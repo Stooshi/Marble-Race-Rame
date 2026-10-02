@@ -1,0 +1,285 @@
+'use strict';
+
+const crypto = require('crypto');
+const db = require('../db');
+const config = require('../config');
+const { createRng } = require('./rng');
+const { simulateRace, subSeed } = require('./simulator');
+const { badRequest, conflict, forbidden, notFound } = require('../utils/httpError');
+
+/**
+ * Database side of the race lifecycle:
+ *   lobby --decide()--> countdown --markRunning()--> running --finalize()--> finished
+ *   lobby --cancel()--> cancelled
+ */
+
+/** Loads everything the simulator needs, in a stable order, from persisted state. */
+async function loadSimulationInput(client, raceId) {
+  const { rows: raceRows } = await client.query(
+    `SELECT r.*, t.length_m, t.lane_count, t.obstacles, t.waypoints, t.name AS track_name, t.slug AS track_slug
+       FROM races r JOIN tracks t ON t.id = r.track_id
+      WHERE r.id = $1`,
+    [raceId],
+  );
+  const race = raceRows[0];
+  if (!race) throw notFound('Race not found');
+  // Decided races use the track exactly as it was when the outcome was computed.
+  if (race.track_snapshot) Object.assign(race, race.track_snapshot);
+
+  const { rows: entries } = await client.query(
+    `SELECT e.id, e.lane, e.user_id, e.is_bot, e.marble_id,
+            e.snap_top_speed, e.snap_acceleration, e.snap_handling, e.snap_luck,
+            e.finish_position, e.finish_time_ms,
+            m.name AS marble_name, m.slug AS marble_slug, m.color_primary, m.color_secondary, m.pattern,
+            u.username
+       FROM race_entries e
+       JOIN marbles m ON m.id = e.marble_id
+       LEFT JOIN users u ON u.id = e.user_id
+      WHERE e.race_id = $1
+      ORDER BY e.lane ASC, e.id ASC`,
+    [raceId],
+  );
+  return { race, entries };
+}
+
+function runSimulation(race, entries) {
+  return simulateRace({
+    seed: Number(race.seed),
+    track: { length_m: Number(race.length_m), lane_count: race.lane_count, obstacles: race.obstacles },
+    entries: entries.map((e) => ({
+      id: e.id,
+      lane: e.lane,
+      topSpeed: e.snap_top_speed,
+      acceleration: e.snap_acceleration,
+      handling: e.snap_handling,
+      luck: e.snap_luck,
+    })),
+    tickRateHz: race.tick_rate_hz,
+    minDurationMs: config.game.minDurationMs,
+    maxDurationMs: config.game.maxDurationMs,
+  });
+}
+
+/** Public, result-free description of a race used for the stream header. */
+function describeForClients(race, entries) {
+  return {
+    raceId: race.id,
+    name: race.name,
+    track: {
+      id: race.track_id,
+      slug: race.track_slug,
+      name: race.track_name,
+      length_m: Number(race.length_m),
+      lane_count: race.lane_count,
+      waypoints: race.waypoints,
+      obstacles: race.obstacles,
+    },
+    entries: entries.map((e, index) => ({
+      index,
+      entryId: e.id,
+      lane: e.lane,
+      isBot: e.is_bot,
+      user: e.user_id ? { id: e.user_id, username: e.username } : null,
+      marble: {
+        id: e.marble_id,
+        slug: e.marble_slug,
+        name: e.marble_name,
+        color_primary: e.color_primary,
+        color_secondary: e.color_secondary,
+        pattern: e.pattern,
+      },
+    })),
+  };
+}
+
+/**
+ * Decides the race: fills empty slots with bots, assigns lanes, snapshots
+ * marble stats, picks a seed and runs the simulation, persisting the results.
+ * Must be called for a race in the lobby. Returns { race, entries, sim }.
+ *
+ * @param {string} raceId
+ * @param {object|null} actor  user requesting the start (null = scheduler)
+ */
+async function decide(raceId, actor) {
+  return db.withTransaction(async (client) => {
+    const { rows } = await client.query('SELECT * FROM races WHERE id = $1 FOR UPDATE', [raceId]);
+    const race = rows[0];
+    if (!race) throw notFound('Race not found');
+    if (actor && actor.role !== 'admin' && race.created_by !== actor.id) {
+      throw forbidden('Only the race creator can start this race');
+    }
+    if (race.status !== 'lobby') throw conflict(`Race is already ${race.status}`);
+
+    const seed = crypto.randomInt(0, 2 ** 32);
+    const rng = createRng(subSeed(seed, 3));
+
+    const { rows: current } = await client.query(
+      'SELECT id, marble_id FROM race_entries WHERE race_id = $1 ORDER BY joined_at, id',
+      [raceId],
+    );
+
+    // Fill with house bots up to the race minimum.
+    let entryIds = current.map((e) => e.id);
+    if (entryIds.length < race.min_marbles) {
+      if (!race.fill_with_bots) {
+        throw badRequest(`Race needs at least ${race.min_marbles} marbles (has ${entryIds.length})`);
+      }
+      const taken = current.map((e) => e.marble_id);
+      const { rows: pool } = await client.query(
+        `SELECT id FROM marbles WHERE is_active AND NOT (id = ANY($1::uuid[])) ORDER BY slug`,
+        [taken],
+      );
+      const needed = race.min_marbles - entryIds.length;
+      if (pool.length < needed) {
+        throw conflict(`Not enough marbles in the catalog to fill the race (need ${needed} more)`);
+      }
+      const bots = rng.shuffle(pool.map((m) => m.id)).slice(0, needed);
+      const { rows: inserted } = await client.query(
+        `INSERT INTO race_entries (race_id, marble_id, user_id, is_bot)
+         SELECT $1, unnest($2::uuid[]), NULL, true
+         RETURNING id`,
+        [raceId, bots],
+      );
+      entryIds = entryIds.concat(inserted.map((r) => r.id));
+    }
+
+    // Random lane draw + stat snapshot.
+    const lanes = rng.shuffle(entryIds.map((_, i) => i));
+    await client.query(
+      `UPDATE race_entries e
+          SET lane = l.lane,
+              snap_top_speed = m.top_speed,
+              snap_acceleration = m.acceleration,
+              snap_handling = m.handling,
+              snap_luck = m.luck
+         FROM unnest($1::uuid[], $2::int[]) AS l(entry_id, lane), marbles m
+        WHERE e.id = l.entry_id AND m.id = e.marble_id`,
+      [entryIds, lanes],
+    );
+
+    // Seed and tick rate are only persisted below, together with the duration
+    // the simulation picks, so apply them in memory for this run.
+    const input = await loadSimulationInput(client, raceId);
+    input.race.seed = seed;
+    input.race.tick_rate_hz = config.game.tickRateHz;
+    const sim = runSimulation(input.race, input.entries);
+
+    await client.query(
+      `UPDATE race_entries e
+          SET finish_position = r.position, finish_time_ms = r.time_ms
+         FROM unnest($1::uuid[], $2::int[], $3::int[]) AS r(entry_id, position, time_ms)
+        WHERE e.id = r.entry_id`,
+      [
+        sim.results.map((r) => r.entryId),
+        sim.results.map((r) => r.position),
+        sim.results.map((r) => r.finishTimeMs),
+      ],
+    );
+
+    const { rows: updated } = await client.query(
+      `UPDATE races
+          SET status = 'countdown', seed = $2, target_duration_ms = $3, tick_rate_hz = $4,
+              countdown_ms = $5::int, decided_at = now(),
+              started_at = now() + make_interval(secs => $5::int / 1000.0),
+              track_snapshot = $6
+        WHERE id = $1
+        RETURNING *`,
+      [raceId, seed, sim.durationMs, config.game.tickRateHz, config.game.countdownMs, JSON.stringify({
+        length_m: Number(input.race.length_m),
+        lane_count: input.race.lane_count,
+        waypoints: input.race.waypoints,
+        obstacles: input.race.obstacles,
+      })],
+    );
+
+    const full = { ...input.race, ...updated[0] };
+    return { race: full, entries: input.entries, sim };
+  });
+}
+
+async function markRunning(raceId) {
+  await db.query(`UPDATE races SET status = 'running' WHERE id = $1 AND status = 'countdown'`, [raceId]);
+}
+
+/**
+ * Marks the race finished and pays out coins. Idempotent: only the first call
+ * for a running race has any effect. Returns the public results, or null if the
+ * race was not in a finishable state.
+ */
+async function finalize(raceId) {
+  return db.withTransaction(async (client) => {
+    const { rows } = await client.query(
+      `UPDATE races SET status = 'finished', finished_at = started_at + make_interval(secs => target_duration_ms::double precision / 1000)
+        WHERE id = $1 AND status IN ('countdown', 'running')
+        RETURNING id`,
+      [raceId],
+    );
+    if (!rows[0]) return null;
+
+    const { podiumRewards, participationReward } = config.game;
+    const { rows: humans } = await client.query(
+      'SELECT id, user_id, finish_position FROM race_entries WHERE race_id = $1 AND user_id IS NOT NULL',
+      [raceId],
+    );
+    for (const h of humans) {
+      const coins = (podiumRewards[h.finish_position - 1] || 0) + participationReward;
+      if (coins <= 0) continue;
+      await client.query('UPDATE race_entries SET coins_awarded = $2 WHERE id = $1', [h.id, coins]);
+      await client.query('UPDATE users SET coins = coins + $2 WHERE id = $1', [h.user_id, coins]);
+    }
+
+    return getResults(client, raceId);
+  });
+}
+
+async function getResults(client, raceId) {
+  const { rows } = await client.query(
+    `SELECT e.id AS entry_id, e.finish_position AS position, e.finish_time_ms, e.lane, e.is_bot, e.coins_awarded,
+            e.marble_id, m.name AS marble_name, m.color_primary,
+            e.user_id, u.username
+       FROM race_entries e
+       JOIN marbles m ON m.id = e.marble_id
+       LEFT JOIN users u ON u.id = e.user_id
+      WHERE e.race_id = $1
+      ORDER BY e.finish_position ASC NULLS LAST`,
+    [raceId],
+  );
+  return rows;
+}
+
+/** Cancels a lobby race and refunds entry fees. */
+async function cancel(raceId, actor) {
+  return db.withTransaction(async (client) => {
+    const { rows } = await client.query('SELECT * FROM races WHERE id = $1 FOR UPDATE', [raceId]);
+    const race = rows[0];
+    if (!race) throw notFound('Race not found');
+    if (actor.role !== 'admin' && race.created_by !== actor.id) {
+      throw forbidden('Only the race creator can cancel this race');
+    }
+    if (race.status !== 'lobby') throw conflict(`Cannot cancel a race that is ${race.status}`);
+
+    if (race.entry_fee_coins > 0) {
+      await client.query(
+        `UPDATE users u SET coins = coins + $2
+           FROM race_entries e WHERE e.race_id = $1 AND e.user_id = u.id`,
+        [raceId, race.entry_fee_coins],
+      );
+    }
+    const { rows: updated } = await client.query(
+      `UPDATE races SET status = 'cancelled', finished_at = now() WHERE id = $1 RETURNING *`,
+      [raceId],
+    );
+    return updated[0];
+  });
+}
+
+module.exports = {
+  loadSimulationInput,
+  runSimulation,
+  describeForClients,
+  decide,
+  markRunning,
+  finalize,
+  getResults,
+  cancel,
+};
