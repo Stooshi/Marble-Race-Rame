@@ -17,8 +17,17 @@ async function runMigrations() {
   }
   const schemaPath = path.join(__dirname, '..', 'docs', 'database_schema.sql');
   const sql = fs.readFileSync(schemaPath, 'utf8');
-  console.log('Creating database tables from database_schema.sql...');
-  await db.query(sql);
+  
+  // Split by semicolon and filter out empty statements
+  const statements = sql
+    .split(';')
+    .map(s => s.trim())
+    .filter(s => s.length > 0);
+  
+  console.log(`Creating database tables from database_schema.sql (${statements.length} statements)...`);
+  for (const stmt of statements) {
+    await db.query(stmt);
+  }
   console.log('Database tables created');
 }
 
