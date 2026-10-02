@@ -59,7 +59,7 @@ router.get('/', optionalAuth, async (req, res) => {
   if (!(q.include_inactive && req.user?.role === 'admin')) where.push('is_active');
   if (q.difficulty) { params.push(q.difficulty); where.push(`difficulty = $${params.length}`); }
   const { rows } = await db.query(
-    `SELECT id, slug, name, description, difficulty, length_m, lane_count, thumbnail_url, is_active,
+    `SELECT id, slug, name, description, difficulty, length_m, lane_count, thumbnail_url, is_active, waypoints,
             jsonb_array_length(obstacles) AS obstacle_count, created_at
        FROM tracks ${where.length ? `WHERE ${where.join(' AND ')}` : ''}
       ORDER BY difficulty, name`,
@@ -75,10 +75,23 @@ router.get('/:idOrSlug', async (req, res) => {
   const { rows } = await db.query(`SELECT * FROM tracks WHERE ${column} = $1`, [key]);
   if (!rows[0]) throw notFound('Track not found');
   const { rows: stats } = await db.query(
-    `SELECT COUNT(*)::int AS races_finished,
-            MIN(e.finish_time_ms) AS record_ms
-       FROM races r JOIN race_entries e ON e.race_id = r.id AND e.finish_position = 1
-      WHERE r.track_id = $1 AND r.status = 'finished'`,
+    `SELECT (SELECT COUNT(*)::int FROM races WHERE track_id = $1 AND status = 'finished') AS races_finished,
+            rec.finish_time_ms AS record_ms, rec.race_id AS record_race_id,
+            rec.marble_name AS record_marble, rec.username AS record_holder,
+            (SELECT MIN(e.split_time_ms) FROM race_entries e
+               JOIN races r ON r.id = e.race_id AND r.status = 'finished'
+              WHERE r.track_id = $1) AS best_split_ms
+       FROM (SELECT 1) one
+       LEFT JOIN LATERAL (
+         SELECT e.finish_time_ms, e.race_id, m.name AS marble_name, u.username
+           FROM race_entries e
+           JOIN races r ON r.id = e.race_id AND r.status = 'finished'
+           JOIN marbles m ON m.id = e.marble_id
+           LEFT JOIN users u ON u.id = e.user_id
+          WHERE r.track_id = $1
+          ORDER BY e.finish_time_ms ASC, r.finished_at ASC
+          LIMIT 1
+       ) rec ON true`,
     [rows[0].id],
   );
   res.json({ track: rows[0], stats: stats[0] });

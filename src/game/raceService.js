@@ -166,13 +166,14 @@ async function decide(raceId, actor) {
 
     await client.query(
       `UPDATE race_entries e
-          SET finish_position = r.position, finish_time_ms = r.time_ms
-         FROM unnest($1::uuid[], $2::int[], $3::int[]) AS r(entry_id, position, time_ms)
+          SET finish_position = r.position, finish_time_ms = r.time_ms, split_time_ms = r.split_ms
+         FROM unnest($1::uuid[], $2::int[], $3::int[], $4::int[]) AS r(entry_id, position, time_ms, split_ms)
         WHERE e.id = r.entry_id`,
       [
         sim.results.map((r) => r.entryId),
         sim.results.map((r) => r.position),
         sim.results.map((r) => r.finishTimeMs),
+        sim.results.map((r) => r.splitTimeMs),
       ],
     );
 
@@ -234,8 +235,9 @@ async function finalize(raceId) {
 
 async function getResults(client, raceId) {
   const { rows } = await client.query(
-    `SELECT e.id AS entry_id, e.finish_position AS position, e.finish_time_ms, e.lane, e.is_bot, e.coins_awarded,
-            e.marble_id, m.name AS marble_name, m.color_primary,
+    `SELECT e.id AS entry_id, e.finish_position AS position, e.finish_time_ms, e.split_time_ms,
+            e.lane, e.is_bot, e.coins_awarded,
+            e.marble_id, m.name AS marble_name, m.color_primary, m.color_secondary, m.pattern,
             e.user_id, u.username
        FROM race_entries e
        JOIN marbles m ON m.id = e.marble_id
@@ -245,6 +247,56 @@ async function getResults(client, raceId) {
     [raceId],
   );
   return rows;
+}
+
+/**
+ * For every entry in a finished race, how it compares with what came before on
+ * the same track: the player's previous bests (finish time, halfway split,
+ * position) and the track record as it stood before this race.
+ * Keyed by entry id.
+ */
+async function getComparisons(client, raceId) {
+  const { rows } = await client.query(
+    `WITH this_race AS (
+       SELECT id, track_id, finished_at FROM races WHERE id = $1 AND status = 'finished'
+     ),
+     earlier AS (
+       SELECT e.user_id, e.finish_time_ms, e.split_time_ms, e.finish_position
+         FROM race_entries e
+         JOIN races r ON r.id = e.race_id AND r.status = 'finished'
+         JOIN this_race t ON r.track_id = t.track_id AND r.finished_at < t.finished_at
+     )
+     SELECT e.id AS entry_id,
+            prev.races AS previous_races_on_track,
+            prev.best_time_ms AS previous_best_time_ms,
+            prev.best_split_ms AS previous_best_split_ms,
+            prev.best_position AS previous_best_position,
+            prev.avg_position AS previous_avg_position,
+            rec.record_ms AS previous_track_record_ms,
+            rec.record_split_ms AS previous_track_record_split_ms
+       FROM race_entries e
+       CROSS JOIN this_race
+       LEFT JOIN LATERAL (
+         SELECT COUNT(*)::int AS races,
+                MIN(x.finish_time_ms) AS best_time_ms,
+                MIN(x.split_time_ms) AS best_split_ms,
+                MIN(x.finish_position) AS best_position,
+                ROUND(AVG(x.finish_position)::numeric, 2) AS avg_position
+           FROM earlier x WHERE x.user_id = e.user_id
+       ) prev ON e.user_id IS NOT NULL
+       CROSS JOIN LATERAL (
+         SELECT MIN(finish_time_ms) AS record_ms, MIN(split_time_ms) AS record_split_ms FROM earlier
+       ) rec
+      WHERE e.race_id = $1`,
+    [raceId],
+  );
+
+  const out = {};
+  for (const r of rows) {
+    const { entry_id: entryId, ...c } = r;
+    out[entryId] = c;
+  }
+  return out;
 }
 
 /** Cancels a lobby race and refunds entry fees. */
@@ -281,5 +333,6 @@ module.exports = {
   markRunning,
   finalize,
   getResults,
+  getComparisons,
   cancel,
 };

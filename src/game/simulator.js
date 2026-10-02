@@ -13,7 +13,8 @@ const { createRng } = require('./rng');
  *   1. Integrate a simple 1-D physics model (speed along the track plus a
  *      lateral offset) at a fixed internal step until every marble finishes.
  *   2. Pick a total race duration in [minDurationMs, maxDurationMs] and scale
- *      the timeline so the last marble crosses the line exactly then.
+ *      the timeline so the last marble crosses the line exactly then. Each
+ *      marble's halfway split time is recorded on the same timeline.
  *   3. Resample to the requested tick rate for streaming.
  *
  * Inputs never include wall-clock time or Math.random, so
@@ -112,6 +113,7 @@ function simulateRace({
       // slightly further back, which the race quickly absorbs.
       lateral: laneCount === 1 ? 0 : -1 + (2 * (lane % laneCount)) / (laneCount - 1),
       startOffset: -Math.floor(lane / laneCount) * 0.8,
+      splitAt: null,           // raw time the marble crossed the halfway point
       finishedAt: null,
       trace: [],               // flat [progress, lateral] pairs, one per SIM_DT
     };
@@ -179,6 +181,11 @@ function simulateRace({
       const before = m.distance;
       m.distance += m.speed * SIM_DT;
 
+      const half = length / 2;
+      if (m.splitAt === null && m.distance >= half) {
+        m.splitAt = time - SIM_DT + ((half - before) / (m.distance - before)) * SIM_DT;
+      }
+
       if (m.distance >= length) {
         // Interpolate the exact crossing time inside this step.
         const frac = (length - before) / (m.distance - before);
@@ -192,7 +199,7 @@ function simulateRace({
 
   // --- 2. pick duration and scale -----------------------------------------
   const rawLast = Math.max(...marbles.map((m) => m.finishedAt));
-  const durationMs = Math.round(durationRng.range(minDurationMs, maxDurationMs + 1));
+  const durationMs = Math.min(maxDurationMs, Math.floor(durationRng.range(minDurationMs, maxDurationMs + 1)));
   const scale = durationMs / 1000 / rawLast; // seconds of race per raw second
   const rawSteps = marbles[0].trace.length / 2;
 
@@ -204,6 +211,7 @@ function simulateRace({
     position: i + 1,
     // Never let rounding push a finisher past the official race length.
     finishTimeMs: Math.min(durationMs, Math.max(1, Math.round(m.finishedAt * scale * 1000))),
+    splitTimeMs: Math.max(1, Math.round(m.splitAt * scale * 1000)),
   }));
   // Rounding can collide identical times; positions stay strictly ordered.
   for (let i = 1; i < results.length; i += 1) {

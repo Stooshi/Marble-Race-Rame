@@ -155,7 +155,8 @@ CREATE INDEX IF NOT EXISTS idx_user_marbles_marble ON user_marbles (marble_id);
 -- races
 -- -----------------------------------------------------------------------------
 -- seed               PRNG seed used by the simulator (set when decided)
--- target_duration_ms total race length the simulation was scaled to (50–90 s)
+-- target_duration_ms total race length the simulation was scaled to (50–90 s;
+--                    the server defaults to fixed 90 s races)
 -- countdown_ms       pre-start countdown streamed to clients
 -- decided_at         moment the outcome was computed (lobby -> countdown)
 -- track_snapshot     copy of the track geometry/obstacles used for the decision,
@@ -165,7 +166,7 @@ CREATE TABLE IF NOT EXISTS races (
     track_id            uuid        NOT NULL REFERENCES tracks(id) ON DELETE RESTRICT,
     name                varchar(80),
     status              race_status NOT NULL DEFAULT 'lobby',
-    min_marbles         smallint    NOT NULL DEFAULT 10,
+    min_marbles         smallint    NOT NULL DEFAULT 20,
     max_marbles         smallint    NOT NULL DEFAULT 20,
     entry_fee_coins     integer     NOT NULL DEFAULT 0 CHECK (entry_fee_coins >= 0),
     fill_with_bots      boolean     NOT NULL DEFAULT true,
@@ -224,6 +225,7 @@ CREATE TABLE IF NOT EXISTS race_entries (
     snap_luck         smallint,
     finish_position   smallint    CHECK (finish_position BETWEEN 1 AND 20),
     finish_time_ms    integer     CHECK (finish_time_ms > 0),
+    split_time_ms     integer     CHECK (split_time_ms > 0),   -- time at the halfway point
     coins_awarded     integer     NOT NULL DEFAULT 0 CHECK (coins_awarded >= 0),
     joined_at         timestamptz NOT NULL DEFAULT now(),
 
@@ -233,11 +235,15 @@ CREATE TABLE IF NOT EXISTS race_entries (
     CONSTRAINT race_entries_bot_xor_user  CHECK (is_bot = (user_id IS NULL))
 );
 
+-- Upgrade path for databases created before split times were tracked.
+ALTER TABLE race_entries ADD COLUMN IF NOT EXISTS split_time_ms integer CHECK (split_time_ms > 0);
+
 -- A player may enter at most one marble per race.
 CREATE UNIQUE INDEX IF NOT EXISTS uq_race_entries_race_user
     ON race_entries (race_id, user_id) WHERE user_id IS NOT NULL;
 CREATE INDEX IF NOT EXISTS idx_race_entries_user   ON race_entries (user_id);
 CREATE INDEX IF NOT EXISTS idx_race_entries_marble ON race_entries (marble_id);
+CREATE INDEX IF NOT EXISTS idx_races_track_finished ON races (track_id, finished_at) WHERE status = 'finished';
 
 -- -----------------------------------------------------------------------------
 -- Views
@@ -252,7 +258,9 @@ SELECT
     COUNT(e.id) FILTER (WHERE e.finish_position <= 3)            AS podiums,
     MIN(e.finish_time_ms) FILTER (WHERE e.finish_position = 1)   AS best_win_time_ms,
     ROUND(AVG(e.finish_position)::numeric, 2)                    AS avg_position,
-    COALESCE(SUM(e.coins_awarded), 0)                            AS coins_won
+    COALESCE(SUM(e.coins_awarded), 0)                            AS coins_won,
+    MIN(e.split_time_ms)                                         AS best_split_ms,
+    MIN(e.finish_time_ms)                                        AS best_finish_time_ms
 FROM users u
 LEFT JOIN (race_entries e
            JOIN races r ON r.id = e.race_id AND r.status = 'finished')

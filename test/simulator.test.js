@@ -84,3 +84,23 @@ test('better stats win more often', () => {
   }
   assert.ok(wins > 3, `strong marble won ${wins}/30`);
 });
+
+test('fixed-length races last exactly the configured duration', () => {
+  for (let seed = 0; seed < 20; seed += 1) {
+    const sim = simulateRace({ seed, track, entries: entries(20), minDurationMs: 90_000, maxDurationMs: 90_000 });
+    assert.equal(sim.durationMs, 90_000);
+    assert.equal(sim.results.at(-1).finishTimeMs, 90_000);
+  }
+});
+
+test('halfway split times are recorded and agree with the frames', () => {
+  const sim = simulateRace({ seed: 77, track, entries: entries(20), minDurationMs: 90_000, maxDurationMs: 90_000 });
+  for (const r of sim.results) {
+    assert.ok(r.splitTimeMs > 0 && r.splitTimeMs < r.finishTimeMs, `split ${r.splitTimeMs} < finish ${r.finishTimeMs}`);
+    // The frame just before the split is short of halfway; the one after is past it.
+    const before = sim.frames[Math.floor(r.splitTimeMs / sim.tickMs)];
+    const after = sim.frames[Math.ceil(r.splitTimeMs / sim.tickMs)];
+    assert.ok(before.p[r.index] <= 0.5 + 1e-3, `before ${before.p[r.index]}`);
+    assert.ok(after.p[r.index] >= 0.5 - 1e-3, `after ${after.p[r.index]}`);
+  }
+});
