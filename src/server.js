@@ -1,5 +1,7 @@
 'use strict';
 
+const fs = require('fs');
+const path = require('path');
 const http = require('http');
 const config = require('./config');
 const db = require('./db');
@@ -7,12 +9,26 @@ const { createApp } = require('./app');
 const { createSocketServer } = require('./sockets');
 const raceManager = require('./game/raceManager');
 
+async function runMigrations() {
+  const { rows } = await db.query("SELECT to_regclass('public.races') AS exists");
+  if (rows[0].exists) {
+    console.log('Database tables already exist, skipping schema setup');
+    return;
+  }
+  const schemaPath = path.join(__dirname, '..', 'docs', 'database_schema.sql');
+  const sql = fs.readFileSync(schemaPath, 'utf8');
+  console.log('Creating database tables from database_schema.sql...');
+  await db.query(sql);
+  console.log('Database tables created');
+}
+
 async function start() {
   const app = createApp();
   const server = http.createServer(app);
   const io = createSocketServer(server);
 
   await db.query('SELECT 1'); // fail fast if the database is unreachable
+  await runMigrations();
   await raceManager.recover();
   raceManager.startScheduler();
 
