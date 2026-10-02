@@ -17,17 +17,8 @@ async function runMigrations() {
   }
   const schemaPath = path.join(__dirname, '..', 'docs', 'database_schema.sql');
   const sql = fs.readFileSync(schemaPath, 'utf8');
-  
-  // Split by semicolon and filter out empty statements
-  const statements = sql
-    .split(';')
-    .map(s => s.trim())
-    .filter(s => s.length > 0);
-  
-  console.log(`Creating database tables from database_schema.sql (${statements.length} statements)...`);
-  for (const stmt of statements) {
-    await db.query(stmt);
-  }
+  console.log('Creating database tables from database_schema.sql...');
+  await db.query(sql);
   console.log('Database tables created');
 }
 
@@ -49,9 +40,8 @@ async function start() {
     if (shuttingDown) return;
     shuttingDown = true;
     console.log(`${signal} received, shutting down`);
-    // In-flight races are recovered from the database on the next boot.
     raceManager.shutdown();
-    io.close(); // also closes the underlying HTTP server
+    io.close();
     await db.pool.end().catch(() => {});
     process.exit(0);
   };
