@@ -1,11 +1,16 @@
 -- =============================================================================
 -- Marble Race — PostgreSQL schema
 -- =============================================================================
--- Apply with:   psql "$DATABASE_URL" -f docs/database_schema.sql
---          or:   npm run db:migrate
+-- The backend applies this file automatically on every start
+-- (src/db/migrate.js), inside one transaction. It can also be applied with
+--   npm run db:migrate      or      psql "$DATABASE_URL" -f docs/database_schema.sql
 --
--- The script is idempotent: it can be run repeatedly against the same
--- database without failing or duplicating seed data.
+-- The script is idempotent and safe for a database that already holds data:
+--  * tables, columns, types and indexes are only created when missing;
+--  * no statement drops, deletes or updates stored rows (the views are
+--    rebuilt, but views hold no data);
+--  * seed marbles and tracks are inserted only when no row with the same slug
+--    or name exists, so existing rows are never overwritten or duplicated.
 --
 -- Design notes
 --  * A race is decided exactly once, on the server, when it leaves the lobby.
@@ -235,8 +240,10 @@ CREATE TABLE IF NOT EXISTS race_entries (
     CONSTRAINT race_entries_bot_xor_user  CHECK (is_bot = (user_id IS NULL))
 );
 
--- Upgrade path for databases created before split times were tracked.
+-- Upgrade path for databases created before these columns existed (including
+-- tables created by hand from an earlier version of this file).
 ALTER TABLE race_entries ADD COLUMN IF NOT EXISTS split_time_ms integer CHECK (split_time_ms > 0);
+ALTER TABLE races        ADD COLUMN IF NOT EXISTS track_snapshot jsonb;
 
 -- A player may enter at most one marble per race.
 CREATE UNIQUE INDEX IF NOT EXISTS uq_race_entries_race_user
@@ -248,8 +255,13 @@ CREATE INDEX IF NOT EXISTS idx_races_track_finished ON races (track_id, finished
 -- -----------------------------------------------------------------------------
 -- Views
 -- -----------------------------------------------------------------------------
+-- Dropped and recreated rather than CREATE OR REPLACE, which refuses to change
+-- an existing view's columns. Views store no data, so this loses nothing.
+DROP VIEW IF EXISTS user_stats;
+DROP VIEW IF EXISTS marble_stats;
+
 -- Per-player aggregate stats over finished races.
-CREATE OR REPLACE VIEW user_stats AS
+CREATE VIEW user_stats AS
 SELECT
     u.id                                                         AS user_id,
     u.username,
@@ -268,7 +280,7 @@ LEFT JOIN (race_entries e
 GROUP BY u.id, u.username;
 
 -- Per-marble aggregate stats over finished races (bots included).
-CREATE OR REPLACE VIEW marble_stats AS
+CREATE VIEW marble_stats AS
 SELECT
     m.id                                                AS marble_id,
     m.name,
@@ -284,9 +296,14 @@ GROUP BY m.id, m.name;
 -- -----------------------------------------------------------------------------
 -- Seed data (idempotent)
 -- -----------------------------------------------------------------------------
+-- Each row is inserted only if no existing row has the same slug OR the same
+-- name (case-insensitive). Existing rows are left exactly as they are.
 INSERT INTO marbles (slug, name, description, color_primary, color_secondary, pattern, rarity,
                      top_speed, acceleration, handling, luck, price_coins, is_starter)
-VALUES
+SELECT v.slug, v.name, v.description, v.color_primary, v.color_secondary, v.pattern,
+       v.rarity::marble_rarity, v.top_speed, v.acceleration, v.handling, v.luck,
+       v.price_coins, v.is_starter
+FROM (VALUES
     ('ruby',        'Ruby',        'A balanced starter marble.',          '#E0115F', NULL,      'solid',   'common',    50, 50, 50, 50,    0, true),
     ('sapphire',    'Sapphire',    'Slightly quicker on the straights.',  '#0F52BA', NULL,      'solid',   'common',    56, 48, 46, 50,    0, true),
     ('emerald',     'Emerald',     'Steady through the rough stuff.',     '#50C878', NULL,      'solid',   'common',    46, 50, 58, 48,    0, true),
@@ -310,10 +327,17 @@ VALUES
     ('turquoise',   'Turquoise',   'A traveller''s lucky charm.',         '#40E0D0', NULL,      'solid',   'common',    47, 50, 48, 58,  100, false),
     ('peridot',     'Peridot',     'Sharp on the straights.',             '#B4C424', NULL,      'solid',   'common',    55, 47, 47, 49,  100, false),
     ('moonstone',   'Moonstone',   'Glides quietly to the front.',        '#E3E4FA', '#B0C4DE', 'pearl',   'common',    50, 50, 51, 51,  100, false)
-ON CONFLICT (slug) DO NOTHING;
+) AS v(slug, name, description, color_primary, color_secondary, pattern, rarity,
+       top_speed, acceleration, handling, luck, price_coins, is_starter)
+WHERE NOT EXISTS (
+    SELECT 1 FROM marbles m WHERE m.slug = v.slug OR lower(m.name) = lower(v.name)
+)
+ON CONFLICT DO NOTHING;
 
 INSERT INTO tracks (slug, name, description, difficulty, length_m, lane_count, waypoints, obstacles)
-VALUES
+SELECT v.slug, v.name, v.description, v.difficulty::track_difficulty, v.length_m, v.lane_count,
+       v.waypoints::jsonb, v.obstacles::jsonb
+FROM (VALUES
     ('meadow-loop', 'Meadow Loop', 'A gentle rolling course for beginners.', 'easy', 600, 6,
      '[{"x":0,"y":0},{"x":200,"y":40},{"x":400,"y":0},{"x":520,"y":160},{"x":400,"y":320},{"x":200,"y":280},{"x":40,"y":360},{"x":0,"y":520}]',
      '[{"type":"ramp","at":0.18,"span":0.03,"intensity":0.4},
@@ -335,4 +359,8 @@ VALUES
        {"type":"funnel","at":0.63,"span":0.04,"intensity":0.9},
        {"type":"spinner","at":0.78,"span":0.04,"intensity":0.9},
        {"type":"bumper","at":0.91,"span":0.04,"intensity":0.7}]')
-ON CONFLICT (slug) DO NOTHING;
+) AS v(slug, name, description, difficulty, length_m, lane_count, waypoints, obstacles)
+WHERE NOT EXISTS (
+    SELECT 1 FROM tracks t WHERE t.slug = v.slug OR lower(t.name) = lower(v.name)
+)
+ON CONFLICT DO NOTHING;

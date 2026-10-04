@@ -1,17 +1,15 @@
 'use strict';
 
-// Applies docs/database_schema.sql to DATABASE_URL. Safe to run repeatedly.
-const fs = require('fs');
-const path = require('path');
+// Applies docs/database_schema.sql to DATABASE_URL, exactly as the server
+// does on startup. Safe to run repeatedly.
 const db = require('../src/db');
+const { migrate } = require('../src/db/migrate');
 
 (async () => {
-  const sql = fs.readFileSync(path.join(__dirname, '..', 'docs', 'database_schema.sql'), 'utf8');
   try {
-    await db.query(sql);
-    console.log('Database schema applied.');
-  } catch (err) {
-    console.error('Migration failed:', err.message);
+    const result = await migrate();
+    if (!result.ok) process.exitCode = 1;
+  } catch {
     process.exitCode = 1;
   } finally {
     await db.pool.end();

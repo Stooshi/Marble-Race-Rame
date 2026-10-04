@@ -8,10 +8,10 @@ const { validate, assertUuid, pagination } = require('../utils/validate');
 const { badRequest, conflict, notFound } = require('../utils/httpError');
 const raceManager = require('../game/raceManager');
 const raceService = require('../game/raceService');
+const { RACE_STATUSES } = require('../game/raceStatus');
 
 const router = express.Router();
 
-const STATUSES = ['lobby', 'countdown', 'running', 'finished', 'cancelled'];
 const { minMarbles, maxMarbles, defaultMarbles } = config.game;
 
 const RACE_LIST_SQL = `
@@ -101,7 +101,7 @@ async function joinRace(client, raceId, userId, marbleId) {
 /** GET /api/races?status=lobby&track_id=&limit=&offset= */
 router.get('/', async (req, res) => {
   const q = validate(req.query, {
-    status: { type: 'enum', values: STATUSES },
+    status: { type: 'enum', values: RACE_STATUSES },
     track_id: { type: 'uuid' },
   });
   const { limit, offset } = pagination(req.query);

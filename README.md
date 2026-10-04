@@ -29,7 +29,7 @@ cp .env.example .env            # then edit DATABASE_URL and JWT_SECRET
 npm install
 
 createdb marble_race            # or create it however you like
-npm run db:migrate              # applies docs/database_schema.sql (safe to re-run)
+npm run db:migrate              # optional: the server also does this on every start
 
 npm run dev                     # node --watch; or `npm start`
 curl localhost:5000/health
@@ -228,7 +228,17 @@ Frames are sent as volatile messages: a client that falls behind skips frames in
 | `race_entries` | One marble per row (bots have `user_id NULL`), lane, stat snapshot, result, halfway split, coins awarded |
 | `user_stats` (view) | Races played, wins, podiums, average position, coins won, best finish and best halfway split |
 
-Running `npm run db:migrate` again upgrades an existing database. For example, it adds the `split_time_ms` column if it is missing.
+The backend applies this file automatically on every start (`src/db/migrate.js`), so a new database sets itself up on the first deploy. It runs in one transaction and only adds what is missing: tables, columns, indexes, and seed marbles and tracks whose slug and name are not already taken. Existing rows are never changed or deleted. If applying the file fails, everything is rolled back, the error is logged, and the server keeps running on the existing database. `npm run db:migrate` runs the same step by hand.
+
+Every boot writes a short report to the logs, with each line starting `[db-setup]`:
+
+```
+[db-setup] Applying docs/database_schema.sql
+[db-setup] OK in 30 ms
+[db-setup] Rows: users 2, marbles 22, tracks 3 (+2), user_marbles 1, races 1, race_entries 20
+[db-setup] Columns: all 81 expected columns present
+[db-setup] Race statuses: lobby, countdown, running, finished, cancelled [enum race_status] — match the code
+```
 | `marble_stats` (view) | Per-marble win record |
 
 ## Scaling notes
