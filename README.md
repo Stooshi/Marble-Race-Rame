@@ -239,3 +239,7 @@ Race timers live in the memory of the process that started the race, so run **on
 - a single owner for each race's timers (for example a Postgres advisory lock taken in `raceManager.track` and in the scheduler), so that only one instance streams each race.
 
 Because the race result is fixed by its seed, moving a race to another instance is safe. That instance re-simulates the race and carries on streaming, the same way it does after a restart.
+
+## Deployment
+
+The backend deploys to Railway automatically on every push to the `Main` branch.
