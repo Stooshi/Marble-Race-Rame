@@ -11,7 +11,7 @@ const { PUBLIC_USER_COLUMNS } = require('./auth');
 
 const router = express.Router();
 
-const STATS_COLUMNS = 'races_played, wins, podiums, best_win_time_ms, avg_position, coins_won';
+const STATS_COLUMNS = 'races_played, wins, podiums, best_win_time_ms, avg_position, coins_won, best_split_ms, best_finish_time_ms';
 
 async function getStats(userId) {
   const { rows } = await db.query(`SELECT ${STATS_COLUMNS} FROM user_stats WHERE user_id = $1`, [userId]);
@@ -126,7 +126,8 @@ router.get('/:id/races', async (req, res) => {
   const { rows } = await db.query(
     `SELECT r.id AS race_id, r.name, r.finished_at, r.target_duration_ms,
             t.id AS track_id, t.name AS track_name,
-            e.marble_id, m.name AS marble_name, e.finish_position, e.finish_time_ms, e.coins_awarded,
+            e.marble_id, m.name AS marble_name, m.color_primary, m.color_secondary, m.pattern,
+            e.finish_position, e.finish_time_ms, e.split_time_ms, e.coins_awarded,
             (SELECT COUNT(*) FROM race_entries x WHERE x.race_id = r.id)::int AS marble_count
        FROM race_entries e
        JOIN races r   ON r.id = e.race_id AND r.status = 'finished'
@@ -138,6 +139,40 @@ router.get('/:id/races', async (req, res) => {
     [id, limit, offset],
   );
   res.json({ races: rows, limit, offset });
+});
+
+/**
+ * GET /api/users/:id/track-records — the player's bests on every track they
+ * have raced, alongside the overall track record.
+ */
+router.get('/:id/track-records', async (req, res) => {
+  const id = assertUuid(req.params.id);
+  const { rows } = await db.query(
+    `SELECT t.id AS track_id, t.slug, t.name AS track_name, t.difficulty,
+            COUNT(e.id)::int AS races,
+            COUNT(e.id) FILTER (WHERE e.finish_position = 1)::int AS wins,
+            COUNT(e.id) FILTER (WHERE e.finish_position <= 3)::int AS podiums,
+            MIN(e.finish_position) AS best_position,
+            ROUND(AVG(e.finish_position)::numeric, 2) AS avg_position,
+            MIN(e.finish_time_ms) AS best_time_ms,
+            MIN(e.split_time_ms) AS best_split_ms,
+            MAX(r.finished_at) AS last_raced_at,
+            rec.record_ms AS track_record_ms,
+            rec.record_split_ms AS track_record_split_ms
+       FROM race_entries e
+       JOIN races r  ON r.id = e.race_id AND r.status = 'finished'
+       JOIN tracks t ON t.id = r.track_id
+       CROSS JOIN LATERAL (
+         SELECT MIN(x.finish_time_ms) AS record_ms, MIN(x.split_time_ms) AS record_split_ms
+           FROM race_entries x JOIN races y ON y.id = x.race_id AND y.status = 'finished'
+          WHERE y.track_id = t.id
+       ) rec
+      WHERE e.user_id = $1
+      GROUP BY t.id, t.slug, t.name, t.difficulty, rec.record_ms, rec.record_split_ms
+      ORDER BY races DESC, t.name`,
+    [id],
+  );
+  res.json({ records: rows });
 });
 
 module.exports = router;

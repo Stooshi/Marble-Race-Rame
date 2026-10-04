@@ -12,7 +12,7 @@ const raceService = require('../game/raceService');
 const router = express.Router();
 
 const STATUSES = ['lobby', 'countdown', 'running', 'finished', 'cancelled'];
-const { minMarbles, maxMarbles } = config.game;
+const { minMarbles, maxMarbles, defaultMarbles } = config.game;
 
 const RACE_LIST_SQL = `
   SELECT r.id, r.name, r.status, r.min_marbles, r.max_marbles, r.entry_fee_coins, r.fill_with_bots,
@@ -36,7 +36,7 @@ async function getRaceRow(id) {
 async function getEntries(raceId, revealResults) {
   const { rows } = await db.query(
     `SELECT e.id, e.lane, e.is_bot, e.joined_at, e.coins_awarded,
-            e.finish_position, e.finish_time_ms,
+            e.finish_position, e.finish_time_ms, e.split_time_ms,
             m.id AS marble_id, m.slug AS marble_slug, m.name AS marble_name,
             m.color_primary, m.color_secondary, m.pattern, m.rarity,
             u.id AS user_id, u.username, u.display_name
@@ -47,8 +47,8 @@ async function getEntries(raceId, revealResults) {
       ORDER BY ${revealResults ? 'e.finish_position' : 'e.lane NULLS LAST, e.joined_at'}`,
     [raceId],
   );
-  return rows.map(({ finish_position, finish_time_ms, coins_awarded, ...rest }) => (
-    revealResults ? { ...rest, finish_position, finish_time_ms, coins_awarded } : rest
+  return rows.map(({ finish_position, finish_time_ms, split_time_ms, coins_awarded, ...rest }) => (
+    revealResults ? { ...rest, finish_position, finish_time_ms, split_time_ms, coins_awarded } : rest
   ));
 }
 
@@ -122,12 +122,15 @@ router.get('/', async (req, res) => {
 
 /**
  * POST /api/races — create a lobby
- * { track_id, name?, min_marbles?, max_marbles?, entry_fee_coins?, fill_with_bots?, scheduled_at?, marble_id? }
+ * { track_id | random_track: true, name?, min_marbles?, max_marbles?, entry_fee_coins?,
+ *   fill_with_bots?, scheduled_at?, marble_id? }
+ * With random_track the server picks an active track at random.
  * If marble_id is supplied the creator is entered immediately.
  */
 router.post('/', requireAuth, async (req, res) => {
   const body = validate(req.body, {
-    track_id: { type: 'uuid', required: true },
+    track_id: { type: 'uuid' },
+    random_track: { type: 'boolean' },
     name: { type: 'string', max: 80 },
     min_marbles: { type: 'int', min: minMarbles, max: maxMarbles },
     max_marbles: { type: 'int', min: minMarbles, max: maxMarbles },
@@ -136,23 +139,28 @@ router.post('/', requireAuth, async (req, res) => {
     scheduled_at: { type: 'date' },
     marble_id: { type: 'uuid' },
   });
-  const min = body.min_marbles ?? minMarbles;
-  const max = body.max_marbles ?? maxMarbles;
+  if (!body.track_id && !body.random_track) throw badRequest('Provide track_id or set random_track to true');
+  if (body.track_id && body.random_track) throw badRequest('Use either track_id or random_track, not both');
+  const max = body.max_marbles ?? Math.max(defaultMarbles, body.min_marbles ?? minMarbles);
+  const min = body.min_marbles ?? Math.min(defaultMarbles, max);
   if (min > max) throw badRequest('min_marbles cannot exceed max_marbles');
   if (body.scheduled_at && body.scheduled_at.getTime() < Date.now() - 1000) {
     throw badRequest('scheduled_at must be in the future');
   }
 
   const raceId = await db.withTransaction(async (client) => {
-    const { rows: track } = await client.query('SELECT id FROM tracks WHERE id = $1 AND is_active', [body.track_id]);
-    if (!track[0]) throw badRequest('Track not found or inactive');
+    const { rows: track } = body.random_track
+      ? await client.query('SELECT id FROM tracks WHERE is_active ORDER BY random() LIMIT 1')
+      : await client.query('SELECT id FROM tracks WHERE id = $1 AND is_active', [body.track_id]);
+    if (!track[0]) throw badRequest(body.random_track ? 'No active tracks available' : 'Track not found or inactive');
+    const trackId = track[0].id;
 
     const { rows } = await client.query(
       `INSERT INTO races (track_id, name, min_marbles, max_marbles, entry_fee_coins, fill_with_bots,
                           scheduled_at, created_by, tick_rate_hz, countdown_ms)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
        RETURNING id`,
-      [body.track_id, body.name ?? null, min, max, body.entry_fee_coins ?? 0, body.fill_with_bots ?? true,
+      [trackId, body.name ?? null, min, max, body.entry_fee_coins ?? 0, body.fill_with_bots ?? true,
         body.scheduled_at ?? null, req.user.id, config.game.tickRateHz, config.game.countdownMs],
     );
     if (body.marble_id) await joinRace(client, rows[0].id, req.user.id, body.marble_id);
@@ -226,12 +234,38 @@ router.post('/:id/cancel', requireAuth, async (req, res) => {
   res.json({ race });
 });
 
-/** GET /api/races/:id/results — official results once the race has finished */
+/**
+ * GET /api/races/:id/results — official results once the race has finished.
+ * Each result carries a `comparison` with the player's previous bests on this
+ * track and the track record before this race, plus personal-best flags.
+ */
 router.get('/:id/results', async (req, res) => {
   const id = assertUuid(req.params.id);
   const race = await getRaceRow(id);
   if (race.status !== 'finished') throw conflict(`Results are not available while the race is ${race.status}`);
-  res.json({ race, results: await raceService.getResults(db, id) });
+  const [results, comparisons] = await Promise.all([
+    raceService.getResults(db, id),
+    raceService.getComparisons(db, id),
+  ]);
+  const winner = results[0];
+  res.json({
+    race,
+    results: results.map((r) => {
+      const c = comparisons[r.entry_id] || {};
+      const beats = (value, previous) => previous === null || previous === undefined || value < previous;
+      return {
+        ...r,
+        gap_to_winner_ms: r.finish_time_ms - winner.finish_time_ms,
+        split_gap_to_leader_ms: r.split_time_ms - Math.min(...results.map((x) => x.split_time_ms)),
+        comparison: {
+          ...c,
+          is_personal_best: !r.is_bot && beats(r.finish_time_ms, c.previous_best_time_ms),
+          is_split_personal_best: !r.is_bot && beats(r.split_time_ms, c.previous_best_split_ms),
+          is_track_record: beats(r.finish_time_ms, c.previous_track_record_ms) && r.position === 1,
+        },
+      };
+    }),
+  });
 });
 
 /**
