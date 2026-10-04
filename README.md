@@ -243,3 +243,4 @@ Because the race result is fixed by its seed, moving a race to another instance 
 ## Deployment
 
 The backend deploys to Railway automatically on every push to the `Main` branch.
+Pushes to other branches do not deploy.
