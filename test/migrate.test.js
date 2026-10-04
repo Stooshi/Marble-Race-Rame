@@ -9,7 +9,7 @@ const schema = fs.readFileSync(SCHEMA_PATH, 'utf8');
 
 test('reads every table and its columns from the schema file', () => {
   const cols = expectedColumns(schema);
-  assert.deepEqual(Object.keys(cols).sort(), ['data_updates', 'marbles', 'race_entries', 'races', 'tracks', 'user_marbles', 'users']);
+  assert.deepEqual(Object.keys(cols).sort(), ['data_updates', 'marble_appearances', 'marble_colors', 'marble_effects', 'marble_surfaces', 'marbles', 'race_entries', 'races', 'tracks', 'user_marbles', 'users']);
   assert.ok(cols.users.includes('password_hash'));
   assert.ok(cols.races.includes('track_snapshot'));
   assert.ok(cols.race_entries.includes('split_time_ms'));

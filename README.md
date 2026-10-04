@@ -151,6 +151,18 @@ Each result's `comparison` compares the race with earlier finished races on the 
 
 `waypoints` is an ordered polyline `[{ "x": 0, "y": 0 }, …]` in track units. Clients map `progress` (0–1) along this line. `obstacles` are placed by progress: `{ "type": "bumper|ramp|sand|spinner|funnel", "at": 0.35, "span": 0.04, "intensity": 0.6 }`.
 
+### Marble appearance
+
+A player's look is purely cosmetic: it never affects how their marble races. Only curated options are accepted.
+
+| Method | Path | Auth | Notes |
+| --- | --- | --- | --- |
+| GET | `/appearance/options` | – | The active curated `colors` (key, name, hex), `surfaces` and `effects` |
+| GET | `/users/me/appearance` | ✔ | Your look, plus `displayLabel` (your username) |
+| PUT | `/users/me/appearance` | ✔ | `{ color?, surface?, effect? }` as option keys. Setting a custom `label` is refused until a word filter exists |
+
+Every player gets a starting look on sign-up: a solid marble with no effect, in a colour picked from their account ID.
+
 ### Marbles
 
 | Method | Path | Auth | Notes |
@@ -226,6 +238,9 @@ Frames are sent as volatile messages: a client that falls behind skips frames in
 | `tracks` | Geometry (`waypoints`) and `obstacles` as JSONB |
 | `races` | Lifecycle state, seed, chosen duration, track snapshot. Checks enforce 10–20 marbles and 50–90 s |
 | `race_entries` | One marble per row (bots have `user_id NULL`), lane, stat snapshot, result, halfway split, coins awarded |
+| `marble_appearances` | One cosmetic look per player: colour, surface, effect and a label kept empty for now |
+| `marble_colors`, `marble_surfaces`, `marble_effects` | Curated look options. Add one with a line in the schema file; retire one with `is_active = false` |
+| `data_updates` | One-time data changes already applied |
 | `user_stats` (view) | Races played, wins, podiums, average position, coins won, best finish and best halfway split |
 
 The backend applies this file automatically on every start (`src/db/migrate.js`), so a new database sets itself up on the first deploy. It runs in one transaction and only adds what is missing: tables, columns, indexes, and seed marbles and tracks whose slug and name are not already taken. Existing rows are never changed or deleted. If applying the file fails, everything is rolled back, the error is logged, and the server keeps running on the existing database. `npm run db:migrate` runs the same step by hand.
@@ -238,8 +253,9 @@ Every boot writes a short report to the logs, with each line starting `[db-setup
 [db-setup] Applying docs/database_schema.sql
 [db-setup] OK in 30 ms
 [db-setup] Data update 2026-10-04-restore-marbles-tracks: already applied on 2026-10-04
-[db-setup] Rows: users 2, marbles 22, tracks 3, user_marbles 1, races 1, race_entries 20
-[db-setup] Columns: all 84 expected columns present
+[db-setup] Rows: users 2, marbles 22, tracks 3, user_marbles 1, races 1, race_entries 20, marble_appearances 2
+[db-setup] Appearance options: 16 colours, 7 surfaces, 5 effects
+[db-setup] Columns: all 106 expected columns present
 [db-setup] Race statuses: lobby, countdown, running, finished, cancelled [enum race_status] — match the code
 ```
 | `marble_stats` (view) | Per-marble win record |

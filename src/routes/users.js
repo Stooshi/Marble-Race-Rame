@@ -8,6 +8,7 @@ const { requireAuth } = require('../middleware/auth');
 const { validate, assertUuid, pagination } = require('../utils/validate');
 const { badRequest, notFound, unauthorized } = require('../utils/httpError');
 const { PUBLIC_USER_COLUMNS } = require('./auth');
+const appearance = require('../game/appearance');
 
 const router = express.Router();
 
@@ -57,6 +58,23 @@ router.patch('/me', requireAuth, async (req, res) => {
     params,
   );
   res.json({ user: rows[0] });
+});
+
+/** GET /api/users/me/appearance — your marble's look (cosmetic only) */
+router.get('/me/appearance', requireAuth, async (req, res) => {
+  res.json({ appearance: await appearance.getAppearance(req.user.id) });
+});
+
+/**
+ * PUT /api/users/me/appearance  { color?, surface?, effect? }
+ * Curated keys only (see GET /api/appearance/options). Custom labels are refused for now.
+ */
+router.put('/me/appearance', requireAuth, async (req, res) => {
+  const body = req.body && typeof req.body === 'object' ? req.body : {};
+  for (const f of ['color', 'surface', 'effect']) {
+    if (body[f] !== undefined && typeof body[f] !== 'string') throw badRequest(`${f} must be a string key`);
+  }
+  res.json({ appearance: await appearance.updateAppearance(req.user.id, body) });
 });
 
 /** GET /api/users/me/marbles — the caller's collection (owned + free starters) */

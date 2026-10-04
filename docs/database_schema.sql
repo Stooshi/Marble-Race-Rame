@@ -255,6 +255,131 @@ CREATE INDEX IF NOT EXISTS idx_race_entries_marble ON race_entries (marble_id);
 CREATE INDEX IF NOT EXISTS idx_races_track_finished ON races (track_id, finished_at) WHERE status = 'finished';
 
 -- -----------------------------------------------------------------------------
+-- Marble appearance: each player's cosmetic look (no effect on racing)
+-- -----------------------------------------------------------------------------
+-- A look is PURELY COSMETIC and completely separate from physics. Races are
+-- decided only from the catalog marble's stats (marbles.top_speed etc.,
+-- snapshotted into race_entries); the race engine never reads these tables, so
+-- no look can ever give a gameplay advantage. A spiky or flaming marble moves
+-- exactly like a plain one. (test/appearance.test.js enforces this.)
+--
+-- Players choose from curated lists only. Each list is a table of keys seeded
+-- below (insert-if-missing), so options can be added later with one line and
+-- no code change, and retired by setting is_active = false (players who chose
+-- them keep them).
+--
+-- STORED NOW, RENDERED LATER: every surface and effect below is stored now,
+-- but only some will be drawn in Phase 2 (expected: solid, swirl, striped,
+-- dotted, glowing, sparkle, galaxy). Spiky, bumpy, star and flaming need
+-- dedicated 3D work in a later phase. We store the ambition, not the rendering.
+--
+-- Planned, not built: uploaded images or logos will live in their own table
+-- (e.g. marble_images, with a moderation status: pending / approved /
+-- rejected) and marble_appearances will gain a nullable link to an approved
+-- image. That is purely additive; nothing here changes.
+
+CREATE TABLE IF NOT EXISTS marble_colors (
+    key         varchar(24) PRIMARY KEY CHECK (key ~ '^[a-z0-9-]+$'),
+    name        varchar(24) NOT NULL,
+    hex         char(7)     NOT NULL CHECK (hex ~ '^#[0-9A-Fa-f]{6}$'),
+    sort_order  smallint    NOT NULL DEFAULT 0,
+    is_active   boolean     NOT NULL DEFAULT true
+);
+
+CREATE TABLE IF NOT EXISTS marble_surfaces (
+    key         varchar(24) PRIMARY KEY CHECK (key ~ '^[a-z0-9-]+$'),
+    name        varchar(24) NOT NULL,
+    description text,
+    sort_order  smallint    NOT NULL DEFAULT 0,
+    is_active   boolean     NOT NULL DEFAULT true
+);
+
+CREATE TABLE IF NOT EXISTS marble_effects (
+    key         varchar(24) PRIMARY KEY CHECK (key ~ '^[a-z0-9-]+$'),
+    name        varchar(24) NOT NULL,
+    description text,
+    sort_order  smallint    NOT NULL DEFAULT 0,
+    is_active   boolean     NOT NULL DEFAULT true
+);
+
+INSERT INTO marble_colors (key, name, hex, sort_order) VALUES
+    ('cherry-red',   'Cherry Red',   '#E0115F',  1),
+    ('tangerine',    'Tangerine',    '#FF7A1A',  2),
+    ('sunflower',    'Sunflower',    '#FFD21F',  3),
+    ('lime',         'Lime',         '#8BD448',  4),
+    ('forest-green', 'Forest Green', '#1FA35B',  5),
+    ('teal',         'Teal',         '#13A8A8',  6),
+    ('sky-blue',     'Sky Blue',     '#3DB5FF',  7),
+    ('royal-blue',   'Royal Blue',   '#2F5BEA',  8),
+    ('violet',       'Violet',       '#8E5CF5',  9),
+    ('magenta',      'Magenta',      '#E040C8', 10),
+    ('bubblegum',    'Bubblegum',    '#FF8FC8', 11),
+    ('chocolate',    'Chocolate',    '#7A4A2A', 12),
+    ('sand',         'Sand',         '#D9B77E', 13),
+    ('snow',         'Snow',         '#F4F4F2', 14),
+    ('silver',       'Silver',       '#A8AFB8', 15),
+    ('midnight',     'Midnight',     '#23252B', 16)
+ON CONFLICT (key) DO NOTHING;
+
+INSERT INTO marble_surfaces (key, name, description, sort_order) VALUES
+    ('solid',   'Solid',   'Smooth and glossy, one colour',  1),
+    ('swirl',   'Swirl',   'Colour swirled with white',      2),
+    ('striped', 'Striped', 'Bands of colour and white',      3),
+    ('dotted',  'Dotted',  'Covered in light polka dots',    4),
+    ('spiky',   'Spiky',   'Studded with soft spikes',       5),
+    ('bumpy',   'Bumpy',   'Knobbly, pebble-like surface',   6),
+    ('star',    'Star',    'Covered in small star shapes',   7)
+ON CONFLICT (key) DO NOTHING;
+
+INSERT INTO marble_effects (key, name, description, sort_order) VALUES
+    ('none',     'None',     'No effect',                               1),
+    ('flaming',  'Flaming',  'A trail of flames',                       2),
+    ('glowing',  'Glowing',  'A soft halo of light',                    3),
+    ('sparkle',  'Sparkle',  'Twinkling glints',                        4),
+    ('galaxy',   'Galaxy',   'A starfield swirling inside the marble',  5)
+ON CONFLICT (key) DO NOTHING;
+
+-- One look per player, used for whichever catalog marble they race.
+-- label: the name shown above the marble. Kept for later but always NULL for
+-- now (the username is shown instead): custom text needs a word filter first,
+-- since public rooms are planned. The API refuses to set it.
+CREATE TABLE IF NOT EXISTS marble_appearances (
+    user_id     uuid        PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+    color_key   varchar(24) NOT NULL REFERENCES marble_colors(key) ON UPDATE CASCADE,
+    surface_key varchar(24) NOT NULL DEFAULT 'solid' REFERENCES marble_surfaces(key) ON UPDATE CASCADE,
+    effect_key  varchar(24) NOT NULL DEFAULT 'none'  REFERENCES marble_effects(key)  ON UPDATE CASCADE,
+    label       varchar(16)
+                CHECK (label IS NULL OR (label ~ '^[A-Za-z0-9_ -]{1,16}$' AND label = btrim(label))),
+    created_at  timestamptz NOT NULL DEFAULT now(),
+    updated_at  timestamptz NOT NULL DEFAULT now()
+);
+
+DROP TRIGGER IF EXISTS trg_marble_appearances_updated_at ON marble_appearances;
+CREATE TRIGGER trg_marble_appearances_updated_at BEFORE UPDATE ON marble_appearances
+    FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+
+-- Starting colour for a player: picked from the active colours by a hash of
+-- their id, so a group of friends doesn't start out identical. Used by the
+-- backfill below and by registration (src/game/appearance.js).
+CREATE OR REPLACE FUNCTION default_marble_color(p_user_id uuid) RETURNS varchar AS $$
+    SELECT key FROM marble_colors
+     WHERE is_active
+     ORDER BY sort_order, key
+    OFFSET ((hashtext(p_user_id::text)::bigint % GREATEST(1, (SELECT count(*) FROM marble_colors WHERE is_active)))
+            + (SELECT count(*) FROM marble_colors WHERE is_active))
+           % GREATEST(1, (SELECT count(*) FROM marble_colors WHERE is_active))
+     LIMIT 1;
+$$ LANGUAGE sql STABLE;
+
+-- Every player gets a starting look (solid, no effect). Runs on each boot and
+-- only adds rows for players who don't have one yet; existing looks are kept.
+INSERT INTO marble_appearances (user_id, color_key)
+SELECT u.id, default_marble_color(u.id)
+FROM users u
+WHERE NOT EXISTS (SELECT 1 FROM marble_appearances a WHERE a.user_id = u.id)
+ON CONFLICT (user_id) DO NOTHING;
+
+-- -----------------------------------------------------------------------------
 -- data_updates: one-time changes to existing rows (docs/data_updates/*.sql)
 -- -----------------------------------------------------------------------------
 -- The backend runs each file once, in name order, and records it here so it is

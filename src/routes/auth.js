@@ -9,6 +9,7 @@ const { signToken } = require('../utils/jwt');
 const { validate } = require('../utils/validate');
 const { unauthorized, conflict } = require('../utils/httpError');
 const { requireAuth } = require('../middleware/auth');
+const { ensureAppearance } = require('../game/appearance');
 
 const router = express.Router();
 
@@ -44,6 +45,8 @@ router.post('/register', authLimiter, async (req, res) => {
       [body.username, body.email.toLowerCase(), hash, body.display_name ?? null],
     );
     const user = rows[0];
+    // Starting marble look. If this fails the look is created on first read instead.
+    await ensureAppearance(user.id).catch((err) => console.error('[auth] starting look failed', err.message));
     res.status(201).json({ token: signToken(user), user });
   } catch (err) {
     if (err.code === '23505') {

@@ -28,7 +28,7 @@ const { RACE_STATUSES } = require('../game/raceStatus');
 const ROOT = path.join(__dirname, '..', '..');
 const SCHEMA_PATH = path.join(ROOT, 'docs', 'database_schema.sql');
 const DATA_UPDATES_DIR = path.join(ROOT, 'docs', 'data_updates');
-const COUNTED_TABLES = ['users', 'marbles', 'tracks', 'user_marbles', 'races', 'race_entries'];
+const COUNTED_TABLES = ['users', 'marbles', 'tracks', 'user_marbles', 'races', 'race_entries', 'marble_appearances'];
 const CORE_TABLES = ['users', 'marbles', 'tracks', 'races', 'race_entries'];
 const TAG = '[db-setup]';
 
@@ -138,6 +138,16 @@ async function report(client, sql, before, log) {
     return `${t} ${after[t]}${added > 0 ? ` (+${added})` : ''}`;
   });
   log.info(`${TAG} Rows: ${counts.join(', ')}`);
+
+  const present = await tablesPresent(client);
+  if (['marble_colors', 'marble_surfaces', 'marble_effects'].every((t) => present.has(t))) {
+    const { rows: opt } = await client.query(
+      `SELECT (SELECT count(*) FROM marble_colors   WHERE is_active)::int AS colours,
+              (SELECT count(*) FROM marble_surfaces WHERE is_active)::int AS surfaces,
+              (SELECT count(*) FROM marble_effects  WHERE is_active)::int AS effects`,
+    );
+    log.info(`${TAG} Appearance options: ${opt[0].colours} colours, ${opt[0].surfaces} surfaces, ${opt[0].effects} effects`);
+  }
 
   const want = expectedColumns(sql);
   const { rows } = await client.query(

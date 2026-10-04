@@ -30,6 +30,7 @@ function createApp() {
   app.use('/api/races', require('./routes/races'));
   app.use('/api/tracks', require('./routes/tracks'));
   app.use('/api/marbles', require('./routes/marbles'));
+  app.use('/api/appearance', require('./routes/appearance'));
 
   app.use(notFoundHandler);
   app.use(errorHandler);
