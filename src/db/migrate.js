@@ -8,6 +8,11 @@
  * only ever adds missing things, so running it against a database that already
  * holds users, marbles and races changes none of their rows.
  *
+ * In the same transaction it then applies each one-time data update in
+ * docs/data_updates/*.sql that has not run yet (in file-name order), recording
+ * it in the data_updates table so it never runs twice. These are the only
+ * changes ever made to existing rows.
+ *
  * Every line it logs starts with "[db-setup]" so it is easy to find in the
  * deploy logs. If applying the file fails, the transaction is rolled back (the
  * database is left exactly as it was), the error is logged, and the server
@@ -20,7 +25,9 @@ const path = require('path');
 const db = require('./index');
 const { RACE_STATUSES } = require('../game/raceStatus');
 
-const SCHEMA_PATH = path.join(__dirname, '..', '..', 'docs', 'database_schema.sql');
+const ROOT = path.join(__dirname, '..', '..');
+const SCHEMA_PATH = path.join(ROOT, 'docs', 'database_schema.sql');
+const DATA_UPDATES_DIR = path.join(ROOT, 'docs', 'data_updates');
 const COUNTED_TABLES = ['users', 'marbles', 'tracks', 'user_marbles', 'races', 'race_entries'];
 const CORE_TABLES = ['users', 'marbles', 'tracks', 'races', 'race_entries'];
 const TAG = '[db-setup]';
@@ -46,6 +53,42 @@ function lineOf(sql, position) {
   const offset = Number(position);
   if (!offset) return null;
   return sql.slice(0, offset).split('\n').length;
+}
+
+/**
+ * Runs the data updates not yet recorded in data_updates. Returns one entry per
+ * file: { id, applied: true, summary } or { id, appliedAt } if it ran before.
+ * A file's last statement may return one row; it becomes the summary.
+ */
+async function applyDataUpdates(client, dir) {
+  if (!fs.existsSync(dir)) return [];
+  const files = fs.readdirSync(dir).filter((f) => f.endsWith('.sql')).sort();
+  const { rows } = await client.query('SELECT id, applied_at FROM data_updates');
+  const done = new Map(rows.map((r) => [r.id, r.applied_at]));
+  const results = [];
+  for (const file of files) {
+    const id = file.replace(/\.sql$/, '');
+    if (done.has(id)) {
+      results.push({ id, appliedAt: done.get(id) });
+      continue;
+    }
+    const sql = fs.readFileSync(path.join(dir, file), 'utf8');
+    let res;
+    try {
+      res = await client.query(sql);
+    } catch (err) {
+      err.migrationFile = `docs/data_updates/${file}`;
+      err.migrationSql = sql;
+      throw err;
+    }
+    const last = [].concat(res).at(-1);
+    const summary = last?.rows?.[0]
+      ? Object.entries(last.rows[0]).map(([k, v]) => `${v} ${k}`).join(', ')
+      : null;
+    await client.query('INSERT INTO data_updates (id, summary) VALUES ($1, $2)', [id, summary]);
+    results.push({ id, applied: true, summary });
+  }
+  return results;
 }
 
 async function tablesPresent(client) {
@@ -127,7 +170,7 @@ async function report(client, sql, before, log) {
  * Applies the schema file. Resolves with a summary; rejects only when the
  * database is unusable (core tables missing after a failed attempt).
  */
-async function migrate({ log = console, schemaPath = SCHEMA_PATH } = {}) {
+async function migrate({ log = console, schemaPath = SCHEMA_PATH, dataUpdatesDir = DATA_UPDATES_DIR } = {}) {
   const started = Date.now();
   const sql = fs.readFileSync(schemaPath, 'utf8');
   log.info(`${TAG} Applying ${path.relative(path.join(__dirname, '..', '..'), schemaPath)}`);
@@ -135,6 +178,7 @@ async function migrate({ log = console, schemaPath = SCHEMA_PATH } = {}) {
   const client = await db.pool.connect();
   try {
     const before = await rowCounts(client);
+    let updates = [];
     try {
       await client.query('BEGIN');
       // Serialise concurrent boots (e.g. two instances during a deploy) and
@@ -142,12 +186,14 @@ async function migrate({ log = console, schemaPath = SCHEMA_PATH } = {}) {
       await client.query("SET LOCAL lock_timeout = '15s'");
       await client.query("SELECT pg_advisory_xact_lock(hashtext('marble-race-schema'))");
       await client.query(sql);
+      updates = await applyDataUpdates(client, dataUpdatesDir);
       await client.query('COMMIT');
     } catch (err) {
       await client.query('ROLLBACK').catch(() => {});
-      const line = lineOf(sql, err.position);
+      const line = lineOf(err.migrationSql || sql, err.position);
+      const file = err.migrationFile || 'schema file';
       log.error(`${TAG} FAILED, rolled back, no changes were made: ${err.message}`);
-      log.error(`${TAG} Detail: code ${err.code || '?'}${line ? `, schema file line ${line}` : ''}${err.where ? `, ${err.where.split('\n')[0]}` : ''}`);
+      log.error(`${TAG} Detail: code ${err.code || '?'}, in ${file}${line ? ` line ${line}` : ''}${err.where ? `, ${err.where.split('\n')[0]}` : ''}`);
       const present = await tablesPresent(client);
       const absent = CORE_TABLES.filter((t) => !present.has(t));
       if (absent.length) {
@@ -159,11 +205,16 @@ async function migrate({ log = console, schemaPath = SCHEMA_PATH } = {}) {
       return { ok: false, error: err };
     }
     log.info(`${TAG} OK in ${Date.now() - started} ms`);
+    for (const u of updates) {
+      log.info(u.applied
+        ? `${TAG} Data update ${u.id}: applied${u.summary ? ` (${u.summary})` : ''}`
+        : `${TAG} Data update ${u.id}: already applied on ${new Date(u.appliedAt).toISOString().slice(0, 10)}`);
+    }
     const { after, missing } = await report(client, sql, before, log);
-    return { ok: true, before, after, missing };
+    return { ok: true, before, after, missing, updates };
   } finally {
     client.release();
   }
 }
 
-module.exports = { migrate, expectedColumns, SCHEMA_PATH };
+module.exports = { migrate, expectedColumns, SCHEMA_PATH, DATA_UPDATES_DIR };

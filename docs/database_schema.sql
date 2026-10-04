@@ -3,7 +3,9 @@
 -- =============================================================================
 -- The backend applies this file automatically on every start
 -- (src/db/migrate.js), inside one transaction. It can also be applied with
---   npm run db:migrate      or      psql "$DATABASE_URL" -f docs/database_schema.sql
+--   npm run db:migrate      or      psql "$DATABASE_URL" -1 -f docs/database_schema.sql
+-- (by hand, -1 runs it as one transaction; only the backend also applies the
+-- one-time data updates in docs/data_updates/).
 --
 -- The script is idempotent and safe for a database that already holds data:
 --  * tables, columns, types and indexes are only created when missing;
@@ -253,6 +255,17 @@ CREATE INDEX IF NOT EXISTS idx_race_entries_marble ON race_entries (marble_id);
 CREATE INDEX IF NOT EXISTS idx_races_track_finished ON races (track_id, finished_at) WHERE status = 'finished';
 
 -- -----------------------------------------------------------------------------
+-- data_updates: one-time changes to existing rows (docs/data_updates/*.sql)
+-- -----------------------------------------------------------------------------
+-- The backend runs each file once, in name order, and records it here so it is
+-- never applied twice.
+CREATE TABLE IF NOT EXISTS data_updates (
+    id          text        PRIMARY KEY,
+    applied_at  timestamptz NOT NULL DEFAULT now(),
+    summary     text
+);
+
+-- -----------------------------------------------------------------------------
 -- Views
 -- -----------------------------------------------------------------------------
 -- Dropped and recreated rather than CREATE OR REPLACE, which refuses to change
@@ -296,71 +309,80 @@ GROUP BY m.id, m.name;
 -- -----------------------------------------------------------------------------
 -- Seed data (idempotent)
 -- -----------------------------------------------------------------------------
+-- The catalog is staged in temporary tables (dropped when the transaction ends)
+-- so that both the inserts below and the one-time data updates in
+-- docs/data_updates/ read the same values. Apply this file inside a single
+-- transaction: the backend does, and by hand use `psql -1 -f`.
+--
+-- Marble stats (1..100) were balanced by simulating thousands of 20-marble races
+-- per track: top speed matters most, then handling (more on rough tracks), then
+-- luck, then acceleration.
+CREATE TEMP TABLE seed_marbles ON COMMIT DROP AS
+SELECT * FROM (VALUES
+    -- Free starters: evenly matched, one clear strength each.
+    ('ruby',        'Ruby',        'The all-rounder: no weak spots, no tricks, just honest racing.', '#E0115F', NULL, 'solid', 'common', 50, 50, 50, 50, 0, true),
+    ('sapphire',    'Sapphire',    'Quick on open ground, shaky when the track gets rough.', '#0F52BA', NULL, 'solid', 'common', 52, 48, 46, 50, 0, true),
+    ('emerald',     'Emerald',     'Keeps its line through bumpers and sand that rattle everyone else.', '#50C878', NULL, 'solid', 'common', 49, 48, 55, 48, 0, true),
+    ('topaz',       'Topaz',       'Gets knocked back often, and is up to speed again before anyone else.', '#FFC87C', NULL, 'solid', 'common', 49, 60, 50, 49, 0, true),
+    -- Uncommon to legendary: slightly higher stat totals, tuned so no marble dominates.
+    ('onyx',        'Onyx',        'The dark horse. Nobody picks it to win, and then it does.', '#353839', '#AAAAAA', 'swirl', 'uncommon', 50, 50, 49, 62, 250, false),
+    ('pearl',       'Pearl',       'Smooth and consistent everywhere: the marble you trust with your coins.', '#F0EAD6', '#D4C4A8', 'pearl', 'uncommon', 51, 53, 52, 50, 250, false),
+    ('amethyst',    'Amethyst',    'Grippy and graceful; the rougher the track, the better it looks.', '#9966CC', '#E6E6FA', 'swirl', 'uncommon', 49, 52, 56, 50, 300, false),
+    ('citrine',     'Citrine',     'Explodes back to full speed after every knock, on any track.', '#E4D00A', '#FF8C00', 'striped', 'rare', 50, 64, 51, 51, 600, false),
+    ('cobalt-comet','Cobalt Comet','Built for long, open straights. Blink and it is gone.', '#0047AB', '#FFFFFF', 'striped', 'rare', 52, 56, 49, 53, 600, false),
+    ('jade-dragon', 'Jade Dragon', 'Ancient and fortunate: good everywhere, lucky the rest of the time.', '#00A86B', '#FFD700', 'cat-eye', 'epic', 51, 55, 51, 55, 1200, false),
+    ('solar-flare', 'Solar Flare', 'Burns hot from start to finish. A threat on every track.', '#FF4500', '#FFD700', 'galaxy', 'legendary', 51, 62, 51, 54, 2500, false),
+    ('nebula',      'Nebula',      'Drifts through chaos untouched; nothing rules Volcano Run like it.', '#2E0854', '#FF69B4', 'galaxy', 'legendary', 50, 57, 53, 57, 2500, false),
+    -- Commons sold in the shop; each has a track that suits it.
+    ('garnet',      'Garnet',      'Deep red and dependable: rarely wins big, rarely loses badly.', '#733635', NULL, 'solid', 'common', 50, 54, 51, 48, 100, false),
+    ('aquamarine',  'Aquamarine',  'Cool under pressure; funnels and spinners barely slow it down.', '#7FFFD4', NULL, 'solid', 'common', 49, 50, 54, 50, 100, false),
+    ('opal',        'Opal',        'Shimmers when it counts. Somehow the bounces tend to go its way.', '#A8C3BC', '#F8C8DC', 'swirl', 'common', 49, 48, 48, 62, 100, false),
+    ('quartz',      'Quartz',      'Clear-headed and quick on smooth tracks, but brittle in the rough.', '#F7F7F7', NULL, 'clear', 'common', 52, 52, 45, 49, 100, false),
+    ('obsidian',    'Obsidian',    'Heavy and hard to knock off line. Slow on the flat, a rock on the volcano.', '#0B1304', NULL, 'solid', 'common', 48, 44, 58, 50, 100, false),
+    ('amber',       'Amber',       'Warm, steady and unhurried. Wins by not making mistakes.', '#FFBF00', NULL, 'solid', 'common', 50, 50, 51, 51, 100, false),
+    ('coral',       'Coral',       'Springs back from every bump like it planned it.', '#FF7F50', NULL, 'solid', 'common', 49, 62, 49, 48, 100, false),
+    ('turquoise',   'Turquoise',   'A traveller''s lucky charm, happiest when the track turns chaotic.', '#40E0D0', NULL, 'solid', 'common', 49, 48, 50, 60, 100, false),
+    ('peridot',     'Peridot',     'Sharp on the straights, nervous in the twisty bits.', '#B4C424', NULL, 'solid', 'common', 52, 47, 47, 49, 100, false),
+    ('moonstone',   'Moonstone',   'Glides quietly to the front while the others jostle.', '#E3E4FA', '#B0C4DE', 'pearl', 'common', 50, 51, 50, 52, 100, false)
+) AS v(slug, name, description, color_primary, color_secondary, pattern, rarity,
+       top_speed, acceleration, handling, luck, price_coins, is_starter);
+
+-- Waypoints are {x, y, z}: x/y the ground plan and z the height above the finish
+-- line, in track units. Obstacles sit at a fraction (0..1) of the way along.
+CREATE TEMP TABLE seed_tracks ON COMMIT DROP AS
+SELECT * FROM (VALUES
+    ('meadow-loop', 'Meadow Loop', 'easy', 600, 6,
+     'A gentle, wide course through rolling grass. Small ramps, a soft sand patch and room to overtake: the place to learn.',
+     '[{"x":0,"y":0,"z":40},{"x":36,"y":10,"z":41},{"x":88,"y":24,"z":42},{"x":140,"y":30,"z":41},{"x":187,"y":19,"z":39},{"x":233,"y":-1,"z":35},{"x":280,"y":-10,"z":31},{"x":328,"y":-2,"z":28},{"x":376,"y":16,"z":25},{"x":420,"y":40,"z":25},{"x":462,"y":71,"z":26},{"x":499,"y":110,"z":27},{"x":520,"y":150,"z":28},{"x":518,"y":195,"z":29},{"x":499,"y":243,"z":27},{"x":470,"y":280,"z":25},{"x":430,"y":303,"z":21},{"x":380,"y":315,"z":17},{"x":330,"y":320,"z":13},{"x":283,"y":311,"z":12},{"x":235,"y":295,"z":11},{"x":190,"y":290,"z":12},{"x":145,"y":304,"z":14},{"x":103,"y":329,"z":15},{"x":70,"y":360,"z":15},{"x":48,"y":398,"z":14},{"x":36,"y":441,"z":12},{"x":40,"y":480,"z":9},{"x":65,"y":513,"z":5},{"x":105,"y":541,"z":2},{"x":150,"y":560,"z":0},{"x":203,"y":566,"z":0},{"x":260,"y":563,"z":0},{"x":300,"y":560,"z":0}]',
+     '[{"type":"ramp","at":0.12,"span":0.03,"intensity":0.35},{"type":"bumper","at":0.27,"span":0.04,"intensity":0.3},{"type":"sand","at":0.4,"span":0.05,"intensity":0.3},{"type":"ramp","at":0.55,"span":0.03,"intensity":0.4},{"type":"funnel","at":0.68,"span":0.04,"intensity":0.3},{"type":"bumper","at":0.8,"span":0.04,"intensity":0.35},{"type":"sand","at":0.9,"span":0.04,"intensity":0.25}]'),
+    ('canyon-drop', 'Canyon Drop', 'medium', 750, 5,
+     'Switchbacks down a red-rock canyon. Steep drops launch marbles off ramps into tight funnels and gravel.',
+     '[{"x":0,"y":0,"z":160},{"x":58,"y":8,"z":160},{"x":138,"y":20,"z":160},{"x":200,"y":40,"z":147},{"x":234,"y":74,"z":132},{"x":250,"y":115,"z":127},{"x":240,"y":150,"z":126},{"x":185,"y":169,"z":123},{"x":104,"y":180,"z":120},{"x":40,"y":200,"z":118},{"x":6,"y":237,"z":116},{"x":-10,"y":283,"z":115},{"x":0,"y":320,"z":113},{"x":55,"y":340,"z":111},{"x":136,"y":351,"z":108},{"x":200,"y":370,"z":106},{"x":234,"y":404,"z":104},{"x":250,"y":446,"z":89},{"x":240,"y":480,"z":77},{"x":185,"y":499,"z":68},{"x":104,"y":510,"z":64},{"x":40,"y":530,"z":60},{"x":6,"y":567,"z":58},{"x":-10,"y":613,"z":55},{"x":0,"y":650,"z":53},{"x":55,"y":669,"z":50},{"x":136,"y":681,"z":46},{"x":200,"y":700,"z":43},{"x":233,"y":737,"z":40},{"x":249,"y":782,"z":38},{"x":240,"y":820,"z":36},{"x":187,"y":842,"z":33},{"x":110,"y":858,"z":29},{"x":60,"y":880,"z":25},{"x":64,"y":920,"z":15},{"x":96,"y":967,"z":0},{"x":120,"y":1000,"z":0}]',
+     '[{"type":"ramp","at":0.08,"span":0.05,"intensity":0.6},{"type":"funnel","at":0.18,"span":0.04,"intensity":0.6},{"type":"sand","at":0.28,"span":0.05,"intensity":0.5},{"type":"bumper","at":0.38,"span":0.05,"intensity":0.5},{"type":"ramp","at":0.46,"span":0.05,"intensity":0.7},{"type":"spinner","at":0.58,"span":0.04,"intensity":0.6},{"type":"funnel","at":0.7,"span":0.04,"intensity":0.6},{"type":"sand","at":0.79,"span":0.05,"intensity":0.5},{"type":"bumper","at":0.87,"span":0.04,"intensity":0.5},{"type":"ramp","at":0.93,"span":0.05,"intensity":0.5}]'),
+    ('volcano-run', 'Volcano Run', 'extreme', 900, 4,
+     'From the crater rim, spiral down the burning slopes. Spinners, ash and lava-rock bumpers everywhere: only the lucky survive.',
+     '[{"x":510,"y":400,"z":260},{"x":505,"y":441,"z":254},{"x":489,"y":489,"z":247},{"x":450,"y":524,"z":240},{"x":400,"y":543,"z":233},{"x":342,"y":538,"z":225},{"x":287,"y":513,"z":217},{"x":246,"y":463,"z":209},{"x":224,"y":400,"z":200},{"x":232,"y":330,"z":191},{"x":264,"y":264,"z":182},{"x":325,"y":216,"z":172},{"x":400,"y":191,"z":162},{"x":483,"y":202,"z":152},{"x":559,"y":241,"z":142},{"x":614,"y":312,"z":131},{"x":641,"y":400,"z":120},{"x":628,"y":495,"z":109},{"x":582,"y":582,"z":98},{"x":500,"y":644,"z":87},{"x":400,"y":674,"z":76},{"x":292,"y":659,"z":65},{"x":194,"y":606,"z":54},{"x":126,"y":513,"z":43},{"x":93,"y":400,"z":33},{"x":111,"y":280,"z":23},{"x":171,"y":171,"z":14},{"x":290,"y":101,"z":5},{"x":400,"y":60,"z":0}]',
+     '[{"type":"spinner","at":0.06,"span":0.04,"intensity":0.8},{"type":"sand","at":0.15,"span":0.06,"intensity":0.6},{"type":"bumper","at":0.24,"span":0.05,"intensity":0.8},{"type":"ramp","at":0.33,"span":0.04,"intensity":0.8},{"type":"funnel","at":0.42,"span":0.04,"intensity":0.9},{"type":"sand","at":0.51,"span":0.06,"intensity":0.7},{"type":"spinner","at":0.6,"span":0.04,"intensity":0.9},{"type":"ramp","at":0.69,"span":0.04,"intensity":0.8},{"type":"bumper","at":0.77,"span":0.05,"intensity":0.8},{"type":"funnel","at":0.85,"span":0.04,"intensity":0.9},{"type":"spinner","at":0.93,"span":0.04,"intensity":0.7}]')
+) AS v(slug, name, difficulty, length_m, lane_count, description, waypoints, obstacles);
+
 -- Each row is inserted only if no existing row has the same slug OR the same
 -- name (case-insensitive). Existing rows are left exactly as they are.
 INSERT INTO marbles (slug, name, description, color_primary, color_secondary, pattern, rarity,
                      top_speed, acceleration, handling, luck, price_coins, is_starter)
-SELECT v.slug, v.name, v.description, v.color_primary, v.color_secondary, v.pattern,
-       v.rarity::marble_rarity, v.top_speed, v.acceleration, v.handling, v.luck,
-       v.price_coins, v.is_starter
-FROM (VALUES
-    ('ruby',        'Ruby',        'A balanced starter marble.',          '#E0115F', NULL,      'solid',   'common',    50, 50, 50, 50,    0, true),
-    ('sapphire',    'Sapphire',    'Slightly quicker on the straights.',  '#0F52BA', NULL,      'solid',   'common',    56, 48, 46, 50,    0, true),
-    ('emerald',     'Emerald',     'Steady through the rough stuff.',     '#50C878', NULL,      'solid',   'common',    46, 50, 58, 48,    0, true),
-    ('topaz',       'Topaz',       'Bounces back quickly.',               '#FFC87C', NULL,      'solid',   'common',    48, 58, 46, 48,    0, true),
-    ('onyx',        'Onyx',        'Dark horse with a lucky streak.',     '#353839', '#AAAAAA', 'swirl',   'uncommon',  52, 50, 50, 62,  250, false),
-    ('pearl',       'Pearl',       'Smooth and consistent.',              '#F0EAD6', '#D4C4A8', 'pearl',   'uncommon',  54, 54, 56, 46,  250, false),
-    ('amethyst',    'Amethyst',    'Grippy and graceful.',                '#9966CC', '#E6E6FA', 'swirl',   'uncommon',  50, 52, 64, 50,  300, false),
-    ('citrine',     'Citrine',     'Explodes out of corners.',            '#E4D00A', '#FF8C00', 'striped', 'rare',      55, 66, 52, 50,  600, false),
-    ('cobalt-comet','Cobalt Comet','Built for long straights.',           '#0047AB', '#FFFFFF', 'striped', 'rare',      66, 52, 48, 50,  600, false),
-    ('jade-dragon', 'Jade Dragon', 'Ancient and fortunate.',              '#00A86B', '#FFD700', 'cat-eye', 'epic',      60, 58, 58, 64, 1200, false),
-    ('solar-flare', 'Solar Flare', 'Burns hot from start to finish.',     '#FF4500', '#FFD700', 'galaxy',  'legendary', 70, 64, 60, 58, 2500, false),
-    ('nebula',      'Nebula',      'Drifts through chaos untouched.',     '#2E0854', '#FF69B4', 'galaxy',  'legendary', 62, 62, 70, 66, 2500, false),
-    -- Extra commons so bots can always fill a 20-marble race with distinct marbles.
-    ('garnet',      'Garnet',      'Deep red and dependable.',            '#733635', NULL,      'solid',   'common',    50, 52, 48, 50,  100, false),
-    ('aquamarine',  'Aquamarine',  'Cool under pressure.',                '#7FFFD4', NULL,      'solid',   'common',    48, 50, 54, 48,  100, false),
-    ('opal',        'Opal',        'Shimmers when it counts.',            '#A8C3BC', '#F8C8DC', 'swirl',   'common',    49, 49, 49, 55,  100, false),
-    ('quartz',      'Quartz',      'Clear-headed and quick.',             '#F7F7F7', NULL,      'clear',   'common',    53, 49, 47, 49,  100, false),
-    ('obsidian',    'Obsidian',    'Heavy and hard to knock off line.',   '#0B1304', NULL,      'solid',   'common',    47, 46, 58, 48,  100, false),
-    ('amber',       'Amber',       'Warm, steady, unhurried.',            '#FFBF00', NULL,      'solid',   'common',    50, 48, 52, 50,  100, false),
-    ('coral',       'Coral',       'Springs off every bumper.',           '#FF7F50', NULL,      'solid',   'common',    48, 56, 48, 48,  100, false),
-    ('turquoise',   'Turquoise',   'A traveller''s lucky charm.',         '#40E0D0', NULL,      'solid',   'common',    47, 50, 48, 58,  100, false),
-    ('peridot',     'Peridot',     'Sharp on the straights.',             '#B4C424', NULL,      'solid',   'common',    55, 47, 47, 49,  100, false),
-    ('moonstone',   'Moonstone',   'Glides quietly to the front.',        '#E3E4FA', '#B0C4DE', 'pearl',   'common',    50, 50, 51, 51,  100, false)
-) AS v(slug, name, description, color_primary, color_secondary, pattern, rarity,
-       top_speed, acceleration, handling, luck, price_coins, is_starter)
+SELECT s.slug, s.name, s.description, s.color_primary, s.color_secondary, s.pattern,
+       s.rarity::marble_rarity, s.top_speed, s.acceleration, s.handling, s.luck,
+       s.price_coins, s.is_starter
+FROM seed_marbles s
 WHERE NOT EXISTS (
-    SELECT 1 FROM marbles m WHERE m.slug = v.slug OR lower(m.name) = lower(v.name)
+    SELECT 1 FROM marbles m WHERE m.slug = s.slug OR lower(m.name) = lower(s.name)
 )
 ON CONFLICT DO NOTHING;
 
 INSERT INTO tracks (slug, name, description, difficulty, length_m, lane_count, waypoints, obstacles)
-SELECT v.slug, v.name, v.description, v.difficulty::track_difficulty, v.length_m, v.lane_count,
-       v.waypoints::jsonb, v.obstacles::jsonb
-FROM (VALUES
-    ('meadow-loop', 'Meadow Loop', 'A gentle rolling course for beginners.', 'easy', 600, 6,
-     '[{"x":0,"y":0},{"x":200,"y":40},{"x":400,"y":0},{"x":520,"y":160},{"x":400,"y":320},{"x":200,"y":280},{"x":40,"y":360},{"x":0,"y":520}]',
-     '[{"type":"ramp","at":0.18,"span":0.03,"intensity":0.4},
-       {"type":"bumper","at":0.42,"span":0.04,"intensity":0.3},
-       {"type":"sand","at":0.71,"span":0.06,"intensity":0.3}]'),
-    ('canyon-drop', 'Canyon Drop', 'Steep drops and tight funnels.', 'medium', 750, 5,
-     '[{"x":0,"y":0},{"x":120,"y":160},{"x":-40,"y":320},{"x":160,"y":480},{"x":0,"y":640},{"x":200,"y":800},{"x":40,"y":980}]',
-     '[{"type":"ramp","at":0.10,"span":0.05,"intensity":0.6},
-       {"type":"funnel","at":0.30,"span":0.04,"intensity":0.6},
-       {"type":"bumper","at":0.48,"span":0.05,"intensity":0.5},
-       {"type":"spinner","at":0.66,"span":0.04,"intensity":0.6},
-       {"type":"funnel","at":0.86,"span":0.04,"intensity":0.5}]'),
-    ('volcano-run', 'Volcano Run', 'Chaos from top to bottom. Only the lucky survive.', 'extreme', 900, 4,
-     '[{"x":0,"y":0},{"x":300,"y":60},{"x":80,"y":220},{"x":360,"y":380},{"x":60,"y":540},{"x":340,"y":700},{"x":100,"y":860},{"x":300,"y":1020},{"x":160,"y":1200}]',
-     '[{"type":"spinner","at":0.08,"span":0.04,"intensity":0.8},
-       {"type":"sand","at":0.22,"span":0.07,"intensity":0.6},
-       {"type":"bumper","at":0.37,"span":0.05,"intensity":0.8},
-       {"type":"ramp","at":0.50,"span":0.04,"intensity":0.8},
-       {"type":"funnel","at":0.63,"span":0.04,"intensity":0.9},
-       {"type":"spinner","at":0.78,"span":0.04,"intensity":0.9},
-       {"type":"bumper","at":0.91,"span":0.04,"intensity":0.7}]')
-) AS v(slug, name, description, difficulty, length_m, lane_count, waypoints, obstacles)
+SELECT s.slug, s.name, s.description, s.difficulty::track_difficulty, s.length_m, s.lane_count,
+       s.waypoints::jsonb, s.obstacles::jsonb
+FROM seed_tracks s
 WHERE NOT EXISTS (
-    SELECT 1 FROM tracks t WHERE t.slug = v.slug OR lower(t.name) = lower(v.name)
+    SELECT 1 FROM tracks t WHERE t.slug = s.slug OR lower(t.name) = lower(s.name)
 )
 ON CONFLICT DO NOTHING;

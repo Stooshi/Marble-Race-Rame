@@ -15,7 +15,8 @@ const OBSTACLE_TYPES = Object.keys(OBSTACLE_EFFECTS);
 const isNum = (v) => typeof v === 'number' && Number.isFinite(v);
 
 function checkWaypoint(p) {
-  if (!p || !isNum(p.x) || !isNum(p.y)) return 'waypoints must be objects like {"x": 0, "y": 0}';
+  if (!p || !isNum(p.x) || !isNum(p.y)) return 'waypoints must be objects like {"x": 0, "y": 0, "z": 0}';
+  if (p.z !== undefined && !isNum(p.z)) return 'waypoint "z" (height) must be a number';
   return null;
 }
 

@@ -230,13 +230,16 @@ Frames are sent as volatile messages: a client that falls behind skips frames in
 
 The backend applies this file automatically on every start (`src/db/migrate.js`), so a new database sets itself up on the first deploy. It runs in one transaction and only adds what is missing: tables, columns, indexes, and seed marbles and tracks whose slug and name are not already taken. Existing rows are never changed or deleted. If applying the file fails, everything is rolled back, the error is logged, and the server keeps running on the existing database. `npm run db:migrate` runs the same step by hand.
 
+Changes to rows that already exist go in `docs/data_updates/*.sql` instead. Each file runs once, in name order, inside the same transaction, and is recorded in the `data_updates` table so it never runs again. For example, `2026-10-04-restore-marbles-tracks.sql` copied the catalog's stats, descriptions and track layouts onto the production rows.
+
 Every boot writes a short report to the logs, with each line starting `[db-setup]`:
 
 ```
 [db-setup] Applying docs/database_schema.sql
 [db-setup] OK in 30 ms
-[db-setup] Rows: users 2, marbles 22, tracks 3 (+2), user_marbles 1, races 1, race_entries 20
-[db-setup] Columns: all 81 expected columns present
+[db-setup] Data update 2026-10-04-restore-marbles-tracks: already applied on 2026-10-04
+[db-setup] Rows: users 2, marbles 22, tracks 3, user_marbles 1, races 1, race_entries 20
+[db-setup] Columns: all 84 expected columns present
 [db-setup] Race statuses: lobby, countdown, running, finished, cancelled [enum race_status] — match the code
 ```
 | `marble_stats` (view) | Per-marble win record |
