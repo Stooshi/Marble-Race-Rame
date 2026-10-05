@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react';
 import { Link, Route, Routes, useLocation } from 'react-router-dom';
 import ErrorBoundary from './components/ErrorBoundary';
 import NavBar from './components/NavBar';
@@ -5,6 +6,10 @@ import Home from './pages/Home';
 import Dashboard from './pages/Dashboard';
 import Race from './pages/Race';
 import Results from './pages/Results';
+import { Spinner } from './components/Status';
+
+// 3D preview (beta) is loaded on demand so the rest of the site stays light.
+const TrackPreview3D = lazy(() => import('./pages/TrackPreview3D'));
 
 export default function App() {
   const { pathname } = useLocation();
@@ -19,6 +24,10 @@ export default function App() {
           <Route path="/profile/:userId" element={<Dashboard />} />
           <Route path="/race/:raceId" element={<Race />} />
           <Route path="/results/:raceId" element={<Results />} />
+          <Route
+            path="/preview/3d"
+            element={<Suspense fallback={<div className="page"><Spinner /></div>}><TrackPreview3D /></Suspense>}
+          />
           <Route
             path="*"
             element={(

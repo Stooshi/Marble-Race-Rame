@@ -51,6 +51,7 @@ export default function Home() {
               <li><strong>Watch it live</strong> — every player sees the same race.</li>
             </ol>
           )}
+          <p className="hero__beta"><Link to="/preview/3d">New: see the tracks in 3D (beta) →</Link></p>
           <div className="hero__marbles" aria-hidden="true">
             {HERO_MARBLES.map((m, i) => <MarbleBall key={i} marble={m} size={34} />)}
           </div>
