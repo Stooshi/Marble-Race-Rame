@@ -3,7 +3,7 @@
  *
  * Built for ordinary phones: one draw call for the whole track, cheap Lambert
  * lighting with no shadows, a capped pixel ratio, and drawing only when
- * something changes (the race step adds a frame loop while marbles move).
+ * something changes (a race replay drives frames while marbles move).
  */
 import {
   AmbientLight, BackSide, BoxGeometry, Color, DirectionalLight, DoubleSide, Float32BufferAttribute, Fog,
@@ -12,6 +12,7 @@ import {
 } from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { buildCenterline, buildTrackGeometry, TRACK_STYLE } from './trackModel';
+import { RaceMarbles, RUNOUT_LENGTH } from './marbles';
 
 const SKY_TOP = '#5fb4ff';
 const SKY_HORIZON = '#d6f0ff';
@@ -78,10 +79,16 @@ export class TrackScene {
       this.controls.addEventListener('start', () => { this.userMoved = true; });
     }
     this.renderQueued = false;
+    this.marbles = null;
+    this.cameraMode = 'overview'; // overview | follow
+    this.followTarget = new Vector3();
+    this.followCam = new Vector3();
+    this.followReady = false;
   }
 
   /** Builds the given track (from the API: waypoints, length_m, lane_count). */
   setTrack(track) {
+    this.clearRace();
     this.clearTrack();
     this.centerline = buildCenterline(track);
     this.track = track;
@@ -120,6 +127,26 @@ export class TrackScene {
     banner.position.set(end.pos.x, end.pos.y + 6, end.pos.z);
     banner.lookAt(end.pos.x + end.tangent.x, end.pos.y + 6, end.pos.z + end.tangent.z);
     group.add(banner);
+
+    // A flat run-out past the line where finished marbles roll in and park.
+    const runout = new Group();
+    const floorMat = new MeshLambertMaterial({ color: TRACK_STYLE.colors.floorA });
+    const wallMat = new MeshLambertMaterial({ color: TRACK_STYLE.colors.wallInner });
+    const inner = (lanes * TRACK_STYLE.laneWidth) / 2;
+    const floor = new Mesh(new BoxGeometry(inner * 2, 0.4, RUNOUT_LENGTH), floorMat);
+    floor.position.set(0, -0.2, RUNOUT_LENGTH / 2);
+    runout.add(floor);
+    for (const s of [-1, 1]) {
+      const wall = new Mesh(new BoxGeometry(TRACK_STYLE.wallThickness, TRACK_STYLE.wallHeight + 0.4, RUNOUT_LENGTH), wallMat);
+      wall.position.set(s * (inner + TRACK_STYLE.wallThickness / 2), TRACK_STYLE.wallHeight / 2 - 0.2, RUNOUT_LENGTH / 2);
+      runout.add(wall);
+    }
+    const endWall = new Mesh(new BoxGeometry(inner * 2 + TRACK_STYLE.wallThickness * 2, TRACK_STYLE.wallHeight + 0.4, TRACK_STYLE.wallThickness), wallMat);
+    endWall.position.set(0, TRACK_STYLE.wallHeight / 2 - 0.2, RUNOUT_LENGTH + TRACK_STYLE.wallThickness / 2);
+    runout.add(endWall);
+    runout.position.copy(end.pos);
+    runout.lookAt(end.pos.x + end.tangent.x, end.pos.y, end.pos.z + end.tangent.z);
+    group.add(runout);
     return group;
   }
 
@@ -147,11 +174,90 @@ export class TrackScene {
     }
   }
 
+  /** Adds the marbles of a race (entries from the race meta / replay). */
+  setRace(entries, highlight = [], results = []) {
+    this.clearRace();
+    this.marbles = new RaceMarbles(entries, Math.max(1, Number(this.track?.lane_count) || 4), highlight, results);
+    this.scene.add(this.marbles.group);
+    this.applyMarbleScale();
+  }
+
+  clearRace() {
+    if (!this.marbles) return;
+    this.scene.remove(this.marbles.group);
+    this.marbles.dispose();
+    this.marbles = null;
+  }
+
+  /** Real size when following; bigger than life in the whole-track view so the pack shows. */
+  applyMarbleScale() {
+    if (!this.marbles || !this.trackMesh) return;
+    const radius = this.trackMesh.geometry.boundingSphere.radius;
+    this.marbles.setScale(this.cameraMode === 'follow' ? 1 : Math.min(8, Math.max(1, radius / 45)));
+  }
+
+  /** 'overview' (whole track, drag to look around) or 'follow' (chase camera behind one marble). */
+  setCameraMode(mode) {
+    if (mode === this.cameraMode) return;
+    this.cameraMode = mode;
+    this.followReady = false;
+    if (this.controls) this.controls.enabled = mode === 'overview';
+    if (mode === 'overview') {
+      this.userMoved = false;
+      this.frameTrack();
+    } else {
+      this.camera.near = 0.3;
+      this.camera.far = this.trackMesh ? this.trackMesh.geometry.boundingSphere.radius * 8 : 3000;
+      this.camera.updateProjectionMatrix();
+    }
+    this.applyMarbleScale();
+    this.render();
+  }
+
+  /**
+   * Moves the marbles to a race frame and, when following, eases the camera
+   * in behind the followed marble. dt = seconds since the last call.
+   */
+  updateRace(frame, followIndex = 0, dt = 1 / 60) {
+    if (!this.marbles || !frame) return;
+    this.marbles.update(this.centerline, frame);
+    if (this.cameraMode === 'follow') {
+      const at = this.marbles.positionOf(followIndex);
+      if (at) this.updateFollowCamera(at, frame.p[followIndex] ?? 0, dt);
+    }
+    this.render();
+  }
+
+  updateFollowCamera(at, progress, dt) {
+    // Look along the track (not the marble's wobble) so the view stays steady.
+    const { samples, segments } = this.centerline;
+    const ahead = samples[Math.min(segments, Math.round(Math.min(1, progress + 0.02) * segments))];
+    const here = samples[Math.min(segments, Math.round(Math.min(1, progress) * segments))];
+    const dir = new Vector3().subVectors(ahead.pos, here.pos).setY(0);
+    if (dir.lengthSq() < 1e-6) dir.set(here.tangent.x, 0, here.tangent.z);
+    dir.normalize();
+    const back = 10 + (Number(this.track?.lane_count) || 4) * 0.8;
+    const desired = new Vector3().copy(at).addScaledVector(dir, -back);
+    desired.y = Math.max(at.y, here.pos.y) + back * 0.55;
+    const target = new Vector3().copy(at).addScaledVector(dir, 4);
+    if (!this.followReady) {
+      this.followCam.copy(desired);
+      this.followTarget.copy(target);
+      this.followReady = true;
+    } else {
+      const k = 1 - Math.exp(-Math.min(0.25, dt) * 3.5);
+      this.followCam.lerp(desired, k);
+      this.followTarget.lerp(target, Math.min(1, k * 2));
+    }
+    this.camera.position.copy(this.followCam);
+    this.camera.lookAt(this.followTarget);
+  }
+
   setSize(width, height) {
     this.renderer.setSize(width, height, false);
     this.camera.aspect = width / Math.max(1, height);
     this.camera.updateProjectionMatrix();
-    if (!this.userMoved) this.frameTrack(); // keep the whole track in view until the user takes over
+    if (!this.userMoved && this.cameraMode === 'overview') this.frameTrack(); // keep the whole track in view until the user takes over
     this.render();
   }
 
@@ -182,6 +288,7 @@ export class TrackScene {
   }
 
   dispose() {
+    this.clearRace();
     this.clearTrack();
     this.controls?.dispose();
     this.trackMaterial.dispose();

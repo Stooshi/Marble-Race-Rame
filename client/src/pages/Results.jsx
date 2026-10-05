@@ -51,9 +51,12 @@ export default function Results() {
           </p>
           <h1>{race.name || race.track_name} — Results</h1>
         </div>
-        <button type="button" className="btn" onClick={() => setShowReplay((v) => !v)}>
-          {showReplay ? 'Hide replay' : 'Watch replay'}
-        </button>
+        <div className="results__actions">
+          <button type="button" className="btn" onClick={() => setShowReplay((v) => !v)}>
+            {showReplay ? 'Hide replay' : 'Watch replay'}
+          </button>
+          <Link to={`/preview/3d/race/${raceId}`} className="btn btn--ghost">Watch in 3D (beta)</Link>
+        </div>
       </header>
 
       {showReplay && <Replay raceId={raceId} userId={user?.id} />}

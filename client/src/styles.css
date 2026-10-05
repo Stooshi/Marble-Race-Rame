@@ -437,3 +437,19 @@ main { padding-bottom: 48px; }
 .preview3d__overlay--error > div { max-width: 640px; }
 .preview3d__errmsg { font-family: ui-monospace, Menlo, Consolas, monospace; color: #fca5a5; word-break: break-word; }
 .preview3d__report { margin: 8px 0 12px; padding-left: 18px; font-size: 0.8rem; color: var(--muted); word-break: break-word; }
+
+/* 3D replay (beta) */
+.results__actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.preview3d__races { margin-top: 16px; }
+.preview3d__racelist { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.preview3d__racelist a { display: flex; flex-direction: column; gap: 2px; padding: 10px 12px; border-radius: 10px; background: var(--bg-inset); border: 1px solid var(--border); color: var(--text); text-decoration: none; }
+.preview3d__racelist a:hover { border-color: var(--accent); }
+.preview3d + .replay__controls, .preview3d .replay__controls { margin: 10px 0; padding: 0; }
+.replay3d__clock { position: absolute; top: 8px; right: 8px; padding: 4px 10px; border-radius: 8px; background: rgba(17, 19, 26, 0.7); color: #fff; font-weight: 700; font-variant-numeric: tabular-nums; }
+.replay3d__standings { position: absolute; top: 8px; left: 8px; margin: 0; padding: 4px; list-style: none; border-radius: 10px; background: rgba(17, 19, 26, 0.7); max-width: 46%; }
+.replay3d__standings button { display: flex; align-items: center; gap: 6px; width: 100%; padding: 3px 6px; border: 0; border-radius: 6px; background: transparent; color: #fff; font: inherit; font-size: 0.8rem; text-align: left; cursor: pointer; }
+.replay3d__standings li.is-followed button { background: rgba(255, 255, 255, 0.18); }
+.replay3d__standings li.is-mine .replay3d__name { color: #facc15; }
+.replay3d__pos { width: 1.1em; font-weight: 700; font-variant-numeric: tabular-nums; }
+.replay3d__name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.replay3d__winner { position: absolute; left: 50%; bottom: 12px; transform: translateX(-50%); display: flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 999px; background: rgba(17, 19, 26, 0.85); color: #fff; white-space: nowrap; }

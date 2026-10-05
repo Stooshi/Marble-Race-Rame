@@ -10,6 +10,7 @@ import { Spinner } from './components/Status';
 
 // 3D preview (beta) is loaded on demand so the rest of the site stays light.
 const TrackPreview3D = lazy(() => import('./pages/TrackPreview3D'));
+const Replay3D = lazy(() => import('./pages/Replay3D'));
 
 export default function App() {
   const { pathname } = useLocation();
@@ -27,6 +28,10 @@ export default function App() {
           <Route
             path="/preview/3d"
             element={<Suspense fallback={<div className="page"><Spinner /></div>}><TrackPreview3D /></Suspense>}
+          />
+          <Route
+            path="/preview/3d/race/:raceId"
+            element={<Suspense fallback={<div className="page"><Spinner /></div>}><Replay3D /></Suspense>}
           />
           <Route
             path="*"
