@@ -17,14 +17,6 @@ const SKY_TOP = '#5fb4ff';
 const SKY_HORIZON = '#d6f0ff';
 const GROUND = '#86c66a';
 
-export function webglAvailable() {
-  try {
-    const canvas = document.createElement('canvas');
-    return Boolean(canvas.getContext('webgl2') || canvas.getContext('webgl'));
-  } catch {
-    return false;
-  }
-}
 
 /** A sky dome: pale at the horizon, blue overhead, whichever way the camera looks. */
 function skyDome() {

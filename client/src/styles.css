@@ -432,3 +432,8 @@ main { padding-bottom: 48px; }
 .preview3d__bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; margin: 12px 0 6px; }
 .preview3d__bar .btn { margin-left: auto; }
 @media (max-width: 640px) { .preview3d__stage { height: 60vh; } }
+
+.preview3d__overlay--error { place-items: center; overflow-y: auto; text-align: left; background: rgba(17, 19, 26, 0.92); }
+.preview3d__overlay--error > div { max-width: 640px; }
+.preview3d__errmsg { font-family: ui-monospace, Menlo, Consolas, monospace; color: #fca5a5; word-break: break-word; }
+.preview3d__report { margin: 8px 0 12px; padding-left: 18px; font-size: 0.8rem; color: var(--muted); word-break: break-word; }
