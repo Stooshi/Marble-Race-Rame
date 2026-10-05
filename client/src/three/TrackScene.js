@@ -12,9 +12,9 @@ import {
 } from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { buildCenterline, buildTrackGeometry, TRACK_STYLE } from './trackModel';
-import { RaceMarbles, RUNOUT_LENGTH } from './marbles';
+import { PEN_DROP, RaceMarbles, RUNOUT_LENGTH } from './marbles';
 import { buildScenery } from './scenery';
-import { buildIceChannelGeometry, channelOf } from './iceChannel';
+import { buildIceChannelGeometry, channelOf, ICE_COLORS } from './iceChannel';
 import { DEFAULT_THEME, themeFor } from './themes';
 
 /** A sky dome: pale at the horizon, coloured overhead, whichever way the camera looks. */
@@ -151,21 +151,28 @@ export class TrackScene {
 
   buildFinishArch(track) {
     const lanes = Math.max(1, Number(track?.lane_count) || 4);
-    const half = (lanes * TRACK_STYLE.laneWidth) / 2 + TRACK_STYLE.wallThickness;
+    const pen = this.channel?.runout;
+    const half = (pen ? pen.halfWidth + 0.6 : (lanes * TRACK_STYLE.laneWidth) / 2) + TRACK_STYLE.wallThickness;
     const end = this.centerline.samples[this.centerline.samples.length - 1];
     const group = new Group();
-    const post = new BoxGeometry(0.6, 6, 0.6);
+    const archH = pen ? 10 : 6; // taller over a catch area, so the follow camera sees the finishers under it
+    const post = new BoxGeometry(0.6, archH, 0.6);
     const white = new MeshLambertMaterial({ color: '#ffffff' });
     const red = new MeshLambertMaterial({ color: '#ef4444' });
     for (const s of [-1, 1]) {
       const m = new Mesh(post, red);
-      m.position.set(end.pos.x + end.side.x * half * s, end.pos.y + 3, end.pos.z + end.side.z * half * s);
+      m.position.set(end.pos.x + end.side.x * half * s, end.pos.y + archH / 2, end.pos.z + end.side.z * half * s);
       group.add(m);
     }
     const banner = new Mesh(new BoxGeometry(half * 2 + 0.6, 1.4, 0.4), white);
-    banner.position.set(end.pos.x, end.pos.y + 6, end.pos.z);
-    banner.lookAt(end.pos.x + end.tangent.x, end.pos.y + 6, end.pos.z + end.tangent.z);
+    banner.position.set(end.pos.x, end.pos.y + archH, end.pos.z);
+    banner.lookAt(end.pos.x + end.tangent.x, end.pos.y + archH, end.pos.z + end.tangent.z);
     group.add(banner);
+
+    if (pen) {
+      group.add(this.buildCatchArea(pen, end));
+      return group;
+    }
 
     // A flat run-out past the line where finished marbles roll in and park.
     const runout = new Group();
@@ -187,6 +194,52 @@ export class TrackScene {
     runout.lookAt(end.pos.x + end.tangent.x, end.pos.y, end.pos.z + end.tangent.z);
     group.add(runout);
     return group;
+  }
+
+  /**
+   * The catch area past an ice channel's finish (physics preview): a pen
+   * with brushed ice falling gently to a padded cushion, where finishers
+   * roll in and bump into the ones already there.
+   */
+  buildCatchArea(pen, end) {
+    const area = new Group();
+    const drop = pen.length * PEN_DROP;
+    const tilt = Math.atan(PEN_DROP);
+    const floorLen = Math.hypot(pen.length, drop);
+    const wallH = 1.6;
+    const wallT = TRACK_STYLE.wallThickness;
+    const floorMat = new MeshLambertMaterial({ color: ICE_COLORS.iceB });
+    const wallMat = new MeshLambertMaterial({ color: ICE_COLORS.outer });
+    const rimMat = new MeshLambertMaterial({ color: ICE_COLORS.rim });
+    const cushionMat = new MeshLambertMaterial({ color: ICE_COLORS.nose });
+    // The floor, tipped down towards the cushion (local z runs down the pen).
+    const floor = new Mesh(new BoxGeometry(pen.halfWidth * 2, 0.4, floorLen), floorMat);
+    floor.position.set(0, -0.2 - drop / 2, pen.length / 2);
+    floor.rotation.x = tilt;
+    area.add(floor);
+    // Brush strips across the floor, every few metres.
+    const brushMat = new MeshLambertMaterial({ color: ICE_COLORS.outerDark });
+    for (let z = 6; z < pen.length - 1; z += 6) {
+      const brush = new Mesh(new BoxGeometry(pen.halfWidth * 2, 0.02, 0.8), brushMat);
+      brush.position.set(0, 0.01 - z * PEN_DROP, z);
+      brush.rotation.x = tilt;
+      area.add(brush);
+    }
+    for (const side of [-1, 1]) {
+      const wall = new Mesh(new BoxGeometry(wallT, wallH + drop + 0.4, pen.length), wallMat);
+      wall.position.set(side * (pen.halfWidth + wallT / 2), (wallH - drop) / 2 - 0.2, pen.length / 2);
+      area.add(wall);
+      const rim = new Mesh(new BoxGeometry(wallT + 0.1, 0.12, pen.length), rimMat);
+      rim.position.set(side * (pen.halfWidth + wallT / 2), wallH, pen.length / 2);
+      area.add(rim);
+    }
+    // The padded end cushion.
+    const cushion = new Mesh(new BoxGeometry(pen.halfWidth * 2 + wallT * 2, wallH + 0.6, 0.8), cushionMat);
+    cushion.position.set(0, wallH / 2 - drop, pen.length + 0.4);
+    area.add(cushion);
+    area.position.copy(end.pos);
+    area.lookAt(end.pos.x + end.tangent.x, end.pos.y, end.pos.z + end.tangent.z);
+    return area;
   }
 
   /** Overview camera: the whole track in view from a high three-quarter angle. */

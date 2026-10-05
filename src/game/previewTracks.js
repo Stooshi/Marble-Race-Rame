@@ -88,7 +88,17 @@ function bobsleigh() {
     physics: {
       surface: 'ice',          // very low rolling resistance
       pace: 'free',            // as fast as the slope allows: no drag added to pad the clock
-      channel: { radius: 3.6, maxAngle: 80 }, // U-shaped ice channel (metres, degrees up the wall)
+      // U-shaped ice channel (metres, degrees up the wall). It starts as a wide,
+      // shallow funnel (walls the same height as the channel's) so the whole
+      // field lines up side by side: nobody starts behind anybody. The outer
+      // places start a little further on (stagger, metres at the very edge),
+      // like a running track's lanes, since they have further to come in, and
+      // the gate releases each marble at its own moment within `release`
+      // seconds, in a random order each race, so no place has an edge.
+      // Tuned on thousands of races (stand-in for the starting gate of step 5).
+      channel: { radius: 3.6, maxAngle: 80, funnel: { length: 70, radius: 22, spacing: 1.15, stagger: 2.2, release: 0.6 } },
+      collisions: true,        // marbles bump into each other
+      runout: { length: 30, halfWidth: 3.5 }, // the catch area past the finish line (metres)
       // The splitter: a wedge divides the channel into a left and a right
       // channel on the inside and outside of a long left-hand curve; they
       // merge again before the next straight.
@@ -105,7 +115,10 @@ function bobsleigh() {
         // tight inside is quicker through the splitter but its rough ice makes
         // marbles skid and come out slower (handling helps); the long outside
         // is slower through but carries its speed.
-        insideScrub: 4.1,
+        // With marbles bumping, more of the pack is pushed wide, so the wedge
+        // stands a little towards the outside to split the field evenly.
+        tipOffset: -0.3,
+        insideScrub: 12,
         outsideDrag: 1,
       },
     },

@@ -78,6 +78,7 @@ export default function PhysicsPreview() {
                   <dd>{stats.splitter.inside.seconds ?? '–'} s / {stats.splitter.outside.seconds ?? '–'} s</dd>
                 </div>
               )}
+              {stats.bumps !== undefined && <div><dt>Bumps (hard ones)</dt><dd>{stats.bumps} ({stats.bigBumps})</dd></div>}
               <div><dt>Wall hits</dt><dd>{stats.wallHits}</dd></div>
               {level === 3 && <div><dt>Jumps</dt><dd>{stats.jumps}</dd></div>}
               {level === 3 && <div><dt>Longest flight</dt><dd>{stats.longestAirSeconds} s</dd></div>}
@@ -86,13 +87,17 @@ export default function PhysicsPreview() {
           )}
           {race.data.track.physics && (
             <p className="muted small">
-              Bobsleigh Olympics (working name) is a preview-only track: an ice channel built for speed. At the splitter
-              each marble's line decides its channel: the tight inside or the long outside, balanced to take the same time.
+              Bobsleigh Olympics (working name) is a preview-only track: an ice channel built for speed. The whole field
+              starts side by side in a wide funnel, and marbles bump, shove and slipstream each other all the way down.
+              At the splitter each marble's line decides its channel: the tight inside or the long outside, balanced so
+              neither wins more often. Past the line they roll into a catch area.
             </p>
           )}
           <p className="muted small">
-            A practice race with 20 house marbles on the new physics. Marbles pass through each other for now:
-            real collisions and the starting gate are the next steps. Real races still use the current physics.
+            A practice race with 20 house marbles on the new physics.
+            {race.data.track.physics?.collisions
+              ? ' Real races still use the current physics.'
+              : ' On this track marbles pass through each other for now (collisions are on for Bobsleigh Olympics only). Real races still use the current physics.'}
           </p>
         </RaceReplayViewer>
       )}

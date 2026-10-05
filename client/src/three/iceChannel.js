@@ -1,7 +1,7 @@
 /**
  * Ice channels (the bobsleigh run): a U-shaped channel instead of a flat road,
- * maybe with a splitter where it divides into an inside and an outside
- * channel that merge again. Mirrors the physics (src/game/physicsSimulator.js
+ * maybe starting as a wide funnel, maybe with a splitter where it divides
+ * into an inside and an outside channel that merge again. Mirrors the physics (src/game/physicsSimulator.js
  * advanceChannel): a marble's place across is an angle up the wall.
  *
  * Pure maths plus one merged geometry (one draw call), like trackModel.js.
@@ -20,12 +20,30 @@ export function channelOf(track, centerline) {
   let arc = 0;
   for (let i = 1; i < centerline.samples.length; i += 1) arc += centerline.samples[i].pos.distanceTo(centerline.samples[i - 1].pos);
   const fork = track.physics.fork;
+  const runout = track.physics.runout;
   return {
     radius: ch.radius,
     maxAngle: (ch.maxAngle * Math.PI) / 180,
     arc,
     fork: fork ? { s0: fork.from * arc, s1: fork.to * arc, radius: fork.radius, apart: fork.apart } : null,
+    funnel: ch.funnel ? { length: ch.funnel.length, radius: ch.funnel.radius } : null, // metres from the start
+    runout: runout ? { length: runout.length, halfWidth: runout.halfWidth } : null, // the catch area past the line
   };
+}
+
+/** How far up its wall the main channel goes at s (radians): the funnel's walls are as high as the channel's. */
+export function channelLipAt(channel, s) {
+  if (!channel.funnel) return channel.maxAngle;
+  const height = channel.radius * (1 - Math.cos(channel.maxAngle));
+  return Math.min(channel.maxAngle, Math.acos(Math.max(-1, Math.min(1, 1 - height / channelRadiusAt(channel, s)))));
+}
+
+/** The main channel's radius at distance s (as the physics): a wide funnel at the top narrowing to the channel. */
+export function channelRadiusAt(channel, s) {
+  const f = channel.funnel;
+  if (!f || s >= f.length) return channel.radius;
+  const k = Math.max(0, s) / f.length;
+  return channel.radius + (f.radius - channel.radius) * (1 - k * k * (3 - 2 * k));
 }
 
 /**
@@ -69,7 +87,7 @@ const tmpSide = new Vector3();
 export function placeOnChannel(centerline, channel, p, l, b, h, radius, out = new Vector3(), normal = new Vector3()) {
   frameAt(centerline, p, tmpPos, tmpSide);
   const s = p * channel.arc;
-  let R = channel.radius;
+  let R = channelRadiusAt(channel, s);
   if (b && inFork(channel, s)) {
     tmpPos.addScaledVector(tmpSide, b * forkOffset(channel.fork, s));
     R = forkRadius(channel.fork, channel.radius, s);
@@ -100,18 +118,18 @@ export function buildIceChannelGeometry(centerline, channel, { segmentsAcross = 
   const step = channel.arc / segments;
 
   // Cross-section points of one channel (centre offset, radius) at a sample.
-  const section = (sample, offset, R) => {
+  const section = (sample, offset, R, lip = channel.maxAngle) => {
     const side = new Vector3(sample.side.x, 0, sample.side.z).normalize();
     const centre = sample.pos.clone().addScaledVector(side, offset);
     const ring = [];
     const lateral = []; // metres from the main channel's middle, for clipping where split channels overlap
     for (let k = 0; k <= segmentsAcross; k += 1) {
-      const th = -channel.maxAngle + (2 * channel.maxAngle * k) / segmentsAcross;
+      const th = -lip + (2 * lip * k) / segmentsAcross;
       ring.push(centre.clone().addScaledVector(side, R * Math.sin(th)).addScaledVector(UP, R * (1 - Math.cos(th))));
       lateral.push(offset + R * Math.sin(th));
     }
-    const top = R * (1 - Math.cos(channel.maxAngle));
-    const edge = R * Math.sin(channel.maxAngle);
+    const top = R * (1 - Math.cos(lip));
+    const edge = R * Math.sin(lip);
     const at = (x, y) => centre.clone().addScaledVector(side, x).addScaledVector(UP, y);
     return {
       ring,
@@ -172,7 +190,13 @@ export function buildIceChannelGeometry(centerline, channel, { segmentsAcross = 
         quad(outA.rimOut[1], outB.rimOut[1], inB.rimOut[0], inA.rimOut[0], nose ? C.nose : C.divider);
       }
     } else {
-      channelStrip(section(a, 0, channel.radius), section(b, 0, channel.radius), stripe);
+      const sa = i * step;
+      const sb = (i + 1) * step;
+      channelStrip(
+        section(a, 0, channelRadiusAt(channel, sa), channelLipAt(channel, sa)),
+        section(b, 0, channelRadiusAt(channel, sb), channelLipAt(channel, sb)),
+        stripe,
+      );
     }
   }
 

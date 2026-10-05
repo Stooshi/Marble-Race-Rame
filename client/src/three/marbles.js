@@ -10,7 +10,7 @@ import {
   MeshPhongMaterial, Quaternion, SphereGeometry, SRGBColorSpace, Vector3, ConeGeometry, Group,
 } from 'three';
 import { pointOnTrack, TRACK_STYLE } from './trackModel';
-import { placeOnChannel } from './iceChannel';
+import { channelRadiusAt, placeOnChannel } from './iceChannel';
 
 export const MARBLE_RADIUS = 0.55; // metres: a lane is 1.6 m wide
 
@@ -27,6 +27,7 @@ export function placeMarble(centerline, progress, lateral, lanes, radius = MARBL
 }
 
 export const RUNOUT_LENGTH = 12; // metres of flat floor past the finish line
+export const PEN_DROP = 0.05;     // the catch area's floor falls gently towards its end cushion (metres per metre)
 
 /** The parking grid past the finish: columns across the track, rows down the run-out. */
 export function parkingGrid(lanes, total = 20, style = TRACK_STYLE) {
@@ -139,7 +140,10 @@ export function layoutMarbles(centerline, frame, lanes, finish, {
   memory = null,
 } = {}) {
   const n = frame.p.length;
-  const half = (lanes * style.laneWidth) / 2;
+  // A physical catch area (frames carry where finishers are in it) or the classic parking run-out.
+  const pen = channel?.runout && frame.a ? channel.runout : null;
+  const half = pen ? pen.halfWidth : (lanes * style.laneWidth) / 2;
+  const runLength = pen ? pen.length : RUNOUT_LENGTH;
   // On an ice channel "across" is metres along the curved wall (angle × radius).
   const room = channel ? channel.maxAngle * channel.radius : Math.max(0, half - radius);
   const length = arcLength(centerline);
@@ -152,8 +156,13 @@ export function layoutMarbles(centerline, frame, lanes, finish, {
   // Each marble is either on the track (progress + metres across) or parked
   // past the finish (metres along + across the run-out).
   const acrossOf = (i) => Math.max(-1, Math.min(1, frame.l[i] ?? 0)) * room;
+  // With a catch area the frames say how far past the line a marble is, and in its
+  // last few metres how far short of it (negative). Within the last 2.5 m that
+  // decides it, so a replay blending frames runs smoothly over the line.
+  const nearLine = (i) => pen && frame.a[i] && (frame.a[i] > 0 || (frame.p[i] ?? 0) >= 1 - 2.5 / channel.arc);
   const finished = (i) => {
     const fin = finish?.get(i);
+    if (fin && nearLine(i)) return frame.a[i] > 0;
     return fin && (frame.p[i] ?? 0) >= 0.999 && frame.t >= fin.t;
   };
   const finishers = [];
@@ -163,11 +172,21 @@ export function layoutMarbles(centerline, frame, lanes, finish, {
     finishers.push({ index: i, rank: finish.get(i).rank, t: finish.get(i).t, across: crossedAt.get(i) });
   }
   finishers.sort((a, b) => a.rank - b.rank);
-  const spots = assignParking(finishers, lanes, finish?.size || n, style);
+  const spots = pen ? new Map() : assignParking(finishers, lanes, finish?.size || n, style);
   const state = [];
   for (let i = 0; i < n; i += 1) {
     const spot = spots.get(i);
-    if (spot) {
+    if (pen && finished(i)) {
+      // Where the physics has it in the catch area, gliding down off the channel wall it crossed the line on.
+      const along = Math.max(0, frame.a[i] ?? 0);
+      const th = crossedAt.get(i) / channel.radius;
+      const k = Math.min(1, along / 3);
+      const lift = channel.radius * (1 - Math.cos(th)) * (1 - k * k * (3 - 2 * k));
+      const runOutRoom = Math.max(0, half - radius);
+      // Across is given as a channel angle, as on the ice: metres = radius · sin(angle).
+      const across = channel.radius * Math.sin(Math.max(-1, Math.min(1, frame.l[i] ?? 0)) * channel.maxAngle);
+      state.push({ parked: true, along, across: Math.max(-runOutRoom, Math.min(runOutRoom, across)), lift });
+    } else if (spot) {
       const runOutRoom = Math.max(0, half - radius);
       const since = (frame.t - finish.get(i).t) / 1000;
       let crossed = crossedAt.get(i);
@@ -183,7 +202,9 @@ export function layoutMarbles(centerline, frame, lanes, finish, {
       const at = parkingPath(since, crossed, spot);
       state.push({ parked: true, along: at.along, across: at.across, lift });
     } else {
-      state.push({ parked: false, progress: Math.min(frame.p[i] ?? 0, 0.99999), across: acrossOf(i) });
+      // Just short of the line (catch-area frames): its distance to go, so it runs smoothly over the line.
+      const progress = nearLine(i) && frame.a[i] < 0 ? 1 + frame.a[i] / channel.arc : frame.p[i] ?? 0;
+      state.push({ parked: false, progress: Math.min(progress, 0.99999), across: acrossOf(i) });
     }
   }
   const place = (i) => {
@@ -192,7 +213,7 @@ export function layoutMarbles(centerline, frame, lanes, finish, {
     const nrm = normals && (normals[i] || (normals[i] = new Vector3()));
     if (s.parked) {
       v.copy(end.pos).addScaledVector(endForward, s.along).addScaledVector(endSide, s.across);
-      v.y = end.pos.y + radius + (s.lift || 0);
+      v.y = end.pos.y + radius + (s.lift || 0) - (pen ? s.along * PEN_DROP : 0);
       nrm?.set(0, 1, 0);
     } else if (channel) {
       placeOnChannel(centerline, channel, s.progress, room > 0 ? s.across / room : 0, frame.b?.[i] ?? 0, frame.h?.[i] ?? 0, radius, v, nrm || undefined);
@@ -213,7 +234,7 @@ export function layoutMarbles(centerline, frame, lanes, finish, {
       const was = memory.raw[i];
       if (!was || Boolean(was.parked) !== Boolean(st.parked)) return; // just finished: start afresh
       if (st.parked) {
-        st.along = Math.max(0, Math.min(RUNOUT_LENGTH - radius, st.along + 0.9 * memory.dp[i]));
+        st.along = Math.max(0, Math.min(runLength - radius, st.along + 0.9 * memory.dp[i]));
         st.across = Math.max(-runOutRoom, Math.min(runOutRoom, st.across + 0.9 * memory.da[i]));
       } else {
         st.across = Math.max(-room, Math.min(room, st.across + 0.9 * memory.da[i]));
@@ -229,11 +250,13 @@ export function layoutMarbles(centerline, frame, lanes, finish, {
     const s = state[i];
     if (s.parked) {
       const runOutRoom = Math.max(0, half - radius);
-      s.along = Math.max(0, Math.min(RUNOUT_LENGTH - radius, s.along + mx * endForward.x + mz * endForward.z));
+      s.along = Math.max(0, Math.min(runLength - radius, s.along + mx * endForward.x + mz * endForward.z));
       s.across = Math.max(-runOutRoom, Math.min(runOutRoom, s.across + mx * endSide.x + mz * endSide.z));
     } else {
       directionsAt(centerline, s.progress, side, forward);
-      s.across = Math.max(-room, Math.min(room, s.across + mx * side.x + mz * side.z));
+      // "across" is measured on the channel proper; in the wider funnel a metre is a smaller share.
+      const scale = channel ? channel.radius / channelRadiusAt(channel, s.progress * channel.arc) : 1;
+      s.across = Math.max(-room, Math.min(room, s.across + (mx * side.x + mz * side.z) * scale));
       s.progress = Math.max(0, Math.min(0.99999, s.progress + (mx * forward.x + mz * forward.z) / length));
     }
     place(i);

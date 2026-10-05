@@ -77,3 +77,87 @@ test('the splitter is used both ways and neither channel wins more often', () =>
   const gap = Math.abs(by.inside.pos / by.inside.n - by.outside.pos / by.outside.n);
   assert.ok(gap < 0.8, `average finishing positions differ by ${gap.toFixed(2)} places`);
 });
+
+// --- step 4: collisions ------------------------------------------------------
+
+const { createRng } = require('../src/game/rng');
+const { subSeed } = require('../src/game/simulator');
+
+/** A preview race exactly as the preview route builds it: 20 of the catalog, lanes from the seed. */
+const sorted = [...catalog].sort((a, b) => (a.slug < b.slug ? -1 : 1));
+function routeRace(seed) {
+  const rng = createRng(subSeed(seed, 3));
+  const picked = rng.shuffle([...sorted]).slice(0, 20);
+  const lanes = rng.shuffle(picked.map((_, i) => i));
+  const entries = picked.map((m, i) => ({ id: m.slug, lane: lanes[i], topSpeed: m.topSpeed, acceleration: m.acceleration, handling: m.handling, luck: m.luck }));
+  return { entries, sim: simulatePhysicsRace({ seed, track: bob, entries, level: 3 }) };
+}
+let batch = null;
+const fairnessBatch = () => {
+  batch ??= Array.from({ length: 60 }, (_, k) => routeRace(20_000 + k * 7919));
+  return batch;
+};
+
+test('bobsleigh marbles bump into each other, and the same seed gives the same race', () => {
+  const a = routeRace(4242).sim;
+  assert.ok(a.stats.bumps > 100, `only ${a.stats.bumps} bumps`);
+  assert.ok(a.stats.bigBumps > 10, `only ${a.stats.bigBumps} hard bumps`);
+  const b = routeRace(4242).sim;
+  assert.equal(JSON.stringify(b), JSON.stringify(a));
+});
+
+test('no starting place has an edge: the field starts side by side and every part of the line finishes alike', () => {
+  const groups = Array.from({ length: 5 }, () => ({ n: 0, pos: 0 }));
+  for (const { entries, sim } of fairnessBatch()) {
+    // Everyone starts in one row (bar the running-track stagger for the outer places).
+    const start = sim.frames[0].p;
+    const stagger = bob.physics.channel.funnel.stagger;
+    assert.ok((Math.max(...start) - Math.min(...start)) * sim.stats.trackMetres < stagger + 0.1, 'one row');
+    for (const r of sim.results) {
+      const g = groups[Math.floor(entries[r.index].lane / 4)];
+      g.n += 1;
+      g.pos += r.position;
+    }
+  }
+  for (const [k, g] of groups.entries()) {
+    const avg = g.pos / g.n;
+    assert.ok(avg > 9 && avg < 12, `starting places ${k * 4 + 1}-${k * 4 + 4} finish ${avg.toFixed(2)} on average (fair is 10.5)`);
+  }
+});
+
+test('better marbles win more often without dominating', () => {
+  const total = (e) => e.topSpeed + e.acceleration + e.handling + e.luck;
+  let strongWins = 0;
+  let weakWins = 0;
+  for (const { entries, sim } of fairnessBatch()) {
+    const order = entries.map((e, i) => i).sort((a, b) => total(entries[b]) - total(entries[a]) || (entries[a].id < entries[b].id ? -1 : 1));
+    const winner = sim.results[0].index;
+    if (order.slice(0, 5).includes(winner)) strongWins += 1;
+    if (order.slice(15).includes(winner)) weakWins += 1;
+  }
+  const n = fairnessBatch().length;
+  assert.ok(strongWins / n > 0.25 && strongWins / n < 0.7, `strongest five won ${strongWins} of ${n}`);
+  assert.ok(strongWins > weakWins * 2, `strongest five ${strongWins} wins, weakest five ${weakWins}`);
+});
+
+test('finishers roll into the catch area, bump the ones ahead and settle without overlapping', () => {
+  const { sim } = routeRace(777);
+  assert.ok(sim.durationMs > sim.stats.lastMs, 'the replay runs on while they settle');
+  assert.ok(sim.stats.penBumps > 0);
+  const last = sim.frames[sim.frames.length - 1];
+  const { radius, maxAngle } = bob.physics.channel;
+  const pts = last.a.map((a, i) => [a, radius * Math.sin((last.l[i] * maxAngle * Math.PI) / 180)]);
+  for (const [a] of pts) assert.ok(a >= 0.5 && a <= bob.physics.runout.length, `parked ${a} m past the line`);
+  for (let i = 0; i < pts.length; i += 1) {
+    for (let j = i + 1; j < pts.length; j += 1) {
+      const d = Math.hypot(pts[i][0] - pts[j][0], pts[i][1] - pts[j][1]);
+      assert.ok(d > 1.0, `marbles ${i} and ${j} only ${d.toFixed(2)} m apart`);
+    }
+  }
+  // Settled: nearly all at rest (one may still be rolling slowly into a gap in the pile).
+  assert.ok(last.v.every((v) => v < 1.5), `still rolling at ${Math.max(...last.v)} m/s`);
+  assert.ok(last.v.filter((v) => v < 0.3).length >= 18, 'come to rest');
+  // The finishing order is still decided at the line.
+  const times = sim.results.map((r) => r.finishTimeMs);
+  assert.deepEqual(times, [...times].sort((x, y) => x - y));
+});

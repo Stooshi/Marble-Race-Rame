@@ -20,8 +20,9 @@ const { TRACK_STYLE, buildCenterline, trackProfile } = require('./trackGeometry'
  *     obstacles knock it; it lands, maybe bounces, and rolls on.
  *
  * Level 2 = rolling only (no air), level 3 = rolling plus air and bounce.
- * Marbles don't collide with each other yet (step 4). Deterministic: the same
- * input always gives the same race.
+ * On tracks that switch it on (the bobsleigh run), marbles bump into each
+ * other, draft behind each other and finish into a catch area. Deterministic:
+ * the same input always gives the same race.
  *
  * Output frames are { t, p, l, h, s }: progress 0..1 along the drawn track,
  * lateral -1..1 (wall to wall, as the 3D view uses it), height of the ball
@@ -51,8 +52,12 @@ const FREE_DRAG = 0.00042;     // 1/m: plain air drag, no padding of the clock (
 const ICE_SCRUB = 0.008;       // speed lost skidding round bends, per unit of cornering force
 const CHANNEL_DAMPING = 0.3;   // 1/s: rocking up and down the channel walls settles slowly on ice
 const ICE_RUTS = 0.5;          // rad/s per √s: bumps in the ice knock marbles off their line
-const ICE_DRAG_SPREAD = 3.0;   // how much top speed (and form) change drag on ice
-const ICE_GLIDE_SPREAD = 0.6;  // how much acceleration (and form) change how well a marble glides: pulls the field apart
+// With bumping, drafting and passing the field mixes on its own, so stats
+// count for less than before: better marbles win more, without dominating.
+const ICE_DRAG_SPREAD = 1.44;  // how much top speed (and form) change drag on ice
+const ICE_GLIDE_SPREAD = 0.29; // how much acceleration (and form) change how well a marble glides
+const ICE_FORM_PULL = 0.1;     // 1/s: how quickly form drifts back to normal…
+const ICE_FORM_DRIFT = 0.02;   // …and how much it wanders (good and bad spells)
 const SPLITTER_TIP = 0.35;     // metres either side of dead centre where the wedge's tip is hit
 
 const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
@@ -292,6 +297,28 @@ function forkOffsetSlope(fork, s) {
 }
 
 /**
+ * The main channel's radius at distance s: a wide funnel at the top of the
+ * run (where the whole field starts side by side) narrowing smoothly to the
+ * channel proper.
+ */
+function funnelShare(channel, s) {
+  const f = channel.funnel;
+  if (!f || s >= f.length) return 0;
+  const k = Math.max(0, s) / f.length;
+  return 1 - k * k * (3 - 2 * k);
+}
+function channelRadius(channel, s) {
+  const f = channel.funnel;
+  return f ? channel.radius + (f.radius - channel.radius) * funnelShare(channel, s) : channel.radius;
+}
+/** How far up its wall the channel goes at s (radians): the walls keep the same height through the funnel. */
+function channelLip(channel, s) {
+  if (!channel.funnel) return channel.maxAngle;
+  const height = channel.radius * (1 - Math.cos(channel.maxAngle));
+  return Math.min(channel.maxAngle, Math.acos(clamp(1 - height / channelRadius(channel, s), -1, 1)));
+}
+
+/**
  * One physics step in a U-shaped ice channel. The marble's place across the
  * channel is an angle up its wall (m.th, radians; positive towards the
  * track's left): gravity pulls it to the bottom, going round a bend pushes it
@@ -302,7 +329,8 @@ function forkOffsetSlope(fork, s) {
 function advanceChannel(m, time, ctx) {
   const { look, rng, air, events, stats, channel, fork } = ctx;
   if (rng) {
-    m.form += 0.5 * (1 - m.form) * DT + 0.03 * rng.gaussian() * Math.sqrt(DT);
+    // Form on the ice drifts slowly: a marble can have a good or bad spell lasting several seconds.
+    m.form += ICE_FORM_PULL * (1 - m.form) * DT + ICE_FORM_DRIFT * rng.gaussian() * Math.sqrt(DT);
     m.form = clamp(m.form, 0.92, 1.08);
   }
   const note = (type, obstacle) => events && events.push({ time, index: m.index, type, ...(obstacle && { obstacle }) });
@@ -310,7 +338,7 @@ function advanceChannel(m, time, ctx) {
   // Geometry where the marble is: the main channel, or one side of the splitter.
   const turnMain = look.turn(m.s);
   let stretch = 1; // channel length per metre of main track
-  let radius = channel.radius;
+  let radius = channelRadius(channel, m.s);
   if (m.branch) {
     const o = m.branch * forkOffset(fork, m.s);
     stretch = Math.hypot(1 - o * turnMain, forkOffsetSlope(fork, m.s));
@@ -331,7 +359,7 @@ function advanceChannel(m, time, ctx) {
   // (more skidding), glassy on the long outside (less drag), balanced so
   // neither is faster for an average marble.
   const ice = m.branch > 0 ? { drag: 1, scrub: fork.insideScrub } : m.branch < 0 ? { drag: fork.outsideDrag, scrub: 1 } : { drag: 1, scrub: 1 };
-  let a = -(m.iceDrag * ice.drag / (m.form * m.form)) * m.v * Math.abs(m.v);
+  let a = -(m.iceDrag * ice.drag * (m.draft ?? 1) / (m.form * m.form)) * m.v * Math.abs(m.v); // draft: slipstream
   if (!m.airborne) {
     a += -G * ROLLING * slope * m.glide * m.form - G * ICE_CRR + m.push * m.form * Math.max(0, 1 - m.v / m.pushFade);
     a -= ICE_SCRUB * ice.scrub * m.knockLoss * m.v * m.v * Math.abs(turn); // handling: skids less in the bends
@@ -346,13 +374,16 @@ function advanceChannel(m, time, ctx) {
   m.thv += thAcc * DT;
   if (rng && !m.airborne) m.thv += ICE_RUTS * m.luckKick * rng.gaussian() * Math.sqrt(DT); // bumpy ice (luck: fewer)
   m.th += m.thv * DT;
-  if (Math.abs(m.th) > channel.maxAngle) {
+  const lip = m.branch ? channel.maxAngle : channelLip(channel, m.s);
+  if (Math.abs(m.th) > lip) {
     const side = Math.sign(m.th);
     const impact = m.thv * side * radius; // speed over the lip
-    m.th = side * channel.maxAngle;
+    m.th = side * lip;
     if (impact > 0) {
       m.thv = -side * (impact / radius) * 0.25;
-      m.v = Math.max(0.5, m.v - m.wallLoss * impact * 0.5);
+      // In a crowd marbles get leant against the lip: only a real knock costs speed.
+      const knock = ctx.collisions ? Math.max(0, impact - LIP_GRACE) : impact;
+      m.v = Math.max(0.5, m.v - m.wallLoss * knock * 0.5);
       if (impact > 2) {
         if (stats) stats.wallHits += 1;
         note('bounce', 'wall');
@@ -366,7 +397,8 @@ function advanceChannel(m, time, ctx) {
 
   if (fork && !m.branch && before < fork.s0 && m.s >= fork.s0) {
     // The splitter: the marble's line decides its channel; dead centre clips the wedge.
-    let across = channel.radius * Math.sin(m.th);
+    // The wedge may stand a little off centre (fork.tipOffset, metres towards the inside).
+    let across = channel.radius * Math.sin(m.th) - fork.tipOffset;
     if (Math.abs(across) < SPLITTER_TIP) {
       const side = rng ? (rng.next() < 0.5 ? -1 : 1) : (m.index % 2 ? 1 : -1);
       across = side * SPLITTER_TIP;
@@ -376,7 +408,7 @@ function advanceChannel(m, time, ctx) {
     }
     m.branch = across > 0 ? 1 : -1;
     // Here the channel it drops into is still the main channel itself: same place across.
-    m.th = Math.asin(clamp(across / channel.radius, -Math.sin(channel.maxAngle), Math.sin(channel.maxAngle)));
+    m.th = Math.asin(clamp((across + fork.tipOffset) / channel.radius, -Math.sin(channel.maxAngle), Math.sin(channel.maxAngle)));
     m.forkIn = time;
     if (stats) stats.fork[m.branch > 0 ? 'inside' : 'outside'].count += 1;
   } else if (m.branch && before < fork.s1 && m.s >= fork.s1) {
@@ -421,6 +453,199 @@ function advanceChannel(m, time, ctx) {
     }
   }
   return before;
+}
+
+// Marble-to-marble collisions (tracks with physics.collisions, e.g. the
+// bobsleigh run). Equal-weight balls: a hit swaps speed between them, a
+// glancing one throws them apart across the ice, and a crowd scatters.
+const BUMP_BOUNCE = 0.55;      // how bouncy a hit is (0 = they stick, 1 = perfectly elastic)
+const BUMP_SCATTER = 0.7;      // random spin-off sideways, as a share of the hit
+const BUMP_SIDESTEP = 2;       // a hit from behind knocks the two aside (share of the hit), so the faster one can get past
+const DRAFT = 0.25;            // up to this much less air drag tucked in behind another marble (slipstream)…
+const DRAFT_REACH = 10;        // …fading out by this many metres back
+const DRAFT_WIDTH = 1.4;       // …and this far off its line
+const LIP_GRACE = 1;           // m/s: leaning on the channel's lip in a crowd costs nothing, a real knock does
+const BUMP_MIN = 0.4;          // m/s: slower than this, marbles are just leaning on each other
+const DIAMETER = 2 * RADIUS;
+
+/** Where a marble sits in the channel's cross-section: metres across and up (from the main channel's middle). */
+function crossSection(m, ctx) {
+  const { channel, fork, look } = ctx;
+  let off = 0;
+  let R = channelRadius(channel, m.s);
+  if (m.branch) {
+    off = m.branch * forkOffset(fork, m.s);
+    R = forkRadius(fork, channel.radius, m.s);
+  }
+  const lift = m.airborne ? Math.max(0, m.y - look.floor(m.s)) : 0;
+  return { x: off + R * Math.sin(m.th), y: R * (1 - Math.cos(m.th)) + lift, R };
+}
+
+/**
+ * Resolves touching marbles in an ice channel after a physics step: pushes
+ * them apart and exchanges an impulse along the line between their centres.
+ * The along-track part changes speed (a shove from behind passes speed on),
+ * the across part throws them up and down the wall. Marbles in different
+ * splitter channels are kept apart by the divider.
+ */
+function collideChannel(marbles, time, ctx) {
+  const { rng, stats, events } = ctx;
+  const live = marbles.filter((m) => m.finishedAt === null).sort((a, b) => a.s - b.s || a.index - b.index);
+  const n = live.length;
+  for (const m of live) m.draft = 1;
+  if (n < 2) return;
+  const cs = live.map((m) => crossSection(m, ctx));
+  // Slipstream for the next step: the nearest marble just ahead on the same line.
+  for (let i = 0; i < n; i += 1) {
+    const a = live[i];
+    for (let j = i + 1; j < n; j += 1) {
+      const gap = live[j].s - a.s;
+      if (gap > DRAFT_REACH) break;
+      if (a.branch !== live[j].branch || Math.abs(cs[j].x - cs[i].x) > DRAFT_WIDTH) continue;
+      a.draft = 1 - DRAFT * (1 - gap / DRAFT_REACH);
+      break;
+    }
+  }
+  for (let i = 0; i < n; i += 1) {
+    const a = live[i];
+    for (let j = i + 1; j < n; j += 1) {
+      const b = live[j];
+      const ds = b.s - a.s;
+      if (ds >= DIAMETER) break; // sorted along the track: nobody further on can touch
+      if (a.branch && b.branch && a.branch !== b.branch) continue;
+      const dx = cs[j].x - cs[i].x;
+      const dy = cs[j].y - cs[i].y;
+      const d2 = ds * ds + dx * dx + dy * dy;
+      if (d2 >= DIAMETER * DIAMETER) continue;
+      const d = Math.sqrt(d2) || 1e-6;
+      // Normal from a to b: along the track, and across (the wall's direction at their middle).
+      const ns = d2 > 1e-12 ? ds / d : 1;
+      const nx = d2 > 1e-12 ? dx / d : 0;
+      const ny = d2 > 1e-12 ? dy / d : 0;
+      // Across-the-wall speeds turned into cross-section velocities.
+      const ua = a.thv * cs[i].R;
+      const ub = b.thv * cs[j].R;
+      const ta = { x: Math.cos(a.th), y: Math.sin(a.th) };
+      const tb = { x: Math.cos(b.th), y: Math.sin(b.th) };
+      // Closing speeds along the track and across it, each along the line between centres.
+      const closeAlong = -(b.v - a.v) * ns;
+      const tna = nx * ta.x + ny * ta.y; // how much of the line between them is across, for each
+      const tnb = nx * tb.x + ny * tb.y;
+      const closeAcross = -(ub * tnb - ua * tna);
+      const vrel = -(closeAlong + closeAcross);
+      // Push apart (half each), along the track and across.
+      const overlap = DIAMETER - d;
+      a.s -= 0.5 * overlap * ns;
+      b.s += 0.5 * overlap * ns;
+      a.th -= (0.5 * overlap * tna) / cs[i].R;
+      b.th += (0.5 * overlap * tnb) / cs[j].R;
+      if (vrel >= 0) continue; // already moving apart
+      // Equal weights. A hit from behind passes speed on along the track; a
+      // shove from the side pushes sideways (it doesn't squirt marbles forwards).
+      const Js = 0.5 * (1 + BUMP_BOUNCE) * Math.max(0, closeAlong);
+      const Jx = 0.5 * (1 + BUMP_BOUNCE) * Math.max(0, closeAcross);
+      const J = Js + Jx;
+      a.v = Math.max(0.5, a.v - Js * ns);
+      b.v = Math.max(0.5, b.v + Js * ns);
+      a.thv -= (Jx * tna) / cs[i].R;
+      b.thv += (Jx * tnb) / cs[j].R;
+      if (-vrel < BUMP_MIN) continue; // resting against each other, not a hit
+      // Hit from behind: the two are knocked aside, opposite ways, so the faster one can come past.
+      let way = Math.sign(dx);
+      if (Math.abs(dx) < 0.05) way = rng ? (rng.next() < 0.5 ? -1 : 1) : (a.index < b.index ? 1 : -1);
+      a.thv -= (way * BUMP_SIDESTEP * Js) / cs[i].R;
+      b.thv += (way * BUMP_SIDESTEP * Js) / cs[j].R;
+      if (rng) {
+        // A real crowd doesn't part neatly: each one spins off a little to one side.
+        a.thv += (BUMP_SCATTER * J * a.luckKick * rng.gaussian()) / cs[i].R;
+        b.thv += (BUMP_SCATTER * J * b.luckKick * rng.gaussian()) / cs[j].R;
+      }
+      if (stats) {
+        stats.bumps += 1;
+        if (-vrel > 3) {
+          stats.bigBumps += 1;
+          if (events) events.push({ time, index: b.index, type: 'bounce', obstacle: 'marble' });
+        }
+      }
+    }
+  }
+}
+
+// The catch area past the finish line (tracks with physics.runout): a pen
+// with brushes that slow marbles down, its floor tipped gently towards a
+// cushioned end wall.
+// Finishers roll in and bump into the ones already there. The finishing
+// order was settled at the line; this is only what happens afterwards.
+const PEN_BRUSH = 0.07;        // 1/m: the brushes' drag (strong at speed)
+const PEN_ROLL = 0.25;         // m/s²: and a little grip, so marbles come to rest…
+const PEN_TILT = 1.2;          // m/s²: …on a floor tipped gently towards the end cushion, where they gather
+const PEN_BOUNCE = 0.2;        // off the pen's walls and cushion
+const PEN_HIT_BOUNCE = 0.25;   // finishers rolling into the pile shove it rather than rebound
+const PEN_SETTLE = 6;          // seconds after the last finisher that the replay may keep rolling while they settle
+
+function enterPen(m, overshoot, ctx) {
+  const { channel, pen } = ctx;
+  const R = channel.radius;
+  // Off the channel wall onto the pen floor: same place across, the wall's swing becomes sideways speed.
+  m.pa = Math.max(0, overshoot);
+  m.px = clamp(R * Math.sin(m.th), -pen.room, pen.room);
+  m.pv = m.v;
+  m.pvx = clamp(R * Math.cos(m.th) * m.thv * 0.5, -3, 3);
+}
+
+function movePen(marbles, ctx) {
+  const { pen, stats } = ctx;
+  const inPen = marbles.filter((m) => m.pa !== undefined);
+  if (!inPen.length) return;
+  const slow = (v, drag) => {
+    const dv = (drag * v * Math.abs(v) + PEN_ROLL * Math.sign(v)) * DT;
+    return Math.abs(dv) >= Math.abs(v) ? 0 : v - dv;
+  };
+  for (const m of inPen) {
+    m.pv += PEN_TILT * DT;
+    m.pv = slow(m.pv, PEN_BRUSH);
+    m.pvx = slow(m.pvx, PEN_BRUSH);
+    m.pa += m.pv * DT;
+    m.px += m.pvx * DT;
+    if (Math.abs(m.px) > pen.room) {
+      m.px = Math.sign(m.px) * pen.room;
+      m.pvx = -m.pvx * PEN_BOUNCE;
+    }
+    if (m.pa > pen.length - RADIUS) {
+      m.pa = pen.length - RADIUS;
+      m.pv = -Math.abs(m.pv) * PEN_BOUNCE;
+    } else if (m.pa < RADIUS && m.pv < 0) {
+      m.pa = RADIUS; // rolled back to the line: a soft gate behind it
+      m.pv = -m.pv * PEN_BOUNCE;
+    }
+  }
+  // Bumps in the pen: flat, so plain 2D equal-weight hits.
+  for (let i = 0; i < inPen.length; i += 1) {
+    const a = inPen[i];
+    for (let j = i + 1; j < inPen.length; j += 1) {
+      const b = inPen[j];
+      const da = b.pa - a.pa;
+      const dx = b.px - a.px;
+      const d2 = da * da + dx * dx;
+      if (d2 >= DIAMETER * DIAMETER) continue;
+      const d = Math.sqrt(d2) || 1e-6;
+      const na = d2 > 1e-12 ? da / d : 1;
+      const nx = d2 > 1e-12 ? dx / d : 0;
+      const overlap = DIAMETER - d;
+      a.pa -= 0.5 * overlap * na;
+      b.pa += 0.5 * overlap * na;
+      a.px = clamp(a.px - 0.5 * overlap * nx, -pen.room, pen.room);
+      b.px = clamp(b.px + 0.5 * overlap * nx, -pen.room, pen.room);
+      const vrel = (b.pv - a.pv) * na + (b.pvx - a.pvx) * nx;
+      if (vrel >= 0) continue;
+      const J = 0.5 * (1 + PEN_HIT_BOUNCE) * -vrel;
+      a.pv -= J * na;
+      a.pvx -= J * nx;
+      b.pv += J * na;
+      b.pvx += J * nx;
+      if (stats && -vrel > 0.5) stats.penBumps += 1;
+    }
+  }
 }
 
 /**
@@ -483,38 +708,56 @@ function simulatePhysicsRace({ seed, track, entries, level = 3, tickRateHz = 20 
   const lanes = Math.max(1, Number(track.lane_count) || 4);
   const roomFull = (lanes * TRACK_STYLE.laneWidth) / 2 - RADIUS;
   const rawEvents = [];
-  const stats = { topSpeed: 0, wallHits: 0, jumps: 0, longestAir: 0, highestAir: 0 };
+  const stats = { topSpeed: 0, wallHits: 0, jumps: 0, longestAir: 0, highestAir: 0, bumps: 0, bigBumps: 0 };
   const ctx = { look, obstacles, rng: physicsRng, air, roomFull, events: rawEvents, stats };
   // Ice channel tracks (bobsleigh): a U-shaped channel, maybe a splitter, free pace.
   const tp = track.physics;
   if (tp?.channel) {
-    ctx.channel = { radius: tp.channel.radius, maxAngle: (tp.channel.maxAngle * Math.PI) / 180 };
+    ctx.channel = { radius: tp.channel.radius, maxAngle: (tp.channel.maxAngle * Math.PI) / 180, funnel: tp.channel.funnel ?? null };
     if (tp.fork) {
       ctx.fork = {
         s0: tp.fork.from * total, s1: tp.fork.to * total, radius: tp.fork.radius, apart: tp.fork.apart,
         insideScrub: tp.fork.insideScrub ?? 1,
+        tipOffset: tp.fork.tipOffset ?? 0,
         outsideDrag: tp.fork.outsideDrag ?? 1,
       };
       stats.fork = { inside: { count: 0, seconds: [] }, outside: { count: 0, seconds: [] } };
     }
   }
+  // Marbles bump into each other (ice channels only), and finish into a catch area.
+  const collisions = Boolean(ctx.channel && tp.collisions);
+  const pen = ctx.channel && tp.runout ? { length: tp.runout.length, room: tp.runout.halfWidth - RADIUS } : null;
+  ctx.pen = pen;
+  ctx.collisions = collisions;
+  if (pen) stats.penBumps = 0;
   const moveMarble = ctx.channel ? advanceChannel : advance;
   const key = `${level}:${track.slug ?? ''}:${total.toFixed(3)}:${lanes}:${JSON.stringify(track.obstacles ?? [])}`;
   const drag = tp?.pace === 'free' ? FREE_DRAG : calibrateDrag(ctx, key);
 
   // Starting grid (step 5 replaces it with a fair starting gate).
-  const laneCount = Math.max(1, Math.min(entries.length, lanes));
+  // With a funnel at the top (ice channels) the whole field starts in one row, side by side up its walls.
+  const funnel = ctx.channel?.funnel;
+  const releaseRng = funnel?.release ? createRng(subSeed(seed, 6)) : null;
+  const laneCount = funnel ? entries.length : Math.max(1, Math.min(entries.length, lanes));
   const rows = Math.ceil(entries.length / laneCount);
   const marbles = entries.map((entry, index) => {
     const lane = Number.isInteger(entry.lane) ? entry.lane : index;
     const row = Math.floor(lane / laneCount);
     const across = laneCount === 1 ? 0 : -1 + (2 * (lane % laneCount)) / (laneCount - 1);
-    const m = newMarble(index, marbleParams(entry, drag), 0.6 + (rows - 1 - row) * START_ROW_GAP, across * roomFull * 0.85, look);
+    // Staggered like a running track's lanes: the outer places, with further to come in, start a little further on.
+    const slot = funnel ? Math.abs((lane % laneCount) - (laneCount - 1) / 2) / ((laneCount - 1) / 2 || 1) : 0;
+    const stagger = funnel ? (funnel.stagger ?? 0) * slot * slot : 0;
+    const m = newMarble(index, marbleParams(entry, drag), 0.6 + stagger + (rows - 1 - row) * START_ROW_GAP, across * roomFull * 0.85, look);
+    // Staggered release: the gate lets each marble go at its own moment, in a random order each race.
+    if (releaseRng) m.releaseAt = releaseRng.next() * funnel.release;
     if (ctx.channel) {
       const top = clamp(Number(entry.topSpeed) || 50, 1, 100) / 100;
       const acc = clamp(Number(entry.acceleration) || 50, 1, 100) / 100;
       Object.assign(m, {
-        th: across * 0.5 * ctx.channel.maxAngle, thv: 0, branch: 0,
+        th: funnel
+          ? clamp(((lane % laneCount) - (laneCount - 1) / 2) * funnel.spacing / funnel.radius, -0.97 * channelLip(ctx.channel, 0), 0.97 * channelLip(ctx.channel, 0))
+          : across * 0.5 * ctx.channel.maxAngle,
+        thv: 0, branch: 0,
         iceDrag: drag * (1 + ICE_DRAG_SPREAD * (0.5 - top)),
         glide: 1 + ICE_GLIDE_SPREAD * (acc - 0.5),
       });
@@ -524,15 +767,27 @@ function simulatePhysicsRace({ seed, track, entries, level = 3, tickRateHz = 20 
 
   const stepsPerTick = Math.round(1 / tickRateHz / DT);
   const tickMs = Math.round(1000 / tickRateHz);
-  const trace = marbles.map(() => ({ s: [], x: [], h: [], v: [], b: [] }));
+  const trace = marbles.map(() => ({ s: [], x: [], h: [], v: [], b: [], a: [] }));
   const record = () => {
     for (const m of marbles) {
       const t = trace[m.index];
+      if (m.pa !== undefined) {
+        // In the catch area: metres past the line, and across given as the
+        // channel angle it would be at (so crossing the line is seamless): px = R·sin(x·maxAngle).
+        t.s.push(total);
+        t.x.push(Math.asin(clamp(m.px / ctx.channel.radius, -1, 1)) / ctx.channel.maxAngle);
+        t.h.push(0);
+        t.v.push(Math.hypot(m.pv, m.pvx));
+        t.b.push(0);
+        t.a.push(m.pa);
+        continue;
+      }
       t.s.push(m.s);
       t.x.push(ctx.channel ? m.th / ctx.channel.maxAngle : m.x / roomFull);
       t.h.push(air ? Math.max(0, m.y - look.floor(m.s)) : 0);
       t.v.push(m.v);
       t.b.push(m.branch || 0);
+      t.a.push(0);
     }
   };
   record();
@@ -546,15 +801,34 @@ function simulatePhysicsRace({ seed, track, entries, level = 3, tickRateHz = 20 
     step += 1;
     for (const m of marbles) {
       if (m.finishedAt !== null) continue;
-      const before = moveMarble(m, time, ctx);
+      if (m.releaseAt && time < m.releaseAt) { m.before = m.s - 1e-6; continue; } // still held at the gate
+      m.before = moveMarble(m, time, ctx);
+    }
+    if (collisions) collideChannel(marbles, time, ctx);
+    for (const m of marbles) {
+      if (m.finishedAt !== null) continue;
+      const before = Math.min(m.before, m.s - 1e-9); // a shove can move it on (or back) a little
       if (m.splitAt === null && m.s >= half) m.splitAt = time - DT + ((half - before) / (m.s - before)) * DT;
       if (m.s >= total) {
         m.finishedAt = time - DT + ((total - before) / (m.s - before)) * DT;
+        if (pen) enterPen(m, m.s - total, ctx);
         m.s = total;
         remaining -= 1;
       }
     }
+    if (pen) movePen(marbles, ctx);
     if (step % stepsPerTick === 0) record();
+  }
+  // Everyone's home: let the catch area settle before the replay ends.
+  const raceEnd = time;
+  if (pen && remaining === 0) {
+    const still = () => marbles.every((m) => Math.abs(m.pv) < 0.15 && Math.abs(m.pvx) < 0.15);
+    while (time < raceEnd + PEN_SETTLE && !(time > raceEnd + 1 && still())) {
+      time += DT;
+      step += 1;
+      movePen(marbles, ctx);
+      if (step % stepsPerTick === 0) record();
+    }
   }
 
   // --- results --------------------------------------------------------------
@@ -572,7 +846,9 @@ function simulatePhysicsRace({ seed, track, entries, level = 3, tickRateHz = 20 
     if (results[i].finishTimeMs <= results[i - 1].finishTimeMs) results[i].finishTimeMs = results[i - 1].finishTimeMs + 1;
   }
   const lastFinish = finishers.length ? results[finishers.length - 1].finishTimeMs : 0;
-  const durationMs = unfinished.length ? CAP_SECONDS * 1000 : lastFinish;
+  const raceMs = unfinished.length ? CAP_SECONDS * 1000 : lastFinish;
+  // With a catch area the replay runs on a little after the race, while finishers settle.
+  const durationMs = pen && !unfinished.length ? Math.max(raceMs, Math.floor((time * 1000) / 50) * 50) : raceMs;
 
   // --- frames -------------------------------------------------------------------
   const finishMs = new Map(results.map((r) => [r.index, r.finishTimeMs]));
@@ -587,14 +863,21 @@ function simulatePhysicsRace({ seed, track, entries, level = 3, tickRateHz = 20 
     const h = [];
     const v = [];
     const b = [];
+    const a = [];
     for (const m of marbles) {
       const done = finishMs.get(m.index) !== null && t >= finishMs.get(m.index);
       const tr = trace[m.index];
+      // In the catch area the finisher's frame shows where it is in the pen (a: metres past the line).
+      const inPen = pen && done && tr.a[j] > 0;
       p.push(done ? 1 : Math.min(0.99999, Math.round((tr.s[j] / total) * 1e5) / 1e5));
       l.push(Math.round(clamp(tr.x[j], -1, 1) * 1000) / 1000);
       h.push(done ? 0 : Math.round(tr.h[j] * 1000) / 1000);
-      v.push(done ? 0 : Math.round(tr.v[j] * 10) / 10); // speed, m/s (for the speed readout)
+      v.push(done && !inPen ? 0 : Math.round(tr.v[j] * 10) / 10); // speed, m/s (for the speed readout)
       b.push(done ? 0 : tr.b[j]); // splitter channel: 1 inside, -1 outside, 0 main channel
+      // In its last few metres a marble's distance before the line comes as a negative, so a
+      // replay blending frames across the line moves it on smoothly into the catch area.
+      const toGo = total - tr.s[j];
+      a.push(inPen ? Math.round(tr.a[j] * 100) / 100 : pen && !done && toGo < 5 ? -Math.round(toGo * 100) / 100 : 0);
     }
     const standings = marbles.map((m) => m.index).sort((a, b) => {
       const fa = finishMs.get(a);
@@ -605,7 +888,7 @@ function simulatePhysicsRace({ seed, track, entries, level = 3, tickRateHz = 20 
       if (da !== db) return da ? -1 : 1;
       return p[b] - p[a] || a - b;
     });
-    frames.push({ t, p, l, h, v, ...(ctx.fork && { b }), s: standings });
+    frames.push({ t, p, l, h, v, ...(ctx.fork && { b }), ...(pen && { a }), s: standings });
   }
 
   const events = rawEvents
@@ -632,6 +915,8 @@ function simulatePhysicsRace({ seed, track, entries, level = 3, tickRateHz = 20 
       jumps: stats.jumps,
       longestAirSeconds: Math.round(stats.longestAir * 100) / 100,
       highestAirMetres: Math.round(stats.highestAir * 100) / 100,
+      ...(collisions && { bumps: stats.bumps, bigBumps: stats.bigBumps }),
+      ...(pen && { penBumps: stats.penBumps }),
       averageSpeed: results[0]?.finishTimeMs ? Math.round((total / (results[0].finishTimeMs / 1000)) * 10) / 10 : null,
       trackMetres: Math.round(total),
       ...(stats.fork && {
