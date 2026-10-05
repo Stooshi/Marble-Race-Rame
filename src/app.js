@@ -6,6 +6,7 @@ const helmet = require('helmet');
 const config = require('./config');
 const db = require('./db');
 const { notFoundHandler, errorHandler } = require('./middleware/errorHandler');
+const { VERSION } = require('./version');
 
 function createApp() {
   const app = express();
@@ -19,9 +20,9 @@ function createApp() {
   app.get('/health', async (_req, res) => {
     try {
       await db.query('SELECT 1');
-      res.json({ status: 'ok', db: 'ok', uptime: process.uptime() });
+      res.json({ status: 'ok', db: 'ok', uptime: process.uptime(), version: VERSION });
     } catch {
-      res.status(503).json({ status: 'degraded', db: 'unreachable' });
+      res.status(503).json({ status: 'degraded', db: 'unreachable', version: VERSION });
     }
   });
 

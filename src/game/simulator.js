@@ -25,6 +25,9 @@ const { createRng } = require('./rng');
  * simulateRace(sameInput) always returns identical output.
  */
 
+// Bumped whenever what viewers see from the simulator changes (shown on /health).
+const SIMULATOR_VERSION = 'solid-marbles-1';
+
 const SIM_DT = 0.05;              // internal integration step, seconds
 const BASE_SPEED = 10;            // m/s for a 50/50/50/50 marble on open track
 const MAX_SIM_SECONDS = 600;      // safety net against a pathological track
@@ -431,4 +434,4 @@ function simulateRace({
   };
 }
 
-module.exports = { simulateRace, subSeed, OBSTACLE_EFFECTS };
+module.exports = { simulateRace, subSeed, OBSTACLE_EFFECTS, SIMULATOR_VERSION };
