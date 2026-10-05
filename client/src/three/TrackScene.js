@@ -14,6 +14,7 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { buildCenterline, buildTrackGeometry, TRACK_STYLE } from './trackModel';
 import { RaceMarbles, RUNOUT_LENGTH } from './marbles';
 import { buildScenery } from './scenery';
+import { buildIceChannelGeometry, channelOf } from './iceChannel';
 import { DEFAULT_THEME, themeFor } from './themes';
 
 /** A sky dome: pale at the horizon, coloured overhead, whichever way the camera looks. */
@@ -119,7 +120,8 @@ export class TrackScene {
     const theme = themeFor(track?.slug);
     this.applyTheme(theme);
     const style = { ...TRACK_STYLE, colors: { ...TRACK_STYLE.colors, ...theme.track } };
-    const geometry = buildTrackGeometry(track, this.centerline, style);
+    this.channel = channelOf(track, this.centerline); // ice channel (bobsleigh) instead of a road
+    const geometry = this.channel ? buildIceChannelGeometry(this.centerline, this.channel) : buildTrackGeometry(track, this.centerline, style);
     this.trackMesh = new Mesh(geometry, this.trackMaterial);
     this.trackGroup.add(this.trackMesh);
     this.trackGroup.add(this.buildFinishArch(track));
@@ -215,6 +217,7 @@ export class TrackScene {
   setRace(entries, highlight = [], results = []) {
     this.clearRace();
     this.marbles = new RaceMarbles(entries, Math.max(1, Number(this.track?.lane_count) || 4), highlight, results);
+    this.marbles.channel = this.channel;
     this.scene.add(this.marbles.group);
     this.applyMarbleScale();
   }

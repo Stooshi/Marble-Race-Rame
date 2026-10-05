@@ -462,3 +462,5 @@ main { padding-bottom: 48px; }
 .physics__stats dt { font-size: 0.75rem; color: var(--muted); }
 .physics__stats dd { margin: 2px 0 0; font-weight: 700; font-variant-numeric: tabular-nums; }
 .preview3d__stage--empty { display: grid; place-items: center; }
+.replay3d__speed { position: absolute; right: 8px; bottom: 8px; padding: 4px 12px; border-radius: 10px; background: rgba(17, 19, 26, 0.75); color: #fff; font-variant-numeric: tabular-nums; }
+.replay3d__speed strong { font-size: 1.5rem; }

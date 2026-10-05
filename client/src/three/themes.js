@@ -28,6 +28,17 @@ export const THEMES = {
     track: { embankment: '#cdb996', embankmentDark: '#c2ac86' }, // stone retaining walls
     scenery: 'san-francisco',
   },
+  // Bobsleigh run (preview): plain snow for now; the alpine dressing comes later.
+  'bobsleigh-olympics': {
+    sky: { top: '#4f93d8', horizon: '#d9eaf8', glow: '#ffffff' },
+    fog: '#d9eaf8',
+    hemisphere: { sky: '#ffffff', ground: '#a9bccf', intensity: 1.6 },
+    ambient: 0.4,
+    sun: { color: '#fffaf0', intensity: 1.8, direction: [-0.5, 0.9, 0.3] },
+    ground: { color: '#dde8f2', y: -2.05 },
+    track: {},
+    scenery: null,
+  },
 };
 
 export function themeFor(slug) {

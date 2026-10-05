@@ -105,6 +105,11 @@ export default function RaceReplayViewer({ data, loading = false, mine = NOBODY,
         {built && (
           <>
             <div className="replay3d__clock">{formatTime(replay.time)}</div>
+            {replay.frame?.v && followIndex !== undefined && replay.frame.p[followIndex] < 1 && (
+              <div className="replay3d__speed" aria-label="Speed of the marble the camera follows">
+                <strong>{Math.round((replay.frame.v[followIndex] ?? 0) * 3.6)}</strong> km/h
+              </div>
+            )}
             <ol className="replay3d__standings" aria-label="Current standings">
               {standings.slice(0, 5).map((i, pos) => {
                 const e = entries[i];

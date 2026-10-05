@@ -28,13 +28,14 @@ describe('3D never-touch layout', () => {
         let biggestStep = 0;
         let prev = null;
         const crossedAt = new Map();
+      const memory = {}; // as the 3D view: nudges carried from draw to draw
         // Every server frame plus the in-between moments the 3D view draws, to 2 s after the last finisher.
         const after = Array.from({ length: 20 }, (_, k) => ({ ...sim.frames.at(-1), t: sim.durationMs + (k + 1) * 100 }));
         const frames = [...sim.frames, ...after];
         for (let k = 0; k < frames.length - 1; k += 1) {
           for (let sub = 0; sub < 6; sub += 1) {
             const f = lerpFrame(frames[k], frames[k + 1], sub / 6);
-            const pos = layoutMarbles(centerline, f, track.lane_count, finish, { crossedAt }).map((v) => v.clone());
+            const pos = layoutMarbles(centerline, f, track.lane_count, finish, { crossedAt, memory }).map((v) => v.clone());
             for (let i = 0; i < pos.length; i += 1) {
               for (let j = i + 1; j < pos.length; j += 1) closest = Math.min(closest, pos[i].distanceTo(pos[j]));
               if (prev) biggestStep = Math.max(biggestStep, pos[i].distanceTo(prev[i]));

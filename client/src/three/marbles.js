@@ -10,6 +10,7 @@ import {
   MeshPhongMaterial, Quaternion, SphereGeometry, SRGBColorSpace, Vector3, ConeGeometry, Group,
 } from 'three';
 import { pointOnTrack, TRACK_STYLE } from './trackModel';
+import { placeOnChannel } from './iceChannel';
 
 export const MARBLE_RADIUS = 0.55; // metres: a lane is 1.6 m wide
 
@@ -134,11 +135,13 @@ const TOUCH_GAP = 0.02; // metres of daylight kept between neighbours
  * Returns an array of Vector3 (reusing `out` when given).
  */
 export function layoutMarbles(centerline, frame, lanes, finish, {
-  radius = MARBLE_RADIUS, separate = true, style = TRACK_STYLE, out = [], crossedAt = new Map(),
+  radius = MARBLE_RADIUS, separate = true, style = TRACK_STYLE, out = [], crossedAt = new Map(), channel = null, normals = null,
+  memory = null,
 } = {}) {
   const n = frame.p.length;
   const half = (lanes * style.laneWidth) / 2;
-  const room = Math.max(0, half - radius);
+  // On an ice channel "across" is metres along the curved wall (angle × radius).
+  const room = channel ? channel.maxAngle * channel.radius : Math.max(0, half - radius);
   const length = arcLength(centerline);
   const end = centerline.samples[centerline.samples.length - 1];
   const endForward = new Vector3(end.tangent.x, 0, end.tangent.z).normalize();
@@ -165,8 +168,20 @@ export function layoutMarbles(centerline, frame, lanes, finish, {
   for (let i = 0; i < n; i += 1) {
     const spot = spots.get(i);
     if (spot) {
-      const at = parkingPath((frame.t - finish.get(i).t) / 1000, crossedAt.get(i), spot);
-      state.push({ parked: true, along: at.along, across: at.across });
+      const runOutRoom = Math.max(0, half - radius);
+      const since = (frame.t - finish.get(i).t) / 1000;
+      let crossed = crossedAt.get(i);
+      let lift = 0;
+      if (channel) {
+        // Off an ice channel: from where it was up the wall, gliding down to the flat run-out.
+        const th = crossed / channel.radius;
+        crossed = channel.radius * Math.sin(th);
+        const k = Math.min(1, since / 0.45);
+        lift = channel.radius * (1 - Math.cos(th)) * (1 - k * k * (3 - 2 * k));
+      }
+      crossed = Math.max(-runOutRoom, Math.min(runOutRoom, crossed));
+      const at = parkingPath(since, crossed, spot);
+      state.push({ parked: true, along: at.along, across: at.across, lift });
     } else {
       state.push({ parked: false, progress: Math.min(frame.p[i] ?? 0, 0.99999), across: acrossOf(i) });
     }
@@ -174,15 +189,38 @@ export function layoutMarbles(centerline, frame, lanes, finish, {
   const place = (i) => {
     const s = state[i];
     const v = out[i] || (out[i] = new Vector3());
+    const nrm = normals && (normals[i] || (normals[i] = new Vector3()));
     if (s.parked) {
       v.copy(end.pos).addScaledVector(endForward, s.along).addScaledVector(endSide, s.across);
-      v.y = end.pos.y + radius;
+      v.y = end.pos.y + radius + (s.lift || 0);
+      nrm?.set(0, 1, 0);
+    } else if (channel) {
+      placeOnChannel(centerline, channel, s.progress, room > 0 ? s.across / room : 0, frame.b?.[i] ?? 0, frame.h?.[i] ?? 0, radius, v, nrm || undefined);
     } else {
+      nrm?.set(0, 1, 0);
       placeMarble(centerline, s.progress, room > 0 ? s.across / room : 0, lanes, radius, style, v);
       v.y += frame.h?.[i] ?? 0; // in the air (physics frames carry the height above the floor)
     }
     return v;
   };
+  // Start from how marbles were nudged a moment ago (fading), so a crowd is
+  // eased apart smoothly from draw to draw rather than reshuffled each time.
+  const raw = state.map((st) => (st.parked ? { parked: true, along: st.along, across: st.across } : { progress: st.progress, across: st.across }));
+  const recent = memory && memory.t !== undefined && Math.abs(frame.t - memory.t) < 250 && memory.raw?.length === n;
+  if (separate && recent) {
+    const runOutRoom = Math.max(0, half - radius);
+    state.forEach((st, i) => {
+      const was = memory.raw[i];
+      if (!was || Boolean(was.parked) !== Boolean(st.parked)) return; // just finished: start afresh
+      if (st.parked) {
+        st.along = Math.max(0, Math.min(RUNOUT_LENGTH - radius, st.along + 0.9 * memory.dp[i]));
+        st.across = Math.max(-runOutRoom, Math.min(runOutRoom, st.across + 0.9 * memory.da[i]));
+      } else {
+        st.across = Math.max(-room, Math.min(room, st.across + 0.9 * memory.da[i]));
+        st.progress = Math.max(0, Math.min(0.99999, st.progress + 0.9 * memory.dp[i]));
+      }
+    });
+  }
   for (let i = 0; i < n; i += 1) place(i);
   if (!separate) return out;
 
@@ -190,8 +228,9 @@ export function layoutMarbles(centerline, frame, lanes, finish, {
   const nudge = (i, mx, mz) => {
     const s = state[i];
     if (s.parked) {
+      const runOutRoom = Math.max(0, half - radius);
       s.along = Math.max(0, Math.min(RUNOUT_LENGTH - radius, s.along + mx * endForward.x + mz * endForward.z));
-      s.across = Math.max(-room, Math.min(room, s.across + mx * endSide.x + mz * endSide.z));
+      s.across = Math.max(-runOutRoom, Math.min(runOutRoom, s.across + mx * endSide.x + mz * endSide.z));
     } else {
       directionsAt(centerline, s.progress, side, forward);
       s.across = Math.max(-room, Math.min(room, s.across + mx * side.x + mz * side.z));
@@ -199,7 +238,8 @@ export function layoutMarbles(centerline, frame, lanes, finish, {
     }
     place(i);
   };
-  for (let pass = 0; pass < 10; pass += 1) {
+  const progressOf = (k) => (state[k].parked ? 1 + state[k].along / 1000 : state[k].progress);
+  for (let pass = 0; pass < 32; pass += 1) {
     let moved = false;
     for (let i = 0; i < n; i += 1) {
       for (let j = i + 1; j < n; j += 1) {
@@ -223,9 +263,29 @@ export function layoutMarbles(centerline, frame, lanes, finish, {
         const push = (minD - d) / 2 + 0.002;
         nudge(i, (-hx / h) * push, (-hz / h) * push);
         nudge(j, (hx / h) * push, (hz / h) * push);
+        // Still touching? Both are against a wall (or a channel's lip), so
+        // part them along the track instead: the one ahead a little further on.
+        const left = minD - out[i].distanceTo(out[j]);
+        if (left > 0.001) {
+          const ahead = progressOf(j) >= progressOf(i) ? j : i;
+          const behind = ahead === j ? i : j;
+          directionsAt(centerline, state[ahead].parked ? 1 : state[ahead].progress, side, forward);
+          const fx = state[ahead].parked ? endForward.x : forward.x;
+          const fz = state[ahead].parked ? endForward.z : forward.z;
+          // Small steps only, so a crowd is eased apart rather than reshuffled (no visible pops).
+          const step = Math.min(left / 2 + 0.002, 0.03);
+          nudge(ahead, fx * step, fz * step);
+          nudge(behind, -fx * step, -fz * step);
+        }
       }
     }
     if (!moved) break;
+  }
+  if (memory) {
+    memory.t = frame.t;
+    memory.raw = raw;
+    memory.da = state.map((st, i) => st.across - raw[i].across);
+    memory.dp = state.map((st, i) => (st.parked ? st.along - raw[i].along : st.progress - raw[i].progress));
   }
   return out;
 }
@@ -334,10 +394,15 @@ export class RaceMarbles {
     });
 
     this.positions = [];
+    this.layoutMemory = {}; // how marbles were nudged apart last draw (smooths crowds)
+    this.normals = [];
+    this.channel = null; // set for ice-channel tracks (marbles ride the curved walls)
+    this.shadowTilt = new Quaternion();
     this.crossedAt = new Map(); // where each finisher crossed the line (fixes its parking spot)
     this.move = new Vector3();
     this.axis = new Vector3();
     this.q = new Quaternion();
+    this.tmpScale = new Vector3();
     this.m = new Matrix4();
   }
 
@@ -358,7 +423,8 @@ export class RaceMarbles {
     // Real size: never let two marbles touch. Bigger than life (whole-track
     // view), they can't all fit side by side, so they are drawn as they come.
     layoutMarbles(centerline, frame, this.lanes, this.finish, {
-      radius: r, separate: this.scale === 1, out: this.positions, crossedAt: this.crossedAt,
+      radius: r, separate: this.scale === 1, out: this.positions, crossedAt: this.crossedAt, channel: this.channel, normals: this.normals,
+      memory: this.layoutMemory,
     });
     this.balls.forEach((b, i) => {
       const pos = this.positions[i];
@@ -378,10 +444,15 @@ export class RaceMarbles {
       b.last.copy(pos);
       b.mesh.position.copy(pos);
 
-      // The shadow stays on the floor and shrinks as the marble flies higher.
+      // The shadow lies on the surface under the marble (tilted up a channel
+      // wall when it rides one) and shrinks as the marble flies higher.
       const h = frame.p[i] >= 1 ? 0 : (frame.h?.[i] ?? 0);
       const spread = this.scale / (1 + 0.35 * h);
-      this.m.makeScale(spread, 1, spread).setPosition(pos.x, pos.y - h - r + 0.03, pos.z);
+      const n = this.normals[i] || UP;
+      this.shadowTilt.setFromUnitVectors(UP, n);
+      this.tmpPos = this.tmpPos || new Vector3();
+      this.tmpPos.copy(pos).addScaledVector(UP, -h).addScaledVector(n, -(r - 0.03));
+      this.m.compose(this.tmpPos, this.shadowTilt, this.tmpScale.set(spread, 1, spread));
       this.shadows.setMatrixAt(i, this.m);
     });
     this.shadows.instanceMatrix.needsUpdate = true;

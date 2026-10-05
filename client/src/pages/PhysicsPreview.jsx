@@ -17,9 +17,13 @@ const LEVELS = [
  */
 export default function PhysicsPreview() {
   const [params, setParams] = useSearchParams();
-  const tracks = useAsync(() => api.tracks(), []);
+  // The real tracks plus the preview-only ones (the bobsleigh run), which come first.
+  const tracks = useAsync(async () => {
+    const [real, preview] = await Promise.all([api.tracks(), api.physicsTracks().catch(() => ({ tracks: [] }))]);
+    return { tracks: [...preview.tracks, ...real.tracks] };
+  }, []);
   const list = tracks.data?.tracks ?? [];
-  const slug = params.get('track') || list.find((t) => t.slug === 'san-francisco')?.slug || list[0]?.slug;
+  const slug = params.get('track') || list[0]?.slug;
   const seed = Math.max(0, Number.parseInt(params.get('seed'), 10) || 1);
   const level = params.get('level') === '2' ? 2 : 3;
   const race = useAsync(() => (slug ? api.physicsPreview(slug, seed, level) : Promise.resolve(null)), [slug, seed, level]);
@@ -40,7 +44,9 @@ export default function PhysicsPreview() {
 
       <div className="segmented" role="tablist" aria-label="Track">
         {list.map((t) => (
-          <button key={t.slug} type="button" role="tab" aria-selected={t.slug === slug} onClick={() => set({ track: t.slug })}>{t.name}</button>
+          <button key={t.slug} type="button" role="tab" aria-selected={t.slug === slug} onClick={() => set({ track: t.slug })}>
+            {t.name}{t.preview ? ' (preview)' : ''}
+          </button>
         ))}
       </div>
       <div className="physics__bar">
@@ -62,11 +68,27 @@ export default function PhysicsPreview() {
               <div><dt>Winner</dt><dd>{formatTime(stats.winnerMs)}</dd></div>
               <div><dt>Last home</dt><dd>{stats.lastMs ? formatTime(stats.lastMs) : `${stats.unfinished} not home by 1:30`}</dd></div>
               <div><dt>Top speed</dt><dd>{Math.round(stats.topSpeed * 3.6)} km/h</dd></div>
+              {stats.averageSpeed && <div><dt>Winner's average</dt><dd>{Math.round(stats.averageSpeed * 3.6)} km/h</dd></div>}
+              {stats.splitter && (
+                <div><dt>Splitter: inside / outside</dt><dd>{stats.splitter.inside.marbles} / {stats.splitter.outside.marbles}</dd></div>
+              )}
+              {stats.splitter && (
+                <div>
+                  <dt>Time through: inside / outside</dt>
+                  <dd>{stats.splitter.inside.seconds ?? '–'} s / {stats.splitter.outside.seconds ?? '–'} s</dd>
+                </div>
+              )}
               <div><dt>Wall hits</dt><dd>{stats.wallHits}</dd></div>
               {level === 3 && <div><dt>Jumps</dt><dd>{stats.jumps}</dd></div>}
               {level === 3 && <div><dt>Longest flight</dt><dd>{stats.longestAirSeconds} s</dd></div>}
               {level === 3 && <div><dt>Highest</dt><dd>{stats.highestAirMetres} m</dd></div>}
             </dl>
+          )}
+          {race.data.track.physics && (
+            <p className="muted small">
+              Bobsleigh Olympics (working name) is a preview-only track: an ice channel built for speed. At the splitter
+              each marble's line decides its channel: the tight inside or the long outside, balanced to take the same time.
+            </p>
           )}
           <p className="muted small">
             A practice race with 20 house marbles on the new physics. Marbles pass through each other for now:
