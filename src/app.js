@@ -32,6 +32,7 @@ function createApp() {
   app.use('/api/tracks', require('./routes/tracks'));
   app.use('/api/marbles', require('./routes/marbles'));
   app.use('/api/appearance', require('./routes/appearance'));
+  app.use('/api/physics', require('./routes/physics'));
 
   app.use(notFoundHandler);
   app.use(errorHandler);

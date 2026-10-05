@@ -179,6 +179,7 @@ export function layoutMarbles(centerline, frame, lanes, finish, {
       v.y = end.pos.y + radius;
     } else {
       placeMarble(centerline, s.progress, room > 0 ? s.across / room : 0, lanes, radius, style, v);
+      v.y += frame.h?.[i] ?? 0; // in the air (physics frames carry the height above the floor)
     }
     return v;
   };
@@ -361,9 +362,10 @@ export class RaceMarbles {
     });
     this.balls.forEach((b, i) => {
       const pos = this.positions[i];
-      // Roll: turn about the axis square to the movement, by distance / radius.
+      // Roll: turn about the axis square to the (level) movement, by distance / radius.
       if (b.last) {
         this.move.subVectors(pos, b.last);
+        this.move.y = 0;
         const dist = this.move.length();
         if (dist > 1e-4 && dist < 20) {
           this.axis.crossVectors(UP, this.move).normalize();
@@ -376,7 +378,10 @@ export class RaceMarbles {
       b.last.copy(pos);
       b.mesh.position.copy(pos);
 
-      this.m.makeScale(this.scale, 1, this.scale).setPosition(pos.x, pos.y - r + 0.03, pos.z);
+      // The shadow stays on the floor and shrinks as the marble flies higher.
+      const h = frame.p[i] >= 1 ? 0 : (frame.h?.[i] ?? 0);
+      const spread = this.scale / (1 + 0.35 * h);
+      this.m.makeScale(spread, 1, spread).setPosition(pos.x, pos.y - h - r + 0.03, pos.z);
       this.shadows.setMatrixAt(i, this.m);
     });
     this.shadows.instanceMatrix.needsUpdate = true;

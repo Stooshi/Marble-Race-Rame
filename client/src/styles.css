@@ -453,3 +453,12 @@ main { padding-bottom: 48px; }
 .replay3d__pos { width: 1.1em; font-weight: 700; font-variant-numeric: tabular-nums; }
 .replay3d__name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .replay3d__winner { position: absolute; left: 50%; bottom: 12px; transform: translateX(-50%); display: flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 999px; background: rgba(17, 19, 26, 0.85); color: #fff; white-space: nowrap; }
+
+/* Physics preview (beta) */
+.physics__bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-bottom: 12px; }
+.physics__bar .segmented { margin: 0; }
+.physics__stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 8px; margin: 12px 0; }
+.physics__stats div { padding: 8px 10px; border-radius: 10px; background: var(--bg-inset); border: 1px solid var(--border); }
+.physics__stats dt { font-size: 0.75rem; color: var(--muted); }
+.physics__stats dd { margin: 2px 0 0; font-weight: 700; font-variant-numeric: tabular-nums; }
+.preview3d__stage--empty { display: grid; place-items: center; }

@@ -92,6 +92,8 @@ export default function TrackPreview3D() {
         Live races still use the 2D view.
       </p>
 
+      <p><Link to={`/preview/physics?track=${track?.slug ?? ''}`}>New: try the new physics (preview) →</Link></p>
+
       <section className="card preview3d__races">
         <div className="card__header"><h2>Watch a real race in 3D</h2></div>
         {recent.loading && !recent.data && <Spinner label="Loading recent races…" />}

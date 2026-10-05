@@ -301,6 +301,26 @@ export function buildSanFrancisco(centerline, track, theme) {
   sun.name = 'sun';
   group.add(sun);
 
-  group.userData = { houses: spots.near.length + spots.far.length, field };
+  // Highest solid thing at a spot (hill or house roof), so the race camera can stay clear of it.
+  const roofs = new Map();
+  for (const h of [...spots.near, ...spots.far]) {
+    const k = `${Math.floor(h.x / 10)},${Math.floor(h.z / 10)}`;
+    if (!roofs.has(k)) roofs.set(k, []);
+    roofs.get(k).push(h);
+  }
+  const clearance = (x, z) => {
+    let top = ground.groundAt(x, z);
+    const cx = Math.floor(x / 10);
+    const cz = Math.floor(z / 10);
+    for (let dx = -1; dx <= 1; dx += 1) {
+      for (let dz = -1; dz <= 1; dz += 1) {
+        for (const h of roofs.get(`${cx + dx},${cz + dz}`) ?? []) {
+          if ((h.x - x) ** 2 + (h.z - z) ** 2 < (7 * h.scale) ** 2) top = Math.max(top, h.y + 13 * h.scale);
+        }
+      }
+    }
+    return top;
+  };
+  group.userData = { houses: spots.near.length + spots.far.length, field, groundAt: ground.groundAt, clearance };
   return group;
 }

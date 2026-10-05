@@ -84,6 +84,7 @@ export class TrackScene {
       this.controls.addEventListener('start', () => { this.userMoved = true; });
     }
     this.renderQueued = false;
+    if (import.meta.env?.DEV) window.__trackScene = this; // for local debugging only
     this.marbles = null;
     this.cameraMode = 'overview'; // overview | follow
     this.followTarget = new Vector3();
@@ -112,6 +113,7 @@ export class TrackScene {
   setTrack(track) {
     this.clearRace();
     this.clearTrack();
+    this.arcLength = 0;
     this.centerline = buildCenterline(track);
     this.track = track;
     const theme = themeFor(track?.slug);
@@ -274,6 +276,22 @@ export class TrackScene {
     const back = 10 + (Number(this.track?.lane_count) || 4) * 0.8;
     const desired = new Vector3().copy(at).addScaledVector(dir, -back);
     desired.y = Math.max(at.y, here.pos.y) + back * 0.55;
+    // On a steep street the road behind is higher than the marble: stay above
+    // all of it between the camera and the marble, so the view never dips into the hill.
+    if (!this.arcLength) {
+      this.arcLength = 0;
+      for (let i = 1; i < samples.length; i += 1) this.arcLength += samples[i].pos.distanceTo(samples[i - 1].pos);
+    }
+    const from = Math.max(0, Math.floor((progress - (back * 1.5) / this.arcLength) * segments));
+    const to = Math.min(segments, Math.round(Math.min(1, progress) * segments));
+    let roadTop = -Infinity;
+    for (let i = from; i <= to; i += 1) roadTop = Math.max(roadTop, samples[i].pos.y);
+    desired.y = Math.max(desired.y, roadTop + 4);
+    // …above the scenery (hills and house roofs), and above any other stretch
+    // of track (and the wall holding it up) it swings out over on a hairpin.
+    const sceneryTop = this.scenery?.userData?.clearance;
+    const clearAbove = (x, z) => Math.max(sceneryTop ? sceneryTop(x, z) : -Infinity, this.trackBelow(x, z));
+    desired.y = Math.max(desired.y, clearAbove(desired.x, desired.z) + 4);
     const target = new Vector3().copy(at).addScaledVector(dir, 4);
     if (!this.followReady) {
       this.followCam.copy(desired);
@@ -283,9 +301,27 @@ export class TrackScene {
       const k = 1 - Math.exp(-Math.min(0.25, dt) * 3.5);
       this.followCam.lerp(desired, k);
       this.followTarget.lerp(target, Math.min(1, k * 2));
+      // Never lag down into the road or the hillside.
+      this.followCam.y = Math.max(this.followCam.y, roadTop + 2.5, clearAbove(this.followCam.x, this.followCam.z) + 2.5);
     }
     this.camera.position.copy(this.followCam);
     this.camera.lookAt(this.followTarget);
+  }
+
+  /** Highest point of the track (with its walls and embankment) near a spot on the ground plan. */
+  trackBelow(x, z) {
+    const { samples } = this.centerline;
+    const half = ((Number(this.track?.lane_count) || 4) * TRACK_STYLE.laneWidth) / 2 + TRACK_STYLE.wallThickness;
+    let top = -Infinity;
+    for (let i = 0; i < samples.length; i += 1) {
+      const p = samples[i].pos;
+      if (p.y + TRACK_STYLE.wallHeight <= top) continue;
+      const reach = half + TRACK_STYLE.embankmentSlope * Math.max(0, p.y - TRACK_STYLE.groundY) + 2;
+      const dx = p.x - x;
+      const dz = p.z - z;
+      if (dx * dx + dz * dz < reach * reach) top = p.y + TRACK_STYLE.wallHeight;
+    }
+    return top;
   }
 
   setSize(width, height) {

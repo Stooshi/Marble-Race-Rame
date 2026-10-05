@@ -32,7 +32,7 @@ export function splitOrder(splits) {
     .map(([i]) => Number(i));
 }
 
-/** Linear interpolation between two frames (progress + lateral), f in [0, 1]. */
+/** Linear interpolation between two frames (progress, lateral and height when present), f in [0, 1]. */
 export function lerpFrame(a, b, f) {
   if (!a) return b;
   if (!b) return a;
@@ -40,6 +40,7 @@ export function lerpFrame(a, b, f) {
     t: a.t + (b.t - a.t) * f,
     p: b.p.map((p, i) => a.p[i] + (p - a.p[i]) * f),
     l: b.l.map((l, i) => a.l[i] + (l - a.l[i]) * f),
+    ...(a.h && b.h && { h: b.h.map((h, i) => a.h[i] + (h - a.h[i]) * f) }),
     s: b.s,
   };
 }
