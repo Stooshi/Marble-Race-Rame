@@ -13,29 +13,35 @@ import {
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { buildCenterline, buildTrackGeometry, TRACK_STYLE } from './trackModel';
 import { RaceMarbles, RUNOUT_LENGTH } from './marbles';
+import { buildScenery } from './scenery';
+import { DEFAULT_THEME, themeFor } from './themes';
 
-const SKY_TOP = '#5fb4ff';
-const SKY_HORIZON = '#d6f0ff';
-const GROUND = '#86c66a';
-
-
-/** A sky dome: pale at the horizon, blue overhead, whichever way the camera looks. */
+/** A sky dome: pale at the horizon, coloured overhead, whichever way the camera looks. */
 function skyDome() {
-  const geometry = new SphereGeometry(1, 24, 12);
-  const top = new Color(SKY_TOP);
-  const horizon = new Color(SKY_HORIZON);
-  const pos = geometry.getAttribute('position');
-  const colors = [];
-  const c = new Color();
-  for (let i = 0; i < pos.count; i += 1) {
-    const t = Math.min(1, Math.max(0, pos.getY(i)) * 2.2); // reach full blue well above the horizon
-    c.copy(horizon).lerp(top, t);
-    colors.push(c.r, c.g, c.b);
-  }
-  geometry.setAttribute('color', new Float32BufferAttribute(colors, 3));
+  const geometry = new SphereGeometry(1, 32, 16);
+  geometry.setAttribute('color', new Float32BufferAttribute(new Float32Array(geometry.getAttribute('position').count * 3), 3));
   const sky = new Mesh(geometry, new MeshBasicMaterial({ vertexColors: true, side: BackSide, fog: false, depthWrite: false }));
   sky.renderOrder = -1;
   return sky;
+}
+
+/** Paints the sky for a theme, with a warm glow around the sun when the theme has one. */
+function paintSky(sky, theme) {
+  const top = new Color(theme.sky.top);
+  const horizon = new Color(theme.sky.horizon);
+  const glow = theme.sky.glow ? new Color(theme.sky.glow) : null;
+  const sun = new Vector3(...theme.sun.direction).normalize();
+  const pos = sky.geometry.getAttribute('position');
+  const col = sky.geometry.getAttribute('color');
+  const c = new Color();
+  const v = new Vector3();
+  for (let i = 0; i < pos.count; i += 1) {
+    v.fromBufferAttribute(pos, i).normalize();
+    c.copy(horizon).lerp(top, Math.min(1, Math.max(0, v.y) * 2.2)); // reach full colour well above the horizon
+    if (glow) c.lerp(glow, Math.max(0, v.dot(sun)) ** 6 * 0.85);
+    col.setXYZ(i, c.r, c.g, c.b);
+  }
+  col.needsUpdate = true;
 }
 
 export class TrackScene {
@@ -46,24 +52,23 @@ export class TrackScene {
     this.renderer.outputColorSpace = SRGBColorSpace;
 
     this.scene = new Scene();
-    this.scene.background = new Color(SKY_HORIZON);
+    this.scene.background = new Color();
     this.sky = skyDome();
     this.scene.add(this.sky);
-    this.scene.fog = new Fog(new Color(SKY_HORIZON), 400, 2500);
+    this.scene.fog = new Fog(new Color(), 400, 2500);
 
     this.camera = new PerspectiveCamera(50, 1, 0.5, 6000);
 
     // Cartoon lighting: soft sky/ground fill plus one sun, no shadows.
-    this.scene.add(new HemisphereLight('#ffffff', '#5a8f3f', 1.6));
-    this.scene.add(new AmbientLight('#ffffff', 0.35));
-    const sun = new DirectionalLight('#fff4e0', 1.8);
-    sun.position.set(-0.6, 1, 0.4);
-    this.scene.add(sun);
+    this.hemisphere = new HemisphereLight();
+    this.ambient = new AmbientLight('#ffffff');
+    this.sun = new DirectionalLight();
+    this.scene.add(this.hemisphere, this.ambient, this.sun);
 
-    this.ground = new Mesh(new PlaneGeometry(1, 1), new MeshLambertMaterial({ color: GROUND }));
+    this.ground = new Mesh(new PlaneGeometry(1, 1), new MeshLambertMaterial());
     this.ground.rotation.x = -Math.PI / 2;
-    this.ground.position.y = TRACK_STYLE.groundY - 0.05;
     this.scene.add(this.ground);
+    this.applyTheme(DEFAULT_THEME);
 
     this.trackGroup = new Group();
     this.scene.add(this.trackGroup);
@@ -86,16 +91,46 @@ export class TrackScene {
     this.followReady = false;
   }
 
-  /** Builds the given track (from the API: waypoints, length_m, lane_count). */
+  /** Sky, haze, light and ground for a track's theme (see themes.js). */
+  applyTheme(theme) {
+    this.theme = theme;
+    paintSky(this.sky, theme);
+    this.scene.background.set(theme.sky.horizon);
+    this.scene.fog.color.set(theme.fog);
+    this.hemisphere.color.set(theme.hemisphere.sky);
+    this.hemisphere.groundColor.set(theme.hemisphere.ground);
+    this.hemisphere.intensity = theme.hemisphere.intensity;
+    this.ambient.intensity = theme.ambient;
+    this.sun.color.set(theme.sun.color);
+    this.sun.intensity = theme.sun.intensity;
+    this.sun.position.set(...theme.sun.direction);
+    this.ground.material.color.set(theme.ground.color);
+    this.ground.position.y = theme.ground.y;
+  }
+
+  /** Builds the given track (from the API: slug, waypoints, length_m, lane_count) in its world. */
   setTrack(track) {
     this.clearRace();
     this.clearTrack();
     this.centerline = buildCenterline(track);
     this.track = track;
-    const geometry = buildTrackGeometry(track, this.centerline);
+    const theme = themeFor(track?.slug);
+    this.applyTheme(theme);
+    const style = { ...TRACK_STYLE, colors: { ...TRACK_STYLE.colors, ...theme.track } };
+    const geometry = buildTrackGeometry(track, this.centerline, style);
     this.trackMesh = new Mesh(geometry, this.trackMaterial);
     this.trackGroup.add(this.trackMesh);
     this.trackGroup.add(this.buildFinishArch(track));
+    // Scenery a moment later, so the track shows straight away even on slow phones.
+    const token = (this.buildToken = (this.buildToken || 0) + 1);
+    if (theme.scenery) {
+      setTimeout(() => {
+        if (token !== this.buildToken || this.disposed) return; // another track was chosen meanwhile
+        this.scenery = buildScenery(theme, this.centerline, track);
+        if (this.scenery) this.trackGroup.add(this.scenery);
+        this.render();
+      }, 30);
+    }
 
     // Ground far bigger than the view, fading into the haze so no edge shows.
     const sphere = geometry.boundingSphere;
@@ -207,7 +242,7 @@ export class TrackScene {
       this.frameTrack();
     } else {
       this.camera.near = 0.3;
-      this.camera.far = this.trackMesh ? this.trackMesh.geometry.boundingSphere.radius * 8 : 3000;
+      this.camera.far = this.trackMesh ? this.trackMesh.geometry.boundingSphere.radius * 10 : 3000;
       this.camera.updateProjectionMatrix();
     }
     this.applyMarbleScale();
@@ -278,16 +313,21 @@ export class TrackScene {
   }
 
   clearTrack() {
+    this.scenery = null;
     for (const child of [...this.trackGroup.children]) {
       child.traverse((o) => {
         if (o.geometry) o.geometry.dispose();
-        if (o.material && o.material !== this.trackMaterial) o.material.dispose();
+        if (o.material && o.material !== this.trackMaterial) {
+          o.material.map?.dispose();
+          o.material.dispose();
+        }
       });
       this.trackGroup.remove(child);
     }
   }
 
   dispose() {
+    this.disposed = true;
     this.clearRace();
     this.clearTrack();
     this.controls?.dispose();
