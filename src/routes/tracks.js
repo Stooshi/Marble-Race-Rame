@@ -25,6 +25,9 @@ function checkObstacle(o) {
   if (!isNum(o.at) || o.at < 0 || o.at > 1) return 'obstacle "at" must be a number between 0 and 1';
   if (o.span !== undefined && (!isNum(o.span) || o.span <= 0 || o.span > 0.5)) return 'obstacle "span" must be in (0, 0.5]';
   if (o.intensity !== undefined && (!isNum(o.intensity) || o.intensity < 0 || o.intensity > 1)) return 'obstacle "intensity" must be between 0 and 1';
+  if (o.period !== undefined && (!isNum(o.period) || o.period < 1 || o.period > 120)) return 'obstacle "period" must be between 1 and 120 seconds';
+  if (o.duty !== undefined && (!isNum(o.duty) || o.duty < 0 || o.duty > 1)) return 'obstacle "duty" must be between 0 and 1';
+  if (o.phase !== undefined && !isNum(o.phase)) return 'obstacle "phase" must be a number';
   return null;
 }
 

@@ -11,9 +11,13 @@ import TrackPreview from '../components/TrackPreview';
 import { Empty, ErrorMessage, Spinner } from '../components/Status';
 import { formatTime } from '../utils/format';
 
+const obstacleName = (o) => o?.replace(/_/g, ' ');
+
 const EVENT_TEXT = {
-  boost: (name, o) => `${name} got a boost${o ? ` off the ${o}` : ''}!`,
-  bounce: (name, o) => `${name} took a bad bounce${o ? ` on the ${o}` : ''}`,
+  boost: (name, o) => `${name} got a boost${o ? ` off the ${obstacleName(o)}` : ''}!`,
+  bounce: (name, o) => (o === 'cable_car'
+    ? `${name} was caught by the cable car!`
+    : `${name} took a bad bounce${o ? ` on the ${obstacleName(o)}` : ''}`),
   stumble: (name) => `${name} stumbled`,
 };
 

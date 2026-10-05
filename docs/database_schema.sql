@@ -474,6 +474,8 @@ SELECT * FROM (VALUES
 
 -- Waypoints are {x, y, z}: x/y the ground plan and z the height above the finish
 -- line, in track units. Obstacles sit at a fraction (0..1) of the way along.
+-- Tracks added after launch come in their own data updates instead, e.g.
+-- San Francisco in docs/data_updates/2026-10-05-add-san-francisco.sql.
 CREATE TEMP TABLE seed_tracks ON COMMIT DROP AS
 SELECT * FROM (VALUES
     ('meadow-loop', 'Meadow Loop', 'easy', 600, 6,

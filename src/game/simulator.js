@@ -30,13 +30,27 @@ const MAX_SIM_SECONDS = 600;      // safety net against a pathological track
 //  bounce:   chance per second of a "bad bounce" (scaled by intensity, reduced by luck)
 //  boost:    chance per second of a speed boost (scaled by intensity, increased by luck)
 //  squeeze:  pull of the lateral position towards the centre line
+//  passing:  for moving obstacles, the effect while the obstacle is in the way
+//            (the base values then apply while it is clear)
 const OBSTACLE_EFFECTS = {
   bumper:  { drag: 0.35, bounce: 1.4, boost: 0.2, squeeze: 0 },
   ramp:    { drag: -0.25, bounce: 0.3, boost: 1.0, squeeze: 0 },
   sand:    { drag: 0.9, bounce: 0.2, boost: 0.0, squeeze: 0 },
   spinner: { drag: 0.4, bounce: 1.8, boost: 0.6, squeeze: 0 },
   funnel:  { drag: 0.5, bounce: 0.8, boost: 0.1, squeeze: 3.0 },
+  // A cable car crossing the street on a timetable. Between cars marbles just
+  // bump over the rails; while a car is passing they are blocked and knocked
+  // about. Timing comes from the obstacle: period (seconds of simulated time
+  // between cars, default 10) and duty (share of each period a car blocks the
+  // road, default 0.4). Where in its timetable the car is when the race starts
+  // is drawn from the race seed, so every race times it differently.
+  cable_car: {
+    drag: 0.05, bounce: 0, boost: 0, squeeze: 0,
+    passing: { drag: 1.2, bounce: 2.0, boost: 0, squeeze: 0 },
+  },
 };
+
+const MOVING_DEFAULTS = { period: 10, duty: 0.4 };
 
 function clamp(value, min, max) {
   return value < min ? min : value > max ? max : value;
@@ -55,7 +69,7 @@ function subSeed(seed, salt) {
   return (h ^ (h >>> 16)) >>> 0;
 }
 
-function normaliseObstacles(obstacles) {
+function normaliseObstacles(obstacles, timetableRng) {
   return (Array.isArray(obstacles) ? obstacles : [])
     .filter((o) => o && OBSTACLE_EFFECTS[o.type] && Number.isFinite(o.at))
     .map((o) => ({
@@ -64,7 +78,13 @@ function normaliseObstacles(obstacles) {
       end: clamp(o.at + (Number.isFinite(o.span) ? o.span : 0.03), 0, 1),
       intensity: clamp(Number.isFinite(o.intensity) ? o.intensity : 0.5, 0, 1),
       effect: OBSTACLE_EFFECTS[o.type],
+      ...(OBSTACLE_EFFECTS[o.type].passing && {
+        period: clamp(Number.isFinite(o.period) ? o.period : MOVING_DEFAULTS.period, 1, 120),
+        duty: clamp(Number.isFinite(o.duty) ? o.duty : MOVING_DEFAULTS.duty, 0, 1),
+        phase: timetableRng.next(), // fraction of a period, set below once period is known
+      }),
     }))
+    .map((o) => (o.period ? { ...o, phase: o.phase * o.period } : o))
     .sort((a, b) => a.start - b.start);
 }
 
@@ -91,10 +111,12 @@ function simulateRace({
 
   const physicsRng = createRng(subSeed(seed, 1));
   const durationRng = createRng(subSeed(seed, 2));
+  // Separate stream so moving obstacles never disturb the physics randomness.
+  const timetableRng = createRng(subSeed(seed, 4));
 
   const length = Number(track.length_m) || 600;
   const laneCount = Math.max(1, Math.min(entries.length, Number(track.lane_count) || 4));
-  const obstacles = normaliseObstacles(track.obstacles);
+  const obstacles = normaliseObstacles(track.obstacles, timetableRng);
 
   // --- 1. physics ----------------------------------------------------------
   const marbles = entries.map((entry, index) => {
@@ -148,10 +170,12 @@ function simulateRace({
       for (const o of obstacles) {
         if (progress < o.start) break;
         if (progress > o.end) continue;
-        const { drag, bounce, boost } = o.effect;
+        // Moving obstacles switch to their "passing" effect on their timetable.
+        const effect = o.period && ((time + o.phase) % o.period) < o.period * o.duty ? o.effect.passing : o.effect;
+        const { drag, bounce, boost } = effect;
         const dragFactor = drag > 0 ? drag * (1 - 0.6 * m.handling) : drag;
         target *= 1 - clamp(dragFactor * o.intensity, -0.6, 0.9);
-        squeeze += o.effect.squeeze * o.intensity;
+        squeeze += effect.squeeze * o.intensity;
 
         if (physicsRng.chance(bounce * o.intensity * (1.15 - 0.7 * m.luck) * SIM_DT)) {
           m.speed *= 0.45 + 0.3 * m.handling;

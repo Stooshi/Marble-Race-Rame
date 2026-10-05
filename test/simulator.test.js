@@ -104,3 +104,24 @@ test('halfway split times are recorded and agree with the frames', () => {
     assert.ok(after.p[r.index] >= 0.5 - 1e-3, `after ${after.p[r.index]}`);
   }
 });
+
+const crossing = (duty) => ({
+  length_m: 600, lane_count: 5,
+  obstacles: [{ type: 'cable_car', at: 0.5, span: 0.05, intensity: 0.9, period: 12, duty }],
+});
+
+test('the cable car only catches marbles while a car is passing', () => {
+  const never = simulateRace({ seed: 5, track: crossing(0), entries: entries(20) });
+  const always = simulateRace({ seed: 5, track: crossing(1), entries: entries(20) });
+  assert.equal(never.events.filter((e) => e.obstacle === 'cable_car').length, 0);
+  assert.ok(always.events.filter((e) => e.obstacle === 'cable_car').length > 20);
+});
+
+test('the cable car timetable is repeatable for a seed and differs between races', () => {
+  const t = crossing(0.3);
+  assert.deepEqual(simulateRace({ seed: 9, track: t, entries: entries(20) }), simulateRace({ seed: 9, track: t, entries: entries(20) }));
+  const caught = (seed) => new Set(simulateRace({ seed, track: t, entries: entries(20) }).events
+    .filter((e) => e.obstacle === 'cable_car').map((e) => e.i)).size;
+  const counts = new Set(Array.from({ length: 12 }, (_, s) => caught(s * 101 + 1)));
+  assert.ok(counts.size > 3, `different races should catch different numbers of marbles (got ${[...counts]})`);
+});

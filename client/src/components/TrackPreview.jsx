@@ -7,6 +7,7 @@ export const OBSTACLE_COLORS = {
   sand: '#d6a35c',
   spinner: '#a855f7',
   funnel: '#38bdf8',
+  cable_car: '#ef4444',
 };
 
 /** Small SVG thumbnail of a track's shape with its obstacles. */

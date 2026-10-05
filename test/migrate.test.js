@@ -46,3 +46,21 @@ test('the seed catalog has 22 marbles and three tracks with heights', () => {
     assert.equal(pts.at(-1).z, 0, 'the finish line is the lowest point');
   }
 });
+
+test('San Francisco is added by its own data update, with a full layout and a cable car', () => {
+  const { OBSTACLE_EFFECTS } = require('../src/game/simulator');
+  const sql = fs.readFileSync(require('path').join(__dirname, '..', 'docs', 'data_updates', '2026-10-05-add-san-francisco.sql'), 'utf8');
+  assert.match(sql, /WHERE NOT EXISTS[\s\S]*t\.slug = v\.slug OR lower\(t\.name\) = lower\(v\.name\)/);
+  assert.match(sql, /\('san-francisco', 'San Francisco'/);
+  const [pts, obs] = [...sql.matchAll(/'(\[\{.*?\}\])'/g)].map((m) => JSON.parse(m[1]));
+  assert.ok(pts.length >= 30);
+  assert.ok(pts.every((p, i) => Number.isFinite(p.z) && (i === 0 || p.z <= pts[i - 1].z)), 'downhill all the way');
+  assert.equal(pts.at(-1).z, 0);
+  assert.ok(obs.every((o) => OBSTACLE_EFFECTS[o.type]), 'every obstacle type is one the race engine knows');
+  assert.ok(obs.every((o, i) => i === 0 || obs[i - 1].at + obs[i - 1].span <= o.at + 1e-9), 'obstacles do not overlap');
+  const car = obs.find((o) => o.type === 'cable_car');
+  assert.ok(car && car.period > 0 && car.duty > 0, 'has a timed cable car');
+  // The older data update must not be edited, or live servers would never re-run it.
+  const old = fs.readFileSync(require('path').join(__dirname, '..', 'docs', 'data_updates', '2026-10-04-restore-marbles-tracks.sql'), 'utf8');
+  assert.doesNotMatch(old, /san-francisco/);
+});

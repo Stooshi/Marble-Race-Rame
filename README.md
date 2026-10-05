@@ -149,7 +149,7 @@ Each result's `comparison` compares the race with earlier finished races on the 
 | PATCH | `/tracks/:id` | admin | Partial update. Races already decided keep their snapshot |
 | DELETE | `/tracks/:id` | admin | Soft delete (`is_active = false`) |
 
-`waypoints` is an ordered polyline `[{ "x": 0, "y": 0 }, …]` in track units. Clients map `progress` (0–1) along this line. `obstacles` are placed by progress: `{ "type": "bumper|ramp|sand|spinner|funnel", "at": 0.35, "span": 0.04, "intensity": 0.6 }`.
+`waypoints` is an ordered polyline `[{ "x": 0, "y": 0 }, …]` in track units. Clients map `progress` (0–1) along this line. `obstacles` are placed by progress: `{ "type": "bumper|ramp|sand|spinner|funnel", "at": 0.35, "span": 0.04, "intensity": 0.6 }`. A `cable_car` is a moving hazard on a timetable: `{ "type": "cable_car", "at": 0.59, "span": 0.03, "intensity": 0.9, "period": 18, "duty": 0.3 }` sends a car every `period` seconds of simulated time, blocking the street for `duty` of that time. Each race starts the timetable at a different point, drawn from the race seed. Four tracks ship today: Meadow Loop (easy), Canyon Drop (medium), San Francisco (hard, with a cable car) and Volcano Run (extreme).
 
 ### Marble appearance
 
