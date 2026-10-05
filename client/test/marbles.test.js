@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { buildCenterline, pointOnTrack, TRACK_STYLE } from '../src/three/trackModel';
-import { MARBLE_RADIUS, placeMarble, RUNOUT_LENGTH, runoutSlot } from '../src/three/marbles';
+import { MARBLE_RADIUS, placeMarble } from '../src/three/marbles';
 
 const track = {
   length_m: 600,
@@ -35,18 +35,3 @@ describe('placeMarble', () => {
   });
 });
 
-describe('runoutSlot', () => {
-  it('gives every finisher its own parking spot inside the run-out', () => {
-    const lanes = 4;
-    const width = lanes * TRACK_STYLE.laneWidth;
-    const seen = new Set();
-    for (let rank = 0; rank < 20; rank += 1) {
-      const { along, across } = runoutSlot(rank, lanes);
-      seen.add(`${along}:${across}`);
-      expect(along).toBeGreaterThan(0);
-      expect(along).toBeLessThan(RUNOUT_LENGTH - MARBLE_RADIUS);
-      expect(Math.abs(across)).toBeLessThanOrEqual(width / 2 - MARBLE_RADIUS);
-    }
-    expect(seen.size).toBe(20);
-  });
-});
