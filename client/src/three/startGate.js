@@ -1,19 +1,20 @@
 /**
  * The starting gate (physics preview, tracks with physics.gate): a row of
  * paddles, one in front of each waiting marble on the starting ramp, under a
- * red frame. At "GO" the paddles sink into the ice one after another in a
+ * frame. White like the ice, with a blue-grey edge so they stand out on it. At "GO" the paddles sink into the ice one after another in a
  * quick ripple: each one is clear just as the physics lets its marble go.
  *
- * Phone budget: two instanced meshes (paddles, blocks behind) plus a frame.
+ * Phone budget: three instanced meshes (paddles, their edges, blocks behind) plus a frame.
  */
 import {
   BoxGeometry, Group, InstancedMesh, Matrix4, Mesh, MeshLambertMaterial, Quaternion, Vector3, DynamicDrawUsage,
 } from 'three';
 import { layoutMarbles, MARBLE_RADIUS } from './marbles';
 
-export const GATE_COLORS = { paddle: '#e23b3b', block: '#f4fbff', frame: '#e23b3b', beam: '#ffffff' };
+export const GATE_COLORS = { paddle: '#ffffff', edge: '#5f86a8', block: '#f4fbff', frame: '#ffffff' };
 
 const PADDLE = { width: 1.05, height: 0.95, thick: 0.14 };
+const EDGE = 0.06; // width of the blue-grey border round each white paddle
 const SINK_MS = 160; // how long a paddle takes to sink
 const ZERO = new Vector3(0, 0, 0);
 
@@ -54,12 +55,19 @@ export class StartGate {
     this.places = places;
     this.releaseMs = releaseMs;
     this.group = new Group();
-    this.paddleGeo = new BoxGeometry(PADDLE.width, PADDLE.height, PADDLE.thick);
+    // Each paddle: a white face set into a slightly larger blue-grey one, which shows as a crisp edge.
+    this.paddleGeo = new BoxGeometry(PADDLE.width - 2 * EDGE, PADDLE.height - 2 * EDGE, PADDLE.thick + 0.02);
+    this.edgeGeo = new BoxGeometry(PADDLE.width, PADDLE.height, PADDLE.thick);
     this.blockGeo = new BoxGeometry(PADDLE.width, 0.5, 0.5);
-    this.mats = Object.fromEntries(Object.entries(GATE_COLORS).map(([k, c]) => [k, new MeshLambertMaterial({ color: c })]));
+    // The white parts glow a touch, so they stay white even facing away from the sun.
+    const glow = { paddle: '#8a96a2', frame: '#8a96a2' };
+    this.mats = Object.fromEntries(Object.entries(GATE_COLORS).map(([k, c]) => [k, new MeshLambertMaterial({ color: c, emissive: glow[k] ?? '#000000' })]));
     this.paddles = new InstancedMesh(this.paddleGeo, this.mats.paddle, places.length);
     this.paddles.instanceMatrix.setUsage(DynamicDrawUsage);
     this.paddles.frustumCulled = false;
+    this.edges = new InstancedMesh(this.edgeGeo, this.mats.edge, places.length);
+    this.edges.instanceMatrix.setUsage(DynamicDrawUsage);
+    this.edges.frustumCulled = false;
     const blocks = new InstancedMesh(this.blockGeo, this.mats.block, places.length);
     this.m = new Matrix4();
     this.q = new Quaternion();
@@ -74,12 +82,12 @@ export class StartGate {
       blocks.setMatrixAt(i, this.m);
     });
     blocks.instanceMatrix.needsUpdate = true;
-    this.group.add(this.paddles, blocks);
+    this.group.add(this.paddles, this.edges, blocks);
     this.group.add(this.buildFrame());
     this.update(-Infinity);
   }
 
-  /** A red frame over the start line: a post at each end and a beam across. */
+  /** A white frame over the start line, trimmed in blue-grey: a post at each end and a beam across. */
   buildFrame() {
     const frame = new Group();
     const ends = [this.places[0], this.places[this.places.length - 1]];
@@ -91,13 +99,25 @@ export class StartGate {
       const post = new Mesh(new BoxGeometry(0.35, height, 0.35), this.mats.frame);
       post.position.copy(foot).add(new Vector3(0, height / 2, 0));
       frame.add(post);
+      // Blue-grey foot and cap, so the white post reads against the ice and the sky.
+      for (const y of [0.15, height - 0.1]) {
+        const band = new Mesh(new BoxGeometry(0.45, 0.3, 0.45), this.mats.edge);
+        band.position.copy(foot).add(new Vector3(0, y, 0));
+        frame.add(band);
+      }
       tops.push(foot.clone().add(new Vector3(0, height, 0)));
     }
     const span = tops[0].distanceTo(tops[1]);
-    const beam = new Mesh(new BoxGeometry(span + 0.35, 0.5, 0.4), this.mats.beam);
+    const beam = new Mesh(new BoxGeometry(span + 0.35, 0.5, 0.4), this.mats.frame);
     beam.position.copy(tops[0]).lerp(tops[1], 0.5);
     beam.lookAt(tops[1]);
     beam.rotateY(Math.PI / 2);
+    // Blue-grey trim along the beam's top and bottom edges.
+    for (const y of [-0.25, 0.25]) {
+      const trim = new Mesh(new BoxGeometry(span + 0.45, 0.08, 0.46), this.mats.edge);
+      trim.position.y = y;
+      beam.add(trim);
+    }
     frame.add(beam);
     return frame;
   }
@@ -137,13 +157,17 @@ export class StartGate {
         .addScaledVector(pl.up, PADDLE.height / 2 - sink * (PADDLE.height + 0.05));
       this.m.compose(this.v, this.q, sink >= 1 ? ZERO : one); // gone once fully sunk
       this.paddles.setMatrixAt(i, this.m);
+      this.edges.setMatrixAt(i, this.m);
     });
     this.paddles.instanceMatrix.needsUpdate = true;
+    this.edges.instanceMatrix.needsUpdate = true;
   }
 
   dispose() {
-    this.group.traverse((o) => { if (o.isMesh && o.geometry !== this.paddleGeo && o.geometry !== this.blockGeo) o.geometry.dispose(); });
+    const shared = [this.paddleGeo, this.edgeGeo, this.blockGeo];
+    this.group.traverse((o) => { if (o.isMesh && !shared.includes(o.geometry)) o.geometry.dispose(); });
     this.paddleGeo.dispose();
+    this.edgeGeo.dispose();
     this.blockGeo.dispose();
     for (const m of Object.values(this.mats)) m.dispose();
   }
