@@ -2,6 +2,7 @@
 
 const test = require('node:test');
 const assert = require('node:assert/strict');
+const crypto = require('node:crypto');
 const { simulateRace } = require('../src/game/simulator');
 
 const track = {
@@ -124,4 +125,61 @@ test('the cable car timetable is repeatable for a seed and differs between races
     .filter((e) => e.obstacle === 'cable_car').map((e) => e.i)).size;
   const counts = new Set(Array.from({ length: 12 }, (_, s) => caught(s * 101 + 1)));
   assert.ok(counts.size > 3, `different races should catch different numbers of marbles (got ${[...counts]})`);
+});
+
+// --- Solid marbles: what viewers see never overlaps, and outcomes never change ---
+
+const FIXTURES = [
+  track,
+  {
+    length_m: 900, lane_count: 4,
+    obstacles: [
+      { type: 'bumper', at: 0.2, span: 0.06, intensity: 0.8 },
+      { type: 'cable_car', at: 0.45, span: 0.02, intensity: 0.9, period: 18, duty: 0.3 },
+      { type: 'spinner', at: 0.7, span: 0.05, intensity: 0.8 },
+    ],
+  },
+  { length_m: 600, lane_count: 6, obstacles: [{ type: 'sand', at: 0.5, span: 0.1, intensity: 0.4 }] },
+];
+
+const mixedField = (seed) => Array.from({ length: 20 }, (_, i) => ({
+  id: `m${i}`, lane: (i * 7 + seed) % 20,
+  topSpeed: 30 + ((i * 13 + seed) % 60), acceleration: 30 + ((i * 29) % 60),
+  handling: 30 + ((i * 17) % 60), luck: 30 + ((i * 11 + seed) % 60),
+}));
+
+test('race outcomes are exactly those of the simulator before marbles became solid', () => {
+  // Fingerprint of durations, results and events from the simulator as of
+  // commit e4e4195, before the overlap-free layout was added. Laying marbles
+  // out must never change who wins or any time: if this fails, outcomes moved.
+  const h = crypto.createHash('sha256');
+  for (const t of FIXTURES) {
+    for (let seed = 0; seed < 20; seed += 1) {
+      const sim = simulateRace({ seed: (seed * 2654435761) % 4294967296, track: t, entries: mixedField(seed) });
+      h.update(JSON.stringify([sim.durationMs, sim.results, sim.events]));
+    }
+  }
+  assert.equal(h.digest('hex').slice(0, 24), '0ce35f74fe3d8ddfc1438bbc');
+});
+
+test('marbles never overlap in any frame and never move backwards', () => {
+  // Same sizes as the 3D view: 1.1 m marbles, 1.6 m lanes, lateral ±1 = centre against a wall.
+  const DIAMETER = 1.1;
+  for (const t of FIXTURES) {
+    const room = (t.lane_count * 1.6) / 2 - DIAMETER / 2;
+    for (let seed = 0; seed < 8; seed += 1) {
+      const sim = simulateRace({ seed: seed * 7919 + 3, track: t, entries: mixedField(seed), minDurationMs: 90_000, maxDurationMs: 90_000 });
+      sim.frames.forEach((f, k) => {
+        for (let i = 0; i < f.p.length; i += 1) {
+          if (k > 0) assert.ok(f.p[i] >= sim.frames[k - 1].p[i], `marble ${i} moved backwards at ${f.t} ms`);
+          if (f.p[i] >= 1) continue; // finished marbles have left the track
+          for (let j = i + 1; j < f.p.length; j += 1) {
+            if (f.p[j] >= 1) continue;
+            const d = Math.hypot((f.p[i] - f.p[j]) * t.length_m, (f.l[i] - f.l[j]) * room);
+            assert.ok(d >= DIAMETER, `marbles ${i} and ${j} overlap by ${(DIAMETER - d).toFixed(3)} m at ${f.t} ms (${t.length_m} m track, seed ${seed})`);
+          }
+        }
+      });
+    }
+  }
 });

@@ -17,6 +17,10 @@ const { createRng } = require('./rng');
  *      marble's halfway split time is recorded on the same timeline.
  *   3. Resample to the requested tick rate for streaming.
  *
+ * Marbles are solid in what viewers see: positions are laid out so no two
+ * marbles ever overlap (see layOut and separateFrame). That only moves where
+ * marbles are drawn, never how fast they go, so it cannot change any result.
+ *
  * Inputs never include wall-clock time or Math.random, so
  * simulateRace(sameInput) always returns identical output.
  */
@@ -24,6 +28,12 @@ const { createRng } = require('./rng');
 const SIM_DT = 0.05;              // internal integration step, seconds
 const BASE_SPEED = 10;            // m/s for a 50/50/50/50 marble on open track
 const MAX_SIM_SECONDS = 600;      // safety net against a pathological track
+// Marbles are solid in what viewers see: 1.1 m across on 1.6 m lanes (as in the 3D view).
+const MARBLE_DIAMETER = 1.1;
+const LANE_WIDTH = 1.6;
+const CONTACT_GAP = 0.12;         // clearance so rounding and interpolation never show a touch as an overlap
+const MAX_NUDGE = 1.5;            // metres a marble may be shown ahead of/behind its true spot
+const ROLL_OUT = 4;               // metres finishers roll on past the line (display only)
 
 // How each obstacle type affects a marble while it is inside the obstacle.
 //  drag:     fraction of speed lost per second (scaled by intensity, reduced by handling)
@@ -117,6 +127,8 @@ function simulateRace({
   const length = Number(track.length_m) || 600;
   const laneCount = Math.max(1, Math.min(entries.length, Number(track.lane_count) || 4));
   const obstacles = normaliseObstacles(track.obstacles, timetableRng);
+  const room = Math.max(0.01, (Math.max(1, Number(track.lane_count) || 4) * LANE_WIDTH) / 2 - MARBLE_DIAMETER / 2);
+  const minGap = MARBLE_DIAMETER + CONTACT_GAP;
 
   // --- 1. physics ----------------------------------------------------------
   const marbles = entries.map((entry, index) => {
@@ -128,6 +140,10 @@ function simulateRace({
       accel: 2.5 + 4 * s(entry.acceleration),
       handling: s(entry.handling),
       luck: s(entry.luck),
+      kick: 0,                 // sideways knock still to play out (lateral units; display only)
+      nudge: 0,                // shown this many metres off its true distance (display only)
+      rollOut: 0,              // metres rolled past the line after finishing (display only)
+      lastShown: -Infinity,    // shown distance at the previous step: it never goes backwards
       form: 1,                 // slow-varying "momentum" multiplier
       speed: 0,
       distance: 0,
@@ -141,12 +157,85 @@ function simulateRace({
     };
   });
   for (const m of marbles) m.distance = m.startOffset;
+  // Shown positions put the starting grid on the track (rows behind the line
+  // are drawn gridDepth metres further on), fading to no shift a quarter of the
+  // way round, so halfway and the finish line are exactly where they really are.
+  const gridDepth = -Math.min(...marbles.map((m) => m.startOffset)) + 2 * MAX_NUDGE + MARBLE_DIAMETER / 2;
+  const fadeOver = length / 4;
+  const gridShift = (d) => gridDepth * clamp(1 - d / fadeOver, 0, 1);
+  const shownDistance = (m) => m.distance + gridShift(m.distance) + m.nudge;
+  const shown = (m) => shownDistance(m) + m.rollOut;
 
   const rawEvents = [];
   let time = 0;
   let remaining = marbles.length;
 
-  const record = (m) => m.trace.push(clamp(m.distance / length, 0, 1), m.lateral);
+  const record = (m) => m.trace.push(
+    m.finishedAt !== null ? 1 : clamp(shownDistance(m) / length, 0, 0.99999),
+    m.lateral,
+  );
+
+  /**
+   * Keeps marbles from overlapping in what viewers see, without touching the
+   * race itself: sideways position never feeds into speed, so marbles are
+   * pushed apart sideways freely, and along the track by a small display-only
+   * nudge that fades back to zero and to nothing near the finish line.
+   * Distances, speeds and random draws are untouched, so results are identical.
+   */
+  function layOut() {
+    // Nudges fade back to the true position, but never so fast that a marble is shown going backwards.
+    for (const m of marbles) {
+      m.nudge *= 0.85;
+      const back = m.lastShown - shownDistance(m);
+      if (back > 0) m.nudge += back;
+    }
+    const onTrack = marbles.filter((m) => m.rollOut < ROLL_OUT);
+    const order = () => onTrack.sort((a, b) => shown(a) - shown(b) || a.index - b.index);
+    // More room in the starting grid (rows sit closer than a marble is wide), none at the finish line.
+    const cap = (m) => (m.finishedAt !== null ? 0
+      : Math.min(m.distance < 20 ? 2 * MAX_NUDGE : MAX_NUDGE, Math.max(0, (length - m.distance) / 15) * MAX_NUDGE));
+    order();
+    for (let pass = 0; pass < 16; pass += 1) {
+      let moved = false;
+      for (let a = 0; a < onTrack.length; a += 1) {
+        const p = onTrack[a];
+        for (let b = a + 1; b < onTrack.length; b += 1) {
+          const q = onTrack[b];
+          const dx = shown(q) - shown(p);
+          if (dx >= minGap) break;
+          const dy = (q.lateral - p.lateral) * room;
+          const d = Math.hypot(dx, dy);
+          if (d >= minGap) continue;
+          moved = true;
+          let nx = d < 1e-6 ? 1 : dx / d;
+          let ny = d < 1e-6 ? 0 : dy / d;
+          // Nose to tail: tilt the push sideways (towards open track) so one goes round the other.
+          if (Math.abs(ny) < 0.5) {
+            const side = Math.abs(dy) > 0.05 ? Math.sign(dy) : ((q.lateral + p.lateral) / 2 > 0 ? -1 : 1);
+            ny = side * 0.5;
+            nx = Math.sqrt(1 - ny * ny);
+          }
+          const push = (minGap - d) / 2 + 0.005;
+          // Sideways first (free); what the walls stop goes into the along-track nudge.
+          const pl = clamp(p.lateral - (ny * push) / room, -1, 1);
+          const ql = clamp(q.lateral + (ny * push) / room, -1, 1);
+          const lost = push * Math.abs(ny) * 2 - (Math.abs(pl - p.lateral) + Math.abs(ql - q.lateral)) * room;
+          p.lateral = pl; q.lateral = ql;
+          // Along the track: p is held back only as far as it moved forward this step; q takes the rest.
+          const along = push * nx + Math.max(0, lost) / 2;
+          const pSlack = p.finishedAt !== null ? 0 : Math.max(0, shownDistance(p) - p.lastShown);
+          const pBack = Math.min(along, pSlack, Math.max(0, p.nudge + cap(p)));
+          p.nudge -= pBack;
+          q.nudge = clamp(q.nudge + along * 2 - pBack, -cap(q), cap(q));
+        }
+      }
+      if (!moved) break;
+      order();
+    }
+    for (const m of marbles) m.lastShown = shownDistance(m);
+  }
+
+  for (let i = 0; i < 20; i += 1) layOut(); // settle the starting grid before the first frame
   marbles.forEach(record);
 
   while (remaining > 0) {
@@ -155,7 +244,7 @@ function simulateRace({
 
     for (const m of marbles) {
       if (m.finishedAt !== null) {
-        record(m);
+        if (m.rollOut < ROLL_OUT) m.rollOut += m.speed * SIM_DT;
         continue;
       }
 
@@ -179,7 +268,7 @@ function simulateRace({
 
         if (physicsRng.chance(bounce * o.intensity * (1.15 - 0.7 * m.luck) * SIM_DT)) {
           m.speed *= 0.45 + 0.3 * m.handling;
-          m.lateral = clamp(m.lateral + physicsRng.range(-0.8, 0.8), -1, 1);
+          m.kick += physicsRng.range(-0.8, 0.8); // knocked sideways, played out over the next few steps
           rawEvents.push({ time, index: m.index, type: 'bounce', obstacle: o.type });
         }
         if (physicsRng.chance(boost * o.intensity * (0.5 + m.luck) * SIM_DT)) {
@@ -199,7 +288,9 @@ function simulateRace({
       if (m.speed < target) m.speed = Math.min(target, m.speed + m.accel * SIM_DT);
       else m.speed = Math.max(target, m.speed - 3 * SIM_DT);
 
-      m.lateral += (-squeeze * m.lateral + 0.6 * physicsRng.gaussian()) * SIM_DT;
+      const shove = m.kick * 0.15;
+      m.kick -= shove;
+      m.lateral += shove + (-squeeze * m.lateral + 0.6 * physicsRng.gaussian()) * SIM_DT;
       m.lateral = clamp(m.lateral, -1, 1);
 
       const before = m.distance;
@@ -217,8 +308,9 @@ function simulateRace({
         m.distance = length;
         remaining -= 1;
       }
-      record(m);
     }
+    layOut();
+    for (const m of marbles) record(m);
   }
 
   // --- 2. pick duration and scale -----------------------------------------
@@ -258,6 +350,40 @@ function simulateRace({
     return [p, l];
   }
 
+  // Last safety net on the frames themselves: a very fast overtake can still
+  // graze between simulation steps; nudge such pairs apart sideways (or, at a
+  // wall, a few centimetres along the track). Display only, like layOut.
+  const metresPerProgress = length; // how viewers draw progress
+  function separateFrame(progress, lateral) {
+    for (let pass = 0; pass < 24; pass += 1) {
+      let moved = false;
+      for (let i = 0; i < progress.length; i += 1) {
+        if (progress[i] >= 1) continue;
+        for (let j = i + 1; j < progress.length; j += 1) {
+          if (progress[j] >= 1) continue;
+          const dx = (progress[j] - progress[i]) * metresPerProgress;
+          if (Math.abs(dx) >= MARBLE_DIAMETER + 0.02) continue;
+          const dy = (lateral[j] - lateral[i]) * room;
+          const d = Math.hypot(dx, dy);
+          if (d >= MARBLE_DIAMETER + 0.02) continue;
+          moved = true;
+          const side = Math.abs(dy) > 0.01 ? Math.sign(dy) : (lateral[i] + lateral[j] > 0 ? -1 : 1);
+          const need = (Math.sqrt(Math.max(0, (MARBLE_DIAMETER + 0.03) ** 2 - dx * dx)) - Math.abs(dy)) / 2 / room;
+          const li = clamp(lateral[i] - side * need, -1, 1);
+          const lj = clamp(lateral[j] + side * need, -1, 1);
+          const short = (2 * need - Math.abs(li - lateral[i]) - Math.abs(lj - lateral[j])) * room;
+          lateral[i] = round(li, 3); lateral[j] = round(lj, 3);
+          if (short > 0.001) {
+            // Only ever forwards, so nobody is shown rolling backwards.
+            const ahead = dx >= 0 ? j : i;
+            progress[ahead] = Math.min(0.99999, round(progress[ahead] + (short + 0.02) / metresPerProgress, 5));
+          }
+        }
+      }
+      if (!moved) break;
+    }
+  }
+
   const finishMsByIndex = new Map(results.map((r) => [r.index, r.finishTimeMs]));
   const frames = [];
   for (let k = 0; k < frameCount; k += 1) {
@@ -268,7 +394,7 @@ function simulateRace({
     for (const m of marbles) {
       const done = t >= finishMsByIndex.get(m.index);
       const [p, l] = sample(m, raw);
-      progress.push(done ? 1 : Math.min(round(p, 4), 0.9999));
+      progress.push(done ? 1 : Math.min(round(p, 5), 0.99999));
       lateral.push(round(l, 3));
     }
     // Standings: finished marbles in finish order, then by progress.
@@ -283,6 +409,9 @@ function simulateRace({
         if (da !== db) return da ? -1 : 1;
         return progress[b] - progress[a] || a - b;
       });
+    const prev = frames[frames.length - 1];
+    if (prev) progress.forEach((p, i) => { if (p < prev.p[i]) progress[i] = prev.p[i]; });
+    separateFrame(progress, lateral);
     frames.push({ t, p: progress, l: lateral, s: standings });
   }
 
