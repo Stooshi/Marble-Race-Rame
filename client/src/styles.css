@@ -446,6 +446,13 @@ main { padding-bottom: 48px; }
 .preview3d__racelist a:hover { border-color: var(--accent); }
 .preview3d + .replay__controls, .preview3d .replay__controls { margin: 10px 0; padding: 0; }
 .replay3d__clock { position: absolute; top: 8px; right: 8px; padding: 4px 10px; border-radius: 8px; background: rgba(17, 19, 26, 0.7); color: #fff; font-weight: 700; font-variant-numeric: tabular-nums; }
+/* The starting countdown over the 3D view: 3, 2, 1, GO! */
+/* Wrapper keeps the live region stable while the number inside is swapped. */
+.replay3d__countdownwrap { position: absolute; inset: 0; pointer-events: none; }
+.replay3d__countdown { position: absolute; top: 30%; left: 50%; transform: translate(-50%, -50%); font-size: clamp(64px, 18vw, 140px); font-weight: 900; color: #fff; text-shadow: 0 4px 0 #1f2937, 0 0 24px rgba(0, 0, 0, 0.35); pointer-events: none; animation: countdown-pop 1s ease-out both; }
+.replay3d__countdown.is-go { color: #facc15; }
+@keyframes countdown-pop { 0% { transform: translate(-50%, -50%) scale(1.25); opacity: 1; } 80% { transform: translate(-50%, -50%) scale(0.95); opacity: 0.9; } 100% { transform: translate(-50%, -50%) scale(0.9); opacity: 0.6; } }
+@media (prefers-reduced-motion: reduce) { .replay3d__countdown { animation: none; } }
 .replay3d__standings { position: absolute; top: 8px; left: 8px; margin: 0; padding: 4px; list-style: none; border-radius: 10px; background: rgba(17, 19, 26, 0.7); max-width: 46%; }
 .replay3d__standings button { display: flex; align-items: center; gap: 6px; width: 100%; padding: 3px 6px; border: 0; border-radius: 6px; background: transparent; color: #fff; font: inherit; font-size: 0.8rem; text-align: left; cursor: pointer; }
 .replay3d__standings li.is-followed button { background: rgba(255, 255, 255, 0.18); }

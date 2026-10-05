@@ -54,6 +54,7 @@ function generate(sections) {
 // Bobsleigh Olympics (working name): an icy run built for speed. Always
 // downhill, never flat. A game, not a simulation: tuned to look fast.
 const BOBSLEIGH_SECTIONS = [
+  { name: 'Starting ramp', kind: 'straight', length: 16, grade: 1.3 }, // steep: a burst off the line
   { name: 'Start plunge', kind: 'straight', length: 80, grade: 0.8 },
   { name: 'S-bend', kind: 'left', radius: 70, degrees: 50, grade: 0.15 },
   { name: 'S-bend', kind: 'right', radius: 70, degrees: 50, grade: 0.15 },
@@ -93,10 +94,14 @@ function bobsleigh() {
       // field lines up side by side: nobody starts behind anybody. The outer
       // places start a little further on (stagger, metres at the very edge),
       // like a running track's lanes, since they have further to come in, and
-      // the gate releases each marble at its own moment within `release`
-      // seconds, in a random order each race, so no place has an edge.
-      // Tuned on thousands of races (stand-in for the starting gate of step 5).
-      channel: { radius: 3.6, maxAngle: 80, funnel: { length: 70, radius: 22, spacing: 1.15, stagger: 2.2, release: 0.6 } },
+      // the starting gate releases each marble at its own moment within
+      // `release` seconds, in a random order each race, so no place has an
+      // edge. Tuned on thousands of races.
+      channel: { radius: 3.6, maxAngle: 80, funnel: { length: 70, radius: 22, spacing: 1.15, stagger: 2.2, release: 0.45 } },
+      // The starting gate: a row of paddles, one in front of each marble, that
+      // sink into the ice after a countdown, each at its own moment (the
+      // funnel's `release`), a quick ripple in a random order each race.
+      gate: { countdownMs: 3000 },
       collisions: true,        // marbles bump into each other
       runout: { length: 30, halfWidth: 3.5 }, // the catch area past the finish line (metres)
       // The splitter: a wedge divides the channel into a left and a right
@@ -117,8 +122,8 @@ function bobsleigh() {
         // is slower through but carries its speed.
         // With marbles bumping, more of the pack is pushed wide, so the wedge
         // stands a little towards the outside to split the field evenly.
-        tipOffset: -0.3,
-        insideScrub: 12,
+        tipOffset: -1.2,
+        insideScrub: 11,
         outsideDrag: 1,
       },
     },

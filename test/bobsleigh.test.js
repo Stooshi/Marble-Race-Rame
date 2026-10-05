@@ -161,3 +161,24 @@ test('finishers roll into the catch area, bump the ones ahead and settle without
   const times = sim.results.map((r) => r.finishTimeMs);
   assert.deepEqual(times, [...times].sort((x, y) => x - y));
 });
+
+// --- step 5: the starting gate ------------------------------------------------
+
+test('the starting gate holds every marble until its own paddle drops, in a quick random ripple', () => {
+  const { gate, channel } = bob.physics;
+  const orders = new Set();
+  for (const seed of [11, 12, 13]) {
+    const { sim } = routeRace(seed);
+    assert.equal(sim.start.countdownMs, gate.countdownMs);
+    const rel = sim.start.releaseMs;
+    assert.equal(rel.length, 20);
+    assert.ok(rel.every((t) => t >= 0 && t <= channel.funnel.release * 1000), 'all gone within the ripple');
+    orders.add(JSON.stringify(rel.map((t, i) => i).sort((a, b) => rel[a] - rel[b])));
+    for (const f of sim.frames) {
+      for (let i = 0; i < 20; i += 1) {
+        if (f.t < rel[i]) assert.equal(f.p[i], sim.frames[0].p[i], `marble ${i} moved before its paddle dropped`);
+      }
+    }
+  }
+  assert.equal(orders.size, 3, 'a different order each race');
+});

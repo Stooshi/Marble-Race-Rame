@@ -88,6 +88,7 @@ router.get('/preview', async (req, res) => {
       results: sim.results,
       events: sim.events,
       frames: sim.frames,
+      ...(sim.start && { start: sim.start }),
       stats: sim.stats,
     };
     const json = Buffer.from(JSON.stringify(body));

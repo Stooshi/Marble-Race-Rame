@@ -13,6 +13,7 @@ import { formatTime } from '../utils/format';
  * again (with a new key) for a different race.
  */
 const NOBODY = [];
+const countdownLabel = (t) => (t >= 0 ? 'GO!' : String(Math.ceil(-t / 1000)));
 
 export default function RaceReplayViewer({ data, loading = false, mine = NOBODY, children }) {
   const replay = useReplay(data);
@@ -28,7 +29,7 @@ export default function RaceReplayViewer({ data, loading = false, mine = NOBODY,
     if (status !== 'ready' || !scene || !data) return;
     try {
       scene.setTrack(data.track);
-      scene.setRace(data.entries, mine, data.results);
+      scene.setRace(data.entries, mine, data.results, data.start ? { ...data.start, frame: data.frames[0] } : null);
       setBuilt(true);
     } catch (err) {
       fail(`building the race on "${data.track?.name}"`, err);
@@ -104,7 +105,15 @@ export default function RaceReplayViewer({ data, loading = false, mine = NOBODY,
         {status === 'failed' && failure && <SceneFailure failure={failure} />}
         {built && (
           <>
-            <div className="replay3d__clock">{formatTime(replay.time)}</div>
+            <div className="replay3d__clock">{formatTime(Math.max(0, replay.time))}</div>
+            {replay.start < 0 && replay.time < 700 && (
+              <div className="replay3d__countdownwrap" aria-live="polite">
+                {/* Keyed by what it shows, so each number pops in afresh. */}
+                <span key={countdownLabel(replay.time)} className={`replay3d__countdown${replay.time >= 0 ? ' is-go' : ''}`}>
+                  {countdownLabel(replay.time)}
+                </span>
+              </div>
+            )}
             {replay.frame?.v && followIndex !== undefined && replay.frame.p[followIndex] < 1 && (
               <div className="replay3d__speed" aria-label="Speed of the marble the camera follows">
                 <strong>{Math.round((replay.frame.v[followIndex] ?? 0) * 3.6)}</strong> km/h
@@ -141,7 +150,7 @@ export default function RaceReplayViewer({ data, loading = false, mine = NOBODY,
           </button>
           <input
             type="range"
-            min={0}
+            min={replay.start}
             max={replay.duration}
             step={100}
             value={replay.time}

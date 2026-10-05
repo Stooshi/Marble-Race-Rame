@@ -6,10 +6,13 @@ import { frameAtTime } from '../utils/splits';
  * speed and scrubbing. Exposes the same `sample()` contract as useRaceStream.
  */
 export function useReplay(replay) {
+  // With a starting gate the replay opens on the countdown: time runs from
+  // minus the countdown up to the race's end, and the race starts at 0 ("GO").
+  const start = -(replay?.start?.countdownMs ?? 0);
   const [playing, setPlaying] = useState(false);
   const [speed, setSpeed] = useState(1);
-  const [time, setTime] = useState(0);
-  const clock = useRef({ base: 0, startedAt: 0 });
+  const [time, setTime] = useState(start);
+  const clock = useRef({ base: start, startedAt: 0 });
   const duration = replay?.durationMs ?? 0;
 
   const now = useCallback(() => {
@@ -18,15 +21,15 @@ export function useReplay(replay) {
   }, [playing, speed, duration]);
 
   const seek = useCallback((t) => {
-    clock.current = { base: Math.max(0, Math.min(duration, t)), startedAt: performance.now() };
+    clock.current = { base: Math.max(start, Math.min(duration, t)), startedAt: performance.now() };
     setTime(clock.current.base);
-  }, [duration]);
+  }, [duration, start]);
 
   const toggle = useCallback(() => {
     const t = now();
-    clock.current = { base: t >= duration ? 0 : t, startedAt: performance.now() };
+    clock.current = { base: t >= duration ? start : t, startedAt: performance.now() };
     setPlaying((p) => !p);
-  }, [now, duration]);
+  }, [now, duration, start]);
 
   const changeSpeed = useCallback((s) => {
     clock.current = { base: now(), startedAt: performance.now() };
@@ -47,9 +50,15 @@ export function useReplay(replay) {
     return () => clearInterval(id);
   }, [playing, now, duration]);
 
-  const sample = useCallback(() => (replay ? frameAtTime(replay.frames, replay.tickMs, now()) : null), [replay, now]);
+  // During the countdown the marbles wait at the gate (the first frame), but the frame carries the real time.
+  const frameAt = useCallback((t) => {
+    if (!replay) return null;
+    const f = frameAtTime(replay.frames, replay.tickMs, t);
+    return t < 0 && f ? { ...f, t } : f;
+  }, [replay]);
+  const sample = useCallback(() => frameAt(now()), [frameAt, now]);
 
-  const frame = replay ? frameAtTime(replay.frames, replay.tickMs, time) : null;
+  const frame = frameAt(time);
 
   // Splits up to the current time, from the official results.
   const splits = {};
@@ -57,6 +66,6 @@ export function useReplay(replay) {
     for (const r of replay.results) if (r.splitTimeMs <= time) splits[r.index] = r.splitTimeMs;
   }
 
-  return { playing, speed, time, duration, frame, splits, sample, seek, toggle, setSpeed: changeSpeed };
+  return { playing, speed, time, start, duration, frame, splits, sample, seek, toggle, setSpeed: changeSpeed };
 }
 

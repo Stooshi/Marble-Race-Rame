@@ -54,8 +54,8 @@ const CHANNEL_DAMPING = 0.3;   // 1/s: rocking up and down the channel walls set
 const ICE_RUTS = 0.5;          // rad/s per √s: bumps in the ice knock marbles off their line
 // With bumping, drafting and passing the field mixes on its own, so stats
 // count for less than before: better marbles win more, without dominating.
-const ICE_DRAG_SPREAD = 1.44;  // how much top speed (and form) change drag on ice
-const ICE_GLIDE_SPREAD = 0.29; // how much acceleration (and form) change how well a marble glides
+const ICE_DRAG_SPREAD = 1.55;  // how much top speed (and form) change drag on ice
+const ICE_GLIDE_SPREAD = 0.31; // how much acceleration (and form) change how well a marble glides
 const ICE_FORM_PULL = 0.1;     // 1/s: how quickly form drifts back to normal…
 const ICE_FORM_DRIFT = 0.02;   // …and how much it wanders (good and bad spells)
 const SPLITTER_TIP = 0.35;     // metres either side of dead centre where the wedge's tip is hit
@@ -533,32 +533,38 @@ function collideChannel(marbles, time, ctx) {
       const tnb = nx * tb.x + ny * tb.y;
       const closeAcross = -(ub * tnb - ua * tna);
       const vrel = -(closeAlong + closeAcross);
+      // A marble still held at the starting gate doesn't budge: the other takes it all.
+      const heldA = a.releaseAt > time;
+      const heldB = b.releaseAt > time;
+      if (heldA && heldB) continue;
+      const wa = heldA ? 0 : heldB ? 1 : 0.5;
+      const wb = 1 - wa;
       // Push apart (half each), along the track and across.
       const overlap = DIAMETER - d;
-      a.s -= 0.5 * overlap * ns;
-      b.s += 0.5 * overlap * ns;
-      a.th -= (0.5 * overlap * tna) / cs[i].R;
-      b.th += (0.5 * overlap * tnb) / cs[j].R;
+      a.s -= wa * overlap * ns;
+      b.s += wb * overlap * ns;
+      a.th -= (wa * overlap * tna) / cs[i].R;
+      b.th += (wb * overlap * tnb) / cs[j].R;
       if (vrel >= 0) continue; // already moving apart
       // Equal weights. A hit from behind passes speed on along the track; a
       // shove from the side pushes sideways (it doesn't squirt marbles forwards).
-      const Js = 0.5 * (1 + BUMP_BOUNCE) * Math.max(0, closeAlong);
-      const Jx = 0.5 * (1 + BUMP_BOUNCE) * Math.max(0, closeAcross);
-      const J = Js + Jx;
-      a.v = Math.max(0.5, a.v - Js * ns);
-      b.v = Math.max(0.5, b.v + Js * ns);
-      a.thv -= (Jx * tna) / cs[i].R;
-      b.thv += (Jx * tnb) / cs[j].R;
+      const Js = (1 + BUMP_BOUNCE) * Math.max(0, closeAlong);
+      const Jx = (1 + BUMP_BOUNCE) * Math.max(0, closeAcross);
+      const J = (Js + Jx) / 2;
+      a.v = Math.max(0.5, a.v - wa * Js * ns);
+      b.v = Math.max(0.5, b.v + wb * Js * ns);
+      a.thv -= (wa * Jx * tna) / cs[i].R;
+      b.thv += (wb * Jx * tnb) / cs[j].R;
       if (-vrel < BUMP_MIN) continue; // resting against each other, not a hit
       // Hit from behind: the two are knocked aside, opposite ways, so the faster one can come past.
       let way = Math.sign(dx);
       if (Math.abs(dx) < 0.05) way = rng ? (rng.next() < 0.5 ? -1 : 1) : (a.index < b.index ? 1 : -1);
-      a.thv -= (way * BUMP_SIDESTEP * Js) / cs[i].R;
-      b.thv += (way * BUMP_SIDESTEP * Js) / cs[j].R;
+      a.thv -= (2 * wa * way * BUMP_SIDESTEP * Js / 2) / cs[i].R;
+      b.thv += (2 * wb * way * BUMP_SIDESTEP * Js / 2) / cs[j].R;
       if (rng) {
         // A real crowd doesn't part neatly: each one spins off a little to one side.
-        a.thv += (BUMP_SCATTER * J * a.luckKick * rng.gaussian()) / cs[i].R;
-        b.thv += (BUMP_SCATTER * J * b.luckKick * rng.gaussian()) / cs[j].R;
+        a.thv += (2 * wa * BUMP_SCATTER * J * a.luckKick * rng.gaussian()) / cs[i].R;
+        b.thv += (2 * wb * BUMP_SCATTER * J * b.luckKick * rng.gaussian()) / cs[j].R;
       }
       if (stats) {
         stats.bumps += 1;
@@ -734,8 +740,8 @@ function simulatePhysicsRace({ seed, track, entries, level = 3, tickRateHz = 20 
   const key = `${level}:${track.slug ?? ''}:${total.toFixed(3)}:${lanes}:${JSON.stringify(track.obstacles ?? [])}`;
   const drag = tp?.pace === 'free' ? FREE_DRAG : calibrateDrag(ctx, key);
 
-  // Starting grid (step 5 replaces it with a fair starting gate).
-  // With a funnel at the top (ice channels) the whole field starts in one row, side by side up its walls.
+  // Starting grid. With a funnel at the top (ice channels) the whole field
+  // waits in one row, side by side, behind the starting gate.
   const funnel = ctx.channel?.funnel;
   const releaseRng = funnel?.release ? createRng(subSeed(seed, 6)) : null;
   const laneCount = funnel ? entries.length : Math.max(1, Math.min(entries.length, lanes));
@@ -906,6 +912,11 @@ function simulatePhysicsRace({ seed, track, entries, level = 3, tickRateHz = 20 
     results,
     frames,
     events,
+    // The starting gate (tracks with physics.gate): the countdown before the
+    // start, and when each marble's paddle let it go (ms after the start).
+    ...(funnel && tp.gate && {
+      start: { countdownMs: tp.gate.countdownMs, releaseMs: marbles.map((m) => Math.round((m.releaseAt ?? 0) * 1000)) },
+    }),
     stats: {
       winnerMs: results[0]?.finishTimeMs ?? null,
       lastMs: finishers.length === marbles.length ? lastFinish : null,

@@ -88,7 +88,8 @@ export default function PhysicsPreview() {
           {race.data.track.physics && (
             <p className="muted small">
               Bobsleigh Olympics (working name) is a preview-only track: an ice channel built for speed. The whole field
-              starts side by side in a wide funnel, and marbles bump, shove and slipstream each other all the way down.
+              waits side by side on a steep starting ramp behind a gate; at GO its paddles sink in a quick ripple, in a
+              random order each race so no starting place has an edge. Then marbles bump, shove and slipstream each other all the way down.
               At the splitter each marble's line decides its channel: the tight inside or the long outside, balanced so
               neither wins more often. Past the line they roll into a catch area.
             </p>

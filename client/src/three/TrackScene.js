@@ -16,6 +16,9 @@ import { PEN_DROP, RaceMarbles, RUNOUT_LENGTH } from './marbles';
 import { buildScenery } from './scenery';
 import { buildIceChannelGeometry, channelOf, ICE_COLORS } from './iceChannel';
 import { DEFAULT_THEME, themeFor } from './themes';
+import { gatePlaces, StartGate } from './startGate';
+
+const START_SHOT_MS = 2500; // the start-line camera holds until this long after GO
 
 /** A sky dome: pale at the horizon, coloured overhead, whichever way the camera looks. */
 function skyDome() {
@@ -267,15 +270,29 @@ export class TrackScene {
   }
 
   /** Adds the marbles of a race (entries from the race meta / replay). */
-  setRace(entries, highlight = [], results = []) {
+  /**
+   * start (optional, tracks with a starting gate): { releaseMs, frame } — when
+   * each paddle lets its marble go, and the first frame (marbles waiting at the gate).
+   */
+  setRace(entries, highlight = [], results = [], start = null) {
     this.clearRace();
-    this.marbles = new RaceMarbles(entries, Math.max(1, Number(this.track?.lane_count) || 4), highlight, results);
+    const lanes = Math.max(1, Number(this.track?.lane_count) || 4);
+    this.marbles = new RaceMarbles(entries, lanes, highlight, results);
     this.marbles.channel = this.channel;
     this.scene.add(this.marbles.group);
+    if (start?.frame && start.releaseMs) {
+      this.gate = new StartGate(gatePlaces(this.centerline, start.frame, lanes, this.channel), start.releaseMs);
+      this.scene.add(this.gate.group);
+    }
     this.applyMarbleScale();
   }
 
   clearRace() {
+    if (this.gate) {
+      this.scene.remove(this.gate.group);
+      this.gate.dispose();
+      this.gate = null;
+    }
     if (!this.marbles) return;
     this.scene.remove(this.marbles.group);
     this.marbles.dispose();
@@ -313,8 +330,22 @@ export class TrackScene {
    */
   updateRace(frame, followIndex = 0, dt = 1 / 60) {
     if (!this.marbles || !frame) return;
+    this.gate?.update(frame.t);
     this.marbles.update(this.centerline, frame);
-    if (this.cameraMode === 'follow') {
+    if (this.cameraMode === 'follow' && this.gate && frame.t < START_SHOT_MS) {
+      // The countdown: a camera at the start line looking back up the ramp at the
+      // field behind the gate. After GO it stays put and turns to watch the
+      // field rush past, then the follow camera swings in behind the leader.
+      const view = this.gate.startView(this.camera.aspect);
+      const leader = this.marbles.positionOf(followIndex);
+      const k = Math.min(1, Math.max(0, frame.t / 1500));
+      this.followCam.copy(view.camera);
+      this.followTarget.copy(view.target);
+      if (leader) this.followTarget.lerp(leader, k * k * (3 - 2 * k));
+      this.followReady = true;
+      this.camera.position.copy(this.followCam);
+      this.camera.lookAt(this.followTarget);
+    } else if (this.cameraMode === 'follow') {
       const at = this.marbles.positionOf(followIndex);
       if (at) this.updateFollowCamera(at, frame.p[followIndex] ?? 0, dt);
     }
