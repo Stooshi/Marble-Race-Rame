@@ -25,7 +25,7 @@ describe('bobsleigh ice channel (3D)', () => {
     const p = i / centerline.segments;
     const bottom = placeOnChannel(centerline, channel, p, 0, 0, 0, MARBLE_RADIUS);
     const centre = new Vector3().copy(centerline.samples[i].pos);
-    expect(bottom.distanceTo(centre)).toBeCloseTo(MARBLE_RADIUS, 5); // resting on the ice, centre one radius up
+    expect(bottom.distanceTo(centre)).toBeCloseTo(MARBLE_RADIUS + 0.02, 5); // resting on the ice (a hair clear of its flat panels), centre one radius up
     const wall = placeOnChannel(centerline, channel, p, 1, 0, 0, MARBLE_RADIUS);
     expect(wall.y - bottom.y).toBeGreaterThan(2); // high on the wall
   });

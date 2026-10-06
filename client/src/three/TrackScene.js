@@ -14,14 +14,16 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { buildCenterline, buildTrackGeometry, TRACK_STYLE } from './trackModel';
 import { PEN_DROP, RaceMarbles, RUNOUT_LENGTH } from './marbles';
 import { buildScenery } from './scenery';
-import { buildIceChannelGeometry, channelLipAt, channelOf, channelRadiusAt, ICE_COLORS } from './iceChannel';
+import { buildIceChannelGeometry, channelLipAt, channelOf, channelRadiusAt, forkOffset, forkRadius, ICE_COLORS } from './iceChannel';
 import { DEFAULT_THEME, themeFor } from './themes';
 import { gatePlaces, StartGate } from './startGate';
-import { countdownPose } from './startCamera';
+import { countdownPose, handover, startLineShot } from './startCamera';
 
 const LEADER_MARGIN = 3; // metres: the follow camera only switches to a new leader that is clearly ahead
 const SCENERY_LAYER = 1;  // scenery is drawn in the big view only (the small corner view skips it, for speed)
 const INSET_CLOSER = 0.6; // the corner view's follow camera sits this much nearer its marble
+const OWN_STRETCH = 60;   // metres along the track either side of a marble that count as its own stretch (ice channels; the corkscrew's levels are 155 m apart)
+const CHANNEL_SKIRT = 1.6; // metres the ice channel's outer skirt hangs below its floor (iceChannel.js)
 
 /** A follow camera and its smoothing state: the big view has one, the small corner view another. */
 function followRig(camera) {
@@ -396,17 +398,24 @@ export class TrackScene {
     const index = this.followedIndex(frame, follow, this.main);
     const at = this.marbles.positionOf(index);
     const main = this.main;
-    if (this.cameraMode === 'follow' && this.gate && frame.t < 0 && at) {
-      // The countdown: the starting camera's path, ending exactly where the follow camera starts at GO.
-      const end = this.followPose(at, frame.p[index] ?? 0);
-      const pose = countdownPose(frame.t, this.countdownMs ?? 3000, this.gate.startFrame(), end, this.camera.aspect);
-      main.cam.copy(pose.camera);
-      main.target.copy(pose.target);
-      main.ready = true;
-      this.camera.position.copy(main.cam);
-      this.camera.lookAt(main.target);
+    const gate = this.cameraMode === 'follow' && this.gate && at ? this.gate.startFrame() : null;
+    if (gate && frame.t < 0) {
+      // The countdown: the starting camera's path, ending at rest on the
+      // starting-line shot at GO (the follow camera starts afresh after it).
+      const shot = startLineShot(gate, this.camera.aspect, this.camera.fov);
+      const pose = countdownPose(frame.t, this.countdownMs ?? 3000, gate, shot, this.camera.aspect);
+      main.ready = false;
+      this.camera.position.copy(pose.camera);
+      this.camera.lookAt(pose.target);
     } else if (this.cameraMode === 'follow' && at) {
       this.updateFollowCamera(at, frame.p[index] ?? 0, dt, main);
+      const w = gate ? handover(frame.t) : 1;
+      if (w < 1) {
+        // Just after GO: from the starting-line shot over to the follow camera, eased in and out.
+        const shot = startLineShot(gate, this.camera.aspect, this.camera.fov);
+        this.camera.position.lerpVectors(shot.camera, main.cam, w);
+        this.camera.lookAt(shot.target.lerp(main.target, w));
+      }
     }
     // The corner view: the other marble, from its own follow camera (waiting
     // behind it at the gate during the countdown, then easing along after GO).
@@ -484,13 +493,19 @@ export class TrackScene {
       return samples[i].pos.y + (samples[i + 1].pos.y - samples[i].pos.y) * (f - i);
     };
     const back = (10 + (Number(this.track?.lane_count) || 4) * 0.8) * closer;
-    // Sit behind the marble but nearer the middle of the track: on a wide
-    // channel (the bobsleigh funnel) a marble high up one side would otherwise
-    // put the camera outside the wall, looking through it.
+    // Sit behind the marble but nearer the middle of the track: in a channel
+    // a marble high up one side would otherwise put the camera outside the
+    // wall, looking through it.
     const f = Math.min(1, Math.max(0, progress)) * segments;
     const i0 = Math.min(segments - 1, Math.floor(f));
     const middle = new Vector3().lerpVectors(samples[i0].pos, samples[i0 + 1].pos, f - i0);
-    const anchor = new Vector3(at.x + (middle.x - at.x) * 0.65, at.y, at.z + (middle.z - at.z) * 0.65);
+    // In the wide, shallow funnel at the start there is no wall to get behind:
+    // there the camera sits straight behind its marble and looks straight down
+    // the track (pulled across towards the middle it would look diagonally over
+    // the field, a lopsided view of a marble out at the edge).
+    const widen = this.channel ? channelRadiusAt(this.channel, Math.min(1, Math.max(0, progress)) * this.channel.arc) / this.channel.radius : 1;
+    const share = 0.65 - 0.55 * Math.min(1, Math.max(0, (widen - 1.2) / 1.3));
+    const anchor = new Vector3(at.x + (middle.x - at.x) * share, at.y, at.z + (middle.z - at.z) * share);
     // Behind and above the marble as seen along the slope it is on, not the
     // horizon: on a steep drop (the bobsleigh's starting ramp) a level camera
     // would sit below the track behind and look up through the ice. The tilt
@@ -501,11 +516,23 @@ export class TrackScene {
     const camera = new Vector3().copy(anchor)
       .addScaledVector(dir, -back * Math.cos(tilt) + back * 0.55 * Math.sin(tilt));
     camera.y = Math.max(at.y, here.pos.y) + back * Math.sin(tilt) + back * 0.55 * Math.cos(tilt);
+    let target = new Vector3().lerpVectors(at, anchor, 0.5).addScaledVector(dir, 4);
+    // Down the wide funnel at the start of an ice channel, the big view keeps
+    // the whole width in the picture, centred and level like the shot at GO
+    // (it carries straight on from it), closing in behind its marble as the
+    // funnel narrows into the channel.
+    const funnel = this.channel && closer === 1 ? this.funnelShare(progress) : 0;
+    if (funnel > 0) {
+      const shot = this.fieldShot(progress);
+      camera.lerp(shot.camera, funnel);
+      target = target.lerp(shot.target, funnel);
+    }
     // On a steep street the road behind is higher than the marble: stay above
     // all of it between the camera and the marble, so the view never dips into
     // the hill. Heights between samples are interpolated, so the camera rises
     // and falls smoothly rather than in steps.
-    const fromP = progress - (back * 1.5) / this.arcLength;
+    // (Before the start of an ice channel there is nothing: only the track itself counts.)
+    const fromP = this.channel ? Math.max(0, progress - (back * 1.5) / this.arcLength) : progress - (back * 1.5) / this.arcLength;
     const toP = Math.min(1, progress);
     let roadTop = Math.max(heightAt(fromP), heightAt(toP));
     for (let i = Math.max(0, Math.ceil(fromP * segments)); i <= Math.floor(toP * segments); i += 1) roadTop = Math.max(roadTop, samples[i].pos.y);
@@ -513,14 +540,167 @@ export class TrackScene {
     // …above the scenery (hills and house roofs), and above any other stretch
     // of track (and the wall holding it up) it swings out over on a hairpin.
     const sceneryTop = this.scenery?.userData?.clearance;
-    const clearAbove = (x, z) => Math.max(sceneryTop ? sceneryTop(x, z) : -Infinity, this.trackBelow(x, z));
+    // On an ice channel only stretches at the marble's own level or below
+    // count: in the corkscrew the camera must stay under the level above, with
+    // its marble, never climb on top of it.
+    const level = this.channel ? { s: Math.min(1, Math.max(0, progress)) * this.channel.arc, y: at.y } : null;
+    const clearAbove = (x, z) => Math.max(sceneryTop ? sceneryTop(x, z) : -Infinity, level ? this.channelBounds(x, z, level).floor : this.trackBelow(x, z));
     camera.y = Math.max(camera.y, clearAbove(camera.x, camera.z) + 4);
-    const target = new Vector3().lerpVectors(at, anchor, 0.5).addScaledVector(dir, 4);
-    return { camera, target, roadTop, clearAbove };
+    if (level) this.keepInSight(camera, at, level);
+    return { camera, target, roadTop, clearAbove, level };
   }
 
+  /** Ice channels: how much of the way the track is still the wide starting funnel at progress p (1 at the top, 0 once it is the channel). */
+  funnelShare(p) {
+    const widen = channelRadiusAt(this.channel, Math.min(1, Math.max(0, p)) * this.channel.arc) / this.channel.radius;
+    const k = Math.min(1, Math.max(0, (widen - 1.3) / 3.2));
+    return k * k * (3 - 2 * k);
+  }
+
+  /** Ice channels: the starting-line view (see startLineShot) for the funnel's whole width at progress p. */
+  fieldShot(p) {
+    const { samples, segments } = this.centerline;
+    const f = Math.min(1, Math.max(0, p)) * segments;
+    const i = Math.min(segments - 1, Math.floor(f));
+    const centre = new Vector3().lerpVectors(samples[i].pos, samples[i + 1].pos, f - i);
+    const down = new Vector3().subVectors(samples[i + 1].pos, samples[i].pos).normalize();
+    const normal = new Vector3(0, 1, 0).addScaledVector(down, -down.y).normalize();
+    const forward = new Vector3(down.x, 0, down.z).normalize();
+    const side = new Vector3().crossVectors(new Vector3(0, 1, 0), forward).normalize();
+    const s = Math.min(1, Math.max(0, p)) * this.channel.arc;
+    const halfWidth = channelRadiusAt(this.channel, s) * Math.sin(channelLipAt(this.channel, s)) + 0.55;
+    return startLineShot({ centre, forward, side, halfWidth, down, normal }, this.camera.aspect, this.camera.fov);
+  }
+
+  /**
+   * Ice channels: what bounds a camera above the ground-plan spot (x, z) for a
+   * marble at `level` ({ s: metres along the track, y: height }). floor: the
+   * top of the walls of its own stretch, and of any stretch at its level or
+   * below; ceiling: the underside of the lowest stretch passing overhead
+   * (another level of the corkscrew, a crossing).
+   */
+  channelBounds(x, z, level) {
+    const ch = this.channel;
+    const { samples } = this.centerline;
+    const rimH = ch.radius * (1 - Math.cos(ch.maxAngle)) + 0.3;
+    let floor = -Infinity;
+    let ceiling = Infinity;
+    for (let i = 0; i < samples.length; i += 1) {
+      const p = samples[i].pos;
+      const s = (i / (samples.length - 1)) * ch.arc;
+      const R = channelRadiusAt(ch, s);
+      const split = ch.fork && s > ch.fork.s0 && s < ch.fork.s1 ? ch.fork.apart : 0;
+      const reach = R * Math.sin(channelLipAt(ch, s)) + split + 0.45 + 2;
+      const dx = p.x - x;
+      const dz = p.z - z;
+      if (dx * dx + dz * dz >= reach * reach) continue;
+      const own = Math.abs(s - level.s) < OWN_STRETCH;
+      if (own || p.y + rimH <= level.y + 2) floor = Math.max(floor, p.y + rimH);
+      else ceiling = Math.min(ceiling, p.y - CHANNEL_SKIRT);
+    }
+    return { floor, ceiling };
+  }
+
+  /**
+   * Ice channels: is the view from `from` to `to` blocked by the channel's
+   * walls, floor or skirt (another level of the corkscrew, or its own lip on
+   * the inside of the hairpin)? The inside of the U is open air.
+   */
+  channelBlocks(from, to) {
+    const ch = this.channel;
+    const { samples } = this.centerline;
+    const step = ch.arc / (samples.length - 1);
+    // Only the cross-sections near the line of sight can be in its way.
+    const pad = 30;
+    const near = [];
+    for (let i = 0; i < samples.length; i += 1) {
+      const p = samples[i].pos;
+      if (p.x < Math.min(from.x, to.x) - pad || p.x > Math.max(from.x, to.x) + pad) continue;
+      if (p.z < Math.min(from.z, to.z) - pad || p.z > Math.max(from.z, to.z) + pad) continue;
+      if (p.y < Math.min(from.y, to.y) - pad || p.y > Math.max(from.y, to.y) + pad) continue;
+      near.push(i);
+    }
+    const q = new Vector3();
+    const span = from.distanceTo(to);
+    const n = Math.max(4, Math.ceil(span / 0.25)); // fine enough not to step over a lip
+    for (let k = 1; k < n; k += 1) {
+      if ((1 - k / n) * span < 1) break; // right by the marble: it sits in the channel's open inside
+      q.lerpVectors(from, to, k / n);
+      for (const i of near) {
+        const a = samples[i];
+        const dx = q.x - a.pos.x;
+        const dz = q.z - a.pos.z;
+        if (dx * dx + dz * dz > 900) continue; // nowhere near this cross-section
+        const plan = Math.hypot(a.tangent.x, a.tangent.z) || 1;
+        const along = (dx * a.tangent.x + dz * a.tangent.z) / plan;
+        if (Math.abs(along) > step / 2 + 0.3) continue; // not this cross-section's slice (they overlap a little: on the outside of a tight bend they fan apart)
+        const x = dx * a.side.x + dz * a.side.z;
+        const y = q.y - a.pos.y - (along * a.tangent.y) / plan; // above the floor's line here
+        if (this.channelSolid(i * step, x, y)) return true;
+      }
+    }
+    return false;
+  }
+
+
+  /** Ice channels: is the point x metres across and y up from the middle of the floor, s metres along, inside the ice? */
+  channelSolid(s, x, y) {
+    const ch = this.channel;
+    const lip = channelLipAt(ch, s);
+    const R = channelRadiusAt(ch, s);
+    const tubes = ch.fork && s > ch.fork.s0 && s < ch.fork.s1
+      ? [1, -1].map((side) => ({ off: side * forkOffset(ch.fork, s), R: forkRadius(ch.fork, ch.radius, s), lip: ch.maxAngle }))
+      : [{ off: 0, R, lip }];
+    let outer = 0;
+    let rimTop = -Infinity;
+    for (const t of tubes) {
+      const top = t.R * (1 - Math.cos(t.lip));
+      const edge = t.R * Math.sin(t.lip);
+      const u = x - t.off;
+      // Its rim, and just over it (a margin, so the camera gets a clear view over the lip, not a grazing one).
+      if (y > top - 0.05 && y <= top + 0.3 && Math.abs(u) >= edge - 0.8 && Math.abs(u) <= edge + 0.65) return true;
+      // Open air: inside this channel's U, below its rim.
+      if (y <= top + 0.05 && Math.abs(u) <= edge && Math.hypot(u, y - t.R) < t.R - 0.02) return false;
+      outer = Math.max(outer, Math.abs(t.off) + edge + 0.45);
+      rimTop = Math.max(rimTop, top);
+    }
+    // The ice itself: the walls, floor and skirt below the rim.
+    return Math.abs(x) <= outer && y <= rimTop + 0.05 && y >= -CHANNEL_SKIRT;
+  }
+
+  /**
+   * Ice channels: keeps a camera with its marble. It stays under any stretch
+   * passing overhead (but above the marble), and if another stretch is still
+   * in the way it comes in closer until the marble is in clear sight.
+   */
+  keepInSight(camera, at, level) {
+    const start = camera.clone();
+    // Where the camera would be k of the way out from its marble (1: where it wants to be).
+    const place = (k) => {
+      camera.lerpVectors(at, start, k);
+      if (k < 1) camera.y = Math.max(camera.y, at.y + 1.2);
+      const { floor, ceiling } = this.channelBounds(camera.x, camera.z, level);
+      camera.y = Math.max(camera.y, floor + 1.5);
+      if (camera.y > ceiling - 1) camera.y = Math.max(at.y + 1.2, ceiling - 1);
+      return !this.channelBlocks(camera, at);
+    };
+    if (place(1)) return camera;
+    // Otherwise the furthest clear spot on the way in (found by halving, so it
+    // moves smoothly from frame to frame rather than in jumps).
+    let clear = 0.25;
+    let blocked = 1;
+    for (let n = 0; n < 7; n += 1) {
+      const k = (clear + blocked) / 2;
+      if (place(k)) clear = k;
+      else blocked = k;
+    }
+    place(clear);
+    return camera;
+  }
+
+
   updateFollowCamera(at, progress, dt, rig = this.main) {
-    const { camera: desired, target, roadTop, clearAbove } = this.followPose(at, progress, rig === this.inset ? INSET_CLOSER : 1);
+    const { camera: desired, target, roadTop, clearAbove, level } = this.followPose(at, progress, rig === this.inset ? INSET_CLOSER : 1);
     if (!rig.ready) {
       rig.cam.copy(desired);
       rig.target.copy(target);
@@ -531,6 +711,12 @@ export class TrackScene {
       rig.target.lerp(target, Math.min(1, k * 2));
       // Never lag down into the road or the hillside.
       rig.cam.y = Math.max(rig.cam.y, roadTop + 2.5, clearAbove(rig.cam.x, rig.cam.z) + 2.5);
+      if (level) {
+        // Nor up into a stretch passing overhead (it eases towards a spot
+        // already clear of every other stretch, see keepInSight).
+        const { ceiling } = this.channelBounds(rig.cam.x, rig.cam.z, level);
+        if (rig.cam.y > ceiling - 1) rig.cam.y = Math.max(at.y + 1.2, ceiling - 1);
+      }
     }
     rig.camera.position.copy(rig.cam);
     rig.camera.lookAt(rig.target);
@@ -540,25 +726,6 @@ export class TrackScene {
   /** Highest point of the track (with its walls and embankment) near a spot on the ground plan. */
   trackBelow(x, z) {
     const { samples } = this.centerline;
-    if (this.channel) {
-      // An ice channel stands on nothing but a short skirt (no earth bank, unlike
-      // a road): clear its walls where it really is, however high up it runs.
-      const ch = this.channel;
-      const rimH = ch.radius * (1 - Math.cos(ch.maxAngle)) + 0.3;
-      let top = -Infinity;
-      for (let i = 0; i < samples.length; i += 1) {
-        const p = samples[i].pos;
-        if (p.y + rimH <= top) continue;
-        const s = (i / (samples.length - 1)) * ch.arc;
-        const R = channelRadiusAt(ch, s);
-        const split = ch.fork && s > ch.fork.s0 && s < ch.fork.s1 ? ch.fork.apart : 0;
-        const reach = R * Math.sin(channelLipAt(ch, s)) + split + 0.45 + 2;
-        const dx = p.x - x;
-        const dz = p.z - z;
-        if (dx * dx + dz * dz < reach * reach) top = p.y + rimH;
-      }
-      return top;
-    }
     const half = ((Number(this.track?.lane_count) || 4) * TRACK_STYLE.laneWidth) / 2 + TRACK_STYLE.wallThickness;
     let top = -Infinity;
     for (let i = 0; i < samples.length; i += 1) {

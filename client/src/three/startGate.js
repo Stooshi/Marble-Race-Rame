@@ -16,6 +16,8 @@ export const GATE_COLORS = { paddle: '#ffffff', edge: '#5f86a8', block: '#f4fbff
 const PADDLE = { width: 1.05, height: 0.95, thick: 0.14 };
 const EDGE = 0.06; // width of the blue-grey border round each white paddle
 const SINK_MS = 160; // how long a paddle takes to sink
+const LIFT_MS = 900; // once the last paddle is down, the frame over the line lifts away this quickly…
+const LIFT_HEIGHT = 40; // …this far up, out of the cameras' way as they follow the field down the slope
 const ZERO = new Vector3(0, 0, 0);
 
 /** How far down (0 up, 1 gone) a paddle released at `releaseMs` is at time `t` (ms after GO). */
@@ -83,7 +85,9 @@ export class StartGate {
     });
     blocks.instanceMatrix.needsUpdate = true;
     this.group.add(this.paddles, this.edges, blocks);
-    this.group.add(this.buildFrame());
+    this.frameGroup = this.buildFrame();
+    this.group.add(this.frameGroup);
+    this.liftAt = Math.max(0, ...releaseMs.map((r) => r ?? 0)); // when the last paddle has gone
     this.update(-Infinity);
   }
 
@@ -123,27 +127,37 @@ export class StartGate {
   }
 
   /**
-   * The middle of the waiting field, and the level directions down the track
-   * and across it (for the countdown camera, see startCamera.js).
+   * The middle of the waiting field, the level directions down the track and
+   * across it, how wide the row is, and the slope it waits on (the direction
+   * down it and the ice's normal), for the countdown camera (startCamera.js).
    */
   startFrame() {
     if (!this.frame) {
       const centre = new Vector3();
       const forward = new Vector3();
+      const normal = new Vector3();
       for (const pl of this.places) {
         centre.add(pl.base);
         forward.add(pl.forward);
+        normal.add(pl.up);
       }
       centre.divideScalar(this.places.length);
+      const down = forward.clone().normalize(); // down the slope the field waits on
+      normal.normalize();
       forward.setY(0).normalize();
       const side = new Vector3().crossVectors(new Vector3(0, 1, 0), forward).normalize();
-      this.frame = { centre, forward, side };
+      // How far the row reaches either side of its middle (to the outer marbles' far edges).
+      const halfWidth = Math.max(...this.places.map((pl) => Math.abs(pl.base.clone().sub(centre).dot(side)))) + MARBLE_RADIUS;
+      this.frame = { centre, forward, side, halfWidth, down, normal };
     }
     return this.frame;
   }
 
-  /** Sets the paddles for time `t` (ms after GO; negative during the countdown). */
+  /** Sets the paddles (and the frame, lifting away after the start) for time `t` (ms after GO; negative during the countdown). */
   update(t) {
+    const k = Math.min(1, Math.max(0, (t - this.liftAt) / LIFT_MS));
+    this.frameGroup.position.y = k * k * LIFT_HEIGHT; // gathering speed as it goes
+    this.frameGroup.visible = k < 1;
     const basis = new Matrix4();
     const one = new Vector3(1, 1, 1);
     this.places.forEach((pl, i) => {

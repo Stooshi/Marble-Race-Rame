@@ -4,8 +4,10 @@
  *   1. it starts behind the field and glides forward over the marbles;
  *   2. it swings round in front and looks back at the field waiting behind the
  *      gate while the 3-2-1 runs;
- *   3. just before GO it swings back round and settles behind the field, on
- *      exactly the spot where the follow camera takes over at GO.
+ *   3. just before GO it swings back round and settles straight behind the
+ *      field, level, on the whole row lined up across the picture (the
+ *      starting-line shot, startLineShot); after GO it hands over smoothly to
+ *      the follow camera (handover).
  *
  * Throughout, it looks at a point inside the waiting field, so the marbles
  * never leave the picture; the path never passes straight over that point,
@@ -20,6 +22,44 @@ import { Vector3 } from 'three';
 
 /** The countdown before GO, live and in replays: long enough for the whole camera move to stay steady. */
 export const COUNTDOWN_MS = 5000;
+
+/** After GO, the shot of the starting line hands over to the follow camera over this long (ms). */
+export const HANDOVER_MS = 1400;
+
+/** How far the hand-over from the starting-line shot to the follow camera has got at `t` ms after GO (0..1, eased at both ends). */
+export function handover(t) {
+  const k = Math.min(1, Math.max(0, t / HANDOVER_MS));
+  return k * k * k * (k * (k * 6 - 15) + 10);
+}
+
+const LINE_PITCH = 20 * (Math.PI / 180); // the shot at GO looks down on the row this steeply (above the slope it waits on)
+
+/**
+ * The shot at GO: from straight behind the middle of the field, level (no
+ * tilt to either side), looking down the track over the row, far enough back
+ * that the whole row fits across the picture with a little room either side
+ * (a narrow phone screen needs to be further back than a wide one). The
+ * angle is measured from the slope the field waits on, not the horizon: on a
+ * steep starting ramp a camera any lower would be below the ice behind the
+ * row, looking at the backs of the starting blocks.
+ *   start: { centre, forward, side, halfWidth, down?, normal? } from StartGate.startFrame;
+ *   aspect, fov: the camera's (width / height, vertical degrees).
+ * Returns { camera, target }.
+ */
+export function startLineShot(start, aspect = 1.6, fov = 50) {
+  const { centre } = start;
+  const down = start.down ?? start.forward; // down the slope (level ground: straight ahead)
+  const normal = start.normal ?? new Vector3(0, 1, 0);
+  const half = (start.halfWidth ?? 12) * 1.15 + 0.8;
+  const across = Math.atan(Math.tan(((fov * Math.PI) / 180) / 2) * Math.max(0.2, aspect)); // half the horizontal view
+  const distance = Math.max(10, half / Math.tan(across));
+  const row = centre.clone().addScaledVector(normal, 0.55); // the marbles' middles
+  const camera = row.clone().addScaledVector(down, -distance * Math.cos(LINE_PITCH)).addScaledVector(normal, distance * Math.sin(LINE_PITCH));
+  // Aim a little way down the track, so the row sits in the lower part of the
+  // picture with the run ahead above it (behind the start there is only sky).
+  const target = row.addScaledVector(down, distance * 0.3);
+  return { camera, target };
+}
 
 /**
  * Smooth curve through (times[i], values[i]): cubic pieces whose slopes are
@@ -52,7 +92,7 @@ const KEY_TIMES = [0, 0.2, 0.38, 0.5, 0.63, 0.79, 1];
  * countdown of `countdownMs`.
  *   start: { centre, forward, side } the middle of the waiting field, the
  *          level direction down the track and across it (from StartGate.startFrame);
- *   end:   { camera, target } where the follow camera starts at GO;
+ *   end:   { camera, target } the shot at GO (startLineShot);
  *   aspect: width / height of the view (narrow phones get pulled back so more of the row fits).
  * Returns { camera, target } (Vector3s).
  */
@@ -70,7 +110,7 @@ export function countdownPose(t, countdownMs, start, end, aspect = 1.6) {
     [at(15 * wide, 0, 3.8), at(0, 0, 0.6)], //            looking back at the field behind the gate
     [at(14 * wide, -1.5, 3.6), at(0, -0.5, 0.6)], //      (a slow drift while the 3-2-1 runs)
     [at(3, -14 * wide, 6), at(1, 0, 0.3)], //             swinging back round the side
-    [end.camera.clone(), end.target.clone()], //         behind the field: the follow camera's spot at GO
+    [end.camera.clone(), end.target.clone()], //         straight behind the field: the shot at GO
   ];
 
   const u = Math.min(1, Math.max(0, 1 + t / countdownMs)); // 0 at the start of the countdown, 1 at GO

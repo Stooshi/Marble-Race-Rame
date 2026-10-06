@@ -63,8 +63,8 @@ export function forkRadius(fork, mainRadius, s) {
 
 const inFork = (channel, s) => channel.fork && s > channel.fork.s0 && s < channel.fork.s1;
 
-/** Centre-line point and level sideways direction at progress p (0..1). */
-function frameAt(centerline, p, pos, side) {
+/** Centre-line point, level sideways direction and (optionally) direction along the track at progress p (0..1). */
+function frameAt(centerline, p, pos, side, along = null) {
   const { samples, segments } = centerline;
   const f = Math.min(1, Math.max(0, p)) * segments;
   const i = Math.min(segments - 1, Math.floor(f));
@@ -73,11 +73,16 @@ function frameAt(centerline, p, pos, side) {
   const b = samples[i + 1];
   pos.lerpVectors(a.pos, b.pos, t);
   side.set(a.side.x + (b.side.x - a.side.x) * t, 0, a.side.z + (b.side.z - a.side.z) * t).normalize();
+  if (along) along.subVectors(b.pos, a.pos).normalize();
 }
 
 const UP = new Vector3(0, 1, 0);
 const tmpPos = new Vector3();
 const tmpSide = new Vector3();
+const tmpAlong = new Vector3();
+const tmpRound = new Vector3();
+// The ice is drawn as flat panels, a hair inside the true curve: marbles sit this much off it so none dips in.
+const FACET_CLEARANCE = 0.02;
 
 /**
  * Where a marble sits: progress p, angle share l (-1..1 of the way up the
@@ -85,7 +90,7 @@ const tmpSide = new Vector3();
  * 0 main), height h above the ice. Also returns the wall's inward normal.
  */
 export function placeOnChannel(centerline, channel, p, l, b, h, radius, out = new Vector3(), normal = new Vector3()) {
-  frameAt(centerline, p, tmpPos, tmpSide);
+  frameAt(centerline, p, tmpPos, tmpSide, tmpAlong);
   const s = p * channel.arc;
   let R = channelRadiusAt(channel, s);
   if (b && inFork(channel, s)) {
@@ -95,10 +100,16 @@ export function placeOnChannel(centerline, channel, p, l, b, h, radius, out = ne
   const th = Math.max(-1, Math.min(1, l || 0)) * channel.maxAngle;
   const sin = Math.sin(th);
   const cos = Math.cos(th);
-  // A point on the U's inner surface, then out along the wall's normal by the marble's radius.
-  normal.copy(tmpSide).multiplyScalar(-sin).addScaledVector(UP, cos);
+  // A point on the U's inner surface, then out along the surface's normal by
+  // the marble's radius. The normal leans with the slope along the track: on
+  // a steep drop (the starting ramp) a marble lifted straight up from the
+  // cross-section would sit partly inside the ice.
+  // (Square to both the track's direction and the way round the U at this angle.)
+  tmpRound.copy(tmpSide).multiplyScalar(cos).addScaledVector(UP, sin);
+  normal.crossVectors(tmpRound, tmpAlong).normalize();
+  if (normal.dot(UP) * cos - normal.dot(tmpSide) * sin < 0) normal.negate(); // pointing into the channel
   out.copy(tmpPos).addScaledVector(tmpSide, R * sin).addScaledVector(UP, R * (1 - cos));
-  out.addScaledVector(normal, radius).addScaledVector(UP, h || 0);
+  out.addScaledVector(normal, radius + FACET_CLEARANCE).addScaledVector(UP, h || 0);
   return out;
 }
 
