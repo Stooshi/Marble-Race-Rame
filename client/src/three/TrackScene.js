@@ -17,8 +17,9 @@ import { buildScenery } from './scenery';
 import { buildIceChannelGeometry, channelOf, ICE_COLORS } from './iceChannel';
 import { DEFAULT_THEME, themeFor } from './themes';
 import { gatePlaces, StartGate } from './startGate';
+import { countdownPose } from './startCamera';
 
-const START_SHOT_MS = 2500; // the start-line camera holds until this long after GO
+const LEADER_MARGIN = 3; // metres: the follow camera only switches to a new leader that is clearly ahead
 
 /** A sky dome: pale at the horizon, coloured overhead, whichever way the camera looks. */
 function skyDome() {
@@ -276,6 +277,8 @@ export class TrackScene {
    */
   setRace(entries, highlight = [], results = [], start = null) {
     this.clearRace();
+    this.leader = null;
+    this.countdownMs = start?.countdownMs;
     const lanes = Math.max(1, Number(this.track?.lane_count) || 4);
     this.marbles = new RaceMarbles(entries, lanes, highlight, results);
     this.marbles.channel = this.channel;
@@ -328,31 +331,70 @@ export class TrackScene {
    * Moves the marbles to a race frame and, when following, eases the camera
    * in behind the followed marble. dt = seconds since the last call.
    */
-  updateRace(frame, followIndex = 0, dt = 1 / 60) {
+  /** How long the countdown before GO runs (ms), for the starting camera. */
+  setCountdown(ms) {
+    this.countdownMs = ms;
+  }
+
+  /**
+   * Which marble the camera follows: an entry index, or 'leader'. The leader
+   * only changes when another marble is clearly ahead (a few metres), so a
+   * field running level at the start doesn't swing the camera from marble to
+   * marble across the track.
+   */
+  followedIndex(frame, follow) {
+    if (follow !== 'leader') {
+      this.leader = null;
+      return follow;
+    }
+    const top = frame.s?.[0] ?? 0;
+    const jumpedBack = this.leaderT !== undefined && frame.t < this.leaderT - 500; // a replay scrubbed back
+    this.leaderT = frame.t;
+    if (this.leader === null || this.leader === undefined || jumpedBack || frame.p[this.leader] === undefined) {
+      this.leader = top;
+      return top;
+    }
+    if (!this.arcLength) this.arcLength = this.measureArc();
+    const ahead = (frame.p[top] - frame.p[this.leader]) * this.arcLength;
+    if (top !== this.leader && (ahead > LEADER_MARGIN || frame.p[top] >= 1)) this.leader = top;
+    return this.leader;
+  }
+
+  measureArc() {
+    const { samples } = this.centerline;
+    let len = 0;
+    for (let i = 1; i < samples.length; i += 1) len += samples[i].pos.distanceTo(samples[i - 1].pos);
+    return len;
+  }
+
+  /** follow: an entry index, or 'leader'. */
+  updateRace(frame, follow = 'leader', dt = 1 / 60) {
     if (!this.marbles || !frame) return;
     this.gate?.update(frame.t);
     this.marbles.update(this.centerline, frame);
-    if (this.cameraMode === 'follow' && this.gate && frame.t < START_SHOT_MS) {
-      // The countdown: a camera at the start line looking back up the ramp at the
-      // field behind the gate. After GO it stays put and turns to watch the
-      // field rush past, then the follow camera swings in behind the leader.
-      const view = this.gate.startView(this.camera.aspect);
-      const leader = this.marbles.positionOf(followIndex);
-      const k = Math.min(1, Math.max(0, frame.t / 1500));
-      this.followCam.copy(view.camera);
-      this.followTarget.copy(view.target);
-      if (leader) this.followTarget.lerp(leader, k * k * (3 - 2 * k));
+    const index = this.followedIndex(frame, follow);
+    const at = this.marbles.positionOf(index);
+    if (this.cameraMode === 'follow' && this.gate && frame.t < 0 && at) {
+      // The countdown: the starting camera's path, ending exactly where the follow camera starts at GO.
+      const end = this.followPose(at, frame.p[index] ?? 0);
+      const pose = countdownPose(frame.t, this.countdownMs ?? 3000, this.gate.startFrame(), end, this.camera.aspect);
+      this.followCam.copy(pose.camera);
+      this.followTarget.copy(pose.target);
       this.followReady = true;
       this.camera.position.copy(this.followCam);
       this.camera.lookAt(this.followTarget);
-    } else if (this.cameraMode === 'follow') {
-      const at = this.marbles.positionOf(followIndex);
-      if (at) this.updateFollowCamera(at, frame.p[followIndex] ?? 0, dt);
+    } else if (this.cameraMode === 'follow' && at) {
+      this.updateFollowCamera(at, frame.p[index] ?? 0, dt);
     }
     this.render();
   }
 
-  updateFollowCamera(at, progress, dt) {
+  /**
+   * Where the follow camera wants to be for a marble at `at` (progress along
+   * the track): behind it and above, clear of the road behind, the scenery and
+   * any other stretch of track. Returns { camera, target, roadTop, clearAbove }.
+   */
+  followPose(at, progress) {
     // Look along the track (not the marble's wobble) so the view stays steady.
     const { samples, segments } = this.centerline;
     const ahead = samples[Math.min(segments, Math.round(Math.min(1, progress + 0.02) * segments))];
@@ -360,26 +402,53 @@ export class TrackScene {
     const dir = new Vector3().subVectors(ahead.pos, here.pos).setY(0);
     if (dir.lengthSq() < 1e-6) dir.set(here.tangent.x, 0, here.tangent.z);
     dir.normalize();
+    if (!this.arcLength) this.arcLength = this.measureArc();
+    // Track height at any progress; before the start it carries on up the first
+    // slope, as if the ramp continued (the camera has to clear that too).
+    const heightAt = (p) => {
+      if (p < 0) return samples[0].pos.y + (samples[0].pos.y - samples[1].pos.y) * (-p * segments);
+      const f = Math.min(1, p) * segments;
+      const i = Math.min(segments - 1, Math.floor(f));
+      return samples[i].pos.y + (samples[i + 1].pos.y - samples[i].pos.y) * (f - i);
+    };
     const back = 10 + (Number(this.track?.lane_count) || 4) * 0.8;
-    const desired = new Vector3().copy(at).addScaledVector(dir, -back);
-    desired.y = Math.max(at.y, here.pos.y) + back * 0.55;
+    // Sit behind the marble but nearer the middle of the track: on a wide
+    // channel (the bobsleigh funnel) a marble high up one side would otherwise
+    // put the camera outside the wall, looking through it.
+    const f = Math.min(1, Math.max(0, progress)) * segments;
+    const i0 = Math.min(segments - 1, Math.floor(f));
+    const middle = new Vector3().lerpVectors(samples[i0].pos, samples[i0 + 1].pos, f - i0);
+    const anchor = new Vector3(at.x + (middle.x - at.x) * 0.65, at.y, at.z + (middle.z - at.z) * 0.65);
+    // Behind and above the marble as seen along the slope it is on, not the
+    // horizon: on a steep drop (the bobsleigh's starting ramp) a level camera
+    // would sit below the track behind and look up through the ice. The tilt
+    // is capped so it never turns into a view from straight above.
+    const behind = 8;
+    const rise = (heightAt(progress - behind / this.arcLength) - heightAt(progress)) / behind;
+    const tilt = Math.asin(Math.min(Math.sin(35 * (Math.PI / 180)), Math.max(0, rise)));
+    const camera = new Vector3().copy(anchor)
+      .addScaledVector(dir, -back * Math.cos(tilt) + back * 0.55 * Math.sin(tilt));
+    camera.y = Math.max(at.y, here.pos.y) + back * Math.sin(tilt) + back * 0.55 * Math.cos(tilt);
     // On a steep street the road behind is higher than the marble: stay above
-    // all of it between the camera and the marble, so the view never dips into the hill.
-    if (!this.arcLength) {
-      this.arcLength = 0;
-      for (let i = 1; i < samples.length; i += 1) this.arcLength += samples[i].pos.distanceTo(samples[i - 1].pos);
-    }
-    const from = Math.max(0, Math.floor((progress - (back * 1.5) / this.arcLength) * segments));
-    const to = Math.min(segments, Math.round(Math.min(1, progress) * segments));
-    let roadTop = -Infinity;
-    for (let i = from; i <= to; i += 1) roadTop = Math.max(roadTop, samples[i].pos.y);
-    desired.y = Math.max(desired.y, roadTop + 4);
+    // all of it between the camera and the marble, so the view never dips into
+    // the hill. Heights between samples are interpolated, so the camera rises
+    // and falls smoothly rather than in steps.
+    const fromP = progress - (back * 1.5) / this.arcLength;
+    const toP = Math.min(1, progress);
+    let roadTop = Math.max(heightAt(fromP), heightAt(toP));
+    for (let i = Math.max(0, Math.ceil(fromP * segments)); i <= Math.floor(toP * segments); i += 1) roadTop = Math.max(roadTop, samples[i].pos.y);
+    camera.y = Math.max(camera.y, roadTop + 4);
     // …above the scenery (hills and house roofs), and above any other stretch
     // of track (and the wall holding it up) it swings out over on a hairpin.
     const sceneryTop = this.scenery?.userData?.clearance;
     const clearAbove = (x, z) => Math.max(sceneryTop ? sceneryTop(x, z) : -Infinity, this.trackBelow(x, z));
-    desired.y = Math.max(desired.y, clearAbove(desired.x, desired.z) + 4);
-    const target = new Vector3().copy(at).addScaledVector(dir, 4);
+    camera.y = Math.max(camera.y, clearAbove(camera.x, camera.z) + 4);
+    const target = new Vector3().lerpVectors(at, anchor, 0.5).addScaledVector(dir, 4);
+    return { camera, target, roadTop, clearAbove };
+  }
+
+  updateFollowCamera(at, progress, dt) {
+    const { camera: desired, target, roadTop, clearAbove } = this.followPose(at, progress);
     if (!this.followReady) {
       this.followCam.copy(desired);
       this.followTarget.copy(target);
@@ -394,6 +463,7 @@ export class TrackScene {
     this.camera.position.copy(this.followCam);
     this.camera.lookAt(this.followTarget);
   }
+
 
   /** Highest point of the track (with its walls and embankment) near a spot on the ground plan. */
   trackBelow(x, z) {

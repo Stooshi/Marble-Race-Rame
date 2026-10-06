@@ -4,6 +4,7 @@ import MarbleBall from './MarbleBall';
 import SceneFailure from './SceneFailure';
 import { Spinner } from './Status';
 import { formatTime } from '../utils/format';
+import { COUNTDOWN_MS } from '../three/startCamera';
 
 /**
  * A live race in 3D (tracks on the new physics, e.g. Bobsleigh Run): the
@@ -14,7 +15,7 @@ import { formatTime } from '../utils/format';
  */
 const NOBODY = [];
 
-export default function LiveRaceViewer3D({ meta, sample, frame, startsAt, highlight = NOBODY, footer = null }) {
+export default function LiveRaceViewer3D({ meta, sample, frame, startsAt, countdownMs = COUNTDOWN_MS, highlight = NOBODY, footer = null }) {
   const { wrapRef, canvasRef, sceneRef, status, failure, fail } = useTrackScene();
   const [camera, setCamera] = useState('follow'); // follow | overview
   const [follow, setFollow] = useState('leader'); // 'leader' or an entry index
@@ -26,12 +27,13 @@ export default function LiveRaceViewer3D({ meta, sample, frame, startsAt, highli
     if (status !== 'ready' || !scene || !meta) return;
     try {
       scene.setTrack(meta.track);
-      scene.setRace(meta.entries, highlight, [], meta.start && meta.firstFrame ? { ...meta.start, frame: meta.firstFrame } : null);
+      // Live, the starting camera runs over the race's whole countdown (the gate's own is shorter).
+      scene.setRace(meta.entries, highlight, [], meta.start && meta.firstFrame ? { ...meta.start, countdownMs, frame: meta.firstFrame } : null);
       setBuilt(true);
     } catch (err) {
       fail(`building the race on "${meta.track?.name}"`, err);
     }
-  }, [status, meta?.raceId, highlight]); // the header repeats on start; build once per race
+  }, [status, meta?.raceId, highlight.join(',')]); // the header repeats (countdown, start): build once per race
 
   useEffect(() => {
     sceneRef.current?.setCameraMode(camera);
@@ -56,12 +58,12 @@ export default function LiveRaceViewer3D({ meta, sample, frame, startsAt, highli
       const dt = (now - lastNow) / 1000;
       lastNow = now;
       let f = sampleRef.current();
-      if (!f && firstRef.current) f = { ...firstRef.current, t: Math.min(0, Date.now() - (startRef.current ?? Date.now())) };
+      if (!f && firstRef.current) f = { ...firstRef.current, t: Math.max(-countdownMs, Math.min(0, Date.now() - (startRef.current ?? Date.now()))) };
       const scene = sceneRef.current;
       if (f && scene) {
         const who = followRef.current;
         try {
-          scene.updateRace(f, who === 'leader' ? (f.s?.[0] ?? 0) : who, dt);
+          scene.updateRace(f, who, dt); // 'leader' or an entry index (the scene keeps the leader steady)
         } catch (err) {
           fail('moving the marbles', err);
           return;

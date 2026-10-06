@@ -119,6 +119,7 @@ export default function Race() {
           sample={stream.sample}
           frame={stream.frame}
           startsAt={stream.startsAt}
+          countdownMs={race?.countdown_ms ?? 5000}
           highlight={myIndexes}
           footer={footer}
         />

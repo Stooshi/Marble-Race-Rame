@@ -123,12 +123,11 @@ export class StartGate {
   }
 
   /**
-   * A camera in front of the gate, a little above it, looking back up the ramp
-   * at the waiting field; further back on narrow (portrait) screens so the whole row fits.
+   * The middle of the waiting field, and the level directions down the track
+   * and across it (for the countdown camera, see startCamera.js).
    */
-  startView(aspect = 1.6) {
-    const back = 13 * Math.max(1, 1.5 / Math.max(0.3, aspect));
-    if (!this.view || this.view.back !== back) {
+  startFrame() {
+    if (!this.frame) {
       const centre = new Vector3();
       const forward = new Vector3();
       for (const pl of this.places) {
@@ -137,11 +136,10 @@ export class StartGate {
       }
       centre.divideScalar(this.places.length);
       forward.setY(0).normalize();
-      const camera = centre.clone().addScaledVector(forward, back);
-      camera.y = centre.y + 3.5 * (back / 13);
-      this.view = { back, camera, target: centre.clone().add(new Vector3(0, 0.6, 0)) };
+      const side = new Vector3().crossVectors(new Vector3(0, 1, 0), forward).normalize();
+      this.frame = { centre, forward, side };
     }
-    return this.view;
+    return this.frame;
   }
 
   /** Sets the paddles for time `t` (ms after GO; negative during the countdown). */

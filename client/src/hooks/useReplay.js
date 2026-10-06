@@ -1,14 +1,16 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { frameAtTime } from '../utils/splits';
+import { COUNTDOWN_MS } from '../three/startCamera';
 
 /**
  * Plays back a finished race from its full frame list with play/pause,
  * speed and scrubbing. Exposes the same `sample()` contract as useRaceStream.
  */
 export function useReplay(replay) {
-  // With a starting gate the replay opens on the countdown: time runs from
-  // minus the countdown up to the race's end, and the race starts at 0 ("GO").
-  const start = -(replay?.start?.countdownMs ?? 0);
+  // With a starting gate the replay opens on the countdown (as long as a live
+  // race's, so the starting camera has time for its move): time runs from minus
+  // the countdown up to the race's end, and the race starts at 0 ("GO").
+  const start = replay?.start ? -Math.max(COUNTDOWN_MS, replay.start.countdownMs ?? 0) : 0;
   const [playing, setPlaying] = useState(false);
   const [speed, setSpeed] = useState(1);
   const [time, setTime] = useState(start);

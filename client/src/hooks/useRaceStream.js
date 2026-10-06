@@ -7,10 +7,14 @@ import { detectCrossings, lerpFrame } from '../utils/splits';
  * screen needs: the stream header (meta), current standings, halfway split
  * times, recent events and the final results.
  *
- * Frames arrive ~10x per second. `sample()` returns a smoothly interpolated
- * frame for the renderer, one tick behind the newest frame, so animation stays
- * fluid regardless of network jitter.
+ * Frames arrive 10-20x per second. `sample()` returns a smoothly interpolated
+ * frame for the renderer: playback runs on a steady clock a little behind the
+ * newest frame (a short buffer), blending between frames by their race time,
+ * so frames arriving in bursts (a busy phone, a patchy network) never make the
+ * marbles leap forward.
  */
+const BUFFER_MS = 150; // how far behind the newest frame playback runs (at least 1.5 frames)
+const KEEP = 40; // frames kept for blending
 export function useRaceStream(raceId, { onLobbyUpdate } = {}) {
   const { socket } = useAuth();
   const [status, setStatus] = useState('connecting');
@@ -23,6 +27,8 @@ export function useRaceStream(raceId, { onLobbyUpdate } = {}) {
   const [error, setError] = useState(null);
 
   const frames = useRef({ prev: null, curr: null, at: 0 });
+  // Recent frames, oldest first, and the steady playback clock: race time = now + offset.
+  const buffer = useRef({ list: [], offset: null, shown: -Infinity });
   const splitsRef = useRef({});
   const lobbyCb = useRef(onLobbyUpdate);
   lobbyCb.current = onLobbyUpdate;
@@ -35,7 +41,16 @@ export function useRaceStream(raceId, { onLobbyUpdate } = {}) {
       splitsRef.current = { ...splitsRef.current, ...crossed };
       setSplits(splitsRef.current);
     }
-    frames.current = { prev: curr, curr: f, at: performance.now() };
+    const now = performance.now();
+    frames.current = { prev: curr, curr: f, at: now };
+    const b = buffer.current;
+    b.list.push(f);
+    if (b.list.length > KEEP) b.list.shift();
+    // Ease the clock towards what this frame says (never jumping), so network
+    // jitter is smoothed out; a big gap (a reconnect, a sleeping tab) resets it.
+    const off = f.t - now;
+    if (b.offset === null || Math.abs(off - b.offset) > 1500) b.offset = off;
+    else b.offset += (off - b.offset) * 0.08;
     setFrame(f);
     if (f.events?.length) setEvents((list) => [...f.events.slice().reverse(), ...list].slice(0, 12));
   }, []);
@@ -43,6 +58,7 @@ export function useRaceStream(raceId, { onLobbyUpdate } = {}) {
   useEffect(() => {
     if (!raceId) return undefined;
     frames.current = { prev: null, curr: null, at: 0 };
+    buffer.current = { list: [], offset: null, shown: -Infinity };
     splitsRef.current = {};
     setSplits({});
     setEvents([]);
@@ -106,14 +122,23 @@ export function useRaceStream(raceId, { onLobbyUpdate } = {}) {
     };
   }, [raceId, socket, ingest]);
 
-  /** Interpolated frame for rendering at the current instant. */
+  /** Interpolated frame for rendering at the current instant (see BUFFER_MS above). */
   const sample = useCallback(() => {
-    const { prev, curr, at } = frames.current;
-    if (!curr) return null;
-    if (!prev) return curr;
-    const tick = curr.t - prev.t || 100;
-    const f = Math.min(1, (performance.now() - at) / tick);
-    return lerpFrame(prev, curr, f);
+    const b = buffer.current;
+    const list = b.list;
+    if (!list.length) return null;
+    const last = list[list.length - 1];
+    if (list.length === 1 || b.offset === null) return last;
+    // Playback time: steady, a little behind the newest frame, never going backwards.
+    let t = performance.now() + b.offset - BUFFER_MS;
+    t = Math.min(last.t, Math.max(t, b.shown, list[0].t));
+    b.shown = t;
+    let i = list.length - 2;
+    while (i > 0 && list[i].t > t) i -= 1;
+    const a = list[i];
+    const c = list[i + 1];
+    const span = c.t - a.t || 1;
+    return lerpFrame(a, c, Math.min(1, Math.max(0, (t - a.t) / span)));
   }, []);
 
   return { status, meta, startsAt, frame, splits, events, results, error, sample };

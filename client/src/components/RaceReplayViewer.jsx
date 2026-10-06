@@ -29,7 +29,7 @@ export default function RaceReplayViewer({ data, loading = false, mine = NOBODY,
     if (status !== 'ready' || !scene || !data) return;
     try {
       scene.setTrack(data.track);
-      scene.setRace(data.entries, mine, data.results, data.start ? { ...data.start, frame: data.frames[0] } : null);
+      scene.setRace(data.entries, mine, data.results, data.start ? { ...data.start, countdownMs: -replay.start, frame: data.frames[0] } : null);
       setBuilt(true);
     } catch (err) {
       fail(`building the race on "${data.track?.name}"`, err);
@@ -75,7 +75,7 @@ export default function RaceReplayViewer({ data, loading = false, mine = NOBODY,
           lastT = frame.t;
           dirty.current = false;
           const f = followRef.current;
-          const index = f === 'leader' ? (frame.s?.[0] ?? 0) : f;
+          const index = f; // 'leader' or an entry index (the scene keeps the leader steady)
           try {
             scene.updateRace(frame, index, dt);
           } catch (err) {
