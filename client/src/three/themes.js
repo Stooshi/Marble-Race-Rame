@@ -28,8 +28,8 @@ export const THEMES = {
     track: { embankment: '#cdb996', embankmentDark: '#c2ac86' }, // stone retaining walls
     scenery: 'san-francisco',
   },
-  // Bobsleigh run (preview): plain snow for now; the alpine dressing comes later.
-  'bobsleigh-olympics': {
+  // Bobsleigh Run: plain snow for now; the alpine dressing comes later.
+  'bobsleigh-run': {
     sky: { top: '#4f93d8', horizon: '#d9eaf8', glow: '#ffffff' },
     fog: '#d9eaf8',
     hemisphere: { sky: '#ffffff', ground: '#a9bccf', intensity: 1.6 },

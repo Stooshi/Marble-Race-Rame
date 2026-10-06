@@ -269,14 +269,15 @@ router.get('/:id/results', async (req, res) => {
 });
 
 /**
- * GET /api/races/:id/replay — full frame data for a finished race, regenerated
- * deterministically from the stored seed and stat snapshots.
+ * GET /api/races/:id/replay — full frame data for a finished race: regenerated
+ * deterministically from the stored seed and stat snapshots (classic races), or
+ * as stored when it was decided (races on the new physics).
  */
 router.get('/:id/replay', async (req, res) => {
   const id = assertUuid(req.params.id);
   const { race, entries } = await raceService.loadSimulationInput(db, id);
   if (race.status !== 'finished') throw conflict(`Replay is not available while the race is ${race.status}`);
-  const sim = raceService.runSimulation(race, entries);
+  const sim = await raceService.loadRun(db, race, entries);
   res.set('Cache-Control', 'public, max-age=86400, immutable');
   res.json({
     ...raceService.describeForClients(race, entries),
@@ -287,6 +288,7 @@ router.get('/:id/replay', async (req, res) => {
     results: sim.results,
     events: sim.events,
     frames: sim.frames,
+    ...(sim.start && { start: sim.start }),
   });
 });
 

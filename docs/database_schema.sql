@@ -98,12 +98,18 @@ CREATE TABLE IF NOT EXISTS tracks (
                     CHECK (jsonb_typeof(waypoints) = 'array'),
     obstacles       jsonb            NOT NULL DEFAULT '[]'::jsonb
                     CHECK (jsonb_typeof(obstacles) = 'array'),
+    physics         jsonb,
     thumbnail_url   text,
     is_active       boolean          NOT NULL DEFAULT true,
     created_by      uuid REFERENCES users(id) ON DELETE SET NULL,
     created_at      timestamptz      NOT NULL DEFAULT now(),
     updated_at      timestamptz      NOT NULL DEFAULT now()
 );
+
+-- physics: settings for the new physics engine (src/game/physicsSimulator.js:
+-- ice channel, splitter, starting gate, catch area). NULL = the track races on
+-- the classic engine (src/game/simulator.js), as every track did before.
+ALTER TABLE tracks ADD COLUMN IF NOT EXISTS physics jsonb;
 
 CREATE INDEX IF NOT EXISTS idx_tracks_active ON tracks (is_active);
 
@@ -162,12 +168,16 @@ CREATE INDEX IF NOT EXISTS idx_user_marbles_marble ON user_marbles (marble_id);
 -- races
 -- -----------------------------------------------------------------------------
 -- seed               PRNG seed used by the simulator (set when decided)
--- target_duration_ms total race length the simulation was scaled to (50–90 s;
---                    the server defaults to fixed 90 s races)
+-- target_duration_ms total race length: on the classic engine the simulation is
+--                    scaled to it (50–90 s; the server defaults to fixed 90 s
+--                    races); on the new physics it is however long the race
+--                    takes (a ceiling of 90 s), so 20–90 s overall
 -- countdown_ms       pre-start countdown streamed to clients
 -- decided_at         moment the outcome was computed (lobby -> countdown)
 -- track_snapshot     copy of the track geometry/obstacles used for the decision,
---                    so later track edits never change a past race or its replay
+--                    so later track edits never change a past race or its replay;
+--                    on the new physics it also holds the physics settings and
+--                    the engine version ("engine"); without them it is a classic race
 CREATE TABLE IF NOT EXISTS races (
     id                  uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     track_id            uuid        NOT NULL REFERENCES tracks(id) ON DELETE RESTRICT,
@@ -196,7 +206,7 @@ CREATE TABLE IF NOT EXISTS races (
         AND min_marbles <= max_marbles
     ),
     CONSTRAINT races_duration_bounds CHECK (
-        target_duration_ms IS NULL OR target_duration_ms BETWEEN 50000 AND 90000
+        target_duration_ms IS NULL OR target_duration_ms BETWEEN 20000 AND 90000
     ),
     CONSTRAINT races_decided_has_seed CHECK (
         status IN ('lobby', 'cancelled')
@@ -240,6 +250,20 @@ CREATE TABLE IF NOT EXISTS race_entries (
     CONSTRAINT race_entries_unique_lane   UNIQUE (race_id, lane),
     CONSTRAINT race_entries_unique_pos    UNIQUE (race_id, finish_position),
     CONSTRAINT race_entries_bot_xor_user  CHECK (is_bot = (user_id IS NULL))
+);
+
+-- -----------------------------------------------------------------------------
+-- race_replays: the stored replay of each race on the new physics
+-- -----------------------------------------------------------------------------
+-- Classic races are replayed by re-running the simulator from their seed. Races
+-- on the new physics are saved as they were decided (gzipped JSON of the frames,
+-- events and starting gate), so later tuning of the physics never changes a past
+-- race's replay. Results and coins live in race_entries as for every race.
+CREATE TABLE IF NOT EXISTS race_replays (
+    race_id     uuid        PRIMARY KEY REFERENCES races(id) ON DELETE CASCADE,
+    engine      text        NOT NULL,
+    data        bytea       NOT NULL,
+    created_at  timestamptz NOT NULL DEFAULT now()
 );
 
 -- Upgrade path for databases created before these columns existed (including

@@ -4,6 +4,7 @@ const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
 const { SIMULATOR_VERSION } = require('./game/simulator');
+const { PHYSICS_VERSION } = require('./game/physicsSimulator');
 
 /**
  * Which code is running, for /health. A deploy uploaded with the Railway CLI
@@ -31,7 +32,8 @@ function codeFingerprint(root = __dirname) {
 const VERSION = Object.freeze({
   commit: process.env.RAILWAY_GIT_COMMIT_SHA || process.env.SOURCE_COMMIT || null,
   codeFingerprint: codeFingerprint(),
-  simulator: SIMULATOR_VERSION,
+  simulator: SIMULATOR_VERSION, // classic engine (the older tracks)
+  physics: PHYSICS_VERSION, // new physics engine (tracks with physics settings)
   startedAt: new Date().toISOString(),
 });
 

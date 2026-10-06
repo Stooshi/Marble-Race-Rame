@@ -147,6 +147,7 @@ main { padding-bottom: 48px; }
 .badge { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; background: #2c3245; color: var(--text); white-space: nowrap; vertical-align: middle; }
 .badge--lg { font-size: 0.85rem; padding: 4px 12px; }
 .badge--lobby { background: #1e3a8a; color: #bfdbfe; }
+.badge--physics { background: #0c4a6e; color: #bae6fd; }
 .badge--countdown { background: #78350f; color: #fde68a; }
 .badge--running { background: #7f1d1d; color: #fecaca; animation: pulse 1.4s infinite; }
 .badge--finished { background: #14532d; color: #bbf7d0; }

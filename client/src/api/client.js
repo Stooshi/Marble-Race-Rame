@@ -82,6 +82,5 @@ export const api = {
   cancelRace: (id) => request(`/races/${id}/cancel`, { method: 'POST' }),
   results: (id) => request(`/races/${id}/results`),
   replay: (id) => request(`/races/${id}/replay`),
-  physicsTracks: () => request('/physics/tracks'),
   physicsPreview: (track, seed, level) => request(`/physics/preview?track=${encodeURIComponent(track)}&seed=${seed}&level=${level}`),
 };

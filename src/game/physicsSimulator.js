@@ -465,6 +465,8 @@ const DRAFT = 0.25;            // up to this much less air drag tucked in behind
 const DRAFT_REACH = 10;        // …fading out by this many metres back
 const DRAFT_WIDTH = 1.4;       // …and this far off its line
 const LIP_GRACE = 1;           // m/s: leaning on the channel's lip in a crowd costs nothing, a real knock does
+const BUMP_NEWS = 6;           // m/s: a hit this hard makes the race commentary
+const NEWS_GAP = 8;            // seconds: on the ice, at most one commentary line per marble this often
 const BUMP_MIN = 0.4;          // m/s: slower than this, marbles are just leaning on each other
 const DIAMETER = 2 * RADIUS;
 
@@ -568,10 +570,8 @@ function collideChannel(marbles, time, ctx) {
       }
       if (stats) {
         stats.bumps += 1;
-        if (-vrel > 3) {
-          stats.bigBumps += 1;
-          if (events) events.push({ time, index: b.index, type: 'bounce', obstacle: 'marble' });
-        }
+        if (-vrel > 3) stats.bigBumps += 1;
+        if (-vrel > BUMP_NEWS && events) events.push({ time, index: b.index, type: 'bounce', obstacle: 'marble' });
       }
     }
   }
@@ -829,7 +829,8 @@ function simulatePhysicsRace({ seed, track, entries, level = 3, tickRateHz = 20 
   const raceEnd = time;
   if (pen && remaining === 0) {
     const still = () => marbles.every((m) => Math.abs(m.pv) < 0.15 && Math.abs(m.pvx) < 0.15);
-    while (time < raceEnd + PEN_SETTLE && !(time > raceEnd + 1 && still())) {
+    // …but never past the 90 s ceiling.
+    while (time < Math.min(raceEnd + PEN_SETTLE, CAP_SECONDS) && !(time > raceEnd + 1 && still())) {
       time += DT;
       step += 1;
       movePen(marbles, ctx);
@@ -897,7 +898,16 @@ function simulatePhysicsRace({ seed, track, entries, level = 3, tickRateHz = 20 
     frames.push({ t, p, l, h, v, ...(ctx.fork && { b }), ...(pen && { a }), s: standings });
   }
 
+  // On the ice (bumps and lip knocks all the time) keep the commentary readable: one line per marble every few seconds.
+  const lastNews = new Map();
+  const newsworthy = (e) => {
+    if (!ctx.channel) return true;
+    if (e.time - (lastNews.get(e.index) ?? -Infinity) < NEWS_GAP) return false;
+    lastNews.set(e.index, e.time);
+    return true;
+  };
   const events = rawEvents
+    .filter(newsworthy)
     .map((e) => ({ t: Math.round(e.time * 1000), i: e.index, type: e.type, ...(e.obstacle && { obstacle: e.obstacle }) }))
     .filter((e) => e.t <= durationMs);
 

@@ -162,14 +162,16 @@ export function layoutMarbles(centerline, frame, lanes, finish, {
   const nearLine = (i) => pen && frame.a[i] && (frame.a[i] > 0 || (frame.p[i] ?? 0) >= 1 - 2.5 / channel.arc);
   const finished = (i) => {
     const fin = finish?.get(i);
-    if (fin && nearLine(i)) return frame.a[i] > 0;
+    if (nearLine(i)) return frame.a[i] > 0; // known from the frame, even live before the results
     return fin && (frame.p[i] ?? 0) >= 0.999 && frame.t >= fin.t;
   };
   const finishers = [];
   for (let i = 0; i < n; i += 1) {
     if (!finished(i)) continue;
     if (!crossedAt.has(i)) crossedAt.set(i, acrossOf(i));
-    finishers.push({ index: i, rank: finish.get(i).rank, t: finish.get(i).t, across: crossedAt.get(i) });
+    // (In a catch area, live, there may be no official results yet: parking order doesn't matter there.)
+    const fin = finish?.get(i);
+    finishers.push({ index: i, rank: fin?.rank ?? n, t: fin?.t ?? frame.t, across: crossedAt.get(i) });
   }
   finishers.sort((a, b) => a.rank - b.rank);
   const spots = pen ? new Map() : assignParking(finishers, lanes, finish?.size || n, style);

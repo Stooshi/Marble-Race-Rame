@@ -107,7 +107,7 @@ function NewRace({ records }) {
     <form className="card new-race" onSubmit={create}>
       <div className="card__header">
         <h2>New race</h2>
-        <small className="muted">20 marbles · 90 seconds · empty slots filled by house marbles</small>
+        <small className="muted">20 marbles · up to 90 seconds · empty slots filled by house marbles</small>
       </div>
 
       <h3 className="step-title"><span>1</span> Track</h3>

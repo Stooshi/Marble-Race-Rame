@@ -222,7 +222,9 @@ function YourRace({ result: r, winner, splitRank, total }) {
 
 function Replay({ raceId, userId }) {
   const { data, error, loading, reload } = useAsync(() => api.replay(raceId), [raceId]);
-  const replay = useReplay(data);
+  // The 2D replay starts at GO: the starting gate's countdown only shows in 3D.
+  const flat = useMemo(() => (data?.start ? { ...data, start: undefined } : data), [data]);
+  const replay = useReplay(flat);
   const highlight = useMemo(
     () => (data?.entries ?? []).filter((e) => e.user?.id && e.user.id === userId).map((e) => e.index),
     [data, userId],

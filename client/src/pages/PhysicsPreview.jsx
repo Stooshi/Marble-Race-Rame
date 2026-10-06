@@ -17,10 +17,10 @@ const LEVELS = [
  */
 export default function PhysicsPreview() {
   const [params, setParams] = useSearchParams();
-  // The real tracks plus the preview-only ones (the bobsleigh run), which come first.
+  // The real tracks, those already on the new physics (Bobsleigh Run) first.
   const tracks = useAsync(async () => {
-    const [real, preview] = await Promise.all([api.tracks(), api.physicsTracks().catch(() => ({ tracks: [] }))]);
-    return { tracks: [...preview.tracks, ...real.tracks] };
+    const { tracks: all } = await api.tracks();
+    return { tracks: [...all.filter((t) => t.new_physics), ...all.filter((t) => !t.new_physics)] };
   }, []);
   const list = tracks.data?.tracks ?? [];
   const slug = params.get('track') || list[0]?.slug;
@@ -45,7 +45,7 @@ export default function PhysicsPreview() {
       <div className="segmented" role="tablist" aria-label="Track">
         {list.map((t) => (
           <button key={t.slug} type="button" role="tab" aria-selected={t.slug === slug} onClick={() => set({ track: t.slug })}>
-            {t.name}{t.preview ? ' (preview)' : ''}
+            {t.name}{t.new_physics ? ' (new physics)' : ''}
           </button>
         ))}
       </div>
@@ -87,7 +87,7 @@ export default function PhysicsPreview() {
           )}
           {race.data.track.physics && (
             <p className="muted small">
-              Bobsleigh Olympics (working name) is a preview-only track: an ice channel built for speed. The whole field
+              Bobsleigh Run races on the new physics, in real races too: an ice channel built for speed. The whole field
               waits side by side on a steep starting ramp behind a gate; at GO its paddles sink in a quick ripple, in a
               random order each race so no starting place has an edge. Then marbles bump, shove and slipstream each other all the way down.
               At the splitter each marble's line decides its channel: the tight inside or the long outside, balanced so
@@ -95,10 +95,10 @@ export default function PhysicsPreview() {
             </p>
           )}
           <p className="muted small">
-            A practice race with 20 house marbles on the new physics.
+            A practice race with 20 house marbles on the new physics; nothing is saved.
             {race.data.track.physics?.collisions
-              ? ' Real races still use the current physics.'
-              : ' On this track marbles pass through each other for now (collisions are on for Bobsleigh Olympics only). Real races still use the current physics.'}
+              ? ''
+              : ' On this track marbles pass through each other for now, and its real races still use the classic physics.'}
           </p>
         </RaceReplayViewer>
       )}

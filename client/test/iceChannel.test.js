@@ -7,10 +7,10 @@ import { layoutMarbles, MARBLE_RADIUS, PEN_DROP } from '../src/three/marbles';
 import { lerpFrame } from '../src/utils/splits';
 
 const require = createRequire(import.meta.url);
-const { previewTrack } = require('../../src/game/previewTracks');
+const { physicsTrack } = require('../../src/game/physicsTracks');
 const { simulatePhysicsRace } = require('../../src/game/physicsSimulator');
 
-const track = previewTrack('bobsleigh-olympics');
+const track = physicsTrack('bobsleigh-run');
 const centerline = buildCenterline(track);
 const channel = channelOf(track, centerline);
 
@@ -99,5 +99,14 @@ describe('bobsleigh ice channel (3D)', () => {
       expected.y = end.pos.y + MARBLE_RADIUS - last.a[i] * PEN_DROP;
       expect(pos[i].distanceTo(expected)).toBeLessThan(0.01);
     }
+  });
+
+  it('draws a live race through the finish before the official results exist', () => {
+    const entries = Array.from({ length: 20 }, (_, i) => ({ id: `m${i}`, lane: i }));
+    const sim = simulatePhysicsRace({ seed: 123, track, entries, level: 3 });
+    const crossedAt = new Map();
+    const noResults = new Map(); // live: nobody has an official finish yet
+    for (const f of sim.frames) layoutMarbles(centerline, f, track.lane_count, noResults, { crossedAt, channel });
+    expect(crossedAt.size).toBe(20); // every marble was drawn crossing into the catch area
   });
 });

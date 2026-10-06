@@ -85,7 +85,12 @@ export function useRaceStream(raceId, { onLobbyUpdate } = {}) {
         setStatus(ack.status);
         if (ack.meta) setMeta(ack.meta);
         if (ack.status === 'countdown' && ack.meta) setStartsAt(new Date(ack.meta.startsAt).getTime());
-        if (ack.status === 'running' && ack.p) ingest({ t: ack.t, p: ack.p, l: ack.l, s: ack.s });
+        if (ack.status === 'running' && ack.p) {
+          // Joined mid-race: the current frame, with whatever the engine sends (heights, speeds, catch area…).
+          const f = {};
+          for (const k of ['t', 'p', 'l', 'h', 'v', 'b', 'a', 's']) if (ack[k] !== undefined) f[k] = ack[k];
+          ingest(f);
+        }
         if (ack.status === 'finished') setResults(ack.results);
       });
     };

@@ -13,21 +13,11 @@ const { notFound } = require('../utils/httpError');
 const { createRng } = require('../game/rng');
 const { subSeed } = require('../game/simulator');
 const { simulatePhysicsRace, PHYSICS_VERSION } = require('../game/physicsSimulator');
-const { PREVIEW_TRACKS, previewTrack } = require('../game/previewTracks');
+const { physicsTrack } = require('../game/physicsTracks');
 
 const router = express.Router();
 const FIELD = 20;
 const cache = new Map(); // a few recent previews, so replays and reloads are instant
-
-/** GET /api/physics/tracks — tracks that exist only in the physics preview. */
-router.get('/tracks', (_req, res) => {
-  res.json({
-    tracks: PREVIEW_TRACKS.map((t) => ({
-      slug: t.slug, name: t.name, difficulty: t.difficulty, description: t.description,
-      length_m: t.length_m, lane_count: t.lane_count, preview: true,
-    })),
-  });
-});
 
 /** GET /api/physics/preview?track=slug&seed=123&level=3 */
 router.get('/preview', async (req, res) => {
@@ -40,14 +30,12 @@ router.get('/preview', async (req, res) => {
   const level = q.level ?? 3;
   const key = `${q.track}:${seed}:${level}`;
   if (!cache.has(key)) {
-    // Preview-only tracks live in code; the real tracks come from the database.
-    let track = previewTrack(q.track);
-    if (!track) {
-      ({ rows: [track] } = await db.query(
-        `SELECT id, slug, name, difficulty, length_m, lane_count, waypoints, obstacles
-           FROM tracks WHERE slug = $1 AND is_active`, [q.track],
-      ));
-    }
+    // Real tracks from the database (a physics track still being added falls back to its definition in code).
+    let { rows: [track] } = await db.query(
+      `SELECT id, slug, name, difficulty, length_m, lane_count, waypoints, obstacles, physics
+         FROM tracks WHERE slug = $1 AND is_active`, [q.track],
+    );
+    track ??= physicsTrack(q.track);
     if (!track) throw notFound('Track not found');
     const { rows: catalog } = await db.query(
       `SELECT id, slug, name, color_primary, color_secondary, pattern, top_speed, acceleration, handling, luck
@@ -75,7 +63,7 @@ router.get('/preview', async (req, res) => {
       track: {
         id: track.id, slug: track.slug, name: track.name, difficulty: track.difficulty,
         length_m: Number(track.length_m), lane_count: track.lane_count, waypoints: track.waypoints, obstacles: track.obstacles,
-        ...(track.physics && { physics: track.physics, sections: track.sections, preview: true }),
+        ...(track.physics && { physics: track.physics }),
       },
       entries: field.map(({ marble: m, lane }, index) => ({
         index, entryId: m.id, lane, isBot: true, user: null,

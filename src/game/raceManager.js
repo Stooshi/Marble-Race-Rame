@@ -60,6 +60,8 @@ class RaceManager {
       tickMs: sim.tickMs,
       tickRateHz: sim.tickRateHz,
       startsAt: new Date(race.started_at).toISOString(),
+      // The starting gate (new physics): when each paddle drops, and the field waiting behind it.
+      ...(sim.start && { start: sim.start, firstFrame: sim.frames[0] }),
     };
     const active = {
       raceId: race.id,
@@ -176,7 +178,7 @@ class RaceManager {
     for (const { id } of rows) {
       try {
         const { race, entries } = await raceService.loadSimulationInput(db, id);
-        const sim = raceService.runSimulation(race, entries);
+        const sim = await raceService.loadRun(db, race, entries);
         const endMs = new Date(race.started_at).getTime() + sim.durationMs;
         if (Date.now() >= endMs) {
           await raceService.finalize(id);

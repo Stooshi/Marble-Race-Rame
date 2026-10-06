@@ -74,7 +74,8 @@ export default function TrackSelector({ value, onChange, records = [] }) {
                 <span className="track-card__body">
                   <strong>{t.name}</strong>
                   <span className={`badge badge--${t.difficulty}`}>{t.difficulty}</span>
-                  <small>{Number(t.length_m)} m · {t.obstacle_count} obstacles</small>
+                  {t.new_physics && <span className="badge badge--physics" title="Collisions, a starting gate and a catch area, watched in 3D">New physics</span>}
+                  <small>{Number(t.length_m)} m · {t.new_physics ? 'about 45 s' : `${t.obstacle_count} obstacles`}</small>
                   <small className="track-card__best">
                     {best ? `Your best: ${formatTime(best.best_time_ms)}` : 'Not raced yet'}
                   </small>

@@ -1,10 +1,16 @@
 'use strict';
 
 const crypto = require('crypto');
+const zlib = require('zlib');
 const db = require('../db');
 const config = require('../config');
 const { createRng } = require('./rng');
 const { simulateRace, subSeed } = require('./simulator');
+const { simulatePhysicsRace, PHYSICS_VERSION } = require('./physicsSimulator');
+
+// Races on tracks with physics settings run on the new physics engine, at a
+// smoother frame rate, and are stored as they were decided (race_replays).
+const PHYSICS_TICK_HZ = 20;
 const { badRequest, conflict, forbidden, notFound } = require('../utils/httpError');
 
 /**
@@ -13,18 +19,30 @@ const { badRequest, conflict, forbidden, notFound } = require('../utils/httpErro
  *   lobby --cancel()--> cancelled
  */
 
+/**
+ * Decided races use the track exactly as it was when the outcome was computed,
+ * including which engine ran them: a snapshot without physics settings is a
+ * classic race, whatever the track has since become.
+ */
+function withSnapshot(race) {
+  if (race.track_snapshot) {
+    Object.assign(race, race.track_snapshot);
+    race.physics = race.track_snapshot.physics ?? null;
+  }
+  return race;
+}
+
 /** Loads everything the simulator needs, in a stable order, from persisted state. */
 async function loadSimulationInput(client, raceId) {
   const { rows: raceRows } = await client.query(
-    `SELECT r.*, t.length_m, t.lane_count, t.obstacles, t.waypoints, t.name AS track_name, t.slug AS track_slug
+    `SELECT r.*, t.length_m, t.lane_count, t.obstacles, t.waypoints, t.physics, t.name AS track_name, t.slug AS track_slug
        FROM races r JOIN tracks t ON t.id = r.track_id
       WHERE r.id = $1`,
     [raceId],
   );
   const race = raceRows[0];
   if (!race) throw notFound('Race not found');
-  // Decided races use the track exactly as it was when the outcome was computed.
-  if (race.track_snapshot) Object.assign(race, race.track_snapshot);
+  withSnapshot(race);
 
   const { rows: entries } = await client.query(
     `SELECT e.id, e.lane, e.user_id, e.is_bot, e.marble_id,
@@ -42,7 +60,31 @@ async function loadSimulationInput(client, raceId) {
   return { race, entries };
 }
 
+/** Runs the race's engine: the new physics for tracks with physics settings, else the classic simulator. */
 function runSimulation(race, entries) {
+  if (race.physics) {
+    return simulatePhysicsRace({
+      seed: Number(race.seed),
+      level: 3,
+      tickRateHz: race.tick_rate_hz,
+      track: {
+        slug: race.track_slug,
+        length_m: Number(race.length_m),
+        lane_count: race.lane_count,
+        waypoints: race.waypoints,
+        obstacles: race.obstacles,
+        physics: race.physics,
+      },
+      entries: entries.map((e) => ({
+        id: e.id,
+        lane: e.lane,
+        topSpeed: e.snap_top_speed,
+        acceleration: e.snap_acceleration,
+        handling: e.snap_handling,
+        luck: e.snap_luck,
+      })),
+    });
+  }
   return simulateRace({
     seed: Number(race.seed),
     track: { length_m: Number(race.length_m), lane_count: race.lane_count, obstacles: race.obstacles },
@@ -60,6 +102,24 @@ function runSimulation(race, entries) {
   });
 }
 
+/** What is stored for a race on the new physics: everything its replay needs. */
+function packReplay(sim) {
+  const { durationMs, tickMs, tickRateHz, results, events, frames, start, stats } = sim;
+  return zlib.gzipSync(Buffer.from(JSON.stringify({ durationMs, tickMs, tickRateHz, results, events, frames, start, stats })));
+}
+
+/**
+ * The race as it runs and replays: for the new physics, the replay stored when
+ * it was decided (so later physics tuning never changes it); for classic races,
+ * regenerated from the seed, exactly as always.
+ */
+async function loadRun(client, race, entries) {
+  if (!race.physics) return runSimulation(race, entries);
+  const { rows } = await client.query('SELECT data FROM race_replays WHERE race_id = $1', [race.id]);
+  if (!rows[0]) throw new Error(`Race ${race.id} has no stored replay`);
+  return JSON.parse(zlib.gunzipSync(rows[0].data).toString('utf8'));
+}
+
 /** Public, result-free description of a race used for the stream header. */
 function describeForClients(race, entries) {
   return {
@@ -73,6 +133,7 @@ function describeForClients(race, entries) {
       lane_count: race.lane_count,
       waypoints: race.waypoints,
       obstacles: race.obstacles,
+      ...(race.physics && { physics: race.physics }),
     },
     entries: entries.map((e, index) => ({
       index,
@@ -160,8 +221,9 @@ async function decide(raceId, actor) {
     // Seed and tick rate are only persisted below, together with the duration
     // the simulation picks, so apply them in memory for this run.
     const input = await loadSimulationInput(client, raceId);
+    const tickRateHz = input.race.physics ? PHYSICS_TICK_HZ : config.game.tickRateHz;
     input.race.seed = seed;
-    input.race.tick_rate_hz = config.game.tickRateHz;
+    input.race.tick_rate_hz = tickRateHz;
     const sim = runSimulation(input.race, input.entries);
 
     await client.query(
@@ -185,13 +247,21 @@ async function decide(raceId, actor) {
               track_snapshot = $6
         WHERE id = $1
         RETURNING *`,
-      [raceId, seed, sim.durationMs, config.game.tickRateHz, config.game.countdownMs, JSON.stringify({
+      [raceId, seed, sim.durationMs, tickRateHz, config.game.countdownMs, JSON.stringify({
         length_m: Number(input.race.length_m),
         lane_count: input.race.lane_count,
         waypoints: input.race.waypoints,
         obstacles: input.race.obstacles,
+        // The new physics: its settings and the engine version, so this race always replays as it ran.
+        ...(input.race.physics && { physics: input.race.physics, engine: PHYSICS_VERSION }),
       })],
     );
+    if (input.race.physics) {
+      await client.query(
+        'INSERT INTO race_replays (race_id, engine, data) VALUES ($1, $2, $3)',
+        [raceId, PHYSICS_VERSION, packReplay(sim)],
+      );
+    }
 
     const full = { ...input.race, ...updated[0] };
     return { race: full, entries: input.entries, sim };
@@ -327,7 +397,9 @@ async function cancel(raceId, actor) {
 
 module.exports = {
   loadSimulationInput,
+  withSnapshot,
   runSimulation,
+  loadRun,
   describeForClients,
   decide,
   markRunning,

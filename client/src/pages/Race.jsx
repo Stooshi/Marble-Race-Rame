@@ -7,6 +7,7 @@ import { useRaceStream } from '../hooks/useRaceStream';
 import MarbleBall from '../components/MarbleBall';
 import MarbleSelector from '../components/MarbleSelector';
 import RaceViewer from '../components/RaceViewer';
+import LiveRaceViewer3D from '../components/LiveRaceViewer3D';
 import TrackPreview from '../components/TrackPreview';
 import { Empty, ErrorMessage, Spinner } from '../components/Status';
 import { formatTime } from '../utils/format';
@@ -15,9 +16,14 @@ const obstacleName = (o) => o?.replace(/_/g, ' ');
 
 const EVENT_TEXT = {
   boost: (name, o) => `${name} got a boost${o ? ` off the ${obstacleName(o)}` : ''}!`,
-  bounce: (name, o) => (o === 'cable_car'
-    ? `${name} was caught by the cable car!`
-    : `${name} took a bad bounce${o ? ` on the ${obstacleName(o)}` : ''}`),
+  bounce: (name, o) => {
+    if (o === 'cable_car') return `${name} was caught by the cable car!`;
+    if (o === 'marble') return `${name} took a big bump!`;
+    if (o === 'splitter') return `${name} clipped the splitter!`;
+    if (o === 'wall') return `${name} hit the wall`;
+    return `${name} took a bad bounce${o ? ` on the ${obstacleName(o)}` : ''}`;
+  },
+  jump: (name) => `${name} flew!`,
   stumble: (name) => `${name} stumbled`,
 };
 
@@ -48,6 +54,8 @@ export default function Race() {
     if (stream.status === 'countdown') reload();
   }, [stream.status, reload]);
 
+  // Tracks on the new physics (the gate, splitter and catch area live in 3D) open in 3D; 2D stays an option.
+  const [view, setView] = useState(null); // null = the track's default
   const myIndexes = useMemo(
     () => (stream.meta?.entries ?? []).filter((e) => e.user?.id && e.user.id === user?.id).map((e) => e.index),
     [stream.meta, user?.id],
@@ -83,27 +91,45 @@ export default function Race() {
   const meta = stream.meta;
   const finished = status === 'finished';
   const winner = finished && stream.results?.[0];
+  const newPhysics = Boolean(meta?.track?.physics);
+  const shown = view ?? (newPhysics ? '3d' : '2d');
+  const footer = finished ? (
+    <div className="finish-banner">
+      <MarbleBall marble={{ color_primary: winner?.color_primary, color_secondary: winner?.color_secondary, pattern: winner?.pattern }} size={28} />
+      <span><strong>{winner?.marble_name}</strong> wins in {formatTime(winner?.finish_time_ms)}!</span>
+      <Link to={`/results/${raceId}`} className="btn btn--primary">See full results</Link>
+    </div>
+  ) : (
+    <EventFeed events={stream.events} entries={meta?.entries ?? []} />
+  );
 
   return (
     <div className="page race-page">
       {header}
       {status === 'countdown' && <Countdown startsAt={stream.startsAt} />}
-      {meta ? (
+      {meta && newPhysics && (
+        <div className="segmented segmented--sm" role="group" aria-label="View">
+          <button type="button" aria-pressed={shown === '3d'} onClick={() => setView('3d')}>3D</button>
+          <button type="button" aria-pressed={shown === '2d'} onClick={() => setView('2d')}>2D</button>
+        </div>
+      )}
+      {meta && shown === '3d' ? (
+        <LiveRaceViewer3D
+          meta={meta}
+          sample={stream.sample}
+          frame={stream.frame}
+          startsAt={stream.startsAt}
+          highlight={myIndexes}
+          footer={footer}
+        />
+      ) : meta ? (
         <RaceViewer
           meta={meta}
           sample={stream.sample}
           frame={stream.frame}
           splits={finished && stream.results ? officialSplits(meta, stream.results, stream.splits) : stream.splits}
           highlight={myIndexes}
-          footer={finished ? (
-            <div className="finish-banner">
-              <MarbleBall marble={{ color_primary: winner?.color_primary, color_secondary: winner?.color_secondary, pattern: winner?.pattern }} size={28} />
-              <span><strong>{winner?.marble_name}</strong> wins in {formatTime(winner?.finish_time_ms)}!</span>
-              <Link to={`/results/${raceId}`} className="btn btn--primary">See full results</Link>
-            </div>
-          ) : (
-            <EventFeed events={stream.events} entries={meta.entries} />
-          )}
+          footer={footer}
         />
       ) : (
         <Spinner label="Connecting to the race…" />
@@ -225,7 +251,7 @@ function Lobby({ details, onChange }) {
           <dl className="kv">
             <div><dt>Track</dt><dd>{race.track_name}</dd></div>
             <div><dt>Length</dt><dd>{track ? `${Number(track.length_m)} m` : '—'}</dd></div>
-            <div><dt>Race time</dt><dd>90 seconds</dd></div>
+            <div><dt>Race time</dt><dd>{track?.physics ? 'About 45 seconds' : '90 seconds'}</dd></div>
             <div><dt>Entry fee</dt><dd>{race.entry_fee_coins ? `${race.entry_fee_coins} coins` : 'Free'}</dd></div>
             <div><dt>Track record</dt><dd>{trackStats?.record_ms ? `${formatTime(trackStats.record_ms)} (${trackStats.record_marble})` : '—'}</dd></div>
             <div><dt>Best halfway</dt><dd>{formatTime(trackStats?.best_split_ms)}</dd></div>

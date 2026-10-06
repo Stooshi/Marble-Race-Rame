@@ -1,9 +1,11 @@
 'use strict';
 
 /**
- * Tracks that exist only in the physics preview (not in the database, never
- * used by real races). Each is described as a list of sections, and the
- * waypoints are generated from them, so the shape is easy to tune by eye.
+ * Tracks built for the new physics (physicsSimulator.js). Each is described as
+ * a list of sections, and the waypoints are generated from them, so the shape
+ * is easy to tune by eye. The database holds the same track (added by a data
+ * update, generated from here by scripts/physics-track-sql.js); a race uses
+ * the new physics when its track has `physics` settings.
  *
  * Section: { name, kind: 'straight'|'left'|'right', length (plan metres) or
  * radius + degrees, grade (metres of drop per metre, positive = downhill) }.
@@ -51,8 +53,8 @@ function generate(sections) {
   };
 }
 
-// Bobsleigh Olympics (working name): an icy run built for speed. Always
-// downhill, never flat. A game, not a simulation: tuned to look fast.
+// Bobsleigh Run: an icy run built for speed. Always downhill, never flat. A
+// game, not a simulation: tuned to look fast.
 const BOBSLEIGH_SECTIONS = [
   { name: 'Starting ramp', kind: 'straight', length: 16, grade: 1.3 }, // steep: a burst off the line
   { name: 'Start plunge', kind: 'straight', length: 80, grade: 0.8 },
@@ -70,16 +72,16 @@ const BOBSLEIGH_SECTIONS = [
   { name: 'Finish', kind: 'straight', length: 30, grade: 0.08 },
 ];
 
-function bobsleigh() {
+function bobsleighRun() {
   const g = generate(BOBSLEIGH_SECTIONS);
   const runIn = g.sections.find((s) => s.name === 'Run to the splitter');
   const merge = g.sections.find((s) => s.name === 'Merge');
   return {
     id: null,
-    slug: 'bobsleigh-olympics',
-    name: 'Bobsleigh Olympics',
+    slug: 'bobsleigh-run',
+    name: 'Bobsleigh Run',
     difficulty: 'extreme',
-    description: 'An icy bobsleigh run built for speed: a splitter, a banked sweep, a hairpin, a corkscrew and a final plunge.',
+    description: 'An icy bobsleigh run built for speed: a paddle gate, a splitter, a banked sweep, a hairpin, a corkscrew and a final plunge into the catch area.',
     length_m: g.length_m,
     lane_count: 4,
     waypoints: g.waypoints,
@@ -127,14 +129,13 @@ function bobsleigh() {
         outsideDrag: 1,
       },
     },
-    preview: true,
   };
 }
 
-const PREVIEW_TRACKS = [bobsleigh()];
+const PHYSICS_TRACKS = [bobsleighRun()];
 
-function previewTrack(slug) {
-  return PREVIEW_TRACKS.find((t) => t.slug === slug) || null;
+function physicsTrack(slug) {
+  return PHYSICS_TRACKS.find((t) => t.slug === slug) || null;
 }
 
-module.exports = { PREVIEW_TRACKS, previewTrack, generate };
+module.exports = { PHYSICS_TRACKS, physicsTrack, generate };

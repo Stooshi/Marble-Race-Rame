@@ -3,8 +3,11 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const crypto = require('node:crypto');
+const fs = require('node:fs');
+const path = require('node:path');
+const { execFileSync } = require('node:child_process');
 const { simulatePhysicsRace } = require('../src/game/physicsSimulator');
-const { previewTrack, PREVIEW_TRACKS } = require('../src/game/previewTracks');
+const { physicsTrack } = require('../src/game/physicsTracks');
 const { buildCenterline, trackProfile } = require('../src/game/trackGeometry');
 const { realTracks, realMarbles } = require('./helpers/realTracks');
 
@@ -13,7 +16,7 @@ const field = (seed) => Array.from({ length: 20 }, (_, i) => {
   const m = catalog[(i + seed) % catalog.length];
   return { id: `m${i}`, lane: (i * 7 + seed) % 20, topSpeed: m.topSpeed, acceleration: m.acceleration, handling: m.handling, luck: m.luck };
 });
-const bob = previewTrack('bobsleigh-olympics');
+const bob = physicsTrack('bobsleigh-run');
 const race = (seed) => simulatePhysicsRace({ seed: seed * 104729 + 11, track: bob, entries: field(seed), level: 3 });
 const pathOf = (sim) => {
   const path = new Array(20).fill(null);
@@ -39,9 +42,13 @@ test('the four real tracks are untouched by the bobsleigh physics (same physics-
   assert.equal(h.digest('hex').slice(0, 24), '4b9853463d4d5f3751587f0a');
 });
 
-test('the bobsleigh run is preview-only and always downhill', () => {
-  assert.ok(PREVIEW_TRACKS.every((t) => t.preview));
-  assert.ok(!realTracks().some((t) => t.slug === bob.slug), 'not in the database seed');
+test('Bobsleigh Run is added by its data update exactly as defined in code, and is always downhill', () => {
+  const file = path.join(__dirname, '..', 'docs', 'data_updates', '2026-10-06-add-bobsleigh-run.sql');
+  const generated = execFileSync(process.execPath, [path.join(__dirname, '..', 'scripts', 'physics-track-sql.js'), 'bobsleigh-run'], { encoding: 'utf8' });
+  assert.equal(fs.readFileSync(file, 'utf8'), generated, 'regenerate the data update with scripts/physics-track-sql.js');
+  assert.equal(bob.name, 'Bobsleigh Run');
+  assert.ok(!/olympic|ring/i.test(JSON.stringify(bob)), 'no Olympic name or rings');
+  assert.ok(!realTracks().some((t) => t.slug === bob.slug), 'not one of the classic tracks');
   const profile = trackProfile(buildCenterline(bob));
   assert.ok(Math.max(...profile.slope) < -0.02, 'never flat, never uphill');
 });
@@ -181,4 +188,29 @@ test('the starting gate holds every marble until its own paddle drops, in a quic
     }
   }
   assert.equal(orders.size, 3, 'a different order each race');
+});
+
+// --- real races: which engine, and protecting the old ones ---------------------
+
+process.env.DATABASE_URL ||= 'postgres://localhost:1/unused';
+const raceService = require('../src/game/raceService');
+
+test('a race runs on the engine its own snapshot names: old races stay classic even if their track gains physics', () => {
+  const classicSnapshot = { length_m: 600, lane_count: 4, waypoints: [], obstacles: [] };
+  const old = raceService.withSnapshot({ physics: bob.physics, track_snapshot: classicSnapshot });
+  assert.equal(old.physics, null, 'decided before the track had physics: classic');
+  const fresh = raceService.withSnapshot({ physics: null, track_snapshot: { ...classicSnapshot, physics: bob.physics, engine: 'physics-preview-1' } });
+  assert.deepEqual(fresh.physics, bob.physics);
+  const lobby = raceService.withSnapshot({ physics: bob.physics, track_snapshot: null });
+  assert.deepEqual(lobby.physics, bob.physics, 'not decided yet: the track as it is now');
+
+  const entries = Array.from({ length: 20 }, (_, i) => ({ id: `e${i}`, lane: i, snap_top_speed: 50, snap_acceleration: 50, snap_handling: 50, snap_luck: 50 }));
+  const base = { seed: 7, tick_rate_hz: 20, track_slug: bob.slug, length_m: bob.length_m, lane_count: 4, waypoints: bob.waypoints, obstacles: [] };
+  const physicsRun = raceService.runSimulation({ ...base, physics: bob.physics }, entries);
+  assert.ok(physicsRun.start && physicsRun.stats.bumps > 0, 'new physics: gate and bumps');
+  assert.ok(physicsRun.durationMs >= 20_000 && physicsRun.durationMs <= 90_000, 'within the race length rule');
+  assert.ok(physicsRun.results.every((r) => r.entryId.startsWith('e')));
+  const classicRun = raceService.runSimulation({ ...base, physics: null, length_m: 600, tick_rate_hz: 10 }, entries);
+  assert.equal(classicRun.start, undefined);
+  assert.equal(classicRun.durationMs, 90_000, 'classic races keep their fixed 90 s');
 });

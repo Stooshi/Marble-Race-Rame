@@ -7,10 +7,10 @@ import { MARBLE_RADIUS } from '../src/three/marbles';
 import { gatePlaces, paddleSink, StartGate } from '../src/three/startGate';
 
 const require = createRequire(import.meta.url);
-const { previewTrack } = require('../../src/game/previewTracks');
+const { physicsTrack } = require('../../src/game/physicsTracks');
 const { simulatePhysicsRace } = require('../../src/game/physicsSimulator');
 
-const track = previewTrack('bobsleigh-olympics');
+const track = physicsTrack('bobsleigh-run');
 const centerline = buildCenterline(track);
 const channel = channelOf(track, centerline);
 const entries = Array.from({ length: 20 }, (_, i) => ({ id: `m${i}`, lane: i }));
