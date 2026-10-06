@@ -1,6 +1,7 @@
 'use strict';
 
 const { createRng } = require('./rng');
+const { bearPaw, bearPawSpeed, normaliseFeatures, SOLID_TYPES } = require('./trackFeatures');
 const { subSeed } = require('./simulator');
 const { TRACK_STYLE, buildCenterline, trackProfile } = require('./trackGeometry');
 
@@ -29,7 +30,7 @@ const { TRACK_STYLE, buildCenterline, trackProfile } = require('./trackGeometry'
  * above the floor in metres, and standings.
  */
 
-const PHYSICS_VERSION = 'physics-preview-2'; // 2: ice knocks in metres, growing with speed (a clean start)
+const PHYSICS_VERSION = 'physics-preview-3'; // 2: ice knocks in metres, growing with speed (a clean start); 3: boost pads, speed bumps, obstacles
 
 const DT = 1 / 120;           // seconds per physics step
 const G = 9.81;
@@ -364,6 +365,17 @@ function advanceChannel(m, time, ctx) {
   if (!m.airborne) {
     a += -G * ROLLING * slope * m.glide * m.form - G * ICE_CRR + m.push * m.form * Math.max(0, 1 - m.v / m.pushFade);
     a -= ICE_SCRUB * ice.scrub * m.knockLoss * m.v * m.v * Math.abs(turn); // handling: skids less in the bends
+    // Boost pads: a burst of speed while rolling over the chevrons (on the right line).
+    for (const f of ctx.boosts ?? []) {
+      if (m.branch || m.s < f.s || m.s > f.s + f.length) continue;
+      if (Math.abs(radius * m.th - f.x) > f.halfWidth) continue;
+      a += BOOST_ACCEL;
+      if (m.lastBoost !== f.id) {
+        m.lastBoost = f.id;
+        if (stats) stats.features.boost += 1;
+        note('boost', 'boost_pad');
+      }
+    }
   }
   m.v = Math.max(0.5, m.v + a * DT);
   if (stats && m.v > stats.topSpeed) stats.topSpeed = m.v;
@@ -403,6 +415,15 @@ function advanceChannel(m, time, ctx) {
   // --- forwards ------------------------------------------------------------------
   const before = m.s;
   m.s += (m.v * DT) / stretch;
+
+  // Speed bumps: a ridge across the channel; marbles hop over it and lose a little speed.
+  for (const f of ctx.bumps ?? []) {
+    if (m.branch || before >= f.s - BUMP_HALF || m.s < f.s - BUMP_HALF) continue;
+    if (m.airborne) continue; // flying over it
+    m.v = Math.max(0.5, m.v * (1 - BUMP_LOSS * m.knockLoss));
+    kickUp(Math.min(BUMP_HOP_MAX, BUMP_HOP * m.v));
+    if (stats) stats.features.bump += 1;
+  }
 
   if (fork && !m.branch && before < fork.s0 && m.s >= fork.s0) {
     // The splitter: the marble's line decides its channel; dead centre clips the wedge.
@@ -586,6 +607,66 @@ function collideChannel(marbles, time, ctx) {
   }
 }
 
+// Boost pads, speed bumps and solid obstacles (tracks with physics.features).
+const BOOST_ACCEL = 11;      // m/s² while on a boost pad (about +3 m/s over an 8 m pad at race speed)
+const BUMP_HALF = 1.1;       // metres from a bump's crest to where it throws marbles up (the 3D view's ridge: 1.2)
+const BUMP_LOSS = 0.05;      // share of speed a bump costs (less with good handling)
+const BUMP_HOP = 0.08;       // how high a bump throws a marble (m/s upwards per m/s of speed)…
+const BUMP_HOP_MAX = 3;      // …up to this: a hop, not a flight
+const SOLID_BOUNCE = 0.45;   // how bouncy the obstacles are
+const SOLID_LOSS = 0.06;     // share of speed a hit costs on top of the bounce (less with good handling)
+const SOLID_SCATTER = 0.35;  // a hit never bounces quite the same way twice
+const SOLID_MAX_LOSS = 0.4;  // a hit, however square, costs at most this share of speed: the rest throws it aside…
+const SOLID_MAX_KNOCK = 12;  // …across the channel at up to this (m/s)
+const PAW_SWAT = 1.0;        // how much of the paw's own speed it passes on
+
+/**
+ * A marble against the obstacles near it: a round footprint (metres along
+ * the track and along the wall) it bounces off, losing some speed and
+ * thrown across the channel. Airborne marbles clear an obstacle lower than
+ * they fly (the icicles hang down from above, so nothing clears them). The
+ * polar bear's paw moves: at full swing it swats marbles harder.
+ */
+function hitSolids(m, time, ctx) {
+  const { channel, look, rng, stats, events } = ctx;
+  if (m.branch) return;
+  const R = channelRadius(channel, m.s);
+  for (const o of ctx.solids) {
+    const ds = m.s - o.s;
+    if (ds < -3 || ds > 3) continue;
+    let ox = o.x;
+    let ou = 0; // the obstacle's own speed across the channel
+    if (o.type === 'polar_bear') {
+      const k = bearPaw(time);
+      ox = o.x + (o.reach - o.x) * k;
+      ou = (o.reach - o.x) * bearPawSpeed(time) * PAW_SWAT;
+    }
+    const lift = m.airborne ? Math.max(0, m.y - look.floor(m.s)) : 0;
+    if (o.type !== 'icicles' && lift > o.height) continue;
+    const dx = R * m.th - ox;
+    const reach = o.radius + RADIUS;
+    if (ds * ds + dx * dx >= reach * reach) continue;
+    // A round obstacle: the marble glances off to the side it was on and
+    // carries on round it (it never ends up stuck behind it).
+    const side = Math.abs(dx) > 0.05 ? Math.sign(dx) : rng ? (rng.next() < 0.5 ? -1 : 1) : (m.index % 2 ? 1 : -1);
+    m.th = (ox + side * Math.sqrt(Math.max(0, reach * reach - ds * ds))) / R;
+    if (m.lastSolid === o.id && time - m.lastSolidAt < 0.4) continue; // still the same contact
+    m.lastSolid = o.id;
+    m.lastSolidAt = time;
+    // How square the hit is (1: dead centre, 0: a graze) decides what it costs
+    // and how hard it throws the marble aside. A game, not a simulation: a
+    // marble never stops dead, it is knocked about and races on.
+    const square = Math.max(0, -ds / reach);
+    m.v = Math.max(0.5, m.v * (1 - SOLID_MAX_LOSS * square * square - SOLID_LOSS * m.knockLoss * square));
+    let knock = side * (1 + SOLID_BOUNCE) * Math.min(SOLID_MAX_KNOCK, 0.3 * m.v * square + 2);
+    knock += (1 + SOLID_BOUNCE) * ou * (Math.sign(ou) === side ? 1 : 0); // the paw swats it on its way
+    if (rng) knock += SOLID_SCATTER * Math.abs(knock) * m.luckKick * rng.gaussian();
+    m.thv = Math.max(-SOLID_MAX_KNOCK, Math.min(SOLID_MAX_KNOCK, m.thv * R * 0.3 + knock)) / R;
+    if (stats) stats.features[o.type] += 1;
+    if (square > 0.4 && events) events.push({ time, index: m.index, type: 'bounce', obstacle: o.type, news: true });
+  }
+}
+
 // The catch area past the finish line (tracks with physics.runout): a pen
 // with brushes that slow marbles down, its floor tipped gently towards a
 // cushioned end wall.
@@ -744,6 +825,21 @@ function simulatePhysicsRace({ seed, track, entries, level = 3, tickRateHz = 20 
   const pen = ctx.channel && tp.runout ? { length: tp.runout.length, room: tp.runout.halfWidth - RADIUS } : null;
   ctx.pen = pen;
   ctx.collisions = collisions;
+  // Boost pads, speed bumps and obstacles (ice channels with physics.features).
+  if (ctx.channel && tp.features) {
+    const features = normaliseFeatures(tp.features, total);
+    const across = (l) => ctx.channel.radius * l * ctx.channel.maxAngle; // metres along the wall from the middle
+    ctx.boosts = features.filter((f) => f.type === 'boost').map((f) => ({ ...f, x: across(f.l), length: f.length ?? 8, halfWidth: f.halfWidth ?? 1.3 }));
+    ctx.bumps = features.filter((f) => f.type === 'bump');
+    ctx.solids = features.filter((f) => SOLID_TYPES.includes(f.type)).map((f) => ({
+      ...f,
+      x: across(f.l),
+      reach: f.reach === undefined ? null : across(f.reach), // the bear's paw: from its rim (l) in to here
+      radius: f.radius ?? 0.7,
+      height: f.height ?? 1.2,
+    }));
+    stats.features = { boost: 0, bump: 0, ...Object.fromEntries(SOLID_TYPES.map((t) => [t, 0])) };
+  }
   if (pen) stats.penBumps = 0;
   const moveMarble = ctx.channel ? advanceChannel : advance;
   const key = `${level}:${track.slug ?? ''}:${total.toFixed(3)}:${lanes}:${JSON.stringify(track.obstacles ?? [])}`;
@@ -820,6 +916,7 @@ function simulatePhysicsRace({ seed, track, entries, level = 3, tickRateHz = 20 
       m.before = moveMarble(m, time, ctx);
     }
     if (collisions) collideChannel(marbles, time, ctx);
+    if (ctx.solids?.length) for (const m of marbles) if (m.finishedAt === null && !(m.releaseAt && time < m.releaseAt)) hitSolids(m, time, ctx);
     for (const m of marbles) {
       if (m.finishedAt !== null) continue;
       const before = Math.min(m.before, m.s - 1e-9); // a shove can move it on (or back) a little
@@ -911,6 +1008,10 @@ function simulatePhysicsRace({ seed, track, entries, level = 3, tickRateHz = 20 
   const lastNews = new Map();
   const newsworthy = (e) => {
     if (!ctx.channel) return true;
+    if (e.news) { // hitting the track's obstacles always makes the news
+      lastNews.set(e.index, e.time);
+      return true;
+    }
     if (e.time - (lastNews.get(e.index) ?? -Infinity) < NEWS_GAP) return false;
     lastNews.set(e.index, e.time);
     return true;
@@ -949,7 +1050,8 @@ function simulatePhysicsRace({ seed, track, entries, level = 3, tickRateHz = 20 
       ...(pen && { penBumps: stats.penBumps }),
       averageSpeed: results[0]?.finishTimeMs ? Math.round((total / (results[0].finishTimeMs / 1000)) * 10) / 10 : null,
       trackMetres: Math.round(total),
-      ...(stats.fork && {
+      ...(stats.features && { features: stats.features }),
+    ...(stats.fork && {
         splitter: Object.fromEntries(Object.entries(stats.fork).map(([side, f]) => [side, {
           marbles: f.count,
           seconds: f.seconds.length ? Math.round((f.seconds.reduce((a, x) => a + x, 0) / f.seconds.length) * 100) / 100 : null,

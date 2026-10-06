@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { aspectRatio, buildPath, fitTransform, pointAt } from '../utils/trackGeometry';
 import { HALFWAY, splitOrder } from '../utils/splits';
 import { formatDelta, formatTime } from '../utils/format';
-import { OBSTACLE_COLORS } from './TrackPreview';
+import { OBSTACLE_COLORS, trackMarks } from './TrackPreview';
 import MarbleBall from './MarbleBall';
 
 /**
@@ -52,7 +52,7 @@ export default function RaceViewer({ meta, sample, frame, splits = {}, highlight
     const trackWidth = Math.max(16, Math.min(46, size.width / 13));
     const { apply } = fitTransform(path, size.width, size.height, trackWidth);
     const radius = Math.max(3.5, Math.min(9, trackWidth * 0.24));
-    const bg = drawTrack({ path, apply, size, dpr, trackWidth, obstacles: meta.track?.obstacles ?? [] });
+    const bg = drawTrack({ path, apply, size, dpr, trackWidth, obstacles: trackMarks(meta.track) });
 
     const toScreen = (progress, lateral) => {
       const p = pointAt(path, progress);

@@ -18,6 +18,7 @@ import { buildIceChannelGeometry, channelLipAt, channelOf, channelRadiusAt, fork
 import { DEFAULT_THEME, themeFor } from './themes';
 import { gatePlaces, StartGate } from './startGate';
 import { countdownPose, handover, startLineShot } from './startCamera';
+import { buildTrackFeatures } from './trackFeatures';
 
 const LEADER_MARGIN = 3; // metres: the follow camera only switches to a new leader that is clearly ahead
 const SCENERY_LAYER = 1;  // scenery is drawn in the big view only (the small corner view skips it, for speed)
@@ -144,6 +145,9 @@ export class TrackScene {
     this.trackMesh = new Mesh(geometry, this.trackMaterial);
     this.trackGroup.add(this.trackMesh);
     this.trackGroup.add(this.buildFinishArch(track));
+    // Boost pads, speed bumps and obstacles (ice channels with physics.features).
+    this.features = this.channel ? buildTrackFeatures(this.centerline, this.channel, track?.physics?.features) : null;
+    if (this.features) this.trackGroup.add(this.features.group);
     // Scenery a moment later, so the track shows straight away even on slow phones.
     const token = (this.buildToken = (this.buildToken || 0) + 1);
     if (theme.scenery) {
@@ -394,6 +398,7 @@ export class TrackScene {
   updateRace(frame, follow = 'leader', dt = 1 / 60, insetFollow = null) {
     if (!this.marbles || !frame) return;
     this.gate?.update(frame.t);
+    this.features?.update(frame.t);
     this.marbles.update(this.centerline, frame);
     const index = this.followedIndex(frame, follow, this.main);
     const at = this.marbles.positionOf(index);
@@ -779,6 +784,7 @@ export class TrackScene {
 
   clearTrack() {
     this.scenery = null;
+    this.features = null; // (its meshes go with the track group below)
     for (const child of [...this.trackGroup.children]) {
       child.traverse((o) => {
         if (o.geometry) o.geometry.dispose();

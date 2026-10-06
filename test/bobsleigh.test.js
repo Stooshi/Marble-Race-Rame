@@ -46,13 +46,20 @@ test('Bobsleigh Run is added by its data update, then re-tuned, exactly as defin
   const dir = path.join(__dirname, '..', 'docs', 'data_updates');
   const added = fs.readFileSync(path.join(dir, '2026-10-06-add-bobsleigh-run.sql'), 'utf8');
   const generated = execFileSync(process.execPath, [path.join(__dirname, '..', 'scripts', 'physics-track-sql.js'), 'bobsleigh-run'], { encoding: 'utf8' });
-  // The data update that added it (already run, so never edited) plus the later
-  // clean-start one (outer starting places' stagger) give the track in code.
+  // The data update that added it (already run, so never edited) plus the
+  // later ones (the clean start's stagger, then the boost pads, bumps and
+  // obstacles) give the track in code.
+  const physicsOf = (sql) => JSON.parse(sql.match(/'(\{"surface".*?\})'\)/)[1]);
+  const physics = physicsOf(added);
   const retune = fs.readFileSync(path.join(dir, '2026-10-06-bobsleigh-clean-start.sql'), 'utf8');
-  const stagger = retune.match(/'\{channel,funnel,stagger\}', '([\d.]+)'::jsonb/)[1];
-  assert.equal(Number(stagger), bob.physics.channel.funnel.stagger);
-  assert.equal(added.split('"stagger":2.2,').length, 2, 'the add update set the old stagger once');
-  assert.equal(added.replace('"stagger":2.2,', `"stagger":${stagger},`), generated, 'the data updates no longer give the track in code');
+  physics.channel.funnel.stagger = Number(retune.match(/'\{channel,funnel,stagger\}', '([\d.]+)'::jsonb/)[1]);
+  const featuresSql = fs.readFileSync(path.join(dir, '2026-10-06-bobsleigh-features.sql'), 'utf8');
+  physics.features = JSON.parse(featuresSql.match(/'\{features\}', '(\[.*?\])'::jsonb/)[1]);
+  physics.fork.tipOffset = Number(featuresSql.match(/'\{fork,tipOffset\}', '(-?[\d.]+)'::jsonb/)[1]);
+  physics.fork.insideScrub = Number(featuresSql.match(/'\{fork,insideScrub\}', '(-?[\d.]+)'::jsonb/)[1]);
+  assert.deepEqual(physics, bob.physics, 'the data updates no longer give the track in code');
+  // Everything else in the add update is as generated from the code.
+  assert.equal(generated.replace(JSON.stringify(bob.physics), JSON.stringify(physicsOf(added))), added);
   assert.equal(bob.name, 'Bobsleigh Run');
   assert.ok(!/olympic|ring/i.test(JSON.stringify(bob)), 'no Olympic name or rings');
   assert.ok(!realTracks().some((t) => t.slug === bob.slug), 'not one of the classic tracks');
@@ -250,4 +257,70 @@ test('a race runs on the engine its own snapshot names: old races stay classic e
   const classicRun = raceService.runSimulation({ ...base, physics: null, length_m: 600, tick_rate_hz: 10 }, entries);
   assert.equal(classicRun.start, undefined);
   assert.equal(classicRun.durationMs, 90_000, 'classic races keep their fixed 90 s');
+});
+
+// --- track features: boost pads, speed bumps, obstacles ----------------------
+
+const { bearPaw, SOLID_TYPES } = require('../src/game/trackFeatures');
+
+test('boost pads give marbles on their line a burst of speed', () => {
+  const { sim } = routeRace(4242);
+  const total = sim.stats.trackMetres;
+  assert.ok(sim.stats.features.boost >= 10, `only ${sim.stats.features.boost} boosts`);
+  // Over the last pad (into the corkscrew, which nearly everyone takes): speed in
+  // and out, compared with the stretch just before it with no pad.
+  const pad = bob.physics.features.filter((f) => f.type === 'boost').at(-1);
+  const speedAt = (i, at) => sim.frames.find((f) => f.p[i] >= at)?.v[i];
+  let gain = 0;
+  let before = 0;
+  let n = 0;
+  for (let i = 0; i < 20; i += 1) {
+    const a = speedAt(i, pad.at);
+    const b = speedAt(i, pad.at + 10 / total);
+    const c = speedAt(i, pad.at - 10 / total);
+    if (a === undefined || b === undefined || c === undefined) continue;
+    gain += b - a;
+    before += a - c;
+    n += 1;
+  }
+  assert.ok(gain / n > before / n + 1.5, `on the pad +${(gain / n).toFixed(2)} m/s, the same distance before it ${(before / n).toFixed(2)} m/s`);
+});
+
+test('speed bumps make the field hop', () => {
+  const { sim } = routeRace(4242);
+  const total = sim.stats.trackMetres;
+  for (const bump of bob.physics.features.filter((f) => f.type === 'bump')) {
+    let hopped = 0;
+    for (let i = 0; i < 20; i += 1) {
+      const over = sim.frames.filter((f) => f.p[i] > bump.at && f.p[i] < bump.at + 12 / total);
+      if (over.some((f) => f.h[i] > 0.1)) hopped += 1;
+    }
+    assert.ok(hopped >= 15, `only ${hopped} of 20 hopped over the bump at ${bump.at}`);
+  }
+});
+
+test('the obstacles give a few strong moments a race, and never stop anyone', () => {
+  const hits = Object.fromEntries(SOLID_TYPES.map((t) => [t, 0]));
+  let news = 0;
+  const races = 30;
+  for (let k = 0; k < races; k += 1) {
+    const { sim } = routeRace(30_000 + k * 101);
+    for (const t of SOLID_TYPES) hits[t] += sim.stats.features[t];
+    news += sim.events.filter((e) => SOLID_TYPES.includes(e.obstacle)).length;
+    assert.equal(sim.stats.unfinished, 0, 'every marble finishes');
+    assert.ok(sim.stats.winnerMs > 40_000 && sim.stats.winnerMs < 60_000, `winner in ${sim.stats.winnerMs} ms`);
+    assert.ok(sim.stats.lastMs < 75_000, `last home in ${sim.stats.lastMs} ms`);
+  }
+  for (const [t, n] of Object.entries(hits)) {
+    const each = n / races / bob.physics.features.filter((f) => f.type === t).length;
+    assert.ok(each >= 0.8 && each <= 8, `${t}: ${each.toFixed(1)} hits a race`);
+  }
+  assert.ok(news / races >= 5, 'the hits make the commentary');
+});
+
+test('the polar bear swipes on a fixed timetable, the same for everyone', () => {
+  assert.equal(bearPaw(0), 0);
+  assert.ok(bearPaw(0.45) > 0.99); // full stretch halfway through a swipe
+  assert.equal(bearPaw(1.5), 0); // resting between swipes
+  assert.equal(bearPaw(0.3), bearPaw(0.3 + 2.6)); // every 2.6 s
 });

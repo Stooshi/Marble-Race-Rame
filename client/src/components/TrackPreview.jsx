@@ -8,7 +8,20 @@ export const OBSTACLE_COLORS = {
   spinner: '#a855f7',
   funnel: '#38bdf8',
   cable_car: '#ef4444',
+  // Ice channel features (tracks with physics.features, e.g. Bobsleigh Run).
+  boost: '#facc15',
+  bump: '#60a5fa',
+  ice_block: '#bfe9ff',
+  snowman: '#ffffff',
+  icicles: '#7dd3fc',
+  polar_bear: '#f5f5f4',
 };
+
+/** A track's obstacles plus its ice channel features (short marks), for the 2D views. */
+export function trackMarks(track) {
+  const features = (track?.physics?.features ?? []).map((f) => ({ type: f.type, at: f.at, span: 0.008 }));
+  return [...(track?.obstacles ?? []), ...features];
+}
 
 /** Small SVG thumbnail of a track's shape with its obstacles. */
 export default function TrackPreview({ track, width = 160, height = 100 }) {
@@ -16,7 +29,7 @@ export default function TrackPreview({ track, width = 160, height = 100 }) {
     const path = buildPath(track?.waypoints);
     const { apply } = fitTransform(path, width, height, 10);
     const line = path.points.map((p) => apply(p)).map((p) => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
-    const obstacles = (track?.obstacles || []).map((o, i) => {
+    const obstacles = trackMarks(track).map((o, i) => {
       const steps = 6;
       const pts = Array.from({ length: steps + 1 }, (_, k) => apply(pointAt(path, o.at + ((o.span ?? 0.03) * k) / steps)));
       return { key: i, color: OBSTACLE_COLORS[o.type] || '#fff', d: pts.map((p) => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ') };
