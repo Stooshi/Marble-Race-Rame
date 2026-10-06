@@ -472,3 +472,10 @@ main { padding-bottom: 48px; }
 .preview3d__stage--empty { display: grid; place-items: center; }
 .replay3d__speed { position: absolute; right: 8px; bottom: 8px; padding: 4px 12px; border-radius: 10px; background: rgba(17, 19, 26, 0.75); color: #fff; font-variant-numeric: tabular-nums; }
 .replay3d__speed strong { font-size: 1.5rem; }
+/* The small corner view (picture in picture): the scene draws into this frame; tap to swap with the big view. */
+.cornerview { position: absolute; left: 8px; bottom: 8px; width: clamp(120px, 30%, 240px); aspect-ratio: 4 / 3; padding: 0; border: 2px solid rgba(255, 255, 255, 0.92); border-radius: 4px; background: transparent; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.35); cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+.cornerview:focus-visible { outline: 3px solid #facc15; outline-offset: 2px; }
+.cornerview:active { border-color: #facc15; }
+.cornerview__label { position: absolute; left: 0; right: 0; bottom: 0; display: flex; align-items: center; gap: 4px; padding: 2px 6px; background: rgba(17, 19, 26, 0.7); color: #fff; font-size: 0.72rem; font-weight: 600; text-align: left; }
+.cornerview__name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cornerview__swap { opacity: 0.85; }

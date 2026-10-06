@@ -98,8 +98,9 @@ function bobsleighRun() {
       // like a running track's lanes, since they have further to come in, and
       // the starting gate releases each marble at its own moment within
       // `release` seconds, in a random order each race, so no place has an
-      // edge. Tuned on thousands of races.
-      channel: { radius: 3.6, maxAngle: 80, funnel: { length: 70, radius: 22, spacing: 1.15, stagger: 2.2, release: 0.45 } },
+      // edge. Tuned on thousands of races (stagger 2.2 m until physics-preview-2,
+      // whose cleaner start needs less: see the 2026-10-06 start data update).
+      channel: { radius: 3.6, maxAngle: 80, funnel: { length: 70, radius: 22, spacing: 1.15, stagger: 0.2, release: 0.45 } },
       // The starting gate: a row of paddles, one in front of each marble, that
       // sink into the ice after a countdown, each at its own moment (the
       // funnel's `release`), a quick ripple in a random order each race.

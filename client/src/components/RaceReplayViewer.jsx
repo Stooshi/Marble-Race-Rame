@@ -3,6 +3,7 @@ import { useReplay } from '../hooks/useReplay';
 import { useTrackScene } from '../hooks/useTrackScene';
 import MarbleBall from './MarbleBall';
 import SceneFailure from './SceneFailure';
+import CornerView, { cornerFollow, followedNow, followLabel } from './CornerView';
 import { Spinner } from './Status';
 import { formatTime } from '../utils/format';
 
@@ -56,7 +57,22 @@ export default function RaceReplayViewer({ data, loading = false, mine = NOBODY,
   sampleRef.current = replay.sample;
   const followRef = useRef(follow);
   followRef.current = follow;
-  useEffect(() => { dirty.current = true; }, [follow]);
+  // The small corner view follows the other one of leader / my marble (not in
+  // the whole-track view, and gone once the race is over).
+  const over = data && replay.time >= replay.duration;
+  const inset = camera === 'follow' && !over ? cornerFollow(follow, mine) : null;
+  const insetRef = useRef(inset);
+  insetRef.current = inset;
+  useEffect(() => { dirty.current = true; }, [follow, inset]);
+  const swapViews = () => {
+    if (inset === null) return;
+    // Tell the frame loop at once, so not even one frame drives the swapped cameras the old way.
+    followRef.current = inset;
+    insetRef.current = follow;
+    sceneRef.current?.swapViews();
+    dirty.current = true;
+    setFollow(inset);
+  };
   useEffect(() => {
     if (!built) return undefined;
     let raf;
@@ -74,10 +90,9 @@ export default function RaceReplayViewer({ data, loading = false, mine = NOBODY,
           settle -= 1;
           lastT = frame.t;
           dirty.current = false;
-          const f = followRef.current;
-          const index = f; // 'leader' or an entry index (the scene keeps the leader steady)
           try {
-            scene.updateRace(frame, index, dt);
+            // 'leader', 'second' or an entry index (the scene keeps the leader steady).
+            scene.updateRace(frame, followRef.current, dt, insetRef.current);
           } catch (err) {
             fail('moving the marbles', err);
             return;
@@ -92,9 +107,10 @@ export default function RaceReplayViewer({ data, loading = false, mine = NOBODY,
 
   const entries = data?.entries ?? [];
   const standings = replay.frame?.s ?? [];
-  const finished = data && replay.time >= replay.duration;
+  const finished = over;
   const winner = data?.results?.[0] && entries[data.results[0].index];
-  const followIndex = follow === 'leader' ? standings[0] : follow;
+  const followIndex = followedNow(follow, standings);
+  const insetIndex = inset === null ? undefined : followedNow(inset, standings);
 
   return (
     <>
@@ -119,6 +135,14 @@ export default function RaceReplayViewer({ data, loading = false, mine = NOBODY,
                 <strong>{Math.round((replay.frame.v[followIndex] ?? 0) * 3.6)}</strong> km/h
               </div>
             )}
+            <CornerView
+              sceneRef={sceneRef}
+              ready={built}
+              visible={inset !== null}
+              label={inset === null ? '' : followLabel(inset, mine, entries)}
+              marble={entries[insetIndex]?.marble}
+              onSwap={swapViews}
+            />
             <ol className="replay3d__standings" aria-label="Current standings">
               {standings.slice(0, 5).map((i, pos) => {
                 const e = entries[i];

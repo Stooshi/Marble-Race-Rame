@@ -14,12 +14,19 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { buildCenterline, buildTrackGeometry, TRACK_STYLE } from './trackModel';
 import { PEN_DROP, RaceMarbles, RUNOUT_LENGTH } from './marbles';
 import { buildScenery } from './scenery';
-import { buildIceChannelGeometry, channelOf, ICE_COLORS } from './iceChannel';
+import { buildIceChannelGeometry, channelLipAt, channelOf, channelRadiusAt, ICE_COLORS } from './iceChannel';
 import { DEFAULT_THEME, themeFor } from './themes';
 import { gatePlaces, StartGate } from './startGate';
 import { countdownPose } from './startCamera';
 
 const LEADER_MARGIN = 3; // metres: the follow camera only switches to a new leader that is clearly ahead
+const SCENERY_LAYER = 1;  // scenery is drawn in the big view only (the small corner view skips it, for speed)
+const INSET_CLOSER = 0.6; // the corner view's follow camera sits this much nearer its marble
+
+/** A follow camera and its smoothing state: the big view has one, the small corner view another. */
+function followRig(camera) {
+  return { camera, cam: new Vector3(), target: new Vector3(), ready: false, leader: null, leaderT: undefined };
+}
 
 /** A sky dome: pale at the horizon, coloured overhead, whichever way the camera looks. */
 function skyDome() {
@@ -55,6 +62,8 @@ export class TrackScene {
     this.renderer = new WebGLRenderer({ canvas, antialias: window.devicePixelRatio < 2, powerPreference: 'default' });
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, lowEnd ? 1.5 : maxPixelRatio));
     this.renderer.outputColorSpace = SRGBColorSpace;
+    this.renderer.info.autoReset = false; // counted over both views (see render)
+    this.size = { width: 1, height: 1 };
 
     this.scene = new Scene();
     this.scene.background = new Color();
@@ -63,6 +72,7 @@ export class TrackScene {
     this.scene.fog = new Fog(new Color(), 400, 2500);
 
     this.camera = new PerspectiveCamera(50, 1, 0.5, 6000);
+    this.camera.layers.enable(SCENERY_LAYER);
 
     // Cartoon lighting: soft sky/ground fill plus one sun, no shadows.
     this.hemisphere = new HemisphereLight();
@@ -92,9 +102,12 @@ export class TrackScene {
     if (import.meta.env?.DEV) window.__trackScene = this; // for local debugging only
     this.marbles = null;
     this.cameraMode = 'overview'; // overview | follow
-    this.followTarget = new Vector3();
-    this.followCam = new Vector3();
-    this.followReady = false;
+    this.main = followRig(this.camera);
+    // The small corner view (picture in picture): its own follow camera on the
+    // same world, drawn into a corner of the canvas after the big view.
+    this.inset = followRig(new PerspectiveCamera(50, 4 / 3, 0.3, 3000));
+    this.insetRect = null; // { x, y, width, height } in CSS pixels from the canvas's top left
+    this.insetOn = false;
   }
 
   /** Sky, haze, light and ground for a track's theme (see themes.js). */
@@ -135,7 +148,10 @@ export class TrackScene {
       setTimeout(() => {
         if (token !== this.buildToken || this.disposed) return; // another track was chosen meanwhile
         this.scenery = buildScenery(theme, this.centerline, track);
-        if (this.scenery) this.trackGroup.add(this.scenery);
+        if (this.scenery) {
+          this.scenery.traverse((o) => o.layers.set(SCENERY_LAYER));
+          this.trackGroup.add(this.scenery);
+        }
         this.render();
       }, 30);
     }
@@ -277,7 +293,9 @@ export class TrackScene {
    */
   setRace(entries, highlight = [], results = [], start = null) {
     this.clearRace();
-    this.leader = null;
+    this.main.leader = null;
+    this.inset.leader = null;
+    this.inset.ready = false;
     this.countdownMs = start?.countdownMs;
     const lanes = Math.max(1, Number(this.track?.lane_count) || 4);
     this.marbles = new RaceMarbles(entries, lanes, highlight, results);
@@ -313,7 +331,7 @@ export class TrackScene {
   setCameraMode(mode) {
     if (mode === this.cameraMode) return;
     this.cameraMode = mode;
-    this.followReady = false;
+    this.main.ready = false;
     if (this.controls) this.controls.enabled = mode === 'overview';
     if (mode === 'overview') {
       this.userMoved = false;
@@ -327,37 +345,35 @@ export class TrackScene {
     this.render();
   }
 
-  /**
-   * Moves the marbles to a race frame and, when following, eases the camera
-   * in behind the followed marble. dt = seconds since the last call.
-   */
   /** How long the countdown before GO runs (ms), for the starting camera. */
   setCountdown(ms) {
     this.countdownMs = ms;
   }
 
   /**
-   * Which marble the camera follows: an entry index, or 'leader'. The leader
-   * only changes when another marble is clearly ahead (a few metres), so a
-   * field running level at the start doesn't swing the camera from marble to
-   * marble across the track.
+   * Which marble a camera follows: an entry index, 'leader', or 'second'
+   * (whoever is in second place). The leader (or second) only changes when
+   * another marble is clearly ahead or behind (a few metres), so a field
+   * running level at the start doesn't swing the camera from marble to marble
+   * across the track.
    */
-  followedIndex(frame, follow) {
-    if (follow !== 'leader') {
-      this.leader = null;
+  followedIndex(frame, follow, rig = this.main) {
+    const rank = follow === 'leader' ? 0 : follow === 'second' ? 1 : -1;
+    if (rank < 0) {
+      rig.leader = null;
       return follow;
     }
-    const top = frame.s?.[0] ?? 0;
-    const jumpedBack = this.leaderT !== undefined && frame.t < this.leaderT - 500; // a replay scrubbed back
-    this.leaderT = frame.t;
-    if (this.leader === null || this.leader === undefined || jumpedBack || frame.p[this.leader] === undefined) {
-      this.leader = top;
-      return top;
+    const want = frame.s?.[rank] ?? frame.s?.[0] ?? 0;
+    const jumpedBack = rig.leaderT !== undefined && frame.t < rig.leaderT - 500; // a replay scrubbed back
+    rig.leaderT = frame.t;
+    if (rig.leader === null || rig.leader === undefined || jumpedBack || frame.p[rig.leader] === undefined) {
+      rig.leader = want;
+      return want;
     }
     if (!this.arcLength) this.arcLength = this.measureArc();
-    const ahead = (frame.p[top] - frame.p[this.leader]) * this.arcLength;
-    if (top !== this.leader && (ahead > LEADER_MARGIN || frame.p[top] >= 1)) this.leader = top;
-    return this.leader;
+    const gap = Math.abs(frame.p[want] - frame.p[rig.leader]) * this.arcLength;
+    if (want !== rig.leader && (gap > LEADER_MARGIN || frame.p[want] >= 1)) rig.leader = want;
+    return rig.leader;
   }
 
   measureArc() {
@@ -367,24 +383,78 @@ export class TrackScene {
     return len;
   }
 
-  /** follow: an entry index, or 'leader'. */
-  updateRace(frame, follow = 'leader', dt = 1 / 60) {
+  /**
+   * Moves the marbles to a race frame and eases the cameras along.
+   * follow: who the big view follows (an entry index, 'leader' or 'second');
+   * insetFollow: who the small corner view follows, or null for no corner view.
+   * dt = seconds since the last call.
+   */
+  updateRace(frame, follow = 'leader', dt = 1 / 60, insetFollow = null) {
     if (!this.marbles || !frame) return;
     this.gate?.update(frame.t);
     this.marbles.update(this.centerline, frame);
-    const index = this.followedIndex(frame, follow);
+    const index = this.followedIndex(frame, follow, this.main);
     const at = this.marbles.positionOf(index);
+    const main = this.main;
     if (this.cameraMode === 'follow' && this.gate && frame.t < 0 && at) {
       // The countdown: the starting camera's path, ending exactly where the follow camera starts at GO.
       const end = this.followPose(at, frame.p[index] ?? 0);
       const pose = countdownPose(frame.t, this.countdownMs ?? 3000, this.gate.startFrame(), end, this.camera.aspect);
-      this.followCam.copy(pose.camera);
-      this.followTarget.copy(pose.target);
-      this.followReady = true;
-      this.camera.position.copy(this.followCam);
-      this.camera.lookAt(this.followTarget);
+      main.cam.copy(pose.camera);
+      main.target.copy(pose.target);
+      main.ready = true;
+      this.camera.position.copy(main.cam);
+      this.camera.lookAt(main.target);
     } else if (this.cameraMode === 'follow' && at) {
-      this.updateFollowCamera(at, frame.p[index] ?? 0, dt);
+      this.updateFollowCamera(at, frame.p[index] ?? 0, dt, main);
+    }
+    // The corner view: the other marble, from its own follow camera (waiting
+    // behind it at the gate during the countdown, then easing along after GO).
+    this.insetOn = false;
+    if (insetFollow !== null && insetFollow !== undefined && this.insetRect && this.cameraMode === 'follow') {
+      const k = this.followedIndex(frame, insetFollow, this.inset);
+      const there = this.marbles.positionOf(k);
+      if (there) {
+        if (frame.t < 0) this.inset.ready = false; // waiting at the gate: sit right behind it
+        this.updateFollowCamera(there, frame.p[k] ?? 0, dt, this.inset);
+        this.insetOn = true;
+      }
+    }
+    this.render();
+  }
+
+  /**
+   * Swaps what the big view and the corner view show, instantly: each camera
+   * takes over the other's place (and who it is keeping track of as leader).
+   */
+  swapViews() {
+    const keys = ['cam', 'target', 'ready', 'leader', 'leaderT'];
+    for (const k of keys) {
+      const v = this.main[k];
+      this.main[k] = this.inset[k];
+      this.inset[k] = v;
+    }
+    if (this.main.ready) {
+      this.camera.position.copy(this.main.cam);
+      this.camera.lookAt(this.main.target);
+    }
+    if (this.inset.ready) {
+      this.inset.camera.position.copy(this.inset.cam);
+      this.inset.camera.lookAt(this.inset.target);
+    }
+    this.render();
+  }
+
+  /** Where the corner view sits ({ x, y, width, height }, CSS pixels from the canvas's top left), or null for none. */
+  setInset(rect) {
+    const same = rect && this.insetRect && ['x', 'y', 'width', 'height'].every((k) => rect[k] === this.insetRect[k]);
+    if (same || (!rect && !this.insetRect)) return;
+    this.insetRect = rect && rect.width > 0 && rect.height > 0 ? { ...rect } : null;
+    if (this.insetRect) {
+      const cam = this.inset.camera;
+      cam.aspect = this.insetRect.width / this.insetRect.height;
+      cam.far = this.trackMesh ? this.trackMesh.geometry.boundingSphere.radius * 10 : 3000;
+      cam.updateProjectionMatrix();
     }
     this.render();
   }
@@ -392,9 +462,11 @@ export class TrackScene {
   /**
    * Where the follow camera wants to be for a marble at `at` (progress along
    * the track): behind it and above, clear of the road behind, the scenery and
-   * any other stretch of track. Returns { camera, target, roadTop, clearAbove }.
+   * any other stretch of track. `closer` < 1 brings it in nearer (the small
+   * corner view, where a far-off marble would be a speck).
+   * Returns { camera, target, roadTop, clearAbove }.
    */
-  followPose(at, progress) {
+  followPose(at, progress, closer = 1) {
     // Look along the track (not the marble's wobble) so the view stays steady.
     const { samples, segments } = this.centerline;
     const ahead = samples[Math.min(segments, Math.round(Math.min(1, progress + 0.02) * segments))];
@@ -411,7 +483,7 @@ export class TrackScene {
       const i = Math.min(segments - 1, Math.floor(f));
       return samples[i].pos.y + (samples[i + 1].pos.y - samples[i].pos.y) * (f - i);
     };
-    const back = 10 + (Number(this.track?.lane_count) || 4) * 0.8;
+    const back = (10 + (Number(this.track?.lane_count) || 4) * 0.8) * closer;
     // Sit behind the marble but nearer the middle of the track: on a wide
     // channel (the bobsleigh funnel) a marble high up one side would otherwise
     // put the camera outside the wall, looking through it.
@@ -447,27 +519,46 @@ export class TrackScene {
     return { camera, target, roadTop, clearAbove };
   }
 
-  updateFollowCamera(at, progress, dt) {
-    const { camera: desired, target, roadTop, clearAbove } = this.followPose(at, progress);
-    if (!this.followReady) {
-      this.followCam.copy(desired);
-      this.followTarget.copy(target);
-      this.followReady = true;
+  updateFollowCamera(at, progress, dt, rig = this.main) {
+    const { camera: desired, target, roadTop, clearAbove } = this.followPose(at, progress, rig === this.inset ? INSET_CLOSER : 1);
+    if (!rig.ready) {
+      rig.cam.copy(desired);
+      rig.target.copy(target);
+      rig.ready = true;
     } else {
       const k = 1 - Math.exp(-Math.min(0.25, dt) * 3.5);
-      this.followCam.lerp(desired, k);
-      this.followTarget.lerp(target, Math.min(1, k * 2));
+      rig.cam.lerp(desired, k);
+      rig.target.lerp(target, Math.min(1, k * 2));
       // Never lag down into the road or the hillside.
-      this.followCam.y = Math.max(this.followCam.y, roadTop + 2.5, clearAbove(this.followCam.x, this.followCam.z) + 2.5);
+      rig.cam.y = Math.max(rig.cam.y, roadTop + 2.5, clearAbove(rig.cam.x, rig.cam.z) + 2.5);
     }
-    this.camera.position.copy(this.followCam);
-    this.camera.lookAt(this.followTarget);
+    rig.camera.position.copy(rig.cam);
+    rig.camera.lookAt(rig.target);
   }
 
 
   /** Highest point of the track (with its walls and embankment) near a spot on the ground plan. */
   trackBelow(x, z) {
     const { samples } = this.centerline;
+    if (this.channel) {
+      // An ice channel stands on nothing but a short skirt (no earth bank, unlike
+      // a road): clear its walls where it really is, however high up it runs.
+      const ch = this.channel;
+      const rimH = ch.radius * (1 - Math.cos(ch.maxAngle)) + 0.3;
+      let top = -Infinity;
+      for (let i = 0; i < samples.length; i += 1) {
+        const p = samples[i].pos;
+        if (p.y + rimH <= top) continue;
+        const s = (i / (samples.length - 1)) * ch.arc;
+        const R = channelRadiusAt(ch, s);
+        const split = ch.fork && s > ch.fork.s0 && s < ch.fork.s1 ? ch.fork.apart : 0;
+        const reach = R * Math.sin(channelLipAt(ch, s)) + split + 0.45 + 2;
+        const dx = p.x - x;
+        const dz = p.z - z;
+        if (dx * dx + dz * dz < reach * reach) top = p.y + rimH;
+      }
+      return top;
+    }
     const half = ((Number(this.track?.lane_count) || 4) * TRACK_STYLE.laneWidth) / 2 + TRACK_STYLE.wallThickness;
     let top = -Infinity;
     for (let i = 0; i < samples.length; i += 1) {
@@ -482,6 +573,7 @@ export class TrackScene {
   }
 
   setSize(width, height) {
+    this.size = { width, height };
     this.renderer.setSize(width, height, false);
     this.camera.aspect = width / Math.max(1, height);
     this.camera.updateProjectionMatrix();
@@ -495,7 +587,20 @@ export class TrackScene {
     this.renderQueued = true;
     requestAnimationFrame(() => {
       this.renderQueued = false;
-      this.renderer.render(this.scene, this.camera);
+      const r = this.renderer;
+      r.info.reset();
+      r.render(this.scene, this.camera);
+      if (this.insetOn && this.insetRect && this.cameraMode === 'follow') {
+        // The corner view, drawn over the big one's corner (no scenery: lighter on phones).
+        const { x, y, width, height } = this.insetRect;
+        const bottom = this.size.height - y - height;
+        r.setScissorTest(true);
+        r.setScissor(x, bottom, width, height);
+        r.setViewport(x, bottom, width, height);
+        r.render(this.scene, this.inset.camera);
+        r.setScissorTest(false);
+        r.setViewport(0, 0, this.size.width, this.size.height);
+      }
     });
   }
 

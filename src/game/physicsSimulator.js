@@ -29,7 +29,7 @@ const { TRACK_STYLE, buildCenterline, trackProfile } = require('./trackGeometry'
  * above the floor in metres, and standings.
  */
 
-const PHYSICS_VERSION = 'physics-preview-1';
+const PHYSICS_VERSION = 'physics-preview-2'; // 2: ice knocks in metres, growing with speed (a clean start)
 
 const DT = 1 / 120;           // seconds per physics step
 const G = 9.81;
@@ -51,7 +51,8 @@ const ICE_CRR = 0.003;         // ice: almost no rolling resistance
 const FREE_DRAG = 0.00042;     // 1/m: plain air drag, no padding of the clock ("free" pace)
 const ICE_SCRUB = 0.008;       // speed lost skidding round bends, per unit of cornering force
 const CHANNEL_DAMPING = 0.3;   // 1/s: rocking up and down the channel walls settles slowly on ice
-const ICE_RUTS = 0.5;          // rad/s per √s: bumps in the ice knock marbles off their line
+const ICE_RUTS = 0.5;          // rad/s per √s (in the channel proper): bumps in the ice knock marbles off their line…
+const RUTS_FULL_SPEED = 8;     // m/s: …at full strength from this speed (gentler while the field gets going)
 // With bumping, drafting and passing the field mixes on its own, so stats
 // count for less than before: better marbles win more, without dominating.
 const ICE_DRAG_SPREAD = 1.55;  // how much top speed (and form) change drag on ice
@@ -372,7 +373,15 @@ function advanceChannel(m, time, ctx) {
   let thAcc = (-cornering * Math.cos(m.th)) / radius;
   if (!m.airborne) thAcc += (-ROLLING * G * Math.sin(m.th)) / radius - CHANNEL_DAMPING * m.thv;
   m.thv += thAcc * DT;
-  if (rng && !m.airborne) m.thv += ICE_RUTS * m.luckKick * rng.gaussian() * Math.sqrt(DT); // bumpy ice (luck: fewer)
+  if (rng && !m.airborne) {
+    // Bumpy ice (luck: fewer knocks). A knock is a sideways shove of the same
+    // size in metres wherever the marble is, so up the wide starting funnel
+    // (a bigger radius) it is a smaller angle; and it grows with speed, so a
+    // marble just let go by the gate rolls straight down the slope rather
+    // than jittering from side to side.
+    const ruts = ICE_RUTS * (channel.radius / radius) * Math.min(1, m.v / RUTS_FULL_SPEED);
+    m.thv += ruts * m.luckKick * rng.gaussian() * Math.sqrt(DT);
+  }
   m.th += m.thv * DT;
   const lip = m.branch ? channel.maxAngle : channelLip(channel, m.s);
   if (Math.abs(m.th) > lip) {

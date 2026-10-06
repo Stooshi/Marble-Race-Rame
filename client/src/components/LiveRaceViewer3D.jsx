@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useTrackScene } from '../hooks/useTrackScene';
 import MarbleBall from './MarbleBall';
 import SceneFailure from './SceneFailure';
+import CornerView, { cornerFollow, followedNow, followLabel } from './CornerView';
 import { Spinner } from './Status';
 import { formatTime } from '../utils/format';
 import { COUNTDOWN_MS } from '../three/startCamera';
@@ -50,6 +51,18 @@ export default function LiveRaceViewer3D({ meta, sample, frame, startsAt, countd
   firstRef.current = meta?.firstFrame;
   const followRef = useRef(follow);
   followRef.current = follow;
+  // The small corner view follows the other one of leader / my marble (none in the whole-track view).
+  const inset = camera === 'follow' ? cornerFollow(follow, highlight) : null;
+  const insetRef = useRef(inset);
+  insetRef.current = inset;
+  const swapViews = () => {
+    if (inset === null) return;
+    // Tell the frame loop at once, so not even one frame drives the swapped cameras the old way.
+    followRef.current = inset;
+    insetRef.current = follow;
+    sceneRef.current?.swapViews();
+    setFollow(inset);
+  };
   useEffect(() => {
     if (!built) return undefined;
     let raf;
@@ -63,7 +76,7 @@ export default function LiveRaceViewer3D({ meta, sample, frame, startsAt, countd
       if (f && scene) {
         const who = followRef.current;
         try {
-          scene.updateRace(f, who, dt); // 'leader' or an entry index (the scene keeps the leader steady)
+          scene.updateRace(f, who, dt, insetRef.current); // 'leader', 'second' or an entry index (the scene keeps the leader steady)
         } catch (err) {
           fail('moving the marbles', err);
           return;
@@ -77,7 +90,8 @@ export default function LiveRaceViewer3D({ meta, sample, frame, startsAt, countd
 
   const entries = meta?.entries ?? [];
   const standings = frame?.s ?? meta?.firstFrame?.s ?? [];
-  const followIndex = follow === 'leader' ? standings[0] : follow;
+  const followIndex = followedNow(follow, standings);
+  const insetIndex = inset === null ? undefined : followedNow(inset, standings);
   const speed = frame?.v && followIndex !== undefined && frame.p[followIndex] < 1 ? frame.v[followIndex] : null;
 
   return (
@@ -94,6 +108,14 @@ export default function LiveRaceViewer3D({ meta, sample, frame, startsAt, countd
                 <strong>{Math.round(speed * 3.6)}</strong> km/h
               </div>
             )}
+            <CornerView
+              sceneRef={sceneRef}
+              ready={built}
+              visible={inset !== null}
+              label={inset === null ? '' : followLabel(inset, highlight, entries)}
+              marble={entries[insetIndex]?.marble}
+              onSwap={swapViews}
+            />
             <ol className="replay3d__standings" aria-label="Current standings">
               {standings.slice(0, 5).map((i, pos) => {
                 const e = entries[i];

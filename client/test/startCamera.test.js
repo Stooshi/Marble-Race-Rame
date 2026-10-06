@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { Vector3 } from 'three';
+import { PerspectiveCamera, Vector3 } from 'three';
 import { COUNTDOWN_MS, countdownPose, smoothCurve } from '../src/three/startCamera';
 
 const start = { centre: new Vector3(10, 50, 20), forward: new Vector3(0, 0, 1), side: new Vector3(1, 0, 0) };
@@ -54,6 +54,31 @@ describe('starting camera (countdown)', () => {
         const last = countdownPose(-dt, D, start, end, aspect);
         expect(last.camera.distanceTo(end.camera)).toBeLessThan(0.05);
       }
+    }
+  });
+
+  it('keeps the waiting marbles in the picture the whole way (desktop and phone)', () => {
+    // The field: 20 marbles side by side across the funnel, the outer ones a little further on.
+    const field = Array.from({ length: 20 }, (_, i) => {
+      const k = (i - 9.5) / 9.5;
+      return start.centre.clone().addScaledVector(start.side, (i - 9.5) * 1.15).addScaledVector(start.forward, 2.2 * k * k).add(new Vector3(0, 0.55, 0));
+    });
+    for (const aspect of [1.8, 0.6]) {
+      const cam = new PerspectiveCamera(50, aspect, 0.3, 1000);
+      let fewest = 20;
+      for (let t = -COUNTDOWN_MS; t < 0; t += 1000 / 30) {
+        const p = countdownPose(t, COUNTDOWN_MS, start, end, aspect);
+        cam.position.copy(p.camera);
+        cam.lookAt(p.target);
+        cam.updateMatrixWorld();
+        const seen = field.filter((m) => {
+          const v = m.clone().project(cam);
+          return v.z < 1 && Math.abs(v.x) < 0.95 && Math.abs(v.y) < 0.95;
+        }).length;
+        fewest = Math.min(fewest, seen);
+      }
+      // Never fewer than a handful in shot (a portrait phone can't fit the whole 22 m row up close).
+      expect(fewest).toBeGreaterThanOrEqual(aspect > 1 ? 8 : 6);
     }
   });
 
