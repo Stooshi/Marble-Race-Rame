@@ -189,7 +189,7 @@ const SAN_FRANCISCO_SECTIONS = [
   { name: 'Lombard 2', kind: 'right', radius: 22, degrees: 170, grade: 0.18 },
   { name: 'Lombard 3', kind: 'left', radius: 22, degrees: 170, grade: 0.18 },
   { name: 'Lombard 4', kind: 'right', radius: 22, degrees: 170, grade: 0.18 },
-  { name: 'Leavenworth', kind: 'straight', length: 75, grade: 0.3 },
+  { name: 'Leavenworth', kind: 'straight', length: 65, grade: 0.3 },
   { name: 'Telegraph Hill', kind: 'straight', length: 35, grade: -0.1 },
   { name: 'Telegraph Hill crest', kind: 'straight', length: 10, grade: -0.06 },
   { name: 'Telegraph Hill crest', kind: 'straight', length: 10, grade: -0.02 },
@@ -205,7 +205,7 @@ const SAN_FRANCISCO_SECTIONS = [
   { name: 'Filbert Street', kind: 'straight', length: 130, grade: 0.38 },
   { name: 'Filbert run-in', kind: 'straight', length: 14, grade: 0.15 },
   { name: 'Embarcadero', kind: 'left', radius: 70, degrees: 170, grade: 0.15 },
-  { name: 'Pier 39', kind: 'straight', length: 70, grade: 0.18 },
+  { name: 'Pier 39', kind: 'straight', length: 62, grade: 0.18 },
   { name: 'Finish', kind: 'straight', length: 30, grade: 0.08 },
 ];
 
