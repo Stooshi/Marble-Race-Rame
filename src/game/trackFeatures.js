@@ -15,13 +15,23 @@
  *           l, radius, height? } a round footprint marbles bounce off. The
  *           polar bear sits on the rim and swipes its paw into the channel on
  *           a fixed timetable (bearPaw), the same in every race and for
- *           every viewer.
+ *           every viewer. San Francisco's sea lion lunges in the same way;
+ *           its planters, fire hydrants and newspaper boxes stand still.
+ *   cable_car: { type: 'cable_car', at, length?, width?, height?, phase? } a cable car
+ *           crossing the channel side to side on a fixed timetable
+ *           (cableCar): a long solid body (`length` metres across the
+ *           channel, `width` along it) that marbles slam into and ricochet
+ *           off, back and forth, the same in every race (`phase`: seconds
+ *           its timetable runs ahead, to meet the pack).
+ *   Any solid can carry `loss` (default 1): how much of the usual speed a
+ *   hit on it costs.
  *
  * The 3D view keeps a copy of bearPaw (client/src/three/trackFeatures.js);
  * a test checks the two agree.
  */
 
-const SOLID_TYPES = ['ice_block', 'snowman', 'icicles', 'polar_bear'];
+const SOLID_TYPES = ['ice_block', 'snowman', 'icicles', 'polar_bear', 'cable_car', 'sea_lion', 'planter', 'hydrant', 'news_box'];
+const SWIPERS = ['polar_bear', 'sea_lion']; // reach in from the rim on bearPaw's timetable
 
 const BEAR_PERIOD = 2.0;  // seconds between swipes
 const BEAR_SWIPE = 1.0;   // seconds a swipe takes (reach in and back)
@@ -35,6 +45,21 @@ function bearPaw(time) {
   if (t >= BEAR_SWIPE) return 0;
   const k = Math.sin((Math.PI * t) / BEAR_SWIPE);
   return k * k;
+}
+
+const CABLE_PERIOD = 9;   // seconds between cable car crossings
+const CABLE_CROSS = 4;    // seconds a crossing takes, from beyond one side to beyond the other
+
+/**
+ * Where the cable car is at `time` seconds after the start: null while it is
+ * away, else { k: 0..1 across its crossing, dir: +1 crossing from the right
+ * to the left (towards positive l), -1 the other way } (it alternates).
+ */
+function cableCar(time) {
+  const n = Math.floor(time / CABLE_PERIOD);
+  const t = time - n * CABLE_PERIOD;
+  if (t >= CABLE_CROSS) return null;
+  return { k: t / CABLE_CROSS, dir: n % 2 === 0 ? 1 : -1 };
 }
 
 /** How fast the paw's reach is changing (share per second), for how hard it swats. */
@@ -51,4 +76,4 @@ function normaliseFeatures(features, total) {
     .sort((a, b) => a.s - b.s);
 }
 
-module.exports = { SOLID_TYPES, BEAR_PERIOD, BEAR_SWIPE, bearPaw, bearPawSpeed, normaliseFeatures };
+module.exports = { SOLID_TYPES, SWIPERS, BEAR_PERIOD, BEAR_SWIPE, CABLE_PERIOD, CABLE_CROSS, bearPaw, bearPawSpeed, cableCar, normaliseFeatures };

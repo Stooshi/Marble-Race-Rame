@@ -160,19 +160,38 @@ function bobsleighRun() {
 // steepest streets in town: long steep drops, two short climbs hit at speed
 // with a crest jump over the top, Lombard Street's banked hairpins and a long
 // sweep along the bay to the pier.
+// Over the top of each climb, the slope steepens bit by bit (a crest rounded
+// off over 60-90 m: Telegraph Hill is taken faster, off a boost pad), so the
+// fastest marbles hop over the top rather than flying off into the sky: at
+// 120-150 km/h a sharp crest throws them 20 m up.
 const SAN_FRANCISCO_SECTIONS = [
   { name: 'Nob Hill start', kind: 'straight', length: 16, grade: 1.3 },
   { name: 'California Street', kind: 'straight', length: 150, grade: 0.55 },
   { name: 'Powell bend', kind: 'right', radius: 60, degrees: 70, grade: 0.15 },
   { name: 'Powell Street', kind: 'straight', length: 120, grade: 0.3 },
   { name: 'Russian Hill', kind: 'straight', length: 45, grade: -0.12 },
+  { name: 'Russian Hill crest', kind: 'straight', length: 10, grade: -0.04 },
+  { name: 'Russian Hill crest', kind: 'straight', length: 10, grade: 0.04 },
+  { name: 'Russian Hill crest', kind: 'straight', length: 10, grade: 0.12 },
+  { name: 'Russian Hill crest', kind: 'straight', length: 10, grade: 0.2 },
+  { name: 'Russian Hill crest', kind: 'straight', length: 10, grade: 0.28 },
+  { name: 'Russian Hill crest', kind: 'straight', length: 10, grade: 0.36 },
   { name: 'Hyde Street', kind: 'straight', length: 140, grade: 0.4 },
-  { name: 'Lombard 1', kind: 'left', radius: 16, degrees: 170, grade: 0.18 },
-  { name: 'Lombard 2', kind: 'right', radius: 16, degrees: 170, grade: 0.18 },
-  { name: 'Lombard 3', kind: 'left', radius: 16, degrees: 170, grade: 0.18 },
-  { name: 'Lombard 4', kind: 'right', radius: 16, degrees: 170, grade: 0.18 },
+  { name: 'Lombard 1', kind: 'left', radius: 22, degrees: 170, grade: 0.18 },
+  { name: 'Lombard 2', kind: 'right', radius: 22, degrees: 170, grade: 0.18 },
+  { name: 'Lombard 3', kind: 'left', radius: 22, degrees: 170, grade: 0.18 },
+  { name: 'Lombard 4', kind: 'right', radius: 22, degrees: 170, grade: 0.18 },
   { name: 'Leavenworth', kind: 'straight', length: 90, grade: 0.3 },
   { name: 'Telegraph Hill', kind: 'straight', length: 35, grade: -0.1 },
+  { name: 'Telegraph Hill crest', kind: 'straight', length: 10, grade: -0.04 },
+  { name: 'Telegraph Hill crest', kind: 'straight', length: 10, grade: 0.02 },
+  { name: 'Telegraph Hill crest', kind: 'straight', length: 10, grade: 0.08 },
+  { name: 'Telegraph Hill crest', kind: 'straight', length: 10, grade: 0.14 },
+  { name: 'Telegraph Hill crest', kind: 'straight', length: 10, grade: 0.2 },
+  { name: 'Telegraph Hill crest', kind: 'straight', length: 10, grade: 0.26 },
+  { name: 'Telegraph Hill crest', kind: 'straight', length: 10, grade: 0.32 },
+  { name: 'Telegraph Hill crest', kind: 'straight', length: 10, grade: 0.38 },
+  { name: 'Telegraph Hill crest', kind: 'straight', length: 10, grade: 0.44 },
   { name: 'Filbert Street', kind: 'straight', length: 130, grade: 0.5 },
   { name: 'Embarcadero', kind: 'left', radius: 70, degrees: 200, grade: 0.12 },
   { name: 'Pier 39', kind: 'straight', length: 120, grade: 0.18 },
@@ -181,6 +200,11 @@ const SAN_FRANCISCO_SECTIONS = [
 
 function sanFrancisco() {
   const g = generate(SAN_FRANCISCO_SECTIONS);
+  // A spot `share` of the way along a named stretch (as a share of the whole track).
+  const on = (name, share) => {
+    const s = g.sections.find((x) => x.name === name);
+    return Math.round((s.from + share * (s.to - s.from)) * 10000) / 10000;
+  };
   return {
     id: null,
     slug: 'san-francisco',
@@ -200,7 +224,29 @@ function sanFrancisco() {
       channel: { radius: 3.6, maxAngle: 88, funnel: { length: 70, radius: 22, spacing: 1.15, stagger: 0.2, release: 0.45 } },
       gate: { countdownMs: 3000 },
       collisions: true,
-      features: [],
+      // Boost pads across the whole street (so they favour no line), one out
+      // of every slow part (each climb and the hairpins), and the city's
+      // obstacles right where the pack rides.
+      features: [
+        { type: 'bump', at: on('California Street', 0.55) },                                  // the cable slot at the Powell crossing
+        // Crossing side to side on its timetable, set (phase, seconds) to be on its way across as the pack comes down.
+        // It sweeps marbles aside more than it stops them (loss: a hit costs 15% of what a fixed obstacle's does),
+        // so it scatters the pack without turning the race into a lottery: class still shows.
+        { type: 'cable_car', at: on('Powell Street', 0.82), length: 7, width: 2.4, height: 3.2, phase: 5, loss: 0.15 },
+        { type: 'boost', at: on('Powell Street', 0.95), l: 0, length: 8, halfWidth: 3.6 },     // into the Russian Hill climb
+        { type: 'boost', at: on('Hyde Street', 0.25), l: 0, length: 8, halfWidth: 3.6 },       // landing off the crest
+        // (Lombard Street's flower beds line the street as scenery: in the hairpins
+        // they caught slow marbles and left them crawling, ten seconds behind.)
+        { type: 'boost', at: on('Leavenworth', 0.05), l: 0, length: 8, halfWidth: 3.6 },       // out of the hairpins
+        { type: 'boost', at: on('Leavenworth', 0.9), l: 0, length: 8, halfWidth: 3.6 },        // into the Telegraph Hill climb
+        // Filbert Street, once the pack is down from the crest hop: two newspaper boxes either side…
+        { type: 'news_box', at: on('Filbert Street', 0.6), l: -0.35, radius: 0.6, height: 1.3 },
+        { type: 'news_box', at: on('Filbert Street', 0.6), l: 0.35, radius: 0.6, height: 1.3 },
+        { type: 'hydrant', at: on('Filbert Street', 0.67), l: 0, radius: 0.45, height: 0.9 },  // …and a fire hydrant behind them, dead centre
+        { type: 'bump', at: on('Filbert Street', 0.88) },
+        { type: 'boost', at: on('Pier 39', 0.05), l: 0, length: 8, halfWidth: 3.6 },           // out of the Embarcadero sweep
+        { type: 'sea_lion', at: on('Pier 39', 0.55), l: -1.25, reach: 0.05, radius: 0.8, height: 1.2 }, // lunging in from the pier, right across the pack's line
+      ],
       runout: { length: 30, halfWidth: 3.5 },
     },
   };

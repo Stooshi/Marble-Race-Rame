@@ -42,6 +42,17 @@ test('the four real tracks are untouched by the bobsleigh physics (same physics-
   assert.equal(h.digest('hex').slice(0, 24), '4b9853463d4d5f3751587f0a');
 });
 
+test('Bobsleigh Run races exactly as on physics-preview-4 (later tracks and obstacle types leave it untouched)', () => {
+  // Fingerprint of whole races (every frame) taken on physics-preview-4, before San Francisco's
+  // obstacles were added to the engine. If this fails, Bobsleigh Run's races changed.
+  const h = crypto.createHash('sha256');
+  for (let seed = 0; seed < 4; seed += 1) {
+    const r = race(seed);
+    h.update(JSON.stringify([r.results, r.events, r.durationMs, r.frames]));
+  }
+  assert.equal(h.digest('hex').slice(0, 24), '78294f382a616b007afb89fd');
+});
+
 test('Bobsleigh Run is added by its data update, then re-tuned, exactly as defined in code, and is always downhill', () => {
   const dir = path.join(__dirname, '..', 'docs', 'data_updates');
   const added = fs.readFileSync(path.join(dir, '2026-10-06-add-bobsleigh-run.sql'), 'utf8');

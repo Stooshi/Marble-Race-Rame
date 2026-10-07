@@ -1,7 +1,7 @@
 'use strict';
 
 const { createRng } = require('./rng');
-const { bearPaw, bearPawSpeed, normaliseFeatures, SOLID_TYPES } = require('./trackFeatures');
+const { bearPaw, bearPawSpeed, cableCar, normaliseFeatures, SOLID_TYPES, SWIPERS, CABLE_CROSS } = require('./trackFeatures');
 const { subSeed } = require('./simulator');
 const { TRACK_STYLE, buildCenterline, trackProfile } = require('./trackGeometry');
 
@@ -642,10 +642,18 @@ function hitSolids(m, time, ctx) {
     let xa = o.xa;
     let xb = o.xb;
     let ou = 0; // its own speed across the channel
-    if (o.type === 'polar_bear') {
+    if (SWIPERS.includes(o.type)) {
       const k = bearPaw(time);
       xa = xb = o.x + (o.reach - o.x) * k;
       ou = (o.reach - o.x) * bearPawSpeed(time) * PAW_SWAT;
+    } else if (o.type === 'cable_car') {
+      // Crossing on its timetable, from beyond one rim to beyond the other (away: nothing there).
+      const c = cableCar(time + (o.phase ?? 0));
+      if (!c) continue;
+      const centre = c.dir * (-o.travel + 2 * o.travel * c.k);
+      xa = centre - o.half;
+      xb = centre + o.half;
+      ou = (c.dir * 2 * o.travel) / CABLE_CROSS;
     }
     const lift = m.airborne ? Math.max(0, m.y - look.floor(m.s)) : 0;
     if (o.type !== 'icicles' && lift > o.height) continue;
@@ -682,7 +690,8 @@ function hitSolids(m, time, ctx) {
     const along = m.v + J * ns;
     // Good handling rides a hit better (keeps up to about 80% of its speed, not 30%).
     // Strong marbles (all four stats) power through: a top marble loses well under half what a weak one does.
-    const kept = Math.max(m.v * (1 - SOLID_MAX_LOSS * m.knockLoss * m.knockLoss * (1.9 - 1.9 * (m.grit ?? 0.5))), along);
+    // An obstacle's `loss` (default 1) scales what its hits cost: the cable car sweeps marbles aside more than it stops them.
+    const kept = Math.max(m.v * (1 - (o.loss ?? 1) * SOLID_MAX_LOSS * m.knockLoss * m.knockLoss * (1.9 - 1.9 * (m.grit ?? 0.5))), along);
     // Which way it is thrown: the side it struck; off the middle of a stretch
     // (the icicle curtain) towards its open end, never up into the rim.
     const lipX = R * channelLip(channel, m.s);
@@ -880,8 +889,13 @@ function simulatePhysicsRace({ seed, track, entries, level = 3, tickRateHz = 20 
       xa: Math.min(across(f.l), across(f.l2 ?? f.l)), // a stretch across the channel (l to l2), or a point
       xb: Math.max(across(f.l), across(f.l2 ?? f.l)),
       reach: f.reach === undefined ? null : across(f.reach), // the bear's paw: from its rim (l) in to here
-      radius: f.radius ?? 0.7,
-      height: f.height ?? 1.2,
+      radius: f.type === 'cable_car' ? (f.width ?? 2.4) / 2 : f.radius ?? 0.7,
+      height: f.height ?? (f.type === 'cable_car' ? 3.2 : 1.2),
+      // The cable car: half its length across the channel, and how far out its middle travels each way (clear of both rims).
+      ...(f.type === 'cable_car' && {
+        half: (f.length ?? 7) / 2,
+        travel: across(1) + (f.length ?? 7) / 2 + 1,
+      }),
     }));
     stats.features = { boost: 0, bump: 0, ...Object.fromEntries(SOLID_TYPES.map((t) => [t, 0])) };
   }
