@@ -69,8 +69,9 @@ export function makeHeightField(centerline, laneCount, { hillHeight = 18, landRa
     const inner = halves[bi];
     const pavement = wSum ? hSum / wSum : ys[bi] + lifts[bi] - 0.25;
     const dip = street.dip ?? 0; // (coarse ground: stays down a little further out, under the street's stone walls)
-    if (d < inner + dip) return ys[bi] - 2; // under the street: never through its floor
-    const kerb = ys[bi] - 2 + (pavement - ys[bi] + 2) * smoothstep(inner + dip, inner + dip + 5, d);
+    const under = street.under ?? 2; // metres under the street's floor (coarse ground: deeper, where the hill bends sharply)
+    if (d < inner + dip) return ys[bi] - under; // under the street: never through its floor
+    const kerb = ys[bi] - under + (pavement - ys[bi] + under) * smoothstep(inner + dip, inner + dip + 5, d);
     return kerb + (hills - kerb) * smoothstep(inner + 40, inner + 160, d);
   }
 

@@ -12,7 +12,8 @@ const { validate } = require('../utils/validate');
 const { notFound } = require('../utils/httpError');
 const { createRng } = require('../game/rng');
 const { subSeed } = require('../game/simulator');
-const { simulatePhysicsRace, PHYSICS_VERSION } = require('../game/physicsSimulator');
+const { PHYSICS_VERSION } = require('../game/physicsSimulator');
+const { simulatePhysics } = require('../game/simulationPool');
 const { physicsTrack } = require('../game/physicsTracks');
 
 const router = express.Router();
@@ -46,7 +47,7 @@ router.get('/preview', async (req, res) => {
     const picked = rng.shuffle([...catalog]).slice(0, FIELD);
     const lanes = rng.shuffle(picked.map((_, i) => i));
     const field = picked.map((m, i) => ({ marble: m, lane: lanes[i] })).sort((a, b) => a.lane - b.lane);
-    const sim = simulatePhysicsRace({
+    const sim = await simulatePhysics({
       seed,
       level,
       track: { ...track, length_m: Number(track.length_m) },

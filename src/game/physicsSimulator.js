@@ -32,7 +32,7 @@ const { TRACK_STYLE, buildCenterline, trackProfile } = require('./trackGeometry'
  * above the floor in metres, and standings.
  */
 
-const PHYSICS_VERSION = 'physics-preview-8'; // 2: ice knocks in metres, growing with speed (a clean start); 3: boost pads, speed bumps, obstacles; 4: real ricochets (chaos), boost kicks; 5: San Francisco's obstacles (the cable car, sea lion, street furniture), each solid's own `loss` (Bobsleigh Run races exactly as on 4); 6: San Francisco re-tuned: a sweeping cable car, a parked bus, trash cans, each pad's own kick, hits never speeding a marble up (physics.noHitBoost)
+const PHYSICS_VERSION = 'physics-preview-9'; // 2: ice knocks in metres, growing with speed (a clean start); 3: boost pads, speed bumps, obstacles; 4: real ricochets (chaos), boost kicks; 5: San Francisco's obstacles (the cable car, sea lion, street furniture), each solid's own `loss` (Bobsleigh Run races exactly as on 4); 6: San Francisco re-tuned: a sweeping cable car, a parked bus, trash cans, each pad's own kick, hits never speeding a marble up (physics.noHitBoost)
 
 const DT = 1 / 120;           // seconds per physics step
 const G = 9.81;
@@ -379,7 +379,10 @@ function advanceChannel(m, time, ctx) {
     }
     // Cobbles: a rough stretch across the whole street that brakes every marble
     // the same way (harder the faster it goes), so they come into a bend slower.
-    for (const f of ctx.cobbles ?? []) if (m.s >= f.s && m.s <= f.s + f.length) a -= f.drag * m.v * Math.abs(m.v);
+    // Strong marbles (all four stats) ride them a little better, so class still tells through the bends.
+    for (const f of ctx.cobbles ?? []) {
+      if (m.s >= f.s && m.s <= f.s + f.length) a -= f.drag * (1 + COBBLE_CLASS * (0.5 - (m.grit ?? 0.5))) * m.v * Math.abs(m.v);
+    }
   }
   m.v = Math.max(0.5, m.v + a * DT);
   if (stats && m.v > stats.topSpeed) stats.topSpeed = m.v;
@@ -627,6 +630,7 @@ const SOLID_MAX_KNOCK = 16;  // at up to this (m/s): up the wall and into whoeve
 const SOLID_NUDGE = 3;       // m/s aside at every fresh contact, so no marble ever sits stuck behind one
 const SOLID_DODGE = 0.8;     // how often (times luck, 0..1) a hit is only a glancing one
 const PAW_SWAT = 1.6;        // how much of the paw's own speed it passes on: a real swat
+const COBBLE_CLASS = 0.3;   // how much better strong marbles ride cobbles (a top marble brakes about a tenth less than a weak one)
 const PARKED_KNOCK = 5;      // m/s aside a parked cable car knocks a marble, round its open end
 
 /**

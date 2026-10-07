@@ -170,7 +170,7 @@ const SAN_FRANCISCO_SECTIONS = [
   // cobbles across the street (see the features) braking the pack before the bend; the straights stay fast.
   { name: 'California run-in', kind: 'straight', length: 15, grade: 0.2 },
   { name: 'Powell bend', kind: 'right', radius: 60, degrees: 70, grade: 0.15 },
-  { name: 'Powell Street', kind: 'straight', length: 100, grade: 0.3 },
+  { name: 'Powell Street', kind: 'straight', length: 80, grade: 0.3 },
   { name: 'Russian Hill', kind: 'straight', length: 45, grade: -0.12 },
   { name: 'Russian Hill crest', kind: 'straight', length: 10, grade: -0.08 },
   { name: 'Russian Hill crest', kind: 'straight', length: 10, grade: -0.04 },
@@ -182,14 +182,14 @@ const SAN_FRANCISCO_SECTIONS = [
   { name: 'Russian Hill crest', kind: 'straight', length: 10, grade: 0.2 },
   { name: 'Russian Hill crest', kind: 'straight', length: 10, grade: 0.24 },
   { name: 'Russian Hill crest', kind: 'straight', length: 10, grade: 0.28 },
-  { name: 'Hyde Street', kind: 'straight', length: 120, grade: 0.32 },
+  { name: 'Hyde Street', kind: 'straight', length: 95, grade: 0.32 },
   { name: 'Hyde run-in', kind: 'straight', length: 10, grade: 0.1 },
   { name: 'Hyde run-in', kind: 'straight', length: 8, grade: -0.03 },
-  { name: 'Lombard 1', kind: 'left', radius: 22, degrees: 170, grade: 0.18 },
-  { name: 'Lombard 2', kind: 'right', radius: 22, degrees: 170, grade: 0.18 },
-  { name: 'Lombard 3', kind: 'left', radius: 22, degrees: 170, grade: 0.18 },
-  { name: 'Lombard 4', kind: 'right', radius: 22, degrees: 170, grade: 0.18 },
-  { name: 'Leavenworth', kind: 'straight', length: 65, grade: 0.3 },
+  { name: 'Lombard 1', kind: 'left', radius: 22, degrees: 120, grade: 0.18 },
+  { name: 'Lombard 2', kind: 'right', radius: 22, degrees: 120, grade: 0.18 },
+  { name: 'Lombard 3', kind: 'left', radius: 22, degrees: 120, grade: 0.18 },
+  { name: 'Lombard 4', kind: 'right', radius: 22, degrees: 120, grade: 0.18 },
+  { name: 'Leavenworth', kind: 'straight', length: 50, grade: 0.3 },
   { name: 'Telegraph Hill', kind: 'straight', length: 35, grade: -0.1 },
   { name: 'Telegraph Hill crest', kind: 'straight', length: 10, grade: -0.06 },
   { name: 'Telegraph Hill crest', kind: 'straight', length: 10, grade: -0.02 },
@@ -202,10 +202,10 @@ const SAN_FRANCISCO_SECTIONS = [
   { name: 'Telegraph Hill crest', kind: 'straight', length: 10, grade: 0.26 },
   { name: 'Telegraph Hill crest', kind: 'straight', length: 10, grade: 0.3 },
   { name: 'Telegraph Hill crest', kind: 'straight', length: 10, grade: 0.34 },
-  { name: 'Filbert Street', kind: 'straight', length: 130, grade: 0.38 },
+  { name: 'Filbert Street', kind: 'straight', length: 100, grade: 0.38 },
   { name: 'Filbert run-in', kind: 'straight', length: 14, grade: 0.15 },
-  { name: 'Embarcadero', kind: 'left', radius: 70, degrees: 170, grade: 0.15 },
-  { name: 'Pier 39', kind: 'straight', length: 62, grade: 0.18 },
+  { name: 'Embarcadero', kind: 'left', radius: 45, degrees: 170, grade: 0.15 },
+  { name: 'Pier 39', kind: 'straight', length: 50, grade: 0.18 },
   { name: 'Finish', kind: 'straight', length: 30, grade: 0.08 },
 ];
 
@@ -216,6 +216,8 @@ function sanFrancisco() {
     const s = g.sections.find((x) => x.name === name);
     return Math.round((s.from + share * (s.to - s.from)) * 10000) / 10000;
   };
+  // Metres from the start of one named stretch to the end of another.
+  const span = (first, last) => Math.round((g.sections.find((x) => x.name === last).to - g.sections.find((x) => x.name === first).from) * g.length_m * 10) / 10;
   return {
     id: null,
     slug: 'san-francisco',
@@ -249,12 +251,17 @@ function sanFrancisco() {
         // Cobbles across the whole street where it eases off before each bend: they brake every marble
         // alike (harder the faster it goes), so the pack comes into the bends slower; hardest before
         // Lombard's tight hairpins. (The hill alone can't: levelling out barely slows a marble at speed.)
-        { type: 'cobbles', at: on('California Street', 0.93), length: 25, drag: 0.005 },
-        { type: 'cobbles', at: on('Hyde Street', 0.9), length: 30, drag: 0.009 },
-        { type: 'cobbles', at: on('Filbert Street', 0.9), length: 27, drag: 0.005 },
+        { type: 'cobbles', at: on('California Street', 0.85), length: 35, drag: 0.01 },
+        { type: 'cobbles', at: on('Hyde Street', 0.85), length: 35, drag: 0.015 },
+        { type: 'cobbles', at: on('Filbert Street', 0.85), length: 35, drag: 0.01 },
+        // Brick paving right round each bend (Lombard's hairpins are famously brick), braking the
+        // marbles gently all the way so they don't pick the speed back up going downhill through it.
+        { type: 'cobbles', at: on('Powell bend', 0), length: span('Powell bend', 'Powell bend'), drag: 0.002, look: 'brick' },
+        { type: 'cobbles', at: on('Lombard 1', 0), length: span('Lombard 1', 'Lombard 4'), drag: 0.004, look: 'brick' },
+        { type: 'cobbles', at: on('Embarcadero', 0), length: span('Embarcadero', 'Embarcadero'), drag: 0.0015, look: 'brick' },
         // Hyde Street: two big trash cans either side of the pack's line, one after the other.
-        { type: 'trash_can', at: on('Hyde Street', 0.45), l: 0.25, radius: 0.65, height: 1.43, loss: 0.2 },
-        { type: 'trash_can', at: on('Hyde Street', 0.58), l: -0.25, radius: 0.65, height: 1.43, loss: 0.2 },
+        { type: 'trash_can', at: on('Hyde Street', 0.45), l: 0.25, radius: 0.65, height: 1.43, loss: 0.15 },
+        { type: 'trash_can', at: on('Hyde Street', 0.58), l: -0.25, radius: 0.65, height: 1.43, loss: 0.15 },
         { type: 'boost', at: on('Powell Street', 0.95), l: 0, length: 8, halfWidth: 3.6, kick: 5 },     // into the Russian Hill climb
         // Lombard Street's flower beds line both rims (scenery only: in the hairpins
         // they caught slow marbles and left them crawling, ten seconds behind).

@@ -5,8 +5,10 @@ const zlib = require('zlib');
 const db = require('../db');
 const config = require('../config');
 const { createRng } = require('./rng');
-const { simulateRace, subSeed } = require('./simulator');
-const { simulatePhysicsRace, PHYSICS_VERSION } = require('./physicsSimulator');
+const { subSeed } = require('./simulator');
+const { PHYSICS_VERSION } = require('./physicsSimulator');
+const { runSimulation } = require('./runSimulation');
+const simulationPool = require('./simulationPool');
 
 // Races on tracks with physics settings run on the new physics engine, at a
 // smoother frame rate, and are stored as they were decided (race_replays).
@@ -58,54 +60,6 @@ async function loadSimulationInput(client, raceId) {
     [raceId],
   );
   return { race, entries };
-}
-
-/** Runs the race's engine: the new physics for tracks with physics settings, else the classic simulator. */
-function runSimulation(race, entries) {
-  if (race.physics) {
-    return simulatePhysicsRace({
-      seed: Number(race.seed),
-      level: 3,
-      tickRateHz: race.tick_rate_hz,
-      track: {
-        slug: race.track_slug,
-        length_m: Number(race.length_m),
-        lane_count: race.lane_count,
-        waypoints: race.waypoints,
-        obstacles: race.obstacles,
-        physics: race.physics,
-      },
-      entries: entries.map((e) => ({
-        id: e.id,
-        lane: e.lane,
-        topSpeed: e.snap_top_speed,
-        acceleration: e.snap_acceleration,
-        handling: e.snap_handling,
-        luck: e.snap_luck,
-      })),
-    });
-  }
-  return simulateRace({
-    seed: Number(race.seed),
-    track: { length_m: Number(race.length_m), lane_count: race.lane_count, obstacles: race.obstacles },
-    entries: entries.map((e) => ({
-      id: e.id,
-      lane: e.lane,
-      topSpeed: e.snap_top_speed,
-      acceleration: e.snap_acceleration,
-      handling: e.snap_handling,
-      luck: e.snap_luck,
-    })),
-    tickRateHz: race.tick_rate_hz,
-    minDurationMs: config.game.minDurationMs,
-    maxDurationMs: config.game.maxDurationMs,
-  });
-}
-
-/** What is stored for a race on the new physics: everything its replay needs. */
-function packReplay(sim) {
-  const { durationMs, tickMs, tickRateHz, results, events, frames, start, stats } = sim;
-  return zlib.gzipSync(Buffer.from(JSON.stringify({ durationMs, tickMs, tickRateHz, results, events, frames, start, stats })));
 }
 
 /**
@@ -224,7 +178,8 @@ async function decide(raceId, actor) {
     const tickRateHz = input.race.physics ? PHYSICS_TICK_HZ : config.game.tickRateHz;
     input.race.seed = seed;
     input.race.tick_rate_hz = tickRateHz;
-    const sim = runSimulation(input.race, input.entries);
+    // (In a worker thread: the live races being streamed meanwhile never freeze.)
+    const { sim, replay } = await simulationPool.simulate(input.race, input.entries);
 
     await client.query(
       `UPDATE race_entries e
@@ -259,7 +214,7 @@ async function decide(raceId, actor) {
     if (input.race.physics) {
       await client.query(
         'INSERT INTO race_replays (race_id, engine, data) VALUES ($1, $2, $3)',
-        [raceId, PHYSICS_VERSION, packReplay(sim)],
+        [raceId, PHYSICS_VERSION, replay],
       );
     }
 

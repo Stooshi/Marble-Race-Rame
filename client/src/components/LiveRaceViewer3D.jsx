@@ -6,6 +6,7 @@ import CornerView, { cornerFollow, followedNow, followLabel } from './CornerView
 import { Spinner } from './Status';
 import { formatTime } from '../utils/format';
 import { COUNTDOWN_MS } from '../three/startCamera';
+import { BUFFER_MS } from '../hooks/useRaceStream';
 import FinishShow, { useFinishShow } from './FinishShow';
 import FrameMeter, { useFrameMeter } from './FrameMeter';
 
@@ -93,7 +94,8 @@ export default function LiveRaceViewer3D({
       const dt = (now - lastNow) / 1000;
       lastNow = now;
       let f = sampleRef.current();
-      if (!f && firstRef.current) f = { ...firstRef.current, t: Math.max(-countdownMs, Math.min(0, Date.now() - (startRef.current ?? Date.now()))) };
+      // (Running BUFFER_MS behind, as the live race itself does, so GO flows straight on into the race.)
+      if (!f && firstRef.current) f = { ...firstRef.current, t: Math.max(-countdownMs, Math.min(0, Date.now() - BUFFER_MS - (startRef.current ?? Date.now()))) };
       const scene = sceneRef.current;
       if (f && scene) {
         const who = followRef.current;

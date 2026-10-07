@@ -13,7 +13,7 @@ import { detectCrossings, lerpFrame } from '../utils/splits';
  * so frames arriving in bursts (a busy phone, a patchy network) never make the
  * marbles leap forward.
  */
-const BUFFER_MS = 150; // how far behind the newest frame playback runs (at least 1.5 frames)
+export const BUFFER_MS = 400; // how far behind the newest frame playback runs: rides out a late frame or two (a patchy phone network) without the marbles stopping
 const KEEP = 40; // frames kept for blending
 export function useRaceStream(raceId, { onLobbyUpdate } = {}) {
   const { socket } = useAuth();

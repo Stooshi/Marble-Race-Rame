@@ -266,15 +266,17 @@ export function buildTrackFeatures(centerline, channel, features, { lite = false
       const len = f.length ?? 25;
       const s0 = f.at * channel.arc;
       const lip = channelLipAt(channel, s0) / channel.maxAngle;
-      const rows = Math.max(2, Math.round(len / 0.9));
-      const cols = 24;
+      // (Stones about 1.5 m long, 16 across the street; on phones bigger ones, 10 across.)
+      const rows = Math.max(2, Math.round(len / (lite ? 2.4 : 1.5)));
+      const cols = lite ? 10 : 16;
       const pos = [];
       const col = [];
-      const shades = ['#8a8580', '#9d968d', '#7a756f', '#a8a197'].map((c) => new Color(c));
-      const grout = new Color('#4a4642');
+      // Grey cobbles, or red brick (look: 'brick', San Francisco's bends: Lombard is famously brick).
+      const shades = (f.look === 'brick' ? ['#a4503c', '#b5604a', '#8f4433', '#c06b52'] : ['#8a8580', '#9d968d', '#7a756f', '#a8a197']).map((c) => new Color(c));
+      const grout = new Color(f.look === 'brick' ? '#5a3a30' : '#4a4642');
       for (let r = 0; r < rows; r += 1) {
-        // The dark joints: the row's whole width, under its stones.
-        for (let c = 0; c < cols; c += 1) {
+        // The dark joints: the row's whole width, under its stones (phones: the street shows through instead).
+        for (let c = 0; c < (lite ? 0 : cols); c += 1) {
           const a0 = p(f.at, (len * r) / rows);
           const a1 = p(f.at, (len * (r + 1)) / rows);
           const corners = [[a0, c / cols], [a0, (c + 1) / cols], [a1, (c + 1) / cols], [a1, c / cols]].map(([at, u]) => surface(at, -lip + 2 * lip * u, 0.015).point);

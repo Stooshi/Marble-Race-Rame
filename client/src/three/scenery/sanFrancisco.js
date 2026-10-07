@@ -316,7 +316,8 @@ export function buildSanFrancisco(centerline, track, theme, { lite = false } = {
   const step = channel ? channel.arc / centerline.segments : 0;
   const { segments } = centerline;
   const street = channel ? {
-    dip: lite ? 6 : 0, // (the phone version's coarser ground stays down further out, behind the street's walls)
+    dip: lite ? 6 : 0, // (the phone version's coarser ground stays down further out, behind the street's walls…
+    under: lite ? 5 : 2, // …and deeper under it, where the hill bends sharply at the start)
     halfAt: (i) => (i > segments ? pen.halfWidth + 0.3 + PAVEMENT : channelRadiusAt(channel, i * step) * Math.sin(channelLipAt(channel, i * step)) + PAVEMENT),
     liftAt: (i) => (i > segments ? 1.6 : channelRadiusAt(channel, i * step) * (1 - Math.cos(channelLipAt(channel, i * step)))),
   } : null;
