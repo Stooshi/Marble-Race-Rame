@@ -233,7 +233,8 @@ function sanFrancisco() {
         // Crossing side to side on its timetable, set (phase, seconds) to be on its way across as the pack comes down.
         // It sweeps marbles aside more than it stops them (loss: a hit costs 15% of what a fixed obstacle's does),
         // so it scatters the pack without turning the race into a lottery: class still shows.
-        { type: 'cable_car', at: on('Powell Street', 0.82), length: 7, width: 2.4, height: 3.2, phase: 5, loss: 0.15 },
+        // Part-way down Powell Street, so the pack has the rest of the hill (and a boost pad) to get back up to speed for the climb.
+        { type: 'cable_car', at: on('Powell Street', 0.35), length: 7, width: 2.4, height: 3.2, phase: 6.8, loss: 0.15 },
         { type: 'boost', at: on('Powell Street', 0.95), l: 0, length: 8, halfWidth: 3.6 },     // into the Russian Hill climb
         { type: 'boost', at: on('Hyde Street', 0.25), l: 0, length: 8, halfWidth: 3.6 },       // landing off the crest
         // Lombard Street's flower beds line both rims (scenery only: in the hairpins

@@ -3,7 +3,10 @@
 // Prints the data update that adds a new-physics track to the database, from
 // its definition in src/game/physicsTracks.js (the single source of truth).
 //   node scripts/physics-track-sql.js bobsleigh-run > docs/data_updates/<date>-add-bobsleigh-run.sql
-// test/bobsleigh.test.js checks the committed file still matches the code.
+// With --rebuild it prints the update that moves an existing classic track
+// onto the new physics instead (its old races keep replaying as they ran):
+//   node scripts/physics-track-sql.js san-francisco --rebuild > docs/data_updates/<date>-san-francisco-rebuild.sql
+// The tests check the committed files still match the code.
 const { physicsTrack } = require('../src/game/physicsTracks');
 
 const slug = process.argv[2];
@@ -12,7 +15,40 @@ if (!track) {
   console.error(`No physics track "${slug}"`);
   process.exit(1);
 }
-process.stdout.write(trackSql(track));
+process.stdout.write(process.argv[3] === '--rebuild' ? rebuildSql(track) : trackSql(track));
+
+function rebuildSql(t) {
+  const q = (v) => `'${String(v).replace(/'/g, "''")}'`;
+  return `-- One-time data update: ${t.name} rebuilt on the new physics.
+--
+-- The classic ${t.name} becomes a racing channel dressed as a city street,
+-- as fast as Bobsleigh Run: a paddle gate on a steep start, long plunges, two
+-- short climbs with crest jumps, banked hairpins, boost pads, a cable car
+-- crossing on a timetable and street obstacles. Races on it now run on the
+-- new physics (src/game/physicsSimulator.js) because the track has "physics"
+-- settings.
+--
+-- Races already run keep replaying exactly as they ran: each race keeps its
+-- own copy of the track as it was when it was decided (races.track_snapshot,
+-- required for every decided race), and the old copies have no physics
+-- settings, so they stay on the classic engine.
+--
+-- Generated from src/game/physicsTracks.js by scripts/physics-track-sql.js.
+--
+-- Only the ${t.name} track row changes (and only while it is still classic).
+-- Nothing else is touched: the other tracks, marbles, users and races stay as
+-- they are.
+
+UPDATE tracks
+   SET description = ${q(t.description)},
+       length_m = ${t.length_m},
+       lane_count = ${t.lane_count},
+       waypoints = ${q(JSON.stringify(t.waypoints))}::jsonb,
+       obstacles = ${q(JSON.stringify(t.obstacles))}::jsonb,
+       physics = ${q(JSON.stringify(t.physics))}::jsonb
+ WHERE slug = ${q(t.slug)} AND physics IS NULL;
+`;
+}
 
 function trackSql(t) {
   const q = (v) => `'${String(v).replace(/'/g, "''")}'`;

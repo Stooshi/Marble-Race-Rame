@@ -30,7 +30,7 @@ const { TRACK_STYLE, buildCenterline, trackProfile } = require('./trackGeometry'
  * above the floor in metres, and standings.
  */
 
-const PHYSICS_VERSION = 'physics-preview-4'; // 2: ice knocks in metres, growing with speed (a clean start); 3: boost pads, speed bumps, obstacles; 4: real ricochets (chaos), boost kicks
+const PHYSICS_VERSION = 'physics-preview-5'; // 2: ice knocks in metres, growing with speed (a clean start); 3: boost pads, speed bumps, obstacles; 4: real ricochets (chaos), boost kicks; 5: San Francisco's obstacles (the cable car, sea lion, street furniture), each solid's own `loss` (Bobsleigh Run races exactly as on 4)
 
 const DT = 1 / 120;           // seconds per physics step
 const G = 9.81;
