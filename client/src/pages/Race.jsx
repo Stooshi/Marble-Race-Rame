@@ -91,7 +91,6 @@ export default function Race() {
 
   const meta = stream.meta;
   const finished = status === 'finished';
-  const winner = finished && stream.results?.[0];
   const newPhysics = Boolean(meta?.track?.physics);
   const shown = view ?? (newPhysics ? '3d' : '2d');
   // The finish show: the official times as marbles cross, then the board with the next race.
@@ -101,15 +100,8 @@ export default function Race() {
     clock: stream.clock,
     next: meta ? <NextRace raceId={raceId} entries={meta.entries} nextRaceId={stream.next?.nextRaceId ?? race?.next_race_id ?? null} /> : null,
   };
-  const footer = finished ? (
-    <div className="finish-banner">
-      <MarbleBall marble={{ color_primary: winner?.color_primary, color_secondary: winner?.color_secondary, pattern: winner?.pattern }} size={28} />
-      <span><strong>{winner?.marble_name}</strong> wins in {formatTime(winner?.finish_time_ms)}!</span>
-      <Link to={`/results/${raceId}`} className="btn btn--primary">See full results</Link>
-    </div>
-  ) : (
-    <EventFeed events={stream.events} entries={meta?.entries ?? []} />
-  );
+  // Race commentary while it runs; once it's over, the results board takes over (inside the view).
+  const footer = finished ? null : <EventFeed events={stream.events} entries={meta?.entries ?? []} />;
 
   return (
     <div className="page race-page">
