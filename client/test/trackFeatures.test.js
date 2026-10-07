@@ -100,8 +100,25 @@ describe('track features (3D)', () => {
     built.update(5050, { frame: { ...frameAt(pad.at + 2 / channel.arc), t: 5050 }, positions: at(pad.at + 2 / channel.arc), contacts: [] });
     const glowing = built.group.children.filter((c) => c.isMesh && c.visible && c.material.blending === 2);
     expect(glowing.length).toBeGreaterThanOrEqual(2); // the pad's flash and the marble's streak
+    const flames = built.group.children.filter((c) => c.name === 'booster-flame' && c.visible);
+    expect(flames).toHaveLength(1); // and a booster flame: white-hot at the marble, red at its tip
+    const plume = flames[0];
+    expect(plume.position.distanceTo(at(pad.at + 2 / channel.arc)[0])).toBeLessThan(1); // out of the marble's back
+    // It flickers by race time alone: the same moment draws the same flame (live and in replays).
+    built.update(5400, { frame: { ...frameAt(pad.at + 12 / channel.arc), t: 5400 }, positions: at(pad.at + 12 / channel.arc), contacts: [] });
+    const len = plume.scale.z;
+    expect(len).toBeGreaterThan(1.5);
+    built.update(5450, { frame: { ...frameAt(pad.at + 14 / channel.arc), t: 5450 }, positions: at(pad.at + 14 / channel.arc), contacts: [] });
+    expect(plume.scale.z).not.toBeCloseTo(len, 3);
+    built.update(4900, { frame: { ...frameAt(pad.at - 3 / channel.arc), t: 4900 }, positions: at(pad.at - 3 / channel.arc), contacts: [] });
+    expect(plume.visible).toBe(false); // a replay rewound to before the pad: no flame yet
+    built.update(5005, { frame: { ...frameAt(pad.at + 2 / channel.arc), t: 5005 }, positions: at(pad.at + 2 / channel.arc), contacts: [] });
+    expect(plume.visible).toBe(true); // and it lights again as the marble rolls over it once more
+    built.update(6100, { frame: { ...frameAt(pad.at + 30 / channel.arc), t: 6100 }, positions: at(pad.at + 30 / channel.arc), contacts: [] });
+    expect(plume.visible).toBe(false); // out after about a second
     built.update(7000, { frame: { ...frameAt(pad.at + 60 / channel.arc), t: 7000 }, positions: at(pad.at + 60 / channel.arc), contacts: [] });
     expect(built.group.children.filter((c) => c.isMesh && c.visible && c.material.blending === 2)).toHaveLength(0); // gone again
+    expect(built.group.children.filter((c) => c.name === 'booster-flame' && c.visible)).toHaveLength(0);
   });
 
   it('draws nothing on tracks without features', () => {

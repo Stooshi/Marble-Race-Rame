@@ -310,7 +310,8 @@ export function buildTrackFeatures(centerline, channel, features) {
   }
 
   // Effects: a puff of snow where a marble slams into an obstacle, a yellow
-  // streak behind a marble fired off a boost pad. Small pools, hidden until used.
+  // streak and a rocket-booster flame behind a marble fired off a boost pad.
+  // Small pools, hidden until used.
   const puffGeo = new IcosahedronGeometry(0.5, 1);
   const puffs = Array.from({ length: 10 }, () => {
     const m = new Mesh(puffGeo, new MeshBasicMaterial({ color: '#ffffff', transparent: true, opacity: 0, depthWrite: false }));
@@ -322,14 +323,49 @@ export function buildTrackFeatures(centerline, channel, features) {
   let nextPuff = 0;
   const streakGeo = new ConeGeometry(0.5, 1, 12, 1, true);
   streakGeo.rotateX(-Math.PI / 2); // along +z, wide end at the marble, tip trailing behind
-  const streaks = new Map(); // marble index → { mesh, start }
+  // The flame's shape: a cone from the marble's back (z = 0, wide) to its tip
+  // (z = 1), white-hot at the nozzle through orange and red to nothing at the
+  // tip. Painted, not glowing: glow washes out to white against the ice.
+  const plumeGeo = new ConeGeometry(0.5, 1, 10, 4, true);
+  plumeGeo.rotateX(Math.PI / 2);
+  plumeGeo.translate(0, 0, 0.5);
+  {
+    const z = plumeGeo.getAttribute('position');
+    const stops = [[0, '#fff3a0', 1], [0.3, '#ff9a10', 1], [0.65, '#f03a00', 0.85], [1, '#b01000', 0]];
+    const a = new Color();
+    const b = new Color();
+    const colors = [];
+    for (let k = 0; k < z.count; k += 1) {
+      const u = Math.max(0, Math.min(1, z.getZ(k)));
+      let j = 0;
+      while (u > stops[j + 1][0]) j += 1;
+      const [u0, c0, a0] = stops[j];
+      const [u1, c1, a1] = stops[j + 1];
+      const f = (u - u0) / (u1 - u0);
+      a.set(c0).lerp(b.set(c1), f);
+      colors.push(a.r, a.g, a.b, a0 + (a1 - a0) * f);
+    }
+    plumeGeo.setAttribute('color', new Float32BufferAttribute(colors, 4));
+  }
+  const streaks = new Map(); // marble index → { mesh, plume, core, start, dir }
   const streakOf = (i) => {
     if (!streaks.has(i)) {
       const m = new Mesh(streakGeo, new MeshBasicMaterial({ color: '#ffd21f', transparent: true, opacity: 0, depthWrite: false, blending: AdditiveBlending, side: DoubleSide }));
       m.visible = false;
       m.renderOrder = 3;
       group.add(m);
-      streaks.set(i, { mesh: m, start: -Infinity, dir: new Vector3(0, 0, 1) });
+      // The booster flame: a short, flickering jet out of the back of the marble,
+      // a white-hot core inside an orange-to-red plume, like a rocket engine (not
+      // the trailing fire of the "Flaming" look players can choose).
+      const plume = new Mesh(plumeGeo, new MeshBasicMaterial({ vertexColors: true, transparent: true, opacity: 0, depthWrite: false, side: DoubleSide }));
+      const core = new Mesh(plumeGeo, new MeshBasicMaterial({ color: '#fffbe6', transparent: true, opacity: 0, depthWrite: false, side: DoubleSide }));
+      plume.name = 'booster-flame';
+      [plume, core].forEach((f, k) => {
+        f.visible = false;
+        f.renderOrder = 4 + k; // the core over the plume
+        group.add(f);
+      });
+      streaks.set(i, { mesh: m, plume, core, start: -Infinity, dir: new Vector3(0, 0, 1) });
     }
     return streaks.get(i);
   };
@@ -339,6 +375,7 @@ export function buildTrackFeatures(centerline, channel, features) {
   const lastPuff = new Map();
   const PUFF_MS = 450;
   const STREAK_MS = 1000;
+  const FLAME_MS = 1000;
   const FLASH_MS = 400;
 
   /** Obstacle footprints at race time t (ms), for drawing marbles round them (the bear's paw moves). */
@@ -351,6 +388,30 @@ export function buildTrackFeatures(centerline, channel, features) {
   };
 
   const tmp = new Vector3();
+  const BACK = new Vector3(0, 0, 1);
+  /**
+   * The booster flame of marble i, `age` ms after it hit a pad: it roars out at
+   * once, flickers (worked out from race time alone, so every viewer and every
+   * replay sees the same flicker) and sputters out over the last third.
+   */
+  const flame = (s, i, age, pos) => {
+    const on = age >= 0 && age < FLAME_MS && Boolean(pos);
+    s.plume.visible = s.core.visible = on;
+    if (!on) return;
+    const k = age / FLAME_MS;
+    const roar = Math.min(1, age / 60) * (k < 0.65 ? 1 : 1 - (k - 0.65) / 0.35);
+    const flicker = 1 + 0.18 * Math.sin(age * 0.07 + i * 1.7) + 0.12 * Math.sin(age * 0.19 + i * 4.1);
+    const len = 2.4 * roar * flicker + 0.2;
+    const width = 0.5 + 0.25 * roar; // slimmer than the marble, which shows round it
+    s.plume.quaternion.setFromUnitVectors(BACK, tmp.copy(s.dir).negate());
+    s.core.quaternion.copy(s.plume.quaternion);
+    s.plume.position.copy(pos).addScaledVector(s.dir, -0.3);
+    s.core.position.copy(s.plume.position);
+    s.plume.scale.set(width, width, len);
+    s.core.scale.set(width * 0.5, width * 0.5, len * 0.45);
+    s.plume.material.opacity = Math.min(1, 1.3 * roar);
+    s.core.material.opacity = 0.95 * Math.min(1, 1.3 * roar);
+  };
   const effects = (t, { frame, positions, contacts } = {}) => {
     if (!frame || !positions) return;
     const back = prevT !== null && t < prevT - 50; // a replay scrubbed back: forget what was showing
@@ -406,6 +467,7 @@ export function buildTrackFeatures(centerline, channel, features) {
       const was = prevPos[i];
       if (was && pos.distanceTo(was) > 0.02) s.dir.subVectors(pos, was).normalize();
       s.mesh.visible = age >= 0 && age < STREAK_MS && Boolean(pos);
+      flame(s, i, age, pos);
       if (!s.mesh.visible) continue;
       const k = age / STREAK_MS;
       const len = 6 * (1 - 0.6 * k);
