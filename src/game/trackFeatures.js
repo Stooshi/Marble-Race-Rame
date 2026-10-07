@@ -15,8 +15,11 @@
  *           l, radius, height? } a round footprint marbles bounce off. The
  *           polar bear sits on the rim and swipes its paw into the channel on
  *           a fixed timetable (bearPaw), the same in every race and for
- *           every viewer. San Francisco's sea lion lunges in the same way;
- *           its planters, fire hydrants and newspaper boxes stand still.
+ *           every viewer. A sea lion with `flop` (seconds its timetable runs
+ *           ahead) instead flops right into the channel on seaLionFlop's
+ *           timetable, lies there a while and hops back out (San Francisco's
+ *           colony at the pier); without it, it lunges like the bear. Planters,
+ *           fire hydrants, newspaper boxes and trash cans stand still.
  *   cable_car: { type: 'cable_car', at, length?, width?, height?, phase? } a cable car
  *           crossing the channel side to side on a fixed timetable
  *           (cableCar): a long solid body (`length` metres across the
@@ -49,6 +52,30 @@ function bearPaw(time) {
   if (t >= BEAR_SWIPE) return 0;
   const k = Math.sin((Math.PI * t) / BEAR_SWIPE);
   return k * k;
+}
+
+const FLOP_PERIOD = 6.5; // seconds between a sea lion's flops into the channel
+const FLOP_IN = 0.7;     // seconds sliding in from its perch
+const FLOP_STAY = 2.6;   // seconds lying there
+const FLOP_OUT = 0.9;    // seconds hopping back out
+
+/**
+ * How far a flopping sea lion is into the channel at `time` seconds: 0 on its
+ * perch beyond the rim, 1 lying where it flops to.
+ */
+function seaLionFlop(time) {
+  const t = ((time % FLOP_PERIOD) + FLOP_PERIOD) % FLOP_PERIOD;
+  const ease = (x) => x * x * (3 - 2 * x);
+  if (t < FLOP_IN) return ease(t / FLOP_IN);
+  if (t < FLOP_IN + FLOP_STAY) return 1;
+  if (t < FLOP_IN + FLOP_STAY + FLOP_OUT) return 1 - ease((t - FLOP_IN - FLOP_STAY) / FLOP_OUT);
+  return 0;
+}
+
+/** How fast a flopping sea lion is moving in (+) or out (−), as a share per second. */
+function seaLionFlopSpeed(time) {
+  const dt = 0.005;
+  return (seaLionFlop(time + dt) - seaLionFlop(time - dt)) / (2 * dt);
 }
 
 const CABLE_PERIOD = 9;   // seconds between cable car crossings
@@ -86,4 +113,7 @@ function normaliseFeatures(features, total) {
     .sort((a, b) => a.s - b.s);
 }
 
-module.exports = { SOLID_TYPES, SWIPERS, BEAR_PERIOD, BEAR_SWIPE, CABLE_PERIOD, CABLE_CROSS, bearPaw, bearPawSpeed, busParts, cableCar, normaliseFeatures };
+module.exports = {
+  SOLID_TYPES, SWIPERS, BEAR_PERIOD, BEAR_SWIPE, CABLE_PERIOD, CABLE_CROSS, FLOP_PERIOD, FLOP_IN, FLOP_STAY, FLOP_OUT,
+  bearPaw, bearPawSpeed, busParts, cableCar, normaliseFeatures, seaLionFlop, seaLionFlopSpeed,
+};

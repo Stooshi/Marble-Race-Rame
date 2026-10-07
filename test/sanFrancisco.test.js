@@ -9,7 +9,7 @@ const path = require('node:path');
 const { execFileSync } = require('node:child_process');
 const { simulatePhysicsRace } = require('../src/game/physicsSimulator');
 const { physicsTrack } = require('../src/game/physicsTracks');
-const { cableCar, CABLE_PERIOD } = require('../src/game/trackFeatures');
+const { cableCar, CABLE_PERIOD, FLOP_PERIOD, FLOP_STAY, seaLionFlop } = require('../src/game/trackFeatures');
 const { createRng } = require('../src/game/rng');
 const { subSeed } = require('../src/game/simulator');
 const { realTracks, realMarbles } = require('./helpers/realTracks');
@@ -37,14 +37,19 @@ const fairnessBatch = () => {
 test('San Francisco is moved onto the new physics, then re-tuned, by its data updates: together exactly the track in code', () => {
   const dir = path.join(__dirname, '..', 'docs', 'data_updates');
   const script = path.join(__dirname, '..', 'scripts', 'physics-track-sql.js');
+  const LATEST = '2026-10-09-san-francisco-sea-lions.sql';
   // The rebuild (already run live, so never edited) moved it onto the new physics…
   const rebuild = fs.readFileSync(path.join(dir, '2026-10-07-san-francisco-rebuild.sql'), 'utf8');
   assert.match(rebuild, /WHERE slug = 'san-francisco' AND physics IS NULL;/);
-  // …and the latest re-tune sets everything as it is now in code.
-  const retune = fs.readFileSync(path.join(dir, '2026-10-08-san-francisco-retune.sql'), 'utf8');
+  // …re-tunes followed (each already run live is never edited, only followed by a new one)…
+  for (const f of ['2026-10-08-san-francisco-retune.sql', LATEST]) {
+    assert.match(fs.readFileSync(path.join(dir, f), 'utf8'), /^UPDATE tracks$[\s\S]*^ WHERE slug = 'san-francisco';$/m, f);
+  }
+  // …and the latest sets everything as it is now in code (its header only says what changed).
+  const body = (sql) => sql.slice(sql.indexOf('UPDATE tracks'));
   const generated = execFileSync(process.execPath, [script, 'san-francisco', '--retune'], { encoding: 'utf8' });
-  assert.equal(retune, generated, 'the latest data update no longer gives the track in code');
-  const later = fs.readdirSync(dir).filter((f) => f > '2026-10-08-san-francisco-retune.sql' && f.includes('san-francisco'));
+  assert.equal(body(fs.readFileSync(path.join(dir, LATEST), 'utf8')), body(generated), 'the latest data update no longer gives the track in code');
+  const later = fs.readdirSync(dir).filter((f) => f > LATEST && f.includes('san-francisco'));
   assert.deepEqual(later, [], 'a later San Francisco update: check it against the code here');
 });
 
@@ -88,14 +93,14 @@ test('the climbs are taken at speed and every marble clears them; the walls hold
   }
 });
 
-test('the obstacles cause chaos where the pack rides: the cable car, the street furniture and the sea lion all get hit', () => {
+test('the obstacles cause chaos where the pack rides: the cable car, the street furniture and the sea lions all get hit', () => {
   const hits = {};
   const runs = fairnessBatch().slice(0, 20);
   for (const { sim } of runs) for (const [k, n] of Object.entries(sim.stats.features)) hits[k] = (hits[k] ?? 0) + n;
   const per = (k) => hits[k] / runs.length;
   assert.ok(per('cable_car') > 15, `cable car ${per('cable_car')} hits per race`);
   assert.ok(per('news_box') + per('hydrant') > 8, `street furniture ${per('news_box') + per('hydrant')} hits per race`);
-  assert.ok(hits.sea_lion > 5, `sea lion ${hits.sea_lion} hits in ${runs.length} races`);
+  assert.ok(per('sea_lion') > 5, `sea lions ${per('sea_lion')} hits per race`); // two flopping into the street
   assert.ok(per('trash_can') > 5, `trash cans ${per('trash_can')} hits per race`);
   assert.ok(per('bus') > 3, `bus ${per('bus')} hits per race`);
   assert.ok(per('boost') > 30, `only ${per('boost')} boost kicks per race`); // four pads across the whole street
@@ -110,6 +115,20 @@ test('the cable car crosses on a fixed timetable, the same for everyone, both wa
     assert.equal(Boolean(a), Boolean(b));
     if (a) assert.ok(a.dir === b.dir && Math.abs(a.k - b.k) < 1e-9);
   }
+});
+
+test('the sea lions flop into the street on a fixed timetable, the same for everyone, and lie there a while', () => {
+  let lying = 0;
+  for (let t = 0; t < FLOP_PERIOD; t += 0.01) {
+    assert.ok(Math.abs(seaLionFlop(t) - seaLionFlop(t + 3 * FLOP_PERIOD)) < 1e-9);
+    assert.ok(seaLionFlop(t) >= 0 && seaLionFlop(t) <= 1);
+    if (seaLionFlop(t) === 1) lying += 0.01;
+  }
+  assert.ok(Math.abs(lying - FLOP_STAY) < 0.05, `lies in the street ${lying.toFixed(2)} s of every ${FLOP_PERIOD}`);
+  // Two of them, out of step: the run to the finish is never clear of both for long.
+  const seals = sf.physics.features.filter((f) => f.type === 'sea_lion');
+  assert.equal(seals.length, 2);
+  assert.ok(seals.every((f) => f.flop !== undefined && Math.abs(f.l) > 1 && Math.abs(f.reach) < 0.5), 'from a perch beyond the rim into the pack\'s line');
 });
 
 test('fair: no starting place has an edge, and better marbles win more often without dominating', () => {

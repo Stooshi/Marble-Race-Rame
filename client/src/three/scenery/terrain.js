@@ -124,8 +124,10 @@ export function buildTerrainGeometry(field, bounds, { cells = 96, colors } = {})
 /**
  * The terrain mesh plus groundAt(x, z): the height of the drawn surface itself
  * (cheap, and things placed with it sit exactly on what you see).
+ * tiles > 1 also cuts it into tiles × tiles pieces (`geometries`), so a camera
+ * down among the streets only draws the ground in front of it.
  */
-export function buildTerrain(field, bounds, { cells = 96, colors } = {}) {
+export function buildTerrain(field, bounds, { cells = 96, colors, tiles = 1 } = {}) {
   const { minX, maxX, minZ, maxZ } = bounds;
   const n = cells + 1;
   const heights = new Float32Array(n * n);
@@ -141,27 +143,36 @@ export function buildTerrain(field, bounds, { cells = 96, colors } = {}) {
     shade: new Color(colors?.shade ?? '#7f9a4c'),
   };
   const top = Math.max(...heights);
-  const positions = [];
-  const colorList = [];
   const c = new Color();
   const at = (i, j) => [minX + ((maxX - minX) * i) / cells, heights[j * n + i], minZ + ((maxZ - minZ) * j) / cells];
-  for (let j = 0; j < cells; j += 1) {
-    for (let i = 0; i < cells; i += 1) {
-      const a = at(i, j); const b = at(i + 1, j); const d = at(i, j + 1); const e = at(i + 1, j + 1);
-      for (const tri of [[a, d, b], [b, d, e]]) {
-        const y = (tri[0][1] + tri[1][1] + tri[2][1]) / 3;
-        const steep = Math.max(...tri.map((p) => p[1])) - Math.min(...tri.map((p) => p[1]));
-        if (y < 0.3) c.copy(C.sand);
-        else c.copy(C.grass).lerp(C.dry, Math.min(1, y / (top || 1)) * 0.9);
-        if (steep > 6) c.lerp(C.shade, 0.35);
-        for (const p of tri) { positions.push(...p); colorList.push(c.r, c.g, c.b); }
+  const piece = (i0, i1, j0, j1) => {
+    const positions = [];
+    const colorList = [];
+    for (let j = j0; j < j1; j += 1) {
+      for (let i = i0; i < i1; i += 1) {
+        const a = at(i, j); const b = at(i + 1, j); const d = at(i, j + 1); const e = at(i + 1, j + 1);
+        for (const tri of [[a, d, b], [b, d, e]]) {
+          const y = (tri[0][1] + tri[1][1] + tri[2][1]) / 3;
+          const steep = Math.max(...tri.map((p) => p[1])) - Math.min(...tri.map((p) => p[1]));
+          if (y < 0.3) c.copy(C.sand);
+          else c.copy(C.grass).lerp(C.dry, Math.min(1, y / (top || 1)) * 0.9);
+          if (steep > 6) c.lerp(C.shade, 0.35);
+          for (const p of tri) { positions.push(...p); colorList.push(c.r, c.g, c.b); }
+        }
       }
     }
+    const g = new BufferGeometry();
+    g.setAttribute('position', new Float32BufferAttribute(positions, 3));
+    g.setAttribute('color', new Float32BufferAttribute(colorList, 3));
+    g.computeVertexNormals();
+    return g;
+  };
+  const cut = (k) => Math.round((cells * k) / tiles);
+  const geometries = [];
+  for (let tj = 0; tj < tiles; tj += 1) {
+    for (let ti = 0; ti < tiles; ti += 1) geometries.push(piece(cut(ti), cut(ti + 1), cut(tj), cut(tj + 1)));
   }
-  const g = new BufferGeometry();
-  g.setAttribute('position', new Float32BufferAttribute(positions, 3));
-  g.setAttribute('color', new Float32BufferAttribute(colorList, 3));
-  g.computeVertexNormals();
+  const g = geometries[0];
 
   const sx = cells / (maxX - minX);
   const sz = cells / (maxZ - minZ);
@@ -177,5 +188,5 @@ export function buildTerrain(field, bounds, { cells = 96, colors } = {}) {
     if (u + v <= 1) return h(i, j) + (h(i + 1, j) - h(i, j)) * u + (h(i, j + 1) - h(i, j)) * v;
     return h(i + 1, j + 1) + (h(i, j + 1) - h(i + 1, j + 1)) * (1 - u) + (h(i + 1, j) - h(i + 1, j + 1)) * (1 - v);
   }
-  return { geometry: g, groundAt };
+  return { geometry: g, geometries, groundAt };
 }

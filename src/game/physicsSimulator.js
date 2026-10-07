@@ -1,7 +1,9 @@
 'use strict';
 
 const { createRng } = require('./rng');
-const { bearPaw, bearPawSpeed, busParts, cableCar, normaliseFeatures, SOLID_TYPES, SWIPERS, CABLE_CROSS } = require('./trackFeatures');
+const {
+  bearPaw, bearPawSpeed, busParts, cableCar, normaliseFeatures, seaLionFlop, seaLionFlopSpeed, SOLID_TYPES, SWIPERS, CABLE_CROSS,
+} = require('./trackFeatures');
 const { subSeed } = require('./simulator');
 const { TRACK_STYLE, buildCenterline, trackProfile } = require('./trackGeometry');
 
@@ -30,7 +32,7 @@ const { TRACK_STYLE, buildCenterline, trackProfile } = require('./trackGeometry'
  * above the floor in metres, and standings.
  */
 
-const PHYSICS_VERSION = 'physics-preview-6'; // 2: ice knocks in metres, growing with speed (a clean start); 3: boost pads, speed bumps, obstacles; 4: real ricochets (chaos), boost kicks; 5: San Francisco's obstacles (the cable car, sea lion, street furniture), each solid's own `loss` (Bobsleigh Run races exactly as on 4); 6: San Francisco re-tuned: a sweeping cable car, a parked bus, trash cans, each pad's own kick, hits never speeding a marble up (physics.noHitBoost)
+const PHYSICS_VERSION = 'physics-preview-7'; // 2: ice knocks in metres, growing with speed (a clean start); 3: boost pads, speed bumps, obstacles; 4: real ricochets (chaos), boost kicks; 5: San Francisco's obstacles (the cable car, sea lion, street furniture), each solid's own `loss` (Bobsleigh Run races exactly as on 4); 6: San Francisco re-tuned: a sweeping cable car, a parked bus, trash cans, each pad's own kick, hits never speeding a marble up (physics.noHitBoost)
 
 const DT = 1 / 120;           // seconds per physics step
 const G = 9.81;
@@ -642,7 +644,13 @@ function hitSolids(m, time, ctx) {
     let xa = o.xa;
     let xb = o.xb;
     let ou = 0; // its own speed across the channel
-    if (SWIPERS.includes(o.type)) {
+    if (o.flop !== undefined) {
+      // A sea lion flopping into the channel on its timetable (on its perch: nothing there).
+      const k = seaLionFlop(time + o.flop);
+      if (k <= 0) continue;
+      xa = xb = o.x + (o.reach - o.x) * k;
+      ou = (o.reach - o.x) * seaLionFlopSpeed(time + o.flop);
+    } else if (SWIPERS.includes(o.type)) {
       const k = bearPaw(time);
       xa = xb = o.x + (o.reach - o.x) * k;
       ou = (o.reach - o.x) * bearPawSpeed(time) * PAW_SWAT;

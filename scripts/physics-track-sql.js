@@ -7,7 +7,9 @@
 // onto the new physics instead (its old races keep replaying as they ran):
 //   node scripts/physics-track-sql.js san-francisco --rebuild > docs/data_updates/<date>-san-francisco-rebuild.sql
 // With --retune it prints a later re-tune of a track already on the new physics
-// (an update that has run is never edited: a new one is added).
+// (an update that has run is never edited: a new one is added), with what
+// changed in its header:
+//   node scripts/physics-track-sql.js san-francisco --retune "What changed." > docs/data_updates/<date>-san-francisco-<what>.sql
 // The tests check the committed files still match the code.
 const { physicsTrack } = require('../src/game/physicsTracks');
 
@@ -18,18 +20,20 @@ if (!track) {
   process.exit(1);
 }
 const mode = process.argv[3];
-process.stdout.write(mode === '--rebuild' ? rebuildSql(track) : mode === '--retune' ? retuneSql(track) : trackSql(track));
+process.stdout.write(mode === '--rebuild' ? rebuildSql(track) : mode === '--retune' ? retuneSql(track, process.argv[4]) : trackSql(track));
 
 // A later re-tune of a track already on the new physics: its shape and settings as now in code.
-function retuneSql(t) {
+function retuneSql(t, note = 'Its shape and settings as now in code.') {
   const q = (v) => `'${String(v).replace(/'/g, "''")}'`;
+  // The note, wrapped into comment lines of up to 80 characters.
+  const lines = [];
+  for (const word of `${note} Races already run keep their stored replays and play back exactly as they ran.`.split(/\s+/)) {
+    if (lines.length && `${lines[lines.length - 1]} ${word}`.length <= 77) lines[lines.length - 1] += ` ${word}`;
+    else lines.push(word);
+  }
   return `-- One-time data update: ${t.name} re-tuned.
 --
--- Built into the landscape and tamed where marbles flew: gentler plunges after
--- the climbs with crests rounded over about 100 m, gentler boost pads, no speed
--- bumps; more street obstacles (trash cans, a parked bus); a cable car that
--- sweeps marbles aside; a hit never speeds a marble up. Races already run keep
--- their stored replays and play back exactly as they ran.
+${lines.map((l) => `-- ${l}`).join('\n')}
 --
 -- Generated from src/game/physicsTracks.js by scripts/physics-track-sql.js --retune.
 -- Only the ${t.name} track row changes.

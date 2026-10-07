@@ -27,6 +27,22 @@ export function bearPaw(time) {
   return k * k;
 }
 
+// San Francisco's flopping sea lions: the same timetable as the physics' (src/game/trackFeatures.js; a test checks they agree).
+const FLOP_PERIOD = 6.5;
+const FLOP_IN = 0.7;
+const FLOP_STAY = 2.6;
+const FLOP_OUT = 0.9;
+
+/** How far a flopping sea lion is into the channel at `time` seconds (0 on its perch, 1 lying where it flops to). */
+export function seaLionFlop(time) {
+  const t = ((time % FLOP_PERIOD) + FLOP_PERIOD) % FLOP_PERIOD;
+  const ease = (x) => x * x * (3 - 2 * x);
+  if (t < FLOP_IN) return ease(t / FLOP_IN);
+  if (t < FLOP_IN + FLOP_STAY) return 1;
+  if (t < FLOP_IN + FLOP_STAY + FLOP_OUT) return 1 - ease((t - FLOP_IN - FLOP_STAY) / FLOP_OUT);
+  return 0;
+}
+
 // San Francisco's cable car: the same timetable as the physics' (src/game/trackFeatures.js; a test checks they agree).
 const CABLE_PERIOD = 9;
 const CABLE_CROSS = 4;
@@ -59,7 +75,10 @@ const busParts = (length) => {
   const n = Math.max(1, Math.round(length / BUS_STEP));
   return Array.from({ length: n + 1 }, (_, k) => (length * k) / n);
 };
-const DECOR = ['flowers']; // drawn only: the physics ignores them
+const DECOR = ['flowers', 'sea_lion_colony']; // drawn only: the physics ignores them
+const SEA = -1.2; // the bay's water level (San Francisco's scenery)
+const DOCK_OUT = 15; // metres from the middle of the street out to the colony's docks
+const DOCK_STEP = 9; // metres of pier per dock
 const DRIVE_IN = 12; // metres the cable car is drawn driving in and out along its rails beyond the crossing
 
 const BUMP_HALF = 1.2;  // metres from a bump's crest to its foot (the physics throws marbles up at its foot)
@@ -73,7 +92,7 @@ export const FEATURE_COLORS = {
   carRed: '#b8312f', carCream: '#f1e3bf', carWindow: '#2b3440', carRoof: '#4b3a2c', rail: '#2d2e33', deck: '#8d8f94',
   newsBox: '#2f5fb3', newsTop: '#e8edf5', hydrant: '#f2efe6', hydrantCap: '#2f5fb3',
   trashCan: '#2e6b45', trashLid: '#1f4a30', busWhite: '#f3f1ea', busRed: '#c8322f', busWindow: '#2b3440', tyre: '#1e1f24', street: '#55585f',
-  seaLion: '#5a4030', seaLionDark: '#2b1f17', rock: '#7b7d80', planterBox: '#8a6a48', leaf: '#3f8a3a', flowerA: '#ff6f91', flowerB: '#ffd23f',
+  seaLion: '#5a4030', seaLionDark: '#2b1f17', dock: '#9b7a55', dockEdge: '#5e4a36', rock: '#7b7d80', planterBox: '#8a6a48', leaf: '#3f8a3a', flowerA: '#ff6f91', flowerB: '#ffd23f',
 };
 
 /** Our own chevron design: bold yellow arrows on black, pointing down the track, with a yellow border. */
@@ -121,6 +140,30 @@ function frameAt(centerline, p) {
 const UP = new Vector3(0, 1, 0);
 
 /**
+ * A sea lion lying on its belly, in local space: facing +z, belly at y = 0.
+ * `head` raises its head (0 resting on its chest, 1 up high, barking).
+ * Returns { body, dark } geometry lists (its coat, and its flippers and nose).
+ */
+function seaLionShape(head = 1) {
+  const at = (g, x, y, z, sx, sy, sz) => g.applyMatrix4(new Matrix4().compose(new Vector3(x, y, z), new Quaternion(), new Vector3(sx, sy, sz)));
+  const ball = (r, detail = 1) => new IcosahedronGeometry(r, detail);
+  const hy = 0.95 + 0.5 * head;
+  const hz = 1.05 - 0.15 * head;
+  return {
+    body: [
+      at(ball(1, 2), 0, 0.5, -0.1, 0.62, 0.5, 1.15),        // the long body
+      at(ball(0.55), 0, 0.55 + 0.35 * head, 0.65, 0.95, 1.1, 0.95), // chest and neck
+      at(ball(0.36), 0, hy, hz, 0.9, 0.85, 1.25),           // head
+    ],
+    dark: [
+      at(ball(0.13), 0, hy - 0.04, hz + 0.42, 1, 0.8, 1),   // nose
+      ...[-1, 1].map((k) => at(ball(0.4), k * 0.62, 0.1, 0.5, 0.75, 0.15, 0.45)),  // fore flippers
+      ...[-1, 1].map((k) => at(ball(0.3), k * 0.28, 0.08, -1.25, 0.55, 0.12, 0.8)), // tail flippers
+    ],
+  };
+}
+
+/**
  * Builds the features of a track on an ice channel.
  * Returns { group, update(t) } (t: ms after the start) or null if it has none.
  */
@@ -141,6 +184,7 @@ export function buildTrackFeatures(centerline, channel, features) {
   };
   const p = (at, metres = 0) => at + metres / channel.arc;
   const swipers = []; // the polar bear's and the sea lion's moving parts
+  const flopping = []; // the colony's sea lions flopping into the street
   let car = null;     // the cable car's body, rebuilt along the U as it crosses
   const pads = []; // boost pads: where they are (to spot marbles rolling onto them) and their flash
   const solids = []; // obstacle footprints, as the physics has them (metres along the track and along the wall)
@@ -445,6 +489,92 @@ export function buildTrackFeatures(centerline, channel, features) {
       mesh.visible = false;
       group.add(mesh);
       car = { mesh, build, half, travel, phase: f.phase ?? 0, speed: (2 * travel) / CABLE_CROSS };
+    } else if (f.type === 'sea_lion' && f.flop !== undefined) {
+      // A sea lion of the pier's colony on a wooden perch beside the rim, flopping
+      // down into the street on its timetable, lying there and hopping back out.
+      const { side } = frameAt(centerline, f.at);
+      const s = f.at * channel.arc;
+      const lip = channelLipAt(channel, s) / channel.maxAngle;
+      const sign = Math.sign(f.l) || -1;
+      const rim = surface(f.at, sign * lip, 0).point;
+      const out = side.clone().multiplyScalar(sign);
+      const along = new Vector3().crossVectors(out, UP).normalize();
+      const look = new Quaternion().setFromUnitVectors(new Vector3(0, 0, 1), out);
+      // Its perch: a deck on the pavement, and a gangway down to the docks.
+      add('dock', new BoxGeometry(3.2, 0.3, 3.4), pose(rim.clone().addScaledVector(out, 1.8).addScaledVector(UP, -0.12), look));
+      const deckEnd = rim.clone().addScaledVector(out, 3.4).addScaledVector(UP, -0.1);
+      const dockAt = rim.clone().addScaledVector(out, DOCK_OUT - channel.radius * Math.sin(lip * channel.maxAngle) + 1);
+      dockAt.y = SEA + 0.45;
+      const span = new Vector3().subVectors(dockAt, deckEnd);
+      add('dockEdge', new BoxGeometry(1.4, 0.15, span.length()), pose(deckEnd.clone().lerp(dockAt, 0.5), new Quaternion().setFromUnitVectors(new Vector3(0, 0, 1), span.clone().normalize())));
+      const shape = seaLionShape(0.6);
+      const geo = (list) => mergeGeometries(list.map((g) => (g.index ? g.toNonIndexed() : g)), false);
+      const body = new Group();
+      const coat = new Mesh(geo(shape.body), new MeshLambertMaterial({ color: FEATURE_COLORS.seaLion, flatShading: true }));
+      const dark = new Mesh(geo(shape.dark), new MeshLambertMaterial({ color: FEATURE_COLORS.seaLionDark, flatShading: true }));
+      body.add(coat, dark);
+      body.name = 'flopping sea lion';
+      group.add(body);
+      const rest = f.l;
+      const full = f.reach ?? f.l;
+      const inward = out.clone().negate();
+      const fwd = new Vector3();
+      const basis = new Matrix4();
+      flopping.push({
+        phase: f.flop,
+        place: (k) => {
+          const l = rest + (full - rest) * k;
+          let point;
+          let normal;
+          if (Math.abs(l) <= lip) ({ point, normal } = surface(f.at, l, 0));
+          else {
+            point = rim.clone().addScaledVector(out, (Math.abs(l) - lip) * across);
+            normal = UP;
+          }
+          // Facing into the street (along the surface), hopping up a little as it flops.
+          fwd.copy(inward).addScaledVector(normal, -inward.dot(normal)).normalize();
+          const right = new Vector3().crossVectors(normal, fwd).normalize();
+          basis.makeBasis(right, normal, fwd);
+          body.quaternion.setFromRotationMatrix(basis);
+          body.position.copy(point).addScaledVector(normal, 2 * k * (1 - k));
+        },
+      });
+    } else if (f.type === 'sea_lion_colony') {
+      // Pier 39's colony: floating wooden docks in the water beside the pier,
+      // crowded with sea lions lazing about (scenery only).
+      const sign = f.side ?? -1;
+      const from = f.at;
+      const to = f.to ?? f.at;
+      const metres = (to - from) * channel.arc;
+      const rand = (k) => {
+        const x = Math.sin(k * 127.1 + 311.7) * 43758.5453;
+        return x - Math.floor(x);
+      };
+      let n = 0;
+      for (let d = 0; d < metres - 4; d += DOCK_STEP) {
+        const { pos, side, along } = frameAt(centerline, p(from, d + DOCK_STEP / 2));
+        const out = side.clone().multiplyScalar(sign);
+        const dir = new Vector3(along.x, 0, along.z).normalize();
+        const centre = new Vector3(pos.x, SEA + 0.25, pos.z).addScaledVector(out, DOCK_OUT + 2.5 + (n % 2) * 1.5);
+        const look = new Quaternion().setFromUnitVectors(new Vector3(0, 0, 1), dir);
+        add('dock', new BoxGeometry(5, 0.4, DOCK_STEP - 1.6), pose(centre, look));
+        for (const k of [-1, 1]) add('dockEdge', new BoxGeometry(0.3, 0.55, DOCK_STEP - 1.6), pose(centre.clone().addScaledVector(out, k * 2.5).addScaledVector(UP, -0.05), look));
+        // Two or three sea lions on each, every one lying its own way, a few barking.
+        const lying = 2 + (rand(n) > 0.5 ? 1 : 0);
+        for (let j = 0; j < lying; j += 1) {
+          const r = rand(n * 7 + j + 1);
+          const yaw = r * Math.PI * 2;
+          const spot = centre.clone()
+            .addScaledVector(dir, (j - (lying - 1) / 2) * 2.6 + (rand(n * 11 + j) - 0.5))
+            .addScaledVector(out, (rand(n * 13 + j) - 0.5) * 2)
+            .addScaledVector(UP, 0.2);
+          const m = pose(spot, new Quaternion().setFromAxisAngle(UP, yaw), new Vector3(0.85, 0.85, 0.85));
+          const shape = seaLionShape(rand(n * 17 + j) > 0.6 ? 1 : 0.1);
+          for (const g of shape.body) add('seaLion', g, m);
+          for (const g of shape.dark) add('seaLionDark', g, m);
+        }
+        n += 1;
+      }
     } else if (f.type === 'sea_lion') {
       // A sea lion lying on a rock beside the pier, lunging its head into the channel on the swipe's timetable.
       const { side } = frameAt(centerline, f.at);
@@ -524,7 +654,7 @@ export function buildTrackFeatures(centerline, channel, features) {
     const xb = Math.max(l, f.l2 ?? l) * across;
     const radius = f.type === 'cable_car' ? (f.width ?? 2.4) / 2 : f.radius ?? 0.7;
     solids.push({
-      id: solids.length, type: f.type, s: f.at * channel.arc, xa, xb, reach: radius + 0.55, rest: l * across, full: (f.reach ?? l) * across,
+      id: solids.length, type: f.type, s: f.at * channel.arc, xa, xb, reach: radius + 0.55, rest: l * across, full: (f.reach ?? l) * across, flop: f.flop,
       ...(f.type === 'cable_car' && { half: (f.length ?? 7) / 2, travel: across + (f.length ?? 7) / 2 + 1, phase: f.phase ?? 0 }),
     });
     // A parked bus: the physics' row of round sections down its length.
@@ -558,11 +688,14 @@ export function buildTrackFeatures(centerline, channel, features) {
     busWindow: new MeshLambertMaterial({ color: FEATURE_COLORS.busWindow }),
     tyre: new MeshLambertMaterial({ color: FEATURE_COLORS.tyre }),
     deck: new MeshLambertMaterial({ color: FEATURE_COLORS.deck }),
+    dock: new MeshLambertMaterial({ color: FEATURE_COLORS.dock, flatShading: true }),
+    dockEdge: new MeshLambertMaterial({ color: FEATURE_COLORS.dockEdge, flatShading: true }),
     newsBox: new MeshLambertMaterial({ color: FEATURE_COLORS.newsBox }),
     newsTop: new MeshLambertMaterial({ color: FEATURE_COLORS.newsTop }),
     hydrant: new MeshLambertMaterial({ color: FEATURE_COLORS.hydrant, emissive: '#55524a' }),
     hydrantCap: new MeshLambertMaterial({ color: FEATURE_COLORS.hydrantCap }),
     seaLion: new MeshLambertMaterial({ color: FEATURE_COLORS.seaLion, flatShading: true }),
+    seaLionDark: new MeshLambertMaterial({ color: FEATURE_COLORS.seaLionDark, flatShading: true }),
     rock: new MeshLambertMaterial({ color: FEATURE_COLORS.rock, flatShading: true }),
     planterBox: new MeshLambertMaterial({ color: FEATURE_COLORS.planterBox }),
     leaf: new MeshLambertMaterial({ color: FEATURE_COLORS.leaf, flatShading: true }),
@@ -655,7 +788,10 @@ export function buildTrackFeatures(centerline, channel, features) {
   /** Obstacle footprints at race time t (ms), for drawing marbles round them (the bear's paw moves). */
   const solidsAt = (t) => {
     for (const o of solids) {
-      if (SWIPERS.includes(o.type)) o.xa = o.xb = o.rest + (o.full - o.rest) * bearPaw(t / 1000);
+      if (o.flop !== undefined) {
+        const k = seaLionFlop(t / 1000 + o.flop);
+        o.xa = o.xb = k > 0 ? o.rest + (o.full - o.rest) * k : 1e4; // on its perch: nowhere near the channel
+      } else if (SWIPERS.includes(o.type)) o.xa = o.xb = o.rest + (o.full - o.rest) * bearPaw(t / 1000);
       else if (o.type === 'cable_car') {
         const c = cableCar(t / 1000 + o.phase);
         if (!c) o.xa = o.xb = 1e4; // away: nowhere near the channel
@@ -764,6 +900,7 @@ export function buildTrackFeatures(centerline, channel, features) {
 
   const update = (t, info) => {
     effects(t, info);
+    for (const sl of flopping) sl.place(seaLionFlop(t / 1000 + sl.phase));
     for (const sw of swipers) {
       const tip = sw.pawAt(bearPaw(t / 1000));
       const { arm, paw, claws, shoulder } = sw;

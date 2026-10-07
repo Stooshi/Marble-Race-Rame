@@ -2,18 +2,23 @@
  * San Francisco at golden hour: hills of painted-lady houses stepping down to
  * the bay, and the Golden Gate in the fog out west.
  *
- * Phone budget: terrain, houses (two instanced meshes), the bridge (one
- * merged mesh), a few fog sprites and the sun: about 7 draw calls in all.
+ * Phone budget: the terrain and the houses are cut into tiles (a few dozen
+ * draw calls, but the follow camera only draws the tiles in front of it,
+ * about a third of the triangles of drawing them all), the bridge (one
+ * merged mesh), a few fog sprites and the sun.
  */
 import {
-  CanvasTexture, Color, DoubleSide, Group, InstancedMesh, Matrix4, Mesh, MeshLambertMaterial, Quaternion,
+  CanvasTexture, Color, Group, InstancedMesh, Matrix4, Mesh, MeshLambertMaterial, Quaternion,
   Sprite, SpriteMaterial, SRGBColorSpace, Vector3,
 } from 'three';
 import { beam, box, hashString, merge, seededRandom, smoothstep, triangles } from './parts';
 import { buildTerrain, makeHeightField } from './terrain';
 import { channelLipAt, channelOf, channelRadiusAt } from '../iceChannel';
+import { PEN_DROP } from '../marbles';
 
 const PAVEMENT = 3; // metres of pavement each side of a street channel (as iceChannel.js draws it)
+const BRIDGE_AHEAD = 620; // metres from the finish line out to the Golden Gate, straight ahead across the bay (pier finish)
+const PIER_EDGE = 8; // metres from the middle of the street where the pier's edge drops into the bay (beside the colony's docks)
 
 const SEA_LEVEL = -1.2;
 const PAINTED_LADIES = ['#f6a9bd', '#a9d6ef', '#ffd79c', '#b9e6a5', '#d6b9f2', '#ffb994', '#9fd8c9', '#f7e3a1', '#f2b6d8'];
@@ -24,7 +29,7 @@ const INTERNATIONAL_ORANGE = '#c4452f';
  * pierFinish: the rebuilt track (new physics) finishes on a pier, with the bay
  * beyond it; the classic layout's whole southern edge is waterfront.
  */
-export function sanFranciscoLayout(centerline, { pierFinish = false } = {}) {
+export function sanFranciscoLayout(centerline, { pierFinish = false, colony = null, pen = null } = {}) {
   const xs = centerline.samples.map((s) => s.pos.x);
   const zs = centerline.samples.map((s) => s.pos.z);
   const bounds = { minX: Math.min(...xs), maxX: Math.max(...xs), minZ: Math.min(...zs), maxZ: Math.max(...zs) };
@@ -34,13 +39,46 @@ export function sanFranciscoLayout(centerline, { pierFinish = false } = {}) {
   // the Golden Gate strait opens to the west.
   const end = centerline.samples[centerline.samples.length - 1];
   const dir = new Vector3(end.tangent.x, 0, end.tangent.z).normalize();
+  // The sea lion colony's docks (track feature sea_lion_colony): the bay comes
+  // right up beside the pier there, on the colony's side.
+  const { samples, segments } = centerline;
+  const dockSide = [];
+  if (colony) {
+    const i0 = Math.max(0, Math.floor(colony.at * segments) - 12);
+    const i1 = Math.min(segments, Math.ceil((colony.to ?? colony.at) * segments) + 12);
+    for (let i = i0; i <= i1; i += 2) {
+      const s = samples[i];
+      const side = new Vector3(s.side.x, 0, s.side.z).normalize().multiplyScalar(colony.side ?? -1);
+      dockSide.push({ x: s.pos.x, z: s.pos.z, side, fade: Math.min(1, (i - i0) / 12, (i1 - i) / 12) });
+    }
+  }
+  const bayBesidePier = (x, z) => {
+    let best = Infinity;
+    let at = null;
+    for (const d of dockSide) {
+      const r = (d.x - x) ** 2 + (d.z - z) ** 2;
+      if (r < best) { best = r; at = d; }
+    }
+    if (!at || best > 120 * 120) return 0;
+    const out = (x - at.x) * at.side.x + (z - at.z) * at.side.z; // metres out from the middle of the street, on the colony's side
+    return smoothstep(PIER_EDGE, PIER_EDGE + 5, out) * (1 - smoothstep(70, 110, out)) * smoothstep(0, 1, at.fade);
+  };
+  const bayFrom = pen ? pen.length + 6 : 14;
   const water = (x, z) => Math.max(
+    bayBesidePier(x, z),
     pierFinish ? 0 : smoothstep(finish.z + 18, finish.z + 70, z),
-    smoothstep(14, 42, (x - finish.x) * dir.x + (z - finish.z) * dir.z)
+    // (Past the catch area at the end of the pier, if there is one.)
+    smoothstep(bayFrom, bayFrom + 28, (x - finish.x) * dir.x + (z - finish.z) * dir.z)
       * (1 - smoothstep(110, 200, Math.abs((x - finish.x) * dir.z - (z - finish.z) * dir.x))),
     smoothstep(bounds.minX - 50, bounds.minX - 110, x) * smoothstep(bounds.minZ + depth * 0.35, bounds.minZ + depth * 0.6, z),
   );
-  const bridge = {
+  // The Golden Gate: on the classic layout out west, broadside to the overview
+  // camera; on the pier finish straight on beyond the line, across the bay,
+  // broadside to the marbles coming home (the backdrop to every finish).
+  const bridge = pierFinish ? {
+    centre: new Vector3(finish.x, SEA_LEVEL, finish.z).addScaledVector(dir, BRIDGE_AHEAD),
+    axis: new Vector3(-dir.z, 0, dir.x),
+  } : {
     centre: new Vector3(bounds.minX - 520, SEA_LEVEL, (bounds.minZ + bounds.maxZ) / 2 + 120),
     axis: new Vector3(0.8, 0, -0.6), // the span, roughly broadside to the overview camera
   };
@@ -234,18 +272,61 @@ function sunTexture() {
   return tex;
 }
 
+const TILE = 180; // metres: houses are drawn in blocks this size, each skipped when out of view
+
+/**
+ * Instanced copies of each geometry in `geometries` (sharing the materials),
+ * one set per TILE-sized block of ground, so blocks out of view aren't drawn.
+ * Returns one Group per geometry.
+ */
+function tiledInstances(items, geometries, materials, names, set) {
+  const blocks = new Map();
+  for (const h of items) {
+    const k = `${Math.floor(h.x / TILE)},${Math.floor(h.z / TILE)}`;
+    if (!blocks.has(k)) blocks.set(k, []);
+    blocks.get(k).push(h);
+  }
+  const groups = names.map((name) => Object.assign(new Group(), { name }));
+  for (const block of blocks.values()) {
+    geometries.forEach((g, n) => {
+      const mesh = new InstancedMesh(g, materials[n], block.length);
+      block.forEach((h, i) => set(mesh, i, h, n));
+      mesh.instanceMatrix.needsUpdate = true;
+      mesh.computeBoundingSphere();
+      groups[n].add(mesh);
+    });
+  }
+  return groups;
+}
+
 /** Builds the whole San Francisco world around a track. Returns a Group. */
 export function buildSanFrancisco(centerline, track, theme) {
   const lanes = Math.max(1, Number(track?.lane_count) || 5);
-  const layout = sanFranciscoLayout(centerline, { pierFinish: Boolean(track?.physics?.channel) });
+  const colony = track?.physics?.features?.find?.((f) => f.type === 'sea_lion_colony') ?? null;
   // The rebuilt track (new physics) is a street channel built into the hillside: pavements and ground at its rim.
   const channel = channelOf(track, centerline);
+  const pen = channel?.runout ?? null;
+  const layout = sanFranciscoLayout(centerline, { pierFinish: Boolean(track?.physics?.channel), colony, pen });
   const step = channel ? channel.arc / centerline.segments : 0;
+  const { segments } = centerline;
   const street = channel ? {
-    halfAt: (i) => channelRadiusAt(channel, i * step) * Math.sin(channelLipAt(channel, i * step)) + PAVEMENT,
-    liftAt: (i) => channelRadiusAt(channel, i * step) * (1 - Math.cos(channelLipAt(channel, i * step))),
+    halfAt: (i) => (i > segments ? pen.halfWidth + 0.3 + PAVEMENT : channelRadiusAt(channel, i * step) * Math.sin(channelLipAt(channel, i * step)) + PAVEMENT),
+    liftAt: (i) => (i > segments ? 1.6 : channelRadiusAt(channel, i * step) * (1 - Math.cos(channelLipAt(channel, i * step)))),
   } : null;
-  const field = makeHeightField(centerline, lanes, { hillHeight: 34, landRadius: 340, seaLevel: SEA_LEVEL, water: layout.water, street });
+  // The ground follows the street on into the catch area past the line (its floor tipping gently down), so it never buries it.
+  let groundLine = centerline;
+  if (pen) {
+    const end = centerline.samples[segments];
+    const forward = new Vector3(end.tangent.x, 0, end.tangent.z).normalize();
+    const more = [];
+    for (let d = step; d <= pen.length + 1; d += step) {
+      const pos = end.pos.clone().addScaledVector(forward, d);
+      pos.y -= d * PEN_DROP;
+      more.push({ ...end, pos });
+    }
+    groundLine = { ...centerline, samples: [...centerline.samples, ...more] };
+  }
+  const field = makeHeightField(groundLine, lanes, { hillHeight: 34, landRadius: 340, seaLevel: SEA_LEVEL, water: layout.water, street });
   const group = new Group();
   group.name = 'scenery:san-francisco';
 
@@ -254,35 +335,32 @@ export function buildSanFrancisco(centerline, track, theme) {
   const margin = 380;
   const ground = buildTerrain(field, { minX: minX - margin, maxX: maxX + margin, minZ: minZ - margin, maxZ: maxZ + margin }, {
     cells: street ? 150 : 80, // finer for a street channel, so the ground meets its pavements colors: { grass: '#8db457', dry: '#b7b85c', shade: '#77a04a', sand: '#ecd59e' },
+    tiles: 6,
   });
-  const terrain = new Mesh(ground.geometry, new MeshLambertMaterial({ vertexColors: true, flatShading: true }));
+  const terrain = new Group();
+  const groundMat = new MeshLambertMaterial({ vertexColors: true, flatShading: true });
+  for (const g of ground.geometries) terrain.add(new Mesh(g, groundMat));
   terrain.name = 'terrain';
   group.add(terrain);
 
   // Painted ladies.
   const spots = placeHouses(centerline, field, layout, { groundAt: ground.groundAt });
   const { body, trim } = houseGeometries();
-  const bodies = new InstancedMesh(body, new MeshLambertMaterial({ flatShading: true }), spots.near.length);
-  const trims = new InstancedMesh(trim, new MeshLambertMaterial({ vertexColors: true, flatShading: true, side: DoubleSide }), spots.near.length);
-  const farHouses = new InstancedMesh(farHouseGeometry(), new MeshLambertMaterial({ vertexColors: true, flatShading: true }), spots.far.length);
   const m = new Matrix4();
   const q = new Quaternion();
   const up = new Vector3(0, 1, 0);
   const c = new Color();
   const place = (h) => m.compose(new Vector3(h.x, h.y, h.z), q.setFromAxisAngle(up, h.yaw), new Vector3(h.scale, h.scale, h.scale));
-  spots.near.forEach((h, i) => {
-    place(h);
-    bodies.setMatrixAt(i, m);
-    trims.setMatrixAt(i, m);
-    bodies.setColorAt(i, c.set(h.color));
-  });
-  spots.far.forEach((h, i) => {
-    farHouses.setMatrixAt(i, place(h));
-    farHouses.setColorAt(i, c.set(h.color));
-  });
-  bodies.name = 'houses';
-  trims.name = 'house trim';
-  farHouses.name = 'houses on the hills';
+  // (Only the bodies, n = 0, take each house's colour; the trim has its own.)
+  const paint = (mesh, i, h, n) => {
+    mesh.setMatrixAt(i, place(h));
+    if (n === 0) mesh.setColorAt(i, c.set(h.color));
+  };
+  const [bodies, trims] = tiledInstances(spots.near, [body, trim], [
+    new MeshLambertMaterial({ flatShading: true }),
+    new MeshLambertMaterial({ vertexColors: true, flatShading: true }), // (every face is wound outwards: one side is enough)
+  ], ['houses', 'house trim'], paint);
+  const [farHouses] = tiledInstances(spots.far, [farHouseGeometry()], [new MeshLambertMaterial({ vertexColors: true, flatShading: true })], ['houses on the hills'], paint);
   group.add(bodies, trims, farHouses);
 
   // The Golden Gate, out west in the fog.

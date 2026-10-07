@@ -2,9 +2,11 @@ import { createRequire } from 'node:module';
 import { describe, expect, it } from 'vitest';
 import { DoubleSide, Mesh, MeshBasicMaterial, PerspectiveCamera, Raycaster, Triangle, Vector3 } from 'three';
 import { buildCenterline } from '../src/three/trackModel';
-import { buildIceChannelGeometry, channelOf } from '../src/three/iceChannel';
-import { layoutMarbles, MARBLE_RADIUS } from '../src/three/marbles';
-import { buildTrackFeatures } from '../src/three/trackFeatures';
+import { buildIceChannelGeometry, channelOf, placeOnChannel } from '../src/three/iceChannel';
+import { layoutMarbles, MARBLE_RADIUS, PEN_DROP } from '../src/three/marbles';
+import { buildSanFrancisco } from '../src/three/scenery/sanFrancisco';
+import { themeFor } from '../src/three/themes';
+import { buildTrackFeatures, seaLionFlop } from '../src/three/trackFeatures';
 import { TrackScene } from '../src/three/TrackScene';
 import { frameAtTime } from '../src/utils/splits';
 
@@ -21,8 +23,10 @@ const entries = Array.from({ length: 20 }, (_, i) => ({ id: `m${i}`, lane: i, to
 const sim = simulatePhysicsRace({ seed: 3, track, entries, level: 3 });
 
 // The 3D view draws onto canvases; tests run without a browser.
+// (A 2D context that accepts anything: gradients, fills.)
+const anything = new Proxy(function stub() {}, { get: () => anything, apply: () => anything, set: () => true });
 globalThis.document ??= {
-  createElement: () => ({ getContext: () => new Proxy({}, { get: () => () => {} }), width: 0, height: 0 }),
+  createElement: () => ({ getContext: () => anything, width: 0, height: 0 }),
 };
 
 describe('San Francisco (3D)', () => {
@@ -64,6 +68,45 @@ describe('San Francisco (3D)', () => {
         expect(ray.intersectObject(mesh)).toHaveLength(0);
       }
       expect(checked).toBeGreaterThan(100);
+    }
+  });
+
+  it('films the finish from behind the line: the line, the catch area and the Golden Gate beyond, all in view (desktop and phone)', () => {
+    const scenery = buildSanFrancisco(centerline, track, themeFor('san-francisco'));
+    const end = centerline.samples[centerline.segments];
+    const forward = new Vector3(end.tangent.x, 0, end.tangent.z).normalize();
+    // The ground dips under the catch area past the line (it never buries it), and the bay opens beyond it.
+    const pen = track.physics.runout;
+    for (let d = 0; d <= pen.length; d += 2) {
+      const at = end.pos.clone().addScaledVector(forward, d);
+      expect(scenery.userData.groundAt(at.x, at.z)).toBeLessThan(at.y - d * PEN_DROP - 0.3);
+    }
+    const bay = end.pos.clone().addScaledVector(forward, pen.length + 40);
+    expect(scenery.userData.groundAt(bay.x, bay.z)).toBeLessThan(-1.2);
+    // The bridge straight ahead across the bay.
+    const bridge = scenery.children.find((c) => c.name === 'golden gate');
+    const ahead = bridge.position.clone().sub(end.pos).setY(0);
+    expect(ahead.dot(forward)).toBeGreaterThan(400);
+    expect(Math.abs(ahead.clone().cross(forward).y)).toBeLessThan(10);
+    for (const aspect of [1.8, 0.56]) {
+      const scene = Object.create(TrackScene.prototype);
+      const camera = new PerspectiveCamera(50, aspect, 0.3, 3000);
+      Object.assign(scene, { centerline, channel, track, camera });
+      const shot = scene.finishShot();
+      camera.position.copy(shot.camera);
+      camera.lookAt(shot.target);
+      camera.updateMatrixWorld();
+      const seen = (p) => {
+        const v = p.clone().project(camera);
+        return Math.abs(v.x) < 1 && Math.abs(v.y) < 1 && v.z < 1;
+      };
+      // The middle of the line, the cushion at the end of the catch area, and the top of the bridge's towers.
+      expect(seen(end.pos)).toBe(true);
+      expect(seen(end.pos.clone().addScaledVector(forward, pen.length).setY(end.pos.y - pen.length * PEN_DROP))).toBe(true);
+      expect(seen(bridge.position.clone().setY(60))).toBe(true);
+      // Well under the finish banner (14 m up), so it stays out of the picture.
+      expect(shot.camera.y - end.pos.y).toBeLessThan(10);
+      expect(seen(end.pos.clone().setY(end.pos.y + 13.3))).toBe(false);
     }
   });
 
@@ -115,9 +158,40 @@ describe('San Francisco (3D)', () => {
       expect((solid.xa + solid.xb) / 2).toBeCloseTo(centre, 6);
       expect(solid.xb - solid.xa).toBeCloseTo(feature.length, 6);
     }
-    // San Francisco's furniture and the sea lion are drawn; its flower beds are scenery the physics never sees.
+    // San Francisco's furniture and the sea lion colony are drawn; its flower beds and docks are scenery the physics never sees.
     const names = built.group.children.map((c) => c.name);
-    for (const part of ['newsBox', 'hydrant', 'seaLion', 'rail', 'street', 'leaf', 'trashCan', 'busWhite']) expect(names).toContain(part);
-    expect(server.normaliseFeatures(track.physics.features, 1000).some((f) => f.type === 'flowers')).toBe(false);
+    for (const part of ['newsBox', 'hydrant', 'seaLion', 'dock', 'rail', 'street', 'leaf', 'trashCan', 'busWhite']) expect(names).toContain(part);
+    expect(server.normaliseFeatures(track.physics.features, 1000).some((f) => f.type === 'flowers' || f.type === 'sea_lion_colony')).toBe(false);
+  });
+
+  it('draws the flopping sea lions exactly where the physics has them: on their perches, or lying in the street', () => {
+    expect(seaLionFlop).toBeDefined();
+    for (let t = -2; t < 30; t += 0.041) expect(seaLionFlop(t)).toBeCloseTo(server.seaLionFlop(t), 12);
+    const built = buildTrackFeatures(centerline, channel, track.physics.features);
+    const bodies = built.group.children.filter((c) => c.name === 'flopping sea lion');
+    const seals = track.physics.features.filter((f) => f.type === 'sea_lion');
+    expect(bodies).toHaveLength(seals.length);
+    const across = channel.radius * channel.maxAngle;
+    let lying = 0;
+    for (let t = 0; t < 20000; t += 250) {
+      built.update(t);
+      const solids = built.solidsAt(t).filter((o) => o.type === 'sea_lion');
+      seals.forEach((f, n) => {
+        const k = server.seaLionFlop(t / 1000 + f.flop);
+        if (k <= 0) {
+          expect(solids[n].xa).toBeGreaterThan(1000); // on its perch: nothing in the street
+          return;
+        }
+        // Its footprint where the physics has it…
+        const x = (f.l + (f.reach - f.l) * k) * across;
+        expect(solids[n].xa).toBeCloseTo(x, 6);
+        if (k < 1) return;
+        // …and lying right there on the street (its body over that spot).
+        lying += 1;
+        const spot = placeOnChannel(centerline, channel, f.at, f.reach, 0, 0, 0);
+        expect(bodies[n].position.distanceTo(spot)).toBeLessThan(0.05);
+      });
+    }
+    expect(lying).toBeGreaterThan(20);
   });
 });

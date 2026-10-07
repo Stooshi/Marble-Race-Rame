@@ -24,6 +24,10 @@ import { WINNER_MS } from '../utils/finishShow';
 
 const LEADER_MARGIN = 3; // metres: the follow camera only switches to a new leader that is clearly ahead
 const SCENERY_LAYER = 1;  // scenery is drawn in the big view only (the small corner view skips it, for speed)
+const SLOW_FRAME_MS = 40; // frames further apart than this on average (under 25 a second): draw at a lower resolution
+const FINISH_FROM = 12; // metres short of the line where the big view starts over to the finish shot…
+const FINISH_TO = 6; // …and past it where it is there
+const SIGHT_EASE = 0.6; // seconds: how gently the follow camera moves back out after coming in to keep its marble in sight
 const INSET_CLOSER = 0.6; // the corner view's follow camera sits this much nearer its marble
 const OWN_STRETCH = 60;   // metres along the track either side of a marble that count as its own stretch (ice channels; the corkscrew's levels are 155 m apart)
 const CHANNEL_SKIRT = 1.6; // metres the ice channel's outer skirt hangs below its floor (iceChannel.js)
@@ -187,7 +191,7 @@ export class TrackScene {
     const half = (pen ? pen.halfWidth + 0.6 : (lanes * TRACK_STYLE.laneWidth) / 2) + TRACK_STYLE.wallThickness;
     const end = this.centerline.samples[this.centerline.samples.length - 1];
     const group = new Group();
-    const archH = pen ? 10 : 6; // taller over a catch area, so the follow camera sees the finishers under it
+    const archH = pen ? 14 : 6; // tall over a catch area, so the finish shot looks under it at the finishers and the view beyond
     const post = new BoxGeometry(0.6, archH, 0.6);
     const white = new MeshLambertMaterial({ color: '#ffffff' });
     const red = new MeshLambertMaterial({ color: '#ef4444' });
@@ -429,6 +433,10 @@ export class TrackScene {
       this.camera.position.copy(pose.camera);
       this.camera.lookAt(pose.target);
     } else if (this.cameraMode === 'follow' && at) {
+      // At the finish the big view settles on the finish shot (see finishShot) and,
+      // following the leader or those coming home, stays there once anyone is home.
+      main.atFinish = Boolean(this.channel?.runout);
+      main.holdFinish = main.atFinish && (follow === 'leader' || follow === 'arriving') && frame.p.some((p) => p >= 1);
       this.updateFollowCamera(at, frame.p[index] ?? 0, dt, main);
       const w = gate ? handover(frame.t) : 1;
       if (w < 1) {
@@ -494,9 +502,12 @@ export class TrackScene {
    * the track): behind it and above, clear of the road behind, the scenery and
    * any other stretch of track. `closer` < 1 brings it in nearer (the small
    * corner view, where a far-off marble would be a speck).
-   * Returns { camera, target, roadTop, clearAbove }.
+   * `reach` (0.25–1) caps how far out the camera may sit when the marble is
+   * hidden from where it wants to be (see keepInSight). `finish` (0–1) takes it
+   * that share of the way over to the finish shot.
+   * Returns { camera, target, roadTop, clearAbove, level, sight }.
    */
-  followPose(at, progress, closer = 1) {
+  followPose(at, progress, closer = 1, reach = 1, finish = 0) {
     // Look along the track (not the marble's wobble) so the view stays steady.
     const { samples, segments } = this.centerline;
     const ahead = samples[Math.min(segments, Math.round(Math.min(1, progress + 0.02) * segments))];
@@ -567,8 +578,38 @@ export class TrackScene {
     const level = this.channel ? { s: Math.min(1, Math.max(0, progress)) * this.channel.arc, y: at.y } : null;
     const clearAbove = (x, z) => Math.max(sceneryTop ? sceneryTop(x, z) : -Infinity, level ? this.channelBounds(x, z, level).floor : this.trackBelow(x, z));
     camera.y = Math.max(camera.y, clearAbove(camera.x, camera.z) + 4);
-    if (level) this.keepInSight(camera, at, level);
-    return { camera, target, roadTop, clearAbove, level };
+    const sight = level ? this.keepInSight(camera, at, level, reach) : 1;
+    if (finish > 0) {
+      // Coming home: over to the finish shot. Pushing in on the winner (closer < 1) moves it in towards them.
+      const shot = this.finishShot();
+      const zoom = 1 - Math.min(1, closer);
+      shot.camera.lerp(at, zoom * 0.9);
+      shot.target.lerp(at, Math.min(1, zoom * 2.2));
+      camera.lerp(shot.camera, finish);
+      target.lerp(shot.target, finish);
+    }
+    return { camera, target, roadTop, clearAbove, level, sight };
+  }
+
+  /**
+   * The finish shot (ice channels with a catch area): from above the street
+   * just short of the line, looking down over it into the catch area, so the
+   * marbles cross the line and roll in to settle right in front of the camera,
+   * with the view beyond (San Francisco: the Golden Gate) behind them. Further
+   * back on a narrow (phone) screen, so the street's width still fits.
+   */
+  finishShot() {
+    const { samples } = this.centerline;
+    const end = samples[samples.length - 1];
+    const forward = new Vector3(end.tangent.x, 0, end.tangent.z).normalize();
+    const narrow = 1 - Math.min(1, Math.max(0, (this.camera.aspect - 0.5) / 0.9)); // 0 on a wide screen, 1 on a tall phone
+    const back = 14 + 7 * narrow;
+    const camera = end.pos.clone().addScaledVector(forward, -back);
+    camera.y = end.pos.y + 7.5 + narrow; // well under the finish banner (14 m up)
+    const ahead = (this.channel.runout.length ?? 30) * 0.75; // looking level enough to show the view beyond
+    const target = end.pos.clone().addScaledVector(forward, ahead);
+    target.y = end.pos.y - ahead * PEN_DROP;
+    return { camera, target };
   }
 
   /** Ice channels: how much of the way the track is still the wide starting funnel at progress p (1 at the top, 0 once it is the channel). */
@@ -692,9 +733,10 @@ export class TrackScene {
   /**
    * Ice channels: keeps a camera with its marble. It stays under any stretch
    * passing overhead (but above the marble), and if another stretch is still
-   * in the way it comes in closer until the marble is in clear sight.
+   * in the way it comes in closer until the marble is in clear sight. It
+   * comes no further out than `reach` of the way. Returns how far out it is.
    */
-  keepInSight(camera, at, level) {
+  keepInSight(camera, at, level, reach = 1) {
     const start = camera.clone();
     // Where the camera would be k of the way out from its marble (1: where it wants to be).
     const place = (k) => {
@@ -705,18 +747,19 @@ export class TrackScene {
       if (camera.y > ceiling - 1) camera.y = Math.max(at.y + 1.2, ceiling - 1);
       return !this.channelBlocks(camera, at);
     };
-    if (place(1)) return camera;
+    const most = Math.max(0.25, Math.min(1, reach));
+    if (place(most)) return most;
     // Otherwise the furthest clear spot on the way in (found by halving, so it
     // moves smoothly from frame to frame rather than in jumps).
     let clear = 0.25;
-    let blocked = 1;
+    let blocked = most;
     for (let n = 0; n < 7; n += 1) {
       const k = (clear + blocked) / 2;
       if (place(k)) clear = k;
       else blocked = k;
     }
     place(clear);
-    return camera;
+    return clear;
   }
 
 
@@ -741,7 +784,30 @@ export class TrackScene {
   }
 
   updateFollowCamera(at, progress, dt, rig = this.main) {
-    const { camera: desired, target, roadTop, clearAbove, level } = this.followPose(at, progress, (rig === this.inset ? INSET_CLOSER : 1) * (rig.push ?? 1));
+    // When a wall hides the marble the camera comes in at once, but goes back
+    // out only gradually: in a tight bend the marble keeps slipping in and out
+    // of view, and following that every frame shook the picture.
+    const reach = rig.ready && rig.sight !== undefined ? rig.sight + (1 - rig.sight) * (1 - Math.exp(-Math.min(0.25, dt) / SIGHT_EASE)) : 1;
+    let finish = 0;
+    if (rig.atFinish) {
+      // From FINISH_FROM metres short of the line to FINISH_TO past it (the follow
+      // camera, trailing behind, passes the finish shot's spot just as its marble
+      // crosses), and on once anyone is home when following the leader or the arrivals.
+      if (!this.arcLength) this.arcLength = this.measureArc();
+      const { samples } = this.centerline;
+      const end = samples[samples.length - 1];
+      const past = progress < 1
+        ? -(1 - progress) * this.arcLength
+        : Math.max(0, (at.x - end.pos.x) * end.tangent.x + (at.z - end.pos.z) * end.tangent.z) / (Math.hypot(end.tangent.x, end.tangent.z) || 1);
+      const k = Math.min(1, Math.max(0, (past + FINISH_FROM) / (FINISH_FROM + FINISH_TO)));
+      finish = rig.holdFinish ? 1 : k * k * (3 - 2 * k);
+    }
+    const { camera: desired, target, roadTop, clearAbove, level, sight } = this.followPose(at, progress, (rig === this.inset ? INSET_CLOSER : 1) * (rig.push ?? 1), reach, finish);
+    rig.sight = sight;
+    // Come in close, it looks down at its marble more (not ahead over it, with the
+    // marble at the very bottom of the picture), easing between the two.
+    rig.close = rig.ready && rig.close !== undefined ? rig.close + (1 - sight - rig.close) * (1 - Math.exp(-Math.min(0.25, dt) / 0.3)) : 1 - sight;
+    target.lerp(at, rig.close * 0.6);
     if (!rig.ready) {
       rig.cam.copy(desired);
       rig.target.copy(target);
@@ -795,6 +861,7 @@ export class TrackScene {
     this.renderQueued = true;
     requestAnimationFrame(() => {
       this.renderQueued = false;
+      this.keepPace();
       const r = this.renderer;
       r.info.reset();
       r.render(this.scene, this.camera);
@@ -810,6 +877,28 @@ export class TrackScene {
         r.setViewport(0, 0, this.size.width, this.size.height);
       }
     });
+  }
+
+  /**
+   * Keeps the picture moving smoothly on a phone that can't keep up: while
+   * frames come more than SLOW_FRAME_MS apart (a stutter, not a 30 Hz screen)
+   * it draws at a slightly lower resolution, a step at a time, down to one
+   * pixel per screen pixel. It never steps back up (no flicker between the two).
+   */
+  keepPace() {
+    const now = performance.now();
+    const gap = now - (this.lastDrawn ?? -Infinity);
+    this.lastDrawn = now;
+    if (gap > 250) return; // a pause (or the first frame), not a slow one
+    this.pace = this.pace === undefined ? gap : this.pace + (gap - this.pace) * 0.05;
+    this.paced = (this.paced ?? 0) + 1;
+    const ratio = this.renderer.getPixelRatio();
+    if (this.paced < 60 || this.pace < SLOW_FRAME_MS || ratio <= 1 || now - (this.lastStepDown ?? -Infinity) < 2000) return;
+    this.lastStepDown = now;
+    this.renderer.setPixelRatio(Math.max(1, ratio - 0.25));
+    this.renderer.setSize(this.size.width, this.size.height, false);
+    this.pace = undefined;
+    this.paced = 0;
   }
 
   /** Draw calls and triangles of the last frame, for the ?debug overlay. */

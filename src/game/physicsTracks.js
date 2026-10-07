@@ -240,9 +240,9 @@ function sanFrancisco() {
         // across; loss: 15% of their speed per hit), so it scatters the pack without a lottery or a crawl.
         // Part-way down Powell Street, so the pack has the rest of the hill (and a boost pad) to get back up to speed for the climb.
         { type: 'cable_car', at: on('Powell Street', 0.35), length: 6, width: 2.4, height: 3.2, phase: 7.8, loss: 0.15, sweep: true },
-        // Hyde Street: two trash cans either side of the pack's line, one after the other.
-        { type: 'trash_can', at: on('Hyde Street', 0.45), l: 0.25, radius: 0.5, height: 1.1, loss: 0.3 },
-        { type: 'trash_can', at: on('Hyde Street', 0.58), l: -0.25, radius: 0.5, height: 1.1, loss: 0.3 },
+        // Hyde Street: two big trash cans either side of the pack's line, one after the other.
+        { type: 'trash_can', at: on('Hyde Street', 0.45), l: 0.25, radius: 0.65, height: 1.43, loss: 0.3 },
+        { type: 'trash_can', at: on('Hyde Street', 0.58), l: -0.25, radius: 0.65, height: 1.43, loss: 0.3 },
         { type: 'boost', at: on('Powell Street', 0.95), l: 0, length: 8, halfWidth: 3.6, kick: 5 },     // into the Russian Hill climb
         // Lombard Street's flower beds line both rims (scenery only: in the hairpins
         // they caught slow marbles and left them crawling, ten seconds behind).
@@ -257,7 +257,12 @@ function sanFrancisco() {
         { type: 'boost', at: on('Pier 39', 0.05), l: 0, length: 8, halfWidth: 3.6, kick: 5 },           // out of the Embarcadero sweep
         // A bus parked along the right-hand wall on the run to the pier, where the pack rides out of the sweep.
         { type: 'bus', at: on('Pier 39', 0.38), l: -1, l2: -0.8, length: 10, radius: 0.4, height: 3, loss: 0.15 }, // from the top of the wall down (like the icicles): nobody gets caught above it
-        { type: 'sea_lion', at: on('Pier 39', 0.72), l: -1.25, reach: 0.05, radius: 0.8, height: 1.2, loss: 0.3 }, // lunging in from the pier, right across the pack's line (a soft swat)
+        // Pier 39's sea lion colony on its docks beside the run-in (scenery only)…
+        { type: 'sea_lion_colony', at: on('Pier 39', 0.3), to: on('Finish', 0.7), side: -1 },
+        // …and two of them flopping from their perches into the street on a timetable (flop: seconds it runs ahead),
+        // lying across the pack's line for a few seconds (the first dead centre): plenty of hits, each a soft one.
+        { type: 'sea_lion', at: on('Pier 39', 0.58), l: -1.3, reach: 0, flop: 0, radius: 0.8, height: 1.0, loss: 0.3 },
+        { type: 'sea_lion', at: on('Pier 39', 0.8), l: -1.3, reach: -0.2, flop: 3.2, radius: 0.8, height: 1.0, loss: 0.3 },
       ],
       runout: { length: 30, halfWidth: 3.5 },
     },
