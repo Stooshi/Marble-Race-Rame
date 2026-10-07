@@ -155,7 +155,58 @@ function bobsleighRun() {
   };
 }
 
-const PHYSICS_TRACKS = [bobsleighRun()];
+// San Francisco: a racing channel dressed as a city street. The same slick
+// channel as the bobsleigh run (it only looks like asphalt), plunging down the
+// steepest streets in town: long steep drops, two short climbs hit at speed
+// with a crest jump over the top, Lombard Street's banked hairpins and a long
+// sweep along the bay to the pier.
+const SAN_FRANCISCO_SECTIONS = [
+  { name: 'Nob Hill start', kind: 'straight', length: 16, grade: 1.3 },
+  { name: 'California Street', kind: 'straight', length: 150, grade: 0.55 },
+  { name: 'Powell bend', kind: 'right', radius: 60, degrees: 70, grade: 0.15 },
+  { name: 'Powell Street', kind: 'straight', length: 120, grade: 0.3 },
+  { name: 'Russian Hill', kind: 'straight', length: 45, grade: -0.12 },
+  { name: 'Hyde Street', kind: 'straight', length: 140, grade: 0.4 },
+  { name: 'Lombard 1', kind: 'left', radius: 16, degrees: 170, grade: 0.18 },
+  { name: 'Lombard 2', kind: 'right', radius: 16, degrees: 170, grade: 0.18 },
+  { name: 'Lombard 3', kind: 'left', radius: 16, degrees: 170, grade: 0.18 },
+  { name: 'Lombard 4', kind: 'right', radius: 16, degrees: 170, grade: 0.18 },
+  { name: 'Leavenworth', kind: 'straight', length: 90, grade: 0.3 },
+  { name: 'Telegraph Hill', kind: 'straight', length: 35, grade: -0.1 },
+  { name: 'Filbert Street', kind: 'straight', length: 130, grade: 0.5 },
+  { name: 'Embarcadero', kind: 'left', radius: 70, degrees: 200, grade: 0.12 },
+  { name: 'Pier 39', kind: 'straight', length: 120, grade: 0.18 },
+  { name: 'Finish', kind: 'straight', length: 30, grade: 0.08 },
+];
+
+function sanFrancisco() {
+  const g = generate(SAN_FRANCISCO_SECTIONS);
+  return {
+    id: null,
+    slug: 'san-francisco',
+    name: 'San Francisco',
+    difficulty: 'hard',
+    description: 'Plunge down the steepest streets in the city: Nob Hill, two crest jumps, the banked hairpins of Lombard Street, a cable car crossing and a long sweep along the bay to the pier.',
+    length_m: g.length_m,
+    lane_count: 4,
+    waypoints: g.waypoints,
+    obstacles: [],
+    sections: g.sections,
+    physics: {
+      surface: 'ice',          // slick: the street only looks like asphalt
+      pace: 'free',
+      // Nearly vertical walls (88° up), so marbles can ride high round the
+      // hairpins and the bay sweep at full speed without leaving the channel.
+      channel: { radius: 3.6, maxAngle: 88, funnel: { length: 70, radius: 22, spacing: 1.15, stagger: 0.2, release: 0.45 } },
+      gate: { countdownMs: 3000 },
+      collisions: true,
+      features: [],
+      runout: { length: 30, halfWidth: 3.5 },
+    },
+  };
+}
+
+const PHYSICS_TRACKS = [bobsleighRun(), sanFrancisco()];
 
 function physicsTrack(slug) {
   return PHYSICS_TRACKS.find((t) => t.slug === slug) || null;
