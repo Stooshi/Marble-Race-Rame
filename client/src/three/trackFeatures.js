@@ -141,24 +141,25 @@ const UP = new Vector3(0, 1, 0);
 
 /**
  * A sea lion lying on its belly, in local space: facing +z, belly at y = 0.
- * `head` raises its head (0 resting on its chest, 1 up high, barking).
+ * `head` raises its head (0 resting on its chest, 1 up high, barking);
+ * `detail` 0 for a simpler one (the colony on its docks, seen from afar).
  * Returns { body, dark } geometry lists (its coat, and its flippers and nose).
  */
-function seaLionShape(head = 1) {
+function seaLionShape(head = 1, detail = 1) {
   const at = (g, x, y, z, sx, sy, sz) => g.applyMatrix4(new Matrix4().compose(new Vector3(x, y, z), new Quaternion(), new Vector3(sx, sy, sz)));
-  const ball = (r, detail = 1) => new IcosahedronGeometry(r, detail);
+  const ball = (r, extra = 0) => new IcosahedronGeometry(r, Math.max(0, detail + extra));
   const hy = 0.95 + 0.5 * head;
   const hz = 1.05 - 0.15 * head;
   return {
     body: [
-      at(ball(1, 2), 0, 0.5, -0.1, 0.62, 0.5, 1.15),        // the long body
+      at(ball(1, 1), 0, 0.5, -0.1, 0.62, 0.5, 1.15),        // the long body
       at(ball(0.55), 0, 0.55 + 0.35 * head, 0.65, 0.95, 1.1, 0.95), // chest and neck
       at(ball(0.36), 0, hy, hz, 0.9, 0.85, 1.25),           // head
     ],
     dark: [
-      at(ball(0.13), 0, hy - 0.04, hz + 0.42, 1, 0.8, 1),   // nose
-      ...[-1, 1].map((k) => at(ball(0.4), k * 0.62, 0.1, 0.5, 0.75, 0.15, 0.45)),  // fore flippers
-      ...[-1, 1].map((k) => at(ball(0.3), k * 0.28, 0.08, -1.25, 0.55, 0.12, 0.8)), // tail flippers
+      at(ball(0.13, -1), 0, hy - 0.04, hz + 0.42, 1, 0.8, 1),   // nose
+      ...[-1, 1].map((k) => at(ball(0.4, -1), k * 0.62, 0.1, 0.5, 0.75, 0.15, 0.45)),  // fore flippers
+      ...[-1, 1].map((k) => at(ball(0.3, -1), k * 0.28, 0.08, -1.25, 0.55, 0.12, 0.8)), // tail flippers
     ],
   };
 }
@@ -167,7 +168,7 @@ function seaLionShape(head = 1) {
  * Builds the features of a track on an ice channel.
  * Returns { group, update(t) } (t: ms after the start) or null if it has none.
  */
-export function buildTrackFeatures(centerline, channel, features) {
+export function buildTrackFeatures(centerline, channel, features, { lite = false } = {}) {
   if (!channel || !Array.isArray(features) || features.length === 0) return null;
   const across = channel.radius * channel.maxAngle; // metres along the wall from the middle to the top, per unit of l
   const group = new Group();
@@ -259,6 +260,50 @@ export function buildTrackFeatures(centerline, channel, features) {
       g.setIndex(index);
       g.computeVertexNormals();
       add('bump', g, new Matrix4());
+    } else if (f.type === 'cobbles') {
+      // A stretch of cobblestones laid across the whole street (rim to rim), in a
+      // brick pattern of greys, just proud of the asphalt: where marbles brake.
+      const len = f.length ?? 25;
+      const s0 = f.at * channel.arc;
+      const lip = channelLipAt(channel, s0) / channel.maxAngle;
+      const rows = Math.max(2, Math.round(len / 0.9));
+      const cols = 24;
+      const pos = [];
+      const col = [];
+      const shades = ['#8a8580', '#9d968d', '#7a756f', '#a8a197'].map((c) => new Color(c));
+      const grout = new Color('#4a4642');
+      for (let r = 0; r < rows; r += 1) {
+        // The dark joints: the row's whole width, under its stones.
+        for (let c = 0; c < cols; c += 1) {
+          const a0 = p(f.at, (len * r) / rows);
+          const a1 = p(f.at, (len * (r + 1)) / rows);
+          const corners = [[a0, c / cols], [a0, (c + 1) / cols], [a1, (c + 1) / cols], [a1, c / cols]].map(([at, u]) => surface(at, -lip + 2 * lip * u, 0.015).point);
+          for (const k of [0, 1, 2, 0, 2, 3]) {
+            pos.push(corners[k].x, corners[k].y, corners[k].z);
+            col.push(grout.r, grout.g, grout.b);
+          }
+        }
+        for (let c = 0; c < cols; c += 1) {
+          // One stone: a quad a little smaller than its cell (the joints show between them).
+          const offset = r % 2 ? 0.5 : 0;
+          const u0 = (c + 0.08 + offset) / cols;
+          const u1 = (c + 0.92 + offset) / cols;
+          if (u1 > 1) continue;
+          const a0 = p(f.at, (len * (r + 0.08)) / rows);
+          const a1 = p(f.at, (len * (r + 0.92)) / rows);
+          const corners = [[a0, u0], [a0, u1], [a1, u1], [a1, u0]].map(([at, u]) => surface(at, -lip + 2 * lip * u, 0.03).point);
+          const shade = shades[(r * 7 + c * 3) % shades.length];
+          for (const k of [0, 1, 2, 0, 2, 3]) {
+            pos.push(corners[k].x, corners[k].y, corners[k].z);
+            col.push(shade.r, shade.g, shade.b);
+          }
+        }
+      }
+      const g = new BufferGeometry();
+      g.setAttribute('position', new Float32BufferAttribute(pos, 3));
+      g.setAttribute('color', new Float32BufferAttribute(col, 3));
+      g.computeVertexNormals();
+      add('cobbles', g, new Matrix4());
     } else if (f.type === 'ice_block') {
       // A chunky block of ice sitting on the wall, turned a little.
       const { point, normal } = surface(f.at, f.l, 0);
@@ -378,7 +423,7 @@ export function buildTrackFeatures(centerline, channel, features) {
       }
     } else if (f.type === 'flowers') {
       // Lombard Street's flower beds, lining both rims from `at` to `to` (scenery only).
-      for (let at = f.at; at <= (f.to ?? f.at); at += 5 / channel.arc) {
+      for (let at = f.at; at <= (f.to ?? f.at); at += (lite ? 8 : 5) / channel.arc) {
         const s = at * channel.arc;
         const lip = channelLipAt(channel, s) / channel.maxAngle;
         const { side, along } = frameAt(centerline, at);
@@ -386,7 +431,7 @@ export function buildTrackFeatures(centerline, channel, features) {
         for (const sign of [-1, 1]) {
           const rim = surface(at, sign * lip, 0).point.addScaledVector(side, sign * 1.1);
           add('planterBox', new BoxGeometry(0.9, 0.5, 2.6), pose(rim.clone().addScaledVector(UP, 0.25), turn));
-          add('leaf', new IcosahedronGeometry(0.55, 1), pose(rim.clone().addScaledVector(UP, 0.7), turn, new Vector3(0.9, 0.7, 2)));
+          add('leaf', new IcosahedronGeometry(0.55, lite ? 0 : 1), pose(rim.clone().addScaledVector(UP, 0.7), turn, new Vector3(0.9, 0.7, 2)));
           for (let k = -1; k <= 1; k += 1) {
             const bloom = rim.clone().addScaledVector(UP, 1.05).addScaledVector(along, k * 0.7).addScaledVector(side, ((k + 2) % 2) * 0.15);
             add((Math.round(at * 997) + k) % 2 ? 'flowerA' : 'flowerB', new IcosahedronGeometry(0.2, 0), pose(bloom));
@@ -488,7 +533,13 @@ export function buildTrackFeatures(centerline, channel, features) {
       mesh.name = 'cable_car';
       mesh.visible = false;
       group.add(mesh);
-      car = { mesh, build, half, travel, phase: f.phase ?? 0, speed: (2 * travel) / CABLE_CROSS };
+      if (f.parked) {
+        // Parked on its rails, standing across part of the street (l to l2): built once, always there.
+        const xa = Math.min(f.l ?? 0, f.l2 ?? f.l ?? 0) * across;
+        const xb = Math.max(f.l ?? 0, f.l2 ?? f.l ?? 0) * across;
+        build(xa, xb);
+        mesh.visible = true;
+      } else car = { mesh, build, half, travel, phase: f.phase ?? 0, speed: (2 * travel) / CABLE_CROSS };
     } else if (f.type === 'sea_lion' && f.flop !== undefined) {
       // A sea lion of the pier's colony on a wooden perch beside the rim, flopping
       // down into the street on its timetable, lying there and hopping back out.
@@ -569,7 +620,7 @@ export function buildTrackFeatures(centerline, channel, features) {
             .addScaledVector(out, (rand(n * 13 + j) - 0.5) * 2)
             .addScaledVector(UP, 0.2);
           const m = pose(spot, new Quaternion().setFromAxisAngle(UP, yaw), new Vector3(0.85, 0.85, 0.85));
-          const shape = seaLionShape(rand(n * 17 + j) > 0.6 ? 1 : 0.1);
+          const shape = seaLionShape(rand(n * 17 + j) > 0.6 ? 1 : 0.1, 0);
           for (const g of shape.body) add('seaLion', g, m);
           for (const g of shape.dark) add('seaLionDark', g, m);
         }
@@ -648,14 +699,14 @@ export function buildTrackFeatures(centerline, channel, features) {
   }
 
   for (const f of features) {
-    if (f.type === 'boost' || f.type === 'bump' || DECOR.includes(f.type)) continue;
+    if (f.type === 'boost' || f.type === 'bump' || f.type === 'cobbles' || DECOR.includes(f.type)) continue;
     const l = f.l ?? 0;
     const xa = Math.min(l, f.l2 ?? l) * across;
     const xb = Math.max(l, f.l2 ?? l) * across;
     const radius = f.type === 'cable_car' ? (f.width ?? 2.4) / 2 : f.radius ?? 0.7;
     solids.push({
       id: solids.length, type: f.type, s: f.at * channel.arc, xa, xb, reach: radius + 0.55, rest: l * across, full: (f.reach ?? l) * across, flop: f.flop,
-      ...(f.type === 'cable_car' && { half: (f.length ?? 7) / 2, travel: across + (f.length ?? 7) / 2 + 1, phase: f.phase ?? 0 }),
+      ...(f.type === 'cable_car' && { half: (f.length ?? 7) / 2, travel: across + (f.length ?? 7) / 2 + 1, phase: f.phase ?? 0, parked: Boolean(f.parked) }),
     });
     // A parked bus: the physics' row of round sections down its length.
     if (f.type === 'bus') {
@@ -669,6 +720,7 @@ export function buildTrackFeatures(centerline, channel, features) {
   const materials = {
     chevron: new MeshBasicMaterial({ map: tex, side: DoubleSide, polygonOffset: true, polygonOffsetFactor: -2 }),
     bump: new MeshLambertMaterial({ vertexColors: true }),
+    cobbles: new MeshLambertMaterial({ vertexColors: true, flatShading: true, polygonOffset: true, polygonOffsetFactor: -1 }),
     ice: new MeshLambertMaterial({ color: FEATURE_COLORS.ice, emissive: '#3a6c86', transparent: true, opacity: 0.78 }),
     snow: new MeshLambertMaterial({ color: FEATURE_COLORS.snow, emissive: '#8a96a2', flatShading: true }),
     coal: new MeshLambertMaterial({ color: FEATURE_COLORS.coal }),
@@ -704,7 +756,7 @@ export function buildTrackFeatures(centerline, channel, features) {
   };
   for (const [key, list] of Object.entries(parts)) {
     // Merge like with like (all with the same attributes).
-    const keep = ['position', 'normal', ...(key === 'chevron' ? ['uv'] : []), ...(key === 'bump' ? ['color'] : [])];
+    const keep = ['position', 'normal', ...(key === 'chevron' ? ['uv'] : []), ...(key === 'bump' || key === 'cobbles' ? ['color'] : [])];
     const ready = list.map((g) => {
       const n = g.index ? g.toNonIndexed() : g;
       if (!n.getAttribute('normal')) n.computeVertexNormals();
@@ -792,7 +844,7 @@ export function buildTrackFeatures(centerline, channel, features) {
         const k = seaLionFlop(t / 1000 + o.flop);
         o.xa = o.xb = k > 0 ? o.rest + (o.full - o.rest) * k : 1e4; // on its perch: nowhere near the channel
       } else if (SWIPERS.includes(o.type)) o.xa = o.xb = o.rest + (o.full - o.rest) * bearPaw(t / 1000);
-      else if (o.type === 'cable_car') {
+      else if (o.type === 'cable_car' && !o.parked) {
         const c = cableCar(t / 1000 + o.phase);
         if (!c) o.xa = o.xb = 1e4; // away: nowhere near the channel
         else {

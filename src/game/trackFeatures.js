@@ -11,6 +11,9 @@
  *           rolling over them gives a burst of speed (`kick` m/s, default 9);
  *   bump:   { type: 'bump', at }  a ridge across the channel: marbles hop
  *           over it and lose a little speed;
+ *   cobbles: { type: 'cobbles', at, length, drag } a rough stretch across the
+ *           whole channel, `length` metres long, braking every marble rolling
+ *           over it by `drag` × speed² (San Francisco: before its tight bends);
  *   solid obstacles (ice_block, snowman, icicles, polar_bear): { type, at,
  *           l, radius, height? } a round footprint marbles bounce off. The
  *           polar bear sits on the rim and swipes its paw into the channel on
@@ -25,7 +28,10 @@
  *           (cableCar): a long solid body (`length` metres across the
  *           channel, `width` along it) that marbles slam into and ricochet
  *           off, back and forth, the same in every race (`phase`: seconds
- *           its timetable runs ahead, to meet the pack).
+ *           its timetable runs ahead, to meet the pack). With `parked` it
+ *           stands still on its rails instead, across the channel from `l`
+ *           to `l2` (San Francisco since physics-preview-8): marbles bounce
+ *           off its flank like a parked bus.
  *   bus:    { type: 'bus', at, l, length, radius } a bus parked against the
  *           wall, `length` metres down the track from `at`: a row of round
  *           sections (busParts) marbles glance off along its flank.
@@ -108,7 +114,7 @@ function busParts(length) {
 /** The track's features in metres along the track (`total` metres long), sorted along it. */
 function normaliseFeatures(features, total) {
   return (Array.isArray(features) ? features : [])
-    .filter((f) => f && Number.isFinite(f.at) && (f.type === 'boost' || f.type === 'bump' || SOLID_TYPES.includes(f.type)))
+    .filter((f) => f && Number.isFinite(f.at) && (f.type === 'boost' || f.type === 'bump' || f.type === 'cobbles' || SOLID_TYPES.includes(f.type)))
     .map((f, id) => ({ ...f, id, s: f.at * total, l: Number(f.l) || 0 }))
     .sort((a, b) => a.s - b.s);
 }

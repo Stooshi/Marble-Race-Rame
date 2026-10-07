@@ -14,7 +14,7 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { buildCenterline, buildTrackGeometry, TRACK_STYLE } from './trackModel';
 import { PEN_DROP, RaceMarbles, RUNOUT_LENGTH } from './marbles';
 import { buildScenery } from './scenery';
-import { buildIceChannelGeometry, channelLipAt, channelOf, channelRadiusAt, forkOffset, forkRadius, ICE_COLORS, STREET_COLORS } from './iceChannel';
+import { buildIceChannelGeometry, channelLipAt, channelPieces, channelOf, channelRadiusAt, forkOffset, forkRadius, ICE_COLORS, STREET_COLORS } from './iceChannel';
 import { DEFAULT_THEME, themeFor } from './themes';
 import { gatePlaces, StartGate } from './startGate';
 import { countdownPose, handover, startLineShot } from './startCamera';
@@ -24,6 +24,7 @@ import { WINNER_MS } from '../utils/finishShow';
 
 const LEADER_MARGIN = 3; // metres: the follow camera only switches to a new leader that is clearly ahead
 const SCENERY_LAYER = 1;  // scenery is drawn in the big view only (the small corner view skips it, for speed)
+const HITCH_MS = 100; // frames further apart than this count as a hold-up (the frame-rate counter shows how many)
 const SLOW_FRAME_MS = 40; // frames further apart than this on average (under 25 a second): draw at a lower resolution
 const FINISH_FROM = 12; // metres short of the line where the big view starts over to the finish shot…
 const FINISH_TO = 6; // …and past it where it is there
@@ -65,11 +66,28 @@ function paintSky(sky, theme) {
   col.needsUpdate = true;
 }
 
+/**
+ * Phones (and small tablets) get the lighter version of the world: a touch
+ * screen no wider than a big phone or small tablet. ?lite=1 / ?lite=0 in the
+ * address forces it either way.
+ */
+export function prefersLite() {
+  try {
+    const forced = new URLSearchParams(window.location.search).get('lite');
+    if (forced === '1' || forced === '0') return forced === '1';
+    const coarse = window.matchMedia?.('(pointer: coarse)').matches;
+    return Boolean(coarse && Math.min(window.screen.width, window.screen.height) <= 900);
+  } catch {
+    return false;
+  }
+}
+
 export class TrackScene {
-  constructor(canvas, { interactive = true, maxPixelRatio = 2 } = {}) {
+  constructor(canvas, { interactive = true, maxPixelRatio = 2, lite = prefersLite() } = {}) {
     const lowEnd = (navigator.hardwareConcurrency || 4) <= 4 && window.devicePixelRatio >= 2;
+    this.lite = lite;
     this.renderer = new WebGLRenderer({ canvas, antialias: window.devicePixelRatio < 2, powerPreference: 'default' });
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, lowEnd ? 1.5 : maxPixelRatio));
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, lowEnd || lite ? 1.5 : maxPixelRatio));
     this.renderer.outputColorSpace = SRGBColorSpace;
     this.renderer.info.autoReset = false; // counted over both views (see render)
     this.size = { width: 1, height: 1 };
@@ -151,19 +169,27 @@ export class TrackScene {
     this.applyTheme(theme);
     const style = { ...TRACK_STYLE, colors: { ...TRACK_STYLE.colors, ...theme.track } };
     this.channel = channelOf(track, this.centerline); // ice channel (bobsleigh) instead of a road
-    const geometry = this.channel ? buildIceChannelGeometry(this.centerline, this.channel) : buildTrackGeometry(track, this.centerline, style);
+    // (On phones a street's U is drawn in fewer strips across.)
+    const lighter = this.lite && this.channel?.look === 'street' ? { segmentsAcross: 20 } : undefined;
+    const geometry = this.channel ? buildIceChannelGeometry(this.centerline, this.channel, lighter) : buildTrackGeometry(track, this.centerline, style);
     this.trackMesh = new Mesh(geometry, this.trackMaterial);
     this.trackGroup.add(this.trackMesh);
+    if (this.channel) {
+      // Drawn in pieces along the track, so only those in view are drawn (the whole
+      // channel stays as trackMesh, hidden, for its size and shape).
+      this.trackMesh.visible = false;
+      for (const piece of channelPieces(geometry)) this.trackGroup.add(new Mesh(piece, this.trackMaterial));
+    }
     this.trackGroup.add(this.buildFinishArch(track));
     // Boost pads, speed bumps and obstacles (ice channels with physics.features).
-    this.features = this.channel ? buildTrackFeatures(this.centerline, this.channel, track?.physics?.features) : null;
+    this.features = this.channel ? buildTrackFeatures(this.centerline, this.channel, track?.physics?.features, { lite: this.lite }) : null;
     if (this.features) this.trackGroup.add(this.features.group);
     // Scenery a moment later, so the track shows straight away even on slow phones.
     const token = (this.buildToken = (this.buildToken || 0) + 1);
     if (theme.scenery) {
       setTimeout(() => {
         if (token !== this.buildToken || this.disposed) return; // another track was chosen meanwhile
-        this.scenery = buildScenery(theme, this.centerline, track);
+        this.scenery = buildScenery(theme, this.centerline, track, { lite: this.lite });
         if (this.scenery) {
           this.scenery.traverse((o) => o.layers.set(SCENERY_LAYER));
           this.trackGroup.add(this.scenery);
@@ -327,6 +353,7 @@ export class TrackScene {
   }
 
   clearRace() {
+    this.hitches = 0; // (the frame-rate counter counts hold-ups per race)
     if (this.gate) {
       this.scene.remove(this.gate.group);
       this.gate.dispose();
@@ -889,6 +916,11 @@ export class TrackScene {
     const now = performance.now();
     const gap = now - (this.lastDrawn ?? -Infinity);
     this.lastDrawn = now;
+    // For the frame-rate counter: when each frame was drawn, and any long hold-ups.
+    const drawn = (this.drawn ??= []);
+    drawn.push(now);
+    while (drawn.length && drawn[0] < now - 2000) drawn.shift();
+    if (Number.isFinite(gap) && gap > HITCH_MS) this.hitches = (this.hitches ?? 0) + 1;
     if (gap > 250) return; // a pause (or the first frame), not a slow one
     this.pace = this.pace === undefined ? gap : this.pace + (gap - this.pace) * 0.05;
     this.paced = (this.paced ?? 0) + 1;
@@ -899,6 +931,29 @@ export class TrackScene {
     this.renderer.setSize(this.size.width, this.size.height, false);
     this.pace = undefined;
     this.paced = 0;
+  }
+
+  /**
+   * For the frame-rate counter: frames drawn in the last second, the longest
+   * gap between frames in the last two, hold-ups (frames over HITCH_MS apart)
+   * so far, and what each frame costs.
+   */
+  frameStats() {
+    const now = performance.now();
+    const drawn = (this.drawn ?? []).filter((t) => t > now - 2000);
+    let worst = 0;
+    for (let k = 1; k < drawn.length; k += 1) worst = Math.max(worst, drawn[k] - drawn[k - 1]);
+    if (drawn.length) worst = Math.max(worst, now - drawn[drawn.length - 1]); // (a freeze going on right now)
+    const { calls, triangles } = this.renderer.info.render;
+    return {
+      fps: drawn.filter((t) => t > now - 1000).length,
+      worstMs: Math.round(worst),
+      hitches: this.hitches ?? 0,
+      pixelRatio: this.renderer.getPixelRatio(),
+      calls,
+      triangles,
+      lite: this.lite,
+    };
   }
 
   /** Draw calls and triangles of the last frame, for the ?debug overlay. */

@@ -7,6 +7,7 @@ import { Spinner } from './Status';
 import { formatTime } from '../utils/format';
 import { COUNTDOWN_MS } from '../three/startCamera';
 import FinishShow, { useFinishShow } from './FinishShow';
+import FrameMeter, { useFrameMeter } from './FrameMeter';
 
 /**
  * A live race in 3D (tracks on the new physics, e.g. Bobsleigh Run): the
@@ -31,6 +32,7 @@ export default function LiveRaceViewer3D({
   const [camera, setCamera] = useState('follow'); // follow | overview
   const [follow, setFollow] = useState('leader'); // 'leader' or an entry index
   const [built, setBuilt] = useState(false);
+  const meter = useFrameMeter();
   const dirty = useRef(true);
 
   useEffect(() => {
@@ -136,6 +138,7 @@ export default function LiveRaceViewer3D({
               marble={entries[insetIndex]?.marble}
               onSwap={swapViews}
             />
+            {meter.on && <FrameMeter sceneRef={sceneRef} />}
             <FinishShow show={show} finishes={finishes} entries={entries} mine={highlight} raceId={meta?.raceId} trackName={meta?.track?.name} next={next} />
             {show.phase === 'racing' && (
               <ol className="replay3d__standings" aria-label="Current standings">
@@ -167,6 +170,9 @@ export default function LiveRaceViewer3D({
         )}
         <button type="button" aria-pressed={camera === 'overview'} onClick={() => setCamera('overview')}>
           Whole track
+        </button>
+        <button type="button" aria-pressed={meter.on} onClick={meter.toggle} title="Show the frame rate">
+          FPS
         </button>
       </div>
       {footer}

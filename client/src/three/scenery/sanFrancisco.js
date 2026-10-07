@@ -126,7 +126,7 @@ function farHouseGeometry() {
  * race down (`near`), then simpler blocks over the hills around (`far`).
  */
 export function placeHouses(centerline, field, layout, {
-  maxNear = 460, maxFar = 1300, seed = hashString('san-francisco'), groundAt = field.heightAt,
+  maxNear = 460, maxFar = 1300, seed = hashString('san-francisco'), groundAt = field.heightAt, lite = false,
 } = {}) {
   const rand = seededRandom(seed);
   const near = [];
@@ -160,10 +160,11 @@ export function placeHouses(centerline, field, layout, {
 
   // Rows facing the street the marbles race down.
   const { samples } = centerline;
-  for (let i = 0; i < samples.length; i += 4) {
+  // (Phones: one row each side, every other house.)
+  for (let i = 0; i < samples.length; i += lite ? 7 : 4) {
     const s = samples[i];
     for (const side of [-1, 1]) {
-      for (const offset of [field.roadHalf + 9, field.roadHalf + 19]) {
+      for (const offset of lite ? [field.roadHalf + 9] : [field.roadHalf + 9, field.roadHalf + 19]) {
         const x = s.pos.x + s.side.x * side * offset;
         const z = s.pos.z + s.side.z * side * offset;
         add(x, z, Math.atan2(-s.side.x * side, -s.side.z * side));
@@ -188,7 +189,7 @@ export function placeHouses(centerline, field, layout, {
   for (const [x, z, roll] of spots) {
     if (houses.length >= max) break;
     const r = field.nearest(x, z);
-    if (r < field.roadHalf + 22 || r > 270) continue;
+    if (r < field.roadHalf + 22 || r > (lite ? 190 : 270)) continue;
     if (roll > 0.95 - 0.55 * smoothstep(80, 270, r)) continue;
     if (!free(x, z)) continue;
     const gx = groundAt(x + 4, z) - groundAt(x - 4, z);
@@ -198,8 +199,8 @@ export function placeHouses(centerline, field, layout, {
   return { near, far };
 }
 
-/** A cartoon Golden Gate, built along +z around the origin (water at y = 0). */
-function goldenGateGeometry() {
+/** A cartoon Golden Gate, built along +z around the origin (water at y = 0); lite: fewer cable pieces. */
+function goldenGateGeometry(lite = false) {
   const o = INTERNATIONAL_ORANGE;
   const parts = [];
   const half = 330;
@@ -221,13 +222,13 @@ function goldenGateGeometry() {
   };
   for (const x of [-11, 11]) {
     const zs = [];
-    for (let z = -half; z <= half + 1e-6; z += 22) zs.push(z);
+    for (let z = -half; z <= half + 1e-6; z += lite ? 44 : 22) zs.push(z);
     for (const z of [-towerZ, towerZ]) zs.push(z);
     zs.sort((a, b) => a - b);
     for (let i = 1; i < zs.length; i += 1) {
       parts.push(beam(new Vector3(x, cableY(zs[i - 1]), zs[i - 1]), new Vector3(x, cableY(zs[i]), zs[i]), 1.4, o));
     }
-    for (let z = -towerZ + 15; z < towerZ; z += 15) {
+    for (let z = -towerZ + 15; z < towerZ; z += lite ? 30 : 15) {
       parts.push(beam(new Vector3(x, deckY + 1.5, z), new Vector3(x, cableY(z), z), 0.5, o));
     }
   }
@@ -299,8 +300,13 @@ function tiledInstances(items, geometries, materials, names, set) {
   return groups;
 }
 
-/** Builds the whole San Francisco world around a track. Returns a Group. */
-export function buildSanFrancisco(centerline, track, theme) {
+/**
+ * Builds the whole San Francisco world around a track. Returns a Group.
+ * lite (phones): a lighter version of it, not the same at lower sharpness:
+ * a quarter of the houses, all simple ones, the ground coarser and only as
+ * far out as the view reaches, a plainer bridge and no fog banks.
+ */
+export function buildSanFrancisco(centerline, track, theme, { lite = false } = {}) {
   const lanes = Math.max(1, Number(track?.lane_count) || 5);
   const colony = track?.physics?.features?.find?.((f) => f.type === 'sea_lion_colony') ?? null;
   // The rebuilt track (new physics) is a street channel built into the hillside: pavements and ground at its rim.
@@ -310,6 +316,7 @@ export function buildSanFrancisco(centerline, track, theme) {
   const step = channel ? channel.arc / centerline.segments : 0;
   const { segments } = centerline;
   const street = channel ? {
+    dip: lite ? 6 : 0, // (the phone version's coarser ground stays down further out, behind the street's walls)
     halfAt: (i) => (i > segments ? pen.halfWidth + 0.3 + PAVEMENT : channelRadiusAt(channel, i * step) * Math.sin(channelLipAt(channel, i * step)) + PAVEMENT),
     liftAt: (i) => (i > segments ? 1.6 : channelRadiusAt(channel, i * step) * (1 - Math.cos(channelLipAt(channel, i * step)))),
   } : null;
@@ -332,10 +339,11 @@ export function buildSanFrancisco(centerline, track, theme) {
 
   // Hills.
   const { minX, maxX, minZ, maxZ } = layout.bounds;
-  const margin = 380;
+  const margin = lite ? 240 : 380;
   const ground = buildTerrain(field, { minX: minX - margin, maxX: maxX + margin, minZ: minZ - margin, maxZ: maxZ + margin }, {
-    cells: street ? 150 : 80, // finer for a street channel, so the ground meets its pavements colors: { grass: '#8db457', dry: '#b7b85c', shade: '#77a04a', sand: '#ecd59e' },
-    tiles: 6,
+    // Finer for a street channel, so the ground meets its pavements (about 10 m squares; 12 on phones).
+    cells: street ? (lite ? 100 : 150) : 80,
+    tiles: lite ? 4 : 6,
   });
   const terrain = new Group();
   const groundMat = new MeshLambertMaterial({ vertexColors: true, flatShading: true });
@@ -344,7 +352,7 @@ export function buildSanFrancisco(centerline, track, theme) {
   group.add(terrain);
 
   // Painted ladies.
-  const spots = placeHouses(centerline, field, layout, { groundAt: ground.groundAt });
+  const spots = placeHouses(centerline, field, layout, { groundAt: ground.groundAt, lite, ...(lite && { maxNear: 150, maxFar: 320 }) });
   const { body, trim } = houseGeometries();
   const m = new Matrix4();
   const q = new Quaternion();
@@ -356,15 +364,22 @@ export function buildSanFrancisco(centerline, track, theme) {
     mesh.setMatrixAt(i, place(h));
     if (n === 0) mesh.setColorAt(i, c.set(h.color));
   };
-  const [bodies, trims] = tiledInstances(spots.near, [body, trim], [
-    new MeshLambertMaterial({ flatShading: true }),
-    new MeshLambertMaterial({ vertexColors: true, flatShading: true }), // (every face is wound outwards: one side is enough)
-  ], ['houses', 'house trim'], paint);
-  const [farHouses] = tiledInstances(spots.far, [farHouseGeometry()], [new MeshLambertMaterial({ vertexColors: true, flatShading: true })], ['houses on the hills'], paint);
-  group.add(bodies, trims, farHouses);
+  const simple = farHouseGeometry();
+  const simpleMat = new MeshLambertMaterial({ vertexColors: true, flatShading: true });
+  if (lite) {
+    // Phones: every house the simple kind (walls, gables, roof), in one set of tiles.
+    group.add(...tiledInstances([...spots.near, ...spots.far], [simple], [simpleMat], ['houses'], paint));
+  } else {
+    const [bodies, trims] = tiledInstances(spots.near, [body, trim], [
+      new MeshLambertMaterial({ flatShading: true }),
+      new MeshLambertMaterial({ vertexColors: true, flatShading: true }), // (every face is wound outwards: one side is enough)
+    ], ['houses', 'house trim'], paint);
+    const [farHouses] = tiledInstances(spots.far, [simple], [simpleMat], ['houses on the hills'], paint);
+    group.add(bodies, trims, farHouses);
+  }
 
   // The Golden Gate, out west in the fog.
-  const bridge = new Mesh(goldenGateGeometry(), new MeshLambertMaterial({ vertexColors: true, flatShading: true }));
+  const bridge = new Mesh(goldenGateGeometry(lite), new MeshLambertMaterial({ vertexColors: true, flatShading: true }));
   bridge.name = 'golden gate';
   bridge.position.copy(layout.bridge.centre);
   bridge.quaternion.setFromUnitVectors(new Vector3(0, 0, 1), layout.bridge.axis.clone().normalize());
@@ -376,7 +391,7 @@ export function buildSanFrancisco(centerline, track, theme) {
     [-260, 16, 260, 70], [-90, 20, 280, 80], [90, 14, 260, 70], [250, 22, 300, 90], [0, 46, 200, 55],
     [-420, 30, 320, 100], [420, 26, 320, 100],
   ];
-  for (const [s, y, w, hgt] of fogBanks) {
+  for (const [s, y, w, hgt] of lite ? [] : fogBanks) { // (big see-through sprites: none on phones)
     const fog = new Sprite(fogMat);
     fog.position.copy(layout.bridge.centre).addScaledVector(along, s).add(new Vector3(0, y, 0));
     fog.scale.set(w, hgt, 1);

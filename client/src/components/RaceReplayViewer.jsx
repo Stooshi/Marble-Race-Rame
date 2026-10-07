@@ -7,6 +7,7 @@ import CornerView, { cornerFollow, followedNow, followLabel } from './CornerView
 import { Spinner } from './Status';
 import { formatTime } from '../utils/format';
 import FinishShow, { useFinishShow } from './FinishShow';
+import FrameMeter, { useFrameMeter } from './FrameMeter';
 import { BOARD_HOLD_MS, finishPlan } from '../utils/finishShow';
 
 /**
@@ -31,6 +32,7 @@ export default function RaceReplayViewer({ data, loading = false, mine = NOBODY,
   const [camera, setCamera] = useState('follow'); // follow | overview
   const [follow, setFollow] = useState('leader'); // 'leader' or an entry index
   const [built, setBuilt] = useState(false);
+  const meter = useFrameMeter();
   // The winner's moment in the scene: the golden spotlight and the camera pushing in.
   const winnerIndex = show.plan ? Number(Object.keys(finishes).find((i) => finishes[i] === show.plan.winnerMs)) : null;
   useEffect(() => {
@@ -174,6 +176,7 @@ export default function RaceReplayViewer({ data, loading = false, mine = NOBODY,
                 })}
               </ol>
             )}
+            {meter.on && <FrameMeter sceneRef={sceneRef} />}
             <FinishShow show={show} finishes={finishes} entries={entries} mine={mine} raceId={raceId} trackName={data?.track?.name} next={next}
               onSkip={() => { replay.seek(plan.boardAt); dirty.current = true; }} />
           </>
@@ -214,6 +217,9 @@ export default function RaceReplayViewer({ data, loading = false, mine = NOBODY,
           )}
           <button type="button" aria-pressed={camera === 'overview'} onClick={() => setCamera('overview')}>
             Whole track
+          </button>
+          <button type="button" aria-pressed={meter.on} onClick={meter.toggle} title="Show the frame rate">
+            FPS
           </button>
         </div>
       )}

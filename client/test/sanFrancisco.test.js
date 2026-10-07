@@ -2,7 +2,7 @@ import { createRequire } from 'node:module';
 import { describe, expect, it } from 'vitest';
 import { DoubleSide, Mesh, MeshBasicMaterial, PerspectiveCamera, Raycaster, Triangle, Vector3 } from 'three';
 import { buildCenterline } from '../src/three/trackModel';
-import { buildIceChannelGeometry, channelOf, placeOnChannel } from '../src/three/iceChannel';
+import { buildIceChannelGeometry, channelLipAt, channelOf, channelRadiusAt, placeOnChannel } from '../src/three/iceChannel';
 import { layoutMarbles, MARBLE_RADIUS, PEN_DROP } from '../src/three/marbles';
 import { buildSanFrancisco } from '../src/three/scenery/sanFrancisco';
 import { themeFor } from '../src/three/themes';
@@ -71,6 +71,30 @@ describe('San Francisco (3D)', () => {
     }
   });
 
+  it('keeps the drawn ground under the street everywhere, in the full version and the lighter one for phones', { timeout: 60_000 }, () => {
+    for (const lite of [false, true]) {
+      const scenery = buildSanFrancisco(centerline, track, themeFor('san-francisco'), { lite });
+      const { groundAt } = scenery.userData;
+      let worst = -Infinity;
+      for (let i = 0; i <= centerline.segments; i += 2) {
+        const sample = centerline.samples[i];
+        const s = (i / centerline.segments) * channel.arc;
+        const R = channelRadiusAt(channel, s);
+        const lip = channelLipAt(channel, s);
+        const side = new Vector3(sample.side.x, 0, sample.side.z).normalize();
+        // Across the street's U up to just short of its rims: the ground stays below the surface.
+        for (let k = -6; k <= 6; k += 1) {
+          const th = (k / 6) * lip * 0.95;
+          const at = sample.pos.clone().addScaledVector(side, R * Math.sin(th));
+          worst = Math.max(worst, groundAt(at.x, at.z) - (sample.pos.y + R * (1 - Math.cos(th))));
+        }
+      }
+      expect(worst, lite ? 'phone version' : 'full version').toBeLessThan(-0.05);
+      // The phone version is far lighter: a quarter of the houses or fewer.
+      if (lite) expect(scenery.userData.houses).toBeLessThan(500);
+    }
+  });
+
   it('films the finish from behind the line: the line, the catch area and the Golden Gate beyond, all in view (desktop and phone)', () => {
     const scenery = buildSanFrancisco(centerline, track, themeFor('san-francisco'));
     const end = centerline.samples[centerline.segments];
@@ -131,10 +155,32 @@ describe('San Francisco (3D)', () => {
     }
   });
 
-  it('draws the cable car exactly where the physics has it while it crosses, and only outside the street otherwise', () => {
+  it('draws the cable car parked where the physics has it, standing in across part of the street', () => {
     const built = buildTrackFeatures(centerline, channel, track.physics.features);
     const car = built.group.children.find((c) => c.name === 'cable_car');
     const feature = track.physics.features.find((f) => f.type === 'cable_car');
+    const across = channel.radius * channel.maxAngle;
+    car.geometry.computeBoundingBox();
+    const box = car.geometry.boundingBox.clone();
+    for (let t = 0; t < 30000; t += 1000) {
+      built.update(t);
+      const solid = built.solidsAt(t).find((o) => o.type === 'cable_car');
+      expect(car.visible).toBe(true);
+      expect(solid.xa).toBeCloseTo(Math.min(feature.l, feature.l2) * across, 6);
+      expect(solid.xb).toBeCloseTo(Math.max(feature.l, feature.l2) * across, 6);
+    }
+    car.geometry.computeBoundingBox();
+    expect(car.geometry.boundingBox.equals(box)).toBe(true); // it never moves
+    // Its open end, inside the street, where the physics has it.
+    const end = placeOnChannel(centerline, channel, feature.at, Math.min(Math.abs(feature.l), Math.abs(feature.l2)) * Math.sign(feature.l), 0, 0, 0);
+    expect(box.distanceToPoint(end)).toBeLessThan(0.3);
+  });
+
+  it('still draws the old crossing cable car exactly where the physics had it (replays of earlier races)', () => {
+    const crossing = track.physics.features.map((f) => (f.type === 'cable_car' ? { type: 'cable_car', at: f.at, length: 6, width: 2.4, height: 3.2, phase: 7.8, loss: 0.15, sweep: true } : f));
+    const built = buildTrackFeatures(centerline, channel, crossing);
+    const car = built.group.children.find((c) => c.name === 'cable_car');
+    const feature = crossing.find((f) => f.type === 'cable_car');
     const across = channel.radius * channel.maxAngle;
     for (let t = 0; t < 30000; t += 333) {
       built.update(t);

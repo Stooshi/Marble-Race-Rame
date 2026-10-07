@@ -25,8 +25,9 @@ function rolling(x, z) {
  * street: a channel built into the ground as a city street (San Francisco
  * rebuilt): { halfAt(i), liftAt(i) } per centre-line sample i, the channel's
  * half-width with its pavements, and the height of its pavements above the
- * floor. The ground then sits at pavement level right beside it, dips under
- * the channel itself, and blends into the hills further out.
+ * floor (and optionally dip: metres beyond them the ground stays down, for
+ * coarse ground). The ground then sits at pavement level right beside it, dips
+ * under the channel itself, and blends into the hills further out.
  */
 export function makeHeightField(centerline, laneCount, { hillHeight = 18, landRadius = 300, seaLevel = -1.2, water = () => 0, street = null } = {}, style = TRACK_STYLE) {
   const keep = centerline.samples.map((_, i) => i).filter((i) => i % 3 === 0 || i === centerline.samples.length - 1);
@@ -67,8 +68,9 @@ export function makeHeightField(centerline, laneCount, { hillHeight = 18, landRa
     const d = Math.sqrt(best);
     const inner = halves[bi];
     const pavement = wSum ? hSum / wSum : ys[bi] + lifts[bi] - 0.25;
-    if (d < inner) return ys[bi] - 2; // under the street: never through its floor
-    const kerb = ys[bi] - 2 + (pavement - ys[bi] + 2) * smoothstep(inner, inner + 5, d);
+    const dip = street.dip ?? 0; // (coarse ground: stays down a little further out, under the street's stone walls)
+    if (d < inner + dip) return ys[bi] - 2; // under the street: never through its floor
+    const kerb = ys[bi] - 2 + (pavement - ys[bi] + 2) * smoothstep(inner + dip, inner + dip + 5, d);
     return kerb + (hills - kerb) * smoothstep(inner + 40, inner + 160, d);
   }
 

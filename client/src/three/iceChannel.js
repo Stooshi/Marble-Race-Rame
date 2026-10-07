@@ -208,7 +208,9 @@ export function buildIceChannelGeometry(centerline, channel, {
     }
   };
 
+  const starts = []; // where each segment's triangles begin (vertex index), for cutting the channel into pieces
   for (let i = 0; i < segments; i += 1) {
+    starts.push(positions.length / 3);
     const a = samples[i];
     const b = samples[i + 1];
     const sMid = (i + 0.5) * step;
@@ -254,5 +256,29 @@ export function buildIceChannelGeometry(centerline, channel, {
   geometry.computeVertexNormals();
   geometry.computeBoundingBox();
   geometry.computeBoundingSphere();
+  geometry.userData.segmentStarts = starts;
   return geometry;
+}
+
+/**
+ * The channel cut into pieces of `per` segments along the track (each its own
+ * geometry, bounding sphere and all), so a camera down in the channel only
+ * draws the pieces in front of it, not the whole course every frame.
+ */
+export function channelPieces(geometry, per = 40) {
+  const starts = geometry.userData.segmentStarts ?? [0];
+  const total = geometry.getAttribute('position').count;
+  const pieces = [];
+  for (let i = 0; i < starts.length; i += per) {
+    const from = starts[i];
+    const to = i + per < starts.length ? starts[i + per] : total;
+    const g = new BufferGeometry();
+    for (const name of Object.keys(geometry.attributes)) {
+      const attr = geometry.getAttribute(name);
+      g.setAttribute(name, new Float32BufferAttribute(attr.array.slice(from * attr.itemSize, to * attr.itemSize), attr.itemSize));
+    }
+    g.computeBoundingSphere();
+    pieces.push(g);
+  }
+  return pieces;
 }

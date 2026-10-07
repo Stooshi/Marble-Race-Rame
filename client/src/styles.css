@@ -717,3 +717,9 @@ main { padding-bottom: 48px; }
   .podium-light, .spin-marble__body, .podium-crown, .podium-step__block::after { animation: none; }
   .podium-step { animation-duration: .01s; }
 }
+/* The frame-rate counter (switched on with the FPS button under the race). */
+.frame-meter { position: absolute; top: 44px; right: 8px; display: flex; flex-direction: column; align-items: flex-end; gap: 1px; padding: 4px 8px; border-radius: 8px; background: rgba(17, 19, 26, 0.75); color: #e5e7eb; font-size: 0.72rem; font-variant-numeric: tabular-nums; pointer-events: none; z-index: 5; }
+.frame-meter strong { font-size: 0.95rem; }
+.frame-meter .is-good { color: #4ade80; }
+.frame-meter .is-ok { color: #facc15; }
+.frame-meter .is-bad { color: #f87171; }

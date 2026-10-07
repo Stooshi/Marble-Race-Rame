@@ -166,6 +166,9 @@ function bobsleighRun() {
 const SAN_FRANCISCO_SECTIONS = [
   { name: 'Nob Hill start', kind: 'straight', length: 16, grade: 1.3 },
   { name: 'California Street', kind: 'straight', length: 150, grade: 0.55 },
+  // Easing off into each bend: the hill gets gentler (before Lombard it even rises a little), with
+  // cobbles across the street (see the features) braking the pack before the bend; the straights stay fast.
+  { name: 'California run-in', kind: 'straight', length: 15, grade: 0.2 },
   { name: 'Powell bend', kind: 'right', radius: 60, degrees: 70, grade: 0.15 },
   { name: 'Powell Street', kind: 'straight', length: 100, grade: 0.3 },
   { name: 'Russian Hill', kind: 'straight', length: 45, grade: -0.12 },
@@ -180,11 +183,13 @@ const SAN_FRANCISCO_SECTIONS = [
   { name: 'Russian Hill crest', kind: 'straight', length: 10, grade: 0.24 },
   { name: 'Russian Hill crest', kind: 'straight', length: 10, grade: 0.28 },
   { name: 'Hyde Street', kind: 'straight', length: 120, grade: 0.32 },
+  { name: 'Hyde run-in', kind: 'straight', length: 10, grade: 0.1 },
+  { name: 'Hyde run-in', kind: 'straight', length: 8, grade: -0.03 },
   { name: 'Lombard 1', kind: 'left', radius: 22, degrees: 170, grade: 0.18 },
   { name: 'Lombard 2', kind: 'right', radius: 22, degrees: 170, grade: 0.18 },
   { name: 'Lombard 3', kind: 'left', radius: 22, degrees: 170, grade: 0.18 },
   { name: 'Lombard 4', kind: 'right', radius: 22, degrees: 170, grade: 0.18 },
-  { name: 'Leavenworth', kind: 'straight', length: 90, grade: 0.3 },
+  { name: 'Leavenworth', kind: 'straight', length: 75, grade: 0.3 },
   { name: 'Telegraph Hill', kind: 'straight', length: 35, grade: -0.1 },
   { name: 'Telegraph Hill crest', kind: 'straight', length: 10, grade: -0.06 },
   { name: 'Telegraph Hill crest', kind: 'straight', length: 10, grade: -0.02 },
@@ -198,8 +203,9 @@ const SAN_FRANCISCO_SECTIONS = [
   { name: 'Telegraph Hill crest', kind: 'straight', length: 10, grade: 0.3 },
   { name: 'Telegraph Hill crest', kind: 'straight', length: 10, grade: 0.34 },
   { name: 'Filbert Street', kind: 'straight', length: 130, grade: 0.38 },
-  { name: 'Embarcadero', kind: 'left', radius: 70, degrees: 170, grade: 0.12 },
-  { name: 'Pier 39', kind: 'straight', length: 80, grade: 0.18 },
+  { name: 'Filbert run-in', kind: 'straight', length: 14, grade: 0.15 },
+  { name: 'Embarcadero', kind: 'left', radius: 70, degrees: 170, grade: 0.15 },
+  { name: 'Pier 39', kind: 'straight', length: 70, grade: 0.18 },
   { name: 'Finish', kind: 'straight', length: 30, grade: 0.08 },
 ];
 
@@ -235,14 +241,20 @@ function sanFrancisco() {
       // of every slow part (each climb and the hairpins), and the city's
       // obstacles right where the pack rides.
       features: [
-        // Crossing side to side on its timetable, set (phase, seconds) to be on its way across as the pack comes down.
-        // It sweeps marbles aside rather than stopping them (sweep: out to its nearer end and carried
-        // across; loss: 15% of their speed per hit), so it scatters the pack without a lottery or a crawl.
-        // Part-way down Powell Street, so the pack has the rest of the hill (and a boost pad) to get back up to speed for the climb.
-        { type: 'cable_car', at: on('Powell Street', 0.35), length: 6, width: 2.4, height: 3.2, phase: 7.8, loss: 0.15, sweep: true },
+        // A cable car parked on its rails part-way down Powell Street, standing in across the left-hand
+        // side of the street from beyond the rim (l to l2), where the pack swings across: marbles that
+        // hit it bounce off, knocked aside round its open end (a tenth of their speed per hit); the rest
+        // run past it.
+        { type: 'cable_car', at: on('Powell Street', 0.7), parked: true, l: 1.4, l2: 0.25, length: 6, width: 2.4, height: 3.2, loss: 0.1 },
+        // Cobbles across the whole street where it eases off before each bend: they brake every marble
+        // alike (harder the faster it goes), so the pack comes into the bends slower; hardest before
+        // Lombard's tight hairpins. (The hill alone can't: levelling out barely slows a marble at speed.)
+        { type: 'cobbles', at: on('California Street', 0.93), length: 25, drag: 0.005 },
+        { type: 'cobbles', at: on('Hyde Street', 0.9), length: 30, drag: 0.009 },
+        { type: 'cobbles', at: on('Filbert Street', 0.9), length: 27, drag: 0.005 },
         // Hyde Street: two big trash cans either side of the pack's line, one after the other.
-        { type: 'trash_can', at: on('Hyde Street', 0.45), l: 0.25, radius: 0.65, height: 1.43, loss: 0.3 },
-        { type: 'trash_can', at: on('Hyde Street', 0.58), l: -0.25, radius: 0.65, height: 1.43, loss: 0.3 },
+        { type: 'trash_can', at: on('Hyde Street', 0.45), l: 0.25, radius: 0.65, height: 1.43, loss: 0.2 },
+        { type: 'trash_can', at: on('Hyde Street', 0.58), l: -0.25, radius: 0.65, height: 1.43, loss: 0.2 },
         { type: 'boost', at: on('Powell Street', 0.95), l: 0, length: 8, halfWidth: 3.6, kick: 5 },     // into the Russian Hill climb
         // Lombard Street's flower beds line both rims (scenery only: in the hairpins
         // they caught slow marbles and left them crawling, ten seconds behind).
@@ -250,10 +262,10 @@ function sanFrancisco() {
         { type: 'boost', at: on('Leavenworth', 0.05), l: 0, length: 8, halfWidth: 3.6, kick: 5 },       // out of the hairpins
         { type: 'boost', at: on('Leavenworth', 0.9), l: 0, length: 8, halfWidth: 3.6, kick: 5 },        // into the Telegraph Hill climb
         // Filbert Street, once the pack is down from the crest hop: two newspaper boxes either side…
-        // (Street furniture costs half the usual speed per hit: plenty of knocks, without a lottery.)
-        { type: 'news_box', at: on('Filbert Street', 0.6), l: -0.35, radius: 0.6, height: 1.3, loss: 0.5 },
-        { type: 'news_box', at: on('Filbert Street', 0.6), l: 0.35, radius: 0.6, height: 1.3, loss: 0.5 },
-        { type: 'hydrant', at: on('Filbert Street', 0.67), l: 0, radius: 0.45, height: 0.9, loss: 0.5 },  // …and a fire hydrant behind them, dead centre
+        // (Street furniture costs 40% of the usual speed per hit: plenty of knocks, without a lottery.)
+        { type: 'news_box', at: on('Filbert Street', 0.6), l: -0.35, radius: 0.6, height: 1.3, loss: 0.4 },
+        { type: 'news_box', at: on('Filbert Street', 0.6), l: 0.35, radius: 0.6, height: 1.3, loss: 0.4 },
+        { type: 'hydrant', at: on('Filbert Street', 0.67), l: 0, radius: 0.45, height: 0.9, loss: 0.4 },  // …and a fire hydrant behind them, dead centre
         { type: 'boost', at: on('Pier 39', 0.05), l: 0, length: 8, halfWidth: 3.6, kick: 5 },           // out of the Embarcadero sweep
         // A bus parked along the right-hand wall on the run to the pier, where the pack rides out of the sweep.
         { type: 'bus', at: on('Pier 39', 0.38), l: -1, l2: -0.8, length: 10, radius: 0.4, height: 3, loss: 0.15 }, // from the top of the wall down (like the icicles): nobody gets caught above it

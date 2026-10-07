@@ -37,12 +37,12 @@ const fairnessBatch = () => {
 test('San Francisco is moved onto the new physics, then re-tuned, by its data updates: together exactly the track in code', () => {
   const dir = path.join(__dirname, '..', 'docs', 'data_updates');
   const script = path.join(__dirname, '..', 'scripts', 'physics-track-sql.js');
-  const LATEST = '2026-10-09-san-francisco-sea-lions.sql';
+  const LATEST = '2026-10-10-san-francisco-bends.sql';
   // The rebuild (already run live, so never edited) moved it onto the new physics…
   const rebuild = fs.readFileSync(path.join(dir, '2026-10-07-san-francisco-rebuild.sql'), 'utf8');
   assert.match(rebuild, /WHERE slug = 'san-francisco' AND physics IS NULL;/);
   // …re-tunes followed (each already run live is never edited, only followed by a new one)…
-  for (const f of ['2026-10-08-san-francisco-retune.sql', LATEST]) {
+  for (const f of ['2026-10-08-san-francisco-retune.sql', '2026-10-09-san-francisco-sea-lions.sql', LATEST]) {
     assert.match(fs.readFileSync(path.join(dir, f), 'utf8'), /^UPDATE tracks$[\s\S]*^ WHERE slug = 'san-francisco';$/m, f);
   }
   // …and the latest sets everything as it is now in code (its header only says what changed).
@@ -98,7 +98,7 @@ test('the obstacles cause chaos where the pack rides: the cable car, the street 
   const runs = fairnessBatch().slice(0, 20);
   for (const { sim } of runs) for (const [k, n] of Object.entries(sim.stats.features)) hits[k] = (hits[k] ?? 0) + n;
   const per = (k) => hits[k] / runs.length;
-  assert.ok(per('cable_car') > 15, `cable car ${per('cable_car')} hits per race`);
+  assert.ok(per('cable_car') > 8, `cable car ${per('cable_car')} hits per race`); // parked across part of Powell Street
   assert.ok(per('news_box') + per('hydrant') > 8, `street furniture ${per('news_box') + per('hydrant')} hits per race`);
   assert.ok(per('sea_lion') > 5, `sea lions ${per('sea_lion')} hits per race`); // two flopping into the street
   assert.ok(per('trash_can') > 5, `trash cans ${per('trash_can')} hits per race`);
@@ -106,7 +106,42 @@ test('the obstacles cause chaos where the pack rides: the cable car, the street 
   assert.ok(per('boost') > 30, `only ${per('boost')} boost kicks per race`); // four pads across the whole street
 });
 
-test('the cable car crosses on a fixed timetable, the same for everyone, both ways', () => {
+test('slower into the bends: cobbles brake the pack before each one, no boost pad leads into one, the straights stay fast', () => {
+  const bends = ['Powell bend', 'Lombard 1', 'Embarcadero'].map((n) => sf.sections.find((s) => s.name === n));
+  const metres = (share) => share * sf.length_m;
+  for (const b of bends) {
+    // No boost pad on the run into a bend (they sit before the climbs and on the way out of bends)…
+    for (const pad of sf.physics.features.filter((f) => f.type === 'boost')) {
+      const before = metres(b.from) - metres(pad.at);
+      assert.ok(before < 0 || before > 100, `a boost pad ${before.toFixed(0)} m before ${b.name}`);
+    }
+    // …and cobbles across the street right before it.
+    const cobbles = sf.physics.features.find((f) => f.type === 'cobbles' && metres(b.from) - metres(f.at) > 0 && metres(b.from) - metres(f.at) < 60);
+    assert.ok(cobbles, `cobbles before ${b.name}`);
+  }
+  // The pack's speed into each bend (median of every marble in 10 races), and its top speed on the straights.
+  const entry = bends.map(() => []);
+  let top = 0;
+  for (const { sim } of fairnessBatch().slice(0, 10)) {
+    bends.forEach((b, n) => {
+      for (let i = 0; i < 20; i += 1) entry[n].push(sim.frames.find((f) => f.p[i] >= b.from).v[i] * 3.6);
+    });
+    for (const f of sim.frames) for (let i = 0; i < 20; i += 1) if (f.p[i] < 1) top = Math.max(top, f.v[i] * 3.6);
+  }
+  const med = (a) => [...a].sort((x, y) => x - y)[a.length >> 1];
+  const [powell, lombard, embarcadero] = entry.map(med);
+  assert.ok(powell < 125, `into the Powell bend at ${powell.toFixed(0)} km/h`); // was about 132
+  assert.ok(lombard < 100, `into Lombard's hairpins at ${lombard.toFixed(0)} km/h`); // was about 113
+  assert.ok(embarcadero < 100, `into the Embarcadero at ${embarcadero.toFixed(0)} km/h`); // was about 108
+  assert.ok(top > 140, `top speed on the straights only ${top.toFixed(0)} km/h`);
+});
+
+test('the cable car stands parked on its rails across part of Powell Street (old races keep the crossing timetable)', () => {
+  const car = sf.physics.features.find((f) => f.type === 'cable_car');
+  assert.equal(car.parked, true);
+  assert.ok(Math.abs(car.l) > 1 && Math.abs(car.l2) < 0.5, 'from beyond the rim in across part of the street');
+  assert.equal(car.phase, undefined);
+  // The timetable stays, for replays of races run while it still crossed.
   assert.equal(cableCar(CABLE_PERIOD + 1).dir, -cableCar(1).dir);
   assert.equal(cableCar(5), null);
   for (let t = 0; t < 30; t += 0.37) {

@@ -32,7 +32,7 @@ const { TRACK_STYLE, buildCenterline, trackProfile } = require('./trackGeometry'
  * above the floor in metres, and standings.
  */
 
-const PHYSICS_VERSION = 'physics-preview-7'; // 2: ice knocks in metres, growing with speed (a clean start); 3: boost pads, speed bumps, obstacles; 4: real ricochets (chaos), boost kicks; 5: San Francisco's obstacles (the cable car, sea lion, street furniture), each solid's own `loss` (Bobsleigh Run races exactly as on 4); 6: San Francisco re-tuned: a sweeping cable car, a parked bus, trash cans, each pad's own kick, hits never speeding a marble up (physics.noHitBoost)
+const PHYSICS_VERSION = 'physics-preview-8'; // 2: ice knocks in metres, growing with speed (a clean start); 3: boost pads, speed bumps, obstacles; 4: real ricochets (chaos), boost kicks; 5: San Francisco's obstacles (the cable car, sea lion, street furniture), each solid's own `loss` (Bobsleigh Run races exactly as on 4); 6: San Francisco re-tuned: a sweeping cable car, a parked bus, trash cans, each pad's own kick, hits never speeding a marble up (physics.noHitBoost)
 
 const DT = 1 / 120;           // seconds per physics step
 const G = 9.81;
@@ -377,6 +377,9 @@ function advanceChannel(m, time, ctx) {
       if (stats) stats.features.boost += 1;
       note('boost', 'boost_pad');
     }
+    // Cobbles: a rough stretch across the whole street that brakes every marble
+    // the same way (harder the faster it goes), so they come into a bend slower.
+    for (const f of ctx.cobbles ?? []) if (m.s >= f.s && m.s <= f.s + f.length) a -= f.drag * m.v * Math.abs(m.v);
   }
   m.v = Math.max(0.5, m.v + a * DT);
   if (stats && m.v > stats.topSpeed) stats.topSpeed = m.v;
@@ -624,6 +627,7 @@ const SOLID_MAX_KNOCK = 16;  // at up to this (m/s): up the wall and into whoeve
 const SOLID_NUDGE = 3;       // m/s aside at every fresh contact, so no marble ever sits stuck behind one
 const SOLID_DODGE = 0.8;     // how often (times luck, 0..1) a hit is only a glancing one
 const PAW_SWAT = 1.6;        // how much of the paw's own speed it passes on: a real swat
+const PARKED_KNOCK = 5;      // m/s aside a parked cable car knocks a marble, round its open end
 
 /**
  * A marble against the obstacles near it: a round footprint (metres along
@@ -654,7 +658,7 @@ function hitSolids(m, time, ctx) {
       const k = bearPaw(time);
       xa = xb = o.x + (o.reach - o.x) * k;
       ou = (o.reach - o.x) * bearPawSpeed(time) * PAW_SWAT;
-    } else if (o.type === 'cable_car') {
+    } else if (o.type === 'cable_car' && !o.parked) {
       // Crossing on its timetable, from beyond one rim to beyond the other (away: nothing there).
       const c = cableCar(time + (o.phase ?? 0));
       if (!c) continue;
@@ -673,14 +677,19 @@ function hitSolids(m, time, ctx) {
     const d = Math.sqrt(d2);
     const ns = d > 1e-6 ? ds / d : -1;
     const nx = d > 1e-6 ? dx / d : 0;
-    if (o.sweep) {
+    if (o.sweep || o.parked) {
       // A sweeping obstacle (San Francisco's cable car) never holds a marble up:
       // it pushes it out to its nearer end and carries it across with it, the
       // marble keeping most of its speed down the hill (`loss` per fresh hit).
+      // Parked across part of the street, it knocks marbles aside round its
+      // open end (the one inside the channel) instead of stopping them dead.
       const x = R * m.th;
-      const target = x - xa < xb - x ? xa - reach : xb + reach;
+      const lipX = R * channelLip(channel, m.s);
+      const target = o.parked
+        ? (xb > lipX ? xa - reach : xb + reach)
+        : x - xa < xb - x ? xa - reach : xb + reach;
       m.th += clamp(target - x, -0.3, 0.3) / R;
-      m.thv = clamp(ou + Math.sign(target - x) * 2, -SOLID_MAX_KNOCK, SOLID_MAX_KNOCK) / R;
+      m.thv = clamp(ou + Math.sign(target - x) * (o.parked ? PARKED_KNOCK : 2), -SOLID_MAX_KNOCK, SOLID_MAX_KNOCK) / R;
       if (m.lastSolid !== o.id || time - m.lastSolidAt > 0.3) {
         m.v *= 1 - (o.loss ?? 0.15);
         if (stats) stats.features[o.type] += 1;
@@ -911,6 +920,7 @@ function simulatePhysicsRace({ seed, track, entries, level = 3, tickRateHz = 20 
     const across = (l) => ctx.channel.radius * l * ctx.channel.maxAngle; // metres along the wall from the middle
     ctx.boosts = features.filter((f) => f.type === 'boost').map((f) => ({ ...f, x: across(f.l), length: f.length ?? 8, halfWidth: f.halfWidth ?? 1.3 }));
     ctx.bumps = features.filter((f) => f.type === 'bump');
+    ctx.cobbles = features.filter((f) => f.type === 'cobbles').map((f) => ({ ...f, length: f.length ?? 25, drag: f.drag ?? 0.01 }));
     ctx.solids = features.filter((f) => SOLID_TYPES.includes(f.type)).map((f) => ({
       ...f,
       x: across(f.l),
