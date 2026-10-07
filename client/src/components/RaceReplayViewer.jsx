@@ -25,12 +25,17 @@ export default function RaceReplayViewer({ data, loading = false, mine = NOBODY,
   const finishes = useMemo(() => Object.fromEntries((data?.results ?? []).filter((r) => Number.isFinite(r.finishTimeMs)).map((r) => [r.index, r.finishTimeMs])), [data]);
   const plan = finishPlan(finishes, data?.entries?.length ?? 0, true);
   const replay = useReplay(data, { tailMs: plan && data ? Math.max(0, plan.boardAt + BOARD_HOLD_MS - data.durationMs) : 0 });
-  const show = useFinishShow({ finishes, count: data?.entries?.length ?? 0, complete: true, time: replay.time });
+  const show = useFinishShow({ finishes, count: data?.entries?.length ?? 0, complete: true, clock: replay.now });
   const finishing = show.phase !== 'racing' && show.phase !== 'winner';
   const { wrapRef, canvasRef, sceneRef, status, failure, fail } = useTrackScene();
   const [camera, setCamera] = useState('follow'); // follow | overview
   const [follow, setFollow] = useState('leader'); // 'leader' or an entry index
   const [built, setBuilt] = useState(false);
+  // The winner's moment in the scene: the golden spotlight and the camera pushing in.
+  const winnerIndex = show.plan ? Number(Object.keys(finishes).find((i) => finishes[i] === show.plan.winnerMs)) : null;
+  useEffect(() => {
+    sceneRef.current?.setCelebration(show.plan && Number.isInteger(winnerIndex) ? { index: winnerIndex, ms: show.plan.winnerMs } : null);
+  }, [built, winnerIndex, show.plan?.winnerMs]);
   const dirty = useRef(true); // something besides the clock changed: redraw
 
   // Build the track and its marbles once both the scene and the race are here.
@@ -131,7 +136,7 @@ export default function RaceReplayViewer({ data, loading = false, mine = NOBODY,
         {status === 'failed' && failure && <SceneFailure failure={failure} />}
         {built && (
           <>
-            <div className="replay3d__clock">{formatTime(Math.max(0, replay.time))}</div>
+            {show.phase !== 'winner' && <div className="replay3d__clock">{formatTime(Math.max(0, replay.time))}</div>}
             {replay.start < 0 && replay.time < 700 && (
               <div className="replay3d__countdownwrap" aria-live="polite">
                 {/* Keyed by what it shows, so each number pops in afresh. */}
@@ -140,7 +145,7 @@ export default function RaceReplayViewer({ data, loading = false, mine = NOBODY,
                 </span>
               </div>
             )}
-            {replay.frame?.v && followIndex !== undefined && replay.frame.p[followIndex] < 1 && (
+            {show.phase === 'racing' && replay.frame?.v && followIndex !== undefined && replay.frame.p[followIndex] < 1 && (
               <div className="replay3d__speed" aria-label="Speed of the marble the camera follows">
                 <strong>{Math.round((replay.frame.v[followIndex] ?? 0) * 3.6)}</strong> km/h
               </div>

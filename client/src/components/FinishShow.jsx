@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { api } from '../api/client';
 import MarbleBall from './MarbleBall';
+import Confetti from './Confetti';
 import { formatTime, ordinal } from '../utils/format';
-import { ROW_MS, arrivals, boardRows, finishPlan, phaseAt } from '../utils/finishShow';
+import { PODIUM_STEP_MS, ROW_MS, arrivals, boardRows, finishPlan, phaseAt, showerFor } from '../utils/finishShow';
 
 /**
  * The finish show's clock and stage, for a race viewer: `time` (a replay's
@@ -12,9 +13,16 @@ import { ROW_MS, arrivals, boardRows, finishPlan, phaseAt } from '../utils/finis
  */
 export function useFinishShow({ finishes, count, complete, time = null, clock = null }) {
   const [ticked, setTicked] = useState(null);
+  const [paused, setPaused] = useState(false); // the clock standing still (a paused replay): the ceremony's motion holds too
   useEffect(() => {
     if (!clock) return undefined;
-    const id = setInterval(() => setTicked(clock()), 100);
+    let last = null;
+    const id = setInterval(() => {
+      const now = clock();
+      setPaused(now === last);
+      last = now;
+      setTicked(now);
+    }, 100);
     return () => clearInterval(id);
   }, [clock]);
   const t = clock ? ticked : time;
@@ -23,7 +31,11 @@ export function useFinishShow({ finishes, count, complete, time = null, clock = 
   // A replay rewound to before the finish: the show starts afresh.
   if (skipped && plan && t !== null && t < plan.winnerMs) setSkipped(false);
   const phase = phaseAt(t, plan, skipped);
-  return { t, plan, phase, complete, skip: () => setSkipped(true) };
+  // For the confetti, drawn every animation frame: the smooth clock, or the last time given.
+  const timeRef = useRef(time);
+  timeRef.current = time;
+  const [readTime] = useState(() => () => timeRef.current);
+  return { t, plan, phase, complete, paused: Boolean(clock) && paused, clock: clock ?? readTime, skip: () => setSkipped(true) };
 }
 
 /** Room for a cheer when the winner crosses (sound comes later). */
@@ -45,18 +57,28 @@ function readable(hex) {
   return `rgb(${Math.round(r)}, ${Math.round(g)}, ${Math.round(b)})`;
 }
 
-const CONFETTI = Array.from({ length: 70 }, (_, k) => {
-  const rnd = (s) => { const x = Math.sin(k * 12.9898 + s * 78.233) * 43758.5453; return x - Math.floor(x); };
-  return {
-    left: `${(rnd(1) * 100).toFixed(1)}%`,
-    delay: `${(rnd(2) * 0.9).toFixed(2)}s`,
-    dur: `${(1.9 + rnd(3) * 1.3).toFixed(2)}s`,
-    drift: `${((rnd(4) - 0.5) * 120).toFixed(0)}px`,
-    spin: `${(360 + rnd(5) * 720).toFixed(0)}deg`,
-    color: ['#ffd21f', '#ff4d6d', '#3ec1ff', '#7ae582', '#ffffff', '#ff9f1c'][k % 6],
-    wide: k % 3 === 0,
-  };
-});
+/**
+ * Keeps a part of the ceremony's CSS animations on the race clock: `elapsed`
+ * (ms since that part began). Paused with a paused replay, and put right
+ * whenever the clock jumps (a replay scrubbed, opened part-way, or a live
+ * view joining late), so the steps, sweeps and sparkles always show the
+ * moment the race is at.
+ */
+function useOnClock(ref, elapsed, paused) {
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el?.getAnimations || !Number.isFinite(elapsed)) return;
+    for (const a of el.getAnimations({ subtree: true })) {
+      if (paused) {
+        a.pause();
+        a.currentTime = elapsed;
+      } else {
+        if (a.playState === 'paused') a.play();
+        if (Math.abs((a.currentTime ?? 0) - elapsed) > 250) a.currentTime = elapsed;
+      }
+    }
+  });
+}
 
 /**
  * The finish show, drawn over a race view (2D or 3D): the winner's banner with
@@ -70,6 +92,7 @@ const CONFETTI = Array.from({ length: 70 }, (_, k) => {
  */
 export default function FinishShow({ show, finishes, entries, mine = [], raceId = null, official = null, trackName = '', next = null, onSkip = null }) {
   const { t, plan, phase, complete, skip } = show;
+  const shower = useMemo(() => showerFor(plan), [plan]);
   const [fetched, setFetched] = useState(null);
   const late = phase === 'podium' || phase === 'board';
   useEffect(() => {
@@ -103,30 +126,11 @@ export default function FinishShow({ show, finishes, entries, mine = [], raceId 
 
   return (
     <div className={`finish finish--${phase}`}>
-      {phase === 'winner' && since < 450 && <div className="finish__flash" style={{ opacity: 1 - since / 450 }} />}
-      {phase === 'winner' && since < 3600 && (
-        <div className="finish__confetti" aria-hidden="true">
-          {CONFETTI.map((c, k) => (
-            <i
-              key={k}
-              className={c.wide ? 'is-wide' : undefined}
-              style={{ left: c.left, background: c.color, animationDelay: c.delay, animationDuration: c.dur, '--drift': c.drift, '--spin': c.spin }}
-            />
-          ))}
-        </div>
-      )}
+      {phase === 'winner' && since < 600 && <div className="finish__flash" style={{ opacity: 1 - since / 600 }} />}
+      {phase !== 'board' && <Confetti clock={show.clock} shower={shower} />}
 
       {(phase === 'winner' || phase === 'field') && winner && (
-        <div className={`finish__banner${phase === 'field' ? ' is-small' : ''}${mineWon ? ' is-mine' : ''}`} role="status" aria-live="polite">
-          <span className="finish__title">{mineWon ? 'You win!' : 'Winner'}</span>
-          <span className="finish__who">
-            <MarbleBall marble={winner.marble} size={phase === 'field' ? 20 : 34} />
-            <span className="finish__name" style={{ color: readable(winner.marble?.color_primary) }}>{winner.marble?.name}</span>
-          </span>
-          <span className="finish__owner">
-            {winner.user ? `@${winner.user.username}` : 'House marble'} · {formatTime(home[0].ms)}
-          </span>
-        </div>
+        <WinnerBanner key={home[0].index} small={phase === 'field'} mineWon={mineWon} winner={winner} ms={home[0].ms} elapsed={t - plan.winnerMs} paused={show.paused} />
       )}
 
       {phase === 'field' && home.length > 1 && (
@@ -147,7 +151,7 @@ export default function FinishShow({ show, finishes, entries, mine = [], raceId 
         <button type="button" className="finish__skip btn btn--sm" onClick={onSkip ?? skip}>Skip to results</button>
       )}
 
-      {phase === 'podium' && <Podium top={home.slice(0, 3)} entries={entries} mine={mine} />}
+      {phase === 'podium' && <Podium top={home.slice(0, 3)} entries={entries} mine={mine} elapsed={t - plan.podiumAt} paused={show.paused} />}
 
       {phase === 'board' && (
         <Board
@@ -160,19 +164,101 @@ export default function FinishShow({ show, finishes, entries, mine = [], raceId 
   );
 }
 
-function Podium({ top, entries, mine }) {
-  const steps = [top[1], top[0], top[2]]; // silver, gold, bronze: the winner in the middle
-  const kind = ['silver', 'gold', 'bronze'];
+/** The winner's banner: metallic gold lettering with a light sweeping across it, glowing rays behind. */
+function WinnerBanner({ small, mineWon, winner, ms, elapsed, paused }) {
+  const ref = useRef(null);
+  useOnClock(ref, elapsed, paused);
   return (
-    <div className="finish__podium" aria-label="Podium">
-      {steps.map((a, k) => (a ? (
-        <div key={a.index} className={`podium-step podium-step--${kind[k]}${mine.includes(a.index) ? ' is-mine' : ''}`}>
-          <MarbleBall marble={entries[a.index]?.marble} size={k === 1 ? 46 : 36} />
-          <span className="podium-step__name" style={{ color: readable(entries[a.index]?.marble?.color_primary) }}>{entries[a.index]?.marble?.name}</span>
-          <span className="podium-step__owner">{entries[a.index]?.user ? `@${entries[a.index].user.username}` : 'House'}</span>
-          <span className="podium-step__block"><strong>{a.place}</strong><small>{formatTime(a.ms)}</small></span>
-        </div>
-      ) : <div key={`gap${k}`} className="podium-step" />))}
+    <div ref={ref} className={`finish__banner${small ? ' is-small' : ''}${mineWon ? ' is-mine' : ''}`} role="status" aria-live="polite">
+      {!small && <span className="finish__rays" aria-hidden="true" />}
+      <span className="finish__title" data-text={mineWon ? 'You win!' : 'Winner'}>{mineWon ? 'You win!' : 'Winner'}</span>
+      <span className="finish__who">
+        <MarbleBall marble={winner.marble} size={small ? 20 : 32} />
+        <span className="finish__name" style={{ color: readable(winner.marble?.color_primary) }}>{winner.marble?.name}</span>
+      </span>
+      <span className="finish__owner">
+        {winner.user ? `@${winner.user.username}` : 'House marble'} <span className="finish__dot">◆</span> {formatTime(ms)}
+      </span>
+    </div>
+  );
+}
+
+/** A marble shown large, slowly turning, with the light staying put on it. */
+function SpinningMarble({ marble, size }) {
+  return (
+    <span className="spin-marble" style={{ width: size, height: size }}>
+      <span className="spin-marble__body"><MarbleBall marble={marble} size={size} title="" /></span>
+      <span className="spin-marble__shade" />
+    </span>
+  );
+}
+
+/** A small gold crown, for first place. */
+function Crown() {
+  return (
+    <svg className="podium-crown" viewBox="0 0 64 44" aria-hidden="true">
+      <defs>
+        <linearGradient id="crown-gold" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#fff4c2" />
+          <stop offset="0.45" stopColor="#f2c94c" />
+          <stop offset="0.7" stopColor="#b8861f" />
+          <stop offset="1" stopColor="#f7dc80" />
+        </linearGradient>
+      </defs>
+      <path d="M6 36 L2 10 L18 22 L32 4 L46 22 L62 10 L58 36 Z" fill="url(#crown-gold)" stroke="#7a5410" strokeWidth="1.6" strokeLinejoin="round" />
+      <rect x="6" y="35" width="52" height="7" rx="2" fill="url(#crown-gold)" stroke="#7a5410" strokeWidth="1.6" />
+      <circle cx="32" cy="25" r="3.6" fill="#e23a5b" stroke="#7a1028" strokeWidth="1" />
+      <circle cx="18" cy="28" r="2.6" fill="#3f7fe8" stroke="#1c3f86" strokeWidth="1" />
+      <circle cx="46" cy="28" r="2.6" fill="#3f7fe8" stroke="#1c3f86" strokeWidth="1" />
+      <circle cx="2" cy="10" r="2.4" fill="#fff4c2" /><circle cx="32" cy="4" r="2.6" fill="#fff4c2" /><circle cx="62" cy="10" r="2.4" fill="#fff4c2" />
+    </svg>
+  );
+}
+
+const SPARKLES = [[-18, 18, 0], [112, 8, 0.5], [-6, 72, 1.1], [104, 66, 0.3], [48, -16, 0.8], [20, 96, 1.4]];
+
+/**
+ * The podium: gold, silver and bronze steps rising one at a time (third,
+ * second, then first, last and tallest), each top-three marble large and
+ * turning on its step, first place crowned and sparkling, under sweeping
+ * spotlights.
+ */
+function Podium({ top, entries, mine, elapsed, paused }) {
+  const ref = useRef(null);
+  useOnClock(ref, elapsed, paused);
+  const steps = [[top[1], 'silver', PODIUM_STEP_MS[1]], [top[0], 'gold', PODIUM_STEP_MS[0]], [top[2], 'bronze', PODIUM_STEP_MS[2]]];
+  return (
+    <div ref={ref} className="finish__podium" aria-label="Podium">
+      <span className="podium-light podium-light--left" aria-hidden="true" />
+      <span className="podium-light podium-light--right" aria-hidden="true" />
+      <span className="podium-glow" aria-hidden="true" />
+      <div className="podium-stage">
+        {steps.map(([a, kind, at]) => {
+          if (!a) return <div key={kind} className="podium-step" />;
+          const e = entries[a.index];
+          return (
+            <div key={kind} className={`podium-step podium-step--${kind}${mine.includes(a.index) ? ' is-mine' : ''}`} style={{ '--at': `${at}ms` }}>
+              <div className="podium-step__top">
+                {kind === 'gold' && <Crown />}
+                <span className="podium-step__marble">
+                  <SpinningMarble marble={e?.marble} size="var(--marble)" />
+                  {kind === 'gold' && SPARKLES.map(([x, y, d], k) => (
+                    <i key={k} className="podium-sparkle" style={{ left: `${x}%`, top: `${y}%`, animationDelay: `${d}s` }} />
+                  ))}
+                </span>
+              </div>
+              <div className="podium-step__block">
+                <span className="podium-step__num">{a.place}</span>
+                <span className="podium-step__plate">
+                  <span className="podium-step__name" style={{ color: readable(e?.marble?.color_primary) }}>{e?.marble?.name}</span>
+                  <span className="podium-step__owner">{e?.user ? `@${e.user.username}` : 'House'}</span>
+                  <span className="podium-step__time">{formatTime(a.ms)}</span>
+                </span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }

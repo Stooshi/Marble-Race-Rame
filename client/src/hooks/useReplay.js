@@ -70,6 +70,6 @@ export function useReplay(replay, { tailMs = 0 } = {}) {
     for (const r of replay.results) if (r.splitTimeMs <= time) splits[r.index] = r.splitTimeMs;
   }
 
-  return { playing, speed, time, start, duration, frame, splits, sample, seek, toggle, setSpeed: changeSpeed };
+  return { playing, speed, time, start, duration, frame, splits, sample, now, seek, toggle, setSpeed: changeSpeed };
 }
 

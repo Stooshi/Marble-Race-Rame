@@ -19,6 +19,8 @@ import { DEFAULT_THEME, themeFor } from './themes';
 import { gatePlaces, StartGate } from './startGate';
 import { countdownPose, handover, startLineShot } from './startCamera';
 import { buildTrackFeatures } from './trackFeatures';
+import { WinnerGlow } from './winnerGlow';
+import { WINNER_MS } from '../utils/finishShow';
 
 const LEADER_MARGIN = 3; // metres: the follow camera only switches to a new leader that is clearly ahead
 const SCENERY_LAYER = 1;  // scenery is drawn in the big view only (the small corner view skips it, for speed)
@@ -82,6 +84,10 @@ export class TrackScene {
     this.ambient = new AmbientLight('#ffffff');
     this.sun = new DirectionalLight();
     this.scene.add(this.hemisphere, this.ambient, this.sun);
+    // The winner's spotlight (finish ceremony), built once and kept dark until needed.
+    this.glow = new WinnerGlow();
+    this.scene.add(this.glow.group);
+    this.celebration = null;
 
     this.ground = new Mesh(new PlaneGeometry(1, 1), new MeshLambertMaterial());
     this.ground.rotation.x = -Math.PI / 2;
@@ -409,6 +415,7 @@ export class TrackScene {
     // The track's features: the bear's swipe, puffs where marbles hit obstacles, boost streaks.
     this.features?.update(frame.t, { frame, positions: this.marbles.positions, contacts: this.marbles.contacts });
     const index = this.followedIndex(frame, follow, this.main);
+    this.celebrate(frame, index);
     const at = this.marbles.positionOf(index);
     const main = this.main;
     const gate = this.cameraMode === 'follow' && this.gate && at ? this.gate.startFrame() : null;
@@ -712,8 +719,28 @@ export class TrackScene {
   }
 
 
+  /**
+   * The winner's moment: { index, ms } (who won, and when they crossed), or
+   * null. For a few seconds after `ms` (race time) the winner glows under a
+   * golden spotlight, and a camera following them pushes in close.
+   */
+  setCelebration(c) {
+    this.celebration = c;
+  }
+
+  /** The winner's spotlight and the push-in, for this frame. */
+  celebrate(frame, index) {
+    const c = this.celebration;
+    const since = c ? frame.t - c.ms : -1;
+    const smooth = (x) => { const k = Math.max(0, Math.min(1, x)); return k * k * (3 - 2 * k); };
+    const strength = since >= 0 && since < WINNER_MS ? smooth(since / 350) * (1 - smooth((since - (WINNER_MS - 900)) / 900)) : 0;
+    this.glow.set(strength > 0 ? this.marbles.positionOf(c.index) : null, strength, frame.t);
+    // Pushing in on the winner over a second and a half, easing back out as the moment ends.
+    this.main.push = strength > 0 && index === c.index && this.cameraMode === 'follow' ? 1 - 0.45 * smooth(since / 1500) * strength : 1;
+  }
+
   updateFollowCamera(at, progress, dt, rig = this.main) {
-    const { camera: desired, target, roadTop, clearAbove, level } = this.followPose(at, progress, rig === this.inset ? INSET_CLOSER : 1);
+    const { camera: desired, target, roadTop, clearAbove, level } = this.followPose(at, progress, (rig === this.inset ? INSET_CLOSER : 1) * (rig.push ?? 1));
     if (!rig.ready) {
       rig.cam.copy(desired);
       rig.target.copy(target);
@@ -807,6 +834,7 @@ export class TrackScene {
 
   dispose() {
     this.disposed = true;
+    this.glow.dispose();
     this.clearRace();
     this.clearTrack();
     this.controls?.dispose();

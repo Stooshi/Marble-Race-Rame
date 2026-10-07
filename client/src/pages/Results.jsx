@@ -248,7 +248,7 @@ function Replay({ raceId, userId, official }) {
         highlight={highlight}
         finishes={finishes}
         complete
-        time={replay.time}
+        clock={replay.now}
         official={official}
         next={<NextRace raceId={raceId} entries={data.entries} />}
         footer={(

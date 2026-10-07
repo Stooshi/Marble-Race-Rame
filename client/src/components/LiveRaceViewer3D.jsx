@@ -64,6 +64,11 @@ export default function LiveRaceViewer3D({
   // Once the winner's moment has passed, the camera following the leader
   // watches the rest come home instead; the corner view bows out.
   const finishing = show.phase !== 'racing' && show.phase !== 'winner';
+  // The winner's moment in the scene: the golden spotlight and the camera pushing in.
+  const winnerIndex = show.plan ? Number(Object.keys(finishes).find((i) => finishes[i] === show.plan.winnerMs)) : null;
+  useEffect(() => {
+    sceneRef.current?.setCelebration(show.plan && Number.isInteger(winnerIndex) ? { index: winnerIndex, ms: show.plan.winnerMs } : null);
+  }, [built, winnerIndex, show.plan?.winnerMs]);
   const followRef = useRef(follow);
   followRef.current = follow === 'leader' && finishing ? 'arriving' : follow;
   // The small corner view follows the other one of leader / my marble (none in the whole-track view).
@@ -107,7 +112,7 @@ export default function LiveRaceViewer3D({
   const standings = frame?.s ?? meta?.firstFrame?.s ?? [];
   const followIndex = followedNow(follow, standings);
   const insetIndex = inset === null ? undefined : followedNow(inset, standings);
-  const speed = frame?.v && followIndex !== undefined && frame.p[followIndex] < 1 ? frame.v[followIndex] : null;
+  const speed = show.phase === 'racing' && frame?.v && followIndex !== undefined && frame.p[followIndex] < 1 ? frame.v[followIndex] : null;
 
   return (
     <div className="live3d">
@@ -117,7 +122,7 @@ export default function LiveRaceViewer3D({
         {status === 'failed' && failure && <SceneFailure failure={failure} />}
         {built && (
           <>
-            <div className="replay3d__clock">{formatTime(Math.max(0, frame?.t ?? 0))}</div>
+            {show.phase !== 'winner' && <div className="replay3d__clock">{formatTime(Math.max(0, frame?.t ?? 0))}</div>}
             {speed !== null && (
               <div className="replay3d__speed" aria-label="Speed of the marble the camera follows">
                 <strong>{Math.round(speed * 3.6)}</strong> km/h

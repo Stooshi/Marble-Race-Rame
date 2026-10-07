@@ -5,14 +5,18 @@
  *   winner  the winner crosses: flash, confetti, the WINNER banner (4 s)
  *   field   the banner shrinks to the top while the rest come home, a ticker
  *           counting them in (until everyone is home)
- *   podium  the top three on a gold, silver and bronze podium (3 s)
+ *   podium  the top three on a gold, silver and bronze podium (6 s): the
+ *           steps rise one at a time, first place last
  *   board   the results board, rows sliding in, then the next race
  *
  * Everything here is plain data (times in ms of race time); FinishShow.jsx draws it.
  */
 export const WINNER_MS = 4000;  // the big banner, before it shrinks to the top
 export const SETTLE_MS = 1500;  // after the last marble is home, before the podium
-export const PODIUM_MS = 3000;  // the podium, before the board
+export const PODIUM_MS = 6000;  // the podium, before the board
+export const PODIUM_STEP_MS = [1600, 900, 200]; // when gold, silver and bronze start to rise (after the podium appears)
+export const PODIUM_RISE_MS = 800; // how long a step takes to rise
+export const GOLD_LAND_MS = PODIUM_STEP_MS[0] + PODIUM_RISE_MS; // first place lands: a fresh burst of confetti
 export const ROW_MS = 60;       // between board rows sliding in
 export const BOARD_HOLD_MS = 4000; // a replay runs on this long past the board's arrival, for the rows to land
 
@@ -79,4 +83,25 @@ export function boardRows({ entries, finishes, official = null, mine = [] }) {
       mine: mine.includes(r.index),
     };
   });
+}
+
+/**
+ * The confetti for a show (see utils/confetti.js): a burst as the winner
+ * crosses and a steady fall through the winner's moment, a lighter drift
+ * while the field comes home, then a fresh burst as first place lands on the
+ * podium and a full fall while it stands.
+ */
+export function showerFor(plan) {
+  if (!plan) return null;
+  const { winnerMs, podiumAt, boardAt } = plan;
+  const bursts = [{ at: winnerMs, kind: 'winner' }];
+  const streams = [
+    { from: winnerMs, to: winnerMs + WINNER_MS, rate: 1 },
+    { from: winnerMs + WINNER_MS, to: podiumAt ?? Infinity, rate: 0.35 },
+  ];
+  if (podiumAt !== null) {
+    bursts.push({ at: podiumAt + GOLD_LAND_MS, kind: 'podium' });
+    streams.push({ from: podiumAt, to: boardAt, rate: 1 });
+  }
+  return { bursts, streams };
 }
