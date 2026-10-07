@@ -9,15 +9,15 @@
  * swiping arm is merged into one mesh per material.
  */
 import {
-  BoxGeometry, BufferGeometry, CanvasTexture, Color, ConeGeometry, CylinderGeometry, DoubleSide, Float32BufferAttribute,
+  AdditiveBlending, BoxGeometry, BufferGeometry, CanvasTexture, Color, ConeGeometry, CylinderGeometry, DoubleSide, Float32BufferAttribute,
   Group, IcosahedronGeometry, Matrix4, Mesh, MeshBasicMaterial, MeshLambertMaterial, Quaternion, SphereGeometry, SRGBColorSpace, Vector3,
 } from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { channelLipAt, placeOnChannel } from './iceChannel';
 
 // The polar bear's timetable: the same as the physics' (src/game/trackFeatures.js; a test checks they agree).
-const BEAR_PERIOD = 2.6;
-const BEAR_SWIPE = 0.9;
+const BEAR_PERIOD = 2.0;
+const BEAR_SWIPE = 1.0;
 
 /** How far the polar bear's paw reaches into the channel at `time` seconds after the start (0 on the rim, 1 at full stretch). */
 export function bearPaw(time) {
@@ -101,6 +101,8 @@ export function buildTrackFeatures(centerline, channel, features) {
   };
   const p = (at, metres = 0) => at + metres / channel.arc;
   let bear = null;
+  const pads = []; // boost pads: where they are (to spot marbles rolling onto them) and their flash
+  const solids = []; // obstacle footprints, as the physics has them (metres along the track and along the wall)
 
   for (const f of features) {
     if (f.type === 'boost') {
@@ -131,7 +133,13 @@ export function buildTrackFeatures(centerline, channel, features) {
       g.setAttribute('uv', new Float32BufferAttribute(uv, 2));
       g.setIndex(index);
       g.computeVertexNormals();
-      add('chevron', g, new Matrix4());
+      add('chevron', g.clone(), new Matrix4());
+      // Its flash: the same sheet in glowing yellow, shown for a moment when a marble hits the pad.
+      const flash = new Mesh(g, new MeshBasicMaterial({ color: '#fff27a', transparent: true, opacity: 0, depthWrite: false, blending: AdditiveBlending }));
+      flash.visible = false;
+      flash.renderOrder = 2;
+      group.add(flash);
+      pads.push({ s0: f.at * channel.arc, len, x0, half, flash, start: -Infinity });
     } else if (f.type === 'bump') {
       // A rounded ridge across the whole channel, in blue and white bands.
       const s = f.at * channel.arc;
@@ -264,6 +272,13 @@ export function buildTrackFeatures(centerline, channel, features) {
     }
   }
 
+  for (const f of features) {
+    if (f.type === 'boost' || f.type === 'bump') continue;
+    const xa = Math.min(f.l, f.l2 ?? f.l) * across;
+    const xb = Math.max(f.l, f.l2 ?? f.l) * across;
+    solids.push({ id: solids.length, type: f.type, s: f.at * channel.arc, xa, xb, reach: (f.radius ?? 0.7) + 0.55, rest: f.l * across, full: (f.reach ?? f.l) * across });
+  }
+
   // One mesh per material.
   const tex = parts.chevron ? chevronTexture() : null;
   const materials = {
@@ -294,8 +309,117 @@ export function buildTrackFeatures(centerline, channel, features) {
     group.add(mesh);
   }
 
+  // Effects: a puff of snow where a marble slams into an obstacle, a yellow
+  // streak behind a marble fired off a boost pad. Small pools, hidden until used.
+  const puffGeo = new IcosahedronGeometry(0.5, 1);
+  const puffs = Array.from({ length: 10 }, () => {
+    const m = new Mesh(puffGeo, new MeshBasicMaterial({ color: '#ffffff', transparent: true, opacity: 0, depthWrite: false }));
+    m.visible = false;
+    m.renderOrder = 3;
+    group.add(m);
+    return { mesh: m, start: -Infinity };
+  });
+  let nextPuff = 0;
+  const streakGeo = new ConeGeometry(0.5, 1, 12, 1, true);
+  streakGeo.rotateX(-Math.PI / 2); // along +z, wide end at the marble, tip trailing behind
+  const streaks = new Map(); // marble index → { mesh, start }
+  const streakOf = (i) => {
+    if (!streaks.has(i)) {
+      const m = new Mesh(streakGeo, new MeshBasicMaterial({ color: '#ffd21f', transparent: true, opacity: 0, depthWrite: false, blending: AdditiveBlending, side: DoubleSide }));
+      m.visible = false;
+      m.renderOrder = 3;
+      group.add(m);
+      streaks.set(i, { mesh: m, start: -Infinity, dir: new Vector3(0, 0, 1) });
+    }
+    return streaks.get(i);
+  };
+  const prevP = [];
+  const prevPos = [];
+  let prevT = null;
+  const lastPuff = new Map();
+  const PUFF_MS = 450;
+  const STREAK_MS = 1000;
+  const FLASH_MS = 400;
+
+  /** Obstacle footprints at race time t (ms), for drawing marbles round them (the bear's paw moves). */
+  const solidsAt = (t) => {
+    for (const o of solids) {
+      if (o.type !== 'polar_bear') continue;
+      o.xa = o.xb = o.rest + (o.full - o.rest) * bearPaw(t / 1000);
+    }
+    return solids;
+  };
+
   const tmp = new Vector3();
-  const update = (t) => {
+  const effects = (t, { frame, positions, contacts } = {}) => {
+    if (!frame || !positions) return;
+    const back = prevT !== null && t < prevT - 50; // a replay scrubbed back: forget what was showing
+    if (back) {
+      for (const p of puffs) p.start = -Infinity;
+      for (const s of streaks.values()) s.start = -Infinity;
+      for (const p of pads) p.start = -Infinity;
+      lastPuff.clear();
+    }
+    const room = channel.maxAngle * channel.radius;
+    const n = frame.p.length;
+    for (let i = 0; i < n; i += 1) {
+      // Onto a boost pad since the last draw: flash the pad, streak the marble.
+      if (!back && prevT !== null && prevP[i] !== undefined && t - prevT < 600) {
+        const s0 = prevP[i] * channel.arc;
+        const s1 = frame.p[i] * channel.arc;
+        const x = (frame.l[i] ?? 0) * room;
+        for (const pad of pads) {
+          if (s0 < pad.s0 + 1 && s1 >= pad.s0 + 1 && Math.abs(x - pad.x0) <= pad.half) {
+            pad.start = t;
+            streakOf(i).start = t;
+          }
+        }
+      }
+      prevP[i] = frame.p[i];
+    }
+    // A puff where a marble touches an obstacle (once per contact).
+    for (const c of contacts ?? []) {
+      const key = `${c.index}:${c.solid.id}`;
+      if (t - (lastPuff.get(key) ?? -Infinity) < 600) continue;
+      lastPuff.set(key, t);
+      const p = puffs[nextPuff];
+      nextPuff = (nextPuff + 1) % puffs.length;
+      p.start = t;
+      p.mesh.position.copy(positions[c.index]);
+    }
+    for (const p of puffs) {
+      const age = t - p.start;
+      p.mesh.visible = age >= 0 && age < PUFF_MS;
+      if (!p.mesh.visible) continue;
+      const k = age / PUFF_MS;
+      p.mesh.scale.setScalar(0.7 + 2.4 * k);
+      p.mesh.material.opacity = 0.9 * (1 - k) * (1 - k);
+    }
+    for (const pad of pads) {
+      const age = t - pad.start;
+      pad.flash.visible = age >= 0 && age < FLASH_MS;
+      if (pad.flash.visible) pad.flash.material.opacity = 0.95 * (1 - age / FLASH_MS);
+    }
+    for (const [i, s] of streaks) {
+      const pos = positions[i];
+      const age = t - s.start;
+      const was = prevPos[i];
+      if (was && pos.distanceTo(was) > 0.02) s.dir.subVectors(pos, was).normalize();
+      s.mesh.visible = age >= 0 && age < STREAK_MS && Boolean(pos);
+      if (!s.mesh.visible) continue;
+      const k = age / STREAK_MS;
+      const len = 6 * (1 - 0.6 * k);
+      s.mesh.scale.set(1, 1, len);
+      s.mesh.quaternion.setFromUnitVectors(new Vector3(0, 0, 1), s.dir.clone().negate());
+      s.mesh.position.copy(pos).addScaledVector(s.dir, -len / 2 - 0.3);
+      s.mesh.material.opacity = 0.75 * (1 - k);
+    }
+    for (let i = 0; i < n; i += 1) (prevPos[i] ??= new Vector3()).copy(positions[i]);
+    prevT = t;
+  };
+
+  const update = (t, info) => {
+    effects(t, info);
     if (!bear) return;
     const tip = bear.pawAt(bearPaw(t / 1000));
     const { arm, paw, claws, shoulder } = bear;
@@ -308,11 +432,15 @@ export function buildTrackFeatures(centerline, channel, features) {
   };
   update(0);
   const dispose = () => {
-    group.traverse((o) => { if (o.isMesh) o.geometry.dispose(); });
+    group.traverse((o) => {
+      if (!o.isMesh) return;
+      o.geometry.dispose();
+      if (!Object.values(materials).includes(o.material)) o.material.dispose();
+    });
     for (const m of Object.values(materials)) m.dispose();
     tex?.dispose();
     bear?.arm.material.dispose();
     bear?.claws.material.dispose();
   };
-  return { group, update, dispose };
+  return { group, update, dispose, solidsAt };
 }

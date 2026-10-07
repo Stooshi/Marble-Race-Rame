@@ -23,8 +23,8 @@
 
 const SOLID_TYPES = ['ice_block', 'snowman', 'icicles', 'polar_bear'];
 
-const BEAR_PERIOD = 2.6;  // seconds between swipes
-const BEAR_SWIPE = 0.9;   // seconds a swipe takes (reach in and back)
+const BEAR_PERIOD = 2.0;  // seconds between swipes
+const BEAR_SWIPE = 1.0;   // seconds a swipe takes (reach in and back)
 
 /**
  * How far the polar bear's paw reaches into the channel at `time` seconds

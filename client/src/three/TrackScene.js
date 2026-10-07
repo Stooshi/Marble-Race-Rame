@@ -306,6 +306,7 @@ export class TrackScene {
     const lanes = Math.max(1, Number(this.track?.lane_count) || 4);
     this.marbles = new RaceMarbles(entries, lanes, highlight, results);
     this.marbles.channel = this.channel;
+    this.marbles.solidsAt = this.features?.solidsAt ?? null; // drawn round the obstacles, as the physics has them
     this.scene.add(this.marbles.group);
     if (start?.frame && start.releaseMs) {
       this.gate = new StartGate(gatePlaces(this.centerline, start.frame, lanes, this.channel), start.releaseMs);
@@ -398,8 +399,9 @@ export class TrackScene {
   updateRace(frame, follow = 'leader', dt = 1 / 60, insetFollow = null) {
     if (!this.marbles || !frame) return;
     this.gate?.update(frame.t);
-    this.features?.update(frame.t);
     this.marbles.update(this.centerline, frame);
+    // The track's features: the bear's swipe, puffs where marbles hit obstacles, boost streaks.
+    this.features?.update(frame.t, { frame, positions: this.marbles.positions, contacts: this.marbles.contacts });
     const index = this.followedIndex(frame, follow, this.main);
     const at = this.marbles.positionOf(index);
     const main = this.main;

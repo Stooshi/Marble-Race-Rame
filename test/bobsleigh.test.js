@@ -57,6 +57,12 @@ test('Bobsleigh Run is added by its data update, then re-tuned, exactly as defin
   physics.features = JSON.parse(featuresSql.match(/'\{features\}', '(\[.*?\])'::jsonb/)[1]);
   physics.fork.tipOffset = Number(featuresSql.match(/'\{fork,tipOffset\}', '(-?[\d.]+)'::jsonb/)[1]);
   physics.fork.insideScrub = Number(featuresSql.match(/'\{fork,insideScrub\}', '(-?[\d.]+)'::jsonb/)[1]);
+  // …then the obstacles rebuilt for chaos, and the splitter re-balanced for them.
+  const chaosSql = fs.readFileSync(path.join(dir, '2026-10-07-bobsleigh-chaos.sql'), 'utf8');
+  physics.features = JSON.parse(chaosSql.match(/'\{features\}', '(\[.*?\])'::jsonb/)[1]);
+  for (const key of ['tipOffset', 'insideScrub', 'outsideDrag']) {
+    physics.fork[key] = Number(chaosSql.match(new RegExp(`'\\{fork,${key}\\}', '(-?[\\d.]+)'::jsonb`))[1]);
+  }
   assert.deepEqual(physics, bob.physics, 'the data updates no longer give the track in code');
   // Everything else in the add update is as generated from the code.
   assert.equal(generated.replace(JSON.stringify(bob.physics), JSON.stringify(physicsOf(added))), added);
@@ -72,7 +78,7 @@ test('bobsleigh races are fast, finish well inside the cap and pull the field ap
   for (let seed = 0; seed < 8; seed += 1) {
     const sim = race(seed);
     assert.equal(sim.stats.unfinished, 0);
-    assert.ok(sim.durationMs < 70_000, `last home at ${sim.durationMs} ms`);
+    assert.ok(sim.stats.lastMs < 85_000, `last home at ${sim.stats.lastMs} ms (the ceiling is 90 s)`);
     assert.ok(sim.stats.topSpeed * 3.6 > 120, `top speed ${sim.stats.topSpeed * 3.6} km/h`);
     spread += (sim.stats.lastMs - sim.stats.winnerMs) / 1000;
     for (const f of sim.frames) {
@@ -115,7 +121,8 @@ function routeRace(seed) {
 }
 let batch = null;
 const fairnessBatch = () => {
-  batch ??= Array.from({ length: 60 }, (_, k) => routeRace(20_000 + k * 7919));
+  // Big enough to see class through the obstacles' chaos (the full check is 3 x 1,000 races).
+  batch ??= Array.from({ length: 150 }, (_, k) => routeRace(20_000 + k * 7919));
   return batch;
 };
 
@@ -158,7 +165,8 @@ test('better marbles win more often without dominating', () => {
   }
   const n = fairnessBatch().length;
   assert.ok(strongWins / n > 0.25 && strongWins / n < 0.7, `strongest five won ${strongWins} of ${n}`);
-  assert.ok(strongWins > weakWins * 2, `strongest five ${strongWins} wins, weakest five ${weakWins}`);
+  // Class shows through the obstacles' chaos (on 3 x 1,000 races the strongest five win 36-39%, the weakest five 14-15%).
+  assert.ok(strongWins / n > weakWins / n + 0.1, `strongest five ${strongWins} wins, weakest five ${weakWins}`);
 });
 
 test('a clean start: marbles roll down the starting slope, moving sideways only when they knock into each other', () => {
@@ -263,28 +271,28 @@ test('a race runs on the engine its own snapshot names: old races stay classic e
 
 const { bearPaw, SOLID_TYPES } = require('../src/game/trackFeatures');
 
-test('boost pads give marbles on their line a burst of speed', () => {
+test('boost pads give marbles a burst of speed you can see', () => {
   const { sim } = routeRace(4242);
   const total = sim.stats.trackMetres;
-  assert.ok(sim.stats.features.boost >= 10, `only ${sim.stats.features.boost} boosts`);
-  // Over the last pad (into the corkscrew, which nearly everyone takes): speed in
-  // and out, compared with the stretch just before it with no pad.
-  const pad = bob.physics.features.filter((f) => f.type === 'boost').at(-1);
-  const speedAt = (i, at) => sim.frames.find((f) => f.p[i] >= at)?.v[i];
-  let gain = 0;
-  let before = 0;
-  let n = 0;
+  assert.ok(sim.stats.features.boost >= 30, `only ${sim.stats.features.boost} boosts`);
+  // Across the edge of the pad out of the merge: speed just before it and just after.
+  const pad = bob.physics.features.filter((f) => f.type === 'boost')[1];
+  const { radius, maxAngle } = bob.physics.channel;
+  const across = (l) => radius * l * (maxAngle * Math.PI / 180);
+  let onLine = 0;
+  let kicked = 0;
   for (let i = 0; i < 20; i += 1) {
-    const a = speedAt(i, pad.at);
-    const b = speedAt(i, pad.at + 10 / total);
-    const c = speedAt(i, pad.at - 10 / total);
-    if (a === undefined || b === undefined || c === undefined) continue;
-    gain += b - a;
-    before += a - c;
-    n += 1;
+    const k = sim.frames.findIndex((f) => f.p[i] >= pad.at);
+    if (k < 1 || sim.frames[k].p[i] > pad.at + pad.length / total) continue; // past it between two frames
+    if (Math.abs(across(sim.frames[k].l[i]) - across(pad.l)) > pad.halfWidth - 0.3) continue; // off its line
+    onLine += 1;
+    if (sim.frames[k].v[i] - sim.frames[k - 1].v[i] > 6) kicked += 1; // in one frame (50 ms)
   }
-  assert.ok(gain / n > before / n + 1.5, `on the pad +${(gain / n).toFixed(2)} m/s, the same distance before it ${(before / n).toFixed(2)} m/s`);
+  assert.ok(onLine >= 5, `only ${onLine} on the pad's line`);
+  // (Marbles flying over it, off a bump or a ricochet, rightly get nothing.)
+  assert.ok(kicked >= 0.7 * onLine, `only ${kicked} of ${onLine} on its line visibly kicked`);
 });
+
 
 test('speed bumps make the field hop', () => {
   const { sim } = routeRace(4242);
@@ -299,28 +307,58 @@ test('speed bumps make the field hop', () => {
   }
 });
 
-test('the obstacles give a few strong moments a race, and never stop anyone', () => {
+test('the obstacles cause chaos: marbles slam into them often and pile up, yet every race finishes well inside 90 s', () => {
   const hits = Object.fromEntries(SOLID_TYPES.map((t) => [t, 0]));
   let news = 0;
+  let pileUps = 0;
   const races = 30;
   for (let k = 0; k < races; k += 1) {
     const { sim } = routeRace(30_000 + k * 101);
     for (const t of SOLID_TYPES) hits[t] += sim.stats.features[t];
     news += sim.events.filter((e) => SOLID_TYPES.includes(e.obstacle)).length;
+    pileUps += sim.stats.bigBumps;
     assert.equal(sim.stats.unfinished, 0, 'every marble finishes');
     assert.ok(sim.stats.winnerMs > 40_000 && sim.stats.winnerMs < 60_000, `winner in ${sim.stats.winnerMs} ms`);
-    assert.ok(sim.stats.lastMs < 75_000, `last home in ${sim.stats.lastMs} ms`);
+    assert.ok(sim.stats.lastMs < 85_000, `last home in ${sim.stats.lastMs} ms (the ceiling is 90 s)`);
   }
-  for (const [t, n] of Object.entries(hits)) {
-    const each = n / races / bob.physics.features.filter((f) => f.type === t).length;
-    assert.ok(each >= 0.8 && each <= 8, `${t}: ${each.toFixed(1)} hits a race`);
+  // Hit often: the pack rides into them.
+  assert.ok(hits.ice_block / races >= 15, `ice blocks: ${(hits.ice_block / races).toFixed(1)} hits a race`);
+  assert.ok(hits.icicles / races >= 15, `icicles: ${(hits.icicles / races).toFixed(1)} hits a race`);
+  assert.ok(hits.snowman / races >= 6, `snowman: ${(hits.snowman / races).toFixed(1)} hits a race`);
+  assert.ok(hits.polar_bear / races >= 3, `polar bear: ${(hits.polar_bear / races).toFixed(1)} swats a race`);
+  // Pile-ups: hard marble-on-marble knocks well above a clean run's (about 200 a race).
+  assert.ok(pileUps / races > 220, `${(pileUps / races).toFixed(0)} hard knocks a race`);
+  assert.ok(news / races >= 10, 'the hits make the commentary');
+});
+
+test('a square hit really stops a marble and throws it across the channel', () => {
+  // A marble flying straight into the middle of the centre ice block.
+  const { sim } = routeRace(4242);
+  void sim;
+  const block = bob.physics.features.find((f) => f.type === 'ice_block' && f.l === 0);
+  const lone = [{ id: 'solo', lane: 0, topSpeed: 50, acceleration: 50, handling: 50, luck: 50 }];
+  const track = { ...bob, physics: { ...bob.physics, features: [block] } };
+  // Find a seed where the lone marble reaches the block on its line, and look at its speed either side.
+  let seen = false;
+  for (let seed = 1; seed < 400 && !seen; seed += 1) {
+    const one = simulatePhysicsRace({ seed, track, entries: lone, level: 3 });
+    if (!one.stats.features.ice_block) continue;
+    const at = one.frames.findIndex((f) => f.p[0] >= block.at - 2 / one.stats.trackMetres);
+    const before = one.frames[at].v[0];
+    const after = Math.min(...one.frames.slice(at, at + 6).map((f) => f.v[0]));
+    const lBefore = one.frames[at].l[0];
+    const lMax = Math.max(...one.frames.slice(at, at + 10).map((f) => Math.abs(f.l[0] - lBefore)));
+    if (after > before * 0.75) continue; // a graze: try another
+    seen = true;
+    assert.ok(after < before * 0.75, `kept ${(100 * after / before).toFixed(0)}% of its speed`);
+    assert.ok(lMax > 0.15, 'thrown across the channel');
   }
-  assert.ok(news / races >= 5, 'the hits make the commentary');
+  assert.ok(seen, 'no square hit found');
 });
 
 test('the polar bear swipes on a fixed timetable, the same for everyone', () => {
   assert.equal(bearPaw(0), 0);
-  assert.ok(bearPaw(0.45) > 0.99); // full stretch halfway through a swipe
+  assert.ok(bearPaw(0.5) > 0.99); // full stretch halfway through a swipe
   assert.equal(bearPaw(1.5), 0); // resting between swipes
-  assert.equal(bearPaw(0.3), bearPaw(0.3 + 2.6)); // every 2.6 s
+  assert.equal(bearPaw(0.3), bearPaw(0.3 + 2.0)); // every 2 s
 });

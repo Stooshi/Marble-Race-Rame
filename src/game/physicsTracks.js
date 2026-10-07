@@ -106,22 +106,23 @@ function bobsleighRun() {
       // funnel's `release`), a quick ripple in a random order each race.
       gate: { countdownMs: 3000 },
       collisions: true,        // marbles bump into each other
-      // Boost pads, speed bumps and obstacles marbles really collide with
+      // Boost pads, speed bumps and obstacles marbles really slam into
       // (trackFeatures.js): `at` is the share of the way down the track, `l`
-      // the share of the way up the wall (positive: the left wall). Placed
-      // where marbles' lines actually run, measured on hundreds of races, so
-      // each gives a few strong moments a race without blocking anyone.
+      // the share of the way up the wall (positive: the left wall; `l2` makes
+      // it a stretch across). Built for chaos: right where the pack rides,
+      // mostly on steep drops so marbles get going again quickly.
       features: [
-        { type: 'bump', at: 0.06 },                                    // start plunge: the whole field hops
-        { type: 'ice_block', at: 0.19, l: 0.75, radius: 0.7, height: 1.1 }, // run to the splitter: two blocks,
-        { type: 'ice_block', at: 0.205, l: -0.85, radius: 0.7, height: 1.1 }, // one each side of the lines
-        { type: 'boost', at: 0.445, l: -0.2, length: 8, halfWidth: 1.3 }, // out of the merge, on one line
-        { type: 'snowman', at: 0.52, l: 0.45, radius: 0.8, height: 2.2 }, // banked sweep: below the high line
-        { type: 'polar_bear', at: 0.675, l: -1.25, reach: -0.75, radius: 0.6, height: 1.5 }, // hairpin: swipes from the rim
-        { type: 'icicles', at: 0.718, l: -0.62, radius: 0.35 },        // drop to the corkscrew: hanging down
-        { type: 'icicles', at: 0.721, l: -0.42, radius: 0.35 },        //   over the lower lines
-        { type: 'boost', at: 0.73, l: -0.85, length: 8, halfWidth: 1.3 }, // into the corkscrew
-        { type: 'bump', at: 0.93 },                                    // final plunge
+        { type: 'ice_block', at: 0.056, l: -0.35, radius: 0.75, height: 1.2 }, // start plunge: two blocks either side
+        { type: 'ice_block', at: 0.056, l: 0.35, radius: 0.75, height: 1.2 },  // across the pack, one dead centre
+        { type: 'ice_block', at: 0.068, l: 0, radius: 0.8, height: 1.2 },     // behind them: the first pile-up of the race
+        { type: 'bump', at: 0.13 },                                            // S-bends: the whole field hops
+        { type: 'boost', at: 0.21, l: 0, length: 8, halfWidth: 3.6 },        // run to the splitter: the whole floor (so it favours neither channel)
+        { type: 'boost', at: 0.445, l: -0.15, length: 8, halfWidth: 2.2 },   // out of the merge
+        { type: 'polar_bear', at: 0.675, l: -1.25, reach: -0.55, radius: 0.7, height: 1.5 }, // hairpin: swats the high line
+        { type: 'icicles', at: 0.718, l: -1, l2: -0.5, radius: 0.35 },       // drop to the corkscrew: a curtain across the high line
+        { type: 'boost', at: 0.73, l: -0.5, length: 8, halfWidth: 2.6 },     // …and a boost out of the pile-up
+        { type: 'snowman', at: 0.9, l: -0.1, radius: 0.9, height: 2.4 },     // final plunge: in the middle of the pack's line
+        { type: 'bump', at: 0.95 },                                           // last hop before the finish
       ],
       runout: { length: 30, halfWidth: 3.5 }, // the catch area past the finish line (metres)
       // The splitter: a wedge divides the channel into a left and a right
@@ -140,12 +141,15 @@ function bobsleighRun() {
         // tight inside is quicker through the splitter but its rough ice makes
         // marbles skid and come out slower (handling helps); the long outside
         // is slower through but carries its speed.
-        // With the ice blocks just before it knocking marbles about, the
-        // wedge stands dead centre and splits the field evenly (it stood
-        // 1.2 m towards the outside before the obstacles came).
-        tipOffset: 0,
-        insideScrub: 8.25,     // (11 before the obstacles came; re-balanced on thousands of races with them)
-        outsideDrag: 1,
+        // With the start-plunge pile-ups knocking marbles about, the wedge
+        // stands 0.7 m towards the inside to split the field evenly (it stood
+        // 1.2 m towards the outside before the obstacles came). Marbles held up
+        // in the pile-ups tend to come in on the inside line, so the inside's
+        // ice is now smooth and the outside's draggier: each channel wins its
+        // fair share (balanced on thousands of races).
+        tipOffset: 0.7,
+        insideScrub: 1,
+        outsideDrag: 1.7,
       },
     },
   };

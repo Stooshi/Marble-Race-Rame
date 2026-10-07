@@ -137,7 +137,7 @@ const TOUCH_GAP = 0.02; // metres of daylight kept between neighbours
  */
 export function layoutMarbles(centerline, frame, lanes, finish, {
   radius = MARBLE_RADIUS, separate = true, style = TRACK_STYLE, out = [], crossedAt = new Map(), channel = null, normals = null,
-  memory = null,
+  memory = null, solids = null, contacts = null,
 } = {}) {
   const n = frame.p.length;
   // A physical catch area (frames carry where finishers are in it) or the classic parking run-out.
@@ -241,6 +241,28 @@ export function layoutMarbles(centerline, frame, lanes, finish, {
       } else {
         st.across = Math.max(-room, Math.min(room, st.across + 0.9 * memory.da[i]));
         st.progress = Math.max(0, Math.min(0.99999, st.progress + 0.9 * memory.dp[i]));
+      }
+    });
+  }
+  // Obstacles (ice channel features): the frames come 20 times a second and a
+  // fast marble covers more than an obstacle's width between two of them, so
+  // a straight line between frames could cut through it. Drawn, a marble goes
+  // round it instead, exactly as the physics has it (the same footprints).
+  if (solids?.length) {
+    state.forEach((st, i) => {
+      if (st.parked) return;
+      for (const o of solids) {
+        const ds = st.progress * length - o.s;
+        if (ds < -4 || ds > 4) continue;
+        const dx = st.across - Math.max(o.xa, Math.min(o.xb, st.across));
+        const d = Math.hypot(ds, dx);
+        if (d >= o.reach + 0.15) continue;
+        contacts?.push({ index: i, solid: o });
+        if (d >= o.reach) continue;
+        const ns = d > 1e-6 ? ds / d : -1;
+        const nx = d > 1e-6 ? dx / d : 0;
+        st.progress = Math.max(0, Math.min(0.99999, st.progress + ((o.reach - d) * ns) / length));
+        st.across = Math.max(-room, Math.min(room, st.across + (o.reach - d) * nx));
       }
     });
   }
@@ -422,6 +444,8 @@ export class RaceMarbles {
     this.layoutMemory = {}; // how marbles were nudged apart last draw (smooths crowds)
     this.normals = [];
     this.channel = null; // set for ice-channel tracks (marbles ride the curved walls)
+    this.solidsAt = null; // (t) → obstacle footprints at race time t (ice channel features), set by the scene
+    this.contacts = []; // marbles touching an obstacle in the last update: [{ index, solid }]
     this.shadowTilt = new Quaternion();
     this.crossedAt = new Map(); // where each finisher crossed the line (fixes its parking spot)
     this.move = new Vector3();
@@ -447,9 +471,10 @@ export class RaceMarbles {
     const r = MARBLE_RADIUS * this.scale;
     // Real size: never let two marbles touch. Bigger than life (whole-track
     // view), they can't all fit side by side, so they are drawn as they come.
+    this.contacts.length = 0;
     layoutMarbles(centerline, frame, this.lanes, this.finish, {
       radius: r, separate: this.scale === 1, out: this.positions, crossedAt: this.crossedAt, channel: this.channel, normals: this.normals,
-      memory: this.layoutMemory,
+      memory: this.layoutMemory, solids: this.scale === 1 ? this.solidsAt?.(frame.t) : null, contacts: this.contacts,
     });
     this.balls.forEach((b, i) => {
       const pos = this.positions[i];
