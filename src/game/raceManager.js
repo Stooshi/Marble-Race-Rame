@@ -14,6 +14,17 @@ const raceService = require('./raceService');
 
 const SCHEDULER_INTERVAL_MS = 5000;
 
+/**
+ * The marbles that crossed the finish line after race time `from` and by `to`
+ * (ms), as [{ i: entry index, ms: official finish time }] in finishing order.
+ */
+function finishesBetween(sim, from, to) {
+  return (sim.results ?? [])
+    .filter((r) => Number.isFinite(r.finishTimeMs) && r.finishTimeMs > from && r.finishTimeMs <= to)
+    .sort((a, b) => a.finishTimeMs - b.finishTimeMs)
+    .map((r) => ({ i: r.index, ms: r.finishTimeMs }));
+}
+
 class RaceManager {
   constructor() {
     this.io = null;
@@ -112,6 +123,11 @@ class RaceManager {
 
     if (frameIdx > active.lastFrame) {
       const frame = sim.frames[frameIdx];
+      // Marbles across the line since the last frame sent, with their official
+      // times (revealed as they cross). Every 20th frame and the final one carry
+      // the whole list so far, in case a viewer missed a frame.
+      const resend = done || frameIdx % 20 === 0;
+      const finishes = finishesBetween(sim, !resend && active.lastFrame >= 0 ? sim.frames[active.lastFrame].t : -Infinity, frame.t);
       const events = [];
       while (active.lastEventIdx < sim.events.length && sim.events[active.lastEventIdx].t <= frame.t) {
         events.push(sim.events[active.lastEventIdx]);
@@ -126,6 +142,7 @@ class RaceManager {
         frame: frameIdx,
         ...frame,
         ...(events.length && { events }),
+        ...(finishes.length && { finishes }),
       });
     }
 
@@ -169,6 +186,7 @@ class RaceManager {
       elapsedMs: Math.max(0, elapsed),
       meta: active.meta,
       ...(running && { frame: frameIdx, ...active.sim.frames[frameIdx] }),
+      ...(running && { finishes: finishesBetween(active.sim, -Infinity, active.sim.frames[frameIdx].t) }),
     };
   }
 

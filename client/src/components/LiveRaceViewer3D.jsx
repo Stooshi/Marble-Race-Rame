@@ -6,6 +6,7 @@ import CornerView, { cornerFollow, followedNow, followLabel } from './CornerView
 import { Spinner } from './Status';
 import { formatTime } from '../utils/format';
 import { COUNTDOWN_MS } from '../three/startCamera';
+import FinishShow, { useFinishShow } from './FinishShow';
 
 /**
  * A live race in 3D (tracks on the new physics, e.g. Bobsleigh Run): the
@@ -15,8 +16,17 @@ import { COUNTDOWN_MS } from '../three/startCamera';
  * the latest `frame` for the standings.
  */
 const NOBODY = [];
+const NONE = {};
 
-export default function LiveRaceViewer3D({ meta, sample, frame, startsAt, countdownMs = COUNTDOWN_MS, highlight = NOBODY, footer = null }) {
+/**
+ * The finish: `finishes` (entry index → official finish ms, as marbles cross),
+ * `complete` (the race is over), `clock()` (the stream's race clock, running
+ * on after the last frame) and `next` (the next-race panel for the board).
+ */
+export default function LiveRaceViewer3D({
+  meta, sample, frame, startsAt, countdownMs = COUNTDOWN_MS, highlight = NOBODY, footer = null,
+  finishes = NONE, complete = false, clock = null, next = null,
+}) {
   const { wrapRef, canvasRef, sceneRef, status, failure, fail } = useTrackScene();
   const [camera, setCamera] = useState('follow'); // follow | overview
   const [follow, setFollow] = useState('leader'); // 'leader' or an entry index
@@ -49,10 +59,15 @@ export default function LiveRaceViewer3D({ meta, sample, frame, startsAt, countd
   startRef.current = startsAt;
   const firstRef = useRef(meta?.firstFrame);
   firstRef.current = meta?.firstFrame;
+  const entryCount = meta?.entries?.length ?? 0;
+  const show = useFinishShow({ finishes, count: entryCount, complete, clock });
+  // Once the winner's moment has passed, the camera following the leader
+  // watches the rest come home instead; the corner view bows out.
+  const finishing = show.phase !== 'racing' && show.phase !== 'winner';
   const followRef = useRef(follow);
-  followRef.current = follow;
+  followRef.current = follow === 'leader' && finishing ? 'arriving' : follow;
   // The small corner view follows the other one of leader / my marble (none in the whole-track view).
-  const inset = camera === 'follow' ? cornerFollow(follow, highlight) : null;
+  const inset = camera === 'follow' && !finishing ? cornerFollow(follow, highlight) : null;
   const insetRef = useRef(inset);
   insetRef.current = inset;
   const swapViews = () => {
@@ -116,20 +131,23 @@ export default function LiveRaceViewer3D({ meta, sample, frame, startsAt, countd
               marble={entries[insetIndex]?.marble}
               onSwap={swapViews}
             />
-            <ol className="replay3d__standings" aria-label="Current standings">
-              {standings.slice(0, 5).map((i, pos) => {
-                const e = entries[i];
-                return (
-                  <li key={i} className={`${i === followIndex ? 'is-followed' : ''}${highlight.includes(i) ? ' is-mine' : ''}`}>
-                    <button type="button" onClick={() => { setFollow(i); setCamera('follow'); }} title={`Follow ${e?.marble.name}`}>
-                      <span className="replay3d__pos">{pos + 1}</span>
-                      <MarbleBall marble={e?.marble} size={16} />
-                      <span className="replay3d__name">{e?.marble.name}</span>
-                    </button>
-                  </li>
-                );
-              })}
-            </ol>
+            <FinishShow show={show} finishes={finishes} entries={entries} mine={highlight} raceId={meta?.raceId} trackName={meta?.track?.name} next={next} />
+            {show.phase === 'racing' && (
+              <ol className="replay3d__standings" aria-label="Current standings">
+                {standings.slice(0, 5).map((i, pos) => {
+                  const e = entries[i];
+                  return (
+                    <li key={i} className={`${i === followIndex ? 'is-followed' : ''}${highlight.includes(i) ? ' is-mine' : ''}`}>
+                      <button type="button" onClick={() => { setFollow(i); setCamera('follow'); }} title={`Follow ${e?.marble.name}`}>
+                        <span className="replay3d__pos">{pos + 1}</span>
+                        <MarbleBall marble={e?.marble} size={16} />
+                        <span className="replay3d__name">{e?.marble.name}</span>
+                      </button>
+                    </li>
+                  );
+                })}
+              </ol>
+            )}
           </>
         )}
       </div>

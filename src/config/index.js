@@ -73,6 +73,8 @@ module.exports = Object.freeze({
     maxDurationMs: int('RACE_MAX_DURATION_MS', 90_000),
     countdownMs: int('RACE_COUNTDOWN_MS', 5000),
     tickRateHz: int('RACE_TICK_RATE_HZ', 10),
+    // A rematch (POST /api/races/:id/next) starts by itself this long after it is set up.
+    nextRaceDelayMs: int('RACE_NEXT_DELAY_MS', 40_000),
     podiumRewards: intList('REWARD_COINS_PODIUM', [100, 50, 25]),
     participationReward: int('REWARD_COINS_PARTICIPATION', 10),
   }),

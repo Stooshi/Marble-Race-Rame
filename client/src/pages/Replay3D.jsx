@@ -4,6 +4,7 @@ import { api } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { useAsync } from '../hooks/useAsync';
 import RaceReplayViewer from '../components/RaceReplayViewer';
+import NextRace from '../components/NextRace';
 import { ErrorMessage } from '../components/Status';
 
 /**
@@ -31,7 +32,7 @@ export default function Replay3D() {
         </div>
         <Link to={`/results/${raceId}`} className="btn btn--ghost btn--sm">Results</Link>
       </header>
-      <RaceReplayViewer data={data} loading={loading} mine={mine}>
+      <RaceReplayViewer data={data} loading={loading} mine={mine} raceId={raceId} next={data ? <NextRace raceId={raceId} entries={data.entries} /> : null}>
         <p className="muted small">
           Tap a name in the standings to follow that marble. In the whole-track view, drag to turn and pinch to zoom
           (marbles are drawn bigger there so you can spot the pack). This is the real race, replayed exactly as it ran.

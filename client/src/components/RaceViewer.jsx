@@ -4,6 +4,7 @@ import { HALFWAY, splitOrder } from '../utils/splits';
 import { formatDelta, formatTime } from '../utils/format';
 import { OBSTACLE_COLORS, trackMarks } from './TrackPreview';
 import MarbleBall from './MarbleBall';
+import FinishShow, { useFinishShow } from './FinishShow';
 
 /**
  * Renders a race: the track on a canvas with marbles animated along it, plus
@@ -15,8 +16,16 @@ import MarbleBall from './MarbleBall';
  *   frame      latest frame (drives standings; updates ~10x/s)
  *   splits     { [entryIndex]: ms | null } halfway split times
  *   highlight  entry indexes to emphasise (the viewer's marbles)
+ *   finishes   { [entryIndex]: official finish ms } known so far, for the finish show,
+ *              with complete (no more to come), and the show's clock: clock() live
+ *              or time (a replay's); next = the next-race panel; official = the
+ *              results API's rows, if already loaded
  */
-export default function RaceViewer({ meta, sample, frame, splits = {}, highlight = [], footer }) {
+const NONE = {};
+export default function RaceViewer({
+  meta, sample, frame, splits = {}, highlight = [], footer,
+  finishes = NONE, complete = false, clock = null, time = null, next = null, official = null,
+}) {
   const wrapRef = useRef(null);
   const canvasRef = useRef(null);
   const [size, setSize] = useState({ width: 0, height: 0 });
@@ -92,6 +101,7 @@ export default function RaceViewer({ meta, sample, frame, splits = {}, highlight
     return () => cancelAnimationFrame(raf);
   }, [size, meta, path, sample, entries, highlightSet]);
 
+  const show = useFinishShow({ finishes, count: entries.length, complete, clock, time });
   const standings = frame?.s ?? entries.map((e) => e.index);
   const splitRank = splitOrder(splits);
   const leaderSplit = splits[splitRank[0]];
@@ -112,6 +122,16 @@ export default function RaceViewer({ meta, sample, frame, splits = {}, highlight
           <span style={{ width: `${Math.min(100, (elapsed / (meta?.durationMs || 1)) * 100)}%` }} />
         </div>
         {footer}
+        <FinishShow
+          show={show}
+          finishes={finishes}
+          entries={entries}
+          mine={highlight}
+          raceId={meta?.raceId}
+          official={official}
+          trackName={meta?.track?.name}
+          next={next}
+        />
       </div>
 
       <aside className="race-viewer__side">

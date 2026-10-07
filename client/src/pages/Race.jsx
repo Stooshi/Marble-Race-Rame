@@ -9,6 +9,7 @@ import MarbleSelector from '../components/MarbleSelector';
 import RaceViewer from '../components/RaceViewer';
 import LiveRaceViewer3D from '../components/LiveRaceViewer3D';
 import TrackPreview from '../components/TrackPreview';
+import NextRace from '../components/NextRace';
 import { Empty, ErrorMessage, Spinner } from '../components/Status';
 import { formatTime } from '../utils/format';
 
@@ -93,6 +94,13 @@ export default function Race() {
   const winner = finished && stream.results?.[0];
   const newPhysics = Boolean(meta?.track?.physics);
   const shown = view ?? (newPhysics ? '3d' : '2d');
+  // The finish show: the official times as marbles cross, then the board with the next race.
+  const finish = {
+    finishes: stream.finishes,
+    complete: finished,
+    clock: stream.clock,
+    next: meta ? <NextRace raceId={raceId} entries={meta.entries} nextRaceId={stream.next?.nextRaceId ?? race?.next_race_id ?? null} /> : null,
+  };
   const footer = finished ? (
     <div className="finish-banner">
       <MarbleBall marble={{ color_primary: winner?.color_primary, color_secondary: winner?.color_secondary, pattern: winner?.pattern }} size={28} />
@@ -122,6 +130,7 @@ export default function Race() {
           countdownMs={race?.countdown_ms ?? 5000}
           highlight={myIndexes}
           footer={footer}
+          {...finish}
         />
       ) : meta ? (
         <RaceViewer
@@ -131,6 +140,7 @@ export default function Race() {
           splits={finished && stream.results ? officialSplits(meta, stream.results, stream.splits) : stream.splits}
           highlight={myIndexes}
           footer={footer}
+          {...finish}
         />
       ) : (
         <Spinner label="Connecting to the race…" />

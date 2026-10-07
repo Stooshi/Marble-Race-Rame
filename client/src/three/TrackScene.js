@@ -358,19 +358,25 @@ export class TrackScene {
   }
 
   /**
-   * Which marble a camera follows: an entry index, 'leader', or 'second'
-   * (whoever is in second place). The leader (or second) only changes when
-   * another marble is clearly ahead or behind (a few metres), so a field
+   * Which marble a camera follows: an entry index, 'leader', 'second'
+   * (whoever is in second place) or 'arriving' (the first marble not yet home:
+   * the field coming in after the winner). The leader (or second) only changes
+   * when another marble is clearly ahead or behind (a few metres), so a field
    * running level at the start doesn't swing the camera from marble to marble
    * across the track.
    */
   followedIndex(frame, follow, rig = this.main) {
-    const rank = follow === 'leader' ? 0 : follow === 'second' ? 1 : -1;
+    const rank = follow === 'leader' ? 0 : follow === 'second' ? 1 : follow === 'arriving' ? 0 : -1;
     if (rank < 0) {
       rig.leader = null;
       return follow;
     }
-    const want = frame.s?.[rank] ?? frame.s?.[0] ?? 0;
+    const s = frame.s ?? [];
+    const want = follow === 'arriving'
+      ? (s.find((i) => frame.p[i] < 1) ?? s[s.length - 1] ?? 0)
+      : (s[rank] ?? s[0] ?? 0);
+    // Coming home: on to the next one as soon as the one followed is across the line.
+    if (follow === 'arriving' && rig.leader !== null && rig.leader !== undefined && frame.p[rig.leader] >= 1 && frame.p[want] < 1) rig.leader = want;
     const jumpedBack = rig.leaderT !== undefined && frame.t < rig.leaderT - 500; // a replay scrubbed back
     rig.leaderT = frame.t;
     if (rig.leader === null || rig.leader === undefined || jumpedBack || frame.p[rig.leader] === undefined) {

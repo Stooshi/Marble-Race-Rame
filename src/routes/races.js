@@ -16,7 +16,7 @@ const { minMarbles, maxMarbles, defaultMarbles } = config.game;
 
 const RACE_LIST_SQL = `
   SELECT r.id, r.name, r.status, r.min_marbles, r.max_marbles, r.entry_fee_coins, r.fill_with_bots,
-         r.scheduled_at, r.started_at, r.finished_at, r.created_at, r.created_by,
+         r.scheduled_at, r.started_at, r.finished_at, r.created_at, r.created_by, r.next_race_id,
          CASE WHEN r.status = 'finished' THEN r.target_duration_ms END AS duration_ms,
          t.id AS track_id, t.slug AS track_slug, t.name AS track_name, t.difficulty,
          (SELECT COUNT(*)::int FROM race_entries e WHERE e.race_id = r.id) AS entry_count,
@@ -192,6 +192,58 @@ router.post('/:id/join', requireAuth, async (req, res) => {
   const { race, entry, entryCount } = await db.withTransaction((client) => joinRace(client, id, req.user.id, marbleId));
   raceManager.notifyRaceUpdated(race, { entryCount });
   res.status(201).json({ entry });
+});
+
+/**
+ * POST /api/races/:id/next  { marble_id? } — race again: the follow-up race on
+ * the same track, so a group keeps going together. The first player to ask
+ * sets it up (same settings, starting by itself after a short wait) and every
+ * later ask lands in that same race; with marble_id the player is entered too.
+ * Everyone still watching the finished race hears about it ('race:next').
+ * A rematch that has already been run (or was cancelled) is replaced by a fresh one.
+ */
+router.post('/:id/next', requireAuth, async (req, res) => {
+  const id = assertUuid(req.params.id);
+  const { marble_id: marbleId } = validate(req.body ?? {}, { marble_id: { type: 'uuid' } });
+  const { nextId, created, joined } = await db.withTransaction(async (client) => {
+    const { rows } = await client.query('SELECT * FROM races WHERE id = $1 FOR UPDATE', [id]);
+    const race = rows[0];
+    if (!race) throw notFound('Race not found');
+    if (race.status !== 'finished') throw conflict('You can race again once this race has finished');
+    let next = null;
+    if (race.next_race_id) {
+      const { rows: n } = await client.query('SELECT id, status FROM races WHERE id = $1', [race.next_race_id]);
+      if (n[0] && !['finished', 'cancelled'].includes(n[0].status)) next = n[0];
+    }
+    let made = false;
+    if (!next) {
+      const { rows: n } = await client.query(
+        `INSERT INTO races (track_id, name, min_marbles, max_marbles, entry_fee_coins, fill_with_bots,
+                            scheduled_at, created_by, tick_rate_hz, countdown_ms)
+         VALUES ($1, $2, $3, $4, $5, $6, now() + make_interval(secs => $7::double precision / 1000), $8, $9, $10)
+         RETURNING id, status`,
+        [race.track_id, race.name, race.min_marbles, race.max_marbles, race.entry_fee_coins, race.fill_with_bots,
+          config.game.nextRaceDelayMs, req.user.id, race.tick_rate_hz, race.countdown_ms],
+      );
+      next = n[0];
+      made = true;
+      await client.query('UPDATE races SET next_race_id = $2 WHERE id = $1', [id, next.id]);
+    }
+    let entered = null;
+    if (marbleId && next.status === 'lobby') {
+      const { rows: mine } = await client.query('SELECT 1 FROM race_entries WHERE race_id = $1 AND user_id = $2', [next.id, req.user.id]);
+      if (!mine[0]) entered = await joinRace(client, next.id, req.user.id, marbleId);
+    }
+    return { nextId: next.id, created: made, joined: entered };
+  });
+
+  const next = await getRaceRow(nextId);
+  if (created) {
+    raceManager.emitLobby('lobby:race_created', next);
+    raceManager.emitRace(id, 'race:next', { raceId: id, nextRaceId: nextId, scheduledAt: next.scheduled_at });
+  }
+  if (joined) raceManager.notifyRaceUpdated(joined.race, { entryCount: joined.entryCount });
+  res.status(created ? 201 : 200).json({ race: next, entries: await getEntries(nextId, false) });
 });
 
 /** DELETE /api/races/:id/join — leave a lobby race (entry fee refunded) */

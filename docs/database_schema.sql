@@ -270,6 +270,9 @@ CREATE TABLE IF NOT EXISTS race_replays (
 -- tables created by hand from an earlier version of this file).
 ALTER TABLE race_entries ADD COLUMN IF NOT EXISTS split_time_ms integer CHECK (split_time_ms > 0);
 ALTER TABLE races        ADD COLUMN IF NOT EXISTS track_snapshot jsonb;
+-- The rematch: the follow-up race on the same track that the group moves on to
+-- after this one (POST /api/races/:id/next creates it once and everyone joins it).
+ALTER TABLE races        ADD COLUMN IF NOT EXISTS next_race_id uuid REFERENCES races(id) ON DELETE SET NULL;
 
 -- A player may enter at most one marble per race.
 CREATE UNIQUE INDEX IF NOT EXISTS uq_race_entries_race_user

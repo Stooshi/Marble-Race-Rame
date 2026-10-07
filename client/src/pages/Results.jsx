@@ -6,6 +6,8 @@ import { useAsync } from '../hooks/useAsync';
 import { useReplay } from '../hooks/useReplay';
 import MarbleBall from '../components/MarbleBall';
 import RaceViewer from '../components/RaceViewer';
+import NextRace from '../components/NextRace';
+import { BOARD_HOLD_MS, finishPlan } from '../utils/finishShow';
 import { ErrorMessage, Spinner } from '../components/Status';
 import { formatDelta, formatTime, ordinal } from '../utils/format';
 
@@ -59,7 +61,7 @@ export default function Results() {
         </div>
       </header>
 
-      {showReplay && <Replay raceId={raceId} userId={user?.id} />}
+      {showReplay && <Replay raceId={raceId} userId={user?.id} official={results} />}
 
       <section className="podium" aria-label="Podium">
         {[podium[1], podium[0], podium[2]].filter(Boolean).map((r) => (
@@ -220,11 +222,14 @@ function YourRace({ result: r, winner, splitRank, total }) {
   );
 }
 
-function Replay({ raceId, userId }) {
+function Replay({ raceId, userId, official }) {
   const { data, error, loading, reload } = useAsync(() => api.replay(raceId), [raceId]);
   // The 2D replay starts at GO: the starting gate's countdown only shows in 3D.
   const flat = useMemo(() => (data?.start ? { ...data, start: undefined } : data), [data]);
-  const replay = useReplay(flat);
+  // The finish show at the end: every finish time is known, and the replay runs on for the show.
+  const finishes = useMemo(() => Object.fromEntries((data?.results ?? []).filter((r) => Number.isFinite(r.finishTimeMs)).map((r) => [r.index, r.finishTimeMs])), [data]);
+  const plan = finishPlan(finishes, data?.entries?.length ?? 0, true);
+  const replay = useReplay(flat, { tailMs: plan && data ? Math.max(0, plan.boardAt + BOARD_HOLD_MS - data.durationMs) : 0 });
   const highlight = useMemo(
     () => (data?.entries ?? []).filter((e) => e.user?.id && e.user.id === userId).map((e) => e.index),
     [data, userId],
@@ -241,6 +246,11 @@ function Replay({ raceId, userId }) {
         frame={replay.frame}
         splits={replay.splits}
         highlight={highlight}
+        finishes={finishes}
+        complete
+        time={replay.time}
+        official={official}
+        next={<NextRace raceId={raceId} entries={data.entries} />}
         footer={(
           <div className="replay__controls">
             <button type="button" className="btn btn--primary btn--sm" onClick={replay.toggle}>

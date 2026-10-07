@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useReplay } from '../hooks/useReplay';
 import { useTrackScene } from '../hooks/useTrackScene';
 import MarbleBall from './MarbleBall';
@@ -6,18 +6,27 @@ import SceneFailure from './SceneFailure';
 import CornerView, { cornerFollow, followedNow, followLabel } from './CornerView';
 import { Spinner } from './Status';
 import { formatTime } from '../utils/format';
+import FinishShow, { useFinishShow } from './FinishShow';
+import { BOARD_HOLD_MS, finishPlan } from '../utils/finishShow';
 
 /**
  * A finished race (or physics preview) played back in 3D: the scene, the
  * standings, the clock, playback controls and camera choices. `data` is a
  * replay ({ track, entries, frames, results, tickMs, durationMs }); mount it
- * again (with a new key) for a different race.
+ * again (with a new key) for a different race. The finish show plays at the
+ * end (the replay runs on for it); raceId (a real race's) brings the track
+ * record and personal-best flags, and `next` is the next-race panel for its board.
  */
 const NOBODY = [];
 const countdownLabel = (t) => (t >= 0 ? 'GO!' : String(Math.ceil(-t / 1000)));
 
-export default function RaceReplayViewer({ data, loading = false, mine = NOBODY, children }) {
-  const replay = useReplay(data);
+export default function RaceReplayViewer({ data, loading = false, mine = NOBODY, raceId = null, next = null, children }) {
+  // Every finish time is known up front: the show's timing, and how long the replay runs on for it.
+  const finishes = useMemo(() => Object.fromEntries((data?.results ?? []).filter((r) => Number.isFinite(r.finishTimeMs)).map((r) => [r.index, r.finishTimeMs])), [data]);
+  const plan = finishPlan(finishes, data?.entries?.length ?? 0, true);
+  const replay = useReplay(data, { tailMs: plan && data ? Math.max(0, plan.boardAt + BOARD_HOLD_MS - data.durationMs) : 0 });
+  const show = useFinishShow({ finishes, count: data?.entries?.length ?? 0, complete: true, time: replay.time });
+  const finishing = show.phase !== 'racing' && show.phase !== 'winner';
   const { wrapRef, canvasRef, sceneRef, status, failure, fail } = useTrackScene();
   const [camera, setCamera] = useState('follow'); // follow | overview
   const [follow, setFollow] = useState('leader'); // 'leader' or an entry index
@@ -56,11 +65,13 @@ export default function RaceReplayViewer({ data, loading = false, mine = NOBODY,
   const sampleRef = useRef(replay.sample);
   sampleRef.current = replay.sample;
   const followRef = useRef(follow);
-  followRef.current = follow;
+  // After the winner's moment, the camera following the leader watches the rest come home.
+  followRef.current = follow === 'leader' && finishing ? 'arriving' : follow;
   // The small corner view follows the other one of leader / my marble (not in
-  // the whole-track view, and gone once the race is over).
+  // the whole-track view, and gone once the winner's moment has passed).
   const over = data && replay.time >= replay.duration;
-  const inset = camera === 'follow' && !over ? cornerFollow(follow, mine) : null;
+  const inset = camera === 'follow' && !finishing ? cornerFollow(follow, mine) : null;
+  useEffect(() => { dirty.current = true; }, [finishing]);
   const insetRef = useRef(inset);
   insetRef.current = inset;
   useEffect(() => { dirty.current = true; }, [follow, inset]);
@@ -108,7 +119,6 @@ export default function RaceReplayViewer({ data, loading = false, mine = NOBODY,
   const entries = data?.entries ?? [];
   const standings = replay.frame?.s ?? [];
   const finished = over;
-  const winner = data?.results?.[0] && entries[data.results[0].index];
   const followIndex = followedNow(follow, standings);
   const insetIndex = inset === null ? undefined : followedNow(inset, standings);
 
@@ -143,26 +153,24 @@ export default function RaceReplayViewer({ data, loading = false, mine = NOBODY,
               marble={entries[insetIndex]?.marble}
               onSwap={swapViews}
             />
-            <ol className="replay3d__standings" aria-label="Current standings">
-              {standings.slice(0, 5).map((i, pos) => {
-                const e = entries[i];
-                return (
-                  <li key={i} className={`${i === followIndex ? 'is-followed' : ''}${mine.includes(i) ? ' is-mine' : ''}`}>
-                    <button type="button" onClick={() => { setFollow(i); setCamera('follow'); }} title={`Follow ${e?.marble.name}`}>
-                      <span className="replay3d__pos">{pos + 1}</span>
-                      <MarbleBall marble={e?.marble} size={16} />
-                      <span className="replay3d__name">{e?.marble.name}</span>
-                    </button>
-                  </li>
-                );
-              })}
-            </ol>
-            {finished && winner && (
-              <div className="replay3d__winner">
-                <MarbleBall marble={winner.marble} size={24} />
-                <span><strong>{winner.marble.name}</strong> wins in {formatTime(data.results[0].finishTimeMs)}!</span>
-              </div>
+            {show.phase === 'racing' && (
+              <ol className="replay3d__standings" aria-label="Current standings">
+                {standings.slice(0, 5).map((i, pos) => {
+                  const e = entries[i];
+                  return (
+                    <li key={i} className={`${i === followIndex ? 'is-followed' : ''}${mine.includes(i) ? ' is-mine' : ''}`}>
+                      <button type="button" onClick={() => { setFollow(i); setCamera('follow'); }} title={`Follow ${e?.marble.name}`}>
+                        <span className="replay3d__pos">{pos + 1}</span>
+                        <MarbleBall marble={e?.marble} size={16} />
+                        <span className="replay3d__name">{e?.marble.name}</span>
+                      </button>
+                    </li>
+                  );
+                })}
+              </ol>
             )}
+            <FinishShow show={show} finishes={finishes} entries={entries} mine={mine} raceId={raceId} trackName={data?.track?.name} next={next}
+              onSkip={() => { replay.seek(plan.boardAt); dirty.current = true; }} />
           </>
         )}
       </div>

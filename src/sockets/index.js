@@ -26,8 +26,12 @@ const raceService = require('../game/raceService');
  *   race:countdown   race decided, starts at `startsAt` (includes stream header)
  *   race:start       stream header: track, entries (index order), durationMs, tickMs
  *   race:frame       { frame, t, p[], l[], s[], events? } — p = progress 0..1,
- *                    l = lateral offset -1..1, s = standings (entry indexes)
+ *                    l = lateral offset -1..1, s = standings (entry indexes);
+ *                    finishes? [{ i, ms }] = official finish times of marbles
+ *                    that just crossed the line (every 20th frame and the
+ *                    final one carry all of them so far)
  *   race:finished    official results
+ *   race:next        { raceId, nextRaceId, scheduledAt } the rematch was set up
  *   race:cancelled
  */
 function createSocketServer(httpServer) {

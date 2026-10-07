@@ -80,6 +80,7 @@ export const api = {
   leaveRace: (id) => request(`/races/${id}/join`, { method: 'DELETE' }),
   startRace: (id) => request(`/races/${id}/start`, { method: 'POST' }),
   cancelRace: (id) => request(`/races/${id}/cancel`, { method: 'POST' }),
+  nextRace: (id, marbleId) => request(`/races/${id}/next`, { method: 'POST', body: marbleId ? { marble_id: marbleId } : {} }),
   results: (id) => request(`/races/${id}/results`),
   replay: (id) => request(`/races/${id}/replay`),
   physicsPreview: (track, seed, level) => request(`/physics/preview?track=${encodeURIComponent(track)}&seed=${seed}&level=${level}`),

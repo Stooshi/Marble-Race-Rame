@@ -5,8 +5,10 @@ import { COUNTDOWN_MS } from '../three/startCamera';
 /**
  * Plays back a finished race from its full frame list with play/pause,
  * speed and scrubbing. Exposes the same `sample()` contract as useRaceStream.
+ * tailMs: how long the replay runs on past the race's last frame (the marbles
+ * stay put while the finish show plays out).
  */
-export function useReplay(replay) {
+export function useReplay(replay, { tailMs = 0 } = {}) {
   // With a starting gate the replay opens on the countdown (as long as a live
   // race's, so the starting camera has time for its move): time runs from minus
   // the countdown up to the race's end, and the race starts at 0 ("GO").
@@ -15,7 +17,7 @@ export function useReplay(replay) {
   const [speed, setSpeed] = useState(1);
   const [time, setTime] = useState(start);
   const clock = useRef({ base: start, startedAt: 0 });
-  const duration = replay?.durationMs ?? 0;
+  const duration = (replay?.durationMs ?? 0) + (replay ? tailMs : 0);
 
   const now = useCallback(() => {
     if (!playing) return clock.current.base;
