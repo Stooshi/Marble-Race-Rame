@@ -11,6 +11,9 @@ import {
 } from 'three';
 import { beam, box, hashString, merge, seededRandom, smoothstep, triangles } from './parts';
 import { buildTerrain, makeHeightField } from './terrain';
+import { channelLipAt, channelOf, channelRadiusAt } from '../iceChannel';
+
+const PAVEMENT = 3; // metres of pavement each side of a street channel (as iceChannel.js draws it)
 
 const SEA_LEVEL = -1.2;
 const PAINTED_LADIES = ['#f6a9bd', '#a9d6ef', '#ffd79c', '#b9e6a5', '#d6b9f2', '#ffb994', '#9fd8c9', '#f7e3a1', '#f2b6d8'];
@@ -107,7 +110,7 @@ export function placeHouses(centerline, field, layout, {
   };
   const add = (x, z, yaw) => {
     if (houses.length >= max) return;
-    if (field.nearest(x, z) < field.roadHalf + 6.5 || !free(x, z)) return;
+    if (field.clearance(x, z) < 6.5 || !free(x, z)) return;
     const y = groundAt(x, z);
     if (y < SEA_LEVEL + 2) return; // no houses in the water or on the beach
     const h = { x, y, z, yaw, scale: 0.9 + rand() * 0.3, color: PAINTED_LADIES[Math.floor(rand() * PAINTED_LADIES.length)] };
@@ -235,7 +238,14 @@ function sunTexture() {
 export function buildSanFrancisco(centerline, track, theme) {
   const lanes = Math.max(1, Number(track?.lane_count) || 5);
   const layout = sanFranciscoLayout(centerline, { pierFinish: Boolean(track?.physics?.channel) });
-  const field = makeHeightField(centerline, lanes, { hillHeight: 34, landRadius: 340, seaLevel: SEA_LEVEL, water: layout.water });
+  // The rebuilt track (new physics) is a street channel built into the hillside: pavements and ground at its rim.
+  const channel = channelOf(track, centerline);
+  const step = channel ? channel.arc / centerline.segments : 0;
+  const street = channel ? {
+    halfAt: (i) => channelRadiusAt(channel, i * step) * Math.sin(channelLipAt(channel, i * step)) + PAVEMENT,
+    liftAt: (i) => channelRadiusAt(channel, i * step) * (1 - Math.cos(channelLipAt(channel, i * step))),
+  } : null;
+  const field = makeHeightField(centerline, lanes, { hillHeight: 34, landRadius: 340, seaLevel: SEA_LEVEL, water: layout.water, street });
   const group = new Group();
   group.name = 'scenery:san-francisco';
 
@@ -243,7 +253,7 @@ export function buildSanFrancisco(centerline, track, theme) {
   const { minX, maxX, minZ, maxZ } = layout.bounds;
   const margin = 380;
   const ground = buildTerrain(field, { minX: minX - margin, maxX: maxX + margin, minZ: minZ - margin, maxZ: maxZ + margin }, {
-    cells: 80, colors: { grass: '#8db457', dry: '#b7b85c', shade: '#77a04a', sand: '#ecd59e' },
+    cells: street ? 150 : 80, // finer for a street channel, so the ground meets its pavements colors: { grass: '#8db457', dry: '#b7b85c', shade: '#77a04a', sand: '#ecd59e' },
   });
   const terrain = new Mesh(ground.geometry, new MeshLambertMaterial({ vertexColors: true, flatShading: true }));
   terrain.name = 'terrain';

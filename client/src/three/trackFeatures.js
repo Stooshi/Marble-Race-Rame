@@ -39,8 +39,28 @@ export function cableCar(time) {
   return { k: t / CABLE_CROSS, dir: n % 2 === 0 ? 1 : -1 };
 }
 
+/**
+ * Where the cable car is drawn at `time` seconds: as cableCar() while it crosses,
+ * and also driving in and out along its rails for `extra` seconds either side
+ * (out beyond the rims, where it cannot touch a marble): null when out of sight.
+ * Returns { u: seconds since its crossing began (negative: still coming), dir }.
+ */
+function cableCarDrawn(time, extra) {
+  const n = Math.floor(time / CABLE_PERIOD);
+  const t = time - n * CABLE_PERIOD;
+  if (t < CABLE_CROSS + extra) return { u: t, dir: n % 2 === 0 ? 1 : -1 };
+  if (t > CABLE_PERIOD - extra) return { u: t - CABLE_PERIOD, dir: (n + 1) % 2 === 0 ? 1 : -1 };
+  return null;
+}
+
 const SWIPERS = ['polar_bear', 'sea_lion']; // reach in from the rim on bearPaw's timetable
+const BUS_STEP = 1.2; // the physics' round sections along a parked bus (src/game/trackFeatures.js busParts)
+const busParts = (length) => {
+  const n = Math.max(1, Math.round(length / BUS_STEP));
+  return Array.from({ length: n + 1 }, (_, k) => (length * k) / n);
+};
 const DECOR = ['flowers']; // drawn only: the physics ignores them
+const DRIVE_IN = 12; // metres the cable car is drawn driving in and out along its rails beyond the crossing
 
 const BUMP_HALF = 1.2;  // metres from a bump's crest to its foot (the physics throws marbles up at its foot)
 const BUMP_HEIGHT = 0.45;
@@ -52,6 +72,7 @@ export const FEATURE_COLORS = {
   // San Francisco
   carRed: '#b8312f', carCream: '#f1e3bf', carWindow: '#2b3440', carRoof: '#4b3a2c', rail: '#2d2e33', deck: '#8d8f94',
   newsBox: '#2f5fb3', newsTop: '#e8edf5', hydrant: '#f2efe6', hydrantCap: '#2f5fb3',
+  trashCan: '#2e6b45', trashLid: '#1f4a30', busWhite: '#f3f1ea', busRed: '#c8322f', busWindow: '#2b3440', tyre: '#1e1f24', street: '#55585f',
   seaLion: '#5a4030', seaLionDark: '#2b1f17', rock: '#7b7d80', planterBox: '#8a6a48', leaf: '#3f8a3a', flowerA: '#ff6f91', flowerB: '#ffd23f',
 };
 
@@ -250,6 +271,45 @@ export function buildTrackFeatures(centerline, channel, features) {
       const cone = new ConeGeometry((f.radius ?? 0.35) * 0.9, len, 8);
       cone.rotateX(Math.PI);
       add('ice', cone, pose(new Vector3(point.x, beamY - 0.22 - len / 2, point.z)));
+    } else if (f.type === 'trash_can') {
+      // A green city trash can with a domed lid.
+      const { point, normal } = surface(f.at, f.l, 0);
+      const q = new Quaternion().setFromUnitVectors(UP, normal);
+      const r = f.radius ?? 0.5;
+      const h = f.height ?? 1.1;
+      const up = (y) => point.clone().addScaledVector(normal, y);
+      add('trashCan', new CylinderGeometry(r * 0.95, r * 0.8, h * 0.85, 14), pose(up(h * 0.425), q));
+      add('trashLid', new SphereGeometry(r, 14, 6, 0, Math.PI * 2, 0, Math.PI / 2), pose(up(h * 0.85), q, new Vector3(1, 0.45, 1)));
+      add('trashLid', new CylinderGeometry(r * 1.0, r * 1.0, 0.08, 14), pose(up(h * 0.86), q));
+    } else if (f.type === 'bus') {
+      // A city bus parked on the pavement, its side overhanging the top of the
+      // channel's wall (the stretch marbles bounce off), facing down the track.
+      const s0 = f.at * channel.arc;
+      const len = f.length ?? 10;
+      const mid = f.at + len / 2 / channel.arc;
+      const { side, along } = frameAt(centerline, mid);
+      const sign = Math.sign(f.l) || -1;
+      const lip = channelLipAt(channel, s0) / channel.maxAngle;
+      const inner = surface(mid, sign * Math.min(Math.abs(f.l2 ?? f.l), lip), 0).point; // the bus's inner flank on the wall
+      const rimTop = surface(mid, sign * lip, 0).point;
+      const width = 2.6;
+      const height = f.height ?? 3;
+      const outward = side.clone().multiplyScalar(sign);
+      const flat = along.clone().setY(0).normalize();
+      const q = new Quaternion().setFromRotationMatrix(new Matrix4().makeBasis(outward, UP, flat));
+      const centre = new Vector3(inner.x, rimTop.y, inner.z).addScaledVector(outward, width / 2);
+      const at = (y) => centre.clone().addScaledVector(UP, y);
+      add('busWhite', new BoxGeometry(width, height * 0.62, len), pose(at(height * 0.31 + 0.35), q));
+      add('busRed', new BoxGeometry(width + 0.04, height * 0.12, len + 0.04), pose(at(height * 0.45 + 0.35), q));
+      add('busWindow', new BoxGeometry(width + 0.06, height * 0.24, len * 0.9), pose(at(height * 0.72 + 0.35), q));
+      add('busWhite', new BoxGeometry(width, height * 0.06, len), pose(at(height * 0.87 + 0.35), q));
+      for (const zf of [-0.33, 0.33]) {
+        for (const xs of [-1, 1]) {
+          const wheel = new CylinderGeometry(0.5, 0.5, 0.35, 12);
+          wheel.rotateZ(Math.PI / 2);
+          add('tyre', wheel, pose(centre.clone().addScaledVector(outward, (xs * width) / 2).addScaledVector(flat, zf * len).addScaledVector(UP, 0.5), q));
+        }
+      }
     } else if (f.type === 'news_box' || f.type === 'hydrant') {
       // Street furniture standing on the floor: a blue newspaper box, or a white fire hydrant with a blue cap.
       const { point, normal } = surface(f.at, f.l, 0);
@@ -308,12 +368,13 @@ export function buildTrackFeatures(centerline, channel, features) {
         const rim = surface(f.at, (sgn * lipX) / across, 0).point;
         return { point: rim.addScaledVector(side, sgn * (Math.abs(x) - lipX)).addScaledVector(UP, lift), normal: UP.clone() };
       };
-      // The rails: two dark strips across the street and out over both decks.
+      // The cross street it runs along, out over both pavements, with its two rails.
+      const reachOut = travel + half + DRIVE_IN;
       for (const off of [-0.55, 0.55]) {
         const pos = [];
-        const steps = 40;
+        const steps = 60;
         for (let k = 0; k <= steps; k += 1) {
-          const x = -travel - half + (2 * (travel + half) * k) / steps;
+          const x = -reachOut + (2 * reachOut * k) / steps;
           const { point } = spot(x, 0.04);
           for (const w of [-0.07, 0.07]) {
             const q = point.clone().addScaledVector(along, off + w);
@@ -331,9 +392,9 @@ export function buildTrackFeatures(centerline, channel, features) {
       const basis = new Matrix4().makeBasis(side, UP, along.clone().setY(0).normalize());
       const deckQ = new Quaternion().setFromRotationMatrix(basis);
       for (const sgn of [-1, 1]) {
-        const len = travel + half - lipX + 0.5;
+        const len = reachOut - lipX + 0.5;
         const from = surface(f.at, (sgn * lipX) / across, 0).point;
-        add('deck', new BoxGeometry(len, 0.3, width + 1.6), pose(from.clone().addScaledVector(side, (sgn * len) / 2).addScaledVector(UP, -0.15), deckQ));
+        add('street', new BoxGeometry(len, 0.3, width + 2.4), pose(from.clone().addScaledVector(side, (sgn * len) / 2).addScaledVector(UP, -0.13), deckQ));
       }
       // The body: slices across, each a band of colours up its side (red, cream belt, windows, cream, roof).
       const SLICES = 18;
@@ -383,7 +444,7 @@ export function buildTrackFeatures(centerline, channel, features) {
       mesh.name = 'cable_car';
       mesh.visible = false;
       group.add(mesh);
-      car = { mesh, build, half, travel, phase: f.phase ?? 0 };
+      car = { mesh, build, half, travel, phase: f.phase ?? 0, speed: (2 * travel) / CABLE_CROSS };
     } else if (f.type === 'sea_lion') {
       // A sea lion lying on a rock beside the pier, lunging its head into the channel on the swipe's timetable.
       const { side } = frameAt(centerline, f.at);
@@ -466,6 +527,11 @@ export function buildTrackFeatures(centerline, channel, features) {
       id: solids.length, type: f.type, s: f.at * channel.arc, xa, xb, reach: radius + 0.55, rest: l * across, full: (f.reach ?? l) * across,
       ...(f.type === 'cable_car' && { half: (f.length ?? 7) / 2, travel: across + (f.length ?? 7) / 2 + 1, phase: f.phase ?? 0 }),
     });
+    // A parked bus: the physics' row of round sections down its length.
+    if (f.type === 'bus') {
+      const bus = solids.pop();
+      for (const d of busParts(f.length ?? 10)) solids.push({ ...bus, id: solids.length, s: bus.s + d });
+    }
   }
 
   // One mesh per material.
@@ -484,6 +550,13 @@ export function buildTrackFeatures(centerline, channel, features) {
     // Clear ice: the follow camera can see the marbles through the beam over the channel.
     frost: new MeshLambertMaterial({ color: FEATURE_COLORS.frost, emissive: '#6f8796', transparent: true, opacity: 0.35, depthWrite: false }),
     rail: new MeshLambertMaterial({ color: FEATURE_COLORS.rail, polygonOffset: true, polygonOffsetFactor: -2 }),
+    street: new MeshLambertMaterial({ color: FEATURE_COLORS.street }),
+    trashCan: new MeshLambertMaterial({ color: FEATURE_COLORS.trashCan }),
+    trashLid: new MeshLambertMaterial({ color: FEATURE_COLORS.trashLid }),
+    busWhite: new MeshLambertMaterial({ color: FEATURE_COLORS.busWhite, emissive: '#3a3833' }),
+    busRed: new MeshLambertMaterial({ color: FEATURE_COLORS.busRed }),
+    busWindow: new MeshLambertMaterial({ color: FEATURE_COLORS.busWindow }),
+    tyre: new MeshLambertMaterial({ color: FEATURE_COLORS.tyre }),
     deck: new MeshLambertMaterial({ color: FEATURE_COLORS.deck }),
     newsBox: new MeshLambertMaterial({ color: FEATURE_COLORS.newsBox }),
     newsTop: new MeshLambertMaterial({ color: FEATURE_COLORS.newsTop }),
@@ -702,10 +775,11 @@ export function buildTrackFeatures(centerline, channel, features) {
       claws.position.copy(tip).addScaledVector(sw.inward, sw.nose);
     }
     if (car) {
-      const c = cableCar(t / 1000 + car.phase);
+      // On its timetable (as the physics has it while it crosses), driving in and out along its rails either side.
+      const c = cableCarDrawn(t / 1000 + car.phase, DRIVE_IN / car.speed);
       car.mesh.visible = Boolean(c);
       if (c) {
-        const centre = c.dir * (-car.travel + 2 * car.travel * c.k);
+        const centre = c.dir * (-car.travel + car.speed * c.u);
         car.build(centre - car.half, centre + car.half);
       }
     }

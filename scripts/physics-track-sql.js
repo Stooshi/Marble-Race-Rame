@@ -6,6 +6,8 @@
 // With --rebuild it prints the update that moves an existing classic track
 // onto the new physics instead (its old races keep replaying as they ran):
 //   node scripts/physics-track-sql.js san-francisco --rebuild > docs/data_updates/<date>-san-francisco-rebuild.sql
+// With --retune it prints a later re-tune of a track already on the new physics
+// (an update that has run is never edited: a new one is added).
 // The tests check the committed files still match the code.
 const { physicsTrack } = require('../src/game/physicsTracks');
 
@@ -15,7 +17,33 @@ if (!track) {
   console.error(`No physics track "${slug}"`);
   process.exit(1);
 }
-process.stdout.write(process.argv[3] === '--rebuild' ? rebuildSql(track) : trackSql(track));
+const mode = process.argv[3];
+process.stdout.write(mode === '--rebuild' ? rebuildSql(track) : mode === '--retune' ? retuneSql(track) : trackSql(track));
+
+// A later re-tune of a track already on the new physics: its shape and settings as now in code.
+function retuneSql(t) {
+  const q = (v) => `'${String(v).replace(/'/g, "''")}'`;
+  return `-- One-time data update: ${t.name} re-tuned.
+--
+-- Built into the landscape and tamed where marbles flew: gentler plunges after
+-- the climbs with crests rounded over about 100 m, gentler boost pads, no speed
+-- bumps; more street obstacles (trash cans, a parked bus); a cable car that
+-- sweeps marbles aside; a hit never speeds a marble up. Races already run keep
+-- their stored replays and play back exactly as they ran.
+--
+-- Generated from src/game/physicsTracks.js by scripts/physics-track-sql.js --retune.
+-- Only the ${t.name} track row changes.
+
+UPDATE tracks
+   SET description = ${q(t.description)},
+       length_m = ${t.length_m},
+       lane_count = ${t.lane_count},
+       waypoints = ${q(JSON.stringify(t.waypoints))}::jsonb,
+       obstacles = ${q(JSON.stringify(t.obstacles))}::jsonb,
+       physics = ${q(JSON.stringify(t.physics))}::jsonb
+ WHERE slug = ${q(t.slug)};
+`;
+}
 
 function rebuildSql(t) {
   const q = (v) => `'${String(v).replace(/'/g, "''")}'`;

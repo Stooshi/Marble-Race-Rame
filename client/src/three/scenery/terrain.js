@@ -21,14 +21,22 @@ function rolling(x, z) {
  * Returns heightAt(x, z) for ground around the track, plus helpers.
  * Options: hillHeight (m of extra rolling hills away from the track),
  * landRadius (m from the track where land gives way to water),
- * water(x, z) → 0..1 extra pull down into the water (e.g. a bay).
+ * water(x, z) → 0..1 extra pull down into the water (e.g. a bay),
+ * street: a channel built into the ground as a city street (San Francisco
+ * rebuilt): { halfAt(i), liftAt(i) } per centre-line sample i, the channel's
+ * half-width with its pavements, and the height of its pavements above the
+ * floor. The ground then sits at pavement level right beside it, dips under
+ * the channel itself, and blends into the hills further out.
  */
-export function makeHeightField(centerline, laneCount, { hillHeight = 18, landRadius = 300, seaLevel = -1.2, water = () => 0 } = {}, style = TRACK_STYLE) {
-  const samples = centerline.samples.filter((_, i) => i % 3 === 0 || i === centerline.samples.length - 1);
+export function makeHeightField(centerline, laneCount, { hillHeight = 18, landRadius = 300, seaLevel = -1.2, water = () => 0, street = null } = {}, style = TRACK_STYLE) {
+  const keep = centerline.samples.map((_, i) => i).filter((i) => i % 3 === 0 || i === centerline.samples.length - 1);
+  const samples = keep.map((i) => centerline.samples[i]);
   const xs = samples.map((s) => s.pos.x);
   const zs = samples.map((s) => s.pos.z);
   const ys = samples.map((s) => s.pos.y);
-  const roadHalf = (laneCount * style.laneWidth) / 2 + style.wallThickness;
+  const halves = street ? keep.map((i) => street.halfAt(i)) : null;
+  const lifts = street ? keep.map((i) => street.liftAt(i)) : null;
+  const roadHalf = street ? Math.max(...halves.slice(Math.floor(halves.length * 0.1))) : (laneCount * style.laneWidth) / 2 + style.wallThickness;
   const flatTo = roadHalf + 14; // ground stays under the road this far out
   const capReach2 = (flatTo + 110) ** 2;
 
@@ -39,6 +47,29 @@ export function makeHeightField(centerline, laneCount, { hillHeight = 18, landRa
       if (d < best) best = d;
     }
     return Math.sqrt(best);
+  }
+
+  // A street channel: pavement level beside it (from the nearby stretches, softly
+  // blended where two pass close), under the floor beneath it, hills further out.
+  function streetHeight(x, z, hills) {
+    let wSum = 0;
+    let hSum = 0;
+    let best = Infinity;
+    let bi = 0;
+    for (let i = 0; i < xs.length; i += 1) {
+      const d2 = (xs[i] - x) ** 2 + (zs[i] - z) ** 2;
+      if (d2 < best) { best = d2; bi = i; }
+      if (d2 > 90 * 90) continue;
+      const w = 1 / (d2 + 25) ** 2;
+      wSum += w;
+      hSum += w * (ys[i] + lifts[i] - 0.25);
+    }
+    const d = Math.sqrt(best);
+    const inner = halves[bi];
+    const pavement = wSum ? hSum / wSum : ys[bi] + lifts[bi] - 0.25;
+    if (d < inner) return ys[bi] - 2; // under the street: never through its floor
+    const kerb = ys[bi] - 2 + (pavement - ys[bi] + 2) * smoothstep(inner, inner + 5, d);
+    return kerb + (hills - kerb) * smoothstep(inner + 40, inner + 160, d);
   }
 
   function heightAt(x, z) {
@@ -64,13 +95,22 @@ export function makeHeightField(centerline, laneCount, { hillHeight = 18, landRa
     }
     const r = Math.sqrt(best);
     let h = hSum / wSum - 2 + hillHeight * rolling(x, z) * smoothstep(flatTo, flatTo + 120, r);
-    h = Math.min(h, floorBelow);
+    if (street) h = streetHeight(x, z, h);
+    else h = Math.min(h, floorBelow);
     // Out at the edges, and wherever the theme puts water, the land sinks into the sea.
     const sink = Math.max(smoothstep(landRadius * 0.7, landRadius, r), water(x, z));
     return h + (seaLevel - 6 - h) * sink;
   }
 
-  return { heightAt, nearest, roadHalf };
+  /** Metres clear of the road's (or street channel's) edge at a spot (negative: on it). */
+  function clearance(x, z) {
+    if (!street) return nearest(x, z) - roadHalf;
+    let best = Infinity;
+    for (let i = 0; i < xs.length; i += 1) best = Math.min(best, Math.hypot(xs[i] - x, zs[i] - z) - halves[i]);
+    return best;
+  }
+
+  return { heightAt, nearest, clearance, roadHalf };
 }
 
 /**

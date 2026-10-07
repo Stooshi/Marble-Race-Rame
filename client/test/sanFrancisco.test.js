@@ -88,7 +88,7 @@ describe('San Francisco (3D)', () => {
     }
   });
 
-  it('draws the cable car exactly where the physics has it, and only while it is crossing', () => {
+  it('draws the cable car exactly where the physics has it while it crosses, and only outside the street otherwise', () => {
     const built = buildTrackFeatures(centerline, channel, track.physics.features);
     const car = built.group.children.find((c) => c.name === 'cable_car');
     const feature = track.physics.features.find((f) => f.type === 'cable_car');
@@ -96,9 +96,19 @@ describe('San Francisco (3D)', () => {
     for (let t = 0; t < 30000; t += 333) {
       built.update(t);
       const c = server.cableCar(t / 1000 + feature.phase);
-      expect(car.visible).toBe(Boolean(c));
       const solid = built.solidsAt(t).find((o) => o.type === 'cable_car');
-      if (!c) continue;
+      if (!c) {
+        // Driving in or out along its rails: drawn only beyond the channel, where it cannot touch a marble.
+        if (car.visible) {
+          car.geometry.computeBoundingBox();
+          const centre = car.geometry.boundingBox.getCenter(new Vector3());
+          const middle = centerline.samples[Math.round(feature.at * centerline.segments)].pos;
+          expect(Math.hypot(centre.x - middle.x, centre.z - middle.z)).toBeGreaterThan(channel.radius + feature.length / 2);
+        }
+        expect(solid.xa).toBeGreaterThan(1000);
+        continue;
+      }
+      expect(car.visible).toBe(true);
       // The same footprint as the physics: centre travelling from beyond one rim to beyond the other.
       const travel = across + feature.length / 2 + 1;
       const centre = c.dir * (-travel + 2 * travel * c.k);
@@ -107,7 +117,7 @@ describe('San Francisco (3D)', () => {
     }
     // San Francisco's furniture and the sea lion are drawn; its flower beds are scenery the physics never sees.
     const names = built.group.children.map((c) => c.name);
-    for (const part of ['newsBox', 'hydrant', 'seaLion', 'rail', 'deck', 'leaf']) expect(names).toContain(part);
+    for (const part of ['newsBox', 'hydrant', 'seaLion', 'rail', 'street', 'leaf', 'trashCan', 'busWhite']) expect(names).toContain(part);
     expect(server.normaliseFeatures(track.physics.features, 1000).some((f) => f.type === 'flowers')).toBe(false);
   });
 });

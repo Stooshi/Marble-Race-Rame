@@ -7,8 +7,8 @@
  * length) and, across the channel, at `l` (share of the way up the wall, as
  * the frames give it: positive towards the track's left).
  *
- *   boost:  { type: 'boost', at, l, length, halfWidth }  chevrons on the ice:
- *           rolling over them gives a burst of speed;
+ *   boost:  { type: 'boost', at, l, length, halfWidth, kick? }  chevrons on the ice:
+ *           rolling over them gives a burst of speed (`kick` m/s, default 9);
  *   bump:   { type: 'bump', at }  a ridge across the channel: marbles hop
  *           over it and lose a little speed;
  *   solid obstacles (ice_block, snowman, icicles, polar_bear): { type, at,
@@ -23,6 +23,9 @@
  *           channel, `width` along it) that marbles slam into and ricochet
  *           off, back and forth, the same in every race (`phase`: seconds
  *           its timetable runs ahead, to meet the pack).
+ *   bus:    { type: 'bus', at, l, length, radius } a bus parked against the
+ *           wall, `length` metres down the track from `at`: a row of round
+ *           sections (busParts) marbles glance off along its flank.
  *   Any solid can carry `loss` (default 1): how much of the usual speed a
  *   hit on it costs.
  *
@@ -30,7 +33,8 @@
  * a test checks the two agree.
  */
 
-const SOLID_TYPES = ['ice_block', 'snowman', 'icicles', 'polar_bear', 'cable_car', 'sea_lion', 'planter', 'hydrant', 'news_box'];
+const SOLID_TYPES = ['ice_block', 'snowman', 'icicles', 'polar_bear', 'cable_car', 'sea_lion', 'planter', 'hydrant', 'news_box', 'trash_can', 'bus'];
+const BUS_STEP = 1.2; // metres between the round sections a parked bus is made of, along its length
 const SWIPERS = ['polar_bear', 'sea_lion']; // reach in from the rim on bearPaw's timetable
 
 const BEAR_PERIOD = 2.0;  // seconds between swipes
@@ -68,6 +72,12 @@ function bearPawSpeed(time) {
   return (bearPaw(time + dt) - bearPaw(time - dt)) / (2 * dt);
 }
 
+/** A parked bus's round sections: offsets in metres down the track from its front. */
+function busParts(length) {
+  const n = Math.max(1, Math.round(length / BUS_STEP));
+  return Array.from({ length: n + 1 }, (_, k) => (length * k) / n);
+}
+
 /** The track's features in metres along the track (`total` metres long), sorted along it. */
 function normaliseFeatures(features, total) {
   return (Array.isArray(features) ? features : [])
@@ -76,4 +86,4 @@ function normaliseFeatures(features, total) {
     .sort((a, b) => a.s - b.s);
 }
 
-module.exports = { SOLID_TYPES, SWIPERS, BEAR_PERIOD, BEAR_SWIPE, CABLE_PERIOD, CABLE_CROSS, bearPaw, bearPawSpeed, cableCar, normaliseFeatures };
+module.exports = { SOLID_TYPES, SWIPERS, BEAR_PERIOD, BEAR_SWIPE, CABLE_PERIOD, CABLE_CROSS, bearPaw, bearPawSpeed, busParts, cableCar, normaliseFeatures };

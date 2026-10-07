@@ -21,7 +21,7 @@ export const ICE_COLORS = {
  */
 export const STREET_COLORS = {
   floorA: '#4b4e56', floorB: '#45484f', line: '#f2c230', kerbA: '#d8322b', kerbB: '#f4f4f2',
-  wallA: '#d3cdc1', wallB: '#c8c2b5', rim: '#f4f2ec', outer: '#bba98c', outerDark: '#ae9c80',
+  wallA: '#d3cdc1', wallB: '#c8c2b5', rim: '#cfc9bd', outer: '#a99a82', outerDark: '#9d8e77',
   divider: '#e9e4da', nose: '#d8322b',
 };
 const KERB_FROM = 0.5;  // radians up the wall where the kerb starts (about 29°)…
@@ -135,7 +135,11 @@ export function placeOnChannel(centerline, channel, p, l, b, h, radius, out = ne
  * and the outside skirt, cut into the two splitter channels with a divider
  * (red nose at the wedge) between them.
  */
-export function buildIceChannelGeometry(centerline, channel, { segmentsAcross = channel.look === 'street' ? 28 : 14, rimWidth = 0.45, skirt = 1.6 } = {}) {
+export function buildIceChannelGeometry(centerline, channel, {
+  segmentsAcross = channel.look === 'street' ? 28 : 14,
+  rimWidth = channel.look === 'street' ? 3 : 0.45, // a street's rims are its pavements
+  skirt = channel.look === 'street' ? 7 : 1.6,     // and a stone retaining wall below them, down to the ground
+} = {}) {
   const street = channel.look === 'street';
   const C = Object.fromEntries(Object.entries(street ? STREET_COLORS : ICE_COLORS).map(([k, v]) => [k, new Color(v)]));
   // The street's paint, by how far up the wall a strip is (th, radians) and how far down the track (s, metres).

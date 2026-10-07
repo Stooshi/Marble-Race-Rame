@@ -34,11 +34,18 @@ const fairnessBatch = () => {
   return batch;
 };
 
-test('San Francisco is moved onto the new physics by its data update, exactly as defined in code', () => {
-  const file = path.join(__dirname, '..', 'docs', 'data_updates', '2026-10-07-san-francisco-rebuild.sql');
-  const generated = execFileSync(process.execPath, [path.join(__dirname, '..', 'scripts', 'physics-track-sql.js'), 'san-francisco', '--rebuild'], { encoding: 'utf8' });
-  assert.equal(fs.readFileSync(file, 'utf8'), generated, 'the data update no longer gives the track in code');
-  assert.match(generated, /WHERE slug = 'san-francisco' AND physics IS NULL;/);
+test('San Francisco is moved onto the new physics, then re-tuned, by its data updates: together exactly the track in code', () => {
+  const dir = path.join(__dirname, '..', 'docs', 'data_updates');
+  const script = path.join(__dirname, '..', 'scripts', 'physics-track-sql.js');
+  // The rebuild (already run live, so never edited) moved it onto the new physics…
+  const rebuild = fs.readFileSync(path.join(dir, '2026-10-07-san-francisco-rebuild.sql'), 'utf8');
+  assert.match(rebuild, /WHERE slug = 'san-francisco' AND physics IS NULL;/);
+  // …and the latest re-tune sets everything as it is now in code.
+  const retune = fs.readFileSync(path.join(dir, '2026-10-08-san-francisco-retune.sql'), 'utf8');
+  const generated = execFileSync(process.execPath, [script, 'san-francisco', '--retune'], { encoding: 'utf8' });
+  assert.equal(retune, generated, 'the latest data update no longer gives the track in code');
+  const later = fs.readdirSync(dir).filter((f) => f > '2026-10-08-san-francisco-retune.sql' && f.includes('san-francisco'));
+  assert.deepEqual(later, [], 'a later San Francisco update: check it against the code here');
 });
 
 test('old San Francisco races replay exactly as they ran, on the classic engine', () => {
@@ -89,7 +96,9 @@ test('the obstacles cause chaos where the pack rides: the cable car, the street 
   assert.ok(per('cable_car') > 15, `cable car ${per('cable_car')} hits per race`);
   assert.ok(per('news_box') + per('hydrant') > 8, `street furniture ${per('news_box') + per('hydrant')} hits per race`);
   assert.ok(hits.sea_lion > 5, `sea lion ${hits.sea_lion} hits in ${runs.length} races`);
-  assert.ok(per('boost') > 40, `only ${per('boost')} boost kicks per race`);
+  assert.ok(per('trash_can') > 5, `trash cans ${per('trash_can')} hits per race`);
+  assert.ok(per('bus') > 3, `bus ${per('bus')} hits per race`);
+  assert.ok(per('boost') > 30, `only ${per('boost')} boost kicks per race`); // four pads across the whole street
 });
 
 test('the cable car crosses on a fixed timetable, the same for everyone, both ways', () => {

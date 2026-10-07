@@ -1,7 +1,7 @@
 'use strict';
 
 const { createRng } = require('./rng');
-const { bearPaw, bearPawSpeed, cableCar, normaliseFeatures, SOLID_TYPES, SWIPERS, CABLE_CROSS } = require('./trackFeatures');
+const { bearPaw, bearPawSpeed, busParts, cableCar, normaliseFeatures, SOLID_TYPES, SWIPERS, CABLE_CROSS } = require('./trackFeatures');
 const { subSeed } = require('./simulator');
 const { TRACK_STYLE, buildCenterline, trackProfile } = require('./trackGeometry');
 
@@ -30,7 +30,7 @@ const { TRACK_STYLE, buildCenterline, trackProfile } = require('./trackGeometry'
  * above the floor in metres, and standings.
  */
 
-const PHYSICS_VERSION = 'physics-preview-5'; // 2: ice knocks in metres, growing with speed (a clean start); 3: boost pads, speed bumps, obstacles; 4: real ricochets (chaos), boost kicks; 5: San Francisco's obstacles (the cable car, sea lion, street furniture), each solid's own `loss` (Bobsleigh Run races exactly as on 4)
+const PHYSICS_VERSION = 'physics-preview-6'; // 2: ice knocks in metres, growing with speed (a clean start); 3: boost pads, speed bumps, obstacles; 4: real ricochets (chaos), boost kicks; 5: San Francisco's obstacles (the cable car, sea lion, street furniture), each solid's own `loss` (Bobsleigh Run races exactly as on 4); 6: San Francisco re-tuned: a sweeping cable car, a parked bus, trash cans, each pad's own kick, hits never speeding a marble up (physics.noHitBoost)
 
 const DT = 1 / 120;           // seconds per physics step
 const G = 9.81;
@@ -371,7 +371,7 @@ function advanceChannel(m, time, ctx) {
       if (m.branch || m.lastBoost === f.id || m.s < f.s || m.s > f.s + f.length) continue;
       if (Math.abs(radius * m.th - f.x) > f.halfWidth) continue;
       m.lastBoost = f.id;
-      m.v += BOOST_KICK;
+      m.v += f.kick ?? BOOST_KICK; // a pad's own kick (San Francisco's are gentler), else the usual
       if (stats) stats.features.boost += 1;
       note('boost', 'boost_pad');
     }
@@ -665,6 +665,23 @@ function hitSolids(m, time, ctx) {
     const d = Math.sqrt(d2);
     const ns = d > 1e-6 ? ds / d : -1;
     const nx = d > 1e-6 ? dx / d : 0;
+    if (o.sweep) {
+      // A sweeping obstacle (San Francisco's cable car) never holds a marble up:
+      // it pushes it out to its nearer end and carries it across with it, the
+      // marble keeping most of its speed down the hill (`loss` per fresh hit).
+      const x = R * m.th;
+      const target = x - xa < xb - x ? xa - reach : xb + reach;
+      m.th += clamp(target - x, -0.3, 0.3) / R;
+      m.thv = clamp(ou + Math.sign(target - x) * 2, -SOLID_MAX_KNOCK, SOLID_MAX_KNOCK) / R;
+      if (m.lastSolid !== o.id || time - m.lastSolidAt > 0.3) {
+        m.v *= 1 - (o.loss ?? 0.15);
+        if (stats) stats.features[o.type] += 1;
+        if (events) events.push({ time, index: m.index, type: 'bounce', obstacle: o.type, news: true });
+      }
+      m.lastSolid = o.id;
+      m.lastSolidAt = time;
+      continue;
+    }
     // Out of it, the way it came…
     m.s += (reach - d) * ns;
     m.th += ((reach - d) * nx) / R;
@@ -687,7 +704,9 @@ function hitSolids(m, time, ctx) {
     const luck = (1.2 - m.luckKick) / 0.5;
     const dodge = rng && rng.next() < SOLID_DODGE * luck ? 0.35 : 1;
     const J = (1 + SOLID_BOUNCE) * Math.max(0, -vn) * dodge;
-    const along = m.v + J * ns;
+    // A hit glancing off the back of an obstacle can push a marble along; on tracks
+    // with physics.noHitBoost it never makes it faster than it was (it could add 100 km/h).
+    const along = ctx.noHitBoost ? Math.min(m.v, m.v + J * ns) : m.v + J * ns;
     // Good handling rides a hit better (keeps up to about 80% of its speed, not 30%).
     // Strong marbles (all four stats) power through: a top marble loses well under half what a weak one does.
     // An obstacle's `loss` (default 1) scales what its hits cost: the cable car sweeps marbles aside more than it stops them.
@@ -877,6 +896,7 @@ function simulatePhysicsRace({ seed, track, entries, level = 3, tickRateHz = 20 
   const pen = ctx.channel && tp.runout ? { length: tp.runout.length, room: tp.runout.halfWidth - RADIUS } : null;
   ctx.pen = pen;
   ctx.collisions = collisions;
+  ctx.noHitBoost = Boolean(tp?.noHitBoost);
   // Boost pads, speed bumps and obstacles (ice channels with physics.features).
   if (ctx.channel && tp.features) {
     const features = normaliseFeatures(tp.features, total);
@@ -896,7 +916,10 @@ function simulatePhysicsRace({ seed, track, entries, level = 3, tickRateHz = 20 
         half: (f.length ?? 7) / 2,
         travel: across(1) + (f.length ?? 7) / 2 + 1,
       }),
-    }));
+    })).flatMap((o) => (o.type === 'bus'
+      // A parked bus: a row of round sections down its length, each its own solid.
+      ? busParts(o.length ?? 10).map((d, k) => ({ ...o, id: `${o.id}:${k}`, s: o.s + d }))
+      : [o]));
     stats.features = { boost: 0, bump: 0, ...Object.fromEntries(SOLID_TYPES.map((t) => [t, 0])) };
   }
   if (pen) stats.penBumps = 0;
