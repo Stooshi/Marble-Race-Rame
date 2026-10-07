@@ -285,14 +285,16 @@ export function buildTrackFeatures(centerline, channel, features, { lite = false
             col.push(grout.r, grout.g, grout.b);
           }
         }
-        for (let c = 0; c < cols; c += 1) {
-          // One stone: a quad a little smaller than its cell (the joints show between them).
+        for (let c = -1; c < cols; c += 1) {
+          // One stone: a quad a little smaller than its cell (the joints show between them); every other row half a stone along.
+          // (Phones: stones edge to edge, no joints, so no street paint shows between them.)
+          const gap = lite ? 0 : 0.08;
           const offset = r % 2 ? 0.5 : 0;
-          const u0 = (c + 0.08 + offset) / cols;
-          const u1 = (c + 0.92 + offset) / cols;
-          if (u1 > 1) continue;
-          const a0 = p(f.at, (len * (r + 0.08)) / rows);
-          const a1 = p(f.at, (len * (r + 0.92)) / rows);
+          const u0 = Math.max(0, Math.min(1, (c + gap + offset) / cols));
+          const u1 = Math.min(1, (c + 1 - gap + offset) / cols);
+          if (u1 - u0 < 0.25 / cols) continue;
+          const a0 = p(f.at, (len * (r + gap)) / rows);
+          const a1 = p(f.at, (len * (r + 1 - gap)) / rows);
           const corners = [[a0, u0], [a0, u1], [a1, u1], [a1, u0]].map(([at, u]) => surface(at, -lip + 2 * lip * u, 0.03).point);
           const shade = shades[(r * 7 + c * 3) % shades.length];
           for (const k of [0, 1, 2, 0, 2, 3]) {
