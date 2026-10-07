@@ -27,6 +27,21 @@ export function bearPaw(time) {
   return k * k;
 }
 
+// San Francisco's cable car: the same timetable as the physics' (src/game/trackFeatures.js; a test checks they agree).
+const CABLE_PERIOD = 9;
+const CABLE_CROSS = 4;
+
+/** Where the cable car is at `time` seconds: null while away, else { k: 0..1 across, dir: +1 towards the left, -1 the other way }. */
+export function cableCar(time) {
+  const n = Math.floor(time / CABLE_PERIOD);
+  const t = time - n * CABLE_PERIOD;
+  if (t >= CABLE_CROSS) return null;
+  return { k: t / CABLE_CROSS, dir: n % 2 === 0 ? 1 : -1 };
+}
+
+const SWIPERS = ['polar_bear', 'sea_lion']; // reach in from the rim on bearPaw's timetable
+const DECOR = ['flowers']; // drawn only: the physics ignores them
+
 const BUMP_HALF = 1.2;  // metres from a bump's crest to its foot (the physics throws marbles up at its foot)
 const BUMP_HEIGHT = 0.45;
 
@@ -34,6 +49,10 @@ export const FEATURE_COLORS = {
   chevron: '#ffd21f', chevronBack: '#16161a', bumpA: '#2f6fb0', bumpB: '#ffffff',
   snow: '#fbfdff', ice: '#bfe9ff', coal: '#1d1f24', carrot: '#ff8a1f', hat: '#2a2d36', scarf: '#e23b3b',
   bear: '#f7f3ea', bearDark: '#26262b', frost: '#e8f6ff',
+  // San Francisco
+  carRed: '#b8312f', carCream: '#f1e3bf', carWindow: '#2b3440', carRoof: '#4b3a2c', rail: '#2d2e33', deck: '#8d8f94',
+  newsBox: '#2f5fb3', newsTop: '#e8edf5', hydrant: '#f2efe6', hydrantCap: '#2f5fb3',
+  seaLion: '#5a4030', seaLionDark: '#2b1f17', rock: '#7b7d80', planterBox: '#8a6a48', leaf: '#3f8a3a', flowerA: '#ff6f91', flowerB: '#ffd23f',
 };
 
 /** Our own chevron design: bold yellow arrows on black, pointing down the track, with a yellow border. */
@@ -100,7 +119,8 @@ export function buildTrackFeatures(centerline, channel, features) {
     return { point, normal };
   };
   const p = (at, metres = 0) => at + metres / channel.arc;
-  let bear = null;
+  const swipers = []; // the polar bear's and the sea lion's moving parts
+  let car = null;     // the cable car's body, rebuilt along the U as it crosses
   const pads = []; // boost pads: where they are (to spot marbles rolling onto them) and their flash
   const solids = []; // obstacle footprints, as the physics has them (metres along the track and along the wall)
 
@@ -230,6 +250,170 @@ export function buildTrackFeatures(centerline, channel, features) {
       const cone = new ConeGeometry((f.radius ?? 0.35) * 0.9, len, 8);
       cone.rotateX(Math.PI);
       add('ice', cone, pose(new Vector3(point.x, beamY - 0.22 - len / 2, point.z)));
+    } else if (f.type === 'news_box' || f.type === 'hydrant') {
+      // Street furniture standing on the floor: a blue newspaper box, or a white fire hydrant with a blue cap.
+      const { point, normal } = surface(f.at, f.l, 0);
+      const { along } = frameAt(centerline, f.at);
+      const q = new Quaternion().setFromUnitVectors(UP, normal);
+      const turn = new Quaternion().setFromUnitVectors(new Vector3(0, 0, 1), along.clone().setY(0).normalize());
+      const r = f.radius ?? 0.6;
+      const h = f.height ?? 1.2;
+      const up = (y) => point.clone().addScaledVector(normal, y);
+      if (f.type === 'news_box') {
+        add('newsBox', new BoxGeometry(r * 1.7, h * 0.85, r * 1.4), pose(up(h * 0.425), q.clone().multiply(turn)));
+        add('newsTop', new BoxGeometry(r * 1.8, h * 0.15, r * 1.5), pose(up(h * 0.92), q.clone().multiply(turn)));
+        add('newsTop', new BoxGeometry(r * 1.2, h * 0.3, 0.04), pose(up(h * 0.55).addScaledVector(along, -r * 0.71), q.clone().multiply(turn)));
+      } else {
+        add('hydrant', new CylinderGeometry(r * 0.6, r * 0.7, h * 0.75, 14), pose(up(h * 0.375), q));
+        add('hydrantCap', new SphereGeometry(r * 0.62, 14, 8, 0, Math.PI * 2, 0, Math.PI / 2), pose(up(h * 0.75), q));
+        add('hydrantCap', new CylinderGeometry(r * 0.16, r * 0.16, 0.15, 8), pose(up(h * 1.08), q));
+        const nozzle = new CylinderGeometry(r * 0.2, r * 0.2, r * 1.8, 10);
+        nozzle.rotateZ(Math.PI / 2);
+        add('hydrant', nozzle, pose(up(h * 0.5), q.clone().multiply(turn)));
+        add('hydrantCap', new CylinderGeometry(r * 0.75, r * 0.75, 0.1, 14), pose(up(0.05), q));
+      }
+    } else if (f.type === 'flowers') {
+      // Lombard Street's flower beds, lining both rims from `at` to `to` (scenery only).
+      for (let at = f.at; at <= (f.to ?? f.at); at += 5 / channel.arc) {
+        const s = at * channel.arc;
+        const lip = channelLipAt(channel, s) / channel.maxAngle;
+        const { side, along } = frameAt(centerline, at);
+        const turn = new Quaternion().setFromUnitVectors(new Vector3(0, 0, 1), along.clone().setY(0).normalize());
+        for (const sign of [-1, 1]) {
+          const rim = surface(at, sign * lip, 0).point.addScaledVector(side, sign * 1.1);
+          add('planterBox', new BoxGeometry(0.9, 0.5, 2.6), pose(rim.clone().addScaledVector(UP, 0.25), turn));
+          add('leaf', new IcosahedronGeometry(0.55, 1), pose(rim.clone().addScaledVector(UP, 0.7), turn, new Vector3(0.9, 0.7, 2)));
+          for (let k = -1; k <= 1; k += 1) {
+            const bloom = rim.clone().addScaledVector(UP, 1.05).addScaledVector(along, k * 0.7).addScaledVector(side, ((k + 2) % 2) * 0.15);
+            add((Math.round(at * 997) + k) % 2 ? 'flowerA' : 'flowerB', new IcosahedronGeometry(0.2, 0), pose(bloom));
+          }
+        }
+      }
+    } else if (f.type === 'cable_car') {
+      // A cable car crossing the street on rails, side to side, on its
+      // timetable; between crossings it waits out of sight. Its body hugs
+      // the U (rebuilt each frame as it slides), so what you see is exactly
+      // what the marbles hit. Beyond each rim a deck carries the rails on.
+      const s = f.at * channel.arc;
+      const lipX = (channelLipAt(channel, s) / channel.maxAngle) * across; // metres along the wall to the rim
+      const { side, along } = frameAt(centerline, f.at);
+      const width = f.width ?? 2.4;
+      const height = f.height ?? 3.2;
+      const half = (f.length ?? 7) / 2;
+      const travel = across + half + 1;
+      // A spot x metres along the surface from the middle (+: left): on the channel, or past the rim on a deck at rim height.
+      const spot = (x, lift) => {
+        if (Math.abs(x) <= lipX) return surface(f.at, x / across, lift);
+        const sgn = Math.sign(x);
+        const rim = surface(f.at, (sgn * lipX) / across, 0).point;
+        return { point: rim.addScaledVector(side, sgn * (Math.abs(x) - lipX)).addScaledVector(UP, lift), normal: UP.clone() };
+      };
+      // The rails: two dark strips across the street and out over both decks.
+      for (const off of [-0.55, 0.55]) {
+        const pos = [];
+        const steps = 40;
+        for (let k = 0; k <= steps; k += 1) {
+          const x = -travel - half + (2 * (travel + half) * k) / steps;
+          const { point } = spot(x, 0.04);
+          for (const w of [-0.07, 0.07]) {
+            const q = point.clone().addScaledVector(along, off + w);
+            pos.push(q.x, q.y, q.z);
+          }
+        }
+        const index = [];
+        for (let k = 0; k < steps; k += 1) index.push(2 * k, 2 * k + 1, 2 * k + 2, 2 * k + 1, 2 * k + 3, 2 * k + 2);
+        const g = new BufferGeometry();
+        g.setAttribute('position', new Float32BufferAttribute(pos, 3));
+        g.setIndex(index);
+        g.computeVertexNormals();
+        add('rail', g, new Matrix4());
+      }
+      const basis = new Matrix4().makeBasis(side, UP, along.clone().setY(0).normalize());
+      const deckQ = new Quaternion().setFromRotationMatrix(basis);
+      for (const sgn of [-1, 1]) {
+        const len = travel + half - lipX + 0.5;
+        const from = surface(f.at, (sgn * lipX) / across, 0).point;
+        add('deck', new BoxGeometry(len, 0.3, width + 1.6), pose(from.clone().addScaledVector(side, (sgn * len) / 2).addScaledVector(UP, -0.15), deckQ));
+      }
+      // The body: slices across, each a band of colours up its side (red, cream belt, windows, cream, roof).
+      const SLICES = 18;
+      const LEVELS = [0, 0.48, 0.56, 0.84, 0.93, 1];
+      const BANDS = ['carRed', 'carCream', 'carWindow', 'carCream', 'carRoof'].map((k) => new Color(FEATURE_COLORS[k]));
+      const tris = SLICES * (LEVELS.length - 1) * 2 * 2 * 3 + SLICES * 2 * 3 + 2 * (LEVELS.length - 1) * 2 * 3; // sides, roof, ends
+      const position = new Float32BufferAttribute(new Float32Array(tris * 3), 3);
+      const color = new Float32BufferAttribute(new Float32Array(tris * 3), 3);
+      const geo = new BufferGeometry();
+      geo.setAttribute('position', position);
+      geo.setAttribute('color', color);
+      const corner = new Vector3();
+      const build = (xa, xb) => {
+        // Points of slice j at level i, on the front (+1) or back (-1) side.
+        const slices = [];
+        for (let j = 0; j <= SLICES; j += 1) {
+          const { point, normal } = spot(xa + ((xb - xa) * j) / SLICES, 0.05);
+          slices.push({ point, normal });
+        }
+        const at = (j, i, f2) => corner.copy(slices[j].point).addScaledVector(slices[j].normal, LEVELS[i] * height).addScaledVector(along, (f2 * width) / 2).clone();
+        let v = 0;
+        const put = (a, b, c, col) => { for (const p2 of [a, b, c]) { position.setXYZ(v, p2.x, p2.y, p2.z); color.setXYZ(v, col.r, col.g, col.b); v += 1; } };
+        const quad = (a, b, c, d, col) => { put(a, b, c, col); put(a, c, d, col); };
+        for (let j = 0; j < SLICES; j += 1) {
+          for (let i = 0; i < LEVELS.length - 1; i += 1) {
+            // The window band: windows with cream pillars between them (every third slice).
+            const col = i === 2 && j % 3 === 0 ? BANDS[1] : BANDS[i];
+            quad(at(j, i, 1), at(j + 1, i, 1), at(j + 1, i + 1, 1), at(j, i + 1, 1), col);
+            quad(at(j + 1, i, -1), at(j, i, -1), at(j, i + 1, -1), at(j + 1, i + 1, -1), col);
+          }
+          const top = LEVELS.length - 1;
+          quad(at(j, top, 1), at(j + 1, top, 1), at(j + 1, top, -1), at(j, top, -1), BANDS[BANDS.length - 1]);
+        }
+        for (const [j, f2] of [[0, -1], [SLICES, 1]]) {
+          for (let i = 0; i < LEVELS.length - 1; i += 1) {
+            const col = BANDS[i];
+            if (f2 < 0) quad(at(j, i, -1), at(j, i, 1), at(j, i + 1, 1), at(j, i + 1, -1), col);
+            else quad(at(j, i, 1), at(j, i, -1), at(j, i + 1, -1), at(j, i + 1, 1), col);
+          }
+        }
+        position.needsUpdate = true;
+        color.needsUpdate = true;
+        geo.computeVertexNormals();
+        geo.computeBoundingSphere();
+      };
+      const mesh = new Mesh(geo, new MeshLambertMaterial({ vertexColors: true, side: DoubleSide }));
+      mesh.name = 'cable_car';
+      mesh.visible = false;
+      group.add(mesh);
+      car = { mesh, build, half, travel, phase: f.phase ?? 0 };
+    } else if (f.type === 'sea_lion') {
+      // A sea lion lying on a rock beside the pier, lunging its head into the channel on the swipe's timetable.
+      const { side } = frameAt(centerline, f.at);
+      const s = f.at * channel.arc;
+      const lip = channelLipAt(channel, s) / channel.maxAngle;
+      const sign = Math.sign(f.l) || -1;
+      const rim = surface(f.at, sign * lip, 0).point;
+      const out = side.clone().multiplyScalar(sign);
+      const inward = out.clone().negate();
+      const look = new Quaternion().setFromUnitVectors(new Vector3(0, 0, 1), inward);
+      const base = rim.clone().addScaledVector(out, 2.1);
+      add('rock', new IcosahedronGeometry(1.5, 1), pose(base.clone().addScaledVector(UP, -0.4), look, new Vector3(1.3, 0.7, 1.4)));
+      const body = base.clone().addScaledVector(UP, 0.75);
+      add('seaLion', new IcosahedronGeometry(1, 2), pose(body, look, new Vector3(0.75, 0.7, 1.45)));
+      const across2 = new Vector3().crossVectors(UP, inward).normalize();
+      for (const k of [-1, 1]) add('seaLion', new IcosahedronGeometry(0.4, 1), pose(body.clone().addScaledVector(across2, k * 0.75).addScaledVector(inward, 0.4).addScaledVector(UP, -0.35), look, new Vector3(0.5, 0.2, 1.2)));
+      const shoulder = body.clone().addScaledVector(inward, 0.9).addScaledVector(UP, 0.4);
+      const restL = f.l;
+      const reachL = f.reach ?? f.l;
+      const neckMat = new MeshLambertMaterial({ color: FEATURE_COLORS.seaLion, flatShading: true });
+      const arm = new Mesh(new CylinderGeometry(0.32, 0.42, 1, 10), neckMat);
+      const paw = new Mesh(new IcosahedronGeometry(0.5, 1), neckMat);
+      const claws = new Mesh(new IcosahedronGeometry(0.17, 1), new MeshLambertMaterial({ color: FEATURE_COLORS.seaLionDark }));
+      group.add(arm, paw, claws);
+      const pawAt = (k) => {
+        const l = restL + (reachL - restL) * k;
+        if (Math.abs(l) <= lip) return surface(f.at, l, 0.5).point;
+        return rim.clone().addScaledVector(out, (Math.abs(l) - lip) * across).addScaledVector(UP, 0.9);
+      };
+      swipers.push({ arm, paw, claws, shoulder, pawAt, inward, nose: 0.45 });
     } else if (f.type === 'polar_bear') {
       // A polar bear sitting just outside the rim, swiping into the channel.
       const { pos, side } = frameAt(centerline, f.at);
@@ -268,15 +452,20 @@ export function buildTrackFeatures(centerline, channel, features) {
         const beyond = (Math.abs(l) - lip) * across;
         return rim.clone().addScaledVector(out, beyond).addScaledVector(UP, 0.6);
       };
-      bear = { arm, paw, claws, shoulder, pawAt, inward };
+      swipers.push({ arm, paw, claws, shoulder, pawAt, inward, nose: 0.3 });
     }
   }
 
   for (const f of features) {
-    if (f.type === 'boost' || f.type === 'bump') continue;
-    const xa = Math.min(f.l, f.l2 ?? f.l) * across;
-    const xb = Math.max(f.l, f.l2 ?? f.l) * across;
-    solids.push({ id: solids.length, type: f.type, s: f.at * channel.arc, xa, xb, reach: (f.radius ?? 0.7) + 0.55, rest: f.l * across, full: (f.reach ?? f.l) * across });
+    if (f.type === 'boost' || f.type === 'bump' || DECOR.includes(f.type)) continue;
+    const l = f.l ?? 0;
+    const xa = Math.min(l, f.l2 ?? l) * across;
+    const xb = Math.max(l, f.l2 ?? l) * across;
+    const radius = f.type === 'cable_car' ? (f.width ?? 2.4) / 2 : f.radius ?? 0.7;
+    solids.push({
+      id: solids.length, type: f.type, s: f.at * channel.arc, xa, xb, reach: radius + 0.55, rest: l * across, full: (f.reach ?? l) * across,
+      ...(f.type === 'cable_car' && { half: (f.length ?? 7) / 2, travel: across + (f.length ?? 7) / 2 + 1, phase: f.phase ?? 0 }),
+    });
   }
 
   // One mesh per material.
@@ -294,6 +483,18 @@ export function buildTrackFeatures(centerline, channel, features) {
     bearDark: new MeshLambertMaterial({ color: FEATURE_COLORS.bearDark }),
     // Clear ice: the follow camera can see the marbles through the beam over the channel.
     frost: new MeshLambertMaterial({ color: FEATURE_COLORS.frost, emissive: '#6f8796', transparent: true, opacity: 0.35, depthWrite: false }),
+    rail: new MeshLambertMaterial({ color: FEATURE_COLORS.rail, polygonOffset: true, polygonOffsetFactor: -2 }),
+    deck: new MeshLambertMaterial({ color: FEATURE_COLORS.deck }),
+    newsBox: new MeshLambertMaterial({ color: FEATURE_COLORS.newsBox }),
+    newsTop: new MeshLambertMaterial({ color: FEATURE_COLORS.newsTop }),
+    hydrant: new MeshLambertMaterial({ color: FEATURE_COLORS.hydrant, emissive: '#55524a' }),
+    hydrantCap: new MeshLambertMaterial({ color: FEATURE_COLORS.hydrantCap }),
+    seaLion: new MeshLambertMaterial({ color: FEATURE_COLORS.seaLion, flatShading: true }),
+    rock: new MeshLambertMaterial({ color: FEATURE_COLORS.rock, flatShading: true }),
+    planterBox: new MeshLambertMaterial({ color: FEATURE_COLORS.planterBox }),
+    leaf: new MeshLambertMaterial({ color: FEATURE_COLORS.leaf, flatShading: true }),
+    flowerA: new MeshLambertMaterial({ color: FEATURE_COLORS.flowerA, emissive: '#5a1f2c' }),
+    flowerB: new MeshLambertMaterial({ color: FEATURE_COLORS.flowerB, emissive: '#5a4a10' }),
   };
   for (const [key, list] of Object.entries(parts)) {
     // Merge like with like (all with the same attributes).
@@ -381,8 +582,16 @@ export function buildTrackFeatures(centerline, channel, features) {
   /** Obstacle footprints at race time t (ms), for drawing marbles round them (the bear's paw moves). */
   const solidsAt = (t) => {
     for (const o of solids) {
-      if (o.type !== 'polar_bear') continue;
-      o.xa = o.xb = o.rest + (o.full - o.rest) * bearPaw(t / 1000);
+      if (SWIPERS.includes(o.type)) o.xa = o.xb = o.rest + (o.full - o.rest) * bearPaw(t / 1000);
+      else if (o.type === 'cable_car') {
+        const c = cableCar(t / 1000 + o.phase);
+        if (!c) o.xa = o.xb = 1e4; // away: nowhere near the channel
+        else {
+          const centre = c.dir * (-o.travel + 2 * o.travel * c.k);
+          o.xa = centre - o.half;
+          o.xb = centre + o.half;
+        }
+      }
     }
     return solids;
   };
@@ -482,15 +691,24 @@ export function buildTrackFeatures(centerline, channel, features) {
 
   const update = (t, info) => {
     effects(t, info);
-    if (!bear) return;
-    const tip = bear.pawAt(bearPaw(t / 1000));
-    const { arm, paw, claws, shoulder } = bear;
-    const len = shoulder.distanceTo(tip);
-    arm.position.copy(shoulder).lerp(tip, 0.5);
-    arm.scale.set(1, len, 1);
-    arm.quaternion.setFromUnitVectors(UP, tmp.subVectors(tip, shoulder).normalize());
-    paw.position.copy(tip);
-    claws.position.copy(tip).addScaledVector(bear.inward, 0.3);
+    for (const sw of swipers) {
+      const tip = sw.pawAt(bearPaw(t / 1000));
+      const { arm, paw, claws, shoulder } = sw;
+      const len = shoulder.distanceTo(tip);
+      arm.position.copy(shoulder).lerp(tip, 0.5);
+      arm.scale.set(1, len, 1);
+      arm.quaternion.setFromUnitVectors(UP, tmp.subVectors(tip, shoulder).normalize());
+      paw.position.copy(tip);
+      claws.position.copy(tip).addScaledVector(sw.inward, sw.nose);
+    }
+    if (car) {
+      const c = cableCar(t / 1000 + car.phase);
+      car.mesh.visible = Boolean(c);
+      if (c) {
+        const centre = c.dir * (-car.travel + 2 * car.travel * c.k);
+        car.build(centre - car.half, centre + car.half);
+      }
+    }
   };
   update(0);
   const dispose = () => {
@@ -501,8 +719,6 @@ export function buildTrackFeatures(centerline, channel, features) {
     });
     for (const m of Object.values(materials)) m.dispose();
     tex?.dispose();
-    bear?.arm.material.dispose();
-    bear?.claws.material.dispose();
   };
   return { group, update, dispose, solidsAt };
 }

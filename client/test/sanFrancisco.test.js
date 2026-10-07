@@ -1,0 +1,109 @@
+import { createRequire } from 'node:module';
+import { describe, expect, it } from 'vitest';
+import { DoubleSide, Mesh, MeshBasicMaterial, PerspectiveCamera, Raycaster, Triangle, Vector3 } from 'three';
+import { buildCenterline } from '../src/three/trackModel';
+import { buildIceChannelGeometry, channelOf } from '../src/three/iceChannel';
+import { layoutMarbles, MARBLE_RADIUS } from '../src/three/marbles';
+import { buildTrackFeatures } from '../src/three/trackFeatures';
+import { TrackScene } from '../src/three/TrackScene';
+import { frameAtTime } from '../src/utils/splits';
+
+const require = createRequire(import.meta.url);
+const { physicsTrack } = require('../../src/game/physicsTracks');
+const { simulatePhysicsRace } = require('../../src/game/physicsSimulator');
+const server = require('../../src/game/trackFeatures');
+
+const track = physicsTrack('san-francisco');
+const centerline = buildCenterline(track);
+const channel = channelOf(track, centerline);
+const geometry = buildIceChannelGeometry(centerline, channel);
+const entries = Array.from({ length: 20 }, (_, i) => ({ id: `m${i}`, lane: i, topSpeed: 20 + i * 4, acceleration: 50 }));
+const sim = simulatePhysicsRace({ seed: 3, track, entries, level: 3 });
+
+// The 3D view draws onto canvases; tests run without a browser.
+globalThis.document ??= {
+  createElement: () => ({ getContext: () => new Proxy({}, { get: () => () => {} }), width: 0, height: 0 }),
+};
+
+describe('San Francisco (3D)', () => {
+  it('is a racing channel dressed as a street', () => {
+    expect(channel.look).toBe('street');
+    expect(channelOf(physicsTrack('bobsleigh-run'), buildCenterline(physicsTrack('bobsleigh-run'))).look).toBe('ice');
+  });
+
+  it('keeps the follow camera with the leader the whole race: above it, never blocked by the street, no jumps (desktop and phone)', { timeout: 120_000 }, () => {
+    const mesh = new Mesh(geometry, new MeshBasicMaterial({ side: DoubleSide }));
+    mesh.updateMatrixWorld();
+    const ray = new Raycaster();
+    for (const aspect of [1.8, 0.6]) {
+      const scene = Object.create(TrackScene.prototype);
+      const camera = new PerspectiveCamera(50, aspect, 0.3, 3000);
+      Object.assign(scene, { centerline, channel, track, scenery: null, camera });
+      scene.main = { camera, cam: new Vector3(), target: new Vector3(), ready: false, leader: null, leaderT: undefined };
+      const out = [];
+      let last = null;
+      let checked = 0;
+      for (let t = 0; t < sim.durationMs; t += 50) {
+        const f = frameAtTime(sim.frames, sim.tickMs, t);
+        const i = scene.followedIndex(f, 'leader', scene.main);
+        if (f.p[i] >= 1) break;
+        layoutMarbles(centerline, f, track.lane_count, null, { channel, out, separate: false });
+        scene.updateFollowCamera(out[i], f.p[i], 0.05, scene.main);
+        const cam = scene.main.cam;
+        if (last) expect(cam.distanceTo(last)).toBeLessThan(4); // 20 frames a second: smooth, no jumps
+        last = cam.clone();
+        if (t % 250 !== 0) continue;
+        checked += 1;
+        expect(cam.y - out[i].y).toBeGreaterThan(0);
+        ray.set(cam, out[i].clone().sub(cam).normalize());
+        ray.far = cam.distanceTo(out[i]) - 1;
+        expect(ray.intersectObject(mesh)).toHaveLength(0);
+      }
+      expect(checked).toBeGreaterThan(100);
+    }
+  });
+
+  it('sits the waiting and starting marbles on the street of the steep ramp, never sunk into it', () => {
+    const pos = geometry.getAttribute('position');
+    const tris = [];
+    for (let k = 0; k < pos.count; k += 3) {
+      const t = new Triangle(new Vector3().fromBufferAttribute(pos, k), new Vector3().fromBufferAttribute(pos, k + 1), new Vector3().fromBufferAttribute(pos, k + 2));
+      if (t.a.distanceTo(centerline.samples[0].pos) < 120) tris.push(t);
+    }
+    const q = new Vector3();
+    const out = [];
+    for (const t of [0, 1000, 2500]) {
+      const f = frameAtTime(sim.frames, sim.tickMs, t);
+      layoutMarbles(centerline, f, track.lane_count, null, { channel, out, separate: false });
+      for (let i = 0; i < 20; i += 1) {
+        if (f.h[i] > 0.05) continue;
+        const gap = Math.min(...tris.map((tr) => tr.closestPointToPoint(out[i], q).distanceTo(out[i]))) - MARBLE_RADIUS;
+        expect(gap).toBeGreaterThan(-0.005);
+        expect(gap).toBeLessThan(0.05);
+      }
+    }
+  });
+
+  it('draws the cable car exactly where the physics has it, and only while it is crossing', () => {
+    const built = buildTrackFeatures(centerline, channel, track.physics.features);
+    const car = built.group.children.find((c) => c.name === 'cable_car');
+    const feature = track.physics.features.find((f) => f.type === 'cable_car');
+    const across = channel.radius * channel.maxAngle;
+    for (let t = 0; t < 30000; t += 333) {
+      built.update(t);
+      const c = server.cableCar(t / 1000 + feature.phase);
+      expect(car.visible).toBe(Boolean(c));
+      const solid = built.solidsAt(t).find((o) => o.type === 'cable_car');
+      if (!c) continue;
+      // The same footprint as the physics: centre travelling from beyond one rim to beyond the other.
+      const travel = across + feature.length / 2 + 1;
+      const centre = c.dir * (-travel + 2 * travel * c.k);
+      expect((solid.xa + solid.xb) / 2).toBeCloseTo(centre, 6);
+      expect(solid.xb - solid.xa).toBeCloseTo(feature.length, 6);
+    }
+    // San Francisco's furniture and the sea lion are drawn; its flower beds are scenery the physics never sees.
+    const names = built.group.children.map((c) => c.name);
+    for (const part of ['newsBox', 'hydrant', 'seaLion', 'rail', 'deck', 'leaf']) expect(names).toContain(part);
+    expect(server.normaliseFeatures(track.physics.features, 1000).some((f) => f.type === 'flowers')).toBe(false);
+  });
+});

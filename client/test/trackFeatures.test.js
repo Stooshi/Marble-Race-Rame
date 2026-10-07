@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { Vector3 } from 'three';
 import { buildCenterline } from '../src/three/trackModel';
 import { channelOf, placeOnChannel } from '../src/three/iceChannel';
-import { bearPaw, buildTrackFeatures } from '../src/three/trackFeatures';
+import { bearPaw, buildTrackFeatures, cableCar } from '../src/three/trackFeatures';
 import { layoutMarbles } from '../src/three/marbles';
 import { frameAtTime } from '../src/utils/splits';
 
@@ -46,8 +46,9 @@ describe('track features (3D)', () => {
     }
   });
 
-  it('swipes the polar bear\'s paw on exactly the physics\' timetable', () => {
+  it('swipes the polar bear\'s paw (and runs San Francisco\'s cable car) on exactly the physics\' timetable', () => {
     for (let t = -3; t < 10; t += 0.037) expect(bearPaw(t)).toBeCloseTo(server.bearPaw(t), 12);
+    for (let t = 0; t < 40; t += 0.043) expect(cableCar(t)).toEqual(server.cableCar(t));
     const arm = built.group.children.find((c) => c.isMesh && c.geometry.type === 'CylinderGeometry');
     built.update(0); // resting
     const rest = arm.position.clone();

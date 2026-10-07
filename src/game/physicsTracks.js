@@ -218,6 +218,7 @@ function sanFrancisco() {
     sections: g.sections,
     physics: {
       surface: 'ice',          // slick: the street only looks like asphalt
+      look: 'street',          // how the 3D view dresses the channel (physics ignores it)
       pace: 'free',
       // Nearly vertical walls (88° up), so marbles can ride high round the
       // hairpins and the bay sweep at full speed without leaving the channel.
@@ -235,8 +236,9 @@ function sanFrancisco() {
         { type: 'cable_car', at: on('Powell Street', 0.82), length: 7, width: 2.4, height: 3.2, phase: 5, loss: 0.15 },
         { type: 'boost', at: on('Powell Street', 0.95), l: 0, length: 8, halfWidth: 3.6 },     // into the Russian Hill climb
         { type: 'boost', at: on('Hyde Street', 0.25), l: 0, length: 8, halfWidth: 3.6 },       // landing off the crest
-        // (Lombard Street's flower beds line the street as scenery: in the hairpins
-        // they caught slow marbles and left them crawling, ten seconds behind.)
+        // Lombard Street's flower beds line both rims (scenery only: in the hairpins
+        // they caught slow marbles and left them crawling, ten seconds behind).
+        { type: 'flowers', at: on('Lombard 1', 0), to: on('Lombard 4', 1) },
         { type: 'boost', at: on('Leavenworth', 0.05), l: 0, length: 8, halfWidth: 3.6 },       // out of the hairpins
         { type: 'boost', at: on('Leavenworth', 0.9), l: 0, length: 8, halfWidth: 3.6 },        // into the Telegraph Hill climb
         // Filbert Street, once the pack is down from the crest hop: two newspaper boxes either side…

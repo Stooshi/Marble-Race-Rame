@@ -16,8 +16,12 @@ const SEA_LEVEL = -1.2;
 const PAINTED_LADIES = ['#f6a9bd', '#a9d6ef', '#ffd79c', '#b9e6a5', '#d6b9f2', '#ffb994', '#9fd8c9', '#f7e3a1', '#f2b6d8'];
 const INTERNATIONAL_ORANGE = '#c4452f';
 
-/** Where the land and the water are, from the track's own shape (so it fits any SF layout). */
-export function sanFranciscoLayout(centerline) {
+/**
+ * Where the land and the water are, from the track's own shape (so it fits any SF layout).
+ * pierFinish: the rebuilt track (new physics) finishes on a pier, with the bay
+ * beyond it; the classic layout's whole southern edge is waterfront.
+ */
+export function sanFranciscoLayout(centerline, { pierFinish = false } = {}) {
   const xs = centerline.samples.map((s) => s.pos.x);
   const zs = centerline.samples.map((s) => s.pos.z);
   const bounds = { minX: Math.min(...xs), maxX: Math.max(...xs), minZ: Math.min(...zs), maxZ: Math.max(...zs) };
@@ -28,7 +32,7 @@ export function sanFranciscoLayout(centerline) {
   const end = centerline.samples[centerline.samples.length - 1];
   const dir = new Vector3(end.tangent.x, 0, end.tangent.z).normalize();
   const water = (x, z) => Math.max(
-    smoothstep(finish.z + 18, finish.z + 70, z),
+    pierFinish ? 0 : smoothstep(finish.z + 18, finish.z + 70, z),
     smoothstep(14, 42, (x - finish.x) * dir.x + (z - finish.z) * dir.z)
       * (1 - smoothstep(110, 200, Math.abs((x - finish.x) * dir.z - (z - finish.z) * dir.x))),
     smoothstep(bounds.minX - 50, bounds.minX - 110, x) * smoothstep(bounds.minZ + depth * 0.35, bounds.minZ + depth * 0.6, z),
@@ -230,7 +234,7 @@ function sunTexture() {
 /** Builds the whole San Francisco world around a track. Returns a Group. */
 export function buildSanFrancisco(centerline, track, theme) {
   const lanes = Math.max(1, Number(track?.lane_count) || 5);
-  const layout = sanFranciscoLayout(centerline);
+  const layout = sanFranciscoLayout(centerline, { pierFinish: Boolean(track?.physics?.channel) });
   const field = makeHeightField(centerline, lanes, { hillHeight: 34, landRadius: 340, seaLevel: SEA_LEVEL, water: layout.water });
   const group = new Group();
   group.name = 'scenery:san-francisco';

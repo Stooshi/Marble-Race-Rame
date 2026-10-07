@@ -14,7 +14,7 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { buildCenterline, buildTrackGeometry, TRACK_STYLE } from './trackModel';
 import { PEN_DROP, RaceMarbles, RUNOUT_LENGTH } from './marbles';
 import { buildScenery } from './scenery';
-import { buildIceChannelGeometry, channelLipAt, channelOf, channelRadiusAt, forkOffset, forkRadius, ICE_COLORS } from './iceChannel';
+import { buildIceChannelGeometry, channelLipAt, channelOf, channelRadiusAt, forkOffset, forkRadius, ICE_COLORS, STREET_COLORS } from './iceChannel';
 import { DEFAULT_THEME, themeFor } from './themes';
 import { gatePlaces, StartGate } from './startGate';
 import { countdownPose, handover, startLineShot } from './startCamera';
@@ -240,17 +240,18 @@ export class TrackScene {
     const floorLen = Math.hypot(pen.length, drop);
     const wallH = 1.6;
     const wallT = TRACK_STYLE.wallThickness;
-    const floorMat = new MeshLambertMaterial({ color: ICE_COLORS.iceB });
-    const wallMat = new MeshLambertMaterial({ color: ICE_COLORS.outer });
-    const rimMat = new MeshLambertMaterial({ color: ICE_COLORS.rim });
-    const cushionMat = new MeshLambertMaterial({ color: ICE_COLORS.nose });
+    const street = this.channel?.look === 'street';
+    const floorMat = new MeshLambertMaterial({ color: street ? STREET_COLORS.floorB : ICE_COLORS.iceB });
+    const wallMat = new MeshLambertMaterial({ color: street ? STREET_COLORS.wallA : ICE_COLORS.outer });
+    const rimMat = new MeshLambertMaterial({ color: street ? STREET_COLORS.rim : ICE_COLORS.rim });
+    const cushionMat = new MeshLambertMaterial({ color: street ? STREET_COLORS.nose : ICE_COLORS.nose });
     // The floor, tipped down towards the cushion (local z runs down the pen).
     const floor = new Mesh(new BoxGeometry(pen.halfWidth * 2, 0.4, floorLen), floorMat);
     floor.position.set(0, -0.2 - drop / 2, pen.length / 2);
     floor.rotation.x = tilt;
     area.add(floor);
     // Brush strips across the floor, every few metres.
-    const brushMat = new MeshLambertMaterial({ color: ICE_COLORS.outerDark });
+    const brushMat = new MeshLambertMaterial({ color: street ? STREET_COLORS.kerbB : ICE_COLORS.outerDark });
     for (let z = 6; z < pen.length - 1; z += 6) {
       const brush = new Mesh(new BoxGeometry(pen.halfWidth * 2, 0.02, 0.8), brushMat);
       brush.position.set(0, 0.01 - z * PEN_DROP, z);

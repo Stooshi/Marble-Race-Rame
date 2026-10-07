@@ -13,6 +13,22 @@ export const ICE_COLORS = {
   divider: '#f4fbff', nose: '#e23b3b',
 };
 
+/**
+ * A racing channel dressed as a city street (San Francisco: physics.look
+ * 'street'): asphalt floor with a dashed yellow centre line, red-and-white
+ * racing kerbs where the floor meets the walls, concrete walls, a white top
+ * rail and stone retaining walls outside. The same shape as the ice channel.
+ */
+export const STREET_COLORS = {
+  floorA: '#4b4e56', floorB: '#45484f', line: '#f2c230', kerbA: '#d8322b', kerbB: '#f4f4f2',
+  wallA: '#d3cdc1', wallB: '#c8c2b5', rim: '#f4f2ec', outer: '#bba98c', outerDark: '#ae9c80',
+  divider: '#e9e4da', nose: '#d8322b',
+};
+const KERB_FROM = 0.5;  // radians up the wall where the kerb starts (about 29°)…
+const KERB_TO = 0.72;   // …and ends (about 41°), where the concrete wall begins
+const KERB_LENGTH = 2;  // metres per red or white block
+const DASH = 6;         // metres per centre-line dash (and gap)
+
 /** Channel settings from a track (null for ordinary tracks). Fork distances are along the drawn track. */
 export function channelOf(track, centerline) {
   const ch = track?.physics?.channel;
@@ -28,6 +44,7 @@ export function channelOf(track, centerline) {
     fork: fork ? { s0: fork.from * arc, s1: fork.to * arc, radius: fork.radius, apart: fork.apart } : null,
     funnel: ch.funnel ? { length: ch.funnel.length, radius: ch.funnel.radius } : null, // metres from the start
     runout: runout ? { length: runout.length, halfWidth: runout.halfWidth } : null, // the catch area past the line
+    look: track.physics.look === 'street' ? 'street' : 'ice', // how it is dressed (the shape is the same)
   };
 }
 
@@ -118,8 +135,18 @@ export function placeOnChannel(centerline, channel, p, l, b, h, radius, out = ne
  * and the outside skirt, cut into the two splitter channels with a divider
  * (red nose at the wedge) between them.
  */
-export function buildIceChannelGeometry(centerline, channel, { segmentsAcross = 14, rimWidth = 0.45, skirt = 1.6 } = {}) {
-  const C = Object.fromEntries(Object.entries(ICE_COLORS).map(([k, v]) => [k, new Color(v)]));
+export function buildIceChannelGeometry(centerline, channel, { segmentsAcross = channel.look === 'street' ? 28 : 14, rimWidth = 0.45, skirt = 1.6 } = {}) {
+  const street = channel.look === 'street';
+  const C = Object.fromEntries(Object.entries(street ? STREET_COLORS : ICE_COLORS).map(([k, v]) => [k, new Color(v)]));
+  // The street's paint, by how far up the wall a strip is (th, radians) and how far down the track (s, metres).
+  const streetColor = (th, s, stripe) => {
+    const a = Math.abs(th);
+    const step = (2 * channel.maxAngle) / segmentsAcross;
+    if (a < step * 0.99) return Math.floor(s / DASH) % 2 === 0 ? C.line : C.floorA; // the two strips either side of the middle
+    if (a < KERB_FROM) return stripe ? C.floorA : C.floorB;
+    if (a < KERB_TO) return Math.floor(s / KERB_LENGTH) % 2 === 0 ? C.kerbA : C.kerbB;
+    return stripe ? C.wallA : C.wallB;
+  };
   const { samples, segments } = centerline;
   const positions = [];
   const colors = [];
@@ -153,12 +180,15 @@ export function buildIceChannelGeometry(centerline, channel, { segmentsAcross = 
 
   // half: 0 = whole channel; +1 / -1 = a split channel still overlapping its
   // twin, drawn only on its own side of the middle (no walls crossing the floor).
-  const channelStrip = (a, b, stripe, half = 0) => {
+  const channelStrip = (a, b, stripe, half = 0, s = 0, lip = channel.maxAngle) => {
     const mine = (k) => !half || (half > 0
       ? Math.min(a.lateral[k], a.lateral[k + 1], b.lateral[k], b.lateral[k + 1]) >= 0
       : Math.max(a.lateral[k], a.lateral[k + 1], b.lateral[k], b.lateral[k + 1]) <= 0);
     for (let k = 0; k < segmentsAcross; k += 1) {
-      if (mine(k)) quad(a.ring[k], b.ring[k], b.ring[k + 1], a.ring[k + 1], stripe ? C.iceA : C.iceB);
+      // The strip's angle up the wall, as a share of the full wall (the funnel's lip is lower: scaled to the main channel's).
+      const th = ((-lip + (2 * lip * (k + 0.5)) / segmentsAcross) / lip) * channel.maxAngle;
+      const color = street ? streetColor(th, s, stripe) : stripe ? C.iceA : C.iceB;
+      if (mine(k)) quad(a.ring[k], b.ring[k], b.ring[k + 1], a.ring[k + 1], color);
     }
     for (const sideIdx of [0, 1]) {
       if (half && (sideIdx === 0) === (half > 0)) continue; // its inner wall is still inside the twin channel
@@ -207,6 +237,9 @@ export function buildIceChannelGeometry(centerline, channel, { segmentsAcross = 
         section(a, 0, channelRadiusAt(channel, sa), channelLipAt(channel, sa)),
         section(b, 0, channelRadiusAt(channel, sb), channelLipAt(channel, sb)),
         stripe,
+        0,
+        sMid,
+        channelLipAt(channel, sMid),
       );
     }
   }
