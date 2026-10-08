@@ -78,6 +78,7 @@ const busParts = (length) => {
 const DECOR = ['flowers', 'sea_lion_colony']; // drawn only: the physics ignores them
 const SEA = -1.2; // the bay's water level (San Francisco's scenery)
 const DOCK_OUT = 15; // metres from the middle of the street out to the colony's docks
+const STRIPS = 4; // cobble strips at most across a braking zone (San Francisco: drawn only, the braking is the physics')
 const DOCK_STEP = 9; // metres of pier per dock
 const DRIVE_IN = 12; // metres the cable car is drawn driving in and out along its rails beyond the crossing
 
@@ -261,45 +262,44 @@ export function buildTrackFeatures(centerline, channel, features, { lite = false
       g.computeVertexNormals();
       add('bump', g, new Matrix4());
     } else if (f.type === 'cobbles') {
-      // A stretch of cobblestones laid across the whole street (rim to rim), in a
-      // brick pattern of greys, just proud of the asphalt: where marbles brake.
+      // Where the physics brakes the marbles (cobbles: the whole stretch, rim to
+      // rim) the street stays asphalt; only the braking zones before the bends
+      // show it, with a few short strips of grey cobblestones across the street,
+      // spread along the zone. Brick-paved bends (look: 'brick') are drawn as plain
+      // asphalt: the braking there is gentle, and a whole bend of stones was too much.
+      if (f.look === 'brick') continue;
       const len = f.length ?? 25;
       const s0 = f.at * channel.arc;
       const lip = channelLipAt(channel, s0) / channel.maxAngle;
-      // (Stones about 1.5 m long, 16 across the street; on phones bigger ones, 10 across.)
-      const rows = Math.max(2, Math.round(len / (lite ? 2.4 : 1.5)));
-      const cols = lite ? 10 : 16;
+      const cols = lite ? 10 : 16; // stones across the street
+      const rows = 2; // rows of stones in a strip, each about 0.9 m long
+      const stripLen = rows * 0.9;
+      const strips = Math.max(2, Math.min(STRIPS, Math.round(len / 10)));
       const pos = [];
       const col = [];
-      // Grey cobbles, or red brick (look: 'brick', San Francisco's bends: Lombard is famously brick).
-      const shades = (f.look === 'brick' ? ['#a4503c', '#b5604a', '#8f4433', '#c06b52'] : ['#8a8580', '#9d968d', '#7a756f', '#a8a197']).map((c) => new Color(c));
-      const grout = new Color(f.look === 'brick' ? '#5a3a30' : '#4a4642');
-      for (let r = 0; r < rows; r += 1) {
-        // The dark joints: the row's whole width, under its stones (phones: the street shows through instead).
-        for (let c = 0; c < (lite ? 0 : cols); c += 1) {
-          const a0 = p(f.at, (len * r) / rows);
-          const a1 = p(f.at, (len * (r + 1)) / rows);
-          const corners = [[a0, c / cols], [a0, (c + 1) / cols], [a1, (c + 1) / cols], [a1, c / cols]].map(([at, u]) => surface(at, -lip + 2 * lip * u, 0.015).point);
-          for (const k of [0, 1, 2, 0, 2, 3]) {
-            pos.push(corners[k].x, corners[k].y, corners[k].z);
-            col.push(grout.r, grout.g, grout.b);
-          }
+      const shades = ['#a8a39b', '#bdb6ac', '#97928b', '#c7c0b4'].map((c) => new Color(c));
+      const grout = new Color('#3e3b38');
+      const quad = (a0, a1, u0, u1, lift, color) => {
+        const corners = [[a0, u0], [a0, u1], [a1, u1], [a1, u0]].map(([at, u]) => surface(at, -lip + 2 * lip * u, lift).point);
+        for (const k of [0, 1, 2, 0, 2, 3]) {
+          pos.push(corners[k].x, corners[k].y, corners[k].z);
+          col.push(color.r, color.g, color.b);
         }
-        for (let c = -1; c < cols; c += 1) {
-          // One stone: a quad a little smaller than its cell (the joints show between them); every other row half a stone along.
-          // (Phones: stones edge to edge, no joints, so no street paint shows between them.)
-          const gap = lite ? 0 : 0.08;
+      };
+      for (let k = 0; k < strips; k += 1) {
+        const from = ((len - stripLen) * k) / (strips - 1); // metres into the zone: the first at its start, the last at its end
+        for (let r = 0; r < rows; r += 1) {
+          const a0 = p(f.at, from + r * 0.9);
+          const a1 = p(f.at, from + (r + 1) * 0.9);
+          // The dark joints under the stones (they show between them)…
+          for (let c = 0; c < cols; c += 1) quad(a0, a1, c / cols, (c + 1) / cols, 0.015, grout);
+          // …and the stones, every other row half a stone along.
           const offset = r % 2 ? 0.5 : 0;
-          const u0 = Math.max(0, Math.min(1, (c + gap + offset) / cols));
-          const u1 = Math.min(1, (c + 1 - gap + offset) / cols);
-          if (u1 - u0 < 0.25 / cols) continue;
-          const a0 = p(f.at, (len * (r + gap)) / rows);
-          const a1 = p(f.at, (len * (r + 1 - gap)) / rows);
-          const corners = [[a0, u0], [a0, u1], [a1, u1], [a1, u0]].map(([at, u]) => surface(at, -lip + 2 * lip * u, 0.03).point);
-          const shade = shades[(r * 7 + c * 3) % shades.length];
-          for (const k of [0, 1, 2, 0, 2, 3]) {
-            pos.push(corners[k].x, corners[k].y, corners[k].z);
-            col.push(shade.r, shade.g, shade.b);
+          for (let c = -1; c < cols; c += 1) {
+            const u0 = Math.max(0, (c + 0.08 + offset) / cols);
+            const u1 = Math.min(1, (c + 0.92 + offset) / cols);
+            if (u1 - u0 < 0.25 / cols) continue;
+            quad(p(f.at, from + (r + 0.08) * 0.9), p(f.at, from + (r + 0.92) * 0.9), u0, u1, 0.03, shades[(k * 5 + r * 7 + c * 3) % shades.length]);
           }
         }
       }
