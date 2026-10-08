@@ -48,6 +48,12 @@ export default function Dashboard() {
         <div className="profile-header__text">
           <h1>{who.display_name || who.username}</h1>
           <p className="muted">@{who.username} · racing since {new Date(who.created_at).toLocaleDateString()}</p>
+          {who.skill && (
+            <p className="skill-chip" title="Skill belongs to the player: every marble in the Marble Bag races at this level">
+              <span className="muted">Skill</span> <strong>{who.skill}</strong>
+              {isSelf && <span className="muted">· every marble in your Marble Bag races at this level</span>}
+            </p>
+          )}
         </div>
         {isSelf && (
           <div className="profile-header__coins">
@@ -56,6 +62,8 @@ export default function Dashboard() {
           </div>
         )}
       </header>
+
+      {isSelf && user.skill_refund_coins > 0 && <RefundNote coins={user.skill_refund_coins} />}
 
       <div className="grid grid--main">
         <div className="stack">
@@ -69,6 +77,33 @@ export default function Dashboard() {
         </div>
       </div>
     </div>
+  );
+}
+
+/** Shown once: marbles stopped carrying strength, and the coins spent on them came back. */
+function RefundNote({ coins }) {
+  const { refreshUser } = useAuth();
+  const [busy, setBusy] = useState(false);
+  async function seen() {
+    setBusy(true);
+    try {
+      await api.refundNoteSeen();
+      await refreshUser();
+    } finally {
+      setBusy(false);
+    }
+  }
+  return (
+    <section className="card refund-note" role="status">
+      <div>
+        <strong>Skill now belongs to you, not your marbles</strong>
+        <p>
+          Every marble in your Marble Bag now races at your own skill, so marbles are about looks only.
+          You keep every marble you bought, and the {formatNumber(coins)} coins you spent on them are back in your balance.
+        </p>
+      </div>
+      <button type="button" className="btn btn--sm" onClick={seen} disabled={busy}>Got it</button>
+    </section>
   );
 }
 
@@ -113,7 +148,7 @@ function NewRace({ records }) {
       <h3 className="step-title"><span>1</span> Track</h3>
       <TrackSelector value={track} onChange={setTrack} records={records} />
 
-      <h3 className="step-title"><span>2</span> Your marble</h3>
+      <h3 className="step-title"><span>2</span> Your Shooter</h3>
       <MarbleSelector value={marble?.id} onChange={setMarble} />
 
       <div className="new-race__footer">
@@ -123,7 +158,7 @@ function NewRace({ records }) {
         </label>
         <div className="new-race__summary">
           {marble && <MarbleBall marble={marble} size={26} />}
-          <span>{marble ? marble.name : 'Pick a marble to enter it'}</span>
+          <span>{marble ? `${marble.name} is your Shooter` : 'Pick your Shooter from your Marble Bag'}</span>
         </div>
         {error && <p className="error" role="alert">{error}</p>}
         <button className="btn btn--primary btn--lg" disabled={busy}>

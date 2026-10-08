@@ -8,23 +8,23 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { execFileSync } = require('node:child_process');
 const { simulatePhysicsRace } = require('../src/game/physicsSimulator');
-const { physicsTrack } = require('../src/game/physicsTracks');
+const { physicsTrack, SAN_FRANCISCO_SECTIONS: SF_SECTIONS } = require('../src/game/physicsTracks');
 const { cableCar, CABLE_PERIOD, FLOP_PERIOD, FLOP_STAY, seaLionFlop } = require('../src/game/trackFeatures');
 const { createRng } = require('../src/game/rng');
 const { subSeed } = require('../src/game/simulator');
-const { realTracks, realMarbles } = require('./helpers/realTracks');
+const { HOUSE_SKILLS, skillStats } = require('../src/game/skill');
+const { realTracks } = require('./helpers/realTracks');
 
 process.env.DATABASE_URL ||= 'postgres://localhost:1/unused';
 const raceService = require('../src/game/raceService');
 
 const sf = physicsTrack('san-francisco');
-const sorted = [...realMarbles()].sort((a, b) => (a.slug < b.slug ? -1 : 1));
-/** A race as the preview route builds it: 20 of the catalog, lanes from the seed. */
+/** A field of house marbles: the 20 levels of the house skill ladder (skill belongs to the player, not the marble), lanes from the seed. */
 function routeRace(seed) {
   const rng = createRng(subSeed(seed, 3));
-  const picked = rng.shuffle([...sorted]).slice(0, 20);
+  const picked = rng.shuffle(HOUSE_SKILLS.map((skill, i) => ({ id: `h${String(i).padStart(2, '0')}`, skill })));
   const lanes = rng.shuffle(picked.map((_, i) => i));
-  const entries = picked.map((m, i) => ({ id: m.slug, lane: lanes[i], topSpeed: m.topSpeed, acceleration: m.acceleration, handling: m.handling, luck: m.luck }));
+  const entries = picked.map((h, i) => ({ id: h.id, lane: lanes[i], ...skillStats(h.skill) }));
   return { entries, sim: simulatePhysicsRace({ seed, track: sf, entries, level: 3 }) };
 }
 let batch = null;
@@ -37,12 +37,12 @@ const fairnessBatch = () => {
 test('San Francisco is moved onto the new physics, then re-tuned, by its data updates: together exactly the track in code', () => {
   const dir = path.join(__dirname, '..', 'docs', 'data_updates');
   const script = path.join(__dirname, '..', 'scripts', 'physics-track-sql.js');
-  const LATEST = '2026-10-11-san-francisco-slower-bends.sql';
+  const LATEST = '2026-10-12-san-francisco-flowing-bends.sql';
   // The rebuild (already run live, so never edited) moved it onto the new physics…
   const rebuild = fs.readFileSync(path.join(dir, '2026-10-07-san-francisco-rebuild.sql'), 'utf8');
   assert.match(rebuild, /WHERE slug = 'san-francisco' AND physics IS NULL;/);
   // …re-tunes followed (each already run live is never edited, only followed by a new one)…
-  for (const f of ['2026-10-08-san-francisco-retune.sql', '2026-10-09-san-francisco-sea-lions.sql', '2026-10-10-san-francisco-bends.sql', LATEST]) {
+  for (const f of ['2026-10-08-san-francisco-retune.sql', '2026-10-09-san-francisco-sea-lions.sql', '2026-10-10-san-francisco-bends.sql', '2026-10-11-san-francisco-slower-bends.sql', LATEST]) {
     assert.match(fs.readFileSync(path.join(dir, f), 'utf8'), /^UPDATE tracks$[\s\S]*^ WHERE slug = 'san-francisco';$/m, f);
   }
   // …and the latest sets everything as it is now in code (its header only says what changed).
@@ -106,8 +106,29 @@ test('the obstacles cause chaos where the pack rides: the cable car, the street 
   assert.ok(per('boost') > 30, `only ${per('boost')} boost kicks per race`); // four pads across the whole street
 });
 
-test('slower into the bends: cobbles brake the pack before each one, no boost pad leads into one, the straights stay fast', () => {
-  const bends = ['Powell bend', 'Lombard 1', 'Embarcadero'].map((n) => sf.sections.find((s) => s.name === n));
+test('bends flow, per the recipe: one signature hairpin, every other bend wide and easing in and out', () => {
+  const bends = sf.sections.filter((_, i) => SF_SECTIONS[i].kind !== 'straight').map((b) => ({ ...b, def: SF_SECTIONS[sf.sections.indexOf(b)] }));
+  const sharp = bends.filter((b) => b.def.radius < 40);
+  assert.deepEqual(sharp.map((b) => b.name), ['Lombard 4'], 'Lombard\'s last bend is the one sharp bend');
+  for (const b of bends) assert.ok(b.def.ease > 0, `${b.name} eases in and out`);
+  // No two sharp bends in a row: the hairpin comes out of a wide sweep and onto a straight.
+  const i = sf.sections.findIndex((s) => s.name === 'Lombard 4');
+  assert.ok(SF_SECTIONS[i - 1].radius >= 40 && SF_SECTIONS[i + 1].kind === 'straight');
+  // The track turns smoothly: from one waypoint to the next its heading changes little,
+  // and the most at the hairpin (an abrupt corner would turn a lot in one step).
+  const w = sf.waypoints;
+  const heading = (a, b) => Math.atan2(b.y - a.y, b.x - a.x);
+  let worst = 0;
+  for (let k = 2; k < w.length; k += 1) {
+    let d = heading(w[k - 1], w[k]) - heading(w[k - 2], w[k - 1]);
+    d = Math.atan2(Math.sin(d), Math.cos(d));
+    worst = Math.max(worst, Math.abs(d));
+  }
+  assert.ok(worst < 0.4, `the sharpest step turns ${(worst * 180 / Math.PI).toFixed(0)}°`);
+});
+
+test('slower into the bends: braking zones before each one, no boost pad leads into one, the straights stay fast', () => {
+  const bends = ['Powell bend', 'Lombard 4', 'Embarcadero'].map((n) => sf.sections.find((s) => s.name === n));
   const metres = (share) => share * sf.length_m;
   for (const b of bends) {
     // No boost pad on the run into a bend (they sit before the climbs and on the way out of bends)…
@@ -116,7 +137,7 @@ test('slower into the bends: cobbles brake the pack before each one, no boost pa
       assert.ok(before < 0 || before > 100, `a boost pad ${before.toFixed(0)} m before ${b.name}`);
     }
     // …and cobbles across the street right before it.
-    const cobbles = sf.physics.features.find((f) => f.type === 'cobbles' && metres(b.from) - metres(f.at) > 0 && metres(b.from) - metres(f.at) < 60);
+    const cobbles = sf.physics.features.find((f) => f.type === 'cobbles' && !f.look && metres(b.from) - metres(f.at) > 0 && metres(b.from) - metres(f.at) < 60);
     assert.ok(cobbles, `cobbles before ${b.name}`);
   }
   // The pack's speed into each bend (median of every marble in 10 races), and its top speed on the straights.
@@ -129,9 +150,9 @@ test('slower into the bends: cobbles brake the pack before each one, no boost pa
     for (const f of sim.frames) for (let i = 0; i < 20; i += 1) if (f.p[i] < 1) top = Math.max(top, f.v[i] * 3.6);
   }
   const med = (a) => [...a].sort((x, y) => x - y)[a.length >> 1];
-  const [powell, lombard, embarcadero] = entry.map(med);
+  const [powell, hairpin, embarcadero] = entry.map(med);
   assert.ok(powell < 105, `into the Powell bend at ${powell.toFixed(0)} km/h`); // was about 132, then 119
-  assert.ok(lombard < 75, `into Lombard's hairpins at ${lombard.toFixed(0)} km/h`); // was about 113, then 91
+  assert.ok(hairpin < 75, `into Lombard's hairpin at ${hairpin.toFixed(0)} km/h`); // was about 113, then 91
   assert.ok(embarcadero < 80, `into the Embarcadero at ${embarcadero.toFixed(0)} km/h`); // was about 108, then 94
   assert.ok(top > 125, `top speed on the straights only ${top.toFixed(0)} km/h`);
 });

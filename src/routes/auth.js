@@ -21,7 +21,7 @@ const authLimiter = rateLimit({
   message: { error: 'Too many attempts, please try again later' },
 });
 
-const PUBLIC_USER_COLUMNS = 'id, username, email, display_name, avatar_url, role, coins, created_at';
+const PUBLIC_USER_COLUMNS = 'id, username, email, display_name, avatar_url, role, coins, skill, skill_refund_coins, created_at';
 
 const registerSchema = {
   username: {

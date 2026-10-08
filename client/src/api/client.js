@@ -68,6 +68,7 @@ export const api = {
 
   marbles: () => request('/marbles'),
   myMarbles: () => request('/users/me/marbles'),
+  refundNoteSeen: () => request('/users/me/refund-note/seen', { method: 'POST' }),
   purchaseMarble: (id) => request(`/marbles/${id}/purchase`, { method: 'POST' }),
 
   tracks: () => request('/tracks'),

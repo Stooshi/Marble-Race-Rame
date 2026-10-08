@@ -10,7 +10,19 @@ const router = express.Router();
 
 const RARITIES = ['common', 'uncommon', 'rare', 'epic', 'legendary'];
 const COLOR = { type: 'string', pattern: /^#[0-9A-Fa-f]{6}$/, patternMessage: 'must be a hex colour like #AABBCC' };
-const STAT = { type: 'int', min: 1, max: 100 };
+
+// Marbles are looks only (skill belongs to the player), so their old stat
+// columns are never sent or set.
+const MARBLE_COLUMNS = ['id', 'slug', 'name', 'description', 'color_primary', 'color_secondary', 'pattern', 'rarity',
+  'price_coins', 'is_starter', 'is_active', 'created_at', 'updated_at'].map((c) => `m.${c}`).join(', ');
+
+// A marble's own history with one player: their races, wins and podiums with it as their Shooter.
+const HISTORY = `(SELECT COUNT(*)::int FROM race_entries e JOIN races r ON r.id = e.race_id AND r.status = 'finished'
+                   WHERE e.user_id = $1 AND e.marble_id = m.id) AS my_races,
+                 (SELECT COUNT(*)::int FROM race_entries e JOIN races r ON r.id = e.race_id AND r.status = 'finished'
+                   WHERE e.user_id = $1 AND e.marble_id = m.id AND e.finish_position = 1) AS my_wins,
+                 (SELECT COUNT(*)::int FROM race_entries e JOIN races r ON r.id = e.race_id AND r.status = 'finished'
+                   WHERE e.user_id = $1 AND e.marble_id = m.id AND e.finish_position <= 3) AS my_podiums`;
 
 const marbleSchema = {
   slug: { type: 'string', required: true, pattern: /^[a-z0-9-]{2,64}$/, patternMessage: 'must be lowercase letters, numbers and dashes' },
@@ -20,10 +32,6 @@ const marbleSchema = {
   color_secondary: { ...COLOR, nullable: true },
   pattern: { type: 'string', max: 24 },
   rarity: { type: 'enum', values: RARITIES },
-  top_speed: STAT,
-  acceleration: STAT,
-  handling: STAT,
-  luck: STAT,
   price_coins: { type: 'int', min: 0 },
   is_starter: { type: 'boolean' },
   is_active: { type: 'boolean' },
@@ -41,7 +49,7 @@ router.get('/', optionalAuth, async (req, res) => {
   if (q.rarity) { params.push(q.rarity); where.push(`m.rarity = $${params.length}`); }
 
   const { rows } = await db.query(
-    `SELECT m.*,
+    `SELECT ${MARBLE_COLUMNS}, ${HISTORY},
             CASE WHEN $1::uuid IS NULL THEN NULL
                  ELSE m.is_starter OR EXISTS (SELECT 1 FROM user_marbles um WHERE um.user_id = $1 AND um.marble_id = m.id)
             END AS owned
@@ -57,7 +65,7 @@ router.get('/', optionalAuth, async (req, res) => {
 router.get('/:id', async (req, res) => {
   const id = assertUuid(req.params.id);
   const { rows } = await db.query(
-    `SELECT m.*, s.races_run, s.wins, s.avg_position
+    `SELECT ${MARBLE_COLUMNS}, s.races_run, s.wins, s.avg_position
        FROM marbles m JOIN marble_stats s ON s.marble_id = m.id
       WHERE m.id = $1`,
     [id],
@@ -70,7 +78,7 @@ router.get('/:id', async (req, res) => {
 router.post('/:id/purchase', requireAuth, async (req, res) => {
   const id = assertUuid(req.params.id);
   const result = await db.withTransaction(async (client) => {
-    const { rows } = await client.query('SELECT * FROM marbles WHERE id = $1 AND is_active', [id]);
+    const { rows } = await client.query(`SELECT ${MARBLE_COLUMNS} FROM marbles m WHERE m.id = $1 AND m.is_active`, [id]);
     const marble = rows[0];
     if (!marble) throw notFound('Marble not found');
     if (marble.is_starter) throw badRequest('Starter marbles are free for everyone');
@@ -95,22 +103,22 @@ router.post('/', requireAuth, requireAdmin, async (req, res) => {
   const body = validate(req.body, marbleSchema);
   const columns = Object.keys(body);
   const { rows } = await db.query(
-    `INSERT INTO marbles (${columns.join(', ')})
+    `INSERT INTO marbles AS m (${columns.join(', ')})
      VALUES (${columns.map((_, i) => `$${i + 1}`).join(', ')})
-     RETURNING *`,
+     RETURNING ${MARBLE_COLUMNS}`,
     columns.map((c) => body[c]),
   );
   res.status(201).json({ marble: rows[0] });
 });
 
-/** PATCH /api/marbles/:id (admin) — stat changes never affect already-decided races */
+/** PATCH /api/marbles/:id (admin) — a marble's look; never affects already-decided races */
 router.patch('/:id', requireAuth, requireAdmin, async (req, res) => {
   const id = assertUuid(req.params.id);
   const body = validate(req.body, marbleSchema, { partial: true });
   const columns = Object.keys(body);
   if (!columns.length) throw badRequest('No updatable fields supplied');
   const { rows } = await db.query(
-    `UPDATE marbles SET ${columns.map((c, i) => `${c} = $${i + 2}`).join(', ')} WHERE id = $1 RETURNING *`,
+    `UPDATE marbles AS m SET ${columns.map((c, i) => `${c} = $${i + 2}`).join(', ')} WHERE m.id = $1 RETURNING ${MARBLE_COLUMNS}`,
     [id, ...columns.map((c) => body[c])],
   );
   if (!rows[0]) throw notFound('Marble not found');
@@ -126,3 +134,5 @@ router.delete('/:id', requireAuth, requireAdmin, async (req, res) => {
 });
 
 module.exports = router;
+module.exports.MARBLE_COLUMNS = MARBLE_COLUMNS;
+module.exports.HISTORY = HISTORY;

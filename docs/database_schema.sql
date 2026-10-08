@@ -74,6 +74,15 @@ CREATE TABLE IF NOT EXISTS users (
     updated_at      timestamptz NOT NULL DEFAULT now()
 );
 
+-- skill: how strong the player's marbles race (1-100). Skill belongs to the
+--        player, not the marble: every marble in their Marble Bag races at it,
+--        whichever one is their Shooter. Everyone starts at 50, the middle of
+--        the house field.
+-- skill_refund_coins: coins refunded when marbles stopped carrying strength
+--        (2026-10-12), shown once on the dashboard; NULL once seen.
+ALTER TABLE users ADD COLUMN IF NOT EXISTS skill smallint NOT NULL DEFAULT 50 CHECK (skill BETWEEN 1 AND 100);
+ALTER TABLE users ADD COLUMN IF NOT EXISTS skill_refund_coins integer CHECK (skill_refund_coins > 0);
+
 DROP TRIGGER IF EXISTS trg_users_updated_at ON users;
 CREATE TRIGGER trg_users_updated_at BEFORE UPDATE ON users
     FOR EACH ROW EXECUTE FUNCTION set_updated_at();
@@ -120,11 +129,10 @@ CREATE TRIGGER trg_tracks_updated_at BEFORE UPDATE ON tracks
 -- -----------------------------------------------------------------------------
 -- marbles (catalog)
 -- -----------------------------------------------------------------------------
--- Stats are 1..100. They bias the simulation but never guarantee a result:
---   top_speed     cruising speed on open track
---   acceleration  recovery speed after obstacles / slow-downs
---   handling      resistance to losing speed on obstacles
---   luck          chance of favourable random events (boosts, clean lines)
+-- Marbles are looks only: skill belongs to the player (users.skill). The stat
+-- columns (top_speed, acceleration, handling, luck) are no longer read by any
+-- race; they stay only as a record of the old catalog. Past races keep their
+-- own copy of the stats they ran with (race_entries.snap_*).
 CREATE TABLE IF NOT EXISTS marbles (
     id              uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     slug            varchar(64)   NOT NULL UNIQUE CHECK (slug ~ '^[a-z0-9-]+$'),
@@ -466,36 +474,37 @@ GROUP BY m.id, m.name;
 -- docs/data_updates/ read the same values. Apply this file inside a single
 -- transaction: the backend does, and by hand use `psql -1 -f`.
 --
--- Marble stats (1..100) were balanced by simulating thousands of 20-marble races
--- per track: top speed matters most, then handling (more on rough tracks), then
+-- Marbles are looks only now (skill belongs to the player); the stats below are
+-- kept only as a record. They were balanced by simulating thousands of 20-marble
+-- races per track: top speed matters most, then handling (more on rough tracks), then
 -- luck, then acceleration.
 CREATE TEMP TABLE seed_marbles ON COMMIT DROP AS
 SELECT * FROM (VALUES
-    -- Free starters: evenly matched, one clear strength each.
-    ('ruby',        'Ruby',        'The all-rounder: no weak spots, no tricks, just honest racing.', '#E0115F', NULL, 'solid', 'common', 50, 50, 50, 50, 0, true),
-    ('sapphire',    'Sapphire',    'Quick on open ground, shaky when the track gets rough.', '#0F52BA', NULL, 'solid', 'common', 52, 48, 46, 50, 0, true),
-    ('emerald',     'Emerald',     'Keeps its line through bumpers and sand that rattle everyone else.', '#50C878', NULL, 'solid', 'common', 49, 48, 55, 48, 0, true),
-    ('topaz',       'Topaz',       'Gets knocked back often, and is up to speed again before anyone else.', '#FFC87C', NULL, 'solid', 'common', 49, 60, 50, 49, 0, true),
-    -- Uncommon to legendary: slightly higher stat totals, tuned so no marble dominates.
-    ('onyx',        'Onyx',        'The dark horse. Nobody picks it to win, and then it does.', '#353839', '#AAAAAA', 'swirl', 'uncommon', 50, 50, 49, 62, 250, false),
-    ('pearl',       'Pearl',       'Smooth and consistent everywhere: the marble you trust with your coins.', '#F0EAD6', '#D4C4A8', 'pearl', 'uncommon', 51, 53, 52, 50, 250, false),
-    ('amethyst',    'Amethyst',    'Grippy and graceful; the rougher the track, the better it looks.', '#9966CC', '#E6E6FA', 'swirl', 'uncommon', 49, 52, 56, 50, 300, false),
-    ('citrine',     'Citrine',     'Explodes back to full speed after every knock, on any track.', '#E4D00A', '#FF8C00', 'striped', 'rare', 50, 64, 51, 51, 600, false),
-    ('cobalt-comet','Cobalt Comet','Built for long, open straights. Blink and it is gone.', '#0047AB', '#FFFFFF', 'striped', 'rare', 52, 56, 49, 53, 600, false),
-    ('jade-dragon', 'Jade Dragon', 'Ancient and fortunate: good everywhere, lucky the rest of the time.', '#00A86B', '#FFD700', 'cat-eye', 'epic', 51, 55, 51, 55, 1200, false),
-    ('solar-flare', 'Solar Flare', 'Burns hot from start to finish. A threat on every track.', '#FF4500', '#FFD700', 'galaxy', 'legendary', 51, 62, 51, 54, 2500, false),
-    ('nebula',      'Nebula',      'Drifts through chaos untouched; nothing rules Volcano Run like it.', '#2E0854', '#FF69B4', 'galaxy', 'legendary', 50, 57, 53, 57, 2500, false),
-    -- Commons sold in the shop; each has a track that suits it.
-    ('garnet',      'Garnet',      'Deep red and dependable: rarely wins big, rarely loses badly.', '#733635', NULL, 'solid', 'common', 50, 54, 51, 48, 100, false),
-    ('aquamarine',  'Aquamarine',  'Cool under pressure; funnels and spinners barely slow it down.', '#7FFFD4', NULL, 'solid', 'common', 49, 50, 54, 50, 100, false),
-    ('opal',        'Opal',        'Shimmers when it counts. Somehow the bounces tend to go its way.', '#A8C3BC', '#F8C8DC', 'swirl', 'common', 49, 48, 48, 62, 100, false),
-    ('quartz',      'Quartz',      'Clear-headed and quick on smooth tracks, but brittle in the rough.', '#F7F7F7', NULL, 'clear', 'common', 52, 52, 45, 49, 100, false),
-    ('obsidian',    'Obsidian',    'Heavy and hard to knock off line. Slow on the flat, a rock on the volcano.', '#0B1304', NULL, 'solid', 'common', 48, 44, 58, 50, 100, false),
-    ('amber',       'Amber',       'Warm, steady and unhurried. Wins by not making mistakes.', '#FFBF00', NULL, 'solid', 'common', 50, 50, 51, 51, 100, false),
-    ('coral',       'Coral',       'Springs back from every bump like it planned it.', '#FF7F50', NULL, 'solid', 'common', 49, 62, 49, 48, 100, false),
-    ('turquoise',   'Turquoise',   'A traveller''s lucky charm, happiest when the track turns chaotic.', '#40E0D0', NULL, 'solid', 'common', 49, 48, 50, 60, 100, false),
-    ('peridot',     'Peridot',     'Sharp on the straights, nervous in the twisty bits.', '#B4C424', NULL, 'solid', 'common', 52, 47, 47, 49, 100, false),
-    ('moonstone',   'Moonstone',   'Glides quietly to the front while the others jostle.', '#E3E4FA', '#B0C4DE', 'pearl', 'common', 50, 51, 50, 52, 100, false)
+    -- Free starters, in every Marble Bag.
+    ('ruby',        'Ruby',        'Deep red and classic: the marble everyone remembers from their first race.', '#E0115F', NULL, 'solid', 'common', 50, 50, 50, 50, 0, true),
+    ('sapphire',    'Sapphire',    'Ocean blue with a cool, glassy shine.', '#0F52BA', NULL, 'solid', 'common', 52, 48, 46, 50, 0, true),
+    ('emerald',     'Emerald',     'Rich forest green that glows when the light catches it.', '#50C878', NULL, 'solid', 'common', 49, 48, 55, 48, 0, true),
+    ('topaz',       'Topaz',       'Warm honey gold, like late afternoon sun.', '#FFC87C', NULL, 'solid', 'common', 49, 60, 50, 49, 0, true),
+    -- Uncommon to legendary: rarer looks.
+    ('onyx',        'Onyx',        'Midnight black with silver swirls: the dark horse of any field.', '#353839', '#AAAAAA', 'swirl', 'uncommon', 50, 50, 49, 62, 250, false),
+    ('pearl',       'Pearl',       'Soft, creamy lustre that shimmers as it rolls.', '#F0EAD6', '#D4C4A8', 'pearl', 'uncommon', 51, 53, 52, 50, 250, false),
+    ('amethyst',    'Amethyst',    'Violet swirls over pale lavender: graceful in every bend.', '#9966CC', '#E6E6FA', 'swirl', 'uncommon', 49, 52, 56, 50, 300, false),
+    ('citrine',     'Citrine',     'Lemon yellow striped with blazing orange.', '#E4D00A', '#FF8C00', 'striped', 'rare', 50, 64, 51, 51, 600, false),
+    ('cobalt-comet','Cobalt Comet','Electric blue with a white streak, like a comet''s tail.', '#0047AB', '#FFFFFF', 'striped', 'rare', 52, 56, 49, 53, 600, false),
+    ('jade-dragon', 'Jade Dragon', 'Jade green with a gold cat''s eye: an ancient charm.', '#00A86B', '#FFD700', 'cat-eye', 'epic', 51, 55, 51, 55, 1200, false),
+    ('solar-flare', 'Solar Flare', 'A swirling galaxy of fire orange and gold.', '#FF4500', '#FFD700', 'galaxy', 'legendary', 51, 62, 51, 54, 2500, false),
+    ('nebula',      'Nebula',      'Deep space purple dusted with pink starlight.', '#2E0854', '#FF69B4', 'galaxy', 'legendary', 50, 57, 53, 57, 2500, false),
+    -- Commons sold in the shop.
+    ('garnet',      'Garnet',      'Dark wine red, quietly elegant.', '#733635', NULL, 'solid', 'common', 50, 54, 51, 48, 100, false),
+    ('aquamarine',  'Aquamarine',  'Pale sea green, cool and clear as a lagoon.', '#7FFFD4', NULL, 'solid', 'common', 49, 50, 54, 50, 100, false),
+    ('opal',        'Opal',        'Misty green swirled with blush pink; no two glances look the same.', '#A8C3BC', '#F8C8DC', 'swirl', 'common', 49, 48, 48, 62, 100, false),
+    ('quartz',      'Quartz',      'Crystal clear: you can see the track right through it.', '#F7F7F7', NULL, 'clear', 'common', 52, 52, 45, 49, 100, false),
+    ('obsidian',    'Obsidian',    'Volcanic black glass, born on Volcano Run.', '#0B1304', NULL, 'solid', 'common', 48, 44, 58, 50, 100, false),
+    ('amber',       'Amber',       'Warm, glowing amber, like sunlight through honey.', '#FFBF00', NULL, 'solid', 'common', 50, 50, 51, 51, 100, false),
+    ('coral',       'Coral',       'Bright reef coral, cheerful from start to finish.', '#FF7F50', NULL, 'solid', 'common', 49, 62, 49, 48, 100, false),
+    ('turquoise',   'Turquoise',   'A traveller''s lucky charm in vivid turquoise.', '#40E0D0', NULL, 'solid', 'common', 49, 48, 50, 60, 100, false),
+    ('peridot',     'Peridot',     'Zesty lime green with a fresh, bright sparkle.', '#B4C424', NULL, 'solid', 'common', 52, 47, 47, 49, 100, false),
+    ('moonstone',   'Moonstone',   'Pale moonlight with a soft blue sheen.', '#E3E4FA', '#B0C4DE', 'pearl', 'common', 50, 51, 50, 52, 100, false)
 ) AS v(slug, name, description, color_primary, color_secondary, pattern, rarity,
        top_speed, acceleration, handling, luck, price_coins, is_starter);
 

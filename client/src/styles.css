@@ -318,12 +318,15 @@ main { padding-bottom: 48px; }
 .rarity-label--rare { color: #60a5fa; }
 .rarity-label--epic { color: #c084fc; }
 .rarity-label--legendary { color: var(--gold); }
-.stat-bars { margin: 0; display: flex; flex-direction: column; gap: 3px; }
-.stat-bar { display: grid; grid-template-columns: 58px 1fr; align-items: center; gap: 6px; font-size: 0.72rem; }
-.stat-bar dt { color: var(--muted); }
-.stat-bar dd { margin: 0; position: relative; height: 12px; background: #232838; border-radius: 4px; overflow: hidden; }
-.stat-bar dd span { position: absolute; inset: 0 auto 0 0; background: linear-gradient(90deg, var(--primary), #a78bfa); }
-.stat-bar dd em { position: absolute; right: 4px; top: -2px; font-style: normal; font-size: 0.68rem; }
+.marble-selector__note { margin: 8px 0; font-size: 0.8rem; }
+.marble-card__desc { margin: 0; font-size: 0.74rem; line-height: 1.35; color: var(--muted); }
+.marble-card__history { font-size: 0.72rem; color: var(--text); opacity: 0.85; }
+.marble-card.is-selected .marble-card__history { color: var(--primary); opacity: 1; font-weight: 600; }
+
+.skill-chip { display: inline-flex; align-items: baseline; gap: 6px; margin-top: 6px; padding: 3px 10px; border-radius: 999px; background: #232838; font-size: 0.8rem; }
+.skill-chip strong { font-size: 1rem; }
+.refund-note { display: flex; gap: 12px; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; border-left: 4px solid var(--primary); }
+.refund-note p { margin: 4px 0 0; }
 
 /* ---- Race page ----------------------------------------------------------- */
 

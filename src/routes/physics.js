@@ -15,6 +15,7 @@ const { subSeed } = require('../game/simulator');
 const { PHYSICS_VERSION } = require('../game/physicsSimulator');
 const { simulatePhysics } = require('../game/simulationPool');
 const { physicsTrack } = require('../game/physicsTracks');
+const { HOUSE_SKILLS, skillStats } = require('../game/skill');
 
 const router = express.Router();
 const FIELD = 20;
@@ -39,21 +40,21 @@ router.get('/preview', async (req, res) => {
     track ??= physicsTrack(q.track);
     if (!track) throw notFound('Track not found');
     const { rows: catalog } = await db.query(
-      `SELECT id, slug, name, color_primary, color_secondary, pattern, top_speed, acceleration, handling, luck
+      `SELECT id, slug, name, color_primary, color_secondary, pattern
          FROM marbles WHERE is_active ORDER BY slug`,
     );
     // A field of house marbles drawn from the catalog, and their lanes, from the seed.
     const rng = createRng(subSeed(seed, 3));
     const picked = rng.shuffle([...catalog]).slice(0, FIELD);
     const lanes = rng.shuffle(picked.map((_, i) => i));
+    // Marbles are looks only: each house marble races at a level from the house ladder.
+    const house = rng.shuffle([...HOUSE_SKILLS]);
     const field = picked.map((m, i) => ({ marble: m, lane: lanes[i] })).sort((a, b) => a.lane - b.lane);
     const sim = await simulatePhysics({
       seed,
       level,
       track: { ...track, length_m: Number(track.length_m) },
-      entries: field.map(({ marble: m, lane }) => ({
-        id: m.id, lane, topSpeed: m.top_speed, acceleration: m.acceleration, handling: m.handling, luck: m.luck,
-      })),
+      entries: field.map(({ marble: m, lane }, i) => ({ id: m.id, lane, ...skillStats(house[i % house.length]) })),
     });
     const body = {
       preview: true,

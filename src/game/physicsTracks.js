@@ -14,24 +14,54 @@
 const HEIGHT_SCALE = 1.4; // the 3D view and physics stretch heights by this (trackGeometry.TRACK_STYLE)
 const STEP = 8;           // plan metres between generated waypoints
 
+// A bend with `ease` (metres) tightens gradually from straight to its radius
+// over that distance, holds it, and loosens again over the same distance at the
+// end: marbles sweep in and out instead of slamming into the wall. Its length
+// grows by `ease`, so it still turns through its full angle at that radius.
+function sectionLength(s) {
+  if (s.length !== undefined) return s.length;
+  return (s.radius * s.degrees * Math.PI) / 180 + (s.ease ?? 0);
+}
+
+// How much a section turns on each of its steps.
+function stepTurns(s, steps) {
+  if (s.kind === 'straight') return new Array(steps).fill(0);
+  const total = ((s.kind === 'left' ? 1 : -1) * (s.degrees * Math.PI) / 180);
+  if (!s.ease) return new Array(steps).fill(total / steps);
+  // Curvature along the bend: up a ramp, flat, down a ramp (a trapezoid); each
+  // step turns by the area under it, so the whole bend turns by `total`.
+  const length = sectionLength(s);
+  const ramp = Math.min(s.ease, length / 2);
+  const area = (u) => {
+    // Integral of the trapezoid (peak 1) from 0 to u.
+    if (u <= ramp) return (u * u) / (2 * ramp);
+    if (u <= length - ramp) return ramp / 2 + (u - ramp);
+    const r = length - u;
+    return length - ramp - (r * r) / (2 * ramp);
+  };
+  const full = area(length);
+  return Array.from({ length: steps }, (_, k) => (total * (area(((k + 1) * length) / steps) - area((k * length) / steps))) / full);
+}
+
 function generate(sections) {
   // Walk the sections, collecting points every STEP metres.
   const pts = [];
   let x = 0;
   let y = 0;
   let heading = 0;
-  let height = sections.reduce((h, s) => h + s.grade * (s.length ?? (s.radius * s.degrees * Math.PI) / 180), 0);
+  let height = sections.reduce((h, s) => h + s.grade * sectionLength(s), 0);
   const marks = [];
   let travelled3d = 0;
   pts.push({ x, y, h: height });
   for (const s of sections) {
-    const length = s.length ?? (s.radius * s.degrees * Math.PI) / 180;
+    const length = sectionLength(s);
     const startMark = travelled3d;
     const steps = Math.max(1, Math.round(length / STEP));
-    const turn = s.kind === 'straight' ? 0 : ((s.kind === 'left' ? 1 : -1) * (s.degrees * Math.PI) / 180) / steps;
+    const turns = stepTurns(s, steps);
     const d = length / steps;
     for (let k = 0; k < steps; k += 1) {
       // Arcs: advance along the chord at the mid heading.
+      const turn = turns[k];
       heading += turn / 2;
       x += Math.cos(heading) * d;
       y += Math.sin(heading) * d;
@@ -169,9 +199,9 @@ const SAN_FRANCISCO_SECTIONS = [
   // Easing off into each bend: the hill gets gentler (before Lombard it even rises a little), with
   // cobbles across the street (see the features) braking the pack before the bend; the straights stay fast.
   { name: 'California run-in', kind: 'straight', length: 15, grade: 0.2 },
-  { name: 'Powell bend', kind: 'right', radius: 60, degrees: 70, grade: 0.15 },
-  { name: 'Powell Street', kind: 'straight', length: 80, grade: 0.3 },
-  { name: 'Russian Hill', kind: 'straight', length: 45, grade: -0.12 },
+  { name: 'Powell bend', kind: 'right', radius: 60, degrees: 70, grade: 0.15, ease: 15 },
+  { name: 'Powell Street', kind: 'straight', length: 60, grade: 0.3 },
+  { name: 'Russian Hill', kind: 'straight', length: 35, grade: -0.12 },
   { name: 'Russian Hill crest', kind: 'straight', length: 10, grade: -0.08 },
   { name: 'Russian Hill crest', kind: 'straight', length: 10, grade: -0.04 },
   { name: 'Russian Hill crest', kind: 'straight', length: 10, grade: 0.0 },
@@ -182,15 +212,17 @@ const SAN_FRANCISCO_SECTIONS = [
   { name: 'Russian Hill crest', kind: 'straight', length: 10, grade: 0.2 },
   { name: 'Russian Hill crest', kind: 'straight', length: 10, grade: 0.24 },
   { name: 'Russian Hill crest', kind: 'straight', length: 10, grade: 0.28 },
-  { name: 'Hyde Street', kind: 'straight', length: 95, grade: 0.32 },
+  { name: 'Hyde Street', kind: 'straight', length: 85, grade: 0.32 },
   { name: 'Hyde run-in', kind: 'straight', length: 10, grade: 0.1 },
   { name: 'Hyde run-in', kind: 'straight', length: 8, grade: -0.03 },
-  { name: 'Lombard 1', kind: 'left', radius: 22, degrees: 120, grade: 0.18 },
-  { name: 'Lombard 2', kind: 'right', radius: 22, degrees: 120, grade: 0.18 },
-  { name: 'Lombard 3', kind: 'left', radius: 22, degrees: 120, grade: 0.18 },
-  { name: 'Lombard 4', kind: 'right', radius: 22, degrees: 120, grade: 0.18 },
-  { name: 'Leavenworth', kind: 'straight', length: 50, grade: 0.3 },
-  { name: 'Telegraph Hill', kind: 'straight', length: 35, grade: -0.1 },
+  // Lombard Street: two flowing S-curves (wide, easing in and out), then its one signature
+  // hairpin, with a braking zone on the way in (see the features).
+  { name: 'Lombard 1', kind: 'left', radius: 60, degrees: 60, grade: 0.18, ease: 15 },
+  { name: 'Lombard 2', kind: 'right', radius: 60, degrees: 30, grade: 0.18, ease: 15 },
+  { name: 'Lombard 3', kind: 'left', radius: 55, degrees: 90, grade: 0.18, ease: 15 },
+  { name: 'Lombard 4', kind: 'right', radius: 22, degrees: 120, grade: 0.18, ease: 8 },
+  { name: 'Leavenworth', kind: 'straight', length: 40, grade: 0.3 },
+  { name: 'Telegraph Hill', kind: 'straight', length: 25, grade: -0.1 },
   { name: 'Telegraph Hill crest', kind: 'straight', length: 10, grade: -0.06 },
   { name: 'Telegraph Hill crest', kind: 'straight', length: 10, grade: -0.02 },
   { name: 'Telegraph Hill crest', kind: 'straight', length: 10, grade: 0.02 },
@@ -202,9 +234,9 @@ const SAN_FRANCISCO_SECTIONS = [
   { name: 'Telegraph Hill crest', kind: 'straight', length: 10, grade: 0.26 },
   { name: 'Telegraph Hill crest', kind: 'straight', length: 10, grade: 0.3 },
   { name: 'Telegraph Hill crest', kind: 'straight', length: 10, grade: 0.34 },
-  { name: 'Filbert Street', kind: 'straight', length: 100, grade: 0.38 },
+  { name: 'Filbert Street', kind: 'straight', length: 75, grade: 0.38 },
   { name: 'Filbert run-in', kind: 'straight', length: 14, grade: 0.15 },
-  { name: 'Embarcadero', kind: 'left', radius: 45, degrees: 170, grade: 0.15 },
+  { name: 'Embarcadero', kind: 'left', radius: 45, degrees: 170, grade: 0.15, ease: 15 },
   { name: 'Pier 39', kind: 'straight', length: 50, grade: 0.18 },
   { name: 'Finish', kind: 'straight', length: 30, grade: 0.08 },
 ];
@@ -247,17 +279,18 @@ function sanFrancisco() {
         // side of the street from beyond the rim (l to l2), where the pack swings across: marbles that
         // hit it bounce off, knocked aside round its open end (a tenth of their speed per hit); the rest
         // run past it.
-        { type: 'cable_car', at: on('Powell Street', 0.7), parked: true, l: 1.4, l2: 0.25, length: 6, width: 2.4, height: 3.2, loss: 0.1 },
+        { type: 'cable_car', at: on('Powell Street', 0.7), parked: true, l: 1.4, l2: 0.45, length: 6, width: 2.4, height: 3.2, loss: 0.1 },
         // Cobbles across the whole street where it eases off before each bend: they brake every marble
         // alike (harder the faster it goes), so the pack comes into the bends slower; hardest before
         // Lombard's tight hairpins. (The hill alone can't: levelling out barely slows a marble at speed.)
         { type: 'cobbles', at: on('California Street', 0.85), length: 35, drag: 0.01 },
-        { type: 'cobbles', at: on('Hyde Street', 0.85), length: 35, drag: 0.015 },
+        { type: 'cobbles', at: on('Hyde Street', 0.85), length: 35, drag: 0.005 },
+        { type: 'cobbles', at: on('Lombard 3', 0.7), length: 35, drag: 0.015 }, // the braking zone before the hairpin
         { type: 'cobbles', at: on('Filbert Street', 0.85), length: 35, drag: 0.01 },
         // Brick paving right round each bend (Lombard's hairpins are famously brick), braking the
         // marbles gently all the way so they don't pick the speed back up going downhill through it.
-        { type: 'cobbles', at: on('Powell bend', 0), length: span('Powell bend', 'Powell bend'), drag: 0.002, look: 'brick' },
-        { type: 'cobbles', at: on('Lombard 1', 0), length: span('Lombard 1', 'Lombard 4'), drag: 0.004, look: 'brick' },
+        { type: 'cobbles', at: on('Powell bend', 0), length: span('Powell bend', 'Powell bend'), drag: 0.001, look: 'brick' },
+        { type: 'cobbles', at: on('Lombard 4', 0), length: span('Lombard 4', 'Lombard 4'), drag: 0.004, look: 'brick' },
         { type: 'cobbles', at: on('Embarcadero', 0), length: span('Embarcadero', 'Embarcadero'), drag: 0.0015, look: 'brick' },
         // Hyde Street: two big trash cans either side of the pack's line, one after the other.
         { type: 'trash_can', at: on('Hyde Street', 0.45), l: 0.25, radius: 0.65, height: 1.43, loss: 0.15 },
@@ -275,7 +308,7 @@ function sanFrancisco() {
         { type: 'hydrant', at: on('Filbert Street', 0.67), l: 0, radius: 0.45, height: 0.9, loss: 0.4 },  // …and a fire hydrant behind them, dead centre
         { type: 'boost', at: on('Pier 39', 0.05), l: 0, length: 8, halfWidth: 3.6, kick: 5 },           // out of the Embarcadero sweep
         // A bus parked along the right-hand wall on the run to the pier, where the pack rides out of the sweep.
-        { type: 'bus', at: on('Pier 39', 0.38), l: -1, l2: -0.8, length: 10, radius: 0.4, height: 3, loss: 0.15 }, // from the top of the wall down (like the icicles): nobody gets caught above it
+        { type: 'bus', at: on('Pier 39', 0.38), l: -1, l2: -0.68, length: 10, radius: 0.4, height: 3, loss: 0.15 }, // from the top of the wall down (like the icicles): nobody gets caught above it
         // Pier 39's sea lion colony on its docks beside the run-in (scenery only)…
         { type: 'sea_lion_colony', at: on('Pier 39', 0.3), to: on('Finish', 0.7), side: -1 },
         // …and two of them flopping from their perches into the street on a timetable (flop: seconds it runs ahead),
@@ -294,4 +327,4 @@ function physicsTrack(slug) {
   return PHYSICS_TRACKS.find((t) => t.slug === slug) || null;
 }
 
-module.exports = { PHYSICS_TRACKS, physicsTrack, generate };
+module.exports = { PHYSICS_TRACKS, physicsTrack, generate, SAN_FRANCISCO_SECTIONS };

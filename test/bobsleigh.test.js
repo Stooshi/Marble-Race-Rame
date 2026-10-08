@@ -120,14 +120,15 @@ test('the splitter is used both ways and neither channel wins more often', () =>
 
 const { createRng } = require('../src/game/rng');
 const { subSeed } = require('../src/game/simulator');
+const { HOUSE_SKILLS, skillStats } = require('../src/game/skill');
 
 /** A preview race exactly as the preview route builds it: 20 of the catalog, lanes from the seed. */
-const sorted = [...catalog].sort((a, b) => (a.slug < b.slug ? -1 : 1));
+/** A field of house marbles: the 20 levels of the house skill ladder (skill belongs to the player, not the marble), lanes from the seed. */
 function routeRace(seed) {
   const rng = createRng(subSeed(seed, 3));
-  const picked = rng.shuffle([...sorted]).slice(0, 20);
+  const picked = rng.shuffle(HOUSE_SKILLS.map((skill, i) => ({ id: `h${String(i).padStart(2, '0')}`, skill })));
   const lanes = rng.shuffle(picked.map((_, i) => i));
-  const entries = picked.map((m, i) => ({ id: m.slug, lane: lanes[i], topSpeed: m.topSpeed, acceleration: m.acceleration, handling: m.handling, luck: m.luck }));
+  const entries = picked.map((h, i) => ({ id: h.id, lane: lanes[i], ...skillStats(h.skill) }));
   return { entries, sim: simulatePhysicsRace({ seed, track: bob, entries, level: 3 }) };
 }
 let batch = null;

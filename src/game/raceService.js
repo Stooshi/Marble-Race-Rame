@@ -9,6 +9,7 @@ const { subSeed } = require('./simulator');
 const { PHYSICS_VERSION } = require('./physicsSimulator');
 const { runSimulation } = require('./runSimulation');
 const simulationPool = require('./simulationPool');
+const { HOUSE_SKILLS, skillStats } = require('./skill');
 
 // Races on tracks with physics settings run on the new physics engine, at a
 // smoother frame rate, and are stored as they were decided (race_replays).
@@ -158,18 +159,37 @@ async function decide(raceId, actor) {
       entryIds = entryIds.concat(inserted.map((r) => r.id));
     }
 
-    // Random lane draw + stat snapshot.
+    // Random lane draw + skill snapshot. Skill belongs to the player, not the
+    // marble: players race at their own skill, house marbles at levels drawn
+    // from the house ladder. The snapshot is what the engine reads, now and in
+    // every replay.
     const lanes = rng.shuffle(entryIds.map((_, i) => i));
+    const { rows: who } = await client.query(
+      `SELECT e.id, e.is_bot, u.skill
+         FROM race_entries e LEFT JOIN users u ON u.id = e.user_id
+        WHERE e.race_id = $1`,
+      [raceId],
+    );
+    const byId = new Map(who.map((w) => [w.id, w]));
+    const house = rng.shuffle([...HOUSE_SKILLS]);
+    let drawn = 0;
+    const skills = entryIds.map((id) => {
+      const w = byId.get(id);
+      if (w && !w.is_bot && w.skill !== null) return w.skill;
+      const skill = house[drawn % house.length];
+      drawn += 1;
+      return skill;
+    });
     await client.query(
       `UPDATE race_entries e
           SET lane = l.lane,
-              snap_top_speed = m.top_speed,
-              snap_acceleration = m.acceleration,
-              snap_handling = m.handling,
-              snap_luck = m.luck
-         FROM unnest($1::uuid[], $2::int[]) AS l(entry_id, lane), marbles m
-        WHERE e.id = l.entry_id AND m.id = e.marble_id`,
-      [entryIds, lanes],
+              snap_top_speed = l.skill,
+              snap_acceleration = l.skill,
+              snap_handling = l.skill,
+              snap_luck = l.skill
+         FROM unnest($1::uuid[], $2::int[], $3::int[]) AS l(entry_id, lane, skill)
+        WHERE e.id = l.entry_id`,
+      [entryIds, lanes, skills.map((k) => skillStats(k).topSpeed)],
     );
 
     // Seed and tick rate are only persisted below, together with the duration

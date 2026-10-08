@@ -8,6 +8,7 @@ const { requireAuth } = require('../middleware/auth');
 const { validate, assertUuid, pagination } = require('../utils/validate');
 const { badRequest, notFound, unauthorized } = require('../utils/httpError');
 const { PUBLIC_USER_COLUMNS } = require('./auth');
+const { MARBLE_COLUMNS, HISTORY } = require('./marbles');
 const appearance = require('../game/appearance');
 
 const router = express.Router();
@@ -77,10 +78,16 @@ router.put('/me/appearance', requireAuth, async (req, res) => {
   res.json({ appearance: await appearance.updateAppearance(req.user.id, body) });
 });
 
-/** GET /api/users/me/marbles — the caller's collection (owned + free starters) */
+/** POST /api/users/me/refund-note/seen — the one-time note about the marble refund has been read */
+router.post('/me/refund-note/seen', requireAuth, async (req, res) => {
+  await db.query('UPDATE users SET skill_refund_coins = NULL WHERE id = $1', [req.user.id]);
+  res.status(204).end();
+});
+
+/** GET /api/users/me/marbles — the caller's Marble Bag (owned + free starters), each with its history with them */
 router.get('/me/marbles', requireAuth, async (req, res) => {
   const { rows } = await db.query(
-    `SELECT m.*, (um.user_id IS NOT NULL) AS owned, COALESCE(um.is_favorite, false) AS is_favorite, um.acquired_at
+    `SELECT ${MARBLE_COLUMNS}, ${HISTORY}, (um.user_id IS NOT NULL) AS owned, COALESCE(um.is_favorite, false) AS is_favorite, um.acquired_at
        FROM marbles m
        LEFT JOIN user_marbles um ON um.marble_id = m.id AND um.user_id = $1
       WHERE m.is_active AND (m.is_starter OR um.user_id IS NOT NULL)
@@ -130,7 +137,7 @@ router.get('/leaderboard', async (req, res) => {
 router.get('/:id', async (req, res) => {
   const id = assertUuid(req.params.id);
   const { rows } = await db.query(
-    'SELECT id, username, display_name, avatar_url, created_at FROM users WHERE id = $1',
+    'SELECT id, username, display_name, avatar_url, skill, created_at FROM users WHERE id = $1',
     [id],
   );
   if (!rows[0]) throw notFound('User not found');
