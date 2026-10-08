@@ -14,6 +14,18 @@ export const ICE_COLORS = {
 };
 
 /**
+ * The ice channel's shape dressed as sand (Table Mountain Run: physics.look
+ * 'sand'): a pale sand floor and sandstone walls. It races exactly like ice.
+ */
+export const SAND_COLORS = {
+  iceA: '#ead39f', iceB: '#e0c68e', rim: '#f5e9c8', outer: '#b98f5a', outerDark: '#a67d4b',
+  divider: '#f1e3bf', nose: '#d8322b',
+};
+
+/** The colours for a channel that is not a street: ice, or sand. */
+export const channelColors = (channel) => (channel?.look === 'sand' ? SAND_COLORS : ICE_COLORS);
+
+/**
  * A racing channel dressed as a city street (San Francisco: physics.look
  * 'street'): asphalt floor with a dashed yellow centre line, red-and-white
  * racing kerbs where the floor meets the walls, concrete walls, a white top
@@ -35,16 +47,18 @@ export function channelOf(track, centerline) {
   if (!ch) return null;
   let arc = 0;
   for (let i = 1; i < centerline.samples.length; i += 1) arc += centerline.samples[i].pos.distanceTo(centerline.samples[i - 1].pos);
-  const fork = track.physics.fork;
+  const forks = (track.physics.forks ?? (track.physics.fork ? [track.physics.fork] : []))
+    .map((f) => ({ s0: f.from * arc, s1: f.to * arc, radius: f.radius, apart: f.apart }));
   const runout = track.physics.runout;
   return {
     radius: ch.radius,
     maxAngle: (ch.maxAngle * Math.PI) / 180,
     arc,
-    fork: fork ? { s0: fork.from * arc, s1: fork.to * arc, radius: fork.radius, apart: fork.apart } : null,
+    fork: forks[0] ?? null, // the first splitter (most tracks have one at most)…
+    forks,                  // …and all of them (Table Mountain Run has two)
     funnel: ch.funnel ? { length: ch.funnel.length, radius: ch.funnel.radius } : null, // metres from the start
     runout: runout ? { length: runout.length, halfWidth: runout.halfWidth } : null, // the catch area past the line
-    look: track.physics.look === 'street' ? 'street' : 'ice', // how it is dressed (the shape is the same)
+    look: ['street', 'sand'].includes(track.physics.look) ? track.physics.look : 'ice', // how it is dressed (the shape is the same)
   };
 }
 
@@ -78,7 +92,11 @@ export function forkRadius(fork, mainRadius, s) {
   return mainRadius + (fork.radius - mainRadius) * forkSpread(fork, s);
 }
 
-const inFork = (channel, s) => channel.fork && s > channel.fork.s0 && s < channel.fork.s1;
+/** The splitter at distance s, or null. */
+export function forkAt(channel, s) {
+  for (const f of channel.forks ?? (channel.fork ? [channel.fork] : [])) if (s > f.s0 && s < f.s1) return f;
+  return null;
+}
 
 /** Centre-line point, level sideways direction and (optionally) direction along the track at progress p (0..1). */
 function frameAt(centerline, p, pos, side, along = null) {
@@ -110,9 +128,10 @@ export function placeOnChannel(centerline, channel, p, l, b, h, radius, out = ne
   frameAt(centerline, p, tmpPos, tmpSide, tmpAlong);
   const s = p * channel.arc;
   let R = channelRadiusAt(channel, s);
-  if (b && inFork(channel, s)) {
-    tmpPos.addScaledVector(tmpSide, b * forkOffset(channel.fork, s));
-    R = forkRadius(channel.fork, channel.radius, s);
+  const fork = b ? forkAt(channel, s) : null;
+  if (fork) {
+    tmpPos.addScaledVector(tmpSide, b * forkOffset(fork, s));
+    R = forkRadius(fork, channel.radius, s);
   }
   const th = Math.max(-1, Math.min(1, l || 0)) * channel.maxAngle;
   const sin = Math.sin(th);
@@ -141,7 +160,7 @@ export function buildIceChannelGeometry(centerline, channel, {
   skirt = channel.look === 'street' ? 7 : 1.6,     // and a stone retaining wall below them, down to the ground
 } = {}) {
   const street = channel.look === 'street';
-  const C = Object.fromEntries(Object.entries(street ? STREET_COLORS : ICE_COLORS).map(([k, v]) => [k, new Color(v)]));
+  const C = Object.fromEntries(Object.entries(street ? STREET_COLORS : channelColors(channel)).map(([k, v]) => [k, new Color(v)]));
   // The street's paint, by how far up the wall a strip is (th, radians) and how far down the track (s, metres).
   const streetColor = (th, s, stripe) => {
     const a = Math.abs(th);
@@ -215,25 +234,26 @@ export function buildIceChannelGeometry(centerline, channel, {
     const b = samples[i + 1];
     const sMid = (i + 0.5) * step;
     const stripe = Math.floor(sMid / 6) % 2 === 0;
-    if (inFork(channel, sMid)) {
+    const fork = forkAt(channel, sMid);
+    if (fork) {
       const sa = i * step;
       const sb = (i + 1) * step;
-      const Ra = forkRadius(channel.fork, channel.radius, sa);
-      const Rb = forkRadius(channel.fork, channel.radius, sb);
-      const oa = forkOffset(channel.fork, sa);
-      const ob = forkOffset(channel.fork, sb);
+      const Ra = forkRadius(fork, channel.radius, sa);
+      const Rb = forkRadius(fork, channel.radius, sb);
+      const oa = forkOffset(fork, sa);
+      const ob = forkOffset(fork, sb);
       const inA = section(a, oa, Ra);
       const inB = section(b, ob, Rb);
       const outA = section(a, -oa, Ra);
       const outB = section(b, -ob, Rb);
       // The divider between the two channels, once they have pulled apart: a
       // flat top joining their inner rims, with a red nose where it starts.
-      const gap = (o) => 2 * o - 2 * (forkRadius(channel.fork, channel.radius, sMid) * Math.sin(channel.maxAngle) + rimWidth);
+      const gap = (o) => 2 * o - 2 * (forkRadius(fork, channel.radius, sMid) * Math.sin(channel.maxAngle) + rimWidth);
       const apart = gap(oa) > 0 && gap(ob) > 0;
       channelStrip(inA, inB, stripe, apart ? 0 : 1);
       channelStrip(outA, outB, stripe, apart ? 0 : -1);
       if (apart) {
-        const nose = gap((oa + ob) / 2) < 1.2 && sMid < (channel.fork.s0 + channel.fork.s1) / 2;
+        const nose = gap((oa + ob) / 2) < 1.2 && sMid < (fork.s0 + fork.s1) / 2;
         quad(outA.rimOut[1], outB.rimOut[1], inB.rimOut[0], inA.rimOut[0], nose ? C.nose : C.divider);
       }
     } else {

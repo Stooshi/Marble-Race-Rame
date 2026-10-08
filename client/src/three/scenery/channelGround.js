@@ -4,7 +4,7 @@
  * many copies of a thing in tiles so only those in view are drawn.
  */
 import { Group, InstancedMesh, Vector3 } from 'three';
-import { channelLipAt, channelOf, channelRadiusAt, forkOffset, forkRadius } from '../iceChannel';
+import { channelLipAt, channelOf, channelRadiusAt, forkAt, forkOffset, forkRadius } from '../iceChannel';
 import { PEN_DROP } from '../marbles';
 
 /**
@@ -24,9 +24,8 @@ export function channelGround(centerline, track, { rim, dip = 0, under = 2 }) {
     if (i > segments) return pen.halfWidth + 0.3 + rim;
     const s = i * step;
     // The splitter: two channels side by side.
-    if (channel.fork && s > channel.fork.s0 && s < channel.fork.s1) {
-      return Math.abs(forkOffset(channel.fork, s)) + forkRadius(channel.fork, channel.radius, s) * Math.sin(channel.maxAngle) + rim;
-    }
+    const fork = forkAt(channel, s);
+    if (fork) return Math.abs(forkOffset(fork, s)) + forkRadius(fork, channel.radius, s) * Math.sin(channel.maxAngle) + rim;
     return channelRadiusAt(channel, s) * Math.sin(channelLipAt(channel, s)) + rim;
   };
   const liftAt = (i) => (i > segments ? 1.6 : channelRadiusAt(channel, i * step) * (1 - Math.cos(channelLipAt(channel, i * step))));

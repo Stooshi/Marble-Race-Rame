@@ -14,7 +14,7 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { buildCenterline, buildTrackGeometry, TRACK_STYLE } from './trackModel';
 import { PEN_DROP, RaceMarbles, RUNOUT_LENGTH } from './marbles';
 import { buildScenery } from './scenery';
-import { buildIceChannelGeometry, channelLipAt, channelPieces, channelOf, channelRadiusAt, forkOffset, forkRadius, ICE_COLORS, STREET_COLORS } from './iceChannel';
+import { buildIceChannelGeometry, channelLipAt, channelPieces, channelColors, channelOf, channelRadiusAt, forkAt, forkOffset, forkRadius, ICE_COLORS, STREET_COLORS } from './iceChannel';
 import { DEFAULT_THEME, themeFor } from './themes';
 import { gatePlaces, StartGate } from './startGate';
 import { countdownPose, handover, startLineShot } from './startCamera';
@@ -284,17 +284,18 @@ export class TrackScene {
     const wallH = 1.6;
     const wallT = TRACK_STYLE.wallThickness;
     const street = this.channel?.look === 'street';
-    const floorMat = new MeshLambertMaterial({ color: street ? STREET_COLORS.floorB : ICE_COLORS.iceB });
-    const wallMat = new MeshLambertMaterial({ color: street ? STREET_COLORS.wallA : ICE_COLORS.outer });
-    const rimMat = new MeshLambertMaterial({ color: street ? STREET_COLORS.rim : ICE_COLORS.rim });
-    const cushionMat = new MeshLambertMaterial({ color: street ? STREET_COLORS.nose : ICE_COLORS.nose });
+    const plain = channelColors(this.channel); // ice or sand
+    const floorMat = new MeshLambertMaterial({ color: street ? STREET_COLORS.floorB : plain.iceB });
+    const wallMat = new MeshLambertMaterial({ color: street ? STREET_COLORS.wallA : plain.outer });
+    const rimMat = new MeshLambertMaterial({ color: street ? STREET_COLORS.rim : plain.rim });
+    const cushionMat = new MeshLambertMaterial({ color: street ? STREET_COLORS.nose : plain.nose });
     // The floor, tipped down towards the cushion (local z runs down the pen).
     const floor = new Mesh(new BoxGeometry(pen.halfWidth * 2, 0.4, floorLen), floorMat);
     floor.position.set(0, -0.2 - drop / 2, pen.length / 2);
     floor.rotation.x = tilt;
     area.add(floor);
     // Brush strips across the floor, every few metres.
-    const brushMat = new MeshLambertMaterial({ color: street ? STREET_COLORS.kerbB : ICE_COLORS.outerDark });
+    const brushMat = new MeshLambertMaterial({ color: street ? STREET_COLORS.kerbB : plain.outerDark });
     for (let z = 6; z < pen.length - 1; z += 6) {
       const brush = new Mesh(new BoxGeometry(pen.halfWidth * 2, 0.02, 0.8), brushMat);
       brush.position.set(0, 0.01 - z * PEN_DROP, z);
@@ -691,7 +692,7 @@ export class TrackScene {
       const p = samples[i].pos;
       const s = (i / (samples.length - 1)) * ch.arc;
       const R = channelRadiusAt(ch, s);
-      const split = ch.fork && s > ch.fork.s0 && s < ch.fork.s1 ? ch.fork.apart : 0;
+      const split = forkAt(ch, s)?.apart ?? 0;
       const reach = R * Math.sin(channelLipAt(ch, s)) + split + 0.45 + 2;
       const dx = p.x - x;
       const dz = p.z - z;
@@ -750,8 +751,9 @@ export class TrackScene {
     const ch = this.channel;
     const lip = channelLipAt(ch, s);
     const R = channelRadiusAt(ch, s);
-    const tubes = ch.fork && s > ch.fork.s0 && s < ch.fork.s1
-      ? [1, -1].map((side) => ({ off: side * forkOffset(ch.fork, s), R: forkRadius(ch.fork, ch.radius, s), lip: ch.maxAngle }))
+    const fork = forkAt(ch, s);
+    const tubes = fork
+      ? [1, -1].map((side) => ({ off: side * forkOffset(fork, s), R: forkRadius(fork, ch.radius, s), lip: ch.maxAngle }))
       : [{ off: 0, R, lip }];
     let outer = 0;
     let rimTop = -Infinity;

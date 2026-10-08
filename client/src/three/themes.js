@@ -39,6 +39,17 @@ export const THEMES = {
     track: {},
     scenery: 'alpine',
   },
+  // Table Mountain Run: a bright Cape summer day, the sea deep blue, a few clouds on the mountain.
+  'table-mountain-run': {
+    sky: { top: '#3f8fd6', horizon: '#cfe6f5', glow: '#ffffff' },
+    fog: '#cfe6f5',
+    hemisphere: { sky: '#ffffff', ground: '#8c8a62', intensity: 1.6 },
+    ambient: 0.4,
+    sun: { color: '#fff6e6', intensity: 1.9, direction: [-0.4, 0.95, 0.5] },
+    ground: { color: '#2f7fb8', y: -1.2 }, // the bay and the harbour
+    track: {},
+    scenery: 'cape-town',
+  },
 };
 
 export function themeFor(slug) {

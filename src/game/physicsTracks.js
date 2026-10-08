@@ -321,10 +321,111 @@ function sanFrancisco() {
   };
 }
 
-const PHYSICS_TRACKS = [bobsleighRun(), sanFrancisco()];
+// Table Mountain Run (Cape Town): Bobsleigh Run's run and physics, through
+// Cape Town. The surface looks like sand but is as slippery as the ice. Per
+// the track recipe its bends are long and flowing, easing in and out: the
+// hairpin is its one sharp bend (with a braking zone before it) and the
+// corkscrew is a wide spiral. A second splitter divides the field around
+// Lion's Head.
+const TABLE_MOUNTAIN_SECTIONS = [
+  { name: 'Starting ramp', kind: 'straight', length: 16, grade: 1.3 },   // high on Table Mountain, in the forest
+  { name: 'Start plunge', kind: 'straight', length: 80, grade: 0.8 },    // the baboons
+  { name: 'S-bend', kind: 'left', radius: 70, degrees: 50, grade: 0.17, ease: 15 },  // down the rocky mountainside
+  { name: 'S-bend', kind: 'right', radius: 70, degrees: 50, grade: 0.17, ease: 15 },
+  { name: 'Run to the splitter', kind: 'straight', length: 90, grade: 0.13 },
+  { name: 'Splitter', kind: 'left', radius: 90, degrees: 120, grade: 0.12, ease: 15 }, // round a big rock
+  { name: 'Merge', kind: 'straight', length: 45, grade: 0.12 },
+  { name: 'Long banked sweep', kind: 'right', radius: 75, degrees: 130, grade: 0.1, ease: 15 }, // over the city and the bay
+  { name: 'Drop to the hairpin', kind: 'straight', length: 45, grade: 0.2 },
+  { name: 'Hairpin', kind: 'left', radius: 20, degrees: 180, grade: 0.16, ease: 8 }, // the one sharp bend: the elephant
+  { name: 'Out of the hairpin', kind: 'straight', length: 75, grade: 0.24 }, // room to get going again before Lion's Head
+  { name: "Lion's Head splitter", kind: 'right', radius: 75, degrees: 80, grade: 0.18, ease: 15 },
+  { name: 'Merge below Lion\'s Head', kind: 'straight', length: 30, grade: 0.2 },
+  { name: 'Drop to the corkscrew', kind: 'straight', length: 35, grade: 0.22 }, // the zebras
+  { name: 'Corkscrew', kind: 'right', radius: 40, degrees: 360, grade: 0.21, ease: 15 }, // past the Bo-Kaap
+  { name: 'Final plunge', kind: 'straight', length: 60, grade: 0.34 },  // Cape Town Stadium alongside: the giraffe
+  { name: 'Finish', kind: 'straight', length: 30, grade: 0.08 },         // the V&A Waterfront
+];
+
+function tableMountainRun() {
+  const g = generate(TABLE_MOUNTAIN_SECTIONS);
+  const sec = (name) => g.sections.find((s) => s.name === name);
+  const on = (name, share) => {
+    const s = sec(name);
+    return Math.round((s.from + share * (s.to - s.from)) * 10000) / 10000;
+  };
+  return {
+    id: null,
+    slug: 'table-mountain-run',
+    name: 'Table Mountain Run',
+    difficulty: 'extreme',
+    description: 'Down Table Mountain into Cape Town: a paddle gate in the forest, baboons, a splitter round a big rock, a sweep over the bay, an elephant at the hairpin, a second splitter round Lion\'s Head, zebras, a corkscrew past the Bo-Kaap and a plunge to the V&A Waterfront.',
+    length_m: g.length_m,
+    lane_count: 4,
+    waypoints: g.waypoints,
+    obstacles: [],
+    sections: g.sections,
+    physics: {
+      surface: 'ice',          // as slippery as Bobsleigh Run's ice…
+      look: 'sand',            // …though it looks like sand (the 3D view; physics ignores it)
+      pace: 'free',
+      channel: { radius: 3.6, maxAngle: 80, funnel: { length: 70, radius: 22, spacing: 1.15, stagger: 0.2, release: 0.45 } },
+      gate: { countdownMs: 3000 },
+      collisions: true,
+      // Bobsleigh Run's obstacles, as Cape Town's animals (`look`): each races
+      // exactly like the one it stands in for. They stand in place; only the
+      // elephant's trunk reaches in, on the polar bear's timetable.
+      features: [
+        { type: 'ice_block', look: 'baboon', at: on('Start plunge', 0.5), l: -0.35, radius: 0.75, height: 1.2 }, // the start plunge: two baboons either side
+        { type: 'ice_block', look: 'baboon', at: on('Start plunge', 0.5), l: 0.35, radius: 0.75, height: 1.2 },  // across the pack, one dead centre
+        { type: 'ice_block', look: 'baboon', at: on('Start plunge', 0.5) + 0.012, l: 0.12, radius: 0.8, height: 1.2 }, // (a touch off centre: no starting place has an edge)
+        { type: 'bump', at: on('S-bend', 0.5) },
+        { type: 'boost', at: on('Run to the splitter', 0.3), l: 0, length: 8, halfWidth: 3.6 },
+        { type: 'boost', at: on('Long banked sweep', 0.06), l: -0.15, length: 8, halfWidth: 2.2 },     // out of the merge, into the sweep
+        { type: 'cobbles', at: on('Drop to the hairpin', 0.35), length: 35, drag: 0.002 },              // the braking zone before the hairpin
+        { type: 'polar_bear', look: 'elephant', at: on('Hairpin', 0.37), l: -1.25, reach: -0.55, radius: 0.7, height: 1.5, loss: 0.7 }, // swings its trunk across the high line
+        { type: 'icicles', look: 'zebras', at: on('Drop to the corkscrew', 0.4), l: -1, l2: -0.5, radius: 0.35 }, // standing on the high line
+        { type: 'boost', at: on('Drop to the corkscrew', 0.7), l: -0.5, length: 8, halfWidth: 2.6 },
+        { type: 'snowman', look: 'giraffe', at: on('Final plunge', 0.45), l: -0.1, radius: 0.9, height: 2.4 },
+        { type: 'bump', at: on('Final plunge', 0.85) },
+        { type: 'penguins', at: on('Finish', 0), to: on('Finish', 1), side: 1 },  // beside the run-in (scenery only)
+      ],
+      runout: { length: 30, halfWidth: 3.5 },
+      // Where Cape Town's landmarks stand along the run (the 3D view's scenery; physics ignores it).
+      landmarks: {
+        forest: [0, on('S-bend', 0)],                                 // the mountain forest round the start
+        boKaap: [on('Corkscrew', 0), on('Corkscrew', 1)],            // the colourful houses round the corkscrew
+        stadium: on('Final plunge', 0.5),                             // Cape Town Stadium alongside
+        city: on('Long banked sweep', 0),                             // the city below, from the sweep on
+      },
+      // Two splitters: round a big rock (as on Bobsleigh Run), and round Lion's Head.
+      // Balanced so the route never decides a race: marbles that reach the wedge
+      // in the same place finish in the same place on average, whichever channel
+      // they take (on thousands of races). Win shares by route differ on Lion's
+      // Head because the leaders come out of the hairpin on the right-hand side.
+      forks: [
+        {
+          from: on('Run to the splitter', 0.62),
+          to: on('Merge', 0.5),
+          radius: 2.5, apart: 6, tipOffset: -0.8, insideScrub: 1, outsideDrag: 0.6,
+        },
+        {
+          from: on('Out of the hairpin', 0.85),
+          to: on('Merge below Lion\'s Head', 0.5),
+          // A right-hand bend: the engine's "inside" channel (the left one) is the long
+          // way round here, so its ice is the smooth one and the short right-hand
+          // channel's the draggy one.
+          radius: 2.5, apart: 6, tipOffset: 0.4, insideScrub: 0.3, outsideDrag: 4,
+        },
+      ],
+    },
+  };
+}
+
+const PHYSICS_TRACKS = [bobsleighRun(), sanFrancisco(), tableMountainRun()];
 
 function physicsTrack(slug) {
   return PHYSICS_TRACKS.find((t) => t.slug === slug) || null;
 }
 
-module.exports = { PHYSICS_TRACKS, physicsTrack, generate, SAN_FRANCISCO_SECTIONS };
+module.exports = { PHYSICS_TRACKS, physicsTrack, generate, SAN_FRANCISCO_SECTIONS, TABLE_MOUNTAIN_SECTIONS };

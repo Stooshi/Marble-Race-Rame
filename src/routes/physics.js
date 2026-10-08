@@ -32,10 +32,10 @@ router.get('/preview', async (req, res) => {
   const level = q.level ?? 3;
   const key = `${q.track}:${seed}:${level}`;
   if (!cache.has(key)) {
-    // Real tracks from the database (a physics track still being added falls back to its definition in code).
+    // Real tracks from the database, switched on or not yet (a physics track still being added falls back to its definition in code).
     let { rows: [track] } = await db.query(
       `SELECT id, slug, name, difficulty, length_m, lane_count, waypoints, obstacles, physics
-         FROM tracks WHERE slug = $1 AND is_active`, [q.track],
+         FROM tracks WHERE slug = $1`, [q.track],
     );
     track ??= physicsTrack(q.track);
     if (!track) throw notFound('Track not found');

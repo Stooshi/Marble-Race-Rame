@@ -20,7 +20,47 @@ if (!track) {
   process.exit(1);
 }
 const mode = process.argv[3];
-process.stdout.write(mode === '--rebuild' ? rebuildSql(track) : mode === '--retune' ? retuneSql(track, process.argv[4]) : trackSql(track));
+process.stdout.write(mode === '--rebuild' ? rebuildSql(track) : mode === '--retune' ? retuneSql(track, process.argv[4])
+  : mode === '--add-hidden' ? hiddenTrackSql(track, process.argv[4]) : trackSql(track));
+
+// A new track added switched off (is_active false): nobody can race on it yet,
+// but the physics preview shows it; switch it on once it has been watched.
+//   node scripts/physics-track-sql.js table-mountain-run --add-hidden "What it is." > docs/data_updates/<date>-add-<slug>.sql
+function hiddenTrackSql(t, note = '') {
+  const q = (v) => `'${String(v).replace(/'/g, "''")}'`;
+  const lines = [];
+  for (const word of `${note} It is added switched off: nobody can race on it until it is switched on (in Railway's query box: UPDATE tracks SET is_active = true WHERE slug = '${t.slug}'; SELECT 1;), while the physics preview already shows it.`.split(/\s+/).filter(Boolean)) {
+    if (lines.length && `${lines[lines.length - 1]} ${word}`.length <= 77) lines[lines.length - 1] += ` ${word}`;
+    else lines.push(word);
+  }
+  return `-- One-time data update: add ${t.name}.
+--
+${lines.map((l) => `-- ${l}`).join('\n')}
+--
+-- Generated from src/game/physicsTracks.js by scripts/physics-track-sql.js --add-hidden.
+-- The track is inserted only if no track with this slug or name exists yet.
+-- Nothing else is touched.
+
+WITH added AS (
+    INSERT INTO tracks (slug, name, description, difficulty, length_m, lane_count, waypoints, obstacles, physics, is_active)
+    SELECT v.slug, v.name, v.description, v.difficulty::track_difficulty, v.length_m, v.lane_count,
+           v.waypoints::jsonb, v.obstacles::jsonb, v.physics::jsonb, false
+    FROM (VALUES
+        (${q(t.slug)}, ${q(t.name)},
+         ${q(t.description)},
+         ${q(t.difficulty)}, ${t.length_m}, ${t.lane_count},
+         ${q(JSON.stringify(t.waypoints))},
+         ${q(JSON.stringify(t.obstacles))},
+         ${q(JSON.stringify(t.physics))})
+    ) AS v(slug, name, description, difficulty, length_m, lane_count, waypoints, obstacles, physics)
+    WHERE NOT EXISTS (
+        SELECT 1 FROM tracks t WHERE t.slug = v.slug OR lower(t.name) = lower(v.name)
+    )
+    RETURNING 1
+)
+SELECT count(*) AS ${JSON.stringify(`track added, switched off (${t.name})`)} FROM added;
+`;
+}
 
 // A later re-tune of a track already on the new physics: its shape and settings as now in code.
 function retuneSql(t, note = 'Its shape and settings as now in code.') {

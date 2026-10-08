@@ -331,7 +331,9 @@ function channelLip(channel, s) {
  * outside (long) channel depending on its line; they merge again later.
  */
 function advanceChannel(m, time, ctx) {
-  const { look, rng, air, events, stats, channel, fork } = ctx;
+  const { look, rng, air, events, stats, channel } = ctx;
+  // The splitter the marble is in (a track may have several, one after another).
+  let fork = m.fork ?? ctx.fork;
   if (rng) {
     // Form on the ice drifts slowly: a marble can have a good or bad spell lasting several seconds.
     m.form += ICE_FORM_PULL * (1 - m.form) * DT + ICE_FORM_DRIFT * rng.gaussian() * Math.sqrt(DT);
@@ -432,7 +434,10 @@ function advanceChannel(m, time, ctx) {
     if (stats) stats.features.bump += 1;
   }
 
-  if (fork && !m.branch && before < fork.s0 && m.s >= fork.s0) {
+  const entering = !m.branch && ctx.forks ? ctx.forks.find((f) => before < f.s0 && m.s >= f.s0) : null;
+  if (entering) {
+    fork = entering;
+    m.fork = fork;
     // The splitter: the marble's line decides its channel; dead centre clips the wedge.
     // The wedge may stand a little off centre (fork.tipOffset, metres towards the inside).
     let across = channel.radius * Math.sin(m.th) - fork.tipOffset;
@@ -447,10 +452,10 @@ function advanceChannel(m, time, ctx) {
     // Here the channel it drops into is still the main channel itself: same place across.
     m.th = Math.asin(clamp((across + fork.tipOffset) / channel.radius, -Math.sin(channel.maxAngle), Math.sin(channel.maxAngle)));
     m.forkIn = time;
-    if (stats) stats.fork[m.branch > 0 ? 'inside' : 'outside'].count += 1;
+    if (stats) fork.stats[m.branch > 0 ? 'inside' : 'outside'].count += 1;
   } else if (m.branch && before < fork.s1 && m.s >= fork.s1) {
     // The channels have become one again: same place across, now in the main channel.
-    if (stats) stats.fork[m.branch > 0 ? 'inside' : 'outside'].seconds.push(time - m.forkIn);
+    if (stats) fork.stats[m.branch > 0 ? 'inside' : 'outside'].seconds.push(time - m.forkIn);
     m.branch = 0;
   }
 
@@ -508,9 +513,18 @@ const NEWS_GAP = 8;            // seconds: on the ice, at most one commentary li
 const BUMP_MIN = 0.4;          // m/s: slower than this, marbles are just leaning on each other
 const DIAMETER = 2 * RADIUS;
 
+/** How many marbles took each side of a splitter, and their average seconds in it. */
+function splitterStats(fork) {
+  return Object.fromEntries(Object.entries(fork).map(([side, f]) => [side, {
+    marbles: f.count,
+    seconds: f.seconds.length ? Math.round((f.seconds.reduce((a, x) => a + x, 0) / f.seconds.length) * 100) / 100 : null,
+  }]));
+}
+
 /** Where a marble sits in the channel's cross-section: metres across and up (from the main channel's middle). */
 function crossSection(m, ctx) {
-  const { channel, fork, look } = ctx;
+  const { channel, look } = ctx;
+  const fork = m.fork ?? ctx.fork;
   let off = 0;
   let R = channelRadius(channel, m.s);
   if (m.branch) {
@@ -902,14 +916,19 @@ function simulatePhysicsRace({ seed, track, entries, level = 3, tickRateHz = 20 
   const tp = track.physics;
   if (tp?.channel) {
     ctx.channel = { radius: tp.channel.radius, maxAngle: (tp.channel.maxAngle * Math.PI) / 180, funnel: tp.channel.funnel ?? null };
-    if (tp.fork) {
-      ctx.fork = {
-        s0: tp.fork.from * total, s1: tp.fork.to * total, radius: tp.fork.radius, apart: tp.fork.apart,
-        insideScrub: tp.fork.insideScrub ?? 1,
-        tipOffset: tp.fork.tipOffset ?? 0,
-        outsideDrag: tp.fork.outsideDrag ?? 1,
-      };
-      stats.fork = { inside: { count: 0, seconds: [] }, outside: { count: 0, seconds: [] } };
+    // Splitters: `fork` (one, as on Bobsleigh Run) or `forks` (several, one after another).
+    const forks = tp.forks ?? (tp.fork ? [tp.fork] : []);
+    if (forks.length) {
+      ctx.forks = forks.map((f) => ({
+        s0: f.from * total, s1: f.to * total, radius: f.radius, apart: f.apart,
+        insideScrub: f.insideScrub ?? 1,
+        tipOffset: f.tipOffset ?? 0,
+        outsideDrag: f.outsideDrag ?? 1,
+        stats: { inside: { count: 0, seconds: [] }, outside: { count: 0, seconds: [] } },
+      }));
+      ctx.fork = ctx.forks[0];
+      stats.fork = ctx.fork.stats;
+      if (forks.length > 1) stats.forks = ctx.forks.map((f) => f.stats);
     }
   }
   // Marbles bump into each other (ice channels only), and finish into a catch area.
@@ -1158,12 +1177,8 @@ function simulatePhysicsRace({ seed, track, entries, level = 3, tickRateHz = 20 
       averageSpeed: results[0]?.finishTimeMs ? Math.round((total / (results[0].finishTimeMs / 1000)) * 10) / 10 : null,
       trackMetres: Math.round(total),
       ...(stats.features && { features: stats.features }),
-    ...(stats.fork && {
-        splitter: Object.fromEntries(Object.entries(stats.fork).map(([side, f]) => [side, {
-          marbles: f.count,
-          seconds: f.seconds.length ? Math.round((f.seconds.reduce((a, x) => a + x, 0) / f.seconds.length) * 100) / 100 : null,
-        }])),
-      }),
+    ...(stats.fork && { splitter: splitterStats(stats.fork) }),
+    ...(stats.forks && { splitters: stats.forks.map(splitterStats) }),
     },
   };
 }
