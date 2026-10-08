@@ -82,10 +82,23 @@ export function prefersLite() {
   }
 }
 
+/**
+ * Whether to build the tracks' scenery (hills, houses, forests): ?scenery=0 in
+ * the address leaves it out, to compare how smoothly a race runs without it.
+ */
+export function prefersScenery() {
+  try {
+    return new URLSearchParams(window.location.search).get('scenery') !== '0';
+  } catch {
+    return true;
+  }
+}
+
 export class TrackScene {
-  constructor(canvas, { interactive = true, maxPixelRatio = 2, lite = prefersLite() } = {}) {
+  constructor(canvas, { interactive = true, maxPixelRatio = 2, lite = prefersLite(), scenery = prefersScenery() } = {}) {
     const lowEnd = (navigator.hardwareConcurrency || 4) <= 4 && window.devicePixelRatio >= 2;
     this.lite = lite;
+    this.sceneryOn = scenery;
     this.renderer = new WebGLRenderer({ canvas, antialias: window.devicePixelRatio < 2, powerPreference: 'default' });
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, lowEnd || lite ? 1.5 : maxPixelRatio));
     this.renderer.outputColorSpace = SRGBColorSpace;
@@ -186,7 +199,7 @@ export class TrackScene {
     if (this.features) this.trackGroup.add(this.features.group);
     // Scenery a moment later, so the track shows straight away even on slow phones.
     const token = (this.buildToken = (this.buildToken || 0) + 1);
-    if (theme.scenery) {
+    if (theme.scenery && this.sceneryOn) {
       setTimeout(() => {
         if (token !== this.buildToken || this.disposed) return; // another track was chosen meanwhile
         this.scenery = buildScenery(theme, this.centerline, track, { lite: this.lite });
@@ -953,6 +966,7 @@ export class TrackScene {
       calls,
       triangles,
       lite: this.lite,
+      scenery: this.sceneryOn,
     };
   }
 

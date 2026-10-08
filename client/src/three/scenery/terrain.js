@@ -26,7 +26,9 @@ function rolling(x, z) {
  * rebuilt): { halfAt(i), liftAt(i) } per centre-line sample i, the channel's
  * half-width with its pavements, and the height of its pavements above the
  * floor (and optionally dip: metres beyond them the ground stays down, for
- * coarse ground). The ground then sits at pavement level right beside it, dips
+ * coarse ground; under: metres the ground stays under the floor; cap: how
+ * steeply the ground may rise beside any stretch, for tracks passing over
+ * themselves). The ground then sits at pavement level right beside it, dips
  * under the channel itself, and blends into the hills further out.
  */
 export function makeHeightField(centerline, laneCount, { hillHeight = 18, landRadius = 300, seaLevel = -1.2, water = () => 0, street = null } = {}, style = TRACK_STYLE) {
@@ -37,6 +39,11 @@ export function makeHeightField(centerline, laneCount, { hillHeight = 18, landRa
   const ys = samples.map((s) => s.pos.y);
   const halves = street ? keep.map((i) => street.halfAt(i)) : null;
   const lifts = street ? keep.map((i) => street.liftAt(i)) : null;
+  // Metres along the track to each kept sample (to tell another stretch from the same one further along).
+  const along = [0];
+  for (let k = 1; k < samples.length; k += 1) along.push(along[k - 1] + samples[k].pos.distanceTo(samples[k - 1].pos));
+  // Another stretch of track: much further along the track than across the ground (it went away and came back).
+  const otherStretch = (i, j, planar) => i !== j && Math.abs(along[i] - along[j]) > 2.5 * planar + 40;
   const roadHalf = street ? Math.max(...halves.slice(Math.floor(halves.length * 0.1))) : (laneCount * style.laneWidth) / 2 + style.wallThickness;
   const flatTo = roadHalf + 14; // ground stays under the road this far out
   const capReach2 = (flatTo + 110) ** 2;
@@ -50,46 +57,79 @@ export function makeHeightField(centerline, laneCount, { hillHeight = 18, landRa
     return Math.sqrt(best);
   }
 
+  // Squared distance from the spot being worked out to each sample (filled by heightAt, reused by streetHeight).
+  const D2 = new Float64Array(xs.length);
+
   // A street channel: pavement level beside it (from the nearby stretches, softly
   // blended where two pass close), under the floor beneath it, hills further out.
-  function streetHeight(x, z, hills) {
-    let wSum = 0;
-    let hSum = 0;
-    let best = Infinity;
-    let bi = 0;
-    for (let i = 0; i < xs.length; i += 1) {
-      const d2 = (xs[i] - x) ** 2 + (zs[i] - z) ** 2;
-      if (d2 < best) { best = d2; bi = i; }
-      if (d2 > 90 * 90) continue;
-      const w = 1 / (d2 + 25) ** 2;
-      wSum += w;
-      hSum += w * (ys[i] + lifts[i] - 0.25);
-    }
-    const d = Math.sqrt(best);
+  // bi: the nearest sample; pavement: the blended pavement level here.
+  function streetHeight(x, z, hills, bi, pavement) {
+    const d = Math.sqrt(D2[bi]);
     const inner = halves[bi];
-    const pavement = wSum ? hSum / wSum : ys[bi] + lifts[bi] - 0.25;
     const dip = street.dip ?? 0; // (coarse ground: stays down a little further out, under the street's stone walls)
     const under = street.under ?? 2; // metres under the street's floor (coarse ground: deeper, where the hill bends sharply)
-    if (d < inner + dip) return ys[bi] - under; // under the street: never through its floor
+    // Under the channel: below the lowest stretch over this spot (where the track
+    // passes over itself, the ground stays under the lower one; the upper one
+    // stands on supports). The floor right here is between the nearest sample
+    // and its neighbour (on a steep plunge it is well below the nearest sample's).
+    let lowest = Infinity;
+    if (d < inner + dip) {
+      let best2 = Infinity;
+      for (const j of [bi - 1, bi]) {
+        if (j < 0 || j + 1 >= xs.length) continue;
+        const ax = xs[j + 1] - xs[j];
+        const az = zs[j + 1] - zs[j];
+        const u = Math.max(0, Math.min(1, ((x - xs[j]) * ax + (z - zs[j]) * az) / (ax * ax + az * az || 1)));
+        const e2 = (xs[j] + ax * u - x) ** 2 + (zs[j] + az * u - z) ** 2;
+        if (e2 < best2) { best2 = e2; lowest = ys[j] + (ys[j + 1] - ys[j]) * u; }
+      }
+      if (lowest === Infinity) lowest = ys[bi];
+    }
+    // Other stretches (see otherStretch; the nearest one's own neighbours are the same
+    // stretch, steep start ramps included): under one, the ground stays under it too;
+    // and with cap, beside any of them the ground rises at most that steeply from its
+    // rim, so where the track passes over itself the bank never buries the lower stretch.
+    let cap = Infinity;
+    for (let i = 0; i < xs.length; i += 1) {
+      const r2 = D2[i];
+      const foot = halves[i] + dip;
+      const near = r2 < foot * foot;
+      if (!near && !(street.cap && r2 < 6400)) continue;
+      const r = Math.sqrt(r2);
+      const other = otherStretch(i, bi, r + d);
+      if (near && other) lowest = Math.min(lowest, ys[i]);
+      if (street.cap && (i === bi || other)) cap = Math.min(cap, ys[i] + (near ? -under : lifts[i] - 0.25 + (r - foot) * street.cap));
+    }
+    if (lowest < Infinity) return Math.min(lowest - under, cap);
     const kerb = ys[bi] - under + (pavement - ys[bi] + under) * smoothstep(inner + dip, inner + dip + 5, d);
-    return kerb + (hills - kerb) * smoothstep(inner + 40, inner + 160, d);
+    return Math.min(kerb + (hills - kerb) * smoothstep(inner + 40, inner + 160, d), cap);
   }
 
   function heightAt(x, z) {
     let wSum = 0;
     let hSum = 0;
+    let pSum = 0; // (street: the pavement level blended from nearby stretches)
+    let pW = 0;
     let best = Infinity;
+    let bi = 0;
     let floorBelow = Infinity; // lowest road within flatTo
     for (let i = 0; i < xs.length; i += 1) {
       const dx = xs[i] - x;
       const dz = zs[i] - z;
       const d2 = dx * dx + dz * dz;
+      D2[i] = d2;
       const t = d2 + 400;
       const w = 1 / (t * Math.sqrt(t));
       wSum += w;
       hSum += w * ys[i];
-      if (d2 < best) best = d2;
-      if (d2 < capReach2) {
+      if (d2 < best) { best = d2; bi = i; }
+      if (street) {
+        if (d2 <= 90 * 90) {
+          const wp = 1 / (d2 + 25) ** 2;
+          pW += wp;
+          pSum += wp * (ys[i] + lifts[i] - 0.25);
+        }
+      } else if (d2 < capReach2) {
         // Beside the road the ground may rise above it by at most half the distance to it (gentle banks).
         const d = Math.sqrt(d2);
         const cap = ys[i] - 1 + Math.max(0, d - flatTo) * 0.5;
@@ -98,7 +138,7 @@ export function makeHeightField(centerline, laneCount, { hillHeight = 18, landRa
     }
     const r = Math.sqrt(best);
     let h = hSum / wSum - 2 + hillHeight * rolling(x, z) * smoothstep(flatTo, flatTo + 120, r);
-    if (street) h = streetHeight(x, z, h);
+    if (street) h = streetHeight(x, z, h, bi, pW ? pSum / pW : ys[bi] + lifts[bi] - 0.25);
     else h = Math.min(h, floorBelow);
     // Out at the edges, and wherever the theme puts water, the land sinks into the sea.
     const sink = Math.max(smoothstep(landRadius * 0.7, landRadius, r), water(x, z));

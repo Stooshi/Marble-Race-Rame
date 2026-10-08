@@ -28,7 +28,7 @@ export const THEMES = {
     track: { embankment: '#cdb996', embankmentDark: '#c2ac86' }, // stone retaining walls
     scenery: 'san-francisco',
   },
-  // Bobsleigh Run: plain snow for now; the alpine dressing comes later.
+  // Bobsleigh Run: a snowy mountainside in pine forest under a clear winter sky.
   'bobsleigh-run': {
     sky: { top: '#4f93d8', horizon: '#d9eaf8', glow: '#ffffff' },
     fog: '#d9eaf8',
@@ -37,7 +37,7 @@ export const THEMES = {
     sun: { color: '#fffaf0', intensity: 1.8, direction: [-0.5, 0.9, 0.3] },
     ground: { color: '#dde8f2', y: -2.05 },
     track: {},
-    scenery: null,
+    scenery: 'alpine',
   },
 };
 

@@ -8,13 +8,12 @@
  * merged mesh), a few fog sprites and the sun.
  */
 import {
-  CanvasTexture, Color, Group, InstancedMesh, Matrix4, Mesh, MeshLambertMaterial, Quaternion,
+  CanvasTexture, Color, Group, Matrix4, Mesh, MeshLambertMaterial, Quaternion,
   Sprite, SpriteMaterial, SRGBColorSpace, Vector3,
 } from 'three';
 import { beam, box, hashString, merge, seededRandom, smoothstep, triangles } from './parts';
 import { buildTerrain, makeHeightField } from './terrain';
-import { channelLipAt, channelOf, channelRadiusAt } from '../iceChannel';
-import { PEN_DROP } from '../marbles';
+import { channelGround, tiledInstances } from './channelGround';
 
 const PAVEMENT = 3; // metres of pavement each side of a street channel (as iceChannel.js draws it)
 const BRIDGE_AHEAD = 620; // metres from the finish line out to the Golden Gate, straight ahead across the bay (pier finish)
@@ -273,33 +272,6 @@ function sunTexture() {
   return tex;
 }
 
-const TILE = 180; // metres: houses are drawn in blocks this size, each skipped when out of view
-
-/**
- * Instanced copies of each geometry in `geometries` (sharing the materials),
- * one set per TILE-sized block of ground, so blocks out of view aren't drawn.
- * Returns one Group per geometry.
- */
-function tiledInstances(items, geometries, materials, names, set) {
-  const blocks = new Map();
-  for (const h of items) {
-    const k = `${Math.floor(h.x / TILE)},${Math.floor(h.z / TILE)}`;
-    if (!blocks.has(k)) blocks.set(k, []);
-    blocks.get(k).push(h);
-  }
-  const groups = names.map((name) => Object.assign(new Group(), { name }));
-  for (const block of blocks.values()) {
-    geometries.forEach((g, n) => {
-      const mesh = new InstancedMesh(g, materials[n], block.length);
-      block.forEach((h, i) => set(mesh, i, h, n));
-      mesh.instanceMatrix.needsUpdate = true;
-      mesh.computeBoundingSphere();
-      groups[n].add(mesh);
-    });
-  }
-  return groups;
-}
-
 /**
  * Builds the whole San Francisco world around a track. Returns a Group.
  * lite (phones): a lighter version of it, not the same at lower sharpness:
@@ -310,30 +282,14 @@ export function buildSanFrancisco(centerline, track, theme, { lite = false } = {
   const lanes = Math.max(1, Number(track?.lane_count) || 5);
   const colony = track?.physics?.features?.find?.((f) => f.type === 'sea_lion_colony') ?? null;
   // The rebuilt track (new physics) is a street channel built into the hillside: pavements and ground at its rim.
-  const channel = channelOf(track, centerline);
-  const pen = channel?.runout ?? null;
+  // (On phones the coarser ground stays down further out, behind the street's walls, and deeper under it,
+  // where the hill bends sharply at the start.)
+  const hug = channelGround(centerline, track, { rim: PAVEMENT, dip: lite ? 6 : 0, under: lite ? 5 : 2 });
+  const channel = hug?.channel ?? null;
+  const pen = hug?.pen ?? null;
   const layout = sanFranciscoLayout(centerline, { pierFinish: Boolean(track?.physics?.channel), colony, pen });
-  const step = channel ? channel.arc / centerline.segments : 0;
-  const { segments } = centerline;
-  const street = channel ? {
-    dip: lite ? 6 : 0, // (the phone version's coarser ground stays down further out, behind the street's walls…
-    under: lite ? 5 : 2, // …and deeper under it, where the hill bends sharply at the start)
-    halfAt: (i) => (i > segments ? pen.halfWidth + 0.3 + PAVEMENT : channelRadiusAt(channel, i * step) * Math.sin(channelLipAt(channel, i * step)) + PAVEMENT),
-    liftAt: (i) => (i > segments ? 1.6 : channelRadiusAt(channel, i * step) * (1 - Math.cos(channelLipAt(channel, i * step)))),
-  } : null;
-  // The ground follows the street on into the catch area past the line (its floor tipping gently down), so it never buries it.
-  let groundLine = centerline;
-  if (pen) {
-    const end = centerline.samples[segments];
-    const forward = new Vector3(end.tangent.x, 0, end.tangent.z).normalize();
-    const more = [];
-    for (let d = step; d <= pen.length + 1; d += step) {
-      const pos = end.pos.clone().addScaledVector(forward, d);
-      pos.y -= d * PEN_DROP;
-      more.push({ ...end, pos });
-    }
-    groundLine = { ...centerline, samples: [...centerline.samples, ...more] };
-  }
+  const street = hug?.street ?? null;
+  const groundLine = hug?.groundLine ?? centerline;
   const field = makeHeightField(groundLine, lanes, { hillHeight: 34, landRadius: 340, seaLevel: SEA_LEVEL, water: layout.water, street });
   const group = new Group();
   group.name = 'scenery:san-francisco';
