@@ -14,7 +14,8 @@ import {
 } from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { buildKitGround, biomeOf } from './kitGround';
-import { FIGURE_COLORS, LANDMARKS, PEOPLE, cabin, dressingFor, liftTower } from './kitProps';
+import { FIGURE_COLORS, LANDMARKS, PEOPLE, cabin, dressingFor, liftTower, snowRock, winterBirch } from './kitProps';
+import { buildCentrepieces, buildFunicular, buildHouses, buildLake, buildRaceNetting, tagsNear } from './kitPlaces';
 import { hashString, mergeByArea, piece, seededRandom, smoothstep } from './parts';
 import { COSTUMES, COSTUME_COLORS } from '../costumes';
 import { FEATURE_COLORS } from '../trackFeatures';
@@ -25,7 +26,9 @@ const UP = new Vector3(0, 1, 0);
 const Z = new Vector3(0, 0, 1);
 const LIFT_HEIGHT = 18;  // metres above the track where a lift crosses it: well above the follow camera
 const CABIN_SPEED = 4;   // metres per second along the cable
-const DRESSING_AREA = 400; // metres: trees and rocks are merged in squares this size (one draw call each)
+const DRESSING_AREA = 500; // metres: trees and rocks are merged in squares this size (one draw call each)
+// What may be merged into the still scenery (nothing that moves, nothing see-through).
+const STILL = new Set(['landmarks', 'lift towers', 'centrepiece', 'netting poles', 'funicular rails', 'houses']);
 
 export function buildKitScenery(centerline, track, theme, { lite = false } = {}) {
   const kit = track.physics.kit;
@@ -197,8 +200,30 @@ export function buildKitScenery(centerline, track, theme, { lite = false } = {})
     group.add(cables);
   }
 
+  // ── Places a section's scenery names: netting, houses, a funicular, a lake, a splitter's hut ──
+  const centrepieces = buildCentrepieces(centerline, channel, kit, { lite });
+  group.add(centrepieces.group);
+  group.add(buildRaceNetting(centerline, channel, kit, rows));
+  const lake = buildLake(ground.lake, { lite });
+  if (lake) {
+    group.add(lake);
+    solids.push({ x: ground.lake.x, z: ground.lake.z, r: ground.lake.radius * 1.25 });
+  }
+  const funicular = buildFunicular(centerline, kit, { groundAt, clearance: field.clearance, lite });
+  if (funicular) {
+    group.add(funicular.group);
+    for (const p of funicular.line) solids.push({ x: p.x, z: p.z, r: 4 }); // (no trees on the rails)
+  }
+  group.add(buildHouses(centerline, kit, { lite, arc: channel.arc, groundAt, clearance: field.clearance, solids, rand }));
+
   // ── Set dressing for the landscape (instanced, drawn in tiles) ─────────
-  const kinds = dressingFor(biome);
+  // The landscape's own, plus what a section's scenery asks for (snow-rimed rocks, birches);
+  // a bare stretch (a wind-swept summit) keeps only a few rocks.
+  const baseKinds = dressingFor(biome);
+  const kinds = [...baseKinds, [(l) => snowRock(l), 0], [(l) => winterBirch(l), 0]];
+  const ROCK = baseKinds.length;
+  const BIRCH = baseKinds.length + 1;
+  const tagsAt = tagsNear(centerline, kit);
   const xs = samples.map((s) => s.pos.x);
   const zs = samples.map((s) => s.pos.z);
   const minX = Math.min(...xs);
@@ -206,7 +231,7 @@ export function buildKitScenery(centerline, track, theme, { lite = false } = {})
   const minZ = Math.min(...zs);
   const maxZ = Math.max(...zs);
   const spacing = lite ? 12 : 7;
-  const maxItems = lite ? 380 : 1100;
+  const maxItems = lite ? 300 : 900;
   const spots = [];
   for (let x = minX - 260; x <= maxX + 260; x += spacing) {
     for (let z = minZ - 260; z <= maxZ + 260; z += spacing) spots.push([x + (rand() - 0.5) * spacing * 0.9, z + (rand() - 0.5) * spacing * 0.9, rand(), rand()]);
@@ -220,8 +245,14 @@ export function buildKitScenery(centerline, track, theme, { lite = false } = {})
     if (c < 9 || c > 250) continue; // (beyond the banks, not out where the land falls away)
     if (roll > 0.8 - 0.55 * smoothstep(30, 240, c)) continue; // denser near the track
     if (solids.some((o) => (o.x - x) ** 2 + (o.z - z) ** 2 < o.r * o.r)) continue;
+    const tags = tagsAt(x, z);
     let acc = 0;
-    const k = kinds.findIndex(([, share]) => (acc += share) >= pick);
+    let k = baseKinds.findIndex(([, share]) => (acc += share) >= pick);
+    if (tags.includes('bare')) {
+      if (pick > 0.12) continue;
+      k = ROCK;
+    } else if (tags.includes('rocks')) k = pick < 0.7 ? ROCK : k;
+    else if (tags.includes('birches')) k = pick < 0.7 ? BIRCH : k;
     items[Math.max(0, k)].push({ x, y: groundAt(x, z), z, yaw: rand() * Math.PI * 2, scale: 0.75 + rand() * 0.6, tint: 0.85 + rand() * 0.25 });
     total += 1;
   }
@@ -245,7 +276,7 @@ export function buildKitScenery(centerline, track, theme, { lite = false } = {})
   const dressMat = new MeshLambertMaterial({ vertexColors: true, flatShading: true });
   const dressGroup = new Group();
   dressGroup.name = 'dressing';
-  for (const geometry of mergeByArea(dressing, lite ? DRESSING_AREA * 1.75 : DRESSING_AREA)) dressGroup.add(new Mesh(geometry, dressMat));
+  for (const geometry of mergeByArea(dressing, lite ? DRESSING_AREA * 4 : DRESSING_AREA)) dressGroup.add(new Mesh(geometry, dressMat));
   group.add(dressGroup);
 
   // ── Moving things, on the race clock ───────────────────────────────────
@@ -253,6 +284,8 @@ export function buildKitScenery(centerline, track, theme, { lite = false } = {})
   const update = (t) => {
     const sec = t / 1000;
     movers?.update(t);
+    centrepieces.update(t);
+    funicular?.update(t);
     for (const lift of lifts) {
       // Half the cabins out on one cable, half back on the other, evenly spaced, looping round.
       cabinQ.setFromAxisAngle(UP, lift.yaw);
@@ -268,6 +301,25 @@ export function buildKitScenery(centerline, track, theme, { lite = false } = {})
     }
   };
   update(0);
-  group.userData = { update, field, groundAt, biome, ground };
+  // The still things in plain colours (landmarks, lift towers, a splitter's hut, net poles, funicular
+  // rails, houses) merged together by neighbourhood: a few draw calls instead of one each.
+  const stillScenery = [];
+  group.traverse((o) => {
+    if (o.isMesh && !o.isInstancedMesh && STILL.has(o.name) && o.material.isMeshLambertMaterial && o.material.vertexColors) stillScenery.push(o);
+  });
+  if (stillScenery.length > 1) {
+    const pieces = stillScenery.map((o) => {
+      o.updateWorldMatrix(true, false);
+      const g = o.geometry.clone().applyMatrix4(o.matrixWorld);
+      for (const k of Object.keys(g.attributes)) if (!['position', 'normal', 'color'].includes(k)) g.deleteAttribute(k);
+      if (!g.getAttribute('normal')) g.computeVertexNormals();
+      return g.index ? g.toNonIndexed() : g;
+    });
+    for (const o of stillScenery) o.removeFromParent();
+    const mat = new MeshLambertMaterial({ vertexColors: true, flatShading: true });
+    for (const geometry of mergeByArea(pieces, 400)) group.add(Object.assign(new Mesh(geometry, mat), { name: 'scenery: still' }));
+  }
+
+  group.userData = { update, field, groundAt, biome, ground, floorY: ground.floorY };
   return group;
 }

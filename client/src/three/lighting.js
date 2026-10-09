@@ -183,7 +183,7 @@ function aurora(lite) {
 }
 
 /** A soft round snowflake (points are drawn square without one). */
-function flakeTexture() {
+export function flakeTexture() {
   const canvas = document.createElement('canvas');
   canvas.width = 32;
   canvas.height = 32;

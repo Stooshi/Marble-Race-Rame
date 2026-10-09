@@ -7,7 +7,7 @@
  */
 import {
   AmbientLight, BackSide, BoxGeometry, Color, DirectionalLight, DoubleSide, Float32BufferAttribute, Fog,
-  Group, HemisphereLight, Mesh, MeshBasicMaterial, MeshLambertMaterial, PerspectiveCamera, PlaneGeometry,
+  FrontSide, Group, HemisphereLight, Mesh, MeshBasicMaterial, MeshLambertMaterial, PerspectiveCamera, PlaneGeometry,
   Scene, SphereGeometry, SRGBColorSpace, Vector3, WebGLRenderer,
 } from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
@@ -20,6 +20,7 @@ import { gatePlaces, StartGate } from './startGate';
 import { countdownPose, handover, startLineShot } from './startCamera';
 import { buildTrackFeatures } from './trackFeatures';
 import { buildStructures } from './structures';
+import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { buildBillboards } from './billboards';
 import { fetchBillboards } from '../api/billboards';
 import { buildEffects } from './lighting';
@@ -50,6 +51,51 @@ function skyDome() {
   const sky = new Mesh(geometry, new MeshBasicMaterial({ vertexColors: true, side: BackSide, fog: false, depthWrite: false }));
   sky.renderOrder = -1;
   return sky;
+}
+
+/** A group's meshes merged into one mesh per material (same look, fewer draw calls). */
+function mergeByMaterial(group) {
+  group.updateMatrixWorld(true);
+  const byMat = new Map();
+  const keep = [];
+  group.traverse((o) => {
+    if (!o.isMesh) return;
+    if (o.isInstancedMesh || o.material.map || o.material.transparent || Array.isArray(o.material)) { keep.push(o); return; }
+    let g = o.geometry.clone().applyMatrix4(o.matrixWorld);
+    g = g.index ? g.toNonIndexed() : g;
+    for (const k of Object.keys(g.attributes)) if (!['position', 'normal', 'color'].includes(k)) g.deleteAttribute(k);
+    if (!g.getAttribute('normal')) g.computeVertexNormals();
+    // A plain lit colour is baked into the corners, so all of those share one mesh.
+    const m = o.material;
+    const plain = m.isMeshLambertMaterial && !m.vertexColors && m.emissive.getHex() === 0 && m.side === FrontSide;
+    let key = m;
+    if (plain) {
+      const colours = new Float32Array(g.getAttribute('position').count * 3);
+      for (let k = 0; k < colours.length; k += 3) { colours[k] = m.color.r; colours[k + 1] = m.color.g; colours[k + 2] = m.color.b; }
+      g.setAttribute('color', new Float32BufferAttribute(colours, 3));
+      key = 'baked';
+    }
+    if (!byMat.has(key)) byMat.set(key, []);
+    byMat.get(key).push(g);
+  });
+  if (byMat.has('baked')) {
+    byMat.set(new MeshLambertMaterial({ vertexColors: true, flatShading: true }), byMat.get('baked'));
+    byMat.delete('baked');
+  }
+  const out = new Group();
+  out.name = group.name;
+  for (const [mat, list] of byMat) {
+    const attrs = (g) => Object.keys(g.attributes).sort().join();
+    const groups = new Map();
+    for (const g of list) { if (!groups.has(attrs(g))) groups.set(attrs(g), []); groups.get(attrs(g)).push(g); }
+    for (const same of groups.values()) out.add(new Mesh(mergeGeometries(same), mat));
+  }
+  for (const o of keep) {
+    const m = o.clone();
+    o.matrixWorld.decompose(m.position, m.quaternion, m.scale);
+    out.add(m);
+  }
+  return out;
 }
 
 /** Paints the sky for a theme, with a warm glow around the sun when the theme has one. */
@@ -192,7 +238,8 @@ export class TrackScene {
     const style = { ...TRACK_STYLE, colors: { ...TRACK_STYLE.colors, ...theme.track } };
     this.channel = channelOf(track, this.centerline); // ice channel (bobsleigh) instead of a road
     // (On phones a street's U is drawn in fewer strips across.)
-    const lighter = this.lite && this.channel?.look === 'street' ? { segmentsAcross: 20 } : undefined;
+    const lighter = this.lite && this.channel?.look === 'street' ? { segmentsAcross: 20 }
+      : this.lite && track?.physics?.kit ? { segmentsAcross: 10 } : undefined; // (kit tracks on phones: a coarser U)
     const geometry = this.channel ? buildIceChannelGeometry(this.centerline, this.channel, lighter) : buildTrackGeometry(track, this.centerline, style);
     this.trackMesh = new Mesh(geometry, this.trackMaterial);
     this.trackGroup.add(this.trackMesh);
@@ -200,9 +247,11 @@ export class TrackScene {
       // Drawn in pieces along the track, so only those in view are drawn (the whole
       // channel stays as trackMesh, hidden, for its size and shape).
       this.trackMesh.visible = false;
-      for (const piece of channelPieces(geometry, track?.physics?.kit ? (this.lite ? 60 : 100) : 40)) this.trackGroup.add(new Mesh(piece, this.trackMaterial));
+      for (const piece of channelPieces(geometry, track?.physics?.kit ? (this.lite ? 200 : 150) : 40)) this.trackGroup.add(new Mesh(piece, this.trackMaterial));
     }
-    this.trackGroup.add(this.buildFinishArch(track));
+    const arch = this.buildFinishArch(track);
+    // Kit tracks: the finish's pieces drawn as one mesh per material (a few draw calls, not a dozen).
+    this.trackGroup.add(track?.physics?.kit ? mergeByMaterial(arch) : arch);
     // Boost pads, speed bumps and obstacles (ice channels with physics.features).
     this.features = this.channel ? buildTrackFeatures(this.centerline, this.channel, track?.physics?.features, { lite: this.lite, compact: Boolean(track?.physics?.kit) }) : null;
     if (this.features) this.trackGroup.add(this.features.group);

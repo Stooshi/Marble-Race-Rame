@@ -43,7 +43,7 @@ Then add it to `index.js` in this folder.
 
 | Shape | Use |
 | --- | --- |
-| `plunge(length, { grade })` | Steep straight drop (the first section must be one) |
+| `plunge(length, { grade, from })` | Steep straight drop (the first section must be one); `from`: the grade before it, eased up 0.06 every 10 m so a steep plunge can follow a gentle stretch |
 | `straight(length, { grade })` | Gentler straight |
 | `climb(length, { grade, after })` | Short climb, rounded off over the top |
 | `sBends({ first, radius, degrees })` | Two flowing bends, one each way |
@@ -118,6 +118,15 @@ Scenery comes from names in the file (looks only; checked, so a typo is refused)
   block costume, standing on the banks facing the track with small idle movements.
 - `overhead: ['gondola' | 'cable-car' | 'chairlift']`: a lift crossing high above
   the section (18 m over the track, clear of the follow camera).
+- `scenery: [...]` on a section, or on `start` / `finish`: `'bare'` (a wind-swept
+  summit: a few rocks only), `'rocks'` (snow-rimed rocks), `'birches'`, `'pines'`,
+  `'race-netting'` (orange safety nets along both banks and a timing board),
+  `'funicular'` (a little red funicular climbing the hill beside it),
+  `'wooden-houses'` (houses with warm windows), `'frozen-lake'` (at the finish: a
+  frozen lake just past the run-out).
+- `around: 'mountain-hut' | 'big-rock'` on a splitter: what stands between its two
+  channels (the hut with smoke from its chimney).
+- `signature: '<section>'`: the track's signature moment, for the report's screenshot.
 
 ## Billboards
 

@@ -14,8 +14,10 @@ const BUDGETS = { computer: { calls: 60, triangles: 150_000 }, phone: { calls: 3
 const mark = (pass) => (pass === true ? '<span class="mark pass">Pass</span>' : pass === false ? '<span class="mark fail">Fail</span>' : '<span class="mark info">Shown</span>');
 
 /** A small bar chart of draw calls through the race, with the budget drawn across it. */
-function loadChart(frames, screen) {
-  if (!frames?.length) return '';
+function loadChart(raw, screen) {
+  if (!raw?.length) return '';
+  // The track's own calls (the marbles, the same on every track, apart).
+  const frames = raw.map((f) => ({ ...f, calls: f.calls - (f.marbles?.calls ?? 0), triangles: f.triangles - (f.marbles?.triangles ?? 0) }));
   const W = 560;
   const H = 120;
   const pad = { l: 34, r: 8, t: 10, b: 22 };
@@ -27,7 +29,7 @@ function loadChart(frames, screen) {
   const bars = frames.map((f, i) => `<rect x="${(x(i) - bw / 2).toFixed(1)}" y="${y(f.calls).toFixed(1)}" width="${bw.toFixed(1)}" height="${(y(0) - y(f.calls)).toFixed(1)}" class="${f.calls > budget ? 'bar over' : 'bar'}"><title>${(f.t / 1000).toFixed(0)} s: ${f.calls} calls, ${Math.round(f.triangles / 1000)}k triangles</title></rect>`).join('');
   const last = frames[frames.length - 1].t / 1000;
   return `<figure class="chart">
-  <figcaption>${screen === 'phone' ? 'Phone' : 'Computer'}: draw calls every 2 s of the race (budget ${budget})</figcaption>
+  <figcaption>${screen === 'phone' ? 'Phone' : 'Computer'}: the track's draw calls every 2 s of the race (budget ${budget}; marbles apart)</figcaption>
   <div class="chart-scroll"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${screen} draw calls through the race">
     <line x1="${pad.l}" x2="${W - pad.r}" y1="${y(0)}" y2="${y(0)}" class="axis"/>
     <line x1="${pad.l}" x2="${W - pad.r}" y1="${y(budget).toFixed(1)}" y2="${y(budget).toFixed(1)}" class="budget"/>

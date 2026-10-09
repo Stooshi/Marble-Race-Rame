@@ -57,12 +57,12 @@ export const THEMES = {
 // Kit tracks: the world's look by landscape (the track file's biome, or its surface),
 // under the race's lighting and weather preset (./lighting.js).
 const KIT_LOOKS = {
-  alpine: { sky: { top: '#4f93d8', horizon: '#d9eaf8', glow: '#ffffff' }, fog: '#d9eaf8', ground: { color: '#dde8f2', y: -60 } },
-  arctic: { sky: { top: '#5d8fc4', horizon: '#e6eef6', glow: '#fff4dc' }, fog: '#e6eef6', ground: { color: '#e2ebf3', y: -60 } },
-  meadow: { sky: { top: '#5fb4ff', horizon: '#d6f0ff', glow: null }, fog: '#d6f0ff', ground: { color: '#86c66a', y: -60 } },
-  desert: { sky: { top: '#4a98d8', horizon: '#f3dcb4', glow: '#fff3d6' }, fog: '#f0d9b5', ground: { color: '#e2a764', y: -60 } },
-  jungle: { sky: { top: '#5aa8e0', horizon: '#d5ead2', glow: null }, fog: '#cfe3cc', ground: { color: '#3f8f3a', y: -60 } },
-  city: { sky: { top: '#5fa8f0', horizon: '#dbe9f5', glow: null }, fog: '#dbe9f5', ground: { color: '#9cb768', y: -60 } },
+  alpine: { sky: { top: '#4f93d8', horizon: '#d9eaf8', glow: '#ffffff' }, fog: '#d9eaf8', ground: { color: '#dde8f2', y: -66.2 } },
+  arctic: { sky: { top: '#5d8fc4', horizon: '#e6eef6', glow: '#fff4dc' }, fog: '#e6eef6', ground: { color: '#e2ebf3', y: -66.2 } },
+  meadow: { sky: { top: '#5fb4ff', horizon: '#d6f0ff', glow: null }, fog: '#d6f0ff', ground: { color: '#86c66a', y: -66.2 } },
+  desert: { sky: { top: '#4a98d8', horizon: '#f3dcb4', glow: '#fff3d6' }, fog: '#f0d9b5', ground: { color: '#e2a764', y: -66.2 } },
+  jungle: { sky: { top: '#5aa8e0', horizon: '#d5ead2', glow: null }, fog: '#cfe3cc', ground: { color: '#3f8f3a', y: -66.2 } },
+  city: { sky: { top: '#5fa8f0', horizon: '#dbe9f5', glow: null }, fog: '#dbe9f5', ground: { color: '#9cb768', y: -66.2 } },
 };
 const KIT_BIOME = { snow: 'alpine', ice: 'alpine', sand: 'desert', water: 'jungle', stone: 'city', street: 'city' };
 

@@ -587,3 +587,11 @@ test('a mirrored track races as a mirror: the field rides the other wall through
     assert.ok(Math.sign(a[name]) === -Math.sign(b[name]) && Math.abs(a[name] + b[name]) < 0.15, `${name}: ${a[name].toFixed(2)} vs ${b[name].toFixed(2)}`);
   }
 });
+
+test('Åre Run is added by its data update, switched off, exactly as its track file builds it', () => {
+  const sql = fs.readFileSync(path.join(__dirname, '..', 'docs', 'data_updates', '2026-10-15-add-are-run.sql'), 'utf8');
+  const note = 'Åre Run (Sweden): a winter-evening race down Åreskutan under the northern lights, the first track built with the track kit.';
+  const generated = execFileSync(process.execPath, [path.join(__dirname, '..', 'scripts', 'physics-track-sql.js'), 'are-run', '--add-hidden', note], { encoding: 'utf8' });
+  assert.equal(sql, generated);
+  assert.match(sql, /is_active|false/);
+});

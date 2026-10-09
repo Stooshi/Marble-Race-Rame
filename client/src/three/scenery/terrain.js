@@ -31,7 +31,7 @@ function rolling(x, z) {
  * themselves). The ground then sits at pavement level right beside it, dips
  * under the channel itself, and blends into the hills further out.
  */
-export function makeHeightField(centerline, laneCount, { hillHeight = 18, landRadius = 300, seaLevel = -1.2, water = () => 0, street = null } = {}, style = TRACK_STYLE) {
+export function makeHeightField(centerline, laneCount, { hillHeight = 18, landRadius = 300, seaLevel = -1.2, water = () => 0, street = null, sinkFrom = 0.7 } = {}, style = TRACK_STYLE) {
   const keep = centerline.samples.map((_, i) => i).filter((i) => i % 3 === 0 || i === centerline.samples.length - 1);
   const samples = keep.map((i) => centerline.samples[i]);
   const xs = samples.map((s) => s.pos.x);
@@ -141,7 +141,7 @@ export function makeHeightField(centerline, laneCount, { hillHeight = 18, landRa
     if (street) h = streetHeight(x, z, h, bi, pW ? pSum / pW : ys[bi] + lifts[bi] - 0.25);
     else h = Math.min(h, floorBelow);
     // Out at the edges, and wherever the theme puts water, the land sinks into the sea.
-    const sink = Math.max(smoothstep(landRadius * 0.7, landRadius, r), water(x, z));
+    const sink = Math.max(smoothstep(landRadius * sinkFrom, landRadius, r), water(x, z));
     return h + (seaLevel - 6 - h) * sink;
   }
 

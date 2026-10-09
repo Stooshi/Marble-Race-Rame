@@ -179,15 +179,18 @@ function viewLines(view, kit) {
 function loadLines(load) {
   const lines = [];
   for (const screen of ['computer', 'phone']) {
-    const frames = load[screen];
-    const calls = frames.map((f) => f.calls).sort((a, b) => a - b);
-    const tris = frames.map((f) => f.triangles).sort((a, b) => a - b);
+    // The track and its world, judged on its budget; the race's own marbles (the same on every
+    // track: each marble its own draw call) are shown beside it.
+    const frames = load[screen].map((f) => ({ ...f, trackCalls: f.calls - (f.marbles?.calls ?? 0), trackTris: f.triangles - (f.marbles?.triangles ?? 0) }));
+    const calls = frames.map((f) => f.trackCalls).sort((a, b) => a - b);
+    const tris = frames.map((f) => f.trackTris).sort((a, b) => a - b);
+    const marbles = Math.max(...frames.map((f) => f.marbles?.calls ?? 0));
     const b = BUDGETS[screen];
-    const worst = frames.reduce((w, f) => (f.calls > w.calls ? f : w), frames[0]);
+    const worst = frames.reduce((w, f) => (f.trackCalls > w.trackCalls ? f : w), frames[0]);
     lines.push({
       part: 'Drawing load',
-      what: `${screen === 'phone' ? 'Phone' : 'Computer'}: draw calls and triangles through a race (median, busiest)`,
-      value: `${calls[calls.length >> 1]} / ${calls[calls.length - 1]} calls, ${Math.round(tris[tris.length >> 1] / 1000)}k / ${Math.round(tris[tris.length - 1] / 1000)}k triangles (busiest at ${(worst.t / 1000).toFixed(0)} s)`,
+      what: `${screen === 'phone' ? 'Phone' : 'Computer'}: the track's draw calls and triangles through a race (median, busiest)`,
+      value: `${calls[calls.length >> 1]} / ${calls[calls.length - 1]} calls, ${Math.round(tris[tris.length >> 1] / 1000)}k / ${Math.round(tris[tris.length - 1] / 1000)}k triangles (busiest at ${(worst.t / 1000).toFixed(0)} s); the marbles add up to ${marbles} calls`,
       target: `at most ${b.calls} calls, ${b.triangles / 1000}k triangles`,
       pass: calls[calls.length - 1] <= b.calls && tris[tris.length - 1] <= b.triangles,
     });

@@ -31,6 +31,26 @@ const SHOULDER = 1.5;    // metres of level ground at the rim before a bank slop
 // Today's sceneries use 0.6; on a track that folds back over itself 100 m lower, that leaves
 // the upper stretch on a towering embankment.
 const MOUNTAIN_CAP = 1.4;
+const LAND_RADIUS = 480;       // metres from the track to where the land reaches the valley floor (computer)…
+const LAND_RADIUS_PHONE = 400; // …and on phones (a smaller patch of land)
+const LAKE_RADIUS = 95;        // metres: a frozen lake beyond the finish
+const LAKE_SHORE = 45;         // metres over which the land rises from the ice
+
+/**
+ * Where a frozen lake lies (a kit track with 'frozen-lake' in its finish's or last section's
+ * scenery): straight on past the run-out, a few metres below the finish. Its outline wobbles.
+ */
+export function lakeOf(centerline, kit) {
+  const wants = (kit?.finish?.scenery ?? []).includes('frozen-lake')
+    || (kit?.sections ?? []).some((s) => (s.scenery ?? []).includes('frozen-lake'));
+  if (!wants) return null;
+  const { samples } = centerline;
+  const end = samples[samples.length - 1];
+  const along = new Vector3(end.tangent.x, 0, end.tangent.z).normalize();
+  const centre = end.pos.clone().addScaledVector(along, 30 + 40 + LAKE_RADIUS);
+  const shape = (a) => 1 + 0.12 * Math.sin(3 * a + 1) + 0.07 * Math.sin(5 * a + 2.3);
+  return { x: centre.x, z: centre.z, y: end.pos.y - 6, radius: LAKE_RADIUS, shape, along };
+}
 
 /** Ground colours by landscape (a track file's `biome`, or guessed from its surface). */
 export const BIOMES = {
@@ -85,13 +105,23 @@ export function buildKitGround(centerline, track, { lite = false } = {}) {
 
   // The land: the proven height field (ground at the rim beside the channel, under it beneath),
   // with a ravine falling away under each bridge.
-  const base = makeHeightField(hug.groundLine, lanes, { hillHeight: biome.hills, landRadius: 420, seaLevel: biome.sea, street: { ...hug.street, cap: MOUNTAIN_CAP } });
+  // Out at the edges the land falls away gently to the valley floor (the world's ground, biome.sea - 6),
+  // starting well in, so the whole-track view shows mountainsides, never a plateau ending in cliffs.
+  const landRadius = lite ? LAND_RADIUS_PHONE : LAND_RADIUS;
+  const base = makeHeightField(hug.groundLine, lanes, { hillHeight: biome.hills, landRadius, sinkFrom: 0.3, seaLevel: biome.sea, street: { ...hug.street, cap: MOUNTAIN_CAP } });
   const bridgeSpots = samples.filter((_, i) => onBridge[i]).map((s) => s.pos);
   const ravineFloor = bridgeSpots.length ? Math.min(...bridgeSpots.map((p) => p.y)) - 24 : 0;
+  // A frozen lake (scenery 'frozen-lake' at the finish): a flat basin just beyond the run-out.
+  const lake = lakeOf(centerline, kit);
   const field = {
     ...base,
+    lake,
     heightAt(x, z) {
-      const h = base.heightAt(x, z);
+      let h = base.heightAt(x, z);
+      if (lake) {
+        const d = Math.hypot(x - lake.x, z - lake.z) - lake.radius * lake.shape(Math.atan2(z - lake.z, x - lake.x));
+        if (d < LAKE_SHORE) h += (Math.min(h, lake.y - 1.2) - h) * (1 - smoothstep(0, LAKE_SHORE, d));
+      }
       if (!bridgeSpots.length) return h;
       let d = Infinity;
       for (const p of bridgeSpots) d = Math.min(d, Math.hypot(p.x - x, p.z - z));
@@ -101,9 +131,9 @@ export function buildKitGround(centerline, track, { lite = false } = {}) {
   };
   const xs = samples.map((s) => s.pos.x);
   const zs = samples.map((s) => s.pos.z);
-  const margin = lite ? 240 : 360;
+  const margin = landRadius;
   const terrain = buildTerrain(field, { minX: Math.min(...xs) - margin, maxX: Math.max(...xs) + margin, minZ: Math.min(...zs) - margin, maxZ: Math.max(...zs) + margin }, {
-    cells: lite ? 72 : 140, colors: biome.terrain, tiles: 2, // few tiles: few draw calls
+    cells: lite ? 60 : 140, colors: biome.terrain, tiles: lite ? 1 : 2, // few tiles: few draw calls
   });
   const group = new Group();
   group.name = 'kit-ground';
@@ -164,6 +194,10 @@ export function buildKitGround(centerline, track, { lite = false } = {}) {
       const near = steep > 0.55 ? fillColour : bankColour;
       const far = steep > 0.35 ? fillColour : bankColour;
       quad(r0.inner, r1.inner, r1.shoulder, r0.shoulder, bankColour);
+      if (lite) {
+        quad(r0.shoulder, r1.shoulder, r1.out, r0.out, near); // (phones: the bank in one slope)
+        continue;
+      }
       quad(r0.shoulder, r1.shoulder, r1.mid, r0.mid, near);
       quad(r0.mid, r1.mid, r1.out, r0.out, far);
     }
@@ -220,5 +254,5 @@ export function buildKitGround(centerline, track, { lite = false } = {}) {
     group.add(viaduct);
   }
 
-  return { group, field, groundAt: (x, z) => terrain.groundAt(x, z), hug, biome, rows, over, onBridge };
+  return { group, field, groundAt: (x, z) => terrain.groundAt(x, z), hug, biome, rows, over, onBridge, lake, floorY: biome.sea - 6 };
 }

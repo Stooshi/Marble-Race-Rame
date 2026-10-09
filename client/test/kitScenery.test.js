@@ -59,7 +59,7 @@ describe('kit scenery', () => {
     const { scenery, centerline } = world(track, false);
     const names = [];
     scenery.traverse((o) => names.push(o.name));
-    for (const name of ['banks', 'viaduct', 'landmarks', 'figures', 'figures:still', 'figures:moving', 'lift:gondola', 'lift towers', 'cables']) expect(names, name).toContain(name);
+    for (const name of ['banks', 'viaduct', 'scenery: still', 'figures', 'figures:still', 'figures:moving', 'lift:gondola', 'cables']) expect(names, name).toContain(name);
     const lift = scenery.getObjectByName('lift:gondola');
     // Cabins: any cabin within 12 m of the track on the ground plan is at least 12 m above it.
     const mtx = new Matrix4();

@@ -81,6 +81,23 @@ export function fern(lite) {
   return merge(parts);
 }
 
+/** A rock with snow lying on its top (snow-rimed rocks on an open fell). */
+export function snowRock(lite) {
+  return merge([
+    piece(new IcosahedronGeometry(1.6, lite ? 0 : 1), '#7f7b78', new Matrix4().compose(new Vector3(0, 0.6, 0), new Quaternion(), new Vector3(1.4, 0.85, 1.1))),
+    piece(new IcosahedronGeometry(1.25, 0), '#f6f9fc', new Matrix4().compose(new Vector3(0.15, 1.35, 0), new Quaternion(), new Vector3(1.35, 0.35, 1.05))),
+  ]);
+}
+
+/** A winter birch: white trunk, bare dark twigs, a little snow. */
+export function winterBirch(lite) {
+  return merge([
+    piece(new CylinderGeometry(0.16, 0.24, 6, 6, 1, true), '#eeebe4', new Matrix4().makeTranslation(0, 3, 0)),
+    piece(new IcosahedronGeometry(1.7, lite ? 0 : 1), '#5d4a3c', new Matrix4().compose(new Vector3(0, 6.2, 0), new Quaternion(), new Vector3(1, 1.4, 1))),
+    piece(new IcosahedronGeometry(1.1, 0), '#f3f7fb', new Matrix4().compose(new Vector3(0.2, 7.3, 0), new Quaternion(), new Vector3(1.2, 0.5, 1.1))),
+  ]);
+}
+
 /** What grows (or lies about) in each landscape: [geometry builder, share of the spots]. */
 export function dressingFor(biome) {
   return {

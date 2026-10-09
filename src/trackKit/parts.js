@@ -21,10 +21,26 @@ const turn = (side) => {
   return side;
 };
 
-/** A steep straight drop. The first section after the gate must be one (the recipe's big starting slope). */
-function plunge(length, { grade = 0.34 } = {}) {
-  return { shape: 'plunge', parts: [{ kind: 'straight', length, grade }] };
+/**
+ * A steep straight drop. The first section after the gate must be one (the recipe's big starting slope).
+ * `from`: the grade it steepens from (the section before's), in gentle steps of 0.06 every 10 m
+ * (steps that small never throw a marble, even coming off a bend at speed), so a steep plunge can
+ * follow a gentle stretch; `length` is the whole of it.
+ */
+function plunge(length, { grade = 0.34, from = null } = {}) {
+  const parts = [];
+  let left = length;
+  if (from !== null) {
+    for (let g = from + RAMP_STEP; g < grade - 1e-9 && left > RAMP_LENGTH; g += RAMP_STEP) {
+      parts.push({ kind: 'straight', length: RAMP_LENGTH, grade: Math.round(g * 100) / 100 });
+      left -= RAMP_LENGTH;
+    }
+  }
+  parts.push({ kind: 'straight', length: left, grade });
+  return { shape: 'plunge', parts };
 }
+const RAMP_STEP = 0.06;  // the recipe's gentle step (GENTLE_STEEPEN)…
+const RAMP_LENGTH = 10;  // …every 10 m
 
 /** A gentler straight. */
 function straight(length, { grade = 0.13 } = {}) {
@@ -219,6 +235,10 @@ module.exports = {
   BIOMES: ['alpine', 'arctic', 'meadow', 'desert', 'jungle', 'city'],
   LANDMARKS: ['church', 'mountain-hut', 'big-rock', 'lighthouse'],
   OVERHEAD: ['gondola', 'cable-car', 'chairlift'],
+  // What stands in the middle of a splitter, between its two channels.
+  AROUND: ['mountain-hut', 'big-rock'],
+  // Scenery near a section (or the start or finish): what grows and stands beside the track there.
+  SCENERY: ['bare', 'rocks', 'birches', 'pines', 'race-netting', 'funicular', 'wooden-houses', 'frozen-lake'],
   // Billboard frames: plain, a jungle timber frame, a city LED screen, a Paris advertising column, expedition crates.
   FRAMES: ['plain', 'wood', 'led', 'column', 'crates'],
 };

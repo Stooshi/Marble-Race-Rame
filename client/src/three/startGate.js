@@ -10,6 +10,7 @@ import {
   BoxGeometry, Group, InstancedMesh, Matrix4, Mesh, MeshLambertMaterial, Quaternion, Vector3, DynamicDrawUsage,
 } from 'three';
 import { layoutMarbles, MARBLE_RADIUS } from './marbles';
+import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 
 export const GATE_COLORS = { paddle: '#ffffff', edge: '#5f86a8', block: '#f4fbff', frame: '#ffffff' };
 
@@ -123,7 +124,19 @@ export class StartGate {
       beam.add(trim);
     }
     frame.add(beam);
-    return frame;
+    // Drawn as one mesh per colour (two draw calls, not ten).
+    frame.updateMatrixWorld(true);
+    const byMat = new Map();
+    frame.traverse((o) => {
+      if (!o.isMesh) return;
+      const g = o.geometry.clone().applyMatrix4(o.matrixWorld);
+      g.deleteAttribute('uv');
+      if (!byMat.has(o.material)) byMat.set(o.material, []);
+      byMat.get(o.material).push(g.index ? g.toNonIndexed() : g);
+    });
+    const merged = new Group();
+    for (const [mat, list] of byMat) merged.add(new Mesh(mergeGeometries(list), mat));
+    return merged;
   }
 
   /**

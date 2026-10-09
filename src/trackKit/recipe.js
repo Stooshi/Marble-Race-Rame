@@ -8,7 +8,7 @@
  * Each problem names the rule and the section, in plain words.
  */
 
-const { SHARP_RADIUS, TUNNELS, BRIDGES, SURFACES, BIOMES, LANDMARKS, OVERHEAD, FRAMES } = require('./parts');
+const { SHARP_RADIUS, TUNNELS, BRIDGES, SURFACES, BIOMES, LANDMARKS, OVERHEAD, FRAMES, AROUND, SCENERY } = require('./parts');
 
 const MIN_SPIRAL_RADIUS = 40;  // Table Mountain Run's corkscrew
 const MIN_SWEEP_RADIUS = 45;   // San Francisco's Embarcadero
@@ -123,7 +123,11 @@ function checkRecipe({ spec, sections, span, generated, owner, placed, total, wh
   }
   known('landmark', LANDMARKS, spec.start?.landmark, 'start');
   known('landmark', LANDMARKS, spec.finish?.landmark, 'finish');
+  for (const where_ of ['start', 'finish']) for (const sc of spec[where_]?.scenery ?? []) known('scenery', SCENERY, sc, where_);
   sections.forEach((s) => {
+    for (const sc of s.scenery ?? []) known('scenery', SCENERY, sc, s.name);
+    known('splitter centrepiece', AROUND, s.around, s.name);
+    if (s.around !== undefined && s.shape.shape !== 'splitter') problems.push(`${where(s.name)}: only a splitter has a middle to stand something in (around).`);
     known('surface', SURFACES, s.surface, s.name);
     known('billboard frame', FRAMES, s.billboardFrame, s.name);
     for (const lm of s.landmarks ?? []) known('landmark', LANDMARKS, lm.name, s.name);

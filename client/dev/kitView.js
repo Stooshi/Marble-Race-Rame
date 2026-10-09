@@ -42,7 +42,7 @@ function drawnBy() {
     if (!(o.isMesh || o.isLine || o.isPoints || o.isSprite)) return;
     if (o.frustumCulled && !frustum.intersectsObject(o)) return;
     const path = [];
-    for (let x = o; x && x !== scene.scene; x = x.parent) path.unshift(x.name || x.type);
+    for (let x = o; x && x !== scene.scene; x = x.parent) path.unshift(x.name || (x === o && x.material?.color ? `${x.type}#${x.material.color.getHexString()}` : x.type));
     const key = path.slice(0, Number(params.get('why')) > 1 ? Number(params.get('why')) : 3).join('/');
     const g = o.geometry;
     const tris = o.isMesh ? Math.round(((g.index ? g.index.count : g.getAttribute('position').count) / 3) * (o.count ?? 1) / 1000) : 0;
@@ -72,11 +72,27 @@ function advance(to, follow = 'leader') {
   following = follow;
   for (; clock <= to; clock += 50) scene.updateRace(raceFrame(clock), follow, 0.05);
 }
+/** Draw calls the marbles themselves cost in this view (each marble its own; their shadows one). */
+function marbleCalls() {
+  if (!scene.marbles) return { calls: 0, triangles: 0 };
+  scene.camera.updateMatrixWorld();
+  const frustum = new Frustum().setFromProjectionMatrix(new Matrix4().multiplyMatrices(scene.camera.projectionMatrix, scene.camera.matrixWorldInverse));
+  let calls = 0;
+  let triangles = 0;
+  scene.marbles.group.traverseVisible((o) => {
+    if (!o.isMesh || (o.frustumCulled && !frustum.intersectsObject(o))) return;
+    calls += 1;
+    const g = o.geometry;
+    triangles += ((g.index ? g.index.count : g.getAttribute('position').count) / 3) * (o.count ?? 1);
+  });
+  return { calls, triangles: Math.round(triangles) };
+}
+
 function drawNow(t) {
   scene.effects?.update(t / 1000, scene.camera.position);
   scene.renderer.info.reset();
   scene.renderer.render(scene.scene, scene.camera);
-  return { calls: scene.renderer.info.render.calls, triangles: scene.renderer.info.render.triangles };
+  return { calls: scene.renderer.info.render.calls, triangles: scene.renderer.info.render.triangles, marbles: marbleCalls(), ...(params.get('why') && { by: drawnBy() }) };
 }
 
 window.kitView = {
