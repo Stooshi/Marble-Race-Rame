@@ -106,7 +106,7 @@ export function buildKitScenery(centerline, track, theme, { lite = false } = {})
       if (!build) return;
       const p = sec.from + ((k + 1) / (names.length + 1)) * (sec.to - sec.from);
       const { i, side } = frame(p);
-      const sign = k % 2 ? -1 : 1;
+      const sign = (k % 2 ? -1 : 1) * (kit.mirrored ? -1 : 1); // (a mirrored track: on the other side)
       const row = ground.over[i] || ground.onBridge[i] ? null : rows[i]?.[sign];
       if (!row) return; // (on a bridge or a viaduct: nowhere to stand)
       if (boardFeet.some((f) => Math.hypot(f.x - row.inner.x, f.z - row.inner.z) < 7)) return; // (a billboard stands there)

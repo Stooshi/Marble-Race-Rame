@@ -16,6 +16,8 @@ const FLAT = 0.02;             // a slope gentler than this counts as flat…
 const MAX_FLAT_M = 10;         // …and may last at most one crest step
 const STEEPEST_CLIMB = -0.15;  // proven climbs: San Francisco's -0.12 (Russian Hill)
 const LONGEST_CLIMB_M = 40;    // San Francisco's 35 m
+const { LIGHTINGS } = require('./lighting');
+
 const BILLBOARDS = [4, 6];
 const BILLBOARD_SHAPES = ['straight', 'plunge', 'climb', 'sBends', 'sweep'];
 const OBSTACLE_FREE_FINISH_M = 25; // nothing in the marbles' way just before the line
@@ -111,6 +113,12 @@ function checkRecipe({ spec, sections, span, generated, owner, placed, total, wh
   known('surface', SURFACES, spec.surface, 'track');
   known('biome', BIOMES, spec.biome, 'track');
   known('billboard frame', FRAMES, spec.billboardFrame, 'track');
+  known('lighting', LIGHTINGS, spec.lighting, 'track');
+  if (spec.variants !== undefined && !Array.isArray(spec.variants)) problems.push(`${where('track')}: variants is a list of lighting presets (${LIGHTINGS.join(', ')}).`);
+  for (const v of Array.isArray(spec.variants) ? spec.variants : []) known('lighting variant', LIGHTINGS, v, 'track');
+  if (Array.isArray(spec.variants) && (new Set(spec.variants).size !== spec.variants.length || spec.variants.includes(spec.lighting || 'day'))) {
+    problems.push(`${where('track')}: each lighting variant once, and not the track's own preset (${spec.lighting || 'day'}).`);
+  }
   known('landmark', LANDMARKS, spec.start?.landmark, 'start');
   known('landmark', LANDMARKS, spec.finish?.landmark, 'finish');
   sections.forEach((s) => {

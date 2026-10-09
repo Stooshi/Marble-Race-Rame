@@ -139,6 +139,35 @@ or if an image fails to load, a board shows one of our own built-in
 promotions, so it is never blank. Images must be `https://` and allow other
 sites to show them (Vercel file storage does). Drawing only: never the race.
 
+## Lighting, weather and variants
+
+`lighting`: the track's own preset, one of `'day' | 'sunset' | 'midnight-sun' |
+'night-northern-lights' | 'fog' | 'snow' | 'rain'` (default `'day'`).
+`variants: ['sunset', 'snow']`: the other presets this track may race in;
+anything not listed is ruled out for it (Paris: no night). Each race picks one
+from its seed when it is decided (the track's own preset twice as often as
+each variant) and keeps it in its snapshot, so the replay looks the same.
+Variants are the same track: same physics, same records. Drawing only: rain
+and snow never slow a marble. At night the marbles glow softly and the rims
+carry an edge light, so the marbles always stay in the picture.
+
+Preview a variant with `&lighting=snow` on the preview link (only presets the
+track allows).
+
+## Mirrored tracks
+
+A mirror is a file of its own (it counts as a track, with its own records):
+
+```js
+const { mirror } = require('../trackKit');
+module.exports = mirror(require('./are-run'), { slug: 'are-run-mirrored', name: 'Åre Run Mirrored' });
+```
+
+Every bend turns the other way, everything across the channel moves to the
+other side, and each splitter's two channels swap their ice settings exactly.
+It still needs its own report before it goes live (the gate's starting places
+are not reflected). Kit tracks only.
+
 ## Slopes
 
 No sudden steepening: a single step of more than 0.13 throws marbles into the

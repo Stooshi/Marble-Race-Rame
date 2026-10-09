@@ -492,3 +492,92 @@ test('the billboards route picks each slot\'s image: most specific first, then t
   assert.deepEqual(pickImages([], 'are-run'), [], 'nothing set: the built-in promotions');
   assert.equal(pickImages([row(null, 2, 'https://x/a.png')], 'other')[0].slot, 2);
 });
+
+test('lighting: the track\'s own preset and the variants it allows, picked per race from its seed', () => {
+  const lighting = require('../src/trackKit/lighting');
+  const s = base();
+  s.lighting = 'night-northern-lights';
+  s.variants = ['snow', 'fog'];
+  const t = track(s);
+  assert.equal(t.physics.kit.lighting, 'night-northern-lights');
+  assert.deepEqual(lighting.allowedLightings(t.physics.kit), ['night-northern-lights', 'snow', 'fog']);
+  const picks = Array.from({ length: 4000 }, (_, k) => lighting.chooseLighting(t.physics.kit, k * 7919 + 13));
+  const share = (name) => picks.filter((p) => p === name).length / picks.length;
+  assert.ok(Math.abs(share('night-northern-lights') - 0.5) < 0.04, 'its own preset half the time');
+  assert.ok(Math.abs(share('snow') - 0.25) < 0.04 && Math.abs(share('fog') - 0.25) < 0.04);
+  assert.equal(lighting.chooseLighting(t.physics.kit, 12345), lighting.chooseLighting(t.physics.kit, 12345), 'the same seed, the same look');
+  // Written into the race's snapshot; nothing the engine reads changes, and other tracks are untouched.
+  const raced = lighting.withLighting(t.physics, 12345);
+  assert.deepEqual({ ...raced, kit: undefined }, { ...t.physics, kit: undefined });
+  assert.ok(lighting.allowedLightings(t.physics.kit).includes(raced.kit.lighting));
+  assert.equal(lighting.withLighting(tm.physics, 1), tm.physics);
+  // A track that allows no variants always races in its own preset.
+  assert.equal(lighting.chooseLighting(track(base()).physics.kit, 99), 'day');
+  for (const [change, message] of [
+    [(x) => { x.lighting = 'dusk'; }, /unknown lighting "dusk"/],
+    [(x) => { x.variants = ['hail']; }, /unknown lighting variant "hail"/],
+    [(x) => { x.variants = ['snow', 'snow']; }, /each lighting variant once/],
+    [(x) => { x.variants = ['day']; }, /each lighting variant once, and not the track's own preset/],
+  ]) {
+    const bad = base();
+    change(bad);
+    refused(bad, message);
+  }
+});
+
+test('the mirror tool: every bend the other way, everything across the channel on the other side, splitter ice swapped', () => {
+  const original = physicsTrack('kit-proving-ground');
+  const m = physicsTrack('kit-proving-ground-mirrored');
+  assert.equal(m.physics.kit.mirrorOf, 'kit-proving-ground');
+  assert.equal(m.length_m, original.length_m);
+  m.waypoints.forEach((p, i) => {
+    assert.equal(p.x, original.waypoints[i].x);
+    assert.equal(p.y, original.waypoints[i].y === 0 ? 0 : -original.waypoints[i].y);
+    assert.equal(p.z, original.waypoints[i].z);
+  });
+  m.physics.features.forEach((f, i) => {
+    const o = original.physics.features[i];
+    assert.equal(f.type, o.type);
+    assert.equal(f.at, o.at);
+    for (const k of ['l', 'l2', 'reach']) if (k in o) assert.equal(f[k], o[k] === 0 ? 0 : -o[k]);
+  });
+  const [fo, fm] = [original.physics.forks[0], m.physics.forks[0]];
+  assert.deepEqual(fm.left, fo.right);
+  assert.deepEqual(fm.right, fo.left);
+  assert.equal(fm.tipOffset, -fo.tipOffset);
+  assert.deepEqual(m.physics.kit.billboards.map((b) => b.side), original.physics.kit.billboards.map((b) => -b.side));
+  // Mirrored twice: the original again (apart from its name).
+  const back = kit.mirror(m, { slug: original.slug, name: original.name });
+  const strip = (t) => ({ ...t, description: null, physics: { ...t.physics, kit: { ...t.physics.kit, mirrorOf: null, mirrored: null } } });
+  assert.deepEqual(strip(back), strip(original));
+  // Only kit tracks (their scenery is all built from the file), each with a slug of its own.
+  assert.throws(() => kit.mirror(tm, { slug: 'x', name: 'X' }), /track kit/);
+  assert.throws(() => kit.mirror(original, { slug: original.slug, name: 'X' }), /slug of its own/);
+  // Each mirror is its own track: own slug and name, so its own records.
+  assert.notEqual(m.slug, original.slug);
+  assert.notEqual(m.name, original.name);
+});
+
+test('a mirrored track races as a mirror: the field rides the other wall through every bend', () => {
+  const sides = (t) => {
+    const out = {};
+    for (const seed of [3, 4]) {
+      const r = simulatePhysicsRace({ seed, track: t, entries: houseField(seed), level: 3 });
+      for (const f of r.frames) {
+        f.p.forEach((p, i) => {
+          for (const name of ['Bay sweep', 'Hairpin', 'Spiral']) {
+            const s = t.physics.kit.sections.find((x) => x.name === name);
+            if (p >= s.from && p < s.to && !f.b[i]) (out[name] ??= []).push(f.l[i]);
+          }
+        });
+      }
+    }
+    return Object.fromEntries(Object.entries(out).map(([k, v]) => [k, v.reduce((a, b) => a + b, 0) / v.length]));
+  };
+  const a = sides(physicsTrack('kit-proving-ground'));
+  const b = sides(physicsTrack('kit-proving-ground-mirrored'));
+  for (const name of Object.keys(a)) {
+    assert.ok(Math.abs(a[name]) > 0.3, `${name} rides a wall`);
+    assert.ok(Math.sign(a[name]) === -Math.sign(b[name]) && Math.abs(a[name] + b[name]) < 0.15, `${name}: ${a[name].toFixed(2)} vs ${b[name].toFixed(2)}`);
+  }
+});

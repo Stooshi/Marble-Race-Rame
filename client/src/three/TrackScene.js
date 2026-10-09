@@ -22,6 +22,7 @@ import { buildTrackFeatures } from './trackFeatures';
 import { buildStructures } from './structures';
 import { buildBillboards } from './billboards';
 import { fetchBillboards } from '../api/billboards';
+import { buildEffects } from './lighting';
 import { WinnerGlow } from './winnerGlow';
 import { WINNER_MS } from '../utils/finishShow';
 
@@ -174,6 +175,8 @@ export class TrackScene {
     this.sun.position.set(...theme.sun.direction);
     this.ground.material.color.set(theme.ground.color);
     this.ground.position.y = theme.ground.y;
+    // Night (kit lighting presets): the channel lifts a little out of the dark.
+    this.trackMaterial?.emissive.set(theme.effects?.night ? '#1b2a44' : '#000000');
   }
 
   /** Builds the given track (from the API: slug, waypoints, length_m, lane_count) in its world. */
@@ -237,6 +240,14 @@ export class TrackScene {
     this.ground.position.z = sphere.center.z;
     this.scene.fog.near = sphere.radius * 2;
     this.scene.fog.far = sphere.radius * 7;
+    // A preset's own haze (fog, snow, rain, night): metres, the same on every track.
+    if (theme.fogRange) [this.scene.fog.near, this.scene.fog.far] = theme.fogRange;
+    // Its sky and weather: stars and northern lights on the sky, snow or rain round the camera, rim lights at night.
+    this.effects = buildEffects(theme, { centerline: this.centerline, channel: this.channel, lite: this.lite });
+    if (this.effects) {
+      this.sky.add(this.effects.sky);
+      this.scene.add(this.effects.world);
+    }
     this.userMoved = false;
     this.frameTrack();
     this.render();
@@ -374,6 +385,7 @@ export class TrackScene {
     this.countdownMs = start?.countdownMs;
     const lanes = Math.max(1, Number(this.track?.lane_count) || 4);
     this.marbles = new RaceMarbles(entries, lanes, highlight, results);
+    if (this.theme?.effects?.night) this.marbles.setGlow(true); // (night: marbles glow in their own colours)
     this.marbles.channel = this.channel;
     this.marbles.solidsAt = this.features?.solidsAt ?? null; // drawn round the obstacles, as the physics has them
     this.scene.add(this.marbles.group);
@@ -926,6 +938,7 @@ export class TrackScene {
       this.keepPace();
       const r = this.renderer;
       r.info.reset();
+      this.effects?.update(performance.now() / 1000, this.camera.position);
       r.render(this.scene, this.camera);
       if (this.insetOn && this.insetRect && this.cameraMode === 'follow') {
         // The corner view, drawn over the big one's corner (no scenery: lighter on phones).
@@ -1004,6 +1017,8 @@ export class TrackScene {
     this.structures = null; // (so do the tunnels, bridges and waterfalls)
     this.billboards?.dispose();
     this.billboards = null;
+    this.effects?.dispose();
+    this.effects = null;
     for (const child of [...this.trackGroup.children]) {
       child.traverse((o) => {
         if (o.geometry) o.geometry.dispose();

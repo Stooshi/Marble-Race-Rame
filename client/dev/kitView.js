@@ -49,20 +49,21 @@ window.kitView = {
   track,
   ready: new Promise((resolve) => setTimeout(resolve, 400)), // the scenery is built a moment after the track
   /** Moves the camera to look at a spot on the track and draws one frame, at race time `t` ms. */
-  shot({ at: p, l = 0, back = 12, up = 5, side = 0, t = 0 }) {
+  shot({ at: p, l = 0, back = 12, up = 5, side = 0, t = 0, rise = 0 }) {
     const arc = scene.channel?.arc ?? scene.centerline.length ?? 1000;
     const target = at(p);
     const from = at(p - back / arc);
     const across = (scene.channel ? scene.channel.radius * scene.channel.maxAngle : 4) * l;
-    const look = target.pos.clone().addScaledVector(target.side, across).add(new Vector3(0, 1, 0));
+    const look = target.pos.clone().addScaledVector(target.side, across).add(new Vector3(0, 1 + rise, 0));
     scene.camera.position.copy(from.pos).addScaledVector(from.side, across + side).add(new Vector3(0, up, 0));
     scene.camera.near = 0.3;
-    scene.camera.far = 3000;
+    scene.camera.far = scene.sky.scale.x * 1.2; // (the sky dome, and its stars and northern lights, in view)
     scene.camera.lookAt(look);
     scene.camera.updateProjectionMatrix();
     scene.features?.update(t);
     scene.structures?.update(t);
     scene.scenery?.userData?.update?.(t);
+    scene.effects?.update(t / 1000, scene.camera.position);
     scene.renderer.info.reset();
     scene.renderer.render(scene.scene, scene.camera);
     return { calls: scene.renderer.info.render.calls, triangles: scene.renderer.info.render.triangles, ...(params.get('why') && { by: drawnBy() }) };

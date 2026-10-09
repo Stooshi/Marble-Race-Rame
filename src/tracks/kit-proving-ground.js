@@ -17,6 +17,7 @@ module.exports = track({
   surface: 'snow',
   biome: 'alpine',
   lighting: 'day',
+  variants: ['sunset', 'midnight-sun', 'night-northern-lights', 'fog', 'snow', 'rain'],
   start: { landmark: 'mountain-hut' },
   finish: { landmark: 'church' },
   sections: [

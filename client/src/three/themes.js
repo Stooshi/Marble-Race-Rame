@@ -4,6 +4,8 @@
  * default bright meadow look. Scenery (hills, houses, landmarks) is built by
  * the theme's `scenery` key, see ./scenery.
  */
+import { lightingOverride, withPreset } from './lighting';
+
 export const DEFAULT_THEME = {
   sky: { top: '#5fb4ff', horizon: '#d6f0ff', glow: null },
   fog: '#d6f0ff',
@@ -52,8 +54,8 @@ export const THEMES = {
   },
 };
 
-// Kit tracks: the world's look by landscape (the track file's biome, or its surface).
-// Lighting and weather presets replace the sky and sun here in step 6.
+// Kit tracks: the world's look by landscape (the track file's biome, or its surface),
+// under the race's lighting and weather preset (./lighting.js).
 const KIT_LOOKS = {
   alpine: { sky: { top: '#4f93d8', horizon: '#d9eaf8', glow: '#ffffff' }, fog: '#d9eaf8', ground: { color: '#dde8f2', y: -60 } },
   arctic: { sky: { top: '#5d8fc4', horizon: '#e6eef6', glow: '#fff4dc' }, fog: '#e6eef6', ground: { color: '#e2ebf3', y: -60 } },
@@ -68,7 +70,8 @@ export function themeFor(slug, track = null) {
   const kit = track?.physics?.kit;
   if (kit) {
     const biome = KIT_LOOKS[kit.biome] ? kit.biome : KIT_BIOME[kit.surface] ?? 'meadow';
-    return { ...DEFAULT_THEME, ...KIT_LOOKS[biome], scenery: 'kit' };
+    const lighting = lightingOverride(kit) ?? kit.lighting ?? 'day';
+    return withPreset({ ...DEFAULT_THEME, ...KIT_LOOKS[biome], scenery: 'kit' }, lighting);
   }
   const own = THEMES[slug];
   if (!own) return DEFAULT_THEME;

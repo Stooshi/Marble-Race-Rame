@@ -236,6 +236,7 @@ function track(spec) {
     surface: spec.surface || 'ice',
     ...(spec.biome && { biome: spec.biome }),
     lighting: spec.lighting || 'day',
+    ...(spec.variants?.length && { variants: [...spec.variants] }),
     billboards,
     start: spec.start || {},
     finish: spec.finish || {},
@@ -287,4 +288,4 @@ function track(spec) {
   return built;
 }
 
-module.exports = { track, ...parts };
+module.exports = { track, mirror: require('./mirror').mirror, ...parts };

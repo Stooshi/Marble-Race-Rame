@@ -466,6 +466,15 @@ export class RaceMarbles {
   }
 
   /** Places every marble for a race frame ({ t, p: progress[], l: lateral[] }). */
+  /** Night: each marble glows softly in its own colours, so it stays in the picture in the dark. */
+  setGlow(on) {
+    for (const { mesh } of this.balls) {
+      mesh.material.emissiveMap = on ? mesh.material.map : null;
+      mesh.material.emissive.set(on ? '#8a8a8a' : '#000000');
+      mesh.material.needsUpdate = true;
+    }
+  }
+
   update(centerline, frame) {
     if (!frame) return;
     const r = MARBLE_RADIUS * this.scale;

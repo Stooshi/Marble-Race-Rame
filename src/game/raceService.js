@@ -11,6 +11,7 @@ const { runSimulation } = require('./runSimulation');
 const simulationPool = require('./simulationPool');
 const { HOUSE_SKILLS, skillStats } = require('./skill');
 const { raceSession } = require('./raceSession');
+const { withLighting } = require('../trackKit/lighting');
 
 // Races on tracks with physics settings run on the new physics engine, at a
 // smoother frame rate, and are stored as they were decided (race_replays).
@@ -201,6 +202,9 @@ async function decide(raceId, actor) {
     const tickRateHz = input.race.physics ? PHYSICS_TICK_HZ : config.game.tickRateHz;
     input.race.seed = seed;
     input.race.tick_rate_hz = tickRateHz;
+    // Kit tracks: this race's lighting and weather, from its seed (looks only), kept in its
+    // snapshot so the replay looks the same. Other tracks are left exactly as they are.
+    if (input.race.physics?.kit) input.race.physics = withLighting(input.race.physics, seed);
     // (In a worker thread: the live races being streamed meanwhile never freeze.)
     const { sim, replay } = await simulationPool.simulate(input.race, input.entries);
 

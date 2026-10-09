@@ -4,4 +4,5 @@
 // physicsTracks.js lists them after the hand-built tracks.
 module.exports = [
   require('./kit-proving-ground'),
+  require('./kit-proving-ground-mirrored'),
 ];
