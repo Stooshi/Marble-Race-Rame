@@ -230,6 +230,7 @@ test('every problem is reported at once, each naming its section', () => {
 test('the other kit obstacles build: block lines, curtain and parked sides', () => {
   const s = base();
   s.sections[5].obstacles = [block({ costume: 'cow', at: 0.3, line: 'left' })];
+  [s.sections[2].billboards, s.sections[3].billboards] = [4, 0]; // (no room beside three obstacles)
   s.sections[3].obstacles = [curtain({ costume: 'easel', side: 'left' }), swipe({ costume: 'falcon', side: 'right' }), parked({ costume: 'vespa', at: 0.1, side: 'right' })];
   s.sections[1].features = [bump(), boost()];
   s.sections.splice(2, 0, { name: 'Split', shape: splitter({ side: 'right' }) });
@@ -392,6 +393,7 @@ test('tunnels and bridges ride along for the 3D view, and are refused where they
   const s = base();
   s.sections[1].tunnel = 'dragon';
   s.sections[2].bridge = 'ice';
+  [s.sections[2].billboards, s.sections[5].billboards] = [0, 2]; // (nowhere to stand them on a bridge)
   const t = track(s);
   assert.equal(t.physics.kit.sections[1].tunnel, 'dragon');
   assert.equal(t.physics.kit.sections[2].bridge, 'ice');
@@ -442,4 +444,51 @@ test('scenery names are checked: surfaces, biomes, landmarks and lifts must be k
     change(bad);
     refused(bad, message);
   }
+});
+
+test('billboards: numbered slots down the track, on the outside of a sweep, clear of obstacles and the line', () => {
+  const t = track(base());
+  const boards = t.physics.kit.billboards;
+  assert.deepEqual(boards.map((b) => b.slot), [1, 2, 3, 4]);
+  assert.deepEqual(boards.map((b) => b.section), ['Sweep', 'Sweep', 'Run to the hairpin', 'Run to the hairpin']);
+  assert.ok(boards.every((b, k) => k === 0 || b.at > boards[k - 1].at), 'in order down the track');
+  assert.deepEqual(boards.slice(0, 2).map((b) => b.side), [1, 1], 'a right-hand sweep: on its outside, the left');
+  assert.ok(boards.every((b) => b.frame === 'plain'));
+  // Nudged clear of an obstacle where one would stand beside it.
+  const s = base();
+  s.sections[3].obstacles = [kit.block({ at: 0.33 })];
+  const nudged = track(s).physics.kit.billboards.filter((b) => b.section === 'Run to the hairpin');
+  const block = track(s).physics.features.find((f) => f.type === 'ice_block');
+  for (const b of nudged) assert.ok(Math.abs(b.at - block.at) * track(s).length_m >= 12);
+  // Refused where they can't stand, or with a frame the view can't draw.
+  for (const [change, message] of [
+    [(x) => { x.sections[1].tunnel = 'mine'; x.sections[1].billboards = 1; x.sections[2].billboards = 1; }, /no billboards in a tunnel or on a bridge/],
+    [(x) => { x.sections[4].billboards = 1; x.sections[3].billboards = 1; }, /no billboards at the sharp bend|billboards stand along/],
+    [(x) => { x.billboardFrame = 'neon'; }, /unknown billboard frame "neon"/],
+    [(x) => { x.sections[3].obstacles = [kit.slalom({ from: 0.05, to: 0.95, count: 9 })]; }, /no room for billboard/],
+  ]) {
+    const bad = base();
+    change(bad);
+    refused(bad, message);
+  }
+});
+
+test('the billboards route picks each slot\'s image: most specific first, then the newest', () => {
+  const { pickImages } = require('../src/routes/billboards');
+  const row = (track_slug, slot, image_url, starts_at = '2026-10-01') => ({ track_slug, slot, image_url, kind: 'own', starts_at });
+  const picked = pickImages([
+    row(null, null, 'https://x/everywhere.png'),
+    row(null, 2, 'https://x/slot2-all-tracks.png'),
+    row('are-run', null, 'https://x/are-old.png', '2026-09-01'),
+    row('are-run', null, 'https://x/are-new.png', '2026-10-05'),
+    row('are-run', 3, 'https://x/are-3.png'),
+    row('are-run', 4, 'http://x/not-https.png'),
+  ], 'are-run');
+  const bySlot = Object.fromEntries(picked.map((p) => [p.slot, p.image_url]));
+  assert.equal(bySlot[1], 'https://x/are-new.png');
+  assert.equal(bySlot[2], 'https://x/are-new.png', 'this track beats this slot on every track');
+  assert.equal(bySlot[3], 'https://x/are-3.png');
+  assert.equal(bySlot[4], 'https://x/are-new.png', 'never an image that is not https');
+  assert.deepEqual(pickImages([], 'are-run'), [], 'nothing set: the built-in promotions');
+  assert.equal(pickImages([row(null, 2, 'https://x/a.png')], 'other')[0].slot, 2);
 });

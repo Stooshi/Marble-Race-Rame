@@ -415,6 +415,30 @@ WHERE NOT EXISTS (SELECT 1 FROM marble_appearances a WHERE a.user_id = u.id)
 ON CONFLICT (user_id) DO NOTHING;
 
 -- -----------------------------------------------------------------------------
+-- billboards: the images on the tracks' billboards (looks only, never the race)
+-- -----------------------------------------------------------------------------
+-- Each kit track has 4 to 6 billboard slots, numbered 1, 2, 3… down the track.
+-- One row puts an image (2:1, 1024 x 512, on Vercel file storage) on one slot
+-- of one track, on every slot of a track (slot NULL), on one slot of every
+-- track (track_slug NULL), or everywhere (both NULL), from starts_at until
+-- ends_at (NULL: until replaced). The most specific row wins, then the newest.
+-- With no row, or if an image fails to load, a slot shows a built-in promotion.
+--   INSERT INTO billboards (track_slug, slot, image_url)
+--   VALUES ('are-run', 2, 'https://….public.blob.vercel-storage.com/winter-editions.png');
+CREATE TABLE IF NOT EXISTS billboards (
+    id          uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
+    track_slug  varchar(64),
+    slot        smallint    CHECK (slot IS NULL OR slot BETWEEN 1 AND 6),
+    image_url   text        NOT NULL CHECK (image_url ~ '^https://[^\s]+$'),
+    kind        varchar(16) NOT NULL DEFAULT 'own' CHECK (kind IN ('own', 'partner')),
+    note        text,
+    starts_at   timestamptz NOT NULL DEFAULT now(),
+    ends_at     timestamptz,
+    created_at  timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_billboards_track ON billboards (track_slug);
+
+-- -----------------------------------------------------------------------------
 -- data_updates: one-time changes to existing rows (docs/data_updates/*.sql)
 -- -----------------------------------------------------------------------------
 -- The backend runs each file once, in name order, and records it here so it is

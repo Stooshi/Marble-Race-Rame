@@ -19,6 +19,7 @@ import { hashString, mergeByArea, piece, seededRandom, smoothstep } from './part
 import { COSTUMES, COSTUME_COLORS } from '../costumes';
 import { FEATURE_COLORS } from '../trackFeatures';
 import { bakeMovers } from '../movers';
+import { boardPose } from '../billboards';
 
 const UP = new Vector3(0, 1, 0);
 const Z = new Vector3(0, 0, 1);
@@ -38,6 +39,9 @@ export function buildKitScenery(centerline, track, theme, { lite = false } = {})
   group.name = 'scenery:kit';
   group.add(ground.group);
   const solids = []; // { x, z, r } kept clear of trees
+  // The billboards' spots (billboards.js stands them there): no tree or figure in front of one.
+  const boardFeet = (kit.billboards ?? []).map((b) => boardPose(centerline, channel, b).foot);
+  for (const f of boardFeet) solids.push({ x: f.x, z: f.z, r: 6 });
 
   const frame = (p) => {
     const i = Math.min(segments, Math.max(0, Math.round(p * segments)));
@@ -105,6 +109,7 @@ export function buildKitScenery(centerline, track, theme, { lite = false } = {})
       const sign = k % 2 ? -1 : 1;
       const row = ground.over[i] || ground.onBridge[i] ? null : rows[i]?.[sign];
       if (!row) return; // (on a bridge or a viaduct: nowhere to stand)
+      if (boardFeet.some((f) => Math.hypot(f.x - row.inner.x, f.z - row.inner.z) < 7)) return; // (a billboard stands there)
       // On the bank, a couple of metres back from the rim, facing the track.
       const reach = Math.min(1, 2.5 / Math.max(0.1, row.inner.distanceTo(row.mid)));
       const at = row.inner.clone().lerp(row.mid, reach);

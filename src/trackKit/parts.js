@@ -219,4 +219,6 @@ module.exports = {
   BIOMES: ['alpine', 'arctic', 'meadow', 'desert', 'jungle', 'city'],
   LANDMARKS: ['church', 'mountain-hut', 'big-rock', 'lighthouse'],
   OVERHEAD: ['gondola', 'cable-car', 'chairlift'],
+  // Billboard frames: plain, a jungle timber frame, a city LED screen, a Paris advertising column, expedition crates.
+  FRAMES: ['plain', 'wood', 'led', 'column', 'crates'],
 };

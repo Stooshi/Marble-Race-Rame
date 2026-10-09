@@ -14,6 +14,7 @@ const slug = params.get('track') || 'kit-proving-ground';
 const track = await (await fetch(`./.tracks/${slug}.json`)).json();
 const canvas = document.getElementById('view');
 const scene = new TrackScene(canvas, { interactive: false, lite: params.get('lite') === '1', scenery: params.get('scenery') !== '0' });
+scene.billboardSource = async () => []; // (no server here: the built-in promotions)
 scene.setSize(window.innerWidth, window.innerHeight);
 scene.setTrack(track);
 

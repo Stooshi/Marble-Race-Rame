@@ -20,6 +20,8 @@ import { gatePlaces, StartGate } from './startGate';
 import { countdownPose, handover, startLineShot } from './startCamera';
 import { buildTrackFeatures } from './trackFeatures';
 import { buildStructures } from './structures';
+import { buildBillboards } from './billboards';
+import { fetchBillboards } from '../api/billboards';
 import { WinnerGlow } from './winnerGlow';
 import { WINNER_MS } from '../utils/finishShow';
 
@@ -100,6 +102,8 @@ export class TrackScene {
     const lowEnd = (navigator.hardwareConcurrency || 4) <= 4 && window.devicePixelRatio >= 2;
     this.lite = lite;
     this.sceneryOn = scenery;
+    // Where billboard images come from (the server; the dev kit view and tests swap it out).
+    this.billboardSource = fetchBillboards;
     this.renderer = new WebGLRenderer({ canvas, antialias: window.devicePixelRatio < 2, powerPreference: 'default' });
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, lowEnd || lite ? 1.5 : maxPixelRatio));
     this.renderer.outputColorSpace = SRGBColorSpace;
@@ -201,6 +205,16 @@ export class TrackScene {
     // Tunnels, bridges and waterfalls (tracks built with the track kit).
     this.structures = this.channel ? buildStructures(this.centerline, this.channel, track?.physics?.kit, { lite: this.lite }) : null;
     if (this.structures) this.trackGroup.add(this.structures.group);
+    // Billboards (kit tracks): our own promotions at once, the server's images as they load.
+    this.billboards = this.sceneryOn && this.channel ? buildBillboards(this.centerline, this.channel, track?.physics?.kit, { lite: this.lite }) : null;
+    if (this.billboards) {
+      this.billboards.group.traverse((o) => o.layers.set(SCENERY_LAYER));
+      this.trackGroup.add(this.billboards.group);
+      const boards = this.billboards;
+      this.billboardSource(track.slug)
+        .then((list) => { if (boards === this.billboards && !this.disposed) boards.setImages(list); })
+        .catch(() => { /* the promotions stay */ });
+    }
     // Scenery a moment later, so the track shows straight away even on slow phones.
     const token = (this.buildToken = (this.buildToken || 0) + 1);
     if (theme.scenery && this.sceneryOn) {
@@ -988,6 +1002,8 @@ export class TrackScene {
     this.scenery = null;
     this.features = null; // (its meshes go with the track group below)
     this.structures = null; // (so do the tunnels, bridges and waterfalls)
+    this.billboards?.dispose();
+    this.billboards = null;
     for (const child of [...this.trackGroup.children]) {
       child.traverse((o) => {
         if (o.geometry) o.geometry.dispose();

@@ -8,7 +8,7 @@
  * Each problem names the rule and the section, in plain words.
  */
 
-const { SHARP_RADIUS, TUNNELS, BRIDGES, SURFACES, BIOMES, LANDMARKS, OVERHEAD } = require('./parts');
+const { SHARP_RADIUS, TUNNELS, BRIDGES, SURFACES, BIOMES, LANDMARKS, OVERHEAD, FRAMES } = require('./parts');
 
 const MIN_SPIRAL_RADIUS = 40;  // Table Mountain Run's corkscrew
 const MIN_SWEEP_RADIUS = 45;   // San Francisco's Embarcadero
@@ -17,6 +17,7 @@ const MAX_FLAT_M = 10;         // …and may last at most one crest step
 const STEEPEST_CLIMB = -0.15;  // proven climbs: San Francisco's -0.12 (Russian Hill)
 const LONGEST_CLIMB_M = 40;    // San Francisco's 35 m
 const BILLBOARDS = [4, 6];
+const BILLBOARD_SHAPES = ['straight', 'plunge', 'climb', 'sBends', 'sweep'];
 const OBSTACLE_FREE_FINISH_M = 25; // nothing in the marbles' way just before the line
 const BRAKING_ZONE_M = 35;
 const PARKED_MAX_GRADE = 0.2;
@@ -109,10 +110,12 @@ function checkRecipe({ spec, sections, span, generated, owner, placed, total, wh
   };
   known('surface', SURFACES, spec.surface, 'track');
   known('biome', BIOMES, spec.biome, 'track');
+  known('billboard frame', FRAMES, spec.billboardFrame, 'track');
   known('landmark', LANDMARKS, spec.start?.landmark, 'start');
   known('landmark', LANDMARKS, spec.finish?.landmark, 'finish');
   sections.forEach((s) => {
     known('surface', SURFACES, s.surface, s.name);
+    known('billboard frame', FRAMES, s.billboardFrame, s.name);
     for (const lm of s.landmarks ?? []) known('landmark', LANDMARKS, lm.name, s.name);
     for (const o of s.overhead ?? []) known('lift', OVERHEAD, o, s.name);
   });
@@ -197,7 +200,10 @@ function checkRecipe({ spec, sections, span, generated, owner, placed, total, wh
   if (boards < BILLBOARDS[0] || boards > BILLBOARDS[1]) problems.push(`${where('billboards')}: ${boards} billboards; every track has ${BILLBOARDS[0]} to ${BILLBOARDS[1]}.`);
   sections.forEach((s) => {
     if (!s.billboards) return;
+    if (!Number.isInteger(s.billboards) || s.billboards < 1) problems.push(`${where(s.name)}: billboards is a number of billboards (1, 2…).`);
     if (s.shape.sharp || s.shape.shape === 'runIn') problems.push(`${where(s.name)}: no billboards at the sharp bend or the finish; put them along a straight or a sweep.`);
+    else if (!BILLBOARD_SHAPES.includes(s.shape.shape)) problems.push(`${where(s.name)}: billboards stand along a straight, a plunge, a climb, S-bends or a sweep, where the follow camera looks (not a ${s.shape.shape}).`);
+    if (s.tunnel !== undefined || s.bridge !== undefined) problems.push(`${where(s.name)}: no billboards in a tunnel or on a bridge (nowhere to stand them).`);
   });
 
   return problems;

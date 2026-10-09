@@ -33,6 +33,7 @@ function createApp() {
   app.use('/api/marbles', require('./routes/marbles'));
   app.use('/api/appearance', require('./routes/appearance'));
   app.use('/api/physics', require('./routes/physics'));
+  app.use('/api/billboards', require('./routes/billboards'));
 
   app.use(notFoundHandler);
   app.use(errorHandler);

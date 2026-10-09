@@ -119,6 +119,26 @@ Scenery comes from names in the file (looks only; checked, so a typo is refused)
 - `overhead: ['gondola' | 'cable-car' | 'chairlift']`: a lift crossing high above
   the section (18 m over the track, clear of the follow camera).
 
+## Billboards
+
+`billboards: 2` on a section stands two billboards beside it; every track has
+4 to 6 in all. Along a straight, a plunge, a climb, S-bends or a sweep only (not
+the sharp bend, a spiral, a splitter, a waterfall, the finish, a tunnel or a
+bridge). The kit spreads them along the section at least 12 m from any
+obstacle, on the outside of a sweep and on alternate sides of a straight, and
+numbers them 1, 2, 3… down the track: those are the slots the server fills.
+
+`billboardFrame` (for the track, or one section): `'plain' | 'wood' | 'led' |
+'column' | 'crates'`. Every panel is the same 6 m by 3 m and takes a 2:1 image,
+1024 x 512, so one artwork fits every track.
+
+Images: one row in the `billboards` table per image (see
+`docs/database_schema.sql`): a track and slot, every slot of a track, one slot
+of every track, or everywhere, with optional start and end dates. With no row,
+or if an image fails to load, a board shows one of our own built-in
+promotions, so it is never blank. Images must be `https://` and allow other
+sites to show them (Vercel file storage does). Drawing only: never the race.
+
 ## Slopes
 
 No sudden steepening: a single step of more than 0.13 throws marbles into the

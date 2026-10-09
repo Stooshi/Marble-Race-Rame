@@ -35,6 +35,11 @@ const RUNOUT = { length: 30, halfWidth: 3.5 };
 // hold a marble up), each fresh hit costing this share of its speed.
 const SLALOM_LOSS = 0.1;
 
+// Billboards stand at least this far (along the track) from any obstacle, and from the line.
+const BOARD_CLEAR_M = 12;
+const BOARD_FINISH_M = 25;
+const SOLID_KINDS = ['block', 'pileUp', 'curtain', 'swipe', 'parked', 'slalom', 'peg'];
+
 // What each kit obstacle races as: the footprint and settings of a proven obstacle.
 const WALL = { left: 1, right: -1 }; // positive l is the left wall
 
@@ -179,6 +184,41 @@ function track(spec) {
   });
   features.sort((a, b) => a.at - b.at);
 
+  // 2b. Billboards: `billboards: n` on a section stands n of them beside it, numbered (slots
+  // 1, 2, 3…) down the track, so the server can hand each slot its image. Evenly along the
+  // section, nudged clear of obstacles; on a bend on its outside (where the follow camera
+  // looks), on a straight on alternate sides.
+  const billboards = [];
+  let nextSide = WALL.left;
+  sections.forEach((sec, i) => {
+    const n = sec.billboards;
+    if (!n || !span[i].parts.length || !Number.isInteger(n) || n < 1) return;
+    const solids = placed.filter((p) => SOLID_KINDS.includes(p.kind));
+    const clear = (share) => {
+      const at = along(i, share);
+      return at <= 1 - BOARD_FINISH_M / total && solids.every((p) => Math.abs(p.at - at) * total >= BOARD_CLEAR_M);
+    };
+    for (let k = 0; k < n; k += 1) {
+      const want = (k + 1) / (n + 1);
+      // The nearest clear spot to its even share (never on top of the previous board).
+      const tries = Array.from({ length: 37 }, (_, j) => 0.05 + j * 0.025)
+        .filter((x) => !billboards.some((b) => b.section === sec.name && Math.abs(b.at - along(i, x)) * total < BOARD_CLEAR_M))
+        .sort((a, b) => Math.abs(a - want) - Math.abs(b - want));
+      const share = tries.find(clear);
+      if (share === undefined) {
+        problems.push(`${where(sec.name)}: no room for billboard ${k + 1} of ${n} at least ${BOARD_CLEAR_M} m from every obstacle; use fewer here, or put them on another section.`);
+        continue;
+      }
+      let side;
+      if (sec.shape.shape === 'sweep') side = sec.shape.side === 'left' ? WALL.right : WALL.left;
+      else {
+        side = nextSide;
+        nextSide = -nextSide;
+      }
+      billboards.push({ slot: billboards.length + 1, at: along(i, share), side, section: sec.name, frame: sec.billboardFrame || spec.billboardFrame || 'plain' });
+    }
+  });
+
   // 3. Splitters.
   const forks = [];
   sections.forEach((sec, i) => {
@@ -196,6 +236,7 @@ function track(spec) {
     surface: spec.surface || 'ice',
     ...(spec.biome && { biome: spec.biome }),
     lighting: spec.lighting || 'day',
+    billboards,
     start: spec.start || {},
     finish: spec.finish || {},
     sections: sections.map((sec, i) => ({
