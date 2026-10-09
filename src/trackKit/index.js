@@ -194,6 +194,7 @@ function track(spec) {
   // 4. Looks for the 3D view (the race engine never reads these).
   const kit = {
     surface: spec.surface || 'ice',
+    ...(spec.biome && { biome: spec.biome }),
     lighting: spec.lighting || 'day',
     start: spec.start || {},
     finish: spec.finish || {},
@@ -206,6 +207,9 @@ function track(spec) {
       ...(sec.overhead && { overhead: sec.overhead }),
       ...(sec.billboards && { billboards: sec.billboards }),
       ...(sec.around && { around: sec.around }),
+      ...(sec.figures && { figures: sec.figures }),
+      ...(sec.landmarks && { landmarks: sec.landmarks }),
+      ...(sec.surface && { surface: sec.surface }),
       ...(sec.tunnel && { tunnel: sec.tunnel }),
       ...(sec.bridge && { bridge: sec.bridge }),
       ...(sec.shape?.shape === 'waterfall' && { waterfall: { curtain: Boolean(sec.shape.curtain) } }),

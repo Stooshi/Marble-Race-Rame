@@ -8,7 +8,7 @@
  * Each problem names the rule and the section, in plain words.
  */
 
-const { SHARP_RADIUS, TUNNELS, BRIDGES } = require('./parts');
+const { SHARP_RADIUS, TUNNELS, BRIDGES, SURFACES, BIOMES, LANDMARKS, OVERHEAD } = require('./parts');
 
 const MIN_SPIRAL_RADIUS = 40;  // Table Mountain Run's corkscrew
 const MIN_SWEEP_RADIUS = 45;   // San Francisco's Embarcadero
@@ -29,7 +29,7 @@ const MOGULS_AFTER_BEND_M = 30;      // between bigger steps, so marbles have la
 const MAX_BUMPS_IN_ROW = 8;
 const MIN_BUMP_SPACING_M = 5;     // the braking zone before the sharp bend needs a straight this long
 
-function checkRecipe({ sections, span, generated, owner, placed, total, where }) {
+function checkRecipe({ spec, sections, span, generated, owner, placed, total, where }) {
   const problems = [];
   const name = (i) => sections[i].name;
   const names = new Set();
@@ -101,6 +101,20 @@ function checkRecipe({ sections, span, generated, owner, placed, total, where })
       if (s.shape.shape === 'splitter') problems.push(`${where(s.name)}: no bridge under a splitter.`);
     }
     if (s.tunnel !== undefined && s.bridge !== undefined) problems.push(`${where(s.name)}: a section is a tunnel or a bridge, not both.`);
+  });
+
+  // Scenery names: a typo is caught here, not found missing on screen.
+  const known = (what, list, value, at) => {
+    if (value !== undefined && !list.includes(value)) problems.push(`${where(at)}: unknown ${what} ${JSON.stringify(value)} (${list.join(', ')}).`);
+  };
+  known('surface', SURFACES, spec.surface, 'track');
+  known('biome', BIOMES, spec.biome, 'track');
+  known('landmark', LANDMARKS, spec.start?.landmark, 'start');
+  known('landmark', LANDMARKS, spec.finish?.landmark, 'finish');
+  sections.forEach((s) => {
+    known('surface', SURFACES, s.surface, s.name);
+    for (const lm of s.landmarks ?? []) known('landmark', LANDMARKS, lm.name, s.name);
+    for (const o of s.overhead ?? []) known('lift', OVERHEAD, o, s.name);
   });
 
   // Bends: long and flowing, at most one sharp bend, with a braking zone before it.

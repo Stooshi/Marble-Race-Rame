@@ -16,6 +16,8 @@ import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js
 import { channelLipAt, placeOnChannel } from './iceChannel';
 import { ANIMALS } from './costumes/animals';
 import { COSTUMES, COSTUME_COLORS } from './costumes';
+import { mergeByArea, piece } from './scenery/parts';
+import { bakeMovers } from './movers';
 
 // The polar bear's timetable: the same as the physics' (src/game/trackFeatures.js; a test checks they agree).
 const BEAR_PERIOD = 2.0;
@@ -174,7 +176,7 @@ function seaLionShape(head = 1, detail = 1) {
  * Builds the features of a track on an ice channel.
  * Returns { group, update(t) } (t: ms after the start) or null if it has none.
  */
-export function buildTrackFeatures(centerline, channel, features, { lite = false } = {}) {
+export function buildTrackFeatures(centerline, channel, features, { lite = false, compact = false } = {}) {
   if (!channel || !Array.isArray(features) || features.length === 0) return null;
   const across = channel.radius * channel.maxAngle; // metres along the wall from the middle to the top, per unit of l
   const group = new Group();
@@ -873,6 +875,8 @@ export function buildTrackFeatures(centerline, channel, features, { lite = false
     flowerB: new MeshLambertMaterial({ color: FEATURE_COLORS.flowerB, emissive: '#5a4a10' }),
     ...Object.fromEntries(['baboon', 'baboonFace', 'elephant', 'tusk', 'zebraW', 'zebraB', 'giraffe', 'giraffeSpot'].map((k) => [k, new MeshLambertMaterial({ color: FEATURE_COLORS[k], flatShading: true })])),
   };
+  const plainPieces = [];
+  const plain = (m) => m.isMeshLambertMaterial && m.flatShading && !m.transparent && !m.map && !m.vertexColors && !m.polygonOffset && m.emissive.getHex() === 0;
   for (const [key, list] of Object.entries(parts)) {
     // Merge like with like (all with the same attributes).
     const keep = ['position', 'normal', ...(key === 'chevron' ? ['uv'] : []), ...(key === 'bump' || key === 'cobbles' ? ['color'] : [])];
@@ -884,10 +888,25 @@ export function buildTrackFeatures(centerline, channel, features, { lite = false
     });
     // Costumes' colours: one flat-shaded material each, made as they are used.
     materials[key] ??= new MeshLambertMaterial({ color: COSTUME_COLORS[key] ?? FEATURE_COLORS[key] ?? '#ff00ff', flatShading: true });
+    // Kit tracks (compact): plain flat colours go into shared meshes, merged by neighbourhood below.
+    if (compact && plain(materials[key]) && keep.length === 2) {
+      for (const g of ready) plainPieces.push(piece(g, materials[key].color));
+      continue;
+    }
     const mesh = new Mesh(mergeGeometries(ready), materials[key]);
     mesh.name = key;
     group.add(mesh);
   }
+  if (plainPieces.length) {
+    const shared = new MeshLambertMaterial({ vertexColors: true, flatShading: true });
+    for (const geometry of mergeByArea(plainPieces, 250)) {
+      const mesh = new Mesh(geometry, shared);
+      mesh.name = 'costumes';
+      group.add(mesh);
+    }
+  }
+  // …and the animals' small movements, all in one mesh.
+  const movers = compact ? bakeMovers(idlers, group, 'costumes:moving') : null;
 
   // Effects: a puff of snow where a marble slams into an obstacle, a yellow
   // streak and a rocket-booster flame behind a marble fired off a boost pad.
@@ -1075,7 +1094,8 @@ export function buildTrackFeatures(centerline, channel, features, { lite = false
   const update = (t, info) => {
     effects(t, info);
     for (const sl of flopping) sl.place(seaLionFlop(t / 1000 + sl.phase));
-    for (const a of idlers) a.part.quaternion.copy(a.base).multiply(idleTurn.setFromAxisAngle(a.axis, a.swing * Math.sin((t / 1000 + a.phase) * (2 * Math.PI) / a.period)));
+    if (movers) movers.update(t);
+    else for (const a of idlers) a.part.quaternion.copy(a.base).multiply(idleTurn.setFromAxisAngle(a.axis, a.swing * Math.sin((t / 1000 + a.phase) * (2 * Math.PI) / a.period)));
     for (const sw of swipers) {
       const tip = sw.pawAt(bearPaw(t / 1000));
       const { arm, paw, claws, shoulder } = sw;

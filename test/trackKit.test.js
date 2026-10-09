@@ -420,3 +420,26 @@ test('hops stay about 1 m over moguls, steps and waterfalls on Kit Proving Groun
   }
   for (const [name, h] of Object.entries(where)) assert.ok(h <= 1.2, `${name}: hops ${h.toFixed(2)} m`);
 });
+
+test('scenery names are checked: surfaces, biomes, landmarks and lifts must be known', () => {
+  const ok = base();
+  ok.surface = 'snow';
+  ok.biome = 'alpine';
+  ok.start = { landmark: 'mountain-hut' };
+  ok.sections[1].surface = 'stone';
+  ok.sections[1].landmarks = [{ name: 'church', side: 'left' }];
+  ok.sections[1].overhead = ['chairlift'];
+  const t = kit.track(ok);
+  assert.equal(t.physics.look, 'snow');
+  assert.equal(t.physics.kit.sections[1].surface, 'stone');
+  for (const [change, message] of [
+    [(s) => { s.surface = 'lava'; }, /unknown surface "lava"/],
+    [(s) => { s.biome = 'moon'; }, /unknown biome "moon"/],
+    [(s) => { s.finish = { landmark: 'castle' }; }, /unknown landmark "castle"/],
+    [(s) => { s.sections[1].overhead = ['zeppelin']; }, /unknown lift "zeppelin"/],
+  ]) {
+    const bad = base();
+    change(bad);
+    refused(bad, message);
+  }
+});

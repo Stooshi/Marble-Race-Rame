@@ -71,3 +71,22 @@ export function smoothstep(a, b, x) {
   const t = Math.min(1, Math.max(0, (x - a) / (b - a)));
   return t * t * (3 - 2 * t);
 }
+
+/**
+ * Coloured pieces (each from piece()) merged by neighbourhood: pieces whose
+ * middles fall in the same `size`-metre square become one geometry. One draw
+ * call per neighbourhood: few calls, and the far ones are still culled.
+ */
+export function mergeByArea(pieces, size = 120) {
+  const areas = new Map();
+  const c = new Vector3();
+  for (const g of pieces) {
+    if (!g.getAttribute('normal')) g.computeVertexNormals();
+    g.computeBoundingBox();
+    g.boundingBox.getCenter(c);
+    const k = `${Math.floor(c.x / size)},${Math.floor(c.z / size)}`;
+    if (!areas.has(k)) areas.set(k, []);
+    areas.get(k).push(g);
+  }
+  return [...areas.values()].map((list) => merge(list));
+}

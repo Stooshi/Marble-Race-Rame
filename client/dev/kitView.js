@@ -6,7 +6,7 @@
 // window.kitView.shot({ at, l, back, up, side }) puts the camera `back` metres
 // up the track from a spot (`at`: share of the way down, `l`: share of the way
 // up the wall), `up` metres above it, and draws one frame.
-import { Vector3 } from 'three';
+import { Frustum, Matrix4, Vector3 } from 'three';
 import { TrackScene } from '../src/three/TrackScene';
 
 const params = new URLSearchParams(window.location.search);
@@ -26,6 +26,24 @@ const at = (p) => {
   return { pos: new Vector3().lerpVectors(a.pos, b.pos, f - i), side: new Vector3(a.side.x, 0, a.side.z).normalize() };
 };
 
+/** Draw calls by what they draw (the camera's view, roughly as the renderer culls): name path → count. */
+function drawnBy() {
+  const frustum = new Frustum().setFromProjectionMatrix(new Matrix4().multiplyMatrices(scene.camera.projectionMatrix, scene.camera.matrixWorldInverse));
+  const by = {};
+  scene.scene.traverseVisible((o) => {
+    if (!(o.isMesh || o.isLine || o.isPoints || o.isSprite)) return;
+    if (o.frustumCulled && !frustum.intersectsObject(o)) return;
+    const path = [];
+    for (let x = o; x && x !== scene.scene; x = x.parent) path.unshift(x.name || x.type);
+    const key = path.slice(0, Number(params.get('why')) > 1 ? Number(params.get('why')) : 3).join('/');
+    const g = o.geometry;
+    const tris = o.isMesh ? Math.round(((g.index ? g.index.count : g.getAttribute('position').count) / 3) * (o.count ?? 1) / 1000) : 0;
+    const [n = 0, t = 0] = (by[key] ?? '0/0k').split(/[/k]/).map(Number);
+    by[key] = `${n + (Array.isArray(o.material) ? o.material.length : 1)}/${t + tris}k`;
+  });
+  return by;
+}
+
 window.kitView = {
   track,
   ready: new Promise((resolve) => setTimeout(resolve, 400)), // the scenery is built a moment after the track
@@ -43,8 +61,9 @@ window.kitView = {
     scene.camera.updateProjectionMatrix();
     scene.features?.update(t);
     scene.structures?.update(t);
+    scene.scenery?.userData?.update?.(t);
     scene.renderer.info.reset();
     scene.renderer.render(scene.scene, scene.camera);
-    return { calls: scene.renderer.info.render.calls, triangles: scene.renderer.info.render.triangles };
+    return { calls: scene.renderer.info.render.calls, triangles: scene.renderer.info.render.triangles, ...(params.get('why') && { by: drawnBy() }) };
   },
 };

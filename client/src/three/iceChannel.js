@@ -22,8 +22,33 @@ export const SAND_COLORS = {
   divider: '#f1e3bf', nose: '#d8322b',
 };
 
-/** The colours for a channel that is not a street: ice, or sand. */
-export const channelColors = (channel) => (channel?.look === 'sand' ? SAND_COLORS : ICE_COLORS);
+/**
+ * The kit's other themed surfaces (a track file's `surface`, or one section's).
+ * Looks only: every surface races exactly like ice (snow is as fast as ice).
+ */
+export const SNOW_COLORS = {
+  iceA: '#fbfdff', iceB: '#eef3f8', rim: '#8fb3d1', outer: '#c9d6e2', outerDark: '#b9c8d6',
+  divider: '#ffffff', nose: '#e23b3b',
+};
+export const STONE_COLORS = {
+  iceA: '#b3ada3', iceB: '#a49e94', rim: '#d6d0c4', outer: '#8d877d', outerDark: '#7f796f',
+  divider: '#d6d0c4', nose: '#d8322b',
+};
+export const WATER_COLORS = {
+  iceA: '#5fb4d9', iceB: '#4ba3cc', rim: '#e8e2d2', outer: '#8f8778', outerDark: '#82796b',
+  divider: '#e8e2d2', nose: '#d8322b',
+};
+const LOOK_COLORS = { ice: ICE_COLORS, sand: SAND_COLORS, snow: SNOW_COLORS, stone: STONE_COLORS, water: WATER_COLORS };
+export const CHANNEL_LOOKS = Object.keys(LOOK_COLORS);
+
+/** The colours for a channel that is not a street (ice, sand, snow, stone, water), at s metres along it. */
+export const channelColors = (channel, s = null) => LOOK_COLORS[lookAt(channel, s)] ?? ICE_COLORS;
+
+/** How the channel is dressed at s metres along it: a kit section's own surface, else the track's. */
+export function lookAt(channel, s = null) {
+  if (s != null) for (const x of channel?.surfaces ?? []) if (s >= x.s0 && s <= x.s1) return x.look;
+  return channel?.look ?? 'ice';
+}
 
 /**
  * A racing channel dressed as a city street (San Francisco: physics.look
@@ -58,7 +83,11 @@ export function channelOf(track, centerline) {
     forks,                  // …and all of them (Table Mountain Run has two)
     funnel: ch.funnel ? { length: ch.funnel.length, radius: ch.funnel.radius } : null, // metres from the start
     runout: runout ? { length: runout.length, halfWidth: runout.halfWidth } : null, // the catch area past the line
-    look: ['street', 'sand'].includes(track.physics.look) ? track.physics.look : 'ice', // how it is dressed (the shape is the same)
+    look: ['street', ...CHANNEL_LOOKS].includes(track.physics.look) ? track.physics.look : 'ice', // how it is dressed (the shape is the same)
+    // Kit sections dressed differently from the rest (a stone stretch on a snow track, say).
+    surfaces: (track.physics.kit?.sections ?? [])
+      .filter((x) => x.surface && LOOK_COLORS[x.surface])
+      .map((x) => ({ s0: x.from * arc, s1: x.to * arc, look: x.surface })),
   };
 }
 
@@ -160,7 +189,16 @@ export function buildIceChannelGeometry(centerline, channel, {
   skirt = channel.look === 'street' ? 7 : 1.6,     // and a stone retaining wall below them, down to the ground
 } = {}) {
   const street = channel.look === 'street';
-  const C = Object.fromEntries(Object.entries(street ? STREET_COLORS : channelColors(channel)).map(([k, v]) => [k, new Color(v)]));
+  const toColors = (palette) => Object.fromEntries(Object.entries(palette).map(([k, v]) => [k, new Color(v)]));
+  const C0 = toColors(street ? STREET_COLORS : channelColors(channel));
+  let C = C0;
+  const looks = {};
+  // The palette for the segment at s (a kit section may be dressed differently from the rest).
+  const dressFor = (sMid) => {
+    if (street || !channel.surfaces?.length) return C0;
+    const look = lookAt(channel, sMid);
+    return (looks[look] ??= toColors(channelColors(channel, sMid)));
+  };
   // The street's paint, by how far up the wall a strip is (th, radians) and how far down the track (s, metres).
   const streetColor = (th, s, stripe) => {
     const a = Math.abs(th);
@@ -234,6 +272,7 @@ export function buildIceChannelGeometry(centerline, channel, {
     const b = samples[i + 1];
     const sMid = (i + 0.5) * step;
     const stripe = Math.floor(sMid / 6) % 2 === 0;
+    C = dressFor(sMid);
     const fork = forkAt(channel, sMid);
     if (fork) {
       const sa = i * step;

@@ -179,7 +179,7 @@ export class TrackScene {
     this.arcLength = 0;
     this.centerline = buildCenterline(track);
     this.track = track;
-    const theme = themeFor(track?.slug);
+    const theme = themeFor(track?.slug, track);
     this.applyTheme(theme);
     const style = { ...TRACK_STYLE, colors: { ...TRACK_STYLE.colors, ...theme.track } };
     this.channel = channelOf(track, this.centerline); // ice channel (bobsleigh) instead of a road
@@ -192,11 +192,11 @@ export class TrackScene {
       // Drawn in pieces along the track, so only those in view are drawn (the whole
       // channel stays as trackMesh, hidden, for its size and shape).
       this.trackMesh.visible = false;
-      for (const piece of channelPieces(geometry)) this.trackGroup.add(new Mesh(piece, this.trackMaterial));
+      for (const piece of channelPieces(geometry, track?.physics?.kit ? (this.lite ? 60 : 100) : 40)) this.trackGroup.add(new Mesh(piece, this.trackMaterial));
     }
     this.trackGroup.add(this.buildFinishArch(track));
     // Boost pads, speed bumps and obstacles (ice channels with physics.features).
-    this.features = this.channel ? buildTrackFeatures(this.centerline, this.channel, track?.physics?.features, { lite: this.lite }) : null;
+    this.features = this.channel ? buildTrackFeatures(this.centerline, this.channel, track?.physics?.features, { lite: this.lite, compact: Boolean(track?.physics?.kit) }) : null;
     if (this.features) this.trackGroup.add(this.features.group);
     // Tunnels, bridges and waterfalls (tracks built with the track kit).
     this.structures = this.channel ? buildStructures(this.centerline, this.channel, track?.physics?.kit, { lite: this.lite }) : null;
@@ -465,6 +465,7 @@ export class TrackScene {
     // The track's features: the bear's swipe, puffs where marbles hit obstacles, boost streaks.
     this.features?.update(frame.t, { frame, positions: this.marbles.positions, contacts: this.marbles.contacts });
     this.structures?.update(frame.t);
+    this.scenery?.userData?.update?.(frame.t); // (kit sceneries: idle movements, lifts)
     const index = this.followedIndex(frame, follow, this.main);
     this.celebrate(frame, index);
     const at = this.marbles.positionOf(index);

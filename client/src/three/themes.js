@@ -52,7 +52,24 @@ export const THEMES = {
   },
 };
 
-export function themeFor(slug) {
+// Kit tracks: the world's look by landscape (the track file's biome, or its surface).
+// Lighting and weather presets replace the sky and sun here in step 6.
+const KIT_LOOKS = {
+  alpine: { sky: { top: '#4f93d8', horizon: '#d9eaf8', glow: '#ffffff' }, fog: '#d9eaf8', ground: { color: '#dde8f2', y: -60 } },
+  arctic: { sky: { top: '#5d8fc4', horizon: '#e6eef6', glow: '#fff4dc' }, fog: '#e6eef6', ground: { color: '#e2ebf3', y: -60 } },
+  meadow: { sky: { top: '#5fb4ff', horizon: '#d6f0ff', glow: null }, fog: '#d6f0ff', ground: { color: '#86c66a', y: -60 } },
+  desert: { sky: { top: '#4a98d8', horizon: '#f3dcb4', glow: '#fff3d6' }, fog: '#f0d9b5', ground: { color: '#e2a764', y: -60 } },
+  jungle: { sky: { top: '#5aa8e0', horizon: '#d5ead2', glow: null }, fog: '#cfe3cc', ground: { color: '#3f8f3a', y: -60 } },
+  city: { sky: { top: '#5fa8f0', horizon: '#dbe9f5', glow: null }, fog: '#dbe9f5', ground: { color: '#9cb768', y: -60 } },
+};
+const KIT_BIOME = { snow: 'alpine', ice: 'alpine', sand: 'desert', water: 'jungle', stone: 'city', street: 'city' };
+
+export function themeFor(slug, track = null) {
+  const kit = track?.physics?.kit;
+  if (kit) {
+    const biome = KIT_LOOKS[kit.biome] ? kit.biome : KIT_BIOME[kit.surface] ?? 'meadow';
+    return { ...DEFAULT_THEME, ...KIT_LOOKS[biome], scenery: 'kit' };
+  }
   const own = THEMES[slug];
   if (!own) return DEFAULT_THEME;
   return { ...DEFAULT_THEME, ...own };

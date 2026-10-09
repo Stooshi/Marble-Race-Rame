@@ -18,6 +18,7 @@ import {
 } from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { placeOnChannel } from './iceChannel';
+import { mergeByArea, piece } from './scenery/parts';
 
 const UP = new Vector3(0, 1, 0);
 
@@ -329,15 +330,15 @@ export function buildStructures(centerline, channel, kit, { lite = false } = {})
         const { pos, side, along } = frameAt(centerline, p);
         const flat = along.clone().setY(0).normalize();
         const q = new Quaternion().setFromRotationMatrix(new Matrix4().makeBasis(side, UP, flat));
-        const under = pos.clone().addScaledVector(UP, -0.9);
+        const under = pos.clone().addScaledVector(UP, -1.75); // just under the channel's outer wall
         if (s.bridge === 'wood') {
           add(k % 2 ? 'plank' : 'plankDark', new BoxGeometry(9.5, 0.25, step * 0.9), new Matrix4().compose(under, q, new Vector3(1, 1, 1)));
           if (k % 3 === 0) {
-            for (const x of [-4.2, 4.2]) add('plankDark', new BoxGeometry(0.35, 12, 0.35), new Matrix4().compose(under.clone().addScaledVector(side, x).addScaledVector(UP, -6.1), q, new Vector3(1, 1, 1)));
+            for (const x of [-4.2, 4.2]) add('plankDark', new BoxGeometry(0.35, 30, 0.35), new Matrix4().compose(under.clone().addScaledVector(side, x).addScaledVector(UP, -15.1), q, new Vector3(1, 1, 1))); // down into the ravine
           }
         } else if (s.bridge === 'stone') {
           add(k % 2 ? 'stone' : 'stoneDark', new BoxGeometry(9.5, 1.2, step * 0.95), new Matrix4().compose(under.clone().addScaledVector(UP, -0.4), q, new Vector3(1, 1, 1)));
-          if (k % 4 === 0) add('stoneDark', new BoxGeometry(2.2, 14, 2.2), new Matrix4().compose(under.clone().addScaledVector(UP, -7.6), q, new Vector3(1, 1, 1)));
+          if (k % 4 === 0) add('stoneDark', new BoxGeometry(2.2, 30, 2.2), new Matrix4().compose(under.clone().addScaledVector(UP, -15.6), q, new Vector3(1, 1, 1)));
         } else {
           // A narrow-looking bridge of blue ice over the crevasse (the channel keeps its width).
           add('iceSlab', new BoxGeometry(8.2, 1.6, step * 0.98), new Matrix4().compose(under.clone().addScaledVector(UP, -0.5), q, new Vector3(1, 1, 1)));
@@ -494,20 +495,35 @@ export function buildStructures(centerline, channel, kit, { lite = false } = {})
     }
   }
 
-  // One mesh per colour for the solid pieces.
+  // The solid pieces, coloured per piece and merged by neighbourhood: one draw call per
+  // structure or so, whatever its colours (bridges apart: the ground check counts them as built).
+  const BUILT = ['plank', 'plankDark', 'stone', 'stoneDark', 'iceSlab', 'iceDeep'];
   const solidMats = {};
+  const coloured = { built: [], other: [] };
   for (const [key, list] of Object.entries(parts)) {
     const ready = list.map((g) => {
-      if (!g.getAttribute('normal')) g.computeVertexNormals();
       for (const name of Object.keys(g.attributes)) if (name !== 'position' && name !== 'normal') g.deleteAttribute(name);
       return g;
     });
-    solidMats[key] = key === 'eye'
-      ? new MeshBasicMaterial({ color: STRUCTURE_COLORS.eye })
-      : new MeshLambertMaterial({ color: STRUCTURE_COLORS[key] ?? '#ff00ff', flatShading: true });
-    const mesh = new Mesh(mergeGeometries(ready), solidMats[key]);
-    mesh.name = key;
-    group.add(mesh);
+    if (key === 'eye') {
+      // The dragon's glowing eyes: unlit, their own call.
+      solidMats.eye = new MeshBasicMaterial({ color: STRUCTURE_COLORS.eye });
+      const mesh = new Mesh(mergeGeometries(ready), solidMats.eye);
+      mesh.name = key;
+      group.add(mesh);
+      continue;
+    }
+    for (const g of ready) coloured[BUILT.includes(key) ? 'built' : 'other'].push(piece(g, STRUCTURE_COLORS[key] ?? '#ff00ff'));
+  }
+  solidMats.solid = new MeshLambertMaterial({ vertexColors: true, flatShading: true });
+  for (const [kind, list] of Object.entries(coloured)) {
+    if (!list.length) continue;
+    for (const geometry of mergeByArea(list, 250)) {
+      const mesh = new Mesh(geometry, solidMats.solid);
+      mesh.name = kind === 'built' ? 'bridge' : 'structure';
+      if (kind === 'built') mesh.userData.built = true;
+      group.add(mesh);
+    }
   }
 
   const update = (t) => {

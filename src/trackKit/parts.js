@@ -214,4 +214,9 @@ module.exports = {
   bump, boost, brake, moguls, steps,
   TUNNELS: ['mine', 'ice-cave', 'dragon', 'rock', 'roots'],
   BRIDGES: ['ice', 'stone', 'wood'],
+  // Scenery names (looks only; the 3D view draws them, client/src/three/scenery/kit*.js).
+  SURFACES: ['ice', 'snow', 'sand', 'stone', 'water'],
+  BIOMES: ['alpine', 'arctic', 'meadow', 'desert', 'jungle', 'city'],
+  LANDMARKS: ['church', 'mountain-hut', 'big-rock', 'lighthouse'],
+  OVERHEAD: ['gondola', 'cable-car', 'chairlift'],
 };

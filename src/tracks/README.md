@@ -94,6 +94,31 @@ race exactly like the open channel. A tunnel's roof faces inward, so the
 follow camera above or behind it is never blocked; a test checks it frame by
 frame through whole races.
 
+## Ground and scenery
+
+Every kit track is **buried in the ground**, like a trench: the land rises to
+the top of the walls on both sides, so the outside of the walls is never seen
+and you look down into the track. The kit does this by itself: on a slope the
+hillside is cut away above the channel and built up with earth or rock below
+it. Only where the track drops faster than the land (steep plunges,
+waterfalls), crosses over itself, or is a bridge may it run above ground, and
+there it stands on something built: rock fill, a stone viaduct with piers, or
+the bridge. A test checks every kit track, phone and computer, and names any
+stretch where the outer wall shows on normal ground.
+
+Scenery comes from names in the file (looks only; checked, so a typo is refused):
+
+- `biome`: `'alpine' | 'arctic' | 'meadow' | 'desert' | 'jungle' | 'city'`:
+  the land's colours and its trees, rocks or cacti (guessed from `surface` if left out).
+- `surface`: `'ice' | 'snow' | 'sand' | 'stone' | 'water'`, for the whole track
+  or one section (`surface: 'stone'` on the Steps). Every surface races exactly like ice.
+- `start: { landmark }`, `finish: { landmark }`, and per section
+  `landmarks: [{ name, side, at, distance }]`: `'church' | 'mountain-hut' | 'big-rock' | 'lighthouse'`.
+- `figures: ['skier', 'snowboarder', 'spectator', 'reindeer', …]`: people, or any
+  block costume, standing on the banks facing the track with small idle movements.
+- `overhead: ['gondola' | 'cable-car' | 'chairlift']`: a lift crossing high above
+  the section (18 m over the track, clear of the follow camera).
+
 ## Slopes
 
 No sudden steepening: a single step of more than 0.13 throws marbles into the

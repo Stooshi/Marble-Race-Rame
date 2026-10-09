@@ -53,7 +53,7 @@ describe('track structures', () => {
       const built = buildStructures(centerline, channel, track.physics.kit, { lite });
       const names = [];
       built.group.traverse((o) => names.push(o.name));
-      for (const name of ['tunnel:mine', 'tunnel:ice-cave', 'tunnel:dragon', 'waterfall-water', 'waterfall-curtain', 'waterfall-spray', 'plank', 'tooth']) {
+      for (const name of ['tunnel:mine', 'tunnel:ice-cave', 'tunnel:dragon', 'waterfall-water', 'waterfall-curtain', 'waterfall-spray', 'bridge', 'structure', 'eye']) {
         expect(names, name).toContain(name);
       }
       expect(() => built.update(12_345)).not.toThrow();

@@ -2,11 +2,13 @@
 import { buildAlpine } from './alpine';
 import { buildCapeTown } from './capeTown';
 import { buildSanFrancisco } from './sanFrancisco';
+import { buildKitScenery } from './kit';
 
 const BUILDERS = {
   'san-francisco': buildSanFrancisco,
   alpine: buildAlpine,
   'cape-town': buildCapeTown,
+  kit: buildKitScenery, // every track built with the track kit
 };
 
 /** Returns a Group of scenery for the theme, or null for the plain default world. options.lite: the lighter version for phones. */
