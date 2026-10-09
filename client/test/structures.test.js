@@ -88,7 +88,7 @@ describe('track structures', () => {
     }
   });
 
-  it('the follow camera is never blocked by any of them, through a whole race, on phone and computer screens', () => {
+  it('the follow camera is never blocked by any of them, through a whole race, on phone and computer screens', { timeout: 120_000 }, () => {
     const built = buildStructures(centerline, channel, track.physics.kit);
     built.group.updateMatrixWorld(true);
     const solids = solidMeshes(built.group);

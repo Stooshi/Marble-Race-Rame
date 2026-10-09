@@ -6,8 +6,15 @@
 // window.kitView.shot({ at, l, back, up, side }) puts the camera `back` metres
 // up the track from a spot (`at`: share of the way down, `l`: share of the way
 // up the wall), `up` metres above it, and draws one frame.
+// With &race=<name> (client/dev/.tracks/<name>.json, written by the track report)
+// it also plays that race through the game's own cameras: raceShot({ t, follow,
+// camera }) draws the moment t ms after GO (negative: the countdown), and
+// raceLoad({ every }) draws the follow camera every few seconds of the race and
+// returns each frame's drawing load.
 import { Frustum, Matrix4, Vector3 } from 'three';
 import { TrackScene } from '../src/three/TrackScene';
+import { frameAtTime } from '../src/utils/splits';
+import { COUNTDOWN_MS } from '../src/three/startCamera';
 
 const params = new URLSearchParams(window.location.search);
 const slug = params.get('track') || 'kit-proving-ground';
@@ -45,7 +52,56 @@ function drawnBy() {
   return by;
 }
 
+// ── A race through the game's own cameras (track report) ─────────────────
+const race = params.get('race') ? await (await fetch(`./.tracks/${params.get('race')}.json`)).json() : null;
+const countdown = race?.start ? Math.max(COUNTDOWN_MS, race.start.countdownMs ?? 0) : 0;
+let clock = null;
+let following = 'leader';
+const raceFrame = (t) => {
+  const f = frameAtTime(race.frames, race.tickMs, t);
+  return t < 0 && f ? { ...f, t } : f; // (waiting at the gate during the countdown)
+};
+function beginRace() {
+  scene.setRace(race.entries, [], race.results, race.start ? { ...race.start, countdownMs: countdown, frame: race.frames[0] } : null);
+  scene.setCameraMode('follow');
+  clock = -countdown;
+}
+/** Plays the race on to `to` ms, 20 frames a second, as a viewer would see it. */
+function advance(to, follow = 'leader') {
+  if (clock === null || to < clock || follow !== following) beginRace();
+  following = follow;
+  for (; clock <= to; clock += 50) scene.updateRace(raceFrame(clock), follow, 0.05);
+}
+function drawNow(t) {
+  scene.effects?.update(t / 1000, scene.camera.position);
+  scene.renderer.info.reset();
+  scene.renderer.render(scene.scene, scene.camera);
+  return { calls: scene.renderer.info.render.calls, triangles: scene.renderer.info.render.triangles };
+}
+
 window.kitView = {
+  race: race && { durationMs: race.durationMs, countdownMs: countdown, winnerMs: Math.min(...race.results.map((r) => r.finishTimeMs)) },
+  /** The race at t ms (negative: the countdown) through the game's camera: 'follow' or 'overview'. */
+  raceShot({ t, follow = 'leader', camera = 'follow' }) {
+    advance(t, follow);
+    if (camera === 'overview') {
+      scene.setCameraMode('overview');
+      const stats = drawNow(t);
+      scene.setCameraMode('follow');
+      return stats;
+    }
+    return drawNow(t);
+  },
+  /** The follow camera's drawing load every `every` ms through the whole race. */
+  raceLoad({ every = 2000 } = {}) {
+    const out = [];
+    for (let t = 0; t <= race.durationMs; t += every) {
+      advance(t);
+      out.push({ t, ...drawNow(t) });
+    }
+    return out;
+  },
+
   track,
   ready: new Promise((resolve) => setTimeout(resolve, 400)), // the scenery is built a moment after the track
   /** Moves the camera to look at a spot on the track and draws one frame, at race time `t` ms. */

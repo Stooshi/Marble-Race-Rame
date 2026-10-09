@@ -237,6 +237,7 @@ function track(spec) {
     ...(spec.biome && { biome: spec.biome }),
     lighting: spec.lighting || 'day',
     ...(spec.variants?.length && { variants: [...spec.variants] }),
+    ...(spec.signature && { signature: spec.signature }),
     billboards,
     start: spec.start || {},
     finish: spec.finish || {},

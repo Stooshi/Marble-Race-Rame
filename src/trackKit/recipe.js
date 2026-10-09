@@ -27,7 +27,7 @@ const MAX_STEEPEN = 0.13;      // Table Mountain Run's into its final plunge (ho
 const GENTLE_STEEPEN = 0.06;   // steps this small never throw a marble
 const STEEPEN_GAP_M = 30;
 const WATERFALL_RUN_IN_M = 30;
-const BUMP_AFTER_BLOCK_M = 20;
+const BUMP_AFTER_BLOCK_M = 40; // 31 m still threw marbles 1.5 m (track report, Kit Proving Ground's final plunge)
 const MOGULS_AFTER_BEND_M = 30;      // between bigger steps, so marbles have landed
 const MAX_BUMPS_IN_ROW = 8;
 const MIN_BUMP_SPACING_M = 5;     // the braking zone before the sharp bend needs a straight this long
@@ -114,6 +114,8 @@ function checkRecipe({ spec, sections, span, generated, owner, placed, total, wh
   known('biome', BIOMES, spec.biome, 'track');
   known('billboard frame', FRAMES, spec.billboardFrame, 'track');
   known('lighting', LIGHTINGS, spec.lighting, 'track');
+  // The signature moment (the report's screenshot of it): a section of this track.
+  if (spec.signature !== undefined && !sections.some((s) => s.name === spec.signature)) problems.push(`${where('track')}: the signature "${spec.signature}" is not one of this track's sections.`);
   if (spec.variants !== undefined && !Array.isArray(spec.variants)) problems.push(`${where('track')}: variants is a list of lighting presets (${LIGHTINGS.join(', ')}).`);
   for (const v of Array.isArray(spec.variants) ? spec.variants : []) known('lighting variant', LIGHTINGS, v, 'track');
   if (Array.isArray(spec.variants) && (new Set(spec.variants).size !== spec.variants.length || spec.variants.includes(spec.lighting || 'day'))) {

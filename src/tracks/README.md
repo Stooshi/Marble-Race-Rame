@@ -82,7 +82,7 @@ To look at them: `node scripts/dump-kit-track.js costume-gallery`, then
 | `moguls({ from, to, count })` | A row of low bumps: on a straight, 30 m after any bend, 5 m apart or more, 8 at most |
 | `steps({ from, to, count, drag })` | Small regular bumps over a slowing surface (the Selarón Steps); same rules as moguls |
 
-Nothing bumpy within 20 m after a block: marbles flung off it land on the bumps and bounce high.
+Nothing bumpy within 40 m after a block: marbles flung off it land on the bumps and bounce high.
 
 ## Tunnels, caves and bridges
 
@@ -179,6 +179,33 @@ in, or make it a `waterfall`, whose lip eases in by itself.
 `line`: `'center'`, `'left'`, `'right'`, `'high'` or a number (share of the
 way up the wall, positive = left). `side`: `'left'`, `'right'` or `'high'`.
 "High" is the outside of the section's bend, so it needs a section with one bend.
+
+## The track report
+
+    npm run report -- <slug>            (3 x 1,000 races: about 15 minutes)
+    npm run report -- <slug> --quick    (3 x 200: for tuning rounds; the batches are noisier)
+
+One page, the same layout for every track, at `reports/<slug>/index.html`,
+with a pass or fail beside each line and what to fix at the top:
+
+- **Fairness**: three batches, each judged on its own: wins and average place per
+  group of 4 starting places, strongest five against weakest five.
+- **Pace**: the winner's time, the last marble home, every marble home.
+- **Close racing**: the winner-to-last gap, racing overtakes (two marbles within
+  4.5 m/s of each other swapping places after the first 5 s, and staying swapped),
+  lead changes.
+- **Splitters**: each channel's share of marbles against its share of wins, and the
+  places a marble gains or loses going through one channel rather than the other.
+  Fix with the splitter's `balance` (each channel's `drag` and `scrub`, the wedge's `tipOffset`).
+- **Obstacles, boosts, bumps**: hits by starting group and strength group; the
+  highest hops.
+- **Safety**: the same seed gives the same race; the database holds what the file
+  builds (where there is a database); today's tracks race as recorded.
+- **Ground** and **Camera**: the ground check, and frame by frame through two races
+  on phone and computer screens: the follow camera never blocked, on its marble's
+  level, no jumps, its marble never inside the ice.
+- **Drawing load** through a race and the **fixed screenshots**, from a headless
+  browser (needs Chromium; its frame rate means nothing).
 
 ## Before a track goes live
 

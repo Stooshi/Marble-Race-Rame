@@ -36,6 +36,7 @@ const SIGHT_EASE = 0.6; // seconds: how gently the follow camera moves back out 
 const INSET_CLOSER = 0.6; // the corner view's follow camera sits this much nearer its marble
 const OWN_STRETCH = 60;   // metres along the track either side of a marble that count as its own stretch (ice channels; the corkscrew's levels are 155 m apart)
 const CHANNEL_SKIRT = 1.6; // metres the ice channel's outer skirt hangs below its floor (iceChannel.js)
+const VIADUCT_DECK = 1.3;  // metres more of stone deck under a kit track's stretch crossing over itself (scenery/kitGround.js)
 
 /** A follow camera and its smoothing state: the big view has one, the small corner view another. */
 function followRig(camera) {
@@ -731,7 +732,7 @@ export class TrackScene {
       if (dx * dx + dz * dz >= reach * reach) continue;
       const own = Math.abs(s - level.s) < OWN_STRETCH;
       if (own || p.y + rimH <= level.y + 2) floor = Math.max(floor, p.y + rimH);
-      else ceiling = Math.min(ceiling, p.y - CHANNEL_SKIRT);
+      else ceiling = Math.min(ceiling, p.y - this.undersideAt(i));
     }
     return { floor, ceiling };
   }
@@ -778,6 +779,14 @@ export class TrackScene {
   }
 
 
+  /**
+   * How far below its floor the channel (and what carries it) reaches at sample i: its skirt,
+   * and on a kit track where it passes over itself, the viaduct deck under it too.
+   */
+  undersideAt(i) {
+    return CHANNEL_SKIRT + (this.scenery?.userData?.ground?.over?.[i] ? VIADUCT_DECK : 0);
+  }
+
   /** Ice channels: is the point x metres across and y up from the middle of the floor, s metres along, inside the ice? */
   channelSolid(s, x, y) {
     const ch = this.channel;
@@ -801,7 +810,8 @@ export class TrackScene {
       rimTop = Math.max(rimTop, top);
     }
     // The ice itself: the walls, floor and skirt below the rim.
-    return Math.abs(x) <= outer && y <= rimTop + 0.05 && y >= -CHANNEL_SKIRT;
+    const i = Math.round((s / ch.arc) * this.centerline.segments);
+    return Math.abs(x) <= outer + (this.undersideAt(i) > CHANNEL_SKIRT ? 0.35 : 0) && y <= rimTop + 0.05 && y >= -this.undersideAt(i);
   }
 
   /**

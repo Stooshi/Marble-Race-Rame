@@ -102,12 +102,18 @@ test('the one sharp bend gets its braking zone on the straight before it, automa
 });
 
 test('a splitter carries proven channel settings, wedge on the straight in, rejoining on the merge', () => {
-  const [fork] = proving.physics.forks;
+  // A splitter starts from Table Mountain Run's proven settings…
+  const { fork: proven } = kit.splitter({ side: 'left' });
   const t0 = tm.physics.forks[0];
   assert.deepEqual(
-    { ...fork, from: 0, to: 0 },
-    { from: 0, to: 0, radius: t0.radius, apart: t0.apart, tipOffset: t0.tipOffset, left: { drag: 1, scrub: t0.insideScrub }, right: { drag: t0.outsideDrag, scrub: 1 } },
+    proven,
+    { radius: t0.radius, apart: t0.apart, tipOffset: t0.tipOffset, left: { drag: 1, scrub: t0.insideScrub }, right: { drag: t0.outsideDrag, scrub: 1 } },
   );
+  // …and `balance` tunes each channel once the track report says so (Kit Proving Ground's).
+  const [fork] = proving.physics.forks;
+  assert.deepEqual(fork.left, { drag: 2.5, scrub: 2.5 });
+  assert.deepEqual(fork.right, { drag: 0.3, scrub: 0.5 });
+  assert.equal(fork.tipOffset, t0.tipOffset);
   const s = proving.physics.kit.sections.find((x) => x.name === 'Rock splitter');
   assert.ok(fork.from > s.from && fork.to < s.to && fork.from < fork.to);
 });

@@ -177,6 +177,13 @@ export function buildKitGround(centerline, track, { lite = false } = {}) {
   bankMesh.userData.ground = true;
   group.add(bankMesh);
 
+  // Is a pier's foot (a spot on the plan) on or beside another stretch of track, lower down?
+  const inLowerStretch = (foot, i, below) => samples.some((o, j) => {
+    if (Math.abs(j - i) * step < 60 || o.pos.y >= below) return false;
+    const { outer } = wallsAt(channel, j, step);
+    return Math.hypot(o.pos.x - foot.x, o.pos.z - foot.z) < outer + 2.6;
+  });
+
   // The viaduct: where the track passes over itself, the upper stretch runs on a stone deck with piers.
   const stone = [];
   let lastPier = -Infinity;
@@ -198,6 +205,8 @@ export function buildKitGround(centerline, track, { lite = false } = {}) {
       lastPier = i * step;
       for (const sign of [1, -1]) {
         const foot = s.pos.clone().addScaledVector(side, sign * (outer - 0.4));
+        // Never a pier standing in the stretch passing underneath (the deck spans it).
+        if (inLowerStretch(foot, i, deckTop)) continue;
         const groundY = terrain.groundAt(foot.x, foot.z);
         const h = Math.max(0.5, deckTop - 1.2 - groundY + 0.5);
         stone.push(piece(place(new BoxGeometry(2.2, h, 2.6), new Vector3(foot.x, groundY - 0.5 + h / 2, foot.z)), '#8a8276'));

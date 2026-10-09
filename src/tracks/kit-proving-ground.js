@@ -17,6 +17,7 @@ module.exports = track({
   surface: 'snow',
   biome: 'alpine',
   lighting: 'day',
+  signature: 'Dragon',
   variants: ['sunset', 'midnight-sun', 'night-northern-lights', 'fog', 'snow', 'rain'],
   start: { landmark: 'mountain-hut' },
   finish: { landmark: 'church' },
@@ -26,7 +27,9 @@ module.exports = track({
     { name: 'Gate run', shape: plunge(50, { grade: 0.3 }), obstacles: [slalom({ from: 0.2, to: 0.9 })] },
     { name: 'Mogul field', shape: straight(45, { grade: 0.2 }), features: [moguls({ from: 0.15, to: 0.85, count: 4 })], billboards: 1, figures: ['skier', 'snowboarder', 'skier'] },
     {
-      name: 'Rock splitter', shape: splitter({ side: 'left' }), around: 'big-rock',
+      // Balanced by the track report (3 x 1,000 races): the inside channel's ice made rougher and the
+      // outside's glassier, so neither is faster: 66% of the marbles go inside and win 65% of races.
+      name: 'Rock splitter', shape: splitter({ side: 'left', balance: { left: { drag: 2.5, scrub: 2.5 }, right: { drag: 0.3, scrub: 0.5 } } }), around: 'big-rock',
       features: [boost({ at: 0.15 }), brake({ at: 0.3 })],
     },
     {
@@ -50,8 +53,8 @@ module.exports = track({
     { name: 'Dragon', shape: straight(40, { grade: 0.26 }), tunnel: 'dragon' },
     {
       name: 'Final plunge', shape: plunge(70),
+      // (Its bump 32 m after the camel threw marbles 1.5 m in the track report: gone, and the recipe now asks for 40 m.)
       obstacles: [block({ costume: 'camel', at: 0.4, size: 'large', line: -0.1 })],
-      features: [bump({ at: 0.85 })],
       billboards: 1, billboardFrame: 'led',
     },
   ],
