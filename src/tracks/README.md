@@ -51,6 +51,7 @@ Then add it to `index.js` in this folder.
 | `spiral({ side, radius, turns })` | Flowing spiral (radius 40 m or more) |
 | `hairpin({ side })` | The one sharp bend; the section before it must be a straight of 35 m or more |
 | `splitter({ side, degrees, balance })` | Field divides and rejoins (`degrees: 0` on a straight) |
+| `waterfall(length, { grade, curtain })` | A waterfall plunge; its lip eases in by itself (0.03 every 8 m); needs a 30 m straight before it; can open the track; `curtain: true` adds a see-through sheet of water to race through |
 | `runIn()` | The run-in to the finish (added automatically) |
 
 ## Obstacles
@@ -70,6 +71,34 @@ in `client/src/three/costumes/index.js`. A test fails if a track wears a
 costume the library doesn't have, or one made for another kind of obstacle.
 To look at them: `node scripts/dump-kit-track.js costume-gallery`, then
 `npm run dev` in `client` and open `/dev/kit-view.html?track=costume-gallery`.
+
+## Features
+
+| Feature | What it is |
+| --- | --- |
+| `boost({ at })` | A boost pad across the whole floor |
+| `brake({ at, length, drag })` | A short braking zone (one is added before the sharp bend automatically) |
+| `bump({ at })` | A low speed bump: the field hops, about 1 m at most |
+| `moguls({ from, to, count })` | A row of low bumps: on a straight, 30 m after any bend, 5 m apart or more, 8 at most |
+| `steps({ from, to, count, drag })` | Small regular bumps over a slowing surface (the Selarón Steps); same rules as moguls |
+
+Nothing bumpy within 20 m after a block: marbles flung off it land on the bumps and bounce high.
+
+## Tunnels, caves and bridges
+
+A section can be a tunnel, `tunnel: 'mine' | 'rock' | 'ice-cave' | 'roots' | 'dragon'`
+(the dragon: in at the tail, out of the mouth), or a bridge, `bridge: 'wood' |
+'stone' | 'ice'` (the channel keeps its width; an ice bridge only looks narrow).
+Not at the start or the finish, and not over a splitter. Drawing only: they
+race exactly like the open channel. A tunnel's roof faces inward, so the
+follow camera above or behind it is never blocked; a test checks it frame by
+frame through whole races.
+
+## Slopes
+
+No sudden steepening: a single step of more than 0.13 throws marbles into the
+air at speed, and two bigger steps need 30 m between them. Ease a steeper drop
+in, or make it a `waterfall`, whose lip eases in by itself.
 
 ## Lines and sides
 

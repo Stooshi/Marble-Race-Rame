@@ -102,6 +102,22 @@ function splitter({ side = 'left', radius = 90, degrees = 120, grade = 0.12, app
   };
 }
 
+/**
+ * A waterfall plunge: a steep straight down a waterfall chute, with water
+ * falling alongside (and, with `curtain`, a see-through sheet of water the
+ * marbles race through). Its lip eases in automatically, the slope steepening
+ * by LIP_STEP every LIP_LENGTH metres, so marbles pour over the edge instead of
+ * flying off it. It can open the track (straight after the gate).
+ */
+function waterfall(length, { grade = 0.6, curtain = false } = {}) {
+  return { shape: 'waterfall', lip: true, curtain, parts: [{ kind: 'straight', length, grade }] };
+}
+// Measured: 0.12 steps every 8 m threw marbles 3.6 m up, 0.06 steps 1.3-2 m at 41 m/s.
+// A marble stays on the ice while the slope steepens by less than about g / v² per metre:
+// 0.03 every 8 m holds it there up to about 50 m/s.
+const LIP_STEP = 0.03;
+const LIP_LENGTH = 8;
+
 /** The run-in to the finish line. Added automatically if a track doesn't end with one. */
 function runIn() {
   return { shape: 'runIn', parts: [{ kind: 'straight', length: 30, grade: 0.08 }] };
@@ -173,14 +189,29 @@ function boost({ at = 0.3, l = 0, length = 8, halfWidth = 3.6, kick } = {}) {
   return { feature: 'boost', at, l, length, halfWidth, ...(kick !== undefined && { kick }) };
 }
 
+/** Moguls: a row of low bumps the field hops over one after another (the Swiss Wall, sastrugi, rapids). */
+function moguls({ from = 0.2, to = 0.85, count = 5 } = {}) {
+  return { feature: 'moguls', from, to, count, at: from };
+}
+
+/**
+ * Steps: small regular bumps over a rough stretch that slows the field
+ * (the Selarón Steps); follow them with a plunge to pick the speed back up.
+ */
+function steps({ from = 0.1, to = 0.8, count = 6, drag = 0.015 } = {}) {
+  return { feature: 'steps', from, to, count, drag, at: from };
+}
+
 /** A short, sharp braking zone (rough surface): the field bunches up, then fans out again (Table Mountain Run). */
 function brake({ at = 0.7, length = 15, drag = 0.02 } = {}) {
   return { feature: 'brake', at, length, drag };
 }
 
 module.exports = {
-  SHARP_RADIUS, EASE, START_RAMP,
-  plunge, straight, climb, sBends, sweep, spiral, hairpin, splitter, runIn,
+  SHARP_RADIUS, EASE, START_RAMP, LIP_STEP, LIP_LENGTH,
+  plunge, straight, climb, sBends, sweep, spiral, hairpin, splitter, waterfall, runIn,
   block, pileUp, curtain, swipe, parked, slalom, peg,
-  bump, boost, brake,
+  bump, boost, brake, moguls, steps,
+  TUNNELS: ['mine', 'ice-cave', 'dragon', 'rock', 'roots'],
+  BRIDGES: ['ice', 'stone', 'wood'],
 };

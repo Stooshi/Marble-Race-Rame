@@ -53,8 +53,17 @@ function track(spec) {
       problems.push(`${where(sec.name)}: needs a shape (plunge, straight, climb, sBends, sweep, spiral, hairpin, splitter, runIn).`);
       return;
     }
-    sec.shape.parts.forEach((p, k) => {
-      generated.push({ ...p, name: sec.shape.parts.length > 1 ? `${sec.name} · ${k + 1}` : sec.name });
+    // A waterfall's lip: the slope steepens a step at a time from the one before it.
+    const lip = [];
+    if (sec.shape.lip) {
+      const fall = sec.shape.parts[0].grade;
+      for (let g = generated[generated.length - 1].grade + parts.LIP_STEP; g < fall - 1e-9; g += parts.LIP_STEP) {
+        lip.push({ kind: 'straight', length: parts.LIP_LENGTH, grade: Math.round(g * 100) / 100 });
+      }
+    }
+    const all = [...lip, ...sec.shape.parts];
+    all.forEach((p, k) => {
+      generated.push({ ...p, name: all.length > 1 ? `${sec.name} · ${k + 1}` : sec.name });
       owner.push(i);
     });
   });
@@ -143,11 +152,21 @@ function track(spec) {
     }
     for (const f of sec.features || []) {
       const at = along(i, f.at);
+      if (f.feature === 'moguls' || f.feature === 'steps') {
+        // A row of low bumps, evenly along the stretch (steps: over a rough, slowing surface).
+        for (let k = 0; k < f.count; k += 1) {
+          const share = f.count > 1 ? f.from + ((f.to - f.from) * k) / (f.count - 1) : f.from;
+          features.push({ type: 'bump', at: along(i, share) });
+        }
+        if (f.feature === 'steps') features.push({ type: 'cobbles', at, length: Math.round((f.to - f.from) * metres(i) * 10) / 10, drag: f.drag, look: 'steps' });
+        placed.push({ section: i, kind: f.feature, at, count: f.count, spacing: ((f.to - f.from) * metres(i)) / Math.max(1, f.count - 1) });
+        continue;
+      }
       if (f.feature === 'bump') features.push({ type: 'bump', at });
       else if (f.feature === 'boost') features.push({ type: 'boost', at, l: f.l, length: f.length, halfWidth: f.halfWidth, ...(f.kick !== undefined && { kick: f.kick }) });
       else if (f.feature === 'brake') features.push({ type: 'cobbles', at, length: f.length, drag: f.drag });
       else {
-        problems.push(`${where(sec.name)}: features must come from the kit (bump, boost, brake).`);
+        problems.push(`${where(sec.name)}: features must come from the kit (bump, boost, brake, moguls, steps).`);
         continue;
       }
       placed.push({ section: i, kind: f.feature, at });
@@ -187,6 +206,9 @@ function track(spec) {
       ...(sec.overhead && { overhead: sec.overhead }),
       ...(sec.billboards && { billboards: sec.billboards }),
       ...(sec.around && { around: sec.around }),
+      ...(sec.tunnel && { tunnel: sec.tunnel }),
+      ...(sec.bridge && { bridge: sec.bridge }),
+      ...(sec.shape?.shape === 'waterfall' && { waterfall: { curtain: Boolean(sec.shape.curtain) } }),
     })),
   };
 

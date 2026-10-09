@@ -19,6 +19,7 @@ import { DEFAULT_THEME, themeFor } from './themes';
 import { gatePlaces, StartGate } from './startGate';
 import { countdownPose, handover, startLineShot } from './startCamera';
 import { buildTrackFeatures } from './trackFeatures';
+import { buildStructures } from './structures';
 import { WinnerGlow } from './winnerGlow';
 import { WINNER_MS } from '../utils/finishShow';
 
@@ -197,6 +198,9 @@ export class TrackScene {
     // Boost pads, speed bumps and obstacles (ice channels with physics.features).
     this.features = this.channel ? buildTrackFeatures(this.centerline, this.channel, track?.physics?.features, { lite: this.lite }) : null;
     if (this.features) this.trackGroup.add(this.features.group);
+    // Tunnels, bridges and waterfalls (tracks built with the track kit).
+    this.structures = this.channel ? buildStructures(this.centerline, this.channel, track?.physics?.kit, { lite: this.lite }) : null;
+    if (this.structures) this.trackGroup.add(this.structures.group);
     // Scenery a moment later, so the track shows straight away even on slow phones.
     const token = (this.buildToken = (this.buildToken || 0) + 1);
     if (theme.scenery && this.sceneryOn) {
@@ -460,6 +464,7 @@ export class TrackScene {
     this.marbles.update(this.centerline, frame);
     // The track's features: the bear's swipe, puffs where marbles hit obstacles, boost streaks.
     this.features?.update(frame.t, { frame, positions: this.marbles.positions, contacts: this.marbles.contacts });
+    this.structures?.update(frame.t);
     const index = this.followedIndex(frame, follow, this.main);
     this.celebrate(frame, index);
     const at = this.marbles.positionOf(index);
@@ -981,6 +986,7 @@ export class TrackScene {
   clearTrack() {
     this.scenery = null;
     this.features = null; // (its meshes go with the track group below)
+    this.structures = null; // (so do the tunnels, bridges and waterfalls)
     for (const child of [...this.trackGroup.children]) {
       child.traverse((o) => {
         if (o.geometry) o.geometry.dispose();

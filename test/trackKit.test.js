@@ -15,7 +15,7 @@ const { houseField } = require('../scripts/race-fingerprints');
 
 const {
   track, plunge, straight, climb, sBends, sweep, spiral, hairpin, splitter,
-  block, pileUp, curtain, swipe, parked, slalom, peg, bump, boost,
+  block, pileUp, curtain, swipe, parked, slalom, peg, bump, boost, moguls, steps, waterfall,
 } = kit;
 
 const proving = physicsTrack('kit-proving-ground');
@@ -31,7 +31,7 @@ const base = () => ({
     { name: 'Sweep', shape: sweep({ side: 'right' }), billboards: 2 },
     { name: 'Run to the hairpin', shape: straight(45, { grade: 0.2 }), billboards: 2 },
     { name: 'Hairpin', shape: hairpin({ side: 'left' }) },
-    { name: 'Final plunge', shape: plunge(60) },
+    { name: 'Final plunge', shape: plunge(60, { grade: 0.28 }) },
   ],
 });
 const refused = (spec, words) => assert.throws(() => track(spec), (err) => {
@@ -318,4 +318,105 @@ test('hops stay low on Kit Proving Ground: about 1 m at most, no flying', () => 
     const sim = simulatePhysicsRace({ seed, track: proving, entries: houseField(seed) });
     assert.ok(sim.stats.highestAirMetres <= 1.2, `race ${k + 1}: highest hop ${sim.stats.highestAirMetres} m`);
   }
+});
+
+// ── Step 3: waterfalls, moguls, steps, tunnels, bridges ───────────────────
+
+test('refused: a sudden steepening, which throws marbles into the air at speed', () => {
+  const s = base();
+  s.sections[5].shape = plunge(60, { grade: 0.34 });
+  refused(s, /"Final plunge": steepens too suddenly \(from a grade of 0.16 to 0.34\)/);
+});
+
+test('refused: steepening twice within 30 m', () => {
+  const s = base();
+  s.sections.splice(5, 0, { name: 'Short drop', shape: plunge(16, { grade: 0.27 }) });
+  s.sections[6].shape = plunge(60, { grade: 0.38 });
+  refused(s, /"Final plunge": steepens again only 16 m after the last time/);
+});
+
+test('a waterfall\'s lip eases in by itself, a step at a time, and a waterfall can open the track', () => {
+  const after = base();
+  after.sections.splice(3, 0, { name: 'Falls', shape: waterfall(40, { grade: 0.6 }) });
+  refused(after, /"Falls": a waterfall needs a straight of at least 30 m before it/);
+  const s = base();
+  s.sections.splice(3, 0, { name: 'Pool', shape: kit.straight(30, { grade: 0.12 }) }, { name: 'Falls', shape: waterfall(40, { grade: 0.6, curtain: true }) });
+  const t = track(s);
+  const falls = t.sections.filter((x) => x.name.startsWith('Falls'));
+  assert.ok(falls.length >= 4, 'lip steps before the fall');
+  const meta = t.physics.kit.sections.find((x) => x.name === 'Falls');
+  assert.deepEqual(meta.waterfall, { curtain: true });
+  const open = base();
+  open.sections[0] = { name: 'First falls', shape: waterfall(80, { grade: 0.8 }) };
+  assert.doesNotThrow(() => track(open));
+});
+
+test('moguls and steps: rows of low bumps, steps over a rough, slowing stretch', () => {
+  const s = base();
+  s.sections.splice(3, 0, { name: 'Mogul straight', shape: kit.straight(70, { grade: 0.18 }), features: [moguls({ from: 0.6, to: 0.95, count: 4 })] });
+  s.sections[6].features = [steps({ from: 0.55, to: 0.95, count: 4 })];
+  const t = track(s);
+  const field = t.physics.kit.sections.find((x) => x.name === 'Mogul straight');
+  const fin = t.physics.kit.sections.find((x) => x.name === 'Final plunge');
+  assert.equal(t.physics.features.filter((f) => f.type === 'bump' && f.at > field.from && f.at < field.to).length, 4);
+  assert.equal(t.physics.features.filter((f) => f.type === 'bump' && f.at > fin.from && f.at < fin.to).length, 4);
+  assert.ok(t.physics.features.some((f) => f.type === 'cobbles' && f.look === 'steps'));
+});
+
+test('refused: moguls on a bend, or too soon after one', () => {
+  const s = base();
+  s.sections[1].features = [moguls({ count: 4 })];
+  refused(s, /"Bends": moguls on a bend/);
+  const soon = base();
+  soon.sections[3].features = [steps({ from: 0.1, to: 0.9, count: 5 })];
+  refused(soon, /"Run to the hairpin": steps only \d+ m after a bend/);
+});
+
+test('refused: a bump just after a block', () => {
+  const s = base();
+  s.sections[5].obstacles = [block({ costume: 'camel', at: 0.5 })];
+  s.sections[5].features = [bump({ at: 0.6 })];
+  refused(s, /a bump only \d+ m after a block/);
+});
+
+test('refused: moguls too close together, or too many in a row', () => {
+  const s = base();
+  s.sections[5].features = [moguls({ from: 0.6, to: 0.8, count: 4 })];
+  refused(s, /moguls .* m apart; at least 5 m/);
+  const m = base();
+  m.sections[5].features = [moguls({ from: 0.5, to: 1, count: 9 })];
+  refused(m, /9 moguls in a row; at most 8/);
+});
+
+test('tunnels and bridges ride along for the 3D view, and are refused where they can\'t go', () => {
+  const s = base();
+  s.sections[1].tunnel = 'dragon';
+  s.sections[2].bridge = 'ice';
+  const t = track(s);
+  assert.equal(t.physics.kit.sections[1].tunnel, 'dragon');
+  assert.equal(t.physics.kit.sections[2].bridge, 'ice');
+  const bad = base();
+  bad.sections[1].tunnel = 'castle';
+  refused(bad, /unknown tunnel "castle"/);
+  const start = base();
+  start.sections[0].tunnel = 'mine';
+  refused(start, /no tunnel at the start or the finish/);
+  const split = base();
+  split.sections.splice(2, 0, { name: 'Split', shape: kit.splitter({ side: 'left' }), tunnel: 'rock' });
+  refused(split, /no tunnel over a splitter/);
+});
+
+test('hops stay about 1 m over moguls, steps and waterfalls on Kit Proving Ground', () => {
+  const where = {};
+  for (let k = 0; k < 6; k += 1) {
+    const seed = 91_000 + k * 7919;
+    const sim = simulatePhysicsRace({ seed, track: proving, entries: houseField(seed) });
+    for (const f of sim.frames) {
+      f.h.forEach((h, i) => {
+        const sec = proving.physics.kit.sections.find((x) => f.p[i] >= x.from && f.p[i] < x.to);
+        if (sec) where[sec.name] = Math.max(where[sec.name] ?? 0, h);
+      });
+    }
+  }
+  for (const [name, h] of Object.entries(where)) assert.ok(h <= 1.2, `${name}: hops ${h.toFixed(2)} m`);
 });

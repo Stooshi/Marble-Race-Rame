@@ -42,6 +42,7 @@ window.kitView = {
     scene.camera.lookAt(look);
     scene.camera.updateProjectionMatrix();
     scene.features?.update(t);
+    scene.structures?.update(t);
     scene.renderer.info.reset();
     scene.renderer.render(scene.scene, scene.camera);
     return { calls: scene.renderer.info.render.calls, triangles: scene.renderer.info.render.triangles };
