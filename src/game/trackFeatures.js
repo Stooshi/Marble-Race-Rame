@@ -43,6 +43,13 @@
  */
 
 const SOLID_TYPES = ['ice_block', 'snowman', 'icicles', 'polar_bear', 'cable_car', 'sea_lion', 'planter', 'hydrant', 'news_box', 'trash_can', 'bus'];
+// Solids added with the track kit. Kept apart so a race's stats only list them
+// on tracks that have them: today's tracks race and record exactly as before.
+//   slalom_gate: { type: 'slalom_gate', at, l, radius?, height? } a thin pole marbles
+//           glance off (a quarter of the usual cost per hit): ski gates, and
+//           small round pieces such as Go stones (with a larger radius).
+const KIT_SOLID_TYPES = ['slalom_gate'];
+const ALL_SOLID_TYPES = [...SOLID_TYPES, ...KIT_SOLID_TYPES];
 const BUS_STEP = 1.2; // metres between the round sections a parked bus is made of, along its length
 const SWIPERS = ['polar_bear', 'sea_lion']; // reach in from the rim on bearPaw's timetable
 
@@ -114,12 +121,12 @@ function busParts(length) {
 /** The track's features in metres along the track (`total` metres long), sorted along it. */
 function normaliseFeatures(features, total) {
   return (Array.isArray(features) ? features : [])
-    .filter((f) => f && Number.isFinite(f.at) && (f.type === 'boost' || f.type === 'bump' || f.type === 'cobbles' || SOLID_TYPES.includes(f.type)))
+    .filter((f) => f && Number.isFinite(f.at) && (f.type === 'boost' || f.type === 'bump' || f.type === 'cobbles' || ALL_SOLID_TYPES.includes(f.type)))
     .map((f, id) => ({ ...f, id, s: f.at * total, l: Number(f.l) || 0 }))
     .sort((a, b) => a.s - b.s);
 }
 
 module.exports = {
-  SOLID_TYPES, SWIPERS, BEAR_PERIOD, BEAR_SWIPE, CABLE_PERIOD, CABLE_CROSS, FLOP_PERIOD, FLOP_IN, FLOP_STAY, FLOP_OUT,
+  SOLID_TYPES, KIT_SOLID_TYPES, ALL_SOLID_TYPES, SWIPERS, BEAR_PERIOD, BEAR_SWIPE, CABLE_PERIOD, CABLE_CROSS, FLOP_PERIOD, FLOP_IN, FLOP_STAY, FLOP_OUT,
   bearPaw, bearPawSpeed, busParts, cableCar, normaliseFeatures, seaLionFlop, seaLionFlopSpeed,
 };

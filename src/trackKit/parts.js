@@ -77,20 +77,28 @@ function hairpin({ side, radius = 20, degrees = 180, grade = 0.16 } = {}) {
  * straight in, the bend (or a straight, with degrees 0) where the channels run
  * apart, and the straight where they merge. The wedge stands 62% of the way
  * along the straight in; the channels rejoin halfway along the merge, as on
- * Bobsleigh Run and Table Mountain Run. `balance` overrides the channel
- * settings (tipOffset, insideScrub, outsideDrag) once fairness batches say so.
+ * Bobsleigh Run and Table Mountain Run. `balance` overrides the settings
+ * (tipOffset, left: { drag, scrub }, right: { drag, scrub }) once fairness
+ * batches say so.
  */
 function splitter({ side = 'left', radius = 90, degrees = 120, grade = 0.12, approach = 90, merge = 45, balance = {} } = {}) {
   const middle = degrees ? { kind: turn(side), radius, degrees, grade, ease: EASE } : { kind: 'straight', length: 80, grade };
-  // Proven starting settings: Table Mountain Run's left-hand splitter, and its right-hand one.
+  // Proven starting settings: Table Mountain Run's left-hand splitter, and its
+  // right-hand one, with each channel's ice set on its own (`left`, `right`: drag
+  // slows a marble along the channel, scrub costs it speed in the bend), so a
+  // mirrored track simply swaps them. They race exactly as Table Mountain Run's.
   const proven = side === 'right'
-    ? { radius: 2.5, apart: 6, tipOffset: 2.2, insideScrub: 0.3, outsideDrag: 1.4 }
-    : { radius: 2.5, apart: 6, tipOffset: -0.8, insideScrub: 1, outsideDrag: 0.6 };
+    ? { radius: 2.5, apart: 6, tipOffset: 2.2, left: { drag: 1, scrub: 0.3 }, right: { drag: 1.4, scrub: 1 } }
+    : { radius: 2.5, apart: 6, tipOffset: -0.8, left: { drag: 1, scrub: 1 }, right: { drag: 0.6, scrub: 1 } };
   return {
     shape: 'splitter',
     side: degrees ? side : null,
     parts: [{ kind: 'straight', length: approach, grade: 0.13 }, middle, { kind: 'straight', length: merge, grade }],
-    fork: { ...proven, ...balance },
+    fork: {
+      ...proven, ...balance,
+      left: { ...proven.left, ...balance.left },
+      right: { ...proven.right, ...balance.right },
+    },
   };
 }
 
@@ -130,9 +138,27 @@ function swipe({ costume, at = 0.5, side = 'high', ...tune } = {}) {
   return obstacle('swipe', { costume, at, side, tune });
 }
 
-/** Parked along a wall, `length` metres down the track; marbles glance off its flank (San Francisco's bus). */
+/**
+ * Parked along a wall, `length` metres down the track, on a gentle section:
+ * marbles are knocked aside round its open side (Table Mountain Run's elephant
+ * and zebras), one hit per marble however much of its flank they scrape.
+ */
 function parked({ costume, at = 0.5, side, length = 10, ...tune } = {}) {
   return obstacle('parked', { costume, at, side, length, tune });
+}
+
+/**
+ * Slalom gates: thin poles the pack glances off (a quarter of the usual cost per
+ * hit, never a stop), `count` of them from `from` to `to` along the section,
+ * alternating left and right of the middle, as on a ski piste.
+ */
+function slalom({ costume = 'slalom-gate', from = 0.35, to = 0.9, count = 4, offset = 0.3, first = 'left', ...tune } = {}) {
+  return obstacle('slalom', { costume, from, to, count, offset, first, at: from, tune });
+}
+
+/** A small round piece in the pack's line that marbles glance off (a slalom gate's physics, bigger): Go stones, Xiangqi pieces. */
+function peg({ costume, at = 0.5, line = 'center', radius = 0.4, ...tune } = {}) {
+  return obstacle('peg', { costume, at, line, radius, tune });
 }
 
 // ── Features ────────────────────────────────────────────────────────────────
@@ -155,6 +181,6 @@ function brake({ at = 0.7, length = 15, drag = 0.02 } = {}) {
 module.exports = {
   SHARP_RADIUS, EASE, START_RAMP,
   plunge, straight, climb, sBends, sweep, spiral, hairpin, splitter, runIn,
-  block, pileUp, curtain, swipe, parked,
+  block, pileUp, curtain, swipe, parked, slalom, peg,
   bump, boost, brake,
 };

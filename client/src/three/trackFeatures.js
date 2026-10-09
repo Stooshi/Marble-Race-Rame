@@ -14,6 +14,8 @@ import {
 } from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { channelLipAt, placeOnChannel } from './iceChannel';
+import { ANIMALS } from './costumes/animals';
+import { COSTUMES, COSTUME_COLORS } from './costumes';
 
 // The polar bear's timetable: the same as the physics' (src/game/trackFeatures.js; a test checks they agree).
 const BEAR_PERIOD = 2.0;
@@ -168,113 +170,6 @@ function seaLionShape(head = 1, detail = 1) {
   };
 }
 
-/** A matrix placing a part at local (x, y, z) in a frame (origin, turned by q), scaled (sx, sy, sz). */
-function local(origin, q, x, y, z, sx = 1, sy = 1, sz = 1) {
-  return new Matrix4().compose(origin.clone().add(new Vector3(x, y, z).applyQuaternion(q)), q, new Vector3(sx, sy, sz));
-}
-
-/**
- * Table Mountain Run's animals, standing in for Bobsleigh Run's obstacles
- * (physics.features with a `look`): each races exactly like the obstacle it
- * stands in for. They stand in place; only small, natural movements (a head
- * turning, a tail swishing), done in update(). Each returns the moving parts
- * it added to the group.
- */
-const ANIMALS = {
-  // A baboon sitting on the track, looking about (the ice block's footprint).
-  baboon(add, mat, group, point, q) {
-    add('baboon', new IcosahedronGeometry(0.55, 1), local(point, q, 0, 0.55, 0, 1, 1.05, 0.9));        // body, sitting up
-    add('baboon', new IcosahedronGeometry(0.35, 1), local(point, q, 0.3, 0.2, 0.35, 0.9, 0.6, 1.2));    // haunches
-    add('baboon', new IcosahedronGeometry(0.35, 1), local(point, q, -0.3, 0.2, 0.35, 0.9, 0.6, 1.2));
-    add('baboon', new CylinderGeometry(0.07, 0.05, 1.1, 6), local(point, q, 0, 0.45, -0.6, 1, 1, 1).multiply(new Matrix4().makeRotationX(-1.1))); // tail
-    const head = new Group();
-    head.position.copy(point.clone().add(new Vector3(0, 1.25, 0.15).applyQuaternion(q)));
-    head.quaternion.copy(q);
-    head.add(new Mesh(new IcosahedronGeometry(0.3, 1), mat('baboon')));
-    const muzzle = new Mesh(new IcosahedronGeometry(0.17, 1), mat('baboonFace'));
-    muzzle.position.set(0, -0.06, 0.28);
-    muzzle.scale.set(1, 0.8, 1.4);
-    head.add(muzzle);
-    group.add(head);
-    return [{ part: head, base: q.clone(), axis: new Vector3(0, 1, 0), swing: 0.7, period: 3.7 }];
-  },
-  // A zebra standing side-on across the high line, swishing its tail.
-  zebra(add, mat, group, point, q) {
-    const W = 'zebraW';
-    const B = 'zebraB';
-    add(W, new BoxGeometry(0.55, 0.6, 1.6), local(point, q, 0, 1.1, 0));
-    for (const z of [-0.55, -0.15, 0.25, 0.6]) add(B, new BoxGeometry(0.57, 0.62, 0.12), local(point, q, 0, 1.1, z)); // stripes
-    for (const [x, z] of [[-0.18, -0.6], [0.18, -0.6], [-0.18, 0.6], [0.18, 0.6]]) add(W, new BoxGeometry(0.13, 0.85, 0.13), local(point, q, x, 0.42, z));
-    add(W, new BoxGeometry(0.25, 0.75, 0.3), local(point, q, 0, 1.55, 0.85).multiply(new Matrix4().makeRotationX(0.5))); // neck
-    add(B, new BoxGeometry(0.06, 0.6, 0.18), local(point, q, 0, 1.68, 0.78).multiply(new Matrix4().makeRotationX(0.5)));   // mane
-    const head = new Group();
-    head.position.copy(point.clone().add(new Vector3(0, 1.88, 1.05).applyQuaternion(q)));
-    head.quaternion.copy(q);
-    const skull = new Mesh(new BoxGeometry(0.24, 0.26, 0.6), mat(W));
-    skull.position.set(0, 0, 0.2);
-    skull.rotation.x = 0.6;
-    head.add(skull);
-    const nose = new Mesh(new BoxGeometry(0.2, 0.18, 0.18), mat(B));
-    nose.position.set(0, -0.2, 0.42);
-    head.add(nose);
-    group.add(head);
-    const tail = new Group();
-    tail.position.copy(point.clone().add(new Vector3(0, 1.3, -0.82).applyQuaternion(q)));
-    tail.quaternion.copy(q);
-    const hair = new Mesh(new CylinderGeometry(0.04, 0.06, 0.7, 5), mat(B));
-    hair.position.set(0, -0.35, 0);
-    tail.add(hair);
-    group.add(tail);
-    return [
-      { part: tail, base: q.clone(), axis: new Vector3(0, 0, 1), swing: 0.45, period: 1.3 },
-      { part: head, base: q.clone(), axis: new Vector3(1, 0, 0), swing: 0.18, period: 4.1 },
-    ];
-  },
-  // A giraffe standing in the pack's line, turning its head slowly (the snowman's footprint: its legs).
-  giraffe(add, mat, group, point, q) {
-    const G = 'giraffe';
-    const S = 'giraffeSpot';
-    for (const [x, z] of [[-0.35, -0.5], [0.35, -0.5], [-0.35, 0.5], [0.35, 0.5]]) add(G, new CylinderGeometry(0.1, 0.12, 2.2, 6), local(point, q, x, 1.1, z));
-    add(G, new IcosahedronGeometry(0.7, 1), local(point, q, 0, 2.5, 0, 0.75, 0.75, 1.45)); // body
-    for (const [x, y, z] of [[0.5, 2.6, 0.3], [-0.5, 2.4, -0.4], [0.45, 2.3, -0.6], [-0.48, 2.7, 0.5]]) add(S, new IcosahedronGeometry(0.16, 0), local(point, q, x, y, z, 1, 1, 0.5));
-    add(G, new CylinderGeometry(0.14, 0.22, 2.2, 6), local(point, q, 0, 3.6, 0.75).multiply(new Matrix4().makeRotationX(0.35))); // the long neck
-    const head = new Group();
-    head.position.copy(point.clone().add(new Vector3(0, 4.7, 1.15).applyQuaternion(q)));
-    head.quaternion.copy(q);
-    const skull = new Mesh(new BoxGeometry(0.28, 0.32, 0.65), mat(G));
-    skull.position.set(0, 0, 0.18);
-    head.add(skull);
-    for (const x of [-0.08, 0.08]) {
-      const horn = new Mesh(new CylinderGeometry(0.035, 0.035, 0.28, 5), mat(S));
-      horn.position.set(x, 0.28, 0);
-      head.add(horn);
-    }
-    group.add(head);
-    return [{ part: head, base: q.clone(), axis: new Vector3(0, 1, 0), swing: 0.5, period: 6.3 }];
-  },
-  // A penguin standing on the quay, swaying from foot to foot.
-  penguin(add, mat, group, point, q, scale = 1) {
-    const body = new Group();
-    body.position.copy(point);
-    body.quaternion.copy(q);
-    body.scale.setScalar(scale);
-    const back = new Mesh(new IcosahedronGeometry(0.3, 1), mat('penguinB'));
-    back.scale.set(1, 1.55, 0.9);
-    back.position.y = 0.45;
-    const belly = new Mesh(new IcosahedronGeometry(0.24, 1), mat('penguinW'));
-    belly.scale.set(1, 1.5, 0.6);
-    belly.position.set(0, 0.42, 0.14);
-    const head = new Mesh(new IcosahedronGeometry(0.17, 1), mat('penguinB'));
-    head.position.y = 0.95;
-    const beak = new Mesh(new ConeGeometry(0.05, 0.16, 6), mat('beak'));
-    beak.rotation.x = Math.PI / 2;
-    beak.position.set(0, 0.93, 0.18);
-    body.add(back, belly, head, beak);
-    group.add(body);
-    return [{ part: body, base: q.clone(), axis: new Vector3(0, 0, 1), swing: 0.12, period: 1.6 + scale }];
-  },
-};
-
 /**
  * Builds the features of a track on an ice channel.
  * Returns { group, update(t) } (t: ms after the start) or null if it has none.
@@ -298,9 +193,89 @@ export function buildTrackFeatures(centerline, channel, features, { lite = false
   const swipers = []; // the polar bear's and the sea lion's moving parts (and the elephant's trunk)
   const idlers = []; // the animals' small movements: { part, base, axis, swing, period, phase }
   const animalMats = {};
-  const animalMat = (key) => (animalMats[key] ??= new MeshLambertMaterial({ color: FEATURE_COLORS[key], flatShading: true }));
+  const animalMat = (key) => (animalMats[key] ??= new MeshLambertMaterial({ color: FEATURE_COLORS[key] ?? COSTUME_COLORS[key], flatShading: true }));
   const animal = (kind, point, q, ...rest) => {
     for (const idle of ANIMALS[kind](add, animalMat, group, point, q, ...rest)) idlers.push({ ...idle, phase: idlers.length * 1.7 });
+  };
+  const wear = (build, point, q, size) => {
+    for (const idle of build(add, animalMat, group, point, q, size)) idlers.push({ ...idle, phase: idlers.length * 1.7 });
+  };
+  /**
+   * A costume from the library (./costumes), stood where its obstacle is: the
+   * placement for its kind of obstacle, then its own builder. (Table Mountain
+   * Run's animals were drawn by these same lines before the library existed.)
+   */
+  const dress = (f, costume) => {
+    const zAxis = new Vector3(0, 0, 1);
+    if (costume.places === 'block' || costume.places === 'slalom') {
+      // In the pack's line, facing back up the track at the marbles coming: tilted
+      // with the wall it sits on, or standing upright (tall ones, poles).
+      const { point, normal } = surface(f.at, f.l, 0);
+      const { along } = frameAt(centerline, f.at);
+      const facing = along.clone().negate().setY(0).normalize();
+      const upright = costume.upright || costume.places === 'slalom';
+      const q = upright
+        ? new Quaternion().setFromUnitVectors(zAxis, facing)
+        : new Quaternion().setFromUnitVectors(UP, normal).multiply(new Quaternion().setFromUnitVectors(zAxis, facing));
+      wear(costume.build, point, q, { radius: f.radius ?? 0.7, height: f.height ?? 1.2, l: f.l ?? 0, at: f.at });
+    } else if (costume.places === 'curtain') {
+      // A few figures standing across the high line, where the icicles hang.
+      const { side } = frameAt(centerline, f.at);
+      const from = f.l;
+      const to = f.l2 ?? f.l;
+      for (let k = 0; k < 3; k += 1) {
+        const l = from + ((to - from) * (k + 0.5)) / 3;
+        const { point } = surface(f.at + ((k - 1) * 0.6) / channel.arc, l, 0);
+        // Standing upright on the steep wall (feet a little into it, so none hangs in the air).
+        const q = new Quaternion().setFromUnitVectors(zAxis, side.clone().multiplyScalar(k % 2 ? 1 : -1));
+        wear(costume.build, point.clone().addScaledVector(UP, -0.25), q);
+      }
+    } else if (costume.places === 'swipe') {
+      // A body just outside the rim, an arm (or trunk) reaching into the channel on the swipe's timetable.
+      const { side } = frameAt(centerline, f.at);
+      const s = f.at * channel.arc;
+      const lip = channelLipAt(channel, s) / channel.maxAngle;
+      const sign = Math.sign(f.l) || -1;
+      const rim = surface(f.at, sign * lip, 0).point;
+      const out = side.clone().multiplyScalar(sign);
+      const inward = out.clone().negate();
+      const q = new Quaternion().setFromUnitVectors(zAxis, inward);
+      const base = rim.clone().addScaledVector(out, costume.standOff).addScaledVector(UP, costume.sink);
+      costume.body(add, base, q);
+      const a = costume.arm;
+      const shoulder = base.clone().add(new Vector3(...a.shoulder).applyQuaternion(q));
+      const restL = f.l;
+      const reachL = f.reach ?? f.l;
+      const armMat = new MeshLambertMaterial({ color: FEATURE_COLORS[a.colour] ?? COSTUME_COLORS[a.colour], flatShading: true });
+      const arm = new Mesh(new CylinderGeometry(a.radii[0], a.radii[1], 1, a.segments), armMat);
+      const paw = new Mesh(new IcosahedronGeometry(a.tip, a.tipDetail), armMat);
+      const claws = new Mesh(new IcosahedronGeometry(a.end, a.endDetail), armMat);
+      group.add(arm, paw, claws);
+      const pawAt = (k) => {
+        const l = restL + (reachL - restL) * k;
+        if (Math.abs(l) <= lip) return surface(f.at, l, a.lift).point;
+        const beyond = (Math.abs(l) - lip) * across;
+        return rim.clone().addScaledVector(out, beyond).addScaledVector(UP, a.outLift);
+      };
+      swipers.push({ arm, paw, claws, shoulder, pawAt, inward, nose: a.nose });
+    } else if (costume.places === 'parked') {
+      // Along the wall, filling the parked object's footprint: its inner flank on the wall, out over the rim.
+      const s0 = f.at * channel.arc;
+      const len = f.length ?? 10;
+      const mid = f.at + len / 2 / channel.arc;
+      const { side, along } = frameAt(centerline, mid);
+      const sign = Math.sign(f.l) || -1;
+      const lip = channelLipAt(channel, s0) / channel.maxAngle;
+      const inner = surface(mid, sign * Math.min(Math.abs(f.l2 ?? f.l), lip), 0).point;
+      const rimTop = surface(mid, sign * lip, 0).point;
+      const width = 2.6;
+      const outward = side.clone().multiplyScalar(sign);
+      const flat = along.clone().setY(0).normalize();
+      const q = new Quaternion().setFromRotationMatrix(new Matrix4().makeBasis(outward, UP, flat));
+      const centre = new Vector3(inner.x, rimTop.y, inner.z).addScaledVector(outward, width / 2);
+      // `drop`: how far below the rim the footprint's inner edge is (where marbles hit it).
+      wear(costume.build, centre, q, { len, width, height: f.height ?? 3, drop: Math.max(0, rimTop.y - inner.y) });
+    }
   };
   const flopping = []; // the colony's sea lions flopping into the street
   let car = null;     // the cable car's body, rebuilt along the U as it crosses
@@ -426,31 +401,9 @@ export function buildTrackFeatures(centerline, channel, features, { lite = false
       g.setAttribute('color', new Float32BufferAttribute(col, 3));
       g.computeVertexNormals();
       add('cobbles', g, new Matrix4());
-    } else if (f.look === 'baboon') {
-      // A baboon sitting where Bobsleigh Run has an ice block, facing up the track at the marbles coming.
-      const { point, normal } = surface(f.at, f.l, 0);
-      const { along } = frameAt(centerline, f.at);
-      const facing = along.clone().negate().setY(0).normalize();
-      const q = new Quaternion().setFromUnitVectors(UP, normal).multiply(new Quaternion().setFromUnitVectors(new Vector3(0, 0, 1), facing));
-      animal('baboon', point, q);
-    } else if (f.look === 'zebras') {
-      // A few zebras standing across the high line, where Bobsleigh Run has its icicles.
-      const { side } = frameAt(centerline, f.at);
-      const from = f.l;
-      const to = f.l2 ?? f.l;
-      for (let k = 0; k < 3; k += 1) {
-        const l = from + ((to - from) * (k + 0.5)) / 3;
-        const { point } = surface(f.at + ((k - 1) * 0.6) / channel.arc, l, 0);
-        // Standing upright on the steep wall (hooves a little into it, so none hangs in the air).
-        const q = new Quaternion().setFromUnitVectors(new Vector3(0, 0, 1), side.clone().multiplyScalar(k % 2 ? 1 : -1));
-        animal('zebra', point.clone().addScaledVector(UP, -0.25), q);
-      }
-    } else if (f.look === 'giraffe') {
-      // A giraffe standing in the pack's line, where Bobsleigh Run has its snowman.
-      const { point } = surface(f.at, f.l, 0);
-      const { along } = frameAt(centerline, f.at);
-      const facing = along.clone().negate().setY(0).normalize();
-      animal('giraffe', point, new Quaternion().setFromUnitVectors(new Vector3(0, 0, 1), facing));
+    } else if (f.look && COSTUMES[f.look]) {
+      // A costume from the library, stood where its obstacle is (see ./costumes).
+      dress(f, COSTUMES[f.look]);
     } else if (f.type === 'penguins') {
       // African penguins on the quay beside the run-in (scenery only).
       const side = f.side ?? 1;
@@ -467,37 +420,6 @@ export function buildTrackFeatures(centerline, channel, features, { lite = false
         const q = new Quaternion().setFromAxisAngle(UP, Math.atan2(-left.x * side, -left.z * side) + ((k * 53) % 7 - 3) * 0.25);
         animal('penguin', point, q, 0.85 + ((k * 29) % 4) * 0.1);
       }
-    } else if (f.look === 'elephant') {
-      // An elephant standing just outside the rim, swinging its trunk into the channel (the polar bear's swipe).
-      const { side } = frameAt(centerline, f.at);
-      const s = f.at * channel.arc;
-      const lip = channelLipAt(channel, s) / channel.maxAngle;
-      const sign = Math.sign(f.l) || -1;
-      const rim = surface(f.at, sign * lip, 0).point;
-      const out = side.clone().multiplyScalar(sign);
-      const inward = out.clone().negate();
-      const q = new Quaternion().setFromUnitVectors(new Vector3(0, 0, 1), inward);
-      const base = rim.clone().addScaledVector(out, 3.2).addScaledVector(UP, -0.4);
-      add('elephant', new IcosahedronGeometry(1, 1), local(base, q, 0, 2.3, -0.6, 1.25, 1.15, 1.9));          // body
-      for (const [x, z] of [[-0.6, -1.5], [0.6, -1.5], [-0.6, 0.3], [0.6, 0.3]]) add('elephant', new CylinderGeometry(0.32, 0.36, 1.8, 7), local(base, q, x, 0.9, z)); // legs
-      add('elephant', new IcosahedronGeometry(0.8, 1), local(base, q, 0, 3.0, 1.2));                          // head
-      for (const x of [-1, 1]) add('elephant', new BoxGeometry(0.12, 1.3, 1.1), local(base, q, x * 0.95, 3.0, 0.9).multiply(new Matrix4().makeRotationY(x * 0.35))); // ears
-      for (const x of [-1, 1]) add('tusk', new ConeGeometry(0.09, 0.8, 6), local(base, q, x * 0.35, 2.4, 1.75).multiply(new Matrix4().makeRotationX(Math.PI / 2 + 0.5)));
-      const shoulder = base.clone().add(new Vector3(0, 2.6, 1.85).applyQuaternion(q));
-      const restL = f.l;
-      const reachL = f.reach ?? f.l;
-      const trunkMat = new MeshLambertMaterial({ color: FEATURE_COLORS.elephant, flatShading: true });
-      const arm = new Mesh(new CylinderGeometry(0.16, 0.3, 1, 8), trunkMat);
-      const paw = new Mesh(new IcosahedronGeometry(0.22, 1), trunkMat);
-      const claws = new Mesh(new IcosahedronGeometry(0.1, 0), trunkMat);
-      group.add(arm, paw, claws);
-      const pawAt = (k) => {
-        const l = restL + (reachL - restL) * k;
-        if (Math.abs(l) <= lip) return surface(f.at, l, 0.45).point;
-        const beyond = (Math.abs(l) - lip) * across;
-        return rim.clone().addScaledVector(out, beyond).addScaledVector(UP, 0.5);
-      };
-      swipers.push({ arm, paw, claws, shoulder, pawAt, inward, nose: 0.15 });
     } else if (f.type === 'ice_block') {
       // A chunky block of ice sitting on the wall, turned a little.
       const { point, normal } = surface(f.at, f.l, 0);
@@ -850,6 +772,8 @@ export function buildTrackFeatures(centerline, channel, features, { lite = false
         return rim.clone().addScaledVector(out, (Math.abs(l) - lip) * across).addScaledVector(UP, 0.9);
       };
       swipers.push({ arm, paw, claws, shoulder, pawAt, inward, nose: 0.45 });
+    } else if (f.type === 'slalom_gate') {
+      dress(f, COSTUMES['slalom-gate']); // a slalom gate with no costume of its own
     } else if (f.type === 'polar_bear') {
       // A polar bear sitting just outside the rim, swiping into the channel.
       const { pos, side } = frameAt(centerline, f.at);
@@ -958,6 +882,8 @@ export function buildTrackFeatures(centerline, channel, features, { lite = false
       for (const name of Object.keys(n.attributes)) if (!keep.includes(name)) n.deleteAttribute(name);
       return n;
     });
+    // Costumes' colours: one flat-shaded material each, made as they are used.
+    materials[key] ??= new MeshLambertMaterial({ color: COSTUME_COLORS[key] ?? FEATURE_COLORS[key] ?? '#ff00ff', flatShading: true });
     const mesh = new Mesh(mergeGeometries(ready), materials[key]);
     mesh.name = key;
     group.add(mesh);

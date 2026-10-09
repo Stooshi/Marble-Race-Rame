@@ -53,6 +53,24 @@ Then add it to `index.js` in this folder.
 | `splitter({ side, degrees, balance })` | Field divides and rejoins (`degrees: 0` on a straight) |
 | `runIn()` | The run-in to the finish (added automatically) |
 
+## Obstacles
+
+| Obstacle | Races as | Costumes in the library |
+| --- | --- | --- |
+| `block({ costume, at, line, size })` | Bobsleigh Run's ice block (`size: 'large'`: the snowman) | panda, camel, cafe-table, reindeer, baboon, giraffe |
+| `pileUp({ costume, at })` | Three blocks: the first pile-up of the race | any block costume |
+| `curtain({ costume, at, side })` | The icicles: knocked out round them | zebras |
+| `swipe({ costume, at, side })` | The polar bear's swipe, knocking marbles aside | elephant |
+| `parked({ costume, at, side, length })` | Knocked aside round its open side, one hit per marble; gentle sections only (grade 0.2 or less) | ore-cart, kick-sled |
+| `slalom({ from, to, count })` | Thin poles alternating either side: about a tenth of a marble's speed per hit, never a stop | slalom-gate |
+| `peg({ costume, at, line, radius })` | A slalom pole's physics, bigger | go-stone |
+
+A costume is one builder in `client/src/three/costumes/kit.js` and one entry
+in `client/src/three/costumes/index.js`. A test fails if a track wears a
+costume the library doesn't have, or one made for another kind of obstacle.
+To look at them: `node scripts/dump-kit-track.js costume-gallery`, then
+`npm run dev` in `client` and open `/dev/kit-view.html?track=costume-gallery`.
+
 ## Lines and sides
 
 `line`: `'center'`, `'left'`, `'right'`, `'high'` or a number (share of the

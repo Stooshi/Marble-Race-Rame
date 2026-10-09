@@ -2,7 +2,7 @@
 
 const { createRng } = require('./rng');
 const {
-  bearPaw, bearPawSpeed, busParts, cableCar, normaliseFeatures, seaLionFlop, seaLionFlopSpeed, SOLID_TYPES, SWIPERS, CABLE_CROSS,
+  bearPaw, bearPawSpeed, busParts, cableCar, normaliseFeatures, seaLionFlop, seaLionFlopSpeed, SOLID_TYPES, KIT_SOLID_TYPES, ALL_SOLID_TYPES, SWIPERS, CABLE_CROSS,
 } = require('./trackFeatures');
 const { subSeed } = require('./simulator');
 const { TRACK_STYLE, buildCenterline, trackProfile } = require('./trackGeometry');
@@ -364,7 +364,11 @@ function advanceChannel(m, time, ctx) {
   // The splitter's channels have their own ice: rough on the tight inside
   // (more skidding), glassy on the long outside (less drag), balanced so
   // neither is faster for an average marble.
-  const ice = m.branch > 0 ? { drag: 1, scrub: fork.insideScrub } : m.branch < 0 ? { drag: fork.outsideDrag, scrub: 1 } : { drag: 1, scrub: 1 };
+  // A splitter built with the track kit sets each channel's ice itself (`left`,
+  // `right`), so a mirrored track simply swaps them; older ones say it as the
+  // inside's scrub and the outside's drag.
+  const ice = m.branch > 0 ? (fork.left ?? { drag: 1, scrub: fork.insideScrub })
+    : m.branch < 0 ? (fork.right ?? { drag: fork.outsideDrag, scrub: 1 }) : { drag: 1, scrub: 1 };
   let a = -(m.iceDrag * ice.drag * (m.draft ?? 1) / (m.form * m.form)) * m.v * Math.abs(m.v); // draft: slipstream
   if (!m.airborne) {
     a += -G * ROLLING * slope * m.glide * m.form - G * ICE_CRR + m.push * m.form * Math.max(0, 1 - m.v / m.pushFade);
@@ -708,12 +712,15 @@ function hitSolids(m, time, ctx) {
         : x - xa < xb - x ? xa - reach : xb + reach;
       m.th += clamp(target - x, -0.3, 0.3) / R;
       m.thv = clamp(ou + Math.sign(target - x) * (o.parked ? PARKED_KNOCK : 2), -SOLID_MAX_KNOCK, SOLID_MAX_KNOCK) / R;
-      if (m.lastSolid !== o.id || time - m.lastSolidAt > 0.3) {
+      // A parked object built with the track kit (`onePiece`) costs one hit however many of
+      // its round sections a marble scrapes along; older ones count each section.
+      const hitId = o.hitId ?? o.id;
+      if (m.lastSolid !== hitId || time - m.lastSolidAt > 0.3) {
         m.v *= 1 - (o.loss ?? 0.15);
         if (stats) stats.features[o.type] += 1;
         if (events) events.push({ time, index: m.index, type: 'bounce', obstacle: o.type, news: true });
       }
-      m.lastSolid = o.id;
+      m.lastSolid = hitId;
       m.lastSolidAt = time;
       continue;
     }
@@ -924,6 +931,8 @@ function simulatePhysicsRace({ seed, track, entries, level = 3, tickRateHz = 20 
         insideScrub: f.insideScrub ?? 1,
         tipOffset: f.tipOffset ?? 0,
         outsideDrag: f.outsideDrag ?? 1,
+        ...(f.left && { left: { drag: f.left.drag ?? 1, scrub: f.left.scrub ?? 1 } }),
+        ...(f.right && { right: { drag: f.right.drag ?? 1, scrub: f.right.scrub ?? 1 } }),
         stats: { inside: { count: 0, seconds: [] }, outside: { count: 0, seconds: [] } },
       }));
       ctx.fork = ctx.forks[0];
@@ -944,7 +953,7 @@ function simulatePhysicsRace({ seed, track, entries, level = 3, tickRateHz = 20 
     ctx.boosts = features.filter((f) => f.type === 'boost').map((f) => ({ ...f, x: across(f.l), length: f.length ?? 8, halfWidth: f.halfWidth ?? 1.3 }));
     ctx.bumps = features.filter((f) => f.type === 'bump');
     ctx.cobbles = features.filter((f) => f.type === 'cobbles').map((f) => ({ ...f, length: f.length ?? 25, drag: f.drag ?? 0.01 }));
-    ctx.solids = features.filter((f) => SOLID_TYPES.includes(f.type)).map((f) => ({
+    ctx.solids = features.filter((f) => ALL_SOLID_TYPES.includes(f.type)).map((f) => ({
       ...f,
       x: across(f.l),
       xa: Math.min(across(f.l), across(f.l2 ?? f.l)), // a stretch across the channel (l to l2), or a point
@@ -959,9 +968,13 @@ function simulatePhysicsRace({ seed, track, entries, level = 3, tickRateHz = 20 
       }),
     })).flatMap((o) => (o.type === 'bus'
       // A parked bus: a row of round sections down its length, each its own solid.
-      ? busParts(o.length ?? 10).map((d, k) => ({ ...o, id: `${o.id}:${k}`, s: o.s + d }))
+      ? busParts(o.length ?? 10).map((d, k) => ({ ...o, id: `${o.id}:${k}`, s: o.s + d, ...(o.onePiece && { hitId: o.id }) }))
       : [o]));
-    stats.features = { boost: 0, bump: 0, ...Object.fromEntries(SOLID_TYPES.map((t) => [t, 0])) };
+    stats.features = {
+      boost: 0, bump: 0, ...Object.fromEntries(SOLID_TYPES.map((t) => [t, 0])),
+      // The kit's solids, listed only on tracks that have them (today's races record exactly as before).
+      ...Object.fromEntries(KIT_SOLID_TYPES.filter((t) => features.some((f) => f.type === t)).map((t) => [t, 0])),
+    };
   }
   if (pen) stats.penBumps = 0;
   const moveMarble = ctx.channel ? advanceChannel : advance;

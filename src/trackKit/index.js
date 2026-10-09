@@ -31,6 +31,9 @@ const BASE_PHYSICS = {
   collisions: true,
 };
 const RUNOUT = { length: 30, halfWidth: 3.5 };
+// Slalom gates and pegs glance marbles aside (the engine's sweep: they never
+// hold a marble up), each fresh hit costing this share of its speed.
+const SLALOM_LOSS = 0.1;
 
 // What each kit obstacle races as: the footprint and settings of a proven obstacle.
 const WALL = { left: 1, right: -1 }; // positive l is the left wall
@@ -95,7 +98,7 @@ function track(spec) {
     if (!span[i].parts.length) return;
     for (const o of sec.obstacles || []) {
       if (!o?.obstacle) {
-        problems.push(`${where(sec.name)}: obstacles must come from the kit (block, pileUp, curtain, swipe, parked).`);
+        problems.push(`${where(sec.name)}: obstacles must come from the kit (block, pileUp, curtain, swipe, parked, slalom, peg).`);
         continue;
       }
       const at = along(i, o.at);
@@ -116,7 +119,25 @@ function track(spec) {
         features.push({ type: 'polar_bear', ...look, at, l: s * 1.25, reach: s * 0.55, radius: 0.7, height: 1.5, parked: true, loss: 0.2, ...o.tune });
       } else if (o.obstacle === 'parked') {
         const s = wallOf(i, o.side ?? 'high');
-        features.push({ type: 'bus', ...look, at, l: s, l2: s * 0.68, length: o.length, radius: 0.4, height: 3, loss: 0.15, ...o.tune });
+        // Knocked aside round its open side (Table Mountain Run's elephant and zebras), one hit
+        // per marble however much of its flank it scrapes: San Francisco's bus ricochets
+        // marbles instead, and parked where the pack rides it left the field 22 s apart.
+        features.push({ type: 'bus', ...look, at, l: s, l2: s * 0.68, length: o.length, radius: 0.4, height: 3, parked: true, onePiece: true, loss: 0.15, ...o.tune });
+      } else if (o.obstacle === 'slalom') {
+        // Poles alternating either side of the middle, evenly along the stretch.
+        const sign = o.first === 'right' ? -1 : 1;
+        for (let k = 0; k < o.count; k += 1) {
+          const share = o.count > 1 ? o.from + ((o.to - o.from) * k) / (o.count - 1) : o.from;
+          const pole = along(i, share);
+          features.push({ type: 'slalom_gate', ...look, at: pole, l: sign * (k % 2 ? -1 : 1) * o.offset, radius: 0.15, height: 1.6, sweep: true, loss: SLALOM_LOSS, ...o.tune });
+          placed.push({ section: i, kind: 'slalom', at: pole, metresIn: share * metres(i) });
+        }
+        continue;
+      } else if (o.obstacle === 'peg') {
+        features.push({ type: 'slalom_gate', ...look, at, l: lineOf(i, o.line), radius: o.radius, height: 0.6, sweep: true, loss: SLALOM_LOSS, ...o.tune });
+      } else {
+        problems.push(`${where(sec.name)}: unknown obstacle ${JSON.stringify(o.obstacle)}.`);
+        continue;
       }
       placed.push({ section: i, kind: o.obstacle, at, metresIn: o.at * metres(i) });
     }

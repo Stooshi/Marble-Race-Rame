@@ -9,13 +9,13 @@ const path = require('node:path');
 const { execFileSync } = require('node:child_process');
 const kit = require('../src/trackKit');
 const { physicsTrack, PHYSICS_TRACKS } = require('../src/game/physicsTracks');
-const { SOLID_TYPES } = require('../src/game/trackFeatures');
+const { ALL_SOLID_TYPES } = require('../src/game/trackFeatures');
 const { simulatePhysicsRace } = require('../src/game/physicsSimulator');
 const { houseField } = require('../scripts/race-fingerprints');
 
 const {
   track, plunge, straight, climb, sBends, sweep, spiral, hairpin, splitter,
-  block, pileUp, curtain, swipe, parked, bump, boost,
+  block, pileUp, curtain, swipe, parked, slalom, peg, bump, boost,
 } = kit;
 
 const proving = physicsTrack('kit-proving-ground');
@@ -58,14 +58,17 @@ test('every kit track opens with Bobsleigh Run\'s starting ramp, gate, channel a
 });
 
 test('kit obstacles race as proven types, with the proven footprints; costumes are looks only', () => {
-  const proven = new Set([...SOLID_TYPES, 'boost', 'bump', 'cobbles']);
+  const proven = new Set([...ALL_SOLID_TYPES, 'boost', 'bump', 'cobbles']);
   for (const f of proving.physics.features) assert.ok(proven.has(f.type), `${f.type} is a proven type`);
   const panda = proving.physics.features.filter((f) => f.look === 'panda');
   const baboons = tm.physics.features.filter((f) => f.look === 'baboon');
   assert.deepEqual(panda.map((f) => [f.type, f.l, f.radius, f.height]), baboons.map((f) => [f.type, f.l, f.radius, f.height]));
-  const cat = proving.physics.features.find((f) => f.look === 'fortune-cat');
+  const cat = proving.physics.features.find((f) => f.look === 'elephant');
   const elephant = tm.physics.features.find((f) => f.look === 'elephant');
   for (const k of ['type', 'l', 'reach', 'radius', 'height', 'parked', 'loss']) assert.equal(cat[k], elephant[k], k);
+  const zebras = proving.physics.features.find((f) => f.look === 'zebras');
+  const tmZebras = tm.physics.features.find((f) => f.look === 'zebras');
+  for (const k of ['type', 'l', 'l2', 'radius', 'parked', 'loss']) assert.equal(zebras[k], tmZebras[k], k);
 });
 
 test('the race engine never reads the looks: a kit track races identically without them', () => {
@@ -81,12 +84,12 @@ test('the race engine never reads the looks: a kit track races identically witho
 
 test('positions are per section: an obstacle at 0.37 of the hairpin stands 37% of the way round it', () => {
   const s = proving.physics.kit.sections.find((x) => x.name === 'Hairpin');
-  const cat = proving.physics.features.find((f) => f.look === 'fortune-cat');
+  const cat = proving.physics.features.find((f) => f.look === 'elephant');
   assert.ok(Math.abs(cat.at - (s.from + 0.37 * (s.to - s.from))) < 1e-4);
 });
 
 test('the high line is the outside of the bend: a left hairpin\'s swipe stands on the right wall', () => {
-  const cat = proving.physics.features.find((f) => f.look === 'fortune-cat');
+  const cat = proving.physics.features.find((f) => f.look === 'elephant');
   assert.ok(cat.l < 0 && cat.reach < 0);
 });
 
@@ -100,7 +103,11 @@ test('the one sharp bend gets its braking zone on the straight before it, automa
 
 test('a splitter carries proven channel settings, wedge on the straight in, rejoining on the merge', () => {
   const [fork] = proving.physics.forks;
-  assert.deepEqual({ ...fork, from: 0, to: 0 }, { ...tm.physics.forks[0], from: 0, to: 0 });
+  const t0 = tm.physics.forks[0];
+  assert.deepEqual(
+    { ...fork, from: 0, to: 0 },
+    { from: 0, to: 0, radius: t0.radius, apart: t0.apart, tipOffset: t0.tipOffset, left: { drag: 1, scrub: t0.insideScrub }, right: { drag: t0.outsideDrag, scrub: 1 } },
+  );
   const s = proving.physics.kit.sections.find((x) => x.name === 'Rock splitter');
   assert.ok(fork.from > s.from && fork.to < s.to && fork.from < fork.to);
 });
@@ -222,8 +229,8 @@ test('every problem is reported at once, each naming its section', () => {
 
 test('the other kit obstacles build: block lines, curtain and parked sides', () => {
   const s = base();
-  s.sections[5].obstacles = [block({ costume: 'cow', at: 0.3, line: 'left' }), parked({ costume: 'vespa', at: 0.1, side: 'right' })];
-  s.sections[3].obstacles = [curtain({ costume: 'easel', side: 'left' }), swipe({ costume: 'falcon', side: 'right' })];
+  s.sections[5].obstacles = [block({ costume: 'cow', at: 0.3, line: 'left' })];
+  s.sections[3].obstacles = [curtain({ costume: 'easel', side: 'left' }), swipe({ costume: 'falcon', side: 'right' }), parked({ costume: 'vespa', at: 0.1, side: 'right' })];
   s.sections[1].features = [bump(), boost()];
   s.sections.splice(2, 0, { name: 'Split', shape: splitter({ side: 'right' }) });
   const t = track(s);
@@ -233,5 +240,82 @@ test('the other kit obstacles build: block lines, curtain and parked sides', () 
   assert.ok(by('vespa').l < 0);
   assert.equal(by('easel').l, 1);
   assert.ok(by('falcon').l < 0);
-  assert.deepEqual({ ...t.physics.forks[0], from: 0, to: 0 }, { ...tm.physics.forks[1], from: 0, to: 0 });
+  const t1 = tm.physics.forks[1];
+  assert.deepEqual(t.physics.forks[0].left, { drag: 1, scrub: t1.insideScrub });
+  assert.deepEqual(t.physics.forks[0].right, { drag: t1.outsideDrag, scrub: 1 });
+  assert.equal(t.physics.forks[0].tipOffset, t1.tipOffset);
+});
+
+// ── Step 2: per-channel splitters, slalom gates, parked objects, hops ─────
+
+test('a splitter with each channel\'s ice set on its own races exactly like the inside/outside form', () => {
+  const conv = JSON.parse(JSON.stringify(tm));
+  conv.physics.forks = conv.physics.forks.map(({ insideScrub, outsideDrag, ...f }) => ({ ...f, left: { drag: 1, scrub: insideScrub }, right: { drag: outsideDrag, scrub: 1 } }));
+  for (const seed of [5, 77]) {
+    const entries = houseField(seed);
+    assert.equal(JSON.stringify(simulatePhysicsRace({ seed, track: tm, entries })), JSON.stringify(simulatePhysicsRace({ seed, track: conv, entries })));
+  }
+});
+
+test('a balance setting overrides one channel\'s ice and keeps the rest proven', () => {
+  const s = base();
+  s.sections.splice(2, 0, { name: 'Split', shape: splitter({ side: 'left', balance: { tipOffset: 0.4, right: { drag: 0.9 } } }) });
+  const [fork] = track(s).physics.forks;
+  assert.equal(fork.tipOffset, 0.4);
+  assert.deepEqual(fork.right, { drag: 0.9, scrub: 1 });
+  assert.deepEqual(fork.left, { drag: 1, scrub: 1 });
+});
+
+test('slalom gates: poles alternating either side of the middle, evenly along the stretch', () => {
+  const poles = proving.physics.features.filter((f) => f.type === 'slalom_gate' && f.look === 'slalom-gate');
+  assert.equal(poles.length, 4);
+  assert.deepEqual(poles.map((p) => p.l), [0.3, -0.3, 0.3, -0.3]);
+  const gaps = poles.slice(1).map((p, k) => p.at - poles[k].at);
+  assert.ok(Math.max(...gaps) - Math.min(...gaps) < 2e-4);
+  for (const p of poles) assert.equal(p.sweep, true);
+});
+
+test('slalom gates and pegs glance marbles aside: about a tenth of their speed per hit, never a stop', () => {
+  let hits = 0;
+  const lost = [];
+  for (let k = 0; k < 6; k += 1) {
+    const seed = 60_000 + k * 7919;
+    const sim = simulatePhysicsRace({ seed, track: proving, entries: houseField(seed) });
+    hits += sim.stats.features.slalom_gate;
+    for (const ev of sim.events.filter((e) => e.obstacle === 'slalom_gate')) {
+      const i = sim.frames.findIndex((f) => f.t > ev.t);
+      if (i > 0) lost.push(1 - sim.frames[i].v[ev.i] / sim.frames[i - 1].v[ev.i]);
+    }
+  }
+  assert.ok(hits > 20, `${hits} pole hits in 6 races`);
+  lost.sort((a, b) => a - b);
+  assert.ok(lost[lost.length >> 1] < 0.12, `median ${lost[lost.length >> 1]}`);
+  assert.ok(lost.at(-1) < 0.3, `worst ${lost.at(-1)}`);
+});
+
+test('a race only lists the kit\'s new obstacles on tracks that have them', () => {
+  const seed = 9;
+  assert.ok(!('slalom_gate' in simulatePhysicsRace({ seed, track: bob, entries: houseField(seed) }).stats.features));
+  assert.ok('slalom_gate' in simulatePhysicsRace({ seed, track: proving, entries: houseField(seed) }).stats.features);
+});
+
+test('a parked object knocks marbles aside, one hit per marble however much of its flank they scrape', () => {
+  const cart = proving.physics.features.find((f) => f.look === 'ore-cart');
+  assert.equal(cart.type, 'bus');
+  assert.equal(cart.parked, true);
+  assert.equal(cart.onePiece, true);
+});
+
+test('refused: a parked object on a steep section', () => {
+  const s = base();
+  s.sections[5].obstacles = [parked({ costume: 'ore-cart', at: 0.4, side: 'left' })];
+  refused(s, /"Final plunge": a parked object needs a gentle section/);
+});
+
+test('hops stay low on Kit Proving Ground: about 1 m at most, no flying', () => {
+  for (let k = 0; k < 6; k += 1) {
+    const seed = 90_000 + k * 7919;
+    const sim = simulatePhysicsRace({ seed, track: proving, entries: houseField(seed) });
+    assert.ok(sim.stats.highestAirMetres <= 1.2, `race ${k + 1}: highest hop ${sim.stats.highestAirMetres} m`);
+  }
 });

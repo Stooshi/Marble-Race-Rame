@@ -18,7 +18,8 @@ const STEEPEST_CLIMB = -0.15;  // proven climbs: San Francisco's -0.12 (Russian 
 const LONGEST_CLIMB_M = 40;    // San Francisco's 35 m
 const BILLBOARDS = [4, 6];
 const OBSTACLE_FREE_FINISH_M = 25; // nothing in the marbles' way just before the line
-const BRAKING_ZONE_M = 35;     // the braking zone before the sharp bend needs a straight this long
+const BRAKING_ZONE_M = 35;
+const PARKED_MAX_GRADE = 0.2;     // the braking zone before the sharp bend needs a straight this long
 
 function checkRecipe({ sections, span, generated, owner, placed, total, where }) {
   const problems = [];
@@ -77,7 +78,12 @@ function checkRecipe({ sections, span, generated, owner, placed, total, where })
   const finishShare = 1 - OBSTACLE_FREE_FINISH_M / total;
   for (const p of placed) {
     if (!(p.at > 0 && p.at < 1)) problems.push(`${where(name(p.section))}: a ${p.kind} placed off the track.`);
-    const solid = ['block', 'pileUp', 'curtain', 'swipe', 'parked'].includes(p.kind);
+    const solid = ['block', 'pileUp', 'curtain', 'swipe', 'parked', 'slalom', 'peg'].includes(p.kind);
+    // Parked objects are proven only on gentle slopes (San Francisco's bus, 0.18): on a
+    // steep plunge they stop marbles nearly dead and fling them off the far wall.
+    if (p.kind === 'parked' && sections[p.section].shape.parts.some((x) => x.grade > PARKED_MAX_GRADE)) {
+      problems.push(`${where(name(p.section))}: a parked object needs a gentle section (a grade of ${PARKED_MAX_GRADE} or less); on steeper ones it stops marbles dead and flings them off the far wall.`);
+    }
     if (solid && (p.at > finishShare || sections[p.section].shape.shape === 'runIn')) {
       problems.push(`${where(name(p.section))}: a ${p.kind} within ${OBSTACLE_FREE_FINISH_M} m of the finish line; nothing may stand in the way there.`);
     }
