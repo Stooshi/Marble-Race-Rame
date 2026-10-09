@@ -30,15 +30,22 @@ const races = () => {
   return batch;
 };
 
-test('Table Mountain Run is added switched off by its data update, exactly as defined in code', () => {
-  const file = path.join(__dirname, '..', 'docs', 'data_updates', '2026-10-13-add-table-mountain-run.sql');
+test('Table Mountain Run is added switched off, then re-tuned, by its data updates: together exactly the track in code', () => {
+  const dir = path.join(__dirname, '..', 'docs', 'data_updates');
   const script = path.join(__dirname, '..', 'scripts', 'physics-track-sql.js');
-  const sql = fs.readFileSync(file, 'utf8');
-  const body = (text) => text.slice(text.indexOf('WITH added AS'));
-  const generated = execFileSync(process.execPath, [script, 'table-mountain-run', '--add-hidden', 'x'], { encoding: 'utf8' });
-  assert.equal(body(sql), body(generated), 'the data update no longer gives the track in code');
-  assert.match(sql, /physics, is_active\)/);
-  assert.match(sql, /v\.physics::jsonb, false/, 'switched off until it has been watched');
+  // Added switched off (already run live, so never edited)…
+  const add = fs.readFileSync(path.join(dir, '2026-10-13-add-table-mountain-run.sql'), 'utf8');
+  assert.match(add, /physics, is_active\)/);
+  assert.match(add, /v\.physics::jsonb, false/, 'switched off until it has been watched');
+  // …then re-tuned: the latest update sets everything as it is now in code, and never switches it on.
+  const LATEST = '2026-10-14-table-mountain-closer-racing.sql';
+  const latest = fs.readFileSync(path.join(dir, LATEST), 'utf8');
+  const body = (sql) => sql.slice(sql.indexOf('UPDATE tracks'));
+  const generated = execFileSync(process.execPath, [script, 'table-mountain-run', '--retune'], { encoding: 'utf8' });
+  assert.equal(body(latest), body(generated), 'the latest data update no longer gives the track in code');
+  assert.doesNotMatch(latest, /is_active/);
+  const later = fs.readdirSync(dir).filter((f) => f > LATEST && f.includes('table-mountain'));
+  assert.deepEqual(later, [], 'a later Table Mountain update: check it against the code here');
 });
 
 test('it is Bobsleigh Run\'s physics: the same channel, gate, start and collisions, dressed as sand', () => {
@@ -47,20 +54,21 @@ test('it is Bobsleigh Run\'s physics: the same channel, gate, start and collisio
   assert.equal(tm.difficulty, 'extreme');
 });
 
-test('its animals race exactly like the obstacles they stand in for', () => {
+test('its animals: the same footprints as Bobsleigh Run\'s obstacles; the elephant and zebras knock marbles aside', () => {
   const byLook = (look) => tm.physics.features.filter((f) => f.look === look);
-  const strip = ({ at, look, ...rest }) => rest; // same footprint, wherever it stands
-  const bobOf = (type) => bob.physics.features.filter((f) => f.type === type).map(strip);
-  // (The middle baboon sits a touch off centre, so no starting place has an edge: same size, same hits.)
-  const shape = ({ type, radius, height }) => ({ type, radius, height });
-  assert.deepEqual(byLook('baboon').map(shape), bob.physics.features.filter((f) => f.type === 'ice_block').map(shape));
-  assert.deepEqual(byLook('zebras').map(strip), bobOf('icicles'));
-  assert.deepEqual(byLook('giraffe').map(strip), bobOf('snowman'));
-  // The elephant swings its trunk on the polar bear's timetable, a little softer (the hairpin comes faster here).
-  const [elephant] = byLook('elephant');
-  assert.equal(elephant.type, 'polar_bear');
-  assert.deepEqual({ ...strip(elephant), loss: undefined }, { ...bobOf('polar_bear')[0], loss: undefined });
-  assert.ok(elephant.loss < 1);
+  const shape = ({ type, radius, height, l, l2, reach }) => ({ type, radius, height, l, l2, reach });
+  const size = ({ type, radius, height }) => ({ type, radius, height });
+  const bobOf = (type) => bob.physics.features.filter((f) => f.type === type);
+  // (The middle baboon sits a touch off centre, so no starting place has an edge.)
+  assert.deepEqual(byLook('baboon').map(size), bobOf('ice_block').map(size));
+  assert.deepEqual(byLook('giraffe').map(shape), bobOf('snowman').map(shape));
+  assert.deepEqual(byLook('zebras').map(shape), bobOf('icicles').map(shape));
+  assert.deepEqual(byLook('elephant').map(shape), bobOf('polar_bear').map(shape));
+  // Closer racing: these two shove marbles aside round their open side, at a fifth of the usual cost, instead of stopping them dead.
+  for (const f of [...byLook('zebras'), ...byLook('elephant')]) {
+    assert.equal(f.parked, true, f.look);
+    assert.ok(f.loss <= 0.25, f.look);
+  }
 });
 
 test('bends flow, per the recipe: the hairpin is the one sharp bend, with a braking zone; the corkscrew is a wide spiral', () => {
@@ -71,7 +79,7 @@ test('bends flow, per the recipe: the hairpin is the one sharp bend, with a brak
   assert.equal(cork.radius, 40);
   assert.equal(cork.degrees, 360);
   const hairpin = tm.sections.find((s) => s.name === 'Hairpin');
-  const braking = tm.physics.features.find((f) => f.type === 'cobbles');
+  const braking = tm.physics.features.filter((f) => f.type === 'cobbles' && f.at < hairpin.from).at(-1);
   const before = (hairpin.from - braking.at) * tm.length_m;
   assert.ok(before > 0 && before < 60, `the braking zone ${before.toFixed(0)} m before the hairpin`);
 });
@@ -80,10 +88,16 @@ test('fast, within the limits, every marble home, and the same seed gives the sa
   assert.equal(JSON.stringify(routeRace(4242).sim), JSON.stringify(routeRace(4242).sim));
   for (const { sim } of races()) {
     const w = sim.stats.winnerMs / 1000;
-    assert.ok(w > 38 && w < 60, `winner ${w} s`); // the recipe's "about 40 to 60 s" (typically 43-44 s here)
-    assert.ok(sim.stats.lastMs / 1000 < 88, `last finisher ${sim.stats.lastMs / 1000} s`);
+    assert.ok(w > 45 && w < 60, `winner ${w} s`); // about Bobsleigh Run's pace (typically 53 s here)
+    assert.ok(sim.stats.lastMs / 1000 < 85, `last finisher ${sim.stats.lastMs / 1000} s`);
     assert.ok(sim.results.every((r) => Number.isFinite(r.finishTimeMs)), 'every marble finishes');
   }
+});
+
+test('close racing: the field finishes close behind the winner (the recipe: under 18 s, typically)', () => {
+  const gaps = races().map(({ sim }) => (sim.stats.lastMs - sim.stats.winnerMs) / 1000).sort((a, b) => a - b);
+  const median = gaps[gaps.length >> 1];
+  assert.ok(median < 18, `winner to last marble ${median.toFixed(1)} s`);
 });
 
 test('both splitters are used both ways, and the route never decides the race', () => {

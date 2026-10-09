@@ -393,8 +393,10 @@ export function buildTrackFeatures(centerline, channel, features, { lite = false
       const strips = Math.max(2, Math.min(STRIPS, Math.round(len / 10)));
       const pos = [];
       const col = [];
-      const shades = ['#a8a39b', '#bdb6ac', '#97928b', '#c7c0b4'].map((c) => new Color(c));
-      const grout = new Color('#3e3b38');
+      // (On a sand channel, Table Mountain Run's, they are rough strips of red-brown gravel instead.)
+      const sand = channel.look === 'sand';
+      const shades = (sand ? ['#9c6b45', '#b07b50', '#8a5c3a', '#c08a5c'] : ['#a8a39b', '#bdb6ac', '#97928b', '#c7c0b4']).map((c) => new Color(c));
+      const grout = new Color(sand ? '#5e3e27' : '#3e3b38');
       const quad = (a0, a1, u0, u1, lift, color) => {
         const corners = [[a0, u0], [a0, u1], [a1, u1], [a1, u0]].map(([at, u]) => surface(at, -lip + 2 * lip * u, lift).point);
         for (const k of [0, 1, 2, 0, 2, 3]) {

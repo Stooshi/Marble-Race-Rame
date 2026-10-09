@@ -8,6 +8,7 @@ import { formatTime } from '../utils/format';
 import { COUNTDOWN_MS } from '../three/startCamera';
 import { BUFFER_MS } from '../hooks/useRaceStream';
 import FinishShow, { useFinishShow } from './FinishShow';
+import SkipToResults from './SkipToResults';
 import FrameMeter, { useFrameMeter } from './FrameMeter';
 
 /**
@@ -27,7 +28,7 @@ const NONE = {};
  */
 export default function LiveRaceViewer3D({
   meta, sample, frame, startsAt, countdownMs = COUNTDOWN_MS, highlight = NOBODY, footer = null,
-  finishes = NONE, complete = false, clock = null, next = null,
+  finishes = NONE, complete = false, clock = null, next = null, canSkip = false,
 }) {
   const { wrapRef, canvasRef, sceneRef, status, failure, fail } = useTrackScene();
   const [camera, setCamera] = useState('follow'); // follow | overview
@@ -161,6 +162,7 @@ export default function LiveRaceViewer3D({
           </>
         )}
       </div>
+      <SkipToResults show={show} allowed={canSkip} onSkip={show.skip} />
       <div className="segmented" role="group" aria-label="Camera">
         <button type="button" aria-pressed={camera === 'follow' && follow === 'leader'} onClick={() => { setFollow('leader'); setCamera('follow'); }}>
           Follow the leader

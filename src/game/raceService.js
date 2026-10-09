@@ -10,6 +10,7 @@ const { PHYSICS_VERSION } = require('./physicsSimulator');
 const { runSimulation } = require('./runSimulation');
 const simulationPool = require('./simulationPool');
 const { HOUSE_SKILLS, skillStats } = require('./skill');
+const { raceSession } = require('./raceSession');
 
 // Races on tracks with physics settings run on the new physics engine, at a
 // smoother frame rate, and are stored as they were decided (race_replays).
@@ -80,6 +81,8 @@ function describeForClients(race, entries) {
   return {
     raceId: race.id,
     name: race.name,
+    session: raceSession(entries), // solo or group: who may skip to the results
+
     track: {
       id: race.track_id,
       slug: race.track_slug,

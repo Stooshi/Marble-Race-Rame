@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { graphicsReport } from '../three/diagnostics';
+import { importOrReload } from '../utils/staleCode';
 
 /** Records a failure: shown on screen and logged to the console in full. */
 function failureFrom(stage, error, report) {
@@ -39,7 +40,7 @@ export function useTrackScene() {
     (async () => {
       let mod;
       try {
-        mod = await import('../three/TrackScene');
+        mod = await importOrReload(() => import('../three/TrackScene'));
       } catch (err) {
         if (!cancelled) fail('loading the 3D code', err);
         return;

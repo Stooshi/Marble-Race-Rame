@@ -28,6 +28,8 @@ export function useFinishShow({ finishes, count, complete, time = null, clock = 
   const t = clock ? ticked : time;
   const plan = useMemo(() => finishPlan(finishes, count, complete), [finishes, count, complete]);
   const [skipped, setSkipped] = useState(false);
+  // When it was skipped (race time): live, the board then shows only the marbles home by that moment.
+  const [skippedAt, setSkippedAt] = useState(null);
   // A replay rewound to before the finish: the show starts afresh.
   if (skipped && plan && t !== null && t < plan.winnerMs) setSkipped(false);
   const phase = phaseAt(t, plan, skipped);
@@ -35,7 +37,10 @@ export function useFinishShow({ finishes, count, complete, time = null, clock = 
   const timeRef = useRef(time);
   timeRef.current = time;
   const [readTime] = useState(() => () => timeRef.current);
-  return { t, plan, phase, complete, paused: Boolean(clock) && paused, clock: clock ?? readTime, skip: () => setSkipped(true) };
+  const skip = () => { setSkipped(true); setSkippedAt(t); };
+  // Frozen at the skip only while marbles are still out there (a replay's or a finished race's board is complete).
+  const boardTime = skipped && !complete && skippedAt !== null ? skippedAt : t;
+  return { t, plan, phase, complete, boardTime, paused: Boolean(clock) && paused, clock: clock ?? readTime, skip };
 }
 
 /** Room for a cheer when the winner crosses (sound comes later). */
@@ -87,11 +92,11 @@ function useOnClock(ref, elapsed, paused) {
  *
  * show: from useFinishShow; entries: the race's entries; mine: the viewer's
  * entry indexes; raceId: for the official results (track record and personal
- * best flags), unless `official` rows are given. onSkip: what "Skip to results"
- * does (a replay jumps ahead; live, the board shows at once).
+ * best flags), unless `official` rows are given. "Skip to results" is not part
+ * of the show: it sits below the race view (SkipToResults.jsx).
  */
-export default function FinishShow({ show, finishes, entries, mine = [], raceId = null, official = null, trackName = '', next = null, onSkip = null }) {
-  const { t, plan, phase, complete, skip } = show;
+export default function FinishShow({ show, finishes, entries, mine = [], raceId = null, official = null, trackName = '', next = null }) {
+  const { t, plan, phase, complete } = show;
   const shower = useMemo(() => showerFor(plan), [plan]);
   const [fetched, setFetched] = useState(null);
   const late = phase === 'podium' || phase === 'board';
@@ -147,15 +152,12 @@ export default function FinishShow({ show, finishes, entries, mine = [], raceId 
         </ol>
       )}
 
-      {(phase === 'winner' || phase === 'field') && (
-        <button type="button" className="finish__skip btn btn--sm" onClick={onSkip ?? skip}>Skip to results</button>
-      )}
 
       {phase === 'podium' && <Podium top={home.slice(0, 3)} entries={entries} mine={mine} elapsed={t - plan.podiumAt} paused={show.paused} />}
 
       {phase === 'board' && (
         <Board
-          rows={boardRows({ entries, finishes: Object.fromEntries(home.map((a) => [a.index, a.ms])), official: official ?? fetched, mine })}
+          rows={boardRows({ entries, finishes: Object.fromEntries(arrivals(finishes, show.boardTime ?? t).map((a) => [a.index, a.ms])), official: official ?? fetched, mine })}
           trackName={trackName}
           next={next}
         />
@@ -313,7 +315,7 @@ function Board({ rows, trackName, next }) {
                 </div>
               </td>
               <td className="board__owner board__ownercol">{r.username ? `@${r.username}` : <span className="muted">House</span>}</td>
-              <td className="num board__time">{r.racing ? 'racing' : formatTime(r.ms)}</td>
+              <td className="num board__time">{r.racing ? <span className="muted">still racing</span> : formatTime(r.ms)}</td>
               <td className="num board__gap">{r.racing ? '' : r.gap === 0 ? '' : `+${(r.gap / 1000).toFixed(2)}`}</td>
             </tr>
           ))}

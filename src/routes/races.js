@@ -9,6 +9,7 @@ const { badRequest, conflict, notFound } = require('../utils/httpError');
 const raceManager = require('../game/raceManager');
 const raceService = require('../game/raceService');
 const { RACE_STATUSES } = require('../game/raceStatus');
+const { raceSession, mayRaceAgain } = require('../game/raceSession');
 
 const router = express.Router();
 
@@ -178,9 +179,11 @@ router.get('/:id', async (req, res) => {
   const race = await getRaceRow(id);
   const finished = race.status === 'finished';
   const live = raceManager.snapshot(id);
+  const entries = await getEntries(id, finished);
   res.json({
     race,
-    entries: await getEntries(id, finished),
+    entries,
+    session: raceSession(entries), // solo or group: who may skip to the results
     ...(live && { live: { status: live.status, elapsedMs: live.elapsedMs, durationMs: live.meta.durationMs } }),
   });
 });
@@ -195,7 +198,8 @@ router.post('/:id/join', requireAuth, async (req, res) => {
 });
 
 /**
- * POST /api/races/:id/next  { marble_id? } — race again: the follow-up race on
+ * POST /api/races/:id/next  { marble_id? } — race again (once the race is over;
+ * in a solo race as soon as it is running, see raceSession): the follow-up race on
  * the same track, so a group keeps going together. The first player to ask
  * sets it up (same settings, starting by itself after a short wait) and every
  * later ask lands in that same race; with marble_id the player is entered too.
@@ -209,7 +213,11 @@ router.post('/:id/next', requireAuth, async (req, res) => {
     const { rows } = await client.query('SELECT * FROM races WHERE id = $1 FOR UPDATE', [id]);
     const race = rows[0];
     if (!race) throw notFound('Race not found');
-    if (race.status !== 'finished') throw conflict('You can race again once this race has finished');
+    if (race.status !== 'finished') {
+      // A solo player may race again straight away; a group waits for the last marble.
+      const { rows: entries } = await client.query('SELECT user_id, is_bot FROM race_entries WHERE race_id = $1', [id]);
+      if (!mayRaceAgain(race, entries, req.user.id)) throw conflict('You can race again once this race has finished');
+    }
     let next = null;
     if (race.next_race_id) {
       const { rows: n } = await client.query('SELECT id, status FROM races WHERE id = $1', [race.next_race_id]);

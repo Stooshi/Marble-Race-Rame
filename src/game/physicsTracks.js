@@ -372,19 +372,26 @@ function tableMountainRun() {
       channel: { radius: 3.6, maxAngle: 80, funnel: { length: 70, radius: 22, spacing: 1.15, stagger: 0.2, release: 0.45 } },
       gate: { countdownMs: 3000 },
       collisions: true,
-      // Bobsleigh Run's obstacles, as Cape Town's animals (`look`): each races
-      // exactly like the one it stands in for. They stand in place; only the
-      // elephant's trunk reaches in, on the polar bear's timetable.
+      // Bobsleigh Run's obstacles, as Cape Town's animals (`look`). They stand in
+      // place; only the elephant's trunk reaches in, on the polar bear's
+      // timetable. The elephant and the zebras knock marbles aside (`parked`:
+      // round their open side, a fifth of the usual cost) rather than stopping
+      // them dead, so nobody is left far behind.
       features: [
         { type: 'ice_block', look: 'baboon', at: on('Start plunge', 0.5), l: -0.35, radius: 0.75, height: 1.2 }, // the start plunge: two baboons either side
         { type: 'ice_block', look: 'baboon', at: on('Start plunge', 0.5), l: 0.35, radius: 0.75, height: 1.2 },  // across the pack, one dead centre
         { type: 'ice_block', look: 'baboon', at: on('Start plunge', 0.5) + 0.012, l: 0.12, radius: 0.8, height: 1.2 }, // (a touch off centre: no starting place has an edge)
         { type: 'bump', at: on('S-bend', 0.5) },
+        // Short, sharp braking zones (rough sand) before the bends: they slow the fast marbles most,
+        // so the field bunches up there and fans out again after: closer racing, more overtaking.
+        { type: 'cobbles', at: on('Run to the splitter', 0.72), length: 15, drag: 0.02 },
+        { type: 'cobbles', at: on('Merge', 0.25), length: 15, drag: 0.02 },
+        { type: 'cobbles', at: on('Drop to the corkscrew', 0.05), length: 15, drag: 0.02 },
         { type: 'boost', at: on('Run to the splitter', 0.3), l: 0, length: 8, halfWidth: 3.6 },
         { type: 'boost', at: on('Long banked sweep', 0.06), l: -0.15, length: 8, halfWidth: 2.2 },     // out of the merge, into the sweep
-        { type: 'cobbles', at: on('Drop to the hairpin', 0.35), length: 35, drag: 0.002 },              // the braking zone before the hairpin
-        { type: 'polar_bear', look: 'elephant', at: on('Hairpin', 0.37), l: -1.25, reach: -0.55, radius: 0.7, height: 1.5, loss: 0.7 }, // swings its trunk across the high line
-        { type: 'icicles', look: 'zebras', at: on('Drop to the corkscrew', 0.4), l: -1, l2: -0.5, radius: 0.35 }, // standing on the high line
+        { type: 'cobbles', at: on('Drop to the hairpin', 0.35), length: 35, drag: 0.004 },              // the braking zone before the hairpin
+        { type: 'polar_bear', look: 'elephant', at: on('Hairpin', 0.37), l: -1.25, reach: -0.55, radius: 0.7, height: 1.5, parked: true, loss: 0.2 }, // swings its trunk across the high line, shoving marbles aside
+        { type: 'icicles', look: 'zebras', at: on('Drop to the corkscrew', 0.4), l: -1, l2: -0.5, radius: 0.35, parked: true, loss: 0.2 }, // standing on the high line: marbles are knocked out round them
         { type: 'boost', at: on('Drop to the corkscrew', 0.7), l: -0.5, length: 8, halfWidth: 2.6 },
         { type: 'snowman', look: 'giraffe', at: on('Final plunge', 0.45), l: -0.1, radius: 0.9, height: 2.4 },
         { type: 'bump', at: on('Final plunge', 0.85) },
@@ -415,7 +422,7 @@ function tableMountainRun() {
           // A right-hand bend: the engine's "inside" channel (the left one) is the long
           // way round here, so its ice is the smooth one and the short right-hand
           // channel's the draggy one.
-          radius: 2.5, apart: 6, tipOffset: 0.4, insideScrub: 0.3, outsideDrag: 4,
+          radius: 2.5, apart: 6, tipOffset: 2.2, insideScrub: 0.3, outsideDrag: 1.4,
         },
       ],
     },

@@ -567,7 +567,6 @@ main { padding-bottom: 48px; }
 .finish__ttime { color: #cfd5e3; }
 .finish__count { color: var(--muted); font-size: .75rem; justify-content: flex-end; animation: none !important; }
 @keyframes finish-tick { from { transform: translateX(14px); opacity: 0; } to { transform: none; opacity: 1; } }
-.finish__skip { position: absolute; right: 10px; bottom: 12px; z-index: 5; background: rgba(17, 19, 26, .78); color: #fff; border-color: transparent; }
 
 /* The podium: a dark stage, two spotlights sweeping, a glow behind first place. */
 .finish--podium { background: radial-gradient(ellipse at 50% 30%, rgba(30, 24, 12, .55), rgba(6, 6, 10, .92) 70%); }
@@ -726,3 +725,11 @@ main { padding-bottom: 48px; }
 .frame-meter .is-good { color: #4ade80; }
 .frame-meter .is-ok { color: #facc15; }
 .frame-meter .is-bad { color: #f87171; }
+
+/* "Skip to results": deliberately quiet, below the race view (see SkipToResults.jsx). */
+.skip-results { display: flex; justify-content: flex-end; margin: 6px 2px 0; }
+.skip-results__link { display: inline-flex; align-items: center; gap: 6px; background: none; border: 0; padding: 4px 2px; color: var(--muted); font-size: 0.78rem; cursor: pointer; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+.skip-results__link:hover, .skip-results__link:focus-visible { color: var(--text); text-decoration: underline; }
+.skip-results__ring { flex: none; transform: rotate(-90deg); }
+.skip-results__track { fill: none; stroke: currentColor; stroke-opacity: 0.3; stroke-width: 2; }
+.skip-results__fill { fill: none; stroke: var(--primary); stroke-width: 2; stroke-linecap: round; }

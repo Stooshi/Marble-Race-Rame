@@ -7,6 +7,7 @@ import CornerView, { cornerFollow, followedNow, followLabel } from './CornerView
 import { Spinner } from './Status';
 import { formatTime } from '../utils/format';
 import FinishShow, { useFinishShow } from './FinishShow';
+import SkipToResults from './SkipToResults';
 import FrameMeter, { useFrameMeter } from './FrameMeter';
 import { BOARD_HOLD_MS, finishPlan } from '../utils/finishShow';
 
@@ -177,11 +178,12 @@ export default function RaceReplayViewer({ data, loading = false, mine = NOBODY,
               </ol>
             )}
             {meter.on && <FrameMeter sceneRef={sceneRef} />}
-            <FinishShow show={show} finishes={finishes} entries={entries} mine={mine} raceId={raceId} trackName={data?.track?.name} next={next}
-              onSkip={() => { replay.seek(plan.boardAt); dirty.current = true; }} />
+            <FinishShow show={show} finishes={finishes} entries={entries} mine={mine} raceId={raceId} trackName={data?.track?.name} next={next} />
           </>
         )}
       </div>
+      {/* A replay of a race that is over: anyone may skip ahead, quietly, below the view. */}
+      <SkipToResults show={show} allowed={built} onSkip={() => { replay.seek(plan.boardAt); dirty.current = true; }} />
 
       {data && (
         <div className="replay__controls">

@@ -94,10 +94,13 @@ export default function Race() {
   const newPhysics = Boolean(meta?.track?.physics);
   const shown = view ?? (newPhysics ? '3d' : '2d');
   // The finish show: the official times as marbles cross, then the board with the next race.
+  // Skipping to the results: only in a solo race (one real player); a group watches to the end together.
+  const session = meta?.session ?? details.data?.session;
   const finish = {
     finishes: stream.finishes,
     complete: finished,
     clock: stream.clock,
+    canSkip: Boolean(session?.canSkip),
     next: meta ? <NextRace raceId={raceId} entries={meta.entries} nextRaceId={stream.next?.nextRaceId ?? race?.next_race_id ?? null} /> : null,
   };
   // Race commentary while it runs; once it's over, the results board takes over (inside the view).

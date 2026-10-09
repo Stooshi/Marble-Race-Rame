@@ -7,11 +7,13 @@ import Dashboard from './pages/Dashboard';
 import Race from './pages/Race';
 import Results from './pages/Results';
 import { Spinner } from './components/Status';
+import { importOrReload } from './utils/staleCode';
 
 // 3D preview (beta) is loaded on demand so the rest of the site stays light.
-const TrackPreview3D = lazy(() => import('./pages/TrackPreview3D'));
-const Replay3D = lazy(() => import('./pages/Replay3D'));
-const PhysicsPreview = lazy(() => import('./pages/PhysicsPreview'));
+// (If a file is gone after an update, the page reloads once for the new version.)
+const TrackPreview3D = lazy(() => importOrReload(() => import('./pages/TrackPreview3D')));
+const Replay3D = lazy(() => importOrReload(() => import('./pages/Replay3D')));
+const PhysicsPreview = lazy(() => importOrReload(() => import('./pages/PhysicsPreview')));
 
 export default function App() {
   const { pathname } = useLocation();

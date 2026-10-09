@@ -5,6 +5,7 @@ import { formatDelta, formatTime } from '../utils/format';
 import { OBSTACLE_COLORS, trackMarks } from './TrackPreview';
 import MarbleBall from './MarbleBall';
 import FinishShow, { useFinishShow } from './FinishShow';
+import SkipToResults from './SkipToResults';
 
 /**
  * Renders a race: the track on a canvas with marbles animated along it, plus
@@ -24,7 +25,7 @@ import FinishShow, { useFinishShow } from './FinishShow';
 const NONE = {};
 export default function RaceViewer({
   meta, sample, frame, splits = {}, highlight = [], footer,
-  finishes = NONE, complete = false, clock = null, time = null, next = null, official = null,
+  finishes = NONE, complete = false, clock = null, time = null, next = null, official = null, canSkip = false,
 }) {
   const wrapRef = useRef(null);
   const canvasRef = useRef(null);
@@ -122,6 +123,7 @@ export default function RaceViewer({
           <span style={{ width: `${Math.min(100, (elapsed / (meta?.durationMs || 1)) * 100)}%` }} />
         </div>
         {footer}
+        <SkipToResults show={show} allowed={canSkip} onSkip={show.skip} />
         <FinishShow
           show={show}
           finishes={finishes}
