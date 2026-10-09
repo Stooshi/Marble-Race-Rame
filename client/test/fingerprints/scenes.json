@@ -1,0 +1,39 @@
+{
+ "bobsleigh-run": {
+  "channel": "1:758b1e7838aac32db81259a0",
+  "features": "27:2c9b512892c81871dc462d8d",
+  "featuresPhone": "27:2c9b512892c81871dc462d8d",
+  "scenery": "96:1daa9744ab3e4ea7bc66686a",
+  "sceneryPhone": "63:240f2509128d1c47f18fa630",
+  "theme": "b2e426f1e3c371dba5f33625"
+ },
+ "san-francisco": {
+  "channel": "1:0b07ea62b3343b39b27cf5ac",
+  "channelPhone": "1:e2c28aacbca46ab34e99ca16",
+  "features": "41:8e7028b68a629937877f1f76",
+  "featuresPhone": "41:0ead046773c7a0822bd44847",
+  "scenery": "102:d7ad19d2f71e213b97129f06",
+  "sceneryPhone": "42:c933cf083c87bb9eb7f70e45",
+  "theme": "0590afdd61c68983dafe8594"
+ },
+ "table-mountain-run": {
+  "channel": "1:f339eddbe9252ffac2d1171c",
+  "features": "100:008bbb215a5895e75b9b79ca",
+  "featuresPhone": "68:bfbf14f90d6e619fd37c4935",
+  "scenery": "113:6b74df24e20dd53249788656",
+  "sceneryPhone": "83:e08727fe7302d27d89a406a3",
+  "theme": "bd0ed14c518c9e420f78a5fa"
+ },
+ "meadow-loop": {
+  "road": "1:92a39b611b125d5ebec021b1",
+  "theme": "edbca35596f44127e2a4866e"
+ },
+ "canyon-drop": {
+  "road": "1:9f8503a490d79d0c6adb3263",
+  "theme": "edbca35596f44127e2a4866e"
+ },
+ "volcano-run": {
+  "road": "1:433f4a28ef97d17aeb52ce68",
+  "theme": "edbca35596f44127e2a4866e"
+ }
+}
