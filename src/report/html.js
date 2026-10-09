@@ -83,6 +83,7 @@ function renderReport(report, track) {
     --accent: #6fa8e8; --pass: #5fd09a; --pass-bg: #163526; --fail: #ff8088; --fail-bg: #3b1a1e; --info: #93a3b5; --info-bg: #1f2b38; color-scheme: dark }
   body { background: var(--bg); color: var(--ink); font: 15px/1.5 var(--body); }
   .wrap { max-width: 1080px; margin: 0 auto; padding-inline: 20px; padding-block: 28px 56px; display: grid; gap: 28px; }
+  .wrap > * { min-width: 0; }
   header { display: grid; gap: 14px; }
   .eyebrow { font: 500 12px var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
   h1 { font: 700 clamp(30px, 5vw, 44px)/1.05 var(--display); margin: 0; text-wrap: balance; }
