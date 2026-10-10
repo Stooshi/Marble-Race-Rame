@@ -7,4 +7,5 @@ module.exports = [
   require('./kit-proving-ground-mirrored'),
   require('./are-run'),
   require('./portes-du-soleil-run'),
+  require('./park-city-run'),
 ];
