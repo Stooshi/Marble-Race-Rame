@@ -188,7 +188,8 @@ Prix: looks only, it races exactly as it would without. It brings:
   over the last three seconds of the countdown and all go out at GO; the countdown over
   the view shows the same five lights instead of 3, 2, 1 (other tracks keep 3-2-1).
 - **Grandstands**: packed stands either side of the start and along the finish straight,
-  one on the outside of the sharp bend, smaller groups every 230 m or so, and more where a
+  one on the outside of the sharp bend, smaller groups every 230 m or so (`groupsEvery`, up
+  to 1000, spaces them further apart where a track's drawing budget needs it), and more where a
   section's `scenery` says `'grandstand'` (packed) or `'crowd'` (small). Each stands at track
   level beside the rim (up on the land where the track runs in a cutting, on scaffolding where
   the ground falls away), clear of other stretches, landmarks and billboards. Spectators wave

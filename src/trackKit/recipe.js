@@ -121,6 +121,8 @@ function checkRecipe({ spec, sections, span, generated, owner, placed, total, wh
     else {
       known('Grand Prix crowd', CROWDS, spec.grandPrix.crowd, 'track');
       known('Grand Prix barrier', BARRIERS, spec.grandPrix.barrier, 'track');
+      const every = spec.grandPrix.groupsEvery;
+      if (every !== undefined && !(Number.isFinite(every) && every >= 230 && every <= 1000)) problems.push(`${where('track')}: grandPrix.groupsEvery is the metres between the small groups of spectators, 230 (the usual) to 1000.`);
     }
   }
   // The signature moment (the report's screenshot of it): a section of this track.

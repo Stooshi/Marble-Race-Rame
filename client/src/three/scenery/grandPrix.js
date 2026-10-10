@@ -28,7 +28,7 @@ const BEND_RADIUS = 200;        // metres: a bend tighter than this gets barrier
 const MAX_FOOTING = 14;         // metres: no stand on scaffolding taller than this
 const SCAFFOLD = '#8d929a';
 const OTHER_CLEAR = 16;         // metres a stand keeps from any other stretch of the track
-const SMALL_EVERY = 230;        // metres between the smaller groups of spectators along the way
+const SMALL_EVERY = 230;        // metres between the smaller groups of spectators along the way (a track's grandPrix.groupsEvery overrides it)
 const CHEER_NEAR = 35;          // metres: marbles this close bring a stand's crowd to its feet…
 const CHEER_FAR = 70;           // …and they are sitting again by this far
 const FIREWORKS_FOR = 14000;    // ms of fireworks after the winner is home
@@ -316,7 +316,7 @@ export function buildGrandPrix(centerline, channel, kit, { lite = false, ground,
   }
   // Smaller groups along the way, every so often, on alternate sides.
   let side = 1;
-  for (let m = 120; m < arc - 120; m += SMALL_EVERY) {
+  for (let m = 120; m < arc - 120; m += kit.grandPrix.groupsEvery ?? SMALL_EVERY) {
     const p = m / arc;
     if (stands.some((st) => hDist(st.centre, samples[sampleAt(p)].pos) < 70)) continue;
     if (placeStand(p, side, 'small') || placeStand(p, -side, 'small') || placeStand(p + 20 / arc, side, 'small')) side = -side;

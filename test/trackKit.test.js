@@ -619,6 +619,7 @@ const HIDDEN_KIT_TRACKS = [
   ['delhi-red-fort-marble-grand-prix', '2026-10-31-add-delhi-red-fort-marble-grand-prix.sql', 'Delhi Red Fort Marble Grand Prix: from the ramparts of the Red Fort and out under its great gateway, through Chandni Chowk and past the Jama Masjid, down the ceremonial avenue to India Gate.'],
   ['sahara-marble-grand-prix', '2026-11-01-add-sahara-marble-grand-prix.sql', 'Sahara Marble Grand Prix: a desert circuit from a kasbah down through dunes, an oasis splitter and a canyon to a mud mosque finish'],
   ['elderglade-marble-grand-prix', '2026-11-02-add-elderglade-marble-grand-prix.sql', 'Elderglade Marble Grand Prix: an enchanted elven forest from a tree platform through ferns and a waterfall, round the Great Tree to a clearing of glowing flowers'],
+  ['frostmere-marble-grand-prix', '2026-11-03-add-frostmere-marble-grand-prix.sql', 'Frostmere Marble Grand Prix: a snowy fairy-tale kingdom by night, from the castle bridge across a frozen lake and through the ice palace hall into its courtyard under the northern lights'],
 ];
 for (const [slug, file, note] of HIDDEN_KIT_TRACKS) {
   test(`${slug} is added by its data update, switched off, exactly as its track file builds it`, () => {
@@ -650,6 +651,9 @@ test('a Grand Prix track: up to 8 billboards (other tracks 4 to 6), its crowd an
   refused({ ...gp(), grandPrix: { barrier: 'hay' } }, /unknown Grand Prix barrier "hay"/);
   assert.equal(track({ ...gp(), grandPrix: { crowd: 'elves', barrier: 'logs' } }).physics.kit.grandPrix.crowd, 'elves');
   assert.equal(track(base()).physics.kit.grandPrix, undefined);
+  // Fewer small groups of spectators along the way, where a track's drawing budget needs it.
+  assert.equal(track({ ...gp(), grandPrix: { groupsEvery: 700 } }).physics.kit.grandPrix.groupsEvery, 700);
+  refused({ ...gp(), grandPrix: { groupsEvery: 100 } }, /groupsEvery is the metres between the small groups/);
   // Rumble strips: a row of low bumps, painted (the look rides along; the race sees bumps).
   const strips = gp();
   strips.sections[3].features = [kit.rumble({ from: 0.7, to: 0.95, count: 3 })];
