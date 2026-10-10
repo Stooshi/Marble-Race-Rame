@@ -123,7 +123,8 @@ export function dressingFor(biome) {
     // (Arctic ground is all rocks, hundreds of them: always the plainest rock, so the triangles stay in budget.)
     arctic: [[() => rock(true, '#7d8794'), 0.7], [() => rock(true, '#e8eef5'), 0.3]],
     meadow: [[broadleaf, 0.45], [birch, 0.15], [(l) => bush(l), 0.4]],
-    desert: [[(l) => rock(l, '#b98154'), 0.55], [() => cactus(), 0.3], [palm, 0.15]],
+    // (Arabian desert: sandstone rocks, desert shrubs and a few date palms; plain, as there are hundreds.)
+    desert: [[() => rock(true, '#c98a5a'), 0.5], [() => bush(true, '#9a8a4a'), 0.35], [() => palm(true), 0.15]],
     jungle: [[broadleaf, 0.4], [palm, 0.25], [fern, 0.35]],
     // (City parks: hundreds of trees beside streets of buildings; always the plainest, to stay in budget.)
     city: [[planeTree, 0.5], [() => bush(true, '#5f9a48'), 0.5]],

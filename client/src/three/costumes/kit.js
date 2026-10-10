@@ -36,6 +36,10 @@ export const COSTUME_COLORS = {
   lampGreen: '#2f4a3a', lampGlass: '#f6e7b0',
   vespaMint: '#9fd8c4', vespaCream: '#f2e6c8', vespaRed: '#d84a3a', vespaSeat: '#3a2a22', vespaChrome: '#c9ccd1', tyre: '#1e1f24',
   easelWood: '#8a6a45', canvasWhite: '#f4f0e6', paintBlue: '#3f6fb5', paintYellow: '#e8b62a', paintRed: '#c84a3a',
+  rallyOrange: '#f07a1f', rallyBlack: '#1f2024', rallyPole: '#e8e4da',
+  buggyFrame: '#e8b62a', buggyCage: '#2c2f36', buggySeat: '#b8312f',
+  carRed: '#c8141c', carGlass: '#2a3440', carChrome: '#c9ccd1',
+  falcon: '#8a6a4a', falconPale: '#e8dcc8', falconDark: '#3a2e26', perch: '#6b4a2f', perchCloth: '#2f5d9a', falconBeak: '#e0b43c',
   pigeonGrey: '#8e939c', pigeonDark: '#4f545c', pigeonNeck: '#5f8a7a', beak: '#3a3a3a',
 };
 
@@ -365,6 +369,45 @@ function vespa(add, mat, group, rimCentre, q, { len, width, drop = 0 }) {
   return [];
 }
 
+/** A dune buggy parked at the edge: a yellow tube frame, a roll cage, fat tyres (Dubai Twister). */
+function duneBuggy(add, mat, group, rimCentre, q, { len, width, drop = 0 }) {
+  const W = 1.9;
+  const centre = rimCentre.clone().add(new Vector3(-(width - W) / 2, -drop, 0).applyQuaternion(q));
+  const count = Math.max(1, Math.round(len / 4));
+  const each = len / count;
+  for (let k = 0; k < count; k += 1) {
+    const z = -len / 2 + each * (k + 0.5);
+    const L = each - 0.6;
+    for (const x of [-0.8, 0.8]) for (const dz of [-L / 2 + 0.5, L / 2 - 0.5]) add('tyre', new CylinderGeometry(0.42, 0.42, 0.35, 12), local(centre, q, x, 0.42, z + dz).multiply(new Matrix4().makeRotationZ(Math.PI / 2)));
+    add('buggyFrame', new BoxGeometry(1.3, 0.35, L - 0.4), local(centre, q, 0, 0.65, z));
+    add('buggySeat', new BoxGeometry(0.9, 0.5, 0.7), local(centre, q, 0, 1.05, z - 0.2));
+    for (const x of [-0.6, 0.6]) {
+      add('buggyCage', new BoxGeometry(0.08, 1.2, 0.08), local(centre, q, x, 1.4, z + 0.4));
+      add('buggyCage', new BoxGeometry(0.08, 1.2, 0.08), local(centre, q, x, 1.4, z - 0.8));
+      add('buggyCage', new BoxGeometry(0.08, 0.08, 1.3), local(centre, q, x, 2.0, z - 0.2));
+    }
+    add('buggyCage', new BoxGeometry(1.25, 0.08, 0.08), local(centre, q, 0, 2.0, z + 0.4));
+  }
+  return [];
+}
+
+/** A low red sports car parked at the edge (Dubai Twister). */
+function sportsCar(add, mat, group, rimCentre, q, { len, width, drop = 0 }) {
+  const W = 1.95;
+  const centre = rimCentre.clone().add(new Vector3(-(width - W) / 2, -drop, 0).applyQuaternion(q));
+  const L = Math.min(len, 4.6);
+  for (let n = 0; n < Math.max(1, Math.floor(len / 4.6)); n += 1) {
+    const z = -len / 2 + L / 2 + n * L;
+    for (const x of [-0.85, 0.85]) for (const dz of [-1.4, 1.4]) add('tyre', new CylinderGeometry(0.34, 0.34, 0.25, 12), local(centre, q, x, 0.34, z + dz).multiply(new Matrix4().makeRotationZ(Math.PI / 2)));
+    add('carRed', new BoxGeometry(1.9, 0.55, L - 0.2), local(centre, q, 0, 0.6, z));
+    add('carRed', new BoxGeometry(1.6, 0.4, L * 0.38), local(centre, q, 0, 1.05, z - 0.2).multiply(new Matrix4().makeRotationX(0.05)));
+    add('carGlass', new BoxGeometry(1.5, 0.32, L * 0.36), local(centre, q, 0, 1.08, z - 0.2));
+    add('carChrome', new BoxGeometry(1.7, 0.08, 0.08), local(centre, q, 0, 0.75, z + L / 2 - 0.12));
+    add('carRed', new BoxGeometry(1.7, 0.08, 0.35), local(centre, q, 0, 1.05, z - L / 2 + 0.3));   // the rear wing
+  }
+  return [];
+}
+
 // ── Slalom gates and pegs: thin poles and small round pieces ────────────────
 
 /** A slalom pole with its little flag, red on the left of the middle, blue on the right (ski tracks). */
@@ -384,6 +427,27 @@ function routeFlag(add, mat, group, point, q, { height, l }) {
   const side = l >= 0 ? 1 : -1;
   add('flagOrange', new BoxGeometry(0.5, 0.34, 0.03), local(point, q, side * 0.27, height + 0.15, 0));
   return [];
+}
+
+/** A desert rally marker: a pole with an orange-and-black flag, marking the way down the dunes (Dubai Twister's slalom poles). */
+function rallyFlag(add, mat, group, point, q, { height, l }) {
+  add('rallyPole', new CylinderGeometry(0.035, 0.045, height + 0.5, 5), local(point, q, 0, (height + 0.5) / 2, 0));
+  const side = l >= 0 ? 1 : -1;
+  add('rallyOrange', new BoxGeometry(0.5, 0.17, 0.03), local(point, q, side * 0.27, height + 0.32, 0));
+  add('rallyBlack', new BoxGeometry(0.5, 0.17, 0.03), local(point, q, side * 0.27, height + 0.15, 0));
+  return [];
+}
+
+/** Dubai Twister's falcon on its perch beyond the rim (its wing, spread on the swipe's timetable, is the arm). */
+function falconBody(add, base, q) {
+  add('perch', new CylinderGeometry(0.1, 0.12, 1.6, 6), local(base, q, 0, 0.8, 0));
+  add('perch', new CylinderGeometry(0.5, 0.6, 0.12, 8), local(base, q, 0, 0.06, 0));
+  add('perchCloth', new CylinderGeometry(0.28, 0.28, 0.12, 8), local(base, q, 0, 1.62, 0));
+  add('falcon', new IcosahedronGeometry(0.32, 1), local(base, q, 0, 1.98, 0, 0.85, 1.25, 0.9));      // body, upright
+  add('falconPale', new IcosahedronGeometry(0.22, 0), local(base, q, 0, 1.92, 0.12, 0.8, 1.2, 0.6)); // the pale speckled breast
+  add('falconDark', new IcosahedronGeometry(0.17, 1), local(base, q, 0, 2.43, 0.04));              // head
+  add('falconBeak', new ConeGeometry(0.05, 0.12, 4), local(base, q, 0, 2.39, 0.22).multiply(new Matrix4().makeRotationX(Math.PI / 2 + 0.4)));
+  add('falconDark', new BoxGeometry(0.22, 0.04, 0.5), local(base, q, 0, 1.7, -0.3).multiply(new Matrix4().makeRotationX(0.6))); // tail
 }
 
 /** A Paris street lamp: a dark green iron post and its lantern (Paris Eiffel Tower Run's slalom poles). */
@@ -458,6 +522,17 @@ export const KIT_COSTUMES = {
   'go-stone': { places: 'slalom', build: goStone },
   'route-flag': { places: 'slalom', build: routeFlag },
   'street-lamp': { places: 'slalom', build: streetLamp },
+  'rally-flag': { places: 'slalom', build: rallyFlag },
+  'dune-buggy': { places: 'parked', build: duneBuggy },
+  'sports-car': { places: 'parked', build: sportsCar },
+  falcon: {
+    places: 'swipe',
+    body: falconBody,
+    standOff: 1.2, // metres out beyond the rim
+    sink: 0,
+    // The wing, from the shoulder out to its tip, spread into the high line on the swipe's timetable.
+    arm: { colour: 'falcon', shoulder: [0, 2.05, 0.2], radii: [0.06, 0.2], segments: 5, tip: 0.18, tipDetail: 0, end: 0.08, endDetail: 0, lift: 0.5, outLift: 0.6, nose: 0.1 },
+  },
   easel: { places: 'curtain', build: easel },
   pigeon: { places: 'block', upright: true, build: pigeon },
   vespa: { places: 'parked', build: vespa },

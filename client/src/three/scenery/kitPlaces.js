@@ -428,6 +428,17 @@ function haussmann(k) {
   return { body: merge(parts), windows: merge(windows), w, d };
 }
 
+/** A Dubai tower: a tall glass block, set back near the top, a spire on some. */
+function skyscraper(k) {
+  const w = 10 + (k % 3) * 2;
+  const h = 40 + (k % 4) * 15;
+  const glass = ['#7fb3d0', '#9cc0d8', '#6f9fc0', '#b0c8d8'][k % 4];
+  const parts = [box(w, h, w, 0, h / 2, 0, glass), box(w * 0.7, h * 0.2, w * 0.7, 0, h + h * 0.1, 0, glass)];
+  if (k % 2) parts.push(piece(new ConeGeometry(0.4, 12, 5), '#c9ccd1', at(0, h * 1.2 + 6, 0)));
+  const windows = merge([box(w * 0.9, h * 0.9, 0.1, 0, h / 2, w / 2 + 0.06, '#d4e4ee')]);
+  return { body: merge(parts), windows, w, d: w };
+}
+
 /** What each house-scenery name builds, and how far out it stands (big buildings stand further back). */
 const HOUSE_STYLES = {
   'wooden-houses': { build: house, out: [22, 45], clear: 14 },
@@ -437,6 +448,7 @@ const HOUSE_STYLES = {
   'stone-houses': { build: stoneHouse, out: [22, 45], clear: 14 },
   'colourful-houses': { build: colourfulHouse, out: [22, 45], clear: 14 },
   haussmann: { build: haussmann, out: [30, 45], clear: 22, liteEvery: 2 },
+  skyscrapers: { build: skyscraper, out: [45, 60], clear: 30, liteEvery: 2 },
 };
 
 /** Houses beside the stretches tagged with a house style (and round the start or finish when it is). */

@@ -62,7 +62,7 @@ Then add it to `index.js` in this folder.
 | `pileUp({ costume, at })` | Three blocks: the first pile-up of the race | any block costume |
 | `curtain({ costume, at, side })` | The icicles: knocked out round them | zebras |
 | `swipe({ costume, at, side })` | The polar bear's swipe, knocking marbles aside | elephant |
-| `parked({ costume, at, side, length })` | Knocked aside round its open side, one hit per marble; gentle sections only (grade 0.2 or less) | ore-cart, kick-sled |
+| `parked({ costume, at, side, length })` | Knocked aside round its open side, one hit per marble; gentle straights only (grade 0.2 or less; on a bend it traps marbles) | ore-cart, kick-sled, vespa, sports-car |
 | `slalom({ from, to, count })` | Thin poles alternating either side: about a tenth of a marble's speed per hit, never a stop | slalom-gate |
 | `peg({ costume, at, line, radius })` | A slalom pole's physics, bigger | go-stone |
 
@@ -116,7 +116,8 @@ Scenery comes from names in the file (looks only; checked, so a typo is refused)
   `landmarks: [{ name, side, at, distance }]`: `'church' | 'mountain-hut' | 'big-rock' | 'lighthouse' |
   'horse-sleigh' | 'border-post' | 'lift-station' | 'mine-buildings' | 'snow-park' | 'base-camp' |
   'sacre-coeur' | 'moulin-rouge' (its sails turn) | 'fountains' | 'louvre-pyramid' | 'notre-dame' |
-  'eiffel-tower' | 'seine' | 'bookstalls'` (the world landmarks: client/src/three/scenery/kitLandmarks.js).
+  'eiffel-tower' | 'seine' | 'bookstalls' | 'bedouin-camp' | 'museum-of-the-future' | 'dubai-frame' |
+  'burj-al-arab' | 'burj-khalifa' | 'palm-boardwalk' | 'dune-buggy'` (the world landmarks: client/src/three/scenery/kitLandmarks.js).
 - `figures: ['skier', 'snowboarder', 'spectator', 'reindeer', …]`: people, or any
   block costume, standing on the banks facing the track with small idle movements.
 - `overhead: ['gondola' | 'cable-car' | 'chairlift' | 'vulture']`: a lift crossing high above
@@ -130,11 +131,11 @@ Scenery comes from names in the file (looks only; checked, so a typo is refused)
   and now and then a whale's tail), `'pasture'` (open pasture, a few trees), `'aspens'`;
   houses in a style: `'chalets'`, `'wood-clad'` (Avoriaz's tall buildings), `'shopfronts'`
   (Old West), `'stone-houses'` (slate roofs), `'colourful-houses'` (Ilulissat), `'haussmann'`
-  (Paris); `'plane-trees'` (rows of city trees).
+  (Paris), `'skyscrapers'` (Dubai); `'plane-trees'` (rows of city trees).
 - `around` on a splitter, what stands between its two channels: `'mountain-hut'` (smoke
   from its chimney), `'big-rock'`, `'mountain-restaurant'`, `'mine-headframe'`, `'nunatak'`,
-  `'arc-de-triomphe'` (over one channel: the other runs round it); on a spiral, what it winds
-  down around: `'bell-tower'` (its bell swinging), `'notre-dame'`; in a hairpin: `'obelisk'`.
+  `'arc-de-triomphe'` (over one channel: the other runs round it), `'oasis'`; on a spiral, what it winds
+  down around: `'bell-tower'` (its bell swinging), `'notre-dame'`, `'twisted-tower'`; in a hairpin: `'obelisk'`.
 - `designChanges: ['…']`: where the recipe made the build differ from the design, and
   why; shown at the top of the track report (never raced).
 - `signature: '<section>'`: the track's signature moment, for the report's screenshot.

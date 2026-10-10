@@ -167,6 +167,11 @@ function checkRecipe({ spec, sections, span, generated, owner, placed, total, wh
     if (p.kind === 'parked' && sections[p.section].shape.parts.some((x) => x.grade > PARKED_MAX_GRADE)) {
       problems.push(`${where(name(p.section))}: a parked object needs a gentle section (a grade of ${PARKED_MAX_GRADE} or less); on steeper ones it stops marbles dead and flings them off the far wall.`);
     }
+    // …and on straights: parked on a bend it traps a marble against it for seconds (measured:
+    // a dune buggy on S-bends held the last marble 8 s, the last one home at 89 s).
+    if (p.kind === 'parked' && sections[p.section].shape.parts.some((x) => x.kind !== 'straight')) {
+      problems.push(`${where(name(p.section))}: a parked object needs a straight; on a bend it traps marbles against it.`);
+    }
     if (solid && (p.at > finishShare || sections[p.section].shape.shape === 'runIn')) {
       problems.push(`${where(name(p.section))}: a ${p.kind} within ${OBSTACLE_FREE_FINISH_M} m of the finish line; nothing may stand in the way there.`);
     }

@@ -170,6 +170,135 @@ function bookstalls() {
   return merge(parts);
 }
 
+// ── Dubai ───────────────────────────────────────────────────────────────────
+
+/** A Bedouin tent on the dune crest: black goat-hair cloth on poles, rugs, camels resting beside it. */
+function bedouinCamp() {
+  const parts = [
+    piece(new BoxGeometry(9, 0.2, 6), '#2a2422', turned(0, 3, 0, 0).multiply(new Matrix4().makeRotationX(0.08))),  // the tent roof
+    ...[-1, 1].map((k) => piece(new BoxGeometry(9, 2.8, 0.15), '#3a302a', M(0, 1.5, k * 3))),                   // its sides
+    box(9, 2.6, 0.15, 0, 1.4, -3, '#3a302a'),
+    box(4, 0.05, 2.5, 0, 0.05, 1.5, '#b8312f'), box(2.5, 0.05, 2, -3, 0.05, 1.2, '#2f5d9a'),                 // rugs
+  ];
+  for (const x of [-4.4, 0, 4.4]) for (const z of [-2.9, 2.9]) parts.push(box(0.15, 3.1, 0.15, x, 1.55, z, '#6b4a2f'));
+  // Two camels resting, folded down on the sand.
+  for (const [x, z, yaw] of [[7, 2, 0.4], [8, -2.5, -0.3]]) {
+    parts.push(piece(new IcosahedronGeometry(0.9, 1), '#c9a06a', turned(x, 0.8, z, yaw, 0.85, 0.8, 1.5)));
+    parts.push(piece(new IcosahedronGeometry(0.6, 1), '#c9a06a', turned(x, 1.5, z, yaw, 0.9, 0.95, 1.1)));
+    parts.push(piece(new BoxGeometry(0.25, 0.9, 0.3), '#c9a06a', turned(x + Math.sin(yaw) * 1.1, 1.4, z + Math.cos(yaw) * 1.1, yaw)));
+    parts.push(piece(new BoxGeometry(0.25, 0.25, 0.5), '#9a7647', turned(x + Math.sin(yaw) * 1.3, 1.95, z + Math.cos(yaw) * 1.3, yaw)));
+  }
+  return merge(parts);
+}
+
+/** An oasis: a small pool ringed with date palms (the splitter's centrepiece). */
+function oasis() {
+  const parts = [piece(new CylinderGeometry(3.4, 3.6, 0.2, 14), '#3f8fb0', M(0, 0.1, 0)), piece(new CylinderGeometry(4.2, 4.4, 0.12, 14), '#d9b87a', M(0, 0.04, 0))];
+  for (let k = 0; k < 5; k += 1) {
+    const a = (k / 5) * Math.PI * 2 + 0.3;
+    const x = Math.cos(a) * 3.9;
+    const z = Math.sin(a) * 2.2;
+    const h = 6 + (k % 3);
+    parts.push(piece(new CylinderGeometry(0.2, 0.3, h, 6), '#8a6a45', M(x, h / 2, z)));
+    for (let f = 0; f < 6; f += 1) {
+      const leaf = new BoxGeometry(0.6, 0.08, 3);
+      leaf.translate(0, 0, 1.4);
+      leaf.applyMatrix4(new Matrix4().makeRotationX(0.5));
+      leaf.applyMatrix4(new Matrix4().makeRotationY((f / 6) * Math.PI * 2 + k));
+      parts.push(piece(leaf, '#3f8f3a', M(x, h, z)));
+    }
+  }
+  return merge(parts);
+}
+
+/** The Museum of the Future, stylised: a silver ring standing on a green mound. */
+function museumOfTheFuture() {
+  const ring = new CylinderGeometry(9, 9, 6, 20, 1, true);
+  ring.rotateX(Math.PI / 2);
+  ring.scale(1, 1.35, 1);
+  const inner = new CylinderGeometry(5, 5, 6.02, 20, 1, true);
+  inner.rotateX(Math.PI / 2);
+  inner.scale(1, 1.6, 1);
+  return merge([
+    piece(new SphereGeometry(9, 14, 6, 0, Math.PI * 2, 0, Math.PI / 2), '#5f9a48', S(0, 0, 0, 1.3, 0.35, 0.9)),
+    piece(ring, '#c9ccd1', M(0, 13, 0)),
+    piece(inner, '#9aa1aa', M(0, 13, 0)),
+    piece(new BoxGeometry(18, 0.4, 6.1), '#c9ccd1', M(0, 1.2, 0)),
+  ]);
+}
+
+/** The Dubai Frame, stylised: a giant golden picture frame standing on end, a glass bridge across its top. */
+function dubaiFrame() {
+  const G = '#d8a93a';
+  return merge([
+    box(4, 40, 4, -10, 20, 0, G), box(4, 40, 4, 10, 20, 0, G),
+    box(24, 4, 4, 0, 42, 0, '#9cc8e8'),
+    box(24.2, 0.6, 4.2, 0, 40, 0, G), box(24.2, 0.6, 4.2, 0, 44, 0, G),
+  ]);
+}
+
+/** A twisting skyscraper: glass floors each turned a little more than the one below (the Twister's centrepiece). */
+function twistedTower() {
+  const parts = [];
+  for (let k = 0; k < 24; k += 1) parts.push(piece(new BoxGeometry(8, 2.4, 8), k % 2 ? '#7fb3d0' : '#a9cce0', turned(0, 1.2 + k * 2.5, 0, k * 0.065)));
+  parts.push(piece(new ConeGeometry(2, 8, 4), '#c9ccd1', turned(0, 64, 0, 1.6)));
+  return merge(parts);
+}
+
+/** The Burj Al Arab, stylised: a white sail on its own island, the mast-like spine behind. */
+function burjAlArab() {
+  const parts = [piece(new CylinderGeometry(9, 10, 1.5, 14), '#d9c49a', M(0, 0.75, 0))];
+  for (let k = 0; k < 12; k += 1) {
+    const t = k / 12;
+    const w = 12 * Math.sin(Math.PI * (0.15 + t * 0.85)) * (1 - t * 0.6);
+    parts.push(box(w, 3.4, 2.5, 0, 2.5 + k * 3.3, -3 + t * 7 * t, '#f4f4f2'));
+  }
+  parts.push(beam(V(0, 1.5, -6), V(0, 46, 2), 1.4, '#c9ccd1'));
+  parts.push(box(6, 0.4, 6, 4, 34, -2, '#c9ccd1'));                              // the helipad
+  return merge(parts);
+}
+
+/** The Burj Khalifa, stylised: a stepped silver needle, far off behind the finish. */
+function burjKhalifa() {
+  const parts = [];
+  let w = 18;
+  let y = 0;
+  for (let k = 0; k < 9; k += 1) {
+    const h = 14 - k * 0.6;
+    parts.push(piece(new CylinderGeometry(w / 2, w / 2, h, 6), k % 2 ? '#b9c4cf' : '#cfd8e0', M(k % 2 ? 0.4 * k : -0.3 * k, y + h / 2, 0)));
+    y += h;
+    w *= 0.8;
+  }
+  parts.push(piece(new ConeGeometry(0.8, 30, 6), '#cfd8e0', M(0, y + 15, 0)));
+  return merge(parts);
+}
+
+/** Palm Jumeirah's boardwalk: wooden decking, date palms, the sea beyond. */
+function palmBoardwalk() {
+  const parts = [box(70, 0.4, 8, 0, 0.2, 0, '#b4895a'), box(70, 0.3, 26, 0, 0.1, -17, '#2f8fb5')];
+  for (let k = 0; k < 7; k += 1) {
+    const x = -30 + k * 10;
+    parts.push(piece(new CylinderGeometry(0.2, 0.28, 7, 6), '#8a6a45', M(x, 3.5, 3)));
+    for (let f = 0; f < 6; f += 1) {
+      const leaf = new BoxGeometry(0.6, 0.08, 3);
+      leaf.translate(0, 0, 1.4);
+      leaf.applyMatrix4(new Matrix4().makeRotationX(0.5));
+      leaf.applyMatrix4(new Matrix4().makeRotationY((f / 6) * Math.PI * 2 + k));
+      parts.push(piece(leaf, '#3f8f3a', M(x, 7, 3)));
+    }
+  }
+  return merge(parts);
+}
+
+/** A dune buggy parked on the sand: yellow tube frame, roll cage, fat tyres. */
+function duneBuggyParked() {
+  const parts = [];
+  for (const x of [-0.8, 0.8]) for (const z of [-1.1, 1.1]) parts.push(piece(new CylinderGeometry(0.42, 0.42, 0.35, 12), '#1e1f24', new Matrix4().makeRotationZ(Math.PI / 2).premultiply(M(x, 0.42, z))));
+  parts.push(box(1.3, 0.35, 2.8, 0, 0.65, 0, '#e8b62a'), box(0.9, 0.5, 0.7, 0, 1.05, -0.2, '#b8312f'));
+  for (const x of [-0.6, 0.6]) parts.push(box(0.08, 1.2, 0.08, x, 1.4, 0.4, '#2c2f36'), box(0.08, 1.2, 0.08, x, 1.4, -0.8, '#2c2f36'), box(0.08, 0.08, 1.3, x, 2, -0.2, '#2c2f36'));
+  return merge(parts);
+}
+
 /** Landmarks by name: builder, footprint radius, and for some the half-width that has to fit a splitter or bend. */
 export const WORLD_LANDMARKS = {
   'sacre-coeur': { build: sacreCoeur, radius: 20 },
@@ -182,4 +311,13 @@ export const WORLD_LANDMARKS = {
   'eiffel-tower': { build: eiffelTower, radius: 18 },
   seine: { build: seine, radius: 40 },
   bookstalls: { build: bookstalls, radius: 9 },
+  'bedouin-camp': { build: bedouinCamp, radius: 10 },
+  oasis: { build: oasis, radius: 5, fit: 4.3 },
+  'museum-of-the-future': { build: museumOfTheFuture, radius: 13 },
+  'dubai-frame': { build: dubaiFrame, radius: 13 },
+  'twisted-tower': { build: twistedTower, radius: 6 },
+  'burj-al-arab': { build: burjAlArab, radius: 12 },
+  'burj-khalifa': { build: burjKhalifa, radius: 10 },
+  'palm-boardwalk': { build: palmBoardwalk, radius: 36 },
+  'dune-buggy': { build: duneBuggyParked, radius: 2 },
 };
