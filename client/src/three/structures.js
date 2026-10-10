@@ -379,7 +379,7 @@ export function buildStructures(centerline, channel, kit, { lite = false } = {})
           // (As wide as the channel there: the start's wide funnel too.)
           const half = channelRadiusAt(channel, p * channel.arc) * Math.sin(channelLipAt(channel, p * channel.arc)) + 1.4;
           add(k % 2 ? 'steel' : 'steelDark', new BoxGeometry(2 * half, 1.1, step * 0.98), new Matrix4().compose(below, qs, new Vector3(1, 1, 1)));
-          for (const x of [-half + 0.4, half - 0.4]) {
+          for (const x of lite && k % 2 ? [] : [-half + 0.4, half - 0.4]) { // (on phones, half as many struts)
             const strut = new BoxGeometry(0.3, 3.2, 0.3);
             strut.rotateX(k % 2 ? 0.6 : -0.6);
             add('steelDark', strut, new Matrix4().compose(below.clone().addScaledVector(side, x).addScaledVector(deckUp, -2.1), qs, new Vector3(1, 1, 1)));

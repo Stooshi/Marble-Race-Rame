@@ -613,6 +613,7 @@ const HIDDEN_KIT_TRACKS = [
   ['dubai-marble-grand-prix', '2026-10-25-add-dubai-marble-grand-prix.sql', 'Dubai Marble Grand Prix: a night race through downtown Dubai under floodlights, from beside the Burj Khalifa past the dancing fountain and round the Museum of the Future to the Marina, the first Grand Prix track.'],
   ['sydney-marble-grand-prix', '2026-10-26-add-sydney-marble-grand-prix.sql', 'Sydney Marble Grand Prix: a harbour race from the top of the Harbour Bridge arch, through The Rocks and round a stylised Opera House to a grandstand finish at Circular Quay.'],
   ['istanbul-marble-grand-prix', '2026-10-27-add-istanbul-marble-grand-prix.sql', 'Istanbul Marble Grand Prix: from the Galata Tower down to the Golden Horn, round a tulip garden, past Hagia Sophia and the Blue Mosque and through the Grand Bazaar\'s vaulted halls to the Bosphorus.'],
+  ['lagos-marble-grand-prix', '2026-10-28-add-lagos-marble-grand-prix.sql', 'Lagos Marble Grand Prix: a loud, colourful race across Lagos, through a busy market and over the lagoon on a long bridge to the National Theatre.'],
 ];
 for (const [slug, file, note] of HIDDEN_KIT_TRACKS) {
   test(`${slug} is added by its data update, switched off, exactly as its track file builds it`, () => {

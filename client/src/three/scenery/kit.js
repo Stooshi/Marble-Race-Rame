@@ -278,7 +278,7 @@ export function buildKitScenery(centerline, track, theme, { lite = false } = {})
   const minZ = Math.min(...zs);
   const maxZ = Math.max(...zs);
   const spacing = lite ? 12 : 7;
-  const maxItems = lite ? (biome === 'meadow' ? 150 : 300) : 900; // (fewer of the meadow's broadleaf trees on a phone: they cost the most)
+  const maxItems = lite ? (biome === 'meadow' ? 150 : kit.grandPrix ? 220 : 300) : 900; // (fewer of the meadow's broadleaf trees on a phone, and fewer beside a Grand Prix's grandstands)
   const spots = [];
   for (let x = minX - 260; x <= maxX + 260; x += spacing) {
     for (let z = minZ - 260; z <= maxZ + 260; z += spacing) spots.push([x + (rand() - 0.5) * spacing * 0.9, z + (rand() - 0.5) * spacing * 0.9, rand(), rand()]);
