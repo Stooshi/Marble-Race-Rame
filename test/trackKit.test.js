@@ -618,6 +618,7 @@ const HIDDEN_KIT_TRACKS = [
   ['stockholm-marble-grand-prix', '2026-10-30-add-stockholm-marble-grand-prix.sql', 'Stockholm Marble Grand Prix: a home race across the islands and bridges, down the Sodermalm cliffs, through Gamla Stan, over the water past City Hall and round Djurgarden to the steamboats on Strandvagen.'],
   ['delhi-red-fort-marble-grand-prix', '2026-10-31-add-delhi-red-fort-marble-grand-prix.sql', 'Delhi Red Fort Marble Grand Prix: from the ramparts of the Red Fort and out under its great gateway, through Chandni Chowk and past the Jama Masjid, down the ceremonial avenue to India Gate.'],
   ['sahara-marble-grand-prix', '2026-11-01-add-sahara-marble-grand-prix.sql', 'Sahara Marble Grand Prix: a desert circuit from a kasbah down through dunes, an oasis splitter and a canyon to a mud mosque finish'],
+  ['elderglade-marble-grand-prix', '2026-11-02-add-elderglade-marble-grand-prix.sql', 'Elderglade Marble Grand Prix: an enchanted elven forest from a tree platform through ferns and a waterfall, round the Great Tree to a clearing of glowing flowers'],
 ];
 for (const [slug, file, note] of HIDDEN_KIT_TRACKS) {
   test(`${slug} is added by its data update, switched off, exactly as its track file builds it`, () => {
