@@ -608,6 +608,7 @@ const HIDDEN_KIT_TRACKS = [
   ['paris-eiffel-tower-run', '2026-10-20-add-paris-eiffel-tower-run.sql', 'Paris Eiffel Tower Run: from Montmartre through the Arc de Triomphe and round the Concorde obelisk to the Seine and the Eiffel Tower, in daylight only, built with the track kit.'],
   ['dubai-twister', '2026-10-21-add-dubai-twister.sql', 'Dubai Twister: from the red desert dunes past an oasis into futuristic Dubai, round the twisting tower and down to the Palm, built with the track kit.'],
   ['amazon-water-run', '2026-10-22-add-amazon-water-run.sql', 'Amazon Water Run: down a jungle river and over two waterfalls, past a sloth, a river dolphin and a caiman, to a village on stilts, built with the track kit.'],
+  ['rio-jungle-rumble', '2026-10-23-add-rio-jungle-rumble.sql', 'Rio Jungle Rumble: from the Tijuca jungle below Corcovado (its figure only a distant, stylised silhouette), past an anaconda and down the Selarón Steps, to Copacabana beach, built with the track kit.'],
 ];
 for (const [slug, file, note] of HIDDEN_KIT_TRACKS) {
   test(`${slug} is added by its data update, switched off, exactly as its track file builds it`, () => {

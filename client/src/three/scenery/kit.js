@@ -15,7 +15,7 @@ import {
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { buildKitGround, biomeOf } from './kitGround';
 import { FIGURE_COLORS, LANDMARKS, PEOPLE, aspen, cabin, dressingFor, liftTower, snowRock, vulture, winterBirch } from './kitProps';
-import { buildCentrepieces, buildFunicular, buildHouses, buildLake, buildRaceNetting, tagsNear } from './kitPlaces';
+import { buildCentrepieces, buildFunicular, buildHouses, buildLake, buildRaceNetting, tagsNear, turnAngle } from './kitPlaces';
 import { hashString, mergeByArea, piece, seededRandom, smoothstep } from './parts';
 import { COSTUMES, COSTUME_COLORS } from '../costumes';
 import { FEATURE_COLORS } from '../trackFeatures';
@@ -70,7 +70,7 @@ export function buildKitScenery(centerline, track, theme, { lite = false } = {})
       mesh.name = `${name}: moving`;
       mesh.position.copy(new Vector3(...lm.moving.pivot).applyQuaternion(q).add(foot));
       group.add(mesh);
-      turning.push({ mesh, base: q, axis: new Vector3(...lm.moving.axis), speed: lm.moving.speed });
+      turning.push({ mesh, base: q, axis: new Vector3(...lm.moving.axis), moving: lm.moving });
     }
   };
   const yawTo = (dir) => Math.atan2(dir.x, dir.z);
@@ -171,8 +171,16 @@ export function buildKitScenery(centerline, track, theme, { lite = false } = {})
         continue;
       }
       const { s, along, side } = frame((sec.from + sec.to) / 2);
-      // Crossing the track at an angle, high above it, from a tower well out on each side.
-      const dir = along.clone().multiplyScalar(0.5).addScaledVector(side, 0.87).normalize();
+      // Crossing the track at an angle, high above it, from a tower well out on each side
+      // (turned to another angle when a tower would stand on or beside another stretch of track).
+      const angles = [0.5, -0.5, 0.2, -0.2, 0.8, -0.8];
+      const towersClear = (d) => [-1, 1].every((k) => field.clearance(s.pos.x + d.x * k * 170, s.pos.z + d.z * k * 170) >= 25);
+      let dir = null;
+      for (const a of angles) {
+        const d = along.clone().multiplyScalar(a).addScaledVector(side, 0.87).normalize();
+        if (towersClear(d)) { dir = d; break; }
+      }
+      dir ??= along.clone().multiplyScalar(0.5).addScaledVector(side, 0.87).normalize();
       const crossY = s.pos.y + 3 + LIFT_HEIGHT;
       const ends = [-1, 1].map((k) => {
         const foot = s.pos.clone().addScaledVector(dir, k * 170);
@@ -314,7 +322,7 @@ export function buildKitScenery(centerline, track, theme, { lite = false } = {})
     centrepieces.update(t);
     funicular?.update(t);
     lake?.update(t);
-    for (const m of turning) m.mesh.quaternion.copy(m.base).multiply(cabinQ.setFromAxisAngle(m.axis, sec * m.speed));
+    for (const m of turning) m.mesh.quaternion.copy(m.base).multiply(cabinQ.setFromAxisAngle(m.axis, turnAngle(m.moving, sec)));
     for (const b of birds) {
       const a = sec * 0.16; // once round every 40 s
       b.mesh.position.set(b.centre.x + Math.cos(a) * b.radius, b.centre.y + Math.sin(a * 2) * 2, b.centre.z + Math.sin(a) * b.radius);

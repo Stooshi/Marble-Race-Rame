@@ -50,6 +50,11 @@ export function tagsNear(centerline, kit, reach = 160) {
   };
 }
 
+/** How far a landmark's moving part has turned at `sec` seconds: round and round (`speed`), or to and fro (`swing`, `period`). */
+export function turnAngle(moving, sec) {
+  return moving.swing ? moving.swing * Math.sin((sec * 2 * Math.PI) / (moving.period ?? 4)) : sec * (moving.speed ?? 0.3);
+}
+
 // ── A splitter's centrepiece, on the divider between its two channels ──────
 
 /** Mountain hut or big rock, scaled to fit between the channels where they are furthest apart; smoke from the hut. */
@@ -61,6 +66,7 @@ export function buildCentrepieces(centerline, channel, kit, { lite = false, grou
   const bells = [];
   const spots = []; // where they stand (kept clear of trees)
   const arches = []; // an arch over a splitter's channel (its own mesh: the camera passes through it)
+  const turning = []; // centrepieces' moving parts (the anaconda's head)
   const { samples, segments } = centerline;
   for (const sec of kit.sections) {
     if (!sec.around || !LANDMARKS[sec.around]) continue;
@@ -135,10 +141,21 @@ export function buildCentrepieces(centerline, channel, kit, { lite = false, grou
     const scale = Math.min(1, (gap - 0.6) / (2 * half));
     const top = s.pos.y + forkRadius(fork, channel.radius, sMid) * (1 - Math.cos(channel.maxAngle));
     const along = new Vector3(s.tangent.x, 0, s.tangent.z).normalize();
-    const q = new Quaternion().setFromAxisAngle(UP, Math.atan2(along.x, along.z) + Math.PI / 2);
+    // (Most face across the divider; one lying along it, the anaconda, lies along the track.)
+    const lengthwise = sec.around === 'anaconda';
+    const q = new Quaternion().setFromAxisAngle(UP, Math.atan2(along.x, along.z) + (lengthwise ? 0 : Math.PI / 2));
+    const foot = new Vector3(s.pos.x, top - 0.05, s.pos.z);
     const g = lm.build();
-    g.applyMatrix4(new Matrix4().compose(new Vector3(s.pos.x, top - 0.05, s.pos.z), q, new Vector3(scale, scale, scale)));
+    g.applyMatrix4(new Matrix4().compose(foot, q, new Vector3(scale, scale, scale)));
     parts.push(g);
+    if (lm.moving) {
+      const mesh = new Mesh(lm.moving.build(), lambert());
+      mesh.name = `${sec.around}: moving`;
+      mesh.position.copy(new Vector3(...lm.moving.pivot).multiplyScalar(scale).applyQuaternion(q).add(foot));
+      mesh.scale.setScalar(scale);
+      group.add(mesh);
+      turning.push({ mesh, base: q, axis: new Vector3(...lm.moving.axis), moving: lm.moving });
+    }
     if (sec.around === 'mountain-hut') chimneys.push(new Vector3(2, 6.8, -1).multiplyScalar(scale).applyQuaternion(q).add(new Vector3(s.pos.x, top, s.pos.z)));
   }
   if (parts.length) {
@@ -175,9 +192,11 @@ export function buildCentrepieces(centerline, channel, kit, { lite = false, grou
     group.add(bell);
     return bell;
   });
+  const spin = new Quaternion();
   const update = (t) => {
     const sec = t / 1000;
     for (const bell of swinging) bell.rotation.x = Math.sin(sec * 2.2) * 0.5;
+    for (const m of turning) m.mesh.quaternion.copy(m.base).multiply(spin.setFromAxisAngle(m.axis, turnAngle(m.moving, sec)));
     for (const { p, c } of smoke) {
       const pos = p.geometry.getAttribute('position');
       for (let k = 0; k < puffs; k += 1) {

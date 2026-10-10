@@ -371,8 +371,10 @@ export function buildTrackFeatures(centerline, channel, features, { lite = false
       const pos = [];
       const col = [];
       // (On a sand channel, Table Mountain Run's, they are rough strips of red-brown gravel instead.)
+      // (The Selarón Steps, look 'mosaic': tiles in red, yellow, blue and green.)
       const sand = channel.look === 'sand';
-      const shades = (sand ? ['#9c6b45', '#b07b50', '#8a5c3a', '#c08a5c'] : ['#a8a39b', '#bdb6ac', '#97928b', '#c7c0b4']).map((c) => new Color(c));
+      const shades = (f.look === 'mosaic' ? ['#d8312a', '#f2c230', '#2f6fd0', '#2f9a4a', '#f2efe8']
+        : sand ? ['#9c6b45', '#b07b50', '#8a5c3a', '#c08a5c'] : ['#a8a39b', '#bdb6ac', '#97928b', '#c7c0b4']).map((c) => new Color(c));
       const grout = new Color(sand ? '#5e3e27' : '#3e3b38');
       const quad = (a0, a1, u0, u1, lift, color) => {
         const corners = [[a0, u0], [a0, u1], [a1, u1], [a1, u0]].map(([at, u]) => surface(at, -lip + 2 * lip * u, lift).point);

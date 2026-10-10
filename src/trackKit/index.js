@@ -163,7 +163,7 @@ function track(spec) {
           const share = f.count > 1 ? f.from + ((f.to - f.from) * k) / (f.count - 1) : f.from;
           features.push({ type: 'bump', at: along(i, share) });
         }
-        if (f.feature === 'steps') features.push({ type: 'cobbles', at, length: Math.round((f.to - f.from) * metres(i) * 10) / 10, drag: f.drag, look: 'steps' });
+        if (f.feature === 'steps') features.push({ type: 'cobbles', at, length: Math.round((f.to - f.from) * metres(i) * 10) / 10, drag: f.drag, look: f.tiles === 'mosaic' ? 'mosaic' : 'steps' });
         placed.push({ section: i, kind: f.feature, at, count: f.count, spacing: ((f.to - f.from) * metres(i)) / Math.max(1, f.count - 1) });
         continue;
       }

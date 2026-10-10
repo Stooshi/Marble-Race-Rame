@@ -80,7 +80,7 @@ To look at them: `node scripts/dump-kit-track.js costume-gallery`, then
 | `brake({ at, length, drag })` | A short braking zone (one is added before the sharp bend automatically) |
 | `bump({ at })` | A low speed bump: the field hops, about 1 m at most |
 | `moguls({ from, to, count })` | A row of low bumps: on a straight, 30 m after any bend, 5 m apart or more, 8 at most |
-| `steps({ from, to, count, drag })` | Small regular bumps over a slowing surface (the Selarón Steps); same rules as moguls |
+| `steps({ from, to, count, drag, tiles })` | Small regular bumps over a slowing surface (the Selarón Steps; `tiles: 'mosaic'` paints them red, yellow, blue and green); same rules as moguls |
 
 Nothing bumpy within 40 m after a block: marbles flung off it land on the bumps and bounce high.
 
@@ -118,7 +118,8 @@ Scenery comes from names in the file (looks only; checked, so a typo is refused)
   'sacre-coeur' | 'moulin-rouge' (its sails turn) | 'fountains' | 'louvre-pyramid' | 'notre-dame' |
   'eiffel-tower' | 'seine' | 'bookstalls' | 'bedouin-camp' | 'museum-of-the-future' | 'dubai-frame' |
   'burj-al-arab' | 'burj-khalifa' | 'palm-boardwalk' | 'dune-buggy' | 'toucan-tree' | 'river-pool' (a pink
-  river dolphin surfaces in it) | 'teatro-amazonas' | 'river-dock'` (the world landmarks: client/src/three/scenery/kitLandmarks.js).
+  river dolphin surfaces in it) | 'teatro-amazonas' | 'river-dock' | 'corcovado' (far behind, its figure only a distant
+  silhouette) | 'sugarloaf' | 'maracana' | 'parrot-tree' | 'copacabana'` (the world landmarks: client/src/three/scenery/kitLandmarks.js).
 - `figures: ['skier', 'snowboarder', 'spectator', 'reindeer', …]`: people, or any
   block costume, standing on the banks facing the track with small idle movements.
 - `overhead: ['gondola' | 'cable-car' | 'chairlift' | 'vulture']`: a lift crossing high above
@@ -135,7 +136,7 @@ Scenery comes from names in the file (looks only; checked, so a typo is refused)
   (Paris), `'skyscrapers'` (Dubai), `'stilt-houses'` (the Amazon); `'plane-trees'` (rows of city trees).
 - `around` on a splitter, what stands between its two channels: `'mountain-hut'` (smoke
   from its chimney), `'big-rock'`, `'mountain-restaurant'`, `'mine-headframe'`, `'nunatak'`,
-  `'arc-de-triomphe'` (over one channel: the other runs round it), `'oasis'`, `'river-island'`; on a spiral, what it winds
+  `'arc-de-triomphe'` (over one channel: the other runs round it), `'oasis'`, `'river-island'`, `'anaconda'` (lying along the divider, lifting its head); on a spiral, what it winds
   down around: `'bell-tower'` (its bell swinging), `'notre-dame'`, `'twisted-tower'`; in a hairpin: `'obelisk'`.
 - `designChanges: ['…']`: where the recipe made the build differ from the design, and
   why; shown at the top of the track report (never raced).

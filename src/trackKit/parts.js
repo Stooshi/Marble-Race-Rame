@@ -214,8 +214,8 @@ function moguls({ from = 0.2, to = 0.85, count = 5 } = {}) {
  * Steps: small regular bumps over a rough stretch that slows the field
  * (the Selarón Steps); follow them with a plunge to pick the speed back up.
  */
-function steps({ from = 0.1, to = 0.8, count = 6, drag = 0.015 } = {}) {
-  return { feature: 'steps', from, to, count, drag, at: from };
+function steps({ from = 0.1, to = 0.8, count = 6, drag = 0.015, tiles } = {}) {
+  return { feature: 'steps', from, to, count, drag, at: from, ...(tiles && { tiles }) }; // tiles: 'mosaic' (the Selarón Steps' colours)
 }
 
 /** A short, sharp braking zone (rough surface): the field bunches up, then fans out again (Table Mountain Run). */
@@ -237,11 +237,12 @@ module.exports = {
     'lift-station', 'mine-buildings', 'snow-park', 'base-camp',
     'sacre-coeur', 'moulin-rouge', 'fountains', 'louvre-pyramid', 'notre-dame', 'eiffel-tower', 'seine', 'bookstalls',
     'bedouin-camp', 'museum-of-the-future', 'dubai-frame', 'burj-al-arab', 'burj-khalifa', 'palm-boardwalk', 'dune-buggy',
-    'toucan-tree', 'river-pool', 'teatro-amazonas', 'river-dock'],
+    'toucan-tree', 'river-pool', 'teatro-amazonas', 'river-dock',
+    'corcovado', 'sugarloaf', 'maracana', 'parrot-tree', 'copacabana'],
   OVERHEAD: ['gondola', 'cable-car', 'chairlift', 'vulture'],
   // What stands in the middle of a splitter, between its two channels (the arch: over one of
   // them), or in the middle of a spiral or a hairpin.
-  AROUND: ['mountain-hut', 'big-rock', 'mountain-restaurant', 'mine-headframe', 'nunatak', 'bell-tower', 'arc-de-triomphe', 'obelisk', 'notre-dame', 'oasis', 'twisted-tower', 'river-island'],
+  AROUND: ['mountain-hut', 'big-rock', 'mountain-restaurant', 'mine-headframe', 'nunatak', 'bell-tower', 'arc-de-triomphe', 'obelisk', 'notre-dame', 'oasis', 'twisted-tower', 'river-island', 'anaconda'],
   // Scenery near a section (or the start or finish): what grows and stands beside the track there.
   SCENERY: ['bare', 'rocks', 'birches', 'pines', 'race-netting', 'funicular', 'wooden-houses', 'frozen-lake',
     'wood-clad', 'chalets', 'pasture', 'aspens', 'shopfronts',

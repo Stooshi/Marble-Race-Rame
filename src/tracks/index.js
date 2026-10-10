@@ -13,4 +13,5 @@ module.exports = [
   require('./paris-eiffel-tower-run'),
   require('./dubai-twister'),
   require('./amazon-water-run'),
+  require('./rio-jungle-rumble'),
 ];

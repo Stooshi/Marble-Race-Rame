@@ -11,7 +11,7 @@
  *   size                              the footprint: { radius, height } for blocks
  *                                     and pegs; { len, width, height } for parked ones
  */
-import { BoxGeometry, ConeGeometry, CylinderGeometry, Group, IcosahedronGeometry, Matrix4, Mesh, Quaternion, Vector3 } from 'three';
+import { BoxGeometry, ConeGeometry, CylinderGeometry, Group, IcosahedronGeometry, Matrix4, Mesh, Quaternion, SphereGeometry, Vector3 } from 'three';
 import { local } from './animals';
 
 export const COSTUME_COLORS = {
@@ -43,6 +43,10 @@ export const COSTUME_COLORS = {
   logBark: '#5a3f2a', logEnd: '#b48a5a', moss: '#5f8a3a',
   caiman: '#4f5a3a', caimanBelly: '#a8a07a', caimanEye: '#e0b43c', caimanMouth: '#c86a6a',
   jaguar: '#d9a24a', jaguarSpot: '#3a2a1e', jaguarPale: '#f0e2c4',
+  ballWhite: '#f4f4f2', ballBlack: '#1f2024', ballYellow: '#f2d23a', ballGreen: '#2f9a4a',
+  flagYellow: '#f2d23a', flagPole: '#f4f4f2',
+  surferSkin: '#c98f6a', surferShorts: '#2fb3a0', board1: '#e23b3b', board2: '#2f6fd0', board3: '#e8b62a', surferHair: '#3a2a1e',
+  monkey: '#6b4a2f', monkeyFace: '#d9b08a', branch: '#5a4a38', leafGreen: '#3f8f3a',
   pigeonGrey: '#8e939c', pigeonDark: '#4f545c', pigeonNeck: '#5f8a7a', beak: '#3a3a3a',
 };
 
@@ -510,6 +514,57 @@ function riverStake(add, mat, group, point, q, { height, l }) {
   return [];
 }
 
+/** A football on the track, rocking gently in place (Rio Jungle Rumble's blocks): white with dark patches. */
+function football(add, mat, group, point, q, size = {}) {
+  const r = Math.min(0.7, (size.radius ?? 0.75) - 0.05);
+  const dark = Math.round(((size.l ?? 0) + 1) * 5) % 2 ? 'ballBlack' : 'ballGreen';
+  add('ballBlack', new CylinderGeometry(r * 0.6, r * 0.6, 0.02, 12, 1, true), local(point, q, 0, 0.02, 0)); // the dent it sits in
+  const ball = movingPart(group, point, q, 0, r, 0, [
+    mesh(new IcosahedronGeometry(r, 1), mat('ballWhite')),
+    ...[[0, 1, 0], [0.9, 0.3, 0.3], [-0.6, 0.2, 0.8], [0.2, -0.4, -0.9], [-0.8, -0.3, -0.5], [0.5, 0.5, -0.7]].map(([x, y, z]) => {
+      const n = new Vector3(x, y, z).normalize();
+      return mesh(new IcosahedronGeometry(r * 0.32, 0), mat(dark), n.x * r * 0.86, n.y * r * 0.86, n.z * r * 0.86, 1, 1, 1);
+    }),
+  ]);
+  return [{ part: ball, base: q.clone(), axis: new Vector3(1, 0, 0), swing: 0.15, period: 1.8 }];
+}
+
+/** A football corner flag: a white pole with a yellow flag (Rio Jungle Rumble's slalom poles). */
+function cornerFlag(add, mat, group, point, q, { height, l }) {
+  add('flagPole', new CylinderGeometry(0.035, 0.045, height + 0.3, 6), local(point, q, 0, (height + 0.3) / 2, 0));
+  const side = l >= 0 ? 1 : -1;
+  add('flagYellow', new BoxGeometry(0.45, 0.32, 0.02), local(point, q, side * 0.24, height + 0.1, 0));
+  return [];
+}
+
+/** A surfer standing at the edge, a surfboard stood up beside them (Rio Jungle Rumble's curtain). */
+function surfer(add, mat, group, point, q) {
+  const k = Math.round((point.x * 3.1 + point.z * 1.7) * 10) % 3;
+  for (const x of [-0.12, 0.12]) add('surferSkin', new BoxGeometry(0.16, 0.8, 0.18), local(point, q, x, 0.4, 0));
+  add('surferShorts', new BoxGeometry(0.4, 0.3, 0.24), local(point, q, 0, 0.82, 0));
+  add('surferSkin', new BoxGeometry(0.44, 0.55, 0.24), local(point, q, 0, 1.25, 0));
+  add('surferSkin', new SphereGeometry(0.15, 8, 6), local(point, q, 0, 1.68, 0));
+  add('surferHair', new SphereGeometry(0.16, 8, 4, 0, Math.PI * 2, 0, Math.PI / 2), local(point, q, 0, 1.7, 0));
+  add(['board1', 'board2', 'board3'][(k + 3) % 3], new BoxGeometry(0.5, 2.0, 0.07), local(point, q, 0.42, 1.0, 0.05).multiply(new Matrix4().makeRotationZ(0.08)));
+  return [];
+}
+
+/** A monkey on a low branch, scratching its head and looking round (Rio Jungle Rumble; a figure beside the track). */
+function monkey(add, mat, group, point, q) {
+  add('branch', new CylinderGeometry(0.08, 0.1, 1.6, 6), local(point, q, 0, 0.9, 0).multiply(new Matrix4().makeRotationZ(Math.PI / 2)));
+  add('branch', new CylinderGeometry(0.1, 0.12, 0.9, 6), local(point, q, -0.6, 0.45, 0));
+  add('leafGreen', new IcosahedronGeometry(0.5, 0), local(point, q, -0.6, 1.3, -0.1, 1.2, 0.8, 1));
+  add('monkey', new IcosahedronGeometry(0.2, 1), local(point, q, 0.15, 1.18, 0, 0.9, 1.2, 0.8));          // body, sitting on the branch
+  add('monkey', new CylinderGeometry(0.03, 0.04, 0.7, 5), local(point, q, 0.3, 0.75, -0.1).multiply(new Matrix4().makeRotationZ(0.3))); // its tail hanging down
+  const head = movingPart(group, point, q, 0.15, 1.5, 0.02, [
+    mesh(new IcosahedronGeometry(0.14, 1), mat('monkey')),
+    mesh(new IcosahedronGeometry(0.09, 0), mat('monkeyFace'), 0, -0.02, 0.09, 1, 0.9, 0.6),
+    ...[-1, 1].map((k) => mesh(new IcosahedronGeometry(0.05, 0), mat('monkeyFace'), k * 0.14, 0.02, 0)),
+    mesh(new BoxGeometry(0.06, 0.28, 0.06), mat('monkey'), 0.16, 0.08, 0.02).rotateZ(-0.8), // the scratching arm
+  ]);
+  return [{ part: head, base: q.clone(), axis: new Vector3(0, 1, 0), swing: 0.6, period: 2.8 }];
+}
+
 /** A Paris street lamp: a dark green iron post and its lantern (Paris Eiffel Tower Run's slalom poles). */
 function streetLamp(add, mat, group, point, q, { height }) {
   const h = height + 1.6;
@@ -584,6 +639,10 @@ export const KIT_COSTUMES = {
   'street-lamp': { places: 'slalom', build: streetLamp },
   'rally-flag': { places: 'slalom', build: rallyFlag },
   log: { places: 'block', build: floatingLog },
+  football: { places: 'block', upright: true, build: football },
+  'corner-flag': { places: 'slalom', build: cornerFlag },
+  surfer: { places: 'curtain', build: surfer },
+  monkey: { places: 'block', upright: true, build: monkey },
   'river-stake': { places: 'slalom', build: riverStake },
   caiman: { places: 'block', build: caiman },
   jaguar: { places: 'block', upright: true, build: jaguar },

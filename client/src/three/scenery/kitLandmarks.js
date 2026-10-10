@@ -375,6 +375,84 @@ function riverDock() {
   return merge(parts);
 }
 
+// ── Rio ─────────────────────────────────────────────────────────────────────
+
+/**
+ * Corcovado far behind the gate, and on its summit only a distant, stylised silhouette of a
+ * figure with open arms (never a detailed statue). Placed well back, in the background.
+ */
+function corcovado() {
+  const z = -420;
+  return merge([
+    piece(new ConeGeometry(110, 230, 9), '#2f6e2c', M(0, 60, z)),
+    piece(new ConeGeometry(60, 140, 8), '#4a5a3a', M(18, 125, z + 10)),
+    box(5, 26, 5, 18, 207, z + 10, '#e8e6e0'),                     // the figure: a plain upright…
+    box(30, 3.5, 3.5, 18, 214, z + 10, '#e8e6e0'),                 // …and its open arms
+    box(9, 6, 9, 18, 193, z + 10, '#d8d4cc'),                      // the plinth
+  ]);
+}
+
+/** Sugarloaf Mountain beyond the finish: a great rounded granite dome rising out of the bay, its little sister beside it. */
+function sugarloaf() {
+  const z = -300;
+  return merge([
+    piece(new SphereGeometry(55, 14, 10), '#6f7a6a', S(0, 30, z, 0.8, 2.2, 0.8)),
+    piece(new SphereGeometry(30, 12, 8), '#5f8a4a', S(-90, 10, z + 40, 1, 1.4, 1)),
+    box(400, 1, 300, 0, -10, z, '#2f8fb5'),                          // the bay
+  ]);
+}
+
+/** The Maracanã, far off: a great white oval stadium, its roof ring open in the middle. */
+function maracana() {
+  const ring = new CylinderGeometry(42, 46, 18, 24, 1, true);
+  ring.scale(1, 1, 0.75);
+  const roof = new CylinderGeometry(46, 46, 1.5, 24, 1, true);
+  roof.scale(1, 1, 0.75);
+  return merge([piece(ring, '#e8e6e0', M(0, 9, 0)), piece(roof, '#c9ccd1', M(0, 18.5, 0)), piece(new CylinderGeometry(34, 34, 0.3, 20), '#4f9a3a', S(0, 0.5, 0, 1, 1, 0.75))]);
+}
+
+/** A rainforest tree with macaws on its branches (red, blue and yellow). */
+function parrotTree() {
+  const parts = [
+    piece(new CylinderGeometry(1, 1.5, 15, 8), '#5a4a38', M(0, 7.5, 0)),
+    beam(V(0, 11, 0), V(7, 14, 2), 0.5, '#5a4a38'),
+    leafy(5, '#2f6e2c', 0, 17, 0), leafy(3.6, '#3f8f3a', 6.5, 15.5, 2),
+  ];
+  for (const [x, y, z, c, w] of [[5, 13.4, 1.6, '#d8312a', '#2f6fd0'], [3, 12.7, 1, '#2f6fd0', '#e8b62a'], [6.6, 13.9, 2.1, '#d8312a', '#e8b62a']]) {
+    parts.push(piece(new IcosahedronGeometry(0.3, 0), c, S(x, y + 0.3, z, 0.8, 1.4, 0.8)));
+    parts.push(piece(new BoxGeometry(0.1, 0.6, 0.12), w, M(x, y - 0.35, z - 0.1)));           // the long tail
+    parts.push(piece(new IcosahedronGeometry(0.16, 0), c, M(x, y + 0.65, z + 0.05)));
+  }
+  return merge(parts);
+}
+
+/** Copacabana: the promenade's black-and-white wave mosaic, the beach, the sea, surfers with their boards. */
+function copacabana() {
+  const parts = [box(80, 0.15, 6, 0, 0.08, 0, '#f2efe8'), box(80, 0.3, 20, 0, 0.05, -13, '#efd9a8'), box(80, 0.3, 30, 0, -0.1, -38, '#2f8fb5')];
+  for (let k = 0; k < 20; k += 1) parts.push(box(2, 0.17, 1.2, -38 + k * 4, 0.09, Math.sin(k * 1.2) * 1.6, '#1f2024')); // the waves of the mosaic
+  for (const [x, c] of [[-20, '#e23b3b'], [-6, '#2fb3a0'], [12, '#e8b62a'], [26, '#2f6fd0']]) {
+    parts.push(box(0.5, 1.6, 0.3, x, 0.95, -12, '#c98f6a'), piece(new SphereGeometry(0.17, 8, 6), '#c98f6a', M(x, 1.95, -12)));
+    parts.push(piece(new BoxGeometry(0.55, 2.1, 0.1), c, turned(x + 0.6, 1.1, -11.8, 0.2)));
+  }
+  return merge(parts);
+}
+
+/** An anaconda lying along a splitter's divider: coils of a long dark-green body (its head, lifting, is the moving part). */
+function anaconda() {
+  const parts = [];
+  for (let k = 0; k < 16; k += 1) parts.push(piece(new IcosahedronGeometry(0.42, 0), k % 3 ? '#3f5a2a' : '#2a3a1e', S(0, 0.32, -9 + k * 1.05, 0.9, 0.7, 1.2)));
+  for (let k = 0; k < 6; k += 1) parts.push(piece(new BoxGeometry(0.22, 0.05, 0.3), '#1f2a14', M((k % 2 ? 0.15 : -0.15), 0.62, -8 + k * 2.8)));  // the dark blotches
+  return merge(parts);
+}
+function anacondaHead() {
+  return merge([
+    piece(new BoxGeometry(0.42, 0.26, 0.7), '#3f5a2a', M(0, 0.6, 0.45)),
+    piece(new BoxGeometry(0.34, 0.12, 0.3), '#2a3a1e', M(0, 0.68, 0.85)),
+    ...[-1, 1].map((k) => piece(new IcosahedronGeometry(0.05, 0), '#e0b43c', M(k * 0.16, 0.74, 0.7))),
+    piece(new CylinderGeometry(0.3, 0.38, 0.9, 7), '#3f5a2a', new Matrix4().makeRotationX(Math.PI / 2 - 0.6).premultiply(M(0, 0.3, 0))),
+  ]);
+}
+
 /** Landmarks by name: builder, footprint radius, and for some the half-width that has to fit a splitter or bend. */
 export const WORLD_LANDMARKS = {
   'sacre-coeur': { build: sacreCoeur, radius: 20 },
@@ -401,4 +479,10 @@ export const WORLD_LANDMARKS = {
   'river-pool': { build: riverPool, radius: 15, moving: { build: riverDolphin, pivot: [0, -2.6, 0], axis: [1, 0, 0], speed: 0.6 } },
   'teatro-amazonas': { build: teatroAmazonas, radius: 16 },
   'river-dock': { build: riverDock, radius: 14 },
+  corcovado: { build: corcovado, radius: 4 },
+  sugarloaf: { build: sugarloaf, radius: 4 },
+  maracana: { build: maracana, radius: 48 },
+  'parrot-tree': { build: parrotTree, radius: 8 },
+  copacabana: { build: copacabana, radius: 30 },
+  anaconda: { build: anaconda, radius: 2, fit: 0.4, moving: { build: anacondaHead, pivot: [0, 0.2, 7.6], axis: [1, 0, 0], swing: 0.45, period: 5 } },
 };
