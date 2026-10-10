@@ -20,4 +20,5 @@ module.exports = [
   require('./istanbul-marble-grand-prix'),
   require('./lagos-marble-grand-prix'),
   require('./nairobi-marble-grand-prix'),
+  require('./stockholm-marble-grand-prix'),
 ];
