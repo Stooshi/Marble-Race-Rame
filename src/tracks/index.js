@@ -9,4 +9,5 @@ module.exports = [
   require('./portes-du-soleil-run'),
   require('./park-city-run'),
   require('./baqueira-beret-run'),
+  require('./greenland-expedition'),
 ];

@@ -111,7 +111,8 @@ export function aspen(lite) {
 export function dressingFor(biome) {
   return {
     alpine: [[(l) => pine(l, true), 0.8], [(l) => rock(l, '#9a9690'), 0.2]],
-    arctic: [[(l) => rock(l, '#7d8794'), 0.7], [(l) => rock(l, '#e8eef5'), 0.3]],
+    // (Arctic ground is all rocks, hundreds of them: always the plainest rock, so the triangles stay in budget.)
+    arctic: [[() => rock(true, '#7d8794'), 0.7], [() => rock(true, '#e8eef5'), 0.3]],
     meadow: [[broadleaf, 0.45], [birch, 0.15], [(l) => bush(l), 0.4]],
     desert: [[(l) => rock(l, '#b98154'), 0.55], [() => cactus(), 0.3], [palm, 0.15]],
     jungle: [[broadleaf, 0.4], [palm, 0.25], [fern, 0.35]],

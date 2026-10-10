@@ -32,6 +32,7 @@ export const COSTUME_COLORS = {
   dogGrey: '#8a8d93', dogWhite: '#eef0f2', dogDark: '#3a3c42', dogHarness: '#e2462f',
   muskox: '#4a3426', muskoxPale: '#a08466', muskoxHorn: '#d9ccb4',
   foxWhite: '#f4f5f7', foxDark: '#2a2b30',
+  flagOrange: '#f07a1f',
 };
 
 /** A part's head (or other moving piece) as its own little group at local (x, y, z), turned with the body. */
@@ -353,6 +354,14 @@ function slalomGate(add, mat, group, point, q, { height, l }) {
   return [];
 }
 
+/** An expedition's route-marker flag: a bamboo pole with a small orange flag, marking the way down the ice (Greenland Expedition). */
+function routeFlag(add, mat, group, point, q, { height, l }) {
+  add('bamboo', new CylinderGeometry(0.035, 0.045, height + 0.4, 5), local(point, q, 0, (height + 0.4) / 2, 0));
+  const side = l >= 0 ? 1 : -1;
+  add('flagOrange', new BoxGeometry(0.5, 0.34, 0.03), local(point, q, side * 0.27, height + 0.15, 0));
+  return [];
+}
+
 /** A round Go stone lying on the board, black or white (China Wall Twister's board-game run). */
 function goStone(add, mat, group, point, q, { radius, at }) {
   const white = Math.round(at * 997) % 2 === 1;
@@ -389,4 +398,5 @@ export const KIT_COSTUMES = {
   'kick-sled': { places: 'parked', build: kickSled },
   'slalom-gate': { places: 'slalom', build: slalomGate },
   'go-stone': { places: 'slalom', build: goStone },
+  'route-flag': { places: 'slalom', build: routeFlag },
 };
