@@ -398,7 +398,7 @@ export function buildGrandPrix(centerline, channel, kit, { lite = false, ground,
   for (const geometry of mergeByArea(still, 400)) group.add(Object.assign(new Mesh(geometry, new MeshLambertMaterial({ vertexColors: true, flatShading: true })), { name: 'grandstands' }));
   if (lamps.length) group.add(Object.assign(new Mesh(merge(lamps), new MeshBasicMaterial({ vertexColors: true })), { name: 'floodlights' }));
   const { material: crowdMat, uniforms } = crowdMaterial();
-  if (crowd.length) for (const geometry of mergeByArea(crowd, 300)) group.add(Object.assign(new Mesh(geometry, crowdMat), { name: 'crowds' }));
+  if (crowd.length) for (const geometry of mergeByArea(crowd, lite ? 600 : 300)) group.add(Object.assign(new Mesh(geometry, crowdMat), { name: 'crowds' }));
 
   // ── Fireworks over the finish once the winner is home ─────────────────
   const sparkles = gp.fireworks === 'sparkles';

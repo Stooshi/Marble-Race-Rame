@@ -56,6 +56,8 @@ export const COSTUME_COLORS = {
   coneOrange: '#f26a1b', coneWhite: '#f4f4f2', coneBase: '#202226',
   safetyWhite: '#f2f2ee', safetyStripe: '#f2b81c', safetyBlue: '#2556b8', lightAmber: '#ffb21c', lightGreen: '#3fd16a',
   craneBase: '#2c2f36', craneYellow: '#f2b81c', craneArm: '#30333a', cameraBody: '#1b1c20', cameraLens: '#5f7fa8', operatorShirt: '#2f5d9a', operatorSkin: '#c98f6a',
+  simitRed: '#b8231f', simit: '#c98a3a', simitWood: '#6b4a2f', simitShade: '#f2f2ee',
+  danfoYellow: '#f2c21c', danfoBlack: '#1c1d21', matatuGreen: '#2fb35a', matatuPink: '#e8317a', matatuBlue: '#2a6fd8',
   bannerPost: '#3a3d44', bannerRed: '#d8322b', bannerBlue: '#2556b8', bannerWhite: '#f2f2ee', bannerGold: '#e8b62a',
 };
 
@@ -678,7 +680,7 @@ function safetyCar(add, mat, group, rimCentre, q, { len, width, drop = 0 }) {
   const L = Math.min(len, 4.7);
   for (let n = 0; n < Math.max(1, Math.floor(len / 4.7)); n += 1) {
     const z = -len / 2 + L / 2 + n * L;
-    for (const x of [-0.85, 0.85]) for (const dz of [-1.45, 1.45]) add('tyre', new CylinderGeometry(0.34, 0.34, 0.25, 12), local(centre, q, x, 0.34, z + dz).multiply(new Matrix4().makeRotationZ(Math.PI / 2)));
+    for (const x of [-0.85, 0.85]) for (const dz of [-1.45, 1.45]) add('tyreBlack', new CylinderGeometry(0.34, 0.34, 0.25, 12), local(centre, q, x, 0.34, z + dz).multiply(new Matrix4().makeRotationZ(Math.PI / 2)));
     add('safetyWhite', new BoxGeometry(1.9, 0.55, L - 0.2), local(centre, q, 0, 0.6, z));
     add('safetyWhite', new BoxGeometry(1.6, 0.42, L * 0.42), local(centre, q, 0, 1.08, z - 0.15));
     add('carGlass', new BoxGeometry(1.52, 0.34, L * 0.4), local(centre, q, 0, 1.1, z - 0.15));
@@ -692,10 +694,38 @@ function safetyCar(add, mat, group, rimCentre, q, { len, width, drop = 0 }) {
   return [];
 }
 
+/** A simit seller's cart: a red cart with a glass case of sesame rings on top, two big wheels, a sunshade (Istanbul; parked). */
+function simitCart(add, mat, group, rimCentre, q, { len, width, drop = 0 }) {
+  const W = 1.6;
+  const centre = rimCentre.clone().add(new Vector3(-(width - W) / 2, -drop, 0).applyQuaternion(q));
+  const L = Math.max(2.4, len - 0.4);
+  add('simitRed', new BoxGeometry(W, 0.9, L), local(centre, q, 0, 0.95, 0));
+  add('carGlass', new BoxGeometry(W - 0.2, 0.6, L - 0.3), local(centre, q, 0, 1.7, 0));
+  add('simitRed', new BoxGeometry(W, 0.08, L), local(centre, q, 0, 2.04, 0));
+  for (let k = 0; k < 4; k += 1) add('simit', new CylinderGeometry(0.28, 0.28, 0.1, 10), local(centre, q, (k % 2 ? -0.35 : 0.35), 2.14, -L / 4 + Math.floor(k / 2) * (L / 2)));
+  for (const x of [-W / 2 - 0.05, W / 2 + 0.05]) add('tyreBlack', new CylinderGeometry(0.5, 0.5, 0.1, 12), local(centre, q, x, 0.5, 0).multiply(new Matrix4().makeRotationZ(Math.PI / 2)));
+  add('simitWood', new CylinderGeometry(0.04, 0.04, 1.6, 5), local(centre, q, 0, 2.8, L / 2 - 0.3));
+  add('simitShade', new ConeGeometry(1.3, 0.5, 8), local(centre, q, 0, 3.7, L / 2 - 0.3));
+  return [];
+}
+
+/** A yellow danfo minibus with black bands, parked at the edge (Lagos; parked). */
+function danfoBus(add, mat, group, rimCentre, q, { len, width, drop = 0 }, body = 'danfoYellow', bands = ['danfoBlack', 'danfoBlack']) {
+  const W = 2;
+  const centre = rimCentre.clone().add(new Vector3(-(width - W) / 2, -drop, 0).applyQuaternion(q));
+  const L = Math.max(4, len - 0.2);
+  for (const x of [-0.9, 0.9]) for (const dz of [-L / 2 + 0.9, L / 2 - 0.9]) add('tyreBlack', new CylinderGeometry(0.4, 0.4, 0.3, 12), local(centre, q, x, 0.4, dz).multiply(new Matrix4().makeRotationZ(Math.PI / 2)));
+  add(body, new BoxGeometry(W, 1.9, L), local(centre, q, 0, 1.45, 0));
+  add('carGlass', new BoxGeometry(W + 0.02, 0.7, L - 1.2), local(centre, q, 0, 1.95, -0.2));
+  for (const [k, y] of [0.85, 1.45].entries()) add(bands[k], new BoxGeometry(W + 0.04, 0.16, L + 0.02), local(centre, q, 0, y, 0));
+  add(body, new BoxGeometry(W - 0.2, 0.3, L - 0.6), local(centre, q, 0, 2.55, 0));
+  return [];
+}
+
 /** A TV camera crane on its dolly beyond the rim, an operator at the controls (its boom, swinging in, is the arm; the camera at its tip). */
 function cameraCraneBody(add, base, q) {
   add('craneBase', new BoxGeometry(1.6, 0.4, 1.6), local(base, q, 0, 0.3, 0));
-  for (const x of [-0.65, 0.65]) for (const z of [-0.65, 0.65]) add('tyre', new CylinderGeometry(0.16, 0.16, 0.12, 8), local(base, q, x, 0.16, z).multiply(new Matrix4().makeRotationZ(Math.PI / 2)));
+  for (const x of [-0.65, 0.65]) for (const z of [-0.65, 0.65]) add('tyreBlack', new CylinderGeometry(0.16, 0.16, 0.12, 8), local(base, q, x, 0.16, z).multiply(new Matrix4().makeRotationZ(Math.PI / 2)));
   add('craneYellow', new CylinderGeometry(0.16, 0.2, 2.4, 8), local(base, q, 0, 1.7, 0));
   add('craneBase', new BoxGeometry(0.5, 0.5, 0.5), local(base, q, 0, 2.95, 0));
   add('craneBase', new BoxGeometry(0.6, 0.6, 0.6), local(base, q, 0, 2.95, -1.4)); // the counterweight
@@ -771,6 +801,10 @@ export const KIT_COSTUMES = {
   'tyre-stack': { places: 'block', upright: true, build: tyreStack },
   'traffic-cone': { places: 'slalom', build: trafficCone },
   'safety-car': { places: 'parked', build: safetyCar },
+  'simit-cart': { places: 'parked', build: simitCart },
+  'danfo-bus': { places: 'parked', build: danfoBus },
+  // Nairobi's matatu: the same minibus, brightly painted (green, its stripes pink and blue).
+  matatu: { places: 'parked', build: (add, mat, group, c, q, size) => danfoBus(add, mat, group, c, q, size, 'matatuGreen', ['matatuPink', 'matatuBlue']) },
   'camera-crane': {
     places: 'swipe',
     body: cameraCraneBody,

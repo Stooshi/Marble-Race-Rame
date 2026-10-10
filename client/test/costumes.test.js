@@ -43,7 +43,7 @@ describe('the costume library', () => {
 
   it('every costume a kit track wears exists and dresses the kind of obstacle it stands on', () => {
     for (const track of PHYSICS_TRACKS.filter((t) => t.physics.kit)) {
-      for (const f of track.physics.features.filter((x) => x.look && x.type !== 'cobbles' && x.type !== 'paint')) { // (a braking surface's or paint's look is not a costume)
+      for (const f of track.physics.features.filter((x) => x.look && x.type !== 'cobbles' && x.type !== 'paint' && x.type !== 'bump')) { // (a braking surface's, paint's or a bump's look — rumble strips — is not a costume)
         const costume = COSTUMES[f.look];
         expect(costume, `${track.slug}: costume "${f.look}" is in the library`).toBeTruthy();
         expect(PLACES_ON[costume.places], `${track.slug}: "${f.look}" dresses a ${costume.places}`).toContain(f.type);

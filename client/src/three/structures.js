@@ -17,7 +17,7 @@ import {
   RepeatWrapping, SRGBColorSpace, BoxGeometry, Vector3,
 } from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
-import { placeOnChannel } from './iceChannel';
+import { channelLipAt, channelRadiusAt, placeOnChannel } from './iceChannel';
 import { mergeByArea, piece } from './scenery/parts';
 
 const UP = new Vector3(0, 1, 0);
@@ -28,8 +28,10 @@ export const STRUCTURE_COLORS = {
   ice: '#9fd8f2', iceDeep: '#4fa3d6', iceRib: '#e3f6ff',
   scale: '#c42d24', scaleDark: '#8e1c18', gold: '#e8b33c', tooth: '#f6f1e2', eye: '#ffd21f', pupil: '#1b1b1e', horn: '#e9dcc0',
   root: '#6b4a2e', rootDark: '#4a321f',
+  plaster: '#e8d6b0', plasterDark: '#d9c39a', ablaqRed: '#b8452f', ablaqCream: '#f2e6c8', carpetRed: '#a8201c', carpetBlue: '#2a4f8a', bazaarLamp: '#ffb84a',
   // bridges
   plank: '#8a6340', plankDark: '#6a4a2f', stone: '#a49c8f', stoneDark: '#837b70', iceSlab: '#cdeefc',
+  steel: '#8d939b', steelDark: '#6c727a', bridgeWater: '#3f7fa8',
   // waterfalls
   water: '#3f9ad6', foam: '#ffffff', cliff: '#7c7a74', cliffDark: '#5d5b56',
 };
@@ -41,6 +43,7 @@ const TUNNEL_STYLES = {
   'ice-cave': { out: 1.2, rise: 4.6, ribEvery: 5, see: 0.5 },
   dragon: { out: 1.0, rise: 4.2, ribEvery: 1.5 },
   roots: { out: 1.0, rise: 4.0, ribEvery: 2.5 },
+  bazaar: { out: 0.9, rise: 4.4, ribEvery: 3 },
 };
 
 /** The track's frame at progress p: floor point, level sideways direction (left), along it. */
@@ -179,6 +182,13 @@ export function buildStructures(centerline, channel, kit, { lite = false } = {})
           return k % 2 ? C.scale : C.scaleDark;
         },
         roots: (k, j) => ((k + j) % 4 === 0 ? C.rootDark : noise(k * 13 + j) > 0.6 ? C.root : C.rock),
+        // The Grand Bazaar's vaulted halls: arches striped red and cream, plaster vaults, carpets hung low on the walls.
+        bazaar: (k, j, n, across) => {
+          if (ribRings && k % ribRings === 0) return j % 2 ? C.ablaqRed : C.ablaqCream;
+          const low = j / across < 0.22 || j / across > 0.78;
+          if (low && Math.floor(k / 2) % 3 === 1) return Math.floor(k / 6) % 2 ? C.carpetRed : C.carpetBlue;
+          return noise(k * 7 + j) > 0.5 ? C.plaster : C.plasterDark;
+        },
       }[s.tunnel] ?? ((k, j) => (noise(k + j) > 0.5 ? C.rock : C.rockDark));
       const { geometry, rings } = arch(s.from, s.to, style, colour);
       const mesh = new Mesh(geometry, archMaterial(style.see));
@@ -187,7 +197,7 @@ export function buildStructures(centerline, channel, kit, { lite = false } = {})
 
       // From outside: banks beside the channel (rock, ice or the dragon's coils), never across
       // it, so the follow camera above sees the run dive in under them.
-      const bank = { mine: ['rock', 'rockDark'], rock: ['rock', 'rockDark'], roots: ['root', 'rock'], 'ice-cave': ['iceRib', 'ice'], dragon: ['scale', 'scaleDark'] }[s.tunnel] ?? ['rock', 'rockDark'];
+      const bank = { mine: ['rock', 'rockDark'], rock: ['rock', 'rockDark'], roots: ['root', 'rock'], 'ice-cave': ['iceRib', 'ice'], dragon: ['scale', 'scaleDark'], bazaar: ['plaster', 'plasterDark'] }[s.tunnel] ?? ['rock', 'rockDark'];
       const bankStep = lite ? 6 : 3.5;
       const nb = Math.max(2, Math.round(len / bankStep));
       for (let k = 0; k <= nb; k += 1) {
@@ -217,8 +227,8 @@ export function buildStructures(centerline, channel, kit, { lite = false } = {})
         }
       }
 
-      if (s.tunnel === 'mine') {
-        // Lanterns on the timber frames, low on the walls (inward-facing glowing tiles).
+      if (s.tunnel === 'mine' || s.tunnel === 'bazaar') {
+        // Lanterns on the timber frames (the bazaar: brass lanterns by the arches), low on the walls (inward-facing glowing tiles).
         const lamps = [];
         for (let k = ribRings * 2; k < rings.length - 1; k += ribRings * 3) {
           const last = rings[k].ring.length - 1;
@@ -233,7 +243,7 @@ export function buildStructures(centerline, channel, kit, { lite = false } = {})
           }
         }
         if (lamps.length) {
-          const m = new MeshBasicMaterial({ color: STRUCTURE_COLORS.lantern });
+          const m = new MeshBasicMaterial({ color: s.tunnel === 'bazaar' ? STRUCTURE_COLORS.bazaarLamp : STRUCTURE_COLORS.lantern });
           owned.push(m);
           group.add(new Mesh(mergeGeometries(lamps.map((g) => g.toNonIndexed())), m));
         }
@@ -324,6 +334,8 @@ export function buildStructures(centerline, channel, kit, { lite = false } = {})
     // ── Bridges: below the channel, so they never come between camera and marble ─
     if (s.bridge) {
       const step = lite ? 4 : 2;
+      // (The water under a steel bridge: just above the ravine floor, 24 m below the lowest bridge, as kitGround cuts it.)
+      const waterLevel = Math.min(...kit.sections.filter((x) => x.bridge).flatMap((x) => [0, 0.25, 0.5, 0.75, 1].map((k) => frameAt(centerline, x.from + (x.to - x.from) * k).pos.y))) - 22.8;
       const n = Math.max(2, Math.round(len / step));
       for (let k = 0; k <= n; k += 1) {
         const p = s.from + ((s.to - s.from) * k) / n;
@@ -339,6 +351,19 @@ export function buildStructures(centerline, channel, kit, { lite = false } = {})
         } else if (s.bridge === 'stone') {
           add(k % 2 ? 'stone' : 'stoneDark', new BoxGeometry(9.5, 1.2, step * 0.95), new Matrix4().compose(under.clone().addScaledVector(UP, -0.4), q, new Vector3(1, 1, 1)));
           if (k % 4 === 0) add('stoneDark', new BoxGeometry(2.2, 30, 2.2), new Matrix4().compose(under.clone().addScaledVector(UP, -15.6), q, new Vector3(1, 1, 1)));
+        } else if (s.bridge === 'steel') {
+          // A city bridge in grey steel: a deck girder, a lattice of struts below it, piers every 16 m,
+          // and water (a harbour, a lagoon, a lake) along the ravine floor beneath.
+          // (As wide as the channel there: the start's wide funnel too.)
+          const half = channelRadiusAt(channel, p * channel.arc) * Math.sin(channelLipAt(channel, p * channel.arc)) + 1.4;
+          add(k % 2 ? 'steel' : 'steelDark', new BoxGeometry(2 * half, 1.1, step * 0.98), new Matrix4().compose(under.clone().addScaledVector(UP, -0.35), q, new Vector3(1, 1, 1)));
+          for (const x of [-half + 0.4, half - 0.4]) {
+            const strut = new BoxGeometry(0.3, 3.2, 0.3);
+            strut.rotateX(k % 2 ? 0.6 : -0.6);
+            add('steelDark', strut, new Matrix4().compose(under.clone().addScaledVector(side, x).addScaledVector(UP, -2.4), q, new Vector3(1, 1, 1)));
+          }
+          if (k % 8 === 0) for (const x of [-half + 1, half - 1]) add('steelDark', new BoxGeometry(1.2, 30, 1.2), new Matrix4().compose(under.clone().addScaledVector(side, x).addScaledVector(UP, -15.6), q, new Vector3(1, 1, 1)));
+          add('bridgeWater', new BoxGeometry(2 * half + 24, 0.3, step * 1.02), new Matrix4().compose(new Vector3(pos.x, waterLevel, pos.z), q, new Vector3(1, 1, 1)));
         } else {
           // A narrow-looking bridge of blue ice over the crevasse (the channel keeps its width).
           add('iceSlab', new BoxGeometry(8.2, 1.6, step * 0.98), new Matrix4().compose(under.clone().addScaledVector(UP, -0.5), q, new Vector3(1, 1, 1)));

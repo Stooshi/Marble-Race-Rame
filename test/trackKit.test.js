@@ -610,6 +610,7 @@ const HIDDEN_KIT_TRACKS = [
   ['amazon-water-run', '2026-10-22-add-amazon-water-run.sql', 'Amazon Water Run: down a jungle river and over two waterfalls, past a sloth, a river dolphin and a caiman, to a village on stilts, built with the track kit.'],
   ['rio-jungle-rumble', '2026-10-23-add-rio-jungle-rumble.sql', 'Rio Jungle Rumble: from the Tijuca jungle below Corcovado (its figure only a distant, stylised silhouette), past an anaconda and down the Selarón Steps, to Copacabana beach, built with the track kit.'],
   ['china-wall-twister', '2026-10-24-add-china-wall-twister.sql', 'China Wall Twister: along the Great Wall over the ridges, across a Go and Xiangqi board, past a waving fortune cat and through a dragon (in at its tail, out of its mouth), to the Temple of Heaven, built with the track kit.'],
+  ['dubai-marble-grand-prix', '2026-10-25-add-dubai-marble-grand-prix.sql', 'Dubai Marble Grand Prix: a night race through downtown Dubai under floodlights, from beside the Burj Khalifa past the dancing fountain and round the Museum of the Future to the Marina, the first Grand Prix track.'],
 ];
 for (const [slug, file, note] of HIDDEN_KIT_TRACKS) {
   test(`${slug} is added by its data update, switched off, exactly as its track file builds it`, () => {

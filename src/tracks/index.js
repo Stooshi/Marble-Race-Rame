@@ -15,4 +15,5 @@ module.exports = [
   require('./amazon-water-run'),
   require('./rio-jungle-rumble'),
   require('./china-wall-twister'),
+  require('./dubai-marble-grand-prix'),
 ];

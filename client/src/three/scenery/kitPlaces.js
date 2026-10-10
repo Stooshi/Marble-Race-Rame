@@ -15,6 +15,7 @@ import { forkOffset, forkRadius } from '../iceChannel';
 import { merge, piece } from './parts';
 import { LANDMARKS } from './kitProps';
 import { arcDeTriomphe } from './kitLandmarks';
+import { DIVIDER_PIECES } from './kitLandmarksGP';
 import { flakeTexture } from '../lighting';
 
 const UP = new Vector3(0, 1, 0);
@@ -137,7 +138,8 @@ export function buildCentrepieces(centerline, channel, kit, { lite = false, grou
       arches.push(g);
       continue;
     }
-    const half = lm.fit ?? lm.radius * (sec.around === 'mountain-hut' ? 0.62 : 0.85); // its half-width across the divider
+    const piece_ = DIVIDER_PIECES[sec.around]; // (a landmark too big for the divider stands there in a version that fits)
+    const half = piece_?.fit ?? lm.fit ?? lm.radius * (sec.around === 'mountain-hut' ? 0.62 : 0.85); // its half-width across the divider
     const scale = Math.min(1, (gap - 0.6) / (2 * half));
     const top = s.pos.y + forkRadius(fork, channel.radius, sMid) * (1 - Math.cos(channel.maxAngle));
     const along = new Vector3(s.tangent.x, 0, s.tangent.z).normalize();
@@ -145,7 +147,7 @@ export function buildCentrepieces(centerline, channel, kit, { lite = false, grou
     const lengthwise = sec.around === 'anaconda';
     const q = new Quaternion().setFromAxisAngle(UP, Math.atan2(along.x, along.z) + (lengthwise ? 0 : Math.PI / 2));
     const foot = new Vector3(s.pos.x, top - 0.05, s.pos.z);
-    const g = lm.build();
+    const g = (piece_ ?? lm).build();
     g.applyMatrix4(new Matrix4().compose(foot, q, new Vector3(scale, scale, scale)));
     parts.push(g);
     if (lm.moving) {
@@ -482,6 +484,32 @@ function haussmann(k) {
   return { body: merge(parts), windows: merge(windows), w, d };
 }
 
+/** A Sydney sandstone terrace (The Rocks): two storeys, an iron-lace balcony across the front, fans on it. */
+function sandstoneTerrace(k) {
+  const w = 12 + (k % 2) * 4;
+  const d = 8;
+  const h = 8;
+  const parts = [box(w, h, d, 0, h / 2, 0, ['#c9a06a', '#d4ad78', '#be945e'][k % 3]), box(w + 0.4, 0.8, d + 0.4, 0, h + 0.4, 0, '#8a5a3a')];
+  parts.push(box(w, 0.25, 1.6, 0, 3.8, d / 2 + 0.8, '#3a3d44'), box(w, 1, 0.08, 0, 4.4, d / 2 + 1.55, '#2c2f36')); // the balcony and its iron lace
+  for (const x of [-w / 3, 0, w / 3]) parts.push(box(0.15, 3.8, 0.15, x, 1.9, d / 2 + 1.5, '#2c2f36'));
+  for (let n = 0; n < 4; n += 1) parts.push(box(0.45, 0.9, 0.3, -w / 2 + 1.5 + n * (w - 3) / 3, 4.4, d / 2 + 0.8, ['#d8322b', '#2556b8', '#f2b81c', '#2f9a4a'][(n + k) % 4])); // fans on the balcony
+  const windows = merge([box(w - 2, 1.4, 0.1, 0, 2, d / 2 + 0.06, '#3b4a5a'), box(w - 2, 1.4, 0.1, 0, 6, d / 2 + 0.06, '#3b4a5a')]);
+  return { body: merge(parts), windows, w, d };
+}
+
+/** A market stall (Lagos): a timber frame under a bright striped awning, bolts of patterned cloth hung out front. */
+function marketStall(k) {
+  const w = 5 + (k % 3);
+  const d = 4;
+  const cloth = ['#e8b62a', '#d8322b', '#2f9a4a', '#2556b8', '#e86a1b', '#7a3fb0'];
+  const parts = [box(w, 0.9, d, 0, 0.45, 0, '#8a6a45')];
+  for (const x of [-w / 2 + 0.2, w / 2 - 0.2]) for (const z of [-d / 2 + 0.2, d / 2 - 0.2]) parts.push(box(0.15, 2.8, 0.15, x, 1.4, z, '#6b4a2f'));
+  for (let n = 0; n < 4; n += 1) parts.push(box(w / 4, 0.15, d + 0.6, -w / 2 + w / 8 + (n * w) / 4, 2.9 - 0.2 * (n % 2), 0.3, cloth[(n + k) % cloth.length]));
+  for (let n = 0; n < 3; n += 1) parts.push(box(0.7, 1.4, 0.05, -w / 3 + (n * w) / 3, 1.8, d / 2 + 0.35, cloth[(n + k + 2) % cloth.length]));
+  const windows = merge([box(w * 0.8, 0.4, 0.1, 0, 1.1, d / 2 + 0.06, '#c98a3a')]);
+  return { body: merge(parts), windows, w, d };
+}
+
 /** A Dubai tower: a tall glass block, set back near the top, a spire on some. */
 function skyscraper(k) {
   const w = 10 + (k % 3) * 2;
@@ -533,6 +561,8 @@ const HOUSE_STYLES = {
   skyscrapers: { build: skyscraper, out: [45, 60], clear: 30, liteEvery: 2 },
   'stilt-houses': { build: stiltHouse, out: [22, 40], clear: 14 },
   'forbidden-city': { build: forbiddenCity, out: [28, 40], clear: 18, liteEvery: 2 },
+  'sandstone-terraces': { build: sandstoneTerrace, out: [24, 40], clear: 16, liteEvery: 2 },
+  'market-stalls': { build: marketStall, out: [16, 26], clear: 12, liteEvery: 2 },
 };
 
 /** Houses beside the stretches tagged with a house style (and round the start or finish when it is). */
@@ -575,8 +605,9 @@ export function buildHouses(centerline, kit, { lite = false, arc, groundAt, clea
       const q = new Quaternion().setFromAxisAngle(UP, Math.atan2(-side.x * sign, -side.z * sign) + (rand() - 0.5) * 0.4);
       const m = new Matrix4().compose(new Vector3(spot.x, groundAt(spot.x, spot.z) - 0.3, spot.z), q, new Vector3(1, 1, 1));
       bodies.push(h.body.applyMatrix4(m));
-      // Windows that light up at night (Åre's houses) are drawn unlit on their own; the rest are part of the house.
-      (glow ? windows : bodies).push(h.windows.applyMatrix4(m));
+      // Windows that light up at night (Åre's houses, and every house on a floodlit city night) are drawn unlit
+      // on their own; the rest are part of the house.
+      (glow || kit.lighting === 'night' ? windows : bodies).push(h.windows.applyMatrix4(m));
       solids.push({ x: spot.x, z: spot.z, r: Math.max(h.w, h.d) / 2 + 2 });
     }
   }

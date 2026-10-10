@@ -278,8 +278,9 @@ export function buildTrackFeatures(centerline, channel, features, { lite = false
       const armMat = colourMat(a.colour);
       const arm = new Mesh(new CylinderGeometry(a.radii[0], a.radii[1], 1, a.segments), armMat);
       // (The tip and its end in their own colours if the costume says so: a TV camera and its lens.)
-      const paw = new Mesh(a.tipBox ? new BoxGeometry(...a.tipBox) : new IcosahedronGeometry(a.tip, a.tipDetail), a.tipColour ? colourMat(a.tipColour) : armMat);
-      const claws = new Mesh(new IcosahedronGeometry(a.end, a.endDetail), a.endColour ? colourMat(a.endColour) : armMat);
+      // (On phones all in the arm's colour: one material, fewer draw calls.)
+      const paw = new Mesh(a.tipBox ? new BoxGeometry(...a.tipBox) : new IcosahedronGeometry(a.tip, a.tipDetail), a.tipColour && !lite ? colourMat(a.tipColour) : armMat);
+      const claws = new Mesh(new IcosahedronGeometry(a.end, a.endDetail), a.endColour && !lite ? colourMat(a.endColour) : armMat);
       group.add(arm, paw, claws);
       const pawAt = (k) => {
         const l = restL + (reachL - restL) * k;

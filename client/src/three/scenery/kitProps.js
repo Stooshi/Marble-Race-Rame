@@ -6,8 +6,9 @@
  */
 import { BoxGeometry, ConeGeometry, CylinderGeometry, Group, IcosahedronGeometry, Matrix4, Mesh, Quaternion, SphereGeometry, Vector3 } from 'three';
 import { merge, piece } from './parts';
-import { local } from '../costumes/animals';
+import { ANIMALS, local } from '../costumes/animals';
 import { WORLD_LANDMARKS } from './kitLandmarks';
+import { GP_LANDMARKS } from './kitLandmarksGP';
 
 // ── Set dressing: one geometry per kind, instanced ──────────────────────────
 
@@ -35,6 +36,22 @@ export function broadleaf(lite) {
     piece(new CylinderGeometry(0.3, 0.45, 3, 6), '#6b4a2f', new Matrix4().makeTranslation(0, 1.5, 0)),
     piece(new IcosahedronGeometry(2.6, lite ? 0 : 1), '#4f8f3a', new Matrix4().makeTranslation(0, 4.4, 0)),
     piece(new IcosahedronGeometry(1.8, 0), '#5ea345', new Matrix4().makeTranslation(1.2, 5.4, 0.6)),
+  ]);
+}
+
+/** A jacaranda in bloom: a dark trunk, a wide crown of violet-blue flowers (Nairobi's city park). */
+export function jacaranda() {
+  return merge([
+    piece(new CylinderGeometry(0.25, 0.4, 3, 5, 1, true), '#5a4a3a', new Matrix4().makeTranslation(0, 1.5, 0)),
+    piece(new IcosahedronGeometry(2.8, 0), '#8a6ad0', new Matrix4().compose(new Vector3(0, 4.4, 0), new Quaternion(), new Vector3(1.2, 0.7, 1.2))),
+  ]);
+}
+
+/** An umbrella acacia of the savannah: a slim trunk and a broad flat crown. */
+export function acaciaTree() {
+  return merge([
+    piece(new CylinderGeometry(0.2, 0.32, 4.5, 5, 1, true), '#6b5a44', new Matrix4().makeTranslation(0, 2.25, 0)),
+    piece(new CylinderGeometry(3.6, 2.8, 1.1, 7), '#6f8a3a', new Matrix4().makeTranslation(0, 4.9, 0)),
   ]);
 }
 
@@ -236,12 +253,27 @@ function painter(add, mat, group, point, q) {
 }
 
 export const FIGURE_COLORS = {
+  buffaloDark: '#3a302a', buffaloHorn: '#8a8070',
   figSki: '#e23b3b', figTrousers: '#2c3e66', figJacket: '#f2a23a', figPole: '#d9dde3', figHelmet: '#ffffff', figGoggles: '#ffb238',
   figBoard: '#7a3fd0', figTrousers2: '#3d3d45', figJacket2: '#2fb3a0', figBeanie: '#e23b3b', figShirt: '#3f7fd8', figSkin: '#e0b48f',
   figSmock: '#4a6fa5', figBeret: '#1f2024', figEasel: '#8a6a45', figCanvas: '#f4f0e6',
 };
 
-export const PEOPLE = { skier, snowboarder, spectator, painter };
+/** A Cape buffalo grazing, its head down, swinging slowly (Nairobi National Park; a figure beside the track). */
+function buffalo(add, mat, group, point, q) {
+  add('buffaloDark', new BoxGeometry(1.1, 1.1, 2.2), local(point, q, 0, 1.15, 0));
+  for (const x of [-0.35, 0.35]) for (const z of [-0.8, 0.8]) add('buffaloDark', new BoxGeometry(0.22, 0.7, 0.22), local(point, q, x, 0.35, z));
+  const head = new Group();
+  head.position.copy(point.clone().add(new Vector3(0, 1.1, 1.1).applyQuaternion(q)));
+  head.quaternion.copy(q);
+  const m = (g, key, x, y, z) => { const o = new Mesh(g, mat(key)); o.position.set(x, y, z); head.add(o); return o; };
+  m(new BoxGeometry(0.6, 0.6, 0.8), 'buffaloDark', 0, -0.3, 0.4);
+  m(new BoxGeometry(1.4, 0.18, 0.25), 'buffaloHorn', 0, 0, 0.15);
+  group.add(head);
+  return [{ part: head, base: q.clone(), axis: new Vector3(1, 0, 0), swing: 0.25, period: 3.5 }];
+}
+
+export const PEOPLE = { skier, snowboarder, spectator, painter, zebra: ANIMALS.zebra, buffalo };
 
 // ── Landmarks: one builder each, origin on the ground, front facing +z ─────
 
@@ -450,6 +482,7 @@ export const LANDMARKS = {
   nunatak: { build: nunatak, radius: 8, fit: 7.6 },
   'snow-park': { build: snowPark, radius: 9 },
   ...WORLD_LANDMARKS,
+  ...GP_LANDMARKS,
 };
 
 // ── Things passing overhead (scenery only, high above the track) ───────────

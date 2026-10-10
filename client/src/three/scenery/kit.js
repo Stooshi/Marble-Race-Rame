@@ -14,7 +14,7 @@ import {
 } from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { buildKitGround, biomeOf } from './kitGround';
-import { FIGURE_COLORS, LANDMARKS, PEOPLE, aspen, cabin, dressingFor, liftTower, snowRock, vulture, winterBirch } from './kitProps';
+import { FIGURE_COLORS, LANDMARKS, PEOPLE, acaciaTree, aspen, cabin, dressingFor, jacaranda, liftTower, palm, snowRock, vulture, winterBirch } from './kitProps';
 import { buildGrandPrix } from './grandPrix';
 import { buildBattlements, buildCentrepieces, buildFunicular, buildHouses, buildLake, buildRaceNetting, tagsNear, turnAngle } from './kitPlaces';
 import { hashString, mergeByArea, piece, seededRandom, smoothstep } from './parts';
@@ -258,10 +258,13 @@ export function buildKitScenery(centerline, track, theme, { lite = false } = {})
   // The landscape's own, plus what a section's scenery asks for (snow-rimed rocks, birches);
   // a bare stretch (a wind-swept summit) keeps only a few rocks.
   const baseKinds = dressingFor(biome);
-  const kinds = [...baseKinds, [(l) => snowRock(l), 0], [(l) => winterBirch(l), 0], [(l) => aspen(l), 0]];
+  const kinds = [...baseKinds, [(l) => snowRock(l), 0], [(l) => winterBirch(l), 0], [(l) => aspen(l), 0], [() => palm(true), 0], [() => jacaranda(), 0], [() => acaciaTree(), 0]];
   const ROCK = baseKinds.length;
   const BIRCH = baseKinds.length + 1;
   const ASPEN = baseKinds.length + 2;
+  const PALM = baseKinds.length + 3;
+  const JACARANDA = baseKinds.length + 4;
+  const ACACIA = baseKinds.length + 5;
   const tagsAt = tagsNear(centerline, kit);
   const xs = samples.map((s) => s.pos.x);
   const zs = samples.map((s) => s.pos.z);
@@ -295,6 +298,12 @@ export function buildKitScenery(centerline, track, theme, { lite = false } = {})
     } else if (tags.includes('rocks')) k = pick < 0.7 ? ROCK : k;
     else if (tags.includes('birches')) k = pick < 0.7 ? BIRCH : k;
     else if (tags.includes('aspens')) k = pick < 0.75 ? ASPEN : k;
+    else if (tags.includes('palms')) k = pick < 0.7 ? PALM : k; // (a beach: palm trees)
+    else if (tags.includes('jacarandas')) k = pick < 0.75 ? JACARANDA : k; // (Nairobi's city park in bloom)
+    else if (tags.includes('savannah')) {
+      if (pick > 0.25) continue; // (open grassland: a few acacias here and there)
+      k = ACACIA;
+    }
     else if (tags.includes('plane-trees')) k = 0; // (the landscape's own broadleaf trees, in rows of them)
     items[Math.max(0, k)].push({ x, y: groundAt(x, z), z, yaw: rand() * Math.PI * 2, scale: 0.75 + rand() * 0.6, tint: 0.85 + rand() * 0.25 });
     total += 1;
