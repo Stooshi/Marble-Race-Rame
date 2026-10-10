@@ -243,7 +243,7 @@ export function buildTrackFeatures(centerline, channel, features, { lite = false
         const { point } = surface(f.at, l, 0);
         const bottom = point.y + 0.5;
         const h = top - 0.2 - bottom;
-        add(costume.banners[k % costume.banners.length], new BoxGeometry(0.8, h, 0.05), new Matrix4().compose(new Vector3(point.x, bottom + h / 2, point.z), q, new Vector3(1, 1, 1)));
+        add(costume.banners[k % costume.banners.length], new BoxGeometry(costume.bannerWidth ?? 0.8, h, 0.05), new Matrix4().compose(new Vector3(point.x, bottom + h / 2, point.z), q, new Vector3(1, 1, 1)));
         add(costume.post, new BoxGeometry(0.9, 0.08, 0.08), new Matrix4().compose(new Vector3(point.x, top - 0.2, point.z), q, new Vector3(1, 1, 1)));
       }
     } else if (costume.places === 'curtain') {

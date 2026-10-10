@@ -16,4 +16,5 @@ module.exports = [
   require('./rio-jungle-rumble'),
   require('./china-wall-twister'),
   require('./dubai-marble-grand-prix'),
+  require('./sydney-marble-grand-prix'),
 ];

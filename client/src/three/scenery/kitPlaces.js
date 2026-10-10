@@ -510,6 +510,20 @@ function marketStall(k) {
   return { body: merge(parts), windows, w, d };
 }
 
+/** A Gamla Stan merchant house: tall and narrow in ochre, rust red or yellow, a stepped gable to the street. */
+function merchantHouse(k) {
+  const w = 6 + (k % 2) * 2;
+  const d = 9;
+  const h = 14 + (k % 3) * 3;
+  const c = ['#d8a03a', '#b8452f', '#e8c45a', '#c97a3a', '#e8dcc0'][k % 5];
+  const parts = [box(w, h, d, 0, h / 2, 0, c)];
+  for (let n = 0; n < 4; n += 1) parts.push(box(w - n * 1.4, 1.2, 0.6, 0, h + 0.6 + n * 1.2, d / 2 - 0.3, c));
+  parts.push(piece(new ConeGeometry(Math.hypot(w, d) / 2, 3, 4), '#5a3a2a', new Matrix4().makeRotationY(Math.PI / 4).premultiply(at(0, h + 1.5, -1))));
+  const windows = [];
+  for (let r = 0; r < 4; r += 1) windows.push(box(w - 2, 1.2, 0.1, 0, 3 + r * 3, d / 2 + 0.06, '#2f3a44'));
+  return { body: merge(parts), windows: merge(windows), w, d };
+}
+
 /** A Dubai tower: a tall glass block, set back near the top, a spire on some. */
 function skyscraper(k) {
   const w = 10 + (k % 3) * 2;
@@ -563,6 +577,7 @@ const HOUSE_STYLES = {
   'forbidden-city': { build: forbiddenCity, out: [28, 40], clear: 18, liteEvery: 2 },
   'sandstone-terraces': { build: sandstoneTerrace, out: [24, 40], clear: 16, liteEvery: 2 },
   'market-stalls': { build: marketStall, out: [16, 26], clear: 12, liteEvery: 2 },
+  'merchant-houses': { build: merchantHouse, out: [22, 36], clear: 15, liteEvery: 2 },
 };
 
 /** Houses beside the stretches tagged with a house style (and round the start or finish when it is). */

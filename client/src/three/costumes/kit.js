@@ -57,7 +57,12 @@ export const COSTUME_COLORS = {
   safetyWhite: '#f2f2ee', safetyStripe: '#f2b81c', safetyBlue: '#2556b8', lightAmber: '#ffb21c', lightGreen: '#3fd16a',
   craneBase: '#2c2f36', craneYellow: '#f2b81c', craneArm: '#30333a', cameraBody: '#1b1c20', cameraLens: '#5f7fa8', operatorShirt: '#2f5d9a', operatorSkin: '#c98f6a',
   simitRed: '#b8231f', simit: '#c98a3a', simitWood: '#6b4a2f', simitShade: '#f2f2ee',
+  rickshawGreen: '#2f8a3a', rickshawYellow: '#f2c21c', truckSand: '#c9a872', truckCanvas: '#8a7a52',
   danfoYellow: '#f2c21c', danfoBlack: '#1c1d21', matatuGreen: '#2fb35a', matatuPink: '#e8317a', matatuBlue: '#2a6fd8',
+  mushroomStalk: '#efe6d0', mushroomRed: '#d8322b', mushroomGold: '#e8a02a', mushroomSpot: '#fbf6ea', crystal: '#9fe8ff', crystalTip: '#d8f6ff',
+  stag: '#8a5a3a', stagPale: '#e8d6b0', antler: '#e8dcc0', snowball: '#f4f8fc', snowballShade: '#dde8f2', iceClear: '#bfe8f8', lanternGlow: '#ffd36b',
+  troll: '#dfe8f2', trollFace: '#a8c0d8', ruinStone: '#9a958a', ruinDark: '#7a756a', dragonScale: '#8a2a24', dragonSpine: '#e0b43c', dragonTail: '#a8342a',
+  vineGreen: '#3f8f3a', vineDark: '#2f6e2c', branchBrown: '#5a3f2a', battleRed: '#9a1f1a', battleGold: '#d8a93a', battleBlack: '#2a2420',
   bannerPost: '#3a3d44', bannerRed: '#d8322b', bannerBlue: '#2556b8', bannerWhite: '#f2f2ee', bannerGold: '#e8b62a',
 };
 
@@ -722,6 +727,117 @@ function danfoBus(add, mat, group, rimCentre, q, { len, width, drop = 0 }, body 
   return [];
 }
 
+/** An auto-rickshaw: a three-wheeled yellow-and-green cab with a black canopy (Delhi; parked). */
+function autoRickshaw(add, mat, group, rimCentre, q, { len, width, drop = 0 }) {
+  const W = 1.4;
+  const centre = rimCentre.clone().add(new Vector3(-(width - W) / 2, -drop, 0).applyQuaternion(q));
+  const L = Math.max(2.6, len - 0.4);
+  for (let n = 0; n < Math.max(1, Math.floor(len / 2.8)); n += 1) {
+    const z = -len / 2 + L / Math.max(1, Math.floor(len / 2.8)) * (n + 0.5);
+    const l = Math.min(2.6, L);
+    add('rickshawGreen', new BoxGeometry(W, 0.7, l), local(centre, q, 0, 0.75, z));
+    add('rickshawYellow', new BoxGeometry(W - 0.1, 0.9, l * 0.55), local(centre, q, 0, 1.5, z - l * 0.15));
+    add('danfoBlack', new BoxGeometry(W + 0.1, 0.12, l * 0.75), local(centre, q, 0, 2.05, z - l * 0.05));
+    add('tyreBlack', new CylinderGeometry(0.3, 0.3, 0.2, 10), local(centre, q, 0, 0.3, z + l / 2 - 0.3).multiply(new Matrix4().makeRotationZ(Math.PI / 2)));
+    for (const x of [-0.6, 0.6]) add('tyreBlack', new CylinderGeometry(0.3, 0.3, 0.2, 10), local(centre, q, x, 0.3, z - l / 2 + 0.4).multiply(new Matrix4().makeRotationZ(Math.PI / 2)));
+  }
+  return [];
+}
+
+/** A desert support truck with no maker's name: sand-coloured, a cab and a covered load, big tyres (Sahara; parked). */
+function supportTruck(add, mat, group, rimCentre, q, { len, width, drop = 0 }) {
+  const W = 2.3;
+  const centre = rimCentre.clone().add(new Vector3(-(width - W) / 2, -drop, 0).applyQuaternion(q));
+  const L = Math.max(5, len - 0.2);
+  for (const x of [-1, 1]) for (const dz of [-L / 2 + 1, -L / 2 + 2.2, L / 2 - 1]) add('tyreBlack', new CylinderGeometry(0.55, 0.55, 0.4, 12), local(centre, q, x, 0.55, dz).multiply(new Matrix4().makeRotationZ(Math.PI / 2)));
+  add('truckSand', new BoxGeometry(W, 0.6, L), local(centre, q, 0, 1.1, 0));
+  add('truckSand', new BoxGeometry(W, 1.6, 2), local(centre, q, 0, 2.1, L / 2 - 1));
+  add('carGlass', new BoxGeometry(W - 0.2, 0.6, 0.1), local(centre, q, 0, 2.4, L / 2 + 0.01));
+  add('truckCanvas', new BoxGeometry(W, 1.8, L - 2.4), local(centre, q, 0, 2.3, -1.1));
+  add('rallyOrange', new BoxGeometry(W + 0.02, 0.2, L - 2.4), local(centre, q, 0, 1.5, -1.1));
+  return [];
+}
+
+// ── Our fantasy worlds (Elderglade, Frostmere, Wyrmwood Hollow) ─────────────
+
+/** A giant toadstool: a pale stalk and a broad red cap spotted white, well above the marbles (Elderglade; a block). */
+function mushroom(add, mat, group, point, q, { radius, at }) {
+  const r = radius * 0.5;
+  const red = Math.round(at * 991) % 2 ? 'mushroomRed' : 'mushroomGold';
+  add('mushroomStalk', new CylinderGeometry(r * 0.8, r, 1.3, 9), local(point, q, 0, 0.65, 0));
+  add(red, new SphereGeometry(radius * 1.15, 12, 6, 0, Math.PI * 2, 0, Math.PI / 2), local(point, q, 0, 1.25, 0, 1, 0.55, 1));
+  for (let k = 0; k < 5; k += 1) {
+    const a = (k / 5) * Math.PI * 2;
+    add('mushroomSpot', new IcosahedronGeometry(0.13, 0), local(point, q, Math.cos(a) * radius * 0.7, 1.55, Math.sin(a) * radius * 0.7));
+  }
+  return [];
+}
+
+/** A glowing crystal post: a six-sided pale crystal with a sharp tip (Elderglade's slalom poles). */
+function crystalPost(add, mat, group, point, q, { height }) {
+  add('crystal', new CylinderGeometry(0.1, 0.15, height, 6), local(point, q, 0, height / 2, 0));
+  add('crystalTip', new ConeGeometry(0.1, 0.45, 6), local(point, q, 0, height + 0.22, 0));
+  return [];
+}
+
+/** A friendly forest stag beyond the rim (its neck and head, lowering the antlers into the high line, are the arm). */
+function stagBody(add, base, q) {
+  add('stag', new BoxGeometry(1.1, 1.2, 2.4), local(base, q, 0, 1.6, -0.4));
+  for (const x of [-0.35, 0.35]) for (const z of [-1.3, 0.5]) add('stag', new BoxGeometry(0.2, 1.1, 0.2), local(base, q, x, 0.55, z));
+  add('stagPale', new BoxGeometry(0.9, 0.5, 0.6), local(base, q, 0, 1.3, -1.6));
+  for (const x of [-1, 1]) {
+    add('antler', new BoxGeometry(0.1, 1.2, 0.1), local(base, q, x * 0.35, 3.2, 0.9).multiply(new Matrix4().makeRotationZ(-x * 0.5)));
+    add('antler', new BoxGeometry(0.08, 0.6, 0.08), local(base, q, x * 0.6, 3.4, 0.7).multiply(new Matrix4().makeRotationZ(-x * 1.1)));
+  }
+}
+
+/** A snowball as big as a boulder (Frostmere; a block). */
+function giantSnowball(add, mat, group, point, q, { radius }) {
+  add('snowball', new IcosahedronGeometry(radius * 0.98, 1), local(point, q, 0, radius * 0.95, 0));
+  add('snowballShade', new IcosahedronGeometry(radius * 0.5, 0), local(point, q, radius * 0.3, radius * 1.5, radius * 0.2));
+  return [];
+}
+
+/** An ice lantern on a post of clear ice, its flame glowing inside (Frostmere's slalom poles). */
+function iceLantern(add, mat, group, point, q, { height }) {
+  add('iceClear', new CylinderGeometry(0.08, 0.13, height, 6), local(point, q, 0, height / 2, 0));
+  add('iceClear', new CylinderGeometry(0.2, 0.16, 0.45, 6), local(point, q, 0, height + 0.22, 0));
+  add('lanternGlow', new IcosahedronGeometry(0.11, 0), local(point, q, 0, height + 0.22, 0));
+  return [];
+}
+
+/** A big friendly snow troll beyond the rim, shaggy and white-blue (its arm, swinging into the high line, is the arm). */
+function snowTrollBody(add, base, q) {
+  add('troll', new IcosahedronGeometry(1.4, 1), local(base, q, 0, 1.6, 0, 1, 1.25, 0.9));
+  add('troll', new IcosahedronGeometry(0.85, 1), local(base, q, 0, 3.6, 0.15));
+  add('trollFace', new IcosahedronGeometry(0.45, 0), local(base, q, 0, 3.5, 0.75, 1, 0.8, 0.6));
+  for (const x of [-0.3, 0.3]) add('xqBlack', new IcosahedronGeometry(0.1, 0), local(base, q, x, 3.75, 0.85));
+  for (const x of [-0.6, 0.6]) add('troll', new BoxGeometry(0.6, 1.2, 0.6), local(base, q, x, 0.5, 0));
+}
+
+/** A fallen stone block, mossy, from the ruined walls (Wyrmwood Hollow; a block). */
+function stoneBlock(add, mat, group, point, q, { radius, at }) {
+  const tilt = (Math.round(at * 997) % 5) * 0.08;
+  add('ruinStone', new BoxGeometry(radius * 1.35, 1.0, radius * 1.35), local(point, q, 0, 0.5, 0).multiply(new Matrix4().makeRotationY(tilt)));
+  add('moss', new BoxGeometry(radius * 1.0, 0.12, radius * 0.9), local(point, q, 0.1, 1.04, 0.05).multiply(new Matrix4().makeRotationY(tilt)));
+  return [];
+}
+
+/** A broken pillar: a short fluted column snapped off at a slant (Wyrmwood Hollow's slalom poles). */
+function brokenPillar(add, mat, group, point, q, { height }) {
+  const h = height * 0.9;
+  add('ruinStone', new CylinderGeometry(0.17, 0.19, h, 8), local(point, q, 0, h / 2, 0));
+  add('ruinStone', new CylinderGeometry(0.19, 0.19, 0.18, 8), local(point, q, 0, 0.09, 0));
+  add('ruinDark', new CylinderGeometry(0.12, 0.17, 0.4, 8), local(point, q, 0.03, h + 0.1, 0).multiply(new Matrix4().makeRotationZ(0.4)));
+  return [];
+}
+
+/** The sleeping dragon's tail tip beyond the rim, scaled and spined (its tail, sweeping slowly into the high line, is the arm). */
+function dragonTailBody(add, base, q) {
+  add('dragonScale', new IcosahedronGeometry(1.5, 1), local(base, q, 0, 0.9, -0.6, 1.2, 0.7, 1.4));
+  for (let k = 0; k < 4; k += 1) add('dragonSpine', new ConeGeometry(0.25, 0.7, 4), local(base, q, 0, 1.8 - k * 0.12, -1.6 + k * 0.6));
+}
+
 /** A TV camera crane on its dolly beyond the rim, an operator at the controls (its boom, swinging in, is the arm; the camera at its tip). */
 function cameraCraneBody(add, base, q) {
   add('craneBase', new BoxGeometry(1.6, 0.4, 1.6), local(base, q, 0, 0.3, 0));
@@ -803,6 +919,8 @@ export const KIT_COSTUMES = {
   'safety-car': { places: 'parked', build: safetyCar },
   'simit-cart': { places: 'parked', build: simitCart },
   'danfo-bus': { places: 'parked', build: danfoBus },
+  'auto-rickshaw': { places: 'parked', build: autoRickshaw },
+  'support-truck': { places: 'parked', build: supportTruck },
   // Nairobi's matatu: the same minibus, brightly painted (green, its stripes pink and blue).
   matatu: { places: 'parked', build: (add, mat, group, c, q, size) => danfoBus(add, mat, group, c, q, size, 'matatuGreen', ['matatuPink', 'matatuBlue']) },
   'camera-crane': {
@@ -815,4 +933,35 @@ export const KIT_COSTUMES = {
   },
   // A gantry over the channel with banners hanging into the high line (a curtain): drawn whole by the curtain's placement.
   'banner-gantry': { places: 'curtain', gantry: true, banners: ['bannerRed', 'bannerWhite', 'bannerBlue'], post: 'bannerPost', build: () => [] },
+  // The fantasy worlds' versions of it: vines hanging from a fallen branch, battle banners from a timber beam.
+  vines: { places: 'curtain', gantry: true, banners: ['vineGreen', 'vineDark', 'vineGreen'], post: 'branchBrown', bannerWidth: 0.35, build: () => [] },
+  'battle-banners': { places: 'curtain', gantry: true, banners: ['battleRed', 'battleBlack', 'battleRed'], post: 'branchBrown', build: () => [] },
+  mushroom: { places: 'block', upright: true, build: mushroom },
+  'crystal-post': { places: 'slalom', build: crystalPost },
+  stag: {
+    places: 'swipe',
+    body: stagBody,
+    standOff: 1.8,
+    sink: -0.2,
+    // The neck and head, lowering the antlers into the high line on the swipe's timetable.
+    arm: { colour: 'stag', shoulder: [0, 2.2, 0.8], radii: [0.22, 0.32], segments: 7, tip: 0.38, tipDetail: 1, end: 0.2, endDetail: 0, endColour: 'antler', lift: 0.5, outLift: 0.6, nose: 0.2 },
+  },
+  'giant-snowball': { places: 'block', build: giantSnowball },
+  'ice-lantern': { places: 'slalom', build: iceLantern },
+  'snow-troll': {
+    places: 'swipe',
+    body: snowTrollBody,
+    standOff: 2.2,
+    sink: -0.3,
+    arm: { colour: 'troll', shoulder: [0.9, 2.6, 0.3], radii: [0.3, 0.42], segments: 7, tip: 0.5, tipDetail: 1, end: 0.25, endDetail: 0, lift: 0.4, outLift: 0.5, nose: 0.25 },
+  },
+  'stone-block': { places: 'block', build: stoneBlock },
+  'broken-pillar': { places: 'slalom', build: brokenPillar },
+  'dragon-tail': {
+    places: 'swipe',
+    body: dragonTailBody,
+    standOff: 1.6,
+    sink: -0.3,
+    arm: { colour: 'dragonTail', shoulder: [0, 1, 0.8], radii: [0.2, 0.45], segments: 8, tip: 0.4, tipDetail: 0, tipColour: 'dragonSpine', end: 0.2, endDetail: 0, lift: 0.4, outLift: 0.4, nose: 0.25 },
+  },
 };

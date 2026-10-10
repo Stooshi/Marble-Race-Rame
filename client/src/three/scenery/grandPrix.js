@@ -60,6 +60,14 @@ export const CROWD_STYLES = {
     seats: ['#6b4a2f', '#4a3424'],
     stand: '#8a6a45', roof: '#e8eef5',
   },
+  // The Sahara: robes in indigo, white and saffron; the stands are colourful tents.
+  'desert-folk': {
+    shirts: ['#2a3f8a', '#f2f2ee', '#e8a02a', '#b8312f', '#3a8a8a', '#c9a06a'],
+    skin: ['#a8724a', '#8a5a3a', '#6e4a30', '#c98f6a'],
+    flags: ['#d8322b', '#2f9a4a', '#f2c230', '#2556b8'],
+    seats: ['#b8312f', '#2a3f8a'],
+    stand: '#c98a52', roof: '#e8c45a',
+  },
   // Wyrmwood Hollow: knights in grey steel and villagers in homespun, waving battle banners.
   villagers: {
     shirts: ['#8a8d93', '#6a6d73', '#7a5a3a', '#5a6a3a', '#a8382a', '#c9b28a'],
@@ -76,6 +84,8 @@ export const BARRIER_STYLES = {
   logs: { body: '#6b4a2f', bands: ['#8a6a45', '#5a3f2a'], round: true },
   snow: { body: '#f4f7fa', bands: ['#dbe6f0', '#f4f7fa'] },
   stone: { body: '#8d877d', bands: ['#a49e94', '#7f796f'] },
+  // Delhi: tyres hung with marigold garlands.
+  marigolds: { body: '#1c1d21', bands: ['#f28a1c', '#f2c21c'] },
 };
 
 /** A soft round spark for the fireworks (none where there is no canvas: square sparks then). */

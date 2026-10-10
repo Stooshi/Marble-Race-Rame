@@ -308,6 +308,291 @@ function parkFence() {
   return merge(parts);
 }
 
+// ── Stockholm Marble Grand Prix ─────────────────────────────────────────────
+
+/** The Royal Palace, stylised: a long square-built palace in sand-yellow, rows of windows, a flat parapet. */
+function royalPalace() {
+  const parts = [box(60, 18, 40, 0, 9, 0, '#d8c08a'), box(62, 1.4, 42, 0, 18.7, 0, '#b8a070'), box(30, 18, 2, 0, 9, 20.2, '#d0b680')];
+  for (let r = 0; r < 3; r += 1) parts.push(box(56, 1.6, 0.2, 0, 4 + r * 5, 20.3, '#4a4a52'));
+  return merge(parts);
+}
+
+/** Stockholm City Hall, stylised: a long red-brick hall and its tall square tower with a gold crown on top. */
+function cityHall() {
+  const parts = [box(46, 14, 30, -12, 7, 0, '#a8452f'), piece(new ConeGeometry(28, 4, 4), '#3f6e5a', turned(-12, 16, 0, Math.PI / 4, 1.1, 1, 0.75))];
+  parts.push(box(10, 92, 10, 18, 46, 0, '#a8452f'), box(11, 2, 11, 18, 92, 0, '#8a3a26'));
+  parts.push(piece(new CylinderGeometry(3.5, 4.5, 10, 8), '#3f6e5a', M(18, 98, 0)), piece(new ConeGeometry(1.2, 4, 6), '#e0b43c', M(18, 105, 0)));
+  for (const x of [-1.6, 0, 1.6]) parts.push(piece(new ConeGeometry(0.6, 1.4, 5), '#e0b43c', M(18 + x, 108, 0)));
+  return merge(parts);
+}
+
+/** The Vasa museum: a dark building with the old warship's three masts rising out of its roof. */
+function vasaMuseum() {
+  const parts = [box(40, 16, 26, 0, 8, 0, '#4a5a52'), piece(new ConeGeometry(26, 8, 4), '#3a4a44', turned(0, 20, 0, Math.PI / 4, 1.1, 1, 0.7))];
+  for (const [x, h] of [[-10, 46], [2, 52], [12, 40]]) {
+    parts.push(piece(new CylinderGeometry(0.5, 0.7, h, 6), '#6b4a2f', M(x, h / 2, 0)));
+    for (const y of [h * 0.55, h * 0.8]) parts.push(box(8, 0.4, 0.4, x, y, 0, '#6b4a2f'));
+  }
+  return merge(parts);
+}
+
+/** Old steamboats moored along the quay (Strandvägen): white hulls, black funnels, the water behind the line. */
+function steamboats() {
+  const parts = [piece(new BoxGeometry(80, 0.3, 30), WATER, M(0, 0.15, 0)), box(82, 1, 4, 0, 0.5, -17, '#a49c8f')];
+  for (const x of [-26, 0, 26]) {
+    parts.push(piece(new BoxGeometry(6, 2.2, 20), '#f4f4f2', M(x, 1.1, -8)));
+    parts.push(piece(new BoxGeometry(4.6, 2, 11), '#e8e2d2', M(x, 3.2, -8)));
+    parts.push(piece(new CylinderGeometry(0.7, 0.8, 4, 10), '#1c1d21', M(x, 5.8, -6)));
+    parts.push(piece(new CylinderGeometry(0.72, 0.72, 0.6, 10), '#d8b23a', M(x, 7.5, -6)));
+  }
+  return merge(parts);
+}
+
+// ── Delhi Red Fort Marble Grand Prix ────────────────────────────────────────
+
+const RED = '#b0452f';
+const RED_DARK = '#8a3424';
+/** A chhatri: a small domed pavilion on four posts, on a wall's top. */
+function chhatri(x, y, z, s = 1) {
+  return [
+    ...[-1, 1].flatMap((a) => [-1, 1].map((b) => box(0.4 * s, 3 * s, 0.4 * s, x + a * 1.4 * s, y + 1.5 * s, z + b * 1.4 * s, '#e8dcc6'))),
+    piece(new SphereGeometry(2 * s, 10, 5, 0, Math.PI * 2, 0, Math.PI / 2), '#f2ece0', M(x, y + 3 * s, z)),
+  ];
+}
+/** The Red Fort: long red sandstone walls with crenellations and corner towers topped with pavilions. */
+function redFort() {
+  const parts = [box(120, 18, 8, 0, 9, 0, RED)];
+  for (let k = 0; k < 30; k += 1) parts.push(box(2, 1.6, 8.2, -58 + k * 4, 18.8, 0, RED_DARK));
+  for (const x of [-60, 60]) {
+    parts.push(piece(new CylinderGeometry(6, 7, 22, 12), RED, M(x, 11, 0)));
+    parts.push(...chhatri(x, 22, 0, 1.4));
+  }
+  parts.push(...chhatri(-20, 19.6, 0, 1), ...chhatri(20, 19.6, 0, 1));
+  return merge(parts);
+}
+/** The fort's great gateway, straddling the track: two towers, a pointed arch high above the channel. */
+function redFortGate() {
+  const parts = [];
+  for (const x of [-11, 11]) {
+    parts.push(box(8, 24, 10, x, 12, 0, RED), box(8.6, 1.4, 10.6, x, 24.7, 0, RED_DARK));
+    parts.push(...chhatri(x, 25.4, 0, 1.2));
+  }
+  parts.push(box(14, 6, 10, 0, 21, 0, RED));
+  parts.push(box(14.4, 1.2, 10.6, 0, 24.6, 0, RED_DARK));
+  for (const x of [-4, 0, 4]) parts.push(...chhatri(x, 25.2, 0, 0.6));
+  return merge(parts);
+}
+/** Jama Masjid, stylised: three white-and-black striped domes on a red sandstone prayer hall, two tall minarets. */
+function jamaMasjid() {
+  const parts = [box(60, 14, 22, 0, 7, 0, RED), box(16, 22, 3, 0, 11, 11.5, RED)];
+  for (const [x, r] of [[-16, 7], [0, 10], [16, 7]]) {
+    parts.push(piece(new CylinderGeometry(r, r, 3, 14), '#f2ece0', M(x, 15.5, 0)));
+    parts.push(piece(new SphereGeometry(r, 14, 7, 0, Math.PI * 2, 0, Math.PI / 2), '#f2ece0', S(x, 17, 0, 1, 1.3, 1)));
+    for (let k = 0; k < 3; k += 1) parts.push(piece(new CylinderGeometry(r * (0.95 - k * 0.25), r * (0.95 - k * 0.25), 0.4, 14), '#2c2f36', M(x, 18.5 + k * r * 0.35, 0)));
+  }
+  for (const x of [-33, 33]) parts.push(piece(new CylinderGeometry(1.8, 2.2, 42, 10), RED, M(x, 21, 8)), ...chhatri(x, 42, 8, 0.9));
+  return merge(parts);
+}
+/** India Gate, stylised: a tall sandstone arch with a stepped attic and a shallow dome on top. */
+function indiaGate() {
+  return merge([
+    box(8, 34, 10, -11, 17, 0, '#c9a77a'), box(8, 34, 10, 11, 17, 0, '#c9a77a'),
+    box(30, 10, 10, 0, 37, 0, '#c9a77a'), box(26, 3, 9, 0, 43.5, 0, '#b8956a'), box(20, 3, 8, 0, 46.5, 0, '#c9a77a'),
+    piece(new SphereGeometry(5, 12, 6, 0, Math.PI * 2, 0, Math.PI / 2), '#b8956a', M(0, 48, 0)),
+    box(34, 1, 14, 0, 0.5, 0, '#a49c8f'),
+  ]);
+}
+/** A Mughal garden fountain on a divider: a long stone water channel with a row of little jets. */
+function mughalFountain(len = 26, wide = 5.2) {
+  const parts = [box(len, 0.6, wide, 0, 0.3, 0, '#d8ccb4'), box(len - 1, 0.1, wide - 1.6, 0, 0.65, 0, WATER)];
+  for (let k = 0; k < 7; k += 1) parts.push(piece(new CylinderGeometry(0.08, 0.2, 1.4, 5), '#e8f6ff', M(-len / 2 + 2 + k * ((len - 4) / 6), 1.3, 0)));
+  for (const x of [-len / 2, len / 2]) parts.push(...chhatri(x, 0.6, 0, 0.5));
+  return merge(parts);
+}
+
+// ── Sahara Marble Grand Prix ────────────────────────────────────────────────
+
+const MUD = '#c98a52';
+const MUD_DARK = '#a86e3e';
+/** An earthen tower: tapering mud-brick walls, crenellated corners. */
+function earthTower(x, z, h, w) {
+  const g = new CylinderGeometry(w * 0.55, w * 0.75, h, 4);
+  g.rotateY(Math.PI / 4);
+  const parts = [piece(g, MUD, M(x, h / 2, z))];
+  for (const [a, b] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) parts.push(box(w * 0.18, 2, w * 0.18, x + a * w * 0.33, h + 1, z + b * w * 0.33, MUD_DARK));
+  return parts;
+}
+/** A kasbah: earthen towers joined by high walls, the gate set between them. */
+function kasbah() {
+  return merge([
+    box(50, 12, 26, 0, 6, 0, MUD),
+    ...earthTower(-25, -13, 22, 9), ...earthTower(25, -13, 22, 9), ...earthTower(-25, 13, 20, 8), ...earthTower(25, 13, 20, 8),
+    ...earthTower(0, -8, 26, 10),
+    box(8, 7, 1, 0, 3.5, 13.3, '#5a3a24'),
+  ]);
+}
+/** A great mud-brick mosque in the Timbuktu style: buttressed walls, cone-topped towers, wooden beams sticking out. */
+function mudMosque() {
+  const parts = [box(56, 12, 34, 0, 6, 0, MUD)];
+  for (const [x, h] of [[-20, 26], [0, 32], [20, 26]]) {
+    const g = new CylinderGeometry(2.5, 6.5, h, 4);
+    g.rotateY(Math.PI / 4);
+    parts.push(piece(g, MUD, M(x, h / 2, 14)));
+    for (let y = 4; y < h - 2; y += 3) parts.push(box(0.35, 0.35, 15, x, y, 14, '#6b4a2f'));
+  }
+  for (let k = 0; k < 12; k += 1) parts.push(piece(new ConeGeometry(1.2, 4, 5), MUD_DARK, M(-27 + k * 4.9, 14, -17)));
+  return merge(parts);
+}
+/** A camel caravan on the horizon: a line of camels and riders crossing the dunes. */
+function caravan() {
+  const parts = [];
+  for (let k = 0; k < 7; k += 1) {
+    const x = -24 + k * 8;
+    parts.push(box(1, 1.3, 2.6, x, 2.4, 0, '#c9a06a'), piece(new IcosahedronGeometry(0.7, 0), '#b8905a', M(x, 3.4, 0)));
+    for (const z of [-0.9, 0.9]) for (const dx of [-0.35, 0.35]) parts.push(box(0.25, 1.8, 0.25, x + dx, 0.9, z, '#b8905a'));
+    parts.push(box(0.35, 1.4, 0.35, x, 3.2, 1.5, '#b8905a'), box(0.45, 0.5, 0.8, x, 3.8, 1.9, '#b8905a'));
+    if (k % 2 === 0) parts.push(box(0.5, 0.9, 0.5, x, 3.5, -0.4, ['#2556b8', '#d8322b', '#f2f2ee'][k % 3]));
+  }
+  return merge(parts);
+}
+
+// ── Elderglade (our own world) ──────────────────────────────────────────────
+
+/** An ancient giant tree: a vast trunk on spreading roots, a crown of glowing green leaves, lanterns hanging from it. */
+function giantTree(platform = false) {
+  const parts = [piece(new CylinderGeometry(6, 9, 60, 12), '#6b4a2f', M(0, 30, 0))];
+  for (let k = 0; k < 6; k += 1) {
+    const a = (k / 6) * Math.PI * 2;
+    parts.push(beam(V(Math.cos(a) * 6, 6, Math.sin(a) * 6), V(Math.cos(a) * 14, 0, Math.sin(a) * 14), 2.2, '#5a3f2a'));
+  }
+  for (const [x, y, z, r] of [[0, 66, 0, 18], [-12, 58, 6, 11], [12, 60, -6, 12], [4, 74, 4, 10]]) parts.push(piece(new IcosahedronGeometry(r, 1), '#5fae4a', M(x, y, z)));
+  for (let k = 0; k < 8; k += 1) {
+    const a = (k / 8) * Math.PI * 2;
+    parts.push(piece(new IcosahedronGeometry(0.7, 0), '#ffe27a', M(Math.cos(a) * 15, 48, Math.sin(a) * 15)));
+  }
+  if (platform) {
+    parts.push(piece(new CylinderGeometry(13, 13, 1, 16), '#8a6a45', M(0, 30, 0)));
+    for (let k = 0; k < 16; k += 1) {
+      const a = (k / 16) * Math.PI * 2;
+      parts.push(box(0.25, 1.4, 0.25, Math.cos(a) * 12.6, 31.2, Math.sin(a) * 12.6, '#5a3f2a'));
+    }
+  }
+  return merge(parts);
+}
+
+/** A ring of glowing flowers round a forest clearing (the finish). */
+function glowFlowers() {
+  const parts = [];
+  const c = ['#ffe27a', '#bfff8a', '#ff9ad8', '#9fe8ff'];
+  for (let k = 0; k < 40; k += 1) {
+    const a = (k / 40) * Math.PI * 2;
+    const r = 22 + (k % 3) * 2;
+    parts.push(piece(new CylinderGeometry(0.06, 0.06, 1.4, 4), '#3f8f3a', M(Math.cos(a) * r, 0.7, Math.sin(a) * r)));
+    parts.push(piece(new IcosahedronGeometry(0.45, 0), c[k % 4], M(Math.cos(a) * r, 1.5, Math.sin(a) * r)));
+  }
+  return merge(parts);
+}
+
+// ── Frostmere (our own world) ───────────────────────────────────────────────
+
+/** A snowy fairy-tale castle: white walls, round towers with tall blue cone roofs, banners. */
+function snowCastle() {
+  const parts = [box(50, 16, 20, 0, 8, 0, '#e8eef5')];
+  for (const [x, z, h] of [[-25, -10, 30], [25, -10, 30], [-25, 10, 26], [25, 10, 26], [0, -6, 40]]) {
+    parts.push(piece(new CylinderGeometry(4.5, 5, h, 12), '#f4f7fa', M(x, h / 2, z)));
+    parts.push(piece(new ConeGeometry(5.8, 12, 12), '#3a6ab8', M(x, h + 6, z)));
+    parts.push(box(0.15, 4, 0.15, x, h + 14, z, '#c9ccd1'), box(2.2, 1.2, 0.05, x + 1.1, h + 15.2, z, '#d8322b'));
+  }
+  for (let k = 0; k < 12; k += 1) parts.push(box(2, 1.6, 20.4, -22 + k * 4, 16.8, 0, '#dbe6f0'));
+  return merge(parts);
+}
+
+/** A small snowy island in a frozen lake, a few pines on it (a splitter's divider). */
+function snowIsland(len = 24, wide = 5.6) {
+  const parts = [piece(new CylinderGeometry(1, 1, 0.6, 10), '#f4f8fc', S(0, 0.3, 0, len / 2, 1, wide / 2))];
+  for (const x of [-len / 4, 0, len / 4]) {
+    parts.push(piece(new CylinderGeometry(0.2, 0.25, 1.4, 5), '#5a4a3a', M(x, 1.2, 0)));
+    for (let k = 0; k < 3; k += 1) parts.push(piece(new ConeGeometry(1.6 - k * 0.45, 1.8, 7), k ? '#e8eef5' : '#2f5a3a', M(x, 2.2 + k * 1.1, 0)));
+  }
+  return merge(parts);
+}
+
+/** The ice palace: clear blue-white towers of ice and spires, glittering. */
+function icePalace() {
+  const parts = [box(46, 14, 26, 0, 7, 0, '#cdeefc')];
+  for (const [x, z, h, r] of [[-20, -8, 34, 4], [20, -8, 34, 4], [0, -10, 50, 6], [-10, 8, 24, 3], [10, 8, 24, 3]]) {
+    const g = new CylinderGeometry(r * 0.7, r, h, 6);
+    parts.push(piece(g, '#bfe8f8', M(x, h / 2, z)), piece(new ConeGeometry(r * 0.8, 14, 6), '#e8f8ff', M(x, h + 7, z)));
+  }
+  for (let k = 0; k < 9; k += 1) parts.push(piece(new ConeGeometry(0.6, 3, 5), '#ffffff', new Matrix4().makeRotationX(Math.PI).premultiply(M(-20 + k * 5, 12.5, 13.2)))); // icicles along the eaves
+  return merge(parts);
+}
+
+// ── Wyrmwood Hollow (our own world) ─────────────────────────────────────────
+
+const RUIN = '#9a958a';
+const RUIN_DARK = '#7a756a';
+/** A ruined castle wall: broken towers and gapped battlements, ivy creeping up. */
+function ruinedCastle() {
+  const parts = [box(60, 14, 6, 0, 7, 0, RUIN)];
+  for (let k = 0; k < 14; k += 1) if (k % 5 !== 2) parts.push(box(2, 1.6 + (k % 3) * 0.6, 6.2, -26 + k * 4, 14.8, 0, RUIN_DARK));
+  for (const [x, h] of [[-30, 22], [30, 16]]) parts.push(piece(new CylinderGeometry(5, 5.6, h, 10), RUIN, M(x, h / 2, 0)));
+  for (const [x, y] of [[-20, 8], [10, 5], [24, 10]]) parts.push(box(4, 5, 0.3, x, y, 3.2, '#3f6e2c')); // ivy
+  return merge(parts);
+}
+
+/** The sleeping dragon curled on a heap of treasure (one eye opening: its eyelid lifts on the race clock). */
+function sleepingDragon() {
+  const parts = [piece(new SphereGeometry(16, 14, 6, 0, Math.PI * 2, 0, Math.PI / 2), '#d8a93a', S(0, 0, 0, 1, 0.35, 1))];
+  for (let k = 0; k < 14; k += 1) {
+    const a = (k / 14) * Math.PI * 1.7;
+    parts.push(piece(new IcosahedronGeometry(4 - k * 0.12, 1), k % 2 ? '#8a2a24' : '#a8342a', M(Math.cos(a) * 9, 5 + Math.sin(k) * 0.6, Math.sin(a) * 9)));
+    parts.push(piece(new ConeGeometry(0.7, 2.2, 4), '#e0b43c', M(Math.cos(a) * 9, 9.4, Math.sin(a) * 9)));
+  }
+  parts.push(piece(new IcosahedronGeometry(3.6, 1), '#8a2a24', S(10, 5, 4, 1.4, 0.9, 1)));             // the head, resting
+  parts.push(piece(new IcosahedronGeometry(0.9, 0), '#ffd21f', M(12.8, 6.4, 6.4)));                    // the eye
+  for (const z of [2.5, 5.5]) parts.push(piece(new ConeGeometry(0.5, 3, 5), '#e9dcc0', new Matrix4().makeRotationZ(-1.1).premultiply(M(9, 8.6, z))));
+  for (let k = 0; k < 20; k += 1) parts.push(piece(new CylinderGeometry(0.5, 0.5, 0.15, 8), '#f2c21c', M(-12 + (k % 5) * 6, 5.4 + Math.floor(k / 5) * 0.2, -12 + Math.floor(k / 5) * 2)));
+  return merge(parts);
+}
+function dragonEyelid() {
+  return merge([piece(new SphereGeometry(1.0, 8, 4, 0, Math.PI * 2, 0, Math.PI / 2), '#8a2a24', new Matrix4().makeRotationZ(Math.PI / 2))]);
+}
+
+/** A fallen statue of a knight, lying along the divider, its sword beside it. */
+function fallenStatue() {
+  return merge([
+    box(4.8, 1, 18, 0, 0.5, 0, RUIN_DARK),
+    box(2.4, 1.6, 7, 0, 1.8, -1, RUIN), box(2, 1.4, 6, 0, 1.7, 5.5, RUIN),
+    piece(new IcosahedronGeometry(1.2, 0), RUIN, M(0, 2, -6)),
+    box(0.4, 0.3, 9, 1.6, 1.2, 1, '#8d939b'), box(1.4, 0.3, 0.4, 1.6, 1.2, -3.2, '#8d939b'),
+  ]);
+}
+
+/** A ruined amphitheatre: tiers of stone in a half ring, broken arches behind. */
+function amphitheatre() {
+  const parts = [];
+  for (let t = 0; t < 6; t += 1) {
+    const g = new CylinderGeometry(20 + t * 2.2, 20 + t * 2.2, 1.2, 20, 1, false, 0, Math.PI);
+    parts.push(piece(g, t % 2 ? RUIN : RUIN_DARK, M(0, 0.6 + t * 1.1, 0)));
+  }
+  for (let k = 0; k < 9; k += 1) {
+    const a = (k / 8) * Math.PI;
+    if (k % 3 === 1) continue;
+    parts.push(box(2, 12, 2, Math.sin(a) * 34, 6, Math.cos(a) * 34, RUIN));
+  }
+  return merge(parts);
+}
+
+/** The dragon's mountain: a dark peak with a glowing cave mouth, far off. */
+function dragonMountain() {
+  return merge([
+    piece(new ConeGeometry(90, 140, 8), '#4a4540', M(0, 70, 0)),
+    piece(new ConeGeometry(30, 40, 6), '#3a3530', M(30, 20, 40)),
+    piece(new IcosahedronGeometry(8, 0), '#ff7a2a', S(0, 30, 70, 1, 0.8, 0.3)),
+  ]);
+}
+
 /**
  * Grand Prix landmarks by name: builder, footprint radius, and (`fit`) the
  * half-width that has to fit a splitter's divider or a bend; `divider`: what
@@ -330,6 +615,29 @@ export const GP_LANDMARKS = {
   acacia: { build: () => bigAcacia(), radius: 8 },
   'safari-truck': { build: safariTruck, radius: 4 },
   'park-fence': { build: parkFence, radius: 4 },
+  'royal-palace': { build: royalPalace, radius: 36 },
+  'city-hall': { build: cityHall, radius: 26 },
+  'vasa-museum': { build: vasaMuseum, radius: 24 },
+  steamboats: { build: steamboats, radius: 42 },
+  'red-fort': { build: redFort, radius: 62 },
+  'red-fort-gate': { build: redFortGate, radius: 15 },
+  'jama-masjid': { build: jamaMasjid, radius: 36 },
+  'india-gate': { build: indiaGate, radius: 18 },
+  'mughal-fountain': { build: () => mughalFountain(30, 12), radius: 16 },
+  kasbah: { build: kasbah, radius: 30 },
+  'mud-mosque': { build: mudMosque, radius: 32 },
+  caravan: { build: caravan, radius: 30 },
+  'giant-tree': { build: () => giantTree(false), radius: 16 },
+  'tree-platform': { build: () => giantTree(true), radius: 16 },
+  'glow-flowers': { build: glowFlowers, radius: 26 },
+  'snow-castle': { build: snowCastle, radius: 30 },
+  'snow-island': { build: () => snowIsland(), radius: 13 },
+  'ice-palace': { build: icePalace, radius: 30 },
+  'ruined-castle': { build: ruinedCastle, radius: 34 },
+  'sleeping-dragon': { build: sleepingDragon, radius: 18, moving: { build: dragonEyelid, pivot: [12.8, 6.4, 6.4], axis: [0, 0, 1], swing: 0.6, period: 7 } },
+  'fallen-statue': { build: fallenStatue, radius: 9, fit: 2.4 },
+  amphitheatre: { build: amphitheatre, radius: 36 },
+  'dragon-mountain': { build: dragonMountain, radius: 90 },
 };
 
 /** What a splitter's divider carries in place of a landmark too big for it. */
@@ -338,4 +646,6 @@ export const DIVIDER_PIECES = {
   'opera-house': { build: operaOnDivider, fit: 2.9 },
   'tulip-garden': { build: () => tulipGarden(24, 5.4), fit: 2.8 },
   acacia: { build: () => bigAcacia(0.75), fit: 2.9 },
+  'mughal-fountain': { build: () => mughalFountain(26, 5.2), fit: 2.8 },
+  'snow-island': { build: () => snowIsland(24, 5.4), fit: 2.8 },
 };

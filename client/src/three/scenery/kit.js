@@ -57,11 +57,11 @@ export function buildKitScenery(centerline, track, theme, { lite = false } = {})
   // ── Landmarks ──────────────────────────────────────────────────────────
   const landmarkParts = [];
   const turning = []; // landmarks' moving parts (a windmill's sails): { mesh, base, axis, speed }
-  const placeLandmark = (name, at, yaw) => {
+  const placeLandmark = (name, at, yaw, footY = null) => {
     const lm = LANDMARKS[name];
     if (!lm) return;
     const g = lm.build();
-    const foot = new Vector3(at.x, groundAt(at.x, at.z) - 0.3, at.z);
+    const foot = new Vector3(at.x, footY ?? groundAt(at.x, at.z) - 0.3, at.z);
     const q = new Quaternion().setFromAxisAngle(UP, yaw);
     g.applyMatrix4(new Matrix4().compose(foot, q, new Vector3(1, 1, 1)));
     landmarkParts.push(g);
@@ -88,7 +88,12 @@ export function buildKitScenery(centerline, track, theme, { lite = false } = {})
   for (const sec of kit.sections) {
     for (const lm of sec.landmarks ?? []) {
       const p = sec.from + (lm.at ?? 0.5) * (sec.to - sec.from);
-      const { s, side, i } = frame(p);
+      const { s, side, i, along } = frame(p);
+      if (lm.over) {
+        // Straddling the track (a gateway the field races through): on the rims' level, its opening along the track.
+        placeLandmark(lm.name, s.pos.clone(), yawTo(along), Math.min(rows[i]?.[1]?.inner.y ?? s.pos.y, rows[i]?.[-1]?.inner.y ?? s.pos.y) - 0.3);
+        continue;
+      }
       const sign = lm.side === 'right' ? -1 : 1;
       const edge = rows[i]?.[sign]?.out ?? s.pos;
       const at = edge.clone().addScaledVector(side, sign * (lm.distance ?? 22));

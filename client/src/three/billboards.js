@@ -12,7 +12,7 @@
  * so a board is never blank. Drawing only: the race never sees them.
  */
 import {
-  BoxGeometry, BufferGeometry, CanvasTexture, CylinderGeometry, Float32BufferAttribute, Group, Matrix4, Mesh,
+  BoxGeometry, BufferGeometry, CanvasTexture, ConeGeometry, CylinderGeometry, Float32BufferAttribute, Group, Matrix4, Mesh,
   MeshBasicMaterial, MeshLambertMaterial, Quaternion, SphereGeometry, SRGBColorSpace, Vector3,
 } from 'three';
 import { channelLipAt, channelRadiusAt } from './iceChannel';
@@ -123,6 +123,15 @@ export const FRAMES = {
       ]),
     ];
   },
+  // Our fantasy worlds: a cloth banner hung from a pole between two staves, tassels at its foot.
+  banner: (bottom) => [
+    ...border(bottom, 0.12, 0.2, '#8a2a24'),
+    back(bottom, '#6b1f1a'),
+    box(W + 1.4, 0.22, 0.22, 0, bottom + H + 0.35, 0, '#6b4a2f'),
+    ...[-W / 2 - 0.55, W / 2 + 0.55].map((x) => piece(new CylinderGeometry(0.13, 0.17, bottom + BURY + H + 1.2, 6), '#5a3f2a', at(x, (bottom + H + 1.2 - BURY) / 2, 0))),
+    ...[-W / 2 - 0.55, W / 2 + 0.55].map((x) => piece(new ConeGeometry(0.28, 0.6, 6), '#e0b43c', at(x, bottom + H + 1.5, 0))),
+    ...[-1.5, 0, 1.5].map((x) => box(0.18, 0.5, 0.05, x, bottom - 0.3, 0.05, '#e0b43c')),
+  ],
 };
 
 /** Where board `b` stands and which way it faces: { foot, quaternion }. */
