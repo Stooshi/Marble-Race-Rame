@@ -143,8 +143,8 @@ export function buildCentrepieces(centerline, channel, kit, { lite = false, grou
     const scale = Math.min(1, (gap - 0.6) / (2 * half));
     const top = s.pos.y + forkRadius(fork, channel.radius, sMid) * (1 - Math.cos(channel.maxAngle));
     const along = new Vector3(s.tangent.x, 0, s.tangent.z).normalize();
-    // (Most face across the divider; one lying along it, the anaconda, lies along the track.)
-    const lengthwise = sec.around === 'anaconda';
+    // (Most face across the divider; those lying along it, the anaconda and the fallen statue, lie along the track.)
+    const lengthwise = sec.around === 'anaconda' || sec.around === 'fallen-statue';
     const q = new Quaternion().setFromAxisAngle(UP, Math.atan2(along.x, along.z) + (lengthwise ? 0 : Math.PI / 2));
     const foot = new Vector3(s.pos.x, top - 0.05, s.pos.z);
     const g = (piece_ ?? lm).build();

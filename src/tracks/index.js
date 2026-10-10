@@ -25,4 +25,5 @@ module.exports = [
   require('./sahara-marble-grand-prix'),
   require('./elderglade-marble-grand-prix'),
   require('./frostmere-marble-grand-prix'),
+  require('./wyrmwood-hollow-marble-grand-prix'),
 ];
