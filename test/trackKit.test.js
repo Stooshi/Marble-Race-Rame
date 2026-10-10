@@ -612,7 +612,7 @@ const HIDDEN_KIT_TRACKS = [
   ['china-wall-twister', '2026-10-24-add-china-wall-twister.sql', 'China Wall Twister: along the Great Wall over the ridges, across a Go and Xiangqi board, past a waving fortune cat and through a dragon (in at its tail, out of its mouth), to the Temple of Heaven, built with the track kit.'],
   ['dubai-marble-grand-prix', '2026-10-25-add-dubai-marble-grand-prix.sql', 'Dubai Marble Grand Prix: a night race through downtown Dubai under floodlights, from beside the Burj Khalifa past the dancing fountain and round the Museum of the Future to the Marina, the first Grand Prix track.'],
   ['sydney-marble-grand-prix', '2026-10-26-add-sydney-marble-grand-prix.sql', 'Sydney Marble Grand Prix: a harbour race from the top of the Harbour Bridge arch, through The Rocks and round a stylised Opera House to a grandstand finish at Circular Quay.'],
-  ['istanbul-marble-grand-prix', '2026-10-27-add-istanbul-marble-grand-prix.sql', 'Istanbul Marble Grand Prix: from the Galata Tower down to the Golden Horn, round a tulip garden, past Hagia Sophia and the Blue Mosque and through the Grand Bazaar's vaulted halls to the Bosphorus.'],
+  ['istanbul-marble-grand-prix', '2026-10-27-add-istanbul-marble-grand-prix.sql', 'Istanbul Marble Grand Prix: from the Galata Tower down to the Golden Horn, round a tulip garden, past Hagia Sophia and the Blue Mosque and through the Grand Bazaar\'s vaulted halls to the Bosphorus.'],
 ];
 for (const [slug, file, note] of HIDDEN_KIT_TRACKS) {
   test(`${slug} is added by its data update, switched off, exactly as its track file builds it`, () => {
