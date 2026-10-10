@@ -12,6 +12,7 @@ import TrackPreview from '../components/TrackPreview';
 import NextRace from '../components/NextRace';
 import { Empty, ErrorMessage, Spinner } from '../components/Status';
 import { formatTime } from '../utils/format';
+import StartLights from '../components/StartLights';
 
 const obstacleName = (o) => o?.replace(/_/g, ' ');
 
@@ -109,7 +110,7 @@ export default function Race() {
   return (
     <div className="page race-page">
       {header}
-      {status === 'countdown' && <Countdown startsAt={stream.startsAt} />}
+      {status === 'countdown' && <Countdown startsAt={stream.startsAt} grandPrix={Boolean((meta?.track ?? details.data?.track)?.physics?.kit?.grandPrix)} />}
       {meta && newPhysics && (
         <div className="segmented segmented--sm" role="group" aria-label="View">
           <button type="button" aria-pressed={shown === '3d'} onClick={() => setView('3d')}>3D</button>
@@ -160,12 +161,14 @@ function officialSplits(meta, results, live) {
   return out;
 }
 
-function Countdown({ startsAt }) {
+function Countdown({ startsAt, grandPrix = false }) {
   const [now, setNow] = useState(Date.now());
   useEffect(() => {
     const id = setInterval(() => setNow(Date.now()), 100);
     return () => clearInterval(id);
   }, []);
+  // A Grand Prix track: five start lights instead of the numbers.
+  if (grandPrix) return <div className="countdown"><StartLights t={now - (startsAt ?? now)} /></div>;
   const left = Math.max(0, Math.ceil(((startsAt ?? now) - now) / 1000));
   return (
     <div className="countdown" role="timer" aria-live="assertive">

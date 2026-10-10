@@ -219,6 +219,14 @@ function steps({ from = 0.1, to = 0.8, count = 6, drag = 0.015, tiles } = {}) {
 }
 
 /**
+ * Rumble strips (Grand Prix tracks): a row of low bumps painted red and white, the field
+ * hopping over them one after another. Races exactly like moguls, under the same rules.
+ */
+function rumble({ from = 0.2, to = 0.85, count = 5 } = {}) {
+  return { feature: 'moguls', from, to, count, at: from, look: 'rumble' };
+}
+
+/**
  * Paint on the floor, looks only (the physics never sees it): a Go board ('go-board') or a
  * Xiangqi board ('xiangqi') over the stretch from `from` to `to` (China Wall Twister's board-game run).
  */
@@ -235,11 +243,11 @@ module.exports = {
   SHARP_RADIUS, EASE, START_RAMP, LIP_STEP, LIP_LENGTH,
   plunge, straight, climb, sBends, sweep, spiral, hairpin, splitter, waterfall, runIn,
   block, pileUp, curtain, swipe, parked, slalom, peg,
-  bump, boost, brake, moguls, steps, paint,
+  bump, boost, brake, moguls, steps, paint, rumble,
   TUNNELS: ['mine', 'ice-cave', 'dragon', 'rock', 'roots'],
   BRIDGES: ['ice', 'stone', 'wood'],
   // Scenery names (looks only; the 3D view draws them, client/src/three/scenery/kit*.js).
-  SURFACES: ['ice', 'snow', 'sand', 'stone', 'water'],
+  SURFACES: ['ice', 'snow', 'sand', 'stone', 'water', 'asphalt'],
   BIOMES: ['alpine', 'arctic', 'meadow', 'desert', 'jungle', 'city'],
   LANDMARKS: ['church', 'mountain-hut', 'big-rock', 'lighthouse', 'horse-sleigh', 'border-post',
     'lift-station', 'mine-buildings', 'snow-park', 'base-camp',
@@ -255,7 +263,10 @@ module.exports = {
   // Scenery near a section (or the start or finish): what grows and stands beside the track there.
   SCENERY: ['bare', 'rocks', 'birches', 'pines', 'race-netting', 'funicular', 'wooden-houses', 'frozen-lake',
     'wood-clad', 'chalets', 'pasture', 'aspens', 'shopfronts',
-    'stone-houses', 'colourful-houses', 'icefjord', 'haussmann', 'plane-trees', 'skyscrapers', 'stilt-houses', 'forbidden-city', 'battlements'],
+    'stone-houses', 'colourful-houses', 'icefjord', 'haussmann', 'plane-trees', 'skyscrapers', 'stilt-houses', 'forbidden-city', 'battlements', 'grandstand', 'crowd'],
   // Billboard frames: plain, a jungle timber frame, a city LED screen, a Paris advertising column, expedition crates.
   FRAMES: ['plain', 'wood', 'led', 'column', 'crates'],
+  // Grand Prix tracks (`grandPrix` in a track file): who fills the grandstands, and what lines the bends.
+  CROWDS: ['fans', 'elves', 'kingdom-folk', 'villagers'],
+  BARRIERS: ['tyres', 'logs', 'snow', 'stone'],
 };

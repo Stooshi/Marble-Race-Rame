@@ -51,6 +51,12 @@ export const COSTUME_COLORS = {
   xqWood: '#e8c890', xqRed: '#c8231f', xqBlack: '#1f2024',
   catWhite: '#f6f3ec', catRed: '#d8231f', catGold: '#e0b43c', catEar: '#f0a8a8',
   pigeonGrey: '#8e939c', pigeonDark: '#4f545c', pigeonNeck: '#5f8a7a', beak: '#3a3a3a',
+  // Grand Prix: tyre stacks, traffic cones, the safety car, the TV camera crane, the banner gantry.
+  tyreBlack: '#1c1d21', tyreBandRed: '#d8322b', tyreBandWhite: '#f2f2ee',
+  coneOrange: '#f26a1b', coneWhite: '#f4f4f2', coneBase: '#202226',
+  safetyWhite: '#f2f2ee', safetyStripe: '#f2b81c', safetyBlue: '#2556b8', lightAmber: '#ffb21c', lightGreen: '#3fd16a',
+  craneBase: '#2c2f36', craneYellow: '#f2b81c', craneArm: '#30333a', cameraBody: '#1b1c20', cameraLens: '#5f7fa8', operatorShirt: '#2f5d9a', operatorSkin: '#c98f6a',
+  bannerPost: '#3a3d44', bannerRed: '#d8322b', bannerBlue: '#2556b8', bannerWhite: '#f2f2ee', bannerGold: '#e8b62a',
 };
 
 /** A part's head (or other moving piece) as its own little group at local (x, y, z), turned with the body. */
@@ -641,6 +647,64 @@ function goStone(add, mat, group, point, q, { radius, at, l = 0 }) {
   return [];
 }
 
+// ── Grand Prix ──────────────────────────────────────────────────────────────
+
+/** A stack of three racing tyres, a red or white band painted round the middle one (Grand Prix blocks). */
+function tyreStack(add, mat, group, point, q, { radius, at }) {
+  const r = radius * 0.95;
+  const band = Math.round(at * 977) % 2 ? 'tyreBandRed' : 'tyreBandWhite';
+  for (let k = 0; k < 3; k += 1) {
+    add('tyreBlack', new CylinderGeometry(r, r, 0.36, 12), local(point, q, 0, 0.2 + k * 0.38, 0));
+    add(k === 1 ? band : 'tyreBlack', new CylinderGeometry(r * 1.01, r * 1.01, 0.1, 12, 1, true), local(point, q, 0, 0.2 + k * 0.38, 0));
+  }
+  add('coneBase', new CylinderGeometry(r * 0.55, r * 0.55, 0.02, 10), local(point, q, 0, 0.39 + 2 * 0.38, 0)); // the hole down the middle
+  return [];
+}
+
+/** An orange traffic cone with a white reflective band, on a square black base (a Grand Prix chicane's slalom poles). */
+function trafficCone(add, mat, group, point, q, { height }) {
+  const h = Math.max(0.9, height * 0.7);
+  // (Slim: no wider than the slalom pole's footprint, so what you see is what the marbles glance off.)
+  add('coneBase', new BoxGeometry(0.26, 0.06, 0.26), local(point, q, 0, 0.03, 0));
+  add('coneOrange', new ConeGeometry(0.16, h, 10), local(point, q, 0, 0.06 + h / 2, 0));
+  add('coneWhite', new CylinderGeometry(0.085, 0.11, h * 0.16, 10, 1, true), local(point, q, 0, 0.06 + h * 0.48, 0));
+  return [];
+}
+
+/** A safety car with no maker's badge: white, a chequer of yellow and blue down its flanks, a light bar on the roof (parked). */
+function safetyCar(add, mat, group, rimCentre, q, { len, width, drop = 0 }) {
+  const W = 1.95;
+  const centre = rimCentre.clone().add(new Vector3(-(width - W) / 2, -drop, 0).applyQuaternion(q));
+  const L = Math.min(len, 4.7);
+  for (let n = 0; n < Math.max(1, Math.floor(len / 4.7)); n += 1) {
+    const z = -len / 2 + L / 2 + n * L;
+    for (const x of [-0.85, 0.85]) for (const dz of [-1.45, 1.45]) add('tyre', new CylinderGeometry(0.34, 0.34, 0.25, 12), local(centre, q, x, 0.34, z + dz).multiply(new Matrix4().makeRotationZ(Math.PI / 2)));
+    add('safetyWhite', new BoxGeometry(1.9, 0.55, L - 0.2), local(centre, q, 0, 0.6, z));
+    add('safetyWhite', new BoxGeometry(1.6, 0.42, L * 0.42), local(centre, q, 0, 1.08, z - 0.15));
+    add('carGlass', new BoxGeometry(1.52, 0.34, L * 0.4), local(centre, q, 0, 1.1, z - 0.15));
+    for (const x of [-0.96, 0.96]) {
+      for (let k = 0; k < 6; k += 1) add(k % 2 ? 'safetyBlue' : 'safetyStripe', new BoxGeometry(0.02, 0.22, (L - 0.6) / 6), local(centre, q, x, 0.62, z - (L - 0.6) / 2 + ((k + 0.5) * (L - 0.6)) / 6));
+    }
+    add('carChrome', new BoxGeometry(1.2, 0.1, 0.25), local(centre, q, 0, 1.34, z - 0.15));
+    add('lightAmber', new BoxGeometry(0.45, 0.14, 0.22), local(centre, q, -0.32, 1.42, z - 0.15));
+    add('lightGreen', new BoxGeometry(0.45, 0.14, 0.22), local(centre, q, 0.32, 1.42, z - 0.15));
+  }
+  return [];
+}
+
+/** A TV camera crane on its dolly beyond the rim, an operator at the controls (its boom, swinging in, is the arm; the camera at its tip). */
+function cameraCraneBody(add, base, q) {
+  add('craneBase', new BoxGeometry(1.6, 0.4, 1.6), local(base, q, 0, 0.3, 0));
+  for (const x of [-0.65, 0.65]) for (const z of [-0.65, 0.65]) add('tyre', new CylinderGeometry(0.16, 0.16, 0.12, 8), local(base, q, x, 0.16, z).multiply(new Matrix4().makeRotationZ(Math.PI / 2)));
+  add('craneYellow', new CylinderGeometry(0.16, 0.2, 2.4, 8), local(base, q, 0, 1.7, 0));
+  add('craneBase', new BoxGeometry(0.5, 0.5, 0.5), local(base, q, 0, 2.95, 0));
+  add('craneBase', new BoxGeometry(0.6, 0.6, 0.6), local(base, q, 0, 2.95, -1.4)); // the counterweight
+  add('craneArm', new BoxGeometry(0.12, 0.12, 1.5), local(base, q, 0, 2.95, -0.7));
+  add('operatorShirt', new BoxGeometry(0.45, 0.65, 0.3), local(base, q, 0.75, 1.0, -0.6));
+  add('operatorSkin', new IcosahedronGeometry(0.15, 0), local(base, q, 0.75, 1.48, -0.6));
+  add('tyreBlack', new BoxGeometry(0.5, 0.5, 0.3), local(base, q, 0.75, 0.42, -0.6));
+}
+
 /**
  * The kit's costumes by name: where each is placed (`places`: the kind of
  * obstacle it dresses) and how it is built.
@@ -704,4 +768,17 @@ export const KIT_COSTUMES = {
   easel: { places: 'curtain', build: easel },
   pigeon: { places: 'block', upright: true, build: pigeon },
   vespa: { places: 'parked', build: vespa },
+  'tyre-stack': { places: 'block', upright: true, build: tyreStack },
+  'traffic-cone': { places: 'slalom', build: trafficCone },
+  'safety-car': { places: 'parked', build: safetyCar },
+  'camera-crane': {
+    places: 'swipe',
+    body: cameraCraneBody,
+    standOff: 1.6, // metres out beyond the rim
+    sink: -0.2,
+    // The boom, from the head of the column out to the camera, swung in over the high line on the swipe's timetable.
+    arm: { colour: 'craneArm', shoulder: [0, 2.95, 0.2], radii: [0.09, 0.12], segments: 6, tip: 0.3, tipDetail: 0, tipBox: [0.42, 0.36, 0.6], tipColour: 'cameraBody', end: 0.12, endDetail: 0, endColour: 'cameraLens', lift: 0.7, outLift: 1.2, nose: 0.2 },
+  },
+  // A gantry over the channel with banners hanging into the high line (a curtain): drawn whole by the curtain's placement.
+  'banner-gantry': { places: 'curtain', gantry: true, banners: ['bannerRed', 'bannerWhite', 'bannerBlue'], post: 'bannerPost', build: () => [] },
 };

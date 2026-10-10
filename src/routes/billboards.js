@@ -11,7 +11,7 @@ const db = require('../db');
 const { validate } = require('../utils/validate');
 
 const router = express.Router();
-const SLOTS = 6;
+const SLOTS = 8; // (up to 8 on a Grand Prix track; other tracks have 4 to 6)
 
 /**
  * Picks each slot's image from the rows that apply now: the most specific

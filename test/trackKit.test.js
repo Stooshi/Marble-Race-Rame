@@ -619,3 +619,43 @@ for (const [slug, file, note] of HIDDEN_KIT_TRACKS) {
     assert.match(sql, /is_active|false/);
   });
 }
+
+test('a Grand Prix track: up to 8 billboards (other tracks 4 to 6), its crowd and barriers by name, rumble strips race as moguls', () => {
+  const gp = () => ({ ...base(), surface: 'asphalt', grandPrix: true });
+  const eight = gp();
+  eight.sections[2].billboards = 5;
+  eight.sections[3].billboards = 3;
+  const built = track(eight);
+  assert.equal(built.physics.kit.billboards.length, 8);
+  assert.deepEqual(built.physics.kit.grandPrix, { crowd: 'fans', barrier: 'tyres' });
+  assert.equal(built.physics.look, 'asphalt');
+  const nine = gp();
+  nine.sections[2].billboards = 6;
+  nine.sections[3].billboards = 3;
+  refused(nine, /9 billboards; every Grand Prix track has 4 to 8/);
+  const notGp = base();
+  notGp.sections[2].billboards = 5;
+  notGp.sections[3].billboards = 3;
+  refused(notGp, /8 billboards; every track has 4 to 6/);
+  refused({ ...gp(), grandPrix: { crowd: 'robots' } }, /unknown Grand Prix crowd "robots"/);
+  refused({ ...gp(), grandPrix: { barrier: 'hay' } }, /unknown Grand Prix barrier "hay"/);
+  assert.equal(track({ ...gp(), grandPrix: { crowd: 'elves', barrier: 'logs' } }).physics.kit.grandPrix.crowd, 'elves');
+  assert.equal(track(base()).physics.kit.grandPrix, undefined);
+  // Rumble strips: a row of low bumps, painted (the look rides along; the race sees bumps).
+  const strips = gp();
+  strips.sections[3].features = [kit.rumble({ from: 0.7, to: 0.95, count: 3 })];
+  const bumps = track(strips).physics.features.filter((f) => f.type === 'bump');
+  assert.equal(bumps.length, 3);
+  assert.ok(bumps.every((b) => b.look === 'rumble'));
+  const onBend = gp();
+  onBend.sections[2].features = [kit.rumble({ from: 0.3, to: 0.6, count: 3 })];
+  refused(onBend, /moguls on a bend/);
+});
+
+test('the Grand Prix gallery (every Grand Prix piece, never raced) builds within the recipe', () => {
+  const { GALLERIES } = require('../scripts/dump-kit-track');
+  const g = GALLERIES['grand-prix-gallery']();
+  assert.ok(g.physics.kit.grandPrix);
+  assert.equal(g.physics.kit.billboards.length, 8);
+  assert.ok(!PHYSICS_TRACKS.some((t) => t.slug === g.slug), 'never a raceable track');
+});

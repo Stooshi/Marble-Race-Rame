@@ -1,6 +1,7 @@
 /**
  * Lighting and weather presets for kit tracks (track kit, step 6): day,
- * sunset, midnight sun, night with northern lights, fog, snow and rain. A
+ * sunset, midnight sun, night with northern lights, fog, snow, rain, and a
+ * floodlit city night (Grand Prix). A
  * preset sets the sky, sun, haze and effects over the track's landscape (its
  * ground and scenery colours stay its own). Drawing only: the race never sees
  * them. The server picks each race's preset from the track's allowed list
@@ -16,7 +17,7 @@ import {
 } from 'three';
 import { channelLipAt, channelRadiusAt, forkAt, forkOffset, forkRadius } from './iceChannel';
 
-export const LIGHTINGS = ['day', 'sunset', 'midnight-sun', 'night-northern-lights', 'fog', 'snow', 'rain'];
+export const LIGHTINGS = ['day', 'sunset', 'midnight-sun', 'night-northern-lights', 'fog', 'snow', 'rain', 'night'];
 
 /** Each preset's sky, haze and light (day: the landscape's own). fogRange: metres, near and far. */
 export const PRESETS = {
@@ -44,6 +45,18 @@ export const PRESETS = {
     sun: { color: '#bcd0ff', intensity: 0.55, direction: [0.3, 0.8, -0.4] }, // the moon
     groundTint: 0.35,
     effects: { stars: true, aurora: true, night: true },
+  },
+  // A night race under floodlights (Dubai Marble Grand Prix): a city's dark sky with a few
+  // stars, brighter light on the track than a northern-lights night, no aurora.
+  night: {
+    sky: { top: '#050a18', horizon: '#1d2a4a', glow: null },
+    fog: '#121c33',
+    fogRange: [300, 1800],
+    hemisphere: { sky: '#8aa0d0', ground: '#1a2236', intensity: 0.8 },
+    ambient: 0.32,
+    sun: { color: '#fff1d6', intensity: 0.75, direction: [0.2, 1, 0.3] }, // the floodlights, from high above
+    groundTint: 0.4,
+    effects: { stars: true, night: true },
   },
   fog: {
     sky: { top: '#b6c0c9', horizon: '#d3d8dc', glow: null },

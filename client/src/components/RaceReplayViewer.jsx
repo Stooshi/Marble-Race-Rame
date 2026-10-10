@@ -7,6 +7,7 @@ import CornerView, { cornerFollow, followedNow, followLabel } from './CornerView
 import { Spinner } from './Status';
 import { formatTime } from '../utils/format';
 import FinishShow, { useFinishShow } from './FinishShow';
+import StartLights from './StartLights';
 import SkipToResults from './SkipToResults';
 import FrameMeter, { useFrameMeter } from './FrameMeter';
 import { BOARD_HOLD_MS, finishPlan } from '../utils/finishShow';
@@ -28,6 +29,7 @@ export default function RaceReplayViewer({ data, loading = false, mine = NOBODY,
   const plan = finishPlan(finishes, data?.entries?.length ?? 0, true);
   const replay = useReplay(data, { tailMs: plan && data ? Math.max(0, plan.boardAt + BOARD_HOLD_MS - data.durationMs) : 0 });
   const show = useFinishShow({ finishes, count: data?.entries?.length ?? 0, complete: true, clock: replay.now });
+  const grandPrix = Boolean(data?.track?.physics?.kit?.grandPrix); // (five start lights instead of 3, 2, 1)
   const finishing = show.phase !== 'racing' && show.phase !== 'winner';
   const { wrapRef, canvasRef, sceneRef, status, failure, fail } = useTrackScene();
   const [camera, setCamera] = useState('follow'); // follow | overview
@@ -140,7 +142,10 @@ export default function RaceReplayViewer({ data, loading = false, mine = NOBODY,
         {built && (
           <>
             {show.phase !== 'winner' && <div className="replay3d__clock">{formatTime(Math.max(0, replay.time))}</div>}
-            {replay.start < 0 && replay.time < 700 && (
+            {replay.start < 0 && replay.time < 700 && grandPrix && (
+              <div className="replay3d__countdownwrap"><StartLights t={replay.time} className="replay3d__lights" /></div>
+            )}
+            {replay.start < 0 && replay.time < 700 && !grandPrix && (
               <div className="replay3d__countdownwrap" aria-live="polite">
                 {/* Keyed by what it shows, so each number pops in afresh. */}
                 <span key={countdownLabel(replay.time)} className={`replay3d__countdown${replay.time >= 0 ? ' is-go' : ''}`}>

@@ -38,7 +38,15 @@ export const WATER_COLORS = {
   iceA: '#5fb4d9', iceB: '#4ba3cc', rim: '#e8e2d2', outer: '#8f8778', outerDark: '#82796b',
   divider: '#e8e2d2', nose: '#d8322b',
 };
-const LOOK_COLORS = { ice: ICE_COLORS, sand: SAND_COLORS, snow: SNOW_COLORS, stone: STONE_COLORS, water: WATER_COLORS };
+/** Grand Prix asphalt: dark tarmac with a white edge line; races exactly like ice. */
+export const ASPHALT_COLORS = {
+  iceA: '#45484f', iceB: '#3f4249', rim: '#f2f2ee', outer: '#9b9b97', outerDark: '#8c8c88',
+  divider: '#e6e6e2', nose: '#d8322b',
+};
+/** Racing kerbs along the top of both walls on a Grand Prix track's bends: red and white blocks. */
+export const KERB_COLORS = { kerbA: '#d8322b', kerbB: '#f4f4f2' };
+const KERB_RADIUS = 200; // metres: a bend tighter than this gets kerbs
+const LOOK_COLORS = { ice: ICE_COLORS, sand: SAND_COLORS, snow: SNOW_COLORS, stone: STONE_COLORS, water: WATER_COLORS, asphalt: ASPHALT_COLORS };
 export const CHANNEL_LOOKS = Object.keys(LOOK_COLORS);
 
 /** The colours for a channel that is not a street (ice, sand, snow, stone, water), at s metres along it. */
@@ -85,6 +93,7 @@ export function channelOf(track, centerline) {
     runout: runout ? { length: runout.length, halfWidth: runout.halfWidth } : null, // the catch area past the line
     look: ['street', ...CHANNEL_LOOKS].includes(track.physics.look) ? track.physics.look : 'ice', // how it is dressed (the shape is the same)
     // Kit sections dressed differently from the rest (a stone stretch on a snow track, say).
+    kerbs: Boolean(track.physics.kit?.grandPrix), // red-and-white kerbs on the bends (Grand Prix tracks)
     surfaces: (track.physics.kit?.sections ?? [])
       .filter((x) => x.surface && LOOK_COLORS[x.surface])
       .map((x) => ({ s0: x.from * arc, s1: x.to * arc, look: x.surface })),
@@ -211,6 +220,10 @@ export function buildIceChannelGeometry(centerline, channel, {
   const { samples, segments } = centerline;
   const positions = [];
   const colors = [];
+  // Grand Prix kerbs: the top strip of each wall, on segments where the track bends.
+  const KERB = { kerbA: new Color(KERB_COLORS.kerbA), kerbB: new Color(KERB_COLORS.kerbB) };
+  const kerbed = channel.kerbs && !street ? bendSegments(centerline, KERB_RADIUS) : null;
+  let kerbHere = false;
   const quad = (p0, p1, p2, p3, color) => {
     for (const p of [p0, p1, p2, p0, p2, p3]) { positions.push(p.x, p.y, p.z); colors.push(color.r, color.g, color.b); }
   };
@@ -248,7 +261,8 @@ export function buildIceChannelGeometry(centerline, channel, {
     for (let k = 0; k < segmentsAcross; k += 1) {
       // The strip's angle up the wall, as a share of the full wall (the funnel's lip is lower: scaled to the main channel's).
       const th = ((-lip + (2 * lip * (k + 0.5)) / segmentsAcross) / lip) * channel.maxAngle;
-      const color = street ? streetColor(th, s, stripe) : stripe ? C.iceA : C.iceB;
+      let color = street ? streetColor(th, s, stripe) : stripe ? C.iceA : C.iceB;
+      if (kerbHere && (k === 0 || k === segmentsAcross - 1)) color = Math.floor(s / KERB_LENGTH) % 2 === 0 ? KERB.kerbA : KERB.kerbB;
       if (mine(k)) quad(a.ring[k], b.ring[k], b.ring[k + 1], a.ring[k + 1], color);
     }
     for (const sideIdx of [0, 1]) {
@@ -273,6 +287,7 @@ export function buildIceChannelGeometry(centerline, channel, {
     const sMid = (i + 0.5) * step;
     const stripe = Math.floor(sMid / 6) % 2 === 0;
     C = dressFor(sMid);
+    kerbHere = Boolean(kerbed?.[i]);
     const fork = forkAt(channel, sMid);
     if (fork) {
       const sa = i * step;
@@ -317,6 +332,26 @@ export function buildIceChannelGeometry(centerline, channel, {
   geometry.computeBoundingSphere();
   geometry.userData.segmentStarts = starts;
   return geometry;
+}
+
+/**
+ * Which segments of the centre line bend tighter than `radius` metres (seen from
+ * above): their turn over a few metres either side, against the distance.
+ */
+export function bendSegments(centerline, radius) {
+  const { samples, segments } = centerline;
+  const out = new Array(segments).fill(false);
+  const K = 3;
+  for (let i = 0; i < segments; i += 1) {
+    const a = samples[Math.max(0, i - K)];
+    const b = samples[Math.min(segments, i + 1 + K)];
+    const ta = new Vector3(a.tangent.x, 0, a.tangent.z).normalize();
+    const tb = new Vector3(b.tangent.x, 0, b.tangent.z).normalize();
+    const turn = Math.acos(Math.max(-1, Math.min(1, ta.dot(tb))));
+    const dist = new Vector3(b.pos.x - a.pos.x, 0, b.pos.z - a.pos.z).length();
+    out[i] = turn > 1e-4 && dist / turn < radius;
+  }
+  return out;
 }
 
 /**

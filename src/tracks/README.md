@@ -167,7 +167,7 @@ sites to show them (Vercel file storage does). Drawing only: never the race.
 ## Lighting, weather and variants
 
 `lighting`: the track's own preset, one of `'day' | 'sunset' | 'midnight-sun' |
-'night-northern-lights' | 'fog' | 'snow' | 'rain'` (default `'day'`).
+'night-northern-lights' | 'fog' | 'snow' | 'rain' | 'night'` (default `'day'`; `'night'`: a floodlit city night).
 `variants: ['sunset', 'snow']`: the other presets this track may race in;
 anything not listed is ruled out for it (Paris: no night). Each race picks one
 from its seed when it is decided (the track's own preset twice as often as
@@ -178,6 +178,38 @@ carry an edge light, so the marbles always stay in the picture.
 
 Preview a variant with `&lighting=snow` on the preview link (only presets the
 track allows).
+
+## Grand Prix tracks
+
+`grandPrix: true` (or `grandPrix: { crowd, barrier, fireworks }`) makes a track a Grand
+Prix: looks only, it races exactly as it would without. It brings:
+
+- **Start lights**: a dark gantry over the gate with five lights that come on one by one
+  over the last three seconds of the countdown and all go out at GO; the countdown over
+  the view shows the same five lights instead of 3, 2, 1 (other tracks keep 3-2-1).
+- **Grandstands**: packed stands either side of the start and along the finish straight,
+  one on the outside of the sharp bend, smaller groups every 230 m or so, and more where a
+  section's `scenery` says `'grandstand'` (packed) or `'crowd'` (small). Each stands at track
+  level beside the rim (up on the land where the track runs in a cutting, on scaffolding where
+  the ground falls away), clear of other stretches, landmarks and billboards. Spectators wave
+  flags and stand up while marbles pass; on phones half as many, each one box, fewer flags.
+  `crowd`: `'fans'` (default), `'elves'`, `'kingdom-folk'`, `'villagers'`.
+- **Kerbs and barriers**: red-and-white kerbs along the top of both walls on every bend, and a
+  barrier along the outside: `barrier`: `'tyres'` (default), `'logs'`, `'snow'`, `'stone'`.
+  The `'asphalt'` surface (dark tarmac, a white edge line) races as fast as ice.
+- **The finish**: a chequered gantry over the line, a finish building with a balcony of
+  spectators beside it, and fireworks over the finish once the winner is home
+  (`fireworks: 'sparkles'`: a shower of sparkling lights instead). A night race (`lighting:
+  'night'`, a floodlit city night) gets floodlight masts along the track.
+- **Billboards**: 4 to 8 (other tracks 4 to 6).
+- **Costumes**: `tyre-stack` (block), `traffic-cone` (slalom), `safety-car` (parked, no maker's
+  badge), `camera-crane` (swipe: its boom swings a TV camera over the high line),
+  `banner-gantry` (curtain: banners hanging from a gantry over the high line), and
+  `rumble({ from, to, count })`: rumble strips, red and white, racing as moguls (same rules).
+
+No real series, circuit or car brand anywhere: generic racing pieces only.
+To look at them all: `node scripts/dump-kit-track.js grand-prix-gallery`, then open
+`/dev/kit-view.html?track=grand-prix-gallery` (never raced).
 
 ## Mirrored tracks
 

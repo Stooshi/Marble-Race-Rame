@@ -8,7 +8,7 @@
  * Each problem names the rule and the section, in plain words.
  */
 
-const { SHARP_RADIUS, TUNNELS, BRIDGES, SURFACES, BIOMES, LANDMARKS, OVERHEAD, FRAMES, AROUND, SCENERY } = require('./parts');
+const { SHARP_RADIUS, TUNNELS, BRIDGES, SURFACES, BIOMES, LANDMARKS, OVERHEAD, FRAMES, AROUND, SCENERY, CROWDS, BARRIERS } = require('./parts');
 
 const MIN_SPIRAL_RADIUS = 40;  // Table Mountain Run's corkscrew
 const MIN_SWEEP_RADIUS = 45;   // San Francisco's Embarcadero
@@ -19,6 +19,7 @@ const LONGEST_CLIMB_M = 40;    // San Francisco's 35 m
 const { LIGHTINGS } = require('./lighting');
 
 const BILLBOARDS = [4, 6];
+const GRAND_PRIX_BILLBOARDS = [4, 8]; // trackside advertising suits a Grand Prix: up to 8
 const BILLBOARD_SHAPES = ['straight', 'plunge', 'climb', 'sBends', 'sweep'];
 const OBSTACLE_FREE_FINISH_M = 25; // nothing in the marbles' way just before the line
 const BRAKING_ZONE_M = 35;
@@ -114,6 +115,14 @@ function checkRecipe({ spec, sections, span, generated, owner, placed, total, wh
   known('biome', BIOMES, spec.biome, 'track');
   known('billboard frame', FRAMES, spec.billboardFrame, 'track');
   known('lighting', LIGHTINGS, spec.lighting, 'track');
+  // A Grand Prix track: its crowd and barriers by name.
+  if (spec.grandPrix !== undefined && spec.grandPrix !== true) {
+    if (typeof spec.grandPrix !== 'object' || spec.grandPrix === null) problems.push(`${where('track')}: grandPrix is true, or { crowd, barrier }.`);
+    else {
+      known('Grand Prix crowd', CROWDS, spec.grandPrix.crowd, 'track');
+      known('Grand Prix barrier', BARRIERS, spec.grandPrix.barrier, 'track');
+    }
+  }
   // The signature moment (the report's screenshot of it): a section of this track.
   if (spec.signature !== undefined && !sections.some((s) => s.name === spec.signature)) problems.push(`${where('track')}: the signature "${spec.signature}" is not one of this track's sections.`);
   if (spec.designChanges !== undefined && !(Array.isArray(spec.designChanges) && spec.designChanges.every((c) => typeof c === 'string'))) problems.push(`${where('track')}: designChanges is a list of sentences (where the build differs from the design, and why).`);
@@ -218,7 +227,8 @@ function checkRecipe({ spec, sections, span, generated, owner, placed, total, wh
 
   // Billboards: 4 to 6 per track, beside straights and sweeps, never at the sharp bend or the finish.
   const boards = sections.reduce((n, s) => n + (s.billboards || 0), 0);
-  if (boards < BILLBOARDS[0] || boards > BILLBOARDS[1]) problems.push(`${where('billboards')}: ${boards} billboards; every track has ${BILLBOARDS[0]} to ${BILLBOARDS[1]}.`);
+  const [fewest, most] = spec.grandPrix ? GRAND_PRIX_BILLBOARDS : BILLBOARDS;
+  if (boards < fewest || boards > most) problems.push(`${where('billboards')}: ${boards} billboards; every ${spec.grandPrix ? 'Grand Prix ' : ''}track has ${fewest} to ${most}.`);
   sections.forEach((s) => {
     if (!s.billboards) return;
     if (!Number.isInteger(s.billboards) || s.billboards < 1) problems.push(`${where(s.name)}: billboards is a number of billboards (1, 2…).`);
@@ -230,4 +240,4 @@ function checkRecipe({ spec, sections, span, generated, owner, placed, total, wh
   return problems;
 }
 
-module.exports = { checkRecipe, MIN_SPIRAL_RADIUS, MIN_SWEEP_RADIUS, BILLBOARDS };
+module.exports = { checkRecipe, MIN_SPIRAL_RADIUS, MIN_SWEEP_RADIUS, BILLBOARDS, GRAND_PRIX_BILLBOARDS };

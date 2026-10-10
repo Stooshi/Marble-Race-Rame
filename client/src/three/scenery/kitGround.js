@@ -64,7 +64,7 @@ export const BIOMES = {
 
 export function biomeOf(kit) {
   if (kit?.biome && BIOMES[kit.biome]) return kit.biome;
-  return { snow: 'alpine', ice: 'alpine', sand: 'desert', water: 'jungle', stone: 'city', street: 'city' }[kit?.surface] ?? 'meadow';
+  return { snow: 'alpine', ice: 'alpine', sand: 'desert', water: 'jungle', stone: 'city', street: 'city', asphalt: 'city' }[kit?.surface] ?? 'meadow';
 }
 
 /** The channel's half-width to the outside of its walls, and its rim's height above the floor, at sample i. */

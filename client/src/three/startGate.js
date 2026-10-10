@@ -7,7 +7,7 @@
  * Phone budget: three instanced meshes (paddles, their edges, blocks behind) plus a frame.
  */
 import {
-  BoxGeometry, Group, InstancedMesh, Matrix4, Mesh, MeshLambertMaterial, Quaternion, Vector3, DynamicDrawUsage,
+  BoxGeometry, Color, Group, IcosahedronGeometry, InstancedMesh, Matrix4, Mesh, MeshBasicMaterial, MeshLambertMaterial, Quaternion, Vector3, DynamicDrawUsage,
 } from 'three';
 import { layoutMarbles, MARBLE_RADIUS } from './marbles';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
@@ -20,6 +20,18 @@ const SINK_MS = 160; // how long a paddle takes to sink
 const LIFT_MS = 900; // once the last paddle is down, the frame over the line lifts away this quickly…
 const LIFT_HEIGHT = 40; // …this far up, out of the cameras' way as they follow the field down the slope
 const ZERO = new Vector3(0, 0, 0);
+
+// Grand Prix start lights: five lights over the line, coming on one by one over the
+// last three seconds of the countdown and all going out at GO (instead of 3-2-1).
+export const START_LIGHTS = 5;
+export const LIGHT_STEP_MS = 600;
+export const GANTRY_COLORS = { gantry: '#2b2e35', pod: '#121317', lightOff: '#3a1210', lightOn: '#ff2a18' };
+
+/** How many of the five start lights are on at time `t` (ms after GO; negative during the countdown). */
+export function startLightsOn(t) {
+  if (!(t < 0) || t < -START_LIGHTS * LIGHT_STEP_MS) return 0;
+  return Math.min(START_LIGHTS, Math.floor((t + START_LIGHTS * LIGHT_STEP_MS) / LIGHT_STEP_MS) + 1);
+}
 
 /** How far down (0 up, 1 gone) a paddle released at `releaseMs` is at time `t` (ms after GO). */
 export function paddleSink(t, releaseMs) {
@@ -53,10 +65,12 @@ export class StartGate {
   /**
    * @param places from gatePlaces
    * @param releaseMs when each paddle lets its marble go (ms after GO)
+   * @param options lights: a Grand Prix start gantry with five start lights instead of the white frame
    */
-  constructor(places, releaseMs) {
+  constructor(places, releaseMs, { lights = false } = {}) {
     this.places = places;
     this.releaseMs = releaseMs;
+    this.lit = lights;
     this.group = new Group();
     // Each paddle: a white face set into a slightly larger blue-grey one, which shows as a crisp edge.
     this.paddleGeo = new BoxGeometry(PADDLE.width - 2 * EDGE, PADDLE.height - 2 * EDGE, PADDLE.thick + 0.02);
@@ -65,6 +79,11 @@ export class StartGate {
     // The white parts glow a touch, so they stay white even facing away from the sun.
     const glow = { paddle: '#8a96a2', frame: '#8a96a2' };
     this.mats = Object.fromEntries(Object.entries(GATE_COLORS).map(([k, c]) => [k, new MeshLambertMaterial({ color: c, emissive: glow[k] ?? '#000000' })]));
+    if (lights) {
+      // The Grand Prix gantry: dark steel, the pods black.
+      this.mats.frame = new MeshLambertMaterial({ color: GANTRY_COLORS.gantry });
+      this.mats.edge = new MeshLambertMaterial({ color: GANTRY_COLORS.pod });
+    }
     this.paddles = new InstancedMesh(this.paddleGeo, this.mats.paddle, places.length);
     this.paddles.instanceMatrix.setUsage(DynamicDrawUsage);
     this.paddles.frustumCulled = false;
@@ -124,6 +143,29 @@ export class StartGate {
       beam.add(trim);
     }
     frame.add(beam);
+    if (this.lit) {
+      // Five pods standing on the beam's middle, two lights each (seen from either side).
+      const mid = tops[0].clone().lerp(tops[1], 0.5);
+      const across = tops[1].clone().sub(tops[0]).setY(0).normalize();
+      const fwd = new Vector3(-across.z, 0, across.x);
+      const q = new Quaternion().setFromRotationMatrix(new Matrix4().makeBasis(across, new Vector3(0, 1, 0), fwd));
+      const lamps = [];
+      for (let n = 0; n < START_LIGHTS; n += 1) {
+        const x = (n - (START_LIGHTS - 1) / 2) * 0.62;
+        const pod = new Mesh(new BoxGeometry(0.48, 1.05, 0.22), this.mats.edge);
+        pod.position.copy(mid).addScaledVector(across, x).add(new Vector3(0, 0.25 + 0.55, 0));
+        pod.quaternion.copy(q);
+        frame.add(pod);
+        for (const y of [0.18, -0.2]) lamps.push(mid.clone().addScaledVector(across, x).add(new Vector3(0, 0.8 + y, 0)));
+      }
+      this.lampGeo = new IcosahedronGeometry(0.19, 1);
+      this.lampMat = new MeshBasicMaterial({ color: '#ffffff' });
+      this.lamps = new InstancedMesh(this.lampGeo, this.lampMat, lamps.length);
+      this.lamps.name = 'start lights';
+      lamps.forEach((p, k) => this.lamps.setMatrixAt(k, new Matrix4().makeTranslation(p.x, p.y, p.z)));
+      this.lampColors = { off: new Color(GANTRY_COLORS.lightOff), on: new Color(GANTRY_COLORS.lightOn) };
+      this.lightsShown = -1;
+    }
     // Drawn as one mesh per colour (two draw calls, not ten).
     frame.updateMatrixWorld(true);
     const byMat = new Map();
@@ -136,6 +178,7 @@ export class StartGate {
     });
     const merged = new Group();
     for (const [mat, list] of byMat) merged.add(new Mesh(mergeGeometries(list), mat));
+    if (this.lamps) merged.add(this.lamps); // (their own call: they light up on the countdown)
     return merged;
   }
 
@@ -171,6 +214,15 @@ export class StartGate {
     const k = Math.min(1, Math.max(0, (t - this.liftAt) / LIFT_MS));
     this.frameGroup.position.y = k * k * LIFT_HEIGHT; // gathering speed as it goes
     this.frameGroup.visible = k < 1;
+    if (this.lamps) {
+      // The lights, one pod at a time (both its lights), all out at GO.
+      const on = startLightsOn(t);
+      if (on !== this.lightsShown) {
+        for (let n = 0; n < START_LIGHTS * 2; n += 1) this.lamps.setColorAt(n, Math.floor(n / 2) < on ? this.lampColors.on : this.lampColors.off);
+        this.lamps.instanceColor.needsUpdate = true;
+        this.lightsShown = on;
+      }
+    }
     const basis = new Matrix4();
     const one = new Vector3(1, 1, 1);
     this.places.forEach((pl, i) => {
@@ -194,6 +246,8 @@ export class StartGate {
     this.paddleGeo.dispose();
     this.edgeGeo.dispose();
     this.blockGeo.dispose();
+    this.lampGeo?.dispose();
+    this.lampMat?.dispose();
     for (const m of Object.values(this.mats)) m.dispose();
   }
 }

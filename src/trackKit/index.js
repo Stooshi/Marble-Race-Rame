@@ -161,7 +161,7 @@ function track(spec) {
         // A row of low bumps, evenly along the stretch (steps: over a rough, slowing surface).
         for (let k = 0; k < f.count; k += 1) {
           const share = f.count > 1 ? f.from + ((f.to - f.from) * k) / (f.count - 1) : f.from;
-          features.push({ type: 'bump', at: along(i, share) });
+          features.push({ type: 'bump', at: along(i, share), ...(f.look && { look: f.look }) }); // (look 'rumble': rumble strips)
         }
         if (f.feature === 'steps') features.push({ type: 'cobbles', at, length: Math.round((f.to - f.from) * metres(i) * 10) / 10, drag: f.drag, look: f.tiles === 'mosaic' ? 'mosaic' : 'steps' });
         placed.push({ section: i, kind: f.feature, at, count: f.count, spacing: ((f.to - f.from) * metres(i)) / Math.max(1, f.count - 1) });
@@ -172,7 +172,7 @@ function track(spec) {
       else if (f.feature === 'brake') features.push({ type: 'cobbles', at, length: f.length, drag: f.drag });
       else if (f.feature === 'paint') { features.push({ type: 'paint', at, length: Math.round((f.to - f.from) * metres(i) * 10) / 10, look: f.look }); continue; } // (looks only)
       else {
-        problems.push(`${where(sec.name)}: features must come from the kit (bump, boost, brake, moguls, steps, paint).`);
+        problems.push(`${where(sec.name)}: features must come from the kit (bump, boost, brake, moguls, steps, paint, rumble).`);
         continue;
       }
       placed.push({ section: i, kind: f.feature, at });
@@ -239,6 +239,9 @@ function track(spec) {
     lighting: spec.lighting || 'day',
     ...(spec.variants?.length && { variants: [...spec.variants] }),
     ...(spec.signature && { signature: spec.signature }),
+    // A Grand Prix track: start lights, grandstands and crowds, kerbs and barriers, the finish's gantry,
+    // building and fireworks (looks only). Who fills the stands and what lines the bends, by name.
+    ...(spec.grandPrix && { grandPrix: { crowd: 'fans', barrier: 'tyres', ...(typeof spec.grandPrix === 'object' ? spec.grandPrix : {}) } }),
     billboards,
     start: spec.start || {},
     finish: spec.finish || {},

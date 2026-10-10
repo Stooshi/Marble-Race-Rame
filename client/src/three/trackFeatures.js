@@ -220,6 +220,32 @@ export function buildTrackFeatures(centerline, channel, features, { lite = false
         ? new Quaternion().setFromUnitVectors(zAxis, facing)
         : new Quaternion().setFromUnitVectors(UP, normal).multiply(new Quaternion().setFromUnitVectors(zAxis, facing));
       wear(costume.build, point, q, { radius: f.radius ?? 0.7, height: f.height ?? 1.2, l: f.l ?? 0, at: f.at });
+    } else if (costume.places === 'curtain' && costume.gantry) {
+      // A gantry across the channel, rim to rim, with banners hanging down into the high line
+      // where the icicles hang (a Grand Prix's banner gantry): three banners over the curtain's stretch.
+      const { side, along } = frameAt(centerline, f.at);
+      const s = f.at * channel.arc;
+      const lip = channelLipAt(channel, s) / channel.maxAngle;
+      const rims = [-1, 1].map((k) => surface(f.at, k * lip, 0).point);
+      const top = Math.max(rims[0].y, rims[1].y) + 4.2;
+      const flat = along.clone().setY(0).normalize();
+      const q = new Quaternion().setFromRotationMatrix(new Matrix4().makeBasis(side.clone().setY(0).normalize(), UP, flat));
+      for (const r of rims) {
+        const foot = r.clone().addScaledVector(side.clone().setY(0).normalize(), Math.sign(r.clone().sub(rims[0]).dot(side)) * 0.6 || -0.6);
+        add(costume.post, new BoxGeometry(0.3, top - foot.y + 0.3, 0.3), new Matrix4().makeTranslation(foot.x, (foot.y + top) / 2, foot.z));
+      }
+      const mid = rims[0].clone().lerp(rims[1], 0.5).setY(top);
+      add(costume.post, new BoxGeometry(rims[0].distanceTo(rims[1]) + 1.6, 0.35, 0.35), new Matrix4().compose(mid, q, new Vector3(1, 1, 1)));
+      const from = f.l;
+      const to = f.l2 ?? f.l;
+      for (let k = 0; k < 3; k += 1) {
+        const l = from + ((to - from) * (k + 0.5)) / 3;
+        const { point } = surface(f.at, l, 0);
+        const bottom = point.y + 0.5;
+        const h = top - 0.2 - bottom;
+        add(costume.banners[k % costume.banners.length], new BoxGeometry(0.8, h, 0.05), new Matrix4().compose(new Vector3(point.x, bottom + h / 2, point.z), q, new Vector3(1, 1, 1)));
+        add(costume.post, new BoxGeometry(0.9, 0.08, 0.08), new Matrix4().compose(new Vector3(point.x, top - 0.2, point.z), q, new Vector3(1, 1, 1)));
+      }
     } else if (costume.places === 'curtain') {
       // A few figures standing across the high line, where the icicles hang.
       const { side } = frameAt(centerline, f.at);
@@ -248,10 +274,12 @@ export function buildTrackFeatures(centerline, channel, features, { lite = false
       const shoulder = base.clone().add(new Vector3(...a.shoulder).applyQuaternion(q));
       const restL = f.l;
       const reachL = f.reach ?? f.l;
-      const armMat = new MeshLambertMaterial({ color: FEATURE_COLORS[a.colour] ?? COSTUME_COLORS[a.colour], flatShading: true });
+      const colourMat = (key) => new MeshLambertMaterial({ color: FEATURE_COLORS[key] ?? COSTUME_COLORS[key], flatShading: true });
+      const armMat = colourMat(a.colour);
       const arm = new Mesh(new CylinderGeometry(a.radii[0], a.radii[1], 1, a.segments), armMat);
-      const paw = new Mesh(new IcosahedronGeometry(a.tip, a.tipDetail), armMat);
-      const claws = new Mesh(new IcosahedronGeometry(a.end, a.endDetail), armMat);
+      // (The tip and its end in their own colours if the costume says so: a TV camera and its lens.)
+      const paw = new Mesh(a.tipBox ? new BoxGeometry(...a.tipBox) : new IcosahedronGeometry(a.tip, a.tipDetail), a.tipColour ? colourMat(a.tipColour) : armMat);
+      const claws = new Mesh(new IcosahedronGeometry(a.end, a.endDetail), a.endColour ? colourMat(a.endColour) : armMat);
       group.add(arm, paw, claws);
       const pawAt = (k) => {
         const l = restL + (reachL - restL) * k;
@@ -328,8 +356,9 @@ export function buildTrackFeatures(centerline, channel, features, { lite = false
       const cols = 24;
       const pos = [];
       const col = [];
-      const A = new Color(FEATURE_COLORS.bumpA);
-      const B = new Color(FEATURE_COLORS.bumpB);
+      // (Rumble strips on a Grand Prix track: red and white.)
+      const A = new Color(f.look === 'rumble' ? '#d8322b' : FEATURE_COLORS.bumpA);
+      const B = new Color(f.look === 'rumble' ? '#f4f4f2' : FEATURE_COLORS.bumpB);
       for (let r = 0; r <= rows; r += 1) {
         const a = -BUMP_HALF + (2 * BUMP_HALF * r) / rows;
         const h = BUMP_HEIGHT * 0.5 * (1 + Math.cos((Math.PI * a) / BUMP_HALF));

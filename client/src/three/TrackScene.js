@@ -6,7 +6,7 @@
  * something changes (a race replay drives frames while marbles move).
  */
 import {
-  AmbientLight, BackSide, BoxGeometry, Color, DirectionalLight, DoubleSide, Float32BufferAttribute, Fog,
+  AmbientLight, BackSide, BoxGeometry, CanvasTexture, Color, NearestFilter, DirectionalLight, DoubleSide, Float32BufferAttribute, Fog,
   FrontSide, Group, HemisphereLight, Mesh, MeshBasicMaterial, MeshLambertMaterial, PerspectiveCamera, PlaneGeometry,
   Scene, SphereGeometry, SRGBColorSpace, Vector3, WebGLRenderer,
 } from 'three';
@@ -54,6 +54,23 @@ function skyDome() {
 }
 
 /** A group's meshes merged into one mesh per material (same look, fewer draw calls). */
+/** A Grand Prix finish banner's chequered pattern: black and white squares, two rows tall. */
+function chequerMaterial(width) {
+  const cols = Math.max(8, Math.round(width / 0.9));
+  const canvas = document.createElement('canvas');
+  canvas.width = cols * 8;
+  canvas.height = 16;
+  const g = canvas.getContext('2d');
+  for (let c = 0; c < cols; c += 1) for (let r = 0; r < 2; r += 1) {
+    g.fillStyle = (c + r) % 2 ? '#141519' : '#f4f4f2';
+    g.fillRect(c * 8, r * 8, 8, 8);
+  }
+  const map = new CanvasTexture(canvas);
+  map.colorSpace = SRGBColorSpace;
+  map.magFilter = NearestFilter;
+  return new MeshLambertMaterial({ map, emissive: '#2a2a2a' });
+}
+
 function mergeByMaterial(group) {
   group.updateMatrixWorld(true);
   const byMat = new Map();
@@ -318,7 +335,10 @@ export class TrackScene {
       m.position.set(end.pos.x + end.side.x * half * s, end.pos.y + archH / 2, end.pos.z + end.side.z * half * s);
       group.add(m);
     }
-    const banner = new Mesh(new BoxGeometry(half * 2 + 0.6, 1.4, 0.4), white);
+    // A Grand Prix finish: a chequered gantry (posts and banner in black and white).
+    const chequered = Boolean(track?.physics?.kit?.grandPrix);
+    if (chequered) for (const m of group.children) m.material = new MeshLambertMaterial({ color: '#1d1f24' });
+    const banner = new Mesh(new BoxGeometry(half * 2 + 0.6, chequered ? 1.8 : 1.4, 0.4), chequered ? chequerMaterial(half * 2 + 0.6) : white);
     banner.position.set(end.pos.x, end.pos.y + archH, end.pos.z);
     banner.lookAt(end.pos.x + end.tangent.x, end.pos.y + archH, end.pos.z + end.tangent.z);
     group.add(banner);
@@ -440,7 +460,7 @@ export class TrackScene {
     this.marbles.solidsAt = this.features?.solidsAt ?? null; // drawn round the obstacles, as the physics has them
     this.scene.add(this.marbles.group);
     if (start?.frame && start.releaseMs) {
-      this.gate = new StartGate(gatePlaces(this.centerline, start.frame, lanes, this.channel), start.releaseMs);
+      this.gate = new StartGate(gatePlaces(this.centerline, start.frame, lanes, this.channel), start.releaseMs, { lights: Boolean(this.track?.physics?.kit?.grandPrix) });
       this.scene.add(this.gate.group);
     }
     this.applyMarbleScale();
@@ -541,7 +561,7 @@ export class TrackScene {
     // The track's features: the bear's swipe, puffs where marbles hit obstacles, boost streaks.
     this.features?.update(frame.t, { frame, positions: this.marbles.positions, contacts: this.marbles.contacts });
     this.structures?.update(frame.t);
-    this.scenery?.userData?.update?.(frame.t); // (kit sceneries: idle movements, lifts)
+    this.scenery?.userData?.update?.(frame.t, { frame, positions: this.marbles.positions }); // (kit sceneries: idle movements, lifts; Grand Prix crowds)
     const index = this.followedIndex(frame, follow, this.main);
     this.celebrate(frame, index);
     const at = this.marbles.positionOf(index);

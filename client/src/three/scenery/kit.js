@@ -15,6 +15,7 @@ import {
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { buildKitGround, biomeOf } from './kitGround';
 import { FIGURE_COLORS, LANDMARKS, PEOPLE, aspen, cabin, dressingFor, liftTower, snowRock, vulture, winterBirch } from './kitProps';
+import { buildGrandPrix } from './grandPrix';
 import { buildBattlements, buildCentrepieces, buildFunicular, buildHouses, buildLake, buildRaceNetting, tagsNear, turnAngle } from './kitPlaces';
 import { hashString, mergeByArea, piece, seededRandom, smoothstep } from './parts';
 import { COSTUMES, COSTUME_COLORS } from '../costumes';
@@ -28,7 +29,7 @@ const LIFT_HEIGHT = 18;  // metres above the track where a lift crosses it: well
 const CABIN_SPEED = 4;   // metres per second along the cable
 const DRESSING_AREA = 500; // metres: trees and rocks are merged in squares this size (one draw call each)
 // What may be merged into the still scenery (nothing that moves, nothing see-through).
-const STILL = new Set(['landmarks', 'lift towers', 'centrepiece', 'netting poles', 'funicular rails', 'houses', 'battlements']);
+const STILL = new Set(['landmarks', 'lift towers', 'centrepiece', 'netting poles', 'funicular rails', 'houses', 'battlements', 'grandstands']);
 
 export function buildKitScenery(centerline, track, theme, { lite = false } = {}) {
   const kit = track.physics.kit;
@@ -246,6 +247,12 @@ export function buildKitScenery(centerline, track, theme, { lite = false } = {})
     for (const p of funicular.line) solids.push({ x: p.x, z: p.z, r: 4 }); // (no trees on the rails)
   }
   group.add(buildHouses(centerline, kit, { lite, arc: channel.arc, groundAt, clearance: field.clearance, solids, rand }));
+  // A Grand Prix: grandstands and crowds, barriers on the bends, the finish building, fireworks.
+  const grandPrix = buildGrandPrix(centerline, channel, kit, { lite, ground, solids, boardFeet, slug: track.slug });
+  if (grandPrix) {
+    group.add(grandPrix.group);
+    solids.push(...grandPrix.spots);
+  }
 
   // ── Set dressing for the landscape (instanced, drawn in tiles) ─────────
   // The landscape's own, plus what a section's scenery asks for (snow-rimed rocks, birches);
@@ -317,9 +324,10 @@ export function buildKitScenery(centerline, track, theme, { lite = false } = {})
 
   // ── Moving things, on the race clock ───────────────────────────────────
   const cabinQ = new Quaternion();
-  const update = (t) => {
+  const update = (t, ctx) => {
     const sec = t / 1000;
     movers?.update(t);
+    grandPrix?.update(t, ctx); // (crowds standing as marbles pass; fireworks once the winner is home)
     centrepieces.update(t);
     funicular?.update(t);
     lake?.update(t);
