@@ -6,4 +6,5 @@ module.exports = [
   require('./kit-proving-ground'),
   require('./kit-proving-ground-mirrored'),
   require('./are-run'),
+  require('./portes-du-soleil-run'),
 ];

@@ -101,6 +101,9 @@ function renderReport(report, track) {
   .todo { background: var(--fail-bg); border-radius: 8px; padding: 12px 16px; }
   .todo h2 { font: 700 18px var(--display); margin: 0 0 6px; color: var(--fail); }
   .todo ul { margin: 0; padding-left: 18px; }
+  .changes { background: var(--paper); border: 1px solid var(--rule); border-radius: 8px; padding: 12px 16px; }
+  .changes h2 { font: 700 18px var(--display); margin: 0 0 6px; }
+  .changes ul { margin: 0; padding-left: 18px; }
   .part h2 { font: 700 22px var(--display); margin: 0 0 8px; display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; }
   .count { font: 500 12px var(--mono); letter-spacing: .04em; text-transform: uppercase; }
   .count.good { color: var(--pass); } .count.bad { color: var(--fail); }
@@ -148,6 +151,7 @@ function renderReport(report, track) {
       <div><dt>Switch on</dt><dd><code>UPDATE tracks SET is_active = true WHERE slug = '${esc(report.slug)}';</code></dd></div>
       <div><dt>Track file</dt><dd><code>src/tracks/${esc(report.slug)}.js</code></dd></div>
     </dl>
+    ${report.designChanges?.length ? `<div class="changes"><h2>Changes from the design</h2><ul>${report.designChanges.map((c) => `<li>${esc(c)}</li>`).join('')}</ul></div>` : ''}
     ${failed.length ? `<div class="todo"><h2>To fix before it goes live</h2><ul>${failed.map((l) => `<li><strong>${esc(l.part)}:</strong> ${esc(l.what)}: ${esc(l.value)} (target ${esc(l.target)})</li>`).join('')}</ul></div>` : ''}
   </header>
 ${parts}

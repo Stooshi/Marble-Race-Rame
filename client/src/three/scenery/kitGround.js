@@ -41,15 +41,15 @@ const LAKE_SHORE = 45;         // metres over which the land rises from the ice
  * scenery): straight on past the run-out, a few metres below the finish. Its outline wobbles.
  */
 export function lakeOf(centerline, kit) {
-  const wants = (kit?.finish?.scenery ?? []).includes('frozen-lake')
-    || (kit?.sections ?? []).some((s) => (s.scenery ?? []).includes('frozen-lake'));
-  if (!wants) return null;
+  const has = (tag) => (kit?.finish?.scenery ?? []).includes(tag) || (kit?.sections ?? []).some((s) => (s.scenery ?? []).includes(tag));
+  const kind = has('frozen-lake') ? 'frozen' : has('icefjord') ? 'fjord' : null; // (an icefjord: open water, icebergs in it)
+  if (!kind) return null;
   const { samples } = centerline;
   const end = samples[samples.length - 1];
   const along = new Vector3(end.tangent.x, 0, end.tangent.z).normalize();
   const centre = end.pos.clone().addScaledVector(along, 30 + 40 + LAKE_RADIUS);
   const shape = (a) => 1 + 0.12 * Math.sin(3 * a + 1) + 0.07 * Math.sin(5 * a + 2.3);
-  return { x: centre.x, z: centre.z, y: end.pos.y - 6, radius: LAKE_RADIUS, shape, along };
+  return { x: centre.x, z: centre.z, y: end.pos.y - 6, radius: LAKE_RADIUS, shape, along, kind };
 }
 
 /** Ground colours by landscape (a track file's `biome`, or guessed from its surface). */
@@ -200,6 +200,19 @@ export function buildKitGround(centerline, track, { lite = false } = {}) {
       }
       quad(r0.shoulder, r1.shoulder, r1.mid, r0.mid, near);
       quad(r0.mid, r1.mid, r1.out, r0.out, far);
+    }
+  }
+  // A couple of metres more bank past each end of the track (behind the gate, beyond the
+  // run-out), so the banks never stop exactly at the last row and leave its wall bare.
+  for (const [i, k] of [[0, -2], [segments, 2]]) {
+    if (over[i] || onBridge[i]) continue;
+    const t = new Vector3(samples[i].tangent.x, 0, samples[i].tangent.z).normalize().multiplyScalar(k);
+    for (const sign of [1, -1]) {
+      const r0 = rows[i][sign];
+      const r1 = Object.fromEntries(Object.entries(r0).map(([key, v]) => [key, v.isVector3 ? v.clone().add(t) : v]));
+      const [a, b] = k > 0 ? [r0, r1] : [r1, r0];
+      quad(a.inner, b.inner, b.shoulder, a.shoulder, bankColour);
+      quad(a.shoulder, b.shoulder, b.out, a.out, bankColour);
     }
   }
   const banks = new BufferGeometry();

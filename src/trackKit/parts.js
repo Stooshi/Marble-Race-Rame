@@ -233,12 +233,15 @@ module.exports = {
   // Scenery names (looks only; the 3D view draws them, client/src/three/scenery/kit*.js).
   SURFACES: ['ice', 'snow', 'sand', 'stone', 'water'],
   BIOMES: ['alpine', 'arctic', 'meadow', 'desert', 'jungle', 'city'],
-  LANDMARKS: ['church', 'mountain-hut', 'big-rock', 'lighthouse'],
-  OVERHEAD: ['gondola', 'cable-car', 'chairlift'],
-  // What stands in the middle of a splitter, between its two channels.
-  AROUND: ['mountain-hut', 'big-rock'],
+  LANDMARKS: ['church', 'mountain-hut', 'big-rock', 'lighthouse', 'horse-sleigh', 'border-post',
+    'lift-station', 'mine-buildings', 'snow-park', 'base-camp'],
+  OVERHEAD: ['gondola', 'cable-car', 'chairlift', 'vulture'],
+  // What stands in the middle of a splitter, between its two channels (or in a spiral's middle).
+  AROUND: ['mountain-hut', 'big-rock', 'mountain-restaurant', 'mine-headframe', 'nunatak', 'bell-tower'],
   // Scenery near a section (or the start or finish): what grows and stands beside the track there.
-  SCENERY: ['bare', 'rocks', 'birches', 'pines', 'race-netting', 'funicular', 'wooden-houses', 'frozen-lake'],
+  SCENERY: ['bare', 'rocks', 'birches', 'pines', 'race-netting', 'funicular', 'wooden-houses', 'frozen-lake',
+    'wood-clad', 'chalets', 'pasture', 'aspens', 'shopfronts',
+    'stone-houses', 'colourful-houses', 'icefjord'],
   // Billboard frames: plain, a jungle timber frame, a city LED screen, a Paris advertising column, expedition crates.
   FRAMES: ['plain', 'wood', 'led', 'column', 'crates'],
 };

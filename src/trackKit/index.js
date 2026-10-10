@@ -270,6 +270,8 @@ function track(spec) {
     waypoints: g.waypoints,
     obstacles: [],
     sections: g.sections,
+    // Where the recipe made the build differ from the design (shown in the track report; never raced).
+    ...(spec.designChanges?.length && { designChanges: [...spec.designChanges] }),
     physics: {
       ...BASE_PHYSICS,
       ...(kit.surface !== 'ice' && { look: kit.surface }),

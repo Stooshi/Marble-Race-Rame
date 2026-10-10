@@ -21,6 +21,10 @@ module.exports = track({
   // The gate near the top of Åreskutan, bare and wind-swept; the finish in the village by
   // the frozen Åresjön, warm lights in the wooden houses and the old stone church nearby.
   start: { scenery: ['bare'] },
+  designChanges: [
+    'A 50 m straight, "Run to the hairpin", before the hairpin: the recipe needs a braking zone before the one sharp bend.',
+    'Reindeer on the summit plunge (a pile-up before the slalom gates): without it the strongest marbles win too often.',
+  ],
   finish: { landmark: 'church', scenery: ['frozen-lake', 'wooden-houses'] },
   sections: [
     { name: 'Summit plunge', shape: plunge(80, { grade: 0.6 }), obstacles: [pileUp({ costume: 'reindeer', at: 0.42 }), slalom({ from: 0.6, to: 0.97, count: 5, loss: 0.25 })], scenery: ['bare'] },

@@ -14,7 +14,7 @@ import {
 } from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { buildKitGround, biomeOf } from './kitGround';
-import { FIGURE_COLORS, LANDMARKS, PEOPLE, cabin, dressingFor, liftTower, snowRock, winterBirch } from './kitProps';
+import { FIGURE_COLORS, LANDMARKS, PEOPLE, aspen, cabin, dressingFor, liftTower, snowRock, vulture, winterBirch } from './kitProps';
 import { buildCentrepieces, buildFunicular, buildHouses, buildLake, buildRaceNetting, tagsNear } from './kitPlaces';
 import { hashString, mergeByArea, piece, seededRandom, smoothstep } from './parts';
 import { COSTUMES, COSTUME_COLORS } from '../costumes';
@@ -148,8 +148,18 @@ export function buildKitScenery(centerline, track, theme, { lite = false } = {})
   const lifts = [];
   const liftParts = [];
   const cablePos = [];
+  const birds = [];
   for (const sec of kit.sections) {
     for (const kind of sec.overhead ?? []) {
+      if (kind === 'vulture') {
+        // A bearded vulture circling high over the section's middle, wings spread, gliding.
+        const { s } = frame((sec.from + sec.to) / 2);
+        const mesh = new Mesh(vulture(), new MeshLambertMaterial({ vertexColors: true, flatShading: true }));
+        mesh.name = 'vulture';
+        group.add(mesh);
+        birds.push({ mesh, centre: s.pos.clone().add(new Vector3(0, LIFT_HEIGHT + 22, 0)), radius: 38 });
+        continue;
+      }
       const { s, along, side } = frame((sec.from + sec.to) / 2);
       // Crossing the track at an angle, high above it, from a tower well out on each side.
       const dir = along.clone().multiplyScalar(0.5).addScaledVector(side, 0.87).normalize();
@@ -201,12 +211,14 @@ export function buildKitScenery(centerline, track, theme, { lite = false } = {})
   }
 
   // ── Places a section's scenery names: netting, houses, a funicular, a lake, a splitter's hut ──
-  const centrepieces = buildCentrepieces(centerline, channel, kit, { lite });
+  const centrepieces = buildCentrepieces(centerline, channel, kit, { lite, groundAt });
   group.add(centrepieces.group);
+  solids.push(...centrepieces.spots);
   group.add(buildRaceNetting(centerline, channel, kit, rows));
   const lake = buildLake(ground.lake, { lite });
   if (lake) {
-    group.add(lake);
+    group.add(lake.mesh);
+    if (lake.tail) group.add(lake.tail);
     solids.push({ x: ground.lake.x, z: ground.lake.z, r: ground.lake.radius * 1.25 });
   }
   const funicular = buildFunicular(centerline, kit, { groundAt, clearance: field.clearance, lite });
@@ -220,9 +232,10 @@ export function buildKitScenery(centerline, track, theme, { lite = false } = {})
   // The landscape's own, plus what a section's scenery asks for (snow-rimed rocks, birches);
   // a bare stretch (a wind-swept summit) keeps only a few rocks.
   const baseKinds = dressingFor(biome);
-  const kinds = [...baseKinds, [(l) => snowRock(l), 0], [(l) => winterBirch(l), 0]];
+  const kinds = [...baseKinds, [(l) => snowRock(l), 0], [(l) => winterBirch(l), 0], [(l) => aspen(l), 0]];
   const ROCK = baseKinds.length;
   const BIRCH = baseKinds.length + 1;
+  const ASPEN = baseKinds.length + 2;
   const tagsAt = tagsNear(centerline, kit);
   const xs = samples.map((s) => s.pos.x);
   const zs = samples.map((s) => s.pos.z);
@@ -251,8 +264,11 @@ export function buildKitScenery(centerline, track, theme, { lite = false } = {})
     if (tags.includes('bare')) {
       if (pick > 0.12) continue;
       k = ROCK;
+    } else if (tags.includes('pasture')) {
+      if (pick > 0.2) continue; // (open alpine pasture: a few trees here and there)
     } else if (tags.includes('rocks')) k = pick < 0.7 ? ROCK : k;
     else if (tags.includes('birches')) k = pick < 0.7 ? BIRCH : k;
+    else if (tags.includes('aspens')) k = pick < 0.75 ? ASPEN : k;
     items[Math.max(0, k)].push({ x, y: groundAt(x, z), z, yaw: rand() * Math.PI * 2, scale: 0.75 + rand() * 0.6, tint: 0.85 + rand() * 0.25 });
     total += 1;
   }
@@ -286,6 +302,12 @@ export function buildKitScenery(centerline, track, theme, { lite = false } = {})
     movers?.update(t);
     centrepieces.update(t);
     funicular?.update(t);
+    lake?.update(t);
+    for (const b of birds) {
+      const a = sec * 0.16; // once round every 40 s
+      b.mesh.position.set(b.centre.x + Math.cos(a) * b.radius, b.centre.y + Math.sin(a * 2) * 2, b.centre.z + Math.sin(a) * b.radius);
+      b.mesh.rotation.set(0, -a, 0.25); // banking into the circle
+    }
     for (const lift of lifts) {
       // Half the cabins out on one cable, half back on the other, evenly spaced, looping round.
       cabinQ.setFromAxisAngle(UP, lift.yaw);

@@ -8,8 +8,8 @@
  * Looks only. Each kind is merged into one or two draw calls.
  */
 import {
-  BoxGeometry, BufferGeometry, CanvasTexture, CircleGeometry, ConeGeometry, Float32BufferAttribute,
-  Group, Matrix4, Mesh, MeshBasicMaterial, MeshLambertMaterial, Points, PointsMaterial, Quaternion, SRGBColorSpace, Vector3,
+  BoxGeometry, BufferGeometry, CanvasTexture, CircleGeometry, ConeGeometry, CylinderGeometry, Float32BufferAttribute,
+  Group, IcosahedronGeometry, Matrix4, Mesh, MeshBasicMaterial, MeshLambertMaterial, Points, PointsMaterial, Quaternion, SRGBColorSpace, Vector3,
 } from 'three';
 import { forkOffset, forkRadius } from '../iceChannel';
 import { merge, piece } from './parts';
@@ -52,14 +52,31 @@ export function tagsNear(centerline, kit, reach = 160) {
 // ── A splitter's centrepiece, on the divider between its two channels ──────
 
 /** Mountain hut or big rock, scaled to fit between the channels where they are furthest apart; smoke from the hut. */
-export function buildCentrepieces(centerline, channel, kit, { lite = false } = {}) {
+export function buildCentrepieces(centerline, channel, kit, { lite = false, groundAt } = {}) {
   const group = new Group();
   group.name = 'centrepieces';
   const parts = [];
   const chimneys = [];
+  const bells = [];
+  const spots = []; // where they stand (kept clear of trees)
   const { samples, segments } = centerline;
   for (const sec of kit.sections) {
     if (!sec.around || !LANDMARKS[sec.around]) continue;
+    if (sec.shape === 'spiral') {
+      // In the middle of a spiral: on the ground at its centre, which the track winds down around.
+      const i0 = Math.round(sec.from * segments);
+      const i1 = Math.round(sec.to * segments);
+      const c = new Vector3();
+      for (let i = i0; i <= i1; i += 1) c.add(samples[i].pos);
+      c.multiplyScalar(1 / (i1 - i0 + 1));
+      const y = groundAt ? groundAt(c.x, c.z) : samples[i1].pos.y;
+      const g = LANDMARKS[sec.around].build();
+      g.applyMatrix4(new Matrix4().compose(new Vector3(c.x, y - 0.3, c.z), new Quaternion().setFromAxisAngle(UP, Math.atan2(samples[i1].pos.x - c.x, samples[i1].pos.z - c.z)), new Vector3(1, 1, 1)));
+      parts.push(g);
+      spots.push({ x: c.x, z: c.z, r: LANDMARKS[sec.around].radius + 4 });
+      if (sec.around === 'bell-tower') bells.push(new Vector3(c.x, y - 0.3 + 14.2, c.z));
+      continue;
+    }
     const fork = channel.forks.find((f) => f.s0 / channel.arc >= sec.from - 0.01 && f.s0 / channel.arc <= sec.to);
     if (!fork) continue;
     const sMid = (fork.s0 + fork.s1) / 2;
@@ -69,7 +86,8 @@ export function buildCentrepieces(centerline, channel, kit, { lite = false } = {
     const inner = forkOffset(fork, sMid) - forkRadius(fork, channel.radius, sMid) * Math.sin(channel.maxAngle) - 0.45;
     const gap = 2 * inner;
     const lm = LANDMARKS[sec.around];
-    const scale = Math.min(1, (gap - 0.6) / (2 * lm.radius * (sec.around === 'mountain-hut' ? 0.62 : 0.85)));
+    const half = lm.fit ?? lm.radius * (sec.around === 'mountain-hut' ? 0.62 : 0.85); // its half-width across the divider
+    const scale = Math.min(1, (gap - 0.6) / (2 * half));
     const top = s.pos.y + forkRadius(fork, channel.radius, sMid) * (1 - Math.cos(channel.maxAngle));
     const along = new Vector3(s.tangent.x, 0, s.tangent.z).normalize();
     const q = new Quaternion().setFromAxisAngle(UP, Math.atan2(along.x, along.z) + Math.PI / 2);
@@ -95,8 +113,20 @@ export function buildCentrepieces(centerline, channel, kit, { lite = false } = {
     group.add(p);
     smoke.push({ p, c });
   }
+  // A bell swinging in the tower's open belfry, on the race clock.
+  const swinging = bells.map((b) => {
+    const bell = new Mesh(merge([
+      piece(new CylinderGeometry(0.35, 0.75, 1.1, 10), '#a57a2e', at(0, -0.75, 0)),
+      piece(new BoxGeometry(1.6, 0.18, 0.18), '#3a2a1e', at(0, 0, 0)),
+    ]), lambert());
+    bell.name = 'bell';
+    bell.position.copy(b);
+    group.add(bell);
+    return bell;
+  });
   const update = (t) => {
     const sec = t / 1000;
+    for (const bell of swinging) bell.rotation.x = Math.sin(sec * 2.2) * 0.5;
     for (const { p, c } of smoke) {
       const pos = p.geometry.getAttribute('position');
       for (let k = 0; k < puffs; k += 1) {
@@ -107,7 +137,7 @@ export function buildCentrepieces(centerline, channel, kit, { lite = false } = {
     }
   };
   update(0);
-  return { group, update };
+  return { group, update, spots };
 }
 
 // ── Along a section: race netting and a timing board ─────────────────────────
@@ -242,7 +272,104 @@ function house(k) {
   return { body, windows, w, d };
 }
 
-/** Houses beside the stretches tagged 'wooden-houses' (and round the finish when it is). */
+/** A Swiss chalet: white stone ground floor, a wooden upper floor, a wide snowy roof, red geraniums in its window boxes. */
+function chalet(k) {
+  const w = 8 + (k % 3);
+  const d = 7 + (k % 2);
+  const roof = new ConeGeometry(Math.hypot(w, d) / 2 + 1.2, 2.4, 4);
+  roof.applyMatrix4(new Matrix4().makeRotationY(Math.PI / 4));
+  roof.applyMatrix4(new Matrix4().makeScale((w / Math.hypot(w, d)) * 1.5, 1, (d / Math.hypot(w, d)) * 1.5));
+  const body = merge([
+    box(w, 2.6, d, 0, 1.3, 0, '#ece6da'),
+    box(w, 2.8, d, 0, 4, 0, ['#8a5a34', '#7a4e2c', '#94643c'][k % 3]),
+    piece(roof, '#f4f7fb', at(0, 6.6, 0)),
+    box(w - 1, 0.2, 1, 0, 3.2, d / 2 + 0.5, '#6e4a2c'), // the balcony
+    ...[-w / 4, w / 4].map((x) => box(1.4, 0.3, 0.3, x, 3.75, d / 2 + 0.2, '#d8312a')), // geraniums
+  ]);
+  const windows = merge([-w / 4, w / 4].map((x) => box(1.1, 1, 0.1, x, 4.4, d / 2 + 0.06, '#2d3e52')));
+  return { body, windows, w, d };
+}
+
+/** One of Avoriaz's wood-clad buildings: tall and angular, cedar shingles to the eaves, a steep snowy roof. */
+function woodClad(k) {
+  const w = 12 + (k % 3) * 3;
+  const d = 9 + (k % 2) * 2;
+  const h = 10 + (k % 4) * 3;
+  const roof = new ConeGeometry(Math.hypot(w, d) / 2 + 0.5, 5, 4);
+  roof.applyMatrix4(new Matrix4().makeRotationY(Math.PI / 4));
+  roof.applyMatrix4(new Matrix4().makeScale((w / Math.hypot(w, d)) * 1.4, 1, (d / Math.hypot(w, d)) * 1.4));
+  const body = merge([
+    box(w, h, d, 0, h / 2, 0, ['#8c6a4a', '#7d5d40', '#977353'][k % 3]),
+    box(w * 0.6, h * 0.5, d * 0.5, w * 0.25, h + h * 0.15, -d * 0.2, '#8c6a4a'), // a stepped upper block
+    piece(roof, '#f4f7fb', at(-w * 0.1, h + 2.5, 0)),
+  ]);
+  const rows = Math.floor(h / 3);
+  const windows = merge(Array.from({ length: rows }, (_, r) => [-w / 3, 0, w / 3].map((x) => box(1.4, 1.2, 0.1, x, 2 + r * 3, d / 2 + 0.06, '#2d3e52'))).flat());
+  return { body, windows, w, d };
+}
+
+/** An Old West shopfront on Main Street, Park City: a tall false front, a boardwalk awning. */
+function shopfront(k) {
+  const w = 7 + (k % 3);
+  const d = 9;
+  const h = 6 + (k % 2) * 2;
+  const walls = ['#8c4b3a', '#5a6e7a', '#a8805a', '#6e7a4a', '#b0a28c'][k % 5];
+  const body = merge([
+    box(w, h, d, 0, h / 2, 0, walls),
+    box(w, 2, 0.4, 0, h + 1, d / 2 - 0.2, walls),           // the false front, standing above the roof
+    box(w + 0.3, 0.3, 0.6, 0, h + 2.1, d / 2 - 0.2, '#f2efe8'),
+    box(w, 0.15, 2.4, 0, 3.4, d / 2 + 1.2, '#5a3f2a'),       // the awning over the boardwalk
+    ...[-w / 2 + 0.3, w / 2 - 0.3].map((x) => box(0.18, 3.4, 0.18, x, 1.7, d / 2 + 2.3, '#5a3f2a')),
+  ]);
+  const windows = merge([box(w * 0.6, 2, 0.1, 0, 1.8, d / 2 + 0.06, '#2d3e52'), box(1.4, 1.2, 0.1, -w / 4, h - 1.6, d / 2 + 0.06, '#2d3e52'), box(1.4, 1.2, 0.1, w / 4, h - 1.6, d / 2 + 0.06, '#2d3e52')]);
+  return { body, windows, w, d };
+}
+
+/** An Aranese house: grey stone walls, a steep dark slate roof. */
+function stoneHouse(k) {
+  const w = 7 + (k % 3);
+  const d = 6 + (k % 2);
+  const h = 5 + (k % 3);
+  const roof = new ConeGeometry(Math.hypot(w, d) / 2 + 0.5, 4, 4);
+  roof.applyMatrix4(new Matrix4().makeRotationY(Math.PI / 4));
+  roof.applyMatrix4(new Matrix4().makeScale((w / Math.hypot(w, d)) * 1.4, 1, (d / Math.hypot(w, d)) * 1.4));
+  const body = merge([
+    box(w, h, d, 0, h / 2, 0, ['#9a9488', '#8e887c', '#a49e92'][k % 3]),
+    piece(roof, '#3e434c', at(0, h + 2, 0)),
+    box(0.9, 1.6, 0.9, w / 4, h + 2.6, 0, '#7e786c'),        // chimney
+  ]);
+  const windows = merge([-w / 4, w / 4].map((x) => box(0.9, 1.2, 0.1, x, h * 0.6, d / 2 + 0.06, '#3a2a1e')));
+  return { body, windows, w, d };
+}
+
+/** A painted wooden house in Ilulissat: red, blue, yellow or green, white window frames. */
+function colourfulHouse(k) {
+  const w = 6 + (k % 3);
+  const d = 5 + (k % 2);
+  const h = 3.4 + (k % 2) * 1.4;
+  const roof = new ConeGeometry(Math.hypot(w, d) / 2 + 0.4, 2.4, 4);
+  roof.applyMatrix4(new Matrix4().makeRotationY(Math.PI / 4));
+  roof.applyMatrix4(new Matrix4().makeScale((w / Math.hypot(w, d)) * 1.4, 1, (d / Math.hypot(w, d)) * 1.4));
+  const body = merge([
+    box(w, h, d, 0, h / 2, 0, ['#c42d24', '#2d5fa8', '#e8b62a', '#3f8f5a', '#2a9aa8'][k % 5]),
+    box(w + 0.1, 0.25, d + 0.1, 0, 0.12, 0, '#2c2f36'),
+    piece(roof, '#2c2f36', at(0, h + 1.2, 0)),
+  ]);
+  const windows = merge([-w / 4, w / 4].map((x) => box(1.1, 1, 0.1, x, h * 0.55, d / 2 + 0.06, '#f4f2ec')));
+  return { body, windows, w, d };
+}
+
+/** What each house-scenery name builds, and how far out it stands (big buildings stand further back). */
+const HOUSE_STYLES = {
+  'wooden-houses': { build: house, out: [22, 45], clear: 14 },
+  chalets: { build: chalet, out: [24, 45], clear: 16 },
+  'wood-clad': { build: woodClad, out: [34, 50], clear: 26 },
+  shopfronts: { build: shopfront, out: [20, 30], clear: 14 },
+  'stone-houses': { build: stoneHouse, out: [22, 45], clear: 14 },
+  'colourful-houses': { build: colourfulHouse, out: [22, 45], clear: 14 },
+};
+
+/** Houses beside the stretches tagged with a house style (and round the start or finish when it is). */
 export function buildHouses(centerline, kit, { lite = false, arc, groundAt, clearance, solids, rand }) {
   const group = new Group();
   group.name = 'wooden houses';
@@ -250,24 +377,31 @@ export function buildHouses(centerline, kit, { lite = false, arc, groundAt, clea
   const windows = [];
   const { samples, segments } = centerline;
   const spots = [];
+  const styles = Object.keys(HOUSE_STYLES);
   for (const sec of kit.sections) {
-    if (!(sec.scenery ?? []).includes('wooden-houses')) continue;
-    for (let p = sec.from; p <= sec.to; p += 12 / arc) spots.push(p);
+    for (const style of styles) {
+      if (!(sec.scenery ?? []).includes(style)) continue;
+      for (let p = sec.from; p <= sec.to; p += 12 / arc) spots.push([p, style]);
+    }
   }
-  if ((kit.finish?.scenery ?? []).includes('wooden-houses')) for (let k = 0; k < 6; k += 1) spots.push(0.97 + k * 0.006);
+  for (const style of styles) {
+    if ((kit.start?.scenery ?? []).includes(style)) for (let k = 0; k < 6; k += 1) spots.push([0.002 + k * 0.006, style]);
+    if ((kit.finish?.scenery ?? []).includes(style)) for (let k = 0; k < 6; k += 1) spots.push([0.97 + k * 0.006, style]);
+  }
   let k = 0;
   const per = lite ? 1 : 2;
-  for (const p of spots) {
+  for (const [p, style] of spots) {
+    const { build, out: [near, far], clear } = HOUSE_STYLES[style];
     const i = Math.min(segments, Math.round(p * segments));
     const s = samples[i];
     const side = new Vector3(s.side.x, 0, s.side.z).normalize();
     for (let n = 0; n < per; n += 1) {
       const sign = rand() < 0.5 ? 1 : -1;
-      const out = 22 + rand() * 45;
+      const out = near + rand() * far;
       const spot = s.pos.clone().addScaledVector(side, sign * out);
-      if (clearance(spot.x, spot.z) < 14) continue;
+      if (clearance(spot.x, spot.z) < clear) continue;
       if (solids.some((o) => (o.x - spot.x) ** 2 + (o.z - spot.z) ** 2 < (o.r + 6) ** 2)) continue;
-      const h = house(k);
+      const h = build(k);
       k += 1;
       const q = new Quaternion().setFromAxisAngle(UP, Math.atan2(-side.x * sign, -side.z * sign) + (rand() - 0.5) * 0.4);
       const m = new Matrix4().compose(new Vector3(spot.x, groundAt(spot.x, spot.z) - 0.3, spot.z), q, new Vector3(1, 1, 1));
@@ -277,7 +411,7 @@ export function buildHouses(centerline, kit, { lite = false, arc, groundAt, clea
     }
   }
   if (bodies.length) group.add(Object.assign(new Mesh(merge(bodies), lambert()), { name: 'houses' }));
-  // Warm lights in the windows: unlit, so they glow at night.
+  // Lights in the windows: unlit, so warm ones glow at night (dark glass by day).
   if (windows.length) group.add(Object.assign(new Mesh(merge(windows), new MeshBasicMaterial({ vertexColors: true })), { name: 'house windows' }));
   return group;
 }
@@ -371,9 +505,57 @@ export function buildFunicular(centerline, kit, { groundAt, clearance, lite = fa
 
 // ── A frozen lake ───────────────────────────────────────────────────────────
 
+/**
+ * An icefjord's open water (the basin is cut by kitGround.js, as a frozen lake's is): icebergs
+ * drifting in it and, now and then, a whale's tail rising out of the water and slipping back.
+ */
+function buildFjord(lake, { lite = false } = {}) {
+  const seg = lite ? 40 : 72;
+  const water = new CircleGeometry(1, seg);
+  const pos = water.getAttribute('position');
+  for (let k = 1; k < pos.count; k += 1) {
+    const a = Math.atan2(pos.getY(k), pos.getX(k));
+    const r = lake.radius * lake.shape(-a);
+    pos.setXY(k, Math.cos(a) * r, Math.sin(a) * r);
+  }
+  water.rotateX(-Math.PI / 2);
+  const bergs = [];
+  for (let k = 0; k < (lite ? 5 : 9); k += 1) {
+    const a = k * 2.399 + 0.4;
+    const r = lake.radius * (0.25 + 0.6 * ((k * 0.37) % 1));
+    const size = 5 + (k % 3) * 3;
+    const g = new IcosahedronGeometry(size, 0);
+    g.scale(1.2, 0.8 + (k % 2) * 0.5, 1);
+    bergs.push(piece(g, k % 2 ? '#e9f4fb' : '#cfe6f3', new Matrix4().compose(new Vector3(Math.cos(a) * r, size * 0.35, Math.sin(a) * r), new Quaternion().setFromAxisAngle(UP, a), new Vector3(1, 1, 1))));
+  }
+  const mesh = new Mesh(merge([piece(water, '#1f4a66'), ...bergs]), new MeshLambertMaterial({ vertexColors: true, flatShading: true }));
+  mesh.position.set(lake.x, lake.y, lake.z);
+  mesh.name = 'icefjord';
+  mesh.userData.ground = true;
+  // The whale's tail: flukes on a stub of tail, rising out of the water every 20 s for a few seconds.
+  const tail = new Mesh(merge([
+    piece(new CylinderGeometry(0.7, 1.1, 3, 7), '#2a2e36', at(0, 1.5, 0)),
+    piece(new BoxGeometry(5, 0.3, 1.6), '#2a2e36', at(0, 3.1, 0)),
+    piece(new BoxGeometry(4.2, 0.32, 0.9), '#e8ecef', at(0, 2.95, 0.2)), // pale undersides
+  ]), lambert());
+  tail.name = 'whale tail';
+  const spot = new Vector3(lake.x + lake.radius * 0.35, lake.y, lake.z - lake.radius * 0.2);
+  tail.position.copy(spot);
+  const update = (t) => {
+    const u = ((t / 1000) % 20) / 20;
+    const up = u < 0.25 ? Math.sin((u / 0.25) * Math.PI) : 0; // up and back down in 5 s
+    tail.visible = up > 0.02;
+    tail.position.y = spot.y - 4 + up * 4;
+    tail.rotation.x = -0.5 + up * 0.4;
+  };
+  update(0);
+  return { mesh, tail, update };
+}
+
 /** The frozen lake's ice (the basin is cut into the land by kitGround.js): pale ice with drifts of snow. */
 export function buildLake(lake, { lite = false } = {}) {
   if (!lake) return null;
+  if (lake.kind === 'fjord') return buildFjord(lake, { lite });
   const seg = lite ? 40 : 72;
   const ice = new CircleGeometry(1, seg);
   const pos = ice.getAttribute('position');
@@ -397,5 +579,5 @@ export function buildLake(lake, { lite = false } = {}) {
   mesh.position.set(lake.x, lake.y, lake.z);
   mesh.name = 'frozen lake';
   mesh.userData.ground = true;
-  return mesh;
+  return { mesh, update: () => {} };
 }

@@ -113,19 +113,26 @@ Scenery comes from names in the file (looks only; checked, so a typo is refused)
 - `surface`: `'ice' | 'snow' | 'sand' | 'stone' | 'water'`, for the whole track
   or one section (`surface: 'stone'` on the Steps). Every surface races exactly like ice.
 - `start: { landmark }`, `finish: { landmark }`, and per section
-  `landmarks: [{ name, side, at, distance }]`: `'church' | 'mountain-hut' | 'big-rock' | 'lighthouse'`.
+  `landmarks: [{ name, side, at, distance }]`: `'church' | 'mountain-hut' | 'big-rock' | 'lighthouse' |
+  'horse-sleigh' | 'border-post' | 'lift-station' | 'mine-buildings' | 'snow-park' | 'base-camp'`.
 - `figures: ['skier', 'snowboarder', 'spectator', 'reindeer', …]`: people, or any
   block costume, standing on the banks facing the track with small idle movements.
-- `overhead: ['gondola' | 'cable-car' | 'chairlift']`: a lift crossing high above
-  the section (18 m over the track, clear of the follow camera).
+- `overhead: ['gondola' | 'cable-car' | 'chairlift' | 'vulture']`: a lift crossing high above
+  the section (18 m over the track, clear of the follow camera), or a vulture circling higher still.
 - `scenery: [...]` on a section, or on `start` / `finish`: `'bare'` (a wind-swept
   summit: a few rocks only), `'rocks'` (snow-rimed rocks), `'birches'`, `'pines'`,
   `'race-netting'` (orange safety nets along both banks and a timing board),
   `'funicular'` (a little red funicular climbing the hill beside it),
   `'wooden-houses'` (houses with warm windows), `'frozen-lake'` (at the finish: a
-  frozen lake just past the run-out).
-- `around: 'mountain-hut' | 'big-rock'` on a splitter: what stands between its two
-  channels (the hut with smoke from its chimney).
+  frozen lake just past the run-out), `'icefjord'` (the same, open water with icebergs
+  and now and then a whale's tail), `'pasture'` (open pasture, a few trees), `'aspens'`;
+  houses in a style: `'chalets'`, `'wood-clad'` (Avoriaz's tall buildings), `'shopfronts'`
+  (Old West), `'stone-houses'` (slate roofs), `'colourful-houses'` (Ilulissat).
+- `around` on a splitter, what stands between its two channels: `'mountain-hut'` (smoke
+  from its chimney), `'big-rock'`, `'mountain-restaurant'`, `'mine-headframe'`, `'nunatak'`;
+  or on a spiral, what it winds down around: `'bell-tower'` (its bell swinging).
+- `designChanges: ['…']`: where the recipe made the build differ from the design, and
+  why; shown at the top of the track report (never raced).
 - `signature: '<section>'`: the track's signature moment, for the report's screenshot.
 
 ## Billboards

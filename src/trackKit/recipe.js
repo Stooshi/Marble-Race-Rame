@@ -116,6 +116,7 @@ function checkRecipe({ spec, sections, span, generated, owner, placed, total, wh
   known('lighting', LIGHTINGS, spec.lighting, 'track');
   // The signature moment (the report's screenshot of it): a section of this track.
   if (spec.signature !== undefined && !sections.some((s) => s.name === spec.signature)) problems.push(`${where('track')}: the signature "${spec.signature}" is not one of this track's sections.`);
+  if (spec.designChanges !== undefined && !(Array.isArray(spec.designChanges) && spec.designChanges.every((c) => typeof c === 'string'))) problems.push(`${where('track')}: designChanges is a list of sentences (where the build differs from the design, and why).`);
   if (spec.variants !== undefined && !Array.isArray(spec.variants)) problems.push(`${where('track')}: variants is a list of lighting presets (${LIGHTINGS.join(', ')}).`);
   for (const v of Array.isArray(spec.variants) ? spec.variants : []) known('lighting variant', LIGHTINGS, v, 'track');
   if (Array.isArray(spec.variants) && (new Set(spec.variants).size !== spec.variants.length || spec.variants.includes(spec.lighting || 'day'))) {
@@ -127,7 +128,7 @@ function checkRecipe({ spec, sections, span, generated, owner, placed, total, wh
   sections.forEach((s) => {
     for (const sc of s.scenery ?? []) known('scenery', SCENERY, sc, s.name);
     known('splitter centrepiece', AROUND, s.around, s.name);
-    if (s.around !== undefined && s.shape.shape !== 'splitter') problems.push(`${where(s.name)}: only a splitter has a middle to stand something in (around).`);
+    if (s.around !== undefined && !['splitter', 'spiral'].includes(s.shape.shape)) problems.push(`${where(s.name)}: only a splitter or a spiral has a middle to stand something in (around).`);
     known('surface', SURFACES, s.surface, s.name);
     known('billboard frame', FRAMES, s.billboardFrame, s.name);
     for (const lm of s.landmarks ?? []) known('landmark', LANDMARKS, lm.name, s.name);

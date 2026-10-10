@@ -595,3 +595,16 @@ test('Åre Run is added by its data update, switched off, exactly as its track f
   assert.equal(sql, generated);
   assert.match(sql, /is_active|false/);
 });
+
+// The kit tracks after Åre Run, each added switched off by its own data update.
+const HIDDEN_KIT_TRACKS = [
+  ['portes-du-soleil-run', '2026-10-16-add-portes-du-soleil-run.sql', 'Portes du Soleil Run (France and Switzerland): from Avoriaz across the border and down the Swiss Wall to a Swiss village, built with the track kit.'],
+];
+for (const [slug, file, note] of HIDDEN_KIT_TRACKS) {
+  test(`${slug} is added by its data update, switched off, exactly as its track file builds it`, () => {
+    const sql = fs.readFileSync(path.join(__dirname, '..', 'docs', 'data_updates', file), 'utf8');
+    const generated = execFileSync(process.execPath, [path.join(__dirname, '..', 'scripts', 'physics-track-sql.js'), slug, '--add-hidden', note], { encoding: 'utf8' });
+    assert.equal(sql, generated);
+    assert.match(sql, /is_active|false/);
+  });
+}

@@ -62,7 +62,7 @@ async function main() {
   fs.rmSync(out, { recursive: true, force: true });
   fs.mkdirSync(out, { recursive: true });
   const started = Date.now();
-  const report = { slug, name: track.name, at: new Date().toISOString(), races: RACES, batches: BATCHES, lines: [] };
+  const report = { slug, name: track.name, at: new Date().toISOString(), races: RACES, batches: BATCHES, lines: [], ...(track.designChanges && { designChanges: track.designChanges }) };
 
   // 1. Races: fairness batches, pace, close racing, splitters, obstacles.
   const batches = [];
