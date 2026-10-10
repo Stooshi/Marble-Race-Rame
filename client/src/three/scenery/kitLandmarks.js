@@ -453,6 +453,85 @@ function anacondaHead() {
   ]);
 }
 
+// ── China ───────────────────────────────────────────────────────────────────
+
+/** A hipped roof (Wudian): a long ridge, eaves sweeping up at the corners, in glazed tiles. */
+function hippedRoof(w, d, h, c, x, y, z) {
+  const r = new ConeGeometry(Math.hypot(w, d) / 2 + 1, h, 4);
+  r.applyMatrix4(new Matrix4().makeRotationY(Math.PI / 4));
+  r.applyMatrix4(new Matrix4().makeScale((w / Math.hypot(w, d)) * 1.45, 1, (d / Math.hypot(w, d)) * 1.45));
+  return [piece(r, c, M(x, y + h / 2, z)), box(w * 0.55, 0.5, 0.5, x, y + h + 0.1, z, c)];
+}
+
+/** A red-columned hall under a yellow-tiled hipped roof, on a white stone terrace (behind the gate). */
+function wudianHall() {
+  const parts = [box(26, 1.6, 16, 0, 0.8, 0, '#e8e4da')];
+  for (let k = 0; k < 8; k += 1) for (const z of [-5, 5]) parts.push(piece(new CylinderGeometry(0.4, 0.4, 7, 8), '#b8231f', M(-10.5 + k * 3, 5.1, z)));
+  parts.push(box(22, 6, 8, 0, 4.6, 0, '#9a2a22'), box(24, 1, 12, 0, 8.6, 0, '#2f6e5a'));
+  parts.push(...hippedRoof(26, 16, 5, '#e0b43c', 0, 9, 0));
+  return merge(parts);
+}
+
+/** A Great Wall watchtower: a square stone tower, crenellated top, a small tiled lookout roof. */
+function watchtower() {
+  const parts = [box(7, 9, 7, 0, 4.5, 0, '#a49c8a'), box(7.6, 0.6, 7.6, 0, 9.3, 0, '#8e8676')];
+  for (let k = 0; k < 4; k += 1) for (let n = -1; n <= 1; n += 1) {
+    const a = (k * Math.PI) / 2;
+    parts.push(box(1.2, 1.2, 0.6, Math.sin(a) * 3.5 + Math.cos(a) * n * 2.4, 10.2, Math.cos(a) * 3.5 - Math.sin(a) * n * 2.4, '#a49c8a'));
+  }
+  for (const yaw of [0, Math.PI / 2]) parts.push(piece(new BoxGeometry(1.2, 2, 0.2), '#3a3530', turned(0, 5, 0, yaw).multiply(M(0, 0, 3.55))));
+  parts.push(...hippedRoof(4, 4, 2, '#5a4e44', 0, 10, 0));
+  return merge(parts);
+}
+
+/** A five-storey pagoda: each storey a little smaller, its eaves upturned, a gilded spire on top. */
+function pagoda() {
+  const parts = [box(9, 1.2, 9, 0, 0.6, 0, '#e8e4da')];
+  let y = 1.2;
+  for (let k = 0; k < 5; k += 1) {
+    const w = 7 - k * 1.1;
+    parts.push(box(w, 3, w, 0, y + 1.5, 0, k % 2 ? '#b8231f' : '#a8201c'));
+    parts.push(piece(new ConeGeometry((w + 3) * 0.75, 1.6, 4), '#2f6e5a', turned(0, y + 3.6, 0, Math.PI / 4)));
+    y += 4;
+  }
+  parts.push(piece(new CylinderGeometry(0.12, 0.3, 5, 6), '#e0b43c', M(0, y + 2, 0)));
+  return merge(parts);
+}
+
+/** Terraced hillsides: green steps of rice terraces climbing a slope. */
+function riceTerraces() {
+  const parts = [];
+  for (let k = 0; k < 7; k += 1) parts.push(box(40 - k * 4, 1.4, 6, 0, 0.7 + k * 1.4, -k * 5, k % 2 ? '#7fb04a' : '#8fbf5a'));
+  return merge(parts);
+}
+
+/** A row of red lanterns on posts, gold tassels hanging. */
+function lanternRow() {
+  const parts = [];
+  for (let k = 0; k < 6; k += 1) {
+    const x = -12.5 + k * 5;
+    parts.push(box(0.2, 4, 0.2, x, 2, 0, '#3a2a22'), box(1.6, 0.15, 0.15, x + 0.6, 3.9, 0, '#3a2a22'));
+    parts.push(piece(new SphereGeometry(0.55, 8, 6), '#d8231f', S(x + 1.2, 3.2, 0, 1, 1.25, 1)));
+    parts.push(box(0.1, 0.5, 0.1, x + 1.2, 2.3, 0, '#e0b43c'));
+  }
+  return merge(parts);
+}
+
+/** The Temple of Heaven: the round hall's three blue conical roofs stacked on red drums, on its white terraces. */
+function templeOfHeaven() {
+  const parts = [];
+  for (let k = 0; k < 3; k += 1) parts.push(piece(new CylinderGeometry(16 - k * 3, 16.5 - k * 3, 1.4, 16), '#f2efe8', M(0, 0.7 + k * 1.4, 0)));
+  let y = 4.2;
+  for (let k = 0; k < 3; k += 1) {
+    const r = 8.5 - k * 1.8;
+    parts.push(piece(new CylinderGeometry(r - 1.2, r - 1.2, 3.6, 18), '#b8231f', M(0, y + 1.8, 0)));
+    parts.push(piece(new ConeGeometry(r + 0.6, 2.6, 18), '#2a4fa0', M(0, y + 4.9, 0)));
+    y += 5;
+  }
+  parts.push(piece(new SphereGeometry(0.9, 10, 8), '#e0b43c', M(0, y + 1.6, 0)));
+  return merge(parts);
+}
+
 /** Landmarks by name: builder, footprint radius, and for some the half-width that has to fit a splitter or bend. */
 export const WORLD_LANDMARKS = {
   'sacre-coeur': { build: sacreCoeur, radius: 20 },
@@ -484,5 +563,11 @@ export const WORLD_LANDMARKS = {
   maracana: { build: maracana, radius: 48 },
   'parrot-tree': { build: parrotTree, radius: 8 },
   copacabana: { build: copacabana, radius: 30 },
+  'wudian-hall': { build: wudianHall, radius: 15 },
+  watchtower: { build: watchtower, radius: 5, fit: 3.6 },
+  pagoda: { build: pagoda, radius: 6 },
+  'rice-terraces': { build: riceTerraces, radius: 22 },
+  'lantern-row': { build: lanternRow, radius: 4 },
+  'temple-of-heaven': { build: templeOfHeaven, radius: 18 },
   anaconda: { build: anaconda, radius: 2, fit: 0.4, moving: { build: anacondaHead, pivot: [0, 0.2, 7.6], axis: [1, 0, 0], swing: 0.45, period: 5 } },
 };

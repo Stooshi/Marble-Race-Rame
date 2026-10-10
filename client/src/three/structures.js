@@ -198,7 +198,7 @@ export function buildStructures(centerline, channel, kit, { lite = false } = {})
           const out = side.clone().multiplyScalar(sign);
           const r = 2.2 + noise(k * 5 + sign) * 1.4;
           const at = rim.clone().addScaledVector(out, style.out + r + 0.8).addScaledVector(UP, r * 0.45);
-          const geo = s.tunnel === 'dragon' ? new IcosahedronGeometry(r * 0.9, 1) : new IcosahedronGeometry(r, 0);
+          const geo = s.tunnel === 'dragon' ? new IcosahedronGeometry(r * 0.9, lite ? 0 : 1) : new IcosahedronGeometry(r, 0);
           add(bank[(k + (sign > 0 ? 0 : 1)) % 2], geo, new Matrix4().compose(at, new Quaternion().setFromAxisAngle(UP, k * 1.3), new Vector3(1, s.tunnel === 'dragon' ? 0.8 : 1.3, 1.2)));
           if (s.tunnel === 'dragon' && k % 2 === 0) {
             // A golden spine plate on each coil.

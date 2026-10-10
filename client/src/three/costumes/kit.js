@@ -47,6 +47,9 @@ export const COSTUME_COLORS = {
   flagYellow: '#f2d23a', flagPole: '#f4f4f2',
   surferSkin: '#c98f6a', surferShorts: '#2fb3a0', board1: '#e23b3b', board2: '#2f6fd0', board3: '#e8b62a', surferHair: '#3a2a1e',
   monkey: '#6b4a2f', monkeyFace: '#d9b08a', branch: '#5a4a38', leafGreen: '#3f8f3a',
+  lanternRed: '#d8231f', lanternGold: '#e0b43c', lanternPost: '#3a2a22',
+  xqWood: '#e8c890', xqRed: '#c8231f', xqBlack: '#1f2024',
+  catWhite: '#f6f3ec', catRed: '#d8231f', catGold: '#e0b43c', catEar: '#f0a8a8',
   pigeonGrey: '#8e939c', pigeonDark: '#4f545c', pigeonNeck: '#5f8a7a', beak: '#3a3a3a',
 };
 
@@ -565,6 +568,38 @@ function monkey(add, mat, group, point, q) {
   return [{ part: head, base: q.clone(), axis: new Vector3(0, 1, 0), swing: 0.6, period: 2.8 }];
 }
 
+/** A red paper lantern on a slim post (China Wall Twister's slalom poles). */
+function lanternPole(add, mat, group, point, q, { height }) {
+  add('lanternPost', new CylinderGeometry(0.04, 0.06, height + 0.6, 6), local(point, q, 0, (height + 0.6) / 2, 0));
+  add('lanternRed', new SphereGeometry(0.22, 10, 8), local(point, q, 0, height + 0.85, 0, 1, 1.25, 1));
+  add('lanternGold', new CylinderGeometry(0.1, 0.1, 0.06, 8), local(point, q, 0, height + 1.15, 0));
+  add('lanternGold', new BoxGeometry(0.04, 0.3, 0.04), local(point, q, 0, height + 0.45, 0));
+  return [];
+}
+
+/** A Xiangqi piece lying on the board: a round wooden disc ringed in red or black (no characters). */
+function xiangqiPiece(add, mat, group, point, q, { radius, at, l = 0 }) {
+  const red = l ? l > 0 : Math.round(at * 991) % 2 === 1; // (a pair across the channel: one of each side's)
+  add('xqWood', new CylinderGeometry(radius, radius, radius * 0.5, 16), local(point, q, 0, radius * 0.25, 0));
+  add(red ? 'xqRed' : 'xqBlack', new CylinderGeometry(radius * 0.72, radius * 0.72, radius * 0.52, 16, 1, true), local(point, q, 0, radius * 0.25, 0));
+  add(red ? 'xqRed' : 'xqBlack', new CylinderGeometry(radius * 0.3, radius * 0.3, radius * 0.53, 8), local(point, q, 0, radius * 0.25, 0));
+  return [];
+}
+
+/** China Wall Twister's fortune cat, sitting just beyond the rim (its raised paw, waving into the high line, is the arm). */
+function fortuneCatBody(add, base, q) {
+  add('catWhite', new IcosahedronGeometry(0.9, 1), local(base, q, 0, 1.0, 0, 1, 1.15, 0.9));          // body, sitting up
+  add('catWhite', new IcosahedronGeometry(0.75, 1), local(base, q, 0, 2.3, 0.05));                     // the big round head
+  for (const x of [-0.45, 0.45]) {
+    add('catWhite', new ConeGeometry(0.25, 0.45, 4), local(base, q, x, 3.0, 0));
+    add('catEar', new ConeGeometry(0.14, 0.3, 4), local(base, q, x, 2.98, 0.08));
+  }
+  add('catRed', new CylinderGeometry(0.62, 0.62, 0.12, 14), local(base, q, 0, 1.75, 0));               // the red collar
+  add('catGold', new IcosahedronGeometry(0.2, 0), local(base, q, 0, 1.6, 0.6));                        // its bell
+  add('catGold', new BoxGeometry(0.7, 0.45, 0.12), local(base, q, -0.4, 1.0, 0.75));                   // the gold coin it holds
+  for (const x of [-0.25, 0.25]) add('xqBlack', new IcosahedronGeometry(0.07, 0), local(base, q, x, 2.4, 0.7));
+}
+
 /** A Paris street lamp: a dark green iron post and its lantern (Paris Eiffel Tower Run's slalom poles). */
 function streetLamp(add, mat, group, point, q, { height }) {
   const h = height + 1.6;
@@ -600,8 +635,8 @@ function pigeon(add, mat, group, point, q) {
 }
 
 /** A round Go stone lying on the board, black or white (China Wall Twister's board-game run). */
-function goStone(add, mat, group, point, q, { radius, at }) {
-  const white = Math.round(at * 997) % 2 === 1;
+function goStone(add, mat, group, point, q, { radius, at, l = 0 }) {
+  const white = l ? l > 0 : Math.round(at * 997) % 2 === 1; // (a pair across the channel: one black, one white)
   add(white ? 'goWhite' : 'goBlack', new IcosahedronGeometry(radius, 2), local(point, q, 0, radius * 0.42, 0, 1, 0.42, 1));
   return [];
 }
@@ -641,6 +676,16 @@ export const KIT_COSTUMES = {
   log: { places: 'block', build: floatingLog },
   football: { places: 'block', upright: true, build: football },
   'corner-flag': { places: 'slalom', build: cornerFlag },
+  'lantern-pole': { places: 'slalom', build: lanternPole },
+  'xiangqi-piece': { places: 'slalom', build: xiangqiPiece },
+  'fortune-cat': {
+    places: 'swipe',
+    body: fortuneCatBody,
+    standOff: 1.6, // metres out beyond the rim
+    sink: -0.2,
+    // The raised paw, from the shoulder out to the paw, beckoning into the high line on the swipe's timetable.
+    arm: { colour: 'catWhite', shoulder: [0.55, 1.6, 0.3], radii: [0.14, 0.22], segments: 7, tip: 0.24, tipDetail: 1, end: 0.1, endDetail: 0, lift: 0.4, outLift: 0.6, nose: 0.12 },
+  },
   surfer: { places: 'curtain', build: surfer },
   monkey: { places: 'block', upright: true, build: monkey },
   'river-stake': { places: 'slalom', build: riverStake },

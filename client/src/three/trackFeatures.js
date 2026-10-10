@@ -361,6 +361,7 @@ export function buildTrackFeatures(centerline, channel, features, { lite = false
       // spread along the zone. Brick-paved bends (look: 'brick') are drawn as plain
       // asphalt: the braking there is gentle, and a whole bend of stones was too much.
       if (f.look === 'brick') continue;
+      if (features.some((g) => g.type === 'paint' && f.at < g.at + (g.length ?? 30) / channel.arc && g.at < f.at + (f.length ?? 25) / channel.arc)) continue; // (a painted board instead)
       const len = f.length ?? 25;
       const s0 = f.at * channel.arc;
       const lip = channelLipAt(channel, s0) / channel.maxAngle;
@@ -399,6 +400,46 @@ export function buildTrackFeatures(centerline, channel, features, { lite = false
             quad(p(f.at, from + (r + 0.08) * 0.9), p(f.at, from + (r + 0.92) * 0.9), u0, u1, 0.03, shades[(k * 5 + r * 7 + c * 3) % shades.length]);
           }
         }
+      }
+      const g = new BufferGeometry();
+      g.setAttribute('position', new Float32BufferAttribute(pos, 3));
+      g.setAttribute('color', new Float32BufferAttribute(col, 3));
+      g.computeVertexNormals();
+      add('cobbles', g, new Matrix4());
+    } else if (f.type === 'paint') {
+      // Paint on the floor, looks only: a Go board (19 lines each way on pale wood) or a
+      // Xiangqi board (9 lines across, its river a band of blue across the middle).
+      const len = f.length ?? 30;
+      const s0 = f.at * channel.arc;
+      const lip = channelLipAt(channel, s0) / channel.maxAngle;
+      const u = 0.62; // the share of the wall up each side the board is painted on
+      const pos = [];
+      const col = [];
+      // (Split across into narrow strips, so the paint follows the U rather than cutting across it.)
+      const quad = (m0, m1, l0, l1, lift, color) => {
+        const n = Math.max(1, Math.ceil((l1 - l0) / (lite ? 0.16 : 0.08)));
+        for (let j = 0; j < n; j += 1) {
+          const a = l0 + ((l1 - l0) * j) / n;
+          const b = l0 + ((l1 - l0) * (j + 1)) / n;
+          const corners = [[m0, a], [m0, b], [m1, b], [m1, a]].map(([m, l]) => surface(p(f.at, m), l * lip, lift).point);
+          for (const k of [0, 1, 2, 0, 2, 3]) { pos.push(corners[k].x, corners[k].y, corners[k].z); col.push(color.r, color.g, color.b); }
+        }
+      };
+      const go = f.look !== 'xiangqi';
+      const wood = new Color(go ? '#d9b37a' : '#e8c890');
+      const ink = new Color('#2a2420');
+      const steps = lite ? 6 : 12;
+      for (let k = 0; k < steps; k += 1) quad((len * k) / steps, (len * (k + 1)) / steps, -u, u, 0.012, wood);
+      const across = go ? 19 : 9;
+      for (let c = 0; c < across; c += 1) {
+        const l = -u + (2 * u * (c + 0.5)) / across;
+        for (let k = 0; k < steps; k += 1) quad((len * k) / steps, (len * (k + 1)) / steps, l - (go ? 0.005 : 0.008), l + (go ? 0.005 : 0.008), 0.02, ink);
+      }
+      const lines = go ? Math.round(len / 1.6) : Math.round(len / 3);
+      for (let r = 0; r <= lines; r += 1) {
+        const m = (len * r) / lines;
+        if (!go && r === Math.floor(lines / 2)) { quad(m, m + len / lines, -u, u, 0.022, new Color('#6aa8c8')); continue; } // the river
+        quad(m - 0.05, m + 0.05, -u, u, 0.02, ink);
       }
       const g = new BufferGeometry();
       g.setAttribute('position', new Float32BufferAttribute(pos, 3));
@@ -821,7 +862,7 @@ export function buildTrackFeatures(centerline, channel, features, { lite = false
   }
 
   for (const f of features) {
-    if (f.type === 'boost' || f.type === 'bump' || f.type === 'cobbles' || DECOR.includes(f.type)) continue;
+    if (f.type === 'boost' || f.type === 'bump' || f.type === 'cobbles' || f.type === 'paint' || DECOR.includes(f.type)) continue;
     const l = f.l ?? 0;
     const xa = Math.min(l, f.l2 ?? l) * across;
     const xb = Math.max(l, f.l2 ?? l) * across;

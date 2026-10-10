@@ -218,6 +218,14 @@ function steps({ from = 0.1, to = 0.8, count = 6, drag = 0.015, tiles } = {}) {
   return { feature: 'steps', from, to, count, drag, at: from, ...(tiles && { tiles }) }; // tiles: 'mosaic' (the Selarón Steps' colours)
 }
 
+/**
+ * Paint on the floor, looks only (the physics never sees it): a Go board ('go-board') or a
+ * Xiangqi board ('xiangqi') over the stretch from `from` to `to` (China Wall Twister's board-game run).
+ */
+function paint({ from = 0.1, to = 0.9, look = 'go-board' } = {}) {
+  return { feature: 'paint', from, to, look, at: from };
+}
+
 /** A short, sharp braking zone (rough surface): the field bunches up, then fans out again (Table Mountain Run). */
 function brake({ at = 0.7, length = 15, drag = 0.02 } = {}) {
   return { feature: 'brake', at, length, drag };
@@ -227,7 +235,7 @@ module.exports = {
   SHARP_RADIUS, EASE, START_RAMP, LIP_STEP, LIP_LENGTH,
   plunge, straight, climb, sBends, sweep, spiral, hairpin, splitter, waterfall, runIn,
   block, pileUp, curtain, swipe, parked, slalom, peg,
-  bump, boost, brake, moguls, steps,
+  bump, boost, brake, moguls, steps, paint,
   TUNNELS: ['mine', 'ice-cave', 'dragon', 'rock', 'roots'],
   BRIDGES: ['ice', 'stone', 'wood'],
   // Scenery names (looks only; the 3D view draws them, client/src/three/scenery/kit*.js).
@@ -238,15 +246,16 @@ module.exports = {
     'sacre-coeur', 'moulin-rouge', 'fountains', 'louvre-pyramid', 'notre-dame', 'eiffel-tower', 'seine', 'bookstalls',
     'bedouin-camp', 'museum-of-the-future', 'dubai-frame', 'burj-al-arab', 'burj-khalifa', 'palm-boardwalk', 'dune-buggy',
     'toucan-tree', 'river-pool', 'teatro-amazonas', 'river-dock',
-    'corcovado', 'sugarloaf', 'maracana', 'parrot-tree', 'copacabana'],
+    'corcovado', 'sugarloaf', 'maracana', 'parrot-tree', 'copacabana',
+    'wudian-hall', 'watchtower', 'pagoda', 'rice-terraces', 'lantern-row', 'temple-of-heaven'],
   OVERHEAD: ['gondola', 'cable-car', 'chairlift', 'vulture'],
   // What stands in the middle of a splitter, between its two channels (the arch: over one of
   // them), or in the middle of a spiral or a hairpin.
-  AROUND: ['mountain-hut', 'big-rock', 'mountain-restaurant', 'mine-headframe', 'nunatak', 'bell-tower', 'arc-de-triomphe', 'obelisk', 'notre-dame', 'oasis', 'twisted-tower', 'river-island', 'anaconda'],
+  AROUND: ['mountain-hut', 'big-rock', 'mountain-restaurant', 'mine-headframe', 'nunatak', 'bell-tower', 'arc-de-triomphe', 'obelisk', 'notre-dame', 'oasis', 'twisted-tower', 'river-island', 'anaconda', 'watchtower', 'pagoda'],
   // Scenery near a section (or the start or finish): what grows and stands beside the track there.
   SCENERY: ['bare', 'rocks', 'birches', 'pines', 'race-netting', 'funicular', 'wooden-houses', 'frozen-lake',
     'wood-clad', 'chalets', 'pasture', 'aspens', 'shopfronts',
-    'stone-houses', 'colourful-houses', 'icefjord', 'haussmann', 'plane-trees', 'skyscrapers', 'stilt-houses'],
+    'stone-houses', 'colourful-houses', 'icefjord', 'haussmann', 'plane-trees', 'skyscrapers', 'stilt-houses', 'forbidden-city', 'battlements'],
   // Billboard frames: plain, a jungle timber frame, a city LED screen, a Paris advertising column, expedition crates.
   FRAMES: ['plain', 'wood', 'led', 'column', 'crates'],
 };

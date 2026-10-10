@@ -14,4 +14,5 @@ module.exports = [
   require('./dubai-twister'),
   require('./amazon-water-run'),
   require('./rio-jungle-rumble'),
+  require('./china-wall-twister'),
 ];

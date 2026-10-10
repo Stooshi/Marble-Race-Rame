@@ -319,6 +319,41 @@ export function buildRaceNetting(centerline, channel, kit, rows) {
   return group;
 }
 
+// ── Along a section: the Great Wall's battlements ──────────────────────────────
+
+/** Crenellated stone parapets along both banks of the sections tagged 'battlements' (the track runs along the top of the Wall). */
+export function buildBattlements(centerline, kit, rows, { lite = false } = {}) {
+  const every = lite ? 4 : 2; // (rows per stretch of parapet; on a phone, longer stretches)
+  const parts = [];
+  const { segments } = centerline;
+  for (const sec of kit.sections) {
+    if (!(sec.scenery ?? []).includes('battlements')) continue;
+    const i0 = Math.ceil(sec.from * segments) + 1;
+    const i1 = Math.floor(sec.to * segments) - 1;
+    for (const sign of [1, -1]) {
+      for (let i = i0; i < i1; i += every) {
+        const a = rows[i]?.[sign];
+        const b = rows[i + every]?.[sign];
+        if (!a || !b) continue;
+        const p0 = a.inner.clone().lerp(a.shoulder, 0.6);
+        const p1 = b.inner.clone().lerp(b.shoulder, 0.6);
+        const len = p0.distanceTo(p1);
+        if (len < 0.5 || len > 4 * every) continue;
+        const g = new BoxGeometry(0.6, 1.0, len + 0.05);
+        g.applyMatrix4(new Matrix4().lookAt(p0, p1, UP));
+        const m = p0.clone().add(p1).multiplyScalar(0.5);
+        g.applyMatrix4(at(m.x, m.y + 0.5, m.z));
+        parts.push(piece(g, '#a49c8a'));
+        if (lite || ((i - i0) / 2) % 2 === 0) parts.push(box(0.6, 0.6, 0.6, p0.x, p0.y + 1.3, p0.z, '#9a9282')); // the merlons
+      }
+    }
+  }
+  const group = new Group();
+  group.name = 'battlements';
+  if (parts.length) group.add(Object.assign(new Mesh(merge(parts), lambert()), { name: 'battlements' }));
+  return group;
+}
+
 // ── Wooden houses with warm windows ─────────────────────────────────────────
 
 const HOUSE_COLOURS = ['#9c2f22', '#a8382a', '#d8a93a', '#e8e1d0', '#7a2a20'];
@@ -474,6 +509,18 @@ function stiltHouse(k) {
   return { body: merge(parts), windows, w, d };
 }
 
+/** A Forbidden City hall: red walls under a golden glazed hipped roof, on a white base. */
+function forbiddenCity(k) {
+  const w = 14 + (k % 3) * 2;
+  const d = 9;
+  const roof = new ConeGeometry(Math.hypot(w, d) / 2 + 1, 3.5, 4);
+  roof.applyMatrix4(new Matrix4().makeRotationY(Math.PI / 4));
+  roof.applyMatrix4(new Matrix4().makeScale((w / Math.hypot(w, d)) * 1.45, 1, (d / Math.hypot(w, d)) * 1.45));
+  const body = merge([box(w + 2, 1.2, d + 2, 0, 0.6, 0, '#e8e4da'), box(w, 5, d, 0, 3.7, 0, '#a8201c'), piece(roof, '#e0b43c', at(0, 8, 0)), box(w * 0.5, 0.5, 0.5, 0, 9.9, 0, '#e0b43c')]);
+  const windows = merge([box(w * 0.8, 1.2, 0.1, 0, 5.3, d / 2 + 0.06, '#2f6e5a')]);
+  return { body, windows, w, d };
+}
+
 /** What each house-scenery name builds, and how far out it stands (big buildings stand further back). */
 const HOUSE_STYLES = {
   'wooden-houses': { build: house, out: [22, 45], clear: 14, glow: true },
@@ -485,6 +532,7 @@ const HOUSE_STYLES = {
   haussmann: { build: haussmann, out: [30, 45], clear: 22, liteEvery: 2 },
   skyscrapers: { build: skyscraper, out: [45, 60], clear: 30, liteEvery: 2 },
   'stilt-houses': { build: stiltHouse, out: [22, 40], clear: 14 },
+  'forbidden-city': { build: forbiddenCity, out: [28, 40], clear: 18, liteEvery: 2 },
 };
 
 /** Houses beside the stretches tagged with a house style (and round the start or finish when it is). */

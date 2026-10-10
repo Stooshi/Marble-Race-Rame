@@ -58,13 +58,13 @@ Then add it to `index.js` in this folder.
 
 | Obstacle | Races as | Costumes in the library |
 | --- | --- | --- |
-| `block({ costume, at, line, size })` | Bobsleigh Run's ice block (`size: 'large'`: the snowman) | panda, camel, cafe-table, reindeer, baboon, giraffe |
+| `block({ costume, at, line, size })` | Bobsleigh Run's ice block (`size: 'large'`: the snowman) | panda, camel, cafe-table, reindeer, baboon, giraffe, cow, marmot, elk, chamois, sled-dog, arctic-fox, pigeon, log, caiman, jaguar, football, monkey |
 | `pileUp({ costume, at })` | Three blocks: the first pile-up of the race | any block costume |
 | `curtain({ costume, at, side })` | The icicles: knocked out round them | zebras |
-| `swipe({ costume, at, side })` | The polar bear's swipe, knocking marbles aside | elephant |
+| `swipe({ costume, at, side })` | The polar bear's swipe, knocking marbles aside | elephant, musk-ox, falcon, fortune-cat (its raised paw waves into the high line) |
 | `parked({ costume, at, side, length })` | Knocked aside round its open side, one hit per marble; gentle straights only (grade 0.2 or less; on a bend it traps marbles) | ore-cart, kick-sled, vespa, sports-car |
-| `slalom({ from, to, count })` | Thin poles alternating either side: about a tenth of a marble's speed per hit, never a stop | slalom-gate |
-| `peg({ costume, at, line, radius })` | A slalom pole's physics, bigger | go-stone |
+| `slalom({ from, to, count })` | Thin poles alternating either side: about a tenth of a marble's speed per hit, never a stop | slalom-gate, route-flag, street-lamp, rally-flag, river-stake, corner-flag, lantern-pole |
+| `peg({ costume, at, line, radius })` | A slalom pole's physics, bigger | go-stone, xiangqi-piece (a pair across the channel: one of each colour) |
 
 A costume is one builder in `client/src/three/costumes/kit.js` and one entry
 in `client/src/three/costumes/index.js`. A test fails if a track wears a
@@ -81,6 +81,7 @@ To look at them: `node scripts/dump-kit-track.js costume-gallery`, then
 | `bump({ at })` | A low speed bump: the field hops, about 1 m at most |
 | `moguls({ from, to, count })` | A row of low bumps: on a straight, 30 m after any bend, 5 m apart or more, 8 at most |
 | `steps({ from, to, count, drag, tiles })` | Small regular bumps over a slowing surface (the Selarón Steps; `tiles: 'mosaic'` paints them red, yellow, blue and green); same rules as moguls |
+| `paint({ from, to, look })` | Looks only (never raced): a board painted on the floor, `look: 'go-board'` (19 lines each way on pale wood) or `'xiangqi'` (9 lines across, its river a blue band) |
 
 Nothing bumpy within 40 m after a block: marbles flung off it land on the bumps and bounce high.
 
@@ -119,7 +120,7 @@ Scenery comes from names in the file (looks only; checked, so a typo is refused)
   'eiffel-tower' | 'seine' | 'bookstalls' | 'bedouin-camp' | 'museum-of-the-future' | 'dubai-frame' |
   'burj-al-arab' | 'burj-khalifa' | 'palm-boardwalk' | 'dune-buggy' | 'toucan-tree' | 'river-pool' (a pink
   river dolphin surfaces in it) | 'teatro-amazonas' | 'river-dock' | 'corcovado' (far behind, its figure only a distant
-  silhouette) | 'sugarloaf' | 'maracana' | 'parrot-tree' | 'copacabana'` (the world landmarks: client/src/three/scenery/kitLandmarks.js).
+  silhouette) | 'sugarloaf' | 'maracana' | 'parrot-tree' | 'copacabana' | 'wudian-hall' | 'watchtower' | 'pagoda' | 'rice-terraces' | 'lantern-row' | 'temple-of-heaven'` (the world landmarks: client/src/three/scenery/kitLandmarks.js).
 - `figures: ['skier', 'snowboarder', 'spectator', 'reindeer', …]`: people, or any
   block costume, standing on the banks facing the track with small idle movements.
 - `overhead: ['gondola' | 'cable-car' | 'chairlift' | 'vulture']`: a lift crossing high above
@@ -133,11 +134,12 @@ Scenery comes from names in the file (looks only; checked, so a typo is refused)
   and now and then a whale's tail), `'pasture'` (open pasture, a few trees), `'aspens'`;
   houses in a style: `'chalets'`, `'wood-clad'` (Avoriaz's tall buildings), `'shopfronts'`
   (Old West), `'stone-houses'` (slate roofs), `'colourful-houses'` (Ilulissat), `'haussmann'`
-  (Paris), `'skyscrapers'` (Dubai), `'stilt-houses'` (the Amazon); `'plane-trees'` (rows of city trees).
+  (Paris), `'skyscrapers'` (Dubai), `'stilt-houses'` (the Amazon), `'forbidden-city'` (red halls, golden roofs); `'plane-trees'` (rows of city trees);
+  `'battlements'` (the Great Wall's parapet and merlons along both banks).
 - `around` on a splitter, what stands between its two channels: `'mountain-hut'` (smoke
   from its chimney), `'big-rock'`, `'mountain-restaurant'`, `'mine-headframe'`, `'nunatak'`,
-  `'arc-de-triomphe'` (over one channel: the other runs round it), `'oasis'`, `'river-island'`, `'anaconda'` (lying along the divider, lifting its head); on a spiral, what it winds
-  down around: `'bell-tower'` (its bell swinging), `'notre-dame'`, `'twisted-tower'`; in a hairpin: `'obelisk'`.
+  `'arc-de-triomphe'` (over one channel: the other runs round it), `'oasis'`, `'river-island'`, `'anaconda'` (lying along the divider, lifting its head), `'watchtower'`; on a spiral, what it winds
+  down around: `'bell-tower'` (its bell swinging), `'notre-dame'`, `'twisted-tower'`, `'pagoda'`; in a hairpin: `'obelisk'`.
 - `designChanges: ['…']`: where the recipe made the build differ from the design, and
   why; shown at the top of the track report (never raced).
 - `signature: '<section>'`: the track's signature moment, for the report's screenshot.

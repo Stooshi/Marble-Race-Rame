@@ -170,8 +170,9 @@ function track(spec) {
       if (f.feature === 'bump') features.push({ type: 'bump', at });
       else if (f.feature === 'boost') features.push({ type: 'boost', at, l: f.l, length: f.length, halfWidth: f.halfWidth, ...(f.kick !== undefined && { kick: f.kick }) });
       else if (f.feature === 'brake') features.push({ type: 'cobbles', at, length: f.length, drag: f.drag });
+      else if (f.feature === 'paint') { features.push({ type: 'paint', at, length: Math.round((f.to - f.from) * metres(i) * 10) / 10, look: f.look }); continue; } // (looks only)
       else {
-        problems.push(`${where(sec.name)}: features must come from the kit (bump, boost, brake, moguls, steps).`);
+        problems.push(`${where(sec.name)}: features must come from the kit (bump, boost, brake, moguls, steps, paint).`);
         continue;
       }
       placed.push({ section: i, kind: f.feature, at });

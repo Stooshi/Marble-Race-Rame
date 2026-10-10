@@ -156,7 +156,8 @@ export function dressingFor(biome) {
     alpine: [[(l) => pine(l, true), 0.8], [(l) => rock(l, '#9a9690'), 0.2]],
     // (Arctic ground is all rocks, hundreds of them: always the plainest rock, so the triangles stay in budget.)
     arctic: [[() => rock(true, '#7d8794'), 0.7], [() => rock(true, '#e8eef5'), 0.3]],
-    meadow: [[broadleaf, 0.45], [birch, 0.15], [(l) => bush(l), 0.4]],
+    // (Hills of broadleaf trees seen from the ridges: the plainest kinds, so the triangles stay in budget.)
+    meadow: [[() => broadleaf(true), 0.45], [() => birch(true), 0.15], [() => bush(true), 0.4]],
     // (Arabian desert: sandstone rocks, desert shrubs and a few date palms; plain, as there are hundreds.)
     desert: [[() => rock(true, '#c98a5a'), 0.5], [() => bush(true, '#9a8a4a'), 0.35], [() => palm(true), 0.15]],
     // (Rainforest: hundreds of trees; the plainest kinds, to stay in budget.)

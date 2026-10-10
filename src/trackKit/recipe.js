@@ -133,6 +133,7 @@ function checkRecipe({ spec, sections, span, generated, owner, placed, total, wh
     known('billboard frame', FRAMES, s.billboardFrame, s.name);
     for (const lm of s.landmarks ?? []) known('landmark', LANDMARKS, lm.name, s.name);
     for (const o of s.overhead ?? []) known('lift', OVERHEAD, o, s.name);
+    for (const f of (s.features ?? []).filter((x) => x.feature === 'paint')) known('paint', ['go-board', 'xiangqi'], f.look, s.name);
   });
 
   // Bends: long and flowing, at most one sharp bend, with a braking zone before it.

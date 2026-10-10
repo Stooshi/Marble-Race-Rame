@@ -15,7 +15,7 @@ import {
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { buildKitGround, biomeOf } from './kitGround';
 import { FIGURE_COLORS, LANDMARKS, PEOPLE, aspen, cabin, dressingFor, liftTower, snowRock, vulture, winterBirch } from './kitProps';
-import { buildCentrepieces, buildFunicular, buildHouses, buildLake, buildRaceNetting, tagsNear, turnAngle } from './kitPlaces';
+import { buildBattlements, buildCentrepieces, buildFunicular, buildHouses, buildLake, buildRaceNetting, tagsNear, turnAngle } from './kitPlaces';
 import { hashString, mergeByArea, piece, seededRandom, smoothstep } from './parts';
 import { COSTUMES, COSTUME_COLORS } from '../costumes';
 import { FEATURE_COLORS } from '../trackFeatures';
@@ -28,7 +28,7 @@ const LIFT_HEIGHT = 18;  // metres above the track where a lift crosses it: well
 const CABIN_SPEED = 4;   // metres per second along the cable
 const DRESSING_AREA = 500; // metres: trees and rocks are merged in squares this size (one draw call each)
 // What may be merged into the still scenery (nothing that moves, nothing see-through).
-const STILL = new Set(['landmarks', 'lift towers', 'centrepiece', 'netting poles', 'funicular rails', 'houses']);
+const STILL = new Set(['landmarks', 'lift towers', 'centrepiece', 'netting poles', 'funicular rails', 'houses', 'battlements']);
 
 export function buildKitScenery(centerline, track, theme, { lite = false } = {}) {
   const kit = track.physics.kit;
@@ -233,6 +233,7 @@ export function buildKitScenery(centerline, track, theme, { lite = false } = {})
   group.add(centrepieces.group);
   solids.push(...centrepieces.spots);
   group.add(buildRaceNetting(centerline, channel, kit, rows));
+  group.add(buildBattlements(centerline, kit, rows, { lite }));
   const lake = buildLake(ground.lake, { lite });
   if (lake) {
     group.add(lake.mesh);
@@ -262,7 +263,7 @@ export function buildKitScenery(centerline, track, theme, { lite = false } = {})
   const minZ = Math.min(...zs);
   const maxZ = Math.max(...zs);
   const spacing = lite ? 12 : 7;
-  const maxItems = lite ? 300 : 900;
+  const maxItems = lite ? (biome === 'meadow' ? 150 : 300) : 900; // (fewer of the meadow's broadleaf trees on a phone: they cost the most)
   const spots = [];
   for (let x = minX - 260; x <= maxX + 260; x += spacing) {
     for (let z = minZ - 260; z <= maxZ + 260; z += spacing) spots.push([x + (rand() - 0.5) * spacing * 0.9, z + (rand() - 0.5) * spacing * 0.9, rand(), rand()]);
