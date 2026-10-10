@@ -114,7 +114,9 @@ Scenery comes from names in the file (looks only; checked, so a typo is refused)
   or one section (`surface: 'stone'` on the Steps). Every surface races exactly like ice.
 - `start: { landmark }`, `finish: { landmark }`, and per section
   `landmarks: [{ name, side, at, distance }]`: `'church' | 'mountain-hut' | 'big-rock' | 'lighthouse' |
-  'horse-sleigh' | 'border-post' | 'lift-station' | 'mine-buildings' | 'snow-park' | 'base-camp'`.
+  'horse-sleigh' | 'border-post' | 'lift-station' | 'mine-buildings' | 'snow-park' | 'base-camp' |
+  'sacre-coeur' | 'moulin-rouge' (its sails turn) | 'fountains' | 'louvre-pyramid' | 'notre-dame' |
+  'eiffel-tower' | 'seine' | 'bookstalls'` (the world landmarks: client/src/three/scenery/kitLandmarks.js).
 - `figures: ['skier', 'snowboarder', 'spectator', 'reindeer', …]`: people, or any
   block costume, standing on the banks facing the track with small idle movements.
 - `overhead: ['gondola' | 'cable-car' | 'chairlift' | 'vulture']`: a lift crossing high above
@@ -127,10 +129,12 @@ Scenery comes from names in the file (looks only; checked, so a typo is refused)
   frozen lake just past the run-out), `'icefjord'` (the same, open water with icebergs
   and now and then a whale's tail), `'pasture'` (open pasture, a few trees), `'aspens'`;
   houses in a style: `'chalets'`, `'wood-clad'` (Avoriaz's tall buildings), `'shopfronts'`
-  (Old West), `'stone-houses'` (slate roofs), `'colourful-houses'` (Ilulissat).
+  (Old West), `'stone-houses'` (slate roofs), `'colourful-houses'` (Ilulissat), `'haussmann'`
+  (Paris); `'plane-trees'` (rows of city trees).
 - `around` on a splitter, what stands between its two channels: `'mountain-hut'` (smoke
-  from its chimney), `'big-rock'`, `'mountain-restaurant'`, `'mine-headframe'`, `'nunatak'`;
-  or on a spiral, what it winds down around: `'bell-tower'` (its bell swinging).
+  from its chimney), `'big-rock'`, `'mountain-restaurant'`, `'mine-headframe'`, `'nunatak'`,
+  `'arc-de-triomphe'` (over one channel: the other runs round it); on a spiral, what it winds
+  down around: `'bell-tower'` (its bell swinging), `'notre-dame'`; in a hairpin: `'obelisk'`.
 - `designChanges: ['…']`: where the recipe made the build differ from the design, and
   why; shown at the top of the track report (never raced).
 - `signature: '<section>'`: the track's signature moment, for the report's screenshot.

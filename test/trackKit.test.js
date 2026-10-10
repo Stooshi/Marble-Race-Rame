@@ -602,6 +602,7 @@ const HIDDEN_KIT_TRACKS = [
   ['park-city-run', '2026-10-17-add-park-city-run.sql', 'Park City Run (Utah, USA): down the Wasatch past old silver-mine relics and through a timbered mine tunnel to Main Street, built with the track kit.'],
   ['baqueira-beret-run', '2026-10-18-add-baqueira-beret-run.sql', 'Baqueira-Beret Run (Spain): a sunny Pyrenees run round a Romanesque bell tower to a stone village in the Val d\'Aran, built with the track kit.'],
   ['greenland-expedition', '2026-10-19-add-greenland-expedition.sql', 'Greenland Expedition: from a base camp on the ice sheet over a crevasse and through an ice cave to the icefjord harbour of Ilulissat, under the midnight sun, built with the track kit.'],
+  ['paris-eiffel-tower-run', '2026-10-20-add-paris-eiffel-tower-run.sql', 'Paris Eiffel Tower Run: from Montmartre through the Arc de Triomphe and round the Concorde obelisk to the Seine and the Eiffel Tower, in daylight only, built with the track kit.'],
 ];
 for (const [slug, file, note] of HIDDEN_KIT_TRACKS) {
   test(`${slug} is added by its data update, switched off, exactly as its track file builds it`, () => {

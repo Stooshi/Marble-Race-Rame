@@ -55,13 +55,23 @@ export function buildKitScenery(centerline, track, theme, { lite = false } = {})
 
   // ── Landmarks ──────────────────────────────────────────────────────────
   const landmarkParts = [];
+  const turning = []; // landmarks' moving parts (a windmill's sails): { mesh, base, axis, speed }
   const placeLandmark = (name, at, yaw) => {
     const lm = LANDMARKS[name];
     if (!lm) return;
     const g = lm.build();
-    g.applyMatrix4(new Matrix4().compose(new Vector3(at.x, groundAt(at.x, at.z) - 0.3, at.z), new Quaternion().setFromAxisAngle(UP, yaw), new Vector3(1, 1, 1)));
+    const foot = new Vector3(at.x, groundAt(at.x, at.z) - 0.3, at.z);
+    const q = new Quaternion().setFromAxisAngle(UP, yaw);
+    g.applyMatrix4(new Matrix4().compose(foot, q, new Vector3(1, 1, 1)));
     landmarkParts.push(g);
     solids.push({ x: at.x, z: at.z, r: lm.radius + 4 });
+    if (lm.moving) {
+      const mesh = new Mesh(lm.moving.build(), new MeshLambertMaterial({ vertexColors: true, flatShading: true }));
+      mesh.name = `${name}: moving`;
+      mesh.position.copy(new Vector3(...lm.moving.pivot).applyQuaternion(q).add(foot));
+      group.add(mesh);
+      turning.push({ mesh, base: q, axis: new Vector3(...lm.moving.axis), speed: lm.moving.speed });
+    }
   };
   const yawTo = (dir) => Math.atan2(dir.x, dir.z);
   if (kit.start?.landmark) {
@@ -269,6 +279,7 @@ export function buildKitScenery(centerline, track, theme, { lite = false } = {})
     } else if (tags.includes('rocks')) k = pick < 0.7 ? ROCK : k;
     else if (tags.includes('birches')) k = pick < 0.7 ? BIRCH : k;
     else if (tags.includes('aspens')) k = pick < 0.75 ? ASPEN : k;
+    else if (tags.includes('plane-trees')) k = 0; // (the landscape's own broadleaf trees, in rows of them)
     items[Math.max(0, k)].push({ x, y: groundAt(x, z), z, yaw: rand() * Math.PI * 2, scale: 0.75 + rand() * 0.6, tint: 0.85 + rand() * 0.25 });
     total += 1;
   }
@@ -303,6 +314,7 @@ export function buildKitScenery(centerline, track, theme, { lite = false } = {})
     centrepieces.update(t);
     funicular?.update(t);
     lake?.update(t);
+    for (const m of turning) m.mesh.quaternion.copy(m.base).multiply(cabinQ.setFromAxisAngle(m.axis, sec * m.speed));
     for (const b of birds) {
       const a = sec * 0.16; // once round every 40 s
       b.mesh.position.set(b.centre.x + Math.cos(a) * b.radius, b.centre.y + Math.sin(a * 2) * 2, b.centre.z + Math.sin(a) * b.radius);

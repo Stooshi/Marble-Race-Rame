@@ -7,6 +7,7 @@
 import { BoxGeometry, ConeGeometry, CylinderGeometry, Group, IcosahedronGeometry, Matrix4, Mesh, Quaternion, SphereGeometry, Vector3 } from 'three';
 import { merge, piece } from './parts';
 import { local } from '../costumes/animals';
+import { WORLD_LANDMARKS } from './kitLandmarks';
 
 // ── Set dressing: one geometry per kind, instanced ──────────────────────────
 
@@ -34,6 +35,14 @@ export function broadleaf(lite) {
     piece(new CylinderGeometry(0.3, 0.45, 3, 6), '#6b4a2f', new Matrix4().makeTranslation(0, 1.5, 0)),
     piece(new IcosahedronGeometry(2.6, lite ? 0 : 1), '#4f8f3a', new Matrix4().makeTranslation(0, 4.4, 0)),
     piece(new IcosahedronGeometry(1.8, 0), '#5ea345', new Matrix4().makeTranslation(1.2, 5.4, 0.6)),
+  ]);
+}
+
+/** A city plane tree: a pale trunk and one round crown (the plainest tree, for streets lined with them). */
+export function planeTree() {
+  return merge([
+    piece(new CylinderGeometry(0.25, 0.35, 3.4, 5, 1, true), '#a39a86', new Matrix4().makeTranslation(0, 1.7, 0)),
+    piece(new IcosahedronGeometry(2.6, 0), '#4f8f3a', new Matrix4().compose(new Vector3(0, 4.8, 0), new Quaternion(), new Vector3(1, 0.9, 1))),
   ]);
 }
 
@@ -116,7 +125,8 @@ export function dressingFor(biome) {
     meadow: [[broadleaf, 0.45], [birch, 0.15], [(l) => bush(l), 0.4]],
     desert: [[(l) => rock(l, '#b98154'), 0.55], [() => cactus(), 0.3], [palm, 0.15]],
     jungle: [[broadleaf, 0.4], [palm, 0.25], [fern, 0.35]],
-    city: [[broadleaf, 0.5], [(l) => bush(l, '#5f9a48'), 0.5]],
+    // (City parks: hundreds of trees beside streets of buildings; always the plainest, to stay in budget.)
+    city: [[planeTree, 0.5], [() => bush(true, '#5f9a48'), 0.5]],
   }[biome] ?? [[broadleaf, 1]];
 }
 
@@ -168,12 +178,33 @@ function spectator(add, mat, group, point, q) {
   return [{ part: arm, base: q.clone(), axis: new Vector3(0, 0, 1), swing: 0.5, period: 0.9 }];
 }
 
+/** A street painter at an easel, brush arm moving (Montmartre). */
+function painter(add, mat, group, point, q) {
+  for (const x of [-0.12, 0.12]) add('figTrousers', new BoxGeometry(0.18, 0.85, 0.2), local(point, q, x, 0.43, 0));
+  add('figSmock', new BoxGeometry(0.52, 0.66, 0.3), local(point, q, 0, 1.18, 0));
+  add('figSkin', new SphereGeometry(0.16, 8, 6), local(point, q, 0, 1.68, 0));
+  add('figBeret', new CylinderGeometry(0.17, 0.17, 0.06, 10), local(point, q, 0.02, 1.83, 0));
+  // The easel in front of them, its canvas towards the track.
+  for (const x of [-0.3, 0.3]) add('figEasel', new BoxGeometry(0.04, 1.6, 0.04), local(point, q, x * 0.6, 0.8, 0.75).multiply(new Matrix4().makeRotationZ(-x * 0.2)));
+  add('figEasel', new BoxGeometry(0.04, 1.6, 0.04), local(point, q, 0, 0.78, 0.95).multiply(new Matrix4().makeRotationX(0.3)));
+  add('figCanvas', new BoxGeometry(0.7, 0.55, 0.04), local(point, q, 0, 1.25, 0.72));
+  const arm = new Group();
+  arm.position.copy(point.clone().add(new Vector3(0.28, 1.45, 0.05).applyQuaternion(q)));
+  arm.quaternion.copy(q);
+  const limb = new Mesh(new BoxGeometry(0.1, 0.1, 0.55), mat('figSmock'));
+  limb.position.set(0, -0.05, 0.27);
+  arm.add(limb);
+  group.add(arm);
+  return [{ part: arm, base: q.clone(), axis: new Vector3(0, 1, 0), swing: 0.25, period: 1.6 }];
+}
+
 export const FIGURE_COLORS = {
   figSki: '#e23b3b', figTrousers: '#2c3e66', figJacket: '#f2a23a', figPole: '#d9dde3', figHelmet: '#ffffff', figGoggles: '#ffb238',
   figBoard: '#7a3fd0', figTrousers2: '#3d3d45', figJacket2: '#2fb3a0', figBeanie: '#e23b3b', figShirt: '#3f7fd8', figSkin: '#e0b48f',
+  figSmock: '#4a6fa5', figBeret: '#1f2024', figEasel: '#8a6a45', figCanvas: '#f4f0e6',
 };
 
-export const PEOPLE = { skier, snowboarder, spectator };
+export const PEOPLE = { skier, snowboarder, spectator, painter };
 
 // ── Landmarks: one builder each, origin on the ground, front facing +z ─────
 
@@ -381,6 +412,7 @@ export const LANDMARKS = {
   'base-camp': { build: baseCamp, radius: 9 },
   nunatak: { build: nunatak, radius: 8, fit: 7.6 },
   'snow-park': { build: snowPark, radius: 9 },
+  ...WORLD_LANDMARKS,
 };
 
 // ── Things passing overhead (scenery only, high above the track) ───────────

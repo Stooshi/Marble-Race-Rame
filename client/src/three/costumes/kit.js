@@ -33,6 +33,10 @@ export const COSTUME_COLORS = {
   muskox: '#4a3426', muskoxPale: '#a08466', muskoxHorn: '#d9ccb4',
   foxWhite: '#f4f5f7', foxDark: '#2a2b30',
   flagOrange: '#f07a1f',
+  lampGreen: '#2f4a3a', lampGlass: '#f6e7b0',
+  vespaMint: '#9fd8c4', vespaCream: '#f2e6c8', vespaRed: '#d84a3a', vespaSeat: '#3a2a22', vespaChrome: '#c9ccd1', tyre: '#1e1f24',
+  easelWood: '#8a6a45', canvasWhite: '#f4f0e6', paintBlue: '#3f6fb5', paintYellow: '#e8b62a', paintRed: '#c84a3a',
+  pigeonGrey: '#8e939c', pigeonDark: '#4f545c', pigeonNeck: '#5f8a7a', beak: '#3a3a3a',
 };
 
 /** A part's head (or other moving piece) as its own little group at local (x, y, z), turned with the body. */
@@ -341,6 +345,26 @@ function snowmobile(add, mat, group, rimCentre, q, { len, width, drop = 0 }) {
   return [];
 }
 
+/** Vespa scooters parked in a row at the edge, in Paris pastels (Paris Eiffel Tower Run). */
+function vespa(add, mat, group, rimCentre, q, { len, width, drop = 0 }) {
+  const centre = rimCentre.clone().add(new Vector3(-(width - 0.8) / 2, -drop, 0).applyQuaternion(q));
+  const count = Math.max(1, Math.round(len / 2.1));
+  const each = len / count;
+  const paint = ['vespaMint', 'vespaCream', 'vespaRed'];
+  for (let k = 0; k < count; k += 1) {
+    const z = -len / 2 + each * (k + 0.5);
+    const c = paint[k % 3];
+    for (const dz of [-0.6, 0.6]) add('tyre', new CylinderGeometry(0.22, 0.22, 0.12, 12), local(centre, q, 0, 0.22, z + dz).multiply(new Matrix4().makeRotationZ(Math.PI / 2)));
+    add(c, new BoxGeometry(0.5, 0.45, 0.7), local(centre, q, 0, 0.55, z - 0.35));                   // the rounded rear body
+    add(c, new BoxGeometry(0.42, 0.12, 0.6), local(centre, q, 0, 0.3, z + 0.15));                   // the footboard
+    add(c, new BoxGeometry(0.42, 0.75, 0.12), local(centre, q, 0, 0.7, z + 0.5).multiply(new Matrix4().makeRotationX(-0.15))); // the leg shield
+    add('vespaSeat', new BoxGeometry(0.3, 0.1, 0.55), local(centre, q, 0, 0.82, z - 0.3));
+    add('vespaChrome', new BoxGeometry(0.6, 0.05, 0.05), local(centre, q, 0, 1.12, z + 0.55));        // handlebars
+    add('vespaChrome', new CylinderGeometry(0.07, 0.07, 0.04, 8), local(centre, q, 0, 1.0, z + 0.62).multiply(new Matrix4().makeRotationX(Math.PI / 2))); // headlamp
+  }
+  return [];
+}
+
 // ── Slalom gates and pegs: thin poles and small round pieces ────────────────
 
 /** A slalom pole with its little flag, red on the left of the middle, blue on the right (ski tracks). */
@@ -360,6 +384,40 @@ function routeFlag(add, mat, group, point, q, { height, l }) {
   const side = l >= 0 ? 1 : -1;
   add('flagOrange', new BoxGeometry(0.5, 0.34, 0.03), local(point, q, side * 0.27, height + 0.15, 0));
   return [];
+}
+
+/** A Paris street lamp: a dark green iron post and its lantern (Paris Eiffel Tower Run's slalom poles). */
+function streetLamp(add, mat, group, point, q, { height }) {
+  const h = height + 1.6;
+  add('lampGreen', new CylinderGeometry(0.06, 0.13, h, 8), local(point, q, 0, h / 2, 0));
+  add('lampGreen', new CylinderGeometry(0.14, 0.14, 0.25, 8), local(point, q, 0, 0.12, 0));
+  add('lampGlass', new CylinderGeometry(0.2, 0.12, 0.45, 6), local(point, q, 0, h + 0.2, 0));
+  add('lampGreen', new ConeGeometry(0.26, 0.25, 6), local(point, q, 0, h + 0.55, 0));
+  return [];
+}
+
+/** A street artist's easel with a half-painted canvas, standing on the high line (Paris; a curtain). */
+function easel(add, mat, group, point, q) {
+  for (const x of [-0.28, 0.28]) add('easelWood', new BoxGeometry(0.05, 1.7, 0.05), local(point, q, x, 0.82, 0.1).multiply(new Matrix4().makeRotationZ(-x * 0.25)));
+  add('easelWood', new BoxGeometry(0.05, 1.7, 0.05), local(point, q, 0, 0.8, -0.3).multiply(new Matrix4().makeRotationX(-0.35)));
+  add('easelWood', new BoxGeometry(0.7, 0.05, 0.08), local(point, q, 0, 0.85, 0.12));
+  add('canvasWhite', new BoxGeometry(0.8, 0.65, 0.04), local(point, q, 0, 1.22, 0.14));
+  add('paintBlue', new BoxGeometry(0.7, 0.2, 0.01), local(point, q, 0, 1.38, 0.165));
+  add('paintYellow', new IcosahedronGeometry(0.1, 0), local(point, q, 0.18, 1.2, 0.165, 1, 1, 0.1));
+  add('paintRed', new BoxGeometry(0.3, 0.12, 0.01), local(point, q, -0.15, 1.05, 0.165));
+  return [];
+}
+
+/** A pigeon pecking at the ground, its head bobbing (Paris; a figure beside the track). */
+function pigeon(add, mat, group, point, q) {
+  add('pigeonGrey', new IcosahedronGeometry(0.13, 1), local(point, q, 0, 0.14, 0, 0.85, 0.8, 1.3));
+  add('pigeonDark', new BoxGeometry(0.1, 0.03, 0.16), local(point, q, 0, 0.15, -0.2));                   // tail
+  for (const x of [-0.04, 0.04]) add('beak', new BoxGeometry(0.015, 0.06, 0.015), local(point, q, x, 0.03, 0.02));
+  const head = movingPart(group, point, q, 0, 0.24, 0.1, [
+    mesh(new IcosahedronGeometry(0.06, 0), mat('pigeonNeck'), 0, 0, 0.04),
+    mesh(new ConeGeometry(0.015, 0.05, 4), mat('beak'), 0, -0.01, 0.11).rotateX(Math.PI / 2),
+  ]);
+  return [{ part: head, base: q.clone(), axis: new Vector3(1, 0, 0), swing: 0.5, period: 0.7 }];
 }
 
 /** A round Go stone lying on the board, black or white (China Wall Twister's board-game run). */
@@ -399,4 +457,8 @@ export const KIT_COSTUMES = {
   'slalom-gate': { places: 'slalom', build: slalomGate },
   'go-stone': { places: 'slalom', build: goStone },
   'route-flag': { places: 'slalom', build: routeFlag },
+  'street-lamp': { places: 'slalom', build: streetLamp },
+  easel: { places: 'curtain', build: easel },
+  pigeon: { places: 'block', upright: true, build: pigeon },
+  vespa: { places: 'parked', build: vespa },
 };

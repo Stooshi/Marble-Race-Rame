@@ -128,7 +128,7 @@ function checkRecipe({ spec, sections, span, generated, owner, placed, total, wh
   sections.forEach((s) => {
     for (const sc of s.scenery ?? []) known('scenery', SCENERY, sc, s.name);
     known('splitter centrepiece', AROUND, s.around, s.name);
-    if (s.around !== undefined && !['splitter', 'spiral'].includes(s.shape.shape)) problems.push(`${where(s.name)}: only a splitter or a spiral has a middle to stand something in (around).`);
+    if (s.around !== undefined && !['splitter', 'spiral', 'hairpin'].includes(s.shape.shape)) problems.push(`${where(s.name)}: only a splitter, a spiral or a hairpin has a middle to stand something in (around).`);
     known('surface', SURFACES, s.surface, s.name);
     known('billboard frame', FRAMES, s.billboardFrame, s.name);
     for (const lm of s.landmarks ?? []) known('landmark', LANDMARKS, lm.name, s.name);

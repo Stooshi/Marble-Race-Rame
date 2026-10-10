@@ -14,6 +14,7 @@ import {
 import { forkOffset, forkRadius } from '../iceChannel';
 import { merge, piece } from './parts';
 import { LANDMARKS } from './kitProps';
+import { arcDeTriomphe } from './kitLandmarks';
 import { flakeTexture } from '../lighting';
 
 const UP = new Vector3(0, 1, 0);
@@ -59,9 +60,27 @@ export function buildCentrepieces(centerline, channel, kit, { lite = false, grou
   const chimneys = [];
   const bells = [];
   const spots = []; // where they stand (kept clear of trees)
+  const arches = []; // an arch over a splitter's channel (its own mesh: the camera passes through it)
   const { samples, segments } = centerline;
   for (const sec of kit.sections) {
     if (!sec.around || !LANDMARKS[sec.around]) continue;
+    if (sec.shape === 'hairpin') {
+      // Inside a hairpin, at the centre of its turn: from the middle of the bend, its radius in towards the centroid.
+      const i0 = Math.round(sec.from * segments);
+      const i1 = Math.round(sec.to * segments);
+      const mid = samples[Math.round((i0 + i1) / 2)].pos;
+      const c = new Vector3();
+      for (let i = i0; i <= i1; i += 1) c.add(samples[i].pos);
+      c.multiplyScalar(1 / (i1 - i0 + 1));
+      const inward = c.clone().sub(mid).setY(0).normalize();
+      const centre = mid.clone().addScaledVector(inward, 20);
+      const y = groundAt ? groundAt(centre.x, centre.z) : mid.y;
+      const g = LANDMARKS[sec.around].build();
+      g.applyMatrix4(new Matrix4().compose(new Vector3(centre.x, y - 0.3, centre.z), new Quaternion(), new Vector3(1, 1, 1)));
+      parts.push(g);
+      spots.push({ x: centre.x, z: centre.z, r: LANDMARKS[sec.around].radius + 3 });
+      continue;
+    }
     if (sec.shape === 'spiral') {
       // In the middle of a spiral: on the ground at its centre, which the track winds down around.
       // Its centre: the middle of the first full turn (the plan of a spiral is a circle).
@@ -97,6 +116,21 @@ export function buildCentrepieces(centerline, channel, kit, { lite = false, grou
     const inner = forkOffset(fork, sMid) - forkRadius(fork, channel.radius, sMid) * Math.sin(channel.maxAngle) - 0.45;
     const gap = 2 * inner;
     const lm = LANDMARKS[sec.around];
+    if (sec.around === 'arc-de-triomphe') {
+      // Not between the channels but over one of them (the left): the arch straddles it, one pier
+      // on the divider, the other on the bank beyond.
+      const off = Math.abs(forkOffset(fork, sMid));
+      const outer = off + forkRadius(fork, channel.radius, sMid) * Math.sin(channel.maxAngle) + 0.45 + 0.1; // its far rim
+      const sideV = new Vector3(s.side.x, 0, s.side.z).normalize();
+      const along = new Vector3(s.tangent.x, 0, s.tangent.z).normalize();
+      const at = s.pos.clone().addScaledVector(sideV, outer / 2);
+      const top = s.pos.y + forkRadius(fork, channel.radius, sMid) * (1 - Math.cos(channel.maxAngle));
+      const g = arcDeTriomphe(outer + 0.5, 0.5);
+      g.applyMatrix4(new Matrix4().compose(new Vector3(at.x, top - 0.05, at.z), new Quaternion().setFromAxisAngle(UP, Math.atan2(sideV.x, sideV.z) + Math.PI / 2), new Vector3(1, 1, 1)));
+      g.name = 'arch';
+      arches.push(g);
+      continue;
+    }
     const half = lm.fit ?? lm.radius * (sec.around === 'mountain-hut' ? 0.62 : 0.85); // its half-width across the divider
     const scale = Math.min(1, (gap - 0.6) / (2 * half));
     const top = s.pos.y + forkRadius(fork, channel.radius, sMid) * (1 - Math.cos(channel.maxAngle));
@@ -110,6 +144,11 @@ export function buildCentrepieces(centerline, channel, kit, { lite = false, grou
   if (parts.length) {
     const m = new Mesh(merge(parts), lambert());
     m.name = 'centrepiece';
+    group.add(m);
+  }
+  if (arches.length) {
+    const m = new Mesh(merge(arches), lambert());
+    m.name = 'arch';
     group.add(m);
   }
   // Smoke from the chimney: soft puffs rising and drifting, on the race clock.
@@ -371,6 +410,24 @@ function colourfulHouse(k) {
   return { body, windows, w, d };
 }
 
+/** A Paris apartment building: cream stone storeys, iron balconies, a grey zinc mansard roof. */
+function haussmann(k) {
+  const w = 14 + (k % 3) * 3;
+  const d = 10;
+  const h = 15 + (k % 2) * 3;
+  const roof = new ConeGeometry(Math.hypot(w, d) / 2 + 0.2, 4.5, 4);
+  roof.applyMatrix4(new Matrix4().makeRotationY(Math.PI / 4));
+  roof.applyMatrix4(new Matrix4().makeScale((w / Math.hypot(w, d)) * 1.42, 1, (d / Math.hypot(w, d)) * 1.42));
+  const parts = [box(w, h, d, 0, h / 2, 0, ['#e8dcc2', '#efe4cc', '#e2d4b8'][k % 3]), piece(roof, '#6f7782', at(0, h + 2.25, 0))];
+  for (const y of [h * 0.45, h * 0.8]) parts.push(box(w, 0.2, 0.6, 0, y, d / 2 + 0.3, '#2c2f36')); // the iron balconies
+  for (const x of [-w / 3, w / 3]) parts.push(box(0.8, 2.5, 0.8, x, h + 4, 0, '#c98f6a'));          // chimney stacks
+  parts.push(box(w, 3.2, 0.1, 0, 1.6, d / 2 + 0.06, '#4a5a6a'));                                      // the shopfronts at street level
+  // The windows as one dark band per storey (a few triangles, hundreds of buildings).
+  const windows = [];
+  for (let r = 0; r < 4; r += 1) windows.push(box(w - 1.6, 1.5, 0.1, 0, 4.5 + r * 3, d / 2 + 0.06, '#3b4a5a'));
+  return { body: merge(parts), windows: merge(windows), w, d };
+}
+
 /** What each house-scenery name builds, and how far out it stands (big buildings stand further back). */
 const HOUSE_STYLES = {
   'wooden-houses': { build: house, out: [22, 45], clear: 14 },
@@ -379,6 +436,7 @@ const HOUSE_STYLES = {
   shopfronts: { build: shopfront, out: [20, 30], clear: 14 },
   'stone-houses': { build: stoneHouse, out: [22, 45], clear: 14 },
   'colourful-houses': { build: colourfulHouse, out: [22, 45], clear: 14 },
+  haussmann: { build: haussmann, out: [30, 45], clear: 22, liteEvery: 2 },
 };
 
 /** Houses beside the stretches tagged with a house style (and round the start or finish when it is). */
@@ -402,8 +460,11 @@ export function buildHouses(centerline, kit, { lite = false, arc, groundAt, clea
   }
   let k = 0;
   const per = lite ? 1 : 2;
+  let spotNo = 0;
   for (const [p, style] of spots) {
-    const { build, out: [near, far], clear } = HOUSE_STYLES[style];
+    const { build, out: [near, far], clear, liteEvery = 1 } = HOUSE_STYLES[style];
+    spotNo += 1;
+    if (lite && spotNo % liteEvery) continue; // (big buildings: fewer on a phone)
     const i = Math.min(segments, Math.round(p * segments));
     const s = samples[i];
     const side = new Vector3(s.side.x, 0, s.side.z).normalize();

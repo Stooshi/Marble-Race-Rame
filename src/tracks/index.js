@@ -10,4 +10,5 @@ module.exports = [
   require('./park-city-run'),
   require('./baqueira-beret-run'),
   require('./greenland-expedition'),
+  require('./paris-eiffel-tower-run'),
 ];

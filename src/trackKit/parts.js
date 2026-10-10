@@ -234,14 +234,16 @@ module.exports = {
   SURFACES: ['ice', 'snow', 'sand', 'stone', 'water'],
   BIOMES: ['alpine', 'arctic', 'meadow', 'desert', 'jungle', 'city'],
   LANDMARKS: ['church', 'mountain-hut', 'big-rock', 'lighthouse', 'horse-sleigh', 'border-post',
-    'lift-station', 'mine-buildings', 'snow-park', 'base-camp'],
+    'lift-station', 'mine-buildings', 'snow-park', 'base-camp',
+    'sacre-coeur', 'moulin-rouge', 'fountains', 'louvre-pyramid', 'notre-dame', 'eiffel-tower', 'seine', 'bookstalls'],
   OVERHEAD: ['gondola', 'cable-car', 'chairlift', 'vulture'],
-  // What stands in the middle of a splitter, between its two channels (or in a spiral's middle).
-  AROUND: ['mountain-hut', 'big-rock', 'mountain-restaurant', 'mine-headframe', 'nunatak', 'bell-tower'],
+  // What stands in the middle of a splitter, between its two channels (the arch: over one of
+  // them), or in the middle of a spiral or a hairpin.
+  AROUND: ['mountain-hut', 'big-rock', 'mountain-restaurant', 'mine-headframe', 'nunatak', 'bell-tower', 'arc-de-triomphe', 'obelisk', 'notre-dame'],
   // Scenery near a section (or the start or finish): what grows and stands beside the track there.
   SCENERY: ['bare', 'rocks', 'birches', 'pines', 'race-netting', 'funicular', 'wooden-houses', 'frozen-lake',
     'wood-clad', 'chalets', 'pasture', 'aspens', 'shopfronts',
-    'stone-houses', 'colourful-houses', 'icefjord'],
+    'stone-houses', 'colourful-houses', 'icefjord', 'haussmann', 'plane-trees'],
   // Billboard frames: plain, a jungle timber frame, a city LED screen, a Paris advertising column, expedition crates.
   FRAMES: ['plain', 'wood', 'led', 'column', 'crates'],
 };
