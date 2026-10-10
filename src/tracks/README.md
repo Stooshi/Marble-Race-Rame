@@ -207,6 +207,30 @@ Prix: looks only, it races exactly as it would without. It brings:
   `banner-gantry` (curtain: banners hanging from a gantry over the high line), and
   `rumble({ from, to, count })`: rumble strips, red and white, racing as moguls (same rules).
 
+The Grand Prix tracks' own pieces (looks only, like everything here):
+- landmarks: `'dubai-fountain'` (its jets sweep), `'marina'`, `'harbour'` (ferries, sailing boats),
+  `'opera-house'` (stylised), `'galata-tower'`, `'hagia-sophia'`, `'blue-mosque'`, `'bosphorus-bridge'`,
+  `'tulip-garden'`, `'lagos-skyline'`, `'national-theatre'`, `'roundabout-monument'`, `'kicc-tower'`,
+  `'acacia'`, `'safari-truck'`, `'park-fence'`, `'royal-palace'`, `'city-hall'`, `'vasa-museum'`,
+  `'steamboats'`, `'red-fort'`, `'red-fort-gate'`, `'jama-masjid'`, `'india-gate'`, `'mughal-fountain'`,
+  `'kasbah'`, `'mud-mosque'`, `'caravan'`, and our own worlds' `'giant-tree'`, `'tree-platform'`,
+  `'glow-flowers'`, `'snow-castle'`, `'snow-island'`, `'ice-palace'`, `'ruined-castle'`,
+  `'sleeping-dragon'` (one eye opening), `'fallen-statue'`, `'amphitheatre'`, `'dragon-mountain'`.
+  A section landmark with `over: true` straddles the track (a gateway the field races through).
+- on a splitter's divider (`around`): `'museum-of-the-future'` and `'opera-house'` (versions sized for
+  it), `'tulip-garden'`, `'roundabout-monument'`, `'acacia'`, `'mughal-fountain'`, `'snow-island'`,
+  `'fallen-statue'`; in a hairpin `'dubai-frame'`; in a spiral `'giant-tree'`.
+- scenery: `'sandstone-terraces'`, `'market-stalls'`, `'merchant-houses'` (house styles), `'palms'`,
+  `'jacarandas'`, `'savannah'` (a few acacias on open grass); on a floodlit night every house's
+  windows light up.
+- tunnels `'bazaar'` (the Grand Bazaar's striped arches and lanterns) and `'canyon'` (no roof: red rock
+  walls with spectators on the cliff tops); bridge `'steel'` (laid along the slope, water beneath).
+- costumes: `simit-cart`, `danfo-bus`, `matatu`, `auto-rickshaw`, `support-truck` (parked);
+  `mushroom`, `giant-snowball`, `stone-block` (blocks); `crystal-post`, `ice-lantern`, `broken-pillar`
+  (slalom); `stag`, `snow-troll`, `dragon-tail` (swipe); `vines`, `battle-banners` (curtain, hung from
+  a gantry like the banner gantry); figures `zebra`, `buffalo`; billboard frame `'banner'`.
+- crowds `'desert-folk'` (tent stands), barrier `'marigolds'` (garlands on the tyres).
+
 No real series, circuit or car brand anywhere: generic racing pieces only.
 To look at them all: `node scripts/dump-kit-track.js grand-prix-gallery`, then open
 `/dev/kit-view.html?track=grand-prix-gallery` (never raced).
