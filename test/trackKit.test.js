@@ -600,6 +600,7 @@ test('Åre Run is added by its data update, switched off, exactly as its track f
 const HIDDEN_KIT_TRACKS = [
   ['portes-du-soleil-run', '2026-10-16-add-portes-du-soleil-run.sql', 'Portes du Soleil Run (France and Switzerland): from Avoriaz across the border and down the Swiss Wall to a Swiss village, built with the track kit.'],
   ['park-city-run', '2026-10-17-add-park-city-run.sql', 'Park City Run (Utah, USA): down the Wasatch past old silver-mine relics and through a timbered mine tunnel to Main Street, built with the track kit.'],
+  ['baqueira-beret-run', '2026-10-18-add-baqueira-beret-run.sql', 'Baqueira-Beret Run (Spain): a sunny Pyrenees run round a Romanesque bell tower to a stone village in the Val d\'Aran, built with the track kit.'],
 ];
 for (const [slug, file, note] of HIDDEN_KIT_TRACKS) {
   test(`${slug} is added by its data update, switched off, exactly as its track file builds it`, () => {

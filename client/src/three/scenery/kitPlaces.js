@@ -64,17 +64,28 @@ export function buildCentrepieces(centerline, channel, kit, { lite = false, grou
     if (!sec.around || !LANDMARKS[sec.around]) continue;
     if (sec.shape === 'spiral') {
       // In the middle of a spiral: on the ground at its centre, which the track winds down around.
+      // Its centre: the middle of the first full turn (the plan of a spiral is a circle).
       const i0 = Math.round(sec.from * segments);
       const i1 = Math.round(sec.to * segments);
       const c = new Vector3();
-      for (let i = i0; i <= i1; i += 1) c.add(samples[i].pos);
-      c.multiplyScalar(1 / (i1 - i0 + 1));
+      let turned = 0;
+      let n = 0;
+      for (let i = i0; i <= i1 && turned < Math.PI * 2; i += 1) {
+        c.add(samples[i].pos);
+        n += 1;
+        if (i > i0) {
+          const a = Math.atan2(samples[i].tangent.x, samples[i].tangent.z) - Math.atan2(samples[i - 1].tangent.x, samples[i - 1].tangent.z);
+          turned += Math.abs(Math.atan2(Math.sin(a), Math.cos(a)));
+        }
+      }
+      c.multiplyScalar(1 / n);
       const y = groundAt ? groundAt(c.x, c.z) : samples[i1].pos.y;
+      const big = 1.6; // (standing tall out of the hill the spiral winds round)
       const g = LANDMARKS[sec.around].build();
-      g.applyMatrix4(new Matrix4().compose(new Vector3(c.x, y - 0.3, c.z), new Quaternion().setFromAxisAngle(UP, Math.atan2(samples[i1].pos.x - c.x, samples[i1].pos.z - c.z)), new Vector3(1, 1, 1)));
+      g.applyMatrix4(new Matrix4().compose(new Vector3(c.x, y - 0.3, c.z), new Quaternion().setFromAxisAngle(UP, Math.atan2(samples[i1].pos.x - c.x, samples[i1].pos.z - c.z)), new Vector3(big, big, big)));
       parts.push(g);
-      spots.push({ x: c.x, z: c.z, r: LANDMARKS[sec.around].radius + 4 });
-      if (sec.around === 'bell-tower') bells.push(new Vector3(c.x, y - 0.3 + 14.2, c.z));
+      spots.push({ x: c.x, z: c.z, r: LANDMARKS[sec.around].radius * big + 4 });
+      if (sec.around === 'bell-tower') bells.push({ at: new Vector3(c.x, y - 0.3 + 14.2 * big, c.z), scale: big });
       continue;
     }
     const fork = channel.forks.find((f) => f.s0 / channel.arc >= sec.from - 0.01 && f.s0 / channel.arc <= sec.to);
@@ -120,7 +131,8 @@ export function buildCentrepieces(centerline, channel, kit, { lite = false, grou
       piece(new BoxGeometry(1.6, 0.18, 0.18), '#3a2a1e', at(0, 0, 0)),
     ]), lambert());
     bell.name = 'bell';
-    bell.position.copy(b);
+    bell.position.copy(b.at);
+    bell.scale.setScalar(b.scale);
     group.add(bell);
     return bell;
   });
