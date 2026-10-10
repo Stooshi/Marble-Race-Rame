@@ -11,7 +11,7 @@
  *   size                              the footprint: { radius, height } for blocks
  *                                     and pegs; { len, width, height } for parked ones
  */
-import { BoxGeometry, ConeGeometry, CylinderGeometry, Group, IcosahedronGeometry, Matrix4, Mesh, Vector3 } from 'three';
+import { BoxGeometry, ConeGeometry, CylinderGeometry, Group, IcosahedronGeometry, Matrix4, Mesh, Quaternion, Vector3 } from 'three';
 import { local } from './animals';
 
 export const COSTUME_COLORS = {
@@ -40,6 +40,9 @@ export const COSTUME_COLORS = {
   buggyFrame: '#e8b62a', buggyCage: '#2c2f36', buggySeat: '#b8312f',
   carRed: '#c8141c', carGlass: '#2a3440', carChrome: '#c9ccd1',
   falcon: '#8a6a4a', falconPale: '#e8dcc8', falconDark: '#3a2e26', perch: '#6b4a2f', perchCloth: '#2f5d9a', falconBeak: '#e0b43c',
+  logBark: '#5a3f2a', logEnd: '#b48a5a', moss: '#5f8a3a',
+  caiman: '#4f5a3a', caimanBelly: '#a8a07a', caimanEye: '#e0b43c', caimanMouth: '#c86a6a',
+  jaguar: '#d9a24a', jaguarSpot: '#3a2a1e', jaguarPale: '#f0e2c4',
   pigeonGrey: '#8e939c', pigeonDark: '#4f545c', pigeonNeck: '#5f8a7a', beak: '#3a3a3a',
 };
 
@@ -450,6 +453,63 @@ function falconBody(add, base, q) {
   add('falconDark', new BoxGeometry(0.22, 0.04, 0.5), local(base, q, 0, 1.7, -0.3).multiply(new Matrix4().makeRotationX(0.6))); // tail
 }
 
+/** A floating log, mossy, bobbing gently on the river (Amazon Water Run's blocks). The whole log is the moving part. */
+function floatingLog(add, mat, group, point, q) {
+  add('canvasWhite', new CylinderGeometry(0.85, 0.85, 0.02, 14, 1, true), local(point, q, 0, 0.05, 0)); // a ring of foam round it
+  const log = movingPart(group, point, q, 0, 0.42, 0, [
+    mesh(new CylinderGeometry(0.4, 0.45, 1.3, 9), mat('logBark')).rotateZ(Math.PI / 2),
+    ...[-1, 1].map((k) => mesh(new CylinderGeometry(0.36, 0.36, 0.04, 9), mat('logEnd'), k * 0.66, 0, 0).rotateZ(Math.PI / 2)),
+    mesh(new IcosahedronGeometry(0.25, 0), mat('moss'), 0.2, 0.3, 0.05, 1.6, 0.4, 1),
+    mesh(new CylinderGeometry(0.06, 0.08, 0.5, 5), mat('logBark'), -0.2, 0.45, 0.1).rotateZ(0.6),
+  ]);
+  return [{ part: log, base: q.clone(), axis: new Vector3(1, 0, 0), swing: 0.12, period: 2.2 }];
+}
+
+/** A caiman lying curled on the high line, its jaws slowly opening (Amazon Water Run). */
+function caiman(add, mat, group, point, q) {
+  // Its body curled round in a U, so all of it lies within the block's footprint.
+  for (let k = 0; k < 7; k += 1) {
+    const a = -1.2 + k * 0.42;
+    const r = 0.5;
+    const w = 0.42 - Math.abs(k - 2) * 0.04;
+    add('caiman', new BoxGeometry(w, 0.28, 0.32), local(point, q, Math.sin(a) * r, 0.16, Math.cos(a) * r - 0.1).multiply(new Matrix4().makeRotationY(a)));
+    add('caimanBelly', new BoxGeometry(w * 0.9, 0.06, 0.3), local(point, q, Math.sin(a) * r, 0.03, Math.cos(a) * r - 0.1).multiply(new Matrix4().makeRotationY(a)));
+  }
+  add('caiman', new ConeGeometry(0.12, 0.6, 5), local(point, q, -0.55, 0.12, -0.45).multiply(new Matrix4().makeRotationZ(Math.PI / 2))); // tail tip
+  for (const x of [-0.3, 0.3]) add('caiman', new BoxGeometry(0.1, 0.14, 0.25), local(point, q, x + 0.2, 0.07, 0.3));
+  const jaw = movingPart(group, point, q, 0.45, 0.2, -0.1, [
+    mesh(new BoxGeometry(0.26, 0.1, 0.5), mat('caiman'), 0, 0.04, 0.25),
+    mesh(new BoxGeometry(0.22, 0.03, 0.45), mat('caimanMouth'), 0, -0.02, 0.24),
+    ...[-1, 1].map((k) => mesh(new IcosahedronGeometry(0.04, 0), mat('caimanEye'), k * 0.08, 0.12, 0.05)),
+  ]);
+  add('caiman', new BoxGeometry(0.24, 0.08, 0.5), local(point, q, 0.45, 0.12, 0.15)); // the lower jaw
+  return [{ part: jaw, base: q.clone().multiply(new Quaternion().setFromAxisAngle(new Vector3(1, 0, 0), -0.15)), axis: new Vector3(1, 0, 0), swing: 0.25, period: 5.5 }];
+}
+
+/** A jaguar resting on the bank, sitting up like a sphinx, its head turning (Amazon Water Run; a figure). */
+function jaguar(add, mat, group, point, q) {
+  add('jaguar', new BoxGeometry(0.5, 0.42, 1.0), local(point, q, 0, 0.3, -0.1));
+  add('jaguarPale', new BoxGeometry(0.4, 0.1, 0.9), local(point, q, 0, 0.1, -0.1));
+  for (const [x, z] of [[-0.12, 0.2], [0.18, -0.35], [-0.15, -0.45], [0.12, 0.05]]) add('jaguarSpot', new BoxGeometry(0.12, 0.02, 0.12), local(point, q, x, 0.52, z));
+  for (const x of [-0.14, 0.14]) add('jaguar', new BoxGeometry(0.12, 0.1, 0.45), local(point, q, x, 0.06, 0.55));   // front paws
+  add('jaguar', new CylinderGeometry(0.05, 0.07, 0.8, 5), local(point, q, 0.25, 0.08, -0.55).multiply(new Matrix4().makeRotationX(Math.PI / 2 - 0.2)));
+  const head = movingPart(group, point, q, 0, 0.62, 0.42, [
+    mesh(new BoxGeometry(0.32, 0.26, 0.3), mat('jaguar')),
+    mesh(new BoxGeometry(0.18, 0.12, 0.12), mat('jaguarPale'), 0, -0.06, 0.18),
+    ...[-1, 1].map((k) => mesh(new ConeGeometry(0.05, 0.1, 4), mat('jaguar'), k * 0.11, 0.16, -0.04)),
+  ]);
+  return [{ part: head, base: q.clone(), axis: new Vector3(0, 1, 0), swing: 0.45, period: 4.4 }];
+}
+
+/** A river marker stake: a bamboo pole with a strip of red cloth, as river pilots mark the channel (Amazon Water Run's slalom poles). */
+function riverStake(add, mat, group, point, q, { height, l }) {
+  add('bamboo', new CylinderGeometry(0.04, 0.05, height + 0.3, 5), local(point, q, 0, (height + 0.3) / 2, 0));
+  for (let k = 0; k < 3; k += 1) add('logBark', new CylinderGeometry(0.055, 0.055, 0.04, 5), local(point, q, 0, 0.4 + k * 0.45, 0));
+  const side = l >= 0 ? 1 : -1;
+  add('gateRed', new BoxGeometry(0.4, 0.12, 0.02), local(point, q, side * 0.22, height + 0.12, 0).multiply(new Matrix4().makeRotationZ(-side * 0.3)));
+  return [];
+}
+
 /** A Paris street lamp: a dark green iron post and its lantern (Paris Eiffel Tower Run's slalom poles). */
 function streetLamp(add, mat, group, point, q, { height }) {
   const h = height + 1.6;
@@ -523,6 +583,10 @@ export const KIT_COSTUMES = {
   'route-flag': { places: 'slalom', build: routeFlag },
   'street-lamp': { places: 'slalom', build: streetLamp },
   'rally-flag': { places: 'slalom', build: rallyFlag },
+  log: { places: 'block', build: floatingLog },
+  'river-stake': { places: 'slalom', build: riverStake },
+  caiman: { places: 'block', build: caiman },
+  jaguar: { places: 'block', upright: true, build: jaguar },
   'dune-buggy': { places: 'parked', build: duneBuggy },
   'sports-car': { places: 'parked', build: sportsCar },
   falcon: {

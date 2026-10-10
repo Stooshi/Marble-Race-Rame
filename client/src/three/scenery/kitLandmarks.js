@@ -299,6 +299,82 @@ function duneBuggyParked() {
   return merge(parts);
 }
 
+// ── The Amazon ──────────────────────────────────────────────────────────────
+
+const leafy = (r, c, x, y, z, sy = 0.8) => piece(new IcosahedronGeometry(r, 0), c, S(x, y, z, 1, sy, 1));
+
+/** A giant rainforest tree over the gate, toucans on its branches (yellow-and-black, big orange bills). */
+function toucanTree() {
+  const parts = [
+    piece(new CylinderGeometry(1.2, 1.8, 18, 8), '#5a4a38', M(0, 9, 0)),
+    beam(V(0, 14, 0), V(9, 17, 3), 0.6, '#5a4a38'), beam(V(0, 12, 0), V(-7, 15, -2), 0.5, '#5a4a38'),
+    leafy(6, '#2f6e2c', 0, 21, 0), leafy(4.5, '#3f8f3a', 8, 18.5, 3), leafy(4, '#3f8f3a', -7, 16.5, -2),
+  ];
+  for (let k = 0; k < 6; k += 1) parts.push(beam(V(-1 + k * 0.9, 13 - k * 0.3, 1), V(-0.6 + k * 1.3, 2 + (k % 3), 1.5 + (k % 2)), 0.08, '#4b7a2e')); // hanging vines
+  for (const [x, y, z, yaw] of [[6, 16.6, 2.6, 0.4], [4, 15.9, 1.9, -0.3], [-5, 14.5, -1.6, 2.8]]) {
+    parts.push(piece(new IcosahedronGeometry(0.28, 0), '#16171b', turned(x, y + 0.25, z, yaw, 0.8, 1.3, 0.9)));
+    parts.push(piece(new IcosahedronGeometry(0.16, 0), '#f2d23a', turned(x, y + 0.48, z + 0.08, yaw)));
+    parts.push(piece(new ConeGeometry(0.11, 0.45, 5), '#f07a1f', turned(x + Math.sin(yaw) * 0.3, y + 0.55, z + Math.cos(yaw) * 0.3, yaw).multiply(new Matrix4().makeRotationX(Math.PI / 2))));
+  }
+  return merge(parts);
+}
+
+/** A river island: a mound of jungle, one big tree, a sloth hanging from a branch. */
+function riverIsland() {
+  return merge([
+    piece(new SphereGeometry(5, 12, 6, 0, Math.PI * 2, 0, Math.PI / 2), '#4b7a2e', S(0, 0, 0, 1, 0.3, 1.6)),
+    piece(new CylinderGeometry(0.4, 0.6, 8, 7), '#5a4a38', M(0, 4, 0)),
+    beam(V(0, 6.5, 0), V(2.6, 7.5, 0.5), 0.25, '#5a4a38'),
+    leafy(3.2, '#2f6e2c', 0, 9, 0), leafy(2.2, '#3f8f3a', 2, 8, 1),
+    piece(new IcosahedronGeometry(0.42, 0), '#8a7a5a', S(2.2, 6.7, 0.45, 0.9, 1.3, 0.8)),     // the sloth, hanging under the branch
+    piece(new IcosahedronGeometry(0.2, 0), '#d9c8a4', M(2.2, 6.2, 0.75)),                     // its pale face
+    ...[-0.25, 0.25].map((dx) => beam(V(2.2 + dx, 6.95, 0.45), V(2.2 + dx * 1.5, 7.4, 0.5), 0.08, '#6e5e44')),
+    ...[0.4, 0.6].map((dx) => piece(new IcosahedronGeometry(0.5, 0), '#7a7268', M(-2 - dx * 3, 0.3, 2 * dx))),
+  ]);
+}
+
+/** A still backwater beside the river: giant water-lily pads; the pink river dolphin surfaces in it now and then. */
+function riverPool() {
+  const parts = [piece(new CylinderGeometry(13, 13.5, 0.4, 20), '#3f6e5a', M(0, 0.2, 0)), piece(new CylinderGeometry(14, 14.5, 0.25, 20), '#6b5a3a', M(0, 0.05, 0))];
+  for (let k = 0; k < 9; k += 1) {
+    const a = k * 2.4;
+    const r = 3 + (k % 4) * 2.3;
+    parts.push(piece(new CylinderGeometry(1.4 + (k % 3) * 0.4, 1.4 + (k % 3) * 0.4, 0.12, 12), '#4f9a3a', M(Math.cos(a) * r, 0.45, Math.sin(a) * r)));
+    parts.push(piece(new CylinderGeometry(1.5 + (k % 3) * 0.4, 1.5 + (k % 3) * 0.4, 0.05, 12, 1, true), '#c8344a', M(Math.cos(a) * r, 0.5, Math.sin(a) * r))); // the red rims
+  }
+  return merge(parts);
+}
+/** The pink river dolphin: carried round a pivot under the water, so it arcs up out of it and back under. */
+function riverDolphin() {
+  return merge([
+    piece(new IcosahedronGeometry(0.9, 1), '#e8a0a8', S(0, 3.2, 0, 0.6, 0.55, 1.8)),
+    piece(new ConeGeometry(0.18, 0.9, 6), '#e8a0a8', new Matrix4().makeRotationX(Math.PI / 2).premultiply(M(0, 3.15, 2.0))), // the long beak
+    piece(new BoxGeometry(1.2, 0.08, 0.4), '#d98a94', M(0, 3.2, -1.7)),                                                         // tail flukes
+    piece(new BoxGeometry(0.06, 0.3, 0.6), '#d98a94', M(0, 3.7, 0)),
+  ]);
+}
+
+/** The Teatro Amazonas: a rose-pink opera house under its green-and-gold tiled dome. */
+function teatroAmazonas() {
+  return merge([
+    box(22, 10, 16, 0, 5, 0, '#e8a8a0'),
+    box(14, 4, 4, 0, 2, 9, '#f2efe8'), ...[-5, -2, 2, 5].map((x) => box(0.8, 6, 0.8, x, 6, 10.5, '#f2efe8')),
+    box(15, 1.2, 5, 0, 9.6, 9.5, '#f2efe8'),
+    piece(new CylinderGeometry(5, 5.4, 4, 16), '#f2efe8', M(0, 12, -2)),
+    piece(new SphereGeometry(5.4, 16, 10, 0, Math.PI * 2, 0, Math.PI / 2), '#2f8f5a', S(0, 14, -2, 1, 1.3, 1)),
+    ...[0, 1, 2, 3].map((k) => piece(new BoxGeometry(0.3, 6.6, 0.3), '#e8b62a', turned(Math.sin(k * Math.PI / 2) * 4.2, 16.5, -2 + Math.cos(k * Math.PI / 2) * 4.2, k * Math.PI / 2).multiply(new Matrix4().makeRotationX(0.6)))),
+    piece(new ConeGeometry(0.8, 2.4, 8), '#e8b62a', M(0, 22, -2)),
+  ]);
+}
+
+/** A wooden river dock at the finish, a long canoe tied to it. */
+function riverDock() {
+  const parts = [box(24, 0.3, 5, 0, 1.2, 0, '#8a6a45'), box(26, 0.3, 14, 0, 0.1, -9, '#3f6e5a')];
+  for (const x of [-11, -6, -1, 4, 9]) for (const z of [-2.2, 2.2]) parts.push(box(0.4, 2.2, 0.4, x, 0.5, z, '#5a3f2a'));
+  parts.push(piece(new IcosahedronGeometry(1, 0), '#6b4a2f', S(2, 0.5, -4.5, 6, 0.4, 0.8)));
+  return merge(parts);
+}
+
 /** Landmarks by name: builder, footprint radius, and for some the half-width that has to fit a splitter or bend. */
 export const WORLD_LANDMARKS = {
   'sacre-coeur': { build: sacreCoeur, radius: 20 },
@@ -320,4 +396,9 @@ export const WORLD_LANDMARKS = {
   'burj-khalifa': { build: burjKhalifa, radius: 10 },
   'palm-boardwalk': { build: palmBoardwalk, radius: 36 },
   'dune-buggy': { build: duneBuggyParked, radius: 2 },
+  'toucan-tree': { build: toucanTree, radius: 8 },
+  'river-island': { build: riverIsland, radius: 6, fit: 3.6 },
+  'river-pool': { build: riverPool, radius: 15, moving: { build: riverDolphin, pivot: [0, -2.6, 0], axis: [1, 0, 0], speed: 0.6 } },
+  'teatro-amazonas': { build: teatroAmazonas, radius: 16 },
+  'river-dock': { build: riverDock, radius: 14 },
 };

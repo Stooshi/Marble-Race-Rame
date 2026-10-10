@@ -12,4 +12,5 @@ module.exports = [
   require('./greenland-expedition'),
   require('./paris-eiffel-tower-run'),
   require('./dubai-twister'),
+  require('./amazon-water-run'),
 ];

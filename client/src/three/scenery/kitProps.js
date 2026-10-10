@@ -46,6 +46,40 @@ export function planeTree() {
   ]);
 }
 
+/** A rainforest tree: a dark trunk and one big crown (the plainest tree, for hundreds of them). */
+export function jungleTree() {
+  return merge([
+    piece(new CylinderGeometry(0.3, 0.45, 5, 5, 1, true), '#5a4a38', new Matrix4().makeTranslation(0, 2.5, 0)),
+    piece(new IcosahedronGeometry(3, 0), '#2f6e2c', new Matrix4().compose(new Vector3(0, 6.5, 0), new Quaternion(), new Vector3(1, 0.75, 1))),
+  ]);
+}
+
+/** A fern, three fronds (plain). */
+export function jungleFern() {
+  const parts = [];
+  for (let k = 0; k < 3; k += 1) {
+    const leaf = new BoxGeometry(0.4, 0.05, 1.9);
+    leaf.translate(0, 0, 0.9);
+    leaf.applyMatrix4(new Matrix4().makeRotationX(-0.6));
+    leaf.applyMatrix4(new Matrix4().makeRotationY((k / 3) * Math.PI * 2));
+    parts.push(piece(leaf, '#4b9a3a', new Matrix4().makeTranslation(0, 0.1, 0)));
+  }
+  return merge(parts);
+}
+
+/** A palm, plain: one trunk, five fronds. */
+export function junglepalm() {
+  const parts = [piece(new CylinderGeometry(0.2, 0.3, 7, 5, 1, true), '#8a6a45', new Matrix4().makeTranslation(0, 3.5, 0))];
+  for (let k = 0; k < 5; k += 1) {
+    const leaf = new BoxGeometry(0.7, 0.08, 3.4);
+    leaf.translate(0, 0, 1.6);
+    leaf.applyMatrix4(new Matrix4().makeRotationX(0.45));
+    leaf.applyMatrix4(new Matrix4().makeRotationY((k / 5) * Math.PI * 2));
+    parts.push(piece(leaf, '#3f8f3a', new Matrix4().makeTranslation(0, 7, 0)));
+  }
+  return merge(parts);
+}
+
 export function palm(lite) {
   const parts = [];
   for (let k = 0; k < 5; k += 1) parts.push(piece(new CylinderGeometry(0.28 - k * 0.03, 0.3 - k * 0.03, 1.4, 6), '#8a6a45', new Matrix4().makeTranslation(k * 0.12, 0.7 + k * 1.35, 0)));
@@ -125,7 +159,8 @@ export function dressingFor(biome) {
     meadow: [[broadleaf, 0.45], [birch, 0.15], [(l) => bush(l), 0.4]],
     // (Arabian desert: sandstone rocks, desert shrubs and a few date palms; plain, as there are hundreds.)
     desert: [[() => rock(true, '#c98a5a'), 0.5], [() => bush(true, '#9a8a4a'), 0.35], [() => palm(true), 0.15]],
-    jungle: [[broadleaf, 0.4], [palm, 0.25], [fern, 0.35]],
+    // (Rainforest: hundreds of trees; the plainest kinds, to stay in budget.)
+    jungle: [[jungleTree, 0.5], [jungleFern, 0.3], [junglepalm, 0.2]],
     // (City parks: hundreds of trees beside streets of buildings; always the plainest, to stay in budget.)
     city: [[planeTree, 0.5], [() => bush(true, '#5f9a48'), 0.5]],
   }[biome] ?? [[broadleaf, 1]];

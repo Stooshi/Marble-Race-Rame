@@ -11,7 +11,7 @@ const kit = require('../src/trackKit');
 
 /** Every costume in the library on one run, by the kind of obstacle it dresses (keep in step with client/src/three/costumes). */
 function costumeGallery() {
-  const blocks = ['panda', 'camel', 'cafe-table', 'reindeer', 'baboon', 'cow', 'marmot', 'elk', 'chamois', 'sled-dog', 'arctic-fox', 'pigeon'];
+  const blocks = ['panda', 'camel', 'cafe-table', 'reindeer', 'baboon', 'cow', 'marmot', 'elk', 'chamois', 'sled-dog', 'arctic-fox', 'pigeon', 'log', 'caiman', 'jaguar'];
   return kit.track({
     slug: 'costume-gallery',
     name: 'Costume Gallery',

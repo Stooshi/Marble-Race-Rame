@@ -439,9 +439,25 @@ function skyscraper(k) {
   return { body: merge(parts), windows, w, d: w };
 }
 
+/** A riverside house on stilts: a wooden box raised on posts, a thatched or tin roof, a ladder down. */
+function stiltHouse(k) {
+  const w = 6 + (k % 2);
+  const d = 5;
+  const parts = [];
+  for (const x of [-w / 2 + 0.4, w / 2 - 0.4]) for (const z of [-d / 2 + 0.4, d / 2 - 0.4]) parts.push(box(0.3, 3, 0.3, x, 1.5, z, '#5a3f2a'));
+  parts.push(box(w + 1, 0.25, d + 1.4, 0, 3.1, 0.2, '#8a6a45'));
+  parts.push(box(w, 2.6, d, 0, 4.5, 0, ['#c9a06a', '#6aa8a0', '#c86a4a', '#e8d26a'][k % 4]));
+  const roof = new ConeGeometry(Math.hypot(w, d) / 2 + 0.6, 2, 4);
+  roof.applyMatrix4(new Matrix4().makeRotationY(Math.PI / 4));
+  roof.applyMatrix4(new Matrix4().makeScale((w / Math.hypot(w, d)) * 1.45, 1, (d / Math.hypot(w, d)) * 1.45));
+  parts.push(piece(roof, k % 2 ? '#8a7a4a' : '#9aa1aa', at(0, 6.8, 0)));
+  const windows = merge([box(1, 0.9, 0.1, -w / 4, 4.6, d / 2 + 0.06, '#2c2f36'), box(0.9, 1.8, 0.1, w / 4, 4.1, d / 2 + 0.06, '#3a2a1e')]);
+  return { body: merge(parts), windows, w, d };
+}
+
 /** What each house-scenery name builds, and how far out it stands (big buildings stand further back). */
 const HOUSE_STYLES = {
-  'wooden-houses': { build: house, out: [22, 45], clear: 14 },
+  'wooden-houses': { build: house, out: [22, 45], clear: 14, glow: true },
   chalets: { build: chalet, out: [24, 45], clear: 16 },
   'wood-clad': { build: woodClad, out: [34, 50], clear: 26 },
   shopfronts: { build: shopfront, out: [20, 30], clear: 14 },
@@ -449,6 +465,7 @@ const HOUSE_STYLES = {
   'colourful-houses': { build: colourfulHouse, out: [22, 45], clear: 14 },
   haussmann: { build: haussmann, out: [30, 45], clear: 22, liteEvery: 2 },
   skyscrapers: { build: skyscraper, out: [45, 60], clear: 30, liteEvery: 2 },
+  'stilt-houses': { build: stiltHouse, out: [22, 40], clear: 14 },
 };
 
 /** Houses beside the stretches tagged with a house style (and round the start or finish when it is). */
@@ -474,7 +491,7 @@ export function buildHouses(centerline, kit, { lite = false, arc, groundAt, clea
   const per = lite ? 1 : 2;
   let spotNo = 0;
   for (const [p, style] of spots) {
-    const { build, out: [near, far], clear, liteEvery = 1 } = HOUSE_STYLES[style];
+    const { build, out: [near, far], clear, liteEvery = 1, glow = false } = HOUSE_STYLES[style];
     spotNo += 1;
     if (lite && spotNo % liteEvery) continue; // (big buildings: fewer on a phone)
     const i = Math.min(segments, Math.round(p * segments));
@@ -491,7 +508,8 @@ export function buildHouses(centerline, kit, { lite = false, arc, groundAt, clea
       const q = new Quaternion().setFromAxisAngle(UP, Math.atan2(-side.x * sign, -side.z * sign) + (rand() - 0.5) * 0.4);
       const m = new Matrix4().compose(new Vector3(spot.x, groundAt(spot.x, spot.z) - 0.3, spot.z), q, new Vector3(1, 1, 1));
       bodies.push(h.body.applyMatrix4(m));
-      windows.push(h.windows.applyMatrix4(m));
+      // Windows that light up at night (Åre's houses) are drawn unlit on their own; the rest are part of the house.
+      (glow ? windows : bodies).push(h.windows.applyMatrix4(m));
       solids.push({ x: spot.x, z: spot.z, r: Math.max(h.w, h.d) / 2 + 2 });
     }
   }

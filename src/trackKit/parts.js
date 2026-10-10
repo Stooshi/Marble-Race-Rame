@@ -236,15 +236,16 @@ module.exports = {
   LANDMARKS: ['church', 'mountain-hut', 'big-rock', 'lighthouse', 'horse-sleigh', 'border-post',
     'lift-station', 'mine-buildings', 'snow-park', 'base-camp',
     'sacre-coeur', 'moulin-rouge', 'fountains', 'louvre-pyramid', 'notre-dame', 'eiffel-tower', 'seine', 'bookstalls',
-    'bedouin-camp', 'museum-of-the-future', 'dubai-frame', 'burj-al-arab', 'burj-khalifa', 'palm-boardwalk', 'dune-buggy'],
+    'bedouin-camp', 'museum-of-the-future', 'dubai-frame', 'burj-al-arab', 'burj-khalifa', 'palm-boardwalk', 'dune-buggy',
+    'toucan-tree', 'river-pool', 'teatro-amazonas', 'river-dock'],
   OVERHEAD: ['gondola', 'cable-car', 'chairlift', 'vulture'],
   // What stands in the middle of a splitter, between its two channels (the arch: over one of
   // them), or in the middle of a spiral or a hairpin.
-  AROUND: ['mountain-hut', 'big-rock', 'mountain-restaurant', 'mine-headframe', 'nunatak', 'bell-tower', 'arc-de-triomphe', 'obelisk', 'notre-dame', 'oasis', 'twisted-tower'],
+  AROUND: ['mountain-hut', 'big-rock', 'mountain-restaurant', 'mine-headframe', 'nunatak', 'bell-tower', 'arc-de-triomphe', 'obelisk', 'notre-dame', 'oasis', 'twisted-tower', 'river-island'],
   // Scenery near a section (or the start or finish): what grows and stands beside the track there.
   SCENERY: ['bare', 'rocks', 'birches', 'pines', 'race-netting', 'funicular', 'wooden-houses', 'frozen-lake',
     'wood-clad', 'chalets', 'pasture', 'aspens', 'shopfronts',
-    'stone-houses', 'colourful-houses', 'icefjord', 'haussmann', 'plane-trees', 'skyscrapers'],
+    'stone-houses', 'colourful-houses', 'icefjord', 'haussmann', 'plane-trees', 'skyscrapers', 'stilt-houses'],
   // Billboard frames: plain, a jungle timber frame, a city LED screen, a Paris advertising column, expedition crates.
   FRAMES: ['plain', 'wood', 'led', 'column', 'crates'],
 };
