@@ -11,6 +11,7 @@ const NAMES = {
   'banked-turn': 'Banked First Turn', 'boost-launch': 'Boost-Pad Launch', 'funnel-drop': 'Funnel Drop', 'crest-start': 'Crest Start',
   'early-hairpin': 'Early Hairpin', 'twin-spirals': 'Twin Spirals', 'climb-drop': 'Climb and Drop', 'late-splitter': 'Late Splitter',
   'mid-drop': 'Mid Drop', 'two-splitters': 'Two Splitters', 'long-sweeps': 'Long Sweeps',
+  'island-spins': 'Island Spins', 'sea-crossing': 'Sea Crossing', 'canopy-run': 'Canopy Run',
 };
 
 const base = (slug, name, description) => ({
@@ -32,10 +33,15 @@ const openings = OPENING_KINDS.filter((k) => k !== 'classic').map((kind) => trac
   sections: layout('classic'),
 }));
 
+// Layouts made for one coaster are proven on a test track built as a coaster (up on its
+// supports, touching down at the run to the hairpin, and Sea Crossing out of it too), as that coaster will race them.
+const COASTER_LAYOUTS = ['island-spins', 'sea-crossing', 'canopy-run'];
+
 const layouts = LAYOUT_KINDS.map((kind) => track({
-  ...base(`variety-layout-${kind}`, `Variety Test: ${NAMES[kind]} Layout`, `The layout library's test track for the ${NAMES[kind].toLowerCase()} layout, with the classic opening.`),
+  ...base(`variety-layout-${kind}`, `Variety Test: ${NAMES[kind]} Layout`, `The layout library's test track for the ${NAMES[kind].toLowerCase()} layout, with the classic opening${COASTER_LAYOUTS.includes(kind) ? ', built as a coaster' : ''}.`),
+  ...(COASTER_LAYOUTS.includes(kind) && { series: 'coaster', coaster: { height: 18 } }),
   opening: opening('classic'),
-  sections: layout(kind),
+  sections: layout(kind, COASTER_LAYOUTS.includes(kind) ? { dress: { brakingStraight: { height: 0 }, ...(kind === 'sea-crossing' && { tunnelRun: { height: 0 } }) } } : {}),
 }));
 
 module.exports = [...openings, ...layouts];

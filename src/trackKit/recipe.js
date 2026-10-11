@@ -20,6 +20,8 @@ const { LIGHTINGS } = require('./lighting');
 const { OPENING_KINDS } = require('./openings');
 // Track families (the sameness check compares openings within one): 'test' tracks are never compared.
 const FAMILIES = ['world-tour', 'grand-prix', 'coaster', 'test'];
+// A coaster: the coaster family, or a library test track built as one (series 'coaster').
+const isCoaster = (spec) => spec.family === 'coaster' || (spec.family === 'test' && spec.series === 'coaster');
 const MAX_COASTER_HEIGHT = 45; // metres: the tallest supports drawn
 
 const BILLBOARDS = [4, 6];
@@ -246,7 +248,8 @@ function checkRecipe({ spec, sections, span, generated, owner, placed, total, wh
   }
 
   // Coasters: their own rules (a lift hill, supports, touchdowns, water).
-  if (spec.family === 'coaster') problems.push(...coasterRules({ spec, sections, where }));
+  if (spec.series !== undefined && !(spec.family === 'test' && spec.series === 'coaster')) problems.push(`${where('track')}: series is for test tracks, and the one series is 'coaster' (a library test track built as a coaster).`);
+  if (isCoaster(spec)) problems.push(...coasterRules({ spec, sections, where }));
   else {
     if (spec.coaster !== undefined) problems.push(`${where('track')}: coaster settings are for coasters (family: 'coaster').`);
     sections.forEach((s) => {
@@ -257,7 +260,7 @@ function checkRecipe({ spec, sections, span, generated, owner, placed, total, wh
 
   // Billboards: 4 to 6 per track, beside straights and sweeps, never at the sharp bend or the finish
   // (a coaster's stand on its towers wherever it flies, and on its station roof).
-  const coaster = spec.family === 'coaster';
+  const coaster = isCoaster(spec);
   const boards = sections.reduce((n, s) => n + (s.billboards || 0), 0) + (coaster ? (spec.finish?.billboards ?? 0) : 0);
   const [fewest, most] = spec.grandPrix ? GRAND_PRIX_BILLBOARDS : BILLBOARDS;
   if (boards < fewest || boards > most) problems.push(`${where('billboards')}: ${boards} billboards; every ${spec.grandPrix ? 'Grand Prix ' : ''}track has ${fewest} to ${most}.`);
@@ -291,4 +294,4 @@ function coasterRules({ spec, sections, where }) {
   return problems;
 }
 
-module.exports = { checkRecipe, MIN_SPIRAL_RADIUS, MIN_SWEEP_RADIUS, BILLBOARDS, GRAND_PRIX_BILLBOARDS };
+module.exports = { checkRecipe, MIN_SPIRAL_RADIUS, MIN_SWEEP_RADIUS, BILLBOARDS, GRAND_PRIX_BILLBOARDS, isCoaster };

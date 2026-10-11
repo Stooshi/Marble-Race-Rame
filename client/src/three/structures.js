@@ -33,6 +33,10 @@ export const STRUCTURE_COLORS = {
   // trencadís mosaic (Park Güell) and the passage through a pyramid
   tileWhite: '#f2efe6', tileBlue: '#2f7fc4', tileYellow: '#f2c230', tileGreen: '#4aa35a', tileRed: '#d8442f', tileTeal: '#2fb0a8',
   sandstone: '#d8b878', sandstoneDark: '#b8955a', glyph: '#5a3a22', torch: '#ffb03a',
+  // a sea cave: wet grey limestone, pale stalactite ribs, pools glowing turquoise
+  caveStone: '#7a807a', caveStoneDark: '#5a605c', stalactite: '#d8d4c4', poolGlow: '#5ae8d8',
+  // an undersea-style road tunnel (light strips), and a tunnel through a fallen redwood (bark outside, heartwood rings)
+  concrete: '#b8bcc0', concreteDark: '#9a9ea4', lightStrip: '#f4f8ff', heartwood: '#c8784a', heartwoodDark: '#a85a32', bark: '#7a3f28', barkDark: '#5a2c1c',
   // bridges
   plank: '#8a6340', plankDark: '#6a4a2f', stone: '#a49c8f', stoneDark: '#837b70', iceSlab: '#cdeefc',
   steel: '#8d939b', steelDark: '#6c727a', bridgeWater: '#3f7fa8',
@@ -50,6 +54,9 @@ const TUNNEL_STYLES = {
   bazaar: { out: 0.9, rise: 4.4, ribEvery: 3 },
   mosaic: { out: 0.9, rise: 4.2, ribEvery: 0 },
   pyramid: { out: 0.9, rise: 4.0, ribEvery: 4 },
+  'sea-cave': { out: 1.1, rise: 4.6, ribEvery: 3 },
+  'lit-tunnel': { out: 0.9, rise: 4.2, ribEvery: 3 },
+  'redwood-trunk': { out: 0.9, rise: 4.4, ribEvery: 2 },
   // A canyon: no roof, towering red rock walls either side, spectators along the cliff tops.
   canyon: { out: 1.2, rise: 0, ribEvery: 0, open: true },
 };
@@ -208,6 +215,13 @@ export function buildStructures(centerline, channel, kit, { lite = false } = {})
           if (low && (k + j) % 3 === 0) return C.glyph;
           return noise(k * 9 + j * 5) > 0.5 ? C.sandstone : C.sandstoneDark;
         },
+        'lit-tunnel': (k, j, n, across) => (Math.abs(j + 0.5 - across / 2) < 1 ? C.lightStrip : noise(k * 5 + j) > 0.5 ? C.concrete : C.concreteDark),
+        // Inside a fallen redwood: heartwood, its growth rings showing as bands.
+        'redwood-trunk': (k, j) => ((k % 4 === 0) ? C.heartwoodDark : noise(k * 7 + j * 3) > 0.5 ? C.heartwood : C.heartwoodDark),
+        'sea-cave': (k, j, n, across) => {
+          if (ribRings && k % ribRings === 0 && j / across > 0.3 && j / across < 0.7) return C.stalactite;
+          return noise(k * 13 + j * 3) > 0.5 ? C.caveStone : C.caveStoneDark;
+        },
       }[s.tunnel] ?? ((k, j) => (noise(k + j) > 0.5 ? C.rock : C.rockDark));
       let rings = [];
       if (!style.open) {
@@ -220,7 +234,7 @@ export function buildStructures(centerline, channel, kit, { lite = false } = {})
 
       // From outside: banks beside the channel (rock, ice or the dragon's coils), never across
       // it, so the follow camera above sees the run dive in under them.
-      const bank = { mine: ['rock', 'rockDark'], rock: ['rock', 'rockDark'], roots: ['root', 'rock'], 'ice-cave': ['iceRib', 'ice'], dragon: ['scale', 'scaleDark'], bazaar: ['plaster', 'plasterDark'], canyon: ['redRock', 'redRockDark'], mosaic: ['tileGreen', 'tileWhite'], pyramid: ['sandstone', 'sandstoneDark'] }[s.tunnel] ?? ['rock', 'rockDark'];
+      const bank = { mine: ['rock', 'rockDark'], rock: ['rock', 'rockDark'], roots: ['root', 'rock'], 'ice-cave': ['iceRib', 'ice'], dragon: ['scale', 'scaleDark'], bazaar: ['plaster', 'plasterDark'], canyon: ['redRock', 'redRockDark'], mosaic: ['tileGreen', 'tileWhite'], pyramid: ['sandstone', 'sandstoneDark'], 'sea-cave': ['caveStone', 'caveStoneDark'], 'lit-tunnel': ['concrete', 'concreteDark'], 'redwood-trunk': ['bark', 'barkDark'] }[s.tunnel] ?? ['rock', 'rockDark'];
       const bankStep = lite ? 6 : 3.5;
       const nb = Math.max(2, Math.round(len / bankStep));
       for (let k = 0; k <= nb; k += 1) {
@@ -259,7 +273,7 @@ export function buildStructures(centerline, channel, kit, { lite = false } = {})
         }
       }
 
-      if (s.tunnel === 'mine' || s.tunnel === 'bazaar' || s.tunnel === 'pyramid') {
+      if (s.tunnel === 'mine' || s.tunnel === 'bazaar' || s.tunnel === 'pyramid' || s.tunnel === 'sea-cave') {
         // Lanterns on the timber frames (the bazaar: brass lanterns by the arches), low on the walls (inward-facing glowing tiles).
         const lamps = [];
         for (let k = ribRings * 2; k < rings.length - 1; k += ribRings * 3) {
@@ -275,7 +289,7 @@ export function buildStructures(centerline, channel, kit, { lite = false } = {})
           }
         }
         if (lamps.length) {
-          const m = new MeshBasicMaterial({ color: s.tunnel === 'bazaar' ? STRUCTURE_COLORS.bazaarLamp : s.tunnel === 'pyramid' ? STRUCTURE_COLORS.torch : STRUCTURE_COLORS.lantern });
+          const m = new MeshBasicMaterial({ color: s.tunnel === 'bazaar' ? STRUCTURE_COLORS.bazaarLamp : s.tunnel === 'pyramid' ? STRUCTURE_COLORS.torch : s.tunnel === 'sea-cave' ? STRUCTURE_COLORS.poolGlow : STRUCTURE_COLORS.lantern });
           owned.push(m);
           group.add(new Mesh(mergeGeometries(lamps.map((g) => g.toNonIndexed())), m));
         }

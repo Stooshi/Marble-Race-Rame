@@ -17,7 +17,7 @@
 
 const { generate } = require('../game/trackShape');
 const parts = require('./parts');
-const { checkRecipe } = require('./recipe');
+const { checkRecipe, isCoaster } = require('./recipe');
 
 const round4 = (x) => Math.round(x * 10000) / 10000;
 
@@ -222,12 +222,12 @@ function track(spec) {
         nextSide = -nextSide;
       }
       // (A coaster's billboards stand on its support towers, up at the track: wherever it flies.)
-      const tower = spec.family === 'coaster' && (sec.height ?? spec.coaster?.height ?? COASTER_HEIGHT) > 0;
+      const tower = isCoaster(spec) && (sec.height ?? spec.coaster?.height ?? COASTER_HEIGHT) > 0;
       billboards.push({ slot: billboards.length + 1, at: along(i, share), side, section: sec.name, frame: sec.billboardFrame || spec.billboardFrame || 'plain', ...(tower && { mount: 'tower' }) });
     }
   });
   // A coaster's station roof (the finish): `finish.billboards` of them up there, facing the track.
-  if (spec.family === 'coaster') {
+  if (isCoaster(spec)) {
     for (let k = 0; k < (spec.finish?.billboards ?? 0); k += 1) {
       billboards.push({ slot: billboards.length + 1, at: 1, side: k % 2 ? WALL.right : WALL.left, section: 'Finish', frame: spec.finish.billboardFrame || spec.billboardFrame || 'plain', mount: 'roof' });
     }
@@ -267,7 +267,7 @@ function track(spec) {
     // A coaster (family 'coaster'): the track flies on steel supports `height` metres above the land
     // (a section's own `height`; 0 where it touches down), a lift hill behind the gate, a station at
     // the finish; `water`: sections that fly over water. Looks only, like everything here.
-    ...(spec.family === 'coaster' && { coaster: { height: COASTER_HEIGHT, ...spec.coaster, colours: { ...COASTER_COLOURS, ...spec.coaster?.colours } } }),
+    ...(isCoaster(spec) && { coaster: { height: COASTER_HEIGHT, ...spec.coaster, colours: { ...COASTER_COLOURS, ...spec.coaster?.colours } } }),
     billboards,
     start: spec.start || {},
     finish: spec.finish || {},
@@ -288,7 +288,7 @@ function track(spec) {
       ...(sec.shape?.shape === 'waterfall' && { waterfall: { curtain: Boolean(sec.shape.curtain) } }),
       ...(sec.height !== undefined && { height: sec.height }),
       // (A coaster's station stands on the ground, and it dives into a tunnel at ground level.)
-      ...(spec.family === 'coaster' && (sec.shape?.shape === 'runIn' || sec.tunnel !== undefined) && sec.height === undefined && { height: 0 }),
+      ...(isCoaster(spec) && (sec.shape?.shape === 'runIn' || sec.tunnel !== undefined) && sec.height === undefined && { height: 0 }),
       ...(sec.water && { water: true }),
       ...(sec.waterCurtain && { waterCurtain: true }),
     })),

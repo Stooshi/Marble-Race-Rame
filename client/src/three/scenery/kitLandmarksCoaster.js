@@ -430,6 +430,203 @@ function nileStation() {
   return merge(p);
 }
 
+
+// ── Ha Long Bay Spins ────────────────────────────────────────────────────────
+
+const KARST = '#8a8f86';
+const JUNGLE = '#3f7a3a';
+
+/** A limestone karst island: a tall steep tower of rock, jungle clinging to its ledges. */
+function karst(h, r, x = 0, z = 0, seed = 1) {
+  const p = [piece(new CylinderGeometry(r * 0.7, r, h, 7), KARST, turned(x, h / 2, z, seed))];
+  p.push(piece(new IcosahedronGeometry(r * 0.75, 0), JUNGLE, S(x, h, z, 1, 0.45, 1)));
+  for (let k = 0; k < 3; k += 1) {
+    const a = seed * 2.1 + k * 2.2;
+    p.push(piece(new IcosahedronGeometry(r * 0.35, 0), JUNGLE, S(x + Math.cos(a) * r * 0.85, h * (0.35 + k * 0.18), z + Math.sin(a) * r * 0.85, 1, 0.6, 1)));
+  }
+  return p;
+}
+
+/** The Fighting Cocks: two limestone islets facing each other across a strip of water. */
+function fightingCocks() {
+  const p = [];
+  for (const [sign, lean] of [[-1, 0.18], [1, -0.18]]) {
+    const x = sign * 7;
+    p.push(piece(new CylinderGeometry(2.6, 5, 16, 6), KARST, new Matrix4().makeRotationZ(lean).premultiply(M(x, 8, 0))));
+    p.push(piece(new IcosahedronGeometry(3.2, 0), KARST, S(x - sign * 2.2, 16.5, 0, 1.4, 1, 1))); // the heads leaning in
+    p.push(piece(new IcosahedronGeometry(2, 0), JUNGLE, S(x - sign * 1.5, 18.6, 0, 1.2, 0.5, 1)));
+  }
+  return merge(p);
+}
+
+/** A limestone island in the middle of a spin, with monkeys on its ledges. */
+function limestoneIsland() {
+  const p = karst(30, 9, 0, 0, 0.7);
+  for (const [x, y, z] of [[6.5, 12, 3], [-5, 18, 5.5], [3, 22, -6]]) {
+    p.push(piece(new IcosahedronGeometry(0.55, 0), '#6a4a2a', M(x, y, z)), piece(new IcosahedronGeometry(0.35, 0), '#6a4a2a', M(x, y + 0.7, z + 0.2)));
+  }
+  return merge(p);
+}
+
+/** A bay of karst islands out on the water, junk boats with red sails among them. */
+function karstBay() {
+  const p = [];
+  [[0, 0, 40, 12], [40, -30, 55, 15], [-45, -20, 35, 10], [75, 10, 30, 9], [-80, 15, 48, 14], [20, -70, 62, 16]].forEach(([x, z, h, r], k) => p.push(...karst(h, r, x, z, k + 1)));
+  for (const [x, z, yaw] of [[18, 25, 0.4], [-25, 30, -0.3], [55, 30, 1.1]]) {
+    p.push(piece(new BoxGeometry(3.4, 1.6, 12), '#6a4a2a', turned(x, 0.8, z, yaw)));
+    for (const d of [-3, 2]) {
+      const sail = turned(x + Math.sin(yaw) * d, 6, z + Math.cos(yaw) * d, yaw, 1, 1, 1);
+      p.push(piece(new BoxGeometry(0.2, 8, 5), '#c8342a', sail));
+    }
+  }
+  return merge(p);
+}
+
+/** A floating fishing village: wooden houses on rafts, walkways between them, basket boats. */
+function floatingVillage() {
+  const p = [box(120, 0.3, 70, 0, -0.1, -25, '#3f9a8a')];
+  const walls = ['#8a6a48', '#2f6f8a', '#c8a46a', '#4a8a5a'];
+  for (let k = 0; k < 8; k += 1) {
+    const x = -42 + (k % 4) * 26;
+    const z = -10 - Math.floor(k / 4) * 22;
+    p.push(box(14, 0.8, 10, x, 0.4, z, '#7a5a3a'));
+    p.push(box(9, 4, 7, x, 2.8, z, walls[k % 4]), roof(10, 2.5, 8, x, 4.8, z, '#2f5a6a'));
+  }
+  p.push(box(90, 0.4, 2, 0, 0.4, -21, '#7a5a3a'));
+  for (const [x, z] of [[-20, 6], [12, 4], [35, 10]]) p.push(piece(new SphereGeometry(1.4, 8, 4, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2), '#a8885a', M(x, 1, z)));
+  return merge(p);
+}
+
+
+// ── Hong Kong Crossing ───────────────────────────────────────────────────────
+
+const GLASS = ['#5a7a9a', '#7a9ab8', '#3f5a7a', '#9ab0c8', '#6a8aa8'];
+
+/** A cluster of glass towers: heights, widths and colours varied, a few with lit crowns. */
+function towers(list) {
+  const p = [];
+  list.forEach(([x, z, w, h], k) => {
+    p.push(box(w, h, w, x, h / 2, z, GLASS[k % GLASS.length]));
+    if (k % 3 === 0) p.push(box(w * 0.6, h * 0.08, w * 0.6, x, h + h * 0.04, z, '#d8e4f0'));
+  });
+  return p;
+}
+
+/** Victoria Peak: the green peak above the harbour, Hong Kong's skyscrapers at its foot. */
+function victoriaPeak() {
+  const p = [piece(new ConeGeometry(70, 60, 8), '#4f7a3a', M(0, 20, -90))];
+  p.push(box(14, 6, 10, 0, 50, -80, '#d8d4c8')); // the lookout on the peak
+  const list = [];
+  for (let k = 0; k < 18; k += 1) list.push([-90 + k * 11, -20 + (k % 3) * 9, 7 + (k % 4), 30 + ((k * 37) % 70)]);
+  p.push(...towers(list));
+  return merge(p);
+}
+
+/** The great sea bridge as a backdrop: a long low deck on piers with cable-stayed towers, far out at sea. */
+function seaBridge() {
+  const p = [box(600, 2, 12, 0, 20, 0, '#c8ccd2')];
+  for (let x = -290; x <= 290; x += 40) p.push(box(3, 20, 6, x, 10, 0, '#a8acb2'));
+  for (const x of [-150, 0, 150]) {
+    p.push(box(4, 70, 4, x, 35, 0, '#e8eaee'));
+    for (let k = 1; k <= 5; k += 1) {
+      for (const sign of [-1, 1]) {
+        const len = Math.hypot(k * 14, 60 - k * 8);
+        const a = Math.atan2(60 - k * 8, k * 14);
+        p.push(piece(new BoxGeometry(len, 0.3, 0.3), '#f2f2f2', new Matrix4().makeRotationZ(sign * a).premultiply(M(x + sign * k * 7, 20 + (60 - k * 8) / 2, 0))));
+      }
+    }
+  }
+  // Cargo ships below.
+  for (const [x, z] of [[-80, 60], [110, -50]]) {
+    p.push(box(60, 5, 12, x, 2.5, z, '#2f3a52'));
+    for (let k = 0; k < 6; k += 1) p.push(box(8, 3, 10, x - 22 + k * 9, 6.5, z, ['#d8442f', '#2f7fc4', '#f2c230', '#4aa35a'][k % 4]));
+  }
+  return merge(p);
+}
+
+/** A small green sea island with a rocky shore and seabirds, in the middle of the island spin. */
+function seaIslet() {
+  const p = [piece(new IcosahedronGeometry(9, 1), '#7a7a72', S(0, 2, 0, 1, 0.5, 1)), piece(new IcosahedronGeometry(7, 1), '#4f8a3a', S(0, 5.5, 0, 1, 0.55, 1))];
+  p.push(box(1.4, 6, 1.4, 2, 9, -1, '#f2efe6'), roof(2, 1.2, 2, 2, 12, -1, '#d8442f')); // a little beacon
+  for (let k = 0; k < 5; k += 1) p.push(piece(new ConeGeometry(0.5, 1.6, 3), '#f4f4f2', new Matrix4().makeRotationZ(Math.PI / 2).premultiply(M(Math.cos(k * 1.3) * 6, 14 + k, Math.sin(k * 1.3) * 6))));
+  return merge(p);
+}
+
+/** Port cranes by the hairpin: tall gantry cranes and stacked containers on the quay. */
+function portCranes() {
+  const p = [box(70, 1, 30, 0, 0.5, 0, '#8a8a84')];
+  for (const x of [-20, 10]) {
+    for (const z of [-6, 6]) p.push(box(1.6, 34, 1.6, x, 17, z, '#d8442f'));
+    p.push(box(2, 2, 40, x, 34, 8, '#d8442f'));
+  }
+  for (let k = 0; k < 16; k += 1) p.push(box(6, 2.6, 2.4, -28 + (k % 8) * 7, 2.3 + Math.floor(k / 8) * 2.6, 10, ['#2f7fc4', '#f2c230', '#4aa35a', '#d8442f'][k % 4]));
+  return merge(p);
+}
+
+/** The Zhuhai waterfront: modern towers behind a palm-lined promenade and the sea. */
+function zhuhaiWaterfront() {
+  const p = [box(140, 0.3, 40, 0, 0.1, 30, '#3f8fa8'), box(140, 0.5, 8, 0, 0.25, 6, '#d8d0c0')];
+  for (let k = 0; k < 10; k += 1) {
+    const x = -60 + k * 13;
+    p.push(piece(new CylinderGeometry(0.3, 0.45, 8, 6), '#8a6a3a', M(x, 4, 6)), piece(new IcosahedronGeometry(2.4, 0), '#3f7f3a', S(x, 8.6, 6, 1.3, 0.45, 1.3)));
+  }
+  p.push(...towers([[-50, -20, 12, 60], [-30, -26, 10, 80], [-8, -18, 14, 50], [16, -28, 11, 95], [40, -20, 13, 70], [62, -26, 9, 55]]));
+  return merge(p);
+}
+
+// ── Redwood Forest Run ───────────────────────────────────────────────────────
+
+const BARK = '#7a3f28';
+const BARK_DARK = '#5a2c1c';
+
+/** One giant redwood: a tall tapering trunk, a narrow crown high up. */
+function redwood(h, r, x = 0, z = 0) {
+  return [
+    piece(new CylinderGeometry(r * 0.45, r, h, 8), BARK, M(x, h / 2, z)),
+    piece(new ConeGeometry(r * 2.6, h * 0.35, 7), '#2f5a32', M(x, h * 0.86, z)),
+    piece(new ConeGeometry(r * 2, h * 0.22, 7), '#3a6a3a', M(x, h * 1.0, z)),
+  ];
+}
+
+/** A giant ancient drive-through redwood beside the lift hill, its trunk arched open big enough for a car. */
+function driveThroughRedwood() {
+  const p = [];
+  for (const sign of [-1, 1]) p.push(piece(new CylinderGeometry(3, 4.2, 9, 8, 1, false, sign > 0 ? 0 : Math.PI, Math.PI), BARK, M(0, 4.5, 0)));
+  p.push(piece(new CylinderGeometry(4.2, 4.2, 4, 8), BARK, M(0, 11, 0)));
+  p.push(piece(new CylinderGeometry(2.4, 4.2, 70, 8), BARK, M(0, 48, 0)));
+  p.push(piece(new ConeGeometry(10, 26, 7), '#2f5a32', M(0, 74, 0)));
+  p.push(box(2, 1.4, 4, 0, 0.9, 0, '#2f6f8a')); // a little car in the arch
+  return merge(p);
+}
+
+/** A grove of giant redwoods. */
+function redwoodGrove() {
+  const p = [];
+  [[0, 0, 80, 3.6], [22, 14, 70, 3.2], [-18, 20, 90, 4], [40, -12, 65, 3], [-34, -8, 75, 3.4], [10, -30, 85, 3.8]].forEach(([x, z, h, r]) => p.push(...redwood(h, r, x, z)));
+  for (let k = 0; k < 10; k += 1) p.push(piece(new IcosahedronGeometry(2.4, 0), '#4f8a3a', S(Math.cos(k) * 30, 1, Math.sin(k) * 30, 1.6, 0.5, 1.6))); // ferns
+  return merge(p);
+}
+
+/** A giant redwood in the middle of the trunk spin, an elk on the bank below it. */
+function giantRedwood() {
+  const p = redwood(60, 5.5);
+  for (let k = 0; k < 4; k += 1) p.push(box(0.5, 0.3, 1.2, Math.cos(k * 1.7) * 4.8, 6 + k * 3, Math.sin(k * 1.7) * 4.8, '#e8c23a')); // banana slugs on the bark
+  // The elk.
+  p.push(box(2.6, 1.4, 1, 9, 2.4, 3, '#8a5a3a'), box(0.8, 1.2, 0.7, 10.4, 3.4, 3, '#7a4a2a'));
+  for (const x of [8.2, 9.8]) p.push(box(0.25, 1.6, 0.25, x, 0.8, 3, '#6a3f22'));
+  for (const sign of [-1, 1]) p.push(piece(new ConeGeometry(0.12, 1.6, 4), '#e8dcc0', new Matrix4().makeRotationX(sign * 0.6).premultiply(M(10.6, 4.6, 3 + sign * 0.5))));
+  return merge(p);
+}
+
+/** A misty Pacific beach: sand, surf, tall sea stacks out in the water. */
+function seaStacksBeach() {
+  const p = [box(130, 0.3, 30, 0, 0.1, -15, '#d8cfb8'), box(140, 0.3, 70, 0, -0.1, -60, '#4f7a8a'), box(140, 0.5, 2, 0, 0.3, -30, '#f2f4f4')];
+  for (const [x, z, h, r] of [[-30, -60, 30, 7], [10, -75, 42, 9], [45, -55, 24, 6], [-60, -80, 36, 8]]) {
+    p.push(piece(new CylinderGeometry(r * 0.7, r, h, 7), '#5a5650', M(x, h / 2, z)), piece(new IcosahedronGeometry(r * 0.7, 0), '#3f6a3a', S(x, h, z, 1, 0.4, 1)));
+  }
+  return merge(p);
+}
+
 export const COASTER_LANDMARKS = {
   'stave-church': { build: staveChurch, radius: 10 },
   'fjord-village': { build: fjordVillage, radius: 30 },
@@ -452,4 +649,17 @@ export const COASTER_LANDMARKS = {
   sphinx: { build: sphinx, radius: 16 },
   'giza-pyramids': { build: gizaPyramids, radius: 120 },
   'nile-station': { build: nileStation, radius: 60 },
+  'fighting-cocks': { build: fightingCocks, radius: 13 },
+  'limestone-island': { build: limestoneIsland, radius: 9, fit: 8 },
+  'karst-bay': { build: karstBay, radius: 100 },
+  'floating-village': { build: floatingVillage, radius: 55 },
+  'victoria-peak': { build: victoriaPeak, radius: 70 },
+  'sea-bridge': { build: seaBridge, radius: 300 },
+  'sea-islet': { build: seaIslet, radius: 9, fit: 8 },
+  'port-cranes': { build: portCranes, radius: 36 },
+  'zhuhai-waterfront': { build: zhuhaiWaterfront, radius: 60 },
+  'drive-through-redwood': { build: driveThroughRedwood, radius: 10 },
+  'redwood-grove': { build: redwoodGrove, radius: 40 },
+  'giant-redwood': { build: giantRedwood, radius: 11, fit: 7 },
+  'sea-stacks-beach': { build: seaStacksBeach, radius: 60 },
 };
