@@ -12,6 +12,7 @@ import { buildScenery } from '../src/three/scenery';
 import { buildStructures } from '../src/three/structures';
 import { themeFor } from '../src/three/themes';
 import { flaggedStretches, wallExposure } from '../src/three/scenery/groundCheck';
+import { buildCoaster, coasterFlight, liftHillCut, liftHillOf, liftHillRaise } from '../src/three/scenery/coaster';
 
 const require = createRequire(import.meta.url);
 const { PHYSICS_TRACKS } = require('../../src/game/physicsTracks');
@@ -122,5 +123,41 @@ describe('kit scenery', () => {
     // Far fewer meshes than one per colour.
     const plain = buildTrackFeatures(centerline, channel, track.physics.features, {});
     expect(built.group.children.length).toBeLessThan(plain.group.children.length - 10);
+  });
+
+  it('a coaster\'s start type: what stands behind the gate (lift hill, curving lift, lift tower, elevator, cliff, rooftop, launch platform)', () => {
+    const track = PHYSICS_TRACKS.find((t) => t.slug === 'sognefjord');
+    const centerline = buildCenterline(track);
+    const channel = channelOf(track, centerline);
+    const flight = coasterFlight(centerline, channel, track.physics.kit);
+    const at = (lift, p) => ({ back: p.clone().sub(lift.top).dot(lift.back), side: p.clone().sub(lift.top).dot(lift.side), down: lift.top.y - p.y });
+    const of = (type) => liftHillOf(centerline, flight, type);
+    const straight = of('straight-lift');
+    expect(straight.path).toHaveLength(2);
+    expect(at(straight, straight.foot).down).toBeCloseTo(flight[0] + 14);
+    const curving = of('curving-lift');
+    expect(Math.abs(at(curving, curving.foot).side)).toBeGreaterThan(15); // round to one side
+    const spiral = of('spiral-tower');
+    expect(spiral.length).toBeGreaterThan(80); // wound round its tower
+    expect(at(spiral, spiral.foot).down).toBeCloseTo(flight[0] + 14);
+    for (const type of ['elevator', 'cliff', 'rooftop', 'station-launch']) expect(at(of(type), of(type).path[1]).down, type).toBe(0); // level behind the gate
+    // The land: carved down along a chain lift, raised to a cliff top behind a cliff start.
+    const p = straight.top.clone().addScaledVector(straight.back, 30);
+    expect(liftHillCut(straight, p.x, p.z)).toBeLessThan(straight.top.y);
+    const cliff = of('cliff');
+    const q = cliff.top.clone().addScaledVector(cliff.back, 30);
+    expect(liftHillCut(cliff, q.x, q.z)).toBe(Infinity);
+    expect(liftHillRaise(cliff, q.x, q.z, cliff.top.y - 50)).toBeCloseTo(cliff.top.y - 2.4);
+    const ahead = cliff.top.clone().addScaledVector(cliff.back, -5);
+    expect(liftHillRaise(cliff, ahead.x, ahead.z, 7)).toBe(7); // (nothing in front of the gate)
+    // Every type builds, on computers and phones.
+    for (const type of ['straight-lift', 'curving-lift', 'spiral-tower', 'elevator', 'cliff', 'rooftop', 'station-launch']) {
+      for (const lite of [false, true]) {
+        const kit = { ...track.physics.kit, start: { ...track.physics.kit.start, type } };
+        const built = buildCoaster(centerline, channel, kit, { lite, groundAt: () => cliff.top.y - 40, flight });
+        expect(built.liftHill.type).toBe(type);
+        expect(built.group.children.length).toBeGreaterThan(0);
+      }
+    }
   });
 });

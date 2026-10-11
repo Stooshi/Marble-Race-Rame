@@ -17,7 +17,7 @@ module.exports = track({
   lighting: 'day',
   coaster: { height: 20, colours: { support: '#5a6a7a', rail: '#e8eef2', tie: '#2a2d32' } },
   signature: 'Sea crossing',
-  start: { landmark: 'victoria-peak' },
+  start: { landmark: 'victoria-peak', type: 'rooftop', gate: 'barrier', shots: { countdown: 'front', launch: 'side' } },
   finish: { landmark: 'zhuhai-waterfront', billboards: 1 },
   designChanges: [
     'Built from the split start (the first drop off the Peak through tumbling shipping containers and harbour bollards, down two chutes that merge) and sea crossing, the library layout made for this track: harbour S-bends, the long crossing, the island spin, the hairpin, a drop through the bridge tunnel, the waterfront bends, a sweep along the Pearl River estuary and a run home past harbour bollards. Its landmark moments are the design\'s: Victoria Peak and the skyline behind the lift hill, the harbour swoops, the sea crossing on the tallest supports beside the sea bridge with cargo ships below, the spin round a green islet, the container crane at the hairpin, the lit bridge tunnel and the Zhuhai waterfront station.',

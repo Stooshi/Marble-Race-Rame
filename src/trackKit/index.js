@@ -333,6 +333,14 @@ function track(spec) {
       opening: spec.opening?.kind ?? (sections[0]?.shape?.shape === 'waterfall' ? 'waterfall' : 'classic'),
       openingSections: openingSections.length || 1,
       layout: layoutKind ?? null,
+      // How the start looks (a track that does not say: the start every track had before the
+      // varied starts: the straight lift on a coaster, the paddle gate, the classic camera).
+      start: {
+        type: isCoaster(spec) ? (spec.start?.type ?? 'straight-lift') : null,
+        gate: spec.start?.gate ?? (spec.grandPrix ? 'lights' : 'paddle'),
+        countdown: spec.start?.shots?.countdown ?? 'classic',
+        launch: spec.start?.shots?.launch ?? 'high-behind',
+      },
       sections: sections.map((sec, i) => ({
         name: sec.name,
         shape: sec.shape?.shape,

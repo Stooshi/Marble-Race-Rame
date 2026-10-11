@@ -2,12 +2,13 @@
 // (its frame rate means nothing: no real graphics chip). It plays a race in the
 // kit view (dev/kit-view.html) through the game's own cameras.
 //   node report/screens.mjs <plan.json>
-// plan: { slug, race, out, shots: [{ name, t, camera?, phone?, scenery? }], loadEvery }
+// plan: { slug, race, out, shots: [{ name, t, camera?, phone?, scenery? }], loadEvery, startLook?: [t, t, t, t] }
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createServer } from 'vite';
 import { chromium } from 'playwright-core';
+import { grabStartLook } from './startLook.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const plan = JSON.parse(fs.readFileSync(process.argv[2], 'utf8'));
@@ -48,6 +49,10 @@ try {
       result.shots.push({ ...s, screen, ...stats });
     }
     await page.close();
+  }
+  // The first seconds with the scenery off, for the on-screen sameness check (and the report's strip of them).
+  if (plan.startLook) {
+    result.startLook = await grabStartLook(browser, port, plan, plan.startLook, plan.startLook.map((_, k) => path.join(plan.out, `11-start-${k + 1}.png`)));
   }
   // Drawing load: the follow camera every few seconds through the whole race, phone and computer.
   for (const screen of ['computer', 'phone']) {

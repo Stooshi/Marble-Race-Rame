@@ -17,7 +17,7 @@ module.exports = track({
   lighting: 'day',
   coaster: { height: 14, colours: { support: '#2f8a7a', rail: '#f2efe6', tie: '#3a3d44' } },
   signature: 'Island spin one',
-  start: { landmark: 'fighting-cocks' },
+  start: { landmark: 'fighting-cocks', type: 'cliff', gate: 'trapdoor', shots: { countdown: 'above', launch: 'low-chase' } },
   finish: { landmark: 'floating-village', billboards: 1 },
   designChanges: [
     'Built from the funnel-drop opening (the field gathered in the wide funnel at the gate, then the first drop down to the water through floating buoys and bamboo poles) and island spins, the library layout made for this track: a spin first, a straight through the sea cave, the long water run, the hairpin, the second spin, a drop through bamboo poles and the run-in. Its landmark moments are the design\'s: the Fighting Cocks behind the lift hill, the island spins, the sea cave with its stalactites and glowing pools, the water run among junk boats, the fisherman\'s oar at the hairpin and the floating village station.',

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { PerspectiveCamera, Vector3 } from 'three';
-import { COUNTDOWN_MS, countdownPose, handover, HANDOVER_MS, smoothCurve, startLineShot } from '../src/three/startCamera';
+import { COUNTDOWN_MS, countdownPose, handover, HANDOVER_MS, LAUNCH_HOLD_MS, launchHandover, launchPose, smoothCurve, startLineShot } from '../src/three/startCamera';
 
 const start = { centre: new Vector3(10, 50, 20), forward: new Vector3(0, 0, 1), side: new Vector3(1, 0, 0) };
 // Where the follow camera starts at GO: behind and above the leader, looking down the track.
@@ -132,5 +132,57 @@ describe('starting camera (countdown)', () => {
     expect(smoothCurve(times, values, 1)).toBe(10);
     expect(smoothCurve(times, values, 2)).toBe(0);
     expect(smoothCurve(times, values, 0.001)).toBeLessThan(0.001); // starts at rest
+  });
+
+  it('the varied starts: each countdown shot moves steadily, keeps the field in the picture and ends on the shot at GO', () => {
+    const field = Array.from({ length: 20 }, (_, i) => start.centre.clone().addScaledVector(start.side, (i - 9.5) * 1.15).add(new Vector3(0, 0.55, 0)));
+    const middles = {};
+    for (const shot of ['front', 'side', 'above', 'chase']) {
+      for (const aspect of [1.8, 0.6]) {
+        const cam = new PerspectiveCamera(50, aspect, 0.3, 1000);
+        let prev = null;
+        let worstStep = 0;
+        let fewest = 20;
+        for (let t = -COUNTDOWN_MS; t <= 0; t += 1000 / 60) {
+          const p = countdownPose(t, COUNTDOWN_MS, start, end, aspect, { shot });
+          if (prev) worstStep = Math.max(worstStep, p.camera.distanceTo(prev.camera));
+          prev = p;
+          cam.position.copy(p.camera);
+          cam.lookAt(p.target);
+          cam.updateMatrixWorld();
+          fewest = Math.min(fewest, field.filter((m) => {
+            const v = m.clone().project(cam);
+            return v.z < 1 && Math.abs(v.x) < 1 && Math.abs(v.y) < 1;
+          }).length);
+        }
+        expect(worstStep, shot).toBeLessThan(1.2);
+        expect(fewest, shot).toBeGreaterThanOrEqual(2); // (the low chase shot sees only part of the row at a time)
+        expect(countdownPose(0, COUNTDOWN_MS, start, end, aspect, { shot }).camera.distanceTo(end.camera)).toBeLessThan(1e-9);
+      }
+      middles[shot] = countdownPose(-0.5 * COUNTDOWN_MS, COUNTDOWN_MS, start, end, 1.8, { shot }).camera.clone().sub(start.centre).normalize();
+    }
+    // Each its own angle on the field: in front, beside, above, behind.
+    expect(middles.front.dot(start.forward)).toBeGreaterThan(0.9);
+    expect(Math.abs(middles.side.dot(start.side))).toBeGreaterThan(0.9);
+    expect(middles.above.y).toBeGreaterThan(0.95);
+    expect(middles.chase.dot(start.forward)).toBeLessThan(-0.7);
+  });
+
+  it('the varied starts: the first-seconds shots look at the leading group from their own angles, then hand over', () => {
+    const frame = { centre: new Vector3(0, 10, 0), down: new Vector3(0, -0.5, 1).normalize(), normal: new Vector3(0, 1, 0.5).normalize(), side: new Vector3(1, 0, 0) };
+    expect(launchPose('high-behind', frame)).toBe(null);
+    const dirs = {};
+    for (const shot of ['low-chase', 'side', 'overhead', 'look-back']) {
+      const p = launchPose(shot, frame);
+      expect(p.target.distanceTo(frame.centre), shot).toBeLessThan(7);
+      dirs[shot] = p.camera.clone().sub(frame.centre).normalize();
+    }
+    expect(dirs['low-chase'].dot(frame.down)).toBeLessThan(-0.9);
+    expect(Math.abs(dirs.side.dot(frame.side))).toBeGreaterThan(0.9);
+    expect(dirs.overhead.dot(frame.normal)).toBeGreaterThan(0.95);
+    expect(dirs['look-back'].dot(frame.down)).toBeGreaterThan(0.9);
+    expect(launchHandover(0)).toBe(0);
+    expect(launchHandover(LAUNCH_HOLD_MS)).toBe(0);
+    expect(launchHandover(LAUNCH_HOLD_MS + HANDOVER_MS)).toBe(1);
   });
 });

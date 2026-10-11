@@ -12,12 +12,12 @@ import {
 } from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { buildCenterline, buildTrackGeometry, TRACK_STYLE } from './trackModel';
-import { PEN_DROP, RaceMarbles, RUNOUT_LENGTH } from './marbles';
+import { MARBLE_RADIUS, PEN_DROP, RaceMarbles, RUNOUT_LENGTH } from './marbles';
 import { buildScenery } from './scenery';
 import { buildIceChannelGeometry, channelLipAt, channelPieces, channelColors, channelOf, channelRadiusAt, forkAt, forkOffset, forkRadius, ICE_COLORS, STREET_COLORS } from './iceChannel';
 import { DEFAULT_THEME, themeFor } from './themes';
 import { gatePlaces, StartGate } from './startGate';
-import { countdownPose, handover, startLineShot } from './startCamera';
+import { countdownPose, handover, launchHandover, launchPose, startLineShot } from './startCamera';
 import { buildTrackFeatures } from './trackFeatures';
 import { buildStructures } from './structures';
 import { roofBlocks, stationRoof } from './scenery/coaster';
@@ -462,7 +462,7 @@ export class TrackScene {
     this.marbles.solidsAt = this.features?.solidsAt ?? null; // drawn round the obstacles, as the physics has them
     this.scene.add(this.marbles.group);
     if (start?.frame && start.releaseMs) {
-      this.gate = new StartGate(gatePlaces(this.centerline, start.frame, lanes, this.channel), start.releaseMs, { lights: Boolean(this.track?.physics?.kit?.grandPrix) });
+      this.gate = new StartGate(gatePlaces(this.centerline, start.frame, lanes, this.channel), start.releaseMs, { lights: Boolean(this.track?.physics?.kit?.grandPrix), style: this.track?.physics?.kit?.start?.gate ?? 'paddle' });
       this.scene.add(this.gate.group);
     }
     this.applyMarbleScale();
@@ -569,11 +569,15 @@ export class TrackScene {
     const at = this.marbles.positionOf(index);
     const main = this.main;
     const gate = this.cameraMode === 'follow' && this.gate && at ? this.gate.startFrame() : null;
+    // The varied starts: a track's own countdown shot and first-seconds shot (kit start.shots); none: the classic start.
+    const shots = this.track?.physics?.kit?.start?.shots;
+    const launch = gate && shots?.launch && shots.launch !== 'high-behind' ? shots.launch : null;
     if (gate && frame.t < 0) {
       // The countdown: the starting camera's path, ending at rest on the
-      // starting-line shot at GO (the follow camera starts afresh after it).
-      const shot = startLineShot(gate, this.camera.aspect, this.camera.fov);
-      const pose = countdownPose(frame.t, this.countdownMs ?? 3000, gate, shot, this.camera.aspect, { liftHill: this.scenery?.userData?.liftHill });
+      // starting-line shot at GO (the follow camera starts afresh after it),
+      // or on the first-seconds shot a track has chosen.
+      const shot = (launch && launchPose(launch, gate)) || startLineShot(gate, this.camera.aspect, this.camera.fov);
+      const pose = countdownPose(frame.t, this.countdownMs ?? 3000, gate, shot, this.camera.aspect, { liftHill: this.scenery?.userData?.liftHill, shot: shots?.countdown ?? 'classic' });
       main.ready = false;
       this.camera.position.copy(pose.camera);
       this.camera.lookAt(pose.target);
@@ -583,8 +587,13 @@ export class TrackScene {
       main.atFinish = Boolean(this.channel?.runout);
       main.holdFinish = main.atFinish && (follow === 'leader' || follow === 'arriving') && frame.p.some((p) => p >= 1);
       this.updateFollowCamera(at, frame.p[index] ?? 0, dt, main);
-      const w = gate ? handover(frame.t) : 1;
-      if (w < 1) {
+      const w = gate ? (launch ? launchHandover(frame.t) : handover(frame.t)) : 1;
+      if (launch && w < 1) {
+        // The first seconds on the track's own shot, on the field's middle, then over to the follow camera.
+        const shot = launchPose(launch, this.fieldFrame(frame));
+        this.camera.position.lerpVectors(shot.camera, main.cam, w);
+        this.camera.lookAt(shot.target.lerp(main.target, w));
+      } else if (w < 1) {
         // Just after GO: from the starting-line shot over to the follow camera, eased in and out.
         const shot = startLineShot(gate, this.camera.aspect, this.camera.fov);
         this.camera.position.lerpVectors(shot.camera, main.cam, w);
@@ -604,6 +613,28 @@ export class TrackScene {
       }
     }
     this.render();
+  }
+
+  /**
+   * The field's middle and the track's frame there (for the first-seconds shots):
+   * { centre, down (along the slope), normal (the ice's up), side (level, across) }.
+   */
+  fieldFrame(frame) {
+    const pos = this.marbles.positions.filter(Boolean);
+    const centre = new Vector3();
+    for (const v of pos) centre.add(v);
+    centre.divideScalar(Math.max(1, pos.length));
+    const ps = frame.p.filter((x) => Number.isFinite(x));
+    const pm = Math.min(1, Math.max(0, ps.reduce((a, b) => a + b, 0) / Math.max(1, ps.length)));
+    const { samples, segments } = this.centerline;
+    const sm = samples[Math.round(pm * segments)];
+    const down = new Vector3(sm.tangent.x, sm.tangent.y, sm.tangent.z).normalize();
+    // Across: the way the gate's frame measures it (startGate.startFrame), so a side shot stays on its side at GO.
+    const side = new Vector3().crossVectors(new Vector3(0, 1, 0), new Vector3(down.x, 0, down.z).normalize()).normalize();
+    const normal = new Vector3().crossVectors(side, down).normalize();
+    if (normal.y < 0) normal.negate();
+    centre.addScaledVector(normal, -MARBLE_RADIUS); // (on the ice, as the gate's frame is)
+    return { centre, down, normal, side };
   }
 
   /**

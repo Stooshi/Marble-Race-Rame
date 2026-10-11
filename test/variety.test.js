@@ -11,7 +11,8 @@ const { varietyCheck, similarity, profile } = require('../src/report/variety');
 
 const { track, opening, layout, OPENING_KINDS, LAYOUT_KINDS } = kit;
 
-const spec = (o = {}) => ({ slug: 'variety-check', name: 'Variety Check', opening: opening('classic'), sections: layout('classic'), ...o });
+const START = { gate: 'stalls', shots: { countdown: 'above', launch: 'overhead' } };
+const spec = (o = {}) => ({ slug: 'variety-check', name: 'Variety Check', opening: opening('classic'), sections: layout('classic'), start: START, ...o });
 
 test('every opening and every layout in the libraries builds within the recipe, and says which it is', () => {
   for (const kind of OPENING_KINDS) {
@@ -116,7 +117,7 @@ test('coasters: up on supports, touching down somewhere, a station roof for bill
   assert.ok(sog.physics.kit.billboards.filter((b) => b.mount !== 'roof').every((b) => b.mount === 'tower'));
   // Looks only: the race is the ice channel's (no coaster settings reach the physics).
   assert.equal(sog.physics.surface, 'ice');
-  const coaster = (o = {}) => spec({ family: 'coaster', sections: layout('classic', { dress: { brakingStraight: { height: 0 } } }), ...o });
+  const coaster = (o = {}) => spec({ family: 'coaster', start: { ...START, type: 'elevator' }, sections: layout('classic', { dress: { brakingStraight: { height: 0 } } }), ...o });
   assert.equal(track(coaster()).physics.kit.coaster.colours.support, '#c43a2f');
   assert.throws(() => track(coaster({ sections: layout('classic') })), /touches down somewhere along the way/);
   assert.throws(() => track(coaster({ coaster: { height: 80 } })), /coaster.height is how high the track flies/);
@@ -142,4 +143,34 @@ test('a track may retune a layout splitter (balance, added pegs), mirrored with 
   assert.throws(() => kit.layout('climb-drop', { dress: { splitter: { addObstacles: [block({ at: 0.1 })] } } }), /only pegs can be added/);
   assert.throws(() => kit.layout('climb-drop', { dress: { spiral: { addObstacles: [peg({ at: 0.5 })] } } }), /no pegs added to a spiral/);
   assert.equal(kit.layout('twin-spirals', { dress: { sweep: { addObstacles: [peg({ at: 0.5 })] } } }).find((s) => s.layoutKey === 'sweep').obstacles.length, 1);
+});
+
+test('the varied starts: a new track says how its start looks, checked like any opening', () => {
+  const { START_TYPES, GATES, COUNTDOWN_SHOTS, LAUNCH_SHOTS } = require('../src/trackKit/recipe');
+  assert.deepEqual(START_TYPES, ['straight-lift', 'curving-lift', 'spiral-tower', 'elevator', 'cliff', 'rooftop', 'station-launch']);
+  assert.deepEqual(GATES, ['paddle', 'trapdoor', 'stalls', 'barrier']);
+  assert.deepEqual(COUNTDOWN_SHOTS, ['front', 'side', 'above', 'chase']);
+  assert.deepEqual(LAUNCH_SHOTS, ['high-behind', 'low-chase', 'side', 'overhead', 'look-back']);
+  // A new track must say its gate and shots; a coaster its start type too.
+  assert.throws(() => track(spec({ start: {} })), /a new track says how its start looks/);
+  const coaster = (start, o = {}) => spec({ family: 'coaster', start, sections: layout('classic', { dress: { brakingStraight: { height: 0 } } }), ...o });
+  assert.throws(() => track(coaster(START)), /a new coaster says its start type/);
+  assert.throws(() => track(coaster({ ...START, type: 'catapult' })), /unknown start type/);
+  assert.throws(() => track(spec({ start: { ...START, gate: 'curtain' } })), /unknown gate/);
+  assert.throws(() => track(spec({ start: { ...START, shots: { countdown: 'drone', launch: 'side' } } })), /unknown countdown shot/);
+  // The station launch: only on the boost-launch opening, and a coaster on that opening launches from its station.
+  assert.throws(() => track(coaster({ ...START, type: 'station-launch' })), /a launch from the station races the boost-launch opening/);
+  assert.equal(track(coaster({ ...START, type: 'station-launch' }, { opening: opening('boost-launch') })).variety.start.type, 'station-launch');
+  assert.throws(() => track(coaster({ ...START, type: 'cliff' }, { opening: opening('boost-launch') })), /only as a launch from the station/);
+  // What the variety value says (tracks built before: the start every track had).
+  const sog = physicsTrack('sognefjord');
+  assert.deepEqual(sog.variety.start, { type: 'cliff', gate: 'trapdoor', countdown: 'side', launch: 'low-chase' });
+  assert.deepEqual(physicsTrack('dubai-marble-grand-prix').variety.start, { type: null, gate: 'lights', countdown: 'classic', launch: 'high-behind' });
+  // The sameness check: no two tracks of a family open on the same pair of shots, at most two coasters per start type.
+  const twin = track(coaster({ type: 'cliff', gate: 'paddle', shots: { countdown: 'side', launch: 'low-chase' } }, { slug: 'variety-twin', name: 'Variety Twin', opening: opening('crest-start'), sections: layout('two-splitters', { dress: { brakingStraight: { height: 0 } } }) }));
+  const check = varietyCheck(twin, [...PHYSICS_TRACKS, twin]);
+  const shots = check.lines.find((l) => /camera shots/.test(l.what));
+  const type = check.lines.find((l) => /start type/.test(l.what));
+  assert.equal(shots.pass, false);
+  assert.equal(type.pass, false); // (Sognefjord and Ha Long Bay Spins start from a cliff already)
 });

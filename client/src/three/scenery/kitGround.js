@@ -19,7 +19,7 @@ import { channelGround } from './channelGround';
 import { buildTerrain, makeHeightField } from './terrain';
 import { merge, piece, smoothstep } from './parts';
 import { stretchKinds } from './groundCheck';
-import { buildWater, coasterFlight, isLifted, liftHillCut, liftHillOf } from './coaster';
+import { buildWater, coasterFlight, isLifted, liftHillCut, liftHillOf, liftHillRaise } from './coaster';
 
 const RIM_WIDTH = 0.45;  // the channel's white rim beyond the lip (iceChannel.js)
 const SKIRT = 1.6;       // the channel's outer wall reaches this far below the floor
@@ -134,7 +134,7 @@ export function buildKitGround(centerline, track, { lite = false } = {}) {
   const waterY = waterSpots.length
     ? Math.min(...samples.map((x, i) => (nearWater(x.pos) ? x.pos.y - flight[i] : Infinity))) - 2
     : null;
-  const lift = flight ? liftHillOf(centerline, flight) : null;
+  const lift = flight ? liftHillOf(centerline, flight, kit.start?.type) : null;
   const field = {
     ...base,
     lake,
@@ -144,7 +144,7 @@ export function buildKitGround(centerline, track, { lite = false } = {}) {
         const d = Math.hypot(x - lake.x, z - lake.z) - lake.radius * lake.shape(Math.atan2(z - lake.z, x - lake.x));
         if (d < LAKE_SHORE) h += (Math.min(h, lake.y - 1.2) - h) * (1 - smoothstep(0, LAKE_SHORE, d));
       }
-      if (lift) h = Math.min(h, liftHillCut(lift, x, z)); // (the land carved down along a coaster's lift hill)
+      if (lift) h = liftHillRaise(lift, x, z, Math.min(h, liftHillCut(lift, x, z))); // (the land carved down along a coaster's lift hill, or raised to its cliff top)
       if (waterSpots.length) {
         let d = Infinity;
         for (const w of waterSpots) d = Math.min(d, Math.hypot(w.x - x, w.z - z));

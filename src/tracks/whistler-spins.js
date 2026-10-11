@@ -17,7 +17,7 @@ module.exports = track({
   lighting: 'day',
   coaster: { height: 18, colours: { support: '#2f6f4a', rail: '#e8eef2', tie: '#3a3d44' } },
   signature: 'Spin two',
-  start: { landmark: 'inukshuk', scenery: ['pines'] },
+  start: { landmark: 'inukshuk', scenery: ['pines'], type: 'elevator', gate: 'paddle', shots: { countdown: 'chase', launch: 'overhead' } },
   finish: { landmark: 'whistler-village', billboards: 1, scenery: ['chalets'] },
   designChanges: [
     'Built from the libraries: the staggered drop (the field let go in waves off the summit, through giant snowballs and ski gates) and the twin-spirals layout, mirrored. The design\'s seven fixed sections are replaced by the layout, as decided for the coaster series; its landmark moments stay: the inukshuk on the summit, the flight across the valley under the gondola, the two spins, the grizzly at the hairpin, the frozen waterfall with its mountain goat beside the second spin, the swoop through the snowy cedars and the village station.',

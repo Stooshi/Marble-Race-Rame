@@ -17,7 +17,7 @@ module.exports = track({
   lighting: 'sunset',
   coaster: { height: 18, colours: { support: '#4a2a5a', rail: '#c8c2d8', tie: '#2a2430' } },
   signature: 'Airtime hills',
-  start: { landmark: 'skull-rock', scenery: ['bare'] },
+  start: { landmark: 'skull-rock', scenery: ['bare'], type: 'spiral-tower', gate: 'stalls', shots: { countdown: 'front', launch: 'look-back' } },
   finish: { landmark: 'park-midway', billboards: 2, scenery: ['crowd'] },
   designChanges: [
     'Built from the libraries: the staggered drop (the field let go in waves down the first drop, through tumbling barrels and a slalom of tombstones) and the early-hairpin layout. The design\'s seven fixed sections are replaced by the layout, as decided for the coaster series; its landmark moments stay: the skull rock and the park gate at the lift hill, the swoop low over the swamp, the graveyard crypt tunnel, the totem at the hairpin, the airtime hills with other coasters across the valley, the spin round the smoking volcano and the midway station.',

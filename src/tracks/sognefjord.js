@@ -16,7 +16,7 @@ module.exports = track({
   lighting: 'day',
   coaster: { height: 18, colours: { support: '#2f5d9a', rail: '#d9dde3', tie: '#4a505a' } },
   signature: 'Fjord crossing',
-  start: { landmark: 'stave-church', scenery: ['pines'] },
+  start: { landmark: 'stave-church', scenery: ['pines'], type: 'cliff', gate: 'trapdoor', shots: { countdown: 'side', launch: 'low-chase' } },
   finish: { landmark: 'fjord-village', billboards: 2, scenery: ['wooden-houses'] },
   designChanges: [
     'Built from the libraries: the crest start (its first drop, a pile-up of mossy boulders and a slalom of fishing-net poles, then a camelback over the cliff top) and the long-sweeps layout. The design\'s seven fixed sections are replaced by the layout, as decided for the coaster series; its landmark moments stay: the stave church behind the lift hill, the fjord crossing on the tallest supports, the run past the waterfall through its spray, the mountain tunnel, the troll at the hairpin high over the fjord, the fjord spin and the village station.',

@@ -17,7 +17,7 @@ module.exports = track({
   lighting: 'day',
   coaster: { height: 18, colours: { support: '#c8442f', rail: '#f2efe6', tie: '#3a3d44' } },
   signature: 'Sagrada spin',
-  start: { landmark: 'tibidabo', scenery: ['pines'] },
+  start: { landmark: 'tibidabo', scenery: ['pines'], type: 'curving-lift', gate: 'barrier', shots: { countdown: 'above', launch: 'side' } },
   finish: { landmark: 'barceloneta-beach', billboards: 1, scenery: ['palms'] },
   designChanges: [
     'Built from the libraries: the tunnel launch (the first drop off Tibidabo through boulder-sized pine cones and street lamps, straight into the Park Güell mosaic tunnel) and the late-splitter layout. The design\'s seven fixed sections are replaced by the layout, as decided for the coaster series; its landmark moments stay: the temple and the Collserola tower at the lift hill, the forest swoops, the Park Güell tunnel and its terrace, the long sweep high over the city, the Gaudí chimney at the hairpin, the spin round the Sagrada Família and the beach station.',

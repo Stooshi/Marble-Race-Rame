@@ -20,6 +20,7 @@ const path = require('node:path');
 const { execFileSync } = require('node:child_process');
 const { physicsTrack, PHYSICS_TRACKS } = require('../src/game/physicsTracks');
 const { varietyCheck } = require('../src/report/variety');
+const { lookVector, saveLook, startLookCheck } = require('../src/report/startLook');
 const { simulatePhysicsRace } = require('../src/game/physicsSimulator');
 const { houseField, computeFingerprints, readFingerprints } = require('./race-fingerprints');
 const { runBatch, batchSeeds } = require('../src/report/batch');
@@ -115,7 +116,9 @@ async function main() {
     fs.writeFileSync(path.join(dev, `${raceName}.json`), JSON.stringify({
       entries: withLooks(houseField(raceSeeds[0])), frames: sim.frames, results: sim.results, start: sim.start, tickMs: sim.tickMs, durationMs: sim.durationMs,
     }));
-    const plan = { slug, race: raceName, out, loadEvery: 2000, shots: fixedShots(track, sim) };
+    const countdown = Math.max(5000, sim.start?.countdownMs ?? 0);
+    const startLook = [-countdown + 300, -1500, 1000, 3000]; // the first seconds, for the on-screen sameness check
+    const plan = { slug, race: raceName, out, loadEvery: 2000, shots: fixedShots(track, sim), startLook };
     const planFile = path.join(out, 'plan.json');
     fs.writeFileSync(planFile, JSON.stringify(plan));
     execFileSync('node', ['report/screens.mjs', planFile], { cwd: CLIENT, stdio: 'inherit' });
@@ -123,6 +126,16 @@ async function main() {
     report.shots = screens.shots;
     report.load = screens.load;
     report.lines.push(...loadLines(screens.load));
+    if (screens.startLook) {
+      // The "first 3 seconds" on screen, against every other track of its family (and kept for the next track's check).
+      const vector = lookVector(screens.startLook);
+      const { scores, ...line } = startLookCheck(track, vector, PHYSICS_TRACKS);
+      report.lines.push(line);
+      report.startLookScores = scores;
+      if (line.pass !== null || !/test track/.test(line.value)) saveLook(track, vector);
+      const titles = ['countdown opens', '1.5 s before GO', '1 s after GO', '3 s after GO'];
+      startLook.forEach((t, k) => report.shots.push({ name: `11-start-${k + 1}`, title: `Start, scenery off: ${titles[k]}`, t, screen: 'computer' }));
+    }
     if (screens.errors.length) report.lines.push({ part: 'Drawing load', what: 'Errors in the browser while drawing', value: screens.errors.slice(0, 3).join(' | '), target: 'none', pass: false });
     fs.rmSync(planFile, { force: true });
     fs.rmSync(path.join(dev, `${raceName}.json`), { force: true });

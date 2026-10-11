@@ -52,7 +52,7 @@ const HAND_BUILT = {
 /** A track as the sameness check sees it (null for a track it cannot read). */
 function profile(track) {
   const hand = HAND_BUILT[track.slug];
-  if (hand) return { slug: track.slug, name: track.name, ...hand, tokens: hand.tokens.map(([t, side]) => ({ t, side })) };
+  if (hand) return { slug: track.slug, name: track.name, start: { type: null, gate: 'paddle', countdown: 'classic', launch: 'high-behind' }, ...hand, tokens: hand.tokens.map(([t, side]) => ({ t, side })) };
   const v = track.variety;
   if (!v) return null;
   const secs = v.sections;
@@ -73,6 +73,7 @@ function profile(track) {
     firstBend,
     openingTokens: opening.filter((s) => TOKEN[s.shape]).map((s) => ({ t: TOKEN[s.shape], side: s.side ?? null })),
     tokens,
+    start: v.start ?? { type: null, gate: 'paddle', countdown: 'classic', launch: 'high-behind' },
     splitters: secs.filter((s) => s.shape === 'splitter').map(mid),
     sharp: secs.find((s) => s.shape === 'hairpin') ? mid(secs.find((s) => s.shape === 'hairpin')) : null,
   };
@@ -137,6 +138,27 @@ function varietyCheck(track, tracks) {
     target: `at most ${MAX_PER_OPENING}`,
     pass: sameKind.length + 1 <= MAX_PER_OPENING,
   });
+
+  // How the start looks: the two camera shots of the first seconds, and a coaster's start type.
+  const st = me.start;
+  const sameShots = family.filter((o) => o.start.countdown === st.countdown && o.start.launch === st.launch);
+  lines.push({
+    part: 'Variety',
+    what: `Start: no other ${familyName(me.family)} track opens on the same camera shots (countdown, first seconds)`,
+    value: `${st.countdown} then ${st.launch}, gate: ${st.gate}${st.type ? `, start: ${st.type}` : ''}${sameShots.length ? `: the same as ${list(sameShots.map((o) => o.name))}` : ''}`,
+    target: 'none the same',
+    pass: !sameShots.length,
+  });
+  if (st.type) {
+    const sameType = family.filter((o) => o.start.type === st.type);
+    lines.push({
+      part: 'Variety',
+      what: `Start: at most ${MAX_PER_OPENING} coasters with this start type`,
+      value: `${sameType.length + 1} with "${st.type}"${sameType.length ? ` (also ${list(sameType.map((o) => o.name))})` : ''}`,
+      target: `at most ${MAX_PER_OPENING}`,
+      pass: sameType.length + 1 <= MAX_PER_OPENING,
+    });
+  }
 
   // The layout, against every other track of every family.
   const scores = rest.map((o) => ({ slug: o.slug, name: o.name, score: similarity(me.tokens, o.tokens), samePlaces: samePlaces(me, o) }))

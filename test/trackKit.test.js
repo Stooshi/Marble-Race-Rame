@@ -637,9 +637,20 @@ const HIDDEN_KIT_TRACKS = [
 for (const [slug, file, note] of HIDDEN_KIT_TRACKS) {
   test(`${slug} is added by its data update, switched off, exactly as its track file builds it`, () => {
     const sql = fs.readFileSync(path.join(__dirname, '..', 'docs', 'data_updates', file), 'utf8');
-    const generated = execFileSync(process.execPath, [path.join(__dirname, '..', 'scripts', 'physics-track-sql.js'), slug, '--add-hidden', note], { encoding: 'utf8' });
-    assert.equal(sql, generated);
+    const script = path.join(__dirname, '..', 'scripts', 'physics-track-sql.js');
     assert.match(sql, /is_active|false/);
+    // A later data update for the track (already run live, so the add is never edited): the latest
+    // sets everything as the track file builds it now (the add then matches it as it was).
+    const dir = path.join(__dirname, '..', 'docs', 'data_updates');
+    const later = fs.readdirSync(dir).filter((f) => f > file && f.slice(11).startsWith(`${slug}-`) && f.endsWith('.sql')).sort();
+    if (!later.length) {
+      assert.equal(sql, execFileSync(process.execPath, [script, slug, '--add-hidden', note], { encoding: 'utf8' }));
+      return;
+    }
+    const body = (x) => x.slice(x.indexOf('UPDATE tracks'));
+    const latest = fs.readFileSync(path.join(dir, later.at(-1)), 'utf8');
+    assert.match(latest, new RegExp(`^ WHERE slug = '${slug}';$`, 'm'));
+    assert.equal(body(latest), body(execFileSync(process.execPath, [script, slug, '--retune'], { encoding: 'utf8' })), `${later.at(-1)} no longer gives the track in code`);
   });
 }
 

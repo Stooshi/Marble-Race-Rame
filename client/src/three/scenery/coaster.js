@@ -102,35 +102,117 @@ const topAt = (channel, i, step) => {
 };
 
 /**
- * Where the lift hill runs: from its foot behind the gate up to the gate, LIFT_RISE metres
- * more than the track flies at the gate, at LIFT_GRADE (the land is carved down along it,
- * kitGround.js, so the whole climb shows).
+ * How the coaster starts (the varied starts, `kit.start.type`): what stands behind the gate.
+ *   straight-lift: a straight chain lift hill from its foot up to the gate (every coaster's, before);
+ *   curving-lift:  the chain lift curving away to one side as it falls back;
+ *   spiral-tower:  the lift winding round a lattice tower;
+ *   elevator:      a vertical lift shaft behind the gate, a short bridge from its cage to the gate;
+ *   cliff:         the gate on a ledge at the edge of a cliff top (the land raised behind it);
+ *   rooftop:       the gate at the edge of a tall building's roof;
+ *   station-launch: a launch platform under an arch (the opening's boost launches the field).
+ * Returns { type, top, foot, back, side, length, path (top to foot, for a chain lift), cut
+ * (the land carved down along the path, so the whole climb shows), plateau (a cliff top) }.
+ * `foot` is where the start's landmark is placed beyond, and the countdown's lift shot looks.
  */
-export function liftHillOf(centerline, flight) {
+export function liftHillOf(centerline, flight, type = 'straight-lift') {
   const s0 = centerline.samples[0];
   const back = new Vector3(-s0.tangent.x, 0, -s0.tangent.z).normalize();
   const side = new Vector3(s0.side.x, 0, s0.side.z).normalize();
   const top = s0.pos.clone();
   const rise = (flight?.[0] ?? 0) + LIFT_RISE;
-  const length = rise / LIFT_GRADE;
-  const foot = top.clone().addScaledVector(back, length);
-  foot.y = top.y - rise;
-  return { top, foot, back, side, length };
+  const go = (from, b, s, d, y) => from.clone().addScaledVector(back, b).addScaledVector(side, s).setY(y ?? from.y - d);
+  let path = null;
+  let cut = true;
+  let plateau = null;
+  let foot;
+  if (type === 'curving-lift') {
+    const length = rise / LIFT_GRADE;
+    const turn = (110 * Math.PI) / 180;
+    const R = (length - 6) / turn;
+    path = [top.clone(), go(top, 6, 0, 6 * LIFT_GRADE)];
+    for (let k = 1; k <= 12; k += 1) {
+      const th = (turn * k) / 12;
+      path.push(go(top, 6 + R * Math.sin(th), R * (1 - Math.cos(th)), (6 + R * th) * LIFT_GRADE));
+    }
+  } else if (type === 'spiral-tower') {
+    const R = 11;
+    const turns = 1.25 * 2 * Math.PI;
+    const length = 6 + R * turns;
+    const grade = rise / length;
+    path = [top.clone(), go(top, 6, 0, 6 * grade)];
+    for (let k = 1; k <= 30; k += 1) {
+      const th = (turns * k) / 30;
+      path.push(go(top, 6 + R * Math.sin(th), R * (1 - Math.cos(th)), (6 + R * th) * grade));
+    }
+  } else if (type === 'elevator') {
+    path = [top.clone(), go(top, ELEVATOR.at, 0, 0)];
+    foot = go(top, ELEVATOR.at, 0, rise);
+  } else if (type === 'cliff') {
+    path = [top.clone(), go(top, CLIFF.edge, 0, 0)];
+    cut = false;
+    plateau = { y: top.y - 2.4, edge: CLIFF.edge, half: CLIFF.half, depth: CLIFF.depth };
+    foot = go(top, 14, 0, 0, plateau.y);
+  } else if (type === 'rooftop') {
+    path = [top.clone(), go(top, ROOF.depth, 0, 0)];
+    foot = go(top, 12, 0, 0);
+  } else if (type === 'station-launch') {
+    path = [top.clone(), go(top, 12, 0, 0)];
+    cut = false;
+    foot = go(top, 12, 0, 0);
+  } else {
+    path = [top.clone(), go(top, rise / LIFT_GRADE, 0, rise)];
+  }
+  let length = 0;
+  for (let k = 1; k < path.length; k += 1) length += Math.hypot(path[k].x - path[k - 1].x, path[k].z - path[k - 1].z);
+  foot = foot ?? path[path.length - 1].clone();
+  return { type, top, foot, back, side, length, path, cut, plateau, rise };
+}
+const ELEVATOR = { at: 12, half: 3.2 };        // metres: the shaft's middle behind the gate, its half-width
+const CLIFF = { edge: 8, half: 30, depth: 80 }; // metres: the cliff edge behind the gate, the cliff top's half-width and depth
+const ROOF = { depth: 24, half: 11 };          // metres: the building behind the gate
+
+/** How low the land must lie at (x, z) to show the lift (Infinity away from it): below its path, falling away either side. */
+export function liftHillCut(lift, x, z) {
+  if (!lift.cut) return Infinity;
+  const { path } = lift;
+  const reach = LIFT_CUT + LIFT_CUT_EDGE;
+  let best = Infinity;
+  let lineY = 0;
+  for (let k = 1; k < path.length; k += 1) {
+    const a = path[k - 1];
+    const b = path[k];
+    const dx = b.x - a.x;
+    const dz = b.z - a.z;
+    const len2 = dx * dx + dz * dz || 1;
+    const t = Math.min(1, Math.max(0, ((x - a.x) * dx + (z - a.z) * dz) / len2));
+    const d = Math.hypot(x - a.x - dx * t, z - a.z - dz * t);
+    if (d < best) { best = d; lineY = a.y + (b.y - a.y) * t; }
+  }
+  // (And a little beyond the gate end and the foot, as the straight lift always had.)
+  const { top, back } = lift;
+  const along = (x - top.x) * back.x + (z - top.z) * back.z;
+  if (along < -10 || best > reach) return Infinity;
+  const k = best <= LIFT_CUT ? 0 : (best - LIFT_CUT) / LIFT_CUT_EDGE;
+  return lineY - 2.5 + k * k * 60;
 }
 
-/** How low the land must lie at (x, z) to show the lift hill's climb (Infinity away from it). */
-export function liftHillCut(lift, x, z) {
-  const { top, foot, back, side, length } = lift;
+/** A cliff start: the land at (x, z) given its height h, raised to the cliff top behind the gate. */
+export function liftHillRaise(lift, x, z, h) {
+  const pl = lift.plateau;
+  if (!pl) return h;
+  const { top, back, side } = lift;
   const dx = x - top.x;
   const dz = z - top.z;
   const along = dx * back.x + dz * back.z;
-  if (along < -10 || along > length + 30) return Infinity;
   const across = Math.abs(dx * side.x + dz * side.z);
-  if (across > LIFT_CUT + LIFT_CUT_EDGE) return Infinity;
-  const t = Math.min(1, Math.max(0, along / length));
-  const lineY = top.y + (foot.y - top.y) * t - 2.5;
-  const k = across <= LIFT_CUT ? 0 : (across - LIFT_CUT) / LIFT_CUT_EDGE;
-  return lineY + k * k * 60;
+  if (along < pl.edge - 1 || along > pl.depth + 70 || across > pl.half + 50) return h;
+  // (A sheer cliff only at its edge; to the sides and behind, the cliff top slopes back down to the land.)
+  const k = Math.min(smooth(pl.edge - 1, pl.edge + 1, along), 1 - smooth(pl.half, pl.half + 50, across), 1 - smooth(pl.depth, pl.depth + 70, along));
+  return h + (Math.max(h, pl.y) - h) * k;
+}
+function smooth(a, b, x) {
+  const t = Math.min(1, Math.max(0, (x - a) / (b - a)));
+  return t * t * (3 - 2 * t);
 }
 
 /** The station over the finish line and the run-out: its middle, the way along, and across. */
@@ -291,34 +373,9 @@ export function buildCoaster(centerline, channel, kit, { lite = false, groundAt,
     feet.push({ x: b.foot.x, z: b.foot.z, r: 3 });
   }
 
-  // The lift hill: a deck with rails and the chain up its middle, a catwalk and handrail
-  // beside it, on towers, from its foot up to the gate.
-  const lift = liftHillOf(centerline, flight);
-  {
-    const { top, foot, side, length } = lift;
-    const half = 4;
-    const at = (d) => top.clone().lerp(foot, d / length);
-    const deck = (d) => at(d).addScaledVector(UP, -1.1);
-    for (let d = 0; d < length; d += 4) {
-      const d1 = Math.min(length, d + 4);
-      const a0 = deck(d);
-      const a1 = deck(d1);
-      // The deck: a dark plank strip as wide as the track.
-      const w = new Vector3().subVectors(a1, a0);
-      const m = new Matrix4().lookAt(a0, a1, UP);
-      m.setPosition(a0.clone().add(a1).multiplyScalar(0.5));
-      towers.push(piece(new BoxGeometry(half * 2, 0.35, w.length()), '#3b3f46', m));
-    }
-    for (const sign of [1, -1]) {
-      towers.push(strut(deck(0).addScaledVector(side, sign * (half - 0.6)).addScaledVector(UP, 0.45), deck(length).addScaledVector(side, sign * (half - 0.6)).addScaledVector(UP, 0.45), 0.36, RAIL));
-    }
-    towers.push(strut(deck(0).addScaledVector(UP, 0.3), deck(length).addScaledVector(UP, 0.3), 0.45, '#1e2024')); // the chain
-    // The catwalk's handrail on one side.
-    towers.push(strut(deck(0).addScaledVector(side, half + 0.8).addScaledVector(UP, 1.1), deck(length).addScaledVector(side, half + 0.8).addScaledVector(UP, 1.1), 0.12, RAIL));
-    for (let d = 0; d <= length; d += lite ? 8 : 4) towers.push(strut(deck(d).addScaledVector(side, half + 0.8), deck(d).addScaledVector(side, half + 0.8).addScaledVector(UP, 1.1), 0.1, RAIL));
-    for (let d = 4; d <= length; d += lite ? 12 : 7) tower(deck(d).addScaledVector(UP, -0.4), side, half - 0.4, -1000);
-    feet.push({ x: foot.x, z: foot.z, r: 8 });
-  }
+  // What stands behind the gate (the start type): the lift hill, a lift tower, an elevator shaft, a cliff ledge, a rooftop or a launch platform.
+  const lift = liftHillOf(centerline, flight, kit.start?.type);
+  buildStart(lift, { towers, feet, tower, groundAt, lite, RAIL, SUPPORT });
 
   // The station over the finish and the run-out: a platform each side, a canopy on posts, a queue behind.
   const st = stationOf(centerline);
@@ -402,6 +459,142 @@ export function buildCoaster(centerline, channel, kit, { lite = false, groundAt,
   }
 
   return { group, feet, liftHill: lift, station: st };
+}
+
+/**
+ * The start's structure (liftHillOf's types) into `towers`: a chain lift along its path (a deck with
+ * rails and the chain up its middle, a catwalk and handrail beside it, on towers), and what else the type has.
+ */
+function buildStart(lift, { towers, feet, tower, groundAt, lite, RAIL, SUPPORT }) {
+  const { type, top, back, side, path } = lift;
+  const half = 4;
+  const yawOf = (dir) => Math.atan2(dir.x, dir.z);
+  const obox = (w, h, d, c, yaw, colour) => piece(new BoxGeometry(w, h, d), colour, new Matrix4().makeRotationY(yaw).setPosition(c));
+  const flip = Math.sign(side.x * -back.z + side.z * back.x) || 1; // (the side of each piece of the path, turned with it)
+  const deckAlong = (pts, { chain = true, posts = true, legs = true } = {}) => {
+    for (let k = 1; k < pts.length; k += 1) {
+      const a = pts[k - 1].clone().addScaledVector(UP, -1.1);
+      const b = pts[k].clone().addScaledVector(UP, -1.1);
+      const dir = new Vector3(b.x - a.x, 0, b.z - a.z);
+      const len = dir.length();
+      if (len < 0.01) continue;
+      dir.normalize();
+      const sd = new Vector3(-dir.z, 0, dir.x).multiplyScalar(flip);
+      const n = Math.max(1, Math.ceil(len / 4));
+      for (let j = 0; j < n; j += 1) {
+        const p0 = a.clone().lerp(b, j / n);
+        const p1 = a.clone().lerp(b, (j + 1) / n);
+        const m = new Matrix4().lookAt(p0, p1, UP);
+        m.setPosition(p0.clone().add(p1).multiplyScalar(0.5));
+        towers.push(piece(new BoxGeometry(half * 2, 0.35, p0.distanceTo(p1) + 0.05), '#3b3f46', m));
+      }
+      for (const sign of [1, -1]) towers.push(strut(a.clone().addScaledVector(sd, sign * (half - 0.6)).addScaledVector(UP, 0.45), b.clone().addScaledVector(sd, sign * (half - 0.6)).addScaledVector(UP, 0.45), 0.36, RAIL));
+      if (chain) towers.push(strut(a.clone().addScaledVector(UP, 0.3), b.clone().addScaledVector(UP, 0.3), 0.45, '#1e2024'));
+      if (posts) {
+        towers.push(strut(a.clone().addScaledVector(sd, half + 0.8).addScaledVector(UP, 1.1), b.clone().addScaledVector(sd, half + 0.8).addScaledVector(UP, 1.1), 0.12, RAIL));
+        for (let d = 0; d < len; d += lite ? 8 : 4) {
+          const p = a.clone().lerp(b, d / len).addScaledVector(sd, half + 0.8);
+          towers.push(strut(p, p.clone().addScaledVector(UP, 1.1), 0.1, RAIL));
+        }
+      }
+      if (legs) for (let d = k === 1 ? 4 : 0; d < len; d += lite ? 12 : 7) tower(a.clone().lerp(b, d / len).addScaledVector(UP, -0.4), sd, half - 0.4, -1000);
+    }
+  };
+  const lattice = (centre, hx, hz, y0, y1, yaw, colour, { ring = lite ? 8 : 4 } = {}) => {
+    const c = Math.cos(yaw);
+    const s = Math.sin(yaw);
+    const corner = (i, j, y) => new Vector3(centre.x + i * hx * c + j * hz * s, y, centre.z - i * hx * s + j * hz * c);
+    const cs = [[1, 1], [1, -1], [-1, -1], [-1, 1]];
+    for (const [i, j] of cs) towers.push(strut(corner(i, j, y0), corner(i, j, y1), 0.45, colour));
+    for (let y = y0 + ring; y <= y1; y += ring) {
+      for (let q = 0; q < 4; q += 1) {
+        const [i0, j0] = cs[q];
+        const [i1, j1] = cs[(q + 1) % 4];
+        towers.push(strut(corner(i0, j0, y), corner(i1, j1, y), 0.25, colour));
+        if (!lite) towers.push(strut(corner(i0, j0, y - ring), corner(i1, j1, y), 0.16, colour));
+      }
+    }
+  };
+
+  if (type === 'elevator') {
+    // A lattice shaft behind the gate, its cage at the top, a short bridge on to the gate and a winding wheel above.
+    const at = top.clone().addScaledVector(back, ELEVATOR.at);
+    const yaw = yawOf(back);
+    const landY = groundAt(at.x, at.z) - 0.5;
+    lattice(at, ELEVATOR.half, ELEVATOR.half, landY, top.y + 6, yaw, SUPPORT);
+    deckAlong([top, top.clone().addScaledVector(back, ELEVATOR.at - ELEVATOR.half)], { chain: false });
+    const cage = at.clone().setY(top.y - 1.1);
+    towers.push(obox(ELEVATOR.half * 2 - 0.8, 0.4, ELEVATOR.half * 2 - 0.8, cage, yaw, '#3b3f46'));
+    towers.push(obox(ELEVATOR.half * 2 - 0.8, 0.3, ELEVATOR.half * 2 - 0.8, cage.clone().setY(top.y + 2.6), yaw, '#f2c230'));
+    for (const [i, j] of [[1, 1], [1, -1], [-1, -1], [-1, 1]]) {
+      const p = cage.clone().addScaledVector(back, i * (ELEVATOR.half - 0.6)).addScaledVector(side, j * (ELEVATOR.half - 0.6));
+      towers.push(strut(p, p.clone().setY(top.y + 2.6), 0.18, '#f2c230'));
+    }
+    towers.push(obox(0.5, 3.2, 3.2, at.clone().setY(top.y + 7.6), yawOf(side), '#1e2024')); // the winding wheel
+    towers.push(strut(at.clone().setY(top.y + 7.6), cage.clone().setY(top.y + 2.6), 0.12, '#1e2024'));
+    feet.push({ x: at.x, z: at.z, r: 8 });
+  } else if (type === 'cliff') {
+    // A plank ledge out from the cliff edge to the gate, and the rock face below the edge.
+    const pl = lift.plateau;
+    deckAlong([top, top.clone().addScaledVector(back, pl.edge + 2)], { chain: false, legs: false });
+    const faceH = lift.rise + 18;
+    const face = top.clone().addScaledVector(back, pl.edge + 0.6).setY(pl.y - faceH / 2);
+    towers.push(obox(pl.half * 2 + 4, faceH, 2.4, face, yawOf(back), '#6f6a62'));
+    // (A few boulders along the edge.)
+    for (let k = -3; k <= 3; k += 1) {
+      if (k === 0) continue;
+      const b = top.clone().addScaledVector(back, pl.edge + 2.5 + (k % 2)).addScaledVector(side, k * 7.5).setY(pl.y + 0.4);
+      towers.push(obox(2.4 + (k & 1), 1.6, 2, b, k * 0.7, '#7d776d'));
+    }
+    feet.push({ x: lift.foot.x, z: lift.foot.z, r: 14 });
+  } else if (type === 'rooftop') {
+    // A tall building behind the gate, its roof just under the track: windows, a parapet, a water tank.
+    const yaw = yawOf(back);
+    const mid = top.clone().addScaledVector(back, ROOF.depth / 2 - 1);
+    const roofY = top.y - 2.0;
+    let low = Infinity;
+    for (const [i, j] of [[0, 0], [1, 1], [1, -1], [-1, 1], [-1, -1]]) low = Math.min(low, groundAt(mid.x + back.x * i * ROOF.depth / 2 + side.x * j * ROOF.half, mid.z + back.z * i * ROOF.depth / 2 + side.z * j * ROOF.half));
+    const h = roofY - low + 1;
+    towers.push(obox(ROOF.half * 2, h, ROOF.depth, mid.clone().setY(roofY - h / 2), yaw, '#8a8f99'));
+    const floors = Math.floor((h - 2) / (lite ? 7 : 3.5));
+    for (let f = 1; f <= floors; f += 1) {
+      const y = roofY - f * (h - 2) / (floors + 0.5);
+      for (const sign of [1, -1]) towers.push(obox(0.2, 1.4, ROOF.depth - 2, mid.clone().addScaledVector(side, sign * (ROOF.half + 0.05)).setY(y), yaw, '#f4d27a'));
+      towers.push(obox(ROOF.half * 2 - 2, 1.4, 0.2, mid.clone().addScaledVector(back, -ROOF.depth / 2 - 0.05).setY(y), yaw, '#f4d27a'));
+    }
+    for (const sign of [1, -1]) towers.push(obox(0.4, 1, ROOF.depth, mid.clone().addScaledVector(side, sign * (ROOF.half - 0.2)).setY(roofY + 0.5), yaw, '#5d626b'));
+    towers.push(obox(ROOF.half * 2, 1, 0.4, mid.clone().addScaledVector(back, ROOF.depth / 2 - 0.2).setY(roofY + 0.5), yaw, '#5d626b'));
+    const tank = mid.clone().addScaledVector(back, ROOF.depth / 2 - 5).addScaledVector(side, ROOF.half - 4);
+    towers.push(obox(3, 3.4, 3, tank.setY(roofY + 4.2), yaw, '#6b4a33'));
+    for (const [i, j] of [[1, 1], [1, -1], [-1, -1], [-1, 1]]) {
+      const p = tank.clone().addScaledVector(back, i * 1.2).addScaledVector(side, j * 1.2);
+      towers.push(strut(p.clone().setY(roofY), p.clone().setY(roofY + 2.5), 0.15, '#3b3f46'));
+    }
+    feet.push({ x: mid.x, z: mid.z, r: ROOF.depth / 2 + ROOF.half });
+  } else if (type === 'station-launch') {
+    // A launch platform behind the gate and an arch of lights over the start.
+    const yaw = yawOf(back);
+    deckAlong(path, { chain: false, legs: true });
+    for (const sign of [1, -1]) {
+      const p = top.clone().addScaledVector(back, 6).addScaledVector(side, sign * (half + 2.2)).setY(top.y - 0.6);
+      towers.push(obox(2.6, 0.6, 12, p, yaw, '#d9d4c8'));
+      const post = top.clone().addScaledVector(back, -1).addScaledVector(side, sign * (half + 3));
+      towers.push(strut(post.clone().setY(groundAt(post.x, post.z) - 0.5), post.clone().setY(top.y + 9), 0.5, SUPPORT));
+    }
+    towers.push(obox((half + 3) * 2 + 1, 1.2, 0.8, top.clone().addScaledVector(back, -1).setY(top.y + 9), yaw, '#1e2024'));
+    for (let k = -4; k <= 4; k += 1) towers.push(obox(0.7, 0.5, 0.9, top.clone().addScaledVector(back, -1).addScaledVector(side, k * 1.6).setY(top.y + 8.3), yaw, k % 2 ? '#ff4b3e' : '#4bd1ff'));
+    feet.push({ x: lift.foot.x, z: lift.foot.z, r: 8 });
+  } else {
+    // A chain lift: straight, curving or round a tower.
+    deckAlong(path);
+    if (type === 'spiral-tower') {
+      const centre = top.clone().addScaledVector(back, 6).addScaledVector(side, 11);
+      lattice(centre, 2.2, 2.2, groundAt(centre.x, centre.z) - 0.5, top.y + 8, yawOf(back), SUPPORT);
+      towers.push(obox(1.2, 6, 1.2, centre.clone().setY(top.y + 11), 0, '#e8e2d0')); // (the tower's mast)
+      feet.push({ x: centre.x, z: centre.z, r: 16 });
+    }
+    feet.push({ x: lift.foot.x, z: lift.foot.z, r: 8 });
+  }
 }
 
 /** A flat water surface (a fjord, a bay) at `y`: discs round the given spots, merged. */

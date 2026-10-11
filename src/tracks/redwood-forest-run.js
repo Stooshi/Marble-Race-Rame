@@ -18,7 +18,7 @@ module.exports = track({
   lighting: 'day',
   coaster: { height: 18, colours: { support: '#6a4a2a', rail: '#e2dcc8', tie: '#3a2a20' } },
   signature: 'Through the trunk',
-  start: { landmark: 'drive-through-redwood', scenery: ['pines'] },
+  start: { landmark: 'drive-through-redwood', scenery: ['pines'], type: 'elevator', gate: 'paddle', shots: { countdown: 'chase', launch: 'look-back' } },
   finish: { landmark: 'sea-stacks-beach' },
   designChanges: [
     'Built from the banked first turn (the first drop between the giants through fallen logs and toadstools, straight into a steep banked turn) and canopy run, the library layout made for this track: a straight run through the fallen trunk, the canopy sweep, the fern swoop with its toadstool slalom, creek bends, the hairpin late, a spin and a quarter round a giant redwood and a toadstool run to the coast. Its landmark moments are the design\'s: the drive-through redwood at the lift hill, the run through the trunk, the canopy run, the fern swoop touching the forest floor, the black bear at the hairpin, the trunk spin with an elk on the bank and the sea-stack beach station.',

@@ -14,6 +14,14 @@ import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js
 
 export const GATE_COLORS = { paddle: '#ffffff', edge: '#5f86a8', block: '#f4fbff', frame: '#ffffff' };
 
+/** The gate styles of the varied starts: each one's colours and the shape of what holds each marble. */
+export const GATE_STYLES = {
+  paddle: { paddle: '#ffffff', edge: '#5f86a8', frame: '#ffffff', size: [1.05, 0.95] },
+  trapdoor: { paddle: '#f2c230', edge: '#1e1f22', frame: '#2a2c31', size: [1.05, 0.5] },
+  stalls: { paddle: '#3f8f4a', edge: '#f4f1e6', frame: '#f4f1e6', size: [1.05, 0.95] },
+  barrier: { paddle: '#e8e4dc', edge: '#d8342a', frame: '#d8342a', size: [1.05, 0.95] },
+};
+
 const PADDLE = { width: 1.05, height: 0.95, thick: 0.14 };
 const EDGE = 0.06; // width of the blue-grey border round each white paddle
 const SINK_MS = 160; // how long a paddle takes to sink
@@ -65,20 +73,33 @@ export class StartGate {
   /**
    * @param places from gatePlaces
    * @param releaseMs when each paddle lets its marble go (ms after GO)
-   * @param options lights: a Grand Prix start gantry with five start lights instead of the white frame
+   * @param options lights: a Grand Prix start gantry with five start lights instead of the white frame;
+   *   style: how the gate holds the field (the varied starts): 'paddle' (the paddles that sink, every
+   *   track before them), 'trapdoor' (low flaps that fall forward flat), 'stalls' (a stall for each
+   *   marble, its door swinging open sideways) or 'barrier' (one striped bar across the row, tilting up).
+   *   Drawing only: each lets its marbles go exactly when the paddles would.
    */
-  constructor(places, releaseMs, { lights = false } = {}) {
+  constructor(places, releaseMs, { lights = false, style = 'paddle' } = {}) {
     this.places = places;
     this.releaseMs = releaseMs;
     this.lit = lights;
+    this.style = GATE_STYLES[style] ? style : 'paddle';
     this.group = new Group();
     // Each paddle: a white face set into a slightly larger blue-grey one, which shows as a crisp edge.
-    this.paddleGeo = new BoxGeometry(PADDLE.width - 2 * EDGE, PADDLE.height - 2 * EDGE, PADDLE.thick + 0.02);
-    this.edgeGeo = new BoxGeometry(PADDLE.width, PADDLE.height, PADDLE.thick);
+    const [pw, ph] = GATE_STYLES[this.style].size;
+    this.ph = ph;
+    this.paddleGeo = new BoxGeometry(pw - 2 * EDGE, ph - 2 * EDGE, PADDLE.thick + 0.02);
+    this.edgeGeo = new BoxGeometry(pw, ph, PADDLE.thick);
+    // (A trapdoor flap and a stall door turn about one edge: their boxes are moved so that edge is at the origin.)
+    if (this.style === 'trapdoor') { this.paddleGeo.translate(0, ph / 2, 0); this.edgeGeo.translate(0, ph / 2, 0); }
+    if (this.style === 'stalls') { this.paddleGeo.translate(pw / 2, ph / 2, 0); this.edgeGeo.translate(pw / 2, ph / 2, 0); }
     this.blockGeo = new BoxGeometry(PADDLE.width, 0.5, 0.5);
     // The white parts glow a touch, so they stay white even facing away from the sun.
     const glow = { paddle: '#8a96a2', frame: '#8a96a2' };
-    this.mats = Object.fromEntries(Object.entries(GATE_COLORS).map(([k, c]) => [k, new MeshLambertMaterial({ color: c, emissive: glow[k] ?? '#000000' })]));
+    const look = { ...GATE_COLORS, ...(this.style === 'paddle' ? {} : { paddle: GATE_STYLES[this.style].paddle, edge: GATE_STYLES[this.style].edge, frame: GATE_STYLES[this.style].frame }) };
+    if (this.style !== 'paddle') glow.paddle = '#000000';
+    if (this.style === 'trapdoor') glow.frame = '#000000';
+    this.mats = Object.fromEntries(Object.entries(look).map(([k, c]) => [k, new MeshLambertMaterial({ color: c, emissive: glow[k] ?? '#000000' })]));
     if (lights) {
       // The Grand Prix gantry: dark steel, the pods black.
       this.mats.frame = new MeshLambertMaterial({ color: GANTRY_COLORS.gantry });
@@ -105,6 +126,13 @@ export class StartGate {
     });
     blocks.instanceMatrix.needsUpdate = true;
     this.group.add(this.paddles, this.edges, blocks);
+    if (this.style === 'stalls') this.group.add(this.buildStalls());
+    if (this.style === 'barrier') {
+      // One bar across the whole row, striped, turning up about its first end; the paddles are not drawn.
+      this.paddles.visible = false;
+      this.edges.visible = false;
+      this.group.add(this.buildBarrier());
+    }
     this.frameGroup = this.buildFrame();
     this.group.add(this.frameGroup);
     this.liftAt = Math.max(0, ...releaseMs.map((r) => r ?? 0)); // when the last paddle has gone
@@ -182,6 +210,49 @@ export class StartGate {
     return merged;
   }
 
+  /** The stalls' dividers: a thin wall between each marble and the next, and at both ends. */
+  buildStalls() {
+    const walls = [];
+    const n = this.places.length;
+    const wall = (pl, offset) => {
+      const g = new BoxGeometry(0.08, 0.95, 1.7);
+      const m = new Matrix4().makeBasis(pl.side, pl.up, pl.forward);
+      m.setPosition(pl.base.clone().addScaledVector(pl.side, offset).addScaledVector(pl.up, 0.47).addScaledVector(pl.forward, -0.15));
+      walls.push(g.applyMatrix4(m).toNonIndexed());
+    };
+    this.places.forEach((pl, i) => {
+      const next = this.places[i + 1];
+      if (next) wall(pl, next.base.clone().sub(pl.base).dot(pl.side) / 2);
+    });
+    wall(this.places[0], -0.8);
+    wall(this.places[n - 1], 0.8);
+    walls.forEach((g) => g.deleteAttribute('uv'));
+    return new Mesh(mergeGeometries(walls), this.mats.edge);
+  }
+
+  /** The barrier: a striped bar across the row at marble height, its pivot at the first end. */
+  buildBarrier() {
+    const a = this.places[0];
+    const b = this.places[this.places.length - 1];
+    const span = b.base.clone().sub(a.base).dot(a.side) + 1.6;
+    const pivot = new Group();
+    const basis = new Matrix4().makeBasis(a.side, a.up, a.forward);
+    pivot.quaternion.setFromRotationMatrix(basis);
+    pivot.position.copy(a.base).addScaledVector(a.side, -0.8).addScaledVector(a.up, 0.6).addScaledVector(a.forward, MARBLE_RADIUS + 0.2);
+    const stripes = Math.max(4, Math.round(span / 1.2));
+    for (let k = 0; k < stripes; k += 1) {
+      const piece = new Mesh(new BoxGeometry(span / stripes, 0.22, 0.16), k % 2 ? this.mats.paddle : this.mats.edge);
+      piece.position.x = (k + 0.5) * (span / stripes);
+      pivot.add(piece);
+    }
+    const post = new Mesh(new BoxGeometry(0.3, 1.1, 0.3), this.mats.frame);
+    post.position.set(-0.2, -0.05, 0);
+    pivot.add(post);
+    this.barrier = pivot;
+    this.barrierAt = Math.min(...this.releaseMs.map((r) => r ?? 0)); // it goes up as the first marble is let go
+    return pivot;
+  }
+
   /**
    * The middle of the waiting field, the level directions down the track and
    * across it, how wide the row is, and the slope it waits on (the direction
@@ -225,14 +296,28 @@ export class StartGate {
     }
     const basis = new Matrix4();
     const one = new Vector3(1, 1, 1);
+    if (this.barrier) {
+      const k2 = paddleSink(t, this.barrierAt + 120);
+      this.barrier.rotation.z = k2 * 1.35; // up and out of the way
+    }
+    const turn = new Quaternion();
     this.places.forEach((pl, i) => {
       const sink = paddleSink(t, this.releaseMs[i] ?? 0);
       basis.makeBasis(pl.side, pl.up, pl.forward);
       this.q.setFromRotationMatrix(basis);
-      this.v.copy(pl.base)
-        .addScaledVector(pl.forward, MARBLE_RADIUS + PADDLE.thick / 2 + 0.03)
-        .addScaledVector(pl.up, PADDLE.height / 2 - sink * (PADDLE.height + 0.05));
-      this.m.compose(this.v, this.q, sink >= 1 ? ZERO : one); // gone once fully sunk
+      const front = pl.base.clone().addScaledVector(pl.forward, MARBLE_RADIUS + PADDLE.thick / 2 + 0.03);
+      if (this.style === 'trapdoor') {
+        // Hinged at its foot: it falls forward, flat on the ice.
+        turn.setFromAxisAngle(new Vector3(1, 0, 0), sink * (Math.PI / 2));
+        this.m.compose(front, this.q.clone().multiply(turn), one);
+      } else if (this.style === 'stalls') {
+        // Hinged at its left edge: it swings open, round to the side.
+        turn.setFromAxisAngle(new Vector3(0, 1, 0), -sink * (Math.PI * 0.55));
+        this.m.compose(front.addScaledVector(pl.side, -0.52), this.q.clone().multiply(turn), one);
+      } else {
+        this.v.copy(front).addScaledVector(pl.up, this.ph / 2 - sink * (this.ph + 0.05));
+        this.m.compose(this.v, this.q, sink >= 1 ? ZERO : one); // gone once fully sunk
+      }
       this.paddles.setMatrixAt(i, this.m);
       this.edges.setMatrixAt(i, this.m);
     });

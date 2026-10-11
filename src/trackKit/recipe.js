@@ -154,6 +154,7 @@ function checkRecipe({ spec, sections, span, generated, owner, placed, total, wh
     problems.push(`${where('track')}: each lighting variant once, and not the track's own preset (${spec.lighting || 'day'}).`);
   }
   known('landmark', LANDMARKS, spec.start?.landmark, 'start');
+  problems.push(...startRules({ spec, where }));
   known('landmark', LANDMARKS, spec.finish?.landmark, 'finish');
   for (const where_ of ['start', 'finish']) for (const sc of spec[where_]?.scenery ?? []) known('scenery', SCENERY, sc, where_);
   sections.forEach((s) => {
@@ -275,6 +276,35 @@ function checkRecipe({ spec, sections, span, generated, owner, placed, total, wh
   return problems;
 }
 
+// The varied starts: how a track's first seconds look (drawing only; the race is its opening's).
+const START_TYPES = ['straight-lift', 'curving-lift', 'spiral-tower', 'elevator', 'cliff', 'rooftop', 'station-launch'];
+const GATES = ['paddle', 'trapdoor', 'stalls', 'barrier'];
+const COUNTDOWN_SHOTS = ['front', 'side', 'above', 'chase'];
+const LAUNCH_SHOTS = ['high-behind', 'low-chase', 'side', 'overhead', 'look-back'];
+
+/** start: { type (coasters), gate, shots: { countdown, launch } }: known values; every new track (a library opening) says them. */
+function startRules({ spec, where }) {
+  const problems = [];
+  const st = spec.start ?? {};
+  const isNew = spec.opening !== undefined && spec.family !== 'test';
+  if (st.type !== undefined) {
+    if (!isCoaster(spec)) problems.push(`${where('start')}: a start type is for coasters (family: 'coaster').`);
+    else if (!START_TYPES.includes(st.type)) problems.push(`${where('start')}: unknown start type ${JSON.stringify(st.type)} (${START_TYPES.join(', ')}).`);
+    if (st.type === 'station-launch' && spec.opening?.kind !== 'boost-launch') problems.push(`${where('start')}: a launch from the station races the boost-launch opening (opening('boost-launch')).`);
+  }
+  if (spec.opening?.kind === 'boost-launch' && isCoaster(spec) && st.type !== 'station-launch') problems.push(`${where('start')}: a coaster takes the boost-launch opening only as a launch from the station (start.type 'station-launch').`);
+  if (st.gate !== undefined && !GATES.includes(st.gate)) problems.push(`${where('start')}: unknown gate ${JSON.stringify(st.gate)} (${GATES.join(', ')}).`);
+  if (st.shots !== undefined) {
+    if (!COUNTDOWN_SHOTS.includes(st.shots.countdown)) problems.push(`${where('start')}: unknown countdown shot ${JSON.stringify(st.shots.countdown)} (${COUNTDOWN_SHOTS.join(', ')}).`);
+    if (!LAUNCH_SHOTS.includes(st.shots.launch)) problems.push(`${where('start')}: unknown first-seconds shot ${JSON.stringify(st.shots.launch)} (${LAUNCH_SHOTS.join(', ')}).`);
+  }
+  if (isNew) {
+    if (st.gate === undefined || st.shots === undefined) problems.push(`${where('start')}: a new track says how its start looks: start.gate (${GATES.join(', ')}) and start.shots { countdown, launch }.`);
+    if (isCoaster(spec) && st.type === undefined) problems.push(`${where('start')}: a new coaster says its start type: start.type (${START_TYPES.join(', ')}).`);
+  }
+  return problems;
+}
+
 /** A coaster's own rules: heights within what the supports are drawn for, somewhere it touches down, at most 2 on the station roof. */
 function coasterRules({ spec, sections, where }) {
   const problems = [];
@@ -294,4 +324,4 @@ function coasterRules({ spec, sections, where }) {
   return problems;
 }
 
-module.exports = { checkRecipe, MIN_SPIRAL_RADIUS, MIN_SWEEP_RADIUS, BILLBOARDS, GRAND_PRIX_BILLBOARDS, isCoaster };
+module.exports = { checkRecipe, MIN_SPIRAL_RADIUS, MIN_SWEEP_RADIUS, BILLBOARDS, GRAND_PRIX_BILLBOARDS, isCoaster, START_TYPES, GATES, COUNTDOWN_SHOTS, LAUNCH_SHOTS };

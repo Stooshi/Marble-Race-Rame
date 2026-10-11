@@ -96,7 +96,7 @@ const KEY_TIMES = [0, 0.2, 0.38, 0.5, 0.63, 0.79, 1];
  *   aspect: width / height of the view (narrow phones get pulled back so more of the row fits).
  * Returns { camera, target } (Vector3s).
  */
-export function countdownPose(t, countdownMs, start, end, aspect = 1.6, { liftHill = null } = {}) {
+export function countdownPose(t, countdownMs, start, end, aspect = 1.6, { liftHill = null, shot = 'classic' } = {}) {
   const { centre, forward: F, side: S } = start;
   const U = new Vector3(0, 1, 0);
   const wide = Math.min(1.8, Math.max(1, 1.3 / Math.max(0.3, aspect))); // portrait: further out
@@ -113,8 +113,17 @@ export function countdownPose(t, countdownMs, start, end, aspect = 1.6, { liftHi
     [end.camera.clone(), end.target.clone()], //         straight behind the field: the shot at GO
   ];
 
-  // A coaster: it opens at the foot of the lift hill, the monument behind, and rides up beside the climb to the gate.
-  if (liftHill) {
+  // A track's own countdown shot (the varied starts): the same smooth path through key poses, ending at the shot at GO.
+  // (on: the same along the slope the field waits on, for shots close to the ice.)
+  const D = start.down ?? F;
+  const N = start.normal ?? U;
+  const on = (d, s, n) => centre.clone().addScaledVector(D, d).addScaledVector(S, s).addScaledVector(N, n);
+  const own = COUNTDOWN_KEYS[shot];
+  if (own) own(at, wide, on).forEach((key, k) => { keys[k] = key; });
+
+  // A coaster on a chain lift: it opens at the foot of the lift hill, the monument behind, and rides up beside the climb to the gate.
+  const chain = !liftHill?.type || liftHill.type === 'straight-lift' || liftHill.type === 'curving-lift';
+  if (liftHill && chain && (shot === 'classic' || shot === 'side')) {
     const { foot, top, side, back } = liftHill;
     // (First from well out to the side, the climb across the picture and the monument beyond its foot;
     // then up beside the top of the climb, looking at the gate.)
@@ -130,4 +139,57 @@ export function countdownPose(t, countdownMs, start, end, aspect = 1.6, { liftHi
     smoothCurve(KEY_TIMES, keys.map((key) => key[k].z), u),
   );
   return { camera: curve(0), target: curve(1) };
+}
+
+/**
+ * The varied starts' countdown shots: the first six key poses ([camera, the point in the field
+ * it looks at]) of each; the seventh is always the shot at GO. `at(f, s, u)`: metres ahead of the
+ * field's middle, to its side and up; `wide`: further out on a narrow (portrait) screen.
+ */
+const COUNTDOWN_KEYS = {
+  // Face-on: from out in front, low, the whole row behind its gate; a slow push in, then up and over to GO.
+  front: (at, wide) => [
+    [at(34 * wide, 0, 4.5), at(0, 0, 1)], [at(28 * wide, 1.5, 4), at(0, 0, 0.9)], [at(22 * wide, 0, 3.4), at(0, 0, 0.8)],
+    [at(17 * wide, -1, 3), at(0, 0, 0.7)], [at(14 * wide, 0, 3.4), at(0, 0, 0.6)], [at(6, -6 * wide, 8), at(2, 0, 0.3)],
+  ],
+  // In profile: the row side-on across the picture, drifting along it.
+  side: (at, wide) => [
+    [at(3, -26 * wide, 5), at(1, 0, 0.6)], [at(2, -23 * wide, 4.6), at(1, 0, 0.6)], [at(1, -21 * wide, 4.2), at(0.5, 0, 0.6)],
+    [at(0, -19 * wide, 4), at(0, 0, 0.6)], [at(-1, -17 * wide, 4.4), at(0, 0, 0.5)], [at(-6, -9 * wide, 7), at(1, 0, 0.3)],
+  ],
+  // From high above: the gate and the drop below it like a map, coming down to the field.
+  above: (at, wide) => [
+    [at(-8, 0, 60 * wide), at(4, 0, 0)], [at(-6, 2, 52 * wide), at(4, 0, 0)], [at(-5, 0, 44 * wide), at(3, 0, 0)],
+    [at(-5, -2, 36 * wide), at(2, 0, 0)], [at(-6, 0, 28 * wide), at(2, 0, 0)], [at(-9, 0, 16), at(2, 0, 0.3)],
+  ],
+  // Low among the marbles: just behind the row, a little above it, sliding across the channel along it.
+  // (Measured along the slope, so on a steep starting ramp it stays above the ice behind the row.)
+  chase: (at, wide, on) => [
+    [on(-5, -3, 2.4), on(2, -1.5, 0.4)], [on(-4.8, -1.5, 2.2), on(2, -0.5, 0.4)], [on(-4.6, 0.5, 2.1), on(2, 0.5, 0.4)],
+    [on(-4.6, 2.5, 2.2), on(2, 1.5, 0.4)], [on(-5, 1, 2.6), on(2, 0, 0.4)], [on(-8, 0, 3.4), on(2, 0, 0.4)],
+  ],
+};
+
+/** How long a first-seconds shot holds after GO before it hands over to the follow camera (ms), and the hand-over. */
+export const LAUNCH_HOLD_MS = 2600;
+export function launchHandover(t) {
+  return handover(t - LAUNCH_HOLD_MS);
+}
+
+/**
+ * The varied starts' first-seconds shots: where the camera is at time t after GO, from the
+ * leading group's middle `centre`, the way down the track there (`down`, along the slope), the
+ * ice's normal and the level direction across (`side`). 'high-behind' is the shot every track had
+ * (startLineShot, then the hand-over), so it has no pose here. Returns { camera, target }.
+ */
+export function launchPose(shot, { centre, down, normal, side }) {
+  const c = centre.clone().addScaledVector(normal, 0.55);
+  const at = (d, s, n) => c.clone().addScaledVector(down, d).addScaledVector(side, s).addScaledVector(normal, n);
+  switch (shot) {
+    case 'low-chase': return { camera: at(-8, 0, 1.8), target: at(6, 0, 0.3) }; //   low behind, at marble height
+    case 'side': return { camera: at(-2, -14, 5), target: at(3, 0, 0) }; //            alongside, tracking the pack
+    case 'overhead': return { camera: at(-6, 0, 26), target: at(4, 0, 0) }; //         from high above, nearly straight down
+    case 'look-back': return { camera: at(16, 0, 4), target: at(-2, 0, 0.3) }; //      ahead, the field racing at the camera
+    default: return null;
+  }
 }

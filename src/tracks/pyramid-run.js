@@ -18,7 +18,7 @@ module.exports = track({
   lighting: 'sunset',
   coaster: { height: 18, colours: { support: '#b8863a', rail: '#f2e6c8', tie: '#5a3a22' } },
   signature: 'Pyramid passage',
-  start: { landmark: 'sphinx' },
+  start: { landmark: 'sphinx', type: 'straight-lift', gate: 'stalls', shots: { countdown: 'side', launch: 'high-behind' } },
   finish: { landmark: 'nile-station', billboards: 1, scenery: ['palms'] },
   designChanges: [
     'Built from the libraries: the tunnel launch (the first drop through fallen stone blocks and broken columns, straight into the passage through a pyramid) and the two-splitters layout. The design\'s seven fixed sections are replaced by the layout, as decided for the coaster series; its landmark moments stay: the Sphinx with the Great Pyramid behind the lift hill, the run through the pyramid, the swoops low over the dunes past a camel caravan, the long sweep high between the three pyramids, the pharaoh\'s statue at the hairpin, the obelisk and the Nile station.',

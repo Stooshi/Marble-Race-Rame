@@ -102,6 +102,10 @@ window.kitView = {
     const v = (x) => x && { x: x.x, y: x.y, z: x.z };
     return { liftHill: u.liftHill && { top: v(u.liftHill.top), foot: v(u.liftHill.foot), back: v(u.liftHill.back), side: v(u.liftHill.side), length: u.liftHill.length } };
   },
+  /** Dev: the land's height at (x, z). */
+  ground(x, z) {
+    return scene.scenery?.userData?.groundAt?.(x, z);
+  },
   /** Dev: a free camera, from one point looking at another ([x, y, z] each), one frame drawn. */
   look({ from, to }) {
     scene.camera.position.set(...from);
