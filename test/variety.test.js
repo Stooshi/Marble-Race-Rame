@@ -123,3 +123,20 @@ test('coasters: up on supports, touching down somewhere, a station roof for bill
   assert.throws(() => track(spec({ sections: layout('classic', { dress: { sweep: { height: 10 } } }) })), /height, water and waterCurtain are for coasters/);
   assert.throws(() => track(coaster({ sections: layout('mid-drop', { waterfall: false, dress: { belowDrop: { tunnel: 'rock', height: 12, billboards: 0 } } }) })), /coaster's tunnel runs into the land/);
 });
+
+test('a track may retune a layout splitter (balance, added pegs), mirrored with the layout, and nothing else of its shape', () => {
+  const plain = kit.layout('climb-drop').find((s) => s.layoutKey === 'splitter').shape.fork;
+  const tuned = kit.layout('climb-drop', { dress: { splitter: { balance: { tipOffset: -1.1, left: { scrub: 3.8 } } } } }).find((s) => s.layoutKey === 'splitter').shape.fork;
+  assert.equal(tuned.tipOffset, -1.1);
+  assert.equal(tuned.left.scrub, 3.8);
+  assert.equal(tuned.left.drag, plain.left.drag);
+  assert.deepEqual(tuned.right, plain.right);
+  const mirrored = kit.layout('climb-drop', { mirror: true, dress: { splitter: { balance: { tipOffset: -1.1, left: { scrub: 3.8 } } } } }).find((s) => s.layoutKey === 'splitter').shape.fork;
+  assert.equal(mirrored.tipOffset, 1.1);
+  assert.equal(mirrored.right.scrub, 3.8);
+  assert.throws(() => kit.layout('climb-drop', { dress: { sweep: { balance: { left: { drag: 2 } } } } }), /only be set on a splitter/);
+  const { peg, block } = require('../src/trackKit/parts');
+  const pegged = kit.layout('climb-drop', { mirror: true, dress: { splitter: { addObstacles: [peg({ at: 0.05, line: 'left' })] } } }).find((s) => s.layoutKey === 'splitter');
+  assert.equal(pegged.obstacles.at(-1).line, 'right');
+  assert.throws(() => kit.layout('climb-drop', { dress: { splitter: { addObstacles: [block({ at: 0.1 })] } } }), /only pegs/);
+});

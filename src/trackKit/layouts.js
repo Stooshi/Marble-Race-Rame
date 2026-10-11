@@ -170,8 +170,24 @@ function layout(kind, { mirror = false, costumes = {}, dress = {}, ...o } = {}) 
   const [L, R] = mirror ? ['right', 'left'] : ['left', 'right'];
   const sections = make(L, R, costumes, (side) => BALANCE[side], o).map(({ key, ...sec }) => {
     const extra = dress[key] ?? {};
-    for (const k of Object.keys(extra)) if (!DRESS.includes(k)) throw new Error(`layout ${kind}: "${k}" cannot be changed on its ${key} section (only ${DRESS.join(', ')})`);
-    return { ...sec, ...extra, layoutKey: key };
+    const { balance, addObstacles, ...looks } = extra;
+    for (const k of Object.keys(looks)) if (!DRESS.includes(k)) throw new Error(`layout ${kind}: "${k}" cannot be changed on its ${key} section (only ${DRESS.join(', ')}, and balance and addObstacles on a splitter)`);
+    if (!balance && !addObstacles) return { ...sec, ...looks, layoutKey: key };
+    // A splitter retuned for this track once its batches say so: its channel settings
+    // (`balance`), and pegs on its approach (`addObstacles`) to mix the lanes when the
+    // section before sends the leaders to one side. Given for the unmirrored layout;
+    // `mirror` swaps channels and lines as it does the layout's own.
+    if (sec.shape?.shape !== 'splitter') throw new Error(`layout ${kind}: balance and addObstacles can only be set on a splitter (not ${key})`);
+    const flip = (line) => (typeof line === 'number' ? -line : { left: 'right', right: 'left' }[line] ?? line);
+    const added = (addObstacles ?? []).map((o) => {
+      if (o.obstacle !== 'peg') throw new Error(`layout ${kind}: only pegs can be added to a splitter (not ${o.obstacle})`);
+      return mirror ? { ...o, line: flip(o.line) } : o;
+    });
+    const obstacles = [...(sec.obstacles ?? []), ...added];
+    if (!balance) return { ...sec, ...looks, ...(obstacles.length && { obstacles }), layoutKey: key };
+    const b = mirror ? { ...balance, tipOffset: balance.tipOffset == null ? undefined : -balance.tipOffset, left: balance.right, right: balance.left } : balance;
+    const fork = { ...sec.shape.fork, ...(b.tipOffset == null ? {} : { tipOffset: b.tipOffset }), left: { ...sec.shape.fork.left, ...b.left }, right: { ...sec.shape.fork.right, ...b.right } };
+    return { ...sec, shape: { ...sec.shape, fork }, ...looks, ...(obstacles.length && { obstacles }), layoutKey: key };
   });
   for (const k of Object.keys(dress)) if (!sections.some((s) => s.layoutKey === k)) throw new Error(`layout ${kind} has no section "${k}" (${sections.map((s) => s.layoutKey).join(', ')})`);
   sections.layout = kind;

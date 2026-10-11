@@ -20,6 +20,7 @@ import { gatePlaces, StartGate } from './startGate';
 import { countdownPose, handover, startLineShot } from './startCamera';
 import { buildTrackFeatures } from './trackFeatures';
 import { buildStructures } from './structures';
+import { roofBlocks, stationRoof } from './scenery/coaster';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { buildBillboards } from './billboards';
 import { fetchBillboards } from '../api/billboards';
@@ -290,6 +291,7 @@ export class TrackScene {
     if (theme.scenery && this.sceneryOn) {
       setTimeout(() => {
         if (token !== this.buildToken || this.disposed) return; // another track was chosen meanwhile
+        this.stationRoof = null;
         this.scenery = buildScenery(theme, this.centerline, track, { lite: this.lite });
         if (this.scenery) {
           this.scenery.traverse((o) => o.layers.set(SCENERY_LAYER));
@@ -903,6 +905,10 @@ export class TrackScene {
    */
   keepInSight(camera, at, level, reach = 1) {
     const start = camera.clone();
+    // A coaster's station canopy: the camera stays under it with its marble, and is never seen through it.
+    const st = this.scenery?.userData?.station;
+    if (st && !this.stationRoof) this.stationRoof = stationRoof(st);
+    const roof = st ? this.stationRoof : null;
     // Where the camera would be k of the way out from its marble (1: where it wants to be).
     const place = (k) => {
       camera.lerpVectors(at, start, k);
@@ -910,7 +916,8 @@ export class TrackScene {
       const { floor, ceiling } = this.channelBounds(camera.x, camera.z, level);
       camera.y = Math.max(camera.y, floor + 1.5);
       if (camera.y > ceiling - 1) camera.y = Math.max(at.y + 1.2, ceiling - 1);
-      return !this.channelBlocks(camera, at);
+      if (roof && at.y < roof.bottom && roofBlocks(roof, camera, at)) camera.y = Math.max(at.y + 1.2, Math.min(camera.y, roof.bottom - 0.6));
+      return !this.channelBlocks(camera, at) && !(roof && roofBlocks(roof, camera, at));
     };
     const most = Math.max(0.25, Math.min(1, reach));
     if (place(most)) return most;

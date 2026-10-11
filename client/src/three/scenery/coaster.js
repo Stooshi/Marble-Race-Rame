@@ -144,6 +144,45 @@ export function stationOf(centerline) {
 }
 
 /**
+ * The station canopy as a slab, for the follow camera (the camera rule: it is never
+ * blocked): its footprint ({ centre, along, side, halfLength, halfWidth }) and its
+ * underside and top, with the front beam that hangs below it counted in.
+ */
+export function stationRoof(st) {
+  const rimY = st.floorY + 1.6;
+  return { centre: st.centre, along: st.along, side: st.side, halfLength: STATION.length / 2 + 1.6, halfWidth: 8.2, bottom: rimY + STATION.roof - 1.1, top: rimY + STATION.roof + 0.7 };
+}
+
+/** Does the line of sight from a to b pass through the station canopy? (A slab test in the canopy's own frame.) */
+export function roofBlocks(roof, a, b) {
+  const local = (p) => {
+    const dx = p.x - roof.centre.x;
+    const dz = p.z - roof.centre.z;
+    return [dx * roof.along.x + dz * roof.along.z, p.y, dx * roof.side.x + dz * roof.side.z];
+  };
+  const p = local(a);
+  const q = local(b);
+  const lo = [-roof.halfLength, roof.bottom, -roof.halfWidth];
+  const hi = [roof.halfLength, roof.top, roof.halfWidth];
+  let t0 = 0;
+  let t1 = 1;
+  for (let k = 0; k < 3; k += 1) {
+    const d = q[k] - p[k];
+    if (Math.abs(d) < 1e-9) {
+      if (p[k] < lo[k] || p[k] > hi[k]) return false;
+      continue;
+    }
+    let ta = (lo[k] - p[k]) / d;
+    let tb = (hi[k] - p[k]) / d;
+    if (ta > tb) [ta, tb] = [tb, ta];
+    t0 = Math.max(t0, ta);
+    t1 = Math.min(t1, tb);
+    if (t0 > t1) return false;
+  }
+  return true;
+}
+
+/**
  * The coaster's structure: { group, feet (spots kept clear of trees), liftHill }.
  * groundAt(x, z): the land's height; flight: coasterFlight's heights; boards: the
  * billboards' poses ({ foot, mount }) that stand on towers.

@@ -75,7 +75,16 @@ module.exports = track({
   `sections`. Each was proven on its own test track (`variety-layout-<kind>`, with the classic
   opening). `mirror` turns every bend the other way and swaps the splitters' channels;
   `dress` names and dresses each section by its key (looks, landmarks, billboards, tunnels,
-  bridges, a centrepiece), never its shape or its obstacles' places.
+  bridges, a centrepiece), never its shape or its obstacles' places. The one exception is a
+  splitter retuned from a track's own batches: `balance` (its channels' `tipOffset`, `left`,
+  `right`) and `addObstacles` (pegs on its run-in, to mix the lanes), both given for the
+  unmirrored layout.
+
+  Every layout's splitter follows S-bends that swing the fastest marbles to the left wall,
+  the splitter's inside. With an opening that spreads the field (the crest start) the
+  leaders then take the inside channel too often, and no balance fixes it without another
+  check failing (Sognefjord on `climb-drop`). Pick a layout without a splitter, or test
+  the splitter's batches early.
 
   | Layout | Sections (keys) |
   | --- | --- |
@@ -313,7 +322,8 @@ To look at them all: `node scripts/dump-kit-track.js grand-prix-gallery`, then o
   tunnel or the finish; and `finish: { billboards: 1 or 2 }` on the station roof.
 - Openings and layouts come from the libraries (above), and every coaster passes the sameness
   check. The design's landmark moments are dressed onto the layout's sections by key.
-- Sognefjord is the proof track.
+- Sognefjord is the proof track (the crest start on `long-sweeps`: no splitter). A coaster
+  splitter (two sets of rails on a wider frame) is built but not yet on a switched-on track.
 
 ## Mirrored tracks
 
