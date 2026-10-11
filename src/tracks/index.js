@@ -29,4 +29,5 @@ module.exports = [
   require('./wyrmwood-hollow-marble-grand-prix'),
   require('./sognefjord'),
   require('./phantom-peak'),
+  require('./collserola-run'),
 ];

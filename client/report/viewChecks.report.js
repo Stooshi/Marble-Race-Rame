@@ -139,7 +139,7 @@ it('track report: view checks', () => {
         ray.set(cam, marbles[i].clone().sub(cam).normalize());
         ray.far = cam.distanceTo(marbles[i]) - 1;
         const hit = ray.intersectObjects(solids, false)[0];
-        if (hit) result.blocked.push({ t, by: named(hit.object), at: +f.p[i].toFixed(4) });
+        if (hit) result.blocked.push({ t, by: named(hit.object), at: +f.p[i].toFixed(4), point: hit.point.toArray().map((v) => +v.toFixed(1)), from: cam.toArray().map((v) => +v.toFixed(1)) });
         else if (ray.intersectObjects(obstacles, false).length) result.behindObstacle += 1;
         const gap = Math.min(...near(f.p[i]).map((tri) => tri.closestPointToPoint(marbles[i], q).distanceTo(marbles[i]))) - MARBLE_RADIUS;
         result.worstSink = Math.min(result.worstSink, gap);

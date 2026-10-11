@@ -200,6 +200,117 @@ function volcanoRock() {
   return merge(p);
 }
 
+
+// ── Collserola Run ───────────────────────────────────────────────────────────
+
+/** Tibidabo's hilltop: the temple with its tall central tower and statue on top, and the slim Collserola tower beside it. */
+function tibidabo() {
+  const STONE = '#d8d0c0';
+  const DARK = '#8a8070';
+  const p = [
+    box(18, 7, 14, 0, 3.5, 0, '#b8a888'), // the crypt below
+    box(12, 9, 10, 0, 11.5, 0, STONE),
+    piece(new CylinderGeometry(2.6, 3, 14, 10), STONE, M(0, 23, 0)),
+    piece(new ConeGeometry(2.8, 4, 10), DARK, M(0, 32, 0)),
+    piece(new CylinderGeometry(0.5, 0.7, 3.4, 8), '#e8c45a', M(0, 35.7, 0)), // the statue, arms out
+    box(3.4, 0.5, 0.5, 0, 36.6, 0, '#e8c45a'),
+  ];
+  for (const x of [-5, 5]) p.push(piece(new CylinderGeometry(1.1, 1.3, 10, 8), STONE, M(x, 20, -3)), piece(new ConeGeometry(1.3, 3.5, 8), DARK, M(x, 26.7, -3)));
+  // The Collserola tower: a slim needle with a disc of decks, its antenna on top.
+  const tx = 26;
+  p.push(piece(new CylinderGeometry(0.9, 1.4, 70, 8), '#c8ccd2', M(tx, 35, -10)));
+  for (const y of [44, 48]) p.push(piece(new CylinderGeometry(7, 7, 2.6, 14), '#e2e4e8', M(tx, y, -10)));
+  p.push(piece(new CylinderGeometry(0.25, 0.5, 18, 6), '#d84a3a', M(tx, 79, -10)));
+  for (let k = 0; k < 3; k += 1) {
+    const a = (k / 3) * Math.PI * 2;
+    p.push(piece(new CylinderGeometry(0.08, 0.08, 52, 4), '#9aa0a8', new Matrix4().makeRotationZ(0.42).premultiply(new Matrix4().makeRotationY(a)).premultiply(M(tx + Math.cos(a) * 10, 24, -10 + Math.sin(a) * 10))));
+  }
+  return merge(p);
+}
+
+/** Barceloneta: the beach and the sea behind the station, umbrellas, a kiosk, the palm-lined promenade. */
+function barcelonetaBeach() {
+  const p = [
+    box(110, 0.4, 30, 0, 0.2, -14, '#ead8a8'), // the sand
+    box(130, 0.3, 60, 0, -0.1, -58, '#3f8fc4'), // the sea
+    box(110, 0.5, 6, 0, 0.25, 4, '#c8c0b0'), // the promenade
+  ];
+  for (let k = 0; k < 9; k += 1) {
+    const x = -44 + k * 11;
+    const c = ['#d8442f', '#f2c230', '#2f7fc4', '#4aa35a'][k % 4];
+    p.push(piece(new CylinderGeometry(0.1, 0.1, 2.6, 5), '#f2efe6', M(x, 1.3, -12 - (k % 3) * 5)));
+    p.push(piece(new ConeGeometry(2, 0.9, 8), c, M(x, 2.9, -12 - (k % 3) * 5)));
+  }
+  for (let k = 0; k < 8; k += 1) {
+    const x = -48 + k * 14;
+    p.push(piece(new CylinderGeometry(0.3, 0.45, 9, 6), '#8a6a4a', M(x, 4.5, 7)));
+    p.push(piece(new IcosahedronGeometry(2.6, 0), '#3f7f3a', S(x, 9.5, 7, 1.3, 0.5, 1.3)));
+  }
+  p.push(box(4, 3, 3, 30, 1.5, -6, '#f2efe6'), roof(5, 1.6, 4, 30, 3, -6, '#2f7fc4'));
+  // A tall hotel sail at the end of the beach.
+  p.push(piece(new CylinderGeometry(6, 8, 50, 4, 1), '#cfe0ea', turned(62, 25, -20, Math.PI / 4, 1, 1, 0.35)));
+  return merge(p);
+}
+
+/** The city spread below: the grid of the Eixample, a few towers, the sea beyond. */
+function barcelonaCity() {
+  const p = [box(220, 0.3, 160, 0, -0.5, 0, '#c8b8a0')];
+  for (let i = -6; i <= 6; i += 1) {
+    for (let j = -4; j <= 4; j += 1) {
+      const h = 6 + (Math.abs(i * 7 + j * 13) % 5) * 1.5;
+      // Eixample blocks: square with cut corners, a courtyard in the middle (drawn as four sides).
+      const x = i * 16;
+      const z = j * 16;
+      p.push(box(12, h, 3, x, h / 2, z - 4.5, '#e2d4b8'), box(12, h, 3, x, h / 2, z + 4.5, '#d8c8a8'));
+      p.push(box(3, h, 6, x - 4.5, h / 2, z, '#e2d4b8'), box(3, h, 6, x + 4.5, h / 2, z, '#d8c8a8'));
+    }
+  }
+  p.push(piece(new CylinderGeometry(4, 6, 60, 12), '#d84a3a', S(60, 30, -50, 1, 1, 0.8))); // a bullet-shaped tower
+  p.push(piece(new SphereGeometry(4.4, 10, 8), '#2f7fc4', S(60, 60, -50, 1, 1.4, 0.8)));
+  p.push(box(220, 0.3, 40, 0, -0.4, -100, '#3f8fc4'));
+  return merge(p);
+}
+
+/** Park Güell's terrace by the tunnel: the long wavy mosaic bench, a little mosaic lizard, a gingerbread lodge. */
+function parkGuellTerrace() {
+  const tiles = ['#2f7fc4', '#f2c230', '#4aa35a', '#d8442f', '#2fb0a8', '#f2efe6'];
+  const p = [box(36, 6, 16, 0, 3, 0, '#c8a878')]; // the terrace on its columns
+  for (let k = 0; k < 6; k += 1) p.push(piece(new CylinderGeometry(0.9, 1, 6, 8), '#d8c8a8', M(-15 + k * 6, 3, 9)));
+  for (let k = 0; k < 24; k += 1) {
+    const x = -17 + k * 1.5;
+    const z = 7.5 + Math.sin(k * 0.6) * 1.4;
+    p.push(box(1.6, 1.2, 0.6, x, 6.6, z, tiles[k % tiles.length]));
+  }
+  // The lizard on the steps, in colourful tiles.
+  p.push(piece(new IcosahedronGeometry(1.2, 0), '#4aa35a', S(-8, 1.2, 14, 1.8, 0.6, 0.9)));
+  p.push(piece(new ConeGeometry(0.5, 2.4, 5), '#2f7fc4', new Matrix4().makeRotationZ(Math.PI / 2).premultiply(M(-11, 1.1, 14))));
+  p.push(piece(new IcosahedronGeometry(0.7, 0), '#f2c230', M(-5.4, 1.4, 14)));
+  // The lodge with its iced-cake roof and spire.
+  p.push(box(8, 7, 8, 14, 3.5, -12, '#e8d8b8'), piece(new ConeGeometry(5.8, 4, 4), '#7a4a2a', turned(14, 9, -12, Math.PI / 4)));
+  p.push(piece(new CylinderGeometry(0.6, 0.9, 6, 8), '#f2efe6', M(17, 10, -9)), piece(new ConeGeometry(0.9, 1.6, 8), '#2f7fc4', M(17, 13.8, -9)));
+  return merge(p);
+}
+
+/** The Sagrada Família in the middle of the spin: clusters of tall perforated spires, cranes over the basilica. */
+function sagradaFamilia() {
+  const STONE = '#c8b08a';
+  const p = [box(22, 14, 32, 0, 7, 0, '#b89c78')];
+  const spire = (x, z, h, r) => {
+    p.push(piece(new CylinderGeometry(r * 0.55, r, h, 8), STONE, M(x, 14 + h / 2, z)));
+    p.push(piece(new ConeGeometry(r * 0.6, h * 0.25, 8), STONE, M(x, 14 + h + h * 0.12, z)));
+    p.push(piece(new IcosahedronGeometry(r * 0.45, 0), '#e8c45a', M(x, 14 + h * 1.27, z)));
+  };
+  for (const z of [-15, 15]) for (const x of [-6, -2, 2, 6]) spire(x, z, 22 + (Math.abs(x) < 4 ? 6 : 0), 1.5);
+  spire(0, 0, 40, 3.2); // the central tower
+  for (const [x, z] of [[-7, -5], [7, -5], [-7, 6], [7, 6]]) spire(x, z, 28, 2);
+  // Two construction cranes.
+  for (const [x, z, a] of [[-14, -8, 0.4], [14, 10, -2.2]]) {
+    p.push(box(1, 52, 1, x, 26, z, '#e8c23a'));
+    p.push(piece(new BoxGeometry(26, 0.8, 0.8), '#e8c23a', new Matrix4().makeRotationY(a).premultiply(M(x, 52, z)).multiply(new Matrix4().makeTranslation(8, 0, 0))));
+  }
+  return merge(p);
+}
+
 export const COASTER_LANDMARKS = {
   'stave-church': { build: staveChurch, radius: 10 },
   'fjord-village': { build: fjordVillage, radius: 30 },
@@ -211,4 +322,9 @@ export const COASTER_LANDMARKS = {
   'distant-coasters': { build: distantCoasters, radius: 70 },
   graveyard: { build: graveyard, radius: 17 },
   'volcano-rock': { build: volcanoRock, radius: 12, fit: 11 },
+  tibidabo: { build: tibidabo, radius: 30 },
+  'barceloneta-beach': { build: barcelonetaBeach, radius: 60 },
+  'barcelona-city': { build: barcelonaCity, radius: 110 },
+  'park-guell-terrace': { build: parkGuellTerrace, radius: 20 },
+  'sagrada-familia': { build: sagradaFamilia, radius: 18, fit: 12 },
 };

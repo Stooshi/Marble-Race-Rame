@@ -67,6 +67,7 @@ export const COSTUME_COLORS = {
   // Coasters: Sognefjord.
   fjordRock: '#6f7378', fjordMoss: '#4f7a3a', netPole: '#7a5a3a', netCord: '#d9cfb8', fjordTroll: '#7d7466', fjordTrollMoss: '#5f7f42', trollNose: '#8f8274',
   barrelWood: '#7a4f2e', barrelHoop: '#3a3634', tombstone: '#9a968c', tombMoss: '#5a6a48', totemWood: '#6a4a8a', totemFace: '#e8b33c', totemEye: '#ff7a1a',
+  pineCone: '#8a5a32', pineConeTip: '#5a3a20', tileBlue: '#2f7fc4', tileYellow: '#f2c230', tileGreen: '#4aa35a', tileRed: '#d8442f', tileWhite: '#f2efe6',
   netFloat: '#d8322b',
 };
 
@@ -876,6 +877,28 @@ function parkTotemBody(add, base, q) {
   add('totemFace', new ConeGeometry(1.3, 1.2, 6), local(base, q, 0, 5.8, 0));
 }
 
+/** A pine cone the size of a boulder, its scales in rings (Collserola Run; a block). */
+function pineCone(add, mat, group, point, q, { radius, at }) {
+  const r = radius * 0.75;
+  const tilt = (Math.round(at * 983) % 4) * 0.4;
+  const lie = new Matrix4().makeRotationZ(Math.PI / 2 - 0.25).premultiply(new Matrix4().makeRotationY(tilt));
+  for (let k = 0; k < 5; k += 1) {
+    const rr = r * (1 - Math.abs(k - 1.6) * 0.2);
+    add(k % 2 ? 'pineCone' : 'pineConeTip', new ConeGeometry(rr, r * 0.7, 9), local(point, q, 0, r * 0.95, 0).multiply(lie).multiply(new Matrix4().makeTranslation(0, (k - 2) * r * 0.42, 0)));
+  }
+  return [];
+}
+
+/** A twisting Gaudí rooftop chimney in trencadís tiles; its swinging arm is a mosaic spiral (Collserola Run; a swipe). */
+function gaudiChimneyBody(add, base, q) {
+  const tiles = ['tileBlue', 'tileYellow', 'tileGreen', 'tileRed', 'tileWhite'];
+  for (let k = 0; k < 6; k += 1) {
+    add(tiles[k % tiles.length], new CylinderGeometry(0.75 - k * 0.04, 0.85 - k * 0.04, 0.9, 6), local(base, q, 0, 0.45 + k * 0.9, 0).multiply(new Matrix4().makeRotationY(k * 0.5)));
+  }
+  add('tileWhite', new IcosahedronGeometry(0.75, 0), local(base, q, 0, 6, 0));
+  add('tileRed', new ConeGeometry(0.4, 0.9, 6), local(base, q, 0, 6.9, 0));
+}
+
 /** A fallen stone block, mossy, from the ruined walls (Wyrmwood Hollow; a block). */
 function stoneBlock(add, mat, group, point, q, { radius, at }) {
   const tilt = (Math.round(at * 997) % 5) * 0.08;
@@ -1029,6 +1052,14 @@ export const KIT_COSTUMES = {
   },
   'stone-block': { places: 'block', build: stoneBlock },
   barrel: { places: 'block', build: barrel },
+  'pine-cone': { places: 'block', build: pineCone },
+  'gaudi-chimney': {
+    places: 'swipe',
+    body: gaudiChimneyBody,
+    standOff: 2.2,
+    sink: -0.3,
+    arm: { colour: 'tileBlue', shoulder: [0.8, 4.4, 0.3], radii: [0.26, 0.38], segments: 7, tip: 0.5, tipDetail: 1, end: 0.25, endDetail: 0, endColour: 'tileYellow', lift: 0.4, outLift: 0.5, nose: 0.25 },
+  },
   tombstone: { places: 'slalom', build: tombstone },
   'park-totem': {
     places: 'swipe',

@@ -244,7 +244,7 @@ module.exports = {
   plunge, straight, climb, sBends, sweep, spiral, hairpin, splitter, waterfall, runIn,
   block, pileUp, curtain, swipe, parked, slalom, peg,
   bump, boost, brake, moguls, steps, paint, rumble,
-  TUNNELS: ['mine', 'ice-cave', 'dragon', 'rock', 'roots', 'bazaar', 'canyon'],
+  TUNNELS: ['mine', 'ice-cave', 'dragon', 'rock', 'roots', 'bazaar', 'canyon', 'mosaic', 'pyramid'],
   BRIDGES: ['ice', 'stone', 'wood', 'steel'],
   // Scenery names (looks only; the 3D view draws them, client/src/three/scenery/kit*.js).
   SURFACES: ['ice', 'snow', 'sand', 'stone', 'water', 'asphalt'],
@@ -263,12 +263,13 @@ module.exports = {
     'giant-tree', 'tree-platform', 'glow-flowers', 'snow-castle', 'snow-island', 'ice-palace',
     'ruined-castle', 'sleeping-dragon', 'fallen-statue', 'amphitheatre', 'dragon-mountain',
     'stave-church', 'fjord-village', 'cruise-ship', 'waterfall-cliff', 'ledge-farm',
-    'skull-rock', 'park-midway', 'distant-coasters', 'graveyard', 'volcano-rock'],
+    'skull-rock', 'park-midway', 'distant-coasters', 'graveyard', 'volcano-rock',
+    'tibidabo', 'barceloneta-beach', 'barcelona-city', 'park-guell-terrace', 'sagrada-familia'],
   OVERHEAD: ['gondola', 'cable-car', 'chairlift', 'vulture'],
   // What stands in the middle of a splitter, between its two channels (the arch: over one of
   // them), or in the middle of a spiral or a hairpin.
   AROUND: ['mountain-hut', 'big-rock', 'mountain-restaurant', 'mine-headframe', 'nunatak', 'bell-tower', 'arc-de-triomphe', 'obelisk', 'notre-dame', 'oasis', 'twisted-tower', 'river-island', 'anaconda', 'watchtower', 'pagoda',
-    'museum-of-the-future', 'dubai-frame', 'opera-house', 'tulip-garden', 'roundabout-monument', 'acacia', 'mughal-fountain', 'giant-tree', 'snow-island', 'fallen-statue', 'volcano-rock'],
+    'museum-of-the-future', 'dubai-frame', 'opera-house', 'tulip-garden', 'roundabout-monument', 'acacia', 'mughal-fountain', 'giant-tree', 'snow-island', 'fallen-statue', 'volcano-rock', 'sagrada-familia'],
   // Scenery near a section (or the start or finish): what grows and stands beside the track there.
   SCENERY: ['bare', 'rocks', 'birches', 'pines', 'race-netting', 'funicular', 'wooden-houses', 'frozen-lake',
     'wood-clad', 'chalets', 'pasture', 'aspens', 'shopfronts',

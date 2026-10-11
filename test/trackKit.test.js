@@ -627,6 +627,7 @@ const HIDDEN_KIT_TRACKS = [
   ['wyrmwood-hollow-marble-grand-prix', '2026-11-04-add-wyrmwood-hollow-marble-grand-prix.sql', 'Wyrmwood Hollow Marble Grand Prix: a valley of ancient ruins where an old dragon sleeps, from a ruined castle wall over a chasm bridge and past the dragon to a ruined amphitheatre'],
   ['sognefjord', '2026-11-05-add-sognefjord.sql', 'Sognefjord Coaster, the first Coaster Series track'],
   ['phantom-peak', '2026-11-06-add-phantom-peak.sql', 'Phantom Peak Coaster, a spooky theme park mountain at dusk'],
+  ['collserola-run', '2026-11-07-add-collserola-run.sql', 'Collserola Run Coaster, from Tibidabo down to the sea at Barcelona'],
 ];
 for (const [slug, file, note] of HIDDEN_KIT_TRACKS) {
   test(`${slug} is added by its data update, switched off, exactly as its track file builds it`, () => {

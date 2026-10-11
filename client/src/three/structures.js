@@ -30,6 +30,9 @@ export const STRUCTURE_COLORS = {
   root: '#6b4a2e', rootDark: '#4a321f',
   redRock: '#b8603a', redRockDark: '#94482a', canyonFan: '#2556b8', canyonFan2: '#f2b81c',
   plaster: '#e8d6b0', plasterDark: '#d9c39a', ablaqRed: '#b8452f', ablaqCream: '#f2e6c8', carpetRed: '#a8201c', carpetBlue: '#2a4f8a', bazaarLamp: '#ffb84a',
+  // trencadís mosaic (Park Güell) and the passage through a pyramid
+  tileWhite: '#f2efe6', tileBlue: '#2f7fc4', tileYellow: '#f2c230', tileGreen: '#4aa35a', tileRed: '#d8442f', tileTeal: '#2fb0a8',
+  sandstone: '#d8b878', sandstoneDark: '#b8955a', glyph: '#5a3a22', torch: '#ffb03a',
   // bridges
   plank: '#8a6340', plankDark: '#6a4a2f', stone: '#a49c8f', stoneDark: '#837b70', iceSlab: '#cdeefc',
   steel: '#8d939b', steelDark: '#6c727a', bridgeWater: '#3f7fa8',
@@ -45,6 +48,8 @@ const TUNNEL_STYLES = {
   dragon: { out: 1.0, rise: 4.2, ribEvery: 1.5 },
   roots: { out: 1.0, rise: 4.0, ribEvery: 2.5 },
   bazaar: { out: 0.9, rise: 4.4, ribEvery: 3 },
+  mosaic: { out: 0.9, rise: 4.2, ribEvery: 0 },
+  pyramid: { out: 0.9, rise: 4.0, ribEvery: 4 },
   // A canyon: no roof, towering red rock walls either side, spectators along the cliff tops.
   canyon: { out: 1.2, rise: 0, ribEvery: 0, open: true },
 };
@@ -192,6 +197,17 @@ export function buildStructures(centerline, channel, kit, { lite = false } = {})
           if (low && Math.floor(k / 2) % 3 === 1) return Math.floor(k / 6) % 2 ? C.carpetRed : C.carpetBlue;
           return noise(k * 7 + j) > 0.5 ? C.plaster : C.plasterDark;
         },
+        // Park Güell: broken tiles of every colour, white grout showing between.
+        mosaic: (k, j) => {
+          const t = noise(k * 23 + j * 11);
+          return t < 0.18 ? C.tileWhite : [C.tileBlue, C.tileYellow, C.tileGreen, C.tileRed, C.tileTeal][Math.floor(noise(k * 5 + j * 29) * 5) % 5];
+        },
+        // A passage through a pyramid: sandstone blocks, bands of hieroglyphs low on the walls.
+        pyramid: (k, j, n, across) => {
+          const low = j / across < 0.25 || j / across > 0.75;
+          if (low && (k + j) % 3 === 0) return C.glyph;
+          return noise(k * 9 + j * 5) > 0.5 ? C.sandstone : C.sandstoneDark;
+        },
       }[s.tunnel] ?? ((k, j) => (noise(k + j) > 0.5 ? C.rock : C.rockDark));
       let rings = [];
       if (!style.open) {
@@ -204,7 +220,7 @@ export function buildStructures(centerline, channel, kit, { lite = false } = {})
 
       // From outside: banks beside the channel (rock, ice or the dragon's coils), never across
       // it, so the follow camera above sees the run dive in under them.
-      const bank = { mine: ['rock', 'rockDark'], rock: ['rock', 'rockDark'], roots: ['root', 'rock'], 'ice-cave': ['iceRib', 'ice'], dragon: ['scale', 'scaleDark'], bazaar: ['plaster', 'plasterDark'], canyon: ['redRock', 'redRockDark'] }[s.tunnel] ?? ['rock', 'rockDark'];
+      const bank = { mine: ['rock', 'rockDark'], rock: ['rock', 'rockDark'], roots: ['root', 'rock'], 'ice-cave': ['iceRib', 'ice'], dragon: ['scale', 'scaleDark'], bazaar: ['plaster', 'plasterDark'], canyon: ['redRock', 'redRockDark'], mosaic: ['tileGreen', 'tileWhite'], pyramid: ['sandstone', 'sandstoneDark'] }[s.tunnel] ?? ['rock', 'rockDark'];
       const bankStep = lite ? 6 : 3.5;
       const nb = Math.max(2, Math.round(len / bankStep));
       for (let k = 0; k <= nb; k += 1) {
@@ -243,7 +259,7 @@ export function buildStructures(centerline, channel, kit, { lite = false } = {})
         }
       }
 
-      if (s.tunnel === 'mine' || s.tunnel === 'bazaar') {
+      if (s.tunnel === 'mine' || s.tunnel === 'bazaar' || s.tunnel === 'pyramid') {
         // Lanterns on the timber frames (the bazaar: brass lanterns by the arches), low on the walls (inward-facing glowing tiles).
         const lamps = [];
         for (let k = ribRings * 2; k < rings.length - 1; k += ribRings * 3) {
@@ -259,7 +275,7 @@ export function buildStructures(centerline, channel, kit, { lite = false } = {})
           }
         }
         if (lamps.length) {
-          const m = new MeshBasicMaterial({ color: s.tunnel === 'bazaar' ? STRUCTURE_COLORS.bazaarLamp : STRUCTURE_COLORS.lantern });
+          const m = new MeshBasicMaterial({ color: s.tunnel === 'bazaar' ? STRUCTURE_COLORS.bazaarLamp : s.tunnel === 'pyramid' ? STRUCTURE_COLORS.torch : STRUCTURE_COLORS.lantern });
           owned.push(m);
           group.add(new Mesh(mergeGeometries(lamps.map((g) => g.toNonIndexed())), m));
         }
