@@ -32,4 +32,5 @@ module.exports = [
   require('./collserola-run'),
   require('./whistler-spins'),
   require('./pyramid-run'),
+  require('./ha-long-bay-spins'),
 ];

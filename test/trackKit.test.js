@@ -630,6 +630,7 @@ const HIDDEN_KIT_TRACKS = [
   ['collserola-run', '2026-11-07-add-collserola-run.sql', 'Collserola Run Coaster, from Tibidabo down to the sea at Barcelona'],
   ['whistler-spins', '2026-11-08-add-whistler-spins.sql', 'Whistler Spins Coaster, a winter coaster spinning down to Whistler Village'],
   ['pyramid-run', '2026-11-09-add-pyramid-run.sql', 'Pyramid Run Coaster, racing between the pyramids of Giza at golden hour'],
+  ['ha-long-bay-spins', '2026-11-10-add-ha-long-bay-spins.sql', 'Ha Long Bay Spins Coaster, spinning between the limestone islands of Ha Long Bay'],
 ];
 for (const [slug, file, note] of HIDDEN_KIT_TRACKS) {
   test(`${slug} is added by its data update, switched off, exactly as its track file builds it`, () => {
