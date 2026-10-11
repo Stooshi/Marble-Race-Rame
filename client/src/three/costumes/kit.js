@@ -67,7 +67,7 @@ export const COSTUME_COLORS = {
   // Coasters: Sognefjord.
   fjordRock: '#6f7378', fjordMoss: '#4f7a3a', netPole: '#7a5a3a', netCord: '#d9cfb8', fjordTroll: '#7d7466', fjordTrollMoss: '#5f7f42', trollNose: '#8f8274',
   barrelWood: '#7a4f2e', barrelHoop: '#3a3634', tombstone: '#9a968c', tombMoss: '#5a6a48', totemWood: '#6a4a8a', totemFace: '#e8b33c', totemEye: '#ff7a1a',
-  pineCone: '#8a5a32', pineConeTip: '#5a3a20', tileBlue: '#2f7fc4', tileYellow: '#f2c230', tileGreen: '#4aa35a', tileRed: '#d8442f', tileWhite: '#f2efe6',
+  pineCone: '#8a5a32', pineConeTip: '#5a3a20', grizzly: '#6a4a30', grizzlyDark: '#4a3220', grizzlyMuzzle: '#a8885a', tileBlue: '#2f7fc4', tileYellow: '#f2c230', tileGreen: '#4aa35a', tileRed: '#d8442f', tileWhite: '#f2efe6',
   netFloat: '#d8322b',
 };
 
@@ -899,6 +899,15 @@ function gaudiChimneyBody(add, base, q) {
   add('tileRed', new ConeGeometry(0.4, 0.9, 6), local(base, q, 0, 6.9, 0));
 }
 
+/** A grizzly bear reared up on its hind legs, one great paw swiping (Whistler Spins; a swipe). */
+function grizzlyBody(add, base, q) {
+  add('grizzly', new IcosahedronGeometry(1.3, 1), local(base, q, 0, 1.7, 0, 1, 1.3, 0.85));
+  add('grizzly', new IcosahedronGeometry(0.75, 1), local(base, q, 0, 3.5, 0.2));
+  add('grizzlyMuzzle', new IcosahedronGeometry(0.34, 0), local(base, q, 0, 3.35, 0.85, 1, 0.8, 1.2));
+  for (const x of [-0.45, 0.45]) add('grizzlyDark', new IcosahedronGeometry(0.22, 0), local(base, q, x, 4.1, 0.15));
+  for (const x of [-0.6, 0.6]) add('grizzlyDark', new BoxGeometry(0.6, 1, 0.7), local(base, q, x, 0.5, 0));
+}
+
 /** A fallen stone block, mossy, from the ruined walls (Wyrmwood Hollow; a block). */
 function stoneBlock(add, mat, group, point, q, { radius, at }) {
   const tilt = (Math.round(at * 997) % 5) * 0.08;
@@ -1053,6 +1062,13 @@ export const KIT_COSTUMES = {
   'stone-block': { places: 'block', build: stoneBlock },
   barrel: { places: 'block', build: barrel },
   'pine-cone': { places: 'block', build: pineCone },
+  grizzly: {
+    places: 'swipe',
+    body: grizzlyBody,
+    standOff: 2.2,
+    sink: -0.3,
+    arm: { colour: 'grizzly', shoulder: [0.9, 2.7, 0.3], radii: [0.3, 0.42], segments: 7, tip: 0.5, tipDetail: 1, end: 0.25, endDetail: 0, endColour: 'grizzlyDark', lift: 0.4, outLift: 0.5, nose: 0.25 },
+  },
   'gaudi-chimney': {
     places: 'swipe',
     body: gaudiChimneyBody,

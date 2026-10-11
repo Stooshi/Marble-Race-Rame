@@ -88,8 +88,8 @@ test('the sameness check: identical layouts fail, different ones pass, test trac
   // Today's Grand Prix tracks share one layout: the check fails them.
   const dubai = varietyCheck(physicsTrack('dubai-marble-grand-prix'), PHYSICS_TRACKS);
   assert.ok(dubai.lines.some((l) => l.pass === false && /Layout/.test(l.what)));
-  // A track on a new layout and opening passes against every track today.
-  const fresh = track(spec({ family: 'world-tour', opening: opening('crest-start'), sections: layout('twin-spirals', { mirror: true }) }));
+  // A track on a layout no track uses yet passes against every track today.
+  const fresh = track(spec({ family: 'world-tour', opening: opening('crest-start'), sections: layout('two-splitters') }));
   const check = varietyCheck(fresh, [...PHYSICS_TRACKS, fresh]);
   assert.deepEqual(check.lines.filter((l) => l.pass === false), []);
   // The libraries' own test tracks are never compared.
@@ -134,9 +134,11 @@ test('a track may retune a layout splitter (balance, added pegs), mirrored with 
   const mirrored = kit.layout('climb-drop', { mirror: true, dress: { splitter: { balance: { tipOffset: -1.1, left: { scrub: 3.8 } } } } }).find((s) => s.layoutKey === 'splitter').shape.fork;
   assert.equal(mirrored.tipOffset, 1.1);
   assert.equal(mirrored.right.scrub, 3.8);
-  assert.throws(() => kit.layout('climb-drop', { dress: { sweep: { balance: { left: { drag: 2 } } } } }), /only be set on a splitter/);
+  assert.throws(() => kit.layout('climb-drop', { dress: { sweep: { balance: { left: { drag: 2 } } } } }), /balance can only be set on a splitter/);
   const { peg, block } = require('../src/trackKit/parts');
   const pegged = kit.layout('climb-drop', { mirror: true, dress: { splitter: { addObstacles: [peg({ at: 0.05, line: 'left' })] } } }).find((s) => s.layoutKey === 'splitter');
   assert.equal(pegged.obstacles.at(-1).line, 'right');
-  assert.throws(() => kit.layout('climb-drop', { dress: { splitter: { addObstacles: [block({ at: 0.1 })] } } }), /only pegs/);
+  assert.throws(() => kit.layout('climb-drop', { dress: { splitter: { addObstacles: [block({ at: 0.1 })] } } }), /only pegs can be added/);
+  assert.throws(() => kit.layout('climb-drop', { dress: { spiral: { addObstacles: [peg({ at: 0.5 })] } } }), /no pegs added to a spiral/);
+  assert.equal(kit.layout('twin-spirals', { dress: { sweep: { addObstacles: [peg({ at: 0.5 })] } } }).find((s) => s.layoutKey === 'sweep').obstacles.length, 1);
 });

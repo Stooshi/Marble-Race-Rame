@@ -30,4 +30,5 @@ module.exports = [
   require('./sognefjord'),
   require('./phantom-peak'),
   require('./collserola-run'),
+  require('./whistler-spins'),
 ];

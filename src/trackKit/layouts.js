@@ -171,16 +171,18 @@ function layout(kind, { mirror = false, costumes = {}, dress = {}, ...o } = {}) 
   const sections = make(L, R, costumes, (side) => BALANCE[side], o).map(({ key, ...sec }) => {
     const extra = dress[key] ?? {};
     const { balance, addObstacles, ...looks } = extra;
-    for (const k of Object.keys(looks)) if (!DRESS.includes(k)) throw new Error(`layout ${kind}: "${k}" cannot be changed on its ${key} section (only ${DRESS.join(', ')}, and balance and addObstacles on a splitter)`);
+    for (const k of Object.keys(looks)) if (!DRESS.includes(k)) throw new Error(`layout ${kind}: "${k}" cannot be changed on its ${key} section (only ${DRESS.join(', ')}, addObstacles, and balance on a splitter)`);
     if (!balance && !addObstacles) return { ...sec, ...looks, layoutKey: key };
-    // A splitter retuned for this track once its batches say so: its channel settings
-    // (`balance`), and pegs on its approach (`addObstacles`) to mix the lanes when the
-    // section before sends the leaders to one side. Given for the unmirrored layout;
-    // `mirror` swaps channels and lines as it does the layout's own.
-    if (sec.shape?.shape !== 'splitter') throw new Error(`layout ${kind}: balance and addObstacles can only be set on a splitter (not ${key})`);
+    // Retuned for this track once its batches say so: a splitter's channel settings
+    // (`balance`), and pegs (`addObstacles`) on a section that is not a spiral or the
+    // hairpin, to mix the lanes before a splitter or add overtakes where a layout runs
+    // at the edge. Given for the unmirrored layout; `mirror` swaps channels and lines
+    // as it does the layout's own.
+    if (balance && sec.shape?.shape !== 'splitter') throw new Error(`layout ${kind}: balance can only be set on a splitter (not ${key})`);
+    if (addObstacles && ['spiral', 'hairpin'].includes(sec.shape?.shape)) throw new Error(`layout ${kind}: no pegs added to a ${sec.shape.shape} (${key}): the layouts keep them clear`);
     const flip = (line) => (typeof line === 'number' ? -line : { left: 'right', right: 'left' }[line] ?? line);
     const added = (addObstacles ?? []).map((o) => {
-      if (o.obstacle !== 'peg') throw new Error(`layout ${kind}: only pegs can be added to a splitter (not ${o.obstacle})`);
+      if (o.obstacle !== 'peg') throw new Error(`layout ${kind}: only pegs can be added (not ${o.obstacle})`);
       return mirror ? { ...o, line: flip(o.line) } : o;
     });
     const obstacles = [...(sec.obstacles ?? []), ...added];

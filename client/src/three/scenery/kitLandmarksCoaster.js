@@ -311,6 +311,67 @@ function sagradaFamilia() {
   return merge(p);
 }
 
+
+// ── Whistler Spins ───────────────────────────────────────────────────────────
+
+/** A tall stone inukshuk on the summit (a plain one, stacked stones with arms), snowy peaks behind it. */
+function inukshuk() {
+  const STONE = '#8a8f96';
+  const p = [
+    box(1.6, 4, 1.4, -1.8, 2, 0, STONE), box(1.6, 4, 1.4, 1.8, 2, 0, STONE), // the legs
+    box(6, 1.6, 1.8, 0, 4.8, 0, '#7a7f86'), // the hips
+    box(3, 3.4, 1.6, 0, 7.3, 0, STONE), // the body
+    box(10, 1.4, 1.6, 0, 9.6, 0, '#7a7f86'), // the arms
+    box(2.2, 2, 1.6, 0, 11.3, 0, STONE), // the head
+    piece(new IcosahedronGeometry(5, 0), '#e8eef4', S(0, 0.5, 0, 1.4, 0.3, 1.2)),
+  ];
+  for (const [x, z, h, r] of [[-40, -50, 60, 26], [10, -70, 80, 30], [55, -45, 55, 24]]) {
+    p.push(piece(new ConeGeometry(r, h, 6), '#7a7f86', M(x, h / 2 - 6, z)));
+    p.push(piece(new ConeGeometry(r * 0.42, h * 0.42, 6), '#f4f8fb', M(x, h - 6 - h * 0.21 + 0.5, z)));
+  }
+  return merge(p);
+}
+
+/** Whistler Village behind the station: wooden lodges with snowy roofs, strings of lights, a skating rink. */
+function whistlerVillage() {
+  const p = [];
+  const walls = ['#7a5a3a', '#8a6a48', '#6a4a30', '#9a7a52'];
+  for (let k = 0; k < 6; k += 1) {
+    const x = -30 + k * 12;
+    const z = (k % 2) * 8 - 4;
+    const h = 7 + (k % 3) * 2;
+    p.push(box(9, h, 8, x, h / 2, z, walls[k % 4]));
+    p.push(roof(10.4, 4, 9.4, x, h, z, '#f4f8fb'));
+    for (const y of [2.5, 5]) p.push(box(6, 1.2, 0.2, x, y, z + 4.1, '#ffd88a'));
+  }
+  // The skating rink with its rail and a few skaters.
+  p.push(box(26, 0.3, 14, 4, 0.15, 20, '#cfe8f6'));
+  for (const [w, d, x, z] of [[26, 0.3, 4, 13], [26, 0.3, 4, 27], [0.3, 14, -9, 20], [0.3, 14, 17, 20]]) p.push(box(w, 1.1, d, x, 0.55, z, '#f2efe6'));
+  for (let k = 0; k < 6; k += 1) p.push(box(0.5, 1.6, 0.4, -4 + k * 3.2, 1.1, 17 + (k % 3) * 2.5, ['#d8442f', '#2f7fc4', '#f2c230'][k % 3]));
+  for (let k = 0; k < 30; k += 1) p.push(piece(new SphereGeometry(0.25, 5, 4), '#ffe08a', M(-34 + k * 2.4, 7 + Math.sin(k * 0.8) * 0.6, 9)));
+  return merge(p);
+}
+
+/** A frozen waterfall in the middle of the second spin: a cliff hung with ice, a mountain goat on a ledge. */
+function frozenWaterfall() {
+  const p = [
+    piece(new CylinderGeometry(4.2, 6, 24, 7), '#6f747a', M(0, 12, 0)),
+    piece(new ConeGeometry(4.6, 4, 7), '#f4f8fb', M(0, 26, 0)),
+  ];
+  for (let k = 0; k < 9; k += 1) {
+    const a = (k / 9) * Math.PI * 2;
+    const h = 9 + (k % 4) * 3;
+    p.push(piece(new ConeGeometry(1.1, h, 6), k % 2 ? '#bfe4f6' : '#e2f4fc', new Matrix4().makeRotationX(Math.PI).premultiply(M(Math.cos(a) * 5.2, 24 - h / 2, Math.sin(a) * 5.2))));
+  }
+  p.push(piece(new CylinderGeometry(6.5, 6.5, 0.5, 14), '#cfe8f6', M(0, 0.25, 0))); // the frozen pool
+  // The mountain goat on a ledge, white coat, black horns.
+  p.push(box(2.4, 0.5, 1.8, 4.6, 14, 1.5, '#6f747a'));
+  p.push(box(1.4, 0.8, 0.6, 4.6, 15, 1.5, '#f4f2ea'), box(0.45, 0.6, 0.45, 5.4, 15.6, 1.5, '#f4f2ea'));
+  for (const x of [4.1, 5.1]) p.push(box(0.18, 0.7, 0.18, x, 14.5, 1.3, '#f4f2ea'));
+  p.push(piece(new ConeGeometry(0.09, 0.45, 4), '#2a2622', new Matrix4().makeRotationZ(-0.5).premultiply(M(5.6, 16.1, 1.5))));
+  return merge(p);
+}
+
 export const COASTER_LANDMARKS = {
   'stave-church': { build: staveChurch, radius: 10 },
   'fjord-village': { build: fjordVillage, radius: 30 },
@@ -327,4 +388,7 @@ export const COASTER_LANDMARKS = {
   'barcelona-city': { build: barcelonaCity, radius: 110 },
   'park-guell-terrace': { build: parkGuellTerrace, radius: 20 },
   'sagrada-familia': { build: sagradaFamilia, radius: 18, fit: 12 },
+  inukshuk: { build: inukshuk, radius: 8 },
+  'whistler-village': { build: whistlerVillage, radius: 38 },
+  'frozen-waterfall': { build: frozenWaterfall, radius: 7, fit: 6.5 },
 };
