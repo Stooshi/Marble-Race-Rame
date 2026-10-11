@@ -571,7 +571,7 @@ export class TrackScene {
       // The countdown: the starting camera's path, ending at rest on the
       // starting-line shot at GO (the follow camera starts afresh after it).
       const shot = startLineShot(gate, this.camera.aspect, this.camera.fov);
-      const pose = countdownPose(frame.t, this.countdownMs ?? 3000, gate, shot, this.camera.aspect);
+      const pose = countdownPose(frame.t, this.countdownMs ?? 3000, gate, shot, this.camera.aspect, { liftHill: this.scenery?.userData?.liftHill });
       main.ready = false;
       this.camera.position.copy(pose.camera);
       this.camera.lookAt(pose.target);
@@ -768,7 +768,19 @@ export class TrackScene {
     const f = Math.min(1, Math.max(0, p)) * segments;
     const i = Math.min(segments - 1, Math.floor(f));
     const centre = new Vector3().lerpVectors(samples[i].pos, samples[i + 1].pos, f - i);
-    const down = new Vector3().subVectors(samples[i + 1].pos, samples[i].pos).normalize();
+    // (The slope taken over the 16 m either side, so it eases from one slope to the next: taken
+    // from one segment alone it turned in a step where the steep starting ramp meets a gentler
+    // slope, and the shot dropped metres in a frame.)
+    const posAt = (q) => {
+      const g = Math.min(1, Math.max(0, q)) * segments;
+      const k = Math.min(segments - 1, Math.floor(g));
+      return new Vector3().lerpVectors(samples[k].pos, samples[k + 1].pos, g - k);
+    };
+    // (Tracks from the opening library and coasters; tracks built before them keep their camera exactly.)
+    const kit = this.track?.physics?.kit;
+    const down = kit?.opening || kit?.coaster
+      ? new Vector3().subVectors(posAt(p + 16 / (this.arcLength || (this.arcLength = this.measureArc()))), posAt(p - 16 / this.arcLength)).normalize()
+      : new Vector3().subVectors(samples[i + 1].pos, samples[i].pos).normalize();
     const normal = new Vector3(0, 1, 0).addScaledVector(down, -down.y).normalize();
     const forward = new Vector3(down.x, 0, down.z).normalize();
     const side = new Vector3().crossVectors(new Vector3(0, 1, 0), forward).normalize();

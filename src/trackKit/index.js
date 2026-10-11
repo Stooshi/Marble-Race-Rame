@@ -31,6 +31,9 @@ const BASE_PHYSICS = {
   collisions: true,
 };
 const RUNOUT = { length: 30, halfWidth: 3.5 };
+// Coasters: how high the track flies above the land where a section doesn't say, and its colours.
+const COASTER_HEIGHT = 16;
+const COASTER_COLOURS = { rail: '#c9ced6', support: '#c43a2f', tie: '#5b616b' };
 // Slalom gates and pegs glance marbles aside (the engine's sweep: they never
 // hold a marble up), each fresh hit costing this share of its speed.
 const SLALOM_LOSS = 0.1;
@@ -48,8 +51,10 @@ function track(spec) {
   const problems = [];
   const where = (name) => `${spec.name || spec.slug}, "${name}"`;
 
-  // 1. The sections, each made of one or more generated parts, after the starting ramp.
-  const sections = [...(spec.sections || [])];
+  // 1. The sections, each made of one or more generated parts, after the starting ramp:
+  // the opening's (from the library) first, if the track has one, then its own (or its layout's).
+  const openingSections = spec.opening?.sections ?? [];
+  const sections = [...openingSections, ...(spec.sections || [])];
   if (!sections.length || sections[sections.length - 1].shape?.shape !== 'runIn') sections.push({ name: 'Finish', shape: parts.runIn() });
   const generated = [{ name: 'Starting ramp', ...parts.START_RAMP }];
   const owner = [null]; // which section each generated part belongs to
@@ -216,13 +221,26 @@ function track(spec) {
         side = nextSide;
         nextSide = -nextSide;
       }
-      billboards.push({ slot: billboards.length + 1, at: along(i, share), side, section: sec.name, frame: sec.billboardFrame || spec.billboardFrame || 'plain' });
+      // (A coaster's billboards stand on its support towers, up at the track: wherever it flies.)
+      const tower = spec.family === 'coaster' && (sec.height ?? spec.coaster?.height ?? COASTER_HEIGHT) > 0;
+      billboards.push({ slot: billboards.length + 1, at: along(i, share), side, section: sec.name, frame: sec.billboardFrame || spec.billboardFrame || 'plain', ...(tower && { mount: 'tower' }) });
     }
   });
+  // A coaster's station roof (the finish): `finish.billboards` of them up there, facing the track.
+  if (spec.family === 'coaster') {
+    for (let k = 0; k < (spec.finish?.billboards ?? 0); k += 1) {
+      billboards.push({ slot: billboards.length + 1, at: 1, side: k % 2 ? WALL.right : WALL.left, section: 'Finish', frame: spec.finish.billboardFrame || spec.billboardFrame || 'plain', mount: 'roof' });
+    }
+  }
 
   // 3. Splitters.
   const forks = [];
   sections.forEach((sec, i) => {
+    // The split-and-merge opening's twin chutes: apart from the wedge at the section's start, together again at its end.
+    if (sec.shape?.shape === 'twinChutes' && span[i].parts.length) {
+      forks.push({ from: round4(span[i].from), to: round4(span[i].to), ...sec.shape.fork });
+      return;
+    }
     if (sec.shape?.shape !== 'splitter' || span[i].parts.length !== 3) return;
     const [inPart, , mergePart] = span[i].parts;
     forks.push({
@@ -233,7 +251,11 @@ function track(spec) {
   });
 
   // 4. Looks for the 3D view (the race engine never reads these).
+  const layoutKind = spec.layout ?? spec.sections?.layout;
   const kit = {
+    // Which opening and layout from the libraries the track uses (tracks built before the libraries have neither).
+    ...(spec.opening && { opening: spec.opening.kind }),
+    ...(layoutKind && { layout: layoutKind }),
     surface: spec.surface || 'ice',
     ...(spec.biome && { biome: spec.biome }),
     lighting: spec.lighting || 'day',
@@ -242,6 +264,10 @@ function track(spec) {
     // A Grand Prix track: start lights, grandstands and crowds, kerbs and barriers, the finish's gantry,
     // building and fireworks (looks only). Who fills the stands and what lines the bends, by name.
     ...(spec.grandPrix && { grandPrix: { crowd: 'fans', barrier: 'tyres', ...(typeof spec.grandPrix === 'object' ? spec.grandPrix : {}) } }),
+    // A coaster (family 'coaster'): the track flies on steel supports `height` metres above the land
+    // (a section's own `height`; 0 where it touches down), a lift hill behind the gate, a station at
+    // the finish; `water`: sections that fly over water. Looks only, like everything here.
+    ...(spec.family === 'coaster' && { coaster: { height: COASTER_HEIGHT, ...spec.coaster, colours: { ...COASTER_COLOURS, ...spec.coaster?.colours } } }),
     billboards,
     start: spec.start || {},
     finish: spec.finish || {},
@@ -260,6 +286,11 @@ function track(spec) {
       ...(sec.tunnel && { tunnel: sec.tunnel }),
       ...(sec.bridge && { bridge: sec.bridge }),
       ...(sec.shape?.shape === 'waterfall' && { waterfall: { curtain: Boolean(sec.shape.curtain) } }),
+      ...(sec.height !== undefined && { height: sec.height }),
+      // (A coaster's station stands on the ground, and it dives into a tunnel at ground level.)
+      ...(spec.family === 'coaster' && (sec.shape?.shape === 'runIn' || sec.tunnel !== undefined) && sec.height === undefined && { height: 0 }),
+      ...(sec.water && { water: true }),
+      ...(sec.waterCurtain && { waterCurtain: true }),
     })),
   };
 
@@ -278,6 +309,13 @@ function track(spec) {
     ...(spec.designChanges?.length && { designChanges: [...spec.designChanges] }),
     physics: {
       ...BASE_PHYSICS,
+      // An opening that changes the gate: the field let go in waves, or a wider, longer funnel.
+      ...((spec.opening?.waves || spec.opening?.funnel) && {
+        channel: {
+          ...BASE_PHYSICS.channel,
+          funnel: { ...BASE_PHYSICS.channel.funnel, ...spec.opening.funnel, ...(spec.opening.waves && { waves: { ...spec.opening.waves } }) },
+        },
+      }),
       ...(kit.surface !== 'ice' && { look: kit.surface }),
       features,
       runout: RUNOUT,
@@ -285,6 +323,27 @@ function track(spec) {
       kit,
     },
   };
+
+  // What the sameness check in the track report compares (src/report/variety.js): never raced, and
+  // never written to the database (not enumerable, so not in the track's JSON).
+  Object.defineProperty(built, 'variety', {
+    enumerable: false,
+    value: {
+      family: spec.family ?? (spec.grandPrix ? 'grand-prix' : 'world-tour'),
+      opening: spec.opening?.kind ?? (sections[0]?.shape?.shape === 'waterfall' ? 'waterfall' : 'classic'),
+      openingSections: openingSections.length || 1,
+      layout: layoutKind ?? null,
+      sections: sections.map((sec, i) => ({
+        name: sec.name,
+        shape: sec.shape?.shape,
+        side: sec.shape?.side ?? (sec.shape?.shape === 'sBends' ? sec.shape.parts[0].kind : null),
+        from: round4(span[i].from),
+        to: round4(span[i].to),
+        obstacles: (sec.obstacles || []).map((o) => o?.obstacle),
+        features: (sec.features || []).map((f) => f?.feature),
+      })),
+    },
+  });
 
   problems.push(...checkRecipe({ spec, sections, span, generated, owner, placed, features, total, where }));
   if (problems.length) {
@@ -295,4 +354,8 @@ function track(spec) {
   return built;
 }
 
-module.exports = { track, mirror: require('./mirror').mirror, ...parts };
+module.exports = {
+  track, mirror: require('./mirror').mirror, ...parts,
+  opening: require('./openings').opening, OPENING_KINDS: require('./openings').OPENING_KINDS,
+  layout: require('./layouts').layout, LAYOUT_KINDS: require('./layouts').LAYOUT_KINDS,
+};

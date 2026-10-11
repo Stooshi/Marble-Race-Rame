@@ -18,7 +18,8 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const { execFileSync } = require('node:child_process');
-const { physicsTrack } = require('../src/game/physicsTracks');
+const { physicsTrack, PHYSICS_TRACKS } = require('../src/game/physicsTracks');
+const { varietyCheck } = require('../src/report/variety');
 const { simulatePhysicsRace } = require('../src/game/physicsSimulator');
 const { houseField, computeFingerprints, readFingerprints } = require('./race-fingerprints');
 const { runBatch, batchSeeds } = require('../src/report/batch');
@@ -73,6 +74,8 @@ async function main() {
     }));
   }
   report.lines.push(...summarize(batches, track));
+  // The sameness check: this track's opening and section order against every other track's.
+  report.lines.push(...varietyCheck(track, PHYSICS_TRACKS).lines);
   fs.writeFileSync(path.join(out, 'batches.json'), JSON.stringify(batches)); // (every race's measurements, to look into)
 
   // 2. Safety.

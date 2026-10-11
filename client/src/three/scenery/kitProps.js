@@ -9,6 +9,7 @@ import { merge, piece } from './parts';
 import { ANIMALS, local } from '../costumes/animals';
 import { WORLD_LANDMARKS } from './kitLandmarks';
 import { GP_LANDMARKS } from './kitLandmarksGP';
+import { COASTER_LANDMARKS } from './kitLandmarksCoaster';
 
 // ── Set dressing: one geometry per kind, instanced ──────────────────────────
 
@@ -483,6 +484,7 @@ export const LANDMARKS = {
   'snow-park': { build: snowPark, radius: 9 },
   ...WORLD_LANDMARKS,
   ...GP_LANDMARKS,
+  ...COASTER_LANDMARKS,
 };
 
 // ── Things passing overhead (scenery only, high above the track) ───────────

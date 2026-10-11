@@ -19,6 +19,7 @@ import { channelGround } from './channelGround';
 import { buildTerrain, makeHeightField } from './terrain';
 import { merge, piece, smoothstep } from './parts';
 import { stretchKinds } from './groundCheck';
+import { buildWater, coasterFlight, isLifted, liftHillCut, liftHillOf } from './coaster';
 
 const RIM_WIDTH = 0.45;  // the channel's white rim beyond the lip (iceChannel.js)
 const SKIRT = 1.6;       // the channel's outer wall reaches this far below the floor
@@ -35,6 +36,8 @@ const LAND_RADIUS = 480;       // metres from the track to where the land reache
 const LAND_RADIUS_PHONE = 400; // …and on phones (a smaller patch of land)
 const LAKE_RADIUS = 95;        // metres: a frozen lake beyond the finish
 const LAKE_SHORE = 45;         // metres over which the land rises from the ice
+const WATER_REACH = 70;        // metres round a coaster's stretch over water that are water…
+const WATER_SHORE = 60;        // …and over which the land then rises from it
 
 /**
  * Where a frozen lake lies (a kit track with 'frozen-lake' in its finish's or last section's
@@ -86,6 +89,8 @@ export function buildKitGround(centerline, track, { lite = false } = {}) {
   const { samples, segments } = centerline;
   const step = channel.arc / segments;
   const kinds = stretchKinds(centerline, channel, track);
+  // A coaster flies on supports: the land lies `flight` metres below the track (0 where it touches down).
+  const flight = kit.coaster ? coasterFlight(centerline, channel, kit) : null;
 
   // Which samples pass over another stretch well below (they go on a viaduct, without banks).
   const above = samples.map((s, i) => {
@@ -108,11 +113,28 @@ export function buildKitGround(centerline, track, { lite = false } = {}) {
   // Out at the edges the land falls away gently to the valley floor (the world's ground, biome.sea - 6),
   // starting well in, so the whole-track view shows mountainsides, never a plateau ending in cliffs.
   const landRadius = lite ? LAND_RADIUS_PHONE : LAND_RADIUS;
-  const base = makeHeightField(hug.groundLine, lanes, { hillHeight: biome.hills, landRadius, sinkFrom: 0.3, seaLevel: biome.sea, street: { ...hug.street, cap: MOUNTAIN_CAP } });
+  const line = flight
+    ? { ...hug.groundLine, samples: hug.groundLine.samples.map((x, i) => (i <= segments ? { ...x, pos: x.pos.clone().setY(x.pos.y - flight[i]) } : x)) }
+    : hug.groundLine;
+  const base = makeHeightField(line, lanes, { hillHeight: biome.hills, landRadius, sinkFrom: 0.3, seaLevel: biome.sea, street: { ...hug.street, cap: MOUNTAIN_CAP } });
   const bridgeSpots = samples.filter((_, i) => onBridge[i]).map((s) => s.pos);
   const ravineFloor = bridgeSpots.length ? Math.min(...bridgeSpots.map((p) => p.y)) - 24 : 0;
   // A frozen lake (scenery 'frozen-lake' at the finish): a flat basin just beyond the run-out.
   const lake = lakeOf(centerline, kit);
+  // A coaster's water (sections with `water`): the land sinks under the surface round them.
+  const waterSpots = [];
+  if (flight) {
+    for (let i = 0; i <= segments; i += Math.max(1, Math.round(20 / step))) {
+      const p = i / segments;
+      if ((kit.sections ?? []).some((x) => x.water && p >= x.from && p <= x.to)) waterSpots.push({ x: samples[i].pos.x, z: samples[i].pos.z, y: samples[i].pos.y - flight[i] });
+    }
+  }
+  // (Below every stretch of track anywhere near the water, so none of it ever runs under the surface.)
+  const nearWater = (pos) => waterSpots.some((w) => Math.hypot(w.x - pos.x, w.z - pos.z) < WATER_REACH + WATER_SHORE + 40);
+  const waterY = waterSpots.length
+    ? Math.min(...samples.map((x, i) => (nearWater(x.pos) ? x.pos.y - flight[i] : Infinity))) - 2
+    : null;
+  const lift = flight ? liftHillOf(centerline, flight) : null;
   const field = {
     ...base,
     lake,
@@ -121,6 +143,12 @@ export function buildKitGround(centerline, track, { lite = false } = {}) {
       if (lake) {
         const d = Math.hypot(x - lake.x, z - lake.z) - lake.radius * lake.shape(Math.atan2(z - lake.z, x - lake.x));
         if (d < LAKE_SHORE) h += (Math.min(h, lake.y - 1.2) - h) * (1 - smoothstep(0, LAKE_SHORE, d));
+      }
+      if (lift) h = Math.min(h, liftHillCut(lift, x, z)); // (the land carved down along a coaster's lift hill)
+      if (waterSpots.length) {
+        let d = Infinity;
+        for (const w of waterSpots) d = Math.min(d, Math.hypot(w.x - x, w.z - z));
+        if (d < WATER_REACH + WATER_SHORE) h += (Math.min(h, waterY - 3) - h) * (1 - smoothstep(WATER_REACH, WATER_REACH + WATER_SHORE, d));
       }
       if (!bridgeSpots.length) return h;
       let d = Infinity;
@@ -188,7 +216,7 @@ export function buildKitGround(centerline, track, { lite = false } = {}) {
     for (const sign of [1, -1]) {
       const r0 = rows[i][sign];
       const r1 = rows[i + 1][sign];
-      const lifted = (k) => over[k] || onBridge[k];
+      const lifted = (k) => over[k] || onBridge[k] || (flight && isLifted(flight, k));
       if (lifted(i) && lifted(i + 1)) continue;
       const steep = Math.max(r0.steep, r1.steep);
       const near = steep > 0.55 ? fillColour : bankColour;
@@ -205,7 +233,7 @@ export function buildKitGround(centerline, track, { lite = false } = {}) {
   // A couple of metres more bank past each end of the track (behind the gate, beyond the
   // run-out), so the banks never stop exactly at the last row and leave its wall bare.
   for (const [i, k] of [[0, -2], [segments, 2]]) {
-    if (over[i] || onBridge[i]) continue;
+    if (over[i] || onBridge[i] || (flight && isLifted(flight, i))) continue;
     const t = new Vector3(samples[i].tangent.x, 0, samples[i].tangent.z).normalize().multiplyScalar(k);
     for (const sign of [1, -1]) {
       const r0 = rows[i][sign];
@@ -267,5 +295,10 @@ export function buildKitGround(centerline, track, { lite = false } = {}) {
     group.add(viaduct);
   }
 
-  return { group, field, groundAt: (x, z) => terrain.groundAt(x, z), hug, biome, rows, over, onBridge, lake, floorY: biome.sea - 6 };
+  if (waterSpots.length) {
+    const water = buildWater(waterSpots, waterY, lite ? 70 : 90);
+    group.add(water);
+  }
+
+  return { group, field, groundAt: (x, z) => terrain.groundAt(x, z), hug, biome, rows, over, onBridge, lake, flight, waterY, floorY: biome.sea - 6 };
 }

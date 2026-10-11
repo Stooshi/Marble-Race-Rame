@@ -17,6 +17,10 @@ const MAX_FLAT_M = 10;         // …and may last at most one crest step
 const STEEPEST_CLIMB = -0.15;  // proven climbs: San Francisco's -0.12 (Russian Hill)
 const LONGEST_CLIMB_M = 40;    // San Francisco's 35 m
 const { LIGHTINGS } = require('./lighting');
+const { OPENING_KINDS } = require('./openings');
+// Track families (the sameness check compares openings within one): 'test' tracks are never compared.
+const FAMILIES = ['world-tour', 'grand-prix', 'coaster', 'test'];
+const MAX_COASTER_HEIGHT = 45; // metres: the tallest supports drawn
 
 const BILLBOARDS = [4, 6];
 const GRAND_PRIX_BILLBOARDS = [4, 8]; // trackside advertising suits a Grand Prix: up to 8
@@ -42,12 +46,26 @@ function checkRecipe({ spec, sections, span, generated, owner, placed, total, wh
     names.add(s.name);
   }
 
-  // The start: a big steep slope straight after the gate.
-  const first = sections[0]?.shape;
-  const firstPart = first?.parts?.[0];
-  if (!first || !['plunge', 'waterfall'].includes(first.shape) || firstPart.grade < 0.5 || firstPart.length < 60) {
-    problems.push(`${where(sections[0]?.name ?? 'start')}: the first section must be a big steep plunge (at least 60 m at a grade of 0.5 or more), so the field bursts off the line.`);
+  // The start: a proven opening from the library (opening(…)), or, as every track
+  // before the library did, the classic big steep slope straight after the gate.
+  if (spec.opening !== undefined) {
+    if (!spec.opening?.kind || !OPENING_KINDS.includes(spec.opening.kind) || !Array.isArray(spec.opening.sections)) {
+      problems.push(`${where('start')}: the opening must come from the library: opening('${OPENING_KINDS.join("' | '")}').`);
+    }
+  } else {
+    const first = sections[0]?.shape;
+    const firstPart = first?.parts?.[0];
+    if (!first || !['plunge', 'waterfall'].includes(first.shape) || firstPart.grade < 0.5 || firstPart.length < 60) {
+      problems.push(`${where(sections[0]?.name ?? 'start')}: the track must open with a proven opening from the library (opening('${OPENING_KINDS.join("' | '")}')), or the classic big steep plunge (at least 60 m at a grade of 0.5 or more), so the field bursts off the line.`);
+    }
   }
+  if (spec.family !== undefined && !FAMILIES.includes(spec.family)) problems.push(`${where('track')}: unknown family ${JSON.stringify(spec.family)} (${FAMILIES.join(', ')}).`);
+  // Twin chutes (the split-and-merge opening): nothing in them, and only where the opening puts them.
+  sections.forEach((s, i) => {
+    if (s.shape?.shape !== 'twinChutes') return;
+    if (spec.opening?.kind !== 'split-start' || i >= (spec.opening.sections?.length ?? 0)) problems.push(`${where(s.name)}: twin chutes are the split-and-merge opening's; use opening('split-start').`);
+    if ((s.obstacles ?? []).length || (s.features ?? []).length || s.billboards || s.tunnel !== undefined || s.bridge !== undefined) problems.push(`${where(s.name)}: nothing in or over the twin chutes (no obstacles, features, billboards, tunnel or bridge).`);
+  });
 
   // No dead-flat stretches (except the run-in past the finish), climbs within what's proven.
   let flatRun = 0;
@@ -227,18 +245,49 @@ function checkRecipe({ spec, sections, span, generated, owner, placed, total, wh
     if (p.count > 1 && p.spacing < MIN_BUMP_SPACING_M) problems.push(`${where(name(p.section))}: ${p.kind} ${p.spacing.toFixed(1)} m apart; at least ${MIN_BUMP_SPACING_M} m.`);
   }
 
-  // Billboards: 4 to 6 per track, beside straights and sweeps, never at the sharp bend or the finish.
-  const boards = sections.reduce((n, s) => n + (s.billboards || 0), 0);
+  // Coasters: their own rules (a lift hill, supports, touchdowns, water).
+  if (spec.family === 'coaster') problems.push(...coasterRules({ spec, sections, where }));
+  else {
+    if (spec.coaster !== undefined) problems.push(`${where('track')}: coaster settings are for coasters (family: 'coaster').`);
+    sections.forEach((s) => {
+      if (s.height !== undefined || s.water || s.waterCurtain) problems.push(`${where(s.name)}: height, water and waterCurtain are for coasters (family: 'coaster').`);
+    });
+    if (spec.finish?.billboards) problems.push(`${where('finish')}: billboards on the station roof are for coasters (family: 'coaster').`);
+  }
+
+  // Billboards: 4 to 6 per track, beside straights and sweeps, never at the sharp bend or the finish
+  // (a coaster's stand on its towers wherever it flies, and on its station roof).
+  const coaster = spec.family === 'coaster';
+  const boards = sections.reduce((n, s) => n + (s.billboards || 0), 0) + (coaster ? (spec.finish?.billboards ?? 0) : 0);
   const [fewest, most] = spec.grandPrix ? GRAND_PRIX_BILLBOARDS : BILLBOARDS;
   if (boards < fewest || boards > most) problems.push(`${where('billboards')}: ${boards} billboards; every ${spec.grandPrix ? 'Grand Prix ' : ''}track has ${fewest} to ${most}.`);
   sections.forEach((s) => {
     if (!s.billboards) return;
     if (!Number.isInteger(s.billboards) || s.billboards < 1) problems.push(`${where(s.name)}: billboards is a number of billboards (1, 2…).`);
     if (s.shape.sharp || s.shape.shape === 'runIn') problems.push(`${where(s.name)}: no billboards at the sharp bend or the finish; put them along a straight or a sweep.`);
-    else if (!BILLBOARD_SHAPES.includes(s.shape.shape)) problems.push(`${where(s.name)}: billboards stand along a straight, a plunge, a climb, S-bends or a sweep, where the follow camera looks (not a ${s.shape.shape}).`);
-    if (s.tunnel !== undefined || s.bridge !== undefined) problems.push(`${where(s.name)}: no billboards in a tunnel or on a bridge (nowhere to stand them).`);
+    else if (!BILLBOARD_SHAPES.includes(s.shape.shape) && !(coaster && ['spiral', 'splitter'].includes(s.shape.shape))) problems.push(`${where(s.name)}: billboards stand along a straight, a plunge, a climb, S-bends or a sweep, where the follow camera looks (not a ${s.shape.shape}).`);
+    if (s.tunnel !== undefined || (s.bridge !== undefined && !coaster)) problems.push(`${where(s.name)}: no billboards in a tunnel or on a bridge (nowhere to stand them).`);
   });
 
+  return problems;
+}
+
+/** A coaster's own rules: heights within what the supports are drawn for, somewhere it touches down, at most 2 on the station roof. */
+function coasterRules({ spec, sections, where }) {
+  const problems = [];
+  const c = spec.coaster ?? {};
+  const ok = (h) => Number.isFinite(h) && h >= 0 && h <= MAX_COASTER_HEIGHT;
+  if (c.height !== undefined && !(ok(c.height) && c.height > 0)) problems.push(`${where('track')}: coaster.height is how high the track flies (metres, 1 to ${MAX_COASTER_HEIGHT}).`);
+  for (const k of Object.keys(c.colours ?? {})) if (!['rail', 'support', 'tie'].includes(k)) problems.push(`${where('track')}: coaster colours are rail, support and tie (not ${k}).`);
+  sections.forEach((s) => {
+    if (s.height !== undefined && !ok(s.height)) problems.push(`${where(s.name)}: height is metres above the land, 0 (touching down) to ${MAX_COASTER_HEIGHT}.`);
+    if (s.height === 0 && s.water) problems.push(`${where(s.name)}: a stretch over water cannot touch down.`);
+    if (s.bridge !== undefined) problems.push(`${where(s.name)}: a coaster flies on its own supports (no bridge).`);
+    if (s.tunnel !== undefined && s.height) problems.push(`${where(s.name)}: a coaster's tunnel runs into the land (height 0, or leave it out).`);
+  });
+  if (!sections.some((s) => (s.height === 0 || (s.tunnel !== undefined && s.height === undefined)) && s.shape.shape !== 'runIn')) problems.push(`${where('track')}: a coaster touches down somewhere along the way (a section with height: 0), not only at the station.`);
+  const roof = spec.finish?.billboards ?? 0;
+  if (!(Number.isInteger(roof) && roof >= 0 && roof <= 2)) problems.push(`${where('finish')}: 0 to 2 billboards on the station roof.`);
   return problems;
 }
 

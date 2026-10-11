@@ -96,6 +96,21 @@ function drawNow(t) {
 }
 
 window.kitView = {
+  /** Dev: the scenery's notes (a coaster's lift hill and station). */
+  info() {
+    const u = scene.scenery?.userData ?? {};
+    const v = (x) => x && { x: x.x, y: x.y, z: x.z };
+    return { liftHill: u.liftHill && { top: v(u.liftHill.top), foot: v(u.liftHill.foot), back: v(u.liftHill.back), side: v(u.liftHill.side), length: u.liftHill.length } };
+  },
+  /** Dev: a free camera, from one point looking at another ([x, y, z] each), one frame drawn. */
+  look({ from, to }) {
+    scene.camera.position.set(...from);
+    scene.camera.near = 0.3;
+    scene.camera.far = scene.sky.scale.x * 1.2;
+    scene.camera.lookAt(...to);
+    scene.camera.updateProjectionMatrix();
+    scene.renderer.render(scene.scene, scene.camera);
+  },
   race: race && { durationMs: race.durationMs, countdownMs: countdown, winnerMs: Math.min(...race.results.map((r) => r.finishTimeMs)) },
   /** The race at t ms (negative: the countdown) through the game's camera: 'follow' or 'overview'. */
   raceShot({ t, follow = 'leader', camera = 'follow' }) {

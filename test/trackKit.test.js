@@ -49,7 +49,11 @@ test('a valid track file builds, and ends with a run-in to the finish', () => {
 test('every kit track opens with Bobsleigh Run\'s starting ramp, gate, channel and collisions', () => {
   for (const t of PHYSICS_TRACKS.filter((x) => x.physics.kit)) {
     assert.equal(t.sections[0].name, 'Starting ramp');
-    assert.deepEqual(t.physics.channel, tm.physics.channel);
+    // (The funnel-drop and staggered-drop openings change the gate's funnel; everything else is Table Mountain Run's.)
+    const { funnel, ...channel } = t.physics.channel;
+    const { funnel: tmFunnel, ...tmChannel } = tm.physics.channel;
+    assert.deepEqual(channel, tmChannel);
+    if (!['funnel-drop', 'staggered-drop'].includes(t.physics.kit.opening)) assert.deepEqual(funnel, tmFunnel);
     assert.deepEqual(t.physics.gate, bob.physics.gate);
     assert.equal(t.physics.collisions, true);
     assert.equal(t.physics.surface, 'ice', 'every surface races as fast as ice');
@@ -143,10 +147,10 @@ test('the database-update generator works for kit tracks', () => {
 
 // ── The recipe, refused rule by rule ───────────────────────────────────────
 
-test('refused: a start without a big steep plunge', () => {
+test('refused: a start that is neither a library opening nor a big steep plunge', () => {
   const s = base();
   s.sections[0] = { name: 'Plunge', shape: straight(80) };
-  refused(s, /first section must be a big steep plunge/);
+  refused(s, /must open with a proven opening from the library/);
 });
 
 test('refused: a second sharp bend', () => {

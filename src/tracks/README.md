@@ -39,11 +39,64 @@ Then add it to `index.js` in this folder.
 - Checks the track recipe and refuses the file, naming the rule and the
   section, if it breaks one.
 
+## Openings and layouts: no two tracks alike
+
+New tracks start from the variety libraries rather than copying the last track
+that passed, so that players racing back to back never meet the same race twice:
+
+```js
+const { track, opening, layout } = require('../trackKit');
+
+module.exports = track({
+  slug: 'sognefjord', name: 'Sognefjord', family: 'coaster',
+  opening: opening('crest-start', { costumes: { block: 'troll', slalom: 'buoy' }, names: { climb: 'Over the ridge' } }),
+  sections: layout('twin-spirals', { mirror: true, costumes: { swipe: 'eagle' }, dress: { spiral1: { name: 'Stave church spiral' } } }),
+});
+```
+
+- **Openings** (`opening(kind, { costumes, names, dress, side, tunnel })`): the first
+  section or two, and anything the opening changes at the gate. Each was proven on its own
+  test track (`variety-opening-<kind>`, on the classic layout) with the full report.
+
+  | Opening | What happens |
+  | --- | --- |
+  | `classic` | The steep 80 m plunge, a pile-up, then a slalom (every track before the library) |
+  | `split-start` | The steep plunge and its pile-up, then two equal parallel chutes, an island between them, merging again about 2 s later |
+  | `staggered-drop` | The gate lets the field go in five waves of four starting places, 0.15 s apart, in a new order every race; a short rough stretch lets the waves catch up before the pile-up |
+  | `tunnel-launch` | Where the gate's funnel ends, the plunge dives into a tunnel (`tunnel`: its look) and bursts out into daylight |
+  | `banked-turn` | The steep plunge straight into a steep banked first turn (`side`); the field fans up the wall |
+  | `boost-launch` | A gentler drop, then a strip of boost pads wall to wall: the same kick for everyone |
+  | `funnel-drop` | A longer bowl at the gate; the order mixes as the field squeezes into the channel |
+  | `crest-start` | The steep plunge into a short climb and over a rounded crest: the field bunches and spills over in a new order |
+
+  The recipe's first rule: a track opens with one of these, or with the classic steep plunge
+  written out by hand (as every track before the library does).
+- **Layouts** (`layout(kind, { mirror, costumes, dress })`): the rest of the track, as its
+  `sections`. Each was proven on its own test track (`variety-layout-<kind>`, with the classic
+  opening). `mirror` turns every bend the other way and swaps the splitters' channels;
+  `dress` names and dresses each section by its key (looks, landmarks, billboards, tunnels,
+  bridges, a centrepiece), never its shape or its obstacles' places.
+
+  | Layout | Sections (keys) |
+  | --- | --- |
+  | `classic` | sBends, splitter, sweep, brakingStraight, hairpin, spiral, lastStraight |
+  | `early-hairpin` | sweep, brakingStraight, hairpin, outOfHairpin, sBends, splitter, spiral, lastStraight |
+  | `twin-spirals` | sBends, spiral1, pegRun, brakingStraight, hairpin, spiral2, sweep, lastStraight (no splitter) |
+  | `climb-drop` | sweep, approach, climb (a short crest), drop, sBends, splitter, brakingStraight, hairpin, spiral, lastStraight |
+  | `late-splitter` | sweep, brakingStraight, hairpin, outOfHairpin, spiral, sBends, splitter (just before the finish), lastStraight |
+  | `mid-drop` | sBends, splitter, aboveDrop, drop (a waterfall; `waterfall: false` for a plain drop), belowDrop, sweep, brakingStraight, hairpin, spiral, lastStraight |
+  | `two-splitters` | sBends1, splitter1, sweep, brakingStraight, hairpin, outOfHairpin, sBends2, splitter2, lastStraight |
+  | `long-sweeps` | sweep1, moguls, sweep2, brakingStraight, hairpin, spiral (one and a half turns), lastStraight (no splitter) |
+
+  A track may still write its own sections by hand; the sameness check makes sure they differ.
+- **`family`**: `'world-tour'` (the default), `'grand-prix'` (any `grandPrix` track),
+  `'coaster'` or `'test'` (test tracks, never compared). Openings are compared within a family.
+
 ## Shapes
 
 | Shape | Use |
 | --- | --- |
-| `plunge(length, { grade, from })` | Steep straight drop (the first section must be one); `from`: the grade before it, eased up 0.06 every 10 m so a steep plunge can follow a gentle stretch |
+| `plunge(length, { grade, from })` | Steep straight drop (a hand-written track opens with one: see Openings); `from`: the grade before it, eased up 0.06 every 10 m so a steep plunge can follow a gentle stretch |
 | `straight(length, { grade })` | Gentler straight |
 | `climb(length, { grade, after })` | Short climb, rounded off over the top |
 | `sBends({ first, radius, degrees })` | Two flowing bends, one each way |
@@ -236,6 +289,32 @@ No real series, circuit or car brand anywhere: generic racing pieces only.
 To look at them all: `node scripts/dump-kit-track.js grand-prix-gallery`, then open
 `/dev/kit-view.html?track=grand-prix-gallery` (never raced).
 
+## Coasters
+
+`family: 'coaster'` makes a track a roller coaster (looks only: it races exactly as the ice channel):
+
+- **Up on supports**: steel rails along both rims, a spine and cross-ties under the channel,
+  and lattice A-frame towers down to the land (fewer, plainer ones on phones). The track
+  flies `coaster.height` metres above the land (default 16), or a section's own `height`
+  (0 to 45); it eases from one height to the next. `height: 0` touches down: the land meets
+  it there, as on every other track. Every coaster touches down somewhere along the way,
+  and its tunnels and station are on the ground. No tower stands on or through another
+  stretch: that stretch spans the gap.
+- **Colours**: `coaster: { colours: { rail, support, tie } }`.
+- **Lift hill**: behind the gate the track climbs a lift hill (a deck, the chain, a catwalk)
+  from the land up to the gate, the land carved down along it; the countdown opens at its
+  foot, the start landmark behind it, and rides up beside the climb to the gate.
+- **Station**: a canopy over the finish and the run-out, platforms either side, riders queuing.
+- **Water**: `water: true` on a section: the land sinks under a water surface round it (never
+  above any stretch of track). Landmarks out over the water float on it (`cruise-ship`).
+- **Water curtain**: `waterCurtain: true`: a see-through sheet of falling water over the rails
+  (a waterfall the track runs behind); the marbles never feel it.
+- **Billboards**: on towers wherever the track flies, on any section but the sharp bend, a
+  tunnel or the finish; and `finish: { billboards: 1 or 2 }` on the station roof.
+- Openings and layouts come from the libraries (above), and every coaster passes the sameness
+  check. The design's landmark moments are dressed onto the layout's sections by key.
+- Sognefjord is the proof track.
+
 ## Mirrored tracks
 
 A mirror is a file of its own (it counts as a track, with its own records):
@@ -281,6 +360,11 @@ with a pass or fail beside each line and what to fix at the top:
   Fix with the splitter's `balance` (each channel's `drag` and `scrub`, the wedge's `tipOffset`).
 - **Obstacles, boosts, bumps**: hits by starting group and strength group; the
   highest hops.
+- **Variety** (the sameness check, no races needed): no other track of the family opens
+  the same way (opening, first obstacle, first bend), at most two of a family share an
+  opening, and the section order is not too alike any other track's (similarity 0.80, or
+  0.70 with the splitters and sharp bend in the same places; shown from 0.65).
+  `node scripts/variety-table.js` scores every track at once (`--matrix`: every pair).
 - **Safety**: the same seed gives the same race; the database holds what the file
   builds (where there is a database); today's tracks race as recorded.
 - **Ground** and **Camera**: the ground check, and frame by frame through two races

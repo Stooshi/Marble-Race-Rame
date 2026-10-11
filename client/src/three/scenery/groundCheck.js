@@ -11,6 +11,7 @@
  * and waterfalls. There the check asks for a structure under the channel
  * instead (a mesh marked userData.built: rock fill, a viaduct, trestles).
  */
+import { coasterFlight, isLifted } from './coaster';
 import { Raycaster, Vector3 } from 'three';
 import { channelLipAt, channelRadiusAt, forkAt, forkOffset, forkRadius } from '../iceChannel';
 
@@ -31,12 +32,15 @@ export function stretchKinds(centerline, channel, track) {
   const kit = track?.physics?.kit?.sections ?? [];
   const sections = track?.sections ?? [];
   const kinds = [];
+  // A coaster's stretches up on its supports are built, not buried.
+  const flight = track?.physics?.kit?.coaster ? coasterFlight(centerline, channel, track.physics.kit) : null;
   for (let i = 0; i <= segments; i += 1) {
     const p = i / segments;
     const s = samples[i];
     let kind = 'normal';
     const sec = kit.find((x) => p >= x.from && p <= x.to);
-    if (sec?.bridge) kind = 'bridge';
+    if (flight && isLifted(flight, i)) kind = 'coaster';
+    else if (sec?.bridge) kind = 'bridge';
     else if (sec?.waterfall) kind = 'waterfall';
     else {
       // Steep: the track's own grade here (from the samples either side).
@@ -103,8 +107,9 @@ export function wallExposure(centerline, channel, track, ground, built = []) {
       shows[name] = Math.min(top - (s.pos.y - SKIRT), Math.max(0, top - groundY));
     }
     // Something built under the channel here (for the exceptions)?
-    let carried = false;
-    if (built.length) {
+    // (A coaster's stretch up on its supports carries itself: its spine and towers are under it.)
+    let carried = kinds[i].kind === 'coaster';
+    if (!carried && built.length) {
       // From just inside the bottom of the wall: a structure's top face sits at the wall's foot.
       ray.set(s.pos.clone().addScaledVector(UP, -SKIRT + 0.5), DOWN);
       ray.far = 4.5;

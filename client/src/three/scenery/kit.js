@@ -16,6 +16,7 @@ import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js
 import { buildKitGround, biomeOf } from './kitGround';
 import { FIGURE_COLORS, LANDMARKS, PEOPLE, acaciaTree, aspen, cabin, dressingFor, jacaranda, liftTower, palm, snowRock, vulture, winterBirch } from './kitProps';
 import { buildGrandPrix } from './grandPrix';
+import { buildCoaster } from './coaster';
 import { buildBattlements, buildCentrepieces, buildFunicular, buildHouses, buildLake, buildRaceNetting, tagsNear, turnAngle } from './kitPlaces';
 import { hashString, mergeByArea, piece, seededRandom, smoothstep } from './parts';
 import { COSTUMES, COSTUME_COLORS } from '../costumes';
@@ -46,6 +47,14 @@ export function buildKitScenery(centerline, track, theme, { lite = false } = {})
   // The billboards' spots (billboards.js stands them there): no tree or figure in front of one.
   const boardFeet = (kit.billboards ?? []).map((b) => boardPose(centerline, channel, b).foot);
   for (const f of boardFeet) solids.push({ x: f.x, z: f.z, r: 6 });
+  // A coaster: its rails, supports, lift hill and station (./coaster.js), clear of trees.
+  const coaster = kit.coaster ? buildCoaster(centerline, channel, kit, {
+    lite, groundAt, flight: ground.flight, boards: (kit.billboards ?? []).map((b) => ({ ...boardPose(centerline, channel, b), mount: b.mount })),
+  }) : null;
+  if (coaster) {
+    group.add(coaster.group);
+    solids.push(...coaster.feet);
+  }
 
   const frame = (p) => {
     const i = Math.min(segments, Math.max(0, Math.round(p * segments)));
@@ -61,7 +70,9 @@ export function buildKitScenery(centerline, track, theme, { lite = false } = {})
     const lm = LANDMARKS[name];
     if (!lm) return;
     const g = lm.build();
-    const foot = new Vector3(at.x, footY ?? groundAt(at.x, at.z) - 0.3, at.z);
+    // (Out over a coaster's water it floats on the surface: a ship, a jetty.)
+    const land = groundAt(at.x, at.z) - 0.3;
+    const foot = new Vector3(at.x, footY ?? (ground.waterY !== null && ground.waterY !== undefined ? Math.max(land, ground.waterY - 0.6) : land), at.z);
     const q = new Quaternion().setFromAxisAngle(UP, yaw);
     g.applyMatrix4(new Matrix4().compose(foot, q, new Vector3(1, 1, 1)));
     landmarkParts.push(g);
@@ -76,8 +87,11 @@ export function buildKitScenery(centerline, track, theme, { lite = false } = {})
   };
   const yawTo = (dir) => Math.atan2(dir.x, dir.z);
   if (kit.start?.landmark) {
-    const { s, along } = frame(0);
-    const at = s.pos.clone().addScaledVector(along, -30);
+    const { s, along, side } = frame(0);
+    // (A coaster's stands beyond the foot of its lift hill, a little to one side: in the climb's shot.)
+    const at = coaster
+      ? coaster.liftHill.foot.clone().addScaledVector(coaster.liftHill.back, 30).addScaledVector(side, -8)
+      : s.pos.clone().addScaledVector(along, -30);
     placeLandmark(kit.start.landmark, at, yawTo(along));
   }
   if (kit.finish?.landmark) {
@@ -385,6 +399,6 @@ export function buildKitScenery(centerline, track, theme, { lite = false } = {})
     for (const geometry of mergeByArea(pieces, 400)) group.add(Object.assign(new Mesh(geometry, mat), { name: 'scenery: still' }));
   }
 
-  group.userData = { update, field, groundAt, biome, ground, floorY: ground.floorY };
+  group.userData = { update, field, groundAt, biome, ground, floorY: ground.floorY, ...(coaster && { liftHill: coaster.liftHill, station: coaster.station }) };
   return group;
 }

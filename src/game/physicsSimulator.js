@@ -987,6 +987,19 @@ function simulatePhysicsRace({ seed, track, entries, level = 3, tickRateHz = 20 
   const releaseRng = funnel?.release ? createRng(subSeed(seed, 6)) : null;
   const laneCount = funnel ? entries.length : Math.max(1, Math.min(entries.length, lanes));
   const rows = Math.ceil(entries.length / laneCount);
+  // A staggered gate drop (the track kit's opening): the field let go in waves of
+  // neighbouring starting places, the waves in a random order each race.
+  const waves = releaseRng && funnel.waves ? funnel.waves : null;
+  let waveRank = null;
+  if (waves) {
+    const order = Array.from({ length: waves.groups }, (_, g) => g);
+    for (let k = order.length - 1; k > 0; k -= 1) {
+      const j = Math.floor(releaseRng.next() * (k + 1));
+      [order[k], order[j]] = [order[j], order[k]];
+    }
+    waveRank = new Array(waves.groups);
+    order.forEach((g, rank) => { waveRank[g] = rank; });
+  }
   const marbles = entries.map((entry, index) => {
     const lane = Number.isInteger(entry.lane) ? entry.lane : index;
     const row = Math.floor(lane / laneCount);
@@ -996,7 +1009,11 @@ function simulatePhysicsRace({ seed, track, entries, level = 3, tickRateHz = 20 
     const stagger = funnel ? (funnel.stagger ?? 0) * slot * slot : 0;
     const m = newMarble(index, marbleParams(entry, drag), 0.6 + stagger + (rows - 1 - row) * START_ROW_GAP, across * roomFull * 0.85, look);
     // Staggered release: the gate lets each marble go at its own moment, in a random order each race.
-    if (releaseRng) m.releaseAt = releaseRng.next() * funnel.release;
+    if (waves) {
+      // (Neighbouring places together, or, interleaved, every fifth place: each wave spread across the whole gate.)
+      const group = waves.interleave ? (lane % laneCount) % waves.groups : Math.min(waves.groups - 1, Math.floor(((lane % laneCount) * waves.groups) / laneCount));
+      m.releaseAt = waveRank[group] * waves.gap + releaseRng.next() * waves.jitter;
+    } else if (releaseRng) m.releaseAt = releaseRng.next() * funnel.release;
     if (ctx.channel) {
       const top = clamp(Number(entry.topSpeed) || 50, 1, 100) / 100;
       const acc = clamp(Number(entry.acceleration) || 50, 1, 100) / 100;

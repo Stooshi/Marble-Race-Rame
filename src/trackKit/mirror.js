@@ -57,6 +57,13 @@ function mirror(built, { slug, name, description } = {}) {
     ...s,
     ...(s.landmarks && { landmarks: s.landmarks.map((lm) => ({ ...lm, side: flip(lm.side ?? 'left') })) }),
   }));
+  // The sameness check's view of it (not raced, not in its JSON): every bend the other way, and whose mirror it is.
+  if (built.variety) {
+    Object.defineProperty(copy, 'variety', {
+      enumerable: false,
+      value: { ...built.variety, mirrorOf: built.slug, sections: built.variety.sections.map((s) => ({ ...s, side: flip(s.side) })) },
+    });
+  }
   return copy;
 }
 

@@ -49,7 +49,8 @@ describe('kit scenery', () => {
         expect(flagged.map((f) => `${f.metres} m at ${(f.from * 100).toFixed(0)}%: ${f.why} (worst ${f.worst.toFixed(1)} m) [${f.sections.join(', ')}]`)).toEqual([]);
         // On normal terrain the ground meets the rim (nothing of the outer wall shows).
         const normal = exposure.filter((e) => e.kind === 'normal');
-        expect(normal.length).toBeGreaterThan(200);
+        // (A coaster flies on supports and is on the land only where it touches down.)
+        expect(normal.length).toBeGreaterThan(track.physics.kit.coaster ? 20 : 200);
       });
     }
   }

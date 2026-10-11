@@ -11,6 +11,7 @@ const {
 
 module.exports = track({
   slug: 'kit-proving-ground',
+  family: 'test',
   name: 'Kit Proving Ground',
   difficulty: 'extreme',
   description: 'The track kit\'s test track: every kit part on one run.',

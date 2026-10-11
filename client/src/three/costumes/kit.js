@@ -64,6 +64,9 @@ export const COSTUME_COLORS = {
   troll: '#dfe8f2', trollFace: '#a8c0d8', ruinStone: '#9a958a', ruinDark: '#7a756a', dragonScale: '#8a2a24', dragonSpine: '#e0b43c', dragonTail: '#a8342a',
   vineGreen: '#3f8f3a', vineDark: '#2f6e2c', branchBrown: '#5a3f2a', battleRed: '#9a1f1a', battleGold: '#d8a93a', battleBlack: '#2a2420',
   bannerPost: '#3a3d44', bannerRed: '#d8322b', bannerBlue: '#2556b8', bannerWhite: '#f2f2ee', bannerGold: '#e8b62a',
+  // Coasters: Sognefjord.
+  fjordRock: '#6f7378', fjordMoss: '#4f7a3a', netPole: '#7a5a3a', netCord: '#d9cfb8', fjordTroll: '#7d7466', fjordTrollMoss: '#5f7f42', trollNose: '#8f8274',
+  netFloat: '#d8322b',
 };
 
 /** A part's head (or other moving piece) as its own little group at local (x, y, z), turned with the body. */
@@ -815,6 +818,33 @@ function snowTrollBody(add, base, q) {
   for (const x of [-0.6, 0.6]) add('troll', new BoxGeometry(0.6, 1.2, 0.6), local(base, q, x, 0.5, 0));
 }
 
+/** A mossy boulder off the fjord cliffs (Sognefjord; a block). */
+function mossyBoulder(add, mat, group, point, q, { radius, at }) {
+  const turn = (Math.round(at * 991) % 7) * 0.4;
+  add('fjordRock', new IcosahedronGeometry(radius * 1.05, 0), local(point, q, 0, radius * 0.9, 0, 1, 0.85, 1).multiply(new Matrix4().makeRotationY(turn)));
+  add('fjordMoss', new IcosahedronGeometry(radius * 0.75, 0), local(point, q, 0.1, radius * 1.45, 0, 1, 0.35, 1));
+  return [];
+}
+
+/** A fishing-net pole: a wooden post with a net hung from it and a red float (Sognefjord's slalom poles). */
+function netPole(add, mat, group, point, q, { height }) {
+  add('netPole', new CylinderGeometry(0.09, 0.13, height, 6), local(point, q, 0, height / 2, 0));
+  // (The net and its float hang above the marbles, so the pole alone is in their way.)
+  add('netCord', new BoxGeometry(0.03, 0.5, 0.22), local(point, q, 0, height * 0.86, 0.14));
+  add('netFloat', new IcosahedronGeometry(0.09, 0), local(point, q, 0, height * 0.76, 0.12));
+  return [];
+}
+
+/** A big stone troll beside the track, moss on his shoulders (Sognefjord's hairpin; his arm swings in). */
+function fjordTrollBody(add, base, q) {
+  add('fjordTroll', new IcosahedronGeometry(1.4, 1), local(base, q, 0, 1.6, 0, 1, 1.25, 0.9));
+  add('fjordTroll', new IcosahedronGeometry(0.85, 1), local(base, q, 0, 3.6, 0.15));
+  add('fjordTrollMoss', new IcosahedronGeometry(0.9, 0), local(base, q, 0, 2.7, -0.1, 1.4, 0.35, 1));
+  add('trollNose', new IcosahedronGeometry(0.32, 0), local(base, q, 0, 3.45, 0.95, 1, 0.9, 1.4));
+  for (const x of [-0.3, 0.3]) add('xqBlack', new IcosahedronGeometry(0.1, 0), local(base, q, x, 3.8, 0.85));
+  for (const x of [-0.6, 0.6]) add('fjordTroll', new BoxGeometry(0.6, 1.2, 0.6), local(base, q, x, 0.5, 0));
+}
+
 /** A fallen stone block, mossy, from the ruined walls (Wyrmwood Hollow; a block). */
 function stoneBlock(add, mat, group, point, q, { radius, at }) {
   const tilt = (Math.round(at * 997) % 5) * 0.08;
@@ -947,6 +977,17 @@ export const KIT_COSTUMES = {
     arm: { colour: 'stag', shoulder: [0, 2.2, 0.8], radii: [0.22, 0.32], segments: 7, tip: 0.38, tipDetail: 1, end: 0.2, endDetail: 0, endColour: 'antler', lift: 0.5, outLift: 0.6, nose: 0.2 },
   },
   'giant-snowball': { places: 'block', build: giantSnowball },
+  // Sognefjord (coasters).
+  'mossy-boulder': { places: 'block', build: mossyBoulder },
+  'net-pole': { places: 'slalom', build: netPole },
+  'drying-nets': { places: 'curtain', gantry: true, banners: ['netCord', 'netCord', 'netCord'], post: 'netPole', bannerWidth: 0.3, build: () => [] },
+  'fjord-troll': {
+    places: 'swipe',
+    body: fjordTrollBody,
+    standOff: 2.2,
+    sink: -0.3,
+    arm: { colour: 'fjordTroll', shoulder: [0.9, 2.6, 0.3], radii: [0.3, 0.42], segments: 7, tip: 0.5, tipDetail: 1, end: 0.25, endDetail: 0, endColour: 'fjordTrollMoss', lift: 0.4, outLift: 0.5, nose: 0.25 },
+  },
   'ice-lantern': { places: 'slalom', build: iceLantern },
   'snow-troll': {
     places: 'swipe',

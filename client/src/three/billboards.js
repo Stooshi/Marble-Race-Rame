@@ -11,6 +11,7 @@
  * for that slot loads (setImages); an image that fails leaves the promotion,
  * so a board is never blank. Drawing only: the race never sees them.
  */
+import { STATION, stationOf } from './scenery/coaster';
 import {
   BoxGeometry, BufferGeometry, CanvasTexture, ConeGeometry, CylinderGeometry, Float32BufferAttribute, Group, Matrix4, Mesh,
   MeshBasicMaterial, MeshLambertMaterial, Quaternion, SphereGeometry, SRGBColorSpace, Vector3,
@@ -137,6 +138,14 @@ export const FRAMES = {
 /** Where board `b` stands and which way it faces: { foot, quaternion }. */
 export function boardPose(centerline, channel, b) {
   const { samples, segments } = centerline;
+  if (b.mount === 'roof') {
+    // A coaster's station roof: up on it, either side of the middle, facing the marbles coming in.
+    const st = stationOf(centerline);
+    const foot = st.centre.clone().addScaledVector(st.side, b.side * 4).addScaledVector(st.along, -STATION.length / 2 + 6);
+    foot.y = st.floorY + 1.6 + STATION.roof + 0.6;
+    const facing = st.along.clone().negate();
+    return { foot, quaternion: new Quaternion().setFromAxisAngle(UP, Math.atan2(facing.x, facing.z)), facing };
+  }
   const i = Math.min(segments, Math.max(0, Math.round(b.at * segments)));
   const s = samples[i];
   const sArc = (i / segments) * channel.arc;

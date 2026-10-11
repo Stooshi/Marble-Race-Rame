@@ -95,7 +95,7 @@ function summarize(batches, track) {
   const forks = track.physics.forks ?? (track.physics.fork ? [track.physics.fork] : []);
   const kitSections = track.physics.kit?.sections ?? [];
   forks.forEach((fork, k) => {
-    const name = kitSections.find((s) => s.shape === 'splitter' && fork.from >= s.from - 0.02 && fork.from <= s.to)?.name ?? `Splitter ${k + 1}`;
+    const name = kitSections.find((s) => (s.shape === 'splitter' || s.shape === 'twinChutes') && fork.from >= s.from - 0.02 && fork.from <= s.to)?.name ?? `Splitter ${k + 1}`;
     const sum = { left: { marbles: 0, wins: 0, placeChange: 0 }, right: { marbles: 0, wins: 0, placeChange: 0 } };
     for (const r of all) for (const side of ['left', 'right']) for (const key of ['marbles', 'wins', 'placeChange']) sum[side][key] += r.forks[k][side][key];
     const share = (side) => pct(sum[side].marbles, n * 20);

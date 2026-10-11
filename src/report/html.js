@@ -8,7 +8,7 @@
  */
 
 const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-const PARTS = ['Fairness', 'Pace', 'Close racing', 'Splitters', 'Obstacles, boosts, bumps', 'Safety', 'Ground', 'Camera', 'Drawing load'];
+const PARTS = ['Fairness', 'Pace', 'Close racing', 'Splitters', 'Obstacles, boosts, bumps', 'Variety', 'Safety', 'Ground', 'Camera', 'Drawing load'];
 const BUDGETS = { computer: { calls: 60, triangles: 150_000 }, phone: { calls: 35, triangles: 60_000 } };
 
 const mark = (pass) => (pass === true ? '<span class="mark pass">Pass</span>' : pass === false ? '<span class="mark fail">Fail</span>' : '<span class="mark info">Shown</span>');

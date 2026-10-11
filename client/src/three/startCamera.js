@@ -96,7 +96,7 @@ const KEY_TIMES = [0, 0.2, 0.38, 0.5, 0.63, 0.79, 1];
  *   aspect: width / height of the view (narrow phones get pulled back so more of the row fits).
  * Returns { camera, target } (Vector3s).
  */
-export function countdownPose(t, countdownMs, start, end, aspect = 1.6) {
+export function countdownPose(t, countdownMs, start, end, aspect = 1.6, { liftHill = null } = {}) {
   const { centre, forward: F, side: S } = start;
   const U = new Vector3(0, 1, 0);
   const wide = Math.min(1.8, Math.max(1, 1.3 / Math.max(0.3, aspect))); // portrait: further out
@@ -113,6 +113,15 @@ export function countdownPose(t, countdownMs, start, end, aspect = 1.6) {
     [end.camera.clone(), end.target.clone()], //         straight behind the field: the shot at GO
   ];
 
+  // A coaster: it opens at the foot of the lift hill, the monument behind, and rides up beside the climb to the gate.
+  if (liftHill) {
+    const { foot, top, side, back } = liftHill;
+    // (First from well out to the side, the climb across the picture and the monument beyond its foot;
+    // then up beside the top of the climb, looking at the gate.)
+    const mid = foot.clone().lerp(top, 0.5);
+    keys[0] = [mid.clone().addScaledVector(side, 46).addScaledVector(back, -6).addScaledVector(U, 6), foot.clone().addScaledVector(back, 12)];
+    keys[1] = [top.clone().addScaledVector(side, 18).addScaledVector(back, 14).addScaledVector(U, 7), top.clone().addScaledVector(U, 1)];
+  }
   const u = Math.min(1, Math.max(0, 1 + t / countdownMs)); // 0 at the start of the countdown, 1 at GO
   if (u >= 1) return { camera: end.camera.clone(), target: end.target.clone() };
   const curve = (k) => new Vector3(

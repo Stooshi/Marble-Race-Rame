@@ -261,7 +261,8 @@ module.exports = {
     'royal-palace', 'city-hall', 'vasa-museum', 'steamboats', 'red-fort', 'red-fort-gate', 'jama-masjid', 'india-gate', 'mughal-fountain',
     'kasbah', 'mud-mosque', 'caravan',
     'giant-tree', 'tree-platform', 'glow-flowers', 'snow-castle', 'snow-island', 'ice-palace',
-    'ruined-castle', 'sleeping-dragon', 'fallen-statue', 'amphitheatre', 'dragon-mountain'],
+    'ruined-castle', 'sleeping-dragon', 'fallen-statue', 'amphitheatre', 'dragon-mountain',
+    'stave-church', 'fjord-village', 'cruise-ship', 'waterfall-cliff', 'ledge-farm'],
   OVERHEAD: ['gondola', 'cable-car', 'chairlift', 'vulture'],
   // What stands in the middle of a splitter, between its two channels (the arch: over one of
   // them), or in the middle of a spiral or a hairpin.

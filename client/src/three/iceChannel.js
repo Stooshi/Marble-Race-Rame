@@ -50,7 +50,13 @@ const LOOK_COLORS = { ice: ICE_COLORS, sand: SAND_COLORS, snow: SNOW_COLORS, sto
 export const CHANNEL_LOOKS = Object.keys(LOOK_COLORS);
 
 /** The colours for a channel that is not a street (ice, sand, snow, stone, water), at s metres along it. */
-export const channelColors = (channel, s = null) => LOOK_COLORS[lookAt(channel, s)] ?? ICE_COLORS;
+export const channelColors = (channel, s = null) => {
+  const base = LOOK_COLORS[lookAt(channel, s)] ?? ICE_COLORS;
+  // A coaster's channel: its rims the rails' steel, its outside the ties' darker steel.
+  if (!channel?.coaster) return base;
+  return { ...base, rim: channel.coaster.rail ?? '#c9ced6', outer: channel.coaster.tie ?? '#5b616b', outerDark: shade(channel.coaster.tie ?? '#5b616b', 0.85) };
+};
+const shade = (hex, k) => `#${new Color(hex).multiplyScalar(k).getHexString()}`;
 
 /** How the channel is dressed at s metres along it: a kit section's own surface, else the track's. */
 export function lookAt(channel, s = null) {
@@ -81,7 +87,7 @@ export function channelOf(track, centerline) {
   let arc = 0;
   for (let i = 1; i < centerline.samples.length; i += 1) arc += centerline.samples[i].pos.distanceTo(centerline.samples[i - 1].pos);
   const forks = (track.physics.forks ?? (track.physics.fork ? [track.physics.fork] : []))
-    .map((f) => ({ s0: f.from * arc, s1: f.to * arc, radius: f.radius, apart: f.apart }));
+    .map((f) => ({ s0: f.from * arc, s1: f.to * arc, radius: f.radius, apart: f.apart, ...(f.chutes && { chutes: true }) }));
   const runout = track.physics.runout;
   return {
     radius: ch.radius,
@@ -94,6 +100,7 @@ export function channelOf(track, centerline) {
     look: ['street', ...CHANNEL_LOOKS].includes(track.physics.look) ? track.physics.look : 'ice', // how it is dressed (the shape is the same)
     // Kit sections dressed differently from the rest (a stone stretch on a snow track, say).
     kerbs: Boolean(track.physics.kit?.grandPrix), // red-and-white kerbs on the bends (Grand Prix tracks)
+    coaster: track.physics.kit?.coaster?.colours ?? null, // a coaster: steel rims and an outer skin in its colours
     surfaces: (track.physics.kit?.sections ?? [])
       .filter((x) => x.surface && LOOK_COLORS[x.surface])
       .map((x) => ({ s0: x.from * arc, s1: x.to * arc, look: x.surface })),
@@ -254,16 +261,40 @@ export function buildIceChannelGeometry(centerline, channel, {
 
   // half: 0 = whole channel; +1 / -1 = a split channel still overlapping its
   // twin, drawn only on its own side of the middle (no walls crossing the floor).
-  const channelStrip = (a, b, stripe, half = 0, s = 0, lip = channel.maxAngle) => {
-    const mine = (k) => !half || (half > 0
-      ? Math.min(a.lateral[k], a.lateral[k + 1], b.lateral[k], b.lateral[k + 1]) >= 0
-      : Math.max(a.lateral[k], a.lateral[k + 1], b.lateral[k], b.lateral[k + 1]) <= 0);
+  const channelStrip = (a, b, stripe, half = 0, s = 0, lip = channel.maxAngle, clip = false) => {
+    // Twin chutes still overlapping each other keep only the floor on their own side of
+    // the middle: each strip is clipped at the middle (the twins meet there exactly,
+    // mirror images of each other), so neither a gap nor a twin's wall shows there.
+    const clipped = (k) => {
+      const pts = [[a.ring[k], a.lateral[k]], [b.ring[k], b.lateral[k]], [b.ring[k + 1], b.lateral[k + 1]], [a.ring[k + 1], a.lateral[k + 1]]];
+      const inside = ([, l]) => (half > 0 ? l >= 0 : l <= 0);
+      const out = [];
+      for (let j = 0; j < pts.length; j += 1) {
+        const p = pts[j];
+        const q = pts[(j + 1) % pts.length];
+        if (inside(p)) out.push(p[0]);
+        if (inside(p) !== inside(q)) out.push(p[0].clone().lerp(q[0], p[1] / (p[1] - q[1])));
+      }
+      return out;
+    };
     for (let k = 0; k < segmentsAcross; k += 1) {
       // The strip's angle up the wall, as a share of the full wall (the funnel's lip is lower: scaled to the main channel's).
       const th = ((-lip + (2 * lip * (k + 0.5)) / segmentsAcross) / lip) * channel.maxAngle;
       let color = street ? streetColor(th, s, stripe) : stripe ? C.iceA : C.iceB;
       if (kerbHere && (k === 0 || k === segmentsAcross - 1)) color = Math.floor(s / KERB_LENGTH) % 2 === 0 ? KERB.kerbA : KERB.kerbB;
-      if (mine(k)) quad(a.ring[k], b.ring[k], b.ring[k + 1], a.ring[k + 1], color);
+      if (!half) { quad(a.ring[k], b.ring[k], b.ring[k + 1], a.ring[k + 1], color); continue; }
+      if (!clip) {
+        // (A splitter's: each strip wholly on its own side of the middle, as always.)
+        const own = half > 0
+          ? Math.min(a.lateral[k], a.lateral[k + 1], b.lateral[k], b.lateral[k + 1]) >= 0
+          : Math.max(a.lateral[k], a.lateral[k + 1], b.lateral[k], b.lateral[k + 1]) <= 0;
+        if (own) quad(a.ring[k], b.ring[k], b.ring[k + 1], a.ring[k + 1], color);
+        continue;
+      }
+      const poly = clipped(k);
+      for (let j = 1; j + 1 < poly.length; j += 1) {
+        for (const p of [poly[0], poly[j], poly[j + 1]]) { positions.push(p.x, p.y, p.z); colors.push(color.r, color.g, color.b); }
+      }
     }
     for (const sideIdx of [0, 1]) {
       if (half && (sideIdx === 0) === (half > 0)) continue; // its inner wall is still inside the twin channel
@@ -304,8 +335,9 @@ export function buildIceChannelGeometry(centerline, channel, {
       // flat top joining their inner rims, with a red nose where it starts.
       const gap = (o) => 2 * o - 2 * (forkRadius(fork, channel.radius, sMid) * Math.sin(channel.maxAngle) + rimWidth);
       const apart = gap(oa) > 0 && gap(ob) > 0;
-      channelStrip(inA, inB, stripe, apart ? 0 : 1);
-      channelStrip(outA, outB, stripe, apart ? 0 : -1);
+      // (Twin chutes, the split-and-merge opening's: their floors clipped at the middle, so neither a gap nor a wall shows.)
+      channelStrip(inA, inB, stripe, apart ? 0 : 1, 0, channel.maxAngle, Boolean(fork.chutes));
+      channelStrip(outA, outB, stripe, apart ? 0 : -1, 0, channel.maxAngle, Boolean(fork.chutes));
       if (apart) {
         const nose = gap((oa + ob) / 2) < 1.2 && sMid < (fork.s0 + fork.s1) / 2;
         quad(outA.rimOut[1], outB.rimOut[1], inB.rimOut[0], inA.rimOut[0], nose ? C.nose : C.divider);

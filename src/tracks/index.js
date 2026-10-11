@@ -5,6 +5,7 @@
 module.exports = [
   require('./kit-proving-ground'),
   require('./kit-proving-ground-mirrored'),
+  ...require('./variety'),
   require('./are-run'),
   require('./portes-du-soleil-run'),
   require('./park-city-run'),
@@ -26,4 +27,5 @@ module.exports = [
   require('./elderglade-marble-grand-prix'),
   require('./frostmere-marble-grand-prix'),
   require('./wyrmwood-hollow-marble-grand-prix'),
+  require('./sognefjord'),
 ];
