@@ -66,6 +66,7 @@ export const COSTUME_COLORS = {
   bannerPost: '#3a3d44', bannerRed: '#d8322b', bannerBlue: '#2556b8', bannerWhite: '#f2f2ee', bannerGold: '#e8b62a',
   // Coasters: Sognefjord.
   fjordRock: '#6f7378', fjordMoss: '#4f7a3a', netPole: '#7a5a3a', netCord: '#d9cfb8', fjordTroll: '#7d7466', fjordTrollMoss: '#5f7f42', trollNose: '#8f8274',
+  barrelWood: '#7a4f2e', barrelHoop: '#3a3634', tombstone: '#9a968c', tombMoss: '#5a6a48', totemWood: '#6a4a8a', totemFace: '#e8b33c', totemEye: '#ff7a1a',
   netFloat: '#d8322b',
 };
 
@@ -845,6 +846,36 @@ function fjordTrollBody(add, base, q) {
   for (const x of [-0.6, 0.6]) add('fjordTroll', new BoxGeometry(0.6, 1.2, 0.6), local(base, q, x, 0.5, 0));
 }
 
+/** A tumbling barrel, on its side (Phantom Peak; a block). */
+function barrel(add, mat, group, point, q, { radius, at }) {
+  const r = radius * 0.7;
+  const roll = (Math.round(at * 991) % 6) * 0.5;
+  const lie = new Matrix4().makeRotationZ(Math.PI / 2).premultiply(new Matrix4().makeRotationY(roll));
+  add('barrelWood', new CylinderGeometry(r, r, r * 2.2, 10), local(point, q, 0, r, 0).multiply(lie));
+  for (const y of [-0.7, 0, 0.7]) add('barrelHoop', new CylinderGeometry(r * 1.04, r * 1.04, 0.12, 10), local(point, q, 0, r, 0).multiply(lie).multiply(new Matrix4().makeTranslation(0, y * r, 0)));
+  return [];
+}
+
+/** A leaning tombstone, mossy at its foot (Phantom Peak's slalom poles). */
+function tombstone(add, mat, group, point, q, { height, at }) {
+  const h = height * 0.85;
+  const tilt = ((Math.round(at * 997) % 5) - 2) * 0.025;
+  add('tombstone', new BoxGeometry(0.26, h, 0.12), local(point, q, 0, h / 2, 0).multiply(new Matrix4().makeRotationZ(tilt)));
+  add('tombstone', new CylinderGeometry(0.13, 0.13, 0.12, 8, 1, false, 0, Math.PI), local(point, q, 0, h, 0).multiply(new Matrix4().makeRotationX(Math.PI / 2)).multiply(new Matrix4().makeRotationZ(tilt)));
+  add('tombMoss', new BoxGeometry(0.26, 0.1, 0.16), local(point, q, 0, 0.06, 0));
+  return [];
+}
+
+/** A carved park totem, its painted face grinning, one arm swinging (Phantom Peak; a swipe). */
+function parkTotemBody(add, base, q) {
+  add('totemWood', new CylinderGeometry(0.9, 1.1, 5.2, 8), local(base, q, 0, 2.6, 0));
+  for (const y of [1.4, 3.6]) {
+    add('totemFace', new BoxGeometry(1.5, 1.2, 0.3), local(base, q, 0, y, 0.95));
+    for (const x of [-0.35, 0.35]) add('totemEye', new IcosahedronGeometry(0.18, 0), local(base, q, x, y + 0.25, 1.12));
+  }
+  add('totemFace', new ConeGeometry(1.3, 1.2, 6), local(base, q, 0, 5.8, 0));
+}
+
 /** A fallen stone block, mossy, from the ruined walls (Wyrmwood Hollow; a block). */
 function stoneBlock(add, mat, group, point, q, { radius, at }) {
   const tilt = (Math.round(at * 997) % 5) * 0.08;
@@ -997,6 +1028,15 @@ export const KIT_COSTUMES = {
     arm: { colour: 'troll', shoulder: [0.9, 2.6, 0.3], radii: [0.3, 0.42], segments: 7, tip: 0.5, tipDetail: 1, end: 0.25, endDetail: 0, lift: 0.4, outLift: 0.5, nose: 0.25 },
   },
   'stone-block': { places: 'block', build: stoneBlock },
+  barrel: { places: 'block', build: barrel },
+  tombstone: { places: 'slalom', build: tombstone },
+  'park-totem': {
+    places: 'swipe',
+    body: parkTotemBody,
+    standOff: 2.2,
+    sink: -0.3,
+    arm: { colour: 'totemWood', shoulder: [0.9, 3.0, 0.3], radii: [0.28, 0.4], segments: 7, tip: 0.5, tipDetail: 1, end: 0.25, endDetail: 0, endColour: 'totemFace', lift: 0.4, outLift: 0.5, nose: 0.25 },
+  },
   'broken-pillar': { places: 'slalom', build: brokenPillar },
   'dragon-tail': {
     places: 'swipe',

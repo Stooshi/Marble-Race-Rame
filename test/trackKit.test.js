@@ -626,6 +626,7 @@ const HIDDEN_KIT_TRACKS = [
   ['frostmere-marble-grand-prix', '2026-11-03-add-frostmere-marble-grand-prix.sql', 'Frostmere Marble Grand Prix: a snowy fairy-tale kingdom by night, from the castle bridge across a frozen lake and through the ice palace hall into its courtyard under the northern lights'],
   ['wyrmwood-hollow-marble-grand-prix', '2026-11-04-add-wyrmwood-hollow-marble-grand-prix.sql', 'Wyrmwood Hollow Marble Grand Prix: a valley of ancient ruins where an old dragon sleeps, from a ruined castle wall over a chasm bridge and past the dragon to a ruined amphitheatre'],
   ['sognefjord', '2026-11-05-add-sognefjord.sql', 'Sognefjord Coaster, the first Coaster Series track'],
+  ['phantom-peak', '2026-11-06-add-phantom-peak.sql', 'Phantom Peak Coaster, a spooky theme park mountain at dusk'],
 ];
 for (const [slug, file, note] of HIDDEN_KIT_TRACKS) {
   test(`${slug} is added by its data update, switched off, exactly as its track file builds it`, () => {

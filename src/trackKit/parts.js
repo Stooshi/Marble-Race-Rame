@@ -262,12 +262,13 @@ module.exports = {
     'kasbah', 'mud-mosque', 'caravan',
     'giant-tree', 'tree-platform', 'glow-flowers', 'snow-castle', 'snow-island', 'ice-palace',
     'ruined-castle', 'sleeping-dragon', 'fallen-statue', 'amphitheatre', 'dragon-mountain',
-    'stave-church', 'fjord-village', 'cruise-ship', 'waterfall-cliff', 'ledge-farm'],
+    'stave-church', 'fjord-village', 'cruise-ship', 'waterfall-cliff', 'ledge-farm',
+    'skull-rock', 'park-midway', 'distant-coasters', 'graveyard', 'volcano-rock'],
   OVERHEAD: ['gondola', 'cable-car', 'chairlift', 'vulture'],
   // What stands in the middle of a splitter, between its two channels (the arch: over one of
   // them), or in the middle of a spiral or a hairpin.
   AROUND: ['mountain-hut', 'big-rock', 'mountain-restaurant', 'mine-headframe', 'nunatak', 'bell-tower', 'arc-de-triomphe', 'obelisk', 'notre-dame', 'oasis', 'twisted-tower', 'river-island', 'anaconda', 'watchtower', 'pagoda',
-    'museum-of-the-future', 'dubai-frame', 'opera-house', 'tulip-garden', 'roundabout-monument', 'acacia', 'mughal-fountain', 'giant-tree', 'snow-island', 'fallen-statue'],
+    'museum-of-the-future', 'dubai-frame', 'opera-house', 'tulip-garden', 'roundabout-monument', 'acacia', 'mughal-fountain', 'giant-tree', 'snow-island', 'fallen-statue', 'volcano-rock'],
   // Scenery near a section (or the start or finish): what grows and stands beside the track there.
   SCENERY: ['bare', 'rocks', 'birches', 'pines', 'race-netting', 'funicular', 'wooden-houses', 'frozen-lake',
     'wood-clad', 'chalets', 'pasture', 'aspens', 'shopfronts',
