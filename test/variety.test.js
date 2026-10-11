@@ -88,9 +88,10 @@ test('the sameness check: identical layouts fail, different ones pass, test trac
   // Today's Grand Prix tracks share one layout: the check fails them.
   const dubai = varietyCheck(physicsTrack('dubai-marble-grand-prix'), PHYSICS_TRACKS);
   assert.ok(dubai.lines.some((l) => l.pass === false && /Layout/.test(l.what)));
-  // A track on a layout no track uses yet passes against every track today.
+  // A track on a layout no other track uses passes against every one of them (two-splitters:
+  // only Pyramid Run uses it, so it is compared with every track but that one).
   const fresh = track(spec({ family: 'world-tour', opening: opening('crest-start'), sections: layout('two-splitters') }));
-  const check = varietyCheck(fresh, [...PHYSICS_TRACKS, fresh]);
+  const check = varietyCheck(fresh, [...PHYSICS_TRACKS.filter((t) => t.slug !== 'pyramid-run'), fresh]);
   assert.deepEqual(check.lines.filter((l) => l.pass === false), []);
   // The libraries' own test tracks are never compared.
   assert.equal(varietyCheck(physicsTrack('variety-layout-classic'), PHYSICS_TRACKS).lines[0].pass, null);

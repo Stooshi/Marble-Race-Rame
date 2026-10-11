@@ -31,4 +31,5 @@ module.exports = [
   require('./phantom-peak'),
   require('./collserola-run'),
   require('./whistler-spins'),
+  require('./pyramid-run'),
 ];

@@ -206,7 +206,7 @@ export function buildCoaster(centerline, channel, kit, { lite = false, groundAt,
   };
 
   // Rails along both rims and a spine under the floor, one strip of beams along the whole track.
-  const railStep = lite ? 4 : 3;
+  const railStep = lite ? 6 : 3;
   for (let i = 0; i + railStep <= segments; i += railStep) {
     const j = i + railStep;
     const a = frameAt(i);
@@ -219,7 +219,7 @@ export function buildCoaster(centerline, channel, kit, { lite = false, groundAt,
     steel.push(strut(a.s.pos.clone().addScaledVector(UP, -SKIRT - 0.35), b.s.pos.clone().addScaledVector(UP, -SKIRT - 0.35), 0.55, TIE));
   }
   // Cross-ties under the channel, rim to rim.
-  const tieEvery = lite ? 6 : 4;
+  const tieEvery = lite ? 8 : 4;
   for (let i = 0; i <= segments; i += Math.max(1, Math.round(tieEvery / step))) {
     const { s, side } = frameAt(i);
     const e = edgeAt(channel, i, step);
@@ -258,7 +258,7 @@ export function buildCoaster(centerline, channel, kit, { lite = false, groundAt,
       feet.push({ x: b.x, z: b.z, r: 3 });
     }
     towers.push(strut(legs[0][0], legs[1][0], 0.4, SUPPORT)); // the crossbeam the channel rests on
-    const rung = light ? 10 : 7;
+    const rung = light ? 12 : 7;
     const n = Math.floor(h / rung);
     for (let k = 1; k <= n; k += 1) {
       const t = (k * rung) / h;
@@ -273,7 +273,7 @@ export function buildCoaster(centerline, channel, kit, { lite = false, groundAt,
       }
     }
   };
-  const every = lite ? 18 : 13;
+  const every = lite ? 22 : 13;
   let last = -Infinity;
   for (let i = 0; i <= segments; i += 1) {
     if (!isLifted(flight, i) || i * step - last < every) continue;

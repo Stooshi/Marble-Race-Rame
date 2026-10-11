@@ -265,7 +265,7 @@ module.exports = {
     'stave-church', 'fjord-village', 'cruise-ship', 'waterfall-cliff', 'ledge-farm',
     'skull-rock', 'park-midway', 'distant-coasters', 'graveyard', 'volcano-rock',
     'tibidabo', 'barceloneta-beach', 'barcelona-city', 'park-guell-terrace', 'sagrada-familia',
-    'inukshuk', 'whistler-village', 'frozen-waterfall'],
+    'inukshuk', 'whistler-village', 'frozen-waterfall', 'sphinx', 'giza-pyramids', 'nile-station', 'obelisk'],
   OVERHEAD: ['gondola', 'cable-car', 'chairlift', 'vulture'],
   // What stands in the middle of a splitter, between its two channels (the arch: over one of
   // them), or in the middle of a spiral or a hairpin.

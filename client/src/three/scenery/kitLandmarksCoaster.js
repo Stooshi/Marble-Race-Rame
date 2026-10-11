@@ -372,6 +372,64 @@ function frozenWaterfall() {
   return merge(p);
 }
 
+
+// ── Pyramid Run ──────────────────────────────────────────────────────────────
+
+const LIMESTONE = '#e2cc98';
+
+/** A stepped-looking pyramid: a four-sided cone, its capstone a shade lighter. */
+function pyramid(base, height, x = 0, z = 0) {
+  const r = base / Math.SQRT2;
+  return [
+    piece(new ConeGeometry(r, height, 4), LIMESTONE, turned(x, height / 2, z, Math.PI / 4)),
+    piece(new ConeGeometry(r * 0.12, height * 0.12, 4), '#f2e2b8', turned(x, height * 0.94, z, Math.PI / 4)),
+  ];
+}
+
+/** The Great Sphinx lying on the sand, the Great Pyramid rising behind it. */
+function sphinx() {
+  const STONE = '#c8a46a';
+  const p = [
+    box(8, 5, 26, 0, 2.5, -2, STONE), // the lion's body
+    box(9, 2, 30, 0, 1, -1, '#b8945a'), // its plinth
+    box(2.4, 2, 10, -3, 1.6, 15, STONE), box(2.4, 2, 10, 3, 1.6, 15, STONE), // the paws, out in front
+    box(5, 6, 5, 0, 8, 10, STONE), // the head
+    box(7.4, 5, 2.4, 0, 7.6, 9, '#2f5a8a'), box(7.4, 1.2, 2.6, 0, 7, 9, '#d8b84a'), // the striped headdress
+    box(3.2, 3.6, 0.4, 0, 8, 12.6, '#b8945a'), // the face
+    piece(new IcosahedronGeometry(3, 0), '#c8a46a', S(0, 4, -16, 1.2, 1, 1.4)), // the haunch
+  ];
+  p.push(...pyramid(120, 90, -10, -110));
+  return merge(p);
+}
+
+/** The three pyramids of Giza across the sand, two small queens' pyramids beside them. */
+function gizaPyramids() {
+  const p = [];
+  p.push(...pyramid(110, 82, -70, 10), ...pyramid(100, 76, 20, -20), ...pyramid(60, 40, 95, 30));
+  for (const x of [120, 135, 150]) p.push(...pyramid(16, 11, x, 70));
+  return merge(p);
+}
+
+/** A Nile-side station: the river, palms on the bank, feluccas with tall white sails. */
+function nileStation() {
+  const p = [
+    box(140, 0.3, 50, 0, 0.1, -40, '#3f8fa8'), // the Nile
+    box(140, 0.5, 10, 0, 0.25, -10, '#c8b078'), // the bank
+  ];
+  for (let k = 0; k < 10; k += 1) {
+    const x = -60 + k * 13;
+    p.push(piece(new CylinderGeometry(0.35, 0.5, 10, 6), '#8a6a3a', M(x, 5, -8 + (k % 2) * 4)));
+    p.push(piece(new IcosahedronGeometry(3, 0), '#4f8a3a', S(x, 10.5, -8 + (k % 2) * 4, 1.3, 0.45, 1.3)));
+  }
+  for (const [x, z, yaw] of [[-30, -35, 0.3], [10, -48, -0.2], [45, -32, 0.6]]) {
+    p.push(piece(new BoxGeometry(3, 1.2, 10), '#7a5a3a', turned(x, 0.6, z, yaw)));
+    p.push(piece(new CylinderGeometry(0.12, 0.12, 12, 5), '#5a4028', M(x, 6.5, z)));
+    // The lateen sail: a long tilted triangle.
+    p.push(piece(new ConeGeometry(4.5, 12, 3), '#f4f0e4', new Matrix4().makeRotationZ(0.35).premultiply(turned(x + 1.5, 7, z, yaw, 1, 1, 0.12))));
+  }
+  return merge(p);
+}
+
 export const COASTER_LANDMARKS = {
   'stave-church': { build: staveChurch, radius: 10 },
   'fjord-village': { build: fjordVillage, radius: 30 },
@@ -391,4 +449,7 @@ export const COASTER_LANDMARKS = {
   inukshuk: { build: inukshuk, radius: 8 },
   'whistler-village': { build: whistlerVillage, radius: 38 },
   'frozen-waterfall': { build: frozenWaterfall, radius: 7, fit: 6.5 },
+  sphinx: { build: sphinx, radius: 16 },
+  'giza-pyramids': { build: gizaPyramids, radius: 120 },
+  'nile-station': { build: nileStation, radius: 60 },
 };

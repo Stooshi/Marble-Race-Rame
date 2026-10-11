@@ -67,7 +67,7 @@ export const COSTUME_COLORS = {
   // Coasters: Sognefjord.
   fjordRock: '#6f7378', fjordMoss: '#4f7a3a', netPole: '#7a5a3a', netCord: '#d9cfb8', fjordTroll: '#7d7466', fjordTrollMoss: '#5f7f42', trollNose: '#8f8274',
   barrelWood: '#7a4f2e', barrelHoop: '#3a3634', tombstone: '#9a968c', tombMoss: '#5a6a48', totemWood: '#6a4a8a', totemFace: '#e8b33c', totemEye: '#ff7a1a',
-  pineCone: '#8a5a32', pineConeTip: '#5a3a20', grizzly: '#6a4a30', grizzlyDark: '#4a3220', grizzlyMuzzle: '#a8885a', tileBlue: '#2f7fc4', tileYellow: '#f2c230', tileGreen: '#4aa35a', tileRed: '#d8442f', tileWhite: '#f2efe6',
+  pineCone: '#8a5a32', pineConeTip: '#5a3a20', grizzly: '#6a4a30', grizzlyDark: '#4a3220', grizzlyMuzzle: '#a8885a', statueStone: '#c8a46a', statueStripe: '#2f5a8a', statueGold: '#d8b84a', tileBlue: '#2f7fc4', tileYellow: '#f2c230', tileGreen: '#4aa35a', tileRed: '#d8442f', tileWhite: '#f2efe6',
   netFloat: '#d8322b',
 };
 
@@ -908,6 +908,15 @@ function grizzlyBody(add, base, q) {
   for (const x of [-0.6, 0.6]) add('grizzlyDark', new BoxGeometry(0.6, 1, 0.7), local(base, q, x, 0.5, 0));
 }
 
+/** A pharaoh's statue on its plinth, striped headdress, one great stone arm swinging (Pyramid Run; a swipe). */
+function pharaohStatueBody(add, base, q) {
+  add('statueStone', new BoxGeometry(1.8, 0.8, 1.8), local(base, q, 0, 0.4, 0));
+  add('statueStone', new BoxGeometry(1.3, 2.6, 0.9), local(base, q, 0, 2.1, 0));
+  add('statueStone', new BoxGeometry(0.8, 0.9, 0.8), local(base, q, 0, 3.85, 0.05));
+  add('statueStripe', new BoxGeometry(1.3, 1, 0.5), local(base, q, 0, 3.8, -0.3));
+  add('statueGold', new BoxGeometry(1.32, 0.2, 0.52), local(base, q, 0, 3.5, -0.3));
+}
+
 /** A fallen stone block, mossy, from the ruined walls (Wyrmwood Hollow; a block). */
 function stoneBlock(add, mat, group, point, q, { radius, at }) {
   const tilt = (Math.round(at * 997) % 5) * 0.08;
@@ -1062,6 +1071,13 @@ export const KIT_COSTUMES = {
   'stone-block': { places: 'block', build: stoneBlock },
   barrel: { places: 'block', build: barrel },
   'pine-cone': { places: 'block', build: pineCone },
+  'pharaoh-statue': {
+    places: 'swipe',
+    body: pharaohStatueBody,
+    standOff: 2.2,
+    sink: -0.3,
+    arm: { colour: 'statueStone', shoulder: [0.75, 3.0, 0.2], radii: [0.26, 0.38], segments: 7, tip: 0.5, tipDetail: 1, end: 0.25, endDetail: 0, endColour: 'statueGold', lift: 0.4, outLift: 0.5, nose: 0.25 },
+  },
   grizzly: {
     places: 'swipe',
     body: grizzlyBody,

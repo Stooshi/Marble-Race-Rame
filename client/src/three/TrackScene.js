@@ -257,7 +257,7 @@ export class TrackScene {
     this.channel = channelOf(track, this.centerline); // ice channel (bobsleigh) instead of a road
     // (On phones a street's U is drawn in fewer strips across.)
     const lighter = this.lite && this.channel?.look === 'street' ? { segmentsAcross: 20 }
-      : this.lite && track?.physics?.kit ? { segmentsAcross: 10 } : undefined; // (kit tracks on phones: a coarser U)
+      : this.lite && track?.physics?.kit ? { segmentsAcross: track.physics.kit.coaster ? 8 : 10 } : undefined; // (kit tracks on phones: a coarser U; coasters, seen from further out, coarser still)
     const geometry = this.channel ? buildIceChannelGeometry(this.centerline, this.channel, lighter) : buildTrackGeometry(track, this.centerline, style);
     this.trackMesh = new Mesh(geometry, this.trackMaterial);
     this.trackGroup.add(this.trackMesh);
