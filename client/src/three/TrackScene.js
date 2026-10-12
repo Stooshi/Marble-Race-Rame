@@ -563,7 +563,7 @@ export class TrackScene {
     // The track's features: the bear's swipe, puffs where marbles hit obstacles, boost streaks.
     this.features?.update(frame.t, { frame, positions: this.marbles.positions, contacts: this.marbles.contacts });
     this.structures?.update(frame.t);
-    this.scenery?.userData?.update?.(frame.t, { frame, positions: this.marbles.positions }); // (kit sceneries: idle movements, lifts; Grand Prix crowds)
+    this.scenery?.userData?.update?.(frame.t, { frame, positions: this.marbles.positions, names: this.marbles.names }); // (kit sceneries: idle movements, lifts; Grand Prix crowds)
     const index = this.followedIndex(frame, follow, this.main);
     this.celebrate(frame, index);
     const at = this.marbles.positionOf(index);

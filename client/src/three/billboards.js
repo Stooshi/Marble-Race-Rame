@@ -37,6 +37,44 @@ export const PROMOTIONS = [
   { title: 'WATCH THE REPLAY', line: 'Every race, every overtake, any angle', bg: ['#2c3e66', '#0d1426'], ink: '#ffffff', accent: '#7fd3ff' },
 ];
 
+/** Our marquee promotions (arcade worlds): our other tracks, as original marquee art. */
+export const MARQUEE_PROMOTIONS = [
+  { title: 'MULTIBALL MANOR', line: 'NOW PLAYING: PINBALL SERIES', glow: '#c6ff4f', bg: '#140a2a' },
+  { title: 'GRAND CHAMPION', line: 'GET YOUR INITIALS UP THERE', glow: '#ff3fa8', bg: '#0a0a12' },
+  { title: 'WIZARD MODE', line: 'STORM THE CASTLE TABLE', glow: '#ffd23f', bg: '#1a2a5c' },
+  { title: 'PHANTOM PEAK', line: 'RIDE THE COASTER SERIES', glow: '#3fd8ff', bg: '#0a1426' },
+  { title: 'TILT', line: 'THE 1970S DINER TABLE', glow: '#7af2ff', bg: '#0f3a4a' },
+  { title: 'MARBLE RACE', line: 'INSERT MARBLE TO PLAY', glow: '#ffd23f', bg: '#2a0a3a' },
+];
+
+/** Paints a marquee promotion: a dark lit panel, the title in big glowing letters, a row of bulbs top and bottom. */
+export function paintMarqueePromotion(g, promo, x, y, w, h) {
+  g.fillStyle = promo.bg;
+  g.fillRect(x, y, w, h);
+  const grad = g.createLinearGradient(x, y, x, y + h);
+  grad.addColorStop(0, 'rgba(255,255,255,0.10)');
+  grad.addColorStop(0.5, 'rgba(255,255,255,0)');
+  g.fillStyle = grad;
+  g.fillRect(x, y, w, h);
+  g.fillStyle = promo.glow;
+  for (let k = 0; k < 24; k += 1) {
+    g.fillRect(x + (k + 0.3) * (w / 24), y + h * 0.04, w * 0.016, h * 0.03);
+    g.fillRect(x + (k + 0.3) * (w / 24), y + h * 0.93, w * 0.016, h * 0.03);
+  }
+  g.textAlign = 'center';
+  g.textBaseline = 'alphabetic';
+  g.font = `900 ${Math.round(h * 0.26)}px monospace`;
+  g.lineWidth = h * 0.03;
+  g.strokeStyle = '#000000';
+  g.strokeText(promo.title, x + w / 2, y + h * 0.55, w * 0.9);
+  g.fillStyle = promo.glow;
+  g.fillText(promo.title, x + w / 2, y + h * 0.55, w * 0.9);
+  g.fillStyle = '#ffffff';
+  g.font = `700 ${Math.round(h * 0.085)}px monospace`;
+  g.fillText(promo.line, x + w / 2, y + h * 0.78, w * 0.86);
+  g.textAlign = 'start';
+}
+
 /** Paints a promotion into the cell at (x, y, w, h) of a 2D canvas context. */
 export function paintPromotion(g, promo, x, y, w, h) {
   const grad = g.createLinearGradient(x, y, x + w, y + h);
@@ -125,6 +163,15 @@ export const FRAMES = {
     ];
   },
   // Our fantasy worlds: a cloth banner hung from a pole between two staves, tassels at its foot.
+  // The arcade worlds: a lit marquee on top of a small cabinet, chrome trim, light strips.
+  marquee: (bottom) => [
+    ...border(bottom, 0.22, 1.0, '#0a0a10'),
+    back(bottom, '#08080c'),
+    box(W + 0.44, 0.1, 1.05, 0, bottom - 0.05, 0, '#c8ccd2'),
+    box(W + 0.44, 0.1, 1.05, 0, bottom + H + 0.05, 0, '#c8ccd2'),
+    box(W * 0.62, bottom + BURY, 1.8, 0, (bottom - BURY) / 2, -0.5, '#141018'), // the cabinet under it
+    box(W * 0.5, 1.4, 0.1, 0, bottom - 1.2, 0.42, '#0a2a3a'), // its screen
+  ],
   banner: (bottom) => [
     ...border(bottom, 0.12, 0.2, '#8a2a24'),
     back(bottom, '#6b1f1a'),
@@ -177,7 +224,8 @@ export function buildBillboards(centerline, channel, kit, { lite = false } = {})
   const cellOf = (k) => ({ x: (k % COLS) * cell.w, y: Math.floor(k / COLS) * cell.h });
   boards.forEach((b, k) => {
     const { x, y } = cellOf(k);
-    paintPromotion(g, PROMOTIONS[(b.slot - 1) % PROMOTIONS.length], x, y, cell.w, cell.h);
+    if (b.frame === 'marquee') paintMarqueePromotion(g, MARQUEE_PROMOTIONS[(b.slot - 1) % MARQUEE_PROMOTIONS.length], x, y, cell.w, cell.h);
+    else paintPromotion(g, PROMOTIONS[(b.slot - 1) % PROMOTIONS.length], x, y, cell.w, cell.h);
   });
   const texture = new CanvasTexture(canvas);
   texture.colorSpace = SRGBColorSpace;

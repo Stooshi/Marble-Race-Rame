@@ -206,8 +206,8 @@ function boost({ at = 0.3, l = 0, length = 8, halfWidth = 3.6, kick } = {}) {
 }
 
 /** Moguls: a row of low bumps the field hops over one after another (the Swiss Wall, sastrugi, rapids). */
-function moguls({ from = 0.2, to = 0.85, count = 5 } = {}) {
-  return { feature: 'moguls', from, to, count, at: from };
+function moguls({ from = 0.2, to = 0.85, count = 5, look } = {}) {
+  return { feature: 'moguls', from, to, count, at: from, ...(look && { look }) }; // look 'reels': pinball score reels (looks only)
 }
 
 /**
@@ -248,7 +248,7 @@ module.exports = {
   BRIDGES: ['ice', 'stone', 'wood', 'steel'],
   // Scenery names (looks only; the 3D view draws them, client/src/three/scenery/kit*.js).
   SURFACES: ['ice', 'snow', 'sand', 'stone', 'water', 'asphalt'],
-  BIOMES: ['alpine', 'arctic', 'meadow', 'desert', 'jungle', 'city', 'playfield'],
+  BIOMES: ['alpine', 'arctic', 'meadow', 'desert', 'jungle', 'city', 'playfield', 'circuit-board', 'blacklight-carpet'],
   LANDMARKS: ['church', 'mountain-hut', 'big-rock', 'lighthouse', 'horse-sleigh', 'border-post',
     'lift-station', 'mine-buildings', 'snow-park', 'base-camp',
     'sacre-coeur', 'moulin-rouge', 'fountains', 'louvre-pyramid', 'notre-dame', 'eiffel-tower', 'seine', 'bookstalls',
@@ -270,18 +270,20 @@ module.exports = {
     'victoria-peak', 'sea-bridge', 'port-cranes', 'zhuhai-waterfront', 'drive-through-redwood', 'redwood-grove', 'sea-stacks-beach',
     'doi-suthep', 'chiang-mai-gate', 'lantern-chedi', 'baobab', 'stilt-lodge', 'mokoros', 'elephant-herd',
     'pancic-mausoleum', 'stone-monastery', 'watermill', 'sheep-flock', 'kolo-village',
-    'sun-yat-sen-mausoleum', 'yangtze-bridge', 'zhonghua-gate', 'lake-pagodas', 'ginkgo-grove', 'haunted-manor', 'siege-castle', 'castle-keep', 'grand-theatre', 'magician-trunk', 'top-hat', 'flying-saucer', 'saucer-town'],
+    'sun-yat-sen-mausoleum', 'yangtze-bridge', 'zhonghua-gate', 'lake-pagodas', 'ginkgo-grove', 'haunted-manor', 'siege-castle', 'castle-keep', 'grand-theatre', 'magician-trunk', 'top-hat', 'flying-saucer', 'saucer-town',
+    'retro-diner', 'soda-fountain', 'jukebox-tower', 'gumball-machine', 'clocktower', 'floating-doors', 'concert-stage', 'speaker-wall', 'lighting-rig',
+    'arcade-hall', 'cabinet-row', 'prize-counter', 'claw-tower', 'neon-maze', 'glitch-tower', 'level-sign'],
   OVERHEAD: ['gondola', 'cable-car', 'chairlift', 'vulture'],
   // What stands in the middle of a splitter, between its two channels (the arch: over one of
   // them), or in the middle of a spiral or a hairpin.
   AROUND: ['mountain-hut', 'big-rock', 'mountain-restaurant', 'mine-headframe', 'nunatak', 'bell-tower', 'arc-de-triomphe', 'obelisk', 'notre-dame', 'oasis', 'twisted-tower', 'river-island', 'anaconda', 'watchtower', 'pagoda',
-    'museum-of-the-future', 'dubai-frame', 'opera-house', 'tulip-garden', 'roundabout-monument', 'acacia', 'mughal-fountain', 'giant-tree', 'snow-island', 'fallen-statue', 'volcano-rock', 'sagrada-familia', 'frozen-waterfall', 'limestone-island', 'sea-islet', 'giant-redwood', 'lantern-chedi', 'watermill', 'confucius-temple', 'castle-keep', 'magician-trunk', 'top-hat'],
+    'museum-of-the-future', 'dubai-frame', 'opera-house', 'tulip-garden', 'roundabout-monument', 'acacia', 'mughal-fountain', 'giant-tree', 'snow-island', 'fallen-statue', 'volcano-rock', 'sagrada-familia', 'frozen-waterfall', 'limestone-island', 'sea-islet', 'giant-redwood', 'lantern-chedi', 'watermill', 'confucius-temple', 'castle-keep', 'magician-trunk', 'top-hat', 'jukebox-tower', 'clocktower', 'lighting-rig', 'claw-tower', 'glitch-tower'],
   // Scenery near a section (or the start or finish): what grows and stands beside the track there.
   SCENERY: ['bare', 'rocks', 'birches', 'pines', 'race-netting', 'funicular', 'wooden-houses', 'frozen-lake',
     'wood-clad', 'chalets', 'pasture', 'aspens', 'shopfronts',
     'stone-houses', 'colourful-houses', 'icefjord', 'haussmann', 'plane-trees', 'skyscrapers', 'stilt-houses', 'forbidden-city', 'battlements', 'grandstand', 'crowd', 'sandstone-terraces', 'market-stalls', 'palms', 'jacarandas', 'savannah', 'merchant-houses'],
-  // Billboard frames: plain, a jungle timber frame, a city LED screen, a Paris advertising column, expedition crates.
-  FRAMES: ['plain', 'wood', 'led', 'column', 'crates', 'banner'],
+  // Billboard frames: plain, a jungle timber frame, a city LED screen, a Paris advertising column, expedition crates, a fantasy banner, an arcade cabinet's marquee.
+  FRAMES: ['plain', 'wood', 'led', 'column', 'crates', 'banner', 'marquee'],
   // Grand Prix tracks (`grandPrix` in a track file): who fills the grandstands, and what lines the bends.
   CROWDS: ['fans', 'elves', 'kingdom-folk', 'villagers', 'desert-folk'],
   BARRIERS: ['tyres', 'logs', 'snow', 'stone', 'marigolds'],

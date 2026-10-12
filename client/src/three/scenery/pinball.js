@@ -212,7 +212,7 @@ export function buildPinball(centerline, channel, kit, { lite = false, groundAt,
     for (const sign of [1, -1]) {
       n += 1;
       const at = s.pos.clone().addScaledVector(side, sign * (edge + 4 + (n % 3) * 2));
-      at.y = groundAt(at.x, at.z) + 0.08;
+      at.y = groundAt(at.x, at.z) + 0.03; // (flush with the playfield: a decal, never a wall in the camera's way)
       if (at.y > s.pos.y + 1) continue; // (not where the land rises over the rim)
       const m = new Matrix4().makeRotationX(-Math.PI / 2).premultiply(new Matrix4().makeRotationY(Math.atan2(along.x, along.z))).premultiply(new Matrix4().makeTranslation(at.x, at.y, at.z));
       const colour = colours[n % colours.length];

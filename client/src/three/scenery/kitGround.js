@@ -65,6 +65,10 @@ export const BIOMES = {
   city: { terrain: { sand: '#d7c9a6', grass: '#9cb768', dry: '#b7bf7a', shade: '#7f9a54' }, bank: '#a7b8a0', fill: '#a49c8f', hills: 18, sea: -60 },
   // A pinball table's playfield: painted wood in deep colours, gently rolling (the table's art, not a landscape).
   playfield: { terrain: { sand: '#3a2a6a', grass: '#22306e', dry: '#2c2a62', shade: '#181c48' }, bank: '#26306a', fill: '#3a2a52', hills: 8, sea: -60 },
+  // The arcade worlds: a giant circuit board (green solder mask, gently rolling) or the blacklight
+  // arcade carpet (near-black with a purple cast); their patterns are the dressing (kitProps.js).
+  'circuit-board': { terrain: { sand: '#0f4a2e', grass: '#0c3f27', dry: '#125234', shade: '#082a1a' }, bank: '#0e4630', fill: '#1a2a22', hills: 6, sea: -60 },
+  'blacklight-carpet': { terrain: { sand: '#1a0f3a', grass: '#120a2e', dry: '#1c1240', shade: '#0a0620' }, bank: '#160c34', fill: '#120a24', hills: 6, sea: -60 },
 };
 
 export function biomeOf(kit) {

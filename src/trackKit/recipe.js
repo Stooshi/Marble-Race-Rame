@@ -19,13 +19,19 @@ const LONGEST_CLIMB_M = 40;    // San Francisco's 35 m
 const { LIGHTINGS } = require('./lighting');
 const { OPENING_KINDS } = require('./openings');
 // Track families (the sameness check compares openings within one): 'test' tracks are never compared.
-const FAMILIES = ['world-tour', 'grand-prix', 'coaster', 'pinball', 'test'];
+const FAMILIES = ['world-tour', 'grand-prix', 'coaster', 'pinball', 'arcade', 'test'];
 // A coaster: the coaster family, or a library test track built as one (series 'coaster').
 const isCoaster = (spec) => spec.family === 'coaster' || (spec.family === 'test' && spec.series === 'coaster');
 // A pinball table: the pinball family, or a library test track built as one (series 'pinball').
 const isPinball = (spec) => spec.family === 'pinball' || (spec.family === 'test' && spec.series === 'pinball');
 // A pinball table's backglass art (original art, one style per table) and its dot-matrix call-out.
 const PINBALL_ART = ['manor', 'castle', 'saucers', 'theatre', 'diner', 'clocks', 'concert'];
+// An arcade world: the arcade family, or a library test track built as one (series 'arcade').
+const isArcade = (spec) => spec.family === 'arcade' || (spec.family === 'test' && spec.series === 'arcade');
+// An arcade world's cabinet and side art (original art, one style per genre).
+const ARCADE_ART = ['maze', 'coin-op', 'space', 'side-scroller', 'fighter', 'highway', 'downtown'];
+const ARCADE_BIOMES = ['circuit-board', 'blacklight-carpet'];
+const ARCADE_LIGHTINGS = ['neon-night', 'synthwave'];
 const MAX_COASTER_HEIGHT = 45; // metres: the tallest supports drawn
 
 const BILLBOARDS = [4, 6];
@@ -253,9 +259,11 @@ function checkRecipe({ spec, sections, span, generated, owner, placed, total, wh
   }
 
   // Coasters: their own rules (a lift hill, supports, touchdowns, water).
-  if (spec.series !== undefined && !(spec.family === 'test' && ['coaster', 'pinball'].includes(spec.series))) problems.push(`${where('track')}: series is for test tracks: 'coaster' or 'pinball' (a library test track built as a coaster or a pinball table).`);
+  if (spec.series !== undefined && !(spec.family === 'test' && ['coaster', 'pinball', 'arcade'].includes(spec.series))) problems.push(`${where('track')}: series is for test tracks: 'coaster', 'pinball' or 'arcade' (a library test track built as a coaster, a pinball table or an arcade world).`);
   if (isPinball(spec)) problems.push(...pinballRules({ spec, where }));
   else if (spec.pinball !== undefined) problems.push(`${where('track')}: pinball settings are for pinball tables (family: 'pinball').`);
+  if (isArcade(spec)) problems.push(...arcadeRules({ spec, where }));
+  else if (spec.arcade !== undefined) problems.push(`${where('track')}: arcade settings are for arcade worlds (family: 'arcade').`);
   if (isCoaster(spec)) problems.push(...coasterRules({ spec, sections, where }));
   else {
     if (spec.coaster !== undefined) problems.push(`${where('track')}: coaster settings are for coasters (family: 'coaster').`);
@@ -293,6 +301,22 @@ function pinballRules({ spec, where }) {
   if (pb.art !== undefined && !PINBALL_ART.includes(pb.art)) problems.push(`${where('pinball')}: unknown backglass art ${JSON.stringify(pb.art)} (${PINBALL_ART.join(', ')}).`);
   if (pb.display !== undefined && !(typeof pb.display === 'string' && /^[A-Z0-9 !?.'-]{1,16}$/.test(pb.display))) problems.push(`${where('pinball')}: display is the dot-matrix call-out: up to 16 capital letters, digits and ! ? . ' - (MULTIBALL!).`);
   if (pb.finish !== undefined && !(typeof pb.finish === 'string' && /^[A-Z0-9 !?.'-]{1,16}$/.test(pb.finish))) problems.push(`${where('pinball')}: finish is the dot-matrix call-out for the winner: up to 16 capital letters, digits and ! ? . ' - (JACKPOT!).`);
+  return problems;
+}
+
+/**
+ * Arcade worlds: the ground is a giant circuit board or blacklight arcade carpet, the light
+ * Neon night (or Synthwave sunset), the cabinet's art and the call-out on the high-score table
+ * for the winner (`arcade: { art, finish }`), and cabinet-marquee billboards.
+ */
+function arcadeRules({ spec, where }) {
+  const problems = [];
+  const ar = spec.arcade ?? {};
+  if (spec.biome !== undefined && !ARCADE_BIOMES.includes(spec.biome)) problems.push(`${where('track')}: an arcade world's ground is a circuit board or arcade carpet (biome ${ARCADE_BIOMES.map((b) => `'${b}'`).join(' or ')}).`);
+  if (spec.lighting !== undefined && !ARCADE_LIGHTINGS.includes(spec.lighting)) problems.push(`${where('track')}: an arcade world's light is ${ARCADE_LIGHTINGS.map((b) => `'${b}'`).join(' or ')}.`);
+  if (spec.billboardFrame !== undefined && spec.billboardFrame !== 'marquee') problems.push(`${where('track')}: an arcade world's billboards are cabinet marquees (billboardFrame 'marquee').`);
+  if (ar.art !== undefined && !ARCADE_ART.includes(ar.art)) problems.push(`${where('arcade')}: unknown cabinet art ${JSON.stringify(ar.art)} (${ARCADE_ART.join(', ')}).`);
+  if (ar.finish !== undefined && !(typeof ar.finish === 'string' && /^[A-Z0-9 !?.'-]{1,16}$/.test(ar.finish))) problems.push(`${where('arcade')}: finish is the high-score table's call-out for the winner: up to 16 capital letters, digits and ! ? . ' - (NEW HIGH SCORE!).`);
   return problems;
 }
 
@@ -344,4 +368,4 @@ function coasterRules({ spec, sections, where }) {
   return problems;
 }
 
-module.exports = { checkRecipe, MIN_SPIRAL_RADIUS, MIN_SWEEP_RADIUS, BILLBOARDS, GRAND_PRIX_BILLBOARDS, isCoaster, isPinball, PINBALL_ART, START_TYPES, GATES, COUNTDOWN_SHOTS, LAUNCH_SHOTS };
+module.exports = { checkRecipe, MIN_SPIRAL_RADIUS, MIN_SWEEP_RADIUS, BILLBOARDS, GRAND_PRIX_BILLBOARDS, isCoaster, isPinball, PINBALL_ART, isArcade, ARCADE_ART, START_TYPES, GATES, COUNTDOWN_SHOTS, LAUNCH_SHOTS };

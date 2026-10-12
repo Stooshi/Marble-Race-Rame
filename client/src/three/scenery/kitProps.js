@@ -10,6 +10,7 @@ import { ANIMALS, local } from '../costumes/animals';
 import { WORLD_LANDMARKS } from './kitLandmarks';
 import { GP_LANDMARKS } from './kitLandmarksGP';
 import { COASTER_LANDMARKS } from './kitLandmarksCoaster';
+import { ARCADE_LANDMARKS } from './kitLandmarksArcade';
 
 // ── Set dressing: one geometry per kind, instanced ──────────────────────────
 
@@ -192,6 +193,67 @@ function plastic() {
   ]);
 }
 
+/** A circuit board's dressing: black chips with silver legs, capacitors, glowing copper traces, pixel blocks. */
+let arcadeTurn = 0; // (the next colour in turn: the same world looks the same every time)
+function chip() {
+  // (Its legs: one silver strip down each side, so the board stays in the phone's triangle budget.)
+  return merge([
+    piece(new BoxGeometry(6, 1, 4), '#141418', new Matrix4().makeTranslation(0, 0.5, 0)),
+    piece(new BoxGeometry(5.6, 0.3, 5.4), '#c8ccd2', new Matrix4().makeTranslation(0, 0.15, 0)),
+  ]);
+}
+function capacitor() {
+  arcadeTurn += 1;
+  const colour = ['#2a5aff', '#1a1a1a', '#d8a83a'][arcadeTurn % 3];
+  return merge([piece(new CylinderGeometry(1.1, 1.1, 2.6, 8), colour, new Matrix4().makeTranslation(0, 1.3, 0)), piece(new CylinderGeometry(1.1, 1.1, 0.2, 8), '#c8ccd2', new Matrix4().makeTranslation(0, 2.7, 0))]);
+}
+function trace() {
+  arcadeTurn += 1;
+  const colour = ['#7dff6a', '#d8a83a', '#3fd8ff'][arcadeTurn % 3];
+  const turn = arcadeTurn % 2 ? 1 : -1;
+  return merge([
+    piece(new BoxGeometry(0.5, 0.08, 7), colour, new Matrix4().makeTranslation(0, 0.05, 0)),
+    piece(new BoxGeometry(4, 0.08, 0.5), colour, new Matrix4().makeTranslation(turn * 1.75, 0.05, 3.5)),
+    piece(new CylinderGeometry(0.7, 0.7, 0.1, 8), '#d8a83a', new Matrix4().makeTranslation(turn * 3.75, 0.06, 3.5)),
+  ]);
+}
+/** Chunky pixel blocks: a stack of cubes in one bright colour (the arcade worlds' trees). */
+function pixelBlock() {
+  arcadeTurn += 1;
+  const colour = ['#ff3fa8', '#3fd8ff', '#ffd23f', '#7dff6a', '#a86aff'][arcadeTurn % 5];
+  const s = 1.6;
+  return merge([
+    piece(new BoxGeometry(s, s * 2, s), '#5a3a8a', new Matrix4().makeTranslation(0, s, 0)),
+    piece(new BoxGeometry(s * 3, s * 2, s), colour, new Matrix4().makeTranslation(0, s * 3, 0)),
+    piece(new BoxGeometry(s, s, s), colour, new Matrix4().makeTranslation(0, s * 4.5, 0)),
+  ]);
+}
+/** The blacklight carpet's pattern: neon planets with rings, squiggles and stars lying flat on it. */
+function neonPlanet() {
+  arcadeTurn += 1;
+  const colour = ['#ff3fd8', '#3fd8ff', '#ffd23f', '#7dff6a'][arcadeTurn % 4];
+  const ring = ['#ffd23f', '#ff3fd8', '#3fd8ff', '#ff7a1a'][arcadeTurn % 4];
+  return merge([
+    piece(new CircleGeometry(2.2, 10), colour, new Matrix4().makeRotationX(-Math.PI / 2).premultiply(new Matrix4().makeTranslation(0, 0.08, 0))),
+    piece(new BoxGeometry(7, 0.06, 0.5), ring, new Matrix4().makeRotationY(0.5).premultiply(new Matrix4().makeTranslation(0, 0.1, 0))),
+  ]);
+}
+function squiggle() {
+  arcadeTurn += 1;
+  const colour = ['#7dff6a', '#ff3fd8', '#ffd23f', '#3fd8ff'][arcadeTurn % 4];
+  const p = [];
+  for (let k = 0; k < 3; k += 1) p.push(piece(new BoxGeometry(0.5, 0.06, 2.2), colour, new Matrix4().makeRotationY(k % 2 ? 0.7 : -0.7).premultiply(new Matrix4().makeTranslation(0, 0.07, k * 1.6))));
+  return merge(p);
+}
+function neonStar() {
+  arcadeTurn += 1;
+  const colour = ['#ffd23f', '#ffffff', '#3fd8ff'][arcadeTurn % 3];
+  return merge([
+    piece(new BoxGeometry(3, 0.06, 0.45), colour, new Matrix4().makeTranslation(0, 0.07, 0)),
+    piece(new BoxGeometry(0.45, 0.06, 3), colour, new Matrix4().makeTranslation(0, 0.07, 0)),
+  ]);
+}
+
 export function dressingFor(biome) {
   return {
     alpine: [[(l) => pine(l, true), 0.8], [(l) => rock(l, '#9a9690'), 0.2]],
@@ -207,6 +269,9 @@ export function dressingFor(biome) {
     city: [[planeTree, 0.5], [() => bush(true, '#5f9a48'), 0.5]],
     // (A pinball playfield: posts, rollovers and plastics instead of trees.)
     playfield: [[pinPost, 0.4], [starRollover, 0.35], [plastic, 0.25]],
+    // (The arcade worlds: the board's parts or the carpet's pattern, and chunky pixel blocks.)
+    'circuit-board': [[chip, 0.3], [capacitor, 0.25], [trace, 0.3], [pixelBlock, 0.15]],
+    'blacklight-carpet': [[neonPlanet, 0.3], [squiggle, 0.3], [neonStar, 0.25], [pixelBlock, 0.15]],
   }[biome] ?? [[broadleaf, 1]];
 }
 
@@ -510,6 +575,7 @@ export const LANDMARKS = {
   ...WORLD_LANDMARKS,
   ...GP_LANDMARKS,
   ...COASTER_LANDMARKS,
+  ...ARCADE_LANDMARKS,
 };
 
 // ── Things passing overhead (scenery only, high above the track) ───────────

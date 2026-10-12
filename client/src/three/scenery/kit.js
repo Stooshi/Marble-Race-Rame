@@ -18,6 +18,7 @@ import { FIGURE_COLORS, LANDMARKS, PEOPLE, acaciaTree, aspen, cabin, dressingFor
 import { buildGrandPrix } from './grandPrix';
 import { buildCoaster } from './coaster';
 import { buildPinball } from './pinball';
+import { buildArcade } from './arcade';
 import { buildBattlements, buildCentrepieces, buildFunicular, buildHouses, buildLake, buildRaceNetting, tagsNear, turnAngle } from './kitPlaces';
 import { hashString, mergeByArea, piece, seededRandom, smoothstep } from './parts';
 import { COSTUMES, COSTUME_COLORS } from '../costumes';
@@ -63,6 +64,13 @@ export function buildKitScenery(centerline, track, theme, { lite = false } = {})
     solids.push(...pinball.feet);
   }
 
+  // An arcade world: the giant cabinet at the start, the high-score table past the finish, pixel bursts (./arcade.js).
+  const arcade = kit.arcade ? buildArcade(centerline, channel, kit, { lite, groundAt, pen: track.physics.runout, countdownMs: track.physics.gate?.countdownMs ?? 3000 }) : null;
+  if (arcade) {
+    group.add(arcade.group);
+    solids.push(...arcade.feet);
+  }
+
   const frame = (p) => {
     const i = Math.min(segments, Math.max(0, Math.round(p * segments)));
     const s = samples[i];
@@ -98,8 +106,8 @@ export function buildKitScenery(centerline, track, theme, { lite = false } = {})
     // (A coaster's stands beyond the foot of its lift hill, a little to one side: in the climb's shot.)
     const at = coaster
       ? coaster.liftHill.foot.clone().addScaledVector(coaster.liftHill.back, 30).addScaledVector(side, -8)
-      : pinball
-        ? s.pos.clone().addScaledVector(along, -26).addScaledVector(side, 34) // (beside the backglass, not in front of it)
+      : pinball || arcade
+        ? s.pos.clone().addScaledVector(along, -26).addScaledVector(side, 38) // (beside the backglass or the cabinet, not in front of it)
         : s.pos.clone().addScaledVector(along, -30);
     placeLandmark(kit.start.landmark, at, yawTo(along));
   }
@@ -366,6 +374,7 @@ export function buildKitScenery(centerline, track, theme, { lite = false } = {})
     movers?.update(t);
     grandPrix?.update(t, ctx); // (crowds standing as marbles pass; fireworks once the winner is home)
     pinball?.update(t);
+    arcade?.update(t, ctx); // (the screen's countdown; the winner's initials and pixel bursts)
     centrepieces.update(t);
     funicular?.update(t);
     lake?.update(t);

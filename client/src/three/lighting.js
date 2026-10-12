@@ -17,7 +17,7 @@ import {
 } from 'three';
 import { channelLipAt, channelRadiusAt, forkAt, forkOffset, forkRadius } from './iceChannel';
 
-export const LIGHTINGS = ['day', 'sunset', 'midnight-sun', 'night-northern-lights', 'fog', 'snow', 'rain', 'night', 'parlour'];
+export const LIGHTINGS = ['day', 'sunset', 'midnight-sun', 'night-northern-lights', 'fog', 'snow', 'rain', 'night', 'parlour', 'neon-night', 'synthwave'];
 
 /** Each preset's sky, haze and light (day: the landscape's own). fogRange: metres, near and far. */
 export const PRESETS = {
@@ -68,6 +68,28 @@ export const PRESETS = {
     ambient: 0.36,
     sun: { color: '#ffe0b0', intensity: 0.95, direction: [0.15, 1, 0.3] }, // the lamps over the table
     effects: { night: true },
+  },
+  // Neon night (the arcade worlds): dark, bright magenta, cyan and yellow glow, neon edges on the
+  // track's walls, stars, the marbles glowing in their own colours.
+  'neon-night': {
+    sky: { top: '#04020c', horizon: '#2a0a4a', glow: null },
+    fog: '#12061f',
+    fogRange: [300, 1800],
+    hemisphere: { sky: '#ff9ae8', ground: '#1a0a3a', intensity: 1.0 },
+    ambient: 0.34,
+    sun: { color: '#9ad8ff', intensity: 0.9, direction: [0.2, 1, 0.35] },
+    effects: { stars: true, night: true, edge: '#ff3fd8' },
+  },
+  // Synthwave sunset (the arcade racers): the sunset under a purple sky, a neon grid on the horizon
+  // and a big striped sun low over it.
+  synthwave: {
+    sky: { top: '#1a0a3a', horizon: '#ff4fa8', glow: '#ffd23f' },
+    fog: '#b04a8a',
+    fogRange: [260, 1700],
+    hemisphere: { sky: '#ffb8e0', ground: '#3a1a5a', intensity: 1.25 },
+    ambient: 0.32,
+    sun: { color: '#ff9a6a', intensity: 1.8, direction: [-1, 0.14, 0.3] },
+    effects: { grid: true, edge: '#3fd8ff' },
   },
   fog: {
     sky: { top: '#b6c0c9', horizon: '#d3d8dc', glow: null },
@@ -266,7 +288,47 @@ function precipitation(kind, lite) {
 }
 
 /** A faint edge light along the top of both rims (night): one draw call. */
-export function edgeLights(centerline, channel) {
+/**
+ * Synthwave sunset's sky: a magenta grid over the lower sky (lines running out to the horizon
+ * and lines along it) and a big sun low in the west, striped across its lower half. One draw.
+ */
+function synthGrid(lite) {
+  const pos = [];
+  const col = [];
+  const line = (a, b, c) => { pos.push(...a, ...b); col.push(...c, ...c); };
+  const magenta = [1, 0.25, 0.85];
+  const at = (a, y) => { const r = Math.sqrt(1 - y * y) * 0.985; return [Math.cos(a) * r, y, Math.sin(a) * r]; };
+  const n = lite ? 48 : 96;
+  for (let k = 0; k < n; k += 1) {
+    const a = (k / n) * Math.PI * 2;
+    line(at(a, 0.0), at(a, 0.09), magenta);
+  }
+  for (const y of [0.012, 0.03, 0.055, 0.09]) {
+    for (let k = 0; k < n; k += 1) line(at((k / n) * Math.PI * 2, y), at(((k + 1) / n) * Math.PI * 2, y), magenta);
+  }
+  // The sun: horizontal strokes filling a disc, gaps in its lower half.
+  const sunA = Math.PI; // the west (the preset's sun comes from -x)
+  const R = 0.16;
+  for (let k = 0; k <= 40; k += 1) {
+    const dy = -R + (2 * R * k) / 40;
+    if (dy < 0 && Math.floor((-dy / R) * 8) % 2 === 1) continue;
+    const half = Math.sqrt(Math.max(0, R * R - dy * dy));
+    const y = 0.1 + dy;
+    const t = (dy + R) / (2 * R);
+    const c = [1, 0.35 + 0.5 * t, 0.3 * (1 - t)];
+    line(at(sunA - half, y), at(sunA + half, y), c);
+  }
+  const g = new BufferGeometry();
+  g.setAttribute('position', new Float32BufferAttribute(pos, 3));
+  g.setAttribute('color', new Float32BufferAttribute(col, 3));
+  const lines = new LineSegments(g, new LineBasicMaterial({ vertexColors: true, fog: false, transparent: true, opacity: 0.9, depthWrite: false }));
+  lines.name = 'synthwave grid';
+  lines.renderOrder = -1;
+  lines.frustumCulled = false;
+  return lines;
+}
+
+export function edgeLights(centerline, channel, colour = '#7fd8ff') {
   const { samples, segments } = centerline;
   const step = channel.arc / segments;
   const pos = [];
@@ -296,7 +358,7 @@ export function edgeLights(centerline, channel) {
   const g = new BufferGeometry();
   g.setAttribute('position', new Float32BufferAttribute(pos, 3));
   g.computeBoundingSphere();
-  const mesh = new Mesh(g, new MeshBasicMaterial({ color: '#7fd8ff', side: DoubleSide, fog: false }));
+  const mesh = new Mesh(g, new MeshBasicMaterial({ color: colour, side: DoubleSide, fog: false }));
   mesh.name = 'edge lights';
   return mesh;
 }
@@ -307,7 +369,7 @@ export function edgeLights(centerline, channel) {
  */
 export function buildEffects(theme, { centerline = null, channel = null, lite = false } = {}) {
   const fx = theme?.effects ?? {};
-  if (!fx.stars && !fx.aurora && !fx.precipitation && !fx.night) return null;
+  if (!fx.stars && !fx.aurora && !fx.precipitation && !fx.night && !fx.grid && !fx.edge) return null;
   const sky = new Group();
   sky.name = 'sky effects';
   const world = new Group();
@@ -324,7 +386,8 @@ export function buildEffects(theme, { centerline = null, channel = null, lite = 
     world.add(p.object);
     updates.push((sec, at) => p.update(sec, at));
   }
-  if (fx.night && centerline && channel) world.add(edgeLights(centerline, channel));
+  if (fx.grid) sky.add(synthGrid(lite));
+  if ((fx.night || fx.edge) && centerline && channel) world.add(edgeLights(centerline, channel, fx.edge));
   const dispose = () => {
     for (const g of [sky, world]) {
       g.traverse((o) => {

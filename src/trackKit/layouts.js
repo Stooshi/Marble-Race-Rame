@@ -85,7 +85,7 @@ const LAYOUTS = {
   /** L4 Climb and drop: a sweep, a short climb over a crest and a drop, S-bends into the splitter; the hairpin comes late. */
   'climb-drop': (L, R, c, b) => [
     { key: 'sweep', name: 'Sweep', shape: sweep({ side: L, radius: 80, degrees: 90, grade: 0.12 }), features: [boost({ at: 0.08 })], billboards: 2 },
-    { key: 'approach', name: 'Run to the climb', shape: straight(35, { grade: 0.14 }) },
+    { key: 'approach', name: 'Run to the climb', shape: straight(35, { grade: 0.14 }), obstacles: [peg({ costume: c.peg, at: 0.5, line: 'center' })] },
     { key: 'climb', name: 'Climb', shape: climb(8, { grade: -0.04, after: 0.3 }) },
     { key: 'drop', name: 'Drop', shape: plunge(60, { grade: 0.55, from: 0.3 }), obstacles: [slalom({ costume: c.slalom, from: 0.4, to: 0.95, count: 4, loss: 0.3 })], billboards: 1 },
     { key: 'sBends', name: 'S-bends', shape: sBends({ first: L, radius: 75, degrees: 70, grade: 0.13 }), billboards: 2 },
@@ -316,6 +316,84 @@ const LAYOUTS = {
       obstacles: [parked({ costume: c.parked, at: 0.2, side: R, length: 6 }), peg({ costume: c.peg, at: 0.45, line: 'left' }), peg({ costume: c.peg, at: 0.6, line: 'center' })], features: [rumble({ from: 0.7, to: 0.95, count: 3 })],
     },
   ],
+  /** L20 Lower playfield: a long sweep, a straight over score-reel bumps, a waterfall down to the lower playfield (a peg), S-bends, the hairpin, a sweep, a spiral and a parked piece and pegs at the run-in. */
+  'lower-playfield': (L, R, c, b, o) => [
+    { key: 'sweep', name: 'Sweep', shape: sweep({ side: L, radius: 85, degrees: 100, grade: 0.1 }), billboards: 2 },
+    { key: 'reels', name: 'Bump run', shape: straight(50, { grade: 0.13 }), features: [moguls({ from: 0.62, to: 0.92, count: 3, look: o.bumps })] },
+    { key: 'drop', name: 'Waterfall', shape: waterfall(40, { grade: 0.35 }), surface: 'water' },
+    { key: 'lower', name: 'Below the drop', shape: straight(32, { grade: 0.12 }), obstacles: [peg({ costume: c.peg, at: 0.5, line: 'left' })] },
+    { key: 'sBends', name: 'S-bends', shape: sBends({ first: L, radius: 75, degrees: 60, grade: 0.13 }), billboards: 2 },
+    { key: 'brakingStraight', name: 'Run to the hairpin', shape: straight(50, { grade: 0.12 }) },
+    { key: 'hairpin', name: 'Hairpin', shape: hairpin({ side: R }), obstacles: [swipe({ costume: c.swipe, side: 'high' })] },
+    // (A long sweep out of the hairpin, carrying the spiral and the run-in away from the stretches far above them, so no bank hides the marbles.)
+    { key: 'outOfHairpin', name: 'Out of the hairpin', shape: sweep({ side: L, radius: 80, degrees: 150, grade: 0.13 }) },
+    { key: 'spiral', name: 'Spiral', shape: spiral({ side: R, radius: 48, turns: 1, grade: 0.16 }) },
+    {
+      key: 'lastStraight', name: 'Last straight', shape: straight(50, { grade: 0.15 }),
+      obstacles: [parked({ costume: c.parked, at: 0.2, side: L, length: 6 }), peg({ costume: c.peg, at: 0.45, line: 'right' }), peg({ costume: c.peg, at: 0.6, line: 'center' })], features: [rumble({ from: 0.7, to: 0.95, count: 3 })],
+    },
+  ],
+  /** L21 Clock tower: a long sweep, a run (a peg) to a short climb and a slalom drop off it, a spiral, the hairpin, S-bends, a straight (a curtain) and a parked piece and pegs at the run-in. */
+  'clock-tower': (L, R, c) => [
+    { key: 'sweep', name: 'Sweep', shape: sweep({ side: R, radius: 85, degrees: 150, grade: 0.085 }), billboards: 2 },
+    { key: 'approach', name: 'Run to the climb', shape: straight(35, { grade: 0.14 }), obstacles: [peg({ costume: c.peg, at: 0.5, line: 'center' })] },
+    { key: 'climb', name: 'Climb', shape: climb(8, { grade: -0.04, after: 0.3 }) },
+    { key: 'drop', name: 'Drop', shape: plunge(55, { grade: 0.5, from: 0.3 }), obstacles: [slalom({ costume: c.slalom, from: 0.4, to: 0.95, count: 4, loss: 0.15 })], billboards: 1 },
+    { key: 'spiral', name: 'Spiral', shape: spiral({ side: L, radius: 48, turns: 1.25, grade: 0.16 }) },
+    { key: 'brakingStraight', name: 'Run to the hairpin', shape: straight(50, { grade: 0.12 }) },
+    { key: 'hairpin', name: 'Hairpin', shape: hairpin({ side: R }), obstacles: [swipe({ costume: c.swipe, side: 'high' })] },
+    { key: 'sBends', name: 'S-bends', shape: sBends({ first: L, radius: 75, degrees: 80, grade: 0.13 }), billboards: 1 },
+    { key: 'doorRun', name: 'Straight run', shape: straight(45, { grade: 0.13 }), obstacles: [curtain({ costume: c.curtain, at: 0.4, side: R })] },
+    {
+      key: 'lastStraight', name: 'Last straight', shape: straight(60, { grade: 0.15 }),
+      obstacles: [parked({ costume: c.parked, at: 0.2, side: L, length: 6 }), peg({ costume: c.peg, at: 0.45, line: 'right' }), peg({ costume: c.peg, at: 0.6, line: 'center' })], features: [rumble({ from: 0.7, to: 0.95, count: 3 })],
+    },
+  ],
+  /** L22 Encore split: a straight (pegs), S-bends, the hairpin early, a drop, a spiral, a sweep, a late splitter (its tip well over and its inside channel much rougher: the field comes off the sweep on the inside) and pegs at the run-in. */
+  'encore-split': (L, R, c) => [
+    // (A short run with pegs first: it mixes the lanes after a split start, whose chutes would otherwise send their own marbles into the S-bends.)
+    { key: 'stageRun', name: 'Straight run', shape: straight(30, { grade: 0.13 }), obstacles: [peg({ costume: c.peg, at: 0.4, line: 'left' }), peg({ costume: c.peg, at: 0.65, line: 'right' })] },
+    { key: 'sBends', name: 'S-bends', shape: sBends({ first: L, radius: 75, degrees: 60, grade: 0.13 }), billboards: 2 },
+    { key: 'brakingStraight', name: 'Run to the hairpin', shape: straight(50, { grade: 0.12 }), billboards: 1 },
+    { key: 'hairpin', name: 'Hairpin', shape: hairpin({ side: R }), obstacles: [swipe({ costume: c.swipe, side: 'high' })] },
+    { key: 'outOfHairpin', name: 'Out of the hairpin', shape: plunge(45, { grade: 0.26, from: 0.16 }) },
+    { key: 'spiral', name: 'Spiral', shape: spiral({ side: R, radius: 48, turns: 1, grade: 0.17 }) },
+    { key: 'sweep', name: 'Sweep', shape: sweep({ side: L, radius: 90, degrees: 120, grade: 0.09 }), billboards: 2 },
+    { key: 'beforeSplit', name: 'Run to the splitter', shape: straight(30, { grade: 0.12 }), obstacles: [peg({ costume: c.peg, at: 0.4, line: 'center' })] },
+    { key: 'splitter', name: 'Splitter', shape: splitter({ side: L, balance: { ...insideDrag(L, 2.1), tipOffset: L === 'left' ? 2.0 : -2.0 } }) },
+    { key: 'lastStraight', name: 'Last straight', shape: straight(40, { grade: 0.15 }), obstacles: [peg({ costume: c.peg, at: 0.4, line: 'left' }), peg({ costume: c.peg, at: 0.6, line: 'right' })] },
+  ],
+  /** L23 Cabinet rows: a long sweep, a straight (a block), a second sweep the other way, a slalom drop, the hairpin, a third sweep, S-bends and a parked piece and pegs at the run-in. */
+  'cabinet-rows': (L, R, c) => [
+    { key: 'row1', name: 'Sweep', shape: sweep({ side: L, radius: 95, degrees: 120, grade: 0.085 }), billboards: 2 },
+    { key: 'aisle', name: 'Straight run', shape: straight(45, { grade: 0.13 }), obstacles: [block({ costume: c.block, at: 0.5, line: R })] },
+    { key: 'row2', name: 'Second sweep', shape: sweep({ side: R, radius: 95, degrees: 120, grade: 0.085 }), billboards: 1 },
+    { key: 'drop', name: 'Slalom drop', shape: plunge(45, { grade: 0.22, from: 0.1 }), obstacles: [slalom({ costume: c.slalom, from: 0.4, to: 0.9, count: 3, loss: 0.15 })] },
+    { key: 'brakingStraight', name: 'Run to the hairpin', shape: straight(50, { grade: 0.12 }) },
+    { key: 'hairpin', name: 'Hairpin', shape: hairpin({ side: L }), obstacles: [swipe({ costume: c.swipe, side: 'high' })] },
+    { key: 'row3', name: 'Third sweep', shape: sweep({ side: R, radius: 90, degrees: 140, grade: 0.09 }), billboards: 1 },
+    { key: 'sBends', name: 'S-bends', shape: sBends({ first: L, radius: 75, degrees: 65, grade: 0.13 }) },
+    {
+      key: 'lastStraight', name: 'Last straight', shape: straight(70, { grade: 0.15 }),
+      obstacles: [parked({ costume: c.parked, at: 0.2, side: L, length: 6 }), peg({ costume: c.peg, at: 0.45, line: 'right' }), peg({ costume: c.peg, at: 0.6, line: 'center' })], features: [rumble({ from: 0.7, to: 0.95, count: 3 })],
+    },
+  ],
+  /** L24 Maze corridors: the hairpin first, a long straight over low bumps, S-bends, a slalom straight, a drop, a spiral, a straight (a block), a sweep and a parked piece and pegs at the run-in. */
+  'maze-corridors': (L, R, c, b, o) => [
+    { key: 'brakingStraight', name: 'Run to the hairpin', shape: straight(50, { grade: 0.12 }), billboards: 1 },
+    { key: 'hairpin', name: 'Hairpin', shape: hairpin({ side: R }), obstacles: [swipe({ costume: c.swipe, side: 'high' })] },
+    { key: 'corridor1', name: 'Bump run', shape: straight(70, { grade: 0.13 }), features: [moguls({ from: 0.45, to: 0.9, count: 5, look: o.bumps })] },
+    { key: 'sBends', name: 'S-bends', shape: sBends({ first: L, radius: 75, degrees: 70, grade: 0.13 }), billboards: 2 },
+    { key: 'corridor2', name: 'Slalom straight', shape: straight(55, { grade: 0.13 }), obstacles: [slalom({ costume: c.slalom, from: 0.3, to: 0.85, count: 3, loss: 0.15 })] },
+    { key: 'drop', name: 'Drop', shape: plunge(40, { grade: 0.3, from: 0.12 }) },
+    { key: 'spiral', name: 'Spiral', shape: spiral({ side: L, radius: 50, turns: 1.25, grade: 0.16 }) },
+    { key: 'corridor3', name: 'Straight run', shape: straight(50, { grade: 0.13 }), obstacles: [block({ costume: c.block, at: 0.5, line: 'center' })] },
+    { key: 'sweep', name: 'Sweep', shape: sweep({ side: R, radius: 90, degrees: 130, grade: 0.09 }), billboards: 2 },
+    {
+      key: 'lastStraight', name: 'Last straight', shape: straight(65, { grade: 0.15 }),
+      obstacles: [parked({ costume: c.parked, at: 0.2, side: R, length: 6 }), peg({ costume: c.peg, at: 0.45, line: 'left' }), peg({ costume: c.peg, at: 0.6, line: 'center' })], features: [rumble({ from: 0.7, to: 0.95, count: 3 })],
+    },
+  ],
 };
 
 const LAYOUT_KINDS = Object.keys(LAYOUTS);
@@ -325,7 +403,7 @@ const DRESS = ['name', 'scenery', 'landmarks', 'billboards', 'billboardFrame', '
 /**
  * A layout from the library, as a track's `sections`. `mirror`: every bend the
  * other way (the first bend turns right). `costumes`: { block, slalom, peg, swipe,
- * curtain, parked }. `dress`: { <key>: { name, scenery, landmarks, billboards, … } }.
+ * curtain, parked }. `dress`: { <key>: { name, scenery, landmarks, billboards, … } }. `bumps` (lower playfield, maze corridors): its bumps' look ('reels', 'dots').
  */
 function layout(kind, { mirror = false, costumes = {}, dress = {}, ...o } = {}) {
   const make = LAYOUTS[kind];

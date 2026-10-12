@@ -69,6 +69,13 @@ export const COSTUME_COLORS = {
   barrelWood: '#7a4f2e', barrelHoop: '#3a3634', tombstone: '#9a968c', tombMoss: '#5a6a48', totemWood: '#6a4a8a', totemFace: '#e8b33c', totemEye: '#ff7a1a',
   pineCone: '#8a5a32', pineConeTip: '#5a3a20', grizzly: '#6a4a30', grizzlyDark: '#4a3220', grizzlyMuzzle: '#a8885a', statueStone: '#c8a46a', statueStripe: '#2f5a8a', statueGold: '#d8b84a', buoyRed: '#d8442f', buoyWhite: '#f2efe6', bamboo: '#b8a050', bambooDark: '#8a7a3a', oarWood: '#8a6a48', fisherShirt: '#2f6f8a', conicalHat: '#e8d8a8', skin: '#c8956a', containerRed: '#c8442f', containerBlue: '#2f6fa8', containerRib: '#3a3d44', bollard: '#2a2d32', bollardTop: '#f2c230', craneRed: '#d8442f', craneDark: '#5a2a22', toadStalk: '#f2ecd8', toadCap: '#d8342a', toadSpot: '#ffffff', blackBear: '#2a2622', blackBearMuzzle: '#8a6a48', tileBlue: '#2f7fc4', tileYellow: '#f2c230', tileGreen: '#4aa35a', tileRed: '#d8442f', tileWhite: '#f2efe6', hippo: '#7a6a78', hippoBelly: '#d89a9a', hippoTooth: '#f2efe6', termite: '#a8653a', termiteDark: '#8a4f2a', jeep: '#5f6a3a', jeepCanvas: '#c8b88a', hay: '#d8b85a', hayDark: '#b8963a', fencePost: '#7a5a3a', cartWood: '#8a6a42', horse: '#6a4a30', horseMane: '#2a1e17', lionStone: '#a8a296', lionDark: '#8a8478', ginkgoTrunk: '#6a5a42', ginkgoLeaf: '#f2c230', guardianStone: '#9a948a', guardianRed: '#a8322a', ferryHull: '#f2efe6', ferryBlue: '#2f5d9a', ferryCabin: '#d8d4c8', bumperBase: '#1e1f26', bumperRed: '#ff3a4a', bumperBlue: '#3a8aff', bumperYellow: '#ffd23f', bumperRing: '#f4f4f0', chrome: '#d0d4da', targetOrange: '#ff8a1a', targetPink: '#ff4fb8', spinnerYellow: '#ffe14a', flipperWhite: '#f6f6f2', flipperRubber: '#d8342a', tombGrey: '#8a8a90', tombGlow: '#c6ff4f', bookWood: '#3a2416', bookRed: '#a8322a', bookGreen: '#2f6a3a', bookBlue: '#2a3f7a', ironDark: '#26262c', candleGold: '#ffcf5a', lightning: '#d8f2ff', shieldBlue: '#2f4a8a', shieldGold: '#ffd23f', catapultWood: '#6a4a2a', curtainRed: '#a8122a', curtainGold: '#e0b43a', spotlight: '#fff2c4', wandBlack: '#141418', saucerSilver: '#b8c4cc', alienGreen: '#7dff6a', rayPink: '#ff4fd8',
   netFloat: '#d8322b',
+  // Pinball: Tilt, Replay and Grand Champion.
+  shakeGlass: '#e8f4f8', shakePink: '#ff8ac0', cherry: '#d8142a', jukeWood: '#7a3a1a', jukeGlow: '#ffb83a', jukeChrome: '#e8eaee', jukeNeon: '#ff4fa8',
+  clockFace: '#f4ecd2', clockBrass: '#c89a3a', clockHand: '#1a1a24', gumRed: '#ff4a4a', gumBlue: '#4a9aff', gumYellow: '#ffd23f', gumGreen: '#5adf6a', doorBlue: '#3a3aa8', doorGold: '#ffcf5a', doorVoid: '#120a30',
+  joyBlack: '#141418', joyRed: '#ff2a4a', joyBase: '#2a2a34', coinGold: '#ffc83a', coinEdge: '#c8962a', pusherSilver: '#b8bcc8', pusherGlow: '#3fd8ff',
+  pixelPink: '#ff3fa8', pixelCyan: '#3fd8ff', pixelViolet: '#8a4aff', pixelYellow: '#ffd23f', glitchBlack: '#0a0a12', glitchGreen: '#7dff6a',
+  clawSteel: '#c8ccd8', clawGlass: '#9ad8ff', clawFrame: '#ff3fa8', puckRed: '#ff3a3a', puckTable: '#e8eef8', pearGreen: '#9ae84a', pearLeaf: '#3a9a3a', pedestal: '#3a2a6a',
+  ampBlack: '#141418', ampGrille: '#2a2a32', ampTrim: '#c8ccd2', pickPink: '#ff3fa8', pickCyan: '#3fd8ff', micSilver: '#b8bcc4', drumRed: '#c8142a', drumSkin: '#f2efe6', stageBlack: '#0a0a10',
 };
 
 /** A part's head (or other moving piece) as its own little group at local (x, y, z), turned with the body. */
@@ -1281,6 +1288,177 @@ function alienBody(add, base, q) {
   for (const x of [-0.3, 0.3]) add('wandBlack', new IcosahedronGeometry(0.15, 0), local(base, q, x, 2.4, 0.65));
 }
 
+// ── Tilt ─────────────────────────────────────────────────────────────────────
+
+/** A milkshake-glass pop bumper: a fluted glass of pink shake, whipped cream and a cherry, on a chrome base (Tilt; a block). */
+function milkshakeBumper(add, mat, group, point, q, { radius }) {
+  add('chrome', new CylinderGeometry(radius * 1.1, radius * 1.2, radius * 0.25, 14), local(point, q, 0, radius * 0.12, 0));
+  add('shakeGlass', new CylinderGeometry(radius * 0.95, radius * 0.6, radius * 1.3, 12), local(point, q, 0, radius * 0.9, 0));
+  add('shakePink', new CylinderGeometry(radius * 0.9, radius * 0.65, radius * 1.0, 12), local(point, q, 0, radius * 0.95, 0));
+  add('bumperRing', new IcosahedronGeometry(radius * 0.7, 1), local(point, q, 0, radius * 1.65, 0));
+  add('cherry', new IcosahedronGeometry(radius * 0.22, 1), local(point, q, 0, radius * 2.25, 0));
+  add('jukeNeon', new CylinderGeometry(radius * 0.06, radius * 0.06, radius * 1.6, 6), local(point, q, radius * 0.35, radius * 2.0, 0).multiply(new Matrix4().makeRotationZ(-0.35)));
+  return [];
+}
+
+/** A row of jukeboxes along the edge: rounded wooden cabinets, glowing amber arches and chrome grilles, facing the track (Tilt; parked). */
+function jukeboxes(add, mat, group, rimCentre, q, { len, width, drop = 0 }) {
+  const centre = rimCentre.clone().add(new Vector3(0, -drop, 0).applyQuaternion(q));
+  const W = Math.max(1, width - 0.2);
+  add('bumperBase', new BoxGeometry(W, 0.3, len), local(centre, q, 0, 0.15, 0));
+  const n = Math.max(2, Math.floor(len / 2.2));
+  for (let k = 0; k < n; k += 1) {
+    const z = -len / 2 + (len / n) * (k + 0.5);
+    add('jukeWood', new BoxGeometry(W * 0.8, 2.2, 1.6), local(centre, q, 0, 1.4, z));
+    add('jukeGlow', new CylinderGeometry(0.8, 0.8, W * 0.82, 12, 1, false, 0, Math.PI), local(centre, q, 0, 2.5, z).multiply(new Matrix4().makeRotationZ(Math.PI / 2)));
+    add('jukeChrome', new BoxGeometry(0.08, 0.9, 1.1), local(centre, q, -W * 0.41, 1.0, z));
+    add('jukeNeon', new BoxGeometry(0.08, 0.15, 1.5), local(centre, q, -W * 0.41, 1.8, z));
+  }
+  return [];
+}
+
+// ── Replay ───────────────────────────────────────────────────────────────────
+
+/** A clock-face pop bumper: a brass-rimmed dial on a short post, its hands at different times (Replay; a block). */
+function clockBumper(add, mat, group, point, q, { radius, at }) {
+  const t = (Math.round(at * 983) % 12) / 12;
+  add('bumperBase', new CylinderGeometry(radius * 1.05, radius * 1.15, radius * 0.6, 14), local(point, q, 0, radius * 0.3, 0));
+  add('clockBrass', new CylinderGeometry(radius * 1.1, radius * 1.1, radius * 0.25, 16), local(point, q, 0, radius * 0.75, 0));
+  add('clockFace', new CylinderGeometry(radius, radius, radius * 0.6, 16), local(point, q, 0, radius * 1.1, 0));
+  for (const [len, a] of [[0.85, t * Math.PI * 2], [0.55, t * Math.PI * 24]]) {
+    add('clockHand', new BoxGeometry(radius * 0.08, radius * 0.06, radius * len), local(point, q, Math.sin(a) * radius * len * 0.5, radius * 1.42, Math.cos(a) * radius * len * 0.5).multiply(new Matrix4().makeRotationY(a)));
+  }
+  return [];
+}
+
+/** A row of gumball standup targets: glass globes of coloured balls on red stands, facing the track (Replay; parked). */
+function gumballTargets(add, mat, group, rimCentre, q, { len, width, drop = 0 }) {
+  const centre = rimCentre.clone().add(new Vector3(0, -drop, 0).applyQuaternion(q));
+  const W = Math.max(1, width - 0.2);
+  add('bumperBase', new BoxGeometry(W, 0.35, len), local(centre, q, 0, 0.17, 0));
+  const n = Math.max(2, Math.floor(len / 2));
+  const gums = ['gumRed', 'gumBlue', 'gumYellow', 'gumGreen'];
+  for (let k = 0; k < n; k += 1) {
+    const z = -len / 2 + (len / n) * (k + 0.5);
+    add('gumRed', new CylinderGeometry(0.35, 0.5, 1.2, 8), local(centre, q, -W / 2 + 0.5, 0.9, z));
+    add('shakeGlass', new IcosahedronGeometry(0.7, 1), local(centre, q, -W / 2 + 0.5, 2.1, z));
+    for (let g = 0; g < 4; g += 1) add(gums[(g + k) % 4], new IcosahedronGeometry(0.2, 0), local(centre, q, -W / 2 + 0.5 + ((g % 2) - 0.5) * 0.4, 1.85 + Math.floor(g / 2) * 0.3, z + ((g + 1) % 2 - 0.5) * 0.3));
+  }
+  return [];
+}
+
+/** The clock pendulum's mount beyond the rim: a brass post and a little clock head (Replay; a swipe, its arm the pendulum rod and bob). */
+function pendulumBody(add, base, q) {
+  add('clockBrass', new CylinderGeometry(0.4, 0.6, 3.2, 10), local(base, q, 0, 1.6, 0));
+  add('clockFace', new CylinderGeometry(1, 1, 0.3, 14), local(base, q, 0, 3.4, 0).multiply(new Matrix4().makeRotationX(Math.PI / 2)));
+}
+
+// ── Grand Champion ───────────────────────────────────────────────────────────
+
+/** A guitar-pick pop bumper: a big rounded triangle, pink or cyan, on a black base (Grand Champion; a block). */
+function pickBumper(add, mat, group, point, q, { radius, at }) {
+  const colour = Math.round(at * 997) % 2 ? 'pickPink' : 'pickCyan';
+  add('ampBlack', new CylinderGeometry(radius * 1.05, radius * 1.15, radius * 0.5, 14), local(point, q, 0, radius * 0.25, 0));
+  add(colour, new CylinderGeometry(radius * 1.05, radius * 1.05, radius * 0.9, 3), local(point, q, 0, radius * 0.95, 0).multiply(new Matrix4().makeRotationY(Math.PI)));
+  add('ampTrim', new CylinderGeometry(radius * 0.4, radius * 0.4, radius * 0.95, 10), local(point, q, 0, radius * 0.97, 0));
+  return [];
+}
+
+/** A slim drum on a stand for a peg: a red shell, a white skin and chrome rims (Grand Champion; a slalom pole or a peg). */
+function drumPeg(add, mat, group, point, q, { height }) {
+  const r = 0.18;
+  const h = Math.max(0.6, height);
+  add('drumRed', new CylinderGeometry(r, r, h * 0.8, 12), local(point, q, 0, h * 0.4, 0));
+  add('drumSkin', new CylinderGeometry(r * 0.98, r * 0.98, 0.06, 12), local(point, q, 0, h * 0.82, 0));
+  add('ampTrim', new CylinderGeometry(r * 1.04, r * 1.04, 0.08, 12), local(point, q, 0, h * 0.8, 0));
+  add('ampTrim', new CylinderGeometry(r * 1.04, r * 1.04, 0.08, 12), local(point, q, 0, 0.04, 0));
+  return [];
+}
+
+/** The microphone boom's stand beyond the rim: a black tripod post and a little amp at its foot (Grand Champion; a swipe, its arm the boom). */
+function micStandBody(add, base, q) {
+  add('ampBlack', new BoxGeometry(1.6, 1.2, 1.2), local(base, q, 0, 0.6, 0));
+  add('ampGrille', new BoxGeometry(1.3, 0.9, 0.1), local(base, q, 0, 0.65, 0.62));
+  add('micSilver', new CylinderGeometry(0.1, 0.12, 2.6, 8), local(base, q, 0, 2.4, 0));
+}
+
+// ── Arcade worlds ────────────────────────────────────────────────────────────
+
+/** A stack of giant gold coins, a little crooked (arcade; a block). */
+function coinStack(add, mat, group, point, q, { radius, at }) {
+  const n = 5;
+  const h = (radius * 1.8) / n;
+  for (let k = 0; k < n; k += 1) {
+    const dx = (((Math.round(at * 997) + k * 7) % 5) - 2) * radius * 0.03;
+    add(k % 2 ? 'coinGold' : 'coinEdge', new CylinderGeometry(radius * 0.95, radius * 0.95, h * 0.9, 16), local(point, q, dx, h * (k + 0.5), 0));
+  }
+  return [];
+}
+
+/** A token-pusher shelf: a chrome tray heaped with coins, a glowing edge (arcade; a block). */
+function tokenPusher(add, mat, group, point, q, { radius }) {
+  add('pusherSilver', new BoxGeometry(radius * 1.5, radius * 0.8, radius * 1.1), local(point, q, 0, radius * 0.4, 0));
+  add('pusherGlow', new BoxGeometry(radius * 1.54, radius * 0.12, radius * 1.14), local(point, q, 0, radius * 0.82, 0));
+  for (let k = 0; k < 6; k += 1) add('coinGold', new CylinderGeometry(radius * 0.22, radius * 0.22, radius * 0.1, 10), local(point, q, (k % 3 - 1) * radius * 0.45, radius * (0.95 + Math.floor(k / 3) * 0.1), (Math.floor(k / 3) - 0.5) * radius * 0.45));
+  return [];
+}
+
+/** A pixel wall: a column of chunky cubes in alternating neon colours (arcade; a slalom pole or a peg). */
+function pixelWall(add, mat, group, point, q, { height }) {
+  const s = 0.26;
+  const n = Math.max(3, Math.round((height + 0.4) / s));
+  for (let k = 0; k < n; k += 1) add(k % 2 ? 'pixelPink' : 'pixelViolet', new BoxGeometry(s, s, s), local(point, q, 0, s * (k + 0.5), 0));
+  return [];
+}
+
+/** A glitch block: a cube broken into offset squares of black, magenta, cyan and green (Kill Screen; a block). */
+function glitchBlock(add, mat, group, point, q, { radius, at }) {
+  const colours = ['glitchBlack', 'pixelPink', 'pixelCyan', 'glitchGreen'];
+  const s = radius * 0.7;
+  let k = Math.round(at * 991);
+  for (const [x, y, z] of [[-0.5, 0.5, -0.5], [0.5, 0.5, -0.5], [-0.5, 0.5, 0.5], [0.5, 0.5, 0.5], [-0.5, 1.5, 0], [0.5, 1.5, 0.3], [0, 2.4, -0.2]]) {
+    k += 1;
+    add(colours[k % 4], new BoxGeometry(s, s, s), local(point, q, x * s + ((k % 3) - 1) * 0.08, y * s, z * s));
+  }
+  return [];
+}
+
+/** A row of air-hockey pucks on a little white table along the edge (Joystick Spins; parked). */
+function airHockey(add, mat, group, rimCentre, q, { len, width, drop = 0 }) {
+  const centre = rimCentre.clone().add(new Vector3(0, -drop, 0).applyQuaternion(q));
+  const W = Math.max(1, width - 0.2);
+  add('puckTable', new BoxGeometry(W, 0.6, len), local(centre, q, 0, 0.3, 0));
+  add('pusherGlow', new BoxGeometry(W + 0.05, 0.1, len + 0.05), local(centre, q, 0, 0.62, 0));
+  const n = Math.max(2, Math.floor(len / 1.6));
+  for (let k = 0; k < n; k += 1) add('puckRed', new CylinderGeometry(0.5, 0.5, 0.25, 12), local(centre, q, -W / 2 + 0.6, 0.8, -len / 2 + (len / n) * (k + 0.5)));
+  return [];
+}
+
+/** A bonus prize on a pedestal along the edge: a giant pixel pear of our own (Kill Screen; parked). */
+function bonusPrize(add, mat, group, rimCentre, q, { len, width, drop = 0 }) {
+  const centre = rimCentre.clone().add(new Vector3(0, -drop, 0).applyQuaternion(q));
+  const W = Math.max(1, width - 0.2);
+  add('pedestal', new BoxGeometry(W, 0.8, len), local(centre, q, 0, 0.4, 0));
+  const s = 0.45;
+  const pear = [[0, 0], [-1, 0], [1, 0], [0, 1], [-1, 1], [1, 1], [0, 2], [0, 3]];
+  for (const [x, y] of pear) add('pearGreen', new BoxGeometry(s, s, s), local(centre, q, -W / 2 + 0.6 + x * s * 0.6, 1.0 + y * s, x * s));
+  add('pearLeaf', new BoxGeometry(s, s * 0.5, s), local(centre, q, -W / 2 + 0.6, 1.0 + 4 * s, s * 0.5));
+  return [];
+}
+
+/** A giant joystick's base beyond the rim: a black box with a red ball-top stick standing beside it (arcade; a swipe, its arm the stick). */
+function joystickBody(add, base, q) {
+  add('joyBase', new BoxGeometry(2.4, 1.2, 2.4), local(base, q, 0, 0.6, 0));
+  add('joyBlack', new CylinderGeometry(0.9, 1.1, 0.4, 12), local(base, q, 0, 1.4, 0));
+}
+
+/** The claw machine beyond the rim: a glass cabinet on a pink frame; its claw on a steel arm is the swipe (Joystick Spins). */
+function clawBody(add, base, q) {
+  add('clawFrame', new BoxGeometry(2.6, 1.6, 2.6), local(base, q, 0, 0.8, 0));
+  add('clawGlass', new BoxGeometry(2.4, 2.4, 2.4), local(base, q, 0, 2.8, 0));
+  add('clawFrame', new BoxGeometry(2.7, 0.4, 2.7), local(base, q, 0, 4.2, 0));
+}
+
 export const KIT_COSTUMES = {
   panda: { places: 'block', build: panda },
   camel: { places: 'block', build: camel },
@@ -1506,6 +1684,47 @@ export const KIT_COSTUMES = {
     arm: { colour: 'wandBlack', shoulder: [0, 2.8, 0.3], radii: [0.08, 0.1], segments: 6, tip: 0.3, tipDetail: 1, tipColour: 'bumperRing', end: 0.12, endDetail: 0, endColour: 'bumperRing', lift: 0.5, outLift: 0.8, nose: 0.2 },
   },
   catapult: { places: 'parked', build: catapult },
+  'milkshake-bumper': { places: 'block', build: milkshakeBumper },
+  jukebox: { places: 'parked', build: jukeboxes },
+  'clock-bumper': { places: 'block', build: clockBumper },
+  'gumball-targets': { places: 'parked', build: gumballTargets },
+  pendulum: {
+    places: 'swipe',
+    body: pendulumBody,
+    standOff: 1.8,
+    sink: -0.2,
+    arm: { colour: 'clockBrass', shoulder: [0, 3.2, 0.3], radii: [0.1, 0.12], segments: 6, tip: 0.6, tipDetail: 1, tipColour: 'clockBrass', end: 0.2, endDetail: 0, endColour: 'clockBrass', lift: 0.5, outLift: 0.8, nose: 0.2 },
+  },
+  'floating-door': { places: 'curtain', gantry: true, banners: ['doorBlue', 'doorVoid', 'doorBlue'], post: 'doorGold', bannerWidth: 0.4, build: () => [] },
+  'pick-bumper': { places: 'block', build: pickBumper },
+  'coin-stack': { places: 'block', build: coinStack },
+  'token-pusher': { places: 'block', build: tokenPusher },
+  'pixel-wall': { places: 'slalom', build: pixelWall },
+  'glitch-block': { places: 'block', build: glitchBlock },
+  'air-hockey': { places: 'parked', build: airHockey },
+  'bonus-prize': { places: 'parked', build: bonusPrize },
+  joystick: {
+    places: 'swipe',
+    body: joystickBody,
+    standOff: 1.8,
+    sink: -0.2,
+    arm: { colour: 'joyBlack', shoulder: [0, 1.6, 0.3], radii: [0.18, 0.22], segments: 5, tip: 0.6, tipDetail: 1, tipColour: 'joyRed', end: 0.3, endDetail: 0, endColour: 'joyRed', lift: 0.4, outLift: 0.6, nose: 0.2 },
+  },
+  'claw-arm': {
+    places: 'swipe',
+    body: clawBody,
+    standOff: 1.8,
+    sink: -0.2,
+    arm: { colour: 'clawSteel', shoulder: [0, 4.2, 0.3], radii: [0.1, 0.12], segments: 6, tip: 0.45, tipDetail: 0, tipColour: 'clawSteel', end: 0.2, endDetail: 0, endColour: 'clawFrame', lift: 0.5, outLift: 0.9, nose: 0.2 },
+  },
+  'drum-peg': { places: 'slalom', build: drumPeg },
+  'mic-boom': {
+    places: 'swipe',
+    body: micStandBody,
+    standOff: 1.8,
+    sink: -0.2,
+    arm: { colour: 'micSilver', shoulder: [0, 3.6, 0.3], radii: [0.08, 0.1], segments: 6, tip: 0.35, tipDetail: 1, tipColour: 'ampGrille', end: 0.12, endDetail: 0, endColour: 'ampBlack', lift: 0.5, outLift: 0.8, nose: 0.2 },
+  },
   'lightning-rod': { places: 'curtain', gantry: true, banners: ['lightning', 'ironDark', 'lightning'], post: 'ironDark', bannerWidth: 0.3, build: () => [] },
   ginkgo: { places: 'slalom', build: ginkgoTree },
   'temple-guardian': {

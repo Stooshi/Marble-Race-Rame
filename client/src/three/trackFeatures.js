@@ -357,9 +357,10 @@ export function buildTrackFeatures(centerline, channel, features, { lite = false
       const cols = 24;
       const pos = [];
       const col = [];
-      // (Rumble strips on a Grand Prix track: red and white.)
-      const A = new Color(f.look === 'rumble' ? '#d8322b' : FEATURE_COLORS.bumpA);
-      const B = new Color(f.look === 'rumble' ? '#f4f4f2' : FEATURE_COLORS.bumpB);
+      // (Rumble strips on a Grand Prix track: red and white; score reels on a pinball table: cream and black.)
+      const LOOKS = { rumble: ['#d8322b', '#f4f4f2'], reels: ['#f4ecd2', '#1a1a24'], buttons: ['#ff3fa8', '#3fd8ff'], dots: ['#ffe9a8', '#1a1040'] };
+      const A = new Color(LOOKS[f.look]?.[0] ?? FEATURE_COLORS.bumpA);
+      const B = new Color(LOOKS[f.look]?.[1] ?? FEATURE_COLORS.bumpB);
       for (let r = 0; r <= rows; r += 1) {
         const a = -BUMP_HALF + (2 * BUMP_HALF * r) / rows;
         const h = BUMP_HEIGHT * 0.5 * (1 + Math.cos((Math.PI * a) / BUMP_HALF));

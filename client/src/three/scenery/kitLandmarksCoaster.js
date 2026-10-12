@@ -1011,6 +1011,112 @@ function saucerTown() {
   return merge(p);
 }
 
+// ── Tilt ─────────────────────────────────────────────────────────────────────
+
+/** A 1970s chrome diner (our own design): a long rounded chrome car, a band of windows, a red stripe and a big neon TILT sign on the roof. */
+function retroDiner() {
+  const p = [box(40, 9, 13, 0, 4.5, 0, '#d8dce2'), piece(new CylinderGeometry(6.5, 6.5, 40, 16, 1, false, 0, Math.PI), '#c8ccd2', new Matrix4().makeRotationZ(Math.PI / 2).premultiply(M(0, 9, 0)))];
+  p.push(box(40.2, 1.2, 13.2, 0, 2.2, 0, '#d8142a'), box(36, 3, 13.4, 0, 6, 0, '#7af2ff'));
+  for (let k = 0; k < 9; k += 1) p.push(box(0.4, 3.2, 13.6, -16 + k * 4, 6, 0, '#e8eaee'));
+  p.push(box(1, 8, 1, -8, 19, 0, '#3a3d44'), box(1, 8, 1, 8, 19, 0, '#3a3d44'), box(22, 7, 1, 0, 25, 0, '#1a1a24'));
+  for (let k = 0; k < 4; k += 1) p.push(box(3.6, 4.6, 1.2, -7.5 + k * 5, 25, 0.2, '#ff4fa8')); // the four neon letters
+  p.push(box(16, 0.6, 1.3, 0, 22, 0.1, '#ffd23f'));
+  return merge(p);
+}
+
+/** A giant soda fountain beside the waterfall: a tall fluted glass of pink soda, a straw and a chrome tap pouring into it. */
+function sodaFountain() {
+  const p = [piece(new CylinderGeometry(6, 3.5, 16, 14), '#e8f4f8', M(0, 8, 0)), piece(new CylinderGeometry(5.6, 3.6, 12, 14), '#ff8ac0', M(0, 7, 0))];
+  p.push(piece(new IcosahedronGeometry(5.5, 1), '#f6f2ea', M(0, 16.5, 0)), piece(new IcosahedronGeometry(1.4, 1), '#d8142a', M(0, 22, 0)));
+  p.push(piece(new CylinderGeometry(0.5, 0.5, 14, 8), '#ff4fa8', new Matrix4().makeRotationZ(-0.3).premultiply(M(2.5, 20, 0))));
+  p.push(box(2, 20, 2, -9, 10, 0, '#c8ccd2'), box(8, 1.6, 1.6, -5.5, 20.5, 0, '#c8ccd2'), box(1.4, 3, 1.4, -2, 19, 0, '#e8eaee'));
+  return merge(p);
+}
+
+/** A giant jukebox for the middle of a spiral: a rounded wooden cabinet, a glowing amber arch, chrome trim and coloured bubble tubes. */
+function jukeboxTower() {
+  const p = [box(9, 11, 6, 0, 5.5, 0, '#7a3a1a'), piece(new CylinderGeometry(4.5, 4.5, 6.2, 16, 1, false, 0, Math.PI), '#ffb83a', new Matrix4().makeRotationX(Math.PI / 2).multiply(new Matrix4().makeRotationY(-Math.PI / 2)).premultiply(M(0, 11, 0)))];
+  for (const x of [-4.2, 4.2]) p.push(box(0.6, 12, 6.4, x, 6, 0, '#ff4fa8'));
+  p.push(box(6, 3, 6.3, 0, 3, 0, '#e8eaee'), box(5, 2, 6.4, 0, 7.5, 0, '#ffd23f'));
+  return merge(p);
+}
+
+// ── Replay ───────────────────────────────────────────────────────────────────
+
+/** A giant gumball machine at the top of the table: a red stand, a clear globe full of coloured gumballs, a chrome coin slot. */
+function gumballMachine() {
+  const p = [piece(new CylinderGeometry(7, 9, 12, 10), '#d8142a', M(0, 6, 0)), box(5, 3, 1, 0, 8, 8.5, '#c8ccd2'), piece(new CylinderGeometry(8, 8, 1.5, 16), '#c8ccd2', M(0, 12.7, 0))];
+  p.push(piece(new SphereGeometry(10, 16, 10), '#e8f4f8', M(0, 22, 0)));
+  const gums = ['#ff4a4a', '#4a9aff', '#ffd23f', '#5adf6a', '#ff8ac0'];
+  for (let k = 0; k < 26; k += 1) {
+    const a = k * 2.4;
+    const r = 3 + (k % 4) * 1.6;
+    p.push(piece(new IcosahedronGeometry(1.5, 0), gums[k % 5], M(Math.cos(a) * r, 16 + (k % 6) * 1.6, Math.sin(a) * r)));
+  }
+  p.push(piece(new CylinderGeometry(2, 2, 2, 10), '#d8142a', M(0, 33, 0)));
+  return merge(p);
+}
+
+/** A surreal clocktower for the middle of a spiral: a slim tower with a big clock face on each side, its spire leaning a little. */
+function clocktower() {
+  const p = [box(7, 22, 7, 0, 11, 0, '#3a2a7a'), box(8, 1, 8, 0, 22.5, 0, '#c89a3a')];
+  for (const [x, z, yaw] of [[0, 3.6, 0], [3.6, 0, Math.PI / 2], [0, -3.6, Math.PI], [-3.6, 0, -Math.PI / 2]]) {
+    p.push(piece(new CylinderGeometry(3, 3, 0.4, 18), '#f4ecd2', new Matrix4().makeRotationX(Math.PI / 2).premultiply(turned(x, 17, z, yaw))));
+    p.push(piece(new BoxGeometry(0.3, 2.4, 0.2), '#1a1a24', turned(x * 1.07, 17.8, z * 1.07, yaw)), piece(new BoxGeometry(1.8, 0.3, 0.2), '#1a1a24', turned(x * 1.07, 17, z * 1.07, yaw)));
+  }
+  p.push(piece(new ConeGeometry(5, 10, 4), '#2a1a5a', new Matrix4().makeRotationZ(0.12).premultiply(turned(0.6, 28, 0, Math.PI / 4))));
+  return merge(p);
+}
+
+/** Doors floating in the void beside the track, and stairs to nowhere: three tall doors at odd angles, light spilling from one. */
+function floatingDoors() {
+  const p = [];
+  for (const [x, y, z, yaw, open] of [[-14, 10, 0, 0.3, false], [0, 16, -6, -0.4, true], [14, 8, 4, 0.9, false]]) {
+    p.push(piece(new BoxGeometry(5.4, 10.4, 0.6), '#ffcf5a', turned(x, y, z, yaw)));
+    p.push(piece(new BoxGeometry(4.6, 9.6, 0.7), open ? '#fff2c4' : '#3a3aa8', turned(x, y, z, yaw)));
+  }
+  for (let k = 0; k < 7; k += 1) p.push(box(5, 0.8, 2.4, 20 + k * 1.6, 2 + k * 1.6, -10 - k * 2.2, '#c8b8ff')); // stairs to nowhere
+  return merge(p);
+}
+
+// ── Grand Champion ───────────────────────────────────────────────────────────
+
+/** A stadium rock stage (our own band, no real musicians): a black stage, amplifier stacks either side, a truss and a drum riser. */
+function concertStage() {
+  const p = [box(46, 3, 18, 0, 1.5, 0, '#0a0a10'), box(14, 2, 7, 0, 4, -4, '#1a1a24')];
+  for (const x of [-19, 19]) for (let k = 0; k < 3; k += 1) {
+    p.push(box(7, 4.2, 4, x, 5.1 + k * 4.4, -4, '#141418'), box(6, 3.4, 0.2, x, 5.1 + k * 4.4, -1.9, '#2a2a32'));
+  }
+  for (const x of [-22, 22]) p.push(box(1, 22, 1, x, 11, 6, '#c8ccd2'));
+  p.push(box(45, 1.2, 1.2, 0, 22, 6, '#c8ccd2'));
+  for (let k = 0; k < 10; k += 1) p.push(box(1.2, 1.2, 1.6, -18 + k * 4, 21, 6.4, k % 2 ? '#ff3fa8' : '#3fd8ff'));
+  for (const [x, c] of [[-3, '#c8142a'], [0, '#f2efe6'], [3, '#c8142a']]) p.push(piece(new CylinderGeometry(1.4, 1.4, 1.6, 12), c, M(x, 5.8, -4)));
+  return merge(p);
+}
+
+/** A giant speaker wall beside the track: a wide stack of black cabinets with grilles and glowing pink cones. */
+function speakerWall() {
+  const p = [];
+  for (let r = 0; r < 4; r += 1) for (let c = 0; c < 6; c += 1) {
+    const x = -15 + c * 6;
+    const y = 2.4 + r * 4.8;
+    p.push(box(5.8, 4.6, 4, x, y, 0, '#141418'), piece(new CylinderGeometry(1.6, 1.6, 0.3, 14), (r + c) % 3 ? '#2a2a32' : '#ff3fa8', new Matrix4().makeRotationX(Math.PI / 2).premultiply(M(x, y, 2.1))));
+  }
+  return merge(p);
+}
+
+/** A lighting rig tower for the middle of a spiral: a square truss tower, a ring of coloured lamps at the top. */
+function lightingRig() {
+  const p = [];
+  for (const [x, z] of [[-2, -2], [2, -2], [-2, 2], [2, 2]]) p.push(box(0.5, 22, 0.5, x, 11, z, '#c8ccd2'));
+  for (let k = 0; k < 7; k += 1) p.push(box(4.6, 0.3, 4.6, 0, 2 + k * 3.2, 0, '#8a8f99'));
+  for (let k = 0; k < 8; k += 1) {
+    const a = (k / 8) * Math.PI * 2;
+    p.push(box(1.4, 1.4, 1.4, Math.cos(a) * 4, 22, Math.sin(a) * 4, ['#ff3fa8', '#3fd8ff', '#ffd23f', '#7dff6a'][k % 4]));
+  }
+  return merge(p);
+}
+
 export const COASTER_LANDMARKS = {
   'stave-church': { build: staveChurch, radius: 10 },
   'fjord-village': { build: fjordVillage, radius: 30 },
@@ -1072,4 +1178,13 @@ export const COASTER_LANDMARKS = {
   'top-hat': { build: topHat, radius: 7, fit: 7 },
   'flying-saucer': { build: flyingSaucer, radius: 17 },
   'saucer-town': { build: saucerTown, radius: 34 },
+  'retro-diner': { build: retroDiner, radius: 24 },
+  'soda-fountain': { build: sodaFountain, radius: 12 },
+  'jukebox-tower': { build: jukeboxTower, radius: 6, fit: 6 },
+  'gumball-machine': { build: gumballMachine, radius: 12 },
+  clocktower: { build: clocktower, radius: 6, fit: 6 },
+  'floating-doors': { build: floatingDoors, radius: 30 },
+  'concert-stage': { build: concertStage, radius: 26 },
+  'speaker-wall': { build: speakerWall, radius: 20 },
+  'lighting-rig': { build: lightingRig, radius: 6, fit: 6 },
 };

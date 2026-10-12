@@ -43,4 +43,5 @@ module.exports = [
   require('./wizard-mode'),
   require('./flipper-spins'),
   require('./slingshot-spins'),
+  require('./tilt'),
 ];

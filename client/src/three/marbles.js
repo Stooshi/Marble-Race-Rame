@@ -403,6 +403,7 @@ export class RaceMarbles {
    */
   constructor(entries, lanes, highlight = [], results = []) {
     this.lanes = lanes;
+    this.names = entries.map((e) => e?.marble?.name ?? '');
     // Finish order and time per entry index, for parking finishers in the run-out.
     this.finish = new Map([...results].sort((a, b) => a.finishTimeMs - b.finishTimeMs)
       .map((r, rank) => [r.index, { rank, t: r.finishTimeMs }]));
