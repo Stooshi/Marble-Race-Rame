@@ -7,8 +7,9 @@
  */
 import {
   CanvasTexture, CircleGeometry, Color, DynamicDrawUsage, InstancedMesh, Matrix4, Mesh, MeshBasicMaterial,
-  MeshPhongMaterial, Quaternion, SphereGeometry, SRGBColorSpace, Vector3, ConeGeometry, Group,
+  MeshPhongMaterial, Quaternion, SphereGeometry, SRGBColorSpace, Vector3, ConeGeometry, CylinderGeometry, Group,
 } from 'three';
+import { merge, piece } from './scenery/parts';
 import { pointOnTrack, TRACK_STYLE } from './trackModel';
 import { channelRadiusAt, placeOnChannel } from './iceChannel';
 
@@ -432,9 +433,14 @@ export class RaceMarbles {
     this.group.add(this.shadows);
 
     // A bright pointer floating over the viewer's own marbles.
-    this.pointerGeo = new ConeGeometry(0.45, 1, 12);
-    this.pointerGeo.rotateX(Math.PI); // tip down
-    this.pointerMat = new MeshBasicMaterial({ color: '#facc15' });
+    // Yellow, its lowest third red (so it stands out over a yellow marble): the same size and place as ever.
+    const tip = new ConeGeometry(0.15, 1 / 3, 12);
+    tip.rotateX(Math.PI); // tip down
+    this.pointerGeo = merge([
+      piece(new CylinderGeometry(0.45, 0.15, 2 / 3, 12), '#facc15', new Matrix4().makeTranslation(0, 1 / 6, 0)),
+      piece(tip, '#e5322d', new Matrix4().makeTranslation(0, -1 / 3, 0)),
+    ]);
+    this.pointerMat = new MeshBasicMaterial({ vertexColors: true });
     this.pointers = highlight.filter((i) => this.balls[i]).map((i) => {
       const m = new Mesh(this.pointerGeo, this.pointerMat);
       this.group.add(m);
