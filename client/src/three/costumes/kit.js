@@ -67,7 +67,7 @@ export const COSTUME_COLORS = {
   // Coasters: Sognefjord.
   fjordRock: '#6f7378', fjordMoss: '#4f7a3a', netPole: '#7a5a3a', netCord: '#d9cfb8', fjordTroll: '#7d7466', fjordTrollMoss: '#5f7f42', trollNose: '#8f8274',
   barrelWood: '#7a4f2e', barrelHoop: '#3a3634', tombstone: '#9a968c', tombMoss: '#5a6a48', totemWood: '#6a4a8a', totemFace: '#e8b33c', totemEye: '#ff7a1a',
-  pineCone: '#8a5a32', pineConeTip: '#5a3a20', grizzly: '#6a4a30', grizzlyDark: '#4a3220', grizzlyMuzzle: '#a8885a', statueStone: '#c8a46a', statueStripe: '#2f5a8a', statueGold: '#d8b84a', buoyRed: '#d8442f', buoyWhite: '#f2efe6', bamboo: '#b8a050', bambooDark: '#8a7a3a', oarWood: '#8a6a48', fisherShirt: '#2f6f8a', conicalHat: '#e8d8a8', skin: '#c8956a', containerRed: '#c8442f', containerBlue: '#2f6fa8', containerRib: '#3a3d44', bollard: '#2a2d32', bollardTop: '#f2c230', craneRed: '#d8442f', craneDark: '#5a2a22', toadStalk: '#f2ecd8', toadCap: '#d8342a', toadSpot: '#ffffff', blackBear: '#2a2622', blackBearMuzzle: '#8a6a48', tileBlue: '#2f7fc4', tileYellow: '#f2c230', tileGreen: '#4aa35a', tileRed: '#d8442f', tileWhite: '#f2efe6', hippo: '#7a6a78', hippoBelly: '#d89a9a', hippoTooth: '#f2efe6', termite: '#a8653a', termiteDark: '#8a4f2a', jeep: '#5f6a3a', jeepCanvas: '#c8b88a', hay: '#d8b85a', hayDark: '#b8963a', fencePost: '#7a5a3a', cartWood: '#8a6a42', horse: '#6a4a30', horseMane: '#2a1e17', lionStone: '#a8a296', lionDark: '#8a8478', ginkgoTrunk: '#6a5a42', ginkgoLeaf: '#f2c230', guardianStone: '#9a948a', guardianRed: '#a8322a', ferryHull: '#f2efe6', ferryBlue: '#2f5d9a', ferryCabin: '#d8d4c8', bumperBase: '#1e1f26', bumperRed: '#ff3a4a', bumperBlue: '#3a8aff', bumperYellow: '#ffd23f', bumperRing: '#f4f4f0', chrome: '#d0d4da', targetOrange: '#ff8a1a', targetPink: '#ff4fb8', spinnerYellow: '#ffe14a', flipperWhite: '#f6f6f2', flipperRubber: '#d8342a', tombGrey: '#8a8a90', tombGlow: '#c6ff4f', bookWood: '#3a2416', bookRed: '#a8322a', bookGreen: '#2f6a3a', bookBlue: '#2a3f7a', ironDark: '#26262c', candleGold: '#ffcf5a', lightning: '#d8f2ff', shieldBlue: '#2f4a8a', shieldGold: '#ffd23f', catapultWood: '#6a4a2a',
+  pineCone: '#8a5a32', pineConeTip: '#5a3a20', grizzly: '#6a4a30', grizzlyDark: '#4a3220', grizzlyMuzzle: '#a8885a', statueStone: '#c8a46a', statueStripe: '#2f5a8a', statueGold: '#d8b84a', buoyRed: '#d8442f', buoyWhite: '#f2efe6', bamboo: '#b8a050', bambooDark: '#8a7a3a', oarWood: '#8a6a48', fisherShirt: '#2f6f8a', conicalHat: '#e8d8a8', skin: '#c8956a', containerRed: '#c8442f', containerBlue: '#2f6fa8', containerRib: '#3a3d44', bollard: '#2a2d32', bollardTop: '#f2c230', craneRed: '#d8442f', craneDark: '#5a2a22', toadStalk: '#f2ecd8', toadCap: '#d8342a', toadSpot: '#ffffff', blackBear: '#2a2622', blackBearMuzzle: '#8a6a48', tileBlue: '#2f7fc4', tileYellow: '#f2c230', tileGreen: '#4aa35a', tileRed: '#d8442f', tileWhite: '#f2efe6', hippo: '#7a6a78', hippoBelly: '#d89a9a', hippoTooth: '#f2efe6', termite: '#a8653a', termiteDark: '#8a4f2a', jeep: '#5f6a3a', jeepCanvas: '#c8b88a', hay: '#d8b85a', hayDark: '#b8963a', fencePost: '#7a5a3a', cartWood: '#8a6a42', horse: '#6a4a30', horseMane: '#2a1e17', lionStone: '#a8a296', lionDark: '#8a8478', ginkgoTrunk: '#6a5a42', ginkgoLeaf: '#f2c230', guardianStone: '#9a948a', guardianRed: '#a8322a', ferryHull: '#f2efe6', ferryBlue: '#2f5d9a', ferryCabin: '#d8d4c8', bumperBase: '#1e1f26', bumperRed: '#ff3a4a', bumperBlue: '#3a8aff', bumperYellow: '#ffd23f', bumperRing: '#f4f4f0', chrome: '#d0d4da', targetOrange: '#ff8a1a', targetPink: '#ff4fb8', spinnerYellow: '#ffe14a', flipperWhite: '#f6f6f2', flipperRubber: '#d8342a', tombGrey: '#8a8a90', tombGlow: '#c6ff4f', bookWood: '#3a2416', bookRed: '#a8322a', bookGreen: '#2f6a3a', bookBlue: '#2a3f7a', ironDark: '#26262c', candleGold: '#ffcf5a', lightning: '#d8f2ff', shieldBlue: '#2f4a8a', shieldGold: '#ffd23f', catapultWood: '#6a4a2a', curtainRed: '#a8122a', curtainGold: '#e0b43a', spotlight: '#fff2c4', wandBlack: '#141418', saucerSilver: '#b8c4cc', alienGreen: '#7dff6a', rayPink: '#ff4fd8',
   netFloat: '#d8322b',
 };
 
@@ -1234,6 +1234,53 @@ function catapult(add, mat, group, rimCentre, q, { len, width, drop = 0 }) {
   return [];
 }
 
+// ── Flipper Spins ────────────────────────────────────────────────────────────
+
+/** A spotlight pop bumper: a black can on a lit ring, its lens glowing (Flipper Spins; a block). */
+function spotlightBumper(add, mat, group, point, q, { radius }) {
+  add('bumperRing', new CylinderGeometry(radius * 1.12, radius * 1.12, radius * 0.18, 14), local(point, q, 0, radius * 0.1, 0));
+  add('wandBlack', new CylinderGeometry(radius * 0.8, radius * 0.95, radius * 1.4, 14), local(point, q, 0, radius * 0.9, 0));
+  add('spotlight', new CylinderGeometry(radius * 0.78, radius * 0.78, radius * 0.12, 14), local(point, q, 0, radius * 1.65, 0));
+  return [];
+}
+
+/** A magician's stand beyond the rim; the wand is its arm (Flipper Spins; a swipe). */
+function magicianStandBody(add, base, q) {
+  add('wandBlack', new CylinderGeometry(0.5, 0.8, 2.6, 10), local(base, q, 0, 1.3, 0));
+  add('curtainRed', new BoxGeometry(1.4, 0.3, 1.4), local(base, q, 0, 2.7, 0));
+}
+
+// ── Slingshot Spins ──────────────────────────────────────────────────────────
+
+/** A little saucer pop bumper: a silver disc on a lit base, a green dome (Slingshot Spins; a block). */
+function saucerBumper(add, mat, group, point, q, { radius }) {
+  add('bumperBase', new CylinderGeometry(radius * 0.8, radius * 0.9, radius * 0.8, 12), local(point, q, 0, radius * 0.4, 0));
+  add('saucerSilver', new CylinderGeometry(radius * 1.2, radius * 0.7, radius * 0.45, 14), local(point, q, 0, radius * 1.0, 0));
+  add('alienGreen', new SphereGeometry(radius * 0.55, 10, 6, 0, Math.PI * 2, 0, Math.PI / 2), local(point, q, 0, radius * 1.2, 0));
+  return [];
+}
+
+/** A row of saucer standup targets along the edge (Slingshot Spins; parked). */
+function saucerTargets(add, mat, group, rimCentre, q, { len, width, drop = 0 }) {
+  const centre = rimCentre.clone().add(new Vector3(0, -drop, 0).applyQuaternion(q));
+  const W = Math.max(1, width - 0.2);
+  add('bumperBase', new BoxGeometry(W, 0.4, len), local(centre, q, 0, 0.2, 0));
+  const n = Math.max(2, Math.floor(len / 1.8));
+  for (let k = 0; k < n; k += 1) {
+    const z = -len / 2 + (len / n) * (k + 0.5);
+    add('chrome', new BoxGeometry(0.12, 1.2, 0.12), local(centre, q, -W / 2 + 0.3, 0.8, z));
+    add('saucerSilver', new CylinderGeometry(0.7, 0.5, 0.25, 10), local(centre, q, -W / 2 + 0.3, 1.5, z).multiply(new Matrix4().makeRotationZ(Math.PI / 2)));
+  }
+  return [];
+}
+
+/** A little alien on a post beyond the rim; its stretchy arm is the swipe (Slingshot Spins; a swipe). */
+function alienBody(add, base, q) {
+  add('chrome', new CylinderGeometry(0.3, 0.4, 1.6, 8), local(base, q, 0, 0.8, 0));
+  add('alienGreen', new IcosahedronGeometry(0.8, 1), local(base, q, 0, 2.2, 0));
+  for (const x of [-0.3, 0.3]) add('wandBlack', new IcosahedronGeometry(0.15, 0), local(base, q, x, 2.4, 0.65));
+}
+
 export const KIT_COSTUMES = {
   panda: { places: 'block', build: panda },
   camel: { places: 'block', build: camel },
@@ -1439,6 +1486,25 @@ export const KIT_COSTUMES = {
     arm: { colour: 'ironDark', shoulder: [0, 5.8, 1.9], radii: [0.06, 0.08], segments: 6, tip: 0.9, tipDetail: 1, tipColour: 'candleGold', end: 0.2, endDetail: 0, endColour: 'candleGold', lift: 1.2, outLift: 1.6, nose: 0.2 },
   },
   'shield-bumper': { places: 'block', build: shieldBumper },
+  'spotlight-bumper': { places: 'block', build: spotlightBumper },
+  'saucer-bumper': { places: 'block', build: saucerBumper },
+  'saucer-targets': { places: 'parked', build: saucerTargets },
+  'ray-gun': { places: 'curtain', gantry: true, banners: ['rayPink', 'alienGreen', 'rayPink'], post: 'saucerSilver', bannerWidth: 0.3, build: () => [] },
+  alien: {
+    places: 'swipe',
+    body: alienBody,
+    standOff: 1.8,
+    sink: -0.2,
+    arm: { colour: 'alienGreen', shoulder: [0.5, 2.0, 0.2], radii: [0.12, 0.18], segments: 7, tip: 0.3, tipDetail: 1, end: 0.15, endDetail: 0, lift: 0.4, outLift: 0.5, nose: 0.2 },
+  },
+  'stage-curtain': { places: 'curtain', gantry: true, banners: ['curtainRed', 'curtainRed', 'curtainGold'], post: 'curtainGold', bannerWidth: 0.4, build: () => [] },
+  'magic-wand': {
+    places: 'swipe',
+    body: magicianStandBody,
+    standOff: 1.8,
+    sink: -0.2,
+    arm: { colour: 'wandBlack', shoulder: [0, 2.8, 0.3], radii: [0.08, 0.1], segments: 6, tip: 0.3, tipDetail: 1, tipColour: 'bumperRing', end: 0.12, endDetail: 0, endColour: 'bumperRing', lift: 0.5, outLift: 0.8, nose: 0.2 },
+  },
   catapult: { places: 'parked', build: catapult },
   'lightning-rod': { places: 'curtain', gantry: true, banners: ['lightning', 'ironDark', 'lightning'], post: 'ironDark', bannerWidth: 0.3, build: () => [] },
   ginkgo: { places: 'slalom', build: ginkgoTree },

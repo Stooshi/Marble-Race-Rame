@@ -931,16 +931,16 @@ const CASTLE_DARK = '#7f7a70';
 function siegeCastle() {
   const p = [];
   for (const [x, z, w, d] of [[0, -20, 44, 3], [0, 20, 44, 3], [-22, 0, 3, 40], [22, 0, 3, 40]]) p.push(box(w, 12, d, x, 6, z, CASTLE));
-  for (let k = 0; k < 18; k += 1) p.push(box(2, 1.6, 3.4, -20 + (k % 9) * 5, 12.8, k < 9 ? -20 : 20, CASTLE_DARK));
+  for (let k = 0; k < 10; k += 1) p.push(box(2.6, 1.6, 3.4, -18 + (k % 5) * 9, 12.8, k < 5 ? -20 : 20, CASTLE_DARK));
   for (const [x, z] of [[-22, -20], [22, -20], [-22, 20], [22, 20]]) {
-    p.push(piece(new CylinderGeometry(4.5, 5, 20, 10), CASTLE, M(x, 10, z)), piece(new ConeGeometry(5.4, 8, 10), '#2f4a8a', M(x, 24, z)));
+    p.push(piece(new CylinderGeometry(4.5, 5, 20, 7), CASTLE, M(x, 10, z)), piece(new ConeGeometry(5.4, 8, 7), '#2f4a8a', M(x, 24, z)));
     p.push(box(0.2, 4, 0.2, x, 30, z, '#5a4a3a'), box(2.4, 1.4, 0.1, x + 1.2, 31, z, '#d8342a'));
   }
   p.push(box(14, 22, 12, 0, 11, 0, CASTLE_DARK), roof(15, 6, 13, 0, 22, 0, '#2f4a8a')); // the keep
   p.push(box(10, 16, 6, 0, 8, 22, CASTLE_DARK), box(5, 7, 0.4, 0, 3.5, 25.2, '#2a1a12')); // the gatehouse
   for (const x of [-34, 34]) { // catapults
     p.push(box(5, 1, 3, x, 1.5, 34, '#6a4a2a'), box(0.5, 0.5, 9, x, 4, 34, '#5a3a22'));
-    for (const dx of [-2, 2]) p.push(piece(new CylinderGeometry(1, 1, 0.4, 10), '#3a2a1a', new Matrix4().makeRotationZ(Math.PI / 2).premultiply(M(x + dx, 1, 34))));
+    for (const dx of [-2, 2]) p.push(piece(new CylinderGeometry(1, 1, 0.4, 6), '#3a2a1a', new Matrix4().makeRotationZ(Math.PI / 2).premultiply(M(x + dx, 1, 34))));
   }
   return merge(p);
 }
@@ -950,6 +950,64 @@ function castleKeep() {
   const p = [box(9, 18, 9, 0, 9, 0, CASTLE), roof(10, 5, 10, 0, 18, 0, '#2f4a8a')];
   for (let k = 0; k < 8; k += 1) p.push(box(1.6, 1.4, 1.6, (k % 4 - 1.5) * 2.4, 18.4, k < 4 ? -4.5 : 4.5, CASTLE_DARK));
   p.push(box(0.2, 5, 0.2, 0, 25, 0, '#5a4a3a'), box(2.6, 1.6, 0.1, 1.3, 26.5, 0, '#ffd23f'));
+  return merge(p);
+}
+
+// ── Flipper Spins ────────────────────────────────────────────────────────────
+
+/** A grand old theatre (our own design): a pale facade with columns, a marquee of bulbs, red curtains in its arches. */
+function grandTheatre() {
+  const p = [box(44, 22, 14, 0, 11, 0, '#e8dcc4'), box(46, 3, 15, 0, 23.5, 0, '#c8b89a')];
+  for (let k = 0; k < 6; k += 1) p.push(piece(new CylinderGeometry(1, 1.1, 16, 10), '#f2ead6', M(-17.5 + k * 7, 8, 7.6)));
+  for (let k = 0; k < 5; k += 1) p.push(box(4.4, 9, 0.3, -14 + k * 7, 5.5, 7.2, '#a8122a'));
+  p.push(box(30, 4, 1.6, 0, 18, 8.4, '#2a1a12'));
+  for (let k = 0; k < 24; k += 1) p.push(box(0.5, 0.5, 0.3, -14.5 + k * 1.26, k % 2 ? 19.6 : 16.4, 9.3, '#ffe9a8')); // the marquee's bulbs
+  p.push(piece(new ConeGeometry(16, 6, 4), '#7a5a3a', turned(0, 28, 0, Math.PI / 4, 1.9, 1, 0.6)));
+  return merge(p);
+}
+
+/** The magician's trunk for the middle of the hairpin: a big studded box, its lid open, gold trim. */
+function magicianTrunk() {
+  const p = [box(7, 4, 4.5, 0, 2, 0, '#3a1a3a'), box(7.2, 0.4, 4.7, 0, 1, 0, '#e0b43a'), box(7.2, 0.4, 4.7, 0, 3.4, 0, '#e0b43a')];
+  p.push(piece(new BoxGeometry(7, 0.5, 4.5), '#3a1a3a', new Matrix4().makeRotationX(-1.1).premultiply(M(0, 5.6, -2.6))));
+  for (const x of [-3, 3]) p.push(box(0.5, 4.2, 0.5, x, 2.1, 2.3, '#e0b43a'));
+  p.push(box(0.6, 0.6, 0.6, 0, 6.2, 0, '#f2efe6')); // a dove
+  return merge(p);
+}
+
+/** A giant top hat for the middle of a spiral, a white rabbit peeking out. */
+function topHat() {
+  const p = [piece(new CylinderGeometry(6, 6, 0.6, 18), '#141418', M(0, 0.3, 0)), piece(new CylinderGeometry(4, 4.2, 9, 18), '#1c1c22', M(0, 5, 0)), piece(new CylinderGeometry(4.25, 4.25, 1.2, 18), '#a8122a', M(0, 1.6, 0))];
+  p.push(piece(new IcosahedronGeometry(1.4, 1), '#f4f4f0', M(0, 10, 0)));
+  for (const x of [-0.6, 0.6]) p.push(box(0.4, 2, 0.3, x, 12, 0, '#f4f4f0'));
+  return merge(p);
+}
+
+// ── Slingshot Spins ──────────────────────────────────────────────────────────
+
+/** A big retro flying saucer hovering high beside the track (our own cheerful design): a silver disc, a green dome, a ring of lights, a beam. */
+function flyingSaucer() {
+  const H = 32;
+  const p = [piece(new CylinderGeometry(16, 10, 3.4, 18), '#b8c4cc', M(0, H, 0)), piece(new CylinderGeometry(10, 16, 2, 18), '#9aa6ae', M(0, H + 2.6, 0))];
+  p.push(piece(new SphereGeometry(7, 14, 8, 0, Math.PI * 2, 0, Math.PI / 2), '#7dff6a', M(0, H + 3.4, 0)));
+  for (let k = 0; k < 12; k += 1) {
+    const a = (k / 12) * Math.PI * 2;
+    p.push(box(1.2, 0.8, 1.2, Math.cos(a) * 14.6, H + 0.6, Math.sin(a) * 14.6, k % 2 ? '#ff4fd8' : '#ffd23f'));
+  }
+  return merge(p);
+}
+
+/** A small 1950s town under attack: little houses with pastel walls, a water tower, a diner sign. */
+function saucerTown() {
+  const walls = ['#f2d0a8', '#a8d8f2', '#f2a8c8', '#c8f2a8', '#f2efe6'];
+  const p = [];
+  for (let k = 0; k < 8; k += 1) {
+    const x = -28 + k * 8;
+    const z = (k % 2) * 8;
+    p.push(box(6, 5, 6, x, 2.5, z, walls[k % 5]), roof(7, 3, 7, x, 5, z, '#7a4a3a'));
+  }
+  p.push(piece(new CylinderGeometry(3, 3, 5, 10), '#c8ccd2', M(26, 16, -10)));
+  for (const [dx, dz] of [[-2, -2], [2, -2], [-2, 2], [2, 2]]) p.push(box(0.3, 14, 0.3, 26 + dx, 7, -10 + dz, '#8a8f99'));
   return merge(p);
 }
 
@@ -1009,4 +1067,9 @@ export const COASTER_LANDMARKS = {
   'haunted-manor': { build: hauntedManor, radius: 30 },
   'siege-castle': { build: siegeCastle, radius: 40 },
   'castle-keep': { build: castleKeep, radius: 7, fit: 7 },
+  'grand-theatre': { build: grandTheatre, radius: 30 },
+  'magician-trunk': { build: magicianTrunk, radius: 6, fit: 6 },
+  'top-hat': { build: topHat, radius: 7, fit: 7 },
+  'flying-saucer': { build: flyingSaucer, radius: 17 },
+  'saucer-town': { build: saucerTown, radius: 34 },
 };

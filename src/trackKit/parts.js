@@ -270,12 +270,12 @@ module.exports = {
     'victoria-peak', 'sea-bridge', 'port-cranes', 'zhuhai-waterfront', 'drive-through-redwood', 'redwood-grove', 'sea-stacks-beach',
     'doi-suthep', 'chiang-mai-gate', 'lantern-chedi', 'baobab', 'stilt-lodge', 'mokoros', 'elephant-herd',
     'pancic-mausoleum', 'stone-monastery', 'watermill', 'sheep-flock', 'kolo-village',
-    'sun-yat-sen-mausoleum', 'yangtze-bridge', 'zhonghua-gate', 'lake-pagodas', 'ginkgo-grove', 'haunted-manor', 'siege-castle', 'castle-keep'],
+    'sun-yat-sen-mausoleum', 'yangtze-bridge', 'zhonghua-gate', 'lake-pagodas', 'ginkgo-grove', 'haunted-manor', 'siege-castle', 'castle-keep', 'grand-theatre', 'magician-trunk', 'top-hat', 'flying-saucer', 'saucer-town'],
   OVERHEAD: ['gondola', 'cable-car', 'chairlift', 'vulture'],
   // What stands in the middle of a splitter, between its two channels (the arch: over one of
   // them), or in the middle of a spiral or a hairpin.
   AROUND: ['mountain-hut', 'big-rock', 'mountain-restaurant', 'mine-headframe', 'nunatak', 'bell-tower', 'arc-de-triomphe', 'obelisk', 'notre-dame', 'oasis', 'twisted-tower', 'river-island', 'anaconda', 'watchtower', 'pagoda',
-    'museum-of-the-future', 'dubai-frame', 'opera-house', 'tulip-garden', 'roundabout-monument', 'acacia', 'mughal-fountain', 'giant-tree', 'snow-island', 'fallen-statue', 'volcano-rock', 'sagrada-familia', 'frozen-waterfall', 'limestone-island', 'sea-islet', 'giant-redwood', 'lantern-chedi', 'watermill', 'confucius-temple', 'castle-keep'],
+    'museum-of-the-future', 'dubai-frame', 'opera-house', 'tulip-garden', 'roundabout-monument', 'acacia', 'mughal-fountain', 'giant-tree', 'snow-island', 'fallen-statue', 'volcano-rock', 'sagrada-familia', 'frozen-waterfall', 'limestone-island', 'sea-islet', 'giant-redwood', 'lantern-chedi', 'watermill', 'confucius-temple', 'castle-keep', 'magician-trunk', 'top-hat'],
   // Scenery near a section (or the start or finish): what grows and stands beside the track there.
   SCENERY: ['bare', 'rocks', 'birches', 'pines', 'race-netting', 'funicular', 'wooden-houses', 'frozen-lake',
     'wood-clad', 'chalets', 'pasture', 'aspens', 'shopfronts',

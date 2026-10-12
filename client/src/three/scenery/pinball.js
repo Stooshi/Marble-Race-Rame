@@ -8,7 +8,8 @@
  *     fixed rhythm, slingshots, the drain at the end of the catch area, a second
  *     display flashing the winner's call-out) and the wooden cabinet rails round the
  *     edges of the world. Flippers never touch a marble: they stand outside the
- *     catch area's walls, so every race replays exactly.
+ *     catch area's walls, so every race replays exactly. Four draws in all: the picture
+ *     (backglass, display and the winner's display), the cabinet, the inserts and the flippers.
  */
 import {
   BoxGeometry, CanvasTexture, CylinderGeometry, DoubleSide, Group, Matrix4, Mesh, MeshBasicMaterial, MeshLambertMaterial,
@@ -79,15 +80,11 @@ function shapes(g, art, w, h, c) {
   }
 }
 
-/** The backglass picture: the art style's sky, its shapes and the table's name in big lit letters. */
-function backglassTexture(art, title, lite) {
-  const w = lite ? 512 : 1024;
-  const h = Math.round((w * BACKGLASS.height) / BACKGLASS.width);
-  const canvas = document.createElement('canvas');
-  canvas.width = w;
-  canvas.height = h;
-  const g = canvas.getContext('2d');
+/** The backglass picture into (x0, y0, w, h) of a canvas: the art style's sky, its shapes and the table's name in big lit letters. */
+function paintBackglass(g, x0, y0, w, h, art, title) {
   const c = ART[art] ?? ART.manor;
+  g.save();
+  g.translate(x0, y0);
   const sky = g.createLinearGradient(0, 0, 0, h);
   sky.addColorStop(0, c.sky[0]);
   sky.addColorStop(1, c.sky[1]);
@@ -104,34 +101,40 @@ function backglassTexture(art, title, lite) {
   g.strokeStyle = c.accent;
   g.lineWidth = h * 0.02;
   g.strokeRect(h * 0.02, h * 0.02, w - h * 0.04, h - h * 0.04);
-  const tex = new CanvasTexture(canvas);
-  tex.colorSpace = SRGBColorSpace;
-  return tex;
+  g.restore();
 }
 
-/** An orange dot-matrix display reading `text`. */
-function dotMatrixTexture(text, lite) {
-  const w = lite ? 256 : 512;
-  const h = Math.round((w * DISPLAY.height) / DISPLAY.width);
-  const canvas = document.createElement('canvas');
-  canvas.width = w;
-  canvas.height = h;
-  const g = canvas.getContext('2d');
+/** An orange dot-matrix display reading `text`, into (x0, y0, w, h) of a canvas. */
+function paintDotMatrix(g, x0, y0, w, h, text, pitch) {
+  g.save();
+  g.translate(x0, y0);
   g.fillStyle = '#120600';
   g.fillRect(0, 0, w, h);
   g.fillStyle = '#ff8a1a';
   g.textAlign = 'center';
   g.textBaseline = 'middle';
-  g.font = `bold ${Math.round(h * 0.62)}px monospace`;
+  g.font = `bold ${Math.round(Math.min(h * 0.62, (w * 0.92) / (Math.max(4, text.length) * 0.62)))}px monospace`;
   g.fillText(text, w / 2, h * 0.54);
   // The dots: a fine dark grid over the letters.
   g.fillStyle = '#120600';
-  const pitch = lite ? 3 : 4;
   for (let x = 0; x < w; x += pitch) g.fillRect(x, 0, 1, h);
   for (let y = 0; y < h; y += pitch) g.fillRect(0, y, w, 1);
+  g.restore();
+}
+
+function canvasTexture(canvas) {
   const tex = new CanvasTexture(canvas);
   tex.colorSpace = SRGBColorSpace;
   return tex;
+}
+
+/** A quad of `w` by `h` (centred at x, y) showing the part (u0..u1, v0..v1) of a picture. */
+function quad(w, h, x, y, z, [u0, u1, v0, v1]) {
+  const g = new PlaneGeometry(w, h);
+  const uv = g.getAttribute('uv');
+  for (let k = 0; k < uv.count; k += 1) uv.setXY(k, u0 + uv.getX(k) * (u1 - u0), v0 + uv.getY(k) * (v1 - v0));
+  g.translate(x, y, z);
+  return g;
 }
 
 /**
@@ -165,22 +168,35 @@ export function buildPinball(centerline, channel, kit, { lite = false, groundAt,
   solid.push(piece(new BoxGeometry(W + 4, H + 4, 2.4), '#2a1a12', new Matrix4().makeTranslation(0, H / 2, -1.4).premultiply(place)));
   solid.push(piece(new BoxGeometry(W + 4.4, 0.8, 2.8), '#c8ccd2', new Matrix4().makeTranslation(0, H + 2.2, -1.4).premultiply(place)));
   for (const x of [-W / 2, W / 2]) solid.push(piece(new BoxGeometry(2, 40, 2), '#2a1a12', new Matrix4().makeTranslation(x, -18, -1.4).premultiply(place)));
-  const art = backglassTexture(pb.art ?? 'manor', pb.title ?? '', lite);
-  const artMat = new MeshBasicMaterial({ map: art, side: DoubleSide, fog: false });
-  owned.push(art, artMat);
-  const glass = new Mesh(new PlaneGeometry(W, H), artMat);
-  glass.applyMatrix4(new Matrix4().makeTranslation(0, H / 2, 0).premultiply(place));
-  glass.name = 'pinball: backglass';
-  group.add(glass);
-  // The display above it, its own small box.
-  const dmd = dotMatrixTexture(pb.display ?? 'MULTIBALL!', lite);
-  const dmdMat = new MeshBasicMaterial({ map: dmd, fog: false });
-  owned.push(dmd, dmdMat);
+  // The backglass and the display above it: one picture (the display along its top), one draw.
   solid.push(piece(new BoxGeometry(DISPLAY.width + 2, DISPLAY.height + 2, 2), '#111114', new Matrix4().makeTranslation(0, H + 3 + DISPLAY.height / 2, -0.8).premultiply(place)));
-  const screen = new Mesh(new PlaneGeometry(DISPLAY.width, DISPLAY.height), dmdMat);
-  screen.applyMatrix4(new Matrix4().makeTranslation(0, H + 3 + DISPLAY.height / 2, 0.25).premultiply(place));
-  screen.name = 'pinball: display';
-  group.add(screen);
+  const cw = lite ? 512 : 1024;
+  const artH = Math.round((cw * H) / W);
+  const dmdW = Math.round((cw * DISPLAY.width) / W);
+  const dmdH = Math.round((dmdW * DISPLAY.height) / DISPLAY.width);
+  const canvas = document.createElement('canvas');
+  canvas.width = cw;
+  canvas.height = artH + dmdH;
+  const g = canvas.getContext('2d');
+  paintDotMatrix(g, 0, 0, dmdW, dmdH, pb.display ?? 'MULTIBALL!', lite ? 3 : 4);
+  // (the winner's call-out beside it, for the display past the drain)
+  const winW = cw - dmdW;
+  paintDotMatrix(g, dmdW, 0, winW, dmdH, pb.finish ?? 'JACKPOT!', lite ? 3 : 4);
+  paintBackglass(g, 0, dmdH, cw, artH, pb.art ?? 'manor', pb.title ?? '');
+  const picture = canvasTexture(canvas);
+  const pictureMat = new MeshBasicMaterial({ map: picture, side: DoubleSide, fog: false });
+  owned.push(picture, pictureMat);
+  const total = artH + dmdH;
+  const panels = merge([
+    quad(W, H, 0, H / 2, 0, [0, 1, 0, artH / total]),
+    quad(DISPLAY.width, DISPLAY.height, 0, H + 3 + DISPLAY.height / 2, 0.25, [0, dmdW / cw, artH / total, 1]),
+  ].map((q) => q.toNonIndexed()));
+  panels.applyMatrix4(place);
+  const glass = new Mesh(panels, pictureMat);
+  glass.name = 'pinball: backglass';
+  const winUV = [dmdW / cw, 1, artH / total, 1];
+  const winAspect = (cw - dmdW) / dmdH;
+  group.add(glass);
   feet.push({ x: foot.x, z: foot.z, r: W / 2 + 6 });
 
   // ── Playfield inserts: glowing arrows and lamps on the ground beside the track ──
@@ -232,34 +248,43 @@ export function buildPinball(centerline, channel, kit, { lite = false, groundAt,
       piece(new CylinderGeometry(0.9, 0.5, 6, 10), '#f4f4f0', new Matrix4().makeRotationZ(Math.PI / 2).premultiply(new Matrix4().makeTranslation(-sign * 3, 0, 0))),
       piece(new CylinderGeometry(0.35, 0.35, 1.4, 8), '#d8342a', new Matrix4().makeTranslation(0, 0, 0)),
     ]);
-    const mesh = new Mesh(bat, lambert);
-    mesh.name = 'pinball: flipper';
-    mesh.position.copy(pivot);
     const base = new Quaternion().setFromAxisAngle(UP, Math.atan2(side.x, side.z) - Math.PI / 2 + sign * 0.5);
-    mesh.quaternion.copy(base);
-    group.add(mesh);
-    flippers.push({ mesh, base, sign });
+    flippers.push({ bat, pivot, base, sign });
     feet.push({ x: pivot.x, z: pivot.z, r: 6 });
   }
+  // Both flippers in one mesh (one draw), their shapes turned about their pivots on every update.
+  const batGeo = merge(flippers.map((f) => f.bat.clone()));
+  const batPos = batGeo.getAttribute('position');
+  const batNormal = batGeo.getAttribute('normal');
+  let offset = 0;
+  for (const f of flippers) {
+    f.from = offset;
+    f.count = f.bat.getAttribute('position').count;
+    f.local = f.bat.getAttribute('position').array.slice();
+    f.localNormal = f.bat.getAttribute('normal').array.slice();
+    offset += f.count;
+    f.bat.dispose();
+  }
+  const flipMesh = new Mesh(batGeo, lambert);
+  flipMesh.name = 'pinball: flippers';
+  flipMesh.frustumCulled = false;
+  group.add(flipMesh);
   // The drain: a dark trough across the end of the catch area, a chrome lip, the apron round it.
   const drainAt = end.pos.clone().addScaledVector(along, len + 2.5);
   drainAt.y = floorAt(len) - 1.6;
   const drainQ = new Quaternion().setFromAxisAngle(UP, Math.atan2(along.x, along.z));
   solid.push(piece(new BoxGeometry(half * 2 + 12, 1, 4), '#08080a', new Matrix4().compose(drainAt, drainQ, new Vector3(1, 1, 1))));
   solid.push(piece(new BoxGeometry(half * 2 + 13, 0.4, 0.6), '#c8ccd2', new Matrix4().compose(drainAt.clone().addScaledVector(along, -2.2).add(new Vector3(0, 0.5, 0)), drainQ, new Vector3(1, 1, 1))));
-  // A second display beyond the drain, flashing the winner's call-out.
-  const winText = dotMatrixTexture(pb.finish ?? 'JACKPOT!', lite);
-  const winMat = new MeshBasicMaterial({ map: winText, fog: false, transparent: true });
-  owned.push(winText, winMat);
+  // A second display beyond the drain with the winner's call-out (part of the backglass's picture: no draw of its own).
   const winAt = end.pos.clone().addScaledVector(along, len + 22);
   winAt.y = Math.max(groundAt(winAt.x, winAt.z), floorAt(len)) + 10;
-  const winSign = new Mesh(new PlaneGeometry(DISPLAY.width * 0.7, DISPLAY.height * 0.7), winMat);
-  winSign.position.copy(winAt);
-  winSign.quaternion.setFromAxisAngle(UP, Math.atan2(-along.x, -along.z));
-  winSign.name = 'pinball: winner display';
-  group.add(winSign);
-  solid.push(piece(new BoxGeometry(DISPLAY.width * 0.7 + 1.4, DISPLAY.height * 0.7 + 1.4, 1), '#111114', new Matrix4().compose(winAt.clone().addScaledVector(along, 0.6), winSign.quaternion, new Vector3(1, 1, 1))));
-  for (const x of [-1, 1]) solid.push(piece(new BoxGeometry(0.6, 12, 0.6), '#2a2a30', new Matrix4().compose(winAt.clone().addScaledVector(side, x * DISPLAY.width * 0.3).addScaledVector(along, 0.6).add(new Vector3(0, -7, 0)), winSign.quaternion, new Vector3(1, 1, 1))));
+  const winSign = { quaternion: new Quaternion().setFromAxisAngle(UP, Math.atan2(-along.x, -along.z)) };
+  const winH = DISPLAY.height * 1.2;
+  const winQuad = quad(winH * winAspect, winH, 0, 0, 0, winUV).toNonIndexed();
+  winQuad.applyMatrix4(new Matrix4().compose(winAt, winSign.quaternion, new Vector3(1, 1, 1)));
+  glass.geometry = merge([glass.geometry, winQuad]);
+  solid.push(piece(new BoxGeometry(winH * winAspect + 1.4, winH + 1.4, 1), '#111114', new Matrix4().compose(winAt.clone().addScaledVector(along, 0.6), winSign.quaternion, new Vector3(1, 1, 1))));
+  for (const x of [-1, 1]) solid.push(piece(new BoxGeometry(0.6, 12, 0.6), '#2a2a30', new Matrix4().compose(winAt.clone().addScaledVector(side, x * winH * winAspect * 0.4).addScaledVector(along, 0.6).add(new Vector3(0, -7, 0)), winSign.quaternion, new Vector3(1, 1, 1))));
   feet.push({ x: winAt.x, z: winAt.z, r: DISPLAY.width * 0.4 });
 
   // ── The cabinet's side rails round the edges of the world ──
@@ -290,16 +315,26 @@ export function buildPinball(centerline, channel, kit, { lite = false, groundAt,
   }
 
   const flipQ = new Quaternion();
+  const v = new Vector3();
+  const m = new Matrix4();
   const update = (t) => {
     // Flippers: up for a moment, then down, each on the same fixed rhythm (the left a beat after the right).
     for (const f of flippers) {
       const u = ((((t + (f.sign > 0 ? 0 : FLIP_MS / 2)) % FLIP_MS) + FLIP_MS) % FLIP_MS) / FLIP_MS;
       const up = u < 0.12 ? u / 0.12 : u < 0.3 ? 1 - (u - 0.12) / 0.18 : 0;
-      f.mesh.quaternion.copy(f.base).multiply(flipQ.setFromAxisAngle(UP, -f.sign * up * 0.9));
+      flipQ.copy(f.base).multiply(new Quaternion().setFromAxisAngle(UP, -f.sign * up * 0.9));
+      m.compose(f.pivot, flipQ, new Vector3(1, 1, 1));
+      for (let k = 0; k < f.count; k += 1) {
+        v.fromArray(f.local, k * 3).applyMatrix4(m);
+        batPos.setXYZ(f.from + k, v.x, v.y, v.z);
+        v.fromArray(f.localNormal, k * 3).applyQuaternion(flipQ);
+        batNormal.setXYZ(f.from + k, v.x, v.y, v.z);
+      }
     }
-    // The winner's display flashes.
-    winMat.opacity = Math.floor(t / 400) % 2 ? 1 : 0.35;
+    batPos.needsUpdate = true;
+    batNormal.needsUpdate = true;
   };
+  update(0);
   const dispose = () => owned.forEach((o) => o.dispose?.());
   return { group, update, feet, dispose, backglass: { foot, back } };
 }

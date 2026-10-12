@@ -162,29 +162,31 @@ describe('kit scenery', () => {
     }
   });
 
-  it('a pinball table: backglass and display behind the gate, flippers on a fixed rhythm outside the catch area', () => {
+  it('a pinball table: backglass and display (one picture) behind the gate, flippers on a fixed rhythm outside the catch area', () => {
     const track = PHYSICS_TRACKS.find((t) => t.slug === 'multiball-manor');
     const centerline = buildCenterline(track);
     const channel = channelOf(track, centerline);
     for (const lite of [false, true]) {
       const built = buildPinball(centerline, channel, track.physics.kit, { lite, groundAt: () => 0, bounds: { minX: -500, maxX: 500, minZ: -500, maxZ: 500, floorY: -66 }, pen: track.physics.runout });
       const names = built.group.children.map((c) => c.name);
-      for (const n of ['pinball: backglass', 'pinball: display', 'pinball: winner display', 'pinball: cabinet']) expect(names).toContain(n);
+      for (const n of ['pinball: backglass', 'pinball: cabinet', 'pinball: flippers', 'pinball: inserts']) expect(names).toContain(n);
+      expect(built.group.children.length).toBe(4); // (four draws in all)
       // The backglass stands behind the gate, facing down the table.
       const s0 = centerline.samples[0];
       expect(built.backglass.foot.clone().sub(s0.pos).setY(0).dot(new Vector3(s0.tangent.x, 0, s0.tangent.z).normalize())).toBeLessThan(-30);
-      // The flippers: two, beyond the catch area's walls, moving on the race clock and the same in every replay.
-      const flippers = built.group.children.filter((c) => c.name === 'pinball: flipper');
-      expect(flippers).toHaveLength(2);
+      // The flippers: beyond the catch area's walls, moving on the race clock and the same in every replay.
+      const flippers = built.group.children.find((c) => c.name === 'pinball: flippers');
       const end = centerline.samples[centerline.segments];
       const side = new Vector3(end.side.x, 0, end.side.z).normalize();
-      for (const f of flippers) expect(Math.abs(f.position.clone().sub(end.pos).dot(side))).toBeGreaterThan(track.physics.runout.halfWidth + 2);
+      const pos = flippers.geometry.getAttribute('position');
+      const at = () => Array.from(pos.array);
       built.update(0);
-      const a = flippers[0].quaternion.clone();
+      const a = at();
+      for (let k = 0; k < pos.count; k += 1) expect(Math.abs(new Vector3().fromBufferAttribute(pos, k).sub(end.pos).dot(side))).toBeGreaterThan(track.physics.runout.halfWidth + 1);
       built.update(200);
-      expect(flippers[0].quaternion.angleTo(a)).toBeGreaterThan(0.1);
+      expect(at().some((x, k) => Math.abs(x - a[k]) > 0.2)).toBe(true);
       built.update(0);
-      expect(flippers[0].quaternion.angleTo(a)).toBeLessThan(1e-9);
+      expect(at().every((x, k) => Math.abs(x - a[k]) < 1e-4)).toBe(true);
       built.dispose();
     }
   });

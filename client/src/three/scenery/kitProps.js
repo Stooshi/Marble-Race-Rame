@@ -4,7 +4,7 @@
  * overhead. Cartoon low-poly from a few simple shapes, merged or instanced so
  * each kind costs one draw call.
  */
-import { BoxGeometry, ConeGeometry, CylinderGeometry, Group, IcosahedronGeometry, Matrix4, Mesh, Quaternion, SphereGeometry, Vector3 } from 'three';
+import { BoxGeometry, CircleGeometry, ConeGeometry, CylinderGeometry, Group, IcosahedronGeometry, Matrix4, Mesh, Quaternion, SphereGeometry, Vector3 } from 'three';
 import { merge, piece } from './parts';
 import { ANIMALS, local } from '../costumes/animals';
 import { WORLD_LANDMARKS } from './kitLandmarks';
@@ -172,23 +172,23 @@ export function aspen(lite) {
 /** A pinball playfield's dressing: chrome posts with rubber rings, star rollovers, coloured plastics. */
 function pinPost() {
   return merge([
-    piece(new CylinderGeometry(0.25, 0.3, 2.4, 8), '#d0d4da', new Matrix4().makeTranslation(0, 1.2, 0)),
-    piece(new CylinderGeometry(0.55, 0.55, 0.3, 10), '#d8342a', new Matrix4().makeTranslation(0, 1.4, 0)),
+    piece(new CylinderGeometry(0.25, 0.3, 2.4, 5, 1, true), '#d0d4da', new Matrix4().makeTranslation(0, 1.2, 0)),
+    piece(new CylinderGeometry(0.55, 0.55, 0.3, 6), '#d8342a', new Matrix4().makeTranslation(0, 1.4, 0)),
   ]);
 }
 let playfieldTurn = 0; // (the next colour in turn: the same table looks the same every time)
 function starRollover() {
   playfieldTurn += 1;
   const colour = ['#ffd23f', '#3fd8ff', '#ff3f6a', '#7dff6a'][playfieldTurn % 4];
-  return merge([piece(new CylinderGeometry(1.4, 1.4, 0.12, 5), colour, new Matrix4().makeTranslation(0, 0.06, 0))]);
+  return merge([piece(new CylinderGeometry(1.4, 1.4, 0.12, 5, 1, true), colour, new Matrix4().makeTranslation(0, 0.06, 0)), piece(new CircleGeometry(1.4, 5), colour, new Matrix4().makeRotationX(-Math.PI / 2).premultiply(new Matrix4().makeTranslation(0, 0.12, 0)))]);
 }
 function plastic() {
   playfieldTurn += 1;
   const colour = ['#ff4fb8', '#3a8aff', '#ffd23f', '#7dff6a'][playfieldTurn % 4];
   return merge([
     piece(new BoxGeometry(5, 0.2, 2.4), colour, new Matrix4().makeTranslation(0, 2.6, 0)),
-    piece(new CylinderGeometry(0.2, 0.2, 2.6, 6), '#d0d4da', new Matrix4().makeTranslation(-2, 1.3, 0)),
-    piece(new CylinderGeometry(0.2, 0.2, 2.6, 6), '#d0d4da', new Matrix4().makeTranslation(2, 1.3, 0)),
+    piece(new CylinderGeometry(0.2, 0.2, 2.6, 4, 1, true), '#d0d4da', new Matrix4().makeTranslation(-2, 1.3, 0)),
+    piece(new CylinderGeometry(0.2, 0.2, 2.6, 4, 1, true), '#d0d4da', new Matrix4().makeTranslation(2, 1.3, 0)),
   ]);
 }
 

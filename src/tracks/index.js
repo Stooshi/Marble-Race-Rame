@@ -40,4 +40,7 @@ module.exports = [
   require('./kopaonik-spins'),
   require('./nanjing'),
   require('./multiball-manor'),
+  require('./wizard-mode'),
+  require('./flipper-spins'),
+  require('./slingshot-spins'),
 ];
