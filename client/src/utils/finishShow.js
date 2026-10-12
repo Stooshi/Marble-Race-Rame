@@ -2,7 +2,12 @@
  * The finish of a race, as a show on the race clock (so it plays the same live
  * and in replays, and a replay rewound past the finish takes it away again):
  *
- *   winner  the winner crosses: flash, confetti, the WINNER banner (4 s)
+ *   medals  the winner crosses: a compact banner at the top fills gold, then
+ *           silver and bronze as second and third cross, with a little
+ *           sparkle; the race runs on clean underneath (no flash, no confetti)
+ *   winner  the full ceremony, once about 70% of the field is home or 8 s
+ *           after the winner, whichever comes first: flash, confetti, the
+ *           WINNER banner (4 s)
  *   field   the banner shrinks to the top while the rest come home, a ticker
  *           counting them in (until everyone is home)
  *   podium  the top three on a gold, silver and bronze podium (6 s): the
@@ -12,6 +17,8 @@
  * Everything here is plain data (times in ms of race time); FinishShow.jsx draws it.
  */
 export const WINNER_MS = 4000;  // the big banner, before it shrinks to the top
+export const CEREMONY_AFTER_MS = 8000; // the full ceremony at the latest this long after the winner crosses…
+export const CEREMONY_SHARE = 0.7;     // …or as soon as this share of the field is home
 export const SETTLE_MS = 1500;  // after the last marble is home, before the podium
 export const PODIUM_MS = 6000;  // the podium, before the board
 export const PODIUM_STEP_MS = [1600, 900, 200]; // when gold, silver and bronze start to rise (after the podium appears)
@@ -32,15 +39,20 @@ export function finishPlan(finishes, count, complete = false) {
   const winnerMs = Math.min(...times);
   const home = complete || times.length >= count;
   const lastMs = home ? Math.max(...times) : null;
-  const podiumAt = home ? Math.max(winnerMs + WINNER_MS + 1000, lastMs + SETTLE_MS) : null;
-  return { winnerMs, lastMs, podiumAt, boardAt: podiumAt === null ? null : podiumAt + PODIUM_MS };
+  // The full ceremony: when the CEREMONY_SHARE-th marble is home, or CEREMONY_AFTER_MS after the winner, whichever is first.
+  const sorted = [...times].sort((a, b) => a - b);
+  const kth = sorted[Math.max(1, Math.ceil(count * CEREMONY_SHARE)) - 1];
+  const ceremonyAt = Math.min(winnerMs + CEREMONY_AFTER_MS, kth ?? Infinity);
+  const podiumAt = home ? Math.max(ceremonyAt + WINNER_MS + 1000, lastMs + SETTLE_MS) : null;
+  return { winnerMs, ceremonyAt, lastMs, podiumAt, boardAt: podiumAt === null ? null : podiumAt + PODIUM_MS };
 }
 
-/** Which stage the show is in at race time t: racing (no show yet), winner, field, podium or board. */
+/** Which stage the show is in at race time t: racing (no show yet), medals, winner, field, podium or board. */
 export function phaseAt(t, plan, skipped = false) {
   if (!plan || t === null || t === undefined || t < plan.winnerMs) return 'racing';
   if (skipped) return 'board';
-  if (t < plan.winnerMs + WINNER_MS) return 'winner';
+  if (t < plan.ceremonyAt) return 'medals';
+  if (t < plan.ceremonyAt + WINNER_MS) return 'winner';
   if (plan.podiumAt === null || t < plan.podiumAt) return 'field';
   if (t < plan.boardAt) return 'podium';
   return 'board';
@@ -86,18 +98,19 @@ export function boardRows({ entries, finishes, official = null, mine = [] }) {
 }
 
 /**
- * The confetti for a show (see utils/confetti.js): a burst as the winner
- * crosses and a steady fall through the winner's moment, a lighter drift
+ * The confetti for a show (see utils/confetti.js): none while the medals fill
+ * (the race runs on clean), a burst as the full ceremony fires and a steady
+ * fall through the winner's moment, a lighter drift
  * while the field comes home, then a fresh burst as first place lands on the
  * podium and a full fall while it stands.
  */
 export function showerFor(plan) {
   if (!plan) return null;
-  const { winnerMs, podiumAt, boardAt } = plan;
-  const bursts = [{ at: winnerMs, kind: 'winner' }];
+  const { ceremonyAt, podiumAt, boardAt } = plan;
+  const bursts = [{ at: ceremonyAt, kind: 'winner' }];
   const streams = [
-    { from: winnerMs, to: winnerMs + WINNER_MS, rate: 1 },
-    { from: winnerMs + WINNER_MS, to: podiumAt ?? Infinity, rate: 0.35 },
+    { from: ceremonyAt, to: ceremonyAt + WINNER_MS, rate: 1 },
+    { from: ceremonyAt + WINNER_MS, to: podiumAt ?? Infinity, rate: 0.35 },
   ];
   if (podiumAt !== null) {
     bursts.push({ at: podiumAt + GOLD_LAND_MS, kind: 'podium' });

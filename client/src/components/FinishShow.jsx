@@ -117,14 +117,14 @@ export default function FinishShow({ show, finishes, entries, mine = [], raceId 
   const cheered = useRef(null);
   useEffect(() => {
     if (phase === 'racing') cheered.current = null;
-    if (phase === 'winner' && plan && cheered.current !== plan.winnerMs && t - plan.winnerMs < 1000) {
+    if (phase === 'medals' && plan && cheered.current !== plan.winnerMs && t - plan.winnerMs < 1000) {
       cheered.current = plan.winnerMs;
       cheer();
     }
   }, [phase, plan, t]);
 
   if (phase === 'racing' || !plan) return null;
-  const since = t - plan.winnerMs;
+  const since = t - plan.ceremonyAt;
   const home = arrivals(finishes, t);
   const winner = home[0] && entries[home[0].index];
   const mineWon = home[0] && mine.includes(home[0].index);
@@ -132,13 +132,15 @@ export default function FinishShow({ show, finishes, entries, mine = [], raceId 
   return (
     <div className={`finish finish--${phase}`}>
       {phase === 'winner' && since < 600 && <div className="finish__flash" style={{ opacity: 1 - since / 600 }} />}
-      {phase !== 'board' && <Confetti clock={show.clock} shower={shower} />}
+      {phase !== 'board' && phase !== 'medals' && <Confetti clock={show.clock} shower={shower} />}
+
+      {phase === 'medals' && <Medals top={home.slice(0, 3)} entries={entries} mine={mine} t={t} paused={show.paused} />}
 
       {(phase === 'winner' || phase === 'field') && winner && (
-        <WinnerBanner key={home[0].index} small={phase === 'field'} mineWon={mineWon} winner={winner} ms={home[0].ms} elapsed={t - plan.winnerMs} paused={show.paused} />
+        <WinnerBanner key={home[0].index} small={phase === 'field'} mineWon={mineWon} winner={winner} ms={home[0].ms} elapsed={t - plan.ceremonyAt} paused={show.paused} />
       )}
 
-      {phase === 'field' && home.length > 1 && (
+      {(phase === 'medals' || phase === 'field') && home.length > 1 && (
         <ol className="finish__ticker" aria-label="Marbles home">
           {home.slice(-3).reverse().map((a) => (
             <li key={a.index} className={mine.includes(a.index) ? 'is-mine' : undefined}>
@@ -163,6 +165,53 @@ export default function FinishShow({ show, finishes, entries, mine = [], raceId 
         />
       )}
     </div>
+  );
+}
+
+const MEDALS = [['gold', '1st'], ['silver', '2nd'], ['bronze', '3rd']];
+
+/**
+ * The medals: a compact banner at the top while the race runs on underneath. Each medal
+ * fills as its place crosses (gold, then silver, then bronze) with a little burst of
+ * sparkle; the places not yet decided wait as empty rings. Never over the track's middle.
+ */
+function Medals({ top, entries, mine, t, paused }) {
+  return (
+    <ol className="finish__medals" role="status" aria-live="polite" aria-label="Podium places">
+      {MEDALS.map(([kind, label], k) => {
+        const a = top[k];
+        const e = a && entries[a.index];
+        return (
+          <MedalSlot key={kind} kind={kind} label={label} a={a} e={e} isMine={Boolean(a) && mine.includes(a.index)} elapsed={a ? t - a.ms : null} paused={paused} />
+        );
+      })}
+    </ol>
+  );
+}
+
+function MedalSlot({ kind, label, a, e, isMine, elapsed, paused }) {
+  const ref = useRef(null);
+  useOnClock(ref, elapsed, paused);
+  if (!a) {
+    return (
+      <li className={`medal medal--${kind} is-waiting`}>
+        <span className="medal__disc" aria-hidden="true" />
+        <span className="medal__label">{label}</span>
+      </li>
+    );
+  }
+  return (
+    <li ref={ref} className={`medal medal--${kind}${isMine ? ' is-mine' : ''}`}>
+      <span className="medal__disc" aria-hidden="true">
+        <MarbleBall marble={e?.marble} size={16} title="" />
+        {[0, 1, 2, 3].map((n) => <i key={n} className="medal__spark" style={{ '--n': n }} />)}
+      </span>
+      <span className="medal__text">
+        <span className="medal__label">{label}</span>
+        <span className="medal__name" style={{ color: readable(e?.marble?.color_primary) }}>{e?.marble?.name}</span>
+        <span className="medal__time">{formatTime(a.ms)}</span>
+      </span>
+    </li>
   );
 }
 

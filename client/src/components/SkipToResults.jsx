@@ -16,7 +16,7 @@ export default function SkipToResults({ show, allowed, onSkip }) {
   const [progress, setProgress] = useState(0);
   const hold = useRef(null);
   const { t, plan, phase } = show;
-  const visible = allowed && plan && t !== null && (phase === 'winner' || phase === 'field') && t - plan.winnerMs >= SKIP_AFTER_MS;
+  const visible = allowed && plan && t !== null && (phase === 'medals' || phase === 'winner' || phase === 'field') && t - plan.winnerMs >= SKIP_AFTER_MS;
 
   const stop = () => {
     if (hold.current) cancelAnimationFrame(hold.current.frame);
