@@ -14,7 +14,7 @@ module.exports = track({
   grandPrix: true,
   signature: 'Lagoon bridge sweep',
   billboardFrame: 'led',
-  start: { landmark: 'lagos-skyline', scenery: ['grandstand'] },
+  start: { landmark: 'lagos-skyline', scenery: ['grandstand'], shots: { countdown: 'above', launch: 'low-chase' } },
   finish: { landmark: 'national-theatre', scenery: ['grandstand'] },
   designChanges: [
     'The traffic-cone chicane is at the foot of the Island plunge, straight after the tyre stacks, rather than on the finish straight: a start with only the tyre stacks lets the strongest marbles win too often and sends the field into the splitter sorted by strength.',

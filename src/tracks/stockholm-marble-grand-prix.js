@@ -14,7 +14,7 @@ module.exports = track({
   grandPrix: true,
   signature: 'Bridge sweep',
   billboardFrame: 'plain',
-  start: { scenery: ['colourful-houses'] },
+  start: { scenery: ['colourful-houses'], shots: { countdown: 'front', launch: 'high-behind' } },
   finish: { landmark: 'steamboats', scenery: ['grandstand'] },
   designChanges: [
     'The traffic-cone chicane is at the foot of the Södermalm plunge, straight after the tyre stacks, rather than in the Gamla Stan S-bends: on the bends it left too few overtakes and the field reached the splitter sorted so that one channel never gave its marbles a fair share of wins (measured on Dubai Marble Grand Prix, the same layout).',

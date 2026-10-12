@@ -20,7 +20,7 @@ module.exports = track({
   billboardFrame: 'wood',
   // The gate at a summit lift station, the Wasatch peaks all around; the finish at the
   // bottom of Main Street, Old West shopfronts and the town lift overhead. (No Olympic rings.)
-  start: { landmark: 'lift-station', scenery: ['bare'] },
+  start: { landmark: 'lift-station', scenery: ['bare'], gate: 'barrier', shots: { countdown: 'above', launch: 'high-behind' } },
   finish: { scenery: ['shopfronts'] },
   designChanges: [
     'A 50 m straight, "Run to the hairpin", before the hairpin: the recipe needs a braking zone before the one sharp bend.',

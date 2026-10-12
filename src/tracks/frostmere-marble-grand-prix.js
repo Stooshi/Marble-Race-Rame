@@ -14,7 +14,7 @@ module.exports = track({
   grandPrix: { crowd: 'kingdom-folk', barrier: 'snow', groupsEvery: 700 },
   signature: 'Ice palace hall',
   billboardFrame: 'banner',
-  start: { landmark: 'snow-castle' },
+  start: { landmark: 'snow-castle', shots: { countdown: 'above', launch: 'overhead' } },
   finish: { landmark: 'ice-palace' },
   designChanges: [
     'The slalom of ice lanterns is at the foot of the Castle plunge, straight after the giant snowballs, rather than in the Pine S-bends: on the bends it left too few overtakes and the field reached the splitter sorted so that one channel never gave its marbles a fair share of wins (measured on Dubai Marble Grand Prix, the same layout).',

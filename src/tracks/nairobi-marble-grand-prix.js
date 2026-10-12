@@ -14,7 +14,7 @@ module.exports = track({
   grandPrix: true,
   signature: 'Park boundary run',
   billboardFrame: 'plain',
-  start: { landmark: 'kicc-tower', scenery: ['skyscrapers'] },
+  start: { landmark: 'kicc-tower', scenery: ['skyscrapers'], shots: { countdown: 'chase', launch: 'overhead' } },
   finish: { landmark: 'safari-truck', scenery: ['savannah'] },
   designChanges: [
     'The traffic-cone chicane is at the foot of the City plunge, straight after the tyre stacks, rather than in the Uhuru S-bends: on the bends it left too few overtakes and the field reached the splitter sorted so that one channel never gave its marbles a fair share of wins (measured on Dubai Marble Grand Prix, the same layout).',

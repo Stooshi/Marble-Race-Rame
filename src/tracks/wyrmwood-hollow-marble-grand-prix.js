@@ -14,7 +14,7 @@ module.exports = track({
   grandPrix: { crowd: 'villagers', barrier: 'stone' },
   signature: 'Dragon hairpin',
   billboardFrame: 'banner',
-  start: { landmark: 'ruined-castle' },
+  start: { landmark: 'ruined-castle', shots: { countdown: 'chase', launch: 'high-behind' } },
   finish: { landmark: 'amphitheatre' },
   designChanges: [
     'The slalom of broken pillars is at the foot of the Rampart plunge, straight after the fallen stone blocks, rather than in the Ruins S-bends: on the bends it left too few overtakes and the field reached the splitter sorted so that one channel never gave its marbles a fair share of wins (measured on Dubai Marble Grand Prix, the same layout).',

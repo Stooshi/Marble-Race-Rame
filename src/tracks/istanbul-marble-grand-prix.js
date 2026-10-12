@@ -14,7 +14,7 @@ module.exports = track({
   grandPrix: true,
   signature: 'Grand Bazaar tunnel',
   billboardFrame: 'plain',
-  start: { landmark: 'galata-tower', scenery: ['colourful-houses'] },
+  start: { landmark: 'galata-tower', scenery: ['colourful-houses'], shots: { countdown: 'front', launch: 'look-back' } },
   finish: { landmark: 'bosphorus-bridge', scenery: ['grandstand'] },
   designChanges: [
     'The traffic-cone chicane is at the foot of the Galata plunge, straight after the tyre stacks, rather than on the finish straight: a start with only the tyre stacks lets the strongest marbles win too often and sends the field into the splitter sorted by strength.',

@@ -21,7 +21,7 @@ module.exports = track({
   billboardFrame: 'plain',
   // The gate in the Tijuca jungle, Corcovado far behind with its distant silhouette and a
   // monkey in a tree beside the gate; the finish on Copacabana's promenade, Sugarloaf behind.
-  start: { landmark: 'corcovado' },
+  start: { landmark: 'corcovado', gate: 'trapdoor', shots: { countdown: 'chase', launch: 'side' } },
   finish: { landmark: 'sugarloaf' },
   designChanges: [
     'Football corner flags down the jungle plunge after the footballs, glanced off like slalom gates: with footballs alone the strongest marbles win too often and the field reaches the splitter sorted by strength.',

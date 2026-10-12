@@ -165,7 +165,8 @@ test('the varied starts: a new track says how its start looks, checked like any 
   // What the variety value says (tracks built before: the start every track had).
   const sog = physicsTrack('sognefjord');
   assert.deepEqual(sog.variety.start, { type: 'cliff', gate: 'trapdoor', countdown: 'side', launch: 'low-chase' });
-  assert.deepEqual(physicsTrack('dubai-marble-grand-prix').variety.start, { type: null, gate: 'lights', countdown: 'classic', launch: 'high-behind' });
+  // (A Grand Prix keeps its starting lights, with its own first camera shots since the originals' new starts.)
+  assert.deepEqual(physicsTrack('dubai-marble-grand-prix').variety.start, { type: null, gate: 'lights', countdown: 'side', launch: 'high-behind' });
   // The sameness check: no two tracks of a family open on the same pair of shots, at most two coasters per start type.
   const twin = track(coaster({ type: 'cliff', gate: 'paddle', shots: { countdown: 'side', launch: 'low-chase' } }, { slug: 'variety-twin', name: 'Variety Twin', opening: opening('crest-start'), sections: layout('two-splitters', { dress: { brakingStraight: { height: 0 } } }) }));
   const check = varietyCheck(twin, [...PHYSICS_TRACKS, twin]);

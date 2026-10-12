@@ -14,7 +14,7 @@ module.exports = track({
   grandPrix: true,
   signature: 'Arch plunge',
   billboardFrame: 'plain',
-  start: { scenery: ['sandstone-terraces'] },
+  start: { scenery: ['sandstone-terraces'], shots: { countdown: 'chase', launch: 'side' } },
   finish: { landmark: 'opera-house', scenery: ['grandstand'] },
   designChanges: [
     'The traffic-cone chicane is at the foot of the Arch plunge, straight after the tyre stacks, rather than in The Rocks S-bends: on the bends it left too few overtakes and the field reached the splitter sorted so that one channel never gave its marbles a fair share of wins (measured on Dubai Marble Grand Prix, the same layout).',

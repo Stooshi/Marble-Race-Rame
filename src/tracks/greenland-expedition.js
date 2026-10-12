@@ -21,7 +21,7 @@ module.exports = track({
   billboardFrame: 'crates',
   // The gate at a base camp on the ice sheet (orange tents, flags, a loaded dog sled); the
   // finish on Ilulissat's harbour front, painted wooden houses and icebergs in the bay.
-  start: { landmark: 'base-camp', scenery: ['bare'] },
+  start: { landmark: 'base-camp', scenery: ['bare'], gate: 'trapdoor', shots: { countdown: 'side', launch: 'look-back' } },
   finish: { scenery: ['colourful-houses', 'icefjord'] },
   designChanges: [
     'Route-marker flags (bamboo poles with orange flags, as expeditions mark their way across the ice) down the ice-sheet plunge after the sled dogs, glanced off like slalom gates: with dogs alone the field reached the splitter sorted by strength (the report\'s splitter check failed) and overtook too little.',

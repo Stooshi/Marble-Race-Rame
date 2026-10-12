@@ -74,6 +74,12 @@ test('Bobsleigh Run is added by its data update, then re-tuned, exactly as defin
   for (const key of ['tipOffset', 'insideScrub', 'outsideDrag']) {
     physics.fork[key] = Number(chaosSql.match(new RegExp(`'\\{fork,${key}\\}', '(-?[\\d.]+)'::jsonb`))[1]);
   }
+  // …and the new start (its own gate and first camera shots, looks only), which sets everything as in code.
+  const NEW_START = '2026-12-05-bobsleigh-run-new-start.sql';
+  const body = (sql) => sql.slice(sql.indexOf('UPDATE tracks'));
+  const retuned = execFileSync(process.execPath, [path.join(__dirname, '..', 'scripts', 'physics-track-sql.js'), 'bobsleigh-run', '--retune'], { encoding: 'utf8' });
+  assert.equal(body(fs.readFileSync(path.join(dir, NEW_START), 'utf8')), body(retuned), `${NEW_START} no longer gives the track in code`);
+  physics.startLook = bob.physics.startLook;
   assert.deepEqual(physics, bob.physics, 'the data updates no longer give the track in code');
   // Everything else in the add update is as generated from the code.
   assert.equal(generated.replace(JSON.stringify(bob.physics), JSON.stringify(physicsOf(added))), added);

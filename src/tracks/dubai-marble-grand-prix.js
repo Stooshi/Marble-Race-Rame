@@ -13,7 +13,7 @@ module.exports = track({
   grandPrix: true,
   signature: 'Fountain S-bends',
   billboardFrame: 'led',
-  start: { landmark: 'burj-khalifa', scenery: ['skyscrapers'] },
+  start: { landmark: 'burj-khalifa', scenery: ['skyscrapers'], shots: { countdown: 'side', launch: 'high-behind' } },
   finish: { landmark: 'marina', scenery: ['skyscrapers'] },
   designChanges: [
     'The traffic-cone chicane is at the foot of the Tower plunge, straight after the tyre stacks, rather than in the Fountain S-bends: there it left too few overtakes (58 to 59 a race; 60 needed) and the field reached the splitter sorted so that one channel never gave its marbles a fair share of wins.',

@@ -14,7 +14,7 @@ module.exports = track({
   grandPrix: { barrier: 'marigolds' },
   signature: 'Rampart plunge',
   billboardFrame: 'plain',
-  start: { landmark: 'red-fort', scenery: ['grandstand'] },
+  start: { landmark: 'red-fort', scenery: ['grandstand'], shots: { countdown: 'above', launch: 'side' } },
   finish: { landmark: 'india-gate', scenery: ['grandstand'] },
   designChanges: [
     'The traffic-cone chicane is at the foot of the Rampart plunge, straight after the tyre stacks, rather than on the finish straight: a start with only the tyre stacks lets the strongest marbles win too often and sends the field into the splitter sorted by strength.',

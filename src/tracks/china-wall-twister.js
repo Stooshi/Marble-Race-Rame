@@ -22,7 +22,7 @@ module.exports = track({
   billboardFrame: 'plain',
   // The gate on a watchtower terrace on the Wall, a red-columned hipped-roof hall behind the
   // start line; the finish before the Temple of Heaven, its round blue roofs behind the line.
-  start: { landmark: 'wudian-hall', scenery: ['battlements'] },
+  start: { landmark: 'wudian-hall', scenery: ['battlements'], gate: 'stalls', shots: { countdown: 'front', launch: 'look-back' } },
   finish: { landmark: 'temple-of-heaven', scenery: ['forbidden-city'] },
   designChanges: [
     'A few pandas on the Wall plunge (a pile-up) rather than one, then red lanterns on posts glanced off like slalom gates: with one panda the strongest marbles win too often and the field reaches the splitter sorted by strength.',

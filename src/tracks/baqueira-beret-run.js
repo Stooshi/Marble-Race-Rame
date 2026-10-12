@@ -19,7 +19,7 @@ module.exports = track({
   billboardFrame: 'wood',
   // The gate on a high sunlit ridge, wide views over the valley; the finish in an Aranese
   // village of grey stone houses and slate roofs, beside a Romanesque church.
-  start: { scenery: ['bare'] },
+  start: { scenery: ['bare'], gate: 'paddle', shots: { countdown: 'front', launch: 'side' } },
   finish: { landmark: 'church', scenery: ['stone-houses'] },
   designChanges: [
     'A 50 m straight, "Run to the hairpin", before the hairpin: the recipe needs a braking zone before the one sharp bend.',

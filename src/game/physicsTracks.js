@@ -64,6 +64,8 @@ function bobsleighRun() {
       // The starting gate: a row of paddles, one in front of each marble, that
       // sink into the ice after a countdown, each at its own moment (the
       // funnel's `release`), a quick ripple in a random order each race.
+      // How its start looks (drawing only, as a kit track's start.gate and start.shots): its own gate and first camera shots.
+      startLook: { gate: 'trapdoor', shots: { countdown: 'side', launch: 'low-chase' } },
       gate: { countdownMs: 3000 },
       collisions: true,        // marbles bump into each other
       // Boost pads, speed bumps and obstacles marbles really slam into
@@ -198,6 +200,8 @@ function sanFrancisco() {
       // Nearly vertical walls (88° up), so marbles can ride high round the
       // hairpins and the bay sweep at full speed without leaving the channel.
       channel: { radius: 3.6, maxAngle: 88, funnel: { length: 70, radius: 22, spacing: 1.15, stagger: 0.2, release: 0.45 } },
+      // How its start looks (drawing only, as a kit track's start.gate and start.shots): its own gate and first camera shots.
+      startLook: { gate: 'stalls', shots: { countdown: 'above', launch: 'overhead' } },
       gate: { countdownMs: 3000 },
       collisions: true,
       noHitBoost: true,        // an obstacle hit never speeds a marble up
@@ -300,6 +304,8 @@ function tableMountainRun() {
       look: 'sand',            // …though it looks like sand (the 3D view; physics ignores it)
       pace: 'free',
       channel: { radius: 3.6, maxAngle: 80, funnel: { length: 70, radius: 22, spacing: 1.15, stagger: 0.2, release: 0.45 } },
+      // How its start looks (drawing only, as a kit track's start.gate and start.shots): its own gate and first camera shots.
+      startLook: { gate: 'barrier', shots: { countdown: 'chase', launch: 'high-behind' } },
       gate: { countdownMs: 3000 },
       collisions: true,
       // Bobsleigh Run's obstacles, as Cape Town's animals (`look`). They stand in

@@ -598,9 +598,17 @@ test('a mirrored track races as a mirror: the field rides the other wall through
 test('Åre Run is added by its data update, switched off, exactly as its track file builds it', () => {
   const sql = fs.readFileSync(path.join(__dirname, '..', 'docs', 'data_updates', '2026-10-15-add-are-run.sql'), 'utf8');
   const note = 'Åre Run (Sweden): a winter-evening race down Åreskutan under the northern lights, the first track built with the track kit.';
-  const generated = execFileSync(process.execPath, [path.join(__dirname, '..', 'scripts', 'physics-track-sql.js'), 'are-run', '--add-hidden', note], { encoding: 'utf8' });
-  assert.equal(sql, generated);
+  const script = path.join(__dirname, '..', 'scripts', 'physics-track-sql.js');
   assert.match(sql, /is_active|false/);
+  // Later data updates (already run live, so the add is never edited): the latest gives the track in code.
+  const dir = path.join(__dirname, '..', 'docs', 'data_updates');
+  const later = fs.readdirSync(dir).filter((f) => f > '2026-10-15-add-are-run.sql' && f.slice(11).startsWith('are-run-')).sort();
+  if (!later.length) {
+    assert.equal(sql, execFileSync(process.execPath, [script, 'are-run', '--add-hidden', note], { encoding: 'utf8' }));
+    return;
+  }
+  const body = (x) => x.slice(x.indexOf('UPDATE tracks'));
+  assert.equal(body(fs.readFileSync(path.join(dir, later.at(-1)), 'utf8')), body(execFileSync(process.execPath, [script, 'are-run', '--retune'], { encoding: 'utf8' })), `${later.at(-1)} no longer gives the track in code`);
 });
 
 // The kit tracks after Åre Run, each added switched off by its own data update.

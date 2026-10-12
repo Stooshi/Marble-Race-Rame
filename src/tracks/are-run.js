@@ -20,7 +20,7 @@ module.exports = track({
   billboardFrame: 'wood',
   // The gate near the top of Åreskutan, bare and wind-swept; the finish in the village by
   // the frozen Åresjön, warm lights in the wooden houses and the old stone church nearby.
-  start: { scenery: ['bare'] },
+  start: { scenery: ['bare'], gate: 'trapdoor', shots: { countdown: 'front', launch: 'low-chase' } },
   designChanges: [
     'A 50 m straight, "Run to the hairpin", before the hairpin: the recipe needs a braking zone before the one sharp bend.',
     'Reindeer on the summit plunge (a pile-up before the slalom gates): without it the strongest marbles win too often.',

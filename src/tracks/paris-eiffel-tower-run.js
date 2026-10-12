@@ -21,7 +21,7 @@ module.exports = track({
   billboardFrame: 'column',
   // The gate on the cobbled square before Sacré-Cœur, the roofs of Paris below; the finish
   // on the Champ de Mars, the Eiffel Tower rising straight behind the line.
-  start: { landmark: 'sacre-coeur', scenery: ['haussmann'] },
+  start: { landmark: 'sacre-coeur', scenery: ['haussmann'], gate: 'stalls', shots: { countdown: 'chase', launch: 'low-chase' } },
   finish: { landmark: 'eiffel-tower', scenery: ['plane-trees'] },
   designChanges: [
     'Street lamps down the Montmartre plunge after the café tables, glanced off like slalom gates: with café tables alone the strongest marbles win too often and the field reaches the splitter sorted by strength.',

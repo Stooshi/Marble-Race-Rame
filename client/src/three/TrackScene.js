@@ -462,7 +462,7 @@ export class TrackScene {
     this.marbles.solidsAt = this.features?.solidsAt ?? null; // drawn round the obstacles, as the physics has them
     this.scene.add(this.marbles.group);
     if (start?.frame && start.releaseMs) {
-      this.gate = new StartGate(gatePlaces(this.centerline, start.frame, lanes, this.channel), start.releaseMs, { lights: Boolean(this.track?.physics?.kit?.grandPrix), style: this.track?.physics?.kit?.start?.gate ?? 'paddle' });
+      this.gate = new StartGate(gatePlaces(this.centerline, start.frame, lanes, this.channel), start.releaseMs, { lights: Boolean(this.track?.physics?.kit?.grandPrix), style: (this.track?.physics?.kit?.start ?? this.track?.physics?.startLook)?.gate ?? 'paddle' });
       this.scene.add(this.gate.group);
     }
     this.applyMarbleScale();
@@ -570,7 +570,7 @@ export class TrackScene {
     const main = this.main;
     const gate = this.cameraMode === 'follow' && this.gate && at ? this.gate.startFrame() : null;
     // The varied starts: a track's own countdown shot and first-seconds shot (kit start.shots); none: the classic start.
-    const shots = this.track?.physics?.kit?.start?.shots;
+    const shots = (this.track?.physics?.kit?.start ?? this.track?.physics?.startLook)?.shots; // (a hand-built track: its own startLook)
     const launch = gate && shots?.launch && shots.launch !== 'high-behind' ? shots.launch : null;
     if (gate && frame.t < 0) {
       // The countdown: the starting camera's path, ending at rest on the

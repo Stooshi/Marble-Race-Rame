@@ -14,7 +14,7 @@ module.exports = track({
   grandPrix: { crowd: 'elves', barrier: 'logs', fireworks: 'sparkles' },
   signature: 'Great Tree spiral',
   billboardFrame: 'banner',
-  start: { landmark: 'tree-platform' },
+  start: { landmark: 'tree-platform', shots: { countdown: 'side', launch: 'low-chase' } },
   finish: { landmark: 'glow-flowers' },
   designChanges: [
     'The slalom of glowing crystal posts is at the foot of the Tree plunge, straight after the giant mushrooms, rather than in the Fern S-bends: on the bends the posts left too few overtakes (measured on Dubai Marble Grand Prix, the same layout), and a start with only a pile-up lets the strongest marbles win too often.',

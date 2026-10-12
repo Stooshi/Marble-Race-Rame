@@ -52,7 +52,11 @@ const HAND_BUILT = {
 /** A track as the sameness check sees it (null for a track it cannot read). */
 function profile(track) {
   const hand = HAND_BUILT[track.slug];
-  if (hand) return { slug: track.slug, name: track.name, start: { type: null, gate: 'paddle', countdown: 'classic', launch: 'high-behind' }, ...hand, tokens: hand.tokens.map(([t, side]) => ({ t, side })) };
+  if (hand) {
+    const look = track.physics?.startLook;
+    const start = look ? { type: null, gate: look.gate, countdown: look.shots.countdown, launch: look.shots.launch } : { type: null, gate: 'paddle', countdown: 'classic', launch: 'high-behind' };
+    return { slug: track.slug, name: track.name, start, ...hand, tokens: hand.tokens.map(([t, side]) => ({ t, side })) };
+  }
   const v = track.variety;
   if (!v) return null;
   const secs = v.sections;

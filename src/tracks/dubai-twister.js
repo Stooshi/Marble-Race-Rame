@@ -21,7 +21,7 @@ module.exports = track({
   billboardFrame: 'led',
   // The gate on the crest of a tall red dune beside a Bedouin tent and resting camels; the
   // finish on the Palm Jumeirah boardwalk, the Burj Khalifa in the distance behind the line.
-  start: { landmark: 'bedouin-camp', scenery: ['bare'] },
+  start: { landmark: 'bedouin-camp', scenery: ['bare'], gate: 'barrier', shots: { countdown: 'front', launch: 'overhead' } },
   finish: { landmark: 'burj-khalifa', scenery: ['skyscrapers'] },
   designChanges: [
     'Desert rally marker flags down the dune plunge after the kneeling camels, glanced off like slalom gates: with camels alone the strongest marbles win too often and the field reaches the splitter sorted by strength.',

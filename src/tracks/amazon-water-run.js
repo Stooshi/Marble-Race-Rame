@@ -22,7 +22,7 @@ module.exports = track({
   billboardFrame: 'wood',
   // The gate on mossy rocks at the top of a waterfall, toucans on the branches overhead; the
   // finish at a wooden river dock beside a village on stilts, the Teatro Amazonas far off.
-  start: { landmark: 'toucan-tree' },
+  start: { landmark: 'toucan-tree', gate: 'paddle', shots: { countdown: 'side', launch: 'high-behind' } },
   finish: { landmark: 'teatro-amazonas', scenery: ['stilt-houses'] },
   designChanges: [
     'The floating logs lie in a pile-up where the first waterfall pours into the river, followed by river marker stakes glanced off like slalom gates, instead of on the S-bends: with no obstacles down the start the front of the gate won far too often (the first starting group finished 3 places ahead of the last), and logs on the bends spread the field to a 30 s gap.',

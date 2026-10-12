@@ -14,7 +14,7 @@ module.exports = track({
   grandPrix: { crowd: 'desert-folk' },
   signature: 'Canyon run',
   billboardFrame: 'crates',
-  start: { landmark: 'kasbah' },
+  start: { landmark: 'kasbah', shots: { countdown: 'chase', launch: 'look-back' } },
   finish: { landmark: 'mud-mosque' },
   designChanges: [
     'A traffic-cone chicane at the foot of the Kasbah plunge, straight after the tyre stacks: without it (as designed) the field reached the splitter sorted by strength, the gap from first to last grew to 20 s (18 allowed) and the races had too few overtakes (58; 60 needed).',

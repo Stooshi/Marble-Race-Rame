@@ -20,7 +20,7 @@ module.exports = track({
   billboardFrame: 'wood',
   // The gate in Avoriaz among its wood-clad buildings, the Dents du Midi on the horizon; the
   // finish in a Swiss village square, chalets with flower boxes round it and a church spire.
-  start: { scenery: ['wood-clad'] },
+  start: { scenery: ['wood-clad'], gate: 'stalls', shots: { countdown: 'side', launch: 'overhead' } },
   designChanges: [
     'A 50 m straight, "Run to the hairpin", before the hairpin: the recipe needs a braking zone before the one sharp bend.',
     'Cows wandered onto the Avoriaz plunge (a pile-up before the slalom gates): without it the strongest marbles win too often, as on Åre Run.',
