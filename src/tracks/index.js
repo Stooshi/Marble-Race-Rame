@@ -44,4 +44,5 @@ module.exports = [
   require('./flipper-spins'),
   require('./slingshot-spins'),
   require('./tilt'),
+  require('./replay'),
 ];

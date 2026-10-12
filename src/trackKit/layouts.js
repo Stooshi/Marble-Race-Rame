@@ -335,21 +335,22 @@ const LAYOUTS = {
   ],
   /** L21 Clock tower: a long sweep, a run (a peg) to a short climb and a slalom drop off it, a spiral, the hairpin, S-bends, a straight (a curtain) and a parked piece and pegs at the run-in. */
   'clock-tower': (L, R, c) => [
-    { key: 'sweep', name: 'Sweep', shape: sweep({ side: R, radius: 85, degrees: 150, grade: 0.085 }), billboards: 2 },
+    { key: 'sweep', name: 'Sweep', shape: sweep({ side: R, radius: 85, degrees: 130, grade: 0.085 }), billboards: 2 },
     { key: 'approach', name: 'Run to the climb', shape: straight(35, { grade: 0.14 }), obstacles: [peg({ costume: c.peg, at: 0.5, line: 'center' })] },
     { key: 'climb', name: 'Climb', shape: climb(8, { grade: -0.04, after: 0.3 }) },
-    { key: 'drop', name: 'Drop', shape: plunge(55, { grade: 0.5, from: 0.3 }), obstacles: [slalom({ costume: c.slalom, from: 0.4, to: 0.95, count: 4, loss: 0.15 })], billboards: 1 },
+    // (A gentle drop off the climb: a steep one left the spiral's foot far below its top, where the bank hid the camera.)
+    { key: 'drop', name: 'Drop', shape: plunge(55, { grade: 0.25, from: 0.3 }), obstacles: [slalom({ costume: c.slalom, from: 0.4, to: 0.95, count: 3, loss: 0.15 })], billboards: 1 },
     { key: 'spiral', name: 'Spiral', shape: spiral({ side: L, radius: 48, turns: 1.25, grade: 0.16 }) },
     { key: 'brakingStraight', name: 'Run to the hairpin', shape: straight(50, { grade: 0.12 }) },
     { key: 'hairpin', name: 'Hairpin', shape: hairpin({ side: R }), obstacles: [swipe({ costume: c.swipe, side: 'high' })] },
     { key: 'sBends', name: 'S-bends', shape: sBends({ first: L, radius: 75, degrees: 80, grade: 0.13 }), billboards: 1 },
-    { key: 'doorRun', name: 'Straight run', shape: straight(45, { grade: 0.13 }), obstacles: [curtain({ costume: c.curtain, at: 0.4, side: R })] },
+    { key: 'doorRun', name: 'Straight run', shape: straight(38, { grade: 0.13 }), obstacles: [curtain({ costume: c.curtain, at: 0.4, side: R })] },
     {
-      key: 'lastStraight', name: 'Last straight', shape: straight(60, { grade: 0.15 }),
+      key: 'lastStraight', name: 'Last straight', shape: straight(50, { grade: 0.15 }),
       obstacles: [parked({ costume: c.parked, at: 0.2, side: L, length: 6 }), peg({ costume: c.peg, at: 0.45, line: 'right' }), peg({ costume: c.peg, at: 0.6, line: 'center' })], features: [rumble({ from: 0.7, to: 0.95, count: 3 })],
     },
   ],
-  /** L22 Encore split: a straight (pegs), S-bends, the hairpin early, a drop, a spiral, a sweep, a late splitter (its tip well over and its inside channel much rougher: the field comes off the sweep on the inside) and pegs at the run-in. */
+  /** L22 Encore split: a straight (pegs), S-bends, the hairpin early, a drop, a spiral, a sweep the same way, a late splitter (its tip well over and its inside channel much rougher: the field comes off the sweep on the inside) and pegs at the run-in. */
   'encore-split': (L, R, c) => [
     // (A short run with pegs first: it mixes the lanes after a split start, whose chutes would otherwise send their own marbles into the S-bends.)
     { key: 'stageRun', name: 'Straight run', shape: straight(30, { grade: 0.13 }), obstacles: [peg({ costume: c.peg, at: 0.4, line: 'left' }), peg({ costume: c.peg, at: 0.65, line: 'right' })] },
@@ -358,9 +359,9 @@ const LAYOUTS = {
     { key: 'hairpin', name: 'Hairpin', shape: hairpin({ side: R }), obstacles: [swipe({ costume: c.swipe, side: 'high' })] },
     { key: 'outOfHairpin', name: 'Out of the hairpin', shape: plunge(45, { grade: 0.26, from: 0.16 }) },
     { key: 'spiral', name: 'Spiral', shape: spiral({ side: R, radius: 48, turns: 1, grade: 0.17 }) },
-    { key: 'sweep', name: 'Sweep', shape: sweep({ side: L, radius: 90, degrees: 120, grade: 0.09 }), billboards: 2 },
+    { key: 'sweep', name: 'Sweep', shape: sweep({ side: R, radius: 90, degrees: 120, grade: 0.09 }), billboards: 2 },
     { key: 'beforeSplit', name: 'Run to the splitter', shape: straight(30, { grade: 0.12 }), obstacles: [peg({ costume: c.peg, at: 0.4, line: 'center' })] },
-    { key: 'splitter', name: 'Splitter', shape: splitter({ side: L, balance: { ...insideDrag(L, 2.1), tipOffset: L === 'left' ? 2.0 : -2.0 } }) },
+    { key: 'splitter', name: 'Splitter', shape: splitter({ side: R, balance: { ...insideDrag(R, 2.1), tipOffset: R === 'right' ? -2.0 : 2.0 } }) },
     { key: 'lastStraight', name: 'Last straight', shape: straight(40, { grade: 0.15 }), obstacles: [peg({ costume: c.peg, at: 0.4, line: 'left' }), peg({ costume: c.peg, at: 0.6, line: 'right' })] },
   ],
   /** L23 Cabinet rows: a long sweep, a straight (a block), a second sweep the other way, a slalom drop, the hairpin, a third sweep, S-bends and a parked piece and pegs at the run-in. */

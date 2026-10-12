@@ -642,6 +642,7 @@ const HIDDEN_KIT_TRACKS = [
   ['flipper-spins', '2026-11-28-add-flipper-spins.sql', 'Flipper Spins, Pinball Series table 3: a stage-magic table in a grand old theatre'],
   ['slingshot-spins', '2026-11-29-add-slingshot-spins.sql', 'Slingshot Spins, Pinball Series table 4: a flying-saucer invasion'],
   ['tilt', '2026-11-30-add-tilt.sql', 'Tilt, Pinball Series table 5: a 1970s diner and pinball parlour.'],
+  ['replay', '2026-12-01-add-replay.sql', 'Replay, Pinball Series table 6: a time-warp clocktower table.'],
 ];
 for (const [slug, file, note] of HIDDEN_KIT_TRACKS) {
   test(`${slug} is added by its data update, switched off, exactly as its track file builds it`, () => {
