@@ -11,7 +11,7 @@ const NAMES = {
   'banked-turn': 'Banked First Turn', 'boost-launch': 'Boost-Pad Launch', 'funnel-drop': 'Funnel Drop', 'crest-start': 'Crest Start',
   'early-hairpin': 'Early Hairpin', 'twin-spirals': 'Twin Spirals', 'climb-drop': 'Climb and Drop', 'late-splitter': 'Late Splitter',
   'mid-drop': 'Mid Drop', 'two-splitters': 'Two Splitters', 'long-sweeps': 'Long Sweeps',
-  'island-spins': 'Island Spins', 'sea-crossing': 'Sea Crossing', 'canopy-run': 'Canopy Run',
+  'island-spins': 'Island Spins', 'sea-crossing': 'Sea Crossing', 'canopy-run': 'Canopy Run', 'terrace-run': 'Terrace Run', 'delta-skim': 'Delta Skim', 'two-spins': 'Two Spins', 'wall-dive': 'Wall Dive',
 };
 
 const base = (slug, name, description) => ({
@@ -34,14 +34,16 @@ const openings = OPENING_KINDS.filter((k) => k !== 'classic').map((kind) => trac
 }));
 
 // Layouts made for one coaster are proven on a test track built as a coaster (up on its
-// supports, touching down at the run to the hairpin, and Sea Crossing out of it too), as that coaster will race them.
-const COASTER_LAYOUTS = ['island-spins', 'sea-crossing', 'canopy-run'];
+// supports, touching down at the run to the hairpin and where else its coaster does), as that coaster will race them.
+const COASTER_LAYOUTS = ['island-spins', 'sea-crossing', 'canopy-run', 'terrace-run', 'delta-skim', 'two-spins', 'wall-dive'];
+// (Where else each touches down, as its coaster does: enough of it on the land.)
+const TOUCHDOWNS = { 'sea-crossing': { tunnelRun: { height: 0 } }, 'terrace-run': { swoops: { height: 0 } }, 'wall-dive': { tunnelRun: { height: 0 } } };
 
 const layouts = LAYOUT_KINDS.map((kind) => track({
   ...base(`variety-layout-${kind}`, `Variety Test: ${NAMES[kind]} Layout`, `The layout library's test track for the ${NAMES[kind].toLowerCase()} layout, with the classic opening${COASTER_LAYOUTS.includes(kind) ? ', built as a coaster' : ''}.`),
   ...(COASTER_LAYOUTS.includes(kind) && { series: 'coaster', coaster: { height: 18 } }),
   opening: opening('classic'),
-  sections: layout(kind, COASTER_LAYOUTS.includes(kind) ? { dress: { brakingStraight: { height: 0 }, ...(kind === 'sea-crossing' && { tunnelRun: { height: 0 } }) } } : {}),
+  sections: layout(kind, COASTER_LAYOUTS.includes(kind) ? { dress: { brakingStraight: { height: 0 }, ...TOUCHDOWNS[kind] } } : {}),
 }));
 
 module.exports = [...openings, ...layouts];

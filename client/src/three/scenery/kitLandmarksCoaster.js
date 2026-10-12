@@ -3,7 +3,7 @@
  * front facing +z, cartoon low-poly from a few simple shapes, merged into the
  * still scenery. Stylised impressions, never detailed reproductions.
  */
-import { BoxGeometry, ConeGeometry, CylinderGeometry, IcosahedronGeometry, Matrix4, Quaternion, SphereGeometry, TorusGeometry, Vector3 } from 'three';
+import { BoxGeometry, CircleGeometry, ConeGeometry, CylinderGeometry, IcosahedronGeometry, Matrix4, Quaternion, SphereGeometry, TorusGeometry, Vector3 } from 'three';
 import { box, merge, piece } from './parts';
 
 const Y = new Vector3(0, 1, 0);
@@ -627,6 +627,284 @@ function seaStacksBeach() {
   return merge(p);
 }
 
+// ── Chiang Mai ───────────────────────────────────────────────────────────────
+
+const GOLD = '#e0b43a';
+const GOLD_DARK = '#b8892a';
+
+/** A golden chedi: a stepped base, a bell, rings and a tall spire (all gold), `h` metres tall. */
+function chedi(h, x = 0, z = 0, y = 0) {
+  const k = h / 20;
+  const p = [];
+  [[5, 1.2], [4.2, 1.2], [3.4, 1.2]].forEach(([w, t], i) => p.push(box(w * 2 * k, t * k, w * 2 * k, x, y + (i * 1.2 + t / 2) * k, z, i % 2 ? GOLD_DARK : GOLD)));
+  p.push(piece(new SphereGeometry(3 * k, 10, 6, 0, Math.PI * 2, 0, Math.PI / 2), GOLD, S(x, y + 3.6 * k, z, 1, 1.3, 1)));
+  for (let i = 0; i < 4; i += 1) p.push(piece(new CylinderGeometry((1.4 - i * 0.25) * k, (1.5 - i * 0.25) * k, 0.7 * k, 10), i % 2 ? GOLD_DARK : GOLD, M(x, y + (7.6 + i * 0.7) * k, z)));
+  p.push(piece(new ConeGeometry(0.75 * k, 8.5 * k, 10), GOLD, M(x, y + (10.4 + 4.25) * k, z)));
+  return p;
+}
+
+/** A Thai temple hall: white walls, layered red roofs with green edges and golden finials. */
+function templeHall(w, d, x, z, yaw = 0) {
+  const p = [piece(new BoxGeometry(w, 4, d), '#f2ece0', turned(x, 2, z, yaw))];
+  [[w + 2, 3.6, d + 2, 4], [w * 0.8, 3, d * 0.85, 6.2]].forEach(([rw, rh, rd, y], i) => {
+    p.push(roof(rw, rh, rd, x, y, z, i ? '#2f7a4a' : '#b8322a', yaw));
+  });
+  p.push(piece(new ConeGeometry(0.25, 2, 5), GOLD, M(x, 10.2, z)));
+  return p;
+}
+
+/** Wat Phra That Doi Suthep, a stylised impression: the golden chedi on its white terrace, temple halls, a naga stairway and flower gardens. */
+function doiSuthep() {
+  const p = [box(30, 2, 30, 0, 1, 0, '#efe8da'), ...chedi(22, 0, 0, 2)];
+  for (const [x, z] of [[-11, -11], [11, -11], [-11, 11], [11, 11]]) p.push(...chedi(6, x, z, 2));
+  p.push(...templeHall(10, 14, -24, 0), ...templeHall(10, 14, 24, 0));
+  // The naga stairway down the front, its balustrades green and gold.
+  for (const sx of [-2.6, 2.6]) p.push(piece(new BoxGeometry(0.8, 0.9, 26), sx > 0 ? '#3f8f5a' : GOLD_DARK, new Matrix4().makeRotationX(0.12).premultiply(M(sx, 0.4, 28))));
+  p.push(piece(new BoxGeometry(4.4, 0.4, 26), '#e6dccb', new Matrix4().makeRotationX(0.12).premultiply(M(0, 0.1, 28))));
+  // Flower gardens round the foot of the terrace.
+  const flowers = ['#e45a9a', '#f2c230', '#b04ad0', '#f27a3a'];
+  for (let k = 0; k < 24; k += 1) {
+    const a = (k / 24) * Math.PI * 2;
+    p.push(piece(new IcosahedronGeometry(1.1, 0), flowers[k % 4], S(Math.cos(a) * 21, 0.6, Math.sin(a) * 21, 1.2, 0.6, 1.2)));
+  }
+  return merge(p);
+}
+
+/** Chiang Mai's old city: a red-brick city gate in its wall, the moat before it, a golden temple spire beyond. */
+function chiangMaiGate() {
+  const BRICK = '#a8482e';
+  const p = [];
+  for (const sx of [-1, 1]) {
+    p.push(box(26, 7, 4, sx * 18, 3.5, 0, BRICK));
+    for (let k = 0; k < 6; k += 1) p.push(box(1.6, 1.4, 4.2, sx * (8 + k * 4.4), 7.7, 0, BRICK)); // battlements
+    p.push(box(6, 9, 6, sx * 6, 4.5, 0, '#9a3f28')); // the gate's bastions
+  }
+  p.push(box(64, 0.3, 12, 0, 0.05, 12, '#3f7fa8')); // the moat
+  p.push(box(64, 0.6, 1, 0, 0.3, 6, '#7a6a58'), box(64, 0.6, 1, 0, 0.3, 18, '#7a6a58'));
+  p.push(...chedi(30, 4, -40), ...templeHall(12, 16, -16, -36));
+  for (const [x, z] of [[-28, -20], [30, -18], [22, -30]]) p.push(piece(new CylinderGeometry(0.4, 0.5, 9, 6), '#6a4a2a', M(x, 4.5, z)), piece(new IcosahedronGeometry(4, 0), '#3f7a3a', M(x, 10, z))); // trees
+  return merge(p);
+}
+
+/** A hilltop temple for the middle of the temple spin: a green hill, a golden chedi on top, sky lanterns floating up round it. */
+function lanternChedi() {
+  const p = [piece(new IcosahedronGeometry(7, 1), '#5a8a3a', S(0, 0, 0, 1, 0.55, 1)), ...chedi(16, 0, 0, 3.4)];
+  for (let k = 0; k < 22; k += 1) {
+    const a = k * 2.4;
+    const r = 6 + (k % 5) * 3;
+    p.push(box(0.6, 0.8, 0.6, Math.cos(a) * r, 18 + (k % 7) * 4 + (k % 3) * 1.3, Math.sin(a) * r, k % 3 ? '#ffb347' : '#ffd27a'));
+  }
+  return merge(p);
+}
+
+// ── Okavango Park ────────────────────────────────────────────────────────────
+
+/** A giant ancient baobab on a dry island: a huge swollen grey trunk, stubby root-like branches, fan palms beside it. */
+function baobab() {
+  const BARK = '#9a8a78';
+  const p = [piece(new IcosahedronGeometry(16, 1), '#c8b07a', S(0, -4, 0, 1.4, 0.4, 1.4))]; // the dry island
+  p.push(piece(new CylinderGeometry(6, 8.5, 22, 10), BARK, M(0, 11, 0)));
+  for (let k = 0; k < 7; k += 1) {
+    const a = (k / 7) * Math.PI * 2;
+    const m = new Matrix4().makeRotationZ(0.7).premultiply(new Matrix4().makeRotationY(a)).premultiply(M(Math.cos(a) * 3.5, 23, Math.sin(a) * 3.5));
+    p.push(piece(new CylinderGeometry(0.7, 1.3, 9, 6), BARK, m));
+    p.push(piece(new IcosahedronGeometry(2.6, 0), '#6f8a3a', M(Math.cos(a) * 8.5, 27.5, Math.sin(a) * 8.5)));
+  }
+  for (const [x, z] of [[14, 6], [-12, 10], [10, -14]]) {
+    p.push(piece(new CylinderGeometry(0.35, 0.45, 8, 6), '#7a6a4a', M(x, 4, z)));
+    for (let k = 0; k < 6; k += 1) p.push(piece(new BoxGeometry(0.3, 0.1, 3.2), '#4f8a3a', new Matrix4().makeRotationY(k * 1.05).multiply(new Matrix4().makeTranslation(0, 0, 1.4)).premultiply(M(x, 8.2, z))));
+  }
+  return merge(p);
+}
+
+/** A safari lodge on stilts over the water: thatched roofs, a long deck of spectators behind the station. */
+function stiltLodge() {
+  const THATCH = '#c8a45a';
+  const p = [box(140, 0.3, 90, 0, -0.4, -30, '#4f8aa0')]; // the water
+  for (const [x, z, w] of [[-26, -12, 14], [0, -18, 18], [26, -12, 14]]) {
+    for (const [dx, dz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) p.push(box(0.5, 4, 0.5, x + dx * (w / 2 - 1), 2, z + dz * 5, '#6a4a2a'));
+    p.push(box(w, 0.5, 11, x, 4.2, z, '#8a6a48'), box(w - 2, 3.4, 9, x, 6.1, z, '#d8c8a0'));
+    p.push(piece(new ConeGeometry(w * 0.72, 6, 4), THATCH, turned(x, 10.8, z, Math.PI / 4, 1, 1, 0.75)));
+  }
+  p.push(box(80, 0.5, 6, 0, 4.2, 4, '#8a6a48'));
+  for (let k = 0; k < 16; k += 1) {
+    const x = -36 + k * 4.8;
+    const shirt = ['#c43a2f', '#2f5d9a', '#f2c230', '#2f9a4a', '#f2f2ee'][k % 5];
+    p.push(box(0.6, 1.2, 0.4, x, 5.05, 5.5, shirt), box(0.4, 0.4, 0.4, x, 5.9, 5.5, '#8a5a3a'));
+  }
+  return merge(p);
+}
+
+/** Mokoros (dugout canoes) along a channel, each with a poler standing at the stern. */
+function mokoros() {
+  const p = [];
+  [[-18, 0, 0.2], [0, 8, -0.3], [20, -4, 0.5]].forEach(([x, z, yaw]) => {
+    p.push(piece(new BoxGeometry(1.1, 0.6, 7), '#6a4a2a', turned(x, 0.2, z, yaw)));
+    const sx = x + Math.sin(yaw) * -2.8;
+    const sz = z + Math.cos(yaw) * -2.8;
+    p.push(box(0.5, 1.4, 0.35, sx, 1.2, sz, '#d8c8a0'), box(0.35, 0.35, 0.35, sx, 2.1, sz, '#5a3a22'));
+    p.push(piece(new CylinderGeometry(0.05, 0.05, 6, 4), '#8a7a5a', new Matrix4().makeRotationZ(0.35).premultiply(M(sx + 0.6, 2, sz))));
+    for (let k = 0; k < 3; k += 1) p.push(piece(new CircleGeometry(0.7, 7), '#4f9a4a', new Matrix4().makeRotationX(-Math.PI / 2).premultiply(M(x + 3 + k * 1.7, 0.05, z + 3 - k)))); // water lilies
+  });
+  for (let k = 0; k < 14; k += 1) p.push(piece(new CylinderGeometry(0.06, 0.08, 3.5, 4), '#6a8a3a', M(-28 + k * 4.3, 1.7, -9 + (k % 3)))); // papyrus
+  return merge(p);
+}
+
+/** An elephant herd on an island among wildflowers. */
+function elephantHerd() {
+  const GREY = '#8a8580';
+  const p = [];
+  [[0, 0, 1], [7, 3, 0.8], [-6, 4, 1.1], [3, -6, 0.6]].forEach(([x, z, k]) => {
+    p.push(piece(new IcosahedronGeometry(1.6 * k, 1), GREY, S(x, 2.6 * k, z, 1.2, 1, 1.7)));
+    p.push(piece(new IcosahedronGeometry(0.9 * k, 1), GREY, M(x, 3.2 * k, z + 2.6 * k)));
+    for (const [dx, dz] of [[-0.6, -1.2], [0.6, -1.2], [-0.6, 1.2], [0.6, 1.2]]) p.push(piece(new CylinderGeometry(0.35 * k, 0.4 * k, 1.8 * k, 6), GREY, M(x + dx * k, 0.9 * k, z + dz * k)));
+  });
+  const flowers = ['#f2c230', '#e45a9a', '#f2efe6'];
+  for (let k = 0; k < 18; k += 1) p.push(piece(new IcosahedronGeometry(0.5, 0), flowers[k % 3], M(Math.cos(k * 2.1) * 14, 0.3, Math.sin(k * 2.1) * 14)));
+  return merge(p);
+}
+
+// ── Kopaonik Spins ───────────────────────────────────────────────────────────
+
+const STONE = '#b8b0a2';
+
+/** The botanist's stone mausoleum on the summit, a stylised impression: a square stone tomb on steps, a low pyramid roof, a small cross; rocks and alpine flowers round it. */
+function pancicMausoleum() {
+  const p = [box(16, 1, 16, 0, 0.5, 0, '#9a9286'), box(12, 1, 12, 0, 1.5, 0, '#a8a094'), box(8, 6, 8, 0, 5, 0, STONE)];
+  p.push(roof(9, 3, 9, 0, 8, 0, '#8a8478'));
+  p.push(box(0.3, 2, 0.3, 0, 12, 0, '#6a6458'), box(1.2, 0.3, 0.3, 0, 12.4, 0, '#6a6458'));
+  p.push(box(2.4, 3.4, 0.3, 0, 3.7, 4.05, '#5a5448'));
+  for (let k = 0; k < 10; k += 1) p.push(piece(new IcosahedronGeometry(1.4 + (k % 3) * 0.5, 0), '#8a8478', M(Math.cos(k * 1.9) * 15, 0.6, Math.sin(k * 1.9) * 15)));
+  return merge(p);
+}
+
+/** A medieval stone monastery: a church with a dome and a bell tower, a wall round it (stylised, no particular one). */
+function stoneMonastery() {
+  const p = [box(16, 8, 10, 0, 4, 0, '#e2d8c4'), roof(17, 4, 11, 0, 8, 0, '#a8482e')];
+  p.push(piece(new CylinderGeometry(3, 3, 3, 10), '#e2d8c4', M(0, 13, 0)), piece(new SphereGeometry(3, 10, 6, 0, Math.PI * 2, 0, Math.PI / 2), '#a8482e', M(0, 14.5, 0)));
+  p.push(box(4, 16, 4, 12, 8, 6, '#d8ccb6'), roof(5, 4, 5, 12, 16, 6, '#a8482e'));
+  for (const [x, z, w, d] of [[0, -16, 44, 1.2], [0, 16, 44, 1.2], [-22, 0, 1.2, 32], [22, 0, 1.2, 32]]) p.push(box(w, 3, d, x, 1.5, z, '#c8bca6'));
+  for (let k = 0; k < 5; k += 1) p.push(box(1, 1, 1, -30 + k * 2, 0.5, 20, k % 2 ? '#f2c230' : '#e8e2d0')); // beehives
+  return merge(p);
+}
+
+/** A wooden watermill on a stream, its wheel standing in the water, for the middle of a spin. */
+function watermill() {
+  const p = [box(9, 5, 7, 0, 2.5, 0, '#8a6a42'), roof(10, 4, 8, 0, 5, 0, '#5a4a3a')];
+  p.push(piece(new TorusGeometry(2.6, 0.25, 6, 14), '#6a4a2a', new Matrix4().makeRotationY(Math.PI / 2).premultiply(M(5.2, 2.6, 0))));
+  for (let k = 0; k < 8; k += 1) p.push(piece(new BoxGeometry(0.2, 0.9, 5.4), '#7a5a3a', new Matrix4().makeRotationX((k / 8) * Math.PI).premultiply(M(5.2, 2.6, 0))));
+  p.push(box(3, 0.2, 16, 6, 0.1, 0, '#4f8aa8'));
+  return merge(p);
+}
+
+/** A shepherd with a flock of sheep on a meadow of wildflowers. */
+function sheepFlock() {
+  const p = [box(0.6, 1.6, 0.4, 0, 0.8, 0, '#5a4a3a'), box(0.4, 0.4, 0.4, 0, 1.8, 0, '#c8956a'), piece(new CylinderGeometry(0.04, 0.04, 2.2, 4), '#6a4a2a', M(0.5, 1.1, 0))];
+  for (let k = 0; k < 12; k += 1) {
+    const x = Math.cos(k * 2.3) * (3 + (k % 4) * 2);
+    const z = Math.sin(k * 2.3) * (3 + (k % 4) * 2);
+    p.push(piece(new IcosahedronGeometry(0.6, 0), '#f2efe6', S(x, 0.7, z, 1.3, 0.9, 1)), box(0.3, 0.35, 0.3, x + 0.7, 0.9, z, '#2a2622'));
+  }
+  const flowers = ['#f2c230', '#e45a9a', '#8a5ad0', '#f2efe6'];
+  for (let k = 0; k < 20; k += 1) p.push(piece(new IcosahedronGeometry(0.35, 0), flowers[k % 4], M(Math.cos(k * 1.7) * 16, 0.2, Math.sin(k * 1.7) * 16)));
+  return merge(p);
+}
+
+/** A mountain village square: a stone church, wooden houses, dancers in traditional dress in a kolo circle, musicians beside them. */
+function koloVillage() {
+  const p = [box(40, 0.2, 30, 0, 0.1, 0, '#c8bca6')];
+  p.push(box(10, 7, 14, -16, 3.5, -12, '#e8e0cc'), roof(11, 4, 15, -16, 7, -12, '#8a4a2e'), box(3.4, 12, 3.4, -16, 6, -3, '#e8e0cc'), piece(new ConeGeometry(2.4, 4, 4), '#8a4a2e', turned(-16, 14, -3, Math.PI / 4)));
+  for (const [x, z] of [[8, -14], [18, -10], [22, 6]]) p.push(box(7, 5, 6, x, 2.5, z, '#8a6a42'), roof(8, 3, 7, x, 5, z, '#5a4a3a'));
+  // The kolo: dancers hand in hand in a ring, white shirts with red sashes and dark vests.
+  for (let k = 0; k < 14; k += 1) {
+    const a = (k / 14) * Math.PI * 2;
+    const x = 4 + Math.cos(a) * 5;
+    const z = 4 + Math.sin(a) * 5;
+    p.push(box(0.55, 1.2, 0.35, x, 0.8, z, k % 2 ? '#f2efe6' : '#2a2a3a'), box(0.6, 0.15, 0.4, x, 1.05, z, '#c43a2f'), box(0.38, 0.38, 0.38, x, 1.65, z, '#d8a47a'));
+  }
+  for (const x of [12, 13.4]) p.push(box(0.55, 1.4, 0.35, x, 0.9, 10, '#2a2a3a'), box(0.38, 0.38, 0.38, x, 1.8, 10, '#d8a47a'), box(0.8, 0.5, 0.2, x, 1.2, 10.3, '#8a5a32'));
+  return merge(p);
+}
+
+// ── Nanjing ──────────────────────────────────────────────────────────────────
+
+const BLUE_TILE = '#2f5a8a';
+
+/** The Sun Yat-sen Mausoleum, a stylised impression: a long ceremonial stairway of white stone up the mountainside to a white hall with a blue-tiled roof, forest either side. */
+function sunYatSenMausoleum() {
+  const p = [];
+  for (let k = 0; k < 14; k += 1) p.push(box(12 - k * 0.2, 1.2, 4, 0, 0.6 + k * 1.1, -k * 4, k % 4 === 3 ? '#d8d4c8' : '#ece8de')); // the stairway, landings now and then
+  const top = 14 * 1.1;
+  p.push(box(24, 2, 14, 0, top + 1, -62, '#ece8de'), box(18, 8, 10, 0, top + 6, -62, '#f2efe6'));
+  p.push(roof(22, 4, 14, 0, top + 10, -62, BLUE_TILE), roof(14, 3, 9, 0, top + 13, -62, BLUE_TILE));
+  p.push(box(3, 5, 0.3, 0, top + 4.5, -56.9, '#2a2d32'));
+  for (let k = 0; k < 16; k += 1) {
+    const sx = k % 2 ? 1 : -1;
+    const z = -4 - Math.floor(k / 2) * 7;
+    p.push(piece(new ConeGeometry(3, 9, 6), '#2f5a32', M(sx * (12 + (k % 3) * 2), 5 + (-z / 4) * 1.1, z)));
+  }
+  return merge(p);
+}
+
+/** A great road-and-rail river bridge, a stylised impression: twin tall towers with red flags at the near end, the long steel span out across the river, barges below. */
+function yangtzeBridge() {
+  const p = [box(260, 0.3, 120, 0, -0.2, -40, '#6f8a8a')]; // the river
+  for (const x of [-10, 10]) {
+    p.push(box(6, 40, 6, x, 20, 0, '#d8d4c8'), box(7, 2, 7, x, 41, 0, '#c8c4b8'));
+    p.push(box(0.15, 3, 2, x, 43.5, 0, '#c43a2f'));
+  }
+  p.push(box(14, 2, 4, 0, 30, 0, '#c8c4b8'));
+  p.push(box(16, 1.6, 200, 0, 18, -100, '#7a7f88'));
+  for (let k = 0; k < 5; k += 1) p.push(box(5, 18, 6, 0, 9, -20 - k * 40, '#a8a49a'));
+  for (let k = 0; k < 10; k += 1) p.push(box(0.4, 4, 0.4, -7.5, 21, -k * 20, '#5a5f68'), box(0.4, 4, 0.4, 7.5, 21, -k * 20, '#5a5f68'));
+  for (const [x, z] of [[-40, -50], [30, -80], [-20, -110]]) p.push(box(6, 1.4, 22, x, 0.6, z, '#5a4a3a'), box(5, 2, 5, x, 2, z - 8, '#d8d4c8'));
+  return merge(p);
+}
+
+/** Ramparts of the old city wall beside the gate: grey brick, battlements, a gate tower with a red-pillared hall. */
+function zhonghuaGate() {
+  const BRICK = '#8f8a80';
+  const p = [box(80, 14, 12, 0, 7, 0, BRICK)];
+  for (let k = 0; k < 16; k += 1) p.push(box(2.4, 1.8, 12.4, -37.5 + k * 5, 14.9, 0, '#7f7a70'));
+  p.push(box(20, 2, 14, 0, 15, 0, '#a8a296'), box(16, 6, 9, 0, 19, 0, '#a8322a'), roof(22, 4, 14, 0, 22, 0, '#3a3d44'));
+  for (const x of [-6, -2, 2, 6]) p.push(box(0.8, 6, 0.8, x, 19, 4.8, '#c43a2f'));
+  for (const x of [-30, -18, 18, 30]) p.push(box(5, 4, 0.4, x, 6, 6.2, '#6f6a62')); // arched openings (dark)
+  return merge(p);
+}
+
+/** Xuanwu Lake: water, a little island with a pagoda, lotus leaves, pleasure boats. */
+function lakePagodas() {
+  const p = [box(120, 0.3, 90, 0, -0.1, 0, '#5a8aa8'), piece(new IcosahedronGeometry(10, 1), '#4f8a3a', S(10, -2, -10, 1, 0.35, 1))];
+  for (let k = 0; k < 5; k += 1) p.push(box(6 - k * 0.8, 2.2, 6 - k * 0.8, 10, 2 + k * 3, -10, '#d8c8a8'), roof(8 - k * 0.9, 1.2, 8 - k * 0.9, 10, 3.1 + k * 3, -10, '#3a3d44'));
+  for (let k = 0; k < 16; k += 1) p.push(piece(new CircleGeometry(1.2, 8), '#3f8a4a', new Matrix4().makeRotationX(-Math.PI / 2).premultiply(M(-30 + (k % 4) * 4, 0.1, 20 + Math.floor(k / 4) * 3.5))));
+  for (const [x, z] of [[-20, -20], [30, 15]]) p.push(box(3, 0.8, 7, x, 0.4, z, '#c43a2f'), box(2.6, 1.6, 3, x, 1.6, z, '#f2c230'));
+  return merge(p);
+}
+
+/** A grove of golden ginkgo trees on the hillside, leaves on the ground, a small pagoda among them. */
+function ginkgoGrove() {
+  const p = [];
+  for (let k = 0; k < 12; k += 1) {
+    const x = Math.cos(k * 2.4) * (8 + (k % 4) * 6);
+    const z = Math.sin(k * 2.4) * (8 + (k % 4) * 6);
+    p.push(piece(new CylinderGeometry(0.4, 0.6, 9, 6), '#6a5a42', M(x, 4.5, z)), piece(new IcosahedronGeometry(4, 0), k % 3 ? '#f2c230' : '#e8a82a', S(x, 11, z, 1, 1.3, 1)));
+    p.push(piece(new CircleGeometry(3, 8), '#e8c03a', new Matrix4().makeRotationX(-Math.PI / 2).premultiply(M(x, 0.05, z))));
+  }
+  for (let k = 0; k < 4; k += 1) p.push(box(4 - k * 0.7, 2, 4 - k * 0.7, 0, 1 + k * 2.6, 0, '#a8322a'), roof(5.4 - k * 0.8, 1, 5.4 - k * 0.8, 0, 2 + k * 2.6, 0, '#3a3d44'));
+  return merge(p);
+}
+
+/** The lantern-lit Confucius Temple quarter, for the middle of a spin: a red hall with a dark tiled roof, a canal, strings of red lanterns. */
+function confuciusTemple() {
+  const p = [box(12, 1, 10, 0, 0.5, 0, '#c8c4b8'), box(9, 5, 7, 0, 3.5, 0, '#a8322a'), roof(12, 3, 9, 0, 6, 0, '#3a3d44'), roof(8, 2, 6, 0, 8.6, 0, '#3a3d44')];
+  p.push(box(14, 0.2, 2.4, 0, 0.1, 7, '#4f7a8a'));
+  for (let k = 0; k < 12; k += 1) {
+    const a = (k / 12) * Math.PI * 2;
+    p.push(piece(new IcosahedronGeometry(0.4, 0), '#ff4a3a', S(Math.cos(a) * 6.5, 6 + (k % 2) * 0.6, Math.sin(a) * 6.5, 1, 1.3, 1)));
+  }
+  return merge(p);
+}
+
 export const COASTER_LANDMARKS = {
   'stave-church': { build: staveChurch, radius: 10 },
   'fjord-village': { build: fjordVillage, radius: 30 },
@@ -662,4 +940,22 @@ export const COASTER_LANDMARKS = {
   'redwood-grove': { build: redwoodGrove, radius: 40 },
   'giant-redwood': { build: giantRedwood, radius: 11, fit: 7 },
   'sea-stacks-beach': { build: seaStacksBeach, radius: 60 },
+  'doi-suthep': { build: doiSuthep, radius: 30 },
+  'chiang-mai-gate': { build: chiangMaiGate, radius: 45 },
+  'lantern-chedi': { build: lanternChedi, radius: 8, fit: 7.5 },
+  baobab: { build: baobab, radius: 22 },
+  'stilt-lodge': { build: stiltLodge, radius: 50 },
+  mokoros: { build: mokoros, radius: 28 },
+  'elephant-herd': { build: elephantHerd, radius: 15 },
+  'pancic-mausoleum': { build: pancicMausoleum, radius: 16 },
+  'stone-monastery': { build: stoneMonastery, radius: 24 },
+  watermill: { build: watermill, radius: 9, fit: 8 },
+  'sheep-flock': { build: sheepFlock, radius: 16 },
+  'kolo-village': { build: koloVillage, radius: 30 },
+  'sun-yat-sen-mausoleum': { build: sunYatSenMausoleum, radius: 30 },
+  'yangtze-bridge': { build: yangtzeBridge, radius: 60 },
+  'zhonghua-gate': { build: zhonghuaGate, radius: 42 },
+  'lake-pagodas': { build: lakePagodas, radius: 60 },
+  'ginkgo-grove': { build: ginkgoGrove, radius: 26 },
+  'confucius-temple': { build: confuciusTemple, radius: 8, fit: 7.5 },
 };

@@ -109,7 +109,7 @@ const topAt = (channel, i, step) => {
  *   elevator:      a vertical lift shaft behind the gate, a short bridge from its cage to the gate;
  *   cliff:         the gate on a ledge at the edge of a cliff top (the land raised behind it);
  *   rooftop:       the gate at the edge of a tall building's roof;
- *   station-launch: a launch platform under an arch (the opening's boost launches the field).
+ *   station-launch: a launch platform behind the gate (the opening's boost launches the field).
  * Returns { type, top, foot, back, side, length, path (top to foot, for a chain lift), cut
  * (the land carved down along the path, so the whole climb shows), plateau (a cliff top) }.
  * `foot` is where the start's landmark is placed beyond, and the countdown's lift shot looks.
@@ -572,17 +572,17 @@ function buildStart(lift, { towers, feet, tower, groundAt, lite, RAIL, SUPPORT }
     }
     feet.push({ x: mid.x, z: mid.z, r: ROOF.depth / 2 + ROOF.half });
   } else if (type === 'station-launch') {
-    // A launch platform behind the gate and an arch of lights over the start.
+    // A launch platform either side behind the gate, lit along its edges, and the operator's booth
+    // (nothing over the track or tall beside it: the cameras swoop low over the start here).
     const yaw = yawOf(back);
     deckAlong(path, { chain: false, legs: true });
     for (const sign of [1, -1]) {
       const p = top.clone().addScaledVector(back, 6).addScaledVector(side, sign * (half + 2.2)).setY(top.y - 0.6);
-      towers.push(obox(2.6, 0.6, 12, p, yaw, '#d9d4c8'));
-      const post = top.clone().addScaledVector(back, -1).addScaledVector(side, sign * (half + 3));
-      towers.push(strut(post.clone().setY(groundAt(post.x, post.z) - 0.5), post.clone().setY(top.y + 9), 0.5, SUPPORT));
+      towers.push(obox(2.6, 0.6, 14, p, yaw, '#d9d4c8'));
+      for (let k = 0; k < 6; k += 1) towers.push(obox(0.3, 0.2, 0.9, p.clone().addScaledVector(side, sign * 1.25).addScaledVector(back, -5.5 + k * 2.2).setY(top.y - 0.2), yaw, k % 2 ? '#ff4b3e' : '#4bd1ff'));
     }
-    towers.push(obox((half + 3) * 2 + 1, 1.2, 0.8, top.clone().addScaledVector(back, -1).setY(top.y + 9), yaw, '#1e2024'));
-    for (let k = -4; k <= 4; k += 1) towers.push(obox(0.7, 0.5, 0.9, top.clone().addScaledVector(back, -1).addScaledVector(side, k * 1.6).setY(top.y + 8.3), yaw, k % 2 ? '#ff4b3e' : '#4bd1ff'));
+    const booth = top.clone().addScaledVector(back, 10).addScaledVector(side, -(half + 6)).setY(top.y + 0.6);
+    towers.push(obox(4, 3, 4, booth, yaw, '#e8e4dc'), obox(4.4, 0.3, 4.4, booth.clone().setY(top.y + 2.25), yaw, SUPPORT));
     feet.push({ x: lift.foot.x, z: lift.foot.z, r: 8 });
   } else {
     // A chain lift: straight, curving or round a tower.

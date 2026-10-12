@@ -633,6 +633,10 @@ const HIDDEN_KIT_TRACKS = [
   ['ha-long-bay-spins', '2026-11-10-add-ha-long-bay-spins.sql', 'Ha Long Bay Spins Coaster, spinning between the limestone islands of Ha Long Bay'],
   ['hong-kong-crossing', '2026-11-11-add-hong-kong-crossing.sql', 'Hong Kong Crossing Coaster, from Victoria Peak across the sea to the mainland'],
   ['redwood-forest-run', '2026-11-12-add-redwood-forest-run.sql', 'Redwood Forest Run Coaster, weaving between giant redwoods down to the Pacific'],
+  ['chiang-mai', '2026-11-21-add-chiang-mai.sql', 'Chiang Mai Coaster, from the golden mountain temple down to the old city'],
+  ['okavango-park', '2026-11-22-add-okavango-park.sql', 'Okavango Park Coaster, over the flooded Okavango Delta to a safari lodge on stilts'],
+  ['kopaonik-spins', '2026-11-23-add-kopaonik-spins.sql', 'Kopaonik Spins Coaster, spinning down the Kopaonik mountain to a village kolo'],
+  ['nanjing', '2026-11-24-add-nanjing.sql', 'Nanjing Coaster, from Purple Mountain past the old city wall to the Yangtze'],
 ];
 for (const [slug, file, note] of HIDDEN_KIT_TRACKS) {
   test(`${slug} is added by its data update, switched off, exactly as its track file builds it`, () => {

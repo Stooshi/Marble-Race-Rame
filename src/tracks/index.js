@@ -35,4 +35,8 @@ module.exports = [
   require('./ha-long-bay-spins'),
   require('./hong-kong-crossing'),
   require('./redwood-forest-run'),
+  require('./chiang-mai'),
+  require('./okavango-park'),
+  require('./kopaonik-spins'),
+  require('./nanjing'),
 ];

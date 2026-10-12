@@ -67,7 +67,7 @@ export const COSTUME_COLORS = {
   // Coasters: Sognefjord.
   fjordRock: '#6f7378', fjordMoss: '#4f7a3a', netPole: '#7a5a3a', netCord: '#d9cfb8', fjordTroll: '#7d7466', fjordTrollMoss: '#5f7f42', trollNose: '#8f8274',
   barrelWood: '#7a4f2e', barrelHoop: '#3a3634', tombstone: '#9a968c', tombMoss: '#5a6a48', totemWood: '#6a4a8a', totemFace: '#e8b33c', totemEye: '#ff7a1a',
-  pineCone: '#8a5a32', pineConeTip: '#5a3a20', grizzly: '#6a4a30', grizzlyDark: '#4a3220', grizzlyMuzzle: '#a8885a', statueStone: '#c8a46a', statueStripe: '#2f5a8a', statueGold: '#d8b84a', buoyRed: '#d8442f', buoyWhite: '#f2efe6', bamboo: '#b8a050', bambooDark: '#8a7a3a', oarWood: '#8a6a48', fisherShirt: '#2f6f8a', conicalHat: '#e8d8a8', skin: '#c8956a', containerRed: '#c8442f', containerBlue: '#2f6fa8', containerRib: '#3a3d44', bollard: '#2a2d32', bollardTop: '#f2c230', craneRed: '#d8442f', craneDark: '#5a2a22', toadStalk: '#f2ecd8', toadCap: '#d8342a', toadSpot: '#ffffff', blackBear: '#2a2622', blackBearMuzzle: '#8a6a48', tileBlue: '#2f7fc4', tileYellow: '#f2c230', tileGreen: '#4aa35a', tileRed: '#d8442f', tileWhite: '#f2efe6',
+  pineCone: '#8a5a32', pineConeTip: '#5a3a20', grizzly: '#6a4a30', grizzlyDark: '#4a3220', grizzlyMuzzle: '#a8885a', statueStone: '#c8a46a', statueStripe: '#2f5a8a', statueGold: '#d8b84a', buoyRed: '#d8442f', buoyWhite: '#f2efe6', bamboo: '#b8a050', bambooDark: '#8a7a3a', oarWood: '#8a6a48', fisherShirt: '#2f6f8a', conicalHat: '#e8d8a8', skin: '#c8956a', containerRed: '#c8442f', containerBlue: '#2f6fa8', containerRib: '#3a3d44', bollard: '#2a2d32', bollardTop: '#f2c230', craneRed: '#d8442f', craneDark: '#5a2a22', toadStalk: '#f2ecd8', toadCap: '#d8342a', toadSpot: '#ffffff', blackBear: '#2a2622', blackBearMuzzle: '#8a6a48', tileBlue: '#2f7fc4', tileYellow: '#f2c230', tileGreen: '#4aa35a', tileRed: '#d8442f', tileWhite: '#f2efe6', hippo: '#7a6a78', hippoBelly: '#d89a9a', hippoTooth: '#f2efe6', termite: '#a8653a', termiteDark: '#8a4f2a', jeep: '#5f6a3a', jeepCanvas: '#c8b88a', hay: '#d8b85a', hayDark: '#b8963a', fencePost: '#7a5a3a', cartWood: '#8a6a42', horse: '#6a4a30', horseMane: '#2a1e17', lionStone: '#a8a296', lionDark: '#8a8478', ginkgoTrunk: '#6a5a42', ginkgoLeaf: '#f2c230', guardianStone: '#9a948a', guardianRed: '#a8322a', ferryHull: '#f2efe6', ferryBlue: '#2f5d9a', ferryCabin: '#d8d4c8',
   netFloat: '#d8322b',
 };
 
@@ -1025,6 +1025,118 @@ function cameraCraneBody(add, base, q) {
  * The kit's costumes by name: where each is placed (`places`: the kind of
  * obstacle it dresses) and how it is built.
  */
+// ── Okavango Park ────────────────────────────────────────────────────────────
+
+/** A hippo half out of the water beside the high line, jaws wide; its head lunges in (Okavango Park; a swipe). */
+function hippoBody(add, base, q) {
+  add('hippo', new IcosahedronGeometry(1.6, 1), local(base, q, 0, 1.2, -0.8, 1.15, 0.85, 1.6));
+  for (const x of [-0.7, 0.7]) add('hippo', new CylinderGeometry(0.4, 0.45, 1.2, 7), local(base, q, x, 0.5, 0.2));
+  for (const x of [-0.5, 0.5]) add('hippoBelly', new IcosahedronGeometry(0.22, 0), local(base, q, x, 2.4, 0.9)); // ears
+}
+
+/** A termite mound: a tall lumpy cone of red earth (Okavango Park; a block). */
+function termiteMound(add, mat, group, point, q, { radius, at }) {
+  const turn = (Math.round(at * 997) % 5) * 0.6;
+  add('termite', new ConeGeometry(radius * 1.05, radius * 3.2, 7), local(point, q, 0, radius * 1.6, 0).multiply(new Matrix4().makeRotationY(turn)));
+  add('termiteDark', new IcosahedronGeometry(radius * 0.55, 0), local(point, q, radius * 0.35, radius * 1.1, 0.2));
+  add('termite', new ConeGeometry(radius * 0.4, radius * 1.6, 6), local(point, q, -radius * 0.45, radius * 2.2, 0));
+  return [];
+}
+
+/** A safari vehicle with no maker's name: olive, open-topped with a canvas roof on bars, a spare wheel on the back (Okavango Park; parked). */
+function safariJeep(add, mat, group, rimCentre, q, { len, width, drop = 0 }) {
+  const W = 1.9;
+  const centre = rimCentre.clone().add(new Vector3(-(width - W) / 2, -drop, 0).applyQuaternion(q));
+  const L = Math.max(4, len - 0.4);
+  for (const x of [-0.85, 0.85]) for (const dz of [-L / 2 + 0.8, L / 2 - 0.8]) add('tyreBlack', new CylinderGeometry(0.45, 0.45, 0.35, 12), local(centre, q, x, 0.45, dz).multiply(new Matrix4().makeRotationZ(Math.PI / 2)));
+  add('jeep', new BoxGeometry(W, 0.9, L), local(centre, q, 0, 1.05, 0));
+  add('carGlass', new BoxGeometry(W - 0.2, 0.5, 0.08), local(centre, q, 0, 1.75, L / 2 - 1.1));
+  for (const x of [-0.85, 0.85]) for (const dz of [-L / 2 + 0.3, L / 2 - 1.2]) add('danfoBlack', new BoxGeometry(0.08, 1.1, 0.08), local(centre, q, x, 2.05, dz));
+  add('jeepCanvas', new BoxGeometry(W + 0.1, 0.1, L - 1.3), local(centre, q, 0, 2.6, -0.45));
+  add('tyreBlack', new CylinderGeometry(0.42, 0.42, 0.3, 12), local(centre, q, 0, 1.3, -L / 2 - 0.15).multiply(new Matrix4().makeRotationX(Math.PI / 2)));
+  return [];
+}
+
+// ── Kopaonik Spins ───────────────────────────────────────────────────────────
+
+/** A round hay bale on its side, twine round it (Kopaonik Spins; a block). */
+function hayBale(add, mat, group, point, q, { radius, at }) {
+  const turn = (Math.round(at * 983) % 5) * 0.5;
+  add('hay', new CylinderGeometry(radius, radius, radius * 1.3, 12), local(point, q, 0, radius, 0).multiply(new Matrix4().makeRotationY(turn)).multiply(new Matrix4().makeRotationZ(Math.PI / 2)));
+  for (const x of [-0.3, 0.3]) add('hayDark', new CylinderGeometry(radius * 1.01, radius * 1.01, 0.08, 12), local(point, q, 0, radius, 0).multiply(new Matrix4().makeRotationY(turn)).multiply(new Matrix4().makeTranslation(x * radius, 0, 0)).multiply(new Matrix4().makeRotationZ(Math.PI / 2)));
+  return [];
+}
+
+/** A split-rail fence post, a short rail stub on top (Kopaonik Spins; a slalom). */
+function fencePost(add, mat, group, point, q, { height, l }) {
+  add('fencePost', new BoxGeometry(0.14, height + 0.3, 0.14), local(point, q, 0, (height + 0.3) / 2, 0));
+  const side = l >= 0 ? 1 : -1;
+  add('fencePost', new BoxGeometry(0.6, 0.1, 0.1), local(point, q, side * 0.3, height * 0.8, 0));
+  return [];
+}
+
+/** A wooden horse cart with its horse, parked at the edge (Kopaonik Spins; parked). */
+function horseCart(add, mat, group, rimCentre, q, { len, width, drop = 0 }) {
+  const W = 1.6;
+  const centre = rimCentre.clone().add(new Vector3(-(width - W) / 2, -drop, 0).applyQuaternion(q));
+  const L = Math.max(4.5, len - 0.4);
+  const cartL = L * 0.55;
+  const z0 = -L / 2 + cartL / 2;
+  add('cartWood', new BoxGeometry(W, 0.5, cartL), local(centre, q, 0, 1.0, z0));
+  for (const x of [-1, 1]) add('cartWood', new BoxGeometry(0.08, 0.5, cartL), local(centre, q, x * (W / 2), 1.45, z0));
+  for (const x of [-0.85, 0.85]) add('tyreBlack', new CylinderGeometry(0.6, 0.6, 0.1, 10), local(centre, q, x, 0.6, z0).multiply(new Matrix4().makeRotationZ(Math.PI / 2)));
+  add('hay', new BoxGeometry(W - 0.3, 0.5, cartL - 0.5), local(centre, q, 0, 1.5, z0));
+  const hz = L / 2 - 1.1;
+  add('horse', new BoxGeometry(0.7, 0.8, 1.9), local(centre, q, 0, 1.55, hz));
+  for (const [x, dz] of [[-0.25, -0.7], [0.25, -0.7], [-0.25, 0.7], [0.25, 0.7]]) add('horse', new BoxGeometry(0.15, 1.15, 0.15), local(centre, q, x, 0.6, hz + dz));
+  add('horse', new BoxGeometry(0.4, 0.9, 0.5), local(centre, q, 0, 2.2, hz + 1.0).multiply(new Matrix4().makeRotationX(-0.5)));
+  add('horseMane', new BoxGeometry(0.1, 0.6, 0.6), local(centre, q, 0, 2.35, hz + 0.8).multiply(new Matrix4().makeRotationX(-0.5)));
+  return [];
+}
+
+// ── Nanjing ──────────────────────────────────────────────────────────────────
+
+/** A fallen stone guardian lion on its side (Nanjing; a block). */
+function stoneLion(add, mat, group, point, q, { radius, at }) {
+  const turn = (Math.round(at * 971) % 5) * 0.7;
+  const base = local(point, q, 0, 0, 0).multiply(new Matrix4().makeRotationY(turn));
+  const part = (geo, colour, x, y, z, sx = 1, sy = 1, sz = 1) => add(colour, geo, base.clone().multiply(new Matrix4().compose(new Vector3(x, y, z), new Quaternion(), new Vector3(sx, sy, sz))));
+  part(new BoxGeometry(radius * 1.6, radius * 1.1, radius * 1.1), 'lionStone', 0, radius * 0.55, 0);
+  part(new IcosahedronGeometry(radius * 0.75, 0), 'lionDark', radius * 0.95, radius * 0.9, 0); // the curly mane
+  part(new IcosahedronGeometry(radius * 0.45, 0), 'lionStone', radius * 1.45, radius * 0.8, 0);
+  return [];
+}
+
+/** A ginkgo tree: a slim trunk, its golden autumn crown high above the marbles (Nanjing; a slalom). */
+function ginkgoTree(add, mat, group, point, q, { height }) {
+  add('ginkgoTrunk', new CylinderGeometry(0.1, 0.14, height + 2.6, 6), local(point, q, 0, (height + 2.6) / 2, 0));
+  add('ginkgoLeaf', new IcosahedronGeometry(1.1, 0), local(point, q, 0, height + 3.2, 0, 1, 1.3, 1));
+  return [];
+}
+
+/** A temple guardian statue in stone armour beyond the rim, a red sash; its arm swings in (Nanjing; a swipe). */
+function guardianBody(add, base, q) {
+  add('guardianStone', new BoxGeometry(1.6, 1, 1.4), local(base, q, 0, 0.5, 0)); // plinth
+  add('guardianStone', new BoxGeometry(1.2, 2.4, 0.9), local(base, q, 0, 2.2, 0));
+  add('guardianRed', new BoxGeometry(1.25, 0.3, 0.95), local(base, q, 0, 2.3, 0));
+  add('guardianStone', new IcosahedronGeometry(0.5, 0), local(base, q, 0, 3.8, 0));
+  add('guardianRed', new ConeGeometry(0.45, 0.6, 6), local(base, q, 0, 4.4, 0));
+}
+
+/** A small river ferry tied up at the edge: a white hull with a blue band, a cabin (Nanjing; parked). */
+function riverFerry(add, mat, group, rimCentre, q, { len, width, drop = 0 }) {
+  const W = 2.2;
+  const centre = rimCentre.clone().add(new Vector3(-(width - W) / 2, -drop, 0).applyQuaternion(q));
+  const L = Math.max(5, len - 0.4);
+  add('ferryHull', new BoxGeometry(W, 1, L), local(centre, q, 0, 0.6, 0));
+  add('ferryBlue', new BoxGeometry(W + 0.02, 0.25, L + 0.02), local(centre, q, 0, 0.75, 0));
+  add('ferryHull', new ConeGeometry(W / 2, 1.6, 4), local(centre, q, 0, 0.6, L / 2 + 0.6).multiply(new Matrix4().makeRotationX(Math.PI / 2)).multiply(new Matrix4().makeRotationY(Math.PI / 4)));
+  add('ferryCabin', new BoxGeometry(W - 0.5, 1.3, L * 0.45), local(centre, q, 0, 1.75, -L * 0.1));
+  add('carGlass', new BoxGeometry(W - 0.45, 0.4, L * 0.46), local(centre, q, 0, 1.95, -L * 0.1));
+  add('ferryBlue', new BoxGeometry(W - 0.3, 0.15, L * 0.5), local(centre, q, 0, 2.5, -L * 0.1));
+  return [];
+}
+
 export const KIT_COSTUMES = {
   panda: { places: 'block', build: panda },
   camel: { places: 'block', build: camel },
@@ -1195,6 +1307,28 @@ export const KIT_COSTUMES = {
     arm: { colour: 'totemWood', shoulder: [0.9, 3.0, 0.3], radii: [0.28, 0.4], segments: 7, tip: 0.5, tipDetail: 1, end: 0.25, endDetail: 0, endColour: 'totemFace', lift: 0.4, outLift: 0.5, nose: 0.25 },
   },
   'broken-pillar': { places: 'slalom', build: brokenPillar },
+  hippo: {
+    places: 'swipe',
+    body: hippoBody,
+    standOff: 2.6,
+    sink: -0.6,
+    arm: { colour: 'hippo', shoulder: [0, 1.6, 0.6], radii: [0.5, 0.7], segments: 6, tip: 0.75, tipDetail: 1, tipColour: 'hippoBelly', end: 0.35, endDetail: 0, endColour: 'hippoTooth', lift: 0.35, outLift: 0.45, nose: 0.3 },
+  },
+  'termite-mound': { places: 'block', build: termiteMound },
+  'safari-jeep': { places: 'parked', build: safariJeep },
+  'hay-bale': { places: 'block', build: hayBale },
+  'fence-post': { places: 'slalom', build: fencePost },
+  'horse-cart': { places: 'parked', build: horseCart },
+  'stone-lion': { places: 'block', build: stoneLion },
+  ginkgo: { places: 'slalom', build: ginkgoTree },
+  'temple-guardian': {
+    places: 'swipe',
+    body: guardianBody,
+    standOff: 2.2,
+    sink: -0.3,
+    arm: { colour: 'guardianStone', shoulder: [0.8, 3.0, 0.2], radii: [0.24, 0.34], segments: 7, tip: 0.42, tipDetail: 1, end: 0.2, endDetail: 0, endColour: 'guardianRed', lift: 0.4, outLift: 0.5, nose: 0.25 },
+  },
+  'river-ferry': { places: 'parked', build: riverFerry },
   'dragon-tail': {
     places: 'swipe',
     body: dragonTailBody,
