@@ -67,7 +67,7 @@ export const COSTUME_COLORS = {
   // Coasters: Sognefjord.
   fjordRock: '#6f7378', fjordMoss: '#4f7a3a', netPole: '#7a5a3a', netCord: '#d9cfb8', fjordTroll: '#7d7466', fjordTrollMoss: '#5f7f42', trollNose: '#8f8274',
   barrelWood: '#7a4f2e', barrelHoop: '#3a3634', tombstone: '#9a968c', tombMoss: '#5a6a48', totemWood: '#6a4a8a', totemFace: '#e8b33c', totemEye: '#ff7a1a',
-  pineCone: '#8a5a32', pineConeTip: '#5a3a20', grizzly: '#6a4a30', grizzlyDark: '#4a3220', grizzlyMuzzle: '#a8885a', statueStone: '#c8a46a', statueStripe: '#2f5a8a', statueGold: '#d8b84a', buoyRed: '#d8442f', buoyWhite: '#f2efe6', bamboo: '#b8a050', bambooDark: '#8a7a3a', oarWood: '#8a6a48', fisherShirt: '#2f6f8a', conicalHat: '#e8d8a8', skin: '#c8956a', containerRed: '#c8442f', containerBlue: '#2f6fa8', containerRib: '#3a3d44', bollard: '#2a2d32', bollardTop: '#f2c230', craneRed: '#d8442f', craneDark: '#5a2a22', toadStalk: '#f2ecd8', toadCap: '#d8342a', toadSpot: '#ffffff', blackBear: '#2a2622', blackBearMuzzle: '#8a6a48', tileBlue: '#2f7fc4', tileYellow: '#f2c230', tileGreen: '#4aa35a', tileRed: '#d8442f', tileWhite: '#f2efe6', hippo: '#7a6a78', hippoBelly: '#d89a9a', hippoTooth: '#f2efe6', termite: '#a8653a', termiteDark: '#8a4f2a', jeep: '#5f6a3a', jeepCanvas: '#c8b88a', hay: '#d8b85a', hayDark: '#b8963a', fencePost: '#7a5a3a', cartWood: '#8a6a42', horse: '#6a4a30', horseMane: '#2a1e17', lionStone: '#a8a296', lionDark: '#8a8478', ginkgoTrunk: '#6a5a42', ginkgoLeaf: '#f2c230', guardianStone: '#9a948a', guardianRed: '#a8322a', ferryHull: '#f2efe6', ferryBlue: '#2f5d9a', ferryCabin: '#d8d4c8',
+  pineCone: '#8a5a32', pineConeTip: '#5a3a20', grizzly: '#6a4a30', grizzlyDark: '#4a3220', grizzlyMuzzle: '#a8885a', statueStone: '#c8a46a', statueStripe: '#2f5a8a', statueGold: '#d8b84a', buoyRed: '#d8442f', buoyWhite: '#f2efe6', bamboo: '#b8a050', bambooDark: '#8a7a3a', oarWood: '#8a6a48', fisherShirt: '#2f6f8a', conicalHat: '#e8d8a8', skin: '#c8956a', containerRed: '#c8442f', containerBlue: '#2f6fa8', containerRib: '#3a3d44', bollard: '#2a2d32', bollardTop: '#f2c230', craneRed: '#d8442f', craneDark: '#5a2a22', toadStalk: '#f2ecd8', toadCap: '#d8342a', toadSpot: '#ffffff', blackBear: '#2a2622', blackBearMuzzle: '#8a6a48', tileBlue: '#2f7fc4', tileYellow: '#f2c230', tileGreen: '#4aa35a', tileRed: '#d8442f', tileWhite: '#f2efe6', hippo: '#7a6a78', hippoBelly: '#d89a9a', hippoTooth: '#f2efe6', termite: '#a8653a', termiteDark: '#8a4f2a', jeep: '#5f6a3a', jeepCanvas: '#c8b88a', hay: '#d8b85a', hayDark: '#b8963a', fencePost: '#7a5a3a', cartWood: '#8a6a42', horse: '#6a4a30', horseMane: '#2a1e17', lionStone: '#a8a296', lionDark: '#8a8478', ginkgoTrunk: '#6a5a42', ginkgoLeaf: '#f2c230', guardianStone: '#9a948a', guardianRed: '#a8322a', ferryHull: '#f2efe6', ferryBlue: '#2f5d9a', ferryCabin: '#d8d4c8', bumperBase: '#1e1f26', bumperRed: '#ff3a4a', bumperBlue: '#3a8aff', bumperYellow: '#ffd23f', bumperRing: '#f4f4f0', chrome: '#d0d4da', targetOrange: '#ff8a1a', targetPink: '#ff4fb8', spinnerYellow: '#ffe14a', flipperWhite: '#f6f6f2', flipperRubber: '#d8342a', tombGrey: '#8a8a90', tombGlow: '#c6ff4f', bookWood: '#3a2416', bookRed: '#a8322a', bookGreen: '#2f6a3a', bookBlue: '#2a3f7a', ironDark: '#26262c', candleGold: '#ffcf5a', lightning: '#d8f2ff', shieldBlue: '#2f4a8a', shieldGold: '#ffd23f', catapultWood: '#6a4a2a',
   netFloat: '#d8322b',
 };
 
@@ -1137,6 +1137,103 @@ function riverFerry(add, mat, group, rimCentre, q, { len, width, drop = 0 }) {
   return [];
 }
 
+// ── The pinball kit: a table's standard pieces, and Multiball Manor's ─────────
+
+/** A pop bumper: a dark base, a lit coloured cap and a white ring round it (pinball; a block). */
+function popBumper(add, mat, group, point, q, { radius, at }) {
+  const cap = ['bumperRed', 'bumperBlue', 'bumperYellow'][Math.round(at * 997) % 3];
+  add('bumperBase', new CylinderGeometry(radius * 1.05, radius * 1.15, radius * 0.6, 14), local(point, q, 0, radius * 0.3, 0));
+  add('bumperRing', new CylinderGeometry(radius * 1.12, radius * 1.12, radius * 0.18, 14), local(point, q, 0, radius * 0.7, 0));
+  add(cap, new CylinderGeometry(radius * 0.95, radius, radius * 0.7, 14), local(point, q, 0, radius * 1.1, 0));
+  add('bumperRing', new CylinderGeometry(radius * 0.55, radius * 0.95, radius * 0.25, 14), local(point, q, 0, radius * 1.55, 0));
+  return [];
+}
+
+/** A rubber-ringed post (pinball; a slalom pole or a peg). */
+function bumperPost(add, mat, group, point, q, { height }) {
+  add('chrome', new CylinderGeometry(0.08, 0.1, height + 0.3, 8), local(point, q, 0, (height + 0.3) / 2, 0));
+  add('flipperRubber', new CylinderGeometry(0.18, 0.18, 0.14, 10), local(point, q, 0, height * 0.35, 0));
+  add('bumperYellow', new CylinderGeometry(0.16, 0.16, 0.2, 10), local(point, q, 0, height + 0.3, 0));
+  return [];
+}
+
+/** A bank of three drop targets, bright faces up, in a chrome frame (pinball; a block). */
+function dropTargets(add, mat, group, point, q, { radius, at }) {
+  const face = Math.round(at * 991) % 2 ? 'targetOrange' : 'targetPink';
+  add('chrome', new BoxGeometry(radius * 2.2, radius * 0.3, radius * 0.6), local(point, q, 0, radius * 0.15, 0));
+  for (const x of [-0.7, 0, 0.7]) add(face, new BoxGeometry(radius * 0.6, radius * 1.4, radius * 0.25), local(point, q, x * radius, radius * 0.9, 0));
+  return [];
+}
+
+/** A row of standup targets along the edge (pinball; parked). */
+function standupTargets(add, mat, group, rimCentre, q, { len, width, drop = 0 }) {
+  const centre = rimCentre.clone().add(new Vector3(0, -drop, 0).applyQuaternion(q));
+  const W = Math.max(1, width - 0.2);
+  add('bumperBase', new BoxGeometry(W, 0.4, len), local(centre, q, 0, 0.2, 0)); // the rail they stand on
+  const n = Math.max(2, Math.floor(len / 1.6));
+  for (let k = 0; k < n; k += 1) {
+    const z = -len / 2 + (len / n) * (k + 0.5);
+    add('chrome', new BoxGeometry(0.12, 1.4, 0.12), local(centre, q, -W / 2 + 0.3, 0.9, z));
+    add(k % 2 ? 'targetOrange' : 'bumperYellow', new BoxGeometry(0.18, 0.9, 0.9), local(centre, q, -W / 2 + 0.09, 1.4, z)); // faces to the track
+  }
+  return [];
+}
+
+/** A flipper-bat swipe: a short chrome post beyond the rim; the bat is its arm (pinball; a swipe). */
+function flipperPostBody(add, base, q) {
+  add('chrome', new CylinderGeometry(0.5, 0.6, 2.2, 10), local(base, q, 0, 1.1, 0));
+  add('bumperBase', new CylinderGeometry(1.2, 1.2, 0.3, 12), local(base, q, 0, 0.15, 0));
+}
+
+/** A tombstone pop bumper: a grey headstone with a glowing ring round its foot (Multiball Manor; a block). */
+function tombBumper(add, mat, group, point, q, { radius, at }) {
+  const lean = ((Math.round(at * 977) % 3) - 1) * 0.06;
+  add('tombGlow', new CylinderGeometry(radius * 1.15, radius * 1.15, radius * 0.18, 14), local(point, q, 0, radius * 0.1, 0));
+  add('tombGrey', new BoxGeometry(radius * 1.4, radius * 1.6, radius * 0.5), local(point, q, 0, radius * 0.95, 0).multiply(new Matrix4().makeRotationZ(lean)));
+  add('tombGrey', new CylinderGeometry(radius * 0.7, radius * 0.7, radius * 0.5, 12, 1, false, 0, Math.PI), local(point, q, 0, radius * 1.75, 0).multiply(new Matrix4().makeRotationX(Math.PI / 2)).multiply(new Matrix4().makeRotationY(Math.PI / 2)));
+  return [];
+}
+
+/** A sliding bookcase: tall dark wood, rows of coloured books (Multiball Manor; a block). */
+function bookcase(add, mat, group, point, q, { radius, at }) {
+  const turn = (Math.round(at * 983) % 3 - 1) * 0.3;
+  const base = local(point, q, 0, 0, 0).multiply(new Matrix4().makeRotationY(turn));
+  const part = (geo, colour, x, y, z) => add(colour, geo, base.clone().multiply(new Matrix4().makeTranslation(x, y, z)));
+  part(new BoxGeometry(radius * 1.8, radius * 2.6, radius * 0.7), 'bookWood', 0, radius * 1.3, 0);
+  [0.5, 1.2, 1.9].forEach((y, k) => part(new BoxGeometry(radius * 1.5, radius * 0.45, 0.05), ['bookRed', 'bookGreen', 'bookBlue'][k], 0, radius * y, radius * 0.36));
+  return [];
+}
+
+/** An iron post beyond the rim from which the chandelier swings (Multiball Manor; a swipe). */
+function chandelierBody(add, base, q) {
+  add('ironDark', new CylinderGeometry(0.22, 0.3, 6, 8), local(base, q, 0, 3, 0));
+  add('ironDark', new BoxGeometry(0.3, 0.3, 2.2), local(base, q, 0, 5.9, 0.9));
+}
+
+// ── Wizard Mode ──────────────────────────────────────────────────────────────
+
+/** A shield pop bumper: a round blue-and-gold shield on a lit base (Wizard Mode; a block). */
+function shieldBumper(add, mat, group, point, q, { radius }) {
+  add('bumperBase', new CylinderGeometry(radius * 1.1, radius * 1.15, radius * 0.5, 14), local(point, q, 0, radius * 0.25, 0));
+  add('shieldBlue', new CylinderGeometry(radius * 0.95, radius * 0.95, radius * 0.9, 14), local(point, q, 0, radius * 0.95, 0));
+  add('shieldGold', new CylinderGeometry(radius * 1.0, radius * 1.0, radius * 0.16, 14), local(point, q, 0, radius * 1.45, 0));
+  add('shieldGold', new BoxGeometry(radius * 0.3, radius * 0.2, radius * 1.6), local(point, q, 0, radius * 1.5, 0));
+  return [];
+}
+
+/** A wooden catapult parked at the edge, its arm cocked (Wizard Mode; parked). */
+function catapult(add, mat, group, rimCentre, q, { len, width, drop = 0 }) {
+  const W = 2.2;
+  const centre = rimCentre.clone().add(new Vector3(-(width - W) / 2, -drop, 0).applyQuaternion(q));
+  const L = Math.max(4, len - 0.4);
+  add('catapultWood', new BoxGeometry(W, 0.5, L), local(centre, q, 0, 0.8, 0));
+  for (const x of [-0.9, 0.9]) for (const z of [-L / 2 + 0.6, L / 2 - 0.6]) add('tyreBlack', new CylinderGeometry(0.55, 0.55, 0.25, 10), local(centre, q, x, 0.55, z).multiply(new Matrix4().makeRotationZ(Math.PI / 2)));
+  for (const x of [-0.7, 0.7]) add('catapultWood', new BoxGeometry(0.25, 2.2, 0.25), local(centre, q, x, 2, 0));
+  add('catapultWood', new BoxGeometry(0.3, 0.3, L * 0.8), local(centre, q, 0, 2.3, -L * 0.1).multiply(new Matrix4().makeRotationX(0.5)));
+  add('lionStone', new IcosahedronGeometry(0.45, 0), local(centre, q, 0, 3.2, -L * 0.42));
+  return [];
+}
+
 export const KIT_COSTUMES = {
   panda: { places: 'block', build: panda },
   camel: { places: 'block', build: camel },
@@ -1320,6 +1417,30 @@ export const KIT_COSTUMES = {
   'fence-post': { places: 'slalom', build: fencePost },
   'horse-cart': { places: 'parked', build: horseCart },
   'stone-lion': { places: 'block', build: stoneLion },
+  'pop-bumper': { places: 'block', build: popBumper },
+  'bumper-post': { places: 'slalom', build: bumperPost },
+  'drop-targets': { places: 'block', build: dropTargets },
+  'standup-targets': { places: 'parked', build: standupTargets },
+  spinner: { places: 'curtain', gantry: true, banners: ['chrome', 'spinnerYellow', 'chrome'], post: 'chrome', bannerWidth: 0.35, build: () => [] },
+  'flipper-bat': {
+    places: 'swipe',
+    body: flipperPostBody,
+    standOff: 1.6,
+    sink: -0.2,
+    arm: { colour: 'flipperWhite', shoulder: [0, 1.2, 0.3], radii: [0.35, 0.55], segments: 5, tip: 0.4, tipDetail: 1, tipColour: 'flipperRubber', end: 0.3, endDetail: 0, endColour: 'flipperRubber', lift: 0.25, outLift: 0.3, nose: 0.2 },
+  },
+  'tomb-bumper': { places: 'block', build: tombBumper },
+  bookcase: { places: 'block', build: bookcase },
+  chandelier: {
+    places: 'swipe',
+    body: chandelierBody,
+    standOff: 2.2,
+    sink: -0.3,
+    arm: { colour: 'ironDark', shoulder: [0, 5.8, 1.9], radii: [0.06, 0.08], segments: 6, tip: 0.9, tipDetail: 1, tipColour: 'candleGold', end: 0.2, endDetail: 0, endColour: 'candleGold', lift: 1.2, outLift: 1.6, nose: 0.2 },
+  },
+  'shield-bumper': { places: 'block', build: shieldBumper },
+  catapult: { places: 'parked', build: catapult },
+  'lightning-rod': { places: 'curtain', gantry: true, banners: ['lightning', 'ironDark', 'lightning'], post: 'ironDark', bannerWidth: 0.3, build: () => [] },
   ginkgo: { places: 'slalom', build: ginkgoTree },
   'temple-guardian': {
     places: 'swipe',

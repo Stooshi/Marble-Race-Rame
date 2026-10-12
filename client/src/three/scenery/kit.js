@@ -17,6 +17,7 @@ import { buildKitGround, biomeOf } from './kitGround';
 import { FIGURE_COLORS, LANDMARKS, PEOPLE, acaciaTree, aspen, cabin, dressingFor, jacaranda, liftTower, palm, snowRock, vulture, winterBirch } from './kitProps';
 import { buildGrandPrix } from './grandPrix';
 import { buildCoaster } from './coaster';
+import { buildPinball } from './pinball';
 import { buildBattlements, buildCentrepieces, buildFunicular, buildHouses, buildLake, buildRaceNetting, tagsNear, turnAngle } from './kitPlaces';
 import { hashString, mergeByArea, piece, seededRandom, smoothstep } from './parts';
 import { COSTUMES, COSTUME_COLORS } from '../costumes';
@@ -55,6 +56,12 @@ export function buildKitScenery(centerline, track, theme, { lite = false } = {})
     group.add(coaster.group);
     solids.push(...coaster.feet);
   }
+  // A pinball table: the backglass and display, inserts, the apron's flippers and drain, the cabinet (./pinball.js).
+  const pinball = kit.pinball ? buildPinball(centerline, channel, kit, { lite, groundAt, bounds: ground.bounds, pen: track.physics.runout }) : null;
+  if (pinball) {
+    group.add(pinball.group);
+    solids.push(...pinball.feet);
+  }
 
   const frame = (p) => {
     const i = Math.min(segments, Math.max(0, Math.round(p * segments)));
@@ -91,7 +98,9 @@ export function buildKitScenery(centerline, track, theme, { lite = false } = {})
     // (A coaster's stands beyond the foot of its lift hill, a little to one side: in the climb's shot.)
     const at = coaster
       ? coaster.liftHill.foot.clone().addScaledVector(coaster.liftHill.back, 30).addScaledVector(side, -8)
-      : s.pos.clone().addScaledVector(along, -30);
+      : pinball
+        ? s.pos.clone().addScaledVector(along, -26).addScaledVector(side, 34) // (beside the backglass, not in front of it)
+        : s.pos.clone().addScaledVector(along, -30);
     placeLandmark(kit.start.landmark, at, yawTo(along));
   }
   if (kit.finish?.landmark) {
@@ -356,6 +365,7 @@ export function buildKitScenery(centerline, track, theme, { lite = false } = {})
     const sec = t / 1000;
     movers?.update(t);
     grandPrix?.update(t, ctx); // (crowds standing as marbles pass; fireworks once the winner is home)
+    pinball?.update(t);
     centrepieces.update(t);
     funicular?.update(t);
     lake?.update(t);

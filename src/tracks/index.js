@@ -39,4 +39,5 @@ module.exports = [
   require('./okavango-park'),
   require('./kopaonik-spins'),
   require('./nanjing'),
+  require('./multiball-manor'),
 ];

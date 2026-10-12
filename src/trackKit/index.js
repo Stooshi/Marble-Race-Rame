@@ -17,7 +17,7 @@
 
 const { generate } = require('../game/trackShape');
 const parts = require('./parts');
-const { checkRecipe, isCoaster } = require('./recipe');
+const { checkRecipe, isCoaster, isPinball } = require('./recipe');
 
 const round4 = (x) => Math.round(x * 10000) / 10000;
 
@@ -268,6 +268,10 @@ function track(spec) {
     // (a section's own `height`; 0 where it touches down), a lift hill behind the gate, a station at
     // the finish; `water`: sections that fly over water. Looks only, like everything here.
     ...(isCoaster(spec) && { coaster: { height: COASTER_HEIGHT, ...spec.coaster, colours: { ...COASTER_COLOURS, ...spec.coaster?.colours } } }),
+    // A pinball table (family 'pinball'): the playfield, the cabinet, the backglass's art and the
+    // dot-matrix display's call-outs at the start and for the winner, the apron's flippers and the
+    // drain past the finish. Looks only.
+    ...(isPinball(spec) && { pinball: { art: 'manor', display: 'MULTIBALL!', finish: 'JACKPOT!', ...spec.pinball, title: spec.name.toUpperCase() } }),
     billboards,
     start: spec.start || {},
     finish: spec.finish || {},

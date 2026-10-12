@@ -13,6 +13,7 @@ import { buildStructures } from '../src/three/structures';
 import { themeFor } from '../src/three/themes';
 import { flaggedStretches, wallExposure } from '../src/three/scenery/groundCheck';
 import { buildCoaster, coasterFlight, liftHillCut, liftHillOf, liftHillRaise } from '../src/three/scenery/coaster';
+import { buildPinball } from '../src/three/scenery/pinball';
 
 const require = createRequire(import.meta.url);
 const { PHYSICS_TRACKS } = require('../../src/game/physicsTracks');
@@ -158,6 +159,33 @@ describe('kit scenery', () => {
         expect(built.liftHill.type).toBe(type);
         expect(built.group.children.length).toBeGreaterThan(0);
       }
+    }
+  });
+
+  it('a pinball table: backglass and display behind the gate, flippers on a fixed rhythm outside the catch area', () => {
+    const track = PHYSICS_TRACKS.find((t) => t.slug === 'multiball-manor');
+    const centerline = buildCenterline(track);
+    const channel = channelOf(track, centerline);
+    for (const lite of [false, true]) {
+      const built = buildPinball(centerline, channel, track.physics.kit, { lite, groundAt: () => 0, bounds: { minX: -500, maxX: 500, minZ: -500, maxZ: 500, floorY: -66 }, pen: track.physics.runout });
+      const names = built.group.children.map((c) => c.name);
+      for (const n of ['pinball: backglass', 'pinball: display', 'pinball: winner display', 'pinball: cabinet']) expect(names).toContain(n);
+      // The backglass stands behind the gate, facing down the table.
+      const s0 = centerline.samples[0];
+      expect(built.backglass.foot.clone().sub(s0.pos).setY(0).dot(new Vector3(s0.tangent.x, 0, s0.tangent.z).normalize())).toBeLessThan(-30);
+      // The flippers: two, beyond the catch area's walls, moving on the race clock and the same in every replay.
+      const flippers = built.group.children.filter((c) => c.name === 'pinball: flipper');
+      expect(flippers).toHaveLength(2);
+      const end = centerline.samples[centerline.segments];
+      const side = new Vector3(end.side.x, 0, end.side.z).normalize();
+      for (const f of flippers) expect(Math.abs(f.position.clone().sub(end.pos).dot(side))).toBeGreaterThan(track.physics.runout.halfWidth + 2);
+      built.update(0);
+      const a = flippers[0].quaternion.clone();
+      built.update(200);
+      expect(flippers[0].quaternion.angleTo(a)).toBeGreaterThan(0.1);
+      built.update(0);
+      expect(flippers[0].quaternion.angleTo(a)).toBeLessThan(1e-9);
+      built.dispose();
     }
   });
 });

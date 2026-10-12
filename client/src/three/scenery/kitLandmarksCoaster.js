@@ -905,6 +905,54 @@ function confuciusTemple() {
   return merge(p);
 }
 
+// ── Multiball Manor ──────────────────────────────────────────────────────────
+
+/** A gothic manor at midnight (our own design): dark walls, steep roofs, towers, lit windows, a lightning rod. */
+function hauntedManor() {
+  const WALL = '#2a2236';
+  const ROOF = '#141018';
+  const LIT = '#ffd27a';
+  const p = [box(40, 16, 18, 0, 8, 0, WALL), roof(42, 9, 20, 0, 16, 0, ROOF)];
+  for (const x of [-22, 22]) p.push(box(9, 28, 9, x, 14, 0, WALL), piece(new ConeGeometry(6.6, 12, 4), ROOF, turned(x, 34, 0, Math.PI / 4)));
+  p.push(box(8, 8, 2, 0, 4, 9.5, '#3a2a1e'));
+  for (let k = 0; k < 10; k += 1) p.push(box(2.4, 3.2, 0.3, -15 + (k % 5) * 7.5, 6 + Math.floor(k / 5) * 6.5, 9.1, k % 3 ? LIT : '#5a4a6a'));
+  for (const x of [-22, 22]) p.push(box(2.4, 3.2, 0.3, x, 20, 4.6, LIT));
+  p.push(box(0.4, 10, 0.4, 22, 45, 0, '#9aa0a8'), box(1.6, 0.4, 0.4, 22, 49, 0, '#9aa0a8')); // the lightning rod
+  for (let k = 0; k < 8; k += 1) p.push(piece(new ConeGeometry(1.6, 7, 5), '#1c2420', M(-30 + k * 8.5, 3.5, 18 + (k % 2) * 4))); // dark hedges
+  return merge(p);
+}
+
+// ── Wizard Mode ──────────────────────────────────────────────────────────────
+
+const CASTLE = '#a8a296';
+const CASTLE_DARK = '#7f7a70';
+
+/** A castle under siege (our own design): curtain walls, round towers with banners, a gatehouse, catapults outside. */
+function siegeCastle() {
+  const p = [];
+  for (const [x, z, w, d] of [[0, -20, 44, 3], [0, 20, 44, 3], [-22, 0, 3, 40], [22, 0, 3, 40]]) p.push(box(w, 12, d, x, 6, z, CASTLE));
+  for (let k = 0; k < 18; k += 1) p.push(box(2, 1.6, 3.4, -20 + (k % 9) * 5, 12.8, k < 9 ? -20 : 20, CASTLE_DARK));
+  for (const [x, z] of [[-22, -20], [22, -20], [-22, 20], [22, 20]]) {
+    p.push(piece(new CylinderGeometry(4.5, 5, 20, 10), CASTLE, M(x, 10, z)), piece(new ConeGeometry(5.4, 8, 10), '#2f4a8a', M(x, 24, z)));
+    p.push(box(0.2, 4, 0.2, x, 30, z, '#5a4a3a'), box(2.4, 1.4, 0.1, x + 1.2, 31, z, '#d8342a'));
+  }
+  p.push(box(14, 22, 12, 0, 11, 0, CASTLE_DARK), roof(15, 6, 13, 0, 22, 0, '#2f4a8a')); // the keep
+  p.push(box(10, 16, 6, 0, 8, 22, CASTLE_DARK), box(5, 7, 0.4, 0, 3.5, 25.2, '#2a1a12')); // the gatehouse
+  for (const x of [-34, 34]) { // catapults
+    p.push(box(5, 1, 3, x, 1.5, 34, '#6a4a2a'), box(0.5, 0.5, 9, x, 4, 34, '#5a3a22'));
+    for (const dx of [-2, 2]) p.push(piece(new CylinderGeometry(1, 1, 0.4, 10), '#3a2a1a', new Matrix4().makeRotationZ(Math.PI / 2).premultiply(M(x + dx, 1, 34))));
+  }
+  return merge(p);
+}
+
+/** The castle keep for the middle of a spiral: a square stone tower, its battlements and a banner. */
+function castleKeep() {
+  const p = [box(9, 18, 9, 0, 9, 0, CASTLE), roof(10, 5, 10, 0, 18, 0, '#2f4a8a')];
+  for (let k = 0; k < 8; k += 1) p.push(box(1.6, 1.4, 1.6, (k % 4 - 1.5) * 2.4, 18.4, k < 4 ? -4.5 : 4.5, CASTLE_DARK));
+  p.push(box(0.2, 5, 0.2, 0, 25, 0, '#5a4a3a'), box(2.6, 1.6, 0.1, 1.3, 26.5, 0, '#ffd23f'));
+  return merge(p);
+}
+
 export const COASTER_LANDMARKS = {
   'stave-church': { build: staveChurch, radius: 10 },
   'fjord-village': { build: fjordVillage, radius: 30 },
@@ -958,4 +1006,7 @@ export const COASTER_LANDMARKS = {
   'lake-pagodas': { build: lakePagodas, radius: 60 },
   'ginkgo-grove': { build: ginkgoGrove, radius: 26 },
   'confucius-temple': { build: confuciusTemple, radius: 8, fit: 7.5 },
+  'haunted-manor': { build: hauntedManor, radius: 30 },
+  'siege-castle': { build: siegeCastle, radius: 40 },
+  'castle-keep': { build: castleKeep, radius: 7, fit: 7 },
 };

@@ -63,6 +63,8 @@ export const BIOMES = {
   desert: { terrain: { sand: '#e8b77a', grass: '#e2a764', dry: '#efc590', shade: '#c98d50' }, bank: '#e5ae6e', fill: '#a8754a', hills: 30, sea: -60 },
   jungle: { terrain: { sand: '#c9b27a', grass: '#3f8f3a', dry: '#5aa344', shade: '#2f6e2c' }, bank: '#3d8a37', fill: '#6b5a44', hills: 34, sea: -60 },
   city: { terrain: { sand: '#d7c9a6', grass: '#9cb768', dry: '#b7bf7a', shade: '#7f9a54' }, bank: '#a7b8a0', fill: '#a49c8f', hills: 18, sea: -60 },
+  // A pinball table's playfield: painted wood in deep colours, gently rolling (the table's art, not a landscape).
+  playfield: { terrain: { sand: '#3a2a6a', grass: '#22306e', dry: '#2c2a62', shade: '#181c48' }, bank: '#26306a', fill: '#3a2a52', hills: 8, sea: -60 },
 };
 
 export function biomeOf(kit) {
@@ -300,5 +302,6 @@ export function buildKitGround(centerline, track, { lite = false } = {}) {
     group.add(water);
   }
 
-  return { group, field, groundAt: (x, z) => terrain.groundAt(x, z), hug, biome, rows, over, onBridge, lake, flight, waterY, floorY: biome.sea - 6 };
+  const bounds = { minX: Math.min(...xs) - margin, maxX: Math.max(...xs) + margin, minZ: Math.min(...zs) - margin, maxZ: Math.max(...zs) + margin, floorY: biome.sea - 6 };
+  return { group, field, groundAt: (x, z) => terrain.groundAt(x, z), hug, biome, rows, over, onBridge, lake, flight, waterY, floorY: biome.sea - 6, bounds };
 }

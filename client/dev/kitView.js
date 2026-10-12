@@ -100,7 +100,9 @@ window.kitView = {
   info() {
     const u = scene.scenery?.userData ?? {};
     const v = (x) => x && { x: x.x, y: x.y, z: x.z };
-    return { liftHill: u.liftHill && { top: v(u.liftHill.top), foot: v(u.liftHill.foot), back: v(u.liftHill.back), side: v(u.liftHill.side), length: u.liftHill.length } };
+    const s0 = scene.centerline?.samples?.[0];
+    const start = s0 && { top: v(s0.pos), back: v(new Vector3(-s0.tangent.x, 0, -s0.tangent.z).normalize()), side: v(new Vector3(s0.side.x, 0, s0.side.z).normalize()) };
+    return { liftHill: u.liftHill && { top: v(u.liftHill.top), foot: v(u.liftHill.foot), back: v(u.liftHill.back), side: v(u.liftHill.side), length: u.liftHill.length }, start };
   },
   /** Dev: the land's height at (x, z). */
   ground(x, z) {

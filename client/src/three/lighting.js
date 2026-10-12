@@ -17,7 +17,7 @@ import {
 } from 'three';
 import { channelLipAt, channelRadiusAt, forkAt, forkOffset, forkRadius } from './iceChannel';
 
-export const LIGHTINGS = ['day', 'sunset', 'midnight-sun', 'night-northern-lights', 'fog', 'snow', 'rain', 'night'];
+export const LIGHTINGS = ['day', 'sunset', 'midnight-sun', 'night-northern-lights', 'fog', 'snow', 'rain', 'night', 'parlour'];
 
 /** Each preset's sky, haze and light (day: the landscape's own). fogRange: metres, near and far. */
 export const PRESETS = {
@@ -57,6 +57,17 @@ export const PRESETS = {
     sun: { color: '#fff1d6', intensity: 0.75, direction: [0.2, 1, 0.3] }, // the floodlights, from high above
     groundTint: 0.4,
     effects: { stars: true, night: true },
+  },
+  // A pinball parlour (the pinball tables): a dim room round the giant table, warm lamps over it,
+  // the playfield's inserts and the backglass glowing, the marbles glowing in their own colours.
+  parlour: {
+    sky: { top: '#07040c', horizon: '#2a1236', glow: null },
+    fog: '#160c20',
+    fogRange: [320, 1900],
+    hemisphere: { sky: '#d8b8ff', ground: '#2a1838', intensity: 1.05 },
+    ambient: 0.36,
+    sun: { color: '#ffe0b0', intensity: 0.95, direction: [0.15, 1, 0.3] }, // the lamps over the table
+    effects: { night: true },
   },
   fog: {
     sky: { top: '#b6c0c9', horizon: '#d3d8dc', glow: null },

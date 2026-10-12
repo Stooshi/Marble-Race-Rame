@@ -263,6 +263,21 @@ const LAYOUTS = {
       obstacles: [parked({ costume: c.parked, at: 0.2, side: R, length: 7 }), peg({ costume: c.peg, at: 0.45, line: 'left' }), peg({ costume: c.peg, at: 0.6, line: 'center' })], features: [rumble({ from: 0.7, to: 0.95, count: 3 })],
     },
   ],
+  /** L16 Staircases: a sweep, a spiral, a slalom drop, a straight (a curtain and pegs), a second spiral, the hairpin late, a second sweep and pegs at the run-in. */
+  staircases: (L, R, c) => [
+    { key: 'gallery', name: 'Sweep', shape: sweep({ side: L, radius: 85, degrees: 165, grade: 0.085 }), billboards: 2 },
+    { key: 'stair1', name: 'First spiral', shape: spiral({ side: R, radius: 48, turns: 1, grade: 0.17 }) },
+    { key: 'slalomDrop', name: 'Slalom drop', shape: plunge(55, { grade: 0.2, from: 0.1 }), obstacles: [slalom({ costume: c.slalom, from: 0.4, to: 0.9, count: 3, loss: 0.15 })] },
+    { key: 'library', name: 'Straight run', shape: straight(70, { grade: 0.13 }), obstacles: [curtain({ costume: c.curtain, at: 0.3, side: L }), peg({ costume: c.peg, at: 0.55, line: 'right' }), peg({ costume: c.peg, at: 0.75, line: 'left' })], billboards: 1 },
+    { key: 'stair2', name: 'Second spiral', shape: spiral({ side: L, radius: 46, turns: 1, grade: 0.17 }) },
+    { key: 'brakingStraight', name: 'Run to the hairpin', shape: straight(50, { grade: 0.12 }), billboards: 1 },
+    { key: 'hairpin', name: 'Hairpin', shape: hairpin({ side: R }), obstacles: [swipe({ costume: c.swipe, side: 'high' })] },
+    { key: 'sweep2', name: 'Second sweep', shape: sweep({ side: L, radius: 80, degrees: 90, grade: 0.08 }) },
+    {
+      key: 'lastStraight', name: 'Last straight', shape: straight(55, { grade: 0.15 }),
+      obstacles: [peg({ costume: c.peg, at: 0.3, line: 'left' }), peg({ costume: c.peg, at: 0.45, line: 'right' }), peg({ costume: c.peg, at: 0.6, line: 'center' })], features: [rumble({ from: 0.75, to: 0.95, count: 3 })],
+    },
+  ],
 };
 
 const LAYOUT_KINDS = Object.keys(LAYOUTS);

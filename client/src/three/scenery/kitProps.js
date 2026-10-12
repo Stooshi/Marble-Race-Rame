@@ -169,6 +169,29 @@ export function aspen(lite) {
 }
 
 /** What grows (or lies about) in each landscape: [geometry builder, share of the spots]. */
+/** A pinball playfield's dressing: chrome posts with rubber rings, star rollovers, coloured plastics. */
+function pinPost() {
+  return merge([
+    piece(new CylinderGeometry(0.25, 0.3, 2.4, 8), '#d0d4da', new Matrix4().makeTranslation(0, 1.2, 0)),
+    piece(new CylinderGeometry(0.55, 0.55, 0.3, 10), '#d8342a', new Matrix4().makeTranslation(0, 1.4, 0)),
+  ]);
+}
+let playfieldTurn = 0; // (the next colour in turn: the same table looks the same every time)
+function starRollover() {
+  playfieldTurn += 1;
+  const colour = ['#ffd23f', '#3fd8ff', '#ff3f6a', '#7dff6a'][playfieldTurn % 4];
+  return merge([piece(new CylinderGeometry(1.4, 1.4, 0.12, 5), colour, new Matrix4().makeTranslation(0, 0.06, 0))]);
+}
+function plastic() {
+  playfieldTurn += 1;
+  const colour = ['#ff4fb8', '#3a8aff', '#ffd23f', '#7dff6a'][playfieldTurn % 4];
+  return merge([
+    piece(new BoxGeometry(5, 0.2, 2.4), colour, new Matrix4().makeTranslation(0, 2.6, 0)),
+    piece(new CylinderGeometry(0.2, 0.2, 2.6, 6), '#d0d4da', new Matrix4().makeTranslation(-2, 1.3, 0)),
+    piece(new CylinderGeometry(0.2, 0.2, 2.6, 6), '#d0d4da', new Matrix4().makeTranslation(2, 1.3, 0)),
+  ]);
+}
+
 export function dressingFor(biome) {
   return {
     alpine: [[(l) => pine(l, true), 0.8], [(l) => rock(l, '#9a9690'), 0.2]],
@@ -182,6 +205,8 @@ export function dressingFor(biome) {
     jungle: [[jungleTree, 0.5], [jungleFern, 0.3], [junglepalm, 0.2]],
     // (City parks: hundreds of trees beside streets of buildings; always the plainest, to stay in budget.)
     city: [[planeTree, 0.5], [() => bush(true, '#5f9a48'), 0.5]],
+    // (A pinball playfield: posts, rollovers and plastics instead of trees.)
+    playfield: [[pinPost, 0.4], [starRollover, 0.35], [plastic, 0.25]],
   }[biome] ?? [[broadleaf, 1]];
 }
 

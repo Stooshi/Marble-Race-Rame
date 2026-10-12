@@ -19,9 +19,13 @@ const LONGEST_CLIMB_M = 40;    // San Francisco's 35 m
 const { LIGHTINGS } = require('./lighting');
 const { OPENING_KINDS } = require('./openings');
 // Track families (the sameness check compares openings within one): 'test' tracks are never compared.
-const FAMILIES = ['world-tour', 'grand-prix', 'coaster', 'test'];
+const FAMILIES = ['world-tour', 'grand-prix', 'coaster', 'pinball', 'test'];
 // A coaster: the coaster family, or a library test track built as one (series 'coaster').
 const isCoaster = (spec) => spec.family === 'coaster' || (spec.family === 'test' && spec.series === 'coaster');
+// A pinball table: the pinball family, or a library test track built as one (series 'pinball').
+const isPinball = (spec) => spec.family === 'pinball' || (spec.family === 'test' && spec.series === 'pinball');
+// A pinball table's backglass art (original art, one style per table) and its dot-matrix call-out.
+const PINBALL_ART = ['manor', 'castle', 'saucers', 'theatre', 'diner', 'clocks', 'concert'];
 const MAX_COASTER_HEIGHT = 45; // metres: the tallest supports drawn
 
 const BILLBOARDS = [4, 6];
@@ -249,7 +253,9 @@ function checkRecipe({ spec, sections, span, generated, owner, placed, total, wh
   }
 
   // Coasters: their own rules (a lift hill, supports, touchdowns, water).
-  if (spec.series !== undefined && !(spec.family === 'test' && spec.series === 'coaster')) problems.push(`${where('track')}: series is for test tracks, and the one series is 'coaster' (a library test track built as a coaster).`);
+  if (spec.series !== undefined && !(spec.family === 'test' && ['coaster', 'pinball'].includes(spec.series))) problems.push(`${where('track')}: series is for test tracks: 'coaster' or 'pinball' (a library test track built as a coaster or a pinball table).`);
+  if (isPinball(spec)) problems.push(...pinballRules({ spec, where }));
+  else if (spec.pinball !== undefined) problems.push(`${where('track')}: pinball settings are for pinball tables (family: 'pinball').`);
   if (isCoaster(spec)) problems.push(...coasterRules({ spec, sections, where }));
   else {
     if (spec.coaster !== undefined) problems.push(`${where('track')}: coaster settings are for coasters (family: 'coaster').`);
@@ -273,6 +279,20 @@ function checkRecipe({ spec, sections, span, generated, owner, placed, total, wh
     if (s.tunnel !== undefined || (s.bridge !== undefined && !coaster)) problems.push(`${where(s.name)}: no billboards in a tunnel or on a bridge (nowhere to stand them).`);
   });
 
+  return problems;
+}
+
+/**
+ * Pinball tables: the playfield is the ground (biome 'playfield'), the parlour's light, the
+ * backglass's art and the dot-matrix display's call-out at the start (`pinball: { art, display }`).
+ */
+function pinballRules({ spec, where }) {
+  const problems = [];
+  const pb = spec.pinball ?? {};
+  if (spec.biome !== undefined && spec.biome !== 'playfield') problems.push(`${where('track')}: a pinball table's ground is its playfield (biome 'playfield').`);
+  if (pb.art !== undefined && !PINBALL_ART.includes(pb.art)) problems.push(`${where('pinball')}: unknown backglass art ${JSON.stringify(pb.art)} (${PINBALL_ART.join(', ')}).`);
+  if (pb.display !== undefined && !(typeof pb.display === 'string' && /^[A-Z0-9 !?.'-]{1,16}$/.test(pb.display))) problems.push(`${where('pinball')}: display is the dot-matrix call-out: up to 16 capital letters, digits and ! ? . ' - (MULTIBALL!).`);
+  if (pb.finish !== undefined && !(typeof pb.finish === 'string' && /^[A-Z0-9 !?.'-]{1,16}$/.test(pb.finish))) problems.push(`${where('pinball')}: finish is the dot-matrix call-out for the winner: up to 16 capital letters, digits and ! ? . ' - (JACKPOT!).`);
   return problems;
 }
 
@@ -324,4 +344,4 @@ function coasterRules({ spec, sections, where }) {
   return problems;
 }
 
-module.exports = { checkRecipe, MIN_SPIRAL_RADIUS, MIN_SWEEP_RADIUS, BILLBOARDS, GRAND_PRIX_BILLBOARDS, isCoaster, START_TYPES, GATES, COUNTDOWN_SHOTS, LAUNCH_SHOTS };
+module.exports = { checkRecipe, MIN_SPIRAL_RADIUS, MIN_SWEEP_RADIUS, BILLBOARDS, GRAND_PRIX_BILLBOARDS, isCoaster, isPinball, PINBALL_ART, START_TYPES, GATES, COUNTDOWN_SHOTS, LAUNCH_SHOTS };

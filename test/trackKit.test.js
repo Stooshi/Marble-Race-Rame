@@ -637,6 +637,7 @@ const HIDDEN_KIT_TRACKS = [
   ['okavango-park', '2026-11-22-add-okavango-park.sql', 'Okavango Park Coaster, over the flooded Okavango Delta to a safari lodge on stilts'],
   ['kopaonik-spins', '2026-11-23-add-kopaonik-spins.sql', 'Kopaonik Spins Coaster, spinning down the Kopaonik mountain to a village kolo'],
   ['nanjing', '2026-11-24-add-nanjing.sql', 'Nanjing Coaster, from Purple Mountain past the old city wall to the Yangtze'],
+  ['multiball-manor', '2026-11-26-add-multiball-manor.sql', 'Multiball Manor, the first Pinball Series table: a gothic manor at midnight'],
 ];
 for (const [slug, file, note] of HIDDEN_KIT_TRACKS) {
   test(`${slug} is added by its data update, switched off, exactly as its track file builds it`, () => {
