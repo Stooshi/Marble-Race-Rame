@@ -45,4 +45,5 @@ module.exports = [
   require('./slingshot-spins'),
   require('./tilt'),
   require('./replay'),
+  require('./grand-champion'),
 ];
