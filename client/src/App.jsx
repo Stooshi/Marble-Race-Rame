@@ -5,9 +5,15 @@ import SiteHeader from './site/SiteHeader';
 import SiteFooter from './site/SiteFooter';
 import { useAuth } from './context/AuthContext';
 import {
-  BagPage, CheckoutPage, CollectionPage, FriendsPage, LandingPage, LegalPage, ScoresPage, ShooterPage, ShopPage,
+  FriendsPage, LandingPage, LegalPage, ScoresPage, ShooterPage,
   SignupPage, StartLinePage, TrackPage,
 } from './site/pages/Stub';
+import CollectionPage from './site/pages/CollectionPage';
+import DesignPage from './site/pages/DesignPage';
+import ShopPage from './site/pages/ShopPage';
+import CertificatePage from './site/pages/CertificatePage';
+import BagPage from './site/pages/BagPage';
+import CheckoutPage from './site/pages/CheckoutPage';
 import Home from './pages/Home';
 import Dashboard from './pages/Dashboard';
 import Race from './pages/Race';
@@ -39,6 +45,8 @@ export default function App() {
           <Route path="/play/start" element={<StartLinePage />} />
           <Route path="/shop" element={<ShopPage />} />
           <Route path="/collection" element={<CollectionPage />} />
+          <Route path="/collection/:design" element={<DesignPage />} />
+          <Route path="/certificate/:code" element={<CertificatePage />} />
           <Route path="/checkout" element={<CheckoutPage />} />
           <Route path="/bag" element={<BagPage />} />
           <Route path="/scores" element={<ScoresPage />} />

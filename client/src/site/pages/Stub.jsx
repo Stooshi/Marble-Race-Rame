@@ -27,10 +27,6 @@ export const FriendsPage = () => <Stub eyebrow="Race · step 1 of 4" title="Who 
 export const TrackPage = () => <Stub eyebrow="Race · step 2 of 4" title="Pick a track" next={[['/play/shooter', 'Next: your shooter']]}>Every track that's switched on, with its series and a preview. [Coming in this build]</Stub>;
 export const ShooterPage = () => <Stub eyebrow="Race · step 3 of 4" title="Pick your shooter" next={[['/play/start', 'Next: the starting line']]}>Choose a marble from your Marble Bag. [Coming in this build]</Stub>;
 export const StartLinePage = () => <Stub eyebrow="Race · step 4 of 4" title="Starting line" next={[['/home', 'Back to races']]}>The grid, the countdown and the gate. [Coming in this build]</Stub>;
-export const ShopPage = () => <Stub eyebrow="Shop" title="The Grand Opening collection" next={[['/collection', 'See the collection']]}>15 designs, 5 shades each, plus the October limited edition. [Coming in this build]</Stub>;
-export const CollectionPage = () => <Stub eyebrow="Collection" title="Grand Opening" next={[['/shop', 'Back to the shop']]}>Every design with its story, shades, rarity and First Edition count. [Coming in this build]</Stub>;
-export const CheckoutPage = () => <Stub eyebrow="Checkout" title="Checkout" next={[['/shop', 'Back to the shop']]}>Pay with coins, or with credits through [Stripe]. [Coming in this build]</Stub>;
-export const BagPage = () => <Stub eyebrow="Marble Bag" title="Your Marble Bag" next={[['/shop', 'Go to the shop']]}>Every marble you own, your sets and your First Edition certificates. [Coming in this build]</Stub>;
 export const ScoresPage = () => <Stub eyebrow="Scoreboards" title="Scoreboards" next={[['/home', 'Race now']]}>Today, this week and all time, per track and overall. [Coming in this build]</Stub>;
 export const SignupPage = () => <Stub eyebrow="Sign up" title="Save your marble" next={[['/home', 'Play free first']]}>Make an account to keep your marbles, coins and records. [Coming in this build]</Stub>;
 export const LegalPage = () => <Stub eyebrow="Legal" title="Terms, privacy and contact">[Terms] · [Privacy] · [Contact]. [Coming in this build]</Stub>;

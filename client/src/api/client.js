@@ -78,6 +78,11 @@ export const api = {
   setShooter: (choice) => request('/collection/shooter', { method: 'PUT', body: choice }),
   certificate: (code) => request(`/collection/certificate/${code}`),
 
+  // Credits: packs, a web checkout, an app store receipt (site/payments picks the provider).
+  paymentOptions: () => request('/payments'),
+  checkout: (body) => request('/payments/checkout', { method: 'POST', body }),
+  redeemReceipt: (body) => request('/payments/receipt', { method: 'POST', body }),
+
   tracks: () => request('/tracks'),
   track: (idOrSlug) => request(`/tracks/${idOrSlug}`),
 

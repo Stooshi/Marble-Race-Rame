@@ -32,6 +32,7 @@ function createApp() {
   app.use('/api/tracks', require('./routes/tracks'));
   app.use('/api/marbles', require('./routes/marbles'));
   app.use('/api/collection', require('./routes/collection'));
+  app.use('/api/payments', require('./routes/payments'));
   app.use('/api/appearance', require('./routes/appearance'));
   app.use('/api/physics', require('./routes/physics'));
   app.use('/api/billboards', require('./routes/billboards'));

@@ -508,6 +508,27 @@ CREATE TABLE IF NOT EXISTS race_entry_looks (
 );
 CREATE INDEX IF NOT EXISTS idx_race_entry_looks_copy ON race_entry_looks (collection_id);
 
+-- Payments for credits, whoever took the money: Stripe on the web, Apple or
+-- Google in-app purchases in the phone apps ('test' only outside production).
+-- product_id is the credit pack (client/src/shared/payments/packs.json).
+-- provider_ref is the provider's own id (Stripe session, App Store
+-- transaction, Play order), unique so a payment is never credited twice.
+CREATE TABLE IF NOT EXISTS payments (
+    id              uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id         uuid        NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
+    provider        varchar(16) NOT NULL CHECK (provider IN ('stripe', 'apple', 'google', 'test')),
+    provider_ref    varchar(255),
+    product_id      varchar(32) NOT NULL,
+    credits         integer     NOT NULL CHECK (credits > 0),
+    amount_cents    integer     NOT NULL CHECK (amount_cents >= 0),
+    currency        char(3)     NOT NULL,
+    status          varchar(16) NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'paid', 'failed', 'refunded')),
+    created_at      timestamptz NOT NULL DEFAULT now(),
+    paid_at         timestamptz,
+    CONSTRAINT payments_provider_ref UNIQUE (provider, provider_ref)
+);
+CREATE INDEX IF NOT EXISTS idx_payments_user ON payments (user_id, created_at DESC);
+
 -- -----------------------------------------------------------------------------
 -- data_updates: one-time changes to existing rows (docs/data_updates/*.sql)
 -- -----------------------------------------------------------------------------

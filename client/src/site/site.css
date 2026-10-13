@@ -185,17 +185,20 @@ a:hover .ms-logo, .ms-header__logo:hover { text-decoration: none; }
   white-space: nowrap;
 }
 .ms-chip--streak { color: var(--ms-orange); }
+.ms-chip--credits { color: #3DB5FF; }
 a.ms-chip:hover { text-decoration: none; border-color: var(--ms-muted); }
 
 .ms-header__inner--landing .ms-header__login { margin-left: auto; }
 
 @media (max-width: 520px) {
-  .ms-chip--streak { display: none; }
+  .ms-chip--streak, .ms-chip--credits { display: none; }
   .ms-header__logout { display: none; }
   .ms-header__logo .ms-logo { font-size: 24px !important; }
   .ms-header__inner { gap: 10px 12px; }
   .ms-chips { gap: 6px; }
   .ms-wide-only { display: none; }
+  .ms-nav { justify-content: space-between; }
+  .ms-nav a { font-size: 0.92rem; padding: 6px 6px; letter-spacing: 0.02em; }
 }
 @media (min-width: 521px) { .ms-narrow-only { display: none; } }
 
@@ -274,3 +277,81 @@ a.ms-chip:hover { text-decoration: none; border-color: var(--ms-muted); }
   color: var(--ms-soft);
 }
 .ms-coins { font-variant-numeric: tabular-nums; font-family: var(--ms-cond); font-weight: 800; }
+
+/* ── Marble badges ─────────────────────────────────────────────────────── */
+.ms-m { position: relative; display: inline-block; border-radius: 50%; overflow: hidden; flex-shrink: 0; }
+.ms-m > i { position: absolute; inset: 0; display: block; border-radius: 50%; }
+@keyframes msSpin { to { transform: rotate(360deg); } }
+.ms-spin-fast { animation: msSpin 4s linear infinite; }
+.ms-spin-slow { animation: msSpin 14s linear infinite; }
+@media (prefers-reduced-motion: reduce) { .ms-spin-fast, .ms-spin-slow { animation: none; } }
+
+/* ── Collection, shop and bag ─────────────────────────────────────────────── */
+.ms-hero {
+  border-radius: 28px;
+  border: 1px solid var(--ms-border);
+  background: radial-gradient(circle at 80% 20%, #3A1E6B 0%, #142338 55%, var(--ms-bg) 100%);
+  padding: clamp(20px, 4vw, 36px);
+  display: flex; flex-wrap: wrap; gap: 24px; align-items: center;
+}
+.ms-hero > * { flex: 1 1 300px; min-width: 0; }
+.ms-hero__balls { display: flex; justify-content: center; align-items: center; gap: 18px; flex-wrap: wrap; }
+.ms-badge-label { align-self: flex-start; background: var(--ms-yellow); color: var(--ms-ink); font-size: 0.8rem; font-weight: 700; padding: 4px 10px; border-radius: 6px; letter-spacing: 0.04em; }
+.ms-pills { display: flex; flex-wrap: wrap; gap: 8px; }
+.ms-pill { background: var(--ms-card); border: 1px solid var(--ms-border); border-radius: 999px; padding: 5px 12px; font-weight: 700; font-size: 0.9rem; }
+.ms-cards { display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 250px), 1fr)); }
+.ms-mcard {
+  background: var(--ms-card); border: 1px solid var(--ms-border); border-radius: 20px; padding: 22px;
+  display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center; color: var(--ms-text); min-width: 0;
+}
+a.ms-mcard:hover { text-decoration: none; border-color: var(--ms-muted); }
+.ms-mcard__rarity { margin-top: 6px; font-size: 0.78rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
+.ms-mcard__name { font-weight: 700; font-size: 1.25rem; }
+.ms-mcard__story { font-size: 0.95rem; line-height: 1.45; color: #E3E7EF; font-style: italic; }
+.ms-mcard__mat { font-size: 0.82rem; line-height: 1.45; color: var(--ms-muted); }
+.ms-mcard__fe { margin-top: auto; font-size: 0.82rem; font-weight: 700; color: var(--ms-orange); }
+.ms-price-btn {
+  display: flex; justify-content: center; align-items: center; width: 100%; min-height: 44px;
+  border: 1px solid var(--ms-yellow); border-radius: 10px; color: var(--ms-yellow); font-weight: 700; background: transparent; cursor: pointer;
+}
+.ms-price-btn:disabled { border-color: var(--ms-border); color: var(--ms-muted); cursor: default; }
+.ms-section-head { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; }
+.ms-section-head h2 { font-family: var(--ms-cond); font-weight: 800; font-size: 2rem; margin: 0; }
+.ms-section-head span { color: var(--ms-muted); }
+.ms-quote { display: flex; flex-direction: column; gap: 4px; padding: 12px 14px; background: rgba(14,19,32,0.55); border-radius: 12px; }
+.ms-quote > span:first-child { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; }
+.ms-quote > span + span { font-size: 0.95rem; line-height: 1.45; color: #E3E7EF; }
+.ms-swatches { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; font-size: 0.8rem; color: var(--ms-muted); }
+.ms-swatches i { width: 14px; height: 14px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.15); display: inline-block; }
+.ms-shades { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 150px), 1fr)); }
+.ms-shade {
+  display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; padding: 12px 8px;
+  border-radius: 14px; border: 1px solid transparent; background: none; color: var(--ms-text); cursor: pointer; font: inherit;
+}
+.ms-shade[aria-pressed="true"] { border-color: var(--ms-yellow); background: rgba(255,210,31,0.06); }
+.ms-shade small { color: var(--ms-soft); font-size: 0.8rem; line-height: 1.35; }
+.ms-progress { display: flex; align-items: center; gap: 12px; }
+.ms-progress > div { flex: 1; height: 10px; background: var(--ms-border); border-radius: 999px; overflow: hidden; }
+.ms-progress > div > div { height: 100%; background: var(--ms-yellow); border-radius: 999px; }
+.ms-progress > span { font-weight: 700; color: var(--ms-soft); font-size: 0.9rem; white-space: nowrap; }
+.ms-tabs { display: flex; gap: 6px; flex-wrap: wrap; }
+.ms-tabs button {
+  min-height: 40px; padding: 8px 16px; border-radius: 999px; border: 1px solid var(--ms-border); background: var(--ms-card);
+  color: var(--ms-soft); font-weight: 700; cursor: pointer; font: inherit;
+}
+.ms-tabs button[aria-selected="true"], .ms-tabs button[aria-pressed="true"] { background: var(--ms-yellow); border-color: var(--ms-yellow); color: var(--ms-ink); }
+.ms-cert {
+  background: linear-gradient(160deg, #2B2410 0%, var(--ms-card) 60%); border: 1px solid var(--ms-yellow); border-radius: 22px;
+  padding: 24px; display: flex; flex-direction: column; gap: 14px; min-width: 0;
+}
+.ms-cert__tag { align-self: flex-start; background: var(--ms-orange); color: var(--ms-ink); font-size: 0.75rem; font-weight: 800; padding: 4px 10px; border-radius: 6px; letter-spacing: 0.04em; }
+.ms-cert__title { font-family: var(--ms-cond); font-weight: 800; font-size: 1.9rem; line-height: 1; }
+.ms-kv { display: grid; grid-template-columns: auto 1fr; gap: 8px 16px; font-size: 0.95rem; }
+.ms-kv > :nth-child(odd) { color: var(--ms-muted); }
+.ms-kv > :nth-child(even) { font-weight: 700; overflow-wrap: anywhere; }
+.ms-note { color: var(--ms-muted); font-size: 0.9rem; margin: 0; }
+.ms-msg { padding: 12px 14px; border-radius: 12px; background: rgba(61,220,151,0.1); border: 1px solid rgba(61,220,151,0.4); }
+.ms-msg--bad { background: rgba(229,50,45,0.1); border-color: rgba(229,50,45,0.45); }
+.ms-turntable { width: 100%; aspect-ratio: 4 / 3; max-width: 100%; border-radius: 20px; display: block; background: #0B1020; touch-action: pan-y; }
+.ms-two { display: flex; flex-wrap: wrap; gap: 20px; }
+.ms-two > * { flex: 1 1 340px; min-width: 0; }
