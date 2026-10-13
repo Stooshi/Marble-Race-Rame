@@ -6,6 +6,8 @@
  * `pass` is true, false, or null (shown, not judged).
  */
 const { GROUPS, STRENGTH_GROUPS } = require('./analyze');
+const { pickShowcaseLooks, lookTier, SHOWCASE_MIX } = require('../marbles/showcase');
+const { createRng } = require('../game/rng');
 
 const TARGETS = {
   groupWins: [17, 23],        // % of wins per group of 4 starting places
@@ -68,6 +70,43 @@ function fairness(batch, b, pooled = false) {
   return lines;
 }
 
+/**
+ * Showcase marbles: dress each race's computer players the way beginner races
+ * are dressed (here from the race's seed, so the report repeats) and check
+ * that every marble tier wins its fair share: its share of the wins within
+ * three standard errors of its share of the field. A look is never given to
+ * the engine, so this is the proof that a computer player's marble never
+ * changes who wins.
+ */
+function showcaseFairness(all) {
+  const tiers = [...SHOWCASE_MIX.map((m) => m.rarities.map((r) => r[0].toUpperCase() + r.slice(1)).join('/')), 'Plain'];
+  const field = new Array(tiers.length).fill(0);
+  const wins = new Array(tiers.length).fill(0);
+  let marbles = 0;
+  for (const r of all) {
+    const rng = createRng((r.seed ^ 0x5eed) >>> 0);
+    const looks = pickShowcaseLooks(r.field, () => rng.next());
+    const tierOf = (i) => { const t = lookTier(looks[i]); return t === 'plain' || t < 0 ? tiers.length - 1 : t; };
+    looks.forEach((_, i) => { field[tierOf(i)] += 1; });
+    wins[tierOf(r.winner)] += 1;
+    marbles += r.field;
+  }
+  const n = all.length;
+  const parts = tiers.map((name, t) => {
+    const share = field[t] / marbles;
+    const winShare = wins[t] / n;
+    const allowed = 3 * Math.sqrt((share * (1 - share)) / n);
+    return { name, share, winShare, ok: Math.abs(winShare - share) <= allowed, allowed };
+  });
+  return [{
+    part: 'Fairness',
+    what: `Showcase marbles (${n.toLocaleString('en')} races): each marble tier's share of the field vs share of wins`,
+    value: parts.map((p) => `${p.name} ${fmt(100 * p.share)}% / ${fmt(100 * p.winShare)}%`).join(' · '),
+    target: 'each tier within 3 standard errors of its share',
+    pass: parts.every((p) => p.ok),
+  }];
+}
+
 /** Every line of the races part of the report. `track`: the track raced (its kit sections, forks). */
 function summarize(batches, track) {
   const all = batches.flat();
@@ -75,6 +114,7 @@ function summarize(batches, track) {
   const lines = [];
   batches.forEach((batch, b) => lines.push(...fairness(batch, b)));
   if (batches.length > 1) lines.push(...fairness(all, batches.length, true));
+  if (all.every((r) => Number.isInteger(r.winner) && r.field)) lines.push(...showcaseFairness(all));
 
   // Pace.
   const winners = all.map((r) => r.winnerMs / 1000);
@@ -143,4 +183,4 @@ function summarize(batches, track) {
   return lines;
 }
 
-module.exports = { summarize, TARGETS, median };
+module.exports = { summarize, showcaseFairness, TARGETS, median };

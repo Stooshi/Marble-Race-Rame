@@ -183,6 +183,8 @@ The collection (Collection 1 · Grand Opening: 15 designs in 5 shades plus the m
 | GET | `/scoreboard` | optional | `?board=season\|all\|friends`: players ranked by coins earned in races |
 | GET | `/races/showcase` | – | A recent close race for the landing page's replay |
 
+**Showcase marbles.** In beginner races (every player in the race has finished fewer than 20 races) the computer players race in designed marbles from the collection: about 6 Common/Uncommon, 3 Rare/Epic and 1 Legendary, different each race; the rest stay plain. The mix lives in `catalog.json` → `showcase`. They are drawn after the race is set up, stored apart (`house_looks`), and never given to the race engine, so they can't change a result; the track report's Fairness part checks that every marble tier wins its share. Computer players carry a small "CPU" tag; after a race, tapping any marble shows its name, rarity and a way to the shop.
+
 Every payment provider ends in the same server step (`src/payments/index.js` → `grant`), which adds a pack's credits exactly once. `PAYMENTS_TEST=true` turns on an instant test provider outside production.
 
 ### Marbles

@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { api } from '../../api/client';
 import { useAsync } from '../../hooks/useAsync';
 import MarbleBadge from '../marbles/MarbleBadge';
+import { FEATURED_DESIGNS, originalSlug, rarityInfo } from '../../shared/marbles';
 import { importOrReload } from '../../utils/staleCode';
 
 const HeroReplay = lazy(() => importOrReload(() => import('./HeroReplay')));
@@ -14,7 +15,6 @@ const SERIES = [
   ['Pinball', 'bumpers and flippers', 'linear-gradient(150deg,#3A1E6B,#FF3FA8)'],
   ['Arcade', 'neon and pixels', 'linear-gradient(150deg,#0A0A12,#3FD8FF)'],
 ];
-const RARITY_SAMPLES = [['candy-pink', 'COMMON', 'var(--r-common)'], ['tiger-amber', 'UNCOMMON', 'var(--r-uncommon)'], ['galaxy-milky-way', 'RARE', 'var(--r-rare)'], ['neon-arcade', 'EPIC', 'var(--r-epic)'], ['sun-solar', 'LEGENDARY', 'var(--r-legendary)']];
 const FAQ = [
   ['Is Marble Spins free?', 'Yes. Every race is free and unlimited. You can buy extra marble looks in the shop if you want to.'],
   ['Do I need to download anything?', 'No. It plays in your browser on phone or computer. Apps for iPhone and Android are on the way.'],
@@ -93,10 +93,10 @@ export default function LandingPage() {
             <Link to="/collection" style={{ color: 'var(--ms-yellow)', fontWeight: 700 }}>See the collection →</Link>
           </div>
           <div className="ms-row" style={{ justifyContent: 'center', gap: 18 }}>
-            {RARITY_SAMPLES.map(([slug, label, colour]) => (
-              <div key={slug} style={{ display: 'grid', justifyItems: 'center', gap: 8 }}>
-                <MarbleBadge slug={slug} size={84} />
-                <span style={{ color: colour, fontWeight: 800, fontSize: '0.8rem', letterSpacing: '0.06em' }}>{label}</span>
+            {FEATURED_DESIGNS.map((d) => (
+              <div key={d.key} style={{ display: 'grid', justifyItems: 'center', gap: 8 }}>
+                <MarbleBadge slug={originalSlug(d)} size={84} />
+                <span style={{ color: rarityInfo(d.rarity).colour, fontWeight: 800, fontSize: '0.8rem', letterSpacing: '0.06em' }}>{rarityInfo(d.rarity).label.toUpperCase()}</span>
               </div>
             ))}
           </div>
@@ -112,7 +112,7 @@ export default function LandingPage() {
           </div>
           <div style={{ display: 'grid', gap: 12 }}>
             <h2 id="friends-h" className="ms-landing__h2">Race your friends</h2>
-            <p style={{ margin: 0, color: 'var(--ms-soft)' }}>Send one link. Up to 20 players race together, and any empty places are filled with house marbles. Lost by a hair? Hit rematch.</p>
+            <p style={{ margin: 0, color: 'var(--ms-soft)' }}>Send one link. Up to 20 players race together, and any empty places are filled with CPU players. Lost by a hair? Hit rematch.</p>
             <Link to="/play/friends" className="ms-btn" style={{ justifySelf: 'start' }}>Start a room</Link>
           </div>
         </div>

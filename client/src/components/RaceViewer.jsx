@@ -4,6 +4,7 @@ import { HALFWAY, splitOrder } from '../utils/splits';
 import { formatDelta, formatTime } from '../utils/format';
 import { OBSTACLE_COLORS, trackMarks } from './TrackPreview';
 import MarbleBall from './MarbleBall';
+import CpuTag from './CpuTag';
 import FinishShow, { useFinishShow } from './FinishShow';
 import SkipToResults from './SkipToResults';
 
@@ -151,7 +152,7 @@ export default function RaceViewer({
                   <MarbleBall marble={e.marble} size={18} />
                   <span className="standings__name">
                     {e.marble.name}
-                    <small>{e.user ? e.user.username : 'bot'}</small>
+                    <small>{e.user ? e.user.username : <CpuTag />}</small>
                   </span>
                   <span className="standings__bar" title={`${Math.round(p * 100)}%`}>
                     <span style={{ width: `${p * 100}%` }} />

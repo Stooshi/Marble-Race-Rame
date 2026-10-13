@@ -1,5 +1,6 @@
 'use strict';
 
+const { dressComputerPlayers } = require('../marbles/showcase');
 const crypto = require('crypto');
 const zlib = require('zlib');
 const db = require('../db');
@@ -37,6 +38,17 @@ function withSnapshot(race) {
   return race;
 }
 
+/** What the race engine gets of an entry: everything but its look (a look can never change a race). */
+const engineEntry = ({ look, marble_rarity, marble_starter, ...entry }) => entry; // (exactly the fields it always had)
+
+/**
+ * The collection look an entry races in (drawing only): a player's Shooter, or
+ * a computer player's showcase marble in a beginner race. Never given to the engine.
+ */
+const LOOK_SQL = `COALESCE(
+  (SELECT c.item_slug FROM race_entry_looks l JOIN user_collection c ON c.id = l.collection_id WHERE l.entry_id = e.id),
+  (SELECT h.item_slug FROM house_looks h WHERE h.entry_id = e.id))`;
+
 /** Loads everything the simulator needs, in a stable order, from persisted state. */
 async function loadSimulationInput(client, raceId) {
   const { rows: raceRows } = await client.query(
@@ -55,8 +67,8 @@ async function loadSimulationInput(client, raceId) {
             e.finish_position, e.finish_time_ms,
             m.name AS marble_name, m.slug AS marble_slug, m.color_primary, m.color_secondary, m.pattern,
             u.username,
-            (SELECT c.item_slug FROM race_entry_looks l JOIN user_collection c ON c.id = l.collection_id
-              WHERE l.entry_id = e.id) AS look
+            m.rarity AS marble_rarity, m.is_starter AS marble_starter,
+            ${LOOK_SQL} AS look
        FROM race_entries e
        JOIN marbles m ON m.id = e.marble_id
        LEFT JOIN users u ON u.id = e.user_id
@@ -73,7 +85,7 @@ async function loadSimulationInput(client, raceId) {
  * regenerated from the seed, exactly as always.
  */
 async function loadRun(client, race, entries) {
-  if (!race.physics) return runSimulation(race, entries);
+  if (!race.physics) return runSimulation(race, entries.map(engineEntry));
   const { rows } = await client.query('SELECT data FROM race_replays WHERE race_id = $1', [race.id]);
   if (!rows[0]) throw new Error(`Race ${race.id} has no stored replay`);
   return JSON.parse(zlib.gunzipSync(rows[0].data).toString('utf8'));
@@ -109,6 +121,8 @@ function describeForClients(race, entries) {
         color_primary: e.color_primary,
         color_secondary: e.color_secondary,
         pattern: e.pattern,
+        rarity: e.marble_rarity,
+        starter: e.marble_starter,
         ...(e.look && { look: e.look }), // the collection look it wears (drawing only)
       },
     })),
@@ -199,6 +213,10 @@ async function decide(raceId, actor) {
       [entryIds, lanes, skills.map((k) => skillStats(k).topSpeed)],
     );
 
+    // Beginner races: the computer players race in showcase marbles (looks only,
+    // drawn with their own randomness, never given to the engine below).
+    await dressComputerPlayers(client, raceId);
+
     // Seed and tick rate are only persisted below, together with the duration
     // the simulation picks, so apply them in memory for this run.
     const input = await loadSimulationInput(client, raceId);
@@ -209,7 +227,7 @@ async function decide(raceId, actor) {
     // snapshot so the replay looks the same. Other tracks are left exactly as they are.
     if (input.race.physics?.kit) input.race.physics = withLighting(input.race.physics, seed);
     // (In a worker thread: the live races being streamed meanwhile never freeze.)
-    const { sim, replay } = await simulationPool.simulate(input.race, input.entries);
+    const { sim, replay } = await simulationPool.simulate(input.race, input.entries.map(engineEntry));
 
     await client.query(
       `UPDATE race_entries e
@@ -293,6 +311,7 @@ async function getResults(client, raceId) {
     `SELECT e.id AS entry_id, e.finish_position AS position, e.finish_time_ms, e.split_time_ms,
             e.lane, e.is_bot, e.coins_awarded,
             e.marble_id, m.name AS marble_name, m.color_primary, m.color_secondary, m.pattern,
+            m.rarity AS marble_rarity, m.is_starter AS marble_starter, ${LOOK_SQL} AS look,
             e.user_id, u.username
        FROM race_entries e
        JOIN marbles m ON m.id = e.marble_id

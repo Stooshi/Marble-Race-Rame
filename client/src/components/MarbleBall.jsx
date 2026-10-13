@@ -1,5 +1,19 @@
-/** A CSS-rendered marble in the marble's colours. */
+import { GLOSS, badgeOf } from '../shared/marbles/badge';
+
+/** A CSS-rendered marble in the marble's colours (or the collection look it wears). */
 export default function MarbleBall({ marble, size = 28, ring = false, title }) {
+  if (marble?.look) {
+    const b = badgeOf(marble.look);
+    return (
+      <span
+        className={`marble-ball${ring ? ' marble-ball--ring' : ''}`}
+        style={{ width: size, height: size, background: `${GLOSS}, ${b.background}` }}
+        title={title ?? marble?.name}
+        role="img"
+        aria-label={title ?? marble?.name ?? 'marble'}
+      />
+    );
+  }
   const primary = marble?.color_primary || '#888888';
   const secondary = marble?.color_secondary || primary;
   const pattern = marble?.pattern || 'solid';

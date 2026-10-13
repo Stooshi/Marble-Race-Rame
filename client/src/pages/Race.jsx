@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { useAsync } from '../hooks/useAsync';
 import { useRaceStream } from '../hooks/useRaceStream';
 import MarbleBall from '../components/MarbleBall';
+import CpuTag from '../components/CpuTag';
 import MarbleSelector from '../components/MarbleSelector';
 import RaceViewer from '../components/RaceViewer';
 import LiveRaceViewer3D from '../components/LiveRaceViewer3D';
@@ -226,14 +227,14 @@ function Lobby({ details, onChange }) {
             {entries.map((e) => (
               <li key={e.id} className={e.user_id === user?.id ? 'is-me' : undefined}>
                 <MarbleBall marble={e} size={24} />
-                <span><strong>{e.marble_name}</strong><small>{e.username ?? 'bot'}</small></span>
+                <span><strong>{e.marble_name}</strong><small>{e.username ?? <CpuTag />}</small></span>
               </li>
             ))}
             {Array.from({ length: Math.max(0, slots) }, (_, i) => (
-              <li key={`slot-${i}`} className="entry-list__empty"><span className="marble-ball marble-ball--empty" /> <small>House marble</small></li>
+              <li key={`slot-${i}`} className="entry-list__empty"><span className="marble-ball marble-ball--empty" /> <small>CPU player</small></li>
             ))}
           </ul>
-          <p className="muted small">Empty slots are filled with house marbles when the race starts, so every race runs with {race.max_marbles} marbles.</p>
+          <p className="muted small">Empty slots are filled with CPU players when the race starts, so every race runs with {race.max_marbles} marbles.</p>
         </section>
 
         {isAuthenticated && !mine && (

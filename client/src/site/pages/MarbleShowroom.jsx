@@ -45,7 +45,7 @@ function useShowroom(canvasRef, { mode, design, night, plain }) {
 
     const geometry = new SphereGeometry(RADIUS, 24, 16);
     const slugs = race
-      ? [...BUILT.map((k) => ITEMS.find((i) => i.design.key === k).slug), 'candy-ocean', 'sun-blue-star', 'glass-ruby', 'hole-quasar'].slice(0, 20)
+      ? [...BUILT.map((k) => ITEMS.find((i) => i.design.key === k).slug), ...ITEMS.filter((i) => !i.shade.original).map((i) => i.slug)].slice(0, 20)
       : ITEMS.filter((i) => i.design.key === design).map((i) => i.slug);
     const plainMat = new MeshPhongMaterial({ color: '#e0115f', shininess: 90 });
     const looks = slugs.map((slug) => {

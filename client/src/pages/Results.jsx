@@ -5,6 +5,14 @@ import { useAuth } from '../context/AuthContext';
 import { useAsync } from '../hooks/useAsync';
 import { useReplay } from '../hooks/useReplay';
 import MarbleBall from '../components/MarbleBall';
+import CpuTag from '../components/CpuTag';
+import MarbleInfo from '../components/MarbleInfo';
+import { lookName } from '../shared/marbles';
+
+/** A result row's marble as the tapped-marble card wants it. */
+const asMarble = (r) => ({ ...r, name: nameOf(r), rarity: r.marble_rarity, starter: r.marble_starter });
+/** The name a result shows: the look it raced in, else the marble's own. */
+const nameOf = (r) => (r.look && lookName(r.look)) || r.marble_name;
 import RaceViewer from '../components/RaceViewer';
 import NextRace from '../components/NextRace';
 import { BOARD_HOLD_MS, finishPlan } from '../utils/finishShow';
@@ -21,6 +29,7 @@ export default function Results() {
     if (data) refreshUser();
   }, [data, refreshUser]);
   const [showReplay, setShowReplay] = useState(false);
+  const [tapped, setTapped] = useState(null); // a marble tapped for its name, rarity and the shop
 
   // Rank at halfway, to show who gained or lost places in the second half.
   const splitRank = useMemo(() => {
@@ -46,6 +55,7 @@ export default function Results() {
 
   return (
     <div className="page results">
+      {tapped && <MarbleInfo marble={asMarble(tapped)} isBot={tapped.is_bot} onClose={() => setTapped(null)} />}
       <header className="race-header">
         <div>
           <p className="eyebrow">
@@ -66,9 +76,11 @@ export default function Results() {
       <section className="podium" aria-label="Podium">
         {[podium[1], podium[0], podium[2]].filter(Boolean).map((r) => (
           <div key={r.entry_id} className={`podium__step podium__step--${r.position}`}>
-            <MarbleBall marble={r} size={r.position === 1 ? 56 : 44} />
-            <strong>{r.marble_name}</strong>
-            <small>{r.username ?? 'bot'}</small>
+            <button type="button" className="marble-tap" style={{ flexDirection: 'column' }} onClick={() => setTapped(r)} aria-label={`About ${nameOf(r)}`}>
+              <MarbleBall marble={r} size={r.position === 1 ? 56 : 44} />
+              <strong>{nameOf(r)}</strong>
+            </button>
+            <small>{r.username ?? <CpuTag />}</small>
             <span className="podium__time">{formatTime(r.finish_time_ms)}</span>
             {r.comparison.is_track_record && <span className="badge badge--gold">Track record</span>}
             <span className="podium__block">{r.position}</span>
@@ -107,11 +119,13 @@ export default function Results() {
                   <td data-label="Pos." className="num stack-head"><span className={`pos pos--${r.position}`}>{r.position}</span></td>
                   <td data-label="Marble" className="stack-head">
                     <span className="inline-marble">
-                      <MarbleBall marble={r} size={20} />
+                      <button type="button" className="marble-tap" onClick={() => setTapped(r)} aria-label={`About ${nameOf(r)}`}>
+                        <MarbleBall marble={r} size={20} />
+                      </button>
                       <span>
-                        <strong>{r.marble_name}</strong>
+                        <button type="button" className="marble-tap" onClick={() => setTapped(r)}><strong>{nameOf(r)}</strong></button>
                         <small className="muted block">
-                          {r.user_id ? <Link to={`/profile/${r.user_id}`}>{r.username}</Link> : 'bot'}
+                          {r.user_id ? <Link to={`/profile/${r.user_id}`}>{r.username}</Link> : <CpuTag />}
                         </small>
                       </span>
                     </span>

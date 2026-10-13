@@ -1,11 +1,10 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { DESIGN, catalog, priceLabel, rarityInfo } from '../../shared/marbles';
+import { DESIGNS, FEATURED_DESIGNS, catalog, originalSlug, priceLabel, rarityInfo } from '../../shared/marbles';
 import MarbleBadge from '../marbles/MarbleBadge';
 import { useCollection } from '../marbles/useCollection';
 import { CREDIT_PACKS } from '../../shared/payments/packs';
 
-const FEATURED = ['candy', 'tiger', 'galaxy', 'flag', 'sun'];
 const TABS = [['marbles', 'Marbles'], ['limited', 'Limited editions'], ['credits', 'Buy credits']];
 
 function daysLeft(iso) {
@@ -62,16 +61,16 @@ export default function ShopPage() {
         <section aria-labelledby="coin-h" style={{ display: 'grid', gap: 14 }}>
           <div className="ms-section-head">
             <h2 id="coin-h">Collection {catalog.collection.number} · {catalog.collection.name}</h2>
-            <Link to="/collection" style={{ color: 'var(--ms-yellow)', fontWeight: 700 }}>See all 15 marbles →</Link>
+            <Link to="/collection" style={{ color: 'var(--ms-yellow)', fontWeight: 700 }}>See all {DESIGNS.filter((d) => !d.limited).length} marbles →</Link>
           </div>
           <span className="ms-note">Bought with coins you earn by racing. Coins can't be bought.</span>
           <div className="ms-cards" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 180px), 1fr))' }}>
-            {FEATURED.map((k) => {
-              const d = DESIGN[k];
+            {FEATURED_DESIGNS.map((d) => {
+              const k = d.key;
               const info = rarityInfo(d.rarity);
               return (
                 <Link key={k} to={`/collection/${k}`} className="ms-mcard" style={{ padding: 18, borderColor: d.rarity === 'legendary' ? 'var(--ms-yellow)' : undefined }}>
-                  <MarbleBadge slug={`${k}-${d.shades[0].key}`} size={96} label={d.name} />
+                  <MarbleBadge slug={originalSlug(d)} size={96} label={d.name} />
                   <span className="ms-mcard__rarity" style={{ color: info.colour }}>{info.label}</span>
                   <span className="ms-mcard__name" style={{ fontSize: '1.1rem' }}>{d.name}</span>
                   <span className="ms-price-btn">{priceLabel(info.price)}</span>

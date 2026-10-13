@@ -64,6 +64,8 @@ function analyzeRace(sim, entries, track) {
   const { overtakes, leadChanges } = countOvertakes(sim);
   return {
     seed: sim.seed,
+    winner,
+    field: entries.length,
     winnerMs: sim.stats.winnerMs,
     lastMs: sim.stats.lastMs,
     unfinished: sim.stats.unfinished,

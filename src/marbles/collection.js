@@ -106,7 +106,6 @@ async function bag(client, userId) {
       ORDER BY m.is_starter DESC, m.name`,
     [userId],
   );
-  const { rows: [user] } = await client.query('SELECT early_player FROM users WHERE id = $1', [userId]);
   const { rows: [shooter] } = await client.query('SELECT item_slug, marble_id FROM user_shooter WHERE user_id = $1', [userId]);
 
   const ownedSlugs = new Set(copies.map((c) => c.item_slug));
@@ -117,9 +116,7 @@ async function bag(client, userId) {
 
   return {
     copies: copies.map(ownedView),
-    // The early-player badge sits on every Original of a player who was here before the collection.
-    originals: originals.map((m) => ({ ...m, earlyPlayer: Boolean(user?.early_player) })),
-    earlyPlayer: Boolean(user?.early_player),
+    originals,
     sets: sets.map((s) => ({ ...s, complete: s.owned === s.of })),
     shooter: shooter?.item_slug ? { item: shooter.item_slug } : shooter?.marble_id ? { original: shooter.marble_id } : null,
   };

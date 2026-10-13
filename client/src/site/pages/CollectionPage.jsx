@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { DESIGNS, RARITY_ORDER, catalog, priceLabel, rarityInfo } from '../../shared/marbles';
+import { DESIGNS, FEATURED_DESIGNS, RARITY_ORDER, catalog, originalSlug, priceLabel, rarityInfo } from '../../shared/marbles';
 import MarbleBadge from '../marbles/MarbleBadge';
 import { editionLine, useCollection } from '../marbles/useCollection';
 
@@ -28,9 +28,7 @@ export default function CollectionPage() {
           </div>
         </div>
         <div className="ms-hero__balls" aria-hidden="true">
-          <MarbleBadge slug="galaxy-milky-way" size={96} />
-          <MarbleBadge slug="sun-solar" size={140} />
-          <MarbleBadge slug="hole-horizon" size={96} />
+          {FEATURED_DESIGNS.slice(-3).map((d, k) => <MarbleBadge key={d.key} slug={originalSlug(d)} size={k === 1 ? 140 : 96} />)}
         </div>
       </section>
 

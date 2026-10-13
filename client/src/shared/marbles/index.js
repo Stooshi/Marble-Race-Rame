@@ -32,6 +32,36 @@ export function priceLabel(price) {
   return `◆ ${price.credits ?? price.creditsLabel ?? '[X]'} credits`;
 }
 
+/**
+ * One design per rarity (the first of each, Common up to Legendary, never the
+ * limited edition): what the shop, landing page and collection hero show, so
+ * swapping the catalogue never needs code changes.
+ */
+export const FEATURED_DESIGNS = RARITY_ORDER.filter((r) => r !== 'limited')
+  .map((r) => DESIGNS.find((d) => d.rarity === r)).filter(Boolean);
+
+/**
+ * A preview of the computer players' showcase marbles in a beginner race (the
+ * real ones are drawn by the server when the race starts): the catalogue's mix,
+ * picked the same way every time for the same key; nulls stay plain.
+ */
+export function previewShowcase(count, key) {
+  let h = 2166136261;
+  for (let i = 0; i < key.length; i += 1) h = Math.imul(h ^ key.charCodeAt(i), 16777619);
+  const rand = () => { h = Math.imul(h ^ (h >>> 13), 1274126177); return ((h ^= h >>> 16) >>> 0) / 4294967296; };
+  const picks = [];
+  for (const { rarities, count: n } of catalog.showcase?.mix ?? []) {
+    const pool = ITEMS.filter((i) => rarities.includes(i.rarity)).map((i) => i.slug);
+    for (let k = 0; k < n && pool.length; k += 1) picks.push(pool.splice(Math.floor(rand() * pool.length), 1)[0]);
+  }
+  const out = [...picks, ...new Array(Math.max(0, count - picks.length)).fill(null)].slice(0, count);
+  for (let i = out.length - 1; i > 0; i -= 1) { const j = Math.floor(rand() * (i + 1)); [out[i], out[j]] = [out[j], out[i]]; }
+  return out;
+}
+
+/** The original shade's item slug of a design. */
+export const originalSlug = (design) => `${design.key}-${design.shades[0].key}`;
+
 /** The shades of one design, as items. */
 export const setItems = (designKey) => ITEMS.filter((i) => i.design.key === designKey);
 
@@ -54,7 +84,7 @@ export const BUILT_MATERIALS = [
   'neon-grid', 'checks', 'black-hole', 'aurora-glass', 'stripe', 'stone', 'core-glass', 'sunfire',
 ];
 
-/** Looks house marbles can wear: every finished regular design (never the limited edition). */
+/** Looks the previews can dress marbles in: every finished regular design (never a limited edition). */
 export const HOUSE_LOOKS = ITEMS.filter((i) => BUILT_MATERIALS.includes(i.design.material) && !i.design.limited).map((i) => i.slug);
 
 /** A short name for a look in standings: "Glacier Glass", "Ruby Ice", "Ocean Candy Stripe". */
@@ -66,16 +96,12 @@ export function lookName(slug) {
 }
 
 /**
- * House marbles wear collection looks too, named after them, the same ones
- * every time a race is shown. Takes race data ({ entries }) and returns it
- * dressed; players keep their own Shooter's look (plain for an Original).
+ * Names every marble that wears a collection look after it in the standings
+ * (a player's Shooter, a computer player's showcase marble). The server says
+ * which look each entry wears; this only renames. Takes race data ({ entries }).
  */
-export function dressHouseMarbles(data) {
+export function nameLooks(data) {
   if (!data?.entries?.length) return data;
-  const bots = HOUSE_LOOKS.length ? data.entries.filter((e) => e?.isBot && !e.marble?.look) : [];
-  const dressed = bots.length ? dressEntries(bots, bots.map((e) => e.entryId ?? e.index).join(','), HOUSE_LOOKS) : [];
-  const byEntry = new Map(bots.map((e, k) => [e, dressed[k]]));
-  // Every marble wearing a look is called by it in the standings (a player's Shooter too).
   const named = (e) => (e?.marble?.look && ITEM[e.marble.look] ? { ...e, marble: { ...e.marble, name: lookName(e.marble.look) } } : e);
-  return { ...data, entries: data.entries.map((e) => named(byEntry.get(e) ?? e)) };
+  return { ...data, entries: data.entries.map(named) };
 }

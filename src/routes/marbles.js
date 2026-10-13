@@ -82,7 +82,7 @@ router.post('/:id/purchase', requireAuth, async (req, res) => {
     const marble = rows[0];
     if (!marble) throw notFound('Marble not found');
     if (marble.is_starter) throw badRequest('Starter marbles are free for everyone');
-    if (!marble.on_sale) throw badRequest('Originals are no longer sold');
+    if (!marble.on_sale) throw badRequest('This marble is not for sale');
 
     const owned = await client.query('SELECT 1 FROM user_marbles WHERE user_id = $1 AND marble_id = $2', [req.user.id, id]);
     if (owned.rowCount) throw conflict('You already own this marble');

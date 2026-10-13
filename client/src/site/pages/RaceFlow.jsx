@@ -3,7 +3,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { api } from '../../api/client';
 import { useAuth } from '../../context/AuthContext';
 import { useAsync } from '../../hooks/useAsync';
-import { HOUSE_LOOKS, ITEM, dressEntries } from '../../shared/marbles';
+import { ITEM, previewShowcase } from '../../shared/marbles';
 import MarbleBadge from '../marbles/MarbleBadge';
 
 /**
@@ -110,7 +110,7 @@ export function FriendsStep() {
             <div className="ms-field-like" style={{ flexBasis: 200 }}>marblespins.com/r/{(user?.username ?? 'YOU').toUpperCase().slice(0, 10)}-[ROOM]</div>
             <button type="button" className="ms-btn ms-btn--sm" disabled>Copy link</button>
           </div>
-          <p className="ms-note">Friend rooms are next: anyone with the link joins your room, up to 20 players, with empty places filled by house marbles. [Coming after v1]</p>
+          <p className="ms-note">Friend rooms are next: anyone with the link joins your room, up to 20 players, with empty places filled by CPU players. [Coming after v1]</p>
           <div className="ms-row">
             <button type="button" className="ms-btn ms-btn--sm" disabled>Share via WhatsApp</button>
             <button type="button" className="ms-btn ms-btn--sm" disabled>Show QR code</button>
@@ -140,7 +140,7 @@ export function FriendsStep() {
         </section>
       </div>
       <div className="ms-flowbar">
-        <span className="ms-note">Racing solo or with whoever joins · empty places are filled with house marbles</span>
+        <span className="ms-note">Racing solo or with whoever joins · empty places are filled with CPU players</span>
         <Link to={`/play/track?${search}`} className="ms-btn ms-btn--primary">NEXT: PICK A TRACK</Link>
       </div>
     </div>
@@ -291,7 +291,7 @@ export function StartStep() {
   const shooter = shooterOf(bag.data);
   const [busy, setBusy] = useState(false);
   const [startError, setStartError] = useState(null);
-  const grid = useMemo(() => dressEntries(Array.from({ length: 19 }, (_, i) => ({ index: i, marble: {} })), `${trackSlug}-${user?.id}`, HOUSE_LOOKS), [trackSlug, user?.id]);
+  const grid = useMemo(() => previewShowcase(19, `${trackSlug}-${user?.id}`), [trackSlug, user?.id]);
 
   const start = async () => {
     setBusy(true);
@@ -324,11 +324,11 @@ export function StartStep() {
           </div>
           <div className="ms-gate" aria-hidden="true">
             <span className="ms-gate__you">{shooter && (shooter.slug ? <MarbleBadge slug={shooter.slug} size={40} /> : <MarbleBadge marble={shooter.marble} size={40} />)}<small>YOU</small></span>
-            {grid.map((g) => <MarbleBadge key={g.index} slug={g.marble.look} size={30} still />)}
+            {grid.map((slug, k) => (slug ? <MarbleBadge key={k} slug={slug} size={30} still /> : <MarbleBadge key={k} marble={{ color_primary: '#8A93A6' }} size={30} still />))}
           </div>
           <div className="ms-row" style={{ justifyContent: 'space-between' }}>
-            <span>20 marbles · 1 player · 19 house marbles</span>
-            <span style={{ opacity: 0.8 }}>Places at the gate are drawn at random</span>
+            <span>20 marbles · you and 19 CPU players</span>
+            <span style={{ opacity: 0.8 }}>In your first races the CPU players show off marbles from the shop. Places at the gate are drawn at random.</span>
           </div>
         </section>
         <aside className="ms-card" style={{ display: 'grid', gap: 14, alignContent: 'start', flexBasis: 300 }}>
@@ -338,7 +338,7 @@ export function StartStep() {
             <div style={{ display: 'grid', flex: 1, minWidth: 0 }}><b>@{user?.username ?? '…'} (host)</b><span className="ms-note">{shooter?.name ?? 'Picking a Shooter…'}</span></div>
             <span style={{ color: 'var(--ms-green)', fontWeight: 700 }}>✓ Ready</span>
           </div>
-          <span className="ms-note">Friends join with a room link once friend rooms arrive. For now house marbles fill every other place.</span>
+          <span className="ms-note">Friends join with a room link once friend rooms arrive. For now CPU players fill every other place.</span>
           {startError && <div className="ms-msg ms-msg--bad" role="alert">{startError}</div>}
           <button type="button" className="ms-btn ms-btn--primary ms-btn--lg" onClick={start} disabled={busy || !ready || !tracks.length}>{busy ? 'STARTING…' : 'START THE RACE'}</button>
           {!quick && <Link to={`/play/shooter?${search}`} style={{ color: 'var(--ms-soft)', textAlign: 'center' }}>Change Shooter</Link>}

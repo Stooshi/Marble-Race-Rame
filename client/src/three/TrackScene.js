@@ -5,7 +5,6 @@
  * lighting with no shadows, a capped pixel ratio, and drawing only when
  * something changes (a race replay drives frames while marbles move).
  */
-import { dressHouseMarbles } from '../shared/marbles';
 import {
   AmbientLight, BackSide, BoxGeometry, CanvasTexture, Color, NearestFilter, DirectionalLight, DoubleSide, Float32BufferAttribute, Fog,
   FrontSide, Group, HemisphereLight, Mesh, MeshBasicMaterial, MeshLambertMaterial, PerspectiveCamera, PlaneGeometry,
@@ -452,8 +451,6 @@ export class TrackScene {
    */
   setRace(entries, highlight = [], results = [], start = null) {
     this.clearRace();
-    // Players race in their Shooter's look (plain for an Original); house marbles get looks too.
-    entries = dressHouseMarbles({ entries }).entries;
     this.main.leader = null;
     this.inset.leader = null;
     this.inset.ready = false;

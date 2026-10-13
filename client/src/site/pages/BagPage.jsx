@@ -10,7 +10,7 @@ const FILTERS = ['all', ...RARITY_ORDER];
 
 /**
  * The Marble Bag: every marble the player owns (collection shades and their
- * Originals), the ones still to collect, Set badges, and picking the Shooter.
+ * plain marbles, the free starters among them), the ones still to collect, Set badges, and picking the Shooter.
  */
 export default function BagPage() {
   const { isAuthenticated, loading: authLoading } = useAuth();
@@ -29,7 +29,6 @@ export default function BagPage() {
       const copy = copies.get(item.slug);
       const notes = [];
       if (copy?.editionNo) notes.push(`#${String(copy.editionNo).padStart(3, '0')}`);
-      if (copy?.source === 'legacy-gift') notes.push('Gift');
       if (copy && complete.has(item.design.key)) notes.push('Set ★');
       return {
         key: item.slug, slug: item.slug, owned: Boolean(copy), copy, rarity: item.rarity,
@@ -39,7 +38,7 @@ export default function BagPage() {
     });
     const originals = data.originals.map((m) => ({
       key: m.id, marble: m, owned: true, rarity: 'original', name: m.name,
-      note: [m.is_starter ? 'Starter' : 'Original', m.earlyPlayer ? 'Early player' : null].filter(Boolean).join(' · '),
+      note: m.is_starter ? 'Free starter' : 'Plain marble',
       shooter: data.shooter?.original === m.id,
     }));
     return [...collection.filter((t) => t.owned), ...originals, ...collection.filter((t) => !t.owned)];
@@ -94,7 +93,7 @@ export default function BagPage() {
         {FILTERS.map((f) => (
           <button key={f} type="button" aria-pressed={filter === f} onClick={() => setFilter(f)}>{f === 'all' ? 'All' : rarityInfo(f).label}</button>
         ))}
-        {data?.originals.length > 0 && <button type="button" aria-pressed={filter === 'original'} onClick={() => setFilter('original')}>Originals</button>}
+        {data?.originals.length > 0 && <button type="button" aria-pressed={filter === 'original'} onClick={() => setFilter('original')}>Plain marbles</button>}
       </div>
 
       {bag.loading && !data && <p className="ms-note">Opening your Marble Bag…</p>}
@@ -106,7 +105,7 @@ export default function BagPage() {
           <div style={{ display: 'grid', gap: 8, flex: '1 1 260px', minWidth: 0 }}>
             <h2 className="ms-h3" style={{ fontFamily: 'var(--ms-cond)', fontWeight: 800, fontSize: '1.6rem' }}>{pick.name}</h2>
             {pick.slug && <p style={{ margin: 0, color: 'var(--ms-soft)' }}>{ITEM[pick.slug].shade.description}</p>}
-            {pick.marble && <p style={{ margin: 0, color: 'var(--ms-soft)' }}>{pick.marble.description} {pick.marble.earlyPlayer ? 'You were here before the first collection: this Original carries your early-player badge.' : ''}</p>}
+            {pick.marble && <p style={{ margin: 0, color: 'var(--ms-soft)' }}>{pick.marble.description}</p>}
             {error && <div className="ms-msg ms-msg--bad">{error}</div>}
             <div className="ms-row">
               {pick.owned && (pick.shooter
@@ -135,7 +134,7 @@ export default function BagPage() {
               {t.slug ? <MarbleBadge slug={t.slug} size={72} still={!t.owned} /> : <MarbleBadge marble={t.marble} size={72} />}
               <span style={{ fontWeight: 700, fontSize: '0.95rem' }}>{t.name}</span>
               <span style={{ color: colour, fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
-                {t.rarity === 'original' ? 'Original' : rarityInfo(t.rarity).label}
+                {t.rarity === 'original' ? (t.marble.is_starter ? 'Starter' : 'Plain') : rarityInfo(t.rarity).label}
               </span>
               <span style={{ fontSize: '0.8rem', color: t.shooter ? 'var(--ms-yellow)' : 'var(--ms-muted)', minHeight: '1.2em' }}>
                 {t.shooter ? 'Shooter' : t.owned ? t.note : 'Not yet'}

@@ -1,4 +1,4 @@
-import { dressHouseMarbles } from '../shared/marbles';
+import { nameLooks } from '../shared/marbles';
 
 export const API_URL = (import.meta.env.VITE_API_URL || 'http://localhost:5000').replace(/\/$/, '');
 
@@ -101,6 +101,6 @@ export const api = {
   cancelRace: (id) => request(`/races/${id}/cancel`, { method: 'POST' }),
   nextRace: (id, marbleId) => request(`/races/${id}/next`, { method: 'POST', body: marbleId ? { marble_id: marbleId } : {} }),
   results: (id) => request(`/races/${id}/results`),
-  replay: (id) => request(`/races/${id}/replay`).then(dressHouseMarbles), // house marbles in collection looks
+  replay: (id) => request(`/races/${id}/replay`).then(nameLooks), // marbles named after the looks they wear
   physicsPreview: (track, seed, level) => request(`/physics/preview?track=${encodeURIComponent(track)}&seed=${seed}&level=${level}`),
 };

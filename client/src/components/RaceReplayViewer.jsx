@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useReplay } from '../hooks/useReplay';
 import { useTrackScene } from '../hooks/useTrackScene';
 import MarbleBall from './MarbleBall';
+import CpuTag from './CpuTag';
 import SceneFailure from './SceneFailure';
 import CornerView, { cornerFollow, followedNow, followLabel } from './CornerView';
 import { Spinner } from './Status';
@@ -175,7 +176,7 @@ export default function RaceReplayViewer({ data, loading = false, mine = NOBODY,
                       <button type="button" onClick={() => { setFollow(i); setCamera('follow'); }} title={`Follow ${e?.marble.name}`}>
                         <span className="replay3d__pos">{pos + 1}</span>
                         <MarbleBall marble={e?.marble} size={16} />
-                        <span className="replay3d__name">{e?.marble.name}</span>
+                        <span className="replay3d__name">{e?.marble.name}</span>{e?.isBot && <CpuTag />}
                       </button>
                     </li>
                   );

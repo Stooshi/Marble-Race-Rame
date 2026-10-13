@@ -2101,34 +2101,33 @@
    }
   }
  ],
- "legacyGift": {
-  "note": "Each old plain marble (now an Original, no longer sold) gives its owner this Common shade for free.",
-  "map": {
-   "ruby": "candy-pink",
-   "sapphire": "candy-ocean",
-   "emerald": "ripple-mint",
-   "topaz": "candy-gold",
-   "onyx": "pebble-slate",
-   "pearl": "pebble-rose-quartz",
-   "amethyst": "ripple-lavender",
-   "citrine": "candy-gold",
-   "cobalt-comet": "candy-ocean",
-   "jade-dragon": "catseye-forest",
-   "solar-flare": "catseye-ember",
-   "nebula": "catseye-violet",
-   "garnet": "catseye-ember",
-   "aquamarine": "ripple-lagoon",
-   "opal": "catseye-sea-glass",
-   "quartz": "catseye-classic",
-   "obsidian": "pebble-slate",
-   "amber": "candy-gold",
-   "coral": "ripple-peach",
-   "turquoise": "ripple-lagoon",
-   "peridot": "ripple-mint",
-   "moonstone": "ripple-rain"
-  }
- },
  "review": {
   "note": "Texts marked text:'review' were written for review; 'design' came from the artboards."
+ },
+ "showcase": {
+  "note": "Beginner races: the computer players race in these designed marbles (looks only). A race is a beginner race while every player in it has finished fewer than beginnerMaxRaces races.",
+  "beginnerMaxRaces": 20,
+  "mix": [
+   {
+    "rarities": [
+     "common",
+     "uncommon"
+    ],
+    "count": 6
+   },
+   {
+    "rarities": [
+     "rare",
+     "epic"
+    ],
+    "count": 3
+   },
+   {
+    "rarities": [
+     "legendary"
+    ],
+    "count": 1
+   }
+  ]
  }
 }

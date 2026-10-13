@@ -446,14 +446,10 @@ CREATE INDEX IF NOT EXISTS idx_billboards_track ON billboards (track_slug);
 -- website and the phone apps. Items are named by slug, "<design>-<shade>"
 -- (e.g. 'candy-pink'). Looks only: the race engine never reads these tables.
 --
--- marbles.on_sale: false for the old plain marbles, now legacy "Originals"
---        that players keep but nobody can buy any more.
--- users.early_player: played before the collection launched (shows a small
---        badge on their Originals).
+-- marbles.on_sale: whether a plain marble can still be bought (all can, for now).
 -- users.credits: shop credits bought with real money (1 credit = $1); only
 --        ever spent in the shop, never cashed out.
 ALTER TABLE marbles ADD COLUMN IF NOT EXISTS on_sale boolean NOT NULL DEFAULT true;
-ALTER TABLE users ADD COLUMN IF NOT EXISTS early_player boolean NOT NULL DEFAULT false;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS credits integer NOT NULL DEFAULT 0 CHECK (credits >= 0);
 -- users.is_guest: playing without an account yet (made by "Play free"); saving the
 --        marble turns it into a normal account, keeping coins and marbles.
@@ -533,6 +529,14 @@ CREATE TABLE IF NOT EXISTS payments (
     CONSTRAINT payments_provider_ref UNIQUE (provider, provider_ref)
 );
 CREATE INDEX IF NOT EXISTS idx_payments_user ON payments (user_id, created_at DESC);
+
+-- Showcase marbles: the collection look a computer player wears in a beginner
+-- race (src/marbles/showcase.js). Drawn when the race is decided, apart from
+-- the race itself; the race engine never reads it.
+CREATE TABLE IF NOT EXISTS house_looks (
+    entry_id    uuid        PRIMARY KEY REFERENCES race_entries(id) ON DELETE CASCADE,
+    item_slug   varchar(64) NOT NULL CHECK (item_slug ~ '^[a-z0-9-]+$')
+);
 
 -- -----------------------------------------------------------------------------
 -- data_updates: one-time changes to existing rows (docs/data_updates/*.sql)
