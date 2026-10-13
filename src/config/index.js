@@ -13,15 +13,6 @@ function int(name, fallback) {
   return value;
 }
 
-function intList(name, fallback) {
-  const raw = process.env[name];
-  if (!raw) return fallback;
-  return raw.split(',').map((part) => {
-    const value = Number.parseInt(part.trim(), 10);
-    if (Number.isNaN(value) || value < 0) throw new Error(`${name} must be a list of non-negative integers`);
-    return value;
-  });
-}
 
 const DEV_JWT_SECRET = 'dev-only-insecure-secret';
 const jwtSecret = process.env.JWT_SECRET || (isProduction ? null : DEV_JWT_SECRET);
@@ -75,7 +66,5 @@ module.exports = Object.freeze({
     tickRateHz: int('RACE_TICK_RATE_HZ', 10),
     // A rematch (POST /api/races/:id/next) starts by itself this long after it is set up.
     nextRaceDelayMs: int('RACE_NEXT_DELAY_MS', 40_000),
-    podiumRewards: intList('REWARD_COINS_PODIUM', [100, 50, 25]),
-    participationReward: int('REWARD_COINS_PARTICIPATION', 10),
   }),
 });

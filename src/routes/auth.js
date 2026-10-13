@@ -11,6 +11,7 @@ const { validate } = require('../utils/validate');
 const { unauthorized, conflict } = require('../utils/httpError');
 const { requireAuth } = require('../middleware/auth');
 const { ensureAppearance } = require('../game/appearance');
+const economy = require('../economy');
 
 const router = express.Router();
 
@@ -41,12 +42,13 @@ router.post('/register', authLimiter, async (req, res) => {
   const hash = await bcrypt.hash(body.password, config.auth.bcryptRounds);
   try {
     const { rows } = await db.query(
-      `INSERT INTO users (username, email, password_hash, display_name, marketing_opt_in)
-       VALUES ($1, $2, $3, $4, $5)
+      `INSERT INTO users (username, email, password_hash, display_name, marketing_opt_in, coins)
+       VALUES ($1, $2, $3, $4, $5, $6)
        RETURNING ${PUBLIC_USER_COLUMNS}`,
-      [body.username, body.email.toLowerCase(), hash, body.display_name ?? null, body.marketing_opt_in ?? false],
+      [body.username, body.email.toLowerCase(), hash, body.display_name ?? null, body.marketing_opt_in ?? false, economy.economy.startingCoins],
     );
     const user = rows[0];
+    await economy.opening(db, user.id, user.coins);
     // Starting marble look. If this fails the look is created on first read instead.
     await ensureAppearance(user.id).catch((err) => console.error('[auth] starting look failed', err.message));
     res.status(201).json({ token: signToken(user), user });
@@ -67,12 +69,13 @@ router.post('/guest', authLimiter, async (req, res) => {
   const id = crypto.randomBytes(5).toString('hex');
   const hash = await bcrypt.hash(crypto.randomBytes(24).toString('hex'), config.auth.bcryptRounds);
   const { rows } = await db.query(
-    `INSERT INTO users (username, email, password_hash, is_guest)
-     VALUES ($1, $2, $3, true)
+    `INSERT INTO users (username, email, password_hash, is_guest, coins)
+     VALUES ($1, $2, $3, true, $4)
      RETURNING ${PUBLIC_USER_COLUMNS}`,
-    [`guest_${id}`, `guest-${id}@guest.marblespins.invalid`, hash],
+    [`guest_${id}`, `guest-${id}@guest.marblespins.invalid`, hash, economy.economy.startingCoins],
   );
   const user = rows[0];
+  await economy.opening(db, user.id, user.coins);
   await ensureAppearance(user.id).catch((err) => console.error('[auth] starting look failed', err.message));
   res.status(201).json({ token: signToken(user), user });
 });

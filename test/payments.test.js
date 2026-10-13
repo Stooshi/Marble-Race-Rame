@@ -13,7 +13,8 @@ function fakeClient() {
       calls.push({ sql, params });
       if (/INSERT INTO payments/.test(sql)) return { rows: [{ id: 'p1', status: 'pending', product_id: params[2], credits: params[3] }] };
       if (/UPDATE payments SET status = 'paid'/.test(sql)) return { rows: [{ user_id: 'u1', credits: 10 }] };
-      if (/UPDATE users SET credits/.test(sql)) return { rows: [{ credits: 12 }] };
+      if (/UPDATE users SET credits/.test(sql)) return { rows: [{ balance: 12 }] };
+      if (/INSERT INTO coin_ledger/.test(sql)) return { rows: [{ id: 1 }] };
       return { rows: [] };
     },
   };
@@ -34,10 +35,12 @@ test('Stripe, App Store and Google Play are placeholders: nothing is charged or 
   await assert.rejects(payments.redeemReceipt(client, 'u1', { provider: 'apple', receipt: 'x' }), /not checked yet/);
 });
 
-test('every provider ends in the same grant: paid once, credits added', async () => {
+test('every provider ends in the same grant: paid once, credits added and written to the coin ledger', async () => {
   const client = fakeClient();
   assert.equal(await payments.grant(client, 'p1', 'ref'), 12);
   assert.match(client.calls[0].sql, /WHERE id = \$1 AND status = 'pending'/);
+  const line = client.calls.find((c) => /INSERT INTO coin_ledger/.test(c.sql));
+  assert.deepEqual(line.params.slice(1, 4), ['credits', 10, 'credit-pack']);
 });
 
 test('the test provider never runs in production', () => {

@@ -5,6 +5,7 @@ const db = require('../db');
 const { requireAuth, optionalAuth, requireAdmin } = require('../middleware/auth');
 const { validate, assertUuid } = require('../utils/validate');
 const { badRequest, conflict, notFound } = require('../utils/httpError');
+const economy = require('../economy');
 
 const router = express.Router();
 
@@ -87,14 +88,10 @@ router.post('/:id/purchase', requireAuth, async (req, res) => {
     const owned = await client.query('SELECT 1 FROM user_marbles WHERE user_id = $1 AND marble_id = $2', [req.user.id, id]);
     if (owned.rowCount) throw conflict('You already own this marble');
 
-    const paid = await client.query(
-      'UPDATE users SET coins = coins - $2 WHERE id = $1 AND coins >= $2 RETURNING coins',
-      [req.user.id, marble.price_coins],
-    );
-    if (!paid.rowCount) throw badRequest('Not enough coins');
+    const paid = await economy.spend(client, { userId: req.user.id, price: marble.price_coins, kind: 'purchase', note: `plain marble ${marble.slug}` });
 
     await client.query('INSERT INTO user_marbles (user_id, marble_id) VALUES ($1, $2)', [req.user.id, id]);
-    return { marble, coins: paid.rows[0].coins };
+    return { marble, coins: paid.balance };
   });
   res.status(201).json(result);
 });

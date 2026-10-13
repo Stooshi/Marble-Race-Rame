@@ -5,6 +5,7 @@ const db = require('../db');
 const { optionalAuth } = require('../middleware/auth');
 const { validate } = require('../utils/validate');
 const { unauthorized } = require('../utils/httpError');
+const { EARNED } = require('../economy');
 
 const router = express.Router();
 
@@ -17,7 +18,7 @@ const TOP = 50;
 
 /**
  * GET /api/scoreboard?board=season|all|friends — players ranked by coins earned
- * in races (money can't buy a place). Friends (v1): the players you raced with
+ * racing: places, personal bests, daily goals and streaks (money can't buy a place). Friends (v1): the players you raced with
  * in the last day. Always includes your own row when you're signed in.
  */
 router.get('/', optionalAuth, async (req, res) => {
@@ -33,15 +34,23 @@ router.get('/', optionalAuth, async (req, res) => {
          JOIN race_entries other ON other.race_id = mine.race_id AND other.user_id IS NOT NULL
         WHERE mine.user_id = $2
      ),
-     s AS (
-       SELECT e.user_id, SUM(e.coins_awarded)::int AS coins,
-              COUNT(*) FILTER (WHERE e.finish_position = 1)::int AS wins, COUNT(*)::int AS races
+     played AS (
+       SELECT e.user_id, COUNT(*) FILTER (WHERE e.finish_position = 1)::int AS wins, COUNT(*)::int AS races
          FROM race_entries e JOIN races r ON r.id = e.race_id AND r.status = 'finished'
         WHERE e.user_id IS NOT NULL
           AND ($1::timestamptz IS NULL OR r.finished_at >= $1)
           AND (NOT $3 OR e.user_id IN (SELECT user_id FROM friends) OR e.user_id = $2)
         GROUP BY e.user_id
      ),
+     -- Coins earned racing (place, personal bests, daily goal, streak), from the coin ledger.
+     earned AS (
+       SELECT l.user_id, SUM(l.amount)::int AS coins
+         FROM coin_ledger l
+        WHERE l.currency = 'coins' AND l.kind = ANY($4::text[])
+          AND ($1::timestamptz IS NULL OR l.created_at >= $1)
+        GROUP BY l.user_id
+     ),
+     s AS (SELECT p.user_id, COALESCE(x.coins, 0) AS coins, p.wins, p.races FROM played p LEFT JOIN earned x ON x.user_id = p.user_id),
      ranked AS (SELECT s.*, rank() OVER (ORDER BY s.coins DESC, s.wins DESC)::int AS rank FROM s)
      SELECT ranked.rank, ranked.coins, ranked.wins, ranked.races, u.id AS user_id, u.username,
             sh.item_slug AS shooter_item, m.name AS shooter_original, m.color_primary, m.color_secondary, m.pattern
@@ -51,7 +60,7 @@ router.get('/', optionalAuth, async (req, res) => {
        LEFT JOIN marbles m ON m.id = sh.marble_id
       WHERE ranked.rank <= ${TOP} OR u.id = $2
       ORDER BY ranked.rank, u.username`,
-    [since, me, board === 'friends'],
+    [since, me, board === 'friends', EARNED],
   );
   res.json({
     board,

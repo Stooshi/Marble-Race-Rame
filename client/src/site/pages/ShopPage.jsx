@@ -1,11 +1,14 @@
 import { useState } from 'react';
+import { api } from '../../api/client';
+import { useAuth } from '../../context/AuthContext';
+import economy from '../../shared/economy.json';
 import { Link } from 'react-router-dom';
 import { DESIGNS, FEATURED_DESIGNS, catalog, originalSlug, priceLabel, rarityInfo } from '../../shared/marbles';
 import MarbleBadge from '../marbles/MarbleBadge';
 import { useCollection } from '../marbles/useCollection';
 import { CREDIT_PACKS } from '../../shared/payments/packs';
 
-const TABS = [['marbles', 'Marbles'], ['limited', 'Limited editions'], ['credits', 'Buy credits']];
+const TABS = [['marbles', 'Marbles'], ['limited', 'Limited editions'], ['credits', 'Credits and coins']];
 
 function daysLeft(iso) {
   if (!iso) return null;
@@ -63,7 +66,7 @@ export default function ShopPage() {
             <h2 id="coin-h">Collection {catalog.collection.number} · {catalog.collection.name}</h2>
             <Link to="/collection" style={{ color: 'var(--ms-yellow)', fontWeight: 700 }}>See all {DESIGNS.filter((d) => !d.limited).length} marbles →</Link>
           </div>
-          <span className="ms-note">Bought with coins you earn by racing. Coins can't be bought.</span>
+          <span className="ms-note">Bought with coins you earn by racing, or with a coin pack.</span>
           <div className="ms-cards" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 180px), 1fr))' }}>
             {FEATURED_DESIGNS.map((d) => {
               const k = d.key;
@@ -98,6 +101,45 @@ export default function ShopPage() {
           <p className="ms-note">Prices shown in your local currency at checkout, including VAT. Under 18? Ask a parent or guardian before buying. <Link to="/legal#sale">Terms of sale</Link></p>
         </section>
       )}
+
+      {tab === 'credits' && <CoinPacks />}
     </div>
+  );
+}
+
+/** Coin packs: credits swapped for coins (client/src/shared/economy.json). */
+function CoinPacks() {
+  const { user, refreshUser } = useAuth();
+  const [busy, setBusy] = useState(null);
+  const [msg, setMsg] = useState(null);
+  const buy = async (p) => {
+    setBusy(p.id);
+    setMsg(null);
+    try {
+      const r = await api.buyCoinPack(p.id);
+      setMsg({ ok: true, text: `+${p.coins.toLocaleString('en-US')} coins. You now have ${r.coins.toLocaleString('en-US')} coins and ${r.credits} credits.` });
+      refreshUser?.();
+    } catch (err) {
+      setMsg({ ok: false, text: err.message });
+    } finally {
+      setBusy(null);
+    }
+  };
+  return (
+    <section aria-labelledby="coins-h" style={{ display: 'grid', gap: 14 }}>
+      <div className="ms-section-head"><h2 id="coins-h">Coin packs</h2><span>Swap credits for coins. Racing earns coins too: every race, the daily goal and your streak.</span></div>
+      <div className="ms-cards" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 160px), 1fr))' }}>
+        {economy.coinPacks.map((p) => (
+          <div key={p.id} className="ms-mcard" style={{ padding: 18, borderColor: p.popular ? 'var(--ms-yellow)' : undefined }}>
+            <span className="ms-coins" style={{ fontSize: '1.8rem' }}>● {p.coins.toLocaleString('en-US')}</span>
+            <span style={{ color: 'var(--ms-soft)' }}>coins{p.popular ? ' · most popular' : ''}</span>
+            {user
+              ? <button type="button" className="ms-price-btn" disabled={busy === p.id} onClick={() => buy(p)}>{busy === p.id ? '…' : `◆ ${p.credits} credits`}</button>
+              : <Link to="/signup?next=/shop" className="ms-price-btn">◆ {p.credits} credits</Link>}
+          </div>
+        ))}
+      </div>
+      {msg && <div className={`ms-msg ${msg.ok ? 'ms-msg--ok' : 'ms-msg--bad'}`} aria-live="polite">{msg.text}</div>}
+    </section>
   );
 }

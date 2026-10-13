@@ -550,6 +550,43 @@ CREATE TABLE IF NOT EXISTS data_updates (
 );
 
 -- -----------------------------------------------------------------------------
+-- The coin economy (client/src/shared/economy.json, src/economy/index.js)
+-- -----------------------------------------------------------------------------
+-- coin_ledger: every change to a player's coins or credits, one line each
+--   (races, personal bests, the daily goal, streaks, purchases, bags, coin
+--   packs, entry fees, refunds, admin adjustments), with the balance after it.
+--   Scoreboards count the earned kinds; the back office shows it as the wallet.
+-- user_days: races finished per player per day (UTC), and when the daily goal
+--   was met. users.streak_days / streak_last_day: the daily-goal streak.
+CREATE TABLE IF NOT EXISTS coin_ledger (
+    id              bigserial   PRIMARY KEY,
+    user_id         uuid        NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    currency        varchar(8)  NOT NULL CHECK (currency IN ('coins', 'credits')),
+    amount          integer     NOT NULL CHECK (amount <> 0),
+    kind            varchar(24) NOT NULL,
+    race_id         uuid,
+    item_slug       varchar(64),
+    payment_id      uuid,
+    note            text,
+    actor_id        uuid,
+    balance_after   integer,
+    created_at      timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_coin_ledger_user ON coin_ledger (user_id, created_at);
+CREATE INDEX IF NOT EXISTS idx_coin_ledger_kind ON coin_ledger (kind, created_at);
+CREATE INDEX IF NOT EXISTS idx_coin_ledger_race ON coin_ledger (race_id) WHERE race_id IS NOT NULL;
+
+CREATE TABLE IF NOT EXISTS user_days (
+    user_id         uuid        NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    day             date        NOT NULL,
+    races           integer     NOT NULL DEFAULT 0 CHECK (races >= 0),
+    goal_met_at     timestamptz,
+    PRIMARY KEY (user_id, day)
+);
+ALTER TABLE users ADD COLUMN IF NOT EXISTS streak_days smallint NOT NULL DEFAULT 0 CHECK (streak_days >= 0);
+ALTER TABLE users ADD COLUMN IF NOT EXISTS streak_last_day date;
+
+-- -----------------------------------------------------------------------------
 -- Views
 -- -----------------------------------------------------------------------------
 -- Dropped and recreated rather than CREATE OR REPLACE, which refuses to change

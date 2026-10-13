@@ -89,7 +89,7 @@ export default function Results() {
       </section>
 
       {mine.map((r) => (
-        <YourRace key={r.entry_id} result={r} winner={results[0]} splitRank={splitRank[r.entry_id]} total={results.length} />
+        <YourRace key={r.entry_id} raceId={raceId} result={r} winner={results[0]} splitRank={splitRank[r.entry_id]} total={results.length} />
       ))}
 
       <section className="card">
@@ -161,7 +161,23 @@ function PbCell({ result: r }) {
 }
 
 /** Personal summary card: this race against your history on the track. */
-function YourRace({ result: r, winner, splitRank, total }) {
+// What each coin line was for (the coin economy, client/src/shared/economy.json).
+const COIN_LINE = { race: 'Place', 'personal-best': 'Personal best', 'daily-goal': 'Daily goal', streak: 'Streak' };
+
+/** The coins this race paid you, line by line: place, personal best, daily goal, streak. */
+function CoinLines({ raceId }) {
+  const { data } = useAsync(() => api.raceCoins(raceId).catch(() => null), [raceId]);
+  if (!data?.lines?.length) return null;
+  return (
+    <p className="muted coin-lines">
+      {data.lines.map((l, i) => (
+        <span key={i}>{i ? ' · ' : ''}{COIN_LINE[l.kind] ?? l.kind}{l.kind === 'streak' && l.note ? ` (${l.note})` : ''} <b>+{l.amount}</b></span>
+      ))}
+    </p>
+  );
+}
+
+function YourRace({ raceId, result: r, winner, splitRank, total }) {
   const c = r.comparison;
   const firstTime = c.previous_best_time_ms === null || c.previous_best_time_ms === undefined;
   // If you set the record, compare with the one you beat (null on a track's
@@ -206,6 +222,7 @@ function YourRace({ result: r, winner, splitRank, total }) {
             {r.position === 1 ? 'Winner!' : `${formatDelta(r.gap_to_winner_ms)} behind the winner`}
             {r.coins_awarded ? ` · +${r.coins_awarded} coins` : ''}
           </p>
+          <CoinLines raceId={raceId} />
         </div>
       </div>
       <table className="table compare-table">

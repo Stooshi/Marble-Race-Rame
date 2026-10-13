@@ -1,0 +1,29 @@
+{
+  "note": "The coin economy: every number in one place (server and client read this file). Coins are earned in races and spent in the shop; credits are bought with real money (1 credit = $1, client/src/shared/payments/packs.json). Marble prices by rarity are in client/src/shared/marbles/catalog.json.",
+  "startingCoins": 500,
+  "race": {
+    "places": [
+      { "upTo": 1, "coins": 50 },
+      { "upTo": 2, "coins": 40 },
+      { "upTo": 3, "coins": 30 },
+      { "upTo": 5, "coins": 20 },
+      { "upTo": 10, "coins": 12 },
+      { "upTo": 20, "coins": 8 }
+    ],
+    "personalBest": 10
+  },
+  "dailyGoal": { "races": 5, "coins": 50 },
+  "streak": { "perDay": 10, "maxDays": 7 },
+  "farmGuard": { "paidRacesPerDay": 40, "coinsAfter": 2 },
+  "dayBoundary": "UTC",
+  "coinPacks": [
+    { "id": "coins-1000", "credits": 5, "coins": 1000 },
+    { "id": "coins-2200", "credits": 10, "coins": 2200, "popular": true },
+    { "id": "coins-6000", "credits": 25, "coins": 6000 },
+    { "id": "coins-13000", "credits": 50, "coins": 13000 }
+  ],
+  "bags": {
+    "starter": { "label": "Starter Bag", "rarities": ["common"], "price": { "coins": 375 } },
+    "full": { "label": "Full Collection Bag", "rarities": ["common", "uncommon", "rare", "epic", "legendary"], "price": { "credits": 30 } }
+  }
+}

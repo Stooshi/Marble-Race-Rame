@@ -21,6 +21,7 @@
 const packsFile = require('../../client/src/shared/payments/packs.json');
 const config = require('../config');
 const { HttpError, badRequest, notFound } = require('../utils/httpError');
+const economy = require('../economy');
 
 const PACKS = new Map(packsFile.packs.map((p) => [p.id, p]));
 
@@ -67,12 +68,12 @@ function available() {
 async function grant(client, paymentId, providerRef = null) {
   const { rows: [pay] } = await client.query(
     `UPDATE payments SET status = 'paid', paid_at = now(), provider_ref = COALESCE($2, provider_ref)
-      WHERE id = $1 AND status = 'pending' RETURNING user_id, credits`,
+      WHERE id = $1 AND status = 'pending' RETURNING id, user_id, credits, product_id`,
     [paymentId, providerRef],
   );
   if (!pay) return null;
-  const { rows: [user] } = await client.query('UPDATE users SET credits = credits + $2 WHERE id = $1 RETURNING credits', [pay.user_id, pay.credits]);
-  return user.credits;
+  const done = await economy.change(client, { userId: pay.user_id, currency: 'credits', amount: pay.credits, kind: 'credit-pack', paymentId: pay.id, note: pay.product_id });
+  return done.balance;
 }
 
 /** Starts buying a credit pack with a provider. */

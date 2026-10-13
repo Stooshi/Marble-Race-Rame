@@ -91,7 +91,7 @@ export default function DesignPage() {
                 {busy ? 'BUYING…' : confirming ? `CONFIRM: ${priceLabel(info.price).replace(/^[●◆] /, '')}` : `BUY · ${priceLabel(info.price).replace(/^[●◆] /, '')}`}
               </button>
               {confirming && <button type="button" className="ms-btn ms-btn--ghost ms-btn--sm" onClick={() => setConfirming(false)}>Cancel</button>}
-              {isAuthenticated && !credits && <span className="ms-note">You have {(user?.coins ?? 0).toLocaleString('en-US')} coins. Coins are earned by racing; they can't be bought.</span>}
+              {isAuthenticated && !credits && <span className="ms-note">You have {(user?.coins ?? 0).toLocaleString('en-US')} coins. Coins are earned by racing, or come in coin packs in the shop.</span>}
             </div>
           )}
         </div>

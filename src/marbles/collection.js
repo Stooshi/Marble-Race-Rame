@@ -8,6 +8,7 @@
 
 const { items, bySlug, marbleCode, onSale, setOf } = require('./catalog');
 const { HttpError, badRequest, conflict, notFound } = require('../utils/httpError');
+const economy = require('../economy');
 
 /** Live counts per item: { slug: { bought, gifted } }. */
 async function counters(client) {
@@ -63,11 +64,8 @@ async function buy(client, userId, slug, now = new Date()) {
     price = item.price.credits;
     if (price == null) throw conflict('This marble has no price yet');
   }
-  const paid = await client.query(
-    `UPDATE users SET ${currency} = ${currency} - $2 WHERE id = $1 AND ${currency} >= $2 RETURNING coins, credits`,
-    [userId, price],
-  );
-  if (!paid.rowCount) throw badRequest(currency === 'coins' ? 'Not enough coins' : 'Not enough credits');
+  await economy.spend(client, { userId, currency, price, kind: 'purchase', itemSlug: slug });
+  const { rows: [wallet] } = await client.query('SELECT coins, credits FROM users WHERE id = $1', [userId]);
 
   const copyNo = count.bought + 1;
   await client.query('UPDATE collection_counters SET bought = $2 WHERE item_slug = $1', [slug, copyNo]);
@@ -78,7 +76,7 @@ async function buy(client, userId, slug, now = new Date()) {
      RETURNING *`,
     [userId, slug, copyNo, editionNo, marbleCode(item, { copyNo }), currency, price],
   );
-  return { copy: ownedView(copy), coins: paid.rows[0].coins, credits: paid.rows[0].credits };
+  return { copy: ownedView(copy), coins: wallet.coins, credits: wallet.credits };
 }
 
 function ownedView(row) {

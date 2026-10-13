@@ -11,35 +11,35 @@
    "label": "Common",
    "colour": "#A9B1C3",
    "price": {
-    "coins": 100
+    "coins": 150
    }
   },
   "uncommon": {
    "label": "Uncommon",
    "colour": "#3DDC97",
    "price": {
-    "coins": 250
+    "coins": 400
    }
   },
   "rare": {
    "label": "Rare",
    "colour": "#6FA8FF",
    "price": {
-    "coins": 600
+    "coins": 900
    }
   },
   "epic": {
    "label": "Epic",
    "colour": "#B79BFF",
    "price": {
-    "coins": 1200
+    "coins": 1800
    }
   },
   "legendary": {
    "label": "Legendary",
    "colour": "#FFD21F",
    "price": {
-    "coins": 2500
+    "coins": 4000
    }
   },
   "limited": {

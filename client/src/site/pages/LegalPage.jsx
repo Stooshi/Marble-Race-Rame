@@ -22,7 +22,7 @@ export default function LegalPage() {
       <h2 className="ms-legal__h2">3. Fair play</h2>
       <p>No cheating, bots, automated play, exploiting bugs, or offensive player names. We may reset progress or close accounts that break these rules.</p>
       <h2 className="ms-legal__h2">4. Coins, credits and marbles</h2>
-      <p>Coins are earned by racing and can't be bought or cashed out. Credits are bought with money and used only in the shop. Marbles and other items are a licence to use them in the game; they have no cash value and aren't your property outside the game. [Trading between players, when introduced, will have its own rules.]</p>
+      <p>Coins are earned by racing, or swapped for credits in a coin pack; they can't be cashed out or turned back into credits. Credits are bought with money and used only in the shop. Marbles and other items are a licence to use them in the game; they have no cash value and aren't your property outside the game. [Trading between players, when introduced, will have its own rules.]</p>
       <h2 className="ms-legal__h2">5. Changes and availability</h2>
       <p>We keep improving the game, so tracks, items and features can change. We'll tell you about important changes to these terms before they apply.</p>
       <h1 id="sale" className="ms-h2 ms-legal__h1">Terms of sale</h1>

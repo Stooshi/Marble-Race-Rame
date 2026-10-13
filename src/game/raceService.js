@@ -18,6 +18,7 @@ const { withLighting } = require('../trackKit/lighting');
 // smoother frame rate, and are stored as they were decided (race_replays).
 const PHYSICS_TICK_HZ = 20;
 const { badRequest, conflict, forbidden, notFound } = require('../utils/httpError');
+const economy = require('../economy');
 
 /**
  * Database side of the race lifecycle:
@@ -290,17 +291,8 @@ async function finalize(raceId) {
     );
     if (!rows[0]) return null;
 
-    const { podiumRewards, participationReward } = config.game;
-    const { rows: humans } = await client.query(
-      'SELECT id, user_id, finish_position FROM race_entries WHERE race_id = $1 AND user_id IS NOT NULL',
-      [raceId],
-    );
-    for (const h of humans) {
-      const coins = (podiumRewards[h.finish_position - 1] || 0) + participationReward;
-      if (coins <= 0) continue;
-      await client.query('UPDATE race_entries SET coins_awarded = $2 WHERE id = $1', [h.id, coins]);
-      await client.query('UPDATE users SET coins = coins + $2 WHERE id = $1', [h.user_id, coins]);
-    }
+    // Coins by place, a personal best, and the daily goal and streak (src/economy).
+    await economy.payRace(client, raceId);
 
     return getResults(client, raceId);
   });
@@ -385,11 +377,8 @@ async function cancel(raceId, actor) {
     if (race.status !== 'lobby') throw conflict(`Cannot cancel a race that is ${race.status}`);
 
     if (race.entry_fee_coins > 0) {
-      await client.query(
-        `UPDATE users u SET coins = coins + $2
-           FROM race_entries e WHERE e.race_id = $1 AND e.user_id = u.id`,
-        [raceId, race.entry_fee_coins],
-      );
+      const { rows: entrants } = await client.query('SELECT user_id FROM race_entries WHERE race_id = $1 AND user_id IS NOT NULL', [raceId]);
+      for (const e of entrants) await economy.change(client, { userId: e.user_id, amount: race.entry_fee_coins, kind: 'entry-refund', raceId });
     }
     const { rows: updated } = await client.query(
       `UPDATE races SET status = 'cancelled', finished_at = now() WHERE id = $1 RETURNING *`,

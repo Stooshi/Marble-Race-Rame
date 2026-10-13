@@ -54,8 +54,6 @@ curl localhost:5000/health
 | `RACE_MIN_DURATION_MS` / `RACE_MAX_DURATION_MS` | `90000` / `90000` | Race length range, within 50000–90000. Equal values give fixed-length races |
 | `RACE_DEFAULT_MARBLES` | `20` | Field size when a race is created without `min_marbles` / `max_marbles` |
 | `RACE_TICK_RATE_HZ` | `10` | Frames streamed per second |
-| `REWARD_COINS_PODIUM` | `100,50,25` | Coins for 1st, 2nd, 3rd (human players only) |
-| `REWARD_COINS_PARTICIPATION` | `10` | Coins for every human finisher |
 | `PAYMENTS_TEST` | – | `true`: an instant test payment provider (never in production) |
 
 ### Making an admin
@@ -180,12 +178,31 @@ The collection (Collection 1 · Grand Opening: 15 designs in 5 shades plus the m
 | GET | `/payments` | – | Credit packs and which payment providers are live |
 | POST | `/payments/checkout` | ✔ | `{ productId, provider }`: start buying credits (Stripe on the web; placeholder until there are keys) |
 | POST | `/payments/receipt` | ✔ | `{ provider: 'apple' \| 'google', receipt }`: an app store purchase (placeholder until the apps exist) |
-| GET | `/scoreboard` | optional | `?board=season\|all\|friends`: players ranked by coins earned in races |
+| GET | `/scoreboard` | optional | `?board=season\|all\|friends`: players ranked by coins earned racing (places, personal bests, daily goals, streaks) |
 | GET | `/races/showcase` | – | A recent close race for the landing page's replay |
 
 **Showcase marbles.** In beginner races (every player in the race has finished fewer than 20 races) the computer players race in designed marbles from the collection: about 6 Common/Uncommon, 3 Rare/Epic and 1 Legendary, different each race; the rest stay plain. The mix lives in `catalog.json` → `showcase`. They are drawn after the race is set up, stored apart (`house_looks`), and never given to the race engine, so they can't change a result; the track report's Fairness part checks that every marble tier wins its share. Computer players carry a small "CPU" tag; after a race, tapping any marble shows its name, rarity and a way to the shop.
 
 Every payment provider ends in the same server step (`src/payments/index.js` → `grant`), which adds a pack's credits exactly once. `PAYMENTS_TEST=true` turns on an instant test provider outside production.
+
+### The coin economy
+
+Every number is in `client/src/shared/economy.json` (the server and the website read it); the logic is `src/economy/index.js`.
+
+- **Races** pay by place: 50, 40, 30 for the podium, 20 for 4th–5th, 12 for 6th–10th, 8 for 11th–20th, plus 10 for a personal best on the track.
+- **Daily goal**: 5 races in a day pays 50, plus 10 per day of the streak (the days in a row the goal was met), up to 70 on day 7. Days run midnight to midnight UTC.
+- **Farm guard**: after 40 races in a day, each further race pays 2.
+- **Prices** by rarity (`catalog.json`): Common 150, Uncommon 400, Rare 900, Epic 1,800, Legendary 4,000. New players start with 500 coins.
+- **Coin packs** swap credits for coins (5 → 1,000; 10 → 2,200; 25 → 6,000; 50 → 13,000).
+- **The coin ledger** (`coin_ledger`) records every change to a player's coins or credits, with the balance after it. Scoreboards count the earned lines; `docs/data_updates/2027-01-03-coin-ledger-start.sql` writes the history from before it.
+
+| Method | Path | Auth | Notes |
+| --- | --- | --- | --- |
+| GET | `/economy` | – | The economy's numbers |
+| GET | `/economy/me` | ✔ | Today: races, the daily goal and its bonus, the streak, balances |
+| GET | `/economy/races/:id` | ✔ | What you earned in one race, line by line |
+| GET | `/economy/ledger` | ✔ | Your last 100 ledger lines |
+| POST | `/economy/coin-packs/:id/buy` | ✔ | Swap credits for a coin pack |
 
 ### Marbles
 

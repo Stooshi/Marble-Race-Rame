@@ -12,6 +12,7 @@ const { RACE_STATUSES } = require('../game/raceStatus');
 const { raceSession, mayRaceAgain } = require('../game/raceSession');
 
 const { pickRacingMarble, recordShooterLook } = require('../marbles/collection');
+const economy = require('../economy');
 const router = express.Router();
 
 const { minMarbles, maxMarbles, defaultMarbles } = config.game;
@@ -88,11 +89,8 @@ async function joinRace(client, raceId, userId, marbleId) {
   if (counts[0].total >= race.max_marbles) throw conflict('Race is full');
 
   if (race.entry_fee_coins > 0) {
-    const paid = await client.query(
-      'UPDATE users SET coins = coins - $2 WHERE id = $1 AND coins >= $2',
-      [userId, race.entry_fee_coins],
-    );
-    if (!paid.rowCount) throw badRequest('Not enough coins for the entry fee');
+    const paid = await economy.change(client, { userId, amount: -race.entry_fee_coins, kind: 'entry-fee', raceId });
+    if (!paid) throw badRequest('Not enough coins for the entry fee');
   }
 
   const { rows: entry } = await client.query(
@@ -299,7 +297,7 @@ router.delete('/:id/join', requireAuth, async (req, res) => {
     const { rowCount } = await client.query('DELETE FROM race_entries WHERE race_id = $1 AND user_id = $2', [id, req.user.id]);
     if (!rowCount) throw notFound('You are not entered in this race');
     if (rows[0].entry_fee_coins > 0) {
-      await client.query('UPDATE users SET coins = coins + $2 WHERE id = $1', [req.user.id, rows[0].entry_fee_coins]);
+      await economy.change(client, { userId: req.user.id, amount: rows[0].entry_fee_coins, kind: 'entry-refund', raceId: id });
     }
     return rows[0];
   });

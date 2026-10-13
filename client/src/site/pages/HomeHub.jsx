@@ -3,8 +3,7 @@ import { api } from '../../api/client';
 import { useAuth } from '../../context/AuthContext';
 import { useAsync } from '../../hooks/useAsync';
 import { daysLeftIn } from './ScoresPage';
-
-const TRAINING_GOAL = 5; // races a day that keep the streak and train skill ([placeholder] rule)
+import economy from '../../shared/economy.json';
 
 /** Today's track: the same for everyone all day, a different one each day. */
 export function trackOfTheDay(tracks, date = new Date()) {
@@ -18,19 +17,23 @@ export function trackOfTheDay(tracks, date = new Date()) {
 export default function HomeHub() {
   const { user } = useAuth();
   const { data } = useAsync(async () => {
-    const [races, tracks, board, mine] = await Promise.all([
+    const [races, tracks, board, day] = await Promise.all([
       api.races('lobby', 10).catch(() => ({ races: [] })),
       api.tracks().catch(() => ({ tracks: [] })),
       api.scoreboard('season').catch(() => null),
-      user ? api.userRaces?.(user.id).catch(() => null) : null,
+      user ? api.economyMe().catch(() => null) : null,
     ]);
-    return { races: races.races ?? [], tracks: tracks.tracks ?? tracks ?? [], board, mine };
+    return { races: races.races ?? [], tracks: tracks.tracks ?? tracks ?? [], board, day };
   }, [user?.id]);
 
   const today = trackOfTheDay(data?.tracks?.filter((t) => t.is_active !== false));
   const waiting = (data?.races ?? []).reduce((n, r) => n + (r.entry_count ?? r.entries_count ?? 0), 0);
   const me = data?.board?.rows?.find((r) => r.me);
-  const todayRaces = (data?.mine?.races ?? []).filter((r) => r.finished_at && new Date(r.finished_at).toDateString() === new Date().toDateString()).length;
+  // The daily goal and its streak (client/src/shared/economy.json): days run midnight to midnight UTC.
+  const goal = data?.day?.goal?.races ?? economy.dailyGoal.races;
+  const done = Math.min(data?.day?.races ?? 0, goal);
+  const streak = data?.day?.streak?.days ?? 0;
+  const bonus = data?.day?.goal?.bonus ?? { goal: economy.dailyGoal.coins, streak: economy.streak.perDay };
 
   return (
     <div className="ms-page">
@@ -52,9 +55,13 @@ export default function HomeHub() {
             <Link to="/play/friends" className="ms-card ms-tile"><b>Race with friends</b><span>Invite and go</span></Link>
           </div>
           <div className="ms-card" style={{ display: 'grid', gap: 8 }}>
-            <div className="ms-row" style={{ justifyContent: 'space-between' }}><b>Today's training</b><span style={{ color: 'var(--ms-soft)' }}>{Math.min(todayRaces, TRAINING_GOAL)} of {TRAINING_GOAL} races</span></div>
-            <div className="ms-progress"><div><div style={{ width: `${(Math.min(todayRaces, TRAINING_GOAL) / TRAINING_GOAL) * 100}%` }} /></div></div>
-            <span className="ms-note">{todayRaces >= TRAINING_GOAL ? 'Done for today: your streak is safe.' : `${TRAINING_GOAL - todayRaces} more race${TRAINING_GOAL - todayRaces === 1 ? '' : 's'} keep your streak and train your skill.`}</span>
+            <div className="ms-row" style={{ justifyContent: 'space-between' }}><b>Daily goal</b><span style={{ color: 'var(--ms-soft)' }}>{done} of {goal} races</span></div>
+            <div className="ms-progress"><div><div style={{ width: `${(done / goal) * 100}%` }} /></div></div>
+            <span className="ms-note">
+              {data?.day?.goal?.met
+                ? `Done for today: +${bonus.goal + bonus.streak} coins, streak ${streak} day${streak === 1 ? '' : 's'}.`
+                : `${goal - done} more race${goal - done === 1 ? '' : 's'} for +${bonus.goal + bonus.streak} coins${streak ? ` and day ${Math.min(streak + 1, 99)} of your streak` : ''}.`}
+            </span>
           </div>
           <Link to="/scores" className="ms-card" style={{ display: 'grid', gap: 6, color: 'var(--ms-text)' }}>
             <span style={{ color: 'var(--ms-orange)', fontWeight: 700 }}>{data?.board?.season ? `${data.board.season.name} · ${daysLeftIn(data.board.season)} days left` : 'This season'}</span>
