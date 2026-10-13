@@ -6,7 +6,7 @@
  * Looks only: nothing here is read by the race engine.
  */
 
-const { items, bySlug, marbleCode, onSale, setOf } = require('./catalog');
+const { catalog, items, bySlug, byId, normaliseId, marbleCode, onSale, setOf } = require('./catalog');
 const { HttpError, badRequest, conflict, notFound } = require('../utils/httpError');
 const economy = require('../economy');
 
@@ -21,6 +21,8 @@ function describe(item, count = { bought: 0, gifted: 0 }, now = new Date()) {
   const numberedLeft = Math.max(0, item.editionSize - count.bought);
   return {
     slug: item.slug,
+    id: item.id,
+    collection: item.collection,
     design: item.design.key,
     shade: item.shade.key,
     rarity: item.rarity,
@@ -46,43 +48,96 @@ async function listItems(client, now = new Date()) {
 async function buy(client, userId, slug, now = new Date()) {
   const item = bySlug.get(slug);
   if (!item) throw notFound('Marble not found');
-
-  const owned = await client.query('SELECT 1 FROM user_collection WHERE user_id = $1 AND item_slug = $2', [userId, slug]);
-  if (owned.rowCount) throw conflict('You already own this marble');
-
-  await client.query('INSERT INTO collection_counters (item_slug) VALUES ($1) ON CONFLICT DO NOTHING', [slug]);
-  const { rows: [count] } = await client.query('SELECT bought FROM collection_counters WHERE item_slug = $1 FOR UPDATE', [slug]);
-  if (!onSale(item, now, count.bought)) throw new HttpError(410, 'This marble is no longer for sale');
-
-  let currency;
-  let price;
-  if (item.price.coins !== undefined) {
-    currency = 'coins';
-    price = item.price.coins;
-  } else {
-    currency = 'credits';
-    price = item.price.credits;
-    if (price == null) throw conflict('This marble has no price yet');
-  }
+  const currency = item.price.coins !== undefined ? 'coins' : 'credits';
+  const price = currency === 'coins' ? item.price.coins : item.price.credits;
+  if (price == null) throw conflict('This marble has no price yet');
+  const counter = await claimCopy(client, userId, item, now);
   await economy.spend(client, { userId, currency, price, kind: 'purchase', itemSlug: slug });
+  const copy = await addCopy(client, userId, item, counter, { currency, price });
   const { rows: [wallet] } = await client.query('SELECT coins, credits FROM users WHERE id = $1', [userId]);
+  return { copy: ownedView(copy), coins: wallet.coins, credits: wallet.credits };
+}
 
+/** Checks the player doesn't own the item yet and that it's on sale, and locks its counter. → the counter row. */
+async function claimCopy(client, userId, item, now) {
+  const owned = await client.query('SELECT 1 FROM user_collection WHERE user_id = $1 AND item_slug = $2', [userId, item.slug]);
+  if (owned.rowCount) throw conflict('You already own this marble');
+  await client.query('INSERT INTO collection_counters (item_slug) VALUES ($1) ON CONFLICT DO NOTHING', [item.slug]);
+  const { rows: [count] } = await client.query('SELECT bought FROM collection_counters WHERE item_slug = $1 FOR UPDATE', [item.slug]);
+  if (!onSale(item, now, count.bought)) throw new HttpError(410, 'This marble is no longer for sale');
+  return count;
+}
+
+/** Hands out the next numbered copy (First Edition while the first 500 last). */
+async function addCopy(client, userId, item, count, { currency, price }) {
   const copyNo = count.bought + 1;
-  await client.query('UPDATE collection_counters SET bought = $2 WHERE item_slug = $1', [slug, copyNo]);
+  await client.query('UPDATE collection_counters SET bought = $2 WHERE item_slug = $1', [item.slug, copyNo]);
   const editionNo = copyNo <= item.editionSize ? copyNo : null;
   const { rows: [copy] } = await client.query(
     `INSERT INTO user_collection (user_id, item_slug, source, copy_no, edition_no, marble_code, currency, price_paid, first_owner_id)
      VALUES ($1, $2, 'purchase', $3, $4, $5, $6, $7, $1)
      RETURNING *`,
-    [userId, slug, copyNo, editionNo, marbleCode(item, { copyNo }), currency, price],
+    [userId, item.slug, copyNo, editionNo, marbleCode(item, { copyNo }), currency, price],
   );
-  return { copy: ownedView(copy), coins: wallet.coins, credits: wallet.credits };
+  return copy;
+}
+
+/**
+ * The bags (client/src/shared/economy.json → bags): every collection design of
+ * the bag's rarities in ONE shade the buyer picks (Classic if they don't). A
+ * player who already owns some of them gets the rest, for the bag's price
+ * scaled to what the missing marbles are worth (rounded up).
+ * → { bag, shade, items, price, currency }
+ */
+function bagOffer(bagKey, shadeKey = 'classic', ownedSlugs = new Set()) {
+  const bag = economy.economy.bags[bagKey];
+  if (!bag) throw notFound('No such bag');
+  const shadeKeys = catalog.designs.find((d) => !d.limited)?.shades.map((sh) => sh.key) ?? [];
+  if (!shadeKeys.includes(shadeKey)) throw badRequest(`Choose a shade: ${shadeKeys.join(', ')}`);
+  const inBag = items.filter((i) => !i.design.limited && bag.rarities.includes(i.rarity) && i.shade.key === shadeKey);
+  const worth = (list) => list.reduce((n, i) => n + (i.price.coins ?? 0), 0);
+  const missing = inBag.filter((i) => !ownedSlugs.has(i.slug));
+  const currency = bag.price.coins !== undefined ? 'coins' : 'credits';
+  const full = bag.price[currency];
+  const price = missing.length === inBag.length ? full : Math.ceil((full * worth(missing)) / Math.max(1, worth(inBag)));
+  return { bag: bagKey, label: bag.label, shade: shadeKey, items: inBag.map((i) => ({ slug: i.slug, id: i.id, owned: ownedSlugs.has(i.slug) })), missing: missing.length, price, currency };
+}
+
+/** Buys a bag in one shade: one charge, then a numbered copy of each marble the player doesn't own yet. */
+async function buyBag(client, userId, bagKey, shadeKey = 'classic', now = new Date()) {
+  const { rows } = await client.query('SELECT item_slug FROM user_collection WHERE user_id = $1', [userId]);
+  const offer = bagOffer(bagKey, shadeKey, new Set(rows.map((r) => r.item_slug)));
+  if (!offer.missing) throw conflict('You already own every marble in this bag');
+  const missing = offer.items.filter((i) => !i.owned).map((i) => bySlug.get(i.slug));
+  const counters = [];
+  for (const item of missing) counters.push(await claimCopy(client, userId, item, now));
+  await economy.spend(client, { userId, currency: offer.currency, price: offer.price, kind: 'bag', note: `${bagKey}:${shadeKey}` });
+  // What each copy cost, for refunds: the bag's price shared out by the marbles' worth (the remainder on the last).
+  const worth = missing.map((i) => i.price.coins ?? 0);
+  const total = worth.reduce((a, b) => a + b, 0) || 1;
+  let left = offer.price;
+  const copies = [];
+  for (let k = 0; k < missing.length; k += 1) {
+    const share = k === missing.length - 1 ? left : Math.floor((offer.price * worth[k]) / total);
+    left -= share;
+    copies.push(ownedView(await addCopy(client, userId, missing[k], counters[k], { currency: offer.currency, price: share })));
+  }
+  const { rows: [wallet] } = await client.query('SELECT coins, credits FROM users WHERE id = $1', [userId]);
+  return { bag: bagKey, shade: shadeKey, copies, price: offer.price, currency: offer.currency, coins: wallet.coins, credits: wallet.credits };
+}
+
+/** The item a typed Marble ID names ("sc105", "SC 105", "#SC105"), or 404. */
+function findById(text) {
+  const item = byId.get(normaliseId(text));
+  if (!item) throw notFound('No marble has this ID');
+  return describe(item);
 }
 
 function ownedView(row) {
   return {
     id: row.id,
     slug: row.item_slug,
+    marbleId: bySlug.get(row.item_slug)?.id ?? null,
     source: row.source,
     editionNo: row.edition_no,
     marbleCode: row.marble_code,
@@ -113,7 +168,8 @@ async function bag(client, userId) {
     .filter((s) => s.of > 1);
 
   return {
-    copies: copies.map(ownedView),
+    // (Copies of marbles no longer in the catalogue are left out.)
+    copies: copies.filter((c) => bySlug.has(c.item_slug)).map(ownedView),
     originals,
     sets: sets.map((s) => ({ ...s, complete: s.owned === s.of })),
     shooter: shooter?.item_slug ? { item: shooter.item_slug } : shooter?.marble_id ? { original: shooter.marble_id } : null,
@@ -160,6 +216,8 @@ async function certificate(client, code) {
   const item = bySlug.get(copy.item_slug);
   return {
     marbleCode: copy.marble_code,
+    marbleId: item?.id ?? null,
+    collection: item?.collection ?? null,
     slug: copy.item_slug,
     design: item?.design.key,
     shade: item?.shade.key,
@@ -207,4 +265,4 @@ async function recordShooterLook(client, userId, entryId) {
   );
 }
 
-module.exports = { pickRacingMarble, recordShooterLook, listItems, describe, buy, bag, setShooter, certificate, counters };
+module.exports = { pickRacingMarble, recordShooterLook, listItems, describe, buy, bagOffer, buyBag, findById, bag, setShooter, certificate, counters };

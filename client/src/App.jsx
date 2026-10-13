@@ -6,8 +6,6 @@ import SiteFooter from './site/SiteFooter';
 import { useAuth } from './context/AuthContext';
 import LandingPage from './site/landing/LandingPage';
 import { FriendsStep, ShooterStep, StartStep, TrackStep } from './site/pages/RaceFlow';
-import CollectionPage from './site/pages/CollectionPage';
-import DesignPage from './site/pages/DesignPage';
 import ShopPage from './site/pages/ShopPage';
 import CertificatePage from './site/pages/CertificatePage';
 import BagPage from './site/pages/BagPage';
@@ -47,8 +45,8 @@ export default function App() {
           <Route path="/play/shooter" element={<ShooterStep />} />
           <Route path="/play/start" element={<StartStep />} />
           <Route path="/shop" element={<ShopPage />} />
-          <Route path="/collection" element={<CollectionPage />} />
-          <Route path="/collection/:design" element={<DesignPage />} />
+          <Route path="/collection" element={<ShopPage />} />
+          <Route path="/collection/:design" element={<ShopPage />} />
           <Route path="/certificate/:code" element={<CertificatePage />} />
           <Route path="/checkout" element={<CheckoutPage />} />
           <Route path="/bag" element={<BagPage />} />

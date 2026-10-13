@@ -166,7 +166,7 @@ Every player gets a starting look on sign-up: a solid marble with no effect, in 
 
 ### Marble collection, payments and scoreboards
 
-The collection (Collection 1 · Grand Opening: 15 designs in 5 shades plus the monthly limited edition, 76 items) is defined once in `client/src/shared/marbles/catalog.json`, which the server, the website and the phone apps all read. Its 3D looks are in `client/src/shared/marbles/materials.js` (three.js only, no React or DOM). Looks only: the race engine never reads any of it.
+The collection (Collection 1 · Schoolyard Classics: 10 designs in 5 shades, 50 items, plus the monthly limited edition) is defined once in `client/src/shared/marbles/catalog.json`, which the server, the website and the phone apps all read. Its 3D looks are in `client/src/shared/marbles/materials.js` (three.js only, no React or DOM). Looks only: the race engine never reads any of it.
 
 | Method | Path | Auth | Notes |
 | --- | --- | --- | --- |
@@ -174,12 +174,17 @@ The collection (Collection 1 · Grand Opening: 15 designs in 5 shades plus the m
 | GET | `/collection/bag` | ✔ | The Marble Bag: collection copies, Originals (old plain marbles), sets, Shooter |
 | PUT | `/collection/shooter` | ✔ | `{ item }` or `{ original }`: the look the player races in |
 | POST | `/collection/:slug/buy` | ✔ | Buy one copy (coins; credits for a limited edition). Copies 1–500 are the numbered First Edition |
-| GET | `/collection/certificate/:code` | – | A marble's certificate by its ID, e.g. `MS-SUN-SOL-000037` |
+| GET | `/collection/certificate/:code` | – | A copy's certificate by its code: the Marble ID and copy number, e.g. `SC105-000037` |
+| GET | `/collection/bags` | optional | `?shade=`: the Starter Bag and Full Collection Bag in one shade (Classic by default), what's in them and their price for you |
+| POST | `/collection/bags/:bag/buy` | ✔ | `{ shade }`: buy a bag (`starter` or `full`): every marble in it in that shade, each a numbered copy |
+| GET | `/collection/id/:id` | – | The marble a Marble ID names: `SC105`, `sc105`, `SC 105` or `#SC105` |
 | GET | `/payments` | – | Credit packs and which payment providers are live |
 | POST | `/payments/checkout` | ✔ | `{ productId, provider }`: start buying credits (Stripe on the web; placeholder until there are keys) |
 | POST | `/payments/receipt` | ✔ | `{ provider: 'apple' \| 'google', receipt }`: an app store purchase (placeholder until the apps exist) |
 | GET | `/scoreboard` | optional | `?board=season\|all\|friends`: players ranked by coins earned racing (places, personal bests, daily goals, streaks) |
 | GET | `/races/showcase` | – | A recent close race for the landing page's replay |
+
+**Marble IDs.** Every item has one: the collection's two letters (SC = Schoolyard Classics; later collections get their own, e.g. HH, MG, AG; LE for the limited editions), the design's number 01–10 and the shade's 1–5 (Classic, Ocean, Forest, Berry, Sunset), no dashes: SC105 is the Champion Shooter in Sunset. The shop finds a marble by ID however it's typed. The next collections and their dates are in `catalog.json` → `comingSoon`.
 
 **Showcase marbles.** In beginner races (every player in the race has finished fewer than 20 races) the computer players race in designed marbles from the collection: about 6 Common/Uncommon, 3 Rare/Epic and 1 Legendary, different each race; the rest stay plain. The mix lives in `catalog.json` → `showcase`. They are drawn after the race is set up, stored apart (`house_looks`), and never given to the race engine, so they can't change a result; the track report's Fairness part checks that every marble tier wins its share. Computer players carry a small "CPU" tag; after a race, tapping any marble shows its name, rarity and a way to the shop.
 

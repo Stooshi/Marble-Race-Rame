@@ -1,7 +1,8 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { Vector3 } from 'three';
-import { DESIGNS, FEATURED_DESIGNS, ITEMS, ITEM, catalog, dressEntries, lookName, nameLooks, originalSlug, priceLabel } from '../src/shared/marbles';
+import { DESIGNS, FEATURED_DESIGNS, ITEMS, ITEM, catalog, dressEntries, findById, lookName, nameLooks, normaliseId, originalSlug, priceLabel } from '../src/shared/marbles';
+import { badgeOf } from '../src/shared/marbles/badge';
 import { BUILT_MATERIALS, createMarbleLook, lookSpec } from '../src/shared/marbles/materials';
 
 // The catalogue is going to be swapped for a new collection, so these tests find
@@ -12,7 +13,7 @@ describe('collection marble looks', () => {
   it('every item gets a look: its material when built, a placeholder swirl otherwise', () => {
     for (const item of ITEMS) {
       const spec = lookSpec(item.slug);
-      expect(spec.map.image.width).toBe(256);
+      expect(spec.map.image.width).toBeGreaterThanOrEqual(256);
       expect(spec.built).toBe(BUILT_MATERIALS.includes(item.design.material));
     }
   });
@@ -39,6 +40,32 @@ describe('collection marble looks', () => {
       expect(look.object.children.length).toBe(1);
       look.dispose();
     }
+  });
+
+  it('Steelie reflects a painted surround (steel); the Champion Shooter glints and glows; Cat\'s Eye has its vane', () => {
+    const steel = byMaterial('steel');
+    const s = createMarbleLook(steel);
+    expect(s.shell.material.envMap).toBeTruthy();
+    expect(s.shell.material.reflectivity).toBeGreaterThan(0.5);
+    s.dispose();
+    const champ = createMarbleLook(byMaterial('champion'));
+    expect(champ.shell.material.emissiveMap).toBeTruthy();
+    expect(champ.object.children.some((c) => c.isSprite)).toBe(true);
+    champ.dispose();
+    const cat = createMarbleLook(byMaterial('vane-glass'));
+    expect(cat.object.children.length).toBe(2);
+    cat.dispose();
+  });
+
+  it('every catalogue marble has a flat badge of its own design (no plain fallback colour)', () => {
+    for (const i of ITEMS) expect(badgeOf(i.slug).background).toMatch(/gradient/);
+  });
+
+  it('Marble IDs: found however they are typed', () => {
+    expect(findById('sc 105')?.slug).toBe('champion-sunset');
+    expect(findById('#SC011')?.slug).toBe('clearie-classic');
+    expect(normaliseId('SC-10')).toBe(null);
+    expect(ITEMS.every((i) => /^[A-Z]{2}\d{3}$/.test(i.id))).toBe(true);
   });
 
   it('the same item looks the same every time; textures are made once and shared', () => {

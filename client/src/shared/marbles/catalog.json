@@ -1,10 +1,36 @@
 {
  "collection": {
-  "key": "grand-opening",
+  "key": "schoolyard-classics",
+  "code": "SC",
   "number": 1,
-  "name": "Grand Opening",
-  "tagline": "15 marbles to collect at launch, from playground classics to a black hole. Every one is earned with coins from racing. Looks, never speed: every marble races exactly the same."
+  "name": "Schoolyard Classics",
+  "era": "Machine-made playground marbles · 1920–1970",
+  "tagline": "The marbles kids won and lost in the schoolyard: aggies, clearies, cat's eyes and the shiny steelie. 10 marbles, each in 5 shades. Looks only, never speed."
  },
+ "comingSoon": [
+  {
+   "code": "HH",
+   "number": 2,
+   "name": "Handmade Heritage",
+   "date": "2026-12-08",
+   "blurb": "The marbles collectors pay real money for today: swirls, cores and the famous sulphide with a figure inside. Classic, grown-up and full of history."
+  },
+  {
+   "code": "MG",
+   "number": 3,
+   "name": "Moonies & Glow",
+   "date": "2026-12-15",
+   "blurb": "Glass that does something: glows green, sparkles, shimmers like the moon. Made for night races, where these marbles light up the track."
+  },
+  {
+   "code": "AG",
+   "number": 4,
+   "name": "Art Glass",
+   "date": "2026-12-22",
+   "blurb": "What glass artists make today: vortexes, implosions, jellyfish and whole universes inside a marble. The most spectacular look."
+  }
+ ],
+ "limitedCode": "LE",
  "editionSize": 500,
  "rarities": {
   "common": {
@@ -53,114 +79,358 @@
  },
  "designs": [
   {
-   "key": "candy",
-   "code": "CAN",
-   "name": "Candy Stripe",
+   "key": "clearie",
+   "no": 1,
+   "name": "Clearie",
    "rarity": "common",
-   "material": "stripe",
-   "story": "Fairground sweets turned racer. The first marble most players ever buy.",
-   "inRaces": "Opaque, glossy. Pink and white candy-cane stripes wrapping the ball.",
+   "material": "clear-glass",
+   "story": "Plain green glass you can see straight through.",
+   "inRaces": "Clear, tinted glass you can see through, darker towards the edge.",
    "slots": [
-    "stripe",
-    "base"
+    "glass",
+    "deep"
    ],
    "shades": [
     {
-     "key": "pink",
-     "code": "PNK",
-     "name": "Pink",
-     "description": "The original fairground pink and white.",
+     "key": "classic",
+     "no": 1,
+     "name": "Classic",
+     "description": "Bottle-green glass, the schoolyard original.",
      "colours": [
       {
-       "name": "Fairground pink",
-       "hex": "#E0115F"
+       "name": "Bottle green",
+       "hex": "#7FD99A"
       },
       {
-       "name": "Sugar white",
-       "hex": "#FFFFFF"
+       "name": "Deep green",
+       "hex": "#1E6B3A"
       }
      ],
-     "text": "design",
+     "text": "review",
      "original": true
     },
     {
      "key": "ocean",
-     "code": "OCN",
+     "no": 2,
      "name": "Ocean",
-     "description": "Seaside blue, like a beach-hut stripe.",
+     "description": "Sea-blue glass, like a wave held still.",
      "colours": [
       {
-       "name": "Beach-hut blue",
-       "hex": "#1F7FD6"
+       "name": "Sea blue",
+       "hex": "#8FD3F5"
       },
       {
-       "name": "Sugar white",
-       "hex": "#FFFFFF"
+       "name": "Deep blue",
+       "hex": "#1F5FA0"
       }
      ],
-     "text": "design"
+     "text": "review"
     },
     {
-     "key": "mint",
-     "code": "MNT",
-     "name": "Mint",
-     "description": "Fresh peppermint green on white.",
+     "key": "forest",
+     "no": 3,
+     "name": "Forest",
+     "description": "Mossy yellow-green glass from the woods.",
      "colours": [
       {
-       "name": "Peppermint",
-       "hex": "#1E9E6A"
+       "name": "Moss",
+       "hex": "#C8D86A"
       },
       {
-       "name": "Sugar white",
-       "hex": "#FFFFFF"
+       "name": "Olive",
+       "hex": "#4F6B1E"
       }
      ],
-     "text": "design"
+     "text": "review"
     },
     {
-     "key": "gold",
-     "code": "GLD",
-     "name": "Gold",
-     "description": "Butterscotch gold on cream, the toffee shade.",
+     "key": "berry",
+     "no": 4,
+     "name": "Berry",
+     "description": "Raspberry glass with a deep plum edge.",
      "colours": [
       {
-       "name": "Butterscotch",
-       "hex": "#E8A10C"
+       "name": "Raspberry",
+       "hex": "#F09AC8"
       },
       {
-       "name": "Cream",
-       "hex": "#FFF4CC"
+       "name": "Plum",
+       "hex": "#7A1E5A"
       }
      ],
-     "text": "design"
+     "text": "review"
     },
     {
-     "key": "midnight",
-     "code": "MID",
-     "name": "Midnight",
-     "description": "Black and yellow, made for night races.",
+     "key": "sunset",
+     "no": 5,
+     "name": "Sunset",
+     "description": "Amber glass, like evening light through a window.",
      "colours": [
       {
-       "name": "Liquorice",
-       "hex": "#141413"
+       "name": "Amber",
+       "hex": "#FFC872"
       },
       {
-       "name": "Lemon drop",
-       "hex": "#FFD21F"
+       "name": "Burnt orange",
+       "hex": "#B4541A"
       }
      ],
-     "text": "design"
+     "text": "review"
     }
    ]
   },
   {
-   "key": "catseye",
-   "code": "CAT",
-   "name": "Cat's Eye",
+   "key": "aggie",
+   "no": 2,
+   "name": "Aggie",
    "rarity": "common",
+   "material": "agate-rings",
+   "story": "Short for agate: brown and orange stone rings.",
+   "inRaces": "Polished stone with rings of colour, matte with a soft sheen.",
+   "slots": [
+    "dark",
+    "mid",
+    "light"
+   ],
+   "shades": [
+    {
+     "key": "classic",
+     "no": 1,
+     "name": "Classic",
+     "description": "Brown and orange agate, the classic stone.",
+     "colours": [
+      {
+       "name": "Chestnut",
+       "hex": "#7A2E12"
+      },
+      {
+       "name": "Clay orange",
+       "hex": "#C8622B"
+      },
+      {
+       "name": "Sand",
+       "hex": "#E9B98A"
+      }
+     ],
+     "text": "review",
+     "original": true
+    },
+    {
+     "key": "ocean",
+     "no": 2,
+     "name": "Ocean",
+     "description": "Blue lace agate from the coast.",
+     "colours": [
+      {
+       "name": "Navy",
+       "hex": "#1C3A6B"
+      },
+      {
+       "name": "Sea blue",
+       "hex": "#3E86C4"
+      },
+      {
+       "name": "Foam",
+       "hex": "#CFE6F5"
+      }
+     ],
+     "text": "review"
+    },
+    {
+     "key": "forest",
+     "no": 3,
+     "name": "Forest",
+     "description": "Moss agate with green bands.",
+     "colours": [
+      {
+       "name": "Pine",
+       "hex": "#24452A"
+      },
+      {
+       "name": "Moss",
+       "hex": "#5E8F3E"
+      },
+      {
+       "name": "Lichen",
+       "hex": "#C9DDA0"
+      }
+     ],
+     "text": "review"
+    },
+    {
+     "key": "berry",
+     "no": 4,
+     "name": "Berry",
+     "description": "Berry agate in plum and rose.",
+     "colours": [
+      {
+       "name": "Plum",
+       "hex": "#4E1640"
+      },
+      {
+       "name": "Raspberry",
+       "hex": "#B23A7A"
+      },
+      {
+       "name": "Rose",
+       "hex": "#F2B8D2"
+      }
+     ],
+     "text": "review"
+    },
+    {
+     "key": "sunset",
+     "no": 5,
+     "name": "Sunset",
+     "description": "Fire agate in red, orange and gold.",
+     "colours": [
+      {
+       "name": "Ember",
+       "hex": "#7A1A10"
+      },
+      {
+       "name": "Flame orange",
+       "hex": "#E0601E"
+      },
+      {
+       "name": "Gold",
+       "hex": "#F6C35A"
+      }
+     ],
+     "text": "review"
+    }
+   ]
+  },
+  {
+   "key": "patch",
+   "no": 3,
+   "name": "Patch",
+   "rarity": "common",
+   "material": "patch",
+   "story": "Two bold patches of colour on milky white.",
+   "inRaces": "Opaque milky glass with two big patches of colour.",
+   "slots": [
+    "patch",
+    "patch2",
+    "base"
+   ],
+   "shades": [
+    {
+     "key": "classic",
+     "no": 1,
+     "name": "Classic",
+     "description": "Red and yellow on milky white.",
+     "colours": [
+      {
+       "name": "Fire red",
+       "hex": "#E5322D"
+      },
+      {
+       "name": "Sun yellow",
+       "hex": "#FFD21F"
+      },
+      {
+       "name": "Milk white",
+       "hex": "#F4F1EA"
+      }
+     ],
+     "text": "review",
+     "original": true
+    },
+    {
+     "key": "ocean",
+     "no": 2,
+     "name": "Ocean",
+     "description": "Blue and aqua on milky white.",
+     "colours": [
+      {
+       "name": "Pool blue",
+       "hex": "#1F7FD6"
+      },
+      {
+       "name": "Aqua",
+       "hex": "#3FD8D0"
+      },
+      {
+       "name": "Milk white",
+       "hex": "#F4F1EA"
+      }
+     ],
+     "text": "review"
+    },
+    {
+     "key": "forest",
+     "no": 3,
+     "name": "Forest",
+     "description": "Leaf green and bark brown on cream.",
+     "colours": [
+      {
+       "name": "Leaf green",
+       "hex": "#3A9A3A"
+      },
+      {
+       "name": "Bark",
+       "hex": "#8A5A32"
+      },
+      {
+       "name": "Cream",
+       "hex": "#F2ECD8"
+      }
+     ],
+     "text": "review"
+    },
+    {
+     "key": "berry",
+     "no": 4,
+     "name": "Berry",
+     "description": "Purple and pink on milky white.",
+     "colours": [
+      {
+       "name": "Grape",
+       "hex": "#8E5CF5"
+      },
+      {
+       "name": "Bubblegum",
+       "hex": "#FF6FB5"
+      },
+      {
+       "name": "Milk white",
+       "hex": "#F4F1EA"
+      }
+     ],
+     "text": "review"
+    },
+    {
+     "key": "sunset",
+     "no": 5,
+     "name": "Sunset",
+     "description": "Orange and magenta on cream.",
+     "colours": [
+      {
+       "name": "Tangerine",
+       "hex": "#FF7A1A"
+      },
+      {
+       "name": "Magenta",
+       "hex": "#E0115F"
+      },
+      {
+       "name": "Cream",
+       "hex": "#FFF4E0"
+      }
+     ],
+     "text": "review"
+    }
+   ]
+  },
+  {
+   "key": "cats-eye",
+   "no": 4,
+   "name": "Cat's Eye",
+   "rarity": "uncommon",
    "material": "vane-glass",
-   "story": "The playground classic: the marble your grandparents traded in the schoolyard.",
-   "inRaces": "Clear glass with a 4-blade twisted vane inside (red and yellow). The classic playground marble.",
+   "story": "The classic four-blade vane. Every pocket had one.",
+   "inRaces": "Clear glass with a twisted four-blade vane inside.",
    "slots": [
     "vane",
     "vane2",
@@ -169,16 +439,16 @@
    "shades": [
     {
      "key": "classic",
-     "code": "CLS",
+     "no": 1,
      "name": "Classic",
-     "description": "Red and yellow vanes in clear glass, straight from the schoolyard.",
+     "description": "Red and yellow blades in clear glass.",
      "colours": [
       {
-       "name": "Schoolyard red",
+       "name": "Fire red",
        "hex": "#E5322D"
       },
       {
-       "name": "Sunbeam yellow",
+       "name": "Sun yellow",
        "hex": "#FFD21F"
       },
       {
@@ -190,1023 +460,85 @@
      "original": true
     },
     {
-     "key": "sea-glass",
-     "code": "SEA",
-     "name": "Sea Glass",
-     "description": "Teal and white vanes in pale green glass, like a find on the beach.",
+     "key": "ocean",
+     "no": 2,
+     "name": "Ocean",
+     "description": "Blue and white blades in sea glass.",
      "colours": [
       {
-       "name": "Lagoon teal",
-       "hex": "#13A8A8"
+       "name": "Deep blue",
+       "hex": "#1F4FA8"
       },
       {
-       "name": "Foam white",
-       "hex": "#F4F4F2"
+       "name": "White",
+       "hex": "#FFFFFF"
       },
       {
-       "name": "Sea-glass green",
-       "hex": "#CFEDE0"
-      }
-     ],
-     "text": "review"
-    },
-    {
-     "key": "ember",
-     "code": "EMB",
-     "name": "Ember Eye",
-     "description": "Orange and deep red vanes: a cat's eye by firelight.",
-     "colours": [
-      {
-       "name": "Ember orange",
-       "hex": "#FF7A1A"
-      },
-      {
-       "name": "Deep red",
-       "hex": "#9E1B1B"
-      },
-      {
-       "name": "Smoke glass",
-       "hex": "#E8DCD2"
-      }
-     ],
-     "text": "review"
-    },
-    {
-     "key": "violet",
-     "code": "VIO",
-     "name": "Violet Eye",
-     "description": "Violet and pink vanes in a cool lilac glass.",
-     "colours": [
-      {
-       "name": "Violet",
-       "hex": "#8E5CF5"
-      },
-      {
-       "name": "Bubblegum",
-       "hex": "#FF8FC8"
-      },
-      {
-       "name": "Lilac glass",
-       "hex": "#E6E0FA"
+       "name": "Sea glass",
+       "hex": "#C8EEF2"
       }
      ],
      "text": "review"
     },
     {
      "key": "forest",
-     "code": "FOR",
-     "name": "Forest Eye",
-     "description": "Two greens twisting in clear glass, a woodland classic.",
+     "no": 3,
+     "name": "Forest",
+     "description": "Green and yellow blades in clear glass.",
      "colours": [
       {
-       "name": "Fern",
-       "hex": "#3BA34A"
-      },
-      {
-       "name": "Moss",
-       "hex": "#1E6B2A"
-      },
-      {
-       "name": "Clear glass",
-       "hex": "#DDF0E4"
-      }
-     ],
-     "text": "review"
-    }
-   ]
-  },
-  {
-   "key": "ripple",
-   "code": "RIP",
-   "name": "Mint Ripple",
-   "rarity": "common",
-   "material": "rings",
-   "story": "Calm on the outside, with rings that spread at every bump.",
-   "inRaces": "Opaque. Rings of mint green, like a ripple on water.",
-   "slots": [
-    "light",
-    "mid",
-    "dark"
-   ],
-   "shades": [
-    {
-     "key": "mint",
-     "code": "MNT",
-     "name": "Mint",
-     "description": "Rings of mint green, like a ripple on a pond.",
-     "colours": [
-      {
-       "name": "Mint cream",
-       "hex": "#C9F7E2"
-      },
-      {
-       "name": "Mint",
-       "hex": "#3DDC97"
-      },
-      {
-       "name": "Pond green",
-       "hex": "#1E9E6A"
-      }
-     ],
-     "text": "review",
-     "original": true
-    },
-    {
-     "key": "lagoon",
-     "code": "LAG",
-     "name": "Lagoon",
-     "description": "Turquoise rings: a stone dropped in a warm lagoon.",
-     "colours": [
-      {
-       "name": "Shallows",
-       "hex": "#C8F3F5"
-      },
-      {
-       "name": "Lagoon",
-       "hex": "#2EC4C9"
-      },
-      {
-       "name": "Deep water",
-       "hex": "#127A85"
-      }
-     ],
-     "text": "review"
-    },
-    {
-     "key": "lavender",
-     "code": "LAV",
-     "name": "Lavender",
-     "description": "Soft lilac rings, calm as an evening pond.",
-     "colours": [
-      {
-       "name": "Pale lilac",
-       "hex": "#EADFFD"
-      },
-      {
-       "name": "Lavender",
-       "hex": "#B79BFF"
-      },
-      {
-       "name": "Dusk",
-       "hex": "#6E4FC2"
-      }
-     ],
-     "text": "review"
-    },
-    {
-     "key": "peach",
-     "code": "PCH",
-     "name": "Peach",
-     "description": "Peach and coral rings, a sunset on still water.",
-     "colours": [
-      {
-       "name": "Peach cream",
-       "hex": "#FFE3D1"
-      },
-      {
-       "name": "Peach",
-       "hex": "#FFA978"
-      },
-      {
-       "name": "Coral",
-       "hex": "#E8603C"
-      }
-     ],
-     "text": "review"
-    },
-    {
-     "key": "rain",
-     "code": "RAN",
-     "name": "Rain",
-     "description": "Grey-blue rings: the first drops on a lake.",
-     "colours": [
-      {
-       "name": "Mist",
-       "hex": "#E1E8F0"
-      },
-      {
-       "name": "Rain blue",
-       "hex": "#8FA8C4"
-      },
-      {
-       "name": "Slate",
-       "hex": "#4C607A"
-      }
-     ],
-     "text": "review"
-    }
-   ]
-  },
-  {
-   "key": "pebble",
-   "code": "PEB",
-   "name": "Fjord Pebble",
-   "rarity": "common",
-   "material": "stone",
-   "story": "Picked from a fjord shore and smoothed by a thousand years of waves.",
-   "inRaces": "Matte polished stone, grey with black and white speckles. Low shine.",
-   "slots": [
-    "stone",
-    "stone2",
-    "fleck",
-    "fleck2"
-   ],
-   "shades": [
-    {
-     "key": "granite",
-     "code": "GRN",
-     "name": "Granite",
-     "description": "Grey shore stone with black and white speckles.",
-     "colours": [
-      {
-       "name": "Shore grey",
-       "hex": "#C4BCAE"
-      },
-      {
-       "name": "Wet stone",
-       "hex": "#8A8276"
-      },
-      {
-       "name": "Basalt fleck",
-       "hex": "#3F4656"
-      },
-      {
-       "name": "Quartz fleck",
-       "hex": "#F2F4F8"
-      }
-     ],
-     "text": "review",
-     "original": true
-    },
-    {
-     "key": "sandstone",
-     "code": "SND",
-     "name": "Sandstone",
-     "description": "Warm sandy stone from a sunny southern beach.",
-     "colours": [
-      {
-       "name": "Sand",
-       "hex": "#E2C79A"
-      },
-      {
-       "name": "Ochre",
-       "hex": "#B48A55"
-      },
-      {
-       "name": "Rust fleck",
-       "hex": "#7A4A2A"
-      },
-      {
-       "name": "Shell fleck",
-       "hex": "#FFF4E0"
-      }
-     ],
-     "text": "review"
-    },
-    {
-     "key": "slate",
-     "code": "SLT",
-     "name": "Slate",
-     "description": "Dark blue-grey slate, smooth as a skimming stone.",
-     "colours": [
-      {
-       "name": "Slate",
-       "hex": "#5A6478"
-      },
-      {
-       "name": "Deep slate",
-       "hex": "#343B4A"
-      },
-      {
-       "name": "Coal fleck",
-       "hex": "#1B1F28"
-      },
-      {
-       "name": "Frost fleck",
-       "hex": "#C7CEDC"
-      }
-     ],
-     "text": "review"
-    },
-    {
-     "key": "rose-quartz",
-     "code": "RSQ",
-     "name": "Rose Quartz",
-     "description": "A pink pebble, polished pale by the tide.",
-     "colours": [
-      {
-       "name": "Rose",
-       "hex": "#E8C4C4"
-      },
-      {
-       "name": "Dusty rose",
-       "hex": "#B98F92"
-      },
-      {
-       "name": "Plum fleck",
-       "hex": "#6B4A5A"
-      },
-      {
-       "name": "Pearl fleck",
-       "hex": "#FFF6F6"
-      }
-     ],
-     "text": "review"
-    },
-    {
-     "key": "moss",
-     "code": "MOS",
-     "name": "Moss Stone",
-     "description": "Green-grey stone from a mossy riverbank.",
-     "colours": [
-      {
-       "name": "Lichen",
-       "hex": "#A8B79A"
-      },
-      {
-       "name": "Moss grey",
-       "hex": "#6E7D62"
-      },
-      {
-       "name": "Bark fleck",
-       "hex": "#3E3A2E"
-      },
-      {
-       "name": "Pale fleck",
-       "hex": "#EEF2E4"
-      }
-     ],
-     "text": "review"
-    }
-   ]
-  },
-  {
-   "key": "tiger",
-   "code": "TIG",
-   "name": "Tiger Eye",
-   "rarity": "uncommon",
-   "material": "gem-bands",
-   "story": "A gemstone stripe that shimmers hardest when it's chasing.",
-   "inRaces": "Polished gemstone. Amber and brown bands with a silky shimmer that moves as it rolls.",
-   "slots": [
-    "dark",
-    "mid",
-    "flash",
-    "deep"
-   ],
-   "shades": [
-    {
-     "key": "amber",
-     "code": "AMB",
-     "name": "Amber",
-     "description": "Amber and brown bands with a golden shimmer.",
-     "colours": [
-      {
-       "name": "Tiger brown",
-       "hex": "#3A1E06"
-      },
-      {
-       "name": "Amber",
-       "hex": "#C8811B"
-      },
-      {
-       "name": "Gold flash",
-       "hex": "#F2C14E"
-      },
-      {
-       "name": "Burnt umber",
-       "hex": "#8A4B0F"
-      }
-     ],
-     "text": "review",
-     "original": true
-    },
-    {
-     "key": "hawk",
-     "code": "HWK",
-     "name": "Hawk Eye",
-     "description": "Blue-grey bands with a steel shimmer: the hawk's version.",
-     "colours": [
-      {
-       "name": "Night blue",
-       "hex": "#14213A"
-      },
-      {
-       "name": "Steel blue",
-       "hex": "#4F7BA8"
-      },
-      {
-       "name": "Silver flash",
-       "hex": "#CFE0F2"
-      },
-      {
-       "name": "Storm",
-       "hex": "#2B4566"
-      }
-     ],
-     "text": "review"
-    },
-    {
-     "key": "red",
-     "code": "RED",
-     "name": "Red Tiger",
-     "description": "Deep red and copper bands that flash when it's chasing.",
-     "colours": [
-      {
-       "name": "Oxblood",
-       "hex": "#3A0A0A"
-      },
-      {
-       "name": "Copper",
-       "hex": "#B8562A"
-      },
-      {
-       "name": "Fire flash",
-       "hex": "#F29A5E"
-      },
-      {
-       "name": "Garnet",
-       "hex": "#7A1E14"
-      }
-     ],
-     "text": "review"
-    },
-    {
-     "key": "green",
-     "code": "GRE",
-     "name": "Green Tiger",
-     "description": "Olive and gold bands: a jungle tiger.",
-     "colours": [
-      {
-       "name": "Jungle",
-       "hex": "#1E260A"
-      },
-      {
-       "name": "Olive",
-       "hex": "#7A8A2A"
-      },
-      {
-       "name": "Lime flash",
-       "hex": "#D8E27A"
-      },
-      {
-       "name": "Leaf",
-       "hex": "#4A5A14"
-      }
-     ],
-     "text": "review"
-    },
-    {
-     "key": "snow",
-     "code": "SNW",
-     "name": "Snow Tiger",
-     "description": "Silver and charcoal bands with an icy shimmer.",
-     "colours": [
-      {
-       "name": "Charcoal",
-       "hex": "#23252B"
-      },
-      {
-       "name": "Silver",
-       "hex": "#A8AFB8"
-      },
-      {
-       "name": "Ice flash",
-       "hex": "#F4F8FF"
-      },
-      {
-       "name": "Graphite",
-       "hex": "#5A606B"
-      }
-     ],
-     "text": "review"
-    }
-   ]
-  },
-  {
-   "key": "bee",
-   "code": "BEE",
-   "name": "Bumblebee",
-   "rarity": "uncommon",
-   "material": "bands",
-   "story": "Small, loud and always buzzing around the leaders.",
-   "inRaces": "Opaque, glossy. Bold black and yellow bands around the ball.",
-   "slots": [
-    "band",
-    "band2"
-   ],
-   "shades": [
-    {
-     "key": "classic",
-     "code": "CLS",
-     "name": "Classic Bee",
-     "description": "Bold black and yellow, buzzing round the leaders.",
-     "colours": [
-      {
-       "name": "Bee black",
-       "hex": "#141413"
-      },
-      {
-       "name": "Pollen yellow",
-       "hex": "#FFD21F"
-      }
-     ],
-     "text": "review",
-     "original": true
-    },
-    {
-     "key": "hornet",
-     "code": "HRN",
-     "name": "Hornet",
-     "description": "Black and orange: the louder cousin.",
-     "colours": [
-      {
-       "name": "Bee black",
-       "hex": "#141413"
-      },
-      {
-       "name": "Hornet orange",
-       "hex": "#FF7A1A"
-      }
-     ],
-     "text": "review"
-    },
-    {
-     "key": "honey",
-     "code": "HNY",
-     "name": "Honey",
-     "description": "Chocolate brown and honey gold, straight from the hive.",
-     "colours": [
-      {
-       "name": "Hive brown",
-       "hex": "#5A3410"
-      },
-      {
-       "name": "Honey",
-       "hex": "#F2B33D"
-      }
-     ],
-     "text": "review"
-    },
-    {
-     "key": "blue",
-     "code": "BLU",
-     "name": "Blue Bee",
-     "description": "Black and electric blue, like a rare carpenter bee.",
-     "colours": [
-      {
-       "name": "Bee black",
-       "hex": "#141413"
-      },
-      {
-       "name": "Carpenter blue",
-       "hex": "#3DB5FF"
-      }
-     ],
-     "text": "review"
-    },
-    {
-     "key": "ghost",
-     "code": "GHO",
-     "name": "Ghost Bee",
-     "description": "Pale white and silver bands: a bee in the moonlight.",
-     "colours": [
-      {
-       "name": "Moon white",
-       "hex": "#F4F4F2"
-      },
-      {
-       "name": "Silver",
-       "hex": "#A8AFB8"
-      }
-     ],
-     "text": "review"
-    }
-   ]
-  },
-  {
-   "key": "ocean",
-   "code": "OCE",
-   "name": "Ocean Swirl",
-   "rarity": "uncommon",
-   "material": "swirl-glass",
-   "story": "A wave caught in glass, spinning deep blue and white.",
-   "inRaces": "Glass with a deep-blue, white and teal swirl twisting through it.",
-   "slots": [
-    "deep",
-    "bright",
-    "foam",
-    "accent"
-   ],
-   "shades": [
-    {
-     "key": "deep-blue",
-     "code": "DPB",
-     "name": "Deep Blue",
-     "description": "Deep blue, white and teal: a wave caught in glass.",
-     "colours": [
-      {
-       "name": "Deep sea",
-       "hex": "#0B3D91"
-      },
-      {
-       "name": "Wave blue",
-       "hex": "#3DB5FF"
-      },
-      {
-       "name": "Foam",
-       "hex": "#FFFFFF"
-      },
-      {
-       "name": "Teal",
-       "hex": "#13A8A8"
-      }
-     ],
-     "text": "review",
-     "original": true
-    },
-    {
-     "key": "tropical",
-     "code": "TRP",
-     "name": "Tropical",
-     "description": "Turquoise and white with a flash of lime, like a tropical reef.",
-     "colours": [
-      {
-       "name": "Reef blue",
-       "hex": "#13A8A8"
-      },
-      {
-       "name": "Turquoise",
-       "hex": "#40E0D0"
-      },
-      {
-       "name": "Foam",
-       "hex": "#FFFFFF"
+       "name": "Leaf green",
+       "hex": "#2E9A4A"
       },
       {
        "name": "Lime",
-       "hex": "#8BD448"
+       "hex": "#C8E83A"
+      },
+      {
+       "name": "Clear glass",
+       "hex": "#E2F2E0"
       }
      ],
      "text": "review"
     },
     {
-     "key": "storm",
-     "code": "STM",
-     "name": "Storm",
-     "description": "Grey-green and white: the North Sea in a storm.",
+     "key": "berry",
+     "no": 4,
+     "name": "Berry",
+     "description": "Magenta and violet blades in clear glass.",
      "colours": [
       {
-       "name": "Storm grey",
-       "hex": "#34454F"
-      },
-      {
-       "name": "Sea green",
-       "hex": "#5E8C84"
-      },
-      {
-       "name": "Spray",
-       "hex": "#F4F4F2"
-      },
-      {
-       "name": "Pewter",
-       "hex": "#8A9AA3"
-      }
-     ],
-     "text": "review"
-    },
-    {
-     "key": "sunset",
-     "code": "SUN",
-     "name": "Sunset Sea",
-     "description": "Coral, violet and white: the sea at sunset.",
-     "colours": [
-      {
-       "name": "Dusk violet",
-       "hex": "#3A1E6B"
-      },
-      {
-       "name": "Coral",
-       "hex": "#FF7F50"
-      },
-      {
-       "name": "Foam",
-       "hex": "#FFFFFF"
-      },
-      {
-       "name": "Rose",
-       "hex": "#FF8FC8"
-      }
-     ],
-     "text": "review"
-    },
-    {
-     "key": "arctic",
-     "code": "ARC",
-     "name": "Arctic",
-     "description": "Pale ice-blue and white, a polar sea.",
-     "colours": [
-      {
-       "name": "Polar blue",
-       "hex": "#2F5BEA"
-      },
-      {
-       "name": "Ice",
-       "hex": "#A9D8F0"
-      },
-      {
-       "name": "Snow",
-       "hex": "#FFFFFF"
-      },
-      {
-       "name": "Glacier",
-       "hex": "#6C9BB8"
-      }
-     ],
-     "text": "review"
-    }
-   ]
-  },
-  {
-   "key": "melon",
-   "code": "MEL",
-   "name": "Watermelon",
-   "rarity": "uncommon",
-   "material": "melon",
-   "story": "Summer in a marble. Nobody can stay serious racing against it.",
-   "inRaces": "Opaque, fun. Red with black seeds, white and green rind on two sides.",
-   "slots": [
-    "flesh",
-    "pith",
-    "rind",
-    "seed"
-   ],
-   "shades": [
-    {
-     "key": "red",
-     "code": "RED",
-     "name": "Red Melon",
-     "description": "Red with black seeds and a green rind.",
-     "colours": [
-      {
-       "name": "Melon red",
-       "hex": "#FF4D6D"
-      },
-      {
-       "name": "Pith",
-       "hex": "#FFFFFF"
-      },
-      {
-       "name": "Rind",
-       "hex": "#3BA34A"
-      },
-      {
-       "name": "Seed",
-       "hex": "#141413"
-      }
-     ],
-     "text": "review",
-     "original": true
-    },
-    {
-     "key": "yellow",
-     "code": "YEL",
-     "name": "Yellow Melon",
-     "description": "Sunny yellow flesh, the rare summer variety.",
-     "colours": [
-      {
-       "name": "Yellow flesh",
-       "hex": "#FFD95A"
-      },
-      {
-       "name": "Pith",
-       "hex": "#FFFFFF"
-      },
-      {
-       "name": "Rind",
-       "hex": "#3BA34A"
-      },
-      {
-       "name": "Seed",
-       "hex": "#141413"
-      }
-     ],
-     "text": "review"
-    },
-    {
-     "key": "cantaloupe",
-     "code": "CNT",
-     "name": "Cantaloupe",
-     "description": "Orange melon with a pale netted rind.",
-     "colours": [
-      {
-       "name": "Cantaloupe",
-       "hex": "#FFA45C"
-      },
-      {
-       "name": "Pith",
-       "hex": "#FFF4E0"
-      },
-      {
-       "name": "Netted rind",
-       "hex": "#C9B88A"
-      },
-      {
-       "name": "Seed",
-       "hex": "#7A5A2A"
-      }
-     ],
-     "text": "review"
-    },
-    {
-     "key": "honeydew",
-     "code": "HDW",
-     "name": "Honeydew",
-     "description": "Pale green and fresh, the calm one on the fruit plate.",
-     "colours": [
-      {
-       "name": "Honeydew",
-       "hex": "#C9F2A6"
-      },
-      {
-       "name": "Pith",
-       "hex": "#F4FFE8"
-      },
-      {
-       "name": "Pale rind",
-       "hex": "#8BC46A"
-      },
-      {
-       "name": "Seed",
-       "hex": "#6B7A3A"
-      }
-     ],
-     "text": "review"
-    },
-    {
-     "key": "dragon",
-     "code": "DRG",
-     "name": "Dragon Fruit",
-     "description": "Hot pink skin, white flesh and tiny black seeds.",
-     "colours": [
-      {
-       "name": "Flesh white",
-       "hex": "#FBF7F2"
-      },
-      {
-       "name": "Pink pith",
-       "hex": "#FFD6F0"
-      },
-      {
-       "name": "Dragon pink",
-       "hex": "#E040C8"
-      },
-      {
-       "name": "Seed",
-       "hex": "#141413"
-      }
-     ],
-     "text": "review"
-    }
-   ]
-  },
-  {
-   "key": "galaxy",
-   "code": "GAL",
-   "name": "Galaxy",
-   "rarity": "rare",
-   "material": "nebula-glass",
-   "story": "A whole night sky folded into one marble.",
-   "inRaces": "Dark glass with pink and blue nebula clouds and tiny twinkling stars inside.",
-   "slots": [
-    "space",
-    "cloud",
-    "cloud2",
-    "stars"
-   ],
-   "shades": [
-    {
-     "key": "milky-way",
-     "code": "MKW",
-     "name": "Milky Way",
-     "description": "Pink and blue nebula clouds in a dark night sky.",
-     "colours": [
-      {
-       "name": "Deep space",
-       "hex": "#120A2E"
-      },
-      {
-       "name": "Nebula pink",
-       "hex": "#E040C8"
-      },
-      {
-       "name": "Star blue",
-       "hex": "#3DB5FF"
-      },
-      {
-       "name": "Starlight",
-       "hex": "#FFFFFF"
-      }
-     ],
-     "text": "review",
-     "original": true
-    },
-    {
-     "key": "andromeda",
-     "code": "AND",
-     "name": "Andromeda",
-     "description": "Violet and gold clouds from a neighbouring galaxy.",
-     "colours": [
-      {
-       "name": "Void",
-       "hex": "#0E0A24"
+       "name": "Magenta",
+       "hex": "#E0115F"
       },
       {
        "name": "Violet",
        "hex": "#8E5CF5"
       },
       {
-       "name": "Gold dust",
-       "hex": "#FFD21F"
-      },
-      {
-       "name": "Starlight",
-       "hex": "#FFFFFF"
+       "name": "Clear glass",
+       "hex": "#F2E2F0"
       }
      ],
      "text": "review"
     },
     {
-     "key": "emerald",
-     "code": "EMR",
-     "name": "Emerald Nebula",
-     "description": "Green and teal gas clouds, a sky no one has charted.",
+     "key": "sunset",
+     "no": 5,
+     "name": "Sunset",
+     "description": "Orange and red blades in amber-tinted glass.",
      "colours": [
       {
-       "name": "Void",
-       "hex": "#06141A"
-      },
-      {
-       "name": "Emerald",
-       "hex": "#3DDC97"
-      },
-      {
-       "name": "Teal",
-       "hex": "#13A8A8"
-      },
-      {
-       "name": "Starlight",
-       "hex": "#FFFFFF"
-      }
-     ],
-     "text": "review"
-    },
-    {
-     "key": "red-giant",
-     "code": "RGT",
-     "name": "Red Giant",
-     "description": "Red and orange clouds around a dying star.",
-     "colours": [
-      {
-       "name": "Void",
-       "hex": "#1A0608"
-      },
-      {
-       "name": "Red giant",
-       "hex": "#E5322D"
-      },
-      {
-       "name": "Flare",
+       "name": "Orange",
        "hex": "#FF7A1A"
       },
       {
-       "name": "Starlight",
-       "hex": "#FFF2C4"
-      }
-     ],
-     "text": "review"
-    },
-    {
-     "key": "ice",
-     "code": "ICE",
-     "name": "Ice Nebula",
-     "description": "Pale blue and white clouds, cold and far away.",
-     "colours": [
-      {
-       "name": "Void",
-       "hex": "#0A1426"
+       "name": "Crimson",
+       "hex": "#C8142A"
       },
       {
-       "name": "Ice blue",
-       "hex": "#A9D8F0"
-      },
-      {
-       "name": "Frost",
-       "hex": "#6FA8FF"
-      },
-      {
-       "name": "Starlight",
-       "hex": "#FFFFFF"
+       "name": "Amber glass",
+       "hex": "#FFE7C2"
       }
      ],
      "text": "review"
@@ -1214,285 +546,121 @@
    ]
   },
   {
-   "key": "lava",
-   "code": "LAV",
-   "name": "Lava Core",
-   "rarity": "rare",
-   "material": "lava",
-   "story": "Still cooling from the volcano, and glowing hottest at night.",
-   "inRaces": "Black volcanic rock with glowing orange cracks and a hot core. Cracks glow brighter in night races.",
+   "key": "corkscrew",
+   "no": 5,
+   "name": "Corkscrew",
+   "rarity": "uncommon",
+   "material": "corkscrew",
+   "story": "Two colours twisting round and round like a screw.",
+   "inRaces": "Opaque, glossy. Two coloured spirals twisting from pole to pole.",
    "slots": [
-    "rock",
-    "crack",
-    "crack2",
-    "core"
+    "band",
+    "band2",
+    "base"
    ],
    "shades": [
     {
-     "key": "magma",
-     "code": "MAG",
-     "name": "Magma",
-     "description": "Black rock with orange cracks and a hot core.",
+     "key": "classic",
+     "no": 1,
+     "name": "Classic",
+     "description": "Yellow and red twisting on white.",
      "colours": [
       {
-       "name": "Basalt",
-       "hex": "#1A0A04"
-      },
-      {
-       "name": "Magma orange",
-       "hex": "#FF7A1A"
-      },
-      {
-       "name": "Lava red",
-       "hex": "#FF4D1A"
-      },
-      {
-       "name": "Core gold",
+       "name": "Sun yellow",
        "hex": "#FFD21F"
+      },
+      {
+       "name": "Fire red",
+       "hex": "#E5322D"
+      },
+      {
+       "name": "White",
+       "hex": "#F4F1EA"
       }
      ],
      "text": "review",
      "original": true
     },
     {
-     "key": "blue-flame",
-     "code": "BLF",
-     "name": "Blue Flame",
-     "description": "Dark rock cracked with blue fire, hotter than it looks.",
+     "key": "ocean",
+     "no": 2,
+     "name": "Ocean",
+     "description": "Blue and aqua twisting on white.",
      "colours": [
       {
-       "name": "Cold basalt",
-       "hex": "#0A0E1A"
+       "name": "Pool blue",
+       "hex": "#1F7FD6"
       },
       {
-       "name": "Blue flame",
-       "hex": "#3DB5FF"
+       "name": "Aqua",
+       "hex": "#3FD8D0"
       },
       {
-       "name": "Plasma",
-       "hex": "#6F8BFF"
-      },
-      {
-       "name": "White core",
-       "hex": "#E8F6FF"
+       "name": "White",
+       "hex": "#F4F4F2"
       }
      ],
      "text": "review"
     },
     {
-     "key": "toxic",
-     "code": "TOX",
-     "name": "Toxic",
-     "description": "A green glow from deep in the earth.",
+     "key": "forest",
+     "no": 3,
+     "name": "Forest",
+     "description": "Green and brown twisting on cream.",
      "colours": [
       {
-       "name": "Ash rock",
-       "hex": "#0E140A"
+       "name": "Leaf green",
+       "hex": "#3A9A3A"
       },
       {
-       "name": "Toxic green",
-       "hex": "#7DFF6A"
+       "name": "Bark",
+       "hex": "#8A5A32"
       },
       {
-       "name": "Acid",
-       "hex": "#3DDC97"
-      },
-      {
-       "name": "Lime core",
-       "hex": "#E4FF8A"
+       "name": "Cream",
+       "hex": "#F2ECD8"
       }
      ],
      "text": "review"
     },
     {
-     "key": "amethyst",
-     "code": "AMT",
-     "name": "Amethyst Fire",
-     "description": "Purple cracks over smoky rock: a geode on fire.",
+     "key": "berry",
+     "no": 4,
+     "name": "Berry",
+     "description": "Purple and pink twisting on white.",
      "colours": [
       {
-       "name": "Smoke rock",
-       "hex": "#120A1A"
+       "name": "Grape",
+       "hex": "#8E5CF5"
       },
       {
-       "name": "Violet fire",
-       "hex": "#B79BFF"
+       "name": "Bubblegum",
+       "hex": "#FF6FB5"
+      },
+      {
+       "name": "White",
+       "hex": "#F7F2F6"
+      }
+     ],
+     "text": "review"
+    },
+    {
+     "key": "sunset",
+     "no": 5,
+     "name": "Sunset",
+     "description": "Orange and magenta twisting on cream.",
+     "colours": [
+      {
+       "name": "Tangerine",
+       "hex": "#FF7A1A"
       },
       {
        "name": "Magenta",
-       "hex": "#E040C8"
-      },
-      {
-       "name": "Lilac core",
-       "hex": "#F4E8FF"
-      }
-     ],
-     "text": "review"
-    },
-    {
-     "key": "ash",
-     "code": "ASH",
-     "name": "Cooling Ash",
-     "description": "Grey rock with the last red embers, just cooling down.",
-     "colours": [
-      {
-       "name": "Ash grey",
-       "hex": "#3A3634"
-      },
-      {
-       "name": "Ember red",
-       "hex": "#C2381A"
-      },
-      {
-       "name": "Dull orange",
-       "hex": "#E8763A"
-      },
-      {
-       "name": "Amber core",
-       "hex": "#FFBF00"
-      }
-     ],
-     "text": "review"
-    }
-   ]
-  },
-  {
-   "key": "glass",
-   "code": "GLA",
-   "name": "Glacier Glass",
-   "rarity": "rare",
-   "material": "core-glass",
-   "story": "A marble frozen inside a marble, from the glacier tracks of the World Tour.",
-   "inRaces": "Crystal-clear glass with a smaller deep-blue marble frozen in the middle, plus tiny air bubbles.",
-   "slots": [
-    "glass",
-    "core",
-    "core2",
-    "bubble"
-   ],
-   "shades": [
-    {
-     "key": "glacier",
-     "code": "GLC",
-     "name": "Glacier",
-     "description": "Clear ice with a deep-blue marble frozen inside.",
-     "colours": [
-      {
-       "name": "Ice glass",
-       "hex": "#E1F5FF"
-      },
-      {
-       "name": "Glacier blue",
-       "hex": "#3DB5FF"
-      },
-      {
-       "name": "Deep blue",
-       "hex": "#13426B"
-      },
-      {
-       "name": "Air bubble",
-       "hex": "#FFFFFF"
-      }
-     ],
-     "text": "review",
-     "original": true
-    },
-    {
-     "key": "ruby",
-     "code": "RBY",
-     "name": "Ruby Ice",
-     "description": "A red marble frozen in clear ice.",
-     "colours": [
-      {
-       "name": "Ice glass",
-       "hex": "#E1F5FF"
-      },
-      {
-       "name": "Ruby",
        "hex": "#E0115F"
       },
       {
-       "name": "Garnet",
-       "hex": "#6B0A2E"
-      },
-      {
-       "name": "Air bubble",
-       "hex": "#FFFFFF"
-      }
-     ],
-     "text": "review"
-    },
-    {
-     "key": "amber",
-     "code": "AMB",
-     "name": "Amber Ice",
-     "description": "A gold marble trapped in pale ice, like a fossil.",
-     "colours": [
-      {
-       "name": "Pale ice",
-       "hex": "#F4F0E0"
-      },
-      {
-       "name": "Amber",
-       "hex": "#FFBF00"
-      },
-      {
-       "name": "Honey brown",
-       "hex": "#8A5A10"
-      },
-      {
-       "name": "Air bubble",
-       "hex": "#FFFFFF"
-      }
-     ],
-     "text": "review"
-    },
-    {
-     "key": "emerald",
-     "code": "EMR",
-     "name": "Emerald Ice",
-     "description": "A green marble deep in blue-white ice.",
-     "colours": [
-      {
-       "name": "Blue ice",
-       "hex": "#D8ECF8"
-      },
-      {
-       "name": "Emerald",
-       "hex": "#50C878"
-      },
-      {
-       "name": "Forest",
-       "hex": "#1B4D2C"
-      },
-      {
-       "name": "Air bubble",
-       "hex": "#FFFFFF"
-      }
-     ],
-     "text": "review"
-    },
-    {
-     "key": "smoke",
-     "code": "SMK",
-     "name": "Smoke Ice",
-     "description": "Smoky grey glass with a black marble at its heart.",
-     "colours": [
-      {
-       "name": "Smoke glass",
-       "hex": "#C9CDD6"
-      },
-      {
-       "name": "Onyx",
-       "hex": "#353839"
-      },
-      {
-       "name": "Midnight",
-       "hex": "#0B0C0D"
-      },
-      {
-       "name": "Air bubble",
-       "hex": "#FFFFFF"
+       "name": "Cream",
+       "hex": "#FFF4E0"
       }
      ],
      "text": "review"
@@ -1500,178 +668,30 @@
    ]
   },
   {
-   "key": "neon",
-   "code": "NEO",
-   "name": "Neon Grid",
-   "rarity": "epic",
-   "material": "neon-grid",
-   "story": "Straight out of a 1980s arcade, built for the bright lights.",
-   "inRaces": "Glowing pink and blue grid lines on a dark ball, retro arcade style. Lines glow (emissive).",
+   "key": "bumblebee",
+   "no": 6,
+   "name": "Bumblebee",
+   "rarity": "uncommon",
+   "material": "bee-bands",
+   "story": "Black and yellow stripes. Always buzzing near the front.",
+   "inRaces": "Opaque, glossy. Even bands of two colours round the ball.",
    "slots": [
-    "line",
-    "line2",
-    "ball",
-    "ball2"
+    "stripe",
+    "base"
    ],
    "shades": [
     {
-     "key": "arcade",
-     "code": "ARC",
-     "name": "Arcade",
-     "description": "Pink and blue grid lines on a dark arcade ball.",
+     "key": "classic",
+     "no": 1,
+     "name": "Classic",
+     "description": "Black and yellow, the real bumblebee.",
      "colours": [
-      {
-       "name": "Neon pink",
-       "hex": "#E040C8"
-      },
-      {
-       "name": "Neon blue",
-       "hex": "#3DB5FF"
-      },
-      {
-       "name": "Night purple",
-       "hex": "#2A1650"
-      },
-      {
-       "name": "Arcade dark",
-       "hex": "#0E1320"
-      }
-     ],
-     "text": "review",
-     "original": true
-    },
-    {
-     "key": "synthwave",
-     "code": "SYN",
-     "name": "Synthwave",
-     "description": "Orange and pink lines over a purple sunset.",
-     "colours": [
-      {
-       "name": "Sunset orange",
-       "hex": "#FF7A1A"
-      },
-      {
-       "name": "Hot pink",
-       "hex": "#FF3FA8"
-      },
-      {
-       "name": "Dusk purple",
-       "hex": "#3A1E6B"
-      },
-      {
-       "name": "Night",
-       "hex": "#120A2E"
-      }
-     ],
-     "text": "review"
-    },
-    {
-     "key": "laser",
-     "code": "LSR",
-     "name": "Laser Green",
-     "description": "A green laser grid on black, like an old computer screen.",
-     "colours": [
-      {
-       "name": "Laser green",
-       "hex": "#7DFF6A"
-      },
-      {
-       "name": "Phosphor",
-       "hex": "#3DDC97"
-      },
-      {
-       "name": "Terminal black",
-       "hex": "#0A120A"
-      },
       {
        "name": "Black",
-       "hex": "#050805"
-      }
-     ],
-     "text": "review"
-    },
-    {
-     "key": "ice",
-     "code": "ICE",
-     "name": "Ice Neon",
-     "description": "White and cyan lines on deep blue.",
-     "colours": [
-      {
-       "name": "Cyan",
-       "hex": "#3FD8FF"
-      },
-      {
-       "name": "White neon",
-       "hex": "#F2F4F8"
-      },
-      {
-       "name": "Deep blue",
-       "hex": "#0B2A5A"
-      },
-      {
-       "name": "Night blue",
-       "hex": "#0E1320"
-      }
-     ],
-     "text": "review"
-    },
-    {
-     "key": "gold",
-     "code": "GLD",
-     "name": "Gold Rush",
-     "description": "Gold and white lines on black: the high-score marble.",
-     "colours": [
-      {
-       "name": "Score gold",
-       "hex": "#FFD21F"
-      },
-      {
-       "name": "Bright white",
-       "hex": "#FFF2C4"
-      },
-      {
-       "name": "Cabinet black",
        "hex": "#141413"
       },
       {
-       "name": "Deep black",
-       "hex": "#0A0A0A"
-      }
-     ],
-     "text": "review"
-    }
-   ]
-  },
-  {
-   "key": "flag",
-   "code": "FLG",
-   "name": "Checkered Flag",
-   "rarity": "epic",
-   "material": "checks",
-   "story": "Made for one thing only: crossing the line first.",
-   "inRaces": "Black and white racing checks, high gloss with a thin gold seam. The winner's marble.",
-   "slots": [
-    "check",
-    "check2",
-    "seam"
-   ],
-   "shades": [
-    {
-     "key": "chequered",
-     "code": "CHQ",
-     "name": "Chequered",
-     "description": "Black and white racing checks with a gold seam.",
-     "colours": [
-      {
-       "name": "Flag black",
-       "hex": "#141413"
-      },
-      {
-       "name": "Flag white",
-       "hex": "#F2F4F8"
-      },
-      {
-       "name": "Gold seam",
+       "name": "Bee yellow",
        "hex": "#FFD21F"
       }
      ],
@@ -1679,85 +699,69 @@
      "original": true
     },
     {
-     "key": "pit-lane",
-     "code": "PIT",
-     "name": "Pit Lane",
-     "description": "Red and white checks, like the pit-lane flag.",
-     "colours": [
-      {
-       "name": "Pit red",
-       "hex": "#E5322D"
-      },
-      {
-       "name": "Flag white",
-       "hex": "#F2F4F8"
-      },
-      {
-       "name": "Silver seam",
-       "hex": "#C8CCD2"
-      }
-     ],
-     "text": "review"
-    },
-    {
-     "key": "pole",
-     "code": "POL",
-     "name": "Pole Position",
-     "description": "Yellow and black checks for the pole sitter.",
-     "colours": [
-      {
-       "name": "Pole yellow",
-       "hex": "#FFD21F"
-      },
-      {
-       "name": "Flag black",
-       "hex": "#141413"
-      },
-      {
-       "name": "Silver seam",
-       "hex": "#C8CCD2"
-      }
-     ],
-     "text": "review"
-    },
-    {
-     "key": "victory",
-     "code": "VIC",
-     "name": "Victory Lap",
-     "description": "Gold and white checks for the champion's lap.",
-     "colours": [
-      {
-       "name": "Victory gold",
-       "hex": "#E8A10C"
-      },
-      {
-       "name": "Flag white",
-       "hex": "#F2F4F8"
-      },
-      {
-       "name": "Black seam",
-       "hex": "#141413"
-      }
-     ],
-     "text": "review"
-    },
-    {
-     "key": "night",
-     "code": "NGT",
-     "name": "Night Race",
-     "description": "Navy and blue checks with a neon seam, built for floodlights.",
+     "key": "ocean",
+     "no": 2,
+     "name": "Ocean",
+     "description": "Navy and sky blue.",
      "colours": [
       {
        "name": "Navy",
-       "hex": "#0B2A5A"
+       "hex": "#14244A"
       },
       {
-       "name": "Track blue",
-       "hex": "#2F5BEA"
+       "name": "Sky",
+       "hex": "#6FC3FF"
+      }
+     ],
+     "text": "review"
+    },
+    {
+     "key": "forest",
+     "no": 3,
+     "name": "Forest",
+     "description": "Pine green and lime.",
+     "colours": [
+      {
+       "name": "Pine",
+       "hex": "#173D22"
       },
       {
-       "name": "Neon seam",
-       "hex": "#3FD8FF"
+       "name": "Lime",
+       "hex": "#B8E83A"
+      }
+     ],
+     "text": "review"
+    },
+    {
+     "key": "berry",
+     "no": 4,
+     "name": "Berry",
+     "description": "Plum and pink.",
+     "colours": [
+      {
+       "name": "Plum",
+       "hex": "#3E1238"
+      },
+      {
+       "name": "Pink",
+       "hex": "#FF8FC8"
+      }
+     ],
+     "text": "review"
+    },
+    {
+     "key": "sunset",
+     "no": 5,
+     "name": "Sunset",
+     "description": "Deep red and orange.",
+     "colours": [
+      {
+       "name": "Deep red",
+       "hex": "#5A0E0E"
+      },
+      {
+       "name": "Orange",
+       "hex": "#FF8A1A"
       }
      ],
      "text": "review"
@@ -1765,142 +769,344 @@
    ]
   },
   {
-   "key": "sun",
-   "code": "SUN",
-   "name": "Sunfire",
-   "rarity": "legendary",
-   "material": "sunfire",
-   "story": "The Marble Spins logo marble. The one that started it all.",
-   "inRaces": "The Marble Spins logo marble. Liquid-gold glow with swirling flame streaks, leaves a short spark trail.",
+   "key": "oxblood",
+   "no": 7,
+   "name": "Oxblood",
+   "rarity": "rare",
+   "material": "oxblood",
+   "story": "Deep blood-red streaks on white. Collectors hunt for these.",
+   "inRaces": "Milky white glass with deep, glossy streaks swirled through it.",
    "slots": [
-    "spark",
-    "glow",
-    "flame",
-    "ember"
+    "streak",
+    "streak2",
+    "base"
    ],
    "shades": [
     {
-     "key": "solar",
-     "code": "SOL",
-     "name": "Solar",
-     "description": "Liquid gold fading into deep orange, the exact colours of the logo, with flame streaks that swirl as it rolls.",
+     "key": "classic",
+     "no": 1,
+     "name": "Classic",
+     "description": "Oxblood red streaks on milky white.",
      "colours": [
       {
-       "name": "Spark white",
-       "hex": "#FFFFFF"
+       "name": "Oxblood",
+       "hex": "#6E0F14"
       },
       {
-       "name": "Solar yellow",
-       "hex": "#FFD21F"
+       "name": "Brick red",
+       "hex": "#962020"
       },
+      {
+       "name": "Milk white",
+       "hex": "#F4F1EA"
+      }
+     ],
+     "text": "review",
+     "original": true
+    },
+    {
+     "key": "ocean",
+     "no": 2,
+     "name": "Ocean",
+     "description": "Deep navy streaks on milky white.",
+     "colours": [
+      {
+       "name": "Ink navy",
+       "hex": "#0E2350"
+      },
+      {
+       "name": "Deep blue",
+       "hex": "#1F4FA8"
+      },
+      {
+       "name": "Milk white",
+       "hex": "#F2F4F6"
+      }
+     ],
+     "text": "review"
+    },
+    {
+     "key": "forest",
+     "no": 3,
+     "name": "Forest",
+     "description": "Bottle-green streaks on cream.",
+     "colours": [
+      {
+       "name": "Bottle green",
+       "hex": "#0E3A1E"
+      },
+      {
+       "name": "Forest",
+       "hex": "#2E6B3A"
+      },
+      {
+       "name": "Cream",
+       "hex": "#F2ECD8"
+      }
+     ],
+     "text": "review"
+    },
+    {
+     "key": "berry",
+     "no": 4,
+     "name": "Berry",
+     "description": "Plum streaks on pale pink.",
+     "colours": [
+      {
+       "name": "Plum",
+       "hex": "#4E1640"
+      },
+      {
+       "name": "Mulberry",
+       "hex": "#8A2A6A"
+      },
+      {
+       "name": "Pale pink",
+       "hex": "#F8E8EF"
+      }
+     ],
+     "text": "review"
+    },
+    {
+     "key": "sunset",
+     "no": 5,
+     "name": "Sunset",
+     "description": "Burnt-orange streaks on cream.",
+     "colours": [
+      {
+       "name": "Burnt orange",
+       "hex": "#8A3208"
+      },
+      {
+       "name": "Rust",
+       "hex": "#C25A1A"
+      },
+      {
+       "name": "Cream",
+       "hex": "#FFF4E0"
+      }
+     ],
+     "text": "review"
+    }
+   ]
+  },
+  {
+   "key": "steelie",
+   "no": 8,
+   "name": "Steelie",
+   "rarity": "rare",
+   "material": "steel",
+   "story": "A shiny steel ball bearing. Heavy, cold and feared.",
+   "inRaces": "Polished steel that mirrors the sky and the track around it.",
+   "slots": [
+    "steel",
+    "shadow"
+   ],
+   "shades": [
+    {
+     "key": "classic",
+     "no": 1,
+     "name": "Classic",
+     "description": "Polished silver steel.",
+     "colours": [
+      {
+       "name": "Steel",
+       "hex": "#DCE3EC"
+      },
+      {
+       "name": "Gunmetal",
+       "hex": "#2A313C"
+      }
+     ],
+     "text": "review",
+     "original": true
+    },
+    {
+     "key": "ocean",
+     "no": 2,
+     "name": "Ocean",
+     "description": "Blued steel, like a watch hand.",
+     "colours": [
+      {
+       "name": "Blued steel",
+       "hex": "#7FA8E0"
+      },
+      {
+       "name": "Midnight",
+       "hex": "#14243C"
+      }
+     ],
+     "text": "review"
+    },
+    {
+     "key": "forest",
+     "no": 3,
+     "name": "Forest",
+     "description": "Green anodised steel.",
+     "colours": [
+      {
+       "name": "Green steel",
+       "hex": "#8FD0A0"
+      },
+      {
+       "name": "Dark pine",
+       "hex": "#16301E"
+      }
+     ],
+     "text": "review"
+    },
+    {
+     "key": "berry",
+     "no": 4,
+     "name": "Berry",
+     "description": "Purple anodised steel.",
+     "colours": [
+      {
+       "name": "Purple steel",
+       "hex": "#C8A0F0"
+      },
+      {
+       "name": "Dark plum",
+       "hex": "#2A1636"
+      }
+     ],
+     "text": "review"
+    },
+    {
+     "key": "sunset",
+     "no": 5,
+     "name": "Sunset",
+     "description": "Copper-gold bronze.",
+     "colours": [
+      {
+       "name": "Bronze",
+       "hex": "#F0B878"
+      },
+      {
+       "name": "Dark copper",
+       "hex": "#3A1E0E"
+      }
+     ],
+     "text": "review"
+    }
+   ]
+  },
+  {
+   "key": "flame-swirl",
+   "no": 9,
+   "name": "Flame Swirl",
+   "rarity": "epic",
+   "material": "flame-swirl",
+   "story": "Tongues of orange and red fire licking across white.",
+   "inRaces": "Milky white glass with tongues of fire swirling round it, glowing at night.",
+   "slots": [
+    "flame",
+    "flame2",
+    "base"
+   ],
+   "shades": [
+    {
+     "key": "classic",
+     "no": 1,
+     "name": "Classic",
+     "description": "Orange and red flames on white.",
+     "colours": [
       {
        "name": "Flame orange",
        "hex": "#FF7A1A"
       },
       {
-       "name": "Ember",
-       "hex": "#E8580C"
+       "name": "Fire red",
+       "hex": "#E5322D"
+      },
+      {
+       "name": "White",
+       "hex": "#F4F1EA"
       }
      ],
-     "text": "design",
+     "text": "review",
      "original": true
     },
     {
-     "key": "blue-star",
-     "code": "BLS",
-     "name": "Blue Star",
-     "description": "A hotter, younger star: white-blue glow with blue flame streaks.",
+     "key": "ocean",
+     "no": 2,
+     "name": "Ocean",
+     "description": "Cold blue flames on white.",
      "colours": [
       {
-       "name": "Spark white",
-       "hex": "#FFFFFF"
-      },
-      {
-       "name": "Star blue",
-       "hex": "#6FA8FF"
+       "name": "Cyan flame",
+       "hex": "#3FD8FF"
       },
       {
        "name": "Blue flame",
-       "hex": "#2F5BEA"
+       "hex": "#1F4FD6"
       },
       {
-       "name": "Deep blue",
-       "hex": "#13286B"
+       "name": "White",
+       "hex": "#F2F6FA"
       }
      ],
      "text": "review"
     },
     {
-     "key": "red-dwarf",
-     "code": "RDW",
-     "name": "Red Dwarf",
-     "description": "A small, fierce red sun with crimson flames.",
+     "key": "forest",
+     "no": 3,
+     "name": "Forest",
+     "description": "Green fire on cream.",
      "colours": [
       {
-       "name": "Spark pink",
-       "hex": "#FFE8E0"
+       "name": "Lime flame",
+       "hex": "#9AE84A"
       },
       {
-       "name": "Red glow",
-       "hex": "#FF4D4D"
+       "name": "Green flame",
+       "hex": "#1E9E4A"
+      },
+      {
+       "name": "Cream",
+       "hex": "#F2F2E2"
+      }
+     ],
+     "text": "review"
+    },
+    {
+     "key": "berry",
+     "no": 4,
+     "name": "Berry",
+     "description": "Pink and violet flames on white.",
+     "colours": [
+      {
+       "name": "Pink flame",
+       "hex": "#FF5FB0"
+      },
+      {
+       "name": "Violet flame",
+       "hex": "#8E3CE0"
+      },
+      {
+       "name": "White",
+       "hex": "#F7F2F8"
+      }
+     ],
+     "text": "review"
+    },
+    {
+     "key": "sunset",
+     "no": 5,
+     "name": "Sunset",
+     "description": "Gold and crimson flames on cream.",
+     "colours": [
+      {
+       "name": "Gold flame",
+       "hex": "#FFC21F"
       },
       {
        "name": "Crimson",
-       "hex": "#C2183A"
+       "hex": "#C8142A"
       },
       {
-       "name": "Ember",
-       "hex": "#6B0A1A"
-      }
-     ],
-     "text": "review"
-    },
-    {
-     "key": "eclipse",
-     "code": "ECL",
-     "name": "Eclipse",
-     "description": "Shadowed gold with white flame streaks: the sun in eclipse.",
-     "colours": [
-      {
-       "name": "Corona white",
-       "hex": "#FFFFFF"
-      },
-      {
-       "name": "Pale gold",
-       "hex": "#F2C14E"
-      },
-      {
-       "name": "Shadow",
-       "hex": "#3A2A14"
-      },
-      {
-       "name": "Night",
-       "hex": "#141413"
-      }
-     ],
-     "text": "review"
-    },
-    {
-     "key": "rose",
-     "code": "RSE",
-     "name": "Rose Sun",
-     "description": "A pink-gold sunrise glow with rose flame streaks.",
-     "colours": [
-      {
-       "name": "Spark white",
-       "hex": "#FFFFFF"
-      },
-      {
-       "name": "Dawn gold",
-       "hex": "#FFD9A0"
-      },
-      {
-       "name": "Rose flame",
-       "hex": "#FF6FA8"
-      },
-      {
-       "name": "Ember rose",
-       "hex": "#B0306A"
+       "name": "Cream",
+       "hex": "#FFF4E0"
       }
      ],
      "text": "review"
@@ -1908,142 +1114,121 @@
    ]
   },
   {
-   "key": "hole",
-   "code": "HOL",
-   "name": "Black Hole",
+   "key": "champion",
+   "no": 10,
+   "name": "Champion Shooter",
    "rarity": "legendary",
-   "material": "black-hole",
-   "story": "Nothing escapes it, not even light. Rarely seen, never forgotten.",
-   "inRaces": "Pitch-black centre with a spinning orange and violet ring of light around it. Bends light at the edges.",
+   "material": "champion",
+   "story": "The big shooter with gold flakes that everyone wanted to win.",
+   "inRaces": "Deep glass full of glinting flakes, with a soft glow around it.",
    "slots": [
-    "ring",
-    "ring2",
-    "ring3",
-    "core"
+    "glass",
+    "deep",
+    "flake"
    ],
    "shades": [
     {
-     "key": "horizon",
-     "code": "HRZ",
-     "name": "Event Horizon",
-     "description": "A pitch-black centre inside a ring of orange and violet light.",
+     "key": "classic",
+     "no": 1,
+     "name": "Classic",
+     "description": "Deep green with gold flakes, the one everyone wanted.",
      "colours": [
       {
-       "name": "Horizon gold",
+       "name": "Champion green",
+       "hex": "#3DDC97"
+      },
+      {
+       "name": "Deep green",
+       "hex": "#063321"
+      },
+      {
+       "name": "Gold",
        "hex": "#FFD21F"
-      },
-      {
-       "name": "Accretion orange",
-       "hex": "#FF7A1A"
-      },
-      {
-       "name": "Violet",
-       "hex": "#3A1E6B"
-      },
-      {
-       "name": "Void",
-       "hex": "#000000"
       }
      ],
      "text": "review",
      "original": true
     },
     {
-     "key": "blue-ring",
-     "code": "BLR",
-     "name": "Blue Ring",
-     "description": "A cold blue ring of light around the dark.",
+     "key": "ocean",
+     "no": 2,
+     "name": "Ocean",
+     "description": "Deep ocean blue with silver flakes.",
      "colours": [
       {
-       "name": "Blue shift",
+       "name": "Ocean blue",
        "hex": "#3DB5FF"
       },
       {
-       "name": "Ice white",
-       "hex": "#E8F6FF"
+       "name": "Abyss",
+       "hex": "#061A3A"
       },
       {
-       "name": "Deep indigo",
-       "hex": "#1A1E6B"
-      },
-      {
-       "name": "Void",
-       "hex": "#000000"
+       "name": "Silver",
+       "hex": "#F2F6FF"
       }
      ],
      "text": "review"
     },
     {
-     "key": "quasar",
-     "code": "QSR",
-     "name": "Quasar",
-     "description": "A blinding white and pink ring, the brightest thing in the sky.",
+     "key": "forest",
+     "no": 3,
+     "name": "Forest",
+     "description": "Dark pine with copper flakes.",
      "colours": [
       {
-       "name": "Quasar white",
-       "hex": "#FFFFFF"
+       "name": "Pine glow",
+       "hex": "#7AC86A"
       },
       {
-       "name": "Hot pink",
-       "hex": "#FF3FA8"
+       "name": "Night pine",
+       "hex": "#0C2412"
       },
       {
-       "name": "Plum",
-       "hex": "#4A0A3A"
-      },
-      {
-       "name": "Void",
-       "hex": "#000000"
+       "name": "Copper",
+       "hex": "#F0A060"
       }
      ],
      "text": "review"
     },
     {
-     "key": "emerald",
-     "code": "EMR",
-     "name": "Emerald Void",
-     "description": "A green ring around nothing at all.",
+     "key": "berry",
+     "no": 4,
+     "name": "Berry",
+     "description": "Royal purple with gold flakes.",
      "colours": [
       {
-       "name": "Aurora green",
-       "hex": "#3DDC97"
+       "name": "Royal purple",
+       "hex": "#B07BFF"
       },
       {
-       "name": "Lime",
-       "hex": "#C8FF6A"
+       "name": "Deep violet",
+       "hex": "#1E0A3A"
       },
       {
-       "name": "Deep teal",
-       "hex": "#0A3A3A"
-      },
-      {
-       "name": "Void",
-       "hex": "#000000"
+       "name": "Gold",
+       "hex": "#FFD21F"
       }
      ],
      "text": "review"
     },
     {
-     "key": "red-shift",
-     "code": "RSH",
-     "name": "Red Shift",
-     "description": "Deep red light, stretched as it falls in.",
+     "key": "sunset",
+     "no": 5,
+     "name": "Sunset",
+     "description": "Ember red with gold flakes.",
      "colours": [
-      {
-       "name": "Red shift",
-       "hex": "#E5322D"
-      },
       {
        "name": "Ember",
-       "hex": "#FF7A1A"
+       "hex": "#FF7A3A"
       },
       {
-       "name": "Maroon",
-       "hex": "#3A0A0A"
+       "name": "Deep red",
+       "hex": "#3A0806"
       },
       {
-       "name": "Void",
-       "hex": "#000000"
+       "name": "Gold",
+       "hex": "#FFE07A"
       }
      ],
      "text": "review"
@@ -2052,7 +1237,6 @@
   },
   {
    "key": "aurora",
-   "code": "AUR",
    "name": "Northern Lights",
    "rarity": "limited",
    "material": "aurora-glass",
@@ -2067,7 +1251,6 @@
    "shades": [
     {
      "key": "aurora",
-     "code": "NL1",
      "name": "Northern Lights",
      "description": "Green and violet ribbons drifting over a winter night sky.",
      "colours": [
@@ -2089,7 +1272,8 @@
       }
      ],
      "text": "review",
-     "original": true
+     "original": true,
+     "no": 1
     }
    ],
    "limited": {
@@ -2098,7 +1282,9 @@
     "allNumbered": true,
     "saleEndsAt": "2026-11-01T00:00:00+01:00",
     "note": "[Sale window placeholder: until the end of October]"
-   }
+   },
+   "no": 1,
+   "collection": "LE"
   }
  ],
  "review": {

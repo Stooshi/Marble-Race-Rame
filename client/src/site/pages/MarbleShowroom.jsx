@@ -16,6 +16,8 @@ import { BUILT_MATERIALS, createMarbleLook } from '../../shared/marbles/material
 const RADIUS = 0.55;
 const UP = new Vector3(0, 1, 0);
 const BUILT = [...new Set(ITEMS.filter((i) => BUILT_MATERIALS.includes(i.design.material)).map((i) => i.design.key))];
+// The race of 20: every finished look (each shade), round again until there are 20.
+const RACE_LOOKS = ITEMS.filter((i) => BUILT_MATERIALS.includes(i.design.material) && !i.design.limited).map((i) => i.slug);
 
 function useShowroom(canvasRef, { mode, design, night, plain }) {
   const [fps, setFps] = useState(null);
@@ -45,7 +47,7 @@ function useShowroom(canvasRef, { mode, design, night, plain }) {
 
     const geometry = new SphereGeometry(RADIUS, 24, 16);
     const slugs = race
-      ? [...BUILT.map((k) => ITEMS.find((i) => i.design.key === k).slug), ...ITEMS.filter((i) => !i.shade.original).map((i) => i.slug)].slice(0, 20)
+      ? Array.from({ length: 20 }, (_, k) => RACE_LOOKS[k % RACE_LOOKS.length])
       : ITEMS.filter((i) => i.design.key === design).map((i) => i.slug);
     const plainMat = new MeshPhongMaterial({ color: '#e0115f', shininess: 90 });
     const looks = slugs.map((slug) => {
@@ -131,8 +133,8 @@ export default function MarbleShowroom() {
   const [search] = useSearchParams();
   const plain = search.has('plain');
   const [mode, setMode] = useState(search.get('mode') === 'race' ? 'race' : 'look');
-  const [design, setDesign] = useState(BUILT[0]);
-  const [night, setNight] = useState(false);
+  const [design, setDesign] = useState(BUILT.includes(search.get('design')) ? search.get('design') : BUILT[0]);
+  const [night, setNight] = useState(search.has('night'));
   const fps = useShowroom(canvasRef, { mode, design, night, plain });
   const d = DESIGN[design];
 

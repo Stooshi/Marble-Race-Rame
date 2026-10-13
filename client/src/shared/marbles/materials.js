@@ -4,18 +4,18 @@
  * can be built anywhere (a race, the shop's turntable, a test).
  *
  * Every look is painted procedurally into small data textures (256 × 128), from
- * the shade's named colours in catalog.json, so the 76 items need no image
+ * the shade's named colours in catalog.json, so the items need no image
  * files. Glass marbles are a see-through shell over a solid inner piece (the
- * cat's-eye vane, the frozen core); glowing marbles add an emissive map, a soft
- * halo and, for Sunfire, a short spark trail. Looks only: nothing here can
+ * cat's-eye vane); glowing marbles add an emissive map and a soft halo, steel
+ * reflects a painted surround. Looks only: nothing here can
  * reach the race.
  *
  * Phone budget per marble: one sphere, plus one inner piece for glass, plus
  * one halo sprite for glowing looks. Textures are tiny and made once per item.
  */
 import {
-  AdditiveBlending, BufferGeometry, Color, DataTexture, DoubleSide, Float32BufferAttribute, Group, LinearFilter,
-  Mesh, MeshBasicMaterial, MeshPhongMaterial, Points, PointsMaterial, RepeatWrapping, RGBAFormat, SphereGeometry,
+  AdditiveBlending, BufferGeometry, Color, DataTexture, DoubleSide, EquirectangularReflectionMapping, Float32BufferAttribute, Group, LinearFilter,
+  Mesh, MeshBasicMaterial, MeshPhongMaterial, MixOperation, Points, PointsMaterial, RepeatWrapping, RGBAFormat, SphereGeometry,
   Sprite, SpriteMaterial, SRGBColorSpace, Vector3,
 } from 'three';
 import { BUILT_MATERIALS as BUILT_LIST, DESIGN, ITEM } from './index.js';
@@ -74,20 +74,21 @@ function makeNoise(rand) {
 /**
  * Paints a sphere texture: paint(d) gets the unit direction of each texel (as
  * three's SphereGeometry maps it) and returns [r, g, b] (0–255), or
- * { c, e } with an emissive colour too. Returns { map, emissive? }.
+ * { c, e } with an emissive colour too. Returns { map, emissive? }. `w`, `h`:
+ * a finer texture for a look with tiny details (the Champion Shooter's flakes).
  */
-function paintSphere(paint, { emissive = false } = {}) {
-  const map = new Uint8Array(TEX_W * TEX_H * 4);
-  const glow = emissive ? new Uint8Array(TEX_W * TEX_H * 4) : null;
+function paintSphere(paint, { emissive = false, w: W = TEX_W, h: H = TEX_H } = {}) {
+  const map = new Uint8Array(W * H * 4);
+  const glow = emissive ? new Uint8Array(W * H * 4) : null;
   const d = new Vector3();
-  for (let j = 0; j < TEX_H; j += 1) {
-    const theta = (1 - (j + 0.5) / TEX_H) * Math.PI;
-    for (let i = 0; i < TEX_W; i += 1) {
-      const phi = ((i + 0.5) / TEX_W) * Math.PI * 2;
+  for (let j = 0; j < H; j += 1) {
+    const theta = (1 - (j + 0.5) / H) * Math.PI;
+    for (let i = 0; i < W; i += 1) {
+      const phi = ((i + 0.5) / W) * Math.PI * 2;
       d.set(-Math.cos(phi) * Math.sin(theta), Math.cos(theta), Math.sin(phi) * Math.sin(theta));
       const out = paint(d);
       const c = Array.isArray(out) ? out : out.c;
-      const k = (j * TEX_W + i) * 4;
+      const k = (j * W + i) * 4;
       map[k] = c[0]; map[k + 1] = c[1]; map[k + 2] = c[2]; map[k + 3] = 255;
       if (glow) {
         const e = Array.isArray(out) ? null : out.e;
@@ -95,7 +96,7 @@ function paintSphere(paint, { emissive = false } = {}) {
       }
     }
   }
-  return { map: dataTexture(map), emissive: glow && dataTexture(glow) };
+  return { map: dataTexture(map, W, H), emissive: glow && dataTexture(glow, W, H) };
 }
 
 function dataTexture(data, w = TEX_W, h = TEX_H) {
@@ -105,6 +106,40 @@ function dataTexture(data, w = TEX_W, h = TEX_H) {
   tex.magFilter = LinearFilter;
   tex.minFilter = LinearFilter;
   tex.needsUpdate = true;
+  return tex;
+}
+
+/**
+ * The surround a steel marble reflects (equirectangular, small): a bright sky in
+ * its tint, a dark band at the horizon (the track's walls), a bright strip of
+ * sky light, and a darker floor. Made once per shade.
+ */
+const envCache = new Map();
+function steelEnvironment(sky, shadow) {
+  const key = `${sky}|${shadow}`;
+  if (envCache.has(key)) return envCache.get(key);
+  const w = 128; const h = 64;
+  const top = mix(rgb(sky), [255, 255, 255], 0.6); const mid = rgb(sky); const dark = rgb(shadow);
+  const data = new Uint8Array(w * h * 4);
+  for (let j = 0; j < h; j += 1) {
+    const v = j / (h - 1); // 0 = straight down, 1 = straight up (three's equirect, flipY off)
+    let c;
+    if (v > 0.62) c = mix(mid, top, smooth(0.62, 1, v));
+    else if (v > 0.53) c = mix(dark, mid, smooth(0.53, 0.62, v));
+    else if (v > 0.47) c = dark;
+    else c = mix(mix(dark, mid, 0.55), dark, smooth(0.47, 0, v));
+    for (let i = 0; i < w; i += 1) {
+      // A couple of bright windows of sky light round the horizon (the glints that move as the ball turns).
+      const u = i / w;
+      const glint = (1 - smooth(0, 0.03, Math.abs(v - 0.7))) * (Math.sin(u * Math.PI * 6) > 0.6 ? 1 : 0.25);
+      const k = (j * w + i) * 4;
+      const out = mix(c, [255, 255, 255], glint * 0.85);
+      data[k] = out[0]; data[k + 1] = out[1]; data[k + 2] = out[2]; data[k + 3] = 255;
+    }
+  }
+  const tex = dataTexture(data, w, h);
+  tex.mapping = EquirectangularReflectionMapping;
+  envCache.set(key, tex);
   return tex;
 }
 
@@ -129,68 +164,9 @@ function glowTexture() {
 // ── The looks ──────────────────────────────────────────────────────────────
 // Each builder gets the shade's colours (in the design's slot order) and a
 // seeded random function, and returns a description of the marble:
-//   { map, emissive?, shininess, specular, glass?, inner?, halo?, trail?, spin? }
+//   { map, emissive?, shininess, specular, glass?, inner?, halo?, trail?, spin?, metal?, core?, twinkle? }
 
 const BUILDERS = {
-  /** Candy Stripe: opaque, glossy, candy-cane stripes wrapping the ball. */
-  stripe([stripe, base]) {
-    const s = rgb(stripe); const b = rgb(base);
-    const { map } = paintSphere((d) => {
-      // Three helices round the ball, half stripe and half base (a candy cane from any side).
-      const a = Math.atan2(d.z, d.x) / (Math.PI * 2) + d.y * 0.55;
-      const f = ((a * 3) % 1 + 1) % 1;
-      const band = smooth(0.0, 0.035, f) - smooth(0.5, 0.535, f);
-      return mix(b, s, band);
-    });
-    return { map, shininess: 140, specular: '#ffffff' };
-  },
-
-  /** Fjord Pebble: matte polished stone with dark and light flecks. */
-  stone([stone, stone2, fleck, fleck2], rand) {
-    const a = rgb(stone); const b = rgb(stone2); const f1 = rgb(fleck); const f2 = rgb(fleck2);
-    const noise = makeNoise(rand);
-    const speck = makeNoise(rand);
-    const { map } = paintSphere((d) => {
-      const n = noise(d.x * 2.2 + 3, d.y * 2.2, d.z * 2.2, 4);
-      let c = mix(a, b, smooth(0.35, 0.7, n));
-      // Veins: a few soft lighter lines through the stone.
-      const vein = Math.abs(noise(d.x * 1.3, d.y * 1.3 + 7, d.z * 1.3, 2) - 0.5);
-      c = mix(c, mix(a, f2, 0.4), (1 - smooth(0.0, 0.03, vein)) * 0.5);
-      const s = speck(d.x * 26, d.y * 26, d.z * 26, 1);
-      if (s > 0.86) c = mix(c, f1, smooth(0.86, 0.92, s));
-      else if (s < 0.1) c = mix(c, f2, smooth(0.1, 0.05, s));
-      return c;
-    });
-    return { map, shininess: 14, specular: '#3a3a3a' };
-  },
-
-  /** Glacier Glass: crystal-clear glass, a smaller marble frozen inside, tiny air bubbles. */
-  'core-glass'([glass, core, core2, bubble], rand) {
-    const g = rgb(glass); const bub = rgb(bubble);
-    const bubbles = Array.from({ length: 9 }, () => new Vector3(rand() * 2 - 1, rand() * 2 - 1, rand() * 2 - 1).normalize());
-    const { map } = paintSphere((d) => {
-      let c = g;
-      for (const p of bubbles) {
-        const dot = d.dot(p);
-        if (dot > 0.995) c = mix(c, bub, smooth(0.995, 0.999, dot));
-      }
-      return c;
-    });
-    // The frozen core: a darker rim to a bright centre, like a marble seen through ice.
-    const a = rgb(core); const b = rgb(core2);
-    const inner = paintSphere((d) => {
-      const swirl = Math.sin(Math.atan2(d.z, d.x) * 3 + d.y * 4) * 0.5 + 0.5;
-      return mix(b, a, 0.55 + 0.45 * swirl);
-    }).map;
-    return {
-      map,
-      shininess: 160,
-      specular: '#ffffff',
-      glass: { opacity: 0.22, rim: glass, rimOpacity: 0.95 },
-      inner: { kind: 'sphere', scale: 0.52, map: inner, shininess: 90 },
-    };
-  },
-
   /** Cat's Eye: clear glass with a 4-blade twisted vane inside. */
   'vane-glass'([vane, vane2, glass], rand) {
     const g = rgb(glass);
@@ -203,166 +179,52 @@ const BUILDERS = {
     return {
       map, shininess: 170, specular: '#ffffff',
       glass: { opacity: 0.16, rim: glass, rimOpacity: 0.9 },
-      inner: { kind: 'vane', scale: 0.9, colours: [vane, vane2], shininess: 60 },
+      inner: { kind: 'vane', scale: 0.8, colours: [vane, vane2], shininess: 60 },
     };
   },
 
-  /** Mint Ripple: opaque, rings like a ripple spreading on water. */
-  rings([light, mid, dark], rand) {
-    const l = rgb(light); const m = rgb(mid); const dk = rgb(dark);
-    const axis = new Vector3(rand() - 0.5, 1, rand() - 0.5).normalize();
+  /**
+   * Steelie: a polished steel ball bearing. Its colour is the shade's tint; what
+   * makes it steel is the reflection: a small painted sky-and-track surround in
+   * world space (metal below), so the highlights stay put while the ball rolls.
+   */
+  steel([steel, shadow], rand) {
+    const s = rgb(steel); const sh = rgb(shadow);
+    const scratch = makeNoise(rand);
     const { map } = paintSphere((d) => {
-      const a = Math.acos(Math.max(-1, Math.min(1, d.dot(axis)))) / Math.PI;
-      const f = (a * 9) % 1;
-      if (f < 0.42) return mix(l, m, smooth(0.36, 0.42, f));
-      if (f < 0.86) return mix(m, dk, smooth(0.8, 0.86, f));
-      return mix(dk, l, smooth(0.94, 1, f));
+      // Faint machining lines round the ball, nothing more: the reflection does the rest.
+      const line = scratch(d.x * 40, d.y * 3, d.z * 40, 1);
+      return mix(s, mix(s, sh, 0.25), smooth(0.7, 0.95, line) * 0.4);
     });
-    return { map, shininess: 70, specular: '#ffffff' };
+    return { map, shininess: 220, specular: '#ffffff', metal: { sky: steel, shadow, reflectivity: 0.88 } };
   },
 
-  /** Tiger Eye: polished gemstone bands with a silky shimmer. */
-  'gem-bands'([dark, mid, flash, deep], rand) {
-    const c0 = rgb(dark); const c1 = rgb(mid); const c2 = rgb(flash); const c3 = rgb(deep);
+  /**
+   * Champion Shooter: deep glass full of glinting flakes, lighter clouds drifting
+   * through it, a glow from inside that deepens towards the edge, and a soft halo.
+   */
+  champion([glass, deep, flake], rand) {
+    const g = rgb(glass); const dp = rgb(deep); const f = rgb(flake);
     const noise = makeNoise(rand);
-    const axis = new Vector3(0.35, 1, 0.2).normalize();
-    const { map } = paintSphere((d) => {
-      const v = d.dot(axis) * 4 + noise(d.x * 2, d.y * 2, d.z * 2, 3) * 1.2;
-      const f = ((v % 1) + 1) % 1;
-      if (f < 0.25) return mix(c0, c1, smooth(0.18, 0.25, f));
-      if (f < 0.58) return mix(c1, c2, smooth(0.5, 0.58, f));
-      if (f < 0.7) return mix(c2, c3, smooth(0.64, 0.7, f));
-      return mix(c3, c0, smooth(0.92, 1, f));
-    });
-    // The shimmer: a broad, bright highlight in the flash colour that slides over the bands as it rolls.
-    return { map, shininess: 45, specular: flash };
-  },
-
-  /** Bumblebee: bold bands around the ball. */
-  bands([a, b]) {
-    const ca = rgb(a); const cb = rgb(b);
-    const { map } = paintSphere((d) => {
-      const f = (((d.y + 1) * 3) % 1 + 1) % 1;
-      return mix(ca, cb, smooth(0.0, 0.03, f) - smooth(0.5, 0.53, f));
-    });
-    return { map, shininess: 130, specular: '#ffffff' };
-  },
-
-  /** Ocean Swirl: glass with a swirl of four colours twisting through it. */
-  'swirl-glass'([deep, bright, foam, accent], rand) {
-    const cols = [deep, bright, foam, accent].map(rgb);
-    const noise = makeNoise(rand);
-    const { map } = paintSphere((d) => {
-      const a = Math.atan2(d.z, d.x) / (Math.PI * 2) + d.y * 0.6 + noise(d.x * 1.5, d.y * 1.5, d.z * 1.5, 2) * 0.3;
-      const f = ((a * 2) % 1 + 1) % 1 * 4;
-      const k = Math.floor(f);
-      return mix(cols[k % 4], cols[(k + 1) % 4], smooth(0.65, 1, f - k));
-    });
-    return { map, shininess: 160, specular: '#ffffff', glass: { opacity: 0.82, rim: foam, rimOpacity: 1 }, spin: 0.03 };
-  },
-
-  /** Watermelon: red flesh with seeds, a white and green rind on two sides. */
-  melon([flesh, pith, rind, seed], rand) {
-    const fl = rgb(flesh); const p = rgb(pith); const r = rgb(rind); const sd = rgb(seed);
-    const dark = mix(r, [0, 0, 0], 0.45);
-    const seeds = Array.from({ length: 26 }, () => new Vector3(rand() * 2 - 1, (rand() * 2 - 1) * 0.5, rand() * 2 - 1).normalize());
-    const { map } = paintSphere((d) => {
-      const y = Math.abs(d.y);
-      if (y > 0.7) {
-        const stripe = Math.sin(Math.atan2(d.z, d.x) * 9 + d.y * 3) > 0.35;
-        return mix(r, dark, stripe ? 0.8 : 0);
-      }
-      if (y > 0.62) return mix(p, r, smooth(0.66, 0.7, y));
-      let c = fl;
-      for (const s of seeds) if (d.dot(s) > 0.9985) c = sd;
-      return c;
-    });
-    return { map, shininess: 60, specular: '#ffffff' };
-  },
-
-  /** Galaxy: dark glass with nebula clouds and tiny twinkling stars. */
-  'nebula-glass'([space, cloud, cloud2, stars], rand) {
-    const sp = rgb(space); const c1 = rgb(cloud); const c2 = rgb(cloud2); const st = rgb(stars);
-    const noise = makeNoise(rand);
-    const pts = Array.from({ length: 70 }, () => new Vector3(rand() * 2 - 1, rand() * 2 - 1, rand() * 2 - 1).normalize());
+    const flakes = Array.from({ length: 320 }, () => [new Vector3(rand() * 2 - 1, rand() * 2 - 1, rand() * 2 - 1).normalize(), 0.99955 + rand() * 0.0003]);
     const textures = paintSphere((d) => {
-      const n1 = noise(d.x * 1.8 + 5, d.y * 1.8, d.z * 1.8, 4);
-      const n2 = noise(d.x * 1.8, d.y * 1.8 + 9, d.z * 1.8, 4);
-      let c = mix(sp, c1, smooth(0.5, 0.75, n1) * 0.8);
-      c = mix(c, c2, smooth(0.52, 0.78, n2) * 0.75);
-      let e = mix([0, 0, 0], c, 0.35);
-      for (const p of pts) {
-        const k = d.dot(p);
-        if (k > 0.9993) { c = st; e = st; }
+      const cloud = noise(d.x * 2.2 + 5, d.y * 2.2, d.z * 2.2, 3);
+      let c = mix(dp, g, smooth(0.3, 0.8, cloud) * 0.75);
+      let e = mix([0, 0, 0], g, smooth(0.45, 0.85, cloud) * 0.12);
+      for (const [p, edge] of flakes) {
+        const dot = d.dot(p);
+        if (dot > edge) { const k = smooth(edge, edge + 0.00015, dot); c = mix(c, f, k); e = mix(e, f, k * 0.9); }
       }
       return { c, e };
-    }, { emissive: true });
-    return { ...textures, emissiveIntensity: 0.8, shininess: 150, specular: '#ffffff', twinkle: true };
-  },
-
-  /** Lava Core: black volcanic rock, glowing cracks, a hot core; brighter in night races. */
-  lava([rock, crack, crack2, core], rand) {
-    const r = rgb(rock); const c1 = rgb(crack); const c2 = rgb(crack2);
-    const noise = makeNoise(rand);
-    const cells = makeNoise(rand);
-    const textures = paintSphere((d) => {
-      const base = mix(r, mix(r, [90, 80, 75], 0.5), noise(d.x * 4, d.y * 4, d.z * 4, 3));
-      const ridge = Math.abs(cells(d.x * 2.6, d.y * 2.6, d.z * 2.6, 2) - 0.5);
-      const glow = 1 - smooth(0.0, 0.045, ridge);
-      const col = mix(c1, c2, noise(d.x * 3 + 2, d.y * 3, d.z * 3, 2));
-      return { c: mix(base, col, glow), e: mix([0, 0, 0], col, glow) };
-    }, { emissive: true });
+    }, { emissive: true, w: 512, h: 256 });
     return {
-      ...textures, emissiveIntensity: 1, shininess: 20, specular: '#3a2a20',
-      core: { centre: core, middle: crack, rim: rock, strength: 0.22 },
-      halo: { color: crack, size: 2.6, opacity: 0.25 },
-    };
-  },
-
-  /** Neon Grid: glowing grid lines on a dark ball, retro arcade style. */
-  'neon-grid'([line, line2, ball, ball2]) {
-    const l1 = rgb(line); const l2 = rgb(line2); const b1 = rgb(ball); const b2 = rgb(ball2);
-    const textures = paintSphere((d) => {
-      const phi = (Math.atan2(d.z, d.x) / (Math.PI * 2) + 1) % 1;
-      const theta = Math.acos(Math.max(-1, Math.min(1, d.y))) / Math.PI;
-      const base = mix(b2, b1, (d.y + 1) / 2);
-      const h = Math.abs(((theta * 8) % 1) - 0.5) > 0.45; // a line across
-      const v = Math.abs(((phi * 12) % 1) - 0.5) > 0.45; // a line from pole to pole
-      let c = base; let e = [0, 0, 0];
-      if (v) { c = l2; e = l2; }
-      if (h) { c = l1; e = l1; }
-      return { c, e };
-    }, { emissive: true });
-    return { ...textures, emissiveIntensity: 0.9, shininess: 120, specular: '#ffffff', halo: { color: line, size: 2.8, opacity: 0.3 } };
-  },
-
-  /** Checkered Flag: black and white racing checks, high gloss, a thin gold seam. */
-  checks([a, b, seam]) {
-    const ca = rgb(a); const cb = rgb(b); const cs = rgb(seam);
-    const { map } = paintSphere((d) => {
-      if (Math.abs(d.y) < 0.035) return cs;
-      const phi = (Math.atan2(d.z, d.x) / (Math.PI * 2) + 1) % 1;
-      const theta = Math.acos(Math.max(-1, Math.min(1, d.y))) / Math.PI;
-      return (Math.floor(phi * 12) + Math.floor(theta * 6)) % 2 ? ca : cb;
-    });
-    return { map, shininess: 180, specular: '#ffffff' };
-  },
-
-  /** Black Hole: a pitch-black centre, a spinning ring of light, light bent at the edges. */
-  'black-hole'([ring, ring2, ring3, core]) {
-    const r1 = rgb(ring); const r2 = rgb(ring2); const r3 = rgb(ring3); const k = rgb(core);
-    const textures = paintSphere((d) => {
-      const band = 1 - smooth(0.08, 0.3, Math.abs(d.y));
-      const a = (Math.atan2(d.z, d.x) / (Math.PI * 2) + 1) % 1;
-      const t = (Math.sin(a * Math.PI * 4) + 1) / 2;
-      const col = mix(mix(r1, r2, t), r3, smooth(0.2, 0.3, Math.abs(d.y)));
-      return { c: mix(k, col, band), e: mix([0, 0, 0], col, band) };
-    }, { emissive: true });
-    return {
-      ...textures, emissiveIntensity: 1.1, shininess: 200, specular: '#ffffff',
-      core: { centre: core, middle: core, rim: ring, strength: 0.7 },
-      halo: { color: ring2, size: 3, opacity: 0.4 },
-      spin: 0.35,
+      ...textures,
+      emissiveIntensity: 0.85,
+      twinkle: true,
+      shininess: 170,
+      specular: '#ffffff',
+      core: { centre: glass, middle: glass, rim: deep, strength: 0.3 },
+      halo: { color: glass, size: 2.6, opacity: 0.32 },
     };
   },
 
@@ -384,32 +246,6 @@ const BUILDERS = {
       return { c: col, e };
     }, { emissive: true });
     return { ...textures, emissiveIntensity: 0.9, shininess: 150, specular: '#ffffff', halo: { color: a, size: 2.8, opacity: 0.3 }, spin: 0.04 };
-  },
-
-  /** Sunfire: the logo marble. Liquid-gold glow, swirling flame streaks, a halo and a short spark trail. */
-  sunfire([spark, glow, flame, ember], rand) {
-    const g = rgb(glow); const f = rgb(flame); const e = rgb(ember);
-    const noise = makeNoise(rand);
-    const textures = paintSphere((d) => {
-      // Flame streaks swirling round the ball over liquid gold.
-      const a = Math.atan2(d.z, d.x);
-      const n = noise(Math.cos(a) * 1.5, d.y * 3, Math.sin(a) * 1.5, 3);
-      const streak = Math.sin(a * 3 + d.y * 4 + n * 5);
-      const flameMix = smooth(0.45, 0.85, streak);
-      const c = mix(g, f, flameMix * 0.9);
-      return { c, e: mix(mix(g, f, 0.25), e, flameMix * 0.8) };
-    }, { emissive: true });
-    return {
-      ...textures,
-      emissiveIntensity: 0.45,
-      shininess: 60,
-      specular: '#5a4a2a',
-      // The logo's gradient, seen from wherever you look: a white-hot centre, solar yellow, an ember rim.
-      core: { centre: spark, middle: glow, rim: ember, strength: 0.5 },
-      halo: { color: glow, size: 3.6, opacity: 0.7 },
-      trail: { color: flame, color2: glow, count: 16 },
-      spin: 0.12, // the flame streaks keep turning, even standing still (turns per second)
-    };
   },
 };
 
@@ -443,7 +279,7 @@ export function lookSpec(slug) {
 /**
  * Effects that depend on where you look from, added to three's Phong shader:
  * glass gets thicker and tinted towards its edge (like real glass), a glowing
- * core (Sunfire) gets the logo's white-to-ember gradient from centre to rim.
+ * core (Champion Shooter) gets a gradient from its centre to its rim.
  */
 function shadeByFacing(material, spec) {
   if (!spec.glass && !spec.core) return;
@@ -493,8 +329,9 @@ function vaneGeometry([c1, c2]) {
     const base = pos.length / 3;
     const colour = colours[blade % 2];
     for (let j = 0; j <= rows; j += 1) {
-      const y = -0.92 + (1.84 * j) / rows;
-      const reach = Math.sqrt(Math.max(0, 1 - y * y)) * 0.92;
+      const y = -0.8 + (1.6 * j) / rows;
+      // Eye-shaped: widest in the middle, coming to a point at each end (as a real cat's-eye vane).
+      const reach = Math.sqrt(Math.max(0, 1 - y * y)) * 0.9 * (1 - Math.pow(Math.abs(y) / 0.8, 2.2) * 0.85);
       const a = (blade * Math.PI) / 2 + y * 0.9;
       for (const r of [0.04, reach]) {
         pos.push(Math.cos(a) * r, y, Math.sin(a) * r);
@@ -530,6 +367,7 @@ export function createMarbleLook(slug, { radius = 0.55, geometry = null } = {}) 
     specular: new Color(spec.specular),
     ...(spec.emissive && { emissiveMap: spec.emissive, emissive: new Color('#ffffff'), emissiveIntensity: spec.emissiveIntensity ?? 1 }),
     ...(spec.glass && { transparent: true, opacity: spec.glass.opacity, depthWrite: false }),
+    ...(spec.metal && { envMap: steelEnvironment(spec.metal.sky, spec.metal.shadow), combine: MixOperation, reflectivity: spec.metal.reflectivity }),
   });
   if (spec.spin) {
     // Its own copy of the texture settings, so its flames can turn on their own.

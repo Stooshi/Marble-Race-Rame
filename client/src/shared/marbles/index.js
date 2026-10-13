@@ -13,16 +13,42 @@ export const RARITY_ORDER = ['common', 'uncommon', 'rare', 'epic', 'legendary', 
 export const DESIGNS = catalog.designs;
 export const DESIGN = Object.fromEntries(DESIGNS.map((d) => [d.key, d]));
 
-/** One entry per shade: { slug, design, shade, rarity, price, editionSize }. */
+/**
+ * The Marble ID of one shade of one design: the collection's two letters, the
+ * design's number (01–10) and the shade's (1–5), no dashes. SC105 = Schoolyard
+ * Classics, design 10 (Champion Shooter), shade 5 (Sunset). A limited edition
+ * has its own letters (LE).
+ */
+export const marbleId = (design, shade) => `${design.collection ?? catalog.collection.code}${String(design.no).padStart(2, '0')}${shade.no}`;
+
+/** The collection a design belongs to, by name ("Schoolyard Classics", "Limited edition"). */
+export const collectionName = (design) => (design.limited ? 'Limited edition' : catalog.collection.name);
+
+/** One entry per shade: { slug, id, design, shade, rarity, price, editionSize, collection }. */
 export const ITEMS = DESIGNS.flatMap((design) => design.shades.map((shade) => ({
   slug: `${design.key}-${shade.key}`,
+  id: marbleId(design, shade),
   design,
   shade,
   rarity: design.rarity,
   price: catalog.rarities[design.rarity].price,
   editionSize: design.limited?.editionSize ?? catalog.editionSize,
+  collection: collectionName(design),
 })));
 export const ITEM = Object.fromEntries(ITEMS.map((i) => [i.slug, i]));
+export const ITEM_BY_ID = Object.fromEntries(ITEMS.map((i) => [i.id, i]));
+
+/**
+ * A Marble ID as people type it: "sc105", "SC 105", "#SC105", "SC-105" all mean
+ * SC105. Returns the clean ID, or null if it can't be one (two letters, three digits).
+ */
+export function normaliseId(text) {
+  const t = String(text ?? '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+  return /^[A-Z]{2}\d{3}$/.test(t) ? t : null;
+}
+
+/** The item a typed Marble ID names, or null. */
+export const findById = (text) => ITEM_BY_ID[normaliseId(text)] ?? null;
 
 export const rarityInfo = (rarity) => catalog.rarities[rarity];
 
@@ -79,10 +105,7 @@ export function dressEntries(entries, key, slugs) {
 }
 
 /** The designs whose 3D look is finished (materials.js builds exactly these). */
-export const BUILT_MATERIALS = [
-  'vane-glass', 'rings', 'gem-bands', 'bands', 'swirl-glass', 'melon', 'nebula-glass', 'lava',
-  'neon-grid', 'checks', 'black-hole', 'aurora-glass', 'stripe', 'stone', 'core-glass', 'sunfire',
-];
+export const BUILT_MATERIALS = ['vane-glass', 'steel', 'champion', 'aurora-glass'];
 
 /** Looks the previews can dress marbles in: every finished regular design (never a limited edition). */
 export const HOUSE_LOOKS = ITEMS.filter((i) => BUILT_MATERIALS.includes(i.design.material) && !i.design.limited).map((i) => i.slug);

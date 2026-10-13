@@ -11,7 +11,7 @@ export function marbleFacts(marble) {
   const item = marble?.look && ITEM[marble.look];
   if (item) {
     const info = rarityInfo(item.rarity);
-    return { name: lookName(item.slug), rarity: info.label, colour: info.colour, shop: `/collection/${item.design.key}?shade=${item.shade.key}`, note: item.design.inRaces };
+    return { name: lookName(item.slug), rarity: `${info.label} · ${item.collection} · #${item.id}`, colour: info.colour, shop: `/collection/${item.design.key}?shade=${item.shade.key}`, note: item.design.inRaces };
   }
   if (marble?.starter) return { name: marble.name, rarity: 'Starter', colour: 'var(--ms-muted)', shop: null, note: 'A free starter marble: every player has it.' };
   return { name: marble?.name ?? 'Marble', rarity: cap(marble?.rarity) || 'Plain', colour: 'var(--ms-soft)', shop: '/dashboard', note: 'A plain marble from the shop.' };

@@ -22,7 +22,7 @@ export default function Certificate({ cert }) {
           </span>
         </div>
       </div>
-      <div className="ms-quote"><span style={{ color: 'var(--ms-yellow)' }}>Series · {design.name}</span><span style={{ fontStyle: 'italic' }}>{design.story}</span></div>
+      <div className="ms-quote"><span style={{ color: 'var(--ms-yellow)' }}>{item.collection} · {design.name}</span><span style={{ fontStyle: 'italic' }}>{design.story}</span></div>
       <div className="ms-quote">
         <span style={{ color: 'var(--ms-orange)' }}>Shade · {shade.name}{shade.original ? ' (original)' : ''}</span>
         <span>{shade.description}</span>
@@ -32,7 +32,9 @@ export default function Certificate({ cert }) {
         <span>First owner</span><span>@{cert.firstOwner ?? '[owner]'}</span>
         <span>Made</span><span>{cert.made ? DATE.format(new Date(cert.made)) : '[date]'}</span>
         <span>Races</span><span>{cert.races} · {cert.wins} {cert.wins === 1 ? 'win' : 'wins'}</span>
-        <span>Marble ID</span><span>{cert.marbleCode}</span>
+        <span>Marble ID</span><span><span className="ms-id ms-id--big">#{item.id}</span></span>
+        <span>Collection</span><span>{item.collection}</span>
+        <span>Certificate</span><span>{cert.marbleCode}</span>
       </div>
       <p className="ms-note">The first {cert.editionSize === 1000 ? '1,000' : '500'} buyers of every marble get a numbered First Edition with its own history. After that the marble is still for sale, just without a number.</p>
     </article>

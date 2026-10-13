@@ -31,7 +31,7 @@ export default function BagPage() {
       if (copy?.editionNo) notes.push(`#${String(copy.editionNo).padStart(3, '0')}`);
       if (copy && complete.has(item.design.key)) notes.push('Set ★');
       return {
-        key: item.slug, slug: item.slug, owned: Boolean(copy), copy, rarity: item.rarity,
+        key: item.slug, slug: item.slug, id: item.id, collection: item.collection, owned: Boolean(copy), copy, rarity: item.rarity,
         name: item.design.shades.length > 1 ? `${item.design.name} · ${item.shade.name}` : item.design.name,
         note: notes.join(' · '), shooter: data.shooter?.item === item.slug,
       };
@@ -104,6 +104,7 @@ export default function BagPage() {
           {pick.slug ? <MarbleBadge slug={pick.slug} size={110} /> : <MarbleBadge marble={pick.marble} size={110} />}
           <div style={{ display: 'grid', gap: 8, flex: '1 1 260px', minWidth: 0 }}>
             <h2 className="ms-h3" style={{ fontFamily: 'var(--ms-cond)', fontWeight: 800, fontSize: '1.6rem' }}>{pick.name}</h2>
+            {pick.slug && <span className="ms-row" style={{ gap: 8 }}><span className="ms-id ms-id--big">#{pick.id}</span><span className="ms-sheet__col">{pick.collection.toUpperCase()}</span></span>}
             {pick.slug && <p style={{ margin: 0, color: 'var(--ms-soft)' }}>{ITEM[pick.slug].shade.description}</p>}
             {pick.marble && <p style={{ margin: 0, color: 'var(--ms-soft)' }}>{pick.marble.description}</p>}
             {error && <div className="ms-msg ms-msg--bad">{error}</div>}
@@ -133,6 +134,8 @@ export default function BagPage() {
             >
               {t.slug ? <MarbleBadge slug={t.slug} size={72} still={!t.owned} /> : <MarbleBadge marble={t.marble} size={72} />}
               <span style={{ fontWeight: 700, fontSize: '0.95rem' }}>{t.name}</span>
+              {t.id && <span className="ms-id">#{t.id}</span>}
+              {t.collection && <span className="ms-mcard__col">{t.collection}</span>}
               <span style={{ color: colour, fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
                 {t.rarity === 'original' ? (t.marble.is_starter ? 'Starter' : 'Plain') : rarityInfo(t.rarity).label}
               </span>

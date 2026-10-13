@@ -1,16 +1,23 @@
 'use strict';
 
 /**
- * The marble collection catalogue (Collection 1 · Grand Opening), read from the
+ * The marble collection catalogue (Collection 1 · Schoolyard Classics), read from the
  * shared file the web client and the phone apps use too:
  * client/src/shared/marbles/catalog.json. Names, stories, shade texts and
  * colours live only there; the database keeps who owns what and the counters.
  *
- * One item = one shade of one design, bought on its own, e.g. "candy-pink".
+ * One item = one shade of one design, bought on its own, e.g. "champion-sunset",
+ * with its Marble ID: the collection's two letters, the design's number (01–10)
+ * and the shade's (1–5), e.g. SC105.
  * Looks only: nothing here ever reaches the race engine.
  */
 
 const catalog = require('../../client/src/shared/marbles/catalog.json');
+
+const pad = (n, w) => String(n).padStart(w, '0');
+
+/** A design and shade's Marble ID: SC105. */
+const marbleId = (design, shade) => `${design.collection ?? catalog.collection.code}${pad(design.no, 2)}${shade.no}`;
 
 const items = [];
 for (const design of catalog.designs) {
@@ -18,6 +25,8 @@ for (const design of catalog.designs) {
   for (const shade of design.shades) {
     items.push({
       slug: `${design.key}-${shade.key}`,
+      id: marbleId(design, shade),
+      collection: design.limited ? 'Limited edition' : catalog.collection.name,
       design,
       shade,
       rarity: design.rarity,
@@ -29,13 +38,17 @@ for (const design of catalog.designs) {
   }
 }
 const bySlug = new Map(items.map((i) => [i.slug, i]));
+const byId = new Map(items.map((i) => [i.id, i]));
 
-const pad = (n, w) => String(n).padStart(w, '0');
+/** A Marble ID as people type it ("sc105", "SC 105", "#SC105") → "SC105", or null if it can't be one. */
+function normaliseId(text) {
+  const t = String(text ?? '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+  return /^[A-Z]{2}\d{3}$/.test(t) ? t : null;
+}
 
-/** The ID printed on a marble and its certificate: MS-SUN-SOL-000037 for a bought copy, MS-CAN-PNK-G00012 for a gift. */
+/** The certificate code of one copy: its Marble ID and copy number, SC105-000037 (a gift: SC105-G00012). */
 function marbleCode(item, { copyNo, giftNo }) {
-  const base = `MS-${item.design.code}-${item.shade.code}`;
-  return giftNo ? `${base}-G${pad(giftNo, 5)}` : `${base}-${pad(copyNo, 6)}`;
+  return giftNo ? `${item.id}-G${pad(giftNo, 5)}` : `${item.id}-${pad(copyNo, 6)}`;
 }
 
 /** Whether the item can be bought right now (a limited edition only in its month, and while numbers last). */
@@ -50,4 +63,4 @@ function setOf(designKey) {
   return items.filter((i) => i.design.key === designKey).map((i) => i.slug);
 }
 
-module.exports = { catalog, items, bySlug, marbleCode, onSale, setOf };
+module.exports = { catalog, items, bySlug, byId, marbleId, normaliseId, marbleCode, onSale, setOf };

@@ -75,10 +75,12 @@ export const api = {
   refundNoteSeen: () => request('/users/me/refund-note/seen', { method: 'POST' }),
   purchaseMarble: (id) => request(`/marbles/${id}/purchase`, { method: 'POST' }),
 
-  // The marble collection (Grand Opening): items, the Marble Bag, buying, the Shooter, certificates.
+  // The marble collection (Schoolyard Classics): items, bags, the Marble Bag, buying, the Shooter, certificates.
   collection: () => request('/collection'),
   bag: () => request('/collection/bag'),
   buyItem: (slug) => request(`/collection/${slug}/buy`, { method: 'POST' }),
+  bags: (shade = 'classic') => request(`/collection/bags?shade=${shade}`),
+  buyBag: (bag, shade = 'classic') => request(`/collection/bags/${bag}/buy`, { method: 'POST', body: { shade } }),
   setShooter: (choice) => request('/collection/shooter', { method: 'PUT', body: choice }),
   certificate: (code) => request(`/collection/certificate/${code}`),
 

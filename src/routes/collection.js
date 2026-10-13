@@ -31,6 +31,29 @@ router.put('/shooter', requireAuth, async (req, res) => {
   res.json({ shooter: await collection.setShooter(db, req.user.id, body) });
 });
 
+/** GET /api/collection/bags?shade= — the bags in one shade (Classic if none), what's in them and their price for you. */
+router.get('/bags', optionalAuth, async (req, res) => {
+  const { shade = 'classic' } = validate(req.query, { shade: { type: 'string', pattern: /^[a-z]{2,20}$/, patternMessage: 'must be a shade' } });
+  let owned = new Set();
+  if (req.user) {
+    const { rows } = await db.query('SELECT item_slug FROM user_collection WHERE user_id = $1', [req.user.id]);
+    owned = new Set(rows.map((r) => r.item_slug));
+  }
+  res.json({ bags: ['starter', 'full'].map((b) => collection.bagOffer(b, shade, owned)) });
+});
+
+/** POST /api/collection/bags/:bag/buy { shade } — buy a bag: every marble in it in one shade (default Classic). */
+router.post('/bags/:bag/buy', requireAuth, async (req, res) => {
+  const { bag } = validate(req.params, { bag: { type: 'enum', values: ['starter', 'full'], required: true } });
+  const { shade = 'classic' } = validate(req.body ?? {}, { shade: { type: 'string', pattern: /^[a-z]{2,20}$/, patternMessage: 'must be a shade' } });
+  res.status(201).json(await db.withTransaction((client) => collection.buyBag(client, req.user.id, bag, shade)));
+});
+
+/** GET /api/collection/id/:id — the marble a Marble ID names: "SC105", "sc105", "SC 105" or "#SC105". */
+router.get('/id/:id', (req, res) => {
+  res.json({ item: collection.findById(decodeURIComponent(req.params.id)) });
+});
+
 /** POST /api/collection/:slug/buy — buy one copy with coins (or credits for a limited edition). */
 router.post('/:slug/buy', requireAuth, async (req, res) => {
   const { slug } = validate(req.params, { slug: { ...SLUG, required: true } });
@@ -40,7 +63,7 @@ router.post('/:slug/buy', requireAuth, async (req, res) => {
 
 /** GET /api/collection/certificate/:code — a marble's certificate, public (shareable). */
 router.get('/certificate/:code', async (req, res) => {
-  const { code } = validate(req.params, { code: { type: 'string', required: true, pattern: /^MS-[A-Z0-9]{3}-[A-Z0-9]{3}-G?\d{5,6}$/ } });
+  const { code } = validate(req.params, { code: { type: 'string', required: true, pattern: /^([A-Z]{2}\d{3}|MS-[A-Z0-9]{3}-[A-Z0-9]{3})-G?\d{5,6}$/ } });
   res.json({ certificate: await collection.certificate(db, code) });
 });
 
