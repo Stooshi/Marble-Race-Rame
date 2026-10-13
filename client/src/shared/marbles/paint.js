@@ -136,6 +136,16 @@ function colourAt(flat, p, repeat) {
   return pre(flat[flat.length - 1]);
 }
 
+/**
+ * A conic layer's colour at an angle (degrees, measured as CSS does from its
+ * "from") → straight [r, g, b, a] (rgb 0–255, a 0–1). For painting a conic
+ * pattern round a sphere (the Cat's Eye vane).
+ */
+export function conicAt(layer, deg) {
+  const c = colourAt(resolveStops(layer.stops, 360), (((deg - (layer.from ?? 0)) % 360) + 360) % 360, layer.repeat);
+  return c[3] > 0 ? [c[0] / c[3], c[1] / c[3], c[2] / c[3], c[3]] : [0, 0, 0, 0];
+}
+
 /** A function (x, y in the 0–1 box) → premultiplied [r, g, b, a] for one layer. */
 function layerSampler(l) {
   if (l.type === 'solid') { const c = rgba(l.color); return () => [c[0] * c[3], c[1] * c[3], c[2] * c[3], c[3]]; }

@@ -12,8 +12,8 @@
  *     camera (like a highlight on a real ball, they stay put as it rolls).
  *   - The details that turn with the ball (Champion flakes, Steelie machining
  *     lines, the aurora's ribbons) are painted on the sphere in the same
- *     colours; the Cat's Eye vane is the picture's own vane layer, turning as
- *     the ball rolls.
+ *     colours; the Cat's Eye vane is the picture's own vane, fixed in the
+ *     ball as slices from pole to pole, so it rolls exactly with the ball.
  *   - The shader writes the picture's sRGB bytes straight to the screen: no
  *     scene lights, tone mapping, colour-space change, fog or reflections of
  *     the track touch the colours, so a marble reads the same on every track.
@@ -23,17 +23,29 @@
  * halo sprite. Textures are small and made once per item.
  */
 import {
-  AdditiveBlending, ClampToEdgeWrapping, Color, DataTexture, Group, LinearFilter, Mesh, NoColorSpace, RepeatWrapping, RGBAFormat,
-  ShaderMaterial, SphereGeometry, Sprite, SpriteMaterial, SRGBColorSpace, Vector3,
+  AdditiveBlending, ClampToEdgeWrapping, Color, DataTexture, Group, LinearFilter, Matrix3, Matrix4, Mesh, NoColorSpace, Quaternion, RepeatWrapping,
+  RGBAFormat, ShaderMaterial, SphereGeometry, Sprite, SpriteMaterial, SRGBColorSpace, Vector3,
 } from 'three';
 import { BUILT_MATERIALS as BUILT_LIST, DESIGN, ITEM } from './index.js';
 import { GLOSS_LAYERS, lookOf } from './badge.js';
-import { hexRgb, rasterize, toBytes } from './paint.js';
+import { conicAt, hexRgb, rasterize, toBytes } from './paint.js';
 
 const TEX_W = 256;
 const TEX_H = 128;
 /** The camera-facing picture's size (px square). */
 const VIEW_N = 256;
+/**
+ * How fast a marble's pattern may turn on screen, per frame drawn (radians).
+ * Up to this it turns exactly with the ball; a faster ball's pattern keeps
+ * rolling forwards (same axis, same direction) at this rate. A pattern that
+ * jumps more than half its repeat between frames seems to turn backwards (the
+ * wagon-wheel effect): the Cat's Eye slices repeat every 90°, so 20° a frame
+ * stays well clear.
+ */
+export const MAX_TURN = (20 * Math.PI) / 180;
+/** Past BLUR_FROM a frame the pattern starts to blur (up to half) towards its average, as a camera shows a fast-spinning ball. */
+export const BLUR_FROM = (40 * Math.PI) / 180;
+export const BLUR_FULL = (90 * Math.PI) / 180;
 /** How much a marble darkens in a night race (its hue stays the same). */
 export const NIGHT_LEVEL = 0.8;
 
@@ -156,16 +168,32 @@ function glowTexture() {
 // Each builder gets the item's look from badge.js (its layers, named parts and
 // colours) and a seeded random function, and returns what the 3D marble is
 // made of, every colour taken from that look:
-//   { body: layers facing the camera, turning?: layers facing the camera that turn as the ball rolls,
-//     over?: layers on top (default the GLOSS shine), detail?: sphere texture, halo?, spin?, twinkle? }
+//   { body: layers facing the camera, over?: layers on top (default the GLOSS shine),
+//     detail?: sphere texture that rolls with the ball, blur?: its spinning average, halo?, spin?, twinkle? }
 
 const BUILDERS = {
   /**
-   * Cat's Eye: the picture's glass, its four-wedge vane and the glass's tinted
-   * edge, layer for layer. The vane turns with the ball as it rolls.
+   * Cat's Eye: the picture's glass and the glass's tinted edge face the
+   * camera; the vane is fixed in the ball, as in a real cat's eye: the
+   * picture's four wedges (its conic layer, same colours and angles) run as
+   * slices from pole to pole. Seen down its axis it is the picture's pinwheel,
+   * side on the slices read as the vane's blades, and it rolls exactly with
+   * the ball. The slices cover the same share of the ball from every side, so
+   * the colour matches the picture whichever way it faces.
    */
   'vane-glass'({ parts }) {
-    return { body: [parts.back], turning: [parts.vaneLayer], over: [...GLOSS_LAYERS, parts.tint] };
+    const vane = parts.vaneLayer;
+    const detail = paintSphere((d) => {
+      const c = conicAt(vane, (Math.atan2(d.z, d.x) * 180) / Math.PI);
+      return c[3] > 0 ? c : null;
+    }, { w: 512, h: 128 });
+    // The vane's average (what a blur of the spinning slices shows): its share of the ball, in its mean colour.
+    let share = 0; const mean = [0, 0, 0];
+    for (let deg = 0; deg < 360; deg += 0.5) {
+      const c = conicAt(vane, deg);
+      share += c[3] / 720; for (let k = 0; k < 3; k += 1) mean[k] += (c[k] * c[3]) / 720;
+    }
+    return { body: [parts.back], over: [...GLOSS_LAYERS, parts.tint], detail, blur: { colour: mean.map((v) => v / share), share } };
   },
 
   /** Steelie: the picture's polished-steel gradient, with faint machining lines round the ball that turn as it rolls. */
@@ -237,7 +265,6 @@ export function lookSpec(slug) {
   spec.built = Boolean(build);
   spec.look = look;
   spec.bodyTexture = viewTexture(`${slug}:body`, spec.body);
-  if (spec.turning) spec.turningTexture = viewTexture(`${slug}:turning`, spec.turning, { premultiplied: true });
   spec.overTexture = spec.over ? viewTexture(`${slug}:over`, spec.over, { premultiplied: true }) : glossTexture();
   cache.set(slug, spec);
   return spec;
@@ -249,35 +276,35 @@ const VERTEX = /* glsl */`
 varying vec3 vNormal;
 varying vec3 vViewPos;
 varying vec2 vUv;
-varying float vTurn;
+varying vec3 vWorldNormal;
 void main() {
   vec4 mv = modelViewMatrix * vec4(position, 1.0);
   vNormal = normalize(normalMatrix * normal);
+  vWorldNormal = normalize(mat3(modelMatrix) * normal);
   vViewPos = -mv.xyz;
   vUv = uv;
-  // How far the ball has turned about the line of sight (for the layers that turn as it rolls).
-  vec3 ax = (modelViewMatrix * vec4(1.0, 0.0, 0.0, 0.0)).xyz;
-  vTurn = atan(ax.y, ax.x);
   gl_Position = projectionMatrix * mv;
 }`;
 
 // Where on the camera-facing picture this point of the ball falls: the
 // picture's centre straight ahead, its rim at the ball's outline (corrected
 // for perspective, as three's matcap does). Then the picture's layers in its
-// own order: body, turning layer, sphere details, and the shine on top
+// own order: body, the details that roll with the ball, and the shine on top
 // (premultiplied, composited in sRGB as the browser does).
 const FRAGMENT = /* glsl */`
 uniform sampler2D uView;
-uniform sampler2D uTurning;
 uniform sampler2D uOver;
 uniform sampler2D uDetail;
 uniform float uLevel;
 uniform float uDetailBoost;
 uniform vec2 uDetailOffset;
+uniform vec4 uBlurColour;
+uniform float uBlur;
+uniform mat3 uDetailTurn;
+varying vec3 vWorldNormal;
 varying vec3 vNormal;
 varying vec3 vViewPos;
 varying vec2 vUv;
-varying float vTurn;
 vec2 facingUv(vec3 n) {
   vec3 v = normalize(vViewPos);
   vec3 x = normalize(vec3(v.z, 0.0, -v.x));
@@ -288,14 +315,18 @@ vec2 toTex(vec2 m) { return vec2(0.5 + 0.5 * m.x, 0.5 - 0.5 * m.y); }
 void main() {
   vec2 m = facingUv(normalize(vNormal));
   vec3 c = texture2D(uView, toTex(m)).rgb;
-  #ifdef MS_TURNING
-  float s = sin(vTurn); float k = cos(vTurn);
-  vec4 t = texture2D(uTurning, toTex(vec2(k * m.x + s * m.y, -s * m.x + k * m.y)));
-  c = t.rgb + c * (1.0 - t.a);
-  #endif
   #ifdef MS_DETAIL
-  vec4 d = texture2D(uDetail, vUv + uDetailOffset);
-  c = mix(c, min(d.rgb * uDetailBoost, vec3(1.0)), d.a);
+  // The details roll with the pattern's own turn (uDetailTurn: world → pattern),
+  // looked up as three's sphere maps its texture.
+  vec3 q = normalize(uDetailTurn * normalize(vWorldNormal));
+  float phi = atan(q.z, -q.x);
+  vec2 duv = vec2(phi / 6.28318530718 + (phi < 0.0 ? 1.0 : 0.0), 1.0 - acos(clamp(q.y, -1.0, 1.0)) / 3.14159265359);
+  vec4 d = texture2D(uDetail, duv + uDetailOffset);
+  // Spinning too fast to follow (more than a blade's width a frame): the
+  // details blur into their average, as a camera would show them.
+  vec3 sharp = mix(c, min(d.rgb * uDetailBoost, vec3(1.0)), d.a);
+  vec3 blurred = mix(c, uBlurColour.rgb, uBlurColour.a);
+  c = mix(sharp, blurred, uBlur);
   #endif
   vec4 o = texture2D(uOver, toTex(m));
   c = o.rgb + c * (1.0 - o.a);
@@ -309,19 +340,20 @@ void main() {
 function marbleMaterial(spec) {
   const defines = {};
   if (spec.detail) defines.MS_DETAIL = '';
-  if (spec.turningTexture) defines.MS_TURNING = '';
   const material = new ShaderMaterial({
     vertexShader: VERTEX,
     fragmentShader: FRAGMENT,
     defines,
     uniforms: {
       uView: { value: spec.bodyTexture },
-      uTurning: { value: spec.turningTexture ?? null },
       uOver: { value: spec.overTexture },
       uDetail: { value: spec.detail ?? null },
       uLevel: { value: 1 },
       uDetailBoost: { value: 1 },
       uDetailOffset: { value: { x: 0, y: 0 } },
+      uBlurColour: { value: spec.blur ? [...spec.blur.colour.map((v) => v / 255), spec.blur.share] : [0, 0, 0, 0] },
+      uBlur: { value: 0 },
+      uDetailTurn: { value: new Matrix3() },
     },
     fog: false,
     lights: false,
@@ -359,6 +391,14 @@ export function createMarbleLook(slug, { radius = 0.55, geometry = null } = {}) 
   }
 
   let night = false;
+  // The pattern's own orientation: it follows the ball's turns, at most MAX_TURN a frame.
+  const shown = new Quaternion(); const last = new Quaternion(); const delta = new Quaternion(); const inv = new Quaternion(); const now = new Quaternion();
+  let started = false;
+  const turnMatrix = new Matrix4();
+  const syncPattern = () => {
+    inv.copy(shown).invert();
+    shell.material.uniforms.uDetailTurn.value.setFromMatrix4(turnMatrix.makeRotationFromQuaternion(inv));
+  };
   const look = {
     slug,
     spec,
@@ -373,11 +413,31 @@ export function createMarbleLook(slug, { radius = 0.55, geometry = null } = {}) 
     },
     /** Per frame: drifting aurora ribbons, the halo's flicker, the flakes' glints. */
     update(t) {
+      if (spec.detail) {
+        // How far the ball turned since the last frame drawn (its world turn: q_now = delta × q_last).
+        const q = object.getWorldQuaternion(now);
+        if (!started) { shown.copy(q); last.copy(q); started = true; }
+        delta.copy(q).multiply(inv.copy(last).invert());
+        if (delta.w < 0) { delta.x = -delta.x; delta.y = -delta.y; delta.z = -delta.z; delta.w = -delta.w; }
+        const turned = 2 * Math.acos(Math.min(1, delta.w));
+        if (turned > MAX_TURN) {
+          // Same axis, same direction, no further than MAX_TURN.
+          const s = Math.sin(turned / 2);
+          const k = Math.sin(MAX_TURN / 2) / s;
+          delta.set(delta.x * k, delta.y * k, delta.z * k, Math.cos(MAX_TURN / 2));
+        }
+        shown.premultiply(delta).normalize();
+        last.copy(q);
+        look.turned = turned;
+        syncPattern();
+        if (spec.blur) shell.material.uniforms.uBlur.value = 0.5 * smooth(BLUR_FROM, BLUR_FULL, turned);
+      }
       if (spec.spin) shell.material.uniforms.uDetailOffset.value = { x: (t * spec.spin) % 1, y: 0 };
       if (halo) halo.material.opacity = spec.halo.opacity * (night ? 1.5 : 1) * (0.9 + 0.1 * Math.sin(t * 7.3));
       if (spec.twinkle) shell.material.uniforms.uDetailBoost.value = 1 + 0.25 * Math.max(0, Math.sin(t * 5.1));
     },
-    resetTrail() {},
+    /** The ball jumped (a new place, a new race): the pattern takes up the ball's orientation again. */
+    resetTrail() { started = false; },
     dispose() {
       if (ownGeometry) sphere.dispose();
       for (const m of materials) m.dispose();

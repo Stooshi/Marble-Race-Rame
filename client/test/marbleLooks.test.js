@@ -1,10 +1,10 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { NoColorSpace, Vector3 } from 'three';
+import { Matrix4, NoColorSpace, Quaternion, Vector3 } from 'three';
 import { bagPrice, DESIGNS, FEATURED_DESIGNS, ITEMS, ITEM, catalog, dressEntries, findById, lookName, nameLooks, normaliseId, originalSlug, priceLabel } from '../src/shared/marbles';
 import { GLOSS_LAYERS, badgeOf, lookOf } from '../src/shared/marbles/badge';
 import { hexRgb, mixHex, rasterize, toBytes, toCss } from '../src/shared/marbles/paint';
-import { BUILT_MATERIALS, NIGHT_LEVEL, _test, createMarbleLook, lookSpec } from '../src/shared/marbles/materials';
+import { BUILT_MATERIALS, MAX_TURN, NIGHT_LEVEL, _test, createMarbleLook, lookSpec } from '../src/shared/marbles/materials';
 
 // The catalogue is going to be swapped for a new collection, so these tests find
 // items by what they are (a material, a rarity) rather than by name.
@@ -66,8 +66,29 @@ describe('collection marble looks', () => {
     for (let k = 0; k < d.length; k += 4) if (d[k + 3] === 255) { expect([d[k], d[k + 1], d[k + 2]]).toEqual(flake); found = true; break; }
     expect(found).toBe(true);
     const cat = createMarbleLook(byMaterial('vane-glass'));
-    expect(cat.object.children.length).toBe(1); // one sphere: glass, vane and tint are the picture's layers
-    expect(cat.shell.material.defines.MS_TURNING).toBe('');
+    expect(cat.object.children.length).toBe(1); // one sphere
+    expect(cat.spec.detail).toBeTruthy(); // the vane, fixed in the ball
+    cat.dispose();
+  });
+
+  it('a rolling pattern turns with the ball, in the same direction, and never more than MAX_TURN a frame (no wagon-wheel)', () => {
+    const cat = createMarbleLook(byMaterial('vane-glass'));
+    const axis = new Vector3(0, 0, -1); // rolling along +x
+    const step = new Quaternion();
+    const pattern = () => new Quaternion().setFromRotationMatrix(new Matrix4().setFromMatrix3(cat.shell.material.uniforms.uDetailTurn.value)).invert();
+    cat.update(0);
+    for (const deg of [5, 15, 19, 30, 60, 80]) {
+      const before = pattern();
+      step.setFromAxisAngle(axis, (deg * Math.PI) / 180);
+      cat.object.quaternion.premultiply(step);
+      cat.update(0);
+      const turn = pattern().multiply(before.invert());
+      const angle = 2 * Math.acos(Math.min(1, Math.abs(turn.w)));
+      const dir = new Vector3(turn.x, turn.y, turn.z).multiplyScalar(Math.sign(turn.w) || 1).normalize();
+      expect(dir.dot(axis)).toBeGreaterThan(0.999); // forwards, about the ball's own axis
+      expect(angle).toBeCloseTo(Math.min(deg * Math.PI / 180, MAX_TURN), 5); // in step, up to the cap
+    }
+    expect(cat.shell.material.uniforms.uBlur.value).toBeGreaterThan(0);
     cat.dispose();
   });
 

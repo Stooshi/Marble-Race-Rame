@@ -27,6 +27,7 @@ const TrackPreview3D = lazy(() => importOrReload(() => import('./pages/TrackPrev
 const Replay3D = lazy(() => importOrReload(() => import('./pages/Replay3D')));
 const MarbleShowroom = lazy(() => importOrReload(() => import('./site/pages/MarbleShowroom')));
 const MarbleCompare = lazy(() => importOrReload(() => import('./site/pages/MarbleCompare')));
+const MarbleRoll = lazy(() => importOrReload(() => import('./site/pages/MarbleRoll')));
 const PhysicsPreview = lazy(() => importOrReload(() => import('./pages/PhysicsPreview')));
 
 export default function App() {
@@ -69,6 +70,10 @@ export default function App() {
           <Route
             path="/preview/marbles/compare"
             element={<Suspense fallback={<div className="page"><Spinner /></div>}><MarbleCompare /></Suspense>}
+          />
+          <Route
+            path="/preview/marbles/roll"
+            element={<Suspense fallback={<div className="page"><Spinner /></div>}><MarbleRoll /></Suspense>}
           />
           <Route
             path="/preview/physics"
