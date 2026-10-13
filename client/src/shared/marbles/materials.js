@@ -14,7 +14,7 @@
  * one halo sprite for glowing looks. Textures are tiny and made once per item.
  */
 import {
-  AdditiveBlending, BufferGeometry, Color, DataTexture, Float32BufferAttribute, Group, LinearFilter,
+  AdditiveBlending, BufferGeometry, Color, DataTexture, DoubleSide, Float32BufferAttribute, Group, LinearFilter,
   Mesh, MeshBasicMaterial, MeshPhongMaterial, Points, PointsMaterial, RepeatWrapping, RGBAFormat, SphereGeometry,
   Sprite, SpriteMaterial, SRGBColorSpace, Vector3,
 } from 'three';
@@ -191,6 +191,201 @@ const BUILDERS = {
     };
   },
 
+  /** Cat's Eye: clear glass with a 4-blade twisted vane inside. */
+  'vane-glass'([vane, vane2, glass], rand) {
+    const g = rgb(glass);
+    const bubbles = Array.from({ length: 5 }, () => new Vector3(rand() * 2 - 1, rand() * 2 - 1, rand() * 2 - 1).normalize());
+    const { map } = paintSphere((d) => {
+      let c = g;
+      for (const p of bubbles) if (d.dot(p) > 0.996) c = mix(c, [255, 255, 255], 0.7);
+      return c;
+    });
+    return {
+      map, shininess: 170, specular: '#ffffff',
+      glass: { opacity: 0.16, rim: glass, rimOpacity: 0.9 },
+      inner: { kind: 'vane', scale: 0.9, colours: [vane, vane2], shininess: 60 },
+    };
+  },
+
+  /** Mint Ripple: opaque, rings like a ripple spreading on water. */
+  rings([light, mid, dark], rand) {
+    const l = rgb(light); const m = rgb(mid); const dk = rgb(dark);
+    const axis = new Vector3(rand() - 0.5, 1, rand() - 0.5).normalize();
+    const { map } = paintSphere((d) => {
+      const a = Math.acos(Math.max(-1, Math.min(1, d.dot(axis)))) / Math.PI;
+      const f = (a * 9) % 1;
+      if (f < 0.42) return mix(l, m, smooth(0.36, 0.42, f));
+      if (f < 0.86) return mix(m, dk, smooth(0.8, 0.86, f));
+      return mix(dk, l, smooth(0.94, 1, f));
+    });
+    return { map, shininess: 70, specular: '#ffffff' };
+  },
+
+  /** Tiger Eye: polished gemstone bands with a silky shimmer. */
+  'gem-bands'([dark, mid, flash, deep], rand) {
+    const c0 = rgb(dark); const c1 = rgb(mid); const c2 = rgb(flash); const c3 = rgb(deep);
+    const noise = makeNoise(rand);
+    const axis = new Vector3(0.35, 1, 0.2).normalize();
+    const { map } = paintSphere((d) => {
+      const v = d.dot(axis) * 4 + noise(d.x * 2, d.y * 2, d.z * 2, 3) * 1.2;
+      const f = ((v % 1) + 1) % 1;
+      if (f < 0.25) return mix(c0, c1, smooth(0.18, 0.25, f));
+      if (f < 0.58) return mix(c1, c2, smooth(0.5, 0.58, f));
+      if (f < 0.7) return mix(c2, c3, smooth(0.64, 0.7, f));
+      return mix(c3, c0, smooth(0.92, 1, f));
+    });
+    // The shimmer: a broad, bright highlight in the flash colour that slides over the bands as it rolls.
+    return { map, shininess: 45, specular: flash };
+  },
+
+  /** Bumblebee: bold bands around the ball. */
+  bands([a, b]) {
+    const ca = rgb(a); const cb = rgb(b);
+    const { map } = paintSphere((d) => {
+      const f = (((d.y + 1) * 3) % 1 + 1) % 1;
+      return mix(ca, cb, smooth(0.0, 0.03, f) - smooth(0.5, 0.53, f));
+    });
+    return { map, shininess: 130, specular: '#ffffff' };
+  },
+
+  /** Ocean Swirl: glass with a swirl of four colours twisting through it. */
+  'swirl-glass'([deep, bright, foam, accent], rand) {
+    const cols = [deep, bright, foam, accent].map(rgb);
+    const noise = makeNoise(rand);
+    const { map } = paintSphere((d) => {
+      const a = Math.atan2(d.z, d.x) / (Math.PI * 2) + d.y * 0.6 + noise(d.x * 1.5, d.y * 1.5, d.z * 1.5, 2) * 0.3;
+      const f = ((a * 2) % 1 + 1) % 1 * 4;
+      const k = Math.floor(f);
+      return mix(cols[k % 4], cols[(k + 1) % 4], smooth(0.65, 1, f - k));
+    });
+    return { map, shininess: 160, specular: '#ffffff', glass: { opacity: 0.82, rim: foam, rimOpacity: 1 }, spin: 0.03 };
+  },
+
+  /** Watermelon: red flesh with seeds, a white and green rind on two sides. */
+  melon([flesh, pith, rind, seed], rand) {
+    const fl = rgb(flesh); const p = rgb(pith); const r = rgb(rind); const sd = rgb(seed);
+    const dark = mix(r, [0, 0, 0], 0.45);
+    const seeds = Array.from({ length: 26 }, () => new Vector3(rand() * 2 - 1, (rand() * 2 - 1) * 0.5, rand() * 2 - 1).normalize());
+    const { map } = paintSphere((d) => {
+      const y = Math.abs(d.y);
+      if (y > 0.7) {
+        const stripe = Math.sin(Math.atan2(d.z, d.x) * 9 + d.y * 3) > 0.35;
+        return mix(r, dark, stripe ? 0.8 : 0);
+      }
+      if (y > 0.62) return mix(p, r, smooth(0.66, 0.7, y));
+      let c = fl;
+      for (const s of seeds) if (d.dot(s) > 0.9985) c = sd;
+      return c;
+    });
+    return { map, shininess: 60, specular: '#ffffff' };
+  },
+
+  /** Galaxy: dark glass with nebula clouds and tiny twinkling stars. */
+  'nebula-glass'([space, cloud, cloud2, stars], rand) {
+    const sp = rgb(space); const c1 = rgb(cloud); const c2 = rgb(cloud2); const st = rgb(stars);
+    const noise = makeNoise(rand);
+    const pts = Array.from({ length: 70 }, () => new Vector3(rand() * 2 - 1, rand() * 2 - 1, rand() * 2 - 1).normalize());
+    const textures = paintSphere((d) => {
+      const n1 = noise(d.x * 1.8 + 5, d.y * 1.8, d.z * 1.8, 4);
+      const n2 = noise(d.x * 1.8, d.y * 1.8 + 9, d.z * 1.8, 4);
+      let c = mix(sp, c1, smooth(0.5, 0.75, n1) * 0.8);
+      c = mix(c, c2, smooth(0.52, 0.78, n2) * 0.75);
+      let e = mix([0, 0, 0], c, 0.35);
+      for (const p of pts) {
+        const k = d.dot(p);
+        if (k > 0.9993) { c = st; e = st; }
+      }
+      return { c, e };
+    }, { emissive: true });
+    return { ...textures, emissiveIntensity: 0.8, shininess: 150, specular: '#ffffff', twinkle: true };
+  },
+
+  /** Lava Core: black volcanic rock, glowing cracks, a hot core; brighter in night races. */
+  lava([rock, crack, crack2, core], rand) {
+    const r = rgb(rock); const c1 = rgb(crack); const c2 = rgb(crack2);
+    const noise = makeNoise(rand);
+    const cells = makeNoise(rand);
+    const textures = paintSphere((d) => {
+      const base = mix(r, mix(r, [90, 80, 75], 0.5), noise(d.x * 4, d.y * 4, d.z * 4, 3));
+      const ridge = Math.abs(cells(d.x * 2.6, d.y * 2.6, d.z * 2.6, 2) - 0.5);
+      const glow = 1 - smooth(0.0, 0.045, ridge);
+      const col = mix(c1, c2, noise(d.x * 3 + 2, d.y * 3, d.z * 3, 2));
+      return { c: mix(base, col, glow), e: mix([0, 0, 0], col, glow) };
+    }, { emissive: true });
+    return {
+      ...textures, emissiveIntensity: 1, shininess: 20, specular: '#3a2a20',
+      core: { centre: core, middle: crack, rim: rock, strength: 0.22 },
+      halo: { color: crack, size: 2.6, opacity: 0.25 },
+    };
+  },
+
+  /** Neon Grid: glowing grid lines on a dark ball, retro arcade style. */
+  'neon-grid'([line, line2, ball, ball2]) {
+    const l1 = rgb(line); const l2 = rgb(line2); const b1 = rgb(ball); const b2 = rgb(ball2);
+    const textures = paintSphere((d) => {
+      const phi = (Math.atan2(d.z, d.x) / (Math.PI * 2) + 1) % 1;
+      const theta = Math.acos(Math.max(-1, Math.min(1, d.y))) / Math.PI;
+      const base = mix(b2, b1, (d.y + 1) / 2);
+      const h = Math.abs(((theta * 8) % 1) - 0.5) > 0.45; // a line across
+      const v = Math.abs(((phi * 12) % 1) - 0.5) > 0.45; // a line from pole to pole
+      let c = base; let e = [0, 0, 0];
+      if (v) { c = l2; e = l2; }
+      if (h) { c = l1; e = l1; }
+      return { c, e };
+    }, { emissive: true });
+    return { ...textures, emissiveIntensity: 0.9, shininess: 120, specular: '#ffffff', halo: { color: line, size: 2.8, opacity: 0.3 } };
+  },
+
+  /** Checkered Flag: black and white racing checks, high gloss, a thin gold seam. */
+  checks([a, b, seam]) {
+    const ca = rgb(a); const cb = rgb(b); const cs = rgb(seam);
+    const { map } = paintSphere((d) => {
+      if (Math.abs(d.y) < 0.035) return cs;
+      const phi = (Math.atan2(d.z, d.x) / (Math.PI * 2) + 1) % 1;
+      const theta = Math.acos(Math.max(-1, Math.min(1, d.y))) / Math.PI;
+      return (Math.floor(phi * 12) + Math.floor(theta * 6)) % 2 ? ca : cb;
+    });
+    return { map, shininess: 180, specular: '#ffffff' };
+  },
+
+  /** Black Hole: a pitch-black centre, a spinning ring of light, light bent at the edges. */
+  'black-hole'([ring, ring2, ring3, core]) {
+    const r1 = rgb(ring); const r2 = rgb(ring2); const r3 = rgb(ring3); const k = rgb(core);
+    const textures = paintSphere((d) => {
+      const band = 1 - smooth(0.08, 0.3, Math.abs(d.y));
+      const a = (Math.atan2(d.z, d.x) / (Math.PI * 2) + 1) % 1;
+      const t = (Math.sin(a * Math.PI * 4) + 1) / 2;
+      const col = mix(mix(r1, r2, t), r3, smooth(0.2, 0.3, Math.abs(d.y)));
+      return { c: mix(k, col, band), e: mix([0, 0, 0], col, band) };
+    }, { emissive: true });
+    return {
+      ...textures, emissiveIntensity: 1.1, shininess: 200, specular: '#ffffff',
+      core: { centre: core, middle: core, rim: ring, strength: 0.7 },
+      halo: { color: ring2, size: 3, opacity: 0.4 },
+      spin: 0.35,
+    };
+  },
+
+  /** Northern Lights: night-sky glass with green and violet ribbons that slowly drift. */
+  'aurora-glass'([a, b, c, sky], rand) {
+    const ca = rgb(a); const cb = rgb(b); const cc = rgb(c); const s = rgb(sky);
+    const noise = makeNoise(rand);
+    const pts = Array.from({ length: 40 }, () => new Vector3(rand() * 2 - 1, rand() * 2 - 1, rand() * 2 - 1).normalize());
+    const textures = paintSphere((d) => {
+      const phi = Math.atan2(d.z, d.x);
+      const n = noise(Math.cos(phi) * 1.4, d.y * 1.2, Math.sin(phi) * 1.4, 3);
+      const ribbon = (y0, col) => [col, 1 - smooth(0.0, 0.13, Math.abs(d.y - (y0 + 0.22 * Math.sin(phi * 2 + n * 4))))];
+      let col = s; let e = [0, 0, 0];
+      for (const [cl, w] of [ribbon(0.35, ca), ribbon(-0.05, cb), ribbon(-0.42, cc)]) {
+        col = mix(col, cl, w * 0.9);
+        e = mix(e, cl, w * 0.8);
+      }
+      for (const p of pts) if (d.dot(p) > 0.9993) { col = [255, 255, 255]; e = [220, 220, 220]; }
+      return { c: col, e };
+    }, { emissive: true });
+    return { ...textures, emissiveIntensity: 0.9, shininess: 150, specular: '#ffffff', halo: { color: a, size: 2.8, opacity: 0.3 }, spin: 0.04 };
+  },
+
   /** Sunfire: the logo marble. Liquid-gold glow, swirling flame streaks, a halo and a short spark trail. */
   sunfire([spark, glow, flame, ember], rand) {
     const g = rgb(glow); const f = rgb(flame); const e = rgb(ember);
@@ -227,7 +422,7 @@ function placeholderLook(colours) {
 
 /** The designs with a finished 3D look (the others show a placeholder swirl for now). */
 export const BUILT_MATERIALS = Object.keys(BUILDERS);
-if (BUILT_MATERIALS.join() !== BUILT_LIST.join()) console.warn('[marbles] BUILT_MATERIALS in index.js is out of date');
+if ([...BUILT_MATERIALS].sort().join() !== [...BUILT_LIST].sort().join()) console.warn('[marbles] BUILT_MATERIALS in index.js is out of date');
 
 const cache = new Map();
 
@@ -283,9 +478,37 @@ uniform vec3 msRim; uniform float msRimOpacity; uniform vec3 msCentre; uniform v
 }
 
 /** The solid piece inside a glass marble. */
-function innerGeometry(kind) {
+function innerGeometry(kind, colours = []) {
   if (kind === 'sphere') return new SphereGeometry(1, 16, 12);
+  if (kind === 'vane') return vaneGeometry(colours);
   throw new Error(`Unknown inner piece ${kind}`);
+}
+
+/** The cat's-eye vane: four thin blades twisting a quarter turn from top to bottom, in two colours. */
+function vaneGeometry([c1, c2]) {
+  const pos = []; const col = []; const idx = [];
+  const colours = [new Color(c1), new Color(c2)];
+  const rows = 14;
+  for (let blade = 0; blade < 4; blade += 1) {
+    const base = pos.length / 3;
+    const colour = colours[blade % 2];
+    for (let j = 0; j <= rows; j += 1) {
+      const y = -0.92 + (1.84 * j) / rows;
+      const reach = Math.sqrt(Math.max(0, 1 - y * y)) * 0.92;
+      const a = (blade * Math.PI) / 2 + y * 0.9;
+      for (const r of [0.04, reach]) {
+        pos.push(Math.cos(a) * r, y, Math.sin(a) * r);
+        col.push(colour.r, colour.g, colour.b);
+      }
+      if (j < rows) { const k = base + j * 2; idx.push(k, k + 1, k + 2, k + 1, k + 3, k + 2); }
+    }
+  }
+  const geo = new BufferGeometry();
+  geo.setAttribute('position', new Float32BufferAttribute(pos, 3));
+  geo.setAttribute('color', new Float32BufferAttribute(col, 3));
+  geo.setIndex(idx);
+  geo.computeVertexNormals();
+  return geo;
 }
 
 /**
@@ -322,8 +545,10 @@ export function createMarbleLook(slug, { radius = 0.55, geometry = null } = {}) 
 
   const extras = [];
   if (spec.inner) {
-    const geo = innerGeometry(spec.inner.kind);
-    const mat = new MeshPhongMaterial({ map: spec.inner.map, shininess: spec.inner.shininess ?? 60, specular: new Color('#ffffff') });
+    const geo = innerGeometry(spec.inner.kind, spec.inner.colours);
+    const mat = spec.inner.colours
+      ? new MeshPhongMaterial({ vertexColors: true, side: DoubleSide, shininess: spec.inner.shininess ?? 60, specular: new Color('#ffffff') })
+      : new MeshPhongMaterial({ map: spec.inner.map, shininess: spec.inner.shininess ?? 60, specular: new Color('#ffffff') });
     const inner = new Mesh(geo, mat);
     inner.scale.setScalar(radius * spec.inner.scale);
     object.add(inner);
@@ -391,6 +616,7 @@ export function createMarbleLook(slug, { radius = 0.55, geometry = null } = {}) 
         if (material.emissiveMap) material.emissiveMap.offset.x = material.map.offset.x;
       }
       if (halo) halo.material.opacity = spec.halo.opacity * (night ? 1.5 : 1) * (0.9 + 0.1 * Math.sin(t * 7.3));
+      if (spec.twinkle) material.emissiveIntensity = baseEmissive * (night ? 1.6 : 1) * (0.8 + 0.2 * Math.sin(t * 5.1));
       if (trail && worldPosition) {
         if (t - lastDrop > 0.035) {
           lastDrop = t;

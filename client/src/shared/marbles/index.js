@@ -49,7 +49,10 @@ export function dressEntries(entries, key, slugs) {
 }
 
 /** The designs whose 3D look is finished (materials.js builds exactly these). */
-export const BUILT_MATERIALS = ['stripe', 'stone', 'core-glass', 'sunfire'];
+export const BUILT_MATERIALS = [
+  'vane-glass', 'rings', 'gem-bands', 'bands', 'swirl-glass', 'melon', 'nebula-glass', 'lava',
+  'neon-grid', 'checks', 'black-hole', 'aurora-glass', 'stripe', 'stone', 'core-glass', 'sunfire',
+];
 
 /** Looks house marbles can wear: every finished regular design (never the limited edition). */
 export const HOUSE_LOOKS = ITEMS.filter((i) => BUILT_MATERIALS.includes(i.design.material) && !i.design.limited).map((i) => i.slug);

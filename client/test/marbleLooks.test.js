@@ -5,8 +5,8 @@ import { ITEMS, ITEM, dressEntries, priceLabel } from '../src/shared/marbles';
 import { BUILT_MATERIALS, createMarbleLook, lookSpec } from '../src/shared/marbles/materials';
 
 describe('collection marble looks', () => {
-  it('the first four looks are built: a stripe, a stone, a glass and a glowing marble', () => {
-    expect(BUILT_MATERIALS.sort()).toEqual(['core-glass', 'stone', 'stripe', 'sunfire']);
+  it('all 16 looks are built', () => {
+    expect([...BUILT_MATERIALS].sort()).toEqual(['aurora-glass', 'bands', 'black-hole', 'checks', 'core-glass', 'gem-bands', 'lava', 'melon', 'nebula-glass', 'neon-grid', 'rings', 'stone', 'stripe', 'sunfire', 'swirl-glass', 'vane-glass']);
   });
 
   it('every one of the 76 items gets a look (unbuilt designs a placeholder for now)', () => {

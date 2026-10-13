@@ -45,7 +45,7 @@ function useShowroom(canvasRef, { mode, design, night, plain }) {
 
     const geometry = new SphereGeometry(RADIUS, 24, 16);
     const slugs = race
-      ? ITEMS.filter((i) => BUILT.includes(i.design.key)).map((i) => i.slug).slice(0, 20)
+      ? [...BUILT.map((k) => ITEMS.find((i) => i.design.key === k).slug), 'candy-ocean', 'sun-blue-star', 'glass-ruby', 'hole-quasar'].slice(0, 20)
       : ITEMS.filter((i) => i.design.key === design).map((i) => i.slug);
     const plainMat = new MeshPhongMaterial({ color: '#e0115f', shininess: 90 });
     const looks = slugs.map((slug) => {
@@ -141,7 +141,7 @@ export default function MarbleShowroom() {
       <div style={{ display: 'grid', gap: 8 }}>
         <div className="ms-eyebrow">Preview · marble looks</div>
         <h1 className="ms-h1">Marble showroom</h1>
-        <p className="ms-lede">The first four collection looks in real 3D, as they race. Looks only: every marble races exactly the same.</p>
+        <p className="ms-lede">Every collection look in real 3D, as it races. Looks only: every marble races exactly the same.</p>
       </div>
       <div className="ms-row" role="group" aria-label="Showroom">
         <button type="button" className={`ms-btn ms-btn--sm ${mode === 'look' ? 'ms-btn--primary' : ''}`} onClick={() => setMode('look')}>Look</button>
