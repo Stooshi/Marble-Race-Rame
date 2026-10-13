@@ -185,13 +185,12 @@ a:hover .ms-logo, .ms-header__logo:hover { text-decoration: none; }
   white-space: nowrap;
 }
 .ms-chip--streak { color: var(--ms-orange); }
-.ms-chip--credits { color: #3DB5FF; }
 a.ms-chip:hover { text-decoration: none; border-color: var(--ms-muted); }
 
 .ms-header__inner--landing .ms-header__login { margin-left: auto; }
 
 @media (max-width: 520px) {
-  .ms-chip--streak, .ms-chip--credits { display: none; }
+  .ms-chip--streak { display: none; }
   .ms-header__logout { display: none; }
   .ms-header__logo .ms-logo { font-size: 24px !important; }
   .ms-header__inner { gap: 10px 12px; }

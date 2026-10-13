@@ -4,10 +4,10 @@ import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { api } from '../../api/client';
 import { useAuth } from '../../context/AuthContext';
 import { useAsync } from '../../hooks/useAsync';
-import { DESIGN, ITEM, ITEMS, RARITY_ORDER, catalog, normaliseId, priceLabel, rarityInfo } from '../../shared/marbles';
+import { DESIGN, ITEM, ITEMS, RARITY_ORDER, bagPrice, catalog, normaliseId, priceLabel, rarityInfo } from '../../shared/marbles';
 import { GLOSS } from '../../shared/marbles/badge';
 import economy from '../../shared/economy.json';
-import { CREDIT_PACKS } from '../../shared/payments/packs';
+import { COIN_PACKS } from '../../shared/payments/packs';
 import { importOrReload } from '../../utils/staleCode';
 import MarbleBadge from '../marbles/MarbleBadge';
 import { editionLine, useCollection } from '../marbles/useCollection';
@@ -26,7 +26,7 @@ const DATE = new Intl.DateTimeFormat('en-GB', { weekday: 'short', day: 'numeric'
  * The shop: the live collection (Schoolyard Classics) with its two bags, every
  * marble in every shade with rarity and shade filters and Find by ID, a big
  * view with the 3D marble and a shade switcher, the next collections, and
- * credits and coin packs. /collection and /collection/:design?shade= open it
+ * coin packs. /collection and /collection/:design?shade= open it
  * too (the second with that marble's big view open), and so does ?id=SC105.
  */
 export default function ShopPage() {
@@ -110,20 +110,6 @@ export default function ShopPage() {
 
       <ComingSoon />
 
-      <section aria-labelledby="cred-h" style={{ display: 'grid', gap: 14 }}>
-        <div className="ms-section-head"><h2 id="cred-h">Credits</h2><span>1 credit = $1. Credits are for the shop only and can't be cashed out.</span></div>
-        <div className="ms-cards" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 160px), 1fr))' }}>
-          {CREDIT_PACKS.map((p) => (
-            <Link key={p.id} to={`/checkout?pack=${p.id}`} className="ms-mcard" style={{ padding: 18, borderColor: p.popular ? 'var(--ms-yellow)' : undefined }}>
-              <span className="ms-coins" style={{ fontSize: '2rem', color: '#3DB5FF' }}>◆ {p.credits}</span>
-              <span style={{ color: 'var(--ms-soft)' }}>credits{p.popular ? ' · most popular' : ''}</span>
-              <span className="ms-price-btn">{p.priceLabel}</span>
-            </Link>
-          ))}
-        </div>
-        <p className="ms-note">Prices shown in your local currency at checkout, including VAT. Under 18? Ask a parent or guardian before buying. <Link to="/legal#sale">Terms of sale</Link></p>
-      </section>
-
       <CoinPacks />
 
       <p className="ms-note">Looks only, never speed: every marble races exactly the same. The first {catalog.editionSize} of every marble are a numbered First Edition.</p>
@@ -184,15 +170,15 @@ function Hero({ owned, onBought }) {
     const o = offer(key);
     const count = o?.items.length ?? SC_DESIGNS.filter((d) => bag.rarities.includes(d.rarity)).length;
     const full = o ? o.missing === o.items.length : true;
-    const price = o ? priceLabel({ [o.currency]: o.price }) : priceLabel(bag.price);
     const worth = SC_ITEMS.filter((i) => bag.rarities.includes(i.rarity) && i.shade.key === shade).reduce((n, i) => n + (i.price.coins ?? 0), 0);
+    const price = priceLabel({ coins: o ? o.price : bagPrice(key, worth) });
     const done = o && !o.missing;
     return (
       <button type="button" className={`ms-bag${main ? ' ms-bag--main' : ''}`} onClick={() => buyBag(key)} disabled={busy || done}>
         <b>{confirm === key ? `CONFIRM: ${price.replace(/^[●◆] /, '')}` : bag.label.toUpperCase()}</b>
         <small>
           {done ? `You own all ${count} in ${shadeName}` : `${key === 'full' ? `All ${count} marbles` : `The ${count} Commons`} in ${shadeName} · ${price}`}
-          {!done && full && bag.price.coins !== undefined && <> <s>{worth.toLocaleString('en-US')}</s></>}
+          {!done && full && <> <s>{worth.toLocaleString('en-US')}</s> · {Math.round(bag.discount * 100)}% off</>}
           {!done && !full && ` (for the ${o.missing} you don't have)`}
         </small>
       </button>
@@ -237,7 +223,7 @@ function MarbleSheet({ slug, onSlug, owned, live, buy, onClose }) {
   const info = rarityInfo(item.rarity);
   const have = owned.has(slug);
   const liveItem = live[slug];
-  const credits = info.price.coins === undefined;
+  const noPrice = info.price.coins == null;
 
   useEffect(() => {
     ref.current?.focus();
@@ -265,7 +251,6 @@ function MarbleSheet({ slug, onSlug, owned, live, buy, onClose }) {
   };
   const onBuy = async () => {
     if (!isAuthenticated) { navigate(`/signup?next=${encodeURIComponent(`/collection/${d.key}?shade=${item.shade.key}`)}`); return; }
-    if (credits) { navigate(`/checkout?item=${slug}`); return; }
     if (!confirming) { setConfirming(true); return; }
     setBusy(true);
     try {
@@ -323,13 +308,15 @@ function MarbleSheet({ slug, onSlug, owned, live, buy, onClose }) {
           <span className="ms-btn ms-sheet__buy" aria-disabled="true">OWNED</span>
         ) : liveItem && !liveItem.onSale ? (
           <span className="ms-btn ms-sheet__buy" aria-disabled="true">NO LONGER FOR SALE</span>
+        ) : noPrice ? (
+          <span className="ms-btn ms-sheet__buy" aria-disabled="true">PRICE COMING SOON</span>
         ) : (
           <>
             <button type="button" className="ms-btn ms-btn--primary ms-sheet__buy" onClick={onBuy} disabled={busy}>
               {busy ? 'BUYING…' : `${confirming ? 'CONFIRM: ' : 'BUY FOR '}${priceLabel(info.price).replace(/^[●◆] /, '').toUpperCase()}`}
             </button>
             {confirming && <button type="button" className="ms-btn ms-btn--ghost ms-btn--sm" onClick={() => setConfirming(false)}>Cancel</button>}
-            {isAuthenticated && !credits && <span className="ms-note">You have {(user?.coins ?? 0).toLocaleString('en-US')} coins.</span>}
+            {isAuthenticated && <span className="ms-note">You have {(user?.coins ?? 0).toLocaleString('en-US')} coins.</span>}
           </>
         )}
       </div>
@@ -365,39 +352,26 @@ function ComingSoon() {
   );
 }
 
-/** Coin packs: credits swapped for coins (client/src/shared/economy.json). */
+/** Coin packs, bought with real money (client/src/shared/payments/packs.json). Racing earns coins too. */
 function CoinPacks() {
-  const { user, refreshUser } = useAuth();
-  const [busy, setBusy] = useState(null);
-  const [msg, setMsg] = useState(null);
-  const buy = async (p) => {
-    setBusy(p.id);
-    setMsg(null);
-    try {
-      const r = await api.buyCoinPack(p.id);
-      setMsg({ ok: true, text: `+${p.coins.toLocaleString('en-US')} coins. You now have ${r.coins.toLocaleString('en-US')} coins and ${r.credits} credits.` });
-      refreshUser?.();
-    } catch (err) {
-      setMsg({ ok: false, text: err.message });
-    } finally {
-      setBusy(null);
-    }
-  };
+  const { isAuthenticated } = useAuth();
+  const race = economy.race;
   return (
-    <section aria-labelledby="coins-h" style={{ display: 'grid', gap: 14 }}>
-      <div className="ms-section-head"><h2 id="coins-h">Coin packs</h2><span>Swap credits for coins. Racing earns coins too: every race, the daily goal and your streak.</span></div>
+    <section id="coins" aria-labelledby="coins-h" style={{ display: 'grid', gap: 14 }}>
+      <div className="ms-section-head">
+        <h2 id="coins-h">Coin packs</h2>
+        <span>Coins are earned by racing or bought here. Every race pays {race.takingPart} for taking part, the top 3 get {race.places.slice(0, 3).map((p) => p.coins).join(' / ')} more, and the daily goal of {economy.dailyGoal.races} races adds {economy.dailyGoal.coins}.</span>
+      </div>
       <div className="ms-cards" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 160px), 1fr))' }}>
-        {economy.coinPacks.map((p) => (
-          <div key={p.id} className="ms-mcard" style={{ padding: 18, borderColor: p.popular ? 'var(--ms-yellow)' : undefined }}>
+        {COIN_PACKS.map((p) => (
+          <Link key={p.id} to={isAuthenticated ? `/checkout?pack=${p.id}` : `/signup?next=${encodeURIComponent(`/checkout?pack=${p.id}`)}`} className="ms-mcard" style={{ padding: 18, borderColor: p.popular ? 'var(--ms-yellow)' : undefined }}>
             <span className="ms-coins" style={{ fontSize: '1.8rem' }}>● {p.coins.toLocaleString('en-US')}</span>
             <span style={{ color: 'var(--ms-soft)' }}>coins{p.popular ? ' · most popular' : ''}</span>
-            {user
-              ? <button type="button" className="ms-price-btn" disabled={busy === p.id} onClick={() => buy(p)}>{busy === p.id ? '…' : `◆ ${p.credits} credits`}</button>
-              : <Link to="/signup?next=/shop" className="ms-price-btn">◆ {p.credits} credits</Link>}
-          </div>
+            <span className="ms-price-btn">{p.priceLabel}</span>
+          </Link>
         ))}
       </div>
-      {msg && <div className={`ms-msg${msg.ok ? '' : ' ms-msg--bad'}`} aria-live="polite">{msg.text}</div>}
+      <p className="ms-note">Coins are for the shop only and can't be cashed out. Prices shown in your local currency at checkout, including VAT. Under 18? Ask a parent or guardian before buying. <Link to="/legal#sale">Terms of sale</Link></p>
     </section>
   );
 }

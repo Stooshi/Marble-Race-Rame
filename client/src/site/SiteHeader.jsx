@@ -14,8 +14,7 @@ export function headerKind(pathname, isAuthenticated) {
 function UserChips({ user }) {
   return (
     <div className="ms-chips">
-      <span className="ms-chip" title="Coins">● {formatNumber(user.coins ?? 0)} coins</span>
-      <Link to="/shop" className="ms-chip ms-chip--credits" title="Credits">◆ {formatNumber(user.credits ?? 0)} credits</Link>
+      <Link to="/shop#coins" className="ms-chip" title="Coins: earned racing or bought in coin packs">● {formatNumber(user.coins ?? 0)} coins</Link>
       <span className="ms-chip ms-chip--streak" title="Daily streak">▲ [streak]</span>
       {user.is_guest
         ? <Link to="/signup" className="ms-btn ms-btn--primary ms-btn--sm"><span className="ms-wide-only">SAVE YOUR MARBLE</span><span className="ms-narrow-only">SAVE</span></Link>

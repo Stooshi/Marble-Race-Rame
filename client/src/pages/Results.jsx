@@ -162,16 +162,16 @@ function PbCell({ result: r }) {
 
 /** Personal summary card: this race against your history on the track. */
 // What each coin line was for (the coin economy, client/src/shared/economy.json).
-const COIN_LINE = { race: 'Place', 'personal-best': 'Personal best', 'daily-goal': 'Daily goal', streak: 'Streak' };
+const COIN_LINE = { race: 'Taking part', 'finish-bonus': 'Finishing bonus', 'daily-goal': 'Daily goal' };
 
-/** The coins this race paid you, line by line: place, personal best, daily goal, streak. */
+/** The coins this race paid you, line by line: taking part, the finishing bonus, the daily goal. */
 function CoinLines({ raceId }) {
   const { data } = useAsync(() => api.raceCoins(raceId).catch(() => null), [raceId]);
   if (!data?.lines?.length) return null;
   return (
     <p className="muted coin-lines">
       {data.lines.map((l, i) => (
-        <span key={i}>{i ? ' · ' : ''}{COIN_LINE[l.kind] ?? l.kind}{l.kind === 'streak' && l.note ? ` (${l.note})` : ''} <b>+{l.amount}</b></span>
+        <span key={i}>{i ? ' · ' : ''}{COIN_LINE[l.kind] ?? l.kind}{l.note ? ` (${l.note})` : ''} <b>+{l.amount}</b></span>
       ))}
     </p>
   );

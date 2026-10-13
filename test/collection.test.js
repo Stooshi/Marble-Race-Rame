@@ -87,16 +87,18 @@ test('collection code never touches the race engine', () => {
   }
 });
 
-test('bags: every marble of their rarities in the one shade picked; owning some makes the rest cheaper', () => {
+test('bags: every marble of their rarities in the one shade picked; 30% / 15% off; owning some makes the rest cheaper', () => {
   const { bagOffer } = require('../src/marbles/collection');
   const full = bagOffer('full', 'sunset');
   assert.equal(full.items.length, 10);
   assert.ok(full.items.every((i) => i.slug.endsWith('-sunset')));
-  assert.deepEqual([full.currency, full.price], ['credits', 30]);
+  assert.equal(full.price, 41700);
+  assert.equal(full.worth, 59500);
   const starter = bagOffer('starter');
   assert.deepEqual(starter.items.map((i) => i.id), ['SC011', 'SC021', 'SC031']);
-  assert.deepEqual([starter.currency, starter.price], ['coins', 375]);
-  assert.equal(bagOffer('starter', 'classic', new Set(['clearie-classic'])).price, 250);
+  assert.equal(starter.price, 2600);
+  assert.equal(bagOffer('starter', 'classic', new Set(['clearie-classic'])).price, 1700);
+  assert.throws(() => bagOffer('bagPricesRoundTo'), /No such bag/);
   assert.equal(bagOffer('starter', 'classic', new Set(['clearie-classic', 'aggie-classic', 'patch-classic'])).missing, 0);
   assert.throws(() => bagOffer('starter', 'tartan'), /Choose a shade/);
 });

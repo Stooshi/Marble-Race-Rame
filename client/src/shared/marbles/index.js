@@ -5,6 +5,7 @@
  * The server reads the same catalog.json (src/marbles/catalog.js).
  */
 import catalog from './catalog.json';
+import economy from '../economy.json';
 
 export { catalog };
 
@@ -52,10 +53,18 @@ export const findById = (text) => ITEM_BY_ID[normaliseId(text)] ?? null;
 
 export const rarityInfo = (rarity) => catalog.rarities[rarity];
 
-/** "● 2,500 coins" or "◆ [X] credits" (a price still to be set stays a visible placeholder). */
+/** "● 2,500 coins" (a price still to be set stays a visible placeholder: "● [X] coins"). */
 export function priceLabel(price) {
-  if (price.coins !== undefined) return `● ${price.coins.toLocaleString('en-US')} coins`;
-  return `◆ ${price.credits ?? price.creditsLabel ?? '[X]'} credits`;
+  return `● ${price.coins != null ? price.coins.toLocaleString('en-US') : price.coinsLabel ?? '[X]'} coins`;
+}
+
+/**
+ * A bag's price for marbles worth `worth` coins one by one: less the bag's
+ * discount, rounded to the nearest 100 (src/economy bagPrice does the same).
+ */
+export function bagPrice(bagKey, worth) {
+  const step = economy.bagPricesRoundTo;
+  return Math.max(step, Math.round((worth * (1 - economy.bags[bagKey].discount)) / step) * step);
 }
 
 /**

@@ -1,9 +1,9 @@
 {
-  "note": "Credit packs, 1 credit = $1. The id is the product id in every store: Stripe on the web, Apple App Store and Google Play in-app purchases (consumable products).",
+  "note": "Coin packs, bought with real money. The id is the product id in every store: Stripe on the web, Apple App Store and Google Play in-app purchases (consumable products). Coins bought here are counted as bought coins, never as earned.",
   "packs": [
-    { "id": "credits-5", "credits": 5, "amountCents": 500, "currency": "usd" },
-    { "id": "credits-10", "credits": 10, "amountCents": 1000, "currency": "usd", "popular": true },
-    { "id": "credits-25", "credits": 25, "amountCents": 2500, "currency": "usd" },
-    { "id": "credits-50", "credits": 50, "amountCents": 5000, "currency": "usd" }
+    { "id": "coins-5000", "coins": 5000, "amountCents": 500, "currency": "usd" },
+    { "id": "coins-10500", "coins": 10500, "amountCents": 1000, "currency": "usd", "popular": true },
+    { "id": "coins-27500", "coins": 27500, "amountCents": 2500, "currency": "usd" },
+    { "id": "coins-57500", "coins": 57500, "amountCents": 5000, "currency": "usd" }
   ]
 }

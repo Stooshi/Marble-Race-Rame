@@ -173,13 +173,13 @@ The collection (Collection 1 · Schoolyard Classics: 10 designs in 5 shades, 50 
 | GET | `/collection` | optional | Every item with its live First Edition count and whether it's on sale; `owned` slugs when signed in |
 | GET | `/collection/bag` | ✔ | The Marble Bag: collection copies, Originals (old plain marbles), sets, Shooter |
 | PUT | `/collection/shooter` | ✔ | `{ item }` or `{ original }`: the look the player races in |
-| POST | `/collection/:slug/buy` | ✔ | Buy one copy (coins; credits for a limited edition). Copies 1–500 are the numbered First Edition |
+| POST | `/collection/:slug/buy` | ✔ | Buy one copy with coins. Copies 1–500 are the numbered First Edition |
 | GET | `/collection/certificate/:code` | – | A copy's certificate by its code: the Marble ID and copy number, e.g. `SC105-000037` |
 | GET | `/collection/bags` | optional | `?shade=`: the Starter Bag and Full Collection Bag in one shade (Classic by default), what's in them and their price for you |
 | POST | `/collection/bags/:bag/buy` | ✔ | `{ shade }`: buy a bag (`starter` or `full`): every marble in it in that shade, each a numbered copy |
 | GET | `/collection/id/:id` | – | The marble a Marble ID names: `SC105`, `sc105`, `SC 105` or `#SC105` |
-| GET | `/payments` | – | Credit packs and which payment providers are live |
-| POST | `/payments/checkout` | ✔ | `{ productId, provider }`: start buying credits (Stripe on the web; placeholder until there are keys) |
+| GET | `/payments` | – | Coin packs and which payment providers are live |
+| POST | `/payments/checkout` | ✔ | `{ productId, provider }`: start buying a coin pack (Stripe on the web; placeholder until there are keys) |
 | POST | `/payments/receipt` | ✔ | `{ provider: 'apple' \| 'google', receipt }`: an app store purchase (placeholder until the apps exist) |
 | GET | `/scoreboard` | optional | `?board=season\|all\|friends`: players ranked by coins earned racing (places, personal bests, daily goals, streaks) |
 | GET | `/races/showcase` | – | A recent close race for the landing page's replay |
@@ -188,26 +188,31 @@ The collection (Collection 1 · Schoolyard Classics: 10 designs in 5 shades, 50 
 
 **Showcase marbles.** In beginner races (every player in the race has finished fewer than 20 races) the computer players race in designed marbles from the collection: about 6 Common/Uncommon, 3 Rare/Epic and 1 Legendary, different each race; the rest stay plain. The mix lives in `catalog.json` → `showcase`. They are drawn after the race is set up, stored apart (`house_looks`), and never given to the race engine, so they can't change a result; the track report's Fairness part checks that every marble tier wins its share. Computer players carry a small "CPU" tag; after a race, tapping any marble shows its name, rarity and a way to the shop.
 
-Every payment provider ends in the same server step (`src/payments/index.js` → `grant`), which adds a pack's credits exactly once. `PAYMENTS_TEST=true` turns on an instant test provider outside production.
+Every payment provider ends in the same server step (`src/payments/index.js` → `grant`), which adds a pack's coins exactly once, as bought coins. `PAYMENTS_TEST=true` turns on an instant test provider outside production.
 
 ### The coin economy
 
 Every number is in `client/src/shared/economy.json` (the server and the website read it); the logic is `src/economy/index.js`.
 
-- **Races** pay by place: 50, 40, 30 for the podium, 20 for 4th–5th, 12 for 6th–10th, 8 for 11th–20th, plus 10 for a personal best on the track.
-- **Daily goal**: 5 races in a day pays 50, plus 10 per day of the streak (the days in a row the goal was met), up to 70 on day 7. Days run midnight to midnight UTC.
-- **Farm guard**: after 40 races in a day, each further race pays 2.
-- **Prices** by rarity (`catalog.json`): Common 150, Uncommon 400, Rare 900, Epic 1,800, Legendary 4,000. New players start with 500 coins.
-- **Coin packs** swap credits for coins (5 → 1,000; 10 → 2,200; 25 → 6,000; 50 → 13,000).
-- **The coin ledger** (`coin_ledger`) records every change to a player's coins or credits, with the balance after it. Scoreboards count the earned lines; `docs/data_updates/2027-01-03-coin-ledger-start.sql` writes the history from before it.
+One currency: **coins**, earned by racing or bought in coin packs; never cashed out.
+
+- **Races** pay 15 for taking part, plus a finishing bonus: 50 for 1st, 30 for 2nd, 20 for 3rd, 5 for 4th–10th, nothing for 11th–20th.
+- **Daily limit**: full coins for the first 10 races a day, then 5 coins a race. Days run midnight to midnight UTC.
+- **Daily goal**: 5 races in a day pays a flat 35. The streak (days in a row the goal was met) is shown but pays nothing.
+- **Starting bag**: 650 coins, guests too.
+- **Prices** by rarity (`catalog.json`): Common 1,000, Uncommon 2,500, Rare 6,000, Epic 12,000, Legendary 25,000. Limited editions are priced in coins too.
+- **Bags**, one shade the buyer picks: Full Collection Bag 30% off the 10 marbles (41,700), Starter Bag 15% off the 3 Commons (2,600), rounded to the nearest 100; owning some makes the rest cheaper at the same discount.
+- **Coin packs** for real money (`client/src/shared/payments/packs.json`): $5 = 5,000, $10 = 10,500, $25 = 27,500, $50 = 57,500.
+- Target: 5 races a day buys the first Common on day 2–3, then about one Common a week (checked in `test/economy.test.js`).
+- **Earned and bought coins** are counted apart (`users.coins_earned`, `users.coins_bought`); scoreboards count earned coins only.
+- **The coin ledger** (`coin_ledger`) records every change to a player's coins, with the balance after it. `docs/data_updates/2027-01-03-coins-only.sql` multiplied every coin amount from before by 10, turned credits into coins (1 credit = 1,000 coins, as bought coins) and wrote the history from before.
 
 | Method | Path | Auth | Notes |
 | --- | --- | --- | --- |
-| GET | `/economy` | – | The economy's numbers |
-| GET | `/economy/me` | ✔ | Today: races, the daily goal and its bonus, the streak, balances |
+| GET | `/economy` | – | The economy's numbers and the coin packs |
+| GET | `/economy/me` | ✔ | Today: races, the daily goal, the streak, full-pay races left, coins (earned and bought) |
 | GET | `/economy/races/:id` | ✔ | What you earned in one race, line by line |
 | GET | `/economy/ledger` | ✔ | Your last 100 ledger lines |
-| POST | `/economy/coin-packs/:id/buy` | ✔ | Swap credits for a coin pack |
 
 ### Marbles
 

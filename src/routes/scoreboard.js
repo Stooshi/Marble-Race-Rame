@@ -42,11 +42,11 @@ router.get('/', optionalAuth, async (req, res) => {
           AND (NOT $3 OR e.user_id IN (SELECT user_id FROM friends) OR e.user_id = $2)
         GROUP BY e.user_id
      ),
-     -- Coins earned racing (place, personal bests, daily goal, streak), from the coin ledger.
+     -- Coins earned racing (taking part, finishing bonus, daily goal), from the coin ledger; bought coins never count.
      earned AS (
        SELECT l.user_id, SUM(l.amount)::int AS coins
          FROM coin_ledger l
-        WHERE l.currency = 'coins' AND l.kind = ANY($4::text[])
+        WHERE l.kind = ANY($4::text[])
           AND ($1::timestamptz IS NULL OR l.created_at >= $1)
         GROUP BY l.user_id
      ),

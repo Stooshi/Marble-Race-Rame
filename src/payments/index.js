@@ -1,7 +1,7 @@
 'use strict';
 
 /**
- * Payments for credits behind one interface, whichever store takes the money:
+ * Payments for coin packs behind one interface, whichever store takes the money:
  *
  *   stripe  the website (Stripe Checkout)            [placeholder until there are keys]
  *   apple   the iPhone app (App Store in-app purchase) [placeholder until the app exists]
@@ -9,8 +9,9 @@
  *   test    local development only: pays at once      (PAYMENTS_TEST=true, never in production)
  *
  * Every provider ends in the same place: grant(), which marks the payment paid
- * and adds the pack's credits exactly once. Credits are then spent in the shop
- * like coins (src/marbles/collection.js). Looks only, never speed.
+ * and adds the pack's coins exactly once, counted as bought coins (never
+ * earned, so they don't count on the scoreboards). Coins are spent in the shop
+ * (src/marbles/collection.js) and never cashed out. Looks only, never speed.
  *
  * A provider is { name, configured(), start(payment, ctx) → next, verify?(input) → { ref, productId } }:
  *   start: begins a web checkout and says what the client does next,
@@ -55,7 +56,7 @@ const PROVIDERS = {
 
 function pack(productId) {
   const p = PACKS.get(productId);
-  if (!p) throw notFound('No such credit pack');
+  if (!p) throw notFound('No such coin pack');
   return p;
 }
 
@@ -64,19 +65,19 @@ function available() {
   return Object.fromEntries(Object.values(PROVIDERS).map((p) => [p.name, p.configured()]));
 }
 
-/** Adds a paid payment's credits, once. Returns the player's new credit balance (or null if it was already granted). */
+/** Adds a paid payment's coins, once. Returns the player's new coin balance (or null if it was already granted). */
 async function grant(client, paymentId, providerRef = null) {
   const { rows: [pay] } = await client.query(
     `UPDATE payments SET status = 'paid', paid_at = now(), provider_ref = COALESCE($2, provider_ref)
-      WHERE id = $1 AND status = 'pending' RETURNING id, user_id, credits, product_id`,
+      WHERE id = $1 AND status = 'pending' RETURNING id, user_id, coins, product_id`,
     [paymentId, providerRef],
   );
   if (!pay) return null;
-  const done = await economy.change(client, { userId: pay.user_id, currency: 'credits', amount: pay.credits, kind: 'credit-pack', paymentId: pay.id, note: pay.product_id });
+  const done = await economy.change(client, { userId: pay.user_id, amount: pay.coins, kind: 'coin-pack', paymentId: pay.id, note: pay.product_id });
   return done.balance;
 }
 
-/** Starts buying a credit pack with a provider. */
+/** Starts buying a coin pack with a provider. */
 async function checkout(client, userId, { productId, provider: providerName }) {
   const provider = PROVIDERS[providerName];
   if (!provider) throw badRequest('Unknown payment provider');
@@ -85,32 +86,32 @@ async function checkout(client, userId, { productId, provider: providerName }) {
     return { payment: null, next: await provider.start(null, {}) };
   }
   const { rows: [payment] } = await client.query(
-    `INSERT INTO payments (user_id, provider, product_id, credits, amount_cents, currency)
-     VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, status, product_id, credits, amount_cents, currency`,
-    [userId, provider.name, p.id, p.credits, p.amountCents, p.currency],
+    `INSERT INTO payments (user_id, provider, product_id, coins, amount_cents, currency)
+     VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, status, product_id, coins, amount_cents, currency`,
+    [userId, provider.name, p.id, p.coins, p.amountCents, p.currency],
   );
   const next = await provider.start(payment, { userId });
   if (next.kind === 'done') {
-    const credits = await grant(client, payment.id, `test-${payment.id}`);
-    return { payment: { ...payment, status: 'paid' }, next, credits };
+    const coins = await grant(client, payment.id, `test-${payment.id}`);
+    return { payment: { ...payment, status: 'paid' }, next, coins };
   }
   return { payment, next };
 }
 
-/** An app's store purchase: check the receipt, record it once, add the credits. */
+/** An app's store purchase: check the receipt, record it once, add the coins. */
 async function redeemReceipt(client, userId, { provider: providerName, receipt }) {
   const provider = PROVIDERS[providerName];
   if (!provider?.verify) throw badRequest('Unknown store');
   const { ref, productId } = await provider.verify(receipt);
   const p = pack(productId);
   const { rows: [payment] } = await client.query(
-    `INSERT INTO payments (user_id, provider, provider_ref, product_id, credits, amount_cents, currency)
+    `INSERT INTO payments (user_id, provider, provider_ref, product_id, coins, amount_cents, currency)
      VALUES ($1, $2, $3, $4, $5, $6, $7)
      ON CONFLICT (provider, provider_ref) DO NOTHING RETURNING id`,
-    [userId, provider.name, ref, p.id, p.credits, p.amountCents, p.currency],
+    [userId, provider.name, ref, p.id, p.coins, p.amountCents, p.currency],
   );
-  if (!payment) return { credits: null, duplicate: true };
-  return { credits: await grant(client, payment.id) };
+  if (!payment) return { coins: null, duplicate: true };
+  return { coins: await grant(client, payment.id) };
 }
 
 module.exports = { PROVIDERS, PACKS, available, checkout, grant, redeemReceipt };

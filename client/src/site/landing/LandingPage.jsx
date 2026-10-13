@@ -121,7 +121,7 @@ export default function LandingPage() {
       <section aria-labelledby="daily-h" className="ms-page">
         <h2 id="daily-h" className="ms-landing__h2">Come back every day</h2>
         <div className="ms-grid">
-          {[['▲', 'Daily streaks', 'Race five times a day to keep your streak alive and earn bonus coins.'],
+          {[['▲', 'Daily goal', 'Race five times a day for bonus coins, and keep your streak going day after day.'],
             ['★', 'Seasonal scoreboards', "Climb the season's scoreboard by the coins you earn, not the coins you buy."],
             ['●', 'New tracks', "Fresh tracks and limited marbles arrive regularly, so there's always something new."]].map(([icon, h, p]) => (
             <div key={h} className="ms-card" style={{ display: 'grid', gap: 8 }}>

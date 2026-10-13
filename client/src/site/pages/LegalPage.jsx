@@ -21,19 +21,19 @@ export default function LegalPage() {
       <p>You can race as a guest. To keep your progress you create an account. Keep your login details to yourself; you're responsible for what happens on your account. Players under [13] need a parent or guardian's approval.</p>
       <h2 className="ms-legal__h2">3. Fair play</h2>
       <p>No cheating, bots, automated play, exploiting bugs, or offensive player names. We may reset progress or close accounts that break these rules.</p>
-      <h2 className="ms-legal__h2">4. Coins, credits and marbles</h2>
-      <p>Coins are earned by racing, or swapped for credits in a coin pack; they can't be cashed out or turned back into credits. Credits are bought with money and used only in the shop. Marbles and other items are a licence to use them in the game; they have no cash value and aren't your property outside the game. [Trading between players, when introduced, will have its own rules.]</p>
+      <h2 className="ms-legal__h2">4. Coins and marbles</h2>
+      <p>Coins are the game's only currency. You earn them by racing or buy them in coin packs, and use them only in the shop; they can't be cashed out, exchanged for money or transferred. Scoreboards count only coins earned by racing. Marbles and other items are a licence to use them in the game; they have no cash value and aren't your property outside the game. [Trading between players, when introduced, will have its own rules.]</p>
       <h2 className="ms-legal__h2">5. Changes and availability</h2>
       <p>We keep improving the game, so tracks, items and features can change. We'll tell you about important changes to these terms before they apply.</p>
       <h1 id="sale" className="ms-h2 ms-legal__h1">Terms of sale</h1>
       <h2 className="ms-legal__h2">1. What you buy</h2>
-      <p>Credits cost $1 each (shown in your local currency, VAT included). Credits are used to buy cosmetic marbles and limited editions in the shop. [Credits do / do not expire.]</p>
+      <p>Coin packs: 5,000 coins for $5, 10,500 for $10, 27,500 for $25 and 57,500 for $50 (shown in your local currency, VAT included). Coins are used to buy cosmetic marbles, bags and limited editions in the shop. [Coins do / do not expire.]</p>
       <h2 className="ms-legal__h2">2. Payment</h2>
       <p>Payments on the website are handled by Stripe. In the iPhone and Android apps, purchases go through Apple or Google and follow their payment and refund rules.</p>
       <h2 className="ms-legal__h2">3. Right of withdrawal</h2>
       <p>Under EU consumer law you normally have 14 days to withdraw from an online purchase. For digital content delivered right away, that right ends once delivery starts, but only if you agreed to immediate delivery and confirmed that you lose the right. We ask for both at checkout.</p>
       <h2 className="ms-legal__h2">4. Refunds</h2>
-      <p>Credits and items aren't refundable once delivered, except where the law requires it: for example a faulty delivery, a purchase made by a minor without a guardian's consent, or a successful chargeback. Contact us at [support email] and we'll help.</p>
+      <p>Coins and items aren't refundable once delivered, except where the law requires it: for example a faulty delivery, a purchase made by a minor without a guardian's consent, or a successful chargeback. Contact us at [support email] and we'll help.</p>
       <h2 className="ms-legal__h2">5. Young players</h2>
       <p>Under 18? Ask a parent or guardian before buying. Parents can contact us about purchases made without their consent.</p>
       <h2 className="ms-legal__h2">6. Complaints</h2>

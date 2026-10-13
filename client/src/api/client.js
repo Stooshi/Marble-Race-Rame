@@ -84,14 +84,13 @@ export const api = {
   setShooter: (choice) => request('/collection/shooter', { method: 'PUT', body: choice }),
   certificate: (code) => request(`/collection/certificate/${code}`),
 
-  // Credits: packs, a web checkout, an app store receipt (site/payments picks the provider).
   scoreboard: (board = 'season') => request(`/scoreboard?board=${board}`),
-  // The coin economy: its numbers, your day (races, daily goal, streak), one race's coins, coin packs.
+  // The coin economy: its numbers, your day (races, daily goal, streak), one race's coins, your coin history.
   economy: () => request('/economy'),
   economyMe: () => request('/economy/me'),
   raceCoins: (raceId) => request(`/economy/races/${raceId}`),
   coinLedger: () => request('/economy/ledger'),
-  buyCoinPack: (id) => request(`/economy/coin-packs/${id}/buy`, { method: 'POST' }),
+  // Coin packs for real money: a web checkout, an app store receipt (site/payments picks the provider).
   paymentOptions: () => request('/payments'),
   checkout: (body) => request('/payments/checkout', { method: 'POST', body }),
   redeemReceipt: (body) => request('/payments/receipt', { method: 'POST', body }),

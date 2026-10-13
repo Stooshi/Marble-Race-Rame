@@ -33,7 +33,8 @@ export default function HomeHub() {
   const goal = data?.day?.goal?.races ?? economy.dailyGoal.races;
   const done = Math.min(data?.day?.races ?? 0, goal);
   const streak = data?.day?.streak?.days ?? 0;
-  const bonus = data?.day?.goal?.bonus ?? { goal: economy.dailyGoal.coins, streak: economy.streak.perDay };
+  const bonus = data?.day?.goal?.coins ?? economy.dailyGoal.coins;
+  const fullLeft = data?.day?.fullRacesLeft ?? economy.dailyLimit.fullRaces;
 
   return (
     <div className="ms-page">
@@ -59,8 +60,13 @@ export default function HomeHub() {
             <div className="ms-progress"><div><div style={{ width: `${(done / goal) * 100}%` }} /></div></div>
             <span className="ms-note">
               {data?.day?.goal?.met
-                ? `Done for today: +${bonus.goal + bonus.streak} coins, streak ${streak} day${streak === 1 ? '' : 's'}.`
-                : `${goal - done} more race${goal - done === 1 ? '' : 's'} for +${bonus.goal + bonus.streak} coins${streak ? ` and day ${Math.min(streak + 1, 99)} of your streak` : ''}.`}
+                ? `Done for today: +${bonus} coins. Streak: ${streak} day${streak === 1 ? '' : 's'} in a row.`
+                : `${goal - done} more race${goal - done === 1 ? '' : 's'} for +${bonus} coins${streak ? ` and day ${Math.min(streak + 1, 999)} of your streak` : ''}.`}
+            </span>
+            <span className="ms-note">
+              {fullLeft > 0
+                ? `${fullLeft} of today's ${economy.dailyLimit.fullRaces} full-pay races left: ${economy.race.takingPart} coins each, plus a bonus for the top 10.`
+                : `Today's ${economy.dailyLimit.fullRaces} full-pay races are done: races pay ${economy.dailyLimit.coinsAfter} coins each until midnight UTC.`}
             </span>
           </div>
           <Link to="/scores" className="ms-card" style={{ display: 'grid', gap: 6, color: 'var(--ms-text)' }}>

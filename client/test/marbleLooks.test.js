@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { Vector3 } from 'three';
-import { DESIGNS, FEATURED_DESIGNS, ITEMS, ITEM, catalog, dressEntries, findById, lookName, nameLooks, normaliseId, originalSlug, priceLabel } from '../src/shared/marbles';
+import { bagPrice, DESIGNS, FEATURED_DESIGNS, ITEMS, ITEM, catalog, dressEntries, findById, lookName, nameLooks, normaliseId, originalSlug, priceLabel } from '../src/shared/marbles';
 import { badgeOf } from '../src/shared/marbles/badge';
 import { BUILT_MATERIALS, createMarbleLook, lookSpec } from '../src/shared/marbles/materials';
 
@@ -93,10 +93,17 @@ describe('collection marble looks', () => {
     }
   });
 
-  it('prices: coins by rarity; a credits price not set yet stays a visible [X] placeholder', () => {
-    const coins = ITEMS.find((i) => i.price.coins !== undefined);
+  it('prices: coins by rarity (coins only); a price not set yet stays a visible [X] placeholder', () => {
+    const coins = ITEMS.find((i) => i.price.coins != null);
     expect(priceLabel(coins.price)).toBe(`● ${coins.price.coins.toLocaleString('en-US')} coins`);
-    expect(priceLabel({ credits: null, creditsLabel: '[X]' })).toBe('◆ [X] credits');
+    expect(priceLabel({ coins: 25000 })).toBe('● 25,000 coins');
+    expect(priceLabel({ coins: null, coinsLabel: '[X]' })).toBe('● [X] coins');
+    expect(ITEMS.every((i) => i.price.credits === undefined)).toBe(true);
+  });
+
+  it('bag prices match the server: 30% / 15% off, to the nearest 100', () => {
+    expect(bagPrice('full', 59500)).toBe(41700);
+    expect(bagPrice('starter', 3000)).toBe(2600);
   });
 
   it('the shop, landing page and collection hero pick their marbles from the catalogue (one per rarity)', () => {

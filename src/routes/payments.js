@@ -9,12 +9,12 @@ const payments = require('../payments');
 const router = express.Router();
 const PROVIDER = { type: 'enum', values: ['stripe', 'apple', 'google', 'test'], required: true };
 
-/** GET /api/payments — the credit packs and which payment providers are live. */
+/** GET /api/payments — the coin packs and which payment providers are live. */
 router.get('/', (req, res) => {
   res.json({ packs: [...payments.PACKS.values()], providers: payments.available() });
 });
 
-/** POST /api/payments/checkout { productId, provider } — start buying a credit pack. */
+/** POST /api/payments/checkout { productId, provider } — start buying a coin pack. */
 router.post('/checkout', requireAuth, async (req, res) => {
   const body = validate(req.body, { productId: { type: 'string', required: true, max: 32 }, provider: PROVIDER });
   res.json(await db.withTransaction((client) => payments.checkout(client, req.user.id, body)));

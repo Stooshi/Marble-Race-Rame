@@ -68,7 +68,7 @@ CREATE TABLE IF NOT EXISTS users (
     display_name    varchar(40),
     avatar_url      text,
     role            user_role   NOT NULL DEFAULT 'player',
-    coins           integer     NOT NULL DEFAULT 500 CHECK (coins >= 0),
+    coins           integer     NOT NULL DEFAULT 650 CHECK (coins >= 0),
     last_login_at   timestamptz,
     created_at      timestamptz NOT NULL DEFAULT now(),
     updated_at      timestamptz NOT NULL DEFAULT now()
@@ -447,10 +447,7 @@ CREATE INDEX IF NOT EXISTS idx_billboards_track ON billboards (track_slug);
 -- (e.g. 'candy-pink'). Looks only: the race engine never reads these tables.
 --
 -- marbles.on_sale: whether a plain marble can still be bought (all can, for now).
--- users.credits: shop credits bought with real money (1 credit = $1); only
---        ever spent in the shop, never cashed out.
 ALTER TABLE marbles ADD COLUMN IF NOT EXISTS on_sale boolean NOT NULL DEFAULT true;
-ALTER TABLE users ADD COLUMN IF NOT EXISTS credits integer NOT NULL DEFAULT 0 CHECK (credits >= 0);
 -- users.is_guest: playing without an account yet (made by "Play free"); saving the
 --        marble turns it into a normal account, keeping coins and marbles.
 ALTER TABLE users ADD COLUMN IF NOT EXISTS is_guest boolean NOT NULL DEFAULT false;
@@ -479,7 +476,7 @@ CREATE TABLE IF NOT EXISTS user_collection (
     gift_no         integer     CHECK (gift_no > 0),
     edition_no      integer     CHECK (edition_no > 0),
     marble_code     varchar(32) NOT NULL UNIQUE,
-    currency        varchar(8)  CHECK (currency IN ('coins', 'credits')),
+    currency        varchar(8)  CHECK (currency IN ('coins', 'credits')), -- always 'coins' now ('credits' only on copies from before coins-only)
     price_paid      integer     CHECK (price_paid >= 0),
     first_owner_id  uuid        REFERENCES users(id) ON DELETE SET NULL,
     acquired_at     timestamptz NOT NULL DEFAULT now(),
@@ -509,9 +506,10 @@ CREATE TABLE IF NOT EXISTS race_entry_looks (
 );
 CREATE INDEX IF NOT EXISTS idx_race_entry_looks_copy ON race_entry_looks (collection_id);
 
--- Payments for credits, whoever took the money: Stripe on the web, Apple or
+-- Payments for coin packs, whoever took the money: Stripe on the web, Apple or
 -- Google in-app purchases in the phone apps ('test' only outside production).
--- product_id is the credit pack (client/src/shared/payments/packs.json).
+-- product_id is the coin pack (client/src/shared/payments/packs.json), coins
+-- what it added.
 -- provider_ref is the provider's own id (Stripe session, App Store
 -- transaction, Play order), unique so a payment is never credited twice.
 CREATE TABLE IF NOT EXISTS payments (
@@ -520,7 +518,7 @@ CREATE TABLE IF NOT EXISTS payments (
     provider        varchar(16) NOT NULL CHECK (provider IN ('stripe', 'apple', 'google', 'test')),
     provider_ref    varchar(255),
     product_id      varchar(32) NOT NULL,
-    credits         integer     NOT NULL CHECK (credits > 0),
+    coins           integer     NOT NULL CHECK (coins > 0),
     amount_cents    integer     NOT NULL CHECK (amount_cents >= 0),
     currency        char(3)     NOT NULL,
     status          varchar(16) NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'paid', 'failed', 'refunded')),
@@ -529,6 +527,9 @@ CREATE TABLE IF NOT EXISTS payments (
     CONSTRAINT payments_provider_ref UNIQUE (provider, provider_ref)
 );
 CREATE INDEX IF NOT EXISTS idx_payments_user ON payments (user_id, created_at DESC);
+-- (Older databases made this table with credits instead of coins: data update
+-- 2027-01-03-coins-only fills coins and drops credits.)
+ALTER TABLE payments ADD COLUMN IF NOT EXISTS coins integer CHECK (coins > 0);
 
 -- Showcase marbles: the collection look a computer player wears in a beginner
 -- race (src/marbles/showcase.js). Drawn when the race is decided, apart from
@@ -552,16 +553,20 @@ CREATE TABLE IF NOT EXISTS data_updates (
 -- -----------------------------------------------------------------------------
 -- The coin economy (client/src/shared/economy.json, src/economy/index.js)
 -- -----------------------------------------------------------------------------
--- coin_ledger: every change to a player's coins or credits, one line each
---   (races, personal bests, the daily goal, streaks, purchases, bags, coin
---   packs, entry fees, refunds, admin adjustments), with the balance after it.
---   Scoreboards count the earned kinds; the back office shows it as the wallet.
+-- One currency: coins, earned by racing or bought in coin packs.
+-- coin_ledger: every change to a player's coins, one line each (taking part,
+--   finishing bonuses, the daily goal, coin packs, purchases, bags, entry
+--   fees, refunds, admin adjustments), with the balance after it. Scoreboards
+--   count the earned kinds only; the back office shows it as the wallet.
+-- users.coins_earned / coins_bought: running totals of coins earned racing and
+--   coins bought (coin packs, and credits converted when coins became the only
+--   currency); spending doesn't lower them.
 -- user_days: races finished per player per day (UTC), and when the daily goal
---   was met. users.streak_days / streak_last_day: the daily-goal streak.
+--   was met. users.streak_days / streak_last_day: the daily-goal streak (shown;
+--   it pays no coins).
 CREATE TABLE IF NOT EXISTS coin_ledger (
     id              bigserial   PRIMARY KEY,
     user_id         uuid        NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    currency        varchar(8)  NOT NULL CHECK (currency IN ('coins', 'credits')),
     amount          integer     NOT NULL CHECK (amount <> 0),
     kind            varchar(24) NOT NULL,
     race_id         uuid,
@@ -585,6 +590,9 @@ CREATE TABLE IF NOT EXISTS user_days (
 );
 ALTER TABLE users ADD COLUMN IF NOT EXISTS streak_days smallint NOT NULL DEFAULT 0 CHECK (streak_days >= 0);
 ALTER TABLE users ADD COLUMN IF NOT EXISTS streak_last_day date;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS coins_earned integer NOT NULL DEFAULT 0 CHECK (coins_earned >= 0);
+ALTER TABLE users ADD COLUMN IF NOT EXISTS coins_bought integer NOT NULL DEFAULT 0 CHECK (coins_bought >= 0);
+ALTER TABLE users ALTER COLUMN coins SET DEFAULT 650; -- the starting bag (economy.json startingCoins)
 
 -- -----------------------------------------------------------------------------
 -- Views

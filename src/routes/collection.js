@@ -54,7 +54,7 @@ router.get('/id/:id', (req, res) => {
   res.json({ item: collection.findById(decodeURIComponent(req.params.id)) });
 });
 
-/** POST /api/collection/:slug/buy — buy one copy with coins (or credits for a limited edition). */
+/** POST /api/collection/:slug/buy — buy one copy with coins. */
 router.post('/:slug/buy', requireAuth, async (req, res) => {
   const { slug } = validate(req.params, { slug: { ...SLUG, required: true } });
   const result = await db.withTransaction((client) => collection.buy(client, req.user.id, slug));
