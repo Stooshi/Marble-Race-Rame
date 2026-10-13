@@ -46,4 +46,6 @@ module.exports = [
   require('./tilt'),
   require('./replay'),
   require('./grand-champion'),
+  require('./joystick-spins'),
+  require('./kill-screen'),
 ];

@@ -14,6 +14,7 @@ import { themeFor } from '../src/three/themes';
 import { flaggedStretches, wallExposure } from '../src/three/scenery/groundCheck';
 import { buildCoaster, coasterFlight, liftHillCut, liftHillOf, liftHillRaise } from '../src/three/scenery/coaster';
 import { buildPinball } from '../src/three/scenery/pinball';
+import { buildArcade, initialsOf } from '../src/three/scenery/arcade';
 
 const require = createRequire(import.meta.url);
 const { PHYSICS_TRACKS } = require('../../src/game/physicsTracks');
@@ -187,6 +188,32 @@ describe('kit scenery', () => {
       expect(at().some((x, k) => Math.abs(x - a[k]) > 0.2)).toBe(true);
       built.update(0);
       expect(at().every((x, k) => Math.abs(x - a[k]) < 1e-4)).toBe(true);
+      built.dispose();
+    }
+  });
+  it('an arcade world: the cabinet behind the gate, its screen counting down, the winner\'s initials on the high-score table', () => {
+    const track = PHYSICS_TRACKS.find((t) => t.slug === 'joystick-spins');
+    const centerline = buildCenterline(track);
+    const channel = channelOf(track, centerline);
+    expect(initialsOf('Bluebell')).toBe('BLU');
+    expect(initialsOf('Q')).toBe('Q..');
+    for (const lite of [false, true]) {
+      const built = buildArcade(centerline, channel, track.physics.kit, { lite, groundAt: () => 0, pen: track.physics.runout, countdownMs: 3000 });
+      const names = built.group.children.map((c) => c.name);
+      for (const n of ['arcade: cabinet', 'arcade: pictures', 'arcade: pixel bursts']) expect(names).toContain(n);
+      expect(built.group.children.length).toBe(3); // (three draws in all)
+      // The cabinet stands behind the gate, facing down the track.
+      const s0 = centerline.samples[0];
+      expect(built.cabinet.foot.clone().sub(s0.pos).setY(0).dot(new Vector3(s0.tangent.x, 0, s0.tangent.z).normalize())).toBeLessThan(-30);
+      // The pixel bursts: only once a marble is home, and gone again when a replay rewinds past that.
+      const bursts = built.group.children.find((c) => c.name === 'arcade: pixel bursts');
+      built.update(-2000, { frame: { p: [0.2, 0.3] }, names: ['Ruby', 'Comet'] });
+      expect(bursts.visible).toBe(false);
+      built.update(50000, { frame: { p: [1, 0.99] }, names: ['Ruby', 'Comet'] });
+      built.update(50300, { frame: { p: [1, 1] }, names: ['Ruby', 'Comet'] });
+      expect(bursts.visible).toBe(true);
+      built.update(10000, { frame: { p: [0.4, 0.5] }, names: ['Ruby', 'Comet'] });
+      expect(bursts.visible).toBe(false);
       built.dispose();
     }
   });

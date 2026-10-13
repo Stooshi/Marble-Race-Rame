@@ -271,7 +271,7 @@ export function buildArcade(centerline, channel, kit, { lite = false, groundAt, 
   boardAt.y = Math.max(groundAt(boardAt.x, boardAt.z), end.pos.y - len * 0.08) + BOARD.lift + BOARD.height / 2;
   const boardQ = new Quaternion().setFromAxisAngle(UP, Math.atan2(-along.x, -along.z));
   const boardPlace = new Matrix4().compose(boardAt, boardQ, new Vector3(1, 1, 1));
-  const bq = quad(BOARD.width, BOARD.height, 0, 0, 0.6, R.board);
+  const bq = quad(BOARD.width, BOARD.height, 0, 0, 1.0, R.board); // (in front of its frame's face, at 0.8)
   bq.applyMatrix4(boardPlace);
   quads.push(bq);
   solid.push(piece(new BoxGeometry(BOARD.width + 3, BOARD.height + 3, 1.6), '#08080c', boardPlace.clone()));

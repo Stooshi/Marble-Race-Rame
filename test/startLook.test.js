@@ -26,14 +26,13 @@ test('every track but the test tracks has its start look recorded (the report re
   assert.deepEqual(missing.map((t) => t.slug), []);
 });
 
-test('on screen: the coasters\' varied starts look unlike each other; the tracks before them all alike', () => {
+test('on screen: every track\'s start looks unlike the others of its family (the originals too, since their new starts)', () => {
   const looks = readLooks();
   const check = (slug) => startLookCheck(physicsTrack(slug), looks[slug].v, PHYSICS_TRACKS, looks);
-  for (const slug of PHYSICS_TRACKS.filter((t) => profile(t)?.family === 'coaster').map((t) => t.slug)) assert.equal(check(slug).pass, true, slug);
-  for (const slug of ['dubai-marble-grand-prix', 'paris-eiffel-tower-run', 'bobsleigh-run']) {
-    const line = check(slug);
-    assert.equal(line.pass, false, slug);
-    assert.ok(line.scores[0][1] >= LOOK_FAIL);
+  for (const t of PHYSICS_TRACKS.filter((x) => profile(x)?.family !== 'test' && !/^variety-|kit-proving/.test(x.slug))) {
+    const line = check(t.slug);
+    assert.notEqual(line.pass, false, t.slug);
+    if (line.scores?.length) assert.ok(line.scores[0][1] < LOOK_FAIL, t.slug);
   }
   assert.equal(startLookCheck(physicsTrack('variety-layout-classic'), looks.sognefjord.v, PHYSICS_TRACKS, looks).pass, null);
 });

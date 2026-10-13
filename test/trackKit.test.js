@@ -652,6 +652,8 @@ const HIDDEN_KIT_TRACKS = [
   ['tilt', '2026-11-30-add-tilt.sql', 'Tilt, Pinball Series table 5: a 1970s diner and pinball parlour.'],
   ['replay', '2026-12-01-add-replay.sql', 'Replay, Pinball Series table 6: a time-warp clocktower table.'],
   ['grand-champion', '2026-12-02-add-grand-champion.sql', 'Grand Champion, Pinball Series table 7: a stadium rock-concert table.'],
+  ['joystick-spins', '2026-12-03-add-joystick-spins.sql', 'Joystick Spins, Arcade Series track 2 and the arcade kit\'s proof track: a 1980s arcade hall at night.'],
+  ['kill-screen', '2026-12-04-add-kill-screen.sql', 'Kill Screen, Arcade Series track 1: a neon maze at level 256.'],
 ];
 for (const [slug, file, note] of HIDDEN_KIT_TRACKS) {
   test(`${slug} is added by its data update, switched off, exactly as its track file builds it`, () => {
