@@ -296,7 +296,7 @@ a.ms-chip:hover { text-decoration: none; border-color: var(--ms-muted); }
 }
 .ms-hero > * { flex: 1 1 300px; min-width: 0; }
 .ms-hero__balls { display: flex; justify-content: center; align-items: center; gap: 18px; flex-wrap: wrap; }
-.ms-badge-label { align-self: flex-start; background: var(--ms-yellow); color: var(--ms-ink); font-size: 0.8rem; font-weight: 700; padding: 4px 10px; border-radius: 6px; letter-spacing: 0.04em; }
+.ms-badge-label { align-self: flex-start; justify-self: start; background: var(--ms-yellow); color: var(--ms-ink); font-size: 0.8rem; font-weight: 700; padding: 4px 10px; border-radius: 6px; letter-spacing: 0.04em; }
 .ms-pills { display: flex; flex-wrap: wrap; gap: 8px; }
 .ms-pill { background: var(--ms-card); border: 1px solid var(--ms-border); border-radius: 999px; padding: 5px 12px; font-weight: 700; font-size: 0.9rem; }
 .ms-cards { display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 250px), 1fr)); }
@@ -355,3 +355,35 @@ a.ms-mcard:hover { text-decoration: none; border-color: var(--ms-muted); }
 .ms-turntable { width: 100%; aspect-ratio: 4 / 3; max-width: 100%; border-radius: 20px; display: block; background: #0B1020; touch-action: pan-y; }
 .ms-two { display: flex; flex-wrap: wrap; gap: 20px; }
 .ms-two > * { flex: 1 1 340px; min-width: 0; }
+
+/* ── Legal ──────────────────────────────────────────────────────────────── */
+.ms-legal { gap: 14px; max-width: 820px; }
+.ms-legal p, .ms-legal li { color: var(--ms-soft); max-width: 70ch; margin: 0; }
+.ms-legal ul { margin: 0; padding-left: 1.2em; display: grid; gap: 6px; }
+.ms-legal__h1 { font-family: var(--ms-cond); font-weight: 800; margin-top: 22px; scroll-margin-top: 140px; }
+.ms-legal__h2 { font-size: 1.1rem; margin-top: 8px; color: var(--ms-text); }
+
+/* ── Forms ──────────────────────────────────────────────────────────────── */
+.ms-form { display: grid; gap: 14px; }
+.ms-form label:not(.ms-check) { display: grid; gap: 6px; font-weight: 600; }
+.ms-form input:not([type="checkbox"]) {
+  min-height: 48px; padding: 10px 14px; border-radius: 12px; border: 1px solid var(--ms-border);
+  background: var(--ms-bg); color: var(--ms-text); font: inherit; font-size: 16px; /* 16px: no zoom-on-focus on iPhone */
+}
+.ms-form input:focus-visible { outline: 3px solid var(--ms-yellow); outline-offset: 1px; }
+.ms-check { display: flex; gap: 10px; align-items: flex-start; cursor: pointer; color: var(--ms-soft); }
+.ms-check input { width: 22px; height: 22px; flex: none; margin-top: 1px; accent-color: var(--ms-yellow); }
+.ms-or { display: flex; align-items: center; gap: 12px; color: var(--ms-muted); font-size: 0.9rem; }
+.ms-or span { flex: 1; height: 1px; background: var(--ms-border); }
+.ms-linkbtn { background: none; border: 0; color: var(--ms-yellow); font: inherit; font-weight: 600; cursor: pointer; min-height: 40px; }
+
+/* ── Tables, tiles, home ───────────────────────────────────────────────── */
+.ms-table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; min-width: 520px; }
+.ms-table th, .ms-table td { text-align: left; padding: 12px 16px; border-bottom: 1px solid var(--ms-border); white-space: nowrap; }
+.ms-table th { color: var(--ms-muted); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.06em; }
+.ms-table .num { text-align: right; }
+.ms-table tr.is-me td { background: rgba(255,210,31,0.12); }
+.ms-tile { display: grid; gap: 2px; flex: 1 1 0; color: var(--ms-text); padding: 16px; }
+.ms-tile span { color: var(--ms-muted); font-size: 0.9rem; }
+a.ms-tile:hover, a.ms-card:hover { text-decoration: none; border-color: var(--ms-muted); }
+.ms-home-hero { min-height: 340px; background: radial-gradient(circle at 70% 10%, #2A4A7A 0%, #13284A 45%, var(--ms-bg) 100%); align-items: flex-end; }

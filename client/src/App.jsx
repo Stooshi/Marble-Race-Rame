@@ -5,8 +5,7 @@ import SiteHeader from './site/SiteHeader';
 import SiteFooter from './site/SiteFooter';
 import { useAuth } from './context/AuthContext';
 import {
-  FriendsPage, LandingPage, LegalPage, ScoresPage, ShooterPage,
-  SignupPage, StartLinePage, TrackPage,
+  FriendsPage, LandingPage, ShooterPage, StartLinePage, TrackPage,
 } from './site/pages/Stub';
 import CollectionPage from './site/pages/CollectionPage';
 import DesignPage from './site/pages/DesignPage';
@@ -14,6 +13,10 @@ import ShopPage from './site/pages/ShopPage';
 import CertificatePage from './site/pages/CertificatePage';
 import BagPage from './site/pages/BagPage';
 import CheckoutPage from './site/pages/CheckoutPage';
+import ScoresPage from './site/pages/ScoresPage';
+import SignupPage from './site/pages/SignupPage';
+import LegalPage from './site/pages/LegalPage';
+import HomeHub from './site/pages/HomeHub';
 import Home from './pages/Home';
 import Dashboard from './pages/Dashboard';
 import Race from './pages/Race';
@@ -37,8 +40,9 @@ export default function App() {
       <main>
         <ErrorBoundary resetKey={pathname}>
         <Routes>
-          <Route path="/" element={isAuthenticated ? <Home /> : <LandingPage />} />
-          <Route path="/home" element={<Home />} />
+          <Route path="/" element={isAuthenticated ? <HomeHub /> : <LandingPage />} />
+          <Route path="/home" element={isAuthenticated ? <HomeHub /> : <Home />} />
+          <Route path="/lobby" element={<Home />} />
           <Route path="/play/friends" element={<FriendsPage />} />
           <Route path="/play/track" element={<TrackPage />} />
           <Route path="/play/shooter" element={<ShooterPage />} />

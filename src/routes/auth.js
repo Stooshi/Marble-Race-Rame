@@ -30,6 +30,7 @@ const registerSchema = {
   },
   email: { type: 'string', required: true, max: 254, pattern: /^[^\s@]+@[^\s@]+\.[^\s@]+$/, patternMessage: 'must be a valid email' },
   password: { type: 'string', required: true, min: 8, max: 72, trim: false },
+  marketing_opt_in: { type: 'boolean' },
   display_name: { type: 'string', max: 40 },
 };
 
@@ -39,10 +40,10 @@ router.post('/register', authLimiter, async (req, res) => {
   const hash = await bcrypt.hash(body.password, config.auth.bcryptRounds);
   try {
     const { rows } = await db.query(
-      `INSERT INTO users (username, email, password_hash, display_name)
-       VALUES ($1, $2, $3, $4)
+      `INSERT INTO users (username, email, password_hash, display_name, marketing_opt_in)
+       VALUES ($1, $2, $3, $4, $5)
        RETURNING ${PUBLIC_USER_COLUMNS}`,
-      [body.username, body.email.toLowerCase(), hash, body.display_name ?? null],
+      [body.username, body.email.toLowerCase(), hash, body.display_name ?? null, body.marketing_opt_in ?? false],
     );
     const user = rows[0];
     // Starting marble look. If this fails the look is created on first read instead.

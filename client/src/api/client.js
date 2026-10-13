@@ -79,6 +79,7 @@ export const api = {
   certificate: (code) => request(`/collection/certificate/${code}`),
 
   // Credits: packs, a web checkout, an app store receipt (site/payments picks the provider).
+  scoreboard: (board = 'season') => request(`/scoreboard?board=${board}`),
   paymentOptions: () => request('/payments'),
   checkout: (body) => request('/payments/checkout', { method: 'POST', body }),
   redeemReceipt: (body) => request('/payments/receipt', { method: 'POST', body }),

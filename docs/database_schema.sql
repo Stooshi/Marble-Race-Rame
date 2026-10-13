@@ -455,6 +455,8 @@ CREATE INDEX IF NOT EXISTS idx_billboards_track ON billboards (track_slug);
 ALTER TABLE marbles ADD COLUMN IF NOT EXISTS on_sale boolean NOT NULL DEFAULT true;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS early_player boolean NOT NULL DEFAULT false;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS credits integer NOT NULL DEFAULT 0 CHECK (credits >= 0);
+-- users.marketing_opt_in: agreed at sign-up to emails about new tracks and limited marbles.
+ALTER TABLE users ADD COLUMN IF NOT EXISTS marketing_opt_in boolean NOT NULL DEFAULT false;
 
 -- How many copies of each item have been bought and given away so far. The
 -- row is locked while a copy is handed out, so numbers are never shared.
