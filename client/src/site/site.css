@@ -295,6 +295,8 @@ a.ms-chip:hover { text-decoration: none; border-color: var(--ms-muted); }
   display: flex; flex-wrap: wrap; gap: 24px; align-items: center;
 }
 .ms-hero > * { flex: 1 1 300px; min-width: 0; }
+.ms-hero--col { flex-direction: column; align-items: stretch; justify-content: space-between; }
+.ms-hero--col > * { flex: none; }
 .ms-hero__balls { display: flex; justify-content: center; align-items: center; gap: 18px; flex-wrap: wrap; }
 .ms-badge-label { align-self: flex-start; justify-self: start; background: var(--ms-yellow); color: var(--ms-ink); font-size: 0.8rem; font-weight: 700; padding: 4px 10px; border-radius: 6px; letter-spacing: 0.04em; }
 .ms-pills { display: flex; flex-wrap: wrap; gap: 8px; }
@@ -387,3 +389,20 @@ a.ms-mcard:hover { text-decoration: none; border-color: var(--ms-muted); }
 .ms-tile span { color: var(--ms-muted); font-size: 0.9rem; }
 a.ms-tile:hover, a.ms-card:hover { text-decoration: none; border-color: var(--ms-muted); }
 .ms-home-hero { min-height: 340px; background: radial-gradient(circle at 70% 10%, #2A4A7A 0%, #13284A 45%, var(--ms-bg) 100%); align-items: flex-end; }
+
+/* ── Race flow ─────────────────────────────────────────────────────────── */
+.ms-steps { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+.ms-steps li { padding: 6px 12px; border-radius: 999px; background: var(--ms-card); border: 1px solid var(--ms-border); color: var(--ms-muted); font-weight: 700; font-size: 0.9rem; }
+.ms-steps li[aria-current="step"] { background: var(--ms-yellow); color: var(--ms-ink); border-color: var(--ms-yellow); }
+.ms-steps li a { color: var(--ms-soft); }
+.ms-flowbar { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; border-top: 1px solid var(--ms-border); padding-top: 18px; }
+.ms-field-like { flex: 1; min-width: 0; min-height: 44px; display: flex; align-items: center; padding: 0 14px; border-radius: 12px; background: var(--ms-bg); border: 1px solid var(--ms-border); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
+.ms-filters { display: grid; gap: 8px; }
+.ms-filters .ms-check span:last-child { color: var(--ms-muted); }
+.ms-trackcard { display: flex; flex-direction: column; text-align: left; padding: 0; border-radius: 18px; overflow: hidden; background: var(--ms-card); border: 1px solid var(--ms-border); color: var(--ms-text); cursor: pointer; font: inherit; }
+.ms-trackcard:hover, .ms-trackcard:focus-visible { border-color: var(--ms-yellow); }
+.ms-trackcard__pic { aspect-ratio: 16 / 9; padding: 10px; display: flex; align-items: flex-start; }
+.ms-trackcard__body { display: grid; gap: 2px; padding: 12px 14px 14px; }
+.ms-trackcard__body span { font-size: 0.88rem; color: var(--ms-muted); }
+.ms-gate { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: center; padding: 18px 8px; background: rgba(0,0,0,0.25); border-radius: 18px; }
+.ms-gate__you { display: inline-flex; flex-direction: column; align-items: center; gap: 2px; color: var(--ms-yellow); font-weight: 800; }

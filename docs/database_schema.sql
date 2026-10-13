@@ -455,6 +455,9 @@ CREATE INDEX IF NOT EXISTS idx_billboards_track ON billboards (track_slug);
 ALTER TABLE marbles ADD COLUMN IF NOT EXISTS on_sale boolean NOT NULL DEFAULT true;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS early_player boolean NOT NULL DEFAULT false;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS credits integer NOT NULL DEFAULT 0 CHECK (credits >= 0);
+-- users.is_guest: playing without an account yet (made by "Play free"); saving the
+--        marble turns it into a normal account, keeping coins and marbles.
+ALTER TABLE users ADD COLUMN IF NOT EXISTS is_guest boolean NOT NULL DEFAULT false;
 -- users.marketing_opt_in: agreed at sign-up to emails about new tracks and limited marbles.
 ALTER TABLE users ADD COLUMN IF NOT EXISTS marketing_opt_in boolean NOT NULL DEFAULT false;
 

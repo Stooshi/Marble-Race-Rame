@@ -73,3 +73,23 @@ describe('collection marble looks', () => {
     expect(own[0].marble.look).toBe('bee-classic');
   });
 });
+
+describe('house marbles and look names', () => {
+  it('house marbles get finished looks named after them; players keep theirs', async () => {
+    const { dressHouseMarbles, lookName, HOUSE_LOOKS } = await import('../src/shared/marbles');
+    expect(lookName('candy-pink')).toBe('Candy Stripe');
+    expect(lookName('glass-ruby')).toBe('Ruby Ice');
+    expect(lookName('candy-ocean')).toBe('Ocean Candy Stripe');
+    const data = { entries: [
+      { index: 0, entryId: 'a', isBot: false, marble: { name: 'Emerald', look: 'sun-solar' } },
+      { index: 1, entryId: 'b', isBot: false, marble: { name: 'Ruby' } },
+      { index: 2, entryId: 'c', isBot: true, marble: { name: 'Coral' } },
+    ] };
+    const out = dressHouseMarbles(data);
+    expect(out.entries[0].marble.name).toBe('Sunfire');
+    expect(out.entries[1].marble).toEqual({ name: 'Ruby' });
+    expect(HOUSE_LOOKS).toContain(out.entries[2].marble.look);
+    expect(out.entries[2].marble.name).toBe(lookName(out.entries[2].marble.look));
+    expect(dressHouseMarbles(out)).toEqual(out);
+  });
+});

@@ -1,3 +1,5 @@
+import { dressHouseMarbles } from '../shared/marbles';
+
 export const API_URL = (import.meta.env.VITE_API_URL || 'http://localhost:5000').replace(/\/$/, '');
 
 const TOKEN_KEY = 'marble-race-token';
@@ -59,6 +61,8 @@ export const api = {
   register: (body) => request('/auth/register', { method: 'POST', body, token: null }),
   login: (body) => request('/auth/login', { method: 'POST', body, token: null }),
   me: () => request('/auth/me'),
+  guest: () => request('/auth/guest', { method: 'POST', token: null }),
+  claim: (body) => request('/auth/claim', { method: 'POST', body }),
 
   user: (id) => request(`/users/${id}`),
   myProfile: () => request('/users/me'),
@@ -96,6 +100,6 @@ export const api = {
   cancelRace: (id) => request(`/races/${id}/cancel`, { method: 'POST' }),
   nextRace: (id, marbleId) => request(`/races/${id}/next`, { method: 'POST', body: marbleId ? { marble_id: marbleId } : {} }),
   results: (id) => request(`/races/${id}/results`),
-  replay: (id) => request(`/races/${id}/replay`),
+  replay: (id) => request(`/races/${id}/replay`).then(dressHouseMarbles), // house marbles in collection looks
   physicsPreview: (track, seed, level) => request(`/physics/preview?track=${encodeURIComponent(track)}&seed=${seed}&level=${level}`),
 };

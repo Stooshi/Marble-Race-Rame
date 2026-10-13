@@ -49,6 +49,10 @@ export function AuthProvider({ children }) {
     socket: getSocket(token),
     login: async (login, password) => applySession(await api.login({ login, password })),
     register: async (fields) => applySession(await api.register(fields)),
+    /** "Play free": a guest account, so a race can start straight away. */
+    playAsGuest: async () => applySession(await api.guest()),
+    /** A guest saves their marble: name, email and password, keeping coins and marbles. */
+    claim: async (fields) => applySession(await api.claim(fields)),
     logout,
     refreshUser,
     setCoins: (coins) => setUser((u) => (u ? { ...u, coins } : u)),

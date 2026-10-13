@@ -179,4 +179,37 @@ async function certificate(client, code) {
   };
 }
 
-module.exports = { listItems, describe, buy, bag, setShooter, certificate, counters };
+/**
+ * The catalogue marble a player races as (races need one per entry): their
+ * Shooter's Original if they chose one, otherwise one of their marbles, the
+ * starters last, skipping any already in this race. The look they race in is
+ * their Shooter (recordShooterLook); this only fills the race's marble slot.
+ */
+async function pickRacingMarble(client, raceId, userId) {
+  const { rows } = await client.query(
+    `SELECT m.id
+       FROM marbles m
+       LEFT JOIN user_shooter sh ON sh.user_id = $2 AND sh.marble_id = m.id
+      WHERE m.is_active
+        AND (m.is_starter OR EXISTS (SELECT 1 FROM user_marbles um WHERE um.user_id = $2 AND um.marble_id = m.id))
+        AND NOT EXISTS (SELECT 1 FROM race_entries e WHERE e.race_id = $1 AND e.marble_id = m.id)
+      ORDER BY (sh.marble_id IS NOT NULL) DESC, m.is_starter, m.slug
+      LIMIT 1`,
+    [raceId, userId],
+  );
+  if (!rows[0]) throw conflict('All your marbles are already in this race');
+  return rows[0].id;
+}
+
+/** Notes the collection look a player races in for this entry (their Shooter, if it's a collection marble). */
+async function recordShooterLook(client, userId, entryId) {
+  await client.query(
+    `INSERT INTO race_entry_looks (entry_id, collection_id)
+     SELECT $2, c.id FROM user_shooter sh JOIN user_collection c ON c.user_id = sh.user_id AND c.item_slug = sh.item_slug
+      WHERE sh.user_id = $1
+     ON CONFLICT (entry_id) DO NOTHING`,
+    [userId, entryId],
+  );
+}
+
+module.exports = { pickRacingMarble, recordShooterLook, listItems, describe, buy, bag, setShooter, certificate, counters };

@@ -1,5 +1,6 @@
 'use strict';
 
+const crypto = require('crypto');
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const rateLimit = require('express-rate-limit');
@@ -21,7 +22,7 @@ const authLimiter = rateLimit({
   message: { error: 'Too many attempts, please try again later' },
 });
 
-const PUBLIC_USER_COLUMNS = 'id, username, email, display_name, avatar_url, role, coins, credits, early_player, skill, skill_refund_coins, created_at';
+const PUBLIC_USER_COLUMNS = 'id, username, email, display_name, avatar_url, role, coins, credits, early_player, is_guest, skill, skill_refund_coins, created_at';
 
 const registerSchema = {
   username: {
@@ -49,6 +50,46 @@ router.post('/register', authLimiter, async (req, res) => {
     // Starting marble look. If this fails the look is created on first read instead.
     await ensureAppearance(user.id).catch((err) => console.error('[auth] starting look failed', err.message));
     res.status(201).json({ token: signToken(user), user });
+  } catch (err) {
+    if (err.code === '23505') {
+      throw conflict(err.constraint?.includes('email') ? 'Email is already registered' : 'Username is taken');
+    }
+    throw err;
+  }
+});
+
+/**
+ * POST /api/auth/guest — "Play free": a guest account to race with straight
+ * away (a made-up name, no email or password the player knows). Saving the
+ * marble later (POST /api/auth/claim) keeps everything it has won.
+ */
+router.post('/guest', authLimiter, async (req, res) => {
+  const id = crypto.randomBytes(5).toString('hex');
+  const hash = await bcrypt.hash(crypto.randomBytes(24).toString('hex'), config.auth.bcryptRounds);
+  const { rows } = await db.query(
+    `INSERT INTO users (username, email, password_hash, is_guest)
+     VALUES ($1, $2, $3, true)
+     RETURNING ${PUBLIC_USER_COLUMNS}`,
+    [`guest_${id}`, `guest-${id}@guest.marblespins.invalid`, hash],
+  );
+  const user = rows[0];
+  await ensureAppearance(user.id).catch((err) => console.error('[auth] starting look failed', err.message));
+  res.status(201).json({ token: signToken(user), user });
+});
+
+/** POST /api/auth/claim — a guest saves their marble: picks a name, email and password, keeping coins and marbles. */
+router.post('/claim', requireAuth, authLimiter, async (req, res) => {
+  const body = validate(req.body, registerSchema);
+  const hash = await bcrypt.hash(body.password, config.auth.bcryptRounds);
+  try {
+    const { rows } = await db.query(
+      `UPDATE users SET username = $2, email = $3, password_hash = $4, marketing_opt_in = $5, is_guest = false
+        WHERE id = $1 AND is_guest
+        RETURNING ${PUBLIC_USER_COLUMNS}`,
+      [req.user.id, body.username, body.email.toLowerCase(), hash, body.marketing_opt_in ?? false],
+    );
+    if (!rows[0]) throw conflict('This account is already saved');
+    res.json({ token: signToken(rows[0]), user: rows[0] });
   } catch (err) {
     if (err.code === '23505') {
       throw conflict(err.constraint?.includes('email') ? 'Email is already registered' : 'Username is taken');

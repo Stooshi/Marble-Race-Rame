@@ -71,7 +71,7 @@ test('every old plain marble maps to a Common shade, and the launch data update 
 });
 
 test('collection code never touches the race engine', () => {
-  for (const f of ['src/game/simulator.js', 'src/game/physicsSimulator.js', 'src/game/raceService.js']) {
+  for (const f of ['src/game/simulator.js', 'src/game/physicsSimulator.js', 'src/game/simulationWorker.js', 'src/game/runSimulation.js']) {
     const code = fs.readFileSync(path.join(__dirname, '..', f), 'utf8');
     assert.doesNotMatch(code, /user_collection|marbles\/catalog|collection_counters/, f);
   }

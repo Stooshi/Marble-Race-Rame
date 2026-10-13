@@ -1,7 +1,6 @@
 import { useMemo } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
-import { ITEMS, dressEntries } from '../shared/marbles';
-import { BUILT_MATERIALS } from '../shared/marbles/materials';
+import { HOUSE_LOOKS, dressEntries } from '../shared/marbles';
 import { api } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { useAsync } from '../hooks/useAsync';
@@ -23,8 +22,7 @@ export default function Replay3D() {
   const dressAll = search.get('looks') === 'all';
   const data = useMemo(() => {
     if (!raw || !dressAll) return raw;
-    const slugs = ITEMS.filter((i) => BUILT_MATERIALS.includes(i.design.material)).map((i) => i.slug);
-    return { ...raw, entries: dressEntries(raw.entries, raceId, slugs) };
+    return { ...raw, entries: dressEntries(raw.entries, raceId, HOUSE_LOOKS) };
   }, [raw, dressAll, raceId]);
   const mine = useMemo(
     () => (data?.entries ?? []).filter((e) => e.user?.id && e.user.id === user?.id).map((e) => e.index),

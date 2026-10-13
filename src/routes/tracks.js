@@ -64,7 +64,14 @@ router.get('/', optionalAuth, async (req, res) => {
   if (q.difficulty) { params.push(q.difficulty); where.push(`difficulty = $${params.length}`); }
   const { rows } = await db.query(
     `SELECT id, slug, name, description, difficulty, length_m, lane_count, thumbnail_url, is_active, waypoints,
-            jsonb_array_length(obstacles) AS obstacle_count, physics IS NOT NULL AS new_physics, created_at
+            jsonb_array_length(obstacles) AS obstacle_count, physics IS NOT NULL AS new_physics, created_at,
+            CASE WHEN physics->'kit' ? 'pinball' THEN 'Pinball'
+                 WHEN physics->'kit' ? 'arcade' THEN 'Arcade'
+                 WHEN physics->'kit' ? 'coaster' THEN 'Coasters'
+                 WHEN physics->'kit' ? 'grandPrix' THEN 'Grand Prix'
+                 WHEN physics IS NOT NULL THEN 'World Tour'
+                 ELSE 'Classic' END AS series,
+            physics->'kit'->>'biome' AS biome, physics->'kit'->>'lighting' AS lighting
        FROM tracks ${where.length ? `WHERE ${where.join(' AND ')}` : ''}
       ORDER BY difficulty, name`,
     params,

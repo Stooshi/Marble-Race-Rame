@@ -1,3 +1,4 @@
+import { dressHouseMarbles } from '../shared/marbles';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { detectCrossings, lerpFrame } from '../utils/splits';
@@ -87,13 +88,13 @@ export function useRaceStream(raceId, { onLobbyUpdate } = {}) {
       'race:updated': (p) => isThis(p) && lobbyCb.current?.(p),
       'race:countdown': (p) => {
         if (!isThis(p)) return;
-        setMeta(p.meta);
+        setMeta(dressHouseMarbles(p.meta));
         setStartsAt(Date.now() + p.countdownMs);
         setStatus('countdown');
       },
       'race:start': (p) => {
         if (!isThis(p)) return;
-        setMeta(p);
+        setMeta(dressHouseMarbles(p));
         setStatus('running');
       },
       'race:frame': (p) => {
@@ -118,7 +119,7 @@ export function useRaceStream(raceId, { onLobbyUpdate } = {}) {
           return;
         }
         setStatus(ack.status);
-        if (ack.meta) setMeta(ack.meta);
+        if (ack.meta) setMeta(dressHouseMarbles(ack.meta));
         if (ack.status === 'countdown' && ack.meta) setStartsAt(new Date(ack.meta.startsAt).getTime());
         if (ack.status === 'running' && ack.p) {
           // Joined mid-race: the current frame, with whatever the engine sends (heights, speeds, catch area…).

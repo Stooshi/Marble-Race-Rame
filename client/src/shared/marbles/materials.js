@@ -18,7 +18,7 @@ import {
   Mesh, MeshBasicMaterial, MeshPhongMaterial, Points, PointsMaterial, RepeatWrapping, RGBAFormat, SphereGeometry,
   Sprite, SpriteMaterial, SRGBColorSpace, Vector3,
 } from 'three';
-import { DESIGN, ITEM } from './index.js';
+import { BUILT_MATERIALS as BUILT_LIST, DESIGN, ITEM } from './index.js';
 
 const TEX_W = 256;
 const TEX_H = 128;
@@ -227,6 +227,7 @@ function placeholderLook(colours) {
 
 /** The designs with a finished 3D look (the others show a placeholder swirl for now). */
 export const BUILT_MATERIALS = Object.keys(BUILDERS);
+if (BUILT_MATERIALS.join() !== BUILT_LIST.join()) console.warn('[marbles] BUILT_MATERIALS in index.js is out of date');
 
 const cache = new Map();
 

@@ -8,7 +8,8 @@ const MIN_AGE = 13; // [13]: players younger than this need a parent or guardian
 export default function SignupPage() {
   const [search, setSearch] = useSearchParams();
   const navigate = useNavigate();
-  const { login, register } = useAuth();
+  const { login, register, claim, user } = useAuth();
+  const guest = Boolean(user?.is_guest);
   const mode = search.get('mode') === 'login' ? 'login' : 'signup';
   const next = search.get('next')?.startsWith('/') ? search.get('next') : '/home';
   const [f, setF] = useState({ username: '', email: '', login: '', password: '', year: '', terms: false, news: false });
@@ -29,7 +30,7 @@ export default function SignupPage() {
     setBusy(true);
     try {
       if (mode === 'login') await login(f.login, f.password);
-      else await register({ username: f.username, email: f.email, password: f.password, marketing_opt_in: f.news });
+      else await (guest ? claim : register)({ username: f.username, email: f.email, password: f.password, marketing_opt_in: f.news });
       navigate(next, { replace: true });
     } catch (err) {
       setError(err.message);
@@ -46,6 +47,7 @@ export default function SignupPage() {
           {mode === 'signup' && <span className="ms-eyebrow">Keep everything you win</span>}
           <h1 className="ms-h1" style={{ fontFamily: 'var(--ms-cond)', fontWeight: 800 }}>{mode === 'signup' ? 'Save your marble' : 'Welcome back'}</h1>
         </div>
+        {mode === 'signup' && guest && <span className="ms-pill" style={{ justifySelf: 'start' }}>You're racing as a guest: saving keeps everything you've won</span>}
         {mode === 'signup' && <p style={{ margin: 0, color: 'var(--ms-soft)' }}>Keep your coins, streak and Marble Bag on every device, and get told when your friends race.</p>}
         <button type="button" className="ms-btn" disabled title="Coming soon">Continue with Google · [soon]</button>
         <button type="button" className="ms-btn" disabled title="Coming soon">Continue with Apple · [soon]</button>

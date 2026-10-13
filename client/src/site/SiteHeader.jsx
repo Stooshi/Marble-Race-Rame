@@ -17,7 +17,9 @@ function UserChips({ user }) {
       <span className="ms-chip" title="Coins">● {formatNumber(user.coins ?? 0)} coins</span>
       <Link to="/shop" className="ms-chip ms-chip--credits" title="Credits">◆ {formatNumber(user.credits ?? 0)} credits</Link>
       <span className="ms-chip ms-chip--streak" title="Daily streak">▲ [streak]</span>
-      <Link to="/bag" className="ms-chip">@{user.username}</Link>
+      {user.is_guest
+        ? <Link to="/signup" className="ms-btn ms-btn--primary ms-btn--sm"><span className="ms-wide-only">SAVE YOUR MARBLE</span><span className="ms-narrow-only">SAVE</span></Link>
+        : <Link to="/bag" className="ms-chip">@{user.username}</Link>}
     </div>
   );
 }
@@ -47,7 +49,7 @@ export default function SiteHeader() {
             <a href="#how">How to play</a><a href="#tracks">Tracks</a><a href="#marbles">Marbles</a><a href="#friends">Friends</a><a href="#faq">FAQ</a>
           </nav>
           <Link to="/signup?mode=login" className="ms-header__login">Log in</Link>
-          <Link to="/home" className="ms-btn ms-btn--primary ms-btn--sm">PLAY FREE</Link>
+          <Link to="/play/start?quick=1" className="ms-btn ms-btn--primary ms-btn--sm">PLAY FREE</Link>
         </div>
       </header>
     );

@@ -11,6 +11,7 @@ const raceService = require('../game/raceService');
 const { RACE_STATUSES } = require('../game/raceStatus');
 const { raceSession, mayRaceAgain } = require('../game/raceSession');
 
+const { pickRacingMarble, recordShooterLook } = require('../marbles/collection');
 const router = express.Router();
 
 const { minMarbles, maxMarbles, defaultMarbles } = config.game;
@@ -71,6 +72,8 @@ async function joinRace(client, raceId, userId, marbleId) {
   if (!race) throw notFound('Race not found');
   if (race.status !== 'lobby') throw conflict('Race is no longer accepting entries');
 
+  // No marble given: race with the player's Shooter (or another of their marbles if it's taken).
+  if (!marbleId) marbleId = await pickRacingMarble(client, raceId, userId);
   await assertCanUseMarble(client, userId, marbleId);
 
   const { rows: counts } = await client.query(
@@ -96,6 +99,7 @@ async function joinRace(client, raceId, userId, marbleId) {
     'INSERT INTO race_entries (race_id, marble_id, user_id, is_bot) VALUES ($1, $2, $3, false) RETURNING *',
     [raceId, marbleId, userId],
   );
+  await recordShooterLook(client, userId, entry[0].id); // the collection look they race in (looks only)
   return { race, entry: entry[0], entryCount: counts[0].total + 1 };
 }
 
@@ -139,6 +143,7 @@ router.post('/', requireAuth, async (req, res) => {
     fill_with_bots: { type: 'boolean' },
     scheduled_at: { type: 'date' },
     marble_id: { type: 'uuid' },
+    enter: { type: 'boolean' }, // enter the creator with their Shooter
   });
   if (!body.track_id && !body.random_track) throw badRequest('Provide track_id or set random_track to true');
   if (body.track_id && body.random_track) throw badRequest('Use either track_id or random_track, not both');
@@ -164,7 +169,7 @@ router.post('/', requireAuth, async (req, res) => {
       [trackId, body.name ?? null, min, max, body.entry_fee_coins ?? 0, body.fill_with_bots ?? true,
         body.scheduled_at ?? null, req.user.id, config.game.tickRateHz, config.game.countdownMs],
     );
-    if (body.marble_id) await joinRace(client, rows[0].id, req.user.id, body.marble_id);
+    if (body.marble_id || body.enter) await joinRace(client, rows[0].id, req.user.id, body.marble_id ?? null);
     return rows[0].id;
   });
 
@@ -191,7 +196,7 @@ router.get('/:id', async (req, res) => {
 /** POST /api/races/:id/join  { marble_id } */
 router.post('/:id/join', requireAuth, async (req, res) => {
   const id = assertUuid(req.params.id);
-  const { marble_id: marbleId } = validate(req.body, { marble_id: { type: 'uuid', required: true } });
+  const { marble_id: marbleId } = validate(req.body ?? {}, { marble_id: { type: 'uuid' } });
   const { race, entry, entryCount } = await db.withTransaction((client) => joinRace(client, id, req.user.id, marbleId));
   raceManager.notifyRaceUpdated(race, { entryCount });
   res.status(201).json({ entry });

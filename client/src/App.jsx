@@ -4,9 +4,8 @@ import ErrorBoundary from './components/ErrorBoundary';
 import SiteHeader from './site/SiteHeader';
 import SiteFooter from './site/SiteFooter';
 import { useAuth } from './context/AuthContext';
-import {
-  FriendsPage, LandingPage, ShooterPage, StartLinePage, TrackPage,
-} from './site/pages/Stub';
+import { LandingPage } from './site/pages/Stub';
+import { FriendsStep, ShooterStep, StartStep, TrackStep } from './site/pages/RaceFlow';
 import CollectionPage from './site/pages/CollectionPage';
 import DesignPage from './site/pages/DesignPage';
 import ShopPage from './site/pages/ShopPage';
@@ -43,10 +42,10 @@ export default function App() {
           <Route path="/" element={isAuthenticated ? <HomeHub /> : <LandingPage />} />
           <Route path="/home" element={isAuthenticated ? <HomeHub /> : <Home />} />
           <Route path="/lobby" element={<Home />} />
-          <Route path="/play/friends" element={<FriendsPage />} />
-          <Route path="/play/track" element={<TrackPage />} />
-          <Route path="/play/shooter" element={<ShooterPage />} />
-          <Route path="/play/start" element={<StartLinePage />} />
+          <Route path="/play/friends" element={<FriendsStep />} />
+          <Route path="/play/track" element={<TrackStep />} />
+          <Route path="/play/shooter" element={<ShooterStep />} />
+          <Route path="/play/start" element={<StartStep />} />
           <Route path="/shop" element={<ShopPage />} />
           <Route path="/collection" element={<CollectionPage />} />
           <Route path="/collection/:design" element={<DesignPage />} />

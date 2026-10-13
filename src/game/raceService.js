@@ -54,7 +54,9 @@ async function loadSimulationInput(client, raceId) {
             e.snap_top_speed, e.snap_acceleration, e.snap_handling, e.snap_luck,
             e.finish_position, e.finish_time_ms,
             m.name AS marble_name, m.slug AS marble_slug, m.color_primary, m.color_secondary, m.pattern,
-            u.username
+            u.username,
+            (SELECT c.item_slug FROM race_entry_looks l JOIN user_collection c ON c.id = l.collection_id
+              WHERE l.entry_id = e.id) AS look
        FROM race_entries e
        JOIN marbles m ON m.id = e.marble_id
        LEFT JOIN users u ON u.id = e.user_id
@@ -107,6 +109,7 @@ function describeForClients(race, entries) {
         color_primary: e.color_primary,
         color_secondary: e.color_secondary,
         pattern: e.pattern,
+        ...(e.look && { look: e.look }), // the collection look it wears (drawing only)
       },
     })),
   };

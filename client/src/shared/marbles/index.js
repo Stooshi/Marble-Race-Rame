@@ -47,3 +47,32 @@ export function dressEntries(entries, key, slugs) {
   const start = (h >>> 0) % slugs.length;
   return entries.map((e, i) => (e.marble?.look ? e : { ...e, marble: { ...e.marble, look: slugs[(start + i) % slugs.length] } }));
 }
+
+/** The designs whose 3D look is finished (materials.js builds exactly these). */
+export const BUILT_MATERIALS = ['stripe', 'stone', 'core-glass', 'sunfire'];
+
+/** Looks house marbles can wear: every finished regular design (never the limited edition). */
+export const HOUSE_LOOKS = ITEMS.filter((i) => BUILT_MATERIALS.includes(i.design.material) && !i.design.limited).map((i) => i.slug);
+
+/** A short name for a look in standings: "Glacier Glass", "Ruby Ice", "Ocean Candy Stripe". */
+export function lookName(slug) {
+  const item = ITEM[slug];
+  if (!item) return null;
+  if (item.shade.original || item.design.shades.length === 1) return item.design.name;
+  return item.shade.name.includes(' ') ? item.shade.name : `${item.shade.name} ${item.design.name}`;
+}
+
+/**
+ * House marbles wear collection looks too, named after them, the same ones
+ * every time a race is shown. Takes race data ({ entries }) and returns it
+ * dressed; players keep their own Shooter's look (plain for an Original).
+ */
+export function dressHouseMarbles(data) {
+  if (!data?.entries?.length) return data;
+  const bots = HOUSE_LOOKS.length ? data.entries.filter((e) => e?.isBot && !e.marble?.look) : [];
+  const dressed = bots.length ? dressEntries(bots, bots.map((e) => e.entryId ?? e.index).join(','), HOUSE_LOOKS) : [];
+  const byEntry = new Map(bots.map((e, k) => [e, dressed[k]]));
+  // Every marble wearing a look is called by it in the standings (a player's Shooter too).
+  const named = (e) => (e?.marble?.look && ITEM[e.marble.look] ? { ...e, marble: { ...e.marble, name: lookName(e.marble.look) } } : e);
+  return { ...data, entries: data.entries.map((e) => named(byEntry.get(e) ?? e)) };
+}
