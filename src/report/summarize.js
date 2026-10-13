@@ -73,11 +73,16 @@ function fairness(batch, b, pooled = false) {
 /**
  * Showcase marbles: dress each race's computer players the way beginner races
  * are dressed (here from the race's seed, so the report repeats) and check
- * that every marble tier wins its fair share: its share of the wins within
- * three standard errors of its share of the field. A look is never given to
+ * that every marble tier wins its fair share: one chi-square test over the
+ * tiers' wins against their shares of the field, failing below p = 0.001 (one
+ * test for the whole line: a check per tier at three standard errors would
+ * fail a fair track about one report in thirty by chance). A look is never given to
  * the engine, so this is the proof that a computer player's marble never
  * changes who wins.
  */
+// Chi-square at p = 0.001, by degrees of freedom (1 to 5).
+const CHI2_P001 = [null, 10.83, 13.82, 16.27, 18.47, 20.52];
+
 function showcaseFairness(all) {
   const tiers = [...SHOWCASE_MIX.map((m) => m.rarities.map((r) => r[0].toUpperCase() + r.slice(1)).join('/')), 'Plain'];
   const field = new Array(tiers.length).fill(0);
@@ -92,18 +97,16 @@ function showcaseFairness(all) {
     marbles += r.field;
   }
   const n = all.length;
-  const parts = tiers.map((name, t) => {
-    const share = field[t] / marbles;
-    const winShare = wins[t] / n;
-    const allowed = 3 * Math.sqrt((share * (1 - share)) / n);
-    return { name, share, winShare, ok: Math.abs(winShare - share) <= allowed, allowed };
-  });
+  const parts = tiers.map((name, t) => ({ name, share: field[t] / marbles, winShare: wins[t] / n }));
+  const used = parts.filter((p) => p.share > 0);
+  const chi2 = used.reduce((x, p) => x + ((p.winShare - p.share) * n) ** 2 / (p.share * n), 0);
+  const critical = CHI2_P001[used.length - 1] ?? Infinity;
   return [{
     part: 'Fairness',
     what: `Showcase marbles (${n.toLocaleString('en')} races): each marble tier's share of the field vs share of wins`,
     value: parts.map((p) => `${p.name} ${fmt(100 * p.share)}% / ${fmt(100 * p.winShare)}%`).join(' · '),
-    target: 'each tier within 3 standard errors of its share',
-    pass: parts.every((p) => p.ok),
+    target: `each tier's wins in line with its share (chi-square ${fmt(chi2)}, at most ${fmt(critical)}: p above 0.001)`,
+    pass: chi2 <= critical,
   }];
 }
 

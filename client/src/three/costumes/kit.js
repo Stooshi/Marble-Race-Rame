@@ -76,6 +76,11 @@ export const COSTUME_COLORS = {
   pixelPink: '#ff3fa8', pixelCyan: '#3fd8ff', pixelViolet: '#8a4aff', pixelYellow: '#ffd23f', glitchBlack: '#0a0a12', glitchGreen: '#7dff6a',
   clawSteel: '#c8ccd8', clawGlass: '#9ad8ff', clawFrame: '#ff3fa8', puckRed: '#ff3a3a', puckTable: '#e8eef8', pearGreen: '#9ae84a', pearLeaf: '#3a9a3a', pedestal: '#3a2a6a',
   ampBlack: '#141418', ampGrille: '#2a2a32', ampTrim: '#c8ccd2', pickPink: '#ff3fa8', pickCyan: '#3fd8ff', micSilver: '#b8bcc4', drumRed: '#c8142a', drumSkin: '#f2efe6', stageBlack: '#0a0a10',
+  alienPod: '#4affc8', alienEye: '#0a0a24', laserRed: '#ff2a5a', laserPost: '#2a2a3a', turretGrey: '#6a7488', turretGlow: '#ff4fd8',
+  treeGreen: '#3ac84a', treeTrunk: '#a8642a', hammerHead: '#8a8a9a', hammerHandle: '#c8843a', chestWood: '#a8642a', chestGold: '#ffd23f',
+  crateWood: '#b8823a', crateDark: '#7a5226', ropeRed: '#e2242a', ropePost: '#d8d8e0', bagRed: '#c8142a', bagChain: '#9a9aa8', carDent: '#2a6ad8', carDentDark: '#1a4a9a', carGlassBroken: '#bfe8ff',
+  barrelOrange: '#ff7a1a', barrelWhite: '#f4f4f2', convertible: '#ff3fa8', convertibleSeat: '#f2efe6', boomRed: '#e2242a', boomWhite: '#f4f4f2', boothBlue: '#2a4a8a',
+  drumBlue: '#2a5ad8', drumRust: '#8a4a2a', signGreen: '#1a8a4a', signPole: '#8a8a94', canSilver: '#9aa0aa', canLid: '#6a707a',
 };
 
 /** A part's head (or other moving piece) as its own little group at local (x, y, z), turned with the body. */
@@ -1459,6 +1464,177 @@ function clawBody(add, base, q) {
   add('clawFrame', new BoxGeometry(2.7, 0.4, 2.7), local(base, q, 0, 4.2, 0));
 }
 
+// ── Bullet Hell ──────────────────────────────────────────────────────────────
+
+/** An alien pod of our own: a squat teal block, two black eye cubes and a pair of stubby antennae (Bullet Hell; a block). */
+function alienBlock(add, mat, group, point, q, { radius, at }) {
+  const s = radius * 0.62;
+  add('alienPod', new BoxGeometry(s * 2.6, s * 1.4, s * 2), local(point, q, 0, s * 0.7, 0));
+  add('alienPod', new BoxGeometry(s * 1.8, s * 0.8, s * 1.6), local(point, q, 0, s * 1.8, 0));
+  for (const x of [-0.5, 0.5]) {
+    add('alienEye', new BoxGeometry(s * 0.45, s * 0.45, s * 0.2), local(point, q, x * s, s * 1.8, s * 0.82));
+    add('turretGlow', new BoxGeometry(s * 0.2, s * 0.7, s * 0.2), local(point, q, x * s * 1.2, s * 2.55, 0));
+  }
+  if (Math.round(at * 997) % 2) add('alienEye', new BoxGeometry(s * 1.4, s * 0.2, s * 0.2), local(point, q, 0, s * 0.9, s * 1.02));
+  return [];
+}
+
+/** A laser pylon: a dark post with a glowing red core and a lit cap (Bullet Hell; a slalom pole or a peg). */
+function laserPylon(add, mat, group, point, q, { height }) {
+  const h = height + 0.8;
+  add('laserPost', new BoxGeometry(0.26, h, 0.26), local(point, q, 0, h / 2, 0));
+  add('laserRed', new BoxGeometry(0.1, h * 0.8, 0.3), local(point, q, 0, h * 0.5, 0));
+  add('turretGlow', new BoxGeometry(0.4, 0.2, 0.4), local(point, q, 0, h + 0.1, 0));
+  return [];
+}
+
+/** The laser turret beyond the rim: a grey dome on a block base; its long cannon is the swipe (Bullet Hell). */
+function turretBody(add, base, q) {
+  add('turretGrey', new BoxGeometry(2.6, 1.4, 2.6), local(base, q, 0, 0.7, 0));
+  add('turretGrey', new CylinderGeometry(1.1, 1.3, 1.2, 8), local(base, q, 0, 2.0, 0));
+  add('turretGlow', new BoxGeometry(2.7, 0.2, 2.7), local(base, q, 0, 1.45, 0));
+}
+
+// ── Aturi Arcade ─────────────────────────────────────────────────────────────
+
+/** A pixel tree: a brown block trunk and a stack of green cubes, an 8-bit tree of our own (Aturi Arcade; a slalom pole or a peg). */
+function pixelTree(add, mat, group, point, q, { height }) {
+  const s = 0.28;
+  const n = Math.max(2, Math.round(height / s));
+  for (let k = 0; k < n; k += 1) add('treeTrunk', new BoxGeometry(s, s, s), local(point, q, 0, s * (k + 0.5), 0));
+  add('treeGreen', new BoxGeometry(s * 2, s, s), local(point, q, 0, s * (n + 0.5), 0));
+  add('treeGreen', new BoxGeometry(s, s * 2, s), local(point, q, 0, s * (n + 1), 0));
+  return [];
+}
+
+/** The giant pixel hammer's stand beyond the rim: a stack of brown blocks; the hammer on its long handle is the swipe (Aturi Arcade). */
+function hammerBody(add, base, q) {
+  add('chestWood', new BoxGeometry(2.4, 2.4, 2.4), local(base, q, 0, 1.2, 0));
+  add('treeTrunk', new BoxGeometry(1.4, 1.4, 1.4), local(base, q, 0, 3.1, 0));
+}
+
+/** A row of treasure chests along the edge: blocky wooden chests with gold bands, lids up on a heap of coins (Aturi Arcade; parked). */
+function treasureChests(add, mat, group, rimCentre, q, { len, width, drop = 0 }) {
+  const centre = rimCentre.clone().add(new Vector3(0, -drop, 0).applyQuaternion(q));
+  const W = Math.max(1, width - 0.2);
+  const n = Math.max(2, Math.floor(len / 2.2));
+  for (let k = 0; k < n; k += 1) {
+    const z = -len / 2 + (len / n) * (k + 0.5);
+    add('chestWood', new BoxGeometry(W * 0.8, 1.0, 1.6), local(centre, q, 0, 0.5, z));
+    add('chestGold', new BoxGeometry(W * 0.82, 0.18, 0.2), local(centre, q, 0, 0.6, z));
+    add('chestWood', new BoxGeometry(W * 0.8, 0.9, 0.2), local(centre, q, 0, 1.4, z - 0.75));
+    add('coinGold', new BoxGeometry(W * 0.6, 0.25, 1.2), local(centre, q, 0, 1.1, z));
+  }
+  return [];
+}
+
+// ── Final Round Spin ─────────────────────────────────────────────────────────
+
+/** A wooden crate: planks round the edges, a cross brace on the front (Final Round Spin; a block). */
+function woodenCrate(add, mat, group, point, q, { radius }) {
+  const s = radius * 1.5;
+  add('crateWood', new BoxGeometry(s, s, s), local(point, q, 0, s / 2, 0));
+  for (const y of [0.06, 0.94]) add('crateDark', new BoxGeometry(s * 1.02, s * 0.1, s * 1.02), local(point, q, 0, s * y, 0));
+  add('crateDark', new BoxGeometry(s * 0.12, s * 1.2, s * 0.04), local(point, q, 0, s / 2, s * 0.51).multiply(new Matrix4().makeRotationZ(Math.PI / 4)));
+  return [];
+}
+
+/** A ring-rope post: a white post with red rope pads (Final Round Spin; a slalom pole or a peg). */
+function ropePost(add, mat, group, point, q, { height }) {
+  const h = height + 0.6;
+  add('ropePost', new CylinderGeometry(0.14, 0.16, h, 8), local(point, q, 0, h / 2, 0));
+  for (const y of [0.35, 0.65, 0.95]) add('ropeRed', new CylinderGeometry(0.18, 0.18, 0.18, 8), local(point, q, 0, h * y, 0));
+  return [];
+}
+
+/** The punching bag's gantry beyond the rim: a steel frame post; the chain and the red bag are the swipe (Final Round Spin). */
+function bagBody(add, base, q) {
+  add('ampBlack', new BoxGeometry(1.8, 0.6, 1.8), local(base, q, 0, 0.3, 0));
+  add('bagChain', new BoxGeometry(0.4, 4.2, 0.4), local(base, q, 0, 2.4, 0));
+}
+
+/** The bonus-stage car: a dented blue saloon of no make, a cracked windscreen and a bent bumper (Final Round Spin; parked). */
+function bonusCar(add, mat, group, rimCentre, q, { len, width, drop = 0 }) {
+  const W = 1.95;
+  const centre = rimCentre.clone().add(new Vector3(-(width - W) / 2, -drop, 0).applyQuaternion(q));
+  const L = Math.min(len, 4.6);
+  for (let n = 0; n < Math.max(1, Math.floor(len / 4.6)); n += 1) {
+    const z = -len / 2 + L / 2 + n * L;
+    for (const x of [-0.85, 0.85]) for (const dz of [-1.4, 1.4]) add('tyre', new CylinderGeometry(0.34, 0.34, 0.25, 12), local(centre, q, x, 0.34, z + dz).multiply(new Matrix4().makeRotationZ(Math.PI / 2)));
+    add('carDent', new BoxGeometry(1.9, 0.6, L - 0.2), local(centre, q, 0, 0.62, z));
+    add('carDent', new BoxGeometry(1.7, 0.55, L * 0.45), local(centre, q, 0, 1.15, z - 0.1).multiply(new Matrix4().makeRotationZ(0.08)));
+    add('carGlassBroken', new BoxGeometry(1.5, 0.45, 0.06), local(centre, q, 0, 1.2, z + L * 0.22).multiply(new Matrix4().makeRotationX(-0.4)));
+    add('carDentDark', new BoxGeometry(0.8, 0.5, 0.6), local(centre, q, 0.6, 0.75, z + L / 2 - 0.3).multiply(new Matrix4().makeRotationY(0.4)));   // the dent
+    add('carChrome', new BoxGeometry(1.8, 0.12, 0.12), local(centre, q, 0, 0.45, z - L / 2 + 0.05).multiply(new Matrix4().makeRotationZ(0.15)));   // the bent bumper
+  }
+  return [];
+}
+
+// ── Checkpoint Rush ──────────────────────────────────────────────────────────
+
+/** A roadside barrel: an orange drum with white reflective bands (Checkpoint Rush; a block). */
+function roadBarrel(add, mat, group, point, q, { radius }) {
+  const h = radius * 2;
+  add('barrelOrange', new CylinderGeometry(radius * 0.85, radius * 0.95, h, 14), local(point, q, 0, h / 2, 0));
+  for (const y of [0.35, 0.7]) add('barrelWhite', new CylinderGeometry(radius * 0.9, radius * 0.9, h * 0.1, 14), local(point, q, 0, h * y, 0));
+  add('coneBase', new CylinderGeometry(radius * 1.05, radius * 1.05, h * 0.06, 14), local(point, q, 0, h * 0.03, 0));
+  return [];
+}
+
+/** The toll booth beyond the rim: a little blue booth with a lit window; the striped boom is the swipe (Checkpoint Rush). */
+function boothBody(add, base, q) {
+  add('boothBlue', new BoxGeometry(2.2, 2.8, 2.2), local(base, q, 0, 1.4, 0));
+  add('carGlass', new BoxGeometry(1.6, 1.0, 0.1), local(base, q, 0, 1.9, 1.12));
+  add('boomWhite', new BoxGeometry(2.6, 0.3, 2.6), local(base, q, 0, 2.95, 0));
+}
+
+/** A parked pixel convertible: a pink open-top car of no make, white seats, chunky tail fins (Checkpoint Rush; parked). */
+function pixelConvertible(add, mat, group, rimCentre, q, { len, width, drop = 0 }) {
+  const W = 1.95;
+  const centre = rimCentre.clone().add(new Vector3(-(width - W) / 2, -drop, 0).applyQuaternion(q));
+  const L = Math.min(len, 4.6);
+  for (let n = 0; n < Math.max(1, Math.floor(len / 4.6)); n += 1) {
+    const z = -len / 2 + L / 2 + n * L;
+    for (const x of [-0.85, 0.85]) for (const dz of [-1.4, 1.4]) add('tyre', new CylinderGeometry(0.34, 0.34, 0.25, 12), local(centre, q, x, 0.34, z + dz).multiply(new Matrix4().makeRotationZ(Math.PI / 2)));
+    add('convertible', new BoxGeometry(1.9, 0.6, L - 0.2), local(centre, q, 0, 0.62, z));
+    for (const dz of [-0.3, 0.7]) add('convertibleSeat', new BoxGeometry(1.5, 0.5, 0.3), local(centre, q, 0, 1.1, z - dz));
+    add('carGlass', new BoxGeometry(1.6, 0.4, 0.06), local(centre, q, 0, 1.15, z + 0.9).multiply(new Matrix4().makeRotationX(-0.3)));
+    for (const x of [-0.85, 0.85]) add('convertible', new BoxGeometry(0.15, 0.45, 0.9), local(centre, q, x, 1.05, z - L / 2 + 0.5));   // the tail fins
+  }
+  return [];
+}
+
+// ── Arcade Spins ─────────────────────────────────────────────────────────────
+
+/** An oil drum: a blue steel drum with two rings and a rust stain (Arcade Spins; a block). */
+function oilDrum(add, mat, group, point, q, { radius, at }) {
+  const h = radius * 2;
+  add(Math.round(at * 997) % 3 ? 'drumBlue' : 'drumRust', new CylinderGeometry(radius * 0.85, radius * 0.85, h, 14), local(point, q, 0, h / 2, 0));
+  for (const y of [0.33, 0.66]) add('signPole', new CylinderGeometry(radius * 0.88, radius * 0.88, h * 0.05, 14), local(point, q, 0, h * y, 0));
+  add('canLid', new CylinderGeometry(radius * 0.8, radius * 0.8, h * 0.04, 14), local(point, q, 0, h, 0));
+  return [];
+}
+
+/** The street sign's lamp post beyond the rim: a grey post on a base; the green sign on its arm is the swipe (Arcade Spins). */
+function streetSignBody(add, base, q) {
+  add('signPole', new BoxGeometry(1.4, 0.6, 1.4), local(base, q, 0, 0.3, 0));
+  add('signPole', new CylinderGeometry(0.22, 0.3, 4.2, 8), local(base, q, 0, 2.6, 0));
+}
+
+/** A row of trash cans along the edge: dented silver cans with their lids, a bag or two beside them (Arcade Spins; parked). */
+function trashCans(add, mat, group, rimCentre, q, { len, width, drop = 0 }) {
+  const centre = rimCentre.clone().add(new Vector3(0, -drop, 0).applyQuaternion(q));
+  const W = Math.max(1, width - 0.2);
+  const n = Math.max(2, Math.floor(len / 1.6));
+  for (let k = 0; k < n; k += 1) {
+    const z = -len / 2 + (len / n) * (k + 0.5);
+    add('canSilver', new CylinderGeometry(0.55, 0.48, 1.3, 10), local(centre, q, -W / 2 + 0.7, 0.65, z));
+    add('canLid', new CylinderGeometry(0.6, 0.6, 0.1, 10), local(centre, q, -W / 2 + 0.7, 1.35, z));
+    if (k % 2) add('glitchBlack', new IcosahedronGeometry(0.4, 0), local(centre, q, -W / 2 + 1.4, 0.35, z + 0.4));
+  }
+  return [];
+}
+
 export const KIT_COSTUMES = {
   panda: { places: 'block', build: panda },
   camel: { places: 'block', build: camel },
@@ -1718,6 +1894,53 @@ export const KIT_COSTUMES = {
     arm: { colour: 'clawSteel', shoulder: [0, 4.2, 0.3], radii: [0.1, 0.12], segments: 6, tip: 0.45, tipDetail: 0, tipColour: 'clawSteel', end: 0.2, endDetail: 0, endColour: 'clawFrame', lift: 0.5, outLift: 0.9, nose: 0.2 },
   },
   'drum-peg': { places: 'slalom', build: drumPeg },
+  'alien-block': { places: 'block', build: alienBlock },
+  'laser-pylon': { places: 'slalom', build: laserPylon },
+  'laser-curtain': { places: 'curtain', gantry: true, banners: ['laserRed', 'turretGlow', 'laserRed'], post: 'laserPost', bannerWidth: 0.2, build: () => [] },
+  'turret-cannon': {
+    places: 'swipe',
+    body: turretBody,
+    standOff: 1.8,
+    sink: -0.2,
+    arm: { colour: 'turretGrey', shoulder: [0, 2.2, 0.3], radii: [0.2, 0.26], segments: 6, tip: 0.4, tipDetail: 0, tipColour: 'laserRed', end: 0.2, endDetail: 0, endColour: 'turretGlow', lift: 0.4, outLift: 0.6, nose: 0.2 },
+  },
+  'pixel-tree': { places: 'slalom', build: pixelTree },
+  'pixel-hammer': {
+    places: 'swipe',
+    body: hammerBody,
+    standOff: 1.8,
+    sink: -0.2,
+    arm: { colour: 'hammerHandle', shoulder: [0, 3.4, 0.3], radii: [0.12, 0.14], segments: 6, tip: 0.7, tipDetail: 0, tipColour: 'hammerHead', end: 0.2, endDetail: 0, endColour: 'hammerHandle', lift: 0.5, outLift: 0.8, nose: 0.2 },
+  },
+  'treasure-chests': { places: 'parked', build: treasureChests },
+  'wooden-crate': { places: 'block', build: woodenCrate },
+  'rope-post': { places: 'slalom', build: ropePost },
+  'punching-bag': {
+    places: 'swipe',
+    body: bagBody,
+    standOff: 1.8,
+    sink: -0.2,
+    arm: { colour: 'bagChain', shoulder: [0, 4.4, 0.3], radii: [0.06, 0.08], segments: 6, tip: 0.75, tipDetail: 1, tipColour: 'bagRed', end: 0.2, endDetail: 0, endColour: 'bagChain', lift: 0.5, outLift: 0.9, nose: 0.2 },
+  },
+  'bonus-car': { places: 'parked', build: bonusCar },
+  'road-barrel': { places: 'block', build: roadBarrel },
+  'toll-boom': {
+    places: 'swipe',
+    body: boothBody,
+    standOff: 1.8,
+    sink: -0.2,
+    arm: { colour: 'boomWhite', shoulder: [0, 2.0, 0.3], radii: [0.12, 0.12], segments: 8, tip: 0.25, tipDetail: 0, tipColour: 'boomRed', end: 0.2, endDetail: 0, endColour: 'boomRed', lift: 0.4, outLift: 0.6, nose: 0.2 },
+  },
+  'pixel-convertible': { places: 'parked', build: pixelConvertible },
+  'oil-drum': { places: 'block', build: oilDrum },
+  'street-sign': {
+    places: 'swipe',
+    body: streetSignBody,
+    standOff: 1.8,
+    sink: -0.2,
+    arm: { colour: 'signPole', shoulder: [0, 4.4, 0.3], radii: [0.1, 0.12], segments: 6, tip: 0.6, tipDetail: 0, tipColour: 'signGreen', end: 0.2, endDetail: 0, endColour: 'signGreen', lift: 0.5, outLift: 0.8, nose: 0.2 },
+  },
+  'trash-cans': { places: 'parked', build: trashCans },
   'mic-boom': {
     places: 'swipe',
     body: micStandBody,

@@ -11,7 +11,7 @@ const NAMES = {
   'banked-turn': 'Banked First Turn', 'boost-launch': 'Boost-Pad Launch', 'funnel-drop': 'Funnel Drop', 'crest-start': 'Crest Start',
   'early-hairpin': 'Early Hairpin', 'twin-spirals': 'Twin Spirals', 'climb-drop': 'Climb and Drop', 'late-splitter': 'Late Splitter',
   'mid-drop': 'Mid Drop', 'two-splitters': 'Two Splitters', 'long-sweeps': 'Long Sweeps',
-  'island-spins': 'Island Spins', 'sea-crossing': 'Sea Crossing', 'canopy-run': 'Canopy Run', 'terrace-run': 'Terrace Run', 'delta-skim': 'Delta Skim', 'two-spins': 'Two Spins', 'wall-dive': 'Wall Dive', staircases: 'Staircases', 'siege-routes': 'Siege Routes', 'stage-hairpin': 'Stage Hairpin', 'saucer-sweeps': 'Saucer Sweeps', 'lower-playfield': 'Lower Playfield', 'clock-tower': 'Clock Tower', 'encore-split': 'Encore Split', 'cabinet-rows': 'Cabinet Rows', 'maze-corridors': 'Maze Corridors',
+  'island-spins': 'Island Spins', 'sea-crossing': 'Sea Crossing', 'canopy-run': 'Canopy Run', 'terrace-run': 'Terrace Run', 'delta-skim': 'Delta Skim', 'two-spins': 'Two Spins', 'wall-dive': 'Wall Dive', staircases: 'Staircases', 'siege-routes': 'Siege Routes', 'stage-hairpin': 'Stage Hairpin', 'saucer-sweeps': 'Saucer Sweeps', 'lower-playfield': 'Lower Playfield', 'clock-tower': 'Clock Tower', 'encore-split': 'Encore Split', 'cabinet-rows': 'Cabinet Rows', 'maze-corridors': 'Maze Corridors', 'bullet-spirals': 'Bullet Spirals', 'up-up-down-down': 'Up Up Down Down', 'bracket-splits': 'Bracket Splits', 'coast-road': 'Coast Road', 'co-op-street': 'Co-op Street',
 };
 
 const base = (slug, name, description) => ({
@@ -41,8 +41,8 @@ const COASTER_LAYOUTS = ['island-spins', 'sea-crossing', 'canopy-run', 'terrace-
 const PINBALL_LAYOUTS = ['staircases', 'siege-routes', 'stage-hairpin', 'saucer-sweeps', 'lower-playfield', 'clock-tower', 'encore-split'];
 // A layout whose results depend on how the field arrives (a splitter's balance, the spread) is proven with its table's own opening.
 // Layouts made for one arcade world are proven on a test track built as an arcade world.
-const ARCADE_LAYOUTS = ['cabinet-rows', 'maze-corridors'];
-const OWN_OPENING = { 'siege-routes': 'crest-start', 'saucer-sweeps': 'staggered-drop', 'clock-tower': 'funnel-drop', 'encore-split': 'split-start', 'cabinet-rows': 'funnel-drop', 'maze-corridors': 'split-start', 'lower-playfield': ['banked-turn', { side: 'right' }] };
+const ARCADE_LAYOUTS = ['cabinet-rows', 'maze-corridors', 'bullet-spirals', 'up-up-down-down', 'bracket-splits', 'coast-road', 'co-op-street'];
+const OWN_OPENING = { 'siege-routes': 'crest-start', 'saucer-sweeps': 'staggered-drop', 'clock-tower': 'funnel-drop', 'encore-split': 'split-start', 'cabinet-rows': 'funnel-drop', 'maze-corridors': 'split-start', 'bullet-spirals': 'staggered-drop', 'up-up-down-down': 'crest-start', 'bracket-splits': 'banked-turn', 'coast-road': 'boost-launch', 'co-op-street': 'tunnel-launch', 'lower-playfield': ['banked-turn', { side: 'right' }] };
 // (Lower playfield: the banked turn the other way, so the test track is Tilt's exact mirror image.)
 const TOUCHDOWNS = { 'sea-crossing': { tunnelRun: { height: 0 } }, 'terrace-run': { swoops: { height: 0 } }, 'wall-dive': { tunnelRun: { height: 0 } } };
 

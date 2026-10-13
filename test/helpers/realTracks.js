@@ -5,8 +5,10 @@ const fs = require('fs');
 const path = require('path');
 
 const DOCS = path.resolve(__dirname, '../../docs');
+// (Tracks added on the new physics, switched off, by scripts/physics-track-sql.js --add-hidden are left
+// out: they never raced on the classic engine, and a row of theirs could otherwise read as a classic track.)
 const sqlText = () => [path.join(DOCS, 'database_schema.sql'), ...fs.readdirSync(path.join(DOCS, 'data_updates')).sort().map((f) => path.join(DOCS, 'data_updates', f))]
-  .map((f) => fs.readFileSync(f, 'utf8')).join('\n');
+  .map((f) => fs.readFileSync(f, 'utf8')).filter((sql) => !sql.includes('scripts/physics-track-sql.js --add-hidden')).join('\n');
 
 /**
  * Tracks that only ever raced on the new physics (physicsTracks.js). A classic

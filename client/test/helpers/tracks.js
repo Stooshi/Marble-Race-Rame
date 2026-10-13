@@ -7,7 +7,9 @@ const ROW = /\('([a-z-]+)',\s*'[^']*',\s*(?:'[^']*',\s*)?'(easy|medium|hard|extr
 
 export function realTracks() {
   const text = [path.join(DOCS, 'database_schema.sql'), ...fs.readdirSync(path.join(DOCS, 'data_updates')).map((f) => path.join(DOCS, 'data_updates', f))]
-    .map((f) => fs.readFileSync(f, 'utf8')).join('\n');
+    .map((f) => fs.readFileSync(f, 'utf8'))
+    // (Tracks added on the new physics by scripts/physics-track-sql.js --add-hidden are not classic tracks.)
+    .filter((sql) => !sql.includes('scripts/physics-track-sql.js --add-hidden')).join('\n');
   const tracks = new Map();
   for (const m of text.matchAll(ROW)) {
     tracks.set(m[1], { slug: m[1], difficulty: m[2], length_m: Number(m[3]), lane_count: Number(m[4]), waypoints: JSON.parse(m[5]), obstacles: JSON.parse(m[6]) });

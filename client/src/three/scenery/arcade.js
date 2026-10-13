@@ -90,6 +90,39 @@ function paintSide(g, art, c) {
     g.beginPath(); g.arc(64, 64, 22, Math.PI, 0); g.fill();
     g.fillStyle = c.sky[1];
     for (let k = 0; k < 4; k += 1) g.fillRect(40, 48 + k * 5, 48, 2);
+  } else if (art === 'side-scroller') {
+    // Rolling pixel hills, blocky clouds and floating platforms of our own.
+    g.fillStyle = '#ffffff';
+    for (const [x, y] of [[12, 14], [70, 24]]) { g.fillRect(x, y, 24, 6); g.fillRect(x + 6, y - 5, 12, 5); }
+    g.fillStyle = '#3ac84a';
+    for (let k = 0; k < 4; k += 1) for (let r = 0; r < 4; r += 1) g.fillRect(k * 34 - r * 4, h - 20 - r * 6 - (k % 2) * 10, 30 + r * 8, 6);
+    g.fillStyle = c.accent;
+    for (const [x, y] of [[20, 56], [62, 46], [96, 60]]) g.fillRect(x, y, 22, 5);
+    g.fillStyle = c.glow;
+    for (const [x, y] of [[26, 48], [70, 38], [102, 52]]) g.fillRect(x, y, 4, 6);
+  } else if (art === 'fighter') {
+    // Two health bars over a city skyline at night, rain streaks.
+    g.fillStyle = c.accent;
+    g.fillRect(6, 8, 50, 6);
+    g.fillStyle = '#3a0a0a';
+    g.fillRect(72, 8, 50, 6);
+    g.fillStyle = c.glow;
+    g.fillRect(104, 8, 18, 6);
+    g.fillStyle = c.ink;
+    for (let k = 0; k < 8; k += 1) g.fillRect(k * 16, 50 + ((k * 11) % 24), 14, h);
+    g.fillStyle = c.accent;
+    for (let k = 0; k < 20; k += 1) g.fillRect(4 + (k * 29) % 120, 60 + ((k * 13) % 50), 2, 2);
+    g.fillStyle = 'rgba(160,200,255,0.4)';
+    for (let k = 0; k < 24; k += 1) g.fillRect((k * 23) % w, (k * 41) % h, 1, 6);
+  } else if (art === 'downtown') {
+    // Shopfronts with lit windows and a big GO arrow.
+    g.fillStyle = c.ink;
+    for (let k = 0; k < 6; k += 1) g.fillRect(k * 22, 30 + ((k * 7) % 20), 20, h);
+    g.fillStyle = '#ffd27a';
+    for (let k = 0; k < 24; k += 1) g.fillRect(4 + (k % 6) * 22, 40 + Math.floor(k / 6) * 14 + ((k % 6) * 7) % 20, 5, 4);
+    g.fillStyle = c.accent;
+    g.fillRect(40, 16, 30, 8);
+    g.beginPath(); g.moveTo(70, 10); g.lineTo(84, 20); g.lineTo(70, 30); g.fill();
   } else {
     g.fillStyle = c.glow;
     for (let k = 0; k < 7; k += 1) g.fillRect(6 + k * 17, 40 + ((k * 13) % 30), 12, h);

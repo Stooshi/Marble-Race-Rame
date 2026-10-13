@@ -48,4 +48,9 @@ module.exports = [
   require('./grand-champion'),
   require('./joystick-spins'),
   require('./kill-screen'),
+  require('./bullet-hell'),
+  require('./aturi-arcade'),
+  require('./final-round-spin'),
+  require('./checkpoint-rush'),
+  require('./arcade-spins'),
 ];

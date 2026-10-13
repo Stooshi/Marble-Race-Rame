@@ -40,3 +40,19 @@ test('an arcade world: the circuit board or arcade carpet, neon light, the cabin
   assert.equal(t.physics.kit.arcade.art, 'coin-op');
   assert.equal(t.variety.family, 'test');
 });
+
+test('the Arcade Series: seven tracks, each its own layout and cabinet art, no opening more than twice, every start its own', () => {
+  const slugs = ['kill-screen', 'joystick-spins', 'bullet-hell', 'aturi-arcade', 'final-round-spin', 'checkpoint-rush', 'arcade-spins'];
+  const series = slugs.map((s) => physicsTrack(s));
+  assert.ok(series.every((t) => t && t.variety.family === 'arcade'));
+  const kits = series.map((t) => t.physics.kit);
+  assert.equal(new Set(kits.map((k) => k.layout)).size, 7);
+  assert.equal(new Set(kits.map((k) => k.arcade.art)).size, 7);
+  const openings = kits.map((k) => k.opening);
+  for (const o of new Set(openings)) assert.ok(openings.filter((x) => x === o).length <= 2, o);
+  const starts = series.map((t) => t.physics.kit.start).map((st) => `${st.gate}/${st.shots.countdown}/${st.shots.launch}`);
+  assert.equal(new Set(starts).size, 7);
+  // A few of their own call-outs and lights.
+  assert.equal(physicsTrack('aturi-arcade').physics.kit.arcade.finish, '30 LIVES');
+  assert.equal(physicsTrack('checkpoint-rush').physics.kit.lighting, 'synthwave');
+});

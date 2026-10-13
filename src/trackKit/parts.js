@@ -244,7 +244,7 @@ module.exports = {
   plunge, straight, climb, sBends, sweep, spiral, hairpin, splitter, waterfall, runIn,
   block, pileUp, curtain, swipe, parked, slalom, peg,
   bump, boost, brake, moguls, steps, paint, rumble,
-  TUNNELS: ['mine', 'ice-cave', 'dragon', 'rock', 'roots', 'bazaar', 'canyon', 'mosaic', 'pyramid', 'sea-cave', 'lit-tunnel', 'redwood-trunk', 'city-wall'],
+  TUNNELS: ['mine', 'ice-cave', 'dragon', 'rock', 'roots', 'bazaar', 'canyon', 'mosaic', 'pyramid', 'sea-cave', 'lit-tunnel', 'redwood-trunk', 'city-wall', 'subway'],
   BRIDGES: ['ice', 'stone', 'wood', 'steel'],
   // Scenery names (looks only; the 3D view draws them, client/src/three/scenery/kit*.js).
   SURFACES: ['ice', 'snow', 'sand', 'stone', 'water', 'asphalt'],
@@ -272,12 +272,17 @@ module.exports = {
     'pancic-mausoleum', 'stone-monastery', 'watermill', 'sheep-flock', 'kolo-village',
     'sun-yat-sen-mausoleum', 'yangtze-bridge', 'zhonghua-gate', 'lake-pagodas', 'ginkgo-grove', 'haunted-manor', 'siege-castle', 'castle-keep', 'grand-theatre', 'magician-trunk', 'top-hat', 'flying-saucer', 'saucer-town',
     'retro-diner', 'soda-fountain', 'jukebox-tower', 'gumball-machine', 'clocktower', 'floating-doors', 'concert-stage', 'speaker-wall', 'lighting-rig',
-    'arcade-hall', 'cabinet-row', 'prize-counter', 'claw-tower', 'neon-maze', 'glitch-tower', 'level-sign'],
+    'arcade-hall', 'cabinet-row', 'prize-counter', 'claw-tower', 'neon-maze', 'glitch-tower', 'level-sign',
+    'alien-formation', 'mothership', 'ringed-planet', 'laser-turret',
+    'pixel-hills', 'floating-platforms', 'pixel-waterfall', 'arrow-up', 'arrow-down', 'arrow-left', 'arrow-right', 'ba-buttons',
+    'rooftop-stage', 'pixel-crowd', 'water-tower', 'health-bars',
+    'starting-grid', 'checkpoint-gate', 'fork-signpost', 'goal-banner',
+    'subway-entrance', 'storefronts', 'go-arrow', 'neon-plaza', 'continue-clock'],
   OVERHEAD: ['gondola', 'cable-car', 'chairlift', 'vulture'],
   // What stands in the middle of a splitter, between its two channels (the arch: over one of
   // them), or in the middle of a spiral or a hairpin.
   AROUND: ['mountain-hut', 'big-rock', 'mountain-restaurant', 'mine-headframe', 'nunatak', 'bell-tower', 'arc-de-triomphe', 'obelisk', 'notre-dame', 'oasis', 'twisted-tower', 'river-island', 'anaconda', 'watchtower', 'pagoda',
-    'museum-of-the-future', 'dubai-frame', 'opera-house', 'tulip-garden', 'roundabout-monument', 'acacia', 'mughal-fountain', 'giant-tree', 'snow-island', 'fallen-statue', 'volcano-rock', 'sagrada-familia', 'frozen-waterfall', 'limestone-island', 'sea-islet', 'giant-redwood', 'lantern-chedi', 'watermill', 'confucius-temple', 'castle-keep', 'magician-trunk', 'top-hat', 'jukebox-tower', 'clocktower', 'lighting-rig', 'claw-tower', 'glitch-tower'],
+    'museum-of-the-future', 'dubai-frame', 'opera-house', 'tulip-garden', 'roundabout-monument', 'acacia', 'mughal-fountain', 'giant-tree', 'snow-island', 'fallen-statue', 'volcano-rock', 'sagrada-familia', 'frozen-waterfall', 'limestone-island', 'sea-islet', 'giant-redwood', 'lantern-chedi', 'watermill', 'confucius-temple', 'castle-keep', 'magician-trunk', 'top-hat', 'jukebox-tower', 'clocktower', 'lighting-rig', 'claw-tower', 'glitch-tower', 'ringed-planet', 'laser-turret', 'water-tower', 'fork-signpost', 'neon-plaza'],
   // Scenery near a section (or the start or finish): what grows and stands beside the track there.
   SCENERY: ['bare', 'rocks', 'birches', 'pines', 'race-netting', 'funicular', 'wooden-houses', 'frozen-lake',
     'wood-clad', 'chalets', 'pasture', 'aspens', 'shopfronts',
