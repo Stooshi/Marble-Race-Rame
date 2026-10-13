@@ -4,7 +4,7 @@ import ErrorBoundary from './components/ErrorBoundary';
 import SiteHeader from './site/SiteHeader';
 import SiteFooter from './site/SiteFooter';
 import { useAuth } from './context/AuthContext';
-import { LandingPage } from './site/pages/Stub';
+import LandingPage from './site/landing/LandingPage';
 import { FriendsStep, ShooterStep, StartStep, TrackStep } from './site/pages/RaceFlow';
 import CollectionPage from './site/pages/CollectionPage';
 import DesignPage from './site/pages/DesignPage';

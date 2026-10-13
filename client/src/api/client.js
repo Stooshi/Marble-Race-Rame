@@ -91,6 +91,7 @@ export const api = {
   tracks: () => request('/tracks'),
   track: (idOrSlug) => request(`/tracks/${idOrSlug}`),
 
+  showcase: () => request('/races/showcase'),
   races: (status, limit = 20) => request(`/races?${status ? `status=${status}&` : ''}limit=${limit}`),
   race: (id) => request(`/races/${id}`),
   createRace: (body) => request('/races', { method: 'POST', body }),

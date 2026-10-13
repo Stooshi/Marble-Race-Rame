@@ -178,6 +178,36 @@ router.post('/', requireAuth, async (req, res) => {
   res.status(201).json({ race, entries: await getEntries(raceId, false) });
 });
 
+/**
+ * GET /api/races/showcase — a close race for the landing page's replay: one of
+ * the 12 recent finished races (new physics, active track) with the smallest
+ * gap between the winner and fifth place, picked at random so each visit
+ * shows a different one.
+ */
+router.get('/showcase', async (req, res) => {
+  const { rows } = await db.query(
+    `WITH recent AS (
+       SELECT r.id, t.name AS track_name, t.slug AS track_slug
+         FROM races r
+         JOIN tracks t ON t.id = r.track_id AND t.is_active
+         JOIN race_replays rp ON rp.race_id = r.id
+        WHERE r.status = 'finished'
+        ORDER BY r.finished_at DESC
+        LIMIT 200
+     )
+     SELECT recent.*, g.gap
+       FROM recent
+       JOIN LATERAL (
+         SELECT MAX(e.finish_time_ms) FILTER (WHERE e.finish_position = 5) - MIN(e.finish_time_ms) AS gap
+           FROM race_entries e WHERE e.race_id = recent.id
+       ) g ON g.gap IS NOT NULL
+      ORDER BY g.gap
+      LIMIT 12`,
+  );
+  if (!rows.length) throw notFound('No race to show yet');
+  res.json({ race: rows[Math.floor(Math.random() * rows.length)] });
+});
+
 /** GET /api/races/:id — race details and entries (results only once finished) */
 router.get('/:id', async (req, res) => {
   const id = assertUuid(req.params.id);
@@ -332,6 +362,7 @@ router.get('/:id/results', async (req, res) => {
     }),
   });
 });
+
 
 /**
  * GET /api/races/:id/replay — full frame data for a finished race: regenerated
