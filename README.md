@@ -56,6 +56,7 @@ curl localhost:5000/health
 | `RACE_TICK_RATE_HZ` | `10` | Frames streamed per second |
 | `REWARD_COINS_PODIUM` | `100,50,25` | Coins for 1st, 2nd, 3rd (human players only) |
 | `REWARD_COINS_PARTICIPATION` | `10` | Coins for every human finisher |
+| `PAYMENTS_TEST` | – | `true`: an instant test payment provider (never in production) |
 
 ### Making an admin
 
@@ -96,6 +97,8 @@ All endpoints are under `/api`. Request and response bodies are JSON. Authentica
 | POST | `/auth/register` | – | `{ username, email, password, display_name? }` → `{ token, user }` (users start with 500 coins) |
 | POST | `/auth/login` | – | `{ login, password }`, where `login` is a username or email → `{ token, user }` |
 | GET | `/auth/me` | ✔ | The current user |
+| POST | `/auth/guest` | – | "Play free": a guest account to race with at once → `{ token, user }` (`is_guest: true`) |
+| POST | `/auth/claim` | ✔ guest | A guest saves their marble: `{ username, email, password, marketing_opt_in? }`, keeping coins and marbles |
 
 The auth endpoints are rate-limited to 20 requests per 15 minutes per IP.
 
@@ -162,6 +165,25 @@ A player's look is purely cosmetic: it never affects how their marble races. Onl
 | PUT | `/users/me/appearance` | ✔ | `{ color?, surface?, effect? }` as option keys. Setting a custom `label` is refused until a word filter exists |
 
 Every player gets a starting look on sign-up: a solid marble with no effect, in a colour picked from their account ID.
+
+### Marble collection, payments and scoreboards
+
+The collection (Collection 1 · Grand Opening: 15 designs in 5 shades plus the monthly limited edition, 76 items) is defined once in `client/src/shared/marbles/catalog.json`, which the server, the website and the phone apps all read. Its 3D looks are in `client/src/shared/marbles/materials.js` (three.js only, no React or DOM). Looks only: the race engine never reads any of it.
+
+| Method | Path | Auth | Notes |
+| --- | --- | --- | --- |
+| GET | `/collection` | optional | Every item with its live First Edition count and whether it's on sale; `owned` slugs when signed in |
+| GET | `/collection/bag` | ✔ | The Marble Bag: collection copies, Originals (old plain marbles), sets, Shooter |
+| PUT | `/collection/shooter` | ✔ | `{ item }` or `{ original }`: the look the player races in |
+| POST | `/collection/:slug/buy` | ✔ | Buy one copy (coins; credits for a limited edition). Copies 1–500 are the numbered First Edition |
+| GET | `/collection/certificate/:code` | – | A marble's certificate by its ID, e.g. `MS-SUN-SOL-000037` |
+| GET | `/payments` | – | Credit packs and which payment providers are live |
+| POST | `/payments/checkout` | ✔ | `{ productId, provider }`: start buying credits (Stripe on the web; placeholder until there are keys) |
+| POST | `/payments/receipt` | ✔ | `{ provider: 'apple' \| 'google', receipt }`: an app store purchase (placeholder until the apps exist) |
+| GET | `/scoreboard` | optional | `?board=season\|all\|friends`: players ranked by coins earned in races |
+| GET | `/races/showcase` | – | A recent close race for the landing page's replay |
+
+Every payment provider ends in the same server step (`src/payments/index.js` → `grant`), which adds a pack's credits exactly once. `PAYMENTS_TEST=true` turns on an instant test provider outside production.
 
 ### Marbles
 
