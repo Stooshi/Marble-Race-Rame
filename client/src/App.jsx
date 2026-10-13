@@ -19,6 +19,7 @@ import { importOrReload } from './utils/staleCode';
 // (If a file is gone after an update, the page reloads once for the new version.)
 const TrackPreview3D = lazy(() => importOrReload(() => import('./pages/TrackPreview3D')));
 const Replay3D = lazy(() => importOrReload(() => import('./pages/Replay3D')));
+const MarbleShowroom = lazy(() => importOrReload(() => import('./site/pages/MarbleShowroom')));
 const PhysicsPreview = lazy(() => importOrReload(() => import('./pages/PhysicsPreview')));
 
 export default function App() {
@@ -50,6 +51,10 @@ export default function App() {
           <Route
             path="/preview/3d"
             element={<Suspense fallback={<div className="page"><Spinner /></div>}><TrackPreview3D /></Suspense>}
+          />
+          <Route
+            path="/preview/marbles"
+            element={<Suspense fallback={<div className="page"><Spinner /></div>}><MarbleShowroom /></Suspense>}
           />
           <Route
             path="/preview/physics"

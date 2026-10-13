@@ -14,7 +14,7 @@ const COLOR = { type: 'string', pattern: /^#[0-9A-Fa-f]{6}$/, patternMessage: 'm
 // Marbles are looks only (skill belongs to the player), so their old stat
 // columns are never sent or set.
 const MARBLE_COLUMNS = ['id', 'slug', 'name', 'description', 'color_primary', 'color_secondary', 'pattern', 'rarity',
-  'price_coins', 'is_starter', 'is_active', 'created_at', 'updated_at'].map((c) => `m.${c}`).join(', ');
+  'price_coins', 'is_starter', 'is_active', 'on_sale', 'created_at', 'updated_at'].map((c) => `m.${c}`).join(', ');
 
 // A marble's own history with one player: their races, wins and podiums with it as their Shooter.
 const HISTORY = `(SELECT COUNT(*)::int FROM race_entries e JOIN races r ON r.id = e.race_id AND r.status = 'finished'
@@ -82,6 +82,7 @@ router.post('/:id/purchase', requireAuth, async (req, res) => {
     const marble = rows[0];
     if (!marble) throw notFound('Marble not found');
     if (marble.is_starter) throw badRequest('Starter marbles are free for everyone');
+    if (!marble.on_sale) throw badRequest('Originals are no longer sold');
 
     const owned = await client.query('SELECT 1 FROM user_marbles WHERE user_id = $1 AND marble_id = $2', [req.user.id, id]);
     if (owned.rowCount) throw conflict('You already own this marble');

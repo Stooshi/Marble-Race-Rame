@@ -439,6 +439,76 @@ CREATE TABLE IF NOT EXISTS billboards (
 CREATE INDEX IF NOT EXISTS idx_billboards_track ON billboards (track_slug);
 
 -- -----------------------------------------------------------------------------
+-- Marble collection (Collection 1 · Grand Opening): designs in shades
+-- -----------------------------------------------------------------------------
+-- The catalogue itself (names, stories, shades, colours, rarities, prices)
+-- lives in client/src/shared/marbles/catalog.json, shared by the server, the
+-- website and the phone apps. Items are named by slug, "<design>-<shade>"
+-- (e.g. 'candy-pink'). Looks only: the race engine never reads these tables.
+--
+-- marbles.on_sale: false for the old plain marbles, now legacy "Originals"
+--        that players keep but nobody can buy any more.
+-- users.early_player: played before the collection launched (shows a small
+--        badge on their Originals).
+-- users.credits: shop credits bought with real money (1 credit = $1); only
+--        ever spent in the shop, never cashed out.
+ALTER TABLE marbles ADD COLUMN IF NOT EXISTS on_sale boolean NOT NULL DEFAULT true;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS early_player boolean NOT NULL DEFAULT false;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS credits integer NOT NULL DEFAULT 0 CHECK (credits >= 0);
+
+-- How many copies of each item have been bought and given away so far. The
+-- row is locked while a copy is handed out, so numbers are never shared.
+CREATE TABLE IF NOT EXISTS collection_counters (
+    item_slug   varchar(64) PRIMARY KEY CHECK (item_slug ~ '^[a-z0-9-]+$'),
+    bought      integer     NOT NULL DEFAULT 0 CHECK (bought >= 0),
+    gifted      integer     NOT NULL DEFAULT 0 CHECK (gifted >= 0)
+);
+
+-- One owned copy of an item. copy_no counts bought copies of that item
+-- (1, 2, 3…); the first 500 (or the whole run of a limited edition) are the
+-- numbered First Edition, edition_no = copy_no. Gifts (gift_no) never take a
+-- First Edition number. marble_code is the ID on the certificate, e.g.
+-- MS-SUN-SOL-000037. first_owner_id stays when trading arrives later.
+CREATE TABLE IF NOT EXISTS user_collection (
+    id              uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id         uuid        NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    item_slug       varchar(64) NOT NULL CHECK (item_slug ~ '^[a-z0-9-]+$'),
+    source          varchar(16) NOT NULL CHECK (source IN ('purchase', 'legacy-gift', 'grant')),
+    copy_no         integer     CHECK (copy_no > 0),
+    gift_no         integer     CHECK (gift_no > 0),
+    edition_no      integer     CHECK (edition_no > 0),
+    marble_code     varchar(32) NOT NULL UNIQUE,
+    currency        varchar(8)  CHECK (currency IN ('coins', 'credits')),
+    price_paid      integer     CHECK (price_paid >= 0),
+    first_owner_id  uuid        REFERENCES users(id) ON DELETE SET NULL,
+    acquired_at     timestamptz NOT NULL DEFAULT now(),
+
+    CONSTRAINT user_collection_one_each UNIQUE (user_id, item_slug),
+    CONSTRAINT user_collection_copy     UNIQUE (item_slug, copy_no),
+    CONSTRAINT user_collection_gift     UNIQUE (item_slug, gift_no),
+    CONSTRAINT user_collection_edition  UNIQUE (item_slug, edition_no)
+);
+CREATE INDEX IF NOT EXISTS idx_user_collection_item ON user_collection (item_slug);
+
+-- The look a player races in (their Shooter): one collection item, or one of
+-- their Originals (the old plain marbles). Neither set: their plain starter.
+CREATE TABLE IF NOT EXISTS user_shooter (
+    user_id         uuid        PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+    item_slug       varchar(64),
+    marble_id       uuid        REFERENCES marbles(id) ON DELETE SET NULL,
+    updated_at      timestamptz NOT NULL DEFAULT now(),
+    CONSTRAINT user_shooter_one CHECK (item_slug IS NULL OR marble_id IS NULL)
+);
+
+-- Which collection marble a player raced in, per race entry (for the
+-- certificate's race record). Written when they join; races never read it.
+CREATE TABLE IF NOT EXISTS race_entry_looks (
+    entry_id        uuid        PRIMARY KEY REFERENCES race_entries(id) ON DELETE CASCADE,
+    collection_id   uuid        NOT NULL REFERENCES user_collection(id) ON DELETE CASCADE
+);
+CREATE INDEX IF NOT EXISTS idx_race_entry_looks_copy ON race_entry_looks (collection_id);
+
+-- -----------------------------------------------------------------------------
 -- data_updates: one-time changes to existing rows (docs/data_updates/*.sql)
 -- -----------------------------------------------------------------------------
 -- The backend runs each file once, in name order, and records it here so it is

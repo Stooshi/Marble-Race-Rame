@@ -15,6 +15,8 @@ import { Frustum, Matrix4, Vector3 } from 'three';
 import { TrackScene } from '../src/three/TrackScene';
 import { frameAtTime } from '../src/utils/splits';
 import { COUNTDOWN_MS } from '../src/three/startCamera';
+import { ITEMS, dressEntries } from '../src/shared/marbles';
+import { BUILT_MATERIALS } from '../src/shared/marbles/materials';
 
 const params = new URLSearchParams(window.location.search);
 const slug = params.get('track') || 'kit-proving-ground';
@@ -54,6 +56,10 @@ function drawnBy() {
 
 // ── A race through the game's own cameras (track report) ─────────────────
 const race = params.get('race') ? await (await fetch(`./.tracks/${params.get('race')}.json`)).json() : null;
+// &looks=all: every marble in a finished collection look (the phone check with 20 decorated marbles).
+if (race && params.get('looks') === 'all') {
+  race.entries = dressEntries(race.entries, params.get('race'), ITEMS.filter((i) => BUILT_MATERIALS.includes(i.design.material)).map((i) => i.slug));
+}
 const countdown = race?.start ? Math.max(COUNTDOWN_MS, race.start.countdownMs ?? 0) : 0;
 let clock = null;
 let following = 'leader';
@@ -137,6 +143,27 @@ window.kitView = {
       out.push({ t, ...drawNow(t) });
     }
     return out;
+  },
+
+  /** Plays the race live (follow camera) from `from` ms for `seconds`, and reports frames per second and the slowest frame. */
+  racePlay({ from = 0, seconds = 8 } = {}) {
+    advance(from);
+    return new Promise((resolve) => {
+      const start = performance.now();
+      let prev = start; let frames = 0; let worst = 0; let cpu = 0; let calls = 0;
+      const tick = (now) => {
+        const t0 = performance.now();
+        const t = from + (now - start);
+        scene.updateRace(raceFrame(t), 'leader', (now - prev) / 1000);
+        const s = drawNow(t);
+        cpu += performance.now() - t0;
+        calls = Math.max(calls, s.calls);
+        worst = Math.max(worst, now - prev); prev = now; frames += 1;
+        if (now - start < seconds * 1000) requestAnimationFrame(tick);
+        else resolve({ fps: Math.round((frames * 1000) / (now - start)), worstMs: Math.round(worst), cpuMsPerFrame: +(cpu / frames).toFixed(2), maxCalls: calls });
+      };
+      requestAnimationFrame(tick);
+    });
   },
 
   track,

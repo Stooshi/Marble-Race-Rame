@@ -12,6 +12,7 @@ import {
 import { merge, piece } from './scenery/parts';
 import { pointOnTrack, TRACK_STYLE } from './trackModel';
 import { channelRadiusAt, placeOnChannel } from './iceChannel';
+import { createMarbleLook } from '../shared/marbles/materials';
 
 export const MARBLE_RADIUS = 0.55; // metres: a lane is 1.6 m wide
 
@@ -411,12 +412,30 @@ export class RaceMarbles {
     this.group = new Group();
     this.geometry = new SphereGeometry(MARBLE_RADIUS, 20, 14);
     this.scale = 1;
+    // A collection look (marble.look, e.g. 'sun-solar') comes from the shared marble
+    // materials; plain marbles (Originals, house marbles) keep their simple texture.
+    this.looks = [];
     this.balls = entries.map((e) => {
-      const map = marbleTexture(e.marble);
-      const mesh = new Mesh(this.geometry, new MeshPhongMaterial({ map, shininess: 90, specular: new Color('#ffffff') }));
+      let mesh;
+      let look = null;
+      if (e?.marble?.look) {
+        try {
+          look = createMarbleLook(e.marble.look, { radius: MARBLE_RADIUS, geometry: this.geometry });
+        } catch {
+          look = null; // an unknown look: fall back to the plain marble
+        }
+      }
+      if (look) {
+        mesh = look.object;
+        if (look.trail) this.group.add(look.trail);
+        this.looks.push(look);
+      } else {
+        const map = marbleTexture(e.marble);
+        mesh = new Mesh(this.geometry, new MeshPhongMaterial({ map, shininess: 90, specular: new Color('#ffffff') }));
+      }
       mesh.rotation.set(Math.random() * 6, Math.random() * 6, 0);
       this.group.add(mesh);
-      return { mesh, last: null };
+      return { mesh, look, last: null };
     });
 
     this.shadowTex = shadowTexture();
@@ -475,7 +494,8 @@ export class RaceMarbles {
   /** Places every marble for a race frame ({ t, p: progress[], l: lateral[] }). */
   /** Night: each marble glows softly in its own colours, so it stays in the picture in the dark. */
   setGlow(on) {
-    for (const { mesh } of this.balls) {
+    for (const { mesh, look } of this.balls) {
+      if (look) { look.setNight(on); continue; }
       mesh.material.emissiveMap = on ? mesh.material.map : null;
       mesh.material.emissive.set(on ? '#8a8a8a' : '#000000');
       mesh.material.needsUpdate = true;
@@ -506,9 +526,11 @@ export class RaceMarbles {
         }
       } else {
         b.last = new Vector3();
+        b.look?.resetTrail();
       }
       b.last.copy(pos);
       b.mesh.position.copy(pos);
+      b.look?.update(frame.t / 1000, pos);
 
       // The shadow lies on the surface under the marble (tilted up a channel
       // wall when it rides one) and shrinks as the marble flies higher.
@@ -536,6 +558,7 @@ export class RaceMarbles {
 
   dispose() {
     for (const b of this.balls) {
+      if (b.look) { b.look.dispose(); continue; }
       b.mesh.material.map?.dispose();
       b.mesh.material.dispose();
     }
