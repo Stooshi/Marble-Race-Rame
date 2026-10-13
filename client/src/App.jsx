@@ -26,6 +26,7 @@ import { importOrReload } from './utils/staleCode';
 const TrackPreview3D = lazy(() => importOrReload(() => import('./pages/TrackPreview3D')));
 const Replay3D = lazy(() => importOrReload(() => import('./pages/Replay3D')));
 const MarbleShowroom = lazy(() => importOrReload(() => import('./site/pages/MarbleShowroom')));
+const MarbleCompare = lazy(() => importOrReload(() => import('./site/pages/MarbleCompare')));
 const PhysicsPreview = lazy(() => importOrReload(() => import('./pages/PhysicsPreview')));
 
 export default function App() {
@@ -64,6 +65,10 @@ export default function App() {
           <Route
             path="/preview/marbles"
             element={<Suspense fallback={<div className="page"><Spinner /></div>}><MarbleShowroom /></Suspense>}
+          />
+          <Route
+            path="/preview/marbles/compare"
+            element={<Suspense fallback={<div className="page"><Spinner /></div>}><MarbleCompare /></Suspense>}
           />
           <Route
             path="/preview/physics"

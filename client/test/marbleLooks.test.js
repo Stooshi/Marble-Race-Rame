@@ -1,9 +1,10 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { Vector3 } from 'three';
+import { NoColorSpace, Vector3 } from 'three';
 import { bagPrice, DESIGNS, FEATURED_DESIGNS, ITEMS, ITEM, catalog, dressEntries, findById, lookName, nameLooks, normaliseId, originalSlug, priceLabel } from '../src/shared/marbles';
-import { badgeOf } from '../src/shared/marbles/badge';
-import { BUILT_MATERIALS, createMarbleLook, lookSpec } from '../src/shared/marbles/materials';
+import { GLOSS_LAYERS, badgeOf, lookOf } from '../src/shared/marbles/badge';
+import { hexRgb, mixHex, rasterize, toBytes, toCss } from '../src/shared/marbles/paint';
+import { BUILT_MATERIALS, NIGHT_LEVEL, _test, createMarbleLook, lookSpec } from '../src/shared/marbles/materials';
 
 // The catalogue is going to be swapped for a new collection, so these tests find
 // items by what they are (a material, a rarity) rather than by name.
@@ -13,48 +14,74 @@ describe('collection marble looks', () => {
   it('every item gets a look: its material when built, a placeholder swirl otherwise', () => {
     for (const item of ITEMS) {
       const spec = lookSpec(item.slug);
-      expect(spec.map.image.width).toBeGreaterThanOrEqual(256);
       expect(spec.built).toBe(BUILT_MATERIALS.includes(item.design.material));
+      expect(spec.bodyTexture.image.width).toBe(_test.VIEW_N);
     }
   });
 
-  it('glass has a see-through shell and an inner piece; glowing looks have a glow map, a halo and (Sunfire) sparks', () => {
-    const glass = byMaterial('core-glass') ?? byMaterial('vane-glass');
-    if (glass) {
-      const look = createMarbleLook(glass);
-      expect(look.shell.material.transparent).toBe(true);
-      expect(look.object.children.length).toBe(2);
-      look.dispose();
+  it('the shop picture is the master: the 3D marble is painted from the very same layers and colour values', () => {
+    for (const item of ITEMS.filter((i) => BUILT_MATERIALS.includes(i.design.material))) {
+      const spec = lookSpec(item.slug);
+      const { layers } = lookOf(item.slug);
+      expect(badgeOf(item.slug).background).toBe(toCss(layers));
+      for (const l of spec.body ?? []) expect(layers.includes(l)).toBe(true); // the same objects, not copies
+      for (const l of spec.turning ?? []) expect(layers.includes(l)).toBe(true);
+      for (const l of spec.over ?? []) expect(layers.includes(l) || GLOSS_LAYERS.includes(l)).toBe(true);
     }
-    const sun = byMaterial('sunfire');
-    if (sun) {
-      const look = createMarbleLook(sun);
-      expect(look.shell.material.emissiveMap).toBeTruthy();
-      expect(look.object.children.some((c) => c.isSprite)).toBe(true);
-      expect(look.trail?.isPoints).toBe(true);
-      look.dispose();
-    }
-    const plain = byMaterial('stripe') ?? byMaterial('bands');
-    if (plain) {
-      const look = createMarbleLook(plain);
-      expect(look.object.children.length).toBe(1);
+  });
+
+  it('nothing in the scene changes the colours: no lights, fog, tone mapping or colour-space conversion', () => {
+    for (const m of ['steel', 'champion', 'vane-glass']) {
+      const look = createMarbleLook(byMaterial(m));
+      look.object.traverse((o) => {
+        if (!o.isMesh) return;
+        expect(o.material.isShaderMaterial).toBe(true);
+        expect(o.material.lights).toBe(false);
+        expect(o.material.fog).toBe(false);
+        expect(o.material.toneMapped).toBe(false);
+        expect(o.material.fragmentShader).not.toMatch(/colorspace_fragment|tonemapping_fragment|lights_/);
+        for (const u of Object.values(o.material.uniforms)) if (u.value?.isTexture) expect(u.value.colorSpace).toBe(NoColorSpace);
+      });
       look.dispose();
     }
   });
 
-  it('Steelie reflects a painted surround (steel); the Champion Shooter glints and glows; Cat\'s Eye has its vane', () => {
-    const steel = byMaterial('steel');
-    const s = createMarbleLook(steel);
-    expect(s.shell.material.envMap).toBeTruthy();
-    expect(s.shell.material.reflectivity).toBeGreaterThan(0.5);
-    s.dispose();
+  it('night: the same colours, a little darker; a halo shows more', () => {
     const champ = createMarbleLook(byMaterial('champion'));
-    expect(champ.shell.material.emissiveMap).toBeTruthy();
+    champ.setNight(true);
+    expect(champ.shell.material.uniforms.uLevel.value).toBe(NIGHT_LEVEL);
     expect(champ.object.children.some((c) => c.isSprite)).toBe(true);
+    champ.setNight(false);
+    expect(champ.shell.material.uniforms.uLevel.value).toBe(1);
     champ.dispose();
+  });
+
+  it('Steelie: the steel gradient with machining lines; Champion: flakes in its flake colour; Cat\'s Eye: the picture\'s vane, turning with the ball', () => {
+    const s = lookSpec(byMaterial('steel'));
+    expect(s.detail).toBeTruthy();
+    const c = lookSpec(byMaterial('champion'));
+    const flake = hexRgb(c.look.parts.flake);
+    const d = c.detail.image.data;
+    let found = false;
+    for (let k = 0; k < d.length; k += 4) if (d[k + 3] === 255) { expect([d[k], d[k + 1], d[k + 2]]).toEqual(flake); found = true; break; }
+    expect(found).toBe(true);
     const cat = createMarbleLook(byMaterial('vane-glass'));
-    expect(cat.object.children.length).toBe(2);
+    expect(cat.object.children.length).toBe(1); // one sphere: glass, vane and tint are the picture's layers
+    expect(cat.shell.material.defines.MS_TURNING).toBe('');
     cat.dispose();
+  });
+
+  it('the painter follows the CSS rules (farthest-corner circles, stop fix-up, premultiplied blending)', () => {
+    // A vertical gradient from red to blue: the middle row is half way (in sRGB, as CSS).
+    const px = rasterize([{ type: 'linear', angle: 180, stops: [['#FF0000', 0], ['#0000FF', 100]] }], 4, { ss: 1 });
+    expect(Math.round(px[(1 * 4 + 0) * 4])).toBe(Math.round(255 * (1 - 0.375)));
+    // Fading to transparent keeps the colour (premultiplied), never greying it.
+    const fade = toBytes(rasterize([{ type: 'radial', stops: [['#FF0000', 0], ['transparent', 100]] }], 8, { ss: 1 }));
+    expect([fade[(3 * 8 + 3) * 4], fade[(3 * 8 + 3) * 4 + 1]]).toEqual([255, 0]);
+    // A circle gradient reaches 100% at the farthest corner.
+    const r = rasterize([{ type: 'radial', stops: [['#000000', 0], ['#FFFFFF', 100]] }], 2, { ss: 1 });
+    expect(r[0]).toBeCloseTo(255 * (Math.hypot(0.25, 0.25) / Math.hypot(0.5, 0.5)), 3);
+    expect(mixHex('#000000', '#FFFFFF', 0.5)).toBe('#808080');
   });
 
   it('every catalogue marble has a flat badge of its own design (no plain fallback colour)', () => {
@@ -71,7 +98,7 @@ describe('collection marble looks', () => {
   it('the same item looks the same every time; textures are made once and shared', () => {
     const slug = ITEMS[0].slug;
     expect(lookSpec(slug)).toBe(lookSpec(slug));
-    expect(createMarbleLook(slug).shell.material.map).toBe(createMarbleLook(slug).shell.material.map);
+    expect(createMarbleLook(slug).shell.material.uniforms.uView.value).toBe(createMarbleLook(slug).shell.material.uniforms.uView.value);
   });
 
   it('20 decorated marbles cost well under a millisecond a frame to update', () => {
