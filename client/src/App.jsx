@@ -1,7 +1,13 @@
 import { lazy, Suspense } from 'react';
 import { Link, Route, Routes, useLocation } from 'react-router-dom';
 import ErrorBoundary from './components/ErrorBoundary';
-import NavBar from './components/NavBar';
+import SiteHeader from './site/SiteHeader';
+import SiteFooter from './site/SiteFooter';
+import { useAuth } from './context/AuthContext';
+import {
+  BagPage, CheckoutPage, CollectionPage, FriendsPage, LandingPage, LegalPage, ScoresPage, ShooterPage, ShopPage,
+  SignupPage, StartLinePage, TrackPage,
+} from './site/pages/Stub';
 import Home from './pages/Home';
 import Dashboard from './pages/Dashboard';
 import Race from './pages/Race';
@@ -17,13 +23,26 @@ const PhysicsPreview = lazy(() => importOrReload(() => import('./pages/PhysicsPr
 
 export default function App() {
   const { pathname } = useLocation();
+  const { isAuthenticated } = useAuth();
   return (
     <>
-      <NavBar />
+      <SiteHeader />
       <main>
         <ErrorBoundary resetKey={pathname}>
         <Routes>
-          <Route path="/" element={<Home />} />
+          <Route path="/" element={isAuthenticated ? <Home /> : <LandingPage />} />
+          <Route path="/home" element={<Home />} />
+          <Route path="/play/friends" element={<FriendsPage />} />
+          <Route path="/play/track" element={<TrackPage />} />
+          <Route path="/play/shooter" element={<ShooterPage />} />
+          <Route path="/play/start" element={<StartLinePage />} />
+          <Route path="/shop" element={<ShopPage />} />
+          <Route path="/collection" element={<CollectionPage />} />
+          <Route path="/checkout" element={<CheckoutPage />} />
+          <Route path="/bag" element={<BagPage />} />
+          <Route path="/scores" element={<ScoresPage />} />
+          <Route path="/signup" element={<SignupPage />} />
+          <Route path="/legal" element={<LegalPage />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/profile/:userId" element={<Dashboard />} />
           <Route path="/race/:raceId" element={<Race />} />
@@ -53,6 +72,7 @@ export default function App() {
         </Routes>
         </ErrorBoundary>
       </main>
+      <SiteFooter />
     </>
   );
 }

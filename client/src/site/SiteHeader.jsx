@@ -1,0 +1,80 @@
+import { Link, NavLink, useLocation } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import { formatNumber } from '../utils/format';
+import Logo from './Logo';
+
+/** Which header a page wears: the landing page's, the race flow's slim one, checkout's, or the game's. */
+export function headerKind(pathname, isAuthenticated) {
+  if (pathname === '/' && !isAuthenticated) return 'landing';
+  if (pathname.startsWith('/checkout')) return 'checkout';
+  if (pathname.startsWith('/play/')) return 'flow';
+  return 'app';
+}
+
+function UserChips({ user }) {
+  return (
+    <div className="ms-chips">
+      <span className="ms-chip" title="Coins">● {formatNumber(user.coins ?? 0)} coins</span>
+      <span className="ms-chip ms-chip--streak" title="Daily streak">▲ [streak]</span>
+      <Link to="/bag" className="ms-chip">@{user.username}</Link>
+    </div>
+  );
+}
+
+export default function SiteHeader() {
+  const { pathname } = useLocation();
+  const { user, isAuthenticated, logout } = useAuth();
+  const kind = headerKind(pathname, isAuthenticated);
+
+  if (kind === 'checkout') {
+    return (
+      <header className="ms-header">
+        <div className="ms-header__inner ms-header__inner--narrow">
+          <Link to="/shop" className="ms-header__back">← Back to the shop</Link>
+          <span className="ms-grow" />
+          <Logo size={26} plain />
+        </div>
+      </header>
+    );
+  }
+  if (kind === 'landing') {
+    return (
+      <header className="ms-header">
+        <div className="ms-header__inner ms-header__inner--landing">
+          <Link to="/" aria-label="Marble Spins home" className="ms-header__logo"><Logo /></Link>
+          <nav aria-label="Main" className="ms-nav ms-nav--landing">
+            <a href="#how">How to play</a><a href="#tracks">Tracks</a><a href="#marbles">Marbles</a><a href="#friends">Friends</a><a href="#faq">FAQ</a>
+          </nav>
+          <Link to="/signup?mode=login" className="ms-header__login">Log in</Link>
+          <Link to="/home" className="ms-btn ms-btn--primary ms-btn--sm">PLAY FREE</Link>
+        </div>
+      </header>
+    );
+  }
+  return (
+    <header className="ms-header">
+      <div className="ms-header__inner">
+        <Link to={isAuthenticated ? '/home' : '/'} aria-label="Marble Spins home" className="ms-header__logo"><Logo /></Link>
+        {kind === 'app' ? (
+          <nav aria-label="Main" className="ms-nav">
+            <NavLink to="/home">Race</NavLink>
+            <NavLink to="/bag">Marble Bag</NavLink>
+            <NavLink to="/scores">Scoreboards</NavLink>
+            <NavLink to="/shop">Shop</NavLink>
+          </nav>
+        ) : <span className="ms-grow" />}
+        {isAuthenticated ? (
+          <>
+            <UserChips user={user} />
+            {kind === 'app' && <button type="button" className="ms-header__logout" onClick={logout}>Log out</button>}
+          </>
+        ) : (
+          <div className="ms-chips">
+            <Link to="/signup?mode=login" className="ms-header__login">Log in</Link>
+            <Link to="/signup" className="ms-btn ms-btn--primary ms-btn--sm"><span className="ms-wide-only">SAVE YOUR MARBLE</span><span className="ms-narrow-only">SIGN UP</span></Link>
+          </div>
+        )}
+      </div>
+    </header>
+  );
+}

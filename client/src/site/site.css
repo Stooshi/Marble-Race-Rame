@@ -1,0 +1,263 @@
+/* ==========================================================================
+   Marble Spins — site shell (header, footer, logo, buttons, page frame).
+   Tokens from the "Web · …" artboards. Loaded after styles.css, so the
+   older game pages pick up the new palette too.
+   ========================================================================== */
+
+:root {
+  --ms-bg: #0E1320;
+  --ms-card: #1A2133;
+  --ms-card-2: #222A3F;
+  --ms-border: #2A3349;
+  --ms-text: #F2F4F8;
+  --ms-soft: #C7CEDC;
+  --ms-muted: #A9B1C3;
+  --ms-yellow: #FFD21F;
+  --ms-yellow-hover: #FFE476;
+  --ms-orange: #FF7A1A;
+  --ms-ink: #141413;
+  --ms-red: #E5322D;
+  --ms-green: #3DDC97;
+  --r-common: #A9B1C3;
+  --r-uncommon: #3DDC97;
+  --r-rare: #6FA8FF;
+  --r-epic: #B79BFF;
+  --r-legendary: #FFD21F;
+  --r-limited: #E040C8;
+  --ms-display: 'Lilita One', 'Arial Rounded MT Bold', system-ui, sans-serif;
+  --ms-cond: 'Barlow Condensed', 'Arial Narrow', system-ui, sans-serif;
+  --ms-body: 'Source Sans 3', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --ms-wide: 1240px;
+
+  /* the older pages' tokens, re-pointed at the new palette */
+  --bg: var(--ms-bg);
+  --bg-elev: var(--ms-card);
+  --bg-inset: #121829;
+  --border: var(--ms-border);
+  --text: var(--ms-text);
+  --muted: var(--ms-muted);
+  --accent: var(--ms-yellow);
+  --accent-ink: var(--ms-ink);
+  color-scheme: dark;
+}
+
+body {
+  background: var(--ms-bg);
+  font-family: var(--ms-body);
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+#root { display: flex; flex-direction: column; min-height: 100vh; }
+#root > main { flex: 1 0 auto; }
+
+/* ── Logo ─────────────────────────────────────────────────────────────── */
+.ms-logo {
+  font-family: var(--ms-display);
+  color: var(--ms-text);
+  line-height: 1;
+  letter-spacing: 0.005em;
+  white-space: nowrap;
+  display: inline-block;
+}
+.ms-logo__i { position: relative; display: inline-block; }
+.ms-logo__i svg {
+  position: absolute;
+  left: 50%;
+  top: -0.07em;
+  width: 0.5em;
+  height: 0.5em;
+  transform: translateX(-50%);
+  overflow: visible;
+}
+a:hover .ms-logo, .ms-header__logo:hover { text-decoration: none; }
+
+/* ── Buttons ──────────────────────────────────────────────────────────── */
+.ms-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-family: var(--ms-cond);
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-size: 1.05rem;
+  line-height: 1;
+  padding: 14px 22px;
+  border-radius: 14px;
+  border: 2px solid transparent;
+  cursor: pointer;
+  color: var(--ms-text);
+  background: var(--ms-card);
+  border-color: var(--ms-border);
+  text-decoration: none;
+  transition: background 0.15s, transform 0.1s;
+}
+.ms-btn:hover { text-decoration: none; background: var(--ms-card-2); }
+.ms-btn:active { transform: translateY(1px); }
+.ms-btn--primary { background: var(--ms-yellow); color: var(--ms-ink); border-color: var(--ms-yellow); }
+.ms-btn--primary:hover { background: var(--ms-yellow-hover); border-color: var(--ms-yellow-hover); }
+.ms-btn--ghost { background: transparent; }
+.ms-btn--sm { font-size: 0.95rem; padding: 9px 14px; border-radius: 10px; }
+.ms-btn--lg { font-size: 1.3rem; padding: 18px 30px; border-radius: 18px; }
+.ms-btn[disabled] { opacity: 0.5; cursor: not-allowed; }
+
+/* ── Header ───────────────────────────────────────────────────────────── */
+.ms-header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: rgba(14, 19, 32, 0.92);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--ms-border);
+}
+.ms-header__inner {
+  max-width: var(--ms-wide);
+  margin: 0 auto;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px 20px;
+  flex-wrap: wrap;
+}
+.ms-header__inner--narrow { max-width: 980px; }
+.ms-header__logo { display: inline-flex; }
+.ms-header__logo .ms-logo { font-size: 28px !important; }
+.ms-header__back, .ms-header__login, .ms-header__logout {
+  color: var(--ms-soft);
+  font-weight: 600;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+}
+.ms-header__back:hover, .ms-header__login:hover, .ms-header__logout:hover { color: var(--ms-text); }
+.ms-grow { flex: 1; }
+
+.ms-nav {
+  display: flex;
+  gap: 4px;
+  order: 3;
+  width: 100%;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.ms-nav::-webkit-scrollbar { display: none; }
+.ms-nav a {
+  font-family: var(--ms-cond);
+  font-weight: 700;
+  font-size: 1.05rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ms-muted);
+  padding: 6px 10px;
+  border-radius: 10px;
+  white-space: nowrap;
+}
+.ms-nav a:hover { color: var(--ms-text); text-decoration: none; }
+.ms-nav a.active { color: var(--ms-ink); background: var(--ms-yellow); }
+.ms-nav--landing { display: none; }
+
+.ms-chips { display: flex; gap: 8px; align-items: center; margin-left: auto; flex-wrap: wrap; }
+.ms-chip {
+  font-family: var(--ms-cond);
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--ms-text);
+  background: var(--ms-card);
+  border: 1px solid var(--ms-border);
+  border-radius: 999px;
+  padding: 5px 12px;
+  white-space: nowrap;
+}
+.ms-chip--streak { color: var(--ms-orange); }
+a.ms-chip:hover { text-decoration: none; border-color: var(--ms-muted); }
+
+.ms-header__inner--landing .ms-header__login { margin-left: auto; }
+
+@media (max-width: 520px) {
+  .ms-chip--streak { display: none; }
+  .ms-header__logout { display: none; }
+  .ms-header__logo .ms-logo { font-size: 24px !important; }
+  .ms-header__inner { gap: 10px 12px; }
+  .ms-chips { gap: 6px; }
+  .ms-wide-only { display: none; }
+}
+@media (min-width: 521px) { .ms-narrow-only { display: none; } }
+
+@media (min-width: 900px) {
+  .ms-nav { order: 0; width: auto; flex: 1; justify-content: center; }
+  .ms-nav--landing { display: flex; }
+  .ms-chips { margin-left: 0; }
+  .ms-header__inner--landing .ms-header__login { margin-left: 0; }
+}
+
+/* ── Footer ───────────────────────────────────────────────────────────── */
+.ms-footer {
+  border-top: 1px solid var(--ms-border);
+  margin-top: 48px;
+  color: var(--ms-muted);
+  font-size: 0.9rem;
+}
+.ms-footer__inner {
+  max-width: var(--ms-wide);
+  margin: 0 auto;
+  padding: 28px 16px 36px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px 28px;
+  align-items: center;
+}
+.ms-footer__nav { display: flex; flex-wrap: wrap; gap: 6px 18px; }
+.ms-footer__nav a { color: var(--ms-soft); }
+.ms-footer__stores { display: flex; gap: 10px; margin-left: auto; }
+.ms-footer__stores span { border: 1px solid var(--ms-border); border-radius: 10px; padding: 6px 12px; }
+
+/* ── Page frame and common blocks ───────────────────────────────────────── */
+.ms-page {
+  width: 100%;
+  max-width: var(--ms-wide);
+  margin: 0 auto;
+  padding: 28px 16px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+.ms-page--narrow { max-width: 980px; }
+.ms-h1, .ms-h2, .ms-h3 { font-family: var(--ms-display); font-weight: 400; color: var(--ms-text); text-wrap: balance; }
+.ms-h1 { font-size: clamp(2rem, 5vw, 3.4rem); line-height: 1.02; }
+.ms-h2 { font-size: clamp(1.5rem, 3.4vw, 2.2rem); line-height: 1.08; }
+.ms-h3 { font-size: 1.3rem; line-height: 1.15; }
+.ms-eyebrow {
+  font-family: var(--ms-cond);
+  font-weight: 800;
+  font-size: 0.95rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--ms-orange);
+}
+.ms-lede { color: var(--ms-soft); font-size: 1.1rem; max-width: 62ch; }
+.ms-card {
+  background: var(--ms-card);
+  border: 1px solid var(--ms-border);
+  border-radius: 20px;
+  padding: 20px;
+  min-width: 0;
+}
+.ms-grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 240px), 1fr)); }
+.ms-row { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+.ms-placeholder { color: var(--ms-muted); font-style: normal; }
+.ms-tag {
+  display: inline-block;
+  font-family: var(--ms-cond);
+  font-weight: 800;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: var(--ms-card-2);
+  color: var(--ms-soft);
+}
+.ms-coins { font-variant-numeric: tabular-nums; font-family: var(--ms-cond); font-weight: 800; }
