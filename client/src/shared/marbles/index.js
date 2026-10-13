@@ -113,6 +113,10 @@ export function dressEntries(entries, key, slugs) {
   return entries.map((e, i) => (e.marble?.look ? e : { ...e, marble: { ...e.marble, look: slugs[(start + i) % slugs.length] } }));
 }
 
+/** Designs approved in 3D (catalog.json → approved3d): the shop shows their 3D marble; any other its shop picture. */
+export const APPROVED_3D = new Set(catalog.approved3d?.designs ?? []);
+export const shows3d = (slug) => APPROVED_3D.has(ITEM[slug]?.design.key);
+
 /** The designs whose 3D look is finished (materials.js builds exactly these). */
 export const BUILT_MATERIALS = ['vane-glass', 'steel', 'champion', 'aurora-glass'];
 

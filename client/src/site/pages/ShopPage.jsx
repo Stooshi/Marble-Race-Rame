@@ -4,7 +4,7 @@ import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { api } from '../../api/client';
 import { useAuth } from '../../context/AuthContext';
 import { useAsync } from '../../hooks/useAsync';
-import { DESIGN, ITEM, ITEMS, RARITY_ORDER, bagPrice, catalog, normaliseId, priceLabel, rarityInfo } from '../../shared/marbles';
+import { DESIGN, ITEM, ITEMS, RARITY_ORDER, bagPrice, catalog, normaliseId, priceLabel, rarityInfo, shows3d } from '../../shared/marbles';
 import { GLOSS } from '../../shared/marbles/badge';
 import economy from '../../shared/economy.json';
 import { COIN_PACKS } from '../../shared/payments/packs';
@@ -269,9 +269,12 @@ function MarbleSheet({ slug, onSlug, owned, live, buy, onClose }) {
       <div className="ms-sheet__panel" role="dialog" aria-modal="true" aria-labelledby="sheet-name" tabIndex={-1} ref={ref} onClick={(e) => e.stopPropagation()}>
         <button type="button" className="ms-sheet__close" onClick={onClose} aria-label="Close">×</button>
         <div className="ms-sheet__ball">
-          <Suspense fallback={<MarbleBadge slug={slug} size={170} />}>
-            <Turntable key={slug} slug={slug} label={`${d.name}, ${item.shade.name}, in 3D`} />
-          </Suspense>
+          {/* The 3D marble only once its look is approved; until then the shop picture, in the shade chosen (never a stand-in). */}
+          {shows3d(slug) ? (
+            <Suspense fallback={<MarbleBadge key={slug} slug={slug} size={170} still />}>
+              <Turntable key={slug} slug={slug} label={`${d.name}, ${item.shade.name}, in 3D`} />
+            </Suspense>
+          ) : <MarbleBadge key={slug} slug={slug} size={170} label={`${d.name}, ${item.shade.name}`} />}
         </div>
         <span className="ms-mcard__rarity" style={{ color: info.colour, margin: 0 }}>{info.label} · {priceLabel(info.price)}</span>
         <span className="ms-sheet__col">{item.collection.toUpperCase()}{d.limited ? '' : ` · COLLECTION ${COLLECTION.number}`}</span>

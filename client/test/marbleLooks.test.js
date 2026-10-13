@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { Matrix4, NoColorSpace, Quaternion, Vector3 } from 'three';
-import { bagPrice, DESIGNS, FEATURED_DESIGNS, ITEMS, ITEM, catalog, dressEntries, findById, lookName, nameLooks, normaliseId, originalSlug, priceLabel } from '../src/shared/marbles';
+import { APPROVED_3D, bagPrice, DESIGNS, FEATURED_DESIGNS, ITEMS, ITEM, catalog, dressEntries, findById, lookName, nameLooks, normaliseId, originalSlug, priceLabel, shows3d } from '../src/shared/marbles';
 import { GLOSS_LAYERS, badgeOf, lookOf } from '../src/shared/marbles/badge';
 import { hexRgb, mixHex, rasterize, toBytes, toCss } from '../src/shared/marbles/paint';
 import { BUILT_MATERIALS, MAX_TURN, NIGHT_LEVEL, _test, createMarbleLook, lookSpec } from '../src/shared/marbles/materials';
@@ -107,6 +107,17 @@ describe('collection marble looks', () => {
 
   it('every catalogue marble has a flat badge of its own design (no plain fallback colour)', () => {
     for (const i of ITEMS) expect(badgeOf(i.slug).background).toMatch(/gradient/);
+  });
+
+  it('the shop never shows a stand-in: only approved, built designs show in 3D; the rest show their picture', () => {
+    for (const key of APPROVED_3D) {
+      const d = DESIGNS.find((x) => x.key === key);
+      expect(d).toBeTruthy();
+      expect(BUILT_MATERIALS).toContain(d.material);
+    }
+    for (const i of ITEMS) if (!BUILT_MATERIALS.includes(i.design.material)) expect(shows3d(i.slug)).toBe(false);
+    expect(shows3d('cats-eye-sunset')).toBe(true);
+    expect(shows3d('flame-swirl-sunset')).toBe(false);
   });
 
   it('Marble IDs: found however they are typed', () => {

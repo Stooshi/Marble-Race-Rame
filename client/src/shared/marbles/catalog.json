@@ -1315,5 +1315,11 @@
     "count": 1
    }
   ]
+ },
+ "approved3d": {
+  "note": "Designs whose 3D look is approved (passed the colour and rolling checks and Moses's review). Only these show the 3D marble in the shop; every other design shows its shop picture, never a stand-in.",
+  "designs": [
+   "cats-eye"
+  ]
  }
 }
