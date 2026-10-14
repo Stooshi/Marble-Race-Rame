@@ -9,7 +9,7 @@
  * both use them.
  */
 import { ITEM } from './index.js';
-import { T, alpha, mixHex, toCss } from './paint.js';
+import { T, alpha, cssDrawable, hexRgb, mixHex, toCss } from './paint.js';
 
 // Lighter or darker versions of a colour, for depth (as CSS color-mix in srgb).
 const toward = mixHex;
@@ -56,12 +56,15 @@ const LOOKS = {
     return { layers: [rings], parts: { pattern: { layers: [rings], map: 'front', repeat: 18 } } };
   },
   patch: ([p, p2, b]) => {
-    const layers = [
-      { type: 'radial', at: [70, 30], stops: [[p, 0, 38], [T, 40]] },
-      { type: 'radial', at: [25, 75], stops: [[p2, 0, 30], [T, 32]] },
-      { type: 'solid', color: b },
+    // Round patches all over the ball (not only front and back), so it looks the same from every
+    // side; the picture is the ball seen from the front.
+    const caps = [
+      { at: [0.5, 0.45, 0.74], size: 44, color: p }, { at: [-0.55, -0.6, 0.58], size: 36, color: p2 },
+      { at: [-0.6, 0.55, -0.58], size: 40, color: p }, { at: [0.62, -0.5, -0.6], size: 38, color: p2 },
+      { at: [-0.98, 0.15, 0.05], size: 30, color: p2 }, { at: [0.97, -0.1, -0.15], size: 30, color: p },
     ];
-    return { layers, parts: { pattern: { layers, map: 'front', repeat: 180 } } };
+    const pattern = { map: 'caps', caps, base: b, view: 'front' };
+    return { layers: [{ type: 'ball', pattern, view: 'front' }], parts: { pattern } };
   },
   'vane-glass': ([v, v2, g]) => {
     const tint = { type: 'radial', stops: [[T, 0, 38], [alpha(g, 0.92), 72]] };
@@ -77,8 +80,10 @@ const LOOKS = {
   },
   corkscrew: ([a, b, base]) => {
     const spiral = { type: 'conic', stops: [[a, 0, 43.2], [base, 43.2, 90], [b, 90, 133.2], [base, 133.2, 180], [a, 180, 223.2], [base, 223.2, 270], [b, 270, 313.2], [base, 313.2]] };
-    // A corkscrew's stripes wind round the ball: the slices twist a full half turn from pole to pole.
-    return { layers: [spiral], parts: { pattern: { layers: [spiral], map: 'gores', twist: 180, repeat: 90 } } };
+    // A corkscrew's stripes wind round the ball: the slices twist a half turn from pole to pole,
+    // and the picture is the same ball seen down its axis (a spiral).
+    const pattern = { layers: [spiral], map: 'gores', twist: 180, repeat: 90 };
+    return { layers: [{ type: 'ball', pattern, view: 'axis' }], parts: { pattern } };
   },
   'bee-bands': ([s, b]) => {
     const bands = { type: 'linear', repeat: true, angle: 0, stops: [[s, 0, 16], [b, 16, 32]] };
@@ -88,7 +93,9 @@ const LOOKS = {
   oxblood: ([s, s2, b]) => {
     const streaks = { type: 'conic', repeat: true, from: 15, stops: [[T, 0, 25], [alpha(s, 0.95), 25, 32], [T, 32, 50], [alpha(s2, 0.8), 50, 53], [T, 53, 72]] };
     const glass = { type: 'radial', stops: [[b, 0], [toward(b, '#000000', 0.12), 100]] };
-    return { layers: [streaks, glass], parts: { body: [glass], pattern: { layers: [streaks], map: 'gores', twist: 60, repeat: 72 } } };
+    // The streaks swirl through the glass (60° from pole to pole); the picture is the same ball seen down its axis.
+    const pattern = { layers: [streaks], map: 'gores', twist: 60, repeat: 72 };
+    return { layers: [{ type: 'ball', pattern, view: 'axis' }, glass], parts: { body: [glass], pattern } };
   },
   steel: ([s, d]) => {
     const body = {
@@ -101,7 +108,9 @@ const LOOKS = {
     const core = { type: 'radial', stops: [['#FFFFFF', 0, 10], [T, 28]] };
     const flames = { type: 'conic', repeat: true, stops: [[b, 0, 8], [f, 8, 14], [f2, 14, 20], [b, 20, 30]] };
     // The flames swirl round the ball (twisting as they go); the white-hot core glows in the middle.
-    return { layers: [core, flames], parts: { pattern: { layers: [flames], map: 'gores', twist: 90, repeat: 30 }, over: [core] } };
+    // The picture is the same ball seen down its axis.
+    const pattern = { layers: [flames], map: 'gores', twist: 90, repeat: 30 };
+    return { layers: [core, { type: 'ball', pattern, view: 'axis' }], parts: { pattern, over: [core] } };
   },
   champion: ([g, d, fl]) => {
     const body = { type: 'radial', at: [40, 35], stops: [[g, 0], [toward(g, d, 0.6), 55], [d, 100]] };
@@ -153,7 +162,9 @@ export function badgeOf(slug) {
   const look = lookOf(slug);
   if (!look) return { background: '#888', spin: null, glow: null };
   return {
-    background: toCss(look.layers),
+    // (A picture with the ball's own pattern needs the painter: background null, the page draws `layers`.)
+    background: cssDrawable(look.layers) ? toCss(look.layers) : null,
+    layers: look.layers,
     spin: SPIN[look.material] ?? null,
     glow: look.glow ? cssAlpha(look.glow, 0.5) : null,
   };
@@ -172,13 +183,18 @@ export function plainLookOf({ color_primary: a = '#888888', color_secondary: b =
   if (!b || pattern === 'solid') {
     // One colour: glossy, lit from the top left, darker towards its edge (its shading stays put as it rolls).
     const body = { type: 'radial', at: [35, 30], stops: [[toward(a, '#FFFFFF', 0.3), 0], [a, 45], [toward(a, '#000000', 0.45), 100]] };
-    look = { material: 'plain-solid', layers: [body], parts: { body: [body] } };
+    // A faint band round the ball so you can see it roll: a little lighter (darker on a pale marble).
+    const [r, g, bl] = hexRgb(a);
+    const pale = 0.2126 * r + 0.7152 * g + 0.0722 * bl > 190;
+    const band = { map: 'band', axis: [0.35, 0.9, 0.25], width: 10, soft: 5, color: alpha(toward(a, pale ? '#000000' : '#FFFFFF', 0.45), 0.3), view: 'front', repeat: 180 };
+    look = { material: 'plain-solid', layers: [{ type: 'ball', pattern: band, view: 'front' }, body], parts: { body: [body], pattern: band } };
   } else if (pattern === 'striped') {
     look = { material: 'plain-striped', ...LOOKS.stripe([b, a]) };
   } else {
-    // Two colours swirled: in the picture a soft pinwheel; on the ball, swirling slices.
+    // Two colours swirled: slices twisting round the ball; the picture is the ball seen down its axis.
     const swirl = { type: 'conic', stops: [[a], [b], [a], [b], [a]] };
-    look = { material: `plain-${pattern}`, layers: [swirl], parts: { pattern: { layers: [swirl], map: 'gores', twist: 120, repeat: 180 } } };
+    const twirl = { layers: [swirl], map: 'gores', twist: 120, repeat: 180 };
+    look = { material: `plain-${pattern}`, layers: [{ type: 'ball', pattern: twirl, view: 'axis' }], parts: { pattern: twirl } };
   }
   const out = { ...look, colours: [a, b].filter(Boolean), glow: null, key };
   plainLooks.set(key, out);
@@ -188,5 +204,5 @@ export function plainLookOf({ color_primary: a = '#888888', color_secondary: b =
 /** A plain Original (old one-colour marble): its colours as a simple picture. */
 export function plainBadge(marble = {}) {
   const look = plainLookOf(marble);
-  return { background: toCss(look.layers), spin: marble.pattern === 'galaxy' ? 'slow' : null, glow: null };
+  return { background: cssDrawable(look.layers) ? toCss(look.layers) : null, layers: look.layers, key: look.key, spin: marble.pattern === 'galaxy' ? 'slow' : null, glow: null };
 }

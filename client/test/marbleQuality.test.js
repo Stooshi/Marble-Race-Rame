@@ -53,6 +53,16 @@ describe('every marble: the quality checks', () => {
     }
   }, 120_000);
 
+  it('1. seen as the picture shows it, the 3D marble is the picture, point for point (median ΔE under 2)', () => {
+    for (const m of ALL) {
+      const spec = m.spec();
+      const ball = drawMarble(spec, { n: 48, turn: pictureTurn(spec) });
+      const pic = drawPicture(m.layers(), { n: 48 });
+      const d = ball.map((p, k) => deltaE(p.rgb, pic[k].rgb)).sort((a, b) => a - b);
+      expect(d[d.length >> 1], `${m.name}: median ΔE ${d[d.length >> 1].toFixed(2)}`).toBeLessThan(2);
+    }
+  }, 120_000);
+
   it('1. at night: only darker, the same hue', () => {
     for (const m of ALL) {
       const spec = m.spec();
@@ -64,10 +74,14 @@ describe('every marble: the quality checks', () => {
     }
   });
 
-  it('the plain marbles\' pictures are the same as before (the master): solid, striped, swirled', () => {
-    expect(plainBadge({ color_primary: '#E0115F' }).background).toBe(toCss(plainLookOf({ color_primary: '#E0115F' }).layers));
-    const solid = plainLookOf({ color_primary: '#E0115F' }).layers[0];
-    expect(solid.stops.map((s) => s[0])).toEqual(['#E9588F', '#E0115F', '#7B0934']);
+  it('the plain marbles\' pictures: the same shading as before, and a faint band to see them roll', () => {
+    const look = plainLookOf({ color_primary: '#E0115F' });
+    expect(plainBadge({ color_primary: '#E0115F' }).layers).toBe(look.layers);
+    const body = look.layers[look.layers.length - 1];
+    expect(body.stops.map((s) => s[0])).toEqual(['#E9588F', '#E0115F', '#7B0934']);
+    expect(look.parts.pattern.map).toBe('band');
+    expect(look.parts.pattern.color.a).toBeLessThan(0.5); // (faint)
+    expect(plainBadge({ color_primary: '#E4D00A', color_secondary: '#FF8C00', pattern: 'striped' }).background).toMatch(/gradient/);
   });
 
   it('2 and 3. the pattern rolls with the ball: forwards, in step, never past 40% of its repeat a frame (no wagon-wheel)', () => {

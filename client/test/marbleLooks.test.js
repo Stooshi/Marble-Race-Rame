@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { Matrix4, NoColorSpace, Quaternion, Vector3 } from 'three';
 import { APPROVED_3D, bagPrice, DESIGNS, FEATURED_DESIGNS, ITEMS, ITEM, catalog, dressEntries, findById, lookName, nameLooks, normaliseId, originalSlug, priceLabel, shows3d } from '../src/shared/marbles';
 import { GLOSS_LAYERS, badgeOf, lookOf } from '../src/shared/marbles/badge';
-import { hexRgb, mixHex, rasterize, toBytes, toCss } from '../src/shared/marbles/paint';
+import { cssDrawable, hexRgb, mixHex, rasterize, toBytes, toCss } from '../src/shared/marbles/paint';
 import { BUILT_MATERIALS, MAX_TURN, NIGHT_LEVEL, _test, createMarbleLook, lookSpec } from '../src/shared/marbles/materials';
 
 // The catalogue is going to be swapped for a new collection, so these tests find
@@ -23,7 +23,9 @@ describe('collection marble looks', () => {
     for (const item of ITEMS.filter((i) => BUILT_MATERIALS.includes(i.design.material))) {
       const spec = lookSpec(item.slug);
       const { layers } = lookOf(item.slug);
-      expect(badgeOf(item.slug).background).toBe(toCss(layers));
+      // (A picture with the ball's own pattern on it is painted from the layers, not drawn as CSS.)
+      if (cssDrawable(layers)) expect(badgeOf(item.slug).background).toBe(toCss(layers));
+      else expect(badgeOf(item.slug).layers).toBe(layers);
       for (const l of spec.body ?? []) expect(layers.includes(l)).toBe(true); // the same objects, not copies
       for (const l of spec.turning ?? []) expect(layers.includes(l)).toBe(true);
       for (const l of spec.over ?? []) expect(layers.includes(l) || GLOSS_LAYERS.includes(l)).toBe(true);
@@ -106,7 +108,11 @@ describe('collection marble looks', () => {
   });
 
   it('every catalogue marble has a flat badge of its own design (no plain fallback colour)', () => {
-    for (const i of ITEMS) expect(badgeOf(i.slug).background).toMatch(/gradient/);
+    for (const i of ITEMS) {
+      const b = badgeOf(i.slug);
+      if (b.background) expect(b.background).toMatch(/gradient/);
+      else expect(b.layers.some((l) => l.type === 'ball')).toBe(true);
+    }
   });
 
   it('the shop never shows a stand-in: only approved, built designs show in 3D; the rest show their picture', () => {

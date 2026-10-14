@@ -86,6 +86,59 @@ export function layerCss(l) {
   throw new Error(`Unknown layer type ${l.type}`);
 }
 
+/**
+ * A pattern fixed in the ball, as a function of the direction (x, y, z: a unit
+ * vector in the ball's own frame) → straight [r, g, b, a]. The 3D marble paints
+ * its rolling texture with it, and a picture layer { type: 'ball' } draws the
+ * same ball as the shop picture, so the two match point for point.
+ *   map 'gores': a conic layer as slices from pole to pole (y up), twisting
+ *     `twist` degrees from pole to pole; seen down the axis, the conic as CSS draws it.
+ *   map 'caps': round patches ({ at: [x, y, z], size: degrees, color }) on `base`.
+ *   map 'band': a soft band `width` degrees wide round the great circle square to `axis`.
+ */
+export function ballPattern(pattern) {
+  const soft = (e0, e1, v) => { const t = Math.max(0, Math.min(1, (v - e0) / (e1 - e0))); return t * t * (3 - 2 * t); };
+  if (pattern.map === 'gores') {
+    const layer = pattern.layers[0];
+    const flat = resolveStops(layer.stops, 360);
+    const twist = pattern.twist ?? 0;
+    return (x, y, z) => {
+      const deg = (Math.atan2(x, -z) * 180) / Math.PI + twist * y - (layer.from ?? 0);
+      const c = colourAt(flat, ((deg % 360) + 360) % 360, layer.repeat);
+      return c[3] > 0 ? [c[0] / c[3], c[1] / c[3], c[2] / c[3], c[3]] : [0, 0, 0, 0];
+    };
+  }
+  if (pattern.map === 'caps') {
+    const base = rgba(pattern.base);
+    const caps = pattern.caps.map(({ at, size, color }) => {
+      const n = Math.hypot(...at);
+      return { at: at.map((v) => v / n), cos: Math.cos((size * Math.PI) / 180), edge: Math.cos(((size + 1.2) * Math.PI) / 180), c: rgba(color) };
+    });
+    return (x, y, z) => {
+      let c = base;
+      for (const cap of caps) {
+        const dot = x * cap.at[0] + y * cap.at[1] + z * cap.at[2];
+        if (dot > cap.edge) { const k = soft(cap.edge, cap.cos, dot); c = c.map((v, i) => v + (cap.c[i] - v) * k); }
+      }
+      return c;
+    };
+  }
+  if (pattern.map === 'band') {
+    const n = Math.hypot(...pattern.axis); const a = pattern.axis.map((v) => v / n);
+    const c = rgba(pattern.color);
+    const half = Math.sin(((pattern.width / 2) * Math.PI) / 180); const edge = Math.sin(((pattern.width / 2 + (pattern.soft ?? 4)) * Math.PI) / 180);
+    return (x, y, z) => {
+      const s = Math.abs(x * a[0] + y * a[1] + z * a[2]);
+      const k = 1 - soft(half, edge, s);
+      return [c[0], c[1], c[2], c[3] * k];
+    };
+  }
+  throw new Error(`Unknown ball pattern ${pattern.map}`);
+}
+
+/** Whether CSS can draw these layers (a 'ball' layer needs the painter: rasterize). */
+export const cssDrawable = (layers) => layers.every((l) => l.type !== 'ball');
+
 /** A stack of layers (top first) as a CSS background value. */
 export const toCss = (layers) => layers.map(layerCss).join(', ');
 
@@ -167,6 +220,18 @@ function layerSampler(l) {
     return (x, y) => {
       const deg = (Math.atan2(x - cx, -(y - cy)) * 180) / Math.PI - (l.from ?? 0);
       return colourAt(flat, ((deg % 360) + 360) % 360, l.repeat);
+    };
+  }
+  if (l.type === 'ball') {
+    // The ball's own pattern as the picture shows it (see ballPattern): 'axis' looks down its
+    // pattern's axis, 'front' from the front. Outside the ball: nothing.
+    const at = ballPattern(l.pattern);
+    return (x, y) => {
+      const mx = 2 * x - 1; const my = 1 - 2 * y; const rr = mx * mx + my * my;
+      if (rr >= 1) return [0, 0, 0, 0];
+      const nz = Math.sqrt(1 - rr);
+      const c = l.view === 'axis' ? at(mx, nz, -my) : at(mx, my, nz);
+      return [c[0] * c[3], c[1] * c[3], c[2] * c[3], c[3]];
     };
   }
   throw new Error(`Unknown layer type ${l.type}`);

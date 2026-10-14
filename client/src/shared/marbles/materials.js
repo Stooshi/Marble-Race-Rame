@@ -28,7 +28,7 @@ import {
 } from 'three';
 import { BUILT_MATERIALS as BUILT_LIST, DESIGN, ITEM } from './index.js';
 import { GLOSS_LAYERS, lookOf, plainLookOf } from './badge.js';
-import { conicAt, hexRgb, rasterize, toBytes } from './paint.js';
+import { ballPattern, hexRgb, rasterize, toBytes } from './paint.js';
 
 const TEX_W = 256;
 const TEX_H = 128;
@@ -189,11 +189,12 @@ function patternTexture(pattern) {
       return px[k + 3] ? [px[k], px[k + 1], px[k + 2], px[k + 3] / 255] : null;
     }, { w: 512, h: 256 });
   }
-  const layer = pattern.layers[0];
+  // Slices, patches or a band (paint.js ballPattern): the very function the shop picture is drawn with.
+  const at = ballPattern(pattern);
   return paintSphere((d) => {
-    const c = conicAt(layer, (Math.atan2(d.z, d.x) * 180) / Math.PI + (pattern.twist ?? 0) * d.y);
+    const c = at(d.x, d.y, d.z);
     return c[3] > 0 ? c : null;
-  }, { w: 512, h: 128 });
+  }, { w: 512, h: pattern.map === 'gores' ? 128 : 256 });
 }
 
 /** A sphere texture's average over the ball (by area): its colour and how much of the ball it covers. */
@@ -227,7 +228,7 @@ function fromParts(look) {
     spec.blur = averageOf(spec.detail);
     spec.repeat = parts.pattern.repeat;
     // Facing you as the picture shows it: a 'front' pattern from the front, slices down their axis.
-    spec.pictureView = parts.pattern.map === 'gores' ? 'axis' : 'front';
+    spec.pictureView = parts.pattern.view ?? (parts.pattern.map === 'gores' ? 'axis' : 'front');
   }
   if (look.glow) spec.halo = { color: look.glow, size: 2.6, opacity: 0.3 };
   return spec;
