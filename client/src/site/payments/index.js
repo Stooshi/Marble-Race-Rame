@@ -36,7 +36,7 @@ const ADAPTERS = {
   async store(pack, provider) {
     // With the Capacitor apps: purchase `pack.id` through the store plugin, then
     //   const { coins } = await api.redeemReceipt({ provider, receipt });
-    return { status: 'unavailable', message: `Buying coins through ${STORE_NAME[provider]} arrives with the app. [Placeholder]` };
+    return { status: 'unavailable', message: `Buying coins in the app (through ${STORE_NAME[provider]}) isn't available yet. [Placeholder]` };
   },
 };
 

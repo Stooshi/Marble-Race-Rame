@@ -33,6 +33,12 @@ const LEADER_MARGIN = 3; // metres: the follow camera only switches to a new lea
 const SCENERY_LAYER = 1;  // scenery is drawn in the big view only (the small corner view skips it, for speed)
 const HITCH_MS = 100; // frames further apart than this count as a hold-up (the frame-rate counter shows how many)
 const SLOW_FRAME_MS = 40; // frames further apart than this on average (under 25 a second): draw at a lower resolution
+// Phones draw at most 60 frames a second: a 90/120 Hz screen otherwise doubles the work (heat,
+// battery, and the phone then slows itself down) for motion the races don't need.
+const PHONE_FRAME_MS = 1000 / 60;
+// How far a phone that still can't keep up may drop its resolution (below 1 pixel per screen
+// pixel: a little softer, but smooth).
+const PHONE_MIN_PIXEL_RATIO = 0.75;
 const FINISH_FROM = 12; // metres short of the line where the big view starts over to the finish shot…
 const FINISH_TO = 6; // …and past it where it is there
 const SIGHT_EASE = 0.6; // seconds: how gently the follow camera moves back out after coming in to keep its marble in sight
@@ -171,7 +177,9 @@ export class TrackScene {
     this.sceneryOn = scenery;
     // Where billboard images come from (the server; the dev kit view and tests swap it out).
     this.billboardSource = fetchBillboards;
-    this.renderer = new WebGLRenderer({ canvas, antialias: window.devicePixelRatio < 2, powerPreference: 'default' });
+    this.renderer = new WebGLRenderer({ canvas, antialias: window.devicePixelRatio < 2 && !lite, powerPreference: 'default' });
+    this.minPixelRatio = lite ? PHONE_MIN_PIXEL_RATIO : 1;
+    this.frameCap = lite ? PHONE_FRAME_MS : 0;
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, lowEnd || lite ? 1.5 : maxPixelRatio));
     this.renderer.outputColorSpace = SRGBColorSpace;
     this.renderer.info.autoReset = false; // counted over both views (see render)
@@ -1066,7 +1074,10 @@ export class TrackScene {
   render() {
     if (this.renderQueued) return;
     this.renderQueued = true;
-    requestAnimationFrame(() => {
+    const draw = (now) => {
+      // (Phones: skip a screen refresh that comes before the next 60 Hz frame is due.)
+      if (this.frameCap && now < (this.nextDue ?? 0) - 2) { requestAnimationFrame(draw); return; }
+      if (this.frameCap) this.nextDue = Math.max((this.nextDue ?? now) + this.frameCap, now);
       this.renderQueued = false;
       this.keepPace();
       const r = this.renderer;
@@ -1084,14 +1095,16 @@ export class TrackScene {
         r.setScissorTest(false);
         r.setViewport(0, 0, this.size.width, this.size.height);
       }
-    });
+    };
+    requestAnimationFrame(draw);
   }
 
   /**
    * Keeps the picture moving smoothly on a phone that can't keep up: while
    * frames come more than SLOW_FRAME_MS apart (a stutter, not a 30 Hz screen)
    * it draws at a slightly lower resolution, a step at a time, down to one
-   * pixel per screen pixel. It never steps back up (no flicker between the two).
+   * pixel per screen pixel (on phones a little further, PHONE_MIN_PIXEL_RATIO).
+   * It never steps back up (no flicker between the two).
    */
   keepPace() {
     const now = performance.now();
@@ -1106,9 +1119,10 @@ export class TrackScene {
     this.pace = this.pace === undefined ? gap : this.pace + (gap - this.pace) * 0.05;
     this.paced = (this.paced ?? 0) + 1;
     const ratio = this.renderer.getPixelRatio();
-    if (this.paced < 60 || this.pace < SLOW_FRAME_MS || ratio <= 1 || now - (this.lastStepDown ?? -Infinity) < 2000) return;
+    const floor = this.minPixelRatio ?? 1;
+    if (this.paced < 60 || this.pace < SLOW_FRAME_MS || ratio <= floor || now - (this.lastStepDown ?? -Infinity) < 2000) return;
     this.lastStepDown = now;
-    this.renderer.setPixelRatio(Math.max(1, ratio - 0.25));
+    this.renderer.setPixelRatio(Math.max(floor, ratio - 0.25));
     this.renderer.setSize(this.size.width, this.size.height, false);
     this.pace = undefined;
     this.paced = 0;

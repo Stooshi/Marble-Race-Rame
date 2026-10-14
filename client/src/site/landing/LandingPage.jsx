@@ -5,6 +5,7 @@ import { useAsync } from '../../hooks/useAsync';
 import MarbleBadge from '../marbles/MarbleBadge';
 import { FEATURED_DESIGNS, originalSlug, rarityInfo } from '../../shared/marbles';
 import { importOrReload } from '../../utils/staleCode';
+import { isNativeApp } from '../../app/native';
 
 const HeroReplay = lazy(() => importOrReload(() => import('./HeroReplay')));
 
@@ -44,7 +45,7 @@ export default function LandingPage() {
             <h1 className="ms-landing__h1">Don't just watch marble races. Race them.</h1>
           </div>
           <div style={{ display: 'grid', gap: 14, flexBasis: 380 }}>
-            <p className="ms-lede" style={{ margin: 0 }}>Pick your marble, drop it into a 20-marble race on one of {total ?? '[43]'} wild tracks, and beat your friends. Free, in your browser, no download.</p>
+            <p className="ms-lede" style={{ margin: 0 }}>Pick your marble, drop it into a 20-marble race on one of {total ?? '[43]'} wild tracks, and beat your friends. {isNativeApp() ? 'Free to play.' : 'Free, in your browser, no download.'}</p>
             <div className="ms-row">
               <Link to="/play/start?quick=1" className="ms-btn ms-btn--primary ms-btn--lg">PLAY NOW, FREE</Link>
               <Link to="/play/friends" className="ms-btn ms-btn--lg ms-btn--ghost">Race with friends</Link>
