@@ -158,9 +158,10 @@ export function keepOutBlocks(boxes, camera, at) {
   koRay.set(camera, koDir);
   const hit = new Vector3();
   for (const b of boxes) {
+    // (Its marble inside it, under a gateway's arch: the camera goes through with it.)
+    if (b.containsPoint(at)) continue;
     koBox.copy(b).expandByScalar(CAMERA_CLEAR);
     if (koBox.containsPoint(camera)) return true;
-    if (b.containsPoint(at)) continue; // (its marble right by it: the sight line starts inside)
     if (koRay.intersectBox(b, hit) && hit.distanceTo(camera) < span - 0.5) return true;
   }
   return false;
