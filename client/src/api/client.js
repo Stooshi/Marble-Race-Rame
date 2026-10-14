@@ -109,5 +109,15 @@ export const api = {
   nextRace: (id, marbleId) => request(`/races/${id}/next`, { method: 'POST', body: marbleId ? { marble_id: marbleId } : {} }),
   results: (id) => request(`/races/${id}/results`),
   replay: (id) => request(`/races/${id}/replay`).then(nameLooks), // marbles named after the looks they wear
+  // Friend rooms: a private race with friends, joined by a short code (marblespins.com/r/CODE).
+  createRoom: (trackId) => request('/rooms', { method: 'POST', body: trackId ? { track_id: trackId } : {} }),
+  room: (code) => request(`/rooms/${encodeURIComponent(code)}`),
+  joinRoom: (code) => request(`/rooms/${encodeURIComponent(code)}/join`, { method: 'POST' }),
+  leaveRoom: (code) => request(`/rooms/${encodeURIComponent(code)}/leave`, { method: 'POST' }),
+  roomTrack: (code, trackId) => request(`/rooms/${encodeURIComponent(code)}/track`, { method: 'POST', body: trackId ? { track_id: trackId } : { random: true } }),
+  roomRemove: (code, userId) => request(`/rooms/${encodeURIComponent(code)}/remove`, { method: 'POST', body: { user_id: userId } }),
+  roomStart: (code) => request(`/rooms/${encodeURIComponent(code)}/start`, { method: 'POST' }),
+  roomClose: (code) => request(`/rooms/${encodeURIComponent(code)}/close`, { method: 'POST' }),
+  setName: (name) => request('/users/me', { method: 'PATCH', body: { display_name: name } }),
   physicsPreview: (track, seed, level) => request(`/physics/preview?track=${encodeURIComponent(track)}&seed=${seed}&level=${level}`),
 };

@@ -7,6 +7,7 @@ import { useAuth } from './context/AuthContext';
 import LandingPage from './site/landing/LandingPage';
 import { FriendsStep, ShooterStep, StartStep, TrackStep } from './site/pages/RaceFlow';
 import ShopPage from './site/pages/ShopPage';
+import RoomPage from './site/pages/RoomPage';
 import CertificatePage from './site/pages/CertificatePage';
 import BagPage from './site/pages/BagPage';
 import CheckoutPage from './site/pages/CheckoutPage';
@@ -46,6 +47,7 @@ export default function App() {
           <Route path="/play/track" element={<TrackStep />} />
           <Route path="/play/shooter" element={<ShooterStep />} />
           <Route path="/play/start" element={<StartStep />} />
+          <Route path="/r/:code" element={<RoomPage />} />
           <Route path="/shop" element={<ShopPage />} />
           <Route path="/collection" element={<ShopPage />} />
           <Route path="/collection/:design" element={<ShopPage />} />

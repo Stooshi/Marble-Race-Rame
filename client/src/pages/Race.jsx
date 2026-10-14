@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
 import { api } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { useAsync } from '../hooks/useAsync';
@@ -87,6 +87,9 @@ export default function Race() {
     );
   }
 
+  // A friend room's race waits at the start in its room.
+  if (status === 'lobby' && race.room_code) return <Navigate to={`/r/${race.room_code}`} replace />;
+
   if (status === 'lobby') {
     return <div className="page">{header}<Lobby details={details.data} onChange={reload} /></div>;
   }
@@ -103,7 +106,7 @@ export default function Race() {
     complete: finished,
     clock: stream.clock,
     canSkip: Boolean(session?.canSkip),
-    next: meta ? <NextRace raceId={raceId} entries={meta.entries} nextRaceId={stream.next?.nextRaceId ?? race?.next_race_id ?? null} /> : null,
+    next: meta ? <NextRace raceId={raceId} entries={meta.entries} nextRaceId={stream.next?.nextRaceId ?? race?.next_race_id ?? null} roomCode={race?.room_code ?? null} /> : null,
   };
   // Race commentary while it runs; once it's over, the results board takes over (inside the view).
   const footer = finished ? null : <EventFeed events={stream.events} entries={meta?.entries ?? []} />;

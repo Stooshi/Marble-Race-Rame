@@ -282,6 +282,28 @@ ALTER TABLE races        ADD COLUMN IF NOT EXISTS track_snapshot jsonb;
 -- after this one (POST /api/races/:id/next creates it once and everyone joins it).
 ALTER TABLE races        ADD COLUMN IF NOT EXISTS next_race_id uuid REFERENCES races(id) ON DELETE SET NULL;
 
+-- -----------------------------------------------------------------------------
+-- Friend rooms: a private race with friends, joined by a short code (/r/K7QF2M)
+-- -----------------------------------------------------------------------------
+-- A room is a run of private races (races.room_id) on the host's track. Its
+-- races never show in the public lists and never start by themselves: the host
+-- starts each one; empty places fill with CPU players as in any race. When one
+-- finishes the next is set up straight away with everyone still in the room.
+-- A room closes after two hours without a race.
+CREATE TABLE IF NOT EXISTS rooms (
+    id               uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    code             varchar(8)  NOT NULL UNIQUE,
+    host_id          uuid        NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    track_id         uuid        REFERENCES tracks(id) ON DELETE SET NULL,
+    current_race_id  uuid        REFERENCES races(id) ON DELETE SET NULL,
+    status           varchar(10) NOT NULL DEFAULT 'open' CHECK (status IN ('open', 'closed')),
+    created_at       timestamptz NOT NULL DEFAULT now(),
+    last_active_at   timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_rooms_host ON rooms (host_id, created_at);
+ALTER TABLE races        ADD COLUMN IF NOT EXISTS room_id uuid REFERENCES rooms(id) ON DELETE SET NULL;
+CREATE INDEX IF NOT EXISTS idx_races_room ON races (room_id) WHERE room_id IS NOT NULL;
+
 -- A player may enter at most one marble per race.
 CREATE UNIQUE INDEX IF NOT EXISTS uq_race_entries_race_user
     ON race_entries (race_id, user_id) WHERE user_id IS NOT NULL;

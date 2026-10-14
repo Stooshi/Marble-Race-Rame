@@ -9,9 +9,8 @@ import MarbleBadge from '../marbles/MarbleBadge';
 /**
  * The race flow: 1 Friends → 2 Track → 3 Shooter → 4 Starting line.
  * The choices travel in the address (?track=…&with=friends), so any step can
- * be opened, shared or reloaded. Version 1 works over today's races: friends
- * are the players you raced with in the last day and open races you can join.
- * Real friend rooms (a room link, live invites) come next.
+ * be opened, shared or reloaded. Racing with friends goes through a friend room
+ * (RoomPage, /r/CODE); the Friends step makes one or opens one by its code.
  */
 
 const LANDSCAPE = {
@@ -46,7 +45,7 @@ function Steps({ at, track, shooter }) {
 }
 
 /** Makes sure there's someone to race as: a guest account if nobody is signed in. */
-function useRacer() {
+export function useRacer() {
   const { isAuthenticated, loading, playAsGuest } = useAuth();
   const [error, setError] = useState(null);
   useEffect(() => {
@@ -55,7 +54,7 @@ function useRacer() {
   return { ready: isAuthenticated, error };
 }
 
-function useTracks() {
+export function useTracks() {
   const { data } = useAsync(() => api.tracks(), []);
   return useMemo(() => (data?.tracks ?? []).filter((t) => t.is_active !== false), [data]);
 }
@@ -85,6 +84,24 @@ export function FriendsStep() {
   }, [ready]);
   const [joining, setJoining] = useState(null);
   const [joinError, setJoinError] = useState(null);
+  const [making, setMaking] = useState(false);
+  const [roomError, setRoomError] = useState(null);
+  const [roomCode, setRoomCode] = useState('');
+  const trackSlug = search.get('track');
+  const tracks = useTracks();
+
+  const makeRoom = async () => {
+    setMaking(true);
+    setRoomError(null);
+    try {
+      const t = tracks.find((x) => x.slug === trackSlug);
+      const v = await api.createRoom(t?.id);
+      navigate(`/r/${v.room.code}`);
+    } catch (e) {
+      setRoomError(e.message);
+      setMaking(false);
+    }
+  };
 
   const join = async (race) => {
     setJoining(race.id);
@@ -105,16 +122,14 @@ export function FriendsStep() {
       {error && <div className="ms-msg ms-msg--bad">{error}</div>}
       <div className="ms-two">
         <section className="ms-card" style={{ display: 'grid', gap: 12 }} aria-labelledby="room-h">
-          <h2 id="room-h" className="ms-h3" style={{ fontFamily: 'var(--ms-cond)', fontWeight: 800, fontSize: '1.6rem' }}>Your room link</h2>
-          <div className="ms-row">
-            <div className="ms-field-like" style={{ flexBasis: 200 }}>marblespins.com/r/{(user?.username ?? 'YOU').toUpperCase().slice(0, 10)}-[ROOM]</div>
-            <button type="button" className="ms-btn ms-btn--sm" disabled>Copy link</button>
-          </div>
-          <p className="ms-note">Friend rooms are next: anyone with the link joins your room, up to 20 players, with empty places filled by CPU players. [Coming after v1]</p>
-          <div className="ms-row">
-            <button type="button" className="ms-btn ms-btn--sm" disabled>Share via WhatsApp</button>
-            <button type="button" className="ms-btn ms-btn--sm" disabled>Show QR code</button>
-          </div>
+          <h2 id="room-h" className="ms-h3" style={{ fontFamily: 'var(--ms-cond)', fontWeight: 800, fontSize: '1.6rem' }}>Race with friends</h2>
+          <p className="ms-note">Make a room and send its link: friends join from their phone or computer, no account needed. Up to 20 players; CPU players fill the empty places. You pick the track and start.</p>
+          {roomError && <div className="ms-msg ms-msg--bad">{roomError}</div>}
+          <button type="button" className="ms-btn ms-btn--primary" disabled={!ready || making} onClick={makeRoom}>{making ? 'MAKING YOUR ROOM…' : 'MAKE A ROOM'}</button>
+          <form className="ms-form ms-row" style={{ display: 'flex', gap: 8 }} onSubmit={(e) => { e.preventDefault(); if (roomCode.trim()) navigate(`/r/${roomCode.trim().toUpperCase().replace(/[^A-Z0-9]/g, '')}`); }}>
+            <input aria-label="Room code" placeholder="Got a code? e.g. K7QF2M" value={roomCode} onChange={(e) => setRoomCode(e.target.value)} maxLength={10} style={{ flex: '1 1 160px', textTransform: 'uppercase' }} />
+            <button type="submit" className="ms-btn ms-btn--sm" disabled={!roomCode.trim()}>Join</button>
+          </form>
         </section>
         <section className="ms-card" style={{ display: 'grid', gap: 12 }} aria-labelledby="friends-h">
           <h2 id="friends-h" className="ms-h3" style={{ fontFamily: 'var(--ms-cond)', fontWeight: 800, fontSize: '1.6rem' }}>Open races to join</h2>
@@ -134,14 +149,14 @@ export function FriendsStep() {
                 {f.shooter?.item ? <MarbleBadge slug={f.shooter.item} size={34} still /> : <MarbleBadge marble={f.shooter?.original} size={34} still />}
                 <span>@{f.username}</span>
               </span>
-              <button type="button" className="ms-btn ms-btn--sm" disabled title="Invites come with friend rooms">Invite · [soon]</button>
+
             </div>
           ))}
         </section>
       </div>
       <div className="ms-flowbar">
-        <span className="ms-note">Racing solo or with whoever joins · empty places are filled with CPU players</span>
-        <Link to={`/play/track?${search}`} className="ms-btn ms-btn--primary">NEXT: PICK A TRACK</Link>
+        <span className="ms-note">Or race on your own: CPU players fill every other place</span>
+        <Link to={`/play/track?${search}`} className="ms-btn">RACE SOLO: PICK A TRACK</Link>
       </div>
     </div>
   );
@@ -268,7 +283,9 @@ export function ShooterStep() {
           </div>
           <div className="ms-flowbar" style={{ border: 0, padding: 0 }}>
             <span />
-            <Link to={`/play/start?${search}`} className="ms-btn ms-btn--primary">TO THE STARTING LINE</Link>
+            {search.get('room')
+              ? <Link to={`/r/${search.get('room')}?rejoin=1`} className="ms-btn ms-btn--primary">BACK TO THE ROOM</Link>
+              : <Link to={`/play/start?${search}`} className="ms-btn ms-btn--primary">TO THE STARTING LINE</Link>}
           </div>
         </section>
       </div>

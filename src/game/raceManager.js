@@ -159,6 +159,7 @@ class RaceManager {
     if (results) {
       this.emitRace(active.raceId, 'race:finished', { raceId: active.raceId, durationMs: active.sim.durationMs, results });
       this.emitLobby('lobby:race_updated', { raceId: active.raceId, status: 'finished' });
+      this.afterFinish?.(active.raceId);
     }
   }
 
@@ -200,6 +201,7 @@ class RaceManager {
         const endMs = new Date(race.started_at).getTime() + sim.durationMs;
         if (Date.now() >= endMs) {
           await raceService.finalize(id);
+          this.afterFinish?.(id);
           console.log(`[race ${id}] finalized after restart`);
         } else {
           this.track(race, entries, sim);

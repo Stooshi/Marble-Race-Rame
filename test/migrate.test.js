@@ -9,12 +9,14 @@ const schema = fs.readFileSync(SCHEMA_PATH, 'utf8');
 
 test('reads every table and its columns from the schema file', () => {
   const cols = expectedColumns(schema);
-  assert.deepEqual(Object.keys(cols).sort(), ['billboards', 'coin_ledger', 'collection_counters', 'data_updates', 'house_looks', 'marble_appearances', 'marble_colors', 'marble_effects', 'marble_surfaces', 'marbles', 'payments', 'race_entries', 'race_entry_looks', 'race_replays', 'races', 'tracks', 'user_collection', 'user_days', 'user_marbles', 'user_shooter', 'users']);
+  assert.deepEqual(Object.keys(cols).sort(), ['billboards', 'coin_ledger', 'collection_counters', 'data_updates', 'house_looks', 'marble_appearances', 'marble_colors', 'marble_effects', 'marble_surfaces', 'marbles', 'payments', 'race_entries', 'race_entry_looks', 'race_replays', 'races', 'rooms', 'tracks', 'user_collection', 'user_days', 'user_marbles', 'user_shooter', 'users']);
   assert.ok(cols.tracks.includes('physics'));
   assert.deepEqual(cols.billboards, ['id', 'track_slug', 'slot', 'image_url', 'kind', 'note', 'starts_at', 'ends_at', 'created_at']);
   assert.ok(cols.race_replays.includes('data'));
   assert.ok(cols.users.includes('password_hash'));
   assert.ok(cols.races.includes('track_snapshot'));
+  assert.ok(cols.races.includes('room_id'));
+  assert.deepEqual(cols.rooms, ['id', 'code', 'host_id', 'track_id', 'current_race_id', 'status', 'created_at', 'last_active_at']);
   assert.ok(cols.race_entries.includes('split_time_ms'));
   // Table-level constraints and their continuation lines are not columns.
   for (const list of Object.values(cols)) {

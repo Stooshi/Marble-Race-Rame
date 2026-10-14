@@ -7,6 +7,7 @@ const { loadUser } = require('../middleware/auth');
 const { UUID_RE } = require('../utils/validate');
 const raceManager = require('../game/raceManager');
 const raceService = require('../game/raceService');
+const rooms = require('../routes/rooms');
 
 /**
  * Socket.io entry point.
@@ -19,6 +20,8 @@ const raceService = require('../game/raceService');
  *   lobby:unsubscribe
  *   race:watch    { raceId }        join a race room; ack returns current state
  *   race:unwatch  { raceId }
+ *   room:watch    { code }          join a friend room's channel
+ *   room:unwatch  { code }
  *
  * Server -> client:
  *   lobby:race_created / lobby:race_updated
@@ -33,6 +36,7 @@ const raceService = require('../game/raceService');
  *   race:finished    official results
  *   race:next        { raceId, nextRaceId, scheduledAt } the rematch was set up
  *   race:cancelled
+ *   room:updated     { code } something in the friend room changed: fetch GET /api/rooms/:code
  */
 function createSocketServer(httpServer) {
   const io = new Server(httpServer, {
@@ -86,6 +90,19 @@ function createSocketServer(httpServer) {
         console.error('[socket] race:watch failed', err);
         return reply(ack, { ok: false, error: 'Internal error' });
       }
+    });
+
+    socket.on('room:watch', (payload, ack) => {
+      const code = rooms.normaliseCode(payload?.code);
+      if (!code) return reply(ack, { ok: false, error: 'Not a room code' });
+      socket.join(rooms.roomChannel(code));
+      return reply(ack, { ok: true });
+    });
+
+    socket.on('room:unwatch', (payload, ack) => {
+      const code = rooms.normaliseCode(payload?.code);
+      if (code) socket.leave(rooms.roomChannel(code));
+      reply(ack, { ok: true });
     });
 
     socket.on('race:unwatch', (payload, ack) => {

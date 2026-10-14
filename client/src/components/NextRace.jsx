@@ -16,7 +16,25 @@ const clockText = (ms) => {
  * countdown and joins the same race. nextRaceId: the rematch if already known
  * (live, the server announces it); otherwise it is looked up once.
  */
-export default function NextRace({ raceId, entries, nextRaceId = null }) {
+export default function NextRace({ raceId, entries, nextRaceId = null, roomCode = null }) {
+  if (roomCode) return <RoomNext code={roomCode} />;
+  return <PublicNext raceId={raceId} entries={entries} nextRaceId={nextRaceId} />;
+}
+
+/** A friend room's race: the room's next race is already set up with everyone in it; the host starts it. */
+function RoomNext({ code }) {
+  const navigate = useNavigate();
+  return (
+    <div className="next-race">
+      <p className="next-race__text">Your room's next race is ready, with everyone who raced in it. The host starts it from the room.</p>
+      <div className="next-race__actions">
+        <button type="button" className="btn btn--primary" onClick={() => navigate(`/r/${code}`)}>Back to the room</button>
+      </div>
+    </div>
+  );
+}
+
+function PublicNext({ raceId, entries, nextRaceId = null }) {
   const { user } = useAuth();
   const navigate = useNavigate();
   const mine = entries.find((e) => e.user?.id && e.user.id === user?.id);
@@ -27,10 +45,15 @@ export default function NextRace({ raceId, entries, nextRaceId = null }) {
   const [error, setError] = useState(null);
 
   useEffect(() => { if (nextRaceId) setNextId(nextRaceId); }, [nextRaceId]);
+  const [roomCode, setRoomCode] = useState(null); // (a friend room's race, found when looking it up)
   useEffect(() => {
-    if (nextRaceId || !raceId) return undefined;
+    if (!raceId) return undefined;
     let stop = false;
-    api.race(raceId).then((d) => !stop && d.race.next_race_id && setNextId(d.race.next_race_id)).catch(() => {});
+    api.race(raceId).then((d) => {
+      if (stop) return;
+      if (d.race.room_code) setRoomCode(d.race.room_code);
+      else if (!nextRaceId && d.race.next_race_id) setNextId(d.race.next_race_id);
+    }).catch(() => {});
     return () => { stop = true; };
   }, [raceId, nextRaceId]);
   // The rematch's details (who is in, when it starts), kept fresh while it waits.
@@ -64,6 +87,8 @@ export default function NextRace({ raceId, entries, nextRaceId = null }) {
       setBusy(false);
     }
   };
+
+  if (roomCode) return <RoomNext code={roomCode} />;
 
   let action;
   if (open && (amIn || !waiting)) {

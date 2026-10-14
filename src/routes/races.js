@@ -23,7 +23,8 @@ const RACE_LIST_SQL = `
          CASE WHEN r.status = 'finished' THEN r.target_duration_ms END AS duration_ms,
          t.id AS track_id, t.slug AS track_slug, t.name AS track_name, t.difficulty,
          (SELECT COUNT(*)::int FROM race_entries e WHERE e.race_id = r.id) AS entry_count,
-         (SELECT COUNT(*)::int FROM race_entries e WHERE e.race_id = r.id AND NOT e.is_bot) AS player_count
+         (SELECT COUNT(*)::int FROM race_entries e WHERE e.race_id = r.id AND NOT e.is_bot) AS player_count,
+         (SELECT ro.code FROM rooms ro WHERE ro.id = r.room_id) AS room_code
     FROM races r JOIN tracks t ON t.id = r.track_id`;
 
 async function getRaceRow(id) {
@@ -109,7 +110,7 @@ router.get('/', async (req, res) => {
   });
   const { limit, offset } = pagination(req.query);
   const params = [];
-  const where = [];
+  const where = ['r.room_id IS NULL']; // (friend rooms' races are private)
   if (q.status) { params.push(q.status); where.push(`r.status = $${params.length}`); }
   if (q.track_id) { params.push(q.track_id); where.push(`r.track_id = $${params.length}`); }
   params.push(limit, offset);
@@ -387,3 +388,4 @@ router.get('/:id/replay', async (req, res) => {
 });
 
 module.exports = router;
+module.exports.joinRace = joinRace;
