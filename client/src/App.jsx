@@ -3,6 +3,7 @@ import { Link, Route, Routes, useLocation } from 'react-router-dom';
 import ErrorBoundary from './components/ErrorBoundary';
 import SiteHeader from './site/SiteHeader';
 import SiteFooter from './site/SiteFooter';
+import { useCanonical } from './site/canonical';
 import { useAuth } from './context/AuthContext';
 import LandingPage from './site/landing/LandingPage';
 import { FriendsStep, ShooterStep, StartStep, TrackStep } from './site/pages/RaceFlow';
@@ -38,6 +39,7 @@ const AdminApp = lazy(() => importOrReload(() => import('./admin/AdminApp')));
 export default function App() {
   const { pathname } = useLocation();
   const { isAuthenticated } = useAuth();
+  useCanonical(pathname);
   // Sound starts with the first tap (not on the landing page: music only once you're in the game).
   const admin = pathname === '/admin' || pathname.startsWith('/admin/');
   useSoundUnlock((pathname === '/' && !isAuthenticated) || admin);

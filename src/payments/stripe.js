@@ -49,8 +49,8 @@ function mode() {
 }
 
 /** A Stripe Checkout page for a pending payment → { kind: 'redirect', url }. */
-async function start(payment, { pack, email, locale }) {
-  const site = config.stripe.siteUrl;
+async function start(payment, { pack, email, locale, siteUrl }) {
+  const site = siteUrl || config.stripe.siteUrl;
   const params = {
     mode: 'payment',
     client_reference_id: payment.id,

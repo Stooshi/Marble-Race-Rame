@@ -8,6 +8,7 @@ const payments = require('../payments');
 const stripe = require('../payments/stripe');
 
 const security = require('../security');
+const config = require('../config');
 const router = express.Router();
 const PROVIDER = { type: 'enum', values: ['stripe', 'apple', 'google', 'test'], required: true };
 
@@ -19,7 +20,11 @@ router.get('/', (req, res) => {
 /** POST /api/payments/checkout { productId, provider, consent: true } — start buying a coin pack. */
 router.post('/checkout', requireAuth, async (req, res) => {
   const body = validate(req.body, { productId: { type: 'string', required: true, max: 32 }, provider: PROVIDER, consent: { type: 'boolean' }, locale: { type: 'string', max: 12 } });
-  const out = await db.withTransaction((client) => payments.checkout(client, req.user.id, body));
+  // Stripe sends the player back to the address they bought from (www or not, or the Vercel address),
+  // where they're logged in — but only to one of the site's own addresses.
+  const origin = req.get('origin');
+  const siteUrl = config.isSiteOrigin(origin) ? origin.replace(/\/+$/, '') : null;
+  const out = await db.withTransaction((client) => payments.checkout(client, req.user.id, { ...body, siteUrl }));
   await security.record(req, req.user.id, 'purchase');
   res.json(out);
 });

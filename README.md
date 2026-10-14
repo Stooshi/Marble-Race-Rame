@@ -43,7 +43,7 @@ curl localhost:5000/health
 | --- | --- | --- |
 | `PORT` | `5000` | The frontend expects `http://localhost:5000` by default |
 | `NODE_ENV` | `development` | `production` requires a `JWT_SECRET` of at least 32 characters |
-| `CORS_ORIGIN` | `*` | Comma-separated origins, used for both HTTP and Socket.io |
+| `CORS_ORIGIN` | `*` | `*`, or comma-separated website addresses allowed to call the API (HTTP and Socket.io). https://marblespins.com and https://www.marblespins.com are always allowed; add the Vercel address here. One `*` per entry for subdomains, e.g. `https://marble-race-rame-client-*.vercel.app` |
 | `DATABASE_URL` | `postgres://localhost:5432/marble_race` | |
 | `DATABASE_SSL` | `false` | `true` for managed Postgres that requires TLS |
 | `DATABASE_POOL_MAX` | `10` | |
@@ -57,7 +57,7 @@ curl localhost:5000/health
 | `PAYMENTS_TEST` | – | `true`: an instant test payment provider (never in production) |
 | `STRIPE_SECRET_KEY` | – | Stripe secret key. `sk_test_…` works at once; a live key (`sk_live_…`) is refused unless `STRIPE_ALLOW_LIVE=true` |
 | `STRIPE_WEBHOOK_SECRET` | – | The signing secret (`whsec_…`) of the webhook endpoint `/api/payments/stripe/webhook` |
-| `PUBLIC_SITE_URL` | `http://localhost:5173` | The website, where Stripe sends players back (`/purchases`, `/checkout`) |
+| `PUBLIC_SITE_URL` | `https://marblespins.com` in production | The website's main address. Stripe sends a player back to the address they bought from (www or not, the Vercel address) when it's one of the site's own, otherwise here |
 | `STRIPE_ALLOW_LIVE` | – | `true` only when going live with real money |
 | `STRIPE_TAX` | on | `off` turns Stripe Tax off (only if the Stripe account has no tax set up) |
 | `STRIPE_TAX_CODE` | `txcd_10000000` | Stripe tax code for coin packs (electronically supplied services) |

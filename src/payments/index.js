@@ -88,7 +88,7 @@ const CONSENT_TEXT = `[${consent.version}] ${consent.withdrawal} / ${consent.ter
  * order number (MS-1001…). Stripe returns a Checkout page to go to; its coins come only from
  * the webhook. The test provider pays at once.
  */
-async function checkout(client, userId, { productId, provider: providerName, consent: agreed, locale }) {
+async function checkout(client, userId, { productId, provider: providerName, consent: agreed, locale, siteUrl = null }) {
   const provider = PROVIDERS[providerName];
   if (!provider) throw badRequest('Unknown payment provider');
   const p = pack(productId);
@@ -103,7 +103,7 @@ async function checkout(client, userId, { productId, provider: providerName, con
     [userId, provider.name, p.id, p.coins, p.amountCents, p.currency, CONSENT_TEXT],
   );
   const { rows: [user] } = await client.query('SELECT email, is_guest FROM users WHERE id = $1', [userId]);
-  const next = await provider.start(payment, { userId, pack: p, email: user && !user.is_guest ? user.email : null, locale });
+  const next = await provider.start(payment, { userId, pack: p, email: user && !user.is_guest ? user.email : null, locale, siteUrl });
   if (next.kind === 'done') {
     const coins = await grant(client, payment.id, `test-${payment.id}`);
     return { payment: { ...payment, status: 'paid' }, next, coins };

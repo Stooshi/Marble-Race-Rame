@@ -100,6 +100,14 @@ test('checkout → Stripe\'s signed "paid" webhook adds the coins once; a refund
     assert.match(pay.consent_text, /14-day right of withdrawal/);
     assert.ok(pay.consent_at);
 
+    // Stripe sends the player back to the address they bought from, if it's one of the site's own.
+    const fromWww = (await call('/payments/checkout', { method: 'POST', token: me.token, headers: { origin: 'https://www.marblespins.com' }, body: { productId: 'coins-5000', provider: 'stripe', consent: true } })).body;
+    assert.ok(fake.made.sessions.at(-1).params.success_url.startsWith(`https://www.marblespins.com/purchases?paid=${fromWww.payment.order_no}`));
+    const fromElsewhere = (await call('/payments/checkout', { method: 'POST', token: me.token, headers: { origin: 'https://evil.example' }, body: { productId: 'coins-5000', provider: 'stripe', consent: true } })).body;
+    assert.ok(fake.made.sessions.at(-1).params.cancel_url.startsWith('https://marblespins.test/checkout'));
+    fake.made.sessions.splice(1); // (keep the numbering below)
+    await db.query(`UPDATE payments SET status = 'failed' WHERE order_no IN ($1, $2)`, [fromWww.payment.order_no, fromElsewhere.payment.order_no]);
+
     // Coming back from Stripe alone adds nothing.
     assert.equal((await call('/auth/me', { token: me.token })).body.user.coins, start);
 
