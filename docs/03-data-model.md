@@ -1,0 +1,286 @@
+# 3. Data model
+
+*Last updated 14 Oct 2026 (Main 69b4a58).* The database is PostgreSQL. The schema is defined in `docs/database_schema.sql`. The server applies that file at every start; it only adds what is missing and never deletes or changes rows. Changes to existing rows go in `docs/data_updates/` (see the [runbook](05-runbook.md#data-updates)).
+
+**Conventions:**
+- Ids are UUIDs (`gen_random_uuid()`), except where noted.
+- Times are `timestamptz`.
+- `citext` is case-insensitive text (usernames and emails).
+- Enumerated types:
+
+| Type | Values |
+|---|---|
+| `user_role` | `player`, `admin` |
+| `race_status` | `lobby`, `countdown`, `running`, `finished`, `cancelled` |
+| `marble_rarity` | `common`, `uncommon`, `rare`, `epic`, `legendary` |
+| `track_difficulty` | `easy`, `medium`, `hard`, `extreme` |
+
+## Overview
+
+```
+users ─┬─< race_entries >── races >── tracks          rooms ──< races (room_id)
+       ├─< coin_ledger            └── race_replays (physics races)
+       ├─< user_collection >── collection_counters (per item)
+       ├── user_shooter, marble_appearances, user_days
+       ├─< payments ──< payment_refunds          stripe_events (webhook dedupe)
+       ├─< security_events, email_consents
+       └── admin_2fa, admin_sessions, admin_audit (target/admin)
+race_entries ── race_entry_looks (player's collection marble) / house_looks (CPU showcase look)
+marbles ──< user_marbles   (the older plain marbles; looks only)
+```
+
+**What is *not* in the database:**
+- The marble collection catalogue (designs, shades, prices): `client/src/shared/marbles/catalog.json`.
+- The economy numbers: `client/src/shared/economy.json`.
+- The coin packs: `client/src/shared/payments/packs.json`.
+- Physics track definitions: `src/tracks/*.js`. The database holds a copy in `tracks.physics`, put there by data updates.
+
+---
+
+## Players
+
+### `users`
+| Column | Meaning |
+|---|---|
+| `id` | Player id |
+| `username` | Player name, 3–24 letters, digits or `_`, unique regardless of case. Deleted accounts become `deleted_<12 hex>` |
+| `email` | Unique. Guests get a placeholder `guest-<id>@guest.marblespins.invalid`; deleted accounts get `…@deleted.invalid` |
+| `password_hash` | bcrypt hash. Deleted accounts get a value no password can match |
+| `display_name` | Optional shown name (40 characters) |
+| `avatar_url` | Not used by the website today |
+| `role` | `player` or `admin` (the back office) |
+| `coins` | Current balance, never below 0. **Only changed through `economy.change()`**, which also writes `coin_ledger` |
+| `coins_earned` | Running total of coins earned by racing (the scoreboards rank by this). Spending doesn't lower it |
+| `coins_bought` | Running total of coins bought (coin packs, and credits converted when coins became the only currency). Refunds lower it |
+| `skill` | 1–100, default 50. How fast the player's marbles race (see [Game rules](04-game-rules.md#skill)). Every marble in the player's bag races at this |
+| `skill_refund_coins` | One-time notice: coins refunded when marbles stopped carrying strength (12 Oct 2026). NULL once seen |
+| `is_guest` | Playing without an account yet ("Play free"). Saving the account clears it and keeps coins and marbles |
+| `marketing_opt_in` | Current answer to news by email. Its history is in `email_consents`. Always false under 13 |
+| `age_group` | `under-13`, `13-17`, `18+`, or NULL for older accounts. Asked at sign-up |
+| `settings` | JSON that follows the player across devices, e.g. `{ "sound": { "music": 0.6, "effects": 0.8, "muted": false } }` |
+| `streak_days`, `streak_last_day` | Days in a row the daily goal was met (shown; pays nothing) |
+| `last_login_at`, `created_at`, `updated_at` | `updated_at` is set by a trigger |
+| `suspended_at` | Set by the back office. A suspended player can't log in or race |
+| `deleted_at` | The player deleted the account. The row stays, anonymised (see below) |
+
+**Account deletion** (`src/account/index.js`) doesn't remove the `users` row.
+- **It anonymises the account:** name, email, password, shown name, settings, age group and consent are cleared.
+- **It deletes:** `email_consents`, `security_events`, `admin_sessions` and `admin_2fa` rows. It also clears the marble label and closes rooms the player hosts.
+- **It keeps:**
+  - race results, so other players' places never change;
+  - marble IDs, so serial numbers stay unique;
+  - the coin ledger;
+  - payments, for bookkeeping.
+
+### `user_days`
+One row per player per day (UTC): `races` finished that day and `goal_met_at` (when the daily goal was reached). Used for the daily full-pay limit and the daily goal.
+
+### `email_consents`
+History of every yes/no to news by email: `consent`, `source` (`signup`, `claim`, `settings`, `support`, `unsubscribe`), `created_at`. Deleted with the account.
+
+### `security_events`
+Sign-up, login and purchase events: `kind`, `ip` (inet), `country` (2 letters, looked up offline), `created_at`. **The full IP is kept for at most 90 days**: a daily job blanks it and keeps only the country (`src/security`). The table is used only for security and fraud checks, such as many accounts from one address.
+
+## Tracks and races
+
+### `tracks`
+| Column | Meaning |
+|---|---|
+| `slug`, `name`, `description` | Identity (the slug is the stable key used in files and data updates) |
+| `difficulty`, `length_m`, `lane_count` | Display and the classic engine |
+| `waypoints`, `obstacles` | JSON: the classic engine's polyline and obstacles |
+| `physics` | JSON settings for the **new physics engine** (channel, sections, features, start, kit looks). NULL means the track uses the classic engine |
+| `thumbnail_url`, `created_by`, `created_at`, `updated_at` | |
+| `is_active` | Shown and raced. New tracks are added switched off and turned on later by a data update |
+
+### `races`
+| Column | Meaning |
+|---|---|
+| `track_id`, `name` | |
+| `status` | `lobby` → `countdown` → `running` → `finished` (or `cancelled`) |
+| `min_marbles`, `max_marbles` | 10–20. Empty places fill with computer players when `fill_with_bots` is true |
+| `entry_fee_coins` | **Always 0.** Coin entry fees were switched off on 14 Oct 2026. The column stays for old races |
+| `seed` | The random seed the race was decided from (set at decision) |
+| `target_duration_ms` | Race length: classic races are scaled to it; physics races take what they take (20–90 s) |
+| `tick_rate_hz`, `countdown_ms` | Streaming rate and countdown length |
+| `track_snapshot` | A copy of the track as it was when the race was decided, including the physics settings and engine version. Later track edits never change a past race |
+| `created_by`, `scheduled_at` | Who made it; when the scheduler should start it |
+| `decided_at`, `started_at`, `finished_at` | Lifecycle times. `started_at` = decision time + countdown |
+| `next_race_id` | The rematch: the follow-up race on the same track |
+| `room_id` | Set for friend-room races, which never appear in public lists |
+
+**Checks on the table:**
+- A race outside the lobby must have a seed, a duration and a snapshot.
+- Durations must be 20–90 s.
+
+### `race_entries`
+One marble in one race. Computer players have `user_id NULL` and `is_bot = true`.
+
+| Column | Meaning |
+|---|---|
+| `race_id`, `marble_id`, `user_id`, `is_bot`, `lane` | Who and where. Each marble, lane and finishing place is unique within a race, and a player can have only one entry per race |
+| `snap_top_speed`, `snap_acceleration`, `snap_handling`, `snap_luck` | The four engine stats the entry raced with, copied at decision time (today all four equal the player's skill) |
+| `finish_position`, `finish_time_ms`, `split_time_ms` | Results (`split_time_ms` is the halfway time). **Written at decision time but hidden by the API until the race is finished** |
+| `coins_awarded` | Coins paid for this race |
+| `joined_at` | |
+
+### `race_replays`
+For physics races, the whole race is stored as `data` (gzipped JSON: frames, events, gate) along with the `engine` version. Classic races aren't stored; they are re-simulated from their seed.
+
+### `race_entry_looks`, `house_looks`
+Looks only; the race engine never reads them.
+- `race_entry_looks`: which collection marble a player raced in. Used for the certificate's race record.
+- `house_looks`: the collection look a computer player wore in a beginner race (showcase).
+
+### `rooms`
+Friend rooms.
+
+| Column | Meaning |
+|---|---|
+| `code` | Short code from the room link, e.g. `/r/K7QF2M` |
+| `host_id` | The host |
+| `track_id` | The host's chosen track |
+| `current_race_id` | The room's current race |
+| `status` | `open` or `closed` |
+| `created_at`, `last_active_at` | A room closes after 2 hours without a race |
+
+## Marbles and the collection
+
+### `user_collection`: one owned copy of a collection marble
+| Column | Meaning |
+|---|---|
+| `user_id`, `item_slug` | Owner and item (`<design>-<shade>`, from `catalog.json`). A player can own **one copy per item** |
+| `source` | `purchase`, `grant` (gift from support) or `legacy-gift` |
+| `copy_no` | Which bought copy of this item it is: 1, 2, 3… |
+| `edition_no` | **The First Edition number**: equals `copy_no` for the first 500 copies of an item (the whole run for a limited edition), otherwise NULL |
+| `gift_no` | Numbering for gifts. Gifts never use a First Edition number |
+| `marble_code` | The ID on the certificate, e.g. `SC105-000037` (gifts: `SC105-G00012`). Unique |
+| `currency`, `price_paid` | What was paid (`coins`; `credits` only on copies from before coins-only) |
+| `first_owner_id` | The first owner. It stays the same if trading arrives later |
+| `acquired_at` | |
+
+### `collection_counters`
+One row per item: `bought` and `gifted` so far.
+
+**How First Editions are handed out** (`src/marbles/collection.js`):
+1. The counter row is locked (`FOR UPDATE`) inside the purchase transaction.
+2. The next `copy_no` is `bought + 1`.
+3. If that is within the edition size, it also becomes the `edition_no`.
+
+Two players can never get the same number, and unique constraints back this up.
+
+### `user_shooter`
+The look the player races in: either a collection item (`item_slug`) or one of the older plain marbles (`marble_id`), never both. With neither set, the player races in a plain starter.
+
+### `marbles`, `user_marbles`
+The older catalogue of plain marbles (free starters and "Originals") and who owns them. **Looks only:** the stat columns (`top_speed`, `acceleration`, `handling`, `luck`) are a historical record and are no longer read by races. `on_sale` and `price_coins` cover the plain marbles still for sale.
+
+### `marble_colors`, `marble_surfaces`, `marble_effects`, `marble_appearances`
+The first cosmetic system: a curated colour, surface and effect per player. Options are retired with `is_active = false`. The `label` is always NULL; custom text needs a word filter first. Looks only.
+
+### `billboards`
+Images on the tracks' billboards.
+
+| Column | Meaning |
+|---|---|
+| `track_slug` | The track, or NULL for every track |
+| `slot` | Slot 1–6, or NULL for every slot |
+| `image_url` | The image (https) |
+| `kind` | `own` or `partner` |
+| `note` | |
+| `starts_at`, `ends_at` | When the image is shown |
+
+The most specific row wins, then the newest. A slot with no row shows a built-in promotion.
+
+## Coins and payments
+
+### `coin_ledger`: every change to every player's coins
+| Column | Meaning |
+|---|---|
+| `id` | bigserial (order of events) |
+| `user_id` | The player |
+| `amount` | Signed, never 0 |
+| `kind` | What it was (list below) |
+| `race_id`, `item_slug`, `payment_id` | What it relates to |
+| `note` | Free text (e.g. the order number, an admin's reason) |
+| `actor_id` | The admin, for back-office adjustments and refunds |
+| `balance_after` | The player's balance right after this line |
+| `created_at` | |
+
+**Kinds** (the `KINDS` list in `src/economy/index.js`):
+
+| Kind | Meaning |
+|---|---|
+| `start` | Starting coins |
+| `opening-balance` | The first line for accounts that had coins before the ledger existed |
+| `race` | **Earned:** taking part |
+| `finish-bonus` | **Earned:** finishing place bonus |
+| `daily-goal` | **Earned:** the daily goal |
+| `coin-pack` | **Bought:** a coin pack |
+| `credit-conversion` | **Bought:** old credits converted |
+| `purchase` | Spent on a marble |
+| `bag` | Spent on a bag |
+| `entry-fee` | Old races only; fees are switched off |
+| `entry-refund` | Return of an old entry fee |
+| `refund` | Coins given back, e.g. for retired items |
+| `skill-refund` | The 12 Oct 2026 refund when marbles stopped carrying strength |
+| `admin` | A back-office adjustment, with a reason |
+| `pack-refund` | Coins removed because a coin pack was refunded or disputed |
+
+**The rules that keep the ledger right:**
+- **Every** change to `users.coins` goes through `economy.change(client, …)`. In one statement it moves the balance and adds the earned or bought total. It then writes the ledger line with `balance_after`.
+- The one exception is a new account: it is created with its starting coins already in `users.coins`, and `economy.opening()` writes the matching `start` line.
+- So the sum of a player's ledger equals their balance.
+- A spend that the balance can't cover changes nothing.
+- Never update `users.coins` directly in code or in a data update. Write a ledger line through the same logic.
+- Scoreboards and `coins_earned` count **earned** kinds only. Bought coins never count towards the scoreboards.
+
+### `payments`: coin-pack orders
+| Column | Meaning |
+|---|---|
+| `user_id` | The buyer |
+| `provider` | `stripe`, `apple`, `google` or `test` |
+| `provider_ref` | The provider's own id (Stripe session, store transaction). Unique per provider, so a payment is never credited twice |
+| `product_id`, `coins` | The pack and the coins it gives |
+| `amount_cents`, `currency` | The pack's list price (USD) |
+| `status` | `pending` → `paid` (or `failed`); `refunded` when fully refunded |
+| `order_no` | Player-facing order number `MS-1001…` (sequence `payment_order_seq`) |
+| `consent_at`, `consent_text` | When the player agreed to immediate delivery and the loss of the withdrawal right, and the exact text they saw |
+| `stripe_session_id`, `payment_intent` | Stripe references |
+| `charged_cents`, `charged_currency`, `tax_cents` | What Stripe actually charged, in the player's currency, VAT included |
+| `receipt_url` | Stripe's receipt |
+| `refunded_cents`, `refunded_at` | Total refunded so far |
+| `created_at`, `paid_at` | |
+
+### `payment_refunds`
+One row per refund or dispute (`id` = the Stripe refund or dispute id, so each is handled once).
+
+| Column | Meaning |
+|---|---|
+| `amount_cents` | Money refunded |
+| `coins_removed` | Coins taken back |
+| `coins_short` | Coins the player had already spent, which couldn't be taken back |
+| `admin_id`, `reason` | Who refunded and why (from the back office) |
+
+The coins taken back are in proportion to the money refunded; the last refund takes exactly what's left.
+
+### `stripe_events`
+Every Stripe webhook event already handled (`id`, `type`). The event is recorded in the same transaction as its coin change, so a resent event is ignored.
+
+## Back office
+
+| Table | Holds |
+|---|---|
+| `admin_2fa` | One per admin: the authenticator secret, encrypted (`secret_enc`), `enabled_at`, and `last_step` (so each code works only once) |
+| `admin_sessions` | Back-office sessions: `created_at`, `last_seen_at` (30-minute idle limit), `ended_at` |
+| `admin_audit` | Every back-office action: `admin_id`, `action`, `target_user_id`, `reason` (required), `details` (JSON of what changed). Never edited. Also records refunds made in the Stripe dashboard, disputes and account deletions |
+
+## Bookkeeping tables and views
+
+| Name | What it is |
+|---|---|
+| `data_updates` | The one-time SQL files already applied: `id` = file name without `.sql`, `applied_at`, `summary` |
+| `user_stats` (view) | Per player: races, wins, podiums, best times, average place, coins won |
+| `marble_stats` (view) | Per plain marble: races, wins, average place |
+| `default_marble_color()` | A function giving each new player a starting colour, based on their id |
+| `set_updated_at()` | The trigger function behind every `updated_at` column |
