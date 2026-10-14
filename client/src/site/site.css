@@ -529,3 +529,17 @@ a.ms-tile:hover, a.ms-card:hover { text-decoration: none; border-color: var(--ms
 .ms-sound__row { display: grid; grid-template-columns: 64px 1fr; align-items: center; gap: 10px; font-weight: 600; }
 .ms-sound__row input[type="range"] { width: 100%; accent-color: var(--ms-yellow); }
 .ms-sound__mute { grid-template-columns: auto 1fr; font-weight: 500; }
+
+/* ── Offline screen (no connection, or the app can't reach the server) ── */
+.ms-offline {
+  position: fixed; inset: 0; z-index: 200; display: grid; place-items: center;
+  padding: max(24px, env(safe-area-inset-top, 0px)) 16px max(24px, env(safe-area-inset-bottom, 0px));
+  background: radial-gradient(circle at 50% 40%, #1B2546 0%, var(--ms-bg) 70%);
+}
+.ms-offline__box { display: grid; justify-items: center; gap: 16px; text-align: center; max-width: 360px; }
+.ms-offline__icon { width: 64px; height: 64px; color: var(--ms-soft); }
+
+/* ── Inside the apps ── */
+.is-app body { overscroll-behavior: none; -webkit-user-select: none; user-select: none; }
+.is-app input, .is-app textarea { -webkit-user-select: text; user-select: text; }
+.is-app { -webkit-tap-highlight-color: transparent; }

@@ -191,3 +191,24 @@ export const getSettings = () => ({ ...settings });
 export const isUnlocked = () => unlocked;
 /** Whether sound is actually running (an iPhone may want a second tap). */
 export const isRunning = () => ctx?.state === 'running';
+
+let paused = false;
+/**
+ * The app or tab went to the background (true) or came back (false): sound stops while nobody is
+ * looking (phones keep a web view's audio playing otherwise) and picks up where it was.
+ */
+export function setBackground(hidden) {
+  if (!ctx || hidden === paused) return;
+  paused = hidden;
+  if (hidden) {
+    deck?.el.pause();
+    ctx.suspend?.().catch(() => {});
+  } else {
+    ctx.resume?.().catch(() => {});
+    if (deck && started && !settings.muted && settings.music > 0) deck.el.play().catch(() => {});
+  }
+}
+
+if (typeof document !== 'undefined') {
+  document.addEventListener('visibilitychange', () => setBackground(document.visibilityState === 'hidden'));
+}

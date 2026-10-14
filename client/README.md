@@ -78,10 +78,15 @@ test/               Vitest unit tests
 `ios/` and `android/` wrap this website as native apps (Capacitor 8, app id `com.marblespins.app`,
 name "Marble Spins"). They load the built site from inside the app and talk to the live server.
 
-- **Update the apps after a website change:** `VITE_API_URL=https://<live server> npm run app:sync`
-  (builds the site and copies it into both projects; refuses a localhost server address).
+- **Update the apps after a website change:** `npm run app:sync` (builds the site against the live
+  server, https://marble-race-rame-production.up.railway.app, and copies it into both projects).
+- **Icons and splash screens** come from `assets/` (icon-only, icon-foreground, icon-background, splash,
+  splash-dark PNGs); after changing them: `npx capacitor-assets generate --ios --android` with the
+  night-blue colours (#0E1320). Android 12+'s system splash uses `res/drawable-nodpi/splash_icon.png`.
 - **Open them:** `npx cap open ios` (Xcode on a Mac; Swift Package Manager, no CocoaPods) and
   `npx cap open android` (Android Studio). Running on a simulator or your own phone needs no store account.
 - In the apps, coin packs go through the App Store / Google Play (still placeholders), never Stripe.
 - The server allows the apps' own addresses (`capacitor://localhost`, `https://localhost`).
-- Not yet: icons and splash screen, store accounts, signing, in-app purchases, push, Sign in with Apple.
+- In the apps: splash until the game has drawn, light status-bar icons, Android back button,
+  sound pauses in the background, an offline screen (also on the website) that retries by itself.
+- Not yet: store accounts, signing, in-app purchases, push, Sign in with Apple.

@@ -1,9 +1,11 @@
-import { lazy, Suspense } from 'react';
-import { Link, Route, Routes, useLocation } from 'react-router-dom';
+import { lazy, Suspense, useEffect } from 'react';
+import { Link, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import ErrorBoundary from './components/ErrorBoundary';
 import SiteHeader from './site/SiteHeader';
 import SiteFooter from './site/SiteFooter';
 import { useCanonical } from './site/canonical';
+import OfflineScreen from './app/OfflineScreen';
+import { startNativeShell } from './app/native';
 import { useAuth } from './context/AuthContext';
 import LandingPage from './site/landing/LandingPage';
 import { FriendsStep, ShooterStep, StartStep, TrackStep } from './site/pages/RaceFlow';
@@ -42,6 +44,11 @@ export default function App() {
   const { pathname } = useLocation();
   const { isAuthenticated } = useAuth();
   useCanonical(pathname);
+  const navigate = useNavigate();
+  // In the iPhone and Android apps: splash, status bar, back button, sound in the background.
+  useEffect(() => {
+    startNativeShell({ goBack: () => navigate(-1), atHome: () => ['/', '/home'].includes(window.location.pathname) });
+  }, [navigate]);
   // Sound starts with the first tap (not on the landing page: music only once you're in the game).
   const admin = pathname === '/admin' || pathname.startsWith('/admin/');
   useSoundUnlock((pathname === '/' && !isAuthenticated) || admin);
@@ -50,6 +57,7 @@ export default function App() {
   }
   return (
     <>
+      <OfflineScreen />
       <SiteHeader />
       <main>
         <ErrorBoundary resetKey={pathname}>

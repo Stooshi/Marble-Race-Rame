@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Marble Spins night blue (the game's background) and its accents. -->
+    <color name="msNight">#0E1320</color>
+    <color name="colorPrimary">#0E1320</color>
+    <color name="colorPrimaryDark">#0E1320</color>
+    <color name="colorAccent">#FFD21F</color>
+</resources>
