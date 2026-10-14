@@ -37,7 +37,12 @@ test('news by email, unsubscribe, download my data, delete my account', { skip: 
   try {
     const name = `t_acc_${Date.now() % 1e6}`;
     const me = (await call('/auth/register', { method: 'POST', body: { username: name, email: `${name}@test.invalid`, password: 'password123', marketing_opt_in: true, age_group: '18+' } })).body;
-    const kid = (await call('/auth/register', { method: 'POST', body: { username: `${name}k`, email: `${name}k@test.invalid`, password: 'password123', marketing_opt_in: true, age_group: 'under-13' } })).body;
+    // Under 13: no account until parental approval exists (the server refuses, not only the page)…
+    const refused = await call('/auth/register', { method: 'POST', body: { username: `${name}k`, email: `${name}k@test.invalid`, password: 'password123', marketing_opt_in: true, age_group: 'under-13' } });
+    assert.equal(refused.status, 403);
+    // …but an account can carry that age group (e.g. made before the rule): set it directly for the checks below.
+    const kid = (await call('/auth/register', { method: 'POST', body: { username: `${name}k`, email: `${name}k@test.invalid`, password: 'password123', age_group: '13-17' } })).body;
+    await db.query(`UPDATE users SET age_group = 'under-13', marketing_opt_in = false WHERE id = $1`, [kid.user.id]);
 
     // News by email: on from sign-up, with its date; off in settings; the history is kept.
     let email = (await call('/users/me/email', { token: me.token })).body;

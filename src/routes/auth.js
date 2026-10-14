@@ -43,10 +43,20 @@ async function logConsent(client, userId, consent, source) {
   await client.query('INSERT INTO email_consents (user_id, consent, source) VALUES ($1, $2, $3)', [userId, consent, source]);
 }
 
+/**
+ * Under-13s can't make an account until parental approval exists (the sign-up page says so too):
+ * refused here as well, so the rule doesn't depend on the website. They can still play as guests.
+ */
+function refuseUnder13(body) {
+  if (body.age_group === 'under-13') {
+    throw forbidden('Players under 13 need a parent or guardian to approve their account first. [Parent approval is coming]');
+  }
+}
+
 /** POST /api/auth/register */
 router.post('/register', authLimiter, async (req, res) => {
   const body = validate(req.body, registerSchema);
-  if (body.age_group === 'under-13') body.marketing_opt_in = false; // (no email consent under 13: the parent rule is a placeholder)
+  refuseUnder13(body);
   const hash = await bcrypt.hash(body.password, config.auth.bcryptRounds);
   try {
     const { rows } = await db.query(
@@ -94,7 +104,7 @@ router.post('/guest', authLimiter, async (req, res) => {
 /** POST /api/auth/claim — a guest saves their marble: picks a name, email and password, keeping coins and marbles. */
 router.post('/claim', requireAuth, authLimiter, async (req, res) => {
   const body = validate(req.body, registerSchema);
-  if (body.age_group === 'under-13') body.marketing_opt_in = false;
+  refuseUnder13(body);
   const hash = await bcrypt.hash(body.password, config.auth.bcryptRounds);
   try {
     const { rows } = await db.query(

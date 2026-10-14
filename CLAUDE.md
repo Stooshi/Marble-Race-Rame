@@ -1,0 +1,11 @@
+# Working on Marble Spins
+
+- **Keep the technical documentation current.** It is in `docs/` (`docs/README.md` is the index) and mirrored in the claude.ai project "Marble Race" under `cto/`.
+  - Any change that alters architecture, routes, files, tables or columns, game or economy rules, deploy steps or a decision updates the matching document, in the same commit.
+  - Then re-upload the changed files to the project mirror.
+  - Never write secret values in docs; variable names only.
+- **Race results must never change.** Looks never affect results. Run the fingerprint tests (`test/raceFingerprints.test.js`) when touching `src/game/`.
+- **Database:** `docs/database_schema.sql` only adds. Changes to existing rows go in a new `docs/data_updates/<name>.sql` (sorting after the last file). Never edit one that has run.
+- **Coins only move through `economy.change()`**, which writes the coin ledger.
+- **Deploys:** the server is deployed by hand by Moses. Vercel builds the website from `Main`.
+- **Commits:** push with `git fetch -q origin Main && git rebase -q origin/Main; git push -q origin HEAD:Main`.

@@ -331,5 +331,6 @@ Because the race result is fixed by its seed, moving a race to another instance 
 
 ## Deployment
 
-The backend deploys to Railway automatically on every push to the `Main` branch.
-Pushes to other branches do not deploy.
+The **website** (`client/`) deploys to Vercel automatically on every push to `Main`.
+
+The **server** does **not** deploy on push. It is deployed by hand: download the repository as a ZIP from GitHub (branch `Main`), then run `railway up` from that folder. The whole repository is needed, because the server reads `client/src/shared/*`. Step-by-step instructions, data updates, rollback and backups are in [`docs/05-runbook.md`](docs/05-runbook.md). The technical documentation index is [`docs/README.md`](docs/README.md).

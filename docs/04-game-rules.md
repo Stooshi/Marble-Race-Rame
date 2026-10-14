@@ -1,0 +1,151 @@
+# 4. Game and economy rules (plain English)
+
+*Last updated 14 Oct 2026 (Main 69b4a58).* The numbers live in `client/src/shared/economy.json` and `client/src/shared/marbles/catalog.json`. If this page and those files ever disagree, the files are right; then update this page.
+
+## The golden rules
+
+1. **Race results never change.** Once a race is decided, its result, and the replay of how it ran, stay the same forever. No code change, track edit or physics tuning may alter a past race. Tests (race fingerprints) guard this.
+2. **Looks never change speed.** Marbles, shades, collection items, showcase looks, billboards, scenery, lighting, sound and the 3D drawing are all cosmetic. The race engine never receives them.
+3. **Money never buys speed.** Coins and coin packs only buy looks.
+4. **Every coin is accounted for.** Every coin movement is a line in the coin ledger, and the ledger always adds up to the balance.
+
+## How a race is decided
+
+1. **The lobby.** A race is created with up to 20 places. Players join with their Shooter (the look they race in). Joining is free: coin entry fees were switched off on 14 Oct 2026.
+2. **The decision**, made once, on the server, when the race leaves the lobby:
+   - A random **seed** is drawn.
+   - Empty places are filled with **computer players** (CPU, marked with a tag), up to the race size.
+   - The seed alone decides the computer players' skills, the lanes and the timing of moving obstacles.
+   - The whole race is then simulated, start to finish.
+   - The finishing order, times and halfway splits are written to the database straight away. The API keeps them hidden until the race has finished.
+3. **The countdown** (5 s), then the race is **streamed** to everyone watching at 10–20 frames a second. Viewers only see positions; their device can't affect anything.
+4. **The finish.**
+   - The race is marked finished and coins are paid in the same transaction.
+   - Solo players may race again straight away. A group moves on to a rematch on the same track (about 40 s later).
+   - In a friend room, the next race is set up automatically for everyone in the room.
+
+**Two engines:**
+- **New physics** (`tracks.physics` set; every current and new track). A real 3D physics simulation of marbles in a channel with obstacles, boosts, splitters and gates. The complete race is saved, so the engine can be tuned later without changing old races.
+- **Classic** (older tracks with no physics settings). A simpler engine whose races are re-created from the seed, which is why that engine must never change.
+
+**A race is between 20 and 90 seconds.** New tracks are designed so the winner finishes in about 48–55 s and the last marble in at most 85 s.
+
+## Skill
+
+- **Skill belongs to the player, not the marble.** Every marble in a player's bag races at the player's skill, whichever one they choose. Decided 12 Oct 2026; coins were refunded for marbles that had been bought for their strength.
+- **Skill is 1–100.** Everyone starts at 50, the middle of the computer players' range (45–55).
+- **In the engine,** skill sets all four marble stats (top speed, acceleration, handling, luck) to the same value. A higher skill means a slightly faster marble with fewer losses on walls and knocks.
+- **Status: skill does not grow yet.** Every player is at 50 today. The plan is for skill to grow with races played, on a curve that flattens, with races matched so fields stay close. The rule for this ("daily training") is still to be decided. The website FAQ and the store texts already say skill "grows as you play", so build this before launch or change that wording.
+- A race keeps each entry's stats as they were (`race_entries.snap_*`), so changing a player's skill never changes a past race.
+
+## Coins
+
+There is one currency: **coins**. They can be earned by racing or bought in coin packs. They are spent only in the shop and can never be cashed out, exchanged or transferred.
+
+**Earning:**
+
+| What | Coins |
+|---|---|
+| Starting coins (new account, guests too) | 650 |
+| Taking part in a race | 15 |
+| Finishing bonus | 1st 50 · 2nd 30 · 3rd 20 · 4th–10th 5 each · 11th–20th 0 |
+| Daily goal: 5 races in a day (once a day) | 35 |
+| **Daily limit:** after the first 10 races of the day | each race pays 5 in total (no taking-part or finishing pay) |
+| Streak (days in a row with the daily goal) | shown only; pays nothing |
+
+Days run midnight to midnight **UTC**. Friend-room races pay like any race and count towards the same daily limit, so rooms can't be used to farm coins. Computer players are never paid.
+
+**Buying (coin packs):**
+
+| Pack | Price | Coins |
+|---|---|---|
+| `coins-5000` | $5 | 5,000 |
+| `coins-10500` (marked popular) | $10 | 10,500 |
+| `coins-27500` | $25 | 27,500 |
+| `coins-57500` | $50 | 57,500 |
+
+- **On the web:** Stripe Checkout shows the price in the player's own currency, with VAT included.
+- **Coins arrive only** when Stripe confirms the payment.
+- **Before paying,** the player must agree to immediate delivery and the loss of the 14-day withdrawal right; the exact text is stored with the order.
+- **Refunds and chargebacks** take back the matching share of the coins, or whatever is left if some were spent.
+- **In the apps,** purchases will go through Apple and Google (not built yet). Inside the apps, coins are never sold any other way.
+
+**Scoreboards** rank players by coins **earned** racing. Bought coins never count. The boards are season (currently a placeholder, October 2026), all-time, and friends.
+
+## The shop and the collection
+
+**Collection 1, Schoolyard Classics (code SC):** 10 designs in 5 shades (Classic, Ocean, Forest, Berry, Sunset), so 50 marbles. More collections are announced as "coming soon": Handmade Heritage (HH), Moonies & Glow (MG), Art Glass (AG). Limited editions use the code LE.
+
+**Marble IDs:** two letters for the collection, then the design number (01–10), then the shade number (1–5). For example, SC105 is design 10 in shade 5 (Sunset). The shop finds a marble by its ID however it's typed.
+
+**Prices by rarity (coins):**
+
+| Rarity | Price |
+|---|---|
+| Common | 1,000 |
+| Uncommon | 2,500 |
+| Rare | 6,000 |
+| Epic | 12,000 |
+| Legendary | 25,000 |
+| Limited editions | to be decided |
+
+**Bags:** the buyer chooses the shade.
+- **Starter Bag:** the 3 Commons at 15% off.
+- **Full Collection Bag:** all 10 designs at 30% off.
+- Prices round to the nearest 100. If the player already owns some marbles in a bag, the discount applies to the ones still missing.
+
+**No loot boxes.** Every purchase is a chosen item; nothing is random.
+
+**First Editions:**
+- The first **500** copies bought of every marble are numbered #001–#500. A limited edition is numbered through its whole run.
+- Each numbered copy gets a **First Edition certificate** showing the serial number, first owner, date and the copy's race record.
+- After 500, the marble stays on sale **unnumbered**, with a Marble ID card instead.
+- Gifts from support have their own numbering and never use up a First Edition number.
+
+**One copy each:** a player can own one copy of each marble.
+
+**The Shooter** is the marble a player races in. **Free starters:** every player keeps 4 plain one-colour marbles.
+
+**Showcase marbles:**
+- In beginner races, the computer players wear collection marbles, so new players see what exists.
+- A beginner race is one where every player has finished fewer than 20 races.
+- The mix per race: about 6 Common or Uncommon, 3 Rare or Epic and 1 Legendary.
+- The looks are chosen separately from the race and never affect it. The fairness report checks that every rarity wins its fair share.
+
+## Fairness checks
+
+Every track must pass a **full report** (`npm run report -- <slug>`) before it is switched on. The report runs 3 batches of 1,000 races and checks:
+
+| Check | Target |
+|---|---|
+| Wins per group of 4 starting places | 17–23% each (no lane advantage) |
+| Average finishing place per group | 10.2–10.8 |
+| Strongest five marbles' share of wins | 35–50%; the weakest five win at least 8%, and the strongest win at least twice as often |
+| Median winner's time | 48–55 s (new designs) |
+| Slowest marble home | at most 85 s, never over 90 s |
+| Median gap from winner to last | at most 18 s |
+| Overtakes per race (median) | at least 60 |
+| Splitters | each channel's share of wins within 5 points of its share of marbles, and at most half a place gained or lost |
+| Obstacles | each group's share of hits within 5 points of fair; no hop over 1.2 m |
+| Showcase looks | each rarity wins its share (chi-square test, p above 0.001) |
+| Sameness | layout not too close to another track (fails at 0.80 similarity, 0.70 when key sections match); start looks different |
+| Safety | the same seed gives the same race; the database matches the track file; the race fingerprints are unchanged |
+| Drawing | no scenery inside the track (up to 2.5 m above the rim); nothing within 0.5 m of the follow camera; ground and phone drawing load within budget |
+
+Reports are saved in `reports/<slug>/`. Track design rules:
+- bends long and flowing, with at most one sharp bend per track;
+- tracks sit in the ground like a trench, raised only where they drop away or cross;
+- at least 35 of the 50 launch tracks must be truly unique (mirrors count towards the 50).
+
+## Friend rooms
+
+- The host creates a room and shares its link (`/r/CODE`). Friends join, as guests if they need to.
+- The host picks the track and starts each race. Empty places fill with computer players, up to 20.
+- After a race, the next one is set up with everyone still in the room. There is no chat.
+- A room closes after 2 hours without a race.
+
+## Age and accounts
+
+- **Age group at sign-up:** under 13, 13–17, or 18+.
+- **Under 13:** no account until parental approval is built (the sign-up page and the server both refuse), and never news emails. Guests can play without giving an age.
+- **Accounts:** players can download their data and delete their account in Settings. Deletion anonymises the account and keeps race results and payment records.
