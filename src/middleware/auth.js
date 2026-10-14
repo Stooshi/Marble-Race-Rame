@@ -16,7 +16,7 @@ async function loadUser(token) {
   if (payload.aud === 'marble-admin') return null; // (a back-office token is not a player's token)
   // Re-read the user so deleted accounts and role changes take effect immediately.
   // A suspended account's token stops working at once.
-  const { rows } = await db.query('SELECT id, username, role FROM users WHERE id = $1 AND suspended_at IS NULL', [payload.sub]);
+  const { rows } = await db.query('SELECT id, username, role FROM users WHERE id = $1 AND suspended_at IS NULL AND deleted_at IS NULL', [payload.sub]);
   if (!rows[0]) return null;
   return { ...rows[0], tokenPayload: payload };
 }

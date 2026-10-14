@@ -15,6 +15,7 @@
  *   POST /players/:id/suspend      { reason }   /unsuspend { reason }
  *   POST /players/:id/name         { display_name, reason } (e.g. an offensive name)
  *   POST /players/:id/consent      { consent: false, reason } (the player asked to stop emails)
+ *   POST /players/:id/delete       { reason } delete (anonymise) the account, as the player can in settings
  *   GET  /payments?q=              coin-pack orders   POST /payments/:id/refund { reason, amount_cents? }
  *   GET  /audit                    the audit log
  *   GET  /economy?days=30          the economy dashboard
@@ -30,6 +31,7 @@ const collection = require('../marbles/collection');
 const { bySlug, normaliseId, byId } = require('../marbles/catalog');
 const { IP_DAYS } = require('../security');
 const paymentsSvc = require('../payments');
+const account = require('../account');
 
 const router = express.Router();
 router.use('/session', sessionRouter);
@@ -69,7 +71,7 @@ router.get('/players', async (req, res) => {
   }
   params.push(limit);
   const { rows } = await db.query(
-    `SELECT u.id, u.username, u.display_name, u.email, u.is_guest, u.role, u.coins, u.age_group, u.created_at, u.last_login_at, u.suspended_at,
+    `SELECT u.id, u.username, u.display_name, u.email, u.is_guest, u.role, u.coins, u.age_group, u.created_at, u.last_login_at, u.suspended_at, u.deleted_at,
             (SELECT COUNT(*)::int FROM race_entries e WHERE e.user_id = u.id) AS races
        FROM users u WHERE ${where}
       ORDER BY u.last_login_at DESC NULLS LAST, u.created_at DESC
@@ -84,7 +86,7 @@ router.get('/players/:id', async (req, res) => {
   const id = assertUuid(req.params.id);
   const { rows: [player] } = await db.query(
     `SELECT id, username, display_name, email, is_guest, role, coins, coins_earned, coins_bought, skill, age_group,
-            marketing_opt_in, created_at, last_login_at, suspended_at, streak_days
+            marketing_opt_in, created_at, last_login_at, suspended_at, deleted_at, streak_days
        FROM users WHERE id = $1`,
     [id],
   );
@@ -213,6 +215,16 @@ router.post('/players/:id/consent', async (req, res) => {
     await audit(client, req, 'consent-off', id, body.reason);
   });
   res.json({ ok: true });
+});
+
+/** POST /players/:id/delete { reason } — delete (anonymise) an account the player asked support to delete. */
+router.post('/players/:id/delete', async (req, res) => {
+  const id = assertUuid(req.params.id);
+  const body = validate(req.body, { reason: REASON });
+  if (id === req.admin.id) throw badRequest("You can't delete your own admin account here");
+  const done = await db.withTransaction((client) => account.deleteAccount(client, id, { by: req.admin.id, reason: body.reason }));
+  if (!done) throw notFound('No such player (or already deleted)');
+  res.json(done);
 });
 
 /** GET /payments?q= — coin-pack orders, newest first; q: an order number, a player's name or e-mail. */

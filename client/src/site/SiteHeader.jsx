@@ -19,7 +19,7 @@ function UserChips({ user }) {
       <span className="ms-chip ms-chip--streak" title="Daily streak">▲ [streak]</span>
       {user.is_guest
         ? <Link to="/signup" className="ms-btn ms-btn--primary ms-btn--sm"><span className="ms-wide-only">SAVE YOUR MARBLE</span><span className="ms-narrow-only">SAVE</span></Link>
-        : <Link to="/bag" className="ms-chip">@{user.username}</Link>}
+        : <Link to="/settings" className="ms-chip" title="Settings">@{user.username}</Link>}
     </div>
   );
 }

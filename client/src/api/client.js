@@ -95,6 +95,16 @@ export const api = {
   checkout: (body) => request('/payments/checkout', { method: 'POST', body }),
   redeemReceipt: (body) => request('/payments/receipt', { method: 'POST', body }),
   myOrders: () => request('/payments/mine'),
+  // Account settings: news by email, the data download, deleting the account.
+  emailStatus: () => request('/users/me/email'),
+  setNews: (on) => request('/users/me', { method: 'PATCH', body: { marketing_opt_in: on } }),
+  unsubscribe: (u, t) => request('/users/unsubscribe', { method: 'POST', body: { u, t }, token: null }),
+  deleteAccount: (body) => request('/users/me', { method: 'DELETE', body }),
+  async exportData() {
+    const res = await fetch(`${API_URL}/api/users/me/export`, { headers: { Authorization: `Bearer ${getStoredToken()}` } });
+    if (!res.ok) throw new ApiError(res.status, (await res.json().catch(() => ({}))).error || 'Download failed');
+    return res.blob();
+  },
   order: (orderNo) => request(`/payments/orders/${encodeURIComponent(orderNo)}`),
 
   tracks: () => request('/tracks'),

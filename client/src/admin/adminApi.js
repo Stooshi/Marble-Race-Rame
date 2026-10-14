@@ -55,6 +55,7 @@ export const adminApi = {
   item: (id, item, action, reason) => request(`/admin/players/${id}/items`, { method: 'POST', body: { item, action, reason } }),
   suspend: (id, on, reason) => request(`/admin/players/${id}/${on ? 'suspend' : 'unsuspend'}`, { method: 'POST', body: { reason } }),
   name: (id, displayName, reason) => request(`/admin/players/${id}/name`, { method: 'POST', body: { display_name: displayName, reason } }),
+  deleteAccount: (id, reason) => request(`/admin/players/${id}/delete`, { method: 'POST', body: { reason } }),
   consentOff: (id, reason) => request(`/admin/players/${id}/consent`, { method: 'POST', body: { consent: false, reason } }),
   payments: (q) => request(`/admin/payments?q=${encodeURIComponent(q ?? '')}`),
   refund: (id, reason, amountCents) => request(`/admin/payments/${id}/refund`, { method: 'POST', body: { reason, ...(amountCents && { amount_cents: amountCents }) } }),

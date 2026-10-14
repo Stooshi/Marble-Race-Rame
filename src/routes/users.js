@@ -10,6 +10,8 @@ const { badRequest, notFound, unauthorized } = require('../utils/httpError');
 const { PUBLIC_USER_COLUMNS } = require('./auth');
 const { MARBLE_COLUMNS, HISTORY } = require('./marbles');
 const appearance = require('../game/appearance');
+const unsubscribe = require('../email/unsubscribe');
+const account = require('../account');
 
 const router = express.Router();
 
@@ -71,12 +73,13 @@ router.patch('/me', requireAuth, async (req, res) => {
   if ('avatar_url' in body) set('avatar_url', body.avatar_url);
   // News by email: yes or no, with its history (the back office's consent log).
   if ('marketing_opt_in' in body) {
-    if (body.marketing_opt_in) {
-      const { rows: [u] } = await db.query('SELECT age_group FROM users WHERE id = $1', [req.user.id]);
-      if (u.age_group === 'under-13') throw badRequest('Under 13: news by email needs a parent or guardian [parent approval is coming]');
-    }
+    const { rows: [u] } = await db.query('SELECT age_group, is_guest, marketing_opt_in FROM users WHERE id = $1', [req.user.id]);
+    if (body.marketing_opt_in && u.age_group === 'under-13') throw badRequest('Under 13: news by email needs a parent or guardian [parent approval is coming]');
+    if (body.marketing_opt_in && u.is_guest) throw badRequest('Save your account with an email address first');
     set('marketing_opt_in', body.marketing_opt_in);
-    await db.query(`INSERT INTO email_consents (user_id, consent, source) VALUES ($1, $2, 'settings')`, [req.user.id, body.marketing_opt_in]);
+    if (u.marketing_opt_in !== body.marketing_opt_in) {
+      await db.query(`INSERT INTO email_consents (user_id, consent, source) VALUES ($1, $2, 'settings')`, [req.user.id, body.marketing_opt_in]);
+    }
   }
 
   if (body.password || body.email) {
@@ -95,6 +98,67 @@ router.patch('/me', requireAuth, async (req, res) => {
     params,
   );
   res.json({ user: rows[0] });
+});
+
+/**
+ * GET /api/users/me/email — news by email: the current answer, since when, and whether this
+ * player can be asked at all (not under 13, not a guest without an email address).
+ */
+router.get('/me/email', requireAuth, async (req, res) => {
+  const { rows: [u] } = await db.query('SELECT email, is_guest, age_group, marketing_opt_in FROM users WHERE id = $1', [req.user.id]);
+  const { rows: [last] } = await db.query('SELECT consent, source, created_at FROM email_consents WHERE user_id = $1 ORDER BY created_at DESC, id DESC LIMIT 1', [req.user.id]);
+  const allowed = u.age_group !== 'under-13' && !u.is_guest;
+  res.json({
+    news: u.marketing_opt_in && allowed,
+    since: last?.created_at ?? null,
+    source: last?.source ?? null,
+    allowed,
+    why: u.age_group === 'under-13' ? 'under-13' : u.is_guest ? 'guest' : null,
+    email: u.is_guest ? null : u.email,
+  });
+});
+
+/**
+ * POST /api/users/unsubscribe { u, t } (or ?u=&t=) — the link in a news email: stops news emails
+ * without logging in. Mail apps' one-click unsubscribe posts here too (List-Unsubscribe=One-Click).
+ * Answers the same whether or not it was already off.
+ */
+async function unsubscribeHandler(req, res) {
+  const u = String(req.body?.u ?? req.query.u ?? '');
+  const t = String(req.body?.t ?? req.query.t ?? '');
+  if (!/^[0-9a-f-]{36}$/i.test(u) || !unsubscribe.valid(u, t)) throw badRequest('This unsubscribe link is not valid');
+  await db.withTransaction(async (client) => {
+    const { rows: [was] } = await client.query('SELECT marketing_opt_in FROM users WHERE id = $1 FOR UPDATE', [u]);
+    if (!was) throw notFound('No such player');
+    if (!was.marketing_opt_in) return;
+    await client.query('UPDATE users SET marketing_opt_in = false WHERE id = $1', [u]);
+    await client.query(`INSERT INTO email_consents (user_id, consent, source) VALUES ($1, false, 'unsubscribe')`, [u]);
+  });
+  res.json({ ok: true, news: false });
+}
+router.post('/unsubscribe', express.urlencoded({ extended: false, limit: '4kb' }), unsubscribeHandler);
+
+/** GET /api/users/me/export — "Download my data": everything stored about the player, as a JSON file. */
+router.get('/me/export', requireAuth, async (req, res) => {
+  const data = await account.exportData(db, req.user.id);
+  if (!data) throw notFound('No such player');
+  res.set('Cache-Control', 'no-store');
+  res.set('Content-Disposition', `attachment; filename="marble-spins-data-${data.account.username}.json"`);
+  res.type('application/json').send(JSON.stringify(data, null, 2));
+});
+
+/**
+ * DELETE /api/users/me { confirm: 'DELETE', password? } — the player deletes their account. Saved
+ * accounts confirm with their password; guests (no password) by typing DELETE. See src/account.
+ */
+router.delete('/me', requireAuth, async (req, res) => {
+  const body = validate(req.body ?? {}, { confirm: { type: 'string', max: 20 }, password: { type: 'string', max: 72, trim: false } }, { partial: true });
+  if (String(body.confirm ?? '').trim().toUpperCase() !== 'DELETE') throw badRequest('Type DELETE to confirm');
+  const { rows: [u] } = await db.query('SELECT is_guest, password_hash FROM users WHERE id = $1', [req.user.id]);
+  if (!u.is_guest && !(body.password && await bcrypt.compare(body.password, u.password_hash))) throw unauthorized('Wrong password');
+  const done = await db.withTransaction((client) => account.deleteAccount(client, req.user.id));
+  if (!done) throw notFound('No such player');
+  res.json({ deleted: true });
 });
 
 /** GET /api/users/me/appearance — your marble's look (cosmetic only) */

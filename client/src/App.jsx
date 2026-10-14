@@ -12,6 +12,8 @@ import RoomPage from './site/pages/RoomPage';
 import CertificatePage from './site/pages/CertificatePage';
 import BagPage from './site/pages/BagPage';
 import PurchasesPage from './site/pages/PurchasesPage';
+import SettingsPage from './site/pages/SettingsPage';
+import UnsubscribePage from './site/pages/UnsubscribePage';
 import CheckoutPage from './site/pages/CheckoutPage';
 import ScoresPage from './site/pages/ScoresPage';
 import SignupPage from './site/pages/SignupPage';
@@ -67,6 +69,8 @@ export default function App() {
           <Route path="/checkout" element={<CheckoutPage />} />
           <Route path="/bag" element={<BagPage />} />
           <Route path="/purchases" element={<PurchasesPage />} />
+          <Route path="/settings" element={<SettingsPage />} />
+          <Route path="/unsubscribe" element={<UnsubscribePage />} />
           <Route path="/scores" element={<ScoresPage />} />
           <Route path="/signup" element={<SignupPage />} />
           <Route path="/legal" element={<LegalPage />} />

@@ -248,7 +248,7 @@ function Players() {
           <tbody>
             {list.data?.players.map((p) => (
               <tr key={p.id}>
-                <td><Link to={`/admin/players/${p.id}`}>{p.display_name || p.username}</Link>{p.display_name ? <span className="adm-muted"> @{p.username}</span> : null}{p.suspended_at && <span className="adm-tag adm-tag--bad">suspended</span>}{p.role === 'admin' && <span className="adm-tag">admin</span>}</td>
+                <td><Link to={`/admin/players/${p.id}`}>{p.display_name || p.username}</Link>{p.display_name ? <span className="adm-muted"> @{p.username}</span> : null}{p.suspended_at && <span className="adm-tag adm-tag--bad">suspended</span>}{p.deleted_at && <span className="adm-tag">deleted</span>}{p.role === 'admin' && <span className="adm-tag">admin</span>}</td>
                 <td>{p.is_guest ? '–' : p.email}</td>
                 <td>{p.is_guest ? 'guest' : 'saved'}</td>
                 <td>{p.age_group ?? '–'}</td>
@@ -286,7 +286,7 @@ function Player() {
       <Link to="/admin/players" className="adm-muted">← Players</Link>
       <div className="adm-row adm-row--top">
         <div className="adm-stack" style={{ flex: '1 1 420px', minWidth: 0 }}>
-          <h1 className="adm-h1">{p.display_name || p.username} {p.suspended_at && <span className="adm-tag adm-tag--bad">suspended {when(p.suspended_at)}</span>}</h1>
+          <h1 className="adm-h1">{p.display_name || p.username} {p.suspended_at && <span className="adm-tag adm-tag--bad">suspended {when(p.suspended_at)}</span>}{p.deleted_at && <span className="adm-tag">account deleted {when(p.deleted_at)}</span>}</h1>
           <dl className="adm-facts">
             <div><dt>Player name</dt><dd>@{p.username}</dd></div>
             <div><dt>Email</dt><dd>{p.is_guest ? 'guest (no email)' : p.email}</dd></div>
@@ -316,7 +316,11 @@ function Player() {
             <label>New shown name (empty: their player name)<input value={name} onChange={(e) => setName(e.target.value)} maxLength={40} /></label>
           </Action>
           {p.marketing_opt_in && <Action title="Stop news emails (the player asked)" submit="Stop emails" onSubmit={(reason) => after('Emails stopped.')(() => adminApi.consentOff(p.id, reason))} />}
-          {p.role !== 'admin' && (
+          {p.role !== 'admin' && !p.deleted_at && (
+            <Action title="Delete account (the player asked; anonymises it, keeps payments)" submit="Delete account" danger
+              onSubmit={(reason) => after((r) => `Deleted: now ${r.username}.`)(() => adminApi.deleteAccount(p.id, reason))} />
+          )}
+          {p.role !== 'admin' && !p.deleted_at && (
             <Action title={p.suspended_at ? 'Lift the suspension' : 'Suspend (no login, no racing)'} submit={p.suspended_at ? 'Lift suspension' : 'Suspend'} danger={!p.suspended_at}
               onSubmit={(reason) => after(p.suspended_at ? 'Suspension lifted.' : 'Suspended.')(() => adminApi.suspend(p.id, !p.suspended_at, reason))} />
           )}

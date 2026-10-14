@@ -704,6 +704,9 @@ GROUP BY m.id, m.name;
 --        player can't log in or race.
 ALTER TABLE users ADD COLUMN IF NOT EXISTS age_group varchar(8) CHECK (age_group IN ('under-13', '13-17', '18+'));
 ALTER TABLE users ADD COLUMN IF NOT EXISTS suspended_at timestamptz;
+-- deleted_at: the player deleted their account (src/account). The row stays, anonymised, so race
+-- results, marble IDs and payment records (bookkeeping) stay whole; nothing in it points to the person.
+ALTER TABLE users ADD COLUMN IF NOT EXISTS deleted_at timestamptz;
 
 -- Admin 2-step login: an authenticator-app secret per admin (encrypted with the server's key).
 CREATE TABLE IF NOT EXISTS admin_2fa (

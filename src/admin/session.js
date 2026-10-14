@@ -47,7 +47,7 @@ async function requireAdminSession(req, _res, next) {
        FROM users u
       WHERE s.id = $1 AND s.user_id = $2 AND u.id = s.user_id
         AND s.ended_at IS NULL AND s.last_seen_at > now() - make_interval(mins => $3)
-        AND u.role = 'admin' AND u.suspended_at IS NULL
+        AND u.role = 'admin' AND u.suspended_at IS NULL AND u.deleted_at IS NULL
       RETURNING u.id, u.username, u.role, s.id AS session_id`,
     [payload.sid, payload.sub, IDLE_MINUTES],
   );

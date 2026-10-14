@@ -103,6 +103,8 @@ a:hover .ms-logo, .ms-header__logo:hover { text-decoration: none; }
 .ms-btn, .ms-nav a, .ms-chip { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
 .ms-btn--lg { font-size: 1.3rem; padding: 18px 30px; border-radius: 18px; }
 .ms-btn[disabled] { opacity: 0.5; cursor: not-allowed; }
+.ms-btn--danger { background: #C8322D; color: #fff; border-color: #C8322D; }
+.ms-btn--danger:hover { background: #A92925; border-color: #A92925; }
 
 /* Hover is a bonus only: every hover state also shows on keyboard focus, and nothing is hidden behind it. */
 .ms-btn:focus-visible, .ms-nav a:focus-visible, .ms-chip:focus-visible { outline: 3px solid var(--ms-yellow); outline-offset: 2px; }

@@ -54,7 +54,7 @@ export default function LegalPage() {
       <h2 className="ms-legal__h2">How long</h2>
       <p>While your account is active, and [X months] after you close it. Purchase records are kept as long as bookkeeping law requires. IP addresses are kept for at most 90 days, then only the country.</p>
       <h2 className="ms-legal__h2">Your rights</h2>
-      <p>You can ask to see, correct, export or delete your data, and object to some uses. Contact [privacy email]. You can also complain to the Swedish Authority for Privacy Protection (IMY).</p>
+      <p>You can ask to see, correct, export or delete your data, and object to some uses. In your account's Settings you can download your data, turn news emails on or off (every news email also has an unsubscribe link), and delete your account at once. Deleting removes your name, email, password, settings, email answers and IP addresses; race results stay under an anonymous name so other players' places don't change, and purchase records are kept without your name for as long as bookkeeping law requires (7 years in Sweden). For anything else, contact [privacy email]. You can also complain to the Swedish Authority for Privacy Protection (IMY).</p>
       <h1 id="cookies" className="ms-h2 ms-legal__h1">Cookies</h1>
       <p>We use necessary cookies to keep you logged in and the game working. [Analytics cookies only with your consent, via the cookie banner.]</p>
       <h1 id="contact" className="ms-h2 ms-legal__h1">Contact</h1>

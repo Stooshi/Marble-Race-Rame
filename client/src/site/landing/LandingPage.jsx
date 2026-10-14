@@ -1,5 +1,5 @@
 import { lazy, Suspense, useMemo } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { api } from '../../api/client';
 import { useAsync } from '../../hooks/useAsync';
 import MarbleBadge from '../marbles/MarbleBadge';
@@ -24,6 +24,8 @@ const FAQ = [
 
 /** The landing page (marblespins.com for visitors): a real race replay up top, then how it works. */
 export default function LandingPage() {
+  const [search] = useSearchParams();
+  const deleted = search.get('deleted') === '1';
   const { data } = useAsync(() => api.tracks().catch(() => ({ tracks: [] })), []);
   const counts = useMemo(() => {
     const c = {};
@@ -34,6 +36,7 @@ export default function LandingPage() {
 
   return (
     <div className="ms-landing">
+      {deleted && <div className="ms-page" style={{ paddingBottom: 0 }}><div className="ms-msg" role="status">Your account has been deleted. Thanks for racing with us.</div></div>}
       <section aria-label="Intro" className="ms-page ms-landing__intro">
         <div className="ms-two" style={{ alignItems: 'end' }}>
           <div style={{ display: 'grid', gap: 12, flexBasis: 520 }}>
