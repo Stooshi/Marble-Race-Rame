@@ -165,10 +165,20 @@ async function report(client, sql, before, log) {
     const extra = statuses.values.filter((v) => !RACE_STATUSES.includes(v));
     const lacking = statuses.kind.startsWith('enum') ? RACE_STATUSES.filter((v) => !statuses.values.includes(v)) : [];
     const summary = `${statuses.values.join(', ') || '(none)'} [${statuses.kind}]`;
-    if (extra.length || lacking.length) {
+    // Extra labels no race uses are harmless (Postgres can't drop an enum label in place, so an
+    // older database keeps them): a note, not a warning. Races in a status the code doesn't know,
+    // or a status the code needs that is missing, are worth a warning.
+    const inUse = [];
+    for (const v of extra) {
+      const { rows: n } = await client.query('SELECT count(*)::int AS n FROM races WHERE status::text = $1', [v]);
+      if (n[0].n) inUse.push(`${v} (${n[0].n} races)`);
+    }
+    if (inUse.length || lacking.length) {
       log.warn(`${TAG} WARNING race statuses differ from the code: ${summary}`
-        + `${extra.length ? `; not used by the code: ${extra.join(', ')}` : ''}`
+        + `${inUse.length ? `; races in statuses the code doesn't use: ${inUse.join(', ')}` : ''}`
         + `${lacking.length ? `; missing: ${lacking.join(', ')}` : ''}`);
+    } else if (extra.length) {
+      log.info(`${TAG} Race statuses: ${summary} — match the code (unused older labels, harmless: ${extra.join(', ')})`);
     } else {
       log.info(`${TAG} Race statuses: ${summary} — match the code`);
     }
