@@ -94,7 +94,7 @@ export default function Race() {
     return (
       <div className="page">
         {header}
-        <div className="card"><Empty>This race was cancelled. Entry fees have been refunded.</Empty>
+        <div className="card"><Empty>This race was cancelled.</Empty>
           <Link to="/dashboard" className="btn">Back to dashboard</Link></div>
       </div>
     );
@@ -208,7 +208,7 @@ function EventFeed({ events, entries }) {
 
 function Lobby({ details, onChange }) {
   const { race, entries, track, trackStats } = details;
-  const { user, isAuthenticated, setCoins, refreshUser } = useAuth();
+  const { user, isAuthenticated, refreshUser } = useAuth();
   const [marble, setMarble] = useState(null);
   const [busy, setBusy] = useState(null);
   const [error, setError] = useState(null);
@@ -260,7 +260,6 @@ function Lobby({ details, onChange }) {
             <button type="button" className="btn btn--primary btn--block" disabled={!marble || busy || slots <= 0}
               onClick={run('join', async () => {
                 await api.joinRace(race.id, marble.id);
-                if (race.entry_fee_coins) setCoins(user.coins - race.entry_fee_coins);
               })}>
               {busy === 'join' ? 'Joining…' : marble ? `Enter ${marble.name}` : 'Pick a marble'}
             </button>
@@ -278,7 +277,6 @@ function Lobby({ details, onChange }) {
             <div><dt>Track</dt><dd>{race.track_name}</dd></div>
             <div><dt>Length</dt><dd>{track ? `${Number(track.length_m)} m` : '—'}</dd></div>
             <div><dt>Race time</dt><dd>{track?.physics ? 'About 45 seconds' : '90 seconds'}</dd></div>
-            <div><dt>Entry fee</dt><dd>{race.entry_fee_coins ? `${race.entry_fee_coins} coins` : 'Free'}</dd></div>
             <div><dt>Track record</dt><dd>{trackStats?.record_ms ? `${formatTime(trackStats.record_ms)} (${trackStats.record_marble})` : '—'}</dd></div>
             <div><dt>Best halfway</dt><dd>{formatTime(trackStats?.best_split_ms)}</dd></div>
           </dl>

@@ -365,7 +365,7 @@ async function getComparisons(client, raceId) {
   return out;
 }
 
-/** Cancels a lobby race and refunds entry fees. */
+/** Cancels a lobby race (and returns any entry fee paid before fees were switched off). */
 async function cancel(raceId, actor) {
   return db.withTransaction(async (client) => {
     const { rows } = await client.query('SELECT * FROM races WHERE id = $1 FOR UPDATE', [raceId]);
@@ -376,10 +376,8 @@ async function cancel(raceId, actor) {
     }
     if (race.status !== 'lobby') throw conflict(`Cannot cancel a race that is ${race.status}`);
 
-    if (race.entry_fee_coins > 0) {
-      const { rows: entrants } = await client.query('SELECT user_id FROM race_entries WHERE race_id = $1 AND user_id IS NOT NULL', [raceId]);
-      for (const e of entrants) await economy.change(client, { userId: e.user_id, amount: race.entry_fee_coins, kind: 'entry-refund', raceId });
-    }
+    const { rows: entrants } = await client.query('SELECT user_id FROM race_entries WHERE race_id = $1 AND user_id IS NOT NULL', [raceId]);
+    for (const e of entrants) await economy.refundEntryFee(client, e.user_id, raceId);
     const { rows: updated } = await client.query(
       `UPDATE races SET status = 'cancelled', finished_at = now() WHERE id = $1 RETURNING *`,
       [raceId],

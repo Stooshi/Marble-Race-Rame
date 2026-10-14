@@ -67,7 +67,7 @@ async function assertCanUseMarble(client, userId, marbleId) {
   if (!rows[0]) throw badRequest('You do not own that marble or it is not available');
 }
 
-/** Adds the user's marble to a lobby race, charging the entry fee. */
+/** Adds the user's marble to a lobby race (always free: coin entry fees are switched off). */
 async function joinRace(client, raceId, userId, marbleId) {
   const { rows } = await client.query('SELECT * FROM races WHERE id = $1 FOR UPDATE', [raceId]);
   const race = rows[0];
@@ -88,11 +88,6 @@ async function joinRace(client, raceId, userId, marbleId) {
   if (counts[0].mine) throw conflict('You have already entered this race');
   if (counts[0].same_marble) throw conflict('That marble is already in this race');
   if (counts[0].total >= race.max_marbles) throw conflict('Race is full');
-
-  if (race.entry_fee_coins > 0) {
-    const paid = await economy.change(client, { userId, amount: -race.entry_fee_coins, kind: 'entry-fee', raceId });
-    if (!paid) throw badRequest('Not enough coins for the entry fee');
-  }
 
   const { rows: entry } = await client.query(
     'INSERT INTO race_entries (race_id, marble_id, user_id, is_bot) VALUES ($1, $2, $3, false) RETURNING *',
@@ -138,7 +133,7 @@ router.post('/', requireAuth, async (req, res) => {
     name: { type: 'string', max: 80 },
     min_marbles: { type: 'int', min: minMarbles, max: maxMarbles },
     max_marbles: { type: 'int', min: minMarbles, max: maxMarbles },
-    entry_fee_coins: { type: 'int', min: 0, max: 100000 },
+    // (entry_fee_coins: no longer accepted. Coin entry fees are switched off; every race is free to enter.)
     fill_with_bots: { type: 'boolean' },
     scheduled_at: { type: 'date' },
     marble_id: { type: 'uuid' },
@@ -165,7 +160,7 @@ router.post('/', requireAuth, async (req, res) => {
                           scheduled_at, created_by, tick_rate_hz, countdown_ms)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
        RETURNING id`,
-      [trackId, body.name ?? null, min, max, body.entry_fee_coins ?? 0, body.fill_with_bots ?? true,
+      [trackId, body.name ?? null, min, max, 0, body.fill_with_bots ?? true,
         body.scheduled_at ?? null, req.user.id, config.game.tickRateHz, config.game.countdownMs],
     );
     if (body.marble_id || body.enter) await joinRace(client, rows[0].id, req.user.id, body.marble_id ?? null);
@@ -264,7 +259,7 @@ router.post('/:id/next', requireAuth, async (req, res) => {
                             scheduled_at, created_by, tick_rate_hz, countdown_ms)
          VALUES ($1, $2, $3, $4, $5, $6, now() + make_interval(secs => $7::double precision / 1000), $8, $9, $10)
          RETURNING id, status`,
-        [race.track_id, race.name, race.min_marbles, race.max_marbles, race.entry_fee_coins, race.fill_with_bots,
+        [race.track_id, race.name, race.min_marbles, race.max_marbles, 0, race.fill_with_bots,
           config.game.nextRaceDelayMs, req.user.id, race.tick_rate_hz, race.countdown_ms],
       );
       next = n[0];
@@ -288,7 +283,7 @@ router.post('/:id/next', requireAuth, async (req, res) => {
   res.status(created ? 201 : 200).json({ race: next, entries: await getEntries(nextId, false) });
 });
 
-/** DELETE /api/races/:id/join — leave a lobby race (entry fee refunded) */
+/** DELETE /api/races/:id/join — leave a lobby race (a fee paid before fees were switched off is returned) */
 router.delete('/:id/join', requireAuth, async (req, res) => {
   const id = assertUuid(req.params.id);
   const race = await db.withTransaction(async (client) => {
@@ -297,9 +292,7 @@ router.delete('/:id/join', requireAuth, async (req, res) => {
     if (rows[0].status !== 'lobby') throw conflict('Cannot leave a race that has already been decided');
     const { rowCount } = await client.query('DELETE FROM race_entries WHERE race_id = $1 AND user_id = $2', [id, req.user.id]);
     if (!rowCount) throw notFound('You are not entered in this race');
-    if (rows[0].entry_fee_coins > 0) {
-      await economy.change(client, { userId: req.user.id, amount: rows[0].entry_fee_coins, kind: 'entry-refund', raceId: id });
-    }
+    await economy.refundEntryFee(client, req.user.id, id);
     return rows[0];
   });
   raceManager.notifyRaceUpdated(race);

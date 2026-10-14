@@ -193,7 +193,7 @@ CREATE TABLE IF NOT EXISTS races (
     status              race_status NOT NULL DEFAULT 'lobby',
     min_marbles         smallint    NOT NULL DEFAULT 20,
     max_marbles         smallint    NOT NULL DEFAULT 20,
-    entry_fee_coins     integer     NOT NULL DEFAULT 0 CHECK (entry_fee_coins >= 0),
+    entry_fee_coins     integer     NOT NULL DEFAULT 0 CHECK (entry_fee_coins >= 0), -- always 0: coin entry fees switched off 14 Oct 2026 (kept for old races)
     fill_with_bots      boolean     NOT NULL DEFAULT true,
     seed                bigint,
     target_duration_ms  integer,

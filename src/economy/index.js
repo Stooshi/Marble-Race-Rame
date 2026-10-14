@@ -21,6 +21,22 @@ const EARNED = ['race', 'finish-bonus', 'daily-goal'];
 const BOUGHT = ['coin-pack', 'credit-conversion'];
 const KINDS = ['start', 'opening-balance', ...EARNED, ...BOUGHT, 'purchase', 'bag', 'entry-fee', 'entry-refund', 'refund', 'skill-refund', 'admin', 'pack-refund'];
 
+/**
+ * Coin entry fees are switched off (14 Oct 2026: no paying coins to enter a race, so a race is never
+ * a bet). A race entered before that may still hold a fee a player paid: this gives back exactly what
+ * the ledger shows they paid for `raceId` and haven't had back yet. → coins returned (0 if none).
+ */
+async function refundEntryFee(client, userId, raceId) {
+  const { rows: [{ owed }] } = await client.query(
+    `SELECT COALESCE(-SUM(amount), 0)::int AS owed FROM coin_ledger
+      WHERE user_id = $1 AND race_id = $2 AND kind IN ('entry-fee', 'entry-refund')`,
+    [userId, raceId],
+  );
+  if (owed <= 0) return 0;
+  await change(client, { userId, amount: owed, kind: 'entry-refund', raceId });
+  return owed;
+}
+
 /** The finishing bonus for `place` (1 = the winner; nothing after 10th). */
 function placeCoins(place) {
   if (!Number.isInteger(place) || place < 1) return 0;
@@ -172,4 +188,4 @@ function bagPrice(bagKey, worth) {
   return Math.max(step, Math.round((worth * (1 - bag.discount)) / step) * step);
 }
 
-module.exports = { economy, KINDS, EARNED, BOUGHT, placeCoins, dayKey, dayBefore, streakAfter, raceLines, change, spend, opening, payRace, today, bagPrice };
+module.exports = { economy, KINDS, EARNED, BOUGHT, placeCoins, dayKey, dayBefore, streakAfter, raceLines, change, spend, opening, payRace, today, bagPrice, refundEntryFee };
