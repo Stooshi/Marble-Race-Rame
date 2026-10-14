@@ -6,6 +6,7 @@ const { requireAuth } = require('../middleware/auth');
 const { validate } = require('../utils/validate');
 const payments = require('../payments');
 
+const security = require('../security');
 const router = express.Router();
 const PROVIDER = { type: 'enum', values: ['stripe', 'apple', 'google', 'test'], required: true };
 
@@ -17,13 +18,17 @@ router.get('/', (req, res) => {
 /** POST /api/payments/checkout { productId, provider } — start buying a coin pack. */
 router.post('/checkout', requireAuth, async (req, res) => {
   const body = validate(req.body, { productId: { type: 'string', required: true, max: 32 }, provider: PROVIDER });
-  res.json(await db.withTransaction((client) => payments.checkout(client, req.user.id, body)));
+  const out = await db.withTransaction((client) => payments.checkout(client, req.user.id, body));
+  await security.record(req, req.user.id, 'purchase');
+  res.json(out);
 });
 
 /** POST /api/payments/receipt { provider: 'apple'|'google', receipt } — an app's store purchase. */
 router.post('/receipt', requireAuth, async (req, res) => {
   const body = validate(req.body, { provider: PROVIDER, receipt: { type: 'string', required: true, max: 20000 } });
-  res.json(await db.withTransaction((client) => payments.redeemReceipt(client, req.user.id, body)));
+  const out = await db.withTransaction((client) => payments.redeemReceipt(client, req.user.id, body));
+  await security.record(req, req.user.id, 'purchase');
+  res.json(out);
 });
 
 /** POST /api/payments/stripe/webhook — Stripe's "paid" message (placeholder until there's an account). */

@@ -59,6 +59,7 @@ export default function LegalPage() {
       <p>We use necessary cookies to keep you logged in and the game working. [Analytics cookies only with your consent, via the cookie banner.]</p>
       <h1 id="contact" className="ms-h2 ms-legal__h1">Contact</h1>
       <p>[support email] · [COMPANY NAME AB], [address], Sweden</p>
+      <p className="ms-note">The country of an IP address is looked up with GeoLite2 data created by MaxMind, available from maxmind.com.</p>
     </div>
   );
 }

@@ -13,9 +13,12 @@ function bearerToken(req) {
 async function loadUser(token) {
   const payload = verifyToken(token);
   if (!payload) return null;
+  if (payload.aud === 'marble-admin') return null; // (a back-office token is not a player's token)
   // Re-read the user so deleted accounts and role changes take effect immediately.
-  const { rows } = await db.query('SELECT id, username, role FROM users WHERE id = $1', [payload.sub]);
-  return rows[0] || null;
+  // A suspended account's token stops working at once.
+  const { rows } = await db.query('SELECT id, username, role FROM users WHERE id = $1 AND suspended_at IS NULL', [payload.sub]);
+  if (!rows[0]) return null;
+  return { ...rows[0], tokenPayload: payload };
 }
 
 /** Rejects the request with 401 unless a valid bearer token is supplied. */

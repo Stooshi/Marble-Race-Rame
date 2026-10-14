@@ -660,6 +660,71 @@ LEFT JOIN (race_entries e
 GROUP BY m.id, m.name;
 
 -- -----------------------------------------------------------------------------
+-- Back office: player details for support, admin 2-step login, the audit log,
+-- security events (IP addresses) and email consent
+-- -----------------------------------------------------------------------------
+-- age_group: asked at sign-up ('under-13', '13-17', '18+'); NULL for older accounts.
+-- marketing_opt_in (above) is the current email consent; email_consents keeps its history.
+-- suspended_at: set by the back office (with a reason in the audit log); a suspended
+--        player can't log in or race.
+ALTER TABLE users ADD COLUMN IF NOT EXISTS age_group varchar(8) CHECK (age_group IN ('under-13', '13-17', '18+'));
+ALTER TABLE users ADD COLUMN IF NOT EXISTS suspended_at timestamptz;
+
+-- Admin 2-step login: an authenticator-app secret per admin (encrypted with the server's key).
+CREATE TABLE IF NOT EXISTS admin_2fa (
+    user_id         uuid        PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+    secret_enc      text        NOT NULL,
+    enabled_at      timestamptz,
+    last_step       bigint,
+    created_at      timestamptz NOT NULL DEFAULT now()
+);
+
+-- Back-office sessions: started with the 2-step code, ended after 30 minutes without use.
+CREATE TABLE IF NOT EXISTS admin_sessions (
+    id              uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id         uuid        NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    created_at      timestamptz NOT NULL DEFAULT now(),
+    last_seen_at    timestamptz NOT NULL DEFAULT now(),
+    ended_at        timestamptz
+);
+
+-- Every back-office action, with who did it, to whom, why, and what changed. Never edited.
+CREATE TABLE IF NOT EXISTS admin_audit (
+    id              bigserial   PRIMARY KEY,
+    admin_id        uuid        REFERENCES users(id) ON DELETE SET NULL,
+    action          varchar(40) NOT NULL,
+    target_user_id  uuid        REFERENCES users(id) ON DELETE SET NULL,
+    reason          text        NOT NULL,
+    details         jsonb       NOT NULL DEFAULT '{}'::jsonb,
+    created_at      timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_admin_audit_target ON admin_audit (target_user_id, created_at);
+CREATE INDEX IF NOT EXISTS idx_admin_audit_time   ON admin_audit (created_at);
+
+-- IP addresses, only for security and fraud (account creation, login, coin purchases):
+-- the full address for at most 90 days, then only its country (src/security).
+CREATE TABLE IF NOT EXISTS security_events (
+    id              bigserial   PRIMARY KEY,
+    user_id         uuid        REFERENCES users(id) ON DELETE CASCADE,
+    kind            varchar(24) NOT NULL,
+    ip              inet,
+    country         char(2),
+    created_at      timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_security_events_user ON security_events (user_id, created_at);
+CREATE INDEX IF NOT EXISTS idx_security_events_ip   ON security_events (ip) WHERE ip IS NOT NULL;
+
+-- Email consent history: every time a player says yes or no to news by email.
+CREATE TABLE IF NOT EXISTS email_consents (
+    id              bigserial   PRIMARY KEY,
+    user_id         uuid        NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    consent         boolean     NOT NULL,
+    source          varchar(16) NOT NULL,
+    created_at      timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_email_consents_user ON email_consents (user_id, created_at);
+
+-- -----------------------------------------------------------------------------
 -- Seed data (idempotent)
 -- -----------------------------------------------------------------------------
 -- The catalog is staged in temporary tables (dropped when the transaction ends)

@@ -82,6 +82,25 @@ async function addCopy(client, userId, item, count, price) {
 }
 
 /**
+ * A copy given by the back office (support: a lost purchase, a prize): a gift
+ * copy (its own G-number, not one of the numbered bought copies), free. → the copy.
+ */
+async function grantCopy(client, userId, slug) {
+  const item = bySlug.get(slug);
+  if (!item) throw notFound('No such marble');
+  const owned = await client.query('SELECT 1 FROM user_collection WHERE user_id = $1 AND item_slug = $2', [userId, slug]);
+  if (owned.rowCount) throw conflict('The player already owns this marble');
+  await client.query('INSERT INTO collection_counters (item_slug) VALUES ($1) ON CONFLICT DO NOTHING', [slug]);
+  const { rows: [count] } = await client.query('UPDATE collection_counters SET gifted = gifted + 1 WHERE item_slug = $1 RETURNING gifted', [slug]);
+  const { rows: [copy] } = await client.query(
+    `INSERT INTO user_collection (user_id, item_slug, source, gift_no, marble_code, currency, price_paid, first_owner_id)
+     VALUES ($1, $2, 'grant', $3, $4, 'coins', 0, $1) RETURNING *`,
+    [userId, slug, count.gifted, marbleCode(item, { giftNo: count.gifted })],
+  );
+  return copy;
+}
+
+/**
  * The bags (client/src/shared/economy.json → bags): every collection design of
  * the bag's rarities in ONE shade the buyer picks (Classic if they don't), at
  * the bag's discount off what the marbles cost one by one, rounded to the
@@ -272,4 +291,4 @@ async function recordShooterLook(client, userId, entryId) {
   );
 }
 
-module.exports = { pickRacingMarble, recordShooterLook, listItems, describe, buy, bagOffer, buyBag, findById, bag, setShooter, certificate, counters };
+module.exports = { grantCopy, pickRacingMarble, recordShooterLook, listItems, describe, buy, bagOffer, buyBag, findById, bag, setShooter, certificate, counters };
