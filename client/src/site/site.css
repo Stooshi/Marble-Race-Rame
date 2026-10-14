@@ -502,6 +502,8 @@ a.ms-tile:hover, a.ms-card:hover { text-decoration: none; border-color: var(--ms
 .ms-sheet__close { position: absolute; right: 14px; top: 10px; background: none; border: 0; color: var(--ms-muted); font-size: 2rem; cursor: pointer; min-width: 44px; min-height: 44px; }
 .ms-sheet__ball { width: 100%; display: grid; place-items: center; }
 .ms-sheet__ball .ms-turntable { max-width: 320px; aspect-ratio: 1 / 1; background: transparent; }
+.ms-bag__ball { width: 170px; max-width: 100%; flex: none; }
+.ms-bag__ball .ms-turntable { aspect-ratio: 1 / 1; background: transparent; }
 .ms-sheet__col { font-size: 0.8rem; font-weight: 700; color: var(--ms-muted); letter-spacing: 0.04em; }
 .ms-sheet__name { margin: 0; font-family: var(--ms-cond); font-weight: 800; font-size: 2.2rem; line-height: 1; }
 .ms-sheet__story { margin: 0; color: var(--ms-soft); font-size: 1rem; line-height: 1.5; font-style: italic; max-width: 42ch; }

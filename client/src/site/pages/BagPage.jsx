@@ -1,10 +1,13 @@
-import { useMemo, useState } from 'react';
+import { lazy, Suspense, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../../api/client';
 import { useAuth } from '../../context/AuthContext';
 import { useAsync } from '../../hooks/useAsync';
-import { DESIGN, ITEM, ITEMS, RARITY_ORDER, rarityInfo } from '../../shared/marbles';
+import { DESIGN, ITEM, ITEMS, PLAIN_3D, RARITY_ORDER, rarityInfo, shows3d } from '../../shared/marbles';
+import { importOrReload } from '../../utils/staleCode';
 import MarbleBadge from '../marbles/MarbleBadge';
+
+const Turntable = lazy(() => importOrReload(() => import('../marbles/Turntable')));
 
 const FILTERS = ['all', ...RARITY_ORDER];
 
@@ -101,7 +104,19 @@ export default function BagPage() {
 
       {pick && (
         <section className="ms-card" style={{ display: 'flex', flexWrap: 'wrap', gap: 20, alignItems: 'center' }} aria-live="polite">
-          {pick.slug ? <MarbleBadge slug={pick.slug} size={110} /> : <MarbleBadge marble={pick.marble} size={110} />}
+          {(() => {
+            // The picked marble in 3D once its look is approved (the picture while it loads).
+            const flat = pick.slug ? <MarbleBadge slug={pick.slug} size={110} /> : <MarbleBadge marble={pick.marble} size={110} />;
+            const in3d = pick.slug ? shows3d(pick.slug) : PLAIN_3D;
+            if (!in3d) return flat;
+            return (
+              <div className="ms-bag__ball">
+                <Suspense fallback={flat}>
+                  <Turntable key={pick.slug ?? pick.marble?.slug} slug={pick.slug} marble={pick.slug ? null : pick.marble} label={`${pick.name} in 3D`} />
+                </Suspense>
+              </div>
+            );
+          })()}
           <div style={{ display: 'grid', gap: 8, flex: '1 1 260px', minWidth: 0 }}>
             <h2 className="ms-h3" style={{ fontFamily: 'var(--ms-cond)', fontWeight: 800, fontSize: '1.6rem' }}>{pick.name}</h2>
             {pick.slug && <span className="ms-row" style={{ gap: 8 }}><span className="ms-id ms-id--big">#{pick.id}</span><span className="ms-sheet__col">{pick.collection.toUpperCase()}</span></span>}

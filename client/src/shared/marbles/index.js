@@ -116,6 +116,8 @@ export function dressEntries(entries, key, slugs) {
 /** Designs approved in 3D (catalog.json → approved3d): the shop shows their 3D marble; any other its shop picture. */
 export const APPROVED_3D = new Set(catalog.approved3d?.designs ?? []);
 export const shows3d = (slug) => APPROVED_3D.has(ITEM[slug]?.design.key);
+/** Whether the plain marbles (starters, Originals) show in 3D (approved with the collection, 14 Oct). */
+export const PLAIN_3D = Boolean(catalog.approved3d?.plain);
 
 /** The designs whose 3D look is finished (materials.js builds exactly these). */
 export const BUILT_MATERIALS = ['vane-glass', 'steel', 'champion', 'aurora-glass', 'clear-glass', 'agate-rings', 'patch', 'corkscrew', 'bee-bands', 'oxblood', 'flame-swirl'];

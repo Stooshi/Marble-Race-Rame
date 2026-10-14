@@ -3,7 +3,7 @@ import {
   AmbientLight, CircleGeometry, Color, DirectionalLight, HemisphereLight, Mesh, MeshBasicMaterial, PerspectiveCamera,
   Quaternion, Scene, Vector3, WebGLRenderer,
 } from 'three';
-import { createMarbleLook, glows } from '../../shared/marbles/materials';
+import { createMarbleLook, createPlainLook, glows } from '../../shared/marbles/materials';
 
 const RADIUS = 1;
 const UP = new Vector3(0, 1, 0);
@@ -13,11 +13,12 @@ const UP = new Vector3(0, 1, 0);
  * races (the shared materials). Drag sideways to spin it by hand.
  * Loaded on demand, so the shop's first paint stays light.
  */
-export default function Turntable({ slug, night = false, label }) {
+export default function Turntable({ slug, marble = null, night = false, label }) {
+  const plainKey = marble ? `${marble.color_primary}|${marble.color_secondary ?? ''}|${marble.pattern ?? ''}` : '';
   const ref = useRef(null);
   useEffect(() => {
     const canvas = ref.current;
-    if (!canvas || !slug) return undefined;
+    if (!canvas || (!slug && !marble)) return undefined;
     let renderer;
     try {
       renderer = new WebGLRenderer({ canvas, antialias: true, alpha: true });
@@ -25,7 +26,7 @@ export default function Turntable({ slug, night = false, label }) {
       return undefined; // no WebGL: the flat badge next to it still shows the marble
     }
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
-    const dark = night || glows(slug);
+    const dark = night || (slug ? glows(slug) : false);
     const scene = new Scene();
     scene.add(new HemisphereLight('#ffffff', dark ? '#1b2235' : '#55607a', dark ? 0.7 : 1.3));
     scene.add(new AmbientLight('#ffffff', 0.25));
@@ -36,7 +37,7 @@ export default function Turntable({ slug, night = false, label }) {
     shadow.rotation.x = -Math.PI / 2;
     shadow.position.y = -RADIUS + 0.01;
     scene.add(shadow);
-    const look = createMarbleLook(slug, { radius: RADIUS });
+    const look = slug ? createMarbleLook(slug, { radius: RADIUS }) : createPlainLook(marble, { radius: RADIUS });
     look.setNight(dark);
     scene.add(look.object);
     const camera = new PerspectiveCamera(30, 4 / 3, 0.1, 50);
@@ -91,6 +92,6 @@ export default function Turntable({ slug, night = false, label }) {
       shadow.material.dispose();
       renderer.dispose();
     };
-  }, [slug, night]);
+  }, [slug, plainKey, night]);
   return <canvas ref={ref} className="ms-turntable" role="img" aria-label={label} />;
 }

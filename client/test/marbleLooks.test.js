@@ -123,7 +123,7 @@ describe('collection marble looks', () => {
     }
     for (const i of ITEMS) if (!BUILT_MATERIALS.includes(i.design.material)) expect(shows3d(i.slug)).toBe(false);
     expect(shows3d('cats-eye-sunset')).toBe(true);
-    expect(shows3d('flame-swirl-sunset')).toBe(false);
+    expect(shows3d('flame-swirl-sunset')).toBe(true); // (all approved, 14 Oct)
   });
 
   it('Marble IDs: found however they are typed', () => {

@@ -1317,9 +1317,20 @@
   ]
  },
  "approved3d": {
-  "note": "Designs whose 3D look is approved (passed the colour and rolling checks and Moses's review). Only these show the 3D marble in the shop; every other design shows its shop picture, never a stand-in.",
+  "note": "Designs whose 3D look is approved (passed the colour and rolling checks and Moses's review). Only these show the 3D marble in the shop; every other design shows its shop picture, never a stand-in. plain: the plain marbles (starters, Originals) too.",
   "designs": [
-   "cats-eye"
-  ]
+   "clearie",
+   "aggie",
+   "patch",
+   "cats-eye",
+   "corkscrew",
+   "bumblebee",
+   "oxblood",
+   "steelie",
+   "flame-swirl",
+   "champion",
+   "aurora"
+  ],
+  "plain": true
  }
 }
