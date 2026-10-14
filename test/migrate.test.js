@@ -9,7 +9,7 @@ const schema = fs.readFileSync(SCHEMA_PATH, 'utf8');
 
 test('reads every table and its columns from the schema file', () => {
   const cols = expectedColumns(schema);
-  assert.deepEqual(Object.keys(cols).sort(), ['admin_2fa', 'admin_audit', 'admin_sessions', 'billboards', 'coin_ledger', 'collection_counters', 'data_updates', 'email_consents', 'house_looks', 'marble_appearances', 'marble_colors', 'marble_effects', 'marble_surfaces', 'marbles', 'payment_refunds', 'payments', 'race_entries', 'race_entry_looks', 'race_replays', 'races', 'rooms', 'security_events', 'stripe_events', 'tracks', 'user_collection', 'user_days', 'user_marbles', 'user_shooter', 'users']);
+  assert.deepEqual(Object.keys(cols).sort(), ['admin_2fa', 'admin_audit', 'admin_sessions', 'billboards', 'coin_ledger', 'collection_counters', 'data_updates', 'email_consents', 'house_looks', 'marble_appearances', 'marble_colors', 'marble_effects', 'marble_surfaces', 'marbles', 'password_resets', 'payment_refunds', 'payments', 'race_entries', 'race_entry_looks', 'race_replays', 'races', 'rooms', 'security_events', 'stripe_events', 'tracks', 'user_collection', 'user_days', 'user_marbles', 'user_shooter', 'users']);
   assert.ok(cols.tracks.includes('physics'));
   assert.deepEqual(cols.billboards, ['id', 'track_slug', 'slot', 'image_url', 'kind', 'note', 'starts_at', 'ends_at', 'created_at']);
   assert.ok(cols.race_replays.includes('data'));

@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { api } from '../../api/client';
 
 const MIN_AGE = 13; // [13]: players younger than this need a parent or guardian's approval (placeholder process)
 const AGE_GROUPS = [['under-13', `Under ${MIN_AGE}`], ['13-17', `${MIN_AGE}–17`], ['18+', '18 or older']];
@@ -12,6 +13,13 @@ export default function SignupPage() {
   const { login, register, claim, user } = useAuth();
   const guest = Boolean(user?.is_guest);
   const mode = search.get('mode') === 'login' ? 'login' : 'signup';
+  const [resetOn, setResetOn] = useState(false);
+  useEffect(() => {
+    if (mode !== 'login') return undefined;
+    let live = true;
+    api.passwordResetEnabled().then((r) => { if (live) setResetOn(Boolean(r.enabled)); }).catch(() => {});
+    return () => { live = false; };
+  }, [mode]);
   const next = search.get('next')?.startsWith('/') ? search.get('next') : '/home';
   const [f, setF] = useState({ username: '', email: '', login: '', password: '', age: '', terms: false, news: false });
   const [error, setError] = useState(null);
@@ -75,6 +83,7 @@ export default function SignupPage() {
           <>
             <label>Player name or email<input value={f.login} onChange={set('login')} autoComplete="username" required /></label>
             <label>Password<input type="password" value={f.password} onChange={set('password')} autoComplete="current-password" required /></label>
+            {resetOn && <Link to="/forgot-password" style={{ justifySelf: 'start', color: 'var(--ms-soft)' }}>Forgot your password?</Link>}
           </>
         )}
         {error && <div className="ms-msg ms-msg--bad" role="alert">{error}</div>}

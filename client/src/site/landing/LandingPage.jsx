@@ -19,7 +19,7 @@ const SERIES = [
 const FAQ = [
   ['Is Marble Spins free?', 'Yes. Every race is free and unlimited. You can buy extra marble looks in the shop if you want to.'],
   ['Do I need to download anything?', 'No. It plays in your browser on phone or computer. Apps for iPhone and Android are on the way.'],
-  ['Can money make my marble faster?', 'Never. Every marble races at your own skill, which grows as you play. Purchases only change how it looks.'],
+  ['Can money make my marble faster?', 'Never. Every player\'s marble races at the same level, whatever it looks like: the race itself decides who wins. Purchases only change how it looks.'],
   ['How long is a race?', 'About a minute. Perfect for a quick break, or ten in a row.'],
 ];
 
@@ -93,7 +93,7 @@ export default function LandingPage() {
             <h2 id="marbles-h" className="ms-landing__h2">Build your Marble Bag</h2>
             <p style={{ margin: 0, color: 'var(--ms-soft)' }}>Collect marbles from Common to Legendary, with stripes, swirls, glitter and glow. Earn coins in every race and spend them in the shop.</p>
             <p style={{ margin: 0, color: 'var(--ms-soft)' }}>Limited-edition marbles drop every month, numbered and gone when they're gone.</p>
-            <div className="ms-card" style={{ borderColor: 'var(--ms-yellow)' }}><strong>Looks, never speed.</strong> Every marble in your bag races at your own skill. Money buys style, never wins.</div>
+            <div className="ms-card" style={{ borderColor: 'var(--ms-yellow)' }}><strong>Looks, never speed.</strong> Every player's marble races at the same level. Money buys style, never wins.</div>
             <Link to="/collection" style={{ color: 'var(--ms-yellow)', fontWeight: 700 }}>See the collection →</Link>
           </div>
           <div className="ms-row" style={{ justifyContent: 'center', gap: 18 }}>

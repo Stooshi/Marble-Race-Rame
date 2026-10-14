@@ -13,6 +13,8 @@ const { requireAuth } = require('../middleware/auth');
 const { ensureAppearance } = require('../game/appearance');
 const economy = require('../economy');
 const security = require('../security');
+const passwordReset = require('../account/passwordReset');
+const email = require('../email');
 
 const router = express.Router();
 
@@ -146,6 +148,36 @@ router.post('/login', authLimiter, async (req, res) => {
   await db.query('UPDATE users SET last_login_at = now() WHERE id = $1', [found.id]);
   await security.record(req, found.id, 'login');
   const { password_hash: _omit, suspended_at: _s, ...user } = found;
+  res.json({ token: signToken(user), user });
+});
+
+/** GET /api/auth/password-reset — whether "Forgot your password?" works (email is set up). */
+router.get('/password-reset', (_req, res) => {
+  res.json({ enabled: email.enabled() });
+});
+
+/**
+ * POST /api/auth/forgot { email } — emails a reset link if the address belongs to a saved account.
+ * The answer is the same either way, so it can't be used to find out who has an account.
+ */
+router.post('/forgot', authLimiter, async (req, res) => {
+  const body = validate(req.body, { email: { type: 'string', required: true, max: 254 } });
+  const origin = req.get('origin');
+  const siteUrl = config.isSiteOrigin(origin) ? origin : config.publicSiteUrl;
+  const out = await passwordReset.request(db, { email: body.email, siteUrl });
+  if (out.sent) await security.record(req, out.userId, 'reset-request');
+  res.json({ ok: true, minutes: passwordReset.LINK_MINUTES });
+});
+
+/** POST /api/auth/reset { token, password } — sets the new password from an emailed link, and logs in. */
+router.post('/reset', authLimiter, async (req, res) => {
+  const body = validate(req.body, {
+    token: { type: 'string', required: true, max: 100, trim: false },
+    password: { type: 'string', required: true, min: 8, max: 72, trim: false },
+  });
+  const { id } = await passwordReset.reset(db, body);
+  await security.record(req, id, 'password-reset');
+  const { rows: [user] } = await db.query(`SELECT ${PUBLIC_USER_COLUMNS} FROM users WHERE id = $1`, [id]);
   res.json({ token: signToken(user), user });
 });
 

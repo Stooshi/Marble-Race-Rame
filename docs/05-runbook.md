@@ -137,6 +137,27 @@ Test-mode orders stay in the `payments` table. They can be recognised by their S
 ### Back to test
 Remove `STRIPE_ALLOW_LIVE`, put the test key and the test `whsec_…` back, and restart.
 
+## Email (Brevo)
+
+Email is off until Brevo is set up. When it's on, "Forgot your password?" appears on the log-in page and reset emails are sent.
+
+1. **Create the account.** Make a Brevo account (brevo.com) in the company's name.
+2. **Authenticate marblespins.com.** In Brevo, go to Senders, Domains & Dedicated IPs → Domains → Add a domain → `marblespins.com`.
+   - Brevo shows DNS records: a Brevo code, DKIM, DMARC and SPF.
+   - Add each record in **Vercel → Domains → marblespins.com → DNS records**, exactly as Brevo shows it, then click **Verify** in Brevo.
+3. **Add the sender.** Go to Senders → Add a sender → `no-reply@marblespins.com`, name "Marble Spins". It is verified through the domain.
+4. **Create the key.** Go to SMTP & API → API keys → Generate a new API key, named for example "railway".
+5. **Set the variables on Railway, then restart:**
+   - `BREVO_API_KEY` = the key (never paste it in chat or docs);
+   - optional: `EMAIL_FROM` (default `no-reply@marblespins.com`) and `EMAIL_FROM_NAME` (default "Marble Spins").
+6. **Test it:**
+   1. On marblespins.com, choose Log in → Forgot your password?
+   2. Enter your own account's email.
+   3. The email arrives within a minute. The link opens `/reset-password` and works once, for 60 minutes.
+   4. Brevo → Transactional → Logs shows each message.
+
+To turn email off again, remove `BREVO_API_KEY` and restart.
+
 ## Common problems
 
 | Symptom | Likely cause and fix |
@@ -153,6 +174,8 @@ Remove `STRIPE_ALLOW_LIVE`, put the test key and the test `whsec_…` back, and 
 | `raceFingerprints` test fails | A change altered how past races run. **Do not ship it.** Revert the engine change, or move the change to the new physics with a version bump (`PHYSICS_VERSION`). Never re-record fingerprints without a deliberate decision |
 | A track looks wrong (scenery in the track, camera inside a tunnel) | Drawing only, in `client/src/three/`; the race is unaffected. Run `node scripts/clear-check.js <slug>` |
 | Admin locked out of the back office | See [2-step reset](#back-office-admins-and-the-2-step-login) |
+| "Forgot your password?" missing on the log-in page | `BREVO_API_KEY` isn't set on Railway (or the server wasn't restarted after setting it) |
+| Reset email doesn't arrive | Look in Brevo → Transactional → Logs. If there's nothing there, see the Railway logs for `Brevo 4xx` (wrong key, or a sender that isn't verified). The player should also check spam. At most 3 links are sent per account per hour |
 | A player asks for their data or to be deleted | They can do both themselves in Settings. Support can delete from the back office (player → Delete account, with a reason) |
 | App shows "Can't reach the race track" | Same as the first row. The app talks to the Railway address built in by `npm run app:sync` |
 

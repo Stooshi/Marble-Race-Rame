@@ -21,6 +21,7 @@
 | Add a new track | `src/tracks/README.md` (the kit guide), then `scripts/physics-track-sql.js` and a data update |
 | Fix sound or music | `client/src/sound/engine.js`, `client/src/sound/settings.js`, files in `client/public/audio/` |
 | Change legal text | `client/src/site/pages/LegalPage.jsx` |
+| Change an email's text | `src/email/templates.js` |
 | Change the app icon or splash | `client/assets/*.png`, then `npx capacitor-assets generate --ios --android` |
 | Change the database | Add columns or tables to `docs/database_schema.sql` (additions only). To change existing rows, add a new file in `docs/data_updates/` |
 
@@ -118,7 +119,12 @@
 - `admin/totp.js`: RFC 6238 codes and the encrypted secret.
 - `security/index.js`: `record()` stores IP and country for sign-up, login and purchase. `trimIps()` blanks IPs older than 90 days and runs daily. Countries are looked up offline (geoip-country).
 - `account/index.js`: `exportData()` ("Download my data") and `deleteAccount()` (anonymises, keeps payments and race results).
+- `email/index.js`: sends email through Brevo when `BREVO_API_KEY` is set (`enabled()`, `send()`). Tests swap the transport.
+- `email/templates.js`: the emails' HTML (password reset).
 - `email/unsubscribe.js`: signed unsubscribe links and RFC 8058 one-click headers.
+- `account/passwordReset.js`: "Forgot your password?":
+  - `request()` emails a one-time link, says nothing about whether the account exists, and sends at most 3 an hour;
+  - `reset()` sets the new password, ends older logins and back-office sessions.
 
 **`middleware/` and `utils/`:**
 - `auth.js`: `requireAuth`, `optionalAuth`, `requireAdmin`, `loadUser` (rejects suspended, deleted and back-office tokens).
@@ -129,7 +135,7 @@
 
 | File | Covers |
 |---|---|
-| `auth.js` | Sign-up, guest, claim (guest → account), login, me |
+| `auth.js` | Sign-up (refuses under-13s), guest, claim (guest → account), login, me; password reset (`GET /password-reset`, `POST /forgot`, `POST /reset`) |
 | `users.js` | Profile, settings, news-by-email, unsubscribe, data export, delete account, appearance, the old marble bag, leaderboard, public profiles |
 | `races.js` | Lobby list, create, join and leave (free), next race, start, cancel, results, replay, showcase race |
 | `rooms.js` | Friend rooms (create, join, leave, track, remove, start, close) and `afterRace` |
@@ -181,7 +187,7 @@ Defined in `src/sockets/index.js`. The client may send a JWT in `auth.token`; an
   - the track tests also check that data-update SQL matches the generator.
 - **Races:** `raceManager`, `raceSession`, `rooms`.
 - **Money and items:** `economy`, `entryFees`, `collection`, `showcase`, `payments`, `stripe`.
-- **Platform:** `account`, `admin`, `origins`, `migrate` (the table list is fixed here), `appearance`.
+- **Platform:** `account`, `passwordReset`, `admin`, `origins`, `migrate` (the table list is fixed here), `appearance`.
 
 ---
 
@@ -266,6 +272,7 @@ Defined in `src/sockets/index.js`. The client may send a JWT in `auth.token`; an
 | `/purchases?paid=` | Orders and receipts |
 | `/settings` | News by email, purchases, download my data, delete my account |
 | `/unsubscribe?u=&t=` | Unsubscribe link from emails (no login) |
+| `/forgot-password`, `/reset-password?token=` | Password reset (`site/pages/PasswordPages.jsx`) |
 | `/scores` | Scoreboards |
 | `/signup` (`?mode=login`) | Sign up / log in |
 | `/legal` | Terms, terms of sale, privacy, cookies, contact |

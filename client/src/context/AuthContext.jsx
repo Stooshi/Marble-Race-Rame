@@ -53,6 +53,8 @@ export function AuthProvider({ children }) {
     playAsGuest: async () => applySession(await api.guest()),
     /** A guest saves their marble: name, email and password, keeping coins and marbles. */
     claim: async (fields) => applySession(await api.claim(fields)),
+    /** A new password from an emailed link (logs in with it). */
+    resetPassword: async (resetToken, password) => applySession(await api.resetPassword(resetToken, password)),
     logout,
     refreshUser,
     setCoins: (coins) => setUser((u) => (u ? { ...u, coins } : u)),

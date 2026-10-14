@@ -4,6 +4,8 @@
 
 | Date | Decision | Why |
 |---|---|---|
+| 2026-10-14 | **Everyone races at the same level for launch** (skill 50 for every player); all texts say so. A growth rule is to be revisited after launch with real data. | Honest, simple and fair from day one. Growth needs real play data to tune without making the game feel unfair. |
+| 2026-10-14 | **Email through Brevo** (EU). Password reset is built now and turns on when `BREVO_API_KEY` is set on Railway; news emails will use the same provider. | An EU provider keeps personal data in the EU. Building it behind a setting means it works the moment the key is added. |
 | 2026-10-14 | **Coin entry fees switched off completely** (server and screens). Every race is free to enter. | Coins can be bought, so paying coins to enter a race and winning coins by place would look like betting. That means "simulated gambling" in the app stores and a 13+ rating or higher. |
 | 2026-10-14 | **Google Play target audience 13+** until parental approval for under-13s is built. No Apple "Made for Kids". The server refuses under-13 sign-ups, as the sign-up page does (technical). | Keeps the app outside the Families policy while the under-13 rules are a placeholder. |
 | 2026-10-14 | **Keep iPad support** in the iPhone app. | The game already works well on tablets. Cost: iPad screenshots for the store. |

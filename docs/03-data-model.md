@@ -52,7 +52,7 @@ marbles ──< user_marbles   (the older plain marbles; looks only)
 | `coins` | Current balance, never below 0. **Only changed through `economy.change()`**, which also writes `coin_ledger` |
 | `coins_earned` | Running total of coins earned by racing (the scoreboards rank by this). Spending doesn't lower it |
 | `coins_bought` | Running total of coins bought (coin packs, and credits converted when coins became the only currency). Refunds lower it |
-| `skill` | 1–100, default 50. How fast the player's marbles race (see [Game rules](04-game-rules.md#skill)). Every marble in the player's bag races at this |
+| `skill` | 1–100, default 50. How fast the player's marbles race (see [Game rules](04-game-rules.md#skill)). For launch every player stays at 50 |
 | `skill_refund_coins` | One-time notice: coins refunded when marbles stopped carrying strength (12 Oct 2026). NULL once seen |
 | `is_guest` | Playing without an account yet ("Play free"). Saving the account clears it and keeps coins and marbles |
 | `marketing_opt_in` | Current answer to news by email. Its history is in `email_consents`. Always false under 13 |
@@ -62,6 +62,7 @@ marbles ──< user_marbles   (the older plain marbles; looks only)
 | `last_login_at`, `created_at`, `updated_at` | `updated_at` is set by a trigger |
 | `suspended_at` | Set by the back office. A suspended player can't log in or race |
 | `deleted_at` | The player deleted the account. The row stays, anonymised (see below) |
+| `password_changed_at` | When the password was last reset by email. Logins made before it stop working |
 
 **Account deletion** (`src/account/index.js`) doesn't remove the `users` row.
 - **It anonymises the account:** name, email, password, shown name, settings, age group and consent are cleared.
@@ -71,6 +72,18 @@ marbles ──< user_marbles   (the older plain marbles; looks only)
   - marble IDs, so serial numbers stay unique;
   - the coin ledger;
   - payments, for bookkeeping.
+
+### `password_resets`
+One row per emailed reset link (`src/account/passwordReset.js`).
+
+| Column | Meaning |
+|---|---|
+| `user_id` | The account |
+| `token_hash` | SHA-256 of the link's token. The token itself is never stored |
+| `created_at`, `expires_at` | A link works for 60 minutes |
+| `used_at` | Set when the link is used, or when a newer link replaces it |
+
+At most 3 links are sent per account per hour.
 
 ### `user_days`
 One row per player per day (UTC): `races` finished that day and `goal_met_at` (when the daily goal was reached). Used for the daily full-pay limit and the daily goal.

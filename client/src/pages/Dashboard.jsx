@@ -48,12 +48,6 @@ export default function Dashboard() {
         <div className="profile-header__text">
           <h1>{who.display_name || who.username}</h1>
           <p className="muted">@{who.username} · racing since {new Date(who.created_at).toLocaleDateString()}</p>
-          {who.skill && (
-            <p className="skill-chip" title="Skill belongs to the player: every marble in the Marble Bag races at this level">
-              <span className="muted">Skill</span> <strong>{who.skill}</strong>
-              {isSelf && <span className="muted">· every marble in your Marble Bag races at this level</span>}
-            </p>
-          )}
         </div>
         {isSelf && (
           <div className="profile-header__coins">
@@ -96,9 +90,9 @@ function RefundNote({ coins }) {
   return (
     <section className="card refund-note" role="status">
       <div>
-        <strong>Skill now belongs to you, not your marbles</strong>
+        <strong>Marbles are now looks only</strong>
         <p>
-          Every marble in your Marble Bag now races at your own skill, so marbles are about looks only.
+          Every player's marble now races at the same level, so marbles are about looks only.
           You keep every marble you bought, and the {formatNumber(coins)} coins you spent on them are back in your balance.
         </p>
       </div>

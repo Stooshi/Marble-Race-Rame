@@ -6,7 +6,7 @@
 
 | Gap | Detail | Where |
 |---|---|---|
-| **Skill doesn't grow** | Everyone races at 50. The website FAQ and the store texts say skill "grows as you play". Either build the growth rule ("daily training", still to be decided by Moses) or change the wording | `src/game/skill.js`, `src/economy`, FAQ in `client/src/site/landing/LandingPage.jsx` |
+| **Turn on email** | The password reset is built but off until `BREVO_API_KEY` (and a verified `EMAIL_FROM` sender) are set on Railway. See the [runbook](05-runbook.md#email-brevo) | Railway variables, Brevo |
 | **In-app purchases in the apps** | Apple and Google purchases are placeholders. They need the store accounts, products named after `packs.json` ids, and server receipt checks (`redeemReceipt`) | `src/payments/index.js`, `client/src/site/payments/index.js` |
 | **Legal text placeholders** | Company name, organisation number, address, support and privacy email, email provider, retention after account deletion, and whether coins expire | `client/src/site/pages/LegalPage.jsx` |
 | **Under-13 parental approval** | Placeholder. Until it exists, under-13s can't make an account: both the sign-up page and the server refuse (they can still play as guests). The process for a parent to approve is still to be designed | `src/routes/auth.js`, `client/src/site/pages/SignupPage.jsx` |
@@ -19,7 +19,7 @@
 
 ## Missing features (planned)
 
-- **Email sending.** There is no email provider. Needed for news emails (consent and unsubscribe are ready) and **password reset**, which doesn't exist yet: a player who forgets their password can't recover the account.
+- **News emails.** Brevo is the chosen provider and the sending code is in place (`src/email`). Consent and unsubscribe links are ready; still to build: the news email itself, its sending, and the list from the back office.
 - **Sign in with Google and Apple.** Mentioned in the privacy policy. If Google sign-in is added, Apple requires Sign in with Apple too.
 - **Push notifications** (app plan step 5).
 - **Marble trading** between players. `user_collection.first_owner_id` is ready for it.
@@ -48,7 +48,6 @@
 1. **Now to mid-November:**
    - store accounts;
    - legal details;
-   - skill growth decision and build;
    - in-app purchases;
    - the 50 tracks;
    - phone testing with the apps;
@@ -60,7 +59,8 @@
    - submission.
 3. **1 December 2026:** launch on the web, iPhone and Android.
 4. **After launch:**
-   - email (news, password reset);
+   - news emails;
+   - a skill growth rule, looked at again with real data;
    - push notifications;
    - new collections (Handmade Heritage 8 Dec, Moonies & Glow 15 Dec, Art Glass 22 Dec);
    - track series;

@@ -65,7 +65,7 @@ export default function MarbleSelector({ value, onChange, disabledIds = [] }) {
       </div>
       <p className="muted marble-selector__note">
         {tab === 'mine'
-          ? `Every marble in your bag races at your skill${user?.skill ? ` (${user.skill})` : ''}: pick the look you like as your Shooter.`
+          ? 'Every player\'s marble races at the same level: pick the look you like as your Shooter.'
           : 'Marbles are sold for their looks only: they never change how fast you race.'}
       </p>
       {buyError && <p className="error">{buyError}</p>}

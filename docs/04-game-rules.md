@@ -32,11 +32,12 @@
 
 ## Skill
 
-- **Skill belongs to the player, not the marble.** Every marble in a player's bag races at the player's skill, whichever one they choose. Decided 12 Oct 2026; coins were refunded for marbles that had been bought for their strength.
-- **Skill is 1–100.** Everyone starts at 50, the middle of the computer players' range (45–55).
-- **In the engine,** skill sets all four marble stats (top speed, acceleration, handling, luck) to the same value. A higher skill means a slightly faster marble with fewer losses on walls and knocks.
-- **Status: skill does not grow yet.** Every player is at 50 today. The plan is for skill to grow with races played, on a curve that flattens, with races matched so fields stay close. The rule for this ("daily training") is still to be decided. The website FAQ and the store texts already say skill "grows as you play", so build this before launch or change that wording.
-- A race keeps each entry's stats as they were (`race_entries.snap_*`), so changing a player's skill never changes a past race.
+- **Every player races at the same level (the rule for launch, decided 14 Oct 2026).** Every player's marble races at skill 50, whatever it looks like and however long they've played. The race itself decides who wins: the track, the start, the bumps and the bounces.
+- **Computer players** are spread a little around the players (skill 45–55), so the field isn't identical and the races stay close.
+- **How skill works in the engine:** skill is a number from 1 to 100 stored per player (`users.skill`). It sets all four marble stats (top speed, acceleration, handling, luck) to the same value. A higher skill would mean a slightly faster marble with fewer losses on walls and knocks.
+- **Skill belongs to the player, not the marble** (12 Oct 2026). Every marble in a bag races the same; coins were refunded for marbles bought for their strength.
+- **After launch:** a growth rule (skill rising with races played, on a curve that flattens, with matched fields) will be considered again using real data. Until then nothing changes a player's skill. Every text says "every player races at the same level"; don't promise growth anywhere.
+- A race keeps each entry's stats as they were (`race_entries.snap_*`), so a future change to skills never changes a past race.
 
 ## Coins
 

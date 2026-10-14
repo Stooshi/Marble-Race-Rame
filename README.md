@@ -55,6 +55,8 @@ curl localhost:5000/health
 | `RACE_DEFAULT_MARBLES` | `20` | Field size when a race is created without `min_marbles` / `max_marbles` |
 | `RACE_TICK_RATE_HZ` | `10` | Frames streamed per second |
 | `PAYMENTS_TEST` | – | `true`: an instant test payment provider (never in production) |
+| `BREVO_API_KEY` | – | Brevo API key. Turns on email (password reset now). Without it, "Forgot your password?" is hidden |
+| `EMAIL_FROM` / `EMAIL_FROM_NAME` | `no-reply@marblespins.com` / `Marble Spins` | Sender, verified in Brevo |
 | `STRIPE_SECRET_KEY` | – | Stripe secret key. `sk_test_…` works at once; a live key (`sk_live_…`) is refused unless `STRIPE_ALLOW_LIVE=true` |
 | `STRIPE_WEBHOOK_SECRET` | – | The signing secret (`whsec_…`) of the webhook endpoint `/api/payments/stripe/webhook` |
 | `PUBLIC_SITE_URL` | `https://marblespins.com` in production | The website's main address. Stripe sends a player back to the address they bought from (www or not, the Vercel address) when it's one of the site's own, otherwise here |

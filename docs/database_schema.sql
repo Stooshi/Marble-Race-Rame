@@ -752,6 +752,20 @@ CREATE TABLE IF NOT EXISTS security_events (
 CREATE INDEX IF NOT EXISTS idx_security_events_user ON security_events (user_id, created_at);
 CREATE INDEX IF NOT EXISTS idx_security_events_ip   ON security_events (ip) WHERE ip IS NOT NULL;
 
+-- Password resets (src/account/passwordReset.js): a one-time link emailed to the player. Only the
+-- token's SHA-256 is stored; it works once, for 60 minutes. users.password_changed_at: when the
+-- password was last reset — logins from before then stop working.
+ALTER TABLE users ADD COLUMN IF NOT EXISTS password_changed_at timestamptz;
+CREATE TABLE IF NOT EXISTS password_resets (
+    id              uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id         uuid        NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    token_hash      char(64)    NOT NULL UNIQUE,
+    created_at      timestamptz NOT NULL DEFAULT now(),
+    expires_at      timestamptz NOT NULL,
+    used_at         timestamptz
+);
+CREATE INDEX IF NOT EXISTS idx_password_resets_user ON password_resets (user_id, created_at);
+
 -- Email consent history: every time a player says yes or no to news by email.
 CREATE TABLE IF NOT EXISTS email_consents (
     id              bigserial   PRIMARY KEY,

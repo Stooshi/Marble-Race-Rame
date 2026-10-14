@@ -164,7 +164,7 @@ export default function BagPage() {
       {data && data.sets.some((s) => s.complete) && (
         <p className="ms-note">Set badges: {data.sets.filter((s) => s.complete).map((s) => DESIGN[s.design].name).join(', ')}.</p>
       )}
-      <p className="ms-note">Every marble races at your own skill, so pick the one you like looking at. Missing marbles can be earned with coins in the <Link to="/shop">shop</Link>. Trading marbles with friends comes later.</p>
+      <p className="ms-note">Every marble races at the same level, so pick the one you like looking at. Missing marbles can be earned with coins in the <Link to="/shop">shop</Link>. Trading marbles with friends comes later.</p>
     </div>
   );
 }

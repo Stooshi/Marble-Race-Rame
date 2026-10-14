@@ -3,4 +3,8 @@ Disallow: /admin
 Disallow: /preview/
 Disallow: /checkout
 Disallow: /purchases
+Disallow: /settings
+Disallow: /forgot-password
+Disallow: /reset-password
+Disallow: /unsubscribe
 Sitemap: https://marblespins.com/sitemap.xml

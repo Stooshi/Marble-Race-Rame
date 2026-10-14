@@ -95,6 +95,10 @@ export const api = {
   checkout: (body) => request('/payments/checkout', { method: 'POST', body }),
   redeemReceipt: (body) => request('/payments/receipt', { method: 'POST', body }),
   myOrders: () => request('/payments/mine'),
+  // Forgot your password: on only when the server can send email.
+  passwordResetEnabled: () => request('/auth/password-reset', { token: null }),
+  forgotPassword: (email) => request('/auth/forgot', { method: 'POST', body: { email }, token: null }),
+  resetPassword: (token, password) => request('/auth/reset', { method: 'POST', body: { token, password }, token: null }),
   // Account settings: news by email, the data download, deleting the account.
   emailStatus: () => request('/users/me/email'),
   setNews: (on) => request('/users/me', { method: 'PATCH', body: { marketing_opt_in: on } }),

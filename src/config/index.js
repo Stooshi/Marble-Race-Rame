@@ -100,6 +100,14 @@ module.exports = Object.freeze({
     tosInCheckout: process.env.STRIPE_TOS_IN_CHECKOUT === 'true',
   },
 
+  // Email through Brevo (EU). Off until BREVO_API_KEY is set: then password-reset emails work, and
+  // the same sender is used later for news emails. EMAIL_FROM must be a sender verified in Brevo.
+  email: {
+    brevoApiKey: process.env.BREVO_API_KEY || null,
+    from: process.env.EMAIL_FROM || 'no-reply@marblespins.com',
+    fromName: process.env.EMAIL_FROM_NAME || 'Marble Spins',
+  },
+
   game: assertGameLimits({
     // Hard limits enforced by the API and the database schema.
     minMarbles: 10,

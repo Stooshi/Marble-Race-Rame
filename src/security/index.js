@@ -13,7 +13,7 @@ const geoip = require('geoip-country');
 const db = require('../db');
 
 const IP_DAYS = 90;
-const KINDS = ['guest', 'signup', 'claim', 'login', 'purchase', 'admin-login'];
+const KINDS = ['guest', 'signup', 'claim', 'login', 'purchase', 'admin-login', 'reset-request', 'password-reset'];
 
 /** The client's address (Express works it out behind the proxy: app 'trust proxy'). */
 function clientIp(req) {

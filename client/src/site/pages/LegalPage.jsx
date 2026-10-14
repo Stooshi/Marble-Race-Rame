@@ -16,7 +16,7 @@ export default function LegalPage() {
       <span className="ms-note">Last updated [date] · Marble Spins is run by [COMPANY NAME AB], org. no. [XXXXXX-XXXX], [address], Sweden.</span>
       <h1 id="use" className="ms-h2 ms-legal__h1">Terms of use</h1>
       <h2 className="ms-legal__h2">1. The game</h2>
-      <p>Marble Spins is a free online marble racing game. Race results are decided by the game's physics and each player's skill rating. Nothing you buy changes how fast your marble is.</p>
+      <p>Marble Spins is a free online marble racing game. Race results are decided by the game's physics. Every player's marble races at the same level, and nothing you buy changes how fast your marble is.</p>
       <h2 className="ms-legal__h2">2. Your account</h2>
       <p>You can race as a guest. To keep your progress you create an account. Keep your login details to yourself; you're responsible for what happens on your account. Players under [13] need a parent or guardian's approval.</p>
       <h2 className="ms-legal__h2">3. Fair play</h2>
@@ -50,7 +50,7 @@ export default function LegalPage() {
       <h2 className="ms-legal__h2">Why</h2>
       <p>To run the game and your account (contract), to handle purchases and bookkeeping (legal obligation), to keep play fair and stop fraud (legitimate interest), and to send optional news only if you agree (consent).</p>
       <h2 className="ms-legal__h2">Who helps us</h2>
-      <p>Hosting and services from Vercel (website), Railway (game server and database) and Stripe (payments on the website)[, and our email provider]. In the iPhone and Android apps, purchases are handled by Apple and Google. We don't use analytics, advertising or tracking services. Some are based outside the EU; we use the EU's standard contractual clauses or equivalent safeguards.</p>
+      <p>Hosting and services from Vercel (website), Railway (game server and database) and Stripe (payments on the website) and Brevo (account emails such as password resets, and news emails if you agree; based in the EU). In the iPhone and Android apps, purchases are handled by Apple and Google. We don't use analytics, advertising or tracking services. Some are based outside the EU; we use the EU's standard contractual clauses or equivalent safeguards.</p>
       <h2 className="ms-legal__h2">How long</h2>
       <p>While your account is active, and [X months] after you close it. Purchase records are kept as long as bookkeeping law requires. IP addresses are kept for at most 90 days, then only the country.</p>
       <h2 className="ms-legal__h2">Your rights</h2>

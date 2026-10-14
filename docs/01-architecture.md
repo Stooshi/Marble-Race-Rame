@@ -24,6 +24,8 @@
                                                           ▲
   ┌──────────────────────────────┐   webhook (signed)     │
   │ Stripe: Checkout, Tax,       │────────────────────────┘ coins only after Stripe confirms
+  │ (Brevo: email, called by the │
+  │  server when the key is set) │
   │ receipts, refunds (web only) │◄── server creates Checkout sessions / refunds (API)
   └──────────────────────────────┘
 ```
@@ -79,7 +81,11 @@
   - the apps' own addresses (`capacitor://localhost`, `https://localhost`).
 - `CORS_ORIGIN=*` (the default) accepts every address.
 
-**Email.** Nothing sends email yet. Signed unsubscribe links are ready (`src/email/unsubscribe.js`). Stripe sends its own receipts.
+**Email.**
+- Sent through **Brevo** (EU), and switched off until `BREVO_API_KEY` is set on Railway.
+- Today it sends **password-reset** links (`/forgot-password` → email → `/reset-password?token=…`).
+- News emails will use the same sender; signed unsubscribe links are ready (`src/email/unsubscribe.js`).
+- Stripe sends its own receipts.
 
 ## Environments
 
@@ -106,6 +112,9 @@ There is no separate staging server. Vercel makes a preview build for every bran
 | `BCRYPT_ROUNDS` | no | Password hashing cost (default 12) |
 | `ADMIN_2FA_KEY` | recommended | Encrypts the admin 2-step secrets. Changing it forces every admin to set up the 2-step login again |
 | `EMAIL_LINK_SECRET` | recommended | Signs unsubscribe links. Changing it breaks links in emails already sent |
+| `BREVO_API_KEY` | to send email | Brevo API key (v3). Without it, email is off and "Forgot your password?" is hidden |
+| `EMAIL_FROM` | with Brevo | Sender address, verified in Brevo (default `no-reply@marblespins.com`) |
+| `EMAIL_FROM_NAME` | no | Sender name (default "Marble Spins") |
 | `CORS_ORIGIN` | no | `*`, or a comma-separated list of extra website addresses (e.g. the vercel.app one) |
 | `PUBLIC_SITE_URL` | no | The website's main address (default https://marblespins.com). Stripe returns players here if their own address isn't recognised |
 | `NODE_ENV` | yes (`production`) | Turns on the production checks |

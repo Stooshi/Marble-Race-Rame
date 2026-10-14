@@ -266,7 +266,7 @@ export function ShooterStep() {
           {shooter && (shooter.slug ? <MarbleBadge slug={shooter.slug} size={150} label={shooter.name} /> : <MarbleBadge marble={shooter.marble} size={150} label={shooter.name} />)}
           <h2 className="ms-h2" style={{ fontFamily: 'var(--ms-cond)', fontWeight: 800 }}>{shooter?.name ?? '…'}</h2>
           {shooter?.slug && <span className="ms-note">{ITEM[shooter.slug].design.inRaces}</span>}
-          <span className="ms-pill">Every marble races at your skill: <b style={{ color: 'var(--ms-yellow)' }}>Skill {user?.skill ?? 50}</b></span>
+          <span className="ms-pill">Looks only: <b style={{ color: 'var(--ms-yellow)' }}>every player races at the same level</b></span>
         </section>
         <section className="ms-card" style={{ display: 'grid', gap: 14, flex: '1 1 420px' }}>
           <div className="ms-row" style={{ justifyContent: 'space-between' }}>
