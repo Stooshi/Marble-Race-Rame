@@ -60,6 +60,7 @@ router.patch('/me', requireAuth, async (req, res) => {
     email: { type: 'string', max: 254, pattern: /^[^\s@]+@[^\s@]+\.[^\s@]+$/, patternMessage: 'must be a valid email' },
     password: { type: 'string', min: 8, max: 72, trim: false },
     current_password: { type: 'string', max: 72, trim: false },
+    marketing_opt_in: { type: 'boolean' },
   }, { partial: true });
 
   const sets = [];
@@ -68,6 +69,15 @@ router.patch('/me', requireAuth, async (req, res) => {
 
   if ('display_name' in body) set('display_name', body.display_name);
   if ('avatar_url' in body) set('avatar_url', body.avatar_url);
+  // News by email: yes or no, with its history (the back office's consent log).
+  if ('marketing_opt_in' in body) {
+    if (body.marketing_opt_in) {
+      const { rows: [u] } = await db.query('SELECT age_group FROM users WHERE id = $1', [req.user.id]);
+      if (u.age_group === 'under-13') throw badRequest('Under 13: news by email needs a parent or guardian [parent approval is coming]');
+    }
+    set('marketing_opt_in', body.marketing_opt_in);
+    await db.query(`INSERT INTO email_consents (user_id, consent, source) VALUES ($1, $2, 'settings')`, [req.user.id, body.marketing_opt_in]);
+  }
 
   if (body.password || body.email) {
     if (!body.current_password) throw badRequest('current_password is required to change email or password');

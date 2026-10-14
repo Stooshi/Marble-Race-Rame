@@ -228,7 +228,7 @@ router.get('/economy', async (req, res) => {
   const days = Math.min(365, Math.max(1, Number(req.query.days) || 30));
   const [daily, totals, players, sales, packs, farming, earners] = await Promise.all([
     db.query(
-      `SELECT d::date AS day,
+      `SELECT to_char(d, 'YYYY-MM-DD') AS day,
               COALESCE(SUM(l.amount) FILTER (WHERE l.kind IN ('race', 'finish-bonus', 'daily-goal')), 0)::int AS earned,
               COALESCE(SUM(l.amount) FILTER (WHERE l.kind = 'coin-pack'), 0)::int AS bought,
               COALESCE(-SUM(l.amount) FILTER (WHERE l.kind IN ('purchase', 'bag', 'entry-fee') AND l.amount < 0), 0)::int AS spent,

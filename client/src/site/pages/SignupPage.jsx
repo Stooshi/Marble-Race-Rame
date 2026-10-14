@@ -3,6 +3,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 
 const MIN_AGE = 13; // [13]: players younger than this need a parent or guardian's approval (placeholder process)
+const AGE_GROUPS = [['under-13', `Under ${MIN_AGE}`], ['13-17', `${MIN_AGE}–17`], ['18+', '18 or older']];
 
 /** Sign up ("Save your marble") and log in (?mode=login). ?next= says where to go afterwards. */
 export default function SignupPage() {
@@ -12,25 +13,24 @@ export default function SignupPage() {
   const guest = Boolean(user?.is_guest);
   const mode = search.get('mode') === 'login' ? 'login' : 'signup';
   const next = search.get('next')?.startsWith('/') ? search.get('next') : '/home';
-  const [f, setF] = useState({ username: '', email: '', login: '', password: '', year: '', terms: false, news: false });
+  const [f, setF] = useState({ username: '', email: '', login: '', password: '', age: '', terms: false, news: false });
   const [error, setError] = useState(null);
   const [busy, setBusy] = useState(false);
   const set = (k) => (e) => setF((v) => ({ ...v, [k]: e.target.type === 'checkbox' ? e.target.checked : e.target.value }));
-  const year = Number(f.year);
-  const tooYoung = f.year.length === 4 && new Date().getFullYear() - year < MIN_AGE;
+  const tooYoung = f.age === 'under-13';
 
   const submit = async (e) => {
     e.preventDefault();
     setError(null);
     if (mode === 'signup') {
-      if (!/^\d{4}$/.test(f.year) || year < 1900 || year > new Date().getFullYear()) { setError('Enter your year of birth, like 1998.'); return; }
+      if (!f.age) { setError('Pick your age group.'); return; }
       if (tooYoung) { setError(`Players under ${MIN_AGE} need a parent or guardian to approve their account first. [Parent approval is coming]`); return; }
       if (!f.terms) { setError('Please accept the terms of use to continue.'); return; }
     }
     setBusy(true);
     try {
       if (mode === 'login') await login(f.login, f.password);
-      else await (guest ? claim : register)({ username: f.username, email: f.email, password: f.password, marketing_opt_in: f.news });
+      else await (guest ? claim : register)({ username: f.username, email: f.email, password: f.password, age_group: f.age, marketing_opt_in: f.news });
       navigate(next, { replace: true });
     } catch (err) {
       setError(err.message);
@@ -57,10 +57,19 @@ export default function SignupPage() {
             <label>Player name<input value={f.username} onChange={set('username')} autoComplete="username" pattern="[A-Za-z0-9_]{3,24}" placeholder="3–24 letters, numbers or _" required /></label>
             <label>Email<input type="email" value={f.email} onChange={set('email')} autoComplete="email" placeholder="you@example.com" required /></label>
             <label>Password<input type="password" value={f.password} onChange={set('password')} autoComplete="new-password" minLength={8} placeholder="At least 8 characters" required /></label>
-            <label>Year of birth<input type="text" inputMode="numeric" maxLength={4} value={f.year} onChange={set('year')} placeholder="YYYY" required /></label>
-            <span className="ms-note">Under [{MIN_AGE}]? We'll ask a parent or guardian to approve your account first.</span>
+            <fieldset className="ms-agegroup" style={{ border: 0, padding: 0, margin: 0, display: 'grid', gap: 8 }}>
+              <legend style={{ fontWeight: 600, marginBottom: 8 }}>Your age</legend>
+              <div className="ms-row" role="radiogroup">
+                {AGE_GROUPS.map(([value, label]) => (
+                  <label key={value} className="ms-check" style={{ flex: '1 1 120px' }}>
+                    <input type="radio" name="age" value={value} checked={f.age === value} onChange={set('age')} /><span>{label}</span>
+                  </label>
+                ))}
+              </div>
+            </fieldset>
+            {tooYoung && <span className="ms-note">Under [{MIN_AGE}]? We'll ask a parent or guardian to approve your account first. [Parent approval is coming]</span>}
             <label className="ms-check"><input type="checkbox" checked={f.terms} onChange={set('terms')} /><span>I accept the <Link to="/legal#use">terms of use</Link> and have read the <Link to="/legal#privacy">privacy policy</Link>.</span></label>
-            <label className="ms-check"><input type="checkbox" checked={f.news} onChange={set('news')} /><span>Email me about new tracks and limited marbles (optional).</span></label>
+            {!tooYoung && <label className="ms-check"><input type="checkbox" checked={f.news} onChange={set('news')} /><span>Email me about new tracks and limited marbles (optional). You can stop any time.</span></label>}
           </>
         ) : (
           <>

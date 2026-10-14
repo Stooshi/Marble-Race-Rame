@@ -41,7 +41,7 @@ export default function LegalPage() {
       <h1 id="privacy" className="ms-h2 ms-legal__h1">Privacy policy</h1>
       <h2 className="ms-legal__h2">What we collect</h2>
       <ul>
-      <li>Account: player name, email, year of birth, and sign-in provider if you use Google or Apple.</li>
+      <li>Account: player name, email, age group (under 13, 13–17, 18 or older), whether you want news by email, and sign-in provider if you use Google or Apple.</li>
       <li>Gameplay: races, results, coins, your Marble Bag, friends and rooms.</li>
       <li>Purchases: what you bought and when. Card details stay with Stripe; we never see them.</li>
       <li>Technical: device and browser type, and anonymous usage statistics to improve the game.</li>

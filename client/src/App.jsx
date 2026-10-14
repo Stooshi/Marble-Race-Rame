@@ -31,12 +31,18 @@ const MarbleShowroom = lazy(() => importOrReload(() => import('./site/pages/Marb
 const MarbleCompare = lazy(() => importOrReload(() => import('./site/pages/MarbleCompare')));
 const MarbleRoll = lazy(() => importOrReload(() => import('./site/pages/MarbleRoll')));
 const PhysicsPreview = lazy(() => importOrReload(() => import('./pages/PhysicsPreview')));
+// The back office (/admin): its own chunk, never linked from the site; the server checks every request.
+const AdminApp = lazy(() => importOrReload(() => import('./admin/AdminApp')));
 
 export default function App() {
   const { pathname } = useLocation();
   const { isAuthenticated } = useAuth();
   // Sound starts with the first tap (not on the landing page: music only once you're in the game).
-  useSoundUnlock(pathname === '/' && !isAuthenticated);
+  const admin = pathname === '/admin' || pathname.startsWith('/admin/');
+  useSoundUnlock((pathname === '/' && !isAuthenticated) || admin);
+  if (admin) {
+    return <Suspense fallback={<div className="page"><Spinner /></div>}><AdminApp /></Suspense>;
+  }
   return (
     <>
       <SiteHeader />
