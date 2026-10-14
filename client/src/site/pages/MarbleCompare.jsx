@@ -7,15 +7,16 @@ import {
 import { api } from '../../api/client';
 import { useTrackScene } from '../../hooks/useTrackScene';
 import { ITEMS } from '../../shared/marbles';
-import { createMarbleLook } from '../../shared/marbles/materials';
+import { createMarbleLook, createPlainLook } from '../../shared/marbles/materials';
 import MarbleBadge from '../marbles/MarbleBadge';
 
 /**
  * Colour check (a preview page, not linked): one design's five shades as the
  * flat shop picture (the master) above the 3D marble, in the showroom or on a
- * real track, by day or by night.
+ * real track, by day or by night. design=plain: the plain marbles (the free
+ * starters, the other Originals, the computer players'), five at a time (set=0, 1, …).
  *   /preview/marbles/compare?design=steelie&where=room|track&night&track=<slug>
- * Screenshots crop each marble using window.__compare (pixel boxes per shade).
+ * Screenshots crop each marble using window.__compare (pixel boxes per marble, and their keys).
  */
 const SIZE = 120;
 
@@ -33,9 +34,12 @@ function boxesOf(positions, radius, camera, canvas) {
   });
 }
 
-function useRoom(canvasRef, slugs, night, on) {
+/** A marble on the page: { key, slug } for a collection item, { key, marble } for a plain one. */
+const lookOfEntry = (e, options) => (e.slug ? createMarbleLook(e.slug, options) : createPlainLook(e.marble, options));
+
+function useRoom(canvasRef, entries, night, on) {
   useEffect(() => {
-    if (!on) return undefined;
+    if (!on || !entries.length) return undefined;
     const canvas = canvasRef.current;
     const renderer = new WebGLRenderer({ canvas, antialias: true });
     renderer.setPixelRatio(1);
@@ -56,25 +60,27 @@ function useRoom(canvasRef, slugs, night, on) {
     camera.position.set(0, 3, 22);
     camera.lookAt(0, 1, 0);
     const geometry = new SphereGeometry(1, 48, 32);
-    const looks = slugs.map((slug, k) => {
-      const look = createMarbleLook(slug, { radius: 1, geometry });
+    const looks = entries.map((e, k) => {
+      const look = lookOfEntry(e, { radius: 1, geometry });
       look.setNight(night);
       look.object.position.set((k - 2) * 2.6, 1, 0);
-      // As the shop picture shows it (a cat's-eye vane seen down its axis); on the track they land as they roll.
-      look.object.rotation.set(Math.PI / 2, 0, 0);
+      // As the shop picture shows it (slices seen down their axis, a painted pattern from the front);
+      // on the track they land as they roll.
+      look.object.rotation.set(look.spec.pictureView === 'axis' ? Math.PI / 2 : 0, 0, 0);
       look.update(0.3);
       scene.add(look.object);
       return look;
     });
     renderer.render(scene, camera);
-    window.__compare = { boxes: boxesOf(looks.map((l) => l.object.position), 1, camera, canvas), ready: true };
+    window.__compare = { boxes: boxesOf(looks.map((l) => l.object.position), 1, camera, canvas), keys: entries.map((e) => e.key), ready: true };
     return () => { looks.forEach((l) => l.dispose()); renderer.dispose(); window.__compare = null; };
-  }, [canvasRef, slugs.join(), night, on]);
+  }, [canvasRef, entries.map((e) => e.key).join(), night, on]);
 }
 
-function useTrack(sceneRef, status, slugs, trackSlug, night, on) {
+function useTrack(sceneRef, status, entries, trackSlug, night, on) {
+  const slugs = entries.map((e) => e.key);
   useEffect(() => {
-    if (!on || status !== 'ready') return;
+    if (!on || status !== 'ready' || !entries.length) return;
     const scene = sceneRef.current;
     (async () => {
       const { track } = await api.track(trackSlug);
@@ -82,8 +88,8 @@ function useTrack(sceneRef, status, slugs, trackSlug, night, on) {
       const kit = track.physics?.kit;
       const lit = kit ? { ...track, physics: { ...track.physics, kit: { ...kit, lighting: night ? 'night' : 'day', variants: [] } } } : track;
       scene.setTrack(lit);
-      scene.setRace(slugs.map((slug, k) => ({ index: k, marble: { look: slug, name: slug } })));
-      const frame = { t: 4000, p: slugs.map(() => 0.035), l: [-0.32, -0.16, 0, 0.16, 0.32], h: slugs.map(() => 0) };
+      scene.setRace(entries.map((e, k) => ({ index: k, marble: e.slug ? { look: e.slug, name: e.slug } : { ...e.marble } })));
+      const frame = { t: 4000, p: slugs.map(() => 0.035), l: [-0.32, -0.16, 0, 0.16, 0.32].slice(0, slugs.length), h: slugs.map(() => 0) };
       scene.updateRace(frame, 'leader');
       scene.marbles.setScale(1);
       scene.marbles.update(scene.centerline, frame);
@@ -92,7 +98,9 @@ function useTrack(sceneRef, status, slugs, trackSlug, night, on) {
       const mid = pos.reduce((a, p) => a.add(p), new Vector3()).multiplyScalar(1 / pos.length);
       const across = pos[pos.length - 1].clone().sub(pos[0]);
       const width = across.length() + 2;
-      across.normalize();
+      // (One marble: across the track at its place.)
+      if (across.lengthSq() < 1e-6) across.copy(scene.centerline.samples[Math.round(0.035 * scene.centerline.segments)].side ?? new Vector3(1, 0, 0));
+      across.setY(0).normalize();
       const forward = new Vector3(0, 1, 0).cross(across).normalize();
       const cam = scene.camera;
       cam.fov = 24;
@@ -102,7 +110,7 @@ function useTrack(sceneRef, status, slugs, trackSlug, night, on) {
       cam.lookAt(mid);
       scene.render();
       requestAnimationFrame(() => requestAnimationFrame(() => {
-        window.__compare = { boxes: boxesOf(pos, 0.55, cam, scene.renderer.domElement), ready: true, track: track.name };
+        window.__compare = { boxes: boxesOf(pos, 0.55, cam, scene.renderer.domElement), keys: slugs, ready: true, track: track.name };
       }));
     })().catch((err) => { window.__compare = { error: String(err) }; });
   }, [status, slugs.join(), trackSlug, night, on]);
@@ -114,16 +122,24 @@ export default function MarbleCompare() {
   const night = search.has('night');
   const where = search.get('where') ?? 'room';
   const trackSlug = search.get('track') ?? 'stockholm-marble-grand-prix';
-  const [slugs] = useState(() => ITEMS.filter((i) => i.design.key === design).map((i) => i.slug));
+  const set = Number(search.get('set') ?? 0);
+  const [entries, setEntries] = useState(() => (design === 'plain' ? [] : ITEMS.filter((i) => i.design.key === design).map((i) => ({ key: i.slug, slug: i.slug }))));
+  useEffect(() => {
+    if (design !== 'plain') return;
+    api.marbles().then((list) => {
+      const all = (list.marbles ?? list).map((m) => ({ key: `plain-${m.slug}`, marble: { name: m.name, slug: m.slug, color_primary: m.color_primary, color_secondary: m.color_secondary, pattern: m.pattern } }));
+      setEntries(all.slice(set * 5, set * 5 + 5));
+    }).catch((err) => { window.__compare = { error: String(err) }; });
+  }, [design, set]);
   const roomRef = useRef(null);
   const { wrapRef, canvasRef, sceneRef, status } = useTrackScene();
-  useRoom(roomRef, slugs, night, where === 'room');
-  useTrack(sceneRef, status, slugs, trackSlug, night, where === 'track');
+  useRoom(roomRef, entries, night, where === 'room');
+  useTrack(sceneRef, status, entries, trackSlug, night, where === 'track');
 
   return (
     <div style={{ background: night ? '#070b1a' : '#0e1420', padding: 16, display: 'grid', gap: 16 }}>
       <div style={{ display: 'flex', gap: 36, justifyContent: 'center' }}>
-        {slugs.map((s) => <span key={s} data-badge={s}><MarbleBadge slug={s} size={SIZE} still /></span>)}
+        {entries.map((e) => <span key={e.key} data-badge={e.key}><MarbleBadge slug={e.slug} marble={e.marble} size={SIZE} still /></span>)}
       </div>
       {where === 'room'
         ? <canvas ref={roomRef} style={{ width: 960, height: 360, display: 'block', margin: '0 auto' }} />

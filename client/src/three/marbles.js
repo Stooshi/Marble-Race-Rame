@@ -7,12 +7,12 @@
  */
 import {
   CanvasTexture, CircleGeometry, Color, DynamicDrawUsage, InstancedMesh, Matrix4, Mesh, MeshBasicMaterial,
-  MeshPhongMaterial, Quaternion, SphereGeometry, SRGBColorSpace, Vector3, ConeGeometry, CylinderGeometry, Group,
+  Quaternion, SphereGeometry, Vector3, ConeGeometry, CylinderGeometry, Group,
 } from 'three';
 import { merge, piece } from './scenery/parts';
 import { pointOnTrack, TRACK_STYLE } from './trackModel';
 import { channelRadiusAt, placeOnChannel } from './iceChannel';
-import { createMarbleLook } from '../shared/marbles/materials';
+import { createMarbleLook, createPlainLook } from '../shared/marbles/materials';
 
 export const MARBLE_RADIUS = 0.55; // metres: a lane is 1.6 m wide
 
@@ -339,49 +339,6 @@ export function layoutMarbles(centerline, frame, lanes, finish, {
   return out;
 }
 
-/** A small texture in the marble's colours, matching the 2D badges' patterns. */
-function marbleTexture(marble) {
-  const primary = marble?.color_primary || '#888888';
-  const secondary = marble?.color_secondary || primary;
-  const pattern = marble?.pattern || 'solid';
-  const canvas = document.createElement('canvas');
-  canvas.width = 64;
-  canvas.height = 32;
-  const g = canvas.getContext('2d');
-  g.fillStyle = primary;
-  g.fillRect(0, 0, 64, 32);
-  g.fillStyle = secondary;
-  if (pattern === 'striped') {
-    for (let x = -32; x < 64; x += 16) {
-      g.beginPath();
-      g.moveTo(x, 32); g.lineTo(x + 6, 32); g.lineTo(x + 38, 0); g.lineTo(x + 32, 0);
-      g.fill();
-    }
-  } else if (pattern === 'swirl' || pattern === 'galaxy') {
-    for (let k = 0; k < 2; k += 1) {
-      g.beginPath();
-      for (let x = 0; x <= 64; x += 2) g.lineTo(x, 16 + Math.sin((x / 64) * Math.PI * 4 + k * Math.PI) * 9);
-      g.lineWidth = 5;
-      g.strokeStyle = secondary;
-      g.stroke();
-    }
-    if (pattern === 'galaxy') {
-      g.fillStyle = '#ffffff';
-      for (let i = 0; i < 14; i += 1) g.fillRect((i * 37) % 64, (i * 13) % 32, 1.5, 1.5);
-    }
-  } else if (pattern === 'cat-eye') {
-    g.fillRect(0, 12, 64, 8);
-  } else {
-    // Solid marbles still get a faint band so you can see them roll.
-    g.globalAlpha = secondary === primary ? 0.25 : 1;
-    g.fillStyle = secondary === primary ? '#ffffff' : secondary;
-    g.fillRect(0, 13, 64, 6);
-  }
-  const tex = new CanvasTexture(canvas);
-  tex.colorSpace = SRGBColorSpace;
-  return tex;
-}
-
 /** A soft round shadow texture (dark centre fading out). */
 function shadowTexture() {
   const canvas = document.createElement('canvas');
@@ -412,8 +369,8 @@ export class RaceMarbles {
     this.group = new Group();
     this.geometry = new SphereGeometry(MARBLE_RADIUS, 20, 14);
     this.scale = 1;
-    // A collection look (marble.look, e.g. 'sun-solar') comes from the shared marble
-    // materials; plain marbles (Originals, house marbles) keep their simple texture.
+    // Every marble is drawn from the shared marble materials: a collection look (marble.look,
+    // e.g. 'sun-solar') or, for plain marbles, the same picture as its 2D badge.
     this.looks = [];
     this.balls = entries.map((e) => {
       let mesh;
@@ -425,14 +382,11 @@ export class RaceMarbles {
           look = null; // an unknown look: fall back to the plain marble
         }
       }
-      if (look) {
-        mesh = look.object;
-        if (look.trail) this.group.add(look.trail);
-        this.looks.push(look);
-      } else {
-        const map = marbleTexture(e.marble);
-        mesh = new Mesh(this.geometry, new MeshPhongMaterial({ map, shininess: 90, specular: new Color('#ffffff') }));
-      }
+      // A plain marble (a starter, an Original, a computer player's): the same marble as its picture.
+      if (!look) look = createPlainLook(e?.marble ?? {}, { radius: MARBLE_RADIUS, geometry: this.geometry });
+      mesh = look.object;
+      if (look.trail) this.group.add(look.trail);
+      this.looks.push(look);
       mesh.rotation.set(Math.random() * 6, Math.random() * 6, 0);
       this.group.add(mesh);
       return { mesh, look, last: null };
@@ -494,12 +448,7 @@ export class RaceMarbles {
   /** Places every marble for a race frame ({ t, p: progress[], l: lateral[] }). */
   /** Night: each marble glows softly in its own colours, so it stays in the picture in the dark. */
   setGlow(on) {
-    for (const { mesh, look } of this.balls) {
-      if (look) { look.setNight(on); continue; }
-      mesh.material.emissiveMap = on ? mesh.material.map : null;
-      mesh.material.emissive.set(on ? '#8a8a8a' : '#000000');
-      mesh.material.needsUpdate = true;
-    }
+    for (const { look } of this.balls) look.setNight(on);
   }
 
   update(centerline, frame) {
@@ -558,9 +507,7 @@ export class RaceMarbles {
 
   dispose() {
     for (const b of this.balls) {
-      if (b.look) { b.look.dispose(); continue; }
-      b.mesh.material.map?.dispose();
-      b.mesh.material.dispose();
+      b.look.dispose();
     }
     this.geometry.dispose();
     this.shadows.geometry.dispose();

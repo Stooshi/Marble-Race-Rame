@@ -27,7 +27,7 @@ import {
   RGBAFormat, ShaderMaterial, SphereGeometry, Sprite, SpriteMaterial, SRGBColorSpace, Vector3,
 } from 'three';
 import { BUILT_MATERIALS as BUILT_LIST, DESIGN, ITEM } from './index.js';
-import { GLOSS_LAYERS, lookOf } from './badge.js';
+import { GLOSS_LAYERS, lookOf, plainLookOf } from './badge.js';
 import { conicAt, hexRgb, rasterize, toBytes } from './paint.js';
 
 const TEX_W = 256;
@@ -43,6 +43,8 @@ const VIEW_N = 256;
  * stays well clear.
  */
 export const MAX_TURN = (20 * Math.PI) / 180;
+/** A pattern that repeats every R degrees may turn at most this share of R a frame (well under half: no wagon-wheel). */
+export const WAGON_SHARE = 0.4;
 /** Past BLUR_FROM a frame the pattern starts to blur (up to half) towards its average, as a camera shows a fast-spinning ball. */
 export const BLUR_FROM = (40 * Math.PI) / 180;
 export const BLUR_FULL = (90 * Math.PI) / 180;
@@ -53,7 +55,6 @@ export const NIGHT_LEVEL = 0.8;
 
 // A colour as sRGB bytes, exactly as the shop picture uses it (never converted to linear light).
 const rgb = (hex) => hexRgb(hex);
-const mix = (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
 const clamp01 = (x) => Math.min(1, Math.max(0, x));
 const smooth = (e0, e1, x) => { const t = clamp01((x - e0) / (e1 - e0)); return t * t * (3 - 2 * t); };
 
@@ -169,7 +170,68 @@ function glowTexture() {
 // colours) and a seeded random function, and returns what the 3D marble is
 // made of, every colour taken from that look:
 //   { body: layers facing the camera, over?: layers on top (default the GLOSS shine),
-//     detail?: sphere texture that rolls with the ball, blur?: its spinning average, halo?, spin?, twinkle? }
+//     detail?: sphere texture that rolls with the ball, blur?: its spinning average, halo?, twinkle? }
+
+/**
+ * A rolling pattern from the picture's own layers (badge.js parts.pattern):
+ * 'front' paints the picture of them on the ball, front and back (facing you
+ * it is the picture itself); 'gores' runs a conic layer as slices from pole to
+ * pole, twisting `twist` degrees on the way. → the sphere texture.
+ */
+function patternTexture(pattern) {
+  if (pattern.map === 'front') {
+    const N = 256;
+    const px = toBytes(rasterize(pattern.layers, N));
+    return paintSphere((d) => {
+      const u = Math.min(N - 1, Math.max(0, Math.floor((0.5 + 0.5 * d.x) * N)));
+      const v = Math.min(N - 1, Math.max(0, Math.floor((0.5 - 0.5 * d.y) * N)));
+      const k = (v * N + u) * 4;
+      return px[k + 3] ? [px[k], px[k + 1], px[k + 2], px[k + 3] / 255] : null;
+    }, { w: 512, h: 256 });
+  }
+  const layer = pattern.layers[0];
+  return paintSphere((d) => {
+    const c = conicAt(layer, (Math.atan2(d.z, d.x) * 180) / Math.PI + (pattern.twist ?? 0) * d.y);
+    return c[3] > 0 ? c : null;
+  }, { w: 512, h: 128 });
+}
+
+/** A sphere texture's average over the ball (by area): its colour and how much of the ball it covers. */
+function averageOf(tex) {
+  const { data, width: W, height: H } = tex.image;
+  let share = 0; let wsum = 0; const mean = [0, 0, 0];
+  for (let j = 0; j < H; j += 1) {
+    const w = Math.sin(((j + 0.5) / H) * Math.PI);
+    for (let i = 0; i < W; i += 1) {
+      const k = (j * W + i) * 4;
+      const a = data[k + 3] / 255;
+      share += a * w; wsum += w;
+      for (let c = 0; c < 3; c += 1) mean[c] += data[k + c] * a * w;
+    }
+  }
+  return share > 0 ? { colour: mean.map((v) => v / share), share: share / wsum } : null;
+}
+
+/**
+ * The common recipe: the picture's body facing the camera, its pattern fixed
+ * in the ball and rolling with it, what lies over it (a glowing core) and the
+ * shine on top; a glowing design gets its halo.
+ */
+function fromParts(look) {
+  const { parts } = look;
+  // (No body of its own: the pattern covers the ball; under it, the picture's bottom layer.)
+  const spec = { body: parts.body ?? [look.layers[look.layers.length - 1]] };
+  if (parts.over) spec.over = [...GLOSS_LAYERS, ...parts.over];
+  if (parts.pattern) {
+    spec.detail = patternTexture(parts.pattern);
+    spec.blur = averageOf(spec.detail);
+    spec.repeat = parts.pattern.repeat;
+    // Facing you as the picture shows it: a 'front' pattern from the front, slices down their axis.
+    spec.pictureView = parts.pattern.map === 'gores' ? 'axis' : 'front';
+  }
+  if (look.glow) spec.halo = { color: look.glow, size: 2.6, opacity: 0.3 };
+  return spec;
+}
 
 const BUILDERS = {
   /**
@@ -178,23 +240,33 @@ const BUILDERS = {
    * picture's four wedges (its conic layer, same colours and angles) run as
    * slices from pole to pole. Seen down its axis it is the picture's pinwheel,
    * side on the slices read as the vane's blades, and it rolls exactly with
-   * the ball. The slices cover the same share of the ball from every side, so
-   * the colour matches the picture whichever way it faces.
+   * the ball.
    */
-  'vane-glass'({ parts }) {
-    const vane = parts.vaneLayer;
-    const detail = paintSphere((d) => {
-      const c = conicAt(vane, (Math.atan2(d.z, d.x) * 180) / Math.PI);
-      return c[3] > 0 ? c : null;
-    }, { w: 512, h: 128 });
-    // The vane's average (what a blur of the spinning slices shows): its share of the ball, in its mean colour.
-    let share = 0; const mean = [0, 0, 0];
-    for (let deg = 0; deg < 360; deg += 0.5) {
-      const c = conicAt(vane, deg);
-      share += c[3] / 720; for (let k = 0; k < 3; k += 1) mean[k] += (c[k] * c[3]) / 720;
-    }
-    return { body: [parts.back], over: [...GLOSS_LAYERS, parts.tint], detail, blur: { colour: mean.map((v) => v / share), share } };
+  'vane-glass': fromParts,
+  /** Clearie: the picture's clear glass, with a few tiny air bubbles in it that roll with the ball. */
+  'clear-glass'(look, rand) {
+    const spec = fromParts(look);
+    const b = rgb(look.parts.bubbles);
+    const bubbles = Array.from({ length: 9 }, () => [new Vector3(rand() * 2 - 1, rand() * 2 - 1, rand() * 2 - 1).normalize(), 0.9994 + rand() * 0.0004]);
+    spec.detail = paintSphere((d) => {
+      let k = 0;
+      for (const [p, edge] of bubbles) { const dot = d.dot(p); if (dot > edge) k = Math.max(k, smooth(edge, edge + 0.0002, dot)); }
+      return k > 0 ? [...b, k * 0.8] : null;
+    }, { w: 512, h: 256 });
+    return spec;
   },
+  /** Aggie: the agate's rings, painted on the ball from the picture. */
+  'agate-rings': fromParts,
+  /** Patch: the two patches of colour on the base, from the picture. */
+  patch: fromParts,
+  /** Corkscrew: the picture's stripes twisting round the ball. */
+  corkscrew: fromParts,
+  /** Bumblebee: the picture's bands round the ball. */
+  'bee-bands': fromParts,
+  /** Oxblood: the picture's streaks swirling through its glass. */
+  oxblood: fromParts,
+  /** Flame Swirl: the picture's flames swirling round the ball, its white-hot core glowing at the middle. */
+  'flame-swirl': fromParts,
 
   /** Steelie: the picture's polished-steel gradient, with faint machining lines round the ball that turn as it rolls. */
   steel({ parts }, rand) {
@@ -220,38 +292,27 @@ const BUILDERS = {
     return { body: [parts.body], detail, twinkle: true, halo: { color: parts.glow, size: 2.6, opacity: 0.32 } };
   },
 
-  /** Northern Lights: the night sky, with the picture's three aurora ribbons and stars drifting round the ball. */
-  'aurora-glass'({ parts }, rand) {
-    const noise = makeNoise(rand);
-    const pts = Array.from({ length: 40 }, () => new Vector3(rand() * 2 - 1, rand() * 2 - 1, rand() * 2 - 1).normalize());
-    const ribbons = parts.ribbons.map(([hex, a], k) => [rgb(hex), a, [0.35, -0.05, -0.42][k]]);
-    const detail = paintSphere((d) => {
-      for (const p of pts) if (d.dot(p) > 0.9993) return [255, 255, 255, 1];
-      const phi = Math.atan2(d.z, d.x);
-      const n = noise(Math.cos(phi) * 1.4, d.y * 1.2, Math.sin(phi) * 1.4, 3);
-      let best = null;
-      for (const [c, a, y0] of ribbons) {
-        const w = (1 - smooth(0.0, 0.13, Math.abs(d.y - (y0 + 0.22 * Math.sin(phi * 2 + n * 4))))) * a;
-        if (w > 0.004 && (!best || w > best[3])) best = [...c, w];
-      }
-      return best;
-    });
-    return { body: [parts.sky], detail, spin: 0.04, halo: { color: parts.glow, size: 2.8, opacity: 0.3 } };
-  },
+  /** Northern Lights: the picture's night sky, with its three aurora ribbons and stars fixed in the ball. */
+  'aurora-glass': fromParts,
 };
 
-/** Designs whose 3D look isn't built yet: a plain glossy swirl in the picture's first two colours. */
-function placeholderLook({ colours }) {
-  const a = rgb(colours[0]); const b = rgb(colours[1] ?? colours[0]);
-  const detail = paintSphere((d) => [...mix(a, b, Math.sin(Math.atan2(d.z, d.x) * 2 + d.y * 3) * 0.5 + 0.5), 1]);
-  return { body: [{ type: 'solid', color: colours[0] }], detail };
-}
+/** A design without a 3D look of its own (none today): its picture's colours, from the common recipe. */
+const placeholderLook = (look) => fromParts(look);
 
-/** The designs with a finished 3D look (the others show a placeholder swirl for now). */
+/** The designs with a finished 3D look. */
 export const BUILT_MATERIALS = Object.keys(BUILDERS);
 if ([...BUILT_MATERIALS].sort().join() !== [...BUILT_LIST].sort().join()) console.warn('[marbles] BUILT_MATERIALS in index.js is out of date');
 
 const cache = new Map();
+
+/** The textures and turn limit of a spec, once. */
+function finish(spec, key) {
+  spec.bodyTexture = viewTexture(`${key}:body`, spec.body);
+  spec.overTexture = spec.over ? viewTexture(`${key}:over`, spec.over, { premultiplied: true }) : glossTexture();
+  // How fast its pattern may turn on screen: under half its repeat (see MAX_TURN), and never past MAX_TURN.
+  spec.maxTurn = Math.min(MAX_TURN, spec.repeat ? (WAGON_SHARE * spec.repeat * Math.PI) / 180 : MAX_TURN);
+  return spec;
+}
 
 /** The textures and settings for one item, made once and shared by every marble wearing it. */
 export function lookSpec(slug) {
@@ -264,9 +325,21 @@ export function lookSpec(slug) {
   spec.slug = slug;
   spec.built = Boolean(build);
   spec.look = look;
-  spec.bodyTexture = viewTexture(`${slug}:body`, spec.body);
-  spec.overTexture = spec.over ? viewTexture(`${slug}:over`, spec.over, { premultiplied: true }) : glossTexture();
+  finish(spec, slug);
   cache.set(slug, spec);
+  return spec;
+}
+
+/** The same for a plain marble ({ color_primary, color_secondary, pattern }): the free starters, the Originals, the computer players'. */
+export function plainSpec(marble) {
+  const look = plainLookOf(marble);
+  if (cache.has(look.key)) return cache.get(look.key);
+  const spec = fromParts(look);
+  spec.slug = look.key;
+  spec.built = true;
+  spec.look = look;
+  finish(spec, look.key);
+  cache.set(look.key, spec);
   return spec;
 }
 
@@ -370,8 +443,17 @@ function marbleMaterial(spec) {
  *   look.update(seconds) every frame; look.setNight(true) at night.
  *   look.dispose() when done (shared textures stay cached).
  */
-export function createMarbleLook(slug, { radius = 0.55, geometry = null } = {}) {
-  const spec = lookSpec(slug);
+export function createMarbleLook(slug, options = {}) {
+  return lookFromSpec(lookSpec(slug), options);
+}
+
+/** One plain marble (a starter, an Original, a computer player's): the same marble as its picture, as a collection look. */
+export function createPlainLook(marble, options = {}) {
+  return lookFromSpec(plainSpec(marble), options);
+}
+
+function lookFromSpec(spec, { radius = 0.55, geometry = null } = {}) {
+  const slug = spec.slug;
   const ownGeometry = !geometry;
   const sphere = geometry ?? new SphereGeometry(radius, 24, 16);
   const object = new Group();
@@ -411,7 +493,7 @@ export function createMarbleLook(slug, { radius = 0.55, geometry = null } = {}) 
       for (const m of materials) m.uniforms.uLevel.value = on ? NIGHT_LEVEL : 1;
       if (halo) halo.material.opacity = spec.halo.opacity * (on ? 1.5 : 1);
     },
-    /** Per frame: drifting aurora ribbons, the halo's flicker, the flakes' glints. */
+    /** Per frame: the pattern rolling with the ball, the halo's flicker, the flakes' glints. */
     update(t) {
       if (spec.detail) {
         // How far the ball turned since the last frame drawn (its world turn: q_now = delta × q_last).
@@ -420,19 +502,18 @@ export function createMarbleLook(slug, { radius = 0.55, geometry = null } = {}) 
         delta.copy(q).multiply(inv.copy(last).invert());
         if (delta.w < 0) { delta.x = -delta.x; delta.y = -delta.y; delta.z = -delta.z; delta.w = -delta.w; }
         const turned = 2 * Math.acos(Math.min(1, delta.w));
-        if (turned > MAX_TURN) {
-          // Same axis, same direction, no further than MAX_TURN.
+        if (turned > spec.maxTurn) {
+          // Same axis, same direction, no further than its limit.
           const s = Math.sin(turned / 2);
-          const k = Math.sin(MAX_TURN / 2) / s;
-          delta.set(delta.x * k, delta.y * k, delta.z * k, Math.cos(MAX_TURN / 2));
+          const k = Math.sin(spec.maxTurn / 2) / s;
+          delta.set(delta.x * k, delta.y * k, delta.z * k, Math.cos(spec.maxTurn / 2));
         }
         shown.premultiply(delta).normalize();
         last.copy(q);
         look.turned = turned;
         syncPattern();
-        if (spec.blur) shell.material.uniforms.uBlur.value = 0.5 * smooth(BLUR_FROM, BLUR_FULL, turned);
+        if (spec.blur) shell.material.uniforms.uBlur.value = 0.5 * smooth(BLUR_FROM * (spec.maxTurn / MAX_TURN), BLUR_FULL * (spec.maxTurn / MAX_TURN), turned);
       }
-      if (spec.spin) shell.material.uniforms.uDetailOffset.value = { x: (t * spec.spin) % 1, y: 0 };
       if (halo) halo.material.opacity = spec.halo.opacity * (night ? 1.5 : 1) * (0.9 + 0.1 * Math.sin(t * 7.3));
       if (spec.twinkle) shell.material.uniforms.uDetailBoost.value = 1 + 0.25 * Math.max(0, Math.sin(t * 5.1));
     },
@@ -452,3 +533,4 @@ export const glows = (slug) => Boolean(lookSpec(slug).halo);
 
 export { DESIGN };
 export const _test = { paintSphere, seeded, makeNoise, TEX_W, TEX_H, VIEW_N };
+export { averageOf };

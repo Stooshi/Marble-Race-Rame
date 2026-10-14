@@ -10,6 +10,7 @@ import { frameAtTime } from '../../utils/splits';
  * by frame with every marble in one look, the camera following one of them,
  * so screenshots can show how a look moves as the ball rolls.
  *   /preview/marbles/roll?race=<id>&look=cats-eye-classic&follow=<index>
+ *   (plain=<primary>,<secondary>,<pattern> instead of look: a plain marble, e.g. plain=E4D00A,FF8C00,striped)
  * window.__roll.step(ms) draws the race at that moment and returns the
  * followed marble's box on screen and how far it turned since the last step.
  */
@@ -18,6 +19,7 @@ export default function MarbleRoll() {
   const raceId = search.get('race');
   const look = search.get('look') ?? 'cats-eye-classic';
   const follow = Number(search.get('follow') ?? 0);
+  const plain = search.get('plain');
   const { wrapRef, canvasRef, sceneRef, status } = useTrackScene();
   const [note, setNote] = useState('loading');
 
@@ -28,7 +30,11 @@ export default function MarbleRoll() {
     (async () => {
       const data = await api.replay(raceId);
       scene.setTrack(data.track);
-      scene.setRace(data.entries.map((e) => ({ ...e, marble: { ...e.marble, look } })), [], data.results ?? [], data.start ?? null);
+      const [a, b, pattern] = (plain ?? '').split(',');
+      const dress = plain
+        ? (m) => ({ name: m.name, color_primary: `#${a}`, color_secondary: b ? `#${b}` : null, pattern: pattern || 'solid' })
+        : (m) => ({ ...m, look });
+      scene.setRace(data.entries.map((e) => ({ ...e, marble: dress(e.marble) })), [], data.results ?? [], data.start ?? null);
       scene.setCameraMode('follow');
       const ball = scene.marbles.balls[follow].mesh;
       const prev = ball.quaternion.clone();
@@ -54,7 +60,7 @@ export default function MarbleRoll() {
       };
       setNote(`${data.track.name} · following #${follow}`);
     })().catch((err) => { setNote(String(err)); window.__roll = { error: String(err) }; });
-  }, [status, raceId, look, follow]);
+  }, [status, raceId, look, follow, plain]);
 
   return (
     <div style={{ background: '#0e1420', padding: 0 }}>

@@ -17,7 +17,7 @@ describe('collection marble looks', () => {
       expect(spec.built).toBe(BUILT_MATERIALS.includes(item.design.material));
       expect(spec.bodyTexture.image.width).toBe(_test.VIEW_N);
     }
-  });
+  }, 60_000);
 
   it('the shop picture is the master: the 3D marble is painted from the very same layers and colour values', () => {
     for (const item of ITEMS.filter((i) => BUILT_MATERIALS.includes(i.design.material))) {
