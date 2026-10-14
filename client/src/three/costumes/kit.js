@@ -81,6 +81,9 @@ export const COSTUME_COLORS = {
   crateWood: '#b8823a', crateDark: '#7a5226', ropeRed: '#e2242a', ropePost: '#d8d8e0', bagRed: '#c8142a', bagChain: '#9a9aa8', carDent: '#2a6ad8', carDentDark: '#1a4a9a', carGlassBroken: '#bfe8ff',
   barrelOrange: '#ff7a1a', barrelWhite: '#f4f4f2', convertible: '#ff3fa8', convertibleSeat: '#f2efe6', boomRed: '#e2242a', boomWhite: '#f4f4f2', boothBlue: '#2a4a8a',
   drumBlue: '#2a5ad8', drumRust: '#8a4a2a', signGreen: '#1a8a4a', signPole: '#8a8a94', canSilver: '#9aa0aa', canLid: '#6a707a',
+  // The Canyon Series.
+  maniPole: '#6a4a32', flagBlue: '#2f6fc4', flagWhite: '#f4f4f0', flagRed: '#c43a2f', flagGreen: '#2f9a4a', flagYellow: '#f2c230',
+  cairnStone: '#b08a68', cairnDark: '#7d5f48', cairnPale: '#d8bf98', raftRed: '#d8452f', raftTube: '#2a2c33', raftPaddle: '#e8c44a', raftVest: '#f2a330', raftRope: '#e9e4d8',
 };
 
 /** A part's head (or other moving piece) as its own little group at local (x, y, z), turned with the body. */
@@ -1635,6 +1638,50 @@ function trashCans(add, mat, group, rimCentre, q, { len, width, drop = 0 }) {
   return [];
 }
 
+/** A cairn: flat stones stacked into a little tower, as hikers mark a trail (the Canyon Series' slalom poles and pegs). */
+function cairn(add, mat, group, point, q, { height, radius = 0.15 }) {
+  // (No wider than its footprint where marbles can touch it; the top stones, above them, a little broader.)
+  const h = Math.max(1, height + 0.2);
+  const stones = 5;
+  for (let k = 0; k < stones; k += 1) {
+    const t = k / (stones - 1);
+    const y = (h * (k + 0.5)) / stones;
+    const w = y - h / stones / 2 < 0.9 ? radius * 0.92 : Math.max(radius, 0.24) * (1 - 0.3 * t);
+    add(['cairnStone', 'cairnDark', 'cairnPale'][k % 3], new IcosahedronGeometry(w, 0), local(point, q, 0, y, 0, 1, (h / stones) / (w * 1.6), 1).multiply(new Matrix4().makeRotationY(k * 1.1)));
+  }
+  return [];
+}
+
+/** A prayer-flag pole: a tall thin pole wrapped in a column of flags in the five colours (the Himalayan canyons' slalom poles and pegs). */
+function maniPost(add, mat, group, point, q, { height }) {
+  const h = height + 1.2;
+  add('maniPole', new CylinderGeometry(0.06, 0.08, h, 5), local(point, q, 0, h / 2, 0));
+  ['flagBlue', 'flagWhite', 'flagRed', 'flagGreen', 'flagYellow'].forEach((c, k) => add(c, new BoxGeometry(0.04, 0.28, 0.42), local(point, q, 0, h - 0.25 - k * 0.3, 0.23)));
+  return [];
+}
+
+/** River rafts pulled up along a wall: red inflatable rafts with paddles and life vests (the Canyon Series' parked pieces). */
+function riverRaft(add, mat, group, rimCentre, q, { len, width, drop = 0 }) {
+  const W = 2.0;
+  const centre = rimCentre.clone().add(new Vector3(-(width - W) / 2, -drop, 0).applyQuaternion(q));
+  const rafts = Math.max(1, Math.round(len / 4.2));
+  const each = len / rafts;
+  for (let k = 0; k < rafts; k += 1) {
+    const z = -len / 2 + each * (k + 0.5);
+    const L = each - 0.5;
+    // The tubes: a ring of fat tubes round the floor, rounded at the bow and stern.
+    for (const x of [-1, 1]) add('raftRed', new CylinderGeometry(0.38, 0.38, L - 0.7, 8), local(centre, q, x * (W / 2 - 0.38), 0.45, z).multiply(new Matrix4().makeRotationX(Math.PI / 2)));
+    for (const e of [-1, 1]) add('raftRed', new CylinderGeometry(0.38, 0.38, W - 0.3, 8), local(centre, q, 0, 0.45, z + e * (L / 2 - 0.4)).multiply(new Matrix4().makeRotationZ(Math.PI / 2)));
+    add('raftTube', new BoxGeometry(W - 0.7, 0.12, L - 0.8), local(centre, q, 0, 0.12, z));
+    for (const t of [-0.25, 0.25]) add('raftTube', new BoxGeometry(W - 0.6, 0.3, 0.3), local(centre, q, 0, 0.5, z + t * L));
+    add('raftRope', new BoxGeometry(W + 0.05, 0.05, 0.05), local(centre, q, 0, 0.86, z));
+    add('raftPaddle', new BoxGeometry(0.08, 0.08, 2.1), local(centre, q, 0.3, 0.75, z + 0.2).multiply(new Matrix4().makeRotationY(0.4)));
+    add('raftPaddle', new BoxGeometry(0.28, 0.04, 0.5), local(centre, q, 0.68, 0.75, z + 1.15));
+    add('raftVest', new BoxGeometry(0.5, 0.18, 0.6), local(centre, q, -0.35, 0.3, z - 0.5));
+  }
+  return [];
+}
+
 export const KIT_COSTUMES = {
   panda: { places: 'block', build: panda },
   camel: { places: 'block', build: camel },
@@ -1958,6 +2005,9 @@ export const KIT_COSTUMES = {
     arm: { colour: 'guardianStone', shoulder: [0.8, 3.0, 0.2], radii: [0.24, 0.34], segments: 7, tip: 0.42, tipDetail: 1, end: 0.2, endDetail: 0, endColour: 'guardianRed', lift: 0.4, outLift: 0.5, nose: 0.25 },
   },
   'river-ferry': { places: 'parked', build: riverFerry },
+  cairn: { places: 'slalom', build: cairn },
+  'mani-post': { places: 'slalom', build: maniPost },
+  'river-raft': { places: 'parked', build: riverRaft },
   'dragon-tail': {
     places: 'swipe',
     body: dragonTailBody,

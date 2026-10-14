@@ -126,6 +126,27 @@ test('coasters: up on supports, touching down somewhere, a station roof for bill
   assert.throws(() => track(coaster({ sections: layout('mid-drop', { waterfall: false, dress: { belowDrop: { tunnel: 'rock', height: 12, billboards: 0 } } }) })), /coaster's tunnel runs into the land/);
 });
 
+test('canyons: built as coasters on the canyon floor unless a section flies, their rock and river by name, their own rules', () => {
+  const gc = physicsTrack('grand-canyon-burst');
+  assert.equal(gc.variety.family, 'canyon');
+  assert.deepEqual(gc.physics.kit.canyon, { depth: 42, river: 'left', palette: 'grand-canyon' });
+  assert.equal(gc.physics.kit.coaster.height, 0, 'on the canyon floor where a section does not say');
+  assert.ok(gc.physics.kit.sections.some((s) => s.height > 30), 'it climbs out over the rock somewhere');
+  assert.ok(gc.physics.kit.billboards.every((b) => b.mount === 'tower' || b.mount === undefined));
+  assert.equal(gc.physics.surface, 'ice');
+  const canyon = (o = {}) => spec({ family: 'canyon', canyon: { palette: 'andes' }, start: { ...START, type: 'elevator' }, sections: layout('classic'), ...o });
+  assert.deepEqual(track(canyon()).physics.kit.canyon, { depth: 40, river: 'left', palette: 'andes' });
+  assert.throws(() => track(canyon({ canyon: undefined })), /a canyon says its rock and river/);
+  assert.throws(() => track(canyon({ canyon: { palette: 'moon' } })), /unknown palette "moon"/);
+  assert.throws(() => track(canyon({ canyon: { palette: 'andes', depth: 90 } })), /depth is metres from the canyon's floor to its rim/);
+  assert.throws(() => track(canyon({ canyon: { palette: 'andes', river: 'middle' } })), /the river runs on the left or right/);
+  assert.throws(() => track(canyon({ sections: layout('classic', { dress: { sweep: { walls: 2 } } }) })), /walls is the share of the canyon's walls/);
+  assert.equal(track(canyon({ sections: layout('classic', { dress: { sweep: { walls: 0.5 } } }) })).physics.kit.sections.find((s) => s.name === 'Sweep').walls, 0.5);
+  assert.throws(() => track(canyon({ coaster: { style: 'bamboo' } })), /coaster.style is how its supports are built/);
+  assert.throws(() => track(spec({ canyon: { palette: 'andes' } })), /canyon settings are for canyons/);
+  assert.throws(() => track(spec({ sections: layout('classic', { dress: { sweep: { walls: 0.5 } } }) })), /walls are for canyons/);
+});
+
 test('a track may retune a layout splitter (balance, added pegs), mirrored with the layout, and nothing else of its shape', () => {
   const plain = kit.layout('climb-drop').find((s) => s.layoutKey === 'splitter').shape.fork;
   const tuned = kit.layout('climb-drop', { dress: { splitter: { balance: { tipOffset: -1.1, left: { scrub: 3.8 } } } } }).find((s) => s.layoutKey === 'splitter').shape.fork;

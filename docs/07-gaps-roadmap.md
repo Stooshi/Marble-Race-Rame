@@ -1,6 +1,6 @@
 # 7. Known gaps and roadmap
 
-*Last updated 14 Oct 2026 (Main 69b4a58).* What isn't built, isn't finished, or is a known weakness. The launch target is **1 December 2026** (web, iPhone and Android). When something here is fixed, remove it and note the change in the [decisions log](06-decisions.md) if it was a decision.
+*Last updated 14 Oct 2026 (the Canyon Series).* What isn't built, isn't finished, or is a known weakness. The launch target is **1 December 2026** (web, iPhone and Android). When something here is fixed, remove it and note the change in the [decisions log](06-decisions.md) if it was a decision.
 
 ## Must fix before launch
 
@@ -14,7 +14,7 @@
 | **Store accounts and listings** | D-U-N-S number, Apple Developer and Google Play accounts; the Google 14-day closed test with 12 testers (start by mid-November); screenshots. Drafts are in the project doc `claude/store-submission-drafts.md` | — |
 | **Limited edition price** | "Northern Lights" coin price is still `[X]` | `client/src/shared/marbles/catalog.json` |
 | **Season** | Season name, dates and badge are placeholders (`Season [3]`, October 2026) | `src/routes/scoreboard.js` |
-| **50 launch tracks** | Arcade tracks are built but switched off. Check which tracks are live and complete the 50 | `docs/data_updates`, `tracks.is_active` |
+| **50 launch tracks** | Arcade tracks are built but switched off; so are the 10 Canyon Series tracks (data updates `2027-01-06` to `2027-01-15`). Check which tracks are live and complete the 50 | `docs/data_updates`, `tracks.is_active` |
 | **Backups** | Not confirmed that Railway backs up the database on the current plan. Until then, take manual `pg_dump` backups | [Runbook](05-runbook.md#backups) |
 
 ## Missing features (planned)
@@ -26,7 +26,7 @@
 - **Custom marble labels.** The column exists, but a word filter is needed first.
 - **Subscriptions and season pass** (later).
 - **Automated social posting** of race clips, approved by Moses.
-- **More track series** (plans in the project): Canyon Series (10 tracks), Block Series (10 tracks).
+- **More track series** (plans in the project): Block Series (10 tracks). The Canyon Series (10 tracks) is built and switched off; when it goes live, add a sixth "Canyons" card to the landing page's series list (it says "five series").
 - **Race sound effects** (rolling, clacks), on hold.
 - **Analytics.** None today. If added, update the privacy policy and both store privacy forms first.
 

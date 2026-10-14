@@ -178,7 +178,7 @@ export function buildTerrainGeometry(field, bounds, { cells = 96, colors } = {})
  * follows the height field; their outer edges stay straight where they meet an
  * ordinary square, so nothing cracks open. The rest of the land is unchanged.
  */
-export function buildTerrain(field, bounds, { cells = 96, colors, tiles = 1, below = null, fine = 2.5, neighbours = true } = {}) {
+export function buildTerrain(field, bounds, { cells = 96, colors, tiles = 1, below = null, fine = 2.5, neighbours = true, detail = null, detailFine = fine, colorAt = null } = {}) {
   const { minX, maxX, minZ, maxZ } = bounds;
   const n = cells + 1;
   const heights = new Float32Array(n * n);
@@ -209,25 +209,37 @@ export function buildTerrain(field, bounds, { cells = 96, colors, tiles = 1, bel
 
   // The finer squares: key → { k, y: heights (k + 1)²}.
   const refined = new Map();
-  if (below?.length) {
+  if (below?.length || detail) {
     const key = (i, j) => j * cells + i;
     const crossed = new Set();
     const above = new Set();
-    for (const p of below) {
+    // (A canyon's walls: `detail` points whose squares are always drawn finer, at `detailFine`, given the squares' size.)
+    const walls = new Set();
+    if (detail) {
+      for (const p of detail(Math.max(cw, cd))) {
+        const [i, j] = cellOf(p.x, p.z);
+        walls.add(key(i, j));
+      }
+    }
+    for (const p of below ?? []) {
       const [i, j, fx, fz] = cellOf(p.x, p.z);
       crossed.add(key(i, j));
       if (flat(h(i, j), h(i + 1, j), h(i, j + 1), h(i + 1, j + 1), fx - i, fz - j) > p.y) above.add(key(i, j));
     }
-    const pick = new Set();
+    // (Squares the ice needs drawn finer at `fine`; a canyon's other wall squares at `detailFine`.)
+    const kIce = Math.max(2, Math.ceil(Math.max(cw, cd) / fine));
+    const kWall = Math.max(2, Math.ceil(Math.max(cw, cd) / detailFine));
+    const pick = new Map(); // square → its subdivisions
     for (const kk of above) {
       const i = kk % cells; const j = Math.floor(kk / cells);
       for (let dj = -1; dj <= 1; dj += 1) for (let di = -1; di <= 1; di += 1) {
         const q = key(i + di, j + dj);
-        if (i + di >= 0 && i + di < cells && j + dj >= 0 && j + dj < cells && (q === kk || (neighbours && crossed.has(q)))) pick.add(q);
+        if (i + di >= 0 && i + di < cells && j + dj >= 0 && j + dj < cells && (q === kk || (neighbours && crossed.has(q)))) pick.set(q, kIce);
       }
     }
-    const k = Math.max(2, Math.ceil(Math.max(cw, cd) / fine));
-    for (const kk of pick) {
+    for (const kk of walls) if (!pick.has(kk)) pick.set(kk, kWall);
+    const kOf = (q) => pick.get(q);
+    for (const [kk, k] of pick) {
       const i = kk % cells; const j = Math.floor(kk / cells);
       const y = new Float32Array((k + 1) * (k + 1));
       for (let b = 0; b <= k; b += 1) {
@@ -236,10 +248,23 @@ export function buildTerrain(field, bounds, { cells = 96, colors, tiles = 1, bel
           const edge = a === 0 ? [i - 1, j] : a === k ? [i + 1, j] : b === 0 ? [i, j - 1] : b === k ? [i, j + 1] : null;
           const corner = (a === 0 || a === k) && (b === 0 || b === k);
           // Corners and edges shared with an ordinary square keep the square's own straight edge.
-          const straight = corner || (edge && !pick.has(key(edge[0], edge[1])));
-          y[b * (k + 1) + a] = straight
-            ? flat(h(i, j), h(i + 1, j), h(i, j + 1), h(i + 1, j + 1), u, v)
-            : field.heightAt(minX + cw * (i + u), minZ + cd * (j + v));
+          const kN = edge ? kOf(key(edge[0], edge[1])) : undefined;
+          const straight = corner || (edge && kN === undefined);
+          let yy;
+          if (straight) yy = flat(h(i, j), h(i + 1, j), h(i, j + 1), h(i + 1, j + 1), u, v);
+          else if (edge && kN < k) {
+            // An edge shared with a coarser finer square (a canyon's walls beside the ice's): it follows
+            // the land at that square's points, straight between them, so the two meet without a crack.
+            const vertical = a === 0 || a === k;
+            const t = vertical ? v : u;
+            const t0 = Math.min(kN - 1, Math.floor(t * kN)) / kN;
+            const t1 = t0 + 1 / kN;
+            const at = (tt) => (vertical
+              ? field.heightAt(minX + cw * (i + (a === 0 ? 0 : 1)), minZ + cd * (j + tt))
+              : field.heightAt(minX + cw * (i + tt), minZ + cd * (j + (b === 0 ? 0 : 1))));
+            yy = at(t0) + (at(t1) - at(t0)) * ((t - t0) * kN);
+          } else yy = field.heightAt(minX + cw * (i + u), minZ + cd * (j + v));
+          y[b * (k + 1) + a] = yy;
         }
       }
       refined.set(kk, { k, y });
@@ -254,9 +279,11 @@ export function buildTerrain(field, bounds, { cells = 96, colors, tiles = 1, bel
       const tri = [a, b, d];
       const y = (a[1] + b[1] + d[1]) / 3;
       const steep = Math.max(...tri.map((p) => p[1])) - Math.min(...tri.map((p) => p[1]));
-      if (y < 0.3) c.copy(C.sand);
+      const own = colorAt && colorAt((a[0] + b[0] + d[0]) / 3, y, (a[2] + b[2] + d[2]) / 3, steep);
+      if (own) c.copy(own);
+      else if (y < 0.3) c.copy(C.sand);
       else c.copy(C.grass).lerp(C.dry, Math.min(1, y / (top || 1)) * 0.9);
-      if (steep > 6) c.lerp(C.shade, 0.35);
+      if (steep > 6 && !own) c.lerp(C.shade, 0.35);
       for (const p of tri) { positions.push(...p); colorList.push(c.r, c.g, c.b); }
     };
     const quad = (a, b, d, e) => { tri3(a, d, b); tri3(b, d, e); };

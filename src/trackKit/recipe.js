@@ -8,7 +8,7 @@
  * Each problem names the rule and the section, in plain words.
  */
 
-const { SHARP_RADIUS, TUNNELS, BRIDGES, SURFACES, BIOMES, LANDMARKS, OVERHEAD, FRAMES, AROUND, SCENERY, CROWDS, BARRIERS } = require('./parts');
+const { SHARP_RADIUS, TUNNELS, BRIDGES, SURFACES, BIOMES, LANDMARKS, OVERHEAD, FRAMES, AROUND, SCENERY, CROWDS, BARRIERS, CANYONS } = require('./parts');
 
 const MIN_SPIRAL_RADIUS = 40;  // Table Mountain Run's corkscrew
 const MIN_SWEEP_RADIUS = 45;   // San Francisco's Embarcadero
@@ -19,9 +19,16 @@ const LONGEST_CLIMB_M = 40;    // San Francisco's 35 m
 const { LIGHTINGS } = require('./lighting');
 const { OPENING_KINDS } = require('./openings');
 // Track families (the sameness check compares openings within one): 'test' tracks are never compared.
-const FAMILIES = ['world-tour', 'grand-prix', 'coaster', 'pinball', 'arcade', 'test'];
-// A coaster: the coaster family, or a library test track built as one (series 'coaster').
-const isCoaster = (spec) => spec.family === 'coaster' || (spec.family === 'test' && spec.series === 'coaster');
+const FAMILIES = ['world-tour', 'grand-prix', 'coaster', 'pinball', 'arcade', 'canyon', 'test'];
+// A canyon: the canyon family, or a library test track built as one (series 'canyon'). It is built
+// as a coaster too (the track climbs out of the canyon on its supports and touches down on its floor).
+const isCanyon = (spec) => spec.family === 'canyon' || (spec.family === 'test' && spec.series === 'canyon');
+// A coaster: the coaster family, or a library test track built as one (series 'coaster'), or a canyon.
+const isCoaster = (spec) => spec.family === 'coaster' || (spec.family === 'test' && spec.series === 'coaster') || isCanyon(spec);
+// A canyon's depth (metres from its floor to its rim), and its river's side.
+const CANYON_DEPTH = [20, 60];
+const RIVER_SIDES = ['left', 'right', 'none'];
+const COASTER_STYLES = ['steel', 'timber'];
 // A pinball table: the pinball family, or a library test track built as one (series 'pinball').
 const isPinball = (spec) => spec.family === 'pinball' || (spec.family === 'test' && spec.series === 'pinball');
 // A pinball table's backglass art (original art, one style per table) and its dot-matrix call-out.
@@ -259,7 +266,12 @@ function checkRecipe({ spec, sections, span, generated, owner, placed, total, wh
   }
 
   // Coasters: their own rules (a lift hill, supports, touchdowns, water).
-  if (spec.series !== undefined && !(spec.family === 'test' && ['coaster', 'pinball', 'arcade'].includes(spec.series))) problems.push(`${where('track')}: series is for test tracks: 'coaster', 'pinball' or 'arcade' (a library test track built as a coaster, a pinball table or an arcade world).`);
+  if (spec.series !== undefined && !(spec.family === 'test' && ['coaster', 'pinball', 'arcade', 'canyon'].includes(spec.series))) problems.push(`${where('track')}: series is for test tracks: 'coaster', 'pinball', 'arcade' or 'canyon' (a library test track built as a coaster, a pinball table, an arcade world or a canyon).`);
+  if (isCanyon(spec)) problems.push(...canyonRules({ spec, sections, where }));
+  else {
+    if (spec.canyon !== undefined) problems.push(`${where('track')}: canyon settings are for canyons (family: 'canyon').`);
+    sections.forEach((s) => { if (s.walls !== undefined) problems.push(`${where(s.name)}: walls are for canyons (family: 'canyon').`); });
+  }
   if (isPinball(spec)) problems.push(...pinballRules({ spec, where }));
   else if (spec.pinball !== undefined) problems.push(`${where('track')}: pinball settings are for pinball tables (family: 'pinball').`);
   if (isArcade(spec)) problems.push(...arcadeRules({ spec, where }));
@@ -354,18 +366,42 @@ function coasterRules({ spec, sections, where }) {
   const problems = [];
   const c = spec.coaster ?? {};
   const ok = (h) => Number.isFinite(h) && h >= 0 && h <= MAX_COASTER_HEIGHT;
-  if (c.height !== undefined && !(ok(c.height) && c.height > 0)) problems.push(`${where('track')}: coaster.height is how high the track flies (metres, 1 to ${MAX_COASTER_HEIGHT}).`);
+  // (A canyon's track runs on the canyon floor where a section doesn't say: its height may be 0.)
+  if (c.height !== undefined && !(ok(c.height) && (c.height > 0 || isCanyon(spec)))) problems.push(`${where('track')}: coaster.height is how high the track flies (metres, 1 to ${MAX_COASTER_HEIGHT}).`);
   for (const k of Object.keys(c.colours ?? {})) if (!['rail', 'support', 'tie'].includes(k)) problems.push(`${where('track')}: coaster colours are rail, support and tie (not ${k}).`);
+  if (c.style !== undefined && !COASTER_STYLES.includes(c.style)) problems.push(`${where('track')}: coaster.style is how its supports are built (${COASTER_STYLES.join(', ')}).`);
   sections.forEach((s) => {
     if (s.height !== undefined && !ok(s.height)) problems.push(`${where(s.name)}: height is metres above the land, 0 (touching down) to ${MAX_COASTER_HEIGHT}.`);
     if (s.height === 0 && s.water) problems.push(`${where(s.name)}: a stretch over water cannot touch down.`);
     if (s.bridge !== undefined) problems.push(`${where(s.name)}: a coaster flies on its own supports (no bridge).`);
     if (s.tunnel !== undefined && s.height) problems.push(`${where(s.name)}: a coaster's tunnel runs into the land (height 0, or leave it out).`);
   });
-  if (!sections.some((s) => (s.height === 0 || (s.tunnel !== undefined && s.height === undefined)) && s.shape.shape !== 'runIn')) problems.push(`${where('track')}: a coaster touches down somewhere along the way (a section with height: 0), not only at the station.`);
+  const flatOut = (c.height ?? (isCanyon(spec) ? 0 : undefined)) === 0; // (a canyon's sections run on its floor unless they say)
+  if (!sections.some((s) => (s.height === 0 || (s.height === undefined && (flatOut || s.tunnel !== undefined))) && s.shape.shape !== 'runIn')) problems.push(`${where('track')}: a coaster touches down somewhere along the way (a section with height: 0), not only at the station.`);
   const roof = spec.finish?.billboards ?? 0;
   if (!(Number.isInteger(roof) && roof >= 0 && roof <= 2)) problems.push(`${where('finish')}: 0 to 2 billboards on the station roof.`);
   return problems;
 }
 
-module.exports = { checkRecipe, MIN_SPIRAL_RADIUS, MIN_SWEEP_RADIUS, BILLBOARDS, GRAND_PRIX_BILLBOARDS, isCoaster, isPinball, PINBALL_ART, isArcade, ARCADE_ART, START_TYPES, GATES, COUNTDOWN_SHOTS, LAUNCH_SHOTS };
+/**
+ * A canyon's own rules: its rock and river (`canyon: { palette, depth, river }`), and walls (0 to 1)
+ * on a section where they stand lower (a basin, a gap). Everything else is a coaster's.
+ */
+function canyonRules({ spec, sections, where }) {
+  const problems = [];
+  const c = spec.canyon;
+  if (!c || typeof c !== 'object') {
+    problems.push(`${where('track')}: a canyon says its rock and river: canyon: { palette (${CANYONS.join(', ')}), depth, river }.`);
+    return problems;
+  }
+  for (const k of Object.keys(c)) if (!['palette', 'depth', 'river'].includes(k)) problems.push(`${where('canyon')}: unknown setting ${k} (palette, depth, river).`);
+  if (!CANYONS.includes(c.palette)) problems.push(`${where('canyon')}: unknown palette ${JSON.stringify(c.palette)} (${CANYONS.join(', ')}).`);
+  if (c.depth !== undefined && !(Number.isFinite(c.depth) && c.depth >= CANYON_DEPTH[0] && c.depth <= CANYON_DEPTH[1])) problems.push(`${where('canyon')}: depth is metres from the canyon's floor to its rim, ${CANYON_DEPTH[0]} to ${CANYON_DEPTH[1]}.`);
+  if (c.river !== undefined && !RIVER_SIDES.includes(c.river)) problems.push(`${where('canyon')}: the river runs on the ${RIVER_SIDES.slice(0, 2).join(' or ')} (or 'none').`);
+  sections.forEach((s) => {
+    if (s.walls !== undefined && !(Number.isFinite(s.walls) && s.walls >= 0 && s.walls <= 1)) problems.push(`${where(s.name)}: walls is the share of the canyon's walls standing here, 0 to 1.`);
+  });
+  return problems;
+}
+
+module.exports = { checkRecipe, isCanyon, MIN_SPIRAL_RADIUS, MIN_SWEEP_RADIUS, BILLBOARDS, GRAND_PRIX_BILLBOARDS, isCoaster, isPinball, PINBALL_ART, isArcade, ARCADE_ART, START_TYPES, GATES, COUNTDOWN_SHOTS, LAUNCH_SHOTS };

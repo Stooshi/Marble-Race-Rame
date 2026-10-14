@@ -1039,6 +1039,13 @@ export class TrackScene {
         const { ceiling } = this.channelBounds(rig.cam.x, rig.cam.z, level);
         if (rig.cam.y > ceiling - 1) rig.cam.y = Math.max(at.y + 1.2, ceiling - 1);
       }
+      // Nor, easing down to a spot under a coaster's station canopy, still up inside it (its front
+      // beam would cut across the picture): straight down under it with its marble.
+      const roof = this.stationRoof;
+      if (roof && at.y < roof.bottom) {
+        const reach = { ...roof, halfLength: roof.halfLength + 0.6, bottom: roof.bottom - 0.6 };
+        if (roofBlocks(reach, rig.cam, rig.cam)) rig.cam.y = Math.max(at.y + 1.2, reach.bottom);
+      }
     }
     rig.camera.position.copy(rig.cam);
     rig.camera.lookAt(rig.target);

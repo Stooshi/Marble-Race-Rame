@@ -17,7 +17,7 @@
 
 const { generate } = require('../game/trackShape');
 const parts = require('./parts');
-const { checkRecipe, isCoaster, isPinball, isArcade } = require('./recipe');
+const { checkRecipe, isCoaster, isPinball, isArcade, isCanyon } = require('./recipe');
 
 const round4 = (x) => Math.round(x * 10000) / 10000;
 
@@ -267,7 +267,11 @@ function track(spec) {
     // A coaster (family 'coaster'): the track flies on steel supports `height` metres above the land
     // (a section's own `height`; 0 where it touches down), a lift hill behind the gate, a station at
     // the finish; `water`: sections that fly over water. Looks only, like everything here.
-    ...(isCoaster(spec) && { coaster: { height: COASTER_HEIGHT, ...spec.coaster, colours: { ...COASTER_COLOURS, ...spec.coaster?.colours } } }),
+    ...(isCoaster(spec) && { coaster: { height: isCanyon(spec) ? 0 : COASTER_HEIGHT, ...spec.coaster, colours: { ...COASTER_COLOURS, ...spec.coaster?.colours } } }),
+    // A canyon (family 'canyon', built as a coaster): the track runs along the floor of a canyon `depth`
+    // metres deep in the rock and river of its `palette`, the river on one side; where the track flies
+    // on its supports it climbs out over the rock. Looks only.
+    ...(isCanyon(spec) && { canyon: { depth: 40, river: 'left', ...spec.canyon } }),
     // A pinball table (family 'pinball'): the playfield, the cabinet, the backglass's art and the
     // dot-matrix display's call-outs at the start and for the winner, the apron's flippers and the
     // drain past the finish. Looks only.
@@ -297,6 +301,7 @@ function track(spec) {
       // (A coaster's station stands on the ground, and it dives into a tunnel at ground level.)
       ...(isCoaster(spec) && (sec.shape?.shape === 'runIn' || sec.tunnel !== undefined) && sec.height === undefined && { height: 0 }),
       ...(sec.water && { water: true }),
+      ...(sec.walls !== undefined && { walls: sec.walls }),
       ...(sec.waterCurtain && { waterCurtain: true }),
     })),
   };

@@ -313,11 +313,14 @@ export function buildCoaster(centerline, channel, kit, { lite = false, groundAt,
   // up it and (computer) a diagonal in each panel. Never one standing in or on another stretch below.
   const below = (foot, i, topY) => samples.some((o, j) => Math.abs(j - i) * step >= 40 && o.pos.y < topY - 1
     && Math.hypot(o.pos.x - foot.x, o.pos.z - foot.z) < edgeAt(channel, j, step) + 2.5);
+  // (`coaster.style` 'timber': wooden trestle bents instead of steel A-frames: near-upright posts,
+  // close ties and cross-bracing in every panel, as the old mining railways' trestles.)
+  const timber = kit.coaster?.style === 'timber';
   const tower = (top, side, half, i, { light = lite } = {}) => {
     const landY = groundAt(top.x, top.z);
     const h = top.y - landY;
     if (h < 1.2) return;
-    const splay = Math.min(0.18 * h, 6);
+    const splay = timber ? Math.min(0.1 * h, 3.5) : Math.min(0.18 * h, 6);
     const legs = [1, -1].map((sign) => {
       const a = top.clone().addScaledVector(side, sign * half);
       const b = top.clone().addScaledVector(side, sign * (half + splay));
@@ -340,6 +343,22 @@ export function buildCoaster(centerline, channel, kit, { lite = false, groundAt,
       feet.push({ x: b.x, z: b.z, r: 3 });
     }
     towers.push(strut(legs[0][0], legs[1][0], 0.4, SUPPORT)); // the crossbeam the channel rests on
+    if (timber) {
+      const tie = light ? 8 : 4.5;
+      const n = Math.max(1, Math.floor(h / tie));
+      for (let k = 1; k <= n; k += 1) {
+        const t0 = ((k - 1) * tie) / h;
+        const t = Math.min(1, (k * tie) / h);
+        const l0 = legs[0][0].clone().lerp(legs[0][1], t0);
+        const r0 = legs[1][0].clone().lerp(legs[1][1], t0);
+        const l = legs[0][0].clone().lerp(legs[0][1], t);
+        const r = legs[1][0].clone().lerp(legs[1][1], t);
+        towers.push(strut(l, r, 0.32, SUPPORT));
+        towers.push(strut(l0, r, 0.24, SUPPORT));
+        if (!light) towers.push(strut(r0, l, 0.24, SUPPORT));
+      }
+      return;
+    }
     const rung = light ? 12 : 7;
     const n = Math.floor(h / rung);
     for (let k = 1; k <= n; k += 1) {
@@ -355,7 +374,7 @@ export function buildCoaster(centerline, channel, kit, { lite = false, groundAt,
       }
     }
   };
-  const every = lite ? 22 : 13;
+  const every = timber ? (lite ? 16 : 9) : lite ? 22 : 13; // (a trestle's bents stand closer together)
   let last = -Infinity;
   for (let i = 0; i <= segments; i += 1) {
     if (!isLifted(flight, i) || i * step - last < every) continue;

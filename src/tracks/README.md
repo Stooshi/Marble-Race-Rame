@@ -96,10 +96,16 @@ module.exports = track({
   | `mid-drop` | sBends, splitter, aboveDrop, drop (a waterfall; `waterfall: false` for a plain drop), belowDrop, sweep, brakingStraight, hairpin, spiral, lastStraight |
   | `two-splitters` | sBends1, splitter1, sweep, brakingStraight, hairpin, outOfHairpin, sBends2, splitter2, lastStraight |
   | `long-sweeps` | sweep1, moguls, sweep2, brakingStraight, hairpin, spiral (one and a half turns), lastStraight (no splitter) |
+  | `horseshoe-bend` (canyons) | riverRun, rapids (a short climb), climbOut, dropIn, horseshoe (225°), brakingStraight, hairpin, slalomDrop, sweep2, lastStraight |
+  | `great-bend` (canyons) | gorge, flagRun, ledge, dropIn, brakingStraight, hairpin, greatBend (a spiral and a quarter), slalomDrop, lastStraight |
+  | `terrace-steps` (canyons) | highSweep, drop, terraces (steps), brakingStraight, hairpin, slalomDrop, sBends, sweep2, lastStraight |
+  | `rafting-run` (canyons) | gates, whirlpool (a spiral), bridgeRun, sweep, drop, sBends, brakingStraight, hairpin, lastStraight |
+  | `six-canyons` (canyons) | hop1, canyon2, hop2, drop, canyon3, hop3, brakingStraight, hairpin, spin, lastStraight |
 
   A track may still write its own sections by hand; the sameness check makes sure they differ.
 - **`family`**: `'world-tour'` (the default), `'grand-prix'` (any `grandPrix` track),
-  `'coaster'` or `'test'` (test tracks, never compared). Openings are compared within a family.
+  `'coaster'`, `'pinball'`, `'arcade'`, `'canyon'` or `'test'` (test tracks, never compared).
+  Openings are compared within a family.
 
 ## Shapes
 
@@ -324,6 +330,34 @@ To look at them all: `node scripts/dump-kit-track.js grand-prix-gallery`, then o
   check. The design's landmark moments are dressed onto the layout's sections by key.
 - Sognefjord is the proof track (the crest start on `long-sweeps`: no splitter). A coaster
   splitter (two sets of rails on a wider frame) is built but not yet on a switched-on track.
+
+## Canyons
+
+`family: 'canyon'` (the Canyon Series) runs the track through a canyon. It is built as a coaster
+(everything above applies), with these differences (looks only, like everything else):
+
+- **On the canyon floor**: a section without a `height` runs on the floor (the default height is
+  0); a section's `height` (up to 45) lifts it onto supports, and there the walls stand lower,
+  so the track climbs out over the rock and drops back in. Every canyon touches down somewhere.
+- **The canyon**: `canyon: { palette, depth, river }`. `palette`: the rock, river and plateau
+  colours and what grows there (`grand-canyon`, `himalaya`, `andes`, `limestone`, `copper`,
+  `basalt`, `namib`); `depth`: metres from the floor to the rim (20 to 60, default 40);
+  `river`: `'left'`, `'right'` or `'none'`. The floor reaches 20 m from the track (34 m on the
+  river's side, the river 16 to 26 m out), then the walls climb in bands to the rim over about
+  22 m; beyond lies the plateau. Inside a tight bend the walls meet in a butte.
+- **Where the walls stand**: from about 40 to 120 m after the gate, until about 60 m before the
+  finish (the lift hill and the station stand in the open); a section's `walls` (0 to 1) lowers
+  them; where another stretch passes close at another height (a spiral's turns) they give way
+  to the ordinary hillside. The land beside any stretch never rises over it.
+- **Supports**: `coaster: { style: 'timber' }` builds timber trestle bents instead of steel A-frames.
+- **Landmarks** may stand up on the rim (`{ name, at, side, rim: true, distance }`, `distance`
+  metres back from the edge) or float on the river (`{ name, at, river: true }`).
+- **Spans** over the gorge, a section's `overhead`: `'prayer-flags'`, `'arch-bridge'`,
+  `'railway-trestle'`, `'suspension-bridge'` (rim to rim, high over the track), and `'condor'`
+  (two condors circling above the rim).
+- The layouts made for the series: `horseshoe-bend`, `great-bend`, `terrace-steps`,
+  `rafting-run`, `six-canyons`; each has a test track built as a canyon (`series: 'canyon'`).
+- Grand Canyon Burst is the proof track.
 
 ## Mirrored tracks
 

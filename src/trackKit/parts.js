@@ -277,12 +277,23 @@ module.exports = {
     'pixel-hills', 'floating-platforms', 'pixel-waterfall', 'arrow-up', 'arrow-down', 'arrow-left', 'arrow-right', 'ba-buttons',
     'rooftop-stage', 'pixel-crowd', 'water-tower', 'health-bars',
     'starting-grid', 'checkpoint-gate', 'fork-signpost', 'goal-banner',
-    'subway-entrance', 'storefronts', 'go-arrow', 'neon-plaza', 'continue-clock'],
-  OVERHEAD: ['gondola', 'cable-car', 'chairlift', 'vulture'],
+    'subway-entrance', 'storefronts', 'go-arrow', 'neon-plaza', 'continue-clock',
+    // The Canyon Series.
+    'rim-lookout', 'river-camp', 'mule-train', 'glass-skywalk', 'river-rafts',
+    'gompa', 'chorten-row', 'snow-peak', 'yak-herd', 'tibetan-village',
+    'andean-church', 'andean-terraces', 'condor-viewpoint', 'llama-herd', 'andean-village',
+    'rafting-camp', 'adobe-mission', 'canyon-station', 'cliff-dwellings',
+    'fire-lookout', 'basalt-columns', 'bighorn-sheep', 'jet-boat', 'river-ranch', 'giant-peak', 'trail-village',
+    'jingle-truck', 'hill-fort', 'puya-plants', 'hot-springs', 'hikers-camp', 'quiver-grove', 'canyon-waterfall'],
+  OVERHEAD: ['gondola', 'cable-car', 'chairlift', 'vulture',
+    // The Canyon Series: birds circling over the gorge, and what spans it from rim to rim, high over the track.
+    'condor', 'prayer-flags', 'arch-bridge', 'railway-trestle', 'suspension-bridge'],
+  // A canyon's rock and river (family 'canyon': `canyon: { palette }`), the client's CANYON_PALETTES.
+  CANYONS: ['grand-canyon', 'himalaya', 'andes', 'limestone', 'copper', 'basalt', 'karakoram', 'namib'],
   // What stands in the middle of a splitter, between its two channels (the arch: over one of
   // them), or in the middle of a spiral or a hairpin.
   AROUND: ['mountain-hut', 'big-rock', 'mountain-restaurant', 'mine-headframe', 'nunatak', 'bell-tower', 'arc-de-triomphe', 'obelisk', 'notre-dame', 'oasis', 'twisted-tower', 'river-island', 'anaconda', 'watchtower', 'pagoda',
-    'museum-of-the-future', 'dubai-frame', 'opera-house', 'tulip-garden', 'roundabout-monument', 'acacia', 'mughal-fountain', 'giant-tree', 'snow-island', 'fallen-statue', 'volcano-rock', 'sagrada-familia', 'frozen-waterfall', 'limestone-island', 'sea-islet', 'giant-redwood', 'lantern-chedi', 'watermill', 'confucius-temple', 'castle-keep', 'magician-trunk', 'top-hat', 'jukebox-tower', 'clocktower', 'lighting-rig', 'claw-tower', 'glitch-tower', 'ringed-planet', 'laser-turret', 'water-tower', 'fork-signpost', 'neon-plaza'],
+    'museum-of-the-future', 'dubai-frame', 'opera-house', 'tulip-garden', 'roundabout-monument', 'acacia', 'mughal-fountain', 'giant-tree', 'snow-island', 'fallen-statue', 'volcano-rock', 'sagrada-familia', 'frozen-waterfall', 'limestone-island', 'sea-islet', 'giant-redwood', 'lantern-chedi', 'watermill', 'confucius-temple', 'castle-keep', 'magician-trunk', 'top-hat', 'jukebox-tower', 'clocktower', 'lighting-rig', 'claw-tower', 'glitch-tower', 'ringed-planet', 'laser-turret', 'water-tower', 'fork-signpost', 'neon-plaza', 'snow-peak'],
   // Scenery near a section (or the start or finish): what grows and stands beside the track there.
   SCENERY: ['bare', 'rocks', 'birches', 'pines', 'race-netting', 'funicular', 'wooden-houses', 'frozen-lake',
     'wood-clad', 'chalets', 'pasture', 'aspens', 'shopfronts',

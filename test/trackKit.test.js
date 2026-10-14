@@ -654,6 +654,16 @@ const HIDDEN_KIT_TRACKS = [
   ['grand-champion', '2026-12-02-add-grand-champion.sql', 'Grand Champion, Pinball Series table 7: a stadium rock-concert table.'],
   ['joystick-spins', '2026-12-03-add-joystick-spins.sql', 'Joystick Spins, Arcade Series track 2 and the arcade kit\'s proof track: a 1980s arcade hall at night.'],
   ['kill-screen', '2026-12-04-add-kill-screen.sql', 'Kill Screen, Arcade Series track 1: a neon maze at level 256.'],
+  ['grand-canyon-burst', '2027-01-06-add-grand-canyon-burst.sql', 'Grand Canyon Burst, the first Canyon Series track: over the South Rim and down through the Grand Canyon, round the horseshoe bend under a glass skywalk.'],
+  ['yarlung-tsangpo-spins', '2027-01-07-add-yarlung-tsangpo-spins.sql', 'Yarlung Tsangpo Spins, Canyon Series track 2: down the deepest gorge on Earth, under prayer flags and round the great bend about a snow peak.'],
+  ['colca-spin', '2027-01-08-add-colca-spin.sql', 'Colca Spin, Canyon Series track 3: through the Colca Canyon in the Andes, where condors circle, down its ancient terraces.'],
+  ['tara-river-spins', '2027-01-09-add-tara-river-spins.sql', 'Tara River Spins, Canyon Series track 4: down the deepest canyon in Europe, on the turquoise Tara under its great arch bridge.'],
+  ['copper-spins', '2027-01-10-add-copper-spins.sql', 'Copper Spins, Canyon Series track 5: through Mexico\'s Copper Canyon, hopping from canyon to canyon on timber trestles under a railway trestle.'],
+  ['hells-burst', '2027-01-11-add-hells-burst.sql', 'Hells Burst, Canyon Series track 6: through Hells Canyon, the deepest in North America, on timber trestles over dark basalt and down to the whitewater.'],
+  ['kali-gandaki-burst', '2027-01-12-add-kali-gandaki-burst.sql', 'Kali Gandaki Burst, Canyon Series track 7: down the Kali Gandaki gorge in Nepal, between two giant snow peaks, under a swaying footbridge.'],
+  ['indus-spins', '2027-01-13-add-indus-spins.sql', 'Indus Spins, Canyon Series track 8: along the Indus gorge below Nanga Parbat, out along a ledge high on the cliff face, then a plunge to the river.'],
+  ['cotahuasi-free-fall', '2027-01-14-add-cotahuasi-free-fall.sql', 'Cotahuasi Free Fall, Canyon Series track 9: through the Cotahuasi Canyon in Peru, with a free fall beside a tall waterfall.'],
+  ['fish-river-burst', '2027-01-15-add-fish-river-burst.sql', 'Fish River Burst, Canyon Series track 10: through the Fish River Canyon in Namibia, down its tight meanders to steaming hot springs.'],
 ];
 for (const [slug, file, note] of HIDDEN_KIT_TRACKS) {
   test(`${slug} is added by its data update, switched off, exactly as its track file builds it`, () => {

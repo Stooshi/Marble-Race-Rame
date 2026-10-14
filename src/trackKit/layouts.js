@@ -20,7 +20,7 @@
 
 const {
   straight, plunge, climb, sBends, sweep, spiral, hairpin, splitter, waterfall,
-  pileUp, block, curtain, swipe, parked, slalom, peg, boost, moguls, rumble,
+  pileUp, block, curtain, swipe, parked, slalom, peg, boost, moguls, rumble, steps,
 } = require('./parts');
 
 // The proven Grand Prix splitter (Dubai Marble Grand Prix onwards): a left-hand splitter's
@@ -475,11 +475,178 @@ const LAYOUTS = {
       obstacles: [parked({ costume: c.parked, at: 0.2, side: R, length: 6 }), peg({ costume: c.peg, at: 0.45, line: 'left' })], features: [moguls({ from: 0.7, to: 0.95, count: 3, look: o.bumps ?? 'rumble' })],
     },
   ],
+  /** L30 Horseshoe bend (Canyon Series): a slalom straight along the river, a short climb over a crest, a long sweep (a boost; a canyon climbs out over the rock here), a drop back in, the horseshoe (a 225° sweep round a butte), the hairpin, a slalom drop, a second sweep and a parked piece and a peg at the run-in. */
+  'horseshoe-bend': (L, R, c) => [
+    { key: 'riverRun', name: 'Slalom straight', shape: straight(120, { grade: 0.11 }), obstacles: [slalom({ costume: c.slalom, from: 0.3, to: 0.85, count: 4, loss: 0.15 })], billboards: 1 },
+    { key: 'rapids', name: 'Climb', shape: climb(14, { grade: -0.05, after: 0.17 }) },
+    { key: 'climbOut', name: 'Sweep', shape: sweep({ side: L, radius: 90, degrees: 110, grade: 0.08 }), features: [boost({ at: 0.08 })], billboards: 2 },
+    { key: 'dropIn', name: 'Drop', shape: plunge(55, { grade: 0.24, from: 0.08 }) },
+    { key: 'horseshoe', name: 'Horseshoe', shape: sweep({ side: R, radius: 65, degrees: 225, grade: 0.075 }), obstacles: [peg({ costume: c.peg, at: 0.5, line: 'center' })], billboards: 1 },
+    { key: 'brakingStraight', name: 'Run to the hairpin', shape: straight(50, { grade: 0.12 }) },
+    { key: 'hairpin', name: 'Hairpin', shape: hairpin({ side: L }), obstacles: [swipe({ costume: c.swipe, side: 'high' })] },
+    { key: 'slalomDrop', name: 'Slalom drop', shape: plunge(50, { grade: 0.22, from: 0.16 }), obstacles: [slalom({ costume: c.slalom, from: 0.4, to: 0.9, count: 3, loss: 0.15 })] },
+    { key: 'sweep2', name: 'Second sweep', shape: sweep({ side: R, radius: 85, degrees: 130, grade: 0.09 }) },
+    {
+      key: 'lastStraight', name: 'Last straight', shape: straight(90, { grade: 0.15 }),
+      obstacles: [parked({ costume: c.parked, at: 0.2, side: L, length: 6 }), peg({ costume: c.peg, at: 0.45, line: 'right' })], features: [rumble({ from: 0.7, to: 0.95, count: 3 })],
+    },
+  ],
+  /** L31 Great bend (Canyon Series): S-bends down the gorge, a peg straight, a long sweep (a boost; a canyon climbs out here), a drop back in, the hairpin, the great bend (a spiral and a quarter, round a peak), a slalom drop and a parked piece, a peg and rumble strips at the run-in. */
+  'great-bend': (L, R, c) => [
+    { key: 'gorge', name: 'S-bends', shape: sBends({ first: L, radius: 80, degrees: 70, grade: 0.13 }), billboards: 1 },
+    {
+      key: 'flagRun', name: 'Peg straight', shape: straight(90, { grade: 0.12 }), billboards: 1,
+      obstacles: [peg({ costume: c.peg, at: 0.3, line: 'left' }), peg({ costume: c.peg, at: 0.5, line: 'right' }), peg({ costume: c.peg, at: 0.7, line: 'center' })],
+    },
+    { key: 'ledge', name: 'Sweep', shape: sweep({ side: R, radius: 85, degrees: 140, grade: 0.085 }), features: [boost({ at: 0.08 })], billboards: 2 },
+    { key: 'dropIn', name: 'Drop', shape: plunge(50, { grade: 0.24, from: 0.085 }) },
+    { key: 'brakingStraight', name: 'Run to the hairpin', shape: straight(50, { grade: 0.12 }) },
+    { key: 'hairpin', name: 'Hairpin', shape: hairpin({ side: L }), obstacles: [swipe({ costume: c.swipe, side: 'high' })] },
+    { key: 'greatBend', name: 'Spiral', shape: spiral({ side: R, radius: 55, turns: 1.25, grade: 0.15 }) },
+    { key: 'slalomDrop', name: 'Slalom drop', shape: plunge(50, { grade: 0.22, from: 0.15 }), obstacles: [slalom({ costume: c.slalom, from: 0.4, to: 0.9, count: 3, loss: 0.15 })] },
+    {
+      key: 'lastStraight', name: 'Last straight', shape: straight(110, { grade: 0.15 }),
+      obstacles: [parked({ costume: c.parked, at: 0.2, side: R, length: 6 }), peg({ costume: c.peg, at: 0.45, line: 'left' })], features: [rumble({ from: 0.7, to: 0.95, count: 3 })],
+    },
+  ],
+  /** L32 Terrace steps (Canyon Series): a long sweep (a boost; a canyon climbs out here), a drop, a straight down terrace steps, the hairpin, a slalom drop, S-bends, a second sweep and a parked piece and a peg at the run-in. */
+  'terrace-steps': (L, R, c) => [
+    { key: 'highSweep', name: 'Sweep', shape: sweep({ side: L, radius: 85, degrees: 160, grade: 0.09 }), features: [boost({ at: 0.08 })], billboards: 2 },
+    { key: 'drop', name: 'Drop', shape: plunge(45, { grade: 0.22, from: 0.09 }) },
+    { key: 'terraces', name: 'Steps', shape: straight(140, { grade: 0.14 }), features: [steps({ from: 0.4, to: 0.9, count: 5, drag: 0.01 })], billboards: 1 },
+    { key: 'brakingStraight', name: 'Run to the hairpin', shape: straight(50, { grade: 0.12 }) },
+    { key: 'hairpin', name: 'Hairpin', shape: hairpin({ side: R }), obstacles: [swipe({ costume: c.swipe, side: 'high' })] },
+    { key: 'slalomDrop', name: 'Slalom drop', shape: plunge(50, { grade: 0.2, from: 0.16 }), obstacles: [slalom({ costume: c.slalom, from: 0.4, to: 0.9, count: 3, loss: 0.15 })] },
+    { key: 'sBends', name: 'S-bends', shape: sBends({ first: L, radius: 75, degrees: 70, grade: 0.12 }), billboards: 1 },
+    { key: 'sweep2', name: 'Second sweep', shape: sweep({ side: R, radius: 80, degrees: 150, grade: 0.09 }) },
+    {
+      key: 'lastStraight', name: 'Last straight', shape: straight(100, { grade: 0.15 }),
+      obstacles: [parked({ costume: c.parked, at: 0.2, side: L, length: 6 }), peg({ costume: c.peg, at: 0.45, line: 'right' })], features: [rumble({ from: 0.7, to: 0.95, count: 3 })],
+    },
+  ],
+  /** L33 Rafting run (Canyon Series): a slalom straight, a spin, a long straight (a boost, moguls; under a bridge on a canyon), a long sweep (a canyon climbs out here), a drop, S-bends, the hairpin and a peg and a parked piece at the run-in (well clear of the hairpin's exit). */
+  'rafting-run': (L, R, c) => [
+    { key: 'gates', name: 'Slalom straight', shape: straight(60, { grade: 0.13 }), obstacles: [slalom({ costume: c.slalom, from: 0.3, to: 0.85, count: 3, loss: 0.15 })] },
+    { key: 'whirlpool', name: 'Spiral', shape: spiral({ side: L, radius: 50, turns: 1, grade: 0.16 }) },
+    { key: 'bridgeRun', name: 'Long straight', shape: straight(100, { grade: 0.1 }), features: [boost({ at: 0.1 }), moguls({ from: 0.55, to: 0.9, count: 4 })], billboards: 2 },
+    { key: 'sweep', name: 'Sweep', shape: sweep({ side: R, radius: 90, degrees: 150, grade: 0.085 }), billboards: 2 },
+    { key: 'drop', name: 'Drop', shape: plunge(45, { grade: 0.22, from: 0.085 }) },
+    { key: 'sBends', name: 'S-bends', shape: sBends({ first: L, radius: 72, degrees: 60, grade: 0.12 }), billboards: 1 },
+    { key: 'brakingStraight', name: 'Run to the hairpin', shape: straight(50, { grade: 0.12 }) },
+    { key: 'hairpin', name: 'Hairpin', shape: hairpin({ side: R }), obstacles: [swipe({ costume: c.swipe, side: 'high' })] },
+    {
+      key: 'lastStraight', name: 'Last straight', shape: straight(75, { grade: 0.15 }),
+      obstacles: [peg({ costume: c.peg, at: 0.4, line: 'right' }), parked({ costume: c.parked, at: 0.7, side: L, length: 6 })], features: [rumble({ from: 0.8, to: 0.97, count: 3 })],
+    },
+  ],
+  /** L34 Six canyons (Canyon Series): a sweep, a slalom straight, S-bends, a drop, a straight (two pegs), a long sweep (a boost), the hairpin, a spin and a parked piece and a peg at the run-in; a canyon hops out over the rock on the sweeps and the S-bends. */
+  'six-canyons': (L, R, c) => [
+    { key: 'hop1', name: 'Sweep', shape: sweep({ side: L, radius: 85, degrees: 110, grade: 0.1 }), billboards: 2 },
+    { key: 'canyon2', name: 'Slalom straight', shape: straight(60, { grade: 0.13 }), obstacles: [slalom({ costume: c.slalom, from: 0.35, to: 0.85, count: 3, loss: 0.1 })] },
+    { key: 'hop2', name: 'S-bends', shape: sBends({ first: R, radius: 75, degrees: 60, grade: 0.12 }), billboards: 1 },
+    { key: 'drop', name: 'Drop', shape: plunge(45, { grade: 0.24, from: 0.12 }) },
+    {
+      key: 'canyon3', name: 'Peg straight', shape: straight(70, { grade: 0.12 }),
+      obstacles: [peg({ costume: c.peg, at: 0.35, line: 'left' }), peg({ costume: c.peg, at: 0.6, line: 'right' })],
+    },
+    { key: 'hop3', name: 'Second sweep', shape: sweep({ side: R, radius: 85, degrees: 130, grade: 0.09 }), features: [boost({ at: 0.08 })], billboards: 2 },
+    { key: 'brakingStraight', name: 'Run to the hairpin', shape: straight(50, { grade: 0.12 }) },
+    { key: 'hairpin', name: 'Hairpin', shape: hairpin({ side: L }), obstacles: [swipe({ costume: c.swipe, side: 'high' })] },
+    { key: 'spin', name: 'Spiral', shape: spiral({ side: R, radius: 56, turns: 1, grade: 0.15 }) },
+    {
+      key: 'lastStraight', name: 'Last straight', shape: straight(70, { grade: 0.15 }),
+      obstacles: [parked({ costume: c.parked, at: 0.2, side: L, length: 6 }), peg({ costume: c.peg, at: 0.45, line: 'right' })], features: [rumble({ from: 0.7, to: 0.95, count: 3 })],
+    },
+  ],
+  /** L35 Basalt gorge (Canyon Series): a long sweep (a boost; a canyon climbs out here on trestles), a drop, a straight of rapids (moguls), S-bends, a straight, the hairpin, a short climb, a second sweep (on trestles again), a drop and a parked piece and a peg at the run-in. */
+  'basalt-gorge': (L, R, c) => [
+    { key: 'trestle1', name: 'Sweep', shape: sweep({ side: L, radius: 85, degrees: 150, grade: 0.085 }), features: [boost({ at: 0.08 })], billboards: 2 },
+    { key: 'drop', name: 'Drop', shape: plunge(45, { grade: 0.22, from: 0.085 }) },
+    { key: 'whitewater', name: 'Mogul straight', shape: straight(120, { grade: 0.12 }), features: [moguls({ from: 0.45, to: 0.9, count: 4 })], billboards: 1 },
+    { key: 'columns', name: 'S-bends', shape: sBends({ first: R, radius: 75, degrees: 80, grade: 0.12 }), billboards: 1 },
+    { key: 'rapids', name: 'Straight', shape: straight(70, { grade: 0.13 }) },
+    { key: 'brakingStraight', name: 'Run to the hairpin', shape: straight(50, { grade: 0.12 }) },
+    { key: 'hairpin', name: 'Hairpin', shape: hairpin({ side: R }), obstacles: [swipe({ costume: c.swipe, side: 'high' })] },
+    { key: 'crest', name: 'Climb', shape: climb(14, { grade: -0.05, after: 0.13 }) },
+    { key: 'trestle2', name: 'Second sweep', shape: sweep({ side: L, radius: 80, degrees: 140, grade: 0.1 }) },
+    { key: 'drop2', name: 'Last drop', shape: plunge(50, { grade: 0.2, from: 0.1 }) },
+    {
+      key: 'lastStraight', name: 'Last straight', shape: straight(90, { grade: 0.15 }),
+      obstacles: [parked({ costume: c.parked, at: 0.2, side: L, length: 6 }), peg({ costume: c.peg, at: 0.45, line: 'right' })], features: [rumble({ from: 0.7, to: 0.95, count: 3 })],
+    },
+  ],
+  /** L36 Twin peaks (Canyon Series): a peg straight, a long sweep, S-bends, the hairpin, a spin, a drop, a second sweep (a boost) and a parked piece and a peg at the run-in. */
+  'twin-peaks': (L, R, c) => [
+    {
+      key: 'windRun', name: 'Peg straight', shape: straight(80, { grade: 0.12 }),
+      obstacles: [peg({ costume: c.peg, at: 0.3, line: 'right' }), peg({ costume: c.peg, at: 0.5, line: 'left' }), peg({ costume: c.peg, at: 0.7, line: 'center' })],
+    },
+    { key: 'sweep1', name: 'Sweep', shape: sweep({ side: L, radius: 90, degrees: 110, grade: 0.1 }), billboards: 2 },
+    { key: 'sBends', name: 'S-bends', shape: sBends({ first: R, radius: 75, degrees: 60, grade: 0.12 }), billboards: 1 },
+    { key: 'brakingStraight', name: 'Run to the hairpin', shape: straight(50, { grade: 0.12 }) },
+    { key: 'hairpin', name: 'Hairpin', shape: hairpin({ side: L }), obstacles: [swipe({ costume: c.swipe, side: 'high' })] },
+    { key: 'spin', name: 'Spiral', shape: spiral({ side: R, radius: 52, turns: 1, grade: 0.16 }) },
+    { key: 'drop', name: 'Drop', shape: plunge(45, { grade: 0.22, from: 0.16 }) },
+    { key: 'sweep2', name: 'Second sweep', shape: sweep({ side: L, radius: 85, degrees: 120, grade: 0.09 }), features: [boost({ at: 0.08 })], billboards: 1 },
+    {
+      key: 'lastStraight', name: 'Last straight', shape: straight(75, { grade: 0.15 }),
+      obstacles: [parked({ costume: c.parked, at: 0.2, side: R, length: 6 }), peg({ costume: c.peg, at: 0.45, line: 'left' })], features: [rumble({ from: 0.7, to: 0.95, count: 3 })],
+    },
+  ],
+  /** L37 Cliff ledge (Canyon Series): a long slalom straight (a canyon's ledge road high on the cliff), a sweep, a steep plunge, S-bends, the hairpin, a spin, a drop and pegs and a parked piece at the run-in. */
+  'cliff-ledge': (L, R, c) => [
+    { key: 'ledge', name: 'Slalom straight', shape: straight(130, { grade: 0.1 }), obstacles: [slalom({ costume: c.slalom, from: 0.35, to: 0.85, count: 3, loss: 0.15 })], billboards: 1 },
+    { key: 'ledgeBend', name: 'Sweep', shape: sweep({ side: R, radius: 90, degrees: 130, grade: 0.09 }), features: [boost({ at: 0.08 })], billboards: 2 },
+    { key: 'plunge', name: 'Plunge', shape: plunge(60, { grade: 0.3, from: 0.09 }) },
+    { key: 'riverBends', name: 'S-bends', shape: sBends({ first: L, radius: 75, degrees: 90, grade: 0.13 }), billboards: 1 },
+    { key: 'brakingStraight', name: 'Run to the hairpin', shape: straight(50, { grade: 0.12 }) },
+    { key: 'hairpin', name: 'Hairpin', shape: hairpin({ side: R }), obstacles: [swipe({ costume: c.swipe, side: 'high' })] },
+    { key: 'spin', name: 'Spiral', shape: spiral({ side: L, radius: 56, turns: 1, grade: 0.15 }) },
+    { key: 'drop', name: 'Drop', shape: plunge(50, { grade: 0.2, from: 0.15 }) },
+    {
+      key: 'lastStraight', name: 'Last straight', shape: straight(115, { grade: 0.15 }),
+      obstacles: [peg({ costume: c.peg, at: 0.25, line: 'left' }), parked({ costume: c.parked, at: 0.4, side: R, length: 6 }), peg({ costume: c.peg, at: 0.6, line: 'center' })], features: [rumble({ from: 0.75, to: 0.95, count: 3 })],
+    },
+  ],
+  /** L38 Free fall (Canyon Series): a long sweep (no boost: there the slowest marbles took it most), a straight to the lip, a waterfall (the free fall), a peg straight, S-bends, the hairpin, a slalom drop, a second sweep and a parked piece and a peg at the run-in. */
+  'free-fall': (L, R, c) => [
+    { key: 'highSweep', name: 'Sweep', shape: sweep({ side: R, radius: 85, degrees: 170, grade: 0.09 }), billboards: 2 },
+    { key: 'toTheLip', name: 'Straight to the lip', shape: straight(50, { grade: 0.12 }), billboards: 1 },
+    { key: 'freeFall', name: 'Waterfall', shape: waterfall(40, { grade: 0.6 }) },
+    {
+      key: 'pool', name: 'Peg straight', shape: straight(120, { grade: 0.1 }),
+      obstacles: [peg({ costume: c.peg, at: 0.4, line: 'left' }), peg({ costume: c.peg, at: 0.55, line: 'right' }), peg({ costume: c.peg, at: 0.7, line: 'center' })],
+    },
+    { key: 'sBends', name: 'S-bends', shape: sBends({ first: L, radius: 75, degrees: 90, grade: 0.12 }), billboards: 1 },
+    { key: 'brakingStraight', name: 'Run to the hairpin', shape: straight(50, { grade: 0.12 }) },
+    { key: 'hairpin', name: 'Hairpin', shape: hairpin({ side: L }), obstacles: [swipe({ costume: c.swipe, side: 'high' })] },
+    { key: 'slalomDrop', name: 'Slalom drop', shape: plunge(50, { grade: 0.2, from: 0.16 }), obstacles: [slalom({ costume: c.slalom, from: 0.4, to: 0.9, count: 3, loss: 0.15 })] },
+    { key: 'sweep2', name: 'Second sweep', shape: sweep({ side: R, radius: 80, degrees: 160, grade: 0.09 }) },
+    {
+      key: 'lastStraight', name: 'Last straight', shape: straight(110, { grade: 0.15 }),
+      obstacles: [parked({ costume: c.parked, at: 0.2, side: L, length: 6 }), peg({ costume: c.peg, at: 0.45, line: 'right' })], features: [rumble({ from: 0.7, to: 0.95, count: 3 })],
+    },
+  ],
+  /** L39 Meanders (Canyon Series): tight S-bends twice, a long sweep (a boost; a canyon climbs out here), a drop, the hairpin, S-bends again and pegs and a parked piece at the run-in. */
+  meanders: (L, R, c) => [
+    { key: 'meander1', name: 'S-bends', shape: sBends({ first: L, radius: 50, degrees: 100, grade: 0.13 }), billboards: 1 },
+    { key: 'straight1', name: 'Slalom straight', shape: straight(70, { grade: 0.12 }), obstacles: [slalom({ costume: c.slalom, from: 0.4, to: 0.85, count: 3, loss: 0.15 })] },
+    { key: 'meander2', name: 'More S-bends', shape: sBends({ first: R, radius: 50, degrees: 100, grade: 0.12 }) },
+    { key: 'highSweep', name: 'Sweep', shape: sweep({ side: L, radius: 85, degrees: 120, grade: 0.085 }), features: [boost({ at: 0.08 })], billboards: 2 },
+    { key: 'drop', name: 'Drop', shape: plunge(45, { grade: 0.22, from: 0.085 }) },
+    { key: 'brakingStraight', name: 'Run to the hairpin', shape: straight(50, { grade: 0.12 }) },
+    { key: 'hairpin', name: 'Hairpin', shape: hairpin({ side: R }), obstacles: [swipe({ costume: c.swipe, side: 'high' })] },
+    { key: 'meander3', name: 'Last S-bends', shape: sBends({ first: L, radius: 55, degrees: 100, grade: 0.12 }), billboards: 1 },
+    {
+      key: 'lastStraight', name: 'Last straight', shape: straight(90, { grade: 0.15 }),
+      obstacles: [peg({ costume: c.peg, at: 0.25, line: 'right' }), parked({ costume: c.parked, at: 0.4, side: L, length: 6 }), peg({ costume: c.peg, at: 0.6, line: 'center' })], features: [rumble({ from: 0.75, to: 0.95, count: 3 })],
+    },
+  ],
 };
 
 const LAYOUT_KINDS = Object.keys(LAYOUTS);
 // Dressing a layout's section: looks only, and the splitter's proven channel settings (`balance`) once batches say so.
-const DRESS = ['name', 'scenery', 'landmarks', 'billboards', 'billboardFrame', 'surface', 'figures', 'overhead', 'tunnel', 'bridge', 'around', 'height', 'water', 'waterCurtain'];
+const DRESS = ['name', 'scenery', 'landmarks', 'billboards', 'billboardFrame', 'surface', 'figures', 'overhead', 'tunnel', 'bridge', 'around', 'height', 'water', 'waterCurtain', 'walls'];
 
 /**
  * A layout from the library, as a track's `sections`. `mirror`: every bend the

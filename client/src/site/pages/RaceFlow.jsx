@@ -17,10 +17,10 @@ const LANDSCAPE = {
   alpine: 'Snow and ice', arctic: 'Snow and ice', city: 'City', jungle: 'Jungle', desert: 'Desert', meadow: 'Countryside',
   playfield: 'Pinball table', 'circuit-board': 'Arcade', 'blacklight-carpet': 'Arcade',
 };
-const SERIES_ORDER = ['World Tour', 'Grand Prix', 'Coasters', 'Pinball', 'Arcade', 'Classic'];
+const SERIES_ORDER = ['World Tour', 'Grand Prix', 'Coasters', 'Canyons', 'Pinball', 'Arcade', 'Classic'];
 const SERIES_PIC = {
   'World Tour': 'linear-gradient(150deg,#1D3A5C,#3DDC97)', 'Grand Prix': 'linear-gradient(150deg,#C94F3D,#2F5BEA)',
-  Coasters: 'linear-gradient(150deg,#F2A541,#3A6B8C)', Pinball: 'linear-gradient(150deg,#3A1E6B,#FF3FA8)',
+  Coasters: 'linear-gradient(150deg,#F2A541,#3A6B8C)', Canyons: 'linear-gradient(150deg,#D9773A,#5A2E1E)', Pinball: 'linear-gradient(150deg,#3A1E6B,#FF3FA8)',
   Arcade: 'linear-gradient(150deg,#0A0A12,#3FD8FF)', Classic: 'linear-gradient(150deg,#D9B77E,#1FA35B)',
 };
 

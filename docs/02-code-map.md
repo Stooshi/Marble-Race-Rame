@@ -1,6 +1,6 @@
 # 2. Code map
 
-*Last updated 14 Oct 2026 (Main 69b4a58).* Where everything is, and where to look to fix something. Paths are relative to the repository root.
+*Last updated 14 Oct 2026 (the Canyon Series).* Where everything is, and where to look to fix something. Paths are relative to the repository root.
 
 ## Find it fast
 
@@ -86,8 +86,8 @@
 - `trackKit/`: the kit itself:
   - `index.js`: `track(spec)`, plus a recipe check that throws an error naming the broken rule;
   - `parts.js`: shapes, obstacles and features, with proven numbers;
-  - `openings.js`, `layouts.js`: proven starts and section orders;
-  - `recipe.js`: the rules;
+  - `openings.js`, `layouts.js`: proven starts and section orders (L30–L34 were made for the Canyon Series);
+  - `recipe.js`: the rules. Families: `world-tour`, `grand-prix`, `coaster`, `pinball`, `arcade`, `canyon`, `test`. A **canyon** (`family: 'canyon'`, `canyon: { palette, depth, river }`, sections' `walls`) is built as a coaster whose sections run on the canyon floor unless they give a `height`;
   - `mirror.js`;
   - `lighting.js`: lighting chosen per race from its seed; looks only.
 
@@ -296,7 +296,8 @@ Defined in `src/sockets/index.js`. The client may send a JWT in `auth.token`; an
 - `iceChannel.js`, `marbles.js`, `startGate.js`, `startCamera.js`, `trackFeatures.js`, `structures.js`, `billboards.js`, `lighting.js`, `themes.js`, `winnerGlow.js`, `movers.js`, `diagnostics.js`.
 - `scenery/`: the worlds:
   - kit scenery: `kit.js`, `kitGround.js`, `kitProps.js`, `kitPlaces.js`, `kitLandmarks*.js`;
-  - series looks: `coaster.js`, `arcade.js`, `pinball.js`, `grandPrix.js`;
+  - series looks: `coaster.js` (steel A-frames, or timber trestle bents with `coaster.style: 'timber'`), `arcade.js`, `pinball.js`, `grandPrix.js`;
+  - canyons: `canyon.js` (the canyon shaped into the land around the track: floor, stepped walls in the palette's bands, plateau, river ribbon; the palettes; what grows there), `canyonSpans.js` (prayer flags, arch bridge, railway trestle and footbridge from rim to rim), `kitLandmarksCanyon.js` (the series' landmarks and the condor). `terrain.js` draws the walls finer (`detail`, at `detailFine`) and in their colours (`colorAt`);
   - hand-built worlds: `sanFrancisco.js`, `alpine.js`, `capeTown.js`;
   - checks: `clearCheck.js` (nothing inside the track, and nothing within 0.5 m of the camera) and `groundCheck.js`.
 - `costumes/`: what obstacles look like, sized to their real footprint so marbles hit what you see.

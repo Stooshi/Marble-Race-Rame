@@ -21,6 +21,7 @@ import { merge, piece, smoothstep } from './parts';
 import { stretchKinds } from './groundCheck';
 import { trackCorridor } from './clearCheck';
 import { buildWater, coasterFlight, isLifted, liftHillCut, liftHillOf, liftHillRaise } from './coaster';
+import { makeCanyon } from './canyon';
 
 const RIM_WIDTH = 0.45;  // the channel's white rim beyond the lip (iceChannel.js)
 const SKIRT = 1.6;       // the channel's outer wall reaches this far below the floor
@@ -171,11 +172,18 @@ export function buildKitGround(centerline, track, { lite = false } = {}) {
     ? Math.min(...samples.map((x, i) => (nearWater(x.pos) ? x.pos.y - flight[i] : Infinity))) - 2
     : null;
   const lift = flight ? liftHillOf(centerline, flight, kit.start?.type) : null;
+  const xs = samples.map((s) => s.pos.x);
+  const zs = samples.map((s) => s.pos.z);
+  const margin = landRadius;
+  const landBounds = { minX: Math.min(...xs) - margin, maxX: Math.max(...xs) + margin, minZ: Math.min(...zs) - margin, maxZ: Math.max(...zs) + margin };
+  // A canyon (family 'canyon'): the land shaped into its floor, walls and plateau around the track (./canyon.js).
+  const canyon = kit.canyon ? makeCanyon(centerline, channel, kit, { flight, liftAt: hug.street.liftAt, bounds: landBounds, landRadius, seaLevel: biome.sea }) : null;
   const field = {
     ...base,
     lake,
     heightAt(x, z) {
       let h = base.heightAt(x, z);
+      if (canyon) h = canyon.heightAt(x, z, h);
       if (lake) {
         const d = Math.hypot(x - lake.x, z - lake.z) - lake.radius * lake.shape(Math.atan2(z - lake.z, x - lake.x));
         if (d < LAKE_SHORE) h += (Math.min(h, lake.y - 1.2) - h) * (1 - smoothstep(0, LAKE_SHORE, d));
@@ -193,16 +201,15 @@ export function buildKitGround(centerline, track, { lite = false } = {}) {
       return h + (Math.min(h, ravineFloor) - h) * (1 - smoothstep(14, 34, d));
     },
   };
-  const xs = samples.map((s) => s.pos.x);
-  const zs = samples.map((s) => s.pos.z);
-  const margin = landRadius;
   const corridor = trackCorridor(centerline, channel);
-  const terrain = buildTerrain(field, { minX: Math.min(...xs) - margin, maxX: Math.max(...xs) + margin, minZ: Math.min(...zs) - margin, maxZ: Math.max(...zs) + margin }, {
+  const terrain = buildTerrain(field, landBounds, {
     cells: lite ? 54 : 140, colors: biome.terrain, tiles: lite ? 1 : 2, // few tiles: few draw calls
     below: icePoints(centerline, channel), // (the land never rises through the ice, however a grid square falls on a bend)
     // (Phones: a slightly coarser grid, refined only where the land rises over the ice, at about 5 m:
     // no more triangles than before the refining.)
     fine: lite ? 5 : 2.5, neighbours: !lite,
+    ...(canyon && { detailFine: lite ? 6.5 : 3.4 }), // (a canyon's walls, drawn finer all along, a little coarser than over the ice: within the drawing budget)
+    ...(canyon && { detail: canyon.detail, colorAt: canyon.colourAt }), // (a canyon's walls drawn finer, in their bands of colour)
   });
   const group = new Group();
   group.name = 'kit-ground';
@@ -217,7 +224,7 @@ export function buildKitGround(centerline, track, { lite = false } = {}) {
   group.add(land);
 
   // The banks: from the top of each rim out to the land, every sample, both sides.
-  const bankColour = new Color(biome.bank);
+  const bankColour = new Color(canyon?.palette.bank ?? biome.bank);
   const fillColour = new Color(biome.fill);
   const pos = [];
   const col = [];
@@ -303,6 +310,12 @@ export function buildKitGround(centerline, track, { lite = false } = {}) {
       quad(a.shoulder, b.shoulder, b.out, a.out, bankColour);
     }
   }
+  // A canyon's river, drawn with the banks (the same material: one draw call less).
+  const river = canyon?.riverTriangles({ lite, corridor });
+  if (river) {
+    pos.push(...river.pos);
+    col.push(...river.col);
+  }
   const banks = new BufferGeometry();
   banks.setAttribute('position', new Float32BufferAttribute(pos, 3));
   banks.setAttribute('color', new Float32BufferAttribute(col, 3));
@@ -361,5 +374,5 @@ export function buildKitGround(centerline, track, { lite = false } = {}) {
   }
 
   const bounds = { minX: Math.min(...xs) - margin, maxX: Math.max(...xs) + margin, minZ: Math.min(...zs) - margin, maxZ: Math.max(...zs) + margin, floorY: biome.sea - 6 };
-  return { group, field, groundAt: (x, z) => terrain.groundAt(x, z), hug, biome, rows, over, onBridge, lake, flight, waterY, floorY: biome.sea - 6, bounds };
+  return { group, field, groundAt: (x, z) => terrain.groundAt(x, z), hug, biome, rows, over, onBridge, lake, flight, waterY, floorY: biome.sea - 6, bounds, canyon };
 }

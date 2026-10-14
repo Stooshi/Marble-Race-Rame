@@ -19,6 +19,9 @@ import { buildGrandPrix } from './grandPrix';
 import { buildCoaster } from './coaster';
 import { buildPinball } from './pinball';
 import { buildArcade } from './arcade';
+import { condor } from './kitLandmarksCanyon';
+import { canyonDressing } from './canyon';
+import { SPAN_KINDS, buildCanyonSpans } from './canyonSpans';
 import { buildBattlements, buildCentrepieces, buildFunicular, buildHouses, buildLake, buildRaceNetting, tagsNear, turnAngle } from './kitPlaces';
 import { hashString, mergeByArea, piece, seededRandom, smoothstep } from './parts';
 import { COSTUMES, COSTUME_COLORS } from '../costumes';
@@ -33,7 +36,7 @@ const LIFT_HEIGHT = 18;  // metres above the track where a lift crosses it: well
 const CABIN_SPEED = 4;   // metres per second along the cable
 const DRESSING_AREA = 500; // metres: trees and rocks are merged in squares this size (one draw call each)
 // What may be merged into the still scenery (nothing that moves, nothing see-through).
-const STILL = new Set(['landmarks', 'lift towers', 'centrepiece', 'netting poles', 'funicular rails', 'houses', 'battlements', 'grandstands']);
+const STILL = new Set(['landmarks', 'lift towers', 'centrepiece', 'netting poles', 'funicular rails', 'houses', 'battlements', 'grandstands', 'canyon spans']);
 
 export function buildKitScenery(centerline, track, theme, { lite = false } = {}) {
   const kit = track.physics.kit;
@@ -149,6 +152,15 @@ export function buildKitScenery(centerline, track, theme, { lite = false } = {})
         continue;
       }
       const sign = lm.side === 'right' ? -1 : 1;
+      // A canyon's: up on its rim (`rim`: `distance` metres back from the edge), or out on its river (`river`).
+      const cy = ground.canyon;
+      if (cy && (lm.rim || (lm.river && cy.riverSign))) {
+        const k = lm.river ? cy.riverSign : sign;
+        const d = lm.rim ? cy.rimOut(i, k) + (lm.distance ?? 3) : cy.river.centre;
+        const at = s.pos.clone().addScaledVector(side, k * d);
+        placeLandmark(lm.name, at, yawTo(side.clone().multiplyScalar(-k)), lm.river ? cy.waterAt(i) - 0.15 : null, lm.rim ? side.clone().multiplyScalar(k) : null);
+        continue;
+      }
       const edge = rows[i]?.[sign]?.out ?? s.pos;
       const at = edge.clone().addScaledVector(side, sign * (lm.distance ?? 22));
       placeLandmark(lm.name, at, yawTo(side.clone().multiplyScalar(-sign)), null, side.clone().multiplyScalar(sign));
@@ -230,6 +242,19 @@ export function buildKitScenery(centerline, track, theme, { lite = false } = {})
         birds.push({ mesh, centre: s.pos.clone().add(new Vector3(0, LIFT_HEIGHT + 22, 0)), radius: 38 });
         continue;
       }
+      if (kind === 'condor') {
+        // Two condors circling over the section's middle, above a canyon's rim, a half-turn apart.
+        const { s, i } = frame((sec.from + sec.to) / 2);
+        const high = Math.max(s.pos.y + LIFT_HEIGHT + 22, ground.canyon ? ground.canyon.rimAt(i) + 14 : -Infinity);
+        for (let k = 0; k < 2; k += 1) {
+          const mesh = new Mesh(condor(), new MeshLambertMaterial({ vertexColors: true, flatShading: true }));
+          mesh.name = 'condor';
+          group.add(mesh);
+          birds.push({ mesh, centre: new Vector3(s.pos.x, high + k * 6, s.pos.z), radius: 46 - k * 12, phase: k * Math.PI });
+        }
+        continue;
+      }
+      if (SPAN_KINDS.includes(kind)) continue; // (spanning a canyon from rim to rim: below)
       const { s, along, side } = frame((sec.from + sec.to) / 2);
       // Crossing the track at an angle, high above it, from a tower well out on each side
       // (turned to another angle when a tower would stand on or beside another stretch of track).
@@ -288,6 +313,13 @@ export function buildKitScenery(centerline, track, theme, { lite = false } = {})
     group.add(cables);
   }
 
+  // ── What spans a canyon from rim to rim: prayer flags, an arch bridge, a railway trestle, a footbridge ──
+  if (kit.sections.some((x) => (x.overhead ?? []).some((k) => SPAN_KINDS.includes(k)))) {
+    const spans = buildCanyonSpans(centerline, kit, { canyon: ground.canyon, groundAt, corridor, lite });
+    group.add(spans.group);
+    solids.push(...spans.spots);
+  }
+
   // ── Places a section's scenery names: netting, houses, a funicular, a lake, a splitter's hut ──
   const centrepieces = buildCentrepieces(centerline, channel, kit, { lite, groundAt, corridor });
   group.add(centrepieces.group);
@@ -316,7 +348,7 @@ export function buildKitScenery(centerline, track, theme, { lite = false } = {})
   // ── Set dressing for the landscape (instanced, drawn in tiles) ─────────
   // The landscape's own, plus what a section's scenery asks for (snow-rimed rocks, birches);
   // a bare stretch (a wind-swept summit) keeps only a few rocks.
-  const baseKinds = dressingFor(biome);
+  const baseKinds = ground.canyon ? canyonDressing(kit.canyon.palette) : dressingFor(biome);
   const kinds = [...baseKinds, [(l) => snowRock(l), 0], [(l) => winterBirch(l), 0], [(l) => aspen(l), 0], [() => palm(true), 0], [() => jacaranda(), 0], [() => acaciaTree(), 0]];
   const ROCK = baseKinds.length;
   const BIRCH = baseKinds.length + 1;
@@ -333,7 +365,7 @@ export function buildKitScenery(centerline, track, theme, { lite = false } = {})
   const maxZ = Math.max(...zs);
   const spacing = lite ? 12 : 7;
   const arcadeBoard = biome === 'circuit-board' || biome === 'blacklight-carpet';
-  const maxItems = lite ? (biome === 'meadow' ? 150 : kit.grandPrix || arcadeBoard ? 220 : 300) : 900; // (fewer of the meadow's broadleaf trees on a phone, and fewer beside a Grand Prix's grandstands or on an arcade board, where the compact layouts show most of the world at once)
+  const maxItems = kit.canyon ? (lite ? 160 : 450) : lite ? (biome === 'meadow' ? 150 : kit.grandPrix || arcadeBoard ? 220 : 300) : 900; // (fewer of the meadow's broadleaf trees on a phone, and fewer beside a Grand Prix's grandstands or on an arcade board, where the compact layouts show most of the world at once)
   const spots = [];
   for (let x = minX - 260; x <= maxX + 260; x += spacing) {
     for (let z = minZ - 260; z <= maxZ + 260; z += spacing) spots.push([x + (rand() - 0.5) * spacing * 0.9, z + (rand() - 0.5) * spacing * 0.9, rand(), rand()]);
@@ -347,6 +379,7 @@ export function buildKitScenery(centerline, track, theme, { lite = false } = {})
     if (c < 9 || c > 250) continue; // (beyond the banks, not out where the land falls away)
     if (roll > 0.8 - 0.55 * smoothstep(30, 240, c)) continue; // denser near the track
     if (solids.some((o) => (o.x - x) ** 2 + (o.z - z) ** 2 < o.r * o.r)) continue;
+    if (ground.canyon && !ground.canyon.dressable(x, z)) continue; // (a canyon: nothing on its walls or in its river)
     const tags = tagsAt(x, z);
     let acc = 0;
     let k = baseKinds.findIndex(([, share]) => (acc += share) >= pick);
@@ -404,7 +437,7 @@ export function buildKitScenery(centerline, track, theme, { lite = false } = {})
     lake?.update(t);
     for (const m of turning) m.mesh.quaternion.copy(m.base).multiply(cabinQ.setFromAxisAngle(m.axis, turnAngle(m.moving, sec)));
     for (const b of birds) {
-      const a = sec * 0.16; // once round every 40 s
+      const a = sec * 0.16 + (b.phase ?? 0); // once round every 40 s
       b.mesh.position.set(b.centre.x + Math.cos(a) * b.radius, b.centre.y + Math.sin(a * 2) * 2, b.centre.z + Math.sin(a) * b.radius);
       b.mesh.rotation.set(0, -a, 0.25); // banking into the circle
     }
@@ -441,7 +474,8 @@ export function buildKitScenery(centerline, track, theme, { lite = false } = {})
     group.userData.stillParts = stillScenery.filter((o) => o.name !== 'landmarks').map((o) => ({ name: o.name, box: new Box3().setFromObject(o) }));
     for (const o of stillScenery) o.removeFromParent();
     const mat = new MeshLambertMaterial({ vertexColors: true, flatShading: true });
-    for (const geometry of mergeByArea(pieces, 400)) group.add(Object.assign(new Mesh(geometry, mat), { name: 'scenery: still' }));
+    // (A canyon on a phone: bigger squares, fewer draw calls; its walls cost more of the budget.)
+    for (const geometry of mergeByArea(pieces, kit.canyon && lite ? 900 : 400)) group.add(Object.assign(new Mesh(geometry, mat), { name: 'scenery: still' }));
   }
 
   group.userData = { ...group.userData, cameraKeepOut: [...cameraKeepOut, ...centrepieces.keepOut], stillParts: [...landmarkBoxes, ...(group.userData.stillParts ?? [])], update, field, groundAt, biome, ground, floorY: ground.floorY, ...(coaster && { liftHill: coaster.liftHill, station: coaster.station }) };
