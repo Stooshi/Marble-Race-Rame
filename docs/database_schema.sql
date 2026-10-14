@@ -475,6 +475,8 @@ ALTER TABLE marbles ADD COLUMN IF NOT EXISTS on_sale boolean NOT NULL DEFAULT tr
 ALTER TABLE users ADD COLUMN IF NOT EXISTS is_guest boolean NOT NULL DEFAULT false;
 -- users.marketing_opt_in: agreed at sign-up to emails about new tracks and limited marbles.
 ALTER TABLE users ADD COLUMN IF NOT EXISTS marketing_opt_in boolean NOT NULL DEFAULT false;
+-- A player's own settings that follow them to any device, e.g. { "sound": { "music": 0.6, "effects": 0.8, "muted": false } }.
+ALTER TABLE users ADD COLUMN IF NOT EXISTS settings jsonb NOT NULL DEFAULT '{}'::jsonb;
 
 -- How many copies of each item have been bought and given away so far. The
 -- row is locked while a copy is handed out, so numbers are never shared.

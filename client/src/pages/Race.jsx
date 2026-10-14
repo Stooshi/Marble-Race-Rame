@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
 import { api } from '../api/client';
 import { useAuth } from '../context/AuthContext';
@@ -14,6 +14,7 @@ import NextRace from '../components/NextRace';
 import { Empty, ErrorMessage, Spinner } from '../components/Status';
 import { formatTime } from '../utils/format';
 import StartLights from '../components/StartLights';
+import { play as playSound } from '../sound/engine';
 
 const obstacleName = (o) => o?.replace(/_/g, ' ');
 
@@ -56,6 +57,18 @@ export default function Race() {
   useEffect(() => {
     if (stream.status === 'countdown') reload();
   }, [stream.status, reload]);
+
+  // The 2D view's start (the 3D view times its own to the gate): the pack leaving, when the race
+  // goes from its countdown to running (not when the page opens mid-race).
+  const sawCountdown = useRef(false);
+  useEffect(() => {
+    if (stream.status === 'countdown') sawCountdown.current = true;
+    const twoD = view === '2d' || (view === null && !stream.meta?.track?.physics);
+    if (stream.status === 'running' && sawCountdown.current && twoD) {
+      sawCountdown.current = false;
+      playSound('launch');
+    }
+  }, [stream.status]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Tracks on the new physics (the gate, splitter and catch area live in 3D) open in 3D; 2D stays an option.
   const [view, setView] = useState(null); // null = the track's default

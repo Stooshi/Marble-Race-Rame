@@ -26,6 +26,32 @@ router.get('/me', requireAuth, async (req, res) => {
   res.json({ user: rows[0], stats: await getStats(req.user.id) });
 });
 
+/**
+ * PUT /api/users/me/settings { sound: { music, effects, muted } } — the player's own settings
+ * (kept with the account so they follow the player to another device). Merged into what is saved.
+ */
+router.put('/me/settings', requireAuth, async (req, res) => {
+  const sound = req.body?.sound;
+  if (!sound || typeof sound !== 'object') throw badRequest('Provide sound: { music, effects, muted }');
+  const level = (v, name) => {
+    if (v === undefined) return undefined;
+    if (typeof v !== 'number' || !(v >= 0 && v <= 1)) throw badRequest(`sound.${name} must be a number from 0 to 1`);
+    return Math.round(v * 100) / 100;
+  };
+  const clean = {};
+  for (const k of ['music', 'effects']) { const v = level(sound[k], k); if (v !== undefined) clean[k] = v; }
+  if (sound.muted !== undefined) {
+    if (typeof sound.muted !== 'boolean') throw badRequest('sound.muted must be true or false');
+    clean.muted = sound.muted;
+  }
+  const { rows } = await db.query(
+    `UPDATE users SET settings = jsonb_set(settings, '{sound}', COALESCE(settings->'sound', '{}'::jsonb) || $2::jsonb)
+      WHERE id = $1 RETURNING settings`,
+    [req.user.id, JSON.stringify(clean)],
+  );
+  res.json({ settings: rows[0].settings });
+});
+
 /** PATCH /api/users/me — update profile; changing password requires current_password */
 router.patch('/me', requireAuth, async (req, res) => {
   const body = validate(req.body, {

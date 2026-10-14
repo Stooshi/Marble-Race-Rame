@@ -119,5 +119,6 @@ export const api = {
   roomStart: (code) => request(`/rooms/${encodeURIComponent(code)}/start`, { method: 'POST' }),
   roomClose: (code) => request(`/rooms/${encodeURIComponent(code)}/close`, { method: 'POST' }),
   setName: (name) => request('/users/me', { method: 'PATCH', body: { display_name: name } }),
+  saveSettings: (settings) => request('/users/me/settings', { method: 'PUT', body: settings }),
   physicsPreview: (track, seed, level) => request(`/physics/preview?track=${encodeURIComponent(track)}&seed=${seed}&level=${level}`),
 };

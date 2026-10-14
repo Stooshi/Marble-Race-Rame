@@ -21,6 +21,7 @@ import Race from './pages/Race';
 import Results from './pages/Results';
 import { Spinner } from './components/Status';
 import { importOrReload } from './utils/staleCode';
+import { useSoundUnlock } from './sound/settings';
 
 // 3D preview (beta) is loaded on demand so the rest of the site stays light.
 // (If a file is gone after an update, the page reloads once for the new version.)
@@ -34,6 +35,8 @@ const PhysicsPreview = lazy(() => importOrReload(() => import('./pages/PhysicsPr
 export default function App() {
   const { pathname } = useLocation();
   const { isAuthenticated } = useAuth();
+  // Sound starts with the first tap (not on the landing page: music only once you're in the game).
+  useSoundUnlock(pathname === '/' && !isAuthenticated);
   return (
     <>
       <SiteHeader />

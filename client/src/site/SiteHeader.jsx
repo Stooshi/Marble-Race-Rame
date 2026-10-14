@@ -2,6 +2,7 @@ import { Link, NavLink, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { formatNumber } from '../utils/format';
 import Logo from './Logo';
+import SoundControl from './SoundControl';
 
 /** Which header a page wears: the landing page's, the race flow's slim one, checkout's, or the game's. */
 export function headerKind(pathname, isAuthenticated) {
@@ -65,6 +66,7 @@ export default function SiteHeader() {
             <NavLink to="/shop">Shop</NavLink>
           </nav>
         ) : <span className="ms-grow" />}
+        <SoundControl />
         {isAuthenticated ? (
           <>
             <UserChips user={user} />

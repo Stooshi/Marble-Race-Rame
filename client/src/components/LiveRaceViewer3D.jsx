@@ -11,6 +11,9 @@ import { BUFFER_MS } from '../hooks/useRaceStream';
 import FinishShow, { useFinishShow } from './FinishShow';
 import SkipToResults from './SkipToResults';
 import FrameMeter, { useFrameMeter } from './FrameMeter';
+import { play as playSound } from '../sound/engine';
+
+const WHOOSH_GAP_MS = 3500; // an overtaking whoosh at most this often
 
 /**
  * A live race in 3D (tracks on the new physics, e.g. Bobsleigh Run): the
@@ -92,6 +95,8 @@ export default function LiveRaceViewer3D({
     if (!built) return undefined;
     let raf;
     let lastNow = performance.now();
+    let lastT = null;
+    const grandPrix = Boolean(meta?.track?.physics?.kit?.grandPrix);
     const tick = (now) => {
       const dt = (now - lastNow) / 1000;
       lastNow = now;
@@ -99,6 +104,13 @@ export default function LiveRaceViewer3D({
       // (Running BUFFER_MS behind, as the live race itself does, so GO flows straight on into the race.)
       if (!f && firstRef.current) f = { ...firstRef.current, t: Math.max(-countdownMs, Math.min(0, Date.now() - BUFFER_MS - (startRef.current ?? Date.now()))) };
       const scene = sceneRef.current;
+      // The gates open (GO, as drawn): the pack leaving the gate, and on a Grand Prix the crowd.
+      // (Or within its first 1.5 s if the 3D world was still being built at GO.)
+      if (f && f.t >= 0 && ((lastT !== null && lastT < 0) || (lastT === null && f.t < 1500))) {
+        playSound('launch');
+        if (grandPrix) playSound('crowd');
+      }
+      if (f) lastT = f.t;
       if (f && scene) {
         const who = followRef.current;
         try {
@@ -116,6 +128,19 @@ export default function LiveRaceViewer3D({
 
   const entries = meta?.entries ?? [];
   const standings = frame?.s ?? meta?.firstFrame?.s ?? [];
+
+  // Your own marble overtakes or is overtaken while the camera follows it: a whoosh (now and then).
+  const rankRef = useRef(null);
+  const whooshAt = useRef(0);
+  const mine = typeof follow === 'number' && highlight.includes(follow) ? follow : null;
+  useEffect(() => {
+    if (mine === null || camera !== 'follow' || show.phase !== 'racing' || !frame?.s || frame.t < 2000 || frame.p?.[mine] >= 1) { rankRef.current = null; return; }
+    const rank = frame.s.indexOf(mine);
+    if (rankRef.current !== null && rank !== rankRef.current && Date.now() - whooshAt.current > WHOOSH_GAP_MS) {
+      if (playSound('whoosh')) whooshAt.current = Date.now();
+    }
+    rankRef.current = rank;
+  }, [frame, mine, camera, show.phase]);
   const followIndex = followedNow(follow, standings);
   const insetIndex = inset === null ? undefined : followedNow(inset, standings);
   const speed = show.phase === 'racing' && frame?.v && followIndex !== undefined && frame.p[followIndex] < 1 ? frame.v[followIndex] : null;
