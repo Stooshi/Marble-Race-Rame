@@ -29,6 +29,8 @@ const { renderReport } = require('../src/report/html');
 
 const ROOT = path.resolve(__dirname, '..');
 const CLIENT = path.join(ROOT, 'client');
+const CAMERA_CLEAR_M = 1.2; // (clearCheck.js CAMERA_CLEAR: reported as close)
+const CAMERA_CUT_M = 0.5;   // (clearCheck.js CAMERA_CUT: a failure)
 const BUDGETS = { computer: { calls: 60, triangles: 150_000 }, phone: { calls: 35, triangles: 60_000 } };
 
 const args = process.argv.slice(2);
@@ -189,6 +191,28 @@ function viewLines(view, kit) {
   lines.push({ part: 'Camera', what: 'On its marble\'s level: 0 to 20 m above the track it is over (from 5 s)', value: `${sum('offLevel')} of ${frames} frames off; highest ${Math.max(...cams.map((c) => c.highest)).toFixed(1)} m${show(first('offLevel'))}`, target: 'none', pass: sum('offLevel') === 0 });
   lines.push({ part: 'Camera', what: 'No jumps (at most 4 m a frame)', value: `${sum('jumps')} jumps; biggest move ${Math.max(...cams.map((c) => c.worstJump)).toFixed(1)} m${show(first('jumps'))}`, target: 'none', pass: sum('jumps') === 0 });
   lines.push({ part: 'Camera', what: 'Its marble never drawn inside the ice', value: `${sum('sunk')} frames; deepest ${Math.min(...cams.map((c) => c.worstSink)).toFixed(2)} m${show(first('sunk'))}`, target: 'none', pass: sum('sunk') === 0 });
+  // The clear track (client/src/three/scenery/clearCheck.js): no scenery inside the track, none in front of the camera.
+  if (view.clear) {
+    for (const screen of ['computer', 'phone']) {
+      const c = view.clear[screen];
+      lines.push({
+        part: 'Clear track',
+        what: `No scenery inside the track (land, banks, props, landmarks), ${screen}`,
+        value: c.stretches.length ? c.stretches.map((r) => `${r.metres} m at ${Math.round(r.from * 100)}% (${r.by.join(', ')}, up to ${r.worst} m over the ice)`).join('; ') : 'none',
+        target: 'none',
+        pass: !c.stretches.length,
+      });
+    }
+    const cc = view.clear.camera;
+    const looks = cc.reduce((n, c) => n + c.looks, 0);
+    const near = cc.flatMap((c) => c.near.map((x) => ({ ...x, race: c.race, screen: c.screen })));
+    const inside = cc.flatMap((c) => c.inside.map((x) => ({ ...x, race: c.race, screen: c.screen })));
+    const cut = near.filter((x) => x.metres < CAMERA_CUT_M);
+    const close = near.filter((x) => x.metres >= CAMERA_CUT_M);
+    lines.push({ part: 'Clear track', what: `Nothing drawn within ${CAMERA_CUT_M} m of the follow camera (its near plane would cut patches across the view)`, value: `${cut.length} of ${looks} checks${show(cut[0])}`, target: 'none', pass: cut.length === 0 });
+    lines.push({ part: 'Clear track', what: `Scenery passing ${CAMERA_CUT_M}–${CAMERA_CLEAR_M} m from the follow camera (close, still drawn whole)`, value: `${close.length} of ${looks} checks${show(close[0])}`, target: 'shown', pass: null });
+    lines.push({ part: 'Clear track', what: 'The follow camera never inside the land', value: `${inside.length} of ${looks} checks${show(inside[0])}`, target: 'none', pass: inside.length === 0 });
+  }
   return lines;
 }
 

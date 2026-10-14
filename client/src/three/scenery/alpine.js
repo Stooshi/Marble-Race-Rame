@@ -15,6 +15,7 @@ import {
   Color, ConeGeometry, CylinderGeometry, Float32BufferAttribute, Group, Matrix4, Mesh, MeshLambertMaterial, Quaternion, Vector3,
 } from 'three';
 import { beam, box, hashString, merge, piece, seededRandom, smoothstep, triangles } from './parts';
+import { trackCorridor } from './clearCheck';
 import { buildTerrain, makeHeightField } from './terrain';
 import { channelGround, tiledInstances } from './channelGround';
 
@@ -265,6 +266,7 @@ export function buildAlpine(centerline, track, theme, { lite = false } = {}) {
   const supported = []; // where (share of the track) a trestle stands
   if (hug) {
     const trestle = [];
+    const corridor = trackCorridor(centerline, hug.channel);
     const step = hug.channel.arc / segments;
     for (let i = 0; i <= segments; i += Math.max(1, Math.round((lite ? 12 : 7) / step))) { // (phones: further apart)
       const s = samples[i];
@@ -276,17 +278,22 @@ export function buildAlpine(centerline, track, theme, { lite = false } = {}) {
       for (const k of [-1, 0, 1]) low = Math.min(low, field.heightAt(s.pos.x + side.x * half * k, s.pos.z + side.z * half * k));
       if (bottom - low < 4) continue;
       supported.push(i / segments);
+      // (Not where another stretch runs by below: the follow camera flies along it there.)
+      const own = (j) => Math.abs(j - i) * step < 60;
+      const nearOther = (p) => corridor.inside(p.x, p.y, p.z, { margin: 3, skip: own, above: 8 });
       for (const k of [-1, 1]) {
         const top = s.pos.clone().addScaledVector(side, k * (half - 0.6));
         top.y = bottom;
         const foot = top.clone().addScaledVector(side, k * 1.2);
         foot.y = groundAt(foot.x, foot.z) - 0.5;
+        if ([0, 0.5, 1].some((f) => nearOther(foot.clone().lerp(top, f)))) continue;
         trestle.push(beam(foot, top, 0.45, WOOD));
       }
       const a = s.pos.clone().addScaledVector(side, -(half - 0.6));
       const b = s.pos.clone().addScaledVector(side, half - 0.6);
       for (const y of lite ? [bottom - 0.3] : [bottom - 0.3, bottom - (bottom - low) * 0.5]) {
         a.y = b.y = y;
+        if ([0, 0.25, 0.5, 0.75, 1].some((f) => nearOther(a.clone().lerp(b, f)))) continue;
         trestle.push(beam(a.clone(), b.clone(), 0.3, WOOD_DARK));
       }
     }

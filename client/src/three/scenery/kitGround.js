@@ -19,6 +19,7 @@ import { channelGround } from './channelGround';
 import { buildTerrain, makeHeightField } from './terrain';
 import { merge, piece, smoothstep } from './parts';
 import { stretchKinds } from './groundCheck';
+import { trackCorridor } from './clearCheck';
 import { buildWater, coasterFlight, isLifted, liftHillCut, liftHillOf, liftHillRaise } from './coaster';
 
 const RIM_WIDTH = 0.45;  // the channel's white rim beyond the lip (iceChannel.js)
@@ -53,6 +54,35 @@ export function lakeOf(centerline, kit) {
   const centre = end.pos.clone().addScaledVector(along, 30 + 40 + LAKE_RADIUS);
   const shape = (a) => 1 + 0.12 * Math.sin(3 * a + 1) + 0.07 * Math.sin(5 * a + 2.3);
   return { x: centre.x, z: centre.z, y: end.pos.y - 6, radius: LAKE_RADIUS, shape, along, kind };
+}
+
+/**
+ * Points on the channel's ice, every sample and across the whole U (a
+ * splitter's two Us), a little below the surface: the drawn land must stay
+ * under them (buildTerrain's `below`).
+ */
+const ICE_MARGIN = 0.15;
+export function icePoints(centerline, channel) {
+  const { samples, segments } = centerline;
+  const step = channel.arc / segments;
+  const out = [];
+  for (let i = 0; i <= segments; i += 1) {
+    const s = samples[i];
+    const sArc = i * step;
+    const side = new Vector3(s.side.x, 0, s.side.z).normalize();
+    const fork = forkAt(channel, sArc);
+    const us = fork
+      ? [-1, 1].map((b) => ({ c: s.pos.clone().addScaledVector(side, b * forkOffset(fork, sArc)), R: forkRadius(fork, channel.radius, sArc), lip: channel.maxAngle }))
+      : [{ c: s.pos, R: channelRadiusAt(channel, sArc), lip: channelLipAt(channel, sArc) }];
+    for (const u of us) {
+      for (let k = -4; k <= 4; k += 1) {
+        const th = (k / 4) * u.lip;
+        const p = u.c.clone().addScaledVector(side, u.R * Math.sin(th));
+        out.push({ x: p.x, z: p.z, y: u.c.y + u.R * (1 - Math.cos(th)) - ICE_MARGIN });
+      }
+    }
+  }
+  return out;
 }
 
 /** Ground colours by landscape (a track file's `biome`, or guessed from its surface). */
@@ -166,8 +196,13 @@ export function buildKitGround(centerline, track, { lite = false } = {}) {
   const xs = samples.map((s) => s.pos.x);
   const zs = samples.map((s) => s.pos.z);
   const margin = landRadius;
+  const corridor = trackCorridor(centerline, channel);
   const terrain = buildTerrain(field, { minX: Math.min(...xs) - margin, maxX: Math.max(...xs) + margin, minZ: Math.min(...zs) - margin, maxZ: Math.max(...zs) + margin }, {
-    cells: lite ? 60 : 140, colors: biome.terrain, tiles: lite ? 1 : 2, // few tiles: few draw calls
+    cells: lite ? 54 : 140, colors: biome.terrain, tiles: lite ? 1 : 2, // few tiles: few draw calls
+    below: icePoints(centerline, channel), // (the land never rises through the ice, however a grid square falls on a bend)
+    // (Phones: a slightly coarser grid, refined only where the land rises over the ice, at about 5 m:
+    // no more triangles than before the refining.)
+    fine: lite ? 5 : 2.5, neighbours: !lite,
   });
   const group = new Group();
   group.name = 'kit-ground';
@@ -203,6 +238,17 @@ export function buildKitGround(centerline, track, { lite = false } = {}) {
         const p = at(d);
         if (Math.abs(terrain.groundAt(p.x, p.z) - rimY) <= d * BANK_SLOPE) { w = d; break; }
       }
+      // Never out over another stretch of the track (where it folds back close by): the bank stops short of it.
+      const own = (j) => Math.abs(j - i) * step < 15; // (its own channel, right beside it; a tight spiral's next turn is not)
+      while (w > 0.5) {
+        const o = at(SHOULDER + w);
+        const reaches = [0.35, 0.7, 1].some((f) => {
+          const q = at(SHOULDER + w * f);
+          return corridor.inside(q.x, rimY + (terrain.groundAt(o.x, o.z) - rimY) * f, q.z, { skip: own });
+        });
+        if (!reaches) break;
+        w -= 1;
+      }
       const inner = at(0);
       inner.y = rimY;
       const shoulder = at(SHOULDER);
@@ -215,10 +261,18 @@ export function buildKitGround(centerline, track, { lite = false } = {}) {
     }
     rows.push(row);
   }
-  const quad = (a, b, c, d, colour) => {
-    for (const p of [a, b, c, a, c, d]) { pos.push(p.x, p.y, p.z); col.push(colour.r, colour.g, colour.b); }
+  // A bank triangle that would reach into another stretch's channel is left out (a tight spiral's
+  // next turn, a hairpin's other leg): that ground is the other stretch's own.
+  let rowAt = 0;
+  // (Its own stretch counts too, narrowed to inside the rims: a bank folding back over its own channel on a very tight turn.)
+  const rowMargin = (j) => (Math.abs(j - rowAt) * step < 15 ? -0.5 : 0);
+  const tri = (a, b, c, colour) => {
+    if (corridor.hitsTriangle(a, b, c, { marginFor: rowMargin })) return;
+    for (const p of [a, b, c]) { pos.push(p.x, p.y, p.z); col.push(colour.r, colour.g, colour.b); }
   };
+  const quad = (a, b, c, d, colour) => { tri(a, b, c, colour); tri(a, c, d, colour); };
   for (let i = 0; i < segments; i += 1) {
+    rowAt = i;
     for (const sign of [1, -1]) {
       const r0 = rows[i][sign];
       const r1 = rows[i + 1][sign];

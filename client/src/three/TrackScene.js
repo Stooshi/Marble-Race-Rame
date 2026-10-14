@@ -21,6 +21,7 @@ import { countdownPose, handover, launchHandover, launchPose, startLineShot } fr
 import { buildTrackFeatures } from './trackFeatures';
 import { buildStructures } from './structures';
 import { roofBlocks, stationRoof } from './scenery/coaster';
+import { keepOutBlocks } from './scenery/clearCheck';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { buildBillboards } from './billboards';
 import { fetchBillboards } from '../api/billboards';
@@ -940,6 +941,9 @@ export class TrackScene {
     const st = this.scenery?.userData?.station;
     if (st && !this.stationRoof) this.stationRoof = stationRoof(st);
     const roof = st ? this.stationRoof : null;
+    // Scenery standing right by the track (a splitter's centrepiece, the start's landmark): never
+    // inside it, nor seen through it (clearCheck.js checks the camera keeps CAMERA_CLEAR from it).
+    const keepOut = this.scenery?.userData?.cameraKeepOut ?? null;
     // Where the camera would be k of the way out from its marble (1: where it wants to be).
     const place = (k) => {
       camera.lerpVectors(at, start, k);
@@ -948,7 +952,7 @@ export class TrackScene {
       camera.y = Math.max(camera.y, floor + 1.5);
       if (camera.y > ceiling - 1) camera.y = Math.max(at.y + 1.2, ceiling - 1);
       if (roof && at.y < roof.bottom && roofBlocks(roof, camera, at)) camera.y = Math.max(at.y + 1.2, Math.min(camera.y, roof.bottom - 0.6));
-      return !this.channelBlocks(camera, at) && !(roof && roofBlocks(roof, camera, at));
+      return !this.channelBlocks(camera, at) && !(roof && roofBlocks(roof, camera, at)) && !keepOutBlocks(keepOut, camera, at);
     };
     const most = Math.max(0.25, Math.min(1, reach));
     if (place(most)) return most;

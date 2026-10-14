@@ -21,7 +21,8 @@ import { merge, piece } from './scenery/parts';
 
 export const PANEL = { width: 6, height: 3 }; // metres: a 2:1 image
 const RIM_WIDTH = 0.45;
-const OUT = 2.6;      // metres from the rim's outer edge to the board's middle
+const OUT = 3.0;      // metres from the rim's outer edge to the board's middle
+const OUTSIDE_BEND = 2.0; // metres further out on the outside of a sharp bend, where the chase camera swings wide
 const LIFT = 1.1;     // metres from the rim top to the panel's bottom edge
 const TOWARD = 0.42;  // radians the board turns from facing straight up the track toward the track
 const COLS = 2;
@@ -200,7 +201,13 @@ export function boardPose(centerline, channel, b) {
   const lip = channelLipAt(channel, sArc);
   const side = new Vector3(s.side.x, 0, s.side.z).normalize().multiplyScalar(b.side);
   const along = new Vector3(s.tangent.x, 0, s.tangent.z).normalize();
-  const foot = s.pos.clone().addScaledVector(side, R * Math.sin(lip) + RIM_WIDTH + OUT);
+  // On the outside of a bend the follow camera swings out towards the board: it stands further out there.
+  const reach = Math.max(1, Math.round((8 / channel.arc) * segments));
+  const t0 = samples[Math.max(0, i - reach)].tangent;
+  const t1 = samples[Math.min(segments, i + reach)].tangent;
+  const turn = t0.x * t1.z - t0.z * t1.x; // (positive and negative: the two ways a bend turns)
+  const outside = turn * b.side < 0 ? OUTSIDE_BEND * Math.min(1, Math.max(0, (Math.abs(turn) - 0.05) / 0.25)) : 0;
+  const foot = s.pos.clone().addScaledVector(side, R * Math.sin(lip) + RIM_WIDTH + OUT + outside);
   foot.y = s.pos.y + R * (1 - Math.cos(lip));
   // Facing back up the track, turned a little toward it.
   const facing = along.clone().negate().multiplyScalar(Math.cos(TOWARD)).addScaledVector(side, -Math.sin(TOWARD)).normalize();

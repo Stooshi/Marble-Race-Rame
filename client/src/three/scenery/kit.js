@@ -8,7 +8,7 @@
  * Moving things (idle movements, lift cabins) follow the race clock, so every
  * viewer and every replay sees the same: update(t) in group.userData.
  */
-import {
+import { Box3,
   BufferGeometry, Float32BufferAttribute, Group, InstancedMesh, LineBasicMaterial, LineSegments, Matrix4, Mesh, MeshLambertMaterial,
   Quaternion, Vector3,
 } from 'three';
@@ -25,6 +25,7 @@ import { COSTUMES, COSTUME_COLORS } from '../costumes';
 import { FEATURE_COLORS } from '../trackFeatures';
 import { bakeMovers } from '../movers';
 import { boardPose } from '../billboards';
+import { trackCorridor } from './clearCheck';
 
 const UP = new Vector3(0, 1, 0);
 const Z = new Vector3(0, 0, 1);
@@ -42,6 +43,8 @@ export function buildKitScenery(centerline, track, theme, { lite = false } = {})
   const { field, groundAt, rows } = ground;
   const { samples, segments } = centerline;
   const channel = ground.hug.channel;
+  // The track's corridor: nothing placed here may reach into it (clearCheck.js checks the result).
+  const corridor = trackCorridor(centerline, channel);
   const group = new Group();
   group.name = 'scenery:kit';
   group.add(ground.group);
@@ -58,7 +61,7 @@ export function buildKitScenery(centerline, track, theme, { lite = false } = {})
     solids.push(...coaster.feet);
   }
   // A pinball table: the backglass and display, inserts, the apron's flippers and drain, the cabinet (./pinball.js).
-  const pinball = kit.pinball ? buildPinball(centerline, channel, kit, { lite, groundAt, bounds: ground.bounds, pen: track.physics.runout }) : null;
+  const pinball = kit.pinball ? buildPinball(centerline, channel, kit, { lite, groundAt, bounds: ground.bounds, pen: track.physics.runout, corridor }) : null;
   if (pinball) {
     group.add(pinball.group);
     solids.push(...pinball.feet);
@@ -80,17 +83,34 @@ export function buildKitScenery(centerline, track, theme, { lite = false } = {})
 
   // ── Landmarks ──────────────────────────────────────────────────────────
   const landmarkParts = [];
+  const landmarkBoxes = []; // (each landmark's name and box, for the checks)
+  const cameraKeepOut = []; // boxes the follow camera keeps clear of (TrackScene.keepInSight)
   const turning = []; // landmarks' moving parts (a windmill's sails): { mesh, base, axis, speed }
-  const placeLandmark = (name, at, yaw, footY = null) => {
+  const placeLandmark = (name, at, yaw, footY = null, away = null) => {
     const lm = LANDMARKS[name];
     if (!lm) return;
-    const g = lm.build();
-    // (Out over a coaster's water it floats on the surface: a ship, a jetty.)
-    const land = groundAt(at.x, at.z) - 0.3;
-    const foot = new Vector3(at.x, footY ?? (ground.waterY !== null && ground.waterY !== undefined ? Math.max(land, ground.waterY - 0.6) : land), at.z);
     const q = new Quaternion().setFromAxisAngle(UP, yaw);
-    g.applyMatrix4(new Matrix4().compose(foot, q, new Vector3(1, 1, 1)));
+    const make = (spot) => {
+      // (Out over a coaster's water it floats on the surface: a ship, a jetty.)
+      const land = groundAt(spot.x, spot.z) - 0.3;
+      const f = new Vector3(spot.x, footY ?? (ground.waterY !== null && ground.waterY !== undefined ? Math.max(land, ground.waterY - 0.6) : land), spot.z);
+      const geo = lm.build();
+      geo.applyMatrix4(new Matrix4().compose(f, q, new Vector3(1, 1, 1)));
+      return { geo, f };
+    };
+    // Never in the track: a landmark beside it that would reach into any stretch (the track winding
+    // back past it) steps further out, a few metres at a time. Gateways straddle it on purpose.
+    let { geo: g, f: foot } = make(at);
+    if (away) {
+      for (let k = 1; k <= 30 && corridor.hits(g); k += 1) {
+        g.dispose();
+        at = at.clone().addScaledVector(away, 4);
+        ({ geo: g, f: foot } = make(at));
+      }
+    }
     landmarkParts.push(g);
+    g.computeBoundingBox();
+    landmarkBoxes.push({ name: `${footY !== null ? 'gateway' : 'landmark'}:${name}`, box: g.boundingBox.clone() });
     solids.push({ x: at.x, z: at.z, r: lm.radius + 4 });
     if (lm.moving) {
       const mesh = new Mesh(lm.moving.build(), new MeshLambertMaterial({ vertexColors: true, flatShading: true }));
@@ -101,6 +121,7 @@ export function buildKitScenery(centerline, track, theme, { lite = false } = {})
     }
   };
   const yawTo = (dir) => Math.atan2(dir.x, dir.z);
+
   if (kit.start?.landmark) {
     const { s, along, side } = frame(0);
     // (A coaster's stands beyond the foot of its lift hill, a little to one side: in the climb's shot.)
@@ -109,12 +130,14 @@ export function buildKitScenery(centerline, track, theme, { lite = false } = {})
       : pinball || arcade
         ? s.pos.clone().addScaledVector(along, -26).addScaledVector(side, 38) // (beside the backglass or the cabinet, not in front of it)
         : s.pos.clone().addScaledVector(along, -30);
-    placeLandmark(kit.start.landmark, at, yawTo(along));
+    placeLandmark(kit.start.landmark, at, yawTo(along), null, coaster ? side.clone().negate() : pinball || arcade ? side.clone() : along.clone().negate());
+    if (landmarkBoxes.length) cameraKeepOut.push(landmarkBoxes[landmarkBoxes.length - 1].box); // (the starting shots fly past it)
   }
   if (kit.finish?.landmark) {
     const { s, along, side } = frame(1);
     const at = s.pos.clone().addScaledVector(along, 70).addScaledVector(side, 6);
-    placeLandmark(kit.finish.landmark, at, yawTo(along.clone().negate()));
+    placeLandmark(kit.finish.landmark, at, yawTo(along.clone().negate()), null, along.clone());
+    if (landmarkBoxes.length) cameraKeepOut.push(landmarkBoxes[landmarkBoxes.length - 1].box);
   }
   for (const sec of kit.sections) {
     for (const lm of sec.landmarks ?? []) {
@@ -128,7 +151,7 @@ export function buildKitScenery(centerline, track, theme, { lite = false } = {})
       const sign = lm.side === 'right' ? -1 : 1;
       const edge = rows[i]?.[sign]?.out ?? s.pos;
       const at = edge.clone().addScaledVector(side, sign * (lm.distance ?? 22));
-      placeLandmark(lm.name, at, yawTo(side.clone().multiplyScalar(-sign)));
+      placeLandmark(lm.name, at, yawTo(side.clone().multiplyScalar(-sign)), null, side.clone().multiplyScalar(sign));
     }
   }
   if (landmarkParts.length) {
@@ -266,7 +289,7 @@ export function buildKitScenery(centerline, track, theme, { lite = false } = {})
   }
 
   // ── Places a section's scenery names: netting, houses, a funicular, a lake, a splitter's hut ──
-  const centrepieces = buildCentrepieces(centerline, channel, kit, { lite, groundAt });
+  const centrepieces = buildCentrepieces(centerline, channel, kit, { lite, groundAt, corridor });
   group.add(centrepieces.group);
   solids.push(...centrepieces.spots);
   group.add(buildRaceNetting(centerline, channel, kit, rows));
@@ -282,7 +305,7 @@ export function buildKitScenery(centerline, track, theme, { lite = false } = {})
     group.add(funicular.group);
     for (const p of funicular.line) solids.push({ x: p.x, z: p.z, r: 4 }); // (no trees on the rails)
   }
-  group.add(buildHouses(centerline, kit, { lite, arc: channel.arc, groundAt, clearance: field.clearance, solids, rand }));
+  group.add(buildHouses(centerline, kit, { lite, arc: channel.arc, groundAt, clearance: field.clearance, solids, rand, corridor }));
   // A Grand Prix: grandstands and crowds, barriers on the bends, the finish building, fireworks.
   const grandPrix = buildGrandPrix(centerline, channel, kit, { lite, ground, solids, boardFeet, slug: track.slug });
   if (grandPrix) {
@@ -414,11 +437,13 @@ export function buildKitScenery(centerline, track, theme, { lite = false } = {})
       if (!g.getAttribute('normal')) g.computeVertexNormals();
       return g.index ? g.toNonIndexed() : g;
     });
+    // (Which piece is where, for the checks: the merged meshes no longer know.)
+    group.userData.stillParts = stillScenery.filter((o) => o.name !== 'landmarks').map((o) => ({ name: o.name, box: new Box3().setFromObject(o) }));
     for (const o of stillScenery) o.removeFromParent();
     const mat = new MeshLambertMaterial({ vertexColors: true, flatShading: true });
     for (const geometry of mergeByArea(pieces, 400)) group.add(Object.assign(new Mesh(geometry, mat), { name: 'scenery: still' }));
   }
 
-  group.userData = { update, field, groundAt, biome, ground, floorY: ground.floorY, ...(coaster && { liftHill: coaster.liftHill, station: coaster.station }) };
+  group.userData = { ...group.userData, cameraKeepOut: [...cameraKeepOut, ...centrepieces.keepOut], stillParts: [...landmarkBoxes, ...(group.userData.stillParts ?? [])], update, field, groundAt, biome, ground, floorY: ground.floorY, ...(coaster && { liftHill: coaster.liftHill, station: coaster.station }) };
   return group;
 }

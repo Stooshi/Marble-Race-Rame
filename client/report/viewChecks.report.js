@@ -17,6 +17,7 @@ import { layoutMarbles, MARBLE_RADIUS } from '../src/three/marbles';
 import { TrackScene } from '../src/three/TrackScene';
 import { frameAtTime } from '../src/utils/splits';
 import { flaggedStretches, wallExposure } from '../src/three/scenery/groundCheck';
+import { cameraClearance, corridorIntrusions, markStructures, nameOf, pieceFinder, stretchesOf, tunnelAllowance } from '../src/three/scenery/clearCheck';
 
 const anything = new Proxy(function stub() {}, { get: () => anything, apply: () => anything, set: () => true });
 globalThis.document ??= { createElement: () => ({ getContext: () => anything, width: 0, height: 0 }) };
@@ -26,13 +27,14 @@ const LEVEL = [0, 20];     // metres the camera sits above the stretch of track 
 const LEVEL_FROM_MS = 5000;
 const RAY_EVERY_MS = 250;  // the blocked check looks every quarter second
 const SINK_M = 0.05;       // how far into the ice a drawn marble may dip
+const CLEAR_EVERY_MS = 100; // the camera clearance check looks ten times a second
 
-it('track report: view checks', () => {
+it.skipIf(!process.env.REPORT_TRACK)('track report: view checks', () => {
   const track = JSON.parse(fs.readFileSync(process.env.REPORT_TRACK, 'utf8'));
   const races = JSON.parse(fs.readFileSync(process.env.REPORT_RACES, 'utf8'));
   const centerline = buildCenterline(track);
   const channel = channelOf(track, centerline);
-  const out = { ground: {}, camera: [] };
+  const out = { ground: {}, camera: [], clear: { camera: [] } };
 
   // The ground check, phone and computer.
   for (const lite of [false, true]) {
@@ -48,6 +50,18 @@ it('track report: view checks', () => {
       });
     }
     const exposure = wallExposure(centerline, channel, track, ground, built);
+    // The clear-track check, inside the track: everything drawn round it (land, banks, dressing,
+    // landmarks, structures, billboards; not the obstacles, which stand in the channel on purpose,
+    // nor see-through water and spray). Tunnels and caves close over the track on purpose.
+    const boardsHere = buildBillboards(centerline, channel, track.physics.kit, { lite });
+    const drawnHere = [];
+    for (const g of [scenery, structures?.group, boardsHere?.group].filter(Boolean)) {
+      g.updateMatrixWorld(true);
+      g.traverse((o) => { if (o.isMesh && o.visible && !o.material?.transparent && !/^tunnel/.test(nameOf(o))) drawnHere.push(o); });
+    }
+    markStructures(structures?.group);
+    const intrusions = corridorIntrusions(centerline, channel, drawnHere, { pieceAt: pieceFinder(scenery), allowed: tunnelAllowance(track.physics.kit) });
+    out.clear[lite ? 'phone' : 'computer'] = { stretches: stretchesOf(intrusions, channel.arc), samples: intrusions.length };
     out.ground[lite ? 'phone' : 'computer'] = {
       flagged: flaggedStretches(exposure, channel.arc),
       normalMetres: Math.round((exposure.filter((e) => e.kind === 'normal').length / exposure.length) * channel.arc),
@@ -74,6 +88,14 @@ it('track report: view checks', () => {
       (g === features?.group ? obstacles : solids).push(o);
     });
   }
+  // The clear-track check round the follow camera: everything drawn (tunnels and caves too).
+  const drawn = [];
+  for (const g of [scenery, structures?.group, boards?.group].filter(Boolean)) {
+    g.traverse((o) => { if (o.isMesh && o.visible && !o.material?.transparent) drawn.push(o); });
+  }
+  const findPiece = pieceFinder(scenery);
+  const landMeshes = drawn.filter((o) => o.userData.ground || /^terrain|^banks/.test(nameOf(o)));
+
   // The stretch of track the camera is over: the nearest point of the track (on the plan) within
   // 120 m of its marble, so a stretch passing above or below never counts.
   const { samples, segments } = centerline;
@@ -116,6 +138,7 @@ it('track report: view checks', () => {
       scene.main = { camera, cam: new Vector3(), target: new Vector3(), ready: false, leader: null, leaderT: undefined };
       const marbles = [];
       const result = { race: r + 1, screen, frames: 0, blocked: [], behindObstacle: 0, offLevel: [], jumps: [], sunk: [], worstJump: 0, worstSink: 0, highest: 0 };
+      const clear = { race: r + 1, screen, looks: 0, near: [], inside: [] };
       let last = null;
       for (let t = 0; t < race.durationMs; t += 50) {
         const f = frameAtTime(race.frames, race.tickMs, t);
@@ -135,6 +158,13 @@ it('track report: view checks', () => {
         if (t >= LEVEL_FROM_MS) result.highest = Math.max(result.highest, above);
         // (From 5 s: before that the starting camera hands over to this one, coming down from its high shot.)
         if (t >= LEVEL_FROM_MS && (above < LEVEL[0] || above > LEVEL[1])) result.offLevel.push({ t, metres: +above.toFixed(1) });
+        if (t >= 1000 && t % CLEAR_EVERY_MS === 0) {
+          // (From 1 s: before that the starting shot's own camera path, checked by its screenshots.)
+          const c = cameraClearance(cam, drawn, landMeshes, { pieceAt: findPiece });
+          clear.looks += 1;
+          if (c.near) clear.near.push({ t, at: +f.p[i].toFixed(4), ...c.near, from: cam.toArray().map((v) => +v.toFixed(1)), to: marbles[i].toArray().map((v) => +v.toFixed(1)) });
+          if (c.inside) clear.inside.push({ t, at: +f.p[i].toFixed(4), by: c.inside, from: cam.toArray().map((v) => +v.toFixed(1)), to: marbles[i].toArray().map((v) => +v.toFixed(1)) });
+        }
         if (t % RAY_EVERY_MS !== 0) continue;
         ray.set(cam, marbles[i].clone().sub(cam).normalize());
         ray.far = cam.distanceTo(marbles[i]) - 1;
@@ -146,6 +176,7 @@ it('track report: view checks', () => {
         if (gap < -SINK_M) result.sunk.push({ t, metres: +gap.toFixed(2) });
       }
       out.camera.push(result);
+      out.clear.camera.push(clear);
     }
   }
   fs.writeFileSync(process.env.REPORT_OUT, JSON.stringify(out, null, 1));

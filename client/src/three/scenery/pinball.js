@@ -142,7 +142,7 @@ function quad(w, h, x, y, z, [u0, u1, v0, v1]) {
  * groundAt(x, z): the land's height; bounds: the land's extent { minX, maxX, minZ, maxZ, floorY };
  * pen: the catch area past the finish ({ length, halfWidth }, physics.runout).
  */
-export function buildPinball(centerline, channel, kit, { lite = false, groundAt, bounds, pen }) {
+export function buildPinball(centerline, channel, kit, { lite = false, groundAt, bounds, pen, corridor = null }) {
   const pb = kit.pinball ?? {};
   const { samples, segments } = centerline;
   const group = new Group();
@@ -214,6 +214,7 @@ export function buildPinball(centerline, channel, kit, { lite = false, groundAt,
       const at = s.pos.clone().addScaledVector(side, sign * (edge + 4 + (n % 3) * 2));
       at.y = groundAt(at.x, at.z) + 0.03; // (flush with the playfield: a decal, never a wall in the camera's way)
       if (at.y > s.pos.y + 1) continue; // (not where the land rises over the rim)
+      if (corridor?.inside(at.x, at.y, at.z, { margin: 2.8 })) continue; // (never on another stretch of the track)
       const m = new Matrix4().makeRotationX(-Math.PI / 2).premultiply(new Matrix4().makeRotationY(Math.atan2(along.x, along.z))).premultiply(new Matrix4().makeTranslation(at.x, at.y, at.z));
       const colour = colours[n % colours.length];
       if (n % 3 === 0) {

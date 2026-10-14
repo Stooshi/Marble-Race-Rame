@@ -169,8 +169,16 @@ export function buildTerrainGeometry(field, bounds, { cells = 96, colors } = {})
  * (cheap, and things placed with it sit exactly on what you see).
  * tiles > 1 also cuts it into tiles × tiles pieces (`geometries`), so a camera
  * down among the streets only draws the ground in front of it.
+ *
+ * below: [{ x, z, y }] points the drawn ground must stay at or under (the ice of
+ * a channel). A grid square is flat between its corners, so a narrow channel
+ * crossing a square can find the square's surface above its ice (on a bend no
+ * corner falls inside the channel). Those squares (and, with `neighbours`, the
+ * squares next to them the channel also crosses) are drawn on a finer grid (about `fine` metres) that
+ * follows the height field; their outer edges stay straight where they meet an
+ * ordinary square, so nothing cracks open. The rest of the land is unchanged.
  */
-export function buildTerrain(field, bounds, { cells = 96, colors, tiles = 1 } = {}) {
+export function buildTerrain(field, bounds, { cells = 96, colors, tiles = 1, below = null, fine = 2.5, neighbours = true } = {}) {
   const { minX, maxX, minZ, maxZ } = bounds;
   const n = cells + 1;
   const heights = new Float32Array(n * n);
@@ -186,22 +194,82 @@ export function buildTerrain(field, bounds, { cells = 96, colors, tiles = 1 } = 
     shade: new Color(colors?.shade ?? '#7f9a4c'),
   };
   const top = Math.max(...heights);
+  const cw = (maxX - minX) / cells;
+  const cd = (maxZ - minZ) / cells;
+  const sx = 1 / cw;
+  const sz = 1 / cd;
+  const h = (a, b) => heights[b * n + a];
+  // A square's surface: two flat triangles, split (a, d, b) and (b, d, e) as drawn.
+  const flat = (y00, y10, y01, y11, u, v) => (u + v <= 1 ? y00 + (y10 - y00) * u + (y01 - y00) * v : y11 + (y01 - y11) * (1 - u) + (y10 - y11) * (1 - v));
+  const cellOf = (x, z) => {
+    const fx = Math.min(cells - 1e-6, Math.max(0, (x - minX) * sx));
+    const fz = Math.min(cells - 1e-6, Math.max(0, (z - minZ) * sz));
+    return [Math.floor(fx), Math.floor(fz), fx, fz];
+  };
+
+  // The finer squares: key → { k, y: heights (k + 1)²}.
+  const refined = new Map();
+  if (below?.length) {
+    const key = (i, j) => j * cells + i;
+    const crossed = new Set();
+    const above = new Set();
+    for (const p of below) {
+      const [i, j, fx, fz] = cellOf(p.x, p.z);
+      crossed.add(key(i, j));
+      if (flat(h(i, j), h(i + 1, j), h(i, j + 1), h(i + 1, j + 1), fx - i, fz - j) > p.y) above.add(key(i, j));
+    }
+    const pick = new Set();
+    for (const kk of above) {
+      const i = kk % cells; const j = Math.floor(kk / cells);
+      for (let dj = -1; dj <= 1; dj += 1) for (let di = -1; di <= 1; di += 1) {
+        const q = key(i + di, j + dj);
+        if (i + di >= 0 && i + di < cells && j + dj >= 0 && j + dj < cells && (q === kk || (neighbours && crossed.has(q)))) pick.add(q);
+      }
+    }
+    const k = Math.max(2, Math.ceil(Math.max(cw, cd) / fine));
+    for (const kk of pick) {
+      const i = kk % cells; const j = Math.floor(kk / cells);
+      const y = new Float32Array((k + 1) * (k + 1));
+      for (let b = 0; b <= k; b += 1) {
+        for (let a = 0; a <= k; a += 1) {
+          const u = a / k; const v = b / k;
+          const edge = a === 0 ? [i - 1, j] : a === k ? [i + 1, j] : b === 0 ? [i, j - 1] : b === k ? [i, j + 1] : null;
+          const corner = (a === 0 || a === k) && (b === 0 || b === k);
+          // Corners and edges shared with an ordinary square keep the square's own straight edge.
+          const straight = corner || (edge && !pick.has(key(edge[0], edge[1])));
+          y[b * (k + 1) + a] = straight
+            ? flat(h(i, j), h(i + 1, j), h(i, j + 1), h(i + 1, j + 1), u, v)
+            : field.heightAt(minX + cw * (i + u), minZ + cd * (j + v));
+        }
+      }
+      refined.set(kk, { k, y });
+    }
+  }
+
   const c = new Color();
-  const at = (i, j) => [minX + ((maxX - minX) * i) / cells, heights[j * n + i], minZ + ((maxZ - minZ) * j) / cells];
   const piece = (i0, i1, j0, j1) => {
     const positions = [];
     const colorList = [];
+    const tri3 = (a, b, d) => {
+      const tri = [a, b, d];
+      const y = (a[1] + b[1] + d[1]) / 3;
+      const steep = Math.max(...tri.map((p) => p[1])) - Math.min(...tri.map((p) => p[1]));
+      if (y < 0.3) c.copy(C.sand);
+      else c.copy(C.grass).lerp(C.dry, Math.min(1, y / (top || 1)) * 0.9);
+      if (steep > 6) c.lerp(C.shade, 0.35);
+      for (const p of tri) { positions.push(...p); colorList.push(c.r, c.g, c.b); }
+    };
+    const quad = (a, b, d, e) => { tri3(a, d, b); tri3(b, d, e); };
     for (let j = j0; j < j1; j += 1) {
       for (let i = i0; i < i1; i += 1) {
-        const a = at(i, j); const b = at(i + 1, j); const d = at(i, j + 1); const e = at(i + 1, j + 1);
-        for (const tri of [[a, d, b], [b, d, e]]) {
-          const y = (tri[0][1] + tri[1][1] + tri[2][1]) / 3;
-          const steep = Math.max(...tri.map((p) => p[1])) - Math.min(...tri.map((p) => p[1]));
-          if (y < 0.3) c.copy(C.sand);
-          else c.copy(C.grass).lerp(C.dry, Math.min(1, y / (top || 1)) * 0.9);
-          if (steep > 6) c.lerp(C.shade, 0.35);
-          for (const p of tri) { positions.push(...p); colorList.push(c.r, c.g, c.b); }
+        const r = refined.get(j * cells + i);
+        if (!r) {
+          const at = (ii, jj) => [minX + cw * ii, h(ii, jj), minZ + cd * jj];
+          quad(at(i, j), at(i + 1, j), at(i, j + 1), at(i + 1, j + 1));
+          continue;
         }
+        const at = (a, b) => [minX + cw * (i + a / r.k), r.y[b * (r.k + 1) + a], minZ + cd * (j + b / r.k)];
+        for (let b = 0; b < r.k; b += 1) for (let a = 0; a < r.k; a += 1) quad(at(a, b), at(a + 1, b), at(a, b + 1), at(a + 1, b + 1));
       }
     }
     const g = new BufferGeometry();
@@ -217,19 +285,15 @@ export function buildTerrain(field, bounds, { cells = 96, colors, tiles = 1 } = 
   }
   const g = geometries[0];
 
-  const sx = cells / (maxX - minX);
-  const sz = cells / (maxZ - minZ);
   function groundAt(x, z) {
-    const fx = Math.min(cells - 1e-6, Math.max(0, (x - minX) * sx));
-    const fz = Math.min(cells - 1e-6, Math.max(0, (z - minZ) * sz));
-    const i = Math.floor(fx);
-    const j = Math.floor(fz);
-    const u = fx - i;
-    const v = fz - j;
-    const h = (a, b) => heights[b * n + a];
-    // Same split as the triangles above: (a, d, b) and (b, d, e).
-    if (u + v <= 1) return h(i, j) + (h(i + 1, j) - h(i, j)) * u + (h(i, j + 1) - h(i, j)) * v;
-    return h(i + 1, j + 1) + (h(i, j + 1) - h(i + 1, j + 1)) * (1 - u) + (h(i + 1, j) - h(i + 1, j + 1)) * (1 - v);
+    const [i, j, fx, fz] = cellOf(x, z);
+    const r = refined.get(j * cells + i);
+    if (!r) return flat(h(i, j), h(i + 1, j), h(i, j + 1), h(i + 1, j + 1), fx - i, fz - j);
+    const ga = Math.min(r.k - 1e-6, (fx - i) * r.k);
+    const gb = Math.min(r.k - 1e-6, (fz - j) * r.k);
+    const a = Math.floor(ga); const b = Math.floor(gb);
+    const Y = (aa, bb) => r.y[bb * (r.k + 1) + aa];
+    return flat(Y(a, b), Y(a + 1, b), Y(a, b + 1), Y(a + 1, b + 1), ga - a, gb - b);
   }
-  return { geometry: g, geometries, groundAt };
+  return { geometry: g, geometries, groundAt, refined: refined.size };
 }

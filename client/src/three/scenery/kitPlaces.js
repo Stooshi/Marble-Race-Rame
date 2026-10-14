@@ -7,7 +7,7 @@
  * (`around`), a mountain hut with smoke from its chimney or a big rock.
  * Looks only. Each kind is merged into one or two draw calls.
  */
-import {
+import { Box3,
   BoxGeometry, BufferGeometry, CanvasTexture, CircleGeometry, ConeGeometry, CylinderGeometry, Float32BufferAttribute,
   Group, IcosahedronGeometry, Matrix4, Mesh, MeshBasicMaterial, MeshLambertMaterial, Points, PointsMaterial, Quaternion, SRGBColorSpace, Vector3,
 } from 'three';
@@ -59,16 +59,29 @@ export function turnAngle(moving, sec) {
 // ── A splitter's centrepiece, on the divider between its two channels ──────
 
 /** Mountain hut or big rock, scaled to fit between the channels where they are furthest apart; smoke from the hut. */
-export function buildCentrepieces(centerline, channel, kit, { lite = false, groundAt } = {}) {
+export function buildCentrepieces(centerline, channel, kit, { lite = false, groundAt, corridor = null } = {}) {
   const group = new Group();
   group.name = 'centrepieces';
   const parts = [];
+  const keepOut = []; // each piece's box: the follow camera keeps clear of them
   const chimneys = [];
   const bells = [];
   const spots = []; // where they stand (kept clear of trees)
   const arches = []; // an arch over a splitter's channel (its own mesh: the camera passes through it)
   const turning = []; // centrepieces' moving parts (the anaconda's head)
   const { samples, segments } = centerline;
+  // A centrepiece at `scale`, or smaller (a tenth at a time, down to 35%) until it keeps clear of
+  // every stretch of the track (a spiral's or hairpin's centre can be close to the track it winds
+  // round; a canopy can reach out over a channel). → { g, scale } or null (left out).
+  const fitClear = (build, foot, q, scale) => {
+    for (let k = scale; k >= scale * 0.35; k *= 0.9) {
+      const g = build();
+      g.applyMatrix4(new Matrix4().compose(foot, q, new Vector3(k, k, k)));
+      if (!corridor?.hits(g, { margin: 0 })) return { g, scale: k }; // (a divider's piece may stand right at the rims)
+      g.dispose();
+    }
+    return null;
+  };
   for (const sec of kit.sections) {
     if (!sec.around || !LANDMARKS[sec.around]) continue;
     if (sec.shape === 'hairpin') {
@@ -82,10 +95,11 @@ export function buildCentrepieces(centerline, channel, kit, { lite = false, grou
       const inward = c.clone().sub(mid).setY(0).normalize();
       const centre = mid.clone().addScaledVector(inward, 20);
       const y = groundAt ? groundAt(centre.x, centre.z) : mid.y;
-      const g = LANDMARKS[sec.around].build();
-      g.applyMatrix4(new Matrix4().compose(new Vector3(centre.x, y - 0.3, centre.z), new Quaternion(), new Vector3(1, 1, 1)));
-      parts.push(g);
-      spots.push({ x: centre.x, z: centre.z, r: LANDMARKS[sec.around].radius + 3 });
+      const k = fitClear(() => LANDMARKS[sec.around].build(), new Vector3(centre.x, y - 0.3, centre.z), new Quaternion(), 1);
+      if (!k) continue;
+      parts.push(k.g);
+      keepOut.push(new Box3().setFromBufferAttribute(k.g.getAttribute('position')));
+      spots.push({ x: centre.x, z: centre.z, r: LANDMARKS[sec.around].radius * k.scale + 3 });
       continue;
     }
     if (sec.shape === 'spiral') {
@@ -107,11 +121,12 @@ export function buildCentrepieces(centerline, channel, kit, { lite = false, grou
       c.multiplyScalar(1 / n);
       const y = groundAt ? groundAt(c.x, c.z) : samples[i1].pos.y;
       const big = 1.6; // (standing tall out of the hill the spiral winds round)
-      const g = LANDMARKS[sec.around].build();
-      g.applyMatrix4(new Matrix4().compose(new Vector3(c.x, y - 0.3, c.z), new Quaternion().setFromAxisAngle(UP, Math.atan2(samples[i1].pos.x - c.x, samples[i1].pos.z - c.z)), new Vector3(big, big, big)));
-      parts.push(g);
-      spots.push({ x: c.x, z: c.z, r: LANDMARKS[sec.around].radius * big + 4 });
-      if (sec.around === 'bell-tower') bells.push({ at: new Vector3(c.x, y - 0.3 + 14.2 * big, c.z), scale: big });
+      const k = fitClear(() => LANDMARKS[sec.around].build(), new Vector3(c.x, y - 0.3, c.z), new Quaternion().setFromAxisAngle(UP, Math.atan2(samples[i1].pos.x - c.x, samples[i1].pos.z - c.z)), big);
+      if (!k) continue;
+      parts.push(k.g);
+      keepOut.push(new Box3().setFromBufferAttribute(k.g.getAttribute('position')));
+      spots.push({ x: c.x, z: c.z, r: LANDMARKS[sec.around].radius * k.scale + 4 });
+      if (sec.around === 'bell-tower') bells.push({ at: new Vector3(c.x, y - 0.3 + 14.2 * k.scale, c.z), scale: k.scale });
       continue;
     }
     const fork = channel.forks.find((f) => f.s0 / channel.arc >= sec.from - 0.01 && f.s0 / channel.arc <= sec.to);
@@ -147,18 +162,20 @@ export function buildCentrepieces(centerline, channel, kit, { lite = false, grou
     const lengthwise = sec.around === 'anaconda' || sec.around === 'fallen-statue';
     const q = new Quaternion().setFromAxisAngle(UP, Math.atan2(along.x, along.z) + (lengthwise ? 0 : Math.PI / 2));
     const foot = new Vector3(s.pos.x, top - 0.05, s.pos.z);
-    const g = (piece_ ?? lm).build();
-    g.applyMatrix4(new Matrix4().compose(foot, q, new Vector3(scale, scale, scale)));
+    const fit = fitClear(() => (piece_ ?? lm).build(), foot, q, scale);
+    if (!fit) continue;
+    const g = fit.g;
     parts.push(g);
+    keepOut.push(new Box3().setFromBufferAttribute(g.getAttribute('position')));
     if (lm.moving) {
       const mesh = new Mesh(lm.moving.build(), lambert());
       mesh.name = `${sec.around}: moving`;
-      mesh.position.copy(new Vector3(...lm.moving.pivot).multiplyScalar(scale).applyQuaternion(q).add(foot));
-      mesh.scale.setScalar(scale);
+      mesh.position.copy(new Vector3(...lm.moving.pivot).multiplyScalar(fit.scale).applyQuaternion(q).add(foot));
+      mesh.scale.setScalar(fit.scale);
       group.add(mesh);
       turning.push({ mesh, base: q, axis: new Vector3(...lm.moving.axis), moving: lm.moving });
     }
-    if (sec.around === 'mountain-hut') chimneys.push(new Vector3(2, 6.8, -1).multiplyScalar(scale).applyQuaternion(q).add(new Vector3(s.pos.x, top, s.pos.z)));
+    if (sec.around === 'mountain-hut') chimneys.push(new Vector3(2, 6.8, -1).multiplyScalar(fit.scale).applyQuaternion(q).add(new Vector3(s.pos.x, top, s.pos.z)));
   }
   if (parts.length) {
     const m = new Mesh(merge(parts), lambert());
@@ -209,7 +226,7 @@ export function buildCentrepieces(centerline, channel, kit, { lite = false, grou
     }
   };
   update(0);
-  return { group, update, spots };
+  return { group, update, spots, keepOut };
 }
 
 // ── Along a section: race netting and a timing board ─────────────────────────
@@ -581,7 +598,7 @@ const HOUSE_STYLES = {
 };
 
 /** Houses beside the stretches tagged with a house style (and round the start or finish when it is). */
-export function buildHouses(centerline, kit, { lite = false, arc, groundAt, clearance, solids, rand }) {
+export function buildHouses(centerline, kit, { lite = false, arc, groundAt, clearance, solids, rand, corridor = null }) {
   const group = new Group();
   group.name = 'wooden houses';
   const bodies = [];
@@ -619,7 +636,9 @@ export function buildHouses(centerline, kit, { lite = false, arc, groundAt, clea
       k += 1;
       const q = new Quaternion().setFromAxisAngle(UP, Math.atan2(-side.x * sign, -side.z * sign) + (rand() - 0.5) * 0.4);
       const m = new Matrix4().compose(new Vector3(spot.x, groundAt(spot.x, spot.z) - 0.3, spot.z), q, new Vector3(1, 1, 1));
-      bodies.push(h.body.applyMatrix4(m));
+      h.body.applyMatrix4(m);
+      if (corridor?.hits(h.body)) continue; // (never reaching into the track)
+      bodies.push(h.body);
       // Windows that light up at night (Åre's houses, and every house on a floodlit city night) are drawn unlit
       // on their own; the rest are part of the house.
       (glow || kit.lighting === 'night' ? windows : bodies).push(h.windows.applyMatrix4(m));
