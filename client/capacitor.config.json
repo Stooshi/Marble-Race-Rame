@@ -1,0 +1,12 @@
+{
+  "appId": "com.marblespins.app",
+  "appName": "Marble Spins",
+  "webDir": "dist",
+  "ios": {
+    "contentInset": "never",
+    "backgroundColor": "#0E1320"
+  },
+  "android": {
+    "backgroundColor": "#0E1320"
+  }
+}

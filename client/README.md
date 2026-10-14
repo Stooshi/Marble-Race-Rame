@@ -72,3 +72,16 @@ src/components/     MarbleSelector, TrackSelector, RaceViewer, Leaderboard, Stat
 src/pages/          Home, Dashboard, Race, Results
 test/               Vitest unit tests
 ```
+
+## The iPhone and Android apps (Capacitor)
+
+`ios/` and `android/` wrap this website as native apps (Capacitor 8, app id `com.marblespins.app`,
+name "Marble Spins"). They load the built site from inside the app and talk to the live server.
+
+- **Update the apps after a website change:** `VITE_API_URL=https://<live server> npm run app:sync`
+  (builds the site and copies it into both projects; refuses a localhost server address).
+- **Open them:** `npx cap open ios` (Xcode on a Mac; Swift Package Manager, no CocoaPods) and
+  `npx cap open android` (Android Studio). Running on a simulator or your own phone needs no store account.
+- In the apps, coin packs go through the App Store / Google Play (still placeholders), never Stripe.
+- The server allows the apps' own addresses (`capacitor://localhost`, `https://localhost`).
+- Not yet: icons and splash screen, store accounts, signing, in-app purchases, push, Sign in with Apple.

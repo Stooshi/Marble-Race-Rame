@@ -18,11 +18,13 @@ test('marblespins.com (www or not) and the Vercel addresses are the site; others
   }
 });
 
-test('CORS lets the site in (and requests with no origin, like Stripe\'s webhook), not other sites', () => {
+test('CORS lets the site and the apps in (and requests with no origin, like Stripe\'s webhook), not other sites', () => {
   const check = (origin) => new Promise((res) => config.corsOrigin(origin, (_e, ok) => res(ok)));
   return Promise.all([
     check('https://www.marblespins.com').then((ok) => assert.equal(ok, true)),
     check(undefined).then((ok) => assert.equal(ok, true)),
     check('https://evil.com').then((ok) => assert.equal(ok, false)),
+    check('capacitor://localhost').then((ok) => assert.equal(ok, true)), // (the iPhone app)
+    check('https://localhost').then((ok) => assert.equal(ok, true)), // (the Android app)
   ]);
 });

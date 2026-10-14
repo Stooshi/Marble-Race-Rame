@@ -54,8 +54,11 @@ function isSiteOrigin(origin) {
   return siteOrigins.some((entry) => originMatches(stripSlash(origin), entry));
 }
 
-/** For the cors package and socket.io: '*' when CORS_ORIGIN is '*', otherwise only the site's addresses. */
-const corsCheck = corsOrigin === '*' ? '*' : (origin, cb) => cb(null, !origin || isSiteOrigin(origin));
+// The iPhone and Android apps (Capacitor) load the site from inside the app, from these addresses.
+const APP_ORIGINS = ['capacitor://localhost', 'https://localhost', 'http://localhost'];
+
+/** For the cors package and socket.io: '*' when CORS_ORIGIN is '*', otherwise the site's addresses and the apps. */
+const corsCheck = corsOrigin === '*' ? '*' : (origin, cb) => cb(null, !origin || isSiteOrigin(origin) || APP_ORIGINS.includes(origin));
 
 module.exports = Object.freeze({
   env,

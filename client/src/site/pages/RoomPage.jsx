@@ -4,6 +4,7 @@ import QRCode from 'qrcode';
 import { api } from '../../api/client';
 import { useAuth } from '../../context/AuthContext';
 import MarbleBadge from '../marbles/MarbleBadge';
+import { SITE_URL } from '../canonical';
 import { useRacer, useTracks } from './RaceFlow';
 
 /**
@@ -31,7 +32,8 @@ export default function RoomPage() {
   const sentTo = useRef(null); // the race we already went to
   const joinTried = useRef(null);
 
-  const link = `${window.location.origin}/r/${code}`;
+  // (In the apps the page's own address is the app's inside one, so share the website's.)
+  const link = `${window.Capacitor?.isNativePlatform?.() ? SITE_URL : window.location.origin}/r/${code}`;
 
   const load = useCallback(async () => {
     try {
