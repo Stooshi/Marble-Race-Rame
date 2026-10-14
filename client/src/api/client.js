@@ -94,6 +94,8 @@ export const api = {
   paymentOptions: () => request('/payments'),
   checkout: (body) => request('/payments/checkout', { method: 'POST', body }),
   redeemReceipt: (body) => request('/payments/receipt', { method: 'POST', body }),
+  myOrders: () => request('/payments/mine'),
+  order: (orderNo) => request(`/payments/orders/${encodeURIComponent(orderNo)}`),
 
   tracks: () => request('/tracks'),
   track: (idOrSlug) => request(`/tracks/${idOrSlug}`),

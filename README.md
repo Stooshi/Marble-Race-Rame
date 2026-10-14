@@ -55,6 +55,13 @@ curl localhost:5000/health
 | `RACE_DEFAULT_MARBLES` | `20` | Field size when a race is created without `min_marbles` / `max_marbles` |
 | `RACE_TICK_RATE_HZ` | `10` | Frames streamed per second |
 | `PAYMENTS_TEST` | – | `true`: an instant test payment provider (never in production) |
+| `STRIPE_SECRET_KEY` | – | Stripe secret key. `sk_test_…` works at once; a live key (`sk_live_…`) is refused unless `STRIPE_ALLOW_LIVE=true` |
+| `STRIPE_WEBHOOK_SECRET` | – | The signing secret (`whsec_…`) of the webhook endpoint `/api/payments/stripe/webhook` |
+| `PUBLIC_SITE_URL` | `http://localhost:5173` | The website, where Stripe sends players back (`/purchases`, `/checkout`) |
+| `STRIPE_ALLOW_LIVE` | – | `true` only when going live with real money |
+| `STRIPE_TAX` | on | `off` turns Stripe Tax off (only if the Stripe account has no tax set up) |
+| `STRIPE_TAX_CODE` | `txcd_10000000` | Stripe tax code for coin packs (electronically supplied services) |
+| `STRIPE_TOS_IN_CHECKOUT` | – | `true`: Stripe's page also asks to accept the terms (needs the terms URL set in Stripe) |
 
 ### Making an admin
 
@@ -189,6 +196,8 @@ The collection (Collection 1 · Schoolyard Classics: 10 designs in 5 shades, 50 
 **Showcase marbles.** In beginner races (every player in the race has finished fewer than 20 races) the computer players race in designed marbles from the collection: about 6 Common/Uncommon, 3 Rare/Epic and 1 Legendary, different each race; the rest stay plain. The mix lives in `catalog.json` → `showcase`. They are drawn after the race is set up, stored apart (`house_looks`), and never given to the race engine, so they can't change a result; the track report's Fairness part checks that every marble tier wins its share. Computer players carry a small "CPU" tag; after a race, tapping any marble shows its name, rarity and a way to the shop.
 
 Every payment provider ends in the same server step (`src/payments/index.js` → `grant`), which adds a pack's coins exactly once, as bought coins. `PAYMENTS_TEST=true` turns on an instant test provider outside production.
+
+**Stripe (the website)** — `src/payments/stripe.js`. The checkout asks for immediate delivery + the loss of the 14-day withdrawal right and the terms (the exact text is stored with the payment; `client/src/shared/payments/consent.json`), gives the order a number (MS-1001…) and sends the player to Stripe Checkout: the pack's USD price shown in their own currency (Adaptive Pricing), VAT included (Stripe Tax, `tax_behavior: inclusive`), with card / Apple Pay / Google Pay as the Stripe dashboard allows. Coins are added **only** by the webhook (`POST /api/payments/stripe/webhook`, signature checked against the raw body): each event id is recorded in `stripe_events` in the same transaction, and `grant` pays a payment once. Refunds (from the back office's Payments page or the Stripe dashboard) and disputes take the coins back in proportion (`payment_refunds`, once per refund; coins already spent are recorded as short), logged in the coin ledger (`pack-refund`) and the audit log. Players see their orders, amounts charged and Stripe receipts on `/purchases`. Webhook events to send: `checkout.session.completed`, `checkout.session.async_payment_succeeded`, `checkout.session.async_payment_failed`, `checkout.session.expired`, `refund.created`, `refund.updated`, `charge.dispute.created`. Local testing: `stripe listen --forward-to localhost:5000/api/payments/stripe/webhook`.
 
 ### The coin economy
 

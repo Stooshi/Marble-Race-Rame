@@ -15,6 +15,8 @@ function createApp() {
   app.disable('x-powered-by');
   app.use(helmet());
   app.use(cors({ origin: config.corsOrigin, credentials: config.corsOrigin !== '*' }));
+  // Stripe's webhook needs the exact bytes it signed, so it comes before the JSON parser.
+  app.post('/api/payments/stripe/webhook', express.raw({ type: '*/*', limit: '1mb' }), require('./routes/payments').stripeWebhook);
   app.use(express.json({ limit: '1mb' }));
 
   app.get('/health', async (_req, res) => {

@@ -551,6 +551,41 @@ CREATE TABLE IF NOT EXISTS payments (
     CONSTRAINT payments_provider_ref UNIQUE (provider, provider_ref)
 );
 CREATE INDEX IF NOT EXISTS idx_payments_user ON payments (user_id, created_at DESC);
+-- Stripe (the website): the order number players see, what they agreed to at checkout, and what
+-- Stripe charged (in the player's own currency, VAT included) and refunded.
+CREATE SEQUENCE IF NOT EXISTS payment_order_seq START 1001;
+ALTER TABLE payments ADD COLUMN IF NOT EXISTS order_no varchar(16) UNIQUE;
+ALTER TABLE payments ADD COLUMN IF NOT EXISTS consent_at timestamptz;
+ALTER TABLE payments ADD COLUMN IF NOT EXISTS consent_text text;
+ALTER TABLE payments ADD COLUMN IF NOT EXISTS stripe_session_id varchar(255);
+ALTER TABLE payments ADD COLUMN IF NOT EXISTS payment_intent varchar(255);
+ALTER TABLE payments ADD COLUMN IF NOT EXISTS charged_cents integer;
+ALTER TABLE payments ADD COLUMN IF NOT EXISTS charged_currency char(3);
+ALTER TABLE payments ADD COLUMN IF NOT EXISTS tax_cents integer;
+ALTER TABLE payments ADD COLUMN IF NOT EXISTS receipt_url text;
+ALTER TABLE payments ADD COLUMN IF NOT EXISTS refunded_cents integer NOT NULL DEFAULT 0;
+ALTER TABLE payments ADD COLUMN IF NOT EXISTS refunded_at timestamptz;
+CREATE INDEX IF NOT EXISTS idx_payments_intent ON payments (payment_intent) WHERE payment_intent IS NOT NULL;
+
+-- Each refund once (a Stripe refund id): the coins it took back, and any it couldn't (already spent).
+CREATE TABLE IF NOT EXISTS payment_refunds (
+    id              varchar(255) PRIMARY KEY,
+    payment_id      uuid        NOT NULL REFERENCES payments(id) ON DELETE CASCADE,
+    amount_cents    integer     NOT NULL CHECK (amount_cents > 0),
+    coins_removed   integer     NOT NULL DEFAULT 0,
+    coins_short     integer     NOT NULL DEFAULT 0,
+    admin_id        uuid        REFERENCES users(id) ON DELETE SET NULL,
+    reason          text,
+    created_at      timestamptz NOT NULL DEFAULT now()
+);
+
+-- Stripe webhook events already handled (Stripe may send one more than once).
+CREATE TABLE IF NOT EXISTS stripe_events (
+    id              varchar(255) PRIMARY KEY,
+    type            varchar(64) NOT NULL,
+    received_at     timestamptz NOT NULL DEFAULT now()
+);
+
 -- (Older databases made this table with credits instead of coins: data update
 -- 2027-01-03-coins-only fills coins and drops credits.)
 ALTER TABLE payments ADD COLUMN IF NOT EXISTS coins integer CHECK (coins > 0);

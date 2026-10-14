@@ -19,7 +19,7 @@ const { race: RACE, dailyGoal: GOAL, dailyLimit: LIMIT } = economy;
 // users.coins_earned; bought kinds count towards users.coins_bought.
 const EARNED = ['race', 'finish-bonus', 'daily-goal'];
 const BOUGHT = ['coin-pack', 'credit-conversion'];
-const KINDS = ['start', 'opening-balance', ...EARNED, ...BOUGHT, 'purchase', 'bag', 'entry-fee', 'entry-refund', 'refund', 'skill-refund', 'admin'];
+const KINDS = ['start', 'opening-balance', ...EARNED, ...BOUGHT, 'purchase', 'bag', 'entry-fee', 'entry-refund', 'refund', 'skill-refund', 'admin', 'pack-refund'];
 
 /** The finishing bonus for `place` (1 = the winner; nothing after 10th). */
 function placeCoins(place) {

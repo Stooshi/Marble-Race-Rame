@@ -52,6 +52,22 @@ module.exports = Object.freeze({
     bcryptRounds: int('BCRYPT_ROUNDS', 12),
   },
 
+  // Coin packs on the website (Stripe Checkout). Test keys (sk_test_…) work as soon as they are
+  // set; live keys (sk_live_…) are refused unless STRIPE_ALLOW_LIVE=true, so nothing goes live by mistake.
+  stripe: {
+    secretKey: process.env.STRIPE_SECRET_KEY || null,
+    webhookSecret: process.env.STRIPE_WEBHOOK_SECRET || null,
+    allowLive: process.env.STRIPE_ALLOW_LIVE === 'true',
+    // Where Checkout sends the player back (the website).
+    siteUrl: (process.env.PUBLIC_SITE_URL || 'http://localhost:5173').replace(/\/$/, ''),
+    // Stripe Tax: on unless STRIPE_TAX=off; prices include VAT. Product tax code: General -
+    // Electronically Supplied Services unless set (ask your accountant; see the setup notes).
+    tax: process.env.STRIPE_TAX !== 'off',
+    taxCode: process.env.STRIPE_TAX_CODE || 'txcd_10000000',
+    // Stripe's own terms-of-service checkbox in Checkout (needs the terms URL set in the Stripe dashboard).
+    tosInCheckout: process.env.STRIPE_TOS_IN_CHECKOUT === 'true',
+  },
+
   game: assertGameLimits({
     // Hard limits enforced by the API and the database schema.
     minMarbles: 10,

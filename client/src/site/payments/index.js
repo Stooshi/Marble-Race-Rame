@@ -23,8 +23,8 @@ export const STORE_NAME = { stripe: 'Stripe', apple: 'the App Store', google: 'G
 
 const ADAPTERS = {
   /** The web: the server starts a Stripe Checkout (or a test payment in development). */
-  async web(pack, provider) {
-    const { next, coins } = await api.checkout({ productId: pack.id, provider });
+  async web(pack, provider, { consent }) {
+    const { next, coins } = await api.checkout({ productId: pack.id, provider, consent });
     if (next.kind === 'redirect') {
       window.location.assign(next.url);
       return { status: 'redirecting' };
@@ -40,8 +40,9 @@ const ADAPTERS = {
   },
 };
 
-/** Buys a coin pack with this platform's store. Resolves { status: 'paid'|'redirecting'|'unavailable', coins?, message? }. */
-export function buyCoins(pack) {
+/** Buys a coin pack with this platform's store. `consent`: the player ticked immediate delivery + the terms (the server refuses without it).
+ * Resolves { status: 'paid'|'redirecting'|'unavailable', coins?, message? }. */
+export function buyCoins(pack, { consent = false } = {}) {
   const provider = storeProvider();
-  return provider === 'apple' || provider === 'google' ? ADAPTERS.store(pack, provider) : ADAPTERS.web(pack, provider);
+  return provider === 'apple' || provider === 'google' ? ADAPTERS.store(pack, provider) : ADAPTERS.web(pack, provider, { consent });
 }

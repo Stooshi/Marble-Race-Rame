@@ -15,6 +15,7 @@
  *   POST /players/:id/suspend      { reason }   /unsuspend { reason }
  *   POST /players/:id/name         { display_name, reason } (e.g. an offensive name)
  *   POST /players/:id/consent      { consent: false, reason } (the player asked to stop emails)
+ *   GET  /payments?q=              coin-pack orders   POST /payments/:id/refund { reason, amount_cents? }
  *   GET  /audit                    the audit log
  *   GET  /economy?days=30          the economy dashboard
  *   GET  /consents?reason=         players who agreed to news by email (CSV with format=csv; the export is audited)
@@ -28,6 +29,7 @@ const economy = require('../economy');
 const collection = require('../marbles/collection');
 const { bySlug, normaliseId, byId } = require('../marbles/catalog');
 const { IP_DAYS } = require('../security');
+const paymentsSvc = require('../payments');
 
 const router = express.Router();
 router.use('/session', sessionRouter);
@@ -36,6 +38,8 @@ router.use(requireAdminSession);
 router.use((_req, res, next) => { res.set('Cache-Control', 'no-store'); next(); });
 
 const REASON = { type: 'string', required: true, min: 5, max: 500 };
+const PAYMENT_COLUMNS = `p.id, p.order_no, p.provider, p.product_id, p.coins, p.amount_cents, upper(p.currency) AS currency, p.charged_cents,
+  p.charged_currency, p.tax_cents, p.status, p.refunded_cents, p.receipt_url, p.payment_intent, p.consent_at, p.created_at, p.paid_at, p.refunded_at`;
 
 async function audit(client, req, action, targetUserId, reason, details = {}) {
   await client.query(
@@ -118,7 +122,7 @@ router.get('/players/:id', async (req, res) => {
       [id],
     ),
     db.query('SELECT consent, source, created_at FROM email_consents WHERE user_id = $1 ORDER BY created_at DESC', [id]),
-    db.query('SELECT id, provider, product_id, coins, amount_cents, currency, status, created_at, paid_at FROM payments WHERE user_id = $1 ORDER BY created_at DESC LIMIT 50', [id]),
+    db.query(`SELECT ${PAYMENT_COLUMNS} FROM payments p WHERE p.user_id = $1 ORDER BY p.created_at DESC LIMIT 50`, [id]),
     db.query(`SELECT COUNT(*)::int AS n FROM race_entries e JOIN races r ON r.id = e.race_id WHERE e.user_id = $1 AND r.finished_at > now() - interval '24 hours'`, [id]),
   ]);
   res.json({
@@ -211,6 +215,31 @@ router.post('/players/:id/consent', async (req, res) => {
   res.json({ ok: true });
 });
 
+/** GET /payments?q= — coin-pack orders, newest first; q: an order number, a player's name or e-mail. */
+router.get('/payments', async (req, res) => {
+  const q = String(req.query.q ?? '').trim().slice(0, 100);
+  const { rows } = await db.query(
+    `SELECT ${PAYMENT_COLUMNS}, u.id AS player_id, u.username AS player,
+            (SELECT COALESCE(sum(r.coins_short), 0)::int FROM payment_refunds r WHERE r.payment_id = p.id) AS coins_short
+       FROM payments p JOIN users u ON u.id = p.user_id
+      WHERE p.order_no IS NOT NULL AND ($1 = '' OR p.order_no ILIKE $1 OR u.username ILIKE $2 OR u.email ILIKE $2)
+      ORDER BY p.created_at DESC LIMIT 200`,
+    [q, q ? `%${q}%` : ''],
+  );
+  res.json({ payments: rows });
+});
+
+/**
+ * POST /payments/:id/refund { reason, amount_cents? } — refund a coin pack (all, or part, in the
+ * currency it was charged in). Stripe refunds the money; its refund event then takes the coins
+ * back (ledger + audit). Test payments are refunded at once.
+ */
+router.post('/payments/:id/refund', async (req, res) => {
+  const id = assertUuid(req.params.id);
+  const body = validate(req.body, { reason: REASON, amount_cents: { type: 'int', min: 1, max: 10_000_000 } });
+  res.json(await paymentsSvc.refund(db, id, { amountCents: body.amount_cents ?? null, adminId: req.admin.id, reason: body.reason }));
+});
+
 /** GET /audit?limit=&action= */
 router.get('/audit', async (req, res) => {
   const limit = Math.min(500, Math.max(1, Number(req.query.limit) || 100));
@@ -232,6 +261,7 @@ router.get('/economy', async (req, res) => {
               COALESCE(SUM(l.amount) FILTER (WHERE l.kind IN ('race', 'finish-bonus', 'daily-goal')), 0)::int AS earned,
               COALESCE(SUM(l.amount) FILTER (WHERE l.kind = 'coin-pack'), 0)::int AS bought,
               COALESCE(-SUM(l.amount) FILTER (WHERE l.kind IN ('purchase', 'bag', 'entry-fee') AND l.amount < 0), 0)::int AS spent,
+              COALESCE(-SUM(l.amount) FILTER (WHERE l.kind = 'pack-refund'), 0)::int AS refunded,
               COALESCE(SUM(l.amount) FILTER (WHERE l.kind = 'admin'), 0)::int AS support,
               (SELECT COUNT(*)::int FROM races r WHERE r.status = 'finished' AND r.finished_at::date = d::date) AS races,
               (SELECT COUNT(DISTINCT e.user_id)::int FROM race_entries e JOIN races r ON r.id = e.race_id

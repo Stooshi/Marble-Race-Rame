@@ -24,7 +24,7 @@ test('coin packs: 5,000 / 10,500 / 27,500 / 57,500 coins for $5 / $10 / $25 / $5
   assert.deepEqual([...payments.PACKS.values()].map((p) => [p.coins, p.amountCents]), [[5000, 500], [10500, 1000], [27500, 2500], [57500, 5000]]);
 });
 
-test('Stripe, App Store and Google Play are placeholders: nothing is charged or recorded', async () => {
+test('without keys, Stripe (and the apps\' stores, still placeholders) charge and record nothing', async () => {
   const client = fakeClient();
   for (const provider of ['stripe', 'apple', 'google']) {
     const r = await payments.checkout(client, 'u1', { productId: 'coins-10500', provider });

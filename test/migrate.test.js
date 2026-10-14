@@ -9,13 +9,14 @@ const schema = fs.readFileSync(SCHEMA_PATH, 'utf8');
 
 test('reads every table and its columns from the schema file', () => {
   const cols = expectedColumns(schema);
-  assert.deepEqual(Object.keys(cols).sort(), ['admin_2fa', 'admin_audit', 'admin_sessions', 'billboards', 'coin_ledger', 'collection_counters', 'data_updates', 'email_consents', 'house_looks', 'marble_appearances', 'marble_colors', 'marble_effects', 'marble_surfaces', 'marbles', 'payments', 'race_entries', 'race_entry_looks', 'race_replays', 'races', 'rooms', 'security_events', 'tracks', 'user_collection', 'user_days', 'user_marbles', 'user_shooter', 'users']);
+  assert.deepEqual(Object.keys(cols).sort(), ['admin_2fa', 'admin_audit', 'admin_sessions', 'billboards', 'coin_ledger', 'collection_counters', 'data_updates', 'email_consents', 'house_looks', 'marble_appearances', 'marble_colors', 'marble_effects', 'marble_surfaces', 'marbles', 'payment_refunds', 'payments', 'race_entries', 'race_entry_looks', 'race_replays', 'races', 'rooms', 'security_events', 'stripe_events', 'tracks', 'user_collection', 'user_days', 'user_marbles', 'user_shooter', 'users']);
   assert.ok(cols.tracks.includes('physics'));
   assert.deepEqual(cols.billboards, ['id', 'track_slug', 'slot', 'image_url', 'kind', 'note', 'starts_at', 'ends_at', 'created_at']);
   assert.ok(cols.race_replays.includes('data'));
   assert.ok(cols.users.includes('password_hash'));
   assert.ok(cols.races.includes('track_snapshot'));
   assert.ok(cols.races.includes('room_id'));
+  for (const c of ['order_no', 'consent_at', 'payment_intent', 'charged_cents', 'refunded_cents', 'receipt_url']) assert.ok(cols.payments.includes(c), c);
   assert.deepEqual(cols.rooms, ['id', 'code', 'host_id', 'track_id', 'current_race_id', 'status', 'created_at', 'last_active_at']);
   assert.ok(cols.race_entries.includes('split_time_ms'));
   // Table-level constraints and their continuation lines are not columns.

@@ -37,6 +37,7 @@ export default function AdminApp() {
         <b className="adm-brand">Marble Spins · back office</b>
         <nav className="adm-nav" aria-label="Back office">
           <NavLink to="/admin/players">Players</NavLink>
+          <NavLink to="/admin/payments">Payments</NavLink>
           <NavLink to="/admin/economy">Economy</NavLink>
           <NavLink to="/admin/emails">Email list</NavLink>
           <NavLink to="/admin/audit">Audit log</NavLink>
@@ -50,6 +51,7 @@ export default function AdminApp() {
           <Route path="/admin" element={<Navigate to="/admin/players" replace />} />
           <Route path="/admin/players" element={<Players />} />
           <Route path="/admin/players/:id" element={<Player />} />
+          <Route path="/admin/payments" element={<Payments />} />
           <Route path="/admin/economy" element={<Economy />} />
           <Route path="/admin/emails" element={<Emails />} />
           <Route path="/admin/audit" element={<Audit />} />
@@ -156,6 +158,73 @@ function Action({ title, children, onSubmit, submit = 'Do it', danger = false })
       <button type="submit" className={`adm-btn ${danger ? 'adm-btn--danger' : 'adm-btn--primary'}`} disabled={busy}>{busy ? '…' : submit}</button>
       {msg && <p className={`adm-msg ${msg.bad ? 'adm-msg--bad' : ''}`}>{msg.text}</p>}
     </form>
+  );
+}
+
+// ── Payments ──────────────────────────────────────────────────────────────
+
+/** An amount in its currency ("10.99 EUR"); `cents` are the currency's smallest unit. */
+const digitsOf = (cur) => { try { return new Intl.NumberFormat('en', { style: 'currency', currency: cur }).resolvedOptions().maximumFractionDigits; } catch { return 2; } };
+const money = (cents, cur) => (cents == null || !cur ? '–' : `${(cents / 10 ** digitsOf(cur)).toFixed(digitsOf(cur))} ${cur.toUpperCase()}`);
+
+/** Coin-pack orders, each with a refund action (Stripe refunds the money; the coins go when Stripe confirms). */
+function PaymentTable({ rows, showPlayer = false, onChanged }) {
+  const [open, setOpen] = useState(null);
+  const [amount, setAmount] = useState('');
+  const pay = rows.find((x) => x.id === open);
+  const cur = pay ? (pay.charged_currency ?? pay.currency) : null;
+  const left = pay ? (pay.charged_cents ?? pay.amount_cents) - pay.refunded_cents : 0;
+  return (
+    <div className="adm-stack">
+      <div className="adm-scroll"><table className="adm-table">
+        <thead><tr><th>Order</th><th>When</th>{showPlayer && <th>Player</th>}<th>Provider</th><th className="num">Coins</th><th className="num">Charged (incl. VAT)</th><th className="num">VAT</th><th className="num">Refunded</th><th>Status</th><th>Receipt</th><th /></tr></thead>
+        <tbody>{rows.map((x) => (
+          <tr key={x.id}>
+            <td><b>{x.order_no ?? '–'}</b></td>
+            <td>{when(x.paid_at ?? x.created_at)}</td>
+            {showPlayer && <td><Link to={`/admin/players/${x.player_id}`}>@{x.player}</Link></td>}
+            <td>{x.provider}</td>
+            <td className="num">{n(x.coins)}</td>
+            <td className="num">{x.charged_cents != null ? money(x.charged_cents, x.charged_currency) : money(x.amount_cents, x.currency)}</td>
+            <td className="num">{x.tax_cents != null ? money(x.tax_cents, x.charged_currency) : '–'}</td>
+            <td className="num">{x.refunded_cents ? money(x.refunded_cents, x.charged_currency ?? x.currency) : '–'}{x.coins_short > 0 && <span className="adm-tag adm-tag--bad" title="Coins already spent when refunded">{n(x.coins_short)} short</span>}</td>
+            <td>{x.status === 'paid' && x.refunded_cents > 0 ? 'part-refunded' : x.status}</td>
+            <td>{x.receipt_url ? <a href={x.receipt_url} target="_blank" rel="noreferrer">receipt</a> : '–'}</td>
+            <td>{x.status === 'paid' && (x.provider === 'stripe' || x.provider === 'test') && <button type="button" className="adm-btn adm-btn--ghost" onClick={() => { setOpen(open === x.id ? null : x.id); setAmount(''); }}>{open === x.id ? 'Close' : 'Refund'}</button>}</td>
+          </tr>
+        ))}</tbody>
+      </table></div>
+      {rows.length === 0 && <p className="adm-muted">No coin packs bought.</p>}
+      {pay && (
+        <Action key={pay.id} title={`Refund ${pay.order_no}`} submit="Refund" danger
+          onSubmit={async (reason) => {
+            const cents = amount.trim() ? Math.round(Number(amount) * 10 ** digitsOf(cur)) : undefined;
+            const r = await adminApi.refund(pay.id, reason, cents);
+            await onChanged?.();
+            return r.waiting ? `Stripe refund ${r.refund.status}. The coins are removed when Stripe confirms it (usually seconds); reload to see.` : `Refunded: ${n(r.removed)} coins removed${r.short ? `, ${n(r.short)} already spent` : ''}.`;
+          }}>
+          <label>Amount in {cur} (empty = all that's left: {money(left, cur)})<input type="number" step="0.01" min="0" value={amount} onChange={(e) => setAmount(e.target.value)} /></label>
+          <p className="adm-muted">The coins from the refunded share are removed (only as many as the player still has) and logged in the coin ledger and the audit log. Stripe emails the player a refund receipt.</p>
+        </Action>
+      )}
+    </div>
+  );
+}
+
+function Payments() {
+  const [q, setQ] = useState('');
+  const [query, setQuery] = useState('');
+  const list = useLoad(() => adminApi.payments(query), [query]);
+  return (
+    <section className="adm-stack">
+      <h1 className="adm-h1">Payments</h1>
+      <form className="adm-row" onSubmit={(e) => { e.preventDefault(); setQuery(q.trim()); }}>
+        <input className="adm-search" placeholder="Order number (MS-1001), player name or email" value={q} onChange={(e) => setQ(e.target.value)} />
+        <button type="submit" className="adm-btn adm-btn--primary">Search</button>
+      </form>
+      <Err error={list.error} />
+      {list.data && <PaymentTable rows={list.data.payments} showPlayer onChanged={list.reload} />}
+    </section>
   );
 }
 
@@ -276,11 +345,7 @@ function Player() {
           <p className="adm-muted">Plain marbles: {marbles.plain.map((m) => m.name).join(', ')}</p>
         </div>
       )}
-      {tab === 'Payments' && (
-        <div className="adm-scroll"><table className="adm-table"><thead><tr><th>When</th><th>Pack</th><th>Provider</th><th className="num">Coins</th><th className="num">Amount</th><th>Status</th></tr></thead>
-          <tbody>{payments.map((x) => <tr key={x.id}><td>{when(x.created_at)}</td><td>{x.product_id}</td><td>{x.provider}</td><td className="num">{n(x.coins)}</td><td className="num">{(x.amount_cents / 100).toFixed(2)} {x.currency}</td><td>{x.status}</td></tr>)}</tbody></table>
-          {payments.length === 0 && <p className="adm-muted">No coin packs bought.</p>}</div>
-      )}
+      {tab === 'Payments' && <PaymentTable rows={payments} onChanged={d.reload} />}
       {tab === 'Security' && (
         <div className="adm-stack">
           <p className="adm-muted">IP addresses are kept {security.ipDays} days for security and fraud checks; after that only the country.</p>
@@ -355,8 +420,8 @@ function Economy() {
             <div><span>News by email</span><b>{n(e.players.email_ok)}</b><small>{n(e.players.suspended)} suspended accounts</small></div>
           </div>
           <Bars rows={e.daily} />
-          <div className="adm-scroll"><table className="adm-table"><thead><tr><th>Day</th><th className="num">Players</th><th className="num">New accounts</th><th className="num">Races</th><th className="num">Earned</th><th className="num">Bought</th><th className="num">Spent</th><th className="num">Support</th></tr></thead>
-            <tbody>{[...e.daily].reverse().map((r) => <tr key={r.day}><td>{String(r.day).slice(0, 10)}</td><td className="num">{n(r.players)}</td><td className="num">{n(r.new_accounts)}</td><td className="num">{n(r.races)}</td><td className="num">{n(r.earned)}</td><td className="num">{n(r.bought)}</td><td className="num">{n(r.spent)}</td><td className="num">{n(r.support)}</td></tr>)}</tbody></table></div>
+          <div className="adm-scroll"><table className="adm-table"><thead><tr><th>Day</th><th className="num">Players</th><th className="num">New accounts</th><th className="num">Races</th><th className="num">Earned</th><th className="num">Bought</th><th className="num">Refunded</th><th className="num">Spent</th><th className="num">Support</th></tr></thead>
+            <tbody>{[...e.daily].reverse().map((r) => <tr key={r.day}><td>{String(r.day).slice(0, 10)}</td><td className="num">{n(r.players)}</td><td className="num">{n(r.new_accounts)}</td><td className="num">{n(r.races)}</td><td className="num">{n(r.earned)}</td><td className="num">{n(r.bought)}</td><td className="num">{n(r.refunded)}</td><td className="num">{n(r.spent)}</td><td className="num">{n(r.support)}</td></tr>)}</tbody></table></div>
           <div className="adm-row adm-row--top">
             <div className="adm-stack" style={{ flex: '1 1 380px', minWidth: 0 }}>
               <b>Marbles sold ({days} d)</b>
@@ -366,7 +431,7 @@ function Economy() {
               <b>Coin packs paid ({days} d)</b>
               <div className="adm-scroll"><table className="adm-table"><thead><tr><th>Pack</th><th>Provider</th><th className="num">Paid</th><th className="num">Amount</th></tr></thead>
                 <tbody>{e.coinPacks.map((p) => <tr key={`${p.product_id}${p.provider}${p.currency}`}><td>{p.product_id}</td><td>{p.provider}</td><td className="num">{n(p.paid)}</td><td className="num">{(p.cents / 100).toFixed(2)} {p.currency}</td></tr>)}</tbody></table>
-                {e.coinPacks.length === 0 && <p className="adm-muted">None yet (payments are switched off).</p>}</div>
+                {e.coinPacks.length === 0 && <p className="adm-muted">None paid in this period.</p>}</div>
             </div>
             <div className="adm-stack" style={{ flex: '1 1 320px', minWidth: 0 }}>
               <b>Possible coin farming (last 7 days)</b>

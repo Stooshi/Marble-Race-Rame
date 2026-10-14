@@ -83,7 +83,7 @@ export default function BagPage() {
         <div style={{ display: 'grid', gap: 6, flex: '1 1 320px' }}>
           <h1 className="ms-h1" style={{ fontFamily: 'var(--ms-cond)', fontWeight: 800 }}>Your Marble Bag</h1>
           <span style={{ color: 'var(--ms-soft)' }}>
-            {ownedCount} of {ITEMS.length} marbles collected · Shooter: {shooterTile ? shooterTile.name : 'your starter'}
+            {ownedCount} of {ITEMS.length} marbles collected · Shooter: {shooterTile ? shooterTile.name : 'your starter'} · <Link to="/purchases">Purchases</Link>
           </span>
         </div>
         <div className="ms-progress" style={{ flex: '1 1 260px' }}>
