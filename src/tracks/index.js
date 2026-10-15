@@ -71,4 +71,5 @@ module.exports = [
   require('./line-clear'),
   require('./combo-drop'),
   require('./the-stack'),
+  require('./block-fortress'),
 ];

@@ -57,6 +57,17 @@
    "side": 1,
    "marbles": 4
   },
+  "block-fortress": {
+   "name": "Block Fortress",
+   "series": "Blocks",
+   "lighting": "day",
+   "v": "852d5c06",
+   "bytes": 14802,
+   "bytes2x": 37672,
+   "t": 10146,
+   "side": 1,
+   "marbles": 1
+  },
   "bobsleigh-run": {
    "name": "Bobsleigh Run",
    "series": "World Tour",
