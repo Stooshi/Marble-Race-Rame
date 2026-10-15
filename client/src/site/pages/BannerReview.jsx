@@ -40,7 +40,7 @@ export default function BannerReview() {
               <b>{b.name}</b>
               <span>{b.series} · <code>{b.slug}</code></span>
               <span>
-                {(b.t / 1000).toFixed(1)} s after GO · {b.side > 0 ? 'right' : 'left'} · {b.marbles} marbles · {kb(b.bytes)} / <a href={`/tracks/${b.slug}@2x.webp?v=${b.v}`} target="_blank" rel="noreferrer">{kb(b.bytes2x)} @2x</a>
+                {(b.t / 1000).toFixed(1)} s after GO · {b.side > 0 ? 'right' : 'left'} · {b.lighting ?? 'day'} · {b.marbles} marbles · {kb(b.bytes)} / <a href={`/tracks/${b.slug}@2x.webp?v=${b.v}`} target="_blank" rel="noreferrer">{kb(b.bytes2x)} @2x</a>
                 {b.leaderHidden && <b style={{ color: 'var(--ms-orange)' }}> · leader hidden</b>}
               </span>
             </div>

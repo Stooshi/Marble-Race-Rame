@@ -11,14 +11,13 @@
  * so every new track gets its picture.
  *
  * Looks only: one race is simulated to have marbles on the track, nothing is stored and no
- * race changes. Same camera style on every track (kitView.banner): a raised three-quarter view
- * behind and beside the leader, in daylight (indoor looks, the pinball parlour and the arcades,
- * keep their own light). A track whose automatic picture isn't good gets its own framing in
+ * race changes. Same camera style on every track (kitView.banner): raised, behind the leading
+ * group, looking on down the track, under the track's own sky (its own lighting preset). A track whose automatic picture isn't good gets its own framing in
  * scripts/track-banners.json:
  *   { "t": ms after GO, "side": 1 | -1 }       a moment and side for the usual camera, or
  *   { "at": 0.12, "back", "beside", "up", "ahead", "rise", "side", "t"? }   the camera set by a
  *       spot on the track (share of the way down), the race when the leader gets there;
- *   "lighting": "own"                            keep the track's own sky (night, sunset…).
+ *   "lighting": "<preset>"                       another of the track's lighting presets than its own.
  */
 const fs = require('node:fs');
 const path = require('node:path');
@@ -36,7 +35,6 @@ const OUT = path.join(CLIENT, 'public', 'tracks');
 const MANIFEST = path.join(CLIENT, 'src', 'shared', 'trackBanners.json');
 const OVERRIDES = path.join(__dirname, 'track-banners.json');
 const SEED = 20261015;
-const INDOOR = ['parlour', 'neon-night', 'synthwave']; // (lit rooms, not skies: they keep their own light)
 
 /** Every track the game has: the physics tracks (not the test ones) and the classic tracks. */
 function allSlugs() {
@@ -68,7 +66,9 @@ function prepare(slug, override = null) {
   if (physics) {
     track = JSON.parse(JSON.stringify(physics));
     const kit = track.physics.kit;
-    if (kit && !INDOOR.includes(kit.lighting) && override?.lighting !== 'own') kit.lighting = 'day';
+    // The track's own sky, always (night, sunset, northern lights…), as its races mostly look;
+    // "lighting": "<preset>" in scripts/track-banners.json picks another of its presets.
+    if (kit && override?.lighting && override.lighting !== 'own') kit.lighting = override.lighting;
     sim = simulatePhysicsRace({ seed: SEED, track: physics, entries, level: 3 });
   } else {
     const classic = realTracks().find((t) => t.slug === slug);
@@ -84,7 +84,7 @@ function prepare(slug, override = null) {
   const winnerMs = Math.min(...sim.results.map((r) => r.finishTimeMs ?? r.finish_time_ms ?? Infinity).filter(Number.isFinite));
   // The moments to try: from a fifth to two thirds of the winner's race.
   const times = [0.2, 0.3, 0.4, 0.5, 0.6, 0.67].map((k) => Math.round((Number.isFinite(winnerMs) ? winnerMs : sim.durationMs * 0.8) * k));
-  return { slug, race: `${slug}.banner-race`, times, name: physics?.name ?? CLASSIC_NAMES[slug] ?? slug, series: seriesOf(physics ?? {}) };
+  return { slug, race: `${slug}.banner-race`, times, name: physics?.name ?? CLASSIC_NAMES[slug] ?? slug, series: seriesOf(physics ?? {}), lighting: track.physics?.kit ? track.physics.kit.lighting || 'day' : 'day' };
 }
 
 function main() {
@@ -112,7 +112,7 @@ function main() {
   for (const r of done) {
     if (r.error) continue;
     const job = jobs.find((j) => j.slug === r.slug);
-    manifest.banners[r.slug] = { name: job.name, series: job.series, v: r.v, bytes: r.bytes, bytes2x: r.bytes2x, t: r.t, side: r.side, marbles: r.seen, ...(r.leaderBlocked && { leaderHidden: true }) };
+    manifest.banners[r.slug] = { name: job.name, series: job.series, lighting: job.lighting, v: r.v, bytes: r.bytes, bytes2x: r.bytes2x, t: r.t, side: r.side, marbles: r.seen, ...(r.leaderBlocked && { leaderHidden: true }) };
   }
   manifest.banners = Object.fromEntries(Object.entries(manifest.banners).sort(([a], [b]) => a.localeCompare(b)));
   fs.writeFileSync(MANIFEST, `${JSON.stringify(manifest, null, 1)}\n`);

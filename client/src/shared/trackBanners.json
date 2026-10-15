@@ -5,6 +5,7 @@
   "amazon-water-run": {
    "name": "Amazon Water Run",
    "series": "World Tour",
+   "lighting": "day",
    "v": "15cecbc5",
    "bytes": 16356,
    "bytes2x": 39736,
@@ -15,6 +16,7 @@
   "arcade-spins": {
    "name": "Arcade Spins",
    "series": "Arcade",
+   "lighting": "neon-night",
    "v": "628f5a32",
    "bytes": 10678,
    "bytes2x": 25334,
@@ -23,8 +25,9 @@
    "marbles": 1
   },
   "are-run": {
-   "name": "\u00c5re Run",
+   "name": "Åre Run",
    "series": "World Tour",
+   "lighting": "night-northern-lights",
    "v": "9c333d21",
    "bytes": 13878,
    "bytes2x": 34222,
@@ -35,6 +38,7 @@
   "aturi-arcade": {
    "name": "Aturi Arcade",
    "series": "Arcade",
+   "lighting": "neon-night",
    "v": "bd839177",
    "bytes": 11200,
    "bytes2x": 27500,
@@ -45,6 +49,7 @@
   "baqueira-beret-run": {
    "name": "Baqueira-Beret Run",
    "series": "World Tour",
+   "lighting": "day",
    "v": "969164dd",
    "bytes": 10890,
    "bytes2x": 26300,
@@ -55,6 +60,7 @@
   "bobsleigh-run": {
    "name": "Bobsleigh Run",
    "series": "World Tour",
+   "lighting": "day",
    "v": "c33b3cc2",
    "bytes": 22516,
    "bytes2x": 51528,
@@ -65,6 +71,7 @@
   "bullet-hell": {
    "name": "Bullet Hell",
    "series": "Arcade",
+   "lighting": "neon-night",
    "v": "d69c0e02",
    "bytes": 13936,
    "bytes2x": 33600,
@@ -75,6 +82,7 @@
   "canyon-drop": {
    "name": "Canyon Drop",
    "series": "Classic",
+   "lighting": "day",
    "v": "00bb4b5a",
    "bytes": 13520,
    "bytes2x": 31880,
@@ -85,6 +93,7 @@
   "checkpoint-rush": {
    "name": "Checkpoint Rush",
    "series": "Arcade",
+   "lighting": "synthwave",
    "v": "600cf8d5",
    "bytes": 15898,
    "bytes2x": 39920,
@@ -95,6 +104,7 @@
   "chiang-mai": {
    "name": "Chiang Mai",
    "series": "Coasters",
+   "lighting": "sunset",
    "v": "c214f0d8",
    "bytes": 13764,
    "bytes2x": 35498,
@@ -105,6 +115,7 @@
   "china-wall-twister": {
    "name": "China Wall Twister",
    "series": "World Tour",
+   "lighting": "day",
    "v": "489dedca",
    "bytes": 17500,
    "bytes2x": 41196,
@@ -115,6 +126,7 @@
   "colca-spin": {
    "name": "Colca Spin",
    "series": "Canyons",
+   "lighting": "day",
    "v": "ad2f2114",
    "bytes": 20868,
    "bytes2x": 49832,
@@ -125,6 +137,7 @@
   "collserola-run": {
    "name": "Collserola Run",
    "series": "Coasters",
+   "lighting": "day",
    "v": "47bda440",
    "bytes": 19916,
    "bytes2x": 49838,
@@ -135,9 +148,10 @@
   "copper-spins": {
    "name": "Copper Spins",
    "series": "Canyons",
-   "v": "d0065e7f",
-   "bytes": 20066,
-   "bytes2x": 45664,
+   "lighting": "sunset",
+   "v": "fe4ba96a",
+   "bytes": 17766,
+   "bytes2x": 41770,
    "t": 16389,
    "side": 1,
    "marbles": 5
@@ -145,9 +159,10 @@
   "cotahuasi-free-fall": {
    "name": "Cotahuasi Free Fall",
    "series": "Canyons",
-   "v": "165b67d1",
-   "bytes": 18394,
-   "bytes2x": 43456,
+   "lighting": "sunset",
+   "v": "e0df8797",
+   "bytes": 16328,
+   "bytes2x": 40412,
    "t": 10655,
    "side": 1,
    "marbles": 4
@@ -155,6 +170,7 @@
   "delhi-red-fort-marble-grand-prix": {
    "name": "Delhi Red Fort Marble Grand Prix",
    "series": "Grand Prix",
+   "lighting": "day",
    "v": "89ad7983",
    "bytes": 21962,
    "bytes2x": 52854,
@@ -165,6 +181,7 @@
   "dubai-marble-grand-prix": {
    "name": "Dubai Marble Grand Prix",
    "series": "Grand Prix",
+   "lighting": "night",
    "v": "b0dfc426",
    "bytes": 18894,
    "bytes2x": 44820,
@@ -175,6 +192,7 @@
   "dubai-twister": {
    "name": "Dubai Twister",
    "series": "World Tour",
+   "lighting": "day",
    "v": "6d745ba3",
    "bytes": 16918,
    "bytes2x": 40622,
@@ -185,9 +203,10 @@
   "elderglade-marble-grand-prix": {
    "name": "Elderglade Marble Grand Prix",
    "series": "Grand Prix",
-   "v": "2263acda",
-   "bytes": 16880,
-   "bytes2x": 40656,
+   "lighting": "sunset",
+   "v": "4bbe3f88",
+   "bytes": 14286,
+   "bytes2x": 34438,
    "t": 10781,
    "side": 1,
    "marbles": 1
@@ -195,6 +214,7 @@
   "final-round-spin": {
    "name": "Final Round Spin",
    "series": "Arcade",
+   "lighting": "neon-night",
    "v": "8e660b59",
    "bytes": 12782,
    "bytes2x": 31992,
@@ -205,6 +225,7 @@
   "fish-river-burst": {
    "name": "Fish River Burst",
    "series": "Canyons",
+   "lighting": "day",
    "v": "7602c4ba",
    "bytes": 22962,
    "bytes2x": 55580,
@@ -215,6 +236,7 @@
   "flipper-spins": {
    "name": "Flipper Spins",
    "series": "Pinball",
+   "lighting": "parlour",
    "v": "2405f46e",
    "bytes": 12450,
    "bytes2x": 30456,
@@ -225,9 +247,10 @@
   "frostmere-marble-grand-prix": {
    "name": "Frostmere Marble Grand Prix",
    "series": "Grand Prix",
-   "v": "01c224d3",
-   "bytes": 16894,
-   "bytes2x": 41236,
+   "lighting": "night-northern-lights",
+   "v": "bc6ff1fc",
+   "bytes": 17614,
+   "bytes2x": 41332,
    "t": 10509,
    "side": 1,
    "marbles": 4
@@ -235,6 +258,7 @@
   "grand-canyon-burst": {
    "name": "Grand Canyon Burst",
    "series": "Canyons",
+   "lighting": "day",
    "v": "01c90c09",
    "bytes": 19898,
    "bytes2x": 48266,
@@ -245,6 +269,7 @@
   "grand-champion": {
    "name": "Grand Champion",
    "series": "Pinball",
+   "lighting": "parlour",
    "v": "867d5797",
    "bytes": 12446,
    "bytes2x": 31026,
@@ -255,9 +280,10 @@
   "greenland-expedition": {
    "name": "Greenland Expedition",
    "series": "World Tour",
-   "v": "bdd17726",
-   "bytes": 10584,
-   "bytes2x": 26752,
+   "lighting": "midnight-sun",
+   "v": "44d2d5fd",
+   "bytes": 9598,
+   "bytes2x": 25336,
    "t": 11371,
    "side": 1,
    "marbles": 4
@@ -265,6 +291,7 @@
   "ha-long-bay-spins": {
    "name": "Ha Long Bay Spins",
    "series": "Coasters",
+   "lighting": "day",
    "v": "81618496",
    "bytes": 15902,
    "bytes2x": 39634,
@@ -275,6 +302,7 @@
   "hells-burst": {
    "name": "Hells Burst",
    "series": "Canyons",
+   "lighting": "day",
    "v": "10fe7694",
    "bytes": 16574,
    "bytes2x": 40624,
@@ -285,6 +313,7 @@
   "hong-kong-crossing": {
    "name": "Hong Kong Crossing",
    "series": "Coasters",
+   "lighting": "day",
    "v": "c9f3ad9b",
    "bytes": 18378,
    "bytes2x": 52434,
@@ -295,6 +324,7 @@
   "indus-spins": {
    "name": "Indus Spins",
    "series": "Canyons",
+   "lighting": "day",
    "v": "42e44bf6",
    "bytes": 21948,
    "bytes2x": 51616,
@@ -305,6 +335,7 @@
   "istanbul-marble-grand-prix": {
    "name": "Istanbul Marble Grand Prix",
    "series": "Grand Prix",
+   "lighting": "day",
    "v": "bd4225be",
    "bytes": 20448,
    "bytes2x": 47020,
@@ -315,6 +346,7 @@
   "joystick-spins": {
    "name": "Joystick Spins",
    "series": "Arcade",
+   "lighting": "neon-night",
    "v": "967f1268",
    "bytes": 12636,
    "bytes2x": 30716,
@@ -325,9 +357,10 @@
   "kali-gandaki-burst": {
    "name": "Kali Gandaki Burst",
    "series": "Canyons",
-   "v": "426fb991",
-   "bytes": 20302,
-   "bytes2x": 51740,
+   "lighting": "sunset",
+   "v": "788aa299",
+   "bytes": 18718,
+   "bytes2x": 47880,
    "t": 9861,
    "side": 1,
    "marbles": 4
@@ -335,6 +368,7 @@
   "kill-screen": {
    "name": "Kill Screen",
    "series": "Arcade",
+   "lighting": "neon-night",
    "v": "99dc3bfd",
    "bytes": 13004,
    "bytes2x": 33232,
@@ -345,6 +379,7 @@
   "kopaonik-spins": {
    "name": "Kopaonik Spins",
    "series": "Coasters",
+   "lighting": "day",
    "v": "2f8614bb",
    "bytes": 16122,
    "bytes2x": 40018,
@@ -355,6 +390,7 @@
   "lagos-marble-grand-prix": {
    "name": "Lagos Marble Grand Prix",
    "series": "Grand Prix",
+   "lighting": "day",
    "v": "2ebd07b9",
    "bytes": 18580,
    "bytes2x": 47112,
@@ -365,6 +401,7 @@
   "meadow-loop": {
    "name": "Meadow Loop",
    "series": "Classic",
+   "lighting": "day",
    "v": "d19d743d",
    "bytes": 14216,
    "bytes2x": 33402,
@@ -375,6 +412,7 @@
   "multiball-manor": {
    "name": "Multiball Manor",
    "series": "Pinball",
+   "lighting": "parlour",
    "v": "1914812f",
    "bytes": 11210,
    "bytes2x": 26622,
@@ -385,6 +423,7 @@
   "nairobi-marble-grand-prix": {
    "name": "Nairobi Marble Grand Prix",
    "series": "Grand Prix",
+   "lighting": "day",
    "v": "39fc8128",
    "bytes": 23132,
    "bytes2x": 54676,
@@ -395,6 +434,7 @@
   "nanjing": {
    "name": "Nanjing",
    "series": "Coasters",
+   "lighting": "sunset",
    "v": "d7bfe1b0",
    "bytes": 13974,
    "bytes2x": 35220,
@@ -405,6 +445,7 @@
   "okavango-park": {
    "name": "Okavango Park",
    "series": "Coasters",
+   "lighting": "day",
    "v": "d69183da",
    "bytes": 17852,
    "bytes2x": 46648,
@@ -415,6 +456,7 @@
   "paris-eiffel-tower-run": {
    "name": "Paris Eiffel Tower Run",
    "series": "World Tour",
+   "lighting": "day",
    "v": "6a1b5771",
    "bytes": 22476,
    "bytes2x": 55022,
@@ -425,6 +467,7 @@
   "park-city-run": {
    "name": "Park City Run",
    "series": "World Tour",
+   "lighting": "day",
    "v": "f2d90606",
    "bytes": 15556,
    "bytes2x": 38180,
@@ -435,6 +478,7 @@
   "phantom-peak": {
    "name": "Phantom Peak",
    "series": "Coasters",
+   "lighting": "sunset",
    "v": "6fff23eb",
    "bytes": 10410,
    "bytes2x": 26160,
@@ -445,6 +489,7 @@
   "portes-du-soleil-run": {
    "name": "Portes du Soleil Run",
    "series": "World Tour",
+   "lighting": "day",
    "v": "defb4761",
    "bytes": 15604,
    "bytes2x": 37080,
@@ -455,6 +500,7 @@
   "pyramid-run": {
    "name": "Pyramid Run",
    "series": "Coasters",
+   "lighting": "sunset",
    "v": "c24fd581",
    "bytes": 10764,
    "bytes2x": 27288,
@@ -465,6 +511,7 @@
   "redwood-forest-run": {
    "name": "Redwood Forest Run",
    "series": "Coasters",
+   "lighting": "day",
    "v": "a1bd6475",
    "bytes": 14238,
    "bytes2x": 35126,
@@ -475,6 +522,7 @@
   "replay": {
    "name": "Replay",
    "series": "Pinball",
+   "lighting": "parlour",
    "v": "f4d09659",
    "bytes": 10704,
    "bytes2x": 25880,
@@ -485,6 +533,7 @@
   "rio-jungle-rumble": {
    "name": "Rio Jungle Rumble",
    "series": "World Tour",
+   "lighting": "day",
    "v": "9f0185a7",
    "bytes": 14876,
    "bytes2x": 34470,
@@ -495,6 +544,7 @@
   "sahara-marble-grand-prix": {
    "name": "Sahara Marble Grand Prix",
    "series": "Grand Prix",
+   "lighting": "day",
    "v": "7bcf8f28",
    "bytes": 20478,
    "bytes2x": 48638,
@@ -505,6 +555,7 @@
   "san-francisco": {
    "name": "San Francisco",
    "series": "World Tour",
+   "lighting": "day",
    "v": "02382dae",
    "bytes": 22544,
    "bytes2x": 52376,
@@ -515,6 +566,7 @@
   "slingshot-spins": {
    "name": "Slingshot Spins",
    "series": "Pinball",
+   "lighting": "parlour",
    "v": "80b72283",
    "bytes": 11316,
    "bytes2x": 26774,
@@ -525,6 +577,7 @@
   "sognefjord": {
    "name": "Sognefjord",
    "series": "Coasters",
+   "lighting": "day",
    "v": "42a5dc82",
    "bytes": 16472,
    "bytes2x": 43526,
@@ -535,6 +588,7 @@
   "stockholm-marble-grand-prix": {
    "name": "Stockholm Marble Grand Prix",
    "series": "Grand Prix",
+   "lighting": "day",
    "v": "93a6a2fc",
    "bytes": 19284,
    "bytes2x": 45236,
@@ -545,6 +599,7 @@
   "sydney-marble-grand-prix": {
    "name": "Sydney Marble Grand Prix",
    "series": "Grand Prix",
+   "lighting": "day",
    "v": "546e9f11",
    "bytes": 17792,
    "bytes2x": 43696,
@@ -555,6 +610,7 @@
   "table-mountain-run": {
    "name": "Table Mountain Run",
    "series": "World Tour",
+   "lighting": "day",
    "v": "45daaff5",
    "bytes": 19924,
    "bytes2x": 47342,
@@ -565,6 +621,7 @@
   "tara-river-spins": {
    "name": "Tara River Spins",
    "series": "Canyons",
+   "lighting": "day",
    "v": "10e5d191",
    "bytes": 16632,
    "bytes2x": 39972,
@@ -575,6 +632,7 @@
   "tilt": {
    "name": "Tilt",
    "series": "Pinball",
+   "lighting": "parlour",
    "v": "81658ac3",
    "bytes": 12756,
    "bytes2x": 31534,
@@ -585,6 +643,7 @@
   "volcano-run": {
    "name": "Volcano Run",
    "series": "Classic",
+   "lighting": "day",
    "v": "13c1fa85",
    "bytes": 11154,
    "bytes2x": 26218,
@@ -595,6 +654,7 @@
   "whistler-spins": {
    "name": "Whistler Spins",
    "series": "Coasters",
+   "lighting": "day",
    "v": "a21215d1",
    "bytes": 14424,
    "bytes2x": 34556,
@@ -605,6 +665,7 @@
   "wizard-mode": {
    "name": "Wizard Mode",
    "series": "Pinball",
+   "lighting": "parlour",
    "v": "ecb3447c",
    "bytes": 10854,
    "bytes2x": 26286,
@@ -615,9 +676,10 @@
   "wyrmwood-hollow-marble-grand-prix": {
    "name": "Wyrmwood Hollow Marble Grand Prix",
    "series": "Grand Prix",
-   "v": "12bd6159",
-   "bytes": 18862,
-   "bytes2x": 45954,
+   "lighting": "sunset",
+   "v": "f0e0993f",
+   "bytes": 15904,
+   "bytes2x": 38826,
    "t": 10333,
    "side": 1,
    "marbles": 4
@@ -625,6 +687,7 @@
   "yarlung-tsangpo-spins": {
    "name": "Yarlung Tsangpo Spins",
    "series": "Canyons",
+   "lighting": "day",
    "v": "df457d12",
    "bytes": 19930,
    "bytes2x": 46788,

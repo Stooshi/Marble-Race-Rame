@@ -16,23 +16,5 @@
   "up": 10,
   "ahead": 45,
   "rise": -12
- },
- "dubai-marble-grand-prix": {
-  "lighting": "own"
- },
- "are-run": {
-  "lighting": "own"
- },
- "phantom-peak": {
-  "lighting": "own"
- },
- "pyramid-run": {
-  "lighting": "own"
- },
- "chiang-mai": {
-  "lighting": "own"
- },
- "nanjing": {
-  "lighting": "own"
  }
 }

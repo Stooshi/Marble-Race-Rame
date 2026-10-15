@@ -44,6 +44,14 @@ describe('track pictures', () => {
     expect(bannerSrc(slug).srcSet).toContain(`@2x.webp?v=${b.v} 2x`);
   });
 
+  it('every picture shows its track\'s own sky (its own lighting, unless scripts/track-banners.json picks another)', () => {
+    const overrides = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../../scripts/track-banners.json'), 'utf8'));
+    for (const t of PHYSICS_TRACKS.filter((x) => manifest.banners[x.slug])) {
+      const want = overrides[t.slug]?.lighting ?? t.physics.kit?.lighting ?? 'day';
+      expect(manifest.banners[t.slug].lighting, t.slug).toBe(want);
+    }
+  });
+
   it('no picture without a track', () => {
     const files = fs.readdirSync(DIR).filter((f) => f.endsWith('.webp')).map((f) => f.replace(/(@2x)?\.webp$/, ''));
     expect([...new Set(files)].filter((s) => !every.includes(s))).toEqual([]);

@@ -420,14 +420,14 @@ with a pass or fail beside each line and what to fix at the top:
   (`scripts/track-banners.js <slug>`; `--skip-banner` leaves it out). It writes
   `client/public/tracks/<slug>.webp` (640×360, under 40 kB) and `@2x` (1280×720), and adds
   the track to `client/src/shared/trackBanners.json`; commit all three. The same camera on
-  every track: raised, behind the leading group, looking on down the track, in daylight
-  (the pinball parlour and the arcades keep their own light), no billboards. If the picture
+  every track: raised, behind the leading group, looking on down the track, under the
+  track's own sky (its own `lighting`: night, sunset, northern lights…), no billboards. If the picture
   isn't good, give the track a moment and a side in `scripts/track-banners.json`
   (`{ "<slug>": { "t": 24000, "side": -1 } }`), or a camera of its own set by a spot on the
   track (`{ "at": 0.25, "back": 20, "beside": 14, "side": -1, "up": 10, "ahead": 45, "rise": -12 }`;
   `at` 1 and a negative `back` frame what lies past the finish, e.g. a pinball table's
-  flippers), and run it again. `"lighting": "own"` keeps a night or sunset track's own sky. A client test fails while
-  a track has no picture.
+  flippers), and run it again. A client test fails while a track has no picture, or a
+  picture isn't under its track's own sky (`"lighting": "<preset>"` there picks another of its presets).
 
 ## Before a track goes live
 
