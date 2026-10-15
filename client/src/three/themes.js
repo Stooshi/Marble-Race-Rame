@@ -5,6 +5,7 @@
  * the theme's `scenery` key, see ./scenery.
  */
 import { lightingOverride, withPreset } from './lighting';
+import { BLOCK_WORLDS } from './scenery/blocks';
 
 export const DEFAULT_THEME = {
   sky: { top: '#5fb4ff', horizon: '#d6f0ff', glow: null },
@@ -71,7 +72,11 @@ export function themeFor(slug, track = null) {
   if (kit) {
     const biome = KIT_LOOKS[kit.biome] ? kit.biome : KIT_BIOME[kit.surface] ?? 'meadow';
     const lighting = lightingOverride(kit) ?? kit.lighting ?? 'day';
-    return withPreset({ ...DEFAULT_THEME, ...KIT_LOOKS[biome], scenery: 'kit' }, lighting);
+    const look = KIT_LOOKS[biome];
+    // A Block Series world: the ground far out in the world's own colour.
+    const world = kit.block ? BLOCK_WORLDS[kit.block.world] : null;
+    const ground = world ? { ...look.ground, color: world.floor } : look.ground;
+    return withPreset({ ...DEFAULT_THEME, ...look, ground, scenery: 'kit' }, lighting);
   }
   const own = THEMES[slug];
   if (!own) return DEFAULT_THEME;

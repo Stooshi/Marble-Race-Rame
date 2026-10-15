@@ -669,6 +669,7 @@ const HIDDEN_KIT_TRACKS = [
   ['voxel-peaks', '2027-01-18-add-voxel-peaks.sql', 'Voxel Peaks, Block Series track 3: snowy mountains of cubes, out on tall block pillars over the cube cliffs and down a spiral round a cube peak to a cabin in the snow.'],
   ['deep-mine', '2027-01-19-add-deep-mine.sql', 'Deep Mine, Block Series track 4: underground in a mine of stone blocks, lit by lamps and glowing gem seams, along the cart rails and down the shaft to the cart depot.'],
   ['magma-core', '2027-01-20-add-magma-core.sql', 'Magma Core, Block Series track 5: a dark cave of basalt blocks over glowing magma, lit only by the lava, past lava falls and round a basalt spire.'],
+  ['line-clear', '2027-01-21-add-line-clear.sql', 'Line Clear, Block Series track 6: a calm plain of coloured blocks, where walls of block rows beside the track clear their full rows with a flash as the pack passes.'],
 ];
 for (const [slug, file, note] of HIDDEN_KIT_TRACKS) {
   test(`${slug} is added by its data update, switched off, exactly as its track file builds it`, () => {

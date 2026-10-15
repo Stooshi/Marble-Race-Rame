@@ -21,46 +21,46 @@ import { merge, piece, smoothstep } from './parts';
 const T = (x, y, z, sx = 1, sy = 1, sz = 1, yaw = 0) => new Matrix4().compose(new Vector3(x, y, z), new Quaternion().setFromAxisAngle(new Vector3(0, 1, 0), yaw), new Vector3(sx, sy, sz));
 const cube = (w, h, d, x, y, z, colour, yaw = 0) => piece(new BoxGeometry(w, h, d), colour, T(x, y, z, 1, 1, 1, yaw));
 
-/** The worlds. tops: the two tones of level land; riser: a terrace's face; deep: the land far below. */
+/** The worlds. tops: the two tones of level land; riser: a terrace's face; deep: the land far below; floor: the world's ground far out. */
 export const BLOCK_WORLDS = {
   // Spawn Point: a calm cube meadow at dawn.
   meadow: {
-    tops: ['#86b665', '#79a95b'], riser: '#8c6c4b', deep: '#6d6660', bank: '#82b162', fill: '#8c6c4b', hills: 24, step: 3,
+    tops: ['#86b665', '#79a95b'], riser: '#8c6c4b', deep: '#6d6660', floor: '#79a95b', bank: '#82b162', fill: '#8c6c4b', hills: 24, step: 3,
     dressing: [['tree', 0.45], ['bush', 0.25], ['flowers', 0.2], ['rock', 0.1]],
   },
   // Speedrun Valley: wide cube hills, a little warmer.
   valley: {
-    tops: ['#97bd68', '#88b05d'], riser: '#9a7a52', deep: '#6f6a5e', bank: '#8eb663', fill: '#9a7a52', hills: 34, step: 4,
+    tops: ['#97bd68', '#88b05d'], riser: '#9a7a52', deep: '#6f6a5e', floor: '#88b05d', bank: '#8eb663', fill: '#9a7a52', hills: 34, step: 4,
     dressing: [['tree', 0.5], ['bush', 0.3], ['rock', 0.2]],
   },
   // Voxel Peaks: snowy cube mountains.
   snow: {
-    tops: ['#eef3f7', '#e1e8ef'], riser: '#7f8995', deep: '#69737f', bank: '#eaf0f5', fill: '#7f8995', hills: 46, step: 4,
+    tops: ['#eef3f7', '#e1e8ef'], riser: '#7f8995', deep: '#69737f', floor: '#e1e8ef', bank: '#eaf0f5', fill: '#7f8995', hills: 46, step: 4,
     dressing: [['snowPine', 0.6], ['snowRock', 0.4]],
   },
   // Deep Mine: dark stone underground, gem seams.
   mine: {
-    tops: ['#5c6067', '#53575e'], riser: '#3f424a', deep: '#2f3238', bank: '#575b62', fill: '#3f424a', hills: 30, step: 3,
+    tops: ['#5c6067', '#53575e'], riser: '#3f424a', deep: '#2f3238', floor: '#2f3238', bank: '#575b62', fill: '#3f424a', hills: 30, step: 3,
     dressing: [['darkRock', 0.5], ['gems', 0.25], ['pillar', 0.25]],
   },
   // Magma Core: dark basalt over glowing magma.
   magma: {
-    tops: ['#3b3335', '#342d2f'], riser: '#241f21', deep: '#1c1718', bank: '#3a3234', fill: '#241f21', hills: 28, step: 3,
+    tops: ['#3b3335', '#342d2f'], riser: '#241f21', deep: '#1c1718', floor: '#1c1718', bank: '#3a3234', fill: '#241f21', hills: 28, step: 3,
     dressing: [['basalt', 0.55], ['darkRock', 0.3], ['embers', 0.15]],
   },
   // Line Clear and Combo Drop: a calm tiled plain, slate blue, our own block pieces on it.
   puzzle: {
-    tops: ['#3e4c61', '#37445a'], riser: '#2a3447', deep: '#222a3a', bank: '#3b485d', fill: '#2a3447', hills: 14, step: 2,
+    tops: ['#62718b', '#596880'], riser: '#424e67', deep: '#36405a', floor: '#36405a', bank: '#5e6d87', fill: '#424e67', hills: 14, step: 2,
     dressing: [['pieces', 0.45], ['pieceStack', 0.3], ['pillar', 0.25]],
   },
   // Block Fortress: green hills round a stone castle.
   fortress: {
-    tops: ['#7fa85d', '#739c54'], riser: '#837a6f', deep: '#625c55', bank: '#7ba45a', fill: '#837a6f', hills: 24, step: 3,
+    tops: ['#7fa85d', '#739c54'], riser: '#837a6f', deep: '#625c55', floor: '#739c54', bank: '#7ba45a', fill: '#837a6f', hills: 24, step: 3,
     dressing: [['tree', 0.45], ['stoneRock', 0.35], ['bush', 0.2]],
   },
   // Final Level: a dusk-blue world round a glowing portal.
   portal: {
-    tops: ['#2e3453', '#292e4b'], riser: '#1d2038', deep: '#15182b', bank: '#2c3150', fill: '#1d2038', hills: 20, step: 3,
+    tops: ['#2e3453', '#292e4b'], riser: '#1d2038', deep: '#15182b', floor: '#15182b', bank: '#2c3150', fill: '#1d2038', hills: 20, step: 3,
     dressing: [['crystal', 0.35], ['pillar', 0.35], ['pieceStack', 0.3]],
   },
 };

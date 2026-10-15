@@ -16,7 +16,7 @@ describe('Block Series worlds', () => {
   it('every world the track kit names has its colours and dressing here', () => {
     expect(Object.keys(BLOCK_WORLDS).sort()).toEqual([...parts.BLOCK_WORLDS].sort());
     for (const [key, w] of Object.entries(BLOCK_WORLDS)) {
-      for (const c of [...w.tops, w.riser, w.deep, w.bank, w.fill]) expect(c, key).toMatch(/^#[0-9a-f]{6}$/);
+      for (const c of [...w.tops, w.riser, w.deep, w.floor, w.bank, w.fill]) expect(c, key).toMatch(/^#[0-9a-f]{6}$/);
       expect(blockDressing(key).reduce((a, [, share]) => a + share, 0), key).toBeCloseTo(1, 5);
       for (const [make] of blockDressing(key)) for (const lite of [false, true]) expect(make(lite).getAttribute('color'), key).toBeTruthy();
     }

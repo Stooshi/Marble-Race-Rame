@@ -68,4 +68,5 @@ module.exports = [
   require('./voxel-peaks'),
   require('./deep-mine'),
   require('./magma-core'),
+  require('./line-clear'),
 ];

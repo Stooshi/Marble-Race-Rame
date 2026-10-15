@@ -409,6 +409,17 @@
    "side": 1,
    "marbles": 1
   },
+  "line-clear": {
+   "name": "Line Clear",
+   "series": "Blocks",
+   "lighting": "day",
+   "v": "e073ec19",
+   "bytes": 13378,
+   "bytes2x": 31776,
+   "t": 10360,
+   "side": 1,
+   "marbles": 4
+  },
   "magma-core": {
    "name": "Magma Core",
    "series": "Blocks",
