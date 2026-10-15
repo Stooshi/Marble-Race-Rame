@@ -21,6 +21,7 @@
 | Add a new track | `src/tracks/README.md` (the kit guide), then `scripts/physics-track-sql.js` and a data update |
 | Fix sound or music | `client/src/sound/engine.js` (the race's sound: countdown beeps, one race track, the ceremony song), `client/src/sound/settings.js`, files in `client/public/audio/`; the race page calls `raceCountdown`/`raceGo`/`raceCeremony`/`raceEnd` (`pages/Race.jsx`, `components/LiveRaceViewer3D.jsx`, `components/RaceViewer.jsx`) |
 | Change legal text | `client/src/site/pages/LegalPage.jsx` |
+| Redo a track's picture in the track picker | `node scripts/track-banners.js <slug>` (a moment and side in `scripts/track-banners.json` if the automatic one isn't good); review at `/preview/banners`; switch the pictures on with `enabled` in `client/src/shared/trackBanners.json` |
 | Change a Help Centre answer, or the search's synonyms | `client/src/site/help/faq.js` (texts from the project doc `claude/help-faq-draft.md`; numbers come from the settings files), `client/src/site/help/search.js` (`SYNONYMS`) |
 | Change an email's text | `src/email/templates.js` |
 | Fix the contact form or the support inbox | `client/src/site/help/ContactForm.jsx`, `src/routes/support.js`, `src/support/index.js`, `src/routes/admin.js` (`/support…`); categories and limits in `client/src/shared/support.json` |
@@ -177,6 +178,7 @@ Defined in `src/sockets/index.js`. The client may send a JWT in `auth.token`; an
 | `node scripts/variety-table.js [--matrix]` | How alike the tracks are |
 | `node scripts/start-looks.js` | Records how each start looks (first 3 seconds) |
 | `node scripts/dump-kit-track.js <slug>` | Writes a track for the development kit view (`client/dev/kit-view.html`) |
+| `node scripts/track-banners.js <slug…> \| --all \| --missing` | The track picker's pictures: each track drawn from its own scene in a headless browser (`client/report/banners.mjs`, `kitView.banner` in `client/dev/kitView.js`), saved as WebP in `client/public/tracks/`, listed in `client/src/shared/trackBanners.json`. Looks only: one race is simulated to put marbles on the track; nothing is stored. The track report runs it for its track |
 | `bash scripts/convert-audio.sh` | Converts `music-inbox/` into small Opus and AAC files in `client/public/audio/` (`race-1`…`race-8`, `ceremony`, `start-beeps`, and the three race sounds; `SKIP_EFFECTS=1` leaves the race sounds alone), levelled with one steady gain per file so loops match |
 | `npm run db:migrate` | Runs the same schema and data-update step as server start |
 
@@ -205,7 +207,7 @@ Defined in `src/sockets/index.js`. The client may send a JWT in `auth.token`; an
 | `vite.config.js`, `vercel.json` | Build settings. `vercel.json` sends every route to `index.html` and adds `noindex` headers on `/admin` |
 | `.vercelignore` | Keeps the app projects out of Vercel uploads |
 | `index.html` | The single page: meta, canonical and Open Graph tags |
-| `public/` | `marble.svg`, `robots.txt`, `sitemap.xml`, `audio/` |
+| `public/` | `marble.svg`, `robots.txt`, `sitemap.xml`, `audio/`, `tracks/` (the track pictures, `<slug>.webp` and `<slug>@2x.webp`) |
 | `capacitor.config.json` | App id, name, splash and status-bar settings |
 | `ios/`, `android/` | The native app projects (see "Apps" below) |
 | `assets/` | Source images for the app icons and splash screens |
@@ -238,7 +240,7 @@ Defined in `src/sockets/index.js`. The client may send a JWT in `auth.token`; an
   - `Home` (lobby), `Race` (lobby, countdown, live), `Results`, `Dashboard`;
   - the previews `TrackPreview3D`, `Replay3D`, `PhysicsPreview`.
 - `site/`: the Marble Spins website:
-  - `SiteHeader.jsx`, `SiteFooter.jsx`, `Logo.jsx`, `SoundControl.jsx`, `canonical.js`;
+  - `SiteHeader.jsx`, `SiteFooter.jsx`, `Logo.jsx`, `SoundControl.jsx`, `canonical.js`, `TrackBanner.jsx` (a track's picture on its picker card: lazy-loaded, over the series gradient, which stays when a picture is missing or still loading; `SERIES_PIC`);
   - `landing/` (landing page, 3D hero replay);
   - `marbles/` (badge, 3D turntable, certificate, `useCollection`);
   - `payments/index.js` (Stripe on the web, app-store placeholder);
@@ -250,6 +252,7 @@ Defined in `src/sockets/index.js`. The client may send a JWT in `auth.token`; an
   - `OfflineScreen.jsx` (links to the Help Centre; on `/help` itself it shrinks to a bar so the answers stay readable offline).
 - `shared/`: data and code **shared with the server**:
   - `economy.json`;
+  - `trackBanners.json` (the track pictures: `enabled` in the picker, and per track its version, sizes, name and series);
   - `support.json` (contact-form categories and limits, checked by the server too);
   - `payments/packs.json`, `payments/consent.json`;
   - `marbles/catalog.json`;
@@ -285,7 +288,7 @@ Defined in `src/sockets/index.js`. The client may send a JWT in `auth.token`; an
 | `/help`, `/help#<question-slug>` | Help Centre: every question has its own link (the slug is the question in lowercase with dashes, e.g. `/help#i-forgot-my-password`); `#contact` is the contact form. Linked from the header, footer, Settings, shop, checkout, Purchases, the offline screen, the error box and the 404 page |
 | `/dashboard`, `/profile/:userId` | Dashboard and public profiles |
 | `/race/:raceId`, `/results/:raceId` | Live race and results |
-| `/preview/3d`, `/preview/3d/race/:raceId`, `/preview/marbles`, `/preview/marbles/compare`, `/preview/marbles/roll`, `/preview/physics` | Preview and check pages (not linked) |
+| `/preview/3d`, `/preview/3d/race/:raceId`, `/preview/marbles`, `/preview/marbles/compare`, `/preview/marbles/roll`, `/preview/physics`, `/preview/banners` | Preview and check pages (not linked); `/preview/banners`: every track picture as a picker card, for review |
 | `/admin/*` | Back office: Players, Player detail (tabs: Coins, Races, Marbles, Payments, Messages, Security, Emails, Audit), Payments, Support messages (`/admin/support`, `/admin/support/:id`), Economy, Email list, Audit log |
 
 ### 3D: `client/src/three/`
@@ -330,7 +333,7 @@ Defined in `src/sockets/index.js`. The client may send a JWT in `auth.token`; an
   - `grandPrix`, `lighting`, `billboards`, `costumes`;
   - `clearTrack`, `sceneFingerprints`.
 - **Marbles:** `marbleLooks`, `marbleQuality` (every look against its shop picture).
-- **Other:** `finishShow`, `confetti`, `utils`, `sound`, `appShell`, `staleCode`, `canonical`, `help` (the Help Centre's texts, numbers from the settings files, placeholders kept, the search).
+- **Other:** `finishShow`, `confetti`, `utils`, `sound`, `appShell`, `staleCode`, `canonical`, `trackBanners` (every track has a picture, both sizes, under 40 kB), `help` (the Help Centre's texts, numbers from the settings files, placeholders kept, the search).
 
 ## Known stale comments
 

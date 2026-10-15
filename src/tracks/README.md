@@ -416,6 +416,15 @@ with a pass or fail beside each line and what to fix at the top:
   level, no jumps, its marble never inside the ice.
 - **Drawing load** through a race and the **fixed screenshots**, from a headless
   browser (needs Chromium; its frame rate means nothing).
+- **Picture**: the track picker's picture, rendered from the track's own scene
+  (`scripts/track-banners.js <slug>`; `--skip-banner` leaves it out). It writes
+  `client/public/tracks/<slug>.webp` (640×360, under 40 kB) and `@2x` (1280×720), and adds
+  the track to `client/src/shared/trackBanners.json`; commit all three. The same camera on
+  every track: raised, behind the leading group, looking on down the track, in daylight
+  (the pinball parlour and the arcades keep their own light), no billboards. If the picture
+  isn't good, give the track a moment and a side in `scripts/track-banners.json`
+  (`{ "<slug>": { "t": 24000, "side": -1 } }`) and run it again. A client test fails while
+  a track has no picture.
 
 ## Before a track goes live
 

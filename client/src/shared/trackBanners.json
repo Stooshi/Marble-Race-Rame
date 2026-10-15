@@ -1,0 +1,636 @@
+{
+ "note": "The track picker's pictures (client/public/tracks/<slug>.webp and @2x), written by scripts/track-banners.js. enabled: shown in the track picker (false: only on /preview/banners). v: changes with the picture, so browsers fetch a new one.",
+ "enabled": false,
+ "banners": {
+  "amazon-water-run": {
+   "name": "Amazon Water Run",
+   "series": "World Tour",
+   "v": "15cecbc5",
+   "bytes": 16356,
+   "bytes2x": 39736,
+   "t": 15597,
+   "side": -1,
+   "marbles": 5
+  },
+  "arcade-spins": {
+   "name": "Arcade Spins",
+   "series": "Arcade",
+   "v": "628f5a32",
+   "bytes": 10678,
+   "bytes2x": 25334,
+   "t": 10226,
+   "side": 1,
+   "marbles": 1
+  },
+  "are-run": {
+   "name": "Åre Run",
+   "series": "World Tour",
+   "v": "6206a7ff",
+   "bytes": 12482,
+   "bytes2x": 30606,
+   "t": 11374,
+   "side": 1,
+   "marbles": 4
+  },
+  "aturi-arcade": {
+   "name": "Aturi Arcade",
+   "series": "Arcade",
+   "v": "bd839177",
+   "bytes": 11200,
+   "bytes2x": 27500,
+   "t": 9591,
+   "side": 1,
+   "marbles": 4
+  },
+  "baqueira-beret-run": {
+   "name": "Baqueira-Beret Run",
+   "series": "World Tour",
+   "v": "969164dd",
+   "bytes": 10890,
+   "bytes2x": 26300,
+   "t": 10322,
+   "side": 1,
+   "marbles": 4
+  },
+  "bobsleigh-run": {
+   "name": "Bobsleigh Run",
+   "series": "World Tour",
+   "v": "c33b3cc2",
+   "bytes": 22516,
+   "bytes2x": 51528,
+   "t": 28060,
+   "side": -1,
+   "marbles": 5
+  },
+  "bullet-hell": {
+   "name": "Bullet Hell",
+   "series": "Arcade",
+   "v": "d69c0e02",
+   "bytes": 13936,
+   "bytes2x": 33600,
+   "t": 9873,
+   "side": 1,
+   "marbles": 1
+  },
+  "canyon-drop": {
+   "name": "Canyon Drop",
+   "series": "Classic",
+   "v": "00bb4b5a",
+   "bytes": 13520,
+   "bytes2x": 31880,
+   "t": 10637,
+   "side": 1,
+   "marbles": 9
+  },
+  "checkpoint-rush": {
+   "name": "Checkpoint Rush",
+   "series": "Arcade",
+   "v": "600cf8d5",
+   "bytes": 15898,
+   "bytes2x": 39920,
+   "t": 9539,
+   "side": 1,
+   "marbles": 5
+  },
+  "chiang-mai": {
+   "name": "Chiang Mai",
+   "series": "Coasters",
+   "v": "a3fd798a",
+   "bytes": 17280,
+   "bytes2x": 44182,
+   "t": 10512,
+   "side": 1,
+   "marbles": 5
+  },
+  "china-wall-twister": {
+   "name": "China Wall Twister",
+   "series": "World Tour",
+   "v": "489dedca",
+   "bytes": 17500,
+   "bytes2x": 41196,
+   "t": 10711,
+   "side": 1,
+   "marbles": 4
+  },
+  "colca-spin": {
+   "name": "Colca Spin",
+   "series": "Canyons",
+   "v": "ad2f2114",
+   "bytes": 20868,
+   "bytes2x": 49832,
+   "t": 10214,
+   "side": -1,
+   "marbles": 4
+  },
+  "collserola-run": {
+   "name": "Collserola Run",
+   "series": "Coasters",
+   "v": "47bda440",
+   "bytes": 19916,
+   "bytes2x": 49838,
+   "t": 10842,
+   "side": -1,
+   "marbles": 4
+  },
+  "copper-spins": {
+   "name": "Copper Spins",
+   "series": "Canyons",
+   "v": "d0065e7f",
+   "bytes": 20066,
+   "bytes2x": 45664,
+   "t": 16389,
+   "side": 1,
+   "marbles": 5
+  },
+  "cotahuasi-free-fall": {
+   "name": "Cotahuasi Free Fall",
+   "series": "Canyons",
+   "v": "165b67d1",
+   "bytes": 18394,
+   "bytes2x": 43456,
+   "t": 10655,
+   "side": 1,
+   "marbles": 4
+  },
+  "delhi-red-fort-marble-grand-prix": {
+   "name": "Delhi Red Fort Marble Grand Prix",
+   "series": "Grand Prix",
+   "v": "89ad7983",
+   "bytes": 21962,
+   "bytes2x": 52854,
+   "t": 9393,
+   "side": 1,
+   "marbles": 1
+  },
+  "dubai-marble-grand-prix": {
+   "name": "Dubai Marble Grand Prix",
+   "series": "Grand Prix",
+   "v": "9729c1d0",
+   "bytes": 22348,
+   "bytes2x": 52194,
+   "t": 9381,
+   "side": 1,
+   "marbles": 1
+  },
+  "dubai-twister": {
+   "name": "Dubai Twister",
+   "series": "World Tour",
+   "v": "6d745ba3",
+   "bytes": 16918,
+   "bytes2x": 40622,
+   "t": 9851,
+   "side": 1,
+   "marbles": 1
+  },
+  "elderglade-marble-grand-prix": {
+   "name": "Elderglade Marble Grand Prix",
+   "series": "Grand Prix",
+   "v": "2263acda",
+   "bytes": 16880,
+   "bytes2x": 40656,
+   "t": 10781,
+   "side": 1,
+   "marbles": 1
+  },
+  "final-round-spin": {
+   "name": "Final Round Spin",
+   "series": "Arcade",
+   "v": "8e660b59",
+   "bytes": 12782,
+   "bytes2x": 31992,
+   "t": 10617,
+   "side": 1,
+   "marbles": 4
+  },
+  "fish-river-burst": {
+   "name": "Fish River Burst",
+   "series": "Canyons",
+   "v": "7602c4ba",
+   "bytes": 22962,
+   "bytes2x": 55580,
+   "t": 15469,
+   "side": 1,
+   "marbles": 5
+  },
+  "flipper-spins": {
+   "name": "Flipper Spins",
+   "series": "Pinball",
+   "v": "e94931f3",
+   "bytes": 10936,
+   "bytes2x": 26856,
+   "t": 8597,
+   "side": -1,
+   "marbles": 4
+  },
+  "frostmere-marble-grand-prix": {
+   "name": "Frostmere Marble Grand Prix",
+   "series": "Grand Prix",
+   "v": "01c224d3",
+   "bytes": 16894,
+   "bytes2x": 41236,
+   "t": 10509,
+   "side": 1,
+   "marbles": 4
+  },
+  "grand-canyon-burst": {
+   "name": "Grand Canyon Burst",
+   "series": "Canyons",
+   "v": "01c90c09",
+   "bytes": 19898,
+   "bytes2x": 48266,
+   "t": 10148,
+   "side": 1,
+   "marbles": 4
+  },
+  "grand-champion": {
+   "name": "Grand Champion",
+   "series": "Pinball",
+   "v": "867d5797",
+   "bytes": 12446,
+   "bytes2x": 31026,
+   "t": 10618,
+   "side": 1,
+   "marbles": 4
+  },
+  "greenland-expedition": {
+   "name": "Greenland Expedition",
+   "series": "World Tour",
+   "v": "bdd17726",
+   "bytes": 10584,
+   "bytes2x": 26752,
+   "t": 11371,
+   "side": 1,
+   "marbles": 4
+  },
+  "ha-long-bay-spins": {
+   "name": "Ha Long Bay Spins",
+   "series": "Coasters",
+   "v": "81618496",
+   "bytes": 15902,
+   "bytes2x": 39634,
+   "t": 10763,
+   "side": 1,
+   "marbles": 1
+  },
+  "hells-burst": {
+   "name": "Hells Burst",
+   "series": "Canyons",
+   "v": "10fe7694",
+   "bytes": 16574,
+   "bytes2x": 40624,
+   "t": 10573,
+   "side": 1,
+   "marbles": 5
+  },
+  "hong-kong-crossing": {
+   "name": "Hong Kong Crossing",
+   "series": "Coasters",
+   "v": "c9f3ad9b",
+   "bytes": 18378,
+   "bytes2x": 52434,
+   "t": 9344,
+   "side": -1,
+   "marbles": 6
+  },
+  "indus-spins": {
+   "name": "Indus Spins",
+   "series": "Canyons",
+   "v": "1b655038",
+   "bytes": 19308,
+   "bytes2x": 45574,
+   "t": 34451,
+   "side": 1,
+   "marbles": 4
+  },
+  "istanbul-marble-grand-prix": {
+   "name": "Istanbul Marble Grand Prix",
+   "series": "Grand Prix",
+   "v": "bd4225be",
+   "bytes": 20448,
+   "bytes2x": 47020,
+   "t": 9381,
+   "side": 1,
+   "marbles": 1
+  },
+  "joystick-spins": {
+   "name": "Joystick Spins",
+   "series": "Arcade",
+   "v": "967f1268",
+   "bytes": 12636,
+   "bytes2x": 30716,
+   "t": 10486,
+   "side": 1,
+   "marbles": 6
+  },
+  "kali-gandaki-burst": {
+   "name": "Kali Gandaki Burst",
+   "series": "Canyons",
+   "v": "426fb991",
+   "bytes": 20302,
+   "bytes2x": 51740,
+   "t": 9861,
+   "side": 1,
+   "marbles": 4
+  },
+  "kill-screen": {
+   "name": "Kill Screen",
+   "series": "Arcade",
+   "v": "99dc3bfd",
+   "bytes": 13004,
+   "bytes2x": 33232,
+   "t": 9328,
+   "side": -1,
+   "marbles": 4
+  },
+  "kopaonik-spins": {
+   "name": "Kopaonik Spins",
+   "series": "Coasters",
+   "v": "2f8614bb",
+   "bytes": 16122,
+   "bytes2x": 40018,
+   "t": 10387,
+   "side": 1,
+   "marbles": 4
+  },
+  "lagos-marble-grand-prix": {
+   "name": "Lagos Marble Grand Prix",
+   "series": "Grand Prix",
+   "v": "2ebd07b9",
+   "bytes": 18580,
+   "bytes2x": 47112,
+   "t": 8781,
+   "side": 1,
+   "marbles": 1
+  },
+  "meadow-loop": {
+   "name": "Meadow Loop",
+   "series": "Classic",
+   "v": "d19d743d",
+   "bytes": 14216,
+   "bytes2x": 33402,
+   "t": 11049,
+   "side": 1,
+   "marbles": 9
+  },
+  "multiball-manor": {
+   "name": "Multiball Manor",
+   "series": "Pinball",
+   "v": "1914812f",
+   "bytes": 11210,
+   "bytes2x": 26622,
+   "t": 22597,
+   "side": 1,
+   "marbles": 2
+  },
+  "nairobi-marble-grand-prix": {
+   "name": "Nairobi Marble Grand Prix",
+   "series": "Grand Prix",
+   "v": "39fc8128",
+   "bytes": 23132,
+   "bytes2x": 54676,
+   "t": 9621,
+   "side": 1,
+   "marbles": 1
+  },
+  "nanjing": {
+   "name": "Nanjing",
+   "series": "Coasters",
+   "v": "6d5c85a1",
+   "bytes": 16610,
+   "bytes2x": 42080,
+   "t": 11208,
+   "side": -1,
+   "marbles": 4
+  },
+  "okavango-park": {
+   "name": "Okavango Park",
+   "series": "Coasters",
+   "v": "d69183da",
+   "bytes": 17852,
+   "bytes2x": 46648,
+   "t": 9915,
+   "side": 1,
+   "marbles": 4
+  },
+  "paris-eiffel-tower-run": {
+   "name": "Paris Eiffel Tower Run",
+   "series": "World Tour",
+   "v": "6a1b5771",
+   "bytes": 22476,
+   "bytes2x": 55022,
+   "t": 11044,
+   "side": 1,
+   "marbles": 6
+  },
+  "park-city-run": {
+   "name": "Park City Run",
+   "series": "World Tour",
+   "v": "f2d90606",
+   "bytes": 15556,
+   "bytes2x": 38180,
+   "t": 10457,
+   "side": 1,
+   "marbles": 5
+  },
+  "phantom-peak": {
+   "name": "Phantom Peak",
+   "series": "Coasters",
+   "v": "b3f9c307",
+   "bytes": 11634,
+   "bytes2x": 28600,
+   "t": 10191,
+   "side": 1,
+   "marbles": 4
+  },
+  "portes-du-soleil-run": {
+   "name": "Portes du Soleil Run",
+   "series": "World Tour",
+   "v": "defb4761",
+   "bytes": 15604,
+   "bytes2x": 37080,
+   "t": 16902,
+   "side": 1,
+   "marbles": 6
+  },
+  "pyramid-run": {
+   "name": "Pyramid Run",
+   "series": "Coasters",
+   "v": "cd8f5fc7",
+   "bytes": 12356,
+   "bytes2x": 31566,
+   "t": 10524,
+   "side": 1,
+   "marbles": 5
+  },
+  "redwood-forest-run": {
+   "name": "Redwood Forest Run",
+   "series": "Coasters",
+   "v": "a1bd6475",
+   "bytes": 14238,
+   "bytes2x": 35126,
+   "t": 10439,
+   "side": 1,
+   "marbles": 5
+  },
+  "replay": {
+   "name": "Replay",
+   "series": "Pinball",
+   "v": "f4d09659",
+   "bytes": 10704,
+   "bytes2x": 25880,
+   "t": 9589,
+   "side": -1,
+   "marbles": 4
+  },
+  "rio-jungle-rumble": {
+   "name": "Rio Jungle Rumble",
+   "series": "World Tour",
+   "v": "9f0185a7",
+   "bytes": 14876,
+   "bytes2x": 34470,
+   "t": 10631,
+   "side": 1,
+   "marbles": 1
+  },
+  "sahara-marble-grand-prix": {
+   "name": "Sahara Marble Grand Prix",
+   "series": "Grand Prix",
+   "v": "7bcf8f28",
+   "bytes": 20478,
+   "bytes2x": 48638,
+   "t": 9359,
+   "side": 1,
+   "marbles": 1
+  },
+  "san-francisco": {
+   "name": "San Francisco",
+   "series": "World Tour",
+   "v": "02382dae",
+   "bytes": 22544,
+   "bytes2x": 52376,
+   "t": 10951,
+   "side": 1,
+   "marbles": 10
+  },
+  "slingshot-spins": {
+   "name": "Slingshot Spins",
+   "series": "Pinball",
+   "v": "80b72283",
+   "bytes": 11316,
+   "bytes2x": 26774,
+   "t": 9581,
+   "side": 1,
+   "marbles": 1
+  },
+  "sognefjord": {
+   "name": "Sognefjord",
+   "series": "Coasters",
+   "v": "42a5dc82",
+   "bytes": 16472,
+   "bytes2x": 43526,
+   "t": 10342,
+   "side": 1,
+   "marbles": 4
+  },
+  "stockholm-marble-grand-prix": {
+   "name": "Stockholm Marble Grand Prix",
+   "series": "Grand Prix",
+   "v": "93a6a2fc",
+   "bytes": 19284,
+   "bytes2x": 45236,
+   "t": 8781,
+   "side": 1,
+   "marbles": 1
+  },
+  "sydney-marble-grand-prix": {
+   "name": "Sydney Marble Grand Prix",
+   "series": "Grand Prix",
+   "v": "546e9f11",
+   "bytes": 17792,
+   "bytes2x": 43696,
+   "t": 8781,
+   "side": 1,
+   "marbles": 1
+  },
+  "table-mountain-run": {
+   "name": "Table Mountain Run",
+   "series": "World Tour",
+   "v": "45daaff5",
+   "bytes": 19924,
+   "bytes2x": 47342,
+   "t": 10783,
+   "side": 1,
+   "marbles": 5
+  },
+  "tara-river-spins": {
+   "name": "Tara River Spins",
+   "series": "Canyons",
+   "v": "10e5d191",
+   "bytes": 16632,
+   "bytes2x": 39972,
+   "t": 9998,
+   "side": -1,
+   "marbles": 4
+  },
+  "tilt": {
+   "name": "Tilt",
+   "series": "Pinball",
+   "v": "81658ac3",
+   "bytes": 12756,
+   "bytes2x": 31534,
+   "t": 10649,
+   "side": 1,
+   "marbles": 4
+  },
+  "volcano-run": {
+   "name": "Volcano Run",
+   "series": "Classic",
+   "v": "13c1fa85",
+   "bytes": 11154,
+   "bytes2x": 26218,
+   "t": 10636,
+   "side": 1,
+   "marbles": 5
+  },
+  "whistler-spins": {
+   "name": "Whistler Spins",
+   "series": "Coasters",
+   "v": "a21215d1",
+   "bytes": 14424,
+   "bytes2x": 34556,
+   "t": 20780,
+   "side": -1,
+   "marbles": 6
+  },
+  "wizard-mode": {
+   "name": "Wizard Mode",
+   "series": "Pinball",
+   "v": "ecb3447c",
+   "bytes": 10854,
+   "bytes2x": 26286,
+   "t": 10171,
+   "side": 1,
+   "marbles": 4
+  },
+  "wyrmwood-hollow-marble-grand-prix": {
+   "name": "Wyrmwood Hollow Marble Grand Prix",
+   "series": "Grand Prix",
+   "v": "12bd6159",
+   "bytes": 18862,
+   "bytes2x": 45954,
+   "t": 10333,
+   "side": 1,
+   "marbles": 4
+  },
+  "yarlung-tsangpo-spins": {
+   "name": "Yarlung Tsangpo Spins",
+   "series": "Canyons",
+   "v": "df457d12",
+   "bytes": 19930,
+   "bytes2x": 46788,
+   "t": 9802,
+   "side": 1,
+   "marbles": 4
+  }
+ }
+}

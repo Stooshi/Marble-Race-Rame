@@ -11,7 +11,7 @@
 // camera }) draws the moment t ms after GO (negative: the countdown), and
 // raceLoad({ every }) draws the follow camera every few seconds of the race and
 // returns each frame's drawing load.
-import { Frustum, Matrix4, Vector3 } from 'three';
+import { Frustum, Matrix4, Raycaster, Vector3 } from 'three';
 import { TrackScene } from '../src/three/TrackScene';
 import { frameAtTime } from '../src/utils/splits';
 import { COUNTDOWN_MS } from '../src/three/startCamera';
@@ -164,6 +164,88 @@ window.kitView = {
       };
       requestAnimationFrame(tick);
     });
+  },
+
+  /**
+   * The track picker's picture: a raised three-quarter view from behind and beside the leader,
+   * looking on down the track, the same on every track. Tries each moment (ms after GO) on both
+   * sides, keeps the one that shows the most marbles unblocked with the camera clear of the land,
+   * draws it and returns what it picked. `pick`: { t, side } to draw one pose without choosing.
+   */
+  banner({ times = [], back = 10, beside = 2.5, up = 6.5, ahead = 16, pick = null } = {}) {
+    if (scene.billboards) scene.billboards.group.visible = false; // (no text in the picture)
+    const ray = new Raycaster();
+    ray.camera = scene.camera; // (sprites need it)
+    const others = scene.scene.children.filter((o) => o !== scene.marbles?.group && o !== scene.sky);
+    const pose = (t, sideSign) => {
+      advance(t, 'leader');
+      const f = raceFrame(t);
+      const lead = f.s?.[0] ?? f.p.indexOf(Math.max(...f.p));
+      const L = scene.marbles.positionOf(lead);
+      if (!L) return null;
+      const { samples, segments } = scene.centerline;
+      const sm = samples[Math.round(Math.min(1, Math.max(0, f.p[lead])) * segments)];
+      const T = new Vector3(sm.tangent.x, 0, sm.tangent.z).normalize();
+      const S = new Vector3(sm.side.x, 0, sm.side.z).normalize();
+      // Behind the fourth marble (or the last of the first four still racing), so a few are in the picture.
+      const fourth = (f.s ?? []).slice(0, 4).map((i) => scene.marbles.positionOf(i)).filter(Boolean).pop() ?? L;
+      const base = fourth.distanceTo(L) < 40 ? fourth : L;
+      const cam = base.clone().addScaledVector(T, -back).addScaledVector(S, beside * sideSign).add(new Vector3(0, up, 0));
+      const ground = scene.scenery?.userData?.groundAt?.(cam.x, cam.z);
+      const lifted = Number.isFinite(ground) && cam.y < ground + 3 ? ground + 3 - cam.y : 0;
+      cam.y += lifted;
+      const target = L.clone().addScaledVector(T, ahead).add(new Vector3(0, -1, 0));
+      return { t, side: sideSign, lead, cam, target, lifted };
+    };
+    const place = (p) => {
+      scene.camera.position.copy(p.cam);
+      scene.camera.near = 0.3;
+      scene.camera.far = scene.sky.scale.x * 1.2;
+      scene.camera.lookAt(p.target);
+      scene.camera.updateProjectionMatrix();
+      scene.camera.updateMatrixWorld();
+    };
+    const score = (p) => {
+      place(p);
+      const frustum = new Frustum().setFromProjectionMatrix(new Matrix4().multiplyMatrices(scene.camera.projectionMatrix, scene.camera.matrixWorldInverse));
+      let seen = 0;
+      let blocked = 0;
+      let nearest = Infinity;
+      scene.marbles.positions.forEach((m) => {
+        if (!m || !frustum.containsPoint(m)) return;
+        const d = m.distanceTo(p.cam);
+        nearest = Math.min(nearest, d);
+        if (d > 90) return;
+        ray.set(p.cam, m.clone().sub(p.cam).normalize());
+        ray.far = d - 0.6;
+        if (ray.intersectObjects(others, true).length) blocked += 1;
+        else seen += 1;
+      });
+      const L = scene.marbles.positionOf(p.lead);
+      ray.set(p.cam, L.clone().sub(p.cam).normalize());
+      ray.far = L.distanceTo(p.cam) - 0.6;
+      const leaderBlocked = ray.intersectObjects(others, true).length > 0;
+      // (A marble right in front of the lens fills the picture: never that.)
+      return { seen, blocked, leaderBlocked, value: Math.min(seen, 8) - blocked * 0.5 - (leaderBlocked ? 6 : 0) - (p.lifted > 4 ? 2 : 0) - (nearest < 5 ? 12 : 0) };
+    };
+    let best = null;
+    const tries = [];
+    for (const t of pick ? [pick.t] : times) {
+      for (const sideSign of pick ? [pick.side] : [1, -1]) {
+        const p = pose(t, sideSign);
+        if (!p) continue;
+        const sc = score(p);
+        tries.push({ t, side: sideSign, ...sc });
+        if (!best || sc.value > best.sc.value) best = { p, sc };
+      }
+    }
+    if (!best) return { tries };
+    advance(best.p.t, 'leader');
+    place(best.p);
+    scene.features?.update(best.p.t);
+    scene.structures?.update(best.p.t);
+    drawNow(best.p.t);
+    return { t: best.p.t, side: best.p.side, ...best.sc, tries };
   },
 
   track,

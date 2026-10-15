@@ -168,6 +168,13 @@ To turn email off again, remove `BREVO_API_KEY` and restart.
 - **Replies** are emailed to the player when Brevo is on, and logged. With email off they are saved but not sent; answer the player another way.
 - **On the player's profile**, the **Messages** tab lists everything they sent (logged in, or from their email).
 
+## Track pictures (the track picker)
+
+- **Review:** `/preview/banners` shows every track's picture as a picker card (with its moment, side, marbles in view and file sizes).
+- **Switch on:** set `"enabled": true` in `client/src/shared/trackBanners.json` and push; Vercel builds it. Back off: `false`.
+- **Redo one:** give the track a moment (ms after GO) and a side in `scripts/track-banners.json`, e.g. `{ "indus-spins": { "t": 21000, "side": -1 } }`, run `node scripts/track-banners.js indus-spins`, and commit the two pictures and the list.
+- **New tracks** get theirs from the track report; `node scripts/track-banners.js --missing` draws any missing. A client test fails while a track has none.
+
 ## Common problems
 
 | Symptom | Likely cause and fix |

@@ -13,7 +13,8 @@
  * every core); safety (same seed same race, database matches the file, today's
  * tracks' fingerprints); ground and camera checks on the drawn track (client
  * report/viewChecks.report.js); drawing load and the fixed screenshots from a
- * headless browser (client report/screens.mjs).
+ * headless browser (client report/screens.mjs); the track picker's picture
+ * (scripts/track-banners.js; --skip-banner leaves it out).
  */
 const fs = require('node:fs');
 const path = require('node:path');
@@ -141,6 +142,18 @@ async function main() {
     if (screens.errors.length) report.lines.push({ part: 'Drawing load', what: 'Errors in the browser while drawing', value: screens.errors.slice(0, 3).join(' | '), target: 'none', pass: false });
     fs.rmSync(planFile, { force: true });
     fs.rmSync(path.join(dev, `${raceName}.json`), { force: true });
+  }
+
+  // 5. The track picker's picture (looks only): rendered from the track's own scene, kept small.
+  if (!args.includes('--skip-banner') && !slug.startsWith('variety-')) {
+    log('the track picker\'s picture…');
+    try {
+      execFileSync('node', [path.join(__dirname, 'track-banners.js'), slug], { cwd: ROOT, stdio: 'inherit' });
+      const b = JSON.parse(fs.readFileSync(path.join(CLIENT, 'src', 'shared', 'trackBanners.json'), 'utf8')).banners[slug];
+      report.lines.push({ part: 'Picture', what: 'The track picker\'s picture (client/public/tracks), under 40 kB', value: b ? `${Math.round(b.bytes / 1000)} kB, ${b.marbles} marbles in view${b.leaderHidden ? ', leader hidden' : ''}` : 'missing', target: 'written', pass: Boolean(b) && b.bytes <= 40_000 });
+    } catch (err) {
+      report.lines.push({ part: 'Picture', what: 'The track picker\'s picture (client/public/tracks)', value: `failed: ${err.message.split('\n')[0]}`, target: 'written', pass: false });
+    }
   }
 
   report.minutes = Math.round((Date.now() - started) / 6000) / 10;
