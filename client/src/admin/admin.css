@@ -62,3 +62,19 @@
 .adm-legend { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; padding: 0 12px 10px; color: var(--a-muted); }
 .adm-key { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: -8px; }
 .adm-details { white-space: normal; overflow-wrap: anywhere; color: var(--a-muted); }
+.adm textarea { min-height: 120px; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--a-line); background: var(--a-bg); color: var(--a-text); font: inherit; resize: vertical; }
+.adm-count { margin-left: 6px; padding: 0 7px; border-radius: 99px; background: #26304a; font-size: 12px; }
+.adm-tag--warn { background: #4a3a12; color: #ffd98a; }
+.adm-status { padding: 2px 10px; border-radius: 99px; font-size: 12px; font-weight: 700; background: #26304a; }
+.adm-status--new { background: #4a3a12; color: #ffd98a; }
+.adm-status--open { background: #1d3557; color: #a9cdff; }
+.adm-status--done { background: #1f3a2a; color: #9fe3b9; }
+.adm-status-select { min-height: 30px; padding: 2px 6px; font-weight: 600; }
+.adm-row-new td:first-child { box-shadow: inset 3px 0 0 var(--a-accent); }
+.adm-table--support td { vertical-align: top; }
+.adm-msgcell { white-space: normal !important; min-width: 220px; max-width: 340px; }
+.adm-plain { color: var(--a-text) !important; text-decoration: none; }
+.adm-quote { white-space: pre-wrap; overflow-wrap: anywhere; padding: 12px 14px; background: var(--a-panel); border: 1px solid var(--a-line); border-left: 3px solid var(--a-accent); border-radius: 8px; }
+.adm-shot { max-width: min(100%, 520px); max-height: 420px; border-radius: 8px; border: 1px solid var(--a-line); background: #000; display: block; }
+.adm-reply { display: grid; gap: 4px; padding: 10px 12px; background: var(--a-panel); border: 1px solid var(--a-line); border-radius: 8px; }
+.adm-pre { white-space: pre-wrap; overflow-wrap: anywhere; }

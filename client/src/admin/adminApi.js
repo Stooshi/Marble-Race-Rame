@@ -62,5 +62,11 @@ export const adminApi = {
   audit: () => request('/admin/audit?limit=300'),
   economy: (days) => request(`/admin/economy?days=${days}`),
   consents: () => request('/admin/consents'),
+  // The support inbox (the Help Centre's contact form).
+  support: ({ q = '', status = '', category = '' } = {}) => request(`/admin/support?${new URLSearchParams({ q, status, category })}`),
+  supportMessage: (id) => request(`/admin/support/${id}`),
+  supportScreenshot: async (id) => (await request(`/admin/support/${id}/screenshot`, { raw: true })).blob(),
+  supportStatus: (id, status, reason) => request(`/admin/support/${id}/status`, { method: 'POST', body: { status, ...(reason && { reason }) } }),
+  supportReply: (id, text) => request(`/admin/support/${id}/reply`, { method: 'POST', body: { text } }),
   consentsCsv: (reason) => request(`/admin/consents?format=csv&reason=${encodeURIComponent(reason)}`, { raw: true }),
 };

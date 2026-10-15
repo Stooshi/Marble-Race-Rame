@@ -38,6 +38,7 @@ export default function AdminApp() {
         <nav className="adm-nav" aria-label="Back office">
           <NavLink to="/admin/players">Players</NavLink>
           <NavLink to="/admin/payments">Payments</NavLink>
+          <NavLink to="/admin/support">Support messages</NavLink>
           <NavLink to="/admin/economy">Economy</NavLink>
           <NavLink to="/admin/emails">Email list</NavLink>
           <NavLink to="/admin/audit">Audit log</NavLink>
@@ -52,6 +53,8 @@ export default function AdminApp() {
           <Route path="/admin/players" element={<Players />} />
           <Route path="/admin/players/:id" element={<Player />} />
           <Route path="/admin/payments" element={<Payments />} />
+          <Route path="/admin/support" element={<SupportInbox />} />
+          <Route path="/admin/support/:id" element={<SupportMessage />} />
           <Route path="/admin/economy" element={<Economy />} />
           <Route path="/admin/emails" element={<Emails />} />
           <Route path="/admin/audit" element={<Audit />} />
@@ -228,6 +231,169 @@ function Payments() {
   );
 }
 
+// ── Support messages ──────────────────────────────────────────────────────
+
+const STATUS_LABEL = { new: 'New', open: 'Open', done: 'Done' };
+const StatusTag = ({ status }) => <span className={`adm-status adm-status--${status}`}>{STATUS_LABEL[status] ?? status}</span>;
+const LinkedBy = ({ m }) => (m.player_id
+  ? <><Link to={`/admin/players/${m.player_id}`}>@{m.player}</Link>{m.player_guest && <span className="adm-tag">guest</span>}{m.linked_by === 'email' && <span className="adm-tag adm-tag--warn" title="Not logged in: matched on the email they typed, which they may not own">by email</span>}</>
+  : <span className="adm-muted">no account</span>);
+
+/** Messages in a table; the status can be changed in place (logged in the audit log). */
+function SupportTable({ rows, showPlayer = true, onChanged }) {
+  const [busy, setBusy] = useState(null);
+  const [error, setError] = useState(null);
+  const change = async (m, status) => {
+    setBusy(m.id); setError(null);
+    try { await adminApi.supportStatus(m.id, status); await onChanged?.(); } catch (err) { setError(err); } finally { setBusy(null); }
+  };
+  if (!rows.length) return <p className="adm-muted">No messages.</p>;
+  return (
+    <div className="adm-stack">
+      <Err error={error} />
+      <div className="adm-scroll"><table className="adm-table adm-table--support">
+        <thead><tr><th>Ref</th><th>Received</th><th>From</th>{showPlayer && <th>Player</th>}<th>Category</th><th>Order</th><th>Message</th><th className="num">Replies</th><th>Status</th></tr></thead>
+        <tbody>{rows.map((m) => (
+          <tr key={m.id} className={m.status === 'new' ? 'adm-row-new' : undefined}>
+            <td><Link to={`/admin/support/${m.id}`}><b>{m.ref}</b></Link></td>
+            <td>{when(m.created_at)}</td>
+            <td>{m.name}<div className="adm-muted">{m.email}</div></td>
+            {showPlayer && <td><LinkedBy m={m} /></td>}
+            <td>{m.category}</td>
+            <td>{m.order_no ?? '–'}</td>
+            <td className="adm-msgcell"><Link to={`/admin/support/${m.id}`} className="adm-plain">{m.message.length > 110 ? `${m.message.slice(0, 110)}…` : m.message}</Link>{m.has_screenshot && <span className="adm-tag" title="Has a screenshot">screenshot</span>}</td>
+            <td className="num">{m.replies || '–'}</td>
+            <td>
+              <select aria-label={`Status of ${m.ref}`} value={m.status} disabled={busy === m.id} onChange={(e) => change(m, e.target.value)} className={`adm-status-select adm-status--${m.status}`}>
+                {Object.entries(STATUS_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+              </select>
+            </td>
+          </tr>
+        ))}</tbody>
+      </table></div>
+    </div>
+  );
+}
+
+function SupportInbox() {
+  const [q, setQ] = useState('');
+  const [filter, setFilter] = useState({ q: '', status: '', category: '' });
+  const list = useLoad(() => adminApi.support(filter), [filter.q, filter.status, filter.category]);
+  const counts = list.data?.counts;
+  const setF = (k) => (v) => setFilter((f) => ({ ...f, [k]: v }));
+  return (
+    <section className="adm-stack">
+      <div className="adm-row"><h1 className="adm-h1">Support messages</h1><span className="adm-grow" />
+        {counts && <div className="adm-row" role="group" aria-label="Filter by status">
+          {['', 'new', 'open', 'done'].map((st) => (
+            <button key={st || 'all'} type="button" className={`adm-btn ${filter.status === st ? 'adm-btn--primary' : 'adm-btn--ghost'}`} aria-pressed={filter.status === st} onClick={() => setF('status')(st)}>
+              {st ? `${STATUS_LABEL[st]} ${n(counts[st])}` : `All ${n(counts.new + counts.open + counts.done)}`}
+            </button>
+          ))}
+        </div>}
+      </div>
+      <form className="adm-row" onSubmit={(e) => { e.preventDefault(); setF('q')(q.trim()); }}>
+        <input className="adm-search" type="search" placeholder="Name, email, player, order number (MS-1001), reference (S-1001) or words in the message" value={q} onChange={(e) => setQ(e.target.value)} />
+        <select aria-label="Category" value={filter.category} onChange={(e) => setF('category')(e.target.value)}>
+          <option value="">All categories</option>
+          {(list.data?.categories ?? []).map((c) => <option key={c} value={c}>{c}</option>)}
+        </select>
+        <button type="submit" className="adm-btn adm-btn--primary">Search</button>
+        {(filter.q || filter.category || filter.status) && <button type="button" className="adm-btn adm-btn--ghost" onClick={() => { setQ(''); setFilter({ q: '', status: '', category: '' }); }}>Clear</button>}
+      </form>
+      <Err error={list.error} />
+      {list.loading && !list.data && <p className="adm-muted">Loading…</p>}
+      {list.data && <SupportTable rows={list.data.messages} onChanged={list.reload} />}
+      {list.data?.messages.length === 200 && <p className="adm-muted">Showing the newest 200. Search or filter to find older ones.</p>}
+    </section>
+  );
+}
+
+function Screenshot({ id }) {
+  const [url, setUrl] = useState(null);
+  const [error, setError] = useState(null);
+  useEffect(() => {
+    let live = true;
+    let made = null;
+    adminApi.supportScreenshot(id).then((blob) => { made = URL.createObjectURL(blob); if (live) setUrl(made); }).catch((err) => live && setError(err));
+    return () => { live = false; if (made) URL.revokeObjectURL(made); };
+  }, [id]);
+  if (error) return <Err error={error} />;
+  if (!url) return <p className="adm-muted">Loading the screenshot…</p>;
+  return <a href={url} target="_blank" rel="noreferrer" title="Open full size"><img src={url} alt="The player's screenshot" className="adm-shot" /></a>;
+}
+
+function SupportMessage() {
+  const { id } = useParams();
+  const d = useLoad(() => adminApi.supportMessage(id), [id]);
+  const [note, setNote] = useState('');
+  const [text, setText] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState(null);
+  if (d.error) return <Err error={d.error} />;
+  if (!d.data) return <p className="adm-muted">Loading…</p>;
+  const { message: m, replies, audit, emailOn } = d.data;
+  const run = async (fn, done) => {
+    setBusy(true); setMsg(null);
+    try { const r = await fn(); await d.reload(); setMsg({ bad: false, text: typeof done === 'function' ? done(r) : done }); } catch (err) { setMsg({ bad: true, text: err.message }); } finally { setBusy(false); }
+  };
+  const setStatus = (status) => run(() => adminApi.supportStatus(m.id, status, note.trim() || undefined), () => { setNote(''); return `Marked ${STATUS_LABEL[status]}.`; });
+  const reply = (e) => {
+    e.preventDefault();
+    if (text.trim().length < 2) return;
+    run(() => adminApi.supportReply(m.id, text.trim()), (r) => { setText(''); return r.emailed ? `Reply emailed to ${m.email}.` : `Reply saved, but not emailed${r.emailError ? ` (${r.emailError})` : ': email is off (BREVO_API_KEY)'}. Answer the player another way.`; });
+  };
+  return (
+    <section className="adm-stack">
+      <Link to="/admin/support" className="adm-muted">← Support messages</Link>
+      <div className="adm-row"><h1 className="adm-h1">{m.ref} · {m.category}</h1><StatusTag status={m.status} /></div>
+      <div className="adm-row adm-row--top">
+        <div className="adm-stack" style={{ flex: '1 1 480px', minWidth: 0 }}>
+          <dl className="adm-facts">
+            <div><dt>From</dt><dd>{m.name} · {m.email}</dd></div>
+            <div><dt>Player</dt><dd><LinkedBy m={m} />{m.linked_by === 'login' && <span className="adm-muted"> (logged in)</span>}</dd></div>
+            <div><dt>Received</dt><dd>{when(m.created_at)}</dd></div>
+            <div><dt>Order number</dt><dd>{m.order_no ?? '–'}</dd></div>
+            <div><dt>Device</dt><dd className="adm-muted">{m.device ?? '–'}</dd></div>
+            <div><dt>Country · IP</dt><dd>{m.country ?? '–'} · {m.ip ?? <span className="adm-muted">(removed after 90 days)</span>}</dd></div>
+            <div><dt>Support address told</dt><dd>{m.notified_at ? when(m.notified_at) : <span className="adm-muted">no (email off or no SUPPORT_EMAIL)</span>}</dd></div>
+          </dl>
+          <div className="adm-quote">{m.message}</div>
+          {m.has_screenshot && <Screenshot id={m.id} />}
+          <b>Replies</b>
+          {replies.length === 0 ? <p className="adm-muted">No replies yet.</p> : replies.map((r) => (
+            <div key={r.id} className="adm-reply">
+              <div className="adm-muted">@{r.admin ?? '–'} · {when(r.created_at)} · {r.emailed_at ? 'emailed' : 'not emailed'}</div>
+              <div className="adm-pre">{r.body}</div>
+            </div>
+          ))}
+          <form className="adm-action" onSubmit={reply}>
+            <b>Reply to {m.name}</b>
+            <textarea value={text} onChange={(e) => setText(e.target.value)} rows={6} maxLength={5000} placeholder={`Hi ${m.name}, …`} />
+            <p className="adm-muted">{emailOn ? `Emailed to ${m.email} from the game's address; their answer comes back to the support address.` : 'Email is off (no BREVO_API_KEY): the reply is saved here but not sent.'} Logged in the audit log. A new message becomes Open.</p>
+            <div><button type="submit" className="adm-btn adm-btn--primary" disabled={busy || text.trim().length < 2}>{busy ? '…' : emailOn ? 'Send reply' : 'Save reply'}</button></div>
+          </form>
+          {msg && <p className={`adm-msg ${msg.bad ? 'adm-msg--bad' : ''}`} role="status">{msg.text}</p>}
+        </div>
+        <div className="adm-actions" style={{ flex: '0 1 320px' }}>
+          <div className="adm-action">
+            <b>Status</b>
+            <div className="adm-row">
+              {Object.entries(STATUS_LABEL).map(([k, v]) => (
+                <button key={k} type="button" className={`adm-btn ${m.status === k ? 'adm-btn--primary' : ''}`} aria-pressed={m.status === k} disabled={busy || m.status === k} onClick={() => setStatus(k)}>{v}</button>
+              ))}
+            </div>
+            <label>Note for the audit log (optional)<input value={note} onChange={(e) => setNote(e.target.value)} maxLength={500} placeholder="e.g. Coins credited, refund sent" /></label>
+          </div>
+          {m.player_id && <Link to={`/admin/players/${m.player_id}`} className="adm-btn adm-btn--ghost" style={{ textAlign: 'center', textDecoration: 'none' }}>Open @{m.player}'s profile</Link>}
+        </div>
+      </div>
+      <b>History</b>
+      <AuditTable rows={audit} showPlayer={false} />
+    </section>
+  );
+}
+
 // ── Players ───────────────────────────────────────────────────────────────
 
 function Players() {
@@ -266,7 +432,7 @@ function Players() {
   );
 }
 
-const TABS = ['Coins', 'Races', 'Marbles', 'Payments', 'Security', 'Emails', 'Audit'];
+const TABS = ['Coins', 'Races', 'Marbles', 'Payments', 'Messages', 'Security', 'Emails', 'Audit'];
 
 function Player() {
   const { id } = useParams();
@@ -279,7 +445,7 @@ function Player() {
   const itemOptions = useMemo(() => ITEMS.map((i) => [i.slug, `${i.design.name} · ${i.shade.name} (${i.id})`]), []);
   if (d.error) return <Err error={d.error} />;
   if (!d.data) return <p className="adm-muted">Loading…</p>;
-  const { player: p, coins, races, marbles, security, consents, payments, audit } = d.data;
+  const { player: p, coins, races, marbles, security, consents, payments, audit, messages = [] } = d.data;
   const after = (text) => async (fn) => { const r = await fn(); await d.reload(); return typeof text === 'function' ? text(r) : text; };
   return (
     <section className="adm-stack">
@@ -328,7 +494,7 @@ function Player() {
       </div>
 
       <div className="adm-tabs" role="tablist">
-        {TABS.map((t) => <button key={t} type="button" role="tab" aria-selected={tab === t} onClick={() => setTab(t)}>{t}</button>)}
+        {TABS.map((t) => <button key={t} type="button" role="tab" aria-selected={tab === t} onClick={() => setTab(t)}>{t}{t === 'Messages' && messages.length > 0 && <span className="adm-count">{messages.length}</span>}</button>)}
       </div>
       {tab === 'Coins' && (
         <div className="adm-stack">
@@ -350,6 +516,12 @@ function Player() {
         </div>
       )}
       {tab === 'Payments' && <PaymentTable rows={payments} onChanged={d.reload} />}
+      {tab === 'Messages' && (
+        <div className="adm-stack">
+          <p className="adm-muted">Messages sent with the Help Centre's contact form: while logged in to this account, or from its email address.</p>
+          <SupportTable rows={messages} showPlayer={false} onChanged={d.reload} />
+        </div>
+      )}
       {tab === 'Security' && (
         <div className="adm-stack">
           <p className="adm-muted">IP addresses are kept {security.ipDays} days for security and fraud checks; after that only the country.</p>
