@@ -398,6 +398,9 @@ as a coaster (everything above applies), like a canyon (looks only, like everyth
   (a swipe).
 - The layouts made for the series are the ten `(blocks)` rows above; each has a test track
   built as a Block Series world (`series: 'block'`).
+- The ten tracks (switched off until reviewed): Spawn Point (the proof track), Speedrun Valley,
+  Voxel Peaks, Deep Mine, Magma Core, Line Clear, Combo Drop, The Stack, Block Fortress,
+  Final Level.
 
 ## Mirrored tracks
 

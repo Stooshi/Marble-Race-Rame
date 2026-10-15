@@ -1,6 +1,6 @@
 # 7. Known gaps and roadmap
 
-*Last updated 15 Oct 2026 (Canyons live).* What isn't built, isn't finished, or is a known weakness. The launch target is **1 December 2026** (web, iPhone and Android). When something here is fixed, remove it and note the change in the [decisions log](06-decisions.md) if it was a decision.
+*Last updated 16 Oct 2026 (Block Series built, switched off).* What isn't built, isn't finished, or is a known weakness. The launch target is **1 December 2026** (web, iPhone and Android). When something here is fixed, remove it and note the change in the [decisions log](06-decisions.md) if it was a decision.
 
 ## Must fix before launch
 
@@ -28,7 +28,7 @@
 - **Custom marble labels.** The column exists, but a word filter is needed first.
 - **Subscriptions and season pass** (later).
 - **Automated social posting** of race clips, approved by Moses.
-- **More track series** (plans in the project): Block Series (10 tracks). The Canyon Series (10 tracks) is live. The landing page and the Help Centre count tracks and series from the live track list; a new series needs its card in `SERIES` in `client/src/site/landing/LandingPage.jsx`.
+- **Block Series: waiting for Moses's review.** All 10 tracks are built and pass their full reports, added **switched off** (`docs/data_updates/2027-01-16-…` to `2027-01-25-…`). To switch them on: review the preview links and the track pictures (`/preview/banners`), then a data update setting `is_active` for the ten slugs. The landing page's Blocks card appears by itself once they are live. The Canyon Series (10 tracks) is live. The landing page and the Help Centre count tracks and series from the live track list; a new series needs its card in `SERIES` in `client/src/site/landing/LandingPage.jsx` (marked `true` to stay hidden until it has live tracks).
 - **Race sound effects** (rolling, clacks), on hold.
 - **Support: a confirmation email to the player** ("we got your message, reference S-…") and canned replies. The form shows the reference on screen today.
 - **Analytics.** None today. If added, update the privacy policy and both store privacy forms first.
