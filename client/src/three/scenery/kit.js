@@ -181,11 +181,7 @@ export function buildKitScenery(centerline, track, theme, { lite = false } = {})
     m.name = 'landmarks';
     group.add(m);
   }
-  if (glowParts.length) {
-    const m = new Mesh(mergeGeometries(glowParts), new MeshBasicMaterial({ vertexColors: true }));
-    m.name = 'landmarks: glow';
-    group.add(m);
-  }
+
 
   // ── People and animals beside the track (small idle movements) ─────────
   const figureParts = {};
@@ -340,6 +336,13 @@ export function buildKitScenery(centerline, track, theme, { lite = false } = {})
   group.add(centrepieces.group);
   solids.push(...centrepieces.spots);
   placed.push(...centrepieces.placed);
+  glowParts.push(...centrepieces.glow);
+  // Every landmark's and centrepiece's lit parts in one mesh (one draw call).
+  if (glowParts.length) {
+    const m = new Mesh(mergeGeometries(glowParts), new MeshBasicMaterial({ vertexColors: true }));
+    m.name = 'landmarks: glow';
+    group.add(m);
+  }
   // A Block Series world's quiet effects on its landmarks: rows clearing with a flash, blocks settling (./kitLandmarksBlock.js).
   const blockFx = kit.block ? buildBlockEffects(placed, { lite }) : null;
   if (blockFx) group.add(blockFx.group);
@@ -494,8 +497,8 @@ export function buildKitScenery(centerline, track, theme, { lite = false } = {})
     group.userData.stillParts = stillScenery.filter((o) => o.name !== 'landmarks').map((o) => ({ name: o.name, box: new Box3().setFromObject(o) }));
     for (const o of stillScenery) o.removeFromParent();
     const mat = new MeshLambertMaterial({ vertexColors: true, flatShading: true });
-    // (A canyon on a phone: bigger squares, fewer draw calls; its walls cost more of the budget.)
-    for (const geometry of mergeByArea(pieces, kit.canyon && lite ? 900 : 400)) group.add(Object.assign(new Mesh(geometry, mat), { name: 'scenery: still' }));
+    // (A canyon or a Block Series world on a phone: bigger squares, fewer draw calls; their walls and lit parts cost more of the budget.)
+    for (const geometry of mergeByArea(pieces, (kit.canyon || kit.block) && lite ? 900 : 400)) group.add(Object.assign(new Mesh(geometry, mat), { name: 'scenery: still' }));
   }
 
   group.userData = { ...group.userData, cameraKeepOut: [...cameraKeepOut, ...centrepieces.keepOut], stillParts: [...landmarkBoxes, ...(group.userData.stillParts ?? [])], update, field, groundAt, biome, ground, floorY: ground.floorY, ...(coaster && { liftHill: coaster.liftHill, station: coaster.station }) };

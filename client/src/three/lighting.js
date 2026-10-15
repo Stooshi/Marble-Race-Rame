@@ -451,7 +451,7 @@ export function buildEffects(theme, { centerline = null, channel = null, lite = 
     world.add(p.object);
     updates.push((sec, at) => p.update(sec, at));
   }
-  if (fx.embers) {
+  if (fx.embers && !lite) { // (computers only: on a phone the draw call goes to the race)
     const e = embers(lite);
     world.add(e.object);
     updates.push((sec, at) => e.update(sec, at));

@@ -392,7 +392,7 @@ as a coaster (everything above applies), like a canyon (looks only, like everyth
   the pack comes), `block-portal` (a gateway glowing blue to violet), `gg-arch` (a finish
   landmark: the GG lights once the winner is home). A rewound replay undoes them.
 - **Lighting**: `dawn` (a soft warm morning), `cave` (dark, lamplit, the marbles glowing) and
-  `magma` (lit from below by the magma, embers drifting up).
+  `magma` (lit from below by the magma, embers drifting up on computers).
 - **Costumes**: `cube-pillar`, `gem-pillar`, `magma-pillar` (slalom poles and pegs), `voxel-cube`
   (a block or pile-up), `block-pieces` (parked: our own five- and six-cube pieces), `block-crane`
   (a swipe).

@@ -409,6 +409,17 @@
    "side": 1,
    "marbles": 1
   },
+  "magma-core": {
+   "name": "Magma Core",
+   "series": "Blocks",
+   "lighting": "magma",
+   "v": "625fc0db",
+   "bytes": 11180,
+   "bytes2x": 26034,
+   "t": 10769,
+   "side": 1,
+   "marbles": 1
+  },
   "meadow-loop": {
    "name": "Meadow Loop",
    "series": "Classic",

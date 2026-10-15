@@ -67,4 +67,5 @@ module.exports = [
   require('./speedrun-valley'),
   require('./voxel-peaks'),
   require('./deep-mine'),
+  require('./magma-core'),
 ];

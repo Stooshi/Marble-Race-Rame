@@ -194,11 +194,6 @@ export function buildCentrepieces(centerline, channel, kit, { lite = false, grou
     m.name = 'centrepiece';
     group.add(m);
   }
-  if (glowParts.length) {
-    const m = new Mesh(merge(glowParts), new MeshBasicMaterial({ vertexColors: true }));
-    m.name = 'centrepiece: glow';
-    group.add(m);
-  }
   if (arches.length) {
     const m = new Mesh(merge(arches), lambert());
     m.name = 'arch';
@@ -243,7 +238,7 @@ export function buildCentrepieces(centerline, channel, kit, { lite = false, grou
     }
   };
   update(0);
-  return { group, update, spots, keepOut, placed };
+  return { group, update, spots, keepOut, placed, glow: glowParts }; // (glow: lit parts, drawn with the landmarks' in one mesh)
 }
 
 // ── Along a section: race netting and a timing board ─────────────────────────

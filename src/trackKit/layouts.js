@@ -716,20 +716,20 @@ const LAYOUTS = {
       obstacles: [parked({ costume: c.parked, at: 0.2, side: R, length: 6 }), peg({ costume: c.peg, at: 0.45, line: 'left' })], features: [rumble({ from: 0.7, to: 0.95, count: 3 })],
     },
   ],
-  /** L44 Magma loops (Block Series): a long sweep (a boost), a drop, a mogul straight, S-bends, a spin, a short climb, the hairpin, a second spin and a parked piece and a peg at the run-in. */
+  /** L44 Magma loops (Block Series): a long sweep, a drop, a mogul straight (a boost, a peg), S-bends, a spin, a short climb, the hairpin, a second spin and a boost, a parked piece and a peg at the run-in. */
   'magma-loops': (L, R, c) => [
-    { key: 'rimSweep', name: 'Sweep', shape: sweep({ side: R, radius: 85, degrees: 120, grade: 0.085 }), features: [boost({ at: 0.08 })], billboards: 2 },
+    { key: 'rimSweep', name: 'Sweep', shape: sweep({ side: R, radius: 85, degrees: 120, grade: 0.085 }), billboards: 2 },
     { key: 'drop', name: 'Drop', shape: plunge(45, { grade: 0.22, from: 0.085 }) },
-    { key: 'lavaRun', name: 'Mogul straight', shape: straight(80, { grade: 0.12 }), features: [moguls({ from: 0.45, to: 0.9, count: 4 })], billboards: 1 },
+    { key: 'lavaRun', name: 'Mogul straight', shape: straight(80, { grade: 0.12 }), features: [boost({ at: 0.1 }), moguls({ from: 0.5, to: 0.9, count: 4 })], obstacles: [peg({ costume: c.peg, at: 0.3, line: 'center' })], billboards: 1 },
     { key: 'sBends', name: 'S-bends', shape: sBends({ first: L, radius: 75, degrees: 60, grade: 0.12 }), billboards: 1 },
-    { key: 'spin1', name: 'Spiral', shape: spiral({ side: R, radius: 52, turns: 1, grade: 0.16 }) },
+    { key: 'spin1', name: 'Spiral', shape: spiral({ side: R, radius: 56, turns: 0.85, grade: 0.16 }) },
     { key: 'crest', name: 'Climb', shape: climb(14, { grade: -0.05, after: 0.16 }) },
     { key: 'brakingStraight', name: 'Run to the hairpin', shape: straight(50, { grade: 0.12 }) },
     { key: 'hairpin', name: 'Hairpin', shape: hairpin({ side: L }), obstacles: [swipe({ costume: c.swipe, side: 'high' })] },
     { key: 'spin2', name: 'Second spiral', shape: spiral({ side: R, radius: 48, turns: 1, grade: 0.15 }) },
     {
       key: 'lastStraight', name: 'Last straight', shape: straight(70, { grade: 0.15 }),
-      obstacles: [parked({ costume: c.parked, at: 0.2, side: L, length: 6 }), peg({ costume: c.peg, at: 0.45, line: 'right' })], features: [rumble({ from: 0.7, to: 0.95, count: 3 })],
+      obstacles: [parked({ costume: c.parked, at: 0.2, side: L, length: 6 }), peg({ costume: c.peg, at: 0.45, line: 'right' })], features: [boost({ at: 0.05 }), rumble({ from: 0.7, to: 0.95, count: 3 })],
     },
   ],
   /** L45 Clear rows (Block Series): a slalom straight, S-bends, a straight of steps (the rows), a drop, a spin, the hairpin, a sweep (a boost), a short climb and a parked piece and a peg at the run-in. */
