@@ -37,7 +37,7 @@ function supportNotification({ ref, name, email, category, order_no: orderNo, me
   const row = (k, v) => `<tr><td style="padding:3px 12px 3px 0;color:#6b7280;vertical-align:top">${esc(k)}</td><td style="padding:3px 0">${v}</td></tr>`;
   const who = account ? `${esc(account)}${linkedBy === 'email' ? ' <span style="color:#b45309">(matched by the email typed, not logged in)</span>' : ''}` : 'no account found';
   return {
-    subject: `[${ref}] ${category}: ${name}`,
+    subject: `[${ref}] ${category}: ${name}`.replace(/[\r\n\t]+/g, ' '), // (one line, whatever was typed)
     html: layout(`New support message ${ref}`, `
 <table role="presentation" cellpadding="0" cellspacing="0" style="font-size:14px;margin:0 0 16px">
 ${row('From', `${esc(name)} &lt;${esc(email)}&gt;`)}

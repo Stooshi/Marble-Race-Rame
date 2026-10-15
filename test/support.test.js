@@ -42,6 +42,7 @@ test('screenshots: known image types by their first bytes, at most 4 MB', () => 
 test('the emails escape what players type', () => {
   const n = templates.supportNotification({ ref: 'S-1001', name: '<b>Ann</b>', email: 'a@b.c', category: 'Refunds', order_no: 'MS-1', message: 'Hi <script>\n\nline 2', account: '@ann', linkedBy: 'email', hasScreenshot: true, link: 'https://marblespins.com/admin/support/x' });
   assert.equal(n.subject, '[S-1001] Refunds: <b>Ann</b>'); // (subjects are plain text)
+  assert.equal(templates.supportNotification({ ref: 'S-1', name: 'A\r\nBcc: x@y.z', email: 'a@b.c', category: 'Coins', message: 'm', link: 'l' }).subject, '[S-1] Coins: A Bcc: x@y.z');
   assert.match(n.html, /&lt;b&gt;Ann&lt;\/b&gt;/);
   assert.match(n.html, /Hi &lt;script&gt;/);
   assert.match(n.html, /matched by the email typed/);
