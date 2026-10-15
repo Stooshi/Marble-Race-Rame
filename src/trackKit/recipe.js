@@ -8,7 +8,7 @@
  * Each problem names the rule and the section, in plain words.
  */
 
-const { SHARP_RADIUS, TUNNELS, BRIDGES, SURFACES, BIOMES, LANDMARKS, OVERHEAD, FRAMES, AROUND, SCENERY, CROWDS, BARRIERS, CANYONS } = require('./parts');
+const { SHARP_RADIUS, TUNNELS, BRIDGES, SURFACES, BIOMES, LANDMARKS, OVERHEAD, FRAMES, AROUND, SCENERY, CROWDS, BARRIERS, CANYONS, BLOCK_WORLDS } = require('./parts');
 
 const MIN_SPIRAL_RADIUS = 40;  // Table Mountain Run's corkscrew
 const MIN_SWEEP_RADIUS = 45;   // San Francisco's Embarcadero
@@ -19,16 +19,21 @@ const LONGEST_CLIMB_M = 40;    // San Francisco's 35 m
 const { LIGHTINGS } = require('./lighting');
 const { OPENING_KINDS } = require('./openings');
 // Track families (the sameness check compares openings within one): 'test' tracks are never compared.
-const FAMILIES = ['world-tour', 'grand-prix', 'coaster', 'pinball', 'arcade', 'canyon', 'test'];
+const FAMILIES = ['world-tour', 'grand-prix', 'coaster', 'pinball', 'arcade', 'canyon', 'block', 'test'];
 // A canyon: the canyon family, or a library test track built as one (series 'canyon'). It is built
 // as a coaster too (the track climbs out of the canyon on its supports and touches down on its floor).
 const isCanyon = (spec) => spec.family === 'canyon' || (spec.family === 'test' && spec.series === 'canyon');
-// A coaster: the coaster family, or a library test track built as one (series 'coaster'), or a canyon.
-const isCoaster = (spec) => spec.family === 'coaster' || (spec.family === 'test' && spec.series === 'coaster') || isCanyon(spec);
+// A Block Series track: the block family, or a library test track built as one (series 'block'). It is
+// built as a coaster too: on the voxel land unless a section flies (on block pillars, over the cube cliffs).
+const isBlock = (spec) => spec.family === 'block' || (spec.family === 'test' && spec.series === 'block');
+// A coaster: the coaster family, or a library test track built as one (series 'coaster'), or a canyon or a Block Series track.
+const isCoaster = (spec) => spec.family === 'coaster' || (spec.family === 'test' && spec.series === 'coaster') || isCanyon(spec) || isBlock(spec);
+// (Tracks whose sections run on the ground unless they say: a canyon's floor, a Block Series world's land.)
+const onTheFloor = (spec) => isCanyon(spec) || isBlock(spec);
 // A canyon's depth (metres from its floor to its rim), and its river's side.
 const CANYON_DEPTH = [20, 60];
 const RIVER_SIDES = ['left', 'right', 'none'];
-const COASTER_STYLES = ['steel', 'timber'];
+const COASTER_STYLES = ['steel', 'timber', 'blocks'];
 // A pinball table: the pinball family, or a library test track built as one (series 'pinball').
 const isPinball = (spec) => spec.family === 'pinball' || (spec.family === 'test' && spec.series === 'pinball');
 // A pinball table's backglass art (original art, one style per table) and its dot-matrix call-out.
@@ -266,7 +271,9 @@ function checkRecipe({ spec, sections, span, generated, owner, placed, total, wh
   }
 
   // Coasters: their own rules (a lift hill, supports, touchdowns, water).
-  if (spec.series !== undefined && !(spec.family === 'test' && ['coaster', 'pinball', 'arcade', 'canyon'].includes(spec.series))) problems.push(`${where('track')}: series is for test tracks: 'coaster', 'pinball', 'arcade' or 'canyon' (a library test track built as a coaster, a pinball table, an arcade world or a canyon).`);
+  if (spec.series !== undefined && !(spec.family === 'test' && ['coaster', 'pinball', 'arcade', 'canyon', 'block'].includes(spec.series))) problems.push(`${where('track')}: series is for test tracks: 'coaster', 'pinball', 'arcade', 'canyon' or 'block' (a library test track built as a coaster, a pinball table, an arcade world, a canyon or a Block Series world).`);
+  if (isBlock(spec)) problems.push(...blockRules({ spec, where }));
+  else if (spec.block !== undefined) problems.push(`${where('track')}: block settings are for the Block Series (family: 'block').`);
   if (isCanyon(spec)) problems.push(...canyonRules({ spec, sections, where }));
   else {
     if (spec.canyon !== undefined) problems.push(`${where('track')}: canyon settings are for canyons (family: 'canyon').`);
@@ -367,7 +374,7 @@ function coasterRules({ spec, sections, where }) {
   const c = spec.coaster ?? {};
   const ok = (h) => Number.isFinite(h) && h >= 0 && h <= MAX_COASTER_HEIGHT;
   // (A canyon's track runs on the canyon floor where a section doesn't say: its height may be 0.)
-  if (c.height !== undefined && !(ok(c.height) && (c.height > 0 || isCanyon(spec)))) problems.push(`${where('track')}: coaster.height is how high the track flies (metres, 1 to ${MAX_COASTER_HEIGHT}).`);
+  if (c.height !== undefined && !(ok(c.height) && (c.height > 0 || onTheFloor(spec)))) problems.push(`${where('track')}: coaster.height is how high the track flies (metres, 1 to ${MAX_COASTER_HEIGHT}).`);
   for (const k of Object.keys(c.colours ?? {})) if (!['rail', 'support', 'tie'].includes(k)) problems.push(`${where('track')}: coaster colours are rail, support and tie (not ${k}).`);
   if (c.style !== undefined && !COASTER_STYLES.includes(c.style)) problems.push(`${where('track')}: coaster.style is how its supports are built (${COASTER_STYLES.join(', ')}).`);
   sections.forEach((s) => {
@@ -376,7 +383,7 @@ function coasterRules({ spec, sections, where }) {
     if (s.bridge !== undefined) problems.push(`${where(s.name)}: a coaster flies on its own supports (no bridge).`);
     if (s.tunnel !== undefined && s.height) problems.push(`${where(s.name)}: a coaster's tunnel runs into the land (height 0, or leave it out).`);
   });
-  const flatOut = (c.height ?? (isCanyon(spec) ? 0 : undefined)) === 0; // (a canyon's sections run on its floor unless they say)
+  const flatOut = (c.height ?? (onTheFloor(spec) ? 0 : undefined)) === 0; // (a canyon's or a Block Series world's sections run on the ground unless they say)
   if (!sections.some((s) => (s.height === 0 || (s.height === undefined && (flatOut || s.tunnel !== undefined))) && s.shape.shape !== 'runIn')) problems.push(`${where('track')}: a coaster touches down somewhere along the way (a section with height: 0), not only at the station.`);
   const roof = spec.finish?.billboards ?? 0;
   if (!(Number.isInteger(roof) && roof >= 0 && roof <= 2)) problems.push(`${where('finish')}: 0 to 2 billboards on the station roof.`);
@@ -404,4 +411,14 @@ function canyonRules({ spec, sections, where }) {
   return problems;
 }
 
-module.exports = { checkRecipe, isCanyon, MIN_SPIRAL_RADIUS, MIN_SWEEP_RADIUS, BILLBOARDS, GRAND_PRIX_BILLBOARDS, isCoaster, isPinball, PINBALL_ART, isArcade, ARCADE_ART, START_TYPES, GATES, COUNTDOWN_SHOTS, LAUNCH_SHOTS };
+/** A Block Series world's own rules: its voxel world by name (`block: { world }`). */
+function blockRules({ spec, where }) {
+  const problems = [];
+  const b = spec.block;
+  if (!b || typeof b !== 'object') return [`${where('track')}: a Block Series track says its world: block: { world (${BLOCK_WORLDS.join(', ')}) }.`];
+  for (const k of Object.keys(b)) if (k !== 'world') problems.push(`${where('block')}: unknown setting ${k} (world).`);
+  if (!BLOCK_WORLDS.includes(b.world)) problems.push(`${where('block')}: unknown world ${JSON.stringify(b.world)} (${BLOCK_WORLDS.join(', ')}).`);
+  return problems;
+}
+
+module.exports = { checkRecipe, isCanyon, isBlock, MIN_SPIRAL_RADIUS, MIN_SWEEP_RADIUS, BILLBOARDS, GRAND_PRIX_BILLBOARDS, isCoaster, isPinball, PINBALL_ART, isArcade, ARCADE_ART, START_TYPES, GATES, COUNTDOWN_SHOTS, LAUNCH_SHOTS };

@@ -68,6 +68,7 @@ router.get('/', optionalAuth, async (req, res) => {
             CASE WHEN physics->'kit' ? 'pinball' THEN 'Pinball'
                  WHEN physics->'kit' ? 'arcade' THEN 'Arcade'
                  WHEN physics->'kit' ? 'canyon' THEN 'Canyons'
+                 WHEN physics->'kit' ? 'block' THEN 'Blocks'
                  WHEN physics->'kit' ? 'coaster' THEN 'Coasters'
                  WHEN physics->'kit' ? 'grandPrix' THEN 'Grand Prix'
                  WHEN physics IS NOT NULL THEN 'World Tour'

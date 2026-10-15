@@ -147,6 +147,23 @@ test('canyons: built as coasters on the canyon floor unless a section flies, the
   assert.throws(() => track(spec({ sections: layout('classic', { dress: { sweep: { walls: 0.5 } } }) })), /walls are for canyons/);
 });
 
+test('Block Series: built as coasters on the voxel land unless a section flies, their world by name, their own rules', () => {
+  const blocky = (o = {}) => spec({ family: 'block', block: { world: 'meadow' }, start: { ...START, type: 'elevator' }, sections: layout('spawn-meadow'), ...o });
+  const t = track(blocky());
+  assert.equal(t.variety.family, 'block');
+  assert.deepEqual(t.physics.kit.block, { world: 'meadow' });
+  assert.equal(t.physics.kit.coaster.height, 0, 'on the land where a section does not say');
+  assert.equal(track(blocky({ coaster: { style: 'blocks' } })).physics.kit.coaster.style, 'blocks');
+  assert.throws(() => track(blocky({ block: undefined })), /a Block Series track says its world/);
+  assert.throws(() => track(blocky({ block: { world: 'nether' } })), /unknown world "nether"/);
+  assert.throws(() => track(blocky({ block: { world: 'meadow', mobs: true } })), /unknown setting mobs/);
+  assert.throws(() => track(spec({ block: { world: 'meadow' } })), /block settings are for the Block Series/);
+  // The block layouts are on the list, and the series name is neutral.
+  const { BLOCK_WORLDS } = require('../src/trackKit/parts');
+  assert.deepEqual(BLOCK_WORLDS, ['meadow', 'valley', 'snow', 'mine', 'magma', 'puzzle', 'fortress', 'portal']);
+  for (const k of ['spawn-meadow', 'speedrun-straights', 'peak-beams', 'mine-shaft', 'magma-loops', 'clear-rows', 'combo-steps', 'stack-spiral', 'fortress-gate', 'final-level']) assert.ok(kit.LAYOUT_KINDS.includes(k), k);
+});
+
 test('a track may retune a layout splitter (balance, added pegs), mirrored with the layout, and nothing else of its shape', () => {
   const plain = kit.layout('climb-drop').find((s) => s.layoutKey === 'splitter').shape.fork;
   const tuned = kit.layout('climb-drop', { dress: { splitter: { balance: { tipOffset: -1.1, left: { scrub: 3.8 } } } } }).find((s) => s.layoutKey === 'splitter').shape.fork;

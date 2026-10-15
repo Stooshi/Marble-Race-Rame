@@ -11,7 +11,9 @@
  * stored with the race (in its track snapshot), so the replay looks the same.
  * Variants share the track's records: same track, same physics.
  */
-const LIGHTINGS = ['day', 'sunset', 'midnight-sun', 'night-northern-lights', 'fog', 'snow', 'rain', 'night', 'parlour', 'neon-night', 'synthwave'];
+const LIGHTINGS = ['day', 'sunset', 'midnight-sun', 'night-northern-lights', 'fog', 'snow', 'rain', 'night', 'parlour', 'neon-night', 'synthwave',
+  // The Block Series: a calm dawn, a dark mine lit by its lamps and gems, a cave lit only by magma.
+  'dawn', 'cave', 'magma'];
 
 // The track's own preset comes up this many times as often as each variant.
 const OWN_WEIGHT = 2;

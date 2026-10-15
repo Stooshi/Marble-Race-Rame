@@ -101,10 +101,20 @@ module.exports = track({
   | `terrace-steps` (canyons) | highSweep, drop, terraces (steps), brakingStraight, hairpin, slalomDrop, sBends, sweep2, lastStraight |
   | `rafting-run` (canyons) | gates, whirlpool (a spiral), bridgeRun, sweep, drop, sBends, brakingStraight, hairpin, lastStraight |
   | `six-canyons` (canyons) | hop1, canyon2, hop2, drop, canyon3, hop3, brakingStraight, hairpin, spin, lastStraight |
+  | `spawn-meadow` (blocks) | meadowSweep, sBends, pegRun, brakingStraight, hairpin, sweep2, drop, spin, lastStraight |
+  | `speedrun-straights` (blocks) | longStraight, wideSweep, slalomStraight, sBends, brakingStraight, hairpin, backStraight, drop, lastStraight |
+  | `peak-beams` (blocks) | beamSweep, drop, crest (a short climb), ridgeSweep, sBends, brakingStraight, hairpin, slalomDrop, spin, lastStraight |
+  | `mine-shaft` (blocks) | railRun, tightBends, cartRun, brakingStraight, hairpin, gallerySweep, shaft (a plunge), lowerGallery, sweep2, lastStraight |
+  | `magma-loops` (blocks) | rimSweep, drop, lavaRun, sBends, spin1, crest, brakingStraight, hairpin, spin2, lastStraight |
+  | `clear-rows` (blocks) | rowRun, sBends, rowSteps (steps), drop, spin, brakingStraight, hairpin, sweep, lastStraight |
+  | `combo-steps` (blocks) | steps1, spin, drop, steps2, sweep, brakingStraight, hairpin, slalomDrop, lastStraight |
+  | `stack-spiral` (blocks) | pegRun, sBends, spin, drop, sweep, brakingStraight, hairpin, stackSpiral (a little over a turn), lastStraight |
+  | `fortress-gate` (blocks) | moatSweep, drawbridge (a short climb), courtyardDrop, gateRun, brakingStraight, hairpin, wallBends, sweep2, spin, lastStraight |
+  | `final-level` (blocks) | introBends, portalSweep, drop, loop (a spiral), bonusRun, brakingStraight, hairpin, slalomDrop, sweep2, lastStraight |
 
   A track may still write its own sections by hand; the sameness check makes sure they differ.
 - **`family`**: `'world-tour'` (the default), `'grand-prix'` (any `grandPrix` track),
-  `'coaster'`, `'pinball'`, `'arcade'`, `'canyon'` or `'test'` (test tracks, never compared).
+  `'coaster'`, `'pinball'`, `'arcade'`, `'canyon'`, `'block'` or `'test'` (test tracks, never compared).
   Openings are compared within a family.
 
 ## Shapes
@@ -358,6 +368,22 @@ To look at them all: `node scripts/dump-kit-track.js grand-prix-gallery`, then o
 - The layouts made for the series: `horseshoe-bend`, `great-bend`, `terrace-steps`,
   `rafting-run`, `six-canyons`; each has a test track built as a canyon (`series: 'canyon'`).
 - Grand Canyon Burst is the proof track.
+
+## Block Series
+
+`family: 'block'` (the Block Series) runs the track through a world built of cubes. It is built
+as a coaster (everything above applies), like a canyon (looks only, like everything else):
+
+- **On the voxel land**: a section without a `height` runs on the land (the default height is 0);
+  a section's `height` lifts it onto block pillars (over the cube cliffs, round the stack).
+- **The world**: `block: { world }`, one of `meadow`, `valley`, `snow`, `mine`, `magma`,
+  `puzzle`, `fortress`, `portal` (the land's colours, how it steps, what stands on it).
+- **Supports**: `coaster: { style: 'blocks' }` builds stacked cube pillars.
+- **Our own shapes**: the falling pieces in the scenery are our own block shapes and colours,
+  never the classic seven in a classic well; no names, creatures, textures or terms from
+  existing block games (see the plan in the project, `claude/block-series-plan.md`).
+- The layouts made for the series are the ten `(blocks)` rows above; each has a test track
+  built as a Block Series world (`series: 'block'`).
 
 ## Mirrored tracks
 

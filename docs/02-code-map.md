@@ -89,8 +89,8 @@
 - `trackKit/`: the kit itself:
   - `index.js`: `track(spec)`, plus a recipe check that throws an error naming the broken rule;
   - `parts.js`: shapes, obstacles and features, with proven numbers;
-  - `openings.js`, `layouts.js`: proven starts and section orders (L30–L34 were made for the Canyon Series);
-  - `recipe.js`: the rules. Families: `world-tour`, `grand-prix`, `coaster`, `pinball`, `arcade`, `canyon`, `test`. A **canyon** (`family: 'canyon'`, `canyon: { palette, depth, river }`, sections' `walls`) is built as a coaster whose sections run on the canyon floor unless they give a `height`;
+  - `openings.js`, `layouts.js`: proven starts and section orders (L30–L34 were made for the Canyon Series, L40–L49 for the Block Series);
+  - `recipe.js`: the rules. Families: `world-tour`, `grand-prix`, `coaster`, `pinball`, `arcade`, `canyon`, `block`, `test`. A **Block Series** track (`family: 'block'`, `block: { world }`) is built the same way, on voxel land, with block-pillar supports (`coaster.style: 'blocks'`); A **canyon** (`family: 'canyon'`, `canyon: { palette, depth, river }`, sections' `walls`) is built as a coaster whose sections run on the canyon floor unless they give a `height`;
   - `mirror.js`;
   - `lighting.js`: lighting chosen per race from its seed; looks only.
 

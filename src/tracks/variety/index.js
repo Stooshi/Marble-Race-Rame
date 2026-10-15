@@ -14,6 +14,8 @@ const NAMES = {
   'island-spins': 'Island Spins', 'sea-crossing': 'Sea Crossing', 'canopy-run': 'Canopy Run', 'terrace-run': 'Terrace Run', 'delta-skim': 'Delta Skim', 'two-spins': 'Two Spins', 'wall-dive': 'Wall Dive', staircases: 'Staircases', 'siege-routes': 'Siege Routes', 'stage-hairpin': 'Stage Hairpin', 'saucer-sweeps': 'Saucer Sweeps', 'lower-playfield': 'Lower Playfield', 'clock-tower': 'Clock Tower', 'encore-split': 'Encore Split', 'cabinet-rows': 'Cabinet Rows', 'maze-corridors': 'Maze Corridors', 'bullet-spirals': 'Bullet Spirals', 'up-up-down-down': 'Up Up Down Down', 'bracket-splits': 'Bracket Splits', 'coast-road': 'Coast Road', 'co-op-street': 'Co-op Street',
   'horseshoe-bend': 'Horseshoe Bend', 'great-bend': 'Great Bend', 'terrace-steps': 'Terrace Steps', 'rafting-run': 'Rafting Run', 'six-canyons': 'Six Canyons',
   'basalt-gorge': 'Basalt Gorge', 'twin-peaks': 'Twin Peaks', 'cliff-ledge': 'Cliff Ledge', 'free-fall': 'Free Fall', meanders: 'Meanders',
+  'spawn-meadow': 'Spawn Meadow', 'speedrun-straights': 'Speedrun Straights', 'peak-beams': 'Peak Beams', 'mine-shaft': 'Mine Shaft', 'magma-loops': 'Magma Loops',
+  'clear-rows': 'Clear Rows', 'combo-steps': 'Combo Steps', 'stack-spiral': 'Stack Spiral', 'fortress-gate': 'Fortress Gate', 'final-level': 'Final Level',
 };
 
 const base = (slug, name, description) => ({
@@ -60,16 +62,25 @@ const CANYON_HEIGHTS = {
   'free-fall': { highSweep: { height: 30 }, sweep2: { height: 16 } },
   meanders: { highSweep: { height: 28 } },
 };
+// Layouts made for one Block Series track are proven on a test track built as a Block Series world (on its
+// voxel land, flying on block pillars where its track does).
+const BLOCK_LAYOUTS = ['spawn-meadow', 'speedrun-straights', 'peak-beams', 'mine-shaft', 'magma-loops', 'clear-rows', 'combo-steps', 'stack-spiral', 'fortress-gate', 'final-level'];
+const BLOCK_HEIGHTS = {
+  'peak-beams': { beamSweep: { height: 30 }, ridgeSweep: { height: 18 } },
+  'stack-spiral': { stackSpiral: { height: 12 } },
+  'final-level': { loop: { height: 14 } },
+};
 const TOUCHDOWNS = { 'sea-crossing': { tunnelRun: { height: 0 } }, 'terrace-run': { swoops: { height: 0 } }, 'wall-dive': { tunnelRun: { height: 0 } } };
 
 const layouts = LAYOUT_KINDS.map((kind) => track({
-  ...base(`variety-layout-${kind}`, `Variety Test: ${NAMES[kind]} Layout`, `The layout library's test track for the ${NAMES[kind].toLowerCase()} layout, with the ${OWN_OPENING[kind] ? `${NAMES[[].concat(OWN_OPENING[kind])[0]].toLowerCase()} opening its table races` : 'classic opening'}${COASTER_LAYOUTS.includes(kind) ? ', built as a coaster' : CANYON_LAYOUTS.includes(kind) ? ', built as a canyon' : PINBALL_LAYOUTS.includes(kind) ? ', built as a pinball table' : ARCADE_LAYOUTS.includes(kind) ? ', built as an arcade world' : ''}.`),
+  ...base(`variety-layout-${kind}`, `Variety Test: ${NAMES[kind]} Layout`, `The layout library's test track for the ${NAMES[kind].toLowerCase()} layout, with the ${OWN_OPENING[kind] ? `${NAMES[[].concat(OWN_OPENING[kind])[0]].toLowerCase()} opening its table races` : 'classic opening'}${COASTER_LAYOUTS.includes(kind) ? ', built as a coaster' : CANYON_LAYOUTS.includes(kind) ? ', built as a canyon' : BLOCK_LAYOUTS.includes(kind) ? ', built as a Block Series world' : PINBALL_LAYOUTS.includes(kind) ? ', built as a pinball table' : ARCADE_LAYOUTS.includes(kind) ? ', built as an arcade world' : ''}.`),
   ...(COASTER_LAYOUTS.includes(kind) && { series: 'coaster', coaster: { height: 18 } }),
   ...(CANYON_LAYOUTS.includes(kind) && { series: 'canyon', biome: 'desert', canyon: { palette: 'grand-canyon' } }),
+  ...(BLOCK_LAYOUTS.includes(kind) && { series: 'block', biome: 'meadow', block: { world: 'meadow' } }),
   ...(PINBALL_LAYOUTS.includes(kind) && { series: 'pinball', biome: 'playfield', lighting: 'parlour' }),
   ...(ARCADE_LAYOUTS.includes(kind) && { series: 'arcade', biome: 'circuit-board', lighting: 'neon-night', billboardFrame: 'marquee' }),
   opening: opening(...[].concat(OWN_OPENING[kind] ?? 'classic')),
-  sections: layout(kind, COASTER_LAYOUTS.includes(kind) ? { dress: { brakingStraight: { height: 0 }, ...TOUCHDOWNS[kind] } } : CANYON_LAYOUTS.includes(kind) ? { dress: CANYON_HEIGHTS[kind] } : {}),
+  sections: layout(kind, COASTER_LAYOUTS.includes(kind) ? { dress: { brakingStraight: { height: 0 }, ...TOUCHDOWNS[kind] } } : CANYON_LAYOUTS.includes(kind) ? { dress: CANYON_HEIGHTS[kind] } : BLOCK_LAYOUTS.includes(kind) ? { dress: BLOCK_HEIGHTS[kind] ?? {} } : {}),
 }));
 
 module.exports = [...openings, ...layouts];

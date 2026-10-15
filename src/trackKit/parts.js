@@ -284,16 +284,25 @@ module.exports = {
     'andean-church', 'andean-terraces', 'condor-viewpoint', 'llama-herd', 'andean-village',
     'rafting-camp', 'adobe-mission', 'canyon-station', 'cliff-dwellings',
     'fire-lookout', 'basalt-columns', 'bighorn-sheep', 'jet-boat', 'river-ranch', 'giant-peak', 'trail-village',
-    'jingle-truck', 'hill-fort', 'puya-plants', 'hot-springs', 'hikers-camp', 'quiver-grove', 'canyon-waterfall'],
+    'jingle-truck', 'hill-fort', 'puya-plants', 'hot-springs', 'hikers-camp', 'quiver-grove', 'canyon-waterfall',
+    // The Block Series (voxel worlds and falling-block ideas; our own shapes and colours).
+    'spawn-beacon', 'cube-cottage', 'cube-windmill', 'split-board', 'cube-farm', 'voxel-peak', 'beam-tower', 'cube-cabin',
+    'mine-entrance', 'gem-seam', 'cart-depot', 'shaft-headframe', 'magma-pool', 'basalt-spire', 'lava-falls',
+    'clear-rows', 'block-well', 'combo-rows', 'settling-stack', 'block-hall', 'voxel-castle', 'drawbridge', 'block-gate',
+    'block-portal', 'gg-arch', 'level-pillars'],
   OVERHEAD: ['gondola', 'cable-car', 'chairlift', 'vulture',
     // The Canyon Series: birds circling over the gorge, and what spans it from rim to rim, high over the track.
     'condor', 'prayer-flags', 'arch-bridge', 'railway-trestle', 'suspension-bridge'],
+  // A Block Series world (family 'block': `block: { world }`): its voxel land's colours and what stands
+  // on it, the client's BLOCK_WORLDS (client/src/three/scenery/blocks.js).
+  BLOCK_WORLDS: ['meadow', 'valley', 'snow', 'mine', 'magma', 'puzzle', 'fortress', 'portal'],
   // A canyon's rock and river (family 'canyon': `canyon: { palette }`), the client's CANYON_PALETTES.
   CANYONS: ['grand-canyon', 'himalaya', 'andes', 'limestone', 'copper', 'basalt', 'karakoram', 'namib'],
   // What stands in the middle of a splitter, between its two channels (the arch: over one of
   // them), or in the middle of a spiral or a hairpin.
   AROUND: ['mountain-hut', 'big-rock', 'mountain-restaurant', 'mine-headframe', 'nunatak', 'bell-tower', 'arc-de-triomphe', 'obelisk', 'notre-dame', 'oasis', 'twisted-tower', 'river-island', 'anaconda', 'watchtower', 'pagoda',
-    'museum-of-the-future', 'dubai-frame', 'opera-house', 'tulip-garden', 'roundabout-monument', 'acacia', 'mughal-fountain', 'giant-tree', 'snow-island', 'fallen-statue', 'volcano-rock', 'sagrada-familia', 'frozen-waterfall', 'limestone-island', 'sea-islet', 'giant-redwood', 'lantern-chedi', 'watermill', 'confucius-temple', 'castle-keep', 'magician-trunk', 'top-hat', 'jukebox-tower', 'clocktower', 'lighting-rig', 'claw-tower', 'glitch-tower', 'ringed-planet', 'laser-turret', 'water-tower', 'fork-signpost', 'neon-plaza', 'snow-peak'],
+    'museum-of-the-future', 'dubai-frame', 'opera-house', 'tulip-garden', 'roundabout-monument', 'acacia', 'mughal-fountain', 'giant-tree', 'snow-island', 'fallen-statue', 'volcano-rock', 'sagrada-familia', 'frozen-waterfall', 'limestone-island', 'sea-islet', 'giant-redwood', 'lantern-chedi', 'watermill', 'confucius-temple', 'castle-keep', 'magician-trunk', 'top-hat', 'jukebox-tower', 'clocktower', 'lighting-rig', 'claw-tower', 'glitch-tower', 'ringed-planet', 'laser-turret', 'water-tower', 'fork-signpost', 'neon-plaza', 'snow-peak',
+    'settling-stack', 'voxel-peak', 'basalt-spire', 'beam-tower', 'level-pillars'],
   // Scenery near a section (or the start or finish): what grows and stands beside the track there.
   SCENERY: ['bare', 'rocks', 'birches', 'pines', 'race-netting', 'funicular', 'wooden-houses', 'frozen-lake',
     'wood-clad', 'chalets', 'pasture', 'aspens', 'shopfronts',
