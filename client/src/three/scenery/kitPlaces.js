@@ -69,7 +69,16 @@ export function buildCentrepieces(centerline, channel, kit, { lite = false, grou
   const spots = []; // where they stand (kept clear of trees)
   const arches = []; // an arch over a splitter's channel (its own mesh: the camera passes through it)
   const turning = []; // centrepieces' moving parts (the anaconda's head)
+  const glowParts = []; // parts that give their own light (a Block Series lamp): drawn unlit
+  const placed = []; // { name, foot, q, scale, p }: where each stands (a Block Series centrepiece's effect follows it)
   const { samples, segments } = centerline;
+  const lit = (name, foot, q, scale, p) => {
+    placed.push({ name, foot: foot.clone(), q: q.clone(), scale, p });
+    if (!LANDMARKS[name].glow) return;
+    const g = LANDMARKS[name].glow();
+    g.applyMatrix4(new Matrix4().compose(foot, q, new Vector3(scale, scale, scale)));
+    glowParts.push(g);
+  };
   // A centrepiece at `scale`, or smaller (a tenth at a time, down to 35%) until it keeps clear of
   // every stretch of the track (a spiral's or hairpin's centre can be close to the track it winds
   // round; a canopy can reach out over a channel). → { g, scale } or null (left out).
@@ -98,6 +107,7 @@ export function buildCentrepieces(centerline, channel, kit, { lite = false, grou
       const k = fitClear(() => LANDMARKS[sec.around].build(), new Vector3(centre.x, y - 0.3, centre.z), new Quaternion(), 1);
       if (!k) continue;
       parts.push(k.g);
+      lit(sec.around, new Vector3(centre.x, y - 0.3, centre.z), new Quaternion(), k.scale, (sec.from + sec.to) / 2);
       keepOut.push(new Box3().setFromBufferAttribute(k.g.getAttribute('position')));
       spots.push({ x: centre.x, z: centre.z, r: LANDMARKS[sec.around].radius * k.scale + 3 });
       continue;
@@ -121,9 +131,11 @@ export function buildCentrepieces(centerline, channel, kit, { lite = false, grou
       c.multiplyScalar(1 / n);
       const y = groundAt ? groundAt(c.x, c.z) : samples[i1].pos.y;
       const big = 1.6; // (standing tall out of the hill the spiral winds round)
-      const k = fitClear(() => LANDMARKS[sec.around].build(), new Vector3(c.x, y - 0.3, c.z), new Quaternion().setFromAxisAngle(UP, Math.atan2(samples[i1].pos.x - c.x, samples[i1].pos.z - c.z)), big);
+      const qq = new Quaternion().setFromAxisAngle(UP, Math.atan2(samples[i1].pos.x - c.x, samples[i1].pos.z - c.z));
+      const k = fitClear(() => LANDMARKS[sec.around].build(), new Vector3(c.x, y - 0.3, c.z), qq, big);
       if (!k) continue;
       parts.push(k.g);
+      lit(sec.around, new Vector3(c.x, y - 0.3, c.z), qq, k.scale, (sec.from + sec.to) / 2);
       keepOut.push(new Box3().setFromBufferAttribute(k.g.getAttribute('position')));
       spots.push({ x: c.x, z: c.z, r: LANDMARKS[sec.around].radius * k.scale + 4 });
       if (sec.around === 'bell-tower') bells.push({ at: new Vector3(c.x, y - 0.3 + 14.2 * k.scale, c.z), scale: k.scale });
@@ -182,6 +194,11 @@ export function buildCentrepieces(centerline, channel, kit, { lite = false, grou
     m.name = 'centrepiece';
     group.add(m);
   }
+  if (glowParts.length) {
+    const m = new Mesh(merge(glowParts), new MeshBasicMaterial({ vertexColors: true }));
+    m.name = 'centrepiece: glow';
+    group.add(m);
+  }
   if (arches.length) {
     const m = new Mesh(merge(arches), lambert());
     m.name = 'arch';
@@ -226,7 +243,7 @@ export function buildCentrepieces(centerline, channel, kit, { lite = false, grou
     }
   };
   update(0);
-  return { group, update, spots, keepOut };
+  return { group, update, spots, keepOut, placed };
 }
 
 // ── Along a section: race netting and a timing board ─────────────────────────

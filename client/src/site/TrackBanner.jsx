@@ -4,7 +4,7 @@ import banners from '../shared/trackBanners.json';
 /** Each series' gradient: the card's picture until a track's own has loaded, or when it has none. */
 export const SERIES_PIC = {
   'World Tour': 'linear-gradient(150deg,#1D3A5C,#3DDC97)', 'Grand Prix': 'linear-gradient(150deg,#C94F3D,#2F5BEA)',
-  Coasters: 'linear-gradient(150deg,#F2A541,#3A6B8C)', Canyons: 'linear-gradient(150deg,#D9773A,#5A2E1E)', Pinball: 'linear-gradient(150deg,#3A1E6B,#FF3FA8)',
+  Coasters: 'linear-gradient(150deg,#F2A541,#3A6B8C)', Canyons: 'linear-gradient(150deg,#D9773A,#5A2E1E)', Blocks: 'linear-gradient(150deg,#5B7FB8,#7FAE5F)', Pinball: 'linear-gradient(150deg,#3A1E6B,#FF3FA8)',
   Arcade: 'linear-gradient(150deg,#0A0A12,#3FD8FF)', Classic: 'linear-gradient(150deg,#D9B77E,#1FA35B)',
 };
 

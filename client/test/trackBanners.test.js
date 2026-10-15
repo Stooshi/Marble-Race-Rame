@@ -54,8 +54,9 @@ describe('track pictures', () => {
 
   it('the landing page\'s series cards each show a picture that exists', () => {
     const src = fs.readFileSync(path.resolve(__dirname, '../src/site/landing/LandingPage.jsx'), 'utf8');
-    const cards = [...src.matchAll(/^ {2}\['([^']+)', '[^']*', '[^']*', '([a-z0-9-]+)'\],$/gm)];
-    expect(cards.map((m) => m[1])).toEqual(['World Tour', 'Grand Prix', 'Coasters', 'Canyons', 'Pinball', 'Arcade']);
+    const cards = [...src.matchAll(/^ {2}\['([^']+)', '[^']*', '[^']*', '([a-z0-9-]+)'(, true)?\],$/gm)];
+    expect(cards.map((m) => m[1])).toEqual(['World Tour', 'Grand Prix', 'Coasters', 'Canyons', 'Blocks', 'Pinball', 'Arcade']);
+    expect(src).toMatch(/\['Blocks', [^\n]*, true\],/); // (a new series: its card shows only once it has tracks live)
     for (const [, series, slug] of cards) expect(manifest.banners[slug]?.series, `${series}: ${slug}`).toBe(series);
   });
 

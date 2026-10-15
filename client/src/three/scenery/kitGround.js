@@ -22,6 +22,7 @@ import { stretchKinds } from './groundCheck';
 import { trackCorridor } from './clearCheck';
 import { buildWater, coasterFlight, isLifted, liftHillCut, liftHillOf, liftHillRaise } from './coaster';
 import { makeCanyon } from './canyon';
+import { BLOCK_WORLDS, makeBlockLand } from './blocks';
 
 const RIM_WIDTH = 0.45;  // the channel's white rim beyond the lip (iceChannel.js)
 const SKIRT = 1.6;       // the channel's outer wall reaches this far below the floor
@@ -119,7 +120,11 @@ function wallsAt(channel, i, step) {
 
 export function buildKitGround(centerline, track, { lite = false } = {}) {
   const kit = track.physics.kit;
-  const biome = BIOMES[biomeOf(kit)];
+  // A Block Series world (family 'block'): its own land colours, hills and banks (./blocks.js).
+  const blockWorld = kit.block ? BLOCK_WORLDS[kit.block.world] ?? BLOCK_WORLDS.meadow : null;
+  const biome = blockWorld
+    ? { ...BIOMES.meadow, terrain: { sand: blockWorld.tops[0], grass: blockWorld.tops[0], dry: blockWorld.tops[1], shade: blockWorld.riser }, bank: blockWorld.bank, fill: blockWorld.fill, hills: blockWorld.hills }
+    : BIOMES[biomeOf(kit)];
   const lanes = Math.max(1, Number(track.lane_count) || 4);
   const hug = channelGround(centerline, track, { rim: RIM_WIDTH, dip: lite ? 6 : 3, under: lite ? 4 : 2 });
   const { channel } = hug;
@@ -178,12 +183,14 @@ export function buildKitGround(centerline, track, { lite = false } = {}) {
   const landBounds = { minX: Math.min(...xs) - margin, maxX: Math.max(...xs) + margin, minZ: Math.min(...zs) - margin, maxZ: Math.max(...zs) + margin };
   // A canyon (family 'canyon'): the land shaped into its floor, walls and plateau around the track (./canyon.js).
   const canyon = kit.canyon ? makeCanyon(centerline, channel, kit, { flight, liftAt: hug.street.liftAt, bounds: landBounds, landRadius, seaLevel: biome.sea }) : null;
+  const blocks = blockWorld ? makeBlockLand(kit.block.world, base) : null;
   const field = {
     ...base,
     lake,
     heightAt(x, z) {
       let h = base.heightAt(x, z);
       if (canyon) h = canyon.heightAt(x, z, h);
+      if (blocks) h = blocks.heightAt(x, z, h); // (stepped in terraces away from the track: only ever lower)
       if (lake) {
         const d = Math.hypot(x - lake.x, z - lake.z) - lake.radius * lake.shape(Math.atan2(z - lake.z, x - lake.x));
         if (d < LAKE_SHORE) h += (Math.min(h, lake.y - 1.2) - h) * (1 - smoothstep(0, LAKE_SHORE, d));
@@ -210,6 +217,7 @@ export function buildKitGround(centerline, track, { lite = false } = {}) {
     fine: lite ? 5 : 2.5, neighbours: !lite,
     ...(canyon && { detailFine: lite ? 6.5 : 3.4 }), // (a canyon's walls, drawn finer all along, a little coarser than over the ice: within the drawing budget)
     ...(canyon && { detail: canyon.detail, colorAt: canyon.colourAt }), // (a canyon's walls drawn finer, in their bands of colour)
+    ...(blocks && { colorAt: blocks.colourAt }), // (a block world's terraces: tops in tiles, risers in earth or stone)
   });
   const group = new Group();
   group.name = 'kit-ground';
@@ -374,5 +382,5 @@ export function buildKitGround(centerline, track, { lite = false } = {}) {
   }
 
   const bounds = { minX: Math.min(...xs) - margin, maxX: Math.max(...xs) + margin, minZ: Math.min(...zs) - margin, maxZ: Math.max(...zs) + margin, floorY: biome.sea - 6 };
-  return { group, field, groundAt: (x, z) => terrain.groundAt(x, z), hug, biome, rows, over, onBridge, lake, flight, waterY, floorY: biome.sea - 6, bounds, canyon };
+  return { group, field, groundAt: (x, z) => terrain.groundAt(x, z), hug, biome, rows, over, onBridge, lake, flight, waterY, floorY: biome.sea - 6, bounds, canyon, blocks };
 }

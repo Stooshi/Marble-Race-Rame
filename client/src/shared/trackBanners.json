@@ -585,6 +585,17 @@
    "side": 1,
    "marbles": 4
   },
+  "spawn-point": {
+   "name": "Spawn Point",
+   "series": "Blocks",
+   "lighting": "dawn",
+   "v": "ddef8c93",
+   "bytes": 13616,
+   "bytes2x": 32102,
+   "t": 10585,
+   "side": 1,
+   "marbles": 4
+  },
   "stockholm-marble-grand-prix": {
    "name": "Stockholm Marble Grand Prix",
    "series": "Grand Prix",

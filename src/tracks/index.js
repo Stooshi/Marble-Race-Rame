@@ -63,4 +63,5 @@ module.exports = [
   require('./indus-spins'),
   require('./cotahuasi-free-fall'),
   require('./fish-river-burst'),
+  require('./spawn-point'),
 ];

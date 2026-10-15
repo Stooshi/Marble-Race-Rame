@@ -84,6 +84,10 @@ export const COSTUME_COLORS = {
   // The Canyon Series.
   maniPole: '#6a4a32', flagBlue: '#2f6fc4', flagWhite: '#f4f4f0', flagRed: '#c43a2f', flagGreen: '#2f9a4a', flagYellow: '#f2c230',
   cairnStone: '#b08a68', cairnDark: '#7d5f48', cairnPale: '#d8bf98', raftRed: '#d8452f', raftTube: '#2a2c33', raftPaddle: '#e8c44a', raftVest: '#f2a330', raftRope: '#e9e4d8',
+  // The Block Series: stone and lit cubes, our own block pieces in calm colours.
+  cubeStone: '#8e949b', cubeStoneDark: '#6b7179', cubeLamp: '#f4d28e', cubeGrass: '#7fae5f', cubeDirt: '#8a6a4a',
+  cubeBasalt: '#3a3436', cubeMagma: '#ff8a3c', gemCyan: '#6fd6dc', blockArm: '#b99a6e',
+  pieceTeal: '#4f9f9a', pieceCoral: '#d98a70', pieceSand: '#e2c47e', pieceSlate: '#5d6c8c', pieceLilac: '#9d8bbd',
 };
 
 /** A part's head (or other moving piece) as its own little group at local (x, y, z), turned with the body. */
@@ -1682,6 +1686,69 @@ function riverRaft(add, mat, group, rimCentre, q, { len, width, drop = 0 }) {
   return [];
 }
 
+
+// ── The Block Series ─────────────────────────────────────────────────────────
+
+/** A pillar of stone cubes, two tones, a warm lit cube on top (the Block Series; a slalom pole or a peg). */
+function cubePillar(add, mat, group, point, q, { height }, { tones = ['cubeStone', 'cubeStoneDark'], cap = 'cubeLamp' } = {}) {
+  const s = 0.26; // (no wider than a pole's footprint)
+  const n = Math.max(2, Math.round(height / s));
+  for (let k = 0; k < n; k += 1) add(tones[k % 2], new BoxGeometry(s, s, s), local(point, q, 0, s * (k + 0.5), 0));
+  add(cap, new BoxGeometry(s * 0.9, s * 0.9, s * 0.9), local(point, q, 0, s * (n + 0.45), 0));
+  return [];
+}
+
+/** A cube of our own block pieces as big as a boulder: four cubes and one set on top (the Block Series; a block). */
+function voxelCube(add, mat, group, point, q, { radius, at }) {
+  const s = radius * 0.72;
+  const tones = ['pieceTeal', 'pieceSand', 'pieceCoral', 'pieceSlate', 'pieceLilac'];
+  let k = Math.round(at * 997);
+  for (const [x, y, z] of [[-0.5, 0.5, -0.5], [0.5, 0.5, -0.5], [-0.5, 0.5, 0.5], [0.5, 0.5, 0.5], [0, 1.5, 0]]) {
+    k += 1;
+    add(tones[k % tones.length], new BoxGeometry(s * 0.97, s * 0.97, s * 0.97), local(point, q, x * s, y * s, z * s));
+  }
+  return [];
+}
+
+/** A tower of big cubes beyond the rim; its long arm of blocks, swinging in, is the swipe (the Block Series). */
+function blockCraneBody(add, base, q) {
+  add('cubeStoneDark', new BoxGeometry(2.2, 2.2, 2.2), local(base, q, 0, 1.1, 0));
+  add('cubeStone', new BoxGeometry(1.6, 1.6, 1.6), local(base, q, 0, 3.0, 0));
+  add('cubeLamp', new BoxGeometry(0.6, 0.6, 0.6), local(base, q, 0, 4.1, 0));
+}
+
+/**
+ * A row of our own block pieces lying along the edge (the Block Series; parked): pieces of five and
+ * six cubes, stepped (never the classic four-cube pieces), in calm colours.
+ */
+function blockPieces(add, mat, group, rimCentre, q, { len, width, drop = 0 }) {
+  // Our shapes, as cells (along, up, across): a long step, a wide step and a hooked bar.
+  const SHAPES = [
+    [[0, 0, 0], [1, 0, 0], [2, 0, 0], [3, 0, 0], [3, 1, 0], [0, 0, 1]],
+    [[0, 0, 0], [1, 0, 0], [2, 0, 0], [1, 1, 0], [1, 1, 1]],
+    [[0, 0, 0], [0, 0, 1], [1, 0, 1], [2, 0, 1], [2, 1, 1], [2, 1, 0]],
+  ];
+  const tones = ['pieceTeal', 'pieceSand', 'pieceCoral', 'pieceSlate', 'pieceLilac'];
+  const GAP = 0.25;
+  // As many pieces as fill the length with cubes about a metre each, then sized to fill it exactly.
+  const longOf = (shape) => Math.max(...shape.map(([a]) => a)) + 1;
+  const pick = [];
+  let cells = 0;
+  while (cells + GAP * pick.length < len - 0.5 || !pick.length) {
+    const shape = SHAPES[pick.length % SHAPES.length];
+    pick.push(shape);
+    cells += longOf(shape);
+  }
+  const c = Math.min(1.4, (len - GAP * (pick.length - 1)) / cells);
+  const centre = rimCentre.clone().add(new Vector3(-(width - 2 * c) / 2, -drop, 0).applyQuaternion(q));
+  let z = -len / 2;
+  pick.forEach((shape, n) => {
+    for (const [a, up, across] of shape) add(tones[(n * 2) % tones.length], new BoxGeometry(c * 0.96, c * 0.96, c * 0.96), local(centre, q, (across - 0.5) * c, c * (up + 0.5), z + c * (a + 0.5)));
+    z += longOf(shape) * c + GAP;
+  });
+  return [];
+}
+
 export const KIT_COSTUMES = {
   panda: { places: 'block', build: panda },
   camel: { places: 'block', build: camel },
@@ -2014,5 +2081,18 @@ export const KIT_COSTUMES = {
     standOff: 1.6,
     sink: -0.3,
     arm: { colour: 'dragonTail', shoulder: [0, 1, 0.8], radii: [0.2, 0.45], segments: 8, tip: 0.4, tipDetail: 0, tipColour: 'dragonSpine', end: 0.2, endDetail: 0, lift: 0.4, outLift: 0.4, nose: 0.25 },
+  },
+  // The Block Series.
+  'cube-pillar': { places: 'slalom', build: cubePillar },
+  'gem-pillar': { places: 'slalom', build: (add, mat, group, point, q, size) => cubePillar(add, mat, group, point, q, size, { tones: ['cubeStoneDark', 'cubeBasalt'], cap: 'gemCyan' }) },
+  'magma-pillar': { places: 'slalom', build: (add, mat, group, point, q, size) => cubePillar(add, mat, group, point, q, size, { tones: ['cubeBasalt', 'cubeStoneDark'], cap: 'cubeMagma' }) },
+  'voxel-cube': { places: 'block', build: voxelCube },
+  'block-pieces': { places: 'parked', build: blockPieces },
+  'block-crane': {
+    places: 'swipe',
+    body: blockCraneBody,
+    standOff: 1.9,
+    sink: -0.2,
+    arm: { colour: 'blockArm', shoulder: [0, 3.4, 0.3], radii: [0.16, 0.18], segments: 6, tip: 0.55, tipDetail: 0, tipColour: 'pieceCoral', end: 0.2, endDetail: 0, endColour: 'blockArm', lift: 0.5, outLift: 0.8, nose: 0.2 },
   },
 };

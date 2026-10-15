@@ -10,7 +10,7 @@
  */
 import { Box3,
   BufferGeometry, Float32BufferAttribute, Group, InstancedMesh, LineBasicMaterial, LineSegments, Matrix4, Mesh, MeshLambertMaterial,
-  Quaternion, Vector3,
+  MeshBasicMaterial, Quaternion, Vector3,
 } from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { buildKitGround, biomeOf } from './kitGround';
@@ -21,6 +21,8 @@ import { buildPinball } from './pinball';
 import { buildArcade } from './arcade';
 import { condor } from './kitLandmarksCanyon';
 import { canyonDressing } from './canyon';
+import { blockDressing } from './blocks';
+import { buildBlockEffects } from './kitLandmarksBlock';
 import { SPAN_KINDS, buildCanyonSpans } from './canyonSpans';
 import { buildBattlements, buildCentrepieces, buildFunicular, buildHouses, buildLake, buildRaceNetting, tagsNear, turnAngle } from './kitPlaces';
 import { hashString, mergeByArea, piece, seededRandom, smoothstep } from './parts';
@@ -89,7 +91,9 @@ export function buildKitScenery(centerline, track, theme, { lite = false } = {})
   const landmarkBoxes = []; // (each landmark's name and box, for the checks)
   const cameraKeepOut = []; // boxes the follow camera keeps clear of (TrackScene.keepInSight)
   const turning = []; // landmarks' moving parts (a windmill's sails): { mesh, base, axis, speed }
-  const placeLandmark = (name, at, yaw, footY = null, away = null) => {
+  const glowParts = []; // landmarks' parts that give their own light (lamps, gems, magma): drawn unlit
+  const placed = []; // where each landmark stands: { name, foot, q, scale, p } (a Block Series landmark's effect follows it)
+  const placeLandmark = (name, at, yaw, footY = null, away = null, p = null) => {
     const lm = LANDMARKS[name];
     if (!lm) return;
     const q = new Quaternion().setFromAxisAngle(UP, yaw);
@@ -112,6 +116,12 @@ export function buildKitScenery(centerline, track, theme, { lite = false } = {})
       }
     }
     landmarkParts.push(g);
+    if (lm.glow) {
+      const glow = lm.glow();
+      glow.applyMatrix4(new Matrix4().compose(foot, q, new Vector3(1, 1, 1)));
+      glowParts.push(glow);
+    }
+    placed.push({ name, foot: foot.clone(), q: q.clone(), scale: 1, p });
     g.computeBoundingBox();
     landmarkBoxes.push({ name: `${footY !== null ? 'gateway' : 'landmark'}:${name}`, box: g.boundingBox.clone() });
     solids.push({ x: at.x, z: at.z, r: lm.radius + 4 });
@@ -139,7 +149,7 @@ export function buildKitScenery(centerline, track, theme, { lite = false } = {})
   if (kit.finish?.landmark) {
     const { s, along, side } = frame(1);
     const at = s.pos.clone().addScaledVector(along, 70).addScaledVector(side, 6);
-    placeLandmark(kit.finish.landmark, at, yawTo(along.clone().negate()), null, along.clone());
+    placeLandmark(kit.finish.landmark, at, yawTo(along.clone().negate()), null, along.clone(), 1);
     if (landmarkBoxes.length) cameraKeepOut.push(landmarkBoxes[landmarkBoxes.length - 1].box);
   }
   for (const sec of kit.sections) {
@@ -148,7 +158,7 @@ export function buildKitScenery(centerline, track, theme, { lite = false } = {})
       const { s, side, i, along } = frame(p);
       if (lm.over) {
         // Straddling the track (a gateway the field races through): on the rims' level, its opening along the track.
-        placeLandmark(lm.name, s.pos.clone(), yawTo(along), Math.min(rows[i]?.[1]?.inner.y ?? s.pos.y, rows[i]?.[-1]?.inner.y ?? s.pos.y) - 0.3);
+        placeLandmark(lm.name, s.pos.clone(), yawTo(along), Math.min(rows[i]?.[1]?.inner.y ?? s.pos.y, rows[i]?.[-1]?.inner.y ?? s.pos.y) - 0.3, null, p);
         continue;
       }
       const sign = lm.side === 'right' ? -1 : 1;
@@ -158,17 +168,22 @@ export function buildKitScenery(centerline, track, theme, { lite = false } = {})
         const k = lm.river ? cy.riverSign : sign;
         const d = lm.rim ? cy.rimOut(i, k) + (lm.distance ?? 3) : cy.river.centre;
         const at = s.pos.clone().addScaledVector(side, k * d);
-        placeLandmark(lm.name, at, yawTo(side.clone().multiplyScalar(-k)), lm.river ? cy.waterAt(i) - 0.15 : null, lm.rim ? side.clone().multiplyScalar(k) : null);
+        placeLandmark(lm.name, at, yawTo(side.clone().multiplyScalar(-k)), lm.river ? cy.waterAt(i) - 0.15 : null, lm.rim ? side.clone().multiplyScalar(k) : null, p);
         continue;
       }
       const edge = rows[i]?.[sign]?.out ?? s.pos;
       const at = edge.clone().addScaledVector(side, sign * (lm.distance ?? 22));
-      placeLandmark(lm.name, at, yawTo(side.clone().multiplyScalar(-sign)), null, side.clone().multiplyScalar(sign));
+      placeLandmark(lm.name, at, yawTo(side.clone().multiplyScalar(-sign)), null, side.clone().multiplyScalar(sign), p);
     }
   }
   if (landmarkParts.length) {
     const m = new Mesh(mergeGeometries(landmarkParts), new MeshLambertMaterial({ vertexColors: true, flatShading: true }));
     m.name = 'landmarks';
+    group.add(m);
+  }
+  if (glowParts.length) {
+    const m = new Mesh(mergeGeometries(glowParts), new MeshBasicMaterial({ vertexColors: true }));
+    m.name = 'landmarks: glow';
     group.add(m);
   }
 
@@ -324,6 +339,10 @@ export function buildKitScenery(centerline, track, theme, { lite = false } = {})
   const centrepieces = buildCentrepieces(centerline, channel, kit, { lite, groundAt, corridor });
   group.add(centrepieces.group);
   solids.push(...centrepieces.spots);
+  placed.push(...centrepieces.placed);
+  // A Block Series world's quiet effects on its landmarks: rows clearing with a flash, blocks settling (./kitLandmarksBlock.js).
+  const blockFx = kit.block ? buildBlockEffects(placed, { lite }) : null;
+  if (blockFx) group.add(blockFx.group);
   group.add(buildRaceNetting(centerline, channel, kit, rows));
   group.add(buildBattlements(centerline, kit, rows, { lite }));
   const lake = buildLake(ground.lake, { lite });
@@ -348,7 +367,7 @@ export function buildKitScenery(centerline, track, theme, { lite = false } = {})
   // ── Set dressing for the landscape (instanced, drawn in tiles) ─────────
   // The landscape's own, plus what a section's scenery asks for (snow-rimed rocks, birches);
   // a bare stretch (a wind-swept summit) keeps only a few rocks.
-  const baseKinds = ground.canyon ? canyonDressing(kit.canyon.palette) : dressingFor(biome);
+  const baseKinds = ground.canyon ? canyonDressing(kit.canyon.palette) : kit.block ? blockDressing(kit.block.world) : dressingFor(biome);
   const kinds = [...baseKinds, [(l) => snowRock(l), 0], [(l) => winterBirch(l), 0], [(l) => aspen(l), 0], [() => palm(true), 0], [() => jacaranda(), 0], [() => acaciaTree(), 0]];
   const ROCK = baseKinds.length;
   const BIRCH = baseKinds.length + 1;
@@ -365,7 +384,7 @@ export function buildKitScenery(centerline, track, theme, { lite = false } = {})
   const maxZ = Math.max(...zs);
   const spacing = lite ? 12 : 7;
   const arcadeBoard = biome === 'circuit-board' || biome === 'blacklight-carpet';
-  const maxItems = kit.canyon ? (lite ? 160 : 450) : lite ? (biome === 'meadow' ? 150 : kit.grandPrix || arcadeBoard ? 220 : 300) : 900; // (fewer of the meadow's broadleaf trees on a phone, and fewer beside a Grand Prix's grandstands or on an arcade board, where the compact layouts show most of the world at once)
+  const maxItems = kit.canyon ? (lite ? 160 : 450) : kit.block ? (lite ? 220 : 650) : lite ? (biome === 'meadow' ? 150 : kit.grandPrix || arcadeBoard ? 220 : 300) : 900; // (fewer of the meadow's broadleaf trees on a phone, and fewer beside a Grand Prix's grandstands or on an arcade board, where the compact layouts show most of the world at once)
   const spots = [];
   for (let x = minX - 260; x <= maxX + 260; x += spacing) {
     for (let z = minZ - 260; z <= maxZ + 260; z += spacing) spots.push([x + (rand() - 0.5) * spacing * 0.9, z + (rand() - 0.5) * spacing * 0.9, rand(), rand()]);
@@ -432,6 +451,7 @@ export function buildKitScenery(centerline, track, theme, { lite = false } = {})
     grandPrix?.update(t, ctx); // (crowds standing as marbles pass; fireworks once the winner is home)
     pinball?.update(t);
     arcade?.update(t, ctx); // (the screen's countdown; the winner's initials and pixel bursts)
+    blockFx?.update(t, ctx); // (block rows clearing, blocks settling, the GG lit once the winner is home)
     centrepieces.update(t);
     funicular?.update(t);
     lake?.update(t);

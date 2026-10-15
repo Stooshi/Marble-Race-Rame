@@ -17,7 +17,9 @@ import {
 } from 'three';
 import { channelLipAt, channelRadiusAt, forkAt, forkOffset, forkRadius } from './iceChannel';
 
-export const LIGHTINGS = ['day', 'sunset', 'midnight-sun', 'night-northern-lights', 'fog', 'snow', 'rain', 'night', 'parlour', 'neon-night', 'synthwave'];
+export const LIGHTINGS = ['day', 'sunset', 'midnight-sun', 'night-northern-lights', 'fog', 'snow', 'rain', 'night', 'parlour', 'neon-night', 'synthwave',
+  // The Block Series: a calm dawn, a dark mine lit by its lamps and gems, a cave lit only by magma.
+  'dawn', 'cave', 'magma'];
 
 /** Each preset's sky, haze and light (day: the landscape's own). fogRange: metres, near and far. */
 export const PRESETS = {
@@ -90,6 +92,40 @@ export const PRESETS = {
     ambient: 0.32,
     sun: { color: '#ff9a6a', intensity: 1.8, direction: [-1, 0.14, 0.3] },
     effects: { grid: true, edge: '#3fd8ff' },
+  },
+  // Dawn (the Block Series' meadows): a soft pale-blue sky warming to peach at the horizon, a low
+  // warm sun, long gentle shadows; calm colours.
+  dawn: {
+    sky: { top: '#5b7fb8', horizon: '#f3c9a6', glow: '#ffe4b4' },
+    fog: '#e6d4c6',
+    fogRange: [320, 2400],
+    hemisphere: { sky: '#ffe8d2', ground: '#66766a', intensity: 1.45 },
+    ambient: 0.38,
+    sun: { color: '#ffc994', intensity: 1.75, direction: [0.9, 0.22, -0.35] },
+  },
+  // A cave or mine (Deep Mine): near-black rock overhead, warm lamplight on the track, the gem
+  // seams and lamps glowing, the marbles glowing in their own colours.
+  cave: {
+    sky: { top: '#050608', horizon: '#15171d', glow: null },
+    fog: '#0e1015',
+    fogRange: [140, 1000],
+    hemisphere: { sky: '#b4bccb', ground: '#1c1d22', intensity: 0.8 },
+    ambient: 0.32,
+    sun: { color: '#ffd9a0', intensity: 0.85, direction: [0.2, 1, 0.3] }, // (the lamps, from above)
+    groundTint: 0.55,
+    effects: { night: true, edge: '#ffc977' },
+  },
+  // Magma light (Magma Core): a dark cave lit from below by glowing magma, deep orange on the rock,
+  // a few embers drifting up.
+  magma: {
+    sky: { top: '#0a0406', horizon: '#3a1208', glow: null },
+    fog: '#1e0a07',
+    fogRange: [160, 1100],
+    hemisphere: { sky: '#ffa066', ground: '#40140a', intensity: 0.95 },
+    ambient: 0.3,
+    sun: { color: '#ff8a4a', intensity: 0.95, direction: [0.3, 0.7, 0.2] },
+    groundTint: 0.5,
+    effects: { night: true, edge: '#ff8a45', embers: true },
   },
   fog: {
     sky: { top: '#b6c0c9', horizon: '#d3d8dc', glow: null },
@@ -287,6 +323,35 @@ function precipitation(kind, lite) {
   return { object, update };
 }
 
+/** Embers drifting up round the camera (magma light): a few soft orange points, additive. */
+function embers(lite) {
+  const n = lite ? 120 : 400;
+  const box = { w: 80, h: 30 };
+  const base = new Float32Array(n * 3);
+  for (let k = 0; k < n; k += 1) {
+    base[k * 3] = (noise(k + 3.1) - 0.5) * box.w;
+    base[k * 3 + 1] = noise(k + 4.37) * box.h;
+    base[k * 3 + 2] = (noise(k + 5.71) - 0.5) * box.w;
+  }
+  const g = new BufferGeometry();
+  g.setAttribute('position', new Float32BufferAttribute(new Float32Array(n * 3), 3));
+  const object = new Points(g, new PointsMaterial({ color: '#ff9a4a', map: flakeTexture(), size: lite ? 0.5 : 0.38, transparent: true, opacity: 0.8, depthWrite: false, blending: AdditiveBlending }));
+  object.name = 'embers';
+  object.frustumCulled = false;
+  const wrap = (v, size) => ((((v + size / 2) % size) + size) % size) - size / 2;
+  const update = (sec, at) => {
+    const pos = object.geometry.getAttribute('position');
+    for (let k = 0; k < n; k += 1) {
+      const x = at.x + wrap(base[k * 3] + Math.sin(sec * 0.4 + k) * 1.2 - at.x, box.w);
+      const z = at.z + wrap(base[k * 3 + 2] + Math.cos(sec * 0.3 + k * 1.3) * 1.2 - at.z, box.w);
+      const y = at.y - 8 + wrap(base[k * 3 + 1] + sec * 1.1 - at.y, box.h);
+      pos.setXYZ(k, x, y, z);
+    }
+    pos.needsUpdate = true;
+  };
+  return { object, update };
+}
+
 /** A faint edge light along the top of both rims (night): one draw call. */
 /**
  * Synthwave sunset's sky: a magenta grid over the lower sky (lines running out to the horizon
@@ -369,7 +434,7 @@ export function edgeLights(centerline, channel, colour = '#7fd8ff') {
  */
 export function buildEffects(theme, { centerline = null, channel = null, lite = false } = {}) {
   const fx = theme?.effects ?? {};
-  if (!fx.stars && !fx.aurora && !fx.precipitation && !fx.night && !fx.grid && !fx.edge) return null;
+  if (!fx.stars && !fx.aurora && !fx.precipitation && !fx.night && !fx.grid && !fx.edge && !fx.embers) return null;
   const sky = new Group();
   sky.name = 'sky effects';
   const world = new Group();
@@ -385,6 +450,11 @@ export function buildEffects(theme, { centerline = null, channel = null, lite = 
     const p = precipitation(fx.precipitation, lite);
     world.add(p.object);
     updates.push((sec, at) => p.update(sec, at));
+  }
+  if (fx.embers) {
+    const e = embers(lite);
+    world.add(e.object);
+    updates.push((sec, at) => e.update(sec, at));
   }
   if (fx.grid) sky.add(synthGrid(lite));
   if ((fx.night || fx.edge) && centerline && channel) world.add(edgeLights(centerline, channel, fx.edge));

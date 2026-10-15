@@ -50,6 +50,7 @@ function seriesOf(track) {
   if (kit?.pinball) return 'Pinball';
   if (kit?.arcade) return 'Arcade';
   if (kit?.canyon) return 'Canyons';
+  if (kit?.block) return 'Blocks';
   if (kit?.coaster) return 'Coasters';
   if (kit?.grandPrix) return 'Grand Prix';
   return 'World Tour';

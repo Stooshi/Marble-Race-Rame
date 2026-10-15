@@ -12,6 +12,7 @@ import { GP_LANDMARKS } from './kitLandmarksGP';
 import { COASTER_LANDMARKS } from './kitLandmarksCoaster';
 import { ARCADE_LANDMARKS } from './kitLandmarksArcade';
 import { CANYON_LANDMARKS } from './kitLandmarksCanyon';
+import { BLOCK_LANDMARKS } from './kitLandmarksBlock';
 
 // ── Set dressing: one geometry per kind, instanced ──────────────────────────
 
@@ -578,6 +579,7 @@ export const LANDMARKS = {
   ...COASTER_LANDMARKS,
   ...ARCADE_LANDMARKS,
   ...CANYON_LANDMARKS,
+  ...BLOCK_LANDMARKS,
 };
 
 // ── Things passing overhead (scenery only, high above the track) ───────────

@@ -382,6 +382,20 @@ as a coaster (everything above applies), like a canyon (looks only, like everyth
 - **Our own shapes**: the falling pieces in the scenery are our own block shapes and colours,
   never the classic seven in a classic well; no names, creatures, textures or terms from
   existing block games (see the plan in the project, `claude/block-series-plan.md`).
+- **Landmarks** of the series (client `kitLandmarksBlock.js`) may have parts that give their own
+  light (`glow`: lamps, gems, magma, drawn unlit) and a quiet effect (`fx`) on the race clock and
+  the leader's progress: `clear-rows` (the full rows flash and clear as the leader passes, the
+  rows above settle), `combo-rows` (five lamp rows light one after another), `settling-stack`
+  (around a spiral: a new block settles on top every 6 s, a full layer clears), `split-board`
+  (a lamp per quarter of the race, gold once the winner is home), `block-gate` (a gateway,
+  `over: true`: its lintel's blocks drop into place as the pack comes), `drawbridge` (lowers as
+  the pack comes), `block-portal` (a gateway glowing blue to violet), `gg-arch` (a finish
+  landmark: the GG lights once the winner is home). A rewound replay undoes them.
+- **Lighting**: `dawn` (a soft warm morning), `cave` (dark, lamplit, the marbles glowing) and
+  `magma` (lit from below by the magma, embers drifting up).
+- **Costumes**: `cube-pillar`, `gem-pillar`, `magma-pillar` (slalom poles and pegs), `voxel-cube`
+  (a block or pile-up), `block-pieces` (parked: our own five- and six-cube pieces), `block-crane`
+  (a swipe).
 - The layouts made for the series are the ten `(blocks)` rows above; each has a test track
   built as a Block Series world (`series: 'block'`).
 

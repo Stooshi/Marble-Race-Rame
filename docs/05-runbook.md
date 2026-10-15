@@ -50,7 +50,7 @@ Pushing to `Main` does **not** deploy the server. Moses deploys it by uploading 
 `docs/database_schema.sql` can only **add** things: tables, columns and indexes. Any change to **existing rows** goes in a one-time file in `docs/data_updates/`. Examples: switching a track on, fixing a value, granting admin.
 
 **How to write one:**
-1. Create `docs/data_updates/<name>.sql`. Files run in **name order**, and names are only an ordering key (many are dated in the future). Pick a name that sorts **after the last existing file**; today that is `2027-01-15-add-fish-river-burst.sql`, so the next one would be, for example, `2027-01-16-<what>.sql`.
+1. Create `docs/data_updates/<name>.sql`. Files run in **name order**, and names are only an ordering key (many are dated in the future). Pick a name that sorts **after the last existing file**; today that is `2027-01-16-add-spawn-point.sql`, so the next one would be, for example, `2027-01-17-<what>.sql`.
 2. Start with a comment saying what the file changes and why, and how it was generated if a script made it.
 3. Write it so that running it on a database where the change is already done changes nothing. For example, `UPDATE … WHERE role <> 'admin'`.
 4. Optionally, end with a `SELECT` returning one row. That row is saved as the file's summary in the `data_updates` table.

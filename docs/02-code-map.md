@@ -1,6 +1,6 @@
 # 2. Code map
 
-*Last updated 14 Oct 2026 (the Canyon Series).* Where everything is, and where to look to fix something. Paths are relative to the repository root.
+*Last updated 15 Oct 2026 (the Block Series).* Where everything is, and where to look to fix something. Paths are relative to the repository root.
 
 ## Find it fast
 
@@ -308,6 +308,7 @@ Defined in `src/sockets/index.js`. The client may send a JWT in `auth.token`; an
   - kit scenery: `kit.js`, `kitGround.js`, `kitProps.js`, `kitPlaces.js`, `kitLandmarks*.js`;
   - series looks: `coaster.js` (steel A-frames, or timber trestle bents with `coaster.style: 'timber'`), `arcade.js`, `pinball.js`, `grandPrix.js`;
   - canyons: `canyon.js` (the canyon shaped into the land around the track: floor, stepped walls in the palette's bands, plateau, river ribbon; the palettes; what grows there), `canyonSpans.js` (prayer flags, arch bridge, railway trestle and footbridge from rim to rim), `kitLandmarksCanyon.js` (the series' landmarks and the condor). `terrain.js` draws the walls finer (`detail`, at `detailFine`) and in their colours (`colorAt`);
+  - the Block Series: `blocks.js` (the eight worlds: voxel land stepped in terraces away from the track, only ever lowering it; tiles and terrace tones through `colorAt`; cube dressing), `kitLandmarksBlock.js` (the series' landmarks, their unlit `glow` parts, and `buildBlockEffects`: rows clearing, lamp rows lighting, blocks settling on the stack, the split board, the gate's blocks dropping, the drawbridge, the portal's glow, the GG; all on the race clock and the leader's progress, undone when a replay rewinds). Block-pillar supports are `coaster.style: 'blocks'` in `coaster.js`; the lighting presets `dawn`, `cave` and `magma` (with drifting embers) are in `lighting.js`;
   - hand-built worlds: `sanFrancisco.js`, `alpine.js`, `capeTown.js`;
   - checks: `clearCheck.js` (nothing inside the track, and nothing within 0.5 m of the camera) and `groundCheck.js`.
 - `costumes/`: what obstacles look like, sized to their real footprint so marbles hit what you see.

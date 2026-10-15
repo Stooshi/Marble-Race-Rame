@@ -12,7 +12,7 @@
  *     phones), the lift hill and its chain, the station and its queue, water
  *     curtains, and a tower under each billboard that stands on one.
  */
-import { BoxGeometry, BufferGeometry, CircleGeometry, DoubleSide, Float32BufferAttribute, Group, Matrix4, Mesh, MeshBasicMaterial, MeshLambertMaterial, Vector3 } from 'three';
+import { BoxGeometry, BufferGeometry, CircleGeometry, Color, DoubleSide, Float32BufferAttribute, Group, Matrix4, Mesh, MeshBasicMaterial, MeshLambertMaterial, Vector3 } from 'three';
 import { channelLipAt, channelRadiusAt, forkAt, forkOffset, forkRadius } from '../iceChannel';
 import { box, merge, piece } from './parts';
 
@@ -316,11 +316,16 @@ export function buildCoaster(centerline, channel, kit, { lite = false, groundAt,
   // (`coaster.style` 'timber': wooden trestle bents instead of steel A-frames: near-upright posts,
   // close ties and cross-bracing in every panel, as the old mining railways' trestles.)
   const timber = kit.coaster?.style === 'timber';
+  // (`coaster.style` 'blocks' (the Block Series): two upright pillars of stacked cubes in two tones
+  // of the support colour, and a cube beam across under the channel.)
+  const blocks = kit.coaster?.style === 'blocks';
+  const CUBE = 1.6;
+  const SUPPORT_DARK = `#${new Color(SUPPORT).multiplyScalar(0.78).getHexString()}`;
   const tower = (top, side, half, i, { light = lite } = {}) => {
     const landY = groundAt(top.x, top.z);
     const h = top.y - landY;
     if (h < 1.2) return;
-    const splay = timber ? Math.min(0.1 * h, 3.5) : Math.min(0.18 * h, 6);
+    const splay = blocks ? 0 : timber ? Math.min(0.1 * h, 3.5) : Math.min(0.18 * h, 6);
     const legs = [1, -1].map((sign) => {
       const a = top.clone().addScaledVector(side, sign * half);
       const b = top.clone().addScaledVector(side, sign * (half + splay));
@@ -338,6 +343,28 @@ export function buildCoaster(centerline, channel, kit, { lite = false, groundAt,
       return Math.abs(dx * along.x + dz * along.z) < e && Math.abs(dx * side.x + dz * side.z) < half + splay + e;
     });
     if (through) return;
+    if (blocks) {
+      // Each pillar: cubes from the land up to the beam (fewer, bigger ones on phones).
+      const size = light ? CUBE * 1.5 : CUBE;
+      const yaw = Math.atan2(side.x, side.z);
+      for (const [a, b] of legs) {
+        const n = Math.max(1, Math.ceil((a.y - b.y) / size));
+        const sz = (a.y - b.y) / n;
+        for (let k = 0; k < n; k += 1) {
+          const g = new BoxGeometry(size, sz * 0.98, size);
+          g.rotateY(yaw);
+          g.translate(a.x, b.y + sz * (k + 0.5), a.z);
+          towers.push(piece(g, k % 2 ? SUPPORT_DARK : SUPPORT));
+        }
+        feet.push({ x: b.x, z: b.z, r: 3 });
+      }
+      const beamG = new BoxGeometry(half * 2 + size, size * 0.8, size);
+      beamG.rotateY(yaw + Math.PI / 2);
+      const mid = legs[0][0].clone().lerp(legs[1][0], 0.5);
+      beamG.translate(mid.x, mid.y - size * 0.4, mid.z);
+      towers.push(piece(beamG, SUPPORT_DARK));
+      return;
+    }
     for (const [a, b] of legs) {
       towers.push(strut(a, b, light ? 0.45 : 0.4, SUPPORT));
       feet.push({ x: b.x, z: b.z, r: 3 });
@@ -374,7 +401,7 @@ export function buildCoaster(centerline, channel, kit, { lite = false, groundAt,
       }
     }
   };
-  const every = timber ? (lite ? 16 : 9) : lite ? 22 : 13; // (a trestle's bents stand closer together)
+  const every = timber ? (lite ? 16 : 9) : blocks ? (lite ? 20 : 12) : lite ? 22 : 13; // (a trestle's bents stand closer together)
   let last = -Infinity;
   for (let i = 0; i <= segments; i += 1) {
     if (!isLifted(flight, i) || i * step - last < every) continue;

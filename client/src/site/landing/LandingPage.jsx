@@ -12,12 +12,14 @@ const NUMBER_WORDS = ['no', 'one', 'two', 'three', 'four', 'five', 'six', 'seven
 
 const HeroReplay = lazy(() => importOrReload(() => import('./HeroReplay')));
 
-// The series cards: name, line, gradient (shown while the picture loads), and the track whose picture the card shows.
+// The series cards: name, line, gradient (shown while the picture loads), and the track whose picture the card shows;
+// a card marked `true` at the end appears only once its series has tracks live (a new series, still switched off).
 const SERIES = [
   ['World Tour', 'landmarks around the globe', 'linear-gradient(150deg,#1D3A5C,#3DDC97)', 'san-francisco'],
   ['Grand Prix', 'start lights and crowds', 'linear-gradient(150deg,#C94F3D,#2F5BEA)', 'frostmere-marble-grand-prix'],
   ['Coasters', 'high on steel rails', 'linear-gradient(150deg,#F2A541,#3A6B8C)', 'hong-kong-crossing'],
   ['Canyons', 'through real canyons', 'linear-gradient(150deg,#D9773A,#5A2E1E)', 'grand-canyon-burst'],
+  ['Blocks', 'worlds built of blocks', 'linear-gradient(150deg,#5B7FB8,#7FAE5F)', 'spawn-point', true],
   ['Pinball', 'bumpers and flippers', 'linear-gradient(150deg,#3A1E6B,#FF3FA8)', 'flipper-spins'],
   ['Arcade', 'neon and pixels', 'linear-gradient(150deg,#0A0A12,#3FD8FF)', 'checkpoint-rush'],
 ];
@@ -40,7 +42,8 @@ export default function LandingPage() {
   }, [data]);
   const total = data?.tracks?.length;
   // The series with tracks live now (from the live track list, so the heading never goes stale).
-  const liveSeries = data?.tracks?.length ? SERIES.filter(([name]) => counts[name]).length : SERIES.length;
+  const liveSeries = data?.tracks?.length ? SERIES.filter(([name]) => counts[name]).length : SERIES.filter((s) => !s[4]).length;
+  const cards = SERIES.filter(([name, , , , whenLive]) => !whenLive || counts[name]);
 
   return (
     <div className="ms-landing">
@@ -85,7 +88,7 @@ export default function LandingPage() {
           <p className="ms-lede" style={{ margin: 0 }}>From Swedish fjords to pinball tables, every track has its own start, layout and surprises.</p>
         </div>
         <div className="ms-cards" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 180px), 1fr))' }}>
-          {SERIES.map(([name, line, pic, picture]) => (
+          {cards.map(([name, line, pic, picture]) => (
             <div key={name} className="ms-trackcard" style={{ cursor: 'default' }}>
               <div className="ms-trackcard__pic" style={{ background: pic }}>
                 {picture && <TrackBanner slug={picture} />}
