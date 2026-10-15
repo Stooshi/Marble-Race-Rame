@@ -670,6 +670,7 @@ const HIDDEN_KIT_TRACKS = [
   ['deep-mine', '2027-01-19-add-deep-mine.sql', 'Deep Mine, Block Series track 4: underground in a mine of stone blocks, lit by lamps and glowing gem seams, along the cart rails and down the shaft to the cart depot.'],
   ['magma-core', '2027-01-20-add-magma-core.sql', 'Magma Core, Block Series track 5: a dark cave of basalt blocks over glowing magma, lit only by the lava, past lava falls and round a basalt spire.'],
   ['line-clear', '2027-01-21-add-line-clear.sql', 'Line Clear, Block Series track 6: a calm plain of coloured blocks, where walls of block rows beside the track clear their full rows with a flash as the pack passes.'],
+  ['combo-drop', '2027-01-22-add-combo-drop.sql', 'Combo Drop, Block Series track 7: step drops down a world of blocks beside stands of lamp rows that light one after another as the pack lands, to the well.'],
 ];
 for (const [slug, file, note] of HIDDEN_KIT_TRACKS) {
   test(`${slug} is added by its data update, switched off, exactly as its track file builds it`, () => {

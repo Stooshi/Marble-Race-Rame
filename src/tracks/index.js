@@ -69,4 +69,5 @@ module.exports = [
   require('./deep-mine'),
   require('./magma-core'),
   require('./line-clear'),
+  require('./combo-drop'),
 ];

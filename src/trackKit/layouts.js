@@ -747,19 +747,19 @@ const LAYOUTS = {
       obstacles: [parked({ costume: c.parked, at: 0.2, side: R, length: 6 }), peg({ costume: c.peg, at: 0.45, line: 'left' })], features: [rumble({ from: 0.7, to: 0.95, count: 3 })],
     },
   ],
-  /** L46 Combo steps (Block Series): a straight of steps, a spin, a drop, a second straight of steps, a sweep (a boost), the hairpin, a slalom drop and a parked piece and a peg at the run-in. */
+  /** L46 Combo steps (Block Series): a straight of steps, a steep spin, a drop, a second straight of steps, a long sweep (a boost), the hairpin, a slalom drop and a parked piece (on the right: on the left, a marble riding the wall out of the slalom drop could stick on its end) and a peg at the run-in. */
   'combo-steps': (L, R, c) => [
     { key: 'steps1', name: 'Steps', shape: straight(130, { grade: 0.14 }), features: [steps({ from: 0.35, to: 0.9, count: 5, drag: 0.01 })], billboards: 1 },
-    { key: 'spin', name: 'Spiral', shape: spiral({ side: L, radius: 50, turns: 1, grade: 0.16 }) },
+    { key: 'spin', name: 'Spiral', shape: spiral({ side: L, radius: 50, turns: 1, grade: 0.19 }) },
     { key: 'drop', name: 'Drop', shape: plunge(45, { grade: 0.22, from: 0.16 }) },
     { key: 'steps2', name: 'More steps', shape: straight(100, { grade: 0.14 }), features: [steps({ from: 0.4, to: 0.9, count: 4, drag: 0.01 })], billboards: 1 },
-    { key: 'sweep', name: 'Sweep', shape: sweep({ side: R, radius: 85, degrees: 140, grade: 0.09 }), features: [boost({ at: 0.08 })], billboards: 2 },
+    { key: 'sweep', name: 'Sweep', shape: sweep({ side: R, radius: 85, degrees: 185, grade: 0.09 }), features: [boost({ at: 0.08 })], billboards: 2 },
     { key: 'brakingStraight', name: 'Run to the hairpin', shape: straight(50, { grade: 0.12 }) },
     { key: 'hairpin', name: 'Hairpin', shape: hairpin({ side: R }), obstacles: [swipe({ costume: c.swipe, side: 'high' })] },
     { key: 'slalomDrop', name: 'Slalom drop', shape: plunge(50, { grade: 0.2, from: 0.16 }), obstacles: [slalom({ costume: c.slalom, from: 0.4, to: 0.9, count: 3, loss: 0.15 })] },
     {
-      key: 'lastStraight', name: 'Last straight', shape: straight(100, { grade: 0.15 }),
-      obstacles: [parked({ costume: c.parked, at: 0.2, side: L, length: 6 }), peg({ costume: c.peg, at: 0.45, line: 'right' })], features: [rumble({ from: 0.7, to: 0.95, count: 3 })],
+      key: 'lastStraight', name: 'Last straight', shape: straight(85, { grade: 0.15 }),
+      obstacles: [parked({ costume: c.parked, at: 0.25, side: R, length: 6 }), peg({ costume: c.peg, at: 0.5, line: 'left' })], features: [rumble({ from: 0.7, to: 0.95, count: 3 })],
     },
   ],
   /** L47 Stack spiral (Block Series): a peg straight, S-bends, a spin, a drop, a sweep (a boost), the hairpin, the long spiral round the stack (a little over one turn) and a parked piece and a peg at the run-in. */

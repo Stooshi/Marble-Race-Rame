@@ -145,6 +145,17 @@
    "side": -1,
    "marbles": 4
   },
+  "combo-drop": {
+   "name": "Combo Drop",
+   "series": "Blocks",
+   "lighting": "sunset",
+   "v": "41cf0b69",
+   "bytes": 13420,
+   "bytes2x": 33658,
+   "t": 14740,
+   "side": 1,
+   "marbles": 6
+  },
   "copper-spins": {
    "name": "Copper Spins",
    "series": "Canyons",
