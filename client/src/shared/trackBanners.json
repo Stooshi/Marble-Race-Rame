@@ -244,6 +244,17 @@
    "side": 1,
    "marbles": 1
   },
+  "final-level": {
+   "name": "Final Level",
+   "series": "Blocks",
+   "lighting": "night",
+   "v": "e61e5817",
+   "bytes": 9828,
+   "bytes2x": 24960,
+   "t": 9880,
+   "side": 1,
+   "marbles": 4
+  },
   "final-round-spin": {
    "name": "Final Round Spin",
    "series": "Arcade",

@@ -798,11 +798,11 @@ const LAYOUTS = {
   ],
   /** L49 Final level (Block Series): S-bends, a sweep (a boost), a drop, the loop (a spin), a mogul straight, the hairpin, a slalom drop, a second sweep and a parked piece and a peg at the run-in. */
   'final-level': (L, R, c) => [
-    { key: 'introBends', name: 'S-bends', shape: sBends({ first: R, radius: 80, degrees: 70, grade: 0.13 }), billboards: 1 },
-    { key: 'portalSweep', name: 'Sweep', shape: sweep({ side: L, radius: 85, degrees: 130, grade: 0.09 }), features: [boost({ at: 0.08 })], billboards: 2 },
+    { key: 'introBends', name: 'S-bends', shape: sBends({ first: R, radius: 80, degrees: 50, grade: 0.13 }), billboards: 1 },
+    { key: 'portalSweep', name: 'Sweep', shape: sweep({ side: L, radius: 85, degrees: 100, grade: 0.09 }), features: [boost({ at: 0.08 })], billboards: 2 },
     { key: 'drop', name: 'Drop', shape: plunge(45, { grade: 0.22, from: 0.09 }) },
     { key: 'loop', name: 'Spiral', shape: spiral({ side: R, radius: 52, turns: 1, grade: 0.16 }) },
-    { key: 'bonusRun', name: 'Mogul straight', shape: straight(100, { grade: 0.12 }), features: [moguls({ from: 0.45, to: 0.9, count: 4 })] },
+    { key: 'bonusRun', name: 'Mogul straight', shape: straight(130, { grade: 0.12 }), features: [moguls({ from: 0.45, to: 0.9, count: 4 })] },
     { key: 'brakingStraight', name: 'Run to the hairpin', shape: straight(50, { grade: 0.12 }) },
     { key: 'hairpin', name: 'Hairpin', shape: hairpin({ side: L }), obstacles: [swipe({ costume: c.swipe, side: 'high' })] },
     { key: 'slalomDrop', name: 'Slalom drop', shape: plunge(50, { grade: 0.2, from: 0.16 }), obstacles: [slalom({ costume: c.slalom, from: 0.4, to: 0.9, count: 3, loss: 0.15 })] },

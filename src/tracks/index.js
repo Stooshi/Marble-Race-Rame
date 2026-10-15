@@ -72,4 +72,5 @@ module.exports = [
   require('./combo-drop'),
   require('./the-stack'),
   require('./block-fortress'),
+  require('./final-level'),
 ];
