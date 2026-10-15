@@ -66,4 +66,5 @@ module.exports = [
   require('./spawn-point'),
   require('./speedrun-valley'),
   require('./voxel-peaks'),
+  require('./deep-mine'),
 ];

@@ -167,6 +167,17 @@
    "side": 1,
    "marbles": 4
   },
+  "deep-mine": {
+   "name": "Deep Mine",
+   "series": "Blocks",
+   "lighting": "cave",
+   "v": "8724007d",
+   "bytes": 10342,
+   "bytes2x": 25692,
+   "t": 10559,
+   "side": -1,
+   "marbles": 5
+  },
   "delhi-red-fort-marble-grand-prix": {
    "name": "Delhi Red Fort Marble Grand Prix",
    "series": "Grand Prix",
