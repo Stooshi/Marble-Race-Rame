@@ -596,6 +596,17 @@
    "side": 1,
    "marbles": 4
   },
+  "speedrun-valley": {
+   "name": "Speedrun Valley",
+   "series": "Blocks",
+   "lighting": "day",
+   "v": "d29e395e",
+   "bytes": 14224,
+   "bytes2x": 34338,
+   "t": 14643,
+   "side": 1,
+   "marbles": 4
+  },
   "stockholm-marble-grand-prix": {
    "name": "Stockholm Marble Grand Prix",
    "series": "Grand Prix",

@@ -64,4 +64,5 @@ module.exports = [
   require('./cotahuasi-free-fall'),
   require('./fish-river-burst'),
   require('./spawn-point'),
+  require('./speedrun-valley'),
 ];

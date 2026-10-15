@@ -665,6 +665,7 @@ const HIDDEN_KIT_TRACKS = [
   ['cotahuasi-free-fall', '2027-01-14-add-cotahuasi-free-fall.sql', 'Cotahuasi Free Fall, Canyon Series track 9: through the Cotahuasi Canyon in Peru, with a free fall beside a tall waterfall.'],
   ['fish-river-burst', '2027-01-15-add-fish-river-burst.sql', 'Fish River Burst, Canyon Series track 10: through the Fish River Canyon in Namibia, down its tight meanders to steaming hot springs.'],
   ['spawn-point', '2027-01-16-add-spawn-point.sql', 'Spawn Point, Block Series track 1: a calm meadow of cubes at dawn, from the spawn beacon past a windmill and over the brook on block pillars to the cottage.'],
+  ['speedrun-valley', '2027-01-17-add-speedrun-valley.sql', 'Speedrun Valley, Block Series track 2: long fast straights through a valley of cube hills, over the valley on block pillars and down a long back straight to the line under the split-time board.'],
 ];
 for (const [slug, file, note] of HIDDEN_KIT_TRACKS) {
   test(`${slug} is added by its data update, switched off, exactly as its track file builds it`, () => {

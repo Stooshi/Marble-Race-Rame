@@ -660,21 +660,21 @@ const LAYOUTS = {
       obstacles: [parked({ costume: c.parked, at: 0.2, side: L, length: 6 }), peg({ costume: c.peg, at: 0.45, line: 'right' })], features: [rumble({ from: 0.7, to: 0.95, count: 3 })],
     },
   ],
-  /** L41 Speedrun straights (Block Series): a long fast straight (a boost, moguls), a wide sweep, a slalom straight, S-bends, the hairpin, a back straight (pegs), a drop and a long run to the line (a parked piece, a peg). */
+  /** L41 Speedrun straights (Block Series): a long fast straight (a boost, moguls), a wide sweep, a peg straight (a boost), S-bends, the hairpin, a back straight (a boost, pegs), a drop and a long run to the line (a parked piece, a peg). Boosts on three straights keep the field together. */
   'speedrun-straights': (L, R, c) => [
-    { key: 'longStraight', name: 'Long straight', shape: straight(180, { grade: 0.1 }), features: [boost({ at: 0.1 }), moguls({ from: 0.55, to: 0.9, count: 4 })], billboards: 2 },
-    { key: 'wideSweep', name: 'Sweep', shape: sweep({ side: R, radius: 95, degrees: 140, grade: 0.085 }), billboards: 1 },
-    { key: 'slalomStraight', name: 'Slalom straight', shape: straight(150, { grade: 0.12 }), obstacles: [slalom({ costume: c.slalom, from: 0.3, to: 0.85, count: 4, loss: 0.15 })], billboards: 1 },
-    { key: 'sBends', name: 'S-bends', shape: sBends({ first: L, radius: 80, degrees: 60, grade: 0.12 }) },
+    { key: 'longStraight', name: 'Long straight', shape: straight(150, { grade: 0.1 }), features: [boost({ at: 0.1 }), moguls({ from: 0.55, to: 0.9, count: 4 })], billboards: 2 },
+    { key: 'wideSweep', name: 'Sweep', shape: sweep({ side: R, radius: 95, degrees: 250, grade: 0.085 }), billboards: 1 },
+    { key: 'slalomStraight', name: 'Peg straight', shape: straight(150, { grade: 0.12 }), obstacles: [peg({ costume: c.peg, at: 0.4, line: 'left' }), peg({ costume: c.peg, at: 0.7, line: 'right' })], features: [boost({ at: 0.06 })], billboards: 1 },
+    { key: 'sBends', name: 'S-bends', shape: sBends({ first: L, radius: 80, degrees: 80, grade: 0.12 }) },
     { key: 'brakingStraight', name: 'Run to the hairpin', shape: straight(50, { grade: 0.12 }) },
     { key: 'hairpin', name: 'Hairpin', shape: hairpin({ side: L }), obstacles: [swipe({ costume: c.swipe, side: 'high' })] },
     {
-      key: 'backStraight', name: 'Back straight', shape: straight(160, { grade: 0.12 }),
+      key: 'backStraight', name: 'Back straight', shape: straight(120, { grade: 0.12 }), features: [boost({ at: 0.1 })],
       obstacles: [peg({ costume: c.peg, at: 0.35, line: 'right' }), peg({ costume: c.peg, at: 0.6, line: 'left' })],
     },
     { key: 'drop', name: 'Drop', shape: plunge(45, { grade: 0.22, from: 0.12 }) },
     {
-      key: 'lastStraight', name: 'Last straight', shape: straight(160, { grade: 0.15 }),
+      key: 'lastStraight', name: 'Last straight', shape: straight(130, { grade: 0.15 }),
       obstacles: [parked({ costume: c.parked, at: 0.2, side: R, length: 6 }), peg({ costume: c.peg, at: 0.45, line: 'left' })], features: [rumble({ from: 0.75, to: 0.95, count: 3 })],
     },
   ],
