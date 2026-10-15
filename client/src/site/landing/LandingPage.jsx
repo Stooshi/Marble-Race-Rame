@@ -6,6 +6,9 @@ import MarbleBadge from '../marbles/MarbleBadge';
 import { FEATURED_DESIGNS, originalSlug, rarityInfo } from '../../shared/marbles';
 import { importOrReload } from '../../utils/staleCode';
 import { isNativeApp } from '../../app/native';
+import TrackBanner from '../TrackBanner';
+
+const NUMBER_WORDS = ['no', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten'];
 
 const HeroReplay = lazy(() => importOrReload(() => import('./HeroReplay')));
 
@@ -13,6 +16,7 @@ const SERIES = [
   ['World Tour', 'landmarks around the globe', 'linear-gradient(150deg,#1D3A5C,#3DDC97)'],
   ['Grand Prix', 'start lights and crowds', 'linear-gradient(150deg,#C94F3D,#2F5BEA)'],
   ['Coasters', 'high on steel rails', 'linear-gradient(150deg,#F2A541,#3A6B8C)'],
+  ['Canyons', 'through real canyons', 'linear-gradient(150deg,#D9773A,#5A2E1E)', 'grand-canyon-burst'],
   ['Pinball', 'bumpers and flippers', 'linear-gradient(150deg,#3A1E6B,#FF3FA8)'],
   ['Arcade', 'neon and pixels', 'linear-gradient(150deg,#0A0A12,#3FD8FF)'],
 ];
@@ -34,6 +38,8 @@ export default function LandingPage() {
     return c;
   }, [data]);
   const total = data?.tracks?.length;
+  // The series with tracks live now (from the live track list, so the heading never goes stale).
+  const liveSeries = data?.tracks?.length ? SERIES.filter(([name]) => counts[name]).length : SERIES.length;
 
   return (
     <div className="ms-landing">
@@ -74,14 +80,17 @@ export default function LandingPage() {
 
       <section id="tracks" aria-labelledby="tracks-h" className="ms-page">
         <div style={{ display: 'grid', gap: 6 }}>
-          <h2 id="tracks-h" className="ms-landing__h2">{total ?? '[50]'} tracks in five series</h2>
+          <h2 id="tracks-h" className="ms-landing__h2">{total || '[60]'} tracks in {NUMBER_WORDS[liveSeries] ?? liveSeries} series</h2>
           <p className="ms-lede" style={{ margin: 0 }}>From Swedish fjords to pinball tables, every track has its own start, layout and surprises.</p>
         </div>
-        <div className="ms-cards" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 200px), 1fr))' }}>
-          {SERIES.map(([name, line, pic]) => (
+        <div className="ms-cards" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 180px), 1fr))' }}>
+          {SERIES.map(([name, line, pic, picture]) => (
             <div key={name} className="ms-trackcard" style={{ cursor: 'default' }}>
-              <div className="ms-trackcard__pic" style={{ background: pic }}>{!counts[name] && <span className="ms-badge-label">COMING SOON</span>}</div>
-              <div className="ms-trackcard__body"><b>{name}</b><span>{counts[name] ? `${counts[name]} ${name === 'Pinball' ? 'tables' : 'tracks'} · ` : ''}{line}</span></div>
+              <div className="ms-trackcard__pic" style={{ background: pic }}>
+                {picture && <TrackBanner slug={picture} />}
+                {!counts[name] && <span className="ms-badge-label">COMING SOON</span>}
+              </div>
+              <div className="ms-trackcard__body"><b>{name}</b><span>{counts[name] ? `${counts[name]} ${name === 'Pinball' ? 'table' : 'track'}${counts[name] === 1 ? '' : 's'} · ` : ''}{line}</span></div>
             </div>
           ))}
         </div>

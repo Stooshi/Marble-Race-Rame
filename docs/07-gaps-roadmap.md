@@ -1,6 +1,6 @@
 # 7. Known gaps and roadmap
 
-*Last updated 15 Oct 2026 (the Help Centre).* What isn't built, isn't finished, or is a known weakness. The launch target is **1 December 2026** (web, iPhone and Android). When something here is fixed, remove it and note the change in the [decisions log](06-decisions.md) if it was a decision.
+*Last updated 15 Oct 2026 (Canyons live).* What isn't built, isn't finished, or is a known weakness. The launch target is **1 December 2026** (web, iPhone and Android). When something here is fixed, remove it and note the change in the [decisions log](06-decisions.md) if it was a decision.
 
 ## Must fix before launch
 
@@ -16,7 +16,7 @@
 | **Help Centre placeholders** | Answers still holding `[brackets]` (support and privacy email, reply time, company details, coins expiry, Swedish time, what happens when someone leaves a room, changing a name, Google/Apple sign-in, app launch, quality setting, parent approval, email switched on). Fill them in the project doc and in `faq.js` together | `client/src/site/help/faq.js` |
 | **Limited edition price** | "Northern Lights" coin price is still `[X]` | `client/src/shared/marbles/catalog.json` |
 | **Season** | Season name, dates and badge are placeholders (`Season [3]`, October 2026) | `src/routes/scoreboard.js` |
-| **50 launch tracks** | Arcade tracks are built but switched off; so are the 10 Canyon Series tracks (data updates `2027-01-06` to `2027-01-15`). Check which tracks are live and complete the 50 | `docs/data_updates`, `tracks.is_active` |
+| **50 launch tracks** | The 10 Canyon Series tracks were switched on on 15 Oct 2026 (Moses: 60 tracks live). Check that every series the landing page shows has live tracks | `docs/data_updates`, `tracks.is_active` |
 | **Backups** | Not confirmed that Railway backs up the database on the current plan. Until then, take manual `pg_dump` backups | [Runbook](05-runbook.md#backups) |
 
 ## Missing features (planned)
@@ -28,7 +28,7 @@
 - **Custom marble labels.** The column exists, but a word filter is needed first.
 - **Subscriptions and season pass** (later).
 - **Automated social posting** of race clips, approved by Moses.
-- **More track series** (plans in the project): Block Series (10 tracks). The Canyon Series (10 tracks) is built and switched off; when it goes live, add a sixth "Canyons" card to the landing page's series list (it says "five series"); the Help Centre counts the live series by itself.
+- **More track series** (plans in the project): Block Series (10 tracks). The Canyon Series (10 tracks) is live. The landing page and the Help Centre count tracks and series from the live track list; a new series needs its card in `SERIES` in `client/src/site/landing/LandingPage.jsx`.
 - **Race sound effects** (rolling, clacks), on hold.
 - **Support: a confirmation email to the player** ("we got your message, reference S-…") and canned replies. The form shows the reference on screen today.
 - **Analytics.** None today. If added, update the privacy policy and both store privacy forms first.
