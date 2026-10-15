@@ -241,7 +241,7 @@ Defined in `src/sockets/index.js`. The client may send a JWT in `auth.token`; an
   - the previews `TrackPreview3D`, `Replay3D`, `PhysicsPreview`.
 - `site/`: the Marble Spins website:
   - `SiteHeader.jsx`, `SiteFooter.jsx`, `Logo.jsx`, `SoundControl.jsx`, `canonical.js`, `TrackBanner.jsx` (a track's picture on its picker card: lazy-loaded, over the series gradient, which stays when a picture is missing or still loading; `SERIES_PIC`);
-  - `landing/` (landing page, 3D hero replay; `SERIES`: the series cards, Canyons with a track picture; the tracks-and-series heading is counted from the live track list);
+  - `landing/` (landing page, 3D hero replay; `SERIES`: the series cards, each with one of its tracks' pictures; the tracks-and-series heading is counted from the live track list);
   - `marbles/` (badge, 3D turntable, certificate, `useCollection`);
   - `payments/index.js` (Stripe on the web, app-store placeholder);
   - `pages/` (every website page; see the routes below);

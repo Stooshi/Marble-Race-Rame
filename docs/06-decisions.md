@@ -4,6 +4,7 @@
 
 | Date | Decision | Why |
 |---|---|---|
+| 2026-10-15 | **Every landing series card shows a track picture**: San Francisco (World Tour), Frostmere Grand Prix, Hong Kong Crossing (Coasters), Grand Canyon Burst (Canyons), Flipper Spins (Pinball), Checkpoint Rush (Arcade). **The search-engine description names no track count** ("20-marble races on dozens of tracks"), so it never needs editing. | One look across the series; no numbers to keep in step by hand. |
 | 2026-10-15 | **Canyon Series switched on** (Moses; 60 tracks live). The landing page gets a sixth series card, Canyons, with a Canyon track picture (Grand Canyon Burst); its "N tracks in N series" heading is counted from the live track list (series with live tracks), so it never goes stale. | New series; no hand-kept numbers. |
 | 2026-10-15 | **Every track picture uses the track's own sky** (replaces "daylight" in the two entries below): its own lighting preset, night, sunset, midnight sun or northern lights, for every track and automatically for new ones (the track report). A test checks it. | Moses's rule: a track is recognised by its sky. |
 | 2026-10-15 | **Track pictures switched on in the picker** after Moses's review. Flipper Spins is framed by hand over the flippers, looking up the table; Indus Spins on the cliff ledge high over the gorge. Dubai Grand Prix (night), Åre (northern lights) and the 4 sunset Coasters keep their own sky (`"lighting": "own"` in `scripts/track-banners.json`). | A picture should show what makes a track, and night tracks are recognised by their sky. |

@@ -12,13 +12,14 @@ const NUMBER_WORDS = ['no', 'one', 'two', 'three', 'four', 'five', 'six', 'seven
 
 const HeroReplay = lazy(() => importOrReload(() => import('./HeroReplay')));
 
+// The series cards: name, line, gradient (shown while the picture loads), and the track whose picture the card shows.
 const SERIES = [
-  ['World Tour', 'landmarks around the globe', 'linear-gradient(150deg,#1D3A5C,#3DDC97)'],
-  ['Grand Prix', 'start lights and crowds', 'linear-gradient(150deg,#C94F3D,#2F5BEA)'],
-  ['Coasters', 'high on steel rails', 'linear-gradient(150deg,#F2A541,#3A6B8C)'],
+  ['World Tour', 'landmarks around the globe', 'linear-gradient(150deg,#1D3A5C,#3DDC97)', 'san-francisco'],
+  ['Grand Prix', 'start lights and crowds', 'linear-gradient(150deg,#C94F3D,#2F5BEA)', 'frostmere-marble-grand-prix'],
+  ['Coasters', 'high on steel rails', 'linear-gradient(150deg,#F2A541,#3A6B8C)', 'hong-kong-crossing'],
   ['Canyons', 'through real canyons', 'linear-gradient(150deg,#D9773A,#5A2E1E)', 'grand-canyon-burst'],
-  ['Pinball', 'bumpers and flippers', 'linear-gradient(150deg,#3A1E6B,#FF3FA8)'],
-  ['Arcade', 'neon and pixels', 'linear-gradient(150deg,#0A0A12,#3FD8FF)'],
+  ['Pinball', 'bumpers and flippers', 'linear-gradient(150deg,#3A1E6B,#FF3FA8)', 'flipper-spins'],
+  ['Arcade', 'neon and pixels', 'linear-gradient(150deg,#0A0A12,#3FD8FF)', 'checkpoint-rush'],
 ];
 const FAQ = [
   ['Is Marble Spins free?', 'Yes. Every race is free and unlimited. You can buy extra marble looks in the shop if you want to.'],

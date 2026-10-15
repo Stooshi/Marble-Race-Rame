@@ -52,6 +52,13 @@ describe('track pictures', () => {
     }
   });
 
+  it('the landing page\'s series cards each show a picture that exists', () => {
+    const src = fs.readFileSync(path.resolve(__dirname, '../src/site/landing/LandingPage.jsx'), 'utf8');
+    const cards = [...src.matchAll(/^ {2}\['([^']+)', '[^']*', '[^']*', '([a-z0-9-]+)'\],$/gm)];
+    expect(cards.map((m) => m[1])).toEqual(['World Tour', 'Grand Prix', 'Coasters', 'Canyons', 'Pinball', 'Arcade']);
+    for (const [, series, slug] of cards) expect(manifest.banners[slug]?.series, `${series}: ${slug}`).toBe(series);
+  });
+
   it('no picture without a track', () => {
     const files = fs.readdirSync(DIR).filter((f) => f.endsWith('.webp')).map((f) => f.replace(/(@2x)?\.webp$/, ''));
     expect([...new Set(files)].filter((s) => !every.includes(s))).toEqual([]);
