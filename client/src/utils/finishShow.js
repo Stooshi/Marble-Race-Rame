@@ -48,6 +48,9 @@ export function finishPlan(finishes, count, complete = false) {
 }
 
 /** Which stage the show is in at race time t: racing (no show yet), medals, winner, field, podium or board. */
+/** The phases from the finish ceremony on (the winner's moment, then the field, podium and board): the ceremony song plays. */
+export const CEREMONY_PHASES = ['winner', 'field', 'podium', 'board'];
+
 export function phaseAt(t, plan, skipped = false) {
   if (!plan || t === null || t === undefined || t < plan.winnerMs) return 'racing';
   if (skipped) return 'board';

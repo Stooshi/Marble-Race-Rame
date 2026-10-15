@@ -14,7 +14,7 @@ import NextRace from '../components/NextRace';
 import { Empty, ErrorMessage, Spinner } from '../components/Status';
 import { formatTime } from '../utils/format';
 import StartLights from '../components/StartLights';
-import { play as playSound } from '../sound/engine';
+import { play as playSound, raceCountdown, raceEnd, raceGo } from '../sound/engine';
 
 const obstacleName = (o) => o?.replace(/_/g, ' ');
 
@@ -64,11 +64,19 @@ export default function Race() {
   useEffect(() => {
     if (stream.status === 'countdown') sawCountdown.current = true;
     const twoD = view === '2d' || (view === null && !stream.meta?.track?.physics);
-    if (stream.status === 'running' && sawCountdown.current && twoD) {
+    if (stream.status === 'running' && twoD) {
+      if (sawCountdown.current) playSound('launch');
       sawCountdown.current = false;
-      playSound('launch');
+      raceGo(raceId); // the race's music (the 3D view starts it at its own GO)
     }
   }, [stream.status]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // The countdown's beeps, the GO beep on GO (the 3-2-1 above the view).
+  useEffect(() => {
+    if (stream.status === 'countdown' && stream.startsAt) raceCountdown(raceId, stream.startsAt - Date.now());
+  }, [stream.status, stream.startsAt, raceId]);
+  // Leaving the race (or moving on to the next one): its music stops.
+  useEffect(() => () => raceEnd(raceId), [raceId]);
 
   // Tracks on the new physics (the gate, splitter and catch area live in 3D) open in 3D; 2D stays an option.
   const [view, setView] = useState(null); // null = the track's default
@@ -147,6 +155,7 @@ export default function Race() {
         />
       ) : meta ? (
         <RaceViewer
+          live
           meta={meta}
           sample={stream.sample}
           frame={stream.frame}

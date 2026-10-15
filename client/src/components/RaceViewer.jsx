@@ -6,6 +6,8 @@ import { OBSTACLE_COLORS, trackMarks } from './TrackPreview';
 import MarbleBall from './MarbleBall';
 import CpuTag from './CpuTag';
 import FinishShow, { useFinishShow } from './FinishShow';
+import { raceCeremony } from '../sound/engine';
+import { CEREMONY_PHASES } from '../utils/finishShow';
 import SkipToResults from './SkipToResults';
 
 /**
@@ -26,7 +28,7 @@ import SkipToResults from './SkipToResults';
 const NONE = {};
 export default function RaceViewer({
   meta, sample, frame, splits = {}, highlight = [], footer,
-  finishes = NONE, complete = false, clock = null, time = null, next = null, official = null, canSkip = false,
+  finishes = NONE, complete = false, clock = null, time = null, next = null, official = null, canSkip = false, live = false,
 }) {
   const wrapRef = useRef(null);
   const canvasRef = useRef(null);
@@ -104,6 +106,10 @@ export default function RaceViewer({
   }, [size, meta, path, sample, entries, highlightSet]);
 
   const show = useFinishShow({ finishes, count: entries.length, complete, clock, time });
+  // A live race (not a replay): the ceremony song when the finish ceremony appears.
+  useEffect(() => {
+    if (live && meta?.raceId && CEREMONY_PHASES.includes(show.phase)) raceCeremony(meta.raceId);
+  }, [live, show.phase, meta?.raceId]);
   const standings = frame?.s ?? entries.map((e) => e.index);
   const splitRank = splitOrder(splits);
   const leaderSplit = splits[splitRank[0]];

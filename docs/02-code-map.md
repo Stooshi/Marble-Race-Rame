@@ -19,7 +19,7 @@
 | Fix friend rooms | `src/routes/rooms.js`, `client/src/site/pages/RoomPage.jsx` |
 | Fix how a track looks | `client/src/three/` (see the 3D section below). Drawing only, never the race |
 | Add a new track | `src/tracks/README.md` (the kit guide), then `scripts/physics-track-sql.js` and a data update |
-| Fix sound or music | `client/src/sound/engine.js`, `client/src/sound/settings.js`, files in `client/public/audio/` |
+| Fix sound or music | `client/src/sound/engine.js` (the race's sound: countdown beeps, one race track, the ceremony song), `client/src/sound/settings.js`, files in `client/public/audio/`; the race page calls `raceCountdown`/`raceGo`/`raceCeremony`/`raceEnd` (`pages/Race.jsx`, `components/LiveRaceViewer3D.jsx`, `components/RaceViewer.jsx`) |
 | Change legal text | `client/src/site/pages/LegalPage.jsx` |
 | Change a Help Centre answer, or the search's synonyms | `client/src/site/help/faq.js` (texts from the project doc `claude/help-faq-draft.md`; numbers come from the settings files), `client/src/site/help/search.js` (`SYNONYMS`) |
 | Change an email's text | `src/email/templates.js` |
@@ -177,7 +177,7 @@ Defined in `src/sockets/index.js`. The client may send a JWT in `auth.token`; an
 | `node scripts/variety-table.js [--matrix]` | How alike the tracks are |
 | `node scripts/start-looks.js` | Records how each start looks (first 3 seconds) |
 | `node scripts/dump-kit-track.js <slug>` | Writes a track for the development kit view (`client/dev/kit-view.html`) |
-| `bash scripts/convert-audio.sh` | Converts `music-inbox/` into small Opus and AAC files in `client/public/audio/` |
+| `bash scripts/convert-audio.sh` | Converts `music-inbox/` into small Opus and AAC files in `client/public/audio/` (`race-1`…`race-8`, `ceremony`, `start-beeps`, and the three race sounds; `SKIP_EFFECTS=1` leaves the race sounds alone), levelled with one steady gain per file so loops match |
 | `npm run db:migrate` | Runs the same schema and data-update step as server start |
 
 ## Server tests: `test/`
@@ -258,7 +258,7 @@ Defined in `src/sockets/index.js`. The client may send a JWT in `auth.token`; an
   - `marbles/materials.js`: the 3D marble material;
   - `marbles/index.js`.
 - `sound/`:
-  - `engine.js` (Web Audio): nothing before the first tap; music shuffled with crossfades and mixed under the effects; three race sounds; pauses in the background.
+  - `engine.js` (Web Audio): nothing before the first tap; no music outside races. A race: the start beeps over the 3-2-1 (the last beep on GO), one of 8 race tracks from GO (shuffled rounds, never the previous race's), looping, mixed under the effects; at the finish ceremony the ceremony song instead, looping, fading out after 45 s; silence when the player leaves. The three race sounds as before; pauses in the background.
   - `settings.js`: volumes and mute, saved on the device and in the account.
 - `three/`: the 3D renderer (next section).
 - `utils/`: formatting, splits, the 2D track geometry, finish-show timing, confetti, `staleCode.js` (reload after deploy).

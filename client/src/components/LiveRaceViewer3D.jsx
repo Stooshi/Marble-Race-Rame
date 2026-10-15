@@ -9,9 +9,10 @@ import { formatTime } from '../utils/format';
 import { COUNTDOWN_MS } from '../three/startCamera';
 import { BUFFER_MS } from '../hooks/useRaceStream';
 import FinishShow, { useFinishShow } from './FinishShow';
+import { CEREMONY_PHASES } from '../utils/finishShow';
 import SkipToResults from './SkipToResults';
 import FrameMeter, { useFrameMeter } from './FrameMeter';
-import { play as playSound } from '../sound/engine';
+import { play as playSound, raceCeremony, raceGo } from '../sound/engine';
 
 const WHOOSH_GAP_MS = 3500; // an overtaking whoosh at most this often
 
@@ -110,6 +111,8 @@ export default function LiveRaceViewer3D({
         playSound('launch');
         if (grandPrix) playSound('crowd');
       }
+      // GO: the race's music (once per race; also when the page opens mid-race).
+      if (f && f.t >= 0 && (lastT === null || lastT < 0) && meta?.raceId) raceGo(meta.raceId);
       if (f) lastT = f.t;
       if (f && scene) {
         const who = followRef.current;
@@ -125,6 +128,11 @@ export default function LiveRaceViewer3D({
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
   }, [built]);
+
+  // The finish ceremony appears: the race music gives way to the ceremony song.
+  useEffect(() => {
+    if (meta?.raceId && CEREMONY_PHASES.includes(show.phase)) raceCeremony(meta.raceId);
+  }, [show.phase, meta?.raceId]);
 
   const entries = meta?.entries ?? [];
   const standings = frame?.s ?? meta?.firstFrame?.s ?? [];
