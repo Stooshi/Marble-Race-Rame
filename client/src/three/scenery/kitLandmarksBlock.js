@@ -293,7 +293,7 @@ function comboRows() {
 function settlingStack() {
   const p = [];
   const s = 2;
-  for (let layer = 0; layer < 8; layer += 1) {
+  for (let layer = 0; layer < 14; layer += 1) {
     for (let x = -1; x <= 1; x += 1) for (let z = -1; z <= 1; z += 1) {
       const k = layer * 9 + (x + 1) * 3 + (z + 1);
       if ((k * 7) % 11 === 3 && layer > 1) continue; // (a gap here and there)
@@ -302,7 +302,7 @@ function settlingStack() {
   }
   return merge(p);
 }
-const STACK_TOP = 16; // metres: the stack's top, where new blocks settle
+const STACK_TOP = 28; // metres: the stack's top (14 layers of 2 m cubes), where new blocks settle
 
 /** A block hall: a long hall of stone blocks with square pillars and a stepped roof. */
 function blockHall() {
@@ -522,7 +522,7 @@ export function buildBlockEffects(placed, { lite = false } = {}) {
       const slots = [[-1, -1], [1, -1], [-1, 1], [1, 1]];
       const mat = lambert();
       mat.emissive = new Color('#ffffff');
-      const top = cubes('settling stack', slots.length, mat, s * 1.94);
+      const top = cubes('settling stack', slots.length, mat, s * 0.97);
       root.add(top.mesh);
       effects.push((t) => {
         const c = ((t / 1000) % 30 + 30) % 30;
@@ -530,7 +530,7 @@ export function buildBlockEffects(placed, { lite = false } = {}) {
         mat.emissiveIntensity = clearing > 0 ? 0.7 * Math.max(0, 1 - Math.abs(clearing - 0.3) / 0.3) : 0;
         slots.forEach(([x, z], k) => {
           const u = (c - (2 + k * 6)) / 1.4; // (each falls for 1.4 s)
-          const y = u < 0 ? STACK_TOP + 40 : STACK_TOP + s + 18 * (1 - fall(Math.min(1, u)));
+          const y = u < 0 ? STACK_TOP + 40 : STACK_TOP + s / 2 + 18 * (1 - fall(Math.min(1, u)));
           const scale = clearing > 0.5 ? Math.max(0.001, 1 - (clearing - 0.5) / 0.5) : 1;
           top.set(k, (x * s) / 2, y, (z * s) / 2, u < 0 ? 0.001 : scale, PIECE_TONES[(k * 2 + 1) % 5]);
         });

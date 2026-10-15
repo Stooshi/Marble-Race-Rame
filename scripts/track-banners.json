@@ -16,5 +16,14 @@
   "up": 10,
   "ahead": 45,
   "rise": -12
+ },
+ "the-stack": {
+  "at": 0.72,
+  "back": 10,
+  "beside": 8,
+  "side": -1,
+  "up": 16,
+  "ahead": 130,
+  "rise": 18
  }
 }

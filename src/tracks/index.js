@@ -70,4 +70,5 @@ module.exports = [
   require('./magma-core'),
   require('./line-clear'),
   require('./combo-drop'),
+  require('./the-stack'),
 ];

@@ -695,6 +695,17 @@
    "side": -1,
    "marbles": 4
   },
+  "the-stack": {
+   "name": "The Stack",
+   "series": "Blocks",
+   "lighting": "dawn",
+   "v": "af46a2fa",
+   "bytes": 13410,
+   "bytes2x": 31926,
+   "t": 38800,
+   "side": -1,
+   "marbles": 0
+  },
   "tilt": {
    "name": "Tilt",
    "series": "Pinball",
