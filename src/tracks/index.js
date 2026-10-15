@@ -65,4 +65,5 @@ module.exports = [
   require('./fish-river-burst'),
   require('./spawn-point'),
   require('./speedrun-valley'),
+  require('./voxel-peaks'),
 ];

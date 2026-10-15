@@ -673,6 +673,17 @@
    "side": 1,
    "marbles": 5
   },
+  "voxel-peaks": {
+   "name": "Voxel Peaks",
+   "series": "Blocks",
+   "lighting": "day",
+   "v": "e7700bd7",
+   "bytes": 13800,
+   "bytes2x": 34612,
+   "t": 10418,
+   "side": -1,
+   "marbles": 4
+  },
   "whistler-spins": {
    "name": "Whistler Spins",
    "series": "Coasters",
