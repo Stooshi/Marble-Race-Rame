@@ -776,6 +776,50 @@ CREATE TABLE IF NOT EXISTS email_consents (
 );
 CREATE INDEX IF NOT EXISTS idx_email_consents_user ON email_consents (user_id, created_at);
 
+-- Support messages: the Help Centre's contact form (/help#contact; src/support). One row per message,
+-- with a reference like S-1001 the player is shown. user_id: the player's account — set when they
+-- were logged in (guests too: linked_by 'login'), or matched on the email they typed (linked_by
+-- 'email'; not proof of identity). The screenshot (optional, at most 4 MB: PNG, JPEG, WebP or GIF)
+-- is kept in the row. ip: for spam and fraud only, blanked after 90 days like security_events (the
+-- country stays). Deleting an account deletes its messages. status: new → open → done, every change
+-- in admin_audit ('support-status').
+CREATE SEQUENCE IF NOT EXISTS support_message_seq START 1001;
+CREATE TABLE IF NOT EXISTS support_messages (
+    id              uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
+    ref             varchar(16) NOT NULL UNIQUE,
+    user_id         uuid        REFERENCES users(id) ON DELETE SET NULL,
+    linked_by       varchar(8)  CHECK (linked_by IN ('login', 'email')),
+    name            varchar(80) NOT NULL,
+    email           varchar(254) NOT NULL,
+    category        varchar(40) NOT NULL,
+    order_no        varchar(40),
+    message         text        NOT NULL,
+    screenshot      bytea,
+    screenshot_type varchar(16),
+    device          varchar(300),
+    status          varchar(8)  NOT NULL DEFAULT 'new' CHECK (status IN ('new', 'open', 'done')),
+    status_at       timestamptz,
+    notified_at     timestamptz,
+    ip              inet,
+    country         char(2),
+    created_at      timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_support_messages_status ON support_messages (status, created_at);
+CREATE INDEX IF NOT EXISTS idx_support_messages_user   ON support_messages (user_id, created_at);
+CREATE INDEX IF NOT EXISTS idx_support_messages_email  ON support_messages (lower(email));
+
+-- Replies to support messages from the back office: emailed to the player when email is on
+-- (emailed_at), and written to admin_audit ('support-reply').
+CREATE TABLE IF NOT EXISTS support_replies (
+    id              bigserial   PRIMARY KEY,
+    message_id      uuid        NOT NULL REFERENCES support_messages(id) ON DELETE CASCADE,
+    admin_id        uuid        REFERENCES users(id) ON DELETE SET NULL,
+    body            text        NOT NULL,
+    emailed_at      timestamptz,
+    created_at      timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_support_replies_message ON support_replies (message_id, created_at);
+
 -- -----------------------------------------------------------------------------
 -- Seed data (idempotent)
 -- -----------------------------------------------------------------------------

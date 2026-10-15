@@ -610,5 +610,18 @@ a.ms-tile:hover, a.ms-card:hover { text-decoration: none; border-color: var(--ms
 .ms-help-table th, .ms-help-table td { text-align: left; padding: 7px 18px 7px 0; border-bottom: 1px solid var(--ms-border); }
 .ms-help-table thead th { color: var(--ms-muted); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.06em; }
 .ms-help-table tbody th { color: var(--ms-text); font-weight: 700; }
-.ms-help__contact { display: grid; gap: 14px; scroll-margin-top: 130px; border-color: var(--ms-yellow); }
+.ms-form select, .ms-form textarea {
+  min-height: 48px; padding: 10px 14px; border-radius: 12px; border: 1px solid var(--ms-border);
+  background: var(--ms-bg); color: var(--ms-text); font: inherit; font-size: 16px; font-weight: 400; width: 100%;
+}
+.ms-form textarea { resize: vertical; min-height: 140px; line-height: 1.45; }
+.ms-form select:focus-visible, .ms-form textarea:focus-visible { outline: 3px solid var(--ms-yellow); outline-offset: 1px; }
+.ms-help-form__two { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); }
+.ms-help-form__opt { color: var(--ms-muted); font-weight: 400; }
+.ms-help-form__file { display: grid; gap: 8px; justify-items: start; }
+.ms-help-form__pick { cursor: pointer; }
+.ms-help-form__pick:focus-within { outline: 3px solid var(--ms-yellow); outline-offset: 2px; }
+.ms-help-form__thumb { max-width: min(220px, 100%); max-height: 160px; border-radius: 10px; border: 1px solid var(--ms-border); object-fit: contain; background: var(--ms-bg); }
+.ms-help-form__hp { position: absolute; left: -10000px; width: 1px; height: 1px; overflow: hidden; }
+.ms-help__contact { position: relative; display: grid; gap: 14px; scroll-margin-top: 130px; border-color: var(--ms-yellow); }
 @media (prefers-reduced-motion: reduce) { .ms-help-q h3 svg { transition: none; } }

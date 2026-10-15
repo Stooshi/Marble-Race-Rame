@@ -85,9 +85,8 @@ describe('the questions', () => {
   });
 
   it('offers the help sections as contact categories', () => {
-    expect(CONTACT_CATEGORIES[0]).toBe('Getting started');
-    expect(CONTACT_CATEGORIES.at(-1)).toBe('Something else');
-    expect(CONTACT_CATEGORIES).not.toContain('Contact us');
+    expect(CONTACT_CATEGORIES).toEqual([...faq.map((s) => s.title).filter((t) => t !== 'Contact us'), 'Something else']);
+    for (const c of CONTACT_CATEGORIES) expect(c.length).toBeLessThanOrEqual(40); // (support_messages.category)
   });
 });
 

@@ -81,9 +81,14 @@
   - the apps' own addresses (`capacitor://localhost`, `https://localhost`).
 - `CORS_ORIGIN=*` (the default) accepts every address.
 
+**Support messages.**
+- The Help Centre's contact form (`/help#contact`) posts to `POST /api/support` (logged in or not), after fetching a signed form token from `GET /api/support/form`.
+- The route reads its own JSON body (up to 7 MB, for a screenshot of at most 4 MB) before the app's 1 MB parser.
+- Each message is saved in `support_messages`, linked to the player's account (their login, guests too; else the account with the email they typed), and shows in the back office's **Support messages** inbox and on the player's **Messages** tab.
+
 **Email.**
 - Sent through **Brevo** (EU), and switched off until `BREVO_API_KEY` is set on Railway.
-- Today it sends **password-reset** links (`/forgot-password` → email → `/reset-password?token=…`).
+- Today it sends **password-reset** links (`/forgot-password` → email → `/reset-password?token=…`), a **notification to the support address** for each new contact-form message (when `SUPPORT_EMAIL` is set; replying to it goes straight to the player), and **replies from the back office** to players.
 - News emails will use the same sender; signed unsubscribe links are ready (`src/email/unsubscribe.js`).
 - Stripe sends its own receipts.
 
@@ -115,6 +120,7 @@ There is no separate staging server. Vercel makes a preview build for every bran
 | `BREVO_API_KEY` | to send email | Brevo API key (v3). Without it, email is off and "Forgot your password?" is hidden |
 | `EMAIL_FROM` | with Brevo | Sender address, verified in Brevo (default `no-reply@marblespins.com`) |
 | `EMAIL_FROM_NAME` | no | Sender name (default "Marble Spins") |
+| `SUPPORT_EMAIL` | no | The support address: new contact-form messages are emailed here (with Brevo on), and it is the reply-to address on replies sent from the back office. Without it, messages are only in the back office |
 | `CORS_ORIGIN` | no | `*`, or a comma-separated list of extra website addresses (e.g. the vercel.app one) |
 | `PUBLIC_SITE_URL` | no | The website's main address (default https://marblespins.com). Stripe returns players here if their own address isn't recognised |
 | `NODE_ENV` | yes (`production`) | Turns on the production checks |

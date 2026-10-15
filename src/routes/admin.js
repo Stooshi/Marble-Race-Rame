@@ -20,6 +20,9 @@
  *   GET  /audit                    the audit log
  *   GET  /economy?days=30          the economy dashboard
  *   GET  /consents?reason=         players who agreed to news by email (CSV with format=csv; the export is audited)
+ *   GET  /support?q=&status=&category=   the support inbox (contact-form messages), newest first, with counts by status
+ *   GET  /support/:id              one message, its replies and its audit trail   GET /support/:id/screenshot  the image
+ *   POST /support/:id/status       { status: 'new'|'open'|'done', reason? }   POST /support/:id/reply { text } (emailed when email is on)
  */
 const express = require('express');
 const db = require('../db');
@@ -32,6 +35,7 @@ const { bySlug, normaliseId, byId } = require('../marbles/catalog');
 const { IP_DAYS } = require('../security');
 const paymentsSvc = require('../payments');
 const account = require('../account');
+const support = require('../support');
 
 const router = express.Router();
 router.use('/session', sessionRouter);
@@ -42,6 +46,10 @@ router.use((_req, res, next) => { res.set('Cache-Control', 'no-store'); next(); 
 const REASON = { type: 'string', required: true, min: 5, max: 500 };
 const PAYMENT_COLUMNS = `p.id, p.order_no, p.provider, p.product_id, p.coins, p.amount_cents, upper(p.currency) AS currency, p.charged_cents,
   p.charged_currency, p.tax_cents, p.status, p.refunded_cents, p.receipt_url, p.payment_intent, p.consent_at, p.created_at, p.paid_at, p.refunded_at`;
+
+const SUPPORT_LIST_COLUMNS = `s.id, s.ref, s.created_at, s.name, s.email, s.category, s.order_no, s.message, s.status, s.status_at,
+  s.linked_by, s.user_id AS player_id, u.username AS player, u.is_guest AS player_guest, s.screenshot IS NOT NULL AS has_screenshot,
+  (SELECT COUNT(*)::int FROM support_replies r WHERE r.message_id = s.id) AS replies`;
 
 async function audit(client, req, action, targetUserId, reason, details = {}) {
   await client.query(
@@ -91,7 +99,7 @@ router.get('/players/:id', async (req, res) => {
     [id],
   );
   if (!player) throw notFound('No such player');
-  const [ledger, sums, races, items, originals, events, related, auditRows, consents, payments, races24h] = await Promise.all([
+  const [ledger, sums, races, items, originals, events, related, auditRows, consents, payments, races24h, messages] = await Promise.all([
     db.query('SELECT id, amount, kind, note, item_slug, race_id, actor_id, balance_after, created_at FROM coin_ledger WHERE user_id = $1 ORDER BY id DESC LIMIT 200', [id]),
     db.query('SELECT kind, COUNT(*)::int AS lines, SUM(amount)::int AS coins FROM coin_ledger WHERE user_id = $1 GROUP BY kind ORDER BY kind', [id]),
     db.query(
@@ -126,6 +134,13 @@ router.get('/players/:id', async (req, res) => {
     db.query('SELECT consent, source, created_at FROM email_consents WHERE user_id = $1 ORDER BY created_at DESC', [id]),
     db.query(`SELECT ${PAYMENT_COLUMNS} FROM payments p WHERE p.user_id = $1 ORDER BY p.created_at DESC LIMIT 50`, [id]),
     db.query(`SELECT COUNT(*)::int AS n FROM race_entries e JOIN races r ON r.id = e.race_id WHERE e.user_id = $1 AND r.finished_at > now() - interval '24 hours'`, [id]),
+    // Support messages: linked to the account, or sent from its email without a link.
+    db.query(
+      `SELECT ${SUPPORT_LIST_COLUMNS} FROM support_messages s LEFT JOIN users u ON u.id = s.user_id
+        WHERE s.user_id = $1 OR (s.user_id IS NULL AND lower(s.email) = lower($2))
+        ORDER BY s.created_at DESC LIMIT 100`,
+      [id, player.email],
+    ),
   ]);
   res.json({
     player,
@@ -136,6 +151,7 @@ router.get('/players/:id', async (req, res) => {
     consents: consents.rows,
     payments: payments.rows,
     audit: auditRows.rows,
+    messages: messages.rows,
   });
 });
 
@@ -250,6 +266,116 @@ router.post('/payments/:id/refund', async (req, res) => {
   const id = assertUuid(req.params.id);
   const body = validate(req.body, { reason: REASON, amount_cents: { type: 'int', min: 1, max: 10_000_000 } });
   res.json(await paymentsSvc.refund(db, id, { amountCents: body.amount_cents ?? null, adminId: req.admin.id, reason: body.reason }));
+});
+
+/**
+ * GET /support?q=&status=&category=&limit= — the support inbox, newest first. q: a name, email,
+ * player name, order number, reference (S-1001) or words from the message.
+ */
+router.get('/support', async (req, res) => {
+  const q = String(req.query.q ?? '').trim().slice(0, 200);
+  const status = support.STATUSES.includes(req.query.status) ? req.query.status : null;
+  const category = support.settings.categories.includes(req.query.category) ? req.query.category : null;
+  const limit = Math.min(500, Math.max(1, Number(req.query.limit) || 200));
+  const params = [];
+  const where = [];
+  if (status) { params.push(status); where.push(`s.status = $${params.length}`); }
+  if (category) { params.push(category); where.push(`s.category = $${params.length}`); }
+  if (q) {
+    params.push(`%${q.replace(/[\\%_]/g, (c) => `\\${c}`)}%`);
+    const p = `$${params.length}`;
+    where.push(`(s.name ILIKE ${p} OR s.email ILIKE ${p} OR s.message ILIKE ${p} OR s.order_no ILIKE ${p} OR s.ref ILIKE ${p} OR u.username ILIKE ${p})`);
+  }
+  params.push(limit);
+  const [list, counts] = await Promise.all([
+    db.query(
+      `SELECT ${SUPPORT_LIST_COLUMNS} FROM support_messages s LEFT JOIN users u ON u.id = s.user_id
+        ${where.length ? `WHERE ${where.join(' AND ')}` : ''}
+        ORDER BY s.created_at DESC LIMIT $${params.length}`,
+      params,
+    ),
+    db.query('SELECT status, COUNT(*)::int AS n FROM support_messages GROUP BY status'),
+  ]);
+  res.json({
+    messages: list.rows,
+    counts: Object.fromEntries(support.STATUSES.map((st) => [st, counts.rows.find((r) => r.status === st)?.n ?? 0])),
+    categories: support.settings.categories,
+  });
+});
+
+async function supportMessage(client, id) {
+  const { rows: [m] } = await client.query(
+    `SELECT ${SUPPORT_LIST_COLUMNS}, s.device, host(s.ip) AS ip, s.country, s.notified_at, s.screenshot_type
+       FROM support_messages s LEFT JOIN users u ON u.id = s.user_id WHERE s.id = $1`,
+    [id],
+  );
+  if (!m) throw notFound('No such message');
+  return m;
+}
+
+/** GET /support/:id — one message, its replies and every status change and reply in the audit log. */
+router.get('/support/:id', async (req, res) => {
+  const id = assertUuid(req.params.id);
+  const message = await supportMessage(db, id);
+  const [replies, trail] = await Promise.all([
+    db.query(
+      `SELECT r.id, r.body, r.created_at, r.emailed_at, a.username AS admin FROM support_replies r LEFT JOIN users a ON a.id = r.admin_id
+        WHERE r.message_id = $1 ORDER BY r.created_at, r.id`,
+      [id],
+    ),
+    db.query(
+      `SELECT a.id, a.action, a.reason, a.details, a.created_at, adm.username AS admin
+         FROM admin_audit a LEFT JOIN users adm ON adm.id = a.admin_id
+        WHERE a.action LIKE 'support-%' AND a.details->>'message_id' = $1 ORDER BY a.created_at DESC, a.id DESC`,
+      [id],
+    ),
+  ]);
+  res.json({ message, replies: replies.rows, audit: trail.rows, emailOn: require('../email').enabled() });
+});
+
+/** GET /support/:id/screenshot — the image sent with the message. */
+router.get('/support/:id/screenshot', async (req, res) => {
+  const id = assertUuid(req.params.id);
+  const { rows: [m] } = await db.query('SELECT screenshot, screenshot_type FROM support_messages WHERE id = $1', [id]);
+  if (!m?.screenshot) throw notFound('No screenshot');
+  res.set('Content-Type', m.screenshot_type).set('Content-Disposition', 'inline').set('Content-Security-Policy', "default-src 'none'");
+  res.send(m.screenshot);
+});
+
+/** POST /support/:id/status { status, reason? } — New, Open or Done; written to the audit log. */
+router.post('/support/:id/status', async (req, res) => {
+  const id = assertUuid(req.params.id);
+  const body = validate(req.body, { status: { type: 'enum', required: true, values: support.STATUSES }, reason: { type: 'string', max: 500 } });
+  const message = await db.withTransaction(async (client) => {
+    const { rows: [m] } = await client.query('SELECT id, ref, user_id, status FROM support_messages WHERE id = $1 FOR UPDATE', [id]);
+    if (!m) throw notFound('No such message');
+    if (m.status !== body.status) {
+      await client.query('UPDATE support_messages SET status = $2, status_at = now() WHERE id = $1', [id, body.status]);
+      await audit(client, req, 'support-status', m.user_id, body.reason || `${m.ref}: ${m.status} → ${body.status}`,
+        { message_id: id, ref: m.ref, from: m.status, to: body.status });
+    }
+    return supportMessage(client, id);
+  });
+  res.json({ message });
+});
+
+/** POST /support/:id/reply { text } — saved, emailed to the player when email is on, written to the audit log. */
+router.post('/support/:id/reply', async (req, res) => {
+  const id = assertUuid(req.params.id);
+  const body = validate(req.body, { text: { type: 'string', required: true, min: 2, max: 5000 } });
+  const out = await db.withTransaction(async (client) => {
+    const { rows: [before] } = await client.query('SELECT status FROM support_messages WHERE id = $1', [id]);
+    const done = await support.reply(client, { messageId: id, adminId: req.admin.id, body: body.text });
+    if (!done) throw notFound('No such message');
+    const { rows: [m] } = await client.query('SELECT user_id FROM support_messages WHERE id = $1', [id]);
+    if (before.status === 'new') {
+      await audit(client, req, 'support-status', m.user_id, `${done.message.ref}: new → open (replied)`, { message_id: id, ref: done.message.ref, from: 'new', to: 'open' });
+    }
+    await audit(client, req, 'support-reply', m.user_id, `Reply to ${done.message.ref}${done.emailed ? ' (emailed)' : ' (not emailed: email is off)'}`,
+      { message_id: id, ref: done.message.ref, reply_id: done.reply.id, emailed: done.emailed, ...(done.emailError && { email_error: done.emailError }), text: body.text });
+    return { reply: done.reply, emailed: done.emailed, emailError: done.emailError, message: await supportMessage(client, id) };
+  });
+  res.json(out);
 });
 
 /** GET /audit?limit=&action= */

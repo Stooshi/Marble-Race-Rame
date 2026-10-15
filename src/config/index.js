@@ -108,6 +108,12 @@ module.exports = Object.freeze({
     fromName: process.env.EMAIL_FROM_NAME || 'Marble Spins',
   },
 
+  // The support inbox (src/support): new contact-form messages are emailed here (when email is on),
+  // and players' replies to support emails come back here. Without it, messages are only in the back office.
+  support: {
+    email: process.env.SUPPORT_EMAIL || null,
+  },
+
   game: assertGameLimits({
     // Hard limits enforced by the API and the database schema.
     minMarbles: 10,

@@ -12,6 +12,7 @@
 | **Under-13 parental approval** | Placeholder. Until it exists, under-13s can't make an account: both the sign-up page and the server refuse (they can still play as guests). The process for a parent to approve is still to be designed | `src/routes/auth.js`, `client/src/site/pages/SignupPage.jsx` |
 | **Stripe live** | Test mode now. Before going live: the company's Stripe account, the accountant's confirmation of tax code and VAT (OSS), live webhook. See the [runbook](05-runbook.md#switching-to-live-only-when-moses-says-so) | Railway variables |
 | **Store accounts and listings** | D-U-N-S number, Apple Developer and Google Play accounts; the Google 14-day closed test with 12 testers (start by mid-November); screenshots. Drafts are in the project doc `claude/store-submission-drafts.md` | — |
+| **Support email** | Set `SUPPORT_EMAIL` on Railway (and Brevo) so contact-form messages are emailed, and fill `[support email]` in the Help Centre and legal text. Until then, messages are only in the back office | Railway variables |
 | **Help Centre placeholders** | Answers still holding `[brackets]` (support and privacy email, reply time, company details, coins expiry, Swedish time, what happens when someone leaves a room, changing a name, Google/Apple sign-in, app launch, quality setting, parent approval, email switched on). Fill them in the project doc and in `faq.js` together | `client/src/site/help/faq.js` |
 | **Limited edition price** | "Northern Lights" coin price is still `[X]` | `client/src/shared/marbles/catalog.json` |
 | **Season** | Season name, dates and badge are placeholders (`Season [3]`, October 2026) | `src/routes/scoreboard.js` |
@@ -29,6 +30,7 @@
 - **Automated social posting** of race clips, approved by Moses.
 - **More track series** (plans in the project): Block Series (10 tracks). The Canyon Series (10 tracks) is built and switched off; when it goes live, add a sixth "Canyons" card to the landing page's series list (it says "five series"); the Help Centre counts the live series by itself.
 - **Race sound effects** (rolling, clacks), on hold.
+- **Support: a confirmation email to the player** ("we got your message, reference S-…") and canned replies. The form shows the reference on screen today.
 - **Analytics.** None today. If added, update the privacy policy and both store privacy forms first.
 
 ## Technical weaknesses

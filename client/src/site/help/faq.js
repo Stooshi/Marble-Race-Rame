@@ -17,6 +17,7 @@
 import economy from '../../shared/economy.json';
 import { COIN_PACKS } from '../../shared/payments/packs';
 import { catalog } from '../../shared/marbles';
+import supportSettings from '../../shared/support.json';
 
 const n = (v) => Number(v).toLocaleString('en-US');
 const ordinal = (k) => `${k}${['th', 'st', 'nd', 'rd'][(k % 100 > 10 && k % 100 < 14) || k % 10 > 3 ? 0 : k % 10]}`;
@@ -314,8 +315,8 @@ export function blocksText(blocks) {
 /** Whether a text still holds a [bracket] placeholder. */
 export const hasPlaceholder = (text) => /\[[^\]]+\]/.test(text);
 
-/** The categories a contact message can be about: the help sections, then "Something else". */
-export const CONTACT_CATEGORIES = [...buildFaq().map((s) => s.title).filter((t) => t !== 'Contact us'), 'Something else'];
+/** The categories a contact message can be about (client/src/shared/support.json, which the server checks too): the help sections, then "Something else". */
+export const CONTACT_CATEGORIES = supportSettings.categories;
 
 /**
  * schema.org FAQPage for search engines. Questions whose answer still holds a [bracket] placeholder

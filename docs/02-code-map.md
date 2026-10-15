@@ -23,6 +23,7 @@
 | Change legal text | `client/src/site/pages/LegalPage.jsx` |
 | Change a Help Centre answer, or the search's synonyms | `client/src/site/help/faq.js` (texts from the project doc `claude/help-faq-draft.md`; numbers come from the settings files), `client/src/site/help/search.js` (`SYNONYMS`) |
 | Change an email's text | `src/email/templates.js` |
+| Fix the contact form or the support inbox | `client/src/site/help/ContactForm.jsx`, `src/routes/support.js`, `src/support/index.js`, `src/routes/admin.js` (`/support…`); categories and limits in `client/src/shared/support.json` |
 | Change the app icon or splash | `client/assets/*.png`, then `npx capacitor-assets generate --ios --android` |
 | Change the database | Add columns or tables to `docs/database_schema.sql` (additions only). To change existing rows, add a new file in `docs/data_updates/` |
 
@@ -47,7 +48,7 @@
 
 **Starting up:**
 - `server.js`: builds the app and socket server, checks the database, then runs `migrate()`, `raceManager.recover()`, the race scheduler and the daily IP trimming. Shuts down cleanly on SIGTERM.
-- `app.js`: Express setup (helmet, CORS, `/health`). The Stripe webhook is mounted **before** the JSON parser, because it needs the raw body. The `/api/*` routers come after.
+- `app.js`: Express setup (helmet, CORS, `/health`). The Stripe webhook is mounted **before** the JSON parser, because it needs the raw body; so is `/api/support`, which reads its own larger body (a screenshot). The `/api/*` routers come after.
 - `version.js`: `VERSION` (commit, `codeFingerprint`, engine versions, start time), shown on `/health`.
 - `config/index.js`: every environment setting in one frozen object, including CORS (`isSiteOrigin`) and Stripe. It refuses to start in production without a `JWT_SECRET` of at least 32 characters.
 
@@ -118,10 +119,11 @@
 **Back office and accounts:**
 - `admin/session.js`: the back-office login (separate admin token, TOTP 2-step code, 30-minute idle timeout, 5 wrong codes give a 15-minute pause kept in memory).
 - `admin/totp.js`: RFC 6238 codes and the encrypted secret.
-- `security/index.js`: `record()` stores IP and country for sign-up, login and purchase. `trimIps()` blanks IPs older than 90 days and runs daily. Countries are looked up offline (geoip-country).
-- `account/index.js`: `exportData()` ("Download my data") and `deleteAccount()` (anonymises, keeps payments and race results).
+- `security/index.js`: `record()` stores IP and country for sign-up, login and purchase. `trimIps()` blanks IPs older than 90 days (security events and support messages) and runs daily. Countries are looked up offline (geoip-country).
+- `account/index.js`: `exportData()` ("Download my data", support messages and replies included) and `deleteAccount()` (anonymises, deletes support messages, keeps payments and race results).
+- `support/index.js`: support messages. The form token (`formToken`, `checkFormToken`: under 3 s is a bot, over 12 h asks for a fresh form), `readScreenshot` (PNG, JPEG, WebP or GIF by their first bytes, at most 4 MB), `create` (links the account, keeps a repeat within 10 minutes once, emails `SUPPORT_EMAIL`), `reply` (saves and emails a back-office reply).
 - `email/index.js`: sends email through Brevo when `BREVO_API_KEY` is set (`enabled()`, `send()`). Tests swap the transport.
-- `email/templates.js`: the emails' HTML (password reset).
+- `email/templates.js`: the emails' HTML (password reset, support notification, support reply).
 - `email/unsubscribe.js`: signed unsubscribe links and RFC 8058 one-click headers.
 - `account/passwordReset.js`: "Forgot your password?":
   - `request()` emails a one-time link, says nothing about whether the account exists, and sends at most 3 an hour;
@@ -142,7 +144,8 @@
 | `rooms.js` | Friend rooms (create, join, leave, track, remove, start, close) and `afterRace` |
 | `collection.js` | Collection, Marble Bag, Shooter, bags, buy, find by ID, certificates |
 | `payments.js` | Packs, checkout, store receipts (placeholder), my orders, the Stripe webhook |
-| `admin.js` | The back office: players, coins, items, suspend, rename, delete, consent, payments and refunds, audit, economy, email list |
+| `admin.js` | The back office: players (with their support messages), coins, items, suspend, rename, delete, consent, payments and refunds, audit, economy, email list, the support inbox (list, message, screenshot, status, reply) |
+| `support.js` | The Help Centre's contact form: `GET /form` (a form token), `POST /` (a message; rate-limited to 6 an hour per address) |
 | `economy.js` | Economy numbers, my day, race payouts, my ledger |
 | `scoreboard.js` | Season, all-time and friends boards (earned coins only); `SEASON` is a placeholder |
 | `tracks.js`, `marbles.js` | Public lists; admin edits |
@@ -188,7 +191,7 @@ Defined in `src/sockets/index.js`. The client may send a JWT in `auth.token`; an
   - the track tests also check that data-update SQL matches the generator.
 - **Races:** `raceManager`, `raceSession`, `rooms`.
 - **Money and items:** `economy`, `entryFees`, `collection`, `showcase`, `payments`, `stripe`.
-- **Platform:** `account`, `passwordReset`, `admin`, `origins`, `migrate` (the table list is fixed here), `appearance`.
+- **Platform:** `account`, `passwordReset`, `admin`, `support` (contact form spam checks, screenshots, account linking, inbox, statuses, replies, audit), `origins`, `migrate` (the table list is fixed here), `appearance`.
 
 ---
 
@@ -240,13 +243,14 @@ Defined in `src/sockets/index.js`. The client may send a JWT in `auth.token`; an
   - `marbles/` (badge, 3D turntable, certificate, `useCollection`);
   - `payments/index.js` (Stripe on the web, app-store placeholder);
   - `pages/` (every website page; see the routes below);
-  - `help/` (the Help Centre at `/help`): `faq.js` (the 12 categories of questions and answers, numbers read from `economy.json`, `packs.json` and `catalog.json`, `[bracket]` placeholders kept; the FAQPage structured data), `search.js` (type-ahead search: any word order, typos, synonyms, highlighting), `HelpPage.jsx`.
-- `admin/`: the back office (`AdminApp.jsx`, `adminApi.js`, `admin.css`).
+  - `help/` (the Help Centre at `/help`): `ContactForm.jsx` ("Still need help?": name, email, topic, order number, message, screenshot scaled down before sending, a hidden spam field), `faq.js` (the 12 categories of questions and answers, numbers read from `economy.json`, `packs.json` and `catalog.json`, `[bracket]` placeholders kept; the FAQPage structured data), `search.js` (type-ahead search: any word order, typos, synonyms, highlighting), `HelpPage.jsx`.
+- `admin/`: the back office (`AdminApp.jsx`, `adminApi.js`, `admin.css`). The support inbox (`SupportInbox`, `SupportMessage`, `SupportTable`) lives in `AdminApp.jsx` too.
 - `app/`: the native app shell:
   - `native.js`: splash, status bar, Android back button, sound in the background, network watch;
   - `OfflineScreen.jsx` (links to the Help Centre; on `/help` itself it shrinks to a bar so the answers stay readable offline).
 - `shared/`: data and code **shared with the server**:
   - `economy.json`;
+  - `support.json` (contact-form categories and limits, checked by the server too);
   - `payments/packs.json`, `payments/consent.json`;
   - `marbles/catalog.json`;
   - `marbles/badge.js`: the master look of each design;
@@ -282,7 +286,7 @@ Defined in `src/sockets/index.js`. The client may send a JWT in `auth.token`; an
 | `/dashboard`, `/profile/:userId` | Dashboard and public profiles |
 | `/race/:raceId`, `/results/:raceId` | Live race and results |
 | `/preview/3d`, `/preview/3d/race/:raceId`, `/preview/marbles`, `/preview/marbles/compare`, `/preview/marbles/roll`, `/preview/physics` | Preview and check pages (not linked) |
-| `/admin/*` | Back office: Players, Player detail, Payments, Economy, Email list, Audit log |
+| `/admin/*` | Back office: Players, Player detail (tabs: Coins, Races, Marbles, Payments, Messages, Security, Emails, Audit), Payments, Support messages (`/admin/support`, `/admin/support/:id`), Economy, Email list, Audit log |
 
 ### 3D: `client/src/three/`
 

@@ -6,7 +6,8 @@
  *   exportData(userId)        everything stored about the player, as one JSON document
  *   deleteAccount(client, …)  deletes the account by anonymising it:
  *     - the person is removed: name, email, password, shown name, picture, settings, age group,
- *       email answers, IP addresses (security log) and admin logins are wiped or deleted; the
+ *       email answers, IP addresses (security log), support messages (with their replies) and admin
+ *       logins are wiped or deleted; the
  *       marble's own label is cleared; rooms they host are closed; every login stops at once;
  *     - what isn't about the person stays, under a name like deleted_3f2a91c07b4e: race results
  *       (other players' places must never change), marble IDs and certificates (serial numbers
@@ -29,7 +30,7 @@ async function exportData(db, userId) {
        FROM users WHERE id = $1 AND deleted_at IS NULL`,
   );
   if (!account) return null;
-  const [stats, emailAnswers, ledger, collection, shooter, look, startingMarbles, races, days, payments, rooms, security] = await Promise.all([
+  const [stats, emailAnswers, ledger, collection, shooter, look, startingMarbles, races, days, payments, rooms, security, support, supportReplies] = await Promise.all([
     one('SELECT * FROM user_stats WHERE user_id = $1'),
     all('SELECT consent, source, created_at FROM email_consents WHERE user_id = $1 ORDER BY created_at'),
     all('SELECT created_at, amount, kind, balance_after, item_slug, race_id, note FROM coin_ledger WHERE user_id = $1 ORDER BY id'),
@@ -46,6 +47,11 @@ async function exportData(db, userId) {
            FROM payments WHERE user_id = $1 ORDER BY created_at`),
     all('SELECT code, status, created_at, last_active_at FROM rooms WHERE host_id = $1 ORDER BY created_at'),
     all('SELECT kind, host(ip) AS ip, country, created_at FROM security_events WHERE user_id = $1 ORDER BY created_at'),
+    all(`SELECT ref, created_at, name, email, category, order_no, message, screenshot IS NOT NULL AS screenshot_attached, device, status,
+                host(ip) AS ip, country
+           FROM support_messages WHERE user_id = $1 ORDER BY created_at`),
+    all(`SELECT m.ref, r.body, r.created_at, r.emailed_at FROM support_replies r JOIN support_messages m ON m.id = r.message_id
+          WHERE m.user_id = $1 ORDER BY r.created_at`),
   ]);
   return {
     about: 'Everything Marble Spins stores about your account. Passwords are stored only as a one-way hash and are not included. IP addresses are kept for security and fraud checks for at most 90 days, then only the country.',
@@ -60,6 +66,7 @@ async function exportData(db, userId) {
     payments,
     friendRoomsHosted: rooms,
     securityLog: security,
+    supportMessages: support.map((m) => ({ ...m, replies: supportReplies.filter((r) => r.ref === m.ref).map(({ ref: _r, ...r }) => r) })),
   };
 }
 
@@ -71,6 +78,12 @@ async function deleteAccount(client, userId, { by = 'player', reason = null } = 
   const { rows: [user] } = await client.query('SELECT id, role FROM users WHERE id = $1 AND deleted_at IS NULL FOR UPDATE', [userId]);
   if (!user) return null;
   const name = anonName(userId);
+  // Support messages: the player's own, and any sent from their email without an account link.
+  await client.query(
+    `DELETE FROM support_messages WHERE user_id = $1
+        OR (user_id IS NULL AND lower(email) = (SELECT lower(email) FROM users WHERE id = $1 AND NOT is_guest))`,
+    [userId],
+  );
   const unusable = `!deleted:${crypto.randomBytes(16).toString('hex')}`; // (no password can ever match)
   await client.query(
     `UPDATE users SET username = $2, email = $3, password_hash = $4, display_name = NULL, avatar_url = NULL,

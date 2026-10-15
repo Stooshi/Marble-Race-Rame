@@ -4,10 +4,10 @@
  * Sending email, through Brevo (an EU email provider) — off until BREVO_API_KEY is set.
  *
  *   enabled()            whether email can be sent (the key is set)
- *   send({ to, subject, html, tags, headers })
+ *   send({ to, subject, html, tags, headers, replyTo })
  *                        sends one email through Brevo's transactional API → { messageId }
  *
- * Used for password resets now; news emails will use the same sender later (their unsubscribe
+ * Used for password resets and support (new-message notifications, replies) now; news emails will use the same sender later (their unsubscribe
  * links and headers: ./unsubscribe.js). Tests swap the transport with setTransport().
  */
 const config = require('../config');
@@ -34,7 +34,7 @@ function setTransport(fn) { transport = fn || brevo; }
 const enabled = () => Boolean(config.email.brevoApiKey) || transport !== brevo;
 
 /** Sends one email. Throws if email is off or the provider refuses it. */
-async function send({ to, toName, subject, html, tags = [], headers }) {
+async function send({ to, toName, subject, html, tags = [], headers, replyTo }) {
   if (!enabled()) throw new Error('Email is not set up (BREVO_API_KEY)');
   return transport({
     sender: { name: config.email.fromName, email: config.email.from },
@@ -43,6 +43,7 @@ async function send({ to, toName, subject, html, tags = [], headers }) {
     htmlContent: html,
     tags,
     ...(headers && { headers }),
+    ...(replyTo && { replyTo: { email: replyTo } }),
   });
 }
 

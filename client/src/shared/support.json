@@ -1,0 +1,9 @@
+{
+  "note": "The Help Centre's contact form (client/src/site/help/ContactForm.jsx) and the server's check of it (src/support). The categories are the help sections (client/src/site/help/faq.js) except Contact us, then Something else.",
+  "categories": [
+    "Getting started", "Races", "Fair play", "Coins", "Marbles and the collection", "Buying coins",
+    "Refunds", "Friend rooms", "Account and settings", "Younger players and parents", "Technical help", "Something else"
+  ],
+  "limits": { "name": 80, "email": 254, "orderNo": 40, "messageMin": 10, "messageMax": 5000, "screenshotBytes": 4194304 },
+  "screenshotTypes": ["image/png", "image/jpeg", "image/webp", "image/gif"]
+}

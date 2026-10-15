@@ -5,6 +5,7 @@ import { useAsync } from '../../hooks/useAsync';
 import { SITE_URL } from '../canonical';
 import { buildFaq, faqStructuredData } from './faq';
 import { buildIndex, highlight, search, snippet } from './search';
+import ContactForm from './ContactForm';
 
 /** **bold** and [placeholder] inside a line of answer text. */
 function Inline({ text }) {
@@ -231,6 +232,13 @@ export default function HelpPage() {
         </section>
       ))}
 
+      <section id="contact" aria-labelledby="contact-h" className="ms-card ms-help__contact">
+        <h2 id="contact-h" className="ms-h2" style={{ margin: 0 }}>Still need help?</h2>
+        <p style={{ margin: 0, color: 'var(--ms-soft)' }}>
+          Send us a message. Tell us your player name and, for payment questions, your order number (on your <Link to="/purchases">Purchases</Link> page).
+        </p>
+        <ContactForm />
+      </section>
     </div>
   );
 }

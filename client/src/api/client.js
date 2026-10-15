@@ -64,6 +64,10 @@ export const api = {
   guest: () => request('/auth/guest', { method: 'POST', token: null }),
   claim: (body) => request('/auth/claim', { method: 'POST', body }),
 
+  // The Help Centre's contact form: a form token first, then the message (logged in or not).
+  supportForm: () => request('/support/form', { token: null }),
+  sendSupport: (body) => request('/support', { method: 'POST', body }),
+
   user: (id) => request(`/users/${id}`),
   myProfile: () => request('/users/me'),
   userRaces: (id, limit = 10) => request(`/users/${id}/races?limit=${limit}`),

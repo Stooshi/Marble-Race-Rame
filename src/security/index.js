@@ -1,9 +1,9 @@
 'use strict';
 
 /**
- * Security events: the only place the game keeps IP addresses, and only for
- * security and fraud (one person farming coins with many accounts, payment
- * fraud). Recorded when an account is made, saved or logs in, and when coins are
+ * Security events: where the game keeps IP addresses (support messages keep the
+ * sender's too, for spam checks, on the same terms), only for security and fraud
+ * (one person farming coins with many accounts, payment fraud). Recorded when an account is made, saved or logs in, and when coins are
  * bought. The full address is kept for at most 90 days (IP_DAYS); after that
  * trimIps() blanks it and only the country stays.
  *
@@ -52,7 +52,12 @@ async function trimIps(client = db) {
     `UPDATE security_events SET ip = NULL WHERE ip IS NOT NULL AND created_at < now() - make_interval(days => $1)`,
     [IP_DAYS],
   );
-  return rowCount;
+  // Support messages keep the sender's address for spam checks, on the same terms.
+  const { rowCount: support } = await client.query(
+    `UPDATE support_messages SET ip = NULL WHERE ip IS NOT NULL AND created_at < now() - make_interval(days => $1)`,
+    [IP_DAYS],
+  );
+  return rowCount + support;
 }
 
 /** Trims now and then once a day (the server's start calls this). */

@@ -158,6 +158,16 @@ Email is off until Brevo is set up. When it's on, "Forgot your password?" appear
 
 To turn email off again, remove `BREVO_API_KEY` and restart.
 
+**Support emails.** Set `SUPPORT_EMAIL` on Railway (the address that should receive contact-form messages) and restart. With Brevo on, every new message is emailed there, with a link to it in the back office; replying to that email goes straight to the player (but isn't logged in the back office, so prefer replying there). Replies written in the back office are emailed to the player from `EMAIL_FROM`, with `SUPPORT_EMAIL` as the reply-to address. Without Brevo, messages and replies are still saved; the back office says a reply wasn't emailed.
+
+## Support messages (back office)
+
+- **Where:** back office → **Support messages**. Filter by New / Open / Done and by category; search by name, email, player, order number, reference (`S-1001`) or words in the message.
+- **A message:** who sent it and how it was linked to an account (*logged in*, or *by email*: matched on the email they typed, which they may not own; check before acting on an account), the order number, device, the screenshot (click for full size), replies and the history.
+- **Status:** New → Open → Done, from the list or the message. Every change is in the audit log (an optional note becomes its reason). Sending a reply moves a New message to Open.
+- **Replies** are emailed to the player when Brevo is on, and logged. With email off they are saved but not sent; answer the player another way.
+- **On the player's profile**, the **Messages** tab lists everything they sent (logged in, or from their email).
+
 ## Common problems
 
 | Symptom | Likely cause and fix |
@@ -176,6 +186,8 @@ To turn email off again, remove `BREVO_API_KEY` and restart.
 | Admin locked out of the back office | See [2-step reset](#back-office-admins-and-the-2-step-login) |
 | "Forgot your password?" missing on the log-in page | `BREVO_API_KEY` isn't set on Railway (or the server wasn't restarted after setting it) |
 | Reset email doesn't arrive | Look in Brevo → Transactional → Logs. If there's nothing there, see the Railway logs for `Brevo 4xx` (wrong key, or a sender that isn't verified). The player should also check spam. At most 3 links are sent per account per hour |
+| Contact-form messages don't arrive by email | They are always in the back office (Support messages). The email needs both `BREVO_API_KEY` and `SUPPORT_EMAIL`; Railway logs show `[support] notification … failed` if Brevo refused it |
+| A player says the contact form keeps failing | The form allows 6 messages an hour from one address ("Too many messages from here"). A form left open over 12 hours fetches a new token by itself |
 | A player asks for their data or to be deleted | They can do both themselves in Settings. Support can delete from the back office (player → Delete account, with a reason) |
 | App shows "Can't reach the race track" | Same as the first row. The app talks to the Railway address built in by `npm run app:sync` |
 

@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 
 /**
  * Terms of use, terms of sale, privacy, cookies and contact: the design's
@@ -46,6 +46,7 @@ export default function LegalPage() {
       <li>Purchases: what you bought and when. Card details stay with Stripe; we never see them.</li>
       <li>Settings: your sound levels and similar choices, so they follow you to another device.</li>
       <li>Security: your IP address when you create an account, log in or buy coins. We use it only to protect accounts and to stop fraud, such as one person farming coins with many accounts or payment fraud. After 90 days we delete the IP address and keep only the country it came from.</li>
+      <li>Support: what you send with the Help Centre's contact form (name, email, topic, order number, message and any screenshot), the device and browser it came from, and its IP address (to stop spam; deleted after 90 days like the others). We use it only to help you, and link it to your account so we can see your races and purchases.</li>
       </ul>
       <h2 className="ms-legal__h2">Why</h2>
       <p>To run the game and your account (contract), to handle purchases and bookkeeping (legal obligation), to keep play fair and stop fraud (legitimate interest), and to send optional news only if you agree (consent).</p>
@@ -54,11 +55,11 @@ export default function LegalPage() {
       <h2 className="ms-legal__h2">How long</h2>
       <p>While your account is active, and [X months] after you close it. Purchase records are kept as long as bookkeeping law requires. IP addresses are kept for at most 90 days, then only the country.</p>
       <h2 className="ms-legal__h2">Your rights</h2>
-      <p>You can ask to see, correct, export or delete your data, and object to some uses. In your account's Settings you can download your data, turn news emails on or off (every news email also has an unsubscribe link), and delete your account at once. Deleting removes your name, email, password, settings, email answers and IP addresses; race results stay under an anonymous name so other players' places don't change, and purchase records are kept without your name for as long as bookkeeping law requires (7 years in Sweden). For anything else, contact [privacy email]. You can also complain to the Swedish Authority for Privacy Protection (IMY).</p>
+      <p>You can ask to see, correct, export or delete your data, and object to some uses. In your account's Settings you can download your data, turn news emails on or off (every news email also has an unsubscribe link), and delete your account at once. Deleting removes your name, email, password, settings, email answers, support messages and IP addresses; race results stay under an anonymous name so other players' places don't change, and purchase records are kept without your name for as long as bookkeeping law requires (7 years in Sweden). For anything else, contact [privacy email]. You can also complain to the Swedish Authority for Privacy Protection (IMY).</p>
       <h1 id="cookies" className="ms-h2 ms-legal__h1">Cookies</h1>
       <p>We don't use cookies for tracking, analytics or advertising. To keep you logged in and remember your choices (such as sound levels), the game stores a few items in your browser's local storage; they are necessary for the game to work and never leave your device except to talk to our own server.</p>
       <h1 id="contact" className="ms-h2 ms-legal__h1">Contact</h1>
-      <p>[support email] · [COMPANY NAME AB], [address], Sweden</p>
+      <p>The contact form in the <Link to="/help#contact">Help Centre</Link> · [support email] · [COMPANY NAME AB], [address], Sweden</p>
       <p className="ms-note">The country of an IP address is looked up with GeoLite2 data created by MaxMind, available from maxmind.com.</p>
     </div>
   );

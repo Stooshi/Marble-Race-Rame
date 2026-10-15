@@ -57,6 +57,7 @@ curl localhost:5000/health
 | `PAYMENTS_TEST` | – | `true`: an instant test payment provider (never in production) |
 | `BREVO_API_KEY` | – | Brevo API key. Turns on email (password reset now). Without it, "Forgot your password?" is hidden |
 | `EMAIL_FROM` / `EMAIL_FROM_NAME` | `no-reply@marblespins.com` / `Marble Spins` | Sender, verified in Brevo |
+| `SUPPORT_EMAIL` | – | Where new contact-form messages are emailed (with Brevo on); reply-to on support replies |
 | `STRIPE_SECRET_KEY` | – | Stripe secret key. `sk_test_…` works at once; a live key (`sk_live_…`) is refused unless `STRIPE_ALLOW_LIVE=true` |
 | `STRIPE_WEBHOOK_SECRET` | – | The signing secret (`whsec_…`) of the webhook endpoint `/api/payments/stripe/webhook` |
 | `PUBLIC_SITE_URL` | `https://marblespins.com` in production | The website's main address. Stripe sends a player back to the address they bought from (www or not, the Vercel address) when it's one of the site's own, otherwise here |
@@ -200,6 +201,15 @@ The collection (Collection 1 · Schoolyard Classics: 10 designs in 5 shades, 50 
 Every payment provider ends in the same server step (`src/payments/index.js` → `grant`), which adds a pack's coins exactly once, as bought coins. `PAYMENTS_TEST=true` turns on an instant test provider outside production.
 
 **Stripe (the website)** — `src/payments/stripe.js`. The checkout asks for immediate delivery + the loss of the 14-day withdrawal right and the terms (the exact text is stored with the payment; `client/src/shared/payments/consent.json`), gives the order a number (MS-1001…) and sends the player to Stripe Checkout: the pack's USD price shown in their own currency (Adaptive Pricing), VAT included (Stripe Tax, `tax_behavior: inclusive`), with card / Apple Pay / Google Pay as the Stripe dashboard allows. Coins are added **only** by the webhook (`POST /api/payments/stripe/webhook`, signature checked against the raw body): each event id is recorded in `stripe_events` in the same transaction, and `grant` pays a payment once. Refunds (from the back office's Payments page or the Stripe dashboard) and disputes take the coins back in proportion (`payment_refunds`, once per refund; coins already spent are recorded as short), logged in the coin ledger (`pack-refund`) and the audit log. Players see their orders, amounts charged and Stripe receipts on `/purchases`. Webhook events to send: `checkout.session.completed`, `checkout.session.async_payment_succeeded`, `checkout.session.async_payment_failed`, `checkout.session.expired`, `refund.created`, `refund.updated`, `charge.dispute.created`. Local testing: `stripe listen --forward-to localhost:5000/api/payments/stripe/webhook`.
+
+### Help Centre: the contact form
+
+| Method | Path | Auth | Notes |
+| --- | --- | --- | --- |
+| GET | `/support/form` | – | `{ token, categories, limits }`: a signed form token (send it back with the message) |
+| POST | `/support` | optional | `{ token, name, email, category, order_no?, message, screenshot? (data URL, ≤ 4 MB), website }` → `201 { ref }` (e.g. `S-1001`). Linked to the player's account when logged in (guests too), otherwise to the account with that email. `website` is a hidden spam trap; a filled one, or a form sent under 3 s after its token, answers `{ ref: null }` and saves nothing. A token over 12 h old → 400 with `details.token = 'expired'`. 6 an hour per address |
+
+The back office reads them under `/api/admin/support` (list with `q`, `status`, `category`; one message; its screenshot; `POST …/status`; `POST …/reply`), and on a player's detail (`messages`).
 
 ### The coin economy
 

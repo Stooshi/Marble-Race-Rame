@@ -24,6 +24,7 @@ users ─┬─< race_entries >── races >── tracks          rooms ──
        ├── user_shooter, marble_appearances, user_days
        ├─< payments ──< payment_refunds          stripe_events (webhook dedupe)
        ├─< security_events, email_consents
+       ├─< support_messages ──< support_replies   (user_id may be empty: no account found)
        └── admin_2fa, admin_sessions, admin_audit (target/admin)
 race_entries ── race_entry_looks (player's collection marble) / house_looks (CPU showcase look)
 marbles ──< user_marbles   (the older plain marbles; looks only)
@@ -33,6 +34,7 @@ marbles ──< user_marbles   (the older plain marbles; looks only)
 - The marble collection catalogue (designs, shades, prices): `client/src/shared/marbles/catalog.json`.
 - The economy numbers: `client/src/shared/economy.json`.
 - The coin packs: `client/src/shared/payments/packs.json`.
+- The contact form's categories and limits: `client/src/shared/support.json`.
 - Physics track definitions: `src/tracks/*.js`. The database holds a copy in `tracks.physics`, put there by data updates.
 
 ---
@@ -66,7 +68,7 @@ marbles ──< user_marbles   (the older plain marbles; looks only)
 
 **Account deletion** (`src/account/index.js`) doesn't remove the `users` row.
 - **It anonymises the account:** name, email, password, shown name, settings, age group and consent are cleared.
-- **It deletes:** `email_consents`, `security_events`, `admin_sessions` and `admin_2fa` rows. It also clears the marble label and closes rooms the player hosts.
+- **It deletes:** `email_consents`, `security_events`, `support_messages` (with their replies; also messages sent from the account's email without a link), `admin_sessions` and `admin_2fa` rows. It also clears the marble label and closes rooms the player hosts.
 - **It keeps:**
   - race results, so other players' places never change;
   - marble IDs, so serial numbers stay unique;
@@ -280,13 +282,35 @@ The coins taken back are in proportion to the money refunded; the last refund ta
 ### `stripe_events`
 Every Stripe webhook event already handled (`id`, `type`). The event is recorded in the same transaction as its coin change, so a resent event is ignored.
 
+## Support
+
+### `support_messages`
+One row per message sent with the Help Centre's contact form (`src/support`).
+
+| Column | Meaning |
+|---|---|
+| `id` | uuid |
+| `ref` | The reference shown to the player: `S-1001`, `S-1002`… (sequence `support_message_seq`) |
+| `user_id`, `linked_by` | The account: `login` when they were logged in (guests too), `email` when it was matched on the email they typed (not proof of identity), empty when no account was found. The player's **Messages** tab in the back office also shows unlinked messages sent from the account's email |
+| `name`, `email`, `category`, `order_no`, `message` | As typed. `category` is one of `support.json` → `categories`; `email` is lowercased |
+| `screenshot`, `screenshot_type` | The optional image (bytes), at most 4 MB; PNG, JPEG, WebP or GIF, checked by its first bytes |
+| `device` | The browser's user-agent, for technical questions |
+| `status`, `status_at` | `new` → `open` → `done`. Every change is in `admin_audit` (`support-status`); a first reply moves `new` to `open` |
+| `notified_at` | When the support address was emailed about it (empty: email off or no `SUPPORT_EMAIL`) |
+| `ip`, `country` | For spam checks only. The IP is blanked after 90 days with the security events; the country stays |
+
+Spam checks before a row is written: a hidden field, a signed form token (a message under 3 s after the form opened is dropped silently), a limit of 6 messages an hour per address, and the same message from the same email and account within 10 minutes kept once.
+
+### `support_replies`
+Replies written in the back office: `message_id`, `admin_id`, `body`, `emailed_at` (empty when email was off or sending failed), `created_at`. Each is also in `admin_audit` (`support-reply`, with the text).
+
 ## Back office
 
 | Table | Holds |
 |---|---|
 | `admin_2fa` | One per admin: the authenticator secret, encrypted (`secret_enc`), `enabled_at`, and `last_step` (so each code works only once) |
 | `admin_sessions` | Back-office sessions: `created_at`, `last_seen_at` (30-minute idle limit), `ended_at` |
-| `admin_audit` | Every back-office action: `admin_id`, `action`, `target_user_id`, `reason` (required), `details` (JSON of what changed). Never edited. Also records refunds made in the Stripe dashboard, disputes and account deletions |
+| `admin_audit` | Every back-office action: `admin_id`, `action`, `target_user_id`, `reason` (required), `details` (JSON of what changed). Never edited. Also records refunds made in the Stripe dashboard, disputes and account deletions, and support-message status changes (`support-status`, details `message_id`, `from`, `to`) and replies (`support-reply`) |
 
 ## Bookkeeping tables and views
 
