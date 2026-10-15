@@ -35,6 +35,7 @@ export default function SiteHeader() {
         <div className="ms-header__inner ms-header__inner--narrow">
           <Link to="/shop" className="ms-header__back">← Back to the shop</Link>
           <span className="ms-grow" />
+          <Link to="/help#buying-coins" className="ms-header__back">Help</Link>
           <Logo size={26} plain />
         </div>
       </header>
@@ -46,7 +47,7 @@ export default function SiteHeader() {
         <div className="ms-header__inner ms-header__inner--landing">
           <Link to="/" aria-label="Marble Spins home" className="ms-header__logo"><Logo /></Link>
           <nav aria-label="Main" className="ms-nav ms-nav--landing">
-            <a href="#how">How to play</a><a href="#tracks">Tracks</a><a href="#marbles">Marbles</a><a href="#friends">Friends</a><a href="#faq">FAQ</a>
+            <a href="#how">How to play</a><a href="#tracks">Tracks</a><a href="#marbles">Marbles</a><a href="#friends">Friends</a><a href="#faq">FAQ</a><Link to="/help">Help</Link>
           </nav>
           <Link to="/signup?mode=login" className="ms-header__login">Log in</Link>
           <Link to="/play/start?quick=1" className="ms-btn ms-btn--primary ms-btn--sm">PLAY FREE</Link>
@@ -64,6 +65,7 @@ export default function SiteHeader() {
             <NavLink to="/bag">Marble Bag</NavLink>
             <NavLink to="/scores">Scoreboards</NavLink>
             <NavLink to="/shop">Shop</NavLink>
+            <NavLink to="/help">Help</NavLink>
           </nav>
         ) : <span className="ms-grow" />}
         <SoundControl />

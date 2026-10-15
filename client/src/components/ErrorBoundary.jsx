@@ -20,6 +20,7 @@ export default class ErrorBoundary extends Component {
         <div className="error-box" role="alert">
           <p>Something went wrong on this page: {this.state.error.message}</p>
           <button type="button" className="btn btn--sm" onClick={() => window.location.reload()}>Reload</button>
+          <p>Still stuck? <a href="/help#the-game-wont-load">Help Centre</a></p>
         </div>
       </div>
     );

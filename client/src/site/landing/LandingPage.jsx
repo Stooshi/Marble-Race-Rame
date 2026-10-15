@@ -144,6 +144,7 @@ export default function LandingPage() {
             <details key={q} className="ms-card ms-faq"><summary>{q}</summary><p>{a}</p></details>
           ))}
         </div>
+        <Link to="/help" style={{ color: 'var(--ms-yellow)', fontWeight: 700 }}>More answers in the Help Centre →</Link>
       </section>
 
       <section aria-label="Play now" className="ms-page">

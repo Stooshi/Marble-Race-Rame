@@ -21,6 +21,7 @@
 | Add a new track | `src/tracks/README.md` (the kit guide), then `scripts/physics-track-sql.js` and a data update |
 | Fix sound or music | `client/src/sound/engine.js`, `client/src/sound/settings.js`, files in `client/public/audio/` |
 | Change legal text | `client/src/site/pages/LegalPage.jsx` |
+| Change a Help Centre answer, or the search's synonyms | `client/src/site/help/faq.js` (texts from the project doc `claude/help-faq-draft.md`; numbers come from the settings files), `client/src/site/help/search.js` (`SYNONYMS`) |
 | Change an email's text | `src/email/templates.js` |
 | Change the app icon or splash | `client/assets/*.png`, then `npx capacitor-assets generate --ios --android` |
 | Change the database | Add columns or tables to `docs/database_schema.sql` (additions only). To change existing rows, add a new file in `docs/data_updates/` |
@@ -238,11 +239,12 @@ Defined in `src/sockets/index.js`. The client may send a JWT in `auth.token`; an
   - `landing/` (landing page, 3D hero replay);
   - `marbles/` (badge, 3D turntable, certificate, `useCollection`);
   - `payments/index.js` (Stripe on the web, app-store placeholder);
-  - `pages/` (every website page; see the routes below).
+  - `pages/` (every website page; see the routes below);
+  - `help/` (the Help Centre at `/help`): `faq.js` (the 12 categories of questions and answers, numbers read from `economy.json`, `packs.json` and `catalog.json`, `[bracket]` placeholders kept; the FAQPage structured data), `search.js` (type-ahead search: any word order, typos, synonyms, highlighting), `HelpPage.jsx`.
 - `admin/`: the back office (`AdminApp.jsx`, `adminApi.js`, `admin.css`).
 - `app/`: the native app shell:
   - `native.js`: splash, status bar, Android back button, sound in the background, network watch;
-  - `OfflineScreen.jsx`.
+  - `OfflineScreen.jsx` (links to the Help Centre; on `/help` itself it shrinks to a bar so the answers stay readable offline).
 - `shared/`: data and code **shared with the server**:
   - `economy.json`;
   - `payments/packs.json`, `payments/consent.json`;
@@ -276,6 +278,7 @@ Defined in `src/sockets/index.js`. The client may send a JWT in `auth.token`; an
 | `/scores` | Scoreboards |
 | `/signup` (`?mode=login`) | Sign up / log in |
 | `/legal` | Terms, terms of sale, privacy, cookies, contact |
+| `/help`, `/help#<question-slug>` | Help Centre: every question has its own link (the slug is the question in lowercase with dashes, e.g. `/help#i-forgot-my-password`); `#contact` is the contact form. Linked from the header, footer, Settings, shop, checkout, Purchases, the offline screen, the error box and the 404 page |
 | `/dashboard`, `/profile/:userId` | Dashboard and public profiles |
 | `/race/:raceId`, `/results/:raceId` | Live race and results |
 | `/preview/3d`, `/preview/3d/race/:raceId`, `/preview/marbles`, `/preview/marbles/compare`, `/preview/marbles/roll`, `/preview/physics` | Preview and check pages (not linked) |
@@ -323,7 +326,7 @@ Defined in `src/sockets/index.js`. The client may send a JWT in `auth.token`; an
   - `grandPrix`, `lighting`, `billboards`, `costumes`;
   - `clearTrack`, `sceneFingerprints`.
 - **Marbles:** `marbleLooks`, `marbleQuality` (every look against its shop picture).
-- **Other:** `finishShow`, `confetti`, `utils`, `sound`, `appShell`, `staleCode`, `canonical`.
+- **Other:** `finishShow`, `confetti`, `utils`, `sound`, `appShell`, `staleCode`, `canonical`, `help` (the Help Centre's texts, numbers from the settings files, placeholders kept, the search).
 
 ## Known stale comments
 

@@ -133,6 +133,10 @@ export default function SettingsPage() {
         <h2 id="buy-h" className="ms-h3" style={{ margin: 0 }}>Purchases</h2>
         <span>Your coin-pack orders and receipts: <Link to="/purchases">Purchases</Link></span>
       </section>
+      <section className="ms-card" style={{ display: 'grid', gap: 6 }} aria-labelledby="help-h">
+        <h2 id="help-h" className="ms-h3" style={{ margin: 0 }}>Help</h2>
+        <span>Answers about coins, marbles, payments and your account: <Link to="/help">Help Centre</Link> · <Link to="/help#contact">Contact us</Link></span>
+      </section>
       <YourData />
       <DeleteAccount user={user} onDeleted={() => { logout(); navigate('/?deleted=1'); }} />
       <div className="ms-row"><button type="button" className="ms-btn" onClick={() => { logout(); navigate('/'); }}>Log out</button></div>

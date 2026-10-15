@@ -538,8 +538,77 @@ a.ms-tile:hover, a.ms-card:hover { text-decoration: none; border-color: var(--ms
 }
 .ms-offline__box { display: grid; justify-items: center; gap: 16px; text-align: center; max-width: 360px; }
 .ms-offline__icon { width: 64px; height: 64px; color: var(--ms-soft); }
+.ms-offline__help { color: var(--ms-soft); font-weight: 600; min-height: 40px; display: inline-flex; align-items: center; }
+.ms-offline-bar {
+  position: sticky; top: 0; z-index: 60; display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: center; justify-content: center;
+  padding: max(8px, env(safe-area-inset-top, 0px)) 16px 8px; background: #3A2410; color: var(--ms-text); font-weight: 600; text-align: center;
+}
+.ms-offline-bar .ms-linkbtn { min-height: 32px; }
 
 /* ── Inside the apps ── */
 .is-app body { overscroll-behavior: none; -webkit-user-select: none; user-select: none; }
 .is-app input, .is-app textarea { -webkit-user-select: text; user-select: text; }
 .is-app { -webkit-tap-highlight-color: transparent; }
+
+/* ── Help Centre (/help) ───────────────────────────────────────────────── */
+.ms-visually-hidden { position: absolute !important; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+.ms-help { gap: 18px; padding-bottom: 8px; }
+.ms-help__top { display: grid; gap: 14px; }
+.ms-help-search { position: relative; z-index: 5; }
+.ms-help-search__box { position: relative; display: flex; align-items: center; }
+.ms-help-search__box > svg { position: absolute; left: 16px; width: 22px; height: 22px; color: var(--ms-muted); pointer-events: none; }
+.ms-help-search input {
+  width: 100%; min-height: 56px; padding: 12px 52px 12px 50px; border-radius: 16px; border: 2px solid var(--ms-border);
+  background: var(--ms-card); color: var(--ms-text); font: inherit; font-size: 17px; -webkit-appearance: none; appearance: none;
+}
+.ms-help-search input::-webkit-search-cancel-button { display: none; }
+.ms-help-search input:focus-visible { outline: none; border-color: var(--ms-yellow); }
+.ms-help-search__clear { position: absolute; right: 6px; width: 44px; height: 44px; border: 0; border-radius: 12px; background: none; color: var(--ms-muted); font-size: 1.6rem; cursor: pointer; }
+.ms-help-search__clear:hover { color: var(--ms-text); }
+.ms-help-suggest {
+  position: absolute; left: 0; right: 0; top: calc(100% + 6px); margin: 0; padding: 6px; list-style: none;
+  background: var(--ms-card-2); border: 1px solid var(--ms-border); border-radius: 16px; box-shadow: 0 18px 40px rgba(0,0,0,0.45);
+  max-height: min(60vh, 460px); overflow-y: auto; overscroll-behavior: contain;
+}
+.ms-help-suggest li { display: grid; gap: 2px; padding: 10px 12px; border-radius: 10px; cursor: pointer; min-height: 44px; }
+.ms-help-suggest li[aria-selected="true"] { background: rgba(255,210,31,0.12); box-shadow: inset 3px 0 0 var(--ms-yellow); }
+.ms-help-suggest li b { font-weight: 700; }
+.ms-help-suggest__in { font-family: var(--ms-cond); font-weight: 800; font-size: 0.78rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ms-orange); }
+.ms-help-suggest__snip { font-size: 0.9rem; color: var(--ms-muted); line-height: 1.4; }
+.ms-help-suggest mark { background: none; color: var(--ms-yellow); font-weight: 800; }
+.ms-help-suggest a, .ms-help a:not(.ms-btn) { color: var(--ms-yellow); }
+.ms-help-suggest--none { display: grid; gap: 4px; padding: 14px 16px; color: var(--ms-soft); }
+.ms-help__topics { display: flex; flex-wrap: wrap; gap: 8px; }
+.ms-help__topics a { padding: 6px 12px; border-radius: 999px; border: 1px solid var(--ms-border); color: var(--ms-soft); font-weight: 600; font-size: 0.9rem; min-height: 36px; display: inline-flex; align-items: center; }
+.ms-help__topics a:hover { color: var(--ms-text); border-color: var(--ms-muted); text-decoration: none; }
+.ms-help__sec { display: grid; gap: 4px; padding: 18px 18px 8px; scroll-margin-top: 130px; }
+.ms-help__sec > h2 { display: flex; align-items: baseline; gap: 12px; margin: 0 0 6px; font-family: var(--ms-cond); font-weight: 800; font-size: clamp(1.5rem, 3.4vw, 1.9rem); line-height: 1.05; text-wrap: balance; }
+.ms-help__sec > h2 span { font-size: 0.9rem; color: var(--ms-orange); letter-spacing: 0.06em; font-variant-numeric: tabular-nums; }
+.ms-help-q { border-top: 1px solid var(--ms-border); scroll-margin-top: 140px; }
+@media (min-width: 900px) { .ms-help-q, .ms-help__sec, .ms-help__contact { scroll-margin-top: 90px; } }
+.ms-help-q h3 { margin: 0; font-size: 1.02rem; }
+.ms-help-q h3 button {
+  width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 2px; min-height: 52px;
+  background: none; border: 0; color: var(--ms-text); font: inherit; font-weight: 700; text-align: left; cursor: pointer;
+  -webkit-tap-highlight-color: transparent; touch-action: manipulation;
+}
+.ms-help-q h3 button:hover { color: var(--ms-yellow); }
+.ms-help-q h3 button:focus-visible { outline: 3px solid var(--ms-yellow); outline-offset: 2px; border-radius: 8px; }
+.ms-help-q h3 svg { width: 20px; height: 20px; flex: none; color: var(--ms-muted); transition: transform 0.18s ease; }
+.ms-help-q[data-open] h3 svg { transform: rotate(180deg); color: var(--ms-yellow); }
+.ms-help-q:target h3 button, .ms-help-q[data-open] h3 button { color: var(--ms-yellow); }
+.ms-help-a[hidden] { display: none; }
+.ms-help-a { display: grid; gap: 10px; padding: 0 2px 16px; color: var(--ms-soft); line-height: 1.55; max-width: 68ch; }
+.ms-help-a p, .ms-help-a ul, .ms-help-a ol { margin: 0; }
+.ms-help-a ul, .ms-help-a ol { padding-left: 1.3em; display: grid; gap: 4px; }
+.ms-help-a strong { color: var(--ms-text); }
+.ms-help-a__foot { display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: center; }
+.ms-help-a__foot .ms-linkbtn { padding: 0; font-size: 0.9rem; }
+.ms-help-ph { color: var(--ms-orange); background: rgba(255,122,26,0.1); border: 1px dashed rgba(255,122,26,0.55); border-radius: 6px; padding: 0 4px; font-weight: 600; -webkit-box-decoration-break: clone; box-decoration-break: clone; }
+.ms-help-table { overflow-x: auto; }
+.ms-help-table table { border-collapse: collapse; font-variant-numeric: tabular-nums; min-width: 240px; }
+.ms-help-table th, .ms-help-table td { text-align: left; padding: 7px 18px 7px 0; border-bottom: 1px solid var(--ms-border); }
+.ms-help-table thead th { color: var(--ms-muted); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.06em; }
+.ms-help-table tbody th { color: var(--ms-text); font-weight: 700; }
+.ms-help__contact { display: grid; gap: 14px; scroll-margin-top: 130px; border-color: var(--ms-yellow); }
+@media (prefers-reduced-motion: reduce) { .ms-help-q h3 svg { transition: none; } }

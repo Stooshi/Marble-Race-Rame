@@ -106,6 +106,7 @@ export default function CheckoutPage() {
             <li>Coins can't be cashed out or exchanged for money.</li>
             <li>{web ? 'Shown in your currency, with your country\'s VAT, on the payment page.' : 'Shown in your currency by the store.'}</li>
             <li>Receipt sent to your email; your orders are on your <Link to="/purchases">Purchases</Link> page.</li>
+            <li>Questions? <Link to="/help#buying-coins">Help with buying coins</Link></li>
           </ul>
         </aside>
       </div>

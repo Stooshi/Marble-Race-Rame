@@ -22,6 +22,7 @@ import ScoresPage from './site/pages/ScoresPage';
 import SignupPage from './site/pages/SignupPage';
 import LegalPage from './site/pages/LegalPage';
 import HomeHub from './site/pages/HomeHub';
+import HelpPage from './site/help/HelpPage';
 import Home from './pages/Home';
 import Dashboard from './pages/Dashboard';
 import Race from './pages/Race';
@@ -85,6 +86,7 @@ export default function App() {
           <Route path="/scores" element={<ScoresPage />} />
           <Route path="/signup" element={<SignupPage />} />
           <Route path="/legal" element={<LegalPage />} />
+          <Route path="/help" element={<HelpPage />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/profile/:userId" element={<Dashboard />} />
           <Route path="/race/:raceId" element={<Race />} />
@@ -119,7 +121,7 @@ export default function App() {
               <div className="page">
                 <h1>Lost the marble</h1>
                 <p className="muted">That page doesn't exist.</p>
-                <Link to="/" className="btn">Back home</Link>
+                <div className="ms-row"><Link to="/" className="btn">Back home</Link><Link to="/help">Help Centre</Link></div>
               </div>
             )}
           />

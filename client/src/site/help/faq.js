@@ -1,0 +1,333 @@
+/**
+ * The Help Centre's questions and answers (/help), from the project doc claude/help-faq-draft.md.
+ *
+ * The texts are the draft's, word for word. Items in [brackets] are still to be decided and stay
+ * visible as placeholders. Every number that is a game setting comes from the same files the game
+ * reads, so the answers stay right when a setting changes:
+ *   client/src/shared/economy.json          coins per race, places, daily goal and limit, starting coins, bag discounts
+ *   client/src/shared/payments/packs.json   coin packs and their prices
+ *   client/src/shared/marbles/catalog.json  marble prices by rarity, First Edition size, shades, collections coming soon
+ * and the number of tracks and series from the live track list when the page has it.
+ *
+ * An answer is a list of blocks:
+ *   'text'                        a paragraph (inline: **bold**, [placeholder])
+ *   ['ul' | 'ol', ...items]       a list
+ *   ['table', [heads], ...rows]   a table
+ */
+import economy from '../../shared/economy.json';
+import { COIN_PACKS } from '../../shared/payments/packs';
+import { catalog } from '../../shared/marbles';
+
+const n = (v) => Number(v).toLocaleString('en-US');
+const ordinal = (k) => `${k}${['th', 'st', 'nd', 'rd'][(k % 100 > 10 && k % 100 < 14) || k % 10 > 3 ? 0 : k % 10]}`;
+const NUMBER_WORDS = ['no', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten'];
+const listJoin = (items) => (items.length < 2 ? items.join('') : `${items.slice(0, -1).join(', ')} and ${items[items.length - 1]}`);
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const shortDate = (iso) => { const [, m, d] = iso.split('-').map(Number); return `${d} ${MONTHS[m - 1]}`; };
+
+/** The series as the draft names them, in its order (the live track list decides which exist). */
+export const SERIES_ORDER = ['Grand Prix', 'World Tour', 'Coasters', 'Pinball', 'Arcade', 'Canyons'];
+const DRAFT_TRACKS = 50;
+const DRAFT_SERIES = SERIES_ORDER.slice(0, 5);
+
+/** "1st place +50, 2nd +30, 3rd +20, 4th–10th +5" from economy.race.places. */
+export function placesLine(places = economy.race.places) {
+  let from = 1;
+  return places.map(({ upTo, coins }, k) => {
+    const label = from === upTo ? ordinal(from) : `${ordinal(from)}–${ordinal(upTo)}`;
+    from = upTo + 1;
+    return `${label}${k === 0 ? ' place' : ''} +${n(coins)}`;
+  }).join(', ');
+}
+
+const percent = (share) => `${Math.round(share * 100)}%`;
+
+/** Lowercase, accents off, punctuation to dashes: "What's my daily streak?" → whats-my-daily-streak. */
+export function slugify(text) {
+  return String(text).toLowerCase().normalize('NFKD').replace(/[̀-ͯ]/g, '')
+    .replace(/['’]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+}
+
+/**
+ * The 12 categories with their questions. `tracks`: the live track list ([{ series }]) when the page
+ * has it, for the number of tracks and series; without it, the draft's 50 tracks in five series.
+ */
+export function buildFaq({ tracks } = {}) {
+  const e = economy;
+  const live = Array.isArray(tracks) && tracks.length > 0;
+  const trackCount = live ? tracks.length : DRAFT_TRACKS;
+  const seriesNames = live ? SERIES_ORDER.filter((s) => tracks.some((t) => t.series === s)) : DRAFT_SERIES;
+  const seriesWord = NUMBER_WORDS[seriesNames.length] ?? String(seriesNames.length);
+
+  const collectionDesigns = catalog.designs.filter((d) => !d.limited);
+  const commons = collectionDesigns.filter((d) => d.rarity === 'common').length;
+  const shades = catalog.designs[0].shades.map((s) => s.name);
+  const rarityRows = ['common', 'uncommon', 'rare', 'epic', 'legendary']
+    .map((r) => [catalog.rarities[r].label, `${n(catalog.rarities[r].price.coins)} coins`]);
+  const edition = catalog.editionSize;
+  const soon = (catalog.comingSoon ?? []).map((c) => `${c.name} (${shortDate(c.date)})`);
+  const packRows = COIN_PACKS.map((p) => [p.priceLabel, n(p.coins)]);
+  const { starter, full } = e.bags;
+
+  const sections = [
+    ['Getting started', [
+      ['What is Marble Spins?',
+        `Marble Spins is a free online marble racing game. You pick a marble, drop it into a race of 20 marbles on one of ${trackCount} tracks, and race for the win. You can play solo against computer players or race your friends.`],
+      ['How do I play my first race?',
+        "Tap **Play free**, then **Start the race**. That's it. Your first race needs no sign-up: we create a guest account for you automatically."],
+      ['Do I need an account?',
+        'No. You can race as a guest straight away. To keep your coins, marbles and progress on every device, save your account with your email and a password at any time. [Google and Apple sign-in: later.]'],
+      ["What's the difference between a guest and a saved account?",
+        "A guest account lives on the device you're using. If you clear your browser or switch phones, a guest account can be lost. When you tap **Save your marble**, everything you've won as a guest moves into your saved account, and you can log in anywhere."],
+      ['What can I play on?',
+        "Any modern browser on a phone, tablet or computer at marblespins.com. The iPhone and Android apps are [coming at launch]. It's the same game and the same account everywhere."],
+      ['Is it really free?',
+        'Yes. Every race, every track and every way of earning coins is free. You can buy coins if you want to collect marbles faster, but you never need to, and buying never makes your marble faster.'],
+    ]],
+    ['Races', [
+      ['How is a race decided?',
+        "Every race is run by the game's physics, the same for every marble. Every player's marble races at the same level, whatever it looks like and however long you've played. The race itself decides who wins: the track, the start, the bumps and the bounces. Which marble you race with never changes the result."],
+      ['Can I steer my marble during the race?',
+        'No. Once the gates open, the race is decided by the track and the physics. Your choices are which track, which marble, and who you race.'],
+      ['How many marbles are in a race?',
+        "Always 20. If there aren't 20 players, computer players fill the empty places."],
+      ['Who are the CPU players?',
+        "Computer players that fill a race so it's always full. They're marked with a small **CPU** tag next to their name. They race by the same physics as everyone else."],
+      ['What is a beginner race?',
+        "While you're new (fewer than 20 finished races), you race in beginner races together with other new players and computer players."],
+      ['Why do some CPU players have special marbles?',
+        "In beginner races, some computer players race with marbles from the shop so you can see what's available. Their marbles don't change results; every marble races exactly the same. Tap any marble after the race to see its name and where to get it."],
+      ['What are the different tracks?',
+        `There are ${trackCount} tracks in ${seriesWord} series: ${listJoin(seriesNames)}. Each track has its own layout, start and scenery.`],
+      ['Why did my marble lose? Is it random?',
+        "Marble racing is close and unpredictable: a small bump at the start can change everything. Every player races at the same level, so over many races, every player's results even out. That's what makes each race exciting."],
+    ]],
+    ['Fair play', [
+      ['Does paying make my marble faster?',
+        "No, never. Marbles you buy change how your marble looks, not how it races. Every player's marble races at the same level."],
+      ['Why do scoreboards only count earned coins?',
+        'So that money can never buy a place on a scoreboard. Scoreboards rank coins earned by racing, never coins bought.'],
+      ['What counts as cheating?',
+        'Bots or automated play, using several accounts to farm coins, exploiting bugs, or offensive names. We may reset progress or close accounts that break these rules.'],
+      ['I think someone is cheating. What do I do?',
+        "Contact us with the player's name and the race time (see **Contact us**). We look into every report."],
+    ]],
+    ['Coins', [
+      ['How do I earn coins?', [
+        'By racing:',
+        ['ul',
+          `**${n(e.race.takingPart)} coins** for every race you take part in.`,
+          `A **finishing bonus**: ${placesLine(e.race.places)}.`,
+          `A **daily goal**: finish ${n(e.dailyGoal.races)} races in a day for +${n(e.dailyGoal.coins)} coins.`],
+      ]],
+      ['Why did I earn fewer coins later in the day?',
+        `Your first ${n(e.dailyLimit.fullRaces)} races each day pay full coins. After that, each race pays ${n(e.dailyLimit.coinsAfter)} coins. This keeps the game fair for everyone. The count starts again the next day.`],
+      ['When does a new day start?',
+        `At midnight ${e.dayBoundary} ([01:00 / 02:00 Swedish time]).`],
+      ["What's my daily streak?",
+        "Your streak counts how many days in a row you've reached the daily goal. Keep it going!"],
+      ['Do new players get coins?',
+        `Yes. Every new player starts with **${n(e.startingCoins)} coins**.`],
+      ["What's the difference between earned and bought coins?",
+        "They're the same coins in your wallet and buy the same things. We keep them apart in your history so scoreboards only count earned coins."],
+      ['Can I turn coins into money?',
+        "No. Coins can't be cashed out, sold or traded for money. They can only be used in the game."],
+      ['Do coins expire?',
+        '[To decide: e.g. "No, your coins don\'t expire as long as your account exists."]'],
+      ['Where can I see my coin history?',
+        'In your account, under **Purchases** and your coin history. Every coin in and out is listed with its date.'],
+    ]],
+    ['Marbles and the collection', [
+      ['What marbles do I start with?',
+        'Every player gets **4 free starter marbles**.'],
+      ['How do I get new marbles?',
+        'In the **Shop**, with coins you earn by racing or buy.'],
+      ['What are the rarities and prices?', [
+        ['table', ['Rarity', 'Price'], ...rarityRows],
+      ]],
+      ['What are shades?',
+        `Every marble design comes in ${shades.length} shades: ${listJoin(shades)}. Each shade is collected separately.`],
+      ['What is a Marble ID?', [
+        'A short code for every marble, like **SC105**. It is made of:',
+        ['ul',
+          'two letters for the collection (SC = Schoolyard Classics);',
+          'two digits for the marble (10 = Champion Shooter);',
+          'one digit for the shade (5 = Sunset).'],
+        'Use it to tell a friend exactly which marble you mean, or type it into **Find by ID** in the shop.',
+      ]],
+      ['What is a First Edition?',
+        `The first ${n(edition)} copies of every marble are numbered First Editions. If you buy one of them, your marble gets its own number (for example #037 of ${n(edition)}) and a certificate showing its number, first owner, the date and its race record. After the first ${n(edition)}, the marble is still for sale, just without a number.`],
+      ['What are bags?', [
+        ['ul',
+          `**${starter.label}:** the ${commons} Commons of a collection, ${percent(starter.discount)} cheaper than buying them one by one.`,
+          `**${full.label}:** all ${collectionDesigns.length} marbles of a collection, ${percent(full.discount)} cheaper.`],
+        "You choose which shade you want. You always see exactly what's in a bag; there are no surprise packs.",
+      ]],
+      ['When do new collections come out?',
+        `Collection ${catalog.collection.number}, ${catalog.collection.name}, is live.${soon.length ? ` Next up: ${listJoin(soon)}.` : ''} See **Coming soon** in the shop.`],
+      ['What is a limited edition?',
+        "A special marble sold for a short time only, with numbered copies. Once it's gone, it's never sold again. [Northern Lights price to decide.]"],
+      ['How do I change which marble I race with?',
+        'Open your **Marble Bag** and pick the marble you want as your shooter.'],
+    ]],
+    ['Buying coins', [
+      ['How do I buy coins?',
+        'In the shop, choose a coin pack and pay. On the website, payment goes through Stripe. In the iPhone and Android apps, it goes through Apple or Google.'],
+      ['What do coin packs cost?', [
+        ['table', ['Pack', 'Coins'], ...packRows],
+        'Prices are shown in your local currency, including VAT.',
+      ]],
+      ['How can I pay?',
+        'On the website: card, Apple Pay or Google Pay (where available). In the apps: your Apple or Google account.'],
+      ['Is my card safe?',
+        'Yes. Payments are handled by Stripe, Apple or Google. We never see or store your card details.'],
+      ['Why is the price different for me?',
+        "Prices are shown in your own currency and include your country's VAT, so the amount can differ slightly between countries."],
+      ['Where do I find my receipt?',
+        'Stripe emails a receipt after each website purchase. You can also see every purchase, with its order number (for example MS-1001), on your **Purchases** page. App purchases appear in your Apple or Google account.'],
+      ["I paid but my coins didn't arrive. What do I do?", [
+        "Coins are added as soon as the payment is confirmed, usually within seconds. If they haven't arrived after a few minutes:",
+        ['ol',
+          'Refresh the page or restart the app.',
+          'Check your **Purchases** page; the order may still say "waiting".',
+          "Still missing? Contact us with your order number and we'll sort it out."],
+      ]],
+      ["I'm under 18. Can I buy coins?",
+        'Ask a parent or guardian before buying anything.'],
+    ]],
+    ['Refunds', [
+      ['Can I get a refund?',
+        'Coins are digital content delivered straight away. When you buy, you agree that delivery starts immediately and that this ends your 14-day right of withdrawal. We still give refunds where the law requires it, for example if coins weren\'t delivered or something went wrong with the payment. Contact us with your order number.'],
+      ['What happens to my coins if I get a refund?',
+        "The refunded coins are removed from your wallet. If you've already spent them, your balance goes down to 0."],
+      ['I bought coins in the app. How do I get a refund?', [
+        'Purchases made in the iPhone or Android app are handled by Apple or Google, so request a refund from them directly:',
+        ['ul',
+          '**Apple:** at reportaproblem.apple.com.',
+          '**Google:** in your Google Play order history.'],
+      ]],
+      ['My child bought coins without asking. What can I do?',
+        'Contact us with the order number. We handle purchases made by minors without consent case by case.'],
+    ]],
+    ['Friend rooms', [
+      ['How do I race with friends?',
+        "Tap **Race with friends**, create a room and share the link or code. Your friends open it and join. When everyone's in, the host starts the race. Computer players fill the remaining places."],
+      ['Can anyone join my room?',
+        'Only people who have your room link or code.'],
+      ['Is there chat?',
+        "No. Friend rooms show players' names only, so they're safe for everyone."],
+      ['Do friend-room races earn coins and count on scoreboards?',
+        `Yes. They pay coins like any race, count towards your ${n(e.dailyLimit.fullRaces)} full-pay races a day, and the coins you earn count on the scoreboards.`],
+      ['What happens if someone leaves?',
+        '[To confirm: e.g. their place is taken by a computer player.]'],
+      ['How long does a room stay open?',
+        'Until the host closes it, or 2 hours after its last race.'],
+    ]],
+    ['Account and settings', [
+      ['How do I save my account?',
+        'Tap **Save your marble** and sign up with your email and a password. Everything you won as a guest is kept.'],
+      ['How do I change my player name?',
+        '[To confirm: in Settings / contact us.] Names must be friendly; offensive names are changed.'],
+      ['How do I turn news emails on or off?',
+        'Tap your @name, then **Settings**, and use the news-by-email switch. You can also click **Unsubscribe** in any email we send.'],
+      ['How do I change the sound?',
+        'Tap the **speaker** button at the top. You can set music and effects separately, or mute everything. Your choice is remembered.'],
+      ['How do I download my data?',
+        '**Settings → Download my data.** You get one file with everything we store about you (passwords are never included).'],
+      ['How do I delete my account?', [
+        "**Settings → Delete my account.** You'll be asked to confirm. When you delete:",
+        ['ul',
+          "you're logged out everywhere;",
+          'your name, email, settings and IP addresses are removed;',
+          "your old race results stay under an anonymous name, so other players' places don't change;",
+          'purchase records are kept because bookkeeping law requires it.'],
+        "Deleting can't be undone, and your coins and marbles are lost.",
+      ]],
+      ['I forgot my password.',
+        "On the log-in page, tap **Forgot your password?** and type your account's email. We email you a link to choose a new password. The link works once, for 60 minutes; if it doesn't arrive, check your spam folder. Choosing a new password logs you out on your other devices. Guest accounts have no password: save your marble to keep it. [Live once email is switched on.]"],
+    ]],
+    ['Younger players and parents', [
+      ['Is there an age limit?',
+        'Marble Spins is for all ages. When you save an account, we ask for your age group.'],
+      ["What's different for players under 13?",
+        "Players under 13 can race as guests. Saving an account needs a parent or guardian's approval [approval process coming]. Under-13s are never asked about news emails and are never sent marketing."],
+      ['A note for parents', [
+        ['ul',
+          'Marble Spins is free to play, with no ads.',
+          'Buying is optional and never makes a marble faster.',
+          'There are no random packs or loot boxes: every purchase shows exactly what you get.',
+          'There is no chat.',
+          "You can turn off purchases on your child's phone through Apple's Screen Time or Google Play's parental controls.",
+          'If your child bought something without your consent, contact us.'],
+      ]],
+    ]],
+    ['Technical help', [
+      ['The game is slow or my phone gets hot.',
+        "Close other apps and make sure your phone isn't in low-power mode. The game automatically lowers detail on slower phones. [If there's a quality setting, mention it here.]"],
+      ['I see the "offline" screen.',
+        "You've lost your internet connection, or our server can't be reached. The screen disappears by itself as soon as the connection is back."],
+      ["The game won't load.",
+        'Refresh the page or restart the app. Make sure your browser is up to date. Still stuck? Contact us and tell us your device and browser.'],
+      ["I can't hear any sound.",
+        "Sound starts after your first tap (browsers require this). Check the **speaker** button isn't muted, and that your phone isn't on silent."],
+      ['How do I report a bug?',
+        'Contact us with what happened, when, and your device. A screenshot helps a lot.'],
+    ]],
+    ['Contact us', [
+      ['Still need help?',
+        'Use the contact form below or email **[support email]**. Tell us your player name and, for payment questions, your order number. We aim to reply within [2 working days].'],
+      ['Privacy questions',
+        'Email **[privacy email]**. You can also complain to the Swedish Authority for Privacy Protection (IMY).'],
+      ['Company details',
+        'Marble Spins is run by [COMPANY NAME AB], org. no. [XXXXXX-XXXX], [address], Sweden.'],
+    ]],
+  ];
+
+  const used = new Set();
+  return sections.map(([title, questions], k) => {
+    const id = slugify(title);
+    return {
+      id,
+      number: k + 1,
+      title,
+      questions: questions.map(([q, answer]) => {
+        let slug = slugify(q);
+        while (used.has(slug)) slug += '-2';
+        used.add(slug);
+        const blocks = Array.isArray(answer) ? answer : [answer];
+        return { slug, q, blocks, section: title, text: blocksText(blocks) };
+      }),
+    };
+  });
+}
+
+/** An answer as plain text (search and the structured data): markup off, placeholders kept. */
+export function blocksText(blocks) {
+  const plain = (s) => s.replace(/\*\*/g, '');
+  return blocks.map((b) => {
+    if (typeof b === 'string') return plain(b);
+    if (b[0] === 'table') return b.slice(2).map((row) => b[1].map((h, i) => `${h}: ${row[i]}`).join(', ')).join('. ');
+    return b.slice(1).map((item, i) => `${b[0] === 'ol' ? `${i + 1}. ` : ''}${plain(item)}`).join(' ');
+  }).join(' ');
+}
+
+/** Whether a text still holds a [bracket] placeholder. */
+export const hasPlaceholder = (text) => /\[[^\]]+\]/.test(text);
+
+/** The categories a contact message can be about: the help sections, then "Something else". */
+export const CONTACT_CATEGORIES = [...buildFaq().map((s) => s.title).filter((t) => t !== 'Contact us'), 'Something else'];
+
+/**
+ * schema.org FAQPage for search engines. Questions whose answer still holds a [bracket] placeholder
+ * are left out until it is filled in (a search result should never show "[support email]").
+ */
+export function faqStructuredData(sections, pageUrl) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    url: pageUrl,
+    mainEntity: sections.flatMap((s) => s.questions)
+      .filter((q) => !hasPlaceholder(q.text) && !hasPlaceholder(q.q))
+      .map((q) => ({ '@type': 'Question', name: q.q, acceptedAnswer: { '@type': 'Answer', text: q.text } })),
+  };
+}

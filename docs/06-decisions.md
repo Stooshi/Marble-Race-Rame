@@ -1,9 +1,11 @@
 # 6. Decisions log
 
-*Last updated 14 Oct 2026.* Key product and technical decisions, newest first, each with its reason. Decisions are Moses's unless marked "(technical)". Add new ones at the top. Don't rewrite old entries: add a new entry that replaces them and say so.
+*Last updated 15 Oct 2026.* Key product and technical decisions, newest first, each with its reason. Decisions are Moses's unless marked "(technical)". Add new ones at the top. Don't rewrite old entries: add a new entry that replaces them and say so.
 
 | Date | Decision | Why |
 |---|---|---|
+| 2026-10-15 | **Help Centre at `/help`** from the project doc `claude/help-faq-draft.md`, texts as written; every `[bracket]` item stays visible (marked as a placeholder) until decided. Coin numbers and prices are read from the same settings files the game uses, and the number of tracks and series from the live track list. | Answers stay right when a setting changes; open questions stay visible instead of being guessed. |
+| 2026-10-15 | **Search engines get only the finished answers** (technical): the FAQPage structured data leaves out questions whose text still holds a `[bracket]` placeholder; each joins automatically once its bracket is filled in. | A search result must never show "[support email]". |
 | 2026-10-14 | **Canyon Series:** 10 tracks through real canyons, a family of their own (`canyon`), added **switched off**. Each canyon is built as a coaster that runs on the canyon floor and climbs out over the rock on supports (timber trestles on Copper and Hells); every track has its own layout, start and signature. | Moses's series plan. Its own family keeps its openings and starts varied among themselves; building on the coaster keeps every race rule and check unchanged. |
 | 2026-10-14 | **Canyons are shaped into the land itself** (technical): floor, stepped walls and plateau come from the track's own line, drawn finer along the walls (coarser on phones), and give way to the ordinary hillside where the track passes over itself (a spiral's turns). The land beside any stretch never rises over it. | Walls follow every bend with no gaps, inside a tight bend they meet in a butte, nothing can stand in the track, and phones stay within the drawing budget. |
 | 2026-10-14 | **The follow camera never eases up into a coaster's station canopy** (technical): easing down to its spot under the canopy, it could lag inside the front beam for a frame or two (seen on Copper Spins). Looks only. | The camera rule: nothing drawn within 0.5 m of the camera. |

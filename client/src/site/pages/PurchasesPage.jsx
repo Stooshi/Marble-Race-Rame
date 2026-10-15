@@ -126,7 +126,7 @@ export default function PurchasesPage() {
           </table>
         </div>
       )}
-      <span className="ms-note">Questions about an order? Contact us with its order number. Coins can't be cashed out; refunds follow the <Link to="/legal#sale">terms of sale</Link>.</span>
+      <span className="ms-note">Questions about an order? <Link to="/help#i-paid-but-my-coins-didnt-arrive-what-do-i-do">Help with payments</Link>, or <Link to="/help#contact">contact us</Link> with its order number. Coins can't be cashed out; refunds follow the <Link to="/legal#sale">terms of sale</Link>.</span>
     </div>
   );
 }

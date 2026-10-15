@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import { API_URL } from '../api/client';
 import Logo from '../site/Logo';
 import { isNativeApp, watchNetwork } from './native';
@@ -25,6 +26,7 @@ export default function OfflineScreen() {
   const [online, setOnline] = useState(true);
   const [server, setServer] = useState(true);
   const [checking, setChecking] = useState(false);
+  const { pathname } = useLocation();
 
   const check = useCallback(async () => {
     setChecking(true);
@@ -47,6 +49,15 @@ export default function OfflineScreen() {
   }, [server, online, check]);
 
   if (online && server) return null;
+  // On the Help Centre (it works offline) a slim bar instead of the cover, so the answers can be read.
+  if (pathname.startsWith('/help')) {
+    return (
+      <div className="ms-offline-bar" role="status">
+        {online ? "Can't reach the race track right now." : "You're offline."} The help answers still work.
+        <button type="button" className="ms-linkbtn" onClick={check} disabled={checking}>{checking ? 'Checking…' : 'Try again'}</button>
+      </div>
+    );
+  }
   return (
     <div className="ms-offline" role="alertdialog" aria-modal="true" aria-labelledby="ms-offline-h">
       <div className="ms-offline__box">
@@ -63,6 +74,7 @@ export default function OfflineScreen() {
             : 'Races are live, so Marble Spins needs the internet. Check Wi-Fi or mobile data; the game comes back by itself.'}
         </p>
         <button type="button" className="ms-btn ms-btn--primary" onClick={check} disabled={checking}>{checking ? 'CHECKING…' : 'TRY AGAIN'}</button>
+        <Link to="/help#i-see-the-offline-screen" className="ms-offline__help">Help Centre</Link>
       </div>
     </div>
   );
