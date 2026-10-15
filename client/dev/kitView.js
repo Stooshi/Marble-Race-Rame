@@ -228,6 +228,32 @@ window.kitView = {
       // (A marble right in front of the lens fills the picture: never that.)
       return { seen, blocked, leaderBlocked, value: Math.min(seen, 8) - blocked * 0.5 - (leaderBlocked ? 6 : 0) - (p.lifted > 4 ? 2 : 0) - (nearest < 5 ? 12 : 0) };
     };
+    // A track's own framing (scripts/track-banners.json): the camera set by a spot on the track
+    // (`at`: share of the way down) rather than by the leader, with the race at the moment the
+    // leader gets there (or `t`).
+    if (pick?.at !== undefined) {
+      const arc = scene.channel?.arc ?? scene.centerline.length ?? 1000;
+      const o = { back, beside, up, ahead, rise: 0, side: 1, ...pick };
+      const firstAt = race.frames.find((fr) => Math.max(...fr.p) >= o.at);
+      const t = o.t ?? (firstAt ? firstAt.t ?? race.frames.indexOf(firstAt) * race.tickMs : 0);
+      advance(t, 'leader');
+      const anchor = at(o.at);
+      const { samples, segments } = scene.centerline;
+      const sm = samples[Math.round(Math.min(1, Math.max(0, o.at)) * segments)];
+      const T = new Vector3(sm.tangent.x, 0, sm.tangent.z).normalize();
+      const cam = anchor.pos.clone().addScaledVector(T, -o.back).addScaledVector(anchor.side, o.beside * o.side).add(new Vector3(0, o.up, 0));
+      // (Past the finish, e.g. a pinball table's flippers: on along the last stretch's direction.)
+      const end = samples[segments];
+      const past = Math.max(0, o.at * arc + o.ahead - arc);
+      const target = at(o.at + o.ahead / arc).pos.addScaledVector(new Vector3(end.tangent.x, 0, end.tangent.z).normalize(), past).add(new Vector3(0, o.rise, 0));
+      const p = { t, side: o.side, lead: 0, cam, target, lifted: 0 };
+      place(p);
+      scene.features?.update(t);
+      scene.structures?.update(t);
+      drawNow(t);
+      const sc = score(p);
+      return { t, side: o.side, ...sc, leaderBlocked: false, framed: true }; // (framed by hand: no leader to keep in view)
+    }
     let best = null;
     const tries = [];
     for (const t of pick ? [pick.t] : times) {

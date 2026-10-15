@@ -1,6 +1,6 @@
 {
  "note": "The track picker's pictures (client/public/tracks/<slug>.webp and @2x), written by scripts/track-banners.js. enabled: shown in the track picker (false: only on /preview/banners). v: changes with the picture, so browsers fetch a new one.",
- "enabled": false,
+ "enabled": true,
  "banners": {
   "amazon-water-run": {
    "name": "Amazon Water Run",
@@ -23,11 +23,11 @@
    "marbles": 1
   },
   "are-run": {
-   "name": "Åre Run",
+   "name": "\u00c5re Run",
    "series": "World Tour",
-   "v": "6206a7ff",
-   "bytes": 12482,
-   "bytes2x": 30606,
+   "v": "9c333d21",
+   "bytes": 13878,
+   "bytes2x": 34222,
    "t": 11374,
    "side": 1,
    "marbles": 4
@@ -95,9 +95,9 @@
   "chiang-mai": {
    "name": "Chiang Mai",
    "series": "Coasters",
-   "v": "a3fd798a",
-   "bytes": 17280,
-   "bytes2x": 44182,
+   "v": "c214f0d8",
+   "bytes": 13764,
+   "bytes2x": 35498,
    "t": 10512,
    "side": 1,
    "marbles": 5
@@ -165,9 +165,9 @@
   "dubai-marble-grand-prix": {
    "name": "Dubai Marble Grand Prix",
    "series": "Grand Prix",
-   "v": "9729c1d0",
-   "bytes": 22348,
-   "bytes2x": 52194,
+   "v": "b0dfc426",
+   "bytes": 18894,
+   "bytes2x": 44820,
    "t": 9381,
    "side": 1,
    "marbles": 1
@@ -215,12 +215,12 @@
   "flipper-spins": {
    "name": "Flipper Spins",
    "series": "Pinball",
-   "v": "e94931f3",
-   "bytes": 10936,
-   "bytes2x": 26856,
-   "t": 8597,
-   "side": -1,
-   "marbles": 4
+   "v": "2405f46e",
+   "bytes": 12450,
+   "bytes2x": 30456,
+   "t": 44200,
+   "side": 1,
+   "marbles": 1
   },
   "frostmere-marble-grand-prix": {
    "name": "Frostmere Marble Grand Prix",
@@ -295,12 +295,12 @@
   "indus-spins": {
    "name": "Indus Spins",
    "series": "Canyons",
-   "v": "1b655038",
-   "bytes": 19308,
-   "bytes2x": 45574,
-   "t": 34451,
-   "side": 1,
-   "marbles": 4
+   "v": "42e44bf6",
+   "bytes": 21948,
+   "bytes2x": 51616,
+   "t": 15650,
+   "side": -1,
+   "marbles": 1
   },
   "istanbul-marble-grand-prix": {
    "name": "Istanbul Marble Grand Prix",
@@ -395,9 +395,9 @@
   "nanjing": {
    "name": "Nanjing",
    "series": "Coasters",
-   "v": "6d5c85a1",
-   "bytes": 16610,
-   "bytes2x": 42080,
+   "v": "d7bfe1b0",
+   "bytes": 13974,
+   "bytes2x": 35220,
    "t": 11208,
    "side": -1,
    "marbles": 4
@@ -435,9 +435,9 @@
   "phantom-peak": {
    "name": "Phantom Peak",
    "series": "Coasters",
-   "v": "b3f9c307",
-   "bytes": 11634,
-   "bytes2x": 28600,
+   "v": "6fff23eb",
+   "bytes": 10410,
+   "bytes2x": 26160,
    "t": 10191,
    "side": 1,
    "marbles": 4
@@ -455,9 +455,9 @@
   "pyramid-run": {
    "name": "Pyramid Run",
    "series": "Coasters",
-   "v": "cd8f5fc7",
-   "bytes": 12356,
-   "bytes2x": 31566,
+   "v": "c24fd581",
+   "bytes": 10764,
+   "bytes2x": 27288,
    "t": 10524,
    "side": 1,
    "marbles": 5

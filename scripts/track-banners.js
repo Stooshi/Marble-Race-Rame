@@ -13,8 +13,12 @@
  * Looks only: one race is simulated to have marbles on the track, nothing is stored and no
  * race changes. Same camera style on every track (kitView.banner): a raised three-quarter view
  * behind and beside the leader, in daylight (indoor looks, the pinball parlour and the arcades,
- * keep their own light). A track whose automatic picture isn't good gets its own moment and side
- * in scripts/track-banners.json ({ "<slug>": { "t": ms after GO, "side": 1 | -1 } }).
+ * keep their own light). A track whose automatic picture isn't good gets its own framing in
+ * scripts/track-banners.json:
+ *   { "t": ms after GO, "side": 1 | -1 }       a moment and side for the usual camera, or
+ *   { "at": 0.12, "back", "beside", "up", "ahead", "rise", "side", "t"? }   the camera set by a
+ *       spot on the track (share of the way down), the race when the leader gets there;
+ *   "lighting": "own"                            keep the track's own sky (night, sunset…).
  */
 const fs = require('node:fs');
 const path = require('node:path');
@@ -56,7 +60,7 @@ function seriesOf(track) {
 const CLASSIC_NAMES = { 'meadow-loop': 'Meadow Loop', 'canyon-drop': 'Canyon Drop', 'volcano-run': 'Volcano Run' };
 
 /** The track as the kit view draws it, in daylight, and one race on it. */
-function prepare(slug) {
+function prepare(slug, override = null) {
   const physics = physicsTrack(slug);
   let track;
   let sim;
@@ -64,7 +68,7 @@ function prepare(slug) {
   if (physics) {
     track = JSON.parse(JSON.stringify(physics));
     const kit = track.physics.kit;
-    if (kit && !INDOOR.includes(kit.lighting)) kit.lighting = 'day';
+    if (kit && !INDOOR.includes(kit.lighting) && override?.lighting !== 'own') kit.lighting = 'day';
     sim = simulatePhysicsRace({ seed: SEED, track: physics, entries, level: 3 });
   } else {
     const classic = realTracks().find((t) => t.slug === slug);
@@ -96,7 +100,8 @@ function main() {
   const overrides = fs.existsSync(OVERRIDES) ? JSON.parse(fs.readFileSync(OVERRIDES, 'utf8')) : {};
   const jobs = slugs.map((slug) => {
     process.stdout.write(`  ${slug}: race… `);
-    const job = { ...prepare(slug), pick: overrides[slug] ?? null };
+    const { lighting: _l, ...pick } = overrides[slug] ?? {};
+    const job = { ...prepare(slug, overrides[slug] ?? null), pick: Object.keys(pick).length ? pick : null };
     console.log('ok');
     return job;
   });

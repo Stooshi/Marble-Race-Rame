@@ -423,7 +423,10 @@ with a pass or fail beside each line and what to fix at the top:
   every track: raised, behind the leading group, looking on down the track, in daylight
   (the pinball parlour and the arcades keep their own light), no billboards. If the picture
   isn't good, give the track a moment and a side in `scripts/track-banners.json`
-  (`{ "<slug>": { "t": 24000, "side": -1 } }`) and run it again. A client test fails while
+  (`{ "<slug>": { "t": 24000, "side": -1 } }`), or a camera of its own set by a spot on the
+  track (`{ "at": 0.25, "back": 20, "beside": 14, "side": -1, "up": 10, "ahead": 45, "rise": -12 }`;
+  `at` 1 and a negative `back` frame what lies past the finish, e.g. a pinball table's
+  flippers), and run it again. `"lighting": "own"` keeps a night or sunset track's own sky. A client test fails while
   a track has no picture.
 
 ## Before a track goes live
