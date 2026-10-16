@@ -340,7 +340,7 @@ function arcadeRules({ spec, where }) {
 }
 
 // The varied starts: how a track's first seconds look (drawing only; the race is its opening's).
-const START_TYPES = ['straight-lift', 'curving-lift', 'spiral-tower', 'elevator', 'cliff', 'rooftop', 'station-launch'];
+const START_TYPES = ['straight-lift', 'curving-lift', 'spiral-tower', 'elevator', 'cliff', 'rooftop', 'station-launch', 'stepped-platform'];
 const GATES = ['paddle', 'trapdoor', 'stalls', 'barrier'];
 const COUNTDOWN_SHOTS = ['front', 'side', 'above', 'chase'];
 const LAUNCH_SHOTS = ['high-behind', 'low-chase', 'side', 'overhead', 'look-back'];
@@ -401,7 +401,8 @@ function canyonRules({ spec, sections, where }) {
     problems.push(`${where('track')}: a canyon says its rock and river: canyon: { palette (${CANYONS.join(', ')}), depth, river }.`);
     return problems;
   }
-  for (const k of Object.keys(c)) if (!['palette', 'depth', 'river'].includes(k)) problems.push(`${where('canyon')}: unknown setting ${k} (palette, depth, river).`);
+  for (const k of Object.keys(c)) if (!['palette', 'depth', 'river', 'narrow'].includes(k)) problems.push(`${where('canyon')}: unknown setting ${k} (palette, depth, river, narrow).`);
+  if (c.narrow !== undefined && typeof c.narrow !== 'boolean') problems.push(`${where('canyon')}: narrow is true for a slot canyon (the walls closer), or left out.`);
   if (!CANYONS.includes(c.palette)) problems.push(`${where('canyon')}: unknown palette ${JSON.stringify(c.palette)} (${CANYONS.join(', ')}).`);
   if (c.depth !== undefined && !(Number.isFinite(c.depth) && c.depth >= CANYON_DEPTH[0] && c.depth <= CANYON_DEPTH[1])) problems.push(`${where('canyon')}: depth is metres from the canyon's floor to its rim, ${CANYON_DEPTH[0]} to ${CANYON_DEPTH[1]}.`);
   if (c.river !== undefined && !RIVER_SIDES.includes(c.river)) problems.push(`${where('canyon')}: the river runs on the ${RIVER_SIDES.slice(0, 2).join(' or ')} (or 'none').`);

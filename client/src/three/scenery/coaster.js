@@ -109,7 +109,8 @@ const topAt = (channel, i, step) => {
  *   elevator:      a vertical lift shaft behind the gate, a short bridge from its cage to the gate;
  *   cliff:         the gate on a ledge at the edge of a cliff top (the land raised behind it);
  *   rooftop:       the gate at the edge of a tall building's roof;
- *   station-launch: a launch platform behind the gate (the opening's boost launches the field).
+ *   station-launch: a launch platform behind the gate (the opening's boost launches the field);
+ *   stepped-platform: the gate on top of a platform of broad stone steps, stepping down behind and to the sides.
  * Returns { type, top, foot, back, side, length, path (top to foot, for a chain lift), cut
  * (the land carved down along the path, so the whole climb shows), plateau (a cliff top) }.
  * `foot` is where the start's landmark is placed beyond, and the countdown's lift shot looks.
@@ -155,6 +156,9 @@ export function liftHillOf(centerline, flight, type = 'straight-lift') {
   } else if (type === 'rooftop') {
     path = [top.clone(), go(top, ROOF.depth, 0, 0)];
     foot = go(top, 12, 0, 0);
+  } else if (type === 'stepped-platform') {
+    path = [top.clone(), go(top, STEPS.depth(STEPS.tiers - 1), 0, 0)];
+    foot = go(top, 14, 0, 0);
   } else if (type === 'station-launch') {
     path = [top.clone(), go(top, 12, 0, 0)];
     cut = false;
@@ -170,6 +174,8 @@ export function liftHillOf(centerline, flight, type = 'straight-lift') {
 const ELEVATOR = { at: 12, half: 3.2 };        // metres: the shaft's middle behind the gate, its half-width
 const CLIFF = { edge: 8, half: 30, depth: 80 }; // metres: the cliff edge behind the gate, the cliff top's half-width and depth
 const ROOF = { depth: 24, half: 11 };          // metres: the building behind the gate
+// The stepped platform: its tiers (the top one just under the gate), each this much deeper, wider and lower than the one above.
+const STEPS = { tiers: 4, depth: (k) => 10 + 6 * k, half: (k) => 8 + 4 * k, drop: 2.6, colours: ['#c9a676', '#b38f60'] };
 
 /** How low the land must lie at (x, z) to show the lift (Infinity away from it): below its path, falling away either side. */
 export function liftHillCut(lift, x, z) {
@@ -617,6 +623,34 @@ function buildStart(lift, { towers, feet, tower, groundAt, lite, RAIL, SUPPORT }
       towers.push(strut(p.clone().setY(roofY), p.clone().setY(roofY + 2.5), 0.15, '#3b3f46'));
     }
     feet.push({ x: mid.x, z: mid.z, r: ROOF.depth / 2 + ROOF.half });
+  } else if (type === 'stepped-platform') {
+    // Broad stone tiers behind the gate, each a step lower, deeper and wider than the one above, down to the land;
+    // a flight of steps up the back of each, and a low parapet along the top tier's sides.
+    const yaw = yawOf(back);
+    const topY = top.y - 2.0;
+    let low = Infinity;
+    const big = STEPS.tiers - 1;
+    for (const [i, j] of [[0, 0], [1, 1], [1, -1], [0, 1], [0, -1]]) {
+      const c = top.clone().addScaledVector(back, i * STEPS.depth(big)).addScaledVector(side, j * STEPS.half(big));
+      low = Math.min(low, groundAt(c.x, c.z));
+    }
+    for (let k = big; k >= 0; k -= 1) {
+      const y = topY - STEPS.drop * k;
+      const h = y - low + 1;
+      if (h <= 0.2) continue;
+      const d = STEPS.depth(k);
+      const mid = top.clone().addScaledVector(back, d / 2 - 1);
+      towers.push(obox(STEPS.half(k) * 2, h, d, mid.clone().setY(y - h / 2), yaw, STEPS.colours[k % 2]));
+      // (the step's edge, a shade darker)
+      towers.push(obox(STEPS.half(k) * 2 + 0.2, 0.35, 0.6, top.clone().addScaledVector(back, d - 1.2).setY(y - 0.1), yaw, '#8f7148'));
+      if (k > 0) {
+        const stair = top.clone().addScaledVector(back, d - 1 + 1.2);
+        for (let st = 0; st < 3; st += 1) towers.push(obox(4.2, STEPS.drop / 3, 1.2, stair.clone().addScaledVector(back, -st * 0.9).setY(y - STEPS.drop + (st + 0.5) * STEPS.drop / 3), yaw, STEPS.colours[(k + 1) % 2]));
+      }
+    }
+    for (const sign of [1, -1]) towers.push(obox(0.6, 1, STEPS.depth(0) - 2, top.clone().addScaledVector(back, STEPS.depth(0) / 2).addScaledVector(side, sign * (STEPS.half(0) - 0.4)).setY(topY + 0.5), yaw, '#8f7148'));
+    const mid = top.clone().addScaledVector(back, STEPS.depth(big) / 2);
+    feet.push({ x: mid.x, z: mid.z, r: STEPS.depth(big) / 2 + STEPS.half(big) });
   } else if (type === 'station-launch') {
     // A launch platform either side behind the gate, lit along its edges, and the operator's booth
     // (nothing over the track or tall beside it: the cameras swoop low over the start here).

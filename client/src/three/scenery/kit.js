@@ -10,7 +10,7 @@
  */
 import { Box3,
   BufferGeometry, Float32BufferAttribute, Group, InstancedMesh, LineBasicMaterial, LineSegments, Matrix4, Mesh, MeshLambertMaterial,
-  MeshBasicMaterial, Quaternion, Vector3,
+  DoubleSide, MeshBasicMaterial, Quaternion, Vector3,
 } from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { buildKitGround, biomeOf } from './kitGround';
@@ -92,6 +92,7 @@ export function buildKitScenery(centerline, track, theme, { lite = false } = {})
   const cameraKeepOut = []; // boxes the follow camera keeps clear of (TrackScene.keepInSight)
   const turning = []; // landmarks' moving parts (a windmill's sails): { mesh, base, axis, speed }
   const glowParts = []; // landmarks' parts that give their own light (lamps, gems, magma): drawn unlit
+  const hazeParts = []; // landmarks' see-through parts (shafts of light, a rainbow, spray): drawn unlit and faint
   const placed = []; // where each landmark stands: { name, foot, q, scale, p } (a Block Series landmark's effect follows it)
   const placeLandmark = (name, at, yaw, footY = null, away = null, p = null) => {
     const lm = LANDMARKS[name];
@@ -120,6 +121,11 @@ export function buildKitScenery(centerline, track, theme, { lite = false } = {})
       const glow = lm.glow();
       glow.applyMatrix4(new Matrix4().compose(foot, q, new Vector3(1, 1, 1)));
       glowParts.push(glow);
+    }
+    if (lm.haze) {
+      const haze = lm.haze();
+      haze.applyMatrix4(new Matrix4().compose(foot, q, new Vector3(1, 1, 1)));
+      hazeParts.push(haze);
     }
     placed.push({ name, foot: foot.clone(), q: q.clone(), scale: 1, p });
     g.computeBoundingBox();
@@ -341,6 +347,13 @@ export function buildKitScenery(centerline, track, theme, { lite = false } = {})
   if (glowParts.length) {
     const m = new Mesh(mergeGeometries(glowParts), new MeshBasicMaterial({ vertexColors: true }));
     m.name = 'landmarks: glow';
+    group.add(m);
+  }
+  // Every landmark's see-through parts in one faint mesh (light, never in the way: no depth written).
+  if (hazeParts.length) {
+    const m = new Mesh(mergeGeometries(hazeParts), new MeshBasicMaterial({ vertexColors: true, transparent: true, opacity: 0.3, depthWrite: false, side: DoubleSide }));
+    m.name = 'landmarks: haze';
+    m.renderOrder = 2;
     group.add(m);
   }
   // A Block Series world's quiet effects on its landmarks: rows clearing with a flash, blocks settling (./kitLandmarksBlock.js).

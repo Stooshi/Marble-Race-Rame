@@ -392,6 +392,177 @@ function ggArch() {
   return merge(p);
 }
 
+// ── Sky Islands ───────────────────────────────────────────────────────────────
+
+/**
+ * A floating island of cubes, high beside the track: a green top with a cube tree, its underside
+ * stepping down to a point of earth and stone, nothing holding it up; a waterfall (see-through)
+ * pours off one edge into the cloud below. Origin on the land, the island `lift` metres above it.
+ */
+const ISLAND = { lift: 16 };
+function floatingIsland() {
+  const p = [];
+  const y = ISLAND.lift;
+  const rows = [[7, 2, B.grass], [6, 2, '#8a6c4b'], [4.6, 2, '#7a5c3e'], [3, 2, '#6b7179'], [1.6, 1.6, '#5e636a']];
+  let top = y;
+  rows.forEach(([half, h, c], k) => {
+    p.push(C(half * 2, h, half * 2 - (k % 2) * 1.2, (k % 2) * 0.4, top - h / 2, 0, c));
+    top -= h;
+  });
+  p.push(C(1, 3, 1, -2.5, y + 1.5, -1.5, '#6e5136'), C(3.4, 2.8, 3.4, -2.5, y + 4.3, -1.5, B.leaf), C(2, 1.4, 2, -2.2, y + 6.3, -1.7, '#5f9a48'));
+  p.push(C(2.4, 0.5, 2.4, 3, y + 0.25, 2.5, '#a8b2bb'), C(1.4, 1.4, 1.4, 3, y + 1.2, 2.5, '#d9dde2'));
+  return merge(p);
+}
+const floatingIslandFall = () => merge([C(2.6, ISLAND.lift + 6, 0.6, 6.4, (ISLAND.lift - 6) / 2 - 1, 3.2, '#dff3ff'), C(4, 1.2, 4, 6.4, 0.6, 3.6, '#ffffff')]);
+
+/** An island house: a cube cottage of pale planks on a green block plinth, a lantern, a flower box. */
+function islandHouse() {
+  const p = [C(14, 2, 12, 0, 1, 0, B.grass), C(14, 1, 12, 0, -0.5, 0, '#8a6c4b')];
+  p.push(C(8, 5, 6, 0, 4.5, -1, '#d9c7a4'), C(9, 1.2, 7, 0, 7.6, -1, B.roof), C(6.6, 1.2, 4.6, 0, 8.8, -1, B.roofDark));
+  p.push(C(1.6, 2.6, 0.3, 0, 3.3, 2.1, '#7a5a3a'), C(4, 0.6, 0.6, -2.6, 4.4, 2.2, '#8a6a45'));
+  for (let k = 0; k < 4; k += 1) p.push(C(0.4, 0.4, 0.4, -4 + k * 0.9, 4.9, 2.2, ['#f2d6e4', '#f5e7a8', '#c9d8f2', '#f2d6e4'][k]));
+  return merge(p);
+}
+const islandHouseGlow = () => merge([C(1, 1, 1, 2.6, 3.8, 2.4, B.lamp)]);
+
+/** An island garden past the finish: a terrace of block flower beds round a little cube pond and a bench. */
+function islandGarden() {
+  const p = [C(18, 1.6, 14, 0, 0.8, 0, B.grass), C(5, 0.4, 4, 0, 1.7, 0, '#5fa8d8')];
+  for (const [x, z] of [[-6, -4], [-6, 4], [6, -4], [6, 4]]) {
+    p.push(C(4, 0.8, 2.4, x, 2, z, '#8a6c4b'));
+    for (let k = 0; k < 4; k += 1) p.push(C(0.6, 0.6, 0.6, x - 1.4 + k * 0.95, 2.7, z, PIECE_TONES[(k + (x > 0 ? 1 : 3)) % 5]));
+  }
+  p.push(C(3, 0.4, 1, 0, 2.2, 5, B.plank), C(0.4, 0.6, 0.8, -1.2, 1.9, 5, B.plankDark), C(0.4, 0.6, 0.8, 1.2, 1.9, 5, B.plankDark));
+  return merge(p);
+}
+
+// ── Voxel Harbor ──────────────────────────────────────────────────────────────
+
+/** A harbour crane of blocks: a square tower on four legs over the quay, a cab, and a long jib (the moving part, slowly swinging). */
+function cubeCrane() {
+  const p = [];
+  for (const [x, z] of [[-3, -3], [3, -3], [-3, 3], [3, 3]]) p.push(C(1.2, 8, 1.2, x, 4, z, '#c9a24a'));
+  p.push(C(7.6, 1.2, 7.6, 0, 8.6, 0, '#b88f3a'), C(3, 14, 3, 0, 16.2, 0, '#c9a24a'), C(4.4, 3, 4.4, 0, 24.6, 0, '#e8e2d0'));
+  return merge(p);
+}
+const craneJib = () => merge([C(2, 1.6, 26, 0, 0, 7, '#c9a24a'), C(3, 2.4, 4, 0, 0.2, -7.6, '#6b7179'), C(0.2, 10, 0.2, 0, -5, 18, '#3a3e44'), C(2.6, 1.4, 1.2, 0, -10.6, 18, '#b8584a')]);
+
+/** A container stack on the quay: rows of shipping containers two and three high, in calm colours. */
+function containerStack() {
+  const p = [];
+  const COLS = ['#b8584a', '#4f7f9a', '#d9a24a', '#6a8a5a', '#8a6a9a', '#c9c3b4'];
+  for (let r = 0; r < 3; r += 1) for (let c = 0; c < 4; c += 1) {
+    const h = 2 + ((r + c) % 2);
+    for (let k = 0; k < h; k += 1) p.push(C(6, 2.5, 2.4, (c - 1.5) * 6.4, 1.25 + k * 2.6, (r - 1) * 2.6, COLS[(r * 4 + c + k) % 6]));
+  }
+  return merge(p);
+}
+
+/** Block boats moored in the basin: a fishing boat with a cabin, a little sailboat, floating on the water. */
+function blockBoats() {
+  const p = [];
+  p.push(C(3.6, 1.4, 9, -4, 0.4, 0, '#e8e2d0'), C(3.8, 0.4, 9.2, -4, 1.2, 0, '#b8584a'), C(2.4, 2, 2.6, -4, 2.4, -1.6, '#f2f0ea'), C(0.3, 4, 0.3, -4, 4, 1.6, '#6b7179'));
+  p.push(C(2.4, 1, 6, 4, 0.3, 2, '#4f7f9a'), C(0.25, 8, 0.25, 4, 4.8, 1.6, '#e8e2d0'), C(0.15, 6, 3.2, 4, 4.6, 3.3, '#f4f2ec'));
+  return merge(p);
+}
+
+/** A harbour office for the start: a two-storey block building with a clock and a flag. */
+function harbourOffice() {
+  const p = [C(12, 7, 8, 0, 3.5, 0, '#c9c3b4'), C(12.6, 1, 8.6, 0, 7.5, 0, '#5d6c8c'), C(4, 3, 4, 0, 9.5, 0, '#c9c3b4'), C(4.6, 0.8, 4.6, 0, 11.4, 0, '#5d6c8c')];
+  for (let k = 0; k < 4; k += 1) p.push(C(1.6, 1.6, 0.2, -4.5 + k * 3, 5, 4.05, '#2f3a4a'), C(1.6, 1.6, 0.2, -4.5 + k * 3, 2, 4.05, '#2f3a4a'));
+  p.push(C(1.6, 1.6, 0.2, 0, 9.6, 2.05, '#f2f0ea'), C(0.2, 5, 0.2, 5, 10, -3, '#6b7179'), C(0.1, 1.4, 2.2, 5, 11.7, -1.9, '#4f7f9a'));
+  return merge(p);
+}
+const harbourOfficeGlow = () => merge([...[0, 1, 2, 3].map((k) => C(1.4, 1.4, 0.25, -4.5 + k * 3, 5, 4.1, '#ffd98a'))]);
+
+/** A lighthouse of blocks at the end of the mole: a white and red stepped tower, its lamp room glowing. */
+function blockLighthouse() {
+  const p = [C(8, 2, 8, 0, 1, 0, '#8a8f96')];
+  for (let k = 0; k < 7; k += 1) p.push(C(4 - k * 0.25, 2, 4 - k * 0.25, 0, 3 + k * 2, 0, k % 2 ? '#b8584a' : '#f2f0ea'));
+  p.push(C(3.4, 0.6, 3.4, 0, 16.3, 0, '#3a3e44'), C(2.4, 0.8, 2.4, 0, 19.4, 0, '#b8584a'));
+  return merge(p);
+}
+const blockLighthouseGlow = () => merge([C(2, 2.2, 2, 0, 17.7, 0, '#fff1c2')]);
+
+// ── Sunstone Temple ───────────────────────────────────────────────────────────
+
+/** A sunstone temple: a stepped pyramid of sand-coloured cubes, a stair up its front, a shrine on top. */
+function sunTemple() {
+  const p = [];
+  for (let k = 0; k < 6; k += 1) p.push(C(30 - k * 4.6, 3, 30 - k * 4.6, 0, 1.5 + k * 3, -6, k % 2 ? '#d8b980' : '#c9a46a'));
+  for (let k = 0; k < 9; k += 1) p.push(C(5, 1, 1.6, 0, 0.5 + k * 2, 9 - k * 1.6, '#e2c48e'));
+  p.push(C(5, 4, 5, 0, 20, -6, '#b8955e'), C(6, 0.8, 6, 0, 22.4, -6, '#c9a46a'), C(2, 2.6, 0.3, 0, 19.3, -3.45, '#3a2e22'));
+  return merge(p);
+}
+const sunTempleGlow = () => merge([C(2.2, 2.2, 0.3, 0, 24.2, -6, '#ffd35a')]);
+
+/** A colonnade of square sandstone columns under a stepped lintel (a hall beside the track). */
+function templeColonnade() {
+  const p = [C(26, 0.8, 6, 0, 0.4, 0, '#c9a46a')];
+  for (let k = 0; k < 7; k += 1) p.push(...column(5, 1.3, -12 + k * 4, 0.8, 1.2, '#d8b980', '#e2c48e'));
+  p.push(C(28, 1.2, 4, 0, 8.1, 1.2, '#c9a46a'), C(26, 1, 3, 0, 9.2, 1, '#b8955e'));
+  return merge(p);
+}
+
+/** A sun disc on a plinth: a stone frame with a round gold disc in it (lit). */
+function sunDisc() {
+  const p = [C(10, 2, 3, 0, 1, 0, '#b8955e'), C(1.6, 10, 1.6, -4.5, 7, 0, '#c9a46a'), C(1.6, 10, 1.6, 4.5, 7, 0, '#c9a46a'), C(10.6, 1.6, 1.8, 0, 12.8, 0, '#c9a46a')];
+  return merge(p);
+}
+const sunDiscGlow = () => {
+  const g = new CylinderGeometry(3.4, 3.4, 0.4, 20);
+  return merge([piece(g, '#ffcf4a', new Matrix4().makeRotationX(Math.PI / 2).premultiply(turned(0, 7, 0.2)))]);
+};
+
+/** The temple gate past the finish: two sandstone pylons and a stepped lintel. */
+function templeGate() {
+  const p = [];
+  for (const x of [-10, 10]) p.push(...column(6, 2.2, x, 0, 0, '#d8b980', '#c9a46a'), C(3, 0.8, 3, x, 13.6, 0, '#b8955e'));
+  p.push(C(24, 1.6, 2.4, 0, 14.6, 0, '#c9a46a'), C(18, 1.2, 2, 0, 16, 0, '#d8b980'));
+  return merge(p);
+}
+
+// ── Chain Reaction ────────────────────────────────────────────────────────────
+
+/** The chain wall: a long low plinth with posts; its block rows are the effect (fx 'chain-rows': they clear one after another as the pack passes, each setting off the next). */
+const CHAIN = { segments: 8, cols: 4, rows: 3, size: 1.2, gap: 0.6 };
+const CHAIN_W = CHAIN.segments * (CHAIN.cols * CHAIN.size + CHAIN.gap);
+function chainWall() {
+  const p = [C(CHAIN_W + 1.6, 1, 2.2, 0, 0.5, 0, B.stoneDark)];
+  for (let k = 0; k <= CHAIN.segments; k += 1) p.push(C(0.5, CHAIN.rows * CHAIN.size + 1.4, 1.4, -CHAIN_W / 2 + k * (CHAIN.cols * CHAIN.size + CHAIN.gap), 1 + (CHAIN.rows * CHAIN.size + 1.4) / 2 - 0.2, 0, B.stone));
+  return merge(p);
+}
+
+// ── Bonus Round ───────────────────────────────────────────────────────────────
+
+/** The score wall: a tall dark frame of blocks; its cells fill with lit blocks as the leader passes each checkpoint (fx 'score-wall'). */
+const SCORE = { cols: 10, rows: 6, size: 1.3 };
+function scoreWall() {
+  const { cols, rows, size } = SCORE;
+  const W = cols * size;
+  const p = [C(W + 2.4, 1.2, 2.4, 0, 0.6, 0, '#262140')];
+  for (const x of [-1, 1]) p.push(C(1.2, rows * size + 2.4, 1.6, x * (W / 2 + 0.6), 1.2 + (rows * size + 2.4) / 2 - 0.6, 0, '#3a3456'));
+  p.push(C(W + 2.4, 1, 1.6, 0, 1.2 + rows * size + 1.3, 0, '#3a3456'), C(W, rows * size, 0.4, 0, 1.2 + (rows * size) / 2 + 0.2, -0.5, '#1c1830'));
+  return merge(p);
+}
+
+/** A checkpoint arch over the track (a gateway): two lit block posts and a lintel; it flashes as the leader passes (fx 'checkpoint-flash'). */
+function checkpointArch() {
+  const p = [];
+  for (const x of [-9, 9]) p.push(...column(7, 1.6, x, 0, 0, '#3a3456', '#2c2746'));
+  p.push(C(20, 1.6, 1.8, 0, 12, 0, '#2c2746'));
+  return merge(p);
+}
+
+/** The final stage past the finish: a broad stepped stage of cream and gold blocks, a lit frame over it (fx 'final-stage': bright once the winner is home). */
+function finalStage() {
+  const p = [];
+  for (let k = 0; k < 3; k += 1) p.push(C(24 - k * 4, 1, 10 - k * 2, 0, 0.5 + k, -2 - k, k % 2 ? '#e8dcc0' : '#d9c48a'));
+  for (const x of [-11, 11]) p.push(...column(8, 1.6, x, 0, -4, '#3a3456', '#2c2746'));
+  p.push(C(24, 1.6, 1.8, 0, 13.6, -4, '#2c2746'));
+  return merge(p);
+}
+
 export const BLOCK_LANDMARKS = {
   'spawn-beacon': { build: spawnBeacon, glow: spawnBeaconGlow, radius: 5 },
   'cube-cottage': { build: cubeCottage, glow: cubeCottageGlow, radius: 7 },
@@ -419,6 +590,22 @@ export const BLOCK_LANDMARKS = {
   'block-portal': { build: blockPortal, radius: 10, fx: 'block-portal' },
   'gg-arch': { build: ggArch, radius: 11, fx: 'gg-arch' },
   'level-pillars': { build: levelPillars, glow: levelPillarsGlow, radius: 10, fit: 10 },
+  'floating-island': { build: floatingIsland, haze: floatingIslandFall, radius: 9 },
+  'island-house': { build: islandHouse, glow: islandHouseGlow, radius: 10 },
+  'island-garden': { build: islandGarden, radius: 12 },
+  'cube-crane': { build: cubeCrane, radius: 6, moving: { build: craneJib, pivot: [0, 27.4, 0], axis: [0, 1, 0], swing: 0.6, period: 14 } },
+  'container-stack': { build: containerStack, radius: 14 },
+  'block-boats': { build: blockBoats, radius: 8 },
+  'harbour-office': { build: harbourOffice, glow: harbourOfficeGlow, radius: 9 },
+  'block-lighthouse': { build: blockLighthouse, glow: blockLighthouseGlow, radius: 6 },
+  'sun-temple': { build: sunTemple, glow: sunTempleGlow, radius: 18 },
+  'temple-colonnade': { build: templeColonnade, radius: 14 },
+  'sun-disc': { build: sunDisc, glow: sunDiscGlow, radius: 7 },
+  'temple-gate': { build: templeGate, radius: 13 },
+  'chain-wall': { build: chainWall, radius: CHAIN_W / 2 + 1, fx: 'chain-rows' },
+  'score-wall': { build: scoreWall, radius: 9, fx: 'score-wall' },
+  'checkpoint-arch': { build: checkpointArch, radius: 10, fx: 'checkpoint-flash' },
+  'final-stage': { build: finalStage, radius: 13, fx: 'final-stage' },
 };
 
 // ── The quiet effects, on the race clock ──────────────────────────────────────
@@ -592,6 +779,86 @@ export function buildBlockEffects(placed, { lite = false } = {}) {
         const s = moment(t, lead, pl.p - 0.004);
         const boost = s === null ? 0 : Math.max(0, 1 - s / 1.2);
         frame.material.color.copy(a).lerp(b, 0.5 + 0.5 * Math.sin(t / 1000 * 0.8)).lerp(new Color('#ffffff'), 0.6 * boost);
+      });
+      continue;
+    }
+    if (fx === 'chain-rows') {
+      // Eight short walls of block rows in a line; as the leader comes level with the first, its
+      // rows flash and clear, and each cleared wall sets off the next 0.3 s later down the line (a
+      // cascade); the cleared blocks refill quietly a while after the pack has gone.
+      const { segments, cols, rows, size, gap } = CHAIN;
+      const per = cols * rows;
+      const mat = lambert();
+      mat.emissive = new Color('#ffffff');
+      const cells = cubes('chain rows', segments * per, mat, size * 0.95);
+      root.add(cells.mesh);
+      const seg = cols * size + gap;
+      const flash = new Float32Array(segments);
+      effects.push((t, lead) => {
+        const s = moment(t, lead, pl.p - 0.012);
+        let glow = 0;
+        for (let k = 0; k < segments; k += 1) {
+          const u = s === null ? -1 : s - k * 0.3;
+          const lit = u < 0 ? 0 : u < 0.2 ? u / 0.2 : Math.max(0, 1 - (u - 0.2) / 0.25);
+          const gone = u < 0 ? 0 : ease((u - 0.25) / 0.25) * (1 - ease((u - 12) / 1.5)); // (back after 12 s)
+          flash[k] = lit;
+          glow = Math.max(glow, lit);
+          for (let j = 0; j < per; j += 1) {
+            const c = j % cols;
+            const r = Math.floor(j / cols);
+            cells.set(k * per + j, -CHAIN_W / 2 + k * seg + gap / 2 + size * (c + 0.5), 1 + size * (r + 0.5), 0, Math.max(0.001, 1 - gone), PIECE_TONES[(k + c + r * 2) % 5]);
+          }
+        }
+        mat.emissiveIntensity = 0.8 * glow;
+        cells.done();
+      });
+      continue;
+    }
+    if (fx === 'score-wall') {
+      // The wall's cells fill with lit blocks, a row for each tenth of the race the leader has run,
+      // left to right; once the winner is home the whole wall turns gold.
+      const { cols, rows, size } = SCORE;
+      const cells = cubes('score wall', cols * rows, basic(), size * 0.9);
+      root.add(cells.mesh);
+      effects.push((t, lead) => {
+        const filled = Math.floor(Math.min(1, lead) * cols * rows);
+        for (let k = 0; k < cols * rows; k += 1) {
+          const c = k % cols;
+          const r = Math.floor(k / cols);
+          const on = k < filled;
+          cells.set(k, (c - (cols - 1) / 2) * size, 1.2 + size * (r + 0.5), 0, on ? 1 : 0.6, lead >= 1 ? '#ffd27a' : on ? PIECE_TONES[(c + r) % 5] : '#2a2540');
+        }
+        cells.done();
+      });
+      continue;
+    }
+    if (fx === 'checkpoint-flash') {
+      // The arch's lamp blocks glow softly and flash bright white for a moment as the leader passes under.
+      const lamps = cubes('checkpoint lamps', 10, basic(), 1.0);
+      root.add(lamps.mesh);
+      effects.push((t, lead) => {
+        const s = moment(t, lead, pl.p - 0.002);
+        const f = s === null ? 0 : Math.max(0, 1 - s / 0.8);
+        tint.set('#7a8cff').lerp(new Color('#ffffff'), f);
+        const c = `#${tint.getHexString()}`;
+        for (let k = 0; k < 10; k += 1) lamps.set(k, (k - 4.5) * 2, 13.2, 0.95, 1, c);
+        lamps.done();
+      });
+      continue;
+    }
+    if (fx === 'final-stage') {
+      // The frame's lamp blocks: dim until the winner is home, then bright, a slow ripple of light along them.
+      const n = 14;
+      const lamps = cubes('final stage lamps', n, basic(), 1.1);
+      root.add(lamps.mesh);
+      effects.push((t, lead) => {
+        const won = lead >= 1;
+        for (let k = 0; k < n; k += 1) {
+          const ripple = won ? 0.75 + 0.25 * Math.sin(t / 300 - k * 0.6) : 0;
+          tint.set('#3a3456').lerp(new Color(k % 2 ? '#fff1cf' : '#ffd27a'), ripple);
+          lamps.set(k, (k - (n - 1) / 2) * 1.6, 14.6, -3, 1, `#${tint.getHexString()}`);
+        }
+        lamps.done();
       });
       continue;
     }

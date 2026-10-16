@@ -589,6 +589,228 @@ function canyonWaterfall(drop = 50, run = 24) {
   return merge(p);
 }
 
+// ── Antelope Slot Spins ──────────────────────────────────────────────────────
+
+/**
+ * Shafts of light falling into the slot: a pool of bright sand on the floor and a little drifting
+ * sand round it (still); the shafts themselves are the see-through part (`lightShafts`), leaning
+ * in from the rim far above. Kept beside the track, never over it.
+ */
+function lightBeams() {
+  const p = [];
+  for (const [x, z, r] of [[0, 0, 3.2], [-4.5, 3, 2.2], [3.8, -2.5, 1.8]]) p.push(piece(new CylinderGeometry(r, r + 0.4, 0.12, 14), '#ffd9a0', M(x, 0.07, z)));
+  for (const [x, z] of [[-2, -2], [2.5, 2.2], [-5, -1]]) p.push(piece(new IcosahedronGeometry(0.9, 0), '#c97a48', S(x, 0.3, z, 1.4, 0.5, 1.1)));
+  return merge(p);
+}
+function lightShafts() {
+  const p = [];
+  for (const [x, z, r, h, lean] of [[0, 0, 1.6, 46, 0.1], [-4.5, 3, 1.1, 44, 0.16], [3.8, -2.5, 0.9, 42, 0.05]]) {
+    const m = new Matrix4().makeRotationX(-lean).premultiply(M(x, h / 2, z + Math.sin(lean) * h / 2));
+    p.push(piece(new CylinderGeometry(r * 1.4, r, h, 10, 1, true), '#fff1c8', m));
+  }
+  return merge(p);
+}
+
+/** Steel stairways down into the slot: two flights of open steps with handrails, a landing between them, on a sandstone ledge. */
+function slotStairs() {
+  const STEEL = '#5a5f66';
+  const p = [box(12, 3, 9, 0, 1.5, -3, '#c4693c'), box(9, 1.6, 6, 0, 3.8, -4.5, '#d9874e')];
+  const flight = (x0, y0, z0, dz, n) => {
+    for (let k = 0; k < n; k += 1) p.push(box(2.2, 0.15, 0.7, x0, y0 - k * 0.45, z0 + dz * k * 0.6, STEEL));
+    for (const sx of [-1.15, 1.15]) {
+      const a = new Vector3(x0 + sx, y0 + 1, z0);
+      const b = new Vector3(x0 + sx, y0 - (n - 1) * 0.45 + 1, z0 + dz * (n - 1) * 0.6);
+      const len = a.distanceTo(b);
+      p.push(piece(new CylinderGeometry(0.06, 0.06, len, 5), STEEL, new Matrix4().lookAt(a, b, Y).multiply(new Matrix4().makeRotationX(Math.PI / 2)).setPosition(a.clone().add(b).multiplyScalar(0.5))));
+    }
+  };
+  flight(-1.6, 4.6, -1.8, 1, 6);
+  p.push(box(3, 0.2, 2, -1.6, 2.2, 2, STEEL));
+  flight(1.6, 2.1, 2.4, 1, 5);
+  return merge(p);
+}
+
+/** Open-top tour trucks parked in the sandy wash at the slot's mouth, benches in their beds, a shade awning beside them. */
+function tourTrucks() {
+  const p = [];
+  for (const [x, z, yaw, colour] of [[-5, 0, 0.2, '#c9b48a'], [3, -2, -0.15, '#8a9a7a'], [10, 1, 0.35, '#b85a3a']]) {
+    const at = (lx, ly, lz) => new Vector3(lx, ly, lz).applyAxisAngle(Y, yaw).add(new Vector3(x, 0, z));
+    const b = (w, h, d, lx, ly, lz, c) => { const q = at(lx, ly, lz); return piece(new BoxGeometry(w, h, d), c, turned(q.x, q.y, q.z, yaw)); };
+    p.push(b(2.4, 1, 6, 0, 1.2, 0, colour), b(2.2, 1.1, 1.8, 0, 2.2, 1.6, colour), b(2.0, 0.7, 0.1, 0, 2.3, 2.55, '#9fc4d6'));
+    p.push(b(2.3, 0.15, 3.4, 0, 2.2, -1.1, '#6a4a32'), b(0.25, 0.7, 3.2, -0.95, 2.6, -1.1, '#6a4a32'), b(0.25, 0.7, 3.2, 0.95, 2.6, -1.1, '#6a4a32'));
+    for (const [wx, wz] of [[-1.25, 1.8], [1.25, 1.8], [-1.25, -1.8], [1.25, -1.8]]) {
+      const q = at(wx, 0.55, wz);
+      p.push(piece(new CylinderGeometry(0.55, 0.55, 0.4, 10), '#2a2a2c', new Matrix4().makeRotationZ(Math.PI / 2).premultiply(turned(q.x, q.y, q.z, yaw))));
+    }
+  }
+  for (const [x, z] of [[-2, -8], [6, -8], [-2, -13], [6, -13]]) p.push(box(0.2, 3, 0.2, x, 1.5, z, '#6a4a32'));
+  p.push(box(9, 0.2, 6, 2, 3.1, -10.5, '#e8d2a6'));
+  return merge(p);
+}
+
+// ── Verdon Burst ─────────────────────────────────────────────────────────────
+
+/** A lavender field on the rim: rows of round purple bushes on pale earth, an almond tree at one end. */
+function lavenderField() {
+  const p = [box(30, 0.2, 18, 0, 0.1, 0, '#c9b98a')];
+  for (let r = 0; r < 6; r += 1) {
+    for (let k = 0; k < 11; k += 1) {
+      const x = -13.5 + k * 2.7;
+      const z = -7.5 + r * 3;
+      p.push(piece(new IcosahedronGeometry(0.85, 0), k % 3 === 1 ? '#8a6ac4' : '#7a5ab8', S(x, 0.6, z, 1.2, 0.75, 1)));
+    }
+  }
+  p.push(piece(new CylinderGeometry(0.3, 0.45, 2.6, 6), '#6a4a32', M(17, 1.3, 0)));
+  p.push(piece(new IcosahedronGeometry(2.4, 0), '#7a9a4a', S(17, 3.6, 0, 1.2, 0.8, 1.2)));
+  return merge(p);
+}
+
+/** A village perched on a ledge: pale stone houses with low red-tile roofs climbing round a bell tower. */
+function perchedVillage() {
+  const STONE = ['#e2d6bc', '#d6c6a4', '#ece2ca'];
+  const TILE = '#b8583a';
+  const p = [box(28, 2, 16, 0, 1, 0, '#c9c3b4')];
+  const houses = [[-10, -3, 6, 5, 6], [-4, -5, 5, 7, 5], [2, -4, 6, 6, 6], [8, -2, 5, 5, 5], [-7, 3, 5, 4, 5], [5, 3, 6, 4, 5]];
+  houses.forEach(([x, z, w, h, d], k) => {
+    p.push(box(w, h, d, x, 2 + h / 2, z, STONE[k % 3]));
+    p.push(roof(w + 0.6, 1.4, d + 0.6, x, 2 + h, z, TILE));
+    p.push(box(0.8, 1.2, 0.1, x - w / 4, 2 + h * 0.55, z + d / 2 + 0.05, '#4a5a6a'));
+  });
+  p.push(box(3, 14, 3, 0, 9, -1, '#e2d6bc'), roof(3.4, 2.6, 3.4, 0, 16, -1, TILE), box(1.2, 1.6, 0.2, 0, 13.5, 0.55, '#3a2e26'));
+  return merge(p);
+}
+
+/** The lake at the gorge's mouth: turquoise water, a jetty and a row of pedal boats tied up along it. */
+function lakePedalos() {
+  const p = [piece(new CylinderGeometry(22, 22, 0.3, 24), '#2fc6c0', M(0, 0.15, 6))];
+  p.push(box(3, 0.4, 16, -6, 0.55, 2, '#9a7a52'));
+  for (let k = 0; k < 5; k += 1) {
+    const z = -3 + k * 3;
+    const colour = ['#f2f2ee', '#e8c84a', '#e86a4a', '#f2f2ee', '#4ab8e8'][k];
+    p.push(box(2.2, 0.6, 2.6, -3, 0.55, z, colour), box(1.6, 0.5, 1.0, -3, 1.0, z - 0.4, '#e8e4dc'));
+    p.push(piece(new CylinderGeometry(0.5, 0.5, 0.3, 8), '#5a6a7a', new Matrix4().makeRotationZ(Math.PI / 2).premultiply(M(-1.8, 0.8, z + 0.6))));
+  }
+  return merge(p);
+}
+
+// ── Tiger Leaping Spins ──────────────────────────────────────────────────────
+
+/** The great rock in the river (on the river's surface): a tall grey boulder, white water churning round it, a small bronze tiger leaping on top. */
+function tigerRock() {
+  const p = [
+    piece(new IcosahedronGeometry(5, 1), '#6f6a62', S(0, 3, 0, 1.2, 1, 0.9)),
+    piece(new IcosahedronGeometry(3.2, 0), '#7f7a70', S(1.5, 6.4, 0.5, 1, 0.7, 1)),
+  ];
+  for (let k = 0; k < 7; k += 1) {
+    const a = (k / 7) * Math.PI * 2;
+    p.push(piece(new IcosahedronGeometry(1.4 + (k % 3) * 0.4, 0), '#f4f2ea', S(Math.cos(a) * 6, 0.4, Math.sin(a) * 5, 1.4, 0.4, 1)));
+  }
+  // The tiger mid-leap: a long body, legs out front and behind, a tail curving up.
+  const BRONZE = '#a8762e';
+  const tiger = new Matrix4().makeRotationZ(0.25).premultiply(M(1.5, 9.4, 0.5));
+  for (const [w, h, d, x, y, z] of [[3, 0.9, 0.9, 0, 0, 0], [0.9, 0.9, 0.9, 1.9, 0.35, 0], [1.4, 0.3, 0.3, 2.6, -0.3, 0.25], [1.4, 0.3, 0.3, 2.6, -0.3, -0.25], [1.4, 0.3, 0.3, -2.1, -0.4, 0.25], [1.4, 0.3, 0.3, -2.1, -0.4, -0.25], [1.6, 0.2, 0.2, -2.2, 0.6, 0]]) {
+    const g = new BoxGeometry(w, h, d);
+    g.applyMatrix4(M(x, y, z).premultiply(tiger));
+    p.push(piece(g, BRONZE, new Matrix4()));
+  }
+  return merge(p);
+}
+
+/** A guesthouse on the high trail: a two-storey timber house with a grey tile roof and a terrace, prayer-style flags on a pole. */
+function trailGuesthouse() {
+  const p = [box(14, 1, 10, 0, 0.5, 0, '#8f877a'), box(10, 7, 7, 0, 4.5, -1, '#d8c8a8'), box(10.4, 0.4, 7.4, 0, 4.4, -1, '#6a4a32')];
+  p.push(roof(11.4, 2.6, 8.4, 0, 8, -1, '#4a5056'));
+  for (let k = 0; k < 4; k += 1) p.push(box(1.2, 1.4, 0.15, -3.6 + k * 2.4, 6.2, 2.55, '#6a4a32'), box(1.2, 1.4, 0.15, -3.6 + k * 2.4, 2.6, 2.55, '#6a4a32'));
+  p.push(box(14, 0.3, 3, 0, 4.6, 4, '#7a5a3a'));
+  for (const x of [-6.5, -2, 2, 6.5]) p.push(box(0.25, 4.1, 0.25, x, 2.5, 5.3, '#5a4030'));
+  p.push(piece(new CylinderGeometry(0.12, 0.12, 9, 5), '#5a4030', M(6.5, 5.5, -5)));
+  for (let k = 0; k < 5; k += 1) p.push(box(0.05, 0.9, 1.2, 6.5, 9.4 - k * 0.2, -4.4 + k * 1.25, ['#2f6fc4', '#f4f4f0', '#c43a2f', '#2f9a4a', '#f2c230'][k]));
+  return merge(p);
+}
+
+/** A viewing platform at the gorge's end: a timber deck on posts with a railing, a little pavilion with an upturned roof. */
+function gorgeViewpoint() {
+  const p = [box(16, 0.5, 9, 0, 3, 0, '#8a6a45')];
+  for (const [x, z] of [[-7.5, -4], [7.5, -4], [-7.5, 4], [7.5, 4], [0, 4], [0, -4]]) p.push(box(0.5, 3, 0.5, x, 1.5, z, '#5a4030'));
+  for (const z of [-4.3, 4.3]) p.push(box(16, 0.2, 0.15, 0, 4.2, z, '#5a4030'));
+  for (let k = 0; k <= 8; k += 1) p.push(box(0.12, 1.1, 0.12, -8 + k * 2, 3.8, 4.3, '#5a4030'));
+  for (const [x, z] of [[-6, -2.5], [-3, -2.5], [-6, 0.5], [-3, 0.5]]) p.push(box(0.3, 3, 0.3, x, 4.75, z, '#8a2a22'));
+  p.push(roof(5.6, 1.6, 5.2, -4.5, 6.2, -1, '#3e464c'));
+  return merge(p);
+}
+
+// ── Waimea Free Fall ─────────────────────────────────────────────────────────
+
+/** A rainbow arching over the spray at a waterfall's foot (see-through): seven thin bands. */
+function rainbowArc(drop, run) {
+  const BANDS = ['#ff4a4a', '#ff9a3a', '#ffe14a', '#5ad85a', '#4ab8ff', '#5a6aff', '#a85aff'];
+  return merge(BANDS.map((c, k) => piece(new TorusGeometry(26 - k * 0.9, 0.42, 4, 40, Math.PI), c, M(0, -drop + 4, run + 10))));
+}
+
+/** A long waterfall over the rim, longer and wider than the canyon's usual one, a rainbow (see-through) in its spray. */
+const LONG_FALL = { drop: 62, run: 26 };
+const longWaterfall = () => canyonWaterfall(LONG_FALL.drop, LONG_FALL.run);
+const longWaterfallRainbow = () => rainbowArc(LONG_FALL.drop, LONG_FALL.run);
+
+/** A lookout on a green ridge: a stone wall round a terrace, a railing, an interpretive sign and a few ohia trees. */
+function ridgeLookout() {
+  const p = [box(14, 1.2, 8, 0, 0.6, 0, '#8a7a6a')];
+  for (const z of [-4, 4]) p.push(box(14, 1.2, 0.6, 0, 1.6, z, '#7a6a5a'));
+  p.push(box(0.6, 1.2, 8, 7, 1.6, 0, '#7a6a5a'));
+  p.push(box(0.2, 2, 0.2, -3, 2.2, 3.4, '#4a3a2e'), box(2.4, 1.4, 0.15, -3, 3.4, 3.4, '#5a4a3a'));
+  for (const [x, z] of [[-9, -3], [-10, 3], [9, -5]]) {
+    p.push(piece(new CylinderGeometry(0.25, 0.4, 3, 6), '#5a4030', M(x, 1.5, z)));
+    p.push(piece(new IcosahedronGeometry(2, 0), '#3f7a34', S(x, 3.8, z, 1.2, 0.8, 1.2)));
+    for (let k = 0; k < 4; k += 1) p.push(piece(new IcosahedronGeometry(0.35, 0), '#e84a3a', M(x + Math.cos(k * 1.7) * 1.6, 4.2 + (k % 2) * 0.6, z + Math.sin(k * 1.7) * 1.6))); // red lehua blossoms
+  }
+  return merge(p);
+}
+
+/** Coconut palms on the sand where the river reaches the sea. */
+function coastPalms() {
+  const p = [box(30, 0.3, 14, 0, 0.15, 0, '#e8d4a6')];
+  for (const [x, z, lean] of [[-10, -3, 0.25], [-4, 2, -0.2], [3, -4, 0.15], [9, 3, -0.3], [13, -2, 0.2]]) {
+    const top = new Vector3(x + Math.sin(lean) * 8, 8, z);
+    const a = new Vector3(x, 0, z);
+    p.push(piece(new CylinderGeometry(0.3, 0.45, 8.4, 6), '#8a6a4a', new Matrix4().lookAt(a, top, Y).multiply(new Matrix4().makeRotationX(Math.PI / 2)).setPosition(a.clone().add(top).multiplyScalar(0.5))));
+    for (let k = 0; k < 6; k += 1) p.push(piece(new BoxGeometry(0.8, 0.12, 4.2), '#3f8a3a', turned(top.x + Math.cos(k) * 1.6, top.y - 0.4, top.z + Math.sin(k) * 1.6, k * 1.05, 1, 1, 1)));
+  }
+  return merge(p);
+}
+
+// ── Wadi Mujib Burst ─────────────────────────────────────────────────────────
+
+/** Ropes and ladders up a small cascade in the passage: a step of red rock with a white curtain of water, a steel ladder and a fixed rope. */
+function siqLadders() {
+  const STEEL = '#6a6e74';
+  const p = [box(9, 4, 4, 0, 2, -2, '#9a3a2c'), box(6, 3.6, 0.3, 0, 2, 0.1, '#e8f4f2')];
+  for (const sx of [-0.45, 0.45]) p.push(box(0.12, 5, 0.12, 3.6 + sx, 2.4, 0.4, STEEL));
+  for (let k = 0; k < 8; k += 1) p.push(box(0.9, 0.08, 0.12, 3.6, 0.4 + k * 0.6, 0.4, STEEL));
+  p.push(box(0.08, 0.08, 9, -3.8, 3.6, -2, '#e8c84a'));
+  for (const z of [-6, -2, 2]) p.push(box(0.15, 1, 0.15, -3.8, 3.2, z, STEEL));
+  return merge(p);
+}
+
+/** The start's wadi gate: a stone guardhouse with a flat roof and a shaded bench, under a tall red cliff. */
+function wadiGate() {
+  const p = [box(10, 5, 7, 0, 2.5, 0, '#d4b08a'), box(10.6, 0.5, 7.6, 0, 5.2, 0, '#b8946e')];
+  p.push(box(1.6, 2.6, 0.2, -2, 1.3, 3.55, '#6a4a32'), box(1.2, 1.1, 0.2, 2.5, 3, 3.55, '#4a5a6a'));
+  for (const x of [5.5, 9.5]) p.push(box(0.3, 2.6, 0.3, x, 1.3, 2, '#6a4a32'), box(0.3, 2.6, 0.3, x, 1.3, -2, '#6a4a32'));
+  p.push(box(5, 0.2, 5, 7.5, 2.7, 0, '#e8d8b8'), box(3, 0.5, 1, 7.5, 0.6, 0, '#8a6a4a'));
+  p.push(box(18, 22, 5, 0, 11, -8, '#8a2e22'), box(14, 6, 5, -2, 25, -8, '#a8443a'));
+  return merge(p);
+}
+
+/** The Dead Sea where the wadi opens: a wide still sea, pale with salt along its shore, white salt mounds on the shallows. */
+function deadSeaShore() {
+  const p = [piece(new CylinderGeometry(60, 60, 0.3, 32), '#6fb8b0', M(0, 0.05, 30))];
+  p.push(piece(new CylinderGeometry(62, 62, 0.2, 32, 1, true), '#f2efe6', M(0, 0.12, 30)));
+  p.push(box(40, 0.25, 10, 0, 0.12, -6, '#e8dcc4'));
+  for (const [x, z, r] of [[-12, 4, 2.2], [-5, 8, 1.6], [6, 5, 2.6], [14, 9, 1.8], [2, 14, 1.4]]) p.push(piece(new IcosahedronGeometry(r, 0), '#f4f2ec', S(x, 0.5, z, 1.3, 0.5, 1.1)));
+  for (const x of [-14, -8, 10]) p.push(piece(new CylinderGeometry(0.08, 0.08, 2.6, 5), '#6a6a6a', M(x, 1.3, -6)), piece(new ConeGeometry(1.8, 0.8, 8), x < 0 ? '#e8c84a' : '#4ab8e8', M(x, 2.8, -6)));
+  return merge(p);
+}
+
 export const CANYON_LANDMARKS = {
   'rim-lookout': { build: rimLookout, radius: 16 },
   'glass-skywalk': { build: glassSkywalk, radius: 18 },
@@ -623,6 +845,21 @@ export const CANYON_LANDMARKS = {
   'hikers-camp': { build: hikersCamp, radius: 9 },
   'quiver-grove': { build: quiverGrove, radius: 14 },
   'canyon-waterfall': { build: () => canyonWaterfall(), radius: 12 },
+  'light-beams': { build: lightBeams, haze: lightShafts, radius: 6 },
+  'slot-stairs': { build: slotStairs, radius: 8 },
+  'tour-trucks': { build: tourTrucks, radius: 14 },
+  'lavender-field': { build: lavenderField, radius: 18 },
+  'perched-village': { build: perchedVillage, radius: 16 },
+  'lake-pedalos': { build: lakePedalos, radius: 24 },
+  'tiger-rock': { build: tigerRock, radius: 8 },
+  'trail-guesthouse': { build: trailGuesthouse, radius: 10 },
+  'gorge-viewpoint': { build: gorgeViewpoint, radius: 10 },
+  'long-waterfall': { build: longWaterfall, haze: longWaterfallRainbow, radius: 14 },
+  'ridge-lookout': { build: ridgeLookout, radius: 12 },
+  'coast-palms': { build: coastPalms, radius: 16 },
+  'siq-ladders': { build: siqLadders, radius: 7 },
+  'wadi-gate': { build: wadiGate, radius: 12 },
+  'dead-sea-shore': { build: deadSeaShore, radius: 30 },
 };
 
 /** An Andean condor gliding: black, a white ruff round its neck, white patches on its broad wings. */

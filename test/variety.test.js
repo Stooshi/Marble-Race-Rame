@@ -160,7 +160,7 @@ test('Block Series: built as coasters on the voxel land unless a section flies, 
   assert.throws(() => track(spec({ block: { world: 'meadow' } })), /block settings are for the Block Series/);
   // The block layouts are on the list, and the series name is neutral.
   const { BLOCK_WORLDS } = require('../src/trackKit/parts');
-  assert.deepEqual(BLOCK_WORLDS, ['meadow', 'valley', 'snow', 'mine', 'magma', 'puzzle', 'fortress', 'portal']);
+  assert.deepEqual(BLOCK_WORLDS, ['meadow', 'valley', 'snow', 'mine', 'magma', 'puzzle', 'fortress', 'portal', 'sky', 'harbour', 'temple', 'bonus']);
   for (const k of ['spawn-meadow', 'speedrun-straights', 'peak-beams', 'mine-shaft', 'magma-loops', 'clear-rows', 'combo-steps', 'stack-spiral', 'fortress-gate', 'final-level']) assert.ok(kit.LAYOUT_KINDS.includes(k), k);
 });
 
@@ -185,7 +185,7 @@ test('a track may retune a layout splitter (balance, added pegs), mirrored with 
 
 test('the varied starts: a new track says how its start looks, checked like any opening', () => {
   const { START_TYPES, GATES, COUNTDOWN_SHOTS, LAUNCH_SHOTS } = require('../src/trackKit/recipe');
-  assert.deepEqual(START_TYPES, ['straight-lift', 'curving-lift', 'spiral-tower', 'elevator', 'cliff', 'rooftop', 'station-launch']);
+  assert.deepEqual(START_TYPES, ['straight-lift', 'curving-lift', 'spiral-tower', 'elevator', 'cliff', 'rooftop', 'station-launch', 'stepped-platform']);
   assert.deepEqual(GATES, ['paddle', 'trapdoor', 'stalls', 'barrier']);
   assert.deepEqual(COUNTDOWN_SHOTS, ['front', 'side', 'above', 'chase']);
   assert.deepEqual(LAUNCH_SHOTS, ['high-behind', 'low-chase', 'side', 'overhead', 'look-back']);

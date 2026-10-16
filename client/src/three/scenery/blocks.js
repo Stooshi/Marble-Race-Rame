@@ -63,6 +63,26 @@ export const BLOCK_WORLDS = {
     tops: ['#2e3453', '#292e4b'], riser: '#1d2038', deep: '#15182b', floor: '#15182b', bank: '#2c3150', fill: '#1d2038', hills: 20, step: 3,
     dressing: [['crystal', 0.35], ['pillar', 0.35], ['pieceStack', 0.3]],
   },
+  // Sky Islands: green island tops high over a sea of cloud (the land far below is cloud).
+  sky: {
+    tops: ['#8cc06a', '#7fb35f'], riser: '#a08566', deep: '#e9eff7', floor: '#eef3f9', bank: '#86ba65', fill: '#a08566', hills: 30, step: 3,
+    dressing: [['tree', 0.4], ['flowers', 0.25], ['cloud', 0.2], ['rock', 0.15]],
+  },
+  // Voxel Harbor: quays of grey stone and timber at sunset, container stacks, the water beyond.
+  harbour: {
+    tops: ['#8a8f96', '#7f848b'], riser: '#5e636a', deep: '#3f6f8a', floor: '#3f6f8a', bank: '#878c93', fill: '#5e636a', hills: 12, step: 2,
+    dressing: [['containers', 0.4], ['bollards', 0.25], ['crates', 0.2], ['rock', 0.15]],
+  },
+  // Sunstone Temple: desert of sand-coloured cubes round a stepped temple.
+  temple: {
+    tops: ['#e2c48e', '#d8b980'], riser: '#b8955e', deep: '#a8875a', floor: '#d8b980', bank: '#dfc08a', fill: '#b8955e', hills: 22, step: 3,
+    dressing: [['sandRock', 0.4], ['palmCube', 0.25], ['ruin', 0.25], ['cactusCube', 0.1]],
+  },
+  // Bonus Round: a bright stage world of cream and gold tiles at night, lit pillars.
+  bonus: {
+    tops: ['#3a3456', '#342f4e'], riser: '#262140', deep: '#1c1830', floor: '#1c1830', bank: '#383254', fill: '#262140', hills: 16, step: 2,
+    dressing: [['pillar', 0.4], ['crystal', 0.3], ['pieceStack', 0.3]],
+  },
 };
 export const BLOCK_WORLD_NAMES = Object.keys(BLOCK_WORLDS);
 
@@ -169,6 +189,24 @@ const MAKE = {
     piece(new BoxGeometry(1.6, 1.6, 1.6), '#8fb8f0', new Matrix4().compose(new Vector3(0, 1.6, 0), new Quaternion().setFromEuler(new Euler(Math.PI / 4, 0.3, Math.atan(Math.SQRT1_2))), new Vector3(1, 1, 1))),
     cube(1.4, 0.4, 1.4, 0, 0.2, 0, '#1d2038'),
   ]),
+  // A puff of cloud: three white cubes.
+  cloud: () => merge([cube(3.2, 1.6, 2.6, 0, 0.8, 0, '#f4f7fb'), cube(2.2, 1.4, 2.0, 1.4, 1.8, 0.3, '#ffffff'), cube(1.8, 1.0, 1.6, -1.2, 1.5, -0.2, '#eef2f8')]),
+  // Shipping containers in calm harbour colours, two stacked.
+  containers: (lite) => merge([
+    cube(6, 2.6, 2.4, 0, 1.3, 0, '#b8584a'),
+    ...(lite ? [] : [cube(6, 2.6, 2.4, 0.3, 3.9, 0.1, '#4f7f9a', 0.05)]),
+  ]),
+  bollards: () => merge([cube(0.8, 1, 0.8, 0, 0.5, 0, '#3a3e44'), cube(1.1, 0.25, 1.1, 0, 1.1, 0, '#3a3e44'), cube(0.8, 1, 0.8, 2.4, 0.5, 0.6, '#3a3e44')]),
+  crates: () => merge([cube(1.4, 1.4, 1.4, 0, 0.7, 0, '#b08a5c'), cube(1.2, 1.2, 1.2, 1.3, 0.6, 0.4, '#9a7448', 0.3), cube(1.1, 1.1, 1.1, 0.4, 1.95, 0.1, '#b08a5c', 0.6)]),
+  sandRock: () => merge([cube(2.4, 1.6, 2.0, 0, 0.8, 0, '#c9a46a', 0.3), cube(1.4, 1.0, 1.2, 0.7, 2.0, -0.2, '#d8b980', 0.3)]),
+  // A cube palm: a stack of trunk cubes and a cross of leaf blocks.
+  palmCube: () => merge([
+    ...[0, 1, 2, 3].map((k) => cube(0.7, 1.2, 0.7, k * 0.1, 0.6 + k * 1.2, 0, '#8a6a42')),
+    cube(4.4, 0.5, 1.1, 0.3, 5.1, 0, '#4f8a3f'), cube(1.1, 0.5, 4.4, 0.3, 5.1, 0, '#5a9a48'), cube(1.4, 0.8, 1.4, 0.3, 5.5, 0, '#4f8a3f'),
+  ]),
+  // A ruin: a broken column of sandstone cubes and a fallen block.
+  ruin: () => merge([cube(1.4, 3.6, 1.4, 0, 1.8, 0, '#d8b980'), cube(1.6, 0.5, 1.6, 0, 3.85, 0, '#c9a46a'), cube(2.6, 1.3, 1.3, 2, 0.65, 0.8, '#c9a46a', 0.5)]),
+  cactusCube: () => merge([cube(0.9, 3.2, 0.9, 0, 1.6, 0, '#5f8a4a'), cube(0.7, 0.7, 0.7, 0.8, 1.8, 0, '#5f8a4a'), cube(0.6, 1.2, 0.6, 1.0, 2.6, 0, '#5f8a4a')]),
 };
 
 /** A world's dressing: [[make(lite) → geometry with colours, share], …], shares adding up to 1. */

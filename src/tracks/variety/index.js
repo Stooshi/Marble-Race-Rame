@@ -16,6 +16,8 @@ const NAMES = {
   'basalt-gorge': 'Basalt Gorge', 'twin-peaks': 'Twin Peaks', 'cliff-ledge': 'Cliff Ledge', 'free-fall': 'Free Fall', meanders: 'Meanders',
   'spawn-meadow': 'Spawn Meadow', 'speedrun-straights': 'Speedrun Straights', 'peak-beams': 'Peak Beams', 'mine-shaft': 'Mine Shaft', 'magma-loops': 'Magma Loops',
   'clear-rows': 'Clear Rows', 'combo-steps': 'Combo Steps', 'stack-spiral': 'Stack Spiral', 'fortress-gate': 'Fortress Gate', 'final-level': 'Final Level',
+  'slot-canyon': 'Slot Canyon', 'cliff-road': 'Cliff Road', 'rapids-gorge': 'Rapids Gorge', 'long-falls': 'Long Falls', 'siq-passage': 'Siq Passage',
+  'island-hops': 'Island Hops', 'harbour-quays': 'Harbour Quays', 'temple-halls': 'Temple Halls', 'cascade-rows': 'Cascade Rows', 'bonus-stages': 'Bonus Stages',
 };
 
 const base = (slug, name, description) => ({
@@ -49,7 +51,8 @@ const ARCADE_LAYOUTS = ['cabinet-rows', 'maze-corridors', 'bullet-spirals', 'up-
 const OWN_OPENING = { 'siege-routes': 'crest-start', 'saucer-sweeps': 'staggered-drop', 'clock-tower': 'funnel-drop', 'encore-split': 'split-start', 'cabinet-rows': 'funnel-drop', 'maze-corridors': 'split-start', 'bullet-spirals': 'staggered-drop', 'up-up-down-down': 'crest-start', 'bracket-splits': 'banked-turn', 'coast-road': 'boost-launch', 'co-op-street': 'tunnel-launch', 'lower-playfield': ['banked-turn', { side: 'right' }] };
 // (Lower playfield: the banked turn the other way, so the test track is Tilt's exact mirror image.)
 // Layouts made for one canyon are proven on a test track built as a canyon (on the canyon floor, climbing out where its canyon does).
-const CANYON_LAYOUTS = ['horseshoe-bend', 'great-bend', 'terrace-steps', 'rafting-run', 'six-canyons', 'basalt-gorge', 'twin-peaks', 'cliff-ledge', 'free-fall', 'meanders'];
+const CANYON_LAYOUTS = ['horseshoe-bend', 'great-bend', 'terrace-steps', 'rafting-run', 'six-canyons', 'basalt-gorge', 'twin-peaks', 'cliff-ledge', 'free-fall', 'meanders',
+  'slot-canyon', 'cliff-road', 'rapids-gorge', 'long-falls', 'siq-passage'];
 const CANYON_HEIGHTS = {
   'horseshoe-bend': { climbOut: { height: 40 }, sweep2: { height: 12 } },
   'great-bend': { ledge: { height: 36 }, greatBend: { height: 16 } },
@@ -61,14 +64,21 @@ const CANYON_HEIGHTS = {
   'cliff-ledge': { ledge: { height: 26 }, ledgeBend: { height: 26 }, spin: { height: 14 } },
   'free-fall': { highSweep: { height: 30 }, sweep2: { height: 16 } },
   meanders: { highSweep: { height: 28 } },
+  'slot-canyon': { rimRun: { height: 14 }, corkscrew: { height: 14 } },
+  'cliff-road': { rimRoad: { height: 30 }, lookout: { height: 30 } },
+  'rapids-gorge': { highTrail: { height: 28 } },
+  'long-falls': { ridgeSweep: { height: 28 }, toTheLip: { height: 14 } },
+  'siq-passage': { openSweep: { height: 24 } },
 };
 // Layouts made for one Block Series track are proven on a test track built as a Block Series world (on its
 // voxel land, flying on block pillars where its track does).
-const BLOCK_LAYOUTS = ['spawn-meadow', 'speedrun-straights', 'peak-beams', 'mine-shaft', 'magma-loops', 'clear-rows', 'combo-steps', 'stack-spiral', 'fortress-gate', 'final-level'];
+const BLOCK_LAYOUTS = ['spawn-meadow', 'speedrun-straights', 'peak-beams', 'mine-shaft', 'magma-loops', 'clear-rows', 'combo-steps', 'stack-spiral', 'fortress-gate', 'final-level',
+  'island-hops', 'harbour-quays', 'temple-halls', 'cascade-rows', 'bonus-stages'];
 const BLOCK_HEIGHTS = {
   'peak-beams': { beamSweep: { height: 30 }, ridgeSweep: { height: 18 } },
   'stack-spiral': { stackSpiral: { height: 12 } },
   'final-level': { loop: { height: 14 } },
+  'island-hops': { bridge1: { height: 18 }, island1: { height: 18 }, bridge2: { height: 14 }, island2: { height: 14 } },
 };
 const TOUCHDOWNS = { 'sea-crossing': { tunnelRun: { height: 0 } }, 'terrace-run': { swoops: { height: 0 } }, 'wall-dive': { tunnelRun: { height: 0 } } };
 

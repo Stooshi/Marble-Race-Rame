@@ -111,6 +111,17 @@ module.exports = track({
   | `stack-spiral` (blocks) | pegRun, sBends, spin, drop, sweep, brakingStraight, hairpin, stackSpiral (a little over a turn), lastStraight |
   | `fortress-gate` (blocks) | moatSweep, drawbridge (a short climb), courtyardDrop, gateRun, brakingStraight, hairpin, wallBends, sweep2, spin, lastStraight |
   | `final-level` (blocks) | introBends, portalSweep, drop, loop (a spiral), bonusRun, brakingStraight, hairpin, slalomDrop, sweep2, lastStraight |
+  | `meanders` (canyons) | meander1, straight1, meander2, highSweep, drop, brakingStraight, hairpin, meander3, lastStraight |
+  | `slot-canyon` (canyons) | beamHall, twist1, twist2, rimRun, corkscrew (a spiral), brakingStraight, hairpin, twist3, drop, lastStraight |
+  | `cliff-road` (canyons) | rimRoad, lookout, spin, dive, paddleRun, brakingStraight, hairpin, riverSweep, lakeDrop, lastStraight |
+  | `rapids-gorge` (canyons) | rapids, sBends, rockRun, cascade (a waterfall), pool, highTrail, brakingStraight, hairpin, slalomDrop, lastStraight |
+  | `long-falls` (canyons) | ridgeSweep, sBends, brakingStraight, hairpin, toTheLip, longFall (a waterfall), plungePool, spin, sweep2, lastStraight |
+  | `siq-passage` (canyons) | siq1, narrows, boulder (a short climb), dropIn, siq2, brakingStraight, hairpin, openSweep, lastStraight |
+  | `island-hops` (blocks) | bridge1, island1, hop, bridge2, island2 (a spiral), brakingStraight, hairpin, toTheEdge, islandFall (a waterfall), bridge3, sweep2, lastStraight |
+  | `harbour-quays` (blocks) | quay, craneSpin, pier, basinSweep, dockDrop, brakingStraight, hairpin, sBends, lastStraight |
+  | `temple-halls` (blocks) | entryHall, brakingStraight, hairpin, stairs1 (steps), courtyard (a spiral), stairs2 (steps), sanctum, sunSweep, lastStraight |
+  | `cascade-rows` (blocks) | firstSweep, cascadeRun, sBends, crest (a short climb), drop, brakingStraight, hairpin, spin, lastStraight |
+  | `bonus-stages` (blocks) | stage1, bonusSweep, checkpointBends, stage2, spin, brakingStraight, hairpin, finalStage, lastStraight |
 
   A track may still write its own sections by hand; the sameness check makes sure they differ.
 - **`family`**: `'world-tour'` (the default), `'grand-prix'` (any `grandPrix` track),
@@ -329,6 +340,9 @@ To look at them all: `node scripts/dump-kit-track.js grand-prix-gallery`, then o
 - **Lift hill**: behind the gate the track climbs a lift hill (a deck, the chain, a catwalk)
   from the land up to the gate, the land carved down along it; the countdown opens at its
   foot, the start landmark behind it, and rides up beside the climb to the gate.
+- **Start types** (`start.type`, at most two coasters of a family share one): `straight-lift`,
+  `curving-lift`, `spiral-tower`, `elevator`, `cliff`, `rooftop`, `station-launch`, and `stepped-platform`
+  (the gate on broad stone steps, each tier lower, deeper and wider behind it: a temple's or a canyon's).
 - **Station**: a canopy over the finish and the run-out, platforms either side, riders queuing.
 - **Water**: `water: true` on a section: the land sinks under a water surface round it (never
   above any stretch of track). Landmarks out over the water float on it (`cruise-ship`).
@@ -349,9 +363,10 @@ To look at them all: `node scripts/dump-kit-track.js grand-prix-gallery`, then o
 - **On the canyon floor**: a section without a `height` runs on the floor (the default height is
   0); a section's `height` (up to 45) lifts it onto supports, and there the walls stand lower,
   so the track climbs out over the rock and drops back in. Every canyon touches down somewhere.
-- **The canyon**: `canyon: { palette, depth, river }`. `palette`: the rock, river and plateau
+- **The canyon**: `canyon: { palette, depth, river, narrow }`. `palette`: the rock, river and plateau
   colours and what grows there (`grand-canyon`, `himalaya`, `andes`, `limestone`, `copper`,
-  `basalt`, `namib`); `depth`: metres from the floor to the rim (20 to 60, default 40);
+  `basalt`, `karakoram`, `namib`, `slot`, `verdon`, `jinsha`, `waimea`, `mujib`); `narrow: true`: a slot
+  canyon, its walls about 15 m from the track instead of 20, climbing faster; `depth`: metres from the floor to the rim (20 to 60, default 40);
   `river`: `'left'`, `'right'` or `'none'`. The floor reaches 20 m from the track (34 m on the
   river's side, the river 16 to 26 m out), then the walls climb in bands to the rim over about
   22 m; beyond lies the plateau. Inside a tight bend the walls meet in a butte.
@@ -366,7 +381,11 @@ To look at them all: `node scripts/dump-kit-track.js grand-prix-gallery`, then o
   `'railway-trestle'`, `'suspension-bridge'` (rim to rim, high over the track), and `'condor'`
   (two condors circling above the rim).
 - The layouts made for the series: `horseshoe-bend`, `great-bend`, `terrace-steps`,
-  `rafting-run`, `six-canyons`; each has a test track built as a canyon (`series: 'canyon'`).
+  `rafting-run`, `six-canyons`, `basalt-gorge`, `twin-peaks`, `cliff-ledge`, `free-fall`, `meanders`,
+  `slot-canyon`, `cliff-road`, `rapids-gorge`, `long-falls`, `siq-passage`; each has a test track built
+  as a canyon (`series: 'canyon'`).
+- **See-through parts**: a landmark may give `haze` (shafts of light falling into a slot, a rainbow in
+  a waterfall's spray, an island's waterfall), drawn faint and unlit, never written to depth.
 - Grand Canyon Burst is the proof track.
 
 ## Block Series
@@ -377,7 +396,8 @@ as a coaster (everything above applies), like a canyon (looks only, like everyth
 - **On the voxel land**: a section without a `height` runs on the land (the default height is 0);
   a section's `height` lifts it onto block pillars (over the cube cliffs, round the stack).
 - **The world**: `block: { world }`, one of `meadow`, `valley`, `snow`, `mine`, `magma`,
-  `puzzle`, `fortress`, `portal` (the land's colours, how it steps, what stands on it).
+  `puzzle`, `fortress`, `portal`, `sky` (island tops over a sea of cloud), `harbour` (quays, containers),
+  `temple` (sand-coloured desert), `bonus` (a night stage) (the land's colours, how it steps, what stands on it).
 - **Supports**: `coaster: { style: 'blocks' }` builds stacked cube pillars.
 - **Our own shapes**: the falling pieces in the scenery are our own block shapes and colours,
   never the classic seven in a classic well; no names, creatures, textures or terms from
@@ -390,7 +410,11 @@ as a coaster (everything above applies), like a canyon (looks only, like everyth
   (a lamp per quarter of the race, gold once the winner is home), `block-gate` (a gateway,
   `over: true`: its lintel's blocks drop into place as the pack comes), `drawbridge` (lowers as
   the pack comes), `block-portal` (a gateway glowing blue to violet), `gg-arch` (a finish
-  landmark: the GG lights once the winner is home). A rewound replay undoes them.
+  landmark: the GG lights once the winner is home), `chain-rows` (eight short walls of rows clear one after
+  another, 0.3 s apart, as the leader comes level, then refill), `score-wall` (a row of lit blocks for each
+  tenth of the race the leader has run, gold once the winner is home), `checkpoint-flash` (a gateway,
+  `over: true`: its lamps flash as the leader passes under), `final-stage` (a finish landmark lit, with a
+  slow ripple, once the winner is home). A rewound replay undoes them.
 - **Lighting**: `dawn` (a soft warm morning), `cave` (dark, lamplit, the marbles glowing) and
   `magma` (lit from below by the magma, embers drifting up on computers).
 - **Costumes**: `cube-pillar`, `gem-pillar`, `magma-pillar` (slalom poles and pegs), `voxel-cube`

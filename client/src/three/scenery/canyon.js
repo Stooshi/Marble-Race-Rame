@@ -76,6 +76,36 @@ export const CANYON_PALETTES = {
     top: '#b0a07e', top2: '#9a8c6a', water: '#7a9488', foam: '#eef2ee', bands: [1, 1.1, 0.9, 1.2, 0.8],
     bank: '#a8987a', dressing: [['rock', 0.6, '#6e6254'], ['bush', 0.25, '#8a8a5a'], ['juniper', 0.15, '#4f6a3a']],
   },
+  // A slot canyon: wavy bands of orange, salmon and deep red sandstone, sand on the floor, no river.
+  slot: {
+    strata: ['#b8532c', '#d9783c', '#e89a5c', '#c4603a', '#f0b27a', '#a8452a', '#de8a4e'], ledge: '#d98a54', floor: '#d9a066', bar: '#e8bf88',
+    top: '#d9a46a', top2: '#c48a52', water: '#5a8f8a', foam: '#eef4f2', bands: [0.8, 0.6, 0.9, 0.5, 0.8, 0.6, 0.7],
+    bank: '#d9a46a', dressing: [['rock', 0.6, '#b8693e'], ['bush', 0.25, '#9a9a62'], ['juniper', 0.15]],
+  },
+  // White and cream limestone cliffs with green scrub on the ledges, a turquoise river, garrigue on the rim.
+  verdon: {
+    strata: ['#e8e4da', '#d6d1c4', '#f2efe8', '#c9c3b4', '#e0dbcf', '#bdb6a6'], ledge: '#6f8a4a', floor: '#a9a98a', bar: '#ece6d6',
+    top: '#8a9a5a', top2: '#a6a36a', water: '#22c4bf', foam: '#e6fbfa', bands: [1.1, 0.8, 1.2, 0.9, 1, 0.8],
+    bank: '#b8b49a', dressing: [['bush', 0.45, '#5f7a3e'], ['pine', 0.3, '#3f6a3a'], ['rock', 0.25, '#d6d1c4']],
+  },
+  // Grey and ochre limestone under snow peaks, pines on the ledges, a roaring khaki river white with rapids.
+  jinsha: {
+    strata: ['#7a746a', '#9a8f7c', '#68625a', '#a89a80', '#857c6e', '#b0a48c'], ledge: '#5f7a4a', floor: '#8f8670', bar: '#b9ad92',
+    top: '#7f8f5a', top2: '#6a7f4f', water: '#8a8a62', foam: '#f4f2ea', bands: [1, 1.1, 0.9, 1.2, 0.9, 1], snow: 1.25,
+    bank: '#a39a82', dressing: [['pine', 0.5], ['rock', 0.4, '#7a746a'], ['bush', 0.1, '#6a8a4a']],
+  },
+  // Red volcanic earth in bands under green ridges, ferns and koa on the ledges, a red-brown river.
+  waimea: {
+    strata: ['#9a3a22', '#b8522e', '#7a2e1e', '#c46a3a', '#8a4a2e', '#a8442a'], ledge: '#4f8a3a', floor: '#8a5a3a', bar: '#b8784e',
+    top: '#4f8f3e', top2: '#5f9a46', water: '#8a5a42', foam: '#f2ece4', bands: [1, 0.8, 1.1, 0.9, 1, 1.2],
+    bank: '#8a6a42', dressing: [['bush', 0.45, '#3f7a34'], ['juniper', 0.35, '#4f8a3a'], ['rock', 0.2, '#7a2e1e']],
+  },
+  // Deep red and rose sandstone, streaked dark, a clear green stream filling the narrow passage.
+  mujib: {
+    strata: ['#8a2e22', '#a8443a', '#c46a5a', '#7a2a24', '#b85a4a', '#d48a6e'], ledge: '#b87a5a', floor: '#a86a4e', bar: '#d9b08a',
+    top: '#c49a72', top2: '#b0845e', water: '#4fa89a', foam: '#eaf6f2', bands: [0.9, 1, 0.7, 1.1, 0.8, 0.9],
+    bank: '#b8846a', dressing: [['rock', 0.65, '#8a2e22'], ['bush', 0.25, '#7a8a4a'], ['juniper', 0.1, '#5f7a4a']],
+  },
   // Namib desert: pale gneiss and dark dolerite bands, sand on the floor, a thin river.
   namib: {
     strata: ['#7a6a5a', '#a08a70', '#5a4e44', '#b49c7e', '#8a7662'], ledge: '#d9b98a', floor: '#d6b07a', bar: '#e8cf9e',
@@ -120,6 +150,7 @@ const FOLD_NEAR = 32;      // …within this far of each other on the plan (a sp
 const FLOOR = 20;          // metres from the track to the foot of the wall (the side without the river)
 const RIVER = { centre: 21, half: 5, foot: 34 }; // the river's middle and half-width, and the wall's foot on its side
 const RUN = 22;            // metres from the foot of a wall to its rim
+const NARROW = { floor: 15.5, run: 14 }; // a slot canyon's (`narrow: true`): its walls' foot never nearer than 12 m, wobble and all
 const DIP = 0.45;          // share the walls are lower where the track flies highest
 const BELOW_RIM = 0.6;     // metres the canyon floor lies under the track's rim
 const GRID = 10;           // metres: the lookup grid of the nearest samples
@@ -145,6 +176,9 @@ export function makeCanyon(centerline, channel, kit, { flight, liftAt, bounds, l
   const pal = CANYON_PALETTES[cfg.palette] ?? CANYON_PALETTES['grand-canyon'];
   const depth = cfg.depth ?? 40;
   const riverSign = cfg.river === 'none' ? 0 : cfg.river === 'right' ? -1 : 1; // (+1: the left, as a track file's sides)
+  // (A slot canyon, `narrow`: the walls stand closer and climb faster.)
+  const floorW = cfg.narrow ? NARROW.floor : FLOOR;
+  const runW = cfg.narrow ? NARROW.run : RUN;
   const { samples, segments } = centerline;
   const step = channel.arc / segments;
   const n = segments + 1;
@@ -318,8 +352,8 @@ export function makeCanyon(centerline, channel, kit, { flight, liftAt, bounds, l
     return cum[k] + (cum[k + 1] - cum[k]) * up;
   };
   // Where a wall's foot is, on each side (the river's side further out), wobbling along the canyon.
-  const footAt = (side, a) => (side === riverSign ? RIVER.foot : FLOOR) + 2.6 * wobble(a, side > 0 ? 0.4 : 2.7);
-  const runAt = (side, a) => RUN + 3 * wobble(a, side > 0 ? 5.1 : 1.3);
+  const footAt = (side, a) => (side === riverSign ? RIVER.foot : floorW) + 2.6 * wobble(a, side > 0 ? 0.4 : 2.7);
+  const runAt = (side, a) => runW + 3 * wobble(a, side > 0 ? 5.1 : 1.3);
 
   // One stretch's canyon at a spot: the land's height, and what the spot is (floor, river, wall, top).
   const stretch = (x, z, c) => {
@@ -361,7 +395,7 @@ export function makeCanyon(centerline, channel, kit, { flight, liftAt, bounds, l
     let { y } = s;
     if (gOther[g] >= 0) {
       const c2 = closest(x, z, gOther[g]);
-      if (c2.d < c.d + 2 * (RUN + RIVER.foot)) {
+      if (c2.d < c.d + 2 * (runW + RIVER.foot)) {
         const s2 = stretch(x, z, c2);
         const k = 6;
         const h = Math.max(0, Math.min(1, 0.5 + (s2.y - y) / (2 * k)));
@@ -388,10 +422,10 @@ export function makeCanyon(centerline, channel, kit, { flight, liftAt, bounds, l
     const s = at(x, z);
     // (Near the track, how much of the canyon there is follows the nearest stretch; further out, the
     // smoothed share round about, so the plateau never ends in a cliff where one stretch gives way to another.)
-    const near = Math.min(1, 1.5 * (s.w + (smooth(gWall, x, z) - s.w) * smoothstep(FLOOR, FLOOR + RUN + 30, s.c.d)));
+    const near = Math.min(1, 1.5 * (s.w + (smooth(gWall, x, z) - s.w) * smoothstep(floorW, floorW + runW + 30, s.c.d)));
     // (And far out it is all the canyon's plateau, even beyond a stretch without walls: the land
     // round the start and the finish rises to the plateau rather than falling away below it.)
-    const W = (near + (1 - near) * smoothstep(FLOOR + RUN + 50, FLOOR + RUN + 160, s.c.d)) * open(x, z);
+    const W = (near + (1 - near) * smoothstep(floorW + runW + 50, floorW + runW + 160, s.c.d)) * open(x, z);
     // (Round the station the land lies no higher than its floor, rising gently away from it: a basin
     // at the canyon's end, so the station never stands in a cutting.)
     const dEnd = Math.hypot(x - endAt.x, z - endAt.z);
@@ -400,7 +434,7 @@ export function makeCanyon(centerline, channel, kit, { flight, liftAt, bounds, l
     const y = sink(s.y, s.c.d);
     const h = Math.min(base + (y - base) * W, basin);
     // (Right beside the track the ordinary land's own fit to the channel always wins where it is lower.)
-    return s.c.d < FLOOR - 4 ? Math.min(h, base) : h;
+    return s.c.d < FLOOR - 4 ? Math.min(h, base) : h; // (as for every canyon, a slot's too)
   }
 
   const C = (hex) => new Color(hex);
