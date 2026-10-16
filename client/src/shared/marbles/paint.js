@@ -95,6 +95,8 @@ export function layerCss(l) {
  *     `twist` degrees from pole to pole; seen down the axis, the conic as CSS draws it.
  *   map 'caps': round patches ({ at: [x, y, z], size: degrees, color }) on `base`.
  *   map 'band': a soft band `width` degrees wide round the great circle square to `axis`.
+ *   map 'rings': soft rings round `axis`, each `{ radius, width, soft, color }`: `radius` degrees
+ *     from the axis (a ring round a pole, like an aurora's oval seen from space), on `base` (or clear).
  */
 export function ballPattern(pattern) {
   const soft = (e0, e1, v) => { const t = Math.max(0, Math.min(1, (v - e0) / (e1 - e0))); return t * t * (3 - 2 * t); };
@@ -131,6 +133,21 @@ export function ballPattern(pattern) {
       const s = Math.abs(x * a[0] + y * a[1] + z * a[2]);
       const k = 1 - soft(half, edge, s);
       return [c[0], c[1], c[2], c[3] * k];
+    };
+  }
+  if (pattern.map === 'rings') {
+    const n = Math.hypot(...pattern.axis); const a = pattern.axis.map((v) => v / n);
+    const base = pattern.base ? rgba(pattern.base) : [0, 0, 0, 0];
+    const rings = pattern.rings.map((r) => ({ ...r, c: rgba(r.color) }));
+    return (x, y, z) => {
+      const deg = (Math.acos(Math.max(-1, Math.min(1, x * a[0] + y * a[1] + z * a[2]))) * 180) / Math.PI;
+      let c = base;
+      for (const r of rings) {
+        const off = Math.abs(deg - r.radius);
+        const k = (1 - soft(r.width / 2, r.width / 2 + (r.soft ?? 4), off)) * r.c[3];
+        if (k > 0) c = [r.c[0] * k + c[0] * (1 - k), r.c[1] * k + c[1] * (1 - k), r.c[2] * k + c[2] * (1 - k), k + c[3] * (1 - k)];
+      }
+      return c;
     };
   }
   throw new Error(`Unknown ball pattern ${pattern.map}`);

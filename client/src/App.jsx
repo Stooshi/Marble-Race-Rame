@@ -43,6 +43,7 @@ const Replay3D = lazy(() => importOrReload(() => import('./pages/Replay3D')));
 const MarbleShowroom = lazy(() => importOrReload(() => import('./site/pages/MarbleShowroom')));
 const MarbleCompare = lazy(() => importOrReload(() => import('./site/pages/MarbleCompare')));
 const MarbleRoll = lazy(() => importOrReload(() => import('./site/pages/MarbleRoll')));
+const AuroraOptions = lazy(() => importOrReload(() => import('./site/pages/AuroraOptions')));
 const BannerReview = lazy(() => importOrReload(() => import('./site/pages/BannerReview')));
 const PhysicsPreview = lazy(() => importOrReload(() => import('./pages/PhysicsPreview')));
 // The back office (/admin): its own chunk, never linked from the site; the server checks every request.
@@ -125,6 +126,10 @@ export default function App() {
           <Route
             path="/preview/marbles/roll"
             element={<Suspense fallback={<div className="page"><Spinner /></div>}><MarbleRoll /></Suspense>}
+          />
+          <Route
+            path="/preview/marbles/northern-lights"
+            element={<Suspense fallback={<div className="page"><Spinner /></div>}><AuroraOptions /></Suspense>}
           />
           <Route
             path="/preview/banners"

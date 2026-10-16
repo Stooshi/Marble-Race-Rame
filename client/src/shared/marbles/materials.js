@@ -331,6 +331,21 @@ export function lookSpec(slug) {
   return spec;
 }
 
+/**
+ * The same for a look that isn't in the catalogue (a design being tried out on a preview page):
+ * `look` as badge.js makes them ({ material, layers, parts, glow }), `key` naming it in the cache.
+ */
+export function customSpec(key, look) {
+  if (cache.has(key)) return cache.get(key);
+  const spec = fromParts(look);
+  spec.slug = key;
+  spec.built = true;
+  spec.look = look;
+  finish(spec, key);
+  cache.set(key, spec);
+  return spec;
+}
+
 /** The same for a plain marble ({ color_primary, color_secondary, pattern }): the free starters, the Originals, the computer players'. */
 export function plainSpec(marble) {
   const look = plainLookOf(marble);
@@ -446,6 +461,11 @@ function marbleMaterial(spec) {
  */
 export function createMarbleLook(slug, options = {}) {
   return lookFromSpec(lookSpec(slug), options);
+}
+
+/** A marble wearing a look that isn't in the catalogue (customSpec): for preview pages. */
+export function createCustomLook(key, look, options = {}) {
+  return lookFromSpec(customSpec(key, look), options);
 }
 
 /** One plain marble (a starter, an Original, a computer player's): the same marble as its picture, as a collection look. */
