@@ -13,6 +13,17 @@
    "side": -1,
    "marbles": 5
   },
+  "antelope-slot-spins": {
+   "name": "Antelope Slot Spins",
+   "series": "Canyons",
+   "lighting": "day",
+   "v": "88758b72",
+   "bytes": 22696,
+   "bytes2x": 54850,
+   "t": 10430,
+   "side": 1,
+   "marbles": 4
+  },
   "arcade-spins": {
    "name": "Arcade Spins",
    "series": "Arcade",

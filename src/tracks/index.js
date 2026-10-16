@@ -63,6 +63,7 @@ module.exports = [
   require('./indus-spins'),
   require('./cotahuasi-free-fall'),
   require('./fish-river-burst'),
+  require('./antelope-slot-spins'),
   require('./spawn-point'),
   require('./speedrun-valley'),
   require('./voxel-peaks'),

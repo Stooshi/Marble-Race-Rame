@@ -674,6 +674,7 @@ const HIDDEN_KIT_TRACKS = [
   ['the-stack', '2027-01-23-add-the-stack.sql', 'The Stack, Block Series track 8: a spiral high on block pillars round a towering stack of blocks, where new blocks keep dropping onto the top and settling.'],
   ['block-fortress', '2027-01-24-add-block-fortress.sql', 'Block Fortress, Block Series track 9: a castle of stone blocks in green hills, over a drawbridge as it lowers and through a gate whose blocks drop into place as the pack comes.'],
   ['final-level', '2027-01-25-add-final-level.sql', 'Final Level, Block Series track 10: a dusk-blue world of blocks, through a glowing block portal and round the loop to a clean GG that lights once the winner is home.'],
+  ['antelope-slot-spins', '2027-01-26-add-antelope-slot-spins.sql', 'Antelope Slot Spins, Canyon Series track 11: down a slot canyon in Arizona, through wavy orange sandstone past shafts of light falling from the rim, round a corkscrew out over the slot to the sandy wash.'],
 ];
 for (const [slug, file, note] of HIDDEN_KIT_TRACKS) {
   test(`${slug} is added by its data update, switched off, exactly as its track file builds it`, () => {
