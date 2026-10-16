@@ -14,6 +14,7 @@
  *   'text'                        a paragraph (inline: **bold**, [placeholder])
  *   ['ul' | 'ol', ...items]       a list
  *   ['table', [heads], ...rows]   a table
+ *   ['contact', label]            a button to the contact form (/help#contact)
  */
 import economy from '../../shared/economy.json';
 import { COIN_PACKS } from '../../shared/payments/packs';
@@ -278,11 +279,11 @@ export function buildFaq({ tracks } = {}) {
     ]],
     ['Contact us', [
       ['Still need help?',
-        `Use the contact form below or email **${company.supportEmail}**. Tell us your player name and, for payment questions, your order number. We aim to reply within [2 working days].`],
+        ['Use the contact form below. Tell us your player name and, for payment questions, your order number. We aim to reply within [2 working days].', ['contact', 'Contact us']]],
       ['Privacy questions',
-        `For questions about your data, or to ask to see, correct, export or delete it, email **${company.privacyEmail}**. ${company.name} is the data controller. You can also complain to the Swedish Authority for Privacy Protection (IMY).`],
+        [`For questions about your data, or to ask to see, correct, export or delete it, use the contact form and choose **Privacy and your data**. ${company.name} is the data controller. You can also complain to the Swedish Authority for Privacy Protection (IMY).`, ['contact', 'Contact us']]],
       ['Company details',
-        `Marble Spins is operated by **${company.name}**, org.nr ${company.orgNo}, VAT no. ${company.vatNo}, ${company.street}, ${company.postcode} ${company.city}, ${company.country}. Email: ${company.supportEmail}.`],
+        `Marble Spins is operated by **${company.name}**, org.nr ${company.orgNo}, VAT no. ${company.vatNo}, ${company.street}, ${company.postcode} ${company.city}, ${company.country}. All our contact details are on the legal page, under Contact.`],
     ]],
   ];
 
@@ -310,8 +311,9 @@ export function blocksText(blocks) {
   return blocks.map((b) => {
     if (typeof b === 'string') return plain(b);
     if (b[0] === 'table') return b.slice(2).map((row) => b[1].map((h, i) => `${h}: ${row[i]}`).join(', ')).join('. ');
+    if (b[0] === 'contact') return '';
     return b.slice(1).map((item, i) => `${b[0] === 'ol' ? `${i + 1}. ` : ''}${plain(item)}`).join(' ');
-  }).join(' ');
+  }).filter(Boolean).join(' ');
 }
 
 /** Whether a text still holds a [bracket] placeholder. */

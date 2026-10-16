@@ -8,3 +8,5 @@ export const OPERATED_BY = `Marble Spins is operated by ${company.name}, org.nr 
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 /** The legal texts' "last updated" date, e.g. "16 October 2026". */
 export const LEGAL_UPDATED = (() => { const [y, m, d] = company.legalUpdated.split('-').map(Number); return `${d} ${MONTHS[m - 1]} ${y}`; })();
+/** Where every "Contact us" link goes: the contact form at the end of the Help Centre. */
+export const CONTACT_PATH = '/help#contact';

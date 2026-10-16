@@ -33,6 +33,7 @@ function Answer({ blocks }) {
         </div>
       );
     }
+    if (b[0] === 'contact') return <p key={k}><a href="#contact" className="ms-btn ms-btn--primary ms-btn--sm">{String(b[1]).toUpperCase()}</a></p>;
     const List = b[0] === 'ol' ? 'ol' : 'ul';
     return <List key={k}>{b.slice(1).map((item) => <li key={item}><Inline text={item} /></li>)}</List>;
   });

@@ -247,6 +247,7 @@ Defined in `src/sockets/index.js`. The client may send a JWT in `auth.token`; an
   - the previews `TrackPreview3D`, `Replay3D`, `PhysicsPreview`.
 - `site/`: the Marble Spins website:
   - `SiteHeader.jsx`, `SiteFooter.jsx`, `Logo.jsx`, `SoundControl.jsx`, `canonical.js`, `TrackBanner.jsx` (a track's picture on its picker card: lazy-loaded, over the series gradient, which stays when a picture is missing or still loading; `SERIES_PIC`);
+  - `company.js` (the company details formatted, `CONTACT_PATH` = `/help#contact`: where every "Contact us" link goes) and `ProtectedEmail.jsx` (an email address shown as "support (at) marblespins.com" in the page HTML, so the pre-rendered pages hold no address for spam bots, and as a normal mailto link once the page runs);
   - `pageMeta.js`: every page's title, description, canonical address, share picture and indexing (`metaFor`, `applyMeta`), set on every page change and used by the pre-rendering;
   - `consent/`: the cookie banner and the trackers (website only, never in the apps): `consent.js` (the choice in local storage `marble-consent`, version `CONSENT_VERSION`; `STORAGE_LIST`), `ConsentManager.jsx` (banner with REJECT ALL and ACCEPT ALL side by side, Settings per category with nothing ticked, reopened by "Cookie settings" in the footer and on `/cookies`; logs the choice to the account when logged in), `tracking.js` (Google Analytics 4 with Consent Mode v2 after statistics consent, the Meta Pixel after marketing consent and never under 13; `track()` events: `sign_up`, `first_race`, `race_finished`, `shop_view`, `checkout_started`, `purchase`);
   - `landing/` (landing page, 3D hero replay; `SERIES`: the series cards, each with one of its tracks' pictures; the tracks-and-series heading is counted from the live track list);
@@ -263,7 +264,7 @@ Defined in `src/sockets/index.js`. The client may send a JWT in `auth.token`; an
   - `storeLinks.json` (the website footer's App Store and Google Play links; empty = hidden);
   - `company.json` (who runs Marble Spins: Voltron Robotics AB, org.nr, VAT no., address, support and privacy email, the legal texts' date; `client/src/site/company.js` formats it);
   - `trackBanners.json` (the track pictures: `enabled` in the picker, and per track its version, sizes, name and series);
-  - `support.json` (contact-form categories and limits, checked by the server too);
+  - `support.json` (contact-form categories and limits, checked by the server too; "Privacy and your data" is the topic for data requests);
   - `payments/packs.json`, `payments/consent.json`;
   - `marbles/catalog.json`;
   - `marbles/badge.js`: the master look of each design;

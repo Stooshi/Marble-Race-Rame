@@ -62,14 +62,17 @@ describe('the questions', () => {
   it('reads as the draft, word for word, where nothing is a setting', () => {
     expect(bySlug['how-do-i-earn-coins'].text).toBe('By racing: 15 coins for every race you take part in. A finishing bonus: 1st place +50, 2nd +30, 3rd +20, 4th–10th +5. A daily goal: finish 5 races in a day for +35 coins.');
     expect(bySlug['what-are-the-different-tracks'].text).toBe('There are 50 tracks in five series: Grand Prix, World Tour, Coasters, Pinball and Arcade. Each track has its own layout, start and scenery.');
-    expect(bySlug['still-need-help'].text).toBe('Use the contact form below or email support@marblespins.com. Tell us your player name and, for payment questions, your order number. We aim to reply within [2 working days].');
+    expect(bySlug['still-need-help'].text).toBe('Use the contact form below. Tell us your player name and, for payment questions, your order number. We aim to reply within [2 working days].');
   });
 
   it('fills the company details from shared/company.json (16 Oct 2026)', () => {
     const text = all.map((q) => q.text).join('\n');
     for (const p of ['[support email]', '[privacy email]', '[COMPANY NAME AB]', '[XXXXXX-XXXX]', '[address]']) expect(text).not.toContain(p);
-    expect(bySlug['company-details'].text).toBe('Marble Spins is operated by Voltron Robotics AB, org.nr 559344-3756, VAT no. SE559344375601, Drivhjulsvägen 20, 126 30 Hägersten, Sweden. Email: support@marblespins.com.');
-    expect(bySlug['privacy-questions'].text).toMatch(/privacy@marblespins\.com/);
+    expect(bySlug['company-details'].text).toBe('Marble Spins is operated by Voltron Robotics AB, org.nr 559344-3756, VAT no. SE559344375601, Drivhjulsvägen 20, 126 30 Hägersten, Sweden. All our contact details are on the legal page, under Contact.');
+    expect(bySlug['privacy-questions'].text).toMatch(/Privacy and your data/);
+    // No written email addresses in the Help Centre: a Contact us button to the form instead.
+    expect(all.map((q) => q.text).join(' ')).not.toMatch(/@marblespins\.com/);
+    expect(bySlug['still-need-help'].blocks).toContainEqual(['contact', 'Contact us']);
   });
 
   it('counts the live tracks and series when it has them', () => {
@@ -91,7 +94,7 @@ describe('the questions', () => {
   });
 
   it('offers the help sections as contact categories', () => {
-    expect(CONTACT_CATEGORIES).toEqual([...faq.map((s) => s.title).filter((t) => t !== 'Contact us'), 'Something else']);
+    expect(CONTACT_CATEGORIES).toEqual([...faq.map((s) => s.title).filter((t) => t !== 'Contact us'), 'Privacy and your data', 'Something else']);
     for (const c of CONTACT_CATEGORIES) expect(c.length).toBeLessThanOrEqual(40); // (support_messages.category)
   });
 });

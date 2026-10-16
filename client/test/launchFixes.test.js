@@ -66,3 +66,24 @@ describe('company details', () => {
     expect(src('src/site/pages/LegalPage.jsx')).toMatch(/DRAFT for legal review/); // (until Moses says)
   });
 });
+
+describe('contact', () => {
+  it('the footer names the company and links Contact us and Legal, with no address or email', () => {
+    const footer = src('src/site/SiteFooter.jsx');
+    expect(footer).toMatch(/OPERATED_BY/);
+    expect(footer).toMatch(/CONTACT_PATH/);
+    expect(footer).toMatch(/to="\/legal#contact">Legal</);
+    expect(footer).not.toMatch(/ADDRESS|supportEmail|mailto/);
+  });
+
+  it('/legal#contact leads with the form, then the details required by law, emails kept from bots', () => {
+    const legal = src('src/site/pages/LegalPage.jsx');
+    expect(legal).toMatch(/The quickest way to reach us is the contact form/);
+    for (const k of ['company.name', 'company.orgNo', 'company.vatNo', 'company.street', 'company.postcode', 'company.city']) expect(legal).toContain(k);
+    expect(legal).toMatch(/<ProtectedEmail address=\{company.supportEmail\} \/>/);
+    expect(legal).toMatch(/<ProtectedEmail address=\{company.privacyEmail\} \/>/);
+    expect(legal).not.toMatch(/mailto/);
+    expect(src('src/site/ProtectedEmail.jsx')).toMatch(/\(at\)/);
+  });
+});
+

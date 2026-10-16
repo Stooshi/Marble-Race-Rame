@@ -152,7 +152,7 @@ function NotFound() {
     <div className="page">
       <h1>Lost the marble</h1>
       <p className="muted">That page doesn't exist.</p>
-      <div className="ms-row"><Link to="/" className="btn">Back home</Link><Link to="/help">Help Centre</Link></div>
+      <div className="ms-row"><Link to="/" className="btn">Back home</Link><Link to="/help">Help Centre</Link><Link to="/help#contact">Contact us</Link></div>
     </div>
   );
 }

@@ -75,6 +75,7 @@ export default function OfflineScreen() {
         </p>
         <button type="button" className="ms-btn ms-btn--primary" onClick={check} disabled={checking}>{checking ? 'CHECKING…' : 'TRY AGAIN'}</button>
         <Link to="/help#i-see-the-offline-screen" className="ms-offline__help">Help Centre</Link>
+        <Link to="/help#contact" className="ms-offline__help">Contact us</Link>
       </div>
     </div>
   );
