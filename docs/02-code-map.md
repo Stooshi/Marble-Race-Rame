@@ -8,6 +8,7 @@
 |---|---|
 | Change how much a race pays, the daily goal, starting coins or bag discounts | `client/src/shared/economy.json` (read by server and website) |
 | Start a scoreboard season | `client/src/shared/economy.json` → `season`: `number`, `startsAt`, `endsAt` (ISO dates), `badgeTop`. Until all three are set no season is shown anywhere (no "This season" board, no season name or days left) |
+| Change the social media links | `client/src/shared/socialLinks.json` (icons from the `simple-icons` package, CC0) |
 | Show the App Store / Google Play buttons on the website | `client/src/shared/storeLinks.json` (`appStore`, `googlePlay`: the store page's https link; empty hides the button). Never shown inside the apps |
 | Change marble prices, designs, shades or the collection | `client/src/shared/marbles/catalog.json`, then `client/src/shared/marbles/badge.js` for how a design looks |
 | Change coin packs (amounts and prices) | `client/src/shared/payments/packs.json` |
@@ -262,6 +263,7 @@ Defined in `src/sockets/index.js`. The client may send a JWT in `auth.token`; an
 - `shared/`: data and code **shared with the server**:
   - `economy.json` (also the scoreboard `season`);
   - `storeLinks.json` (the website footer's App Store and Google Play links; empty = hidden);
+  - `socialLinks.json` (YouTube, Instagram, TikTok profile links: the footer's icon links via `site/SocialLinks.jsx`, the Help Centre's "Follow Marble Spins", and `sameAs` in the landing page's Organization data; website only, an empty link hides its icon);
   - `company.json` (who runs Marble Spins: Voltron Robotics AB, org.nr, VAT no., address, support and privacy email, the legal texts' date; `client/src/site/company.js` formats it);
   - `trackBanners.json` (the track pictures: `enabled` in the picker, and per track its version, sizes, name and series);
   - `support.json` (contact-form categories and limits, checked by the server too; "Privacy and your data" is the topic for data requests);

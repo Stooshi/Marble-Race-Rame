@@ -20,8 +20,8 @@ describe('the questions', () => {
   it('has the draft\'s 12 categories and every question once, each with its own link', () => {
     expect(faq.map((s) => s.title)).toEqual(['Getting started', 'Races', 'Fair play', 'Coins', 'Marbles and the collection', 'Buying coins',
       'Refunds', 'Friend rooms', 'Account and settings', 'Younger players and parents', 'Technical help', 'Contact us']);
-    expect(all.length).toBe(73); // (the draft: 6, 8, 4, 9, 10, 8, 4, 6, 7, 3, 5 and 3)
-    expect(faq.map((s) => s.questions.length)).toEqual([6, 8, 4, 9, 10, 8, 4, 6, 7, 3, 5, 3]);
+    expect(all.length).toBe(74); // (the draft: 6, 8, 4, 9, 10, 8, 4, 6, 7, 3, 5 and 4)
+    expect(faq.map((s) => s.questions.length)).toEqual([6, 8, 4, 9, 10, 8, 4, 6, 7, 3, 5, 4]);
     expect(new Set(all.map((q) => q.slug)).size).toBe(all.length);
     for (const q of all) expect(q.slug).toMatch(/^[a-z0-9]+(-[a-z0-9]+)*$/);
     expect(bySlug['whats-my-daily-streak'].q).toBe("What's my daily streak?");

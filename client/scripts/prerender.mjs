@@ -88,7 +88,7 @@ async function main() {
     build: { ssr: 'src/prerender/entry.jsx', outDir: ssrOut, emptyOutDir: true, rollupOptions: { output: { format: 'es', entryFileNames: 'entry.mjs' } } },
     ssr: { noExternal: true },
   });
-  const { render, metaFor, buildFaq, faqStructuredData } = await import(pathToFileURL(join(ssrOut, 'entry.mjs')).href);
+  const { render, metaFor, buildFaq, faqStructuredData, organizationStructuredData, socialLinks, SITE_URL } = await import(pathToFileURL(join(ssrOut, 'entry.mjs')).href);
 
   const template = readFileSync(join(dist, 'index.html'), 'utf8');
   writeFileSync(join(dist, 'app-shell.html'), template); // (the plain page, for every other address)
@@ -112,7 +112,10 @@ async function main() {
       console.warn(`prerender: ${path} couldn't be rendered (${e.message}); it gets the plain page`);
       html = '';
     }
-    const extra = path === '/help' ? `<script type="application/ld+json">${JSON.stringify(faqStructuredData(sections, metaFor('/help').canonical)).replace(/</g, '\\u003c')}</script>` : '';
+    const ld = (data) => `<script type="application/ld+json">${JSON.stringify(data).replace(/</g, '\\u003c')}</script>`;
+    // Structured data: the FAQ on /help; who runs Marble Spins and its social profiles (sameAs) on the landing page.
+    const extra = path === '/help' ? ld(faqStructuredData(sections, metaFor('/help').canonical))
+      : path === '/' ? ld(organizationStructuredData(SITE_URL, socialLinks)) : '';
     const file = path === '/' ? join(dist, 'index.html') : join(dist, `${path.slice(1)}.html`);
     mkdirSync(dirname(file), { recursive: true });
     writeFileSync(file, page(template, m, html, path, extra));

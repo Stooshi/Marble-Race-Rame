@@ -87,3 +87,43 @@ describe('contact', () => {
   });
 });
 
+
+describe('social links', () => {
+  it('are set once (shared/socialLinks.json) and go to search engines as Organization sameAs', async () => {
+    const { default: links } = await import('../src/shared/socialLinks.json');
+    expect(links).toMatchObject({ youtube: 'https://www.youtube.com/@Marblespins', instagram: 'https://www.instagram.com/marblespins_official/', tiktok: 'https://www.tiktok.com/@marblespins' });
+    const { organizationStructuredData } = await import('../src/site/company');
+    const org = organizationStructuredData('https://marblespins.com', links);
+    expect(org['@type']).toBe('Organization');
+    expect(org.legalName).toBe('Voltron Robotics AB');
+    expect(org.sameAs).toEqual([links.youtube, links.instagram, links.tiktok]);
+    expect(organizationStructuredData('https://marblespins.com', { youtube: '' }).sameAs).toBeUndefined();
+    expect(src('scripts/prerender.mjs')).toMatch(/organizationStructuredData\(SITE_URL, socialLinks\)/);
+  });
+
+  it('the footer shows icon links (labelled, new tab), not the old text, and never inside the apps', () => {
+    const footer = src('src/site/SiteFooter.jsx');
+    expect(footer).toMatch(/<SocialLinks \/>/);
+    expect(footer).not.toMatch(/on TikTok, Instagram and YouTube/);
+    const social = src('src/site/SocialLinks.jsx');
+    expect(social).toMatch(/if \(isNativeApp\(\)/);
+    expect(social).toMatch(/target="_blank" rel="noopener noreferrer" aria-label=/);
+  });
+});
+
+describe('social links in the apps', () => {
+  it('render nothing inside the iPhone and Android apps, and three labelled links on the website', async () => {
+    const { renderToStaticMarkup } = await import('react-dom/server');
+    const { createElement } = await import('react');
+    const { default: SocialLinks } = await import('../src/site/SocialLinks');
+    const web = renderToStaticMarkup(createElement(SocialLinks));
+    expect(web.match(/<a /g)).toHaveLength(3);
+    expect(web).toMatch(/aria-label="Marble Spins on YouTube \(opens in a new tab\)"/);
+    globalThis.window = { Capacitor: { isNativePlatform: () => true, getPlatform: () => 'ios' } };
+    try {
+      expect(renderToStaticMarkup(createElement(SocialLinks))).toBe('');
+    } finally {
+      delete globalThis.window;
+    }
+  });
+});

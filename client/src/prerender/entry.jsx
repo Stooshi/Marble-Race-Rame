@@ -10,6 +10,9 @@ import { AuthProvider } from '../context/AuthContext';
 
 export { metaFor } from '../site/pageMeta';
 export { buildFaq, faqStructuredData } from '../site/help/faq';
+export { organizationStructuredData } from '../site/company';
+export { default as socialLinks } from '../shared/socialLinks.json';
+export { SITE_URL } from '../site/canonical';
 
 /** HTML for one address. `data`: what the pages would fetch ({ tracks }), as the server gives it. */
 export function render(url, data = {}) {

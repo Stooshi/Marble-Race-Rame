@@ -6,6 +6,7 @@ import { SITE_URL } from '../canonical';
 import { buildFaq, faqStructuredData } from './faq';
 import { buildIndex, highlight, search, snippet } from './search';
 import ContactForm from './ContactForm';
+import SocialLinks from '../SocialLinks';
 
 /** **bold** and [placeholder] inside a line of answer text. */
 function Inline({ text }) {
@@ -33,6 +34,7 @@ function Answer({ blocks }) {
         </div>
       );
     }
+    if (b[0] === 'social') return <SocialLinks key={k} size={24} className="ms-social--help" />;
     if (b[0] === 'contact') return <p key={k}><a href="#contact" className="ms-btn ms-btn--primary ms-btn--sm">{String(b[1]).toUpperCase()}</a></p>;
     const List = b[0] === 'ol' ? 'ol' : 'ul';
     return <List key={k}>{b.slice(1).map((item) => <li key={item}><Inline text={item} /></li>)}</List>;

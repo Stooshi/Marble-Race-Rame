@@ -232,6 +232,9 @@ a.ms-chip:hover { text-decoration: none; border-color: var(--ms-muted); }
 .ms-footer__link:hover, .ms-footer__link:focus-visible { color: var(--ms-text); text-decoration: underline; }
 .ms-footer__stores { display: flex; gap: 10px; margin-left: auto; }
 .ms-footer__stores a { border: 1px solid var(--ms-border); border-radius: 10px; padding: 6px 12px; }
+.ms-social { display: flex; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.ms-social a { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 10px; color: var(--ms-soft); }
+.ms-social a:hover, .ms-social a:focus-visible { color: var(--ms-text); background: rgba(255, 255, 255, 0.06); }
 .ms-footer__company { flex-basis: 100%; margin: 0; font-size: 0.82rem; line-height: 1.5; }
 .ms-footer__company a { color: var(--ms-soft); }
 .ms-legal__address { font-style: normal; color: var(--ms-soft); line-height: 1.6; }
