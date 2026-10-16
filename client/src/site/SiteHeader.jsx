@@ -16,7 +16,7 @@ function UserChips({ user }) {
   return (
     <div className="ms-chips">
       <Link to="/shop#coins" className="ms-chip" title="Coins: earned racing or bought in coin packs">● {formatNumber(user.coins ?? 0)} coins</Link>
-      <span className="ms-chip ms-chip--streak" title="Daily streak">▲ [streak]</span>
+      {user.streak > 0 && <span className="ms-chip ms-chip--streak" title={`Daily streak: the daily goal met ${user.streak} day${user.streak === 1 ? '' : 's'} in a row`}>▲ {user.streak}</span>}
       {user.is_guest
         ? <Link to="/signup" className="ms-btn ms-btn--primary ms-btn--sm"><span className="ms-wide-only">SAVE YOUR MARBLE</span><span className="ms-narrow-only">SAVE</span></Link>
         : <Link to="/settings" className="ms-chip" title="Settings">@{user.username}</Link>}

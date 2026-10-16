@@ -35,7 +35,7 @@ const EVENT_TEXT = {
 export default function Race() {
   const { raceId } = useParams();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth();
 
   const details = useAsync(async () => {
     const data = await api.race(raceId);
@@ -89,6 +89,8 @@ export default function Race() {
   // Only to what the player allowed in the cookie banner; nothing about who they are.
   const raceOver = stream.status === 'finished';
   const inIt = myIndexes.length > 0;
+  // …and the header's coins and streak catch up with what the race paid.
+  useEffect(() => { if (raceOver && inIt) refreshUser?.().catch?.(() => {}); }, [raceOver, inIt, refreshUser]);
   useEffect(() => {
     if (!raceOver || !inIt || !trackingActive()) return;
     track('race_finished', { friendRoom: Boolean(race?.room_code) }, { onceKey: `race:${raceId}` });

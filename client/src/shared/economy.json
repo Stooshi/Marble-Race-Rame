@@ -4,19 +4,62 @@
   "race": {
     "takingPart": 15,
     "places": [
-      { "upTo": 1, "coins": 50 },
-      { "upTo": 2, "coins": 30 },
-      { "upTo": 3, "coins": 20 },
-      { "upTo": 10, "coins": 5 }
+      {
+        "upTo": 1,
+        "coins": 50
+      },
+      {
+        "upTo": 2,
+        "coins": 30
+      },
+      {
+        "upTo": 3,
+        "coins": 20
+      },
+      {
+        "upTo": 10,
+        "coins": 5
+      }
     ]
   },
-  "dailyGoal": { "races": 5, "coins": 35 },
-  "streak": { "note": "Days in a row with the daily goal met. Shown to the player; pays no coins." },
-  "dailyLimit": { "fullRaces": 10, "coinsAfter": 5 },
+  "dailyGoal": {
+    "races": 5,
+    "coins": 35
+  },
+  "streak": {
+    "note": "Days in a row with the daily goal met. Shown to the player; pays no coins."
+  },
+  "dailyLimit": {
+    "fullRaces": 10,
+    "coinsAfter": 5
+  },
   "dayBoundary": "UTC",
   "bagPricesRoundTo": 100,
   "bags": {
-    "starter": { "label": "Starter Bag", "rarities": ["common"], "discount": 0.15 },
-    "full": { "label": "Full Collection Bag", "rarities": ["common", "uncommon", "rare", "epic", "legendary"], "discount": 0.30 }
+    "starter": {
+      "label": "Starter Bag",
+      "rarities": [
+        "common"
+      ],
+      "discount": 0.15
+    },
+    "full": {
+      "label": "Full Collection Bag",
+      "rarities": [
+        "common",
+        "uncommon",
+        "rare",
+        "epic",
+        "legendary"
+      ],
+      "discount": 0.3
+    }
+  },
+  "season": {
+    "note": "The scoreboard season. Until number, startsAt and endsAt are all set (ISO dates, e.g. 2026-11-01T00:00:00Z), no season is shown anywhere: no season name or days left, no 'This season' board (the scoreboards open on All time). badgeTop: how many players win the season badge.",
+    "number": null,
+    "startsAt": null,
+    "endsAt": null,
+    "badgeTop": 100
   }
 }

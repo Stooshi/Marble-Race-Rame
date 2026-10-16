@@ -1,6 +1,6 @@
 # 4. Game and economy rules (plain English)
 
-*Last updated 14 Oct 2026 (Main 69b4a58).* The numbers live in `client/src/shared/economy.json` and `client/src/shared/marbles/catalog.json`. If this page and those files ever disagree, the files are right; then update this page.
+*Last updated 16 Oct 2026.* The numbers live in `client/src/shared/economy.json` and `client/src/shared/marbles/catalog.json`. If this page and those files ever disagree, the files are right; then update this page.
 
 ## The golden rules
 
@@ -52,7 +52,7 @@ There is one currency: **coins**. They can be earned by racing or bought in coin
 | Finishing bonus | 1st 50 · 2nd 30 · 3rd 20 · 4th–10th 5 each · 11th–20th 0 |
 | Daily goal: 5 races in a day (once a day) | 35 |
 | **Daily limit:** after the first 10 races of the day | each race pays 5 in total (no taking-part or finishing pay) |
-| Streak (days in a row with the daily goal) | shown only; pays nothing |
+| Streak (days in a row with the daily goal) | shown only (in the header, `▲ 3`, once there is one; on the home screen); pays nothing |
 
 Days run midnight to midnight **UTC**. Friend-room races pay like any race and count towards the same daily limit, so rooms can't be used to farm coins. Computer players are never paid.
 
@@ -71,7 +71,7 @@ Days run midnight to midnight **UTC**. Friend-room races pay like any race and c
 - **Refunds and chargebacks** take back the matching share of the coins, or whatever is left if some were spent.
 - **In the apps,** purchases will go through Apple and Google (not built yet). Inside the apps, coins are never sold any other way.
 
-**Scoreboards** rank players by coins **earned** racing. Bought coins never count. The boards are season (currently a placeholder, October 2026), all-time, and friends.
+**Scoreboards** rank players by coins **earned** racing. Bought coins never count. The boards are season, all-time, and friends. No season is set yet (`economy.json` → `season`): until it is, there is no season board or season label, and the scoreboards open on all-time.
 
 ## The shop and the collection
 

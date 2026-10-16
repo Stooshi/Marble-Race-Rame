@@ -6,14 +6,22 @@ const { optionalAuth } = require('../middleware/auth');
 const { validate } = require('../utils/validate');
 const { unauthorized } = require('../utils/httpError');
 const { EARNED } = require('../economy');
+const economy = require('../../client/src/shared/economy.json');
 
 const router = express.Router();
 
 /**
- * The current season. [Placeholder] dates and number until seasons are planned;
- * the board counts coins earned in races finished inside these dates.
+ * The current season, from client/src/shared/economy.json → season: { name, startsAt, endsAt,
+ * badgeTop }, or null until its number and dates are all set (then no season is shown and the
+ * season board counts all time). The board counts coins earned in races finished since the start.
  */
-const SEASON = { name: 'Season [3]', startsAt: '2026-10-01T00:00:00Z', endsAt: '2026-10-31T23:59:59Z', badgeTop: 100 };
+function seasonFrom(cfg = {}) {
+  const start = Date.parse(cfg.startsAt ?? '');
+  const end = Date.parse(cfg.endsAt ?? '');
+  if (!Number.isInteger(cfg.number) || cfg.number < 1 || !(start < end)) return null;
+  return { name: `Season ${cfg.number}`, startsAt: new Date(start).toISOString(), endsAt: new Date(end).toISOString(), badgeTop: cfg.badgeTop ?? 100 };
+}
+const SEASON = seasonFrom(economy.season);
 const TOP = 50;
 
 /**
@@ -25,7 +33,7 @@ router.get('/', optionalAuth, async (req, res) => {
   const { board = 'season' } = validate(req.query, { board: { type: 'enum', values: ['season', 'all', 'friends'] } });
   const me = req.user?.id ?? null;
   if (board === 'friends' && !me) throw unauthorized('Log in to see your friends');
-  const since = board === 'season' ? SEASON.startsAt : null;
+  const since = board === 'season' ? SEASON?.startsAt ?? null : null;
   const { rows } = await db.query(
     `WITH friends AS (
        SELECT DISTINCT other.user_id
@@ -82,3 +90,4 @@ router.get('/', optionalAuth, async (req, res) => {
 
 module.exports = router;
 module.exports.SEASON = SEASON;
+module.exports.seasonFrom = seasonFrom;

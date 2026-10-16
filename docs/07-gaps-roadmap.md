@@ -1,6 +1,6 @@
 # 7. Known gaps and roadmap
 
-*Last updated 16 Oct 2026 (Block Series built, switched off).* What isn't built, isn't finished, or is a known weakness. The launch target is **1 December 2026** (web, iPhone and Android). When something here is fixed, remove it and note the change in the [decisions log](06-decisions.md) if it was a decision.
+*Last updated 16 Oct 2026.* What isn't built, isn't finished, or is a known weakness. The launch target is **1 December 2026** (web, iPhone and Android). When something here is fixed, remove it and note the change in the [decisions log](06-decisions.md) if it was a decision.
 
 ## Must fix before launch
 
@@ -15,14 +15,15 @@
 | **Support email** | Set `SUPPORT_EMAIL` on Railway (and Brevo) so contact-form messages are emailed, and fill `[support email]` in the Help Centre and legal text. Until then, messages are only in the back office | Railway variables |
 | **Help Centre placeholders** | Answers still holding `[brackets]` (support and privacy email, reply time, company details, coins expiry, Swedish time, what happens when someone leaves a room, changing a name, Google/Apple sign-in, app launch, quality setting, parent approval, email switched on). Fill them in the project doc and in `faq.js` together | `client/src/site/help/faq.js` |
 | **Limited edition price** | "Northern Lights" coin price is still `[X]` | `client/src/shared/marbles/catalog.json` |
-| **Season** | Season name, dates and badge are placeholders (`Season [3]`, October 2026) | `src/routes/scoreboard.js` |
+| **Season** | Not set: no season is shown until `number`, `startsAt` and `endsAt` are set. The season badge for the top players isn't built yet | `client/src/shared/economy.json` → `season` |
+| **App store links** | The website footer shows the App Store / Google Play buttons once their links are in `storeLinks.json` | `client/src/shared/storeLinks.json` |
 | **50 launch tracks** | The 10 Canyon Series tracks were switched on on 15 Oct 2026 (Moses: 60 tracks live). Check that every series the landing page shows has live tracks | `docs/data_updates`, `tracks.is_active` |
 | **Backups** | Not confirmed that Railway backs up the database on the current plan. Until then, take manual `pg_dump` backups | [Runbook](05-runbook.md#backups) |
 
 ## Missing features (planned)
 
 - **News emails.** Brevo is the chosen provider and the sending code is in place (`src/email`). Consent and unsubscribe links are ready; still to build: the news email itself, its sending, and the list from the back office.
-- **Sign in with Google and Apple.** Mentioned in the privacy policy. If Google sign-in is added, Apple requires Sign in with Apple too.
+- **Sign in with Google and Apple.** Not built; the buttons are hidden on the sign-up page. Mentioned in the privacy policy. If Google sign-in is added, Apple requires Sign in with Apple too.
 - **Push notifications** (app plan step 5).
 - **Marble trading** between players. `user_collection.first_owner_id` is ready for it.
 - **Custom marble labels.** The column exists, but a word filter is needed first.

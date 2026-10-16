@@ -1,4 +1,5 @@
 import UIKit
+import AVFoundation
 import Capacitor
 
 @UIApplicationMain
@@ -7,7 +8,10 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     var window: UIWindow?
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-        // Override point for customization after application launch.
+        // The silent switch mutes the game's music and sounds, and the player's own music keeps
+        // playing under it ("ambient", like most games). The web page asks WebKit for the same
+        // (navigator.audioSession, client/src/app/native.js).
+        try? AVAudioSession.sharedInstance().setCategory(.ambient, mode: .default, options: [])
         return true
     }
 

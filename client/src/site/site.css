@@ -231,7 +231,7 @@ a.ms-chip:hover { text-decoration: none; border-color: var(--ms-muted); }
 .ms-footer__link { background: none; border: 0; padding: 0; color: var(--ms-soft); font: inherit; cursor: pointer; text-decoration: none; }
 .ms-footer__link:hover, .ms-footer__link:focus-visible { color: var(--ms-text); text-decoration: underline; }
 .ms-footer__stores { display: flex; gap: 10px; margin-left: auto; }
-.ms-footer__stores span { border: 1px solid var(--ms-border); border-radius: 10px; padding: 6px 12px; }
+.ms-footer__stores a { border: 1px solid var(--ms-border); border-radius: 10px; padding: 6px 12px; }
 
 /* ── Page frame and common blocks ───────────────────────────────────────── */
 .ms-page {

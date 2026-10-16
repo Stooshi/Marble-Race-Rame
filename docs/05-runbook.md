@@ -1,6 +1,6 @@
 # 5. Operations runbook
 
-*Last updated 14 Oct 2026 (Main 69b4a58).* How to deploy, change data, roll back, back up, and fix the usual problems. Items marked **[check]** should be confirmed the first time they are done.
+*Last updated 16 Oct 2026.* How to deploy, change data, roll back, back up, and fix the usual problems. Items marked **[check]** should be confirmed the first time they are done.
 
 ## Deploying
 
@@ -189,6 +189,12 @@ To turn email off again, remove `BREVO_API_KEY` and restart.
 - Pages, sitemap and share pictures are made by `npm run build` (see `docs/02-code-map.md`, `scripts/prerender.mjs`). A track switched on gets its page at the next website build: after a data update that switches tracks on, **redeploy the website** in Vercel too.
 - Check: `https://marblespins.com/sitemap.xml`, `/robots.txt`, and a page's preview in Facebook's Sharing Debugger. Submit the sitemap once in Google Search Console.
 - A new track's share picture: `public/share/tracks/<slug>.jpg`, 1200 × 630 (cut from its `@2x.webp`); without one its picker picture is used.
+
+## Season, store buttons and the iPhone silent switch
+
+- **Start a season:** set `season.number`, `season.startsAt` and `season.endsAt` (e.g. `2026-11-01T00:00:00Z`) in `client/src/shared/economy.json`, push, and **deploy the server** too (it reads the same file). The "This season" board, the season name and the days left appear by themselves. Until then nothing about seasons is shown.
+- **App Store / Google Play buttons on the website:** put each store page's https link in `client/src/shared/storeLinks.json` and push. An empty link hides its button. The apps never show them.
+- **iPhone silent switch:** the app uses an "ambient" audio session, so the switch mutes the game's music and sounds and the player's own music keeps playing. Check it on a real iPhone after each app build (switch on and off during a race, and with Spotify or Apple Music playing).
 
 ## Common problems
 

@@ -124,8 +124,8 @@ export default function LandingPage() {
         <div className="ms-two" style={{ alignItems: 'center' }}>
           <div className="ms-card" style={{ display: 'grid', gap: 12 }}>
             <span style={{ fontWeight: 700 }}>Your room link</span>
-            <div className="ms-row"><div className="ms-field-like" style={{ flexBasis: 200 }}>marblespins.com/r/[ROOM]</div><span className="ms-chip">Copy link</span></div>
-            <span className="ms-note">Friend rooms arrive soon.</span>
+            <div className="ms-row"><div className="ms-field-like" style={{ flexBasis: 200 }}>marblespins.com/r/K7P2QX</div><span className="ms-chip">Copy link</span></div>
+            <Link to="/play/friends" className="ms-note">Make a room: friends join from the link, no account needed.</Link>
           </div>
           <div style={{ display: 'grid', gap: 12 }}>
             <h2 id="friends-h" className="ms-landing__h2">Race your friends</h2>
@@ -139,7 +139,7 @@ export default function LandingPage() {
         <h2 id="daily-h" className="ms-landing__h2">Come back every day</h2>
         <div className="ms-grid">
           {[['▲', 'Daily goal', 'Race five times a day for bonus coins, and keep your streak going day after day.'],
-            ['★', 'Seasonal scoreboards', "Climb the season's scoreboard by the coins you earn, not the coins you buy."],
+            ['★', 'Scoreboards', 'Climb the scoreboard by the coins you earn racing, not the coins you buy.'],
             ['●', 'New tracks', "Fresh tracks and limited marbles arrive regularly, so there's always something new."]].map(([icon, h, p]) => (
             <div key={h} className="ms-card" style={{ display: 'grid', gap: 8 }}>
               <span aria-hidden="true" style={{ color: 'var(--ms-orange)', fontSize: '1.4rem' }}>{icon}</span>

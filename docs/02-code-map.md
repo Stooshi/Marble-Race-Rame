@@ -1,12 +1,14 @@
 # 2. Code map
 
-*Last updated 15 Oct 2026 (the Block Series).* Where everything is, and where to look to fix something. Paths are relative to the repository root.
+*Last updated 16 Oct 2026.* Where everything is, and where to look to fix something. Paths are relative to the repository root.
 
 ## Find it fast
 
 | I want to… | Look in |
 |---|---|
 | Change how much a race pays, the daily goal, starting coins or bag discounts | `client/src/shared/economy.json` (read by server and website) |
+| Start a scoreboard season | `client/src/shared/economy.json` → `season`: `number`, `startsAt`, `endsAt` (ISO dates), `badgeTop`. Until all three are set no season is shown anywhere (no "This season" board, no season name or days left) |
+| Show the App Store / Google Play buttons on the website | `client/src/shared/storeLinks.json` (`appStore`, `googlePlay`: the store page's https link; empty hides the button). Never shown inside the apps |
 | Change marble prices, designs, shades or the collection | `client/src/shared/marbles/catalog.json`, then `client/src/shared/marbles/badge.js` for how a design looks |
 | Change coin packs (amounts and prices) | `client/src/shared/payments/packs.json` |
 | Change the checkout consent wording | `client/src/shared/payments/consent.json` (and bump its `version`) |
@@ -150,7 +152,7 @@
 | `admin.js` | The back office: players (with their support messages), coins, items, suspend, rename, delete, consent, payments and refunds, audit, economy, email list, the support inbox (list, message, screenshot, status, reply) |
 | `support.js` | The Help Centre's contact form: `GET /form` (a form token), `POST /` (a message; rate-limited to 6 an hour per address) |
 | `economy.js` | Economy numbers, my day, race payouts, my ledger |
-| `scoreboard.js` | Season, all-time and friends boards (earned coins only); `SEASON` is a placeholder |
+| `scoreboard.js` | Season, all-time and friends boards (earned coins only); the season comes from `economy.json` → `season` (`seasonFrom`), `null` until set, and the season board then counts all time |
 | `tracks.js`, `marbles.js` | Public lists; admin edits |
 | `physics.js` | On-demand physics preview (nothing saved) |
 | `billboards.js`, `appearance.js` | Billboard images; look options |
@@ -234,7 +236,7 @@ Defined in `src/sockets/index.js`. The client may send a JWT in `auth.token`; an
   - `useTrackScene.js`: loads the 3D scene and reports failures;
   - `useAsync.js`, `useLobby.js`.
 - `components/`: the race viewers and shared UI:
-  - `LiveRaceViewer3D.jsx`: live 3D race; FPS button, corner view, finish show, skip;
+  - `LiveRaceViewer3D.jsx`: live 3D race; FPS button, corner view, finish show, skip. On phones (CSS in `styles.css`, "The race on phones"): the camera buttons share the row with short labels (Leader, My marble), the clock hides once the winner is across so it can't sit under the medals or the winner banner, and the "home" list sits bottom right, clear of the corner view;
   - `RaceReplayViewer.jsx`: 3D replay;
   - `RaceViewer.jsx`: the 2D viewer;
   - `FinishShow.jsx`, `Confetti.jsx`, `StartLights.jsx`, `CornerView.jsx`, `FrameMeter.jsx`, `SceneFailure.jsx`;
@@ -253,10 +255,11 @@ Defined in `src/sockets/index.js`. The client may send a JWT in `auth.token`; an
   - `help/` (the Help Centre at `/help`): `ContactForm.jsx` ("Still need help?": name, email, topic, order number, message, screenshot scaled down before sending, a hidden spam field), `faq.js` (the 12 categories of questions and answers, numbers read from `economy.json`, `packs.json` and `catalog.json`, `[bracket]` placeholders kept; the FAQPage structured data), `search.js` (type-ahead search: any word order, typos, synonyms, highlighting), `HelpPage.jsx`.
 - `admin/`: the back office (`AdminApp.jsx`, `adminApi.js`, `admin.css`). The support inbox (`SupportInbox`, `SupportMessage`, `SupportTable`) lives in `AdminApp.jsx` too.
 - `app/`: the native app shell:
-  - `native.js`: splash, status bar, Android back button, sound in the background, network watch;
+  - `native.js`: splash, status bar, Android back button, sound in the background, network watch, and on iPhone an "ambient" audio session (`preferAmbientAudio`: the silent switch mutes the game, the player's own music keeps playing);
   - `OfflineScreen.jsx` (links to the Help Centre; on `/help` itself it shrinks to a bar so the answers stay readable offline).
 - `shared/`: data and code **shared with the server**:
-  - `economy.json`;
+  - `economy.json` (also the scoreboard `season`);
+  - `storeLinks.json` (the website footer's App Store and Google Play links; empty = hidden);
   - `trackBanners.json` (the track pictures: `enabled` in the picker, and per track its version, sizes, name and series);
   - `support.json` (contact-form categories and limits, checked by the server too);
   - `payments/packs.json`, `payments/consent.json`;
@@ -326,7 +329,7 @@ Defined in `src/sockets/index.js`. The client may send a JWT in `auth.token`; an
 - **Never edit these** (written by `npx cap sync`, and gitignored): `ios/App/App/public` and `android/app/src/main/assets/public`.
 - **Generated from `client/assets/`:** the icons and splash screens.
 - **Edited by hand:**
-  - iPhone: `Info.plist`, `AppDelegate.swift`, `project.pbxproj`;
+  - iPhone: `Info.plist`, `AppDelegate.swift` (sets the `.ambient` audio category at launch, for the silent switch), `project.pbxproj`;
   - Android: `AndroidManifest.xml`, `res/values/*.xml`, the Gradle files.
 - In-app purchases are a placeholder in `client/src/site/payments/index.js`.
 

@@ -352,7 +352,7 @@ export function StartStep() {
             <div style={{ display: 'grid', flex: 1, minWidth: 0 }}><b>@{user?.username ?? '…'} (host)</b><span className="ms-note">{shooter?.name ?? 'Picking a Shooter…'}</span></div>
             <span style={{ color: 'var(--ms-green)', fontWeight: 700 }}>✓ Ready</span>
           </div>
-          <span className="ms-note">Friends join with a room link once friend rooms arrive. For now CPU players fill every other place.</span>
+          <span className="ms-note">CPU players fill every other place. Racing with friends? <Link to={`/play/friends${track?.slug ? `?track=${encodeURIComponent(track.slug)}` : ''}`}>Make a friend room</Link> and send them the link.</span>
           {startError && <div className="ms-msg ms-msg--bad" role="alert">{startError}</div>}
           <button type="button" className="ms-btn ms-btn--primary ms-btn--lg" onClick={start} disabled={busy || !ready || !tracks.length}>{busy ? 'STARTING…' : 'START THE RACE'}</button>
           {!quick && <Link to={`/play/shooter?${search}`} style={{ color: 'var(--ms-soft)', textAlign: 'center' }}>Change Shooter</Link>}

@@ -70,9 +70,9 @@ export default function HomeHub() {
             </span>
           </div>
           <Link to="/scores" className="ms-card" style={{ display: 'grid', gap: 6, color: 'var(--ms-text)' }}>
-            <span style={{ color: 'var(--ms-orange)', fontWeight: 700 }}>{data?.board?.season ? `${data.board.season.name} · ${daysLeftIn(data.board.season)} days left` : 'This season'}</span>
+            <span style={{ color: 'var(--ms-orange)', fontWeight: 700 }}>{data?.board?.season ? `${data.board.season.name} · ${daysLeftIn(data.board.season)} days left` : 'Scoreboard'}</span>
             <div className="ms-row" style={{ justifyContent: 'space-between' }}><span style={{ color: 'var(--ms-muted)' }}>Your rank</span><b>{me ? `#${me.rank}` : '—'}</b></div>
-            <div className="ms-row" style={{ justifyContent: 'space-between' }}><span style={{ color: 'var(--ms-muted)' }}>Coins earned this season</span><b>{(me?.coins ?? 0).toLocaleString('en-US')}</b></div>
+            <div className="ms-row" style={{ justifyContent: 'space-between' }}><span style={{ color: 'var(--ms-muted)' }}>{data?.board?.season ? 'Coins earned this season' : 'Coins earned racing'}</span><b>{(me?.coins ?? 0).toLocaleString('en-US')}</b></div>
           </Link>
         </aside>
       </div>

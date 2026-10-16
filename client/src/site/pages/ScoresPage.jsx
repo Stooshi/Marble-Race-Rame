@@ -5,8 +5,13 @@ import { useAuth } from '../../context/AuthContext';
 import { useAsync } from '../../hooks/useAsync';
 import { ITEM } from '../../shared/marbles';
 import MarbleBadge from '../marbles/MarbleBadge';
+import economy from '../../shared/economy.json';
 
-const BOARDS = [['season', 'This season'], ['all', 'All time'], ['friends', 'Friends']];
+// No season until its number and dates are set (client/src/shared/economy.json → season, read by
+// the server the same way): then no "This season" board and no season label anywhere.
+const S = economy.season ?? {};
+export const HAS_SEASON = Number.isInteger(S.number) && S.number > 0 && Date.parse(S.startsAt ?? '') < Date.parse(S.endsAt ?? '');
+const BOARDS = [['season', 'This season'], ['all', 'All time'], ['friends', 'Friends']].filter(([k]) => k !== 'season' || HAS_SEASON);
 const MEDAL = { 1: 'var(--ms-yellow)', 2: 'var(--ms-soft)', 3: 'var(--ms-orange)' };
 
 export function daysLeftIn(season) {
@@ -17,7 +22,7 @@ export function daysLeftIn(season) {
 /** Scoreboards: players ranked by coins earned in races (money can't buy a place). */
 export default function ScoresPage() {
   const { isAuthenticated } = useAuth();
-  const [board, setBoard] = useState('season');
+  const [board, setBoard] = useState(HAS_SEASON ? 'season' : 'all');
   const { data, error, loading } = useAsync(
     () => (board === 'friends' && !isAuthenticated ? Promise.resolve(null) : api.scoreboard(board)),
     [board, isAuthenticated],
@@ -46,7 +51,7 @@ export default function ScoresPage() {
           <span className="ms-pill">Top {data.season.badgeTop} win a season badge for their Marble Bag</span>
         </div>
       )}
-      {board === 'friends' && <p className="ms-note" style={{ margin: 0 }}>Friends, for now: the players you raced with in the last day. Friend rooms with invites are coming next.</p>}
+      {board === 'friends' && <p className="ms-note" style={{ margin: 0 }}>Friends: the players you raced with in the last day.</p>}
       {board === 'friends' && !isAuthenticated && <div className="ms-card"><Link to="/signup?mode=login&next=/scores">Log in</Link> to see your friends.</div>}
       {error && <div className="ms-msg ms-msg--bad">{error.message}</div>}
       {loading && !data && <p className="ms-note">Loading…</p>}

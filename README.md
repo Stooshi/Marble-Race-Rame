@@ -104,7 +104,7 @@ All endpoints are under `/api`. Request and response bodies are JSON. Authentica
 | --- | --- | --- | --- |
 | POST | `/auth/register` | – | `{ username, email, password, display_name? }` → `{ token, user }` (users start with 500 coins) |
 | POST | `/auth/login` | – | `{ login, password }`, where `login` is a username or email → `{ token, user }` |
-| GET | `/auth/me` | ✔ | The current user |
+| GET | `/auth/me` | ✔ | The current user (with `streak`: days in a row with the daily goal met, 0 when broken) |
 | POST | `/auth/guest` | – | "Play free": a guest account to race with at once → `{ token, user }` (`is_guest: true`) |
 | POST | `/auth/claim` | ✔ guest | A guest saves their marble: `{ username, email, password, marketing_opt_in? }`, keeping coins and marbles |
 
@@ -192,7 +192,7 @@ The collection (Collection 1 · Schoolyard Classics: 10 designs in 5 shades, 50 
 | GET | `/payments` | – | Coin packs and which payment providers are live |
 | POST | `/payments/checkout` | ✔ | `{ productId, provider }`: start buying a coin pack (Stripe on the web; placeholder until there are keys) |
 | POST | `/payments/receipt` | ✔ | `{ provider: 'apple' \| 'google', receipt }`: an app store purchase (placeholder until the apps exist) |
-| GET | `/scoreboard` | optional | `?board=season\|all\|friends`: players ranked by coins earned racing (places, personal bests, daily goals, streaks) |
+| GET | `/scoreboard` | optional | `?board=season\|all\|friends`: players ranked by coins earned racing (places, personal bests, daily goals, streaks); `season` is `null` until set in `economy.json` (then `season` counts all time) |
 | GET | `/races/showcase` | – | A recent close race for the landing page's replay |
 
 **Marble IDs.** Every item has one: the collection's two letters (SC = Schoolyard Classics; later collections get their own, e.g. HH, MG, AG; LE for the limited editions), the design's number 01–10 and the shade's 1–5 (Classic, Ocean, Forest, Berry, Sunset), no dashes: SC105 is the Champion Shooter in Sunset. The shop finds a marble by ID however it's typed. The next collections and their dates are in `catalog.json` → `comingSoon`.

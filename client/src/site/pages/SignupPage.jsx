@@ -61,9 +61,6 @@ export default function SignupPage() {
         </div>
         {mode === 'signup' && guest && <span className="ms-pill" style={{ justifySelf: 'start' }}>You're racing as a guest: saving keeps everything you've won</span>}
         {mode === 'signup' && <p style={{ margin: 0, color: 'var(--ms-soft)' }}>Keep your coins, streak and Marble Bag on every device, and get told when your friends race.</p>}
-        <button type="button" className="ms-btn" disabled title="Coming soon">Continue with Google · [soon]</button>
-        <button type="button" className="ms-btn" disabled title="Coming soon">Continue with Apple · [soon]</button>
-        <div className="ms-or"><span />or with email<span /></div>
         {mode === 'signup' ? (
           <>
             <label>Player name<input value={f.username} onChange={set('username')} autoComplete="username" pattern="[A-Za-z0-9_]{3,24}" placeholder="3–24 letters, numbers or _" required /></label>

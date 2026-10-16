@@ -26,7 +26,10 @@ const authLimiter = rateLimit({
   message: { error: 'Too many attempts, please try again later' },
 });
 
-const PUBLIC_USER_COLUMNS = 'id, username, email, display_name, avatar_url, role, coins, coins_earned, coins_bought, is_guest, skill, skill_refund_coins, settings, age_group, marketing_opt_in, created_at';
+// `streak`: days in a row with the daily goal met, alive while the goal was met today or yesterday
+// (UTC days, as in src/economy/index.js today()); 0 otherwise.
+const PUBLIC_USER_COLUMNS = `id, username, email, display_name, avatar_url, role, coins, coins_earned, coins_bought, is_guest, skill, skill_refund_coins, settings, age_group, marketing_opt_in, created_at,
+  CASE WHEN streak_last_day >= (now() AT TIME ZONE 'UTC')::date - 1 THEN streak_days ELSE 0 END AS streak`;
 
 const registerSchema = {
   username: {

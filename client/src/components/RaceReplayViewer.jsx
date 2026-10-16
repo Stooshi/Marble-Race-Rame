@@ -135,7 +135,7 @@ export default function RaceReplayViewer({ data, loading = false, mine = NOBODY,
 
   return (
     <>
-      <div className="preview3d__stage" ref={wrapRef}>
+      <div className={`preview3d__stage${show.phase !== 'racing' ? ' is-finishing' : ''}`} ref={wrapRef}>
         <canvas ref={canvasRef} className="preview3d__canvas" aria-label="Race replay in 3D" />
         {status === 'loading' && <div className="preview3d__overlay"><Spinner label="Loading 3D…" /></div>}
         {status === 'ready' && loading && !data && <div className="preview3d__overlay"><Spinner label="Loading the race…" /></div>}
@@ -214,13 +214,13 @@ export default function RaceReplayViewer({ data, loading = false, mine = NOBODY,
       )}
 
       {data && (
-        <div className="segmented" role="group" aria-label="Camera">
+        <div className="segmented segmented--camera" role="group" aria-label="Camera">
           <button type="button" aria-pressed={camera === 'follow' && follow === 'leader'} onClick={() => { setFollow('leader'); setCamera('follow'); }}>
-            Follow the leader
+            <span className="ms-wide-only">Follow the leader</span><span className="ms-narrow-only">Leader</span>
           </button>
           {mine.length > 0 && (
             <button type="button" aria-pressed={camera === 'follow' && follow === mine[0]} onClick={() => { setFollow(mine[0]); setCamera('follow'); }}>
-              Follow my marble
+              <span className="ms-wide-only">Follow my marble</span><span className="ms-narrow-only">My marble</span>
             </button>
           )}
           <button type="button" aria-pressed={camera === 'overview'} onClick={() => setCamera('overview')}>
