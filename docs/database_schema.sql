@@ -566,6 +566,16 @@ ALTER TABLE payments ADD COLUMN IF NOT EXISTS receipt_url text;
 ALTER TABLE payments ADD COLUMN IF NOT EXISTS refunded_cents integer NOT NULL DEFAULT 0;
 ALTER TABLE payments ADD COLUMN IF NOT EXISTS refunded_at timestamptz;
 CREATE INDEX IF NOT EXISTS idx_payments_intent ON payments (payment_intent) WHERE payment_intent IS NOT NULL;
+-- Google Play (the Android app): the purchase token Google gave the app (each credited once), and
+-- when the purchase was consumed at Google (Google refunds purchases not acknowledged within 3 days;
+-- consuming also acknowledges). provider_ref holds Google's order id (GPA.…).
+ALTER TABLE payments ADD COLUMN IF NOT EXISTS store_token text;
+ALTER TABLE payments ADD COLUMN IF NOT EXISTS store_consumed_at timestamptz;
+CREATE UNIQUE INDEX IF NOT EXISTS idx_payments_store_token ON payments (provider, store_token) WHERE store_token IS NOT NULL;
+-- The player's random account id for store purchases (Google Play's obfuscatedAccountId): ties a
+-- purchase to one player without giving Google anything personal.
+ALTER TABLE users ADD COLUMN IF NOT EXISTS store_account_id varchar(64);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_users_store_account ON users (store_account_id) WHERE store_account_id IS NOT NULL;
 
 -- Each refund once (a Stripe refund id): the coins it took back, and any it couldn't (already spent).
 CREATE TABLE IF NOT EXISTS payment_refunds (

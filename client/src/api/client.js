@@ -99,6 +99,9 @@ export const api = {
   paymentOptions: () => request('/payments'),
   checkout: (body) => request('/payments/checkout', { method: 'POST', body }),
   redeemReceipt: (body) => request('/payments/receipt', { method: 'POST', body }),
+  // Google Play (the Android app): the player's account id to buy with, then the purchase to check.
+  googleAccount: () => request('/payments/google/account'),
+  googleVerify: (body) => request('/payments/google/verify', { method: 'POST', body }),
   myOrders: () => request('/payments/mine'),
   // Forgot your password: on only when the server can send email.
   passwordResetEnabled: () => request('/auth/password-reset', { token: null }),

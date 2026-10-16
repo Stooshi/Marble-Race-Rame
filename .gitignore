@@ -4,3 +4,8 @@ node_modules/
 coverage/
 .DS_Store
 reports/
+
+# Android signing keys never go in Git
+*.jks
+*.keystore
+keystore.properties

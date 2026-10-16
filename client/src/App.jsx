@@ -6,6 +6,7 @@ import SiteFooter from './site/SiteFooter';
 import { useCanonical } from './site/canonical';
 import OfflineScreen from './app/OfflineScreen';
 import { startNativeShell } from './app/native';
+import { resumeStorePurchases } from './site/payments';
 import { useAuth } from './context/AuthContext';
 import LandingPage from './site/landing/LandingPage';
 import { FriendsStep, ShooterStep, StartStep, TrackStep } from './site/pages/RaceFlow';
@@ -49,7 +50,13 @@ const AdminApp = lazy(() => importOrReload(() => import('./admin/AdminApp')));
 
 export default function App() {
   const { pathname } = useLocation();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, refreshUser } = useAuth();
+  // Android: a Google Play purchase the server hasn't confirmed yet (app closed mid-purchase, a
+  // pending payment that completed) is sent again once the player is logged in; coins are added once.
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    resumeStorePurchases().then((n) => { if (n) refreshUser?.(); });
+  }, [isAuthenticated]);
   useCanonical(pathname);
   // Every page's title, description, share picture and indexing (./site/pageMeta.js). A layout
   // effect, so it runs before the pages' own (a track's page, the not-found page) and they win.

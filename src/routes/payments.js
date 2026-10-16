@@ -6,6 +6,7 @@ const { requireAuth } = require('../middleware/auth');
 const { validate } = require('../utils/validate');
 const payments = require('../payments');
 const stripe = require('../payments/stripe');
+const google = require('../payments/google');
 
 const security = require('../security');
 const config = require('../config');
@@ -35,6 +36,53 @@ router.post('/receipt', requireAuth, async (req, res) => {
   const out = await db.withTransaction((client) => payments.redeemReceipt(client, req.user.id, body));
   await security.record(req, req.user.id, 'purchase');
   res.json(out);
+});
+
+/**
+ * GET /api/payments/google/account — the player's account id for Google Play (the Android app buys
+ * with it as Google's obfuscatedAccountId, so a purchase can only ever be credited to this player).
+ */
+router.get('/google/account', requireAuth, async (req, res) => {
+  res.json({ accountId: await payments.googleAccountId(db, req.user.id), live: google.configured(), packageName: google.packageName() });
+});
+
+/**
+ * POST /api/payments/google/verify { productId, purchaseToken } — a Google Play purchase from the
+ * Android app: checked with Google, then the coins added once (also safe to send again).
+ * → { status: 'paid'|'duplicate'|'pending'|'cancelled', coins?, orderNo? }
+ */
+router.post('/google/verify', requireAuth, async (req, res) => {
+  const body = validate(req.body, { productId: { type: 'string', required: true, max: 32 }, purchaseToken: { type: 'string', required: true, max: 2000 } });
+  const out = await payments.googlePurchase(db, { userId: req.user.id, productId: body.productId, purchaseToken: body.purchaseToken });
+  if (out.status === 'paid') await security.record(req, req.user.id, 'purchase');
+  const { paymentId, ...shown } = out;
+  res.json(shown);
+});
+
+/**
+ * POST /api/payments/google/rtdn?token=… — Google Play's real-time developer notifications (a
+ * Pub/Sub push subscription). Only a nudge: a voided purchase starts a check with Google's Voided
+ * Purchases API; a bought one is checked with Google like the app's own report (for when the app
+ * was closed before it could send it). Answers 2xx once handled; Pub/Sub retries otherwise.
+ */
+router.post('/google/rtdn', async (req, res) => {
+  if (!google.rtdnTokenOk(req.query.token)) return res.status(403).json({ error: 'Forbidden' });
+  const n = google.decodeRtdn(req.body);
+  if (!n || (n.packageName && n.packageName !== google.packageName())) return res.status(204).end();
+  if (n.testNotification) { console.log('[google-play] test notification received'); return res.status(204).end(); }
+  try {
+    if (n.voidedPurchaseNotification) await payments.googleSync(db);
+    const o = n.oneTimeProductNotification;
+    if (o && Number(o.notificationType) === 1 && o.sku && o.purchaseToken) {
+      const out = await payments.googlePurchase(db, { productId: o.sku, purchaseToken: o.purchaseToken });
+      if (out.status === 'paid') console.log(`[google-play] ${out.orderNo} credited from Google's notification`);
+    }
+  } catch (err) {
+    // Our own "no" (unknown product, someone else's purchase…) is final: don't make Pub/Sub retry it.
+    if (err.status && err.status < 500) { console.error(`[google-play] notification: ${err.message}`); return res.status(204).end(); }
+    throw err;
+  }
+  return res.status(204).end();
 });
 
 /** GET /api/payments/mine — the player's orders (the Purchases page). */

@@ -159,5 +159,7 @@ Then click ▶ Run again in Android Studio or Xcode.
   frames per second and hold-ups (tap FPS again to hide it). Phones are capped
   at 60 frames a second; numbers from 45 to 60 are good. Note the numbers and the phone model for
   Claude if a race feels choppy.
-- **Coin packs:** in the apps, buying coins says it isn't available in the app yet. App Store and
-  Google Play purchases come later, with your store accounts.
+- **Coin packs:** on the iPhone, buying coins says it isn't available in the app yet. On Android,
+  purchases use Google Play Billing: test them in the build installed from Play's internal test
+  track, signed in with your license-tester account (test cards, nothing charged). Release builds:
+  `npm run android:key` once, then `npm run android:release` (docs/05-runbook.md).

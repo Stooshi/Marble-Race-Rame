@@ -90,7 +90,7 @@ async function deleteAccount(client, userId, { by = 'player', reason = null } = 
   await client.query(
     `UPDATE users SET username = $2, email = $3, password_hash = $4, display_name = NULL, avatar_url = NULL,
             settings = '{}'::jsonb, age_group = NULL, marketing_opt_in = false, last_login_at = NULL,
-            role = 'player', deleted_at = now(), updated_at = now()
+            role = 'player', store_account_id = NULL, deleted_at = now(), updated_at = now()
       WHERE id = $1`,
     [userId, name, `${name}@deleted.invalid`, unusable],
   );

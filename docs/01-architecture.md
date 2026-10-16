@@ -35,8 +35,8 @@
 | **Website** | Vercel project `marble-race-rame-client`; domains marblespins.com, www.marblespins.com and the vercel.app address | `client/` (React 19, Vite, three.js) | **Automatically** on every push to `Main` |
 | **Game server** | Railway service; public address https://marble-race-rame-production.up.railway.app | `src/` (Node 20 or later, Express 5, socket.io 4) | **By hand** by Moses (see the [runbook](05-runbook.md)). Pushing to `Main` does **not** deploy the server |
 | **Database** | Railway PostgreSQL | `docs/database_schema.sql` + `docs/data_updates/*.sql` | Applied automatically by the server at every start |
-| **Payments** | Stripe (web only) | `src/payments/` | Settings in the Stripe dashboard |
-| **Apps** | iPhone and Android (Capacitor 8), app id `com.marblespins.app` | `client/ios`, `client/android` (wrapping `client/`) | Built on a Mac or PC (`npm run app:sync`); no store release yet |
+| **Payments** | Stripe (website only); Google Play Billing (Android app) | `src/payments/` | Settings in the Stripe dashboard and Google Play Console |
+| **Apps** | iPhone and Android (Capacitor 8), app id `com.marblespins.app` | `client/ios`, `client/android` (wrapping `client/`) | Built on Moses's computer: Android with `npm run android:release` (signed `.aab` for Google Play, [runbook](05-runbook.md#android-release-google-play)); iPhone not released yet |
 
 **Note on the shared data files:** the server reads data files from inside the client folder: `client/src/shared/economy.json`, `client/src/shared/marbles/catalog.json` and `client/src/shared/payments/*.json`. Website and server therefore always use the same numbers. It also means the server must be deployed from the **whole repository**, not from `src/` alone.
 
@@ -72,7 +72,14 @@
 4. **Only then** are the coins added, once per payment.
 5. Refunds and disputes arrive the same way and remove the coins.
 
-**Payments (apps).** In-app purchases through Apple and Google are not built yet; the apps show a placeholder.
+**Payments (Android app): Google Play Billing.** Google's rules require its billing for digital items in the app, so Stripe is never used there.
+1. The app asks the server for the player's Play account id (`GET /api/payments/google/account`, a random `users.store_account_id`, never the user id or email) and opens Google's purchase sheet for the pack (`coins-5000`, `coins-10500`, `coins-27500`, `coins-57500`) with that id.
+2. It sends the purchase token to `POST /api/payments/google/verify`. The server asks Google (Android Publisher API, with a service account) whether the purchase is paid, for this product, and made by this player's account id.
+3. **Only then** are the coins added, once per purchase (unique Google order id and purchase token), through `economy.change()` like a Stripe payment. Then the server *consumes* the purchase at Google so the pack can be bought again.
+4. Google also tells the server about purchases by itself (real-time developer notifications, a Pub/Sub push to `/api/payments/google/rtdn`), so coins arrive even if the app closed mid-purchase; the app also resends unconfirmed purchases at the next login.
+5. Refunds and chargebacks: Google's list of voided purchases (checked every 6 hours, on each notification, and a minute after a refund from the back office) takes the coins back once, in the same way and with the same ledger and refund rows as Stripe refunds and disputes.
+
+**Payments (iPhone app).** App Store purchases are not built yet; buying coins there says "not available yet".
 
 **CORS.**
 - The server accepts calls from:
@@ -131,6 +138,9 @@ There is no separate staging server. Vercel makes a preview build for every bran
 | `STRIPE_TAX` | no | `off` turns off Stripe Tax |
 | `STRIPE_TAX_CODE` | no | Default `txcd_10000000` (to be confirmed by the accountant) |
 | `STRIPE_TOS_IN_CHECKOUT` | no | `true` also asks for the terms on Stripe's page |
+| `GOOGLE_PLAY_SERVICE_ACCOUNT` | for Android coin purchases | The Google Cloud service account's JSON key (the whole JSON, or base64 of it). Without it the Android app says buying coins isn't switched on yet |
+| `GOOGLE_PLAY_RTDN_TOKEN` | with the above | A long random secret; the Pub/Sub push address ends in `?token=` + this. Notifications with another token are refused |
+| `GOOGLE_PLAY_PACKAGE` | no | Default `com.marblespins.app` |
 | `PAYMENTS_TEST` | never in production | `true`: instant fake payments, for local development |
 | `RACE_COUNTDOWN_MS`, `RACE_MIN_DURATION_MS`, `RACE_MAX_DURATION_MS`, `RACE_DEFAULT_MARBLES`, `RACE_TICK_RATE_HZ`, `RACE_NEXT_DELAY_MS` | no | Race timing defaults (see the root README) |
 | `RAILWAY_GIT_COMMIT_SHA`, `SOURCE_COMMIT` | set by the platform | Shown on `/health` as the commit, when known |
@@ -150,6 +160,13 @@ There is no separate staging server. Vercel makes a preview build for every bran
 The apps are built with `npm run app:sync`. This sets `VITE_API_URL` to the live Railway address unless another https address is given. They need no other settings. The apps never show the cookie banner and never load Analytics or the Pixel, even if those IDs are set.
 
 `npm run build` (what Vercel runs) also **pre-renders** the public pages (`client/scripts/prerender.mjs`): `/`, `/shop`, `/scores`, `/help` and each `/help/<question>`, `/legal`, `/cookies`, `/tracks` and each live `/tracks/<slug>` are written as plain HTML with their own title, description, canonical link and share picture, so search engines and link previews read them without running the game. It reads the live track list from `VITE_API_URL` at build time (so a newly switched-on track gets its page at the next website build) and writes `sitemap.xml`. Structured data for search engines: the FAQ (FAQPage) on `/help`, and on `/` the Organization (Marble Spins, run by Voltron Robotics AB) with its social profiles as `sameAs`. Every other address gets `app-shell.html`.
+
+### Google Play Console (settings, not variables)
+
+- The four coin packs as one-time products with the same ids as `client/src/shared/payments/packs.json`.
+- API access through a Google Cloud project; a service account with "View financial data" and "Manage orders and subscriptions".
+- Real-time developer notifications: a Pub/Sub topic with a push subscription to `https://<server>/api/payments/google/rtdn?token=<GOOGLE_PLAY_RTDN_TOKEN>`.
+- Step by step: the [runbook](05-runbook.md#google-play-billing-coins-in-the-android-app).
 
 ### Stripe dashboard (settings, not variables)
 

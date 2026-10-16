@@ -65,6 +65,7 @@ marbles ──< user_marbles   (the older plain marbles; looks only)
 | `suspended_at` | Set by the back office. A suspended player can't log in or race |
 | `deleted_at` | The player deleted the account. The row stays, anonymised (see below) |
 | `password_changed_at` | When the password was last reset by email. Logins made before it stop working |
+| `store_account_id` | Random id (unique, up to 64 characters) the Android app gives Google Play with each purchase (`obfuscatedAccountId`), so the server can check a purchase belongs to this player. Made at the first purchase; never the user id or email. Cleared when the account is deleted |
 
 **Account deletion** (`src/account/index.js`) doesn't remove the `users` row.
 - **It anonymises the account:** name, email, password, shown name, settings, age group and consent are cleared.
@@ -255,7 +256,9 @@ The most specific row wins, then the newest. A slot with no row shows a built-in
 |---|---|
 | `user_id` | The buyer |
 | `provider` | `stripe`, `apple`, `google` or `test` |
-| `provider_ref` | The provider's own id (Stripe session, store transaction). Unique per provider, so a payment is never credited twice |
+| `provider_ref` | The provider's own id (Stripe session; Google Play order id `GPA.…`, or `token-<sha256>` for a test purchase without one). Unique per provider, so a payment is never credited twice |
+| `store_token` | Google Play: the purchase token. Unique per provider, the second guard against crediting twice |
+| `store_consumed_at` | Google Play: when the server consumed the purchase at Google (so the pack can be bought again). NULL: still to do; the hourly job retries |
 | `product_id`, `coins` | The pack and the coins it gives |
 | `amount_cents`, `currency` | The pack's list price (USD) |
 | `status` | `pending` → `paid` (or `failed`); `refunded` when fully refunded |
@@ -268,7 +271,7 @@ The most specific row wins, then the newest. A slot with no row shows a built-in
 | `created_at`, `paid_at` | |
 
 ### `payment_refunds`
-One row per refund or dispute (`id` = the Stripe refund or dispute id, so each is handled once).
+One row per refund or dispute (`id` = the Stripe refund or dispute id, or `google-void-<order id>` for a Google Play refund or chargeback, so each is handled once).
 
 | Column | Meaning |
 |---|---|

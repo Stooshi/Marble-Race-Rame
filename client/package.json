@@ -9,7 +9,9 @@
     "build": "vite build && node scripts/prerender.mjs",
     "preview": "vite preview",
     "test": "vitest run",
-    "app:sync": "node scripts/app-sync.mjs"
+    "app:sync": "node scripts/app-sync.mjs",
+    "android:key": "node scripts/android-upload-key.mjs",
+    "android:release": "node scripts/android-release.mjs"
   },
   "dependencies": {
     "@capacitor/android": "8.5.2",
@@ -19,6 +21,7 @@
     "@capacitor/network": "8.0.1",
     "@capacitor/splash-screen": "8.0.2",
     "@capacitor/status-bar": "8.0.3",
+    "@capgo/native-purchases": "8.9.6",
     "@fontsource/barlow-condensed": "5.3.0",
     "@fontsource/lilita-one": "5.3.0",
     "@fontsource/source-sans-3": "5.3.0",

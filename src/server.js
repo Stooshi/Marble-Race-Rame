@@ -19,6 +19,7 @@ async function start() {
   await raceManager.recover();
   raceManager.startScheduler();
   require('./security').startTrimming(); // IP addresses: 90 days, then the country only
+  require('./payments').startGoogleJobs(db); // Google Play: consume leftovers hourly, refunds/chargebacks every 6 h
 
   await new Promise((resolve) => server.listen(config.port, resolve));
   console.log(`Marble Race backend listening on :${server.address().port} (${config.env})`);

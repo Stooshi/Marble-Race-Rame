@@ -18,6 +18,8 @@
 | Fix coins not added or wrong | `src/economy/index.js` (`change`, `payRace`) and the `coin_ledger` table |
 | Fix the shop or First Edition numbers | `src/marbles/collection.js` |
 | Fix a Stripe payment | `src/payments/stripe.js`, `src/payments/index.js`, `src/routes/payments.js` |
+| Fix a Google Play (Android) payment | `src/payments/google.js` (server checks with Google), `client/src/site/payments/index.js` (the app's purchase sheet), `src/routes/payments.js` |
+| Build the Android release | `client/scripts/android-upload-key.mjs`, `client/scripts/android-release.mjs`, `client/app-version.json`, `client/android/app/build.gradle` (signing) |
 | Fix a back-office page | `client/src/admin/AdminApp.jsx` (pages), `src/routes/admin.js` (data and actions), `src/admin/session.js` (login) |
 | Fix friend rooms | `src/routes/rooms.js`, `client/src/site/pages/RoomPage.jsx` |
 | Fix how a track looks | `client/src/three/` (see the 3D section below). Drawing only, never the race |
@@ -119,8 +121,9 @@
 - Also: `payRace`, `spend`, `opening`, `placeCoins`, `raceLines`, `streakAfter`, `bagPrice`, and `refundEntryFee` (for fees paid before entry fees were switched off).
 
 **`payments/`:**
-- `index.js`: providers (stripe, apple, google, test). `grant()` adds a pack's coins once. Also `checkout()` (with consent and order number), `stripeEvent()`, `refund()`, `ordersOf`/`orderOf`. Apple and Google are placeholders.
+- `index.js`: providers (stripe, apple, google, test). `grant()` adds a pack's coins once. Also `checkout()` (with consent and order number), `stripeEvent()`, `refund()`, `ordersOf`/`orderOf`, and for Google Play `googleAccountId`, `googlePurchase`, `googleSync`, `startGoogleJobs` (hourly: consume leftovers; every 6 hours: voided purchases). Apple is a placeholder.
 - `stripe.js`: Checkout sessions, webhook verification, `handleEvent()` (paid, expired, refund, dispute), `revoke()` (takes coins back in proportion), `requestRefund()`. Live keys are refused unless `STRIPE_ALLOW_LIVE`.
+- `google.js`: Google Play Billing on the server. Signs in to the Android Publisher API as the service account (`GOOGLE_PLAY_SERVICE_ACCOUNT`, RS256 JWT with node's crypto, no Google library). `redeem()` checks a purchase with Google (paid, the right product, the player's `store_account_id`), records it once (`provider_ref` = order id, `store_token`), grants the coins, then consumes it; `syncVoided()` takes back refunded and charged-back purchases through `stripe.revoke()` (same ledger lines and `payment_refunds`); `refundOrder()` asks Google to refund and revoke; `decodeRtdn()`/`rtdnTokenOk()` read Google's Pub/Sub notifications. Tests: `test/googlePlay.test.js` (a fake Google that checks the signed token).
 
 **Back office and accounts:**
 - `admin/session.js`: the back-office login (separate admin token, TOTP 2-step code, 30-minute idle timeout, 5 wrong codes give a 15-minute pause kept in memory).
@@ -149,7 +152,7 @@
 | `races.js` | Lobby list, create, join and leave (free), next race, start, cancel, results, replay, showcase race |
 | `rooms.js` | Friend rooms (create, join, leave, track, remove, start, close) and `afterRace` |
 | `collection.js` | Collection, Marble Bag, Shooter, bags, buy, find by ID, certificates |
-| `payments.js` | Packs, checkout, store receipts (placeholder), my orders, the Stripe webhook |
+| `payments.js` | Packs, checkout, my orders, the Stripe webhook; Google Play: `GET /google/account` (the player's Play account id, and whether purchases are on), `POST /google/verify` (a purchase token from the app), `POST /google/rtdn?token=` (Google's notifications) |
 | `admin.js` | The back office: players (with their support messages), coins, items, suspend, rename, delete, consent, payments and refunds, audit, economy, email list, the support inbox (list, message, screenshot, status, reply) |
 | `support.js` | The Help Centre's contact form: `GET /form` (a form token), `POST /` (a message; rate-limited to 6 an hour per address) |
 | `economy.js` | Economy numbers, my day, race payouts, my ledger |
@@ -219,6 +222,9 @@ Defined in `src/sockets/index.js`. The client may send a JWT in `auth.token`; an
 | `ios/`, `android/` | The native app projects (see "Apps" below) |
 | `assets/` | Source images for the app icons and splash screens |
 | `scripts/app-sync.mjs` | Builds the site against the live server and copies it into both apps |
+| `scripts/android-upload-key.mjs` | `npm run android:key`: makes the Google Play upload key once, in `MarbleSpins-keys` in your home folder (outside the project), and `android/keystore.properties` (gitignored, no password) |
+| `scripts/android-release.mjs` | `npm run android:release`: the signed `.aab` for Google Play, copied to `MarbleSpins-releases` in your home folder |
+| `app-version.json` | The apps' `versionCode` (raise by 1 for every Play upload) and `versionName` |
 | `APP-TESTING.md` | Running the apps on your own phone |
 | `dev/` | The development "kit view": draws a track straight from its file, with no server |
 | `report/` | Browser-based report checks (view checks, screenshots), run by the root report script |
@@ -253,7 +259,7 @@ Defined in `src/sockets/index.js`. The client may send a JWT in `auth.token`; an
   - `consent/`: the cookie banner and the trackers (website only, never in the apps): `consent.js` (the choice in local storage `marble-consent`, version `CONSENT_VERSION`; `STORAGE_LIST`), `ConsentManager.jsx` (banner with REJECT ALL and ACCEPT ALL side by side, Settings per category with nothing ticked, reopened by "Cookie settings" in the footer and on `/cookies`; logs the choice to the account when logged in), `tracking.js` (Google Analytics 4 with Consent Mode v2 after statistics consent, the Meta Pixel after marketing consent and never under 13; `track()` events: `sign_up`, `first_race`, `race_finished`, `shop_view`, `checkout_started`, `purchase`);
   - `landing/` (landing page, 3D hero replay; `SERIES`: the series cards, each with one of its tracks' pictures; the tracks-and-series heading is counted from the live track list);
   - `marbles/` (badge, 3D turntable, certificate, `useCollection`);
-  - `payments/index.js` (Stripe on the web, app-store placeholder);
+  - `payments/index.js`: `buyCoins()` for every screen: Stripe on the website; Google Play Billing in the Android app (`@capgo/native-purchases`: purchase with the player's Play account id, then `api.googleVerify`); `resumeStorePurchases()` (unconfirmed purchases resent at login, from `App.jsx`); `useStorePrices()` (Play's prices in the player's currency, on the shop and checkout); the App Store is a placeholder;
   - `pages/` (every website page; see the routes below);
   - `help/` (the Help Centre at `/help`): `ContactForm.jsx` ("Still need help?": name, email, topic, order number, message, screenshot scaled down before sending, a hidden spam field), `faq.js` (the 12 categories of questions and answers, numbers read from `economy.json`, `packs.json` and `catalog.json`, `[bracket]` placeholders kept; the FAQPage structured data), `search.js` (type-ahead search: any word order, typos, synonyms, highlighting), `HelpPage.jsx`.
 - `admin/`: the back office (`AdminApp.jsx`, `adminApi.js`, `admin.css`). The support inbox (`SupportInbox`, `SupportMessage`, `SupportTable`) lives in `AdminApp.jsx` too.
@@ -335,8 +341,9 @@ Defined in `src/sockets/index.js`. The client may send a JWT in `auth.token`; an
 - **Generated from `client/assets/`:** the icons and splash screens.
 - **Edited by hand:**
   - iPhone: `Info.plist`, `AppDelegate.swift` (sets the `.ambient` audio category at launch, for the silent switch), `project.pbxproj`;
-  - Android: `AndroidManifest.xml`, `res/values/*.xml`, the Gradle files.
-- In-app purchases are a placeholder in `client/src/site/payments/index.js`.
+  - Android: `AndroidManifest.xml` (removes the advertising-ID permission: no ads or tracking), `res/values/*.xml`, the Gradle files (`app/build.gradle`: version from `client/app-version.json`, release signing from `android/keystore.properties` or `MS_UPLOAD_*` variables).
+- Plugins: `@capacitor/app`, `network`, `splash-screen`, `status-bar`, and `@capgo/native-purchases` (Google Play Billing 9; StoreKit on iPhone, not used yet). `npx cap sync` lists them in `android/capacitor.settings.gradle`.
+- In-app purchases: Google Play in the Android app (`client/src/site/payments/index.js`); the iPhone App Store is still a placeholder.
 
 ### Client tests: `client/test`
 

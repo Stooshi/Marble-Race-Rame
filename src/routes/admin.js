@@ -45,7 +45,7 @@ router.use((_req, res, next) => { res.set('Cache-Control', 'no-store'); next(); 
 
 const REASON = { type: 'string', required: true, min: 5, max: 500 };
 const PAYMENT_COLUMNS = `p.id, p.order_no, p.provider, p.product_id, p.coins, p.amount_cents, upper(p.currency) AS currency, p.charged_cents,
-  p.charged_currency, p.tax_cents, p.status, p.refunded_cents, p.receipt_url, p.payment_intent, p.consent_at, p.created_at, p.paid_at, p.refunded_at`;
+  p.charged_currency, p.tax_cents, p.status, p.refunded_cents, p.receipt_url, p.payment_intent, p.provider_ref, p.store_consumed_at, p.consent_at, p.created_at, p.paid_at, p.refunded_at`;
 
 const SUPPORT_LIST_COLUMNS = `s.id, s.ref, s.created_at, s.name, s.email, s.category, s.order_no, s.message, s.status, s.status_at,
   s.linked_by, s.user_id AS player_id, u.username AS player, u.is_guest AS player_guest, s.screenshot IS NOT NULL AS has_screenshot,

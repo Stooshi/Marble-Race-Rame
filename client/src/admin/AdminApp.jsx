@@ -193,7 +193,7 @@ function PaymentTable({ rows, showPlayer = false, onChanged }) {
             <td className="num">{x.refunded_cents ? money(x.refunded_cents, x.charged_currency ?? x.currency) : '–'}{x.coins_short > 0 && <span className="adm-tag adm-tag--bad" title="Coins already spent when refunded">{n(x.coins_short)} short</span>}</td>
             <td>{x.status === 'paid' && x.refunded_cents > 0 ? 'part-refunded' : x.status}</td>
             <td>{x.receipt_url ? <a href={x.receipt_url} target="_blank" rel="noreferrer">receipt</a> : '–'}</td>
-            <td>{x.status === 'paid' && (x.provider === 'stripe' || x.provider === 'test') && <button type="button" className="adm-btn adm-btn--ghost" onClick={() => { setOpen(open === x.id ? null : x.id); setAmount(''); }}>{open === x.id ? 'Close' : 'Refund'}</button>}</td>
+            <td>{x.status === 'paid' && (x.provider === 'stripe' || x.provider === 'test' || x.provider === 'google') && <button type="button" className="adm-btn adm-btn--ghost" onClick={() => { setOpen(open === x.id ? null : x.id); setAmount(''); }}>{open === x.id ? 'Close' : 'Refund'}</button>}</td>
           </tr>
         ))}</tbody>
       </table></div>
@@ -204,10 +204,15 @@ function PaymentTable({ rows, showPlayer = false, onChanged }) {
             const cents = amount.trim() ? Math.round(Number(amount) * 10 ** digitsOf(cur)) : undefined;
             const r = await adminApi.refund(pay.id, reason, cents);
             await onChanged?.();
+            if (pay.provider === 'google') return 'Google Play is refunding the order. The coins are removed when Google lists it as refunded (usually within minutes, at the latest at the next 6-hourly check); reload to see.';
             return r.waiting ? `Stripe refund ${r.refund.status}. The coins are removed when Stripe confirms it (usually seconds); reload to see.` : `Refunded: ${n(r.removed)} coins removed${r.short ? `, ${n(r.short)} already spent` : ''}.`;
           }}>
-          <label>Amount in {cur} (empty = all that's left: {money(left, cur)})<input type="number" step="0.01" min="0" value={amount} onChange={(e) => setAmount(e.target.value)} /></label>
-          <p className="adm-muted">The coins from the refunded share are removed (only as many as the player still has) and logged in the coin ledger and the audit log. Stripe emails the player a refund receipt.</p>
+          {pay.provider === 'google'
+            ? <p className="adm-muted">Google Play refunds the whole order ({pay.order_no}, Google order {pay.provider_ref ?? '–'}) and takes the item back. The coins are then removed (only as many as the player still has) and logged in the coin ledger and the audit log. Google emails the player.</p>
+            : <>
+              <label>Amount in {cur} (empty = all that's left: {money(left, cur)})<input type="number" step="0.01" min="0" value={amount} onChange={(e) => setAmount(e.target.value)} /></label>
+              <p className="adm-muted">The coins from the refunded share are removed (only as many as the player still has) and logged in the coin ledger and the audit log. Stripe emails the player a refund receipt.</p>
+            </>}
         </Action>
       )}
     </div>

@@ -19,6 +19,7 @@ shows marblespins.com.
 | `google-play/tablet-7/` | 1080 × 1920 | Google Play, 7" tablet |
 | `google-play/tablet-10/` | 2560 × 1440 | Google Play, 10" tablet (landscape) |
 | `google-play/feature-graphic-1024x500.png` | 1024 × 500 | Google Play feature graphic |
+| `google-play/app-icon-512.png` | 512 × 512 (32-bit PNG) | Google Play app icon (from `client/assets/icon-only.png`) |
 
 Every device folder has the same 8 pictures, in this order:
 

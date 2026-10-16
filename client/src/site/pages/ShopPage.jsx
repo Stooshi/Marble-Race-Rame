@@ -13,6 +13,7 @@ import MarbleBadge from '../marbles/MarbleBadge';
 import { editionLine, useCollection } from '../marbles/useCollection';
 import { TEASERS } from '../shop/comingSoon';
 import { track } from '../consent/tracking';
+import { useStorePrices } from '../payments';
 
 const Turntable = lazy(() => importOrReload(() => import('../marbles/Turntable')));
 
@@ -361,6 +362,7 @@ function ComingSoon() {
 function CoinPacks() {
   const { isAuthenticated } = useAuth();
   const race = economy.race;
+  const storePrices = useStorePrices(COIN_PACKS); // (Android: Google Play's price in the player's currency)
   return (
     <section id="coins" aria-labelledby="coins-h" style={{ display: 'grid', gap: 14 }}>
       <div className="ms-section-head">
@@ -372,11 +374,11 @@ function CoinPacks() {
           <Link key={p.id} to={isAuthenticated ? `/checkout?pack=${p.id}` : `/signup?next=${encodeURIComponent(`/checkout?pack=${p.id}`)}`} className="ms-mcard" style={{ padding: 18, borderColor: p.popular ? 'var(--ms-yellow)' : undefined }}>
             <span className="ms-coins" style={{ fontSize: '1.8rem' }}>● {p.coins.toLocaleString('en-US')}</span>
             <span style={{ color: 'var(--ms-soft)' }}>coins{p.popular ? ' · most popular' : ''}</span>
-            <span className="ms-price-btn">{p.priceLabel}</span>
+            <span className="ms-price-btn">{storePrices[p.id] ?? p.priceLabel}</span>
           </Link>
         ))}
       </div>
-      <p className="ms-note">Coins are for the shop only and can't be cashed out. Prices shown in your local currency at checkout, including VAT. Under 18? Ask a parent or guardian before buying. <Link to="/legal#sale">Terms of sale</Link> · <Link to="/help#buying-coins">Help with buying coins</Link> · <Link to="/help#contact">Contact us</Link></p>
+      <p className="ms-note">Coins are for the shop only and can't be cashed out. {Object.keys(storePrices).length ? 'Prices in your local currency, including VAT.' : 'Prices shown in your local currency at checkout, including VAT.'} Under 18? Ask a parent or guardian before buying. <Link to="/legal#sale">Terms of sale</Link> · <Link to="/help#buying-coins">Help with buying coins</Link> · <Link to="/help#contact">Contact us</Link></p>
     </section>
   );
 }

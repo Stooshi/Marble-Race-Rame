@@ -1,5 +1,19 @@
 apply plugin: 'com.android.application'
 
+import groovy.json.JsonSlurper
+
+// The app's version (client/app-version.json): raise versionCode by 1 for every upload to Google Play.
+def appVersion = new JsonSlurper().parse(file('../../app-version.json'))
+
+// Release signing with the UPLOAD key (Google Play App Signing signs what players download).
+// The key and its passwords never go in Git: they come from android/keystore.properties (gitignored,
+// written by scripts/android-upload-key.mjs) or from environment variables of the same names.
+def keystoreProps = new Properties()
+def keystorePropsFile = rootProject.file('keystore.properties')
+if (keystorePropsFile.exists()) keystorePropsFile.withInputStream { keystoreProps.load(it) }
+def signingValue = { String name -> keystoreProps.getProperty(name) ?: System.getenv('MS_UPLOAD_' + name.toUpperCase()) }
+def hasUploadKey = signingValue('storeFile') && file(signingValue('storeFile')).exists()
+
 android {
     namespace = "com.marblespins.app"
     compileSdk = rootProject.ext.compileSdkVersion
@@ -7,8 +21,8 @@ android {
         applicationId "com.marblespins.app"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
-        versionName "1.0"
+        versionCode appVersion.versionCode
+        versionName appVersion.versionName
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
@@ -16,8 +30,19 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    signingConfigs {
+        release {
+            if (hasUploadKey) {
+                storeFile file(signingValue('storeFile'))
+                storePassword signingValue('storePassword')
+                keyAlias signingValue('keyAlias')
+                keyPassword signingValue('keyPassword')
+            }
+        }
+    }
     buildTypes {
         release {
+            if (hasUploadKey) signingConfig signingConfigs.release
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }

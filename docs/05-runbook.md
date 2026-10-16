@@ -204,6 +204,84 @@ Any change to `client/vercel.json`, the build, or the pre-rendering: build exact
 2. `node scripts/serve-vercel-output.mjs . 4300` serves that output with Vercel's own routing rules.
 3. Open, and refresh, at least: `/`, `/help`, a `/help/<question>`, `/tracks/<slug>`, `/cookies`, `/play/track`, a race (`/race/<id>`), `/preview/physics?track=spawn-point`, `/preview/banners`, `/admin`, and a made-up address (it must show the app's "Lost the marble" page, not "404: NOT_FOUND").
 
+## Android release (Google Play)
+
+Built on **your own computer** (the Windows PC, or a Mac), in a terminal in `client/` (Command Prompt on Windows), with Android Studio installed (it brings Java 21 and the Android SDK; open `client/android` in it once so it downloads the SDK, as in `client/APP-TESTING.md`). The cloud workspace can't build Android apps: Google's download servers are blocked there.
+
+### The upload key (once)
+
+`npm run android:key` makes it. It asks for a password (12+ characters; save it in your password manager first) and writes:
+
+| File | What | Secret? |
+|---|---|---|
+| `C:\Users\<you>\MarbleSpins-keys\marblespins-upload.jks` (Mac: `~/MarbleSpins-keys/…`) | The upload key (PKCS12, alias `upload`, RSA 4096, valid ~27 years) | **Yes** |
+| `…\MarbleSpins-keys\upload_certificate.pem` | Its public certificate (for an upload-key reset) | No |
+| `client/android/keystore.properties` | Where the key is and its alias. **No password.** Gitignored | No |
+
+It also prints the key's SHA-256 fingerprint. The folder is in your home folder (`C:\Users\<you>` on Windows, `/Users/<you>` on a Mac); another folder can be set with the `MS_KEY_DIR` variable (never inside the project). The script refuses to make a second key.
+
+**Why not in the project or GitHub:** anyone with the key and password could upload an app as Marble Spins. `.gitignore` blocks `*.jks`, `*.keystore` and `keystore.properties`, and the key lives outside the repository anyway.
+
+**Back it up the same day, two copies:**
+1. Your password manager (1Password, Bitwarden or similar): an entry "Marble Spins Google Play upload key" with the password, the SHA-256 fingerprint, and the `.jks` and `.pem` files attached.
+2. Offline: an encrypted USB stick or encrypted disk image (Windows: BitLocker To Go, right-click the USB drive → Turn on BitLocker; Mac: Disk Utility, "AES-256") with the `.jks` and `.pem`, kept somewhere safe at home or at the office. Not in a shared Dropbox/Google Drive folder, email or chat.
+
+**If it is lost or leaked:** with Play App Signing, Google holds the real signing key, so the app is not lost. Make a new key (move the old `MarbleSpins-keys` folder away first), then Play Console → Test and release → Setup → **App signing** → *Request upload key reset*, and upload the new `upload_certificate.pem`. Google takes a few days; until then you can't upload.
+
+### Building the bundle
+
+1. Raise `versionCode` in `client/app-version.json` by 1 (every upload needs a higher one; `versionName` is what players see, e.g. `1.0.1`). Commit it.
+2. `npm run android:release`. It asks for the key password, builds the app against the live Railway server (`npm run app:sync`), runs Gradle's `bundleRelease`, checks that the bundle is signed with the upload key, and copies it to `MarbleSpins-releases\marblespins-<versionName>-<versionCode>.aab` in your home folder.
+3. The password can also come from `MS_UPLOAD_STOREPASSWORD` (e.g. for a build machine); it is never written to a file.
+
+Android Studio instead: Build → Generate Signed App Bundle, with the same `.jks`, alias `upload`.
+
+### First upload: internal testing
+
+Voltron Robotics AB is an organisation account, so the "12 testers for 14 days" closed-test rule for new personal accounts doesn't apply.
+1. Play Console → **Create app**: name Marble Spins, default language English (United States), App, Free, accept the declarations. (Free with in-app products.)
+2. Test and release → Testing → **Internal testing** → *Testers* tab → *Create email list* "Marble Spins team" → add moses.ntereke@gmail.com (the Google account on your phone) → Save, and tick the list.
+3. *Releases* tab → **Create new release**. At "App signing" keep **Google-generated key** (Play App Signing) and continue.
+4. Upload the `.aab` from `MarbleSpins-releases` in your home folder. Release name e.g. `1.0.0 (1)`, release notes "First internal test". Next → fix anything flagged as an error (warnings are fine) → **Save and publish** / *Start rollout to Internal testing*.
+5. Check the upload key: Setup → App signing → *Upload key certificate* SHA-256 must equal the fingerprint `npm run android:key` printed.
+6. *Testers* tab → **Copy link** ("Join on the web"). Open it on the phone, signed in with that Google account → *Accept invite* → *Download it on Google Play*. The first release can take a few minutes to an hour to appear.
+Play may first ask for some "App content" answers (privacy policy, ads, app access, content rating, target audience, data safety): the answers are in `claude/store-submission-drafts.md` in the project.
+
+## Google Play Billing: coins in the Android app
+
+The app sells the same four packs through Google Play; the server checks every purchase with Google before adding coins (see [architecture](01-architecture.md)). Order matters:
+
+1. **Deploy the server** with this code (new columns and `/api/payments/google/*`). Without the variables below, the app says buying coins isn't switched on yet.
+2. **Payments profile:** Play Console → Settings → *Payments profile* (or Monetize with Play → *Monetization setup*): set up the merchant account for Voltron Robotics AB (bank account, VAT number). Paid products need it.
+3. **Upload an `.aab` first** (internal testing, above). Play only offers in-app products once a bundle with Google Play Billing (the `BILLING` permission) is uploaded.
+4. **Products:** Monetize with Play → Products → **One-time products** → *Create one-time product*, four times:
+
+   | Product ID | Name | Description | Price (US) |
+   |---|---|---|---|
+   | `coins-5000` | 5,000 coins | 5,000 Marble Spins coins for the shop. For looks only. | USD 5.00 |
+   | `coins-10500` | 10,500 coins | 10,500 Marble Spins coins for the shop. For looks only. | USD 10.00 |
+   | `coins-27500` | 27,500 coins | 27,500 Marble Spins coins for the shop. For looks only. | USD 25.00 |
+   | `coins-57500` | 57,500 coins | 57,500 Marble Spins coins for the shop. For looks only. | USD 50.00 |
+
+   The IDs must be exactly these (they can never be changed or reused). Set the price (purchase option "buy", consumable), let Play convert the other countries, check SEK and EUR look sensible, then **Activate** each one. Prices shown to players are Play's own, in their currency with VAT.
+5. **Google Cloud project and API:** console.cloud.google.com, signed in as the account that owns the Play developer account → create project `marble-spins-play` → APIs & Services → Library → enable **Google Play Android Developer API** and **Cloud Pub/Sub API**. (If Play Console shows Setup → *API access* with "Link a Google Cloud project", link this project there.)
+6. **Service account:** Cloud console → IAM & Admin → Service accounts → *Create*: name `play-billing`, no project roles → Done. Open it → *Keys* → Add key → JSON → it downloads one file. Paste the **whole file's contents** into Railway as `GOOGLE_PLAY_SERVICE_ACCOUNT`. Then put the file in your password manager and delete the download. Never in chat, email or Git.
+7. **Give it access in Play:** Play Console → **Users and permissions** → *Invite new users* → the service account's email (`play-billing@marble-spins-play.iam.gserviceaccount.com`) → App permissions → add Marble Spins → tick **View financial data, orders and cancellation survey responses** and **Manage orders and subscriptions** → Invite. It can take up to 24 hours before Google accepts its calls (until then the server logs `Google Play 401/403`). Editing and saving one product's description sometimes makes it work sooner.
+8. **Real-time notifications (Pub/Sub):**
+   - Make the token: a long random string (e.g. `openssl rand -hex 32`). Put it in Railway as `GOOGLE_PLAY_RTDN_TOKEN`.
+   - Cloud console → Pub/Sub → Topics → *Create topic* `play-rtdn` (no default subscription).
+   - Topic → *Permissions* → Add principal `google-play-developer-notifications@system.gserviceaccount.com` with role **Pub/Sub Publisher**.
+   - Subscriptions → *Create subscription* `play-rtdn-push` on that topic → Delivery type **Push** → endpoint `https://marble-race-rame-production.up.railway.app/api/payments/google/rtdn?token=<the token>` → Create.
+   - Play Console → Monetize with Play → **Monetization setup** → Real-time developer notifications: topic name `projects/marble-spins-play/topics/play-rtdn` → notifications for **subscriptions, voided purchases and all one-time products** → Save → **Send test notification**. Railway logs show `[google-play] test notification received`.
+9. **Restart** the server after setting the variables. `GET /api/payments/google/account` (logged in) now says `"live": true`.
+10. **License testers:** Play Console → Settings (all apps) → **License testing** → add moses.ntereke@gmail.com → Save. Purchases from this account on the internal test use test cards ("always approves", "slow test card, approves after a few minutes", "declines") and cost nothing.
+11. **Test on the phone** (internal test build): buy each pack with "always approves" → coins arrive at once, the order shows on Purchases and in the back office (Payments, provider `google`, order id `GPA.…`). Close the app during a "slow" purchase → coins arrive by themselves within minutes. Refund one from the back office → within a few minutes the coins go and the refund appears like a Stripe refund.
+
+**Refunds and chargebacks:**
+- From us: back office → player → Payments → *Refund* (full only, a reason required). The server asks Google to refund and revoke; when the voided purchase comes back (usually minutes) the coins are taken back once, recorded in `payment_refunds`, the coin ledger (`pack-refund`) and the audit log. Refunds made in Play Console → Order management work the same way (pick "Remove entitlement").
+- From the player or the bank (Google's 48-hour refunds, chargebacks): the same voided-purchase path; reason "Chargeback" or "Friendly fraud" counts as a dispute, as with Stripe. Coins already spent show as "short".
+- The server checks voided purchases every 6 hours and on every notification; Google keeps 30 days of them.
+
 ## Common problems
 
 | Symptom | Likely cause and fix |
@@ -216,6 +294,12 @@ Any change to `client/vercel.json`, the build, or the pre-rendering: build exact
 | Logs show `WARNING missing columns` or `WARNING race statuses differ from the code` | The database lags the code. Usually a failed migration (see the row above) |
 | A paid player got no coins | Stripe → Developers → Webhooks → the endpoint → recent deliveries. A 400 there means a signature problem: `STRIPE_WEBHOOK_SECRET` doesn't match **this** endpoint, or the test and live secrets are mixed up. A 5xx means a server error (Railway logs `[stripe]`). Use "Resend" in Stripe: repeated events are safe and never credit twice |
 | Coins taken back after a refund look wrong | Back office → Payments shows the refunded amount and the coins "short" (already spent). Each refund is in `payment_refunds`, the audit log and the coin ledger (`pack-refund`) |
+| Android app: "Buying coins in the app isn't switched on yet" | `GOOGLE_PLAY_SERVICE_ACCOUNT` isn't set on Railway, or the server wasn't restarted |
+| Android app: purchase made but no coins, logs show `Google Play 401` or `403` | The service account isn't invited in Play Console (Users and permissions) with the two permissions, or it's within the first ~24 hours. Coins are added later by itself (the app resends at login, the server checks hourly) |
+| Android app: "This purchase belongs to another account" | The purchase was made while logged in to a different Marble Spins account on that phone; log in to that one |
+| No Google notifications (`[google-play]` never in logs) | Pub/Sub topic permission for `google-play-developer-notifications@…`, the push address, or the `?token=` doesn't match `GOOGLE_PLAY_RTDN_TOKEN` (the server answers 403) |
+| Play refuses the `.aab`: "signed with the wrong key" | Built with another key: use the original `.jks` from the backup, or request an upload-key reset |
+| Play refuses the `.aab`: "version code already used" | Raise `versionCode` in `client/app-version.json` and build again |
 | Checkout says Stripe isn't connected | No `STRIPE_SECRET_KEY`, or a live key without `STRIPE_ALLOW_LIVE=true` |
 | A race seems stuck in countdown or running | Restart the server: `recover()` finishes or resumes every unfinished race from what is stored |
 | Players see an old version of the website | It reloads itself once when old code files are gone. Otherwise a hard refresh. Check that Vercel finished building `Main` |

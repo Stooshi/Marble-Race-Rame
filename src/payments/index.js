@@ -5,7 +5,7 @@
  *
  *   stripe  the website (Stripe Checkout, src/payments/stripe.js; coins only from its webhook)
  *   apple   the iPhone app (App Store in-app purchase) [placeholder until the app exists]
- *   google  the Android app (Google Play billing)      [placeholder until the app exists]
+ *   google  the Android app (Google Play Billing, src/payments/google.js: verified with Google before coins)
  *   test    local development only: pays at once      (PAYMENTS_TEST=true, never in production)
  *
  * Every provider ends in the same place: grant(), which marks the payment paid
@@ -24,6 +24,7 @@ const config = require('../config');
 const { HttpError, badRequest, notFound } = require('../utils/httpError');
 const economy = require('../economy');
 const stripe = require('./stripe');
+const google = require('./google');
 const consent = require('../../client/src/shared/payments/consent.json');
 
 const PACKS = new Map(packsFile.packs.map((p) => [p.id, p]));
@@ -45,9 +46,10 @@ const PROVIDERS = {
   },
   google: {
     name: 'google',
-    configured: () => false,
-    start: async () => notYet('Google Play purchase'),
-    verify: async () => { throw new HttpError(501, 'Google Play receipts are not checked yet. [Placeholder]'); },
+    // On once GOOGLE_PLAY_SERVICE_ACCOUNT is set on the server (the app buys through Google Play
+    // Billing and sends the purchase to /api/payments/google/verify; see googlePurchase below).
+    configured: () => google.configured(),
+    start: async () => ({ kind: 'unavailable', message: 'Coins in the Android app are bought through Google Play.' }),
   },
   test: {
     name: 'test',
@@ -92,7 +94,8 @@ async function checkout(client, userId, { productId, provider: providerName, con
   const provider = PROVIDERS[providerName];
   if (!provider) throw badRequest('Unknown payment provider');
   const p = pack(productId);
-  if (!provider.configured()) {
+  // The app stores have no web checkout: the apps buy in the store and send the purchase to be checked.
+  if (!provider.configured() || provider.name === 'google' || provider.name === 'apple') {
     return { payment: null, next: await provider.start(null, {}) };
   }
   if (agreed !== true) throw badRequest('Please agree to immediate delivery and the terms of sale first');
@@ -174,7 +177,55 @@ async function refund(db, paymentId, { amountCents = null, adminId, reason }) {
     });
     return { refund: { status: 'succeeded' }, ...out, waiting: false };
   }
+  if (pay.provider === 'google') {
+    // Google refunds whole orders only; the coins go when the voided purchase comes back from Google.
+    if (amountCents != null && amountCents !== left) throw badRequest('Google Play purchases can only be refunded in full');
+    if (!/^GPA\./.test(pay.provider_ref ?? '')) throw badRequest('This Google Play purchase has no order id: refund it in Play Console');
+    await google.refundOrder(pay.provider_ref);
+    await db.query(
+      'INSERT INTO admin_audit (admin_id, action, target_user_id, reason, details) VALUES ($1, $2, $3, $4, $5)',
+      [adminId, 'refund-request', pay.user_id, reason, JSON.stringify({ order_no: pay.order_no, payment_id: pay.id, google_order: pay.provider_ref })],
+    );
+    // Google lists the voided purchase within minutes: check now, and the 6-hourly check catches the rest.
+    setTimeout(() => googleSync(db).catch((err) => console.error(`[google-play] voided check: ${err.message}`)), 60_000).unref?.();
+    return { refund: { status: 'requested' }, waiting: true };
+  }
   throw badRequest(`${pay.provider} purchases are refunded by the store itself`);
+}
+
+/** The player's account id for Google Play purchases (the app buys with it). */
+const googleAccountId = (db, userId) => google.accountIdFor(db, userId);
+
+/** A Google Play purchase from the app (or from Google's notification): verified with Google, coins once. */
+function googlePurchase(db, { userId = null, productId, purchaseToken }) {
+  if (!google.configured()) throw new HttpError(503, 'Google Play purchases are not connected yet');
+  return google.redeem(db, { userId, productId, purchaseToken }, { grant, pack });
+}
+
+/** Google's refunds and chargebacks (voided purchases) taken back, and purchases not yet consumed consumed. */
+async function googleSync(db) {
+  if (!google.configured()) return { revoked: 0, consumed: 0 };
+  const consumed = await google.consumeLeftovers(db);
+  const revoked = await google.syncVoided(db, { revoke: stripe.revoke });
+  if (revoked || consumed) console.log(`[google-play] ${revoked} voided purchase(s) taken back, ${consumed} consumed`);
+  return { revoked, consumed };
+}
+
+/** Every hour: consume leftovers; every 6 hours: voided purchases. Started by src/server.js. */
+function startGoogleJobs(db) {
+  if (!google.configured()) return null;
+  let n = 0;
+  const run = async () => {
+    n += 1;
+    try {
+      if (n % 6 === 1) await googleSync(db);
+      else await google.consumeLeftovers(db);
+    } catch (err) { console.error(`[google-play] job: ${err.message}`); }
+  };
+  setTimeout(run, 30_000).unref?.();
+  const timer = setInterval(run, 3600_000);
+  timer.unref?.();
+  return timer;
 }
 
 /** An app's store purchase: check the receipt, record it once, add the coins. */
@@ -193,4 +244,4 @@ async function redeemReceipt(client, userId, { provider: providerName, receipt }
   return { coins: await grant(client, payment.id) };
 }
 
-module.exports = { PROVIDERS, PACKS, CONSENT_TEXT, available, checkout, grant, redeemReceipt, ordersOf, orderOf, stripeEvent, refund };
+module.exports = { PROVIDERS, PACKS, CONSENT_TEXT, available, checkout, grant, redeemReceipt, ordersOf, orderOf, stripeEvent, refund, googleAccountId, googlePurchase, googleSync, startGoogleJobs, pack };

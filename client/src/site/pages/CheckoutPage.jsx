@@ -5,7 +5,7 @@ import { COIN_PACKS, PACK } from '../../shared/payments/packs';
 import CONSENT from '../../shared/payments/consent.json';
 import { api } from '../../api/client';
 import { formatNumber } from '../../utils/format';
-import { STORE_NAME, buyCoins, storeProvider } from '../payments';
+import { STORE_NAME, buyCoins, storeProvider, useStorePrices } from '../payments';
 import { track } from '../consent/tracking';
 
 /**
@@ -25,6 +25,8 @@ export default function CheckoutPage() {
   const web = provider === 'stripe' || provider === 'test';
   const cancelled = search.get('cancelled') === '1';
   const [stripeMode, setStripeMode] = useState(null);
+  const storePrices = useStorePrices(COIN_PACKS); // (Android: Google Play's price in the player's currency)
+  const priceOf = (p) => storePrices[p.id] ?? p.priceLabel;
   useEffect(() => {
     if (provider !== 'stripe') return undefined;
     let live = true;
@@ -73,7 +75,10 @@ export default function CheckoutPage() {
                 <span>The price is shown in your own currency there, VAT included.</span>
               </>}
               {provider === 'test' && <span>Development: a test payment that completes at once.</span>}
-              {!web && <span>[{STORE_NAME[provider]} purchase sheet]</span>}
+              {!web && <>
+                <span>You'll pay with {STORE_NAME[provider]}, using the payment method saved in your {provider === 'google' ? 'Google' : 'Apple'} account.</span>
+                <span>The price is in your own currency, VAT included.</span>
+              </>}
             </div>
             {stripeMode === 'test' && <span className="ms-note" role="note">TEST MODE: no real money is taken. Use Stripe's test card 4242 4242 4242 4242, any future date, any CVC.</span>}
           </div>
@@ -88,8 +93,10 @@ export default function CheckoutPage() {
           {cancelled && !result && <div className="ms-msg" role="status">Payment cancelled: nothing was charged. You can try again whenever you like.</div>}
           {result?.status === 'paid' && <div className="ms-msg" role="status">Paid: ● {formatNumber(pack.coins)} coins added. You now have ● {formatNumber(result.coins ?? 0)}. <Link to="/purchases">Your purchases</Link> · <Link to="/shop">Back to the shop</Link></div>}
           {result?.status === 'redirecting' && <div className="ms-msg" role="status">Taking you to Stripe's secure payment page…</div>}
+          {result?.status === 'pending' && <div className="ms-msg" role="status">{result.message}</div>}
+          {result?.status === 'cancelled' && <div className="ms-msg" role="status">Payment cancelled: nothing was charged. You can try again whenever you like.</div>}
           {(result?.status === 'unavailable' || result?.status === 'error') && <div className="ms-msg ms-msg--bad" role="alert">{result.message}</div>}
-          <button type="button" className="ms-btn ms-btn--primary ms-btn--lg" disabled={!ready} onClick={pay}>{busy ? 'ONE MOMENT…' : provider === 'stripe' ? 'CONTINUE TO PAYMENT' : `PAY ${pack.priceLabel}`}</button>
+          <button type="button" className="ms-btn ms-btn--primary ms-btn--lg" disabled={!ready} onClick={pay}>{busy ? 'ONE MOMENT…' : provider === 'stripe' ? 'CONTINUE TO PAYMENT' : `PAY ${priceOf(pack)}`}</button>
           <span className="ms-note">
             {web ? 'Payments are handled securely by Stripe. We never see or store your card details.' : `Payments are handled by ${STORE_NAME[provider]}.`}
           </span>
@@ -98,11 +105,11 @@ export default function CheckoutPage() {
           <span className="ms-eyebrow">Your order</span>
           <div className="ms-row" style={{ alignItems: 'baseline' }}><span className="ms-coins" style={{ fontSize: '2.4rem' }}>● {formatNumber(pack.coins)}</span><span style={{ color: 'var(--ms-soft)' }}>coins</span></div>
           <div className="ms-kv" style={{ gridTemplateColumns: '1fr auto' }}>
-            <span>Price incl. VAT</span><span>{pack.priceLabel}.00</span>
+            <span>Price incl. VAT</span><span>{storePrices[pack.id] ?? `${pack.priceLabel}.00`}</span>
             <span>VAT</span><span>included</span>
-            <span>Total</span><span>{pack.priceLabel}.00</span>
+            <span>Total</span><span>{storePrices[pack.id] ?? `${pack.priceLabel}.00`}</span>
           </div>
-          <div className="ms-row">{COIN_PACKS.filter((p) => p.id !== pack.id).map((p) => <Link key={p.id} to={`/checkout?pack=${p.id}`} className="ms-chip">● {formatNumber(p.coins)} · {p.priceLabel}</Link>)}</div>
+          <div className="ms-row">{COIN_PACKS.filter((p) => p.id !== pack.id).map((p) => <Link key={p.id} to={`/checkout?pack=${p.id}`} className="ms-chip">● {formatNumber(p.coins)} · {priceOf(p)}</Link>)}</div>
           <ul style={{ margin: 0, paddingLeft: '1.2em', color: 'var(--ms-muted)', display: 'grid', gap: 4 }}>
             <li>Coins work only in the Marble Spins shop: for looks, never speed.</li>
             <li>Coins can't be cashed out or exchanged for money.</li>
