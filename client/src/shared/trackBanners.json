@@ -794,6 +794,17 @@
    "side": -1,
    "marbles": 4
   },
+  "wadi-mujib-burst": {
+   "name": "Wadi Mujib Burst",
+   "series": "Canyons",
+   "lighting": "day",
+   "v": "334d4dfa",
+   "bytes": 21804,
+   "bytes2x": 51350,
+   "t": 10698,
+   "side": -1,
+   "marbles": 4
+  },
   "whistler-spins": {
    "name": "Whistler Spins",
    "series": "Coasters",

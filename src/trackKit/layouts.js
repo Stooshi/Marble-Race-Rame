@@ -892,18 +892,22 @@ const LAYOUTS = {
       obstacles: [parked({ costume: c.parked, at: 0.2, side: R, length: 6 }), peg({ costume: c.peg, at: 0.45, line: 'left' })], features: [rumble({ from: 0.7, to: 0.95, count: 3 })],
     },
   ],
-  /** L54 Siq passage (Canyon Series): a slalom straight through the water, tight S-bends, a short climb over a boulder, a drop, more tight S-bends, the hairpin, a long sweep (a boost; a canyon climbs out here) and pegs and a parked piece at the run-in. */
+  /** L54 Siq passage (Canyon Series): tight S-bends first, long and deep (they mix the field off the launch: on a straight or gentler bends first the front starting places kept their lead), a peg and slalom straight through the water, a short climb over a boulder, a drop, more tight S-bends, the hairpin, three quarters of a spiral (the pool where the siq widens), a long sweep (a boost; a canyon climbs out here) and pegs and a parked piece at the run-in. */
   'siq-passage': (L, R, c) => [
-    { key: 'siq1', name: 'Slalom straight', shape: straight(80, { grade: 0.12 }), obstacles: [slalom({ costume: c.slalom, from: 0.35, to: 0.85, count: 3, loss: 0.15 })], billboards: 1 },
-    { key: 'narrows', name: 'S-bends', shape: sBends({ first: L, radius: 55, degrees: 95, grade: 0.13 }) },
+    { key: 'narrows', name: 'S-bends', shape: sBends({ first: L, radius: 55, degrees: 115, grade: 0.13 }) },
+    {
+      key: 'siq1', name: 'Slalom straight', shape: straight(75, { grade: 0.12 }),
+      obstacles: [peg({ costume: c.peg, at: 0.12, line: 'left' }), peg({ costume: c.peg, at: 0.26, line: 'right' }), slalom({ costume: c.slalom, from: 0.45, to: 0.88, count: 3, loss: 0.15 })],
+    },
     { key: 'boulder', name: 'Climb', shape: climb(12, { grade: -0.05, after: 0.14 }) },
     { key: 'dropIn', name: 'Drop', shape: plunge(45, { grade: 0.22, from: 0.14 }), billboards: 1 },
     { key: 'siq2', name: 'More S-bends', shape: sBends({ first: R, radius: 58, degrees: 90, grade: 0.12 }), billboards: 1 },
     { key: 'brakingStraight', name: 'Run to the hairpin', shape: straight(50, { grade: 0.12 }) },
     { key: 'hairpin', name: 'Hairpin', shape: hairpin({ side: L }), obstacles: [swipe({ costume: c.swipe, side: 'high' })] },
+    { key: 'pool', name: 'Spiral', shape: spiral({ side: R, radius: 60, turns: 0.75, grade: 0.15 }) },
     { key: 'openSweep', name: 'Sweep', shape: sweep({ side: R, radius: 88, degrees: 150, grade: 0.09 }), features: [boost({ at: 0.08 })], billboards: 2 },
     {
-      key: 'lastStraight', name: 'Last straight', shape: straight(95, { grade: 0.15 }),
+      key: 'lastStraight', name: 'Last straight', shape: straight(80, { grade: 0.15 }),
       obstacles: [peg({ costume: c.peg, at: 0.25, line: 'right' }), parked({ costume: c.parked, at: 0.4, side: L, length: 6 }), peg({ costume: c.peg, at: 0.6, line: 'center' })], features: [rumble({ from: 0.75, to: 0.95, count: 3 })],
     },
   ],

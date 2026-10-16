@@ -66,6 +66,7 @@ module.exports = [
   require('./antelope-slot-spins'),
   require('./verdon-burst'),
   require('./tiger-leaping-spins'),
+  require('./wadi-mujib-burst'),
   require('./spawn-point'),
   require('./speedrun-valley'),
   require('./voxel-peaks'),
