@@ -109,9 +109,10 @@ module.exports = Object.freeze({
   },
 
   // The support inbox (src/support): new contact-form messages are emailed here (when email is on),
-  // and players' replies to support emails come back here. Without it, messages are only in the back office.
+  // and players' replies to support emails come back here. SUPPORT_EMAIL overrides the company's
+  // support address (client/src/shared/company.json).
   support: {
-    email: process.env.SUPPORT_EMAIL || null,
+    email: process.env.SUPPORT_EMAIL || require('../../client/src/shared/company.json').supportEmail || null,
   },
 
   game: assertGameLimits({

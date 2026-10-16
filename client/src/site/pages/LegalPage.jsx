@@ -1,9 +1,11 @@
 import { useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { ADDRESS, LEGAL_UPDATED, OPERATED_BY, company } from '../company';
 
 /**
  * Terms of use, terms of sale, privacy, cookies and contact: the design's
- * draft text, for legal review before launch. [Brackets] are still to decide.
+ * draft text, for legal review before launch. [Brackets] are still to decide. The company's
+ * details come from client/src/shared/company.json.
  */
 export default function LegalPage() {
   const { hash } = useLocation();
@@ -13,7 +15,7 @@ export default function LegalPage() {
   return (
     <div className="ms-page ms-page--narrow ms-legal">
       <div className="ms-msg ms-msg--bad">DRAFT for legal review before launch. Text in [brackets] still needs to be decided.</div>
-      <span className="ms-note">Last updated [date] · Marble Spins is run by [COMPANY NAME AB], org. no. [XXXXXX-XXXX], [address], Sweden.</span>
+      <span className="ms-note">Last updated {LEGAL_UPDATED} · {OPERATED_BY}, {ADDRESS} · <a href={`mailto:${company.supportEmail}`}>{company.supportEmail}</a></span>
       <h1 id="use" className="ms-h2 ms-legal__h1">Terms of use</h1>
       <h2 className="ms-legal__h2">1. The game</h2>
       <p>Marble Spins is a free online marble racing game. Race results are decided by the game's physics. Every player's marble races at the same level, and nothing you buy changes how fast your marble is.</p>
@@ -26,6 +28,7 @@ export default function LegalPage() {
       <h2 className="ms-legal__h2">5. Changes and availability</h2>
       <p>We keep improving the game, so tracks, items and features can change. We'll tell you about important changes to these terms before they apply.</p>
       <h1 id="sale" className="ms-h2 ms-legal__h1">Terms of sale</h1>
+      <p>The seller is {company.name} (org.nr {company.orgNo}, VAT no. {company.vatNo}), {ADDRESS}, <a href={`mailto:${company.supportEmail}`}>{company.supportEmail}</a>.</p>
       <h2 className="ms-legal__h2">1. What you buy</h2>
       <p>Coin packs: 5,000 coins for $5, 10,500 for $10, 27,500 for $25 and 57,500 for $50 (shown in your local currency, VAT included). Coins are used to buy cosmetic marbles, bags and limited editions in the shop. [Coins do / do not expire.]</p>
       <h2 className="ms-legal__h2">2. Payment</h2>
@@ -33,12 +36,14 @@ export default function LegalPage() {
       <h2 className="ms-legal__h2">3. Right of withdrawal</h2>
       <p>Under EU consumer law you normally have 14 days to withdraw from an online purchase. For digital content delivered right away, that right ends once delivery starts, but only if you agreed to immediate delivery and confirmed that you lose the right. We ask for both at checkout.</p>
       <h2 className="ms-legal__h2">4. Refunds</h2>
-      <p>Coins and items aren't refundable once delivered, except where the law requires it: for example a faulty delivery, a purchase made by a minor without a guardian's consent, or a successful chargeback. Contact us at [support email] with your order number and we'll help. When a payment is refunded or reversed, the coins it added are removed from your account (only as many as are left, if some were already spent).</p>
+      <p>Coins and items aren't refundable once delivered, except where the law requires it: for example a faulty delivery, a purchase made by a minor without a guardian's consent, or a successful chargeback. Contact us at <a href={`mailto:${company.supportEmail}`}>{company.supportEmail}</a> with your order number and we'll help. When a payment is refunded or reversed, the coins it added are removed from your account (only as many as are left, if some were already spent).</p>
       <h2 className="ms-legal__h2">5. Young players</h2>
       <p>Under 18? Ask a parent or guardian before buying. Parents can contact us about purchases made without their consent.</p>
       <h2 className="ms-legal__h2">6. Complaints</h2>
       <p>Contact us first. You can also turn to the Swedish National Board for Consumer Disputes (ARN) or the EU's online dispute platform.</p>
       <h1 id="privacy" className="ms-h2 ms-legal__h1">Privacy policy</h1>
+      <h2 className="ms-legal__h2">Who is responsible</h2>
+      <p>{company.name} (org.nr {company.orgNo}), {ADDRESS}, is the data controller for the personal data handled in Marble Spins, on the website and in the apps. Questions about your data: <a href={`mailto:${company.privacyEmail}`}>{company.privacyEmail}</a>.</p>
       <h2 className="ms-legal__h2">What we collect</h2>
       <ul>
       <li>Account: player name, email, age group (under 13, 13–17, 18 or older), whether you want news by email, and sign-in provider if you use Google or Apple.</li>
@@ -56,11 +61,21 @@ export default function LegalPage() {
       <h2 className="ms-legal__h2">How long</h2>
       <p>While your account is active, and [X months] after you close it. Purchase records are kept as long as bookkeeping law requires. IP addresses are kept for at most 90 days, then only the country.</p>
       <h2 className="ms-legal__h2">Your rights</h2>
-      <p>You can ask to see, correct, export or delete your data, and object to some uses. In your account's Settings you can download your data, turn news emails on or off (every news email also has an unsubscribe link), and delete your account at once. Deleting removes your name, email, password, settings, email answers, support messages and IP addresses; race results stay under an anonymous name so other players' places don't change, and purchase records are kept without your name for as long as bookkeeping law requires (7 years in Sweden). For anything else, contact [privacy email]. You can also complain to the Swedish Authority for Privacy Protection (IMY).</p>
+      <p>You can ask to see, correct, export or delete your data, and object to some uses. In your account's Settings you can download your data, turn news emails on or off (every news email also has an unsubscribe link), and delete your account at once. Deleting removes your name, email, password, settings, email answers, support messages and IP addresses; race results stay under an anonymous name so other players' places don't change, and purchase records are kept without your name for as long as bookkeeping law requires (7 years in Sweden). For anything else, or to make a request about your data, email <a href={`mailto:${company.privacyEmail}`}>{company.privacyEmail}</a>. You can also complain to the Swedish Authority for Privacy Protection (IMY).</p>
       <h1 id="cookies" className="ms-h2 ms-legal__h1">Cookies</h1>
       <p>To keep you logged in and remember your choices (such as sound levels), the website stores a few items in your browser; they are necessary for the game to work. Statistics cookies (Google Analytics) and marketing cookies (Meta Pixel) are used only if you allow them in the cookie banner, and you can change your choice any time with "Cookie settings" at the bottom of every page. The full list is in our <Link to="/cookies">cookie policy</Link>.</p>
       <h1 id="contact" className="ms-h2 ms-legal__h1">Contact</h1>
-      <p>The contact form in the <Link to="/help#contact">Help Centre</Link> · [support email] · [COMPANY NAME AB], [address], Sweden</p>
+      <p>{OPERATED_BY}.</p>
+      <address className="ms-legal__address">
+        {company.name}<br />
+        {company.street}<br />
+        {company.postcode} {company.city}, {company.country}<br />
+        Org.nr {company.orgNo} · VAT no. {company.vatNo}
+      </address>
+      <ul>
+        <li>Support: <a href={`mailto:${company.supportEmail}`}>{company.supportEmail}</a>, or the contact form in the <Link to="/help#contact">Help Centre</Link></li>
+        <li>Privacy and data requests: <a href={`mailto:${company.privacyEmail}`}>{company.privacyEmail}</a></li>
+      </ul>
       <p className="ms-note">The country of an IP address is looked up with GeoLite2 data created by MaxMind, available from maxmind.com.</p>
     </div>
   );

@@ -123,6 +123,7 @@ pg_restore --clean --if-exists --no-owner -d "<DATABASE_URL>" marble-spins-YYYY-
 
 ### Switching to live (only when Moses says so)
 1. Take a [backup](#backups).
+   Also check Stripe → Settings → Business → **Public details**: business name Voltron Robotics AB, support email support@marblespins.com, support address, statement descriptor (e.g. MARBLESPINS). Stripe prints these on receipts; our checkout line also names the seller and support email.
 2. In the Stripe dashboard **in live mode**, create the same webhook endpoint (same address, same events) and copy its live signing secret. Check that Tax, Adaptive Pricing, payment methods and receipts are set up in live mode too.
 3. On Railway set:
    - `STRIPE_SECRET_KEY` = `sk_live_…`
@@ -158,7 +159,7 @@ Email is off until Brevo is set up. When it's on, "Forgot your password?" appear
 
 To turn email off again, remove `BREVO_API_KEY` and restart.
 
-**Support emails.** Set `SUPPORT_EMAIL` on Railway (the address that should receive contact-form messages) and restart. With Brevo on, every new message is emailed there, with a link to it in the back office; replying to that email goes straight to the player (but isn't logged in the back office, so prefer replying there). Replies written in the back office are emailed to the player from `EMAIL_FROM`, with `SUPPORT_EMAIL` as the reply-to address. Without Brevo, messages and replies are still saved; the back office says a reply wasn't emailed.
+**Support emails.** Contact-form messages go to support@marblespins.com (the company's address in `client/src/shared/company.json`; `SUPPORT_EMAIL` on Railway overrides it). With Brevo on, every new message is emailed there, with a link to it in the back office; replying to that email goes straight to the player (but isn't logged in the back office, so prefer replying there). Replies written in the back office are emailed to the player from `EMAIL_FROM`, with `SUPPORT_EMAIL` as the reply-to address. Without Brevo, messages and replies are still saved; the back office says a reply wasn't emailed.
 
 ## Support messages (back office)
 
@@ -223,7 +224,7 @@ Any change to `client/vercel.json`, the build, or the pre-rendering: build exact
 | Admin locked out of the back office | See [2-step reset](#back-office-admins-and-the-2-step-login) |
 | "Forgot your password?" missing on the log-in page | `BREVO_API_KEY` isn't set on Railway (or the server wasn't restarted after setting it) |
 | Reset email doesn't arrive | Look in Brevo → Transactional → Logs. If there's nothing there, see the Railway logs for `Brevo 4xx` (wrong key, or a sender that isn't verified). The player should also check spam. At most 3 links are sent per account per hour |
-| Contact-form messages don't arrive by email | They are always in the back office (Support messages). The email needs both `BREVO_API_KEY` and `SUPPORT_EMAIL`; Railway logs show `[support] notification … failed` if Brevo refused it |
+| Contact-form messages don't arrive by email | They are always in the back office (Support messages). The email needs `BREVO_API_KEY` (the address is support@marblespins.com unless `SUPPORT_EMAIL` overrides it), and that mailbox must exist; Railway logs show `[support] notification … failed` if Brevo refused it |
 | A player says the contact form keeps failing | The form allows 6 messages an hour from one address ("Too many messages from here"). A form left open over 12 hours fetches a new token by itself |
 | A player asks for their data or to be deleted | They can do both themselves in Settings. Support can delete from the back office (player → Delete account, with a reason) |
 | App shows "Can't reach the race track" | Same as the first row. The app talks to the Railway address built in by `npm run app:sync` |

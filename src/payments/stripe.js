@@ -15,6 +15,7 @@
  *
  * Test keys only (sk_test_…) unless STRIPE_ALLOW_LIVE=true: live money waits for Moses.
  */
+const company = require('../../client/src/shared/company.json');
 const Stripe = require('stripe');
 const config = require('../config');
 const consent = require('../../client/src/shared/payments/consent.json');
@@ -62,7 +63,7 @@ async function start(payment, { pack, email, locale, siteUrl }) {
         tax_behavior: 'inclusive', // (the price already includes VAT)
         product_data: {
           name: `${pack.coins.toLocaleString('en-US')} Marble Spins coins`,
-          description: 'Coins for the Marble Spins shop: looks only, never speed. Delivered right away; no cash value.',
+          description: `Coins for the Marble Spins shop: looks only, never speed. Delivered right away; no cash value. Sold by ${company.name} (org.nr ${company.orgNo}, VAT ${company.vatNo}). Questions: ${company.supportEmail}`,
           tax_code: config.stripe.taxCode,
           metadata: { product_id: pack.id },
         },

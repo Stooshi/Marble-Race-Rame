@@ -22,7 +22,7 @@
 | Fix how a track looks | `client/src/three/` (see the 3D section below). Drawing only, never the race |
 | Add a new track | `src/tracks/README.md` (the kit guide), then `scripts/physics-track-sql.js` and a data update |
 | Fix sound or music | `client/src/sound/engine.js` (the race's sound: countdown beeps, one race track, the ceremony song), `client/src/sound/settings.js`, files in `client/public/audio/`; the race page calls `raceCountdown`/`raceGo`/`raceCeremony`/`raceEnd` (`pages/Race.jsx`, `components/LiveRaceViewer3D.jsx`, `components/RaceViewer.jsx`) |
-| Change legal text | `client/src/site/pages/LegalPage.jsx` |
+| Change legal text | `client/src/site/pages/LegalPage.jsx`; the company's name, org.nr, VAT no., address, support and privacy email in `client/src/shared/company.json` (used by the legal pages, cookie page, footer, Help Centre, emails and Stripe's checkout) |
 | Change a page's title, description or share picture, or what search engines index | `client/src/site/pageMeta.js` (used by the site and the pre-rendering), `client/public/robots.txt`; pages in the sitemap: `client/scripts/prerender.mjs` |
 | Change the cookie banner, the cookie list, or what Analytics / the Pixel receive | `client/src/site/consent/` (`consent.js`: categories, `STORAGE_LIST` shown on `/cookies`; `tracking.js`: loading and events; `ConsentManager.jsx`: banner and settings). A new browser storage key must be added to `STORAGE_LIST` (a test checks) |
 | Redo a track's picture in the track picker | `node scripts/track-banners.js <slug>` (a moment and side in `scripts/track-banners.json` if the automatic one isn't good); review at `/preview/banners`; switch the pictures on with `enabled` in `client/src/shared/trackBanners.json` |
@@ -261,6 +261,7 @@ Defined in `src/sockets/index.js`. The client may send a JWT in `auth.token`; an
 - `shared/`: data and code **shared with the server**:
   - `economy.json` (also the scoreboard `season`);
   - `storeLinks.json` (the website footer's App Store and Google Play links; empty = hidden);
+  - `company.json` (who runs Marble Spins: Voltron Robotics AB, org.nr, VAT no., address, support and privacy email, the legal texts' date; `client/src/site/company.js` formats it);
   - `trackBanners.json` (the track pictures: `enabled` in the picker, and per track its version, sizes, name and series);
   - `support.json` (contact-form categories and limits, checked by the server too);
   - `payments/packs.json`, `payments/consent.json`;

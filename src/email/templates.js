@@ -2,6 +2,8 @@
 
 /** The emails' contents: plain, readable HTML with inline styles (mail apps ignore style sheets). */
 
+const company = require('../../client/src/shared/company.json');
+
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
 function layout(title, body) {
@@ -13,7 +15,7 @@ function layout(title, body) {
 <h1 style="font-size:20px;margin:0 0 12px">${esc(title)}</h1>
 ${body}
 </td></tr>
-<tr><td style="padding:0 24px 20px;font-size:12px;color:#6b7280">Marble Spins · marblespins.com</td></tr>
+<tr><td style="padding:0 24px 20px;font-size:12px;color:#6b7280">Marble Spins · marblespins.com · Questions? <a href="mailto:${esc(company.supportEmail)}" style="color:#6b7280">${esc(company.supportEmail)}</a><br>Marble Spins is operated by ${esc(company.name)}, org.nr ${esc(company.orgNo)}, ${esc(company.street)}, ${esc(company.postcode)} ${esc(company.city)}, ${esc(company.country)}.</td></tr>
 </table></td></tr></table></body></html>`;
 }
 

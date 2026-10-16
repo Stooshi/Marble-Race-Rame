@@ -50,3 +50,19 @@ describe('placeholders players would see', () => {
     }
   });
 });
+
+describe('company details', () => {
+  it('are set once (shared/company.json) and no company placeholder is left', async () => {
+    const { default: company } = await import('../src/shared/company.json');
+    expect(company.name).toBe('Voltron Robotics AB');
+    expect(company.orgNo).toMatch(/^\d{6}-\d{4}$/);
+    expect(company.vatNo).toBe(`SE${company.orgNo.replace('-', '')}01`);
+    expect(company.supportEmail).toMatch(/^support@marblespins\.com$/);
+    expect(company.privacyEmail).toMatch(/^privacy@marblespins\.com$/);
+    for (const f of ['src/site/pages/LegalPage.jsx', 'src/site/pages/CookiesPage.jsx', 'src/site/help/faq.js', 'src/site/SiteFooter.jsx', '../src/email/templates.js', '../src/payments/stripe.js']) {
+      expect(src(f), f).not.toMatch(/\[(COMPANY NAME AB|XXXXXX-XXXX|address|support email|privacy email|date)\]/);
+    }
+    expect(src('src/site/pages/LegalPage.jsx')).toMatch(/data controller/);
+    expect(src('src/site/pages/LegalPage.jsx')).toMatch(/DRAFT for legal review/); // (until Moses says)
+  });
+});

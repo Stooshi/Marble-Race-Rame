@@ -7,6 +7,7 @@
  *   client/src/shared/economy.json          coins per race, places, daily goal and limit, starting coins, bag discounts
  *   client/src/shared/payments/packs.json   coin packs and their prices
  *   client/src/shared/marbles/catalog.json  marble prices by rarity, First Edition size, shades, collections coming soon
+ *   client/src/shared/company.json          company name, org. no., address, support and privacy email
  * and the number of tracks and series from the live track list when the page has it.
  *
  * An answer is a list of blocks:
@@ -18,6 +19,7 @@ import economy from '../../shared/economy.json';
 import { COIN_PACKS } from '../../shared/payments/packs';
 import { catalog } from '../../shared/marbles';
 import supportSettings from '../../shared/support.json';
+import company from '../../shared/company.json';
 
 const n = (v) => Number(v).toLocaleString('en-US');
 const ordinal = (k) => `${k}${['th', 'st', 'nd', 'rd'][(k % 100 > 10 && k % 100 < 14) || k % 10 > 3 ? 0 : k % 10]}`;
@@ -276,11 +278,11 @@ export function buildFaq({ tracks } = {}) {
     ]],
     ['Contact us', [
       ['Still need help?',
-        'Use the contact form below or email **[support email]**. Tell us your player name and, for payment questions, your order number. We aim to reply within [2 working days].'],
+        `Use the contact form below or email **${company.supportEmail}**. Tell us your player name and, for payment questions, your order number. We aim to reply within [2 working days].`],
       ['Privacy questions',
-        'Email **[privacy email]**. You can also complain to the Swedish Authority for Privacy Protection (IMY).'],
+        `For questions about your data, or to ask to see, correct, export or delete it, email **${company.privacyEmail}**. ${company.name} is the data controller. You can also complain to the Swedish Authority for Privacy Protection (IMY).`],
       ['Company details',
-        'Marble Spins is run by [COMPANY NAME AB], org. no. [XXXXXX-XXXX], [address], Sweden.'],
+        `Marble Spins is operated by **${company.name}**, org.nr ${company.orgNo}, VAT no. ${company.vatNo}, ${company.street}, ${company.postcode} ${company.city}, ${company.country}. Email: ${company.supportEmail}.`],
     ]],
   ];
 
@@ -320,7 +322,7 @@ export const CONTACT_CATEGORIES = supportSettings.categories;
 
 /**
  * schema.org FAQPage for search engines. Questions whose answer still holds a [bracket] placeholder
- * are left out until it is filled in (a search result should never show "[support email]").
+ * are left out until it is filled in (a search result should never show a placeholder).
  */
 export function faqStructuredData(sections, pageUrl) {
   return {

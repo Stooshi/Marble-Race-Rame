@@ -1,6 +1,6 @@
 # 1. Architecture
 
-*Last updated 14 Oct 2026 (Main 69b4a58).*
+*Last updated 16 Oct 2026.*
 
 ## The parts
 
@@ -120,7 +120,7 @@ There is no separate staging server. Vercel makes a preview build for every bran
 | `BREVO_API_KEY` | to send email | Brevo API key (v3). Without it, email is off and "Forgot your password?" is hidden |
 | `EMAIL_FROM` | with Brevo | Sender address, verified in Brevo (default `no-reply@marblespins.com`) |
 | `EMAIL_FROM_NAME` | no | Sender name (default "Marble Spins") |
-| `SUPPORT_EMAIL` | no | The support address: new contact-form messages are emailed here (with Brevo on), and it is the reply-to address on replies sent from the back office. Without it, messages are only in the back office |
+| `SUPPORT_EMAIL` | no | Overrides the support address (default: the company's, `client/src/shared/company.json`, support@marblespins.com): new contact-form messages are emailed here (with Brevo on), and it is the reply-to address on replies sent from the back office |
 | `CORS_ORIGIN` | no | `*`, or a comma-separated list of extra website addresses (e.g. the vercel.app one) |
 | `PUBLIC_SITE_URL` | no | The website's main address (default https://marblespins.com). Stripe returns players here if their own address isn't recognised |
 | `NODE_ENV` | yes (`production`) | Turns on the production checks |

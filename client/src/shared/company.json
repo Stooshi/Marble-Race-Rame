@@ -1,0 +1,13 @@
+{
+  "note": "Who runs Marble Spins: shown in the legal pages, the footer, the Help Centre, emails and Stripe's checkout (server and website read this file). Swedish e-commerce rules: company name, org. no., address and email must be easy to find.",
+  "name": "Voltron Robotics AB",
+  "orgNo": "559344-3756",
+  "vatNo": "SE559344375601",
+  "street": "Drivhjulsvägen 20",
+  "postcode": "126 30",
+  "city": "Hägersten",
+  "country": "Sweden",
+  "supportEmail": "support@marblespins.com",
+  "privacyEmail": "privacy@marblespins.com",
+  "legalUpdated": "2026-10-16"
+}

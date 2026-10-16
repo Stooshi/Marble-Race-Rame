@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { CATEGORIES, STORAGE_LIST, openCookieSettings, readConsent } from '../consent/consent';
 import { META_PIXEL_ID, GA4_ID } from '../consent/tracking';
+import { ADDRESS, company } from '../company';
 
 const TITLES = { necessary: 'Necessary', statistics: 'Statistics', marketing: 'Marketing' };
 const ABOUT = {
@@ -19,6 +20,7 @@ export default function CookiesPage() {
     <div className="ms-page ms-page--narrow ms-legal">
       <h1 className="ms-h2 ms-legal__h1">Cookie policy</h1>
       <p>Marble Spins stores a few small items in your browser (cookies, and the browser's local and session storage). This page lists all of them. The iPhone and Android apps use none of the statistics or marketing ones.</p>
+      <p>Responsible for this (the data controller): {company.name}, org.nr {company.orgNo}, {ADDRESS}. Questions: <a href={`mailto:${company.privacyEmail}`}>{company.privacyEmail}</a>.</p>
       <div className="ms-card" style={{ display: 'grid', gap: 10 }}>
         <strong>Your choice</strong>
         <span>{yours}</span>
