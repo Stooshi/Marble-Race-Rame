@@ -194,6 +194,7 @@ To turn email off again, remove `BREVO_API_KEY` and restart.
 
 | Symptom | Likely cause and fix |
 |---|---|
+| The website is blank (often only when logged in) while the page source has text | The pre-rendered copy and the app: check in a browser's console and with `client/test/prerender.test.js`. Fastest fix: Vercel → Deployments → promote the last good one |
 | Website shows "Can't reach the server", the offline screen ("Can't reach the race track"), or CORS errors in the browser | Server down (Railway logs, `/health`). Or `VITE_API_URL` on Vercel is wrong. Or the site's address is missing from `CORS_ORIGIN` (marblespins.com and www are always allowed; add the vercel.app address) |
 | Server won't start in production | `JWT_SECRET` missing or under 32 characters (the log says so). Or the database is unreachable (`DATABASE_URL`) |
 | Logs show `[db-setup] FAILED, rolled back, no changes were made` | The schema or a data update failed. Nothing changed and the server runs on the old database. Read the error, fix the new file (it didn't run), and redeploy |

@@ -20,7 +20,8 @@ window.addEventListener('vite:preloadError', (event) => {
   if (reloadOnceForNewCode()) event.preventDefault();
 });
 
-createRoot(document.getElementById('root')).render(
+const root = document.getElementById('root');
+createRoot(root).render(
   <StrictMode>
     <BrowserRouter>
       <AuthProvider>
@@ -29,3 +30,10 @@ createRoot(document.getElementById('root')).render(
     </BrowserRouter>
   </StrictMode>,
 );
+
+// The pre-rendered copy of the page (scripts/prerender.mjs) is replaced by the app: once the app has
+// drawn, make sure no copy is left and nothing stays hidden.
+requestAnimationFrame(() => requestAnimationFrame(() => {
+  root.querySelectorAll(':scope > [data-ms-prerender]').forEach((el) => el.remove());
+  document.documentElement.removeAttribute('data-ms-shell');
+}));

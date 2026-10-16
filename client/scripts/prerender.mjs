@@ -39,13 +39,13 @@ async function liveTracks() {
   }
 }
 
-// Shown only while the page's code loads; cleared at once when it isn't the page the visitor
-// asked for (a fallback to index.html), when they're logged in (they get their own home), or
-// inside the apps.
+// The pre-rendered copy (wrapped in [data-ms-prerender]) shows only while the page's code loads;
+// it is hidden at once when it isn't the page the visitor asked for, when they're logged in (they
+// get their own pages), or inside the apps. Only the copy is hidden, never the app that replaces it.
 const GUARD = (path) => `<script>(function(){try{var p=location.pathname.replace(/\\/+$/,'')||'/';`
   + `if(p!==${JSON.stringify(path)}||localStorage.getItem('marble-race-token')||window.Capacitor)`
   + `document.documentElement.setAttribute('data-ms-shell','1')}catch(e){}})()</script>`
-  + `<style>html[data-ms-shell] #root>*{display:none}</style>`;
+  + `<style>html[data-ms-shell] [data-ms-prerender]{display:none!important}</style>`;
 
 function headFor(m, extra = '') {
   return [
@@ -75,8 +75,9 @@ function page(template, m, html, path, extra) {
     .replace(/<meta (property|name)="(og|twitter):[^"]*"[^>]*>\s*/g, '')
     .replace(/<meta name="robots"[^>]*>\s*/, '');
   return cleaned
-    .replace('</head>', `    ${headFor(m, extra)}\n    ${GUARD(path)}\n  </head>`)
-    .replace('<div id="root"></div>', `<div id="root">${html}</div>`);
+    .replace('</head>', () => `    ${headFor(m, extra)}\n    ${GUARD(path)}\n  </head>`)
+    // (functions, so a "$" in the page, e.g. a price, is never read as a replacement pattern)
+    .replace('<div id="root"></div>', () => `<div id="root"><div data-ms-prerender style="display:contents">${html}</div></div>`);
 }
 
 async function main() {
