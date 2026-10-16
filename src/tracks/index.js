@@ -64,6 +64,7 @@ module.exports = [
   require('./cotahuasi-free-fall'),
   require('./fish-river-burst'),
   require('./antelope-slot-spins'),
+  require('./verdon-burst'),
   require('./spawn-point'),
   require('./speedrun-valley'),
   require('./voxel-peaks'),

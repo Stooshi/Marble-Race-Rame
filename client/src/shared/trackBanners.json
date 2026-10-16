@@ -750,6 +750,17 @@
    "side": 1,
    "marbles": 4
   },
+  "verdon-burst": {
+   "name": "Verdon Burst",
+   "series": "Canyons",
+   "lighting": "day",
+   "v": "58de0992",
+   "bytes": 14938,
+   "bytes2x": 35918,
+   "t": 10254,
+   "side": 1,
+   "marbles": 5
+  },
   "volcano-run": {
    "name": "Volcano Run",
    "series": "Classic",

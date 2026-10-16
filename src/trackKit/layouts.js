@@ -831,20 +831,23 @@ const LAYOUTS = {
       obstacles: [parked({ costume: c.parked, at: 0.2, side: R, length: 6 }), peg({ costume: c.peg, at: 0.42, line: 'left' }), peg({ costume: c.peg, at: 0.58, line: 'right' })], features: [rumble({ from: 0.72, to: 0.95, count: 3 })],
     },
   ],
-  /** L51 Cliff road (Canyon Series): a long sweep high on the rim (a boost), a slalom straight, a spin down into the gorge, a plunge to the river, a mogul straight (a peg), the hairpin, a sweep along the river, a drop to the lake and pegs and a parked piece at the run-in. */
+  /** L51 Cliff road (Canyon Series; made for the crest start, which mixes the field before it): a long sweep high on the rim (a boost), a slalom straight past the lookout, a spin down into the gorge, a plunge to the river, a peg straight along it (pegs, not moguls: moguls cost the slowest marbles most and spread the field), the hairpin, a sweep along the river, a drop to the lake and three pegs at the run-in (no parked piece: off the drop a marble could stick on its end for 20 s). */
   'cliff-road': (L, R, c) => [
     { key: 'rimRoad', name: 'Sweep', shape: sweep({ side: L, radius: 95, degrees: 150, grade: 0.085 }), features: [boost({ at: 0.08 })], billboards: 2 },
     { key: 'lookout', name: 'Slalom straight', shape: straight(60, { grade: 0.12 }), obstacles: [slalom({ costume: c.slalom, from: 0.35, to: 0.85, count: 3, loss: 0.15 })] },
     { key: 'spin', name: 'Spiral', shape: spiral({ side: R, radius: 54, turns: 1, grade: 0.16 }) },
     { key: 'dive', name: 'Plunge', shape: plunge(50, { grade: 0.24, from: 0.16 }), billboards: 1 },
-    { key: 'paddleRun', name: 'Mogul straight', shape: straight(100, { grade: 0.12 }), features: [moguls({ from: 0.5, to: 0.9, count: 4 })], obstacles: [peg({ costume: c.peg, at: 0.3, line: 'center' })], billboards: 1 },
+    {
+      key: 'paddleRun', name: 'Peg straight', shape: straight(85, { grade: 0.12 }), billboards: 1,
+      obstacles: [peg({ costume: c.peg, at: 0.3, line: 'center' }), peg({ costume: c.peg, at: 0.5, line: 'left' }), peg({ costume: c.peg, at: 0.7, line: 'right' })],
+    },
     { key: 'brakingStraight', name: 'Run to the hairpin', shape: straight(50, { grade: 0.12 }) },
     { key: 'hairpin', name: 'Hairpin', shape: hairpin({ side: L }), obstacles: [swipe({ costume: c.swipe, side: 'high' })] },
     { key: 'riverSweep', name: 'Second sweep', shape: sweep({ side: R, radius: 85, degrees: 140, grade: 0.09 }) },
     { key: 'lakeDrop', name: 'Drop', shape: plunge(45, { grade: 0.2, from: 0.09 }) },
     {
       key: 'lastStraight', name: 'Last straight', shape: straight(75, { grade: 0.15 }),
-      obstacles: [peg({ costume: c.peg, at: 0.25, line: 'left' }), parked({ costume: c.parked, at: 0.4, side: R, length: 6 }), peg({ costume: c.peg, at: 0.6, line: 'center' })], features: [rumble({ from: 0.75, to: 0.95, count: 3 })],
+      obstacles: [peg({ costume: c.peg, at: 0.25, line: 'left' }), peg({ costume: c.peg, at: 0.42, line: 'right' }), peg({ costume: c.peg, at: 0.6, line: 'center' })], features: [rumble({ from: 0.75, to: 0.95, count: 3 })],
     },
   ],
   /** L52 Rapids gorge (Canyon Series): a mogul straight (the rapids), S-bends, a peg straight (the great rock), a waterfall, a straight (a peg), a long sweep (a canyon climbs out here on the high trail), the hairpin, a slalom drop and a parked piece and a peg at the run-in. */
