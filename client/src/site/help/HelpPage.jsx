@@ -1,5 +1,5 @@
 import { Fragment, useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { api } from '../../api/client';
 import { useAsync } from '../../hooks/useAsync';
 import { SITE_URL } from '../canonical';
@@ -161,24 +161,18 @@ function useStructuredData(sections) {
     el.id = 'ms-help-faq';
     el.textContent = JSON.stringify(faqStructuredData(sections, `${SITE_URL}/help`));
     document.head.appendChild(el);
-    const title = document.title;
-    const meta = document.head.querySelector('meta[name="description"]');
-    const description = meta?.getAttribute('content');
-    document.title = 'Help Centre · Marble Spins';
-    meta?.setAttribute('content', 'Answers about races, coins, marbles, buying coins, refunds, friend rooms and your account, and a way to contact Marble Spins support.');
-    return () => {
-      el.remove();
-      document.title = title;
-      if (meta && description != null) meta.setAttribute('content', description);
-    };
+    return () => el.remove();
   }, [sections]);
 }
 
 /** /help: the Help Centre. Every question has its own link (/help#question-slug) for support to send. */
 export default function HelpPage() {
-  const { hash } = useLocation();
+  const { hash: realHash } = useLocation();
+  // A question's own page (/help/question-slug, in the sitemap) opens that question, as /help#slug does.
+  const { question } = useParams();
+  const hash = realHash || (question ? `#${question}` : '');
   const navigate = useNavigate();
-  const { data } = useAsync(() => api.tracks().catch(() => null), []);
+  const { data } = useAsync(() => api.tracks().catch(() => null), [], 'tracks');
   const sections = useMemo(() => buildFaq({ tracks: data?.tracks }), [data]);
   const index = useMemo(() => buildIndex(sections), [sections]);
   const [openSet, setOpenSet] = useState(() => new Set());

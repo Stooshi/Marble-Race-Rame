@@ -34,7 +34,7 @@ const FAQ = [
 export default function LandingPage() {
   const [search] = useSearchParams();
   const deleted = search.get('deleted') === '1';
-  const { data } = useAsync(() => api.tracks().catch(() => ({ tracks: [] })), []);
+  const { data } = useAsync(() => api.tracks().catch(() => ({ tracks: [] })), [], 'tracks');
   const counts = useMemo(() => {
     const c = {};
     for (const t of data?.tracks ?? []) c[t.series] = (c[t.series] ?? 0) + 1;

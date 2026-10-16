@@ -6,6 +6,7 @@ import CONSENT from '../../shared/payments/consent.json';
 import { api } from '../../api/client';
 import { formatNumber } from '../../utils/format';
 import { STORE_NAME, buyCoins, storeProvider } from '../payments';
+import { track } from '../consent/tracking';
 
 /**
  * Checkout for a coin pack bought with real money: ?pack=coins-10500 (Stripe
@@ -46,6 +47,7 @@ export default function CheckoutPage() {
   const pay = async () => {
     setBusy(true);
     setResult(null);
+    track('checkout_started', { productId: pack.id, value: pack.amountCents / 100, currency: pack.currency });
     try {
       const r = await buyCoins(pack, { consent: withdrawal && terms });
       if (r.status === 'paid') await refreshUser();

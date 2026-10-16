@@ -12,6 +12,7 @@ import { importOrReload } from '../../utils/staleCode';
 import MarbleBadge from '../marbles/MarbleBadge';
 import { editionLine, useCollection } from '../marbles/useCollection';
 import { TEASERS } from '../shop/comingSoon';
+import { track } from '../consent/tracking';
 
 const Turntable = lazy(() => importOrReload(() => import('../marbles/Turntable')));
 
@@ -50,6 +51,7 @@ export default function ShopPage() {
   }, [designParam, search]);
   const [open, setOpen] = useState(fromUrl);
   useEffect(() => setOpen(fromUrl), [fromUrl]);
+  useEffect(() => { track('shop_view'); }, []);
   const close = () => {
     setOpen(null);
     if (designParam || search.get('id')) navigate('/shop', { replace: true });

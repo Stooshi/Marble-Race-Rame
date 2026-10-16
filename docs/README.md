@@ -17,6 +17,7 @@ This is the starting point for anyone taking over the code, such as a future CTO
 - `client/README.md`: the client and the apps.
 - `client/APP-TESTING.md`: running the apps on your own phone.
 - `src/tracks/README.md`: the track kit, for building new tracks.
+- `store-assets/README.md`: the App Store and Google Play screenshots and feature graphic.
 - `docs/database_schema.sql`: the schema itself, with comments.
 
 **Conventions used in these documents:**

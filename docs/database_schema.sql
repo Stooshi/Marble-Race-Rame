@@ -820,6 +820,20 @@ CREATE TABLE IF NOT EXISTS support_replies (
 );
 CREATE INDEX IF NOT EXISTS idx_support_replies_message ON support_replies (message_id, created_at);
 
+-- Cookie consent on the website (/cookies): every choice a logged-in player makes in the cookie
+-- banner or its settings, as a record of the consent (time, banner version, each category).
+-- Necessary storage needs no consent and isn't asked. In "Download my data"; deleted with the account.
+CREATE TABLE IF NOT EXISTS cookie_consents (
+    id              bigserial   PRIMARY KEY,
+    user_id         uuid        NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    version         smallint    NOT NULL,
+    statistics      boolean     NOT NULL,
+    marketing       boolean     NOT NULL,
+    decided_at      timestamptz NOT NULL,
+    created_at      timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_cookie_consents_user ON cookie_consents (user_id, created_at);
+
 -- -----------------------------------------------------------------------------
 -- Seed data (idempotent)
 -- -----------------------------------------------------------------------------

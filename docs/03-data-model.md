@@ -1,6 +1,6 @@
 # 3. Data model
 
-*Last updated 14 Oct 2026 (Main 69b4a58).* The database is PostgreSQL. The schema is defined in `docs/database_schema.sql`. The server applies that file at every start; it only adds what is missing and never deletes or changes rows. Changes to existing rows go in `docs/data_updates/` (see the [runbook](05-runbook.md#data-updates)).
+*Last updated 16 Oct 2026.* The database is PostgreSQL. The schema is defined in `docs/database_schema.sql`. The server applies that file at every start; it only adds what is missing and never deletes or changes rows. Changes to existing rows go in `docs/data_updates/` (see the [runbook](05-runbook.md#data-updates)).
 
 **Conventions:**
 - Ids are UUIDs (`gen_random_uuid()`), except where noted.
@@ -23,7 +23,7 @@ users ─┬─< race_entries >── races >── tracks          rooms ──
        ├─< user_collection >── collection_counters (per item)
        ├── user_shooter, marble_appearances, user_days
        ├─< payments ──< payment_refunds          stripe_events (webhook dedupe)
-       ├─< security_events, email_consents
+       ├─< security_events, email_consents, cookie_consents
        ├─< support_messages ──< support_replies   (user_id may be empty: no account found)
        └── admin_2fa, admin_sessions, admin_audit (target/admin)
 race_entries ── race_entry_looks (player's collection marble) / house_looks (CPU showcase look)
@@ -303,6 +303,9 @@ Spam checks before a row is written: a hidden field, a signed form token (a mess
 
 ### `support_replies`
 Replies written in the back office: `message_id`, `admin_id`, `body`, `emailed_at` (empty when email was off or sending failed), `created_at`. Each is also in `admin_audit` (`support-reply`, with the text).
+
+### `cookie_consents`
+The website's cookie choice, kept as a record of consent (GDPR): one row each time a logged-in player decides or changes their mind (`POST /api/users/me/cookie-consent`). `user_id`, `version` (the banner's `CONSENT_VERSION`), `statistics`, `marketing`, `decided_at` (the browser's time when plausible, else the server's), `created_at`. Visitors who aren't logged in have their choice in their browser only. In "Download my data" (`cookieChoices`); deleted with the account.
 
 ## Back office
 

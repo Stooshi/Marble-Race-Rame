@@ -30,9 +30,10 @@ async function exportData(db, userId) {
        FROM users WHERE id = $1 AND deleted_at IS NULL`,
   );
   if (!account) return null;
-  const [stats, emailAnswers, ledger, collection, shooter, look, startingMarbles, races, days, payments, rooms, security, support, supportReplies] = await Promise.all([
+  const [stats, emailAnswers, cookieAnswers, ledger, collection, shooter, look, startingMarbles, races, days, payments, rooms, security, support, supportReplies] = await Promise.all([
     one('SELECT * FROM user_stats WHERE user_id = $1'),
     all('SELECT consent, source, created_at FROM email_consents WHERE user_id = $1 ORDER BY created_at'),
+    all('SELECT version, statistics, marketing, decided_at FROM cookie_consents WHERE user_id = $1 ORDER BY created_at'),
     all('SELECT created_at, amount, kind, balance_after, item_slug, race_id, note FROM coin_ledger WHERE user_id = $1 ORDER BY id'),
     all('SELECT item_slug, marble_code, source, copy_no, gift_no, edition_no, price_paid, currency, acquired_at FROM user_collection WHERE user_id = $1 ORDER BY acquired_at'),
     one('SELECT item_slug, marble_id, updated_at FROM user_shooter WHERE user_id = $1'),
@@ -59,6 +60,7 @@ async function exportData(db, userId) {
     account,
     stats,
     newsByEmail: emailAnswers,
+    cookieChoices: cookieAnswers,
     coinLedger: ledger,
     marbles: { collection, shooter, look, startingMarbles },
     races,
@@ -93,6 +95,7 @@ async function deleteAccount(client, userId, { by = 'player', reason = null } = 
     [userId, name, `${name}@deleted.invalid`, unusable],
   );
   await client.query('DELETE FROM email_consents WHERE user_id = $1', [userId]);
+  await client.query('DELETE FROM cookie_consents WHERE user_id = $1', [userId]);
   await client.query('DELETE FROM security_events WHERE user_id = $1', [userId]);
   await client.query('DELETE FROM admin_sessions WHERE user_id = $1', [userId]);
   await client.query('DELETE FROM admin_2fa WHERE user_id = $1', [userId]);

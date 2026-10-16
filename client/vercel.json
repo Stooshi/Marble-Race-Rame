@@ -2,7 +2,7 @@
   "rewrites": [
     {
       "source": "/((?!assets/).*)",
-      "destination": "/index.html"
+      "destination": "/app-shell.html"
     }
   ],
   "headers": [
@@ -37,5 +37,6 @@
         }
       ]
     }
-  ]
+  ],
+  "cleanUrls": true
 }

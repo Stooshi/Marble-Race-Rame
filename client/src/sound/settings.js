@@ -52,7 +52,7 @@ export function useSoundUnlock(paused = false) {
 
 /** { settings, update(patch) } for the sound controls; `user` from the auth context. */
 export function useSoundSettings(user) {
-  const settings = useSyncExternalStore((l) => { listeners.add(l); return () => listeners.delete(l); }, () => current);
+  const settings = useSyncExternalStore((l) => { listeners.add(l); return () => listeners.delete(l); }, () => current, () => current);
   // Signing in: the account's settings (if it has any).
   const adopted = useRef(null);
   useEffect(() => {

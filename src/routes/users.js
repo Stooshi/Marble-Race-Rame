@@ -22,6 +22,27 @@ async function getStats(userId) {
   return rows[0] || null;
 }
 
+/**
+ * POST /api/users/me/cookie-consent { version, statistics, marketing, decided_at } — the player's
+ * choice in the website's cookie banner, kept as a record of the consent (see /cookies).
+ */
+router.post('/me/cookie-consent', requireAuth, async (req, res) => {
+  const body = validate(req.body ?? {}, {
+    version: { type: 'int', required: true, min: 1, max: 1000 },
+    statistics: { type: 'boolean', required: true },
+    marketing: { type: 'boolean', required: true },
+    decided_at: { type: 'date' },
+  });
+  // (A time from the browser is kept only if it is plausible: not in the future, not older than a year.)
+  const now = Date.now();
+  const at = body.decided_at && body.decided_at.getTime() <= now + 60_000 && body.decided_at.getTime() > now - 365 * 86400_000 ? body.decided_at : new Date(now);
+  await db.query(
+    'INSERT INTO cookie_consents (user_id, version, statistics, marketing, decided_at) VALUES ($1, $2, $3, $4, $5)',
+    [req.user.id, body.version, body.statistics, body.marketing, at],
+  );
+  res.status(201).json({ ok: true });
+});
+
 /** GET /api/users/me — full private profile with stats */
 router.get('/me', requireAuth, async (req, res) => {
   const { rows } = await db.query(`SELECT ${PUBLIC_USER_COLUMNS}, last_login_at FROM users WHERE id = $1`, [req.user.id]);

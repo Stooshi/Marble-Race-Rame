@@ -4,6 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import { api } from '../../api/client';
 import { PACK } from '../../shared/payments/packs';
 import { formatNumber } from '../../utils/format';
+import { track } from '../consent/tracking';
 
 /** An amount in its currency, in the player's own number style ("€10.99", "109,00 kr"). */
 export function money(cents, currency) {
@@ -62,6 +63,10 @@ export default function PurchasesPage() {
       try {
         const { order } = await api.order(justPaid);
         if (order.status !== 'pending') {
+          // The purchase, from the payment the server has confirmed: once per order (the order number dedupes it too).
+          if (order.status === 'paid') {
+            track('purchase', { orderNo: order.order_no ?? justPaid, productId: order.product_id, value: (order.charged_cents ?? order.amount_cents) / 100, currency: order.charged_currency ?? order.currency }, { onceKey: `purchase:${order.order_no ?? justPaid}` });
+          }
           setWaiting(false);
           await Promise.all([load(), refresh.current?.()]);
           return;

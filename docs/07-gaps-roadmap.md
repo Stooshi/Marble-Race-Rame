@@ -31,7 +31,8 @@
 - **Block Series: waiting for Moses's review.** All 10 tracks are built and pass their full reports, added **switched off** (`docs/data_updates/2027-01-16-…` to `2027-01-25-…`). To switch them on: review the preview links and the track pictures (`/preview/banners`), then a data update setting `is_active` for the ten slugs. The landing page's Blocks card appears by itself once they are live. The Canyon Series (10 tracks) is live. The landing page and the Help Centre count tracks and series from the live track list; a new series needs its card in `SERIES` in `client/src/site/landing/LandingPage.jsx` (marked `true` to stay hidden until it has live tracks).
 - **Race sound effects** (rolling, clacks), on hold.
 - **Support: a confirmation email to the player** ("we got your message, reference S-…") and canned replies. The form shows the reference on screen today.
-- **Analytics.** None today. If added, update the privacy policy and both store privacy forms first.
+- **Analytics in the apps.** None. The website has Google Analytics 4 and the Meta Pixel, only with consent and only once `VITE_GA4_ID` / `VITE_META_PIXEL_ID` are set in Vercel. Adding anything to the apps needs the store privacy forms updated first.
+- **Website pre-rendering is per build.** A track switched on gets its `/tracks/<slug>` page and sitemap entry at the next website build (a redeploy in Vercel, or any push). Unknown addresses still answer 200 with the app (a "soft 404" to Google; the page says "noindex").
 
 ## Technical weaknesses
 

@@ -3,9 +3,12 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 /**
  * Runs an async loader on mount and whenever `deps` change.
  * Returns { data, error, loading, reload, setData }.
+ * `seed`: a key into the data the build's pre-rendering supplies (scripts/prerender.mjs), so a
+ * pre-rendered page has its content without a server; in the browser there is none.
  */
-export function useAsync(loader, deps = []) {
-  const [state, setState] = useState({ data: null, error: null, loading: true });
+export function useAsync(loader, deps = [], seed = null) {
+  const seeded = seed ? globalThis.__MS_PRERENDER__?.[seed] : undefined;
+  const [state, setState] = useState(() => (seeded !== undefined ? { data: seeded, error: null, loading: false } : { data: null, error: null, loading: true }));
   const loaderRef = useRef(loader);
   loaderRef.current = loader;
   const seq = useRef(0);

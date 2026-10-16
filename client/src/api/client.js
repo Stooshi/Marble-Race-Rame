@@ -70,6 +70,7 @@ export const api = {
 
   user: (id) => request(`/users/${id}`),
   myProfile: () => request('/users/me'),
+  cookieConsent: (body) => request('/users/me/cookie-consent', { method: 'POST', body }),
   userRaces: (id, limit = 10) => request(`/users/${id}/races?limit=${limit}`),
   trackRecords: (id) => request(`/users/${id}/track-records`),
   leaderboard: (sort = 'wins', limit = 10) => request(`/users/leaderboard?sort=${sort}&limit=${limit}`),

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { api } from '../../api/client';
+import { track } from '../consent/tracking';
 
 const MIN_AGE = 13; // [13]: players younger than this need a parent or guardian's approval (placeholder process)
 const AGE_GROUPS = [['under-13', `Under ${MIN_AGE}`], ['13-17', `${MIN_AGE}–17`], ['18+', '18 or older']];
@@ -38,7 +39,10 @@ export default function SignupPage() {
     setBusy(true);
     try {
       if (mode === 'login') await login(f.login, f.password);
-      else await (guest ? claim : register)({ username: f.username, email: f.email, password: f.password, age_group: f.age, marketing_opt_in: f.news });
+      else {
+        await (guest ? claim : register)({ username: f.username, email: f.email, password: f.password, age_group: f.age, marketing_opt_in: f.news });
+        track('sign_up'); // (only to what the player allowed in the cookie banner; no name or email)
+      }
       navigate(next, { replace: true });
     } catch (err) {
       setError(err.message);

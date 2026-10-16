@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect } from 'react';
+import { lazy, Suspense, useEffect, useLayoutEffect } from 'react';
 import { Link, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import ErrorBoundary from './components/ErrorBoundary';
 import SiteHeader from './site/SiteHeader';
@@ -23,6 +23,10 @@ import SignupPage from './site/pages/SignupPage';
 import LegalPage from './site/pages/LegalPage';
 import HomeHub from './site/pages/HomeHub';
 import HelpPage from './site/help/HelpPage';
+import CookiesPage from './site/pages/CookiesPage';
+import { TrackPage, TracksPage } from './site/pages/TrackPages';
+import ConsentManager from './site/consent/ConsentManager';
+import { applyMeta, metaFor } from './site/pageMeta';
 import Home from './pages/Home';
 import Dashboard from './pages/Dashboard';
 import Race from './pages/Race';
@@ -47,6 +51,9 @@ export default function App() {
   const { pathname } = useLocation();
   const { isAuthenticated } = useAuth();
   useCanonical(pathname);
+  // Every page's title, description, share picture and indexing (./site/pageMeta.js). A layout
+  // effect, so it runs before the pages' own (a track's page, the not-found page) and they win.
+  useLayoutEffect(() => { applyMeta(metaFor(pathname)); }, [pathname]);
   const navigate = useNavigate();
   // In the iPhone and Android apps: splash, status bar, back button, sound in the background.
   useEffect(() => {
@@ -88,6 +95,10 @@ export default function App() {
           <Route path="/signup" element={<SignupPage />} />
           <Route path="/legal" element={<LegalPage />} />
           <Route path="/help" element={<HelpPage />} />
+          <Route path="/help/:question" element={<HelpPage />} />
+          <Route path="/cookies" element={<CookiesPage />} />
+          <Route path="/tracks" element={<TracksPage />} />
+          <Route path="/tracks/:slug" element={<TrackPage />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/profile/:userId" element={<Dashboard />} />
           <Route path="/race/:raceId" element={<Race />} />
@@ -122,18 +133,26 @@ export default function App() {
           />
           <Route
             path="*"
-            element={(
-              <div className="page">
-                <h1>Lost the marble</h1>
-                <p className="muted">That page doesn't exist.</p>
-                <div className="ms-row"><Link to="/" className="btn">Back home</Link><Link to="/help">Help Centre</Link></div>
-              </div>
-            )}
+            element={<NotFound />}
           />
         </Routes>
         </ErrorBoundary>
       </main>
       <SiteFooter />
+      <ConsentManager />
     </>
+  );
+}
+
+/** Any other address: a friendly page, kept out of search results. */
+function NotFound() {
+  const { pathname } = useLocation();
+  useEffect(() => { applyMeta({ ...metaFor(pathname), title: 'Page not found · Marble Spins', noindex: true }); }, [pathname]);
+  return (
+    <div className="page">
+      <h1>Lost the marble</h1>
+      <p className="muted">That page doesn't exist.</p>
+      <div className="ms-row"><Link to="/" className="btn">Back home</Link><Link to="/help">Help Centre</Link></div>
+    </div>
   );
 }

@@ -175,6 +175,21 @@ To turn email off again, remove `BREVO_API_KEY` and restart.
 - **Redo one:** give the track a moment (ms after GO) and a side in `scripts/track-banners.json`, e.g. `{ "indus-spins": { "t": 21000, "side": -1 } }`, run `node scripts/track-banners.js indus-spins`, and commit the two pictures and the list.
 - **New tracks** get theirs from the track report; `node scripts/track-banners.js --missing` draws any missing. A client test fails while a track has none.
 
+## Analytics, Meta Pixel and the cookie banner (website only)
+
+- **Switch on:** Vercel → project `marble-race-rame-client` → Settings → Environment Variables, Production: `VITE_GA4_ID` (the GA4 measurement ID, `G-…`, from Google Analytics → Admin → Data streams → the web stream) and/or `VITE_META_PIXEL_ID` (the Pixel's ID, digits, from Meta Events Manager → Data sources). Then **redeploy**. With both empty there is no banner and nothing loads.
+- **What a visitor sees:** a banner with REJECT ALL / ACCEPT ALL and Settings; nothing but necessary storage until they choose. "Cookie settings" in the footer and on `/cookies` changes it. Never in the apps; the Pixel never for an account under 13.
+- **In Google Analytics:** mark `sign_up` and `purchase` as key events. Events: `sign_up`, `first_race`, `race_finished`, `view_item_list` (shop), `begin_checkout`, `purchase` (value and currency; the order number is the transaction ID).
+- **In Meta Events Manager:** CompleteRegistration, ViewContent (shop), InitiateCheckout, Purchase (value, currency; the order number as event ID), and custom FirstRace and RaceFinished. Don't switch on "automatic advanced matching": we send no email or phone.
+- **Changing what a category covers:** update `STORAGE_LIST` and the privacy text, and raise `CONSENT_VERSION` in `client/src/site/consent/consent.js` so everyone is asked again.
+- **Consent records:** `cookie_consents` (one row per logged-in decision).
+
+## Search engines and link previews
+
+- Pages, sitemap and share pictures are made by `npm run build` (see `docs/02-code-map.md`, `scripts/prerender.mjs`). A track switched on gets its page at the next website build: after a data update that switches tracks on, **redeploy the website** in Vercel too.
+- Check: `https://marblespins.com/sitemap.xml`, `/robots.txt`, and a page's preview in Facebook's Sharing Debugger. Submit the sitemap once in Google Search Console.
+- A new track's share picture: `public/share/tracks/<slug>.jpg`, 1200 × 630 (cut from its `@2x.webp`); without one its picker picture is used.
+
 ## Common problems
 
 | Symptom | Likely cause and fix |

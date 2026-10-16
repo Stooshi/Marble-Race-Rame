@@ -1,6 +1,6 @@
 User-agent: *
 Disallow: /admin
-Disallow: /preview/
+Disallow: /preview
 Disallow: /checkout
 Disallow: /purchases
 Disallow: /settings

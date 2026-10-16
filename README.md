@@ -118,6 +118,7 @@ The auth endpoints are rate-limited to 20 requests per 15 minutes per IP.
 | PATCH | `/users/me` | ✔ | `{ display_name?, avatar_url?, email?, password?, current_password? }`. Changing email or password needs `current_password` |
 | GET | `/users/me/marbles` | ✔ | Owned marbles plus the free starter marbles |
 | PUT | `/users/me/marbles/:marbleId/favorite` | ✔ | `{ is_favorite }` |
+| POST | `/users/me/cookie-consent` | ✔ | `{ version, statistics, marketing, decided_at? }`: the website's cookie choice, kept as a consent record (`cookie_consents`) |
 | GET | `/users/leaderboard` | – | `?sort=wins\|podiums\|races_played\|coins_won&limit&offset` |
 | GET | `/users/:id` | – | Public profile + stats |
 | GET | `/users/:id/races` | – | Finished race history with halfway splits (`limit`, `offset`) |

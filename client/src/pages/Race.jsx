@@ -15,6 +15,7 @@ import { Empty, ErrorMessage, Spinner } from '../components/Status';
 import { formatTime } from '../utils/format';
 import StartLights from '../components/StartLights';
 import { play as playSound, raceCountdown, raceEnd, raceGo } from '../sound/engine';
+import { track, trackingActive } from '../site/consent/tracking';
 
 const obstacleName = (o) => o?.replace(/_/g, ' ');
 
@@ -84,6 +85,19 @@ export default function Race() {
     () => (stream.meta?.entries ?? []).filter((e) => e.user?.id && e.user.id === user?.id).map((e) => e.index),
     [stream.meta, user?.id],
   );
+  // The player's race is over: counted (once per race), and their very first race once per account.
+  // Only to what the player allowed in the cookie banner; nothing about who they are.
+  const raceOver = stream.status === 'finished';
+  const inIt = myIndexes.length > 0;
+  useEffect(() => {
+    if (!raceOver || !inIt || !trackingActive()) return;
+    track('race_finished', { friendRoom: Boolean(race?.room_code) }, { onceKey: `race:${raceId}` });
+    if (user?.id) {
+      api.myProfile().then(({ stats }) => {
+        if (Number(stats?.races_played) === 1) track('first_race', {}, { onceKey: `first-race:${user.id}` });
+      }).catch(() => {});
+    }
+  }, [raceOver, inIt, raceId, user?.id, race?.room_code]);
 
   if (details.loading && !details.data) return <div className="page"><Spinner label="Loading race…" /></div>;
   if (details.error) return <div className="page"><ErrorMessage error={details.error} onRetry={reload} /></div>;

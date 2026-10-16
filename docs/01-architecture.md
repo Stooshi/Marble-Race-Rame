@@ -142,10 +142,14 @@ There is no separate staging server. Vercel makes a preview build for every bran
 | `VITE_API_URL` | The server's address (the Railway URL). Built into the website at build time |
 | `VITE_SITE_URL` | Optional; canonical address, default https://marblespins.com |
 | `VITE_PAYMENTS_TEST` | Development only: `true` uses the fake payment provider |
+| `VITE_GA4_ID` | Optional. Google Analytics 4 measurement ID (`G-…`). Empty: no Analytics and, with `VITE_META_PIXEL_ID` also empty, no cookie banner. Loads only after the visitor allows statistics cookies |
+| `VITE_META_PIXEL_ID` | Optional. Meta Pixel ID (digits). Empty: no Pixel. Loads only after the visitor allows marketing cookies, and never for an account under 13 |
 
 ### The apps
 
-The apps are built with `npm run app:sync`. This sets `VITE_API_URL` to the live Railway address unless another https address is given. They need no other settings.
+The apps are built with `npm run app:sync`. This sets `VITE_API_URL` to the live Railway address unless another https address is given. They need no other settings. The apps never show the cookie banner and never load Analytics or the Pixel, even if those IDs are set.
+
+`npm run build` (what Vercel runs) also **pre-renders** the public pages (`client/scripts/prerender.mjs`): `/`, `/shop`, `/scores`, `/help` and each `/help/<question>`, `/legal`, `/cookies`, `/tracks` and each live `/tracks/<slug>` are written as plain HTML with their own title, description, canonical link and share picture, so search engines and link previews read them without running the game. It reads the live track list from `VITE_API_URL` at build time (so a newly switched-on track gets its page at the next website build) and writes `sitemap.xml`. Every other address gets `app-shell.html`.
 
 ### Stripe dashboard (settings, not variables)
 

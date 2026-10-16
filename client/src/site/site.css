@@ -228,6 +228,8 @@ a.ms-chip:hover { text-decoration: none; border-color: var(--ms-muted); }
 }
 .ms-footer__nav { display: flex; flex-wrap: wrap; gap: 6px 18px; }
 .ms-footer__nav a { color: var(--ms-soft); }
+.ms-footer__link { background: none; border: 0; padding: 0; color: var(--ms-soft); font: inherit; cursor: pointer; text-decoration: none; }
+.ms-footer__link:hover, .ms-footer__link:focus-visible { color: var(--ms-text); text-decoration: underline; }
 .ms-footer__stores { display: flex; gap: 10px; margin-left: auto; }
 .ms-footer__stores span { border: 1px solid var(--ms-border); border-radius: 10px; padding: 6px 12px; }
 
@@ -629,3 +631,19 @@ a.ms-tile:hover, a.ms-card:hover { text-decoration: none; border-color: var(--ms
 .ms-help-form__hp { position: absolute; left: -10000px; width: 1px; height: 1px; overflow: hidden; }
 .ms-help__contact { position: relative; display: grid; gap: 14px; scroll-margin-top: 130px; border-color: var(--ms-yellow); }
 @media (prefers-reduced-motion: reduce) { .ms-help-q h3 svg { transition: none; } }
+
+/* ── Cookie banner and settings (src/site/consent) ─────────────────────── */
+.ms-consent { position: fixed; left: 0; right: 0; bottom: 0; z-index: 60; background: var(--ms-card); border-top: 1px solid var(--ms-border); padding: 14px 16px calc(14px + env(safe-area-inset-bottom, 0px)); box-shadow: 0 -8px 24px rgba(0,0,0,.35); }
+.ms-consent__inner { max-width: var(--ms-wide); margin: 0 auto; display: flex; flex-wrap: wrap; gap: 12px 24px; align-items: center; justify-content: space-between; }
+.ms-consent__text { margin: 0; color: var(--ms-soft); flex: 1 1 420px; min-width: 0; line-height: 1.45; }
+.ms-consent__text a, .ms-consent-dialog a { color: var(--ms-yellow); }
+.ms-consent__buttons { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+/* Accept all and Reject all: the same size, colour and weight (neither is pushed). */
+.ms-consent__btn { min-width: 132px; justify-content: center; }
+.ms-consent-dialog { position: fixed; inset: 0; z-index: 70; background: rgba(5,8,15,.72); display: grid; place-items: center; padding: 16px; }
+.ms-consent-dialog__box { background: var(--ms-card); border: 1px solid var(--ms-border); border-radius: 16px; padding: 22px; max-width: 560px; width: 100%; display: grid; gap: 14px; max-height: calc(100vh - 32px); overflow: auto; outline: none; }
+.ms-consent-dialog__row { display: grid; grid-template-columns: 22px 1fr; gap: 10px; align-items: start; color: var(--ms-soft); line-height: 1.45; }
+.ms-consent-dialog__row input { width: 20px; height: 20px; margin-top: 2px; accent-color: var(--ms-yellow); }
+.ms-cookie-table { width: 100%; border-collapse: collapse; font-size: .95rem; }
+.ms-cookie-table th, .ms-cookie-table td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--ms-border); vertical-align: top; }
+.ms-cookie-table-wrap { overflow-x: auto; }
