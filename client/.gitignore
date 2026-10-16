@@ -4,3 +4,4 @@ dist/
 .env.local
 dev/.tracks/
 dev/.shots/
+.vercel/

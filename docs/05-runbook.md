@@ -196,10 +196,18 @@ To turn email off again, remove `BREVO_API_KEY` and restart.
 - **App Store / Google Play buttons on the website:** put each store page's https link in `client/src/shared/storeLinks.json` and push. An empty link hides its button. The apps never show them.
 - **iPhone silent switch:** the app uses an "ambient" audio session, so the switch mutes the game's music and sounds and the player's own music keeps playing. Check it on a real iPhone after each app build (switch on and off during a race, and with Spotify or Apple Music playing).
 
+## Checking the website's routing before a push
+
+Any change to `client/vercel.json`, the build, or the pre-rendering: build exactly as Vercel does and click through.
+1. In `client/`: `npx vercel build --prod` (needs `client/.vercel/project.json`: `npx vercel link` with your Vercel login, or a local one with `"settings": {"framework": "vite", "outputDirectory": "dist"}`; set `VITE_API_URL` in `.vercel/.env.production.local`).
+2. `node scripts/serve-vercel-output.mjs . 4300` serves that output with Vercel's own routing rules.
+3. Open, and refresh, at least: `/`, `/help`, a `/help/<question>`, `/tracks/<slug>`, `/cookies`, `/play/track`, a race (`/race/<id>`), `/preview/physics?track=spawn-point`, `/preview/banners`, `/admin`, and a made-up address (it must show the app's "Lost the marble" page, not "404: NOT_FOUND").
+
 ## Common problems
 
 | Symptom | Likely cause and fix |
 |---|---|
+| Some addresses (in-game pages, `/race`, `/play`, `/preview`, `/admin`) answer Vercel's "404: NOT_FOUND" while the pre-rendered pages work | The fallback rewrite in `client/vercel.json` doesn't reach `app-shell` (with `cleanUrls` it must be `/app-shell`, not `/app-shell.html`). Promote the last good deployment, then check routing locally ("Checking the website's routing" above) |
 | The website is blank (often only when logged in) while the page source has text | The pre-rendered copy and the app: check in a browser's console and with `client/test/prerender.test.js`. Fastest fix: Vercel → Deployments → promote the last good one |
 | Website shows "Can't reach the server", the offline screen ("Can't reach the race track"), or CORS errors in the browser | Server down (Railway logs, `/health`). Or `VITE_API_URL` on Vercel is wrong. Or the site's address is missing from `CORS_ORIGIN` (marblespins.com and www are always allowed; add the vercel.app address) |
 | Server won't start in production | `JWT_SECRET` missing or under 32 characters (the log says so). Or the database is unreachable (`DATABASE_URL`) |
