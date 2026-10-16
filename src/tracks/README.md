@@ -114,7 +114,7 @@ module.exports = track({
   | `meanders` (canyons) | meander1, straight1, meander2, highSweep, drop, brakingStraight, hairpin, meander3, lastStraight |
   | `slot-canyon` (canyons) | beamHall, twist1, twist2, rimRun, corkscrew (a spiral), brakingStraight, hairpin, twist3, drop, lastStraight |
   | `cliff-road` (canyons) | rimRoad, lookout, spin, dive, paddleRun, brakingStraight, hairpin, riverSweep, lakeDrop, lastStraight |
-  | `rapids-gorge` (canyons) | rapids, sBends, rockRun, cascade (a waterfall), pool, highTrail, brakingStraight, hairpin, slalomDrop, lastStraight |
+  | `rapids-gorge` (canyons) | rapids, sBends, rockRun, cascade (a steep plunge in white water), pool, highTrail, brakingStraight, hairpin, whirlpool (a spiral), slalomDrop, lastStraight |
   | `long-falls` (canyons) | ridgeSweep, sBends, brakingStraight, hairpin, toTheLip, longFall (a waterfall), plungePool, spin, sweep2, lastStraight |
   | `siq-passage` (canyons) | siq1, narrows, boulder (a short climb), dropIn, siq2, brakingStraight, hairpin, openSweep, lastStraight |
   | `island-hops` (blocks) | bridge1, island1, hop, bridge2, island2 (a spiral), brakingStraight, hairpin, toTheEdge, islandFall (a waterfall), bridge3, sweep2, lastStraight |

@@ -676,6 +676,7 @@ const HIDDEN_KIT_TRACKS = [
   ['final-level', '2027-01-25-add-final-level.sql', 'Final Level, Block Series track 10: a dusk-blue world of blocks, through a glowing block portal and round the loop to a clean GG that lights once the winner is home.'],
   ['antelope-slot-spins', '2027-01-26-add-antelope-slot-spins.sql', 'Antelope Slot Spins, Canyon Series track 11: down a slot canyon in Arizona, through wavy orange sandstone past shafts of light falling from the rim, round a corkscrew out over the slot to the sandy wash.'],
   ['verdon-burst', '2027-01-27-add-verdon-burst.sql', 'Verdon Burst, Canyon Series track 12: through the Verdon Gorge in Provence, along the cliff road high on the white limestone rim past lavender fields, down beside the turquoise river to the lake.'],
+  ['tiger-leaping-spins', '2027-01-28-add-tiger-leaping-spins.sql', 'Tiger Leaping Spins, Canyon Series track 13: down Tiger Leaping Gorge in Yunnan, along roaring rapids under snow peaks, past the great rock in the river, down a white-water cascade and out along the high trail.'],
 ];
 for (const [slug, file, note] of HIDDEN_KIT_TRACKS) {
   test(`${slug} is added by its data update, switched off, exactly as its track file builds it`, () => {

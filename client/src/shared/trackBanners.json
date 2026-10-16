@@ -739,6 +739,17 @@
    "side": -1,
    "marbles": 0
   },
+  "tiger-leaping-spins": {
+   "name": "Tiger Leaping Spins",
+   "series": "Canyons",
+   "lighting": "day",
+   "v": "d02d0b17",
+   "bytes": 23404,
+   "bytes2x": 54836,
+   "t": 35541,
+   "side": 1,
+   "marbles": 2
+  },
   "tilt": {
    "name": "Tilt",
    "series": "Pinball",

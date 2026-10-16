@@ -850,20 +850,24 @@ const LAYOUTS = {
       obstacles: [peg({ costume: c.peg, at: 0.25, line: 'left' }), peg({ costume: c.peg, at: 0.42, line: 'right' }), peg({ costume: c.peg, at: 0.6, line: 'center' })], features: [rumble({ from: 0.75, to: 0.95, count: 3 })],
     },
   ],
-  /** L52 Rapids gorge (Canyon Series): a mogul straight (the rapids), S-bends, a peg straight (the great rock), a waterfall, a straight (a peg), a long sweep (a canyon climbs out here on the high trail), the hairpin, a slalom drop and a parked piece and a peg at the run-in. */
+  /** L52 Rapids gorge (Canyon Series): a mogul straight (the rapids; two pegs first, to mix the field out of the start), S-bends, a peg straight (the great rock), a cascade (a steep plunge in white water: a waterfall's cliff rocks stood into the channel here), a straight (a peg), a long sweep (a canyon climbs out here on the high trail), the hairpin, three quarters of a spiral (the whirlpool: a full turn passed under the straight before it), a slalom drop and a parked piece and a peg at the run-in. */
   'rapids-gorge': (L, R, c) => [
-    { key: 'rapids', name: 'Mogul straight', shape: straight(90, { grade: 0.12 }), features: [moguls({ from: 0.4, to: 0.85, count: 4 })], billboards: 1 },
+    {
+      key: 'rapids', name: 'Mogul straight', shape: straight(100, { grade: 0.12 }), features: [moguls({ from: 0.6, to: 0.9, count: 3 })], billboards: 1,
+      obstacles: [peg({ costume: c.peg, at: 0.2, line: 'left' }), peg({ costume: c.peg, at: 0.36, line: 'right' })],
+    },
     { key: 'sBends', name: 'S-bends', shape: sBends({ first: R, radius: 72, degrees: 80, grade: 0.13 }), billboards: 1 },
     {
-      key: 'rockRun', name: 'Peg straight', shape: straight(55, { grade: 0.12 }),
+      key: 'rockRun', name: 'Peg straight', shape: straight(60, { grade: 0.12 }),
       obstacles: [peg({ costume: c.peg, at: 0.25, line: 'left' }), peg({ costume: c.peg, at: 0.45, line: 'right' })],
     },
-    { key: 'cascade', name: 'Waterfall', shape: waterfall(40, { grade: 0.4 }), surface: 'water' },
+    { key: 'cascade', name: 'Cascade', shape: plunge(45, { grade: 0.32, from: 0.12 }), surface: 'water' },
     { key: 'pool', name: 'Below the falls', shape: straight(40, { grade: 0.12 }), obstacles: [peg({ costume: c.peg, at: 0.5, line: 'center' })] },
     { key: 'highTrail', name: 'Sweep', shape: sweep({ side: L, radius: 88, degrees: 140, grade: 0.09 }), features: [boost({ at: 0.08 })], billboards: 2 },
     { key: 'brakingStraight', name: 'Run to the hairpin', shape: straight(50, { grade: 0.12 }) },
     { key: 'hairpin', name: 'Hairpin', shape: hairpin({ side: R }), obstacles: [swipe({ costume: c.swipe, side: 'high' })] },
-    { key: 'slalomDrop', name: 'Slalom drop', shape: plunge(50, { grade: 0.2, from: 0.16 }), obstacles: [slalom({ costume: c.slalom, from: 0.4, to: 0.9, count: 3, loss: 0.15 })] },
+    { key: 'whirlpool', name: 'Spiral', shape: spiral({ side: L, radius: 60, turns: 0.75, grade: 0.15 }) },
+    { key: 'slalomDrop', name: 'Slalom drop', shape: plunge(50, { grade: 0.2, from: 0.15 }), obstacles: [slalom({ costume: c.slalom, from: 0.4, to: 0.9, count: 3, loss: 0.15 })] },
     {
       key: 'lastStraight', name: 'Last straight', shape: straight(85, { grade: 0.15 }),
       obstacles: [parked({ costume: c.parked, at: 0.2, side: L, length: 6 }), peg({ costume: c.peg, at: 0.45, line: 'right' })], features: [rumble({ from: 0.7, to: 0.95, count: 3 })],
