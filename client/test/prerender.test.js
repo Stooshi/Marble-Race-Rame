@@ -30,3 +30,25 @@ it('every other address falls back to the app (vercel.json): with clean URLs the
   expect(fallback.destination.replace(/^\//, '').replace(/(\.html)?$/, '.html')).toBe('app-shell.html');
   expect(script).toMatch(/app-shell\.html/);
 });
+
+it('every page links the tab and home-screen icons (they come from index.html)', async () => {
+  const html = readFileSync(join(__dirname, '..', 'index.html'), 'utf8');
+  for (const href of ['/favicon.ico', '/favicon.svg', '/apple-touch-icon.png', '/site.webmanifest']) expect(html).toContain(`href="${href}"`);
+  expect(html).toMatch(/<meta name="theme-color" content="#0E1320" \/>/);
+  const manifest = JSON.parse(readFileSync(join(__dirname, '..', 'public', 'site.webmanifest'), 'utf8'));
+  expect(manifest.theme_color).toBe('#0E1320');
+  expect(manifest.icons.map((i) => i.sizes)).toEqual(expect.arrayContaining(['192x192', '512x512']));
+  for (const f of ['favicon.ico', 'favicon.svg', 'apple-touch-icon.png', 'icon-192.png', 'icon-512.png']) {
+    expect(readFileSync(join(__dirname, '..', 'public', f)).length, f).toBeGreaterThan(300);
+  }
+  // PNG sizes from their headers
+  const size = (f) => { const b = readFileSync(join(__dirname, '..', 'public', f)); return [b.readUInt32BE(16), b.readUInt32BE(20)]; };
+  expect(size('apple-touch-icon.png')).toEqual([180, 180]);
+  expect(size('icon-192.png')).toEqual([192, 192]);
+  expect(size('icon-512.png')).toEqual([512, 512]);
+  // favicon.ico holds 16, 32 and 48 px
+  const ico = readFileSync(join(__dirname, '..', 'public', 'favicon.ico'));
+  const n = ico.readUInt16LE(4);
+  const sizes = Array.from({ length: n }, (_, k) => ico[6 + k * 16] || 256).sort((a, b) => a - b);
+  expect(sizes).toEqual([16, 32, 48]);
+});
