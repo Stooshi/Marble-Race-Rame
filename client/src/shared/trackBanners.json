@@ -211,6 +211,17 @@
    "side": -1,
    "marbles": 4
   },
+  "coliseum-anchor-leg": {
+   "name": "Coliseum Anchor Leg",
+   "series": "Track and Field",
+   "lighting": "sunset",
+   "v": "76d8242d",
+   "bytes": 16392,
+   "bytes2x": 39360,
+   "t": 35144,
+   "side": 1,
+   "marbles": 6
+  },
   "collserola-run": {
    "name": "Collserola Run",
    "series": "Coasters",

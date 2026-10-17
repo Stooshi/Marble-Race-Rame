@@ -16,6 +16,7 @@
 "chiang-mai": {"family":"coaster","reach":0.22,"seq":["opening: crest-start","drop","pileUp","slalom","climb","drop","S-bends right","curtain"]},
 "china-wall-twister": {"family":"world-tour","reach":0.207,"seq":["opening: classic","drop","pileUp","slalom","S-bends left"]},
 "colca-spin": {"family":"canyon","reach":0.273,"seq":["opening: staggered-drop","drop","pileUp","slalom","brake","sweep right","boost"]},
+"coliseum-anchor-leg": {"family":"athletics","reach":0.318,"seq":["opening: clean-drop","drop","S-bends right","straight","half-pipe"]},
 "collserola-run": {"family":"coaster","reach":0.236,"seq":["opening: tunnel-launch","drop","pileUp","slalom","drop","slalom","sweep right","straight"]},
 "combo-drop": {"family":"block","reach":0.245,"seq":["opening: split-start","drop","pileUp","slalom","chutes","drop","slalom","straight","steps","spiral left"]},
 "copper-spins": {"family":"canyon","reach":0.25,"seq":["opening: boost-launch","drop","pileUp","straight","boost","drop","slalom","sweep left","straight","slalom"]},

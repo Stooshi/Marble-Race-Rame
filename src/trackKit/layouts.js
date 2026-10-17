@@ -1168,22 +1168,27 @@ const LAYOUTS = {
       obstacles: [peg({ costume: c.peg, at: 0.2, line: 'right' }), peg({ costume: c.peg, at: 0.38, line: 'left' }), peg({ costume: c.peg, at: 0.56, line: 'center' })], features: [rumble({ from: 0.72, to: 0.95, count: 3 })],
     },
   ],
-  /** L68 Anchor arches (Track and Field): deep, tight S-bends (they mix the field), a short climb and a drop (through the arches), a sweep, a spiral, a straight, the hairpin, a sweep and the long final sprint. */
+  /** L68 Anchor arches (Track and Field): a short straight into a half-pipe, a short climb and a drop (through the arches), a sweep, a peg straight, a spiral, a straight, the hairpin, a sweep and the long final sprint. */
   'anchor-arches': (L, R, c) => [
-    { key: 'sBends', name: 'S-bends', shape: sBends({ first: R, radius: 55, degrees: 115, grade: 0.13 }), billboards: 1 },
+    { key: 'runIn', name: 'Into the pipe', shape: straight(30, { grade: 0.12 }) },
+    { key: 'pipe', name: 'Half-pipe', shape: halfPipe({ first: R, width: 8, swings: 3, radius: 150, degrees: 18, grade: 0.12 }) },
     { key: 'crest', name: 'Climb', shape: climb(12, { grade: -0.05, after: 0.13 }) },
     { key: 'arches', name: 'Drop', shape: plunge(45, { grade: 0.22, from: 0.13 }), billboards: 1 },
-    { key: 'sweep', name: 'Sweep', shape: sweep({ side: L, radius: 80, degrees: 90, grade: 0.09 }), billboards: 1 },
-    { key: 'spin', name: 'Spiral', shape: spiral({ side: R, radius: 55, turns: 1, grade: 0.15 }) },
+    { key: 'sweep', name: 'Sweep', shape: sweep({ side: L, radius: 80, degrees: 70, grade: 0.09 }), billboards: 2, obstacles: [peg({ costume: c.peg, at: 0.35, line: 'center' }), peg({ costume: c.peg, at: 0.75, line: 'center' })] },
+    {
+      key: 'pegStraight', name: 'Peg straight', shape: straight(70, { grade: 0.12 }),
+      obstacles: [peg({ costume: c.peg, at: 0.18, line: 'right' }), slalom({ costume: c.slalom, from: 0.35, to: 0.95, count: 6, loss: 0.3 })],
+    },
+    { key: 'spin', name: 'Spiral', shape: spiral({ side: R, radius: 55, turns: 0.65, grade: 0.15 }) },
     {
       key: 'brakingStraight', name: 'Run to the hairpin', shape: straight(60, { grade: 0.12 }),
       obstacles: [peg({ costume: c.peg, at: 0.15, line: 'center' }), peg({ costume: c.peg, at: 0.3, line: 'left' }), peg({ costume: c.peg, at: 0.45, line: 'right' })],
     },
-    { key: 'hairpin', name: 'Hairpin', shape: hairpin({ side: R }) },
-    { key: 'sweep2', name: 'Second sweep', shape: sweep({ side: L, radius: 85, degrees: 150, grade: 0.09 }), features: [boost({ at: 0.1 })], billboards: 1 },
+    { key: 'hairpin', name: 'Hairpin', shape: hairpin({ side: R }) , obstacles: [swipe({ costume: c.swipe, side: 'high' })] },
+    { key: 'sweep2', name: 'Second sweep', shape: sweep({ side: L, radius: 85, degrees: 125, grade: 0.09 }), billboards: 1 },
     {
-      key: 'lastStraight', name: 'Last straight', shape: straight(130, { grade: 0.13 }),
-      obstacles: [peg({ costume: c.peg, at: 0.12, line: 'right' }), peg({ costume: c.peg, at: 0.24, line: 'left' }), parked({ costume: c.parked, at: 0.36, side: L, length: 6 }), peg({ costume: c.peg, at: 0.55, line: 'center' })], features: [rumble({ from: 0.78, to: 0.95, count: 3 })],
+      key: 'lastStraight', name: 'Last straight', shape: straight(90, { grade: 0.13 }),
+      obstacles: [peg({ costume: c.peg, at: 0.12, line: 'right' }), peg({ costume: c.peg, at: 0.24, line: 'left' }), peg({ costume: c.peg, at: 0.38, line: 'right' }), peg({ costume: c.peg, at: 0.52, line: 'center' }), slalom({ costume: c.slalom, from: 0.6, to: 0.72, count: 2, loss: 0.15 })], features: [rumble({ from: 0.78, to: 0.95, count: 3 })],
     },
   ],
   /** L69 Golden lap (Track and Field): a peg straight, a sweep, a drop, a straight, the hairpin, a part-spiral, the long golden sweep round the stadium, S-bends and the run-in. */
