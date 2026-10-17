@@ -78,7 +78,7 @@ const BLOCK_HEIGHTS = {
   'peak-beams': { beamSweep: { height: 30 }, ridgeSweep: { height: 18 } },
   'stack-spiral': { stackSpiral: { height: 12 } },
   'final-level': { loop: { height: 14 } },
-  'island-hops': { bridge1: { height: 18 }, island1: { height: 18 }, bridge2: { height: 14 }, island2: { height: 14 } },
+  'island-hops': { bridge1: { height: 12 }, bridge2: { height: 10 } },
 };
 const TOUCHDOWNS = { 'sea-crossing': { tunnelRun: { height: 0 } }, 'terrace-run': { swoops: { height: 0 } }, 'wall-dive': { tunnelRun: { height: 0 } } };
 

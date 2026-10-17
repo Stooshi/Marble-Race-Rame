@@ -914,7 +914,7 @@ const LAYOUTS = {
   /** L55 Island hops (Block Series): a peg straight (a bridge), a sweep (a boost), a drop, a slalom straight (a second bridge), a spin, the hairpin, a waterfall off an island, a straight (a peg), a second sweep and a parked piece and a peg at the run-in. */
   'island-hops': (L, R, c) => [
     {
-      key: 'bridge1', name: 'Peg straight', shape: straight(70, { grade: 0.12 }), billboards: 1,
+      key: 'bridge1', name: 'Peg straight', shape: straight(85, { grade: 0.12 }), billboards: 1,
       obstacles: [peg({ costume: c.peg, at: 0.35, line: 'left' }), peg({ costume: c.peg, at: 0.6, line: 'right' })],
     },
     { key: 'island1', name: 'Sweep', shape: sweep({ side: L, radius: 85, degrees: 120, grade: 0.09 }), features: [boost({ at: 0.08 })], billboards: 2 },
@@ -926,7 +926,7 @@ const LAYOUTS = {
     { key: 'toTheEdge', name: 'Straight to the edge', shape: straight(35, { grade: 0.12 }) },
     { key: 'islandFall', name: 'Waterfall', shape: waterfall(40, { grade: 0.35 }), surface: 'water' },
     { key: 'bridge3', name: 'Straight', shape: straight(45, { grade: 0.12 }), obstacles: [peg({ costume: c.peg, at: 0.5, line: 'center' })] },
-    { key: 'sweep2', name: 'Second sweep', shape: sweep({ side: R, radius: 80, degrees: 130, grade: 0.09 }), billboards: 1 },
+    { key: 'sweep2', name: 'Second sweep', shape: sweep({ side: R, radius: 85, degrees: 170, grade: 0.09 }), billboards: 1 },
     {
       key: 'lastStraight', name: 'Last straight', shape: straight(70, { grade: 0.15 }),
       obstacles: [parked({ costume: c.parked, at: 0.2, side: L, length: 6 }), peg({ costume: c.peg, at: 0.45, line: 'right' })], features: [rumble({ from: 0.7, to: 0.95, count: 3 })],

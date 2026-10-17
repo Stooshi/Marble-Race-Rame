@@ -640,6 +640,17 @@
    "side": 1,
    "marbles": 10
   },
+  "sky-islands": {
+   "name": "Sky Islands",
+   "series": "Blocks",
+   "lighting": "day",
+   "v": "b5f6b2b4",
+   "bytes": 13548,
+   "bytes2x": 32622,
+   "t": 9000,
+   "side": -1,
+   "marbles": 1
+  },
   "slingshot-spins": {
    "name": "Slingshot Spins",
    "series": "Pinball",

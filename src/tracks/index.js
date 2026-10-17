@@ -78,4 +78,5 @@ module.exports = [
   require('./the-stack'),
   require('./block-fortress'),
   require('./final-level'),
+  require('./sky-islands'),
 ];

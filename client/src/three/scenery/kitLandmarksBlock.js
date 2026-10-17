@@ -413,6 +413,17 @@ function floatingIsland() {
   p.push(C(2.4, 0.5, 2.4, 3, y + 0.25, 2.5, '#a8b2bb'), C(1.4, 1.4, 1.4, 3, y + 1.2, 2.5, '#d9dde2'));
   return merge(p);
 }
+/** A big floating island further out: the same, larger and higher, two cube trees and a little cube house on it. */
+function bigFloatingIsland() {
+  const g = floatingIsland();
+  g.applyMatrix4(new Matrix4().makeScale(2.2, 2.2, 2.2));
+  return merge([g, C(4, 3, 4, 4, ISLAND.lift * 2.2 + 1.5, 4, '#d9c7a4'), C(4.6, 1, 4.6, 4, ISLAND.lift * 2.2 + 3.5, 4, B.roof)]);
+}
+const bigFloatingIslandFall = () => {
+  const g = floatingIslandFall();
+  g.applyMatrix4(new Matrix4().makeScale(2.2, 2.2, 2.2));
+  return g;
+};
 const floatingIslandFall = () => merge([C(2.6, ISLAND.lift + 6, 0.6, 6.4, (ISLAND.lift - 6) / 2 - 1, 3.2, '#dff3ff'), C(4, 1.2, 4, 6.4, 0.6, 3.6, '#ffffff')]);
 
 /** An island house: a cube cottage of pale planks on a green block plinth, a lantern, a flower box. */
@@ -591,6 +602,7 @@ export const BLOCK_LANDMARKS = {
   'gg-arch': { build: ggArch, radius: 11, fx: 'gg-arch' },
   'level-pillars': { build: levelPillars, glow: levelPillarsGlow, radius: 10, fit: 10 },
   'floating-island': { build: floatingIsland, haze: floatingIslandFall, radius: 9 },
+  'big-floating-island': { build: bigFloatingIsland, haze: bigFloatingIslandFall, radius: 18 },
   'island-house': { build: islandHouse, glow: islandHouseGlow, radius: 10 },
   'island-garden': { build: islandGarden, radius: 12 },
   'cube-crane': { build: cubeCrane, radius: 6, moving: { build: craneJib, pivot: [0, 27.4, 0], axis: [0, 1, 0], swing: 0.6, period: 14 } },

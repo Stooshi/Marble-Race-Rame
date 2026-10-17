@@ -294,7 +294,7 @@ module.exports = {
     'mine-entrance', 'gem-seam', 'cart-depot', 'shaft-headframe', 'magma-pool', 'basalt-spire', 'lava-falls',
     'clear-rows', 'block-well', 'combo-rows', 'settling-stack', 'block-hall', 'voxel-castle', 'drawbridge', 'block-gate',
     'block-portal', 'gg-arch', 'level-pillars',
-    'floating-island', 'island-house', 'island-garden', 'cube-crane', 'container-stack', 'block-boats', 'harbour-office', 'block-lighthouse',
+    'floating-island', 'big-floating-island', 'island-house', 'island-garden', 'cube-crane', 'container-stack', 'block-boats', 'harbour-office', 'block-lighthouse',
     'sun-temple', 'temple-colonnade', 'sun-disc', 'temple-gate', 'chain-wall', 'score-wall', 'checkpoint-arch', 'final-stage'],
   OVERHEAD: ['gondola', 'cable-car', 'chairlift', 'vulture',
     // The Canyon Series: birds circling over the gorge, and what spans it from rim to rim, high over the track.
