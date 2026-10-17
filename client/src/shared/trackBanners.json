@@ -90,6 +90,17 @@
    "side": -1,
    "marbles": 5
   },
+  "bonus-round": {
+   "name": "Bonus Round",
+   "series": "Blocks",
+   "lighting": "night",
+   "v": "67b71372",
+   "bytes": 13342,
+   "bytes2x": 33606,
+   "t": 9194,
+   "side": 1,
+   "marbles": 6
+  },
   "bullet-hell": {
    "name": "Bullet Hell",
    "series": "Arcade",

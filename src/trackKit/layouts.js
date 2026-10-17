@@ -983,11 +983,11 @@ const LAYOUTS = {
       obstacles: [parked({ costume: c.parked, at: 0.2, side: R, length: 6 }), peg({ costume: c.peg, at: 0.45, line: 'left' })], features: [rumble({ from: 0.7, to: 0.95, count: 3 })],
     },
   ],
-  /** L59 Bonus stages (Block Series): a peg straight, a sweep (a boost), S-bends, a slalom straight, a spin, the hairpin, a long last sweep (the final stage) and a parked piece and a peg at the run-in. */
+  /** L59 Bonus stages (Block Series): a peg straight (four pegs, two on the inside of the sweep that follows: they even out the twin chutes), a sweep (a boost), S-bends, a slalom straight, a spin, the hairpin, a long last sweep (the final stage) and a parked piece and a peg at the run-in. */
   'bonus-stages': (L, R, c) => [
     {
-      key: 'stage1', name: 'Peg straight', shape: straight(70, { grade: 0.12 }), billboards: 1,
-      obstacles: [peg({ costume: c.peg, at: 0.3, line: 'right' }), peg({ costume: c.peg, at: 0.5, line: 'left' }), peg({ costume: c.peg, at: 0.7, line: 'center' })],
+      key: 'stage1', name: 'Peg straight', shape: straight(90, { grade: 0.12 }), billboards: 1,
+      obstacles: [peg({ costume: c.peg, at: 0.25, line: 'left' }), peg({ costume: c.peg, at: 0.42, line: 'right' }), peg({ costume: c.peg, at: 0.6, line: 'center' }), peg({ costume: c.peg, at: 0.78, line: 'right' })],
     },
     { key: 'bonusSweep', name: 'Sweep', shape: sweep({ side: L, radius: 90, degrees: 130, grade: 0.09 }), features: [boost({ at: 0.08 })], billboards: 2 },
     { key: 'checkpointBends', name: 'S-bends', shape: sBends({ first: R, radius: 75, degrees: 60, grade: 0.13 }) },

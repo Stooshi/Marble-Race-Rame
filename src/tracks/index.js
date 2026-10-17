@@ -82,4 +82,5 @@ module.exports = [
   require('./voxel-harbor'),
   require('./sunstone-temple'),
   require('./chain-reaction'),
+  require('./bonus-round'),
 ];
