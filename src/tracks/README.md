@@ -120,7 +120,7 @@ module.exports = track({
   | `island-hops` (blocks) | bridge1, island1, hop, bridge2, island2 (a spiral), brakingStraight, hairpin, toTheEdge, islandFall (a waterfall), bridge3, sweep2, lastStraight |
   | `harbour-quays` (blocks) | sBends, quay, craneSpin (0.6 of a spiral), pier, basinSweep, dockDrop, brakingStraight, hairpin, lastStraight |
   | `temple-halls` (blocks) | entryHall, brakingStraight, hairpin, stairs1 (steps), courtyard (a spiral), stairs2 (steps), sanctum, sunSweep, lastStraight |
-  | `cascade-rows` (blocks) | firstSweep, cascadeRun, sBends, crest (a short climb), drop, brakingStraight, hairpin, spin, lastStraight |
+  | `cascade-rows` (blocks) | firstSweep (deep S-bends), cascadeRun, sBends, crest (a short climb), drop, brakingStraight, hairpin, spin, lastStraight |
   | `bonus-stages` (blocks) | stage1, bonusSweep, checkpointBends, stage2, spin, brakingStraight, hairpin, finalStage, lastStraight |
 
   A track may still write its own sections by hand; the sameness check makes sure they differ.

@@ -37,5 +37,9 @@
  "voxel-harbor": {
   "t": 36000,
   "side": -1
+ },
+ "chain-reaction": {
+  "t": 17000,
+  "side": 1
  }
 }

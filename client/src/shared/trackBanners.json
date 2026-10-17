@@ -112,6 +112,17 @@
    "side": 1,
    "marbles": 9
   },
+  "chain-reaction": {
+   "name": "Chain Reaction",
+   "series": "Blocks",
+   "lighting": "night",
+   "v": "c5643a4d",
+   "bytes": 9702,
+   "bytes2x": 24576,
+   "t": 17000,
+   "side": 1,
+   "marbles": 4
+  },
   "checkpoint-rush": {
    "name": "Checkpoint Rush",
    "series": "Arcade",

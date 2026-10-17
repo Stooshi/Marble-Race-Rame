@@ -965,14 +965,14 @@ const LAYOUTS = {
       obstacles: [parked({ costume: c.parked, at: 0.2, side: R, length: 6 }), peg({ costume: c.peg, at: 0.45, line: 'left' })], features: [rumble({ from: 0.7, to: 0.95, count: 3 })],
     },
   ],
-  /** L58 Cascade rows (Block Series): a sweep, a long peg straight (the rows), S-bends, a short climb, a drop, the hairpin, a spiral and a half and a parked piece and a peg at the run-in. */
+  /** L58 Cascade rows (Block Series): tight, deep S-bends first (they mix the field), a long straight (the rows: a parked piece, a peg, a slalom), S-bends (a boost), a short climb, a drop, the hairpin, a spiral and a half and a parked piece and a peg at the run-in. */
   'cascade-rows': (L, R, c) => [
-    { key: 'firstSweep', name: 'Sweep', shape: sweep({ side: R, radius: 90, degrees: 110, grade: 0.1 }), billboards: 2 },
+    { key: 'firstSweep', name: 'First S-bends', shape: sBends({ first: L, radius: 55, degrees: 115, grade: 0.13 }), billboards: 2 },
     {
-      key: 'cascadeRun', name: 'Peg straight', shape: straight(140, { grade: 0.12 }), features: [boost({ at: 0.06 })], billboards: 1,
-      obstacles: [peg({ costume: c.peg, at: 0.3, line: 'left' }), peg({ costume: c.peg, at: 0.5, line: 'right' }), peg({ costume: c.peg, at: 0.7, line: 'center' })],
+      key: 'cascadeRun', name: 'Peg straight', shape: straight(140, { grade: 0.12 }), billboards: 1,
+      obstacles: [parked({ costume: c.parked, at: 0.1, side: L, length: 6 }), peg({ costume: c.peg, at: 0.26, line: 'right' }), slalom({ costume: c.slalom, from: 0.45, to: 0.88, count: 3, loss: 0.15 })],
     },
-    { key: 'sBends', name: 'S-bends', shape: sBends({ first: L, radius: 75, degrees: 80, grade: 0.12 }), billboards: 1 },
+    { key: 'sBends', name: 'S-bends', shape: sBends({ first: L, radius: 75, degrees: 80, grade: 0.12 }), features: [boost({ at: 0.08 })], billboards: 1 },
     { key: 'crest', name: 'Climb', shape: climb(12, { grade: -0.05, after: 0.12 }) },
     { key: 'drop', name: 'Drop', shape: plunge(50, { grade: 0.22, from: 0.12 }) },
     { key: 'brakingStraight', name: 'Run to the hairpin', shape: straight(50, { grade: 0.12 }) },

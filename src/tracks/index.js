@@ -81,4 +81,5 @@ module.exports = [
   require('./sky-islands'),
   require('./voxel-harbor'),
   require('./sunstone-temple'),
+  require('./chain-reaction'),
 ];
