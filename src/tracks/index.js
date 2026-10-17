@@ -90,4 +90,5 @@ module.exports = [
   require('./beijing-nest-200'),
   require('./tokyo-photo-finish'),
   require('./stockholm-1912-relay'),
+  require('./london-steeplechase'),
 ];

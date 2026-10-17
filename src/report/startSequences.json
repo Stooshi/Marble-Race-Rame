@@ -45,6 +45,7 @@
 "kopaonik-spins": {"family":"coaster","reach":0.24,"seq":["opening: classic","drop","pileUp","slalom","spiral left"]},
 "lagos-marble-grand-prix": {"family":"grand-prix","reach":0.207,"seq":["opening: classic","drop","pileUp","slalom","S-bends right"]},
 "line-clear": {"family":"block","reach":0.22,"seq":["opening: staggered-drop","drop","pileUp","slalom","brake","straight","slalom","S-bends right"]},
+"london-steeplechase": {"family":"athletics","reach":0.273,"seq":["opening: peg-drop","drop","peg ×7","straight","peg","slalom","sweep left","straight","peg"]},
 "magma-core": {"family":"block","reach":0.21,"seq":["opening: funnel-drop","drop","pileUp","slalom","sweep right"]},
 "marble-stadium-sprint": {"family":"athletics","reach":0.194,"seq":["opening: classic","drop","pileUp","slalom","S-bends right"]},
 "multiball-manor": {"family":"pinball","reach":0.248,"seq":["opening: tunnel-launch","drop","pileUp","slalom","drop","slalom","sweep left"]},

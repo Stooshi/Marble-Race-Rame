@@ -530,6 +530,17 @@
    "side": 1,
    "marbles": 4
   },
+  "london-steeplechase": {
+   "name": "London Steeplechase",
+   "series": "Track and Field",
+   "lighting": "sunset",
+   "v": "4e9e1d8b",
+   "bytes": 17726,
+   "bytes2x": 42424,
+   "t": 10802,
+   "side": 1,
+   "marbles": 6
+  },
   "magma-core": {
    "name": "Magma Core",
    "series": "Blocks",

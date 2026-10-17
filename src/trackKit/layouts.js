@@ -1153,15 +1153,15 @@ const LAYOUTS = {
   ],
   /** L67 Steeple water (Track and Field): a straight with a barrier (a big peg), a sweep, a second barrier and the water jump (a short stretch of water, a light brake), S-bends, a drop, the hairpin, a spiral, a sweep and the run-in. */
   'steeple-water': (L, R, c) => [
-    { key: 'barrier1', name: 'Barrier straight', shape: straight(80, { grade: 0.12 }), obstacles: [peg({ costume: c.barrier, at: 0.45, line: 'left', radius: 0.6 }), peg({ costume: c.peg, at: 0.7, line: 'right' })], billboards: 1 },
+    { key: 'barrier1', name: 'Barrier straight', shape: straight(80, { grade: 0.12 }), obstacles: [peg({ costume: c.barrier, at: 0.45, line: 'left', radius: 0.6 }), slalom({ costume: c.slalom, from: 0.6, to: 0.97, count: 5, loss: 0.3 })], billboards: 1 },
     { key: 'sweep', name: 'Sweep', shape: sweep({ side: L, radius: 80, degrees: 130, grade: 0.09 }), billboards: 2 },
     { key: 'barrier2', name: 'Second barrier', shape: straight(60, { grade: 0.12 }), obstacles: [peg({ costume: c.barrier, at: 0.55, line: 'right', radius: 0.6 })] },
     { key: 'waterJump', name: 'Water jump', shape: straight(22, { grade: 0.12 }), features: [brake({ at: 0.15, length: 14, drag: 0.01 })] },
     { key: 'sBends', name: 'S-bends', shape: sBends({ first: R, radius: 70, degrees: 55, grade: 0.13 }), billboards: 1 },
     { key: 'drop', name: 'Drop', shape: plunge(45, { grade: 0.22, from: 0.13 }) },
     { key: 'brakingStraight', name: 'Run to the hairpin', shape: straight(50, { grade: 0.12 }), obstacles: [peg({ costume: c.peg, at: 0.2, line: 'left' })] },
-    { key: 'hairpin', name: 'Hairpin', shape: hairpin({ side: L }) },
-    { key: 'spin', name: 'Spiral', shape: spiral({ side: R, radius: 55, turns: 0.7, grade: 0.15 }) },
+    { key: 'hairpin', name: 'Hairpin', shape: hairpin({ side: L }) , obstacles: [swipe({ costume: c.swipe, side: 'high' })] },
+    { key: 'spin', name: 'Spiral', shape: spiral({ side: R, radius: 55, turns: 1.1, grade: 0.15 }) },
     { key: 'sweep2', name: 'Last sweep', shape: sweep({ side: L, radius: 85, degrees: 100, grade: 0.09 }), features: [boost({ at: 0.1 })] },
     {
       key: 'lastStraight', name: 'Last straight', shape: straight(90, { grade: 0.15 }),
