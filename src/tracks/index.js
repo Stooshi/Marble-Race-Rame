@@ -92,4 +92,5 @@ module.exports = [
   require('./stockholm-1912-relay'),
   require('./london-steeplechase'),
   require('./coliseum-anchor-leg'),
+  require('./zurich-golden-lap'),
 ];

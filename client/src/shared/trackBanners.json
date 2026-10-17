@@ -1013,6 +1013,17 @@
    "t": 9802,
    "side": 1,
    "marbles": 4
+  },
+  "zurich-golden-lap": {
+   "name": "Zurich Golden Lap",
+   "series": "Track and Field",
+   "lighting": "night",
+   "v": "67d7a091",
+   "bytes": 15506,
+   "bytes2x": 37496,
+   "t": 9689,
+   "side": 1,
+   "marbles": 4
   }
  }
 }
