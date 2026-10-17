@@ -31,7 +31,7 @@ describe('the questions', () => {
   it('keeps every [bracket] placeholder of the draft, as written', () => {
     const text = all.map((q) => q.text).join('\n');
     for (const p of ['[Google and Apple sign-in: later.]', '[coming at launch]', '[01:00 / 02:00 Swedish time]', '[To decide: e.g. "No, your coins don\'t expire as long as your account exists."]',
-      '[Northern Lights price to decide.]', '[To confirm: e.g. their place is taken by a computer player.]', '[To confirm: in Settings / contact us.]',
+'[To confirm: e.g. their place is taken by a computer player.]', '[To confirm: in Settings / contact us.]',
       '[Live once email is switched on.]', '[approval process coming]', "[If there's a quality setting, mention it here.]", '[2 working days]']) {
       expect(text, p).toContain(p);
     }
@@ -51,6 +51,8 @@ describe('the questions', () => {
     for (const r of ['common', 'uncommon', 'rare', 'epic', 'legendary']) expect(prices).toContain(`${catalog.rarities[r].label}, Price: ${n(catalog.rarities[r].price.coins)} coins`);
     for (const p of packs.packs) expect(bySlug['what-do-coin-packs-cost'].text).toContain(`Pack: $${p.amountCents / 100}, Coins: ${n(p.coins)}`);
     expect(bySlug['what-is-a-first-edition'].text).toContain(`first ${catalog.editionSize} copies`);
+    // The launch limited edition, from the catalogue: 500 numbered copies, 25,000 coins, 1–31 December (Swedish time).
+    expect(bySlug['what-is-a-limited-edition'].text).toContain('Our launch edition is Northern Lights: 500 numbered copies (#001 to #500) at 25,000 coins each, on sale from 1 December 2026 to 31 December 2026 (Swedish time)');
     const bags = bySlug['what-are-bags'].text;
     expect(bags).toContain(`${Math.round(economy.bags.starter.discount * 100)}% cheaper than buying them one by one`);
     expect(bags).toContain(`all 10 marbles of a collection, ${Math.round(economy.bags.full.discount * 100)}% cheaper`);

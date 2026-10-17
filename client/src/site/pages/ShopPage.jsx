@@ -10,7 +10,7 @@ import economy from '../../shared/economy.json';
 import { COIN_PACKS } from '../../shared/payments/packs';
 import { importOrReload } from '../../utils/staleCode';
 import MarbleBadge from '../marbles/MarbleBadge';
-import { editionLine, useCollection } from '../marbles/useCollection';
+import { editionLine, limitedLine, limitedSale, useCollection } from '../marbles/useCollection';
 import { TEASERS } from '../shop/comingSoon';
 import { track } from '../consent/tracking';
 import { useStorePrices } from '../payments';
@@ -62,7 +62,8 @@ export default function ShopPage() {
   const shown = SC_ITEMS.filter((i) => (rarity === 'all' || i.rarity === rarity) && (shade === 'all' || i.shade.key === shade) && (!query || i.id.includes(query)));
   const limited = catalog.designs.find((d) => d.limited);
   const ltdSlug = limited && `${limited.key}-${limited.shades[0].key}`;
-  const ltdOnSale = limited && live[ltdSlug]?.onSale !== false && new Date(limited.limited.saleEndsAt) > new Date();
+  // The limited edition shows before its window ("Coming…", no buy button), in it, and after ("Sold out").
+  const ltdSale = limited && limitedSale(limited, live[ltdSlug]);
 
   return (
     <div className="ms-page">
@@ -99,14 +100,15 @@ export default function ShopPage() {
         )}
       </section>
 
-      {ltdOnSale && (
+      {ltdSale && (
         <section aria-labelledby="ltd-h" className="ms-hero" style={{ borderColor: 'var(--r-limited)' }}>
           <div style={{ display: 'flex', justifyContent: 'center', flex: '0 1 160px' }}><MarbleBadge slug={ltdSlug} size={130} label={limited.name} /></div>
           <div style={{ display: 'grid', gap: 8 }}>
             <span className="ms-mcard__rarity" style={{ color: 'var(--r-limited)', margin: 0 }}>Limited edition · #{ITEM[ltdSlug].id}</span>
             <h2 id="ltd-h" className="ms-h2" style={{ fontFamily: 'var(--ms-cond)', fontWeight: 800 }}>{limited.name}</h2>
             <p style={{ margin: 0, color: 'var(--ms-soft)' }}>{limited.story}</p>
-            <button type="button" className="ms-btn ms-btn--primary" style={{ justifySelf: 'start' }} onClick={() => setOpen(ltdSlug)}>See it</button>
+            <span className="ms-ltd-state" data-state={ltdSale.state}>{limitedLine(ltdSale)}</span>
+            <button type="button" className={`ms-btn ${ltdSale.state === 'on-sale' ? 'ms-btn--primary' : 'ms-btn--ghost'}`} style={{ justifySelf: 'start' }} onClick={() => setOpen(ltdSlug)}>See it</button>
           </div>
         </section>
       )}
@@ -227,6 +229,7 @@ function MarbleSheet({ slug, onSlug, owned, live, buy, onClose }) {
   const have = owned.has(slug);
   const liveItem = live[slug];
   const noPrice = info.price.coins == null;
+  const sale = limitedSale(d, liveItem);
 
   useEffect(() => {
     ref.current?.focus();
@@ -302,7 +305,7 @@ function MarbleSheet({ slug, onSlug, owned, live, buy, onClose }) {
         )}
         <span style={{ fontWeight: 700, color: 'var(--ms-soft)' }}>Shade: {item.shade.name}{item.shade.original ? ' (the original)' : ''}</span>
         <span className="ms-note" style={{ textAlign: 'center' }}>{item.shade.description} <b style={{ color: 'var(--ms-soft)' }}>In races:</b> {d.inRaces}</span>
-        <span className="ms-mcard__fe">{editionLine(liveItem, item.editionSize)}</span>
+        <span className="ms-mcard__fe">{sale ? `Numbered #001–#${String(item.editionSize).padStart(3, '0')} · ${sale.state === 'coming' ? 'First Edition certificate' : limitedLine(sale)}` : editionLine(liveItem, item.editionSize)}</span>
         {message?.ok && (
           <div className="ms-msg" role="status">
             It's yours: <b>{d.name} · {item.shade.name}</b>{message.copy.editionNo ? <>, First Edition <b>#{String(message.copy.editionNo).padStart(3, '0')}</b></> : null}.{' '}
@@ -312,6 +315,10 @@ function MarbleSheet({ slug, onSlug, owned, live, buy, onClose }) {
         {message && !message.ok && <div className="ms-msg ms-msg--bad" role="alert">{message.text}</div>}
         {have ? (
           <span className="ms-btn ms-sheet__buy" aria-disabled="true">OWNED</span>
+        ) : sale?.state === 'coming' ? (
+          <span className="ms-btn ms-sheet__buy" aria-disabled="true">{limitedLine(sale).toUpperCase()}</span>
+        ) : sale?.state === 'sold-out' ? (
+          <span className="ms-btn ms-sheet__buy" aria-disabled="true">SOLD OUT</span>
         ) : liveItem && !liveItem.onSale ? (
           <span className="ms-btn ms-sheet__buy" aria-disabled="true">NO LONGER FOR SALE</span>
         ) : noPrice ? (

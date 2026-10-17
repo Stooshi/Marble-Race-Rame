@@ -109,9 +109,9 @@
 - `html.js`: writes the report page.
 
 **`marbles/`: the collection.**
-- `catalog.js`: reads `catalog.json`. Builds items (design × shade), IDs like `SC105` and certificate codes like `SC105-000037` (gifts: `SC105-G00012`).
+- `catalog.js`: reads `catalog.json`. Builds items (design × shade), IDs like `SC105` and certificate codes like `SC105-000037` (gifts: `SC105-G00012`). `saleState()`: a limited edition is `coming` before its sale window (`limited.saleStartsAt`), `on-sale` in it, `sold-out` after it (`saleEndsAt`) or once every numbered copy is sold; `onSale()` is true only when on sale.
 - `collection.js`:
-  - buying (`buy`, which hands out First Edition numbers), gifts (`grantCopy`) and bags;
+  - buying (`buy`, which hands out First Edition numbers and refuses a limited edition outside its window: 409 before, 410 after, whatever the screen shows), gifts (`grantCopy`) and bags;
   - the Marble Bag, the Shooter, certificates, find by ID;
   - `pickRacingMarble`.
 - `showcase.js`: dresses computer players in collection looks in beginner races. It uses its own randomness, never the race seed.
@@ -258,7 +258,7 @@ Defined in `src/sockets/index.js`. The client may send a JWT in `auth.token`; an
   - `pageMeta.js`: every page's title, description, canonical address, share picture and indexing (`metaFor`, `applyMeta`), set on every page change and used by the pre-rendering;
   - `consent/`: the cookie banner and the trackers (website only, never in the apps): `consent.js` (the choice in local storage `marble-consent`, version `CONSENT_VERSION`; `STORAGE_LIST`), `ConsentManager.jsx` (banner with REJECT ALL and ACCEPT ALL side by side, Settings per category with nothing ticked, reopened by "Cookie settings" in the footer and on `/cookies`; logs the choice to the account when logged in), `tracking.js` (Google Analytics 4 with Consent Mode v2 after statistics consent, the Meta Pixel after marketing consent and never under 13; `track()` events: `sign_up`, `first_race`, `race_finished`, `shop_view`, `checkout_started`, `purchase`);
   - `landing/` (landing page, 3D hero replay; `SERIES`: the series cards, each with one of its tracks' pictures; the tracks-and-series heading is counted from the live track list);
-  - `marbles/` (badge, 3D turntable, certificate, `useCollection`);
+  - `marbles/` (badge, 3D turntable, certificate, `useCollection`, with `limitedSale`/`limitedLine`: the limited edition's "Coming 1 December — limited to 500", how many are left, "Sold out");
   - `payments/index.js`: `buyCoins()` for every screen: Stripe on the website; Google Play Billing in the Android app (`@capgo/native-purchases`: purchase with the player's Play account id, then `api.googleVerify`); `resumeStorePurchases()` (unconfirmed purchases resent at login, from `App.jsx`); `useStorePrices()` (Play's prices in the player's currency, on the shop and checkout); the App Store is a placeholder;
   - `pages/` (every website page; see the routes below);
   - `help/` (the Help Centre at `/help`): `ContactForm.jsx` ("Still need help?": name, email, topic, order number, message, screenshot scaled down before sending, a hidden spam field), `faq.js` (the 12 categories of questions and answers, numbers read from `economy.json`, `packs.json` and `catalog.json`, `[bracket]` placeholders kept; the FAQPage structured data), `search.js` (type-ahead search: any word order, typos, synonyms, highlighting), `HelpPage.jsx`.
@@ -309,7 +309,7 @@ Defined in `src/sockets/index.js`. The client may send a JWT in `auth.token`; an
 | `/help`, `/help/<question-slug>`, `/help#<question-slug>` | Help Centre: every question has its own link (the slug is the question in lowercase with dashes, e.g. `/help#i-forgot-my-password`); `#contact` is the contact form. Linked from the header, footer, Settings, shop, checkout, Purchases, the offline screen, the error box and the 404 page |
 | `/dashboard`, `/profile/:userId` | Dashboard and public profiles |
 | `/race/:raceId`, `/results/:raceId` | Live race and results |
-| `/preview/3d`, `/preview/3d/race/:raceId`, `/preview/marbles`, `/preview/marbles/compare`, `/preview/marbles/roll`, `/preview/marbles/northern-lights` (the Northern Lights launch edition's design review: the original `aurora-glass` next to its upgrade `aurora-glow` (badge.js `GLOW_STRENGTH` and `SHIMMER`, materials.js's shimmer), drawn with `materials.js` `createCustomLook`; nothing in the catalogue), `/preview/physics`, `/preview/banners` | Preview and check pages (not linked); `/preview/banners`: every track picture as a picker card, for review |
+| `/preview/3d`, `/preview/3d/race/:raceId`, `/preview/marbles`, `/preview/marbles/compare`, `/preview/marbles/roll`, `/preview/marbles/northern-lights` (the Northern Lights launch edition's design review: the original `aurora-glass` next to its upgrade `aurora-glow`, now the catalogue's (badge.js `GLOW_STRENGTH` and `SHIMMER`, materials.js's shimmer), drawn with `materials.js` `createCustomLook`), `/preview/physics`, `/preview/banners` | Preview and check pages (not linked); `/preview/banners`: every track picture as a picker card, for review |
 | `/admin/*` | Back office: Players, Player detail (tabs: Coins, Races, Marbles, Payments, Messages, Security, Emails, Audit), Payments, Support messages (`/admin/support`, `/admin/support/:id`), Economy, Email list, Audit log |
 
 ### 3D: `client/src/three/`

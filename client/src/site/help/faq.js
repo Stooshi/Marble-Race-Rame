@@ -53,6 +53,17 @@ export function slugify(text) {
     .replace(/['’]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
 }
 
+/** The limited edition answer, from the catalogue: what one is, and the one on sale (or coming). */
+function limitedAnswer() {
+  const base = "A special marble sold for a short time only. Every copy is numbered and comes with a First Edition certificate. Once its sale ends or it sells out, it's never sold again.";
+  const ltd = catalog.designs.find((d) => d.limited);
+  if (!ltd) return base;
+  const day = (iso, back = 0) => new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Europe/Stockholm' }).format(new Date(new Date(iso).getTime() - back));
+  const size = ltd.limited.editionSize;
+  const price = catalog.rarities[ltd.rarity].price.coins;
+  return `${base} Our launch edition is **${ltd.name}**: ${n(size)} numbered copies (#001 to #${String(size).padStart(3, '0')}) at ${n(price)} coins each, on sale from ${day(ltd.limited.saleStartsAt)} to ${day(ltd.limited.saleEndsAt, 1)} (Swedish time), or until they're sold out. Until then it's in the shop as "coming", without a buy button.`;
+}
+
 /**
  * The 12 categories with their questions. `tracks`: the live track list ([{ series }]) when the page
  * has it, for the number of tracks and series; without it, the draft's 50 tracks in five series.
@@ -171,7 +182,7 @@ export function buildFaq({ tracks } = {}) {
       ['When do new collections come out?',
         `Collection ${catalog.collection.number}, ${catalog.collection.name}, is live.${soon.length ? ` Next up: ${listJoin(soon)}.` : ''} See **Coming soon** in the shop.`],
       ['What is a limited edition?',
-        "A special marble sold for a short time only, with numbered copies. Once it's gone, it's never sold again. [Northern Lights price to decide.]"],
+        limitedAnswer()],
       ['How do I change which marble I race with?',
         'Open your **Marble Bag** and pick the marble you want as your shooter.'],
     ]],

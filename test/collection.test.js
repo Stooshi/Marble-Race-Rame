@@ -6,7 +6,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('fs');
 const path = require('path');
-const { catalog, items, bySlug, byId, normaliseId, marbleCode, onSale } = require('../src/marbles/catalog');
+const { catalog, items, bySlug, byId, normaliseId, marbleCode, saleState, onSale } = require('../src/marbles/catalog');
 
 test('every design has a story, a race note, a material and its shades (5, or 1 for a limited edition)', () => {
   assert.ok(catalog.designs.length > 0);
@@ -70,6 +70,26 @@ test('prices come from the rarity; regular marbles stay on sale after the First 
     assert.ok(!onSale(limited, new Date(0), limited.editionSize));
   }
   assert.equal(bySlug.get(regular.slug), regular);
+});
+
+test('Northern Lights, the launch limited edition: 500 numbered copies at 25,000 coins, on sale 1–31 December 2026 Swedish time only', () => {
+  const nl = bySlug.get('aurora-aurora');
+  assert.equal(nl.design.name, 'Northern Lights');
+  assert.equal(nl.price.coins, 25000);
+  assert.equal(nl.editionSize, 500);
+  assert.ok(nl.allNumbered);
+  assert.equal(nl.design.material, 'aurora-glow');
+  // Not for sale before 1 Dec 00:00 Swedish time (CET, UTC+1), from then until 31 Dec 23:59, then never again.
+  assert.equal(saleState(nl, new Date('2026-10-17T12:00:00Z'), 0), 'coming');
+  assert.equal(saleState(nl, new Date('2026-11-30T22:59:59Z'), 0), 'coming');
+  assert.equal(saleState(nl, new Date('2026-11-30T23:00:00Z'), 0), 'on-sale');
+  assert.equal(saleState(nl, new Date('2026-12-31T22:59:59Z'), 499), 'on-sale');
+  assert.equal(saleState(nl, new Date('2026-12-31T23:00:00Z'), 0), 'sold-out');
+  assert.equal(saleState(nl, new Date('2027-06-01T12:00:00Z'), 0), 'sold-out');
+  assert.equal(saleState(nl, new Date('2026-12-10T12:00:00Z'), 500), 'sold-out');
+  assert.ok(!onSale(nl, new Date('2026-11-15T12:00:00Z'), 0));
+  // Regular marbles have no window.
+  assert.equal(saleState(items.find((i) => !i.design.limited), new Date('2026-10-17T12:00:00Z'), 0), 'on-sale');
 });
 
 test('no one-off data update retires the plain marbles or hands out collection marbles (retiring a whole collection is allowed)', () => {

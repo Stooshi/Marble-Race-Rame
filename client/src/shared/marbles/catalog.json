@@ -72,8 +72,7 @@
    "label": "Limited",
    "colour": "#E040C8",
    "price": {
-    "coins": null,
-    "coinsLabel": "[X]"
+    "coins": 25000
    }
   }
  },
@@ -1239,8 +1238,8 @@
    "key": "aurora",
    "name": "Northern Lights",
    "rarity": "limited",
-   "material": "aurora-glass",
-   "story": "October's limited edition: the northern lights over a Swedish winter race.",
+   "material": "aurora-glow",
+   "story": "The launch limited edition: the northern lights over a Swedish winter race. 500 numbered copies, on sale in December only.",
    "inRaces": "Night-sky glass with green and violet aurora ribbons that slowly drift. Numbered limited edition.",
    "slots": [
     "ribbon",
@@ -1277,11 +1276,12 @@
     }
    ],
    "limited": {
-    "month": "2026-10",
-    "editionSize": 1000,
+    "edition": "launch",
+    "editionSize": 500,
     "allNumbered": true,
-    "saleEndsAt": "2026-11-01T00:00:00+01:00",
-    "note": "[Sale window placeholder: until the end of October]"
+    "saleStartsAt": "2026-12-01T00:00:00+01:00",
+    "saleEndsAt": "2027-01-01T00:00:00+01:00",
+    "note": "On sale 1 Dec 2026 00:00 to 31 Dec 2026 23:59 Swedish time (CET), or until the 500 are sold; never sold again after."
    },
    "no": 1,
    "collection": "LE"

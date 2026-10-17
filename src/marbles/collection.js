@@ -6,7 +6,7 @@
  * Looks only: nothing here is read by the race engine.
  */
 
-const { catalog, items, bySlug, byId, normaliseId, marbleCode, onSale, setOf } = require('./catalog');
+const { catalog, items, bySlug, byId, normaliseId, marbleCode, saleState, onSale, setOf } = require('./catalog');
 const { HttpError, badRequest, conflict, notFound } = require('../utils/httpError');
 const economy = require('../economy');
 
@@ -31,6 +31,8 @@ function describe(item, count = { bought: 0, gifted: 0 }, now = new Date()) {
     numberedLeft,
     bought: count.bought,
     onSale: onSale(item, now, count.bought),
+    sale: saleState(item, now, count.bought),
+    saleStartsAt: item.saleStartsAt,
     saleEndsAt: item.saleEndsAt,
   };
 }
@@ -63,8 +65,16 @@ async function claimCopy(client, userId, item, now) {
   if (owned.rowCount) throw conflict('You already own this marble');
   await client.query('INSERT INTO collection_counters (item_slug) VALUES ($1) ON CONFLICT DO NOTHING', [item.slug]);
   const { rows: [count] } = await client.query('SELECT bought FROM collection_counters WHERE item_slug = $1 FOR UPDATE', [item.slug]);
-  if (!onSale(item, now, count.bought)) throw new HttpError(410, 'This marble is no longer for sale');
+  // The server decides, whatever the screen shows: a limited edition only inside its sale window.
+  const state = saleState(item, now, count.bought);
+  if (state === 'coming') throw conflict(`This marble isn't on sale yet: it goes on sale on ${saleStartText(item)}`);
+  if (state !== 'on-sale') throw new HttpError(410, item.allNumbered ? 'Sold out: this limited edition is never sold again' : 'This marble is no longer for sale');
   return count;
+}
+
+/** "1 December 2026" (Swedish time), for a limited edition's opening day. */
+function saleStartText(item) {
+  return new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Europe/Stockholm' }).format(new Date(item.saleStartsAt));
 }
 
 /** Hands out the next numbered copy (First Edition while the first 500 last). */

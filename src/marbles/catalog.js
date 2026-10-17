@@ -33,6 +33,7 @@ for (const design of catalog.designs) {
       price: rarity.price,
       editionSize: design.limited?.editionSize ?? catalog.editionSize,
       allNumbered: Boolean(design.limited?.allNumbered),
+      saleStartsAt: design.limited?.saleStartsAt ?? null,
       saleEndsAt: design.limited?.saleEndsAt ?? null,
     });
   }
@@ -51,11 +52,20 @@ function marbleCode(item, { copyNo, giftNo }) {
   return giftNo ? `${item.id}-G${pad(giftNo, 5)}` : `${item.id}-${pad(copyNo, 6)}`;
 }
 
-/** Whether the item can be bought right now (a limited edition only in its month, and while numbers last). */
+/**
+ * Where an item's sale stands: 'coming' (a limited edition before its window opens), 'on-sale', or
+ * 'sold-out' (its window has closed or every numbered copy is sold; it is never sold again).
+ */
+function saleState(item, now = new Date(), sold = 0) {
+  if (item.saleStartsAt && now < new Date(item.saleStartsAt)) return 'coming';
+  if (item.saleEndsAt && now >= new Date(item.saleEndsAt)) return 'sold-out';
+  if (item.allNumbered && sold >= item.editionSize) return 'sold-out';
+  return 'on-sale';
+}
+
+/** Whether the item can be bought right now (a limited edition only in its sale window, and while numbers last). */
 function onSale(item, now = new Date(), sold = 0) {
-  if (item.saleEndsAt && now >= new Date(item.saleEndsAt)) return false;
-  if (item.allNumbered && sold >= item.editionSize) return false;
-  return true;
+  return saleState(item, now, sold) === 'on-sale';
 }
 
 /** A design's shades as item slugs (for the Set badge). */
@@ -63,4 +73,4 @@ function setOf(designKey) {
   return items.filter((i) => i.design.key === designKey).map((i) => i.slug);
 }
 
-module.exports = { catalog, items, bySlug, byId, marbleId, normaliseId, marbleCode, onSale, setOf };
+module.exports = { catalog, items, bySlug, byId, marbleId, normaliseId, marbleCode, saleState, onSale, setOf };

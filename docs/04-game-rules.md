@@ -88,7 +88,12 @@ Days run midnight to midnight **UTC**. Friend-room races pay like any race and c
 | Rare | 6,000 |
 | Epic | 12,000 |
 | Legendary | 25,000 |
-| Limited editions | to be decided |
+| Limited (Northern Lights, the launch edition) | 25,000 |
+
+**Limited editions:** sold only in their sale window or until their numbered copies are sold, then never again; every copy numbered, with a First Edition certificate. Bags never contain them.
+- **Northern Lights** (LE011), the launch edition: 500 copies (#001–#500) at 25,000 coins, on sale from 1 Dec 2026 00:00 to 31 Dec 2026 23:59 Swedish time (`limited.saleStartsAt` / `saleEndsAt` in the catalogue).
+- Before its window the shop shows it as "Coming 1 December — limited to 500" without a buy button; after the window or once sold out, "Sold out". The server refuses any purchase outside the window, whatever the screen shows.
+- Gifts from support (back office) are not sales: they get a gift number, never one of the 500.
 
 **Bags:** the buyer chooses the shade.
 - **Starter Bag:** the 3 Commons at 15% off.

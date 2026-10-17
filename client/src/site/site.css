@@ -324,6 +324,9 @@ a.ms-mcard:hover { text-decoration: none; border-color: var(--ms-muted); }
 .ms-mcard__story { font-size: 0.95rem; line-height: 1.45; color: #E3E7EF; font-style: italic; }
 .ms-mcard__mat { font-size: 0.82rem; line-height: 1.45; color: var(--ms-muted); }
 .ms-mcard__fe { margin-top: auto; font-size: 0.82rem; font-weight: 700; color: var(--ms-orange); }
+/* A limited edition's sale line on the shop's banner: coming, on sale (how many left), sold out. */
+.ms-ltd-state { font-weight: 800; color: var(--r-limited); letter-spacing: .01em; }
+.ms-ltd-state[data-state='sold-out'] { color: var(--ms-soft); }
 .ms-price-btn {
   display: flex; justify-content: center; align-items: center; width: 100%; min-height: 44px;
   border: 1px solid var(--ms-yellow); border-radius: 10px; color: var(--ms-yellow); font-weight: 700; background: transparent; cursor: pointer;

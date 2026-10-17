@@ -40,7 +40,7 @@ test('the daily goal: 5 races for a flat 35; the streak is counted but pays noth
 test('prices: Common 1,000 · Uncommon 2,500 · Rare 6,000 · Epic 12,000 · Legendary 25,000 coins', () => {
   const r = catalog.rarities;
   assert.deepEqual(['common', 'uncommon', 'rare', 'epic', 'legendary'].map((k) => r[k].price), [1000, 2500, 6000, 12000, 25000].map((coins) => ({ coins })));
-  assert.equal(r.limited.price.coins, null); // in coins; its price is still to be set
+  assert.equal(r.limited.price.coins, 25000); // the launch limited edition, Northern Lights
 });
 
 test('the target: 5 races a day at an average place buys the first Common on day 2–3, then about one a week', () => {
