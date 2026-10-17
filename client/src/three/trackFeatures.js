@@ -385,6 +385,69 @@ export function buildTrackFeatures(centerline, channel, features, { lite = false
       g.setIndex(index);
       g.computeVertexNormals();
       add('bump', g, new Matrix4());
+    } else if (f.type === 'box') {
+      // A jib part (box, rail, table top): a raised flat top over the ice where the physics has it, a short
+      // ramp up at its start and its end dropping off (a table top easing down over its drop-off), the
+      // sides of a box or rail standing up from the ice. Steel and white, with yellow edges, like a park's.
+      const s0 = f.at * channel.arc;
+      const lip = channelLipAt(channel, s0) / channel.maxAngle;
+      const half = Math.min(lip, (f.half ?? 0.6) / across);
+      const mid = Math.max(-lip, Math.min(lip, f.l ?? 0));
+      const lo = Math.max(-lip, mid - half);
+      const hi = Math.min(lip, mid + half);
+      const len = f.length ?? 10;
+      const down = f.down ?? 0;
+      const top = new Color(f.look === 'table-top' ? '#eef3f6' : f.look === 'rail' ? '#b9c0ca' : '#c8ced6');
+      const edge = new Color('#f2c230');
+      const side = new Color(f.look === 'table-top' ? '#9fb3c4' : '#7d8794');
+      const ramp = Math.min(1.2, len / 4);
+      const liftAt = (d) => f.height * (d < 0 ? 0 : d < ramp ? d / ramp : d <= len ? 1 : down > 0 ? Math.max(0, 1 - (d - len) / down) : 0);
+      const along = [0, ramp];
+      for (let d = ramp + 2; d < len; d += 2) along.push(d);
+      along.push(len);
+      if (down > 0) for (let d = len + 2; d < len + down; d += 2) along.push(d);
+      if (down > 0) along.push(len + down);
+      const cols = f.look === 'table-top' ? (lite ? 8 : 14) : 2;
+      const pos = [];
+      const col = [];
+      const tri = (a, b, c, color) => { for (const v of [a, b, c]) { pos.push(v.x, v.y, v.z); col.push(color.r, color.g, color.b); } };
+      for (let r = 0; r + 1 < along.length; r += 1) {
+        const a0 = p(f.at, along[r]);
+        const a1 = p(f.at, along[r + 1]);
+        const h0 = liftAt(along[r]) + 0.005;
+        const h1 = liftAt(along[r + 1]) + 0.005;
+        for (let c = 0; c < cols; c += 1) {
+          const u0 = lo + ((hi - lo) * c) / cols;
+          const u1 = lo + ((hi - lo) * (c + 1)) / cols;
+          const color = f.look === 'table-top' && (c === 0 || c === cols - 1) ? edge : top;
+          const q = [surface(a0, u0, h0).point, surface(a0, u1, h0).point, surface(a1, u1, h1).point, surface(a1, u0, h1).point];
+          tri(q[0], q[1], q[2], color);
+          tri(q[0], q[2], q[3], color);
+        }
+        if (f.look !== 'table-top') {
+          // The sides, from the ice up to the top, a yellow line along the top edge.
+          for (const u of [lo, hi]) {
+            const q = [surface(a0, u, 0).point, surface(a1, u, 0).point, surface(a1, u, h1).point, surface(a0, u, h0).point];
+            tri(q[0], q[1], q[2], side);
+            tri(q[0], q[2], q[3], side);
+            const e = [surface(a0, u, h0).point, surface(a1, u, h1).point, surface(a1, u, h1 + 0.012).point, surface(a0, u, h0 + 0.012).point];
+            tri(e[0], e[1], e[2], edge);
+            tri(e[0], e[2], e[3], edge);
+          }
+        }
+      }
+      if (f.look !== 'table-top' || down === 0) {
+        // The end face, where it drops off.
+        const a1 = p(f.at, len);
+        const q = [surface(a1, lo, 0).point, surface(a1, hi, 0).point, surface(a1, hi, f.height).point, surface(a1, lo, f.height).point];
+        tri(q[0], q[1], q[2], side);
+        tri(q[0], q[2], q[3], side);
+      }
+      const g = new BufferGeometry();
+      g.setAttribute('position', new Float32BufferAttribute(pos, 3));
+      g.setAttribute('color', new Float32BufferAttribute(col, 3));
+      g.computeVertexNormals();
+      add('jib', g, new Matrix4());
     } else if (f.type === 'cobbles') {
       // Where the physics brakes the marbles (cobbles: the whole stretch, rim to
       // rim) the street stays asphalt; only the braking zones before the bends
@@ -917,7 +980,7 @@ export function buildTrackFeatures(centerline, channel, features, { lite = false
   }
 
   for (const f of features) {
-    if (f.type === 'boost' || f.type === 'bump' || f.type === 'cobbles' || f.type === 'paint' || DECOR.includes(f.type)) continue;
+    if (f.type === 'boost' || f.type === 'bump' || f.type === 'box' || f.type === 'cobbles' || f.type === 'paint' || DECOR.includes(f.type)) continue;
     const l = f.l ?? 0;
     const xa = Math.min(l, f.l2 ?? l) * across;
     const xb = Math.max(l, f.l2 ?? l) * across;
@@ -938,6 +1001,7 @@ export function buildTrackFeatures(centerline, channel, features, { lite = false
   const materials = {
     chevron: new MeshBasicMaterial({ map: tex, side: DoubleSide, polygonOffset: true, polygonOffsetFactor: -2 }),
     bump: new MeshLambertMaterial({ vertexColors: true }),
+    jib: new MeshLambertMaterial({ vertexColors: true, flatShading: true, side: DoubleSide }),
     cobbles: new MeshLambertMaterial({ vertexColors: true, flatShading: true, polygonOffset: true, polygonOffsetFactor: -1 }),
     ice: new MeshLambertMaterial({ color: FEATURE_COLORS.ice, emissive: '#3a6c86', transparent: true, opacity: 0.78 }),
     snow: new MeshLambertMaterial({ color: FEATURE_COLORS.snow, emissive: '#8a96a2', flatShading: true }),
@@ -977,7 +1041,7 @@ export function buildTrackFeatures(centerline, channel, features, { lite = false
   const plain = (m) => m.isMeshLambertMaterial && m.flatShading && !m.transparent && !m.map && !m.vertexColors && !m.polygonOffset && m.emissive.getHex() === 0;
   for (const [key, list] of Object.entries(parts)) {
     // Merge like with like (all with the same attributes).
-    const keep = ['position', 'normal', ...(key === 'chevron' ? ['uv'] : []), ...(key === 'bump' || key === 'cobbles' ? ['color'] : [])];
+    const keep = ['position', 'normal', ...(key === 'chevron' ? ['uv'] : []), ...(key === 'bump' || key === 'cobbles' || key === 'jib' ? ['color'] : [])];
     const ready = list.map((g) => {
       const n = g.index ? g.toNonIndexed() : g;
       if (!n.getAttribute('normal')) n.computeVertexNormals();

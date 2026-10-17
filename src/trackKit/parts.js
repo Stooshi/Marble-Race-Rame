@@ -70,6 +70,20 @@ function sBends({ first = 'left', radius = 70, degrees = 50, grade = 0.17 } = {}
   };
 }
 
+/**
+ * A half-pipe (skatepark): the channel widens into a big smooth U (`width`: its radius in metres,
+ * the usual channel's is 3.6) and the line swings one way and the other (`swings` bends of
+ * `degrees`), so the field rocks from wall to wall as it rolls down; it narrows again at its end.
+ */
+function halfPipe({ first = 'left', width = 8, swings = 3, radius = 60, degrees = 32, grade = 0.12 } = {}) {
+  const other = turn(first) === 'left' ? 'right' : 'left';
+  return {
+    shape: 'halfPipe',
+    wide: { radius: width },
+    parts: Array.from({ length: swings }, (_, k) => ({ kind: k % 2 ? other : first, radius, degrees, grade, ease: EASE })),
+  };
+}
+
 /** A long banked sweep. */
 function sweep({ side, radius = 75, degrees = 130, grade = 0.1 } = {}) {
   return { shape: 'sweep', side: turn(side), parts: [{ kind: side, radius, degrees, grade, ease: EASE }] };
@@ -227,6 +241,29 @@ function rumble({ from = 0.2, to = 0.85, count = 5 } = {}) {
 }
 
 /**
+ * Jib parts (the skatepark kit), all a raised flat top in the channel (physics 'box'):
+ * - box: a low box with a flat top in the middle of the channel (a snowboard jib box). Marbles that meet it
+ *   square on roll up onto it, across and off the end; the rest are pushed round either side of it.
+ * - rail: the same, very narrow and very low: a bar along the track that bumps the marbles about.
+ * - tableTop: a long raised flat across the whole channel, a short ramp up and a gentle drop-off at the
+ *   end: the pack spreads out on the flat (nothing pulls it back to the middle) and drops off in a stream.
+ * - jibLine: a rail, a box and a table top one after another, as on a snowboard park run.
+ * `at` / `from` are shares of the section; length, width and height in metres.
+ */
+function box({ at = 0.4, length = 10, width = 1.2, height = 0.25, line = 'center' } = {}) {
+  return { feature: 'box', at, length, width, height, line, part: 'box' };
+}
+function rail({ at = 0.3, length = 12, line = 'center' } = {}) {
+  return { feature: 'box', at, length, width: 0.3, height: 0.12, line, part: 'rail' };
+}
+function tableTop({ at = 0.3, length = 25, height = 0.3, down = 8 } = {}) {
+  return { feature: 'box', at, length, width: 5, height, line: 'center', down, part: 'table-top' };
+}
+function jibLine({ from = 0.1 } = {}) {
+  return [rail({ at: from, length: 10 }), box({ at: from + 0.25, length: 10 }), tableTop({ at: from + 0.5, length: 22 })];
+}
+
+/**
  * Paint on the floor, looks only (the physics never sees it): relay exchange zones ('exchange-zone'), a Go board ('go-board') or a
  * Xiangqi board ('xiangqi') over the stretch from `from` to `to` (China Wall Twister's board-game run).
  */
@@ -241,7 +278,7 @@ function brake({ at = 0.7, length = 15, drag = 0.02 } = {}) {
 
 module.exports = {
   SHARP_RADIUS, EASE, START_RAMP, LIP_STEP, LIP_LENGTH,
-  plunge, straight, climb, sBends, sweep, spiral, hairpin, splitter, waterfall, runIn,
+  plunge, straight, climb, sBends, sweep, spiral, hairpin, splitter, waterfall, runIn, halfPipe, box, rail, tableTop, jibLine,
   block, pileUp, curtain, swipe, parked, slalom, peg,
   bump, boost, brake, moguls, steps, paint, rumble,
   TUNNELS: ['mine', 'ice-cave', 'dragon', 'rock', 'roots', 'bazaar', 'canyon', 'mosaic', 'pyramid', 'sea-cave', 'lit-tunnel', 'redwood-trunk', 'city-wall', 'subway'],

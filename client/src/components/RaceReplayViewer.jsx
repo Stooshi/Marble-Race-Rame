@@ -11,6 +11,7 @@ import FinishShow, { useFinishShow } from './FinishShow';
 import StartLights from './StartLights';
 import SkipToResults from './SkipToResults';
 import FrameMeter, { useFrameMeter } from './FrameMeter';
+import { useTvMoments } from './tvMomentsSetting';
 import { BOARD_HOLD_MS, finishPlan } from '../utils/finishShow';
 
 /**
@@ -37,6 +38,8 @@ export default function RaceReplayViewer({ data, loading = false, mine = NOBODY,
   const [follow, setFollow] = useState('leader'); // 'leader' or an entry index
   const [built, setBuilt] = useState(false);
   const meter = useFrameMeter();
+  const tv = useTvMoments();
+  useEffect(() => { sceneRef.current?.setTvMoments(tv.on); }, [tv.on, sceneRef, status]);
   // The winner's moment in the scene: the golden spotlight and the camera pushing in.
   const winnerIndex = show.plan ? Number(Object.keys(finishes).find((i) => finishes[i] === show.plan.winnerMs)) : null;
   useEffect(() => {
@@ -225,6 +228,9 @@ export default function RaceReplayViewer({ data, loading = false, mine = NOBODY,
           )}
           <button type="button" aria-pressed={camera === 'overview'} onClick={() => setCamera('overview')}>
             Whole track
+          </button>
+          <button type="button" aria-pressed={tv.on} onClick={tv.toggle} title="TV moments: cut to trackside cameras as the marble you follow comes by">
+            TV
           </button>
           <button type="button" aria-pressed={meter.on} onClick={meter.toggle} title="Show the frame rate">
             FPS

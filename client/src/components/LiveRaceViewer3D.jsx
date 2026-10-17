@@ -12,6 +12,7 @@ import FinishShow, { useFinishShow } from './FinishShow';
 import { CEREMONY_PHASES } from '../utils/finishShow';
 import SkipToResults from './SkipToResults';
 import FrameMeter, { useFrameMeter } from './FrameMeter';
+import { useTvMoments } from './tvMomentsSetting';
 import { play as playSound, raceCeremony, raceGo } from '../sound/engine';
 
 const WHOOSH_GAP_MS = 3500; // an overtaking whoosh at most this often
@@ -40,6 +41,8 @@ export default function LiveRaceViewer3D({
   const [follow, setFollow] = useState('leader'); // 'leader' or an entry index
   const [built, setBuilt] = useState(false);
   const meter = useFrameMeter();
+  const tv = useTvMoments();
+  useEffect(() => { sceneRef.current?.setTvMoments(tv.on); }, [tv.on, sceneRef, status]);
   const dirty = useRef(true);
 
   useEffect(() => {
@@ -208,6 +211,9 @@ export default function LiveRaceViewer3D({
         )}
         <button type="button" aria-pressed={camera === 'overview'} onClick={() => setCamera('overview')}>
           Whole track
+        </button>
+        <button type="button" aria-pressed={tv.on} onClick={tv.toggle} title="TV moments: cut to trackside cameras as the marble you follow comes by">
+          TV
         </button>
         <button type="button" aria-pressed={meter.on} onClick={meter.toggle} title="Show the frame rate">
           FPS

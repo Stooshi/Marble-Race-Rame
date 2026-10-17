@@ -160,7 +160,7 @@ function track(spec) {
       }
       placed.push({ section: i, kind: o.obstacle, at, metresIn: o.at * metres(i) });
     }
-    for (const f of sec.features || []) {
+    for (const f of (sec.features || []).flat()) {
       const at = along(i, f.at);
       if (f.feature === 'moguls' || f.feature === 'steps') {
         // A row of low bumps, evenly along the stretch (steps: over a rough, slowing surface).
@@ -172,12 +172,18 @@ function track(spec) {
         placed.push({ section: i, kind: f.feature, at, count: f.count, spacing: ((f.to - f.from) * metres(i)) / Math.max(1, f.count - 1) });
         continue;
       }
+      if (f.feature === 'box') {
+        // A jib part: a raised flat top (box, rail, table top) from `at` for `length` metres.
+        features.push({ type: 'box', at, length: f.length, l: lineOf(i, f.line), half: f.width / 2, height: f.height, ...(f.down && { down: f.down }), look: f.part });
+        placed.push({ section: i, kind: f.part, at, length: f.length, width: f.width, height: f.height, down: f.down ?? 0 });
+        continue;
+      }
       if (f.feature === 'bump') features.push({ type: 'bump', at });
       else if (f.feature === 'boost') features.push({ type: 'boost', at, l: f.l, length: f.length, halfWidth: f.halfWidth, ...(f.kick !== undefined && { kick: f.kick }) });
       else if (f.feature === 'brake') features.push({ type: 'cobbles', at, length: f.length, drag: f.drag });
       else if (f.feature === 'paint') { features.push({ type: 'paint', at, length: Math.round((f.to - f.from) * metres(i) * 10) / 10, look: f.look }); continue; } // (looks only)
       else {
-        problems.push(`${where(sec.name)}: features must come from the kit (bump, boost, brake, moguls, steps, paint, rumble).`);
+        problems.push(`${where(sec.name)}: features must come from the kit (bump, boost, brake, moguls, steps, paint, rumble, box, rail, tableTop).`);
         continue;
       }
       placed.push({ section: i, kind: f.feature, at });
@@ -250,6 +256,12 @@ function track(spec) {
     });
   });
 
+  // 3b. Half-pipes: where the channel widens into a big U (the race engine's channel.wides).
+  const wides = [];
+  sections.forEach((sec, i) => {
+    if (sec.shape?.wide && span[i].parts.length) wides.push({ from: round4(span[i].from), to: round4(span[i].to), radius: sec.shape.wide.radius });
+  });
+
   // 4. Looks for the 3D view (the race engine never reads these).
   const layoutKind = spec.layout ?? spec.sections?.layout;
   const kit = {
@@ -261,6 +273,14 @@ function track(spec) {
     lighting: spec.lighting || 'day',
     ...(spec.variants?.length && { variants: [...spec.variants] }),
     ...(spec.signature && { signature: spec.signature }),
+    // TV moments: fixed trackside cameras the big view cuts to as the followed marble comes by (drawing only).
+    ...(spec.tvCameras?.length && {
+      tv: spec.tvCameras.map((c) => {
+        const i = sections.findIndex((s) => s.name === c.section);
+        const p = i < 0 ? 0 : span[i].from + (c.at ?? 0.5) * (span[i].to - span[i].from);
+        return { p: round4(p), section: c.section, side: c.side === 'right' ? -1 : 1, distance: c.distance ?? 10, height: c.height ?? 5 };
+      }),
+    }),
     // A Grand Prix track: start lights, grandstands and crowds, kerbs and barriers, the finish's gantry,
     // building and fireworks (looks only). Who fills the stands and what lines the bends, by name.
     ...(spec.grandPrix && { grandPrix: { crowd: 'fans', barrier: 'tyres', ...(typeof spec.grandPrix === 'object' ? spec.grandPrix : {}) } }),
@@ -330,10 +350,11 @@ function track(spec) {
     physics: {
       ...BASE_PHYSICS,
       // An opening that changes the gate: the field let go in waves, or a wider, longer funnel.
-      ...((spec.opening?.waves || spec.opening?.funnel) && {
+      ...((spec.opening?.waves || spec.opening?.funnel || wides.length) && {
         channel: {
           ...BASE_PHYSICS.channel,
-          funnel: { ...BASE_PHYSICS.channel.funnel, ...spec.opening.funnel, ...(spec.opening.waves && { waves: { ...spec.opening.waves } }) },
+          funnel: { ...BASE_PHYSICS.channel.funnel, ...spec.opening?.funnel, ...(spec.opening?.waves && { waves: { ...spec.opening.waves } }) },
+          ...(wides.length && { wides }),
         },
       }),
       ...(kit.surface !== 'ice' && { look: kit.surface }),
@@ -368,7 +389,7 @@ function track(spec) {
         from: round4(span[i].from),
         to: round4(span[i].to),
         obstacles: (sec.obstacles || []).map((o) => o?.obstacle),
-        features: (sec.features || []).map((f) => f?.feature),
+        features: (sec.features || []).flat().map((f) => f?.part ?? f?.feature),
       })),
     },
   });

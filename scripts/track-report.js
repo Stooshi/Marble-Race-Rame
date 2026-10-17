@@ -21,6 +21,7 @@ const path = require('node:path');
 const { execFileSync } = require('node:child_process');
 const { physicsTrack, PHYSICS_TRACKS } = require('../src/game/physicsTracks');
 const { varietyCheck } = require('../src/report/variety');
+const { reachOf, startSequence, saveSequence, firstSecondsCheck } = require('../src/report/firstSeconds');
 const { lookVector, saveLook, startLookCheck } = require('../src/report/startLook');
 const { simulatePhysicsRace } = require('../src/game/physicsSimulator');
 const { houseField, computeFingerprints, readFingerprints } = require('./race-fingerprints');
@@ -87,6 +88,14 @@ async function main() {
   const once = JSON.stringify(simulatePhysicsRace({ seed, track, entries: houseField(seed), level: 3 }));
   const twice = JSON.stringify(simulatePhysicsRace({ seed, track, entries: houseField(seed), level: 3 }));
   report.lines.push({ part: 'Safety', what: 'The same seed gives the same race', value: once === twice ? 'identical' : 'different', target: 'identical', pass: once === twice });
+  // The first 20 seconds: what the field races through after the gate, against every other track's start.
+  {
+    const reach = reachOf(JSON.parse(once));
+    const seq = startSequence(track, reach);
+    const { line } = firstSecondsCheck(track, seq, PHYSICS_TRACKS);
+    report.lines.splice(report.lines.findIndex((l) => l.part === 'Safety'), 0, line);
+    if (seq && line.pass !== null) saveSequence(track, reach, seq);
+  }
   report.lines.push(await databaseLine(track));
   const want = readFingerprints();
   const got = computeFingerprints({ limit: 12 });

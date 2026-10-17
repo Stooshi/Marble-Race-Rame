@@ -54,6 +54,8 @@ const ICE_CRR = 0.003;         // ice: almost no rolling resistance
 const FREE_DRAG = 0.00042;     // 1/m: plain air drag, no padding of the clock ("free" pace)
 const ICE_SCRUB = 0.008;       // speed lost skidding round bends, per unit of cornering force
 const CHANNEL_DAMPING = 0.3;   // 1/s: rocking up and down the channel walls settles slowly on ice
+const HALF_PIPE_DAMPING = 0.12; // 1/s: …and more slowly still in a half-pipe's smooth wide U, so the field rocks wall to wall
+const WIDE_RAMP = 25;          // metres over which a half-pipe widens (and narrows again)
 const ICE_RUTS = 0.5;          // rad/s per √s (in the channel proper): bumps in the ice knock marbles off their line…
 const RUTS_FULL_SPEED = 8;     // m/s: …at full strength from this speed (gentler while the field gets going)
 // With bumping, drafting and passing the field mixes on its own, so stats
@@ -311,13 +313,28 @@ function funnelShare(channel, s) {
   const k = Math.max(0, s) / f.length;
   return 1 - k * k * (3 - 2 * k);
 }
+/**
+ * A half-pipe (track kit: halfPipe): along its stretch the channel widens smoothly into a big U
+ * (`radius`) and narrows again at its end, its walls rising with it. Tracks without one race as before.
+ */
+function wideAt(channel, s) {
+  for (const w of channel.wides ?? []) if (s > w.s0 && s < w.s1) return w;
+  return null;
+}
+function wideShare(w, s) {
+  const ramp = Math.min(WIDE_RAMP, (w.s1 - w.s0) / 4);
+  const k = clamp(Math.min(s - w.s0, w.s1 - s) / ramp, 0, 1);
+  return k * k * (3 - 2 * k);
+}
 function channelRadius(channel, s) {
   const f = channel.funnel;
-  return f ? channel.radius + (f.radius - channel.radius) * funnelShare(channel, s) : channel.radius;
+  const base = f ? channel.radius + (f.radius - channel.radius) * funnelShare(channel, s) : channel.radius;
+  const w = channel.wides ? wideAt(channel, s) : null;
+  return w ? base + (w.radius - base) * wideShare(w, s) : base;
 }
-/** How far up its wall the channel goes at s (radians): the walls keep the same height through the funnel. */
+/** How far up its wall the channel goes at s (radians): the walls keep the same height through the funnel (and rise in a half-pipe). */
 function channelLip(channel, s) {
-  if (!channel.funnel) return channel.maxAngle;
+  if (!channel.funnel || (channel.wides && wideAt(channel, s))) return channel.maxAngle;
   const height = channel.radius * (1 - Math.cos(channel.maxAngle));
   return Math.min(channel.maxAngle, Math.acos(clamp(1 - height / channelRadius(channel, s), -1, 1)));
 }
@@ -396,7 +413,7 @@ function advanceChannel(m, time, ctx) {
   // --- up and down the channel walls ------------------------------------------
   const cornering = turn * m.v * m.v; // sideways push of the bend (towards the outside)
   let thAcc = (-cornering * Math.cos(m.th)) / radius;
-  if (!m.airborne) thAcc += (-ROLLING * G * Math.sin(m.th)) / radius - CHANNEL_DAMPING * m.thv;
+  if (!m.airborne) thAcc += (m.onBox ? 0 : (-ROLLING * G * Math.sin(m.th)) / radius) - (channel.wides && wideAt(channel, m.s) ? HALF_PIPE_DAMPING : CHANNEL_DAMPING) * m.thv; // (a flat top doesn't pull back to the middle)
   m.thv += thAcc * DT;
   if (rng && !m.airborne) {
     // Bumpy ice (luck: fewer knocks). A knock is a sideways shove of the same
@@ -438,6 +455,32 @@ function advanceChannel(m, time, ctx) {
     if (stats) stats.features.bump += 1;
   }
 
+  // Jib parts: up onto a flat top square on, round its side otherwise, off its end (or its side) into the air.
+  if (ctx.boxes && !m.branch) {
+    const x = radius * m.th;
+    for (const bx of ctx.boxes) {
+      if (m.onBox === bx) continue;
+      // (A table top fills the channel's floor: a marble coming down off the wall beside it steps up onto it.)
+      if (((before < bx.s0 && m.s >= bx.s0) || (bx.full && m.s > bx.s0 && m.s < bx.s1)) && Math.abs(x - bx.x) <= bx.half) {
+        m.onBox = bx;
+        m.v = Math.max(0.5, m.v * (1 - BOX_LOSS * m.knockLoss));
+        if (air) { m.y = look.floor(m.s) + bx.height; kickUp(BOX_LIP); }
+        if (stats) stats.features.box += 1;
+      } else if (!bx.full && m.s > bx.s0 && m.s < bx.s1 && Math.abs(x - bx.x) < bx.half + BOX_SIDE && Math.abs(x - bx.x) > bx.half - BOX_SIDE) {
+        const side = Math.sign(x - bx.x) || 1;
+        m.th = (bx.x + side * (bx.half + BOX_SIDE)) / radius;
+        if (m.thv * side < 0) m.thv = (side * BOX_NUDGE) / radius;
+        m.v = Math.max(0.5, m.v * (1 - BOX_SIDE_LOSS * m.knockLoss));
+      }
+    }
+    const on = m.onBox;
+    if (on && (m.s > on.s1 + on.down || Math.abs(x - on.x) > on.half + (on.full ? 0.3 : 0))) {
+      // Off the end, or off its side: the floor drops away and the marble falls to the ice.
+      m.onBox = null;
+      if (air && !m.airborne) { m.airborne = true; m.airSince = time; m.vy = m.v * slope; }
+    }
+  }
+
   const entering = !m.branch && ctx.forks ? ctx.forks.find((f) => before < f.s0 && m.s >= f.s0) : null;
   if (entering) {
     fork = entering;
@@ -464,10 +507,12 @@ function advanceChannel(m, time, ctx) {
   }
 
   // --- up and down (air) --------------------------------------------------------
+  // (On a jib part the floor is its flat top, easing back down over a table top's drop-off.)
+  const lift = m.onBox ? boxLift(m.onBox, m.s) : 0;
   if (!air) {
-    m.y = look.floor(m.s);
+    m.y = look.floor(m.s) + lift;
   } else if (!m.airborne) {
-    m.y = look.floor(m.s);
+    m.y = look.floor(m.s) + lift;
     m.vy = m.v * slope;
     if ((-look.bend(m.s) / (stretch * stretch)) * m.v * m.v > G * 0.95) {
       m.airborne = true;
@@ -476,7 +521,7 @@ function advanceChannel(m, time, ctx) {
   } else {
     m.vy -= G * DT;
     m.y += m.vy * DT;
-    const floor = look.floor(m.s);
+    const floor = look.floor(m.s) + lift;
     if (m.y <= floor) {
       const surface = m.v * slope;
       const impact = surface - m.vy;
@@ -650,6 +695,20 @@ const SOLID_DODGE = 0.8;     // how often (times luck, 0..1) a hit is only a gla
 const PAW_SWAT = 1.6;        // how much of the paw's own speed it passes on: a real swat
 const COBBLE_CLASS = 0.3;   // how much better strong marbles ride cobbles (a top marble brakes about a tenth less than a weak one)
 const PARKED_KNOCK = 5;      // m/s aside a parked cable car knocks a marble, round its open end
+// Jib parts (the skatepark kit: rails, boxes, table tops): raised flat tops in the channel. A marble that
+// meets one square on rolls up onto it, across the flat and off the end; one that meets its side is
+// pushed round it. Only on tracks that have them (physics.features 'box'), so every other race is unchanged.
+const BOX_LOSS = 0.03;       // share of speed rolling up onto a top costs (less with good handling)
+const BOX_LIP = 0.5;         // m/s upwards at the lip: a little lift onto the top, not a jump
+const BOX_SIDE = 0.18;       // metres: a marble this close to a top's side is pushed round it…
+const BOX_NUDGE = 2.2;       // …at this speed across the channel
+const BOX_SIDE_LOSS = 0.02;  // and loses this share of its speed
+
+/** How high a jib part's top stands where a marble on it is: its height, easing down over a table top's drop-off. */
+function boxLift(bx, s) {
+  if (s <= bx.s1) return bx.height;
+  return bx.down > 0 ? bx.height * Math.max(0, 1 - (s - bx.s1) / bx.down) : 0;
+}
 
 /**
  * A marble against the obstacles near it: a round footprint (metres along
@@ -923,6 +982,8 @@ function simulatePhysicsRace({ seed, track, entries, level = 3, tickRateHz = 20 
   const tp = track.physics;
   if (tp?.channel) {
     ctx.channel = { radius: tp.channel.radius, maxAngle: (tp.channel.maxAngle * Math.PI) / 180, funnel: tp.channel.funnel ?? null };
+    // Half-pipes (track kit): where the channel widens into a big U.
+    if (tp.channel.wides?.length) ctx.channel.wides = tp.channel.wides.map((w) => ({ s0: w.from * total, s1: w.to * total, radius: w.radius }));
     // Splitters: `fork` (one, as on Bobsleigh Run) or `forks` (several, one after another).
     const forks = tp.forks ?? (tp.fork ? [tp.fork] : []);
     if (forks.length) {
@@ -952,6 +1013,8 @@ function simulatePhysicsRace({ seed, track, entries, level = 3, tickRateHz = 20 
     const across = (l) => ctx.channel.radius * l * ctx.channel.maxAngle; // metres along the wall from the middle
     ctx.boosts = features.filter((f) => f.type === 'boost').map((f) => ({ ...f, x: across(f.l), length: f.length ?? 8, halfWidth: f.halfWidth ?? 1.3 }));
     ctx.bumps = features.filter((f) => f.type === 'bump');
+    ctx.boxes = features.filter((f) => f.type === 'box').map((f, id) => ({ id, s0: f.s, s1: f.s + f.length, x: across(f.l ?? 0), half: f.half, height: f.height, down: f.down ?? 0, full: f.look === 'table-top' }));
+    if (!ctx.boxes.length) ctx.boxes = null;
     ctx.cobbles = features.filter((f) => f.type === 'cobbles').map((f) => ({ ...f, length: f.length ?? 25, drag: f.drag ?? 0.01 }));
     ctx.solids = features.filter((f) => ALL_SOLID_TYPES.includes(f.type)).map((f) => ({
       ...f,
@@ -971,7 +1034,7 @@ function simulatePhysicsRace({ seed, track, entries, level = 3, tickRateHz = 20 
       ? busParts(o.length ?? 10).map((d, k) => ({ ...o, id: `${o.id}:${k}`, s: o.s + d, ...(o.onePiece && { hitId: o.id }) }))
       : [o]));
     stats.features = {
-      boost: 0, bump: 0, ...Object.fromEntries(SOLID_TYPES.map((t) => [t, 0])),
+      boost: 0, bump: 0, ...(ctx.boxes && { box: 0 }), ...Object.fromEntries(SOLID_TYPES.map((t) => [t, 0])),
       // The kit's solids, listed only on tracks that have them (today's races record exactly as before).
       ...Object.fromEntries(KIT_SOLID_TYPES.filter((t) => features.some((f) => f.type === t)).map((t) => [t, 0])),
     };

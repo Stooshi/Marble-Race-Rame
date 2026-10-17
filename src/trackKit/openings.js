@@ -19,7 +19,7 @@
  * shape and its obstacles' places are what was proven, so they stay as they are.
  */
 
-const { plunge, straight, sweep, climb, pileUp, slalom, boost, brake } = require('./parts');
+const { plunge, straight, sweep, sBends, climb, pileUp, slalom, peg, boost, brake, halfPipe } = require('./parts');
 
 // The classic opening (every Grand Prix track's): a steep 80 m plunge, a pile-up, then a slalom.
 const classicObstacles = (c) => [
@@ -103,6 +103,34 @@ const OPENINGS = {
       { key: 'plunge', name: 'Start plunge', shape: plunge(80, { grade: 0.6 }), obstacles: classicObstacles(o.costumes) },
       { key: 'climb', name: 'The crest', shape: climb(12, { grade: -0.06, after: 0.3 }) },
       { key: 'drop', name: 'Over the top', shape: plunge(40, { grade: 0.5, from: 0.3 }) },
+    ],
+  }),
+
+  // ── Varied starts (October 2026): no pile-up and slalom after the gate. Without the pile-up's luck the
+  // strongest marbles win too often (57% against the usual 42%), so a track starting with one of these
+  // has its pile-up later on (the recipe's rule): the luck stays, the first seconds differ.
+
+  /** Clean drop: a plunge with nothing in it, at full speed into deep, tight S-bends that shuffle the field. */
+  'clean-drop': (o) => ({
+    sections: [
+      { key: 'plunge', name: 'Start plunge', shape: plunge(70, { grade: 0.5 }) },
+      { key: 'bends', name: 'First S-bends', shape: sBends({ first: o.side === 'right' ? 'right' : 'left', radius: 55, degrees: 110, grade: 0.13 }) },
+    ],
+  }),
+
+  /** Peg drop: a slightly gentler plunge through a scatter of single pegs, left and right, the field threading through. */
+  'peg-drop': (o) => ({
+    sections: [{
+      key: 'plunge', name: 'Peg drop', shape: plunge(90, { grade: 0.5 }),
+      obstacles: [['left', 0.3], ['right', 0.4], ['left', 0.5], ['right', 0.6], ['left', 0.7], ['right', 0.8], ['center', 0.9]].map(([line, at]) => peg({ costume: o.costumes.peg, at, line })),
+    }],
+  }),
+
+  /** Pipe drop: a short plunge straight into a half-pipe, the field rocking from wall to wall down its U. */
+  'pipe-drop': (o) => ({
+    sections: [
+      { key: 'plunge', name: 'Start plunge', shape: plunge(60, { grade: 0.55 }) },
+      { key: 'pipe', name: 'Half-pipe', shape: halfPipe({ first: o.side === 'right' ? 'right' : 'left', width: 8, swings: 4, radius: 150, degrees: 18, grade: 0.12 }) },
     ],
   }),
 };

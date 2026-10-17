@@ -19,7 +19,7 @@
  */
 
 const {
-  straight, plunge, climb, sBends, sweep, spiral, hairpin, splitter, waterfall,
+  straight, plunge, climb, sBends, sweep, spiral, hairpin, splitter, waterfall, halfPipe, box, rail, tableTop, jibLine,
   pileUp, block, curtain, swipe, parked, slalom, peg, boost, moguls, rumble, steps, brake, paint,
 } = require('./parts');
 
@@ -1200,6 +1200,63 @@ const LAYOUTS = {
     {
       key: 'lastStraight', name: 'Last straight', shape: straight(90, { grade: 0.15 }),
       obstacles: [parked({ costume: c.parked, at: 0.2, side: L, length: 6 }), peg({ costume: c.peg, at: 0.45, line: 'right' })], features: [rumble({ from: 0.7, to: 0.95, count: 3 })],
+    },
+  ],
+  /** L70 Half-pipe run (the skatepark parts' proving layout): a peg straight, the half-pipe (the field rocking wall to wall down a wide U), a sweep, S-bends, a second peg straight, more S-bends, the hairpin, a spiral and the run-in. */
+  'half-pipe-run': (L, R, c) => [
+    {
+      key: 'leadIn', name: 'Peg straight', shape: straight(60, { grade: 0.12 }), billboards: 1,
+      obstacles: [peg({ costume: c.peg, at: 0.25, line: 'left' }), peg({ costume: c.peg, at: 0.45, line: 'right' }), peg({ costume: c.peg, at: 0.65, line: 'center' })],
+    },
+    { key: 'halfPipe', name: 'Half-pipe', shape: halfPipe({ first: L, width: 8, swings: 3, radius: 150, degrees: 18, grade: 0.12 }) },
+    { key: 'sweep', name: 'Sweep', shape: sweep({ side: R, radius: 85, degrees: 130, grade: 0.09 }), features: [boost({ at: 0.1 })], billboards: 2 },
+    { key: 'sBends', name: 'S-bends', shape: sBends({ first: L, radius: 70, degrees: 55, grade: 0.13 }), billboards: 1 },
+    {
+      key: 'pegStraight', name: 'Second peg straight', shape: straight(90, { grade: 0.11 }),
+      obstacles: [peg({ costume: c.peg, at: 0.25, line: 'right' }), peg({ costume: c.peg, at: 0.45, line: 'center' }), peg({ costume: c.peg, at: 0.65, line: 'left' }), slalom({ costume: c.slalom, from: 0.78, to: 0.95, count: 2, loss: 0.15 })],
+    },
+    { key: 'sBends2', name: 'More S-bends', shape: sBends({ first: R, radius: 70, degrees: 50, grade: 0.13 }) },
+    { key: 'brakingStraight', name: 'Run to the hairpin', shape: straight(50, { grade: 0.12 }) },
+    { key: 'hairpin', name: 'Hairpin', shape: hairpin({ side: R }) },
+    { key: 'spin', name: 'Spiral', shape: spiral({ side: L, radius: 55, turns: 0.9, grade: 0.15 }) },
+    {
+      key: 'lastStraight', name: 'Last straight', shape: straight(90, { grade: 0.15 }),
+      obstacles: [parked({ costume: c.parked, at: 0.2, side: R, length: 6 }), peg({ costume: c.peg, at: 0.42, line: 'left' }), peg({ costume: c.peg, at: 0.6, line: 'right' })], features: [rumble({ from: 0.72, to: 0.95, count: 3 })],
+    },
+  ],
+  /** L71 Mid lottery (proving the varied starts): S-bends, then a slalom on a drop further on (the luck a track starting without the pile-up and slalom still needs), a sweep, a peg straight, the hairpin, a spiral and the run-in. */
+  'mid-lottery': (L, R, c) => [
+    { key: 'sBends', name: 'S-bends', shape: sBends({ first: L, radius: 75, degrees: 80, grade: 0.13 }), billboards: 3 },
+    { key: 'lottery', name: 'Pile-up drop', shape: plunge(70, { grade: 0.3, from: 0.13 }), obstacles: [slalom({ costume: c.slalom, from: 0.2, to: 0.95, count: 7, loss: 0.3 })] },
+    { key: 'sweep', name: 'Sweep', shape: sweep({ side: R, radius: 80, degrees: 130, grade: 0.08 }), billboards: 2 },
+    {
+      key: 'pegStraight', name: 'Peg straight', shape: straight(70, { grade: 0.12 }),
+      obstacles: [peg({ costume: c.peg, at: 0.2, line: 'left' }), peg({ costume: c.peg, at: 0.4, line: 'right' }), peg({ costume: c.peg, at: 0.6, line: 'center' }), peg({ costume: c.peg, at: 0.8, line: 'left' })],
+    },
+    { key: 'brakingStraight', name: 'Run to the hairpin', shape: straight(55, { grade: 0.12 }), obstacles: [peg({ costume: c.peg, at: 0.15, line: 'right' }), peg({ costume: c.peg, at: 0.32, line: 'left' })] },
+    { key: 'hairpin', name: 'Hairpin', shape: hairpin({ side: L }), obstacles: [swipe({ costume: c.swipe, side: 'high' })] },
+    { key: 'spiral', name: 'Spiral', shape: spiral({ side: R, radius: 45, turns: 1.15, grade: 0.17 }) },
+    {
+      key: 'lastStraight', name: 'Last straight', shape: straight(105, { grade: 0.15 }),
+      obstacles: [parked({ costume: c.parked, at: 0.15, side: L, length: 8 })], features: [rumble({ from: 0.55, to: 0.95, count: 4 })],
+    },
+  ],
+  /** L72 Jib run (the jib parts' proving layout): deep S-bends, a straight with a jib line (rail, box, table top), a straight with a box, a sweep, a peg straight, the hairpin, a spiral and the run-in. */
+  'jib-run': (L, R, c) => [
+    { key: 'sBends', name: 'S-bends', shape: sBends({ first: L, radius: 55, degrees: 110, grade: 0.13 }), billboards: 2 },
+    { key: 'jibs', name: 'Jib line', shape: straight(110, { grade: 0.13 }), features: jibLine({ from: 0.1 }) },
+    { key: 'boxStraight', name: 'Box straight', shape: straight(70, { grade: 0.13 }), features: [box({ at: 0.35, length: 12 })], obstacles: [peg({ costume: c.peg, at: 0.8, line: 'left' })] },
+    { key: 'sweep', name: 'Sweep', shape: sweep({ side: R, radius: 85, degrees: 130, grade: 0.09 }), billboards: 2 },
+    {
+      key: 'pegStraight', name: 'Peg straight', shape: straight(70, { grade: 0.12 }),
+      obstacles: [peg({ costume: c.peg, at: 0.2, line: 'center' }), peg({ costume: c.peg, at: 0.4, line: 'left' }), peg({ costume: c.peg, at: 0.6, line: 'right' }), slalom({ costume: c.slalom, from: 0.72, to: 0.95, count: 3, loss: 0.15 })],
+    },
+    { key: 'brakingStraight', name: 'Run to the hairpin', shape: straight(50, { grade: 0.12 }), obstacles: [peg({ costume: c.peg, at: 0.2, line: 'right' })] },
+    { key: 'hairpin', name: 'Hairpin', shape: hairpin({ side: L }) },
+    { key: 'spin', name: 'Spiral', shape: spiral({ side: R, radius: 50, turns: 1.1, grade: 0.16 }) },
+    {
+      key: 'lastStraight', name: 'Last straight', shape: straight(95, { grade: 0.15 }),
+      obstacles: [parked({ costume: c.parked, at: 0.2, side: L, length: 6 }), peg({ costume: c.peg, at: 0.45, line: 'right' })], features: [rumble({ from: 0.72, to: 0.95, count: 3 })],
     },
   ],
 };

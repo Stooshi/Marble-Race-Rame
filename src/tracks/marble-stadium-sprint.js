@@ -19,6 +19,11 @@ module.exports = track({
   athletics: { stadium: 'panathenaic', lanes: 'red' },
   coaster: { style: 'concrete', colours: { support: '#d8d3c8', rail: '#f4f1ea', tie: '#8d3b30' } },
   signature: 'The marble end',
+  // TV moments: trackside cameras at the marble end (outside the hairpin) and on the S-bends home.
+  tvCameras: [
+    { section: 'The marble end', at: 0.5, side: 'left', distance: 6, height: 9 },
+    { section: 'More S-bends', at: 0.5, side: 'right', distance: 8, height: 9 },
+  ],
   start: { landmark: 'herm-gateway', type: 'stepped-platform', gate: 'barrier', shots: { countdown: 'front', launch: 'high-behind' } },
   finish: { landmark: 'medal-podium' },
   designChanges: [

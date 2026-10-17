@@ -20,6 +20,7 @@ import { gatePlaces, StartGate } from './startGate';
 import { countdownPose, handover, launchHandover, launchPose, startLineShot } from './startCamera';
 import { buildTrackFeatures } from './trackFeatures';
 import { buildLaneMarkings } from './scenery/athletics';
+import { TV, tvCameras, tvMoment } from './tvMoments';
 import { buildStructures } from './structures';
 import { roofBlocks, stationRoof } from './scenery/coaster';
 import { keepOutBlocks } from './scenery/clearCheck';
@@ -212,6 +213,7 @@ export class TrackScene {
 
     this.trackGroup = new Group();
     this.scene.add(this.trackGroup);
+    this.tvOn = true; // TV moments (the viewer's setting: setTvMoments)
     this.trackMaterial = new MeshLambertMaterial({ vertexColors: true, flatShading: true, side: DoubleSide });
 
     this.controls = null;
@@ -289,6 +291,8 @@ export class TrackScene {
       this.trackGroup.add(marks.lines);
       if (marks.numbers) this.trackGroup.add(marks.numbers);
     }
+    // TV moments: the track's fixed trackside cameras (./tvMoments.js).
+    this.tvCams = tvCameras(this.centerline, this.channel, track?.physics?.kit);
     // Tunnels, bridges and waterfalls (tracks built with the track kit).
     this.structures = this.channel ? buildStructures(this.centerline, this.channel, track?.physics?.kit, { lite: this.lite }) : null;
     if (this.structures) this.trackGroup.add(this.structures.group);
@@ -614,6 +618,8 @@ export class TrackScene {
         const shot = startLineShot(gate, this.camera.aspect, this.camera.fov);
         this.camera.position.lerpVectors(shot.camera, main.cam, w);
         this.camera.lookAt(shot.target.lerp(main.target, w));
+      } else {
+        this.applyTvMoment(frame, index, at);
       }
     }
     // The corner view: the other marble, from its own follow camera (waiting
@@ -629,6 +635,42 @@ export class TrackScene {
       }
     }
     this.render();
+  }
+
+  /**
+   * TV moments (./tvMoments.js): as the followed marble comes up to one of the track's trackside
+   * cameras, the big view cuts to it, the camera turning to keep the marble in view as it passes,
+   * then eases back to the follow camera. Off with setTvMoments(false). Drawing only.
+   */
+  applyTvMoment(frame, index, at) {
+    const pulse = (k) => { for (const p of this.marbles.pointers ?? []) if (p.index === index) p.mesh.scale.multiplyScalar(1 + 0.9 * k); };
+    const lensBack = () => {
+      if (this.tvLens === undefined) return;
+      this.camera.fov = this.tvLens;
+      this.camera.updateProjectionMatrix();
+      this.tvLens = undefined;
+    };
+    if (!this.tvOn || !this.tvCams?.length || !at) { lensBack(); return; }
+    if (!this.arcLength) this.arcLength = this.measureArc();
+    const metres = (frame.p[index] ?? 0) * (this.channel?.arc ?? this.arcLength);
+    const finishAt = (this.channel?.arc ?? this.arcLength) - 140;
+    const m = tvMoment(this.tvCams, metres, frame.t, finishAt);
+    if (!m) { lensBack(); return; }
+    if (this.tvLens === undefined) this.tvLens = this.camera.fov;
+    // The TV camera zooms in on the marble as a camera operator would: the same size in the shot however far off.
+    const zoom = Math.min(TV.lens[1], Math.max(TV.lens[0], (2 * Math.atan(TV.frame / 2 / Math.max(1, m.cam.pos.distanceTo(at))) * 180) / Math.PI));
+    this.camera.fov = this.tvLens + (zoom - this.tvLens) * m.w;
+    this.camera.updateProjectionMatrix();
+    const target = at.clone();
+    this.camera.position.lerpVectors(this.main.cam, m.cam.pos, m.w);
+    this.camera.lookAt(this.main.target.clone().lerp(target, m.w));
+    // The player's own marble, followed: its pointer pulses as it comes past.
+    pulse(m.w * (0.5 + 0.5 * Math.sin(frame.t / 120)));
+  }
+
+  /** Switches TV moments on or off (the viewer's setting). */
+  setTvMoments(on) {
+    this.tvOn = Boolean(on);
   }
 
   /**

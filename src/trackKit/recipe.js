@@ -63,6 +63,14 @@ const STEEPEN_GAP_M = 30;
 const WATERFALL_RUN_IN_M = 30;
 const BUMP_AFTER_BLOCK_M = 40; // 31 m still threw marbles 1.5 m (track report, Kit Proving Ground's final plunge)
 const MOGULS_AFTER_BEND_M = 30;      // between bigger steps, so marbles have landed
+const HALF_PIPE_WIDTH = [6, 10];     // metres: a half-pipe's radius (the channel's is 3.6)
+const HALF_PIPE_RUN_IN_M = 20;       // a straight this long before a half-pipe, so the field comes in on its line
+const JIB_PARTS = ['box', 'rail', 'table-top'];
+const JIB_MAX_HEIGHT = 0.35;     // metres: dropping off a 0.3 m top is a hop of about 0.8 m at most (measured)
+const JIB_CLEAR_M = 8;           // metres clear of other obstacles and features before and after a jib part
+const NO_LUCK_OPENINGS = ['clean-drop', 'peg-drop', 'pipe-drop'];
+const LUCK_GATES = 5;
+const LUCK_LOSS = 0.3;
 const MAX_BUMPS_IN_ROW = 8;
 const MIN_BUMP_SPACING_M = 5;     // the braking zone before the sharp bend needs a straight this long
 
@@ -95,6 +103,26 @@ function checkRecipe({ spec, sections, span, generated, owner, placed, total, wh
     if (spec.opening?.kind !== 'split-start' || i >= (spec.opening.sections?.length ?? 0)) problems.push(`${where(s.name)}: twin chutes are the split-and-merge opening's; use opening('split-start').`);
     if ((s.obstacles ?? []).length || (s.features ?? []).length || s.billboards || s.tunnel !== undefined || s.bridge !== undefined) problems.push(`${where(s.name)}: nothing in or over the twin chutes (no obstacles, features, billboards, tunnel or bridge).`);
   });
+
+  // Half-pipes: a proven width, nothing in them, never the first section, a straight or a drop before (the field comes in on its line).
+  sections.forEach((s, i) => {
+    if (s.shape?.shape !== 'halfPipe') return;
+    const w = s.shape.wide?.radius;
+    if (!(Number.isFinite(w) && w >= HALF_PIPE_WIDTH[0] && w <= HALF_PIPE_WIDTH[1])) problems.push(`${where(s.name)}: a half-pipe's width is its radius in metres, ${HALF_PIPE_WIDTH[0]} to ${HALF_PIPE_WIDTH[1]}.`);
+    if ((s.obstacles ?? []).length || (s.features ?? []).length || s.billboards || s.tunnel !== undefined || s.bridge !== undefined) problems.push(`${where(s.name)}: nothing in or over a half-pipe (no obstacles, features, billboards, tunnel or bridge).`);
+    if (i === 0) problems.push(`${where(s.name)}: a half-pipe never opens the track (the plunge from the gate comes first).`);
+    const before = sections[i - 1]?.shape;
+    if (before && !(before.parts?.length === 1 && before.parts[0].kind === 'straight' && before.parts[0].length >= HALF_PIPE_RUN_IN_M) && !['plunge'].includes(before.shape)) problems.push(`${where(s.name)}: a half-pipe needs a straight (at least ${HALF_PIPE_RUN_IN_M} m) or a drop before it, so the field comes in on its line.`);
+    if (sections[i + 1]?.shape?.shape === 'halfPipe') problems.push(`${where(s.name)}: one half-pipe at a time (a straight between two).`);
+  });
+
+  // The varied starts (clean drop, peg drop, pipe drop) leave out the pile-up and slalom, whose luck keeps the
+  // strongest marbles from winning too often: such a track has its luck in the first half instead (a pile-up,
+  // or a slalom of at least LUCK_GATES gates costing LUCK_LOSS or more a hit).
+  if (NO_LUCK_OPENINGS.includes(spec.opening?.kind)) {
+    const lucky = sections.some((sec, i) => span[i].from < 0.5 && (sec.obstacles ?? []).some((o) => o.obstacle === 'pileUp' || (o.obstacle === 'slalom' && o.count >= LUCK_GATES && (o.tune?.loss ?? 0) >= LUCK_LOSS)));
+    if (!lucky) problems.push(`${where('track')}: the ${spec.opening.kind} opening has no pile-up or slalom, so the first half of the track needs one (a pile-up, or a slalom of ${LUCK_GATES} gates or more at a loss of ${LUCK_LOSS}): without its luck the strongest marbles win too often.`);
+  }
 
   // No dead-flat stretches (except the run-in past the finish), climbs within what's proven.
   let flatRun = 0;
@@ -172,6 +200,8 @@ function checkRecipe({ spec, sections, span, generated, owner, placed, total, wh
       if (every !== undefined && !(Number.isFinite(every) && every >= 230 && every <= 1000)) problems.push(`${where('track')}: grandPrix.groupsEvery is the metres between the small groups of spectators, 230 (the usual) to 1000.`);
     }
   }
+  // TV moments: one or two fixed trackside cameras, at a section of this track, well apart, never at the start or the finish.
+  if (spec.tvCameras !== undefined) problems.push(...tvRules({ spec, sections, span, total, where }));
   // The signature moment (the report's screenshot of it): a section of this track.
   if (spec.signature !== undefined && !sections.some((s) => s.name === spec.signature)) problems.push(`${where('track')}: the signature "${spec.signature}" is not one of this track's sections.`);
   if (spec.designChanges !== undefined && !(Array.isArray(spec.designChanges) && spec.designChanges.every((c) => typeof c === 'string'))) problems.push(`${where('track')}: designChanges is a list of sentences (where the build differs from the design, and why).`);
@@ -238,6 +268,24 @@ function checkRecipe({ spec, sections, span, generated, owner, placed, total, wh
     if (solid && sections[p.section].shape.shape === 'plunge' && p.section === 0 && p.metresIn < 25) {
       problems.push(`${where(name(p.section))}: a ${p.kind} within 25 m of the gate; the field needs room to burst off the line.`);
     }
+  }
+
+  // Jib parts (box, rail, table top): on straights only, within what's proven, clear of everything else,
+  // never in the first 25 m (the field bursts off the line) nor the last stretch before the finish.
+  const jibs = placed.filter((x) => JIB_PARTS.includes(x.kind));
+  for (const p of jibs) {
+    const sec = sections[p.section];
+    const f = p;
+    if (sec.shape.parts.some((x) => x.kind !== 'straight')) problems.push(`${where(sec.name)}: a ${p.kind} needs a straight (on a bend it would throw marbles off its side).`);
+    if (!(f.height > 0 && f.height <= JIB_MAX_HEIGHT)) problems.push(`${where(sec.name)}: a ${p.kind} stands at most ${JIB_MAX_HEIGHT} m high (the drop off its end stays a short hop).`);
+    if (!(f.length >= 4 && f.length <= 40)) problems.push(`${where(sec.name)}: a ${p.kind} is 4 to 40 m long.`);
+    if (!(f.width >= 0.2 && f.width <= 5)) problems.push(`${where(sec.name)}: a ${p.kind} is 0.2 to 5 m wide.`);
+    if ((f.down ?? 0) > 15) problems.push(`${where(sec.name)}: a table top's drop-off is at most 15 m.`);
+    const endShare = p.at + ((f.length ?? 0) + (f.down ?? 0)) / total;
+    if (p.at * total < 25) problems.push(`${where(sec.name)}: a ${p.kind} within 25 m of the gate.`);
+    if (endShare > finishShare) problems.push(`${where(sec.name)}: a ${p.kind} within ${OBSTACLE_FREE_FINISH_M} m of the finish line.`);
+    const near = placed.find((o) => !JIB_PARTS.includes(o.kind) && o.at > p.at - JIB_CLEAR_M / total && o.at < endShare + JIB_CLEAR_M / total);
+    if (near) problems.push(`${where(sec.name)}: a ${near.kind} too close to a ${p.kind}; keep ${JIB_CLEAR_M} m clear before and after it.`);
   }
 
   // No bumps just after a block: marbles flung off it land on the bumps and bounce high
@@ -419,6 +467,35 @@ function canyonRules({ spec, sections, where }) {
   sections.forEach((s) => {
     if (s.walls !== undefined && !(Number.isFinite(s.walls) && s.walls >= 0 && s.walls <= 1)) problems.push(`${where(s.name)}: walls is the share of the canyon's walls standing here, 0 to 1.`);
   });
+  return problems;
+}
+
+/**
+ * TV moments (`tvCameras: [{ section, at, side, distance, height }]`): at most two, each at a section of the
+ * track, at least TV_FROM_START m from the gate and TV_FROM_FINISH m from the line, TV_APART m apart.
+ */
+const TV_FROM_START = 250;
+const TV_FROM_FINISH = 150;
+const TV_APART = 300;
+function tvRules({ spec, sections, span, total, where }) {
+  const problems = [];
+  const cams = spec.tvCameras;
+  if (!Array.isArray(cams) || cams.length < 1 || cams.length > 2) return [`${where('track')}: tvCameras is a list of one or two trackside cameras.`];
+  const at = [];
+  cams.forEach((c, k) => {
+    const i = sections.findIndex((s) => s.name === c?.section);
+    if (i < 0) { problems.push(`${where('tvCameras')}: camera ${k + 1}'s section ${JSON.stringify(c?.section)} is not one of this track's sections.`); return; }
+    for (const key of Object.keys(c)) if (!['section', 'at', 'side', 'distance', 'height'].includes(key)) problems.push(`${where('tvCameras')}: unknown setting ${key} (section, at, side, distance, height).`);
+    if (c.at !== undefined && !(c.at >= 0 && c.at <= 1)) problems.push(`${where('tvCameras')}: at is a share of the section, 0 to 1.`);
+    if (c.side !== undefined && !['left', 'right'].includes(c.side)) problems.push(`${where('tvCameras')}: side is left or right.`);
+    if (c.distance !== undefined && !(c.distance >= 6 && c.distance <= 25)) problems.push(`${where('tvCameras')}: distance is metres out from the rim, 6 to 25.`);
+    if (c.height !== undefined && !(c.height >= 2 && c.height <= 15)) problems.push(`${where('tvCameras')}: height is metres over the track, 2 to 15.`);
+    const m = (span[i].from + (c.at ?? 0.5) * (span[i].to - span[i].from)) * total;
+    if (m < TV_FROM_START) problems.push(`${where('tvCameras')}: camera ${k + 1} is ${Math.round(m)} m from the gate; TV moments start ${TV_FROM_START} m in (the start keeps its own shots).`);
+    if (total - m < TV_FROM_FINISH) problems.push(`${where('tvCameras')}: camera ${k + 1} is ${Math.round(total - m)} m from the line; the last ${TV_FROM_FINISH} m keep the finish shot.`);
+    at.push(m);
+  });
+  if (at.length === 2 && Math.abs(at[0] - at[1]) < TV_APART) problems.push(`${where('tvCameras')}: the two cameras are ${Math.round(Math.abs(at[0] - at[1]))} m apart; at least ${TV_APART} m, so two cuts never come close together.`);
   return problems;
 }
 

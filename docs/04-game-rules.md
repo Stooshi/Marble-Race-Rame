@@ -134,12 +134,14 @@ Every track must pass a **full report** (`npm run report -- <slug>`) before it i
 | Splitters | each channel's share of wins within 5 points of its share of marbles, and at most half a place gained or lost |
 | Obstacles | each group's share of hits within 5 points of fair; no hop over 1.2 m |
 | Showcase looks | each rarity wins its share (chi-square test, p above 0.001) |
-| Sameness | layout not too close to another track (fails at 0.80 similarity, 0.70 when key sections match); start looks different |
+| Sameness | layout not too close to another track (fails at 0.80 similarity, 0.70 when key sections match); start looks different; the first 20 seconds (what the field races through after the gate) not too close to another track's (fails at 0.80; held for every track from Bislett Mile on), and no start part straight after the gate on two tracks in a row |
 | Safety | the same seed gives the same race; the database matches the track file; the race fingerprints are unchanged |
 | Drawing | no scenery inside the track (up to 2.5 m above the rim); nothing within 0.5 m of the follow camera; ground and phone drawing load within budget |
 
 Reports are saved in `reports/<slug>/`. Track design rules:
 - bends long and flowing, with at most one sharp bend per track;
+- a race needs its luck: a track that starts without the pile-up and slalom (clean drop, peg drop, pipe drop) has a pile-up or a hard slalom (5+ gates, loss 0.3) in its first half;
+- TV moments (looks only): up to two trackside cameras a track cuts to as the followed marble passes, about 3–5 s each, never in the first 8 s or the last 150 m; viewers can switch them off (the TV button);
 - tracks sit in the ground like a trench, raised only where they drop away or cross;
 - at least 35 of the 50 launch tracks must be truly unique (mirrors count towards the 50).
 

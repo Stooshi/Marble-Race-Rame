@@ -108,6 +108,8 @@ export function channelOf(track, centerline) {
     fork: forks[0] ?? null, // the first splitter (most tracks have one at most)…
     forks,                  // …and all of them (Table Mountain Run has two)
     funnel: ch.funnel ? { length: ch.funnel.length, radius: ch.funnel.radius } : null, // metres from the start
+    // Half-pipes (track kit): where the channel widens into a big U, as the physics has them (metres along).
+    wides: (ch.wides ?? []).map((w) => ({ s0: w.from * arc, s1: w.to * arc, radius: w.radius })),
     runout: runout ? { length: runout.length, halfWidth: runout.halfWidth } : null, // the catch area past the line
     look: ['street', ...CHANNEL_LOOKS].includes(track.physics.look) ? track.physics.look : 'ice', // how it is dressed (the shape is the same)
     // Kit sections dressed differently from the rest (a stone stretch on a snow track, say).
@@ -119,9 +121,21 @@ export function channelOf(track, centerline) {
   };
 }
 
-/** How far up its wall the main channel goes at s (radians): the funnel's walls are as high as the channel's. */
+/** The half-pipe the main channel is widened into at s, or null (as the physics: WIDE_RAMP metres in and out). */
+const WIDE_RAMP = 25;
+function wideAt(channel, s) {
+  for (const w of channel?.wides ?? []) if (s > w.s0 && s < w.s1) return w;
+  return null;
+}
+function wideShare(w, s) {
+  const ramp = Math.min(WIDE_RAMP, (w.s1 - w.s0) / 4);
+  const k = Math.min(1, Math.max(0, Math.min(s - w.s0, w.s1 - s) / ramp));
+  return k * k * (3 - 2 * k);
+}
+
+/** How far up its wall the main channel goes at s (radians): the funnel's walls are as high as the channel's (a half-pipe's rise with it). */
 export function channelLipAt(channel, s) {
-  if (!channel.funnel) return channel.maxAngle;
+  if (!channel.funnel || wideAt(channel, s)) return channel.maxAngle;
   const height = channel.radius * (1 - Math.cos(channel.maxAngle));
   return Math.min(channel.maxAngle, Math.acos(Math.max(-1, Math.min(1, 1 - height / channelRadiusAt(channel, s)))));
 }
@@ -129,9 +143,13 @@ export function channelLipAt(channel, s) {
 /** The main channel's radius at distance s (as the physics): a wide funnel at the top narrowing to the channel. */
 export function channelRadiusAt(channel, s) {
   const f = channel.funnel;
-  if (!f || s >= f.length) return channel.radius;
-  const k = Math.max(0, s) / f.length;
-  return channel.radius + (f.radius - channel.radius) * (1 - k * k * (3 - 2 * k));
+  let base = channel.radius;
+  if (f && s < f.length) {
+    const k = Math.max(0, s) / f.length;
+    base = channel.radius + (f.radius - channel.radius) * (1 - k * k * (3 - 2 * k));
+  }
+  const w = wideAt(channel, s);
+  return w ? base + (w.radius - base) * wideShare(w, s) : base;
 }
 
 /**

@@ -49,8 +49,8 @@ test('a valid track file builds, and ends with a run-in to the finish', () => {
 test('every kit track opens with Bobsleigh Run\'s starting ramp, gate, channel and collisions', () => {
   for (const t of PHYSICS_TRACKS.filter((x) => x.physics.kit)) {
     assert.equal(t.sections[0].name, 'Starting ramp');
-    // (The funnel-drop and staggered-drop openings change the gate's funnel; everything else is Table Mountain Run's.)
-    const { funnel, ...channel } = t.physics.channel;
+    // (The funnel-drop and staggered-drop openings change the gate's funnel, a half-pipe widens its stretch; everything else is Table Mountain Run's.)
+    const { funnel, wides, ...channel } = t.physics.channel;
     const { funnel: tmFunnel, ...tmChannel } = tm.physics.channel;
     assert.deepEqual(channel, tmChannel);
     if (!['funnel-drop', 'staggered-drop'].includes(t.physics.kit.opening)) assert.deepEqual(funnel, tmFunnel);
@@ -747,4 +747,106 @@ test('the Grand Prix gallery (every Grand Prix piece, never raced) builds within
   assert.ok(g.physics.kit.grandPrix);
   assert.equal(g.physics.kit.billboards.length, 8);
   assert.ok(!PHYSICS_TRACKS.some((t) => t.slug === g.slug), 'never a raceable track');
+});
+
+// A track with a half-pipe after the bends (a straight before it, as the recipe asks).
+const withHalfPipe = () => {
+  const s = base();
+  s.sections.splice(2, 0, { name: 'Run-in', shape: straight(30, { grade: 0.12 }) }, { name: 'Half-pipe', shape: kit.halfPipe({ first: 'left', width: 8, swings: 3, radius: 150, degrees: 18 }) });
+  return s;
+};
+
+test('a half-pipe widens the channel for the race engine, and the field rocks wall to wall in it', () => {
+  const t = track(withHalfPipe());
+  const [w] = t.physics.channel.wides;
+  assert.equal(w.radius, 8);
+  assert.ok(w.to > w.from);
+  // Tracks without one keep the plain channel (so every existing race is unchanged).
+  assert.equal(track(base()).physics.channel.wides, undefined);
+  const sim = simulatePhysicsRace({ seed: 7, track: t, entries: houseField(7), level: 3 });
+  assert.equal(sim.results.length, 20);
+  let swings = 0;
+  for (let i = 0; i < 20; i++) {
+    let side = 0;
+    for (const fr of sim.frames) {
+      if (fr.p[i] < w.from || fr.p[i] > w.to) continue;
+      const sd = fr.l[i] > 0.3 ? 1 : fr.l[i] < -0.3 ? -1 : 0;
+      if (sd && sd !== side) { if (side) swings++; side = sd; }
+    }
+  }
+  assert.ok(swings / 20 >= 1, `the field swings from wall to wall (${(swings / 20).toFixed(2)} a marble)`);
+});
+
+test('refused: a half-pipe too narrow or wide, with things in it, first, or with no straight before it', () => {
+  const narrow = withHalfPipe();
+  narrow.sections[3].shape = kit.halfPipe({ width: 4 });
+  refused(narrow, /a half-pipe's width is its radius in metres, 6 to 10/);
+  const busy = withHalfPipe();
+  busy.sections[3].obstacles = [peg({ at: 0.5 })];
+  refused(busy, /nothing in or over a half-pipe/);
+  const noRunIn = withHalfPipe();
+  noRunIn.sections.splice(2, 1);
+  refused(noRunIn, /a half-pipe needs a straight \(at least 20 m\) or a drop before it/);
+});
+
+test('TV moments: one or two trackside cameras ride along as looks, at a section, well apart, clear of the start and the line', () => {
+  const s = base();
+  s.sections[0].shape = plunge(300, { grade: 0.8 });
+  const t = track({ ...s, tvCameras: [{ section: 'Sweep', at: 0.5, side: 'right', distance: 8, height: 9 }] });
+  assert.deepEqual(Object.keys(t.physics.kit.tv[0]).sort(), ['distance', 'height', 'p', 'section', 'side']);
+  assert.equal(t.physics.kit.tv[0].side, -1);
+  // Looks only: the race is the same without them.
+  const a = simulatePhysicsRace({ seed: 3, track: t, entries: houseField(3), level: 3 });
+  const b = simulatePhysicsRace({ seed: 3, track: track(s), entries: houseField(3), level: 3 });
+  assert.deepEqual(a.results, b.results);
+  refused({ ...s, tvCameras: [] }, /tvCameras is a list of one or two/);
+  refused({ ...s, tvCameras: [{ section: 'Nowhere' }] }, /section "Nowhere" is not one of this track's sections/);
+  refused({ ...base(), tvCameras: [{ section: 'Bends', at: 0 }] }, /TV moments start 250 m in/);
+  refused({ ...s, tvCameras: [{ section: 'Final plunge', at: 1 }] }, /the last 150 m keep the finish shot/);
+  refused({ ...s, tvCameras: [{ section: 'Sweep', at: 0.4 }, { section: 'Sweep', at: 0.6 }] }, /at least 300 m, so two cuts never come close together/);
+  refused({ ...s, tvCameras: [{ section: 'Sweep', distance: 40 }] }, /distance is metres out from the rim, 6 to 25/);
+});
+
+test('jib parts: a box, a rail and a table top are raised flat tops the field rides over or round, and hops stay low', () => {
+  const s = base();
+  s.sections.splice(2, 0, { name: 'Jibs', shape: straight(120, { grade: 0.13 }), features: kit.jibLine({ from: 0.1 }) }, { name: 'Box run', shape: straight(60, { grade: 0.13 }), features: [kit.box({ at: 0.3, length: 12 })] });
+  const t = track(s);
+  const tops = t.physics.features.filter((f) => f.type === 'box');
+  assert.deepEqual(tops.map((f) => f.look), ['rail', 'box', 'table-top', 'box']);
+  let on = 0;
+  let seen = 0;
+  for (const seed of [3, 4, 5]) {
+    const sim = simulatePhysicsRace({ seed, track: t, entries: houseField(seed), level: 3 });
+    assert.equal(sim.results.length, 20);
+    const box = tops[3];
+    for (let i = 0; i < 20; i += 1) {
+      const near = sim.frames.filter((f) => f.p[i] > box.at + 0.001 && f.p[i] < box.at + 0.004);
+      if (!near.length) continue;
+      seen += 1;
+      if (near.some((f) => f.h[i] > 0.15)) on += 1;
+    }
+    for (const f of sim.frames) for (const h of f.h) assert.ok(h < 1.2, `a hop of ${h} m`);
+  }
+  // Some marbles ride up onto the box; most pass either side of it.
+  assert.ok(on > 0 && on < seen, `${on} of ${seen} on the box`);
+});
+
+test('refused: a jib part on a bend, too high, too near the gate or crowded by other obstacles', () => {
+  const onBend = base();
+  onBend.sections[1].features = [kit.box({ at: 0.4 })];
+  refused(onBend, /a box needs a straight/);
+  const high = base();
+  high.sections.splice(2, 0, { name: 'Jibs', shape: straight(60, { grade: 0.13 }), features: [kit.box({ at: 0.3, height: 0.5 })] });
+  refused(high, /stands at most 0.35 m high/);
+  const crowded = base();
+  crowded.sections.splice(2, 0, { name: 'Jibs', shape: straight(60, { grade: 0.13 }), features: [kit.box({ at: 0.3, length: 10 })], obstacles: [peg({ at: 0.45 })] });
+  refused(crowded, /a peg too close to a box/);
+});
+
+test('the varied starts: an opening without the pile-up and slalom needs its luck in the first half of the track', () => {
+  const s = { ...base(), opening: kit.opening('clean-drop'), start: { gate: 'stalls', shots: { countdown: 'above', launch: 'overhead' } } };
+  s.sections = s.sections.slice(1);
+  refused(s, /the clean-drop opening has no pile-up or slalom/);
+  s.sections.splice(0, 0, { name: 'Luck', shape: straight(60, { grade: 0.13 }), obstacles: [slalom({ from: 0.2, to: 0.95, count: 6, loss: 0.3 })] });
+  assert.equal(track(s).physics.kit.opening, 'clean-drop');
 });

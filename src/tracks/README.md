@@ -68,6 +68,18 @@ module.exports = track({
   | `boost-launch` | A gentler drop, then a strip of boost pads wall to wall: the same kick for everyone. It tends to keep the front starting group ahead; follow it with deep, tight S-bends (as Wadi Mujib Burst) and check the groups early |
   | `funnel-drop` | A longer bowl at the gate; the order mixes as the field squeezes into the channel |
   | `crest-start` | The steep plunge into a short climb and over a rounded crest: the field bunches and spills over in a new order |
+  | `clean-drop` | A plunge with nothing in it, at full speed into deep, tight S-bends (`side`) that shuffle the field |
+  | `peg-drop` | A slightly gentler plunge through seven single pegs, left and right, the field threading through |
+  | `pipe-drop` | A short plunge straight into a half-pipe (`side`: its first swing), the field rocking wall to wall |
+
+  **The varied starts** (`clean-drop`, `peg-drop`, `pipe-drop`, October 2026) leave out the pile-up
+  and slalom. Those give a race most of its luck: without them the strongest marbles win far too often
+  (57–62% of races, the target is 35–50%). So a track starting with one of them has its luck in its first
+  half instead, and the recipe refuses it otherwise: a pile-up, or a slalom of 5 gates or more at a loss of
+  0.3 (`slalom({ count: 7, loss: 0.3 })` on a straight is what tracks 3–10 of Track and Field use). They are
+  proven on the mid lottery layout (L71), whose slalom drop does that.
+  No start part may follow the gate on two tracks in a row (a test checks it from Berlin Blue Lanes on), and
+  the report's **first 20 seconds** check (below) compares what the field races through at the start.
 
   The recipe's first rule: a track opens with one of these, or with the classic steep plunge
   written out by hand (as every track before the library does).
@@ -150,6 +162,7 @@ module.exports = track({
 | `spiral({ side, radius, turns })` | Flowing spiral (radius 40 m or more) |
 | `hairpin({ side })` | The one sharp bend; the section before it must be a straight of 35 m or more |
 | `splitter({ side, degrees, balance })` | Field divides and rejoins (`degrees: 0` on a straight) |
+| `halfPipe({ first, width, swings, radius, degrees, grade })` | The channel widens into a U (`width`: its radius, 6 to 10 m, the channel's is 3.6) over gentle alternating bends (`swings`), easing in and out over 25 m: the field rocks from wall to wall as it rolls down (about two swings a marble, hops under 1 m). Nothing in or over it; a straight of 20 m or more, or a drop, before it; never two in a row. Proven on the half-pipe run (L70) |
 | `waterfall(length, { grade, curtain })` | A waterfall plunge; its lip eases in by itself (0.03 every 8 m); needs a 30 m straight before it; can open the track; `curtain: true` adds a see-through sheet of water to race through |
 | `runIn()` | The run-in to the finish (added automatically) |
 
@@ -182,7 +195,15 @@ To look at them: `node scripts/dump-kit-track.js costume-gallery`, then
 | `steps({ from, to, count, drag, tiles })` | Small regular bumps over a slowing surface (the Selarón Steps; `tiles: 'mosaic'` paints them red, yellow, blue and green); same rules as moguls |
 | `paint({ from, to, look })` | Looks only (never raced): a board painted on the floor, `look: 'go-board'` (19 lines each way on pale wood) or `'xiangqi'` (9 lines across, its river a blue band) |
 
+| `box({ at, length, width, height, line })` | A jib part (snowboard park): a low box with a flat top (default 10 m long, 1.2 m wide, 0.25 m high). Marbles that meet it square on roll up onto it, across and off the end; the rest are pushed round either side |
+| `rail({ at, length, line })` | A narrow, very low box (0.3 m wide, 0.12 m high): a bar along the track that bumps the marbles about; a few ride along it |
+| `tableTop({ at, length, height, down })` | A long raised flat over the channel's floor, a short ramp up and a gentle drop-off over `down` metres: the pack spreads out on the flat (nothing pulls it back to the middle) and drops off in a stream |
+| `jibLine({ from })` | A rail, a box and a table top one after another, as on a park run: `features: jibLine({ from: 0.1 })` on a straight of 110 m or more |
+
 Nothing bumpy within 40 m after a block: marbles flung off it land on the bumps and bounce high.
+Jib parts: on straights only, at most 0.35 m high (the drop off the end is a hop of 0.8 m at most), 4 to 40 m
+long, 8 m clear of any other obstacle or feature, never in the first 25 m or near the line. Proven on the jib
+run (L72). They race only on tracks that have them: every other race is unchanged.
 
 ## Tunnels, caves and bridges
 
@@ -469,6 +490,25 @@ as a coaster (everything above applies), like a canyon (looks only, like everyth
 - The layouts made for the series are the ten `(track and field)` rows above; each has a test track
   built as a stadium (`series: 'athletics'`).
 
+## TV moments
+
+A track can have one or two fixed trackside cameras at its dramatic spots (drawing only, never
+raced), facing back up the track at the oncoming marbles:
+
+```js
+tvCameras: [
+  { section: 'The marble end', at: 0.5, side: 'left', distance: 6, height: 9 },
+  { section: 'More S-bends', at: 0.5, side: 'right', distance: 8, height: 9 },
+],
+```
+
+The big view cuts to one as the followed marble (the leader, or the player's own) comes up to it
+(50 m before), follows it past and eases back over 30 m: about 3–5 s. The cut is worked out from
+where the marble is, so replays show the same moments. Rules: at a section of the track, `at` 0 to 1,
+`distance` 6–25 m out from the rim, `height` 2–15 m, at least 250 m from the gate and 150 m from the line,
+two cameras at least 300 m apart. The viewer's **TV** button switches them off. A client test checks
+that no scenery stands at a camera or between it and the track.
+
 ## Mirrored tracks
 
 A mirror is a file of its own (it counts as a track, with its own records):
@@ -519,6 +559,11 @@ with a pass or fail beside each line and what to fix at the top:
   opening, and the section order is not too alike any other track's (similarity 0.80, or
   0.70 with the splitters and sharp bend in the same places; shown from 0.65).
   `node scripts/variety-table.js` scores every track at once (`--matrix`: every pair).
+- **First 20 seconds** (Variety): what the middle of the field races through in its first
+  20 s (the opening, then each section's shape, obstacles and features, in order) against every
+  other track's start, kept in `src/report/startSequences.json` (`node scripts/start-sequences.js`
+  records them all). Too alike at 0.80; the same sequence is a reused start. Every track from
+  Bislett Mile on is held to it (a test).
 - **Safety**: the same seed gives the same race; the database holds what the file
   builds (where there is a database); today's tracks race as recorded.
 - **Ground** and **Camera**: the ground check, and frame by frame through two races

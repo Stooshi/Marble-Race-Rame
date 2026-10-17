@@ -27,7 +27,7 @@ const LAYOUT_WARN = 0.65;
 const PLACE_CLOSE = 0.1;
 const MAX_PER_OPENING = 2;
 
-const TOKEN = { plunge: 'drop', waterfall: 'waterfall', climb: 'climb', sBends: 'S-bends', sweep: 'sweep', spiral: 'spiral', hairpin: 'hairpin', splitter: 'splitter', twinChutes: 'chutes' };
+const TOKEN = { plunge: 'drop', waterfall: 'waterfall', climb: 'climb', sBends: 'S-bends', sweep: 'sweep', spiral: 'spiral', hairpin: 'hairpin', splitter: 'splitter', twinChutes: 'chutes', halfPipe: 'half-pipe' };
 const OBSTACLE = { block: 'block', pileUp: 'pile-up', curtain: 'curtain', swipe: 'swipe', parked: 'parked', slalom: 'slalom', peg: 'peg' };
 
 // The three hand-built tracks (src/game/physicsTracks.js), written out as the kit would see them.

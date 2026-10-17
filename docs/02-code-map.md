@@ -68,7 +68,7 @@
 - `rng.js`: the seeded random-number generator (mulberry32). The engines never use `Math.random` or the clock.
 - `skill.js`: skill is the player's, not the marble's. `skillStats(skill)` sets all four engine stats to the skill. Also `HOUSE_SKILLS` (the computer players, 45–55) and `STARTING_SKILL` (50).
 - `simulator.js`: the **classic** 1-D engine (`SIMULATOR_VERSION = 'solid-marbles-1'`). Old races are **re-simulated** from their seed, so this file must never change behaviour.
-- `physicsSimulator.js`: the **new physics** engine (`PHYSICS_VERSION`), used by every track with `tracks.physics`. Its races are stored as replays (`race_replays`), so tuning it never changes a past race. The comments at the top of this file and `routes/physics.js` still say real races use the classic engine; that is no longer true.
+- `physicsSimulator.js`: the **new physics** engine (`PHYSICS_VERSION`), used by every track with `tracks.physics`. Half-pipes (`channel.wides`: the channel widening into a U, `wideAt`) and jib parts (features `box`: raised flat tops marbles ride over or are pushed round, `boxLift`) race only on tracks that have them. Its races are stored as replays (`race_replays`), so tuning it never changes a past race. The comments at the top of this file and `routes/physics.js` still say real races use the classic engine; that is no longer true.
 - `runSimulation.js`: picks the engine; `packReplay` gzips a physics race.
 - `simulationPool.js` + `simulationWorker.js`: run simulations in a worker thread, falling back to the main thread.
 - `raceService.js`: the database side of a race:
@@ -105,7 +105,7 @@
 - `analyze.js`: measures one race.
 - `batch.js`: runs batches of races on worker threads.
 - `summarize.js`: pass/fail lines; `TARGETS` holds every threshold.
-- `overtakes.js`, `variety.js` (sameness check), `startLook.js` + `startLooks.json` (first-3-seconds check).
+- `overtakes.js`, `variety.js` (sameness check), `startLook.js` + `startLooks.json` (first-3-seconds check), `firstSeconds.js` + `startSequences.json` (first-20-seconds check: what the field races through after the gate against every other track's start; `scripts/start-sequences.js` records every track).
 - `html.js`: writes the report page.
 
 **`marbles/`: the collection.**
@@ -324,7 +324,8 @@ Defined in `src/sockets/index.js`. The client may send a JWT in `auth.token`; an
 
 **Other files:**
 - `trackModel.js`: pure geometry, matching the server's.
-- `iceChannel.js`, `marbles.js`, `startGate.js`, `startCamera.js`, `trackFeatures.js`, `structures.js`, `billboards.js`, `lighting.js`, `themes.js`, `winnerGlow.js`, `movers.js`, `diagnostics.js`.
+- `tvMoments.js` (TV moments: a track's trackside cameras, `tvCameras`, and the cut by where the followed marble is, `tvMoment`; `TrackScene.applyTvMoment` draws it; `components/tvMomentsSetting.js` keeps the viewer's TV on/off, `marble-tv-moments`).
+- `iceChannel.js` (also the half-pipe's widening, `channelRadiusAt` / `channelLipAt`), `marbles.js`, `startGate.js`, `startCamera.js`, `trackFeatures.js` (also the jib parts: box, rail, table top), `structures.js`, `billboards.js`, `lighting.js`, `themes.js`, `winnerGlow.js`, `movers.js`, `diagnostics.js`.
 - `scenery/`: the worlds:
   - kit scenery: `kit.js`, `kitGround.js`, `kitProps.js`, `kitPlaces.js`, `kitLandmarks*.js`;
   - series looks: `coaster.js` (steel A-frames, or timber trestle bents with `coaster.style: 'timber'`), `arcade.js`, `pinball.js`, `grandPrix.js`;

@@ -24,6 +24,7 @@ import { canyonDressing } from './canyon';
 import { blockDressing } from './blocks';
 import { buildBlockEffects } from './kitLandmarksBlock';
 import { buildAthletics } from './athletics';
+import { tvCameras } from '../tvMoments';
 import { SPAN_KINDS, buildCanyonSpans } from './canyonSpans';
 import { buildBattlements, buildCentrepieces, buildFunicular, buildHouses, buildLake, buildRaceNetting, tagsNear, turnAngle } from './kitPlaces';
 import { hashString, mergeByArea, piece, seededRandom, smoothstep } from './parts';
@@ -58,6 +59,8 @@ export function buildKitScenery(centerline, track, theme, { lite = false } = {})
   // The billboards' spots (billboards.js stands them there): no tree or figure in front of one.
   const boardFeet = (kit.billboards ?? []).map((b) => boardPose(centerline, channel, b).foot);
   for (const f of boardFeet) solids.push({ x: f.x, z: f.z, r: 6 });
+  // TV moments' trackside cameras: nothing planted where one stands (its view stays clear).
+  for (const c of tvCameras(centerline, channel, kit)) solids.push({ x: c.pos.x, z: c.pos.z, r: 5 });
   // A coaster: its rails, supports, lift hill and station (./coaster.js), clear of trees.
   const coaster = kit.coaster ? buildCoaster(centerline, channel, kit, {
     lite, groundAt, flight: ground.flight, boards: (kit.billboards ?? []).map((b) => ({ ...boardPose(centerline, channel, b), mount: b.mount })),

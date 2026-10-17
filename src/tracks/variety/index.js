@@ -20,6 +20,7 @@ const NAMES = {
   'island-hops': 'Island Hops', 'harbour-quays': 'Harbour Quays', 'temple-halls': 'Temple Halls', 'cascade-rows': 'Cascade Rows', 'bonus-stages': 'Bonus Stages',
   'horseshoe-sprint': 'Horseshoe Sprint', 'blue-lanes': 'Blue Lanes', 'bell-lap': 'Bell Lap', 'hurdles-straight': 'Hurdles Straight', 'nest-bend': 'Nest Bend',
   'photo-finish': 'Photo Finish', 'relay-legs': 'Relay Legs', 'steeple-water': 'Steeple Water', 'anchor-arches': 'Anchor Arches', 'golden-lap': 'Golden Lap',
+  'half-pipe-run': 'Half-Pipe Run', 'mid-lottery': 'Mid Lottery', 'jib-run': 'Jib Run', 'clean-drop': 'Clean Drop', 'peg-drop': 'Peg Drop', 'pipe-drop': 'Pipe Drop',
 };
 
 const base = (slug, name, description) => ({
@@ -35,10 +36,13 @@ const base = (slug, name, description) => ({
   finish: { landmark: 'church' },
 });
 
+// Openings without the pile-up and slalom are proven on the mid lottery layout: the pile-up comes later,
+// as the recipe asks of every track that starts without one.
+const OPENING_LAYOUT = { 'clean-drop': 'mid-lottery', 'peg-drop': 'mid-lottery', 'pipe-drop': 'mid-lottery' };
 const openings = OPENING_KINDS.filter((k) => k !== 'classic').map((kind) => track({
-  ...base(`variety-opening-${kind}`, `Variety Test: ${NAMES[kind]}`, `The opening library's test track for the ${NAMES[kind].toLowerCase()}, on the classic layout.`),
+  ...base(`variety-opening-${kind}`, `Variety Test: ${NAMES[kind]}`, `The opening library's test track for the ${NAMES[kind].toLowerCase()}, on the ${NAMES[OPENING_LAYOUT[kind] ?? 'classic'].toLowerCase()} layout.`),
   opening: opening(kind),
-  sections: layout('classic'),
+  sections: layout(OPENING_LAYOUT[kind] ?? 'classic'),
 }));
 
 // Layouts made for one coaster are proven on a test track built as a coaster (up on its

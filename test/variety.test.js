@@ -15,10 +15,13 @@ const START = { gate: 'stalls', shots: { countdown: 'above', launch: 'overhead' 
 const spec = (o = {}) => ({ slug: 'variety-check', name: 'Variety Check', opening: opening('classic'), sections: layout('classic'), start: START, ...o });
 
 test('every opening and every layout in the libraries builds within the recipe, and says which it is', () => {
+  // (The varied starts, without the pile-up and slalom, need their luck later on: the mid lottery layout has it.)
+  const NO_LUCK = ['clean-drop', 'peg-drop', 'pipe-drop'];
   for (const kind of OPENING_KINDS) {
-    const t = track(spec({ opening: opening(kind) }));
+    const lay = NO_LUCK.includes(kind) ? 'mid-lottery' : 'classic';
+    const t = track(spec({ opening: opening(kind), sections: layout(lay) }));
     assert.equal(t.physics.kit.opening, kind);
-    assert.equal(t.physics.kit.layout, 'classic');
+    assert.equal(t.physics.kit.layout, lay);
   }
   for (const kind of LAYOUT_KINDS) {
     for (const mirror of [false, true]) assert.equal(track(spec({ sections: layout(kind, { mirror }) })).physics.kit.layout, kind);
@@ -252,4 +255,42 @@ test('the varied starts: a new track says how its start looks, checked like any 
   const type = check.lines.find((l) => /start type/.test(l.what));
   assert.equal(shots.pass, false);
   assert.equal(type.pass, false); // (Sognefjord and Ha Long Bay Spins start from a cliff already)
+});
+
+test('the first 20 seconds: a reused start fails; every track from Bislett Mile on differs from every other track\'s start', () => {
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const { batchSeeds } = require('../src/report/batch');
+  const { reachOf, startSequence, firstSecondsCheck, readSequences, tokensOf } = require('../src/report/firstSeconds');
+  const stored = readSequences();
+  // The check itself: the same sequence as another track fails.
+  const athens = physicsTrack('marble-stadium-sprint');
+  const same = firstSecondsCheck(athens, tokensOf(stored['chain-reaction']), PHYSICS_TRACKS, stored);
+  assert.equal(same.line.pass, false);
+  assert.match(same.line.value, /the same start as Chain Reaction/);
+  // Every track on file is a track (none left over from a renamed one), and every kit track is on file.
+  const kitTracks = PHYSICS_TRACKS.filter((t) => t.variety && profile(t)?.family !== 'test' && !/^variety-|kit-proving/.test(t.slug));
+  assert.deepEqual(Object.keys(stored).sort(), kitTracks.map((t) => t.slug).sort());
+  // The rule, for every track added after Berlin Blue Lanes: its own first 20 seconds, worked out again here.
+  // (Every track after Marble Stadium Sprint and Berlin Blue Lanes, the two built before the check.)
+  const order = require('../src/tracks').map((t) => t.slug);
+  const held = order.slice(order.indexOf('marble-stadium-sprint') + 1).filter((slug) => slug !== 'berlin-blue-lanes');
+  for (const slug of held) {
+    const t = physicsTrack(slug);
+    const seed = batchSeeds(0, 1)[0];
+    const seq = startSequence(t, reachOf(simulatePhysicsRace({ seed, track: t, entries: houseField(seed), level: 3 })));
+    assert.deepEqual(seq.map((x) => (x.side ? `${x.t} ${x.side}` : x.t)), stored[slug].seq, `${slug}: startSequences.json is out of date (node scripts/start-sequences.js ${slug})`);
+    const { line } = firstSecondsCheck(t, seq, PHYSICS_TRACKS, stored);
+    assert.equal(line.pass, true, `${slug}: ${line.value}`);
+  }
+  assert.ok(fs.existsSync(path.join(__dirname, '..', 'scripts', 'start-sequences.js')));
+});
+
+test('no start part straight after the gate on two tracks in a row (every track from Bislett Mile on)', () => {
+  const order = require('../src/tracks').map((t) => t.slug);
+  const held = order.slice(order.indexOf('marble-stadium-sprint'));
+  const first = (slug) => physicsTrack(slug).physics.kit.opening;
+  for (let k = 1; k < held.length; k += 1) {
+    assert.notEqual(first(held[k]), first(held[k - 1]), `${held[k - 1]} and ${held[k]} both start with ${first(held[k])}`);
+  }
 });
