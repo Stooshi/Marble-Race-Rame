@@ -860,6 +860,17 @@
    "side": 1,
    "marbles": 4
   },
+  "tokyo-photo-finish": {
+   "name": "Tokyo Photo Finish",
+   "series": "Track and Field",
+   "lighting": "day",
+   "v": "6d7519dc",
+   "bytes": 21168,
+   "bytes2x": 53310,
+   "t": 10868,
+   "side": -1,
+   "marbles": 6
+  },
   "verdon-burst": {
    "name": "Verdon Burst",
    "series": "Canyons",

@@ -1107,21 +1107,22 @@ const LAYOUTS = {
     },
   ],
 
-  /** L65 Photo finish (Track and Field): S-bends, a spiral (round under the roof), a sweep, the hairpin, a drop, a long sweep and a long run to the line (the photo finish). */
+  /** L65 Photo finish (Track and Field): S-bends, a slalom drop, a peg straight, a part-spiral (round under the roof), a sweep, the hairpin, a drop, a long sweep and a long run to the line (the photo finish). */
   'photo-finish': (L, R, c) => [
-    { key: 'sBends', name: 'S-bends', shape: sBends({ first: L, radius: 55, degrees: 100, grade: 0.13 }), billboards: 1 },
+    { key: 'sBends', name: 'S-bends', shape: sBends({ first: R, radius: 55, degrees: 100, grade: 0.13 }), billboards: 1 },
+    { key: 'slalomDrop', name: 'Slalom drop', shape: plunge(70, { grade: 0.3, from: 0.13 }), obstacles: [slalom({ costume: c.slalom, from: 0.2, to: 0.95, count: 7, loss: 0.3 })] },
     {
-      key: 'pegStraight', name: 'Peg straight', shape: straight(60, { grade: 0.12 }),
+      key: 'pegStraight', name: 'Peg straight', shape: straight(85, { grade: 0.12 }),
       obstacles: [peg({ costume: c.peg, at: 0.2, line: 'center' }), peg({ costume: c.peg, at: 0.45, line: 'right' }), peg({ costume: c.peg, at: 0.7, line: 'left' })],
     },
-    { key: 'roofSpiral', name: 'Spiral', shape: spiral({ side: R, radius: 55, turns: 1, grade: 0.15 }) },
-    { key: 'sweep', name: 'Sweep', shape: sweep({ side: L, radius: 85, degrees: 120, grade: 0.09 }), features: [boost({ at: 0.1 })], billboards: 2 },
+    { key: 'roofSpiral', name: 'Spiral', shape: spiral({ side: R, radius: 55, turns: 0.45, grade: 0.15 }) },
+    { key: 'sweep', name: 'Sweep', shape: sweep({ side: L, radius: 85, degrees: 120, grade: 0.11 }), billboards: 2, obstacles: [peg({ costume: c.peg, at: 0.45, line: 'right' })] },
     { key: 'brakingStraight', name: 'Run to the hairpin', shape: straight(50, { grade: 0.12 }) },
-    { key: 'hairpin', name: 'Hairpin', shape: hairpin({ side: R }) },
+    { key: 'hairpin', name: 'Hairpin', shape: hairpin({ side: R }) , obstacles: [swipe({ costume: c.swipe, side: 'high' })] },
     { key: 'drop', name: 'Drop', shape: plunge(45, { grade: 0.2, from: 0.16 }) },
-    { key: 'longSweep', name: 'Long sweep', shape: sweep({ side: R, radius: 90, degrees: 140, grade: 0.09 }), billboards: 1 },
+    { key: 'longSweep', name: 'Long sweep', shape: sweep({ side: R, radius: 90, degrees: 100, grade: 0.1 }), billboards: 1, obstacles: [peg({ costume: c.peg, at: 0.5, line: 'center' })] },
     {
-      key: 'lastStraight', name: 'Last straight', shape: straight(140, { grade: 0.13 }),
+      key: 'lastStraight', name: 'Last straight', shape: straight(120, { grade: 0.13 }),
       obstacles: [peg({ costume: c.peg, at: 0.15, line: 'left' }), peg({ costume: c.peg, at: 0.3, line: 'right' }), slalom({ costume: c.slalom, from: 0.45, to: 0.7, count: 2, loss: 0.15 })], features: [rumble({ from: 0.78, to: 0.95, count: 3 })],
     },
   ],

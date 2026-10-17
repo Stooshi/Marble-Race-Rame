@@ -88,4 +88,5 @@ module.exports = [
   require('./bislett-mile'),
   require('./eugene-hurdles'),
   require('./beijing-nest-200'),
+  require('./tokyo-photo-finish'),
 ];

@@ -72,6 +72,7 @@
 "the-stack": {"family":"block","reach":0.184,"seq":["opening: crest-start","drop","pileUp","slalom","climb","drop","straight","peg ×3"]},
 "tiger-leaping-spins": {"family":"canyon","reach":0.215,"seq":["opening: split-start","drop","pileUp","slalom","chutes","drop","slalom","straight","peg ×2","moguls","S-bends right"]},
 "tilt": {"family":"pinball","reach":0.218,"seq":["opening: banked-turn","drop","pileUp","slalom","sweep left","sweep right","peg"]},
+"tokyo-photo-finish": {"family":"athletics","reach":0.311,"seq":["opening: pipe-drop","drop","half-pipe","S-bends right"]},
 "verdon-burst": {"family":"canyon","reach":0.216,"seq":["opening: crest-start","drop","pileUp","slalom","climb","drop","sweep right","boost"]},
 "voxel-harbor": {"family":"block","reach":0.241,"seq":["opening: staggered-drop","drop","pileUp","slalom","brake","S-bends left"]},
 "voxel-peaks": {"family":"block","reach":0.207,"seq":["opening: banked-turn","drop","pileUp","slalom","sweep right","sweep left","boost"]},
