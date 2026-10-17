@@ -1085,22 +1085,25 @@ const LAYOUTS = {
       obstacles: [peg({ costume: c.peg, at: 0.25, line: 'left' }), peg({ costume: c.peg, at: 0.45, line: 'right' })], features: [rumble({ from: 0.72, to: 0.95, count: 3 })],
     },
   ],
-  /** L64 Nest bend (Track and Field): deep S-bends (they mix the field), one long sweeping bend (a half circle) into the home straight, S-bends, the hairpin, a sweep, a part-spiral and the run-in. */
+  /** L64 Nest bend (Track and Field): one long sweeping bend (a half circle) into the home straight, S-bends, the hairpin, more S-bends, a slalom straight, a part-spiral and the run-in (after a start that mixes the field, e.g. the clean drop's S-bends). */
   'nest-bend': (L, R, c) => [
-    { key: 'entryBends', name: 'S-bends', shape: sBends({ first: R, radius: 55, degrees: 100, grade: 0.13 }), billboards: 1 },
-    { key: 'longBend', name: 'Long bend', shape: sweep({ side: L, radius: 85, degrees: 180, grade: 0.085 }), billboards: 2 },
+    { key: 'longBend', name: 'Long bend', shape: sweep({ side: L, radius: 72, degrees: 180, grade: 0.085 }), billboards: 2 },
     {
-      key: 'homeStraight', name: 'Peg straight', shape: straight(110, { grade: 0.11 }), features: [boost({ at: 0.1 })],
-      obstacles: [peg({ costume: c.peg, at: 0.3, line: 'center' }), peg({ costume: c.peg, at: 0.45, line: 'right' }), peg({ costume: c.peg, at: 0.62, line: 'left' }), peg({ costume: c.peg, at: 0.8, line: 'center' })],
+      key: 'homeStraight', name: 'Peg straight', shape: straight(75, { grade: 0.11 }),
+      obstacles: [peg({ costume: c.peg, at: 0.2, line: 'center' }), peg({ costume: c.peg, at: 0.4, line: 'right' }), peg({ costume: c.peg, at: 0.6, line: 'left' }), peg({ costume: c.peg, at: 0.8, line: 'center' })],
     },
-    { key: 'sBends', name: 'More S-bends', shape: sBends({ first: L, radius: 70, degrees: 50, grade: 0.13 }), billboards: 1 },
-    { key: 'brakingStraight', name: 'Run to the hairpin', shape: straight(50, { grade: 0.12 }) },
-    { key: 'hairpin', name: 'Hairpin', shape: hairpin({ side: R }) },
-    { key: 'sweep2', name: 'Sweep', shape: sweep({ side: L, radius: 80, degrees: 100, grade: 0.09 }) },
+    { key: 'sBends', name: 'More S-bends', shape: sBends({ first: R, radius: 70, degrees: 50, grade: 0.13 }), billboards: 2 },
+    { key: 'brakingStraight', name: 'Run to the hairpin', shape: straight(60, { grade: 0.12 }), obstacles: [peg({ costume: c.peg, at: 0.15, line: 'left' }), peg({ costume: c.peg, at: 0.35, line: 'right' })] },
+    { key: 'hairpin', name: 'Hairpin', shape: hairpin({ side: R }) , obstacles: [swipe({ costume: c.swipe, side: 'high' })] },
+    { key: 'sweep2', name: 'S-bends after the hairpin', shape: sBends({ first: L, radius: 70, degrees: 45, grade: 0.12 }), obstacles: [peg({ costume: c.peg, at: 0.3, line: 'center' }), peg({ costume: c.peg, at: 0.7, line: 'center' })] },
+    {
+      key: 'slalomStraight', name: 'Slalom straight', shape: straight(65, { grade: 0.11 }),
+      obstacles: [peg({ costume: c.peg, at: 0.2, line: 'left' }), peg({ costume: c.peg, at: 0.38, line: 'right' }), slalom({ costume: c.slalom, from: 0.5, to: 0.75, count: 4, loss: 0.15 }), peg({ costume: c.peg, at: 0.08, line: 'right' }), peg({ costume: c.peg, at: 0.86, line: 'center' })],
+    },
     { key: 'spin', name: 'Spiral', shape: spiral({ side: R, radius: 55, turns: 0.6, grade: 0.15 }) },
     {
       key: 'lastStraight', name: 'Last straight', shape: straight(90, { grade: 0.15 }),
-      obstacles: [parked({ costume: c.parked, at: 0.2, side: L, length: 6 }), peg({ costume: c.peg, at: 0.42, line: 'right' }), peg({ costume: c.peg, at: 0.6, line: 'left' })], features: [rumble({ from: 0.72, to: 0.95, count: 3 })],
+      obstacles: [parked({ costume: c.parked, at: 0.2, side: L, length: 6 }), peg({ costume: c.peg, at: 0.38, line: 'right' }), slalom({ costume: c.slalom, from: 0.48, to: 0.64, count: 3, loss: 0.15 })], features: [rumble({ from: 0.74, to: 0.95, count: 3 })],
     },
   ],
 

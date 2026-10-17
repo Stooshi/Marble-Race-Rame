@@ -68,6 +68,17 @@
    "side": 1,
    "marbles": 4
   },
+  "beijing-nest-200": {
+   "name": "Beijing Nest 200",
+   "series": "Track and Field",
+   "lighting": "night",
+   "v": "e7245532",
+   "bytes": 24702,
+   "bytes2x": 62260,
+   "t": 15461,
+   "side": 1,
+   "marbles": 6
+  },
   "berlin-blue-lanes": {
    "name": "Berlin Blue Lanes",
    "series": "Track and Field",

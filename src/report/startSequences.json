@@ -5,6 +5,7 @@
 "are-run": {"family":"world-tour","reach":0.197,"seq":["opening: classic","drop","pileUp","slalom","S-bends left"]},
 "aturi-arcade": {"family":"arcade","reach":0.247,"seq":["opening: crest-start","drop","pileUp","slalom","climb","drop","straight","peg","climb","straight","moguls"]},
 "baqueira-beret-run": {"family":"world-tour","reach":0.201,"seq":["opening: classic","drop","pileUp","slalom","S-bends left"]},
+"beijing-nest-200": {"family":"athletics","reach":0.325,"seq":["opening: clean-drop","drop","S-bends left","sweep left"]},
 "berlin-blue-lanes": {"family":"athletics","reach":0.187,"seq":["opening: staggered-drop","drop","pileUp","slalom","brake","S-bends left"]},
 "bislett-mile": {"family":"athletics","reach":0.314,"seq":["opening: pipe-drop","drop","half-pipe","spiral left"]},
 "block-fortress": {"family":"block","reach":0.225,"seq":["opening: banked-turn","drop","pileUp","slalom","sweep left","sweep right"]},
