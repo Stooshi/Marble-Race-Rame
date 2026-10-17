@@ -1,6 +1,6 @@
 # 3. Data model
 
-*Last updated 16 Oct 2026.* The database is PostgreSQL. The schema is defined in `docs/database_schema.sql`. The server applies that file at every start; it only adds what is missing and never deletes or changes rows. Changes to existing rows go in `docs/data_updates/` (see the [runbook](05-runbook.md#data-updates)).
+*Last updated 17 Oct 2026.* The database is PostgreSQL. The schema is defined in `docs/database_schema.sql`. The server applies that file at every start; it only adds what is missing and never deletes or changes rows. Changes to existing rows go in `docs/data_updates/` (see the [runbook](05-runbook.md#data-updates)).
 
 **Conventions:**
 - Ids are UUIDs (`gen_random_uuid()`), except where noted.
@@ -23,6 +23,8 @@ users ─┬─< race_entries >── races >── tracks          rooms ──
        ├─< user_collection >── collection_counters (per item)
        ├── user_shooter, marble_appearances, user_days
        ├─< payments ──< payment_refunds          stripe_events (webhook dedupe)
+       ├─< season_passes >── seasons ──< tracks (season_key), payments (season_key)
+       ├─< user_badges
        ├─< security_events, email_consents, cookie_consents
        ├─< support_messages ──< support_replies   (user_id may be empty: no account found)
        └── admin_2fa, admin_sessions, admin_audit (target/admin)
@@ -108,6 +110,7 @@ Sign-up, login and purchase events: `kind`, `ip` (inet), `country` (2 letters, l
 | `physics` | JSON settings for the **new physics engine** (channel, sections, features, start, kit looks). NULL means the track uses the classic engine |
 | `thumbnail_url`, `created_by`, `created_at`, `updated_at` | |
 | `is_active` | Shown and raced. New tracks are added switched off and turned on later by a data update |
+| `season_key` | A season's track (e.g. `holiday-2026`): raced only by pass holders while the season is on, by nobody before it, by everyone after (see [Seasons](#seasons-and-the-season-pass)). NULL for every ordinary track |
 
 ### `races`
 | Column | Meaning |
@@ -137,7 +140,8 @@ One marble in one race. Computer players have `user_id NULL` and `is_bot = true`
 | `race_id`, `marble_id`, `user_id`, `is_bot`, `lane` | Who and where. Each marble, lane and finishing place is unique within a race, and a player can have only one entry per race |
 | `snap_top_speed`, `snap_acceleration`, `snap_handling`, `snap_luck` | The four engine stats the entry raced with, copied at decision time (today all four equal the player's skill) |
 | `finish_position`, `finish_time_ms`, `split_time_ms` | Results (`split_time_ms` is the halfway time). **Written at decision time but hidden by the API until the race is finished** |
-| `coins_awarded` | Coins paid for this race |
+| `coins_awarded` | Coins paid for this race (taking part, the finishing bonus, the daily goal) |
+| `bonus_coins` | The Track of the Day bonus a pass holder got on this race (0 otherwise). Kept out of `coins_awarded`, which the stats and scoreboards read |
 | `joined_at` | |
 
 ### `race_replays`
@@ -242,6 +246,7 @@ The most specific row wins, then the newest. A slot with no row shows a built-in
 | `skill-refund` | The 12 Oct 2026 refund when marbles stopped carrying strength |
 | `admin` | A back-office adjustment, with a reason |
 | `pack-refund` | Coins removed because a coin pack was refunded or disputed |
+| `featured-bonus` | The Track of the Day bonus for a season pass holder: +50% of the race's coins, on the day's full-pay races only. **Neither earned nor bought**: it never counts on the scoreboards or in `coins_earned` |
 
 **The rules that keep the ledger right:**
 - **Every** change to `users.coins` goes through `economy.change(client, …)`. In one statement it moves the balance and adds the earned or bought total. It then writes the ledger line with `balance_after`.
@@ -251,7 +256,7 @@ The most specific row wins, then the newest. A slot with no row shows a built-in
 - Never update `users.coins` directly in code or in a data update. Write a ledger line through the same logic.
 - Scoreboards and `coins_earned` count **earned** kinds only. Bought coins never count towards the scoreboards.
 
-### `payments`: coin-pack orders
+### `payments`: coin-pack and season-pass orders
 | Column | Meaning |
 |---|---|
 | `user_id` | The buyer |
@@ -259,7 +264,9 @@ The most specific row wins, then the newest. A slot with no row shows a built-in
 | `provider_ref` | The provider's own id (Stripe session; Google Play order id `GPA.…`, or `token-<sha256>` for a test purchase without one). Unique per provider, so a payment is never credited twice |
 | `store_token` | Google Play: the purchase token. Unique per provider, the second guard against crediting twice |
 | `store_consumed_at` | Google Play: when the server consumed the purchase at Google (so the pack can be bought again). NULL: still to do; the hourly job retries |
-| `product_id`, `coins` | The pack and the coins it gives |
+| `store_acknowledged_at` | Google Play, season passes only: when the server acknowledged the purchase (a pass is kept, never consumed). NULL: still to do; the hourly job retries |
+| `product_id`, `coins` | The pack and the coins it gives. A season pass has 0 coins (allowed only with `season_key`) |
+| `season_key` | Set for a season pass (`product_id` is the pass, e.g. `holiday-pass-2026`) |
 | `amount_cents`, `currency` | The pack's list price (USD) |
 | `status` | `pending` → `paid` (or `failed`); `refunded` when fully refunded |
 | `order_no` | Player-facing order number `MS-1001…` (sequence `payment_order_seq`) |
@@ -284,6 +291,33 @@ The coins taken back are in proportion to the money refunded; the last refund ta
 
 ### `stripe_events`
 Every Stripe webhook event already handled (`id`, `type`). The event is recorded in the same transaction as its coin change, so a resent event is ignored.
+
+## Seasons and the season pass
+
+### `seasons`
+One row per season, added by a data update (the Holiday Season 2026: `2027-02-16-season-pass`). Everything follows its dates, so nothing is deployed on any day of a season.
+
+| Column | Meaning |
+|---|---|
+| `key`, `name` | `holiday-2026`, "Holiday Season 2026" |
+| `starts_at`, `ends_at`, `free_from` | Before `starts_at` nobody races its tracks; from `free_from` everyone does, free |
+| `time_zone` | The season's calendar (Europe/Stockholm): the Track of the Day changes at its midnight |
+| `pass_product_id`, `pass_name`, `price_cents`, `currency` | The pass as a store product (`holiday-pass-2026`, $9.99): the same id on Stripe, Google Play and the App Store |
+| `pass_sale_starts_at`, `pass_sale_ends_at` | When the pass is sold. The server refuses any sale outside this window |
+| `featured` | The Track of the Day: `{ "2026-12-01": "tromso-aurora-grand-prix", … }` |
+| `featured_bonus` | The Track of the Day bonus (0.5 = +50% race coins) |
+
+### `season_passes`
+A player's pass for a season. Granted once when its payment is paid; a full refund or a chargeback sets `revoked_at` and `revoke_reason` (`refunded`, `chargeback`), and the season's tracks lock again for that player. At most one live (not revoked) pass per player and season. A second pass paid for (bought on two platforms at once) is flagged in `admin_audit` (`pass-duplicate`) for the back office to refund.
+
+| Column | Meaning |
+|---|---|
+| `user_id`, `season_key` | Whose and which |
+| `payment_id`, `provider` | The payment that bought it |
+| `granted_at`, `revoked_at`, `revoke_reason` | |
+
+### `user_badges`
+Badges on a profile (`user_id`, `badge_key`, `rank`, `awarded_at`), e.g. the Holiday Season 2026 top 100. Not awarded yet (the season-end job comes with step 3 of the Holiday plan).
 
 ## Support
 

@@ -845,6 +845,73 @@ CREATE TABLE IF NOT EXISTS cookie_consents (
 CREATE INDEX IF NOT EXISTS idx_cookie_consents_user ON cookie_consents (user_id, created_at);
 
 -- -----------------------------------------------------------------------------
+-- Seasons and the season pass (src/seasons; docs/04-game-rules.md "Seasons")
+-- -----------------------------------------------------------------------------
+-- A season (the Holiday Season 2026: 'holiday-2026') has its dates and its pass. Its tracks
+-- (tracks.season_key) can be raced only by pass holders (and in friend rooms a holder hosts)
+-- from starts_at until free_from; from free_from they are free for everyone. Before starts_at
+-- nobody races them. featured: the Track of the Day, { "YYYY-MM-DD": "track-slug" } by the
+-- season's own calendar day (time_zone); on it pass holders get featured_bonus × the race's
+-- coins on their full-pay races (coin ledger kind 'featured-bonus', never counted on the
+-- scoreboards). Everything follows the dates, so nothing is deployed on any day of a season.
+-- The pass is bought with real money only (never coins), between pass_sale_starts_at and
+-- pass_sale_ends_at, and is one row in payments (payments.season_key) like a coin pack.
+CREATE TABLE IF NOT EXISTS seasons (
+    key                  varchar(32)  PRIMARY KEY CHECK (key ~ '^[a-z0-9-]+$'),
+    name                 varchar(80)  NOT NULL,
+    starts_at            timestamptz  NOT NULL,
+    ends_at              timestamptz  NOT NULL,
+    free_from            timestamptz  NOT NULL,
+    time_zone            varchar(40)  NOT NULL DEFAULT 'Europe/Stockholm',
+    pass_product_id      varchar(32)  UNIQUE,
+    pass_name            varchar(80),
+    price_cents          integer      CHECK (price_cents > 0),
+    currency             char(3)      NOT NULL DEFAULT 'usd',
+    pass_sale_starts_at  timestamptz,
+    pass_sale_ends_at    timestamptz,
+    featured             jsonb        NOT NULL DEFAULT '{}'::jsonb CHECK (jsonb_typeof(featured) = 'object'),
+    featured_bonus       numeric(4,2) NOT NULL DEFAULT 0.5 CHECK (featured_bonus >= 0 AND featured_bonus <= 1),
+    created_at           timestamptz  NOT NULL DEFAULT now(),
+    CHECK (ends_at > starts_at AND free_from >= starts_at)
+);
+
+-- A player's pass for a season: granted when its payment is paid (once), revoked by a full
+-- refund or a chargeback (revoked_at, with the reason; the audit log has the details). One live
+-- pass per player and season.
+CREATE TABLE IF NOT EXISTS season_passes (
+    id              uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id         uuid        NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    season_key      varchar(32) NOT NULL REFERENCES seasons(key),
+    payment_id      uuid        REFERENCES payments(id) ON DELETE SET NULL,
+    provider        varchar(16) NOT NULL,
+    granted_at      timestamptz NOT NULL DEFAULT now(),
+    revoked_at      timestamptz,
+    revoke_reason   text
+);
+CREATE UNIQUE INDEX IF NOT EXISTS uq_season_passes_live ON season_passes (user_id, season_key) WHERE revoked_at IS NULL;
+CREATE INDEX IF NOT EXISTS idx_season_passes_payment ON season_passes (payment_id);
+
+-- Badges on a player's profile (e.g. 'holiday-2026-top-100' with the final rank).
+CREATE TABLE IF NOT EXISTS user_badges (
+    user_id         uuid        NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    badge_key       varchar(48) NOT NULL,
+    rank            integer     CHECK (rank > 0),
+    awarded_at      timestamptz NOT NULL DEFAULT now(),
+    PRIMARY KEY (user_id, badge_key)
+);
+
+-- A season's tracks; NULL = an ordinary track, free for everyone.
+ALTER TABLE tracks ADD COLUMN IF NOT EXISTS season_key varchar(32) REFERENCES seasons(key);
+CREATE INDEX IF NOT EXISTS idx_tracks_season ON tracks (season_key) WHERE season_key IS NOT NULL;
+-- A season pass's payment (no coins: data update 2027-02-16-season-pass lets coins be 0 for one).
+ALTER TABLE payments ADD COLUMN IF NOT EXISTS season_key varchar(32) REFERENCES seasons(key);
+-- When a store purchase that is kept (a season pass) was acknowledged at Google (never consumed).
+ALTER TABLE payments ADD COLUMN IF NOT EXISTS store_acknowledged_at timestamptz;
+-- The Track of the Day bonus a pass holder got on a race (its own ledger line; kept out of
+-- coins_awarded, which the scoreboards and stats read).
+ALTER TABLE race_entries ADD COLUMN IF NOT EXISTS bonus_coins integer NOT NULL DEFAULT 0 CHECK (bonus_coins >= 0);
+
+-- -----------------------------------------------------------------------------
 -- Seed data (idempotent)
 -- -----------------------------------------------------------------------------
 -- The catalog is staged in temporary tables (dropped when the transaction ends)

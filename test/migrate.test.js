@@ -9,7 +9,7 @@ const schema = fs.readFileSync(SCHEMA_PATH, 'utf8');
 
 test('reads every table and its columns from the schema file', () => {
   const cols = expectedColumns(schema);
-  assert.deepEqual(Object.keys(cols).sort(), ['admin_2fa', 'admin_audit', 'admin_sessions', 'billboards', 'coin_ledger', 'collection_counters', 'cookie_consents', 'data_updates', 'email_consents', 'house_looks', 'marble_appearances', 'marble_colors', 'marble_effects', 'marble_surfaces', 'marbles', 'password_resets', 'payment_refunds', 'payments', 'race_entries', 'race_entry_looks', 'race_replays', 'races', 'rooms', 'security_events', 'stripe_events', 'support_messages', 'support_replies', 'tracks', 'user_collection', 'user_days', 'user_marbles', 'user_shooter', 'users']);
+  assert.deepEqual(Object.keys(cols).sort(), ['admin_2fa', 'admin_audit', 'admin_sessions', 'billboards', 'coin_ledger', 'collection_counters', 'cookie_consents', 'data_updates', 'email_consents', 'house_looks', 'marble_appearances', 'marble_colors', 'marble_effects', 'marble_surfaces', 'marbles', 'password_resets', 'payment_refunds', 'payments', 'race_entries', 'race_entry_looks', 'race_replays', 'races', 'rooms', 'season_passes', 'seasons', 'security_events', 'stripe_events', 'support_messages', 'support_replies', 'tracks', 'user_badges', 'user_collection', 'user_days', 'user_marbles', 'user_shooter', 'users']);
   assert.ok(cols.tracks.includes('physics'));
   assert.deepEqual(cols.billboards, ['id', 'track_slug', 'slot', 'image_url', 'kind', 'note', 'starts_at', 'ends_at', 'created_at']);
   assert.ok(cols.race_replays.includes('data'));
@@ -19,6 +19,9 @@ test('reads every table and its columns from the schema file', () => {
   for (const c of ['order_no', 'consent_at', 'payment_intent', 'charged_cents', 'refunded_cents', 'receipt_url']) assert.ok(cols.payments.includes(c), c);
   assert.deepEqual(cols.rooms, ['id', 'code', 'host_id', 'track_id', 'current_race_id', 'status', 'created_at', 'last_active_at']);
   assert.ok(cols.race_entries.includes('split_time_ms'));
+  assert.ok(cols.tracks.includes('season_key'));
+  assert.ok(cols.payments.includes('season_key'));
+  assert.deepEqual(cols.season_passes, ['id', 'user_id', 'season_key', 'payment_id', 'provider', 'granted_at', 'revoked_at', 'revoke_reason']);
   // Table-level constraints and their continuation lines are not columns.
   for (const list of Object.values(cols)) {
     for (const c of ['constraint', 'primary', 'min_marbles BETWEEN']) assert.ok(!list.includes(c));
