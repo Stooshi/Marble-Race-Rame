@@ -492,6 +492,12 @@ as a coaster (everything above applies), like a canyon (looks only, like everyth
   checks every Track and Field track's texts); real place names only.
 - The layouts made for the series are the ten `(track and field)` rows above; each has a test track
   built as a stadium (`series: 'athletics'`).
+- **The ten tracks** (all added switched off, data updates `2027-02-05-…` to `2027-02-15-…`), each on
+  its own layout and opening: Marble Stadium Sprint (classic, horseshoe sprint), Berlin Blue Lanes
+  (staggered drop, blue lanes), Bislett Mile (pipe drop, bell lap), Eugene Hurdles (peg drop, hurdles
+  straight), Beijing Nest 200 (clean drop, nest bend), Tokyo Photo Finish (pipe drop, photo finish),
+  Stockholm 1912 Relay (split start, relay legs), London Steeplechase (peg drop, steeple water), Coliseum
+  Anchor Leg (clean drop, anchor arches), Zurich Golden Lap (tunnel launch, golden lap).
 
 ## TV moments
 

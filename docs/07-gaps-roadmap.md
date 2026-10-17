@@ -1,6 +1,6 @@
 # 7. Known gaps and roadmap
 
-*Last updated 16 Oct 2026.* What isn't built, isn't finished, or is a known weakness. The launch target is **1 December 2026** (web, iPhone and Android). When something here is fixed, remove it and note the change in the [decisions log](06-decisions.md) if it was a decision.
+*Last updated 17 Oct 2026.* What isn't built, isn't finished, or is a known weakness. The launch target is **1 December 2026** (web, iPhone and Android). When something here is fixed, remove it and note the change in the [decisions log](06-decisions.md) if it was a decision.
 
 ## Must fix before launch
 
@@ -29,6 +29,7 @@
 - **Custom marble labels.** The column exists, but a word filter is needed first.
 - **Subscriptions and season pass** (later).
 - **Automated social posting** of race clips, approved by Moses.
+- **Track and Field (10 tracks): waiting for Moses's review.** All built and passing their full reports, added **switched off** (`docs/data_updates/2027-02-05-…` to `2027-02-15-…`): Marble Stadium Sprint, Berlin Blue Lanes, Bislett Mile, Eugene Hurdles, Beijing Nest 200, Tokyo Photo Finish, Stockholm 1912 Relay, London Steeplechase, Coliseum Anchor Leg, Zurich Golden Lap. Results and preview links: the project doc `claude/track-and-field-plan.md`. To switch them on: a data update setting `is_active` for the ten slugs; the landing page's Track and Field card then appears by itself.
 - **Block Series: waiting for Moses's review.** All 10 tracks are built and pass their full reports, added **switched off** (`docs/data_updates/2027-01-16-…` to `2027-01-25-…`).
 - **Canyon and Block tracks 11–15 (ten tracks): waiting for Moses's review.** Built 16–17 Oct 2026, each passing its full report, added **switched off**: Antelope Slot Spins, Verdon Burst, Tiger Leaping Spins, Wadi Mujib Burst, Waimea Free Fall (`2027-01-26-…` to `2027-01-30-…`) and Sky Islands, Voxel Harbor, Sunstone Temple, Chain Reaction, Bonus Round (`2027-01-31-…` to `2027-02-04-…`). Switching on: a data update setting `is_active` for the slugs. Details and preview links: the project docs `claude/canyon-series-plan.md` and `claude/block-series-plan.md`. To switch them on: review the preview links and the track pictures (`/preview/banners`), then a data update setting `is_active` for the ten slugs. The landing page's Blocks card appears by itself once they are live. The Canyon Series (10 tracks) is live. The landing page and the Help Centre count tracks and series from the live track list; a new series needs its card in `SERIES` in `client/src/site/landing/LandingPage.jsx` (marked `true` to stay hidden until it has live tracks).
 - **Race sound effects** (rolling, clacks), on hold.
