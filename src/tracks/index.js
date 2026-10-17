@@ -84,4 +84,5 @@ module.exports = [
   require('./chain-reaction'),
   require('./bonus-round'),
   require('./marble-stadium-sprint'),
+  require('./berlin-blue-lanes'),
 ];

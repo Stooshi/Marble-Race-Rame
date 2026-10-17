@@ -68,6 +68,17 @@
    "side": 1,
    "marbles": 4
   },
+  "berlin-blue-lanes": {
+   "name": "Berlin Blue Lanes",
+   "series": "Track and Field",
+   "lighting": "day",
+   "v": "30e5a6b8",
+   "bytes": 20376,
+   "bytes2x": 53812,
+   "t": 10104,
+   "side": 1,
+   "marbles": 4
+  },
   "block-fortress": {
    "name": "Block Fortress",
    "series": "Blocks",
