@@ -497,6 +497,17 @@
    "side": 1,
    "marbles": 1
   },
+  "marble-stadium-sprint": {
+   "name": "Marble Stadium Sprint",
+   "series": "Track and Field",
+   "lighting": "day",
+   "v": "9ba1d46d",
+   "bytes": 36458,
+   "bytes2x": 96612,
+   "t": 16000,
+   "side": 1,
+   "marbles": 1
+  },
   "meadow-loop": {
    "name": "Meadow Loop",
    "series": "Classic",

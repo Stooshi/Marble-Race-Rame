@@ -83,4 +83,5 @@ module.exports = [
   require('./sunstone-temple'),
   require('./chain-reaction'),
   require('./bonus-round'),
+  require('./marble-stadium-sprint'),
 ];

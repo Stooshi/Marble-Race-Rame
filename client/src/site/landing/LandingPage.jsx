@@ -20,6 +20,7 @@ const SERIES = [
   ['Coasters', 'high on steel rails', 'linear-gradient(150deg,#F2A541,#3A6B8C)', 'hong-kong-crossing'],
   ['Canyons', 'through real canyons', 'linear-gradient(150deg,#D9773A,#5A2E1E)', 'grand-canyon-burst'],
   ['Blocks', 'worlds built of blocks', 'linear-gradient(150deg,#5B7FB8,#7FAE5F)', 'spawn-point', true],
+  ['Track and Field', 'through famous stadiums', 'linear-gradient(150deg,#B9493A,#2F5D9A)', 'marble-stadium-sprint', true],
   ['Pinball', 'bumpers and flippers', 'linear-gradient(150deg,#3A1E6B,#FF3FA8)', 'flipper-spins'],
   ['Arcade', 'neon and pixels', 'linear-gradient(150deg,#0A0A12,#3FD8FF)', 'checkpoint-rush'],
 ];

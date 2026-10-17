@@ -684,6 +684,7 @@ const HIDDEN_KIT_TRACKS = [
   ['sunstone-temple', '2027-02-02-add-sunstone-temple.sql', 'Sunstone Temple, Block Series track 13: a desert temple of sand-coloured cubes, through a tunnel into its halls, past colonnades, down two long flights of stairs round the courtyard, past the golden sun disc and out through the temple gate.'],
   ['chain-reaction', '2027-02-03-add-chain-reaction.sql', 'Chain Reaction, Block Series track 14: a plain of coloured blocks at night, where long walls of block rows clear in a cascade as the pack passes, each wall setting off the next.'],
   ['bonus-round', '2027-02-04-add-bonus-round.sql', 'Bonus Round, Block Series track 15: a stage world of blocks at night, under checkpoint arches that flash as the leader passes, beside a score wall that fills with lit blocks, round a spin and a long last sweep to a bright final stage.'],
+  ['marble-stadium-sprint', '2027-02-05-add-marble-stadium-sprint.sql', 'Marble Stadium Sprint, Track and Field track 1: through the white marble stadium in Athens, in at its open end, down the home straight, round the hairpin at the marble end and back up the far straight.'],
 ];
 for (const [slug, file, note] of HIDDEN_KIT_TRACKS) {
   test(`${slug} is added by its data update, switched off, exactly as its track file builds it`, () => {

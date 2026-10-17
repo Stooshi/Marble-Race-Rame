@@ -41,5 +41,9 @@
  "chain-reaction": {
   "t": 17000,
   "side": 1
+ },
+ "marble-stadium-sprint": {
+  "t": 16000,
+  "side": 1
  }
 }
