@@ -7,7 +7,7 @@
  * Phone budget: three instanced meshes (paddles, their edges, blocks behind) plus a frame.
  */
 import {
-  BoxGeometry, Color, Group, IcosahedronGeometry, InstancedMesh, Matrix4, Mesh, MeshBasicMaterial, MeshLambertMaterial, Quaternion, Vector3, DynamicDrawUsage,
+  BoxGeometry, Color, Float32BufferAttribute, Group, IcosahedronGeometry, InstancedMesh, Matrix4, Mesh, MeshBasicMaterial, MeshLambertMaterial, Quaternion, Vector3, DynamicDrawUsage,
 } from 'three';
 import { layoutMarbles, MARBLE_RADIUS } from './marbles';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
@@ -69,6 +69,29 @@ export function gatePlaces(centerline, frame0, lanes, channel) {
   });
 }
 
+/** A starting block (Track and Field): a low grey rail along the track, two pedals tilted back, in their own colours. */
+function startingBlock() {
+  const part = (w, h, d, x, y, z, tilt, colour) => {
+    const g = new BoxGeometry(w, h, d);
+    g.rotateX(tilt);
+    g.translate(x, y, z);
+    const c = new Color(colour);
+    const n = g.getAttribute('position').count;
+    const col = new Float32Array(n * 3);
+    for (let k = 0; k < n; k += 1) { col[k * 3] = c.r; col[k * 3 + 1] = c.g; col[k * 3 + 2] = c.b; }
+    g.setAttribute('color', new Float32BufferAttribute(col, 3));
+    g.deleteAttribute('uv');
+    return g.index ? g.toNonIndexed() : g;
+  };
+  return mergeGeometries([
+    part(0.14, 0.08, 0.95, 0, -0.2, -0.1, 0, '#4a4f57'),
+    part(0.36, 0.26, 0.06, -0.14, -0.08, 0.12, -0.7, '#2f5d9a'),
+    part(0.36, 0.3, 0.06, 0.14, -0.06, -0.28, -0.7, '#2f5d9a'),
+    part(0.06, 0.12, 0.06, -0.14, -0.17, 0.12, 0, '#4a4f57'),
+    part(0.06, 0.14, 0.06, 0.14, -0.16, -0.28, 0, '#4a4f57'),
+  ]);
+}
+
 export class StartGate {
   /**
    * @param places from gatePlaces
@@ -79,7 +102,7 @@ export class StartGate {
    *   marble, its door swinging open sideways) or 'barrier' (one striped bar across the row, tilting up).
    *   Drawing only: each lets its marbles go exactly when the paddles would.
    */
-  constructor(places, releaseMs, { lights = false, style = 'paddle' } = {}) {
+  constructor(places, releaseMs, { lights = false, style = 'paddle', athletics = false } = {}) {
     this.places = places;
     this.releaseMs = releaseMs;
     this.lit = lights;
@@ -93,7 +116,8 @@ export class StartGate {
     // (A trapdoor flap and a stall door turn about one edge: their boxes are moved so that edge is at the origin.)
     if (this.style === 'trapdoor') { this.paddleGeo.translate(0, ph / 2, 0); this.edgeGeo.translate(0, ph / 2, 0); }
     if (this.style === 'stalls') { this.paddleGeo.translate(pw / 2, ph / 2, 0); this.edgeGeo.translate(pw / 2, ph / 2, 0); }
-    this.blockGeo = new BoxGeometry(PADDLE.width, 0.5, 0.5);
+    // (Track and Field: real starting blocks behind each marble, a grey rail with two angled pedals.)
+    this.blockGeo = athletics ? startingBlock() : new BoxGeometry(PADDLE.width, 0.5, 0.5);
     // The white parts glow a touch, so they stay white even facing away from the sun.
     const glow = { paddle: '#8a96a2', frame: '#8a96a2' };
     const look = { ...GATE_COLORS, ...(this.style === 'paddle' ? {} : { paddle: GATE_STYLES[this.style].paddle, edge: GATE_STYLES[this.style].edge, frame: GATE_STYLES[this.style].frame }) };
@@ -111,7 +135,7 @@ export class StartGate {
     this.edges = new InstancedMesh(this.edgeGeo, this.mats.edge, places.length);
     this.edges.instanceMatrix.setUsage(DynamicDrawUsage);
     this.edges.frustumCulled = false;
-    const blocks = new InstancedMesh(this.blockGeo, this.mats.block, places.length);
+    const blocks = new InstancedMesh(this.blockGeo, athletics ? new MeshLambertMaterial({ vertexColors: true, flatShading: true }) : this.mats.block, places.length);
     this.m = new Matrix4();
     this.q = new Quaternion();
     this.v = new Vector3();

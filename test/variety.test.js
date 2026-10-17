@@ -164,6 +164,46 @@ test('Block Series: built as coasters on the voxel land unless a section flies, 
   for (const k of ['spawn-meadow', 'speedrun-straights', 'peak-beams', 'mine-shaft', 'magma-loops', 'clear-rows', 'combo-steps', 'stack-spiral', 'fortress-gate', 'final-level']) assert.ok(kit.LAYOUT_KINDS.includes(k), k);
 });
 
+test('Track and Field: built as coasters on the ground unless a section flies, a stadium by name round its stadium sections, on tartan', () => {
+  const stadium = (o = {}) => spec({
+    family: 'athletics', surface: 'tartan', athletics: { stadium: 'bislett' }, start: { ...START, type: 'elevator' },
+    sections: layout('horseshoe-sprint', { dress: { homeStraight: { stadium: true }, hairpin: { stadium: true } } }), ...o,
+  });
+  const t = track(stadium());
+  assert.equal(t.variety.family, 'athletics');
+  assert.deepEqual(t.physics.kit.athletics, { lanes: 'red', stadium: 'bislett' });
+  assert.equal(t.physics.kit.coaster.height, 0, 'on the ground where a section does not say');
+  assert.equal(t.physics.look, 'tartan', 'the tartan is a look: it races like ice');
+  assert.deepEqual(t.physics.kit.sections.filter((x) => x.stadium).map((x) => x.name), ['Home straight', 'Hairpin']);
+  assert.equal(track(stadium({ coaster: { style: 'concrete' } })).physics.kit.coaster.style, 'concrete');
+  assert.throws(() => track(stadium({ athletics: undefined })), /a Track and Field track says its stadium/);
+  assert.throws(() => track(stadium({ athletics: { stadium: 'wembley' } })), /unknown stadium "wembley"/);
+  assert.throws(() => track(stadium({ athletics: { stadium: 'bislett', lanes: 'green' } })), /lanes are red or blue/);
+  assert.throws(() => track(stadium({ surface: 'ice' })), /runs on tartan/);
+  assert.throws(() => track(stadium({ sections: layout('horseshoe-sprint') })), /runs inside its stadium/);
+  assert.throws(() => track(stadium({ sections: layout('horseshoe-sprint', { dress: { homeStraight: { stadium: true, height: 12 } } }) })), /inside the stadium the track runs on its ground/);
+  assert.throws(() => track(spec({ athletics: { stadium: 'bislett' } })), /athletics settings are for Track and Field/);
+  assert.throws(() => track(spec({ sections: layout('horseshoe-sprint', { dress: { homeStraight: { stadium: true } } }) })), /stadium is for Track and Field/);
+  // The layouts are on the list.
+  for (const k of ['horseshoe-sprint', 'blue-lanes', 'bell-lap', 'hurdles-straight', 'nest-bend', 'photo-finish', 'relay-legs', 'steeple-water', 'anchor-arches', 'golden-lap']) assert.ok(kit.LAYOUT_KINDS.includes(k), k);
+});
+
+test('Track and Field never uses a protected name: no games, rings, torch, league, federation or sponsor in any of its tracks', () => {
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const BANNED = /olymp|five rings|diamond league|world athletics|\biaaf\b|\bioc\b|\bnike\b|\badidas\b|\bpuma\b|\bomega\b|\bseiko\b|wanda|\btorch\b/i;
+  const mine = PHYSICS_TRACKS.filter((t) => t.variety?.family === 'athletics');
+  for (const t of mine) {
+    const text = JSON.stringify({ name: t.name, description: t.description, designChanges: t.designChanges, kit: t.physics.kit });
+    assert.doesNotMatch(text, BANNED, t.slug);
+    assert.doesNotMatch(fs.readFileSync(path.join(__dirname, '../src/tracks', `${t.slug}.js`), 'utf8'), BANNED, `${t.slug}.js`);
+  }
+  for (const f of ['client/src/three/scenery/athletics.js', 'client/src/three/scenery/kitLandmarksAthletics.js']) {
+    const code = fs.readFileSync(path.join(__dirname, '..', f), 'utf8').replace(/no torch design of any games|no torch designs? of any games|no rings, no torch designs/gi, '');
+    assert.doesNotMatch(code, /olymp|diamond league|world athletics/i, f);
+  }
+});
+
 test('a track may retune a layout splitter (balance, added pegs), mirrored with the layout, and nothing else of its shape', () => {
   const plain = kit.layout('climb-drop').find((s) => s.layoutKey === 'splitter').shape.fork;
   const tuned = kit.layout('climb-drop', { dress: { splitter: { balance: { tipOffset: -1.1, left: { scrub: 3.8 } } } } }).find((s) => s.layoutKey === 'splitter').shape.fork;

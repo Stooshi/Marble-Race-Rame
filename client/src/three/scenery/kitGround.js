@@ -124,7 +124,9 @@ export function buildKitGround(centerline, track, { lite = false } = {}) {
   const blockWorld = kit.block ? BLOCK_WORLDS[kit.block.world] ?? BLOCK_WORLDS.meadow : null;
   const biome = blockWorld
     ? { ...BIOMES.meadow, terrain: { sand: blockWorld.tops[0], grass: blockWorld.tops[0], dry: blockWorld.tops[1], shade: blockWorld.riser }, bank: blockWorld.bank, fill: blockWorld.fill, hills: blockWorld.hills }
-    : BIOMES[biomeOf(kit)];
+    // Track and Field: a city park round the stadium, mown grass on gentle land (low hills: the stands stand level).
+    : kit.athletics ? { ...BIOMES.meadow, terrain: { sand: '#c9c3aa', grass: '#7cab55', dry: '#8ab45e', shade: '#679548' }, bank: '#78a752', fill: '#6f9b4c', hills: 8 } // (its embankments grassed over, as a park's)
+      : BIOMES[biomeOf(kit)];
   const lanes = Math.max(1, Number(track.lane_count) || 4);
   const hug = channelGround(centerline, track, { rim: RIM_WIDTH, dip: lite ? 6 : 3, under: lite ? 4 : 2 });
   const { channel } = hug;

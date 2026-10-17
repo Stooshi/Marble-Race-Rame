@@ -31,7 +31,7 @@ const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', '
 const shortDate = (iso) => { const [, m, d] = iso.split('-').map(Number); return `${d} ${MONTHS[m - 1]}`; };
 
 /** The series as the draft names them, in its order (the live track list decides which exist). */
-export const SERIES_ORDER = ['Grand Prix', 'World Tour', 'Coasters', 'Pinball', 'Arcade', 'Canyons', 'Blocks'];
+export const SERIES_ORDER = ['Grand Prix', 'World Tour', 'Coasters', 'Pinball', 'Arcade', 'Canyons', 'Blocks', 'Track and Field'];
 const DRAFT_TRACKS = 50;
 const DRAFT_SERIES = SERIES_ORDER.slice(0, 5);
 

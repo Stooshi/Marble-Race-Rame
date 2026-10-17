@@ -405,9 +405,13 @@ export function buildTrackFeatures(centerline, channel, features, { lite = false
       // (On a sand channel, Table Mountain Run's, they are rough strips of red-brown gravel instead.)
       // (The Selarón Steps, look 'mosaic': tiles in red, yellow, blue and green.)
       const sand = channel.look === 'sand';
+      // (On tartan, Track and Field's: strips of darker, rougher rubber.)
+      const tartan = channel.look === 'tartan' || channel.look === 'tartan-blue';
       const shades = (f.look === 'mosaic' ? ['#d8312a', '#f2c230', '#2f6fd0', '#2f9a4a', '#f2efe8']
-        : sand ? ['#9c6b45', '#b07b50', '#8a5c3a', '#c08a5c'] : ['#a8a39b', '#bdb6ac', '#97928b', '#c7c0b4']).map((c) => new Color(c));
-      const grout = new Color(sand ? '#5e3e27' : '#3e3b38');
+        : sand ? ['#9c6b45', '#b07b50', '#8a5c3a', '#c08a5c']
+          : tartan ? (channel.look === 'tartan-blue' ? ['#244f84', '#20487a', '#2a5890', '#1d426f'] : ['#8d3b30', '#7f342a', '#9a4235', '#86372d'])
+            : ['#a8a39b', '#bdb6ac', '#97928b', '#c7c0b4']).map((c) => new Color(c));
+      const grout = new Color(sand ? '#5e3e27' : tartan ? '#4a1f1a' : '#3e3b38');
       const quad = (a0, a1, u0, u1, lift, color) => {
         const corners = [[a0, u0], [a0, u1], [a1, u1], [a1, u0]].map(([at, u]) => surface(at, -lip + 2 * lip * u, lift).point);
         for (const k of [0, 1, 2, 0, 2, 3]) {
@@ -456,6 +460,26 @@ export function buildTrackFeatures(centerline, channel, features, { lite = false
           for (const k of [0, 1, 2, 0, 2, 3]) { pos.push(corners[k].x, corners[k].y, corners[k].z); col.push(color.r, color.g, color.b); }
         }
       };
+      if (f.look === 'exchange-zone') {
+        // A relay's exchange zone (Track and Field): yellow lines across the lanes where it starts and
+        // ends, and a yellow triangle in each lane at its start, pointing the way the race runs.
+        const yellow = new Color('#f2c230');
+        const edges = [-1, -0.75, -0.5, -0.25, 0, 0.25, 0.5, 0.75, 1];
+        for (const m of [0, len]) quad(Math.max(0, m - 0.09), Math.min(len, m + 0.09) + (m === 0 ? 0.09 : 0), -0.92, 0.92, 0.022, yellow);
+        for (let k = 0; k < 8; k += 1) {
+          const c = ((edges[k] + edges[k + 1]) / 2) * 0.92;
+          for (let j = 0; j < 4; j += 1) {
+            const w = 0.075 * (1 - j / 4);
+            quad(0.5 + j * 0.3, 0.8 + j * 0.3, c - w, c + w, 0.022, yellow);
+          }
+        }
+        const g = new BufferGeometry();
+        g.setAttribute('position', new Float32BufferAttribute(pos, 3));
+        g.setAttribute('color', new Float32BufferAttribute(col, 3));
+        g.computeVertexNormals();
+        add('cobbles', g, new Matrix4());
+        continue;
+      }
       const go = f.look !== 'xiangqi';
       const wood = new Color(go ? '#d9b37a' : '#e8c890');
       const ink = new Color('#2a2420');

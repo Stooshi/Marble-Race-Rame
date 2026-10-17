@@ -18,7 +18,7 @@ const LANDSCAPE = {
   alpine: 'Snow and ice', arctic: 'Snow and ice', city: 'City', jungle: 'Jungle', desert: 'Desert', meadow: 'Countryside',
   playfield: 'Pinball table', 'circuit-board': 'Arcade', 'blacklight-carpet': 'Arcade',
 };
-const SERIES_ORDER = ['World Tour', 'Grand Prix', 'Coasters', 'Canyons', 'Blocks', 'Pinball', 'Arcade', 'Classic'];
+const SERIES_ORDER = ['World Tour', 'Grand Prix', 'Coasters', 'Canyons', 'Blocks', 'Track and Field', 'Pinball', 'Arcade', 'Classic'];
 
 function Steps({ at, track, shooter }) {
   const [search] = useSearchParams();

@@ -227,7 +227,7 @@ function rumble({ from = 0.2, to = 0.85, count = 5 } = {}) {
 }
 
 /**
- * Paint on the floor, looks only (the physics never sees it): a Go board ('go-board') or a
+ * Paint on the floor, looks only (the physics never sees it): relay exchange zones ('exchange-zone'), a Go board ('go-board') or a
  * Xiangqi board ('xiangqi') over the stretch from `from` to `to` (China Wall Twister's board-game run).
  */
 function paint({ from = 0.1, to = 0.9, look = 'go-board' } = {}) {
@@ -247,7 +247,7 @@ module.exports = {
   TUNNELS: ['mine', 'ice-cave', 'dragon', 'rock', 'roots', 'bazaar', 'canyon', 'mosaic', 'pyramid', 'sea-cave', 'lit-tunnel', 'redwood-trunk', 'city-wall', 'subway'],
   BRIDGES: ['ice', 'stone', 'wood', 'steel'],
   // Scenery names (looks only; the 3D view draws them, client/src/three/scenery/kit*.js).
-  SURFACES: ['ice', 'snow', 'sand', 'stone', 'water', 'asphalt'],
+  SURFACES: ['ice', 'snow', 'sand', 'stone', 'water', 'asphalt', 'tartan', 'tartan-blue'],
   BIOMES: ['alpine', 'arctic', 'meadow', 'desert', 'jungle', 'city', 'playfield', 'circuit-board', 'blacklight-carpet'],
   LANDMARKS: ['church', 'mountain-hut', 'big-rock', 'lighthouse', 'horse-sleigh', 'border-post',
     'lift-station', 'mine-buildings', 'snow-park', 'base-camp',
@@ -295,20 +295,27 @@ module.exports = {
     'clear-rows', 'block-well', 'combo-rows', 'settling-stack', 'block-hall', 'voxel-castle', 'drawbridge', 'block-gate',
     'block-portal', 'gg-arch', 'level-pillars',
     'floating-island', 'big-floating-island', 'island-house', 'island-garden', 'cube-crane', 'container-stack', 'block-boats', 'harbour-office', 'block-lighthouse',
-    'sun-temple', 'temple-colonnade', 'sun-disc', 'temple-gate', 'chain-wall', 'score-wall', 'checkpoint-arch', 'final-stage'],
+    'sun-temple', 'temple-colonnade', 'sun-disc', 'temple-gate', 'chain-wall', 'score-wall', 'checkpoint-arch', 'final-stage',
+    // Track and Field (generic stadium architecture; no protected names, rings, torch designs or sponsors).
+    'athletes-village', 'herm-gateway', 'stone-colonnade', 'stadium-bell-tower', 'warm-up-track', 'timber-stand',
+    'woven-lattice', 'wooden-eaves', 'brick-tower', 'relay-batons', 'steeple-pit', 'peristyle-arches', 'flame-cauldron',
+    'golden-arch', 'floodlight-mast', 'field-events', 'medal-podium'],
   OVERHEAD: ['gondola', 'cable-car', 'chairlift', 'vulture',
     // The Canyon Series: birds circling over the gorge, and what spans it from rim to rim, high over the track.
     'condor', 'prayer-flags', 'arch-bridge', 'railway-trestle', 'suspension-bridge'],
   // A Block Series world (family 'block': `block: { world }`): its voxel land's colours and what stands
   // on it, the client's BLOCK_WORLDS (client/src/three/scenery/blocks.js).
   BLOCK_WORLDS: ['meadow', 'valley', 'snow', 'mine', 'magma', 'puzzle', 'fortress', 'portal', 'sky', 'harbour', 'temple', 'bonus'],
+  // A Track and Field stadium (family 'athletics': `athletics: { stadium }`): its generic architecture, the
+  // client's STADIUMS (client/src/three/scenery/athletics.js).
+  STADIUMS: ['panathenaic', 'berlin-1936', 'bislett', 'hayward', 'nest', 'tokyo', 'stockholm-1912', 'london', 'coliseum', 'letzigrund'],
   // A canyon's rock and river (family 'canyon': `canyon: { palette }`), the client's CANYON_PALETTES.
   CANYONS: ['grand-canyon', 'himalaya', 'andes', 'limestone', 'copper', 'basalt', 'karakoram', 'namib', 'slot', 'verdon', 'jinsha', 'waimea', 'mujib'],
   // What stands in the middle of a splitter, between its two channels (the arch: over one of
   // them), or in the middle of a spiral or a hairpin.
   AROUND: ['mountain-hut', 'big-rock', 'mountain-restaurant', 'mine-headframe', 'nunatak', 'bell-tower', 'arc-de-triomphe', 'obelisk', 'notre-dame', 'oasis', 'twisted-tower', 'river-island', 'anaconda', 'watchtower', 'pagoda',
     'museum-of-the-future', 'dubai-frame', 'opera-house', 'tulip-garden', 'roundabout-monument', 'acacia', 'mughal-fountain', 'giant-tree', 'snow-island', 'fallen-statue', 'volcano-rock', 'sagrada-familia', 'frozen-waterfall', 'limestone-island', 'sea-islet', 'giant-redwood', 'lantern-chedi', 'watermill', 'confucius-temple', 'castle-keep', 'magician-trunk', 'top-hat', 'jukebox-tower', 'clocktower', 'lighting-rig', 'claw-tower', 'glitch-tower', 'ringed-planet', 'laser-turret', 'water-tower', 'fork-signpost', 'neon-plaza', 'snow-peak',
-    'settling-stack', 'voxel-peak', 'basalt-spire', 'beam-tower', 'level-pillars'],
+    'settling-stack', 'voxel-peak', 'basalt-spire', 'beam-tower', 'level-pillars', 'floodlight-mast', 'flame-cauldron', 'medal-podium'],
   // Scenery near a section (or the start or finish): what grows and stands beside the track there.
   SCENERY: ['bare', 'rocks', 'birches', 'pines', 'race-netting', 'funicular', 'wooden-houses', 'frozen-lake',
     'wood-clad', 'chalets', 'pasture', 'aspens', 'shopfronts',

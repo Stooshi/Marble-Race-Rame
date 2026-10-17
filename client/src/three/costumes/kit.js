@@ -88,6 +88,8 @@ export const COSTUME_COLORS = {
   cubeStone: '#8e949b', cubeStoneDark: '#6b7179', cubeLamp: '#f4d28e', cubeGrass: '#7fae5f', cubeDirt: '#8a6a4a',
   cubeBasalt: '#3a3436', cubeMagma: '#ff8a3c', gemCyan: '#6fd6dc', blockArm: '#b99a6e',
   pieceTeal: '#4f9f9a', pieceCoral: '#d98a70', pieceSand: '#e2c47e', pieceSlate: '#5d6c8c', pieceLilac: '#9d8bbd',
+  // Track and Field: hurdles and steeplechase barriers, white with black bands, on dark steel feet.
+  hurdleWhite: '#f4f2ee', hurdleBlack: '#1f2226', hurdleSteel: '#59606a', barrierWood: '#f1eee6', cartBlue: '#2f5d9a',
 };
 
 /** A part's head (or other moving piece) as its own little group at local (x, y, z), turned with the body. */
@@ -1749,6 +1751,79 @@ function blockPieces(add, mat, group, rimCentre, q, { len, width, drop = 0 }) {
   return [];
 }
 
+
+// ── Track and Field (looks only; each the size of the obstacle it stands for) ─────────────
+
+/**
+ * A hurdle (Track and Field; a peg or a slalom gate): two steel uprights at the edges of the
+ * obstacle's footprint, a white top bar with black bands across them: exactly as wide as the
+ * footprint, so marbles glancing off the obstacle hit the hurdle.
+ */
+function hurdle(add, mat, group, point, q, { radius = 0.4 }) {
+  const half = Math.max(0.12, radius);
+  const top = 0.78;
+  for (const x of [-half + 0.03, half - 0.03]) {
+    add('hurdleSteel', new BoxGeometry(0.05, top, 0.05), local(point, q, x, top / 2, 0));
+    add('hurdleSteel', new BoxGeometry(0.05, 0.05, 0.1), local(point, q, x, 0.03, 0));
+  }
+  const bands = 5;
+  for (let k = 0; k < bands; k += 1) {
+    const w = (2 * half) / bands;
+    add(k % 2 ? 'hurdleBlack' : 'hurdleWhite', new BoxGeometry(w, 0.2, 0.05), local(point, q, -half + w * (k + 0.5), top - 0.1, 0));
+  }
+  return [];
+}
+
+/** A steeplechase barrier (Track and Field; a block): a heavy square beam on two solid trestles, white with black bands. */
+function steepleBarrier(add, mat, group, point, q, { radius = 0.75 }) {
+  const half = radius + 0.1;
+  const top = 0.95;
+  for (const x of [-half + 0.12, half - 0.12]) {
+    add('hurdleWhite', new BoxGeometry(0.2, top - 0.16, 0.5), local(point, q, x, (top - 0.16) / 2, 0));
+    add('hurdleSteel', new BoxGeometry(0.24, 0.08, 0.6), local(point, q, x, 0.04, 0));
+  }
+  const bands = 5;
+  for (let k = 0; k < bands; k += 1) {
+    const w = (2 * half) / bands;
+    add(k % 2 ? 'hurdleBlack' : 'barrierWood', new BoxGeometry(w, 0.18, 0.18), local(point, q, -half + w * (k + 0.5), top - 0.09, 0));
+  }
+  // (A solid board under the beam: the barrier blocks the line, as its obstacle does.)
+  add('barrierWood', new BoxGeometry(2 * half - 0.4, 0.42, 0.08), local(point, q, 0, 0.42, 0));
+  return [];
+}
+
+/** A steeplechase barrier on a big peg (Track and Field): the same beam and trestles, exactly as wide as the peg. */
+function steeplePeg(add, mat, group, point, q, { radius = 0.6 }) {
+  const half = Math.max(0.15, radius);
+  const top = 0.95;
+  for (const x of [-half + 0.08, half - 0.08]) {
+    add('hurdleWhite', new BoxGeometry(0.14, top - 0.16, 0.16), local(point, q, x, (top - 0.16) / 2, 0));
+    add('hurdleSteel', new BoxGeometry(0.16, 0.08, 0.2), local(point, q, x, 0.04, 0));
+  }
+  const bands = 5;
+  for (let k = 0; k < bands; k += 1) {
+    const w = (2 * half) / bands;
+    add(k % 2 ? 'hurdleBlack' : 'barrierWood', new BoxGeometry(w, 0.18, 0.16), local(point, q, -half + w * (k + 0.5), top - 0.09, 0));
+  }
+  add('barrierWood', new BoxGeometry(Math.max(0.05, 2 * half - 0.3), 0.42, 0.06), local(point, q, 0, 0.42, 0));
+  return [];
+}
+
+/** A cart of stacked hurdles parked along the wall (Track and Field; parked): a blue cart, hurdles leaning in a row. */
+function hurdleCart(add, mat, group, rimCentre, q, { len, width, drop = 0 }) {
+  const base = rimCentre.clone().add(new Vector3(-(width - 1.6) / 2, -drop, 0).applyQuaternion(q));
+  add('cartBlue', new BoxGeometry(1.4, 0.35, len * 0.96), local(base, q, 0, 0.3, 0));
+  for (const z of [-len / 2 + 0.4, len / 2 - 0.4]) for (const x of [-0.55, 0.55]) add('hurdleBlack', new BoxGeometry(0.12, 0.24, 0.24), local(base, q, x, 0.12, z));
+  const n = Math.max(3, Math.round(len / 0.45));
+  for (let k = 0; k < n; k += 1) {
+    const z = -len / 2 + 0.3 + ((len - 0.6) * k) / Math.max(1, n - 1);
+    add(k % 2 ? 'hurdleBlack' : 'hurdleWhite', new BoxGeometry(1.3, 0.16, 0.05), local(base, q, 0, 1.15, z));
+    add('hurdleSteel', new BoxGeometry(0.05, 0.7, 0.05), local(base, q, -0.6, 0.8, z));
+    add('hurdleSteel', new BoxGeometry(0.05, 0.7, 0.05), local(base, q, 0.6, 0.8, z));
+  }
+  return [];
+}
+
 export const KIT_COSTUMES = {
   panda: { places: 'block', build: panda },
   camel: { places: 'block', build: camel },
@@ -2082,6 +2157,11 @@ export const KIT_COSTUMES = {
     sink: -0.3,
     arm: { colour: 'dragonTail', shoulder: [0, 1, 0.8], radii: [0.2, 0.45], segments: 8, tip: 0.4, tipDetail: 0, tipColour: 'dragonSpine', end: 0.2, endDetail: 0, lift: 0.4, outLift: 0.4, nose: 0.25 },
   },
+  // Track and Field.
+  hurdle: { places: 'slalom', build: hurdle },
+  'steeple-barrier': { places: 'block', upright: true, build: steepleBarrier },
+  'steeple-peg': { places: 'slalom', build: steeplePeg },
+  'hurdle-cart': { places: 'parked', build: hurdleCart },
   // The Block Series.
   'cube-pillar': { places: 'slalom', build: cubePillar },
   'gem-pillar': { places: 'slalom', build: (add, mat, group, point, q, size) => cubePillar(add, mat, group, point, q, size, { tones: ['cubeStoneDark', 'cubeBasalt'], cap: 'gemCyan' }) },

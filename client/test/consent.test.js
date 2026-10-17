@@ -7,6 +7,7 @@ import { describe, expect, it } from 'vitest';
 import { CONSENT_VERSION, STORAGE_LIST, allowed, readConsent, saveConsent } from '../src/site/consent/consent';
 import { TRACKING_CONFIGURED, applyConsent, track } from '../src/site/consent/tracking';
 import { metaFor } from '../src/site/pageMeta';
+import manifest from '../src/shared/trackBanners.json';
 
 const memory = () => {
   const m = new Map();
@@ -47,6 +48,7 @@ describe('consent', () => {
     for (const f of files) for (const m of readFileSync(f, 'utf8').matchAll(/'(marble-[a-z-]+(?::[a-z-]+)?)/g)) keys.add(m[1]);
     for (const k of keys) {
       if (k === 'marble-spins-my-data') continue; // (the "Download my data" file name)
+      if (manifest.banners[k]) continue; // (a track's name, Marble Stadium Sprint's: not a stored key)
       const short = k.replace(/:.*$/, '');
       expect(names, `${k} is missing from the cookie list`).toContain(short);
     }

@@ -8,7 +8,7 @@
  * Each problem names the rule and the section, in plain words.
  */
 
-const { SHARP_RADIUS, TUNNELS, BRIDGES, SURFACES, BIOMES, LANDMARKS, OVERHEAD, FRAMES, AROUND, SCENERY, CROWDS, BARRIERS, CANYONS, BLOCK_WORLDS } = require('./parts');
+const { SHARP_RADIUS, TUNNELS, BRIDGES, SURFACES, BIOMES, LANDMARKS, OVERHEAD, FRAMES, AROUND, SCENERY, CROWDS, BARRIERS, CANYONS, BLOCK_WORLDS, STADIUMS } = require('./parts');
 
 const MIN_SPIRAL_RADIUS = 40;  // Table Mountain Run's corkscrew
 const MIN_SWEEP_RADIUS = 45;   // San Francisco's Embarcadero
@@ -19,21 +19,26 @@ const LONGEST_CLIMB_M = 40;    // San Francisco's 35 m
 const { LIGHTINGS } = require('./lighting');
 const { OPENING_KINDS } = require('./openings');
 // Track families (the sameness check compares openings within one): 'test' tracks are never compared.
-const FAMILIES = ['world-tour', 'grand-prix', 'coaster', 'pinball', 'arcade', 'canyon', 'block', 'test'];
+const FAMILIES = ['world-tour', 'grand-prix', 'coaster', 'pinball', 'arcade', 'canyon', 'block', 'athletics', 'test'];
 // A canyon: the canyon family, or a library test track built as one (series 'canyon'). It is built
 // as a coaster too (the track climbs out of the canyon on its supports and touches down on its floor).
 const isCanyon = (spec) => spec.family === 'canyon' || (spec.family === 'test' && spec.series === 'canyon');
 // A Block Series track: the block family, or a library test track built as one (series 'block'). It is
 // built as a coaster too: on the voxel land unless a section flies (on block pillars, over the cube cliffs).
 const isBlock = (spec) => spec.family === 'block' || (spec.family === 'test' && spec.series === 'block');
-// A coaster: the coaster family, or a library test track built as one (series 'coaster'), or a canyon or a Block Series track.
-const isCoaster = (spec) => spec.family === 'coaster' || (spec.family === 'test' && spec.series === 'coaster') || isCanyon(spec) || isBlock(spec);
-// (Tracks whose sections run on the ground unless they say: a canyon's floor, a Block Series world's land.)
-const onTheFloor = (spec) => isCanyon(spec) || isBlock(spec);
+// A Track and Field track: the athletics family, or a library test track built as one (series 'athletics').
+// Built as a coaster too: on the ground (in and round its stadium) unless a section flies (a ramp over the stands).
+const isAthletics = (spec) => spec.family === 'athletics' || (spec.family === 'test' && spec.series === 'athletics');
+// A coaster: the coaster family, or a library test track built as one (series 'coaster'), or a canyon, a Block Series or a Track and Field track.
+const isCoaster = (spec) => spec.family === 'coaster' || (spec.family === 'test' && spec.series === 'coaster') || isCanyon(spec) || isBlock(spec) || isAthletics(spec);
+// (Tracks whose sections run on the ground unless they say: a canyon's floor, a Block Series world's land, a stadium's ground.)
+const onTheFloor = (spec) => isCanyon(spec) || isBlock(spec) || isAthletics(spec);
+// A stadium's lanes: red tartan or blue (Berlin).
+const LANE_COLOURS = ['red', 'blue'];
 // A canyon's depth (metres from its floor to its rim), and its river's side.
 const CANYON_DEPTH = [20, 60];
 const RIVER_SIDES = ['left', 'right', 'none'];
-const COASTER_STYLES = ['steel', 'timber', 'blocks'];
+const COASTER_STYLES = ['steel', 'timber', 'blocks', 'concrete'];
 // A pinball table: the pinball family, or a library test track built as one (series 'pinball').
 const isPinball = (spec) => spec.family === 'pinball' || (spec.family === 'test' && spec.series === 'pinball');
 // A pinball table's backglass art (original art, one style per table) and its dot-matrix call-out.
@@ -187,7 +192,7 @@ function checkRecipe({ spec, sections, span, generated, owner, placed, total, wh
     known('billboard frame', FRAMES, s.billboardFrame, s.name);
     for (const lm of s.landmarks ?? []) known('landmark', LANDMARKS, lm.name, s.name);
     for (const o of s.overhead ?? []) known('lift', OVERHEAD, o, s.name);
-    for (const f of (s.features ?? []).filter((x) => x.feature === 'paint')) known('paint', ['go-board', 'xiangqi'], f.look, s.name);
+    for (const f of (s.features ?? []).filter((x) => x.feature === 'paint')) known('paint', ['go-board', 'xiangqi', 'exchange-zone'], f.look, s.name);
   });
 
   // Bends: long and flowing, at most one sharp bend, with a braking zone before it.
@@ -271,7 +276,12 @@ function checkRecipe({ spec, sections, span, generated, owner, placed, total, wh
   }
 
   // Coasters: their own rules (a lift hill, supports, touchdowns, water).
-  if (spec.series !== undefined && !(spec.family === 'test' && ['coaster', 'pinball', 'arcade', 'canyon', 'block'].includes(spec.series))) problems.push(`${where('track')}: series is for test tracks: 'coaster', 'pinball', 'arcade', 'canyon' or 'block' (a library test track built as a coaster, a pinball table, an arcade world, a canyon or a Block Series world).`);
+  if (spec.series !== undefined && !(spec.family === 'test' && ['coaster', 'pinball', 'arcade', 'canyon', 'block', 'athletics'].includes(spec.series))) problems.push(`${where('track')}: series is for test tracks: 'coaster', 'pinball', 'arcade', 'canyon', 'block' or 'athletics' (a library test track built as a coaster, a pinball table, an arcade world, a canyon, a Block Series world or a stadium).`);
+  if (isAthletics(spec)) problems.push(...athleticsRules({ spec, sections, where }));
+  else {
+    if (spec.athletics !== undefined) problems.push(`${where('track')}: athletics settings are for Track and Field (family: 'athletics').`);
+    for (const s of sections) if (s.stadium !== undefined) problems.push(`${where(s.name)}: stadium is for Track and Field (family: 'athletics').`);
+  }
   if (isBlock(spec)) problems.push(...blockRules({ spec, where }));
   else if (spec.block !== undefined) problems.push(`${where('track')}: block settings are for the Block Series (family: 'block').`);
   if (isCanyon(spec)) problems.push(...canyonRules({ spec, sections, where }));
@@ -422,4 +432,26 @@ function blockRules({ spec, where }) {
   return problems;
 }
 
-module.exports = { checkRecipe, isCanyon, isBlock, MIN_SPIRAL_RADIUS, MIN_SWEEP_RADIUS, BILLBOARDS, GRAND_PRIX_BILLBOARDS, isCoaster, isPinball, PINBALL_ART, isArcade, ARCADE_ART, START_TYPES, GATES, COUNTDOWN_SHOTS, LAUNCH_SHOTS };
+/**
+ * A Track and Field track's own rules: its stadium by name (`athletics: { stadium, lanes }`), and at
+ * least some of the track inside it (sections marked `stadium: true`), with a tartan surface.
+ */
+function athleticsRules({ spec, sections, where }) {
+  const problems = [];
+  const a = spec.athletics;
+  if (!a || typeof a !== 'object') return [`${where('track')}: a Track and Field track says its stadium: athletics: { stadium (${STADIUMS.join(', ')}), lanes (${LANE_COLOURS.join(', ')}) }.`];
+  for (const k of Object.keys(a)) if (!['stadium', 'lanes'].includes(k)) problems.push(`${where('athletics')}: unknown setting ${k} (stadium, lanes).`);
+  if (!STADIUMS.includes(a.stadium)) problems.push(`${where('athletics')}: unknown stadium ${JSON.stringify(a.stadium)} (${STADIUMS.join(', ')}).`);
+  if (a.lanes !== undefined && !LANE_COLOURS.includes(a.lanes)) problems.push(`${where('athletics')}: lanes are ${LANE_COLOURS.join(' or ')} tartan.`);
+  if (spec.family === 'athletics') {
+    if (!sections.some((s) => s.stadium === true)) problems.push(`${where('track')}: some of a Track and Field track runs inside its stadium (sections with stadium: true).`);
+    if (!['tartan', 'tartan-blue'].includes(spec.surface)) problems.push(`${where('track')}: a Track and Field track runs on tartan (surface 'tartan' or 'tartan-blue').`);
+  }
+  for (const s of sections) {
+    if (s.stadium !== undefined && s.stadium !== true) problems.push(`${where(s.name)}: stadium: true marks a section inside the stadium (or leave it out).`);
+    if (s.stadium && s.height) problems.push(`${where(s.name)}: inside the stadium the track runs on its ground (height 0, or leave it out).`);
+  }
+  return problems;
+}
+
+module.exports = { checkRecipe, isCanyon, isBlock, isAthletics, MIN_SPIRAL_RADIUS, MIN_SWEEP_RADIUS, BILLBOARDS, GRAND_PRIX_BILLBOARDS, isCoaster, isPinball, PINBALL_ART, isArcade, ARCADE_ART, START_TYPES, GATES, COUNTDOWN_SHOTS, LAUNCH_SHOTS };

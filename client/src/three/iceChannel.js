@@ -43,10 +43,22 @@ export const ASPHALT_COLORS = {
   iceA: '#45484f', iceB: '#3f4249', rim: '#f2f2ee', outer: '#9b9b97', outerDark: '#8c8c88',
   divider: '#e6e6e2', nose: '#d8322b',
 };
+/**
+ * Track and Field: the channel dressed as an athletics track, red tartan (or Berlin's blue), its
+ * white lane lines, start and finish lines drawn over it (./scenery/athletics.js). Races exactly like ice.
+ */
+export const TARTAN_COLORS = {
+  iceA: '#b9493a', iceB: '#b24434', rim: '#f4f1ea', outer: '#8d3b30', outerDark: '#7f342a',
+  divider: '#f4f1ea', nose: '#f4f1ea',
+};
+export const TARTAN_BLUE_COLORS = {
+  iceA: '#2f63a3', iceB: '#2b5c98', rim: '#f4f1ea', outer: '#284f80', outerDark: '#234673',
+  divider: '#f4f1ea', nose: '#f4f1ea',
+};
 /** Racing kerbs along the top of both walls on a Grand Prix track's bends: red and white blocks. */
 export const KERB_COLORS = { kerbA: '#d8322b', kerbB: '#f4f4f2' };
 const KERB_RADIUS = 200; // metres: a bend tighter than this gets kerbs
-const LOOK_COLORS = { ice: ICE_COLORS, sand: SAND_COLORS, snow: SNOW_COLORS, stone: STONE_COLORS, water: WATER_COLORS, asphalt: ASPHALT_COLORS };
+const LOOK_COLORS = { ice: ICE_COLORS, sand: SAND_COLORS, snow: SNOW_COLORS, stone: STONE_COLORS, water: WATER_COLORS, asphalt: ASPHALT_COLORS, tartan: TARTAN_COLORS, 'tartan-blue': TARTAN_BLUE_COLORS };
 export const CHANNEL_LOOKS = Object.keys(LOOK_COLORS);
 
 /** The colours for a channel that is not a street (ice, sand, snow, stone, water), at s metres along it. */

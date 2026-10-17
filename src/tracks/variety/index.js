@@ -18,6 +18,8 @@ const NAMES = {
   'clear-rows': 'Clear Rows', 'combo-steps': 'Combo Steps', 'stack-spiral': 'Stack Spiral', 'fortress-gate': 'Fortress Gate', 'final-level': 'Final Level',
   'slot-canyon': 'Slot Canyon', 'cliff-road': 'Cliff Road', 'rapids-gorge': 'Rapids Gorge', 'long-falls': 'Long Falls', 'siq-passage': 'Siq Passage',
   'island-hops': 'Island Hops', 'harbour-quays': 'Harbour Quays', 'temple-halls': 'Temple Halls', 'cascade-rows': 'Cascade Rows', 'bonus-stages': 'Bonus Stages',
+  'horseshoe-sprint': 'Horseshoe Sprint', 'blue-lanes': 'Blue Lanes', 'bell-lap': 'Bell Lap', 'hurdles-straight': 'Hurdles Straight', 'nest-bend': 'Nest Bend',
+  'photo-finish': 'Photo Finish', 'relay-legs': 'Relay Legs', 'steeple-water': 'Steeple Water', 'anchor-arches': 'Anchor Arches', 'golden-lap': 'Golden Lap',
 };
 
 const base = (slug, name, description) => ({
@@ -84,17 +86,33 @@ const BLOCK_HEIGHTS = {
   'cascade-rows': { brakingStraight: { height: 10 }, hairpin: { height: 10 }, spin: { height: 10 } },
   'bonus-stages': { stage2: { height: 10 }, spin: { height: 10 } },
 };
+// Layouts made for one Track and Field track are proven on a test track built as a stadium (on its ground,
+// the stadium round the sections its track runs inside it).
+const ATHLETICS_LAYOUTS = ['horseshoe-sprint', 'blue-lanes', 'bell-lap', 'hurdles-straight', 'nest-bend', 'photo-finish', 'relay-legs', 'steeple-water', 'anchor-arches', 'golden-lap'];
+const ATHLETICS_DRESS = {
+  'horseshoe-sprint': { homeStraight: { stadium: true }, hairpin: { stadium: true }, backStraight: { stadium: true } },
+  'blue-lanes': { stadiumBend: { stadium: true }, colonnade: { stadium: true } },
+  'bell-lap': { backStraight: { stadium: true }, sweep: { stadium: true } },
+  'hurdles-straight': { sweep: { stadium: true }, hurdles: { stadium: true } },
+  'nest-bend': { longBend: { stadium: true }, homeStraight: { stadium: true } },
+  'photo-finish': { longSweep: { stadium: true }, lastStraight: { stadium: true } },
+  'relay-legs': { leg1: { stadium: true }, sweep1: { stadium: true }, leg2: { stadium: true } },
+  'steeple-water': { barrier2: { stadium: true }, waterJump: { stadium: true }, sBends: { stadium: true } },
+  'anchor-arches': { sweep2: { stadium: true }, lastStraight: { stadium: true } },
+  'golden-lap': { goldenSweep: { stadium: true }, sBends: { stadium: true } },
+};
 const TOUCHDOWNS = { 'sea-crossing': { tunnelRun: { height: 0 } }, 'terrace-run': { swoops: { height: 0 } }, 'wall-dive': { tunnelRun: { height: 0 } } };
 
 const layouts = LAYOUT_KINDS.map((kind) => track({
-  ...base(`variety-layout-${kind}`, `Variety Test: ${NAMES[kind]} Layout`, `The layout library's test track for the ${NAMES[kind].toLowerCase()} layout, with the ${OWN_OPENING[kind] ? `${NAMES[[].concat(OWN_OPENING[kind])[0]].toLowerCase()} opening its table races` : 'classic opening'}${COASTER_LAYOUTS.includes(kind) ? ', built as a coaster' : CANYON_LAYOUTS.includes(kind) ? ', built as a canyon' : BLOCK_LAYOUTS.includes(kind) ? ', built as a Block Series world' : PINBALL_LAYOUTS.includes(kind) ? ', built as a pinball table' : ARCADE_LAYOUTS.includes(kind) ? ', built as an arcade world' : ''}.`),
+  ...base(`variety-layout-${kind}`, `Variety Test: ${NAMES[kind]} Layout`, `The layout library's test track for the ${NAMES[kind].toLowerCase()} layout, with the ${OWN_OPENING[kind] ? `${NAMES[[].concat(OWN_OPENING[kind])[0]].toLowerCase()} opening its table races` : 'classic opening'}${COASTER_LAYOUTS.includes(kind) ? ', built as a coaster' : CANYON_LAYOUTS.includes(kind) ? ', built as a canyon' : BLOCK_LAYOUTS.includes(kind) ? ', built as a Block Series world' : ATHLETICS_LAYOUTS.includes(kind) ? ', built as a stadium' : PINBALL_LAYOUTS.includes(kind) ? ', built as a pinball table' : ARCADE_LAYOUTS.includes(kind) ? ', built as an arcade world' : ''}.`),
   ...(COASTER_LAYOUTS.includes(kind) && { series: 'coaster', coaster: { height: 18 } }),
   ...(CANYON_LAYOUTS.includes(kind) && { series: 'canyon', biome: 'desert', canyon: { palette: 'grand-canyon' } }),
   ...(BLOCK_LAYOUTS.includes(kind) && { series: 'block', biome: 'meadow', block: { world: 'meadow' } }),
+  ...(ATHLETICS_LAYOUTS.includes(kind) && { series: 'athletics', biome: 'city', surface: 'tartan', athletics: { stadium: 'bislett' } }),
   ...(PINBALL_LAYOUTS.includes(kind) && { series: 'pinball', biome: 'playfield', lighting: 'parlour' }),
   ...(ARCADE_LAYOUTS.includes(kind) && { series: 'arcade', biome: 'circuit-board', lighting: 'neon-night', billboardFrame: 'marquee' }),
   opening: opening(...[].concat(OWN_OPENING[kind] ?? 'classic')),
-  sections: layout(kind, COASTER_LAYOUTS.includes(kind) ? { dress: { brakingStraight: { height: 0 }, ...TOUCHDOWNS[kind] } } : CANYON_LAYOUTS.includes(kind) ? { dress: CANYON_HEIGHTS[kind] } : BLOCK_LAYOUTS.includes(kind) ? { dress: BLOCK_HEIGHTS[kind] ?? {} } : {}),
+  sections: layout(kind, COASTER_LAYOUTS.includes(kind) ? { dress: { brakingStraight: { height: 0 }, ...TOUCHDOWNS[kind] } } : CANYON_LAYOUTS.includes(kind) ? { dress: CANYON_HEIGHTS[kind] } : BLOCK_LAYOUTS.includes(kind) ? { dress: BLOCK_HEIGHTS[kind] ?? {} } : ATHLETICS_LAYOUTS.includes(kind) ? { dress: ATHLETICS_DRESS[kind] } : {}),
 }));
 
 module.exports = [...openings, ...layouts];

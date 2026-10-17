@@ -122,10 +122,20 @@ module.exports = track({
   | `temple-halls` (blocks) | entryHall, brakingStraight, hairpin, stairs1 (steps), courtyard (a spiral), stairs2 (steps), sanctum, sunSweep, lastStraight |
   | `cascade-rows` (blocks) | firstSweep (deep S-bends), cascadeRun, sBends, crest (a short climb), drop, brakingStraight, hairpin, spin, lastStraight |
   | `bonus-stages` (blocks) | stage1, bonusSweep, checkpointBends, stage2, spin, brakingStraight, hairpin, finalStage, lastStraight |
+  | `horseshoe-sprint` (track and field) | approach (deep S-bends), homeStraight, hairpin, backStraight, finalSweep, spin, drop, sBends, lastStraight |
+  | `blue-lanes` (track and field) | entryBends (deep S-bends), stadiumBend (a half circle), colonnade, crest (a short climb), drop, longSweep, spin, brakingStraight, hairpin, lastStraight |
+  | `bell-lap` (track and field) | lapSpiral, backStraight, sweep, brakingStraight, hairpin, straight2, bellSpiral, sBends, lastStraight |
+  | `hurdles-straight` (track and field) | sBends, sweep, hurdles (pegs in rows), brakingStraight, hairpin, sweep2, crest, drop, spin, lastStraight |
+  | `nest-bend` (track and field) | longBend (200 degrees), homeStraight, crest, drop, sBends, brakingStraight, hairpin, sweep2, spin, lastStraight |
+  | `photo-finish` (track and field) | sBends, pegStraight, roofSpiral, sweep, brakingStraight, hairpin, drop, longSweep, lastStraight (140 m) |
+  | `relay-legs` (track and field) | leg1, sweep1, leg2, sweep2, leg3, hairpin, leg4, sweep3, spin, lastStraight (exchange zones painted on the legs) |
+  | `steeple-water` (track and field) | barrier1, sweep, barrier2, waterJump (a light brake), sBends, drop, brakingStraight, hairpin, spin, sweep2, lastStraight |
+  | `anchor-arches` (track and field) | sBends, crest, arches (a drop), sweep, spin, brakingStraight, hairpin, sweep2, lastStraight (150 m) |
+  | `golden-lap` (track and field) | sweep, drop, pegStraight, brakingStraight, hairpin, spin, goldenSweep, sBends, lastStraight |
 
   A track may still write its own sections by hand; the sameness check makes sure they differ.
 - **`family`**: `'world-tour'` (the default), `'grand-prix'` (any `grandPrix` track),
-  `'coaster'`, `'pinball'`, `'arcade'`, `'canyon'`, `'block'` or `'test'` (test tracks, never compared).
+  `'coaster'`, `'pinball'`, `'arcade'`, `'canyon'`, `'block'`, `'athletics'` or `'test'` (test tracks, never compared).
   Openings are compared within a family.
 
 ## Shapes
@@ -425,6 +435,39 @@ as a coaster (everything above applies), like a canyon (looks only, like everyth
 - The ten tracks (switched off until reviewed): Spawn Point (the proof track), Speedrun Valley,
   Voxel Peaks, Deep Mine, Magma Core, Line Clear, Combo Drop, The Stack, Block Fortress,
   Final Level.
+
+## Track and Field
+
+`family: 'athletics'` (Track and Field) races through athletics stadiums. It is built as a coaster
+(everything above applies), like the Block Series (looks only, like everything else):
+
+- **On the ground**: a section without a `height` runs on the land; a section's `height` lifts it onto
+  slim concrete columns (`coaster: { style: 'concrete' }`), a ramp that may fly over the stands.
+- **The stadium**: `athletics: { stadium, lanes }`. `stadium` is one of `panathenaic`, `berlin-1936`,
+  `bislett`, `hayward`, `nest`, `tokyo`, `stockholm-1912`, `london`, `coliseum` or `letzigrund`: generic
+  architecture only (stand colours and rise, a closed oval or a horseshoe, roof, floodlight masts, its own
+  touch: a woven steel shell, a stone colonnade, brick towers, a row of arches with a plain flame cauldron).
+  `lanes` is `red` (the default) or `blue`. Sections marked `stadium: true` (a dress key, looks only) run
+  inside it: the stands are fitted round them (client `athletics.js`), open where the track runs out
+  through them, stepped down under a ramp flying over them, and kept clear of a finish inside the stadium.
+- **The track**: `surface: 'tartan'` or `'tartan-blue'` (looks; it races like ice), with white lane lines,
+  a start line and lane numbers in front of the gate, and a finish line; the braking-zone strips are dark
+  rubber; `paint({ look: 'exchange-zone' })` marks a relay's exchange zone on the lanes.
+- **Furniture** (drawn for every Track and Field track): starting blocks at the gate; the starter on his
+  stand beside it, his gun flashing and smoking at GO; the scoreboard, whose clock runs with the race clock
+  and stops at the winner's time; the photo-finish camera at the line, flashing as the winner crosses; at
+  `letzigrund` a golden finish (gold lamps and confetti once the winner is home). All on the race clock
+  and the leader's progress, undone when a replay rewinds.
+- **Costumes**: `hurdle` (a peg or a slalom gate, drawn the size of its peg), `steeple-barrier` (a block),
+  `hurdle-cart` (parked).
+- **Landmarks** (client `kitLandmarksAthletics.js`): `athletes-village`, `herm-gateway`, `stone-colonnade`,
+  `stadium-bell-tower`, `warm-up-track`, `timber-stand`, `woven-lattice`, `wooden-eaves`, `brick-tower`,
+  `relay-batons`, `steeple-pit`, `peristyle-arches`, `flame-cauldron`, `golden-arch`, `floodlight-mast`,
+  `field-events`, `medal-podium` (the last three also stand in a spiral's or a hairpin's middle).
+- **Names**: never "Olympic", the rings, a torch design, or any league, federation or sponsor (a test
+  checks every Track and Field track's texts); real place names only.
+- The layouts made for the series are the ten `(track and field)` rows above; each has a test track
+  built as a stadium (`series: 'athletics'`).
 
 ## Mirrored tracks
 

@@ -51,6 +51,7 @@ function seriesOf(track) {
   if (kit?.arcade) return 'Arcade';
   if (kit?.canyon) return 'Canyons';
   if (kit?.block) return 'Blocks';
+  if (kit?.athletics) return 'Track and Field';
   if (kit?.coaster) return 'Coasters';
   if (kit?.grandPrix) return 'Grand Prix';
   return 'World Tour';

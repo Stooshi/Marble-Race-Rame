@@ -19,6 +19,7 @@ import { DEFAULT_THEME, themeFor } from './themes';
 import { gatePlaces, StartGate } from './startGate';
 import { countdownPose, handover, launchHandover, launchPose, startLineShot } from './startCamera';
 import { buildTrackFeatures } from './trackFeatures';
+import { buildLaneMarkings } from './scenery/athletics';
 import { buildStructures } from './structures';
 import { roofBlocks, stationRoof } from './scenery/coaster';
 import { keepOutBlocks } from './scenery/clearCheck';
@@ -282,6 +283,12 @@ export class TrackScene {
     // Boost pads, speed bumps and obstacles (ice channels with physics.features).
     this.features = this.channel ? buildTrackFeatures(this.centerline, this.channel, track?.physics?.features, { lite: this.lite, compact: Boolean(track?.physics?.kit) }) : null;
     if (this.features) this.trackGroup.add(this.features.group);
+    // Track and Field: the tartan's white lane lines, start and finish lines and lane numbers (part of the track's surface).
+    if (this.channel && track?.physics?.kit?.athletics) {
+      const marks = buildLaneMarkings(this.centerline, this.channel, { lite: this.lite });
+      this.trackGroup.add(marks.lines);
+      if (marks.numbers) this.trackGroup.add(marks.numbers);
+    }
     // Tunnels, bridges and waterfalls (tracks built with the track kit).
     this.structures = this.channel ? buildStructures(this.centerline, this.channel, track?.physics?.kit, { lite: this.lite }) : null;
     if (this.structures) this.trackGroup.add(this.structures.group);
@@ -471,7 +478,7 @@ export class TrackScene {
     this.marbles.solidsAt = this.features?.solidsAt ?? null; // drawn round the obstacles, as the physics has them
     this.scene.add(this.marbles.group);
     if (start?.frame && start.releaseMs) {
-      this.gate = new StartGate(gatePlaces(this.centerline, start.frame, lanes, this.channel), start.releaseMs, { lights: Boolean(this.track?.physics?.kit?.grandPrix), style: (this.track?.physics?.kit?.start ?? this.track?.physics?.startLook)?.gate ?? 'paddle' });
+      this.gate = new StartGate(gatePlaces(this.centerline, start.frame, lanes, this.channel), start.releaseMs, { lights: Boolean(this.track?.physics?.kit?.grandPrix), style: (this.track?.physics?.kit?.start ?? this.track?.physics?.startLook)?.gate ?? 'paddle', athletics: Boolean(this.track?.physics?.kit?.athletics) });
       this.scene.add(this.gate.group);
     }
     this.applyMarbleScale();

@@ -325,13 +325,15 @@ export function buildCoaster(centerline, channel, kit, { lite = false, groundAt,
   // (`coaster.style` 'blocks' (the Block Series): two upright pillars of stacked cubes in two tones
   // of the support colour, and a cube beam across under the channel.)
   const blocks = kit.coaster?.style === 'blocks';
+  // (`coaster.style` 'concrete' (Track and Field's ramps): two slim grey columns and a beam, as a stadium's concourse.)
+  const concrete = kit.coaster?.style === 'concrete';
   const CUBE = 1.6;
   const SUPPORT_DARK = `#${new Color(SUPPORT).multiplyScalar(0.78).getHexString()}`;
   const tower = (top, side, half, i, { light = lite } = {}) => {
     const landY = groundAt(top.x, top.z);
     const h = top.y - landY;
     if (h < 1.2) return;
-    const splay = blocks ? 0 : timber ? Math.min(0.1 * h, 3.5) : Math.min(0.18 * h, 6);
+    const splay = blocks || concrete ? 0 : timber ? Math.min(0.1 * h, 3.5) : Math.min(0.18 * h, 6);
     const legs = [1, -1].map((sign) => {
       const a = top.clone().addScaledVector(side, sign * half);
       const b = top.clone().addScaledVector(side, sign * (half + splay));
@@ -349,6 +351,22 @@ export function buildCoaster(centerline, channel, kit, { lite = false, groundAt,
       return Math.abs(dx * along.x + dz * along.z) < e && Math.abs(dx * side.x + dz * side.z) < half + splay + e;
     });
     if (through) return;
+    if (concrete) {
+      const yaw = Math.atan2(side.x, side.z);
+      for (const [a, b] of legs) {
+        const g = new BoxGeometry(0.9, a.y - b.y, 0.9);
+        g.rotateY(yaw);
+        g.translate(a.x, (a.y + b.y) / 2, a.z);
+        towers.push(piece(g, SUPPORT));
+        feet.push({ x: b.x, z: b.z, r: 3 });
+      }
+      const beamG = new BoxGeometry(half * 2 + 1.2, 0.9, 1.1);
+      beamG.rotateY(yaw + Math.PI / 2);
+      const mid = legs[0][0].clone().lerp(legs[1][0], 0.5);
+      beamG.translate(mid.x, mid.y - 0.45, mid.z);
+      towers.push(piece(beamG, SUPPORT_DARK));
+      return;
+    }
     if (blocks) {
       // Each pillar: cubes from the land up to the beam (fewer, bigger ones on phones).
       const size = light ? CUBE * 1.5 : CUBE;
@@ -407,7 +425,7 @@ export function buildCoaster(centerline, channel, kit, { lite = false, groundAt,
       }
     }
   };
-  const every = timber ? (lite ? 16 : 9) : blocks ? (lite ? 20 : 12) : lite ? 22 : 13; // (a trestle's bents stand closer together)
+  const every = timber ? (lite ? 16 : 9) : blocks || concrete ? (lite ? 20 : 12) : lite ? 22 : 13; // (a trestle's bents stand closer together)
   let last = -Infinity;
   for (let i = 0; i <= segments; i += 1) {
     if (!isLifted(flight, i) || i * step - last < every) continue;
@@ -430,8 +448,9 @@ export function buildCoaster(centerline, channel, kit, { lite = false, groundAt,
   buildStart(lift, { towers, feet, tower, groundAt, lite, RAIL, SUPPORT });
 
   // The station over the finish and the run-out: a platform each side, a canopy on posts, a queue behind.
+  // (Track and Field finishes at a finish line with its photo-finish camera instead: ./athletics.js.)
   const st = stationOf(centerline);
-  {
+  if (!kit.athletics) {
     const { centre, along, side, floorY } = st;
     const half = 6.5;
     const yaw = Math.atan2(along.x, along.z);

@@ -38,7 +38,7 @@ describe('Block Series worlds', () => {
 
 describe('Block Series landmarks', () => {
   it('every block landmark the track kit names is here, and builds (with its glow and moving parts)', () => {
-    const block = parts.LANDMARKS.slice(parts.LANDMARKS.indexOf('spawn-beacon'));
+    const block = parts.LANDMARKS.slice(parts.LANDMARKS.indexOf('spawn-beacon'), parts.LANDMARKS.indexOf('athletes-village'));
     expect(block.sort()).toEqual(Object.keys(BLOCK_LANDMARKS).sort());
     for (const name of block) {
       const lm = LANDMARKS[name];
