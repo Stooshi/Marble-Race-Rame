@@ -64,18 +64,30 @@ function midnightFireworks() {
 }
 
 export const SEASON_OPTIONS = [
-  { key: 'solstice', letter: 'A', name: 'Winter Solstice', idea: 'Deep blue glass with a frosted star burst glowing at its heart and snowflakes drifting through it. Calm and wintry; reads well small.', look: winterSolstice() },
+  { key: 'solstice', letter: 'A · chosen', name: 'Winter Solstice', idea: 'Deep blue glass with a frosted star burst glowing at its heart and snowflakes drifting through it. Calm and wintry; reads well small.', look: winterSolstice() },
   { key: 'lights', letter: 'B', name: 'Holiday Lights', idea: 'Dark glass wrapped in two strings of warm coloured lights (red, gold, green, blue, pink) that glow as it rolls. Festive in every country, not tied to snow.', look: holidayLights() },
   { key: 'fireworks', letter: 'C', name: 'Midnight Fireworks', idea: 'Our own idea: a night sky with gold, magenta and silver bursts, for the New Year at the end of the season. Bright on dark tracks, at home on the summer tracks too.', look: midnightFireworks() },
 ];
 
 // ── The Winter collection: five designs, one shade each ─────────────────────
 
-/** Snowball (Common): soft white snow, shaded blue, flecked with frost. */
-function snowball() {
+/** Snowball as first shown (kept for the before-and-after on the preview page): its blue too faint on snow. */
+function snowballBefore() {
   const body = { type: 'radial', at: [38, 32], stops: [['#FFFFFF', 0], ['#E6EEF7', 45], ['#AFC0D6', 100]] };
   const specks = FLAKES.map(([x, y, r]) => dot(x, y, r * 0.6, alpha('#9FB6D1', 0.8)));
-  return { material: 'snowball', layers: [...specks, body], parts: { body: [body], pattern: { layers: specks, map: 'front', repeat: 180 } } };
+  return { material: 'snowball-before', layers: [...specks, body], parts: { body: [body], pattern: { layers: specks, map: 'front', repeat: 180 } } };
+}
+
+/**
+ * Snowball (Common): packed white snow with deep icy-blue shadows, blue swirls where it was rolled,
+ * and a crisp darker blue rim, so it stays easy to spot on white snow tracks.
+ */
+function snowball() {
+  const body = { type: 'radial', at: [36, 30], stops: [['#FFFFFF', 0], ['#E4EEFA', 20], ['#93B6E6', 46], ['#4A76B8', 74], ['#21437C', 92], ['#162F5C', 100]] };
+  const swirls = { type: 'conic', at: [44, 40], repeat: true, stops: [[T, 0, 18], [alpha('#2F62AE', 0.8), 24], [alpha('#6E9BDA', 0.5), 31], [T, 38, 60]] };
+  const specks = FLAKES.map(([x, y, r]) => dot(x, y, r * 0.75, alpha('#244E91', 0.95)));
+  const lights = [...specks, swirls];
+  return { material: 'snowball', layers: [...lights, body], parts: { body: [body], pattern: { layers: lights, map: 'front', repeat: 180 } } };
 }
 
 /** Frost Clearie (Common): clear ice-blue glass with feathers of frost twisting through it. */
@@ -115,9 +127,13 @@ function midwinterStar() {
 
 export const WINTER_PRICES = { common: 800, uncommon: 2000, rare: 4500, epic: 9000 };
 export const WINTER_DESIGNS = [
-  { key: 'snowball', rarity: 'common', name: 'Snowball', idea: 'Soft white snow shaded blue, flecked with frost. The simplest and cheapest of the five.', look: snowball() },
+  { key: 'snowball', rarity: 'common', name: 'Snowball', idea: 'Packed white snow with deep icy-blue shadows, blue swirls where it was rolled and a crisp darker rim, so it stands out on white snow tracks. The simplest and cheapest of the five.', look: snowball() },
   { key: 'frost', rarity: 'common', name: 'Frost Clearie', idea: 'Clear ice-blue glass with feathers of frost twisting through it as it rolls.', look: frostClearie() },
   { key: 'candy', rarity: 'uncommon', name: 'Candy Cane', idea: 'White with red and pale-pink stripes twisting round the ball, like a candy cane.', look: candyCane() },
   { key: 'evergreen', rarity: 'rare', name: 'Evergreen', idea: 'Bands of forest green like an agate, with a cap of fresh snow on top.', look: evergreen() },
   { key: 'star', rarity: 'epic', name: 'Midwinter Star', idea: 'Midnight-indigo glass with a glowing gold star of eight points at its heart and a few sparkles round it.', look: midwinterStar() },
 ];
+
+/** Snowball before and after (the preview page's comparison, and the dev view's &designs=snowball-before,snowball). */
+export const SNOWBALL_BEFORE = { key: 'snowball-before', rarity: 'common', name: 'Snowball (before)', idea: 'As first shown: its blue shading too faint, it disappears on white snow tracks.', look: snowballBefore() };
+export const REVIEW_LOOKS = Object.fromEntries([...SEASON_OPTIONS, ...WINTER_DESIGNS, SNOWBALL_BEFORE].map((d) => [d.key, d.look]));

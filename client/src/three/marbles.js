@@ -12,7 +12,7 @@ import {
 import { merge, piece } from './scenery/parts';
 import { pointOnTrack, TRACK_STYLE } from './trackModel';
 import { channelRadiusAt, placeOnChannel } from './iceChannel';
-import { createMarbleLook, createPlainLook } from '../shared/marbles/materials';
+import { createCustomLook, createMarbleLook, createPlainLook } from '../shared/marbles/materials';
 
 export const MARBLE_RADIUS = 0.55; // metres: a lane is 1.6 m wide
 
@@ -375,7 +375,9 @@ export class RaceMarbles {
     this.balls = entries.map((e) => {
       let mesh;
       let look = null;
-      if (e?.marble?.look) {
+      // (A design still under review, on the dev and preview pages only: { key, look } as the preview pages draw it.)
+      if (e?.marble?.customLook) look = createCustomLook(e.marble.customLook.key, e.marble.customLook.look, { radius: MARBLE_RADIUS, geometry: this.geometry });
+      else if (e?.marble?.look) {
         try {
           look = createMarbleLook(e.marble.look, { radius: MARBLE_RADIUS, geometry: this.geometry });
         } catch {

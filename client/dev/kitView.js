@@ -57,6 +57,15 @@ function drawnBy() {
 // ── A race through the game's own cameras (track report) ─────────────────
 const race = params.get('race') ? await (await fetch(`./.tracks/${params.get('race')}.json`)).json() : null;
 // &looks=all: every marble in a finished collection look (the phone check with 20 decorated marbles).
+// (&designs=snowball-before,snowball: the field in designs under review, from the Holiday preview page, taking turns.)
+if (race && params.get('designs')) {
+  const { REVIEW_LOOKS } = await import('../src/site/marbles/holidayDesigns');
+  const keys = params.get('designs').split(',');
+  race.entries = race.entries.map((e, i) => {
+    const key = keys[i % keys.length];
+    return { ...e, marble: { ...e.marble, customLook: { key: `holiday:${key}`, look: REVIEW_LOOKS[key] } } };
+  });
+}
 if (race && params.get('looks') === 'all') {
   race.entries = dressEntries(race.entries, params.get('race'), ITEMS.filter((i) => BUILT_MATERIALS.includes(i.design.material)).map((i) => i.slug));
 }
