@@ -678,6 +678,7 @@ const HIDDEN_KIT_TRACKS = [
   ['verdon-burst', '2027-01-27-add-verdon-burst.sql', 'Verdon Burst, Canyon Series track 12: through the Verdon Gorge in Provence, along the cliff road high on the white limestone rim past lavender fields, down beside the turquoise river to the lake.'],
   ['tiger-leaping-spins', '2027-01-28-add-tiger-leaping-spins.sql', 'Tiger Leaping Spins, Canyon Series track 13: down Tiger Leaping Gorge in Yunnan, along roaring rapids under snow peaks, past the great rock in the river, down a white-water cascade and out along the high trail.'],
   ['wadi-mujib-burst', '2027-01-29-add-wadi-mujib-burst.sql', 'Wadi Mujib Burst, Canyon Series track 15: through Wadi Mujib in Jordan, a narrow passage of deep red sandstone filled with a clear stream, past the ladders, round the pool and out to the Dead Sea.'],
+  ['waimea-free-fall', '2027-01-30-add-waimea-free-fall.sql', 'Waimea Free Fall, Canyon Series track 14: through Waimea Canyon on Kauai, over green ridges and between walls of red earth, a free fall beside a long waterfall with a rainbow, down to palms by the sea.'],
 ];
 for (const [slug, file, note] of HIDDEN_KIT_TRACKS) {
   test(`${slug} is added by its data update, switched off, exactly as its track file builds it`, () => {

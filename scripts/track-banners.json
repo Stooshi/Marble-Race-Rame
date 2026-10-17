@@ -25,5 +25,9 @@
   "up": 16,
   "ahead": 130,
   "rise": 18
+ },
+ "waimea-free-fall": {
+  "t": 26000,
+  "side": -1
  }
 }

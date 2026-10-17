@@ -478,8 +478,10 @@ export function buildStructures(centerline, channel, kit, { lite = false } = {})
         for (const sign of [-1, 1]) {
           const rim = surface(p, sign);
           const out = side.clone().multiplyScalar(sign);
-          const rock = rim.clone().addScaledVector(out, 3.4 + noise(k * 3 + sign) * 1.2).addScaledVector(UP, 0.6);
-          add(noise(k + sign * 5) > 0.5 ? 'cliff' : 'cliffDark', new IcosahedronGeometry(2.4 + noise(k * 7 + sign) * 1.2, 0), new Matrix4().compose(rock, new Quaternion().setFromAxisAngle(UP, k), new Vector3(1, 1.5, 1.2)));
+          // (Never reaching over the rim: a big rock stands further out.)
+          const r = 2.4 + noise(k * 7 + sign) * 1.2;
+          const rock = rim.clone().addScaledVector(out, Math.max(3.4 + noise(k * 3 + sign) * 1.2, r * 1.2 + 0.5)).addScaledVector(UP, 0.6);
+          add(noise(k + sign * 5) > 0.5 ? 'cliff' : 'cliffDark', new IcosahedronGeometry(r, 0), new Matrix4().compose(rock, new Quaternion().setFromAxisAngle(UP, k), new Vector3(1, 1.5, 1.2)));
           if (k < steps) cascades.push({ rim, out, p });
         }
       }

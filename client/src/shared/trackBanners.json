@@ -805,6 +805,17 @@
    "side": -1,
    "marbles": 4
   },
+  "waimea-free-fall": {
+   "name": "Waimea Free Fall",
+   "series": "Canyons",
+   "lighting": "day",
+   "v": "0af34ea5",
+   "bytes": 19946,
+   "bytes2x": 46404,
+   "t": 26000,
+   "side": -1,
+   "marbles": 4
+  },
   "whistler-spins": {
    "name": "Whistler Spins",
    "series": "Coasters",

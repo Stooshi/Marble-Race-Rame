@@ -67,7 +67,7 @@ const CANYON_HEIGHTS = {
   'slot-canyon': { rimRun: { height: 14 }, corkscrew: { height: 14 } },
   'cliff-road': { rimRoad: { height: 30 }, lookout: { height: 30 } },
   'rapids-gorge': { highTrail: { height: 28 } },
-  'long-falls': { ridgeSweep: { height: 28 }, toTheLip: { height: 14 } },
+  'long-falls': { ridgeSweep: { height: 28 }, toTheLip: { height: 14 }, plungePool: { height: 12 }, spin: { height: 12 } },
   'siq-passage': { openSweep: { height: 24 } },
 };
 // Layouts made for one Block Series track are proven on a test track built as a Block Series world (on its
