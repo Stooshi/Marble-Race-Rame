@@ -36,13 +36,16 @@ const base = (slug, name, description) => ({
   finish: { landmark: 'church' },
 });
 
-// Openings without the pile-up and slalom are proven on the mid lottery layout: the pile-up comes later,
-// as the recipe asks of every track that starts without one.
-const OPENING_LAYOUT = { 'clean-drop': 'mid-lottery', 'peg-drop': 'mid-lottery', 'pipe-drop': 'mid-lottery' };
+// Openings without the pile-up and slalom are proven on the mid lottery layout (the peg drop on the
+// half-pipe run), a lottery further on as well as their waves at the gate.
+const OPENING_LAYOUT = { 'clean-drop': 'mid-lottery', 'peg-drop': 'half-pipe-run', 'pipe-drop': 'mid-lottery' };
+// (The pipe drop's test track: a stronger lottery, 6 gates at loss 0.25, as its batches asked: its
+// half-pipe gives no luck of its own.)
+const OPENING_LAYOUT_OPTIONS = { 'pipe-drop': { lotteryGates: 6, lotteryLoss: 0.25 } };
 const openings = OPENING_KINDS.filter((k) => k !== 'classic').map((kind) => track({
   ...base(`variety-opening-${kind}`, `Variety Test: ${NAMES[kind]}`, `The opening library's test track for the ${NAMES[kind].toLowerCase()}, on the ${NAMES[OPENING_LAYOUT[kind] ?? 'classic'].toLowerCase()} layout.`),
   opening: opening(kind),
-  sections: layout(OPENING_LAYOUT[kind] ?? 'classic'),
+  sections: layout(OPENING_LAYOUT[kind] ?? 'classic', OPENING_LAYOUT_OPTIONS[kind] ?? {}),
 }));
 
 // Layouts made for one coaster are proven on a test track built as a coaster (up on its

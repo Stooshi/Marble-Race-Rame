@@ -140,7 +140,7 @@ Every track must pass a **full report** (`npm run report -- <slug>`) before it i
 
 Reports are saved in `reports/<slug>/`. Track design rules:
 - bends long and flowing, with at most one sharp bend per track;
-- a race needs its luck: a track that starts without the pile-up and slalom (clean drop, peg drop, pipe drop) has a pile-up or a hard slalom (5+ gates, loss 0.3) in its first half;
+- a race needs its luck: the openings without the pile-up and slalom (clean drop, peg drop, pipe drop) let the field go in **waves** (five waves of four starting places, 0.3 s apart, in a new order every race); a track that opens without the pile-up and slalom and without the waves has a pile-up or a hard slalom (5+ gates, loss 0.3) in its first half;
 - TV moments (looks only): up to two trackside cameras a track cuts to as the followed marble passes, about 3–5 s each, never in the first 8 s or the last 150 m; viewers can switch them off (the TV button);
 - tracks sit in the ground like a trench, raised only where they drop away or cross;
 - at least 35 of the 50 launch tracks must be truly unique (mirrors count towards the 50).

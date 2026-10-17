@@ -117,10 +117,11 @@ function checkRecipe({ spec, sections, span, generated, owner, placed, total, wh
   });
 
   // The varied starts (clean drop, peg drop, pipe drop) leave out the pile-up and slalom, whose luck keeps the
-  // strongest marbles from winning too often: such a track has its luck in the first half instead (a pile-up,
-  // or a slalom of at least LUCK_GATES gates costing LUCK_LOSS or more a hit).
+  // strongest marbles from winning too often: they let the field go in waves instead (a new order every race),
+  // and a track without that luck at the gate has it in its first half (a pile-up, or a slalom of at least
+  // LUCK_GATES gates costing LUCK_LOSS or more a hit).
   if (NO_LUCK_OPENINGS.includes(spec.opening?.kind)) {
-    const lucky = sections.some((sec, i) => span[i].from < 0.5 && (sec.obstacles ?? []).some((o) => o.obstacle === 'pileUp' || (o.obstacle === 'slalom' && o.count >= LUCK_GATES && (o.tune?.loss ?? 0) >= LUCK_LOSS)));
+    const lucky = Boolean(spec.opening?.waves) || sections.some((sec, i) => span[i].from < 0.5 && (sec.obstacles ?? []).some((o) => o.obstacle === 'pileUp' || (o.obstacle === 'slalom' && o.count >= LUCK_GATES && (o.tune?.loss ?? 0) >= LUCK_LOSS)));
     if (!lucky) problems.push(`${where('track')}: the ${spec.opening.kind} opening has no pile-up or slalom, so the first half of the track needs one (a pile-up, or a slalom of ${LUCK_GATES} gates or more at a loss of ${LUCK_LOSS}): without its luck the strongest marbles win too often.`);
   }
 

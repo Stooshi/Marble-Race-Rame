@@ -79,6 +79,17 @@
    "side": 1,
    "marbles": 4
   },
+  "bislett-mile": {
+   "name": "Bislett Mile",
+   "series": "Track and Field",
+   "lighting": "sunset",
+   "v": "83cb8b46",
+   "bytes": 18062,
+   "bytes2x": 42728,
+   "t": 10833,
+   "side": 1,
+   "marbles": 6
+  },
   "block-fortress": {
    "name": "Block Fortress",
    "series": "Blocks",

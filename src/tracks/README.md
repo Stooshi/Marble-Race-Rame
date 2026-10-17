@@ -68,16 +68,19 @@ module.exports = track({
   | `boost-launch` | A gentler drop, then a strip of boost pads wall to wall: the same kick for everyone. It tends to keep the front starting group ahead; follow it with deep, tight S-bends (as Wadi Mujib Burst) and check the groups early |
   | `funnel-drop` | A longer bowl at the gate; the order mixes as the field squeezes into the channel |
   | `crest-start` | The steep plunge into a short climb and over a rounded crest: the field bunches and spills over in a new order |
-  | `clean-drop` | A plunge with nothing in it, at full speed into deep, tight S-bends (`side`) that shuffle the field |
-  | `peg-drop` | A slightly gentler plunge through seven single pegs, left and right, the field threading through |
-  | `pipe-drop` | A short plunge straight into a half-pipe (`side`: its first swing), the field rocking wall to wall |
+  | `clean-drop` | The field let go in waves, a plunge with nothing in it, at full speed into deep, tight S-bends (`side`) that shuffle the field |
+  | `peg-drop` | The field let go in waves, a slightly gentler plunge through seven single pegs, left and right, the field threading through |
+  | `pipe-drop` | The field let go in waves, a short plunge straight into a half-pipe (`side`: its first swing), the field rocking wall to wall |
 
   **The varied starts** (`clean-drop`, `peg-drop`, `pipe-drop`, October 2026) leave out the pile-up
   and slalom. Those give a race most of its luck: without them the strongest marbles win far too often
-  (57–62% of races, the target is 35–50%). So a track starting with one of them has its luck in its first
-  half instead, and the recipe refuses it otherwise: a pile-up, or a slalom of 5 gates or more at a loss of
-  0.3 (`slalom({ count: 7, loss: 0.3 })` on a straight is what tracks 3–10 of Track and Field use). They are
-  proven on the mid lottery layout (L71), whose slalom drop does that.
+  (57–62% of races, the target is 35–50%). So these openings let the field go in **waves** (five waves of four
+  starting places, 0.3 s apart, a new order every race, as the staggered drop does), which brings the luck back
+  at the gate. The recipe refuses a track that opens with one of them and has neither the waves nor a pile-up
+  or a hard slalom (5 gates or more at a loss of 0.3) in its first half. On the pipe-drop tracks (Bislett Mile,
+  Tokyo Photo Finish) a slalom drop after the first bends adds the rest of the luck. They are proven on the
+  mid lottery layout (L71; the pipe drop's test track with its stronger lottery, `lotteryGates: 6, lotteryLoss: 0.25`,
+  as its half-pipe gives no luck of its own; the peg drop on the half-pipe run, L70).
   No start part may follow the gate on two tracks in a row (a test checks it from Berlin Blue Lanes on), and
   the report's **first 20 seconds** check (below) compares what the field races through at the start.
 

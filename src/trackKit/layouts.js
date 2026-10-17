@@ -1041,19 +1041,20 @@ const LAYOUTS = {
       obstacles: [peg({ costume: c.peg, at: 0.25, line: 'left' }), parked({ costume: c.parked, at: 0.42, side: R, length: 6 })], features: [rumble({ from: 0.72, to: 0.95, count: 3 })],
     },
   ],
-  /** L62 Bell lap (Track and Field): a long spiral (laps round the inside of the stands), a sweep, the hairpin, a straight, a second, tighter spiral (the bell lap), S-bends and the run-in. */
+  /** L62 Bell lap (Track and Field): a long spiral (laps round the inside of the stands), a slalom drop, a peg straight, a sweep, the hairpin, a slalom straight, a second, tighter spiral (the bell lap, the other way), S-bends and the run-in. */
   'bell-lap': (L, R, c) => [
-    { key: 'lapSpiral', name: 'Spiral', shape: spiral({ side: L, radius: 58, turns: 1.1, grade: 0.15 }) },
+    { key: 'lapSpiral', name: 'Spiral', shape: spiral({ side: L, radius: 58, turns: 0.75, grade: 0.15 }) },
+    { key: 'slalomDrop', name: 'Slalom drop', shape: plunge(60, { grade: 0.3, from: 0.15 }), obstacles: [slalom({ costume: c.slalom, from: 0.2, to: 0.95, count: 6, loss: 0.3 })] },
     {
       key: 'backStraight', name: 'Peg straight', shape: straight(70, { grade: 0.12 }), billboards: 1,
       obstacles: [peg({ costume: c.peg, at: 0.2, line: 'left' }), peg({ costume: c.peg, at: 0.38, line: 'right' }), peg({ costume: c.peg, at: 0.56, line: 'center' }), peg({ costume: c.peg, at: 0.74, line: 'left' })],
     },
-    { key: 'sweep', name: 'Sweep', shape: sweep({ side: R, radius: 80, degrees: 120, grade: 0.09 }), features: [boost({ at: 0.1 })], billboards: 2 },
+    { key: 'sweep', name: 'Sweep', shape: sweep({ side: R, radius: 80, degrees: 95, grade: 0.09 }), billboards: 2 },
     { key: 'brakingStraight', name: 'Run to the hairpin', shape: straight(50, { grade: 0.12 }) },
-    { key: 'hairpin', name: 'Hairpin', shape: hairpin({ side: R }) },
-    { key: 'straight2', name: 'Slalom straight', shape: straight(60, { grade: 0.12 }), obstacles: [peg({ costume: c.peg, at: 0.15, line: 'center' }), slalom({ costume: c.slalom, from: 0.35, to: 0.88, count: 4, loss: 0.15 })] },
-    { key: 'bellSpiral', name: 'Second spiral', shape: spiral({ side: L, radius: 48, turns: 0.9, grade: 0.16 }) },
-    { key: 'sBends', name: 'S-bends', shape: sBends({ first: R, radius: 70, degrees: 50, grade: 0.13 }), billboards: 1 },
+    { key: 'hairpin', name: 'Hairpin', shape: hairpin({ side: R }) , obstacles: [swipe({ costume: c.swipe, side: 'high' })] },
+    { key: 'straight2', name: 'Slalom straight', shape: straight(60, { grade: 0.12 }), obstacles: [peg({ costume: c.peg, at: 0.15, line: 'center' }), slalom({ costume: c.slalom, from: 0.3, to: 0.9, count: 5, loss: 0.15 })] },
+    { key: 'bellSpiral', name: 'Second spiral', shape: spiral({ side: R, radius: 48, turns: 0.75, grade: 0.16 }) },
+    { key: 'sBends', name: 'S-bends', shape: sBends({ first: R, radius: 70, degrees: 38, grade: 0.13 }), billboards: 1, obstacles: [peg({ costume: c.peg, at: 0.35, line: 'left' }), peg({ costume: c.peg, at: 0.7, line: 'right' })] },
     {
       key: 'lastStraight', name: 'Last straight', shape: straight(80, { grade: 0.15 }),
       obstacles: [parked({ costume: c.parked, at: 0.2, side: R, length: 6 }), peg({ costume: c.peg, at: 0.42, line: 'left' }), peg({ costume: c.peg, at: 0.6, line: 'right' })], features: [rumble({ from: 0.72, to: 0.95, count: 3 })],
@@ -1224,10 +1225,10 @@ const LAYOUTS = {
       obstacles: [parked({ costume: c.parked, at: 0.2, side: R, length: 6 }), peg({ costume: c.peg, at: 0.42, line: 'left' }), peg({ costume: c.peg, at: 0.6, line: 'right' })], features: [rumble({ from: 0.72, to: 0.95, count: 3 })],
     },
   ],
-  /** L71 Mid lottery (proving the varied starts): S-bends, then a slalom on a drop further on (the luck a track starting without the pile-up and slalom still needs), a sweep, a peg straight, the hairpin, a spiral and the run-in. */
-  'mid-lottery': (L, R, c) => [
+  /** L71 Mid lottery (proving the varied starts): S-bends, then a slalom on a drop further on (the luck a track starting without the pile-up and slalom still needs), a sweep, a peg straight, the hairpin, a spiral and the run-in. Options: `lotteryGates` (5), `lotteryLoss` (0.15). */
+  'mid-lottery': (L, R, c, b, o) => [
     { key: 'sBends', name: 'S-bends', shape: sBends({ first: L, radius: 75, degrees: 80, grade: 0.13 }), billboards: 3 },
-    { key: 'lottery', name: 'Pile-up drop', shape: plunge(70, { grade: 0.3, from: 0.13 }), obstacles: [slalom({ costume: c.slalom, from: 0.2, to: 0.95, count: 7, loss: 0.3 })] },
+    { key: 'lottery', name: 'Pile-up drop', shape: plunge(70, { grade: 0.3, from: 0.13 }), obstacles: [slalom({ costume: c.slalom, from: 0.2, to: 0.95, count: o.lotteryGates ?? 5, loss: o.lotteryLoss ?? 0.15 })] },
     { key: 'sweep', name: 'Sweep', shape: sweep({ side: R, radius: 80, degrees: 130, grade: 0.08 }), billboards: 2 },
     {
       key: 'pegStraight', name: 'Peg straight', shape: straight(70, { grade: 0.12 }),

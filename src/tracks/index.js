@@ -85,4 +85,5 @@ module.exports = [
   require('./bonus-round'),
   require('./marble-stadium-sprint'),
   require('./berlin-blue-lanes'),
+  require('./bislett-mile'),
 ];

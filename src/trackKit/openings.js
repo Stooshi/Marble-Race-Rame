@@ -116,6 +116,7 @@ const OPENINGS = {
       { key: 'plunge', name: 'Start plunge', shape: plunge(70, { grade: 0.5 }) },
       { key: 'bends', name: 'First S-bends', shape: sBends({ first: o.side === 'right' ? 'right' : 'left', radius: 55, degrees: 110, grade: 0.13 }) },
     ],
+    waves: { groups: 5, gap: 0.3, jitter: 0.1 },
   }),
 
   /** Peg drop: a slightly gentler plunge through a scatter of single pegs, left and right, the field threading through. */
@@ -124,6 +125,7 @@ const OPENINGS = {
       key: 'plunge', name: 'Peg drop', shape: plunge(90, { grade: 0.5 }),
       obstacles: [['left', 0.3], ['right', 0.4], ['left', 0.5], ['right', 0.6], ['left', 0.7], ['right', 0.8], ['center', 0.9]].map(([line, at]) => peg({ costume: o.costumes.peg, at, line })),
     }],
+    waves: { groups: 5, gap: 0.3, jitter: 0.1 },
   }),
 
   /** Pipe drop: a short plunge straight into a half-pipe, the field rocking from wall to wall down its U. */
@@ -132,6 +134,7 @@ const OPENINGS = {
       { key: 'plunge', name: 'Start plunge', shape: plunge(60, { grade: 0.55 }) },
       { key: 'pipe', name: 'Half-pipe', shape: halfPipe({ first: o.side === 'right' ? 'right' : 'left', width: 8, swings: 4, radius: 150, degrees: 18, grade: 0.12 }) },
     ],
+    waves: { groups: 5, gap: 0.3, jitter: 0.1 },
   }),
 };
 

@@ -53,7 +53,10 @@ test('every kit track opens with Bobsleigh Run\'s starting ramp, gate, channel a
     const { funnel, wides, ...channel } = t.physics.channel;
     const { funnel: tmFunnel, ...tmChannel } = tm.physics.channel;
     assert.deepEqual(channel, tmChannel);
-    if (!['funnel-drop', 'staggered-drop'].includes(t.physics.kit.opening)) assert.deepEqual(funnel, tmFunnel);
+    // (The staggered drop and the varied starts let the field go in waves: their funnel has that one setting more.)
+    const { waves, ...rest } = funnel;
+    if (waves) assert.ok(['staggered-drop', 'clean-drop', 'peg-drop', 'pipe-drop'].includes(t.physics.kit.opening), `${t.slug}: waves at the gate`);
+    if (!['funnel-drop', 'staggered-drop'].includes(t.physics.kit.opening)) assert.deepEqual(rest, tmFunnel);
     assert.deepEqual(t.physics.gate, bob.physics.gate);
     assert.equal(t.physics.collisions, true);
     assert.equal(t.physics.surface, 'ice', 'every surface races as fast as ice');
@@ -686,6 +689,7 @@ const HIDDEN_KIT_TRACKS = [
   ['bonus-round', '2027-02-04-add-bonus-round.sql', 'Bonus Round, Block Series track 15: a stage world of blocks at night, under checkpoint arches that flash as the leader passes, beside a score wall that fills with lit blocks, round a spin and a long last sweep to a bright final stage.'],
   ['marble-stadium-sprint', '2027-02-05-add-marble-stadium-sprint.sql', 'Marble Stadium Sprint, Track and Field track 1: through the white marble stadium in Athens, in at its open end, down the home straight, round the hairpin at the marble end and back up the far straight.'],
   ['berlin-blue-lanes', '2027-02-07-add-berlin-blue-lanes.sql', 'Track and Field track 2: Berlin Blue Lanes (the blue tartan of Berlin\'s 1936 stadium), added switched off.'],
+  ['bislett-mile', '2027-02-08-add-bislett-mile.sql', 'Track and Field track 3: Bislett Mile (the laps on a long spiral, then Bislett\'s tight, steep stadium in Oslo and the bell lap), added switched off.'],
 ];
 for (const [slug, file, note] of HIDDEN_KIT_TRACKS) {
   test(`${slug} is added by its data update, switched off, exactly as its track file builds it`, () => {
@@ -844,9 +848,14 @@ test('refused: a jib part on a bend, too high, too near the gate or crowded by o
   refused(crowded, /a peg too close to a box/);
 });
 
-test('the varied starts: an opening without the pile-up and slalom needs its luck in the first half of the track', () => {
+test('the varied starts: an opening without the pile-up and slalom has its luck in its waves, or in the first half of the track', () => {
   const s = { ...base(), opening: kit.opening('clean-drop'), start: { gate: 'stalls', shots: { countdown: 'above', launch: 'overhead' } } };
   s.sections = s.sections.slice(1);
+  // Its own waves at the gate are its luck.
+  assert.deepEqual(track(s).physics.channel.funnel.waves, { groups: 5, gap: 0.3, jitter: 0.1 });
+  // Without them, the first half of the track needs a pile-up or a hard slalom.
+  const { waves, ...still } = s.opening;
+  s.opening = still;
   refused(s, /the clean-drop opening has no pile-up or slalom/);
   s.sections.splice(0, 0, { name: 'Luck', shape: straight(60, { grade: 0.13 }), obstacles: [slalom({ from: 0.2, to: 0.95, count: 6, loss: 0.3 })] });
   assert.equal(track(s).physics.kit.opening, 'clean-drop');
