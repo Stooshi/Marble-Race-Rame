@@ -2,7 +2,8 @@
 
 /**
  * Google Play Billing for the Android app: coin packs are one-time ("consumable") products with
- * the same ids as on the website (coins-5000, coins-10500, coins-27500, coins-57500). Stripe stays
+ * the same ids as on the website (coins-5000, coins-10500, coins-27500, coins-57500). A season pass
+ * (holiday-pass-2026) is a one-time product that is kept: acknowledged, never consumed. Stripe stays
  * for the website only.
  *
  * The flow (docs/05-runbook.md, "Google Play"):
@@ -31,6 +32,7 @@
 
 const crypto = require('node:crypto');
 const { HttpError, badRequest, forbidden } = require('../utils/httpError');
+const seasons = require('../seasons');
 
 const API = 'https://androidpublisher.googleapis.com/androidpublisher/v3/applications';
 const SCOPE = 'https://www.googleapis.com/auth/androidpublisher';
@@ -110,6 +112,14 @@ async function consume(productId, purchaseToken) {
   throw new HttpError(502, `Google Play didn't consume the purchase (${r.status})`);
 }
 
+/** Acknowledges a purchase that is kept (a season pass: never consumed). → true when done (or done before). */
+async function acknowledge(productId, purchaseToken) {
+  const r = await call('POST', `${productPath(productId, purchaseToken)}:acknowledge`);
+  if (r.status < 300) return true;
+  if (r.status === 400 && /acknowledg/i.test(JSON.stringify(r.body))) return true;
+  throw new HttpError(502, `Google Play didn't acknowledge the purchase (${r.status})`);
+}
+
 /** Refunds an order at Google (all of it), taking the item back. → true. */
 async function refundOrder(orderId) {
   const r = await call('POST', `/orders/${encodeURIComponent(orderId)}:refund`, { revoke: 'true' });
@@ -153,12 +163,15 @@ const VOID_REASON = { 0: 'Other', 1: 'Remorse', 2: 'Not received', 3: 'Defective
 /**
  * A purchase from the app (or from Google's notification): checked with Google, then the coins
  * added once. `userId`: the player who sent it (null when it comes from Google's notification:
- * the player is found by the account id the app bought with). `grant`, `pack`: from src/payments.
- * → { status: 'paid'|'pending'|'duplicate'|'cancelled', coins?, orderNo?, consumed? }
+ * the player is found by the account id the app bought with). `grant`, `product`: from src/payments
+ * (a coin pack, or a season pass: `keep`, acknowledged and never consumed, granted only if bought
+ * inside its sale window and not already held; otherwise it is left unacknowledged, so Google
+ * refunds it by itself after 3 days).
+ * → { status: 'paid'|'pending'|'duplicate'|'cancelled'|'not-on-sale'|'already-owned', coins?, pass?, orderNo?, consumed?, acknowledged? }
  */
-async function redeem(db, { userId = null, productId, purchaseToken }, { grant, pack }) {
+async function redeem(db, { userId = null, productId, purchaseToken }, { grant, product }) {
   if (typeof purchaseToken !== 'string' || purchaseToken.length < 10 || purchaseToken.length > 2000) throw badRequest('Not a Google Play purchase');
-  const p = pack(productId);
+  const p = await product(productId);
   const g = await getPurchase(p.id, purchaseToken);
   if (!g) throw badRequest('Google Play doesn\'t know this purchase');
   const state = STATE[g.purchaseState] ?? 'unknown';
@@ -177,20 +190,45 @@ async function redeem(db, { userId = null, productId, purchaseToken }, { grant, 
       return { status: 'unknown-player' };
     }
     const ref = g.orderId || `token-${crypto.createHash('sha256').update(purchaseToken).digest('hex').slice(0, 40)}`;
-    const { rows: [payment] } = await client.query(
-      `INSERT INTO payments (user_id, provider, provider_ref, store_token, product_id, coins, amount_cents, currency, order_no, status)
-       VALUES ($1, 'google', $2, $3, $4, $5, $6, $7, 'MS-' || nextval('payment_order_seq'), 'pending')
-       ON CONFLICT DO NOTHING RETURNING id, order_no`,
-      [owner, ref, purchaseToken, p.id, p.coins, p.amountCents, p.currency],
-    );
-    if (!payment) {
-      const { rows: [had] } = await client.query(`SELECT user_id, order_no, status FROM payments WHERE provider = 'google' AND (store_token = $1 OR provider_ref = $2)`, [purchaseToken, ref]);
-      if (had && had.user_id !== owner) throw forbidden('This purchase belongs to another account');
-      return { status: 'duplicate', orderNo: had?.order_no ?? null };
+    const { rows: [had] } = await client.query(`SELECT user_id, order_no, status FROM payments WHERE provider = 'google' AND (store_token = $1 OR provider_ref = $2)`, [purchaseToken, ref]);
+    if (had) {
+      if (had.user_id !== owner) throw forbidden('This purchase belongs to another account');
+      return { status: 'duplicate', orderNo: had.order_no };
     }
-    const coins = await grant(client, payment.id, ref);
-    return { status: 'paid', coins, orderNo: payment.order_no, paymentId: payment.id };
+    if (p.keep) {
+      // A season pass: bought inside its sale window (Google's purchase time), and not held already.
+      const bought = new Date(Number(g.purchaseTimeMillis) || Date.now());
+      if (!seasons.passOnSale(p.season, bought)) return { status: 'not-on-sale' };
+      if (await seasons.hasPass(client, owner, p.seasonKey)) return { status: 'already-owned' };
+    }
+    const { rows: [payment] } = await client.query(
+      `INSERT INTO payments (user_id, provider, provider_ref, store_token, product_id, coins, amount_cents, currency, order_no, status, season_key)
+       VALUES ($1, 'google', $2, $3, $4, $5, $6, $7, 'MS-' || nextval('payment_order_seq'), 'pending', $8)
+       ON CONFLICT DO NOTHING RETURNING id, order_no`,
+      [owner, ref, purchaseToken, p.id, p.coins, p.amountCents, p.currency, p.seasonKey ?? null],
+    );
+    if (!payment) return { status: 'duplicate', orderNo: null };
+    const granted = await grant(client, payment.id, ref);
+    return p.keep
+      ? { status: 'paid', pass: granted, orderNo: payment.order_no, paymentId: payment.id }
+      : { status: 'paid', coins: granted, orderNo: payment.order_no, paymentId: payment.id };
   });
+  // A season pass: acknowledge at Google (never consume: it stays owned).
+  if (p.keep) {
+    if ((out.status === 'paid' || out.status === 'duplicate') && Number(g.acknowledgementState) !== 1) {
+      try {
+        await acknowledge(p.id, purchaseToken);
+        await db.query(`UPDATE payments SET store_acknowledged_at = now() WHERE provider = 'google' AND store_token = $1`, [purchaseToken]);
+        out.acknowledged = true;
+      } catch (err) {
+        console.error(`[google-play] acknowledge ${out.orderNo}: ${err.message} (retried hourly)`);
+        out.acknowledged = false;
+      }
+    } else if (out.status === 'paid' || out.status === 'duplicate') {
+      await db.query(`UPDATE payments SET store_acknowledged_at = COALESCE(store_acknowledged_at, now()) WHERE provider = 'google' AND store_token = $1`, [purchaseToken]);
+    }
+    return out;
+  }
   // Consume at Google (outside the transaction: the coins are already safely recorded).
   if ((out.status === 'paid' || out.status === 'duplicate') && Number(g.consumptionState) !== 1) {
     try {
@@ -211,7 +249,7 @@ async function redeem(db, { userId = null, productId, purchaseToken }, { grant, 
 async function consumeLeftovers(db) {
   const { rows } = await db.query(
     `SELECT product_id, store_token FROM payments
-      WHERE provider = 'google' AND status = 'paid' AND store_consumed_at IS NULL AND store_token IS NOT NULL LIMIT 200`,
+      WHERE provider = 'google' AND status = 'paid' AND store_consumed_at IS NULL AND store_token IS NOT NULL AND season_key IS NULL LIMIT 200`,
   );
   let done = 0;
   for (const r of rows) {
@@ -223,6 +261,27 @@ async function consumeLeftovers(db) {
       done += 1;
     } catch (err) {
       console.error(`[google-play] consume retry: ${err.message}`);
+    }
+  }
+  return done;
+}
+
+/** Season passes paid but not acknowledged at Google yet (Google refunds them after 3 days): acknowledge now. */
+async function acknowledgeLeftovers(db) {
+  const { rows } = await db.query(
+    `SELECT product_id, store_token FROM payments
+      WHERE provider = 'google' AND status = 'paid' AND store_acknowledged_at IS NULL AND store_token IS NOT NULL AND season_key IS NOT NULL LIMIT 200`,
+  );
+  let done = 0;
+  for (const r of rows) {
+    try {
+      // eslint-disable-next-line no-await-in-loop
+      await acknowledge(r.product_id, r.store_token);
+      // eslint-disable-next-line no-await-in-loop
+      await db.query(`UPDATE payments SET store_acknowledged_at = now() WHERE provider = 'google' AND store_token = $1`, [r.store_token]);
+      done += 1;
+    } catch (err) {
+      console.error(`[google-play] acknowledge retry: ${err.message}`);
     }
   }
   return done;
@@ -280,6 +339,6 @@ function decodeRtdn(body) {
 }
 
 module.exports = {
-  configured, packageName, accountIdFor, redeem, consume, consumeLeftovers, syncVoided, refundOrder,
+  configured, packageName, accountIdFor, redeem, consume, consumeLeftovers, acknowledge, acknowledgeLeftovers, syncVoided, refundOrder,
   getPurchase, voidedPurchases, rtdnTokenOk, decodeRtdn, setTransport, VOID_REASON,
 };

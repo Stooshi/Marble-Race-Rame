@@ -103,6 +103,10 @@ export const api = {
   googleAccount: () => request('/payments/google/account'),
   googleVerify: (body) => request('/payments/google/verify', { method: 'POST', body }),
   myOrders: () => request('/payments/mine'),
+  // Seasons and the season pass (real money only: Stripe on the web, Google Play in the Android app).
+  seasons: () => request('/seasons'),
+  season: (key) => request(`/seasons/${encodeURIComponent(key)}`),
+  passCheckout: (body) => request('/payments/pass/checkout', { method: 'POST', body }),
   // Forgot your password: on only when the server can send email.
   passwordResetEnabled: () => request('/auth/password-reset', { token: null }),
   forgotPassword: (email) => request('/auth/forgot', { method: 'POST', body: { email }, token: null }),

@@ -6,6 +6,7 @@ const { requireAuth, optionalAuth, requireAdmin } = require('../middleware/auth'
 const { validate, UUID_RE } = require('../utils/validate');
 const { badRequest, notFound } = require('../utils/httpError');
 const { OBSTACLE_EFFECTS } = require('../game/simulator');
+const seasons = require('../seasons');
 
 const router = express.Router();
 
@@ -52,6 +53,27 @@ function toDbValues(body) {
   return out;
 }
 
+/**
+ * Each track's season, for the player asking: season { key, name, state, featured } and locked (true:
+ * a season track they can't race now; the picker shows it with a lock and "Get the pass"). Watching
+ * its races and replays is open to everyone.
+ */
+async function withSeasons(rows, userId, now = new Date()) {
+  if (!rows.some((t) => t.season_key)) return rows;
+  const all = new Map((await seasons.all(db)).map((s) => [s.key, s]));
+  const held = await seasons.passesOf(db, userId);
+  return rows.map(({ season_key: key, ...t }) => {
+    const s = key ? all.get(key) : null;
+    if (!s) return t;
+    const state = seasons.stateOf(s, now);
+    return {
+      ...t,
+      season: { key: s.key, name: s.name, state, featured: seasons.featuredSlug(s, now) === t.slug },
+      locked: state === 'before' || (state === 'on' && !held.has(s.key)),
+    };
+  });
+}
+
 /** GET /api/tracks?difficulty= */
 router.get('/', optionalAuth, async (req, res) => {
   const q = validate(req.query, {
@@ -74,16 +96,16 @@ router.get('/', optionalAuth, async (req, res) => {
                  WHEN physics->'kit' ? 'grandPrix' THEN 'Grand Prix'
                  WHEN physics IS NOT NULL THEN 'World Tour'
                  ELSE 'Classic' END AS series,
-            physics->'kit'->>'biome' AS biome, physics->'kit'->>'lighting' AS lighting
+            physics->'kit'->>'biome' AS biome, physics->'kit'->>'lighting' AS lighting, season_key
        FROM tracks ${where.length ? `WHERE ${where.join(' AND ')}` : ''}
       ORDER BY difficulty, name`,
     params,
   );
-  res.json({ tracks: rows });
+  res.json({ tracks: await withSeasons(rows, req.user?.id ?? null) });
 });
 
 /** GET /api/tracks/:idOrSlug — full track including geometry */
-router.get('/:idOrSlug', async (req, res) => {
+router.get('/:idOrSlug', optionalAuth, async (req, res) => {
   const key = req.params.idOrSlug;
   const column = UUID_RE.test(key) ? 'id' : 'slug';
   const { rows } = await db.query(`SELECT * FROM tracks WHERE ${column} = $1`, [key]);
@@ -108,7 +130,8 @@ router.get('/:idOrSlug', async (req, res) => {
        ) rec ON true`,
     [rows[0].id],
   );
-  res.json({ track: rows[0], stats: stats[0] });
+  const [track] = await withSeasons(rows, req.user?.id ?? null);
+  res.json({ track, stats: stats[0] });
 });
 
 /** POST /api/tracks (admin) */

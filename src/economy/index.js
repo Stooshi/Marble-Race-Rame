@@ -12,14 +12,17 @@
  */
 const economy = require('../../client/src/shared/economy.json');
 const { badRequest, notFound } = require('../utils/httpError');
+const seasons = require('../seasons');
 
 const { race: RACE, dailyGoal: GOAL, dailyLimit: LIMIT } = economy;
 
 // What a ledger line can be. Earned kinds count towards the scoreboards and
-// users.coins_earned; bought kinds count towards users.coins_bought.
+// users.coins_earned; bought kinds count towards users.coins_bought. The Track of the
+// Day bonus ('featured-bonus', for season pass holders) is neither: it comes with a paid
+// pass, and money never buys a place on a scoreboard.
 const EARNED = ['race', 'finish-bonus', 'daily-goal'];
 const BOUGHT = ['coin-pack', 'credit-conversion'];
-const KINDS = ['start', 'opening-balance', ...EARNED, ...BOUGHT, 'purchase', 'bag', 'entry-fee', 'entry-refund', 'refund', 'skill-refund', 'admin', 'pack-refund'];
+const KINDS = ['start', 'opening-balance', ...EARNED, ...BOUGHT, 'purchase', 'bag', 'entry-fee', 'entry-refund', 'refund', 'skill-refund', 'admin', 'pack-refund', 'featured-bonus'];
 
 /**
  * Coin entry fees are switched off (14 Oct 2026: no paying coins to enter a race, so a race is never
@@ -121,11 +124,14 @@ async function opening(client, userId, coins) {
  * Pays a finished race's human players: taking part and the finishing bonus
  * (or the reduced rate after the day's full races), and on their goal-th race
  * of the day the daily goal, which also moves the streak on. Writes each line
- * to the ledger and the total to race_entries.coins_awarded.
+ * to the ledger and the total to race_entries.coins_awarded. On a season's Track of
+ * the Day a pass holder's full-pay race also pays the bonus (src/seasons bonusLine), its
+ * own line, kept in race_entries.bonus_coins (not coins_awarded, which the stats read).
  * → Map(entryId → lines).
  */
 async function payRace(client, raceId, now = new Date()) {
   const today = dayKey(now);
+  const { rows: [track] } = await client.query('SELECT t.slug, t.season_key FROM races r JOIN tracks t ON t.id = r.track_id WHERE r.id = $1', [raceId]);
   const { rows: humans } = await client.query(
     `SELECT e.id, e.user_id, e.finish_position FROM race_entries e WHERE e.race_id = $1 AND e.user_id IS NOT NULL`,
     [raceId],
@@ -147,9 +153,11 @@ async function payRace(client, raceId, now = new Date()) {
       await client.query('UPDATE user_days SET goal_met_at = $3 WHERE user_id = $1 AND day = $2', [h.user_id, today, now]);
       lines.push({ kind: 'daily-goal', amount: GOAL.coins, note: `streak day ${days}` });
     }
-    for (const l of lines) await change(client, { userId: h.user_id, amount: l.amount, kind: l.kind, raceId, note: l.note ?? null });
+    const bonus = await seasons.bonusLine(client, { userId: h.user_id, track, lines, fullPay: day.races <= LIMIT.fullRaces, now });
     const total = lines.reduce((n, l) => n + l.amount, 0);
-    await client.query('UPDATE race_entries SET coins_awarded = $2 WHERE id = $1', [h.id, total]);
+    if (bonus) lines.push(bonus);
+    for (const l of lines) await change(client, { userId: h.user_id, amount: l.amount, kind: l.kind, raceId, note: l.note ?? null });
+    await client.query('UPDATE race_entries SET coins_awarded = $2, bonus_coins = $3 WHERE id = $1', [h.id, total, bonus?.amount ?? 0]);
     paid.set(h.id, lines);
   }
   return paid;

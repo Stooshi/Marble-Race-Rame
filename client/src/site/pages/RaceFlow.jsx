@@ -183,6 +183,8 @@ export function TrackStep() {
     .sort((a, b) => (sort === 'new' ? new Date(b.created_at) - new Date(a.created_at) : a.name.localeCompare(b.name)));
   const newest = [...tracks].sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).slice(0, 3).map((t) => t.id);
   const go = (slug) => { const n = new URLSearchParams(search); n.set('track', slug); navigate(`/play/shooter?${n}`); };
+  // A season that is on, whose tracks this player may race: "Holiday races" (one of its tracks each race).
+  const openSeason = tracks.find((t) => t.season?.state === 'on' && !t.locked)?.season ?? null;
 
   return (
     <div className="ms-page">
@@ -192,6 +194,7 @@ export function TrackStep() {
         <div className="ms-row ms-form" style={{ display: 'flex' }}>
           <input type="search" placeholder={`Search ${tracks.length} tracks`} aria-label="Search tracks" value={q} onChange={(e) => setQ(e.target.value)} style={{ width: 'min(100%, 260px)' }} />
           <button type="button" className="ms-btn ms-btn--sm" onClick={() => setSort((s) => (s === 'new' ? 'name' : 'new'))}>Sort: {sort === 'new' ? 'New' : 'A–Z'}</button>
+          {openSeason && <button type="button" className="ms-btn ms-btn--sm" onClick={() => go(`season:${openSeason.key}`)}>{openSeason.name.replace(/ Season \d{4}$/, '')} races</button>}
           <button type="button" className="ms-btn ms-btn--sm ms-btn--primary" onClick={() => go('random')}>Random track</button>
         </div>
       </div>
@@ -206,10 +209,13 @@ export function TrackStep() {
           {shown.map((t) => {
             const r = best.get(t.slug);
             return (
-              <button key={t.id} type="button" className="ms-trackcard" onClick={() => go(t.slug)}>
+              <button key={t.id} type="button" className="ms-trackcard" onClick={() => (t.locked ? navigate(`/pass?season=${t.season.key}`) : go(t.slug))}>
                 <div className="ms-trackcard__pic" style={{ background: SERIES_PIC[t.series] }}>
                   <TrackBanner slug={t.slug} />
-                  {newest.includes(t.id) && <span className="ms-badge-label" style={{ background: 'var(--ms-green)' }}>NEW</span>}
+                  {t.locked
+                    ? <span className="ms-badge-label" aria-label="Locked: in the season pass">🔒 {t.season.state === 'before' ? 'SOON' : 'GET THE PASS'}</span>
+                    : t.season?.featured ? <span className="ms-badge-label" style={{ background: 'var(--ms-green)' }}>TRACK OF THE DAY</span>
+                    : newest.includes(t.id) && <span className="ms-badge-label" style={{ background: 'var(--ms-green)' }}>NEW</span>}
                 </div>
                 <div className="ms-trackcard__body">
                   <b>{t.name}</b>
@@ -302,6 +308,7 @@ export function StartStep() {
   const bag = useAsync(() => (ready ? api.bag() : null), [ready]);
   const trackSlug = quick ? 'random' : search.get('track') ?? 'random';
   const track = tracks.find((t) => t.slug === trackSlug);
+  const seasonKey = trackSlug.startsWith('season:') ? trackSlug.slice(7) : null; // ("Holiday races")
   const shooter = shooterOf(bag.data);
   const [busy, setBusy] = useState(false);
   const [startError, setStartError] = useState(null);
@@ -312,7 +319,7 @@ export function StartStep() {
     setStartError(null);
     try {
       const { race } = await api.createRace({
-        ...(track ? { track_id: track.id } : { random_track: true }),
+        ...(track ? { track_id: track.id } : seasonKey ? { season: seasonKey } : { random_track: true }),
         enter: true,
         min_marbles: 20,
         max_marbles: 20,

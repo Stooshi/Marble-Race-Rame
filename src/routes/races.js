@@ -13,6 +13,7 @@ const { raceSession, mayRaceAgain } = require('../game/raceSession');
 
 const { pickRacingMarble, recordShooterLook } = require('../marbles/collection');
 const economy = require('../economy');
+const seasons = require('../seasons');
 const router = express.Router();
 
 const { minMarbles, maxMarbles, defaultMarbles } = config.game;
@@ -21,7 +22,7 @@ const RACE_LIST_SQL = `
   SELECT r.id, r.name, r.status, r.min_marbles, r.max_marbles, r.entry_fee_coins, r.fill_with_bots,
          r.scheduled_at, r.started_at, r.finished_at, r.created_at, r.created_by, r.next_race_id,
          CASE WHEN r.status = 'finished' THEN r.target_duration_ms END AS duration_ms,
-         t.id AS track_id, t.slug AS track_slug, t.name AS track_name, t.difficulty,
+         t.id AS track_id, t.slug AS track_slug, t.name AS track_name, t.difficulty, t.season_key AS track_season,
          (SELECT COUNT(*)::int FROM race_entries e WHERE e.race_id = r.id) AS entry_count,
          (SELECT COUNT(*)::int FROM race_entries e WHERE e.race_id = r.id AND NOT e.is_bot) AS player_count,
          (SELECT ro.code FROM rooms ro WHERE ro.id = r.room_id) AS room_code
@@ -73,6 +74,12 @@ async function joinRace(client, raceId, userId, marbleId) {
   const race = rows[0];
   if (!race) throw notFound('Race not found');
   if (race.status !== 'lobby') throw conflict('Race is no longer accepting entries');
+  // A season track: pass holders only (or anyone in a friend room whose host has the pass).
+  const { rows: [track] } = await client.query(
+    'SELECT t.slug, t.season_key, ro.host_id AS room_host_id FROM tracks t LEFT JOIN rooms ro ON ro.id = $2 WHERE t.id = $1',
+    [race.track_id, race.room_id ?? null],
+  );
+  await seasons.assertTrackAccess(client, track, { userId, roomHostId: track?.room_host_id ?? null });
 
   // No marble given: race with the player's Shooter (or another of their marbles if it's taken).
   if (!marbleId) marbleId = await pickRacingMarble(client, raceId, userId);
@@ -121,15 +128,18 @@ router.get('/', async (req, res) => {
 
 /**
  * POST /api/races — create a lobby
- * { track_id | random_track: true, name?, min_marbles?, max_marbles?, entry_fee_coins?,
+ * { track_id | random_track: true | season: key, name?, min_marbles?, max_marbles?,
  *   fill_with_bots?, scheduled_at?, marble_id? }
- * With random_track the server picks an active track at random.
+ * With random_track the server picks an active track at random (never a locked season track).
+ * With season (pass holders, while the season is on: "Holiday races") it picks one of the
+ * season's tracks, the Track of the Day one race in three.
  * If marble_id is supplied the creator is entered immediately.
  */
 router.post('/', requireAuth, async (req, res) => {
   const body = validate(req.body, {
     track_id: { type: 'uuid' },
     random_track: { type: 'boolean' },
+    season: { type: 'string', max: 32 },
     name: { type: 'string', max: 80 },
     min_marbles: { type: 'int', min: minMarbles, max: maxMarbles },
     max_marbles: { type: 'int', min: minMarbles, max: maxMarbles },
@@ -139,8 +149,7 @@ router.post('/', requireAuth, async (req, res) => {
     marble_id: { type: 'uuid' },
     enter: { type: 'boolean' }, // enter the creator with their Shooter
   });
-  if (!body.track_id && !body.random_track) throw badRequest('Provide track_id or set random_track to true');
-  if (body.track_id && body.random_track) throw badRequest('Use either track_id or random_track, not both');
+  if ([body.track_id, body.random_track, body.season].filter(Boolean).length !== 1) throw badRequest('Provide one of track_id, random_track: true or season');
   const max = body.max_marbles ?? Math.max(defaultMarbles, body.min_marbles ?? minMarbles);
   const min = body.min_marbles ?? Math.min(defaultMarbles, max);
   if (min > max) throw badRequest('min_marbles cannot exceed max_marbles');
@@ -149,11 +158,23 @@ router.post('/', requireAuth, async (req, res) => {
   }
 
   const raceId = await db.withTransaction(async (client) => {
-    const { rows: track } = body.random_track
-      ? await client.query('SELECT id FROM tracks WHERE is_active ORDER BY random() LIMIT 1')
-      : await client.query('SELECT id FROM tracks WHERE id = $1 AND is_active', [body.track_id]);
-    if (!track[0]) throw badRequest(body.random_track ? 'No active tracks available' : 'Track not found or inactive');
-    const trackId = track[0].id;
+    let trackId;
+    if (body.random_track) {
+      trackId = await seasons.pickOpenTrack(client);
+      if (!trackId) throw badRequest('No active tracks available');
+    } else if (body.season) {
+      const season = await seasons.byKey(client, body.season);
+      if (!season) throw notFound('No such season');
+      // (The same check as on any of the season's tracks: the season is on and the player has its pass.)
+      await seasons.assertTrackAccess(client, { season_key: season.key }, { userId: req.user.id });
+      trackId = await seasons.pickSeasonTrack(client, season);
+      if (!trackId) throw badRequest(`No ${season.name} tracks yet`);
+    } else {
+      const { rows: [track] } = await client.query('SELECT id, slug, season_key FROM tracks WHERE id = $1 AND is_active', [body.track_id]);
+      if (!track) throw badRequest('Track not found or inactive');
+      await seasons.assertTrackAccess(client, track, { userId: req.user.id });
+      trackId = track.id;
+    }
 
     const { rows } = await client.query(
       `INSERT INTO races (track_id, name, min_marbles, max_marbles, entry_fee_coins, fill_with_bots,
@@ -254,6 +275,9 @@ router.post('/:id/next', requireAuth, async (req, res) => {
     }
     let made = false;
     if (!next) {
+      // (A season track's rematch is set up only by someone who may race it.)
+      const { rows: [track] } = await client.query('SELECT slug, season_key FROM tracks WHERE id = $1', [race.track_id]);
+      await seasons.assertTrackAccess(client, track, { userId: req.user.id });
       const { rows: n } = await client.query(
         `INSERT INTO races (track_id, name, min_marbles, max_marbles, entry_fee_coins, fill_with_bots,
                             scheduled_at, created_by, tick_rate_hz, countdown_ms)

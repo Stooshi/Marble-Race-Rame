@@ -1,6 +1,6 @@
 # 2. Code map
 
-*Last updated 16 Oct 2026.* Where everything is, and where to look to fix something. Paths are relative to the repository root.
+*Last updated 17 Oct 2026.* Where everything is, and where to look to fix something. Paths are relative to the repository root.
 
 ## Find it fast
 
@@ -22,6 +22,8 @@
 | Build the Android release | `client/scripts/android-upload-key.mjs`, `client/scripts/android-release.mjs`, `client/app-version.json`, `client/android/app/build.gradle` (signing) |
 | Fix a back-office page | `client/src/admin/AdminApp.jsx` (pages), `src/routes/admin.js` (data and actions), `src/admin/session.js` (login) |
 | Fix friend rooms | `src/routes/rooms.js`, `client/src/site/pages/RoomPage.jsx` |
+| Change a season's dates, its pass price or the Track of the Day | A new data update on the `seasons` row (`featured`: date → track slug). Rules in `src/seasons/index.js` |
+| Fix the season pass, locked season tracks or the Track of the Day bonus | `src/seasons/index.js` (`trackAccess`, `pickOpenTrack`, `pickSeasonTrack`, `bonusLine`, `grantForPayment`, `revokeForPayment`), `src/payments/index.js` (`passCheckout`, `passProduct`, `grant`), `src/routes/seasons.js`, `client/src/site/pages/PassPage.jsx` |
 | Fix how a track looks | `client/src/three/` (see the 3D section below). Drawing only, never the race |
 | Add a new track | `src/tracks/README.md` (the kit guide), then `scripts/physics-track-sql.js` and a data update |
 | Fix sound or music | `client/src/sound/engine.js` (the race's sound: countdown beeps, one race track, the ceremony song), `client/src/sound/settings.js`, files in `client/public/audio/`; the race page calls `raceCountdown`/`raceGo`/`raceCeremony`/`raceEnd` (`pages/Race.jsx`, `components/LiveRaceViewer3D.jsx`, `components/RaceViewer.jsx`) |
@@ -118,12 +120,20 @@
 
 **`economy/index.js`: coins.**
 - `change()` is the **only** way coins move: it updates the balance and writes a `coin_ledger` line.
-- Also: `payRace`, `spend`, `opening`, `placeCoins`, `raceLines`, `streakAfter`, `bagPrice`, and `refundEntryFee` (for fees paid before entry fees were switched off).
+- `payRace` also pays a pass holder's Track of the Day bonus (`featured-bonus`, from `seasons.bonusLine`; kept in `race_entries.bonus_coins`, never earned coins).
+- Also: `spend`, `opening`, `placeCoins`, `raceLines`, `streakAfter`, `bagPrice`, and `refundEntryFee` (for fees paid before entry fees were switched off).
 
 **`payments/`:**
-- `index.js`: providers (stripe, apple, google, test). `grant()` adds a pack's coins once. Also `checkout()` (with consent and order number), `stripeEvent()`, `refund()`, `ordersOf`/`orderOf`, and for Google Play `googleAccountId`, `googlePurchase`, `googleSync`, `startGoogleJobs` (hourly: consume leftovers; every 6 hours: voided purchases). Apple is a placeholder.
-- `stripe.js`: Checkout sessions, webhook verification, `handleEvent()` (paid, expired, refund, dispute), `revoke()` (takes coins back in proportion), `requestRefund()`. Live keys are refused unless `STRIPE_ALLOW_LIVE`.
-- `google.js`: Google Play Billing on the server. Signs in to the Android Publisher API as the service account (`GOOGLE_PLAY_SERVICE_ACCOUNT`, RS256 JWT with node's crypto, no Google library). `redeem()` checks a purchase with Google (paid, the right product, the player's `store_account_id`), records it once (`provider_ref` = order id, `store_token`), grants the coins, then consumes it; `syncVoided()` takes back refunded and charged-back purchases through `stripe.revoke()` (same ledger lines and `payment_refunds`); `refundOrder()` asks Google to refund and revoke; `decodeRtdn()`/`rtdnTokenOk()` read Google's Pub/Sub notifications. Tests: `test/googlePlay.test.js` (a fake Google that checks the signed token).
+- `index.js`: providers (stripe, apple, google, test). `grant()` adds a pack's coins once, or gives a season pass once (a payment with `season_key` and 0 coins). Also `checkout()` (with consent and order number), `passCheckout()` (the season pass on the website: refused outside its sale window or when already held), `passProduct()`, `stripeEvent()`, `refund()`, `ordersOf`/`orderOf`, and for Google Play `googleAccountId`, `googlePurchase`, `googleSync`, `startGoogleJobs` (hourly: consume leftovers; every 6 hours: voided purchases). Apple is a placeholder.
+- `stripe.js`: Checkout sessions (coin packs and the season pass), webhook verification, `handleEvent()` (paid, expired, refund, dispute), `revoke()` (takes coins back in proportion; a full refund or a dispute of a pass revokes the pass), `requestRefund()`. Live keys are refused unless `STRIPE_ALLOW_LIVE`.
+- `google.js`: Google Play Billing on the server. Signs in to the Android Publisher API as the service account (`GOOGLE_PLAY_SERVICE_ACCOUNT`, RS256 JWT with node's crypto, no Google library). `redeem()` checks a purchase with Google (paid, the right product, the player's `store_account_id`), records it once (`provider_ref` = order id, `store_token`), grants the coins, then consumes it (a season pass: granted only if bought inside its sale window and not already held, then **acknowledged**, never consumed; `acknowledgeLeftovers()` retries hourly); `syncVoided()` takes back refunded and charged-back purchases through `stripe.revoke()` (same ledger lines and `payment_refunds`); `refundOrder()` asks Google to refund and revoke; `decodeRtdn()`/`rtdnTokenOk()` read Google's Pub/Sub notifications. Tests: `test/googlePlay.test.js` (a fake Google that checks the signed token).
+
+**`seasons/index.js`: seasons and the season pass** (the `seasons`, `season_passes` tables, `tracks.season_key`):
+- `stateOf` ('before', 'on', 'free' by the season's dates), `dayOf` (the season's calendar day), `featuredSlug` (the Track of the Day), `passOnSale`, `saleDaysLeft` (the countdown), `view` (what `/api/seasons` shows).
+- `trackAccess` / `assertTrackAccess`: may this player race this track (a pass, or a friend room whose host has one); every route that puts a marble on a track calls it (`routes/races.js` `joinRace`, create, rematch; `routes/rooms.js` `pickTrack`).
+- `pickOpenTrack` (the public random pick: never a locked season track), `pickSeasonTrack` (Holiday races: the Track of the Day one race in three).
+- `bonusLine` (the Track of the Day bonus), `grantForPayment`, `revokeForPayment`.
+- Tests: `test/seasonPass.test.js` (the dates always; with a database: Stripe test mode, Google Play, locks, rooms, the bonus, refunds).
 
 **Back office and accounts:**
 - `admin/session.js`: the back-office login (separate admin token, TOTP 2-step code, 30-minute idle timeout, 5 wrong codes give a 15-minute pause kept in memory).
@@ -149,15 +159,16 @@
 |---|---|
 | `auth.js` | Sign-up (refuses under-13s), guest, claim (guest → account), login, me; password reset (`GET /password-reset`, `POST /forgot`, `POST /reset`) |
 | `users.js` | Profile, settings, news-by-email, unsubscribe, cookie consent record (`POST /me/cookie-consent`), data export, delete account, appearance, the old marble bag, leaderboard, public profiles |
-| `races.js` | Lobby list, create, join and leave (free), next race, start, cancel, results, replay, showcase race |
-| `rooms.js` | Friend rooms (create, join, leave, track, remove, start, close) and `afterRace` |
+| `races.js` | Lobby list, create (a track, random, or `season`: Holiday races), join and leave (free; season tracks checked), next race, start, cancel, results, replay, showcase race |
+| `rooms.js` | Friend rooms (create, join, leave, track, remove, start, close) and `afterRace`; a season track only if the host may race it (`hostedSeason` in the room view) |
+| `seasons.js` | `GET /` and `GET /:key`: a season's dates, state, today's Track of the Day, the pass (price, on sale, countdown, owned) |
 | `collection.js` | Collection, Marble Bag, Shooter, bags, buy, find by ID, certificates |
-| `payments.js` | Packs, checkout, my orders, the Stripe webhook; Google Play: `GET /google/account` (the player's Play account id, and whether purchases are on), `POST /google/verify` (a purchase token from the app), `POST /google/rtdn?token=` (Google's notifications) |
+| `payments.js` | Packs, checkout, `POST /pass/checkout` (the season pass), my orders, the Stripe webhook; Google Play: `GET /google/account` (the player's Play account id, and whether purchases are on), `POST /google/verify` (a purchase token from the app), `POST /google/rtdn?token=` (Google's notifications) |
 | `admin.js` | The back office: players (with their support messages), coins, items, suspend, rename, delete, consent, payments and refunds, audit, economy, email list, the support inbox (list, message, screenshot, status, reply) |
 | `support.js` | The Help Centre's contact form: `GET /form` (a form token), `POST /` (a message; rate-limited to 6 an hour per address) |
 | `economy.js` | Economy numbers, my day, race payouts, my ledger |
 | `scoreboard.js` | Season, all-time and friends boards (earned coins only); the season comes from `economy.json` → `season` (`seasonFrom`), `null` until set, and the season board then counts all time |
-| `tracks.js`, `marbles.js` | Public lists; admin edits |
+| `tracks.js`, `marbles.js` | Public lists (a track's `season` and `locked` for the player asking); admin edits |
 | `physics.js` | On-demand physics preview (nothing saved) |
 | `billboards.js`, `appearance.js` | Billboard images; look options |
 
@@ -259,7 +270,8 @@ Defined in `src/sockets/index.js`. The client may send a JWT in `auth.token`; an
   - `consent/`: the cookie banner and the trackers (website only, never in the apps): `consent.js` (the choice in local storage `marble-consent`, version `CONSENT_VERSION`; `STORAGE_LIST`), `ConsentManager.jsx` (banner with REJECT ALL and ACCEPT ALL side by side, Settings per category with nothing ticked, reopened by "Cookie settings" in the footer and on `/cookies`; logs the choice to the account when logged in), `tracking.js` (Google Analytics 4 with Consent Mode v2 after statistics consent, the Meta Pixel after marketing consent and never under 13; `track()` events: `sign_up`, `first_race`, `race_finished`, `shop_view`, `checkout_started`, `purchase`);
   - `landing/` (landing page, 3D hero replay; `SERIES`: the series cards, each with one of its tracks' pictures; the tracks-and-series heading is counted from the live track list);
   - `marbles/` (badge, 3D turntable, certificate, `useCollection`, with `limitedSale`/`limitedLine`: the limited edition's "Coming 1 December — limited to 500", how many are left, "Sold out");
-  - `payments/index.js`: `buyCoins()` for every screen: Stripe on the website; Google Play Billing in the Android app (`@capgo/native-purchases`: purchase with the player's Play account id, then `api.googleVerify`); `resumeStorePurchases()` (unconfirmed purchases resent at login, from `App.jsx`); `useStorePrices()` (Play's prices in the player's currency, on the shop and checkout); the App Store is a placeholder;
+  - `pages/PassPage.jsx` (`/pass?season=`): the season pass: what it gives, the price (the store's own in the apps), the countdown, buying it; the track picker, track pages and room picker show season tracks locked with "Get the pass", and holders get "Holiday races";
+  - `payments/index.js`: `buyPass()` (the season pass: Stripe on the web, Google Play in the app, kept not consumed); `buyCoins()` for every screen: Stripe on the website; Google Play Billing in the Android app (`@capgo/native-purchases`: purchase with the player's Play account id, then `api.googleVerify`); `resumeStorePurchases()` (unconfirmed purchases resent at login, from `App.jsx`); `useStorePrices()` (Play's prices in the player's currency, on the shop and checkout); the App Store is a placeholder;
   - `pages/` (every website page; see the routes below);
   - `help/` (the Help Centre at `/help`): `ContactForm.jsx` ("Still need help?": name, email, topic, order number, message, screenshot scaled down before sending, a hidden spam field), `faq.js` (the 12 categories of questions and answers, numbers read from `economy.json`, `packs.json` and `catalog.json`, `[bracket]` placeholders kept; the FAQPage structured data), `search.js` (type-ahead search: any word order, typos, synonyms, highlighting), `HelpPage.jsx`.
 - `admin/`: the back office (`AdminApp.jsx`, `adminApi.js`, `admin.css`). The support inbox (`SupportInbox`, `SupportMessage`, `SupportTable`) lives in `AdminApp.jsx` too.

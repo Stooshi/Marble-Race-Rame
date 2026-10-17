@@ -100,7 +100,7 @@ export default function PurchasesPage() {
       </div>
 
       {justPaid && waiting && <div className="ms-msg" role="status">Thanks! Waiting for Stripe to confirm order {justPaid}… your coins arrive as soon as it does.</div>}
-      {justPaid && !waiting && fresh?.status === 'paid' && <div className="ms-msg" role="status">Order {justPaid} is paid: ● {formatNumber(fresh.coins)} coins added. Stripe has emailed you a receipt. <Link to="/shop">To the shop</Link></div>}
+      {justPaid && !waiting && fresh?.status === 'paid' && <div className="ms-msg" role="status">Order {justPaid} is paid: {fresh.season_key ? 'your season pass is ready' : `● ${formatNumber(fresh.coins)} coins added`}. Stripe has emailed you a receipt. <Link to="/shop">To the shop</Link></div>}
       {justPaid && !waiting && fresh?.status === 'pending' && <div className="ms-msg" role="status">Stripe hasn't confirmed order {justPaid} yet. Some payments take a little longer; your coins arrive by themselves when it does. Reload this page to check.</div>}
       {error && <div className="ms-msg ms-msg--bad" role="alert">{error}</div>}
       {!orders && !error && <p className="ms-note">Loading your orders…</p>}
@@ -117,7 +117,7 @@ export default function PurchasesPage() {
                 <tr key={o.order_no} className={o.order_no === justPaid ? 'is-me' : undefined}>
                   <td style={{ fontWeight: 700 }}>{o.order_no}</td>
                   <td>{new Date(o.paid_at ?? o.created_at).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}</td>
-                  <td className="num">● {formatNumber(o.coins)}</td>
+                  <td className="num">{o.season_key ? 'Season pass' : `● ${formatNumber(o.coins)}`}</td>
                   <td className="num">
                     {o.charged_cents != null ? money(o.charged_cents, o.charged_currency) : `${PACK[o.product_id]?.priceLabel ?? money(o.amount_cents, o.currency)}`}
                     {o.tax_cents > 0 && <span className="ms-note" style={{ display: 'block' }}>VAT {money(o.tax_cents, o.charged_currency)}</span>}

@@ -282,6 +282,16 @@ The app sells the same four packs through Google Play; the server checks every p
 - From the player or the bank (Google's 48-hour refunds, chargebacks): the same voided-purchase path; reason "Chargeback" or "Friendly fraud" counts as a dispute, as with Stripe. Coins already spent show as "short".
 - The server checks voided purchases every 6 hours and on every notification; Google keeps 30 days of them.
 
+## The season pass (Holiday Season 2026)
+
+The pass `holiday-pass-2026` ($9.99) is bought with real money only. Its season, dates, price and Track of the Day list are in the `seasons` table (data update `2027-02-16-season-pass`); see [game rules](04-game-rules.md#seasons-and-the-season-pass).
+
+- **Website (Stripe):** nothing to set up in the dashboard. The Checkout line is built by the server (as for coin packs), on the same webhook and events. Test it in test mode while the season is on (or on a test database with a season whose dates are now): `/pass` → tick both boxes → card `4242 4242 4242 4242` → back on the site the pass shows as owned and the holiday tracks unlock. Refund it from the back office (Payments → Refund, in full): the pass is revoked when Stripe's refund event arrives.
+- **Google Play:** Play Console → Monetize with Play → Products → **One-time products** → *Create one-time product*: ID `holiday-pass-2026`, name "Holiday Season Pass 2026", description "Every holiday track and the Track of the Day bonus until 7 January 2027, and the season marble. One payment, not a subscription.", price USD 9.99 → **Activate**. (The app buys it with the player's Play account id; the server acknowledges it and never consumes it, so it stays owned.) Deactivate the product after 7 Jan 2027 23:59; the server refuses purchases made outside the sale window anyway, and Google refunds those by itself after 3 days because they are never acknowledged.
+- **App Store:** not built yet (Holiday plan step 3).
+- **A second pass paid for** (bought on the website and in the app at the same time): the audit log shows `pass-duplicate` for that player. Refund the second payment from the back office.
+- **Before the season starts** nobody can race the holiday tracks, even when switched on; from 7 Jan 2027 23:59 Swedish time they are free for everyone. Nothing has to be deployed on either date.
+
 ## Common problems
 
 | Symptom | Likely cause and fix |

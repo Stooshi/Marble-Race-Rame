@@ -9,7 +9,8 @@
  *                      consumes it at Google. Stripe is never used inside the apps.
  *   iPhone app         App Store purchase: not built yet (reports "not available yet")
  *
- * Screens call buyCoins(pack) and never care which store took the money.
+ * Screens call buyCoins(pack) (or buyPass(season) for a season pass, which is kept: Google Play
+ * acknowledges it, never consumes it) and never care which store took the money.
  */
 import { useEffect, useState } from 'react';
 import { api } from '../../api/client';
@@ -72,7 +73,9 @@ const ADAPTERS = {
 
 async function verifyGoogle(productId, purchaseToken) {
   const r = await api.googleVerify({ productId, purchaseToken });
-  if (r.status === 'paid' || r.status === 'duplicate') return { status: 'paid', coins: r.coins, orderNo: r.orderNo };
+  if (r.status === 'paid' || r.status === 'duplicate') return { status: 'paid', coins: r.coins, pass: r.pass, orderNo: r.orderNo };
+  if (r.status === 'already-owned') return { status: 'unavailable', message: 'You already have this pass. Google Play refunds the second payment by itself within 3 days.' };
+  if (r.status === 'not-on-sale') return { status: 'unavailable', message: 'This pass isn\'t on sale now. Google Play refunds the payment by itself within 3 days.' };
   if (r.status === 'pending') return { status: 'pending', message: 'Google Play is still processing your payment. Your coins arrive as soon as it\'s done.' };
   return { status: 'unavailable', message: 'Google Play cancelled this purchase. Nothing was charged.' };
 }
@@ -84,6 +87,43 @@ export function buyCoins(pack, { consent = false } = {}) {
   if (provider === 'google') return ADAPTERS.google(pack);
   if (provider === 'apple') return ADAPTERS.apple();
   return ADAPTERS.web(pack, provider, { consent });
+}
+
+/**
+ * Buys a season's pass (real money only). `season`: from /api/seasons (its pass.productId). Web:
+ * Stripe Checkout (the pass comes from Stripe's webhook); Android: Google Play, kept, never consumed.
+ * Resolves like buyCoins, with pass instead of coins.
+ */
+export async function buyPass(season, { consent = false } = {}) {
+  const provider = storeProvider();
+  if (provider === 'apple') return { status: 'unavailable', message: 'The season pass is coming to the iPhone app soon.' };
+  if (provider === 'google') {
+    const { accountId, live } = await api.googleAccount();
+    if (!live) return { status: 'unavailable', message: 'Buying in the app isn\'t switched on yet. Please try again later.' };
+    const { NativePurchases, PURCHASE_TYPE } = await billing();
+    let t;
+    try {
+      t = await NativePurchases.purchaseProduct({
+        productIdentifier: season.pass.productId,
+        productType: PURCHASE_TYPE.INAPP,
+        appAccountToken: accountId,
+        isConsumable: false, // (a pass is kept: the server acknowledges it after checking it)
+        autoAcknowledgePurchases: false,
+      });
+    } catch (err) {
+      if (cancelled(err)) return { status: 'cancelled' };
+      throw err;
+    }
+    if (!t?.purchaseToken) return { status: 'pending', message: 'Google Play is still processing your payment. Your pass arrives as soon as it\'s done.' };
+    return verifyGoogle(season.pass.productId, t.purchaseToken);
+  }
+  const { next, pass } = await api.passCheckout({ season: season.key, provider, consent });
+  if (next.kind === 'redirect') {
+    window.location.assign(next.url);
+    return { status: 'redirecting' };
+  }
+  if (next.kind === 'done') return { status: 'paid', pass };
+  return { status: 'unavailable', message: next.message };
 }
 
 /**

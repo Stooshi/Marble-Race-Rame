@@ -30,6 +30,20 @@ router.post('/checkout', requireAuth, async (req, res) => {
   res.json(out);
 });
 
+/**
+ * POST /api/payments/pass/checkout { season, provider, consent: true } — start buying a season pass
+ * (real money only). The pass comes from Stripe's webhook; refused outside its sale window or when
+ * the player has it already.
+ */
+router.post('/pass/checkout', requireAuth, async (req, res) => {
+  const body = validate(req.body, { season: { type: 'string', required: true, max: 32 }, provider: { ...PROVIDER, required: false }, consent: { type: 'boolean' }, locale: { type: 'string', max: 12 } });
+  const origin = req.get('origin');
+  const siteUrl = config.isSiteOrigin(origin) ? origin.replace(/\/+$/, '') : null;
+  const out = await db.withTransaction((client) => payments.passCheckout(client, req.user.id, { seasonKey: body.season, provider: body.provider ?? 'stripe', consent: body.consent, locale: body.locale, siteUrl }));
+  await security.record(req, req.user.id, 'purchase');
+  res.json(out);
+});
+
 /** POST /api/payments/receipt { provider: 'apple'|'google', receipt } — an app's store purchase. */
 router.post('/receipt', requireAuth, async (req, res) => {
   const body = validate(req.body, { provider: PROVIDER, receipt: { type: 'string', required: true, max: 20000 } });
@@ -48,8 +62,8 @@ router.get('/google/account', requireAuth, async (req, res) => {
 
 /**
  * POST /api/payments/google/verify { productId, purchaseToken } — a Google Play purchase from the
- * Android app: checked with Google, then the coins added once (also safe to send again).
- * → { status: 'paid'|'duplicate'|'pending'|'cancelled', coins?, orderNo? }
+ * Android app: checked with Google, then the coins (or the season pass) added once (also safe to
+ * send again). → { status: 'paid'|'duplicate'|'pending'|'cancelled'|'not-on-sale'|'already-owned', coins?, pass?, orderNo? }
  */
 router.post('/google/verify', requireAuth, async (req, res) => {
   const body = validate(req.body, { productId: { type: 'string', required: true, max: 32 }, purchaseToken: { type: 'string', required: true, max: 2000 } });

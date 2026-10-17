@@ -4,12 +4,12 @@
  * Stripe on the website: Checkout for the coin packs, the webhook that adds the
  * coins, and refunds that take them back.
  *
- *   start()        makes a Stripe Checkout page for a pending payment: the pack's price,
+ *   start()        makes a Stripe Checkout page for a pending payment (a coin pack or a season pass): its price,
  *                  shown in the player's own currency (Adaptive Pricing) with VAT included
  *                  (Stripe Tax), card / Apple Pay / Google Pay as the dashboard allows.
  *   verify()       checks a webhook's signature (STRIPE_WEBHOOK_SECRET) → the event.
- *   handleEvent()  the ONLY place Stripe coins are added: "checkout.session.completed"
- *                  (paid) → grant(), once. Refunds and disputes take the coins back.
+ *   handleEvent()  the ONLY place Stripe coins (and season passes) are added: "checkout.session.completed"
+ *                  (paid) → grant(), once. Refunds and disputes take the coins back (or the pass).
  *   requestRefund() the back office asks Stripe for a refund; the coins go when Stripe's
  *                  refund event arrives (the same path as a refund made in the Stripe dashboard).
  *
@@ -20,6 +20,7 @@ const Stripe = require('stripe');
 const config = require('../config');
 const consent = require('../../client/src/shared/payments/consent.json');
 const economy = require('../economy');
+const seasons = require('../seasons');
 const { HttpError, badRequest } = require('../utils/httpError');
 
 let injected = null; // (tests: a fake Stripe client)
@@ -49,9 +50,14 @@ function mode() {
   return 'test';
 }
 
-/** A Stripe Checkout page for a pending payment → { kind: 'redirect', url }. */
+/**
+ * A Stripe Checkout page for a pending payment → { kind: 'redirect', url }. `pack`: a coin pack, or a
+ * season pass (src/payments passProduct: { id, name, amountCents, currency, seasonKey }).
+ */
 async function start(payment, { pack, email, locale, siteUrl }) {
   const site = siteUrl || config.stripe.siteUrl;
+  const pass = Boolean(pack.seasonKey);
+  const what = pass ? pack.name : `${pack.coins} coins`;
   const params = {
     mode: 'payment',
     client_reference_id: payment.id,
@@ -62,8 +68,10 @@ async function start(payment, { pack, email, locale, siteUrl }) {
         unit_amount: pack.amountCents,
         tax_behavior: 'inclusive', // (the price already includes VAT)
         product_data: {
-          name: `${pack.coins.toLocaleString('en-US')} Marble Spins coins`,
-          description: `Coins for the Marble Spins shop: looks only, never speed. Delivered right away; no cash value. Sold by ${company.name} (org.nr ${company.orgNo}, VAT ${company.vatNo}). Questions: ${company.supportEmail}`,
+          name: pass ? `Marble Spins ${pack.name}` : `${pack.coins.toLocaleString('en-US')} Marble Spins coins`,
+          description: `${pass
+            ? `${pack.season.name}: every holiday track and the Track of the Day bonus until ${new Intl.DateTimeFormat('en-GB', { timeZone: pack.season.time_zone, day: 'numeric', month: 'long', year: 'numeric' }).format(new Date(pack.season.free_from))}, and the season marble. One payment, not a subscription. Delivered right away; no cash value.`
+            : 'Coins for the Marble Spins shop: looks only, never speed. Delivered right away; no cash value.'} Sold by ${company.name} (org.nr ${company.orgNo}, VAT ${company.vatNo}). Questions: ${company.supportEmail}`,
           tax_code: config.stripe.taxCode,
           metadata: { product_id: pack.id },
         },
@@ -73,11 +81,11 @@ async function start(payment, { pack, email, locale, siteUrl }) {
     adaptive_pricing: { enabled: true }, // (the price in the player's own currency)
     metadata: { payment_id: payment.id, user_id: payment.user_id, order_no: payment.order_no, product_id: pack.id },
     payment_intent_data: {
-      description: `Marble Spins ${payment.order_no}: ${pack.coins} coins`,
+      description: `Marble Spins ${payment.order_no}: ${what}`,
       metadata: { payment_id: payment.id, order_no: payment.order_no, product_id: pack.id },
     },
     success_url: `${site}/purchases?paid=${encodeURIComponent(payment.order_no)}&session_id={CHECKOUT_SESSION_ID}`,
-    cancel_url: `${site}/checkout?pack=${encodeURIComponent(pack.id)}&cancelled=1`,
+    cancel_url: pass ? `${site}/pass?cancelled=1` : `${site}/checkout?pack=${encodeURIComponent(pack.id)}&cancelled=1`,
     custom_text: { submit: { message: consent.stripeSubmit } },
     locale: locale || 'auto',
     expires_at: Math.floor(Date.now() / 1000) + 60 * 60, // (an hour, then the order lapses)
@@ -138,7 +146,8 @@ async function paymentForSession(db, session) {
  * Takes a refunded (or disputed) part of a payment's coins back, once per `refundId`:
  * coins in proportion to the money returned, never more than the pack gave; if the player
  * has already spent them, what's left is taken and the rest recorded as short.
- * Logged in the coin ledger ('pack-refund') and the back office's audit log.
+ * Logged in the coin ledger ('pack-refund') and the back office's audit log. A season pass's
+ * payment has no coins: a full refund or a chargeback revokes the pass instead (src/seasons).
  */
 async function revoke(db, { payment, refundId, amountCents, adminId = null, reason, action = 'refund' }) {
   if (!(amountCents > 0)) return null;
@@ -172,14 +181,18 @@ async function revoke(db, { payment, refundId, amountCents, adminId = null, reas
     `UPDATE payments SET refunded_cents = $2, refunded_at = now(), status = CASE WHEN $3 THEN 'refunded' ELSE status END WHERE id = $1`,
     [payment.id, refundedAfter, full],
   );
+  const passRevoked = payment.season_key && (full || action === 'dispute')
+    ? await seasons.revokeForPayment(db, payment, action === 'dispute' ? 'chargeback' : 'refunded')
+    : false;
   await db.query(
     'INSERT INTO admin_audit (admin_id, action, target_user_id, reason, details) VALUES ($1, $2, $3, $4, $5)',
     [adminId, action, payment.user_id, reason, JSON.stringify({
       order_no: payment.order_no, payment_id: payment.id, refund_id: refundId, amount_cents: amountCents,
       currency: payment.charged_currency ?? payment.currency, coins_removed: removed, coins_short: short, full,
+      ...(payment.season_key && { season: payment.season_key, pass_revoked: passRevoked }),
     })],
   );
-  return { removed, short, full };
+  return { removed, short, full, ...(payment.season_key && { passRevoked }) };
 }
 
 async function paymentForIntent(db, intentId) {

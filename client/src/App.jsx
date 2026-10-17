@@ -19,6 +19,7 @@ import SettingsPage from './site/pages/SettingsPage';
 import UnsubscribePage from './site/pages/UnsubscribePage';
 import { ForgotPasswordPage, ResetPasswordPage } from './site/pages/PasswordPages';
 import CheckoutPage from './site/pages/CheckoutPage';
+import PassPage from './site/pages/PassPage';
 import ScoresPage from './site/pages/ScoresPage';
 import SignupPage from './site/pages/SignupPage';
 import LegalPage from './site/pages/LegalPage';
@@ -94,6 +95,7 @@ export default function App() {
           <Route path="/collection/:design" element={<ShopPage />} />
           <Route path="/certificate/:code" element={<CertificatePage />} />
           <Route path="/checkout" element={<CheckoutPage />} />
+          <Route path="/pass" element={<PassPage />} />
           <Route path="/bag" element={<BagPage />} />
           <Route path="/purchases" element={<PurchasesPage />} />
           <Route path="/settings" element={<SettingsPage />} />

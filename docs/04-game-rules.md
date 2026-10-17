@@ -1,12 +1,12 @@
 # 4. Game and economy rules (plain English)
 
-*Last updated 16 Oct 2026.* The numbers live in `client/src/shared/economy.json` and `client/src/shared/marbles/catalog.json`. If this page and those files ever disagree, the files are right; then update this page.
+*Last updated 17 Oct 2026.* The numbers live in `client/src/shared/economy.json` and `client/src/shared/marbles/catalog.json`. If this page and those files ever disagree, the files are right; then update this page.
 
 ## The golden rules
 
 1. **Race results never change.** Once a race is decided, its result, and the replay of how it ran, stay the same forever. No code change, track edit or physics tuning may alter a past race. Tests (race fingerprints) guard this.
 2. **Looks never change speed.** Marbles, shades, collection items, showcase looks, billboards, scenery, lighting, sound and the 3D drawing are all cosmetic. The race engine never receives them.
-3. **Money never buys speed.** Coins and coin packs only buy looks.
+3. **Money never buys speed.** Coins and coin packs only buy looks. A season pass buys access to tracks and a coin bonus that never counts on a scoreboard, never speed.
 4. **Every coin is accounted for.** Every coin movement is a line in the coin ledger, and the ledger always adds up to the balance.
 
 ## How a race is decided
@@ -151,6 +151,29 @@ Reports are saved in `reports/<slug>/`. Track design rules:
 - The host picks the track and starts each race. Empty places fill with computer players, up to 20.
 - After a race, the next one is set up with everyone still in the room. There is no chat.
 - A room closes after 2 hours without a race.
+- **Season tracks in rooms:** a host with the season pass can pick a season track, and everyone in the room races it, pass or not ("hosted by a pass holder"). A host without the pass sees season tracks locked. If the host's pass is refunded, the room's next race goes back to a random free track.
+
+## Seasons and the season pass
+
+A season (the first: **Holiday Season 2026**, `holiday-2026`, 1 Dec 2026 00:00 to 7 Jan 2027 23:59 Swedish time) has its own tracks and a pass. Everything follows the season's dates in the `seasons` table, so nothing is deployed on any day of the season (`src/seasons`).
+
+**Who races a season's tracks** (`tracks.season_key`), checked by the server on every request that puts a marble on a track (creating or joining a race, a rematch, a room's track), not only in the pickers:
+- **Before the season starts:** nobody (the tracks may already be switched on).
+- **During the season:** pass holders, and everyone in a friend room whose host has the pass. Anyone else gets "This track is in the Holiday Season pass".
+- **After it ends:** everyone, free. They join the random pick like any track.
+- **Watching** races and replays on season tracks is open to everyone.
+- **The public random pick** never picks a locked season track. Pass holders get **Holiday races** (`POST /api/races { season }`): a random season track each race, the Track of the Day one race in three.
+
+**The Track of the Day:** each day of the season (Swedish calendar day) one season track is featured (`seasons.featured`). On it, a pass holder's **full-pay races** (the first 10 of the day) pay **+50% of the race's coins** (taking part and the finishing bonus) as a separate ledger line, `featured-bonus`. After the day's full races there is no bonus. The bonus is **neither earned nor bought**: it never counts on the scoreboards or in a player's earned coins (decided 17 Oct 2026: it comes with a paid pass, and money never buys a place on a scoreboard). Free players see the Track of the Day locked with "Get the pass".
+
+**The pass** (`holiday-pass-2026`, $9.99): real money only, never coins.
+- **On the web:** Stripe Checkout (test mode until Moses says otherwise), with the same immediate-delivery consent as coin packs. The pass arrives only when Stripe's signed webhook confirms the payment, once.
+- **On Android:** Google Play; the server checks the purchase with Google and **acknowledges** it (a pass is kept, never consumed). A purchase made outside the sale window, or a second pass while holding one, is not taken and left unacknowledged, so Google refunds it by itself within 3 days.
+- **On iPhone:** not built yet (Holiday plan step 3).
+- **Sold** from the season's start to its end, with an "ends in N days" countdown from 1 Jan. The server refuses a sale outside the window, or a second pass.
+- **One pass works everywhere:** bought on one platform, owned on all.
+- **No coins move:** a pass payment is a row in `payments` with 0 coins and its `season_key`.
+- **A full refund or a chargeback** revokes the pass: the season's tracks lock again for that player until the season ends (the season marble, once built, is taken back too). Partial refunds leave the pass.
 
 ## Age and accounts
 

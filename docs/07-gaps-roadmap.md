@@ -16,6 +16,7 @@
 | **Support email** | support@marblespins.com and privacy@marblespins.com are in the texts. The mailboxes must exist and receive mail, and Brevo must be on (`BREVO_API_KEY`) for contact-form notifications to be emailed (they go to support@marblespins.com unless `SUPPORT_EMAIL` says otherwise) | Railway variables, the mail host |
 | **Help Centre placeholders** | Answers still holding `[brackets]` (reply time, coins expiry, Swedish time, what happens when someone leaves a room, changing a name, Google/Apple sign-in, app launch, quality setting, parent approval, email switched on). Fill them in the project doc and in `faq.js` together | `client/src/site/help/faq.js` |
 | **Season** | Not set: no season is shown until `number`, `startsAt` and `endsAt` are set. The season badge for the top players isn't built yet | `client/src/shared/economy.json` → `season` |
+| **Holiday Season pass: the rest** | Built (step 1 of the plan): the `seasons` row, the pass on Stripe (test mode) and Google Play, locked season tracks checked by the server, friend rooms, Holiday races and the Track of the Day bonus. Still to do: the `holiday-pass-2026` product in Play Console ([runbook](05-runbook.md#the-season-pass-holiday-season-2026)); the App Store pass with Apple's coin purchases (step 3); the scoreboard season name and dates, the season-end badge job (`user_badges`); the season marble and its grant (step 5); the seasonal Winter collection; the pass page's final design, store texts, terms and Help answers (step 6); the 31 holiday tracks (step 4) | `src/seasons`, project doc `claude/holiday-season-plan.md` |
 | **App store links** | The website footer shows the App Store / Google Play buttons once their links are in `storeLinks.json` | `client/src/shared/storeLinks.json` |
 | **50 launch tracks** | The 10 Canyon Series tracks were switched on on 15 Oct 2026 (Moses: 60 tracks live). Check that every series the landing page shows has live tracks | `docs/data_updates`, `tracks.is_active` |
 | **Backups** | Not confirmed that Railway backs up the database on the current plan. Until then, take manual `pg_dump` backups | [Runbook](05-runbook.md#backups) |
@@ -27,7 +28,7 @@
 - **Push notifications** (app plan step 5).
 - **Marble trading** between players. `user_collection.first_owner_id` is ready for it.
 - **Custom marble labels.** The column exists, but a word filter is needed first.
-- **Subscriptions and season pass** (later).
+- **Subscriptions** (later). The season pass is being built (see "Holiday Season pass" above).
 - **Automated social posting** of race clips, approved by Moses.
 - **Track and Field (10 tracks): waiting for Moses's review.** All built and passing their full reports, added **switched off** (`docs/data_updates/2027-02-05-…` to `2027-02-15-…`): Marble Stadium Sprint, Berlin Blue Lanes, Bislett Mile, Eugene Hurdles, Beijing Nest 200, Tokyo Photo Finish, Stockholm 1912 Relay, London Steeplechase, Coliseum Anchor Leg, Zurich Golden Lap. Results and preview links: the project doc `claude/track-and-field-plan.md`. To switch them on: a data update setting `is_active` for the ten slugs; the landing page's Track and Field card then appears by itself.
 - **Block Series: waiting for Moses's review.** All 10 tracks are built and pass their full reports, added **switched off** (`docs/data_updates/2027-01-16-…` to `2027-01-25-…`).
@@ -71,5 +72,4 @@
    - push notifications;
    - new collections (Handmade Heritage 8 Dec, Moonies & Glow 15 Dec, Art Glass 22 Dec);
    - track series;
-   - trading;
-   - season pass.
+   - trading.

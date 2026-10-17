@@ -72,10 +72,17 @@ export function TrackPage() {
         {km && <li>Length: {km}</li>}
         <li>20 marbles a race, about a minute; every race is free</li>
       </ul>
+      {track.locked ? (
+        <div className="ms-row">
+          <span className="ms-msg" role="status">{track.season.state === 'before' ? `Opens with the ${track.season.name}.` : `In the ${track.season.name} pass.`} Watching its races is free.</span>
+          <Link to={`/pass?season=${track.season.key}`} className="ms-btn ms-btn--primary ms-btn--lg">GET THE PASS</Link>
+        </div>
+      ) : (
       <div className="ms-row">
         <Link to={`/play/start?track=${encodeURIComponent(track.slug)}`} className="ms-btn ms-btn--primary ms-btn--lg">RACE IT</Link>
         <Link to={`/play/friends?track=${encodeURIComponent(track.slug)}`} className="ms-btn ms-btn--lg ms-btn--ghost">RACE IT WITH FRIENDS</Link>
       </div>
+      )}
     </div>
   );
 }

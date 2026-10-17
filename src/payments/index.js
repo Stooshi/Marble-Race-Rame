@@ -9,7 +9,8 @@
  *   test    local development only: pays at once      (PAYMENTS_TEST=true, never in production)
  *
  * Every provider ends in the same place: grant(), which marks the payment paid
- * and adds the pack's coins exactly once, counted as bought coins (never
+ * and adds the pack's coins exactly once (or, for a season pass, gives the player the pass once:
+ * a pass payment has no coins and its season in payments.season_key; src/seasons), counted as bought coins (never
  * earned, so they don't count on the scoreboards). Coins are spent in the shop
  * (src/marbles/collection.js) and never cashed out. Looks only, never speed.
  *
@@ -21,11 +22,12 @@
 
 const packsFile = require('../../client/src/shared/payments/packs.json');
 const config = require('../config');
-const { HttpError, badRequest, notFound } = require('../utils/httpError');
+const { HttpError, badRequest, conflict, notFound } = require('../utils/httpError');
 const economy = require('../economy');
 const stripe = require('./stripe');
 const google = require('./google');
 const consent = require('../../client/src/shared/payments/consent.json');
+const seasons = require('../seasons');
 
 const PACKS = new Map(packsFile.packs.map((p) => [p.id, p]));
 
@@ -69,14 +71,29 @@ function available() {
   return Object.fromEntries(Object.values(PROVIDERS).map((p) => [p.name, p.configured()]));
 }
 
-/** Adds a paid payment's coins, once. Returns the player's new coin balance (or null if it was already granted). */
+/**
+ * A season pass as a store product, or null: { id, coins: 0, amountCents, currency, seasonKey,
+ * name, keep: true } (kept, never consumed: Google Play acknowledges it).
+ */
+async function passProduct(db, productId) {
+  const season = await seasons.byPassProduct(db, productId);
+  if (!season) return null;
+  return { id: season.pass_product_id, coins: 0, amountCents: season.price_cents, currency: season.currency, seasonKey: season.key, name: season.pass_name, keep: true, season };
+}
+
+/**
+ * Adds a paid payment's coins, once. Returns the player's new coin balance (or null if it was
+ * already granted). A season pass payment gives the pass instead: → 'pass-granted' or
+ * 'pass-already-held' (a second pass paid for: flagged in the audit log for a refund).
+ */
 async function grant(client, paymentId, providerRef = null) {
   const { rows: [pay] } = await client.query(
     `UPDATE payments SET status = 'paid', paid_at = now(), provider_ref = COALESCE($2, provider_ref)
-      WHERE id = $1 AND status = 'pending' RETURNING id, user_id, coins, product_id`,
+      WHERE id = $1 AND status = 'pending' RETURNING id, user_id, coins, product_id, season_key, provider, order_no`,
     [paymentId, providerRef],
   );
   if (!pay) return null;
+  if (pay.season_key) return `pass-${await seasons.grantForPayment(client, pay)}`;
   const done = await economy.change(client, { userId: pay.user_id, amount: pay.coins, kind: 'coin-pack', paymentId: pay.id, note: pay.product_id });
   return done.balance;
 }
@@ -118,8 +135,44 @@ async function checkout(client, userId, { productId, provider: providerName, con
   return { payment: { order_no: payment.order_no, status: payment.status, product_id: payment.product_id, coins: payment.coins }, next: shown };
 }
 
+/**
+ * Starts buying a season's pass on the website (Stripe; the test provider in development). Real
+ * money only. Refused when the pass isn't on sale (before its sale starts or after the season's
+ * end: 409 / 410) or when the player already has it (409). The pass comes only from Stripe's webhook.
+ */
+async function passCheckout(client, userId, { seasonKey, provider: providerName = 'stripe', consent: agreed, locale, siteUrl = null, now = new Date() }) {
+  const season = await seasons.byKey(client, seasonKey);
+  if (!season?.pass_product_id) throw notFound('No such season pass');
+  if (!seasons.passOnSale(season, now)) {
+    const ended = new Date(now) >= new Date(season.pass_sale_ends_at ?? season.free_from);
+    throw new HttpError(ended ? 410 : 409, ended ? `The ${season.pass_name} is no longer sold` : `The ${season.pass_name} goes on sale on ${new Intl.DateTimeFormat('en-GB', { timeZone: season.time_zone, day: 'numeric', month: 'long' }).format(new Date(season.pass_sale_starts_at))}`);
+  }
+  if (await seasons.hasPass(client, userId, season.key)) throw conflict(`You already have the ${season.pass_name}`);
+  const provider = PROVIDERS[providerName];
+  if (!provider || provider.name === 'google' || provider.name === 'apple') throw badRequest('The pass is bought on the website here; in the apps, through the store');
+  if (!provider.configured()) return { payment: null, next: await provider.start(null, {}) };
+  const user = await client.query('SELECT is_guest, email FROM users WHERE id = $1', [userId]).then((r) => r.rows[0]);
+  if (!user || user.is_guest) throw new HttpError(401, 'Make an account first, so your pass stays yours on every device');
+  if (agreed !== true) throw badRequest('Please agree to immediate delivery and the terms of sale first');
+  const item = await passProduct(client, season.pass_product_id);
+  const { rows: [payment] } = await client.query(
+    `INSERT INTO payments (user_id, provider, product_id, coins, amount_cents, currency, order_no, consent_at, consent_text, season_key)
+     VALUES ($1, $2, $3, 0, $4, $5, 'MS-' || nextval('payment_order_seq'), now(), $6, $7)
+     RETURNING id, user_id, order_no, status, product_id, coins, amount_cents, currency, season_key`,
+    [userId, provider.name, item.id, item.amountCents, item.currency, CONSENT_TEXT, season.key],
+  );
+  const next = await provider.start(payment, { userId, pack: item, email: user.email, locale, siteUrl });
+  if (next.kind === 'done') {
+    const pass = await grant(client, payment.id, `test-${payment.id}`);
+    return { payment: { order_no: payment.order_no, status: 'paid', product_id: payment.product_id }, next, pass };
+  }
+  if (next.sessionId) await client.query('UPDATE payments SET stripe_session_id = $2 WHERE id = $1', [payment.id, next.sessionId]);
+  const { sessionId, ...shown } = next;
+  return { payment: { order_no: payment.order_no, status: payment.status, product_id: payment.product_id }, next: shown };
+}
+
 // What a player sees of their own orders (Purchases page).
-const ORDER_COLUMNS = `order_no, provider, product_id, coins, amount_cents, upper(currency) AS currency, charged_cents, charged_currency,
+const ORDER_COLUMNS = `order_no, provider, product_id, season_key, coins, amount_cents, upper(currency) AS currency, charged_cents, charged_currency,
   tax_cents, status, refunded_cents, receipt_url, created_at, paid_at, refunded_at`;
 
 /** A player's orders, newest first (lapsed checkouts that were never paid are left out). */
@@ -199,13 +252,13 @@ const googleAccountId = (db, userId) => google.accountIdFor(db, userId);
 /** A Google Play purchase from the app (or from Google's notification): verified with Google, coins once. */
 function googlePurchase(db, { userId = null, productId, purchaseToken }) {
   if (!google.configured()) throw new HttpError(503, 'Google Play purchases are not connected yet');
-  return google.redeem(db, { userId, productId, purchaseToken }, { grant, pack });
+  return google.redeem(db, { userId, productId, purchaseToken }, { grant, product: async (id) => PACKS.get(id) ?? (await passProduct(db, id)) ?? pack(id) });
 }
 
 /** Google's refunds and chargebacks (voided purchases) taken back, and purchases not yet consumed consumed. */
 async function googleSync(db) {
   if (!google.configured()) return { revoked: 0, consumed: 0 };
-  const consumed = await google.consumeLeftovers(db);
+  const consumed = await google.consumeLeftovers(db) + await google.acknowledgeLeftovers(db);
   const revoked = await google.syncVoided(db, { revoke: stripe.revoke });
   if (revoked || consumed) console.log(`[google-play] ${revoked} voided purchase(s) taken back, ${consumed} consumed`);
   return { revoked, consumed };
@@ -219,7 +272,7 @@ function startGoogleJobs(db) {
     n += 1;
     try {
       if (n % 6 === 1) await googleSync(db);
-      else await google.consumeLeftovers(db);
+      else { await google.consumeLeftovers(db); await google.acknowledgeLeftovers(db); }
     } catch (err) { console.error(`[google-play] job: ${err.message}`); }
   };
   setTimeout(run, 30_000).unref?.();
@@ -244,4 +297,4 @@ async function redeemReceipt(client, userId, { provider: providerName, receipt }
   return { coins: await grant(client, payment.id) };
 }
 
-module.exports = { PROVIDERS, PACKS, CONSENT_TEXT, available, checkout, grant, redeemReceipt, ordersOf, orderOf, stripeEvent, refund, googleAccountId, googlePurchase, googleSync, startGoogleJobs, pack };
+module.exports = { PROVIDERS, PACKS, CONSENT_TEXT, available, checkout, passCheckout, passProduct, grant, redeemReceipt, ordersOf, orderOf, stripeEvent, refund, googleAccountId, googlePurchase, googleSync, startGoogleJobs, pack };

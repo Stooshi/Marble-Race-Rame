@@ -27,6 +27,7 @@ const { validate } = require('../utils/validate');
 const { HttpError, badRequest, conflict, forbidden, notFound } = require('../utils/httpError');
 const raceManager = require('../game/raceManager');
 const { joinRace } = require('./races');
+const seasons = require('../seasons');
 
 const router = express.Router();
 
@@ -54,17 +55,36 @@ function emitRoom(code) {
   raceManager.io?.to(roomChannel(code)).emit('room:updated', { code });
 }
 
-async function pickTrack(client, trackId) {
-  const { rows } = trackId
-    ? await client.query('SELECT id FROM tracks WHERE id = $1 AND is_active', [trackId])
-    : await client.query('SELECT id FROM tracks WHERE is_active ORDER BY random() LIMIT 1');
-  if (!rows[0]) throw badRequest(trackId ? 'Track not found or not active' : 'No active tracks');
-  return rows[0].id;
+/**
+ * The room's track: the one asked for (a season track only if the host may race it: a host with the
+ * pass opens it to everyone in the room), or a random one (never a locked season track).
+ */
+async function pickTrack(client, trackId, hostId) {
+  if (!trackId) {
+    const id = await seasons.pickOpenTrack(client);
+    if (!id) throw badRequest('No active tracks');
+    return id;
+  }
+  const { rows: [track] } = await client.query('SELECT id, slug, season_key FROM tracks WHERE id = $1 AND is_active', [trackId]);
+  if (!track) throw badRequest('Track not found or not active');
+  await seasons.assertTrackAccess(client, track, { userId: hostId });
+  return track.id;
 }
 
-/** A new race waiting at the start for the room (on its track, or a random one). */
+/**
+ * A new race waiting at the start for the room (on its track, or a random one). If the room's track
+ * is a season track the host may no longer race (their pass was refunded), the room goes back to
+ * random free tracks.
+ */
 async function newRoomRace(client, room) {
-  const trackId = await pickTrack(client, room.track_id);
+  let trackId;
+  try {
+    trackId = await pickTrack(client, room.track_id, room.host_id);
+  } catch (err) {
+    if (err.status !== 403 || !room.track_id) throw err;
+    await client.query('UPDATE rooms SET track_id = NULL WHERE id = $1', [room.id]);
+    trackId = await pickTrack(client, null, room.host_id);
+  }
   const { rows } = await client.query(
     `INSERT INTO races (track_id, min_marbles, max_marbles, fill_with_bots, created_by, tick_rate_hz, countdown_ms, room_id)
      VALUES ($1, $2, $2, true, $3, $4, $5, $6) RETURNING id`,
@@ -109,10 +129,13 @@ async function roomView(code, user) {
   const room = await db.withTransaction((client) => lockRoom(client, c));
   const { rows: host } = await db.query('SELECT id, username, display_name, is_guest FROM users WHERE id = $1', [room.host_id]);
   const { rows: race } = await db.query(
-    `SELECT r.id, r.status, r.started_at, r.countdown_ms, r.finished_at, t.id AS track_id, t.slug AS track_slug, t.name AS track_name
+    `SELECT r.id, r.status, r.started_at, r.countdown_ms, r.finished_at, t.id AS track_id, t.slug AS track_slug, t.name AS track_name, t.season_key
        FROM races r JOIN tracks t ON t.id = r.track_id WHERE r.id = $1`,
     [room.current_race_id],
   );
+  // A season track the room races while the season is on: open to everyone here through the host's pass.
+  const season = race[0]?.season_key ? await seasons.byKey(db, race[0].season_key) : null;
+  const hostedSeason = season && seasons.stateOf(season) === 'on' ? { key: season.key, name: season.name } : null;
   const { rows: players } = race[0] ? await db.query(
     `SELECT u.id AS user_id, u.username, u.display_name, u.is_guest, e.joined_at,
             m.id AS marble_id, m.slug AS marble_slug, m.name AS marble_name, m.color_primary, m.color_secondary, m.pattern,
@@ -144,7 +167,7 @@ async function roomView(code, user) {
       id: race[0].id,
       status: race[0].status,
       startedAt: race[0].started_at,
-      track: { id: race[0].track_id, slug: race[0].track_slug, name: race[0].track_name },
+      track: { id: race[0].track_id, slug: race[0].track_slug, name: race[0].track_name, ...(hostedSeason && { hostedSeason }) },
     } : null,
     players: players.map((p) => ({
       userId: p.user_id,
@@ -166,7 +189,7 @@ router.post('/', requireAuth, async (req, res) => {
       [req.user.id],
     );
     if (recent[0].n >= ROOMS_PER_HOUR) throw new HttpError(429, 'You have made a lot of rooms in the last hour. Try again a little later.');
-    if (body.track_id) await pickTrack(client, body.track_id);
+    if (body.track_id) await pickTrack(client, body.track_id, req.user.id);
     // A fresh code (retrying the rare clash).
     let room = null;
     for (let tries = 0; !room && tries < 8; tries += 1) {
@@ -229,7 +252,7 @@ router.post('/:code/track', requireAuth, async (req, res) => {
   const code = await onRoom(req, async (client, room, race) => {
     assertHost(room, req.user);
     if (!race || race.status !== 'lobby') throw conflict('The track can change once this race has finished');
-    const trackId = await pickTrack(client, body.random ? null : body.track_id);
+    const trackId = await pickTrack(client, body.random ? null : body.track_id, room.host_id);
     await client.query('UPDATE rooms SET track_id = $2 WHERE id = $1', [room.id, body.random ? null : trackId]);
     await client.query('UPDATE races SET track_id = $2, updated_at = now() WHERE id = $1', [race.id, trackId]);
   });
@@ -310,6 +333,7 @@ raceManager.afterFinish = (raceId) => afterRace(raceId).catch((err) => console.e
 
 module.exports = router;
 module.exports.afterRace = afterRace;
+module.exports.newRoomRace = newRoomRace;
 module.exports.emitRoom = emitRoom;
 module.exports.roomChannel = roomChannel;
 module.exports.normaliseCode = normaliseCode;

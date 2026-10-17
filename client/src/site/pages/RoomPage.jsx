@@ -166,6 +166,7 @@ export default function RoomPage() {
             </h2>
             <span className="ms-note">{view.players.length} of {view.room.size} · CPU players fill the rest</span>
           </div>
+          {race?.track.hostedSeason && <span className="ms-note" role="note">{race.track.hostedSeason.name.replace(/ \d{4}$/, '')} track: hosted by a pass holder, so everyone here races it.</span>}
           {isGuestName && (
             <form className="ms-form ms-row" style={{ display: 'flex', gap: 8 }} onSubmit={(e) => { e.preventDefault(); if (name.trim()) saveName(); }}>
               <input aria-label="Your name in the room" placeholder="Your name, so friends know it's you" maxLength={40} value={name} onChange={(e) => setName(e.target.value)} style={{ flex: '1 1 200px' }} />
@@ -205,7 +206,7 @@ export default function RoomPage() {
                   style={{ minHeight: 44, borderRadius: 12, padding: '0 12px', background: 'var(--ms-bg)', color: 'var(--ms-text)', border: '1px solid var(--ms-border)' }}
                 >
                   <option value="random">Random track each race</option>
-                  {tracks.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
+                  {tracks.map((t) => <option key={t.id} value={t.id} disabled={t.locked}>{t.name}{t.locked ? ' (in the season pass)' : ''}</option>)}
                 </select>
               </label>
               <button type="button" className="ms-btn ms-btn--primary ms-btn--lg" disabled={Boolean(busy) || !me.inRace} onClick={run('start', () => api.roomStart(code))}>
