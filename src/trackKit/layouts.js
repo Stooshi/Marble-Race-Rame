@@ -1060,7 +1060,7 @@ const LAYOUTS = {
       obstacles: [parked({ costume: c.parked, at: 0.2, side: R, length: 6 }), peg({ costume: c.peg, at: 0.42, line: 'left' }), peg({ costume: c.peg, at: 0.6, line: 'right' })], features: [rumble({ from: 0.72, to: 0.95, count: 3 })],
     },
   ],
-  /** L63 Hurdles straight (Track and Field): deep S-bends (they mix the field), a sweep, a long straight of hurdles (pegs in rows), the hairpin, a sweep, a short climb and a drop, a part-spiral and the run-in. */
+  /** L63 Hurdles straight (Track and Field): deep S-bends (they mix the field), a sweep, a long straight of hurdles (pegs in rows, then a slalom), the hairpin, a sweep, a short climb and a drop, a spiral and the run-in. */
   'hurdles-straight': (L, R, c) => [
     { key: 'sBends', name: 'S-bends', shape: sBends({ first: R, radius: 55, degrees: 100, grade: 0.13 }), billboards: 1 },
     { key: 'sweep', name: 'Sweep', shape: sweep({ side: L, radius: 85, degrees: 140, grade: 0.09 }), features: [boost({ at: 0.1 })], billboards: 2 },
@@ -1071,6 +1071,7 @@ const LAYOUTS = {
         peg({ costume: c.peg, at: 0.32, line: 'center' }),
         peg({ costume: c.peg, at: 0.52, line: 'left' }), peg({ costume: c.peg, at: 0.52, line: 'right' }),
         peg({ costume: c.peg, at: 0.72, line: 'center' }),
+        slalom({ costume: c.slalom, from: 0.8, to: 0.97, count: 5, loss: 0.3 }),
       ],
     },
     { key: 'brakingStraight', name: 'Run to the hairpin', shape: straight(45, { grade: 0.12 }) },
@@ -1078,7 +1079,7 @@ const LAYOUTS = {
     { key: 'sweep2', name: 'Second sweep', shape: sweep({ side: R, radius: 80, degrees: 120, grade: 0.09 }), billboards: 1 },
     { key: 'crest', name: 'Climb', shape: climb(12, { grade: -0.05, after: 0.12 }) },
     { key: 'drop', name: 'Drop', shape: plunge(45, { grade: 0.22, from: 0.12 }) },
-    { key: 'spin', name: 'Spiral', shape: spiral({ side: R, radius: 55, turns: 0.8, grade: 0.15 }) },
+    { key: 'spin', name: 'Spiral', shape: spiral({ side: R, radius: 55, turns: 0.95, grade: 0.15 }) },
     {
       key: 'lastStraight', name: 'Last straight', shape: straight(90, { grade: 0.15 }),
       obstacles: [peg({ costume: c.peg, at: 0.25, line: 'left' }), peg({ costume: c.peg, at: 0.45, line: 'right' })], features: [rumble({ from: 0.72, to: 0.95, count: 3 })],

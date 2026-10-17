@@ -24,6 +24,7 @@
 "dubai-marble-grand-prix": {"family":"grand-prix","reach":0.216,"seq":["opening: classic","drop","pileUp","slalom","S-bends left"]},
 "dubai-twister": {"family":"world-tour","reach":0.203,"seq":["opening: classic","drop","pileUp","slalom","S-bends left"]},
 "elderglade-marble-grand-prix": {"family":"grand-prix","reach":0.201,"seq":["opening: classic","drop","pileUp","slalom","S-bends right"]},
+"eugene-hurdles": {"family":"athletics","reach":0.304,"seq":["opening: peg-drop","drop","peg ×7","S-bends right","sweep left","boost"]},
 "final-level": {"family":"block","reach":0.227,"seq":["opening: funnel-drop","drop","pileUp","slalom","S-bends left","sweep right","boost"]},
 "final-round-spin": {"family":"arcade","reach":0.201,"seq":["opening: banked-turn","drop","pileUp","slalom","sweep left","S-bends right"]},
 "fish-river-burst": {"family":"canyon","reach":0.218,"seq":["opening: banked-turn","drop","pileUp","slalom","sweep left","S-bends left"]},

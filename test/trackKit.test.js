@@ -690,6 +690,7 @@ const HIDDEN_KIT_TRACKS = [
   ['marble-stadium-sprint', '2027-02-05-add-marble-stadium-sprint.sql', 'Marble Stadium Sprint, Track and Field track 1: through the white marble stadium in Athens, in at its open end, down the home straight, round the hairpin at the marble end and back up the far straight.'],
   ['berlin-blue-lanes', '2027-02-07-add-berlin-blue-lanes.sql', 'Track and Field track 2: Berlin Blue Lanes (the blue tartan of Berlin\'s 1936 stadium), added switched off.'],
   ['bislett-mile', '2027-02-08-add-bislett-mile.sql', 'Track and Field track 3: Bislett Mile (the laps on a long spiral, then Bislett\'s tight, steep stadium in Oslo and the bell lap), added switched off.'],
+  ['eugene-hurdles', '2027-02-09-add-eugene-hurdles.sql', 'Track and Field track 4: Eugene Hurdles (Hayward Field in Oregon: the hurdles straight, rows of hurdles across the lanes), added switched off.'],
 ];
 for (const [slug, file, note] of HIDDEN_KIT_TRACKS) {
   test(`${slug} is added by its data update, switched off, exactly as its track file builds it`, () => {

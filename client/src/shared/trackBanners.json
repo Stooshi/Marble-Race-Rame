@@ -299,6 +299,17 @@
    "side": 1,
    "marbles": 1
   },
+  "eugene-hurdles": {
+   "name": "Eugene Hurdles",
+   "series": "Track and Field",
+   "lighting": "day",
+   "v": "b989dc05",
+   "bytes": 21466,
+   "bytes2x": 54600,
+   "t": 10510,
+   "side": -1,
+   "marbles": 5
+  },
   "final-level": {
    "name": "Final Level",
    "series": "Blocks",

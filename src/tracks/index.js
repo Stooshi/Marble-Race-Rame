@@ -86,4 +86,5 @@ module.exports = [
   require('./marble-stadium-sprint'),
   require('./berlin-blue-lanes'),
   require('./bislett-mile'),
+  require('./eugene-hurdles'),
 ];
