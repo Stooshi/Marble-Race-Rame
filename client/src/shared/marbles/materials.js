@@ -295,6 +295,16 @@ const BUILDERS = {
 
   /** Northern Lights: the picture's night sky, with its three aurora ribbons and stars fixed in the ball. */
   'aurora-glass': fromParts,
+  /**
+   * Northern Lights, upgraded (the launch edition): the same sky, ribbons and stars, with a stronger
+   * halo and a soft shimmer: the ribbons brighten and fade a little as the ball rolls.
+   */
+  'aurora-glow'(look) {
+    const spec = fromParts(look);
+    spec.halo = { color: look.glow, size: 3.5, opacity: 0.6 };
+    spec.shimmer = { amount: 0.22, perTurn: 2.2, drift: 0.9 };
+    return spec;
+  },
 };
 
 /** A design without a 3D look of its own (none today): its picture's colours, from the common recipe. */
@@ -337,7 +347,8 @@ export function lookSpec(slug) {
  */
 export function customSpec(key, look) {
   if (cache.has(key)) return cache.get(key);
-  const spec = fromParts(look);
+  // (A preview of a catalogue material, e.g. its upgrade, is built exactly as the catalogue would build it.)
+  const spec = (BUILDERS[look.material] ?? fromParts)(look, seeded(key));
   spec.slug = key;
   spec.built = true;
   spec.look = look;
@@ -494,6 +505,7 @@ function lookFromSpec(spec, { radius = 0.55, geometry = null } = {}) {
   }
 
   let night = false;
+  let shimmerPhase = 0;
   // The pattern's own orientation: it follows the ball's turns, at most MAX_TURN a frame.
   const shown = new Quaternion(); const last = new Quaternion(); const delta = new Quaternion(); const inv = new Quaternion(); const now = new Quaternion();
   let started = false;
@@ -537,6 +549,12 @@ function lookFromSpec(spec, { radius = 0.55, geometry = null } = {}) {
       }
       if (halo) halo.material.opacity = spec.halo.opacity * (night ? 1.5 : 1) * (0.9 + 0.1 * Math.sin(t * 7.3));
       if (spec.twinkle) shell.material.uniforms.uDetailBoost.value = 1 + 0.25 * Math.max(0, Math.sin(t * 5.1));
+      if (spec.shimmer) {
+        // The ribbons' shimmer moves on with the ball's turning (and drifts slowly while it is still).
+        const { amount, perTurn, drift } = spec.shimmer;
+        shimmerPhase = (shimmerPhase + (look.turned ?? 0) * perTurn) % (Math.PI * 2);
+        shell.material.uniforms.uDetailBoost.value = 1 + amount * (0.5 + 0.5 * Math.sin(shimmerPhase + t * drift));
+      }
     },
     /** The ball jumped (a new place, a new race): the pattern takes up the ball's orientation again. */
     resetTrail() { started = false; },

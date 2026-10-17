@@ -28,6 +28,19 @@ export const GLOSS = toCss(GLOSS_LAYERS);
 // Flakes for the Champion Shooter's picture (fixed places, so every picture is the same).
 const FLAKES = [[30, 34, 1.2], [56, 26, 0.9], [72, 50, 1.3], [44, 56, 1], [28, 66, 0.8], [60, 74, 1.1], [50, 42, 0.7], [38, 22, 0.8], [66, 64, 0.9], [22, 48, 1], [78, 36, 0.7], [46, 80, 0.8], [58, 54, 0.6], [34, 46, 0.6]];
 
+/** Northern Lights: three aurora ribbons and a few stars fixed in the ball, over the night sky. */
+function auroraGlass([a, b, c, sky]) {
+  const skyLayer = { type: 'solid', color: sky };
+  const lights = [
+    ...STAR_DOTS,
+    { type: 'linear', angle: 160, stops: [[T, 20], [alpha(a, 0.9), 36], [T, 52]] },
+    { type: 'linear', angle: 200, stops: [[T, 34], [alpha(b, 0.9), 52], [T, 68]] },
+    { type: 'linear', angle: 170, stops: [[T, 56], [alpha(c, 0.85), 70], [T, 86]] },
+  ];
+  // The ribbons and stars are fixed in the ball (front and back), over the night sky.
+  return { layers: [...lights, skyLayer], parts: { body: [skyLayer], pattern: { layers: lights, map: 'front', repeat: 180 }, glow: a } };
+}
+
 /**
  * Each material: shade colours (in the design's slot order) → { layers, parts }.
  * layers: the picture, top first. parts: the same layer objects and colours,
@@ -117,17 +130,13 @@ const LOOKS = {
     const flakes = FLAKES.map(([x, y, r]) => ({ type: 'radial', at: [x, y], stops: [[fl, 0, r], [T, r + 0.8]] }));
     return { layers: [...flakes, body], parts: { body, flake: fl, glow: g } };
   },
-  'aurora-glass': ([a, b, c, sky]) => {
-    const skyLayer = { type: 'solid', color: sky };
-    const lights = [
-      ...STAR_DOTS,
-      { type: 'linear', angle: 160, stops: [[T, 20], [alpha(a, 0.9), 36], [T, 52]] },
-      { type: 'linear', angle: 200, stops: [[T, 34], [alpha(b, 0.9), 52], [T, 68]] },
-      { type: 'linear', angle: 170, stops: [[T, 56], [alpha(c, 0.85), 70], [T, 86]] },
-    ];
-    // The ribbons and stars are fixed in the ball (front and back), over the night sky.
-    return { layers: [...lights, skyLayer], parts: { body: [skyLayer], pattern: { layers: lights, map: 'front', repeat: 180 }, glow: a } };
-  },
+  'aurora-glass': (colours) => auroraGlass(colours),
+  /**
+   * Northern Lights, upgraded (the launch edition): the very same night sky, ribbons, stars and
+   * colours, with a stronger glow round it (GLOW_STRENGTH) and a soft shimmer over the ribbons as it
+   * rolls (SHIMMER: the 3D ribbons brighten and fade with the ball's turning; the picture's sheen drifts).
+   */
+  'aurora-glow': (colours) => auroraGlass(colours),
   // Plain striped Originals.
   stripe: ([s, b]) => {
     const bands = { type: 'linear', repeat: true, angle: 0, stops: [[s, 0, 16], [b, 16, 32]] };
@@ -136,9 +145,13 @@ const LOOKS = {
 };
 
 /** Which looks turn in their picture (moving patterns), and how fast. */
-const SPIN = { corkscrew: 'fast', 'flame-swirl': 'slow', 'aurora-glass': 'slow' };
+const SPIN = { corkscrew: 'fast', 'flame-swirl': 'slow', 'aurora-glass': 'slow', 'aurora-glow': 'slow' };
 /** Which looks glow, and in what colour (slot index). */
-const GLOW = { 'flame-swirl': 0, champion: 0, 'aurora-glass': 0 };
+const GLOW = { 'flame-swirl': 0, champion: 0, 'aurora-glass': 0, 'aurora-glow': 0 };
+/** How strong a look's glow is in its picture (the shadow's opacity; 0.5 unless set here). */
+export const GLOW_STRENGTH = { 'aurora-glow': 0.72 };
+/** Which looks shimmer as they roll (the 3D ribbons brighten and fade; the picture's sheen drifts). */
+export const SHIMMER = new Set(['aurora-glow']);
 
 /** An item's look: { material, colours, layers, parts, glow } (the master for 2D and 3D; made once per item). */
 const looks = new Map();
@@ -166,7 +179,8 @@ export function badgeOf(slug) {
     background: cssDrawable(look.layers) ? toCss(look.layers) : null,
     layers: look.layers,
     spin: SPIN[look.material] ?? null,
-    glow: look.glow ? cssAlpha(look.glow, 0.5) : null,
+    glow: look.glow ? cssAlpha(look.glow, GLOW_STRENGTH[look.material] ?? 0.5) : null,
+    shimmer: SHIMMER.has(look.material),
   };
 }
 

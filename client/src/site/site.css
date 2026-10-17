@@ -293,7 +293,10 @@ a.ms-chip:hover { text-decoration: none; border-color: var(--ms-muted); }
 @keyframes msSpin { to { transform: rotate(360deg); } }
 .ms-spin-fast { animation: msSpin 4s linear infinite; }
 .ms-spin-slow { animation: msSpin 14s linear infinite; }
-@media (prefers-reduced-motion: reduce) { .ms-spin-fast, .ms-spin-slow { animation: none; } }
+/* A soft sheen drifting across a shimmering marble's picture (Northern Lights). */
+.ms-shimmer { background: linear-gradient(115deg, transparent 30%, rgba(214, 255, 236, 0.16) 45%, rgba(255, 255, 255, 0.26) 50%, rgba(214, 236, 255, 0.16) 55%, transparent 70%) 0 0 / 300% 100% no-repeat; mix-blend-mode: screen; animation: msShimmer 5.5s ease-in-out infinite; }
+@keyframes msShimmer { 0% { background-position: 100% 0; } 60%, 100% { background-position: 0% 0; } }
+@media (prefers-reduced-motion: reduce) { .ms-spin-fast, .ms-spin-slow, .ms-shimmer { animation: none; } .ms-shimmer { display: none; } }
 
 /* ── Collection, shop and bag ─────────────────────────────────────────────── */
 .ms-hero {

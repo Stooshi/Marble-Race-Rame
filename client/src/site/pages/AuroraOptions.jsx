@@ -2,18 +2,18 @@ import { useEffect, useRef } from 'react';
 import {
   AmbientLight, CircleGeometry, Color, Mesh, MeshBasicMaterial, PerspectiveCamera, Quaternion, Scene, Vector3, WebGLRenderer,
 } from 'three';
-import { GLOSS, badgeOf } from '../../shared/marbles/badge';
+import { GLOSS, GLOW_STRENGTH, SHIMMER, badgeOf, lookOf } from '../../shared/marbles/badge';
 import { toCss, cssDrawable } from '../../shared/marbles/paint';
 import { createCustomLook, createMarbleLook } from '../../shared/marbles/materials';
 import { pictureBackground } from '../marbles/picture';
-import { AURORA_OPTIONS } from '../marbles/auroraOptions';
 
 /**
- * Northern Lights design options (a preview page, not linked, not indexed):
+ * Northern Lights, the launch edition's design review (a preview page, not linked, not indexed):
  *   /preview/marbles/northern-lights
- * The current limited edition and four new options, each as the shop picture (large, and at the
- * shop card's size) and as the 3D marble rolling, on a light and a dark background. Nothing here
- * changes the shop or the catalogue.
+ * The original design next to its small upgrade (the 'aurora-glow' material: the same sky, ribbons,
+ * stars and colours, a stronger glow and a soft shimmer as it rolls), each as the shop picture (large,
+ * and at the shop card's size) and as the 3D marble rolling, on a light and a dark background.
+ * Nothing here changes the shop or the catalogue.
  */
 const CURRENT = 'aurora-aurora';
 const UP = new Vector3(0, 1, 0);
@@ -24,29 +24,33 @@ function Picture({ entry, size }) {
     background: cssDrawable(entry.look.layers) ? toCss(entry.look.layers) : null,
     layers: entry.look.layers,
     spin: entry.look.spin ?? null,
-    glow: entry.look.glow ? `${entry.look.glow}80` : null,
+    glow: entry.look.glow ? `${entry.look.glow}${Math.round((GLOW_STRENGTH[entry.look.material] ?? 0.5) * 255).toString(16).padStart(2, '0')}` : null,
+    shimmer: SHIMMER.has(entry.look.material),
   };
   const shadow = b.glow ? `0 0 ${Math.round(size / 4)}px ${b.glow}, 0 10px 20px rgba(0,0,0,0.45)` : '0 10px 20px rgba(0,0,0,0.45)';
   return (
     <span className="ms-m" style={{ width: size, height: size, boxShadow: shadow }} role="img" aria-label={`${entry.name}, shop picture`}>
       <i className={b.spin ? `ms-spin-${b.spin}` : undefined} style={{ background: pictureBackground(b, `aurora-option:${entry.key}`) }} />
+      {b.shimmer && <i className="ms-shimmer" />}
       <i style={{ background: GLOSS }} />
     </span>
   );
 }
 
 /** The 3D marble rolling on the spot, as in races (the shared materials, unlit), its shadow under it. */
-function Rolling({ entry, label }) {
+function Rolling({ entry, label, background }) {
   const ref = useRef(null);
   useEffect(() => {
     const canvas = ref.current;
     let renderer;
     try {
-      renderer = new WebGLRenderer({ canvas, antialias: true, alpha: true });
+      // (An opaque canvas in the panel's colour, as a race draws on its scene: the glow adds onto it.)
+      renderer = new WebGLRenderer({ canvas, antialias: true });
     } catch {
       return undefined;
     }
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    renderer.setClearColor(new Color(background));
     const scene = new Scene();
     scene.add(new AmbientLight('#ffffff', 1));
     const shadow = new Mesh(new CircleGeometry(1.15, 32), new MeshBasicMaterial({ color: new Color('#000000'), transparent: true, opacity: 0.3 }));
@@ -83,7 +87,7 @@ function Rolling({ entry, label }) {
     };
     raf = requestAnimationFrame(tick);
     return () => { cancelAnimationFrame(raf); look.dispose(); renderer.dispose(); };
-  }, [entry]);
+  }, [entry, background]);
   return <canvas ref={ref} className="nl-roll" role="img" aria-label={label} />;
 }
 
@@ -95,26 +99,30 @@ function Panel({ entry, theme }) {
         <Picture entry={entry} size={132} />
         <Picture entry={entry} size={64} />
       </div>
-      <Rolling entry={entry} label={`${entry.name}, 3D marble rolling, ${theme} background`} />
+      <Rolling entry={entry} background={theme === 'light' ? '#f2f4f8' : '#0b1020'} label={`${entry.name}, 3D marble rolling, ${theme} background`} />
     </div>
   );
 }
 
 const ENTRIES = [
-  { key: 'current', letter: 'Now', name: 'Northern Lights (current)', idea: 'The October limited edition as it is today: a night sky with three soft aurora bands and a few stars.', slug: CURRENT },
-  ...AURORA_OPTIONS,
+  { key: 'current', letter: 'Original', name: 'Northern Lights (original)', idea: 'The design as it is today: a night sky with three soft aurora bands, green, violet and teal, and a few stars.', slug: CURRENT },
+  {
+    key: 'glow', letter: 'Upgrade', name: 'Northern Lights (upgraded)',
+    idea: 'The same design, colours and character, with a slightly stronger glow round the marble and a subtle shimmer: the ribbons brighten and fade a little as it rolls, and a faint sheen drifts over the shop picture.',
+    look: { ...lookOf(CURRENT), material: 'aurora-glow', spin: 'slow' },
+  },
 ];
 
 export default function AuroraOptions() {
   // (Preview pages are kept out of search engines by pageMeta.js; this one only names its tab.)
-  useEffect(() => { document.title = 'Northern Lights design options · Marble Spins'; }, []);
+  useEffect(() => { document.title = 'Northern Lights design review · Marble Spins'; }, []);
   return (
     <div className="nl-page">
       <style>{CSS}</style>
       <header className="nl-head">
         <span className="nl-eyebrow">Design review · not in the shop</span>
-        <h1>Northern Lights: four new designs</h1>
-        <p>The current limited edition, then options A to D. Each shows the shop picture (large, and at the shop card&apos;s size) and the 3D marble rolling as it does in races, on a light and a dark background. The shop picture and the 3D marble are painted from the same colours.</p>
+        <h1>Northern Lights: the launch edition</h1>
+        <p>The original design, then its small upgrade. Each shows the shop picture (large, and at the shop card&apos;s size) and the 3D marble rolling as it does in races, on a light and a dark background. The shop picture and the 3D marble are painted from the same colours.</p>
       </header>
       {ENTRIES.map((e) => (
         <section key={e.key} className={`nl-row${e.slug ? ' nl-row--current' : ''}`} aria-labelledby={`nl-${e.key}`}>
@@ -129,7 +137,7 @@ export default function AuroraOptions() {
           </div>
         </section>
       ))}
-      <p className="nl-foot">Pick one (or ask for changes) and it replaces the current design in the catalogue: the name, its story text and the edition stay as decided.</p>
+      <p className="nl-foot">Once the upgrade is approved it replaces the original in the catalogue (the same name, colours and Marble ID); until then the shop keeps the original.</p>
     </div>
   );
 }
@@ -143,7 +151,7 @@ const CSS = `
 .nl-row--current { border-style: dashed; }
 .nl-row__text h2 { margin: 6px 0; font-size: 1.3rem; }
 .nl-row__text p { margin: 0; color: var(--ms-muted, #a9b1c3); line-height: 1.5; font-size: .95rem; }
-.nl-letter { display: inline-grid; place-items: center; min-width: 34px; height: 34px; padding: 0 8px; border-radius: 10px; background: #3DDC97; color: #0B1430; font-weight: 800; }
+.nl-letter { display: inline-grid; place-items: center; min-width: 34px; font-size: .8rem; letter-spacing: .04em; text-transform: uppercase; height: 34px; padding: 0 8px; border-radius: 10px; background: #3DDC97; color: #0B1430; font-weight: 800; }
 .nl-row--current .nl-letter { background: #6b7590; color: #fff; }
 .nl-row__panels { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
 .nl-panel { position: relative; border-radius: 14px; padding: 16px; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 12px; align-items: center; min-height: 190px; }

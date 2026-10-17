@@ -120,7 +120,7 @@ export const shows3d = (slug) => APPROVED_3D.has(ITEM[slug]?.design.key);
 export const PLAIN_3D = Boolean(catalog.approved3d?.plain);
 
 /** The designs whose 3D look is finished (materials.js builds exactly these). */
-export const BUILT_MATERIALS = ['vane-glass', 'steel', 'champion', 'aurora-glass', 'clear-glass', 'agate-rings', 'patch', 'corkscrew', 'bee-bands', 'oxblood', 'flame-swirl'];
+export const BUILT_MATERIALS = ['vane-glass', 'steel', 'champion', 'aurora-glass', 'aurora-glow', 'clear-glass', 'agate-rings', 'patch', 'corkscrew', 'bee-bands', 'oxblood', 'flame-swirl'];
 
 /** Looks the previews can dress marbles in: every finished regular design (never a limited edition). */
 export const HOUSE_LOOKS = ITEMS.filter((i) => BUILT_MATERIALS.includes(i.design.material) && !i.design.limited).map((i) => i.slug);

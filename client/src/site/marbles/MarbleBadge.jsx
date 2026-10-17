@@ -8,6 +8,7 @@ export default function MarbleBadge({ slug, marble, size = 84, label, still = fa
   return (
     <span className="ms-m" style={{ width: size, height: size, boxShadow: shadow }} role={label ? 'img' : undefined} aria-label={label} aria-hidden={label ? undefined : true}>
       <i className={!still && b.spin ? `ms-spin-${b.spin}` : undefined} style={{ background: pictureBackground(b, slug ?? b.key) }} />
+      {!still && b.shimmer && <i className="ms-shimmer" />}
       <i style={{ background: GLOSS }} />
     </span>
   );
