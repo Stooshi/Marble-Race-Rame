@@ -80,4 +80,5 @@ module.exports = [
   require('./final-level'),
   require('./sky-islands'),
   require('./voxel-harbor'),
+  require('./sunstone-temple'),
 ];

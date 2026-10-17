@@ -706,6 +706,17 @@
    "side": 1,
    "marbles": 1
   },
+  "sunstone-temple": {
+   "name": "Sunstone Temple",
+   "series": "Blocks",
+   "lighting": "day",
+   "v": "7fe547c8",
+   "bytes": 15458,
+   "bytes2x": 38714,
+   "t": 10532,
+   "side": 1,
+   "marbles": 5
+  },
   "sydney-marble-grand-prix": {
    "name": "Sydney Marble Grand Prix",
    "series": "Grand Prix",
