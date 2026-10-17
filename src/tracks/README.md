@@ -65,7 +65,7 @@ module.exports = track({
   | `staggered-drop` | The gate lets the field go in five waves of four starting places, 0.15 s apart, in a new order every race; a short rough stretch lets the waves catch up before the pile-up |
   | `tunnel-launch` | Where the gate's funnel ends, the plunge dives into a tunnel (`tunnel`: its look) and bursts out into daylight |
   | `banked-turn` | The steep plunge straight into a steep banked first turn (`side`); the field fans up the wall |
-  | `boost-launch` | A gentler drop, then a strip of boost pads wall to wall: the same kick for everyone |
+  | `boost-launch` | A gentler drop, then a strip of boost pads wall to wall: the same kick for everyone. It tends to keep the front starting group ahead; follow it with deep, tight S-bends (as Wadi Mujib Burst) and check the groups early |
   | `funnel-drop` | A longer bowl at the gate; the order mixes as the field squeezes into the channel |
   | `crest-start` | The steep plunge into a short climb and over a rounded crest: the field bunches and spills over in a new order |
 
