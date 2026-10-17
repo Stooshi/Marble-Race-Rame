@@ -680,6 +680,7 @@ const HIDDEN_KIT_TRACKS = [
   ['wadi-mujib-burst', '2027-01-29-add-wadi-mujib-burst.sql', 'Wadi Mujib Burst, Canyon Series track 15: through Wadi Mujib in Jordan, a narrow passage of deep red sandstone filled with a clear stream, past the ladders, round the pool and out to the Dead Sea.'],
   ['waimea-free-fall', '2027-01-30-add-waimea-free-fall.sql', 'Waimea Free Fall, Canyon Series track 14: through Waimea Canyon on Kauai, over green ridges and between walls of red earth, a free fall beside a long waterfall with a rainbow, down to palms by the sea.'],
   ['sky-islands', '2027-01-31-add-sky-islands.sql', 'Sky Islands, Block Series track 11: islands of cubes floating over a sea of cloud, over block bridges from island to island, round a spin and down a waterfall off the last island to a garden.'],
+  ['voxel-harbor', '2027-02-01-add-voxel-harbor.sql', 'Voxel Harbor, Block Series track 12: a harbour of blocks at sunset, along the quay past stacked containers, round a spin under a block crane, out along the pier past moored boats and round the basin to the lighthouse.'],
 ];
 for (const [slug, file, note] of HIDDEN_KIT_TRACKS) {
   test(`${slug} is added by its data update, switched off, exactly as its track file builds it`, () => {

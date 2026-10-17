@@ -33,5 +33,9 @@
  "sky-islands": {
   "t": 9000,
   "side": -1
+ },
+ "voxel-harbor": {
+  "t": 36000,
+  "side": -1
  }
 }

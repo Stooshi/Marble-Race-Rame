@@ -79,4 +79,5 @@ module.exports = [
   require('./block-fortress'),
   require('./final-level'),
   require('./sky-islands'),
+  require('./voxel-harbor'),
 ];

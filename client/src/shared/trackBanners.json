@@ -794,6 +794,17 @@
    "side": 1,
    "marbles": 5
   },
+  "voxel-harbor": {
+   "name": "Voxel Harbor",
+   "series": "Blocks",
+   "lighting": "sunset",
+   "v": "7109f81b",
+   "bytes": 14440,
+   "bytes2x": 33194,
+   "t": 36000,
+   "side": -1,
+   "marbles": 1
+  },
   "voxel-peaks": {
    "name": "Voxel Peaks",
    "series": "Blocks",

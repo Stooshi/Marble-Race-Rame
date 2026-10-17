@@ -79,6 +79,7 @@ const BLOCK_HEIGHTS = {
   'stack-spiral': { stackSpiral: { height: 12 } },
   'final-level': { loop: { height: 14 } },
   'island-hops': { bridge1: { height: 12 }, bridge2: { height: 10 } },
+  'harbour-quays': { pier: { height: 6 }, basinSweep: { height: 6 } },
 };
 const TOUCHDOWNS = { 'sea-crossing': { tunnelRun: { height: 0 } }, 'terrace-run': { swoops: { height: 0 } }, 'wall-dive': { tunnelRun: { height: 0 } } };
 

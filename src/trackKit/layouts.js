@@ -932,22 +932,22 @@ const LAYOUTS = {
       obstacles: [parked({ costume: c.parked, at: 0.2, side: L, length: 6 }), peg({ costume: c.peg, at: 0.45, line: 'right' })], features: [rumble({ from: 0.7, to: 0.95, count: 3 })],
     },
   ],
-  /** L56 Harbour quays (Block Series): a long quay straight (a boost, moguls), a spin round the crane, a pier straight (a parked piece, a peg), a long sweep round the basin, a drop, the hairpin late, S-bends and pegs at the run-in. */
+  /** L56 Harbour quays (Block Series): tight, deep S-bends first through the warehouses (they mix the field), a long quay straight (a boost, a peg, moguls), a wide part-spiral round the crane (0.6 of a turn: a full turn's end passed under the quay), a pier straight (a parked piece, a peg), a long sweep round the basin, a drop, the hairpin late and pegs at the run-in. */
   'harbour-quays': (L, R, c) => [
-    { key: 'quay', name: 'Long straight', shape: straight(120, { grade: 0.1 }), features: [boost({ at: 0.1 }), moguls({ from: 0.55, to: 0.9, count: 4 })], billboards: 2 },
-    { key: 'craneSpin', name: 'Spiral', shape: spiral({ side: R, radius: 54, turns: 1, grade: 0.15 }) },
+    { key: 'sBends', name: 'S-bends', shape: sBends({ first: R, radius: 55, degrees: 115, grade: 0.13 }), billboards: 1 },
+    { key: 'quay', name: 'Long straight', shape: straight(120, { grade: 0.1 }), features: [boost({ at: 0.1 }), moguls({ from: 0.55, to: 0.9, count: 4 })], obstacles: [peg({ costume: c.peg, at: 0.3, line: 'center' })], billboards: 2 },
+    { key: 'craneSpin', name: 'Spiral', shape: spiral({ side: R, radius: 70, turns: 0.6, grade: 0.15 }) },
     {
-      key: 'pier', name: 'Pier straight', shape: straight(70, { grade: 0.12 }),
+      key: 'pier', name: 'Pier straight', shape: straight(85, { grade: 0.12 }),
       obstacles: [parked({ costume: c.parked, at: 0.25, side: R, length: 6 }), peg({ costume: c.peg, at: 0.55, line: 'left' })],
     },
-    { key: 'basinSweep', name: 'Sweep', shape: sweep({ side: L, radius: 90, degrees: 150, grade: 0.085 }), billboards: 2 },
+    { key: 'basinSweep', name: 'Sweep', shape: sweep({ side: L, radius: 90, degrees: 180, grade: 0.085 }), billboards: 2 },
     { key: 'dockDrop', name: 'Drop', shape: plunge(45, { grade: 0.22, from: 0.085 }) },
     { key: 'brakingStraight', name: 'Run to the hairpin', shape: straight(50, { grade: 0.12 }) },
     { key: 'hairpin', name: 'Hairpin', shape: hairpin({ side: R }), obstacles: [swipe({ costume: c.swipe, side: 'high' })] },
-    { key: 'sBends', name: 'S-bends', shape: sBends({ first: L, radius: 75, degrees: 70, grade: 0.12 }), billboards: 1 },
     {
-      key: 'lastStraight', name: 'Last straight', shape: straight(85, { grade: 0.15 }),
-      obstacles: [peg({ costume: c.peg, at: 0.3, line: 'right' }), peg({ costume: c.peg, at: 0.5, line: 'left' })], features: [rumble({ from: 0.7, to: 0.95, count: 3 })],
+      key: 'lastStraight', name: 'Last straight', shape: straight(100, { grade: 0.15 }),
+      obstacles: [peg({ costume: c.peg, at: 0.25, line: 'right' }), peg({ costume: c.peg, at: 0.42, line: 'left' }), peg({ costume: c.peg, at: 0.58, line: 'center' })], features: [rumble({ from: 0.72, to: 0.95, count: 3 })],
     },
   ],
   /** L57 Temple halls (Block Series): a slalom straight (the entrance hall), the hairpin early, a straight of steps (the stairs), a spin and a quarter (the courtyard), a second straight of steps, S-bends, a sweep (a boost) and a parked piece and a peg at the run-in. */

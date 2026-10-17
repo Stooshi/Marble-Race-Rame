@@ -118,7 +118,7 @@ module.exports = track({
   | `long-falls` (canyons) | ridgeSweep, sBends, brakingStraight, hairpin, toTheLip, longFall (a waterfall), plungePool, spin, sweep2, lastStraight |
   | `siq-passage` (canyons) | narrows, siq1, boulder (a short climb), dropIn, siq2, brakingStraight, hairpin, pool (a spiral), openSweep, lastStraight |
   | `island-hops` (blocks) | bridge1, island1, hop, bridge2, island2 (a spiral), brakingStraight, hairpin, toTheEdge, islandFall (a waterfall), bridge3, sweep2, lastStraight |
-  | `harbour-quays` (blocks) | quay, craneSpin, pier, basinSweep, dockDrop, brakingStraight, hairpin, sBends, lastStraight |
+  | `harbour-quays` (blocks) | sBends, quay, craneSpin (0.6 of a spiral), pier, basinSweep, dockDrop, brakingStraight, hairpin, lastStraight |
   | `temple-halls` (blocks) | entryHall, brakingStraight, hairpin, stairs1 (steps), courtyard (a spiral), stairs2 (steps), sanctum, sunSweep, lastStraight |
   | `cascade-rows` (blocks) | firstSweep, cascadeRun, sBends, crest (a short climb), drop, brakingStraight, hairpin, spin, lastStraight |
   | `bonus-stages` (blocks) | stage1, bonusSweep, checkpointBends, stage2, spin, brakingStraight, hairpin, finalStage, lastStraight |
