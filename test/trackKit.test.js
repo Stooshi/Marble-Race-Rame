@@ -693,6 +693,7 @@ const HIDDEN_KIT_TRACKS = [
   ['eugene-hurdles', '2027-02-09-add-eugene-hurdles.sql', 'Track and Field track 4: Eugene Hurdles (Hayward Field in Oregon: the hurdles straight, rows of hurdles across the lanes), added switched off.'],
   ['beijing-nest-200', '2027-02-10-add-beijing-nest-200.sql', 'Track and Field track 5: Beijing Nest 200 (under the woven steel nest at night: one long sweeping bend into the home straight), added switched off.'],
   ['tokyo-photo-finish', '2027-02-11-add-tokyo-photo-finish.sql', 'Track and Field track 6: Tokyo Photo Finish (to the National Stadium under its timber roof, down the long straight to a photo finish), added switched off.'],
+  ['stockholm-1912-relay', '2027-02-12-add-stockholm-1912-relay.sql', 'Track and Field track 7: Stockholm 1912 Relay (Stockholms Stadion\'s red-brown brick: four legs with their exchange zones), added switched off.'],
 ];
 for (const [slug, file, note] of HIDDEN_KIT_TRACKS) {
   test(`${slug} is added by its data update, switched off, exactly as its track file builds it`, () => {

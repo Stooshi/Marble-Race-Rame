@@ -772,6 +772,17 @@
    "side": 1,
    "marbles": 4
   },
+  "stockholm-1912-relay": {
+   "name": "Stockholm 1912 Relay",
+   "series": "Track and Field",
+   "lighting": "day",
+   "v": "c58dc427",
+   "bytes": 26392,
+   "bytes2x": 67762,
+   "t": 17915,
+   "side": 1,
+   "marbles": 5
+  },
   "stockholm-marble-grand-prix": {
    "name": "Stockholm Marble Grand Prix",
    "series": "Grand Prix",

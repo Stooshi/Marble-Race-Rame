@@ -1130,9 +1130,9 @@ const LAYOUTS = {
   'relay-legs': (L, R, c) => [
     {
       key: 'leg1', name: 'First leg', shape: straight(85, { grade: 0.12 }), billboards: 1,
-      obstacles: [peg({ costume: c.peg, at: 0.15, line: 'center' }), peg({ costume: c.peg, at: 0.3, line: 'left' }), peg({ costume: c.peg, at: 0.45, line: 'right' }), peg({ costume: c.peg, at: 0.6, line: 'center' })], features: [paint({ from: 0.7, to: 0.95, look: 'exchange-zone' })],
+      obstacles: [peg({ costume: c.peg, at: 0.15, line: 'center' }), peg({ costume: c.peg, at: 0.3, line: 'left' }), peg({ costume: c.peg, at: 0.45, line: 'right' }), peg({ costume: c.peg, at: 0.6, line: 'center' })], features: [paint({ from: 0.7, to: 0.95, look: 'exchange-zone' }), brake({ at: 0.72, length: 10, drag: 0.01 })],
     },
-    { key: 'sweep1', name: 'Sweep', shape: sweep({ side: R, radius: 75, degrees: 150, grade: 0.09 }), billboards: 1 },
+    { key: 'sweep1', name: 'Sweep', shape: sweep({ side: R, radius: 75, degrees: 150, grade: 0.1 }), billboards: 1 },
     {
       key: 'leg2', name: 'Second leg', shape: straight(85, { grade: 0.12 }),
       obstacles: [slalom({ costume: c.slalom, from: 0.25, to: 0.6, count: 3, loss: 0.15 })], features: [paint({ from: 0.7, to: 0.95, look: 'exchange-zone' })],
@@ -1144,7 +1144,7 @@ const LAYOUTS = {
       key: 'leg4', name: 'Fourth leg', shape: straight(80, { grade: 0.12 }), billboards: 1,
       obstacles: [peg({ costume: c.peg, at: 0.5, line: 'center' })], features: [paint({ from: 0.05, to: 0.3, look: 'exchange-zone' })],
     },
-    { key: 'sweep3', name: 'Third sweep', shape: sweep({ side: L, radius: 80, degrees: 110, grade: 0.09 }) },
+    { key: 'sweep3', name: 'Third sweep', shape: sweep({ side: L, radius: 80, degrees: 110, grade: 0.11 }) },
     { key: 'spin', name: 'Spiral', shape: spiral({ side: R, radius: 55, turns: 0.8, grade: 0.15 }) },
     {
       key: 'lastStraight', name: 'Last straight', shape: straight(80, { grade: 0.15 }),

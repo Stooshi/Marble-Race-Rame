@@ -65,6 +65,7 @@
 "sognefjord": {"family":"coaster","reach":0.242,"seq":["opening: crest-start","drop","pileUp","slalom","climb","drop","sweep left"]},
 "spawn-point": {"family":"block","reach":0.256,"seq":["opening: crest-start","drop","pileUp","slalom","climb","drop","sweep left","boost"]},
 "speedrun-valley": {"family":"block","reach":0.277,"seq":["opening: boost-launch","drop","pileUp","straight","boost","drop","slalom","straight","boost","moguls","sweep right"]},
+"stockholm-1912-relay": {"family":"athletics","reach":0.224,"seq":["opening: split-start","drop","pileUp","slalom","chutes","drop","slalom","straight","peg ×4","paint","brake","sweep right"]},
 "stockholm-marble-grand-prix": {"family":"grand-prix","reach":0.207,"seq":["opening: classic","drop","pileUp","slalom","S-bends right"]},
 "sunstone-temple": {"family":"block","reach":0.253,"seq":["opening: tunnel-launch","drop","pileUp","slalom","drop","slalom","straight","slalom","straight","hairpin left","swipe","straight","steps"]},
 "sydney-marble-grand-prix": {"family":"grand-prix","reach":0.207,"seq":["opening: classic","drop","pileUp","slalom","S-bends right"]},
