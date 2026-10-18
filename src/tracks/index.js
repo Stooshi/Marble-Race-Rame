@@ -103,4 +103,5 @@ module.exports = [
   require('./quebec-old-town-spins'),
   require('./oaxaca-posadas-run'),
   require('./nuremberg-christmas-market-run'),
+  require('./belgrade-badnjak-run'),
 ];
