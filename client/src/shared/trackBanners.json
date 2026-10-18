@@ -651,6 +651,17 @@
    "side": -1,
    "marbles": 4
   },
+  "nuremberg-christmas-market-run": {
+   "name": "Nuremberg Christmas Market Run",
+   "series": "World Tour",
+   "lighting": "snow",
+   "v": "3f08615c",
+   "bytes": 13438,
+   "bytes2x": 31780,
+   "t": 10605,
+   "side": -1,
+   "marbles": 4
+  },
   "oaxaca-posadas-run": {
    "name": "Oaxaca Posadas Run",
    "series": "World Tour",

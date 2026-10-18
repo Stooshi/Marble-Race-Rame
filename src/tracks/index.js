@@ -102,4 +102,5 @@ module.exports = [
   require('./outback-christmas-burst'),
   require('./quebec-old-town-spins'),
   require('./oaxaca-posadas-run'),
+  require('./nuremberg-christmas-market-run'),
 ];
