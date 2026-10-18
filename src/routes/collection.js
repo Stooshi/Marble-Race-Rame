@@ -6,6 +6,7 @@ const { requireAuth, optionalAuth } = require('../middleware/auth');
 const { validate } = require('../utils/validate');
 const collection = require('../marbles/collection');
 
+const seasons = require('../seasons');
 const router = express.Router();
 const SLUG = { type: 'string', pattern: /^[a-z0-9-]{2,64}$/, patternMessage: 'must be a marble slug' };
 
@@ -22,7 +23,8 @@ router.get('/', optionalAuth, async (req, res) => {
 
 /** GET /api/collection/bag — the signed-in player's Marble Bag. */
 router.get('/bag', requireAuth, async (req, res) => {
-  res.json(await collection.bag(db, req.user.id));
+  const [bag, badges] = await Promise.all([collection.bag(db, req.user.id), seasons.badgesOf(db, req.user.id)]);
+  res.json({ ...bag, badges });
 });
 
 /** PUT /api/collection/shooter { item } | { original } — the look the player races in. */

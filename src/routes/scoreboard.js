@@ -7,13 +7,15 @@ const { validate } = require('../utils/validate');
 const { unauthorized } = require('../utils/httpError');
 const { EARNED } = require('../economy');
 const economy = require('../../client/src/shared/economy.json');
+const seasons = require('../seasons');
 
 const router = express.Router();
 
 /**
- * The current season, from client/src/shared/economy.json → season: { name, startsAt, endsAt,
- * badgeTop }, or null until its number and dates are all set (then no season is shown and the
- * season board counts all time). The board counts coins earned in races finished since the start.
+ * A numbered season from client/src/shared/economy.json → season: { name, startsAt, endsAt,
+ * badgeTop }, or null until its number and dates are all set. Used only when no season in the
+ * seasons table is on or has ended (src/seasons scoreboardSeason, which comes first): then no season
+ * is shown and the season board counts all time.
  */
 function seasonFrom(cfg = {}) {
   const start = Date.parse(cfg.startsAt ?? '');
@@ -25,6 +27,17 @@ const SEASON = seasonFrom(economy.season);
 const TOP = 50;
 
 /**
+ * The scoreboard's season now: a season in the seasons table that is on (or ended last: its final
+ * standings, `ended: true`), else the numbered one in economy.json, else null. The board counts the
+ * coins earned from its start to its end.
+ */
+async function currentSeason(now = new Date()) {
+  const s = await seasons.scoreboardSeason(db, now);
+  if (s) return s;
+  return SEASON ? { ...SEASON, ended: Date.now() >= Date.parse(SEASON.endsAt) } : null;
+}
+
+/**
  * GET /api/scoreboard?board=season|all|friends — players ranked by coins earned
  * racing: places, personal bests, daily goals and streaks (money can't buy a place). Friends (v1): the players you raced with
  * in the last day. Always includes your own row when you're signed in.
@@ -33,7 +46,9 @@ router.get('/', optionalAuth, async (req, res) => {
   const { board = 'season' } = validate(req.query, { board: { type: 'enum', values: ['season', 'all', 'friends'] } });
   const me = req.user?.id ?? null;
   if (board === 'friends' && !me) throw unauthorized('Log in to see your friends');
-  const since = board === 'season' ? SEASON?.startsAt ?? null : null;
+  const season = await currentSeason();
+  const since = board === 'season' ? season?.startsAt ?? null : null;
+  const until = board === 'season' ? season?.endsAt ?? null : null;
   const { rows } = await db.query(
     `WITH friends AS (
        SELECT DISTINCT other.user_id
@@ -47,6 +62,7 @@ router.get('/', optionalAuth, async (req, res) => {
          FROM race_entries e JOIN races r ON r.id = e.race_id AND r.status = 'finished'
         WHERE e.user_id IS NOT NULL
           AND ($1::timestamptz IS NULL OR r.finished_at >= $1)
+          AND ($5::timestamptz IS NULL OR r.finished_at < $5)
           AND (NOT $3 OR e.user_id IN (SELECT user_id FROM friends) OR e.user_id = $2)
         GROUP BY e.user_id
      ),
@@ -56,6 +72,7 @@ router.get('/', optionalAuth, async (req, res) => {
          FROM coin_ledger l
         WHERE l.kind = ANY($4::text[])
           AND ($1::timestamptz IS NULL OR l.created_at >= $1)
+          AND ($5::timestamptz IS NULL OR l.created_at < $5)
         GROUP BY l.user_id
      ),
      s AS (SELECT p.user_id, COALESCE(x.coins, 0) AS coins, p.wins, p.races FROM played p LEFT JOIN earned x ON x.user_id = p.user_id),
@@ -68,11 +85,11 @@ router.get('/', optionalAuth, async (req, res) => {
        LEFT JOIN marbles m ON m.id = sh.marble_id
       WHERE ranked.rank <= ${TOP} OR u.id = $2
       ORDER BY ranked.rank, u.username`,
-    [since, me, board === 'friends', EARNED],
+    [since, me, board === 'friends', EARNED, until],
   );
   res.json({
     board,
-    season: SEASON,
+    season,
     rows: rows.map((r) => ({
       rank: r.rank,
       userId: r.user_id,
@@ -90,4 +107,5 @@ router.get('/', optionalAuth, async (req, res) => {
 
 module.exports = router;
 module.exports.SEASON = SEASON;
+module.exports.currentSeason = currentSeason;
 module.exports.seasonFrom = seasonFrom;

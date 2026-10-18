@@ -92,6 +92,12 @@ export default function BagPage() {
         </div>
       </div>
 
+      {data?.badges?.length > 0 && (
+        <div className="ms-pills" aria-label="Your badges">
+          {data.badges.map((b) => <span key={b.key} className="ms-pill" style={{ color: 'var(--ms-yellow)' }}>★ {b.name}{b.rank ? ` · #${b.rank}` : ''}</span>)}
+        </div>
+      )}
+
       <div role="group" aria-label="Filter by rarity" className="ms-tabs">
         {FILTERS.map((f) => (
           <button key={f} type="button" aria-pressed={filter === f} onClick={() => setFilter(f)}>{f === 'all' ? 'All' : rarityInfo(f).label}</button>

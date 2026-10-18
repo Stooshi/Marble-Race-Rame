@@ -13,6 +13,7 @@ const appearance = require('../game/appearance');
 const unsubscribe = require('../email/unsubscribe');
 const account = require('../account');
 
+const seasons = require('../seasons');
 const router = express.Router();
 
 const STATS_COLUMNS = 'races_played, wins, podiums, best_win_time_ms, avg_position, coins_won, best_split_ms, best_finish_time_ms';
@@ -46,7 +47,7 @@ router.post('/me/cookie-consent', requireAuth, async (req, res) => {
 /** GET /api/users/me — full private profile with stats */
 router.get('/me', requireAuth, async (req, res) => {
   const { rows } = await db.query(`SELECT ${PUBLIC_USER_COLUMNS}, last_login_at FROM users WHERE id = $1`, [req.user.id]);
-  res.json({ user: rows[0], stats: await getStats(req.user.id) });
+  res.json({ user: rows[0], stats: await getStats(req.user.id), badges: await seasons.badgesOf(db, req.user.id) });
 });
 
 /**
@@ -262,7 +263,7 @@ router.get('/:id', async (req, res) => {
     [id],
   );
   if (!rows[0]) throw notFound('User not found');
-  res.json({ user: rows[0], stats: await getStats(id) });
+  res.json({ user: rows[0], stats: await getStats(id), badges: await seasons.badgesOf(db, id) });
 });
 
 /** GET /api/users/:id/races — finished race history */

@@ -29,7 +29,8 @@ async function all(db, { fresh = false } = {}) {
   if (!fresh && cache && Date.now() - cache.at < CACHE_MS) return cache.seasons;
   const { rows } = await db.query(
     `SELECT key, name, starts_at, ends_at, free_from, time_zone, pass_product_id, pass_name, price_cents, currency,
-            pass_sale_starts_at, pass_sale_ends_at, featured, featured_bonus::float AS featured_bonus
+            pass_sale_starts_at, pass_sale_ends_at, featured, featured_bonus::float AS featured_bonus,
+            badge_top, badges_awarded_at
        FROM seasons ORDER BY starts_at`,
   );
   cache = { at: Date.now(), seasons: rows };
@@ -243,7 +244,94 @@ function lastMonthStart(season) {
   return new Date(utc - offset);
 }
 
+/**
+ * The scoreboard's season at `now`: the season that is on, or else the one that ended last (its
+ * final standings stay on the board until the next season starts); null before the first one.
+ * → { key, name, startsAt, endsAt, badgeTop, ended } or null.
+ */
+async function scoreboardSeason(db, now = new Date()) {
+  const t = at(now);
+  const list = await all(db);
+  const on = list.find((s) => at(s.starts_at) <= t && t < at(s.ends_at));
+  const last = list.filter((s) => at(s.ends_at) <= t).sort((a, b) => at(b.ends_at) - at(a.ends_at))[0];
+  const s = on ?? last;
+  if (!s) return null;
+  return { key: s.key, name: s.name, startsAt: new Date(s.starts_at).toISOString(), endsAt: new Date(s.ends_at).toISOString(), badgeTop: s.badge_top ?? 100, ended: !on };
+}
+
+/**
+ * The season's final standings: players ranked by coins earned in the season (the earned ledger
+ * kinds only; money never buys a place), ties to who reached their total first. Deleted and
+ * suspended accounts are left out. → [{ userId, coins, reachedAt, rank }].
+ */
+async function standings(db, season, { limit = null, earned }) {
+  const { rows } = await db.query(
+    `SELECT l.user_id, SUM(l.amount)::int AS coins, MAX(l.created_at) AS reached_at
+       FROM coin_ledger l JOIN users u ON u.id = l.user_id AND u.deleted_at IS NULL AND u.suspended_at IS NULL
+      WHERE l.kind = ANY($1::text[]) AND l.created_at >= $2 AND l.created_at < $3
+      GROUP BY l.user_id
+     HAVING SUM(l.amount) > 0
+      ORDER BY coins DESC, reached_at ASC, l.user_id
+      ${limit ? 'LIMIT $4' : ''}`,
+    [earned, season.starts_at, season.ends_at, ...(limit ? [limit] : [])],
+  );
+  return rows.map((r, i) => ({ userId: r.user_id, coins: r.coins, reachedAt: r.reached_at, rank: i + 1 }));
+}
+
+/**
+ * The season-end job for one season: once it has ended, the top badge_top players by its final
+ * standings get its badge (user_badges, badge_key = the season's key, with their rank), once.
+ * → how many badges were given (0 if not ended or done before).
+ */
+async function awardBadges(db, seasonKey, { now = new Date(), earned } = {}) {
+  const given = await db.withTransaction(async (client) => {
+    const { rows: [s] } = await client.query('SELECT * FROM seasons WHERE key = $1 FOR UPDATE', [seasonKey]);
+    if (!s || s.badges_awarded_at || at(now) < at(s.ends_at)) return 0;
+    const top = s.badge_top > 0 ? await standings(client, s, { limit: s.badge_top, earned }) : [];
+    for (const r of top) {
+      await client.query(
+        'INSERT INTO user_badges (user_id, badge_key, rank, awarded_at) VALUES ($1, $2, $3, $4) ON CONFLICT (user_id, badge_key) DO NOTHING',
+        [r.userId, s.key, r.rank, now],
+      );
+    }
+    await client.query('UPDATE seasons SET badges_awarded_at = $2 WHERE key = $1', [s.key, now]);
+    return top.length;
+  });
+  if (given) forget();
+  return given;
+}
+
+/** A player's badges (newest first): [{ key, name, rank, awardedAt }]. */
+async function badgesOf(db, userId) {
+  const { rows } = await db.query(
+    `SELECT b.badge_key AS key, COALESCE(s.name, b.badge_key) AS name, b.rank, b.awarded_at
+       FROM user_badges b LEFT JOIN seasons s ON s.key = b.badge_key
+      WHERE b.user_id = $1 ORDER BY b.awarded_at DESC`,
+    [userId],
+  );
+  return rows.map((r) => ({ key: r.key, name: r.name, rank: r.rank, awardedAt: r.awarded_at }));
+}
+
+/** Every hour: award the badges of seasons that have ended (nothing to deploy on the night). Started by src/server.js. */
+function startJobs(db, { earned }) {
+  const run = async () => {
+    try {
+      for (const s of await all(db, { fresh: true })) {
+        if (!s.badges_awarded_at && Date.now() >= at(s.ends_at)) {
+          const n = await awardBadges(db, s.key, { earned });
+          console.log(`[seasons] ${s.name} ended: ${n} badge(s) awarded`);
+        }
+      }
+    } catch (err) { console.error(`[seasons] badge job: ${err.message}`); }
+  };
+  setTimeout(run, 60_000).unref?.();
+  const timer = setInterval(run, 3600_000);
+  timer.unref?.();
+  return timer;
+}
+
 module.exports = {
+  scoreboardSeason, standings, awardBadges, badgesOf, startJobs,
   all, forget, stateOf, dayOf, featuredSlug, passOnSale, saleDaysLeft, lastMonthStart, byKey, byPassProduct, hasPass, passesOf,
   trackAccess, assertTrackAccess, freeSeasonKeys, OPEN_TRACK_SQL, pickOpenTrack, pickSeasonTrack, bonusLine,
   grantForPayment, revokeForPayment, view,

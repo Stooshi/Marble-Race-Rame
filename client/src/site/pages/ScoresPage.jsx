@@ -1,17 +1,14 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../../api/client';
 import { useAuth } from '../../context/AuthContext';
 import { useAsync } from '../../hooks/useAsync';
 import { ITEM } from '../../shared/marbles';
 import MarbleBadge from '../marbles/MarbleBadge';
-import economy from '../../shared/economy.json';
 
-// No season until its number and dates are set (client/src/shared/economy.json → season, read by
-// the server the same way): then no "This season" board and no season label anywhere.
-const S = economy.season ?? {};
-export const HAS_SEASON = Number.isInteger(S.number) && S.number > 0 && Date.parse(S.startsAt ?? '') < Date.parse(S.endsAt ?? '');
-const BOARDS = [['season', 'This season'], ['all', 'All time'], ['friends', 'Friends']].filter(([k]) => k !== 'season' || HAS_SEASON);
+// The season comes from the server (a season in its seasons table that is on or ended last, or the
+// numbered one in economy.json): without one there is no "This season" board and no season label.
+const BOARDS = [['season', 'This season'], ['all', 'All time'], ['friends', 'Friends']];
 const MEDAL = { 1: 'var(--ms-yellow)', 2: 'var(--ms-soft)', 3: 'var(--ms-orange)' };
 
 export function daysLeftIn(season) {
@@ -22,11 +19,16 @@ export function daysLeftIn(season) {
 /** Scoreboards: players ranked by coins earned in races (money can't buy a place). */
 export default function ScoresPage() {
   const { isAuthenticated } = useAuth();
-  const [board, setBoard] = useState(HAS_SEASON ? 'season' : 'all');
+  const [board, setBoard] = useState('season');
+  const [hasSeason, setHasSeason] = useState(true);
   const { data, error, loading } = useAsync(
     () => (board === 'friends' && !isAuthenticated ? Promise.resolve(null) : api.scoreboard(board)),
     [board, isAuthenticated],
   );
+  // No season on the server: open on All time and leave the season tab out.
+  useEffect(() => {
+    if (data && !data.season && board === 'season') { setHasSeason(false); setBoard('all'); }
+  }, [data, board]);
   const rows = data?.rows ?? [];
   const withGap = [];
   rows.forEach((r, i) => {
@@ -42,13 +44,13 @@ export default function ScoresPage() {
           <span style={{ color: 'var(--ms-soft)' }}>Ranked by coins earned in races. Money can't buy a place here.</span>
         </div>
         <div role="tablist" aria-label="Scoreboard" className="ms-tabs">
-          {BOARDS.map(([k, label]) => <button key={k} type="button" role="tab" aria-selected={board === k} onClick={() => setBoard(k)}>{label}</button>)}
+          {BOARDS.filter(([k]) => k !== 'season' || hasSeason).map(([k, label]) => <button key={k} type="button" role="tab" aria-selected={board === k} onClick={() => setBoard(k)}>{label}</button>)}
         </div>
       </div>
       {board === 'season' && data?.season && (
         <div className="ms-pills">
-          <span className="ms-pill" style={{ color: 'var(--ms-orange)' }}>{data.season.name} ends in {daysLeftIn(data.season)} days</span>
-          <span className="ms-pill">Top {data.season.badgeTop} win a season badge for their Marble Bag</span>
+          <span className="ms-pill" style={{ color: 'var(--ms-orange)' }}>{data.season.ended ? `${data.season.name}: final standings` : `${data.season.name} ends in ${daysLeftIn(data.season)} days`}</span>
+          <span className="ms-pill">{data.season.ended ? `The top ${data.season.badgeTop} won the season badge` : `Top ${data.season.badgeTop} win a season badge for their Marble Bag`}</span>
         </div>
       )}
       {board === 'friends' && <p className="ms-note" style={{ margin: 0 }}>Friends: the players you raced with in the last day.</p>}

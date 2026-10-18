@@ -24,7 +24,7 @@ test('coin packs: 5,000 / 10,500 / 27,500 / 57,500 coins for $5 / $10 / $25 / $5
   assert.deepEqual([...payments.PACKS.values()].map((p) => [p.coins, p.amountCents]), [[5000, 500], [10500, 1000], [27500, 2500], [57500, 5000]]);
 });
 
-test('without keys, Stripe (and the apps\' stores, still placeholders) charge and record nothing', async () => {
+test('without keys, Stripe charges nothing; the apps\' stores take no web checkout', async () => {
   const client = fakeClient();
   for (const provider of ['stripe', 'apple', 'google']) {
     const r = await payments.checkout(client, 'u1', { productId: 'coins-10500', provider });
@@ -32,7 +32,8 @@ test('without keys, Stripe (and the apps\' stores, still placeholders) charge an
     assert.equal(r.payment, null);
   }
   assert.equal(client.calls.length, 0);
-  await assert.rejects(payments.redeemReceipt(client, 'u1', { provider: 'apple', receipt: 'x' }), /not checked yet/);
+  // (App Store purchases are checked through /api/payments/apple/verify, never as a bare receipt.)
+  await assert.rejects(payments.redeemReceipt(client, 'u1', { provider: 'apple', receipt: 'x' }), /apple\/verify/);
 });
 
 test('every provider ends in the same grant: paid once, coins added as bought coins and written to the coin ledger', async () => {

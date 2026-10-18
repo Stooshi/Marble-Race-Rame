@@ -7,6 +7,7 @@ const { validate } = require('../utils/validate');
 const payments = require('../payments');
 const stripe = require('../payments/stripe');
 const google = require('../payments/google');
+const apple = require('../payments/apple');
 
 const security = require('../security');
 const config = require('../config');
@@ -97,6 +98,41 @@ router.post('/google/rtdn', async (req, res) => {
     throw err;
   }
   return res.status(204).end();
+});
+
+/**
+ * GET /api/payments/apple/account — the player's App Store account token (the iPhone app buys with
+ * it as StoreKit's appAccountToken, so a purchase can only ever be credited to this player).
+ */
+router.get('/apple/account', requireAuth, async (req, res) => {
+  res.json({ accountToken: await payments.appleAccountToken(db, req.user.id), live: apple.configured(), bundleId: apple.bundleId() });
+});
+
+/**
+ * POST /api/payments/apple/verify { signedTransaction } — an App Store purchase from the iPhone app
+ * (StoreKit 2's jwsRepresentation): Apple's signature checked, then the coins (or the season pass)
+ * added once (also safe to send again). The app finishes the transaction when `finish` is true.
+ * → { status: 'paid'|'duplicate'|'revoked'|'not-on-sale'|'already-owned', coins?, pass?, orderNo?, finish }
+ */
+router.post('/apple/verify', requireAuth, async (req, res) => {
+  const body = validate(req.body, { signedTransaction: { type: 'string', required: true, max: 20000 } });
+  const out = await payments.applePurchase(db, { userId: req.user.id, signedTransaction: body.signedTransaction });
+  if (out.status === 'paid') await security.record(req, req.user.id, 'purchase');
+  const { paymentId, ...shown } = out;
+  res.json(shown);
+});
+
+/**
+ * POST /api/payments/apple/notifications { signedPayload } — App Store Server Notifications v2
+ * (set as the server URL in App Store Connect). Signed by Apple; refunds and revocations take the
+ * coins or the pass back. Answers 200 once handled (Apple retries otherwise).
+ */
+router.post('/apple/notifications', async (req, res) => {
+  const signed = typeof req.body?.signedPayload === 'string' ? req.body.signedPayload : null;
+  if (!signed) return res.status(400).json({ error: 'No signed payload' });
+  const outcome = await payments.appleNotification(db, signed);
+  if (outcome !== 'ignored') console.log(`[app-store] notification: ${outcome}`);
+  return res.json({ received: true });
 });
 
 /** GET /api/payments/mine — the player's orders (the Purchases page). */

@@ -56,7 +56,7 @@
     }
   },
   "season": {
-    "note": "The scoreboard season. Until number, startsAt and endsAt are all set (ISO dates, e.g. 2026-11-01T00:00:00Z), no season is shown anywhere: no season name or days left, no 'This season' board (the scoreboards open on All time). badgeTop: how many players win the season badge.",
+    "note": "A numbered scoreboard season, used only when no season in the seasons table is on or has ended (the Holiday Season 2026 is in that table). Until number, startsAt and endsAt are all set (ISO dates, e.g. 2026-11-01T00:00:00Z), no season is shown anywhere: no season name or days left, no 'This season' board (the scoreboards open on All time). badgeTop: how many players win the season badge.",
     "number": null,
     "startsAt": null,
     "endsAt": null,

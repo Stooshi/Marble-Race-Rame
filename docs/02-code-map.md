@@ -1,13 +1,13 @@
 # 2. Code map
 
-*Last updated 17 Oct 2026.* Where everything is, and where to look to fix something. Paths are relative to the repository root.
+*Last updated 18 Oct 2026.* Where everything is, and where to look to fix something. Paths are relative to the repository root.
 
 ## Find it fast
 
 | I want to… | Look in |
 |---|---|
 | Change how much a race pays, the daily goal, starting coins or bag discounts | `client/src/shared/economy.json` (read by server and website) |
-| Start a scoreboard season | `client/src/shared/economy.json` → `season`: `number`, `startsAt`, `endsAt` (ISO dates), `badgeTop`. Until all three are set no season is shown anywhere (no "This season" board, no season name or days left) |
+| Start a scoreboard season | A row in the `seasons` table (a data update: name, `starts_at`, `ends_at`, `badge_top`); the board, its end and the badges follow its dates. Only when the table has no season on or ended: `client/src/shared/economy.json` → `season` (`number`, `startsAt`, `endsAt`, `badgeTop`) |
 | Change the social media links | `client/src/shared/socialLinks.json` (icons from the `simple-icons` package, CC0) |
 | Show the App Store / Google Play buttons on the website | `client/src/shared/storeLinks.json` (`appStore`, `googlePlay`: the store page's https link; empty hides the button). Never shown inside the apps |
 | Change marble prices, designs, shades or the collection | `client/src/shared/marbles/catalog.json`, then `client/src/shared/marbles/badge.js` for how a design looks |
@@ -18,6 +18,8 @@
 | Fix coins not added or wrong | `src/economy/index.js` (`change`, `payRace`) and the `coin_ledger` table |
 | Fix the shop or First Edition numbers | `src/marbles/collection.js` |
 | Fix a Stripe payment | `src/payments/stripe.js`, `src/payments/index.js`, `src/routes/payments.js` |
+| Fix an App Store (iPhone) payment | `src/payments/apple.js` (Apple's signature checked on the server), `client/src/site/payments/index.js` (StoreKit through `@capgo/native-purchases`), `src/routes/payments.js` (`/apple/*`) |
+| Fix the season's scoreboard, its end or its badges | `src/seasons/index.js` (`scoreboardSeason`, `standings`, `awardBadges`, `badgesOf`, `startJobs`), `src/routes/scoreboard.js` (`currentSeason`) |
 | Fix a Google Play (Android) payment | `src/payments/google.js` (server checks with Google), `client/src/site/payments/index.js` (the app's purchase sheet), `src/routes/payments.js` |
 | Build the Android release | `client/scripts/android-upload-key.mjs`, `client/scripts/android-release.mjs`, `client/app-version.json`, `client/android/app/build.gradle` (signing) |
 | Fix a back-office page | `client/src/admin/AdminApp.jsx` (pages), `src/routes/admin.js` (data and actions), `src/admin/session.js` (login) |
@@ -124,15 +126,18 @@
 - Also: `spend`, `opening`, `placeCoins`, `raceLines`, `streakAfter`, `bagPrice`, and `refundEntryFee` (for fees paid before entry fees were switched off).
 
 **`payments/`:**
-- `index.js`: providers (stripe, apple, google, test). `grant()` adds a pack's coins once, or gives a season pass once (a payment with `season_key` and 0 coins). Also `checkout()` (with consent and order number), `passCheckout()` (the season pass on the website: refused outside its sale window or when already held), `passProduct()`, `stripeEvent()`, `refund()`, `ordersOf`/`orderOf`, and for Google Play `googleAccountId`, `googlePurchase`, `googleSync`, `startGoogleJobs` (hourly: consume leftovers; every 6 hours: voided purchases). Apple is a placeholder.
+- `index.js`: providers (stripe, apple, google, test). `grant()` adds a pack's coins once, or gives a season pass once (a payment with `season_key` and 0 coins). Also `checkout()` (with consent and order number), `passCheckout()` (the season pass on the website: refused outside its sale window or when already held), `passProduct()`, `stripeEvent()`, `refund()`, `ordersOf`/`orderOf`, and for Google Play `googleAccountId`, `googlePurchase`, `googleSync`, `startGoogleJobs` (hourly: consume leftovers; every 6 hours: voided purchases), and for the App Store `appleAccountToken`, `applePurchase`, `appleNotification`.
 - `stripe.js`: Checkout sessions (coin packs and the season pass), webhook verification, `handleEvent()` (paid, expired, refund, dispute), `revoke()` (takes coins back in proportion; a full refund or a dispute of a pass revokes the pass), `requestRefund()`. Live keys are refused unless `STRIPE_ALLOW_LIVE`.
 - `google.js`: Google Play Billing on the server. Signs in to the Android Publisher API as the service account (`GOOGLE_PLAY_SERVICE_ACCOUNT`, RS256 JWT with node's crypto, no Google library). `redeem()` checks a purchase with Google (paid, the right product, the player's `store_account_id`), records it once (`provider_ref` = order id, `store_token`), grants the coins, then consumes it (a season pass: granted only if bought inside its sale window and not already held, then **acknowledged**, never consumed; `acknowledgeLeftovers()` retries hourly); `syncVoided()` takes back refunded and charged-back purchases through `stripe.revoke()` (same ledger lines and `payment_refunds`); `refundOrder()` asks Google to refund and revoke; `decodeRtdn()`/`rtdnTokenOk()` read Google's Pub/Sub notifications. Tests: `test/googlePlay.test.js` (a fake Google that checks the signed token).
+
+- `apple.js`: App Store purchases (StoreKit 2) on the server, with no Apple library: `verifySigned()` checks a JWS from the App Store (its x5c chain to the pinned Apple Root CA - G3 fingerprint, the leaf's and intermediate's Apple marker extensions, dates, the ES256 signature); `redeem()` checks the bundle id, the product, the player's `apple_account_token` (StoreKit's appAccountToken), not revoked, not family shared, then grants once (`provider_ref` = Apple's transactionId; a pass also by its originalTransactionId, so Restore Purchases never gives a second); a pass bought outside its window or a second one is not granted and is flagged in the audit log (`apple-pass-refused`) for the player to ask Apple; `notification()` handles Server Notifications v2 (REFUND, REVOKE) through `stripe.revoke()`. Tests: `test/applePurchases.test.js` with a test-only chain in `test/fixtures/apple`.
 
 **`seasons/index.js`: seasons and the season pass** (the `seasons`, `season_passes` tables, `tracks.season_key`):
 - `stateOf` ('before', 'on', 'free' by the season's dates), `dayOf` (the season's calendar day), `featuredSlug` (the Track of the Day), `passOnSale`, `saleDaysLeft` (the countdown), `view` (what `/api/seasons` shows).
 - `trackAccess` / `assertTrackAccess`: may this player race this track (a pass, or a friend room whose host has one); every route that puts a marble on a track calls it (`routes/races.js` `joinRace`, create, rematch; `routes/rooms.js` `pickTrack`).
 - `pickOpenTrack` (the public random pick: never a locked season track), `pickSeasonTrack` (Holiday races: the Track of the Day one race in three).
 - `bonusLine` (the Track of the Day bonus), `grantForPayment`, `revokeForPayment`.
+- `scoreboardSeason` (the season that is on, or the one that ended last: its final standings), `standings` (coins earned in the season, ties to who got there first), `awardBadges` (the season-end job: the top `badge_top` get `user_badges`, once), `badgesOf`, `startJobs` (hourly, from `server.js`).
 - Tests: `test/seasonPass.test.js` (the dates always; with a database: Stripe test mode, Google Play, locks, rooms, the bonus, refunds).
 
 **Back office and accounts:**
@@ -163,11 +168,11 @@
 | `rooms.js` | Friend rooms (create, join, leave, track, remove, start, close) and `afterRace`; a season track only if the host may race it (`hostedSeason` in the room view) |
 | `seasons.js` | `GET /` and `GET /:key`: a season's dates, state, today's Track of the Day, the pass (price, on sale, countdown, owned) |
 | `collection.js` | Collection, Marble Bag, Shooter, bags, buy, find by ID, certificates |
-| `payments.js` | Packs, checkout, `POST /pass/checkout` (the season pass), my orders, the Stripe webhook; Google Play: `GET /google/account` (the player's Play account id, and whether purchases are on), `POST /google/verify` (a purchase token from the app), `POST /google/rtdn?token=` (Google's notifications) |
+| `payments.js` | Packs, checkout, `POST /pass/checkout` (the season pass), my orders, the Stripe webhook; Google Play: `GET /google/account` (the player's Play account id, and whether purchases are on), `POST /google/verify` (a purchase token from the app), `POST /google/rtdn?token=` (Google's notifications); the App Store: `GET /apple/account` (the player's account token), `POST /apple/verify` (a signed transaction from the app), `POST /apple/notifications` (Apple's Server Notifications v2) |
 | `admin.js` | The back office: players (with their support messages), coins, items, suspend, rename, delete, consent, payments and refunds, audit, economy, email list, the support inbox (list, message, screenshot, status, reply) |
 | `support.js` | The Help Centre's contact form: `GET /form` (a form token), `POST /` (a message; rate-limited to 6 an hour per address) |
 | `economy.js` | Economy numbers, my day, race payouts, my ledger |
-| `scoreboard.js` | Season, all-time and friends boards (earned coins only); the season comes from `economy.json` → `season` (`seasonFrom`), `null` until set, and the season board then counts all time |
+| `scoreboard.js` | Season, all-time and friends boards (earned coins only); the season is a season in the `seasons` table that is on or ended last (`currentSeason`, counted from its start to its end), else the numbered one in `economy.json` → `season` (`seasonFrom`), else `null`, and the season board then counts all time |
 | `tracks.js`, `marbles.js` | Public lists (a track's `season` and `locked` for the player asking); admin edits |
 | `physics.js` | On-demand physics preview (nothing saved) |
 | `billboards.js`, `appearance.js` | Billboard images; look options |
@@ -203,7 +208,7 @@ Defined in `src/sockets/index.js`. The client may send a JWT in `auth.token`; an
 
 ## Server tests: `test/`
 
-- **Running them:** `npm test`, about 5 minutes. Set `ROOMS_TEST_DATABASE_URL=postgres://…` to also run the tests that need a database (rooms, admin, Stripe, Google Play, seasons, account, support, entry fees). `npm test` first brings that database up to date on its own (`test/helpers/migrateTestDb.js`, the `pretest` step), so no test file runs the schema while the others run against it.
+- **Running them:** `npm test`, about 5 minutes. Set `ROOMS_TEST_DATABASE_URL=postgres://…` to also run the tests that need a database (rooms, admin, Stripe, Google Play, the App Store, seasons, account, support, entry fees). `npm test` first brings that database up to date on its own (`test/helpers/migrateTestDb.js`, the `pretest` step), so no test file runs the schema while the others run against it.
 - **Engines and protecting results:**
   - `raceFingerprints` with `fingerprints/races.json`;
   - `simulator`, `physics`, `simulationPool`, `version`, `skill`.
@@ -271,7 +276,7 @@ Defined in `src/sockets/index.js`. The client may send a JWT in `auth.token`; an
   - `landing/` (landing page, 3D hero replay; `SERIES`: the series cards, each with one of its tracks' pictures; the tracks-and-series heading is counted from the live track list);
   - `marbles/` (badge, 3D turntable, certificate, `useCollection`, with `limitedSale`/`limitedLine`: the limited edition's "Coming 1 December — limited to 500", how many are left, "Sold out");
   - `pages/PassPage.jsx` (`/pass?season=`): the season pass: what it gives, the price (the store's own in the apps), the countdown, buying it; the track picker, track pages and room picker show season tracks locked with "Get the pass", and holders get "Holiday races";
-  - `payments/index.js`: `buyPass()` (the season pass: Stripe on the web, Google Play in the app, kept not consumed); `buyCoins()` for every screen: Stripe on the website; Google Play Billing in the Android app (`@capgo/native-purchases`: purchase with the player's Play account id, then `api.googleVerify`); `resumeStorePurchases()` (unconfirmed purchases resent at login, from `App.jsx`); `useStorePrices()` (Play's prices in the player's currency, on the shop and checkout); the App Store is a placeholder;
+  - `payments/index.js`: `buyPass()` (the season pass: Stripe on the web, Google Play or the App Store in the apps, kept not consumed); `buyCoins()` for every screen: Stripe on the website; Google Play Billing in the Android app (`@capgo/native-purchases`: purchase with the player's Play account id, then `api.googleVerify`); the App Store in the iPhone app (the same plugin's StoreKit 2: purchase with the player's account token, `api.appleVerify` with the signed transaction, then `finishTransaction`); `resumeStorePurchases()` (unconfirmed purchases resent at login, from `App.jsx`; on iPhone the unfinished transactions); `restoreStorePurchases()` (iPhone "Restore purchases", on the pass page); `useStorePrices()` (the store's prices in the player's currency, on the shop and checkout);
   - `pages/` (every website page; see the routes below);
   - `help/` (the Help Centre at `/help`): `ContactForm.jsx` ("Still need help?": name, email, topic, order number, message, screenshot scaled down before sending, a hidden spam field), `faq.js` (the 12 categories of questions and answers, numbers read from `economy.json`, `packs.json` and `catalog.json`, `[bracket]` placeholders kept; the FAQPage structured data), `search.js` (type-ahead search: any word order, typos, synonyms, highlighting), `HelpPage.jsx`.
 - `admin/`: the back office (`AdminApp.jsx`, `adminApi.js`, `admin.css`). The support inbox (`SupportInbox`, `SupportMessage`, `SupportTable`) lives in `AdminApp.jsx` too.
@@ -356,8 +361,8 @@ Defined in `src/sockets/index.js`. The client may send a JWT in `auth.token`; an
 - **Edited by hand:**
   - iPhone: `Info.plist`, `AppDelegate.swift` (sets the `.ambient` audio category at launch, for the silent switch), `project.pbxproj`;
   - Android: `AndroidManifest.xml` (removes the advertising-ID permission: no ads or tracking), `res/values/*.xml`, the Gradle files (`app/build.gradle`: version from `client/app-version.json`, release signing from `android/keystore.properties` or `MS_UPLOAD_*` variables).
-- Plugins: `@capacitor/app`, `network`, `splash-screen`, `status-bar`, and `@capgo/native-purchases` (Google Play Billing 9; StoreKit on iPhone, not used yet). `npx cap sync` lists them in `android/capacitor.settings.gradle`.
-- In-app purchases: Google Play in the Android app (`client/src/site/payments/index.js`); the iPhone App Store is still a placeholder.
+- Plugins: `@capacitor/app`, `network`, `splash-screen`, `status-bar`, and `@capgo/native-purchases` (Google Play Billing 9 on Android; StoreKit 2 on iPhone, with `autoFinishTransactions: false` so a transaction is finished only once the server has it). `npx cap sync` lists them in `android/capacitor.settings.gradle`.
+- In-app purchases: Google Play in the Android app and the App Store in the iPhone app (`client/src/site/payments/index.js`).
 
 ### Client tests: `client/test`
 

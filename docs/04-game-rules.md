@@ -1,6 +1,6 @@
 # 4. Game and economy rules (plain English)
 
-*Last updated 17 Oct 2026.* The numbers live in `client/src/shared/economy.json` and `client/src/shared/marbles/catalog.json`. If this page and those files ever disagree, the files are right; then update this page.
+*Last updated 18 Oct 2026.* The numbers live in `client/src/shared/economy.json` and `client/src/shared/marbles/catalog.json`. If this page and those files ever disagree, the files are right; then update this page.
 
 ## The golden rules
 
@@ -69,9 +69,12 @@ Days run midnight to midnight **UTC**. Friend-room races pay like any race and c
 - **Coins arrive only** when Stripe confirms the payment.
 - **Before paying,** the player must agree to immediate delivery and the loss of the 14-day withdrawal right; the exact text is stored with the order.
 - **Refunds and chargebacks** take back the matching share of the coins, or whatever is left if some were spent.
-- **In the apps,** purchases will go through Apple and Google (not built yet). Inside the apps, coins are never sold any other way.
+- **In the apps,** purchases go through the stores: Google Play on Android, the App Store on iPhone. The server checks each purchase (with Google; with Apple's signature) before adding coins, once. Inside the apps, coins are never sold any other way, and the apps never show or link to the website's prices.
+- **App Store refunds** are Apple's: the player asks Apple (we can't refund an App Store purchase). Apple's signed notification then takes the coins back, like any refund.
 
-**Scoreboards** rank players by coins **earned** racing. Bought coins never count. The boards are season, all-time, and friends. No season is set yet (`economy.json` → `season`): until it is, there is no season board or season label, and the scoreboards open on all-time.
+**Scoreboards** rank players by coins **earned** racing. Bought coins never count. The boards are season, all-time, and friends. **The season board** follows the season in the `seasons` table that is on (the Holiday Season 2026: 1 Dec 2026 to 7 Jan 2027, 23:59 Swedish time), counting coins earned between its start and its end; once it has ended it shows the final standings until the next season starts. Before the first season (and when no season is on or has ended) there is no season board or season label, and the scoreboards open on all-time. (A numbered season in `economy.json` → `season` is used only when the table has none.)
+
+**Season badges.** When a season ends, the top 100 by coins earned in it get its badge ("Holiday Season 2026", with their final rank) on their profile and in their Marble Bag. Ties go to the player who reached the total first. Only earned coins count: never bought coins or the Track of the Day bonus. The server gives the badges by itself within an hour of the end; nothing is deployed on the night.
 
 ## The shop and the collection
 
@@ -169,8 +172,8 @@ A season (the first: **Holiday Season 2026**, `holiday-2026`, 1 Dec 2026 00:00 t
 **The pass** (`holiday-pass-2026`, $9.99): real money only, never coins.
 - **On the web:** Stripe Checkout (test mode until Moses says otherwise), with the same immediate-delivery consent as coin packs. The pass arrives only when Stripe's signed webhook confirms the payment, once.
 - **On Android:** Google Play; the server checks the purchase with Google and **acknowledges** it (a pass is kept, never consumed). A purchase made outside the sale window, or a second pass while holding one, is not taken and left unacknowledged, so Google refunds it by itself within 3 days.
-- **On iPhone:** not built yet (Holiday plan step 3).
-- **Sold** from the season's start to its end, with an "ends in N days" countdown from 1 Jan. The server refuses a sale outside the window, or a second pass.
+- **On iPhone:** the App Store, a non-consumable in-app purchase. The server checks Apple's signature, this player and the sale window; a pass bought outside the window, or a second one, is not given (Apple can't be asked by us to refund: the player asks Apple, and the back office sees it flagged). "Restore purchases" on the pass page gives back a pass the player already has, never a second.
+- **Sold** from the season's start (1 Dec 2026, no pre-sale, decided 18 Oct) to its end, with an "ends in N days" countdown from 1 Jan. The server refuses a sale outside the window, or a second pass.
 - **One pass works everywhere:** bought on one platform, owned on all.
 - **No coins move:** a pass payment is a row in `payments` with 0 coins and its `season_key`.
 - **A full refund or a chargeback** revokes the pass: the season's tracks lock again for that player until the season ends (the season marble, once built, is taken back too). Partial refunds leave the pass.

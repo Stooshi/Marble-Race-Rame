@@ -30,7 +30,7 @@ async function exportData(db, userId) {
        FROM users WHERE id = $1 AND deleted_at IS NULL`,
   );
   if (!account) return null;
-  const [stats, emailAnswers, cookieAnswers, ledger, collection, shooter, look, startingMarbles, races, days, payments, rooms, security, support, supportReplies] = await Promise.all([
+  const [stats, emailAnswers, cookieAnswers, ledger, collection, shooter, look, startingMarbles, races, days, payments, rooms, security, support, supportReplies, passes, badges] = await Promise.all([
     one('SELECT * FROM user_stats WHERE user_id = $1'),
     all('SELECT consent, source, created_at FROM email_consents WHERE user_id = $1 ORDER BY created_at'),
     all('SELECT version, statistics, marketing, decided_at FROM cookie_consents WHERE user_id = $1 ORDER BY created_at'),
@@ -43,7 +43,7 @@ async function exportData(db, userId) {
            FROM race_entries e JOIN races r ON r.id = e.race_id LEFT JOIN tracks t ON t.id = r.track_id
           WHERE e.user_id = $1 ORDER BY r.created_at`),
     all('SELECT day, races, goal_met_at FROM user_days WHERE user_id = $1 ORDER BY day'),
-    all(`SELECT order_no, provider, product_id, coins, amount_cents, currency, charged_cents, charged_currency, tax_cents, status,
+    all(`SELECT order_no, provider, product_id, season_key, coins, amount_cents, currency, charged_cents, charged_currency, tax_cents, status,
                 refunded_cents, consent_at, consent_text, receipt_url, created_at, paid_at, refunded_at
            FROM payments WHERE user_id = $1 ORDER BY created_at`),
     all('SELECT code, status, created_at, last_active_at FROM rooms WHERE host_id = $1 ORDER BY created_at'),
@@ -53,6 +53,8 @@ async function exportData(db, userId) {
            FROM support_messages WHERE user_id = $1 ORDER BY created_at`),
     all(`SELECT m.ref, r.body, r.created_at, r.emailed_at FROM support_replies r JOIN support_messages m ON m.id = r.message_id
           WHERE m.user_id = $1 ORDER BY r.created_at`),
+    all('SELECT season_key, provider, granted_at, revoked_at, revoke_reason FROM season_passes WHERE user_id = $1 ORDER BY granted_at'),
+    all('SELECT badge_key, rank, awarded_at FROM user_badges WHERE user_id = $1 ORDER BY awarded_at'),
   ]);
   return {
     about: 'Everything Marble Spins stores about your account. Passwords are stored only as a one-way hash and are not included. IP addresses are kept for security and fraud checks for at most 90 days, then only the country.',
@@ -66,6 +68,8 @@ async function exportData(db, userId) {
     races,
     dailyRaces: days,
     payments,
+    seasonPasses: passes,
+    badges,
     friendRoomsHosted: rooms,
     securityLog: security,
     supportMessages: support.map((m) => ({ ...m, replies: supportReplies.filter((r) => r.ref === m.ref).map(({ ref: _r, ...r }) => r) })),
@@ -90,7 +94,7 @@ async function deleteAccount(client, userId, { by = 'player', reason = null } = 
   await client.query(
     `UPDATE users SET username = $2, email = $3, password_hash = $4, display_name = NULL, avatar_url = NULL,
             settings = '{}'::jsonb, age_group = NULL, marketing_opt_in = false, last_login_at = NULL,
-            role = 'player', store_account_id = NULL, deleted_at = now(), updated_at = now()
+            role = 'player', store_account_id = NULL, apple_account_token = NULL, deleted_at = now(), updated_at = now()
       WHERE id = $1`,
     [userId, name, `${name}@deleted.invalid`, unusable],
   );

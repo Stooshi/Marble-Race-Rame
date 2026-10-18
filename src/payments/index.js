@@ -4,7 +4,7 @@
  * Payments for coin packs behind one interface, whichever store takes the money:
  *
  *   stripe  the website (Stripe Checkout, src/payments/stripe.js; coins only from its webhook)
- *   apple   the iPhone app (App Store in-app purchase) [placeholder until the app exists]
+ *   apple   the iPhone app (App Store in-app purchases, StoreKit 2: src/payments/apple.js, Apple's signature checked before coins)
  *   google  the Android app (Google Play Billing, src/payments/google.js: verified with Google before coins)
  *   test    local development only: pays at once      (PAYMENTS_TEST=true, never in production)
  *
@@ -26,6 +26,7 @@ const { HttpError, badRequest, conflict, notFound } = require('../utils/httpErro
 const economy = require('../economy');
 const stripe = require('./stripe');
 const google = require('./google');
+const apple = require('./apple');
 const consent = require('../../client/src/shared/payments/consent.json');
 const seasons = require('../seasons');
 
@@ -42,9 +43,11 @@ const PROVIDERS = {
   },
   apple: {
     name: 'apple',
-    configured: () => false,
-    start: async () => notYet('App Store purchase'),
-    verify: async () => { throw new HttpError(501, 'App Store receipts are not checked yet. [Placeholder]'); },
+    // On once APPLE_IAP_ENABLED=true on the server (the app buys through StoreKit 2 and sends the
+    // signed transaction to /api/payments/apple/verify; see applePurchase below).
+    configured: () => apple.configured(),
+    start: async () => ({ kind: 'unavailable', message: 'Coins in the iPhone app are bought through the App Store.' }),
+    verify: async () => { throw badRequest('App Store purchases go to /api/payments/apple/verify'); },
   },
   google: {
     name: 'google',
@@ -255,6 +258,20 @@ function googlePurchase(db, { userId = null, productId, purchaseToken }) {
   return google.redeem(db, { userId, productId, purchaseToken }, { grant, product: async (id) => PACKS.get(id) ?? (await passProduct(db, id)) ?? pack(id) });
 }
 
+/** The player's App Store account token (the iPhone app buys with it as StoreKit's appAccountToken). */
+const appleAccountToken = (db, userId) => apple.accountTokenFor(db, userId);
+
+/** An App Store purchase from the iPhone app: Apple's signature checked, then the coins (or the pass) once. */
+function applePurchase(db, { userId, signedTransaction }) {
+  if (!apple.configured()) throw new HttpError(503, 'App Store purchases are not connected yet');
+  return apple.redeem(db, { userId, signedTransaction }, { grant, product: async (id) => PACKS.get(id) ?? (await passProduct(db, id)) ?? pack(id) });
+}
+
+/** An App Store Server Notification (v2): refunds and revocations take the coins (or the pass) back. */
+function appleNotification(db, signedPayload) {
+  return apple.notification(db, signedPayload, { revoke: stripe.revoke });
+}
+
 /** Google's refunds and chargebacks (voided purchases) taken back, and purchases not yet consumed consumed. */
 async function googleSync(db) {
   if (!google.configured()) return { revoked: 0, consumed: 0 };
@@ -297,4 +314,4 @@ async function redeemReceipt(client, userId, { provider: providerName, receipt }
   return { coins: await grant(client, payment.id) };
 }
 
-module.exports = { PROVIDERS, PACKS, CONSENT_TEXT, available, checkout, passCheckout, passProduct, grant, redeemReceipt, ordersOf, orderOf, stripeEvent, refund, googleAccountId, googlePurchase, googleSync, startGoogleJobs, pack };
+module.exports = { PROVIDERS, PACKS, CONSENT_TEXT, available, checkout, passCheckout, passProduct, grant, redeemReceipt, ordersOf, orderOf, stripeEvent, refund, googleAccountId, googlePurchase, appleAccountToken, applePurchase, appleNotification, googleSync, startGoogleJobs, pack };

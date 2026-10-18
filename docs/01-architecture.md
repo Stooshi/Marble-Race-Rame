@@ -79,7 +79,7 @@
 4. Google also tells the server about purchases by itself (real-time developer notifications, a Pub/Sub push to `/api/payments/google/rtdn`), so coins arrive even if the app closed mid-purchase; the app also resends unconfirmed purchases at the next login.
 5. Refunds and chargebacks: Google's list of voided purchases (checked every 6 hours, on each notification, and a minute after a refund from the back office) takes the coins back once, in the same way and with the same ledger and refund rows as Stripe refunds and disputes.
 
-**Payments (iPhone app).** App Store purchases are not built yet; buying coins there says "not available yet".
+**Payments (iPhone app).** App Store in-app purchases with StoreKit 2: the app buys with the player's App Store account token and sends the signed transaction; the server checks Apple's signature itself (the certificate chain to Apple Root CA - G3, Apple's marker extensions, ES256) before adding coins or the season pass, once per transaction, and the app then finishes the transaction. Apple's signed Server Notifications v2 bring refunds and revocations. Switched on with `APPLE_IAP_ENABLED=true` (`src/payments/apple.js`).
 
 **CORS.**
 - The server accepts calls from:

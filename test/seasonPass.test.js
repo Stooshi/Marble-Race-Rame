@@ -308,6 +308,55 @@ test('the pass on Google Play: inside its sale window only, once, acknowledged (
   } finally {
     google.setTransport((...a) => fetch(...a), undefined);
     seasons.forget();
+  }
+});
+
+test('the season end: its final standings, the top players\' badges once, and the board on its dates', { skip: !DB }, async () => {
+  const db = require('../src/db');
+  const economy = require('../src/economy');
+  const run = crypto.randomBytes(3).toString('hex');
+  const key = `test-end-${run}`;
+  try {
+    // A season that ran long ago, at a moment of its own (so no other test's, or earlier run's, coins
+    // fall in it), with a badge for the top 2.
+    const base = 1000 + crypto.randomInt(50000); // (days ago)
+    const ago = (days) => `${base - 400 + days} days`;
+    await db.query(
+      `INSERT INTO seasons (key, name, starts_at, ends_at, free_from, badge_top) VALUES ($1, 'End Test Season', now() - $2::interval, now() - $3::interval, now() - $3::interval, 2)`,
+      [key, ago(400), ago(390)],
+    );
+    seasons.forget();
+    const users = [];
+    for (const tag of ['a', 'b', 'c', 'd']) {
+      const { rows: [u] } = await db.query(`INSERT INTO users (username, email, password_hash) VALUES ($1, $2, 'x') RETURNING id`, [`t_end${tag}_${run}`, `t_end${tag}_${run}@test.invalid`]);
+      users.push(u.id);
+    }
+    const line = (u, amount, kind, ago) => db.query(`INSERT INTO coin_ledger (user_id, amount, kind, created_at) VALUES ($1, $2, $3, now() - $4::interval)`, [u, amount, kind, ago]);
+    const [a, b, c, d] = users;
+    await line(a, 300, 'race', ago(395)); // a: 300, reached 395 days ago
+    await line(b, 200, 'race', ago(396)); await line(b, 100, 'finish-bonus', ago(394)); // b: 300 too, reached later → after a
+    await line(c, 5000, 'coin-pack', ago(393)); await line(c, 50, 'race', ago(393)); // c: bought coins never count
+    await line(c, 900, 'race', ago(389)); // (after the end: not counted)
+    await line(d, 120, 'featured-bonus', ago(392)); await line(d, 100, 'daily-goal', ago(392)); // d: the bonus doesn't count
+    const season = (await seasons.all(db, { fresh: true })).find((s) => s.key === key);
+    const table = await seasons.standings(db, season, { earned: economy.EARNED });
+    assert.deepEqual(table.map((r) => [users.indexOf(r.userId), r.coins, r.rank]), [[0, 300, 1], [1, 300, 2], [3, 100, 3], [2, 50, 4]]);
+
+    // Not before the end; then the top 2 (of everyone in the season) get the badge, once.
+    assert.equal(await seasons.awardBadges(db, key, { now: new Date(Date.now() - (base - 9) * 86400_000), earned: economy.EARNED }), 0);
+    assert.equal(await seasons.awardBadges(db, key, { earned: economy.EARNED }), 2);
+    assert.equal(await seasons.awardBadges(db, key, { earned: economy.EARNED }), 0);
+    const { rows: got } = await db.query('SELECT user_id, rank FROM user_badges WHERE badge_key = $1 ORDER BY rank', [key]);
+    assert.deepEqual(got.map((r) => [r.user_id, r.rank]), [[a, 1], [b, 2]]);
+    assert.deepEqual(await seasons.badgesOf(db, c), []);
+    assert.deepEqual((await seasons.badgesOf(db, a)).map((x) => [x.key, x.name, x.rank]), [[key, 'End Test Season', 1]]);
+
+    // The board: before any season none; a season on comes first; an ended one stays as final standings.
+    const view = await seasons.scoreboardSeason(db);
+    assert.ok(view);
+    if (view.key === key) assert.equal(view.ended, true);
+  } finally {
+    seasons.forget();
     await db.pool?.end?.();
   }
 });

@@ -288,9 +288,33 @@ The pass `holiday-pass-2026` ($9.99) is bought with real money only. Its season,
 
 - **Website (Stripe):** nothing to set up in the dashboard. The Checkout line is built by the server (as for coin packs), on the same webhook and events. Test it in test mode while the season is on (or on a test database with a season whose dates are now): `/pass` → tick both boxes → card `4242 4242 4242 4242` → back on the site the pass shows as owned and the holiday tracks unlock. Refund it from the back office (Payments → Refund, in full): the pass is revoked when Stripe's refund event arrives.
 - **Google Play:** Play Console → Monetize with Play → Products → **One-time products** → *Create one-time product*: ID `holiday-pass-2026`, name "Holiday Season Pass 2026", description "Every holiday track and the Track of the Day bonus until 7 January 2027, and the season marble. One payment, not a subscription.", price USD 9.99 → **Activate**. (The app buys it with the player's Play account id; the server acknowledges it and never consumes it, so it stays owned.) Deactivate the product after 7 Jan 2027 23:59; the server refuses purchases made outside the sale window anyway, and Google refunds those by itself after 3 days because they are never acknowledged.
-- **App Store:** not built yet (Holiday plan step 3).
+- **App Store:** App Store Connect → the app → In-App Purchases → *Create*: type **Non-Consumable**, product ID `holiday-pass-2026`, reference name "Holiday Season Pass 2026", price USD 9.99, the same description as on Google Play, **Family Sharing off** (the server refuses family-shared purchases), a review screenshot of the pass page. Remove it from sale after 7 Jan 2027 23:59. Setting up App Store purchases in general: "App Store purchases" below.
 - **A second pass paid for** (bought on the website and in the app at the same time): the audit log shows `pass-duplicate` for that player. Refund the second payment from the back office.
 - **Before the season starts** nobody can race the holiday tracks, even when switched on; from 7 Jan 2027 23:59 Swedish time they are free for everyone. Nothing has to be deployed on either date.
+
+## App Store purchases (the iPhone app)
+
+The iPhone app sells the same four coin packs and the season pass through the App Store (StoreKit 2). The server checks Apple's signature on every purchase itself, with Apple's public certificates: no key or secret is needed. Order matters:
+
+1. **Apple Developer Program** (the company, Voltron Robotics AB) and in App Store Connect the **Paid Apps agreement**, banking and tax forms (Business → Agreements). In-app purchases can't be sold before they are active.
+2. **The app** in App Store Connect with bundle id `com.marblespins.app`.
+3. **Products** (App Store Connect → the app → In-App Purchases), each with a review screenshot (the shop or the pass page):
+
+   | Product ID | Type | Reference name | Price (US) |
+   |---|---|---|---|
+   | `coins-5000` | Consumable | 5,000 coins | USD 5.00 (tier) |
+   | `coins-10500` | Consumable | 10,500 coins | USD 10.00 |
+   | `coins-27500` | Consumable | 27,500 coins | USD 25.00 |
+   | `coins-57500` | Consumable | 57,500 coins | USD 50.00 |
+   | `holiday-pass-2026` | Non-Consumable, Family Sharing off | Holiday Season Pass 2026 | USD 9.99 |
+
+   The IDs must be exactly these. Apple's price points are fixed: pick the nearest to each US price and let Apple set the other countries. Players see Apple's own price in their currency.
+4. **Server Notifications** (App Store Connect → the app → App Information → App Store Server Notifications): **Version 2**, Production URL and Sandbox URL both `https://marble-race-rame-production.up.railway.app/api/payments/apple/notifications`. Then *Request a test notification*: Railway's log shows `[app-store] notification: test`.
+5. **Railway:** `APPLE_IAP_ENABLED=true` (and `APPLE_BUNDLE_ID` only if it isn't `com.marblespins.app`). Restart. `GET /api/payments/apple/account` (logged in) now says `"live": true`. Sandbox purchases (TestFlight, App Review) are accepted by default, as App Review needs; `APPLE_ACCEPT_SANDBOX=false` refuses them.
+6. **Sandbox testers:** App Store Connect → Users and Access → Sandbox → Test Accounts. On the test iPhone, sign in to the sandbox account under Settings → App Store → Sandbox Account.
+7. **Test on the phone** (a TestFlight build): buy a pack → coins arrive, the order shows on Purchases and in the back office (provider `apple`, Apple's transaction id). Close the app during a purchase → the coins arrive at the next start (unfinished transactions are sent again). Buy the pass while the season is on (or on a test database) → the holiday tracks unlock; delete and reinstall the app → *Restore purchases* on the pass page shows it as owned. Refund a sandbox purchase (Settings → App Store → Sandbox Account → Manage → Refund) → within minutes the coins (or the pass) go, logged like a Stripe refund.
+
+**Refunds:** only Apple refunds App Store purchases (the player asks at reportaproblem.apple.com); the back office can't. Apple's signed REFUND notification takes the coins back once (coins already spent show as "short") or revokes the pass. A pass bought outside its window or a second pass isn't given; the audit log shows `apple-pass-refused` so support can tell the player to ask Apple for the refund.
 
 ## Common problems
 

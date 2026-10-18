@@ -7,10 +7,15 @@
  *                      player's Play account id, then send the purchase to the server, which checks
  *                      it with Google before adding the coins (src/payments/google.js); the server
  *                      consumes it at Google. Stripe is never used inside the apps.
- *   iPhone app         App Store purchase: not built yet (reports "not available yet")
+ *   iPhone app         App Store in-app purchases (StoreKit 2, the same plugin): buy the product with
+ *                      the player's App Store account token, send the signed transaction to the
+ *                      server, which checks Apple's signature before adding the coins
+ *                      (src/payments/apple.js), then finish the transaction in StoreKit. Transactions
+ *                      left unfinished (the app closed first) are sent again at the next start.
  *
  * Screens call buyCoins(pack) (or buyPass(season) for a season pass, which is kept: Google Play
- * acknowledges it, never consumes it) and never care which store took the money.
+ * acknowledges it, never consumes it; on iPhone it is a non-consumable, with restorePurchases())
+ * and never care which store took the money.
  */
 import { useEffect, useState } from 'react';
 import { api } from '../../api/client';
@@ -65,11 +70,41 @@ const ADAPTERS = {
     return verifyGoogle(pack.id, t.purchaseToken);
   },
 
-  /** iPhone: the App Store purchase isn't built yet. */
-  async apple() {
-    return { status: 'unavailable', message: 'Buying coins in the iPhone app isn\'t available yet.' };
+  /** iPhone: the App Store (StoreKit 2), then the server checks Apple's signature and adds the coins. */
+  async apple(productId, what = 'coins') {
+    const { accountToken, live } = await api.appleAccount();
+    if (!live) return { status: 'unavailable', message: 'Buying in the iPhone app isn\'t switched on yet. Please try again later.' };
+    const { NativePurchases, PURCHASE_TYPE } = await billing();
+    await NativePurchases.configure?.({ autoFinishTransactions: false }); // (finished only once the server has it)
+    let t;
+    try {
+      t = await NativePurchases.purchaseProduct({
+        productIdentifier: productId,
+        productType: PURCHASE_TYPE.INAPP,
+        appAccountToken: accountToken, // (StoreKit's appAccountToken: ties the purchase to this player)
+        autoAcknowledgePurchases: false,
+      });
+    } catch (err) {
+      if (cancelled(err)) return { status: 'cancelled' };
+      throw err;
+    }
+    if (!t?.jwsRepresentation) return { status: 'pending', message: `The App Store is still processing your payment (Ask to Buy, or a slower method). Your ${what} arrive${what === 'coins' ? '' : 's'} as soon as it's done.` };
+    return verifyApple(t);
   },
 };
+
+/** Sends an App Store transaction to the server and finishes it in StoreKit once the server has it. */
+async function verifyApple(t) {
+  const r = await api.appleVerify({ signedTransaction: t.jwsRepresentation });
+  if (r.finish && t.transactionId) {
+    const { NativePurchases } = await billing();
+    await NativePurchases.finishTransaction({ transactionId: String(t.transactionId) }).catch(() => {});
+  }
+  if (r.status === 'paid' || r.status === 'duplicate') return { status: 'paid', coins: r.coins, pass: r.pass, orderNo: r.orderNo };
+  if (r.status === 'already-owned') return { status: 'unavailable', message: 'You already have this pass. You can ask Apple for a refund of the second payment (reportaproblem.apple.com).' };
+  if (r.status === 'not-on-sale') return { status: 'unavailable', message: 'This pass isn\'t on sale now. You can ask Apple for a refund (reportaproblem.apple.com).' };
+  return { status: 'unavailable', message: 'The App Store refunded or cancelled this purchase.' };
+}
 
 async function verifyGoogle(productId, purchaseToken) {
   const r = await api.googleVerify({ productId, purchaseToken });
@@ -85,7 +120,7 @@ async function verifyGoogle(productId, purchaseToken) {
 export function buyCoins(pack, { consent = false } = {}) {
   const provider = storeProvider();
   if (provider === 'google') return ADAPTERS.google(pack);
-  if (provider === 'apple') return ADAPTERS.apple();
+  if (provider === 'apple') return ADAPTERS.apple(pack.id);
   return ADAPTERS.web(pack, provider, { consent });
 }
 
@@ -96,7 +131,7 @@ export function buyCoins(pack, { consent = false } = {}) {
  */
 export async function buyPass(season, { consent = false } = {}) {
   const provider = storeProvider();
-  if (provider === 'apple') return { status: 'unavailable', message: 'The season pass is coming to the iPhone app soon.' };
+  if (provider === 'apple') return ADAPTERS.apple(season.pass.productId, 'pass');
   if (provider === 'google') {
     const { accountId, live } = await api.googleAccount();
     if (!live) return { status: 'unavailable', message: 'Buying in the app isn\'t switched on yet. Please try again later.' };
@@ -132,6 +167,7 @@ export async function buyPass(season, { consent = false } = {}) {
  * Safe to call any time; the server also learns about them from Google's notifications.
  */
 export async function resumeStorePurchases() {
+  if (storeProvider() === 'apple') return resumeApple();
   if (storeProvider() !== 'google') return 0;
   try {
     const { NativePurchases, PURCHASE_TYPE } = await billing();
@@ -148,12 +184,50 @@ export async function resumeStorePurchases() {
   }
 }
 
-/** Android: the coin packs' prices as Google Play shows them (local currency) → { [packId]: '49,00 kr' }. */
+/** iPhone: App Store transactions not finished yet (the app closed before the server confirmed): sent again. */
+async function resumeApple() {
+  try {
+    const { NativePurchases } = await billing();
+    await NativePurchases.configure?.({ autoFinishTransactions: false });
+    const { transactions = [] } = await NativePurchases.getUnfinishedTransactions();
+    let n = 0;
+    for (const t of transactions) {
+      if (!t.jwsRepresentation) continue;
+      const r = await verifyApple(t).catch(() => null);
+      if (r?.status === 'paid') n += 1;
+    }
+    return n;
+  } catch {
+    return 0;
+  }
+}
+
+/**
+ * iPhone: "Restore Purchases" (Apple requires it for a non-consumable such as the season pass): asks
+ * the App Store for this Apple ID's purchases and sends the pass ones to the server, which gives back
+ * a pass it knows (never a second one). → how many were restored.
+ */
+export async function restoreStorePurchases() {
+  if (storeProvider() !== 'apple') return 0;
+  const { accountToken } = await api.appleAccount();
+  const { NativePurchases, PURCHASE_TYPE } = await billing();
+  await NativePurchases.restorePurchases();
+  const { purchases = [] } = await NativePurchases.getPurchases({ productType: PURCHASE_TYPE.INAPP, onlyCurrentEntitlements: true, appAccountToken: accountToken });
+  let n = 0;
+  for (const t of purchases) {
+    if (!t.jwsRepresentation) continue;
+    const r = await verifyApple(t).catch(() => null);
+    if (r?.status === 'paid') n += 1;
+  }
+  return n;
+}
+
+/** The apps: the products' prices as Google Play or the App Store shows them (local currency) → { [packId]: '49,00 kr' }. */
 export function useStorePrices(packs) {
   const [prices, setPrices] = useState({});
   const ids = packs.map((p) => p.id).join(',');
   useEffect(() => {
-    if (storeProvider() !== 'google') return undefined;
+    if (storeProvider() !== 'google' && storeProvider() !== 'apple') return undefined;
     let live = true;
     billing().then(({ NativePurchases, PURCHASE_TYPE }) => NativePurchases.getProducts({ productIdentifiers: ids.split(','), productType: PURCHASE_TYPE.INAPP }))
       .then(({ products = [] }) => { if (live) setPrices(Object.fromEntries(products.map((p) => [p.identifier, p.priceString]))); })

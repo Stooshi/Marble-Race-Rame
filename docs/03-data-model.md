@@ -1,6 +1,6 @@
 # 3. Data model
 
-*Last updated 17 Oct 2026.* The database is PostgreSQL. The schema is defined in `docs/database_schema.sql`. The server applies that file at every start; it only adds what is missing and never deletes or changes rows. Changes to existing rows go in `docs/data_updates/` (see the [runbook](05-runbook.md#data-updates)).
+*Last updated 18 Oct 2026.* The database is PostgreSQL. The schema is defined in `docs/database_schema.sql`. The server applies that file at every start; it only adds what is missing and never deletes or changes rows. Changes to existing rows go in `docs/data_updates/` (see the [runbook](05-runbook.md#data-updates)).
 
 **Conventions:**
 - Ids are UUIDs (`gen_random_uuid()`), except where noted.
@@ -67,6 +67,7 @@ marbles ──< user_marbles   (the older plain marbles; looks only)
 | `suspended_at` | Set by the back office. A suspended player can't log in or race |
 | `deleted_at` | The player deleted the account. The row stays, anonymised (see below) |
 | `password_changed_at` | When the password was last reset by email. Logins made before it stop working |
+| `apple_account_token` | A random UUID the iPhone app buys with (StoreKit's appAccountToken): ties an App Store purchase to this player without giving Apple anything personal. Made at the first App Store purchase; cleared when the account is deleted |
 | `store_account_id` | Random id (unique, up to 64 characters) the Android app gives Google Play with each purchase (`obfuscatedAccountId`), so the server can check a purchase belongs to this player. Made at the first purchase; never the user id or email. Cleared when the account is deleted |
 
 **Account deletion** (`src/account/index.js`) doesn't remove the `users` row.
@@ -306,6 +307,8 @@ One row per season, added by a data update (the Holiday Season 2026: `2027-02-16
 | `pass_sale_starts_at`, `pass_sale_ends_at` | When the pass is sold. The server refuses any sale outside this window |
 | `featured` | The Track of the Day: `{ "2026-12-01": "tromso-aurora-grand-prix", … }` |
 | `featured_bonus` | The Track of the Day bonus (0.5 = +50% race coins) |
+| `badge_top` | How many players get the season's badge (100) |
+| `badges_awarded_at` | When the season-end job gave the badges (once; NULL until the season has ended and the job has run) |
 
 ### `season_passes`
 A player's pass for a season. Granted once when its payment is paid; a full refund or a chargeback sets `revoked_at` and `revoke_reason` (`refunded`, `chargeback`), and the season's tracks lock again for that player. At most one live (not revoked) pass per player and season. A second pass paid for (bought on two platforms at once) is flagged in `admin_audit` (`pass-duplicate`) for the back office to refund.
@@ -317,7 +320,7 @@ A player's pass for a season. Granted once when its payment is paid; a full refu
 | `granted_at`, `revoked_at`, `revoke_reason` | |
 
 ### `user_badges`
-Badges on a profile (`user_id`, `badge_key`, `rank`, `awarded_at`), e.g. the Holiday Season 2026 top 100. Not awarded yet (the season-end job comes with step 3 of the Holiday plan).
+Badges on a profile and in the Marble Bag (`user_id`, `badge_key`, `rank`, `awarded_at`). A season's badge has the season's key as `badge_key` and the player's final rank: the season-end job gives it to the top `badge_top` players by coins earned in the season (earned kinds only; ties to who reached their total first; deleted and suspended accounts left out), once.
 
 ## Support
 

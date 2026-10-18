@@ -576,6 +576,10 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_payments_store_token ON payments (provider
 -- purchase to one player without giving Google anything personal.
 ALTER TABLE users ADD COLUMN IF NOT EXISTS store_account_id varchar(64);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_users_store_account ON users (store_account_id) WHERE store_account_id IS NOT NULL;
+-- The player's random account token for App Store purchases (StoreKit's appAccountToken, a UUID):
+-- ties a purchase from the iPhone app to one player without giving Apple anything personal.
+ALTER TABLE users ADD COLUMN IF NOT EXISTS apple_account_token uuid;
+CREATE UNIQUE INDEX IF NOT EXISTS idx_users_apple_account ON users (apple_account_token) WHERE apple_account_token IS NOT NULL;
 
 -- Each refund once (a Stripe refund id): the coins it took back, and any it couldn't (already spent).
 CREATE TABLE IF NOT EXISTS payment_refunds (
@@ -874,6 +878,12 @@ CREATE TABLE IF NOT EXISTS seasons (
     created_at           timestamptz  NOT NULL DEFAULT now(),
     CHECK (ends_at > starts_at AND free_from >= starts_at)
 );
+
+-- The season's scoreboard and badge: the top badge_top players by coins earned in the season (from
+-- starts_at to ends_at, ties to who got there first) get a badge (user_badges, badge_key = the
+-- season's key); badges_awarded_at once the season-end job has done it (src/seasons awardBadges).
+ALTER TABLE seasons ADD COLUMN IF NOT EXISTS badge_top integer NOT NULL DEFAULT 100 CHECK (badge_top >= 0);
+ALTER TABLE seasons ADD COLUMN IF NOT EXISTS badges_awarded_at timestamptz;
 
 -- A player's pass for a season: granted when its payment is paid (once), revoked by a full
 -- refund or a chargeback (revoked_at, with the reason; the audit log has the details). One live

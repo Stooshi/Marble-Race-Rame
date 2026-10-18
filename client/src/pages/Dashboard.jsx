@@ -31,7 +31,7 @@ export default function Dashboard() {
       api.trackRecords(id),
       api.userRaces(id, 10),
     ]);
-    return { user: p.user, stats: p.stats, records: records.records, races: history.races };
+    return { user: p.user, stats: p.stats, badges: p.badges ?? [], records: records.records, races: history.races };
   }, [id, isSelf]);
 
   if (!userId && !authLoading && !isAuthenticated) return <Navigate to="/" replace />;
@@ -39,7 +39,7 @@ export default function Dashboard() {
   // Data may be missing or still belong to a previous profile until the reload lands.
   if (!id || profile.data?.user.id !== id) return <div className="page"><Spinner /></div>;
 
-  const { user: who, stats, records, races } = profile.data;
+  const { user: who, stats, badges, records, races } = profile.data;
 
   return (
     <div className="page dashboard">
@@ -48,6 +48,7 @@ export default function Dashboard() {
         <div className="profile-header__text">
           <h1>{who.display_name || who.username}</h1>
           <p className="muted">@{who.username} · racing since {new Date(who.created_at).toLocaleDateString()}</p>
+          {badges.length > 0 && <p className="profile-badges">{badges.map((b) => <span key={b.key} className="badge badge--season" title={`${b.name}, #${b.rank}`}>★ {b.name}{b.rank ? ` · #${b.rank}` : ''}</span>)}</p>}
         </div>
         {isSelf && (
           <div className="profile-header__coins">

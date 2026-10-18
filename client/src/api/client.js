@@ -102,6 +102,9 @@ export const api = {
   // Google Play (the Android app): the player's account id to buy with, then the purchase to check.
   googleAccount: () => request('/payments/google/account'),
   googleVerify: (body) => request('/payments/google/verify', { method: 'POST', body }),
+  // The App Store (the iPhone app): the player's account token to buy with, then the signed transaction to check.
+  appleAccount: () => request('/payments/apple/account'),
+  appleVerify: (body) => request('/payments/apple/verify', { method: 'POST', body }),
   myOrders: () => request('/payments/mine'),
   // Seasons and the season pass (real money only: Stripe on the web, Google Play in the Android app).
   seasons: () => request('/seasons'),

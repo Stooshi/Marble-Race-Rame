@@ -4,7 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import CONSENT from '../../shared/payments/consent.json';
 import { api } from '../../api/client';
 import { useAsync } from '../../hooks/useAsync';
-import { STORE_NAME, buyPass, storeProvider, useStorePrices } from '../payments';
+import { STORE_NAME, buyPass, restoreStorePurchases, storeProvider, useStorePrices } from '../payments';
 
 const day = (iso) => new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Stockholm', day: 'numeric', month: 'long', year: 'numeric' }).format(new Date(iso));
 const time = (iso) => new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Stockholm', hour: '2-digit', minute: '2-digit' }).format(new Date(iso));
@@ -34,8 +34,23 @@ export default function PassPage() {
   if (!season) return <div className="ms-page ms-page--narrow"><p className="ms-note">{data ? 'There is no season pass right now.' : 'Loading…'}</p></div>;
   const { pass } = season;
   const price = web ? `$${(pass.priceCents / 100).toFixed(2)}` : storePrices[pass.productId] ?? null;
-  const owned = pass.owned || result?.status === 'paid';
+  const owned = pass.owned || result?.status === 'paid' || result?.status === 'restored';
   const signIn = `/signup?next=${encodeURIComponent(`/pass?season=${season.key}`)}`;
+
+  // iPhone: "Restore Purchases" (Apple requires it for the pass, a non-consumable).
+  const restore = async () => {
+    setBusy(true);
+    setResult(null);
+    try {
+      const n = await restoreStorePurchases();
+      if (n) reload();
+      setResult(n ? { status: 'restored' } : { status: 'unavailable', message: 'No pass to restore on this Apple ID.' });
+    } catch (err) {
+      setResult({ status: 'error', message: err.message });
+    } finally {
+      setBusy(false);
+    }
+  };
 
   const buy = async () => {
     setBusy(true);
@@ -104,6 +119,7 @@ export default function PassPage() {
           <button type="button" className="ms-btn ms-btn--primary ms-btn--lg" disabled={!withdrawal || !terms || busy} onClick={buy}>
             {busy ? 'ONE MOMENT…' : provider === 'stripe' ? 'CONTINUE TO PAYMENT' : price ? `GET THE PASS · ${price}` : 'GET THE PASS'}
           </button>
+          {provider === 'apple' && <button type="button" className="ms-btn" disabled={busy} onClick={restore}>Restore purchases</button>}
           <span className="ms-note">{web ? 'Payments are handled securely by Stripe. We never see or store your card details.' : `Payments are handled by ${STORE_NAME[provider]}.`} Under 18? Ask a parent or guardian first.</span>
         </section>
       )}
