@@ -132,7 +132,7 @@ test('App Store: checked, credited once to the buyer only; a refund notification
       [key, `apass-${run}`],
     );
     seasons.forget();
-    const early = tx({ appAccountToken: acc.accountToken, productId: `apass-${run}`, type: 'Non-Consumable', purchaseDate: Date.now() - 3 * 86400_000 });
+    const early = tx({ appAccountToken: acc.accountToken, productId: `apass-${run}`, type: 'Non-Consumable', purchaseDate: Date.now() - 3 * 86400_000, environment: 'Production' });
     assert.equal((await verify(me.token, signed(early))).body.status, 'not-on-sale');
     const passTx = tx({ appAccountToken: acc.accountToken, productId: `apass-${run}`, type: 'Non-Consumable' });
     passTx.originalTransactionId = passTx.transactionId;
@@ -148,6 +148,11 @@ test('App Store: checked, credited once to the buyer only; a refund notification
     assert.equal(flags.length, 2);
     assert.equal((await call('/payments/apple/notifications', { method: 'POST', body: { signedPayload: note('REFUND', passTx) } })).status, 200);
     assert.equal(await seasons.hasPass(db, me.user.id, key), false);
+    // A sandbox or TestFlight purchase before the sale started (App Review, our testers): granted.
+    const testBuy = tx({ appAccountToken: acc.accountToken, productId: `apass-${run}`, type: 'Non-Consumable', purchaseDate: Date.now() - 3 * 86400_000, environment: 'Sandbox' });
+    testBuy.originalTransactionId = testBuy.transactionId;
+    assert.equal((await verify(me.token, signed(testBuy))).body.status, 'paid');
+    assert.equal(await seasons.hasPass(db, me.user.id, key), true);
   } finally {
     apple.setRoot(null);
     seasons.forget();

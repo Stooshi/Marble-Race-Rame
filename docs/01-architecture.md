@@ -135,6 +135,7 @@ There is no separate staging server. Vercel makes a preview build for every bran
 | `STRIPE_SECRET_KEY` | for payments | `sk_test_…` now |
 | `STRIPE_WEBHOOK_SECRET` | for payments | `whsec_…` from the webhook endpoint in Stripe |
 | `STRIPE_ALLOW_LIVE` | **only when going live** | `true` lets a `sk_live_…` key work |
+| `PASS_TESTERS` | no | Tester accounts' emails, comma-separated: they may test-buy the season pass before its sale starts (App Review, our testers) |
 | `STRIPE_TAX` | no | `off` turns off Stripe Tax |
 | `STRIPE_TAX_CODE` | no | Default `txcd_10000000` (to be confirmed by the accountant) |
 | `STRIPE_TOS_IN_CHECKOUT` | no | `true` also asks for the terms on Stripe's page |

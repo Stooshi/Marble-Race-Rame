@@ -149,8 +149,10 @@ async function passCheckout(client, userId, { seasonKey, provider: providerName 
   const season = await seasons.byKey(client, seasonKey);
   if (!season?.pass_product_id) throw notFound('No such season pass');
   if (!seasons.passOnSale(season, now)) {
-    const ended = new Date(now) >= new Date(season.pass_sale_ends_at ?? season.free_from);
-    throw new HttpError(ended ? 410 : 409, ended ? `The ${season.pass_name} is no longer sold` : `The ${season.pass_name} goes on sale on ${new Intl.DateTimeFormat('en-GB', { timeZone: season.time_zone, day: 'numeric', month: 'long' }).format(new Date(season.pass_sale_starts_at))}`);
+    const ended = !seasons.passOnSale(season, now, { early: true });
+    // Before the sale starts: only a tester (PASS_TESTERS), and only with Stripe in test mode (no real money).
+    const testerEarly = !ended && providerName === 'stripe' && stripe.mode() === 'test' && await seasons.isPassTester(client, userId);
+    if (!testerEarly) throw new HttpError(ended ? 410 : 409, ended ? `The ${season.pass_name} is no longer sold` : `The ${season.pass_name} goes on sale on ${new Intl.DateTimeFormat('en-GB', { timeZone: season.time_zone, day: 'numeric', month: 'long' }).format(new Date(season.pass_sale_starts_at))}`);
   }
   if (await seasons.hasPass(client, userId, season.key)) throw conflict(`You already have the ${season.pass_name}`);
   const provider = PROVIDERS[providerName];

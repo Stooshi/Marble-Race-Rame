@@ -61,12 +61,30 @@ function featuredSlug(season, now = new Date()) {
   return season.featured?.[dayOf(season, now)] ?? null;
 }
 
-/** Whether the pass is on sale at `now` (a season without a pass never is). */
-function passOnSale(season, now = new Date()) {
+/**
+ * Whether the pass is on sale at `now` (a season without a pass never is). `early`: a test purchase
+ * (Apple sandbox or TestFlight, a Google Play licence tester, Stripe in test mode) by a tester, which
+ * may come before the sale starts, so App Review and our testers can buy it; never after it ends.
+ */
+function passOnSale(season, now = new Date(), { early = false } = {}) {
   if (!season.pass_product_id) return false;
   const t = at(now);
-  if (season.pass_sale_starts_at && t < at(season.pass_sale_starts_at)) return false;
+  if (!early && season.pass_sale_starts_at && t < at(season.pass_sale_starts_at)) return false;
   return t < at(season.pass_sale_ends_at ?? season.free_from);
+}
+
+/** The accounts that may make test purchases of a pass before its sale starts: PASS_TESTERS, emails, comma-separated. */
+function passTesters() {
+  return new Set(String(process.env.PASS_TESTERS || '').split(',').map((e) => e.trim().toLowerCase()).filter(Boolean));
+}
+
+/** Is this account one of the pass's testers (PASS_TESTERS)? */
+async function isPassTester(db, userId) {
+  if (!userId) return false;
+  const list = passTesters();
+  if (!list.size) return false;
+  const { rows: [u] } = await db.query('SELECT email FROM users WHERE id = $1', [userId]);
+  return Boolean(u?.email && list.has(String(u.email).toLowerCase()));
 }
 
 /** Whole days left to buy the pass, counted from 1 Jan (the countdown, "ends in N days"); null before then. */
@@ -248,6 +266,9 @@ async function trackCount(db, key) {
 async function view(db, season, userId = null, now = new Date()) {
   const state = stateOf(season, now);
   const featured = featuredSlug(season, now);
+  const open = passOnSale(season, now);
+  // A tester sees the pass on sale before its sale starts (a test purchase only: the server refuses a real one).
+  const testerEarly = Boolean(season.pass_product_id) && !open && passOnSale(season, now, { early: true }) && await isPassTester(db, userId);
   return {
     key: season.key,
     name: season.name,
@@ -264,7 +285,8 @@ async function view(db, season, userId = null, now = new Date()) {
       name: season.pass_name,
       priceCents: season.price_cents,
       currency: season.currency.toUpperCase(),
-      onSale: passOnSale(season, now),
+      onSale: open || testerEarly,
+      testPurchaseOnly: testerEarly,
       saleStartsAt: season.pass_sale_starts_at,
       saleEndsAt: season.pass_sale_ends_at ?? season.free_from,
       // The "ends in N days" countdown, shown from the start of the season's last month (1 Jan).
@@ -381,7 +403,7 @@ function startJobs(db, { earned }) {
 
 module.exports = {
   scoreboardSeason, standings, awardBadges, badgesOf, startJobs,
-  all, forget, stateOf, dayOf, featuredSlug, passOnSale, saleDaysLeft, lastMonthStart, byKey, byPassProduct, hasPass, passesOf,
+  all, forget, stateOf, dayOf, featuredSlug, passOnSale, isPassTester, saleDaysLeft, lastMonthStart, byKey, byPassProduct, hasPass, passesOf,
   trackAccess, assertTrackAccess, freeSeasonKeys, OPEN_TRACK_SQL, pickOpenTrack, pickSeasonTrack, bonusLine,
   grantForPayment, revokeForPayment, grantMissingMarbles, view,
 };

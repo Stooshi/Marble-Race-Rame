@@ -198,7 +198,8 @@ async function redeem(db, { userId = null, productId, purchaseToken }, { grant, 
     if (p.keep) {
       // A season pass: bought inside its sale window (Google's purchase time), and not held already.
       const bought = new Date(Number(g.purchaseTimeMillis) || Date.now());
-      if (!seasons.passOnSale(p.season, bought)) return { status: 'not-on-sale' };
+      // (Before the sale starts, only a licence tester's test purchase: Google's purchaseType 0.)
+      if (!seasons.passOnSale(p.season, bought, { early: g.purchaseType === 0 })) return { status: 'not-on-sale' };
       if (await seasons.hasPass(client, owner, p.seasonKey)) return { status: 'already-owned' };
     }
     const { rows: [payment] } = await client.query(

@@ -134,12 +134,13 @@ async function redeem(db, { userId, signedTransaction }, { grant, product, now =
     }
     if (tx.revocationDate) return { status: 'revoked', finish: true };
     if (p.keep) {
+      // (Before the sale starts, only a sandbox or TestFlight purchase: App Review and our testers.)
       const bought = new Date(Number(tx.purchaseDate) || now.getTime());
       const flag = async (why) => client.query(
         'INSERT INTO admin_audit (admin_id, action, target_user_id, reason, details) VALUES (NULL, $1, $2, $3, $4)',
         ['apple-pass-refused', userId, `${why}: the player can ask Apple for a refund`, JSON.stringify({ transaction_id: ref, product_id: p.id, environment: env })],
       );
-      if (!seasons.passOnSale(p.season, bought)) { await flag('Bought outside the sale window'); return { status: 'not-on-sale', finish: true }; }
+      if (!seasons.passOnSale(p.season, bought, { early: env !== 'Production' })) { await flag('Bought outside the sale window'); return { status: 'not-on-sale', finish: true }; }
       if (await seasons.hasPass(client, userId, p.seasonKey)) { await flag('A second pass'); return { status: 'already-owned', finish: true }; }
     }
     const { rows: [payment] } = await client.query(

@@ -244,7 +244,72 @@ test('the pass on Stripe (test mode): unlocks the season\'s tracks, rooms, the b
   }
 });
 
-test('the pass on Google Play: inside its sale window only, once, acknowledged (never consumed); a voided purchase revokes it', { skip: !DB }, async () => {
+test('test purchases before the sale starts: Apple sandbox or TestFlight, Google licence testers, Stripe test mode by a tester; never real money, never after the end', () => {
+  const before = new Date('2026-11-20T12:00:00+01:00');
+  assert.equal(seasons.passOnSale(HOLIDAY, before), false);
+  assert.equal(seasons.passOnSale(HOLIDAY, before, { early: true }), true);
+  // Real purchases open at 1 Dec 00:00 Swedish time, not a minute before.
+  assert.equal(seasons.passOnSale(HOLIDAY, new Date('2026-11-30T23:59:00+01:00')), false);
+  assert.equal(seasons.passOnSale(HOLIDAY, new Date('2026-12-01T00:00:00+01:00')), true);
+  // After the sale ends, not even a test purchase.
+  assert.equal(seasons.passOnSale(HOLIDAY, new Date('2027-01-08T00:00:00+01:00'), { early: true }), false);
+});
+
+test('a tester (PASS_TESTERS) sees the pass on sale before it starts and can buy it with Stripe in test mode; nobody else, and never with live keys', { skip: !DB }, async () => {
+  const { createApp } = require('../src/app');
+  const db = require('../src/db');
+  const stripe = require('../src/payments/stripe');
+  const config = require('../src/config');
+  stripe.setClient(fakeStripe());
+  const server = createApp().listen(0);
+  const base = `http://127.0.0.1:${server.address().port}/api`;
+  const call = async (path, { method = 'GET', body, token } = {}) => {
+    const res = await fetch(base + path, { method, headers: { 'content-type': 'application/json', ...(token && { authorization: `Bearer ${token}` }) }, body: body === undefined ? undefined : JSON.stringify(body) });
+    return { status: res.status, body: await res.json().catch(() => null) };
+  };
+  const run = crypto.randomBytes(3).toString('hex');
+  const key = `test-e-${run}`;
+  const saved = { testers: process.env.PASS_TESTERS, key: config.stripe.secretKey, live: config.stripe.allowLive };
+  try {
+    // A season whose pass goes on sale in five days.
+    await db.query(
+      `INSERT INTO seasons (key, name, starts_at, ends_at, free_from, pass_product_id, pass_name, price_cents, pass_sale_starts_at, pass_sale_ends_at)
+       VALUES ($1, 'Early Season 2026', now() + interval '5 days', now() + interval '20 days', now() + interval '20 days', $2, 'Early Season Pass 2026', 999, now() + interval '5 days', now() + interval '20 days')`,
+      [key, `epass-${run}`],
+    );
+    seasons.forget();
+    const account = async (tag) => {
+      const name = `t_se_${tag}_${run}`;
+      return (await call('/auth/register', { method: 'POST', body: { username: name, email: `${name}@test.invalid`, password: 'password123', age_group: '18+' } })).body;
+    };
+    const tester = await account('t');
+    const player = await account('p');
+    process.env.PASS_TESTERS = ` someone@example.invalid, T_SE_T_${run}@test.invalid `; // (any case, spaces)
+
+    const pass = async (who) => (await call(`/seasons/${key}`, { token: who.token })).body.season.pass;
+    assert.deepEqual([(await pass(tester)).onSale, (await pass(tester)).testPurchaseOnly], [true, true]);
+    assert.deepEqual([(await pass(player)).onSale, (await pass(player)).testPurchaseOnly], [false, false]);
+
+    const checkout = (who) => call('/payments/pass/checkout', { method: 'POST', token: who.token, body: { season: key, consent: true } });
+    assert.equal((await checkout(player)).status, 409);
+    const out = await checkout(tester);
+    assert.equal(out.status, 200);
+    assert.equal(out.body.next.kind, 'redirect');
+    // Live keys: no early purchase, not even for a tester.
+    config.stripe.secretKey = 'sk_live_fake_for_tests';
+    config.stripe.allowLive = true;
+    assert.equal(stripe.mode(), 'live');
+    assert.equal((await checkout(tester)).status, 409);
+  } finally {
+    if (saved.testers === undefined) delete process.env.PASS_TESTERS; else process.env.PASS_TESTERS = saved.testers;
+    config.stripe.secretKey = saved.key;
+    config.stripe.allowLive = saved.live;
+    seasons.forget();
+    server.close();
+  }
+});
+
+test('the pass on Google Play: inside its sale window only (a licence tester\'s test purchase also before it), once, acknowledged (never consumed); a voided purchase revokes it', { skip: !DB }, async () => {
   const db = require('../src/db');
   const google = require('../src/payments/google');
   const payments = require('../src/payments');
@@ -261,7 +326,7 @@ test('the pass on Google Play: inside its sale window only, once, acknowledged (
       if (!p) return json(404, {});
       if (m[3] === ':consume') { state.consumed.push(m[2]); return json(200, null); }
       if (m[3] === ':acknowledge') { p.acknowledgementState = 1; state.acknowledged.push(m[2]); return json(200, null); }
-      return json(200, { purchaseState: 0, consumptionState: 0, acknowledgementState: p.acknowledgementState ?? 0, orderId: p.orderId, obfuscatedExternalAccountId: p.accountId, purchaseTimeMillis: String(p.at) });
+      return json(200, { purchaseState: 0, consumptionState: 0, acknowledgementState: p.acknowledgementState ?? 0, orderId: p.orderId, obfuscatedExternalAccountId: p.accountId, purchaseTimeMillis: String(p.at), ...(p.test && { purchaseType: 0 }) });
     }
     if (u.pathname.endsWith('/purchases/voidedpurchases')) return json(200, { voidedPurchases: state.voided });
     return json(404, {});
@@ -279,9 +344,9 @@ test('the pass on Google Play: inside its sale window only, once, acknowledged (
     const accountId = await google.accountIdFor(db, user.id);
     const productId = `gpass-${run}`;
     let orders = 0;
-    const buy = (tok, at = Date.now()) => state.purchases.set(tok, { orderId: `GPA.4400-${run}-${++orders}`, accountId, at });
+    const buy = (tok, at = Date.now(), test = false) => state.purchases.set(tok, { orderId: `GPA.4400-${run}-${++orders}`, accountId, at, test });
 
-    // Bought before the sale started: not granted, not acknowledged (Google refunds it by itself).
+    // Bought (for real) before the sale started: not granted, not acknowledged (Google refunds it by itself).
     const early = `play-pass-${run}-early-xxxxxx`;
     buy(early, Date.now() - 3 * 86400_000);
     assert.equal((await payments.googlePurchase(db, { userId: user.id, productId, purchaseToken: early })).status, 'not-on-sale');
@@ -308,6 +373,12 @@ test('the pass on Google Play: inside its sale window only, once, acknowledged (
     state.voided = [{ purchaseToken: tok, orderId: state.purchases.get(tok).orderId, voidedReason: 1, voidedSource: 0 }];
     await payments.googleSync(db);
     assert.equal(await seasons.hasPass(db, user.id, key), false);
+
+    // A licence tester's test purchase (purchaseType 0) before the sale started: granted (App Review, our testers).
+    const tested = `play-pass-${run}-test-xxxxxxx`;
+    buy(tested, Date.now() - 3 * 86400_000, true);
+    assert.equal((await payments.googlePurchase(db, { userId: user.id, productId, purchaseToken: tested })).status, 'paid');
+    assert.equal(await seasons.hasPass(db, user.id, key), true);
   } finally {
     google.setTransport((...a) => fetch(...a), undefined);
     seasons.forget();

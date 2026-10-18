@@ -133,6 +133,7 @@ export default function PassPage() {
             {price && <span style={{ fontSize: '2rem', fontWeight: 800 }}>{price}</span>}
             {pass.endsInDays != null && <span className="ms-badge-label" style={{ position: 'static' }}>Ends in {pass.endsInDays} {pass.endsInDays === 1 ? 'day' : 'days'}</span>}
           </div>
+          {pass.testPurchaseOnly && <div className="ms-msg" role="status">Tester account: a test purchase only (Stripe test mode, Apple sandbox or TestFlight, Google Play licence testing). The pass goes on sale for everyone on {day(pass.saleStartsAt)}.</div>}
           {web && <span className="ms-note">Shown in your own currency, VAT included, on Stripe's payment page.</span>}
           <label style={{ display: 'flex', gap: 10, alignItems: 'flex-start', cursor: 'pointer' }}>
             <input type="checkbox" checked={withdrawal} onChange={(e) => setWithdrawal(e.target.checked)} style={{ width: 22, height: 22, flex: 'none' }} />
