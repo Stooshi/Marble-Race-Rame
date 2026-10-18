@@ -17,7 +17,7 @@ import {
 } from 'three';
 import { channelLipAt, channelRadiusAt, forkAt, forkOffset, forkRadius } from './iceChannel';
 
-export const LIGHTINGS = ['day', 'sunset', 'midnight-sun', 'night-northern-lights', 'fog', 'snow', 'rain', 'night', 'parlour', 'neon-night', 'synthwave',
+export const LIGHTINGS = ['day', 'sunset', 'midnight-sun', 'night-northern-lights', 'fog', 'snow', 'rain', 'night', 'fireworks-night', 'parlour', 'neon-night', 'synthwave',
   // The Block Series: a calm dawn, a dark mine lit by its lamps and gems, a cave lit only by magma.
   'dawn', 'cave', 'magma'];
 
@@ -59,6 +59,18 @@ export const PRESETS = {
     sun: { color: '#fff1d6', intensity: 0.75, direction: [0.2, 1, 0.3] }, // the floodlights, from high above
     groundTint: 0.4,
     effects: { stars: true, night: true },
+  },
+  // A New Year's Eve night (the Holiday Season's fireworks tracks): the city night, with fireworks
+  // bursting over the track all through the race (looks only).
+  'fireworks-night': {
+    sky: { top: '#070818', horizon: '#22284a', glow: null },
+    fog: '#121c33',
+    fogRange: [300, 1800],
+    hemisphere: { sky: '#8a96d0', ground: '#1a2236', intensity: 0.8 },
+    ambient: 0.32,
+    sun: { color: '#fff1d6', intensity: 0.75, direction: [0.2, 1, 0.3] },
+    groundTint: 0.4,
+    effects: { stars: true, night: true, fireworks: true },
   },
   // A pinball parlour (the pinball tables): a dim room round the giant table, warm lamps over it,
   // the playfield's inserts and the backglass glowing, the marbles glowing in their own colours.
@@ -206,6 +218,65 @@ function stars(lite) {
   p.name = 'stars';
   p.renderOrder = -1;
   return p;
+}
+
+/**
+ * Fireworks: bursts of coloured sparks round the sky, each opening, drifting down and fading, then
+ * another somewhere else, on the race clock (so a replay shows the same). One draw call.
+ */
+function fireworks(lite) {
+  const BURSTS = lite ? 4 : 7;
+  const SPARKS = lite ? 40 : 70;
+  const LIFE = 1.9; // seconds a burst shows
+  const COLOURS = [[1, 0.35, 0.4], [1, 0.85, 0.3], [0.4, 1, 0.55], [0.4, 0.75, 1], [1, 0.5, 0.95], [1, 1, 1]];
+  const hash = (a, b) => { const x = Math.sin(a * 127.1 + b * 311.7) * 43758.5453; return x - Math.floor(x); };
+  const dirs = [];
+  for (let k = 0; k < SPARKS; k += 1) {
+    const y = 1 - (2 * (k + 0.5)) / SPARKS;
+    const r = Math.sqrt(1 - y * y);
+    const a = k * 2.39996;
+    dirs.push([Math.cos(a) * r, y, Math.sin(a) * r]);
+  }
+  const pos = new Float32Array(BURSTS * SPARKS * 3);
+  const col = new Float32Array(BURSTS * SPARKS * 3);
+  const g = new BufferGeometry();
+  g.setAttribute('position', new Float32BufferAttribute(pos, 3));
+  g.setAttribute('color', new Float32BufferAttribute(col, 3));
+  const p = new Points(g, new PointsMaterial({ size: lite ? 3.2 : 2.6, sizeAttenuation: false, vertexColors: true, fog: false, transparent: true, blending: AdditiveBlending, depthWrite: false }));
+  p.name = 'fireworks';
+  p.renderOrder = -1;
+  p.frustumCulled = false;
+  const update = (sec) => {
+    const P = g.getAttribute('position');
+    const C = g.getAttribute('color');
+    for (let b = 0; b < BURSTS; b += 1) {
+      const period = 2.6 + (b % 3) * 0.45;
+      const t0 = sec + b * 0.83;
+      const n = Math.floor(t0 / period);
+      const tau = t0 - n * period;
+      const live = sec > 0 && tau < LIFE;
+      const t = tau / LIFE;
+      const az = hash(b, n) * Math.PI * 2;
+      const up = 0.28 + 0.3 * hash(n, b + 7);
+      const rr = Math.sqrt(1 - up * up) * 0.9;
+      const cx = Math.cos(az) * rr;
+      const cy = up * 0.9;
+      const cz = Math.sin(az) * rr;
+      const size = (0.05 + 0.03 * hash(b + 3, n)) * (1 - (1 - t) * (1 - t));
+      const fade = live ? (1 - t) ** 1.6 : 0;
+      const [r, gg, bb] = COLOURS[Math.floor(hash(n + 11, b) * COLOURS.length)];
+      for (let k = 0; k < SPARKS; k += 1) {
+        const i = b * SPARKS + k;
+        const [dx, dy, dz] = dirs[k];
+        P.setXYZ(i, cx + dx * size, cy + dy * size - 0.025 * t * t, cz + dz * size);
+        C.setXYZ(i, r * fade, gg * fade, bb * fade);
+      }
+    }
+    P.needsUpdate = true;
+    C.needsUpdate = true;
+  };
+  update(0);
+  return { group: p, update };
 }
 
 /**
@@ -434,7 +505,7 @@ export function edgeLights(centerline, channel, colour = '#7fd8ff') {
  */
 export function buildEffects(theme, { centerline = null, channel = null, lite = false } = {}) {
   const fx = theme?.effects ?? {};
-  if (!fx.stars && !fx.aurora && !fx.precipitation && !fx.night && !fx.grid && !fx.edge && !fx.embers) return null;
+  if (!fx.stars && !fx.aurora && !fx.fireworks && !fx.precipitation && !fx.night && !fx.grid && !fx.edge && !fx.embers) return null;
   const sky = new Group();
   sky.name = 'sky effects';
   const world = new Group();
@@ -445,6 +516,11 @@ export function buildEffects(theme, { centerline = null, channel = null, lite = 
     const a = aurora(lite);
     sky.add(a.group);
     updates.push((sec) => a.update(sec));
+  }
+  if (fx.fireworks) {
+    const f = fireworks(lite);
+    sky.add(f.group);
+    updates.push((sec) => f.update(sec));
   }
   if (fx.precipitation) {
     const p = precipitation(fx.precipitation, lite);

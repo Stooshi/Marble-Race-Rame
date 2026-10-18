@@ -439,7 +439,7 @@ function arcadeRules({ spec, where }) {
 }
 
 // The varied starts: how a track's first seconds look (drawing only; the race is its opening's).
-const START_TYPES = ['straight-lift', 'curving-lift', 'spiral-tower', 'elevator', 'cliff', 'rooftop', 'station-launch', 'stepped-platform'];
+const START_TYPES = ['straight-lift', 'curving-lift', 'spiral-tower', 'elevator', 'cliff', 'rooftop', 'station-launch', 'stepped-platform', 'lighthouse', 'ski-jump', 'castle-tower'];
 const GATES = ['paddle', 'trapdoor', 'stalls', 'barrier'];
 const COUNTDOWN_SHOTS = ['front', 'side', 'above', 'chase'];
 const LAUNCH_SHOTS = ['high-behind', 'low-chase', 'side', 'overhead', 'look-back'];

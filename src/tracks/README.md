@@ -255,6 +255,13 @@ Scenery comes from names in the file (looks only; checked, so a typo is refused)
   'burj-al-arab' | 'burj-khalifa' | 'palm-boardwalk' | 'dune-buggy' | 'toucan-tree' | 'river-pool' (a pink
   river dolphin surfaces in it) | 'teatro-amazonas' | 'river-dock' | 'corcovado' (far behind, its figure only a distant
   silhouette) | 'sugarloaf' | 'maracana' | 'parrot-tree' | 'copacabana' | 'wudian-hall' | 'watchtower' | 'pagoda' | 'rice-terraces' | 'lantern-row' | 'temple-of-heaven'` (the world landmarks: client/src/three/scenery/kitLandmarks.js).
+  The Holiday Season's landmarks (client/src/three/scenery/kitLandmarksHoliday.js; generic architecture and
+  traditions, no religious figures, flags, emblems or brands): 'chateau-hotel', 'toboggan-slide',
+  'flat-top-mountain', 'promenade-lights', 'braai-fires', 'outback-homestead', 'kangaroo-mob', 'light-figures',
+  'light-arches', 'gothic-church-front', 'gingerbread-stands', 'papel-picado', 'posada-procession', 'pinata-line',
+  'badnjak-fires', 'fortress-walls', 'hanging-lanterns', 'old-church-courtyard', 'wooden-residence', 'troika',
+  'onion-dome-church', 'ice-rink-tree', 'drum-circle', 'snow-sculptures', 'tv-tower', 'snow-lanterns',
+  'ice-castles', 'pohutukawa-trees', 'harbour-arch-bridge', 'castle-rock' (lights, fires and lit ice glow, drawn unlit).
 - `figures: ['skier', 'snowboarder', 'spectator', 'reindeer', …]`: people, or any
   block costume, standing on the banks facing the track with small idle movements.
 - `overhead: ['gondola' | 'cable-car' | 'chairlift' | 'vulture']`: a lift crossing high above
@@ -301,7 +308,8 @@ sites to show them (Vercel file storage does). Drawing only: never the race.
 ## Lighting, weather and variants
 
 `lighting`: the track's own preset, one of `'day' | 'sunset' | 'midnight-sun' |
-'night-northern-lights' | 'fog' | 'snow' | 'rain' | 'night'` (default `'day'`; `'night'`: a floodlit city night).
+'night-northern-lights' | 'fog' | 'snow' | 'rain' | 'night' | 'fireworks-night'` (default `'day'`; `'night'`: a floodlit city night;
+`'fireworks-night'`: the city night with fireworks bursting round the sky all race long, on the race clock, looks only).
 `variants: ['sunset', 'snow']`: the other presets this track may race in;
 anything not listed is ruled out for it (Paris: no night). Each race picks one
 from its seed when it is decided (the track's own preset twice as often as
@@ -386,8 +394,11 @@ To look at them all: `node scripts/dump-kit-track.js grand-prix-gallery`, then o
   from the land up to the gate, the land carved down along it; the countdown opens at its
   foot, the start landmark behind it, and rides up beside the climb to the gate.
 - **Start types** (`start.type`, at most two coasters of a family share one): `straight-lift`,
-  `curving-lift`, `spiral-tower`, `elevator`, `cliff`, `rooftop`, `station-launch`, and `stepped-platform`
-  (the gate on broad stone steps, each tier lower, deeper and wider behind it: a temple's or a canyon's).
+  `curving-lift`, `spiral-tower`, `elevator`, `cliff`, `rooftop`, `station-launch`, `stepped-platform`
+  (the gate on broad stone steps, each tier lower, deeper and wider behind it: a temple's or a canyon's),
+  `lighthouse` (a lighthouse in red and white bands, its gallery level with the gate), `ski-jump` (a ski
+  jump's in-run rising on from the gate to a start hut on a concrete tower) and `castle-tower` (the gate on
+  top of a great round tower with battlements, in the coaster's support colour).
 - **Station**: a canopy over the finish and the run-out, platforms either side, riders queuing.
 - **Water**: `water: true` on a section: the land sinks under a water surface round it (never
   above any stretch of track). Landmarks out over the water float on it (`cruise-ship`).
@@ -479,7 +490,8 @@ as a coaster (everything above applies), like a canyon (looks only, like everyth
 - **On the ground**: a section without a `height` runs on the land; a section's `height` lifts it onto
   slim concrete columns (`coaster: { style: 'concrete' }`), a ramp that may fly over the stands.
 - **The stadium**: `athletics: { stadium, lanes }`. `stadium` is one of `panathenaic`, `berlin-1936`,
-  `bislett`, `hayward`, `nest`, `tokyo`, `stockholm-1912`, `london`, `coliseum` or `letzigrund`: generic
+  `bislett`, `hayward`, `nest`, `tokyo`, `stockholm-1912`, `london`, `coliseum`, `letzigrund` or `accra`
+  (an open bowl in kente colours, for the Holiday Season): generic
   architecture only (stand colours and rise, a closed oval or a horseshoe, roof, floodlight masts, its own
   touch: a woven steel shell, a stone colonnade, brick towers, a row of arches with a plain flame cauldron).
   `lanes` is `red` (the default) or `blue`. Sections marked `stadium: true` (a dress key, looks only) run

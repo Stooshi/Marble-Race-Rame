@@ -327,6 +327,8 @@ module.exports = {
     'rooftop-stage', 'pixel-crowd', 'water-tower', 'health-bars',
     'starting-grid', 'checkpoint-gate', 'fork-signpost', 'goal-banner',
     'subway-entrance', 'storefronts', 'go-arrow', 'neon-plaza', 'continue-clock',
+    // The Holiday Season 2026 (client/src/three/scenery/kitLandmarksHoliday.js).
+    'chateau-hotel', 'toboggan-slide', 'flat-top-mountain', 'promenade-lights', 'braai-fires', 'outback-homestead', 'kangaroo-mob', 'light-figures', 'light-arches', 'gothic-church-front', 'gingerbread-stands', 'papel-picado', 'posada-procession', 'pinata-line', 'badnjak-fires', 'fortress-walls', 'hanging-lanterns', 'old-church-courtyard', 'wooden-residence', 'troika', 'onion-dome-church', 'ice-rink-tree', 'drum-circle', 'snow-sculptures', 'tv-tower', 'snow-lanterns', 'ice-castles', 'pohutukawa-trees', 'harbour-arch-bridge', 'castle-rock',
     // The Canyon Series.
     'rim-lookout', 'river-camp', 'mule-train', 'glass-skywalk', 'river-rafts',
     'gompa', 'chorten-row', 'snow-peak', 'yak-herd', 'tibetan-village',
@@ -357,7 +359,7 @@ module.exports = {
   BLOCK_WORLDS: ['meadow', 'valley', 'snow', 'mine', 'magma', 'puzzle', 'fortress', 'portal', 'sky', 'harbour', 'temple', 'bonus'],
   // A Track and Field stadium (family 'athletics': `athletics: { stadium }`): its generic architecture, the
   // client's STADIUMS (client/src/three/scenery/athletics.js).
-  STADIUMS: ['panathenaic', 'berlin-1936', 'bislett', 'hayward', 'nest', 'tokyo', 'stockholm-1912', 'london', 'coliseum', 'letzigrund'],
+  STADIUMS: ['panathenaic', 'berlin-1936', 'bislett', 'hayward', 'nest', 'tokyo', 'stockholm-1912', 'london', 'coliseum', 'letzigrund', 'accra'],
   // A canyon's rock and river (family 'canyon': `canyon: { palette }`), the client's CANYON_PALETTES.
   CANYONS: ['grand-canyon', 'himalaya', 'andes', 'limestone', 'copper', 'basalt', 'karakoram', 'namib', 'slot', 'verdon', 'jinsha', 'waimea', 'mujib'],
   // What stands in the middle of a splitter, between its two channels (the arch: over one of

@@ -9,6 +9,7 @@ import { merge, piece } from './parts';
 import { ANIMALS, local } from '../costumes/animals';
 import { WORLD_LANDMARKS } from './kitLandmarks';
 import { GP_LANDMARKS } from './kitLandmarksGP';
+import { HOLIDAY_LANDMARKS } from './kitLandmarksHoliday';
 import { COASTER_LANDMARKS } from './kitLandmarksCoaster';
 import { ARCADE_LANDMARKS } from './kitLandmarksArcade';
 import { CANYON_LANDMARKS } from './kitLandmarksCanyon';
@@ -577,6 +578,7 @@ export const LANDMARKS = {
   'snow-park': { build: snowPark, radius: 9 },
   ...WORLD_LANDMARKS,
   ...GP_LANDMARKS,
+  ...HOLIDAY_LANDMARKS,
   ...COASTER_LANDMARKS,
   ...ARCADE_LANDMARKS,
   ...CANYON_LANDMARKS,

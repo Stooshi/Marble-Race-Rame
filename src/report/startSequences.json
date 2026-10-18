@@ -54,6 +54,7 @@
 "nairobi-marble-grand-prix": {"family":"grand-prix","reach":0.232,"seq":["opening: classic","drop","pileUp","slalom","S-bends left"]},
 "nanjing": {"family":"coaster","reach":0.208,"seq":["opening: banked-turn","drop","pileUp","slalom","sweep right","S-bends left"]},
 "okavango-park": {"family":"coaster","reach":0.229,"seq":["opening: funnel-drop","drop","pileUp","slalom","straight","slalom","drop","sweep left","boost"]},
+"outback-christmas-burst": {"family":"canyon","reach":0.327,"seq":["opening: pipe-drop","drop","half-pipe","straight","rail","box","table-top","S-bends left","slalom"]},
 "paris-eiffel-tower-run": {"family":"world-tour","reach":0.2,"seq":["opening: classic","drop","pileUp","slalom","S-bends left"]},
 "park-city-run": {"family":"world-tour","reach":0.208,"seq":["opening: classic","drop","pileUp","slalom","S-bends left"]},
 "phantom-peak": {"family":"coaster","reach":0.202,"seq":["opening: staggered-drop","drop","pileUp","slalom","brake","sweep left","straight"]},

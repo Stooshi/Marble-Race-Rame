@@ -12,7 +12,7 @@
  *     phones), the lift hill and its chain, the station and its queue, water
  *     curtains, and a tower under each billboard that stands on one.
  */
-import { BoxGeometry, BufferGeometry, CircleGeometry, Color, DoubleSide, Float32BufferAttribute, Group, Matrix4, Mesh, MeshBasicMaterial, MeshLambertMaterial, Vector3 } from 'three';
+import { BoxGeometry, BufferGeometry, CircleGeometry, Color, ConeGeometry, CylinderGeometry, DoubleSide, Float32BufferAttribute, Group, Matrix4, Mesh, MeshBasicMaterial, MeshLambertMaterial, Vector3 } from 'three';
 import { channelLipAt, channelRadiusAt, forkAt, forkOffset, forkRadius } from '../iceChannel';
 import { box, merge, piece } from './parts';
 
@@ -111,6 +111,9 @@ const topAt = (channel, i, step) => {
  *   rooftop:       the gate at the edge of a tall building's roof;
  *   station-launch: a launch platform behind the gate (the opening's boost launches the field);
  *   stepped-platform: the gate on top of a platform of broad stone steps, stepping down behind and to the sides.
+ *   lighthouse:    a striped lighthouse behind the gate, its gallery level with the gate, a short bridge on to it;
+ *   ski-jump:      a ski jump's in-run rising on from the gate to a start hut high behind it, on a concrete tower.
+ *   castle-tower:  the gate on top of a great round tower with battlements, in the coaster's support colour.
  * Returns { type, top, foot, back, side, length, path (top to foot, for a chain lift), cut
  * (the land carved down along the path, so the whole climb shows), plateau (a cliff top) }.
  * `foot` is where the start's landmark is placed beyond, and the countdown's lift shot looks.
@@ -163,6 +166,17 @@ export function liftHillOf(centerline, flight, type = 'straight-lift') {
     path = [top.clone(), go(top, 12, 0, 0)];
     cut = false;
     foot = go(top, 12, 0, 0);
+  } else if (type === 'lighthouse') {
+    path = [top.clone(), go(top, LIGHTHOUSE.at, 0, 0)];
+    foot = go(top, LIGHTHOUSE.at, 0, rise);
+  } else if (type === 'castle-tower') {
+    path = [top.clone(), go(top, CASTLE_TOWER.at, 0, 0)];
+    foot = go(top, CASTLE_TOWER.at, 0, rise);
+  } else if (type === 'ski-jump') {
+    // (Up from the gate: the in-run's top, with its start hut, stands SKI_JUMP.rise over the gate.)
+    path = [top.clone(), go(top, SKI_JUMP.length, 0, -SKI_JUMP.rise)];
+    cut = false;
+    foot = path[1].clone();
   } else {
     path = [top.clone(), go(top, rise / LIFT_GRADE, 0, rise)];
   }
@@ -175,6 +189,9 @@ const ELEVATOR = { at: 12, half: 3.2 };        // metres: the shaft's middle beh
 const CLIFF = { edge: 8, half: 30, depth: 80 }; // metres: the cliff edge behind the gate, the cliff top's half-width and depth
 const ROOF = { depth: 24, half: 11 };          // metres: the building behind the gate
 // The stepped platform: its tiers (the top one just under the gate), each this much deeper, wider and lower than the one above.
+const LIGHTHOUSE = { at: 14, radius: 4.2 };    // metres: the lighthouse's middle behind the gate, its radius at the gallery
+const CASTLE_TOWER = { at: 12, radius: 8 };     // metres: the tower's middle behind the gate, its radius
+const SKI_JUMP = { length: 34, rise: 14, half: 3 }; // metres: the in-run behind the gate (along, up), its half-width
 const STEPS = { tiers: 4, depth: (k) => 10 + 6 * k, half: (k) => 8 + 4 * k, drop: 2.6, colours: ['#c9a676', '#b38f60'] };
 
 /** How low the land must lie at (x, z) to show the lift (Infinity away from it): below its path, falling away either side. */
@@ -684,6 +701,57 @@ function buildStart(lift, { towers, feet, tower, groundAt, lite, RAIL, SUPPORT }
     for (const sign of [1, -1]) towers.push(obox(0.6, 1, STEPS.depth(0) - 2, top.clone().addScaledVector(back, STEPS.depth(0) / 2).addScaledVector(side, sign * (STEPS.half(0) - 0.4)).setY(topY + 0.5), yaw, '#8f7148'));
     const mid = top.clone().addScaledVector(back, STEPS.depth(big) / 2);
     feet.push({ x: mid.x, z: mid.z, r: STEPS.depth(big) / 2 + STEPS.half(big) });
+  } else if (type === 'lighthouse') {
+    // A lighthouse behind the gate in red and white bands, its gallery level with the gate and a short
+    // bridge on to it, the lamp room and its cap above.
+    const at = top.clone().addScaledVector(back, LIGHTHOUSE.at);
+    const landY = groundAt(at.x, at.z) - 0.5;
+    const galleryY = top.y - 0.6;
+    const bands = Math.max(2, Math.round((galleryY - landY) / 4));
+    for (let k = 0; k < bands; k += 1) {
+      const y0 = landY + ((galleryY - landY) * k) / bands;
+      const y1 = landY + ((galleryY - landY) * (k + 1)) / bands;
+      const r0 = LIGHTHOUSE.radius + 1.6 * (1 - k / bands);
+      const r1 = LIGHTHOUSE.radius + 1.6 * (1 - (k + 1) / bands);
+      towers.push(piece(new CylinderGeometry(r1, r0, y1 - y0, lite ? 10 : 16), k % 2 ? '#f4f2ee' : '#c8302a', new Matrix4().makeTranslation(at.x, (y0 + y1) / 2, at.z)));
+    }
+    towers.push(piece(new CylinderGeometry(LIGHTHOUSE.radius + 1.4, LIGHTHOUSE.radius + 1.4, 0.5, lite ? 12 : 18), '#3b3f46', new Matrix4().makeTranslation(at.x, galleryY, at.z)));
+    towers.push(piece(new CylinderGeometry(2.4, 2.4, 3.2, lite ? 10 : 14), '#ffe9a0', new Matrix4().makeTranslation(at.x, galleryY + 1.9, at.z)));
+    towers.push(piece(new ConeGeometry(3, 2.4, lite ? 10 : 14), '#c8302a', new Matrix4().makeTranslation(at.x, galleryY + 4.7, at.z)));
+    deckAlong([top, top.clone().addScaledVector(back, LIGHTHOUSE.at - LIGHTHOUSE.radius - 0.6)], { chain: false });
+    feet.push({ x: at.x, z: at.z, r: 9 });
+  } else if (type === 'castle-tower') {
+    // A great round tower behind the gate, its top just under the gate's deck, battlements round it, a door at its foot.
+    const at = top.clone().addScaledVector(back, CASTLE_TOWER.at);
+    const landY = groundAt(at.x, at.z) - 0.5;
+    const topY = top.y - 1.2;
+    const segs = lite ? 12 : 20;
+    towers.push(piece(new CylinderGeometry(CASTLE_TOWER.radius, CASTLE_TOWER.radius + 1.2, topY - landY, segs), SUPPORT, new Matrix4().makeTranslation(at.x, (topY + landY) / 2, at.z)));
+    towers.push(piece(new CylinderGeometry(CASTLE_TOWER.radius + 0.8, CASTLE_TOWER.radius + 0.8, 1, segs), `#${new Color(SUPPORT).multiplyScalar(0.8).getHexString()}`, new Matrix4().makeTranslation(at.x, topY + 0.5, at.z)));
+    for (let k = 0; k < segs; k += 2) {
+      const a = (k / segs) * Math.PI * 2;
+      towers.push(obox(1.4, 1.6, 1, at.clone().add(new Vector3(Math.cos(a) * (CASTLE_TOWER.radius + 0.4), 0, Math.sin(a) * (CASTLE_TOWER.radius + 0.4))).setY(topY + 1.8), -a, SUPPORT));
+    }
+    const door = at.clone().addScaledVector(back, -(CASTLE_TOWER.radius + 1.1)).addScaledVector(side, 3).setY(landY + 2.2);
+    towers.push(obox(2.6, 4, 0.4, door, yawOf(back), '#3a2a20'));
+    deckAlong([top, top.clone().addScaledVector(back, CASTLE_TOWER.at)], { chain: false, legs: false });
+    feet.push({ x: at.x, z: at.z, r: CASTLE_TOWER.radius + 3 });
+  } else if (type === 'ski-jump') {
+    // A ski jump's in-run going on up from the gate to its start hut, on a concrete tower, snow on the in-run.
+    const yaw = yawOf(back);
+    deckAlong(path, { chain: false });
+    const hut = path[1].clone().addScaledVector(back, 3);
+    const landY = groundAt(hut.x, hut.z) - 0.5;
+    const towerH = hut.y - landY;
+    towers.push(obox(SKI_JUMP.half * 2 + 3, towerH, 6, hut.clone().setY(landY + towerH / 2), yaw, '#b8b4ac'));
+    towers.push(obox(SKI_JUMP.half * 2 + 3.4, 4, 6.4, hut.clone().setY(hut.y + 2), yaw, '#3a5a8a'));
+    towers.push(obox(SKI_JUMP.half * 2 + 4, 0.6, 7, hut.clone().setY(hut.y + 4.3), yaw, '#f4f7fa'));
+    // Two slim columns under the in-run's middle.
+    for (const sign of [1, -1]) {
+      const m = top.clone().lerp(path[1], 0.55).addScaledVector(side, sign * (SKI_JUMP.half + 0.6));
+      towers.push(strut(m.clone().setY(groundAt(m.x, m.z) - 0.5), m, 0.5, '#b8b4ac'));
+    }
+    feet.push({ x: hut.x, z: hut.z, r: 10 });
   } else if (type === 'station-launch') {
     // A launch platform either side behind the gate, lit along its edges, and the operator's booth
     // (nothing over the track or tall beside it: the cameras swoop low over the start here).

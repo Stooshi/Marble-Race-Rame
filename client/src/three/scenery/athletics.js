@@ -58,6 +58,8 @@ export const STADIUMS = {
   // Los Angeles: a great open bowl, a row of tall arches (the peristyle) at one end with a flame cauldron.
   coliseum: { seat: '#9c8f7e', riser: '#c9b79c', wall: '#bba88c', depth: 32, rise: 18, front: 2, rows: 14, crowd: 0.6, shape: 'oval', roof: null, masts: 4, apron: 12, touch: 'arches' },
   // Zurich: a modern stadium for a night meeting, a dark roof all round with a band of floodlights under it.
+  // Accra (Holiday Season): an open bowl in kente colours, gold seats, green risers, red walls, a lively crowd, floodlights.
+  accra: { seat: '#e2a91c', riser: '#2a7a3a', wall: '#b8302a', depth: 24, rise: 14, front: 2, rows: 12, crowd: 0.8, shape: 'oval', roof: null, masts: 4, apron: 9, touch: null },
   letzigrund: { seat: '#2f3a4c', riser: '#7b8088', wall: '#5c6168', depth: 24, rise: 14, front: 2, rows: 12, crowd: 0.75, shape: 'oval', roof: { colour: '#2f3237', under: '#4a4e55', depth: 15, rise: 2.5, over: 'all', lights: true }, masts: 0, apron: 9, touch: 'golden' },
 };
 export const STADIUM_NAMES = Object.keys(STADIUMS);

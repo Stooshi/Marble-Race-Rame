@@ -640,6 +640,17 @@
    "side": 1,
    "marbles": 4
   },
+  "outback-christmas-burst": {
+   "name": "Outback Christmas Burst",
+   "series": "Canyons",
+   "lighting": "day",
+   "v": "f6fe7d9d",
+   "bytes": 18244,
+   "bytes2x": 44552,
+   "t": 15290,
+   "side": 1,
+   "marbles": 6
+  },
   "paris-eiffel-tower-run": {
    "name": "Paris Eiffel Tower Run",
    "series": "World Tour",

@@ -97,4 +97,5 @@ module.exports = [
   require('./tromso-aurora-grand-prix'),
   require('./zermatt-marble-grand-prix'),
   require('./gamla-stan-christmas-run'),
+  require('./outback-christmas-burst'),
 ];
