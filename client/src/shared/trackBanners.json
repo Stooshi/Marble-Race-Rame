@@ -607,6 +607,17 @@
    "side": 1,
    "marbles": 9
   },
+  "medellin-lights": {
+   "name": "Medellín Lights",
+   "series": "Coasters",
+   "lighting": "night",
+   "v": "28233b75",
+   "bytes": 17650,
+   "bytes2x": 43954,
+   "t": 10920,
+   "side": 1,
+   "marbles": 5
+  },
   "multiball-manor": {
    "name": "Multiball Manor",
    "series": "Pinball",

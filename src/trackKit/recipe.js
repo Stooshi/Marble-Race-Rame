@@ -19,7 +19,7 @@ const LONGEST_CLIMB_M = 40;    // San Francisco's 35 m
 const { LIGHTINGS } = require('./lighting');
 const { OPENING_KINDS } = require('./openings');
 // Track families (the sameness check compares openings within one): 'test' tracks are never compared.
-const FAMILIES = ['world-tour', 'grand-prix', 'coaster', 'pinball', 'arcade', 'canyon', 'block', 'athletics', 'test'];
+const FAMILIES = ['world-tour', 'grand-prix', 'coaster', 'pinball', 'arcade', 'canyon', 'block', 'athletics', 'winter-wonders', 'test'];
 // A canyon: the canyon family, or a library test track built as one (series 'canyon'). It is built
 // as a coaster too (the track climbs out of the canyon on its supports and touches down on its floor).
 const isCanyon = (spec) => spec.family === 'canyon' || (spec.family === 'test' && spec.series === 'canyon');
@@ -28,6 +28,8 @@ const isCanyon = (spec) => spec.family === 'canyon' || (spec.family === 'test' &
 const isBlock = (spec) => spec.family === 'block' || (spec.family === 'test' && spec.series === 'block');
 // A Track and Field track: the athletics family, or a library test track built as one (series 'athletics').
 // Built as a coaster too: on the ground (in and round its stadium) unless a section flies (a ramp over the stands).
+// A Winter Wonders track (the Holiday Season's own fairy-tale winter series): built as a World Tour track on the ground, listed as its own series.
+const isWinterWonders = (spec) => spec.family === 'winter-wonders';
 const isAthletics = (spec) => spec.family === 'athletics' || (spec.family === 'test' && spec.series === 'athletics');
 // A coaster: the coaster family, or a library test track built as one (series 'coaster'), or a canyon, a Block Series or a Track and Field track.
 const isCoaster = (spec) => spec.family === 'coaster' || (spec.family === 'test' && spec.series === 'coaster') || isCanyon(spec) || isBlock(spec) || isAthletics(spec);
@@ -42,11 +44,11 @@ const COASTER_STYLES = ['steel', 'timber', 'blocks', 'concrete'];
 // A pinball table: the pinball family, or a library test track built as one (series 'pinball').
 const isPinball = (spec) => spec.family === 'pinball' || (spec.family === 'test' && spec.series === 'pinball');
 // A pinball table's backglass art (original art, one style per table) and its dot-matrix call-out.
-const PINBALL_ART = ['manor', 'castle', 'saucers', 'theatre', 'diner', 'clocks', 'concert'];
+const PINBALL_ART = ['manor', 'castle', 'saucers', 'theatre', 'diner', 'clocks', 'concert', 'parang', 'beach-fireworks'];
 // An arcade world: the arcade family, or a library test track built as one (series 'arcade').
 const isArcade = (spec) => spec.family === 'arcade' || (spec.family === 'test' && spec.series === 'arcade');
 // An arcade world's cabinet and side art (original art, one style per genre).
-const ARCADE_ART = ['maze', 'coin-op', 'space', 'side-scroller', 'fighter', 'highway', 'downtown'];
+const ARCADE_ART = ['maze', 'coin-op', 'space', 'side-scroller', 'fighter', 'highway', 'downtown', 'star-lanterns', 'light-stream'];
 const ARCADE_BIOMES = ['circuit-board', 'blacklight-carpet'];
 const ARCADE_LIGHTINGS = ['neon-night', 'synthwave'];
 const MAX_COASTER_HEIGHT = 45; // metres: the tallest supports drawn
@@ -572,4 +574,4 @@ function athleticsRules({ spec, sections, where }) {
   return problems;
 }
 
-module.exports = { checkRecipe, isCanyon, isBlock, isAthletics, MIN_SPIRAL_RADIUS, MIN_SWEEP_RADIUS, BILLBOARDS, GRAND_PRIX_BILLBOARDS, isCoaster, isPinball, PINBALL_ART, isArcade, ARCADE_ART, START_TYPES, GATES, COUNTDOWN_SHOTS, LAUNCH_SHOTS };
+module.exports = { checkRecipe, isCanyon, isBlock, isAthletics, isWinterWonders, MIN_SPIRAL_RADIUS, MIN_SWEEP_RADIUS, BILLBOARDS, GRAND_PRIX_BILLBOARDS, isCoaster, isPinball, PINBALL_ART, isArcade, ARCADE_ART, START_TYPES, GATES, COUNTDOWN_SHOTS, LAUNCH_SHOTS };

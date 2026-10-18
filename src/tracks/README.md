@@ -150,7 +150,9 @@ module.exports = track({
 
   A track may still write its own sections by hand; the sameness check makes sure they differ.
 - **`family`**: `'world-tour'` (the default), `'grand-prix'` (any `grandPrix` track),
-  `'coaster'`, `'pinball'`, `'arcade'`, `'canyon'`, `'block'`, `'athletics'` or `'test'` (test tracks, never compared).
+  `'coaster'`, `'pinball'`, `'arcade'`, `'canyon'`, `'block'`, `'athletics'`, `'winter-wonders'` or `'test'` (test tracks, never compared).
+  `'winter-wonders'` (Winter Wonders, the Holiday Season's own fairy-tale winter series) is built exactly as a World
+  Tour track on the ground; its kit carries `winterWonders: true`, which lists it as its own series.
   Openings are compared within a family.
 
 ## Shapes
@@ -261,7 +263,13 @@ Scenery comes from names in the file (looks only; checked, so a typo is refused)
   'light-arches', 'gothic-church-front', 'gingerbread-stands', 'papel-picado', 'posada-procession', 'pinata-line',
   'badnjak-fires', 'fortress-walls', 'hanging-lanterns', 'old-church-courtyard', 'wooden-residence', 'troika',
   'onion-dome-church', 'ice-rink-tree', 'drum-circle', 'snow-sculptures', 'tv-tower', 'snow-lanterns',
-  'ice-castles', 'pohutukawa-trees', 'harbour-arch-bridge', 'castle-rock' (lights, fires and lit ice glow, drawn unlit).
+  'ice-castles', 'pohutukawa-trees', 'harbour-arch-bridge', 'castle-rock', 'rock-hewn-church', 'pilgrims',
+  'parol-lanterns', 'parang-band', 'gallery-houses', 'white-crowd', 'flower-boats', 'star-lanterns' (pixel blocks, for
+  the arcade), 'pixel-palms', 'pixel-white-church', 'stepping-stones', 'lantern-bridge', 'gingerbread-houses',
+  'candy-trees', 'ice-palace', 'ice-chandeliers', 'steam-train', 'top-station', 'owl-perches', 'reindeer-herd'
+  (lights, fires and lit ice glow, drawn unlit). The season's costumes: 'steel-pan-bumper', 'firework-bumper' and
+  'gumdrop' (blocks), 'maraca-post' and 'candy-cane' (slalom poles and pegs). Its pinball art: 'parang',
+  'beach-fireworks'; its arcade art: 'star-lanterns', 'light-stream'.
 - `figures: ['skier', 'snowboarder', 'spectator', 'reindeer', …]`: people, or any
   block costume, standing on the banks facing the track with small idle movements.
 - `overhead: ['gondola' | 'cable-car' | 'chairlift' | 'vulture']`: a lift crossing high above

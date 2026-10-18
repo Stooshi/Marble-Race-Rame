@@ -216,14 +216,14 @@ function lightFiguresGlow() {
       // A flower: petals round a centre, on its stem.
       for (let j = 0; j < 6; j += 1) {
         const a = (j / 6) * Math.PI * 2;
-        p.push(piece(new SphereGeometry(1.1, 8, 6), BULBS[(k + j) % 5], new Matrix4().compose(new Vector3(x + Math.cos(a) * 1.8, 6.5 + Math.sin(a) * 1.8, 0), new Quaternion(), new Vector3(1, 1, 0.4))));
+        p.push(piece(new SphereGeometry(1.1, 6, 4), BULBS[(k + j) % 5], new Matrix4().compose(new Vector3(x + Math.cos(a) * 1.8, 6.5 + Math.sin(a) * 1.8, 0), new Quaternion(), new Vector3(1, 1, 0.4))));
       }
-      p.push(piece(new SphereGeometry(0.9, 8, 6), '#ffd23f', M(x, 6.5, 0.2)));
+      p.push(piece(new SphereGeometry(0.9, 6, 4), '#ffd23f', M(x, 6.5, 0.2)));
     } else {
       // A bird: an oval body, a head, two raised wings, all of light.
-      p.push(piece(new SphereGeometry(1.4, 8, 6), BULBS[k % 5], new Matrix4().compose(new Vector3(x, 6, 0), new Quaternion(), new Vector3(1.6, 0.8, 0.4))));
-      p.push(piece(new SphereGeometry(0.7, 8, 6), BULBS[(k + 2) % 5], M(x + 2.4, 6.8, 0)));
-      for (const s of [-1, 1]) p.push(piece(new SphereGeometry(1, 8, 6), BULBS[(k + 3) % 5], new Matrix4().compose(new Vector3(x - 0.4, 7.6, s * 0.3), new Quaternion().setFromAxisAngle(new Vector3(0, 0, 1), 0.7 * s), new Vector3(1.8, 0.4, 0.3))));
+      p.push(piece(new SphereGeometry(1.4, 6, 4), BULBS[k % 5], new Matrix4().compose(new Vector3(x, 6, 0), new Quaternion(), new Vector3(1.6, 0.8, 0.4))));
+      p.push(piece(new SphereGeometry(0.7, 6, 4), BULBS[(k + 2) % 5], M(x + 2.4, 6.8, 0)));
+      for (const s of [-1, 1]) p.push(piece(new SphereGeometry(1, 6, 4), BULBS[(k + 3) % 5], new Matrix4().compose(new Vector3(x - 0.4, 7.6, s * 0.3), new Quaternion().setFromAxisAngle(new Vector3(0, 0, 1), 0.7 * s), new Vector3(1.8, 0.4, 0.3))));
     }
   }
   return merge(p);
@@ -694,7 +694,454 @@ function castleRock() {
   return merge(p);
 }
 
+
+// ── Lalibela Genna Spins ─────────────────────────────────────────────────────
+
+const TUFF = '#a8644a';
+
+/** A church hewn down into the rock (architecture only): a deep square trench, the church block standing in it, carved windows, a stair cut down. */
+function rockHewnChurch() {
+  const p = [];
+  // The rim round the trench, and its floor.
+  for (const [w, d, x, z] of [[40, 6, 0, -17], [40, 6, 0, 17], [6, 28, -17, 0], [6, 28, 17, 0]]) p.push(box(w, 1, d, x, 0.5, z, '#b8785a'));
+  p.push(box(28, 0.4, 28, 0, -12, 0, '#8a5040'));
+  for (const [w, d, x, z] of [[28, 1, 0, -14.5], [28, 1, 0, 14.5], [1, 28, -14.5, 0], [1, 28, 14.5, 0]]) p.push(box(w, 12, d, x, -6, z, '#94583f'));
+  // The church block, its top level with the ground.
+  p.push(box(16, 12, 16, 0, -6, 0, TUFF));
+  p.push(box(17, 1, 17, 0, 0.3, 0, '#b8785a'));
+  for (const y of [-8.5, -4]) for (const x of [-4.5, 0, 4.5]) p.push(box(1.4, 2.2, 0.3, x, y, 8.05, '#4a2a20'));
+  p.push(box(3, 5, 0.3, 0, -9.5, 8.05, '#3a2018')); // the door
+  // A stair cut down the trench wall.
+  for (let k = 0; k < 8; k += 1) p.push(box(3, 1.5, 1.6, 12.5, -0.75 - k * 1.5, -10 + k * 2.4, '#b8785a'));
+  return merge(p);
+}
+
+/** Pilgrims in white gathered on the rock above the churches, many standing, some seated. */
+function pilgrims() {
+  const p = [];
+  for (let k = 0; k < 40; k += 1) {
+    const x = ((k * 37) % 23) - 11 + (k % 3) * 0.4;
+    const z = ((k * 53) % 17) - 8;
+    const sit = k % 5 === 0;
+    p.push(piece(new ConeGeometry(0.55, sit ? 0.9 : 1.6, 7), '#f4f2ec', M(x, sit ? 0.45 : 0.8, z)));
+    p.push(piece(new SphereGeometry(0.24, 7, 6), '#f4f2ec', M(x, sit ? 1.05 : 1.8, z)));
+  }
+  return merge(p);
+}
+
+
+// ── San Fernando Lantern Spins ───────────────────────────────────────────────
+
+/** Giant parol lanterns made of cubes: five-pointed stars on tall block posts, their cubes glowing in rings of colour. */
+function parolFrame() {
+  const p = [];
+  for (const x of [-18, 0, 18]) for (let k = 0; k < 8; k += 1) p.push(box(1.6, 1.6, 1.6, x, 0.8 + k * 1.6, -1.2, '#4a3a2a'));
+  return merge(p);
+}
+function parolGlow() {
+  const p = [];
+  const rings = [['#ffcf3a', '#ff4a5a', '#3ac8ff'], ['#ff4a5a', '#7aff5a', '#ffcf3a'], ['#3ac8ff', '#ffcf3a', '#ff7ae0']];
+  [-18, 0, 18].forEach((cx, n) => {
+    const cy = 20;
+    // A five-pointed star of cubes: the centre, then cubes out along the five arms, and a ring round it.
+    p.push(box(2.4, 2.4, 1.2, cx, cy, 0, rings[n][0]));
+    for (let arm = 0; arm < 5; arm += 1) {
+      const a = Math.PI / 2 + (arm / 5) * Math.PI * 2;
+      for (let k = 1; k <= 4; k += 1) p.push(box(1.6, 1.6, 1.2, cx + Math.cos(a) * k * 1.7, cy + Math.sin(a) * k * 1.7, 0, rings[n][k > 2 ? 1 : 0]));
+    }
+    for (let k = 0; k < 20; k += 1) {
+      const a = (k / 20) * Math.PI * 2;
+      p.push(box(1.1, 1.1, 1, cx + Math.cos(a) * 8.6, cy + Math.sin(a) * 8.6, 0, rings[n][2]));
+    }
+    for (let k = 1; k <= 3; k += 1) p.push(box(1, 1, 1, cx, cy - 8.6 - k * 1.4, 0, rings[n][k % 3])); // the tail
+  });
+  return merge(p);
+}
+
 /** Landmarks by name: builder and footprint radius. */
+// ── Trinidad Parang Run ──────────────────────────────────────────────────────
+
+const PARANG_SHIRTS = ['#f2c230', '#e8342a', '#2f9a5a', '#f2efe6', '#2f6fd8'];
+
+/** A parang band on a low wooden stage: singers and players with guitar, cuatro, box bass and maracas, under a string of bulbs. */
+function parangBandFrame() {
+  const p = [];
+  p.push(box(16, 0.8, 7, 0, 0.4, 0, '#8a5a32'));
+  for (const x of [-7.6, 7.6]) p.push(piece(new CylinderGeometry(0.15, 0.15, 6, 6), '#5a3a20', M(x, 3.8, -3)));
+  for (let k = 0; k < 6; k += 1) {
+    const x = -6 + k * 2.4;
+    const shirt = PARANG_SHIRTS[k % 5];
+    p.push(piece(new CylinderGeometry(0.42, 0.5, 1.6, 7), shirt, M(x, 1.6, 0)));
+    p.push(piece(new SphereGeometry(0.34, 7, 5), '#5a3a2a', M(x, 2.75, 0)));
+    p.push(piece(new CylinderGeometry(0.5, 0.5, 0.12, 8), '#e8d8a8', M(x, 3.15, 0))); // a straw hat brim
+    if (k === 0 || k === 3) { // guitar (k 0) and cuatro (k 3): a body and a neck across the chest
+      const r = k === 0 ? 0.55 : 0.4;
+      p.push(piece(new CylinderGeometry(r, r, 0.18, 10), '#b8783a', new Matrix4().compose(new Vector3(x + 0.2, 1.7, 0.5), new Quaternion().setFromAxisAngle(X, Math.PI / 2), new Vector3(1, 1, 1))));
+      p.push(piece(new BoxGeometry(1.4, 0.12, 0.1), '#3a2416', new Matrix4().compose(new Vector3(x - 0.7, 2.0, 0.55), new Quaternion().setFromAxisAngle(new Vector3(0, 0, 1), 0.35), new Vector3(1, 1, 1))));
+    } else if (k === 1 || k === 4) { // maracas held up
+      for (const sx of [-1, 1]) p.push(piece(new SphereGeometry(0.22, 6, 5), sx < 0 ? '#e8342a' : '#f2c230', M(x + sx * 0.6, 2.6, 0.3)));
+    } else { // the box bass
+      p.push(box(0.9, 0.9, 0.9, x + 0.7, 1.25, 0.3, '#7a4a24'));
+    }
+  }
+  return merge(p);
+}
+
+/** The band's string of coloured bulbs between its two poles. */
+function parangBandGlow() {
+  const p = [];
+  for (let k = 0; k <= 14; k += 1) {
+    const x = -7.6 + k * (15.2 / 14);
+    p.push(piece(new SphereGeometry(0.22, 6, 4), PARANG_SHIRTS[k % 5], M(x, 6.4 - Math.sin((k / 14) * Math.PI) * 1.2, -3)));
+  }
+  return merge(p);
+}
+
+const GALLERY_WALLS = ['#f2d8a0', '#a8d8c8', '#f2b8a8', '#c8e0f2', '#f2efe6'];
+
+/** Wooden houses up the hillside: bright board walls, steep tin roofs, white fretwork verandas on stilts. */
+function galleryHousesFrame() {
+  const p = [];
+  for (let k = 0; k < 6; k += 1) {
+    const x = -25 + k * 10;
+    const y = (k % 3) * 1.5;
+    const z = -(k % 2) * 5;
+    p.push(box(7, 5, 6, x, y + 2.5 + 1.5, z, GALLERY_WALLS[k % 5]));
+    for (const sx of [-3, 3]) for (const sz of [-2.5, 2.5]) p.push(box(0.3, 1.5 + y, 0.3, x + sx, (1.5 + y) / 2, z + sz, '#5a3a20'));
+    p.push(spire(8.4, 3, x, y + 6.5, z, '#9aa4ac'));
+    p.push(box(7, 0.25, 1.8, x, y + 1.6, z + 3.9, '#8a5a32'));
+    p.push(box(7, 0.25, 0.15, x, y + 2.6, z + 4.7, '#f2efe6')); // the fretwork rail
+    p.push(box(7.2, 0.5, 0.15, x, y + 4.4, z + 4.7, '#f2efe6')); // the fretwork valance
+    p.push(box(1.2, 2.2, 0.2, x - 1.8, y + 2.9, z + 3.05, '#5a3a20'));
+    p.push(box(1.1, 1.1, 0.2, x + 1.6, y + 3.4, z + 3.05, WARM));
+  }
+  return merge(p);
+}
+
+/** Christmas lights strung along the verandas. */
+function galleryHousesGlow() {
+  const p = [];
+  for (let k = 0; k < 6; k += 1) {
+    const x = -25 + k * 10;
+    const y = (k % 3) * 1.5;
+    const z = -(k % 2) * 5;
+    for (let j = 0; j < 7; j += 1) p.push(piece(new SphereGeometry(0.18, 5, 4), PARANG_SHIRTS[(k + j) % 5], M(x - 3 + j, y + 4.1, z + 4.8)));
+  }
+  return merge(p);
+}
+
+// ── Rio New Year Burst ───────────────────────────────────────────────────────
+
+/** A crowd dressed in white on the sand, waiting for midnight, a few palms behind them. */
+function whiteCrowd() {
+  const p = [];
+  p.push(box(60, 0.3, 14, 0, 0.15, 0, '#e8d8a8'));
+  for (let k = 0; k < 36; k += 1) {
+    const x = -27 + (k % 18) * 3.1 + ((k * 7) % 3) * 0.4;
+    const z = -3 + Math.floor(k / 18) * 3.6 + ((k * 5) % 3) * 0.5;
+    p.push(piece(new CylinderGeometry(0.35, 0.45, 1.6, 6), k % 7 === 3 ? '#f2e6c8' : '#f6f6f2', M(x, 1.1, z)));
+    p.push(piece(new SphereGeometry(0.28, 6, 4), ['#5a3a2a', '#8a5a3a', '#c8956a'][k % 3], M(x, 2.15, z)));
+  }
+  for (const x of [-24, -6, 14, 26]) {
+    p.push(piece(new CylinderGeometry(0.3, 0.4, 9, 6), '#8a6a42', M(x, 4.5, -6)));
+    for (let j = 0; j < 5; j += 1) {
+      const a = (j / 5) * Math.PI * 2;
+      p.push(piece(new BoxGeometry(4, 0.15, 1), '#2f8a3a', new Matrix4().compose(new Vector3(x + Math.cos(a) * 1.8, 8.7, -6 + Math.sin(a) * 1.8), new Quaternion().setFromAxisAngle(Y, -a).multiply(new Quaternion().setFromAxisAngle(new Vector3(0, 0, 1), -0.35)), new Vector3(1, 1, 1))));
+    }
+  }
+  return merge(p);
+}
+
+/** Small boats of flowers floating out on the sea at the water's edge. */
+function flowerBoats() {
+  const p = [];
+  p.push(box(34, 0.2, 14, 0, 0.1, 0, '#2a5a8a'));
+  const petals = ['#f6f6f2', '#ff8ac0', '#ffd23f', '#d8142a', '#c8a8ff'];
+  for (let k = 0; k < 9; k += 1) {
+    const x = -14 + k * 3.5;
+    const z = -4 + ((k * 3) % 5) * 2;
+    p.push(piece(new CylinderGeometry(0.9, 0.6, 0.4, 8), '#c8a46a', M(x, 0.4, z)));
+    for (let j = 0; j < 4; j += 1) p.push(piece(new SphereGeometry(0.3, 6, 4), petals[(k + j) % 5], M(x + Math.cos(j * 1.6) * 0.45, 0.8, z + Math.sin(j * 1.6) * 0.45)));
+  }
+  return merge(p);
+}
+
+// ── Goa Star Lanterns (an arcade world: drawn in pixel blocks) ───────────────
+
+const STAR_COLOURS = ['#ffd23f', '#ff4f6a', '#3fd8ff', '#7dff6a', '#ff8ad8'];
+
+/** The posts and strings the star lanterns hang from. */
+function starLanternsFrame() {
+  const p = [];
+  for (const x of [-26, -13, 0, 13, 26]) p.push(box(0.6, 12, 0.6, x, 6, 0, '#2a2438'));
+  p.push(box(53, 0.2, 0.2, 0, 11.6, 0, '#4a4458'));
+  return merge(p);
+}
+
+/** Pixel star lanterns: a square body, four points and two tails, in bright colours. */
+function starLanternsGlow() {
+  const p = [];
+  for (let k = 0; k < 8; k += 1) {
+    const x = -23 + k * 6.5;
+    const y = 9 - (k % 2) * 1.5;
+    const c = STAR_COLOURS[k % 5];
+    p.push(box(1.6, 1.6, 0.6, x, y, 0, c));
+    p.push(box(3.2, 0.6, 0.6, x, y, 0, c));
+    p.push(box(0.6, 3.2, 0.6, x, y, 0, c));
+    for (const t of [-0.4, 0.4]) p.push(box(0.2, 2, 0.2, x + t, y - 2.6, 0, c));
+  }
+  return merge(p);
+}
+
+/** Pixel palms: a trunk of stacked blocks and a crown of block fronds. */
+function pixelPalms() {
+  const p = [];
+  for (const [x, z, h] of [[-20, 0, 10], [-6, 4, 12], [8, -2, 9], [22, 3, 11]]) {
+    for (let k = 0; k < h; k += 1) p.push(box(1, 1, 1, x + (k > h / 2 ? 0.4 : 0), k + 0.5, z, k % 2 ? '#8a6a42' : '#6a4a2a'));
+    for (const [dx, dz] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) for (let j = 1; j <= 3; j += 1) p.push(box(1, 1, 1, x + 0.4 + dx * j, h + 0.5 - (j === 3 ? 1 : 0), z + dz * j, '#2f9a3a'));
+  }
+  return merge(p);
+}
+
+/** A white church front in pixel blocks (architecture only): a gabled front, two bell towers, dark openings. */
+function pixelWhiteChurch() {
+  const p = [];
+  p.push(box(14, 12, 6, 0, 6, 0, '#f2efe6'));
+  for (let k = 0; k < 3; k += 1) p.push(box(14 - k * 4, 1.5, 6, 0, 12.75 + k * 1.5, 0, '#f2efe6'));
+  for (const x of [-9, 9]) {
+    p.push(box(4, 18, 4, x, 9, 0, '#e8e4d8'));
+    p.push(box(1.6, 2.4, 0.3, x, 14, 2.05, '#2a2438'));
+    p.push(box(4.6, 1, 4.6, x, 18.5, 0, '#f2efe6'));
+  }
+  p.push(box(3, 5, 0.3, 0, 2.5, 3.05, '#5a3a2a'));
+  for (const x of [-3.5, 3.5]) p.push(box(1.4, 2.4, 0.3, x, 8, 3.05, '#2a2438'));
+  return merge(p);
+}
+
+// ── Seoul Winter Lights (an arcade world: drawn in pixel blocks) ─────────────
+
+/** Snowy stepping stones across a stream, in pixel blocks. */
+function steppingStones() {
+  const p = [];
+  p.push(box(10, 0.2, 34, 0, 0.1, 0, '#1a3a6a'));
+  for (let k = 0; k < 8; k += 1) {
+    p.push(box(1.8, 0.8, 1.6, (k % 2 ? 0.8 : -0.8), 0.4, -14 + k * 4, '#8a8a90'));
+    p.push(box(1.6, 0.25, 1.4, (k % 2 ? 0.8 : -0.8), 0.92, -14 + k * 4, '#f2f6fa'));
+  }
+  return merge(p);
+}
+
+/** A low stone bridge over the stream, posts along it. */
+function lanternBridgeFrame() {
+  const p = [];
+  p.push(box(30, 1.2, 5, 0, 3, 0, '#9a9aa4'));
+  p.push(box(30, 0.3, 5, 0, 3.75, 0, '#f2f6fa'));
+  for (const x of [-12, 0, 12]) p.push(box(2, 2.4, 4, x, 1.2, 0, '#7a7a84'));
+  for (let k = 0; k < 7; k += 1) for (const z of [-2.2, 2.2]) p.push(box(0.3, 1.8, 0.3, -13.5 + k * 4.5, 4.8, z, '#2a2438'));
+  return merge(p);
+}
+
+/** The bridge's lanterns: glowing pixel blocks on its posts. */
+function lanternBridgeGlow() {
+  const p = [];
+  const cols = ['#ff8ad8', '#9ae8ff', '#ffd23f', '#7dff6a'];
+  for (let k = 0; k < 7; k += 1) for (const z of [-2.2, 2.2]) p.push(box(0.8, 0.9, 0.8, -13.5 + k * 4.5, 6.1, z, cols[k % 4]));
+  return merge(p);
+}
+
+// ── Winter Wonders: Gingerbread Village ──────────────────────────────────────
+
+const GINGER = '#b8743a';
+const ICING = '#fbf6ee';
+const CANDY = ['#e8242a', '#3fcf5a', '#ffd23f', '#ff6fae', '#3fa8ff'];
+
+/** A lane of gingerbread houses: biscuit walls, thick icing on the roofs and eaves, sweets on the walls. */
+function gingerbreadHousesFrame() {
+  const p = [];
+  for (let k = 0; k < 5; k += 1) {
+    const x = -24 + k * 12;
+    const w = 7 + (k % 2) * 1.5;
+    p.push(box(w, 5.5, 6, x, 2.75, 0, GINGER));
+    p.push(spire(w * 1.15, 4, x, 5.5, 0, '#8a5226'));
+    p.push(box(w + 0.4, 0.5, 6.4, x, 5.6, 0, ICING)); // the icing along the eaves
+    p.push(piece(new ConeGeometry(w * 0.4, 1.4, 4), ICING, turned(x, 9.2, 0, Math.PI / 4))); // snow-icing on the roof's tip
+    p.push(box(1.6, 2.6, 0.2, x, 1.3, 3.05, '#6a3a1a'));
+    for (const sx of [-1, 1]) for (let j = 0; j < 3; j += 1) p.push(piece(new SphereGeometry(0.28, 6, 4), CANDY[(k + j) % 5], M(x + sx * (w / 2 - 0.6), 1 + j * 1.5, 3.1)));
+    p.push(box(w, 0.25, 0.15, x, 4.4, 3.08, ICING));
+  }
+  return merge(p);
+}
+
+/** The houses' windows, lit warm behind sugar panes. */
+function gingerbreadHousesGlow() {
+  const p = [];
+  for (let k = 0; k < 5; k += 1) {
+    const x = -24 + k * 12;
+    for (const sx of [-1.8, 1.8]) p.push(box(1.2, 1.2, 0.2, x + sx, 3.4, 3.06, WARM));
+  }
+  return merge(p);
+}
+
+/** Lollipop trees and giant candy canes along the street. */
+function candyTrees() {
+  const p = [];
+  for (let k = 0; k < 6; k += 1) {
+    const x = -25 + k * 10;
+    if (k % 2 === 0) {
+      p.push(piece(new CylinderGeometry(0.25, 0.25, 7, 6), ICING, M(x, 3.5, 0)));
+      p.push(piece(new CylinderGeometry(2.2, 2.2, 0.6, 14), CANDY[k % 5], new Matrix4().compose(new Vector3(x, 8.4, 0), new Quaternion().setFromAxisAngle(X, Math.PI / 2), new Vector3(1, 1, 1))));
+      p.push(piece(new CylinderGeometry(1.2, 1.2, 0.65, 12), ICING, new Matrix4().compose(new Vector3(x, 8.4, 0), new Quaternion().setFromAxisAngle(X, Math.PI / 2), new Vector3(1, 1, 1))));
+    } else {
+      for (let j = 0; j < 8; j += 1) p.push(piece(new CylinderGeometry(0.4, 0.4, 1, 8), j % 2 ? ICING : '#e8242a', M(x, 0.5 + j, 0)));
+      p.push(piece(new TorusGeometry(1, 0.4, 6, 10, Math.PI), '#e8242a', M(x + 1, 8, 0)));
+    }
+  }
+  return merge(p);
+}
+
+// ── Winter Wonders: Ice Palace ───────────────────────────────────────────────
+
+const ICE = '#bfe6f6';
+const ICE_DEEP = '#7fc4e8';
+
+/** A palace of ice: halls of clear blocks, tall pointed towers, ice arches (generic: nothing from any film). */
+function icePalaceFrame() {
+  const p = [];
+  p.push(box(44, 12, 16, 0, 6, 0, ICE));
+  for (let k = 0; k < 5; k += 1) p.push(box(5, 7, 0.4, -16 + k * 8, 3.5, 8.1, ICE_DEEP)); // the hall arches' panes
+  for (const [x, h] of [[-24, 26], [-12, 20], [0, 32], [12, 20], [24, 26]]) {
+    p.push(piece(new CylinderGeometry(3, 3.4, h, 8), ICE, M(x, h / 2, -4)));
+    p.push(piece(new ConeGeometry(3.6, 9, 8), ICE_DEEP, M(x, h + 4.5, -4)));
+  }
+  for (let k = 0; k < 12; k += 1) p.push(box(3.2, 1.6, 3.2, -22 + k * 4, 12.8, 6, ICE_DEEP)); // battlements of ice
+  return merge(p);
+}
+
+/** The palace's glow: light through the ice halls and the chandeliers in them. */
+function icePalaceGlow() {
+  const p = [];
+  for (let k = 0; k < 5; k += 1) {
+    const x = -16 + k * 8;
+    p.push(box(4, 5.5, 0.3, x, 3.6, 8.3, '#e8f8ff'));
+    for (let j = 0; j < 6; j += 1) {
+      const a = (j / 6) * Math.PI * 2;
+      p.push(piece(new ConeGeometry(0.3, 1.2, 5), '#f2fbff', new Matrix4().compose(new Vector3(x + Math.cos(a) * 1.2, 9.6, 10 + Math.sin(a) * 1.2), new Quaternion().setFromAxisAngle(X, Math.PI), new Vector3(1, 1, 1))));
+    }
+  }
+  return merge(p);
+}
+
+/** Ice chandeliers hanging from an ice arch over the side of the track. */
+function iceChandeliersFrame() {
+  const p = [];
+  for (const x of [-12, 12]) p.push(box(2, 14, 2, x, 7, 0, ICE));
+  p.push(box(26, 2, 2, 0, 14.5, 0, ICE));
+  for (const x of [-6, 0, 6]) p.push(piece(new CylinderGeometry(0.08, 0.08, 3, 5), ICE_DEEP, M(x, 12, 0)));
+  return merge(p);
+}
+
+function iceChandeliersGlow() {
+  const p = [];
+  for (const x of [-6, 0, 6]) {
+    p.push(piece(new SphereGeometry(0.9, 8, 6), '#e8f8ff', M(x, 10, 0)));
+    for (let j = 0; j < 8; j += 1) {
+      const a = (j / 8) * Math.PI * 2;
+      p.push(piece(new ConeGeometry(0.22, 1.4, 5), '#f2fbff', new Matrix4().compose(new Vector3(x + Math.cos(a) * 1.4, 9.2, Math.sin(a) * 1.4), new Quaternion().setFromAxisAngle(X, Math.PI), new Vector3(1, 1, 1))));
+    }
+  }
+  return merge(p);
+}
+
+// ── Winter Wonders: Night Train North ────────────────────────────────────────
+
+/** A steam train standing on its rails beside the track: the engine with its tall chimney, a tender and three carriages. */
+function steamTrainFrame() {
+  const p = [];
+  p.push(box(66, 0.3, 3.2, 0, 0.15, 0, '#3a3a40'));
+  // The engine.
+  p.push(piece(new CylinderGeometry(1.5, 1.5, 9, 12), '#1f2a24', new Matrix4().compose(new Vector3(-26, 2.6, 0), new Quaternion().setFromAxisAngle(new Vector3(0, 0, 1), Math.PI / 2), new Vector3(1, 1, 1))));
+  p.push(box(4, 4.4, 3.2, -19.5, 3.0, 0, '#1f2a24'));
+  p.push(box(4.6, 0.4, 3.6, -19.5, 5.4, 0, '#8a1a1a'));
+  p.push(piece(new CylinderGeometry(0.5, 0.7, 2.2, 8), '#141418', M(-29, 5, 0)));
+  p.push(piece(new CylinderGeometry(1, 1, 0.3, 10), '#c89a3a', new Matrix4().compose(new Vector3(-30.6, 2.6, 0), new Quaternion().setFromAxisAngle(new Vector3(0, 0, 1), Math.PI / 2), new Vector3(1, 1, 1))));
+  for (const x of [-28, -25, -22, -19]) for (const z of [-1.7, 1.7]) p.push(piece(new CylinderGeometry(0.8, 0.8, 0.3, 10), '#8a1a1a', new Matrix4().compose(new Vector3(x, 0.9, z), new Quaternion().setFromAxisAngle(X, Math.PI / 2), new Vector3(1, 1, 1))));
+  // The tender and carriages.
+  p.push(box(5, 3, 3.2, -14, 2, 0, '#1f2a24'));
+  for (const x of [-5, 6, 17]) {
+    p.push(box(10, 3.6, 3.2, x, 2.6, 0, '#5a1a22'));
+    p.push(box(10.4, 0.4, 3.6, x, 4.6, 0, '#2a2a30'));
+    for (const z of [-1.7, 1.7]) for (const dx of [-3.5, 3.5]) p.push(piece(new CylinderGeometry(0.5, 0.5, 0.3, 8), '#141418', new Matrix4().compose(new Vector3(x + dx, 0.6, z), new Quaternion().setFromAxisAngle(X, Math.PI / 2), new Vector3(1, 1, 1))));
+  }
+  // A puff of steam above the chimney.
+  for (let k = 0; k < 4; k += 1) p.push(piece(new SphereGeometry(0.9 + k * 0.35, 7, 5), '#e8eef4', M(-29 + k * 1.6, 7 + k * 1.1, 0)));
+  return merge(p);
+}
+
+/** The carriages' lit windows and the engine's lamp. */
+function steamTrainGlow() {
+  const p = [];
+  for (const x of [-5, 6, 17]) for (let k = 0; k < 4; k += 1) for (const z of [-1.62, 1.62]) p.push(box(1.4, 1.1, 0.1, x - 3.6 + k * 2.4, 3.1, z, WARM));
+  p.push(piece(new SphereGeometry(0.4, 7, 5), '#fff2c4', M(-30.9, 3.6, 0)));
+  return merge(p);
+}
+
+/** The station at the top of the world: a long timber station under a snowy roof, a clock tower, lamps along the platform. */
+function topStationFrame() {
+  const p = [];
+  p.push(box(30, 1, 8, 0, 0.5, 0, '#8a8a90'));
+  p.push(box(24, 5, 5, 0, 3.5, -1.5, '#7a4a2a'));
+  p.push(box(27, 0.6, 9, 0, 6.3, 0, '#f2f6fa'));
+  p.push(box(4, 12, 4, 10, 6, -2, '#7a4a2a'));
+  p.push(spire(5, 4, 10, 12, -2, '#f2f6fa'));
+  p.push(piece(new CylinderGeometry(1.2, 1.2, 0.2, 14), '#f4ecd2', new Matrix4().compose(new Vector3(10, 9.8, 0.1), new Quaternion().setFromAxisAngle(X, Math.PI / 2), new Vector3(1, 1, 1))));
+  for (const x of [-12, -6, 0, 6]) p.push(piece(new CylinderGeometry(0.1, 0.1, 4, 5), '#2a2a30', M(x, 3, 3.5)));
+  return merge(p);
+}
+
+function topStationGlow() {
+  const p = [];
+  for (let k = 0; k < 6; k += 1) p.push(box(1.8, 1.6, 0.1, -10 + k * 3.6, 3.6, 1.05, WARM));
+  for (const x of [-12, -6, 0, 6]) p.push(piece(new SphereGeometry(0.35, 6, 4), '#fff2c4', M(x, 5.2, 3.5)));
+  return merge(p);
+}
+
+// ── Winter Wonders: Sleigh Bell Forest ───────────────────────────────────────
+
+/** Owls on snowy stumps at the forest's edge, big round eyes watching the race. */
+function owlPerches() {
+  const p = [];
+  for (let k = 0; k < 5; k += 1) {
+    const x = -12 + k * 6;
+    const h = 1.5 + (k % 3) * 0.8;
+    p.push(piece(new CylinderGeometry(0.8, 0.9, h, 8), '#5a3a20', M(x, h / 2, 0)));
+    p.push(piece(new CylinderGeometry(0.85, 0.85, 0.25, 8), '#f2f6fa', M(x, h + 0.1, 0)));
+    p.push(piece(new SphereGeometry(0.7, 8, 6), k % 2 ? '#8a6a48' : '#d8d4c8', new Matrix4().compose(new Vector3(x, h + 0.9, 0), new Quaternion(), new Vector3(1, 1.3, 0.9))));
+    for (const sx of [-0.25, 0.25]) {
+      p.push(piece(new SphereGeometry(0.2, 6, 4), '#ffd23f', M(x + sx, h + 1.3, 0.55)));
+      p.push(piece(new ConeGeometry(0.12, 0.4, 4), k % 2 ? '#8a6a48' : '#d8d4c8', M(x + sx * 1.6, h + 1.85, 0)));
+    }
+  }
+  return merge(p);
+}
+
+/** A reindeer herd crossing the snow beside the track. */
+function reindeerHerd() {
+  const p = [];
+  for (let k = 0; k < 7; k += 1) {
+    const x = -15 + k * 5 + ((k * 7) % 3);
+    const z = ((k * 5) % 4) * 1.5 - 3;
+    p.push(piece(new BoxGeometry(2.4, 1.1, 0.9), '#8a6a48', M(x, 1.7, z)));
+    for (const dx of [-0.9, 0.9]) for (const dz of [-0.3, 0.3]) p.push(piece(new CylinderGeometry(0.1, 0.1, 1.2, 5), '#5a3a20', M(x + dx, 0.6, z + dz)));
+    p.push(piece(new BoxGeometry(0.5, 1, 0.5), '#8a6a48', M(x + 1.3, 2.5, z)));
+    p.push(piece(new BoxGeometry(0.8, 0.45, 0.45), '#d8d4c8', M(x + 1.6, 2.9, z)));
+    for (const s of [-1, 1]) {
+      p.push(piece(new CylinderGeometry(0.05, 0.05, 1, 4), '#c8b88a', new Matrix4().compose(new Vector3(x + 1.3, 3.5, z + s * 0.3), new Quaternion().setFromAxisAngle(X, s * 0.4), new Vector3(1, 1, 1))));
+      p.push(piece(new CylinderGeometry(0.04, 0.04, 0.6, 4), '#c8b88a', new Matrix4().compose(new Vector3(x + 1.5, 3.8, z + s * 0.5), new Quaternion().setFromAxisAngle(new Vector3(0, 0, 1), -0.8), new Vector3(1, 1, 1))));
+    }
+  }
+  return merge(p);
+}
+
 export const HOLIDAY_LANDMARKS = {
   'chateau-hotel': { build: chateauHotel, radius: 34 },
   'toboggan-slide': { build: tobogganSlide, radius: 30 },
@@ -726,4 +1173,24 @@ export const HOLIDAY_LANDMARKS = {
   'pohutukawa-trees': { build: pohutukawaTrees, radius: 28 },
   'harbour-arch-bridge': { build: harbourArchBridge, radius: 90 },
   'castle-rock': { build: castleRock, radius: 44 },
+  'rock-hewn-church': { build: rockHewnChurch, radius: 22 },
+  pilgrims: { build: pilgrims, radius: 14 },
+  'parol-lanterns': { build: parolFrame, glow: parolGlow, radius: 28 },
+  'parang-band': { build: parangBandFrame, glow: parangBandGlow, radius: 10 },
+  'gallery-houses': { build: galleryHousesFrame, glow: galleryHousesGlow, radius: 32 },
+  'white-crowd': { build: whiteCrowd, radius: 32 },
+  'flower-boats': { build: flowerBoats, radius: 18 },
+  'star-lanterns': { build: starLanternsFrame, glow: starLanternsGlow, radius: 28 },
+  'pixel-palms': { build: pixelPalms, radius: 26 },
+  'pixel-white-church': { build: pixelWhiteChurch, radius: 14 },
+  'stepping-stones': { build: steppingStones, radius: 18 },
+  'lantern-bridge': { build: lanternBridgeFrame, glow: lanternBridgeGlow, radius: 16 },
+  'gingerbread-houses': { build: gingerbreadHousesFrame, glow: gingerbreadHousesGlow, radius: 30 },
+  'candy-trees': { build: candyTrees, radius: 28 },
+  'ice-palace': { build: icePalaceFrame, glow: icePalaceGlow, radius: 34 },
+  'ice-chandeliers': { build: iceChandeliersFrame, glow: iceChandeliersGlow, radius: 14 },
+  'steam-train': { build: steamTrainFrame, glow: steamTrainGlow, radius: 34 },
+  'top-station': { build: topStationFrame, glow: topStationGlow, radius: 18 },
+  'owl-perches': { build: owlPerches, radius: 14 },
+  'reindeer-herd': { build: reindeerHerd, radius: 20 },
 };

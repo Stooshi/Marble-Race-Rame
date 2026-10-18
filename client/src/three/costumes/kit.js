@@ -73,6 +73,8 @@ export const COSTUME_COLORS = {
   shakeGlass: '#e8f4f8', shakePink: '#ff8ac0', cherry: '#d8142a', jukeWood: '#7a3a1a', jukeGlow: '#ffb83a', jukeChrome: '#e8eaee', jukeNeon: '#ff4fa8',
   clockFace: '#f4ecd2', clockBrass: '#c89a3a', clockHand: '#1a1a24', gumRed: '#ff4a4a', gumBlue: '#4a9aff', gumYellow: '#ffd23f', gumGreen: '#5adf6a', doorBlue: '#3a3aa8', doorGold: '#ffcf5a', doorVoid: '#120a30',
   joyBlack: '#141418', joyRed: '#ff2a4a', joyBase: '#2a2a34', coinGold: '#ffc83a', coinEdge: '#c8962a', pusherSilver: '#b8bcc8', pusherGlow: '#3fd8ff',
+  caneRed: '#e8242a', caneWhite: '#f6f4ee', gumdropGreen: '#3fcf5a', gumdropPink: '#ff6fae', gumdropYellow: '#ffd23f', sugar: '#fff8f0',
+  panSteel: '#c8ccd4', panRim: '#ff5a3a', panDimple: '#8a909a', maracaRed: '#e8342a', maracaYellow: '#ffd23f', maracaHandle: '#7a4a24', rocketRed: '#e8342a', rocketBlue: '#2f6fd8', rocketCap: '#f4f4f0', burstGold: '#fff2b0',
   pixelPink: '#ff3fa8', pixelCyan: '#3fd8ff', pixelViolet: '#8a4aff', pixelYellow: '#ffd23f', glitchBlack: '#0a0a12', glitchGreen: '#7dff6a',
   clawSteel: '#c8ccd8', clawGlass: '#9ad8ff', clawFrame: '#ff3fa8', puckRed: '#ff3a3a', puckTable: '#e8eef8', pearGreen: '#9ae84a', pearLeaf: '#3a9a3a', pedestal: '#3a2a6a',
   ampBlack: '#141418', ampGrille: '#2a2a32', ampTrim: '#c8ccd2', pickPink: '#ff3fa8', pickCyan: '#3fd8ff', micSilver: '#b8bcc4', drumRed: '#c8142a', drumSkin: '#f2efe6', stageBlack: '#0a0a10',
@@ -1824,7 +1826,72 @@ function hurdleCart(add, mat, group, rimCentre, q, { len, width, drop = 0 }) {
   return [];
 }
 
+// ── Winter Wonders ───────────────────────────────────────────────────────────
+
+/** A candy cane standing as a post: red and white bands up the pole, the hook on top (Winter Wonders; a slalom pole or peg). */
+function candyCane(add, mat, group, point, q, { height }) {
+  const bands = 6;
+  const step = (height + 0.3) / bands;
+  for (let k = 0; k < bands; k += 1) add(k % 2 ? 'caneWhite' : 'caneRed', new CylinderGeometry(0.11, 0.11, step, 8), local(point, q, 0, step * (k + 0.5), 0));
+  add('caneRed', new CylinderGeometry(0.1, 0.1, 0.3, 8), local(point, q, 0.1, height + 0.42, 0).multiply(new Matrix4().makeRotationZ(-1.1)));
+  add('caneWhite', new CylinderGeometry(0.1, 0.1, 0.22, 8), local(point, q, 0.2, height + 0.3, 0));
+  return [];
+}
+
+/** A big gumdrop, sugar-frosted, as a pop bumper (Winter Wonders; a block). */
+function gumdrop(add, mat, group, point, q, { radius, at }) {
+  const colour = ['gumdropGreen', 'gumdropPink', 'gumdropYellow'][Math.round(at * 997) % 3];
+  add(colour, new SphereGeometry(radius * 0.95, 12, 8, 0, Math.PI * 2, 0, Math.PI / 2), local(point, q, 0, 0, 0, 1, 1.15, 1));
+  add(colour, new CylinderGeometry(radius * 0.95, radius * 0.95, radius * 0.25, 12), local(point, q, 0, radius * 0.0, 0));
+  for (let k = 0; k < 6; k += 1) {
+    const a = (k / 6) * Math.PI * 2;
+    add('sugar', new IcosahedronGeometry(radius * 0.08, 0), local(point, q, Math.cos(a) * radius * 0.55, radius * 0.85, Math.sin(a) * radius * 0.55));
+  }
+  return [];
+}
+
+// ── The Holiday Season pinball tables ───────────────────────────────────────
+
+/** A steel-pan drum as a pop bumper: a chrome skirt, the polished pan and its hammered note dimples (Trinidad Parang Run; a block). */
+function steelPanBumper(add, mat, group, point, q, { radius }) {
+  add('chrome', new CylinderGeometry(radius * 1.05, radius * 1.15, radius * 1.1, 14), local(point, q, 0, radius * 0.55, 0));
+  add('panRim', new CylinderGeometry(radius * 1.12, radius * 1.12, radius * 0.12, 14), local(point, q, 0, radius * 1.12, 0));
+  add('panSteel', new CylinderGeometry(radius * 1.0, radius * 0.9, radius * 0.1, 14), local(point, q, 0, radius * 1.16, 0));
+  for (let k = 0; k < 5; k += 1) {
+    const a = (k / 5) * Math.PI * 2;
+    add('panDimple', new CylinderGeometry(radius * 0.22, radius * 0.22, radius * 0.04, 8), local(point, q, Math.cos(a) * radius * 0.55, radius * 1.22, Math.sin(a) * radius * 0.55));
+  }
+  return [];
+}
+
+/** A maraca standing on its handle as a post (Trinidad Parang Run; a slalom pole or peg). */
+function maracaPost(add, mat, group, point, q, { height, at = 0.5 }) {
+  const head = Math.round(at * 997) % 2 ? 'maracaRed' : 'maracaYellow';
+  add('maracaHandle', new CylinderGeometry(0.06, 0.09, height * 0.6, 7), local(point, q, 0, height * 0.3, 0));
+  add(head, new IcosahedronGeometry(0.19, 1), local(point, q, 0, height * 0.6 + 0.22, 0, 1, 1.5, 1));
+  return [];
+}
+
+/** A bundle of firework rockets as a pop bumper, a gold star burst on top (Rio New Year Burst; a block). */
+function fireworkBumper(add, mat, group, point, q, { radius }) {
+  add('bumperBase', new CylinderGeometry(radius * 1.1, radius * 1.2, radius * 0.25, 12), local(point, q, 0, radius * 0.12, 0));
+  for (let k = 0; k < 5; k += 1) {
+    const a = (k / 5) * Math.PI * 2;
+    const x = Math.cos(a) * radius * 0.5;
+    const z = Math.sin(a) * radius * 0.5;
+    add(k % 2 ? 'rocketBlue' : 'rocketRed', new CylinderGeometry(radius * 0.26, radius * 0.26, radius * 1.4, 8), local(point, q, x, radius * 0.95, z));
+    add('rocketCap', new ConeGeometry(radius * 0.28, radius * 0.4, 8), local(point, q, x, radius * 1.85, z));
+  }
+  add('burstGold', new IcosahedronGeometry(radius * 0.45, 0), local(point, q, 0, radius * 2.2, 0));
+  return [];
+}
+
 export const KIT_COSTUMES = {
+  'candy-cane': { places: 'slalom', build: candyCane },
+  gumdrop: { places: 'block', build: gumdrop },
+  'steel-pan-bumper': { places: 'block', build: steelPanBumper },
+  'maraca-post': { places: 'slalom', build: maracaPost },
+  'firework-bumper': { places: 'block', build: fireworkBumper },
   panda: { places: 'block', build: panda },
   camel: { places: 'block', build: camel },
   'cafe-table': { places: 'block', upright: true, build: cafeTable },

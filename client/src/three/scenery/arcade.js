@@ -40,6 +40,8 @@ export const ART = {
   fighter: { sky: ['#0a0a1a', '#4a0a2a'], ink: '#06060a', glow: '#ff3f3f', accent: '#ffd23f' },
   highway: { sky: ['#2a0a4a', '#ff6a8a'], ink: '#1a0a2a', glow: '#ff3fa8', accent: '#3fd8ff' },
   downtown: { sky: ['#06061a', '#2a1a5a'], ink: '#04040c', glow: '#3fd8ff', accent: '#ff7a1a' },
+  'star-lanterns': { sky: ['#0a0a2a', '#3a1a5a'], ink: '#06061a', glow: '#ffd23f', accent: '#ff4f6a' },
+  'light-stream': { sky: ['#040a1a', '#1a3a6a'], ink: '#02060e', glow: '#9ae8ff', accent: '#ff8ad8' },
 };
 
 // The picture: one small canvas, drawn in pixels. Regions (x, y, w, h) in its pixels.
@@ -123,6 +125,28 @@ function paintSide(g, art, c) {
     g.fillStyle = c.accent;
     g.fillRect(40, 16, 30, 8);
     g.beginPath(); g.moveTo(70, 10); g.lineTo(84, 20); g.lineTo(70, 30); g.fill();
+  } else if (art === 'star-lanterns') {
+    // Palms and pixel star lanterns hung on strings.
+    g.fillStyle = c.ink;
+    for (const x of [10, 100]) { g.fillRect(x, 40, 4, h); g.fillRect(x - 8, 38, 20, 3); g.fillRect(x - 5, 34, 14, 3); }
+    g.fillStyle = 'rgba(255,255,255,0.35)'; g.fillRect(0, 20, w, 1);
+    for (let k = 0; k < 4; k += 1) {
+      const x = 18 + k * 26;
+      const y = 26 + (k % 2) * 10;
+      g.fillStyle = k % 2 ? c.accent : c.glow;
+      g.fillRect(x, y, 9, 3); g.fillRect(x + 3, y - 3, 3, 9); g.fillRect(x + 1, y - 1, 7, 7);
+      g.fillRect(x + 3, y + 7, 1, 6); g.fillRect(x + 5, y + 7, 1, 8);
+    }
+  } else if (art === 'light-stream') {
+    // A stream under arches of light, stepping stones across it.
+    g.fillStyle = '#0a2a4a'; g.fillRect(0, 60, w, 20);
+    g.fillStyle = c.ink; for (let k = 0; k < 6; k += 1) g.fillRect(8 + k * 20, 66, 10, 6);
+    for (let k = 0; k < 4; k += 1) {
+      g.fillStyle = k % 2 ? c.accent : c.glow;
+      const x = 6 + k * 30;
+      g.fillRect(x, 20, 3, 40); g.fillRect(x + 24, 20, 3, 40); g.fillRect(x, 18, 27, 3);
+    }
+    g.fillStyle = '#f2f6fa'; for (let k = 0; k < 20; k += 1) g.fillRect((k * 29) % w, (k * 17) % 56, 1, 1);
   } else {
     g.fillStyle = c.glow;
     for (let k = 0; k < 7; k += 1) g.fillRect(6 + k * 17, 40 + ((k * 13) % 30), 12, h);

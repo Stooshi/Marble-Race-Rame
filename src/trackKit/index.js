@@ -17,7 +17,7 @@
 
 const { generate } = require('../game/trackShape');
 const parts = require('./parts');
-const { checkRecipe, isCoaster, isPinball, isArcade, isCanyon, isBlock, isAthletics } = require('./recipe');
+const { checkRecipe, isCoaster, isPinball, isArcade, isCanyon, isBlock, isAthletics, isWinterWonders } = require('./recipe');
 
 const round4 = (x) => Math.round(x * 10000) / 10000;
 
@@ -310,6 +310,8 @@ function track(spec) {
     // round the sections marked `stadium`, red (or blue) tartan lanes, the starter, the scoreboard clock and
     // the photo-finish camera. Looks only.
     ...(isAthletics(spec) && { athletics: { lanes: 'red', ...spec.athletics } }),
+    // A Winter Wonders track (family 'winter-wonders'): a World Tour track listed as its own series.
+    ...(isWinterWonders(spec) && { winterWonders: true }),
     // A pinball table (family 'pinball'): the playfield, the cabinet, the backglass's art and the
     // dot-matrix display's call-outs at the start and for the winner, the apron's flippers and the
     // drain past the finish. Looks only.

@@ -98,6 +98,7 @@ module.exports = [
   require('./cape-town-summer-christmas'),
   require('./gamla-stan-christmas-run'),
   require('./zermatt-marble-grand-prix'),
+  require('./medellin-lights'),
   require('./outback-christmas-burst'),
   require('./quebec-old-town-spins'),
 ];

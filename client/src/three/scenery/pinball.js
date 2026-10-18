@@ -32,6 +32,8 @@ const ART = {
   diner: { sky: ['#0f3a4a', '#ff6fa8'], ink: '#1a2a30', glow: '#7af2ff', accent: '#ffd23f' },
   clocks: { sky: ['#05051a', '#3a2a7a'], ink: '#0a0a20', glow: '#c8b8ff', accent: '#ffcf5a' },
   concert: { sky: ['#0a0a12', '#5a0a6a'], ink: '#06060a', glow: '#ff3fa8', accent: '#3fd8ff' },
+  parang: { sky: ['#0a1a2e', '#1f6a5a'], ink: '#08141a', glow: '#ffd23f', accent: '#ff5a3a' },
+  'beach-fireworks': { sky: ['#04061a', '#1a2a6a'], ink: '#05070f', glow: '#fff2b0', accent: '#ff4f9a' },
 };
 
 function shapes(g, art, w, h, c) {
@@ -73,6 +75,24 @@ function shapes(g, art, w, h, c) {
       g.beginPath(); g.moveTo(w * x, h * y); g.lineTo(w * x, h * (y - r * 0.7)); g.moveTo(w * x, h * y); g.lineTo(w * x + h * r * 0.5, h * y); g.stroke();
     }
     g.fillStyle = c.ink; for (let k = 0; k < 5; k += 1) g.fillRect(w * (0.5 + k * 0.06), h * (0.85 - k * 0.08), w * 0.06, h * 0.03); // stairs to nowhere
+  } else if (art === 'parang') {
+    g.fillStyle = c.ink; // hills with little houses, a string of lights and a four-string guitar
+    g.beginPath(); g.moveTo(0, h * 0.7); g.quadraticCurveTo(w * 0.3, h * 0.45, w * 0.6, h * 0.62); g.quadraticCurveTo(w * 0.8, h * 0.72, w, h * 0.55); g.lineTo(w, h); g.lineTo(0, h); g.fill();
+    for (const [x, y] of [[0.12, 0.62], [0.24, 0.55], [0.36, 0.53], [0.7, 0.62], [0.86, 0.6]]) g.fillRect(w * x, h * (y - 0.08), w * 0.06, h * 0.08);
+    g.fillStyle = c.glow;
+    for (let k = 0; k < 16; k += 1) { const x = 0.04 + k * 0.06; g.beginPath(); g.arc(w * x, h * (0.12 + 0.05 * Math.sin(k * 0.8)), h * 0.018, 0, Math.PI * 2); g.fill(); }
+    g.fillStyle = c.accent; g.beginPath(); g.ellipse(w * 0.5, h * 0.42, w * 0.07, h * 0.12, 0, 0, Math.PI * 2); g.fill();
+    g.fillRect(w * 0.49, h * 0.12, w * 0.02, h * 0.22);
+    g.fillStyle = c.ink; g.beginPath(); g.arc(w * 0.5, h * 0.4, h * 0.035, 0, Math.PI * 2); g.fill();
+  } else if (art === 'beach-fireworks') {
+    g.fillStyle = '#0a1a3a'; g.fillRect(0, h * 0.62, w, h * 0.12); // the sea
+    g.fillStyle = '#d8c79a'; g.fillRect(0, h * 0.74, w, h * 0.26); // the sand
+    g.lineWidth = h * 0.012;
+    for (const [x, y, r, col] of [[0.22, 0.25, 0.14, c.accent], [0.52, 0.18, 0.11, c.glow], [0.8, 0.3, 0.13, '#5affd2']]) {
+      g.strokeStyle = col;
+      for (let k = 0; k < 14; k += 1) { const a = (k / 14) * Math.PI * 2; g.beginPath(); g.moveTo(w * x + Math.cos(a) * h * r * 0.3, h * y + Math.sin(a) * h * r * 0.3); g.lineTo(w * x + Math.cos(a) * h * r, h * y + Math.sin(a) * h * r); g.stroke(); }
+    }
+    g.fillStyle = c.ink; for (let k = 0; k < 9; k += 1) g.fillRect(w * (0.06 + k * 0.1), h * 0.68, w * 0.07, h * 0.04); // the line of people on the shore
   } else {
     g.fillStyle = c.ink; g.fillRect(0, h * 0.62, w, h * 0.38);
     for (let k = 0; k < 8; k += 1) { g.fillStyle = k % 2 ? c.glow : c.accent; g.globalAlpha = 0.5; g.beginPath(); g.moveTo(w * (0.1 + k * 0.11), 0); g.lineTo(w * (0.05 + k * 0.11), h * 0.62); g.lineTo(w * (0.15 + k * 0.11), h * 0.62); g.fill(); }

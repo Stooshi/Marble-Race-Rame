@@ -5,7 +5,7 @@ import { useAsync } from '../../hooks/useAsync';
 import TrackBanner, { SERIES_PIC } from '../TrackBanner';
 import { applyMeta, metaFor } from '../pageMeta';
 
-export const SERIES_ORDER = ['World Tour', 'Grand Prix', 'Coasters', 'Canyons', 'Blocks', 'Pinball', 'Arcade', 'Classic'];
+export const SERIES_ORDER = ['World Tour', 'Grand Prix', 'Coasters', 'Canyons', 'Blocks', 'Pinball', 'Arcade', 'Winter Wonders', 'Classic'];
 const lengthOf = (m) => (Number(m) > 0 ? `${(Number(m) / 1000).toFixed(1)} km` : null);
 
 /** The live track list (pre-rendered pages get it from the build: seed 'tracks'). */

@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import TrackBanner, { BANNERS, BANNERS_ON, SERIES_PIC } from '../TrackBanner';
 
-const ORDER = ['World Tour', 'Grand Prix', 'Coasters', 'Canyons', 'Blocks', 'Track and Field', 'Pinball', 'Arcade', 'Classic'];
+const ORDER = ['World Tour', 'Grand Prix', 'Coasters', 'Canyons', 'Blocks', 'Track and Field', 'Pinball', 'Arcade', 'Winter Wonders', 'Classic'];
 const kb = (n) => `${Math.round(n / 1000)} kB`;
 
 /**

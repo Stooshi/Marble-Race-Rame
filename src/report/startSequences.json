@@ -51,6 +51,7 @@
 "london-steeplechase": {"family":"athletics","reach":0.273,"seq":["opening: peg-drop","drop","peg ×7","straight","peg","slalom","sweep left","straight","peg"]},
 "magma-core": {"family":"block","reach":0.21,"seq":["opening: funnel-drop","drop","pileUp","slalom","sweep right"]},
 "marble-stadium-sprint": {"family":"athletics","reach":0.194,"seq":["opening: classic","drop","pileUp","slalom","S-bends right"]},
+"medellin-lights": {"family":"coaster","reach":0.256,"seq":["opening: peg-drop","drop","peg ×7","S-bends left","slalom","straight","peg","half-pipe"]},
 "multiball-manor": {"family":"pinball","reach":0.248,"seq":["opening: tunnel-launch","drop","pileUp","slalom","drop","slalom","sweep left"]},
 "nairobi-marble-grand-prix": {"family":"grand-prix","reach":0.232,"seq":["opening: classic","drop","pileUp","slalom","S-bends left"]},
 "nanjing": {"family":"coaster","reach":0.208,"seq":["opening: banked-turn","drop","pileUp","slalom","sweep right","S-bends left"]},
