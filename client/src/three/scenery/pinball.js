@@ -193,6 +193,7 @@ export function buildPinball(centerline, channel, kit, { lite = false, groundAt,
   ].map((q) => q.toNonIndexed()));
   panels.applyMatrix4(place);
   const glass = new Mesh(panels, pictureMat);
+  glass.userData.text = {}; // (its title and dot-matrix display)
   glass.name = 'pinball: backglass';
   const winUV = [dmdW / cw, 1, artH / total, 1];
   const winAspect = (cw - dmdW) / dmdH;

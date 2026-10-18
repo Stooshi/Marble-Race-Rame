@@ -13,6 +13,8 @@
  *   - steep plunges and waterfalls get their banks as steep rock fill.
  * groundCheck.js checks the result on every kit track.
  */
+import { PEN_DROP } from '../marbles';
+import { TRACK_STYLE } from '../trackModel';
 import { BoxGeometry, BufferGeometry, Color, DoubleSide, Float32BufferAttribute, Group, Mesh, MeshLambertMaterial, Vector3 } from 'three';
 import { channelLipAt, channelRadiusAt, forkAt, forkOffset, forkRadius } from '../iceChannel';
 import { channelGround } from './channelGround';
@@ -64,7 +66,8 @@ export function lakeOf(centerline, kit) {
  * under them (buildTerrain's `below`).
  */
 const ICE_MARGIN = 0.15;
-export function icePoints(centerline, channel) {
+const PEN_WALL = 1.6; // metres: the catch area's walls over the line (TrackScene buildCatchArea)
+export function icePoints(centerline, channel, { margin = ICE_MARGIN } = {}) {
   const { samples, segments } = centerline;
   const step = channel.arc / segments;
   const out = [];
@@ -80,7 +83,30 @@ export function icePoints(centerline, channel) {
       for (let k = -4; k <= 4; k += 1) {
         const th = (k / 4) * u.lip;
         const p = u.c.clone().addScaledVector(side, u.R * Math.sin(th));
-        out.push({ x: p.x, z: p.z, y: u.c.y + u.R * (1 - Math.cos(th)) - ICE_MARGIN });
+        out.push({ x: p.x, z: p.z, y: u.c.y + u.R * (1 - Math.cos(th)) - margin });
+      }
+    }
+  }
+  // The catch area past the line (its floor falling PEN_DROP a metre, between its walls), and a little
+  // beyond its end cushion: the land stays under it too (a coarse grid square used to rise through it).
+  const pen = channel.runout;
+  if (pen) {
+    const end = samples[segments];
+    const forward = new Vector3(end.tangent.x, 0, end.tangent.z).normalize();
+    const side = new Vector3(end.side.x, 0, end.side.z).normalize();
+    // Under the floor between the walls; just outside them, only under the walls' tops (PEN_WALL over the
+    // line, level all along), so the land meets the walls as it meets the channel's rims, not dug down
+    // to the floor in grid-square steps beside them.
+    const wallOut = pen.halfWidth + TRACK_STYLE.wallThickness + 0.3;
+    for (let d = 0; d <= pen.length + 2; d += 1.5) {
+      const floorY = end.pos.y - Math.min(d, pen.length) * PEN_DROP - 0.4 - margin;
+      for (let k = -4; k <= 4; k += 1) {
+        const p = end.pos.clone().addScaledVector(forward, d).addScaledVector(side, (k / 4) * pen.halfWidth);
+        out.push({ x: p.x, z: p.z, y: floorY });
+      }
+      for (const sign of [-1, 1]) {
+        const p = end.pos.clone().addScaledVector(forward, d).addScaledVector(side, sign * wallOut);
+        out.push({ x: p.x, z: p.z, y: d > pen.length ? floorY : end.pos.y + PEN_WALL - 0.5 - margin });
       }
     }
   }
@@ -213,7 +239,9 @@ export function buildKitGround(centerline, track, { lite = false } = {}) {
   const corridor = trackCorridor(centerline, channel);
   const terrain = buildTerrain(field, landBounds, {
     cells: lite ? 54 : 140, colors: biome.terrain, tiles: lite ? 1 : 2, // few tiles: few draw calls
-    below: icePoints(centerline, channel), // (the land never rises through the ice, however a grid square falls on a bend)
+    // (the land never rises through the ice, however a grid square falls on a bend; on phones 10 cm deeper,
+    // for their coarser grid between the points: Colca Spin's land showed 8 cm through near the finish)
+    below: icePoints(centerline, channel, { margin: lite ? ICE_MARGIN + 0.1 : ICE_MARGIN }),
     // (Phones: a slightly coarser grid, refined only where the land rises over the ice, at about 5 m:
     // no more triangles than before the refining.)
     fine: lite ? 5 : 2.5, neighbours: !lite,

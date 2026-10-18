@@ -565,7 +565,8 @@ function portCranes() {
 
 /** The Zhuhai waterfront: modern towers behind a palm-lined promenade and the sea. */
 function zhuhaiWaterfront() {
-  const p = [box(140, 0.3, 40, 0, 0.1, 30, '#3f8fa8'), box(140, 0.5, 8, 0, 0.25, 6, '#d8d0c0')];
+  // (The harbour water from 10 to 32 m in front of the promenade: it stands 70 m past the line, facing back, so the water stops clear of the catch area.)
+  const p = [box(140, 0.3, 22, 0, 0.1, 21, '#3f8fa8'), box(140, 0.5, 8, 0, 0.25, 6, '#d8d0c0')];
   for (let k = 0; k < 10; k += 1) {
     const x = -60 + k * 13;
     p.push(piece(new CylinderGeometry(0.3, 0.45, 8, 6), '#8a6a3a', M(x, 4, 6)), piece(new IcosahedronGeometry(2.4, 0), '#3f7f3a', S(x, 8.6, 6, 1.3, 0.45, 1.3)));

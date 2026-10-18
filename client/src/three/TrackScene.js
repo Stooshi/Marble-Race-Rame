@@ -172,6 +172,30 @@ export function prefersScenery() {
   }
 }
 
+
+/**
+ * The finish shot (ice channels with a catch area): from above the street
+ * just short of the line, looking down over it into the catch area, so the
+ * marbles cross the line and roll in to settle right in front of the camera,
+ * with the view beyond (San Francisco: the Golden Gate) behind them. Further
+ * back on a narrow (phone) screen, so the street's width still fits.
+ * → { camera, target } (also used by the clear-track check, scenery/clearCheck.js).
+ */
+export function finishShotPose(centerline, channel, aspect, { roof = null } = {}) {
+  const { samples } = centerline;
+  const end = samples[samples.length - 1];
+  const forward = new Vector3(end.tangent.x, 0, end.tangent.z).normalize();
+  const narrow = 1 - Math.min(1, Math.max(0, (aspect - 0.5) / 0.9)); // 0 on a wide screen, 1 on a tall phone
+  const back = 14 + 7 * narrow;
+  const camera = end.pos.clone().addScaledVector(forward, -back);
+  camera.y = end.pos.y + 7.5 + narrow; // well under the finish banner (14 m up)
+  if (roof) camera.y = Math.min(camera.y, roof.bottom - 1.5); // (a coaster station over the finish: under its canopy, never in it)
+  const ahead = (channel.runout.length ?? 30) * 0.75; // looking level enough to show the view beyond
+  const target = end.pos.clone().addScaledVector(forward, ahead);
+  target.y = end.pos.y - ahead * PEN_DROP;
+  return { camera, target };
+}
+
 export class TrackScene {
   constructor(canvas, { interactive = true, maxPixelRatio = 2, lite = prefersLite(), scenery = prefersScenery() } = {}) {
     const lowEnd = (navigator.hardwareConcurrency || 4) <= 4 && window.devicePixelRatio >= 2;
@@ -287,7 +311,7 @@ export class TrackScene {
     if (this.features) this.trackGroup.add(this.features.group);
     // Track and Field: the tartan's white lane lines, start and finish lines and lane numbers (part of the track's surface).
     if (this.channel && track?.physics?.kit?.athletics) {
-      const marks = buildLaneMarkings(this.centerline, this.channel, { lite: this.lite });
+      const marks = buildLaneMarkings(this.centerline, this.channel, { lite: this.lite, kit: track.physics.kit });
       this.trackGroup.add(marks.lines);
       if (marks.numbers) this.trackGroup.add(marks.numbers);
     }
@@ -833,17 +857,9 @@ export class TrackScene {
    * back on a narrow (phone) screen, so the street's width still fits.
    */
   finishShot() {
-    const { samples } = this.centerline;
-    const end = samples[samples.length - 1];
-    const forward = new Vector3(end.tangent.x, 0, end.tangent.z).normalize();
-    const narrow = 1 - Math.min(1, Math.max(0, (this.camera.aspect - 0.5) / 0.9)); // 0 on a wide screen, 1 on a tall phone
-    const back = 14 + 7 * narrow;
-    const camera = end.pos.clone().addScaledVector(forward, -back);
-    camera.y = end.pos.y + 7.5 + narrow; // well under the finish banner (14 m up)
-    const ahead = (this.channel.runout.length ?? 30) * 0.75; // looking level enough to show the view beyond
-    const target = end.pos.clone().addScaledVector(forward, ahead);
-    target.y = end.pos.y - ahead * PEN_DROP;
-    return { camera, target };
+    const st = this.scenery?.userData?.station;
+    if (st && !this.stationRoof) this.stationRoof = stationRoof(st);
+    return finishShotPose(this.centerline, this.channel, this.camera.aspect, { roof: st ? this.stationRoof : null });
   }
 
   /** Ice channels: how much of the way the track is still the wide starting funnel at progress p (1 at the top, 0 once it is the channel). */

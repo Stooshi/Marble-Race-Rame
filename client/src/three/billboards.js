@@ -272,6 +272,7 @@ export function buildBillboards(centerline, channel, kit, { lite = false } = {})
   // Unlit, so the artwork shows its own colours (the frame around it is lit like the rest).
   const panels = new Mesh(pg, new MeshBasicMaterial({ map: texture }));
   panels.name = 'billboard panels';
+  panels.userData.text = {};
   group.add(panels);
 
   let generation = 0;
