@@ -104,4 +104,5 @@ module.exports = [
   require('./oaxaca-posadas-run'),
   require('./nuremberg-christmas-market-run'),
   require('./belgrade-badnjak-run'),
+  require('./coptic-cairo-lights'),
 ];

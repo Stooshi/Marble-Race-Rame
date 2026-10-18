@@ -22,6 +22,7 @@
 "collserola-run": {"family":"coaster","reach":0.236,"seq":["opening: tunnel-launch","drop","pileUp","slalom","drop","slalom","sweep right","straight"]},
 "combo-drop": {"family":"block","reach":0.245,"seq":["opening: split-start","drop","pileUp","slalom","chutes","drop","slalom","straight","steps","spiral left"]},
 "copper-spins": {"family":"canyon","reach":0.25,"seq":["opening: boost-launch","drop","pileUp","straight","boost","drop","slalom","sweep left","straight","slalom"]},
+"coptic-cairo-lights": {"family":"world-tour","reach":0.252,"seq":["opening: tunnel-launch","drop","pileUp","slalom","drop","slalom","S-bends left","slalom","straight","box"]},
 "cotahuasi-free-fall": {"family":"canyon","reach":0.233,"seq":["opening: tunnel-launch","drop","pileUp","slalom","drop","slalom","sweep right"]},
 "deep-mine": {"family":"block","reach":0.233,"seq":["opening: tunnel-launch","drop","pileUp","slalom","drop","slalom","straight","moguls","S-bends right"]},
 "delhi-red-fort-marble-grand-prix": {"family":"grand-prix","reach":0.216,"seq":["opening: classic","drop","pileUp","slalom","S-bends left"]},

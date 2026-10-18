@@ -277,6 +277,17 @@
    "side": 1,
    "marbles": 5
   },
+  "coptic-cairo-lights": {
+   "name": "Coptic Cairo Lights",
+   "series": "World Tour",
+   "lighting": "sunset",
+   "v": "6a3838e1",
+   "bytes": 15908,
+   "bytes2x": 38984,
+   "t": 10347,
+   "side": 1,
+   "marbles": 4
+  },
   "cotahuasi-free-fall": {
    "name": "Cotahuasi Free Fall",
    "series": "Canyons",
