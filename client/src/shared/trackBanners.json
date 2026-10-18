@@ -156,6 +156,17 @@
    "side": 1,
    "marbles": 9
   },
+  "cape-town-summer-christmas": {
+   "name": "Cape Town Summer Christmas",
+   "series": "Coasters",
+   "lighting": "day",
+   "v": "230d6315",
+   "bytes": 20896,
+   "bytes2x": 52716,
+   "t": 10205,
+   "side": -1,
+   "marbles": 4
+  },
   "chain-reaction": {
    "name": "Chain Reaction",
    "series": "Blocks",
@@ -705,6 +716,17 @@
    "t": 10524,
    "side": 1,
    "marbles": 5
+  },
+  "quebec-old-town-spins": {
+   "name": "Québec Old Town Spins",
+   "series": "World Tour",
+   "lighting": "night",
+   "v": "b4727b5d",
+   "bytes": 12542,
+   "bytes2x": 31606,
+   "t": 9738,
+   "side": 1,
+   "marbles": 6
   },
   "redwood-forest-run": {
    "name": "Redwood Forest Run",

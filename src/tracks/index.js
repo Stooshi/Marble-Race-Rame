@@ -95,7 +95,9 @@ module.exports = [
   require('./zurich-golden-lap'),
   // Holiday Season 2026 (season 'holiday-2026': locked to the pass until the season ends).
   require('./tromso-aurora-grand-prix'),
-  require('./zermatt-marble-grand-prix'),
+  require('./cape-town-summer-christmas'),
   require('./gamla-stan-christmas-run'),
+  require('./zermatt-marble-grand-prix'),
   require('./outback-christmas-burst'),
+  require('./quebec-old-town-spins'),
 ];

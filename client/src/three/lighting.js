@@ -225,8 +225,8 @@ function stars(lite) {
  * another somewhere else, on the race clock (so a replay shows the same). One draw call.
  */
 function fireworks(lite) {
-  const BURSTS = lite ? 4 : 7;
-  const SPARKS = lite ? 40 : 70;
+  const BURSTS = lite ? 5 : 9;
+  const SPARKS = lite ? 48 : 90;
   const LIFE = 1.9; // seconds a burst shows
   const COLOURS = [[1, 0.35, 0.4], [1, 0.85, 0.3], [0.4, 1, 0.55], [0.4, 0.75, 1], [1, 0.5, 0.95], [1, 1, 1]];
   const hash = (a, b) => { const x = Math.sin(a * 127.1 + b * 311.7) * 43758.5453; return x - Math.floor(x); };
@@ -242,7 +242,7 @@ function fireworks(lite) {
   const g = new BufferGeometry();
   g.setAttribute('position', new Float32BufferAttribute(pos, 3));
   g.setAttribute('color', new Float32BufferAttribute(col, 3));
-  const p = new Points(g, new PointsMaterial({ size: lite ? 3.2 : 2.6, sizeAttenuation: false, vertexColors: true, fog: false, transparent: true, blending: AdditiveBlending, depthWrite: false }));
+  const p = new Points(g, new PointsMaterial({ size: lite ? 4.4 : 3.6, sizeAttenuation: false, vertexColors: true, fog: false, transparent: true, blending: AdditiveBlending, depthWrite: false }));
   p.name = 'fireworks';
   p.renderOrder = -1;
   p.frustumCulled = false;
@@ -257,18 +257,18 @@ function fireworks(lite) {
       const live = sec > 0 && tau < LIFE;
       const t = tau / LIFE;
       const az = hash(b, n) * Math.PI * 2;
-      const up = 0.28 + 0.3 * hash(n, b + 7);
+      const up = 0.3 + 0.38 * hash(n, b + 7);
       const rr = Math.sqrt(1 - up * up) * 0.9;
       const cx = Math.cos(az) * rr;
       const cy = up * 0.9;
       const cz = Math.sin(az) * rr;
-      const size = (0.05 + 0.03 * hash(b + 3, n)) * (1 - (1 - t) * (1 - t));
+      const size = (0.09 + 0.06 * hash(b + 3, n)) * (1 - (1 - t) * (1 - t));
       const fade = live ? (1 - t) ** 1.6 : 0;
       const [r, gg, bb] = COLOURS[Math.floor(hash(n + 11, b) * COLOURS.length)];
       for (let k = 0; k < SPARKS; k += 1) {
         const i = b * SPARKS + k;
         const [dx, dy, dz] = dirs[k];
-        P.setXYZ(i, cx + dx * size, cy + dy * size - 0.025 * t * t, cz + dz * size);
+        P.setXYZ(i, cx + dx * size, cy + dy * size - 0.04 * t * t, cz + dz * size);
         C.setXYZ(i, r * fade, gg * fade, bb * fade);
       }
     }
