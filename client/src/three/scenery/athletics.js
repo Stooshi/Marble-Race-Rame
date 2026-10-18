@@ -236,10 +236,33 @@ function canvasOf(w, h) {
 }
 
 /**
+ * Which side of the track is the inside, as lane 1 is on a real athletics track: the inside of the
+ * stadium's bend (the sections marked `stadium`; the whole track if none), +1 for the left, -1 for
+ * the right; the left when the stadium runs straight (as a real track runs: anticlockwise).
+ */
+export function insideSide(centerline, kit) {
+  const { samples, segments } = centerline;
+  const parts = (kit?.sections ?? []).filter((x) => x.stadium);
+  const ranges = parts.length ? parts.map((x) => [x.from, x.to]) : [[0, 1]];
+  let left = 0;
+  for (const [from, to] of ranges) {
+    for (let i = Math.max(0, Math.floor(from * segments)); i < Math.min(segments, Math.ceil(to * segments)); i += 1) {
+      const a = samples[i];
+      const b = samples[i + 1];
+      left += (b.tangent.x - a.tangent.x) * a.side.x + (b.tangent.z - a.tangent.z) * a.side.z; // (turning towards `side`, the left)
+    }
+  }
+  return left < -1e-6 ? -1 : 1;
+}
+
+/**
  * The lane lines, the start and finish lines and the lane numbers on the tartan:
  * { lines (one white mesh), numbers (a mesh of number squares at the start, or null) }.
+ * The numbers read the right way round for the marbles coming (and the follow and start cameras
+ * behind them): left to right across the track, their tops towards the finish, lane 1 on the
+ * inside (`kit`: the stadium's bend decides which side; see insideSide).
  */
-export function buildLaneMarkings(centerline, channel, { lite = false } = {}) {
+export function buildLaneMarkings(centerline, channel, { lite = false, kit = null } = {}) {
   const arc = channel.arc;
   const out = new Vector3();
   const nrm = new Vector3();
@@ -277,6 +300,11 @@ export function buildLaneMarkings(centerline, channel, { lite = false } = {}) {
   lines.name = 'athletics: lane lines';
 
   // The lane numbers, 1 to 8 from the inside, white squares with a dark number, just past the start line.
+  const inside = insideSide(centerline, kit);
+  // Which way round the picture goes: the channel's `side` (l > 0) is not always on the left of a marble
+  // looking down the track (the plan's y runs to the drawing's z), so the left is worked out here.
+  const s0 = centerline.samples[0];
+  const toLeft = Math.sign(s0.side.x * s0.tangent.z - s0.side.z * s0.tangent.x) || 1; // (side · (up × forward): up × forward = (forward.z, 0, -forward.x))
   let numbers = null;
   const atlas = canvasOf(512, 64);
   if (atlas) {
@@ -295,13 +323,16 @@ export function buildLaneMarkings(centerline, channel, { lite = false } = {}) {
   const lip = lipShare(NUMBERS_AT);
   const edges = [-1, ...LANE_LINES, 1];
   for (let k = 0; k < 8; k += 1) {
-    const mid = ((edges[k] + edges[k + 1]) / 2) * lip;
+    // Lane k + 1, counted from the inside (l is positive to the left).
+    const mid = -inside * ((edges[k] + edges[k + 1]) / 2) * lip;
     const half = 0.07 * lip;
-    const quad = [at(NUMBERS_AT, mid - half, 0.02), at(NUMBERS_AT, mid + half, 0.02), at(NUMBERS_AT + 1.1, mid + half, 0.02), at(NUMBERS_AT + 1.1, mid - half, 0.02)];
+    // Its square: near left, near right, far right, far left (as the marbles coming see it).
+    const l = toLeft * half;
+    const quad = [at(NUMBERS_AT, mid + l, 0.02), at(NUMBERS_AT, mid - l, 0.02), at(NUMBERS_AT + 1.1, mid - l, 0.02), at(NUMBERS_AT + 1.1, mid + l, 0.02)];
     const u0 = k / 8;
     const u1 = (k + 1) / 8;
-    // (Read from behind the gate: the number's top towards the finish.)
-    const uvs = [[u0, 1], [u1, 1], [u1, 0], [u0, 0]];
+    // (The number's left on the track's left, its top towards the finish: v = 1 is the picture's top.)
+    const uvs = [[u0, 0], [u1, 0], [u1, 1], [u0, 1]];
     for (const j of [0, 1, 2, 0, 2, 3]) { pos.push(quad[j].x, quad[j].y, quad[j].z); uv.push(...uvs[j]); }
   }
   const ng = new BufferGeometry();
@@ -310,6 +341,7 @@ export function buildLaneMarkings(centerline, channel, { lite = false } = {}) {
   ng.computeVertexNormals();
   numbers = new Mesh(ng, new MeshLambertMaterial({ map: atlas?.tex ?? null, color: atlas ? '#ffffff' : '#f4f1ea', side: DoubleSide, polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -3 }));
   numbers.name = 'athletics: lane numbers';
+  numbers.userData.text = { floor: true };
   return { lines, numbers };
 }
 
@@ -451,6 +483,7 @@ export function buildAthletics(centerline, channel, kit, { lite = false, groundA
     const g = new PlaneGeometry(W - 1.2, H - 1.2);
     const m = new Mesh(g, new MeshBasicMaterial({ map: screen?.tex ?? null, color: screen ? '#ffffff' : '#141414' }));
     m.name = 'athletics: scoreboard';
+    m.userData.text = {};
     m.position.copy(board.centre);
     m.quaternion.copy(board.q);
     m.position.addScaledVector(board.facing, 0.42);

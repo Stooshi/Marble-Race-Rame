@@ -220,10 +220,19 @@ function viewLines(view, kit) {
       lines.push({
         part: 'Clear track',
         what: `No scenery inside the track (land, banks, props, landmarks), ${screen}`,
-        value: c.stretches.length ? c.stretches.map((r) => `${r.metres} m at ${Math.round(r.from * 100)}% (${r.by.join(', ')}, up to ${r.worst} m over the ice)`).join('; ') : 'none',
+        // (Past the line, in the catch area: "after the line".)
+        value: c.stretches.length ? c.stretches.map((r) => `${r.metres} m ${r.from > 1 ? 'after the line' : `at ${Math.round(r.from * 100)}%`} (${r.by.join(', ')}, up to ${r.worst} m over the ice)`).join('; ') : 'none',
         target: 'none',
         pass: !c.stretches.length,
       });
+    }
+    // The finish shot, wide and tall screens (phone and computer drawings): its view of the line and the catch area.
+    if (view.clear.finish) {
+      const fs = Object.entries(view.clear.finish).flatMap(([screen, list]) => list.map((x) => ({ ...x, drawing: screen })));
+      const blocked = fs.filter((x) => x.blocked.length);
+      const close = fs.filter((x) => (x.near && x.near.metres < CAMERA_CUT_M) || x.inside);
+      lines.push({ part: 'Clear track', what: 'The finish shot: nothing drawn between it and the line or the catch area', value: blocked.length ? blocked.map((x) => `${x.drawing}, ${x.screen} screen: ${x.blocked.length} of ${x.looks} looks (${[...new Set(x.blocked.map((b) => b.by))].join(', ')})`).join('; ') : `clear (${fs.length} views)`, target: 'none', pass: blocked.length === 0 });
+      lines.push({ part: 'Clear track', what: `The finish shot: nothing within ${CAMERA_CUT_M} m of its camera, never in the land`, value: close.length ? close.map((x) => `${x.drawing}, ${x.screen}: ${x.inside ? `inside ${x.inside}` : `${x.near.by} ${x.near.metres} m`}`).join('; ') : 'clear', target: 'none', pass: close.length === 0 });
     }
     const cc = view.clear.camera;
     const looks = cc.reduce((n, c) => n + c.looks, 0);

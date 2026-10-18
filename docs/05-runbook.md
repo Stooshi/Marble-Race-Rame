@@ -340,7 +340,7 @@ The iPhone app sells the same four coin packs and the season pass through the Ap
 | A race seems stuck in countdown or running | Restart the server: `recover()` finishes or resumes every unfinished race from what is stored |
 | Players see an old version of the website | It reloads itself once when old code files are gone. Otherwise a hard refresh. Check that Vercel finished building `Main` |
 | `raceFingerprints` test fails | A change altered how past races run. **Do not ship it.** Revert the engine change, or move the change to the new physics with a version bump (`PHYSICS_VERSION`). Never re-record fingerprints without a deliberate decision |
-| A track looks wrong (scenery in the track, camera inside a tunnel) | Drawing only, in `client/src/three/`; the race is unaffected. Run `node scripts/clear-check.js <slug>` |
+| A track looks wrong (scenery in the track, camera inside a tunnel) | Drawing only, in `client/src/three/`; the race is unaffected. Run `node scripts/clear-check.js <slug> --clear-only` (covers the finish straight, the catch area after the line and the finish shot too). Mirrored text: `cd client && npx vitest run test/trackText.test.js` |
 | Admin locked out of the back office | See [2-step reset](#back-office-admins-and-the-2-step-login) |
 | "Forgot your password?" missing on the log-in page | `BREVO_API_KEY` isn't set on Railway (or the server wasn't restarted after setting it) |
 | Reset email doesn't arrive | Look in Brevo → Transactional → Logs. If there's nothing there, see the Railway logs for `Brevo 4xx` (wrong key, or a sender that isn't verified). The player should also check spam. At most 3 links are sent per account per hour |

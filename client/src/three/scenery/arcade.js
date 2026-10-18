@@ -318,6 +318,7 @@ export function buildArcade(centerline, channel, kit, { lite = false, groundAt, 
   cabinet.name = 'arcade: cabinet';
   group.add(cabinet);
   const pictures = new Mesh(merge(quads), pictureMat);
+  pictures.userData.text = { faces: 'front' }; // (its marquee title and side art, each on the cabinet's or board's outer face)
   pictures.name = 'arcade: pictures';
   group.add(pictures);
 

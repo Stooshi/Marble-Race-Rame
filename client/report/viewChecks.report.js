@@ -17,7 +17,9 @@ import { layoutMarbles, MARBLE_RADIUS } from '../src/three/marbles';
 import { TrackScene } from '../src/three/TrackScene';
 import { frameAtTime } from '../src/utils/splits';
 import { flaggedStretches, wallExposure } from '../src/three/scenery/groundCheck';
-import { cameraClearance, corridorIntrusions, markStructures, nameOf, pieceFinder, stretchesOf, tunnelAllowance } from '../src/three/scenery/clearCheck';
+import { cameraClearance, corridorIntrusions, finishShotView, markStructures, nameOf, pieceFinder, stretchesOf, tunnelAllowance } from '../src/three/scenery/clearCheck';
+import { finishShotPose } from '../src/three/TrackScene';
+import { stationRoof } from '../src/three/scenery/coaster';
 
 const anything = new Proxy(function stub() {}, { get: () => anything, apply: () => anything, set: () => true });
 globalThis.document ??= { createElement: () => ({ getContext: () => anything, width: 0, height: 0 }) };
@@ -62,6 +64,14 @@ it.skipIf(!process.env.REPORT_TRACK)('track report: view checks', () => {
     markStructures(structures?.group);
     const intrusions = corridorIntrusions(centerline, channel, drawnHere, { pieceAt: pieceFinder(scenery), allowed: tunnelAllowance(track.physics.kit) });
     out.clear[lite ? 'phone' : 'computer'] = { stretches: stretchesOf(intrusions, channel.arc), samples: intrusions.length };
+    // The finish shot (where the big view settles once anyone is home), on a wide and a tall screen: nothing
+    // between it and the line or the catch area, nothing close round it, never inside the land.
+    if (channel.runout) {
+      const land = drawnHere.filter((o) => o.userData.ground || /^terrain|^banks/.test(nameOf(o)));
+      const shots = [['wide', 16 / 9], ['tall', 9 / 19.5]].map(([screen, aspect]) => ({ screen, ...finishShotView(centerline, channel, finishShotPose(centerline, channel, aspect, { roof: scenery.userData?.station ? stationRoof(scenery.userData.station) : null }), drawnHere, land, { pieceAt: pieceFinder(scenery) }) }));
+      out.clear.finish ??= {};
+      out.clear.finish[lite ? 'phone' : 'computer'] = shots.map((x) => ({ screen: x.screen, looks: x.looks, blocked: x.blocked, near: x.near, inside: x.inside }));
+    }
     out.ground[lite ? 'phone' : 'computer'] = {
       flagged: flaggedStretches(exposure, channel.arc),
       normalMetres: Math.round((exposure.filter((e) => e.kind === 'normal').length / exposure.length) * channel.arc),
@@ -130,7 +140,8 @@ it.skipIf(!process.env.REPORT_TRACK)('track report: view checks', () => {
   };
   const q = new Vector3();
   const ray = new Raycaster();
-  for (const [r, race] of races.entries()) {
+  // (REPORT_CLEAR_ONLY: only the clear-track checks above, for checking many tracks at once.)
+  for (const [r, race] of (process.env.REPORT_CLEAR_ONLY ? [] : races).entries()) {
     for (const [screen, aspect] of [['computer', 16 / 9], ['phone', 9 / 19.5]]) {
       const scene = Object.create(TrackScene.prototype);
       const camera = new PerspectiveCamera(50, aspect, 0.3, 3000);

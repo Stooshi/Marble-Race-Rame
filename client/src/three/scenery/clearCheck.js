@@ -22,6 +22,12 @@ export const CLEAR_ABOVE = 2.5;  // metres over the rim that must be clear (a ma
 export const CAMERA_CLEAR = 1.2; // metres round the follow camera reported as close (a warning)
 export const CAMERA_CUT = 0.5;   // closer than this, the camera's near plane cuts into it: patches over the track (a failure)
 const ACROSS = [-0.95, -0.75, -0.5, -0.25, 0, 0.25, 0.5, 0.75, 0.95]; // shares of the way up each wall
+// The finish: the last FINISH_M metres before the line looked through four times as closely (where every
+// race ends and the finish camera looks), and the catch area past the line, whose floor falls PEN_DROP a metre.
+export const FINISH_M = 60;
+const ACROSS_FINE = Array.from({ length: 17 }, (_, k) => -0.95 + (1.9 * k) / 16);
+const PEN_DROP = 0.05; // (as src/three/marbles.js PEN_DROP)
+const PEN_WALL = 1.6;  // metres: the catch area's walls (TrackScene buildCatchArea)
 const ICE_TOLERANCE = 0.03; // metres above the ice that still counts as the ice (its flat panels)
 
 const UP = new Vector3(0, 1, 0);
@@ -210,7 +216,8 @@ function bothSides(meshes, fn) {
 
 /**
  * Scenery inside the track: [{ p, metres, across, by, height }] (height: metres above the ice),
- * one per sample and position across where something is hit.
+ * one per sample and position across where something is hit. Also the finish (its last FINISH_M metres
+ * more closely) and the catch area past the line (p over 1: metres past the line, `pen: true`).
  */
 export function corridorIntrusions(centerline, channel, meshes, { pieceAt = null, allowed = null } = {}) {
   const { samples, segments } = centerline;
@@ -218,32 +225,115 @@ export function corridorIntrusions(centerline, channel, meshes, { pieceAt = null
   const ray = new Raycaster();
   const out = [];
   for (const m of meshes) m.updateMatrixWorld(true);
+  const finishFrom = Math.max(0, channel.arc - FINISH_M);
+  const look = (from, ice, i, sArc, a, pen = false) => {
+    ray.set(from, DOWN);
+    ray.far = from.y - ice.y - ICE_TOLERANCE;
+    const p = sArc / channel.arc;
+    const hit = ray.intersectObjects(meshes, false).find((h) => !allowed?.(h.object, Math.min(1, p)));
+    if (hit) out.push({ p: +p.toFixed(4), metres: Math.round(sArc), across: a, by: (/^scenery: still$|^landmarks$/.test(nameOf(hit.object)) && pieceAt?.(hit.point)) || nameOf(hit.object), height: +(hit.point.y - ice.y).toFixed(2), point: hit.point.toArray().map((v) => +v.toFixed(1)), ...(pen && { pen: true }) });
+  };
+  const atArc = (sArc) => {
+    const f = Math.min(segments, Math.max(0, sArc / step));
+    const i = Math.min(segments - 1, Math.floor(f));
+    const a = samples[i]; const b = samples[i + 1];
+    return { pos: new Vector3().lerpVectors(a.pos, b.pos, f - i), side: new Vector3(a.side.x, 0, a.side.z).normalize(), i };
+  };
+  const section = (sArc, across, pos, side, i) => {
+    const fork = forkAt(channel, sArc);
+    const us = fork
+      ? [-1, 1].map((b) => ({ centre: pos.clone().addScaledVector(side, b * forkOffset(fork, sArc)), R: forkRadius(fork, channel.radius, sArc), lip: channel.maxAngle }))
+      : [{ centre: pos, R: channelRadiusAt(channel, sArc), lip: channelLipAt(channel, sArc) }];
+    for (const u of us) {
+      const top = u.centre.y + u.R * (1 - Math.cos(u.lip));
+      for (const a of across) {
+        const th = a * u.lip;
+        const ice = u.centre.clone().addScaledVector(side, u.R * Math.sin(th)).addScaledVector(UP, u.R * (1 - Math.cos(th)));
+        const from = ice.clone();
+        from.y = top + CLEAR_ABOVE;
+        look(from, ice, i, sArc, a);
+      }
+    }
+  };
   return bothSides(meshes, () => {
     for (let i = 0; i <= segments; i += 1) {
       const s = samples[i];
       const sArc = i * step;
       const side = new Vector3(s.side.x, 0, s.side.z).normalize();
-      // The U (or a splitter's two Us).
-      const fork = forkAt(channel, sArc);
-      const us = fork
-        ? [-1, 1].map((b) => ({ centre: s.pos.clone().addScaledVector(side, b * forkOffset(fork, sArc)), R: forkRadius(fork, channel.radius, sArc), lip: channel.maxAngle }))
-        : [{ centre: s.pos, R: channelRadiusAt(channel, sArc), lip: channelLipAt(channel, sArc) }];
-      for (const u of us) {
-        const top = u.centre.y + u.R * (1 - Math.cos(u.lip));
-        for (const a of ACROSS) {
-          const th = a * u.lip;
-          const ice = u.centre.clone().addScaledVector(side, u.R * Math.sin(th)).addScaledVector(UP, u.R * (1 - Math.cos(th)));
+      if (sArc >= finishFrom) {
+        // The finish straight: four looks per sample, each across 17 places.
+        for (let k = 0; k < 4 && sArc + (k * step) / 4 <= channel.arc; k += 1) {
+          const at = atArc(sArc + (k * step) / 4);
+          section(sArc + (k * step) / 4, ACROSS_FINE, at.pos, at.side, at.i);
+        }
+      } else {
+        section(sArc, ACROSS, s.pos, side, i);
+      }
+    }
+    // The catch area past the line: its floor, falling gently, between its walls, every metre.
+    const pen = channel.runout;
+    if (pen) {
+      const end = samples[segments];
+      const forward = new Vector3(end.tangent.x, 0, end.tangent.z).normalize();
+      const side = new Vector3(end.side.x, 0, end.side.z).normalize();
+      for (let d = 0; d <= pen.length; d += 1) {
+        for (const a of ACROSS_FINE) {
+          const ice = end.pos.clone().addScaledVector(forward, d).addScaledVector(side, a * pen.halfWidth);
+          ice.y = end.pos.y - d * PEN_DROP;
           const from = ice.clone();
-          from.y = top + CLEAR_ABOVE;
-          ray.set(from, DOWN);
-          ray.far = from.y - ice.y - ICE_TOLERANCE;
-          const hit = ray.intersectObjects(meshes, false).find((h) => !allowed?.(h.object, i / segments));
-          if (hit) out.push({ p: +(i / segments).toFixed(4), metres: Math.round(sArc), across: a, by: (/^scenery: still$|^landmarks$/.test(nameOf(hit.object)) && pieceAt?.(hit.point)) || nameOf(hit.object), height: +(hit.point.y - ice.y).toFixed(2), point: hit.point.toArray().map((v) => +v.toFixed(1)) });
+          from.y = ice.y + PEN_WALL + CLEAR_ABOVE;
+          look(from, ice, segments, channel.arc + d, a, true);
         }
       }
     }
     return out;
   });
+}
+
+/**
+ * The finish shot's view (`pose`: { camera, target } as TrackScene finishShotPose): nothing drawn
+ * between the camera and the finish (the last 25 m of track, at a marble's height, across the
+ * floor) or the catch area past the line, and nothing close round the camera itself.
+ * → { blocked: [{ at (metres past the line, negative before it), by }], near: { by, metres } | null }
+ */
+const SHOT_FOV = 50; // degrees, top to bottom (TrackScene's camera)
+
+export function finishShotView(centerline, channel, pose, meshes, ground = [], { pieceAt = null } = {}) {
+  const { samples, segments } = centerline;
+  const end = samples[segments];
+  const forward = new Vector3(end.tangent.x, 0, end.tangent.z).normalize();
+  const side = new Vector3(end.side.x, 0, end.side.z).normalize();
+  const pen = channel.runout ?? { length: 0, halfWidth: 0 };
+  const points = [];
+  for (let d = -25; d <= pen.length - 2; d += 2.5) {
+    const half = d < 0 ? channelRadiusAt(channel, channel.arc) * 0.6 : pen.halfWidth * 0.75;
+    for (const a of [-1, 0, 1]) {
+      const p = end.pos.clone().addScaledVector(forward, d).addScaledVector(side, a * half);
+      p.y = end.pos.y - Math.max(0, d) * PEN_DROP + 0.55;
+      points.push({ d, p });
+    }
+  }
+  // In the shot: in front of the camera and within its picture (the finish shot's 50° picture, a few degrees spare).
+  const view = pose.target.clone().sub(pose.camera).normalize();
+  const inShot = (p) => {
+    const dir = p.clone().sub(pose.camera);
+    return dir.dot(forward) >= 3 && dir.normalize().dot(view) >= Math.cos((SHOT_FOV / 2 + 4) * Math.PI / 180);
+  };
+  const ray = new Raycaster();
+  const blocked = [];
+  for (const m of meshes) m.updateMatrixWorld(true);
+  bothSides(meshes, () => {
+    for (const { d, p } of points) {
+      const dir = p.clone().sub(pose.camera);
+      if (!inShot(p)) continue; // (behind the camera, or outside its picture)
+      ray.set(pose.camera, dir.clone().normalize());
+      ray.far = dir.length() - 0.6;
+      const hit = ray.intersectObjects(meshes, false)[0];
+      if (hit) blocked.push({ at: d, by: (/^scenery: still$|^landmarks$/.test(nameOf(hit.object)) && pieceAt?.(hit.point)) || nameOf(hit.object), point: hit.point.toArray().map((v) => +v.toFixed(1)) });
+    }
+  });
+  const { near, inside } = cameraClearance(pose.camera, meshes, ground, { pieceAt });
+  return { blocked, near, inside, looks: points.filter(({ p }) => inShot(p)).length };
 }
 
 /**

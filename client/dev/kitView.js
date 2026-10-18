@@ -144,6 +144,32 @@ window.kitView = {
     const v = (x) => [x.x, x.y, x.z];
     return { pos: v(pos), side: v(new Vector3(a.side.x, 0, a.side.z).normalize()), ahead: v(new Vector3(a.tangent.x, 0, a.tangent.z).normalize()), arc: scene.channel?.arc ?? null };
   },
+  /** Dev: hide or show a part of the drawing ('scenery', 'structures', 'features', 'billboards', 'ground', 'track': the channel and finish pieces). */
+  show(part, on) {
+    const g = { scenery: scene.scenery, structures: scene.structures?.group, features: scene.features?.group, billboards: scene.billboards?.group, ground: scene.ground }[part];
+    if (g) g.visible = on;
+    if (part === 'track') for (const c of scene.trackGroup.children) if (![scene.scenery, scene.structures?.group, scene.features?.group, scene.billboards?.group].includes(c)) c.visible = on;
+  },
+  /** Dev: what is drawn at a screen point (pixels from the top left) in the last view: the names up its parents, and the point. */
+  pick({ x, y }) {
+    const ray = new Raycaster();
+    ray.setFromCamera({ x: (x / window.innerWidth) * 2 - 1, y: -(y / window.innerHeight) * 2 + 1 }, scene.camera);
+    const hit = ray.intersectObjects(scene.scene.children, true).find((h) => h.object.visible);
+    if (!hit) return null;
+    const names = [];
+    for (let o = hit.object; o && o !== scene.scene; o = o.parent) names.push(o.name || o.type);
+    const m = hit.object.material; names.push(`colour ${m?.color?.getHexString?.() ?? '?'}${m?.vertexColors ? ' (vertex colours)' : ''}`, `parent index ${scene.scene.children.indexOf(hit.object.parent?.parent ?? hit.object.parent)}`);
+    const owner = [['scenery', scene.scenery], ['structures', scene.structures?.group], ['features', scene.features?.group], ['billboards', scene.billboards?.group]].find(([, g]) => { let found = false; g?.traverse((o) => { if (o === hit.object) found = true; }); return found; });
+    names.push(`in ${owner?.[0] ?? 'the track itself'}`);
+    if (hit.face) {
+      const pos = hit.object.geometry.getAttribute('position');
+      const v = [hit.face.a, hit.face.b, hit.face.c].map((k) => new Vector3().fromBufferAttribute(pos, k).applyMatrix4(hit.object.matrixWorld).toArray().map((x) => +x.toFixed(2)));
+      names.push(`triangle ${JSON.stringify(v)}`);
+      const col = hit.object.geometry.getAttribute('color');
+      if (col) names.push(`vertex colour ${[col.getX(hit.face.a), col.getY(hit.face.a), col.getZ(hit.face.a)].map((x) => x.toFixed(2)).join(',')}`);
+    }
+    return { names, point: hit.point.toArray().map((v) => +v.toFixed(2)), distance: +hit.distance.toFixed(2) };
+  },
   /** Dev (clips): the race at t ms, seen from a fixed camera ([x, y, z] from and to). */
   raceLook({ t, from, to, fov = null }) {
     advance(t, 'leader');

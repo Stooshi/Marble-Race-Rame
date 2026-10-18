@@ -317,6 +317,19 @@ export function buildCoaster(centerline, channel, kit, { lite = false, groundAt,
 
   // The towers: an A-frame of two splayed legs from under the channel down to the land, rungs
   // up it and (computer) a diagonal in each panel. Never one standing in or on another stretch below.
+  // The catch area past the line (its floor and walls), where no leg may stand.
+  const penEnd = samples[segments];
+  const penAlong = new Vector3(penEnd.tangent.x, 0, penEnd.tangent.z).normalize();
+  const penSide = new Vector3(penEnd.side.x, 0, penEnd.side.z).normalize();
+  const inPen = (p) => {
+    const r = channel.runout;
+    if (!r) return false;
+    const dx = p.x - penEnd.pos.x;
+    const dz = p.z - penEnd.pos.z;
+    const u = dx * penAlong.x + dz * penAlong.z;
+    const w = dx * penSide.x + dz * penSide.z;
+    return u > 0.5 && u < r.length + 3 && Math.abs(w) < r.halfWidth + 2 && p.y < penEnd.pos.y + 4;
+  };
   const below = (foot, i, topY) => samples.some((o, j) => Math.abs(j - i) * step >= 40 && o.pos.y < topY - 1
     && Math.hypot(o.pos.x - foot.x, o.pos.z - foot.z) < edgeAt(channel, j, step) + 2.5);
   // (`coaster.style` 'timber': wooden trestle bents instead of steel A-frames: near-upright posts,
@@ -341,6 +354,7 @@ export function buildCoaster(centerline, channel, kit, { lite = false, groundAt,
       return [a, b];
     });
     if (legs.some(([, b]) => below(b, i, top.y))) return;
+    if (legs.some(([t, b]) => [0, 0.25, 0.5, 0.75, 1].some((f) => inPen(t.clone().lerp(b, f))))) return; // (nor one standing in the catch area past the line)
     // Nor one another stretch passes through, between its legs or under its rungs: that one spans the gap.
     const along = new Vector3().crossVectors(side, UP).normalize();
     const through = samples.some((o, j) => {

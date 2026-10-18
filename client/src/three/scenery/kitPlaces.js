@@ -346,7 +346,7 @@ export function buildRaceNetting(centerline, channel, kit, rows) {
     group.add(Object.assign(new Mesh(g, new MeshBasicMaterial({ map: netTexture(), alphaTest: 0.5, side: 2 /* DoubleSide */, transparent: false })), { name: 'netting' }));
   }
   if (poles.length) group.add(Object.assign(new Mesh(merge(poles), lambert()), { name: 'netting poles' }));
-  if (boards.length) group.add(Object.assign(new Mesh(merge(boards), new MeshBasicMaterial({ map: timingBoardTexture() })), { name: 'timing board' }));
+  if (boards.length) group.add(Object.assign(new Mesh(merge(boards), new MeshBasicMaterial({ map: timingBoardTexture() })), { name: 'timing board', userData: { text: {} } }));
   return group;
 }
 
