@@ -651,6 +651,17 @@
    "side": -1,
    "marbles": 4
   },
+  "oaxaca-posadas-run": {
+   "name": "Oaxaca Posadas Run",
+   "series": "World Tour",
+   "lighting": "night",
+   "v": "4271440f",
+   "bytes": 14622,
+   "bytes2x": 36924,
+   "t": 10772,
+   "side": 1,
+   "marbles": 5
+  },
   "okavango-park": {
    "name": "Okavango Park",
    "series": "Coasters",

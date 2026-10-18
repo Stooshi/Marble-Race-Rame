@@ -101,4 +101,5 @@ module.exports = [
   require('./medellin-lights'),
   require('./outback-christmas-burst'),
   require('./quebec-old-town-spins'),
+  require('./oaxaca-posadas-run'),
 ];
