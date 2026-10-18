@@ -32,6 +32,7 @@
 "fish-river-burst": {"family":"canyon","reach":0.218,"seq":["opening: banked-turn","drop","pileUp","slalom","sweep left","S-bends left"]},
 "flipper-spins": {"family":"pinball","reach":0.26,"seq":["opening: classic","drop","pileUp","slalom","straight","hairpin left","swipe","drop","slalom","sweep right","curtain"]},
 "frostmere-marble-grand-prix": {"family":"grand-prix","reach":0.218,"seq":["opening: classic","drop","pileUp","slalom","S-bends left"]},
+"gamla-stan-christmas-run": {"family":"world-tour","reach":0.309,"seq":["opening: peg-drop","drop","peg ×7","straight","rail","box","S-bends right"]},
 "grand-canyon-burst": {"family":"canyon","reach":0.223,"seq":["opening: staggered-drop","drop","pileUp","slalom","brake","straight","slalom","climb"]},
 "grand-champion": {"family":"pinball","reach":0.235,"seq":["opening: split-start","drop","pileUp","slalom","chutes","drop","slalom","straight","peg ×2","S-bends left"]},
 "greenland-expedition": {"family":"world-tour","reach":0.202,"seq":["opening: classic","drop","pileUp","slalom","S-bends left"]},
@@ -86,5 +87,6 @@
 "wizard-mode": {"family":"pinball","reach":0.21,"seq":["opening: crest-start","drop","pileUp","slalom","climb","drop","sweep right"]},
 "wyrmwood-hollow-marble-grand-prix": {"family":"grand-prix","reach":0.226,"seq":["opening: classic","drop","pileUp","slalom","S-bends left"]},
 "yarlung-tsangpo-spins": {"family":"canyon","reach":0.225,"seq":["opening: tunnel-launch","drop","pileUp","slalom","drop","slalom","S-bends left"]},
+"zermatt-marble-grand-prix": {"family":"grand-prix","reach":0.206,"seq":["opening: staggered-drop","drop","pileUp","slalom","brake","straight","table-top","spiral left"]},
 "zurich-golden-lap": {"family":"athletics","reach":0.24,"seq":["opening: tunnel-launch","drop","pileUp","slalom","drop","slalom","straight","peg ×3","sweep right"]}
 }

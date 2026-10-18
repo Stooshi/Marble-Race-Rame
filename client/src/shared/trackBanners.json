@@ -387,6 +387,17 @@
    "side": 1,
    "marbles": 4
   },
+  "gamla-stan-christmas-run": {
+   "name": "Gamla Stan Christmas Run",
+   "series": "World Tour",
+   "lighting": "snow",
+   "v": "19b10c35",
+   "bytes": 16394,
+   "bytes2x": 38718,
+   "t": 10053,
+   "side": 1,
+   "marbles": 5
+  },
   "grand-canyon-burst": {
    "name": "Grand Canyon Burst",
    "series": "Canyons",
@@ -1024,6 +1035,17 @@
    "t": 9802,
    "side": 1,
    "marbles": 4
+  },
+  "zermatt-marble-grand-prix": {
+   "name": "Zermatt Marble Grand Prix",
+   "series": "Grand Prix",
+   "lighting": "sunset",
+   "v": "fb3bb4e0",
+   "bytes": 17016,
+   "bytes2x": 43160,
+   "t": 9833,
+   "side": 1,
+   "marbles": 5
   },
   "zurich-golden-lap": {
    "name": "Zurich Golden Lap",
