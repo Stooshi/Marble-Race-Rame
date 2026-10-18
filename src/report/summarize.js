@@ -24,6 +24,7 @@ const TARGETS = {
   splitPlaces: 0.5,           // places gained or lost going through one channel rather than the other, at most
   hitShare: 5,                // points a group's share of obstacle hits may be off fair
   hop: 1.2,                   // metres, the highest hop in any race
+  jumpTop: 2,                 // metres over the ice, a boost-pad jump's highest flight (a jump, not a launch)
 };
 
 const SINGLE_BATCH_SLACK = 2; // points: a single batch's chance wobble (about 1.5 standard deviations of 1,000 races)
@@ -179,6 +180,15 @@ function summarize(batches, track) {
     const label = kind === 'obstacles' ? 'Obstacle hits' : 'Boost pads taken';
     lines.push({ part: 'Obstacles, boosts, bumps', what: `${label} by starting group`, value: laneShare.map((v) => `${fmt(v)}%`).join(' / '), target: `each ${100 / GROUPS}% ± ${TARGETS.hitShare}`, pass: laneShare.every((v) => Math.abs(v - 100 / GROUPS) <= TARGETS.hitShare) });
     lines.push({ part: 'Obstacles, boosts, bumps', what: `${label} by strength group (strongest first)`, value: strengthShare.map((v) => `${fmt(v)}%`).join(' / '), target: `each ${100 / STRENGTH_GROUPS}% ± ${TARGETS.hitShare}`, pass: strengthShare.every((v) => Math.abs(v - 100 / STRENGTH_GROUPS) <= TARGETS.hitShare) });
+  }
+  const jumps = all.filter((r) => r.jump);
+  if (jumps.length) {
+    // The boost-pad jump: every marble clears it; its flight stays a jump, not a launch.
+    const caught = jumps.reduce((n, r) => n + r.jump.caught, 0);
+    const flights = jumps.reduce((n, r) => n + r.jump.flights, 0);
+    const top = Math.max(...jumps.map((r) => r.jump.top));
+    lines.push({ part: 'Obstacles, boosts, bumps', what: 'Boost-pad jump: marbles that fell short (into the catch channel)', value: `${caught} of ${flights}`, target: 'none', pass: caught === 0 });
+    lines.push({ part: 'Obstacles, boosts, bumps', what: 'Boost-pad jump: highest flight over the ice; slowest off the lip; longest flight', value: `${fmt(top, 2)} m; ${fmt(Math.min(...jumps.map((r) => r.jump.slowest)), 1)} m/s; ${fmt(Math.max(...jumps.map((r) => r.jump.longest)), 1)} m`, target: `at most ${TARGETS.jumpTop} m over the ice`, pass: top <= TARGETS.jumpTop });
   }
   const hops = all.map((r) => r.highestHop).sort((a, b) => a - b);
   const p99 = hops[Math.floor(hops.length * 0.99)];

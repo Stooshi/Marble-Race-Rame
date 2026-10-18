@@ -26,13 +26,14 @@ const cryptoRandom = () => crypto.randomInt(0, 2 ** 32) / 2 ** 32;
 
 /**
  * Picks the showcase looks for `bots` computer players: up to 10 different
- * items in the mix above (never the limited edition), in random order, then
+ * items of the standard collection in the mix above (never a limited edition, a seasonal or a
+ * retired marble, or a season pass's), in random order, then
  * nulls for the rest. `random` is any () => [0, 1) (tests and the report seed it).
  */
 function pickShowcaseLooks(bots, random = cryptoRandom) {
   const picks = [];
   for (const { rarities, count } of SHOWCASE_MIX) {
-    const pool = items.filter((i) => rarities.includes(i.rarity)).map((i) => i.slug);
+    const pool = items.filter((i) => i.kind === 'standard' && rarities.includes(i.rarity)).map((i) => i.slug);
     for (let k = 0; k < count && pool.length; k += 1) picks.push(pool.splice(Math.floor(random() * pool.length), 1)[0]);
   }
   const looks = [...picks, ...new Array(Math.max(0, bots - picks.length)).fill(null)].slice(0, bots);

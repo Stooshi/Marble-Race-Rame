@@ -93,10 +93,20 @@ Days run midnight to midnight **UTC**. Friend-room races pay like any race and c
 | Legendary | 25,000 |
 | Limited (Northern Lights, the launch edition) | 25,000 |
 
+A seasonal collection has its own prices per rarity (below). A season pass's marble is never sold.
+
 **Limited editions:** sold only in their sale window or until their numbered copies are sold, then never again; every copy numbered, with a First Edition certificate. Bags never contain them.
 - **Northern Lights** (LE011), the launch edition: 500 copies (#001–#500) at 25,000 coins, on sale from 1 Dec 2026 00:00 to 31 Dec 2026 23:59 Swedish time (`limited.saleStartsAt` / `saleEndsAt` in the catalogue).
 - Before its window the shop shows it as "Coming 1 December — limited to 500" without a buy button; after the window or once sold out, "Sold out". The server refuses any purchase outside the window, whatever the screen shows.
 - Gifts from support (back office) are not sales: they get a gift number, never one of the 500.
+
+**Kinds of collection** (catalog.json → `collections`, by the two letters of the Marble IDs): the live **standard** collection (Schoolyard Classics, SC), **limited** editions (LE), **seasonal** collections and a **season pass's marble**. Only the standard collection is in bags and on the computer players in beginner races.
+
+**Seasonal collections:** on sale from their release to their retirement at their own prices per rarity, then **retired**: never sold again; owners keep theirs, and they race normally. The shop shows them on the **Seasonal** shelf ("Coming 1 December · on sale until 7 January", then "Leaving in N days"); after retirement they leave the shop, and the Marble Bag and the certificate show "Retired 7 Jan 2027". The server refuses a sale outside the window, whatever the screen shows (409 before, 410 after). The first 500 of each are a numbered First Edition, as for every marble.
+- **Winter 2026** (WI011–WI051), for the Holiday Season: Snowball (Common, 800 coins), Frost Clearie (Common, 800), Candy Cane (Uncommon, 2,000), Evergreen (Rare, 4,500), Midwinter Star (Epic, 9,000), one shade each. On sale 1 Dec 2026 00:00 to 7 Jan 2027 23:59 Swedish time.
+
+**A season pass's marble:** never sold; only the season's pass holders get it, the moment the pass is granted, numbered in the order the passes were granted ("Holiday 2026 #0001", certificate "Holiday Season 2026 pass edition"). An open edition: no fixed size, it closes when the pass stops being sold. A pass refunded in full or charged back takes the marble back (its number is never handed out again); a player who still holds the pass another way keeps it. An hourly job gives it to any pass holder still without it.
+- **Winter Solstice** (HS011), the Holiday Season 2026 pass marble: deep blue glass, a frosted star burst at its heart, snowflakes drifting through it.
 
 **Bags:** the buyer chooses the shade.
 - **Starter Bag:** the 3 Commons at 15% off.
@@ -169,14 +179,15 @@ A season (the first: **Holiday Season 2026**, `holiday-2026`, 1 Dec 2026 00:00 t
 
 **The Track of the Day:** each day of the season (Swedish calendar day) one season track is featured (`seasons.featured`). On it, a pass holder's **full-pay races** (the first 10 of the day) pay **+50% of the race's coins** (taking part and the finishing bonus) as a separate ledger line, `featured-bonus`. After the day's full races there is no bonus. The bonus is **neither earned nor bought**: it never counts on the scoreboards or in a player's earned coins (decided 17 Oct 2026: it comes with a paid pass, and money never buys a place on a scoreboard). Free players see the Track of the Day locked with "Get the pass".
 
-**The pass** (`holiday-pass-2026`, $9.99): real money only, never coins.
-- **On the web:** Stripe Checkout (test mode until Moses says otherwise), with the same immediate-delivery consent as coin packs. The pass arrives only when Stripe's signed webhook confirms the payment, once.
+**The pass** (`holiday-pass-2026`, $9.99): real money only, never coins. Its terms are section 2 of the terms of sale (`/legal#season-pass`); the Help Centre's "Season pass" category answers the common questions (its dates and price are written there, kept in step with the season's row).
+- **On the web:** Stripe Checkout (test mode until Moses says otherwise), with an immediate-delivery consent of its own ("I want my pass delivered right away…"), stored with the payment like a coin pack's. The pass arrives only when Stripe's signed webhook confirms the payment, once.
 - **On Android:** Google Play; the server checks the purchase with Google and **acknowledges** it (a pass is kept, never consumed). A purchase made outside the sale window, or a second pass while holding one, is not taken and left unacknowledged, so Google refunds it by itself within 3 days.
 - **On iPhone:** the App Store, a non-consumable in-app purchase. The server checks Apple's signature, this player and the sale window; a pass bought outside the window, or a second one, is not given (Apple can't be asked by us to refund: the player asks Apple, and the back office sees it flagged). "Restore purchases" on the pass page gives back a pass the player already has, never a second.
 - **Sold** from the season's start (1 Dec 2026, no pre-sale, decided 18 Oct) to its end, with an "ends in N days" countdown from 1 Jan. The server refuses a sale outside the window, or a second pass.
 - **One pass works everywhere:** bought on one platform, owned on all.
 - **No coins move:** a pass payment is a row in `payments` with 0 coins and its `season_key`.
-- **A full refund or a chargeback** revokes the pass: the season's tracks lock again for that player until the season ends (the season marble, once built, is taken back too). Partial refunds leave the pass.
+- **A full refund or a chargeback** revokes the pass: the season's tracks lock again for that player until the season ends, and the season marble (Winter Solstice) is taken back. Partial refunds leave the pass.
+- **The season marble** comes with the pass ("Kinds of collection" above).
 
 ## Age and accounts
 

@@ -42,9 +42,9 @@ ${lines.map((l) => `-- ${l}`).join('\n')}
 -- Nothing else is touched.
 
 WITH added AS (
-    INSERT INTO tracks (slug, name, description, difficulty, length_m, lane_count, waypoints, obstacles, physics, is_active)
+    INSERT INTO tracks (slug, name, description, difficulty, length_m, lane_count, waypoints, obstacles, physics, is_active${t.physics.kit?.season ? ', season_key' : ''})
     SELECT v.slug, v.name, v.description, v.difficulty::track_difficulty, v.length_m, v.lane_count,
-           v.waypoints::jsonb, v.obstacles::jsonb, v.physics::jsonb, false
+           v.waypoints::jsonb, v.obstacles::jsonb, v.physics::jsonb, false${t.physics.kit?.season ? `, ${q(t.physics.kit.season)}` : ''}
     FROM (VALUES
         (${q(t.slug)}, ${q(t.name)},
          ${q(t.description)},

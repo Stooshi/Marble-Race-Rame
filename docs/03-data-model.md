@@ -33,7 +33,7 @@ marbles ──< user_marbles   (the older plain marbles; looks only)
 ```
 
 **What is *not* in the database:**
-- The marble collection catalogue (designs, shades, prices): `client/src/shared/marbles/catalog.json`.
+- The marble collection catalogue (designs, shades, prices; the kinds of collection: standard, limited, seasonal with its own prices and dates, a season pass's marble): `client/src/shared/marbles/catalog.json`.
 - The economy numbers: `client/src/shared/economy.json`.
 - The coin packs: `client/src/shared/payments/packs.json`.
 - The contact form's categories and limits: `client/src/shared/support.json`.
@@ -171,9 +171,9 @@ Friend rooms.
 | Column | Meaning |
 |---|---|
 | `user_id`, `item_slug` | Owner and item (`<design>-<shade>`, from `catalog.json`). A player can own **one copy per item** |
-| `source` | `purchase`, `grant` (gift from support) or `legacy-gift` |
-| `copy_no` | Which bought copy of this item it is: 1, 2, 3… |
-| `edition_no` | **The First Edition number**: equals `copy_no` for the first 500 copies of an item (the whole run for a limited edition), otherwise NULL |
+| `source` | `purchase`, `grant` (a gift from support, or a season pass's marble) or `legacy-gift` |
+| `copy_no` | Which bought copy of this item it is: 1, 2, 3… (a season pass's marble: which pass holder's, in the order passes were granted) |
+| `edition_no` | **The First Edition number**: equals `copy_no` for the first 500 copies of an item (the whole run for a limited edition), otherwise NULL. A season pass's marble: its pass edition number ("Holiday 2026 #0001"), every copy, price 0. Its counter (`collection_counters.bought`) only grows, so a number taken back with a refunded pass is never handed out again |
 | `gift_no` | Numbering for gifts. Gifts never use a First Edition number |
 | `marble_code` | The ID on the certificate, e.g. `SC105-000037` (gifts: `SC105-G00012`). Unique |
 | `currency`, `price_paid` | What was paid (`coins`; `credits` only on copies from before coins-only) |

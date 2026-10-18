@@ -31,16 +31,25 @@ export default function LegalPage() {
       <h1 id="sale" className="ms-h2 ms-legal__h1">Terms of sale</h1>
       <p>The seller is {company.name} (org.nr {company.orgNo}, VAT no. {company.vatNo}), {ADDRESS}. How to reach us: <a href="#contact">Contact</a>.</p>
       <h2 className="ms-legal__h2">1. What you buy</h2>
-      <p>Coin packs: 5,000 coins for $5, 10,500 for $10, 27,500 for $25 and 57,500 for $50 (shown in your local currency, VAT included). Coins are used to buy cosmetic marbles, bags and limited editions in the shop. [Coins do / do not expire.]</p>
-      <h2 className="ms-legal__h2">2. Payment</h2>
-      <p>Payments on the website are handled by Stripe; we never see or store your card details. Your coins are added as soon as Stripe confirms the payment, and Stripe emails you a receipt. Each purchase has an order number, listed with its receipt on your Purchases page. In the iPhone and Android apps, purchases go through Apple or Google and follow their payment and refund rules.</p>
-      <h2 className="ms-legal__h2">3. Right of withdrawal</h2>
+      <p>Coin packs: 5,000 coins for $5, 10,500 for $10, 27,500 for $25 and 57,500 for $50 (shown in your local currency, VAT included). Coins are used to buy cosmetic marbles, bags and limited editions in the shop. [Coins do / do not expire.] The season pass is described in section 2.</p>
+      <h2 id="season-pass" className="ms-legal__h2">2. Season pass</h2>
+      <p>The Holiday Season Pass 2026 costs $9.99 (shown in your local currency, VAT included). It is one payment, not a subscription, and is sold for money only, never for coins. It gives you, from 1 December 2026 until the season ends on 7 January 2027 at 23:59 Swedish time:</p>
+      <ul>
+        <li>access to all the season's holiday tracks (31 tracks), whenever during the season you buy it;</li>
+        <li>the Track of the Day bonus: on the day's featured track, +50% race coins on your full-pay races of the day. The bonus never counts on the scoreboards;</li>
+        <li>the season marble, Winter Solstice, numbered in the order passes are bought, which you keep after the season.</li>
+      </ul>
+      <p>After the season ends the holiday tracks are free for everyone, and the pass is no longer sold. The pass belongs to your Marble Spins account and works on the website and in the apps. It has no cash value and can't be transferred, exchanged or resold. Like everything in the game, it never changes how fast a marble is.</p>
+      <p>The pass is delivered as soon as the payment is confirmed. You agree to immediate delivery and confirm that this ends your right of withdrawal (section 4) when you buy it. If a pass payment is refunded in full or reversed, the pass is removed: the holiday tracks lock again for you until the season ends, and the season marble is removed from your Marble Bag. Passes bought in the iPhone or Android app are refunded by Apple or Google under their rules.</p>
+      <h2 className="ms-legal__h2">3. Payment</h2>
+      <p>Payments on the website are handled by Stripe; we never see or store your card details. Your coins (or your pass) are added as soon as Stripe confirms the payment, and Stripe emails you a receipt. Each purchase has an order number, listed with its receipt on your Purchases page. In the iPhone and Android apps, purchases go through Apple or Google and follow their payment and refund rules.</p>
+      <h2 className="ms-legal__h2">4. Right of withdrawal</h2>
       <p>Under EU consumer law you normally have 14 days to withdraw from an online purchase. For digital content delivered right away, that right ends once delivery starts, but only if you agreed to immediate delivery and confirmed that you lose the right. We ask for both at checkout.</p>
-      <h2 className="ms-legal__h2">4. Refunds</h2>
+      <h2 className="ms-legal__h2">5. Refunds</h2>
       <p>Coins and items aren't refundable once delivered, except where the law requires it: for example a faulty delivery, a purchase made by a minor without a guardian's consent, or a successful chargeback. <Link to={CONTACT_PATH}>Contact us</Link> with your order number and we'll help. When a payment is refunded or reversed, the coins it added are removed from your account (only as many as are left, if some were already spent).</p>
-      <h2 className="ms-legal__h2">5. Young players</h2>
+      <h2 className="ms-legal__h2">6. Young players</h2>
       <p>Under 18? Ask a parent or guardian before buying. Parents can <Link to={CONTACT_PATH}>contact us</Link> about purchases made without their consent.</p>
-      <h2 className="ms-legal__h2">6. Complaints</h2>
+      <h2 className="ms-legal__h2">7. Complaints</h2>
       <p><Link to={CONTACT_PATH}>Contact us</Link> first. You can also turn to the Swedish National Board for Consumer Disputes (ARN) or the EU's online dispute platform.</p>
       <h1 id="privacy" className="ms-h2 ms-legal__h1">Privacy policy</h1>
       <h2 className="ms-legal__h2">Who is responsible</h2>

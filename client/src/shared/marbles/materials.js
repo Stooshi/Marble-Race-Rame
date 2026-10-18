@@ -293,6 +293,21 @@ const BUILDERS = {
     return { body: [parts.body], detail, twinkle: true, halo: { color: parts.glow, size: 2.6, opacity: 0.32 } };
   },
 
+  // The Holiday Season 2026 designs (Winter 2026 and the pass's Winter Solstice): the pictures' layers
+  // on the ball by the common recipe, as approved on /preview/marbles/holiday.
+  /** Snowball: the picture's packed snow and its shading staying put, the swirls and specks rolling with the ball. */
+  snowball: fromParts,
+  /** Frost Clearie: the picture's ice-blue glass, its frost feathers twisting round the ball. */
+  'frost-clearie': fromParts,
+  /** Candy Cane: the picture's stripes twisting round the ball, its shine on top. */
+  'candy-cane': fromParts,
+  /** Evergreen: the picture's green bands and snow cap, painted on the ball. */
+  evergreen: fromParts,
+  /** Midwinter Star: the picture's star fixed in the ball, its glowing heart and sparkles over it, a gold halo. */
+  'midwinter-star': fromParts,
+  /** Winter Solstice: the picture's blue glass staying put, its star burst and snowflakes rolling with the ball, a soft halo. */
+  'winter-solstice': fromParts,
+
   /** Northern Lights: the picture's night sky, with its three aurora ribbons and stars fixed in the ball. */
   'aurora-glass': fromParts,
   /**

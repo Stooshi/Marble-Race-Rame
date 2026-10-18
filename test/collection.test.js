@@ -6,14 +6,14 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('fs');
 const path = require('path');
-const { catalog, items, bySlug, byId, normaliseId, marbleCode, saleState, onSale } = require('../src/marbles/catalog');
+const { catalog, items, bySlug, byId, normaliseId, marbleCode, saleState, onSale, collectionOf } = require('../src/marbles/catalog');
 
-test('every design has a story, a race note, a material and its shades (5, or 1 for a limited edition)', () => {
+test('every design has a story, a race note, a material and its shades (5 in the standard collection, else 1)', () => {
   assert.ok(catalog.designs.length > 0);
   for (const d of catalog.designs) {
     assert.ok(d.story && d.inRaces && d.material && Number.isInteger(d.no), d.key);
     assert.ok(catalog.rarities[d.rarity], `${d.key}: unknown rarity ${d.rarity}`);
-    assert.equal(d.shades.length, d.limited ? 1 : 5, d.key);
+    assert.equal(d.shades.length, collectionOf(d).kind === 'standard' ? 5 : 1, d.key);
     assert.ok(d.shades[0].original, `${d.key}: the first shade is the original`);
   }
   assert.equal(items.length, catalog.designs.reduce((n, d) => n + d.shades.length, 0));
@@ -35,7 +35,7 @@ test('every shade has a name, a description and one named colour per material sl
 test('Marble IDs: two letters and three digits, one per item; the collection, the design and the shade', () => {
   assert.equal(new Set(items.map((i) => i.id)).size, items.length);
   for (const i of items) assert.match(i.id, /^[A-Z]{2}\d{3}$/);
-  const regular = items.filter((i) => !i.design.limited);
+  const regular = items.filter((i) => i.kind === 'standard');
   for (const i of regular) assert.equal(i.id, `${catalog.collection.code}${String(i.design.no).padStart(2, '0')}${i.shade.no}`);
   // The design numbers run 01 to 10 and the shades 1 to 5 (Classic, Ocean, Forest, Berry, Sunset).
   assert.deepEqual([...new Set(regular.map((i) => i.design.no))].sort((a, b) => a - b), [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].slice(0, new Set(regular.map((i) => i.design.key)).size));
@@ -52,7 +52,7 @@ test('Marble IDs: two letters and three digits, one per item; the collection, th
 });
 
 test('Schoolyard Classics: 10 designs in 5 shades, the rarities as planned, the next collections dated', () => {
-  const regular = catalog.designs.filter((d) => !d.limited);
+  const regular = catalog.designs.filter((d) => collectionOf(d).kind === 'standard');
   assert.equal(catalog.collection.code, 'SC');
   assert.equal(regular.length, 10);
   assert.deepEqual(regular.map((d) => d.rarity), ['common', 'common', 'common', 'uncommon', 'uncommon', 'uncommon', 'rare', 'rare', 'epic', 'legendary']);
@@ -60,9 +60,9 @@ test('Schoolyard Classics: 10 designs in 5 shades, the rarities as planned, the 
   assert.deepEqual(catalog.comingSoon.map((c) => [c.code, c.date]), [['HH', '2026-12-08'], ['MG', '2026-12-15'], ['AG', '2026-12-22']]);
 });
 
-test('prices come from the rarity; regular marbles stay on sale after the First Edition; a limited edition ends', () => {
-  for (const i of items) assert.deepEqual(i.price, catalog.rarities[i.rarity].price);
-  const regular = items.find((i) => !i.design.limited);
+test('prices come from the rarity (a seasonal collection\'s from its own list); regular marbles stay on sale after the First Edition; a limited edition ends', () => {
+  for (const i of items.filter((x) => x.kind === 'standard' || x.kind === 'limited')) assert.deepEqual(i.price, catalog.rarities[i.rarity].price);
+  const regular = items.find((i) => i.kind === 'standard');
   assert.ok(onSale(regular, new Date('2030-01-01'), 5000));
   const limited = items.find((i) => i.design.limited);
   if (limited) {
@@ -89,7 +89,38 @@ test('Northern Lights, the launch limited edition: 500 numbered copies at 25,000
   assert.equal(saleState(nl, new Date('2026-12-10T12:00:00Z'), 500), 'sold-out');
   assert.ok(!onSale(nl, new Date('2026-11-15T12:00:00Z'), 0));
   // Regular marbles have no window.
-  assert.equal(saleState(items.find((i) => !i.design.limited), new Date('2026-10-17T12:00:00Z'), 0), 'on-sale');
+  assert.equal(saleState(items.find((i) => i.kind === 'standard'), new Date('2026-10-17T12:00:00Z'), 0), 'on-sale');
+});
+
+test('Winter 2026, a seasonal collection: 5 designs at its own prices, on sale 1 Dec 2026 to 7 Jan 2027 Swedish time, then retired for good', () => {
+  const winter = items.filter((i) => i.kind === 'seasonal');
+  assert.deepEqual(winter.map((i) => [i.id, i.design.name, i.rarity, i.price.coins]), [
+    ['WI011', 'Snowball', 'common', 800], ['WI021', 'Frost Clearie', 'common', 800], ['WI031', 'Candy Cane', 'uncommon', 2000],
+    ['WI041', 'Evergreen', 'rare', 4500], ['WI051', 'Midwinter Star', 'epic', 9000],
+  ]);
+  for (const i of winter) {
+    assert.equal(i.collection, 'Winter 2026');
+    assert.equal(i.editionSize, 500); // (the first 500 of each are the numbered First Edition, as for every marble)
+    assert.equal(saleState(i, new Date('2026-11-30T22:59:59Z')), 'coming');
+    assert.equal(saleState(i, new Date('2026-11-30T23:00:00Z')), 'on-sale');
+    assert.equal(saleState(i, new Date('2027-01-07T22:59:58Z'), 9999), 'on-sale');
+    assert.equal(saleState(i, new Date('2027-01-07T22:59:59Z')), 'retired');
+    assert.equal(saleState(i, new Date('2030-01-01T00:00:00Z')), 'retired');
+  }
+});
+
+test('the Holiday Season 2026 pass marble, Winter Solstice: never sold, an open numbered edition of its season', () => {
+  const { passMarbleOf } = require('../src/marbles/catalog');
+  const ws = passMarbleOf('holiday-2026');
+  assert.equal(ws.slug, 'winter-solstice-2026');
+  assert.equal(ws.id, 'HS011');
+  assert.equal(ws.design.name, 'Winter Solstice');
+  assert.equal(ws.price.coins, null);
+  assert.equal(ws.editionSize, null);
+  for (const t of ['2026-10-01', '2026-12-10', '2027-02-01']) assert.equal(saleState(ws, new Date(t)), 'pass-only');
+  assert.equal(passMarbleOf('nothing'), null);
+  const { passNumber } = require('../src/marbles/collection');
+  assert.equal(passNumber(ws, 1), 'Holiday 2026 #0001');
 });
 
 test('no one-off data update retires the plain marbles or hands out collection marbles (retiring a whole collection is allowed)', () => {

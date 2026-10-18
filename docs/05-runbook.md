@@ -291,6 +291,8 @@ The pass `holiday-pass-2026` ($9.99) is bought with real money only. Its season,
 - **App Store:** App Store Connect → the app → In-App Purchases → *Create*: type **Non-Consumable**, product ID `holiday-pass-2026`, reference name "Holiday Season Pass 2026", price USD 9.99, the same description as on Google Play, **Family Sharing off** (the server refuses family-shared purchases), a review screenshot of the pass page. Remove it from sale after 7 Jan 2027 23:59. Setting up App Store purchases in general: "App Store purchases" below.
 - **A second pass paid for** (bought on the website and in the app at the same time): the audit log shows `pass-duplicate` for that player. Refund the second payment from the back office.
 - **Before the season starts** nobody can race the holiday tracks, even when switched on; from 7 Jan 2027 23:59 Swedish time they are free for everyone. Nothing has to be deployed on either date.
+- **The season marble** (Winter Solstice) is given by the server with each pass, numbered, and taken back with a full refund; nothing to do. Its hourly job also gives it to any pass holder still without one (for example passes from before the deploy that built it).
+- **The holiday tracks** are added switched off with `season_key` set: a track file with `season: 'holiday-2026'` makes `node scripts/physics-track-sql.js <slug> --add-hidden "…"` write `season_key` into its data update. Store texts for the products: project doc `claude/store-submission-drafts.md`, section 7.
 
 ## App Store purchases (the iPhone app)
 

@@ -41,6 +41,71 @@ function auroraGlass([a, b, c, sky]) {
   return { layers: [...lights, skyLayer], parts: { body: [skyLayer], pattern: { layers: lights, map: 'front', repeat: 180 }, glow: a } };
 }
 
+// ── Holiday Season 2026: the Winter 2026 collection and the pass's Winter Solstice ──
+// (Approved on /preview/marbles/holiday, 17 Oct 2026: the very same layers, the colours now from the catalogue.)
+
+/** A round dot of colour at (x, y), with a soft glow round it when `glow` is set. */
+const dot = (x, y, r, color, glow = 0) => ({
+  type: 'radial', at: [x, y],
+  stops: glow ? [[color, 0, r], [alpha(color, 0.35), r + glow * 0.5], [T, r + glow]] : [[color, 0, r], [T, r + 0.9]],
+});
+// Snowflakes and frost specks: fixed places, so the picture and the ball match.
+const SNOW = [
+  [20, 24, 0.9], [34, 13, 0.6], [52, 18, 0.7], [68, 12, 0.6], [81, 27, 0.8], [88, 46, 0.6], [13, 44, 0.7], [22, 64, 0.6],
+  [71, 62, 0.7], [84, 72, 0.6], [38, 82, 0.8], [57, 88, 0.6], [15, 78, 0.5], [92, 58, 0.5], [62, 36, 0.5], [42, 52, 0.5], [30, 38, 0.4], [76, 44, 0.4],
+];
+
+const HOLIDAY_LOOKS = {
+  /** Winter Solstice (the pass marble): deep blue glass, a frosted star burst at its heart, snowflakes drifting through it. */
+  'winter-solstice': ([sky, mid, deep, rays, core, glow]) => {
+    const body = { type: 'radial', at: [44, 40], stops: [[sky, 0], [mid, 55], [deep, 100]] };
+    const burst = { type: 'conic', repeat: true, stops: [[alpha(rays, 0.32), 0, 1.2], [T, 2.6, 15]] };
+    const heart = { type: 'radial', stops: [['#FFFFFF', 0], [alpha(core, 0.85), 7], [alpha(glow, 0.35), 20], [T, 38]] };
+    const lights = [...SNOW.map(([x, y, r]) => dot(x, y, r, '#FFFFFF', 1.4)), heart, burst];
+    return { layers: [...lights, body], parts: { body: [body], pattern: { layers: lights, map: 'front', repeat: 180 } } };
+  },
+  /** Snowball: packed white snow with deep icy-blue shadows, blue swirls where it was rolled and a darker rim (it stands out on snow). */
+  snowball: ([snow, shadow, ice, deep, rim, swirl, swirlLight, speck]) => {
+    const body = { type: 'radial', at: [36, 30], stops: [['#FFFFFF', 0], [snow, 20], [shadow, 46], [ice, 74], [deep, 92], [rim, 100]] };
+    const swirls = { type: 'conic', at: [44, 40], repeat: true, stops: [[T, 0, 18], [alpha(swirl, 0.8), 24], [alpha(swirlLight, 0.5), 31], [T, 38, 60]] };
+    const lights = [...SNOW.map(([x, y, r]) => dot(x, y, r * 0.75, alpha(speck, 0.95))), swirls];
+    return { layers: [...lights, body], parts: { body: [body], pattern: { layers: lights, map: 'front', repeat: 180 } } };
+  },
+  /** Frost Clearie: clear ice-blue glass with feathers of frost twisting through it. */
+  'frost-clearie': ([core, glass, edge]) => {
+    // (The glass opaque, where the preview had it at 95%: the 3D ball then matches its picture point for point.)
+    const body = { type: 'radial', at: [40, 36], stops: [[core, 0], [glass, 55], [edge, 100]] };
+    const frost = { type: 'conic', repeat: true, stops: [[alpha('#FFFFFF', 0.55), 0, 2], [T, 5, 24]] };
+    const pattern = { layers: [frost], map: 'gores', twist: 50, repeat: 24 };
+    return { layers: [{ type: 'ball', pattern, view: 'axis' }, body], parts: { body: [body], pattern } };
+  },
+  /** Candy Cane: white with red and pale-pink stripes twisting round it. */
+  'candy-cane': ([white, red, pink]) => {
+    const stripes = { type: 'conic', repeat: true, stops: [[white, 0, 22], [red, 22, 36], [white, 36, 46], [pink, 46, 52], [white, 52, 60]] };
+    const pattern = { layers: [stripes], map: 'gores', twist: 170, repeat: 60 };
+    const shine = { type: 'radial', at: [36, 30], stops: [[alpha('#FFFFFF', 0.35), 0], [T, 40]] };
+    const base = { type: 'solid', color: white };
+    // (The white base under the ball, as in the 3D marble's body: hidden in the picture under the stripes.)
+    return { layers: [shine, { type: 'ball', pattern, view: 'axis' }, base], parts: { body: [base], pattern, over: [shine] } };
+  },
+  /** Evergreen: bands of forest green like an agate, a cap of fresh snow on top. */
+  evergreen: ([pine, fir, sage, deepForest, snow]) => {
+    const cap = { type: 'radial', at: [50, 2], stops: [['#FFFFFF', 0], [snow, 15], [alpha('#E8F0F8', 0.8), 19], [T, 23]] };
+    const rings = { type: 'radial', repeat: true, at: [40, 70], stops: [[pine, 0, 5], [fir, 5, 9], [sage, 9, 11], [deepForest, 11, 16]] };
+    return { layers: [cap, rings], parts: { pattern: { layers: [cap, rings], map: 'front', repeat: 18 } } };
+  },
+  /** Midwinter Star: midnight-indigo glass with a glowing eight-point gold star at its heart. */
+  'midwinter-star': ([indigo, night, deepNight, gold, amber, sparkle]) => {
+    const body = { type: 'radial', at: [46, 40], stops: [[indigo, 0], [night, 60], [deepNight, 100]] };
+    const star = { type: 'conic', repeat: true, from: -6, stops: [[gold, 0, 12], [T, 15, 45]] };
+    const fade = { type: 'radial', stops: [[T, 0, 26], [alpha(night, 0.92), 40], [night, 48]] };
+    // (Its amber glow at 60%, where the preview had 45%: warm enough that at night it only darkens, the same hue.)
+    const halo = { type: 'radial', stops: [['#FFFFFF', 0, 3], [gold, 9], [alpha(amber, 0.6), 20], [T, 42]] };
+    const lights = [halo, ...SNOW.slice(0, 10).map(([x, y, r]) => dot(x, y, r * 0.7, sparkle, 1.2))];
+    return { layers: [...lights, fade, star, body], parts: { body: [body], pattern: { layers: [fade, star], map: 'front', repeat: 180 }, over: lights } };
+  },
+};
+
 /**
  * Each material: shade colours (in the design's slot order) → { layers, parts }.
  * layers: the picture, top first. parts: the same layer objects and colours,
@@ -137,6 +202,7 @@ const LOOKS = {
    * rolls (SHIMMER: the 3D ribbons brighten and fade with the ball's turning; the picture's sheen drifts).
    */
   'aurora-glow': (colours) => auroraGlass(colours),
+  ...HOLIDAY_LOOKS,
   // Plain striped Originals.
   stripe: ([s, b]) => {
     const bands = { type: 'linear', repeat: true, angle: 0, stops: [[s, 0, 16], [b, 16, 32]] };
@@ -145,9 +211,9 @@ const LOOKS = {
 };
 
 /** Which looks turn in their picture (moving patterns), and how fast. */
-const SPIN = { corkscrew: 'fast', 'flame-swirl': 'slow', 'aurora-glass': 'slow', 'aurora-glow': 'slow' };
+const SPIN = { corkscrew: 'fast', 'flame-swirl': 'slow', 'aurora-glass': 'slow', 'aurora-glow': 'slow', 'winter-solstice': 'slow', 'candy-cane': 'slow', 'midwinter-star': 'slow' };
 /** Which looks glow, and in what colour (slot index). */
-const GLOW = { 'flame-swirl': 0, champion: 0, 'aurora-glass': 0, 'aurora-glow': 0 };
+const GLOW = { 'flame-swirl': 0, champion: 0, 'aurora-glass': 0, 'aurora-glow': 0, 'winter-solstice': 5, 'midwinter-star': 3 };
 /** How strong a look's glow is in its picture (the shadow's opacity; 0.5 unless set here). */
 export const GLOW_STRENGTH = { 'aurora-glow': 0.72 };
 /** Which looks shimmer as they roll (the 3D ribbons brighten and fade; the picture's sheen drifts). */

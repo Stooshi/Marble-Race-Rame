@@ -17,7 +17,7 @@ const RADIUS = 0.55;
 const UP = new Vector3(0, 1, 0);
 const BUILT = [...new Set(ITEMS.filter((i) => BUILT_MATERIALS.includes(i.design.material)).map((i) => i.design.key))];
 // The race of 20: every finished look (each shade), round again until there are 20.
-const RACE_LOOKS = ITEMS.filter((i) => BUILT_MATERIALS.includes(i.design.material) && !i.design.limited).map((i) => i.slug);
+const RACE_LOOKS = ITEMS.filter((i) => BUILT_MATERIALS.includes(i.design.material) && i.kind === 'standard').map((i) => i.slug);
 
 function useShowroom(canvasRef, { mode, design, night, plain }) {
   const [fps, setFps] = useState(null);

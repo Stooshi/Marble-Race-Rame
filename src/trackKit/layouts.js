@@ -19,7 +19,7 @@
  */
 
 const {
-  straight, plunge, climb, sBends, sweep, spiral, hairpin, splitter, waterfall, halfPipe, box, rail, tableTop, jibLine,
+  straight, plunge, climb, sBends, sweep, spiral, hairpin, splitter, waterfall, halfPipe, box, rail, tableTop, jibLine, boostJump,
   pileUp, block, curtain, swipe, parked, slalom, peg, boost, moguls, rumble, steps, brake, paint,
 } = require('./parts');
 
@@ -1257,6 +1257,23 @@ const LAYOUTS = {
     { key: 'sBends', name: 'S-bends', shape: sBends({ first: L, radius: 55, degrees: 110, grade: 0.13 }), billboards: 2 },
     { key: 'jibs', name: 'Jib line', shape: straight(110, { grade: 0.13 }), features: jibLine({ from: 0.1 }) },
     { key: 'boxStraight', name: 'Box straight', shape: straight(70, { grade: 0.13 }), features: [box({ at: 0.35, length: 12 })], obstacles: [peg({ costume: c.peg, at: 0.8, line: 'left' })] },
+    { key: 'sweep', name: 'Sweep', shape: sweep({ side: R, radius: 85, degrees: 130, grade: 0.09 }), billboards: 2 },
+    {
+      key: 'pegStraight', name: 'Peg straight', shape: straight(70, { grade: 0.12 }),
+      obstacles: [peg({ costume: c.peg, at: 0.2, line: 'center' }), peg({ costume: c.peg, at: 0.4, line: 'left' }), peg({ costume: c.peg, at: 0.6, line: 'right' }), slalom({ costume: c.slalom, from: 0.72, to: 0.95, count: 3, loss: 0.15 })],
+    },
+    { key: 'brakingStraight', name: 'Run to the hairpin', shape: straight(50, { grade: 0.12 }), obstacles: [peg({ costume: c.peg, at: 0.2, line: 'right' })] },
+    { key: 'hairpin', name: 'Hairpin', shape: hairpin({ side: L }) },
+    { key: 'spin', name: 'Spiral', shape: spiral({ side: R, radius: 50, turns: 1.1, grade: 0.16 }) },
+    {
+      key: 'lastStraight', name: 'Last straight', shape: straight(95, { grade: 0.15 }),
+      obstacles: [parked({ costume: c.parked, at: 0.2, side: L, length: 6 }), peg({ costume: c.peg, at: 0.45, line: 'right' })], features: [rumble({ from: 0.72, to: 0.95, count: 3 })],
+    },
+  ],
+  /** L73 Jump run (the boost-pad jump's proving layout): deep S-bends, a long straight with the boost-pad jump (a peg after it), a sweep, a peg straight, the hairpin, a spiral and the run-in. */
+  'jump-run': (L, R, c) => [
+    { key: 'sBends', name: 'S-bends', shape: sBends({ first: L, radius: 55, degrees: 110, grade: 0.13 }), billboards: 2 },
+    { key: 'jumpStraight', name: 'Jump straight', shape: straight(140, { grade: 0.12 }), features: [boostJump({ at: 0.25 })], obstacles: [peg({ costume: c.peg, at: 0.95, line: 'left' })] },
     { key: 'sweep', name: 'Sweep', shape: sweep({ side: R, radius: 85, degrees: 130, grade: 0.09 }), billboards: 2 },
     {
       key: 'pegStraight', name: 'Peg straight', shape: straight(70, { grade: 0.12 }),

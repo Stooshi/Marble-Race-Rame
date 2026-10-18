@@ -121,7 +121,7 @@ function busParts(length) {
 /** The track's features in metres along the track (`total` metres long), sorted along it. */
 function normaliseFeatures(features, total) {
   return (Array.isArray(features) ? features : [])
-    .filter((f) => f && Number.isFinite(f.at) && (f.type === 'boost' || f.type === 'bump' || f.type === 'cobbles' || f.type === 'box' || ALL_SOLID_TYPES.includes(f.type)))
+    .filter((f) => f && Number.isFinite(f.at) && (f.type === 'boost' || f.type === 'bump' || f.type === 'cobbles' || f.type === 'box' || f.type === 'jump' || ALL_SOLID_TYPES.includes(f.type)))
     .map((f, id) => ({ ...f, id, s: f.at * total, l: Number(f.l) || 0 }))
     .sort((a, b) => a.s - b.s);
 }

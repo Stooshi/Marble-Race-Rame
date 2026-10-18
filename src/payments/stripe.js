@@ -86,7 +86,7 @@ async function start(payment, { pack, email, locale, siteUrl }) {
     },
     success_url: `${site}/purchases?paid=${encodeURIComponent(payment.order_no)}&session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: pass ? `${site}/pass?cancelled=1` : `${site}/checkout?pack=${encodeURIComponent(pack.id)}&cancelled=1`,
-    custom_text: { submit: { message: consent.stripeSubmit } },
+    custom_text: { submit: { message: pass ? consent.passStripeSubmit : consent.stripeSubmit } },
     locale: locale || 'auto',
     expires_at: Math.floor(Date.now() / 1000) + 60 * 60, // (an hour, then the order lapses)
   };

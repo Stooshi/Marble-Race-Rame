@@ -178,12 +178,21 @@ function track(spec) {
         placed.push({ section: i, kind: f.part, at, length: f.length, width: f.width, height: f.height, down: f.down ?? 0 });
         continue;
       }
+      if (f.feature === 'jump') {
+        // A boost-pad jump: the launch pad (a boost wall to wall, with its minimum speed), 2 m on the kicker,
+        // then the gap and the landing deck (physics 'jump'); the catch channel's exit after the deck.
+        features.push({ type: 'boost', at, l: 0, length: f.pad, halfWidth: 5.2, kick: f.kick, min: f.min });
+        const jumpAt = round4(at + (f.pad + 2) / total);
+        features.push({ type: 'jump', at: jumpAt, kicker: f.kicker, height: f.height, gap: f.gap, landing: f.landing, deck: f.deck, depth: f.depth, exit: 8, look: f.look });
+        placed.push({ section: i, kind: 'jump', at, length: f.pad + 2 + f.kicker + f.gap + f.landing + 8, height: f.height, gap: f.gap, deck: f.deck, min: f.min, kicker: f.kicker, landing: f.landing });
+        continue;
+      }
       if (f.feature === 'bump') features.push({ type: 'bump', at });
       else if (f.feature === 'boost') features.push({ type: 'boost', at, l: f.l, length: f.length, halfWidth: f.halfWidth, ...(f.kick !== undefined && { kick: f.kick }) });
       else if (f.feature === 'brake') features.push({ type: 'cobbles', at, length: f.length, drag: f.drag });
       else if (f.feature === 'paint') { features.push({ type: 'paint', at, length: Math.round((f.to - f.from) * metres(i) * 10) / 10, look: f.look }); continue; } // (looks only)
       else {
-        problems.push(`${where(sec.name)}: features must come from the kit (bump, boost, brake, moguls, steps, paint, rumble, box, rail, tableTop).`);
+        problems.push(`${where(sec.name)}: features must come from the kit (bump, boost, brake, moguls, steps, paint, rumble, box, rail, tableTop, boostJump).`);
         continue;
       }
       placed.push({ section: i, kind: f.feature, at });
@@ -273,6 +282,8 @@ function track(spec) {
     lighting: spec.lighting || 'day',
     ...(spec.variants?.length && { variants: [...spec.variants] }),
     ...(spec.signature && { signature: spec.signature }),
+    // A season's track (e.g. 'holiday-2026'): its data update sets tracks.season_key, so only the season's pass holders race it during the season.
+    ...(spec.season && { season: spec.season }),
     // TV moments: fixed trackside cameras the big view cuts to as the followed marble comes by (drawing only).
     ...(spec.tvCameras?.length && {
       tv: spec.tvCameras.map((c) => {

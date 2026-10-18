@@ -264,6 +264,18 @@ function jibLine({ from = 0.1 } = {}) {
 }
 
 /**
+ * A boost-pad jump (`look`: 'ski-jump', 'river-jump'): a launch pad wall to wall (`pad` metres), then a
+ * kicker ramp (`kicker` metres, rising `height`), a short gap (`gap` metres) and a landing deck
+ * (`landing` metres, from `deck` metres above the ice at its lip easing down to the ice). The pad adds
+ * its `kick` and brings every marble up to at least `min` m/s, the speed that carries even the slowest
+ * over the gap with room to spare; a hidden catch channel under the gap (`depth` metres down) brings
+ * back any marble that still falls short, past the deck. `at`: where the pad starts (share of the section).
+ */
+function boostJump({ at = 0.3, look = 'ski-jump', pad = 6, kick = 4, min = 22, kicker = 20, height = 0.9, gap = 4, landing = 40, deck = 0.5, depth = 1.6 } = {}) {
+  return { feature: 'jump', at, look, pad, kick, min, kicker, height, gap, landing, deck, depth, part: 'jump' };
+}
+
+/**
  * Paint on the floor, looks only (the physics never sees it): relay exchange zones ('exchange-zone'), a Go board ('go-board') or a
  * Xiangqi board ('xiangqi') over the stretch from `from` to `to` (China Wall Twister's board-game run).
  */
@@ -278,7 +290,7 @@ function brake({ at = 0.7, length = 15, drag = 0.02 } = {}) {
 
 module.exports = {
   SHARP_RADIUS, EASE, START_RAMP, LIP_STEP, LIP_LENGTH,
-  plunge, straight, climb, sBends, sweep, spiral, hairpin, splitter, waterfall, runIn, halfPipe, box, rail, tableTop, jibLine,
+  plunge, straight, climb, sBends, sweep, spiral, hairpin, splitter, waterfall, runIn, halfPipe, box, rail, tableTop, jibLine, boostJump,
   block, pileUp, curtain, swipe, parked, slalom, peg,
   bump, boost, brake, moguls, steps, paint, rumble,
   TUNNELS: ['mine', 'ice-cave', 'dragon', 'rock', 'roots', 'bazaar', 'canyon', 'mosaic', 'pyramid', 'sea-cave', 'lit-tunnel', 'redwood-trunk', 'city-wall', 'subway'],

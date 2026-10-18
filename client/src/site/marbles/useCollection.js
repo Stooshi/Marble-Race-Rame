@@ -2,6 +2,7 @@ import { useCallback, useMemo } from 'react';
 import { api } from '../../api/client';
 import { useAsync } from '../../hooks/useAsync';
 import { useAuth } from '../../context/AuthContext';
+import { windowOf } from '../../shared/marbles';
 
 /**
  * The live collection: every item's First Edition count and whether it's on
@@ -59,4 +60,36 @@ export function limitedLine(sale) {
   if (sale.state === 'coming') return `Coming ${sale.opens} — limited to ${sale.size.toLocaleString('en-US')}`;
   if (sale.state === 'sold-out') return 'Sold out';
   return `${sale.left.toLocaleString('en-US')} of ${sale.size.toLocaleString('en-US')} left${sale.closes ? ` · on sale until ${sale.closes}` : ''}`;
+}
+
+const DAY_YEAR = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'Europe/Stockholm' });
+// (A window ending at midnight or at 23:59:59 has its last day on the day before midnight.)
+const lastDay = (iso) => new Date(new Date(iso).getTime() - 1000);
+const DAY_MS = 86400000;
+
+/**
+ * A seasonal collection's marble in the shop: { state: 'coming' | 'on-sale' | 'retired', opens: "1
+ * December", closes: "7 January", daysLeft, retired: "7 Jan 2027" } from its window in the catalogue
+ * (Swedish time); null for any other marble.
+ */
+export function seasonalSale(item, now = new Date()) {
+  if (item?.kind !== 'seasonal') return null;
+  const end = lastDay(item.saleEndsAt);
+  const state = windowOf(item, now);
+  // Days left, counting today: "Leaving today" on the last day.
+  const daysLeft = state === 'on-sale' ? Math.max(0, Math.ceil((new Date(item.saleEndsAt).getTime() - now.getTime()) / DAY_MS) - 1) : null;
+  return { state, opens: DAY.format(new Date(item.saleStartsAt)), closes: DAY.format(end), daysLeft, retired: DAY_YEAR.format(end) };
+}
+
+/** The line a seasonal marble shows: "Coming 1 December · until 7 January", "Leaving in 12 days", "Leaving today", "Retired 7 Jan 2027". */
+export function seasonalLine(sale) {
+  if (sale.state === 'coming') return `Coming ${sale.opens} · on sale until ${sale.closes}`;
+  if (sale.state === 'retired') return `Retired ${sale.retired}`;
+  if (sale.daysLeft === 0) return 'Leaving today';
+  return `Leaving in ${sale.daysLeft} day${sale.daysLeft === 1 ? '' : 's'} · until ${sale.closes}`;
+}
+
+/** "Retired 7 Jan 2027" for a seasonal marble after its retirement, else null (the Marble Bag and certificates). */
+export function retiredLine(item, now = new Date()) {
+  return item?.kind === 'seasonal' && windowOf(item, now) === 'retired' ? `Retired ${DAY_YEAR.format(lastDay(item.saleEndsAt))}` : null;
 }

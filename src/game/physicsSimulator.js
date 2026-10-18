@@ -390,13 +390,17 @@ function advanceChannel(m, time, ctx) {
   if (!m.airborne) {
     a += -G * ROLLING * slope * m.glide * m.form - G * ICE_CRR + m.push * m.form * Math.max(0, 1 - m.v / m.pushFade);
     a -= ICE_SCRUB * ice.scrub * m.knockLoss * m.v * m.v * Math.abs(turn); // handling: skids less in the bends
+    // (Up a jump's kicker and down its landing deck: the same for every marble.)
+    if (m.jump) a -= G * ROLLING * jumpLiftSlope(m.jump, m.s);
     // Boost pads: rolling onto the chevrons kicks the marble forwards, a burst
     // you can see (the air drag then eats it up over the next few seconds).
     for (const f of ctx.boosts ?? []) {
       if (m.branch || m.lastBoost === f.id || m.s < f.s || m.s > f.s + f.length) continue;
       if (Math.abs(radius * m.th - f.x) > f.halfWidth) continue;
       m.lastBoost = f.id;
-      m.v += f.kick ?? BOOST_KICK; // a pad's own kick (San Francisco's are gentler), else the usual
+      // A pad's own kick (San Francisco's are gentler), else the usual; a launch pad before a jump also
+      // brings every marble up to at least its `min` speed, so even the slowest clears the gap.
+      m.v = f.min ? Math.max(m.v + (f.kick ?? BOOST_KICK), f.min) : m.v + (f.kick ?? BOOST_KICK);
       if (stats) stats.features.boost += 1;
       note('boost', 'boost_pad');
     }
@@ -481,6 +485,11 @@ function advanceChannel(m, time, ctx) {
     }
   }
 
+  // Boost-pad jumps: up the kicker, off its lip over the gap, down onto the landing deck. A marble that
+  // would fall short drops into the hidden catch channel under the gap, which brings it back onto the
+  // track past the deck. Only on tracks that have one (physics.features 'jump').
+  if (ctx.jumps && !m.branch) advanceJump(m, before, time, ctx, slope, note);
+
   const entering = !m.branch && ctx.forks ? ctx.forks.find((f) => before < f.s0 && m.s >= f.s0) : null;
   if (entering) {
     fork = entering;
@@ -508,12 +517,14 @@ function advanceChannel(m, time, ctx) {
 
   // --- up and down (air) --------------------------------------------------------
   // (On a jib part the floor is its flat top, easing back down over a table top's drop-off.)
-  const lift = m.onBox ? boxLift(m.onBox, m.s) : 0;
+  const lift = m.onBox ? boxLift(m.onBox, m.s) : m.jump ? jumpLift(m.jump, m.s) : 0;
+  // (The surface's slope under the marble: on a jump's kicker or deck, theirs on top of the track's.)
+  const surfaceSlope = m.jump ? slope + jumpLiftSlope(m.jump, m.s) : slope;
   if (!air) {
     m.y = look.floor(m.s) + lift;
   } else if (!m.airborne) {
     m.y = look.floor(m.s) + lift;
-    m.vy = m.v * slope;
+    m.vy = m.v * surfaceSlope;
     if ((-look.bend(m.s) / (stretch * stretch)) * m.v * m.v > G * 0.95) {
       m.airborne = true;
       m.airSince = time;
@@ -523,7 +534,7 @@ function advanceChannel(m, time, ctx) {
     m.y += m.vy * DT;
     const floor = look.floor(m.s) + lift;
     if (m.y <= floor) {
-      const surface = m.v * slope;
+      const surface = m.v * surfaceSlope;
       const impact = surface - m.vy;
       const airtime = time - m.airSince;
       if (stats) {
@@ -531,6 +542,11 @@ function advanceChannel(m, time, ctx) {
         if (airtime > stats.longestAir) stats.longestAir = airtime;
       }
       m.y = floor;
+      if (m.jumpFlight && !(m.jump?.part === 'flight' && m.s < m.jump.j.s2)) { // (short, into the catch channel: logged as caught)
+        // (The jump report: how fast each marble left the lip, how far it flew and how high over the ice.)
+        stats.jumpFlights.push({ v: m.jumpFlight.v, distance: Math.round((m.s - m.jumpFlight.from) * 10) / 10, top: Math.round(m.jumpFlight.top * 100) / 100, impact: Math.round(impact * 10) / 10 });
+        m.jumpFlight = null;
+      }
       if (impact > 1.2) {
         m.vy = surface + impact * 0.3;
         m.airSince = time;
@@ -539,9 +555,10 @@ function advanceChannel(m, time, ctx) {
         m.vy = surface;
       }
       m.v *= 1 - 0.02 * Math.min(1, impact / 3) * m.knockLoss;
-    } else if (stats && m.y - floor > stats.highestAir) {
+    } else if (stats && !m.jumpFlight && m.y - floor > stats.highestAir) { // (a jump's flight is meant: it has its own lines in the report)
       stats.highestAir = m.y - floor;
     }
+    if (m.jumpFlight && m.y - look.floor(m.s) > m.jumpFlight.top) m.jumpFlight.top = m.y - look.floor(m.s);
   }
   return before;
 }
@@ -616,6 +633,8 @@ function collideChannel(marbles, time, ctx) {
       const ds = b.s - a.s;
       if (ds >= DIAMETER) break; // sorted along the track: nobody further on can touch
       if (a.branch && b.branch && a.branch !== b.branch) continue;
+      // (A marble in a jump's catch channel is under the track: it meets nobody up on it.)
+      if (ctx.jumps && (a.jump?.part === 'catch' || b.jump?.part === 'catch')) continue;
       const dx = cs[j].x - cs[i].x;
       const dy = cs[j].y - cs[i].y;
       const d2 = ds * ds + dx * dx + dy * dy;
@@ -703,6 +722,77 @@ const BOX_LIP = 0.5;         // m/s upwards at the lip: a little lift onto the t
 const BOX_SIDE = 0.18;       // metres: a marble this close to a top's side is pushed round it…
 const BOX_NUDGE = 2.2;       // …at this speed across the channel
 const BOX_SIDE_LOSS = 0.02;  // and loses this share of its speed
+
+// Boost-pad jumps (track kit: boostJump): a launch pad, a kicker ramp, a short gap and a landing deck
+// easing back down to the ice; under the gap a hidden catch channel. Every marble clears it: the pad
+// brings each one up to at least the speed that carries it over with room to spare.
+const CATCH_LOSS = 0.3;      // share of speed a marble caught under the gap loses (the catch channel's soft net)
+const CATCH_GRACE = 0.05;    // metres: a marble this little below the deck's lip still lands on it
+
+/** A jump's surface under a marble on it, in metres above the ice (the catch channel: below it). */
+function jumpLift(st, s) {
+  const j = st.j;
+  if (st.part === 'kicker') { const u = clamp((s - j.s0) / (j.s1 - j.s0), 0, 1); return j.height * u * u; }
+  if (st.part === 'catch') return s < j.s3 ? -j.depth : -j.depth * clamp(1 - (s - j.s3) / j.exit, 0, 1);
+  if (s < j.s2) return -j.depth; // (in flight over the gap: the catch channel's floor below)
+  const w = clamp((s - j.s2) / (j.s3 - j.s2), 0, 1);
+  return j.deck * (1 - w) * (1 - w);
+}
+/** …and its slope (rise per metre along). */
+function jumpLiftSlope(st, s) {
+  const j = st.j;
+  if (st.part === 'kicker') return (2 * j.height * clamp((s - j.s0) / (j.s1 - j.s0), 0, 1)) / (j.s1 - j.s0);
+  if (st.part === 'catch') return s < j.s3 ? 0 : j.depth / j.exit;
+  if (s < j.s2) return 0;
+  const w = clamp((s - j.s2) / (j.s3 - j.s2), 0, 1);
+  return (-2 * j.deck * (1 - w)) / (j.s3 - j.s2);
+}
+
+/** One step of a marble at a boost-pad jump (see advanceChannel). */
+function advanceJump(m, before, time, ctx, slope, note) {
+  const { look, stats } = ctx;
+  if (!m.jump) {
+    const j = ctx.jumps.find((x) => before < x.s0 && m.s >= x.s0);
+    if (!j) return;
+    m.jump = { j, part: 'kicker' };
+    // (Already in the air as it reaches the kicker: it flies on and lands where it lands.)
+    if (m.airborne) m.jump.part = 'flight';
+  }
+  const st = m.jump;
+  const j = st.j;
+  if (st.part === 'kicker' && m.s >= j.s1) {
+    // Off the lip: up and over the gap.
+    st.part = 'flight';
+    m.y = look.floor(m.s) + j.height;
+    m.airborne = true;
+    m.airSince = time;
+    m.vy = m.v * (slope + (2 * j.height) / (j.s1 - j.s0));
+    if (stats) { stats.features.jump += 1; m.jumpFlight = { from: m.s, v: Math.round(m.v * 10) / 10, top: 0 }; }
+    note('jump');
+  }
+  if (st.part === 'flight') {
+    // Over the deck's lip, or under it into the catch channel (short of it).
+    if (before < j.s2 && m.s >= j.s2 && m.y < look.floor(j.s2) + j.deck - CATCH_GRACE) st.part = 'catch';
+    else if (m.s < j.s2 && m.y <= look.floor(m.s) - j.depth) st.part = 'catch';
+    if (st.part === 'catch') {
+      m.v = Math.max(0.5, m.v * (1 - CATCH_LOSS));
+      if (stats) {
+        stats.features.caught = (stats.features.caught ?? 0) + 1;
+        if (m.jumpFlight) { stats.jumpFlights.push({ v: m.jumpFlight.v, caught: true }); m.jumpFlight = null; }
+      }
+      note('bounce', 'jump_catch');
+    }
+  }
+  if (st.part === 'catch') {
+    m.airborne = false;
+    m.y = look.floor(m.s) + jumpLift(st, m.s);
+    m.vy = m.v * slope;
+    if (m.s >= j.s3 + j.exit) m.jump = null; // back on the ice past the deck
+    return;
+  }
+  // Past the deck (or flown right over it): on the ice again.
+  if (m.s >= j.s3) m.jump = null;
+}
 
 /** How high a jib part's top stands where a marble on it is: its height, easing down over a table top's drop-off. */
 function boxLift(bx, s) {
@@ -1015,6 +1105,13 @@ function simulatePhysicsRace({ seed, track, entries, level = 3, tickRateHz = 20 
     ctx.bumps = features.filter((f) => f.type === 'bump');
     ctx.boxes = features.filter((f) => f.type === 'box').map((f, id) => ({ id, s0: f.s, s1: f.s + f.length, x: across(f.l ?? 0), half: f.half, height: f.height, down: f.down ?? 0, full: f.look === 'table-top' }));
     if (!ctx.boxes.length) ctx.boxes = null;
+    // Boost-pad jumps: kicker s0–s1, gap s1–s2, landing deck s2–s3 (metres along), the catch channel's exit after it.
+    ctx.jumps = features.filter((f) => f.type === 'jump').map((f, id) => ({
+      id, s0: f.s, s1: f.s + f.kicker, s2: f.s + f.kicker + f.gap, s3: f.s + f.kicker + f.gap + f.landing,
+      height: f.height, deck: f.deck, depth: f.depth ?? 1.6, exit: f.exit ?? 8,
+    }));
+    if (!ctx.jumps.length) ctx.jumps = null;
+    else if (stats) stats.jumpFlights = [];
     ctx.cobbles = features.filter((f) => f.type === 'cobbles').map((f) => ({ ...f, length: f.length ?? 25, drag: f.drag ?? 0.01 }));
     ctx.solids = features.filter((f) => ALL_SOLID_TYPES.includes(f.type)).map((f) => ({
       ...f,
@@ -1034,7 +1131,7 @@ function simulatePhysicsRace({ seed, track, entries, level = 3, tickRateHz = 20 
       ? busParts(o.length ?? 10).map((d, k) => ({ ...o, id: `${o.id}:${k}`, s: o.s + d, ...(o.onePiece && { hitId: o.id }) }))
       : [o]));
     stats.features = {
-      boost: 0, bump: 0, ...(ctx.boxes && { box: 0 }), ...Object.fromEntries(SOLID_TYPES.map((t) => [t, 0])),
+      boost: 0, bump: 0, ...(ctx.boxes && { box: 0 }), ...(ctx.jumps && { jump: 0, caught: 0 }), ...Object.fromEntries(SOLID_TYPES.map((t) => [t, 0])),
       // The kit's solids, listed only on tracks that have them (today's races record exactly as before).
       ...Object.fromEntries(KIT_SOLID_TYPES.filter((t) => features.some((f) => f.type === t)).map((t) => [t, 0])),
     };
@@ -1113,7 +1210,8 @@ function simulatePhysicsRace({ seed, track, entries, level = 3, tickRateHz = 20 
       }
       t.s.push(m.s);
       t.x.push(ctx.channel ? m.th / ctx.channel.maxAngle : m.x / roomFull);
-      t.h.push(air ? Math.max(0, m.y - look.floor(m.s)) : 0);
+      // (Under a jump's gap, in its catch channel, a marble is below the ice: a negative height.)
+      t.h.push(air ? (m.jump?.part === 'catch' ? m.y - look.floor(m.s) : Math.max(0, m.y - look.floor(m.s))) : 0);
       t.v.push(m.v);
       t.b.push(m.branch || 0);
       t.a.push(0);
@@ -1270,6 +1368,7 @@ function simulatePhysicsRace({ seed, track, entries, level = 3, tickRateHz = 20 
       averageSpeed: results[0]?.finishTimeMs ? Math.round((total / (results[0].finishTimeMs / 1000)) * 10) / 10 : null,
       trackMetres: Math.round(total),
       ...(stats.features && { features: stats.features }),
+      ...(stats.jumpFlights && { jumpFlights: stats.jumpFlights }),
     ...(stats.fork && { splitter: splitterStats(stats.fork) }),
     ...(stats.forks && { splitters: stats.forks.map(splitterStats) }),
     },

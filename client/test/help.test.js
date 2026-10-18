@@ -17,11 +17,11 @@ const slugs = (query) => search(index, query).map((r) => r.question.slug);
 const n = (v) => v.toLocaleString('en-US');
 
 describe('the questions', () => {
-  it('has the draft\'s 12 categories and every question once, each with its own link', () => {
+  it('has the draft\'s 12 categories and the Season pass, every question once, each with its own link', () => {
     expect(faq.map((s) => s.title)).toEqual(['Getting started', 'Races', 'Fair play', 'Coins', 'Marbles and the collection', 'Buying coins',
-      'Refunds', 'Friend rooms', 'Account and settings', 'Younger players and parents', 'Technical help', 'Contact us']);
-    expect(all.length).toBe(74); // (the draft: 6, 8, 4, 9, 10, 8, 4, 6, 7, 3, 5 and 4)
-    expect(faq.map((s) => s.questions.length)).toEqual([6, 8, 4, 9, 10, 8, 4, 6, 7, 3, 5, 4]);
+      'Refunds', 'Season pass', 'Friend rooms', 'Account and settings', 'Younger players and parents', 'Technical help', 'Contact us']);
+    expect(all.length).toBe(85); // (the draft: 6, 8, 4, 9, 10, 8, 4, 6, 7, 3, 5 and 4; then seasonal collections, the season marble and the Season pass's 9)
+    expect(faq.map((s) => s.questions.length)).toEqual([6, 8, 4, 9, 12, 8, 4, 9, 6, 7, 3, 5, 4]);
     expect(new Set(all.map((q) => q.slug)).size).toBe(all.length);
     for (const q of all) expect(q.slug).toMatch(/^[a-z0-9]+(-[a-z0-9]+)*$/);
     expect(bySlug['whats-my-daily-streak'].q).toBe("What's my daily streak?");
@@ -98,6 +98,20 @@ describe('the questions', () => {
   it('offers the help sections as contact categories', () => {
     expect(CONTACT_CATEGORIES).toEqual([...faq.map((s) => s.title).filter((t) => t !== 'Contact us'), 'Privacy and your data', 'Something else']);
     for (const c of CONTACT_CATEGORIES) expect(c.length).toBeLessThanOrEqual(40); // (support_messages.category)
+  });
+});
+
+describe('the season pass and seasonal answers', () => {
+  it('say what the pass gives, until when, and what a refund takes back', () => {
+    expect(bySlug['whats-in-the-holiday-season-pass'].text).toContain('$9.99');
+    expect(bySlug['whats-in-the-holiday-season-pass'].text).toContain('all 31 holiday tracks from around the world, from 1 December 2026');
+    expect(bySlug['how-long-does-the-pass-last'].text).toContain('7 January 2027 at 23:59 Swedish time');
+    expect(bySlug['how-do-i-get-a-refund-for-the-pass'].text).toContain('Winter Solstice leaves your Marble Bag');
+    expect(bySlug['what-is-the-track-of-the-day'].text).toContain("doesn't count on the scoreboards");
+  });
+  it('take the seasonal collection from the catalogue', () => {
+    expect(bySlug['what-is-a-seasonal-collection'].text).toContain('Snowball (800 coins), Frost Clearie (800 coins), Candy Cane (2,000 coins), Evergreen (4,500 coins) and Midwinter Star (9,000 coins), on sale from 1 December 2026 to 7 January 2027');
+    expect(bySlug['what-is-the-season-marble'].text).toContain('Holiday 2026 #0001');
   });
 });
 

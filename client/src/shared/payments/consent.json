@@ -1,7 +1,9 @@
 {
-  "note": "What a player agrees to at checkout for a coin pack. The server stores this exact text with each payment (payments.consent_text), so change `version` whenever the wording changes.",
-  "version": "2026-10-14",
+  "note": "What a player agrees to at checkout for a coin pack (withdrawal, terms, stripeSubmit) or the season pass (passWithdrawal, terms, passStripeSubmit). The server stores this exact text with each payment (payments.consent_text), so change `version` whenever the wording changes.",
+  "version": "2026-10-18",
   "withdrawal": "I want my coins delivered right away. I understand that I lose my 14-day right of withdrawal once they're delivered.",
   "terms": "I'm 18 or older, or a parent or guardian has agreed to this purchase. I accept the terms of sale.",
-  "stripeSubmit": "By paying you ask for your coins to be delivered right away and agree that your 14-day right of withdrawal ends once they're delivered."
+  "stripeSubmit": "By paying you ask for your coins to be delivered right away and agree that your 14-day right of withdrawal ends once they're delivered.",
+  "passWithdrawal": "I want my pass delivered right away. I understand that I lose my 14-day right of withdrawal once it's delivered.",
+  "passStripeSubmit": "By paying you ask for your pass to be delivered right away and agree that your 14-day right of withdrawal ends once it's delivered."
 }

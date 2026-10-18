@@ -78,6 +78,16 @@ function analyzeRace(sim, entries, track) {
     forks,
     hits,
     highestHop: sim.stats.highestAirMetres,
+    // A boost-pad jump's flights (tracks with one): how many fell short, the highest over the ice, the slowest off the lip.
+    ...(sim.stats.jumpFlights && {
+      jump: {
+        flights: sim.stats.jumpFlights.length,
+        caught: sim.stats.jumpFlights.filter((f) => f.caught).length,
+        top: Math.max(0, ...sim.stats.jumpFlights.map((f) => f.top ?? 0)),
+        slowest: Math.min(...sim.stats.jumpFlights.map((f) => f.v)),
+        longest: Math.max(0, ...sim.stats.jumpFlights.map((f) => f.distance ?? 0)),
+      },
+    }),
     bumps: sim.stats.features?.bump ?? 0,
   };
 }

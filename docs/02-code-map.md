@@ -72,7 +72,7 @@
 - `rng.js`: the seeded random-number generator (mulberry32). The engines never use `Math.random` or the clock.
 - `skill.js`: skill is the player's, not the marble's. `skillStats(skill)` sets all four engine stats to the skill. Also `HOUSE_SKILLS` (the computer players, 45–55) and `STARTING_SKILL` (50).
 - `simulator.js`: the **classic** 1-D engine (`SIMULATOR_VERSION = 'solid-marbles-1'`). Old races are **re-simulated** from their seed, so this file must never change behaviour.
-- `physicsSimulator.js`: the **new physics** engine (`PHYSICS_VERSION`), used by every track with `tracks.physics`. Half-pipes (`channel.wides`: the channel widening into a U, `wideAt`) and jib parts (features `box`: raised flat tops marbles ride over or are pushed round, `boxLift`) race only on tracks that have them. Its races are stored as replays (`race_replays`), so tuning it never changes a past race. The comments at the top of this file and `routes/physics.js` still say real races use the classic engine; that is no longer true.
+- `physicsSimulator.js`: the **new physics** engine (`PHYSICS_VERSION`), used by every track with `tracks.physics`. Half-pipes (`channel.wides`: the channel widening into a U, `wideAt`), jib parts (features `box`: raised flat tops marbles ride over or are pushed round, `boxLift`) and boost-pad jumps (features `jump`: kicker, gap, landing deck and the hidden catch channel, `advanceJump`, `jumpLift`; a launch pad is a `boost` with a `min` speed; `stats.jumpFlights` for the report) race only on tracks that have them. Its races are stored as replays (`race_replays`), so tuning it never changes a past race. The comments at the top of this file and `routes/physics.js` still say real races use the classic engine; that is no longer true.
 - `runSimulation.js`: picks the engine; `packReplay` gzips a physics race.
 - `simulationPool.js` + `simulationWorker.js`: run simulations in a worker thread, falling back to the main thread.
 - `raceService.js`: the database side of a race:
@@ -99,8 +99,8 @@
 - `src/tracks/README.md`: the guide for building a track.
 - `trackKit/`: the kit itself:
   - `index.js`: `track(spec)`, plus a recipe check that throws an error naming the broken rule;
-  - `parts.js`: shapes, obstacles and features, with proven numbers;
-  - `openings.js`, `layouts.js`: proven starts and section orders (L30–L39 and L50–L54 were made for the Canyon Series, L40–L49 and L55–L59 for the Block Series, L60–L69 for Track and Field);
+  - `parts.js`: shapes, obstacles and features, with proven numbers (also `boostJump`: the launch pad, kicker, gap and landing deck, proven on the jump run, L73; the recipe allows one a track, on a straight, every marble clearing it at the pad's minimum speed);
+  - `openings.js`, `layouts.js`: proven starts and section orders (L30–L39 and L50–L54 were made for the Canyon Series, L40–L49 and L55–L59 for the Block Series, L60–L69 for Track and Field, L70–L73 the skatepark parts' proving layouts);
   - `recipe.js`: the rules. Families: `world-tour`, `grand-prix`, `coaster`, `pinball`, `arcade`, `canyon`, `block`, `athletics`, `test`. A **Track and Field** track (`family: 'athletics'`, `athletics: { stadium, lanes }`, sections' `stadium: true`, surface `tartan` or `tartan-blue`) is built the same way, on the ground, with concrete columns (`coaster.style: 'concrete'`) under any ramp; A **Block Series** track (`family: 'block'`, `block: { world }`) is built the same way, on voxel land, with block-pillar supports (`coaster.style: 'blocks'`); A **canyon** (`family: 'canyon'`, `canyon: { palette, depth, river, narrow }`, sections' `walls`) is built as a coaster whose sections run on the canyon floor unless they give a `height`;
   - `mirror.js`;
   - `lighting.js`: lighting chosen per race from its seed; looks only.
@@ -113,9 +113,10 @@
 - `html.js`: writes the report page.
 
 **`marbles/`: the collection.**
-- `catalog.js`: reads `catalog.json`. Builds items (design × shade), IDs like `SC105` and certificate codes like `SC105-000037` (gifts: `SC105-G00012`). `saleState()`: a limited edition is `coming` before its sale window (`limited.saleStartsAt`), `on-sale` in it, `sold-out` after it (`saleEndsAt`) or once every numbered copy is sold; `onSale()` is true only when on sale.
+- `catalog.js`: reads `catalog.json`. Builds items (design × shade), IDs like `SC105` and certificate codes like `SC105-000037` (gifts: `SC105-G00012`). Each item has its collection's `kind` (`collectionOf`: catalog.json → `collections` by its code; `standard`, `limited`, `seasonal`, `pass`), its price (a seasonal collection's own per rarity) and its window. `saleState()`: `coming` before its window (a limited edition's `limited.saleStartsAt`, a seasonal collection's `releaseAt`), `on-sale` in it, `sold-out` after a limited edition's window or once every numbered copy is sold, `retired` after a seasonal collection's `retireAt`, `pass-only` for a season pass's marble; `onSale()` is true only when on sale. `isStandard()` (bags and the showcase use only these), `passMarbleOf(seasonKey)`.
 - `collection.js`:
-  - buying (`buy`, which hands out First Edition numbers and refuses a limited edition outside its window: 409 before, 410 after, whatever the screen shows), gifts (`grantCopy`) and bags;
+  - buying (`buy`, which hands out First Edition numbers and refuses a limited edition or a seasonal marble outside its window: 409 before, 410 after, whatever the screen shows, and a pass marble always), gifts (`grantCopy`) and bags (the standard collection only);
+  - the season pass's marble: `grantSeasonMarble` (numbered in order: `copy_no` = `edition_no`, price 0, source `grant`), `takeBackSeasonMarble` (a refunded pass), `passNumber` ("Holiday 2026 #0001"); `certificate()` also says a pass marble's `edition` and `number`, and a retired seasonal marble's `retiredAt`;
   - the Marble Bag, the Shooter, certificates, find by ID;
   - `pickRacingMarble`.
 - `showcase.js`: dresses computer players in collection looks in beginner races. It uses its own randomness, never the race seed.
@@ -136,8 +137,8 @@
 - `stateOf` ('before', 'on', 'free' by the season's dates), `dayOf` (the season's calendar day), `featuredSlug` (the Track of the Day), `passOnSale`, `saleDaysLeft` (the countdown), `view` (what `/api/seasons` shows).
 - `trackAccess` / `assertTrackAccess`: may this player race this track (a pass, or a friend room whose host has one); every route that puts a marble on a track calls it (`routes/races.js` `joinRace`, create, rematch; `routes/rooms.js` `pickTrack`).
 - `pickOpenTrack` (the public random pick: never a locked season track), `pickSeasonTrack` (Holiday races: the Track of the Day one race in three).
-- `bonusLine` (the Track of the Day bonus), `grantForPayment`, `revokeForPayment`.
-- `scoreboardSeason` (the season that is on, or the one that ended last: its final standings), `standings` (coins earned in the season, ties to who got there first), `awardBadges` (the season-end job: the top `badge_top` get `user_badges`, once), `badgesOf`, `startJobs` (hourly, from `server.js`).
+- `bonusLine` (the Track of the Day bonus), `grantForPayment` (also gives the season marble), `revokeForPayment` (also takes it back), `grantMissingMarbles` (the hourly job: pass holders still without the season marble get it).
+- `scoreboardSeason` (the season that is on, or the one that ended last: its final standings), `standings` (coins earned in the season, ties to who got there first), `awardBadges` (the season-end job: the top `badge_top` get `user_badges`, once), `badgesOf`, `startJobs` (hourly, from `server.js`: missing season marbles, then season-end badges).
 - Tests: `test/seasonPass.test.js` (the dates always; with a database: Stripe test mode, Google Play, locks, rooms, the bonus, refunds).
 
 **Back office and accounts:**
@@ -202,6 +203,7 @@ Defined in `src/sockets/index.js`. The client may send a JWT in `auth.token`; an
 | `node scripts/variety-table.js [--matrix]` | How alike the tracks are |
 | `node scripts/start-looks.js` | Records how each start looks (first 3 seconds) |
 | `node scripts/dump-kit-track.js <slug>` | Writes a track for the development kit view (`client/dev/kit-view.html`) |
+| `node client/report/clip.mjs <plan.json>` (run in `client`) | A short MP4 of a race in the kit view (headless browser, `kitView.raceShot` / `raceLook` / `spot` in `client/dev/kitView.js`): follow-camera and fixed-camera segments, for showing a new kit part before it goes on a real track. The track and race JSON go in `client/dev/.tracks/` first (as the track report writes them) |
 | `node scripts/track-banners.js <slug…> \| --all \| --missing` | The track picker's pictures: each track drawn from its own scene in a headless browser (`client/report/banners.mjs`, `kitView.banner` in `client/dev/kitView.js`), saved as WebP in `client/public/tracks/`, listed in `client/src/shared/trackBanners.json`. Looks only: one race is simulated to put marbles on the track; nothing is stored. The track report runs it for its track |
 | `bash scripts/convert-audio.sh` | Converts `music-inbox/` into small Opus and AAC files in `client/public/audio/` (`race-1`…`race-8`, `ceremony`, `start-beeps`, and the three race sounds; `SKIP_EFFECTS=1` leaves the race sounds alone), levelled with one steady gain per file so loops match |
 | `npm run db:migrate` | Runs the same schema and data-update step as server start |
@@ -274,8 +276,8 @@ Defined in `src/sockets/index.js`. The client may send a JWT in `auth.token`; an
   - `pageMeta.js`: every page's title, description, canonical address, share picture and indexing (`metaFor`, `applyMeta`), set on every page change and used by the pre-rendering;
   - `consent/`: the cookie banner and the trackers (website only, never in the apps): `consent.js` (the choice in local storage `marble-consent`, version `CONSENT_VERSION`; `STORAGE_LIST`), `ConsentManager.jsx` (banner with REJECT ALL and ACCEPT ALL side by side, Settings per category with nothing ticked, reopened by "Cookie settings" in the footer and on `/cookies`; logs the choice to the account when logged in), `tracking.js` (Google Analytics 4 with Consent Mode v2 after statistics consent, the Meta Pixel after marketing consent and never under 13; `track()` events: `sign_up`, `first_race`, `race_finished`, `shop_view`, `checkout_started`, `purchase`);
   - `landing/` (landing page, 3D hero replay; `SERIES`: the series cards, each with one of its tracks' pictures; the tracks-and-series heading is counted from the live track list);
-  - `marbles/` (badge, 3D turntable, certificate, `useCollection`, with `limitedSale`/`limitedLine`: the limited edition's "Coming 1 December — limited to 500", how many are left, "Sold out");
-  - `pages/PassPage.jsx` (`/pass?season=`): the season pass: what it gives, the price (the store's own in the apps), the countdown, buying it; the track picker, track pages and room picker show season tracks locked with "Get the pass", and holders get "Holiday races";
+  - `marbles/` (badge, 3D turntable, certificate, `useCollection`, with `limitedSale`/`limitedLine`: the limited edition's "Coming 1 December — limited to 500", how many are left, "Sold out"; `seasonalSale`/`seasonalLine`/`retiredLine`: a seasonal marble's "Coming 1 December · on sale until 7 January", "Leaving in N days", "Retired 7 Jan 2027"); the shop's **Seasonal** shelf (`ShopPage.jsx` `SeasonalShelf`: a seasonal collection until it retires, a season pass's marble while the pass is sold);
+  - `pages/PassPage.jsx` (`/pass?season=`): the season pass: a header with the season's marble and dates, four cards (the season's tracks with their count, the Track of the Day with today's track, the season marble, friend rooms), the price (the store's own in the apps), the countdown, buying it with the pass's own consent (`consent.json` `passWithdrawal`; Stripe's button `passStripeSubmit`); the track picker, track pages and room picker show season tracks locked with "Get the pass", and holders get "Holiday races";
   - `payments/index.js`: `buyPass()` (the season pass: Stripe on the web, Google Play or the App Store in the apps, kept not consumed); `buyCoins()` for every screen: Stripe on the website; Google Play Billing in the Android app (`@capgo/native-purchases`: purchase with the player's Play account id, then `api.googleVerify`); the App Store in the iPhone app (the same plugin's StoreKit 2: purchase with the player's account token, `api.appleVerify` with the signed transaction, then `finishTransaction`); `resumeStorePurchases()` (unconfirmed purchases resent at login, from `App.jsx`; on iPhone the unfinished transactions); `restoreStorePurchases()` (iPhone "Restore purchases", on the pass page); `useStorePrices()` (the store's prices in the player's currency, on the shop and checkout);
   - `pages/` (every website page; see the routes below);
   - `help/` (the Help Centre at `/help`): `ContactForm.jsx` ("Still need help?": name, email, topic, order number, message, screenshot scaled down before sending, a hidden spam field), `faq.js` (the 12 categories of questions and answers, numbers read from `economy.json`, `packs.json` and `catalog.json`, `[bracket]` placeholders kept; the FAQPage structured data), `search.js` (type-ahead search: any word order, typos, synonyms, highlighting), `HelpPage.jsx`.
@@ -290,12 +292,12 @@ Defined in `src/sockets/index.js`. The client may send a JWT in `auth.token`; an
   - `company.json` (who runs Marble Spins: Voltron Robotics AB, org.nr, VAT no., address, support and privacy email, the legal texts' date; `client/src/site/company.js` formats it);
   - `trackBanners.json` (the track pictures: `enabled` in the picker, and per track its version, sizes, name and series);
   - `support.json` (contact-form categories and limits, checked by the server too; "Privacy and your data" is the topic for data requests);
-  - `payments/packs.json`, `payments/consent.json`;
-  - `marbles/catalog.json`;
-  - `marbles/badge.js`: the master look of each design;
+  - `payments/packs.json`, `payments/consent.json` (what a buyer agrees to: coin packs, and the season pass's own wording; stored with each payment);
+  - `marbles/catalog.json` (also `collections`: the limited, seasonal and pass collections, by the code in their Marble IDs);
+  - `marbles/badge.js`: the master look of each design (`HOLIDAY_LOOKS`: Winter 2026 and Winter Solstice, as approved on `/preview/marbles/holiday`);
   - `marbles/paint.js`: draws the badge as CSS for the shop and as textures for 3D;
   - `marbles/materials.js`: the 3D marble material;
-  - `marbles/index.js`.
+  - `marbles/index.js` (`collectionOf`, `isStandard`, `windowOf`: where an item stands by its dates, `passNumber`).
 - `sound/`:
   - `engine.js` (Web Audio): nothing before the first tap; no music outside races. A race: the start beeps over the 3-2-1 (the last beep on GO), one of 8 race tracks from GO (shuffled rounds, never the previous race's), looping, mixed under the effects; at the finish ceremony the ceremony song instead, looping, fading out after 45 s; silence when the player leaves. The three race sounds as before; pauses in the background.
   - `settings.js`: volumes and mute, saved on the device and in the account.
@@ -326,7 +328,7 @@ Defined in `src/sockets/index.js`. The client may send a JWT in `auth.token`; an
 | `/help`, `/help/<question-slug>`, `/help#<question-slug>` | Help Centre: every question has its own link (the slug is the question in lowercase with dashes, e.g. `/help#i-forgot-my-password`); `#contact` is the contact form. Linked from the header, footer, Settings, shop, checkout, Purchases, the offline screen, the error box and the 404 page |
 | `/dashboard`, `/profile/:userId` | Dashboard and public profiles |
 | `/race/:raceId`, `/results/:raceId` | Live race and results |
-| `/preview/3d`, `/preview/3d/race/:raceId`, `/preview/marbles`, `/preview/marbles/compare`, `/preview/marbles/roll`, `/preview/marbles/northern-lights` (the Northern Lights launch edition's design review: the original `aurora-glass` next to its upgrade `aurora-glow`, now the catalogue's (badge.js `GLOW_STRENGTH` and `SHIMMER`, materials.js's shimmer), drawn with `materials.js` `createCustomLook`), `/preview/marbles/holiday` (the Holiday Season's design review: the season marble's three options and the Winter collection's five designs, `site/marbles/holidayDesigns.js`, with the Snowball before and after on snow; nothing in the catalogue. Designs under review race in the dev kit view with `&designs=<key>,<key>`: `three/marbles.js` draws a marble's `customLook`), `/preview/physics`, `/preview/banners` | Preview and check pages (not linked); `/preview/banners`: every track picture as a picker card, for review |
+| `/preview/3d`, `/preview/3d/race/:raceId`, `/preview/marbles`, `/preview/marbles/compare`, `/preview/marbles/roll`, `/preview/marbles/northern-lights` (the Northern Lights launch edition's design review: the original `aurora-glass` next to its upgrade `aurora-glow`, now the catalogue's (badge.js `GLOW_STRENGTH` and `SHIMMER`, materials.js's shimmer), drawn with `materials.js` `createCustomLook`), `/preview/marbles/holiday` (the Holiday Season's design review: the season marble's three options and the Winter collection's five designs, `site/marbles/holidayDesigns.js`, with the Snowball before and after on snow; the chosen ones are now in the catalogue (Winter 2026, Winter Solstice). Designs under review race in the dev kit view with `&designs=<key>,<key>`: `three/marbles.js` draws a marble's `customLook`), `/preview/physics`, `/preview/banners` | Preview and check pages (not linked); `/preview/banners`: every track picture as a picker card, for review |
 | `/admin/*` | Back office: Players, Player detail (tabs: Coins, Races, Marbles, Payments, Messages, Security, Emails, Audit), Payments, Support messages (`/admin/support`, `/admin/support/:id`), Economy, Email list, Audit log |
 
 ### 3D: `client/src/three/`
@@ -342,7 +344,7 @@ Defined in `src/sockets/index.js`. The client may send a JWT in `auth.token`; an
 **Other files:**
 - `trackModel.js`: pure geometry, matching the server's.
 - `tvMoments.js` (TV moments: a track's trackside cameras, `tvCameras`, and the cut by where the followed marble is, `tvMoment`; `TrackScene.applyTvMoment` draws it; `components/tvMomentsSetting.js` keeps the viewer's TV on/off, `marble-tv-moments`).
-- `iceChannel.js` (also the half-pipe's widening, `channelRadiusAt` / `channelLipAt`), `marbles.js`, `startGate.js`, `startCamera.js`, `trackFeatures.js` (also the jib parts: box, rail, table top), `structures.js`, `billboards.js`, `lighting.js`, `themes.js`, `winnerGlow.js`, `movers.js`, `diagnostics.js`.
+- `iceChannel.js` (also the half-pipe's widening, `channelRadiusAt` / `channelLipAt`), `marbles.js`, `startGate.js`, `startCamera.js`, `trackFeatures.js` (also the jib parts: box, rail, table top; and the boost-pad jump: kicker, gap with its catch-channel grate or river, landing deck, exit grate), `structures.js`, `billboards.js`, `lighting.js`, `themes.js`, `winnerGlow.js`, `movers.js`, `diagnostics.js`.
 - `scenery/`: the worlds:
   - kit scenery: `kit.js`, `kitGround.js`, `kitProps.js`, `kitPlaces.js`, `kitLandmarks*.js`;
   - series looks: `coaster.js` (steel A-frames, or timber trestle bents with `coaster.style: 'timber'`), `arcade.js`, `pinball.js`, `grandPrix.js`;

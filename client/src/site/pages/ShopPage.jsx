@@ -4,13 +4,13 @@ import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { api } from '../../api/client';
 import { useAuth } from '../../context/AuthContext';
 import { useAsync } from '../../hooks/useAsync';
-import { DESIGN, ITEM, ITEMS, RARITY_ORDER, bagPrice, catalog, normaliseId, priceLabel, rarityInfo, shows3d } from '../../shared/marbles';
+import { DESIGN, ITEM, ITEMS, RARITY_ORDER, bagPrice, catalog, collectionOf, isStandard, normaliseId, priceLabel, rarityInfo, shows3d, windowOf } from '../../shared/marbles';
 import { GLOSS } from '../../shared/marbles/badge';
 import economy from '../../shared/economy.json';
 import { COIN_PACKS } from '../../shared/payments/packs';
 import { importOrReload } from '../../utils/staleCode';
 import MarbleBadge from '../marbles/MarbleBadge';
-import { editionLine, limitedLine, limitedSale, useCollection } from '../marbles/useCollection';
+import { editionLine, limitedLine, limitedSale, seasonalLine, seasonalSale, useCollection } from '../marbles/useCollection';
 import { TEASERS } from '../shop/comingSoon';
 import { track } from '../consent/tracking';
 import { useStorePrices } from '../payments';
@@ -18,15 +18,16 @@ import { useStorePrices } from '../payments';
 const Turntable = lazy(() => importOrReload(() => import('../marbles/Turntable')));
 
 const COLLECTION = catalog.collection;
-const SC_DESIGNS = catalog.designs.filter((d) => !d.limited);
-const SC_ITEMS = ITEMS.filter((i) => !i.design.limited);
+const SC_DESIGNS = catalog.designs.filter(isStandard);
+const SC_ITEMS = ITEMS.filter((i) => i.kind === 'standard');
 const SHADES = SC_DESIGNS[0].shades.map((s) => ({ key: s.key, name: s.name }));
 const RARITIES = RARITY_ORDER.filter((r) => r !== 'limited' && SC_DESIGNS.some((d) => d.rarity === r));
 const DATE = new Intl.DateTimeFormat('en-GB', { weekday: 'short', day: 'numeric', month: 'short' });
 
 /**
  * The shop: the live collection (Schoolyard Classics) with its two bags, every
- * marble in every shade with rarity and shade filters and Find by ID, a big
+ * marble in every shade with rarity and shade filters and Find by ID, the
+ * seasonal shelf (a seasonal collection while it's on sale, a season pass's marble), a big
  * view with the 3D marble and a shade switcher, the next collections, and
  * coin packs. /collection and /collection/:design?shade= open it
  * too (the second with that marble's big view open), and so does ?id=SC105.
@@ -100,6 +101,8 @@ export default function ShopPage() {
         )}
       </section>
 
+      <SeasonalShelf owned={owned} onOpen={setOpen} />
+
       {ltdSale && (
         <section aria-labelledby="ltd-h" className="ms-hero" style={{ borderColor: 'var(--r-limited)' }}>
           <div style={{ display: 'flex', justifyContent: 'center', flex: '0 1 160px' }}><MarbleBadge slug={ltdSlug} size={130} label={limited.name} /></div>
@@ -117,7 +120,7 @@ export default function ShopPage() {
 
       <CoinPacks />
 
-      <p className="ms-note">Looks only, never speed: every marble races exactly the same. The first {catalog.editionSize} of every marble are a numbered First Edition.</p>
+      <p className="ms-note">Looks only, never speed: every marble races exactly the same. The first {catalog.editionSize} of every marble on sale are a numbered First Edition.</p>
 
       {open && ITEM[open] && <MarbleSheet slug={open} onSlug={setOpen} owned={owned} live={live} buy={buy} onClose={close} />}
     </div>
@@ -125,7 +128,7 @@ export default function ShopPage() {
 }
 
 /** One marble in the grid: its picture, rarity, name, shade, collection, Marble ID and price. */
-function MarbleCard({ item, owned, onOpen }) {
+function MarbleCard({ item, owned, onOpen, tag = null }) {
   const info = rarityInfo(item.rarity);
   return (
     <button type="button" className={`ms-mcard ms-mcard--grid${item.rarity === 'legendary' ? ' ms-mcard--legend' : ''}`} onClick={onOpen}
@@ -133,10 +136,11 @@ function MarbleCard({ item, owned, onOpen }) {
       <MarbleBadge slug={item.slug} size={84} />
       <span className="ms-mcard__rarity" style={{ color: info.colour }}>{info.label}</span>
       <span className="ms-mcard__name" style={{ fontSize: '1rem' }}>{item.design.name}</span>
-      <span className="ms-mcard__shade">{item.shade.name}</span>
+      {item.design.shades.length > 1 && <span className="ms-mcard__shade">{item.shade.name}</span>}
       <span className="ms-id">#{item.id}</span>
       <span className="ms-mcard__col">{item.collection}</span>
       <span className="ms-mcard__price" style={owned ? { color: 'var(--ms-green)' } : undefined}>{owned ? 'Owned' : priceLabel(item.price)}</span>
+      {tag && <span className="ms-mcard__tag">{tag}</span>}
     </button>
   );
 }
@@ -228,8 +232,11 @@ function MarbleSheet({ slug, onSlug, owned, live, buy, onClose }) {
   const info = rarityInfo(item.rarity);
   const have = owned.has(slug);
   const liveItem = live[slug];
-  const noPrice = info.price.coins == null;
+  const noPrice = item.price.coins == null;
   const sale = limitedSale(d, liveItem);
+  const seasonal = seasonalSale(item);
+  const col = collectionOf(d);
+  const pass = item.kind === 'pass';
 
   useEffect(() => {
     ref.current?.focus();
@@ -282,8 +289,8 @@ function MarbleSheet({ slug, onSlug, owned, live, buy, onClose }) {
             </Suspense>
           ) : <MarbleBadge key={slug} slug={slug} size={170} label={`${d.name}, ${item.shade.name}`} />}
         </div>
-        <span className="ms-mcard__rarity" style={{ color: info.colour, margin: 0 }}>{info.label} · {priceLabel(info.price)}</span>
-        <span className="ms-sheet__col">{item.collection.toUpperCase()}{d.limited ? '' : ` · COLLECTION ${COLLECTION.number}`}</span>
+        <span className="ms-mcard__rarity" style={{ color: info.colour, margin: 0 }}>{pass ? `${info.label} · not sold` : `${info.label} · ${priceLabel(item.price)}`}</span>
+        <span className="ms-sheet__col">{item.collection.toUpperCase()}{item.kind === 'standard' ? ` · COLLECTION ${COLLECTION.number}` : item.kind === 'seasonal' ? ' · SEASONAL' : ''}</span>
         <h2 id="sheet-name" className="ms-sheet__name">{d.name}</h2>
         <div className="ms-row" style={{ justifyContent: 'center', gap: 8 }}>
           <span className="ms-id ms-id--big" id="sheet-id">#{item.id}</span>
@@ -305,7 +312,10 @@ function MarbleSheet({ slug, onSlug, owned, live, buy, onClose }) {
         )}
         <span style={{ fontWeight: 700, color: 'var(--ms-soft)' }}>Shade: {item.shade.name}{item.shade.original ? ' (the original)' : ''}</span>
         <span className="ms-note" style={{ textAlign: 'center' }}>{item.shade.description} <b style={{ color: 'var(--ms-soft)' }}>In races:</b> {d.inRaces}</span>
-        <span className="ms-mcard__fe">{sale ? `Numbered #001–#${String(item.editionSize).padStart(3, '0')} · ${sale.state === 'coming' ? 'First Edition certificate' : limitedLine(sale)}` : editionLine(liveItem, item.editionSize)}</span>
+        <span className="ms-mcard__fe">{pass
+          ? `${col.edition} · numbered in the order passes are bought`
+          : sale ? `Numbered #001–#${String(item.editionSize).padStart(3, '0')} · ${sale.state === 'coming' ? 'First Edition certificate' : limitedLine(sale)}`
+            : seasonal ? `${seasonalLine(seasonal)} · ${seasonal.state === 'retired' ? 'never sold again' : editionLine(liveItem, item.editionSize)}` : editionLine(liveItem, item.editionSize)}</span>
         {message?.ok && (
           <div className="ms-msg" role="status">
             It's yours: <b>{d.name} · {item.shade.name}</b>{message.copy.editionNo ? <>, First Edition <b>#{String(message.copy.editionNo).padStart(3, '0')}</b></> : null}.{' '}
@@ -315,6 +325,14 @@ function MarbleSheet({ slug, onSlug, owned, live, buy, onClose }) {
         {message && !message.ok && <div className="ms-msg ms-msg--bad" role="alert">{message.text}</div>}
         {have ? (
           <span className="ms-btn ms-sheet__buy" aria-disabled="true">OWNED</span>
+        ) : pass ? (
+          windowOf(item) === 'pass-only'
+            ? <Link to="/pass" className="ms-btn ms-btn--primary ms-sheet__buy">COMES WITH THE {col.name.toUpperCase()} PASS</Link>
+            : <span className="ms-btn ms-sheet__buy" aria-disabled="true">{col.name.toUpperCase()} PASS HOLDERS ONLY</span>
+        ) : seasonal?.state === 'coming' ? (
+          <span className="ms-btn ms-sheet__buy" aria-disabled="true">COMING {seasonal.opens.toUpperCase()}</span>
+        ) : seasonal?.state === 'retired' ? (
+          <span className="ms-btn ms-sheet__buy" aria-disabled="true">RETIRED · NEVER SOLD AGAIN</span>
         ) : sale?.state === 'coming' ? (
           <span className="ms-btn ms-sheet__buy" aria-disabled="true">{limitedLine(sale).toUpperCase()}</span>
         ) : sale?.state === 'sold-out' ? (
@@ -326,7 +344,7 @@ function MarbleSheet({ slug, onSlug, owned, live, buy, onClose }) {
         ) : (
           <>
             <button type="button" className="ms-btn ms-btn--primary ms-sheet__buy" onClick={onBuy} disabled={busy}>
-              {busy ? 'BUYING…' : `${confirming ? 'CONFIRM: ' : 'BUY FOR '}${priceLabel(info.price).replace(/^[●◆] /, '').toUpperCase()}`}
+              {busy ? 'BUYING…' : `${confirming ? 'CONFIRM: ' : 'BUY FOR '}${priceLabel(item.price).replace(/^[●◆] /, '').toUpperCase()}`}
             </button>
             {confirming && <button type="button" className="ms-btn ms-btn--ghost ms-btn--sm" onClick={() => setConfirming(false)}>Cancel</button>}
             {isAuthenticated && <span className="ms-note">You have {(user?.coins ?? 0).toLocaleString('en-US')} coins.</span>}
@@ -335,6 +353,60 @@ function MarbleSheet({ slug, onSlug, owned, live, buy, onClose }) {
       </div>
     </div>
   ), document.body);
+}
+
+/**
+ * The seasonal shelf: each seasonal collection from shortly before its release until its retirement
+ * ("Coming 1 December", then "Leaving in N days"), and a season pass's marble while the pass is sold.
+ * Retired marbles leave the shop for good.
+ */
+function SeasonalShelf({ owned, onOpen }) {
+  const now = new Date();
+  const groups = new Map();
+  for (const i of ITEMS) {
+    if (i.kind !== 'seasonal' || windowOf(i, now) === 'retired') continue;
+    const code = collectionOf(i.design).code;
+    if (!groups.has(code)) groups.set(code, []);
+    groups.get(code).push(i);
+  }
+  const passMarbles = ITEMS.filter((i) => i.kind === 'pass' && windowOf(i, now) === 'pass-only');
+  if (!groups.size && !passMarbles.length) return null;
+  return (
+    <section aria-labelledby="seasonal-h" style={{ display: 'grid', gap: 14 }}>
+      {[...groups].map(([code, list]) => {
+        const col = collectionOf(list[0].design);
+        const sale = seasonalSale(list[0], now);
+        return (
+          <div key={code} style={{ display: 'grid', gap: 14 }}>
+            <div className="ms-section-head" style={{ justifyContent: 'space-between' }}>
+              <h2 id="seasonal-h">Seasonal · {col.name}</h2>
+              <span className="ms-ltd-state ms-seasonal-line" data-state={sale.state}>{seasonalLine(sale)}</span>
+            </div>
+            <p className="ms-note" style={{ margin: 0 }}>{col.tagline}</p>
+            <div className="ms-grid50">
+              {list.map((i) => <MarbleCard key={i.slug} item={i} owned={owned.has(i.slug)} onOpen={() => onOpen(i.slug)} tag={sale.state === 'coming' ? `From ${sale.opens}` : null} />)}
+            </div>
+          </div>
+        );
+      })}
+      {passMarbles.map((i) => {
+        const col = collectionOf(i.design);
+        return (
+          <div key={i.slug} className="ms-hero" style={{ borderColor: 'var(--r-season)' }}>
+            <div style={{ display: 'flex', justifyContent: 'center', flex: '0 1 160px' }}><MarbleBadge slug={i.slug} size={130} label={i.design.name} /></div>
+            <div style={{ display: 'grid', gap: 8 }}>
+              <span className="ms-mcard__rarity" style={{ color: 'var(--r-season)', margin: 0 }}>{col.name} pass marble · #{i.id}</span>
+              <h3 className="ms-h2" style={{ fontFamily: 'var(--ms-cond)', fontWeight: 800, margin: 0 }}>{i.design.name}</h3>
+              <p style={{ margin: 0, color: 'var(--ms-soft)' }}>{i.design.inRaces} Only pass holders ever get it, numbered in the order the passes are bought. Looks only, never speed.</p>
+              {owned.has(i.slug)
+                ? <span className="ms-ltd-state" data-state="on-sale">In your Marble Bag</span>
+                : <Link to="/pass" className="ms-btn ms-btn--primary" style={{ justifySelf: 'start' }}>Comes with the pass</Link>}
+            </div>
+          </div>
+        );
+      })}
+    </section>
+  );
 }
 
 /** The next collections, their dates and three of their marbles (the first stays a secret). */

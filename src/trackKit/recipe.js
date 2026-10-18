@@ -68,6 +68,15 @@ const HALF_PIPE_RUN_IN_M = 20;       // a straight this long before a half-pipe,
 const JIB_PARTS = ['box', 'rail', 'table-top'];
 const JIB_MAX_HEIGHT = 0.35;     // metres: dropping off a 0.3 m top is a hop of about 0.8 m at most (measured)
 const JIB_CLEAR_M = 8;           // metres clear of other obstacles and features before and after a jib part
+// Boost-pad jumps: within what's proven on the jump run, one a track, on a straight, clear of everything else.
+const JUMP_HEIGHT = [0.8, 1.5];  // metres: the kicker's lip above the ice
+const JUMP_GAP = [2, 6];         // metres of gap
+const JUMP_MIN_SPEED = 18;       // m/s: the launch pad brings every marble up to at least this
+const JUMP_FASTEST = 42;         // m/s: faster than any marble leaves a lip (the jump run: 36 at most)
+const JUMP_CLEAR_MARGIN = 0.25;  // metres: at the launch pad's minimum speed a marble passes this far over the deck's lip
+const JUMP_RUN_UP_M = 30;        // metres of the straight before the launch pad, so the field comes in on its line
+const JUMP_RUN_OUT_M = 15;       // metres of the straight left after the catch channel's exit
+const JUMP_CLEAR_M = 15;         // metres clear of other obstacles and features before and after it
 const NO_LUCK_OPENINGS = ['clean-drop', 'peg-drop', 'pipe-drop'];
 const LUCK_GATES = 5;
 const LUCK_LOSS = 0.3;
@@ -287,6 +296,37 @@ function checkRecipe({ spec, sections, span, generated, owner, placed, total, wh
     if (endShare > finishShare) problems.push(`${where(sec.name)}: a ${p.kind} within ${OBSTACLE_FREE_FINISH_M} m of the finish line.`);
     const near = placed.find((o) => !JIB_PARTS.includes(o.kind) && o.at > p.at - JIB_CLEAR_M / total && o.at < endShare + JIB_CLEAR_M / total);
     if (near) problems.push(`${where(sec.name)}: a ${near.kind} too close to a ${p.kind}; keep ${JIB_CLEAR_M} m clear before and after it.`);
+  }
+
+  // Boost-pad jumps: on a straight, at most one a track, every marble clearing the gap at the pad's minimum speed.
+  const jumps = placed.filter((x) => x.kind === 'jump');
+  if (jumps.length > 1) problems.push(`${where(name(jumps[1].section))}: at most one boost-pad jump a track.`);
+  for (const p of jumps) {
+    const sec = sections[p.section];
+    const metresIn = (p.at - span[p.section].from) * total;
+    const secLength = (span[p.section].to - span[p.section].from) * total;
+    if (sec.shape.parts.some((x) => x.kind !== 'straight')) problems.push(`${where(sec.name)}: a boost-pad jump needs a straight.`);
+    const grade = sec.shape.parts[0]?.grade ?? 0;
+    if (!(grade >= 0.05 && grade <= 0.2)) problems.push(`${where(sec.name)}: a boost-pad jump needs a straight of grade 0.05 to 0.2.`);
+    if (!(p.height >= JUMP_HEIGHT[0] && p.height <= JUMP_HEIGHT[1])) problems.push(`${where(sec.name)}: a jump's kicker stands ${JUMP_HEIGHT[0]} to ${JUMP_HEIGHT[1]} m high.`);
+    if (!(p.gap >= JUMP_GAP[0] && p.gap <= JUMP_GAP[1])) problems.push(`${where(sec.name)}: a jump's gap is ${JUMP_GAP[0]} to ${JUMP_GAP[1]} m.`);
+    if (!(p.deck > 0 && p.deck < p.height)) problems.push(`${where(sec.name)}: a jump's landing deck starts lower than its kicker's lip.`);
+    if (!(p.min >= JUMP_MIN_SPEED)) problems.push(`${where(sec.name)}: a jump's launch pad brings every marble up to at least ${JUMP_MIN_SPEED} m/s.`);
+    // At the pad's minimum speed a marble off the lip is still this far over the deck's lip (its height over
+    // the ice, the lip's launch angle, gravity over the gap); and the fastest (JUMP_FASTEST) lands on the deck.
+    const v = p.min;
+    const launch = (2 * p.height) / p.kicker;
+    const over = p.height + launch * p.gap - (9.81 * p.gap * p.gap) / (2 * v * v) - p.deck;
+    if (over < JUMP_CLEAR_MARGIN) problems.push(`${where(sec.name)}: at ${v} m/s a marble passes only ${over.toFixed(2)} m over the landing deck's lip; every marble must clear it by ${JUMP_CLEAR_MARGIN} m (a lower deck, a shorter gap or a faster pad).`);
+    const up = launch * JUMP_FASTEST;
+    const flight = JUMP_FASTEST * ((up + Math.sqrt(up * up + 2 * 9.81 * p.height)) / 9.81);
+    if (flight > p.gap + p.landing) problems.push(`${where(sec.name)}: at ${JUMP_FASTEST} m/s a marble flies ${Math.round(flight)} m, past the landing deck; make the deck longer or the kicker gentler.`);
+    if (metresIn < JUMP_RUN_UP_M) problems.push(`${where(sec.name)}: a boost-pad jump needs ${JUMP_RUN_UP_M} m of the straight before its pad.`);
+    if (metresIn + p.length > secLength - JUMP_RUN_OUT_M) problems.push(`${where(sec.name)}: a boost-pad jump needs ${JUMP_RUN_OUT_M} m of the straight after it.`);
+    const endShare = p.at + p.length / total;
+    if (endShare > finishShare) problems.push(`${where(sec.name)}: a boost-pad jump within ${OBSTACLE_FREE_FINISH_M} m of the finish line.`);
+    const near = placed.find((o) => o !== p && o.kind !== 'brakeBeforeSharp' && o.at > p.at - JUMP_CLEAR_M / total && o.at < endShare + JUMP_CLEAR_M / total);
+    if (near) problems.push(`${where(sec.name)}: a ${near.kind} too close to the boost-pad jump; keep ${JUMP_CLEAR_M} m clear before and after it.`);
   }
 
   // No bumps just after a block: marbles flung off it land on the bumps and bounce high

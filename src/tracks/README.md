@@ -202,11 +202,22 @@ To look at them: `node scripts/dump-kit-track.js costume-gallery`, then
 | `rail({ at, length, line })` | A narrow, very low box (0.3 m wide, 0.12 m high): a bar along the track that bumps the marbles about; a few ride along it |
 | `tableTop({ at, length, height, down })` | A long raised flat over the channel's floor, a short ramp up and a gentle drop-off over `down` metres: the pack spreads out on the flat (nothing pulls it back to the middle) and drops off in a stream |
 | `jibLine({ from })` | A rail, a box and a table top one after another, as on a park run: `features: jibLine({ from: 0.1 })` on a straight of 110 m or more |
+| `boostJump({ at, look, pad, kick, min, kicker, height, gap, landing, deck })` | A boost-pad jump (`look`: `'ski-jump'` or `'river-jump'`, looks only): a launch pad wall to wall (`pad` m; it adds `kick` and brings every marble up to at least `min` m/s), a kicker ramp (`kicker` m, rising `height`), a gap (`gap` m) and a landing deck (`landing` m, from `deck` m at its lip easing down to the ice). A hidden catch channel under the gap brings back any marble that would fall short, past the deck. Defaults: pad 6, kick 4, min 22, kicker 20, height 0.9, gap 4, landing 40, deck 0.5 |
 
 Nothing bumpy within 40 m after a block: marbles flung off it land on the bumps and bounce high.
 Jib parts: on straights only, at most 0.35 m high (the drop off the end is a hop of 0.8 m at most), 4 to 40 m
 long, 8 m clear of any other obstacle or feature, never in the first 25 m or near the line. Proven on the jib
 run (L72). They race only on tracks that have them: every other race is unchanged.
+
+Boost-pad jumps: one a track at most, and on **two or three tracks only** (a test counts them), on a straight
+of grade 0.05 to 0.2, with 30 m of the straight before the pad and 15 m after the catch channel's exit, 15 m clear
+of any other obstacle or feature. Within what's proven: kicker 0.8 to 1.5 m high, gap 2 to 6 m, the deck's lip lower
+than the kicker's, a pad of at least 18 m/s. The recipe works out the flight: at the pad's minimum speed a marble
+must pass 0.25 m over the deck's lip, and at 42 m/s (faster than any marble leaves a lip) it must still come down
+on the deck. Proven on the jump run (L73, `variety-layout-jump-run`, full report 39 of 39): every marble clears it
+(none of 60,000 jumps fell short in 3 x 1,000 races), leaving the lip at 25 to 39 m/s and flying 16 to 39 m, at
+most 1.6 m over the ice. The report shows a jump's flights on their own lines (marbles that fell short, the highest
+flight over the ice: at most 2 m); they never count as hops.
 
 ## Tunnels, caves and bridges
 

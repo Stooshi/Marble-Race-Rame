@@ -5,14 +5,17 @@ import CONSENT from '../../shared/payments/consent.json';
 import { api } from '../../api/client';
 import { useAsync } from '../../hooks/useAsync';
 import { STORE_NAME, buyPass, restoreStorePurchases, storeProvider, useStorePrices } from '../payments';
+import { ITEMS, collectionOf } from '../../shared/marbles';
+import MarbleBadge from '../marbles/MarbleBadge';
 
 const day = (iso) => new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Stockholm', day: 'numeric', month: 'long', year: 'numeric' }).format(new Date(iso));
 const time = (iso) => new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Stockholm', hour: '2-digit', minute: '2-digit' }).format(new Date(iso));
 
 /**
- * /pass?season=holiday-2026: the season pass. What it gives, the price, the end date and today's Track
- * of the Day; buying it with real money only (Stripe on the web, Google Play in the Android app; the
- * apps never show or link to the website's price). Opened from the lock on a season track.
+ * /pass?season=holiday-2026: the season pass. The season's marble and dates up top, what it gives (the
+ * season's tracks, the Track of the Day, the season marble, friend rooms), today's Track of the Day, the
+ * price and buying it with real money only (Stripe on the web, Google Play or the App Store in the apps;
+ * the apps never show or link to the website's price). Opened from the lock on a season track.
  */
 export default function PassPage() {
   const [search] = useSearchParams();
@@ -33,6 +36,10 @@ export default function PassPage() {
 
   if (!season) return <div className="ms-page ms-page--narrow"><p className="ms-note">{data ? 'There is no season pass right now.' : 'Loading…'}</p></div>;
   const { pass } = season;
+  // The season's own marble (catalog.json: the pass collection of this season).
+  const marble = ITEMS.find((i) => i.kind === 'pass' && collectionOf(i.design).season === season.key) ?? null;
+  const bonus = Math.round((season.featured?.bonus ?? 0.5) * 100);
+  const tracks = season.trackCount > 0 ? `All ${season.trackCount} holiday tracks` : 'Every holiday track';
   const price = web ? `$${(pass.priceCents / 100).toFixed(2)}` : storePrices[pass.productId] ?? null;
   const owned = pass.owned || result?.status === 'paid' || result?.status === 'restored';
   const signIn = `/signup?next=${encodeURIComponent(`/pass?season=${season.key}`)}`;
@@ -67,23 +74,47 @@ export default function PassPage() {
   };
 
   return (
-    <div className="ms-page ms-page--narrow" style={{ display: 'grid', gap: 18 }}>
-      <h1 className="ms-h1" style={{ margin: 0 }}>{pass.name}</h1>
-      <p className="ms-lede" style={{ margin: 0 }}>
-        Every holiday track from around the world, from {day(season.startsAt)} to {day(season.freeFrom)} ({time(season.freeFrom)} Swedish time).
-        After that they're free for everyone.
-      </p>
-      <section className="ms-card" style={{ display: 'grid', gap: 10 }} aria-label="What's in the pass">
-        <span className="ms-eyebrow">What you get</span>
-        <ul style={{ margin: 0, paddingLeft: '1.2em', display: 'grid', gap: 6 }}>
-          <li>All the holiday tracks, from the day the season starts. Bought later? You still get every one, straight away.</li>
-          <li>The Track of the Day: each day one holiday track pays you +{Math.round((season.featured?.bonus ?? 0.5) * 100)}% race coins on your full-pay races. The bonus doesn't count on the scoreboards.</li>
-          <li>The season marble, yours to keep. Looks only: it races like every marble.</li>
-          <li>Friends race the holiday tracks with you in your rooms, with or without a pass.</li>
-        </ul>
-        {season.featured && <span className="ms-note">Today's Track of the Day: <Link to={`/tracks/${season.featured.slug}`}>{season.featured.slug.replace(/-/g, ' ')}</Link></span>}
-        <span className="ms-note">One payment, not a subscription. Watching holiday races and replays is free for everyone.</span>
+    <div className="ms-page ms-page--narrow ms-pass" style={{ display: 'grid', gap: 18 }}>
+      <section className="ms-pass-hero" aria-labelledby="pass-h">
+        <div style={{ display: 'grid', gap: 10, minWidth: 0 }}>
+          <span className="ms-pass-eyebrow">{season.name} · {day(season.startsAt)} – {day(season.freeFrom)}</span>
+          <h1 id="pass-h" className="ms-h1" style={{ margin: 0 }}>{pass.name}</h1>
+          <p className="ms-lede" style={{ margin: 0 }}>
+            Christmas and New Year from around the world, on {season.trackCount > 0 ? season.trackCount : 'its own'} holiday tracks, until {day(season.freeFrom)} ({time(season.freeFrom)} Swedish time). After that they're free for everyone.
+          </p>
+        </div>
+        {marble && (
+          <div className="ms-pass-hero__marble">
+            <MarbleBadge slug={marble.slug} size={150} label={`${marble.design.name}, the season marble`} />
+            <span className="ms-note">{marble.design.name} · season marble</span>
+          </div>
+        )}
       </section>
+
+      <section className="ms-pass-grid" aria-label="What's in the pass">
+        <article className="ms-pass-feature">
+          <span className="ms-pass-feature__k">Tracks</span>
+          <h2>{tracks}</h2>
+          <p>Snowy northern winters, summer Christmas down south, New Year fireworks. Bought later in the season? You still get every one, straight away.</p>
+        </article>
+        <article className="ms-pass-feature">
+          <span className="ms-pass-feature__k">Every day</span>
+          <h2>Track of the Day +{bonus}%</h2>
+          <p>Each day one holiday track pays you +{bonus}% race coins on your full-pay races. The bonus doesn't count on the scoreboards.</p>
+          {season.featured && <Link to={`/tracks/${season.featured.slug}`} className="ms-pass-feature__link">Today: {season.featured.slug.replace(/-/g, ' ')}</Link>}
+        </article>
+        <article className="ms-pass-feature">
+          <span className="ms-pass-feature__k">Yours to keep</span>
+          <h2>{marble ? marble.design.name : 'The season marble'}</h2>
+          <p>{marble ? `${marble.design.inRaces} ` : ''}Only pass holders get it, numbered in the order passes are bought. Looks only: it races like every marble.</p>
+        </article>
+        <article className="ms-pass-feature">
+          <span className="ms-pass-feature__k">Friends</span>
+          <h2>Holiday rooms</h2>
+          <p>Host a friend room on a holiday track and everyone in it races, pass or not. Watching holiday races and replays is free for all.</p>
+        </article>
+      </section>
+      <p className="ms-note" style={{ margin: 0 }}>One payment, not a subscription. Money only, never coins. <Link to="/legal#season-pass">Terms</Link> · <Link to="/help#season-pass">Help with the pass</Link></p>
 
       {owned ? (
         <div className="ms-msg" role="status">You have the {pass.name}. <Link to="/play/track">Pick a holiday track</Link></div>
@@ -105,7 +136,7 @@ export default function PassPage() {
           {web && <span className="ms-note">Shown in your own currency, VAT included, on Stripe's payment page.</span>}
           <label style={{ display: 'flex', gap: 10, alignItems: 'flex-start', cursor: 'pointer' }}>
             <input type="checkbox" checked={withdrawal} onChange={(e) => setWithdrawal(e.target.checked)} style={{ width: 22, height: 22, flex: 'none' }} />
-            <span>{CONSENT.withdrawal}</span>
+            <span>{CONSENT.passWithdrawal}</span>
           </label>
           <label style={{ display: 'flex', gap: 10, alignItems: 'flex-start', cursor: 'pointer' }}>
             <input type="checkbox" checked={terms} onChange={(e) => setTerms(e.target.checked)} style={{ width: 22, height: 22, flex: 'none' }} />

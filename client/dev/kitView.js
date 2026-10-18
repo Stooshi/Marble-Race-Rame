@@ -133,6 +133,28 @@ window.kitView = {
     scene.renderer.render(scene.scene, scene.camera);
   },
   race: race && { durationMs: race.durationMs, countdownMs: countdown, winnerMs: Math.min(...race.results.map((r) => r.finishTimeMs)) },
+  /** Dev: a spot on the track (share of the way down): its centre, its sideways and its forward directions ([x, y, z] each). */
+  spot(p) {
+    const { samples, segments } = scene.centerline;
+    const f = Math.min(1, Math.max(0, p)) * segments;
+    const i = Math.min(segments - 1, Math.floor(f));
+    const a = samples[i];
+    const b = samples[i + 1];
+    const pos = new Vector3().lerpVectors(a.pos, b.pos, f - i);
+    const v = (x) => [x.x, x.y, x.z];
+    return { pos: v(pos), side: v(new Vector3(a.side.x, 0, a.side.z).normalize()), ahead: v(new Vector3(a.tangent.x, 0, a.tangent.z).normalize()), arc: scene.channel?.arc ?? null };
+  },
+  /** Dev (clips): the race at t ms, seen from a fixed camera ([x, y, z] from and to). */
+  raceLook({ t, from, to, fov = null }) {
+    advance(t, 'leader');
+    scene.camera.position.set(...from);
+    scene.camera.near = 0.3;
+    scene.camera.far = scene.sky.scale.x * 1.2;
+    if (fov) scene.camera.fov = fov;
+    scene.camera.lookAt(...to);
+    scene.camera.updateProjectionMatrix();
+    return drawNow(t);
+  },
   /** The race at t ms (negative: the countdown) through the game's camera: 'follow' or 'overview'. */
   raceShot({ t, follow = 'leader', camera = 'follow' }) {
     advance(t, follow);

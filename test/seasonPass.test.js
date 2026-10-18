@@ -150,6 +150,9 @@ test('the pass on Stripe (test mode): unlocks the season\'s tracks, rooms, the b
     const { rows: [pay] } = await db.query('SELECT * FROM payments WHERE order_no = $1', [out.payment.order_no]);
     assert.equal(pay.coins, 0);
     assert.equal(pay.season_key, key);
+    // The pass's own consent (its delivery, not coins'), on the page and on Stripe's button.
+    assert.match(pay.consent_text, /I want my pass delivered right away/);
+    assert.match(params.custom_text.submit.message, /your pass to be delivered/);
     assert.equal(await seasons.hasPass(db, holder.user.id, key), false);
     const session = { id: fake.made.sessions[0].id, object: 'checkout.session', mode: 'payment', payment_status: 'paid', client_reference_id: pay.id, metadata: { payment_id: pay.id }, amount_total: 999, currency: 'usd', total_details: { amount_tax: 200 }, payment_intent: `pi_pass_${run}` };
     assert.equal((await send('checkout.session.completed', session)).body.outcome, 'granted');

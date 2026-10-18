@@ -74,6 +74,13 @@
    "price": {
     "coins": 25000
    }
+  },
+  "season": {
+   "label": "Season pass",
+   "colour": "#8FC4FF",
+   "price": {
+    "coins": null
+   }
   }
  },
  "designs": [
@@ -1285,6 +1292,305 @@
    },
    "no": 1,
    "collection": "LE"
+  },
+  {
+   "key": "snowball",
+   "no": 1,
+   "name": "Snowball",
+   "rarity": "common",
+   "material": "snowball",
+   "story": "Packed white snow, rolled until it shone.",
+   "inRaces": "Packed snow with deep icy-blue shadows, blue swirls and a darker rim, easy to spot on snow tracks.",
+   "slots": [
+    "snow",
+    "shadow",
+    "ice",
+    "deep",
+    "rim",
+    "swirl",
+    "swirl-light",
+    "speck"
+   ],
+   "shades": [
+    {
+     "key": "winter",
+     "no": 1,
+     "name": "Snowball",
+     "description": "White snow with icy-blue shadows and swirls.",
+     "colours": [
+      {
+       "name": "Fresh snow",
+       "hex": "#E4EEFA"
+      },
+      {
+       "name": "Snow shadow",
+       "hex": "#93B6E6"
+      },
+      {
+       "name": "Ice blue",
+       "hex": "#4A76B8"
+      },
+      {
+       "name": "Deep ice",
+       "hex": "#21437C"
+      },
+      {
+       "name": "Winter rim",
+       "hex": "#162F5C"
+      },
+      {
+       "name": "Swirl blue",
+       "hex": "#2F62AE"
+      },
+      {
+       "name": "Pale swirl",
+       "hex": "#6E9BDA"
+      },
+      {
+       "name": "Ice speck",
+       "hex": "#244E91"
+      }
+     ],
+     "text": "review",
+     "original": true
+    }
+   ],
+   "collection": "WI"
+  },
+  {
+   "key": "frost-clearie",
+   "no": 2,
+   "name": "Frost Clearie",
+   "rarity": "common",
+   "material": "frost-clearie",
+   "story": "Clear ice-blue glass with frost feathers growing through it.",
+   "inRaces": "Clear ice-blue glass with feathers of frost twisting through it as it rolls.",
+   "slots": [
+    "core",
+    "glass",
+    "edge"
+   ],
+   "shades": [
+    {
+     "key": "winter",
+     "no": 1,
+     "name": "Frost Clearie",
+     "description": "Ice-blue glass with feathers of frost.",
+     "colours": [
+      {
+       "name": "Ice white",
+       "hex": "#F2FBFF"
+      },
+      {
+       "name": "Ice blue",
+       "hex": "#A9DDF5"
+      },
+      {
+       "name": "Glacier",
+       "hex": "#4E9CC8"
+      }
+     ],
+     "text": "review",
+     "original": true
+    }
+   ],
+   "collection": "WI"
+  },
+  {
+   "key": "candy-cane",
+   "no": 3,
+   "name": "Candy Cane",
+   "rarity": "uncommon",
+   "material": "candy-cane",
+   "story": "White with red and pale-pink stripes, like the sweet on the tree.",
+   "inRaces": "White with red and pale-pink stripes twisting round the ball.",
+   "slots": [
+    "white",
+    "red",
+    "pink"
+   ],
+   "shades": [
+    {
+     "key": "winter",
+     "no": 1,
+     "name": "Candy Cane",
+     "description": "Red and pink stripes on sugar white.",
+     "colours": [
+      {
+       "name": "Sugar white",
+       "hex": "#F7F4F0"
+      },
+      {
+       "name": "Candy red",
+       "hex": "#D62B35"
+      },
+      {
+       "name": "Peppermint pink",
+       "hex": "#F2A9B0"
+      }
+     ],
+     "text": "review",
+     "original": true
+    }
+   ],
+   "collection": "WI"
+  },
+  {
+   "key": "evergreen",
+   "no": 4,
+   "name": "Evergreen",
+   "rarity": "rare",
+   "material": "evergreen",
+   "story": "Bands of forest green like an agate, with fresh snow on top.",
+   "inRaces": "Stone bands of forest green with a cap of fresh snow.",
+   "slots": [
+    "pine",
+    "fir",
+    "sage",
+    "deep",
+    "snow"
+   ],
+   "shades": [
+    {
+     "key": "winter",
+     "no": 1,
+     "name": "Evergreen",
+     "description": "Forest-green bands under fresh snow.",
+     "colours": [
+      {
+       "name": "Pine",
+       "hex": "#0F3D2A"
+      },
+      {
+       "name": "Fir",
+       "hex": "#1F6B45"
+      },
+      {
+       "name": "Sage",
+       "hex": "#6FB48A"
+      },
+      {
+       "name": "Deep forest",
+       "hex": "#14492F"
+      },
+      {
+       "name": "Fresh snow",
+       "hex": "#F4F8FC"
+      }
+     ],
+     "text": "review",
+     "original": true
+    }
+   ],
+   "collection": "WI"
+  },
+  {
+   "key": "midwinter-star",
+   "no": 5,
+   "name": "Midwinter Star",
+   "rarity": "epic",
+   "material": "midwinter-star",
+   "story": "A gold star of eight points glowing in midnight-indigo glass.",
+   "inRaces": "Midnight-indigo glass with a glowing gold eight-point star at its heart and sparkles round it.",
+   "slots": [
+    "indigo",
+    "night",
+    "deep",
+    "gold",
+    "amber",
+    "sparkle"
+   ],
+   "shades": [
+    {
+     "key": "winter",
+     "no": 1,
+     "name": "Midwinter Star",
+     "description": "A gold star in midnight-indigo glass.",
+     "colours": [
+      {
+       "name": "Indigo",
+       "hex": "#2E2470"
+      },
+      {
+       "name": "Midnight",
+       "hex": "#17123F"
+      },
+      {
+       "name": "Deep night",
+       "hex": "#08061C"
+      },
+      {
+       "name": "Star gold",
+       "hex": "#FFD45C"
+      },
+      {
+       "name": "Amber",
+       "hex": "#FFB020"
+      },
+      {
+       "name": "Sparkle",
+       "hex": "#FFE8A8"
+      }
+     ],
+     "text": "review",
+     "original": true
+    }
+   ],
+   "collection": "WI"
+  },
+  {
+   "key": "winter-solstice",
+   "no": 1,
+   "name": "Winter Solstice",
+   "rarity": "season",
+   "material": "winter-solstice",
+   "story": "The Holiday Season 2026 pass marble: only pass holders ever get one, numbered in the order the passes were bought.",
+   "inRaces": "Deep blue glass with a frosted star burst glowing at its heart and snowflakes drifting through it.",
+   "slots": [
+    "sky",
+    "mid",
+    "deep",
+    "rays",
+    "core",
+    "glow"
+   ],
+   "shades": [
+    {
+     "key": "2026",
+     "no": 1,
+     "name": "Winter Solstice",
+     "description": "Deep blue glass with a frosted star burst and snowflakes.",
+     "colours": [
+      {
+       "name": "Solstice blue",
+       "hex": "#1D4F99"
+      },
+      {
+       "name": "Winter blue",
+       "hex": "#0E2A5C"
+      },
+      {
+       "name": "Longest night",
+       "hex": "#071433"
+      },
+      {
+       "name": "Frost rays",
+       "hex": "#DDEFFF"
+      },
+      {
+       "name": "Frost core",
+       "hex": "#CFE8FF"
+      },
+      {
+       "name": "Star glow",
+       "hex": "#8FC4FF"
+      }
+     ],
+     "text": "review",
+     "original": true
+    }
+   ],
+   "collection": "HS"
   }
  ],
  "review": {
@@ -1317,7 +1623,7 @@
   ]
  },
  "approved3d": {
-  "note": "Designs whose 3D look is approved (passed the colour and rolling checks and Moses's review). Only these show the 3D marble in the shop; every other design shows its shop picture, never a stand-in. plain: the plain marbles (starters, Originals) too.",
+  "note": "Designs whose 3D look is approved (passed the colour and rolling checks and Moses's review). Only these show the 3D marble in the shop; every other design shows its shop picture, never a stand-in. plain: the plain marbles (starters, Originals) too. The Winter 2026 designs and Winter Solstice: approved on /preview/marbles/holiday, 17 Oct 2026.",
   "designs": [
    "clearie",
    "aggie",
@@ -1329,8 +1635,53 @@
    "steelie",
    "flame-swirl",
    "champion",
-   "aurora"
+   "aurora",
+   "snowball",
+   "frost-clearie",
+   "candy-cane",
+   "evergreen",
+   "midwinter-star",
+   "winter-solstice"
   ],
   "plain": true
+ },
+ "collections": {
+  "note": "Collections other than the live standard one (catalog.collection), by the code in their Marble IDs. kind: 'limited' (numbered editions with their own sale window, in the design's `limited`), 'seasonal' (on sale from releaseAt to retireAt at its own prices per rarity, then retired: never sold again, owners keep theirs), 'pass' (never sold: given to every holder of its season's pass, numbered in order, an open edition that closes at closesAt).",
+  "LE": {
+   "kind": "limited",
+   "name": "Limited edition"
+  },
+  "WI": {
+   "kind": "seasonal",
+   "key": "winter-2026",
+   "number": null,
+   "name": "Winter 2026",
+   "season": "holiday-2026",
+   "tagline": "Five winter marbles for the Holiday Season, on sale only from 1 December 2026 to 7 January 2027. Then they're retired and never sold again: owners keep theirs. Looks only, never speed.",
+   "releaseAt": "2026-12-01T00:00:00+01:00",
+   "retireAt": "2027-01-07T23:59:59+01:00",
+   "prices": {
+    "common": {
+     "coins": 800
+    },
+    "uncommon": {
+     "coins": 2000
+    },
+    "rare": {
+     "coins": 4500
+    },
+    "epic": {
+     "coins": 9000
+    }
+   }
+  },
+  "HS": {
+   "kind": "pass",
+   "name": "Holiday Season 2026",
+   "season": "holiday-2026",
+   "edition": "Holiday Season 2026 pass edition",
+   "numberLabel": "Holiday 2026",
+   "closesAt": "2027-01-07T23:59:59+01:00"
+  }
  }
 }

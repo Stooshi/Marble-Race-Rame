@@ -19,22 +19,38 @@ const pad = (n, w) => String(n).padStart(w, '0');
 /** A design and shade's Marble ID: SC105. */
 const marbleId = (design, shade) => `${design.collection ?? catalog.collection.code}${pad(design.no, 2)}${shade.no}`;
 
+/**
+ * The collection a design belongs to (catalog.json → collections, by the code in its Marble IDs): the
+ * live standard collection, a limited edition, a seasonal collection or a season pass's marble.
+ * → { code, kind: 'standard'|'limited'|'seasonal'|'pass', name, … }
+ */
+function collectionOf(design) {
+  const code = design.collection ?? catalog.collection.code;
+  const c = catalog.collections?.[code];
+  return c ? { code, ...c } : { code, kind: 'standard', ...catalog.collection };
+}
+
 const items = [];
 for (const design of catalog.designs) {
   const rarity = catalog.rarities[design.rarity];
+  const col = collectionOf(design);
   for (const shade of design.shades) {
     items.push({
       slug: `${design.key}-${shade.key}`,
       id: marbleId(design, shade),
-      collection: design.limited ? 'Limited edition' : catalog.collection.name,
+      collection: col.name,
+      kind: col.kind,
+      season: col.season ?? null,
       design,
       shade,
       rarity: design.rarity,
-      price: rarity.price,
-      editionSize: design.limited?.editionSize ?? catalog.editionSize,
-      allNumbered: Boolean(design.limited?.allNumbered),
-      saleStartsAt: design.limited?.saleStartsAt ?? null,
-      saleEndsAt: design.limited?.saleEndsAt ?? null,
+      // A seasonal collection has its own prices per rarity; a pass marble is never sold (no price).
+      price: col.kind === 'pass' ? { coins: null } : col.prices?.[design.rarity] ?? rarity.price,
+      // A pass marble: every copy numbered in order, an open edition (no size) that closes with its season.
+      editionSize: col.kind === 'pass' ? null : design.limited?.editionSize ?? catalog.editionSize,
+      allNumbered: Boolean(design.limited?.allNumbered) || col.kind === 'pass',
+      saleStartsAt: design.limited?.saleStartsAt ?? col.releaseAt ?? null,
+      saleEndsAt: design.limited?.saleEndsAt ?? col.retireAt ?? col.closesAt ?? null,
     });
   }
 }
@@ -53,24 +69,33 @@ function marbleCode(item, { copyNo, giftNo }) {
 }
 
 /**
- * Where an item's sale stands: 'coming' (a limited edition before its window opens), 'on-sale', or
- * 'sold-out' (its window has closed or every numbered copy is sold; it is never sold again).
+ * Where an item's sale stands: 'coming' (before its window opens: a limited edition or a seasonal
+ * collection), 'on-sale', 'sold-out' (a limited edition whose window has closed or whose numbered copies
+ * are all sold), 'retired' (a seasonal collection after its retirement) or 'pass-only' (a season pass's
+ * marble, never sold). Sold out and retired are for good: never sold again.
  */
 function saleState(item, now = new Date(), sold = 0) {
+  if (item.kind === 'pass') return 'pass-only';
   if (item.saleStartsAt && now < new Date(item.saleStartsAt)) return 'coming';
-  if (item.saleEndsAt && now >= new Date(item.saleEndsAt)) return 'sold-out';
-  if (item.allNumbered && sold >= item.editionSize) return 'sold-out';
+  if (item.saleEndsAt && now >= new Date(item.saleEndsAt)) return item.kind === 'seasonal' ? 'retired' : 'sold-out';
+  if (item.allNumbered && item.editionSize != null && sold >= item.editionSize) return 'sold-out';
   return 'on-sale';
 }
 
-/** Whether the item can be bought right now (a limited edition only in its sale window, and while numbers last). */
+/** Whether the item can be bought right now (inside its sale window, and while a limited edition's numbers last). */
 function onSale(item, now = new Date(), sold = 0) {
   return saleState(item, now, sold) === 'on-sale';
 }
+
+/** Whether an item is in the live standard collection (only these go in bags and the computer players' showcase). */
+const isStandard = (item) => item.kind === 'standard';
+
+/** The season pass's marble of a season ('holiday-2026'), or null. */
+const passMarbleOf = (seasonKey) => items.find((i) => i.kind === 'pass' && i.season === seasonKey) ?? null;
 
 /** A design's shades as item slugs (for the Set badge). */
 function setOf(designKey) {
   return items.filter((i) => i.design.key === designKey).map((i) => i.slug);
 }
 
-module.exports = { catalog, items, bySlug, byId, marbleId, normaliseId, marbleCode, saleState, onSale, setOf };
+module.exports = { catalog, items, bySlug, byId, marbleId, normaliseId, marbleCode, saleState, onSale, setOf, collectionOf, isStandard, passMarbleOf };

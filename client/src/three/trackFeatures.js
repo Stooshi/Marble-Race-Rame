@@ -448,6 +448,75 @@ export function buildTrackFeatures(centerline, channel, features, { lite = false
       g.setAttribute('color', new Float32BufferAttribute(col, 3));
       g.computeVertexNormals();
       add('jib', g, new Matrix4());
+    } else if (f.type === 'jump') {
+      // A boost-pad jump, where the physics has it: the kicker ramp rising over the ice to its lip, the gap
+      // (the hidden catch channel under it: a dark grate, or on a river jump the icy river), the landing deck
+      // from its lip easing back down to the ice, and the catch channel's exit grate after it. Rim to rim.
+      const k = f.kicker;
+      const gapEnd = k + f.gap;
+      const deckEnd = gapEnd + f.landing;
+      const exitEnd = deckEnd + (f.exit ?? 8);
+      const river = f.look === 'river-jump';
+      // The ramps in ice blue with bands across them every few metres (so you see them rise and fall), their
+      // edges and the faces at the gap in a bold stripe colour.
+      const top = new Color(river ? '#d6e6ef' : '#d9ebf7');
+      const stripe = new Color(river ? '#2f7fc4' : '#d8343a');
+      const face = stripe;
+      const pit = new Color(river ? '#2f6f9a' : '#1d2630');
+      const bar = new Color(river ? '#9cc8e4' : '#4a5664');
+      const pos = [];
+      const col = [];
+      const tri = (a1, b1, c1, color) => { for (const v of [a1, b1, c1]) { pos.push(v.x, v.y, v.z); col.push(color.r, color.g, color.b); } };
+      const lipAt = (d) => channelLipAt(channel, f.at * channel.arc + d) / channel.maxAngle;
+      const cols = lite ? 8 : 14;
+      // A surface over [d0, d1] at heights liftAt(d), coloured per row and column.
+      const sheet = (d0, d1, step, liftAt, colour) => {
+        const along = [];
+        for (let d = d0; d < d1; d += step) along.push(d);
+        along.push(d1);
+        for (let r = 0; r + 1 < along.length; r += 1) {
+          const a0 = p(f.at, along[r]);
+          const a1 = p(f.at, along[r + 1]);
+          const l0 = lipAt(along[r]);
+          const l1 = lipAt(along[r + 1]);
+          const h0 = liftAt(along[r]);
+          const h1 = liftAt(along[r + 1]);
+          for (let c = 0; c < cols; c += 1) {
+            const u0 = -1 + (2 * c) / cols;
+            const u1 = -1 + (2 * (c + 1)) / cols;
+            const color = colour(r, c);
+            const q = [surface(a0, u0 * l0, h0).point, surface(a0, u1 * l0, h0).point, surface(a1, u1 * l1, h1).point, surface(a1, u0 * l1, h1).point];
+            tri(q[0], q[1], q[2], color);
+            tri(q[0], q[2], q[3], color);
+          }
+        }
+      };
+      // A face standing up from the ice to height h at d, rim to rim (the kicker's lip, the deck's front).
+      const wall = (d, h) => {
+        const a0 = p(f.at, d);
+        const l0 = lipAt(d);
+        for (let c = 0; c < cols; c += 1) {
+          const u0 = (-1 + (2 * c) / cols) * l0;
+          const u1 = (-1 + (2 * (c + 1)) / cols) * l0;
+          const q = [surface(a0, u0, 0.01).point, surface(a0, u1, 0.01).point, surface(a0, u1, h).point, surface(a0, u0, h).point];
+          tri(q[0], q[1], q[2], face);
+          tri(q[0], q[2], q[3], face);
+        }
+      };
+      const edges = (r, c) => (c === 0 || c === cols - 1 || r % 8 === 7 ? stripe : top);
+      sheet(0, k, 0.5, (d) => f.height * (d / k) * (d / k) + 0.005, edges);
+      wall(k, f.height);
+      // The gap: the catch channel under it, seen as a grate (bars every half metre) or the river's water and floes.
+      sheet(k, gapEnd, 0.5, () => 0.012, (r, c) => (river ? ((r + c * 3) % 5 === 0 ? bar : pit) : r % 2 ? pit : bar));
+      wall(gapEnd, f.deck);
+      sheet(gapEnd, deckEnd, 0.5, (d) => { const w = (d - gapEnd) / f.landing; return f.deck * (1 - w) * (1 - w) + 0.005; }, (r, c) => (r === 0 ? stripe : edges(r, c)));
+      // The catch channel's exit: a grate across the ice just past the deck, where a caught marble comes back up.
+      sheet(deckEnd, exitEnd, 0.5, () => 0.012, (r) => (r % 2 ? pit : bar));
+      const g = new BufferGeometry();
+      g.setAttribute('position', new Float32BufferAttribute(pos, 3));
+      g.setAttribute('color', new Float32BufferAttribute(col, 3));
+      g.computeVertexNormals();
+      add('jib', g, new Matrix4());
     } else if (f.type === 'cobbles') {
       // Where the physics brakes the marbles (cobbles: the whole stretch, rim to
       // rim) the street stays asphalt; only the braking zones before the bends
@@ -980,7 +1049,7 @@ export function buildTrackFeatures(centerline, channel, features, { lite = false
   }
 
   for (const f of features) {
-    if (f.type === 'boost' || f.type === 'bump' || f.type === 'box' || f.type === 'cobbles' || f.type === 'paint' || DECOR.includes(f.type)) continue;
+    if (f.type === 'boost' || f.type === 'bump' || f.type === 'box' || f.type === 'jump' || f.type === 'cobbles' || f.type === 'paint' || DECOR.includes(f.type)) continue;
     const l = f.l ?? 0;
     const xa = Math.min(l, f.l2 ?? l) * across;
     const xb = Math.max(l, f.l2 ?? l) * across;

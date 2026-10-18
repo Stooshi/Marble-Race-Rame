@@ -187,7 +187,11 @@ async function grantForPayment(client, payment) {
      ON CONFLICT (user_id, season_key) WHERE revoked_at IS NULL DO NOTHING RETURNING id`,
     [payment.user_id, payment.season_key, payment.id, payment.provider],
   );
-  if (pass) return 'granted';
+  if (pass) {
+    // The season's own marble comes with the pass (numbered in order: src/marbles/collection.js).
+    await require('../marbles/collection').grantSeasonMarble(client, payment.user_id, payment.season_key);
+    return 'granted';
+  }
   await client.query(
     'INSERT INTO admin_audit (admin_id, action, target_user_id, reason, details) VALUES (NULL, $1, $2, $3, $4)',
     ['pass-duplicate', payment.user_id, 'A second season pass was paid for: refund it', JSON.stringify({ order_no: payment.order_no, payment_id: payment.id, season: payment.season_key })],
@@ -201,7 +205,43 @@ async function revokeForPayment(client, payment, reason) {
     'UPDATE season_passes SET revoked_at = now(), revoke_reason = $2 WHERE payment_id = $1 AND revoked_at IS NULL',
     [payment.id, reason],
   );
+  // The season marble goes with it, unless the player still holds the season's pass another way.
+  if (rowCount > 0 && !(await hasPass(client, payment.user_id, payment.season_key))) {
+    await require('../marbles/collection').takeBackSeasonMarble(client, payment.user_id, payment.season_key);
+  }
   return rowCount > 0;
+}
+
+/**
+ * Pass holders who have no season marble yet (passes granted before the marble was built) get it:
+ * only for passes granted before the marble's edition closed (the season's end). → how many.
+ */
+async function grantMissingMarbles(db, now = new Date()) {
+  const { passMarbleOf } = require('../marbles/catalog');
+  const collection = require('../marbles/collection');
+  let n = 0;
+  for (const s of await all(db)) {
+    const item = passMarbleOf(s.key);
+    if (!item) continue;
+    const { rows } = await db.query(
+      `SELECT p.user_id FROM season_passes p
+        WHERE p.season_key = $1 AND p.revoked_at IS NULL AND p.granted_at < $3
+          AND NOT EXISTS (SELECT 1 FROM user_collection c WHERE c.user_id = p.user_id AND c.item_slug = $2)
+        ORDER BY p.granted_at`,
+      [s.key, item.slug, item.saleEndsAt ? new Date(item.saleEndsAt) : now],
+    );
+    for (const r of rows) {
+      await db.withTransaction((client) => collection.grantSeasonMarble(client, r.user_id, s.key));
+      n += 1;
+    }
+  }
+  return n;
+}
+
+/** How many of a season's tracks are switched on. */
+async function trackCount(db, key) {
+  const { rows: [r] } = await db.query('SELECT COUNT(*)::int AS n FROM tracks WHERE season_key = $1 AND is_active', [key]);
+  return r.n;
 }
 
 /** What the client shows about a season, for `userId` (null: signed out). */
@@ -216,6 +256,8 @@ async function view(db, season, userId = null, now = new Date()) {
     freeFrom: season.free_from,
     state,
     today: state === 'on' ? dayOf(season, now) : null,
+    // How many of its tracks are switched on (the pass page's "31 holiday tracks").
+    trackCount: await trackCount(db, season.key),
     featured: featured ? { slug: featured, bonus: season.featured_bonus } : null,
     pass: season.pass_product_id ? {
       productId: season.pass_product_id,
@@ -312,9 +354,16 @@ async function badgesOf(db, userId) {
   return rows.map((r) => ({ key: r.key, name: r.name, rank: r.rank, awardedAt: r.awarded_at }));
 }
 
-/** Every hour: award the badges of seasons that have ended (nothing to deploy on the night). Started by src/server.js. */
+/**
+ * Every hour: give the season marble to any pass holder still without it, and award the badges of
+ * seasons that have ended (nothing to deploy on the night). Started by src/server.js.
+ */
 function startJobs(db, { earned }) {
   const run = async () => {
+    try {
+      const given = await grantMissingMarbles(db);
+      if (given) console.log(`[seasons] ${given} season marble(s) given to pass holders`);
+    } catch (err) { console.error(`[seasons] marble job: ${err.message}`); }
     try {
       for (const s of await all(db, { fresh: true })) {
         if (!s.badges_awarded_at && Date.now() >= at(s.ends_at)) {
@@ -334,5 +383,5 @@ module.exports = {
   scoreboardSeason, standings, awardBadges, badgesOf, startJobs,
   all, forget, stateOf, dayOf, featuredSlug, passOnSale, saleDaysLeft, lastMonthStart, byKey, byPassProduct, hasPass, passesOf,
   trackAccess, assertTrackAccess, freeSeasonKeys, OPEN_TRACK_SQL, pickOpenTrack, pickSeasonTrack, bonusLine,
-  grantForPayment, revokeForPayment, view,
+  grantForPayment, revokeForPayment, grantMissingMarbles, view,
 };

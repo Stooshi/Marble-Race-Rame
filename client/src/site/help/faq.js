@@ -19,7 +19,7 @@
  */
 import economy from '../../shared/economy.json';
 import { COIN_PACKS } from '../../shared/payments/packs';
-import { catalog } from '../../shared/marbles';
+import { catalog, isStandard } from '../../shared/marbles';
 import supportSettings from '../../shared/support.json';
 import company from '../../shared/company.json';
 
@@ -65,7 +65,28 @@ function limitedAnswer() {
 }
 
 /**
- * The 12 categories with their questions. `tracks`: the live track list ([{ series }]) when the page
+ * The Holiday Season 2026 as the Help Centre tells it (the season itself is the `seasons` row of the
+ * data update 2027-02-16-season-pass; keep these in step with it, and with the pass page).
+ */
+const HOLIDAY = {
+  name: 'Holiday Season 2026', pass: 'Holiday Season Pass 2026', price: '$9.99', starts: '1 December 2026', ends: '7 January 2027',
+  endTime: '23:59 Swedish time', tracks: 31, bonus: 50, marble: 'Winter Solstice',
+};
+
+/** A seasonal collection's answer, from the catalogue: what one is, and the one on sale (or coming). */
+function seasonalAnswer() {
+  const base = "A collection sold for one season only, at its own prices. When the season ends it's **retired**: never sold again. If you have one, it's yours to keep and race, and its certificate says when it was retired.";
+  const code = Object.keys(catalog.collections ?? {}).find((k) => catalog.collections[k].kind === 'seasonal');
+  if (!code) return base;
+  const col = catalog.collections[code];
+  const designs = catalog.designs.filter((d) => d.collection === code);
+  const day = (iso, back = 0) => new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Europe/Stockholm' }).format(new Date(new Date(iso).getTime() - back));
+  const list = listJoin(designs.map((d) => `${d.name} (${n(col.prices[d.rarity].coins)} coins)`));
+  return `${base} This season it's **${col.name}**: ${list}, on sale from ${day(col.releaseAt)} to ${day(col.retireAt, 1000)} (Swedish time), on the **Seasonal** shelf in the shop.`;
+}
+
+/**
+ * The 13 categories with their questions. `tracks`: the live track list ([{ series }]) when the page
  * has it, for the number of tracks and series; without it, the draft's 50 tracks in five series.
  */
 export function buildFaq({ tracks } = {}) {
@@ -75,7 +96,7 @@ export function buildFaq({ tracks } = {}) {
   const seriesNames = live ? SERIES_ORDER.filter((s) => tracks.some((t) => t.series === s)) : DRAFT_SERIES;
   const seriesWord = NUMBER_WORDS[seriesNames.length] ?? String(seriesNames.length);
 
-  const collectionDesigns = catalog.designs.filter((d) => !d.limited);
+  const collectionDesigns = catalog.designs.filter(isStandard);
   const commons = collectionDesigns.filter((d) => d.rarity === 'common').length;
   const shades = catalog.designs[0].shades.map((s) => s.name);
   const rarityRows = ['common', 'uncommon', 'rare', 'epic', 'legendary']
@@ -183,6 +204,10 @@ export function buildFaq({ tracks } = {}) {
         `Collection ${catalog.collection.number}, ${catalog.collection.name}, is live.${soon.length ? ` Next up: ${listJoin(soon)}.` : ''} See **Coming soon** in the shop.`],
       ['What is a limited edition?',
         limitedAnswer()],
+      ['What is a seasonal collection?',
+        seasonalAnswer()],
+      ['What is the season marble?',
+        `A marble only season pass holders ever get. With the ${HOLIDAY.pass} it's **${HOLIDAY.marble}**: it's added to your Marble Bag the moment you get the pass, numbered in the order passes are bought (Holiday 2026 #0001, #0002…), with its own certificate. It's never sold, and it's yours to keep after the season. Like every marble it's looks only.`],
       ['How do I change which marble I race with?',
         'Open your **Marble Bag** and pick the marble you want as your shooter.'],
     ]],
@@ -224,6 +249,39 @@ export function buildFaq({ tracks } = {}) {
       ]],
       ['My child bought coins without asking. What can I do?',
         'Contact us with the order number. We handle purchases made by minors without consent case by case.'],
+    ]],
+    ['Season pass', [
+      ["What's in the Holiday Season pass?", [
+        `The **${HOLIDAY.pass}** costs ${HOLIDAY.price} (shown in your local currency, VAT included) and gives you, until the season ends on ${HOLIDAY.ends} at ${HOLIDAY.endTime}:`,
+        ['ul',
+          `all ${HOLIDAY.tracks} holiday tracks from around the world, from ${HOLIDAY.starts};`,
+          `the **Track of the Day** bonus: +${HOLIDAY.bonus}% race coins on the featured track;`,
+          `the season marble, **${HOLIDAY.marble}**, yours to keep.`],
+        "It's one payment, not a subscription, and it's real money only: it can't be bought with coins. Under 18? Ask a parent or guardian first.",
+      ]],
+      ['What is the Track of the Day?',
+        `Every day of the season one holiday track is featured. Race it with the pass and you get +${HOLIDAY.bonus}% race coins on your full-pay races of the day (your first ${n(e.dailyLimit.fullRaces)}). The bonus doesn't count on the scoreboards: scoreboards only count coins earned by racing.`],
+      ['I bought the pass on 15 December. Do I get every track?',
+        `Yes. All ${HOLIDAY.tracks} holiday tracks are yours straight away, whenever you buy the pass during the season.`],
+      ['How long does the pass last?',
+        `Until the season ends on ${HOLIDAY.ends} at ${HOLIDAY.endTime}. It's sold from ${HOLIDAY.starts} until then, with a countdown in its last week.`],
+      ['I bought it on my phone. Does it work on the website?',
+        'Yes. The pass belongs to your account, so it works on the website and in both apps, wherever you log in. Buy it once only: if you already have it, the app shows it as yours.'],
+      ['Can my friends race the holiday tracks with me?',
+        "Yes. In a friend room you host, you can pick a holiday track and everyone in the room races it, with or without a pass. Anyone can also watch holiday races and replays for free."],
+      ['What happens when the season ends?', [
+        ['ul',
+          'The holiday tracks become **free for everyone** and join the normal races.',
+          `The pass is no longer sold. You keep ${HOLIDAY.marble} and your purchase stays on your **Purchases** page.`,
+          'The top 100 players by coins earned in the season get a **Holiday Season 2026** badge with their final place.',
+          "The season's collection is retired and never sold again."],
+      ]],
+      ['How do I get a refund for the pass?', [
+        "The pass is digital content you get straight away, so when you buy it you agree that this ends your 14-day right of withdrawal. We still give refunds where the law requires it: contact us with your order number. Bought in an app? Ask Apple (reportaproblem.apple.com) or Google (your Google Play order history).",
+        `A refunded pass is taken back: the holiday tracks lock again until the season ends, and ${HOLIDAY.marble} leaves your Marble Bag.`,
+      ]],
+      ['How do I restore my pass on iPhone?',
+        'Log in with the same Marble Spins account, open the pass page and tap **Restore purchases**. A pass you already bought comes back; you are never charged twice.'],
     ]],
     ['Friend rooms', [
       ['How do I race with friends?',

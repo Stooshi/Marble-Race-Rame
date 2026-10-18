@@ -9,7 +9,7 @@ import economy from '../economy.json';
 
 export { catalog };
 
-export const RARITY_ORDER = ['common', 'uncommon', 'rare', 'epic', 'legendary', 'limited'];
+export const RARITY_ORDER = ['common', 'uncommon', 'rare', 'epic', 'legendary', 'limited', 'season'];
 
 export const DESIGNS = catalog.designs;
 export const DESIGN = Object.fromEntries(DESIGNS.map((d) => [d.key, d]));
@@ -22,21 +22,66 @@ export const DESIGN = Object.fromEntries(DESIGNS.map((d) => [d.key, d]));
  */
 export const marbleId = (design, shade) => `${design.collection ?? catalog.collection.code}${String(design.no).padStart(2, '0')}${shade.no}`;
 
-/** The collection a design belongs to, by name ("Schoolyard Classics", "Limited edition"). */
-export const collectionName = (design) => (design.limited ? 'Limited edition' : catalog.collection.name);
+/**
+ * The collection a design belongs to (catalog.json → collections): the live standard one, or a
+ * limited edition, a seasonal collection (on sale between its dates, then retired) or a season pass's
+ * marble (never sold). → { code, kind: 'standard'|'limited'|'seasonal'|'pass', name, … }
+ */
+export function collectionOf(design) {
+  const code = design.collection ?? catalog.collection.code;
+  const c = catalog.collections?.[code];
+  if (c) return { code, ...c };
+  return { code, kind: 'standard', ...catalog.collection };
+}
 
-/** One entry per shade: { slug, id, design, shade, rarity, price, editionSize, collection }. */
-export const ITEMS = DESIGNS.flatMap((design) => design.shades.map((shade) => ({
-  slug: `${design.key}-${shade.key}`,
-  id: marbleId(design, shade),
-  design,
-  shade,
-  rarity: design.rarity,
-  price: catalog.rarities[design.rarity].price,
-  editionSize: design.limited?.editionSize ?? catalog.editionSize,
-  collection: collectionName(design),
-})));
+/** The collection a design belongs to, by name ("Schoolyard Classics", "Limited edition", "Winter 2026"). */
+export const collectionName = (design) => collectionOf(design).name;
+
+/** Whether a design is in the live standard collection (the bags, the showcase and the filters use only these). */
+export const isStandard = (design) => collectionOf(design).kind === 'standard';
+
+/**
+ * One entry per shade: { slug, id, design, shade, rarity, price, editionSize, collection, kind,
+ * saleStartsAt, saleEndsAt }. A seasonal collection's prices are its own (per rarity); its window is
+ * its release and retirement; a pass marble is never sold and its numbered edition is open.
+ */
+export const ITEMS = DESIGNS.flatMap((design) => design.shades.map((shade) => {
+  const col = collectionOf(design);
+  return {
+    slug: `${design.key}-${shade.key}`,
+    id: marbleId(design, shade),
+    design,
+    shade,
+    rarity: design.rarity,
+    price: col.prices?.[design.rarity] ?? catalog.rarities[design.rarity].price,
+    editionSize: col.kind === 'pass' ? null : design.limited?.editionSize ?? catalog.editionSize,
+    collection: col.name,
+    kind: col.kind,
+    saleStartsAt: design.limited?.saleStartsAt ?? col.releaseAt ?? null,
+    saleEndsAt: design.limited?.saleEndsAt ?? col.retireAt ?? col.closesAt ?? null,
+  };
+}));
 export const ITEM = Object.fromEntries(ITEMS.map((i) => [i.slug, i]));
+
+/**
+ * Where an item stands by its dates (what the screen shows; the server decides what can be bought):
+ * 'coming' (before its window), 'on-sale', 'sold-out' (a limited edition after its window), 'retired'
+ * (a seasonal collection after its retirement: never sold again), 'pass-only' (a season pass's
+ * marble while its season's pass is sold) or 'closed' (a pass marble's edition after its season).
+ */
+export function windowOf(item, now = new Date()) {
+  const ended = item.saleEndsAt && now >= new Date(item.saleEndsAt);
+  if (item.kind === 'pass') return ended ? 'closed' : 'pass-only';
+  if (item.saleStartsAt && now < new Date(item.saleStartsAt)) return 'coming';
+  if (ended) return item.kind === 'seasonal' ? 'retired' : 'sold-out';
+  return 'on-sale';
+}
+
+/** A pass marble's number as its certificate shows it: "Holiday 2026 #0001". */
+export function passNumber(item, editionNo) {
+  const col = collectionOf(item.design);
+  return `${col.numberLabel ?? col.name} #${String(editionNo).padStart(4, '0')}`;
+}
 export const ITEM_BY_ID = Object.fromEntries(ITEMS.map((i) => [i.id, i]));
 
 /**
@@ -72,8 +117,8 @@ export function bagPrice(bagKey, worth) {
  * limited edition): what the shop, landing page and collection hero show, so
  * swapping the catalogue never needs code changes.
  */
-export const FEATURED_DESIGNS = RARITY_ORDER.filter((r) => r !== 'limited')
-  .map((r) => DESIGNS.find((d) => d.rarity === r)).filter(Boolean);
+export const FEATURED_DESIGNS = RARITY_ORDER.filter((r) => r !== 'limited' && r !== 'season')
+  .map((r) => DESIGNS.find((d) => d.rarity === r && isStandard(d))).filter(Boolean);
 
 /**
  * A preview of the computer players' showcase marbles in a beginner race (the
@@ -86,7 +131,7 @@ export function previewShowcase(count, key) {
   const rand = () => { h = Math.imul(h ^ (h >>> 13), 1274126177); return ((h ^= h >>> 16) >>> 0) / 4294967296; };
   const picks = [];
   for (const { rarities, count: n } of catalog.showcase?.mix ?? []) {
-    const pool = ITEMS.filter((i) => rarities.includes(i.rarity)).map((i) => i.slug);
+    const pool = ITEMS.filter((i) => i.kind === 'standard' && rarities.includes(i.rarity)).map((i) => i.slug);
     for (let k = 0; k < n && pool.length; k += 1) picks.push(pool.splice(Math.floor(rand() * pool.length), 1)[0]);
   }
   const out = [...picks, ...new Array(Math.max(0, count - picks.length)).fill(null)].slice(0, count);
@@ -120,10 +165,11 @@ export const shows3d = (slug) => APPROVED_3D.has(ITEM[slug]?.design.key);
 export const PLAIN_3D = Boolean(catalog.approved3d?.plain);
 
 /** The designs whose 3D look is finished (materials.js builds exactly these). */
-export const BUILT_MATERIALS = ['vane-glass', 'steel', 'champion', 'aurora-glass', 'aurora-glow', 'clear-glass', 'agate-rings', 'patch', 'corkscrew', 'bee-bands', 'oxblood', 'flame-swirl'];
+export const BUILT_MATERIALS = ['vane-glass', 'steel', 'champion', 'aurora-glass', 'aurora-glow', 'clear-glass', 'agate-rings', 'patch', 'corkscrew', 'bee-bands', 'oxblood', 'flame-swirl',
+  'snowball', 'frost-clearie', 'candy-cane', 'evergreen', 'midwinter-star', 'winter-solstice'];
 
-/** Looks the previews can dress marbles in: every finished regular design (never a limited edition). */
-export const HOUSE_LOOKS = ITEMS.filter((i) => BUILT_MATERIALS.includes(i.design.material) && !i.design.limited).map((i) => i.slug);
+/** Looks the previews can dress marbles in: every finished design of the standard collection (never a limited, seasonal or pass one). */
+export const HOUSE_LOOKS = ITEMS.filter((i) => BUILT_MATERIALS.includes(i.design.material) && i.kind === 'standard').map((i) => i.slug);
 
 /** A short name for a look in standings: "Glacier Glass", "Ruby Ice", "Ocean Candy Stripe". */
 export function lookName(slug) {

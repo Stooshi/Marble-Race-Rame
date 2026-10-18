@@ -6,7 +6,7 @@
  * Looks only: nothing here is read by the race engine.
  */
 
-const { catalog, items, bySlug, byId, normaliseId, marbleCode, saleState, onSale, setOf } = require('./catalog');
+const { items, bySlug, byId, normaliseId, marbleCode, saleState, onSale, setOf, isStandard, passMarbleOf, collectionOf } = require('./catalog');
 const { HttpError, badRequest, conflict, notFound } = require('../utils/httpError');
 const economy = require('../economy');
 
@@ -18,11 +18,13 @@ async function counters(client) {
 
 /** The shop/collection view of every item, with how many numbered copies are left. */
 function describe(item, count = { bought: 0, gifted: 0 }, now = new Date()) {
-  const numberedLeft = Math.max(0, item.editionSize - count.bought);
+  // (A pass marble's edition is open: every copy numbered, no size.)
+  const numberedLeft = item.editionSize == null ? null : Math.max(0, item.editionSize - count.bought);
   return {
     slug: item.slug,
     id: item.id,
     collection: item.collection,
+    kind: item.kind,
     design: item.design.key,
     shade: item.shade.key,
     rarity: item.rarity,
@@ -50,6 +52,7 @@ async function listItems(client, now = new Date()) {
 async function buy(client, userId, slug, now = new Date()) {
   const item = bySlug.get(slug);
   if (!item) throw notFound('Marble not found');
+  if (item.kind === 'pass') throw conflict(`This marble comes only with the ${collectionOf(item.design).name} pass`);
   const price = item.price.coins;
   if (price == null) throw conflict('This marble has no price yet');
   const counter = await claimCopy(client, userId, item, now);
@@ -67,14 +70,20 @@ async function claimCopy(client, userId, item, now) {
   const { rows: [count] } = await client.query('SELECT bought FROM collection_counters WHERE item_slug = $1 FOR UPDATE', [item.slug]);
   // The server decides, whatever the screen shows: a limited edition only inside its sale window.
   const state = saleState(item, now, count.bought);
-  if (state === 'coming') throw conflict(`This marble isn't on sale yet: it goes on sale on ${saleStartText(item)}`);
+  if (state === 'pass-only') throw conflict(`This marble comes only with the ${collectionOf(item.design).name} pass`);
+  if (state === 'coming') throw conflict(`This marble isn't on sale yet: it goes on sale on ${dayText(item.saleStartsAt)}`);
+  if (state === 'retired') throw new HttpError(410, `Retired on ${dayText(item.saleEndsAt, true)}: this marble is never sold again`);
   if (state !== 'on-sale') throw new HttpError(410, item.allNumbered ? 'Sold out: this limited edition is never sold again' : 'This marble is no longer for sale');
   return count;
 }
 
-/** "1 December 2026" (Swedish time), for a limited edition's opening day. */
-function saleStartText(item) {
-  return new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Europe/Stockholm' }).format(new Date(item.saleStartsAt));
+/**
+ * "1 December 2026" (Swedish time): a sale window's first day, or with `last` its last day (a window
+ * ending at midnight or at 23:59:59 has its last day on the day before midnight).
+ */
+function dayText(iso, last = false) {
+  const t = new Date(iso).getTime() - (last ? 1000 : 0);
+  return new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Europe/Stockholm' }).format(new Date(t));
 }
 
 /** Hands out the next numbered copy (First Edition while the first 500 last). */
@@ -121,9 +130,10 @@ async function grantCopy(client, userId, slug) {
 function bagOffer(bagKey, shadeKey = 'classic', ownedSlugs = new Set()) {
   const bag = Object.hasOwn(economy.economy.bags, bagKey) ? economy.economy.bags[bagKey] : null;
   if (!bag) throw notFound('No such bag');
-  const shadeKeys = catalog.designs.find((d) => !d.limited)?.shades.map((sh) => sh.key) ?? [];
+  const shadeKeys = items.find(isStandard)?.design.shades.map((sh) => sh.key) ?? [];
   if (!shadeKeys.includes(shadeKey)) throw badRequest(`Choose a shade: ${shadeKeys.join(', ')}`);
-  const inBag = items.filter((i) => !i.design.limited && bag.rarities.includes(i.rarity) && i.shade.key === shadeKey);
+  // (Only the live standard collection: never a limited edition, a seasonal collection or a pass marble.)
+  const inBag = items.filter((i) => isStandard(i) && bag.rarities.includes(i.rarity) && i.shade.key === shadeKey);
   const worthOf = (list) => list.reduce((n, i) => n + (i.price.coins ?? 0), 0);
   const missing = inBag.filter((i) => !ownedSlugs.has(i.slug));
   const worth = worthOf(missing);
@@ -167,6 +177,43 @@ function findById(text) {
   const item = byId.get(normaliseId(text));
   if (!item) throw notFound('No marble has this ID');
   return describe(item);
+}
+
+/**
+ * A season pass's marble (catalog.json: the collection of kind 'pass' for that season) → given to
+ * its holder the moment the pass is, numbered in the order passes were granted ("Holiday 2026
+ * #0001"): an open edition that closes when the pass stops being sold. Free (price 0), once per
+ * player; a player who already has it keeps theirs. → the copy, or null (the season has no marble).
+ */
+async function grantSeasonMarble(client, userId, seasonKey) {
+  const item = passMarbleOf(seasonKey);
+  if (!item) return null;
+  const { rows: [had] } = await client.query('SELECT * FROM user_collection WHERE user_id = $1 AND item_slug = $2', [userId, item.slug]);
+  if (had) return had;
+  await client.query('INSERT INTO collection_counters (item_slug) VALUES ($1) ON CONFLICT DO NOTHING', [item.slug]);
+  const { rows: [count] } = await client.query('UPDATE collection_counters SET bought = bought + 1 WHERE item_slug = $1 RETURNING bought', [item.slug]);
+  const n = count.bought;
+  const { rows: [copy] } = await client.query(
+    `INSERT INTO user_collection (user_id, item_slug, source, copy_no, edition_no, marble_code, currency, price_paid, first_owner_id)
+     VALUES ($1, $2, 'grant', $3, $3, $4, 'coins', 0, $1) RETURNING *`,
+    [userId, item.slug, n, marbleCode(item, { copyNo: n })],
+  );
+  return copy;
+}
+
+/** The pass was refunded or charged back: its marble is taken back (its number is never handed out again). → its code, or null. */
+async function takeBackSeasonMarble(client, userId, seasonKey) {
+  const item = passMarbleOf(seasonKey);
+  if (!item) return null;
+  const { rows: [gone] } = await client.query('DELETE FROM user_collection WHERE user_id = $1 AND item_slug = $2 AND gift_no IS NULL RETURNING marble_code', [userId, item.slug]);
+  if (gone) await client.query('DELETE FROM user_shooter WHERE user_id = $1 AND item_slug = $2', [userId, item.slug]);
+  return gone?.marble_code ?? null;
+}
+
+/** "Holiday 2026 #0001": a pass marble's number as its certificate shows it. */
+function passNumber(item, editionNo) {
+  const col = collectionOf(item.design);
+  return `${col.numberLabel ?? col.name} #${String(editionNo).padStart(4, '0')}`;
 }
 
 function ownedView(row) {
@@ -250,16 +297,23 @@ async function certificate(client, code) {
   );
   if (!copy) throw notFound('No marble has this ID');
   const item = bySlug.get(copy.item_slug);
+  const col = item ? collectionOf(item.design) : null;
   return {
     marbleCode: copy.marble_code,
     marbleId: item?.id ?? null,
     collection: item?.collection ?? null,
+    kind: item?.kind ?? null,
+    // A pass marble: "Holiday Season 2026 pass edition", numbered "Holiday 2026 #0001".
+    edition: col?.kind === 'pass' ? col.edition : null,
+    number: col?.kind === 'pass' && copy.edition_no ? passNumber(item, copy.edition_no) : null,
+    // A seasonal collection's marble after its retirement: "Retired 7 Jan 2027".
+    retiredAt: item?.kind === 'seasonal' && item.saleEndsAt && Date.now() >= new Date(item.saleEndsAt).getTime() ? item.saleEndsAt : null,
     slug: copy.item_slug,
     design: item?.design.key,
     shade: item?.shade.key,
     editionNo: copy.edition_no,
     editionSize: item?.editionSize,
-    firstEdition: copy.edition_no != null,
+    firstEdition: copy.edition_no != null && col?.kind !== 'pass',
     firstOwner: copy.first_owner,
     owner: copy.owner,
     made: copy.acquired_at,
@@ -301,4 +355,4 @@ async function recordShooterLook(client, userId, entryId) {
   );
 }
 
-module.exports = { grantCopy, pickRacingMarble, recordShooterLook, listItems, describe, buy, bagOffer, buyBag, findById, bag, setShooter, certificate, counters };
+module.exports = { grantSeasonMarble, takeBackSeasonMarble, passNumber, grantCopy, pickRacingMarble, recordShooterLook, listItems, describe, buy, bagOffer, buyBag, findById, bag, setShooter, certificate, counters };

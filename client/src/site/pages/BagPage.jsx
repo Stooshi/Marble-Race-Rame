@@ -3,7 +3,8 @@ import { Link } from 'react-router-dom';
 import { api } from '../../api/client';
 import { useAuth } from '../../context/AuthContext';
 import { useAsync } from '../../hooks/useAsync';
-import { DESIGN, ITEM, ITEMS, PLAIN_3D, RARITY_ORDER, rarityInfo, shows3d } from '../../shared/marbles';
+import { DESIGN, ITEM, ITEMS, PLAIN_3D, RARITY_ORDER, passNumber, rarityInfo, shows3d, windowOf } from '../../shared/marbles';
+import { retiredLine } from '../marbles/useCollection';
 import { importOrReload } from '../../utils/staleCode';
 import MarbleBadge from '../marbles/MarbleBadge';
 
@@ -31,8 +32,11 @@ export default function BagPage() {
     const collection = ITEMS.map((item) => {
       const copy = copies.get(item.slug);
       const notes = [];
-      if (copy?.editionNo) notes.push(`#${String(copy.editionNo).padStart(3, '0')}`);
+      // (A pass marble: "Holiday 2026 #0001"; any other numbered copy: "#037".)
+      if (copy?.editionNo) notes.push(item.kind === 'pass' ? passNumber(item, copy.editionNo) : `#${String(copy.editionNo).padStart(3, '0')}`);
       if (copy && complete.has(item.design.key)) notes.push('Set ★');
+      const retired = retiredLine(item);
+      if (copy && retired) notes.push(retired);
       return {
         key: item.slug, slug: item.slug, id: item.id, collection: item.collection, owned: Boolean(copy), copy, rarity: item.rarity,
         name: item.design.shades.length > 1 ? `${item.design.name} · ${item.shade.name}` : item.design.name,
@@ -44,7 +48,9 @@ export default function BagPage() {
       note: m.is_starter ? 'Free starter' : 'Plain marble',
       shooter: data.shooter?.original === m.id,
     }));
-    return [...collection.filter((t) => t.owned), ...originals, ...collection.filter((t) => !t.owned)];
+    // Marbles not owned: only those that can still be had (never a retired seasonal one, or a pass marble after its season).
+    const gettable = (t) => !['retired', 'closed'].includes(windowOf(ITEM[t.slug]));
+    return [...collection.filter((t) => t.owned), ...originals, ...collection.filter((t) => !t.owned && gettable(t))];
   }, [data]);
 
   if (!authLoading && !isAuthenticated) {
@@ -134,7 +140,9 @@ export default function BagPage() {
                 ? <span className="ms-btn" aria-disabled="true">YOUR SHOOTER</span>
                 : <button type="button" className="ms-btn ms-btn--primary" disabled={busy} onClick={() => makeShooter(pick)}>{busy ? 'SAVING…' : 'MAKE IT MY SHOOTER'}</button>)}
               {pick.copy && <Link to={`/certificate/${pick.copy.marbleCode}`} className="ms-btn">{pick.copy.editionNo ? 'CERTIFICATE' : 'MARBLE ID'}</Link>}
-              {!pick.owned && <Link to={`/collection/${ITEM[pick.slug].design.key}?shade=${ITEM[pick.slug].shade.key}`} className="ms-btn ms-btn--primary">GET IT IN THE SHOP</Link>}
+              {!pick.owned && (ITEM[pick.slug].kind === 'pass'
+                ? <Link to="/pass" className="ms-btn ms-btn--primary">COMES WITH THE SEASON PASS</Link>
+                : <Link to={`/collection/${ITEM[pick.slug].design.key}?shade=${ITEM[pick.slug].shade.key}`} className="ms-btn ms-btn--primary">GET IT IN THE SHOP</Link>)}
               <button type="button" className="ms-btn ms-btn--ghost ms-btn--sm" onClick={() => setSelected(null)}>Close</button>
             </div>
           </div>
