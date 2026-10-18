@@ -53,8 +53,7 @@ test('the emails escape what players type', () => {
 });
 
 test('the contact form and the support inbox on a real database', { skip: !DB }, async () => {
-  const { migrate } = require('../src/db/migrate');
-  await migrate();
+  // (The test database is brought up to date before the test files start: test/helpers/migrateTestDb.js.)
   const { createApp } = require('../src/app');
   const db = require('../src/db');
   const security = require('../src/security');
@@ -81,10 +80,15 @@ test('the contact form and the support inbox on a real database', { skip: !DB },
     const msg = (extra = {}) => ({ token: oldToken, name: 'Ann Player', email: `${name}@test.invalid`, category: 'Buying coins', order_no: 'MS-1001', message: 'My coins did not arrive after paying.', ...extra });
 
     // Checks: a fresh form is too fast (a bot: looks fine, nothing saved); the honeypot; bad fields.
-    const before = Number((await db.query('SELECT COUNT(*) FROM support_messages')).rows[0].count);
-    assert.deepEqual((await call('/support', { method: 'POST', body: msg({ token: form.token, message: 'Bot message number one.' }) })).body, { ref: null });
+    // (Counted for this test's address only, and "too fast" made with a form time a minute ahead: on a
+    // busy machine, with every test file running at once, the form fetched above may already be over
+    // 3 s old by the time it is sent, and the bot check would then rightly let it through.)
+    const mineCount = async () => Number((await db.query('SELECT COUNT(*) FROM support_messages WHERE lower(email) = lower($1)', [`${name}@test.invalid`])).rows[0].count);
+    const before = await mineCount();
+    const fresh = support.formToken(Date.now() + 60_000);
+    assert.deepEqual((await call('/support', { method: 'POST', body: msg({ token: fresh, message: 'Bot message number one.' }) })).body, { ref: null });
     assert.deepEqual((await call('/support', { method: 'POST', body: msg({ website: 'http://spam', message: 'Bot message number two.' }) })).body, { ref: null });
-    assert.equal(Number((await db.query('SELECT COUNT(*) FROM support_messages')).rows[0].count), before);
+    assert.equal(await mineCount(), before);
     assert.equal((await call('/support', { method: 'POST', body: msg({ token: 'nope' }) })).body.details.token, 'expired');
     assert.equal((await call('/support', { method: 'POST', body: msg({ category: 'Bananas' }) })).status, 400);
     assert.equal((await call('/support', { method: 'POST', body: msg({ message: 'short' }) })).status, 400);

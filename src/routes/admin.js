@@ -281,7 +281,12 @@ router.get('/support', async (req, res) => {
   const where = [];
   if (status) { params.push(status); where.push(`s.status = $${params.length}`); }
   if (category) { params.push(category); where.push(`s.category = $${params.length}`); }
-  if (q) {
+  if (/^S-\d+$/i.test(q)) {
+    // A message's reference (S-1001): that message only, never others that merely contain the text
+    // (an order number MS-1001 holds "S-1001" too).
+    params.push(q.toUpperCase());
+    where.push(`s.ref = $${params.length}`);
+  } else if (q) {
     params.push(`%${q.replace(/[\\%_]/g, (c) => `\\${c}`)}%`);
     const p = `$${params.length}`;
     where.push(`(s.name ILIKE ${p} OR s.email ILIKE ${p} OR s.message ILIKE ${p} OR s.order_no ILIKE ${p} OR s.ref ILIKE ${p} OR u.username ILIKE ${p})`);

@@ -203,7 +203,7 @@ Defined in `src/sockets/index.js`. The client may send a JWT in `auth.token`; an
 
 ## Server tests: `test/`
 
-- **Running them:** `npm test`, about 5 minutes. Set `ROOMS_TEST_DATABASE_URL=postgres://…` to also run the tests that need a database (rooms, admin, Stripe, account, entry fees).
+- **Running them:** `npm test`, about 5 minutes. Set `ROOMS_TEST_DATABASE_URL=postgres://…` to also run the tests that need a database (rooms, admin, Stripe, Google Play, seasons, account, support, entry fees). `npm test` first brings that database up to date on its own (`test/helpers/migrateTestDb.js`, the `pretest` step), so no test file runs the schema while the others run against it.
 - **Engines and protecting results:**
   - `raceFingerprints` with `fingerprints/races.json`;
   - `simulator`, `physics`, `simulationPool`, `version`, `skill`.
