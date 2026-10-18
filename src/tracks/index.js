@@ -93,4 +93,6 @@ module.exports = [
   require('./london-steeplechase'),
   require('./coliseum-anchor-leg'),
   require('./zurich-golden-lap'),
+  // Holiday Season 2026 (season 'holiday-2026': locked to the pass until the season ends).
+  require('./tromso-aurora-grand-prix'),
 ];

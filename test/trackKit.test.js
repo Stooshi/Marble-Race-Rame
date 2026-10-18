@@ -697,6 +697,7 @@ const HIDDEN_KIT_TRACKS = [
   ['london-steeplechase', '2027-02-13-add-london-steeplechase.sql', 'Track and Field track 8: London Steeplechase (under the white steel roof ring at sunset: the barriers and the water jump), added switched off.'],
   ['coliseum-anchor-leg', '2027-02-14-add-coliseum-anchor-leg.sql', 'Track and Field track 9: Coliseum Anchor Leg (the Los Angeles Coliseum\'s arches at sunset and the final sprint), added switched off.'],
   ['zurich-golden-lap', '2027-02-15-add-zurich-golden-lap.sql', 'Track and Field track 10: Zurich Golden Lap (a night meeting under the floodlights of Letzigrund, the golden finish), added switched off.'],
+  ['tromso-aurora-grand-prix', '2027-02-17-add-tromso-aurora-grand-prix.sql', 'Holiday Season 2026 track: Tromsø Aurora Grand Prix (the polar night under the northern lights: past the harbour\'s wooden houses, over the fjord bridge, down a half-pipe beneath it, round a white peaked church to the line), added switched off and in the Holiday Season pass (season holiday-2026).'],
 ];
 for (const [slug, file, note] of HIDDEN_KIT_TRACKS) {
   test(`${slug} is added by its data update, switched off, exactly as its track file builds it`, () => {

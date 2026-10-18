@@ -904,6 +904,17 @@
    "side": -1,
    "marbles": 6
   },
+  "tromso-aurora-grand-prix": {
+   "name": "Tromsø Aurora Grand Prix",
+   "series": "Grand Prix",
+   "lighting": "night-northern-lights",
+   "v": "f38afcb6",
+   "bytes": 13316,
+   "bytes2x": 33450,
+   "t": 11066,
+   "side": 1,
+   "marbles": 6
+  },
   "verdon-burst": {
    "name": "Verdon Burst",
    "series": "Canyons",
