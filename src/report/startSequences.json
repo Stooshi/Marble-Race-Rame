@@ -57,6 +57,7 @@
 "multiball-manor": {"family":"pinball","reach":0.248,"seq":["opening: tunnel-launch","drop","pileUp","slalom","drop","slalom","sweep left"]},
 "nairobi-marble-grand-prix": {"family":"grand-prix","reach":0.232,"seq":["opening: classic","drop","pileUp","slalom","S-bends left"]},
 "nanjing": {"family":"coaster","reach":0.208,"seq":["opening: banked-turn","drop","pileUp","slalom","sweep right","S-bends left"]},
+"new-york-winter-run": {"family":"grand-prix","reach":0.279,"seq":["opening: peg-drop","drop","peg ×7","straight","peg ×2","box","rail","spiral left"]},
 "nuremberg-christmas-market-run": {"family":"world-tour","reach":0.232,"seq":["opening: banked-turn","drop","pileUp","slalom","sweep right","straight","table-top"]},
 "oaxaca-posadas-run": {"family":"world-tour","reach":0.24,"seq":["opening: staggered-drop","drop","pileUp","slalom","brake","straight","rail","box","table-top","sweep left"]},
 "okavango-park": {"family":"coaster","reach":0.229,"seq":["opening: funnel-drop","drop","pileUp","slalom","straight","slalom","drop","sweep left","boost"]},

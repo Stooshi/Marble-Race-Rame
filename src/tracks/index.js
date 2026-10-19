@@ -106,4 +106,5 @@ module.exports = [
   require('./belgrade-badnjak-run'),
   require('./coptic-cairo-lights'),
   require('./veliky-ustyug-frost-run'),
+  require('./new-york-winter-run'),
 ];

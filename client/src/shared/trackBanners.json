@@ -673,6 +673,17 @@
    "side": -1,
    "marbles": 4
   },
+  "new-york-winter-run": {
+   "name": "New York Winter Run",
+   "series": "Grand Prix",
+   "lighting": "night",
+   "v": "4c31e5ae",
+   "bytes": 16866,
+   "bytes2x": 40200,
+   "t": 27691,
+   "side": -1,
+   "marbles": 6
+  },
   "nuremberg-christmas-market-run": {
    "name": "Nuremberg Christmas Market Run",
    "series": "World Tour",

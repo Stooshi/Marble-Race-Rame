@@ -497,7 +497,7 @@ function iceRinkTreeGlow() {
     const h = 4 + (k / 60) * 24;
     const r = 8.6 * (1 - (h - 3) / 30);
     const a = k * 2.4;
-    p.push(piece(new SphereGeometry(0.32, 6, 5), BULBS[k % 5], M(Math.cos(a) * r, h, -15 + Math.sin(a) * r)));
+    p.push(piece(new SphereGeometry(0.34, 4, 3), BULBS[k % 5], M(Math.cos(a) * r, h, -15 + Math.sin(a) * r)));
   }
   p.push(piece(new ConeGeometry(1.4, 2.2, 5), '#ffe066', M(0, 30.5, -15)));
   return merge(p);
