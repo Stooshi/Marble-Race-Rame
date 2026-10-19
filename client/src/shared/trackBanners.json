@@ -772,6 +772,17 @@
    "side": -1,
    "marbles": 6
   },
+  "night-train-north": {
+   "name": "Night Train North",
+   "series": "Winter Wonders",
+   "lighting": "night",
+   "v": "eb8d2b19",
+   "bytes": 7238,
+   "bytes2x": 18052,
+   "t": 10736,
+   "side": 1,
+   "marbles": 5
+  },
   "nuremberg-christmas-market-run": {
    "name": "Nuremberg Christmas Market Run",
    "series": "World Tour",
