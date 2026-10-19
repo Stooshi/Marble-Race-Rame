@@ -79,6 +79,7 @@
 "reykjavik-yule-lights": {"family":"block","reach":0.318,"seq":["opening: peg-drop","drop","peg ×7","straight","peg","rail","box","table-top","sweep right"]},
 "rio-jungle-rumble": {"family":"world-tour","reach":0.209,"seq":["opening: classic","drop","pileUp","slalom","S-bends left"]},
 "sahara-marble-grand-prix": {"family":"grand-prix","reach":0.216,"seq":["opening: classic","drop","pileUp","slalom","S-bends left"]},
+"san-fernando-lantern-spins": {"family":"block","reach":0.33,"seq":["opening: peg-drop","drop","peg ×7","S-bends left","straight","peg ×3","table-top"]},
 "sapporo-snow-sculptures": {"family":"coaster","reach":0.231,"seq":["opening: classic","drop","pileUp","slalom","straight","box","rail","spiral right"]},
 "sky-islands": {"family":"block","reach":0.239,"seq":["opening: classic","drop","pileUp","slalom","straight","peg ×2","sweep left","boost"]},
 "slingshot-spins": {"family":"pinball","reach":0.256,"seq":["opening: staggered-drop","drop","pileUp","slalom","brake","sweep left"]},

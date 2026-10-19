@@ -915,6 +915,17 @@
    "side": 1,
    "marbles": 1
   },
+  "san-fernando-lantern-spins": {
+   "name": "San Fernando Lantern Spins",
+   "series": "Blocks",
+   "lighting": "night",
+   "v": "c7072fbf",
+   "bytes": 16404,
+   "bytes2x": 39366,
+   "t": 9937,
+   "side": 1,
+   "marbles": 7
+  },
   "san-francisco": {
    "name": "San Francisco",
    "series": "World Tour",
