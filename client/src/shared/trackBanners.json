@@ -464,6 +464,17 @@
    "side": 1,
    "marbles": 5
   },
+  "gingerbread-village": {
+   "name": "Gingerbread Village",
+   "series": "Winter Wonders",
+   "lighting": "sunset",
+   "v": "c13eae4d",
+   "bytes": 12934,
+   "bytes2x": 31076,
+   "t": 23812,
+   "side": -1,
+   "marbles": 8
+  },
   "goa-star-lanterns": {
    "name": "Goa Star Lanterns",
    "series": "Arcade",

@@ -117,6 +117,7 @@ module.exports = [
   require('./san-fernando-lantern-spins'),
   require('./edinburgh-hogmanay-grand-prix'),
   require('./trinidad-parang-run'),
-  require('./goa-star-lanterns'),
   require('./seoul-winter-lights'),
+  require('./goa-star-lanterns'),
+  require('./gingerbread-village'),
 ];
