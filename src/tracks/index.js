@@ -124,4 +124,5 @@ module.exports = [
   require('./rio-new-year-burst'),
   require('./ice-palace'),
   require('./night-train-north'),
+  require('./sleigh-bell-forest'),
 ];

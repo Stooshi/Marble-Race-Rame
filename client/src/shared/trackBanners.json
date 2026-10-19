@@ -1025,6 +1025,17 @@
    "side": -1,
    "marbles": 1
   },
+  "sleigh-bell-forest": {
+   "name": "Sleigh Bell Forest",
+   "series": "Winter Wonders",
+   "lighting": "night",
+   "v": "8c7c3796",
+   "bytes": 12336,
+   "bytes2x": 29594,
+   "t": 9980,
+   "side": 1,
+   "marbles": 4
+  },
   "slingshot-spins": {
    "name": "Slingshot Spins",
    "series": "Pinball",
