@@ -996,12 +996,12 @@
    "name": "Sapporo Snow Sculptures",
    "series": "Coasters",
    "lighting": "snow",
-   "v": "bae73438",
-   "bytes": 16452,
-   "bytes2x": 38644,
-   "t": 9701,
+   "v": "bab8f0c1",
+   "bytes": 13470,
+   "bytes2x": 32978,
+   "t": 10125,
    "side": 1,
-   "marbles": 5
+   "marbles": 4
   },
   "seoul-winter-lights": {
    "name": "Seoul Winter Lights",
