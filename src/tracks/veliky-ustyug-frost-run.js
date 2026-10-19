@@ -1,41 +1,41 @@
 'use strict';
 
 // Veliky Ustyug Frost Run: Holiday Season 2026 track (World Tour), Track of the Day on 28 December and
-// again on 2 January. A deep-frost day under a low sun in the old wooden town: down to the river, a jib
-// line along the frozen river, past troikas and the white church's onion domes, to the carved wooden
+// again on 2 January. A deep-frost day under a low sun in the old wooden town: down to the river, a jump
+// over the frozen river, past troikas and the white church's onion domes, to the carved wooden
 // residence with its towers (shown as a building only).
-const { track, opening, straight, sBends, sweep, spiral, hairpin, plunge, runIn, peg, slalom, swipe, rumble, jibLine, curtain } = require('../trackKit');
+const { boostJump, track, opening, straight, sBends, sweep, spiral, hairpin, plunge, runIn, peg, slalom, swipe, rumble, curtain } = require('../trackKit');
 
 module.exports = track({
   slug: 'veliky-ustyug-frost-run',
   name: 'Veliky Ustyug Frost Run',
   season: 'holiday-2026',
   difficulty: 'extreme',
-  description: 'A deep-frost day under a low sun in an old wooden town: a jib line along the frozen river, past troikas and a white church\'s onion domes, to a carved wooden residence with tall towers.',
+  description: 'A deep-frost day under a low sun in an old wooden town: a jump over the frozen river, past troikas and a white church\'s onion domes, to a carved wooden residence with tall towers.',
   surface: 'snow',
   biome: 'arctic',
   lighting: 'sunset',
   variants: ['snow'],
-  signature: 'Frozen river jib line',
+  signature: 'Frozen river jump',
   tvCameras: [
-    { section: 'Frozen river jib line', at: 0.6, side: 'left', distance: 8, height: 14 },
+    { section: 'Frozen river jump', at: 0.6, side: 'left', distance: 8, height: 14 },
     { section: 'Bell tower spiral', at: 0.5, side: 'left', distance: 9, height: 14 },
   ],
   start: { landmark: 'onion-dome-church', gate: 'paddle', shots: { countdown: 'side', launch: 'side' } },
   finish: { landmark: 'wooden-residence', scenery: ['wooden-houses'] },
   designChanges: [
-    'A clean drop at the gate (the field let go in waves) and bends down to the river, then the jib line along the frozen river, as planned.',
+    'A clean drop at the gate (the field let go in waves) and bends down to the river, then the river jump over the frozen river (the boost-pad jump, approved by Moses on 19 Oct, in place of the planned jib line).',
     'The residence is a carved wooden house with towers, shown as a building only (no characters); the church is generic architecture (onion domes, a bell tower) with no symbols or figures. No names on anything drawn.',
     'Banner gantries hang over the wooden street bends and the church sweep (they give the weakest marbles their chances).',
   ],
   opening: opening('clean-drop', { side: 'left', names: { plunge: 'Town hill drop', bends: 'Down to the river' } }),
   sections: [
     {
-      name: 'Frozen river jib line', shape: straight(120, { grade: 0.115 }), billboards: 1,
+      name: 'Frozen river jump', shape: straight(140, { grade: 0.115 }),
       obstacles: [peg({ costume: 'ice-lantern', at: 0.05, line: 'left' })],
-      features: [jibLine({ from: 0.15 })], landmarks: [{ name: 'troika', side: 'right', at: 0.5, distance: 8 }],
+      features: [boostJump({ at: 0.25, look: 'river-jump' })], landmarks: [{ name: 'troika', side: 'right', at: 0.5, distance: 8 }],
     },
-    { name: 'Wooden street bends', shape: sBends({ first: 'right', radius: 65, degrees: 80, grade: 0.12 }), scenery: ['wooden-houses'], billboards: 2, obstacles: [curtain({ costume: 'banner-gantry', at: 0.5, side: 'left' })] },
+    { name: 'Wooden street bends', shape: sBends({ first: 'right', radius: 65, degrees: 80, grade: 0.12 }), scenery: ['wooden-houses'], billboards: 3, obstacles: [curtain({ costume: 'banner-gantry', at: 0.5, side: 'left' })] },
     { name: 'Run to the hairpin', shape: straight(45, { grade: 0.12 }), obstacles: [peg({ costume: 'ice-lantern', at: 0.15, line: 'center' }), peg({ costume: 'ice-lantern', at: 0.32, line: 'left' }), peg({ costume: 'ice-lantern', at: 0.5, line: 'right' })] },
     { name: 'Hairpin', shape: hairpin({ side: 'left' }), obstacles: [swipe({ costume: 'stag', side: 'high' })] },
     {

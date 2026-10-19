@@ -104,7 +104,7 @@
 "tokyo-photo-finish": {"family":"athletics","reach":0.311,"seq":["opening: pipe-drop","drop","half-pipe","S-bends right"]},
 "trinidad-parang-run": {"family":"pinball","reach":0.33,"seq":["opening: peg-drop","drop","peg ×7","sweep right","straight","hairpin left","swipe"]},
 "tromso-aurora-grand-prix": {"family":"grand-prix","reach":0.28,"seq":["opening: peg-drop","drop","peg ×7","S-bends right","straight","drop","slalom"]},
-"veliky-ustyug-frost-run": {"family":"world-tour","reach":0.342,"seq":["opening: clean-drop","drop","S-bends left","straight","peg","rail","box","table-top","S-bends right","curtain"]},
+"veliky-ustyug-frost-run": {"family":"world-tour","reach":0.344,"seq":["opening: clean-drop","drop","S-bends left","straight","peg","jump","S-bends right","curtain"]},
 "verdon-burst": {"family":"canyon","reach":0.216,"seq":["opening: crest-start","drop","pileUp","slalom","climb","drop","sweep right","boost"]},
 "voxel-harbor": {"family":"block","reach":0.241,"seq":["opening: staggered-drop","drop","pileUp","slalom","brake","S-bends left"]},
 "voxel-peaks": {"family":"block","reach":0.207,"seq":["opening: banked-turn","drop","pileUp","slalom","sweep right","sweep left","boost"]},
