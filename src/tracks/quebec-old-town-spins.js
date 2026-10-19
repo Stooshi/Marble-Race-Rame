@@ -44,7 +44,7 @@ module.exports = track({
       obstacles: [slalom({ costume: 'lantern-pole', from: 0.2, to: 0.8, count: 5, loss: 0.3 })],
     },
     { name: 'Old town S-bends', shape: sBends({ first: 'left', radius: 70, degrees: 90, grade: 0.11 }), scenery: ['stone-houses'], billboards: 2 },
-    { name: 'River bends', shape: sBends({ first: 'left', radius: 75, degrees: 80, grade: 0.10 }), obstacles: [curtain({ costume: 'banner-gantry', at: 0.25, side: 'right' }), curtain({ costume: 'banner-gantry', at: 0.75, side: 'left' })] },
+    { name: 'River bends', shape: sBends({ first: 'left', radius: 75, degrees: 75, grade: 0.11 }), obstacles: [curtain({ costume: 'banner-gantry', at: 0.25, side: 'right' }), curtain({ costume: 'banner-gantry', at: 0.75, side: 'left' })] },
     { name: 'Run to the hairpin', shape: straight(45, { grade: 0.12 }), obstacles: [peg({ costume: 'lantern-pole', at: 0.3, line: 'left' }), peg({ costume: 'lantern-pole', at: 0.55, line: 'right' })] },
     { name: 'Hairpin', shape: hairpin({ side: 'right' }), obstacles: [swipe({ costume: 'camera-crane', side: 'high' })] },
     { name: 'Riverside run', shape: straight(120, { grade: 0.13 }), scenery: ['wooden-houses'], obstacles: [peg({ costume: 'lantern-pole', at: 0.15, line: 'center' }), peg({ costume: 'lantern-pole', at: 0.3, line: 'left' })], features: [rumble({ from: 0.6, to: 0.95, count: 3 })] },
