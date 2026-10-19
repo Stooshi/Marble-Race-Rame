@@ -74,7 +74,7 @@ async function withSeasons(rows, userId, now = new Date()) {
   });
 }
 
-/** GET /api/tracks?difficulty= */
+/** GET /api/tracks?difficulty= (a season's tracks only from the season's start) */
 router.get('/', optionalAuth, async (req, res) => {
   const q = validate(req.query, {
     difficulty: { type: 'enum', values: DIFFICULTIES },
@@ -102,7 +102,11 @@ router.get('/', optionalAuth, async (req, res) => {
       ORDER BY difficulty, name`,
     params,
   );
-  res.json({ tracks: await withSeasons(rows, req.user?.id ?? null) });
+  // A season's tracks stay out of the list until the season starts (they may be switched on early:
+  // nothing to deploy at midnight); they appear by themselves at its first minute. Admins see all.
+  const all = q.include_inactive && req.user?.role === 'admin';
+  const tracks = (await withSeasons(rows, req.user?.id ?? null)).filter((t) => all || t.season?.state !== 'before');
+  res.json({ tracks });
 });
 
 /** GET /api/tracks/:idOrSlug — full track including geometry */

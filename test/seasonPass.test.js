@@ -377,9 +377,15 @@ test('the pre-sale on Stripe: bought before the season starts, the pass is held 
     assert.equal(race.body.details.code, 'season_not_started');
     assert.equal((await call('/races', { method: 'POST', token: me.token, body: { season: key } })).status, 403);
     assert.equal((await call('/rooms', { method: 'POST', token: me.token, body: { track_id: track.id } })).status, 403);
-    // The season starts: open for the holder.
+    // Switched on early, but not in the track list (the picker, the website) before the season starts.
+    const listed = async (token) => (await call('/tracks', { token })).body.tracks.some((t) => t.id === track.id);
+    assert.equal(await listed(me.token), false);
+    assert.equal(await listed(null), false);
+    // The season starts: listed, and open for the holder.
     await db.query(`UPDATE seasons SET starts_at = now() - interval '1 minute' WHERE key = $1`, [key]);
     seasons.forget();
+    assert.equal(await listed(me.token), true);
+    assert.equal(await listed(null), true);
     assert.equal((await call('/races', { method: 'POST', token: me.token, body: { track_id: track.id, enter: true } })).status, 201);
     await db.query(`UPDATE seasons SET starts_at = now() + interval '2 days' WHERE key = $1`, [key]);
     seasons.forget();
