@@ -103,7 +103,7 @@
 "tiger-leaping-spins": {"family":"canyon","reach":0.215,"seq":["opening: split-start","drop","pileUp","slalom","chutes","drop","slalom","straight","peg ×2","moguls","S-bends right"]},
 "tilt": {"family":"pinball","reach":0.218,"seq":["opening: banked-turn","drop","pileUp","slalom","sweep left","sweep right","peg"]},
 "tokyo-photo-finish": {"family":"athletics","reach":0.311,"seq":["opening: pipe-drop","drop","half-pipe","S-bends right"]},
-"trinidad-parang-run": {"family":"pinball","reach":0.33,"seq":["opening: peg-drop","drop","peg ×7","sweep right","straight","hairpin left","swipe"]},
+"trinidad-parang-run": {"family":"pinball","reach":0.333,"seq":["opening: peg-drop","drop","peg ×7","sweep right","straight","hairpin left","swipe"]},
 "tromso-aurora-grand-prix": {"family":"grand-prix","reach":0.28,"seq":["opening: peg-drop","drop","peg ×7","S-bends right","straight","drop","slalom"]},
 "veliky-ustyug-frost-run": {"family":"world-tour","reach":0.344,"seq":["opening: clean-drop","drop","S-bends left","straight","peg","jump","S-bends right","curtain"]},
 "verdon-burst": {"family":"canyon","reach":0.216,"seq":["opening: crest-start","drop","pileUp","slalom","climb","drop","sweep right","boost"]},
