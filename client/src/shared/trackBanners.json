@@ -160,12 +160,12 @@
    "name": "Buenos Aires Summer Christmas",
    "series": "Grand Prix",
    "lighting": "fireworks-night",
-   "v": "6398dab5",
-   "bytes": 16394,
-   "bytes2x": 39360,
-   "t": 10261,
+   "v": "2a639226",
+   "bytes": 13910,
+   "bytes2x": 34644,
+   "t": 10145,
    "side": 1,
-   "marbles": 4
+   "marbles": 6
   },
   "bullet-hell": {
    "name": "Bullet Hell",

@@ -12,7 +12,7 @@
 "bislett-mile": {"family":"athletics","reach":0.314,"seq":["opening: pipe-drop","drop","half-pipe","spiral left"]},
 "block-fortress": {"family":"block","reach":0.225,"seq":["opening: banked-turn","drop","pileUp","slalom","sweep left","sweep right"]},
 "bonus-round": {"family":"block","reach":0.232,"seq":["opening: split-start","drop","pileUp","slalom","chutes","drop","slalom","straight","peg ×4","sweep right","boost"]},
-"buenos-aires-summer-christmas": {"family":"grand-prix","reach":0.251,"seq":["opening: banked-turn","drop","pileUp","slalom","sweep left","straight","peg ×2","moguls"]},
+"buenos-aires-summer-christmas": {"family":"grand-prix","reach":0.288,"seq":["opening: banked-turn","drop","pileUp","slalom","sweep left","straight","peg ×2","moguls","straight","peg ×3"]},
 "bullet-hell": {"family":"arcade","reach":0.209,"seq":["opening: staggered-drop","drop","pileUp","slalom","brake","sweep left","spiral right"]},
 "cape-town-summer-christmas": {"family":"coaster","reach":0.223,"seq":["opening: split-start","drop","pileUp","slalom","chutes","drop","slalom","straight","rail","box","table-top","spiral right"]},
 "chain-reaction": {"family":"block","reach":0.199,"seq":["opening: classic","drop","pileUp","slalom","S-bends right"]},
