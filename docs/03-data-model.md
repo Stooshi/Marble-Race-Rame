@@ -319,6 +319,22 @@ A player's pass for a season. Granted once when its payment is paid; a full refu
 | `payment_id`, `provider` | The payment that bought it |
 | `granted_at`, `revoked_at`, `revoke_reason` | |
 
+### `pass_reminders`
+"Remind me when sales open" on the pass page, asked for before the pass goes on sale (`src/seasons/reminders.js`). **Collected only: nothing is sent yet.** One live reminder per player or email address and season.
+
+| Column | Meaning |
+|---|---|
+| `season_key` | Which season's pass |
+| `user_id` | A player's reminder (always in the game); NULL for a visitor's |
+| `email` | A visitor's address (lower case); NULL for a player (their account's address is used) |
+| `email_wanted` | Also by email (a player who ticked it; always true for a visitor) |
+| `consent_text` | The exact text they agreed to, with the consent version |
+| `token` | The reminder's own link, to confirm (the confirmation email) or cancel it |
+| `confirm_sent_at`, `confirmed_at` | Double opt-in: when the confirmation email went out, and when its link was clicked. Only a confirmed address gets the reminder email; a verified account email would count as confirmed (accounts have no email check yet) |
+| `created_at`, `sent_at`, `cancelled_at` | `sent_at` is set when sending is built |
+
+Unconfirmed 7 days after the confirmation email: a visitor's reminder is deleted, a player's keeps only its in-game reminder. Deleted with the account (also a visitor's reminder at the account's address), by the hourly seasons job once cancelled, and 30 days after the sale opened. In the player's data download (`passReminders`).
+
 ### `user_badges`
 Badges on a profile and in the Marble Bag (`user_id`, `badge_key`, `rank`, `awarded_at`). A season's badge has the season's key as `badge_key` and the player's final rank: the season-end job gives it to the top `badge_top` players by coins earned in the season (earned kinds only; ties to who reached their total first; deleted and suspended accounts left out), once.
 

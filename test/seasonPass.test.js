@@ -398,6 +398,101 @@ test('the pre-sale on Stripe: bought before the season starts, the pass is held 
   }
 });
 
+test('"Remind me when sales open": collected before the sale only (players in the game and by email if ticked, visitors by email with consent), cancelled, exported, deleted with the account', { skip: !DB }, async () => {
+  const { createApp } = require('../src/app');
+  const db = require('../src/db');
+  const reminders = require('../src/seasons/reminders');
+  const server = createApp().listen(0);
+  const base = `http://127.0.0.1:${server.address().port}/api`;
+  const call = async (path, { method = 'GET', body, token } = {}) => {
+    const res = await fetch(base + path, { method, headers: { 'content-type': 'application/json', ...(token && { authorization: `Bearer ${token}` }) }, body: body === undefined ? undefined : JSON.stringify(body) });
+    return { status: res.status, body: await res.json().catch(() => null) };
+  };
+  const run = crypto.randomBytes(3).toString('hex');
+  const key = `test-r-${run}`;
+  try {
+    // On sale in five days, the season in eight.
+    await db.query(
+      `INSERT INTO seasons (key, name, starts_at, ends_at, free_from, pass_product_id, pass_name, price_cents, pass_sale_starts_at, pass_sale_ends_at)
+       VALUES ($1, 'Remind Season 2026', now() + interval '8 days', now() + interval '20 days', now() + interval '20 days', $2, 'Remind Season Pass 2026', 999, now() + interval '5 days', now() + interval '20 days')`,
+      [key, `rpass-${run}`],
+    );
+    seasons.forget();
+    const name = `t_rm_${run}`;
+    const me = (await call('/auth/register', { method: 'POST', body: { username: name, email: `${name}@test.invalid`, password: 'password123', age_group: '18+' } })).body;
+    const view = async (token) => (await call(`/seasons/${key}`, { token })).body.season.pass;
+
+    // The price is shown before the sale, and reminders may be asked for.
+    let pass = await view(me.token);
+    assert.deepEqual([pass.priceCents, pass.onSale, pass.remindersOpen, pass.reminder], [999, false, true, null]);
+
+    // A player: in the game; the email only when ticked (their account's address).
+    assert.deepEqual((await call(`/seasons/${key}/remind`, { method: 'POST', token: me.token, body: {} })).body.reminder, { inGame: true, email: false, confirmed: null });
+    assert.deepEqual((await view(me.token)).reminder, { email: false, address: null, confirmed: null });
+    // (Account emails aren't verified yet, so the player confirms the address like a visitor: double opt-in.)
+    assert.deepEqual((await call(`/seasons/${key}/remind`, { method: 'POST', token: me.token, body: { email_too: true } })).body.reminder, { inGame: true, email: true, confirmed: false });
+    assert.deepEqual((await view(me.token)).reminder, { email: true, address: `${name}@test.invalid`, confirmed: false });
+    const { rows: mine } = await db.query('SELECT consent_text FROM pass_reminders WHERE user_id = $1 AND cancelled_at IS NULL', [me.user.id]);
+    assert.equal(mine.length, 1); // (asking again updates it)
+    assert.match(mine[0].consent_text, /Remind me in the game when the Remind Season Pass 2026 goes on sale on \d+ \w+\. \/ Also email me once at t_rm_/);
+
+    // A visitor: an address and consent, both required; asked twice, listed once, the same answer.
+    const visit = (body) => call(`/seasons/${key}/remind`, { method: 'POST', body });
+    assert.equal((await visit({ email: 'not-an-email', consent: true })).status, 400);
+    assert.equal((await visit({ email: `v_${run}@test.invalid` })).status, 400);
+    assert.equal((await visit({ email: `v_${run}@test.invalid`, consent: true })).status, 201);
+    assert.deepEqual((await visit({ email: `V_${run}@Test.invalid `, consent: true })).body.reminder, { inGame: false, email: true, confirmed: false });
+    const { rows: theirs } = await db.query('SELECT email, consent_text, token FROM pass_reminders WHERE season_key = $1 AND user_id IS NULL', [key]);
+    assert.equal(theirs.length, 1);
+    assert.equal(theirs[0].email, `v_${run}@test.invalid`);
+    assert.match(theirs[0].consent_text, /Email me once at this address when the Remind Season Pass 2026 goes on sale on \d+ \w+\. I'll first get an email to confirm my address/);
+    // A bot (the hidden field): the same answer, nothing saved.
+    assert.equal((await visit({ email: `bot_${run}@test.invalid`, consent: true, website: 'x' })).status, 201);
+    assert.equal((await db.query('SELECT 1 FROM pass_reminders WHERE email = $1', [`bot_${run}@test.invalid`])).rows.length, 0);
+    assert.deepEqual(await reminders.counts(db, key), { players: 1, byEmail: 2, confirmed: 0 });
+
+    // Double opt-in: the confirmation email's link confirms it; unconfirmed 7 days after that email,
+    // a visitor's reminder is deleted and a player's keeps only the in-game one. Nothing expires
+    // before a confirmation email has gone out.
+    assert.equal(await reminders.purge(db, new Date(Date.now() + 4 * 86400_000)), 0);
+    assert.deepEqual((await call('/seasons/reminders/confirm', { method: 'POST', body: { token: theirs[0].token } })).body, { confirmed: true });
+    assert.deepEqual(await reminders.counts(db, key), { players: 1, byEmail: 2, confirmed: 1 });
+    await visit({ email: `unconf_${run}@test.invalid`, consent: true });
+    await db.query(`UPDATE pass_reminders SET confirm_sent_at = now() - interval '8 days' WHERE season_key = $1 AND confirmed_at IS NULL`, [key]);
+    assert.equal(await reminders.purge(db), 2); // (the unconfirmed visitor deleted; the player's email dropped)
+    assert.equal((await db.query('SELECT 1 FROM pass_reminders WHERE email = $1', [`unconf_${run}@test.invalid`])).rows.length, 0);
+    assert.deepEqual((await view(me.token)).reminder, { email: false, address: null, confirmed: null });
+    assert.deepEqual(await reminders.counts(db, key), { players: 1, byEmail: 1, confirmed: 1 });
+
+    // Cancelling: the visitor's own link; the player on the page.
+    assert.deepEqual((await call('/seasons/reminders/cancel', { method: 'POST', body: { token: theirs[0].token } })).body, { cancelled: true });
+    assert.deepEqual((await call('/seasons/reminders/cancel', { method: 'POST', body: { token: theirs[0].token } })).body, { cancelled: false });
+    assert.deepEqual((await call(`/seasons/${key}/remind`, { method: 'DELETE', token: me.token })).body, { cancelled: true });
+    assert.equal((await view(me.token)).reminder, null);
+    assert.equal(await reminders.purge(db) >= 2, true); // (cancelled ones are deleted by the hourly job)
+
+    // In the player's data download, and deleted with the account (also one asked for at its address).
+    await call(`/seasons/${key}/remind`, { method: 'POST', token: me.token, body: { email_too: true } });
+    await visit({ email: `${name}@test.invalid`, consent: true });
+    const data = (await call('/users/me/export', { token: me.token })).body;
+    assert.equal((data.passReminders ?? data.data?.passReminders ?? []).length, 2);
+    await db.withTransaction((c) => require('../src/account').deleteAccount(c, me.user.id));
+    assert.equal((await db.query('SELECT 1 FROM pass_reminders WHERE season_key = $1', [key])).rows.length, 0);
+
+    // Once the sale opens: no more reminders; 30 days after it, the hourly job deletes the rest.
+    await visit({ email: `late_${run}@test.invalid`, consent: true });
+    await db.query(`UPDATE seasons SET pass_sale_starts_at = now() - interval '1 minute' WHERE key = $1`, [key]);
+    seasons.forget();
+    assert.equal((await visit({ email: `later_${run}@test.invalid`, consent: true })).status, 409);
+    assert.equal((await view(null)).remindersOpen, false);
+    assert.equal(await reminders.purge(db, new Date(Date.now() + 31 * 86400_000)) >= 1, true);
+    assert.equal((await db.query('SELECT 1 FROM pass_reminders WHERE season_key = $1', [key])).rows.length, 0);
+  } finally {
+    seasons.forget();
+    server.close();
+  }
+});
+
 test('the pass on Google Play: inside its sale window only (a licence tester\'s test purchase also before it), once, acknowledged (never consumed); a voided purchase revokes it', { skip: !DB }, async () => {
   const db = require('../src/db');
   const google = require('../src/payments/google');

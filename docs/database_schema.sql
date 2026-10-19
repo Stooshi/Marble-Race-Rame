@@ -910,6 +910,34 @@ CREATE TABLE IF NOT EXISTS user_badges (
     PRIMARY KEY (user_id, badge_key)
 );
 
+-- "Remind me when sales open" on the pass page (src/seasons/reminders.js): collected now, sent
+-- later (in the game, and by email through Brevo, once). A player's reminder (user_id) is always
+-- in the game, and by email to their account's address only if they ticked it (email_wanted); a
+-- visitor's (no account) is by email only, to the address they gave, with their consent (the exact
+-- text in consent_text). Double opt-in: an email reminder goes only to a confirmed address
+-- (confirmed_at, from the link in a confirmation email, sent at confirm_sent_at; a verified account
+-- email counts as confirmed). Unconfirmed 7 days after the confirmation email: a visitor's is
+-- deleted, a player's keeps only the in-game reminder. One live reminder per player or address and
+-- season. Deleted with the account, on cancelling (cancelled_at, then deleted by the hourly job)
+-- and 30 days after the sale opens.
+CREATE TABLE IF NOT EXISTS pass_reminders (
+    id              uuid         PRIMARY KEY DEFAULT gen_random_uuid(),
+    season_key      varchar(32)  NOT NULL REFERENCES seasons(key),
+    user_id         uuid         REFERENCES users(id) ON DELETE CASCADE,
+    email           varchar(254),
+    email_wanted    boolean      NOT NULL DEFAULT false,
+    consent_text    text         NOT NULL,
+    token           varchar(64)  NOT NULL UNIQUE,
+    created_at      timestamptz  NOT NULL DEFAULT now(),
+    confirm_sent_at timestamptz,
+    confirmed_at    timestamptz,
+    sent_at         timestamptz,
+    cancelled_at    timestamptz,
+    CHECK (user_id IS NOT NULL OR email IS NOT NULL)
+);
+CREATE UNIQUE INDEX IF NOT EXISTS uq_pass_reminders_player ON pass_reminders (season_key, user_id) WHERE user_id IS NOT NULL AND cancelled_at IS NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS uq_pass_reminders_email ON pass_reminders (season_key, lower(email)) WHERE user_id IS NULL AND cancelled_at IS NULL;
+
 -- A season's tracks; NULL = an ordinary track, free for everyone.
 ALTER TABLE tracks ADD COLUMN IF NOT EXISTS season_key varchar(32) REFERENCES seasons(key);
 CREATE INDEX IF NOT EXISTS idx_tracks_season ON tracks (season_key) WHERE season_key IS NOT NULL;

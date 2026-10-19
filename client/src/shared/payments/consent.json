@@ -1,5 +1,5 @@
 {
-  "note": "What a player agrees to at checkout for a coin pack (withdrawal, terms, stripeSubmit) or the season pass (passWithdrawal, terms, passStripeSubmit; bought in its pre-sale, before the season starts: passPreSaleWithdrawal and passPreSaleStripeSubmit, {activates} being the season's first day, e.g. \"1 December\"). The server stores this exact text with each payment (payments.consent_text), so change `version` whenever the wording changes.",
+  "note": "What a player agrees to at checkout for a coin pack (withdrawal, terms, stripeSubmit) or the season pass (passWithdrawal, terms, passStripeSubmit; bought in its pre-sale, before the season starts: passPreSaleWithdrawal and passPreSaleStripeSubmit, {activates} being the season's first day, e.g. \"1 December\"); \"Remind me when sales open\" on the pass page (reminderVisitor, reminderPlayer, reminderPlayerEmail; stored with each reminder). The server stores this exact text with each payment (payments.consent_text), so change `version` whenever the wording changes.",
   "version": "2026-10-19",
   "withdrawal": "I want my coins delivered right away. I understand that I lose my 14-day right of withdrawal once they're delivered.",
   "terms": "I'm 18 or older, or a parent or guardian has agreed to this purchase. I accept the terms of sale.",
@@ -7,5 +7,8 @@
   "passWithdrawal": "I want my pass delivered right away. I understand that I lose my 14-day right of withdrawal once it's delivered.",
   "passStripeSubmit": "By paying you ask for your pass to be delivered right away and agree that your 14-day right of withdrawal ends once it's delivered.",
   "passPreSaleWithdrawal": "I want my pass to activate on {activates}. Until then I can cancel it for a full refund; once it activates, my 14-day right of withdrawal ends.",
+  "reminderVisitor": "Email me once at this address when the {pass} goes on sale on {opens}. I'll first get an email to confirm my address; only a confirmed address gets the reminder. No newsletter, and I can cancel it any time.",
+  "reminderPlayerEmail": "Also email me once at {email} when it goes on sale (I'll confirm the address from an email first).",
+  "reminderPlayer": "Remind me in the game when the {pass} goes on sale on {opens}.",
   "passPreSaleStripeSubmit": "Your pass activates on {activates}. Until then you can cancel it for a full refund; once it activates, your 14-day right of withdrawal ends."
 }

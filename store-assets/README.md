@@ -1,6 +1,6 @@
 # Store screenshots and graphics
 
-Made on 16 Oct 2026 from the real game (a local copy of the site and server with demo players; no
+Made on 16 Oct 2026 (Google Play's `03-tracks`, `09-stadiums` and `10-holiday-pass` on 19 Oct) from the real game (a local copy of the site and server with demo players; no
 real players' data). Each picture is a real screen at the device's size with a short caption on top,
 on the brand background. No device frames. The site header and footer are left out ("[streak]" and
 "App Store · soon" are not shown), and so is the scoreboard's "Season [3]" line; the friend room link
@@ -33,6 +33,10 @@ Every device folder has the same 8 pictures, in this order:
 | `06-scoreboard.png` | Climb the scoreboard | This season's scoreboard |
 | `07-canyon.png` | Drop into the canyons | A Canyon track (Grand Canyon Burst) |
 | `08-blocks.png` | Race through block worlds | A Block track (Line Clear) |
+| `09-stadiums.png` (Google Play only) | Into the stadiums | A Track and Field race (Marble Stadium Sprint) |
+| `10-holiday-pass.png` (Google Play only) | The Holiday Season pass | The pass page, no price or countdown; swap out after 7 Jan 2027 |
 
-Captions are in English only. Line Clear is a Block Series track that is still switched off on the
-live site: use `08-blocks.png` only once the Block Series is live.
+Google Play's `03-tracks.png` says "90+ tracks to race" (19 Oct); the App Store sets still say "Dozens of tracks to race".
+Google Play upload order (8 per slot): 01, 02, 03, 09, 07, 08, 05, 10 (project doc `claude/store-submission-drafts.md`, 6.1b).
+
+Captions are in English only. The Block Series and Track and Field are live (19 Oct 2026).

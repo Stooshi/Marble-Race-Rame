@@ -30,7 +30,7 @@ async function exportData(db, userId) {
        FROM users WHERE id = $1 AND deleted_at IS NULL`,
   );
   if (!account) return null;
-  const [stats, emailAnswers, cookieAnswers, ledger, collection, shooter, look, startingMarbles, races, days, payments, rooms, security, support, supportReplies, passes, badges] = await Promise.all([
+  const [stats, emailAnswers, cookieAnswers, ledger, collection, shooter, look, startingMarbles, races, days, payments, rooms, security, support, supportReplies, passes, badges, passReminders] = await Promise.all([
     one('SELECT * FROM user_stats WHERE user_id = $1'),
     all('SELECT consent, source, created_at FROM email_consents WHERE user_id = $1 ORDER BY created_at'),
     all('SELECT version, statistics, marketing, decided_at FROM cookie_consents WHERE user_id = $1 ORDER BY created_at'),
@@ -55,6 +55,11 @@ async function exportData(db, userId) {
           WHERE m.user_id = $1 ORDER BY r.created_at`),
     all('SELECT season_key, provider, granted_at, revoked_at, revoke_reason FROM season_passes WHERE user_id = $1 ORDER BY granted_at'),
     all('SELECT badge_key, rank, awarded_at FROM user_badges WHERE user_id = $1 ORDER BY awarded_at'),
+    all(`SELECT season_key, email_wanted, consent_text, created_at, sent_at, cancelled_at FROM pass_reminders WHERE user_id = $1
+          UNION ALL
+         SELECT r.season_key, r.email_wanted, r.consent_text, r.created_at, r.sent_at, r.cancelled_at FROM pass_reminders r
+          WHERE r.user_id IS NULL AND lower(r.email) = (SELECT lower(email) FROM users WHERE id = $1 AND NOT is_guest)
+          ORDER BY created_at`),
   ]);
   return {
     about: 'Everything Marble Spins stores about your account. Passwords are stored only as a one-way hash and are not included. IP addresses are kept for security and fraud checks for at most 90 days, then only the country.',
@@ -69,6 +74,7 @@ async function exportData(db, userId) {
     dailyRaces: days,
     payments,
     seasonPasses: passes,
+    passReminders,
     badges,
     friendRoomsHosted: rooms,
     securityLog: security,
@@ -87,6 +93,12 @@ async function deleteAccount(client, userId, { by = 'player', reason = null } = 
   // Support messages: the player's own, and any sent from their email without an account link.
   await client.query(
     `DELETE FROM support_messages WHERE user_id = $1
+        OR (user_id IS NULL AND lower(email) = (SELECT lower(email) FROM users WHERE id = $1 AND NOT is_guest))`,
+    [userId],
+  );
+  // Pass reminders: the player's own, and any a visitor asked for at the account's email (before the email is wiped below).
+  await client.query(
+    `DELETE FROM pass_reminders WHERE user_id = $1
         OR (user_id IS NULL AND lower(email) = (SELECT lower(email) FROM users WHERE id = $1 AND NOT is_guest))`,
     [userId],
   );

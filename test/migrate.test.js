@@ -9,7 +9,7 @@ const schema = fs.readFileSync(SCHEMA_PATH, 'utf8');
 
 test('reads every table and its columns from the schema file', () => {
   const cols = expectedColumns(schema);
-  assert.deepEqual(Object.keys(cols).sort(), ['admin_2fa', 'admin_audit', 'admin_sessions', 'billboards', 'coin_ledger', 'collection_counters', 'cookie_consents', 'data_updates', 'email_consents', 'house_looks', 'marble_appearances', 'marble_colors', 'marble_effects', 'marble_surfaces', 'marbles', 'password_resets', 'payment_refunds', 'payments', 'race_entries', 'race_entry_looks', 'race_replays', 'races', 'rooms', 'season_passes', 'seasons', 'security_events', 'stripe_events', 'support_messages', 'support_replies', 'tracks', 'user_badges', 'user_collection', 'user_days', 'user_marbles', 'user_shooter', 'users']);
+  assert.deepEqual(Object.keys(cols).sort(), ['admin_2fa', 'admin_audit', 'admin_sessions', 'billboards', 'coin_ledger', 'collection_counters', 'cookie_consents', 'data_updates', 'email_consents', 'house_looks', 'marble_appearances', 'marble_colors', 'marble_effects', 'marble_surfaces', 'marbles', 'pass_reminders', 'password_resets', 'payment_refunds', 'payments', 'race_entries', 'race_entry_looks', 'race_replays', 'races', 'rooms', 'season_passes', 'seasons', 'security_events', 'stripe_events', 'support_messages', 'support_replies', 'tracks', 'user_badges', 'user_collection', 'user_days', 'user_marbles', 'user_shooter', 'users']);
   assert.ok(cols.tracks.includes('physics'));
   assert.deepEqual(cols.billboards, ['id', 'track_slug', 'slot', 'image_url', 'kind', 'note', 'starts_at', 'ends_at', 'created_at']);
   assert.ok(cols.race_replays.includes('data'));
@@ -22,6 +22,7 @@ test('reads every table and its columns from the schema file', () => {
   assert.ok(cols.tracks.includes('season_key'));
   assert.ok(cols.payments.includes('season_key'));
   assert.deepEqual(cols.season_passes, ['id', 'user_id', 'season_key', 'payment_id', 'provider', 'granted_at', 'revoked_at', 'revoke_reason']);
+  assert.deepEqual(cols.pass_reminders, ['id', 'season_key', 'user_id', 'email', 'email_wanted', 'consent_text', 'token', 'created_at', 'confirm_sent_at', 'confirmed_at', 'sent_at', 'cancelled_at']);
   // Table-level constraints and their continuation lines are not columns.
   for (const list of Object.values(cols)) {
     for (const c of ['constraint', 'primary', 'min_marbles BETWEEN']) assert.ok(!list.includes(c));
