@@ -115,6 +115,6 @@
 "wizard-mode": {"family":"pinball","reach":0.21,"seq":["opening: crest-start","drop","pileUp","slalom","climb","drop","sweep right"]},
 "wyrmwood-hollow-marble-grand-prix": {"family":"grand-prix","reach":0.226,"seq":["opening: classic","drop","pileUp","slalom","S-bends left"]},
 "yarlung-tsangpo-spins": {"family":"canyon","reach":0.225,"seq":["opening: tunnel-launch","drop","pileUp","slalom","drop","slalom","S-bends left"]},
-"zermatt-marble-grand-prix": {"family":"grand-prix","reach":0.206,"seq":["opening: staggered-drop","drop","pileUp","slalom","brake","straight","table-top","spiral left"]},
+"zermatt-marble-grand-prix": {"family":"grand-prix","reach":0.25,"seq":["opening: staggered-drop","drop","pileUp","slalom","brake","straight","table-top","spiral left"]},
 "zurich-golden-lap": {"family":"athletics","reach":0.24,"seq":["opening: tunnel-launch","drop","pileUp","slalom","drop","slalom","straight","peg ×3","sweep right"]}
 }

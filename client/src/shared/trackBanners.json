@@ -1348,12 +1348,12 @@
    "name": "Zermatt Marble Grand Prix",
    "series": "Grand Prix",
    "lighting": "sunset",
-   "v": "fb3bb4e0",
-   "bytes": 17016,
-   "bytes2x": 43160,
-   "t": 9833,
+   "v": "83cd29a4",
+   "bytes": 17212,
+   "bytes2x": 42256,
+   "t": 9720,
    "side": 1,
-   "marbles": 5
+   "marbles": 4
   },
   "zurich-golden-lap": {
    "name": "Zurich Golden Lap",
