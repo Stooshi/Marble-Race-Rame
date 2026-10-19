@@ -118,4 +118,5 @@ module.exports = [
   require('./edinburgh-hogmanay-grand-prix'),
   require('./trinidad-parang-run'),
   require('./goa-star-lanterns'),
+  require('./seoul-winter-lights'),
 ];

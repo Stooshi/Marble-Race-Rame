@@ -959,6 +959,17 @@
    "side": 1,
    "marbles": 5
   },
+  "seoul-winter-lights": {
+   "name": "Seoul Winter Lights",
+   "series": "Arcade",
+   "lighting": "neon-night",
+   "v": "e7754e8c",
+   "bytes": 15660,
+   "bytes2x": 37750,
+   "t": 30811,
+   "side": 1,
+   "marbles": 7
+  },
   "sky-islands": {
    "name": "Sky Islands",
    "series": "Blocks",
