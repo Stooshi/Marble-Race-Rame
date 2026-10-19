@@ -104,7 +104,10 @@ async function grant(client, paymentId, providerRef = null) {
 /** The consent a player gave at checkout, stored with the payment (EU withdrawal-right waiver + terms). */
 const CONSENT_TEXT = `[${consent.version}] ${consent.withdrawal} / ${consent.terms}`;
 /** …and for the season pass. */
-const PASS_CONSENT_TEXT = `[${consent.version}] ${consent.passWithdrawal} / ${consent.terms}`;
+/** The pass's consent as stored with the payment: in its pre-sale (before the season starts), the "activates on 1 December" one. */
+const passConsentText = (season, now = new Date()) => `[${consent.version}] ${seasons.stateOf(season, now) === 'before'
+  ? consent.passPreSaleWithdrawal.replace('{activates}', seasons.activatesText(season))
+  : consent.passWithdrawal} / ${consent.terms}`;
 
 /**
  * Starts buying a coin pack with a provider. The player must have agreed to immediate delivery
@@ -166,7 +169,7 @@ async function passCheckout(client, userId, { seasonKey, provider: providerName 
     `INSERT INTO payments (user_id, provider, product_id, coins, amount_cents, currency, order_no, consent_at, consent_text, season_key)
      VALUES ($1, $2, $3, 0, $4, $5, 'MS-' || nextval('payment_order_seq'), now(), $6, $7)
      RETURNING id, user_id, order_no, status, product_id, coins, amount_cents, currency, season_key`,
-    [userId, provider.name, item.id, item.amountCents, item.currency, PASS_CONSENT_TEXT, season.key],
+    [userId, provider.name, item.id, item.amountCents, item.currency, passConsentText(season, now), season.key],
   );
   const next = await provider.start(payment, { userId, pack: item, email: user.email, locale, siteUrl });
   if (next.kind === 'done') {

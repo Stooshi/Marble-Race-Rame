@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import CONSENT from '../../shared/payments/consent.json';
@@ -7,6 +7,7 @@ import { useAsync } from '../../hooks/useAsync';
 import { STORE_NAME, buyPass, restoreStorePurchases, storeProvider, useStorePrices } from '../payments';
 import { ITEMS, collectionOf } from '../../shared/marbles';
 import MarbleBadge from '../marbles/MarbleBadge';
+import { activatesDay, countdownText, useCountdown } from '../payments/preSale';
 
 const day = (iso) => new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Stockholm', day: 'numeric', month: 'long', year: 'numeric' }).format(new Date(iso));
 const time = (iso) => new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Stockholm', hour: '2-digit', minute: '2-digit' }).format(new Date(iso));
@@ -16,6 +17,8 @@ const time = (iso) => new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Stock
  * season's tracks, the Track of the Day, the season marble, friend rooms), today's Track of the Day, the
  * price and buying it with real money only (Stripe on the web, Google Play or the App Store in the apps;
  * the apps never show or link to the website's price). Opened from the lock on a season track.
+ * Before the season starts (its pre-sale, from 28 Nov): "Activates 1 December" and a countdown, the
+ * same on the website and in the apps; the pass is bought then, but opens only on that day.
  */
 export default function PassPage() {
   const [search] = useSearchParams();
@@ -33,6 +36,10 @@ export default function PassPage() {
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState(null);
   const cancelled = search.get('cancelled') === '1';
+  // Before the season starts: the countdown to its first day (when a pass activates).
+  const before = season?.state === 'before';
+  const left = useCountdown(before ? season.startsAt : null);
+  useEffect(() => { if (before && left != null && left <= 0) reload(); }, [before, left != null && left <= 0]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!season) return <div className="ms-page ms-page--narrow"><p className="ms-note">{data ? 'There is no season pass right now.' : 'Loading…'}</p></div>;
   const { pass } = season;
@@ -43,6 +50,13 @@ export default function PassPage() {
   const price = web ? `$${(pass.priceCents / 100).toFixed(2)}` : storePrices[pass.productId] ?? null;
   const owned = pass.owned || result?.status === 'paid' || result?.status === 'restored';
   const signIn = `/signup?next=${encodeURIComponent(`/pass?season=${season.key}`)}`;
+  const activates = activatesDay(pass.activatesAt ?? season.startsAt);
+  const preSale = pass.preSale && pass.onSale;
+  const countdown = before ? countdownText(left) : null;
+  // Changing your mind before the pass activates: a full refund, from whoever took the payment.
+  const refundBefore = provider === 'apple' ? 'ask Apple for a full refund at reportaproblem.apple.com'
+    : provider === 'google' ? 'ask Google Play for a full refund, or contact us with your order number'
+      : 'contact us with your order number for a full refund';
 
   // iPhone: "Restore Purchases" (Apple requires it for the pass, a non-consumable).
   const restore = async () => {
@@ -91,6 +105,20 @@ export default function PassPage() {
         )}
       </section>
 
+      {before && (
+        <div className="ms-pass-activates" role="status" aria-live="off">
+          <strong>Activates {activates}</strong>
+          {countdown && <span className="ms-pass-activates__count" style={{ fontVariantNumeric: 'tabular-nums' }}>in {countdown}</span>}
+          <span className="ms-note" style={{ flexBasis: '100%' }}>
+            {owned
+              ? `Your pass is ready: the holiday tracks, the Track of the Day and holiday rooms open on ${activates} at 00:00 Swedish time.`
+              : pass.onSale
+              ? `Buy it now and it's yours: the holiday tracks, the Track of the Day and holiday rooms open on ${activates} at 00:00 Swedish time, for every pass holder.`
+              : `On sale from ${activatesDay(pass.saleStartsAt ?? season.startsAt)}. The holiday tracks, the Track of the Day and holiday rooms open on ${activates} at 00:00 Swedish time.`}
+          </span>
+        </div>
+      )}
+
       <section className="ms-pass-grid" aria-label="What's in the pass">
         <article className="ms-pass-feature">
           <span className="ms-pass-feature__k">Tracks</span>
@@ -117,10 +145,12 @@ export default function PassPage() {
       <p className="ms-note" style={{ margin: 0 }}>One payment, not a subscription. Money only, never coins. <Link to="/legal#season-pass">Terms</Link> · <Link to="/help#season-pass">Help with the pass</Link></p>
 
       {owned ? (
-        <div className="ms-msg" role="status">You have the {pass.name}. <Link to="/play/track">Pick a holiday track</Link></div>
+        before
+          ? <div className="ms-msg" role="status"><strong>{pass.name} — activates {activates}.</strong> It's yours; its tracks open then. Changed your mind before {activates}? Just {refundBefore}.</div>
+          : <div className="ms-msg" role="status">You have the {pass.name}. <Link to="/play/track">Pick a holiday track</Link></div>
       ) : !pass.onSale ? (
         <div className="ms-msg" role="status">
-          {new Date() < new Date(pass.saleStartsAt ?? season.startsAt) ? `On sale from ${day(pass.saleStartsAt ?? season.startsAt)}.` : 'The pass is no longer sold: the holiday tracks are free for everyone now.'}
+          {new Date() < new Date(pass.saleStartsAt ?? season.startsAt) ? `On sale from ${day(pass.saleStartsAt ?? season.startsAt)}${before ? `; activates ${activates}` : ''}.` : 'The pass is no longer sold: the holiday tracks are free for everyone now.'}
         </div>
       ) : !isAuthenticated || user?.is_guest ? (
         <div className="ms-card" style={{ display: 'grid', gap: 12 }}>
@@ -133,11 +163,12 @@ export default function PassPage() {
             {price && <span style={{ fontSize: '2rem', fontWeight: 800 }}>{price}</span>}
             {pass.endsInDays != null && <span className="ms-badge-label" style={{ position: 'static' }}>Ends in {pass.endsInDays} {pass.endsInDays === 1 ? 'day' : 'days'}</span>}
           </div>
+          {preSale && <div className="ms-msg" role="status"><strong>Activates {activates}.</strong> You pay now and the pass is yours; its tracks open on {activates} at 00:00 Swedish time. Changed your mind before then? Just {refundBefore}.</div>}
           {pass.testPurchaseOnly && <div className="ms-msg" role="status">Tester account: a test purchase only (Stripe test mode, Apple sandbox or TestFlight, Google Play licence testing). The pass goes on sale for everyone on {day(pass.saleStartsAt)}.</div>}
           {web && <span className="ms-note">Shown in your own currency, VAT included, on Stripe's payment page.</span>}
           <label style={{ display: 'flex', gap: 10, alignItems: 'flex-start', cursor: 'pointer' }}>
             <input type="checkbox" checked={withdrawal} onChange={(e) => setWithdrawal(e.target.checked)} style={{ width: 22, height: 22, flex: 'none' }} />
-            <span>{CONSENT.passWithdrawal}</span>
+            <span>{before ? CONSENT.passPreSaleWithdrawal.replace('{activates}', activates) : CONSENT.passWithdrawal}</span>
           </label>
           <label style={{ display: 'flex', gap: 10, alignItems: 'flex-start', cursor: 'pointer' }}>
             <input type="checkbox" checked={terms} onChange={(e) => setTerms(e.target.checked)} style={{ width: 22, height: 22, flex: 'none' }} />
@@ -151,6 +182,7 @@ export default function PassPage() {
           <button type="button" className="ms-btn ms-btn--primary ms-btn--lg" disabled={!withdrawal || !terms || busy} onClick={buy}>
             {busy ? 'ONE MOMENT…' : provider === 'stripe' ? 'CONTINUE TO PAYMENT' : price ? `GET THE PASS · ${price}` : 'GET THE PASS'}
           </button>
+          {before && <span className="ms-note" style={{ textAlign: 'center' }}>Activates {activates}</span>}
           {provider === 'apple' && <button type="button" className="ms-btn" disabled={busy} onClick={restore}>Restore purchases</button>}
           <span className="ms-note">{web ? 'Payments are handled securely by Stripe. We never see or store your card details.' : `Payments are handled by ${STORE_NAME[provider]}.`} Under 18? Ask a parent or guardian first.</span>
         </section>

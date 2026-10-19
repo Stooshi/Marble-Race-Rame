@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { api } from '../../api/client';
+import { activatesDay } from '../payments/preSale';
 
 const day = (t) => (t ? new Date(t).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : null);
 
@@ -109,6 +110,25 @@ function DeleteAccount({ user, onDeleted }) {
   );
 }
 
+/** The player's season passes: "Holiday Season Pass 2026 — activates 1 December" before the season starts. */
+function SeasonPasses() {
+  const [list, setList] = useState(null);
+  useEffect(() => { api.seasons().then((r) => setList((r.seasons ?? []).filter((x) => x.pass?.owned))).catch(() => setList([])); }, []);
+  if (!list?.length) return null;
+  const until = (iso) => new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Stockholm', day: 'numeric', month: 'long' }).format(new Date(iso));
+  return (
+    <section className="ms-card" style={{ display: 'grid', gap: 6 }} aria-labelledby="pass-h">
+      <h2 id="pass-h" className="ms-h3" style={{ margin: 0 }}>Season pass</h2>
+      {list.map((x) => (
+        <span key={x.key}>
+          <strong>{x.pass.name}</strong> — {x.state === 'before' ? `activates ${activatesDay(x.pass.activatesAt ?? x.startsAt)}` : x.state === 'on' ? `active until ${until(x.freeFrom)}` : 'the season is over'}
+          {' · '}<Link to={`/pass?season=${x.key}`}>Details</Link>
+        </span>
+      ))}
+    </section>
+  );
+}
+
 /** Account settings (/settings): news by email, purchases, the data download and deleting the account. */
 export default function SettingsPage() {
   const { isAuthenticated, loading, user, logout } = useAuth();
@@ -128,10 +148,11 @@ export default function SettingsPage() {
     <div className="ms-page ms-page--narrow" style={{ display: 'grid', gap: 16 }}>
       <h1 className="ms-h1" style={{ fontFamily: 'var(--ms-cond)', fontWeight: 800, margin: 0 }}>Settings</h1>
       {user && <span style={{ color: 'var(--ms-soft)' }}>@{user.username}{user.is_guest ? ' · guest' : ` · ${user.email}`}</span>}
+      <SeasonPasses />
       <NewsByEmail />
       <section className="ms-card" style={{ display: 'grid', gap: 6 }} aria-labelledby="buy-h">
         <h2 id="buy-h" className="ms-h3" style={{ margin: 0 }}>Purchases</h2>
-        <span>Your coin-pack orders and receipts: <Link to="/purchases">Purchases</Link></span>
+        <span>Your orders (coin packs and the season pass) and receipts: <Link to="/purchases">Purchases</Link></span>
       </section>
       <section className="ms-card" style={{ display: 'grid', gap: 6 }} aria-labelledby="help-h">
         <h2 id="help-h" className="ms-h3" style={{ margin: 0 }}>Help</h2>

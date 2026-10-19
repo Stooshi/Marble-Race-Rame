@@ -20,8 +20,8 @@ describe('the questions', () => {
   it('has the draft\'s 12 categories and the Season pass, every question once, each with its own link', () => {
     expect(faq.map((s) => s.title)).toEqual(['Getting started', 'Races', 'Fair play', 'Coins', 'Marbles and the collection', 'Buying coins',
       'Refunds', 'Season pass', 'Friend rooms', 'Account and settings', 'Younger players and parents', 'Technical help', 'Contact us']);
-    expect(all.length).toBe(85); // (the draft: 6, 8, 4, 9, 10, 8, 4, 6, 7, 3, 5 and 4; then seasonal collections, the season marble and the Season pass's 9)
-    expect(faq.map((s) => s.questions.length)).toEqual([6, 8, 4, 9, 12, 8, 4, 9, 6, 7, 3, 5, 4]);
+    expect(all.length).toBe(86); // (the draft: 6, 8, 4, 9, 10, 8, 4, 6, 7, 3, 5 and 4; then seasonal collections, the season marble and the Season pass's 10, with the pre-sale)
+    expect(faq.map((s) => s.questions.length)).toEqual([6, 8, 4, 9, 12, 8, 4, 10, 6, 7, 3, 5, 4]);
     expect(new Set(all.map((q) => q.slug)).size).toBe(all.length);
     for (const q of all) expect(q.slug).toMatch(/^[a-z0-9]+(-[a-z0-9]+)*$/);
     expect(bySlug['whats-my-daily-streak'].q).toBe("What's my daily streak?");
@@ -63,7 +63,7 @@ describe('the questions', () => {
 
   it('reads as the draft, word for word, where nothing is a setting', () => {
     expect(bySlug['how-do-i-earn-coins'].text).toBe('By racing: 15 coins for every race you take part in. A finishing bonus: 1st place +50, 2nd +30, 3rd +20, 4th–10th +5. A daily goal: finish 5 races in a day for +35 coins.');
-    expect(bySlug['what-are-the-different-tracks'].text).toBe('There are 50 tracks in five series: Grand Prix, World Tour, Coasters, Pinball and Arcade. Each track has its own layout, start and scenery.');
+    expect(bySlug['what-are-the-different-tracks'].text).toBe('There are 50+ tracks in five series: Grand Prix, World Tour, Coasters, Pinball and Arcade. Each track has its own layout, start and scenery.');
     expect(bySlug['still-need-help'].text).toBe('Use the contact form below. Tell us your player name and, for payment questions, your order number. We aim to reply within [2 working days].');
   });
 
@@ -77,10 +77,10 @@ describe('the questions', () => {
     expect(bySlug['still-need-help'].blocks).toContainEqual(['contact', 'Contact us']);
   });
 
-  it('counts the live tracks and series when it has them', () => {
+  it('counts the live tracks (rounded down to ten, so it never goes stale) and series when it has them', () => {
     const tracks = [...Array(57).fill({ series: 'World Tour' }), { series: 'Canyons' }, { series: 'Arcade' }, { series: 'Classic' }];
     const q = buildFaq({ tracks }).flatMap((s) => s.questions).find((x) => x.slug === 'what-are-the-different-tracks');
-    expect(q.text).toBe('There are 60 tracks in three series: World Tour, Arcade and Canyons. Each track has its own layout, start and scenery.');
+    expect(q.text).toBe('There are 60+ tracks in three series: World Tour, Arcade and Canyons. Each track has its own layout, start and scenery.');
   });
 
   it('turns lists and tables into plain text for search and search engines', () => {

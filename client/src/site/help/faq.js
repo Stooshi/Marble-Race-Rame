@@ -22,6 +22,7 @@ import { COIN_PACKS } from '../../shared/payments/packs';
 import { catalog, isStandard } from '../../shared/marbles';
 import supportSettings from '../../shared/support.json';
 import company from '../../shared/company.json';
+import { BUILD_TRACK_COUNT, roundedTracks } from '../trackCount';
 
 const n = (v) => Number(v).toLocaleString('en-US');
 const ordinal = (k) => `${k}${['th', 'st', 'nd', 'rd'][(k % 100 > 10 && k % 100 < 14) || k % 10 > 3 ? 0 : k % 10]}`;
@@ -66,10 +67,11 @@ function limitedAnswer() {
 
 /**
  * The Holiday Season 2026 as the Help Centre tells it (the season itself is the `seasons` row of the
- * data update 2027-02-16-season-pass; keep these in step with it, and with the pass page).
+ * data update 2027-02-16-season-pass, its sale start moved to 28 Nov by 2027-03-22-holiday-pass-pre-sale;
+ * keep these in step with them, and with the pass page).
  */
 const HOLIDAY = {
-  name: 'Holiday Season 2026', pass: 'Holiday Season Pass 2026', price: '$9.99', starts: '1 December 2026', ends: '7 January 2027',
+  name: 'Holiday Season 2026', pass: 'Holiday Season Pass 2026', price: '$9.99', saleStarts: '28 November 2026', starts: '1 December 2026', ends: '7 January 2027',
   endTime: '23:59 Swedish time', tracks: 31, bonus: 50, marble: 'Winter Solstice',
 };
 
@@ -92,7 +94,8 @@ function seasonalAnswer() {
 export function buildFaq({ tracks } = {}) {
   const e = economy;
   const live = Array.isArray(tracks) && tracks.length > 0;
-  const trackCount = live ? tracks.length : DRAFT_TRACKS;
+  // Rounded down ("80+"), so an answer never goes stale between builds (src/site/trackCount.js).
+  const trackCount = roundedTracks(live ? tracks.length : BUILD_TRACK_COUNT ?? DRAFT_TRACKS);
   const seriesNames = live ? SERIES_ORDER.filter((s) => tracks.some((t) => t.series === s)) : DRAFT_SERIES;
   const seriesWord = NUMBER_WORDS[seriesNames.length] ?? String(seriesNames.length);
 
@@ -259,12 +262,16 @@ export function buildFaq({ tracks } = {}) {
           `the season marble, **${HOLIDAY.marble}**, yours to keep.`],
         "It's one payment, not a subscription, and it's real money only: it can't be bought with coins. Under 18? Ask a parent or guardian first.",
       ]],
+      ['Can I buy the pass before 1 December?', [
+        `Yes. The pass is on sale from **${HOLIDAY.saleStarts}** at 00:00 Swedish time, on the website and in the apps. Bought before the season starts, it's yours straight away but **activates on ${HOLIDAY.starts}** at 00:00 Swedish time: that's when the holiday tracks, the Track of the Day and holiday rooms open, for every pass holder at once. The pass page shows a countdown, and your account says "activates 1 December" until then.`,
+        `Changed your mind before ${HOLIDAY.starts}? You get a full refund, no questions asked: contact us with your order number, or, if you bought it in an app, ask Apple (reportaproblem.apple.com) or Google Play.`,
+      ]],
       ['What is the Track of the Day?',
         `Every day of the season one holiday track is featured. Race it with the pass and you get +${HOLIDAY.bonus}% race coins on your full-pay races of the day (your first ${n(e.dailyLimit.fullRaces)}). The bonus doesn't count on the scoreboards: scoreboards only count coins earned by racing.`],
       ['I bought the pass on 15 December. Do I get every track?',
         `Yes. All ${HOLIDAY.tracks} holiday tracks are yours straight away, whenever you buy the pass during the season.`],
       ['How long does the pass last?',
-        `Until the season ends on ${HOLIDAY.ends} at ${HOLIDAY.endTime}. It's sold from ${HOLIDAY.starts} until then, with a countdown in its last week.`],
+        `Until the season ends on ${HOLIDAY.ends} at ${HOLIDAY.endTime}. It's sold from ${HOLIDAY.saleStarts} (activating on ${HOLIDAY.starts}) until then, with a countdown in its last week.`],
       ['I bought it on my phone. Does it work on the website?',
         'Yes. The pass belongs to your account, so it works on the website and in both apps, wherever you log in. Buy it once only: if you already have it, the app shows it as yours.'],
       ['Can my friends race the holiday tracks with me?',
@@ -277,7 +284,8 @@ export function buildFaq({ tracks } = {}) {
           "The season's collection is retired and never sold again."],
       ]],
       ['How do I get a refund for the pass?', [
-        "The pass is digital content you get straight away, so when you buy it you agree that this ends your 14-day right of withdrawal. We still give refunds where the law requires it: contact us with your order number. Bought in an app? Ask Apple (reportaproblem.apple.com) or Google (your Google Play order history).",
+        `Bought before ${HOLIDAY.starts}? Until the pass activates on ${HOLIDAY.starts}, you get a full refund on request: contact us with your order number (or ask Apple or Google, if you bought it in an app).`,
+        "From the day the season starts the pass is digital content you have, so when you buy it you agree that this ends your 14-day right of withdrawal. We still give refunds where the law requires it: contact us with your order number. Bought in an app? Ask Apple (reportaproblem.apple.com) or Google (your Google Play order history).",
         `A refunded pass is taken back: the holiday tracks lock again until the season ends, and ${HOLIDAY.marble} leaves your Marble Bag.`,
       ]],
       ['How do I restore my pass on iPhone?',

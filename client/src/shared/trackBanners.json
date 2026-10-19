@@ -94,12 +94,12 @@
    "name": "Belgrade Badnjak Run",
    "series": "World Tour",
    "lighting": "night",
-   "v": "1fd37390",
-   "bytes": 12452,
-   "bytes2x": 30544,
-   "t": 15203,
+   "v": "2292ef01",
+   "bytes": 11868,
+   "bytes2x": 29348,
+   "t": 14126,
    "side": 1,
-   "marbles": 6
+   "marbles": 5
   },
   "berlin-blue-lanes": {
    "name": "Berlin Blue Lanes",
@@ -160,12 +160,12 @@
    "name": "Buenos Aires Summer Christmas",
    "series": "Grand Prix",
    "lighting": "fireworks-night",
-   "v": "6398dab5",
-   "bytes": 16394,
-   "bytes2x": 39360,
-   "t": 10261,
+   "v": "2a639226",
+   "bytes": 13910,
+   "bytes2x": 34644,
+   "t": 10145,
    "side": 1,
-   "marbles": 4
+   "marbles": 6
   },
   "bullet-hell": {
    "name": "Bullet Hell",
@@ -765,12 +765,12 @@
    "name": "New York Winter Run",
    "series": "Grand Prix",
    "lighting": "night",
-   "v": "4c31e5ae",
-   "bytes": 16866,
-   "bytes2x": 40200,
-   "t": 27691,
-   "side": -1,
-   "marbles": 6
+   "v": "d4d1e131",
+   "bytes": 15020,
+   "bytes2x": 37488,
+   "t": 15398,
+   "side": 1,
+   "marbles": 5
   },
   "night-train-north": {
    "name": "Night Train North",
@@ -787,10 +787,10 @@
    "name": "Nuremberg Christmas Market Run",
    "series": "World Tour",
    "lighting": "snow",
-   "v": "3f08615c",
-   "bytes": 13438,
-   "bytes2x": 31780,
-   "t": 10605,
+   "v": "caaca530",
+   "bytes": 14234,
+   "bytes2x": 33174,
+   "t": 10705,
    "side": -1,
    "marbles": 4
   },
@@ -886,12 +886,12 @@
    "name": "Québec Old Town Spins",
    "series": "World Tour",
    "lighting": "night",
-   "v": "b4727b5d",
-   "bytes": 12542,
-   "bytes2x": 31606,
-   "t": 9738,
+   "v": "8ab40fde",
+   "bytes": 12114,
+   "bytes2x": 30362,
+   "t": 10511,
    "side": 1,
-   "marbles": 6
+   "marbles": 5
   },
   "queenstown-pohutukawa-run": {
    "name": "Queenstown Pōhutukawa Run",
@@ -1029,10 +1029,10 @@
    "name": "Sleigh Bell Forest",
    "series": "Winter Wonders",
    "lighting": "night",
-   "v": "8c7c3796",
-   "bytes": 12336,
-   "bytes2x": 29594,
-   "t": 9980,
+   "v": "2aaed50b",
+   "bytes": 11190,
+   "bytes2x": 27822,
+   "t": 10991,
    "side": 1,
    "marbles": 4
   },
@@ -1205,12 +1205,12 @@
    "name": "Trinidad Parang Run",
    "series": "Pinball",
    "lighting": "parlour",
-   "v": "f218985e",
-   "bytes": 11222,
-   "bytes2x": 27436,
-   "t": 9672,
-   "side": 1,
-   "marbles": 5
+   "v": "802aa781",
+   "bytes": 16226,
+   "bytes2x": 38876,
+   "t": 14723,
+   "side": -1,
+   "marbles": 7
   },
   "tromso-aurora-grand-prix": {
    "name": "Tromsø Aurora Grand Prix",
@@ -1348,12 +1348,12 @@
    "name": "Zermatt Marble Grand Prix",
    "series": "Grand Prix",
    "lighting": "sunset",
-   "v": "fb3bb4e0",
-   "bytes": 17016,
-   "bytes2x": 43160,
-   "t": 9833,
+   "v": "83cd29a4",
+   "bytes": 17212,
+   "bytes2x": 42256,
+   "t": 9720,
    "side": 1,
-   "marbles": 5
+   "marbles": 4
   },
   "zurich-golden-lap": {
    "name": "Zurich Golden Lap",

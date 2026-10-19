@@ -19,12 +19,12 @@ delete process.env.STRIPE_ALLOW_LIVE;
 
 const seasons = require('../src/seasons');
 
-// The Holiday Season 2026 as its data update sets it.
+// The Holiday Season 2026 as its data updates set it (the pass on sale from 28 Nov: 2027-03-22-holiday-pass-pre-sale).
 const HOLIDAY = {
   key: 'holiday-2026', name: 'Holiday Season 2026', time_zone: 'Europe/Stockholm',
   starts_at: '2026-12-01T00:00:00+01:00', ends_at: '2027-01-07T23:59:59+01:00', free_from: '2027-01-07T23:59:59+01:00',
   pass_product_id: 'holiday-pass-2026', pass_name: 'Holiday Season Pass 2026', price_cents: 999, currency: 'usd',
-  pass_sale_starts_at: '2026-12-01T00:00:00+01:00', pass_sale_ends_at: '2027-01-07T23:59:59+01:00',
+  pass_sale_starts_at: '2026-11-28T00:00:00+01:00', pass_sale_ends_at: '2027-01-07T23:59:59+01:00',
   featured: { '2026-12-01': 'tromso-aurora-grand-prix', '2026-12-24': 'gamla-stan-christmas-run', '2027-01-07': 'lalibela-genna-spins' },
   featured_bonus: 0.5,
 };
@@ -45,8 +45,15 @@ test('the Track of the Day goes by the Swedish calendar day', () => {
   assert.equal(seasons.dayOf(HOLIDAY, new Date('2026-12-31T23:30:00Z')), '2027-01-01');
 });
 
-test('the pass is sold from the season\'s start to its end, with an "ends in N days" countdown from 1 Jan', () => {
-  assert.equal(seasons.passOnSale(HOLIDAY, new Date('2026-11-30T12:00:00Z')), false);
+test('the pass is sold from 28 Nov (a pre-sale, activating on 1 Dec) to the season\'s end, with an "ends in N days" countdown from 1 Jan', () => {
+  assert.equal(seasons.passOnSale(HOLIDAY, new Date('2026-11-27T22:59:59Z')), false);
+  assert.equal(seasons.passOnSale(HOLIDAY, new Date('2026-11-27T23:00:00Z')), true); // (28 Nov 00:00 in Stockholm)
+  assert.equal(seasons.inPreSale(HOLIDAY, new Date('2026-11-27T23:00:00Z')), true);
+  assert.equal(seasons.inPreSale(HOLIDAY, new Date('2026-11-30T22:59:59Z')), true);
+  assert.equal(seasons.inPreSale(HOLIDAY, new Date('2026-11-30T23:00:00Z')), false); // (1 Dec: the pass is active)
+  assert.equal(seasons.inPreSale(HOLIDAY, new Date('2026-11-20T12:00:00Z')), false); // (not on sale yet)
+  assert.equal(seasons.activatesText(HOLIDAY), '1 December');
+  assert.equal(seasons.passOnSale(HOLIDAY, new Date('2026-11-30T12:00:00Z')), true);
   assert.equal(seasons.passOnSale(HOLIDAY, new Date('2026-12-15T12:00:00Z')), true);
   assert.equal(seasons.passOnSale(HOLIDAY, new Date('2027-01-08T00:00:00Z')), false);
   const from = seasons.lastMonthStart(HOLIDAY);
@@ -248,9 +255,9 @@ test('test purchases before the sale starts: Apple sandbox or TestFlight, Google
   const before = new Date('2026-11-20T12:00:00+01:00');
   assert.equal(seasons.passOnSale(HOLIDAY, before), false);
   assert.equal(seasons.passOnSale(HOLIDAY, before, { early: true }), true);
-  // Real purchases open at 1 Dec 00:00 Swedish time, not a minute before.
-  assert.equal(seasons.passOnSale(HOLIDAY, new Date('2026-11-30T23:59:00+01:00')), false);
-  assert.equal(seasons.passOnSale(HOLIDAY, new Date('2026-12-01T00:00:00+01:00')), true);
+  // Real purchases open at 28 Nov 00:00 Swedish time, not a minute before, on every platform.
+  assert.equal(seasons.passOnSale(HOLIDAY, new Date('2026-11-27T23:59:00+01:00')), false);
+  assert.equal(seasons.passOnSale(HOLIDAY, new Date('2026-11-28T00:00:00+01:00')), true);
   // After the sale ends, not even a test purchase.
   assert.equal(seasons.passOnSale(HOLIDAY, new Date('2027-01-08T00:00:00+01:00'), { early: true }), false);
 });
@@ -304,6 +311,88 @@ test('a tester (PASS_TESTERS) sees the pass on sale before it starts and can buy
     if (saved.testers === undefined) delete process.env.PASS_TESTERS; else process.env.PASS_TESTERS = saved.testers;
     config.stripe.secretKey = saved.key;
     config.stripe.allowLive = saved.live;
+    seasons.forget();
+    server.close();
+  }
+});
+
+test('the pre-sale on Stripe: bought before the season starts, the pass is held but activates only on the season\'s first day; a refund before then revokes it', { skip: !DB }, async () => {
+  const { createApp } = require('../src/app');
+  const db = require('../src/db');
+  const stripe = require('../src/payments/stripe');
+  const fake = fakeStripe();
+  stripe.setClient(fake);
+  const server = createApp().listen(0);
+  const base = `http://127.0.0.1:${server.address().port}/api`;
+  const call = async (path, { method = 'GET', body, token, headers = {} } = {}) => {
+    const res = await fetch(base + path, { method, headers: { 'content-type': 'application/json', ...headers, ...(token && { authorization: `Bearer ${token}` }) }, body: body === undefined ? undefined : typeof body === 'string' ? body : JSON.stringify(body) });
+    return { status: res.status, body: await res.json().catch(() => null) };
+  };
+  let n = 0;
+  const send = (type, object) => {
+    const payload = JSON.stringify({ id: `evt_presale_${Date.now()}_${++n}`, object: 'event', type, data: { object } });
+    return call('/payments/stripe/webhook', { method: 'POST', body: payload, headers: { 'stripe-signature': Stripe.webhooks.generateTestHeaderString({ payload, secret: 'whsec_fake_for_tests' }) } });
+  };
+  const run = crypto.randomBytes(3).toString('hex');
+  const key = `test-ps-${run}`;
+  try {
+    // On sale since yesterday; the season starts in two days.
+    await db.query(
+      `INSERT INTO seasons (key, name, starts_at, ends_at, free_from, pass_product_id, pass_name, price_cents, pass_sale_starts_at, pass_sale_ends_at)
+       VALUES ($1, 'Pre Season 2026', now() + interval '2 days', now() + interval '12 days', now() + interval '12 days', $2, 'Pre Season Pass 2026', 999, now() - interval '1 day', now() + interval '12 days')`,
+      [key, `ppass-${run}`],
+    );
+    const { rows: [track] } = await db.query(
+      `INSERT INTO tracks (slug, name, difficulty, length_m, lane_count, waypoints, obstacles, season_key, is_active)
+       SELECT $1, 'Pre season track', difficulty, length_m, lane_count, waypoints, obstacles, $2, true FROM tracks WHERE slug = 'meadow-loop' RETURNING id`,
+      [`${key}-t`, key],
+    );
+    seasons.forget();
+    const name = `t_ps_${run}`;
+    const me = (await call('/auth/register', { method: 'POST', body: { username: name, email: `${name}@test.invalid`, password: 'password123', age_group: '18+' } })).body;
+
+    const view = async () => (await call(`/seasons/${key}`, { token: me.token })).body.season;
+    let season = await view();
+    assert.equal(season.state, 'before');
+    assert.deepEqual([season.pass.onSale, season.pass.preSale, season.pass.testPurchaseOnly, season.pass.owned], [true, true, false, false]);
+    assert.equal(new Date(season.pass.activatesAt).getTime(), new Date(season.startsAt).getTime());
+
+    // A real purchase (no tester needed): the pre-sale consent and "Activates …" on Stripe's page.
+    const out = (await call('/payments/pass/checkout', { method: 'POST', token: me.token, body: { season: key, consent: true } })).body;
+    assert.equal(out.next.kind, 'redirect');
+    const { params } = fake.made.sessions[0];
+    assert.match(params.line_items[0].price_data.product_data.description, /Activates \d{1,2} [A-Z][a-z]+ at 00:00 Swedish time, with a full refund on request until then/);
+    assert.match(params.custom_text.submit.message, /^Your pass activates on \d{1,2} [A-Z][a-z]+\. Until then you can cancel it for a full refund/);
+    const { rows: [pay] } = await db.query('SELECT * FROM payments WHERE order_no = $1', [out.payment.order_no]);
+    assert.match(pay.consent_text, /I want my pass to activate on \d{1,2} [A-Z][a-z]+\. Until then I can cancel it for a full refund/);
+    const session = { id: fake.made.sessions[0].id, object: 'checkout.session', mode: 'payment', payment_status: 'paid', client_reference_id: pay.id, metadata: { payment_id: pay.id }, amount_total: 999, currency: 'usd', total_details: { amount_tax: 200 }, payment_intent: `pi_presale_${run}` };
+    assert.equal((await send('checkout.session.completed', session)).body.outcome, 'granted');
+    assert.equal(await seasons.hasPass(db, me.user.id, key), true);
+    season = await view();
+    assert.deepEqual([season.pass.owned, season.pass.preSale], [true, true]);
+
+    // Held, but nothing opens before the season starts: its tracks, holiday races, rooms.
+    const race = await call('/races', { method: 'POST', token: me.token, body: { track_id: track.id, enter: true } });
+    assert.equal(race.status, 403);
+    assert.equal(race.body.details.code, 'season_not_started');
+    assert.equal((await call('/races', { method: 'POST', token: me.token, body: { season: key } })).status, 403);
+    assert.equal((await call('/rooms', { method: 'POST', token: me.token, body: { track_id: track.id } })).status, 403);
+    // The season starts: open for the holder.
+    await db.query(`UPDATE seasons SET starts_at = now() - interval '1 minute' WHERE key = $1`, [key]);
+    seasons.forget();
+    assert.equal((await call('/races', { method: 'POST', token: me.token, body: { track_id: track.id, enter: true } })).status, 201);
+    await db.query(`UPDATE seasons SET starts_at = now() + interval '2 days' WHERE key = $1`, [key]);
+    seasons.forget();
+
+    // Refunded before the season starts (from the back office or Stripe's dashboard): revoked.
+    await send('refund.created', { id: `re_presale_${run}`, object: 'refund', status: 'succeeded', amount: 999, currency: 'usd', payment_intent: session.payment_intent, metadata: {} });
+    assert.equal(await seasons.hasPass(db, me.user.id, key), false);
+    const { rows: [revoked] } = await db.query('SELECT revoke_reason FROM season_passes WHERE payment_id = $1', [pay.id]);
+    assert.equal(revoked.revoke_reason, 'refunded');
+    season = await view();
+    assert.deepEqual([season.pass.owned, season.pass.onSale], [false, true]); // (and may be bought again)
+  } finally {
+    stripe.setClient(null);
     seasons.forget();
     server.close();
   }
@@ -379,6 +468,22 @@ test('the pass on Google Play: inside its sale window only (a licence tester\'s 
     buy(tested, Date.now() - 3 * 86400_000, true);
     assert.equal((await payments.googlePurchase(db, { userId: user.id, productId, purchaseToken: tested })).status, 'paid');
     assert.equal(await seasons.hasPass(db, user.id, key), true);
+
+    // The pre-sale: a real purchase before the season starts (its sale has started) is granted; it
+    // activates with the season, and a refund before then revokes it.
+    await db.query(`UPDATE seasons SET starts_at = now() + interval '2 days' WHERE key = $1`, [key]);
+    seasons.forget();
+    state.voided = [{ purchaseToken: tested, orderId: state.purchases.get(tested).orderId, voidedReason: 1, voidedSource: 0 }];
+    await payments.googleSync(db);
+    assert.equal(await seasons.hasPass(db, user.id, key), false);
+    const pre = `play-pass-${run}-presale-xxxx`;
+    buy(pre);
+    assert.equal((await payments.googlePurchase(db, { userId: user.id, productId, purchaseToken: pre })).status, 'paid');
+    assert.equal(await seasons.hasPass(db, user.id, key), true);
+    assert.equal((await seasons.trackAccess(db, { season_key: key }, { userId: user.id })).reason, 'before');
+    state.voided.push({ purchaseToken: pre, orderId: state.purchases.get(pre).orderId, voidedReason: 1, voidedSource: 0 });
+    await payments.googleSync(db);
+    assert.equal(await seasons.hasPass(db, user.id, key), false);
   } finally {
     google.setTransport((...a) => fetch(...a), undefined);
     seasons.forget();
