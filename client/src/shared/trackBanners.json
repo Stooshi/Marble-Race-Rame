@@ -871,6 +871,17 @@
    "side": 1,
    "marbles": 10
   },
+  "sapporo-snow-sculptures": {
+   "name": "Sapporo Snow Sculptures",
+   "series": "Coasters",
+   "lighting": "snow",
+   "v": "bae73438",
+   "bytes": 16452,
+   "bytes2x": 38644,
+   "t": 9701,
+   "side": 1,
+   "marbles": 5
+  },
   "sky-islands": {
    "name": "Sky Islands",
    "series": "Blocks",
