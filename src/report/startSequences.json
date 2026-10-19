@@ -48,6 +48,7 @@
 "harbin-ice-city": {"family":"coaster","reach":0.307,"seq":["opening: peg-drop","drop","peg ×7","spiral right"]},
 "hells-burst": {"family":"canyon","reach":0.312,"seq":["opening: split-start","drop","pileUp","slalom","chutes","drop","slalom","sweep left","boost","drop"]},
 "hong-kong-crossing": {"family":"coaster","reach":0.216,"seq":["opening: split-start","drop","pileUp","slalom","chutes","drop","slalom","S-bends left"]},
+"ice-palace": {"family":"winter-wonders","reach":0.324,"seq":["opening: tunnel-launch","drop","pileUp","slalom","drop","slalom","straight","half-pipe","straight","peg ×3"]},
 "indus-spins": {"family":"canyon","reach":0.241,"seq":["opening: classic","drop","pileUp","slalom","straight","slalom","sweep right","boost"]},
 "istanbul-marble-grand-prix": {"family":"grand-prix","reach":0.216,"seq":["opening: classic","drop","pileUp","slalom","S-bends left"]},
 "joystick-spins": {"family":"arcade","reach":0.238,"seq":["opening: funnel-drop","drop","pileUp","slalom","sweep left"]},

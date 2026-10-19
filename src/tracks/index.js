@@ -122,4 +122,5 @@ module.exports = [
   require('./goa-star-lanterns'),
   require('./sydney-harbour-new-year'),
   require('./rio-new-year-burst'),
+  require('./ice-palace'),
 ];

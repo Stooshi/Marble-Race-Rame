@@ -563,6 +563,17 @@
    "side": -1,
    "marbles": 6
   },
+  "ice-palace": {
+   "name": "Ice Palace",
+   "series": "Winter Wonders",
+   "lighting": "night",
+   "v": "f0d45898",
+   "bytes": 11492,
+   "bytes2x": 26940,
+   "t": 9451,
+   "side": 1,
+   "marbles": 4
+  },
   "indus-spins": {
    "name": "Indus Spins",
    "series": "Canyons",
