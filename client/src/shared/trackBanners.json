@@ -2,6 +2,17 @@
  "note": "The track picker's pictures (client/public/tracks/<slug>.webp and @2x), written by scripts/track-banners.js. enabled: shown in the track picker (false: only on /preview/banners). v: changes with the picture, so browsers fetch a new one.",
  "enabled": true,
  "banners": {
+  "accra-december-beats": {
+   "name": "Accra December Beats",
+   "series": "Track and Field",
+   "lighting": "sunset",
+   "v": "edbca800",
+   "bytes": 19066,
+   "bytes2x": 46156,
+   "t": 10547,
+   "side": 1,
+   "marbles": 1
+  },
   "amazon-water-run": {
    "name": "Amazon Water Run",
    "series": "World Tour",
