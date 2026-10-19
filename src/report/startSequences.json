@@ -92,6 +92,7 @@
 "stockholm-1912-relay": {"family":"athletics","reach":0.224,"seq":["opening: split-start","drop","pileUp","slalom","chutes","drop","slalom","straight","peg ×4","paint","brake","sweep right"]},
 "stockholm-marble-grand-prix": {"family":"grand-prix","reach":0.207,"seq":["opening: classic","drop","pileUp","slalom","S-bends right"]},
 "sunstone-temple": {"family":"block","reach":0.253,"seq":["opening: tunnel-launch","drop","pileUp","slalom","drop","slalom","straight","slalom","straight","hairpin left","swipe","straight","steps"]},
+"sydney-harbour-new-year": {"family":"coaster","reach":0.34,"seq":["opening: clean-drop","drop","S-bends right","straight","peg ×4","sweep left","curtain"]},
 "sydney-marble-grand-prix": {"family":"grand-prix","reach":0.207,"seq":["opening: classic","drop","pileUp","slalom","S-bends right"]},
 "tara-river-spins": {"family":"canyon","reach":0.231,"seq":["opening: banked-turn","drop","pileUp","slalom","sweep right","straight","slalom","spiral left"]},
 "the-stack": {"family":"block","reach":0.184,"seq":["opening: crest-start","drop","pileUp","slalom","climb","drop","straight","peg ×3"]},

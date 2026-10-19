@@ -116,8 +116,9 @@ module.exports = [
   require('./buenos-aires-summer-christmas'),
   require('./san-fernando-lantern-spins'),
   require('./edinburgh-hogmanay-grand-prix'),
-  require('./trinidad-parang-run'),
   require('./seoul-winter-lights'),
-  require('./goa-star-lanterns'),
+  require('./trinidad-parang-run'),
   require('./gingerbread-village'),
+  require('./goa-star-lanterns'),
+  require('./sydney-harbour-new-year'),
 ];

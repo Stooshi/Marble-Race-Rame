@@ -1069,6 +1069,17 @@
    "side": 1,
    "marbles": 5
   },
+  "sydney-harbour-new-year": {
+   "name": "Sydney Harbour New Year",
+   "series": "Coasters",
+   "lighting": "fireworks-night",
+   "v": "b2cbcf29",
+   "bytes": 14728,
+   "bytes2x": 35896,
+   "t": 10978,
+   "side": 1,
+   "marbles": 6
+  },
   "sydney-marble-grand-prix": {
    "name": "Sydney Marble Grand Prix",
    "series": "Grand Prix",
