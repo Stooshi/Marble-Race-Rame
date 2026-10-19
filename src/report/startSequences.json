@@ -41,6 +41,7 @@
 "grand-champion": {"family":"pinball","reach":0.235,"seq":["opening: split-start","drop","pileUp","slalom","chutes","drop","slalom","straight","peg ×2","S-bends left"]},
 "greenland-expedition": {"family":"world-tour","reach":0.202,"seq":["opening: classic","drop","pileUp","slalom","S-bends left"]},
 "ha-long-bay-spins": {"family":"coaster","reach":0.233,"seq":["opening: funnel-drop","drop","pileUp","slalom","straight","peg ×4","sweep right","boost"]},
+"harbin-ice-city": {"family":"coaster","reach":0.307,"seq":["opening: peg-drop","drop","peg ×7","spiral right"]},
 "hells-burst": {"family":"canyon","reach":0.312,"seq":["opening: split-start","drop","pileUp","slalom","chutes","drop","slalom","sweep left","boost","drop"]},
 "hong-kong-crossing": {"family":"coaster","reach":0.216,"seq":["opening: split-start","drop","pileUp","slalom","chutes","drop","slalom","S-bends left"]},
 "indus-spins": {"family":"canyon","reach":0.241,"seq":["opening: classic","drop","pileUp","slalom","straight","slalom","sweep right","boost"]},

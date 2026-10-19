@@ -486,6 +486,17 @@
    "side": 1,
    "marbles": 1
   },
+  "harbin-ice-city": {
+   "name": "Harbin Ice City",
+   "series": "Coasters",
+   "lighting": "night",
+   "v": "1821ba51",
+   "bytes": 11046,
+   "bytes2x": 27376,
+   "t": 34164,
+   "side": 1,
+   "marbles": 9
+  },
   "hells-burst": {
    "name": "Hells Burst",
    "series": "Canyons",

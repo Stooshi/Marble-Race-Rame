@@ -108,4 +108,5 @@ module.exports = [
   require('./veliky-ustyug-frost-run'),
   require('./new-york-winter-run'),
   require('./accra-december-beats'),
+  require('./harbin-ice-city'),
 ];
