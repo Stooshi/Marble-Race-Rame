@@ -816,6 +816,17 @@
    "side": 1,
    "marbles": 6
   },
+  "queenstown-pohutukawa-run": {
+   "name": "Queenstown Pōhutukawa Run",
+   "series": "Canyons",
+   "lighting": "day",
+   "v": "8a380a79",
+   "bytes": 21692,
+   "bytes2x": 52032,
+   "t": 36171,
+   "side": 1,
+   "marbles": 5
+  },
   "redwood-forest-run": {
    "name": "Redwood Forest Run",
    "series": "Coasters",
