@@ -839,8 +839,8 @@ function whiteCrowd() {
   for (let k = 0; k < 36; k += 1) {
     const x = -27 + (k % 18) * 3.1 + ((k * 7) % 3) * 0.4;
     const z = -3 + Math.floor(k / 18) * 3.6 + ((k * 5) % 3) * 0.5;
-    p.push(piece(new CylinderGeometry(0.35, 0.45, 1.6, 6), k % 7 === 3 ? '#f2e6c8' : '#f6f6f2', M(x, 1.1, z)));
-    p.push(piece(new SphereGeometry(0.28, 6, 4), ['#5a3a2a', '#8a5a3a', '#c8956a'][k % 3], M(x, 2.15, z)));
+    p.push(piece(new CylinderGeometry(0.35, 0.45, 1.6, 5, 1, true), k % 7 === 3 ? '#f2e6c8' : '#f6f6f2', M(x, 1.1, z)));
+    p.push(piece(new SphereGeometry(0.28, 5, 3), ['#5a3a2a', '#8a5a3a', '#c8956a'][k % 3], M(x, 2.15, z)));
   }
   for (const x of [-24, -6, 14, 26]) {
     p.push(piece(new CylinderGeometry(0.3, 0.4, 9, 6), '#8a6a42', M(x, 4.5, -6)));

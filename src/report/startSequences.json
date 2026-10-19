@@ -80,6 +80,7 @@
 "replay": {"family":"pinball","reach":0.229,"seq":["opening: funnel-drop","drop","pileUp","slalom","sweep right"]},
 "reykjavik-yule-lights": {"family":"block","reach":0.318,"seq":["opening: peg-drop","drop","peg ×7","straight","peg","rail","box","table-top","sweep right"]},
 "rio-jungle-rumble": {"family":"world-tour","reach":0.209,"seq":["opening: classic","drop","pileUp","slalom","S-bends left"]},
+"rio-new-year-burst": {"family":"pinball","reach":0.358,"seq":["opening: pipe-drop","drop","half-pipe","sweep right","peg ×2","spiral right"]},
 "sahara-marble-grand-prix": {"family":"grand-prix","reach":0.216,"seq":["opening: classic","drop","pileUp","slalom","S-bends left"]},
 "san-fernando-lantern-spins": {"family":"block","reach":0.33,"seq":["opening: peg-drop","drop","peg ×7","S-bends left","straight","peg ×3","table-top"]},
 "sapporo-snow-sculptures": {"family":"coaster","reach":0.231,"seq":["opening: classic","drop","pileUp","slalom","straight","box","rail","spiral right"]},

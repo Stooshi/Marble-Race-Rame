@@ -121,4 +121,5 @@ module.exports = [
   require('./gingerbread-village'),
   require('./goa-star-lanterns'),
   require('./sydney-harbour-new-year'),
+  require('./rio-new-year-burst'),
 ];

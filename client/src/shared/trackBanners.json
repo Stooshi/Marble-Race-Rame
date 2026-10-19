@@ -926,6 +926,17 @@
    "side": 1,
    "marbles": 1
   },
+  "rio-new-year-burst": {
+   "name": "Rio New Year Burst",
+   "series": "Pinball",
+   "lighting": "fireworks-night",
+   "v": "04def8d6",
+   "bytes": 7224,
+   "bytes2x": 17944,
+   "t": 9898,
+   "side": 1,
+   "marbles": 6
+  },
   "sahara-marble-grand-prix": {
    "name": "Sahara Marble Grand Prix",
    "series": "Grand Prix",
