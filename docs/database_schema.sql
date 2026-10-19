@@ -937,6 +937,10 @@ CREATE TABLE IF NOT EXISTS pass_reminders (
 );
 CREATE UNIQUE INDEX IF NOT EXISTS uq_pass_reminders_player ON pass_reminders (season_key, user_id) WHERE user_id IS NOT NULL AND cancelled_at IS NULL;
 CREATE UNIQUE INDEX IF NOT EXISTS uq_pass_reminders_email ON pass_reminders (season_key, lower(email)) WHERE user_id IS NULL AND cancelled_at IS NULL;
+-- The language of its emails ('en' or 'sv', from the browser when it was asked for), and when a
+-- player dismissed the in-game "on sale now" notice (src/seasons/reminderMail.js).
+ALTER TABLE pass_reminders ADD COLUMN IF NOT EXISTS lang varchar(5) NOT NULL DEFAULT 'en';
+ALTER TABLE pass_reminders ADD COLUMN IF NOT EXISTS notice_seen_at timestamptz;
 
 -- A season's tracks; NULL = an ordinary track, free for everyone.
 ALTER TABLE tracks ADD COLUMN IF NOT EXISTS season_key varchar(32) REFERENCES seasons(key);

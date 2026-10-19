@@ -11,7 +11,10 @@
  *   DELETE /api/seasons/:key/remind   a player cancels theirs
  *   POST   /api/seasons/reminders/confirm { token }  the confirmation email's link (double opt-in)
  *   POST   /api/seasons/reminders/cancel { token }   cancel with the reminder's own link (the email's)
- * Nothing is sent yet: the reminders are only collected.
+ *   POST   /api/seasons/reminders/unsubscribe?t=      the same, for mail apps' one-click unsubscribe (RFC 8058)
+ *   POST   /api/seasons/:key/remind/seen  a player closes the in-game "on sale now" notice
+ * Sending (the confirmation and reminder emails, the in-game notice): src/seasons/reminderMail.js, off
+ * until BREVO_API_KEY is set and PASS_REMINDERS_SENDING=on.
  */
 const express = require('express');
 const db = require('../db');
@@ -21,6 +24,7 @@ const config = require('../config');
 const { validate } = require('../utils/validate');
 const { notFound } = require('../utils/httpError');
 const reminders = require('../seasons/reminders');
+const reminderMail = require('../seasons/reminderMail');
 const seasons = require('../seasons');
 
 const router = express.Router();
@@ -62,11 +66,24 @@ router.post('/reminders/cancel', remindLimiter, async (req, res) => {
   res.json({ cancelled: await reminders.cancelByToken(db, body.token) });
 });
 
+// (Mail apps post "List-Unsubscribe=One-Click" as a form; the token is in the address.)
+router.post('/reminders/unsubscribe', remindLimiter, express.urlencoded({ extended: false }), async (req, res) => {
+  await reminders.cancelByToken(db, String(req.query.t ?? '').slice(0, 64));
+  res.json({ ok: true });
+});
+
+router.post('/:key/remind/seen', requireAuth, async (req, res) => {
+  const season = await seasonOf(req.params.key);
+  await reminderMail.noticeSeen(db, season.key, req.user.id);
+  res.json({ ok: true });
+});
+
 router.post('/:key/remind', remindLimiter, optionalAuth, async (req, res) => {
   const body = validate(req.body, {
     email: { type: 'string', max: 254 },
     consent: { type: 'boolean' },
     email_too: { type: 'boolean' },
+    lang: { type: 'string', max: 5 },
     website: { type: 'string', max: 500 }, // (the field people never see: a bot fills it)
   });
   const season = await seasonOf(req.params.key);
@@ -75,7 +92,7 @@ router.post('/:key/remind', remindLimiter, optionalAuth, async (req, res) => {
     : null;
   // A bot: the same answer, nothing saved.
   if (body.website) return res.status(201).json({ reminder: { inGame: false, email: true, confirmed: false } });
-  res.status(201).json(await reminders.remind(db, season, user, { email: body.email, consent: body.consent, emailToo: body.email_too }));
+  res.status(201).json(await reminders.remind(db, season, user, { email: body.email, consent: body.consent, emailToo: body.email_too, lang: body.lang }));
 });
 
 router.delete('/:key/remind', requireAuth, async (req, res) => {

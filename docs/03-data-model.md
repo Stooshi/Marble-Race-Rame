@@ -320,7 +320,7 @@ A player's pass for a season. Granted once when its payment is paid; a full refu
 | `granted_at`, `revoked_at`, `revoke_reason` | |
 
 ### `pass_reminders`
-"Remind me when sales open" on the pass page, asked for before the pass goes on sale (`src/seasons/reminders.js`). **Collected only: nothing is sent yet.** One live reminder per player or email address and season.
+"Remind me when sales open" on the pass page, asked for before the pass goes on sale (`src/seasons/reminders.js`). Sent by `src/seasons/reminderMail.js`, **off until `BREVO_API_KEY` is set and `PASS_REMINDERS_SENDING=on`**. One live reminder per player or email address and season.
 
 | Column | Meaning |
 |---|---|
@@ -331,7 +331,9 @@ A player's pass for a season. Granted once when its payment is paid; a full refu
 | `consent_text` | The exact text they agreed to, with the consent version |
 | `token` | The reminder's own link, to confirm (the confirmation email) or cancel it |
 | `confirm_sent_at`, `confirmed_at` | Double opt-in: when the confirmation email went out, and when its link was clicked. Only a confirmed address gets the reminder email; a verified account email would count as confirmed (accounts have no email check yet) |
-| `created_at`, `sent_at`, `cancelled_at` | `sent_at` is set when sending is built |
+| `created_at`, `sent_at`, `cancelled_at` | `sent_at`: when the reminder email went |
+| `lang` | The emails' language, `en` or `sv` (the browser's when it was asked for) |
+| `notice_seen_at` | When the player closed the in-game "on sale now" notice |
 
 Unconfirmed 7 days after the confirmation email: a visitor's reminder is deleted, a player's keeps only its in-game reminder. Deleted with the account (also a visitor's reminder at the account's address), by the hourly seasons job once cancelled, and 30 days after the sale opened. In the player's data download (`passReminders`).
 

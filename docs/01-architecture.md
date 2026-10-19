@@ -135,6 +135,8 @@ There is no separate staging server. Vercel makes a preview build for every bran
 | `STRIPE_SECRET_KEY` | for payments | `sk_test_…` now |
 | `STRIPE_WEBHOOK_SECRET` | for payments | `whsec_…` from the webhook endpoint in Stripe |
 | `STRIPE_ALLOW_LIVE` | **only when going live** | `true` lets a `sk_live_…` key work |
+| `PASS_REMINDERS_SENDING` | no | `on` switches on sending the pass reminders (the confirmation emails, the reminder email when the sale opens, the in-game notice); also needs `BREVO_API_KEY`. Unset or anything else: nothing is sent (Moses says go) |
+| `PUBLIC_API_URL` | no | The server's own public address, for the one-click unsubscribe header in emails; on Railway `RAILWAY_PUBLIC_DOMAIN` is used when it isn't set |
 | `PASS_TESTERS` | no | Tester accounts' emails, comma-separated: they may test-buy the season pass before its sale starts (App Review, our testers) |
 | `STRIPE_TAX` | no | `off` turns off Stripe Tax |
 | `STRIPE_TAX_CODE` | no | Default `txcd_10000000` (to be confirmed by the accountant) |

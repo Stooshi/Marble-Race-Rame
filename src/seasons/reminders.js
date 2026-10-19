@@ -2,7 +2,8 @@
 
 /**
  * "Remind me when sales open" on the pass page, before a season pass goes on sale (the
- * pass_reminders table). Collected only: nothing is sent yet. When sending is built (Brevo):
+ * pass_reminders table). Sending is src/seasons/reminderMail.js, off until BREVO_API_KEY is set and
+ * PASS_REMINDERS_SENDING=on (Moses says go). Then:
  *   1. a confirmation email with the reminder's link to each unconfirmed email reminder
  *      (confirm_sent_at); the link confirms it (confirm(), confirmed_at). Double opt-in (Moses, 19 Oct);
  *   2. on the sale's first day one in-game notice (players) and one email to each CONFIRMED address,
@@ -71,20 +72,21 @@ async function ofPlayer(db, userId, seasonKey) {
  * Sets a reminder. `user`: { id, email, is_guest } or null. A player: { emailToo }. A visitor or a
  * guest: { email, consent: true }. → { reminder: { inGame, email } }.
  */
-async function remind(db, season, user, { email = null, consent: agreed = false, emailToo = false } = {}, now = new Date()) {
+async function remind(db, season, user, { email = null, consent: agreed = false, emailToo = false, lang = 'en' } = {}, now = new Date()) {
   assertOpen(season, now);
+  const language = lang === 'sv' ? 'sv' : 'en'; // (the emails' language: Swedish or English)
   const token = crypto.randomBytes(24).toString('base64url');
   if (user && !user.is_guest && user.email) {
     const text = `[${consent.version}] ${fill(consent.reminderPlayer, season)}${emailToo ? ` / ${fill(consent.reminderPlayerEmail, season, { email: user.email })}` : ''}`;
     const confirmed = Boolean(emailToo) && accountEmailVerified(user);
     await db.query(
-      `INSERT INTO pass_reminders (season_key, user_id, email_wanted, consent_text, token, confirmed_at)
-       VALUES ($1, $2, $3, $4, $5, CASE WHEN $6 THEN now() END)
+      `INSERT INTO pass_reminders (season_key, user_id, email_wanted, consent_text, token, confirmed_at, lang)
+       VALUES ($1, $2, $3, $4, $5, CASE WHEN $6 THEN now() END, $7)
        ON CONFLICT (season_key, user_id) WHERE user_id IS NOT NULL AND cancelled_at IS NULL
-       DO UPDATE SET email_wanted = EXCLUDED.email_wanted, consent_text = EXCLUDED.consent_text, created_at = now(),
+       DO UPDATE SET email_wanted = EXCLUDED.email_wanted, consent_text = EXCLUDED.consent_text, created_at = now(), lang = EXCLUDED.lang,
                      confirmed_at = CASE WHEN EXCLUDED.email_wanted THEN COALESCE(pass_reminders.confirmed_at, EXCLUDED.confirmed_at) END,
                      confirm_sent_at = CASE WHEN EXCLUDED.email_wanted THEN pass_reminders.confirm_sent_at END`,
-      [season.key, user.id, Boolean(emailToo), text, token, confirmed],
+      [season.key, user.id, Boolean(emailToo), text, token, confirmed, language],
     );
     return { reminder: { inGame: true, email: Boolean(emailToo), confirmed: Boolean(emailToo) ? confirmed : null } };
   }
@@ -94,9 +96,9 @@ async function remind(db, season, user, { email = null, consent: agreed = false,
   const text = `[${consent.version}] ${fill(consent.reminderVisitor, season)}`;
   // (Already on the list: kept as it is, and the same answer, so nobody learns whose address is listed.)
   await db.query(
-    `INSERT INTO pass_reminders (season_key, email, email_wanted, consent_text, token) VALUES ($1, $2, true, $3, $4)
+    `INSERT INTO pass_reminders (season_key, email, email_wanted, consent_text, token, lang) VALUES ($1, $2, true, $3, $4, $5)
      ON CONFLICT (season_key, lower(email)) WHERE user_id IS NULL AND cancelled_at IS NULL DO NOTHING`,
-    [season.key, address, text, token],
+    [season.key, address, text, token, language],
   );
   return { reminder: { inGame: false, email: true, confirmed: false } };
 }
