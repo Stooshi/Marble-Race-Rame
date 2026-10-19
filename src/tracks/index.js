@@ -105,4 +105,5 @@ module.exports = [
   require('./nuremberg-christmas-market-run'),
   require('./belgrade-badnjak-run'),
   require('./coptic-cairo-lights'),
+  require('./veliky-ustyug-frost-run'),
 ];

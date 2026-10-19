@@ -1014,6 +1014,17 @@
    "side": 1,
    "marbles": 6
   },
+  "veliky-ustyug-frost-run": {
+   "name": "Veliky Ustyug Frost Run",
+   "series": "World Tour",
+   "lighting": "sunset",
+   "v": "4368cafb",
+   "bytes": 14064,
+   "bytes2x": 35188,
+   "t": 21584,
+   "side": -1,
+   "marbles": 6
+  },
   "verdon-burst": {
    "name": "Verdon Burst",
    "series": "Canyons",
