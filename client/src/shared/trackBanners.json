@@ -464,6 +464,17 @@
    "side": 1,
    "marbles": 5
   },
+  "goa-star-lanterns": {
+   "name": "Goa Star Lanterns",
+   "series": "Arcade",
+   "lighting": "neon-night",
+   "v": "4aa32a80",
+   "bytes": 8972,
+   "bytes2x": 21644,
+   "t": 10740,
+   "side": 1,
+   "marbles": 5
+  },
   "grand-canyon-burst": {
    "name": "Grand Canyon Burst",
    "series": "Canyons",

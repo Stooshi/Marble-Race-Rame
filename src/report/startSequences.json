@@ -39,6 +39,7 @@
 "flipper-spins": {"family":"pinball","reach":0.26,"seq":["opening: classic","drop","pileUp","slalom","straight","hairpin left","swipe","drop","slalom","sweep right","curtain"]},
 "frostmere-marble-grand-prix": {"family":"grand-prix","reach":0.218,"seq":["opening: classic","drop","pileUp","slalom","S-bends left"]},
 "gamla-stan-christmas-run": {"family":"world-tour","reach":0.309,"seq":["opening: peg-drop","drop","peg ×7","straight","rail","box","S-bends right"]},
+"goa-star-lanterns": {"family":"arcade","reach":0.338,"seq":["opening: pipe-drop","drop","half-pipe","straight","peg ×4","hairpin left","swipe"]},
 "grand-canyon-burst": {"family":"canyon","reach":0.223,"seq":["opening: staggered-drop","drop","pileUp","slalom","brake","straight","slalom","climb"]},
 "grand-champion": {"family":"pinball","reach":0.235,"seq":["opening: split-start","drop","pileUp","slalom","chutes","drop","slalom","straight","peg ×2","S-bends left"]},
 "greenland-expedition": {"family":"world-tour","reach":0.202,"seq":["opening: classic","drop","pileUp","slalom","S-bends left"]},
