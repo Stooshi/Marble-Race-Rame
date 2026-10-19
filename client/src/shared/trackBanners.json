@@ -1113,6 +1113,17 @@
    "side": -1,
    "marbles": 6
   },
+  "trinidad-parang-run": {
+   "name": "Trinidad Parang Run",
+   "series": "Pinball",
+   "lighting": "parlour",
+   "v": "f218985e",
+   "bytes": 11222,
+   "bytes2x": 27436,
+   "t": 9672,
+   "side": 1,
+   "marbles": 5
+  },
   "tromso-aurora-grand-prix": {
    "name": "Tromsø Aurora Grand Prix",
    "series": "Grand Prix",
