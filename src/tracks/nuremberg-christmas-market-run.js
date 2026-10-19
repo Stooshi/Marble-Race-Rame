@@ -4,7 +4,7 @@
 // The old town at the blue hour with snow falling: down the castle hill's bowl, through the lanes of
 // half-timbered houses, a table top across the market square between the red-and-white stalls and the
 // gingerbread stands, round the Gothic church front, over the river and through the old town to the line.
-const { track, opening, straight, sBends, sweep, splitter, hairpin, runIn, peg, slalom, swipe, rumble, tableTop } = require('../trackKit');
+const { track, opening, straight, sBends, sweep, hairpin, runIn, peg, slalom, swipe, rumble, tableTop, curtain } = require('../trackKit');
 
 module.exports = track({
   slug: 'nuremberg-christmas-market-run',
@@ -24,6 +24,7 @@ module.exports = track({
   start: { landmark: 'castle-keep', gate: 'paddle', shots: { countdown: 'front', launch: 'high-behind' } },
   finish: { landmark: 'gothic-church-front', scenery: ['market-stalls'] },
   designChanges: [
+    'No splitter: no setting gave its smaller channel a real share (30–70%) and passed the fairness checks, so bends under a banner gantry take its place (Moses: every splitter under 30%, 19 Oct).',
     'A plunge down the castle hill into a steep banked bend at the gate (barrels and a slalom of lanterns) rather than the planned peg drop: two World Tour tracks already open with a peg drop, the most one opening may have.',
     'The Gothic church front is a generic red sandstone church (two spired towers, a rose window), beside the Church sweep and again past the line; the gingerbread stands and the market stalls line the Market square. No names of real stalls or shops.',
   ],
@@ -39,10 +40,7 @@ module.exports = track({
       name: 'Church sweep', shape: sweep({ side: 'left', radius: 80, degrees: 110, grade: 0.09 }), billboards: 2,
       landmarks: [{ name: 'gothic-church-front', side: 'high', at: 0.5, distance: 30 }],
     },
-    {
-      name: 'River splitter', shape: splitter({ side: 'right', balance: { tipOffset: 0.8, left: { drag: 0.42, scrub: 0.72 }, right: { drag: 1.32, scrub: 1.32 } } }),
-      around: 'river-island',
-    },
+    { name: 'River bends', shape: sBends({ first: 'left', radius: 70, degrees: 70, grade: 0.12 }), obstacles: [curtain({ costume: 'banner-gantry', at: 0.5, side: 'right' })] },
     { name: 'Run to the hairpin', shape: straight(45, { grade: 0.12 }), obstacles: [peg({ costume: 'lantern-pole', at: 0.25, line: 'left' }), peg({ costume: 'lantern-pole', at: 0.5, line: 'right' })] },
     { name: 'Hairpin', shape: hairpin({ side: 'left' }), obstacles: [swipe({ costume: 'street-sign', side: 'high' })] },
     { name: 'Half-timbered bends', shape: sBends({ first: 'left', radius: 70, degrees: 75, grade: 0.12 }), scenery: ['merchant-houses'], obstacles: [slalom({ costume: 'lantern-pole', from: 0.2, to: 0.8, count: 4, loss: 0.2 })] },

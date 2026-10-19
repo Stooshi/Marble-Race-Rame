@@ -73,6 +73,20 @@ function passOnSale(season, now = new Date(), { early = false } = {}) {
   return t < at(season.pass_sale_ends_at ?? season.free_from);
 }
 
+/**
+ * The pass's pre-sale: on sale before the season starts (from pass_sale_starts_at to starts_at). A
+ * pre-sale pass is the player's at once (and its season marble), but its tracks, the Track of the Day
+ * and holiday rooms open only at starts_at, as for everyone; until then a refund is given on request.
+ */
+function inPreSale(season, now = new Date()) {
+  return passOnSale(season, now) && stateOf(season, now) === 'before';
+}
+
+/** "1 December": the season's first day, in its own time zone (the pass's "Activates 1 December"). */
+function activatesText(season) {
+  return new Intl.DateTimeFormat('en-GB', { timeZone: season.time_zone || 'Europe/Stockholm', day: 'numeric', month: 'long' }).format(new Date(season.starts_at));
+}
+
 /** The accounts that may make test purchases of a pass before its sale starts: PASS_TESTERS, emails, comma-separated. */
 function passTesters() {
   return new Set(String(process.env.PASS_TESTERS || '').split(',').map((e) => e.trim().toLowerCase()).filter(Boolean));
@@ -288,6 +302,9 @@ async function view(db, season, userId = null, now = new Date()) {
       onSale: open || testerEarly,
       testPurchaseOnly: testerEarly,
       saleStartsAt: season.pass_sale_starts_at,
+      // Bought before the season starts, it activates then ("Activates 1 December", with a countdown).
+      activatesAt: season.starts_at,
+      preSale: state === 'before',
       saleEndsAt: season.pass_sale_ends_at ?? season.free_from,
       // The "ends in N days" countdown, shown from the start of the season's last month (1 Jan).
       endsInDays: saleDaysLeft(season, now, lastMonthStart(season)),
@@ -403,7 +420,7 @@ function startJobs(db, { earned }) {
 
 module.exports = {
   scoreboardSeason, standings, awardBadges, badgesOf, startJobs,
-  all, forget, stateOf, dayOf, featuredSlug, passOnSale, isPassTester, saleDaysLeft, lastMonthStart, byKey, byPassProduct, hasPass, passesOf,
+  all, forget, stateOf, dayOf, featuredSlug, passOnSale, inPreSale, activatesText, isPassTester, saleDaysLeft, lastMonthStart, byKey, byPassProduct, hasPass, passesOf,
   trackAccess, assertTrackAccess, freeSeasonKeys, OPEN_TRACK_SQL, pickOpenTrack, pickSeasonTrack, bonusLine,
   grantForPayment, revokeForPayment, grantMissingMarbles, view,
 };

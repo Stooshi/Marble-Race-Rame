@@ -676,6 +676,9 @@ a.ms-tile:hover, a.ms-card:hover { text-decoration: none; border-color: var(--ms
 .ms-pass-hero__marble { display: grid; justify-items: center; gap: 10px; flex: 0 0 auto; text-align: center; }
 .ms-pass-grid { display: grid; gap: 12px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
 @media (max-width: 640px) { .ms-pass-grid { grid-template-columns: 1fr; } }
+.ms-pass-activates { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; padding: 14px 18px; border-radius: 18px; border: 1px solid var(--r-season); background: var(--ms-card); }
+.ms-pass-activates strong { font-family: var(--ms-cond); font-weight: 800; font-size: 1.5rem; letter-spacing: 0.02em; text-transform: uppercase; color: var(--r-season); }
+.ms-pass-activates__count { font-family: var(--ms-cond); font-weight: 800; font-size: 1.25rem; }
 .ms-pass-feature { display: grid; align-content: start; gap: 6px; background: var(--ms-card); border: 1px solid var(--ms-border); border-radius: 18px; padding: 18px; min-width: 0; }
 .ms-pass-feature h2 { margin: 0; font-family: var(--ms-cond); font-weight: 800; font-size: 1.35rem; line-height: 1.15; text-wrap: balance; }
 .ms-pass-feature p { margin: 0; color: var(--ms-soft); line-height: 1.5; }

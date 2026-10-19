@@ -5,10 +5,12 @@
  */
 import { buildFaq } from './help/faq';
 import { canonicalUrl, SITE_URL } from './canonical';
+import { tracksPhrase } from './trackCount';
 
 export const SITE_NAME = 'Marble Spins';
 export const SHARE_IMAGE = '/share/marble-spins-1200x630.png';
-const DEFAULT_DESCRIPTION = "Don't just watch marble races, race them. Live 20-marble races on 60+ tracks with real physics, free in your browser. Race your friends with a code.";
+// (The track count is the live one at build time, rounded down: "80+ tracks", src/site/trackCount.js.)
+const DEFAULT_DESCRIPTION = `Don't just watch marble races, race them. Live 20-marble races on ${tracksPhrase()} with real physics, free in your browser. Race your friends with a code.`;
 
 const STATIC = {
   '/': { title: 'Marble Spins: live marble races with your friends', description: DEFAULT_DESCRIPTION },

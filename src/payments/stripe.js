@@ -58,6 +58,9 @@ async function start(payment, { pack, email, locale, siteUrl }) {
   const site = siteUrl || config.stripe.siteUrl;
   const pass = Boolean(pack.seasonKey);
   const what = pass ? pack.name : `${pack.coins} coins`;
+  // The pass's pre-sale (before the season starts): "Activates 1 December", a full refund until then.
+  const preSale = pass && seasons.stateOf(pack.season) === 'before';
+  const activates = pass ? seasons.activatesText(pack.season) : null;
   const params = {
     mode: 'payment',
     client_reference_id: payment.id,
@@ -70,7 +73,7 @@ async function start(payment, { pack, email, locale, siteUrl }) {
         product_data: {
           name: pass ? `Marble Spins ${pack.name}` : `${pack.coins.toLocaleString('en-US')} Marble Spins coins`,
           description: `${pass
-            ? `${pack.season.name}: every holiday track and the Track of the Day bonus until ${new Intl.DateTimeFormat('en-GB', { timeZone: pack.season.time_zone, day: 'numeric', month: 'long', year: 'numeric' }).format(new Date(pack.season.free_from))}, and the season marble. One payment, not a subscription. Delivered right away; no cash value.`
+            ? `${pack.season.name}: every holiday track and the Track of the Day bonus until ${new Intl.DateTimeFormat('en-GB', { timeZone: pack.season.time_zone, day: 'numeric', month: 'long', year: 'numeric' }).format(new Date(pack.season.free_from))}, and the season marble. One payment, not a subscription. ${preSale ? `Activates ${activates} at 00:00 Swedish time, with a full refund on request until then` : 'Delivered right away'}; no cash value.`
             : 'Coins for the Marble Spins shop: looks only, never speed. Delivered right away; no cash value.'} Sold by ${company.name} (org.nr ${company.orgNo}, VAT ${company.vatNo}). Questions: ${company.supportEmail}`,
           tax_code: config.stripe.taxCode,
           metadata: { product_id: pack.id },
@@ -86,7 +89,7 @@ async function start(payment, { pack, email, locale, siteUrl }) {
     },
     success_url: `${site}/purchases?paid=${encodeURIComponent(payment.order_no)}&session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: pass ? `${site}/pass?cancelled=1` : `${site}/checkout?pack=${encodeURIComponent(pack.id)}&cancelled=1`,
-    custom_text: { submit: { message: pass ? consent.passStripeSubmit : consent.stripeSubmit } },
+    custom_text: { submit: { message: pass ? (preSale ? consent.passPreSaleStripeSubmit.replace('{activates}', activates) : consent.passStripeSubmit) : consent.stripeSubmit } },
     locale: locale || 'auto',
     expires_at: Math.floor(Date.now() / 1000) + 60 * 60, // (an hour, then the order lapses)
   };

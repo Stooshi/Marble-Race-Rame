@@ -153,6 +153,23 @@ test('App Store: checked, credited once to the buyer only; a refund notification
     testBuy.originalTransactionId = testBuy.transactionId;
     assert.equal((await verify(me.token, signed(testBuy))).body.status, 'paid');
     assert.equal(await seasons.hasPass(db, me.user.id, key), true);
+
+    // The pre-sale: a real (Production) purchase before the season starts, its sale started: granted;
+    // nothing opens until the season does, and a refund before then revokes it.
+    const preKey = `test-app-${run}`;
+    await db.query(
+      `INSERT INTO seasons (key, name, starts_at, ends_at, free_from, pass_product_id, pass_name, price_cents, pass_sale_starts_at, pass_sale_ends_at)
+       VALUES ($1, 'Apple Pre Season 2026', now() + interval '2 days', now() + interval '12 days', now() + interval '12 days', $2, 'Apple Pre Season Pass 2026', 999, now() - interval '1 day', now() + interval '12 days')`,
+      [preKey, `appass-${run}`],
+    );
+    seasons.forget();
+    const preTx = tx({ appAccountToken: acc.accountToken, productId: `appass-${run}`, type: 'Non-Consumable', environment: 'Production' });
+    preTx.originalTransactionId = preTx.transactionId;
+    assert.equal((await verify(me.token, signed(preTx))).body.status, 'paid');
+    assert.equal(await seasons.hasPass(db, me.user.id, preKey), true);
+    assert.equal((await seasons.trackAccess(db, { season_key: preKey }, { userId: me.user.id })).reason, 'before');
+    assert.equal((await call('/payments/apple/notifications', { method: 'POST', body: { signedPayload: note('REFUND', preTx) } })).status, 200);
+    assert.equal(await seasons.hasPass(db, me.user.id, preKey), false);
   } finally {
     apple.setRoot(null);
     seasons.forget();

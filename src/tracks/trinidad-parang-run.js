@@ -4,8 +4,8 @@
 // A parang band's table on a warm Caribbean night: a peg drop through maraca posts at the gate,
 // round the hillside of wooden gallery houses strung with lights, the flipper hairpin early, down
 // the steel-pan lane past steel-pan pop bumpers, through the S-bends past the band on its stage,
-// the village splitter and the run past more maraca posts to the flippers.
-const { track, opening, straight, sBends, sweep, hairpin, splitter, plunge, runIn, peg, slalom, swipe, block, rumble } = require('../trackKit');
+// the village bends and the run past more maraca posts to the flippers.
+const { track, opening, straight, sBends, sweep, hairpin, plunge, runIn, peg, slalom, swipe, block, rumble, curtain } = require('../trackKit');
 
 module.exports = track({
   slug: 'trinidad-parang-run',
@@ -26,6 +26,7 @@ module.exports = track({
   start: { landmark: 'parang-band', gate: 'trapdoor', shots: { countdown: 'side', launch: 'low-chase' } },
   finish: { landmark: 'gallery-houses' },
   designChanges: [
+    'No splitter: no setting gave its smaller channel a real share (30–70%) and passed the fairness checks, so bends under a banner gantry take its place (Moses: every splitter under 30%, 19 Oct).',
     'The parang band (guitar, cuatro, box bass and maracas) plays on its stage at the gate and again beside the S-bends; the gallery houses with their fretwork verandas and strung lights stand on the hillside, all generic.',
     'Steel pans are the pop bumpers and maracas the posts: both only looks, racing exactly like the kit\'s blocks and pegs.',
   ],
@@ -45,9 +46,7 @@ module.exports = track({
       name: 'Cuatro S-bends', shape: sBends({ first: 'right', radius: 65, degrees: 85, grade: 0.1 }), billboards: 1,
       landmarks: [{ name: 'parang-band', side: 'left', at: 0.5, distance: 18 }],
     },
-    {
-      name: 'Village splitter', shape: splitter({ side: 'right', balance: { tipOffset: 0, left: { drag: 0.42, scrub: 0.72 }, right: { drag: 1.64, scrub: 1.64 } } }),
-    },
+    { name: 'Village bends', shape: sBends({ first: 'left', radius: 80, degrees: 90, grade: 0.10 }), obstacles: [curtain({ costume: 'banner-gantry', at: 0.5, side: 'right' })] },
     { name: 'Lights drop', shape: plunge(45, { grade: 0.17, from: 0.1 }), obstacles: [slalom({ costume: 'maraca-post', from: 0.35, to: 0.9, count: 4, loss: 0.15 })] },
     {
       name: 'Run to the flippers', shape: straight(100, { grade: 0.095 }),

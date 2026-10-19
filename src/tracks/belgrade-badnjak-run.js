@@ -4,7 +4,7 @@
 // again on 6 January, Orthodox Christmas Eve. Christmas Eve night by the fortress over the meeting of
 // two rivers: down into a half-pipe along the fortress moat, past the churchyard bonfires of oak logs,
 // through the old town's streets and down to the riverbank.
-const { track, opening, straight, sBends, sweep, splitter, hairpin, plunge, runIn, peg, slalom, swipe, rumble } = require('../trackKit');
+const { track, opening, straight, sBends, sweep, spiral, hairpin, plunge, runIn, peg, slalom, swipe, rumble, curtain } = require('../trackKit');
 
 module.exports = track({
   slug: 'belgrade-badnjak-run',
@@ -24,6 +24,7 @@ module.exports = track({
   start: { landmark: 'fortress-walls', gate: 'paddle', shots: { countdown: 'side', launch: 'low-chase' } },
   finish: { landmark: 'church', scenery: ['stone-houses'] },
   designChanges: [
+    'No splitter: no setting gave its smaller channel a real share (30–70%) and passed the fairness checks, so a sweep under a banner gantry and a drop to the river bank take its place (Moses: every splitter under 30%, 19 Oct).',
     'The fortress is a generic walled fortress on its ridge over two rivers (no flags or emblems on it); the half-pipe is its moat.',
     'The bonfires of oak logs burn in the churchyard beside the Bonfire sweep, people standing round them; no figures from the church.',
   ],
@@ -35,10 +36,8 @@ module.exports = track({
       name: 'Bonfire sweep', shape: sweep({ side: 'right', radius: 80, degrees: 110, grade: 0.09 }), billboards: 2,
       landmarks: [{ name: 'badnjak-fires', side: 'low', at: 0.5, distance: 14 }],
     },
-    {
-      name: 'Confluence splitter', shape: splitter({ side: 'left', balance: { tipOffset: -0.8, left: { drag: 1.55, scrub: 1.55 }, right: { drag: 0.42, scrub: 0.72 } } }),
-      around: 'river-island',
-    },
+    { name: 'Confluence sweep', shape: sweep({ side: 'left', radius: 80, degrees: 105, grade: 0.09 }), obstacles: [curtain({ costume: 'banner-gantry', at: 0.5, side: 'right' })] },
+    { name: 'River bank drop', shape: plunge(35, { grade: 0.13, from: 0.1 }) },
     { name: 'Run to the hairpin', shape: straight(45, { grade: 0.12 }), obstacles: [peg({ costume: 'lantern-pole', at: 0.15, line: 'center' }), peg({ costume: 'lantern-pole', at: 0.32, line: 'left' }), peg({ costume: 'lantern-pole', at: 0.5, line: 'right' })] },
     { name: 'Hairpin', shape: hairpin({ side: 'left' }), obstacles: [swipe({ costume: 'stag', side: 'high' })] },
     { name: 'Steps drop', shape: plunge(55, { grade: 0.2, from: 0.1 }), obstacles: [slalom({ costume: 'lantern-pole', from: 0.35, to: 0.95, count: 5, loss: 0.3 })] },

@@ -7,6 +7,7 @@ import { FEATURED_DESIGNS, originalSlug, rarityInfo } from '../../shared/marbles
 import { importOrReload } from '../../utils/staleCode';
 import { isNativeApp } from '../../app/native';
 import TrackBanner from '../TrackBanner';
+import { BUILD_TRACK_COUNT, roundedTracks } from '../trackCount';
 
 const NUMBER_WORDS = ['no', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten'];
 
@@ -41,7 +42,9 @@ export default function LandingPage() {
     for (const t of data?.tracks ?? []) c[t.series] = (c[t.series] ?? 0) + 1;
     return c;
   }, [data]);
-  const total = data?.tracks?.length;
+  // "80+": the live count rounded down (the build's count before the list loads), so the page that
+  // search engines read never states a number that has gone stale (src/site/trackCount.js).
+  const total = roundedTracks(data?.tracks?.length || BUILD_TRACK_COUNT);
   // The series with tracks live now (from the live track list, so the heading never goes stale).
   const liveSeries = data?.tracks?.length ? SERIES.filter(([name]) => counts[name]).length : SERIES.filter((s) => !s[4]).length;
   const cards = SERIES.filter(([name, , , , whenLive]) => !whenLive || counts[name]);
@@ -56,7 +59,7 @@ export default function LandingPage() {
             <h1 className="ms-landing__h1">Don't just watch marble races. Race them.</h1>
           </div>
           <div style={{ display: 'grid', gap: 14, flexBasis: 380 }}>
-            <p className="ms-lede" style={{ margin: 0 }}>Pick your marble, drop it into a 20-marble race on one of {total ?? '[43]'} wild tracks, and beat your friends. {isNativeApp() ? 'Free to play.' : 'Free, in your browser, no download.'}</p>
+            <p className="ms-lede" style={{ margin: 0 }}>Pick your marble, drop it into a 20-marble race on one of {total ? `${total} wild tracks` : 'dozens of wild tracks'}, and beat your friends. {isNativeApp() ? 'Free to play.' : 'Free, in your browser, no download.'}</p>
             <div className="ms-row">
               <Link to="/play/start?quick=1" className="ms-btn ms-btn--primary ms-btn--lg">PLAY NOW, FREE</Link>
               <Link to="/play/friends" className="ms-btn ms-btn--lg ms-btn--ghost">Race with friends</Link>
@@ -85,7 +88,7 @@ export default function LandingPage() {
 
       <section id="tracks" aria-labelledby="tracks-h" className="ms-page">
         <div style={{ display: 'grid', gap: 6 }}>
-          <h2 id="tracks-h" className="ms-landing__h2">{total || '[60]'} tracks in {NUMBER_WORDS[liveSeries] ?? liveSeries} series</h2>
+          <h2 id="tracks-h" className="ms-landing__h2">{total ? `${total} tracks` : 'Tracks'} in {NUMBER_WORDS[liveSeries] ?? liveSeries} series</h2>
           <p className="ms-lede" style={{ margin: 0 }}>From Swedish fjords to pinball tables, every track has its own start, layout and surprises.</p>
         </div>
         <div className="ms-cards" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 180px), 1fr))' }}>

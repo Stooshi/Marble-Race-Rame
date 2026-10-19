@@ -304,7 +304,7 @@ One row per season, added by a data update (the Holiday Season 2026: `2027-02-16
 | `starts_at`, `ends_at`, `free_from` | Before `starts_at` nobody races its tracks; from `free_from` everyone does, free |
 | `time_zone` | The season's calendar (Europe/Stockholm): the Track of the Day changes at its midnight |
 | `pass_product_id`, `pass_name`, `price_cents`, `currency` | The pass as a store product (`holiday-pass-2026`, $9.99): the same id on Stripe, Google Play and the App Store |
-| `pass_sale_starts_at`, `pass_sale_ends_at` | When the pass is sold. The server refuses any sale outside this window |
+| `pass_sale_starts_at`, `pass_sale_ends_at` | When the pass is sold. The server refuses any sale outside this window. A sale start before `starts_at` is a pre-sale: the pass is held from purchase but opens nothing until `starts_at` (Holiday 2026: sale 28 Nov 00:00, season 1 Dec 00:00 Swedish time) |
 | `featured` | The Track of the Day: `{ "2026-12-01": "tromso-aurora-grand-prix", … }` |
 | `featured_bonus` | The Track of the Day bonus (0.5 = +50% race coins) |
 | `badge_top` | How many players get the season's badge (100) |

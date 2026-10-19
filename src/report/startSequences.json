@@ -88,7 +88,7 @@
 "sapporo-snow-sculptures": {"family":"coaster","reach":0.236,"seq":["opening: classic","drop","pileUp","slalom","straight","box","rail","jump","spiral right"]},
 "seoul-winter-lights": {"family":"arcade","reach":0.369,"seq":["opening: clean-drop","drop","S-bends left","sweep right","curtain"]},
 "sky-islands": {"family":"block","reach":0.239,"seq":["opening: classic","drop","pileUp","slalom","straight","peg ×2","sweep left","boost"]},
-"sleigh-bell-forest": {"family":"winter-wonders","reach":0.241,"seq":["opening: crest-start","drop","pileUp","slalom","climb","drop","straight","peg","rail","box","table-top"]},
+"sleigh-bell-forest": {"family":"winter-wonders","reach":0.26,"seq":["opening: crest-start","drop","pileUp","slalom","climb","drop","straight","peg","rail","box","table-top"]},
 "slingshot-spins": {"family":"pinball","reach":0.256,"seq":["opening: staggered-drop","drop","pileUp","slalom","brake","sweep left"]},
 "sognefjord": {"family":"coaster","reach":0.242,"seq":["opening: crest-start","drop","pileUp","slalom","climb","drop","sweep left"]},
 "spawn-point": {"family":"block","reach":0.256,"seq":["opening: crest-start","drop","pileUp","slalom","climb","drop","sweep left","boost"]},

@@ -2,10 +2,10 @@
 
 // Sleigh Bell Forest: Holiday Season 2026 track (Winter Wonders), Track of the Day on 23 December.
 // A moonlit fir forest: a crest start at the gate, over the snowbank, the jib line along the sleigh path beside a
-// reindeer herd crossing the snow, into the firs, the owl wood bends, the forest splitter, the
+// reindeer herd crossing the snow, into the firs, the owl wood bends, the forest bends, the
 // hairpin, the moonlit sweep under lanterns, the bell drop and the run to the clearing where the
 // owls watch from their stumps.
-const { track, opening, straight, sBends, sweep, plunge, hairpin, splitter, runIn, peg, slalom, swipe, rumble, jibLine } = require('../trackKit');
+const { track, opening, straight, sBends, sweep, plunge, hairpin, runIn, peg, slalom, swipe, rumble, jibLine, curtain } = require('../trackKit');
 
 module.exports = track({
   slug: 'sleigh-bell-forest',
@@ -26,6 +26,7 @@ module.exports = track({
   start: { landmark: 'owl-perches', gate: 'paddle', shots: { countdown: 'side', launch: 'high-behind' } },
   finish: { landmark: 'owl-perches', scenery: ['pines'] },
   designChanges: [
+    'No splitter: no setting gave its smaller channel a real share (30–70%) and passed the fairness checks, so bends under a banner gantry take its place (Moses: every splitter under 30%, 19 Oct).',
     'The forest is ours: firs and birches under the moon, owls on snowy stumps, a reindeer herd crossing beside the sleigh path and lanterns hung along the sweep. The jib line (a rail, a box and a table top) runs along the sleigh path, as planned.',
   ],
   opening: opening('crest-start', { costumes: { block: 'giant-snowball', slalom: 'ice-lantern' }, names: { plunge: 'Sleigh run drop', climb: 'Up the snowbank', drop: 'Over the crest' } }),
@@ -40,7 +41,7 @@ module.exports = track({
       name: 'Owl wood bends', shape: sBends({ first: 'left', radius: 65, degrees: 85, grade: 0.12 }), scenery: ['birches'], billboards: 1,
       landmarks: [{ name: 'owl-perches', side: 'right', at: 0.5, distance: 12 }],
     },
-    { name: 'Forest splitter', shape: splitter({ side: 'left', balance: { tipOffset: -0.8, left: { drag: 1.32, scrub: 1.32 }, right: { drag: 0.42, scrub: 0.72 } } }) },
+    { name: 'Forest bends', shape: sBends({ first: 'left', radius: 70, degrees: 70, grade: 0.12 }), obstacles: [curtain({ costume: 'banner-gantry', at: 0.5, side: 'right' })] },
     {
       name: 'Run to the hairpin', shape: straight(45, { grade: 0.11 }),
       obstacles: [peg({ costume: 'ice-lantern', at: 0.2, line: 'center' }), peg({ costume: 'ice-lantern', at: 0.45, line: 'left' }), peg({ costume: 'ice-lantern', at: 0.7, line: 'right' })],
