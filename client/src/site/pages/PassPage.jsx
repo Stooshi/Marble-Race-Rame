@@ -8,6 +8,7 @@ import { STORE_NAME, buyPass, restoreStorePurchases, storeProvider, useStorePric
 import { ITEMS, collectionOf } from '../../shared/marbles';
 import MarbleBadge from '../marbles/MarbleBadge';
 import { activatesDay, countdownText, useCountdown } from '../payments/preSale';
+import PassReminder from '../payments/PassReminder';
 
 const day = (iso) => new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Stockholm', day: 'numeric', month: 'long', year: 'numeric' }).format(new Date(iso));
 const time = (iso) => new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Stockholm', hour: '2-digit', minute: '2-digit' }).format(new Date(iso));
@@ -148,10 +149,20 @@ export default function PassPage() {
         before
           ? <div className="ms-msg" role="status"><strong>{pass.name} — activates {activates}.</strong> It's yours; its tracks open then. Changed your mind before {activates}? Just {refundBefore}.</div>
           : <div className="ms-msg" role="status">You have the {pass.name}. <Link to="/play/track">Pick a holiday track</Link></div>
+      ) : !pass.onSale && new Date() < new Date(pass.saleStartsAt ?? season.startsAt) ? (
+        // Before the sale: the price now, and "Remind me when sales open".
+        <section className="ms-card" style={{ display: 'grid', gap: 14 }} aria-label="The pass's price and sale">
+          <div className="ms-row" style={{ alignItems: 'baseline', justifyContent: 'space-between' }}>
+            {price && <span style={{ fontSize: '2rem', fontWeight: 800 }}>{price}</span>}
+            <span className="ms-badge-label" style={{ position: 'static' }}>On sale from {activatesDay(pass.saleStartsAt ?? season.startsAt)}</span>
+          </div>
+          <span className="ms-note">
+            {web ? 'One payment, VAT included; shown in your own currency on Stripe\'s payment page.' : `One payment, through ${STORE_NAME[provider]}.`} On sale from {day(pass.saleStartsAt ?? season.startsAt)}{before ? `; activates ${activates}` : ''}.
+          </span>
+          {pass.remindersOpen !== false && <PassReminder season={season} user={isAuthenticated ? user : null} onChange={reload} />}
+        </section>
       ) : !pass.onSale ? (
-        <div className="ms-msg" role="status">
-          {new Date() < new Date(pass.saleStartsAt ?? season.startsAt) ? `On sale from ${day(pass.saleStartsAt ?? season.startsAt)}${before ? `; activates ${activates}` : ''}.` : 'The pass is no longer sold: the holiday tracks are free for everyone now.'}
-        </div>
+        <div className="ms-msg" role="status">The pass is no longer sold: the holiday tracks are free for everyone now.</div>
       ) : !isAuthenticated || user?.is_guest ? (
         <div className="ms-card" style={{ display: 'grid', gap: 12 }}>
           <p style={{ margin: 0 }}>Make a free account first, so your pass is yours on every device.</p>

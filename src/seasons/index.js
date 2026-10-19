@@ -20,6 +20,7 @@
  */
 
 const { HttpError } = require('../utils/httpError');
+const reminders = require('./reminders');
 
 const CACHE_MS = 60_000;
 let cache = null; // { at, seasons }
@@ -309,6 +310,9 @@ async function view(db, season, userId = null, now = new Date()) {
       // The "ends in N days" countdown, shown from the start of the season's last month (1 Jan).
       endsInDays: saleDaysLeft(season, now, lastMonthStart(season)),
       owned: await hasPass(db, userId, season.key),
+      // "Remind me when sales open" (before the sale only): may one be asked for, and this player's.
+      remindersOpen: reminders.open(season, now),
+      reminder: await reminders.ofPlayer(db, userId, season.key),
     } : null,
   };
 }
@@ -394,8 +398,9 @@ async function badgesOf(db, userId) {
 }
 
 /**
- * Every hour: give the season marble to any pass holder still without it, and award the badges of
- * seasons that have ended (nothing to deploy on the night). Started by src/server.js.
+ * Every hour: give the season marble to any pass holder still without it, award the badges of
+ * seasons that have ended (nothing to deploy on the night), and delete pass reminders that were
+ * cancelled or whose sale opened 30 days ago. Started by src/server.js.
  */
 function startJobs(db, { earned }) {
   const run = async () => {
@@ -411,6 +416,10 @@ function startJobs(db, { earned }) {
         }
       }
     } catch (err) { console.error(`[seasons] badge job: ${err.message}`); }
+    try {
+      const gone = await reminders.purge(db);
+      if (gone) console.log(`[seasons] ${gone} pass reminder(s) deleted`);
+    } catch (err) { console.error(`[seasons] reminder clean-up: ${err.message}`); }
   };
   setTimeout(run, 60_000).unref?.();
   const timer = setInterval(run, 3600_000);

@@ -110,6 +110,9 @@ export const api = {
   seasons: () => request('/seasons'),
   season: (key) => request(`/seasons/${encodeURIComponent(key)}`),
   passCheckout: (body) => request('/payments/pass/checkout', { method: 'POST', body }),
+  // "Remind me when sales open" (before the pass's sale): a player { email_too }, a visitor { email, consent }.
+  passRemind: (key, body) => request(`/seasons/${encodeURIComponent(key)}/remind`, { method: 'POST', body }),
+  passRemindCancel: (key) => request(`/seasons/${encodeURIComponent(key)}/remind`, { method: 'DELETE' }),
   // Forgot your password: on only when the server can send email.
   passwordResetEnabled: () => request('/auth/password-reset', { token: null }),
   forgotPassword: (email) => request('/auth/forgot', { method: 'POST', body: { email }, token: null }),

@@ -63,6 +63,7 @@ export default function LegalPage() {
       <li>Settings: your sound levels and similar choices, so they follow you to another device.</li>
       <li>Security: your IP address when you create an account, log in or buy coins. We use it only to protect accounts and to stop fraud, such as one person farming coins with many accounts or payment fraud. After 90 days we delete the IP address and keep only the country it came from.</li>
       <li>Website statistics and ad measurement, only if you allow them in the cookie banner (website only, never in the apps): which pages and features are used, and whether our ads led to a sign-up or purchase. Google and Meta get no name, email or player name from us; see the <Link to="/cookies">cookie policy</Link>.</li>
+      <li>Pass reminders: if you ask on the season pass page to be reminded when the pass goes on sale, the reminder (in the game, and by email only if you tick it) and, if you have no account, the email address you give, with the consent you agreed to. We use it only for that one reminder, never for news, and delete it within 30 days after the sale opens, or when you cancel it.</li>
       <li>Support: what you send with the Help Centre's contact form (name, email, topic, order number, message and any screenshot), the device and browser it came from, and its IP address (to stop spam; deleted after 90 days like the others). We use it only to help you, and link it to your account so we can see your races and purchases.</li>
       </ul>
       <h2 className="ms-legal__h2">Why</h2>
