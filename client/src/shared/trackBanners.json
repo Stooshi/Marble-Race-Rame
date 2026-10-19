@@ -618,6 +618,17 @@
    "side": 1,
    "marbles": 1
   },
+  "lalibela-genna-spins": {
+   "name": "Lalibela Genna Spins",
+   "series": "Canyons",
+   "lighting": "sunset",
+   "v": "fbb7ebb4",
+   "bytes": 12294,
+   "bytes2x": 31612,
+   "t": 10630,
+   "side": 1,
+   "marbles": 7
+  },
   "line-clear": {
    "name": "Line Clear",
    "series": "Blocks",

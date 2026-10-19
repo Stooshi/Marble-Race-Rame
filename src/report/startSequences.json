@@ -53,6 +53,7 @@
 "kill-screen": {"family":"arcade","reach":0.229,"seq":["opening: split-start","drop","pileUp","slalom","chutes","drop","slalom","straight","hairpin right","swipe","straight","moguls"]},
 "kopaonik-spins": {"family":"coaster","reach":0.24,"seq":["opening: classic","drop","pileUp","slalom","spiral left"]},
 "lagos-marble-grand-prix": {"family":"grand-prix","reach":0.207,"seq":["opening: classic","drop","pileUp","slalom","S-bends right"]},
+"lalibela-genna-spins": {"family":"canyon","reach":0.307,"seq":["opening: peg-drop","drop","peg ×7","straight","peg ×3","spiral right"]},
 "line-clear": {"family":"block","reach":0.22,"seq":["opening: staggered-drop","drop","pileUp","slalom","brake","straight","slalom","S-bends right"]},
 "london-steeplechase": {"family":"athletics","reach":0.273,"seq":["opening: peg-drop","drop","peg ×7","straight","peg","slalom","sweep left","straight","peg"]},
 "magma-core": {"family":"block","reach":0.21,"seq":["opening: funnel-drop","drop","pileUp","slalom","sweep right"]},
