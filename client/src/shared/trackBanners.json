@@ -871,6 +871,17 @@
    "side": -1,
    "marbles": 4
   },
+  "reykjavik-yule-lights": {
+   "name": "Reykjavik Yule Lights",
+   "series": "Blocks",
+   "lighting": "night-northern-lights",
+   "v": "ea95fb14",
+   "bytes": 18138,
+   "bytes2x": 47906,
+   "t": 9604,
+   "side": -1,
+   "marbles": 7
+  },
   "rio-jungle-rumble": {
    "name": "Rio Jungle Rumble",
    "series": "World Tour",

@@ -75,6 +75,7 @@
 "queenstown-pohutukawa-run": {"family":"canyon","reach":0.326,"seq":["opening: peg-drop","drop","peg ×7","straight","half-pipe","straight","peg ×3","hairpin left","swipe"]},
 "redwood-forest-run": {"family":"coaster","reach":0.188,"seq":["opening: banked-turn","drop","pileUp","slalom","sweep left","straight","sweep left","boost"]},
 "replay": {"family":"pinball","reach":0.229,"seq":["opening: funnel-drop","drop","pileUp","slalom","sweep right"]},
+"reykjavik-yule-lights": {"family":"block","reach":0.318,"seq":["opening: peg-drop","drop","peg ×7","straight","peg","rail","box","table-top","sweep right"]},
 "rio-jungle-rumble": {"family":"world-tour","reach":0.209,"seq":["opening: classic","drop","pileUp","slalom","S-bends left"]},
 "sahara-marble-grand-prix": {"family":"grand-prix","reach":0.216,"seq":["opening: classic","drop","pileUp","slalom","S-bends left"]},
 "sapporo-snow-sculptures": {"family":"coaster","reach":0.231,"seq":["opening: classic","drop","pileUp","slalom","straight","box","rail","spiral right"]},
