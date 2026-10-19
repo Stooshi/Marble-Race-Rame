@@ -365,6 +365,17 @@
    "side": 1,
    "marbles": 1
   },
+  "edinburgh-hogmanay-grand-prix": {
+   "name": "Edinburgh Hogmanay Grand Prix",
+   "series": "Grand Prix",
+   "lighting": "fireworks-night",
+   "v": "8592a978",
+   "bytes": 12790,
+   "bytes2x": 30740,
+   "t": 10709,
+   "side": -1,
+   "marbles": 4
+  },
   "elderglade-marble-grand-prix": {
    "name": "Elderglade Marble Grand Prix",
    "series": "Grand Prix",

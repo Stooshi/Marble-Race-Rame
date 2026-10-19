@@ -30,6 +30,7 @@
 "delhi-red-fort-marble-grand-prix": {"family":"grand-prix","reach":0.216,"seq":["opening: classic","drop","pileUp","slalom","S-bends left"]},
 "dubai-marble-grand-prix": {"family":"grand-prix","reach":0.216,"seq":["opening: classic","drop","pileUp","slalom","S-bends left"]},
 "dubai-twister": {"family":"world-tour","reach":0.203,"seq":["opening: classic","drop","pileUp","slalom","S-bends left"]},
+"edinburgh-hogmanay-grand-prix": {"family":"grand-prix","reach":0.249,"seq":["opening: funnel-drop","drop","pileUp","slalom","half-pipe","straight"]},
 "elderglade-marble-grand-prix": {"family":"grand-prix","reach":0.201,"seq":["opening: classic","drop","pileUp","slalom","S-bends right"]},
 "eugene-hurdles": {"family":"athletics","reach":0.304,"seq":["opening: peg-drop","drop","peg ×7","S-bends right","sweep left","boost"]},
 "final-level": {"family":"block","reach":0.227,"seq":["opening: funnel-drop","drop","pileUp","slalom","S-bends left","sweep right","boost"]},

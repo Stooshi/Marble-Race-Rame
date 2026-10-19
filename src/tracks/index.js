@@ -112,4 +112,5 @@ module.exports = [
   require('./sapporo-snow-sculptures'),
   require('./queenstown-pohutukawa-run'),
   require('./buenos-aires-summer-christmas'),
+  require('./edinburgh-hogmanay-grand-prix'),
 ];
