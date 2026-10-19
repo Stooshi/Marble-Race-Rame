@@ -886,12 +886,12 @@
    "name": "Québec Old Town Spins",
    "series": "World Tour",
    "lighting": "night",
-   "v": "b4727b5d",
-   "bytes": 12542,
-   "bytes2x": 31606,
-   "t": 9738,
+   "v": "32b5c210",
+   "bytes": 12638,
+   "bytes2x": 32122,
+   "t": 10623,
    "side": 1,
-   "marbles": 6
+   "marbles": 5
   },
   "queenstown-pohutukawa-run": {
    "name": "Queenstown Pōhutukawa Run",
