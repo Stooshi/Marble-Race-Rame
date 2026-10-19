@@ -111,4 +111,5 @@ module.exports = [
   require('./harbin-ice-city'),
   require('./sapporo-snow-sculptures'),
   require('./queenstown-pohutukawa-run'),
+  require('./buenos-aires-summer-christmas'),
 ];

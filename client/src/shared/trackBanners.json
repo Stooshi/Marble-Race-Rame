@@ -156,6 +156,17 @@
    "side": 1,
    "marbles": 6
   },
+  "buenos-aires-summer-christmas": {
+   "name": "Buenos Aires Summer Christmas",
+   "series": "Grand Prix",
+   "lighting": "fireworks-night",
+   "v": "6398dab5",
+   "bytes": 16394,
+   "bytes2x": 39360,
+   "t": 10261,
+   "side": 1,
+   "marbles": 4
+  },
   "bullet-hell": {
    "name": "Bullet Hell",
    "series": "Arcade",
