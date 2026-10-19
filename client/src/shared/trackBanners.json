@@ -765,12 +765,12 @@
    "name": "New York Winter Run",
    "series": "Grand Prix",
    "lighting": "night",
-   "v": "4c31e5ae",
-   "bytes": 16866,
-   "bytes2x": 40200,
-   "t": 27691,
-   "side": -1,
-   "marbles": 6
+   "v": "d4d1e131",
+   "bytes": 15020,
+   "bytes2x": 37488,
+   "t": 15398,
+   "side": 1,
+   "marbles": 5
   },
   "night-train-north": {
    "name": "Night Train North",
@@ -787,10 +787,10 @@
    "name": "Nuremberg Christmas Market Run",
    "series": "World Tour",
    "lighting": "snow",
-   "v": "3f08615c",
-   "bytes": 13438,
-   "bytes2x": 31780,
-   "t": 10605,
+   "v": "caaca530",
+   "bytes": 14234,
+   "bytes2x": 33174,
+   "t": 10705,
    "side": -1,
    "marbles": 4
   },
