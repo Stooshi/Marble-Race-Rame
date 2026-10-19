@@ -14,6 +14,8 @@ import { activatesDay } from './preSale';
  */
 const LISTED = (key) => `marble-pass-reminder:${key}`;
 const remembered = (key) => { try { return localStorage.getItem(LISTED(key)) === '1'; } catch { return false; } };
+// The emails' language: Swedish for a Swedish browser, otherwise English.
+const LANG = () => (typeof navigator !== 'undefined' && /^sv\b/i.test(navigator.language || '') ? 'sv' : 'en');
 const remember = (key) => { try { localStorage.setItem(LISTED(key), '1'); } catch { /* (private window) */ } };
 
 export default function PassReminder({ season, user, onChange }) {
@@ -35,10 +37,10 @@ export default function PassReminder({ season, user, onChange }) {
     setError(null);
     try {
       if (player) {
-        await api.passRemind(season.key, { email_too: emailToo });
+        await api.passRemind(season.key, { email_too: emailToo, lang: LANG() });
         onChange?.();
       } else {
-        await api.passRemind(season.key, { email: email.trim(), consent: agreed, website });
+        await api.passRemind(season.key, { email: email.trim(), consent: agreed, website, lang: LANG() });
         remember(season.key);
         setDone(true);
       }

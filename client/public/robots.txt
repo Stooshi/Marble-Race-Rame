@@ -7,4 +7,5 @@ Disallow: /settings
 Disallow: /forgot-password
 Disallow: /reset-password
 Disallow: /unsubscribe
+Disallow: /pass/reminder
 Sitemap: https://marblespins.com/sitemap.xml

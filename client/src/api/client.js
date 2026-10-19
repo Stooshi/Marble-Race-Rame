@@ -113,6 +113,10 @@ export const api = {
   // "Remind me when sales open" (before the pass's sale): a player { email_too }, a visitor { email, consent }.
   passRemind: (key, body) => request(`/seasons/${encodeURIComponent(key)}/remind`, { method: 'POST', body }),
   passRemindCancel: (key) => request(`/seasons/${encodeURIComponent(key)}/remind`, { method: 'DELETE' }),
+  // The links in the reminder emails, and closing the in-game "on sale now" notice.
+  passReminderConfirm: (token) => request('/seasons/reminders/confirm', { method: 'POST', body: { token }, token: null }),
+  passReminderCancel: (token) => request('/seasons/reminders/cancel', { method: 'POST', body: { token }, token: null }),
+  passReminderSeen: (key) => request(`/seasons/${encodeURIComponent(key)}/remind/seen`, { method: 'POST', body: {} }),
   // Forgot your password: on only when the server can send email.
   passwordResetEnabled: () => request('/auth/password-reset', { token: null }),
   forgotPassword: (email) => request('/auth/forgot', { method: 'POST', body: { email }, token: null }),

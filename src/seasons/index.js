@@ -21,6 +21,7 @@
 
 const { HttpError } = require('../utils/httpError');
 const reminders = require('./reminders');
+const reminderMail = require('./reminderMail');
 
 const CACHE_MS = 60_000;
 let cache = null; // { at, seasons }
@@ -313,6 +314,8 @@ async function view(db, season, userId = null, now = new Date()) {
       // "Remind me when sales open" (before the sale only): may one be asked for, and this player's.
       remindersOpen: reminders.open(season, now),
       reminder: await reminders.ofPlayer(db, userId, season.key),
+      // The in-game "on sale now" notice for a player who asked to be reminded (only once sending is on).
+      onSaleNotice: await reminderMail.noticeFor(db, season, userId, now),
     } : null,
   };
 }
@@ -422,6 +425,7 @@ function startJobs(db, { earned }) {
     } catch (err) { console.error(`[seasons] reminder clean-up: ${err.message}`); }
   };
   setTimeout(run, 60_000).unref?.();
+  reminderMail.start(db, () => all(db, { fresh: true }));
   const timer = setInterval(run, 3600_000);
   timer.unref?.();
   return timer;

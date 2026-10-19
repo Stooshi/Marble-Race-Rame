@@ -20,21 +20,24 @@ describe('the questions', () => {
   it('has the draft\'s 12 categories and the Season pass, every question once, each with its own link', () => {
     expect(faq.map((s) => s.title)).toEqual(['Getting started', 'Races', 'Fair play', 'Coins', 'Marbles and the collection', 'Buying coins',
       'Refunds', 'Season pass', 'Friend rooms', 'Account and settings', 'Younger players and parents', 'Technical help', 'Contact us']);
-    expect(all.length).toBe(86); // (the draft: 6, 8, 4, 9, 10, 8, 4, 6, 7, 3, 5 and 4; then seasonal collections, the season marble and the Season pass's 10, with the pre-sale)
-    expect(faq.map((s) => s.questions.length)).toEqual([6, 8, 4, 9, 12, 8, 4, 10, 6, 7, 3, 5, 4]);
+    expect(all.length).toBe(87); // (the draft: 6, 8, 4, 9, 10, 8, 4, 6, 7, 3, 5 and 4; then seasonal collections, the season marble and the Season pass's 11, with the pre-sale and the reminder)
+    expect(faq.map((s) => s.questions.length)).toEqual([6, 8, 4, 9, 12, 8, 4, 11, 6, 7, 3, 5, 4]);
     expect(new Set(all.map((q) => q.slug)).size).toBe(all.length);
     for (const q of all) expect(q.slug).toMatch(/^[a-z0-9]+(-[a-z0-9]+)*$/);
     expect(bySlug['whats-my-daily-streak'].q).toBe("What's my daily streak?");
     expect(slugify('I paid but my coins didn’t arrive. What do I do?')).toBe('i-paid-but-my-coins-didnt-arrive-what-do-i-do');
   });
 
-  it('keeps every [bracket] placeholder of the draft, as written', () => {
+  it('keeps the [bracket] placeholders only Moses can answer, and fills the others (19 Oct)', () => {
     const text = all.map((q) => q.text).join('\n');
-    for (const p of ['[Google and Apple sign-in: later.]', '[coming at launch]', '[01:00 / 02:00 Swedish time]', '[To decide: e.g. "No, your coins don\'t expire as long as your account exists."]',
-'[To confirm: e.g. their place is taken by a computer player.]', '[To confirm: in Settings / contact us.]',
-      '[Live once email is switched on.]', '[approval process coming]', "[If there's a quality setting, mention it here.]", '[2 working days]']) {
+    for (const p of ['[coming at launch]', '[To decide: e.g. "No, your coins don\'t expire as long as your account exists."]',
+      '[Live once email is switched on.]', '[2 working days]']) {
       expect(text, p).toContain(p);
     }
+    for (const p of ['[Google and Apple sign-in: later.]', '[01:00 / 02:00 Swedish time]', '[To confirm:', '[approval process coming]', "[If there's a quality setting"]) {
+      expect(text, p).not.toContain(p);
+    }
+    expect(bySlug['when-does-a-new-day-start'].text).toBe('At midnight UTC, which is 01:00 Swedish time in winter and 02:00 in summer.');
   });
 
   it('takes the coin numbers and prices from the game\'s settings', () => {

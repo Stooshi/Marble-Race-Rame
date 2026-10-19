@@ -18,6 +18,7 @@ shows marblespins.com.
 | `google-play/phone/` | 1080 × 1920 | Google Play, phone |
 | `google-play/tablet-7/` | 1080 × 1920 | Google Play, 7" tablet |
 | `google-play/tablet-10/` | 2560 × 1440 | Google Play, 10" tablet (landscape) |
+| `google-play/phone-landscape/` | 1920 × 1080 | Google Play, phone (landscape, for featuring: 6 pictures, 19 Oct) |
 | `google-play/feature-graphic-1024x500.png` | 1024 × 500 | Google Play feature graphic |
 | `google-play/app-icon-512.png` | 512 × 512 (32-bit PNG) | Google Play app icon (from `client/assets/icon-only.png`) |
 
@@ -33,10 +34,12 @@ Every device folder has the same 8 pictures, in this order:
 | `06-scoreboard.png` | Climb the scoreboard | This season's scoreboard |
 | `07-canyon.png` | Drop into the canyons | A Canyon track (Grand Canyon Burst) |
 | `08-blocks.png` | Race through block worlds | A Block track (Line Clear) |
-| `09-stadiums.png` (Google Play only) | Into the stadiums | A Track and Field race (Marble Stadium Sprint) |
-| `10-holiday-pass.png` (Google Play only) | The Holiday Season pass | The pass page, no price or countdown; swap out after 7 Jan 2027 |
+| `09-stadiums.png` | Into the stadiums | A Track and Field race (Marble Stadium Sprint) |
+| `10-holiday-pass.png` | The Holiday Season pass | The pass page, no price or countdown; swap out after 7 Jan 2027 |
 
-Google Play's `03-tracks.png` says "90+ tracks to race" (19 Oct); the App Store sets still say "Dozens of tracks to race".
+`03-tracks.png` says "90+ tracks to race" in every set since 19 Oct; `09-stadiums` and `10-holiday-pass` are in the App Store sets too. App Store upload order: 01, 02, 03, 09, 07, 08, 05, 04, 10, 06.
+
+`google-play/phone-landscape/` (19 Oct, night): 01-race-live (San Francisco), 02-canyons, 03-coasters (Hong Kong Crossing), 04-track-and-field, 05-pinball (Flipper Spins), 06-blocks (Line Clear).
 Google Play upload order (8 per slot): 01, 02, 03, 09, 07, 08, 05, 10 (project doc `claude/store-submission-drafts.md`, 6.1b).
 
 Captions are in English only. The Block Series and Track and Field are live (19 Oct 2026).

@@ -22,7 +22,7 @@ test('reads every table and its columns from the schema file', () => {
   assert.ok(cols.tracks.includes('season_key'));
   assert.ok(cols.payments.includes('season_key'));
   assert.deepEqual(cols.season_passes, ['id', 'user_id', 'season_key', 'payment_id', 'provider', 'granted_at', 'revoked_at', 'revoke_reason']);
-  assert.deepEqual(cols.pass_reminders, ['id', 'season_key', 'user_id', 'email', 'email_wanted', 'consent_text', 'token', 'created_at', 'confirm_sent_at', 'confirmed_at', 'sent_at', 'cancelled_at']);
+  assert.deepEqual(cols.pass_reminders, ['id', 'season_key', 'user_id', 'email', 'email_wanted', 'consent_text', 'token', 'created_at', 'confirm_sent_at', 'confirmed_at', 'sent_at', 'cancelled_at', 'lang', 'notice_seen_at']);
   // Table-level constraints and their continuation lines are not columns.
   for (const list of Object.values(cols)) {
     for (const c of ['constraint', 'primary', 'min_marbles BETWEEN']) assert.ok(!list.includes(c));

@@ -493,6 +493,102 @@ test('"Remind me when sales open": collected before the sale only (players in th
   }
 });
 
+test('sending the pass reminders: off until BREVO_API_KEY and PASS_REMINDERS_SENDING=on; then a confirmation (double opt-in), one reminder to confirmed addresses when the sale opens, the in-game notice, a cancel link in every email', { skip: !DB }, async () => {
+  const { createApp } = require('../src/app');
+  const db = require('../src/db');
+  const email = require('../src/email');
+  const reminders = require('../src/seasons/reminders');
+  const reminderMail = require('../src/seasons/reminderMail');
+  const server = createApp().listen(0);
+  const base = `http://127.0.0.1:${server.address().port}/api`;
+  const call = async (path, { method = 'GET', body, token } = {}) => {
+    const res = await fetch(base + path, { method, headers: { 'content-type': 'application/json', ...(token && { authorization: `Bearer ${token}` }) }, body: body === undefined ? undefined : typeof body === 'string' ? body : JSON.stringify(body) });
+    return { status: res.status, body: await res.json().catch(() => null) };
+  };
+  const sent = [];
+  let failNext = false;
+  const savedEnv = process.env.PASS_REMINDERS_SENDING;
+  const run = crypto.randomBytes(3).toString('hex');
+  const key = `test-rs-${run}`;
+  try {
+    await db.query(
+      `INSERT INTO seasons (key, name, starts_at, ends_at, free_from, pass_product_id, pass_name, price_cents, pass_sale_starts_at, pass_sale_ends_at)
+       VALUES ($1, 'Send Season 2026', now() + interval '5 days', now() + interval '20 days', now() + interval '20 days', $2, 'Send Season Pass 2026', 999, now() + interval '2 days', now() + interval '20 days')`,
+      [key, `spass-${run}`],
+    );
+    seasons.forget();
+    const season = await seasons.byKey(db, key);
+    const reg = async (tag) => (await call('/auth/register', { method: 'POST', body: { username: `t_rs${tag}_${run}`, email: `t_rs${tag}_${run}@test.invalid`, password: 'password123', age_group: '18+' } })).body;
+    const withEmail = await reg('a');
+    const inGameOnly = await reg('b');
+    await call(`/seasons/${key}/remind`, { method: 'POST', token: withEmail.token, body: { email_too: true } });
+    await call(`/seasons/${key}/remind`, { method: 'POST', token: inGameOnly.token, body: {} });
+    await call(`/seasons/${key}/remind`, { method: 'POST', body: { email: `sv_${run}@test.invalid`, consent: true, lang: 'sv' } });
+
+    // Off: no key and no go → nothing.
+    delete process.env.PASS_REMINDERS_SENDING;
+    assert.equal(reminderMail.sendingOn(), false);
+    assert.deepEqual(await reminderMail.run(db, [season]), { confirmations: 0, reminders: 0, off: true });
+    email.setTransport(async (m) => { if (failNext) { failNext = false; throw new Error('Brevo 500'); } sent.push(m); return { messageId: `m${sent.length}` }; });
+    assert.equal(reminderMail.sendingOn(), false); // (email works, but Moses hasn't said go)
+    process.env.PASS_REMINDERS_SENDING = 'on';
+    assert.equal(reminderMail.sendingOn(), true);
+
+    // 1. Confirmations, once each, to the two email reminders; Swedish for the Swedish browser.
+    assert.deepEqual(await reminderMail.run(db, [season]), { confirmations: 2, reminders: 0 });
+    assert.deepEqual(await reminderMail.run(db, [season]), { confirmations: 0, reminders: 0 });
+    const sv = sent.find((m) => m.to[0].email === `sv_${run}@test.invalid`);
+    assert.equal(sv.subject, 'Bekräfta din påminnelse om Send Season Pass 2026');
+    const { rows: [svRow] } = await db.query('SELECT token FROM pass_reminders WHERE email = $1', [`sv_${run}@test.invalid`]);
+    assert.ok(sv.htmlContent.includes(`/pass/reminder?confirm=${svRow.token}`));
+    assert.ok(sv.htmlContent.includes(`/pass/reminder?cancel=${svRow.token}`));
+    assert.match(sv.headers['List-Unsubscribe'], new RegExp(`/api/seasons/reminders/unsubscribe\\?t=${svRow.token}>$`));
+    const en = sent.find((m) => m.to[0].email === `t_rsa_${run}@test.invalid`);
+    assert.equal(en.subject, 'Confirm your reminder for the Send Season Pass 2026');
+    assert.ok(en.htmlContent.includes('/pass/reminder?cancel='));
+
+    // The visitor confirms; the player doesn't.
+    assert.deepEqual((await call('/seasons/reminders/confirm', { method: 'POST', body: { token: svRow.token } })).body, { confirmed: true });
+
+    // 2. The sale opens: one reminder, to the confirmed address only; a failed send is tried again.
+    await db.query(`UPDATE seasons SET pass_sale_starts_at = now() - interval '1 minute' WHERE key = $1`, [key]);
+    seasons.forget();
+    const open = await seasons.byKey(db, key);
+    sent.length = 0;
+    failNext = true;
+    assert.deepEqual(await reminderMail.run(db, [open]), { confirmations: 0, reminders: 0 });
+    assert.deepEqual(await reminderMail.run(db, [open]), { confirmations: 0, reminders: 1 });
+    assert.deepEqual(await reminderMail.run(db, [open]), { confirmations: 0, reminders: 0 });
+    assert.equal(sent.length, 1);
+    assert.equal(sent[0].to[0].email, `sv_${run}@test.invalid`);
+    assert.equal(sent[0].subject, 'Send Season Pass 2026 säljs nu');
+    assert.ok(sent[0].htmlContent.includes(`/pass?season=${key}`) && sent[0].htmlContent.includes(`/pass/reminder?cancel=${svRow.token}`));
+
+    // The in-game notice: for both players (whatever their email), until closed; never for others.
+    const notice = async (who) => (await call(`/seasons/${key}`, { token: who.token })).body.season.pass.onSaleNotice;
+    assert.equal(await notice(withEmail), true);
+    assert.equal(await notice(inGameOnly), true);
+    assert.equal((await call(`/seasons/${key}`)).body.season.pass.onSaleNotice, false);
+    await call(`/seasons/${key}/remind/seen`, { method: 'POST', token: inGameOnly.token });
+    assert.equal(await notice(inGameOnly), false);
+    // Off again: no notice.
+    delete process.env.PASS_REMINDERS_SENDING;
+    assert.equal(await notice(withEmail), false);
+
+    // A mail app's one-click unsubscribe cancels it.
+    const { rows: [mine] } = await db.query('SELECT token FROM pass_reminders WHERE user_id = $1', [withEmail.user.id]);
+    const res = await fetch(`${base}/seasons/reminders/unsubscribe?t=${mine.token}`, { method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded' }, body: 'List-Unsubscribe=One-Click' });
+    assert.equal(res.status, 200);
+    assert.ok((await db.query('SELECT cancelled_at FROM pass_reminders WHERE token = $1', [mine.token])).rows[0].cancelled_at);
+    assert.ok(reminders);
+  } finally {
+    if (savedEnv === undefined) delete process.env.PASS_REMINDERS_SENDING; else process.env.PASS_REMINDERS_SENDING = savedEnv;
+    email.setTransport(null);
+    seasons.forget();
+    server.close();
+  }
+});
+
 test('the pass on Google Play: inside its sale window only (a licence tester\'s test purchase also before it), once, acknowledged (never consumed); a voided purchase revokes it', { skip: !DB }, async () => {
   const db = require('../src/db');
   const google = require('../src/payments/google');
