@@ -94,12 +94,12 @@
    "name": "Belgrade Badnjak Run",
    "series": "World Tour",
    "lighting": "night",
-   "v": "1fd37390",
-   "bytes": 12452,
-   "bytes2x": 30544,
-   "t": 15203,
+   "v": "2292ef01",
+   "bytes": 11868,
+   "bytes2x": 29348,
+   "t": 14126,
    "side": 1,
-   "marbles": 6
+   "marbles": 5
   },
   "berlin-blue-lanes": {
    "name": "Berlin Blue Lanes",
