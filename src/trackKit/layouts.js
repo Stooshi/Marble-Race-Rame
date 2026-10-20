@@ -1323,9 +1323,9 @@ const LAYOUTS = {
       obstacles: [parked({ costume: c.parked, at: 0.2, side: L, length: 6 }), peg({ costume: c.peg, at: 0.45, line: 'right' })], features: [rumble({ from: 0.7, to: 0.95, count: 3 })],
     },
   ],
-  /** L76 Steamer pass (Rivers): a straight along the levee (three pegs), a straight through a paddle steamer (a tunnel; a boost), a long sweep out over the bayou (it flies here), a drop, the hairpin, S-bends through the river town, a slalom drop, a sweep to the landing and a parked piece and a peg at the run-in. */
+  /** L76 Steamer pass (Rivers): a straight along the levee (two pegs), a straight through a paddle steamer (a tunnel; a boost), a long sweep out over the bayou (it flies here), a drop, the hairpin, S-bends through the river town, a slalom drop, a sweep to the landing and a parked piece and a peg at the run-in. */
   'steamer-pass': (L, R, c) => [
-    { key: 'levee', name: 'Levee straight', shape: straight(120, { grade: 0.1 }), obstacles: [peg({ costume: c.peg, at: 0.2, line: 'left' }), peg({ costume: c.peg, at: 0.35, line: 'right' }), peg({ costume: c.peg, at: 0.5, line: 'center' })], billboards: 1 },
+    { key: 'levee', name: 'Levee straight', shape: straight(120, { grade: 0.1 }), obstacles: [peg({ costume: c.peg, at: 0.5, line: 'center' }), peg({ costume: c.peg, at: 0.7, line: 'left' })], billboards: 1 },
     { key: 'steamer', name: 'Through the steamer', shape: straight(70, { grade: 0.1 }), features: [boost({ at: 0.1 })] },
     { key: 'bayou', name: 'Bayou sweep', shape: sweep({ side: L, radius: 90, degrees: 140, grade: 0.085 }), billboards: 2 },
     { key: 'drop', name: 'Drop', shape: plunge(45, { grade: 0.22, from: 0.085 }) },
