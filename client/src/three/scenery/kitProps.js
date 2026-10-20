@@ -13,6 +13,7 @@ import { HOLIDAY_LANDMARKS } from './kitLandmarksHoliday';
 import { COASTER_LANDMARKS } from './kitLandmarksCoaster';
 import { ARCADE_LANDMARKS } from './kitLandmarksArcade';
 import { CANYON_LANDMARKS } from './kitLandmarksCanyon';
+import { RIVER_LANDMARKS } from './kitLandmarksRiver';
 import { BLOCK_LANDMARKS } from './kitLandmarksBlock';
 import { ATHLETICS_LANDMARKS } from './kitLandmarksAthletics';
 
@@ -582,6 +583,7 @@ export const LANDMARKS = {
   ...COASTER_LANDMARKS,
   ...ARCADE_LANDMARKS,
   ...CANYON_LANDMARKS,
+  ...RIVER_LANDMARKS,
   ...BLOCK_LANDMARKS,
   ...ATHLETICS_LANDMARKS,
 };

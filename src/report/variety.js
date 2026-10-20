@@ -183,7 +183,7 @@ function varietyCheck(track, tracks) {
   return { lines, scores };
 }
 
-const familyName = (f) => ({ 'world-tour': 'World Tour', 'grand-prix': 'Grand Prix', coaster: 'coaster', pinball: 'pinball', arcade: 'arcade', canyon: 'canyon', block: 'Block Series', athletics: 'Track and Field', 'winter-wonders': 'Winter Wonders', classic: 'hand-built' }[f] ?? f);
+const familyName = (f) => ({ 'world-tour': 'World Tour', 'grand-prix': 'Grand Prix', coaster: 'coaster', pinball: 'pinball', arcade: 'arcade', canyon: 'canyon', block: 'Block Series', athletics: 'Track and Field', 'winter-wonders': 'Winter Wonders', river: 'Rivers', classic: 'hand-built' }[f] ?? f);
 const list = (xs) => (xs.length > 4 ? `${xs.slice(0, 4).join(', ')} and ${xs.length - 4} more` : xs.join(', '));
 
 module.exports = { varietyCheck, profile, similarity, LAYOUT_FAIL, LAYOUT_FAIL_SAME_PLACES, LAYOUT_WARN };

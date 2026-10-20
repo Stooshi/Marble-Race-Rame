@@ -142,7 +142,7 @@ describe('kit scenery', () => {
     const spiral = of('spiral-tower');
     expect(spiral.length).toBeGreaterThan(80); // wound round its tower
     expect(at(spiral, spiral.foot).down).toBeCloseTo(flight[0] + 14);
-    for (const type of ['elevator', 'cliff', 'rooftop', 'station-launch', 'stepped-platform', 'lighthouse', 'castle-tower']) expect(at(of(type), of(type).path[1]).down, type).toBe(0); // level behind the gate
+    for (const type of ['elevator', 'cliff', 'rooftop', 'station-launch', 'stepped-platform', 'lighthouse', 'castle-tower', 'pier', 'river-boat', 'lock-gate']) expect(at(of(type), of(type).path[1]).down, type).toBe(0); // level behind the gate
     const jump = of('ski-jump');
     expect(at(jump, jump.foot).down).toBeLessThan(-10); // (a ski jump's in-run rises on behind the gate to its start hut)
     // The land: carved down along a chain lift, raised to a cliff top behind a cliff start.
@@ -155,7 +155,7 @@ describe('kit scenery', () => {
     const ahead = cliff.top.clone().addScaledVector(cliff.back, -5);
     expect(liftHillRaise(cliff, ahead.x, ahead.z, 7)).toBe(7); // (nothing in front of the gate)
     // Every type builds, on computers and phones.
-    for (const type of ['straight-lift', 'curving-lift', 'spiral-tower', 'elevator', 'cliff', 'rooftop', 'station-launch', 'stepped-platform', 'lighthouse', 'ski-jump', 'castle-tower']) {
+    for (const type of ['straight-lift', 'curving-lift', 'spiral-tower', 'elevator', 'cliff', 'rooftop', 'station-launch', 'stepped-platform', 'lighthouse', 'ski-jump', 'castle-tower', 'pier', 'river-boat', 'lock-gate']) {
       for (const lite of [false, true]) {
         const kit = { ...track.physics.kit, start: { ...track.physics.kit.start, type } };
         const built = buildCoaster(centerline, channel, kit, { lite, groundAt: () => cliff.top.y - 40, flight });

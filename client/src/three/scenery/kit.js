@@ -21,6 +21,8 @@ import { buildPinball } from './pinball';
 import { buildArcade } from './arcade';
 import { condor } from './kitLandmarksCanyon';
 import { canyonDressing } from './canyon';
+import { riverDressing, riverExtras } from './river';
+import { RIVER_SPAN_KINDS, buildRiverSpans } from './riverSpans';
 import { blockDressing } from './blocks';
 import { buildBlockEffects } from './kitLandmarksBlock';
 import { buildAthletics } from './athletics';
@@ -181,6 +183,19 @@ export function buildKitScenery(centerline, track, theme, { lite = false } = {})
         placeLandmark(lm.name, at, yawTo(side.clone().multiplyScalar(-k)), lm.river ? cy.waterAt(i) - 0.15 : null, lm.rim ? side.clone().multiplyScalar(k) : null, p);
         continue;
       }
+      // A Rivers track's: out on its river (`river: true`: a boat), `distance` metres from its middle
+      // towards the track (default: in the middle), lying along the river.
+      const rv = ground.river;
+      if (rv && lm.river && rv.halfAt(i) > 4) {
+        const c = rv.centreAt(i);
+        const o = rv.offsetAt(i);
+        const towards = o >= 0 ? -1 : 1; // (from the river's middle towards the track, across its side vector)
+        const sv = rv.sideVec(i);
+        const d = Math.min(lm.distance ?? 0, rv.halfAt(i) - 4);
+        const at = new Vector3(c.x + sv.x * towards * d, 0, c.z + sv.z * towards * d);
+        placeLandmark(lm.name, at, yawTo(along), rv.waterAt(i) - 0.15, null, p);
+        continue;
+      }
       const edge = rows[i]?.[sign]?.out ?? s.pos;
       const at = edge.clone().addScaledVector(side, sign * (lm.distance ?? 22));
       placeLandmark(lm.name, at, yawTo(side.clone().multiplyScalar(-sign)), null, side.clone().multiplyScalar(sign), p);
@@ -275,7 +290,7 @@ export function buildKitScenery(centerline, track, theme, { lite = false } = {})
         }
         continue;
       }
-      if (SPAN_KINDS.includes(kind)) continue; // (spanning a canyon from rim to rim: below)
+      if (SPAN_KINDS.includes(kind) || RIVER_SPAN_KINDS.includes(kind)) continue; // (spanning a canyon from rim to rim: below)
       const { s, along, side } = frame((sec.from + sec.to) / 2);
       // Crossing the track at an angle, high above it, from a tower well out on each side
       // (turned to another angle when a tower would stand on or beside another stretch of track).
@@ -341,6 +356,14 @@ export function buildKitScenery(centerline, track, theme, { lite = false } = {})
     solids.push(...spans.spots);
   }
 
+  // ── The bridges a Rivers track runs under: a chain bridge along a section, a steel arch, a cable-stayed span ──
+  if (kit.sections.some((x) => (x.overhead ?? []).some((k) => RIVER_SPAN_KINDS.includes(k)))) {
+    const spans = buildRiverSpans(centerline, channel, kit, { river: ground.river, groundAt, corridor, lite });
+    group.add(spans.group);
+    solids.push(...spans.spots);
+    glowParts.push(...spans.glow);
+  }
+
   // ── Places a section's scenery names: netting, houses, a funicular, a lake, a splitter's hut ──
   const centrepieces = buildCentrepieces(centerline, channel, kit, { lite, groundAt, corridor });
   group.add(centrepieces.group);
@@ -376,7 +399,7 @@ export function buildKitScenery(centerline, track, theme, { lite = false } = {})
     group.add(funicular.group);
     for (const p of funicular.line) solids.push({ x: p.x, z: p.z, r: 4 }); // (no trees on the rails)
   }
-  group.add(buildHouses(centerline, kit, { lite, arc: channel.arc, groundAt, clearance: field.clearance, solids, rand, corridor }));
+  group.add(buildHouses(centerline, kit, { lite, arc: channel.arc, groundAt, clearance: field.clearance, solids, rand, corridor, dressable: ground.river ? (x, z) => ground.river.dressable(x, z) : null }));
   // A Grand Prix: grandstands and crowds, barriers on the bends, the finish building, fireworks.
   const grandPrix = buildGrandPrix(centerline, channel, kit, { lite, ground, solids, boardFeet, slug: track.slug });
   if (grandPrix) {
@@ -393,14 +416,16 @@ export function buildKitScenery(centerline, track, theme, { lite = false } = {})
   // ── Set dressing for the landscape (instanced, drawn in tiles) ─────────
   // The landscape's own, plus what a section's scenery asks for (snow-rimed rocks, birches);
   // a bare stretch (a wind-swept summit) keeps only a few rocks.
-  const baseKinds = ground.canyon ? canyonDressing(kit.canyon.palette) : kit.block ? blockDressing(kit.block.world) : dressingFor(biome);
-  const kinds = [...baseKinds, [(l) => snowRock(l), 0], [(l) => winterBirch(l), 0], [(l) => aspen(l), 0], [() => palm(true), 0], [() => jacaranda(), 0], [() => acaciaTree(), 0]];
+  const baseKinds = ground.canyon ? canyonDressing(kit.canyon.palette) : ground.river ? riverDressing(kit.river.palette) : kit.block ? blockDressing(kit.block.world) : dressingFor(biome);
+  const kinds = [...baseKinds, [(l) => snowRock(l), 0], [(l) => winterBirch(l), 0], [(l) => aspen(l), 0], [() => palm(true), 0], [() => jacaranda(), 0], [() => acaciaTree(), 0], [(l) => riverExtras().cypress(l), 0], [(l) => riverExtras().reeds(l), 0]];
   const ROCK = baseKinds.length;
   const BIRCH = baseKinds.length + 1;
   const ASPEN = baseKinds.length + 2;
   const PALM = baseKinds.length + 3;
   const JACARANDA = baseKinds.length + 4;
   const ACACIA = baseKinds.length + 5;
+  const CYPRESS = baseKinds.length + 6;
+  const REEDS = baseKinds.length + 7;
   const tagsAt = tagsNear(centerline, kit);
   const xs = samples.map((s) => s.pos.x);
   const zs = samples.map((s) => s.pos.z);
@@ -425,6 +450,7 @@ export function buildKitScenery(centerline, track, theme, { lite = false } = {})
     if (roll > 0.8 - 0.55 * smoothstep(30, 240, c)) continue; // denser near the track
     if (solids.some((o) => (o.x - x) ** 2 + (o.z - z) ** 2 < o.r * o.r)) continue;
     if (ground.canyon && !ground.canyon.dressable(x, z)) continue; // (a canyon: nothing on its walls or in its river)
+    if (ground.river && !ground.river.dressable(x, z)) continue; // (a river: nothing in the water)
     const tags = tagsAt(x, z);
     let acc = 0;
     let k = baseKinds.findIndex(([, share]) => (acc += share) >= pick);
@@ -436,7 +462,9 @@ export function buildKitScenery(centerline, track, theme, { lite = false } = {})
     } else if (tags.includes('rocks')) k = pick < 0.7 ? ROCK : k;
     else if (tags.includes('birches')) k = pick < 0.7 ? BIRCH : k;
     else if (tags.includes('aspens')) k = pick < 0.75 ? ASPEN : k;
-    else if (tags.includes('palms')) k = pick < 0.7 ? PALM : k; // (a beach: palm trees)
+    else if (tags.includes('palms') || tags.includes('river-palms')) k = pick < 0.7 ? PALM : k; // (a beach, a river's banks: palm trees)
+    else if (tags.includes('cypress')) k = pick < 0.7 ? CYPRESS : k; // (a bayou: bald cypresses)
+    else if (tags.includes('reeds')) k = pick < 0.6 ? REEDS : k; // (a river's banks: reed beds)
     else if (tags.includes('jacarandas')) k = pick < 0.75 ? JACARANDA : k; // (Nairobi's city park in bloom)
     else if (tags.includes('savannah')) {
       if (pick > 0.25) continue; // (open grassland: a few acacias here and there)

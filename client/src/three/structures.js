@@ -37,7 +37,7 @@ export const STRUCTURE_COLORS = {
   // a sea cave: wet grey limestone, pale stalactite ribs, pools glowing turquoise
   caveStone: '#7a807a', caveStoneDark: '#5a605c', stalactite: '#d8d4c4', poolGlow: '#5ae8d8',
   // an undersea-style road tunnel (light strips), and a tunnel through a fallen redwood (bark outside, heartwood rings)
-  concrete: '#b8bcc0', concreteDark: '#9a9ea4', lightStrip: '#f4f8ff', subwayTile: '#e8ecf0', subwayTileDark: '#d4d8de', subwayLine: '#ff7a1a', subwayLamp: '#3fd8ff', heartwood: '#c8784a', heartwoodDark: '#a85a32', bark: '#7a3f28', barkDark: '#5a2c1c',
+  concrete: '#b8bcc0', concreteDark: '#9a9ea4', lightStrip: '#f4f8ff', subwayTile: '#e8ecf0', subwayTileDark: '#d4d8de', subwayLine: '#ff7a1a', subwayLamp: '#3fd8ff', steamerWhite: '#f4f2ea', steamerCream: '#e4ddc8', steamerRed: '#a8322a', steamerRib: '#cfc6ae', heartwood: '#c8784a', heartwoodDark: '#a85a32', bark: '#7a3f28', barkDark: '#5a2c1c',
   // bridges
   plank: '#8a6340', plankDark: '#6a4a2f', stone: '#a49c8f', stoneDark: '#837b70', iceSlab: '#cdeefc',
   steel: '#8d939b', steelDark: '#6c727a', bridgeWater: '#3f7fa8',
@@ -60,6 +60,8 @@ const TUNNEL_STYLES = {
   'redwood-trunk': { out: 0.9, rise: 4.4, ribEvery: 2 },
   'city-wall': { out: 0.9, rise: 4.2, ribEvery: 4 },
   subway: { out: 0.9, rise: 4.2, ribEvery: 3 },
+  // Through a paddle steamer's lower deck: white-painted timber ribs, a red band low, warm lamps.
+  steamer: { out: 1.0, rise: 4.4, ribEvery: 3 },
   // A canyon: no roof, towering red rock walls either side, spectators along the cliff tops.
   canyon: { out: 1.2, rise: 0, ribEvery: 0, open: true },
 };
@@ -222,6 +224,8 @@ export function buildStructures(centerline, channel, kit, { lite = false } = {})
         'city-wall': (k, j) => (j % 3 === 0 ? C.mortar : noise(k * 11 + j * 7) > 0.5 ? C.wallBrick : C.wallBrickDark),
         // A subway tunnel: white tiles, a coloured line band low on each wall, a light strip down the crown.
         subway: (k, j, n, across) => (Math.abs(j + 0.5 - across / 2) < 1 ? C.lightStrip : (j / across < 0.28 || j / across > 0.72) && j % 4 === 1 ? C.subwayLine : (k + j) % 2 ? C.subwayTile : C.subwayTileDark),
+        // Through a paddle steamer's lower deck: white planking, cream ribs, a red band low on each side.
+        steamer: (k, j, n, across) => (ribRings && k % ribRings === 0 ? C.steamerRib : (j / across < 0.2 || j / across > 0.8) ? C.steamerRed : (k + j) % 3 ? C.steamerWhite : C.steamerCream),
         'lit-tunnel': (k, j, n, across) => (Math.abs(j + 0.5 - across / 2) < 1 ? C.lightStrip : noise(k * 5 + j) > 0.5 ? C.concrete : C.concreteDark),
         // Inside a fallen redwood: heartwood, its growth rings showing as bands.
         'redwood-trunk': (k, j) => ((k % 4 === 0) ? C.heartwoodDark : noise(k * 7 + j * 3) > 0.5 ? C.heartwood : C.heartwoodDark),
@@ -241,7 +245,7 @@ export function buildStructures(centerline, channel, kit, { lite = false } = {})
 
       // From outside: banks beside the channel (rock, ice or the dragon's coils), never across
       // it, so the follow camera above sees the run dive in under them.
-      const bank = { mine: ['rock', 'rockDark'], rock: ['rock', 'rockDark'], roots: ['root', 'rock'], 'ice-cave': ['iceRib', 'ice'], dragon: ['scale', 'scaleDark'], bazaar: ['plaster', 'plasterDark'], canyon: ['redRock', 'redRockDark'], mosaic: ['tileGreen', 'tileWhite'], pyramid: ['sandstone', 'sandstoneDark'], 'sea-cave': ['caveStone', 'caveStoneDark'], 'lit-tunnel': ['concrete', 'concreteDark'], 'redwood-trunk': ['bark', 'barkDark'], 'city-wall': ['wallBrick', 'wallBrickDark'], subway: ['concrete', 'concreteDark'] }[s.tunnel] ?? ['rock', 'rockDark'];
+      const bank = { mine: ['rock', 'rockDark'], rock: ['rock', 'rockDark'], roots: ['root', 'rock'], 'ice-cave': ['iceRib', 'ice'], dragon: ['scale', 'scaleDark'], bazaar: ['plaster', 'plasterDark'], canyon: ['redRock', 'redRockDark'], mosaic: ['tileGreen', 'tileWhite'], pyramid: ['sandstone', 'sandstoneDark'], 'sea-cave': ['caveStone', 'caveStoneDark'], 'lit-tunnel': ['concrete', 'concreteDark'], 'redwood-trunk': ['bark', 'barkDark'], 'city-wall': ['wallBrick', 'wallBrickDark'], subway: ['concrete', 'concreteDark'], steamer: ['steamerWhite', 'steamerRed'] }[s.tunnel] ?? ['rock', 'rockDark'];
       const bankStep = lite ? 6 : 3.5;
       const nb = Math.max(2, Math.round(len / bankStep));
       for (let k = 0; k <= nb; k += 1) {
@@ -280,7 +284,7 @@ export function buildStructures(centerline, channel, kit, { lite = false } = {})
         }
       }
 
-      if (s.tunnel === 'mine' || s.tunnel === 'bazaar' || s.tunnel === 'pyramid' || s.tunnel === 'sea-cave' || s.tunnel === 'city-wall' || s.tunnel === 'subway') {
+      if (s.tunnel === 'mine' || s.tunnel === 'bazaar' || s.tunnel === 'pyramid' || s.tunnel === 'sea-cave' || s.tunnel === 'city-wall' || s.tunnel === 'subway' || s.tunnel === 'steamer') {
         // Lanterns on the timber frames (the bazaar: brass lanterns by the arches), low on the walls (inward-facing glowing tiles).
         const lamps = [];
         for (let k = ribRings * 2; k < rings.length - 1; k += ribRings * 3) {

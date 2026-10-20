@@ -93,6 +93,12 @@ module.exports = [
   require('./london-steeplechase'),
   require('./coliseum-anchor-leg'),
   require('./zurich-golden-lap'),
+  // Rivers (the first five, the test batch).
+  require('./danube-night-run'),
+  require('./mekong-market-spins'),
+  require('./mississippi-steamer-run'),
+  require('./zambezi-falls-run'),
+  require('./yangtze-lock-run'),
   // Holiday Season 2026 (season 'holiday-2026': locked to the pass until the season ends).
   require('./tromso-aurora-grand-prix'),
   require('./cape-town-summer-christmas'),

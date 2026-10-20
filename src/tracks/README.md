@@ -147,10 +147,18 @@ module.exports = track({
   | `steeple-water` (track and field) | barrier1, sweep, barrier2, waterJump (a light brake), sBends, drop, brakingStraight, hairpin, spin, sweep2, lastStraight |
   | `anchor-arches` (track and field) | sBends, crest, arches (a drop), sweep, spin, brakingStraight, hairpin, sweep2, lastStraight (150 m) |
   | `golden-lap` (track and field) | sweep, drop, pegStraight, brakingStraight, hairpin, spin, goldenSweep, sBends, lastStraight |
+  | `bridge-slalom` (rivers) | quay, pillars (a slalom under a chain bridge), flyOut, drop, farBank, brakingStraight, hairpin, island (a spiral), lastStraight |
+  | `market-maze` (rivers) | bankBends (deep S-bends), boats (a slalom among the market boats), underPier, spin, bankSweep, brakingStraight, hairpin, pontoon (moguls), lastStraight |
+  | `steamer-pass` (rivers) | levee, steamer (a tunnel through a paddle steamer; a boost), bayou, drop, town, brakingStraight, hairpin, slalomDrop, landing, lastStraight |
+  | `falls-edge` (rivers) | lipBend, lip (pegs), falls (a waterfall), gorge (a slalom), brakingStraight, hairpin, upstream, spin, lastStraight |
+  | `lock-staircase` (rivers) | locks (five steps), riverSweep, bridgeRun (a slalom), brakingStraight, hairpin, sBends, spin, lastStraight |
 
   A track may still write its own sections by hand; the sameness check makes sure they differ.
 - **`family`**: `'world-tour'` (the default), `'grand-prix'` (any `grandPrix` track),
-  `'coaster'`, `'pinball'`, `'arcade'`, `'canyon'`, `'block'`, `'athletics'`, `'winter-wonders'` or `'test'` (test tracks, never compared).
+  `'coaster'`, `'pinball'`, `'arcade'`, `'canyon'`, `'block'`, `'athletics'`, `'winter-wonders'`, `'river'` or `'test'` (test tracks, never compared).
+  A Rivers track (`'river'`) gives `river: { palette, side, width, banks }`; each section may say where the river runs
+  by it (`river: 'left' | 'right' | 'under' | 'none'`; `under` needs a `height` of at least 6 m). Boats are landmarks
+  with `river: true` (`distance`: metres from the river's middle towards the track).
   `'winter-wonders'` (Winter Wonders, the Holiday Season's own fairy-tale winter series) is built exactly as a World
   Tour track on the ground; its kit carries `winterWonders: true`, which lists it as its own series.
   Openings are compared within a family.
