@@ -1,16 +1,10 @@
-import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { lang as browserLang } from '../account/saveTexts';
 
 /**
  * The home page's banner under the hero race (Moses, 20 Oct 2026): short and punchy, no explanations.
- * English, or Swedish for a Swedish browser (set after the first paint, so the pre-rendered page and
- * the app agree). The button does what "Play free" does.
+ * English only, like the rest of the site. The button does what "Play free" does.
  */
-const TEXTS = {
-  en: { h: 'Race. Earn. Collect.', points: ['Coins every race', '50 marbles to own', 'Your wins on record', 'Climb the season'], cta: "Start racing, it's free" },
-  sv: { h: 'Tävla. Tjäna. Samla.', points: ['Mynt varje lopp', '50 kulor att äga', 'Dina vinster sparas', 'Klättra i säsongen'], cta: 'Börja tävla, det är gratis' },
-};
+const t = { h: 'Race. Earn. Collect.', points: ['Coins every race', '50 marbles to own', 'Your wins on record', 'Climb the season'], cta: "Start racing, it's free" };
 
 const ICONS = [
   // A coin.
@@ -24,12 +18,9 @@ const ICONS = [
 ];
 
 export default function PromoBanner() {
-  const [lang, setLang] = useState('en');
-  useEffect(() => setLang(browserLang()), []);
-  const t = TEXTS[lang];
   return (
     <section aria-labelledby="promo-h" className="ms-page ms-promo-wrap">
-      <div className="ms-promo" lang={lang}>
+      <div className="ms-promo">
         <h2 id="promo-h" className="ms-promo__h">{t.h}</h2>
         <ul className="ms-promo__points">
           {t.points.map((p, i) => <li key={p}>{ICONS[i]}<span>{p}</span></li>)}
