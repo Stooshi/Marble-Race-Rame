@@ -293,7 +293,7 @@ module.exports = {
   plunge, straight, climb, sBends, sweep, spiral, hairpin, splitter, waterfall, runIn, halfPipe, box, rail, tableTop, jibLine, boostJump,
   block, pileUp, curtain, swipe, parked, slalom, peg,
   bump, boost, brake, moguls, steps, paint, rumble,
-  TUNNELS: ['mine', 'ice-cave', 'dragon', 'rock', 'roots', 'bazaar', 'canyon', 'mosaic', 'pyramid', 'sea-cave', 'lit-tunnel', 'redwood-trunk', 'city-wall', 'subway'],
+  TUNNELS: ['mine', 'ice-cave', 'dragon', 'rock', 'roots', 'bazaar', 'canyon', 'mosaic', 'pyramid', 'sea-cave', 'lit-tunnel', 'redwood-trunk', 'city-wall', 'subway', 'steamer'],
   BRIDGES: ['ice', 'stone', 'wood', 'steel'],
   // Scenery names (looks only; the 3D view draws them, client/src/three/scenery/kit*.js).
   SURFACES: ['ice', 'snow', 'sand', 'stone', 'water', 'asphalt', 'tartan', 'tartan-blue'],
@@ -350,10 +350,16 @@ module.exports = {
     // Track and Field (generic stadium architecture; no protected names, rings, torch designs or sponsors).
     'athletes-village', 'herm-gateway', 'stone-colonnade', 'stadium-bell-tower', 'warm-up-track', 'timber-stand',
     'woven-lattice', 'wooden-eaves', 'brick-tower', 'relay-batons', 'steeple-pit', 'peristyle-arches', 'flame-cauldron',
-    'golden-arch', 'floodlight-mast', 'field-events', 'medal-podium'],
+    'golden-arch', 'floodlight-mast', 'field-events', 'medal-podium',
+    // The Rivers (client/src/three/scenery/kitLandmarksRiver.js; boats float on the river: `river: true`).
+    'river-cruiser', 'longtail-boat', 'market-boats', 'paddle-steamer', 'river-barge', 'river-ferry',
+    'domed-hall', 'quay-lamps', 'wat-roofs', 'falls-lip', 'hippo-pool', 'ship-locks', 'green-peaks', 'levee-houses', 'pontoon-floats'],
   OVERHEAD: ['gondola', 'cable-car', 'chairlift', 'vulture',
     // The Canyon Series: birds circling over the gorge, and what spans it from rim to rim, high over the track.
-    'condor', 'prayer-flags', 'arch-bridge', 'railway-trestle', 'suspension-bridge'],
+    'condor', 'prayer-flags', 'arch-bridge', 'railway-trestle', 'suspension-bridge',
+    // The Rivers: the bridges the track runs under (a chain bridge's piers along the section, the field
+    // weaving between them; a steel arch or a cable-stayed bridge crossing high over it).
+    'chain-bridge', 'steel-arch-bridge', 'cable-stayed-bridge'],
   // A Block Series world (family 'block': `block: { world }`): its voxel land's colours and what stands
   // on it, the client's BLOCK_WORLDS (client/src/three/scenery/blocks.js).
   BLOCK_WORLDS: ['meadow', 'valley', 'snow', 'mine', 'magma', 'puzzle', 'fortress', 'portal', 'sky', 'harbour', 'temple', 'bonus'],
@@ -362,6 +368,8 @@ module.exports = {
   STADIUMS: ['panathenaic', 'berlin-1936', 'bislett', 'hayward', 'nest', 'tokyo', 'stockholm-1912', 'london', 'coliseum', 'letzigrund', 'accra'],
   // A canyon's rock and river (family 'canyon': `canyon: { palette }`), the client's CANYON_PALETTES.
   CANYONS: ['grand-canyon', 'himalaya', 'andes', 'limestone', 'copper', 'basalt', 'karakoram', 'namib', 'slot', 'verdon', 'jinsha', 'waimea', 'mujib'],
+  // A river's water, banks and plants (family 'river': `river: { palette }`), the client's RIVER_PALETTES.
+  RIVERS: ['danube', 'mekong', 'mississippi', 'zambezi', 'yangtze'],
   // What stands in the middle of a splitter, between its two channels (the arch: over one of
   // them), or in the middle of a spiral or a hairpin.
   AROUND: ['mountain-hut', 'big-rock', 'mountain-restaurant', 'mine-headframe', 'nunatak', 'bell-tower', 'arc-de-triomphe', 'obelisk', 'notre-dame', 'oasis', 'twisted-tower', 'river-island', 'anaconda', 'watchtower', 'pagoda',
@@ -370,7 +378,9 @@ module.exports = {
   // Scenery near a section (or the start or finish): what grows and stands beside the track there.
   SCENERY: ['bare', 'rocks', 'birches', 'pines', 'race-netting', 'funicular', 'wooden-houses', 'frozen-lake',
     'wood-clad', 'chalets', 'pasture', 'aspens', 'shopfronts',
-    'stone-houses', 'colourful-houses', 'icefjord', 'haussmann', 'plane-trees', 'skyscrapers', 'stilt-houses', 'forbidden-city', 'battlements', 'grandstand', 'crowd', 'sandstone-terraces', 'market-stalls', 'palms', 'jacarandas', 'savannah', 'merchant-houses'],
+    'stone-houses', 'colourful-houses', 'icefjord', 'haussmann', 'plane-trees', 'skyscrapers', 'stilt-houses', 'forbidden-city', 'battlements', 'grandstand', 'crowd', 'sandstone-terraces', 'market-stalls', 'palms', 'jacarandas', 'savannah', 'merchant-houses',
+    // The Rivers.
+    'balcony-houses', 'river-palms', 'cypress', 'reeds', 'city-quay'],
   // Billboard frames: plain, a jungle timber frame, a city LED screen, a Paris advertising column, expedition crates, a fantasy banner, an arcade cabinet's marquee.
   FRAMES: ['plain', 'wood', 'led', 'column', 'crates', 'banner', 'marquee'],
   // Grand Prix tracks (`grandPrix` in a track file): who fills the grandstands, and what lines the bends.

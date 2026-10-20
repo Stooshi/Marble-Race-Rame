@@ -25,7 +25,7 @@ describe('Track and Field', () => {
   });
 
   it('every Track and Field landmark the track kit names is here, and builds', () => {
-    const mine = parts.LANDMARKS.slice(parts.LANDMARKS.indexOf('athletes-village'));
+    const mine = parts.LANDMARKS.slice(parts.LANDMARKS.indexOf('athletes-village'), parts.LANDMARKS.indexOf('river-cruiser')); // (the Rivers' follow)
     expect(mine.sort()).toEqual(Object.keys(ATHLETICS_LANDMARKS).sort());
     for (const name of mine) {
       const lm = LANDMARKS[name];

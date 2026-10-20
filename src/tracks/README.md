@@ -147,10 +147,18 @@ module.exports = track({
   | `steeple-water` (track and field) | barrier1, sweep, barrier2, waterJump (a light brake), sBends, drop, brakingStraight, hairpin, spin, sweep2, lastStraight |
   | `anchor-arches` (track and field) | sBends, crest, arches (a drop), sweep, spin, brakingStraight, hairpin, sweep2, lastStraight (150 m) |
   | `golden-lap` (track and field) | sweep, drop, pegStraight, brakingStraight, hairpin, spin, goldenSweep, sBends, lastStraight |
+  | `bridge-slalom` (rivers) | quay (two pegs), rise (a short climb), pillars (a slalom under a chain bridge), flyOut, drop, brakingStraight, hairpin, island (a spiral), farBank (S-bends), lastStraight |
+  | `market-maze` (rivers) | boats (a slalom among the market boats), bankBends (S-bends), pierRamp (a short climb), pierDrop, brakingStraight, hairpin, bankSweep, spin, underPier, pontoon (two pegs), lastStraight |
+  | `steamer-pass` (rivers) | levee (two pegs), steamer (a tunnel through a paddle steamer; a boost), bayou, drop, brakingStraight, hairpin, town (S-bends), slalomDrop, landing, lastStraight |
+  | `falls-edge` (rivers) | lipBend, lip (pegs), falls (a waterfall), gorge (a slalom), spin, brakingStraight, hairpin, upstream (S-bends), lastStraight |
+  | `lock-staircase` (rivers) | locks (five steps), damCrest (a short climb), bridgeRun (a steep slalom drop), riverSweep (two pegs), sBends (a peg), spin, brakingStraight, hairpin, lastStraight |
 
   A track may still write its own sections by hand; the sameness check makes sure they differ.
 - **`family`**: `'world-tour'` (the default), `'grand-prix'` (any `grandPrix` track),
-  `'coaster'`, `'pinball'`, `'arcade'`, `'canyon'`, `'block'`, `'athletics'`, `'winter-wonders'` or `'test'` (test tracks, never compared).
+  `'coaster'`, `'pinball'`, `'arcade'`, `'canyon'`, `'block'`, `'athletics'`, `'winter-wonders'`, `'river'` or `'test'` (test tracks, never compared).
+  A Rivers track (`'river'`) gives `river: { palette, side, width, banks }`; each section may say where the river runs
+  by it (`river: 'left' | 'right' | 'under' | 'none'`; `under` needs a `height` of at least 6 m). Boats are landmarks
+  with `river: true` (`distance`: metres from the river's middle towards the track).
   `'winter-wonders'` (Winter Wonders, the Holiday Season's own fairy-tale winter series) is built exactly as a World
   Tour track on the ground; its kit carries `winterWonders: true`, which lists it as its own series.
   Openings are compared within a family.

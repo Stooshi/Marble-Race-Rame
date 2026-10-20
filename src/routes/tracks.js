@@ -89,6 +89,7 @@ router.get('/', optionalAuth, async (req, res) => {
     `SELECT id, slug, name, description, difficulty, length_m, lane_count, thumbnail_url, is_active, waypoints,
             jsonb_array_length(obstacles) AS obstacle_count, physics IS NOT NULL AS new_physics, created_at,
             CASE WHEN physics->'kit' ? 'pinball' THEN 'Pinball'
+                 WHEN physics->'kit' ? 'river' THEN 'Rivers'
                  WHEN physics->'kit' ? 'arcade' THEN 'Arcade'
                  WHEN physics->'kit' ? 'canyon' THEN 'Canyons'
                  WHEN physics->'kit' ? 'block' THEN 'Blocks'

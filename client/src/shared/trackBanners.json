@@ -321,6 +321,17 @@
    "side": 1,
    "marbles": 4
   },
+  "danube-night-run": {
+   "name": "Danube Night Run",
+   "series": "Rivers",
+   "lighting": "night",
+   "v": "9cbc6dd8",
+   "bytes": 13148,
+   "bytes2x": 32560,
+   "t": 9949,
+   "side": 1,
+   "marbles": 4
+  },
   "deep-mine": {
    "name": "Deep Mine",
    "series": "Blocks",
@@ -727,6 +738,28 @@
    "t": 10920,
    "side": 1,
    "marbles": 5
+  },
+  "mekong-market-spins": {
+   "name": "Mekong Market Spins",
+   "series": "Rivers",
+   "lighting": "day",
+   "v": "0795c884",
+   "bytes": 13366,
+   "bytes2x": 33374,
+   "t": 10555,
+   "side": 1,
+   "marbles": 5
+  },
+  "mississippi-steamer-run": {
+   "name": "Mississippi Steamer Run",
+   "series": "Rivers",
+   "lighting": "sunset",
+   "v": "62ce97b2",
+   "bytes": 9340,
+   "bytes2x": 23320,
+   "t": 9772,
+   "side": 1,
+   "marbles": 4
   },
   "multiball-manor": {
    "name": "Multiball Manor",
@@ -1333,6 +1366,17 @@
    "side": 1,
    "marbles": 4
   },
+  "yangtze-lock-run": {
+   "name": "Yangtze Lock Run",
+   "series": "Rivers",
+   "lighting": "dawn",
+   "v": "45b6cb8c",
+   "bytes": 12534,
+   "bytes2x": 31686,
+   "t": 27926,
+   "side": 1,
+   "marbles": 5
+  },
   "yarlung-tsangpo-spins": {
    "name": "Yarlung Tsangpo Spins",
    "series": "Canyons",
@@ -1343,6 +1387,17 @@
    "t": 9802,
    "side": 1,
    "marbles": 4
+  },
+  "zambezi-falls-run": {
+   "name": "Zambezi Falls Run",
+   "series": "Rivers",
+   "lighting": "day",
+   "v": "4438f628",
+   "bytes": 14616,
+   "bytes2x": 37282,
+   "t": 10360,
+   "side": -1,
+   "marbles": 5
   },
   "zermatt-marble-grand-prix": {
    "name": "Zermatt Marble Grand Prix",

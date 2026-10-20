@@ -228,7 +228,7 @@ test('a track may retune a layout splitter (balance, added pegs), mirrored with 
 
 test('the varied starts: a new track says how its start looks, checked like any opening', () => {
   const { START_TYPES, GATES, COUNTDOWN_SHOTS, LAUNCH_SHOTS } = require('../src/trackKit/recipe');
-  assert.deepEqual(START_TYPES, ['straight-lift', 'curving-lift', 'spiral-tower', 'elevator', 'cliff', 'rooftop', 'station-launch', 'stepped-platform', 'lighthouse', 'ski-jump', 'castle-tower']);
+  assert.deepEqual(START_TYPES, ['straight-lift', 'curving-lift', 'spiral-tower', 'elevator', 'cliff', 'rooftop', 'station-launch', 'stepped-platform', 'lighthouse', 'ski-jump', 'castle-tower', 'pier', 'river-boat', 'lock-gate']);
   assert.deepEqual(GATES, ['paddle', 'trapdoor', 'stalls', 'barrier']);
   assert.deepEqual(COUNTDOWN_SHOTS, ['front', 'side', 'above', 'chase']);
   assert.deepEqual(LAUNCH_SHOTS, ['high-behind', 'low-chase', 'side', 'overhead', 'look-back']);
@@ -243,6 +243,12 @@ test('the varied starts: a new track says how its start looks, checked like any 
   assert.throws(() => track(coaster({ ...START, type: 'station-launch' })), /a launch from the station races the boost-launch opening/);
   assert.equal(track(coaster({ ...START, type: 'station-launch' }, { opening: opening('boost-launch') })).variety.start.type, 'station-launch');
   assert.throws(() => track(coaster({ ...START, type: 'cliff' }, { opening: opening('boost-launch') })), /only as a launch from the station/);
+  // The Rivers' starts stand on a river: only a Rivers track takes them (and a river boat may take the boost launch).
+  assert.throws(() => track(coaster({ ...START, type: 'pier' })), /stands on a river/);
+  const river = (start, o = {}) => coaster(start, { family: 'river', river: { palette: 'danube' }, ...o });
+  assert.equal(track(river({ ...START, type: 'lock-gate' })).variety.start.type, 'lock-gate');
+  assert.equal(track(river({ ...START, type: 'river-boat' }, { opening: opening('boost-launch') })).variety.start.type, 'river-boat');
+  assert.throws(() => track(spec({ river: { palette: 'danube' } })), /river settings are for Rivers tracks/);
   // What the variety value says (tracks built before: the start every track had).
   const sog = physicsTrack('sognefjord');
   assert.deepEqual(sog.variety.start, { type: 'cliff', gate: 'trapdoor', countdown: 'side', launch: 'low-chase' });

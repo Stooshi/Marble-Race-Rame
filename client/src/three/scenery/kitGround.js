@@ -24,6 +24,7 @@ import { stretchKinds } from './groundCheck';
 import { trackCorridor } from './clearCheck';
 import { buildWater, coasterFlight, isLifted, liftHillCut, liftHillOf, liftHillRaise } from './coaster';
 import { makeCanyon } from './canyon';
+import { makeRiver } from './river';
 import { BLOCK_WORLDS, makeBlockLand } from './blocks';
 
 const RIM_WIDTH = 0.45;  // the channel's white rim beyond the lip (iceChannel.js)
@@ -211,6 +212,8 @@ export function buildKitGround(centerline, track, { lite = false } = {}) {
   const landBounds = { minX: Math.min(...xs) - margin, maxX: Math.max(...xs) + margin, minZ: Math.min(...zs) - margin, maxZ: Math.max(...zs) + margin };
   // A canyon (family 'canyon'): the land shaped into its floor, walls and plateau around the track (./canyon.js).
   const canyon = kit.canyon ? makeCanyon(centerline, channel, kit, { flight, liftAt: hug.street.liftAt, bounds: landBounds, landRadius, seaLevel: biome.sea }) : null;
+  // A Rivers track (family 'river'): the river shaped into the land beside and under the track (./river.js).
+  const river = kit.river ? makeRiver(centerline, channel, kit, { flight, liftAt: hug.street.liftAt, bounds: landBounds }) : null;
   const blocks = blockWorld ? makeBlockLand(kit.block.world, base) : null;
   const field = {
     ...base,
@@ -218,6 +221,7 @@ export function buildKitGround(centerline, track, { lite = false } = {}) {
     heightAt(x, z) {
       let h = base.heightAt(x, z);
       if (canyon) h = canyon.heightAt(x, z, h);
+      if (river) h = river.heightAt(x, z, h);
       if (blocks) h = blocks.heightAt(x, z, h); // (stepped in terraces away from the track: only ever lower)
       if (lake) {
         const d = Math.hypot(x - lake.x, z - lake.z) - lake.radius * lake.shape(Math.atan2(z - lake.z, x - lake.x));
@@ -248,6 +252,7 @@ export function buildKitGround(centerline, track, { lite = false } = {}) {
     ...(canyon && { detailFine: lite ? 6.5 : 3.4 }), // (a canyon's walls, drawn finer all along, a little coarser than over the ice: within the drawing budget)
     ...(canyon && { detail: canyon.detail, colorAt: canyon.colourAt }), // (a canyon's walls drawn finer, in their bands of colour)
     ...(blocks && { colorAt: blocks.colourAt }), // (a block world's terraces: tops in tiles, risers in earth or stone)
+    ...(river && { detailFine: lite ? 6 : 3.4, detail: river.detail, colorAt: river.colourAt }), // (a river's banks drawn finer, the shore in its colours)
   });
   const group = new Group();
   group.name = 'kit-ground';
@@ -348,11 +353,11 @@ export function buildKitGround(centerline, track, { lite = false } = {}) {
       quad(a.shoulder, b.shoulder, b.out, a.out, bankColour);
     }
   }
-  // A canyon's river, drawn with the banks (the same material: one draw call less).
-  const river = canyon?.riverTriangles({ lite, corridor });
-  if (river) {
-    pos.push(...river.pos);
-    col.push(...river.col);
+  // A canyon's river, or a Rivers track's, drawn with the banks (the same material: one draw call less).
+  const water = canyon?.riverTriangles({ lite, corridor }) ?? river?.riverTriangles({ lite, corridor, groundAt: (x, z) => terrain.groundAt(x, z) });
+  if (water) {
+    pos.push(...water.pos);
+    col.push(...water.col);
   }
   const banks = new BufferGeometry();
   banks.setAttribute('position', new Float32BufferAttribute(pos, 3));
@@ -407,10 +412,10 @@ export function buildKitGround(centerline, track, { lite = false } = {}) {
   }
 
   if (waterSpots.length) {
-    const water = buildWater(waterSpots, waterY, lite ? 70 : 90);
-    group.add(water);
+    const pool = buildWater(waterSpots, waterY, lite ? 70 : 90);
+    group.add(pool);
   }
 
   const bounds = { minX: Math.min(...xs) - margin, maxX: Math.max(...xs) + margin, minZ: Math.min(...zs) - margin, maxZ: Math.max(...zs) + margin, floorY: biome.sea - 6 };
-  return { group, field, groundAt: (x, z) => terrain.groundAt(x, z), hug, biome, rows, over, onBridge, lake, flight, waterY, floorY: biome.sea - 6, bounds, canyon, blocks };
+  return { group, field, groundAt: (x, z) => terrain.groundAt(x, z), hug, biome, rows, over, onBridge, lake, flight, waterY, floorY: biome.sea - 6, bounds, canyon, blocks, river };
 }

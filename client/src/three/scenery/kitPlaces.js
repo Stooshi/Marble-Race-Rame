@@ -592,6 +592,40 @@ function forbiddenCity(k) {
   return { body, windows, w, d };
 }
 
+/** (Rivers) A town house with iron balconies: two or three storeys in pastel plaster, a lacy balcony along each upper floor. */
+function balconyHouse(k) {
+  const w = 9 + (k % 2) * 2;
+  const d = 9;
+  const floors = 2 + (k % 2);
+  const h = floors * 3.6;
+  const c = ['#f2c8b4', '#cfe0d8', '#f4e2a8', '#d8c8e8', '#f4f0e6'][k % 5];
+  const parts = [box(w, h, d, 0, h / 2, 0, c), box(w + 0.6, 0.6, d + 0.6, 0, h + 0.3, 0, '#e8e4dc')];
+  for (let f = 1; f < floors; f += 1) {
+    parts.push(box(w + 0.4, 0.25, 1.8, 0, f * 3.6, d / 2 + 0.9, '#2a2e30'));
+    parts.push(box(w + 0.4, 1, 0.1, 0, f * 3.6 + 0.6, d / 2 + 1.8, '#2a2e30'));
+    for (let x = -w / 2; x <= w / 2; x += w / 3) parts.push(box(0.15, 3.4, 0.15, x, f * 3.6 - 1.7, d / 2 + 1.75, '#2a2e30'));
+  }
+  const windows = [];
+  for (let f = 0; f < floors; f += 1) for (const x of [-w / 4, w / 4]) windows.push(box(1.4, 2.2, 0.1, x, 1.6 + f * 3.6, d / 2 + 0.06, '#3a5a6a'));
+  return { body: merge(parts), windows: merge(windows), w, d };
+}
+
+/** (Rivers) A grand house on a city quay: pale stone, tall windows in rows, a mansard roof of slate. */
+function quayHouse(k) {
+  const w = 14 + (k % 3) * 2;
+  const d = 12;
+  const h = 15 + (k % 2) * 3;
+  const c = ['#efe6d2', '#e8d8b8', '#f2ead8', '#d8ccb4'][k % 4];
+  const parts = [box(w, h, d, 0, h / 2, 0, c), box(w + 0.4, 1, d + 0.4, 0, h, 0, '#cfc3a8')];
+  const roof = new ConeGeometry(Math.hypot(w, d) / 2, 4, 4);
+  roof.applyMatrix4(new Matrix4().makeRotationY(Math.PI / 4));
+  roof.applyMatrix4(new Matrix4().makeScale((w / Math.hypot(w, d)) * 1.41, 1, (d / Math.hypot(w, d)) * 1.41));
+  parts.push(piece(roof, '#5a6470', at(0, h + 2.5, 0)));
+  const windows = [];
+  for (let r = 0; r < 4; r += 1) for (let x = -w / 2 + 2; x <= w / 2 - 2; x += 3) windows.push(box(1.2, 2, 0.1, x, 2.5 + r * 3.4, d / 2 + 0.06, '#3a4650'));
+  return { body: merge(parts), windows: merge(windows), w, d };
+}
+
 /** What each house-scenery name builds, and how far out it stands (big buildings stand further back). */
 const HOUSE_STYLES = {
   'wooden-houses': { build: house, out: [22, 45], clear: 14, glow: true },
@@ -607,10 +641,12 @@ const HOUSE_STYLES = {
   'sandstone-terraces': { build: sandstoneTerrace, out: [24, 40], clear: 16, liteEvery: 2 },
   'market-stalls': { build: marketStall, out: [16, 26], clear: 12, liteEvery: 2 },
   'merchant-houses': { build: merchantHouse, out: [22, 36], clear: 15, liteEvery: 2 },
+  'balcony-houses': { build: balconyHouse, out: [22, 38], clear: 15, liteEvery: 2 },
+  'city-quay': { build: quayHouse, out: [28, 44], clear: 20, liteEvery: 2 },
 };
 
 /** Houses beside the stretches tagged with a house style (and round the start or finish when it is). */
-export function buildHouses(centerline, kit, { lite = false, arc, groundAt, clearance, solids, rand, corridor = null }) {
+export function buildHouses(centerline, kit, { lite = false, arc, groundAt, clearance, solids, rand, corridor = null, dressable = null }) {
   const group = new Group();
   group.name = 'wooden houses';
   const bodies = [];
@@ -643,6 +679,7 @@ export function buildHouses(centerline, kit, { lite = false, arc, groundAt, clea
       const out = near + rand() * far;
       const spot = s.pos.clone().addScaledVector(side, sign * out);
       if (clearance(spot.x, spot.z) < clear) continue;
+      if (dressable && !dressable(spot.x, spot.z)) continue; // (a Rivers track: never in the water)
       if (solids.some((o) => (o.x - spot.x) ** 2 + (o.z - spot.z) ** 2 < (o.r + 6) ** 2)) continue;
       const h = build(k);
       k += 1;
@@ -653,7 +690,8 @@ export function buildHouses(centerline, kit, { lite = false, arc, groundAt, clea
       bodies.push(h.body);
       // Windows that light up at night (Åre's houses, and every house on a floodlit city night) are drawn unlit
       // on their own; the rest are part of the house.
-      (glow || kit.lighting === 'night' ? windows : bodies).push(h.windows.applyMatrix4(m));
+      // (A Rivers track on a phone: its windows join the houses, one draw call less by the busy water.)
+      (glow || (kit.lighting === 'night' && !(lite && kit.river)) ? windows : bodies).push(h.windows.applyMatrix4(m));
       solids.push({ x: spot.x, z: spot.z, r: Math.max(h.w, h.d) / 2 + 2 });
     }
   }

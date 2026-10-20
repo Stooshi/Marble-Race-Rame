@@ -8,7 +8,7 @@
  * Each problem names the rule and the section, in plain words.
  */
 
-const { SHARP_RADIUS, TUNNELS, BRIDGES, SURFACES, BIOMES, LANDMARKS, OVERHEAD, FRAMES, AROUND, SCENERY, CROWDS, BARRIERS, CANYONS, BLOCK_WORLDS, STADIUMS } = require('./parts');
+const { SHARP_RADIUS, TUNNELS, BRIDGES, SURFACES, BIOMES, LANDMARKS, OVERHEAD, FRAMES, AROUND, SCENERY, CROWDS, BARRIERS, CANYONS, BLOCK_WORLDS, STADIUMS, RIVERS } = require('./parts');
 
 const MIN_SPIRAL_RADIUS = 40;  // Table Mountain Run's corkscrew
 const MIN_SWEEP_RADIUS = 45;   // San Francisco's Embarcadero
@@ -19,7 +19,7 @@ const LONGEST_CLIMB_M = 40;    // San Francisco's 35 m
 const { LIGHTINGS } = require('./lighting');
 const { OPENING_KINDS } = require('./openings');
 // Track families (the sameness check compares openings within one): 'test' tracks are never compared.
-const FAMILIES = ['world-tour', 'grand-prix', 'coaster', 'pinball', 'arcade', 'canyon', 'block', 'athletics', 'winter-wonders', 'test'];
+const FAMILIES = ['world-tour', 'grand-prix', 'coaster', 'pinball', 'arcade', 'canyon', 'block', 'athletics', 'winter-wonders', 'river', 'test'];
 // A canyon: the canyon family, or a library test track built as one (series 'canyon'). It is built
 // as a coaster too (the track climbs out of the canyon on its supports and touches down on its floor).
 const isCanyon = (spec) => spec.family === 'canyon' || (spec.family === 'test' && spec.series === 'canyon');
@@ -31,10 +31,19 @@ const isBlock = (spec) => spec.family === 'block' || (spec.family === 'test' && 
 // A Winter Wonders track (the Holiday Season's own fairy-tale winter series): built as a World Tour track on the ground, listed as its own series.
 const isWinterWonders = (spec) => spec.family === 'winter-wonders';
 const isAthletics = (spec) => spec.family === 'athletics' || (spec.family === 'test' && spec.series === 'athletics');
-// A coaster: the coaster family, or a library test track built as one (series 'coaster'), or a canyon, a Block Series or a Track and Field track.
-const isCoaster = (spec) => spec.family === 'coaster' || (spec.family === 'test' && spec.series === 'coaster') || isCanyon(spec) || isBlock(spec) || isAthletics(spec);
-// (Tracks whose sections run on the ground unless they say: a canyon's floor, a Block Series world's land, a stadium's ground.)
-const onTheFloor = (spec) => isCanyon(spec) || isBlock(spec) || isAthletics(spec);
+// A Rivers track: the river family, or a library test track built as one (series 'river'). Built as a coaster:
+// on the bank unless a section flies (out over the water on its supports, across the river).
+const isRiver = (spec) => spec.family === 'river' || (spec.family === 'test' && spec.series === 'river');
+// A coaster: the coaster family, or a library test track built as one (series 'coaster'), or a canyon, a Block Series, a Track and Field or a Rivers track.
+const isCoaster = (spec) => spec.family === 'coaster' || (spec.family === 'test' && spec.series === 'coaster') || isCanyon(spec) || isBlock(spec) || isAthletics(spec) || isRiver(spec);
+// (Tracks whose sections run on the ground unless they say: a canyon's floor, a Block Series world's land, a stadium's ground, a river's bank.)
+const onTheFloor = (spec) => isCanyon(spec) || isBlock(spec) || isAthletics(spec) || isRiver(spec);
+// A river's width (metres, bank to bank), and where it runs by a section: beside the track, under it (the track
+// flying over the water), or away from it.
+const RIVER_WIDTH = [40, 160];
+const RIVER_BY = ['left', 'right', 'under', 'none'];
+const RIVER_BANKS = ['quay', 'sand', 'reeds', 'bayou', 'rock', 'grass'];
+const MIN_OVER_WATER = 6; // metres: a section flying over the river is at least this high
 // A stadium's lanes: red tartan or blue (Berlin).
 const LANE_COLOURS = ['red', 'blue'];
 // A canyon's depth (metres from its floor to its rim), and its river's side.
@@ -367,7 +376,7 @@ function checkRecipe({ spec, sections, span, generated, owner, placed, total, wh
   }
 
   // Coasters: their own rules (a lift hill, supports, touchdowns, water).
-  if (spec.series !== undefined && !(spec.family === 'test' && ['coaster', 'pinball', 'arcade', 'canyon', 'block', 'athletics'].includes(spec.series))) problems.push(`${where('track')}: series is for test tracks: 'coaster', 'pinball', 'arcade', 'canyon', 'block' or 'athletics' (a library test track built as a coaster, a pinball table, an arcade world, a canyon, a Block Series world or a stadium).`);
+  if (spec.series !== undefined && !(spec.family === 'test' && ['coaster', 'pinball', 'arcade', 'canyon', 'block', 'athletics', 'river'].includes(spec.series))) problems.push(`${where('track')}: series is for test tracks: 'coaster', 'pinball', 'arcade', 'canyon', 'block', 'athletics' or 'river' (a library test track built as a coaster, a pinball table, an arcade world, a canyon, a Block Series world, a stadium or a river).`);
   if (isAthletics(spec)) problems.push(...athleticsRules({ spec, sections, where }));
   else {
     if (spec.athletics !== undefined) problems.push(`${where('track')}: athletics settings are for Track and Field (family: 'athletics').`);
@@ -379,6 +388,11 @@ function checkRecipe({ spec, sections, span, generated, owner, placed, total, wh
   else {
     if (spec.canyon !== undefined) problems.push(`${where('track')}: canyon settings are for canyons (family: 'canyon').`);
     sections.forEach((s) => { if (s.walls !== undefined) problems.push(`${where(s.name)}: walls are for canyons (family: 'canyon').`); });
+  }
+  if (isRiver(spec)) problems.push(...riverRules({ spec, sections, where }));
+  else {
+    if (spec.river !== undefined) problems.push(`${where('track')}: river settings are for Rivers tracks (family: 'river').`);
+    sections.forEach((s) => { if (s.river !== undefined) problems.push(`${where(s.name)}: river is for Rivers tracks (family: 'river').`); });
   }
   if (isPinball(spec)) problems.push(...pinballRules({ spec, where }));
   else if (spec.pinball !== undefined) problems.push(`${where('track')}: pinball settings are for pinball tables (family: 'pinball').`);
@@ -441,7 +455,9 @@ function arcadeRules({ spec, where }) {
 }
 
 // The varied starts: how a track's first seconds look (drawing only; the race is its opening's).
-const START_TYPES = ['straight-lift', 'curving-lift', 'spiral-tower', 'elevator', 'cliff', 'rooftop', 'station-launch', 'stepped-platform', 'lighthouse', 'ski-jump', 'castle-tower'];
+const START_TYPES = ['straight-lift', 'curving-lift', 'spiral-tower', 'elevator', 'cliff', 'rooftop', 'station-launch', 'stepped-platform', 'lighthouse', 'ski-jump', 'castle-tower', 'pier', 'river-boat', 'lock-gate'];
+// (The Rivers' starts: on a timber pier over the water, on a moored boat's top deck, at a lock's upper gates.)
+const RIVER_STARTS = ['pier', 'river-boat', 'lock-gate'];
 const GATES = ['paddle', 'trapdoor', 'stalls', 'barrier'];
 const COUNTDOWN_SHOTS = ['front', 'side', 'above', 'chase'];
 const LAUNCH_SHOTS = ['high-behind', 'low-chase', 'side', 'overhead', 'look-back'];
@@ -454,9 +470,10 @@ function startRules({ spec, where }) {
   if (st.type !== undefined) {
     if (!isCoaster(spec)) problems.push(`${where('start')}: a start type is for coasters (family: 'coaster').`);
     else if (!START_TYPES.includes(st.type)) problems.push(`${where('start')}: unknown start type ${JSON.stringify(st.type)} (${START_TYPES.join(', ')}).`);
+    if (RIVER_STARTS.includes(st.type) && !isRiver(spec)) problems.push(`${where('start')}: a ${st.type} start stands on a river (family: 'river').`);
     if (st.type === 'station-launch' && spec.opening?.kind !== 'boost-launch') problems.push(`${where('start')}: a launch from the station races the boost-launch opening (opening('boost-launch')).`);
   }
-  if (spec.opening?.kind === 'boost-launch' && isCoaster(spec) && st.type !== 'station-launch') problems.push(`${where('start')}: a coaster takes the boost-launch opening only as a launch from the station (start.type 'station-launch').`);
+  if (spec.opening?.kind === 'boost-launch' && isCoaster(spec) && !['station-launch', 'river-boat'].includes(st.type)) problems.push(`${where('start')}: a coaster takes the boost-launch opening only as a launch from the station or off a river boat's deck (start.type 'station-launch' or 'river-boat').`);
   if (st.gate !== undefined && !GATES.includes(st.gate)) problems.push(`${where('start')}: unknown gate ${JSON.stringify(st.gate)} (${GATES.join(', ')}).`);
   if (st.shots !== undefined) {
     if (!COUNTDOWN_SHOTS.includes(st.shots.countdown)) problems.push(`${where('start')}: unknown countdown shot ${JSON.stringify(st.shots.countdown)} (${COUNTDOWN_SHOTS.join(', ')}).`);
@@ -509,6 +526,27 @@ function canyonRules({ spec, sections, where }) {
   if (c.river !== undefined && !RIVER_SIDES.includes(c.river)) problems.push(`${where('canyon')}: the river runs on the ${RIVER_SIDES.slice(0, 2).join(' or ')} (or 'none').`);
   sections.forEach((s) => {
     if (s.walls !== undefined && !(Number.isFinite(s.walls) && s.walls >= 0 && s.walls <= 1)) problems.push(`${where(s.name)}: walls is the share of the canyon's walls standing here, 0 to 1.`);
+  });
+  return problems;
+}
+
+/**
+ * A Rivers track's own rules: its river (`river: { palette, side, width, banks }`) and, per section, where
+ * the river runs by it (`river`: 'left', 'right', 'under' the track flying over it, or 'none').
+ */
+function riverRules({ spec, sections, where }) {
+  const problems = [];
+  const r = spec.river;
+  if (!r || typeof r !== 'object') return [`${where('track')}: a Rivers track says its river: river: { palette (${RIVERS.join(', ')}), side, width, banks }.`];
+  for (const k of Object.keys(r)) if (!['palette', 'side', 'width', 'banks'].includes(k)) problems.push(`${where('river')}: unknown setting ${k} (palette, side, width, banks).`);
+  if (!RIVERS.includes(r.palette)) problems.push(`${where('river')}: unknown palette ${JSON.stringify(r.palette)} (${RIVERS.join(', ')}).`);
+  if (r.side !== undefined && !['left', 'right'].includes(r.side)) problems.push(`${where('river')}: the river runs on the left or the right of the track.`);
+  if (r.width !== undefined && !(Number.isFinite(r.width) && r.width >= RIVER_WIDTH[0] && r.width <= RIVER_WIDTH[1])) problems.push(`${where('river')}: width is metres bank to bank, ${RIVER_WIDTH[0]} to ${RIVER_WIDTH[1]}.`);
+  if (r.banks !== undefined && !RIVER_BANKS.includes(r.banks)) problems.push(`${where('river')}: banks are ${RIVER_BANKS.join(', ')}.`);
+  sections.forEach((s) => {
+    if (s.river === undefined) return;
+    if (!RIVER_BY.includes(s.river)) problems.push(`${where(s.name)}: river is where the river runs by this section: ${RIVER_BY.join(', ')}.`);
+    if (s.river === 'under' && !(s.height >= MIN_OVER_WATER)) problems.push(`${where(s.name)}: a section over the river flies at least ${MIN_OVER_WATER} m high (height).`);
   });
   return problems;
 }
@@ -574,4 +612,4 @@ function athleticsRules({ spec, sections, where }) {
   return problems;
 }
 
-module.exports = { checkRecipe, isCanyon, isBlock, isAthletics, isWinterWonders, MIN_SPIRAL_RADIUS, MIN_SWEEP_RADIUS, BILLBOARDS, GRAND_PRIX_BILLBOARDS, isCoaster, isPinball, PINBALL_ART, isArcade, ARCADE_ART, START_TYPES, GATES, COUNTDOWN_SHOTS, LAUNCH_SHOTS };
+module.exports = { checkRecipe, isCanyon, isBlock, isAthletics, isWinterWonders, isRiver, MIN_SPIRAL_RADIUS, MIN_SWEEP_RADIUS, BILLBOARDS, GRAND_PRIX_BILLBOARDS, isCoaster, isPinball, PINBALL_ART, isArcade, ARCADE_ART, START_TYPES, GATES, COUNTDOWN_SHOTS, LAUNCH_SHOTS };

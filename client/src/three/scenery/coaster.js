@@ -114,6 +114,9 @@ const topAt = (channel, i, step) => {
  *   lighthouse:    a striped lighthouse behind the gate, its gallery level with the gate, a short bridge on to it;
  *   ski-jump:      a ski jump's in-run rising on from the gate to a start hut high behind it, on a concrete tower.
  *   castle-tower:  the gate on top of a great round tower with battlements, in the coaster's support colour.
+ *   pier:          (Rivers) the gate at the end of a long wooden pier on piles, out over a pool of the river;
+ *   river-boat:    (Rivers) a moored river boat behind the gate, its top deck level with the gate, a gangway on to it;
+ *   lock-gate:     (Rivers) the gate is a lock's gate: a lock chamber behind it, full of high water.
  * Returns { type, top, foot, back, side, length, path (top to foot, for a chain lift), cut
  * (the land carved down along the path, so the whole climb shows), plateau (a cliff top) }.
  * `foot` is where the start's landmark is placed beyond, and the countdown's lift shot looks.
@@ -172,6 +175,18 @@ export function liftHillOf(centerline, flight, type = 'straight-lift') {
   } else if (type === 'castle-tower') {
     path = [top.clone(), go(top, CASTLE_TOWER.at, 0, 0)];
     foot = go(top, CASTLE_TOWER.at, 0, rise);
+  } else if (type === 'pier') {
+    path = [top.clone(), go(top, PIER.length, 0, 0)];
+    cut = false;
+    foot = go(top, PIER.length - 6, 0, 0);
+  } else if (type === 'river-boat') {
+    path = [top.clone(), go(top, BOAT.at, 0, 0)];
+    cut = false;
+    foot = go(top, BOAT.at, 0, 0);
+  } else if (type === 'lock-gate') {
+    path = [top.clone(), go(top, LOCK.length, 0, 0)];
+    cut = false;
+    foot = go(top, LOCK.length, 0, 0);
   } else if (type === 'ski-jump') {
     // (Up from the gate: the in-run's top, with its start hut, stands SKI_JUMP.rise over the gate.)
     path = [top.clone(), go(top, SKI_JUMP.length, 0, -SKI_JUMP.rise)];
@@ -191,6 +206,9 @@ const ROOF = { depth: 24, half: 11 };          // metres: the building behind th
 // The stepped platform: its tiers (the top one just under the gate), each this much deeper, wider and lower than the one above.
 const LIGHTHOUSE = { at: 14, radius: 4.2 };    // metres: the lighthouse's middle behind the gate, its radius at the gallery
 const CASTLE_TOWER = { at: 12, radius: 8 };     // metres: the tower's middle behind the gate, its radius
+const PIER = { length: 34, half: 5.5 };        // metres: the pier behind the gate, its deck's half-width
+const BOAT = { at: 18, half: 6, length: 30 };   // metres: the boat's middle behind the gate, its half-beam and length
+const LOCK = { length: 36, half: 6.5 };         // metres: the lock chamber behind the gate, its half-width inside the walls
 const SKI_JUMP = { length: 34, rise: 14, half: 3 }; // metres: the in-run behind the gate (along, up), its half-width
 const STEPS = { tiers: 4, depth: (k) => 10 + 6 * k, half: (k) => 8 + 4 * k, drop: 2.6, colours: ['#c9a676', '#b38f60'] };
 
@@ -752,6 +770,77 @@ function buildStart(lift, { towers, feet, tower, groundAt, lite, RAIL, SUPPORT }
       towers.push(strut(m.clone().setY(groundAt(m.x, m.z) - 0.5), m, 0.5, '#b8b4ac'));
     }
     feet.push({ x: hut.x, z: hut.z, r: 10 });
+  } else if (type === 'pier' || type === 'river-boat' || type === 'lock-gate') {
+    // (Rivers) A pool of the river behind the gate, at the land's lowest there, and what stands in it.
+    const yaw = yawOf(back);
+    const reach = type === 'pier' ? PIER.length : type === 'lock-gate' ? LOCK.length : BOAT.at + BOAT.length / 2;
+    let low = Infinity;
+    for (let d = 0; d <= reach + 8; d += 6) for (const j of [-1, 0, 1]) {
+      const c = top.clone().addScaledVector(back, d).addScaledVector(side, j * 16);
+      low = Math.min(low, groundAt(c.x, c.z));
+    }
+    const waterY = Math.min(low + 0.5, top.y - 4);
+    const mid = top.clone().addScaledVector(back, reach / 2 + 2);
+    if (type !== 'lock-gate') towers.push(obox(40, 0.3, reach + 14, mid.clone().setY(waterY), yaw, '#3f86a8'));
+    if (type === 'pier') {
+      // A plank deck at the gate's height on rows of piles, a handrail, lamps, and mooring posts at its end.
+      for (let d = 0; d < PIER.length; d += 3) towers.push(obox(PIER.half * 2, 0.4, 3.05, top.clone().addScaledVector(back, d + 1.5).setY(top.y - 1.3), yaw, d % 6 ? '#8a6440' : '#7a5636'));
+      for (let d = 3; d <= PIER.length; d += lite ? 9 : 4.5) {
+        for (const sign of [1, -1]) {
+          const p = top.clone().addScaledVector(back, d).addScaledVector(side, sign * (PIER.half - 0.4));
+          towers.push(strut(p.clone().setY(waterY - 2), p.clone().setY(top.y - 1.4), 0.5, '#5a3e26'));
+          towers.push(strut(p.clone().setY(top.y - 1.1), p.clone().setY(top.y + 0.1), 0.14, '#5a3e26'));
+        }
+      }
+      for (const sign of [1, -1]) towers.push(strut(top.clone().addScaledVector(back, 3).addScaledVector(side, sign * (PIER.half - 0.4)).setY(top.y + 0.1), top.clone().addScaledVector(back, PIER.length).addScaledVector(side, sign * (PIER.half - 0.4)).setY(top.y + 0.1), 0.12, '#5a3e26'));
+      for (const d of [10, 22]) for (const sign of [1, -1]) {
+        const p = top.clone().addScaledVector(back, d).addScaledVector(side, sign * (PIER.half + 0.2));
+        towers.push(strut(p.clone().setY(top.y - 1.1), p.clone().setY(top.y + 2.6), 0.12, '#2a2e30'));
+        towers.push(obox(0.6, 0.6, 0.6, p.clone().setY(top.y + 2.9), yaw, '#ffe2a0'));
+      }
+      feet.push({ x: mid.x, z: mid.z, r: PIER.length / 2 + 6 });
+    } else if (type === 'river-boat') {
+      // A moored river boat: a white hull in the pool, decks up to the gate's level, a funnel, a gangway on to the gate.
+      const at = top.clone().addScaledVector(back, BOAT.at);
+      const deckY = top.y - 1.3;
+      const hullTop = waterY + 2.4;
+      towers.push(obox(BOAT.half * 2, hullTop - waterY + 0.6, BOAT.length, at.clone().setY((hullTop + waterY - 0.6) / 2), yaw, '#f2f2ee'));
+      towers.push(obox(BOAT.half * 2 + 0.1, 0.5, BOAT.length + 0.1, at.clone().setY(waterY + 0.1), yaw, '#a8322a'));
+      const decks = Math.max(1, Math.round((deckY - hullTop) / 2.6));
+      for (let k = 0; k < decks; k += 1) {
+        const y0 = hullTop + ((deckY - hullTop) * k) / decks;
+        const y1 = hullTop + ((deckY - hullTop) * (k + 1)) / decks;
+        towers.push(obox(BOAT.half * 2 - 1 - k * 0.6, y1 - y0, BOAT.length - 4 - k * 2, at.clone().setY((y0 + y1) / 2), yaw, '#fbfaf4'));
+        towers.push(obox(BOAT.half * 2 - 0.9 - k * 0.6, 0.7, BOAT.length - 3.9 - k * 2, at.clone().setY(y0 + (y1 - y0) * 0.55), yaw, '#2b3c52'));
+      }
+      towers.push(obox(BOAT.half * 2 - 1, 0.3, BOAT.length - 4, at.clone().setY(deckY), yaw, '#c9a676'));
+      const funnel = at.clone().addScaledVector(back, 6).addScaledVector(side, 0);
+      towers.push(piece(new CylinderGeometry(1, 1.1, 5, 10), '#1e1e22', new Matrix4().makeTranslation(funnel.x, deckY + 2.5, funnel.z)));
+      towers.push(piece(new CylinderGeometry(1.12, 1.12, 1, 10), '#c8302a', new Matrix4().makeTranslation(funnel.x, deckY + 4, funnel.z)));
+      deckAlong([top, top.clone().addScaledVector(back, BOAT.at - BOAT.length / 2 + 2)], { chain: false, legs: false });
+      feet.push({ x: at.x, z: at.z, r: BOAT.length / 2 + 4 });
+    } else {
+      // A lock chamber: two concrete walls from the land up past the gate, the chamber's high water just
+      // under the gate, the far gate's beams and the lock-keeper's cabin on a wall.
+      const yaw2 = yawOf(back);
+      const chamberY = top.y - 1.6;
+      for (const sign of [1, -1]) {
+        const w = top.clone().addScaledVector(back, LOCK.length / 2).addScaledVector(side, sign * (LOCK.half + 1.6));
+        const h = top.y + 1 - (low - 1);
+        towers.push(obox(3.2, h, LOCK.length + 2, w.clone().setY(low - 1 + h / 2), yaw2, '#c8c4bc'));
+        towers.push(obox(3.4, 0.4, LOCK.length + 2.2, w.clone().setY(top.y + 1.2), yaw2, '#9a968e'));
+        for (let d = 4; d < LOCK.length; d += 8) towers.push(obox(0.3, 1, 0.3, top.clone().addScaledVector(back, d).addScaledVector(side, sign * (LOCK.half + 0.2)).setY(top.y + 0.5), yaw2, '#e8c030'));
+      }
+      towers.push(obox(LOCK.half * 2, 0.3, LOCK.length - 2, mid.clone().addScaledVector(back, -2).setY(chamberY), yaw2, '#3f86a8'));
+      const far = top.clone().addScaledVector(back, LOCK.length);
+      towers.push(obox(LOCK.half * 2 + 3.2, top.y + 1 - (low - 1), 1.6, far.clone().setY((top.y + 1 + low - 1) / 2), yaw2, '#5a6a72'));
+      for (const sign of [1, -1]) towers.push(obox(0.5, 0.5, 9, far.clone().addScaledVector(side, sign * (LOCK.half + 6)).addScaledVector(back, 2).setY(top.y + 1.8), yaw2 + sign * 0.5, '#f2f0ea')); // the balance beams
+      const cabin = top.clone().addScaledVector(back, 8).addScaledVector(side, -(LOCK.half + 1.6)).setY(top.y + 2.9);
+      towers.push(obox(3, 3, 3.6, cabin, yaw2, '#f2f0ea'), obox(3.4, 0.4, 4, cabin.clone().setY(top.y + 4.6), yaw2, '#c8302a'));
+      // Below the lock, the lower river: a pool at the land's level beside the walls.
+      towers.push(obox(46, 0.3, 30, top.clone().addScaledVector(back, LOCK.length + 16).setY(waterY), yaw2, '#3f86a8'));
+      feet.push({ x: mid.x, z: mid.z, r: LOCK.length / 2 + 8 });
+    }
   } else if (type === 'station-launch') {
     // A launch platform either side behind the gate, lit along its edges, and the operator's booth
     // (nothing over the track or tall beside it: the cameras swoop low over the start here).
