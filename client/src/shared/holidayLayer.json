@@ -1,0 +1,14 @@
+{
+  "note": "The Holiday Season's layer (client/src/three/holidayLayer.js): string lights on the start and finish, the place's weather and fireworks for the winner. Looks only. `on`: the tracks it is switched on for (three for Moses's preview first, then all 31). `weather`: snow (winter), confetti (New Year) or sparkles (summer Christmas and warm places); none where the track's own sky already snows.",
+  "on": ["new-york-winter-run", "cape-town-summer-christmas", "sydney-harbour-new-year"],
+  "weather": {
+    "tromso-aurora-grand-prix": "snow", "zermatt-marble-grand-prix": "snow", "gamla-stan-christmas-run": "snow", "nuremberg-christmas-market-run": "snow",
+    "belgrade-badnjak-run": "snow", "new-york-winter-run": "snow", "quebec-old-town-spins": "snow", "harbin-ice-city": "snow", "veliky-ustyug-frost-run": "snow",
+    "sapporo-snow-sculptures": "snow", "reykjavik-yule-lights": "snow", "seoul-winter-lights": "snow", "gingerbread-village": "snow", "ice-palace": "snow",
+    "night-train-north": "snow", "sleigh-bell-forest": "snow",
+    "edinburgh-hogmanay-grand-prix": "confetti", "sydney-harbour-new-year": "confetti", "rio-new-year-burst": "confetti", "buenos-aires-summer-christmas": "confetti",
+    "cape-town-summer-christmas": "sparkles", "outback-christmas-burst": "sparkles", "queenstown-pohutukawa-run": "sparkles", "accra-december-beats": "sparkles",
+    "goa-star-lanterns": "sparkles", "medellin-lights": "sparkles", "oaxaca-posadas-run": "sparkles", "san-fernando-lantern-spins": "sparkles",
+    "trinidad-parang-run": "sparkles", "coptic-cairo-lights": "sparkles", "lalibela-genna-spins": "sparkles"
+  }
+}

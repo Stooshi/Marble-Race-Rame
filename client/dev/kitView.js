@@ -105,6 +105,7 @@ function marbleCalls() {
 
 function drawNow(t) {
   scene.effects?.update(t / 1000, scene.camera.position);
+  scene.holiday?.tick(t / 1000, scene.camera.position); // (the Holiday Season's lights and weather)
   scene.renderer.info.reset();
   scene.renderer.render(scene.scene, scene.camera);
   return { calls: scene.renderer.info.render.calls, triangles: scene.renderer.info.render.triangles, marbles: marbleCalls(), ...(params.get('why') && { by: drawnBy() }) };
@@ -349,6 +350,7 @@ window.kitView = {
     scene.structures?.update(t);
     scene.scenery?.userData?.update?.(t);
     scene.effects?.update(t / 1000, scene.camera.position);
+    scene.holiday?.tick(t / 1000, scene.camera.position); // (the Holiday Season's lights and weather)
     scene.renderer.info.reset();
     scene.renderer.render(scene.scene, scene.camera);
     return { calls: scene.renderer.info.render.calls, triangles: scene.renderer.info.render.triangles, ...(params.get('why') && { by: drawnBy() }) };
