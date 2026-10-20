@@ -2,9 +2,10 @@ import { Link, NavLink } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { formatNumber } from '../utils/format';
 import { plainName } from '../shared/playerName';
+import LogoutButton from '../site/account/LogoutButton';
 
 export default function NavBar() {
-  const { user, isAuthenticated, logout } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   return (
     <header className="nav">
       <div className="nav__inner">
@@ -21,7 +22,7 @@ export default function NavBar() {
             <>
               <span className="coins" title="Coins">{formatNumber(user.coins)}</span>
               <Link to="/dashboard" className="nav__name">{plainName(user.username, user.display_name)}</Link>
-              <button type="button" className="btn btn--ghost btn--sm" onClick={logout}>Log out</button>
+              <LogoutButton className="btn btn--ghost btn--sm" />
             </>
           ) : (
             <Link to="/" className="btn btn--sm">Sign in</Link>

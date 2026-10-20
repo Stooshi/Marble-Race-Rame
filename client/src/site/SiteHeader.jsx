@@ -4,6 +4,7 @@ import { formatNumber } from '../utils/format';
 import Logo from './Logo';
 import SoundControl from './SoundControl';
 import { handle } from '../shared/playerName';
+import LogoutButton from './account/LogoutButton';
 
 /** Which header a page wears: the landing page's, the race flow's slim one, checkout's, or the game's. */
 export function headerKind(pathname, isAuthenticated) {
@@ -27,7 +28,7 @@ function UserChips({ user }) {
 
 export default function SiteHeader() {
   const { pathname } = useLocation();
-  const { user, isAuthenticated, logout } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   const kind = headerKind(pathname, isAuthenticated);
 
   if (kind === 'checkout') {
@@ -73,7 +74,7 @@ export default function SiteHeader() {
         {isAuthenticated ? (
           <>
             <UserChips user={user} />
-            {kind === 'app' && <button type="button" className="ms-header__logout" onClick={logout}>Log out</button>}
+            {kind === 'app' && <LogoutButton className="ms-header__logout" />}
           </>
         ) : (
           <div className="ms-chips">

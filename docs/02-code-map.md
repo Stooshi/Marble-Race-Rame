@@ -10,6 +10,7 @@
 | Start a scoreboard season | A row in the `seasons` table (a data update: name, `starts_at`, `ends_at`, `badge_top`); the board, its end and the badges follow its dates. Only when the table has no season on or ended: `client/src/shared/economy.json` → `season` (`number`, `startsAt`, `endsAt`, `badgeTop`) |
 | Change the starter marbles' colours | `client/src/shared/marbles/starters.json` (palette, two-colour minimum difference), `src/marbles/starters.js` (making them, the race line-up), `badge.js` `plainLookOf` (pattern `half`) |
 | Change the save pop-up or quick sign-up texts (EN/SV) | `client/src/site/account/saveTexts.js`; the pop-up's rule in `SavePrompt.jsx` |
+| Change what a guest sees on "Log out" | `client/src/site/account/LogoutButton.jsx` (header, Settings, the old nav bar) |
 | Change how a player's name shows to others ("@name", a guest as "Guest 0DA1") | `client/src/shared/playerName.js` (`handle()`, `plainName()`); friend rooms: `src/routes/rooms.js` `nameOf` |
 | Change the social media links | `client/src/shared/socialLinks.json` (icons from the `simple-icons` package, CC0) |
 | Show the App Store / Google Play buttons on the website | `client/src/shared/storeLinks.json` (`appStore`, `googlePlay`: the store page's https link; empty hides the button). Never shown inside the apps |

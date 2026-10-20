@@ -1,3 +1,4 @@
+import LogoutButton from '../account/LogoutButton';
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
@@ -161,7 +162,7 @@ export default function SettingsPage() {
       </section>
       <YourData />
       <DeleteAccount user={user} onDeleted={() => { logout(); navigate('/?deleted=1'); }} />
-      <div className="ms-row"><button type="button" className="ms-btn" onClick={() => { logout(); navigate('/'); }}>Log out</button></div>
+      <div className="ms-row"><LogoutButton className="ms-btn" onLoggedOut={() => navigate('/')} /></div>
     </div>
   );
 }
