@@ -325,10 +325,10 @@
    "name": "Danube Night Run",
    "series": "Rivers",
    "lighting": "night",
-   "v": "5db7505d",
-   "bytes": 13146,
-   "bytes2x": 32360,
-   "t": 9834,
+   "v": "4351dd87",
+   "bytes": 13010,
+   "bytes2x": 32196,
+   "t": 9949,
    "side": 1,
    "marbles": 4
   },
@@ -1370,12 +1370,12 @@
    "name": "Yangtze Lock Run",
    "series": "Rivers",
    "lighting": "dawn",
-   "v": "d8c27ae2",
-   "bytes": 17360,
-   "bytes2x": 42732,
-   "t": 10681,
+   "v": "866d8ae3",
+   "bytes": 15610,
+   "bytes2x": 38548,
+   "t": 22001,
    "side": 1,
-   "marbles": 6
+   "marbles": 5
   },
   "yarlung-tsangpo-spins": {
    "name": "Yarlung Tsangpo Spins",

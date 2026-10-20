@@ -42,7 +42,7 @@ const LIFT_HEIGHT = 18;  // metres above the track where a lift crosses it: well
 const CABIN_SPEED = 4;   // metres per second along the cable
 const DRESSING_AREA = 500; // metres: trees and rocks are merged in squares this size (one draw call each)
 // What may be merged into the still scenery (nothing that moves, nothing see-through).
-const STILL = new Set(['landmarks', 'lift towers', 'centrepiece', 'netting poles', 'funicular rails', 'houses', 'battlements', 'grandstands', 'canyon spans']);
+const STILL = new Set(['landmarks', 'lift towers', 'centrepiece', 'netting poles', 'funicular rails', 'houses', 'battlements', 'grandstands', 'canyon spans', 'river bridges']);
 
 export function buildKitScenery(centerline, track, theme, { lite = false } = {}) {
   const kit = track.physics.kit;
@@ -550,7 +550,7 @@ export function buildKitScenery(centerline, track, theme, { lite = false } = {})
     for (const o of stillScenery) o.removeFromParent();
     const mat = new MeshLambertMaterial({ vertexColors: true, flatShading: true });
     // (A canyon or a Block Series world on a phone: bigger squares, fewer draw calls; their walls and lit parts cost more of the budget.)
-    for (const geometry of mergeByArea(pieces, (kit.canyon || kit.block || kit.athletics) && lite ? 900 : 400)) group.add(Object.assign(new Mesh(geometry, mat), { name: 'scenery: still' }));
+    for (const geometry of mergeByArea(pieces, (kit.canyon || kit.block || kit.athletics || kit.river) && lite ? 900 : 400)) group.add(Object.assign(new Mesh(geometry, mat), { name: 'scenery: still' }));
   }
 
   group.userData = { ...group.userData, cameraKeepOut: [...cameraKeepOut, ...centrepieces.keepOut], stillParts: [...landmarkBoxes, ...(group.userData.stillParts ?? [])], update, field, groundAt, biome, ground, floorY: ground.floorY, ...(coaster && { liftHill: coaster.liftHill, station: coaster.station }) };
