@@ -10,7 +10,7 @@ import { useRacer, useTracks } from './RaceFlow';
 /**
  * A friend room (/r/CODE): anyone with the link is in. A friend without an
  * account races as a guest straight away. Everyone sees who is in with which
- * marble; the host picks the track and starts the race (CPU players fill the
+ * marble; the host picks the track and starts the race (computer players fill the
  * empty places). When the race starts, everyone in it goes to the race; after
  * the finish the room's next race is ready with the same players.
  */
@@ -169,7 +169,7 @@ export default function RoomPage() {
             <h2 id="players-h" className="ms-h3" style={{ fontFamily: 'var(--ms-cond)', fontWeight: 800, fontSize: '1.6rem' }}>
               {race ? `${race.track.name}` : 'The next race'}
             </h2>
-            <span className="ms-note">{view.players.length} of {view.room.size} · CPU players fill the rest</span>
+            <span className="ms-note">{view.players.length} of {view.room.size} · computer players fill the rest</span>
           </div>
           {race?.track.hostedSeason && <span className="ms-note" role="note">{race.track.hostedSeason.name.replace(/ \d{4}$/, '')} track: hosted by a pass holder, so everyone here races it.</span>}
           {isGuestName && (

@@ -1,5 +1,6 @@
 'use strict';
 
+const { computerPlayers } = require('../marbles/computerPlayers');
 const express = require('express');
 const db = require('../db');
 const { requireAuth, optionalAuth, requireAdmin } = require('../middleware/auth');
@@ -118,13 +119,13 @@ router.get('/:idOrSlug', optionalAuth, async (req, res) => {
   const { rows: stats } = await db.query(
     `SELECT (SELECT COUNT(*)::int FROM races WHERE track_id = $1 AND status = 'finished') AS races_finished,
             rec.finish_time_ms AS record_ms, rec.race_id AS record_race_id,
-            rec.marble_name AS record_marble, rec.username AS record_holder,
+            rec.marble_name AS record_marble, rec.username AS record_holder, rec.entry_id AS record_entry_id, rec.is_bot AS record_is_bot,
             (SELECT MIN(e.split_time_ms) FROM race_entries e
                JOIN races r ON r.id = e.race_id AND r.status = 'finished'
               WHERE r.track_id = $1) AS best_split_ms
        FROM (SELECT 1) one
        LEFT JOIN LATERAL (
-         SELECT e.finish_time_ms, e.race_id, m.name AS marble_name, u.username
+         SELECT e.finish_time_ms, e.race_id, m.name AS marble_name, u.username, e.id AS entry_id, e.is_bot
            FROM race_entries e
            JOIN races r ON r.id = e.race_id AND r.status = 'finished'
            JOIN marbles m ON m.id = e.marble_id
@@ -135,8 +136,18 @@ router.get('/:idOrSlug', optionalAuth, async (req, res) => {
        ) rec ON true`,
     [rows[0].id],
   );
+  // (A record held by a computer player shows its friendly name, as in the race itself.)
+  const { record_entry_id: recordEntry, record_is_bot: recordBot, ...stat } = stats[0];
+  if (recordBot) {
+    const { rows: field } = await db.query(
+      'SELECT e.id, e.is_bot, m.color_primary, m.color_secondary, m.pattern FROM race_entries e JOIN marbles m ON m.id = e.marble_id WHERE e.race_id = $1',
+      [stat.record_race_id],
+    );
+    stat.record_marble = computerPlayers(stat.record_race_id, field).get(recordEntry)?.name ?? stat.record_marble;
+    stat.record_computer = true;
+  }
   const [track] = await withSeasons(rows, req.user?.id ?? null);
-  res.json({ track, stats: stats[0] });
+  res.json({ track, stats: stat });
 });
 
 /** POST /api/tracks (admin) */

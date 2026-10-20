@@ -1,6 +1,6 @@
 # 4. Game and economy rules (plain English)
 
-*Last updated 19 Oct 2026.* The numbers live in `client/src/shared/economy.json` and `client/src/shared/marbles/catalog.json`. If this page and those files ever disagree, the files are right; then update this page.
+*Last updated 20 Oct 2026.* The numbers live in `client/src/shared/economy.json` and `client/src/shared/marbles/catalog.json`. If this page and those files ever disagree, the files are right; then update this page.
 
 ## The golden rules
 
@@ -14,7 +14,7 @@
 1. **The lobby.** A race is created with up to 20 places. Players join with their Shooter (the look they race in). Joining is free: coin entry fees were switched off on 14 Oct 2026.
 2. **The decision**, made once, on the server, when the race leaves the lobby:
    - A random **seed** is drawn.
-   - Empty places are filled with **computer players** (CPU, marked with a tag), up to the race size.
+   - Empty places are filled with **computer players**, up to the race size. They are always marked as computer players (a small robot icon, "Computer player"), have a fun made-up name from a fixed list (no real people or brands) and, unless they wear a showcase marble, a plain starter-style look (one colour or two half and half) that no one else in the race shows. Names and looks are worked out from the race when it is shown, never stored, and never given to the race engine.
    - The seed alone decides the computer players' skills, the lanes and the timing of moving obstacles.
    - The whole race is then simulated, start to finish.
    - The finishing order, times and halfway splits are written to the database straight away. The API keeps them hidden until the race has finished.

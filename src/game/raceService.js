@@ -1,5 +1,6 @@
 'use strict';
 
+const { dressRows } = require('../marbles/computerPlayers');
 const { dressComputerPlayers } = require('../marbles/showcase');
 const crypto = require('crypto');
 const zlib = require('zlib');
@@ -93,7 +94,8 @@ async function loadRun(client, race, entries) {
 }
 
 /** Public, result-free description of a race used for the stream header. */
-function describeForClients(race, entries) {
+function describeForClients(race, rows) {
+  const entries = dressRows(race.id, rows); // (computer players' names and looks: drawing only)
   return {
     raceId: race.id,
     name: race.name,
@@ -312,7 +314,7 @@ async function getResults(client, raceId) {
       ORDER BY e.finish_position ASC NULLS LAST`,
     [raceId],
   );
-  return rows;
+  return dressRows(raceId, rows, { idField: 'entry_id' }); // (computer players' names and looks)
 }
 
 /**

@@ -273,10 +273,10 @@ function Lobby({ details, onChange }) {
               </li>
             ))}
             {Array.from({ length: Math.max(0, slots) }, (_, i) => (
-              <li key={`slot-${i}`} className="entry-list__empty"><span className="marble-ball marble-ball--empty" /> <small>CPU player</small></li>
+              <li key={`slot-${i}`} className="entry-list__empty"><span className="marble-ball marble-ball--empty" /> <small>Computer player</small></li>
             ))}
           </ul>
-          <p className="muted small">Empty slots are filled with CPU players when the race starts, so every race runs with {race.max_marbles} marbles.</p>
+          <p className="muted small">Empty slots are filled with computer players when the race starts, so every race runs with {race.max_marbles} marbles.</p>
         </section>
 
         {isAuthenticated && !mine && (

@@ -7,12 +7,13 @@ import MarbleBall from './MarbleBall';
 const cap = (s) => (s ? s[0].toUpperCase() + s.slice(1) : '');
 
 /** What a tapped marble is: { name, rarity, colour, shop link or null, note }. */
-export function marbleFacts(marble) {
+export function marbleFacts(marble, isBot = false) {
   const item = marble?.look && ITEM[marble.look];
   if (item) {
     const info = rarityInfo(item.rarity);
     return { name: lookName(item.slug), rarity: `${info.label} · ${item.collection} · #${item.id}`, colour: info.colour, shop: `/collection/${item.design.key}?shade=${item.shade.key}`, note: item.design.inRaces };
   }
+  if (isBot) return { name: marble?.name ?? 'Computer player', rarity: 'Computer player', colour: 'var(--ms-muted)', shop: null, note: 'A computer player: it fills an empty place so every race is full, and races by the same physics as everyone else.' };
   if (marble?.starter) return { name: marble.name, rarity: marble.code ? `Starter · ${marble.code}` : 'Starter', colour: 'var(--ms-muted)', shop: null, note: "One of this player's own 4 starter marbles: every player gets 4 of their own, each with its own Marble ID." };
   return { name: marble?.name ?? 'Marble', rarity: cap(marble?.rarity) || 'Plain', colour: 'var(--ms-soft)', shop: '/dashboard', note: 'A plain marble from the shop.' };
 }
@@ -23,7 +24,7 @@ export function marbleFacts(marble) {
  */
 export default function MarbleInfo({ marble, isBot, onClose }) {
   const ref = useRef(null);
-  const f = marbleFacts(marble);
+  const f = marbleFacts(marble, isBot);
   useEffect(() => {
     ref.current?.focus();
     const key = (e) => { if (e.key === 'Escape') onClose(); };
@@ -36,7 +37,7 @@ export default function MarbleInfo({ marble, isBot, onClose }) {
         <MarbleBall marble={marble} size={72} />
         <div className="marble-info__text">
           <b className="marble-info__name">{f.name}</b>
-          <span className="marble-info__rarity" style={{ color: f.colour }}>{f.rarity}{isBot ? ' · raced by a CPU player' : ''}</span>
+          <span className="marble-info__rarity" style={{ color: f.colour }}>{f.rarity}{isBot && f.rarity !== 'Computer player' ? ' · raced by a computer player' : ''}</span>
           <span className="marble-info__note">{f.note}</span>
         </div>
         <div className="marble-info__actions">

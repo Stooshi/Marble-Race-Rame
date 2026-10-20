@@ -1,5 +1,6 @@
 'use strict';
 
+const { dressRows } = require('../marbles/computerPlayers');
 const express = require('express');
 const config = require('../config');
 const db = require('../db');
@@ -44,6 +45,7 @@ async function getEntries(raceId, revealResults) {
             e.finish_position, e.finish_time_ms, e.split_time_ms,
             m.id AS marble_id, m.slug AS marble_slug, m.name AS marble_name,
             m.color_primary, m.color_secondary, m.pattern, m.rarity,
+            (SELECT h.item_slug FROM house_looks h WHERE h.entry_id = e.id) AS look,
             u.id AS user_id, u.username, u.display_name
        FROM race_entries e
        JOIN marbles m ON m.id = e.marble_id
@@ -52,7 +54,7 @@ async function getEntries(raceId, revealResults) {
       ORDER BY ${revealResults ? 'e.finish_position' : 'e.lane NULLS LAST, e.joined_at'}`,
     [raceId],
   );
-  return rows.map(({ finish_position, finish_time_ms, split_time_ms, coins_awarded, ...rest }) => (
+  return dressRows(raceId, rows).map(({ finish_position, finish_time_ms, split_time_ms, coins_awarded, ...rest }) => (
     revealResults ? { ...rest, finish_position, finish_time_ms, split_time_ms, coins_awarded } : rest
   ));
 }

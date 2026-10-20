@@ -484,12 +484,12 @@ a.ms-tile:hover, a.ms-card:hover { text-decoration: none; border-color: var(--ms
   .ms-heroplay__bottom .ms-btn { width: 100%; }
 }
 
-/* ── CPU tag and tapped-marble card ─────────────────────────────────────── */
+/* ── Computer-player icon and tapped-marble card ─────────────────────────────────────── */
 .cpu-tag { flex: none;
-  display: inline-block; margin-left: 6px; padding: 0 5px; border-radius: 4px; vertical-align: 1px;
-  font: 800 0.66rem/1.5 var(--ms-cond); letter-spacing: 0.08em; color: var(--ms-muted);
-  border: 1px solid var(--ms-border); background: rgba(14,19,32,0.6); white-space: nowrap;
+  display: inline-grid; place-items: center; margin-left: 6px; width: 20px; height: 18px; border-radius: 5px; vertical-align: -3px;
+  color: var(--ms-muted); border: 1px solid var(--ms-border); background: rgba(14,19,32,0.6); line-height: 0;
 }
+.cpu-tag svg { display: block; }
 .marble-tap { background: none; border: 0; padding: 0; margin: 0; font: inherit; color: inherit; cursor: pointer; text-align: left; display: inline-flex; align-items: center; gap: 6px; min-height: 28px; }
 .marble-tap:hover .board__name, .marble-tap:focus-visible .board__name { text-decoration: underline; }
 .marble-info__backdrop { position: fixed; inset: 0; z-index: 80; background: rgba(5,8,16,0.55); display: grid; place-items: end center; padding: 16px 16px calc(16px + env(safe-area-inset-bottom, 0px)); }

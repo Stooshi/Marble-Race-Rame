@@ -120,7 +120,7 @@ export function FriendsStep() {
       <div className="ms-two">
         <section className="ms-card" style={{ display: 'grid', gap: 12 }} aria-labelledby="room-h">
           <h2 id="room-h" className="ms-h3" style={{ fontFamily: 'var(--ms-cond)', fontWeight: 800, fontSize: '1.6rem' }}>Race with friends</h2>
-          <p className="ms-note">Make a room and send its link: friends join from their phone or computer, no account needed. Up to 20 players; CPU players fill the empty places. You pick the track and start.</p>
+          <p className="ms-note">Make a room and send its link: friends join from their phone or computer, no account needed. Up to 20 players; computer players fill the empty places. You pick the track and start.</p>
           {roomError && <div className="ms-msg ms-msg--bad">{roomError}</div>}
           <button type="button" className="ms-btn ms-btn--primary" disabled={!ready || making} onClick={makeRoom}>{making ? 'MAKING YOUR ROOM…' : 'MAKE A ROOM'}</button>
           <form className="ms-form ms-row" style={{ display: 'flex', gap: 8 }} onSubmit={(e) => { e.preventDefault(); if (roomCode.trim()) navigate(`/r/${roomCode.trim().toUpperCase().replace(/[^A-Z0-9]/g, '')}`); }}>
@@ -152,7 +152,7 @@ export function FriendsStep() {
         </section>
       </div>
       <div className="ms-flowbar">
-        <span className="ms-note">Or race on your own: CPU players fill every other place</span>
+        <span className="ms-note">Or race on your own: computer players fill every other place</span>
         <Link to={`/play/track?${search}`} className="ms-btn">RACE SOLO: PICK A TRACK</Link>
       </div>
     </div>
@@ -354,8 +354,8 @@ export function StartStep() {
             {grid.map((slug, k) => (slug ? <MarbleBadge key={k} slug={slug} size={30} still /> : <MarbleBadge key={k} marble={{ color_primary: '#8A93A6' }} size={30} still />))}
           </div>
           <div className="ms-row" style={{ justifyContent: 'space-between' }}>
-            <span>20 marbles · you and 19 CPU players</span>
-            <span style={{ opacity: 0.8 }}>In your first races the CPU players show off marbles from the shop. Places at the gate are drawn at random.</span>
+            <span>20 marbles · you and 19 computer players</span>
+            <span style={{ opacity: 0.8 }}>In your first races the computer players show off marbles from the shop. Places at the gate are drawn at random.</span>
           </div>
         </section>
         <aside className="ms-card" style={{ display: 'grid', gap: 14, alignContent: 'start', flexBasis: 300 }}>
@@ -365,7 +365,7 @@ export function StartStep() {
             <div style={{ display: 'grid', flex: 1, minWidth: 0 }}><b>{user?.username ? handle(user.username) : '…'} (host)</b><span className="ms-note">{shooter?.name ?? 'Picking a Shooter…'}</span></div>
             <span style={{ color: 'var(--ms-green)', fontWeight: 700 }}>✓ Ready</span>
           </div>
-          <span className="ms-note">CPU players fill every other place. Racing with friends? <Link to={`/play/friends${track?.slug ? `?track=${encodeURIComponent(track.slug)}` : ''}`}>Make a friend room</Link> and send them the link.</span>
+          <span className="ms-note">Computer players fill every other place. Racing with friends? <Link to={`/play/friends${track?.slug ? `?track=${encodeURIComponent(track.slug)}` : ''}`}>Make a friend room</Link> and send them the link.</span>
           {startError && <div className="ms-msg ms-msg--bad" role="alert">{startError}</div>}
           <button type="button" className="ms-btn ms-btn--primary ms-btn--lg" onClick={start} disabled={busy || !ready || !tracks.length}>{busy ? 'STARTING…' : 'START THE RACE'}</button>
           {!quick && <Link to={`/play/shooter?${search}`} style={{ color: 'var(--ms-soft)', textAlign: 'center' }}>Change Shooter</Link>}

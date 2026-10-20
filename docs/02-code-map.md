@@ -82,7 +82,7 @@
 - `runSimulation.js`: picks the engine; `packReplay` gzips a physics race.
 - `simulationPool.js` + `simulationWorker.js`: run simulations in a worker thread, falling back to the main thread.
 - `raceService.js`: the database side of a race:
-  - `decide()` fills CPU players, sets lanes and skills, dresses showcase looks, picks lighting, simulates, writes results, and sets `countdown`;
+  - `decide()` fills computer players, sets lanes and skills, dresses showcase looks, picks lighting, simulates, writes results, and sets `countdown`;
   - `finalize()` marks the race finished and pays coins;
   - `cancel()`;
   - `getResults()`.
@@ -127,6 +127,7 @@
   - `pickRacingMarble`.
 - `starters.js`: every player's own 4 starter marbles (20 Oct 2026): the 76 looks from 12 colours, `create()`/`ensure()` (their `marbles` rows, Marble IDs `ST…`), `lineUp()` (the starter a joining player races with so no two show the same look: their next one first; only if all 4 are shown, an earlier player moves). Used by `collection.js` `pickRacingMarble`.
 - `showcase.js`: dresses computer players in collection looks in beginner races. It uses its own randomness, never the race seed.
+- `computerPlayers.js`: how computer players show (`NAMES`, `computerPlayers(raceId, entries)`, `dressRows`): a friendly name each and a plain starter-style look no one else in the race shows (showcase marbles kept), worked out from the race id each time it is shown (two seeded streams, so a name never depends on the looks). Applied to the race stream (`describeForClients`), the results (`getResults`), `GET /api/races/:id` entries and a computer player's track record; never to the engine's rows. The client marks them with a robot icon (`components/CpuTag.jsx`, "Computer player").
 
 **`economy/index.js`: coins.**
 - `change()` is the **only** way coins move: it updates the balance and writes a `coin_ledger` line.

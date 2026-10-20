@@ -133,7 +133,7 @@ export default function LandingPage() {
           </div>
           <div style={{ display: 'grid', gap: 12 }}>
             <h2 id="friends-h" className="ms-landing__h2">Race your friends</h2>
-            <p style={{ margin: 0, color: 'var(--ms-soft)' }}>Send one link. Up to 20 players race together, and any empty places are filled with CPU players. Lost by a hair? Hit rematch.</p>
+            <p style={{ margin: 0, color: 'var(--ms-soft)' }}>Send one link. Up to 20 players race together, and any empty places are filled with computer players. Lost by a hair? Hit rematch.</p>
             <Link to="/play/friends" className="ms-btn" style={{ justifySelf: 'start' }}>Start a room</Link>
           </div>
         </div>
