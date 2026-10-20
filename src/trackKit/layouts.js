@@ -1305,7 +1305,7 @@ const LAYOUTS = {
   ],
   /** L75 Market maze (Rivers): a long slalom straight low over the water among the boats (the lottery after a peg drop), S-bends along the bank, up a pier ramp (a short climb) and off it (a drop), the hairpin, a sweep along the bank, a spin, a peg under a pier, a peg straight past a pontoon line's floats and a parked piece and a peg at the run-in. */
   'market-maze': (L, R, c) => [
-    { key: 'boats', name: 'Market slalom', shape: straight(110, { grade: 0.11 }), obstacles: [slalom({ costume: c.slalom, from: 0.25, to: 0.88, count: 4, loss: 0.13 })], billboards: 1 },
+    { key: 'boats', name: 'Market slalom', shape: straight(110, { grade: 0.11 }), obstacles: [slalom({ costume: c.slalom, from: 0.2, to: 0.9, count: 5, loss: 0.22 })], billboards: 1 },
     { key: 'bankBends', name: 'Bank S-bends', shape: sBends({ first: L, radius: 70, degrees: 85, grade: 0.13 }), billboards: 1 },
     { key: 'pierRamp', name: 'Up the pier ramp', shape: climb(12, { grade: -0.05, after: 0.13 }) },
     { key: 'pierDrop', name: 'Off the pier', shape: plunge(40, { grade: 0.22, from: 0.13 }) },
