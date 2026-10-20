@@ -1354,15 +1354,15 @@ const LAYOUTS = {
       obstacles: [parked({ costume: c.parked, at: 0.2, side: L, length: 6 }), peg({ costume: c.peg, at: 0.45, line: 'right' })], features: [rumble({ from: 0.7, to: 0.95, count: 3 })],
     },
   ],
-  /** L78 Lock staircase (Rivers): a long straight down five lock steps, a wide river sweep (a boost), a slalom straight under a long bridge, the hairpin, S-bends, a spiral and a parked piece and a peg at the run-in. */
+  /** L78 Lock staircase (Rivers): a straight down five lock steps, a river sweep, a steep slalom drop under a long bridge (the lottery: the clean drop has none at the gate), the hairpin, S-bends, a spiral and a parked piece and a peg at the run-in. */
   'lock-staircase': (L, R, c) => [
-    { key: 'locks', name: 'Lock staircase', shape: straight(150, { grade: 0.14 }), features: [steps({ from: 0.3, to: 0.9, count: 5, drag: 0.01 })], billboards: 1 },
-    { key: 'riverSweep', name: 'River sweep', shape: sweep({ side: R, radius: 90, degrees: 150, grade: 0.085 }), features: [boost({ at: 0.08 })], billboards: 2 },
-    { key: 'bridgeRun', name: 'Bridge slalom', shape: straight(80, { grade: 0.12 }), obstacles: [slalom({ costume: c.slalom, from: 0.25, to: 0.9, count: 4, loss: 0.15 })] },
+    { key: 'locks', name: 'Lock staircase', shape: straight(115, { grade: 0.14 }), features: [steps({ from: 0.3, to: 0.9, count: 5, drag: 0.01 })], billboards: 1 },
+    { key: 'riverSweep', name: 'River sweep', shape: sweep({ side: R, radius: 85, degrees: 120, grade: 0.09 }), billboards: 2 },
+    { key: 'bridgeRun', name: 'Bridge slalom', shape: plunge(65, { grade: 0.3, from: 0.09 }), obstacles: [slalom({ costume: c.slalom, from: 0.2, to: 0.95, count: 5, loss: 0.15 })] },
     { key: 'brakingStraight', name: 'Run to the hairpin', shape: straight(50, { grade: 0.12 }) },
     { key: 'hairpin', name: 'Hairpin', shape: hairpin({ side: L }), obstacles: [swipe({ costume: c.swipe, side: 'high' })] },
     { key: 'sBends', name: 'S-bends', shape: sBends({ first: R, radius: 75, degrees: 60, grade: 0.12 }), billboards: 1 },
-    { key: 'spin', name: 'Spiral', shape: spiral({ side: L, radius: 54, turns: 1, grade: 0.15 }) },
+    { key: 'spin', name: 'Spiral', shape: spiral({ side: L, radius: 50, turns: 1, grade: 0.16 }) },
     {
       key: 'lastStraight', name: 'Last straight', shape: straight(85, { grade: 0.15 }),
       obstacles: [parked({ costume: c.parked, at: 0.2, side: R, length: 6 }), peg({ costume: c.peg, at: 0.45, line: 'left' })], features: [rumble({ from: 0.7, to: 0.95, count: 3 })],

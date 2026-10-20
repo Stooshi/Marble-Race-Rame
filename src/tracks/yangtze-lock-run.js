@@ -22,7 +22,7 @@ module.exports = track({
   start: { landmark: 'green-peaks', scenery: ['rocks'], type: 'lock-gate', gate: 'paddle', shots: { countdown: 'front', launch: 'overhead' } },
   finish: { landmark: 'river-ferry' },
   designChanges: [
-    'Built from the clean drop and the lock staircase, the library layout made for this track: a long straight down five lock steps, a wide river sweep (a boost), a slalom under a long bridge, the hairpin, S-bends, a spiral and the run-in.',
+    'Built from the clean drop and the lock staircase, the library layout made for this track: a straight down five lock steps, a river sweep, a steep slalom drop under a long bridge, the hairpin, S-bends, a spiral and the run-in.',
     'The ship locks stand beside the staircase, the steps level with their gates (looks only).',
   ],
   opening: opening('clean-drop', {
