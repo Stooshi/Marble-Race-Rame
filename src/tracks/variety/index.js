@@ -119,6 +119,8 @@ const RIVER_HEIGHTS = {
   'falls-edge': { lip: { height: 14 }, lipBend: { height: 14 } },
   'lock-staircase': {},
 };
+// (Falls edge is proven the way Zambezi Falls Run races it: mirrored, its first bend to the right.)
+const RIVER_MIRROR = { 'falls-edge': true };
 const TOUCHDOWNS = { 'sea-crossing': { tunnelRun: { height: 0 } }, 'terrace-run': { swoops: { height: 0 } }, 'wall-dive': { tunnelRun: { height: 0 } } };
 
 const layouts = LAYOUT_KINDS.map((kind) => track({
@@ -131,7 +133,7 @@ const layouts = LAYOUT_KINDS.map((kind) => track({
   ...(PINBALL_LAYOUTS.includes(kind) && { series: 'pinball', biome: 'playfield', lighting: 'parlour' }),
   ...(ARCADE_LAYOUTS.includes(kind) && { series: 'arcade', biome: 'circuit-board', lighting: 'neon-night', billboardFrame: 'marquee' }),
   opening: opening(...[].concat(OWN_OPENING[kind] ?? 'classic')),
-  sections: layout(kind, COASTER_LAYOUTS.includes(kind) ? { dress: { brakingStraight: { height: 0 }, ...TOUCHDOWNS[kind] } } : CANYON_LAYOUTS.includes(kind) ? { dress: CANYON_HEIGHTS[kind] } : BLOCK_LAYOUTS.includes(kind) ? { dress: BLOCK_HEIGHTS[kind] ?? {} } : ATHLETICS_LAYOUTS.includes(kind) ? { dress: ATHLETICS_DRESS[kind] } : RIVER_LAYOUTS.includes(kind) ? { dress: RIVER_HEIGHTS[kind] } : {}),
+  sections: layout(kind, COASTER_LAYOUTS.includes(kind) ? { dress: { brakingStraight: { height: 0 }, ...TOUCHDOWNS[kind] } } : CANYON_LAYOUTS.includes(kind) ? { dress: CANYON_HEIGHTS[kind] } : BLOCK_LAYOUTS.includes(kind) ? { dress: BLOCK_HEIGHTS[kind] ?? {} } : ATHLETICS_LAYOUTS.includes(kind) ? { dress: ATHLETICS_DRESS[kind] } : RIVER_LAYOUTS.includes(kind) ? { dress: RIVER_HEIGHTS[kind], mirror: Boolean(RIVER_MIRROR[kind]) } : {}),
 }));
 
 module.exports = [...openings, ...layouts];
