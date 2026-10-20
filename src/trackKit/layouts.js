@@ -1336,7 +1336,7 @@ const LAYOUTS = {
       obstacles: [parked({ costume: c.parked, at: 0.2, side: L, length: 6 }), peg({ costume: c.peg, at: 0.45, line: 'right' })], features: [rumble({ from: 0.7, to: 0.95, count: 3 })],
     },
   ],
-  /** L77 Falls edge (Rivers): a sweep out to the falls, a long straight along their lip (pegs: rocks in the spray; both fly here), the plunge into the gorge (a waterfall), a slalom straight down the gorge, the hairpin, a long sweep upstream (a boost), a spiral and a parked piece and a peg at the run-in. */
+  /** L77 Falls edge (Rivers): a sweep out to the falls, a long straight along their lip (pegs: rocks in the spray; both fly here), the plunge into the gorge (a waterfall), a slalom straight down the gorge, the hairpin, a long sweep upstream, a spiral and a parked piece and a peg at the run-in. */
   'falls-edge': (L, R, c) => [
     { key: 'lipBend', name: 'Sweep to the lip', shape: sweep({ side: L, radius: 90, degrees: 100, grade: 0.1 }), billboards: 1 },
     {
@@ -1347,7 +1347,7 @@ const LAYOUTS = {
     { key: 'gorge', name: 'Gorge slalom', shape: straight(70, { grade: 0.12 }), obstacles: [slalom({ costume: c.slalom, from: 0.3, to: 0.85, count: 3, loss: 0.15 })] },
     { key: 'brakingStraight', name: 'Run to the hairpin', shape: straight(50, { grade: 0.12 }) },
     { key: 'hairpin', name: 'Hairpin', shape: hairpin({ side: R }), obstacles: [swipe({ costume: c.swipe, side: 'high' })] },
-    { key: 'upstream', name: 'Upstream sweep', shape: sweep({ side: L, radius: 85, degrees: 150, grade: 0.09 }), features: [boost({ at: 0.08 })], billboards: 2 },
+    { key: 'upstream', name: 'Upstream sweep', shape: sweep({ side: L, radius: 85, degrees: 150, grade: 0.09 }), billboards: 2 },
     { key: 'spin', name: 'Spiral', shape: spiral({ side: R, radius: 54, turns: 1, grade: 0.15 }) },
     {
       key: 'lastStraight', name: 'Last straight', shape: straight(80, { grade: 0.15 }),

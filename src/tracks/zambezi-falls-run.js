@@ -22,7 +22,7 @@ module.exports = track({
   start: { landmark: 'hippo-pool', scenery: ['savannah'], type: 'cliff', gate: 'barrier', shots: { countdown: 'chase', launch: 'look-back' } },
   finish: { landmark: 'hippo-pool' },
   designChanges: [
-    'Built from the classic opening and the falls edge, the library layout made for this track: a sweep out to the falls, a long straight along their lip (pegs: rocks in the spray), the falls (a waterfall), a slalom down the gorge, the hairpin, a long sweep upstream (a boost), a spiral and the run-in.',
+    'Built from the classic opening and the falls edge, the library layout made for this track: a sweep out to the falls, a long straight along their lip (pegs: rocks in the spray), the falls (a waterfall), a slalom down the gorge, the hairpin, a long sweep upstream, a spiral and the run-in.',
     'The steel arch bridge crosses the gorge high over the slalom (looks only).',
   ],
   opening: opening('classic', {
