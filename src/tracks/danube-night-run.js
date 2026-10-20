@@ -19,7 +19,7 @@ module.exports = track({
   river: { palette: 'danube', side: 'left', width: 110, banks: 'quay' },
   coaster: { colours: { support: '#5a5e66', rail: '#e8e2cc', tie: '#2f3238' } },
   signature: 'The chain bridge slalom',
-  start: { type: 'pier', gate: 'barrier', shots: { countdown: 'side', launch: 'low-chase' } },
+  start: { type: 'pier', gate: 'trapdoor', shots: { countdown: 'side', launch: 'low-chase' } },
   finish: { landmark: 'domed-hall' },
   designChanges: [
     'Built from the tunnel launch (out from under the quay) and the bridge slalom, the library layout made for this track: a quay straight, a short climb, a slalom between a chain bridge\'s piers, a sweep out over the river, a drop, the hairpin, a spiral round an island, S-bends along the far bank and the run-in.',
