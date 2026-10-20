@@ -21,13 +21,13 @@ module.exports = track({
   start: { landmark: 'wat-roofs', scenery: ['river-palms'], type: 'river-boat', gate: 'stalls', shots: { countdown: 'front', launch: 'high-behind' } },
   finish: { landmark: 'longtail-boat' },
   designChanges: [
-    'Built from the crest start (off the river boat\'s deck, over its gangway) and the market maze, the library layout made for this track: S-bends along the bank, a long slalom low over the water among the boats, a peg under a pier, a sweep along the market bank, the hairpin, a spin, pegs past a line of floats and the run-in.',
+    'Built from the peg drop (down from the river boat\'s deck between mooring poles) and the market maze, the library layout made for this track: a long slalom low over the water among the boats, S-bends along the bank, up a pier ramp and off the pier, the hairpin, a sweep along the market bank, a spin, a peg under a pier, pegs past a line of floats and the run-in.',
     'The market boats float on the river beside the slalom; the slalom poles are the boats\' mooring poles (looks only).',
   ],
-  opening: opening('crest-start', {
-    costumes: { block: 'wooden-crate', slalom: 'river-stake' },
-    names: { plunge: 'Off the boat', climb: 'Over the gangway', drop: 'Down to the bank' },
-    dress: { plunge: { height: 0, river: 'right' }, climb: { height: 0, river: 'right' }, drop: { height: 0, river: 'right' } },
+  opening: opening('peg-drop', {
+    costumes: { peg: 'mooring-pole' },
+    names: { plunge: 'Down from the boat' },
+    dress: { plunge: { height: 0, river: 'right' } },
   }),
   sections: layout('market-maze', {
     mirror: true,
@@ -40,6 +40,8 @@ module.exports = track({
       bankSweep: { name: 'Market bank', height: 0, river: 'right', scenery: ['market-stalls', 'river-palms'] },
       brakingStraight: { name: 'Run to the hairpin', height: 0, river: 'right' },
       hairpin: { name: 'Fisherman hairpin', height: 0, river: 'right' },
+      pierRamp: { name: 'Up the pier ramp', height: 0, river: 'left' },
+      pierDrop: { name: 'Off the pier', height: 0, river: 'left' },
       pontoon: { name: 'Over the floats', height: 0, river: 'right', landmarks: [{ name: 'pontoon-floats', at: 0.6, river: true, distance: 10 }] },
       lastStraight: { name: 'Run to the temple', height: 0, river: 'right', scenery: ['river-palms'], landmarks: [{ name: 'wat-roofs', at: 0.4, side: 'left', distance: 26 }] },
     },

@@ -148,7 +148,7 @@ module.exports = track({
   | `anchor-arches` (track and field) | sBends, crest, arches (a drop), sweep, spin, brakingStraight, hairpin, sweep2, lastStraight (150 m) |
   | `golden-lap` (track and field) | sweep, drop, pegStraight, brakingStraight, hairpin, spin, goldenSweep, sBends, lastStraight |
   | `bridge-slalom` (rivers) | quay (two pegs), pillars (a slalom under a chain bridge), rise (a short climb), flyOut, drop, brakingStraight, hairpin, island (a spiral), farBank (S-bends), lastStraight |
-  | `market-maze` (rivers) | bankBends (S-bends), boats (a slalom among the market boats), underPier, bankSweep, brakingStraight, hairpin, spin, pontoon (two pegs), lastStraight |
+  | `market-maze` (rivers) | boats (a slalom among the market boats), bankBends (S-bends), pierRamp (a short climb), pierDrop, brakingStraight, hairpin, bankSweep, spin, underPier, pontoon (two pegs), lastStraight |
   | `steamer-pass` (rivers) | levee, steamer (a tunnel through a paddle steamer; a boost), bayou, drop, brakingStraight, hairpin, town (S-bends), slalomDrop, landing, lastStraight |
   | `falls-edge` (rivers) | lipBend, lip (pegs), falls (a waterfall), gorge (a slalom), spin, brakingStraight, hairpin, upstream (S-bends), lastStraight |
   | `lock-staircase` (rivers) | locks (five steps), riverSweep, bridgeRun (a steep slalom drop), brakingStraight, hairpin, sBends, spin, lastStraight |
