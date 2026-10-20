@@ -12,6 +12,7 @@ import StatsDisplay from '../components/StatsDisplay';
 import TrackSelector from '../components/TrackSelector';
 import { Empty, ErrorMessage, Spinner } from '../components/Status';
 import { formatNumber, formatTime, ordinal, timeAgo } from '../utils/format';
+import { handle, plainName } from '../shared/playerName';
 
 /**
  * The signed-in player's home base (/dashboard) and public player profiles
@@ -44,10 +45,10 @@ export default function Dashboard() {
   return (
     <div className="page dashboard">
       <header className="profile-header card">
-        <div className="avatar" aria-hidden="true">{(who.display_name || who.username).slice(0, 1).toUpperCase()}</div>
+        <div className="avatar" aria-hidden="true">{plainName(who.username, who.display_name).slice(0, 1).toUpperCase()}</div>
         <div className="profile-header__text">
-          <h1>{who.display_name || who.username}</h1>
-          <p className="muted">@{who.username} · racing since {new Date(who.created_at).toLocaleDateString()}</p>
+          <h1>{plainName(who.username, who.display_name)}</h1>
+          <p className="muted">{handle(who.username)} · racing since {new Date(who.created_at).toLocaleDateString()}</p>
           {badges.length > 0 && <p className="profile-badges">{badges.map((b) => <span key={b.key} className="badge badge--season" title={`${b.name}, #${b.rank}`}>★ {b.name}{b.rank ? ` · #${b.rank}` : ''}</span>)}</p>}
         </div>
         {isSelf && (

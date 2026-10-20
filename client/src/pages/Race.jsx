@@ -16,6 +16,7 @@ import { formatTime } from '../utils/format';
 import StartLights from '../components/StartLights';
 import { play as playSound, raceCountdown, raceEnd, raceGo } from '../sound/engine';
 import { track, trackingActive } from '../site/consent/tracking';
+import { plainName } from '../shared/playerName';
 
 const obstacleName = (o) => o?.replace(/_/g, ' ');
 
@@ -268,7 +269,7 @@ function Lobby({ details, onChange }) {
             {entries.map((e) => (
               <li key={e.id} className={e.user_id === user?.id ? 'is-me' : undefined}>
                 <MarbleBall marble={e} size={24} />
-                <span><strong>{e.marble_name}</strong><small>{e.username ?? <CpuTag />}</small></span>
+                <span><strong>{e.marble_name}</strong><small>{e.username ? plainName(e.username) : <CpuTag />}</small></span>
               </li>
             ))}
             {Array.from({ length: Math.max(0, slots) }, (_, i) => (

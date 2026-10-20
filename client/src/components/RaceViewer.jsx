@@ -9,6 +9,7 @@ import FinishShow, { useFinishShow } from './FinishShow';
 import { raceCeremony } from '../sound/engine';
 import { CEREMONY_PHASES } from '../utils/finishShow';
 import SkipToResults from './SkipToResults';
+import { plainName } from '../shared/playerName';
 
 /**
  * Renders a race: the track on a canvas with marbles animated along it, plus
@@ -158,7 +159,7 @@ export default function RaceViewer({
                   <MarbleBall marble={e.marble} size={18} />
                   <span className="standings__name">
                     {e.marble.name}
-                    <small>{e.user ? e.user.username : <CpuTag />}</small>
+                    <small>{e.user ? plainName(e.user.username) : <CpuTag />}</small>
                   </span>
                   <span className="standings__bar" title={`${Math.round(p * 100)}%`}>
                     <span style={{ width: `${p * 100}%` }} />

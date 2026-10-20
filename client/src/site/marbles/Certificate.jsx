@@ -1,6 +1,7 @@
 import { DESIGN, ITEM, collectionOf, passNumber } from '../../shared/marbles';
 import { retiredLine } from './useCollection';
 import MarbleBadge from './MarbleBadge';
+import { handle } from '../../shared/playerName';
 
 const DATE = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
 
@@ -37,7 +38,7 @@ export default function Certificate({ cert }) {
         <span className="ms-swatches">{shade.colours.map((c) => <i key={c.name} style={{ background: c.hex }} />)}{shade.colours.map((c) => c.name).join(' · ')}</span>
       </div>
       <div className="ms-kv">
-        <span>First owner</span><span>@{cert.firstOwner ?? '[owner]'}</span>
+        <span>First owner</span><span>{cert.firstOwner ? handle(cert.firstOwner) : '@[owner]'}</span>
         <span>Made</span><span>{cert.made ? DATE.format(new Date(cert.made)) : '[date]'}</span>
         <span>Races</span><span>{cert.races} · {cert.wins} {cert.wins === 1 ? 'win' : 'wins'}</span>
         <span>Marble ID</span><span><span className="ms-id ms-id--big">#{item.id}</span></span>

@@ -1,6 +1,6 @@
 # 7. Known gaps and roadmap
 
-*Last updated 19 Oct 2026.* What isn't built, isn't finished, or is a known weakness. The launch target is **1 December 2026** (web, iPhone and Android). When something here is fixed, remove it and note the change in the [decisions log](06-decisions.md) if it was a decision.
+*Last updated 20 Oct 2026.* What isn't built, isn't finished, or is a known weakness. The launch target is **1 December 2026** (web, iPhone and Android). When something here is fixed, remove it and note the change in the [decisions log](06-decisions.md) if it was a decision.
 
 ## Must fix before launch
 
@@ -37,10 +37,11 @@
 - **Race sound effects** (rolling, clacks), on hold.
 - **Support: a confirmation email to the player** ("we got your message, reference S-…") and canned replies. The form shows the reference on screen today.
 - **Analytics in the apps.** None. The website has Google Analytics 4 and the Meta Pixel, only with consent and only once `VITE_GA4_ID` / `VITE_META_PIXEL_ID` are set in Vercel. Adding anything to the apps needs the store privacy forms updated first.
-- **Website pre-rendering is per build.** A track switched on gets its `/tracks/<slug>` page and sitemap entry at the next website build (a redeploy in Vercel, or any push). Unknown addresses still answer 200 with the app (a "soft 404" to Google; the page says "noindex").
+- **Website pre-rendering is per build.** A track switched on gets its `/tracks/<slug>` page and sitemap entry at the next website build (a redeploy in Vercel, or any push). The holiday tracks join the website at the rebuild the GitHub Actions workflow "Season start: rebuild the website" starts at 1 Dec 00:05 (runbook). Unknown addresses answer a real HTTP 404 (since 20 Oct).
 
 ## Technical weaknesses
 
+- **At most 4 players with only the free starters in one race.** A race holds each catalogue marble once (`race_entries_unique_marble`), and the 4 free starters are shared by every player, so a 5th player who owns no marble of their own (every new player and guest) can't join that race or friend room: "Every marble you can race with is taken in this race by other players" (since 20 Oct; before, "All your marbles are already in this race"). A friend room of 5+ new players fails. Needs Moses's decision (e.g. let starters enter a race more than once, each with its own lane and stats copy); found 20 Oct, test `test/rooms.test.js` shows 4 of 6 guests get in.
 - **Single server instance.** Race timers live in memory. Scaling out needs the socket.io Redis adapter and one owner per race (see "Scaling notes" in the root README). The long-term ambition is very large scale (hundreds of thousands of races), which will need a redesign of race hosting.
 - **No monitoring or alerts.** There are no uptime checks, error tracking or paging. Suggested: an uptime monitor on `/health`, and log alerts for `FAILED, rolled back` and `[stripe]` errors.
 - **The admin lockout counter is in memory** (5 wrong codes give a 15-minute pause). A restart clears it, and it isn't shared if there is ever more than one instance.

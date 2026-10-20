@@ -1,6 +1,6 @@
 # 5. Operations runbook
 
-*Last updated 19 Oct 2026.* How to deploy, change data, roll back, back up, and fix the usual problems. Items marked **[check]** should be confirmed the first time they are done.
+*Last updated 20 Oct 2026.* How to deploy, change data, roll back, back up, and fix the usual problems. Items marked **[check]** should be confirmed the first time they are done.
 
 ## Deploying
 
@@ -197,12 +197,24 @@ To turn email off again, remove `BREVO_API_KEY` and restart.
 - **App Store / Google Play buttons on the website:** put each store page's https link in `client/src/shared/storeLinks.json` and push. An empty link hides its button. The apps never show them.
 - **iPhone silent switch:** the app uses an "ambient" audio session, so the switch mutes the game's music and sounds and the player's own music keeps playing. Check it on a real iPhone after each app build (switch on and off during a race, and with Spotify or Apple Music playing).
 
+## The season-start website rebuild (1 Dec 2026, automatic)
+
+The website learns of the holiday tracks only at a build (their pages, the sitemap, "90+ tracks"); the server shows them from 1 Dec 00:00 by date. The GitHub Actions workflow **"Season start: rebuild the website"** (`.github/workflows/season-start-rebuild.yml`) starts that build at **1 Dec 2026 00:05 Swedish time** (spares at 00:35 and 01:15, which do nothing once the holiday tracks are on the site), waits for it, and checks the sitemap has `/tracks/tromso-aurora-grand-prix`. If anything fails, the run fails and GitHub emails the repository's owner; then press Redeploy in Vercel by hand. Nobody has to be awake for it.
+
+It calls a **Vercel Deploy Hook**: a secret URL that rebuilds Main. The URL is kept only in GitHub's secret `VERCEL_DEPLOY_HOOK_SEASON`, never in code, chat, docs or logs. Set-up (once):
+1. **Vercel:** the project `marble-race-rame-client` → **Settings** → **Git** → **Deploy Hooks**. Name: `season-start`, branch: `Main` → **Create Hook**. Copy the URL it shows (Vercel shows it again on that page).
+2. **GitHub:** the repository `Stooshi/Marble-Race-Rame` → **Settings** → **Secrets and variables** → **Actions** → **New repository secret**. Name `VERCEL_DEPLOY_HOOK_SEASON`, value: the URL → **Add secret**.
+3. **Test it once:** **Actions** → "Season start: rebuild the website" → **Run workflow** (branch `Main`, leave the box unticked) → green within a minute; Vercel → **Deployments** shows a new production build "Deploy Hook: season-start", live in a few minutes. Actions must be allowed (Settings → Actions → General → "Allow all actions"; and scheduled runs stop on a repository with no activity for 60 days: any push keeps it alive).
+4. **On 1 Dec, morning:** Actions shows the 00:05 run green; `marblespins.com/tracks` lists the holiday tracks.
+
+A hook that leaks only lets someone rebuild the website (no code or data). Replace it then: delete it in Vercel, make a new one, update the secret.
+
 ## Checking the website's routing before a push
 
 Any change to `client/vercel.json`, the build, or the pre-rendering: build exactly as Vercel does and click through.
 1. In `client/`: `npx vercel build --prod` (needs `client/.vercel/project.json`: `npx vercel link` with your Vercel login, or a local one with `"settings": {"framework": "vite", "outputDirectory": "dist"}`; set `VITE_API_URL` in `.vercel/.env.production.local`).
 2. `node scripts/serve-vercel-output.mjs . 4300` serves that output with Vercel's own routing rules.
-3. Open, and refresh, at least: `/`, `/help`, a `/help/<question>`, `/tracks/<slug>`, `/cookies`, `/play/track`, a race (`/race/<id>`), `/preview/physics?track=spawn-point`, `/preview/banners`, `/admin`, and a made-up address (it must show the app's "Lost the marble" page, not "404: NOT_FOUND").
+3. Open, and refresh, at least: `/`, `/help`, a `/help/<question>`, `/tracks/<slug>`, `/cookies`, `/play/track`, a race (`/race/<id>`), `/preview/physics?track=spawn-point`, `/preview/banners`, `/admin`, and a made-up address (it must show the app's "Lost the marble" page with HTTP 404, not "404: NOT_FOUND"; `curl -s -o /dev/null -w '%{http_code}' localhost:4300/made-up` says 404, and every in-game address 200).
 
 ## Android release (Google Play)
 
@@ -305,7 +317,7 @@ The pass `holiday-pass-2026` ($9.99) is bought with real money only. Its season,
 - **"Remind me when sales open" (collected, not sent yet):** how many have asked, in Railway → Postgres → Data → Query: `SELECT count(*) FILTER (WHERE user_id IS NOT NULL) AS players, count(*) FILTER (WHERE email_wanted) AS by_email, count(*) FILTER (WHERE email_wanted AND confirmed_at IS NOT NULL) AS confirmed FROM pass_reminders WHERE season_key = 'holiday-2026' AND cancelled_at IS NULL;`. **Sending** (built, off): set `BREVO_API_KEY` and `PASS_REMINDERS_SENDING=on` on Railway and redeploy; the log says `[pass-reminders] sending is ON`, then `[pass-reminders] sent N confirmation(s), M reminder(s)` as they go (every 5 minutes, 50 at most a run). Stop at once: remove `PASS_REMINDERS_SENDING` (or set `off`) and redeploy. Brevo's free plan sends 300 a day: if more than about 250 have asked, move to a paid plan before 28 Nov. Test first with your own Gmail and Outlook (a Swedish browser for the Swedish emails): ask on /pass, the confirmation arrives within 5 minutes, try Confirm, Cancel and the mail app's Unsubscribe. A person who asks to be taken off: `UPDATE pass_reminders SET cancelled_at = now() WHERE lower(email) = lower('<address>') AND cancelled_at IS NULL; SELECT 1;` (the hourly job then deletes it).
 - **Testing before the sale starts (App Review, our testers):** on Railway set `PASS_TESTERS` to the tester accounts' emails, comma-separated (our testers, and the demo account given to App Review in App Store Connect's review notes and Google Play's app access). Those accounts see the pass on sale early, marked as a test purchase. Before the sale starts (28 Nov) the server accepts only test purchases: Apple sandbox and TestFlight, Google Play licence testers (Play Console → Settings → License testing), and Stripe in test mode by a tester. Real purchases are refused until 28 Nov 00:00 Swedish time. Empty the variable after 28 Nov if you like; it changes nothing once the sale is open.
 - **A second pass paid for** (bought on the website and in the app at the same time): the audit log shows `pass-duplicate` for that player. Refund the second payment from the back office.
-- **Before the season starts** nobody can race the holiday tracks, even when switched on, and they are not in the track list (the picker, the website); at 1 Dec 00:00 Swedish time they appear and open by themselves. Switch them on ahead of time with data update `2027-03-31-switch-on-holiday-tracks` (any day before 30 Nov 23:00 UTC; best well before). After 1 Dec 00:00, trigger one website build (any push to Main, or Vercel → Redeploy) so its pre-rendered track pages and track count include them; from 7 Jan 2027 23:59 Swedish time they are free for everyone. Nothing has to be deployed on either date.
+- **Before the season starts** nobody can race the holiday tracks, even when switched on, and they are not in the track list (the picker, the website); at 1 Dec 00:00 Swedish time they appear and open by themselves. Switch them on ahead of time with data update `2027-03-31-switch-on-holiday-tracks` (any day before 30 Nov 23:00 UTC; best well before). The website rebuilds itself at 00:05 so its track pages and count include them ("The season-start website rebuild" above); from 7 Jan 2027 23:59 Swedish time they are free for everyone. Nothing has to be deployed on either date.
 - **The season marble** (Winter Solstice) is given by the server with each pass, numbered, and taken back with a full refund; nothing to do. Its hourly job also gives it to any pass holder still without one (for example passes from before the deploy that built it).
 - **The holiday tracks** are added switched off with `season_key` set: a track file with `season: 'holiday-2026'` makes `node scripts/physics-track-sql.js <slug> --add-hidden "…"` write `season_key` into its data update. Store texts for the products: project doc `claude/store-submission-drafts.md`, section 7.
 

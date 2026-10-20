@@ -82,6 +82,19 @@ test('a room from start to the next race, on a real database', { skip: !DB }, as
     assert.equal((await call(`/rooms/${code}/close`, { method: 'POST', token: host })).body.room.status, 'closed');
     assert.equal((await call(`/rooms/${code}/join`, { method: 'POST', token: friend })).status, 410);
     assert.equal((await call('/rooms/ABCDEF')).status, 404);
+
+    // No free marble (pre-launch item 18): the message says why and what to do.
+    const guests = [];
+    for (let i = 0; i < 6; i += 1) guests.push((await call('/auth/guest', { method: 'POST' })).body.token);
+    const { code: code6 } = (await call('/rooms', { method: 'POST', body: {}, token: guests[0] })).body.room;
+    const results = [];
+    for (const g of guests.slice(1)) results.push(await call(`/rooms/${code6}/join`, { method: 'POST', token: g }));
+    const refused = results.filter((r) => r.status === 409);
+    for (const r of refused) {
+      assert.equal(r.body.details?.code, 'no_free_marble');
+      assert.match(r.body.error, /taken in this race by other players/);
+    }
+    console.log(`# room of 6 guests: ${results.filter((r) => r.status === 200).length + 1} in, ${refused.length} refused`);
   } finally {
     server.close();
     await db.pool?.end?.();

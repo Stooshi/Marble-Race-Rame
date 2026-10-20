@@ -9,6 +9,7 @@ import Leaderboard from '../components/Leaderboard';
 import MarbleBall from '../components/MarbleBall';
 import RaceList from '../components/RaceList';
 import { ErrorMessage, Spinner } from '../components/Status';
+import { plainName } from '../shared/playerName';
 
 const HERO_MARBLES = [
   { color_primary: '#E0115F' }, { color_primary: '#0F52BA' }, { color_primary: '#50C878' },
@@ -42,7 +43,7 @@ export default function Home() {
               <button type="button" className="btn btn--primary btn--lg" onClick={() => navigate('/dashboard')}>
                 Start a race
               </button>
-              <span className="muted">Welcome back, {user.display_name || user.username}.</span>
+              <span className="muted">Welcome back, {plainName(user.username, user.display_name)}.</span>
             </div>
           ) : (
             <ol className="steps">

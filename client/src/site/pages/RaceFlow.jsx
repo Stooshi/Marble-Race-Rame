@@ -6,6 +6,7 @@ import { useAsync } from '../../hooks/useAsync';
 import { ITEM, previewShowcase } from '../../shared/marbles';
 import MarbleBadge from '../marbles/MarbleBadge';
 import TrackBanner, { SERIES_PIC } from '../TrackBanner';
+import { handle } from '../../shared/playerName';
 
 /**
  * The race flow: 1 Friends → 2 Track → 3 Shooter → 4 Starting line.
@@ -143,7 +144,7 @@ export function FriendsStep() {
             <div key={f.userId} className="ms-row" style={{ justifyContent: 'space-between' }}>
               <span className="ms-row" style={{ flexWrap: 'nowrap', gap: 10 }}>
                 {f.shooter?.item ? <MarbleBadge slug={f.shooter.item} size={34} still /> : <MarbleBadge marble={f.shooter?.original} size={34} still />}
-                <span>@{f.username}</span>
+                <span>{handle(f.username)}</span>
               </span>
 
             </div>
@@ -170,6 +171,7 @@ export function TrackStep() {
   const [series, setSeries] = useState(() => new Set());
   const [land, setLand] = useState(() => new Set());
   const [sort, setSort] = useState('new');
+  const [filtersOpen, setFiltersOpen] = useState(false); // (phones: folded behind one button, so the tracks come first)
   const best = useMemo(() => new Map((records?.records ?? []).map((r) => [r.slug, r])), [records]);
 
   const count = (key, val) => tracks.filter((t) => (key === 'series' ? t.series : LANDSCAPE[t.biome]) === val).length;
@@ -199,11 +201,15 @@ export function TrackStep() {
         </div>
       </div>
       <div className="ms-two" style={{ alignItems: 'start' }}>
-        <aside aria-label="Filters" className="ms-card ms-filters" style={{ flex: '0 1 230px' }}>
+        <button type="button" className="ms-btn ms-btn--sm ms-filters-toggle" aria-expanded={filtersOpen} aria-controls="ms-track-filters" onClick={() => setFiltersOpen((v) => !v)}>
+          Filters{series.size + land.size ? ` (${series.size + land.size})` : ''} {filtersOpen ? '▴' : '▾'}
+        </button>
+        <aside id="ms-track-filters" aria-label="Filters" className={`ms-card ms-filters${filtersOpen ? ' ms-filters--open' : ''}`} style={{ flex: '0 1 230px' }}>
           <span className="ms-eyebrow" style={{ color: 'var(--ms-muted)' }}>Series</span>
           {seriesList.map((s) => <label key={s} className="ms-check"><input type="checkbox" checked={series.has(s)} onChange={() => toggle(series, setSeries, s)} /><span>{s}</span><span className="ms-grow" /><span>{count('series', s)}</span></label>)}
           <span className="ms-eyebrow" style={{ color: 'var(--ms-muted)', marginTop: 8 }}>Landscape</span>
           {lands.map((l) => <label key={l} className="ms-check"><input type="checkbox" checked={land.has(l)} onChange={() => toggle(land, setLand, l)} /><span>{l}</span><span className="ms-grow" /><span>{count('land', l)}</span></label>)}
+          {series.size + land.size > 0 && <button type="button" className="ms-btn ms-btn--sm" onClick={() => { setSeries(new Set()); setLand(new Set()); }}>Clear filters</button>}
         </aside>
         <section className="ms-cards" style={{ flex: '1 1 480px', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 220px), 1fr))' }} aria-label="Tracks">
           {shown.map((t) => {
@@ -356,7 +362,7 @@ export function StartStep() {
           <h1 className="ms-h2" style={{ fontFamily: 'var(--ms-cond)', fontWeight: 800 }}>The starting line</h1>
           <div className="ms-row" style={{ flexWrap: 'nowrap' }}>
             {shooter && (shooter.slug ? <MarbleBadge slug={shooter.slug} size={44} /> : <MarbleBadge marble={shooter.marble} size={44} />)}
-            <div style={{ display: 'grid', flex: 1, minWidth: 0 }}><b>@{user?.username ?? '…'} (host)</b><span className="ms-note">{shooter?.name ?? 'Picking a Shooter…'}</span></div>
+            <div style={{ display: 'grid', flex: 1, minWidth: 0 }}><b>{user?.username ? handle(user.username) : '…'} (host)</b><span className="ms-note">{shooter?.name ?? 'Picking a Shooter…'}</span></div>
             <span style={{ color: 'var(--ms-green)', fontWeight: 700 }}>✓ Ready</span>
           </div>
           <span className="ms-note">CPU players fill every other place. Racing with friends? <Link to={`/play/friends${track?.slug ? `?track=${encodeURIComponent(track.slug)}` : ''}`}>Make a friend room</Link> and send them the link.</span>

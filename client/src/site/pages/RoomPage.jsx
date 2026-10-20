@@ -156,7 +156,12 @@ export default function RoomPage() {
         <span className="ms-id ms-id--big" aria-label={`Room code ${code.split('').join(' ')}`}>{code}</span>
       </div>
       {!open && <div className="ms-msg ms-msg--bad">This room has closed. <Link to="/play/friends">Make a new room</Link></div>}
-      {error && <div className="ms-msg ms-msg--bad" role="alert">{error.message}</div>}
+      {error && (
+        <div className="ms-msg ms-msg--bad" role="alert">
+          {error.message}
+          {error.details?.code === 'no_free_marble' && <> <Link to="/play/start?quick=1">Quick race instead</Link> · <Link to="/shop">Shop</Link></>}
+        </div>
+      )}
 
       <div className="ms-two" style={{ alignItems: 'start' }}>
         <section className="ms-card" style={{ display: 'grid', gap: 14, flex: '1 1 420px' }} aria-labelledby="players-h">

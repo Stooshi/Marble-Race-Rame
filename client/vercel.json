@@ -1,7 +1,11 @@
 {
   "rewrites": [
     {
-      "source": "/((?!assets/).*)",
+      "source": "/(home|lobby|shop|collection|certificate|checkout|pass|bag|purchases|settings|unsubscribe|forgot-password|reset-password|scores|signup|legal|help|cookies|tracks|dashboard|profile|race|results|play|r|preview|admin)",
+      "destination": "/app-shell"
+    },
+    {
+      "source": "/(home|lobby|shop|collection|certificate|checkout|pass|bag|purchases|settings|unsubscribe|forgot-password|reset-password|scores|signup|legal|help|cookies|tracks|dashboard|profile|race|results|play|r|preview|admin)/:rest*",
       "destination": "/app-shell"
     }
   ],

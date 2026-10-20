@@ -460,12 +460,19 @@ test('"Remind me when sales open": collected before the sale only (players in th
     // Double opt-in: the confirmation email's link confirms it; unconfirmed 7 days after that email,
     // a visitor's reminder is deleted and a player's keeps only the in-game one. Nothing expires
     // before a confirmation email has gone out.
-    assert.equal(await reminders.purge(db, new Date(Date.now() + 4 * 86400_000)), 0);
+    // (purge() runs over every season: on a reused test database, count only this season's rows)
+    const rowsOfSeason = async () => (await db.query('SELECT count(*)::int AS n, count(*) FILTER (WHERE email_wanted)::int AS e FROM pass_reminders WHERE season_key = $1', [key])).rows[0];
+    const before = await rowsOfSeason();
+    await reminders.purge(db, new Date(Date.now() + 4 * 86400_000));
+    assert.deepEqual(await rowsOfSeason(), before);
     assert.deepEqual((await call('/seasons/reminders/confirm', { method: 'POST', body: { token: theirs[0].token } })).body, { confirmed: true });
     assert.deepEqual(await reminders.counts(db, key), { players: 1, byEmail: 2, confirmed: 1 });
     await visit({ email: `unconf_${run}@test.invalid`, consent: true });
     await db.query(`UPDATE pass_reminders SET confirm_sent_at = now() - interval '8 days' WHERE season_key = $1 AND confirmed_at IS NULL`, [key]);
-    assert.equal(await reminders.purge(db), 2); // (the unconfirmed visitor deleted; the player's email dropped)
+    const pre = await rowsOfSeason();
+    assert.ok(await reminders.purge(db) >= 2);
+    const post = await rowsOfSeason(); // (the unconfirmed visitor deleted; the player's email dropped)
+    assert.deepEqual([pre.n - post.n, pre.e - post.e], [1, 2]);
     assert.equal((await db.query('SELECT 1 FROM pass_reminders WHERE email = $1', [`unconf_${run}@test.invalid`])).rows.length, 0);
     assert.deepEqual((await view(me.token)).reminder, { email: false, address: null, confirmed: null });
     assert.deepEqual(await reminders.counts(db, key), { players: 1, byEmail: 1, confirmed: 1 });

@@ -92,6 +92,10 @@ async function main() {
 
   const template = readFileSync(join(dist, 'index.html'), 'utf8');
   writeFileSync(join(dist, 'app-shell.html'), template); // (the plain page, for every other address)
+  // Any address that isn't one of the site's pages: Vercel answers it with 404.html and HTTP 404 (a real
+  // 404, not a "soft" one: client/vercel.json rewrites only the site's own paths to the app shell). It is
+  // the same app, so it draws "Lost the marble"; kept out of search results.
+  writeFileSync(join(dist, '404.html'), page(template, { ...metaFor('/'), title: 'Page not found · Marble Spins', noindex: true }, '', '/__404__'));
   const tracks = await liveTracks();
   const data = { tracks: { tracks } };
   const sections = buildFaq({ tracks });

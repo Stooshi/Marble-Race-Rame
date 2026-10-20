@@ -8,6 +8,7 @@
 |---|---|
 | Change how much a race pays, the daily goal, starting coins or bag discounts | `client/src/shared/economy.json` (read by server and website) |
 | Start a scoreboard season | A row in the `seasons` table (a data update: name, `starts_at`, `ends_at`, `badge_top`); the board, its end and the badges follow its dates. Only when the table has no season on or ended: `client/src/shared/economy.json` → `season` (`number`, `startsAt`, `endsAt`, `badgeTop`) |
+| Change how a player's name shows to others ("@name", a guest as "Guest 0DA1") | `client/src/shared/playerName.js` (`handle()`, `plainName()`); friend rooms: `src/routes/rooms.js` `nameOf` |
 | Change the social media links | `client/src/shared/socialLinks.json` (icons from the `simple-icons` package, CC0) |
 | Show the App Store / Google Play buttons on the website | `client/src/shared/storeLinks.json` (`appStore`, `googlePlay`: the store page's https link; empty hides the button). Never shown inside the apps |
 | Change marble prices, designs, shades or the collection | `client/src/shared/marbles/catalog.json`, then `client/src/shared/marbles/badge.js` for how a design looks |
@@ -55,6 +56,8 @@
 | `reports/` | Committed output of the track reports (one folder per track: `index.html`, JSON, screenshots) |
 | `music-inbox/` | Moses's original audio files. `scripts/convert-audio.sh` turns them into `client/public/audio/` |
 | `vercel.json` | (root) Vercel settings for the website project |
+| `.github/workflows/season-start-rebuild.yml` | "Season start: rebuild the website": at 1 Dec 2026 00:05 Swedish time (and from its "Run workflow" button) it POSTs the Vercel Deploy Hook kept in the Actions secret `VERCEL_DEPLOY_HOOK_SEASON`, then checks the sitemap has a holiday track (runbook, "The season-start website rebuild") |
+
 
 ## The server: `src/`
 
@@ -232,11 +235,11 @@ Defined in `src/sockets/index.js`. The client may send a JWT in `auth.token`; an
 | Path | What it is |
 |---|---|
 | `package.json` | `npm run dev`, `npm run build` (`vite build`, then `scripts/prerender.mjs`; output `dist/`, which Vercel serves), `npm test` (vitest, about 8 minutes), `npm run app:sync` |
-| `vite.config.js`, `vercel.json` | Build settings. `vercel.json`: `cleanUrls` (so `/help` serves the pre-rendered `help.html`), every other route is rewritten to `/app-shell` (written without `.html`: with clean URLs that file is served at `/app-shell`, and a rewrite to `/app-shell.html` finds nothing, which made every in-game address answer 404 on 16 Oct 2026; a test checks), `noindex` headers on `/admin` |
+| `vite.config.js`, `vercel.json` | Build settings. `vercel.json`: `cleanUrls` (so `/help` serves the pre-rendered `help.html`), the site's own routes (the first part of every path in `App.jsx`: `/play/…`, `/race/…`, `/admin/…`, …) are rewritten to `/app-shell` (keep the list in step when a route with a new first part is added, or it answers 404) and any other address gets `404.html` with HTTP 404 (written without `.html`: with clean URLs that file is served at `/app-shell`, and a rewrite to `/app-shell.html` finds nothing, which made every in-game address answer 404 on 16 Oct 2026; a test checks), `noindex` headers on `/admin` |
 | `.vercelignore` | Keeps the app projects out of Vercel uploads |
 | `index.html` | The single page: meta, canonical, Open Graph and share-picture tags |
 | `scripts/serve-vercel-output.mjs` | Serves a local `npx vercel build` output with Vercel's own routing (`.vercel/output/config.json`), to check routes before pushing (see the runbook) |
-| `scripts/prerender.mjs` | Build step 2: renders the public pages to HTML (through `src/prerender/entry.jsx`, the real app with `StaticRouter`), writes `dist/<path>.html`, `dist/app-shell.html` and `dist/sitemap.xml`. The page's copy is wrapped in `<div data-ms-prerender>`; a small script in each page hides only that copy at once when it isn't the page asked for, when logged in, or in the apps, and `src/main.jsx` removes any copy left once the app has drawn (never hide the app itself: `#root > *` did, and logged-in players got a blank page, 16 Oct 2026) |
+| `scripts/prerender.mjs` | Build step 2: renders the public pages to HTML (through `src/prerender/entry.jsx`, the real app with `StaticRouter`), writes `dist/<path>.html`, `dist/app-shell.html`, `dist/404.html` (the app with a noindex head, served by Vercel with HTTP 404 for unknown addresses; it draws "Lost the marble") and `dist/sitemap.xml`. The page's copy is wrapped in `<div data-ms-prerender>`; a small script in each page hides only that copy at once when it isn't the page asked for, when logged in, or in the apps, and `src/main.jsx` removes any copy left once the app has drawn (never hide the app itself: `#root > *` did, and logged-in players got a blank page, 16 Oct 2026) |
 | `public/` | The tab and home-screen icons (linked from `index.html`, so on every page, pre-rendered or not, and `/admin`): `favicon.svg` and `favicon.ico` (16, 32 px: the app icon's marble alone on its navy tile, simplified to read at tab size; 48 px with the orbit arcs), `favicon-48x48.png` and `favicon-96x96.png` (the app icon scaled; with `icon-192.png` the square icons in multiples of 48 px that Google's search results want, each linked with its size), `apple-touch-icon.png` (180), `icon-192.png`, `icon-512.png` (the app icon itself, `client/assets/icon-only.png`), `site.webmanifest` (name, icons, theme colour `#0E1320`); `robots.txt` (blocks `/admin`, `/preview`, checkout and account pages), `audio/`, `tracks/` (the track pictures, `<slug>.webp` and `<slug>@2x.webp`), `share/` (link-preview pictures, 1200 × 630: `marble-spins-1200x630.png` and `tracks/<slug>.jpg`; a track without one uses its `@2x.webp`). `sitemap.xml` is generated by the build |
 | `capacitor.config.json` | App id, name, splash and status-bar settings |
 | `ios/`, `android/` | The native app projects (see "Apps" below) |

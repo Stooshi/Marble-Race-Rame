@@ -5,6 +5,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useAsync } from '../../hooks/useAsync';
 import { ITEM } from '../../shared/marbles';
 import MarbleBadge from '../marbles/MarbleBadge';
+import { handle } from '../../shared/playerName';
 
 // The season comes from the server (a season in its seasons table that is on or ended last, or the
 // numbered one in economy.json): without one there is no "This season" board and no season label.
@@ -59,8 +60,8 @@ export default function ScoresPage() {
       {loading && !data && <p className="ms-note">Loading…</p>}
       {data && (
         <div className="ms-card" style={{ padding: 0, overflowX: 'auto' }}>
-          <table className="ms-table">
-            <thead><tr><th scope="col">Rank</th><th scope="col">Player</th><th scope="col">Shooter</th><th scope="col" className="num">Wins</th><th scope="col" className="num">Coins earned</th></tr></thead>
+          <table className="ms-table ms-table--scores">
+            <thead><tr><th scope="col">Rank</th><th scope="col">Player</th><th scope="col">Shooter</th><th scope="col" className="num">Wins</th><th scope="col" className="num">Coins<span className="ms-wide-only"> earned</span></th></tr></thead>
             <tbody>
               {withGap.length === 0 && <tr><td colSpan={5} style={{ color: 'var(--ms-muted)' }}>No races counted here yet. Race to get on the board.</td></tr>}
               {withGap.map((r) => (r.gap ? (
@@ -68,11 +69,11 @@ export default function ScoresPage() {
               ) : (
                 <tr key={r.key} className={r.me ? 'is-me' : undefined}>
                   <td style={{ color: MEDAL[r.rank] ?? 'var(--ms-text)', fontWeight: 800 }}>{r.rank}</td>
-                  <td>@{r.username}{r.me ? ' (you)' : ''}</td>
+                  <td className="ms-scores__player">{handle(r.username)}{r.me ? ' (you)' : ''}</td>
                   <td>
                     <span className="ms-row" style={{ gap: 8, flexWrap: 'nowrap' }}>
                       {r.shooter?.item ? <MarbleBadge slug={r.shooter.item} size={22} still /> : <MarbleBadge marble={r.shooter?.original} size={22} still />}
-                      {r.shooter?.item ? `${ITEM[r.shooter.item]?.design.name ?? ''}` : r.shooter?.original?.name ?? 'Starter'}
+                      <span className="ms-scores__shooter">{r.shooter?.item ? `${ITEM[r.shooter.item]?.design.name ?? ''}` : r.shooter?.original?.name ?? 'Starter'}</span>
                     </span>
                   </td>
                   <td className="num">{r.wins.toLocaleString('en-US')}</td>

@@ -1,0 +1,94 @@
+# Rebuild the website when the Holiday Season 2026 starts, so its pre-rendered track pages, the
+# sitemap and the "90+ tracks" count include the 31 holiday tracks (the server shows them from
+# 1 Dec 2026 00:00 Swedish time by date; the website only learns of them at a build).
+#
+# How it works: a POST to a Vercel Deploy Hook (a URL that rebuilds Main). The URL is a secret: it
+# lives only in this repository's Actions secret VERCEL_DEPLOY_HOOK_SEASON, never in the code, the
+# logs or the docs. Set-up and test steps: docs/05-runbook.md, "The season-start website rebuild".
+#
+#   - Scheduled: 1 Dec 2026 00:05 Swedish time (30 Nov 23:05 UTC), with two spare runs in case
+#     GitHub starts a scheduled run late or drops it (rebuilding twice does no harm). Each
+#     scheduled run checks the Swedish date first, so in later years nothing happens.
+#     It then waits for the new site and checks that a holiday track's page is in the sitemap;
+#     if not, the run fails and GitHub emails the repository's owner.
+#   - "Run workflow" button (Actions → Season start: rebuild the website): rebuilds now, to test the
+#     hook. The holiday check is off by default (the tracks only show from 1 Dec).
+name: "Season start: rebuild the website"
+
+on:
+  schedule:
+    - cron: '5 23 30 11 *'   # 1 Dec 00:05 Swedish time (CET = UTC+1)
+    - cron: '35 23 30 11 *'  # spare: 00:35
+    - cron: '15 0 1 12 *'    # spare: 01:15
+  workflow_dispatch:
+    inputs:
+      check_holiday_tracks:
+        description: 'After the rebuild, check that the holiday tracks are on the site (only works from 1 Dec)'
+        type: boolean
+        default: false
+
+permissions: {}
+
+concurrency:
+  group: season-start-rebuild
+  cancel-in-progress: false
+
+jobs:
+  rebuild:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      SITE: https://marblespins.com
+      HOLIDAY_TRACK: tromso-aurora-grand-prix
+    steps:
+      - name: Only on the season's first day (scheduled runs)
+        id: when
+        run: |
+          today=$(TZ=Europe/Stockholm date +%F)
+          echo "Swedish date: $today"
+          if [ "${{ github.event_name }}" = "schedule" ] && [ "$today" != "2026-12-01" ]; then
+            echo "Not the season's first day: nothing to do."
+            echo "go=no" >> "$GITHUB_OUTPUT"
+          else
+            echo "go=yes" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Already rebuilt? (a spare run after a good one)
+        id: done
+        if: steps.when.outputs.go == 'yes' && github.event_name == 'schedule'
+        run: |
+          if curl -fsS --max-time 20 "$SITE/sitemap.xml" | grep -q "/tracks/$HOLIDAY_TRACK"; then
+            echo "The holiday tracks are on the site already: no rebuild needed."
+            echo "skip=yes" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Rebuild the website (Vercel Deploy Hook)
+        if: steps.when.outputs.go == 'yes' && steps.done.outputs.skip != 'yes'
+        env:
+          HOOK: ${{ secrets.VERCEL_DEPLOY_HOOK_SEASON }}
+        run: |
+          if [ -z "$HOOK" ]; then
+            echo "::error::The secret VERCEL_DEPLOY_HOOK_SEASON is not set (docs/05-runbook.md, 'The season-start website rebuild')."
+            exit 1
+          fi
+          # (the URL is never printed: GitHub masks secrets, and curl runs silently)
+          code=$(curl -sS -o /tmp/hook.json -w '%{http_code}' -X POST "$HOOK")
+          if [ "$code" -lt 200 ] || [ "$code" -ge 300 ]; then
+            echo "::error::Vercel answered HTTP $code: the hook may have been deleted or replaced in Vercel."
+            exit 1
+          fi
+          echo "Vercel started a new build of Main (HTTP $code). It is live in about 3-5 minutes."
+
+      - name: Check the holiday tracks are on the site
+        if: steps.when.outputs.go == 'yes' && steps.done.outputs.skip != 'yes' && (github.event_name == 'schedule' || inputs.check_holiday_tracks)
+        run: |
+          for i in $(seq 1 30); do
+            sleep 30
+            if curl -fsS --max-time 20 "$SITE/sitemap.xml" | grep -q "/tracks/$HOLIDAY_TRACK"; then
+              echo "The holiday tracks are on the site (sitemap has /tracks/$HOLIDAY_TRACK)."
+              exit 0
+            fi
+            echo "Not yet ($i/30)..."
+          done
+          echo "::error::After 15 minutes the sitemap still has no holiday track. Check the build in Vercel (Deployments), and that the server shows the holiday tracks (its /api/tracks)."
+          exit 1

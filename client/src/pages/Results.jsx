@@ -18,6 +18,7 @@ import NextRace from '../components/NextRace';
 import { BOARD_HOLD_MS, finishPlan } from '../utils/finishShow';
 import { ErrorMessage, Spinner } from '../components/Status';
 import { formatDelta, formatTime, ordinal } from '../utils/format';
+import { plainName } from '../shared/playerName';
 
 export default function Results() {
   const { raceId } = useParams();
@@ -80,7 +81,7 @@ export default function Results() {
               <MarbleBall marble={r} size={r.position === 1 ? 56 : 44} />
               <strong>{nameOf(r)}</strong>
             </button>
-            <small>{r.username ?? <CpuTag />}</small>
+            <small>{r.username ? plainName(r.username) : <CpuTag />}</small>
             <span className="podium__time">{formatTime(r.finish_time_ms)}</span>
             {r.comparison.is_track_record && <span className="badge badge--gold">Track record</span>}
             <span className="podium__block">{r.position}</span>
@@ -125,7 +126,7 @@ export default function Results() {
                       <span>
                         <button type="button" className="marble-tap" onClick={() => setTapped(r)}><strong>{nameOf(r)}</strong></button>
                         <small className="muted block">
-                          {r.user_id ? <Link to={`/profile/${r.user_id}`}>{r.username}</Link> : <CpuTag />}
+                          {r.user_id ? <Link to={`/profile/${r.user_id}`}>{plainName(r.username)}</Link> : <CpuTag />}
                         </small>
                       </span>
                     </span>

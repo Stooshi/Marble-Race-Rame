@@ -1,9 +1,11 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../../api/client';
 import { useAuth } from '../../context/AuthContext';
 import { useAsync } from '../../hooks/useAsync';
 import { daysLeftIn } from './ScoresPage';
 import economy from '../../shared/economy.json';
+import { BANNERS_ON, bannerSrc } from '../TrackBanner';
 
 /** Today's track: the same for everyone all day, a different one each day. */
 export function trackOfTheDay(tracks, date = new Date()) {
@@ -27,6 +29,9 @@ export default function HomeHub() {
   }, [user?.id]);
 
   const today = trackOfTheDay(data?.tracks?.filter((t) => t.is_active !== false));
+  // The day's track's own picture behind the card (pre-launch item 12), over the gradient until it has loaded.
+  const pic = today && BANNERS_ON ? bannerSrc(today.slug) : null;
+  const [picLoaded, setPicLoaded] = useState(false);
   const waiting = (data?.races ?? []).reduce((n, r) => n + (r.entry_count ?? r.entries_count ?? 0), 0);
   const me = data?.board?.rows?.find((r) => r.me);
   // The daily goal and its streak (client/src/shared/economy.json): days run midnight to midnight UTC.
@@ -40,7 +45,8 @@ export default function HomeHub() {
     <div className="ms-page">
       <div className="ms-two" style={{ alignItems: 'stretch' }}>
         <section className="ms-hero ms-home-hero" style={{ flexBasis: 520, alignContent: 'end' }} aria-labelledby="tod-h">
-          <div style={{ display: 'grid', gap: 10 }}>
+          {pic && <img className="ms-home-hero__pic" src={pic.src} srcSet={pic.srcSet} sizes="(max-width: 760px) 100vw, 640px" width="640" height="360" alt="" decoding="async" data-loaded={picLoaded || undefined} onLoad={() => setPicLoaded(true)} onError={() => setPicLoaded(false)} />}
+          <div style={{ display: 'grid', gap: 10, position: 'relative' }}>
             <span className="ms-badge-label" style={{ background: 'var(--ms-orange)' }}>
               {data?.races?.length ? `NEXT RACE OPEN · ${waiting || data.races.length} ${waiting ? 'players' : 'races'} waiting` : 'START THE NEXT RACE'}
             </span>

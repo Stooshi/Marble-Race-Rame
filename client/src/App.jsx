@@ -172,10 +172,20 @@ function NotFound() {
   const { pathname } = useLocation();
   useEffect(() => { applyMeta({ ...metaFor(pathname), title: 'Page not found · Marble Spins', noindex: true }); }, [pathname]);
   return (
-    <div className="page">
-      <h1>Lost the marble</h1>
-      <p className="muted">That page doesn't exist.</p>
-      <div className="ms-row"><Link to="/" className="btn">Back home</Link><Link to="/help">Help Centre</Link><Link to="/help#contact">Contact us</Link></div>
+    <div className="ms-page">
+      <section className="ms-hero ms-notfound" aria-labelledby="nf-h">
+        <div style={{ display: 'grid', gap: 12 }}>
+          <span className="ms-eyebrow" style={{ color: 'var(--ms-soft)' }}>Error 404</span>
+          <h1 id="nf-h" className="ms-h1" style={{ fontFamily: 'var(--ms-cond)', fontWeight: 800 }}>Lost the marble</h1>
+          <p style={{ color: 'var(--ms-soft)', margin: 0 }}>That page doesn't exist, or it rolled off the track. Try one of these instead.</p>
+          <div className="ms-row">
+            <Link to="/" className="ms-btn ms-btn--primary">Back home</Link>
+            <Link to="/tracks" className="ms-btn">See the tracks</Link>
+            <Link to="/help" className="ms-btn">Help Centre</Link>
+          </div>
+        </div>
+        <div className="ms-notfound__ball" aria-hidden="true" />
+      </section>
     </div>
   );
 }

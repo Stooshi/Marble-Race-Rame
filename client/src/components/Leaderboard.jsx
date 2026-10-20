@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { useAsync } from '../hooks/useAsync';
 import { formatNumber } from '../utils/format';
 import { Empty, ErrorMessage, Spinner } from './Status';
+import { plainName } from '../shared/playerName';
 
 const SORTS = [
   ['wins', 'Wins'],
@@ -38,7 +39,7 @@ export default function Leaderboard({ limit = 10, title = 'Leaderboard' }) {
           {rows.map((r) => (
             <li key={r.user_id} className={r.user_id === user?.id ? 'is-me' : undefined}>
               <span className={`rank rank--${r.rank}`}>{r.rank}</span>
-              <Link to={`/profile/${r.user_id}`} className="leaderboard__name">{r.display_name || r.username}</Link>
+              <Link to={`/profile/${r.user_id}`} className="leaderboard__name">{plainName(r.username, r.display_name)}</Link>
               <span className="leaderboard__value">
                 {formatNumber(r[sort])}
                 <small>{sort === 'wins' ? `${r.races_played} races` : `${r.wins} wins`}</small>

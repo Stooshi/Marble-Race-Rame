@@ -227,12 +227,22 @@ a.ms-chip:hover { text-decoration: none; border-color: var(--ms-muted); }
   gap: 14px 28px;
   align-items: center;
 }
-.ms-footer__nav { display: flex; flex-wrap: wrap; gap: 6px 18px; }
+.ms-footer__nav { display: flex; flex-wrap: wrap; gap: 0 18px; }
 .ms-footer__nav a { color: var(--ms-soft); }
 .ms-footer__link { background: none; border: 0; padding: 0; color: var(--ms-soft); font: inherit; cursor: pointer; text-decoration: none; }
 .ms-footer__link:hover, .ms-footer__link:focus-visible { color: var(--ms-text); text-decoration: underline; }
 .ms-footer__stores { display: flex; gap: 10px; margin-left: auto; }
 .ms-footer__stores a { border: 1px solid var(--ms-border); border-radius: 10px; padding: 6px 12px; }
+/* Tap targets at least 44 px tall (pre-launch item 14; Apple's guideline, WCAG's minimum is 24 px). */
+.ms-footer__nav a, .ms-footer__link, .ms-footer__stores a { display: inline-flex; align-items: center; min-height: 44px; }
+.ms-header__logo, .ms-header__back, .ms-header__login { display: inline-flex; align-items: center; min-height: 44px; }
+@media (min-width: 521px) { .ms-header__logout { display: inline-flex; align-items: center; min-height: 44px; } } /* (hidden on phones) */
+.ms-header__login, .ms-header__back { padding: 0 4px; }
+.ms-chip { display: inline-flex; align-items: center; min-height: 36px; position: relative; }
+a.ms-chip::after, button.ms-chip::after { content: ''; position: absolute; inset: -4px 0; } /* (a 44 px tap target, a compact chip) */
+.ms-filters .ms-check { align-items: center; min-height: 44px; }
+.ms-footer__company a { display: inline-block; padding-block: 13px; margin-block: -13px; } /* (links in a sentence: a taller target, same line) */
+@media (pointer: coarse) { .ms-btn--sm, .ms-nav a { min-height: 44px; } }
 .ms-social { display: flex; gap: 6px; margin: 0; padding: 0; list-style: none; }
 .ms-social a { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 10px; color: var(--ms-soft); }
 .ms-social a:hover, .ms-social a:focus-visible { color: var(--ms-text); background: rgba(255, 255, 255, 0.06); }
@@ -403,10 +413,23 @@ a.ms-mcard:hover { text-decoration: none; border-color: var(--ms-muted); }
 .ms-table th { color: var(--ms-muted); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.06em; }
 .ms-table .num { text-align: right; }
 .ms-table tr.is-me td { background: rgba(255,210,31,0.12); }
+/* The scoreboards on a phone (pre-launch item 11): every column fits a 390 px screen; the shooter shows as its marble only. */
+@media (max-width: 520px) {
+  .ms-table--scores { min-width: 0; }
+  .ms-table--scores th, .ms-table--scores td { padding: 10px 8px; }
+  .ms-table--scores th:first-child, .ms-table--scores td:first-child { padding-left: 12px; }
+  .ms-table--scores th:last-child, .ms-table--scores td:last-child { padding-right: 12px; }
+  .ms-table--scores .ms-scores__shooter, .ms-table--scores .ms-wide-only { display: none; }
+  .ms-table--scores .ms-scores__player { max-width: 34vw; overflow: hidden; text-overflow: ellipsis; }
+}
 .ms-tile { display: grid; gap: 2px; flex: 1 1 0; color: var(--ms-text); padding: 16px; }
 .ms-tile span { color: var(--ms-muted); font-size: 0.9rem; }
 a.ms-tile:hover, a.ms-card:hover { text-decoration: none; border-color: var(--ms-muted); }
-.ms-home-hero { min-height: 340px; background: radial-gradient(circle at 70% 10%, #2A4A7A 0%, #13284A 45%, var(--ms-bg) 100%); align-items: flex-end; }
+.ms-home-hero { min-height: 340px; background: radial-gradient(circle at 70% 10%, #2A4A7A 0%, #13284A 45%, var(--ms-bg) 100%); align-items: flex-end; position: relative; overflow: hidden; isolation: isolate; }
+.ms-home-hero__pic { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: -1; opacity: 0; transition: opacity 0.4s ease; }
+.ms-home-hero__pic[data-loaded] { opacity: 1; }
+.ms-home-hero::after { content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none; background: linear-gradient(180deg, rgba(14,19,32,0.05) 0%, rgba(14,19,32,0.55) 50%, rgba(14,19,32,0.92) 100%); }
+@media (prefers-reduced-motion: reduce) { .ms-home-hero__pic { transition: none; } }
 
 /* ── Race flow ─────────────────────────────────────────────────────────── */
 .ms-steps { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
@@ -416,6 +439,13 @@ a.ms-tile:hover, a.ms-card:hover { text-decoration: none; border-color: var(--ms
 .ms-flowbar { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; border-top: 1px solid var(--ms-border); padding-top: 18px; }
 .ms-field-like { flex: 1; min-width: 0; min-height: 44px; display: flex; align-items: center; padding: 0 14px; border-radius: 12px; background: var(--ms-bg); border: 1px solid var(--ms-border); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
 .ms-filters { display: grid; gap: 8px; }
+/* Phones and narrow windows: the filters fold behind one button, so the first tracks show at once (pre-launch item 10). */
+.ms-filters-toggle { display: none; }
+@media (max-width: 759px) {
+  .ms-filters-toggle { display: inline-flex; flex: 0 0 auto !important; }
+  .ms-filters { display: none; }
+  .ms-filters.ms-filters--open { display: grid; flex-basis: 100% !important; }
+}
 .ms-filters .ms-check span:last-child { color: var(--ms-muted); }
 .ms-trackcard { display: flex; flex-direction: column; text-align: left; padding: 0; border-radius: 18px; overflow: hidden; background: var(--ms-card); border: 1px solid var(--ms-border); color: var(--ms-text); cursor: pointer; font: inherit; }
 .ms-trackcard:hover, .ms-trackcard:focus-visible { border-color: var(--ms-yellow); }
@@ -691,3 +721,8 @@ a.ms-tile:hover, a.ms-card:hover { text-decoration: none; border-color: var(--ms
 .ms-pass-feature p { margin: 0; color: var(--ms-soft); line-height: 1.5; }
 .ms-pass-feature__k { font-size: 0.75rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: var(--r-season); }
 .ms-pass-feature__link { font-weight: 700; color: var(--ms-yellow); text-transform: capitalize; }
+
+/* The 404 page ("Lost the marble"): a marble rolled off to the edge. */
+.ms-notfound { min-height: 300px; position: relative; overflow: hidden; }
+.ms-notfound__ball { flex: none !important; width: 120px; height: 120px; border-radius: 50%; margin-left: auto; background: radial-gradient(circle at 32% 28%, #FFF6C8 0%, var(--ms-yellow) 28%, #E08A12 70%, #7A3E05 100%); box-shadow: 0 18px 30px rgba(0,0,0,0.45); transform: translateX(30%); }
+@media (max-width: 520px) { .ms-notfound__ball { width: 80px; height: 80px; } }

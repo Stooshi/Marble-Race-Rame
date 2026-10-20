@@ -20,15 +20,25 @@ it('page text is inserted with a function, so a "$" in a page is never a replace
   expect(script).toMatch(/\.replace\('<\/head>', \(\) =>/);
 });
 
-it('every other address falls back to the app (vercel.json): with clean URLs the target has no ".html"', () => {
+it("the site's own addresses get the app (vercel.json), any other a real 404: with clean URLs the target has no \".html\"", () => {
   // cleanUrls serves app-shell.html at /app-shell; a rewrite to "/app-shell.html" found no file and
   // every in-game address (/race, /play, /preview, /admin…) answered 404 NOT_FOUND (16 Oct 2026).
   const vercel = JSON.parse(readFileSync(join(__dirname, '..', 'vercel.json'), 'utf8'));
-  const fallback = vercel.rewrites.find((r) => r.source.includes('(?!assets/)'));
-  expect(fallback).toBeTruthy();
-  if (vercel.cleanUrls) expect(fallback.destination).not.toMatch(/\.html$/);
-  expect(fallback.destination.replace(/^\//, '').replace(/(\.html)?$/, '.html')).toBe('app-shell.html');
+  expect(vercel.rewrites.length).toBeGreaterThan(0);
+  for (const r of vercel.rewrites) {
+    if (vercel.cleanUrls) expect(r.destination).not.toMatch(/\.html$/);
+    expect(r.destination.replace(/^\//, '').replace(/(\.html)?$/, '.html')).toBe('app-shell.html');
+  }
   expect(script).toMatch(/app-shell\.html/);
+  // Every route's first part (App.jsx) is rewritten to the app, or that page would answer 404 (item 15).
+  const app = readFileSync(join(__dirname, '..', 'src', 'App.jsx'), 'utf8');
+  const firsts = new Set([...app.matchAll(/path="\/([^/":*]+)/g)].map((m) => m[1]));
+  firsts.add('admin');
+  const covered = (seg) => vercel.rewrites.some((r) => new RegExp(`^${r.source.replace(/:rest\*$/, '.*').replace(/\/\(/g, '/(?:')}$`).test(`/${seg}`) || new RegExp(`^${r.source.replace(/:rest\*$/, '.*').replace(/\/\(/g, '/(?:')}$`).test(`/${seg}/x`));
+  for (const seg of firsts) expect(covered(seg), `/${seg}`).toBe(true);
+  // Anything else: Vercel serves dist/404.html with HTTP 404 (a real 404, not a "soft" one), noindex.
+  expect(script).toMatch(/join\(dist, '404\.html'\)/);
+  expect(script).toMatch(/noindex: true/);
 });
 
 it('every page links the tab and home-screen icons (they come from index.html)', async () => {

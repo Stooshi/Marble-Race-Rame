@@ -340,7 +340,14 @@ async function pickRacingMarble(client, raceId, userId) {
       LIMIT 1`,
     [raceId, userId],
   );
-  if (!rows[0]) throw conflict('All your marbles are already in this race');
+  if (!rows[0]) {
+    // Say why (pre-launch item 18: "All your marbles are already in this race" didn't): the player is in
+    // it already, or every marble they may race with (the shared free starters, their own) is taken in
+    // this race by other players. Either way, how to get going.
+    const { rows: [me] } = await client.query('SELECT 1 FROM race_entries WHERE race_id = $1 AND user_id = $2', [raceId, userId]);
+    if (me) throw new HttpError(409, "You're already in this race: wait for it to start, or leave it first", { code: 'already_in_race' });
+    throw new HttpError(409, 'Every marble you can race with is taken in this race by other players (the free starters are shared). Join another race, or get a marble of your own in the shop.', { code: 'no_free_marble' });
+  }
   return rows[0].id;
 }
 
