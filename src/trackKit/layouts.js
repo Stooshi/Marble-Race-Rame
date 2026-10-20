@@ -1291,7 +1291,7 @@ const LAYOUTS = {
   'bridge-slalom': (L, R, c) => [
     { key: 'quay', name: 'Quay straight', shape: straight(100, { grade: 0.11 }), obstacles: [peg({ costume: c.peg, at: 0.15, line: 'left' }), peg({ costume: c.peg, at: 0.3, line: 'right' })], billboards: 1 },
     { key: 'rise', name: 'Up to the bridge', shape: climb(12, { grade: -0.05, after: 0.12 }) },
-    { key: 'pillars', name: 'Bridge slalom', shape: straight(100, { grade: 0.12 }), obstacles: [slalom({ costume: c.slalom, from: 0.25, to: 0.85, count: 4, loss: 0.2 })], billboards: 1 },
+    { key: 'pillars', name: 'Bridge slalom', shape: straight(100, { grade: 0.12 }), obstacles: [slalom({ costume: c.slalom, from: 0.3, to: 0.85, count: 3, loss: 0.22 })], billboards: 1 },
     { key: 'flyOut', name: 'Sweep over the river', shape: sweep({ side: R, radius: 90, degrees: 150, grade: 0.085 }), features: [boost({ at: 0.08 })], billboards: 2 },
     { key: 'drop', name: 'Drop', shape: plunge(45, { grade: 0.22, from: 0.085 }) },
     { key: 'brakingStraight', name: 'Run to the hairpin', shape: straight(50, { grade: 0.12 }) },

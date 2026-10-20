@@ -69,6 +69,11 @@ export function buildRiverSpans(centerline, channel, kit, { river, groundAt, cor
       }
     }
   }
+  // (On a phone the cables are thin beams in the bridges' one mesh: one draw call fewer.)
+  if (lite) {
+    for (let k = 0; k < lines.length; k += 6) parts.push(beam(new Vector3(lines[k], lines[k + 1], lines[k + 2]), new Vector3(lines[k + 3], lines[k + 4], lines[k + 5]), 0.12, '#2a2c30'));
+    lines.length = 0;
+  }
   if (parts.length) {
     const mesh = new Mesh(merge(parts), new MeshLambertMaterial({ vertexColors: true, flatShading: true }));
     mesh.name = 'river bridges';
