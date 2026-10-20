@@ -321,6 +321,17 @@
    "side": 1,
    "marbles": 4
   },
+  "danube-night-run": {
+   "name": "Danube Night Run",
+   "series": "Rivers",
+   "lighting": "night",
+   "v": "057a5a25",
+   "bytes": 15424,
+   "bytes2x": 36362,
+   "t": 9538,
+   "side": -1,
+   "marbles": 5
+  },
   "deep-mine": {
    "name": "Deep Mine",
    "series": "Blocks",
@@ -727,6 +738,17 @@
    "t": 10920,
    "side": 1,
    "marbles": 5
+  },
+  "mississippi-steamer-run": {
+   "name": "Mississippi Steamer Run",
+   "series": "Rivers",
+   "lighting": "sunset",
+   "v": "347ff37b",
+   "bytes": 12578,
+   "bytes2x": 31052,
+   "t": 8865,
+   "side": 1,
+   "marbles": 4
   },
   "multiball-manor": {
    "name": "Multiball Manor",

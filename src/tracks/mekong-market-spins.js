@@ -10,7 +10,7 @@ module.exports = track({
   name: 'Mekong Market Spins',
   family: 'river',
   difficulty: 'extreme',
-  description: 'A floating market on a great river: off a moored boat\'s deck, skimming low between boats heaped with fruit, a peg under a long pier, a spin past stilt houses, and over a line of floats to the temple roofs on the bank.',
+  description: 'A floating market on a great river: off a moored boat\'s deck, skimming low between boats heaped with fruit, under a long pier, a spin past stilt houses, and over a line of floats to the temple roofs on the bank.',
   surface: 'ice',
   biome: 'jungle',
   lighting: 'day',
@@ -21,7 +21,7 @@ module.exports = track({
   start: { landmark: 'wat-roofs', scenery: ['river-palms'], type: 'river-boat', gate: 'stalls', shots: { countdown: 'front', launch: 'high-behind' } },
   finish: { landmark: 'longtail-boat' },
   designChanges: [
-    'Built from the crest start (off the river boat\'s deck, over its gangway) and the market maze, the library layout made for this track: S-bends along the bank, a long slalom low over the water among the boats, a peg under a pier, a spin, a sweep along the market bank, the hairpin, pegs past a line of floats and the run-in.',
+    'Built from the crest start (off the river boat\'s deck, over its gangway) and the market maze, the library layout made for this track: S-bends along the bank, a long slalom low over the water among the boats, a peg under a pier, a sweep along the market bank, the hairpin, a spin, pegs past a line of floats and the run-in.',
     'The market boats float on the river beside the slalom; the slalom poles are the boats\' mooring poles (looks only).',
   ],
   opening: opening('crest-start', {

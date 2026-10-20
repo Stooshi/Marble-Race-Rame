@@ -22,7 +22,7 @@ module.exports = track({
   start: { landmark: 'levee-houses', scenery: ['cypress'], type: 'river-boat', gate: 'barrier', shots: { countdown: 'above', launch: 'side' } },
   finish: { landmark: 'paddle-steamer' },
   designChanges: [
-    'Built from the staggered drop and the steamer pass, the library layout made for this track: a levee straight, a straight through a paddle steamer (a boost), a sweep out over the bayou, a drop, S-bends through the river town, the hairpin, a slalom drop, a sweep to the landing and the run-in.',
+    'Built from the staggered drop and the steamer pass, the library layout made for this track: a levee straight, a straight through a paddle steamer (a boost), a sweep out over the bayou, a drop, the hairpin, S-bends through the river town, a slalom drop, a sweep to the landing and the run-in.',
     'The steamer is a tunnel (its lower deck: white planking, red bands, lamps); it stands on the land at the water\'s edge (looks only).',
   ],
   opening: opening('staggered-drop', {

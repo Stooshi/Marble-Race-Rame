@@ -147,10 +147,10 @@ module.exports = track({
   | `steeple-water` (track and field) | barrier1, sweep, barrier2, waterJump (a light brake), sBends, drop, brakingStraight, hairpin, spin, sweep2, lastStraight |
   | `anchor-arches` (track and field) | sBends, crest, arches (a drop), sweep, spin, brakingStraight, hairpin, sweep2, lastStraight (150 m) |
   | `golden-lap` (track and field) | sweep, drop, pegStraight, brakingStraight, hairpin, spin, goldenSweep, sBends, lastStraight |
-  | `bridge-slalom` (rivers) | quay, pillars (a slalom under a chain bridge), flyOut, drop, farBank, brakingStraight, hairpin, island (a spiral), lastStraight |
-  | `market-maze` (rivers) | bankBends (S-bends), boats (a slalom among the market boats), underPier, spin, bankSweep, brakingStraight, hairpin, pontoon (two pegs), lastStraight |
-  | `steamer-pass` (rivers) | levee, steamer (a tunnel through a paddle steamer; a boost), bayou, drop, town, brakingStraight, hairpin, slalomDrop, landing, lastStraight |
-  | `falls-edge` (rivers) | lipBend, lip (pegs), falls (a waterfall), gorge (a slalom), brakingStraight, hairpin, upstream, spin, lastStraight |
+  | `bridge-slalom` (rivers) | quay (two pegs), pillars (a slalom under a chain bridge), rise (a short climb), flyOut, drop, brakingStraight, hairpin, island (a spiral), farBank (S-bends), lastStraight |
+  | `market-maze` (rivers) | bankBends (S-bends), boats (a slalom among the market boats), underPier, bankSweep, brakingStraight, hairpin, spin, pontoon (two pegs), lastStraight |
+  | `steamer-pass` (rivers) | levee, steamer (a tunnel through a paddle steamer; a boost), bayou, drop, brakingStraight, hairpin, town (S-bends), slalomDrop, landing, lastStraight |
+  | `falls-edge` (rivers) | lipBend, lip (pegs), falls (a waterfall), gorge (a slalom), spin, brakingStraight, hairpin, upstream (S-bends), lastStraight |
   | `lock-staircase` (rivers) | locks (five steps), riverSweep, bridgeRun (a steep slalom drop), brakingStraight, hairpin, sBends, spin, lastStraight |
 
   A track may still write its own sections by hand; the sameness check makes sure they differ.

@@ -22,7 +22,7 @@ module.exports = track({
   start: { landmark: 'quay-lamps', scenery: ['city-quay'], type: 'pier', gate: 'barrier', shots: { countdown: 'side', launch: 'low-chase' } },
   finish: { landmark: 'domed-hall' },
   designChanges: [
-    'Built from the tunnel launch (out from under the quay) and the bridge slalom, the library layout made for this track: a quay straight, a slalom between a chain bridge\'s piers, a sweep out over the river, a drop to the far bank, S-bends, the hairpin, a spiral round an island and the run-in.',
+    'Built from the tunnel launch (out from under the quay) and the bridge slalom, the library layout made for this track: a quay straight, a slalom between a chain bridge\'s piers, a short climb, a sweep out over the river, a drop, the hairpin, a spiral round an island, S-bends along the far bank and the run-in.',
     'The chain bridge stands high over the slalom (18 m clear of the rim at the lowest); its piers stand in the river and beside the track, never in it (looks only).',
   ],
   opening: opening('tunnel-launch', {
@@ -36,8 +36,9 @@ module.exports = track({
     dress: {
       quay: { name: 'Along the embankment', height: 0, river: 'left', scenery: ['city-quay'], landmarks: [{ name: 'quay-lamps', at: 0.5, side: 'right', distance: 18 }] },
       pillars: { name: 'The chain bridge slalom', height: 0, river: 'left', overhead: ['chain-bridge'], scenery: ['city-quay'] },
+      rise: { name: 'Up to the bridge', height: 0, river: 'left' },
       flyOut: { name: 'Out over the river', height: 14, river: 'under', landmarks: [{ name: 'river-cruiser', at: 0.55, river: true }] },
-      drop: { name: 'Down to the far bank', height: 0, river: 'right' },
+      drop: { name: 'Down from the bridge', height: 0, river: 'right' },
       farBank: { name: 'The far bank', height: 0, river: 'right', scenery: ['plane-trees'] },
       brakingStraight: { name: 'Run to the hairpin', height: 0, river: 'right' },
       hairpin: { name: 'Crane hairpin', height: 0, river: 'none' },
