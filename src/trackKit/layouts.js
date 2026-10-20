@@ -1323,9 +1323,9 @@ const LAYOUTS = {
       obstacles: [parked({ costume: c.parked, at: 0.2, side: L, length: 6 }), peg({ costume: c.peg, at: 0.45, line: 'right' })], features: [rumble({ from: 0.7, to: 0.95, count: 3 })],
     },
   ],
-  /** L76 Steamer pass (Rivers): a straight along the levee (a peg), a straight through a paddle steamer (a tunnel; a boost), a long sweep out over the bayou (it flies here), a drop, the hairpin, S-bends through the river town, a slalom drop, a sweep to the landing and a parked piece and a peg at the run-in. */
+  /** L76 Steamer pass (Rivers): a straight along the levee (three pegs), a straight through a paddle steamer (a tunnel; a boost), a long sweep out over the bayou (it flies here), a drop, the hairpin, S-bends through the river town, a slalom drop, a sweep to the landing and a parked piece and a peg at the run-in. */
   'steamer-pass': (L, R, c) => [
-    { key: 'levee', name: 'Levee straight', shape: straight(120, { grade: 0.1 }), obstacles: [peg({ costume: c.peg, at: 0.5, line: 'center' })], billboards: 1 },
+    { key: 'levee', name: 'Levee straight', shape: straight(120, { grade: 0.1 }), obstacles: [peg({ costume: c.peg, at: 0.2, line: 'left' }), peg({ costume: c.peg, at: 0.35, line: 'right' }), peg({ costume: c.peg, at: 0.5, line: 'center' })], billboards: 1 },
     { key: 'steamer', name: 'Through the steamer', shape: straight(70, { grade: 0.1 }), features: [boost({ at: 0.1 })] },
     { key: 'bayou', name: 'Bayou sweep', shape: sweep({ side: L, radius: 90, degrees: 140, grade: 0.085 }), billboards: 2 },
     { key: 'drop', name: 'Drop', shape: plunge(45, { grade: 0.22, from: 0.085 }) },
@@ -1357,15 +1357,16 @@ const LAYOUTS = {
       obstacles: [parked({ costume: c.parked, at: 0.2, side: L, length: 6 }), peg({ costume: c.peg, at: 0.45, line: 'right' })], features: [rumble({ from: 0.7, to: 0.95, count: 3 })],
     },
   ],
-  /** L78 Lock staircase (Rivers): a straight down five lock steps, a river sweep, a steep slalom drop under a long bridge (the lottery: the clean drop has none at the gate), the hairpin, S-bends, a spiral and a parked piece and a peg at the run-in. */
+  /** L78 Lock staircase (Rivers): a straight down five lock steps, a short climb over the dam crest, a steep slalom drop under a long bridge (the lottery: the clean drop has none at the gate), a river sweep, S-bends, a spiral, the hairpin and a parked piece and a peg at the run-in. */
   'lock-staircase': (L, R, c) => [
     { key: 'locks', name: 'Lock staircase', shape: straight(100, { grade: 0.15 }), features: [steps({ from: 0.3, to: 0.9, count: 5, drag: 0.01 })], billboards: 1 },
-    { key: 'riverSweep', name: 'River sweep', shape: sweep({ side: R, radius: 85, degrees: 100, grade: 0.1 }), billboards: 2 },
+    { key: 'damCrest', name: 'Over the dam crest', shape: climb(12, { grade: -0.05, after: 0.1 }) },
     { key: 'bridgeRun', name: 'Bridge slalom', shape: plunge(65, { grade: 0.3, from: 0.09 }), obstacles: [slalom({ costume: c.slalom, from: 0.2, to: 0.95, count: 5, loss: 0.15 })] },
-    { key: 'brakingStraight', name: 'Run to the hairpin', shape: straight(50, { grade: 0.12 }) },
-    { key: 'hairpin', name: 'Hairpin', shape: hairpin({ side: L }), obstacles: [swipe({ costume: c.swipe, side: 'high' })] },
+    { key: 'riverSweep', name: 'River sweep', shape: sweep({ side: R, radius: 85, degrees: 100, grade: 0.1 }), billboards: 2 },
     { key: 'sBends', name: 'S-bends', shape: sBends({ first: R, radius: 75, degrees: 60, grade: 0.12 }), billboards: 1 },
     { key: 'spin', name: 'Spiral', shape: spiral({ side: L, radius: 50, turns: 1, grade: 0.16 }) },
+    { key: 'brakingStraight', name: 'Run to the hairpin', shape: straight(50, { grade: 0.12 }) },
+    { key: 'hairpin', name: 'Hairpin', shape: hairpin({ side: L }), obstacles: [swipe({ costume: c.swipe, side: 'high' })] },
     {
       key: 'lastStraight', name: 'Last straight', shape: straight(75, { grade: 0.15 }),
       obstacles: [parked({ costume: c.parked, at: 0.2, side: R, length: 6 }), peg({ costume: c.peg, at: 0.45, line: 'left' })], features: [rumble({ from: 0.7, to: 0.95, count: 3 })],

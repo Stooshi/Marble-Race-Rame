@@ -1,9 +1,9 @@
 'use strict';
 
 // Yangtze Lock Run: Rivers track 5, at a great river's ship locks among green mountains. Out of the top
-// lock as its gate opens, down a staircase of five locks beside the ships waiting in them, a wide sweep
-// down the river, a slalom under a long cable-stayed bridge, round a hairpin past the river boats and
-// down to the quay below the green peaks.
+// lock as its gate opens, down a staircase of five locks beside the ships waiting in them, over the dam
+// crest, a slalom down under a long cable-stayed bridge, a wide sweep down the river, round a hairpin past
+// the river boats and down to the quay below the green peaks.
 const { track, opening, layout } = require('../trackKit');
 
 module.exports = track({
@@ -11,7 +11,7 @@ module.exports = track({
   name: 'Yangtze Lock Run',
   family: 'river',
   difficulty: 'extreme',
-  description: 'A great river\'s ship locks among green mountains: out of the top lock as its gate opens, down a staircase of five locks beside the waiting ships, a wide sweep down the river, a slalom under a long bridge and down to the quay below the green peaks.',
+  description: 'A great river\'s ship locks among green mountains: out of the top lock as its gate opens, down a staircase of five locks beside the waiting ships, a slalom under a long bridge, a wide sweep down the river and down to the quay below the green peaks.',
   surface: 'ice',
   biome: 'meadow',
   lighting: 'dawn',
@@ -22,7 +22,7 @@ module.exports = track({
   start: { landmark: 'green-peaks', scenery: ['rocks'], type: 'lock-gate', gate: 'paddle', shots: { countdown: 'front', launch: 'overhead' } },
   finish: { landmark: 'river-ferry' },
   designChanges: [
-    'Built from the clean drop and the lock staircase, the library layout made for this track: a straight down five lock steps, a river sweep, a steep slalom drop under a long bridge, the hairpin, S-bends, a spiral and the run-in.',
+    'Built from the clean drop and the lock staircase, the library layout made for this track: a straight down five lock steps, a climb over the dam crest, a steep slalom drop under a long bridge, a river sweep, S-bends, a spiral, the hairpin and the run-in.',
     'The ship locks stand beside the staircase, the steps level with their gates (looks only).',
   ],
   opening: opening('clean-drop', {
@@ -33,6 +33,7 @@ module.exports = track({
     costumes: { slalom: 'mooring-pole', peg: 'bollard', swipe: 'fisherman', parked: 'river-ferry' },
     dress: {
       locks: { name: 'The lock staircase', height: 0, river: 'right', landmarks: [{ name: 'ship-locks', at: 0.5, side: 'left', distance: 24 }] },
+      damCrest: { name: 'Over the dam crest', height: 0, river: 'right' },
       riverSweep: { name: 'Down the river', height: 0, river: 'right', landmarks: [{ name: 'green-peaks', at: 0.5, side: 'left', distance: 140 }, { name: 'river-cruiser', at: 0.6, river: true, distance: 40 }] },
       bridgeRun: { name: 'Under the long bridge', height: 0, river: 'right', overhead: ['cable-stayed-bridge'] },
       brakingStraight: { name: 'Run to the hairpin', height: 0, river: 'right' },
