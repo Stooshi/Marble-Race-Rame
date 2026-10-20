@@ -1302,9 +1302,9 @@ const LAYOUTS = {
       obstacles: [parked({ costume: c.parked, at: 0.2, side: R, length: 6 }), peg({ costume: c.peg, at: 0.45, line: 'left' })], features: [rumble({ from: 0.7, to: 0.95, count: 3 })],
     },
   ],
-  /** L75 Market maze (Rivers): deep S-bends along the bank, a long slalom straight low over the water among the boats, a peg under a pier, a spin, a sweep along the bank, the hairpin, a mogul straight (a pontoon line's floats) and a parked piece and a peg at the run-in. */
+  /** L75 Market maze (Rivers): S-bends along the bank, a long slalom straight low over the water among the boats, a peg under a pier, a spin, a sweep along the bank, the hairpin, a peg straight past a pontoon line's floats and a parked piece and a peg at the run-in. */
   'market-maze': (L, R, c) => [
-    { key: 'bankBends', name: 'Bank S-bends', shape: sBends({ first: L, radius: 55, degrees: 115, grade: 0.13 }), billboards: 1 },
+    { key: 'bankBends', name: 'Bank S-bends', shape: sBends({ first: L, radius: 70, degrees: 85, grade: 0.13 }), billboards: 1 },
     { key: 'boats', name: 'Market slalom', shape: straight(110, { grade: 0.11 }), obstacles: [slalom({ costume: c.slalom, from: 0.25, to: 0.88, count: 4, loss: 0.13 })], billboards: 1 },
     {
       key: 'underPier', name: 'Under the pier', shape: straight(60, { grade: 0.12 }),
@@ -1314,7 +1314,7 @@ const LAYOUTS = {
     { key: 'bankSweep', name: 'Bank sweep', shape: sweep({ side: L, radius: 85, degrees: 120, grade: 0.1 }), billboards: 2 },
     { key: 'brakingStraight', name: 'Run to the hairpin', shape: straight(50, { grade: 0.12 }) },
     { key: 'hairpin', name: 'Hairpin', shape: hairpin({ side: R }), obstacles: [swipe({ costume: c.swipe, side: 'high' })] },
-    { key: 'pontoon', name: 'Pontoon straight', shape: straight(80, { grade: 0.12 }), features: [moguls({ from: 0.42, to: 0.85, count: 4 })], billboards: 1 },
+    { key: 'pontoon', name: 'Pontoon straight', shape: straight(80, { grade: 0.12 }), obstacles: [peg({ costume: c.peg, at: 0.45, line: 'left' }), peg({ costume: c.peg, at: 0.65, line: 'right' })], billboards: 1 },
     {
       key: 'lastStraight', name: 'Last straight', shape: straight(80, { grade: 0.15 }),
       obstacles: [parked({ costume: c.parked, at: 0.2, side: L, length: 6 }), peg({ costume: c.peg, at: 0.45, line: 'right' })], features: [rumble({ from: 0.7, to: 0.95, count: 3 })],

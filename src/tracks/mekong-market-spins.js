@@ -21,7 +21,7 @@ module.exports = track({
   start: { landmark: 'wat-roofs', scenery: ['river-palms'], type: 'river-boat', gate: 'stalls', shots: { countdown: 'front', launch: 'high-behind' } },
   finish: { landmark: 'longtail-boat' },
   designChanges: [
-    'Built from the crest start (off the river boat\'s deck, over its gangway) and the market maze, the library layout made for this track: deep S-bends along the bank, a long slalom low over the water among the boats, a peg under a pier, a spin, a sweep along the market bank, the hairpin, moguls over a line of floats and the run-in.',
+    'Built from the crest start (off the river boat\'s deck, over its gangway) and the market maze, the library layout made for this track: S-bends along the bank, a long slalom low over the water among the boats, a peg under a pier, a spin, a sweep along the market bank, the hairpin, pegs past a line of floats and the run-in.',
     'The market boats float on the river beside the slalom; the slalom poles are the boats\' mooring poles (looks only).',
   ],
   opening: opening('crest-start', {
