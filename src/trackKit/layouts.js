@@ -1287,11 +1287,11 @@ const LAYOUTS = {
       obstacles: [parked({ costume: c.parked, at: 0.2, side: L, length: 6 }), peg({ costume: c.peg, at: 0.45, line: 'right' })], features: [rumble({ from: 0.72, to: 0.95, count: 3 })],
     },
   ],
-  /** L74 Bridge slalom (Rivers): a quay straight (a block, to mix the field out of the launch tunnel), a slalom straight between a chain bridge's piers, a short climb up to the bridge, a long sweep out over the river (a boost; it flies here), a drop back to the bank, the hairpin, a spiral round an island, S-bends along the far bank and a parked piece and a peg at the run-in. */
+  /** L74 Bridge slalom (Rivers): a quay straight (two pegs, to mix the field out of the launch tunnel), a short climb up to the bridge, a slalom straight between a chain bridge's piers, a long sweep out over the river (a boost; it flies here), a drop back to the bank, the hairpin, a spiral round an island, S-bends along the far bank and a parked piece and a peg at the run-in. */
   'bridge-slalom': (L, R, c) => [
-    { key: 'quay', name: 'Quay straight', shape: straight(100, { grade: 0.11 }), obstacles: [block({ costume: c.block, at: 0.25, line: 'center' })], billboards: 1 },
-    { key: 'pillars', name: 'Bridge slalom', shape: straight(100, { grade: 0.12 }), obstacles: [slalom({ costume: c.slalom, from: 0.25, to: 0.85, count: 4, loss: 0.2 })], billboards: 1 },
+    { key: 'quay', name: 'Quay straight', shape: straight(100, { grade: 0.11 }), obstacles: [peg({ costume: c.peg, at: 0.15, line: 'left' }), peg({ costume: c.peg, at: 0.3, line: 'right' })], billboards: 1 },
     { key: 'rise', name: 'Up to the bridge', shape: climb(12, { grade: -0.05, after: 0.12 }) },
+    { key: 'pillars', name: 'Bridge slalom', shape: straight(100, { grade: 0.12 }), obstacles: [slalom({ costume: c.slalom, from: 0.25, to: 0.85, count: 4, loss: 0.2 })], billboards: 1 },
     { key: 'flyOut', name: 'Sweep over the river', shape: sweep({ side: R, radius: 90, degrees: 150, grade: 0.085 }), features: [boost({ at: 0.08 })], billboards: 2 },
     { key: 'drop', name: 'Drop', shape: plunge(45, { grade: 0.22, from: 0.085 }) },
     { key: 'brakingStraight', name: 'Run to the hairpin', shape: straight(50, { grade: 0.12 }) },

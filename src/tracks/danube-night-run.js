@@ -22,7 +22,7 @@ module.exports = track({
   start: { landmark: 'quay-lamps', type: 'pier', gate: 'barrier', shots: { countdown: 'side', launch: 'low-chase' } },
   finish: { landmark: 'domed-hall' },
   designChanges: [
-    'Built from the tunnel launch (out from under the quay) and the bridge slalom, the library layout made for this track: a quay straight, a slalom between a chain bridge\'s piers, a short climb, a sweep out over the river, a drop, the hairpin, a spiral round an island, S-bends along the far bank and the run-in.',
+    'Built from the tunnel launch (out from under the quay) and the bridge slalom, the library layout made for this track: a quay straight, a short climb, a slalom between a chain bridge\'s piers, a sweep out over the river, a drop, the hairpin, a spiral round an island, S-bends along the far bank and the run-in.',
     'The chain bridge stands high over the slalom (18 m clear of the rim at the lowest); its piers stand in the river and beside the track, never in it (looks only).',
   ],
   opening: opening('tunnel-launch', {
