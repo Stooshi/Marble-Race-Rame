@@ -19,6 +19,9 @@ export const BUILD_TRACK_COUNT = (() => {
   return Number.isFinite(n) && n > 0 ? n : null;
 })();
 
+/** The live tracks' series at build time ("Grand Prix", "World Tour", …); [] when the build couldn't reach the server. */
+export const BUILD_TRACK_SERIES = String(import.meta.env?.VITE_TRACK_SERIES || '').split('|').filter(Boolean);
+
 /** "80+ tracks" (or "dozens of tracks"), from a live count when given, else the build's. */
 export function tracksPhrase(n = BUILD_TRACK_COUNT) {
   const r = roundedTracks(n);

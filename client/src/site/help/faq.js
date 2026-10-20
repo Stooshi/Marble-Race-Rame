@@ -22,7 +22,7 @@ import { COIN_PACKS } from '../../shared/payments/packs';
 import { catalog, isStandard } from '../../shared/marbles';
 import supportSettings from '../../shared/support.json';
 import company from '../../shared/company.json';
-import { BUILD_TRACK_COUNT, roundedTracks } from '../trackCount';
+import { BUILD_TRACK_COUNT, BUILD_TRACK_SERIES, roundedTracks } from '../trackCount';
 
 const n = (v) => Number(v).toLocaleString('en-US');
 const ordinal = (k) => `${k}${['th', 'st', 'nd', 'rd'][(k % 100 > 10 && k % 100 < 14) || k % 10 > 3 ? 0 : k % 10]}`;
@@ -33,8 +33,6 @@ const shortDate = (iso) => { const [, m, d] = iso.split('-').map(Number); return
 
 /** The series as the draft names them, in its order (the live track list decides which exist). */
 export const SERIES_ORDER = ['Grand Prix', 'World Tour', 'Coasters', 'Pinball', 'Arcade', 'Canyons', 'Blocks', 'Track and Field', 'Winter Wonders'];
-const DRAFT_TRACKS = 50;
-const DRAFT_SERIES = SERIES_ORDER.slice(0, 5);
 
 /** "1st place +50, 2nd +30, 3rd +20, 4th–10th +5" from economy.race.places. */
 export function placesLine(places = economy.race.places) {
@@ -89,14 +87,17 @@ function seasonalAnswer() {
 
 /**
  * The 13 categories with their questions. `tracks`: the live track list ([{ series }]) when the page
- * has it, for the number of tracks and series; without it, the draft's 50 tracks in five series.
+ * has it, for the number of tracks and series; without it, the build's live count and series
+ * (src/site/trackCount.js); without those either (no server at build time), no numbers at all.
  */
 export function buildFaq({ tracks } = {}) {
   const e = economy;
   const live = Array.isArray(tracks) && tracks.length > 0;
   // Rounded down ("80+"), so an answer never goes stale between builds (src/site/trackCount.js).
-  const trackCount = roundedTracks(live ? tracks.length : BUILD_TRACK_COUNT ?? DRAFT_TRACKS);
-  const seriesNames = live ? SERIES_ORDER.filter((s) => tracks.some((t) => t.series === s)) : DRAFT_SERIES;
+  const trackCount = roundedTracks(live ? tracks.length : BUILD_TRACK_COUNT); // (null: no count known)
+  const known = live ? tracks.map((t) => t.series) : BUILD_TRACK_SERIES;
+  // (in the site's own order; a series the Help Centre doesn't know yet goes at the end)
+  const seriesNames = [...SERIES_ORDER.filter((s) => known.includes(s)), ...new Set(known.filter((s) => s && s !== 'Classic' && !SERIES_ORDER.includes(s)))];
   const seriesWord = NUMBER_WORDS[seriesNames.length] ?? String(seriesNames.length);
 
   const collectionDesigns = catalog.designs.filter(isStandard);
@@ -112,7 +113,7 @@ export function buildFaq({ tracks } = {}) {
   const sections = [
     ['Getting started', [
       ['What is Marble Spins?',
-        `Marble Spins is a free online marble racing game. You pick a marble, drop it into a race of 20 marbles on one of ${trackCount} tracks, and race for the win. You can play solo against computer players or race your friends.`],
+        `Marble Spins is a free online marble racing game. You pick a marble, drop it into a race of 20 marbles on ${trackCount ? `one of ${trackCount} tracks` : 'one of dozens of tracks'}, and race for the win. You can play solo against computer players or race your friends.`],
       ['How do I play my first race?',
         "Tap **Play free**, then **Start the race**. That's it. Your first race needs no sign-up: we create a guest account for you automatically."],
       ['Do I need an account?',
@@ -134,11 +135,11 @@ export function buildFaq({ tracks } = {}) {
       ['Who are the CPU players?',
         "Computer players that fill a race so it's always full. They're marked with a small **CPU** tag next to their name. They race by the same physics as everyone else."],
       ['What is a beginner race?',
-        "While you're new (fewer than 20 finished races), you race in beginner races together with other new players and computer players."],
+        `A race where every player is new (fewer than ${catalog.showcase.beginnerMaxRaces} finished races) is a beginner race: its computer players race in marbles from the shop, so you can see what's available.`],
       ['Why do some CPU players have special marbles?',
         "In beginner races, some computer players race with marbles from the shop so you can see what's available. Their marbles don't change results; every marble races exactly the same. Tap any marble after the race to see its name and where to get it."],
       ['What are the different tracks?',
-        `There are ${trackCount} tracks in ${seriesWord} series: ${listJoin(seriesNames)}. Each track has its own layout, start and scenery.`],
+        `There are ${trackCount ?? 'dozens of'} tracks in ${seriesNames.length ? `${seriesWord} series: ${listJoin(seriesNames)}` : 'several series'}. Each track has its own layout, start and scenery.`],
       ['Why did my marble lose? Is it random?',
         "Marble racing is close and unpredictable: a small bump at the start can change everything. Every player races at the same level, so over many races, every player's results even out. That's what makes each race exciting."],
     ]],

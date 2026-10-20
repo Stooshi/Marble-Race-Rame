@@ -66,7 +66,9 @@ describe('the questions', () => {
 
   it('reads as the draft, word for word, where nothing is a setting', () => {
     expect(bySlug['how-do-i-earn-coins'].text).toBe('By racing: 15 coins for every race you take part in. A finishing bonus: 1st place +50, 2nd +30, 3rd +20, 4th–10th +5. A daily goal: finish 5 races in a day for +35 coins.');
-    expect(bySlug['what-are-the-different-tracks'].text).toBe('There are 50+ tracks in five series: Grand Prix, World Tour, Coasters, Pinball and Arcade. Each track has its own layout, start and scenery.');
+    // (no live list and no build count in tests: no made-up number, never the old draft's "50 tracks in five series")
+    expect(bySlug['what-are-the-different-tracks'].text).toBe('There are dozens of tracks in several series. Each track has its own layout, start and scenery.');
+    expect(bySlug['what-is-marble-spins'].text).toContain('on one of dozens of tracks');
     expect(bySlug['still-need-help'].text).toBe('Use the contact form below. Tell us your player name and, for payment questions, your order number. We aim to reply within [2 working days].');
   });
 
@@ -84,6 +86,15 @@ describe('the questions', () => {
     const tracks = [...Array(57).fill({ series: 'World Tour' }), { series: 'Canyons' }, { series: 'Arcade' }, { series: 'Classic' }];
     const q = buildFaq({ tracks }).flatMap((s) => s.questions).find((x) => x.slug === 'what-are-the-different-tracks');
     expect(q.text).toBe('There are 60+ tracks in three series: World Tour, Arcade and Canyons. Each track has its own layout, start and scenery.');
+  });
+
+  it('says 90+ tracks in the eight live series (20 Oct 2026)', () => {
+    const live = { 'Grand Prix': 11, 'World Tour': 13, Coasters: 12, Pinball: 7, Arcade: 7, Canyons: 15, Blocks: 15, 'Track and Field': 10 };
+    const tracks = Object.entries(live).flatMap(([series, k]) => Array(k).fill({ series }));
+    expect(tracks).toHaveLength(90);
+    const qs = buildFaq({ tracks }).flatMap((s) => s.questions);
+    expect(qs.find((x) => x.slug === 'what-are-the-different-tracks').text).toBe('There are 90+ tracks in eight series: Grand Prix, World Tour, Coasters, Pinball, Arcade, Canyons, Blocks and Track and Field. Each track has its own layout, start and scenery.');
+    expect(qs.find((x) => x.slug === 'what-is-marble-spins').text).toContain('on one of 90+ tracks');
   });
 
   it('turns lists and tables into plain text for search and search engines', () => {

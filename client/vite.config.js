@@ -6,7 +6,7 @@ import react from '@vitejs/plugin-react';
  * meta descriptions, share previews and pre-rendered pages say "80+ tracks" and never go stale
  * (src/site/trackCount.js rounds it). No server, the dev server or tests: none ("dozens of tracks").
  */
-async function liveTrackCount(apiUrl) {
+async function liveTracks(apiUrl) {
   const api = String(apiUrl || '').replace(/\/+$/, '');
   if (!/^https:\/\//.test(api)) return null;
   try {
@@ -16,7 +16,9 @@ async function liveTrackCount(apiUrl) {
     clearTimeout(t);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const body = await res.json();
-    return Array.isArray(body?.tracks) && body.tracks.length ? body.tracks.length : null;
+    const tracks = Array.isArray(body?.tracks) ? body.tracks : [];
+    // The series the live tracks are in (the Help Centre lists them), in the order they appear.
+    return tracks.length ? { count: tracks.length, series: [...new Set(tracks.map((t) => t.series).filter(Boolean))] } : null;
   } catch (e) {
     console.warn(`vite: the live track count couldn't be loaded (${e.message}); the texts say "dozens of tracks"`);
     return null;
@@ -28,16 +30,22 @@ const phrase = (n) => (n ? `${n < 10 ? n : `${Math.floor(n / 10) * 10}+`} tracks
 
 export default defineConfig(async ({ command, mode }) => {
   const env = loadEnv(mode, process.cwd(), 'VITE_');
-  const count = command === 'build' && mode !== 'test'
-    ? Number(process.env.VITE_TRACK_COUNT) || await liveTrackCount(env.VITE_API_URL)
+  const live = command === 'build' && mode !== 'test' && !Number(process.env.VITE_TRACK_COUNT)
+    ? await liveTracks(env.VITE_API_URL)
     : null;
-  if (count) process.env.VITE_TRACK_COUNT = String(count); // (the pre-render's own build reuses it)
+  const count = command === 'build' && mode !== 'test' ? Number(process.env.VITE_TRACK_COUNT) || live?.count || null : null;
+  const series = process.env.VITE_TRACK_SERIES || (live?.series ?? []).join('|');
+  if (count) process.env.VITE_TRACK_COUNT = String(count); // (the pre-render's own build reuses them)
+  if (series) process.env.VITE_TRACK_SERIES = series;
   return {
     plugins: [
       react(),
       { name: 'track-count-in-html', transformIndexHtml: (html) => html.replace(/__TRACKS_PHRASE__/g, phrase(count)) },
     ],
-    define: { 'import.meta.env.VITE_TRACK_COUNT': JSON.stringify(count ? String(count) : '') },
+    define: {
+      'import.meta.env.VITE_TRACK_COUNT': JSON.stringify(count ? String(count) : ''),
+      'import.meta.env.VITE_TRACK_SERIES': JSON.stringify(count ? series : ''),
+    },
     server: { port: 5173 },
     // The 3D scene (Three.js) is one lazily loaded chunk of about 140 KB gzipped.
     build: { chunkSizeWarningLimit: 700 },
