@@ -29,6 +29,7 @@ import { buildBillboards } from './billboards';
 import { fetchBillboards } from '../api/billboards';
 import { buildEffects } from './lighting';
 import { WinnerGlow } from './winnerGlow';
+import { buildHolidayLayer } from './holidayLayer';
 import { WINNER_MS } from '../utils/finishShow';
 
 const LEADER_MARGIN = 3; // metres: the follow camera only switches to a new leader that is clearly ahead
@@ -304,6 +305,15 @@ export class TrackScene {
       for (const piece of channelPieces(geometry, track?.physics?.kit ? (this.lite ? 200 : 150) : 40)) this.trackGroup.add(new Mesh(piece, this.trackMaterial));
     }
     const arch = this.buildFinishArch(track);
+    // The Holiday Season's layer (looks only): string lights, the place's weather, the winner's fireworks (./holidayLayer.js).
+    this.holiday?.dispose();
+    this.holiday = buildHolidayLayer(track, this.centerline, {
+      ...this.archSize,
+      startHalf: this.channel ? channelRadiusAt(this.channel, 0) + TRACK_STYLE.wallThickness : this.archSize.half,
+      lite: this.lite,
+      precipitation: Boolean(theme?.effects?.precipitation),
+    });
+    if (this.holiday) this.trackGroup.add(this.holiday.group);
     // Kit tracks: the finish's pieces drawn as one mesh per material (a few draw calls, not a dozen).
     this.trackGroup.add(track?.physics?.kit ? mergeByMaterial(arch) : arch);
     // Boost pads, speed bumps and obstacles (ice channels with physics.features).
@@ -373,6 +383,7 @@ export class TrackScene {
     const end = this.centerline.samples[this.centerline.samples.length - 1];
     const group = new Group();
     const archH = pen ? 14 : 6; // tall over a catch area, so the finish shot looks under it at the finishers and the view beyond
+    this.archSize = { half, archH };
     const post = new BoxGeometry(0.6, archH, 0.6);
     const white = new MeshLambertMaterial({ color: '#ffffff' });
     const red = new MeshLambertMaterial({ color: '#ef4444' });
@@ -610,6 +621,7 @@ export class TrackScene {
     this.scenery?.userData?.update?.(frame.t, { frame, positions: this.marbles.positions, names: this.marbles.names }); // (kit sceneries: idle movements, lifts; Grand Prix crowds)
     const index = this.followedIndex(frame, follow, this.main);
     this.celebrate(frame, index);
+    this.holiday?.race(frame.t, this.celebration?.ms ?? null);
     const at = this.marbles.positionOf(index);
     const main = this.main;
     const gate = this.cameraMode === 'follow' && this.gate && at ? this.gate.startFrame() : null;
@@ -1155,6 +1167,7 @@ export class TrackScene {
       const r = this.renderer;
       r.info.reset();
       this.effects?.update(performance.now() / 1000, this.camera.position);
+      this.holiday?.tick(performance.now() / 1000, this.camera.position);
       r.render(this.scene, this.camera);
       if (this.insetOn && this.insetRect && this.cameraMode === 'follow') {
         // The corner view, drawn over the big one's corner (no scenery: lighter on phones).
@@ -1237,6 +1250,8 @@ export class TrackScene {
     this.billboards?.dispose();
     this.billboards = null;
     this.effects?.dispose();
+    this.holiday?.dispose();
+    this.holiday = null;
     this.effects = null;
     for (const child of [...this.trackGroup.children]) {
       child.traverse((o) => {
