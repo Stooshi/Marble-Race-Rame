@@ -28,8 +28,11 @@ function UserChips({ user }) {
 
 export default function SiteHeader() {
   const { pathname } = useLocation();
-  const { user, isAuthenticated } = useAuth();
-  const kind = headerKind(pathname, isAuthenticated);
+  const { user, isAuthenticated, loading, token } = useAuth();
+  // (Signed in, or still checking a stored login: the logo goes to the home hub, never to the visitors' landing page.)
+  const signedIn = isAuthenticated || (loading && Boolean(token));
+  const home = signedIn ? '/home' : '/';
+  const kind = headerKind(pathname, signedIn);
 
   if (kind === 'checkout') {
     return (
@@ -38,7 +41,7 @@ export default function SiteHeader() {
           <Link to="/shop" className="ms-header__back">← Back to the shop</Link>
           <span className="ms-grow" />
           <Link to="/help#buying-coins" className="ms-header__back">Help</Link>
-          <Logo size={26} plain />
+          <Link to={home} aria-label="Marble Spins home" className="ms-header__logo"><Logo size={26} plain /></Link>
         </div>
       </header>
     );
@@ -60,7 +63,7 @@ export default function SiteHeader() {
   return (
     <header className="ms-header">
       <div className="ms-header__inner">
-        <Link to={isAuthenticated ? '/home' : '/'} aria-label="Marble Spins home" className="ms-header__logo"><Logo /></Link>
+        <Link to={home} aria-label="Marble Spins home" className="ms-header__logo"><Logo /></Link>
         {kind === 'app' ? (
           <nav aria-label="Main" className="ms-nav">
             <NavLink to="/home">Race</NavLink>

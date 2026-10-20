@@ -28,3 +28,14 @@ describe('logging out as a guest', () => {
     expect(src('components/NavBar.jsx')).toMatch(/<LogoutButton /);
   });
 });
+
+describe('the header logo', () => {
+  it('goes to the home hub when signed in (also while a stored login is being checked), to the landing page when not, on every header', () => {
+    const h = src('site/SiteHeader.jsx');
+    expect(h).toMatch(/const signedIn = isAuthenticated \|\| \(loading && Boolean\(token\)\);/);
+    expect(h).toMatch(/const home = signedIn \? '\/home' : '\/';/);
+    // The game's and checkout's headers both link the logo home; the landing page's goes to the landing page.
+    expect((h.match(/<Link to=\{home\} aria-label="Marble Spins home"/g) ?? []).length).toBe(2);
+    expect(h).toMatch(/<Link to="\/" aria-label="Marble Spins home" className="ms-header__logo"><Logo \/><\/Link>/);
+  });
+});
