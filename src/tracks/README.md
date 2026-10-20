@@ -151,7 +151,7 @@ module.exports = track({
   | `market-maze` (rivers) | boats (a slalom among the market boats), bankBends (S-bends), pierRamp (a short climb), pierDrop, brakingStraight, hairpin, bankSweep, spin, underPier, pontoon (two pegs), lastStraight |
   | `steamer-pass` (rivers) | levee (two pegs), steamer (a tunnel through a paddle steamer; a boost), bayou, drop, brakingStraight, hairpin, town (S-bends), slalomDrop, landing, lastStraight |
   | `falls-edge` (rivers) | lipBend, lip (pegs), falls (a waterfall), gorge (a slalom), spin, brakingStraight, hairpin, upstream (S-bends), lastStraight |
-  | `lock-staircase` (rivers) | locks (five steps), damCrest (a short climb), bridgeRun (a steep slalom drop), riverSweep (two pegs), sBends, spin, brakingStraight, hairpin, lastStraight |
+  | `lock-staircase` (rivers) | locks (five steps), damCrest (a short climb), bridgeRun (a steep slalom drop), riverSweep (two pegs), sBends (a peg), spin, brakingStraight, hairpin, lastStraight |
 
   A track may still write its own sections by hand; the sameness check makes sure they differ.
 - **`family`**: `'world-tour'` (the default), `'grand-prix'` (any `grandPrix` track),
