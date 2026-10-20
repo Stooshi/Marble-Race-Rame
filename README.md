@@ -48,7 +48,7 @@ curl localhost:5000/health
 | `DATABASE_SSL` | `false` | `true` for managed Postgres that requires TLS |
 | `DATABASE_POOL_MAX` | `10` | |
 | `JWT_SECRET` | dev-only fallback | **Required in production** |
-| `JWT_EXPIRES_IN` | `7d` | Any [`ms`](https://github.com/vercel/ms) string |
+| `JWT_EXPIRES_IN` | `180d` | How long a login lasts after the last visit (renewed daily by `GET /api/auth/me`). Any [`ms`](https://github.com/vercel/ms) string |
 | `BCRYPT_ROUNDS` | `12` | |
 | `RACE_COUNTDOWN_MS` | `5000` | Time between the race being decided and the start |
 | `RACE_MIN_DURATION_MS` / `RACE_MAX_DURATION_MS` | `90000` / `90000` | Race length range, within 50000–90000. Equal values give fixed-length races |

@@ -24,7 +24,11 @@ export function AuthProvider({ children }) {
   const refreshUser = useCallback(async () => {
     if (!getStoredToken()) return null;
     try {
-      const { user: fresh } = await api.me();
+      const { user: fresh, token: renewed } = await api.me();
+      // A visit renews the login (the server sends a fresh token once a day): stored for the next
+      // requests and visits, so a guest is only lost after 180 days away. (Not set as state: the
+      // open socket and this session carry on with the old one, still valid.)
+      if (renewed) storeToken(renewed);
       setUser(fresh);
       return fresh;
     } catch (err) {

@@ -57,7 +57,7 @@ export function onOpenCookieSettings(fn) { openers.add(fn); return () => openers
  * name, where (cookie | local | session), who sets it, why, how long.
  */
 export const STORAGE_LIST = [
-  { category: 'necessary', name: 'marble-race-token', where: 'local storage', by: 'Marble Spins', why: 'Keeps you logged in (your login token).', lasts: 'Until you log out' },
+  { category: 'necessary', name: 'marble-race-token', where: 'local storage', by: 'Marble Spins', why: 'Keeps you logged in (your login token).', lasts: 'Until you log out; the login itself ends 180 days after your last visit' },
   { category: 'necessary', name: 'marble-consent', where: 'local storage', by: 'Marble Spins', why: 'Remembers your cookie choices.', lasts: 'Until you change them or clear your browser' },
   { category: 'necessary', name: 'marble-sound', where: 'local storage', by: 'Marble Spins', why: 'Your sound levels and mute setting.', lasts: 'Until you clear your browser' },
   { category: 'necessary', name: 'marble-tv-moments', where: 'local storage', by: 'Marble Spins', why: 'Whether the race view cuts to trackside cameras (TV moments), if you switched them off.', lasts: 'Until you clear your browser' },

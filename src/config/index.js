@@ -78,7 +78,12 @@ module.exports = Object.freeze({
 
   auth: {
     jwtSecret,
-    jwtExpiresIn: process.env.JWT_EXPIRES_IN || '7d',
+    // A player's login lasts this long after their LAST visit: GET /api/auth/me renews it once a
+    // day (sliding). Guests have no password to log back in with, so it is all that keeps them
+    // (Moses, 20 Oct 2026: a guest is lost only after 180 days without a visit; was 7 days from
+    // the login, for everyone). The back office has its own 30-minute login.
+    jwtExpiresIn: process.env.JWT_EXPIRES_IN || '180d',
+    renewAfterSeconds: 24 * 3600,
     bcryptRounds: int('BCRYPT_ROUNDS', 12),
   },
 
