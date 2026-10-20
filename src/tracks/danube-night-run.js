@@ -19,7 +19,7 @@ module.exports = track({
   river: { palette: 'danube', side: 'left', width: 110, banks: 'quay' },
   coaster: { colours: { support: '#5a5e66', rail: '#e8e2cc', tie: '#2f3238' } },
   signature: 'The chain bridge slalom',
-  start: { landmark: 'quay-lamps', type: 'pier', gate: 'barrier', shots: { countdown: 'side', launch: 'low-chase' } },
+  start: { type: 'pier', gate: 'barrier', shots: { countdown: 'side', launch: 'low-chase' } },
   finish: { landmark: 'domed-hall' },
   designChanges: [
     'Built from the tunnel launch (out from under the quay) and the bridge slalom, the library layout made for this track: a quay straight, a short climb, a slalom between a chain bridge\'s piers, a sweep out over the river, a drop, the hairpin, a spiral round an island, S-bends along the far bank and the run-in.',
@@ -34,7 +34,7 @@ module.exports = track({
   sections: layout('bridge-slalom', {
     costumes: { block: 'stone-block', slalom: 'mooring-pole', peg: 'street-lamp', swipe: 'container-crane', parked: 'river-ferry' },
     dress: {
-      quay: { name: 'Along the embankment', height: 0, river: 'left', scenery: ['city-quay'], landmarks: [{ name: 'quay-lamps', at: 0.5, side: 'right', distance: 18 }] },
+      quay: { name: 'Along the embankment', height: 0, river: 'left', landmarks: [{ name: 'quay-lamps', at: 0.5, side: 'right', distance: 18 }] },
       pillars: { name: 'The chain bridge slalom', height: 0, river: 'left', overhead: ['chain-bridge'], scenery: ['city-quay'] },
       rise: { name: 'Up to the bridge', height: 0, river: 'left' },
       flyOut: { name: 'Out over the river', height: 14, river: 'under', landmarks: [{ name: 'river-cruiser', at: 0.55, river: true }] },

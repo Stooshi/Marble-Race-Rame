@@ -690,7 +690,8 @@ export function buildHouses(centerline, kit, { lite = false, arc, groundAt, clea
       bodies.push(h.body);
       // Windows that light up at night (Åre's houses, and every house on a floodlit city night) are drawn unlit
       // on their own; the rest are part of the house.
-      (glow || kit.lighting === 'night' ? windows : bodies).push(h.windows.applyMatrix4(m));
+      // (A Rivers track on a phone: its windows join the houses, one draw call less by the busy water.)
+      (glow || (kit.lighting === 'night' && !(lite && kit.river)) ? windows : bodies).push(h.windows.applyMatrix4(m));
       solids.push({ x: spot.x, z: spot.z, r: Math.max(h.w, h.d) / 2 + 2 });
     }
   }
