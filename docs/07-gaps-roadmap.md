@@ -1,6 +1,6 @@
 # 7. Known gaps and roadmap
 
-*Last updated 20 Oct 2026.* What isn't built, isn't finished, or is a known weakness. The launch target is **1 December 2026** (web, iPhone and Android). When something here is fixed, remove it and note the change in the [decisions log](06-decisions.md) if it was a decision.
+*Last updated 20 Oct 2026.* What isn't built, isn't finished, or is a known weakness. The launch target is **1 December 2026** (web, iPhone and Android), after a full site check this week and a soft start (social media, 10–20 test pilots) from the week of 26 Oct. When something here is fixed, remove it and note the change in the [decisions log](06-decisions.md) if it was a decision.
 
 ## Must fix before launch
 
