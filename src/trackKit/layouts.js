@@ -1359,7 +1359,7 @@ const LAYOUTS = {
   ],
   /** L78 Lock staircase (Rivers): a straight down five lock steps, a short climb over the dam crest, a steep slalom drop under a long bridge (the lottery: the clean drop has none at the gate), a river sweep (two pegs), S-bends, a spiral, the hairpin and a parked piece and a peg at the run-in. */
   'lock-staircase': (L, R, c) => [
-    { key: 'locks', name: 'Lock staircase', shape: straight(90, { grade: 0.15 }), features: [steps({ from: 0.3, to: 0.9, count: 5, drag: 0.01 })], billboards: 1 },
+    { key: 'locks', name: 'Lock staircase', shape: straight(90, { grade: 0.15 }), features: [steps({ from: 0.36, to: 0.92, count: 5, drag: 0.01 })], billboards: 1 },
     { key: 'damCrest', name: 'Over the dam crest', shape: climb(12, { grade: -0.05, after: 0.1 }) },
     { key: 'bridgeRun', name: 'Bridge slalom', shape: plunge(65, { grade: 0.3, from: 0.09 }), obstacles: [slalom({ costume: c.slalom, from: 0.15, to: 0.95, count: 6, loss: 0.25 })] },
     { key: 'riverSweep', name: 'River sweep', shape: sweep({ side: R, radius: 85, degrees: 100, grade: 0.1 }), obstacles: [peg({ costume: c.peg, at: 0.4, line: 'left' }), peg({ costume: c.peg, at: 0.65, line: 'right' })], billboards: 2 },
