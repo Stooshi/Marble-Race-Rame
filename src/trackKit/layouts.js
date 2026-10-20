@@ -1287,9 +1287,9 @@ const LAYOUTS = {
       obstacles: [parked({ costume: c.parked, at: 0.2, side: L, length: 6 }), peg({ costume: c.peg, at: 0.45, line: 'right' })], features: [rumble({ from: 0.72, to: 0.95, count: 3 })],
     },
   ],
-  /** L74 Bridge slalom (Rivers): a quay straight, a slalom straight between a chain bridge's piers, a long sweep out over the river (a boost; it flies here), a drop back to the bank, S-bends along the far bank, the hairpin, a spiral round an island and a parked piece and a peg at the run-in. */
+  /** L74 Bridge slalom (Rivers): a quay straight (two pegs, to mix the field out of the launch tunnel), a slalom straight between a chain bridge's piers, a long sweep out over the river (a boost; it flies here), a drop back to the bank, S-bends along the far bank, the hairpin, a spiral round an island and a parked piece and a peg at the run-in. */
   'bridge-slalom': (L, R, c) => [
-    { key: 'quay', name: 'Quay straight', shape: straight(100, { grade: 0.11 }), billboards: 1 },
+    { key: 'quay', name: 'Quay straight', shape: straight(100, { grade: 0.11 }), obstacles: [peg({ costume: c.peg, at: 0.15, line: 'left' }), peg({ costume: c.peg, at: 0.3, line: 'right' })], billboards: 1 },
     { key: 'pillars', name: 'Bridge slalom', shape: straight(100, { grade: 0.12 }), obstacles: [slalom({ costume: c.slalom, from: 0.25, to: 0.85, count: 4, loss: 0.15 })], billboards: 1 },
     { key: 'flyOut', name: 'Sweep over the river', shape: sweep({ side: R, radius: 90, degrees: 150, grade: 0.085 }), features: [boost({ at: 0.08 })], billboards: 2 },
     { key: 'drop', name: 'Drop', shape: plunge(45, { grade: 0.22, from: 0.085 }) },
@@ -1298,7 +1298,7 @@ const LAYOUTS = {
     { key: 'hairpin', name: 'Hairpin', shape: hairpin({ side: R }), obstacles: [swipe({ costume: c.swipe, side: 'high' })] },
     { key: 'island', name: 'Spiral', shape: spiral({ side: L, radius: 52, turns: 1, grade: 0.15 }) },
     {
-      key: 'lastStraight', name: 'Last straight', shape: straight(85, { grade: 0.15 }),
+      key: 'lastStraight', name: 'Last straight', shape: straight(100, { grade: 0.15 }),
       obstacles: [parked({ costume: c.parked, at: 0.2, side: R, length: 6 }), peg({ costume: c.peg, at: 0.45, line: 'left' })], features: [rumble({ from: 0.7, to: 0.95, count: 3 })],
     },
   ],
