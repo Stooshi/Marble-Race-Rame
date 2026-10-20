@@ -743,3 +743,25 @@ a.ms-tile:hover, a.ms-card:hover { text-decoration: none; border-color: var(--ms
 .ms-save__born { border: 0; padding: 0; margin: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .ms-save__born legend { font-weight: 600; margin-bottom: 6px; padding: 0; }
 .ms-save__env { font-size: 3rem; line-height: 1; }
+
+/* ── Home page promo banner (under the hero race): headline, points, the button at the bottom ── */
+.ms-promo-wrap { padding-top: 0; }
+.ms-promo {
+  position: relative; overflow: hidden; display: grid; gap: 20px; grid-template-columns: 1fr;
+  padding: 28px 32px; border-radius: 22px;
+  background: linear-gradient(115deg, #2F5BEA 0%, #6A3FD8 55%, #FF7A1A 130%);
+  box-shadow: 0 18px 40px rgba(8, 12, 30, 0.45);
+}
+.ms-promo::after { content: ''; position: absolute; right: -60px; top: -60px; width: 220px; height: 220px; border-radius: 50%; background: radial-gradient(circle, rgba(255,210,31,0.35), rgba(255,210,31,0) 70%); pointer-events: none; }
+.ms-promo__h { margin: 0; font: 400 clamp(1.9rem, 3.2vw, 2.6rem)/1 var(--ms-display); color: #fff; letter-spacing: 0.01em; text-shadow: 0 2px 0 rgba(0,0,0,0.18); }
+.ms-promo__points { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px 18px; }
+.ms-promo__points li { display: flex; align-items: center; gap: 10px; min-width: 0; font: 700 1.1rem/1.15 var(--ms-cond); letter-spacing: 0.02em; text-transform: uppercase; color: #fff; }
+.ms-promo__points svg { flex: none; width: 30px; height: 30px; color: var(--ms-yellow); filter: drop-shadow(0 1px 0 rgba(0,0,0,0.2)); }
+.ms-promo__cta { position: relative; z-index: 1; width: 100%; }
+@media (max-width: 860px) {
+  .ms-promo__points { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 640px) {
+  .ms-promo { padding: 22px 20px; gap: 16px; }
+  .ms-promo__points li { font-size: 1rem; }
+}

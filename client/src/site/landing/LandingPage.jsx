@@ -1,3 +1,4 @@
+import PromoBanner from './PromoBanner';
 import { lazy, Suspense, useMemo } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { api } from '../../api/client';
@@ -73,6 +74,8 @@ export default function LandingPage() {
         </Suspense>
         <span className="ms-note">A real race replay, picked for a close finish. Every visit shows a different race.</span>
       </section>
+
+      <PromoBanner />
 
       <section id="how" aria-labelledby="how-h" className="ms-page">
         <h2 id="how-h" className="ms-landing__h2">How to play</h2>
