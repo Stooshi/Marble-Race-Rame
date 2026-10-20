@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { api } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import MarbleBall from './MarbleBall';
+import { useSavePrompt } from '../site/account/SavePrompt';
 
 const clockText = (ms) => {
   const s = Math.ceil(ms / 1000);
@@ -42,6 +43,7 @@ function PublicNext({ raceId, entries, nextRaceId = null }) {
   const [next, setNext] = useState(null); // { race, entries } of the rematch
   const [now, setNow] = useState(Date.now());
   const [busy, setBusy] = useState(false);
+  const { beforeNextRace } = useSavePrompt();
   const [error, setError] = useState(null);
 
   useEffect(() => { if (nextRaceId) setNextId(nextRaceId); }, [nextRaceId]);
@@ -80,6 +82,7 @@ function PublicNext({ raceId, entries, nextRaceId = null }) {
     setBusy(true);
     setError(null);
     try {
+      await beforeNextRace(); // (a guest after every 3rd race: "Save your marble" first; "Later" goes on)
       const d = await api.nextRace(raceId, marbleId);
       navigate(`/race/${d.race.id}`);
     } catch (err) {

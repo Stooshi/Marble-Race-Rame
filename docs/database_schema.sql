@@ -1036,3 +1036,50 @@ WHERE NOT EXISTS (
     SELECT 1 FROM tracks t WHERE t.slug = s.slug OR lower(t.name) = lower(s.name)
 )
 ON CONFLICT DO NOTHING;
+
+-- ---------------------------------------------------------------------------
+-- Every player's own 4 starter marbles (Moses, 20 Oct 2026): their own rows in `marbles` (plain
+-- glass, one colour or two half and half: pattern 'solid' | 'half'), made by src/marbles/starters.js.
+-- owner_id: the player (catalogue marbles: NULL). starter_no 1-4. marble_code: the Marble ID
+-- ("ST" + the player's 5-character code + 1-4), also the certificate's code. Looks only.
+-- ---------------------------------------------------------------------------
+ALTER TABLE marbles ADD COLUMN IF NOT EXISTS owner_id uuid REFERENCES users(id) ON DELETE CASCADE;
+ALTER TABLE marbles ADD COLUMN IF NOT EXISTS starter_no smallint CHECK (starter_no BETWEEN 1 AND 4);
+ALTER TABLE marbles ADD COLUMN IF NOT EXISTS marble_code varchar(16);
+CREATE UNIQUE INDEX IF NOT EXISTS uq_marbles_marble_code ON marbles (marble_code) WHERE marble_code IS NOT NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS uq_marbles_owner_starter ON marbles (owner_id, starter_no) WHERE owner_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_marbles_owner ON marbles (owner_id) WHERE owner_id IS NOT NULL;
+
+-- ---------------------------------------------------------------------------
+-- Every player's own 4 starter marbles (20 Oct 2026; src/marbles/starters.js). A starter is the
+-- player's own `marbles` row: owner_id, starter_no 1–4 and its Marble ID (marble_code, e.g.
+-- STLVAS82; its certificate). Catalogue marbles have owner_id NULL. Looks only: a race never reads a
+-- marble's stats. pattern 'half': two colours, half and half.
+-- ---------------------------------------------------------------------------
+ALTER TABLE marbles ADD COLUMN IF NOT EXISTS owner_id    uuid REFERENCES users(id) ON DELETE CASCADE;
+ALTER TABLE marbles ADD COLUMN IF NOT EXISTS starter_no  smallint CHECK (starter_no BETWEEN 1 AND 4);
+ALTER TABLE marbles ADD COLUMN IF NOT EXISTS marble_code varchar(16);
+CREATE UNIQUE INDEX IF NOT EXISTS uq_marbles_marble_code ON marbles (marble_code) WHERE marble_code IS NOT NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS uq_marbles_owner_starter ON marbles (owner_id, starter_no) WHERE owner_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_marbles_catalogue ON marbles (is_active) WHERE owner_id IS NULL;
+
+-- ---------------------------------------------------------------------------
+-- Sign-up with birth year and month (20 Oct 2026): the age group is worked out from them (under 13:
+-- no account). Stored as the first day of the month, so the age group stays right as players grow up.
+-- Email confirmation (double opt-in, sent once email is set up: src/account/emailConfirm.js): the
+-- address is confirmed when its link is opened (email_verified_at). Only the link's SHA-256 is stored.
+-- ---------------------------------------------------------------------------
+ALTER TABLE users ADD COLUMN IF NOT EXISTS birth_month       date;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verified_at timestamptz;
+
+CREATE TABLE IF NOT EXISTS email_confirmations (
+    id          bigserial   PRIMARY KEY,
+    user_id     uuid        NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    email       varchar(254) NOT NULL,
+    token_hash  char(64)    NOT NULL UNIQUE,
+    lang        varchar(5)  NOT NULL DEFAULT 'en',
+    created_at  timestamptz NOT NULL DEFAULT now(),
+    expires_at  timestamptz NOT NULL,
+    used_at     timestamptz
+);
+CREATE INDEX IF NOT EXISTS idx_email_confirmations_user ON email_confirmations (user_id, created_at);

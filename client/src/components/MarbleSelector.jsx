@@ -22,14 +22,19 @@ function history(m) {
  */
 export default function MarbleSelector({ value, onChange, disabledIds = [] }) {
   const { user, setCoins } = useAuth();
-  const { data, error, loading, reload } = useAsync(() => api.marbles(), [user?.id]);
+  // Mine: the player's own marbles (their 4 starters and any bought), the shop: the catalogue.
+  const { data, error, loading, reload } = useAsync(async () => {
+    const [own, all] = await Promise.all([api.myMarbles(), api.marbles()]);
+    return { own: own.marbles ?? [], marbles: all.marbles ?? [] };
+  }, [user?.id]);
   const [tab, setTab] = useState('mine');
   const [buying, setBuying] = useState(null);
   const [buyError, setBuyError] = useState(null);
 
   const { mine, shop } = useMemo(() => {
-    const all = data?.marbles ?? [];
-    return { mine: all.filter((m) => m.owned), shop: all.filter((m) => !m.owned) };
+    const own = data?.own ?? [];
+    const ownIds = new Set(own.map((m) => m.id));
+    return { mine: own, shop: (data?.marbles ?? []).filter((m) => !ownIds.has(m.id) && m.on_sale !== false) };
   }, [data]);
 
   async function buy(marble) {

@@ -123,7 +123,11 @@ A seasonal collection has its own prices per rarity (below). A season pass's mar
 
 **One copy each:** a player can own one copy of each marble.
 
-**The Shooter** is the marble a player races in. **Free starters:** every player keeps 4 plain one-colour marbles.
+**The Shooter** is the marble a player races in.
+
+**Starter marbles** (since 20 Oct 2026; replaced the 4 shared ones): every player, guest or saved, gets **4 starter marbles of their own** when the account is made (older players the first time they need them). Plain glass from 12 clearly different colours (`client/src/shared/marbles/starters.json`): one in one colour and three in two colours, half and half, all different; two colours of one marble always clearly differ. Each has its own Marble ID (`ST` + 5 characters + 1–4) and certificate. Never sold. Looks only: they never change a race.
+- **In a race no two players show the same starter look.** A player without a collection Shooter races their Shooter starter (or their first); if someone in the race already shows that look, they get their own next starter. Only when all 4 are shown already does an earlier player waiting in the race move to another of theirs. (In 20,000 simulated races of 20 new players, everyone always got one of their own, all different.)
+- So any number of new players fit in one race or friend room (before: 4).
 
 **Showcase marbles:**
 - In beginner races, the computer players wear collection marbles, so new players see what exists.
@@ -195,6 +199,9 @@ A season (the first: **Holiday Season 2026**, `holiday-2026`, 1 Dec 2026 00:00 t
 
 ## Age and accounts
 
-- **Age group at sign-up:** under 13, 13–17, or 18+.
-- **Under 13:** no account until parental approval is built (the sign-up page and the server both refuse), and never news emails. Guests can play without giving an age.
+- **Birth year and month at sign-up** (no day; since 20 Oct 2026): the age group (under 13, 13–17, 18+) is worked out from them, counting the birth month as not yet reached.
+- **Under 13:** no account until parental approval is built (the sign-up form says so kindly and the player keeps racing as a guest; the server refuses too and stores nothing), and never news emails. Guests can play without giving an age.
+- **Save your marble pop-up** (guests only): after every 3rd finished race (3, 6, 9 …, counted by the server across visits), before the next race starts. Headline "Save your marble — it's free", six reasons, a big "Sign up now" and a plain "Later". **"Later" always works and racing is never blocked** (App Store rules). Never shown to saved players (the app review accounts are saved accounts). English or Swedish by the browser's or phone's language.
+- **Quick sign-up** (the pop-up and the sign-up page alike): player name (a suggested free name the player can change), email, password, birth year and month, the terms (required), news by email (optional, unticked). Everything the guest won stays: it is the same account.
+- **Confirm your email** (double opt-in): once email is set up (`BREVO_API_KEY`), a link to confirm the address, valid 7 days; Settings sends a new one. Until then accounts are saved without it.
 - **Accounts:** players can download their data and delete their account in Settings. Deletion anonymises the account and keeps race results and payment records.

@@ -25,7 +25,7 @@ async function exportData(db, userId) {
   const one = async (sql) => (await db.query(sql, [userId])).rows[0] ?? null;
   const all = async (sql) => (await db.query(sql, [userId])).rows;
   const account = await one(
-    `SELECT id, username, email, display_name, avatar_url, role, is_guest, age_group, marketing_opt_in, coins, coins_earned,
+    `SELECT id, username, email, display_name, avatar_url, role, is_guest, age_group, to_char(birth_month, 'YYYY-MM') AS birth_year_month, email_verified_at, marketing_opt_in, coins, coins_earned,
             coins_bought, skill, streak_days, streak_last_day, settings, created_at, updated_at, last_login_at, suspended_at
        FROM users WHERE id = $1 AND deleted_at IS NULL`,
   );
@@ -38,7 +38,9 @@ async function exportData(db, userId) {
     all('SELECT item_slug, marble_code, source, copy_no, gift_no, edition_no, price_paid, currency, acquired_at FROM user_collection WHERE user_id = $1 ORDER BY acquired_at'),
     one('SELECT item_slug, marble_id, updated_at FROM user_shooter WHERE user_id = $1'),
     one('SELECT color_key, surface_key, effect_key, label, updated_at FROM marble_appearances WHERE user_id = $1'),
-    all('SELECT m.name, um.is_favorite, um.acquired_at FROM user_marbles um JOIN marbles m ON m.id = um.marble_id WHERE um.user_id = $1'),
+    all(`SELECT m.name, m.marble_code, m.starter_no, um.is_favorite, coalesce(um.acquired_at, m.created_at) AS acquired_at
+           FROM marbles m LEFT JOIN user_marbles um ON um.marble_id = m.id AND um.user_id = $1
+          WHERE m.owner_id = $1 OR um.user_id IS NOT NULL ORDER BY m.starter_no NULLS LAST, m.name`),
     all(`SELECT r.id AS race_id, t.name AS track, r.finished_at, e.finish_position, e.finish_time_ms, e.coins_awarded, r.room_id IS NOT NULL AS friend_room
            FROM race_entries e JOIN races r ON r.id = e.race_id LEFT JOIN tracks t ON t.id = r.track_id
           WHERE e.user_id = $1 ORDER BY r.created_at`),
@@ -105,7 +107,7 @@ async function deleteAccount(client, userId, { by = 'player', reason = null } = 
   const unusable = `!deleted:${crypto.randomBytes(16).toString('hex')}`; // (no password can ever match)
   await client.query(
     `UPDATE users SET username = $2, email = $3, password_hash = $4, display_name = NULL, avatar_url = NULL,
-            settings = '{}'::jsonb, age_group = NULL, marketing_opt_in = false, last_login_at = NULL,
+            settings = '{}'::jsonb, age_group = NULL, birth_month = NULL, email_verified_at = NULL, marketing_opt_in = false, last_login_at = NULL,
             role = 'player', store_account_id = NULL, apple_account_token = NULL, deleted_at = now(), updated_at = now()
       WHERE id = $1`,
     [userId, name, `${name}@deleted.invalid`, unusable],

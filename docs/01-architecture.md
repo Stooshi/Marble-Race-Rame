@@ -1,6 +1,6 @@
 # 1. Architecture
 
-*Last updated 16 Oct 2026.*
+*Last updated 20 Oct 2026.*
 
 ## The parts
 
@@ -44,7 +44,7 @@
 
 **Website or app → server (REST).**
 - Every call goes to `${VITE_API_URL}/api/...` as JSON.
-- A player is identified by a JWT in the `Authorization: Bearer` header. On the website it is stored in localStorage under `marble-race-token`. A login lasts 180 days after the player's last visit: on each visit `GET /api/auth/me` sends a fresh token when the current one is over a day old, and the app stores it (sliding expiry, since 20 Oct 2026; before, 7 days from the login, which lost guests after a week). A password reset ends every older login.
+- A player is identified by a JWT in the `Authorization: Bearer` header. On the website it is stored in localStorage under `marble-race-token`. A login lasts 180 days after the player's last visit: on each visit `GET /api/auth/me` sends a fresh token when the current one is over a day old, and the app stores it (sliding expiry, since 20 Oct 2026; before, 7 days from the login, which lost guests after a week). A password reset ends every older login. Every new account (guest or saved) gets its own 4 starter marbles (`src/marbles/starters.js`). Guests see the "Save your marble" pop-up after every 3rd finished race (client `site/account/SavePrompt.jsx`); sign-up asks for birth year and month, and once email is set up sends a "Confirm your email" link (`src/account/emailConfirm.js`).
 - Guests ("Play free") get a real account with `is_guest = true`. Saving the account turns it into a normal one.
 - The API reference is in the root `README.md`.
 

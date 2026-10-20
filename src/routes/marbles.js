@@ -15,7 +15,7 @@ const COLOR = { type: 'string', pattern: /^#[0-9A-Fa-f]{6}$/, patternMessage: 'm
 // Marbles are looks only (skill belongs to the player), so their old stat
 // columns are never sent or set.
 const MARBLE_COLUMNS = ['id', 'slug', 'name', 'description', 'color_primary', 'color_secondary', 'pattern', 'rarity',
-  'price_coins', 'is_starter', 'is_active', 'on_sale', 'created_at', 'updated_at'].map((c) => `m.${c}`).join(', ');
+  'price_coins', 'is_starter', 'is_active', 'on_sale', 'marble_code', 'starter_no', 'created_at', 'updated_at'].map((c) => `m.${c}`).join(', ');
 
 // A marble's own history with one player: their races, wins and podiums with it as their Shooter.
 const HISTORY = `(SELECT COUNT(*)::int FROM race_entries e JOIN races r ON r.id = e.race_id AND r.status = 'finished'
@@ -45,14 +45,14 @@ router.get('/', optionalAuth, async (req, res) => {
     include_inactive: { type: 'boolean' },
   });
   const params = [req.user?.id ?? null];
-  const where = [];
+  const where = ['m.owner_id IS NULL']; // (the catalogue: not the players' own starters)
   if (!(q.include_inactive && req.user?.role === 'admin')) where.push('m.is_active');
   if (q.rarity) { params.push(q.rarity); where.push(`m.rarity = $${params.length}`); }
 
   const { rows } = await db.query(
     `SELECT ${MARBLE_COLUMNS}, ${HISTORY},
             CASE WHEN $1::uuid IS NULL THEN NULL
-                 ELSE m.is_starter OR EXISTS (SELECT 1 FROM user_marbles um WHERE um.user_id = $1 AND um.marble_id = m.id)
+                 ELSE EXISTS (SELECT 1 FROM user_marbles um WHERE um.user_id = $1 AND um.marble_id = m.id)
             END AS owned
        FROM marbles m
       ${where.length ? `WHERE ${where.join(' AND ')}` : ''}
@@ -79,10 +79,10 @@ router.get('/:id', async (req, res) => {
 router.post('/:id/purchase', requireAuth, async (req, res) => {
   const id = assertUuid(req.params.id);
   const result = await db.withTransaction(async (client) => {
-    const { rows } = await client.query(`SELECT ${MARBLE_COLUMNS} FROM marbles m WHERE m.id = $1 AND m.is_active`, [id]);
+    const { rows } = await client.query(`SELECT ${MARBLE_COLUMNS} FROM marbles m WHERE m.id = $1 AND m.is_active AND m.owner_id IS NULL`, [id]);
     const marble = rows[0];
     if (!marble) throw notFound('Marble not found');
-    if (marble.is_starter) throw badRequest('Starter marbles are free for everyone');
+    if (marble.is_starter) throw badRequest('Starter marbles are never sold: every player has 4 of their own');
     if (!marble.on_sale) throw badRequest('This marble is not for sale');
 
     const owned = await client.query('SELECT 1 FROM user_marbles WHERE user_id = $1 AND marble_id = $2', [req.user.id, id]);

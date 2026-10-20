@@ -12,9 +12,8 @@
  *   keeps only the in-game reminder (purge()).
  *
  * - A player (an account with an email, not a guest): always a reminder in the game; also by email
- *   to their account's address only if they tick it (email_wanted). A verified account email counts
- *   as confirmed; an unverified one (every account today: there is no email check yet) is confirmed
- *   like a visitor's.
+ *   to their account's address only if they tick it (email_wanted). A confirmed account email
+ *   (users.email_verified_at) counts as confirmed; an unconfirmed one is confirmed like a visitor's.
  * - A visitor (or a guest): by email only, to the address they give, with their consent ticked.
  * - The exact consent text they agreed to is stored with the reminder (GDPR: what, when).
  * - One live reminder per player or address and season; asking again updates or keeps it, and the
@@ -52,10 +51,10 @@ function assertOpen(season, now) {
 }
 
 /**
- * Is the account's email address verified (then it counts as confirmed)? There is no email check
- * for accounts yet, so never; when one is built, read it here.
+ * Is the account's email address confirmed (then it counts as confirmed here too)? Confirmed from
+ * the sign-up's confirmation email (users.email_verified_at, since 20 Oct 2026).
  */
-const accountEmailVerified = (_user) => false;
+const accountEmailVerified = (user) => Boolean(user?.email_verified_at);
 
 /** A player's live reminder for a season (null if none): { email: bool, address, confirmed }. */
 async function ofPlayer(db, userId, seasonKey) {

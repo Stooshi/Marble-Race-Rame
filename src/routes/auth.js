@@ -7,8 +7,10 @@ const rateLimit = require('express-rate-limit');
 const config = require('../config');
 const db = require('../db');
 const { signToken } = require('../utils/jwt');
+const starters = require('../marbles/starters');
+const emailConfirm = require('../account/emailConfirm');
 const { validate } = require('../utils/validate');
-const { unauthorized, conflict, forbidden } = require('../utils/httpError');
+const { HttpError, badRequest, unauthorized, conflict, forbidden } = require('../utils/httpError');
 const { requireAuth } = require('../middleware/auth');
 const { ensureAppearance } = require('../game/appearance');
 const economy = require('../economy');
@@ -28,7 +30,7 @@ const authLimiter = rateLimit({
 
 // `streak`: days in a row with the daily goal met, alive while the goal was met today or yesterday
 // (UTC days, as in src/economy/index.js today()); 0 otherwise.
-const PUBLIC_USER_COLUMNS = `id, username, email, display_name, avatar_url, role, coins, coins_earned, coins_bought, is_guest, skill, skill_refund_coins, settings, age_group, marketing_opt_in, created_at,
+const PUBLIC_USER_COLUMNS = `id, username, email, display_name, avatar_url, role, coins, coins_earned, coins_bought, is_guest, skill, skill_refund_coins, settings, age_group, marketing_opt_in, email_verified_at, created_at,
   CASE WHEN streak_last_day >= (now() AT TIME ZONE 'UTC')::date - 1 THEN streak_days ELSE 0 END AS streak`;
 
 const registerSchema = {
@@ -41,7 +43,30 @@ const registerSchema = {
   marketing_opt_in: { type: 'boolean' },
   display_name: { type: 'string', max: 40 },
   age_group: { type: 'enum', values: ['under-13', '13-17', '18+'] },
+  // Since 20 Oct 2026: birth year and month (the age group is worked out from them; older apps send age_group).
+  birth_year: { type: 'int', min: 1900, max: 2100 },
+  birth_month: { type: 'int', min: 1, max: 12 },
+  lang: { type: 'enum', values: ['en', 'sv'] }, // (the confirmation email's language)
 };
+
+/**
+ * Age in whole years from a birth year and month, counting the birth month as not yet reached (no
+ * day is asked: so nobody is taken for 13 before they are).
+ */
+function ageFrom(year, month, now = new Date()) {
+  const y = now.getUTCFullYear(); const m = now.getUTCMonth() + 1;
+  return y - year - (m <= month ? 1 : 0);
+}
+const ageGroupOf = (age) => (age < 13 ? 'under-13' : age < 18 ? '13-17' : '18+');
+
+/** The sign-up's age: from birth year and month (both or neither), else the old age group. Throws on a birth date in the future. */
+function ageOf(body, now = new Date()) {
+  if ((body.birth_year == null) !== (body.birth_month == null)) throw badRequest('Give both your birth year and month');
+  if (body.birth_year == null) return { ageGroup: body.age_group ?? null, birthMonth: null };
+  const age = ageFrom(body.birth_year, body.birth_month, now);
+  if (age < 0 || age > 120) throw badRequest('Please check your birth year and month');
+  return { ageGroup: ageGroupOf(age), birthMonth: `${body.birth_year}-${String(body.birth_month).padStart(2, '0')}-01` };
+}
 
 /** The email consent's history: a line each time the answer is given or changes. */
 async function logConsent(client, userId, consent, source) {
@@ -52,23 +77,25 @@ async function logConsent(client, userId, consent, source) {
  * Under-13s can't make an account until parental approval exists (the sign-up page says so too):
  * refused here as well, so the rule doesn't depend on the website. They can still play as guests.
  */
-function refuseUnder13(body) {
-  if (body.age_group === 'under-13') {
-    throw forbidden('Players under 13 need a parent or guardian to approve their account first. [Parent approval is coming]');
+function refuseUnder13(ageGroup) {
+  if (ageGroup === 'under-13') {
+    // (nothing is stored: the player keeps racing as a guest; the sign-up form says so kindly)
+    throw new HttpError(403, "Saving an account is for players 13 and older, so we haven't made one. You can keep racing as a guest as much as you like.", { code: 'under_13' });
   }
 }
 
 /** POST /api/auth/register */
 router.post('/register', authLimiter, async (req, res) => {
   const body = validate(req.body, registerSchema);
-  refuseUnder13(body);
+  const { ageGroup, birthMonth } = ageOf(body);
+  refuseUnder13(ageGroup);
   const hash = await bcrypt.hash(body.password, config.auth.bcryptRounds);
   try {
     const { rows } = await db.query(
-      `INSERT INTO users (username, email, password_hash, display_name, marketing_opt_in, coins, age_group)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)
+      `INSERT INTO users (username, email, password_hash, display_name, marketing_opt_in, coins, age_group, birth_month)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
        RETURNING ${PUBLIC_USER_COLUMNS}`,
-      [body.username, body.email.toLowerCase(), hash, body.display_name ?? null, body.marketing_opt_in ?? false, economy.economy.startingCoins, body.age_group ?? null],
+      [body.username, body.email.toLowerCase(), hash, body.display_name ?? null, body.marketing_opt_in ?? false, economy.economy.startingCoins, ageGroup, birthMonth],
     );
     const user = rows[0];
     await logConsent(db, user.id, body.marketing_opt_in ?? false, 'signup');
@@ -76,7 +103,10 @@ router.post('/register', authLimiter, async (req, res) => {
     await economy.opening(db, user.id, user.coins);
     // Starting marble look. If this fails the look is created on first read instead.
     await ensureAppearance(user.id).catch((err) => console.error('[auth] starting look failed', err.message));
-    res.status(201).json({ token: signToken(user), user });
+    // Their own 4 starter marbles (if this fails, they are made the first time they're needed).
+    await starters.ensure(db, user.id).catch((err) => console.error('[auth] starter marbles failed', err.message));
+    const confirm = await emailConfirm.send(db, user, { lang: body.lang }).catch((err) => { console.error('[auth] confirmation email failed', err.message); return 'failed'; });
+    res.status(201).json({ token: signToken(user), user, confirm });
   } catch (err) {
     if (err.code === '23505') {
       throw conflict(err.constraint?.includes('email') ? 'Email is already registered' : 'Username is taken');
@@ -102,6 +132,7 @@ router.post('/guest', authLimiter, async (req, res) => {
   const user = rows[0];
   await economy.opening(db, user.id, user.coins);
   await ensureAppearance(user.id).catch((err) => console.error('[auth] starting look failed', err.message));
+  await starters.ensure(db, user.id).catch((err) => console.error('[auth] starter marbles failed', err.message));
   await security.record(req, user.id, 'guest');
   res.status(201).json({ token: signToken(user), user });
 });
@@ -109,20 +140,23 @@ router.post('/guest', authLimiter, async (req, res) => {
 /** POST /api/auth/claim — a guest saves their marble: picks a name, email and password, keeping coins and marbles. */
 router.post('/claim', requireAuth, authLimiter, async (req, res) => {
   const body = validate(req.body, registerSchema);
-  refuseUnder13(body);
+  const { ageGroup, birthMonth } = ageOf(body);
+  refuseUnder13(ageGroup);
   const hash = await bcrypt.hash(body.password, config.auth.bcryptRounds);
   try {
     const { rows } = await db.query(
       `UPDATE users SET username = $2, email = $3, password_hash = $4, marketing_opt_in = $5, is_guest = false,
-                        age_group = COALESCE($6, age_group)
+                        age_group = COALESCE($6, age_group), birth_month = COALESCE($7::date, birth_month)
         WHERE id = $1 AND is_guest
         RETURNING ${PUBLIC_USER_COLUMNS}`,
-      [req.user.id, body.username, body.email.toLowerCase(), hash, body.marketing_opt_in ?? false, body.age_group ?? null],
+      [req.user.id, body.username, body.email.toLowerCase(), hash, body.marketing_opt_in ?? false, ageGroup, birthMonth],
     );
     if (!rows[0]) throw conflict('This account is already saved');
     await logConsent(db, rows[0].id, body.marketing_opt_in ?? false, 'claim');
     await security.record(req, rows[0].id, 'claim');
-    res.json({ token: signToken(rows[0]), user: rows[0] });
+    // Everything the guest won stays: it's the same account (coins, marbles, starters, races).
+    const confirm = await emailConfirm.send(db, rows[0], { lang: body.lang }).catch((err) => { console.error('[auth] confirmation email failed', err.message); return 'failed'; });
+    res.json({ token: signToken(rows[0]), user: rows[0], confirm });
   } catch (err) {
     if (err.code === '23505') {
       throw conflict(err.constraint?.includes('email') ? 'Email is already registered' : 'Username is taken');
@@ -191,7 +225,44 @@ router.get('/me', requireAuth, async (req, res) => {
   // config.auth.jwtExpiresIn from now. The app stores it; the old one stays valid until it expires.
   const age = Math.floor(Date.now() / 1000) - (req.user.tokenPayload?.iat ?? 0);
   const token = age >= config.auth.renewAfterSeconds ? signToken(rows[0]) : undefined;
-  res.json({ user: rows[0], ...(token && { token }) });
+  // A guest's finished races (the save pop-up comes after every 3rd: client SavePrompt).
+  let racesFinished;
+  if (rows[0].is_guest) {
+    const { rows: [n] } = await db.query(
+      `SELECT count(*)::int AS n FROM race_entries e JOIN races r ON r.id = e.race_id AND r.status = 'finished' WHERE e.user_id = $1`,
+      [req.user.id],
+    );
+    racesFinished = n.n;
+  }
+  res.json({ user: rows[0], ...(token && { token }), ...(racesFinished != null && { racesFinished }) });
+});
+
+// Suggested player names for the quick sign-up ("SwiftComet42"): free ones, the player may change it.
+const NAME_A = ['Swift', 'Lucky', 'Rapid', 'Bouncy', 'Shiny', 'Rolling', 'Cosmic', 'Golden', 'Turbo', 'Zippy', 'Mighty', 'Brave', 'Clever', 'Sunny', 'Frosty', 'Speedy', 'Jolly', 'Daring', 'Bright', 'Nimble'];
+const NAME_B = ['Comet', 'Rocket', 'Racer', 'Spinner', 'Pebble', 'Bolt', 'Glider', 'Orbit', 'Flash', 'Marble', 'Shooter', 'Roller', 'Dash', 'Spark', 'Meteor', 'Swirl', 'Zoom', 'Breeze', 'Arrow', 'Drift'];
+/** GET /api/auth/suggest-name — a free player name to start from. */
+router.get('/suggest-name', authLimiter, async (_req, res) => {
+  for (let tries = 0; tries < 12; tries += 1) {
+    const name = `${NAME_A[crypto.randomInt(NAME_A.length)]}${NAME_B[crypto.randomInt(NAME_B.length)]}${crypto.randomInt(10, 100)}`;
+    const { rows } = await db.query('SELECT 1 FROM users WHERE lower(username) = lower($1)', [name]);
+    if (!rows.length) return res.json({ name });
+  }
+  res.json({ name: null });
+});
+
+/** POST /api/auth/confirm-email { token } — the link in the confirmation email. */
+router.post('/confirm-email', authLimiter, async (req, res) => {
+  const { token } = validate(req.body, { token: { type: 'string', required: true, max: 100, trim: false } });
+  res.json(await emailConfirm.confirm(db, token));
+});
+
+/** POST /api/auth/confirm-email/resend — a new confirmation link (logged in, saved account, not yet confirmed). */
+router.post('/confirm-email/resend', requireAuth, authLimiter, async (req, res) => {
+  const { lang } = validate(req.body ?? {}, { lang: { type: 'enum', values: ['en', 'sv'] } });
+  const { rows: [u] } = await db.query('SELECT id, username, email, is_guest, email_verified_at FROM users WHERE id = $1', [req.user.id]);
+  if (u.is_guest) throw badRequest('Save your account first');
+  if (u.email_verified_at) return res.json({ confirm: 'confirmed' });
+  res.json({ confirm: await emailConfirm.send(db, u, { lang }) });
 });
 
 module.exports = router;

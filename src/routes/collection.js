@@ -65,7 +65,7 @@ router.post('/:slug/buy', requireAuth, async (req, res) => {
 
 /** GET /api/collection/certificate/:code — a marble's certificate, public (shareable). */
 router.get('/certificate/:code', async (req, res) => {
-  const { code } = validate(req.params, { code: { type: 'string', required: true, pattern: /^([A-Z]{2}\d{3}|MS-[A-Z0-9]{3}-[A-Z0-9]{3})-G?\d{5,6}$/ } });
+  const { code } = validate(req.params, { code: { type: 'string', required: true, pattern: /^(([A-Z]{2}\d{3}|MS-[A-Z0-9]{3}-[A-Z0-9]{3})-G?\d{5,6}|ST[A-HJ-NP-Z2-9]{5}[1-4])$/ } });
   res.json({ certificate: await collection.certificate(db, code) });
 });
 

@@ -9,6 +9,7 @@
 const { items, bySlug, byId, normaliseId, marbleCode, saleState, onSale, setOf, isStandard, passMarbleOf, collectionOf } = require('./catalog');
 const { HttpError, badRequest, conflict, notFound } = require('../utils/httpError');
 const economy = require('../economy');
+const starters = require('./starters');
 
 /** Live counts per item: { slug: { bought, gifted } }. */
 async function counters(client) {
@@ -234,12 +235,14 @@ async function bag(client, userId) {
     'SELECT * FROM user_collection WHERE user_id = $1 ORDER BY acquired_at, item_slug',
     [userId],
   );
+  await starters.ensure(client, userId); // (players from before 20 Oct 2026 get theirs here)
   const { rows: originals } = await client.query(
-    `SELECT m.id, m.slug, m.name, m.description, m.color_primary, m.color_secondary, m.pattern, m.rarity, m.is_starter
+    `SELECT m.id, m.slug, m.name, m.description, m.color_primary, m.color_secondary, m.pattern, m.rarity, m.is_starter,
+            m.marble_code, m.starter_no
        FROM marbles m
       WHERE m.is_active
-        AND (m.is_starter OR EXISTS (SELECT 1 FROM user_marbles um WHERE um.user_id = $1 AND um.marble_id = m.id))
-      ORDER BY m.is_starter DESC, m.name`,
+        AND (m.owner_id = $1 OR EXISTS (SELECT 1 FROM user_marbles um WHERE um.user_id = $1 AND um.marble_id = m.id))
+      ORDER BY m.is_starter DESC, m.starter_no, m.name`,
     [userId],
   );
   const { rows: [shooter] } = await client.query('SELECT item_slug, marble_id FROM user_shooter WHERE user_id = $1', [userId]);
@@ -268,7 +271,7 @@ async function setShooter(client, userId, { item, original }) {
   } else {
     const ok = await client.query(
       `SELECT 1 FROM marbles m WHERE m.id = $2 AND m.is_active
-          AND (m.is_starter OR EXISTS (SELECT 1 FROM user_marbles um WHERE um.user_id = $1 AND um.marble_id = m.id))`,
+          AND (m.owner_id = $1 OR EXISTS (SELECT 1 FROM user_marbles um WHERE um.user_id = $1 AND um.marble_id = m.id))`,
       [userId, original],
     );
     if (!ok.rowCount) throw notFound('You don\'t own this marble');
@@ -283,6 +286,7 @@ async function setShooter(client, userId, { item, original }) {
 
 /** A certificate by marble ID: the numbered copy, its first owner, when it was made and its race record. */
 async function certificate(client, code) {
+  if (/^ST[A-HJ-NP-Z2-9]{5}[1-4]$/.test(code)) return starterCertificate(client, code);
   const { rows: [copy] } = await client.query(
     `SELECT c.*, fo.username AS first_owner, o.username AS owner,
             (SELECT COUNT(*)::int FROM race_entry_looks l JOIN race_entries e ON e.id = l.entry_id
@@ -322,33 +326,64 @@ async function certificate(client, code) {
   };
 }
 
-/**
- * The catalogue marble a player races as (races need one per entry): their
- * Shooter's Original if they chose one, otherwise one of their marbles, the
- * starters last, skipping any already in this race. The look they race in is
- * their Shooter (recordShooterLook); this only fills the race's marble slot.
- */
-async function pickRacingMarble(client, raceId, userId) {
-  const { rows } = await client.query(
-    `SELECT m.id
-       FROM marbles m
-       LEFT JOIN user_shooter sh ON sh.user_id = $2 AND sh.marble_id = m.id
-      WHERE m.is_active
-        AND (m.is_starter OR EXISTS (SELECT 1 FROM user_marbles um WHERE um.user_id = $2 AND um.marble_id = m.id))
-        AND NOT EXISTS (SELECT 1 FROM race_entries e WHERE e.race_id = $1 AND e.marble_id = m.id)
-      ORDER BY (sh.marble_id IS NOT NULL) DESC, m.is_starter, m.slug
-      LIMIT 1`,
-    [raceId, userId],
+/** A starter marble's certificate (its Marble ID, e.g. STLVAS82): its owner and its race record. */
+async function starterCertificate(client, code) {
+  const { rows: [m] } = await client.query(
+    `SELECT m.*, u.username AS owner,
+            (SELECT COUNT(*)::int FROM race_entries e JOIN races r ON r.id = e.race_id AND r.status = 'finished'
+              WHERE e.marble_id = m.id AND e.user_id = m.owner_id
+                AND NOT EXISTS (SELECT 1 FROM race_entry_looks l WHERE l.entry_id = e.id)) AS races,
+            (SELECT COUNT(*)::int FROM race_entries e JOIN races r ON r.id = e.race_id AND r.status = 'finished'
+              WHERE e.marble_id = m.id AND e.user_id = m.owner_id AND e.finish_position = 1
+                AND NOT EXISTS (SELECT 1 FROM race_entry_looks l WHERE l.entry_id = e.id)) AS wins
+       FROM marbles m JOIN users u ON u.id = m.owner_id
+      WHERE m.marble_code = $1 AND m.is_starter`,
+    [code],
   );
-  if (!rows[0]) {
-    // Say why (pre-launch item 18: "All your marbles are already in this race" didn't): the player is in
-    // it already, or every marble they may race with (the shared free starters, their own) is taken in
-    // this race by other players. Either way, how to get going.
-    const { rows: [me] } = await client.query('SELECT 1 FROM race_entries WHERE race_id = $1 AND user_id = $2', [raceId, userId]);
-    if (me) throw new HttpError(409, "You're already in this race: wait for it to start, or leave it first", { code: 'already_in_race' });
-    throw new HttpError(409, 'Every marble you can race with is taken in this race by other players (the free starters are shared). Join another race, or get a marble of your own in the shop.', { code: 'no_free_marble' });
+  if (!m) throw notFound('No marble has this ID');
+  return {
+    kind: 'starter',
+    marbleCode: m.marble_code,
+    name: m.name,
+    starterNo: m.starter_no,
+    marble: { color_primary: m.color_primary, color_secondary: m.color_secondary, pattern: m.pattern },
+    firstOwner: m.owner,
+    owner: m.owner,
+    made: m.created_at,
+    races: m.races,
+    wins: m.wins,
+  };
+}
+
+/**
+ * The marble a player races as (races need one marble row per entry). Since 20 Oct 2026 every player
+ * has their own 4 starters (src/marbles/starters.js), so nobody is ever left without one:
+ * - their Shooter's Original, if it is a plain marble they bought and it isn't in the race already;
+ * - with a collection marble as Shooter (that's the look shown): their first starter;
+ * - otherwise one of their starters (their Shooter first, if it is one), chosen so that no two
+ *   players in the race show the same look: their next starter when one is shown already; only when
+ *   all 4 are does an earlier player move to another of theirs, while the race waits (looks only: a
+ *   race never reads a marble's stats).
+ */
+async function pickRacingMarble(client, raceId, userId, preferStarterId = null) {
+  const mine = await starters.ensure(client, userId);
+  const { rows: [shooter] } = await client.query('SELECT item_slug, marble_id FROM user_shooter WHERE user_id = $1', [userId]);
+  if (!preferStarterId && shooter?.marble_id && !mine.some((m) => m.id === shooter.marble_id)) {
+    const { rows: [bought] } = await client.query(
+      `SELECT m.id FROM marbles m
+        WHERE m.id = $2 AND m.is_active AND m.owner_id IS NULL
+          AND EXISTS (SELECT 1 FROM user_marbles um WHERE um.user_id = $3 AND um.marble_id = m.id)
+          AND NOT EXISTS (SELECT 1 FROM race_entries e WHERE e.race_id = $1 AND e.marble_id = m.id)`,
+      [raceId, shooter.marble_id, userId],
+    );
+    if (bought) return bought.id;
   }
-  return rows[0].id;
+  if (!preferStarterId && shooter?.item_slug) return mine[0].id;
+  const first = preferStarterId ?? shooter?.marble_id;
+  const prefs = [...mine.filter((m) => m.id === first), ...mine.filter((m) => m.id !== first)];
+  const { marbleId, moves } = await starters.lineUp(client, raceId, prefs);
+  for (const mv of moves) await client.query('UPDATE race_entries SET marble_id = $2 WHERE id = $1', [mv.entryId, mv.marbleId]);
+  return marbleId;
 }
 
 /** Notes the collection look a player races in for this entry (their Shooter, if it's a collection marble). */

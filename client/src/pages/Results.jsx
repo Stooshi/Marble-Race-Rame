@@ -10,7 +10,7 @@ import MarbleInfo from '../components/MarbleInfo';
 import { lookName } from '../shared/marbles';
 
 /** A result row's marble as the tapped-marble card wants it. */
-const asMarble = (r) => ({ ...r, name: nameOf(r), rarity: r.marble_rarity, starter: r.marble_starter });
+const asMarble = (r) => ({ ...r, name: nameOf(r), rarity: r.marble_rarity, starter: r.marble_starter, code: r.marble_code });
 /** The name a result shows: the look it raced in, else the marble's own. */
 const nameOf = (r) => (r.look && lookName(r.look)) || r.marble_name;
 import RaceViewer from '../components/RaceViewer';

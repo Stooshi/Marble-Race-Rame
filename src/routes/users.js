@@ -4,6 +4,7 @@ const express = require('express');
 const bcrypt = require('bcryptjs');
 const config = require('../config');
 const db = require('../db');
+const starters = require('../marbles/starters');
 const { requireAuth } = require('../middleware/auth');
 const { validate, assertUuid, pagination } = require('../utils/validate');
 const { badRequest, notFound, unauthorized } = require('../utils/httpError');
@@ -110,7 +111,7 @@ router.patch('/me', requireAuth, async (req, res) => {
     if (!(await bcrypt.compare(body.current_password, rows[0].password_hash))) {
       throw unauthorized('current_password is incorrect');
     }
-    if (body.email) set('email', body.email.toLowerCase());
+    if (body.email) { set('email', body.email.toLowerCase()); set('email_verified_at', null); } // (a new address is confirmed again)
     if (body.password) set('password_hash', await bcrypt.hash(body.password, config.auth.bcryptRounds));
   }
 
@@ -206,14 +207,15 @@ router.post('/me/refund-note/seen', requireAuth, async (req, res) => {
   res.status(204).end();
 });
 
-/** GET /api/users/me/marbles — the caller's Marble Bag (owned + free starters), each with its history with them */
+/** GET /api/users/me/marbles — the caller's Marble Bag (their own 4 starters + bought), each with its history with them */
 router.get('/me/marbles', requireAuth, async (req, res) => {
+  await starters.ensure(db, req.user.id); // (players from before 20 Oct 2026 get their own 4 here)
   const { rows } = await db.query(
-    `SELECT ${MARBLE_COLUMNS}, ${HISTORY}, (um.user_id IS NOT NULL) AS owned, COALESCE(um.is_favorite, false) AS is_favorite, um.acquired_at
+    `SELECT ${MARBLE_COLUMNS}, ${HISTORY}, (um.user_id IS NOT NULL OR m.owner_id = $1) AS owned, COALESCE(um.is_favorite, false) AS is_favorite, um.acquired_at
        FROM marbles m
        LEFT JOIN user_marbles um ON um.marble_id = m.id AND um.user_id = $1
-      WHERE m.is_active AND (m.is_starter OR um.user_id IS NOT NULL)
-      ORDER BY is_favorite DESC, m.rarity DESC, m.name`,
+      WHERE m.is_active AND (m.owner_id = $1 OR um.user_id IS NOT NULL)
+      ORDER BY is_favorite DESC, m.starter_no NULLS LAST, m.rarity DESC, m.name`,
     [req.user.id],
   );
   res.json({ marbles: rows });
@@ -228,7 +230,7 @@ router.put('/me/marbles/:marbleId/favorite', requireAuth, async (req, res) => {
   const { rows } = await db.query(
     `INSERT INTO user_marbles (user_id, marble_id, is_favorite)
      SELECT $1, m.id, $3 FROM marbles m
-      WHERE m.id = $2 AND (m.is_starter OR EXISTS (SELECT 1 FROM user_marbles WHERE user_id = $1 AND marble_id = $2))
+      WHERE m.id = $2 AND (m.owner_id = $1 OR EXISTS (SELECT 1 FROM user_marbles WHERE user_id = $1 AND marble_id = $2))
      ON CONFLICT (user_id, marble_id) DO UPDATE SET is_favorite = EXCLUDED.is_favorite
      RETURNING marble_id, is_favorite`,
     [req.user.id, marbleId, isFavorite],

@@ -49,7 +49,7 @@ test('the server never hands a look to the race engine', () => {
   const code = fs.readFileSync(path.join(__dirname, '..', 'src', 'game', 'raceService.js'), 'utf8');
   assert.match(code, /simulationPool\.simulate\(input\.race, input\.entries\.map\(engineEntry\)\)/);
   assert.match(code, /runSimulation\(race, entries\.map\(engineEntry\)\)/);
-  assert.match(code, /const engineEntry = \(\{ look, marble_rarity, marble_starter, \.\.\.entry \}\) => entry/);
+  assert.match(code, /const engineEntry = \(\{ look, marble_rarity, marble_starter, marble_code, \.\.\.entry \}\) => entry/);
 });
 
 test('the report flags a marble tier that wins more than its share, and passes a fair spread', () => {

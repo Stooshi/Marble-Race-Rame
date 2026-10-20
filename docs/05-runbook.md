@@ -140,7 +140,7 @@ Remove `STRIPE_ALLOW_LIVE`, put the test key and the test `whsec_…` back, and 
 
 ## Email (Brevo)
 
-Email is off until Brevo is set up. When it's on, "Forgot your password?" appears on the log-in page and reset emails are sent.
+Email is off until Brevo is set up. When it's on, "Forgot your password?" appears on the log-in page and reset emails are sent, and **every new sign-up gets a "Confirm your email" link** (EN/SV; texts in project doc `claude/signup-confirm-email.md`; Settings sends a new one). Before then, accounts are saved without confirmation.
 
 1. **Create the account.** Make a Brevo account (brevo.com) in the company's name.
 2. **Authenticate marblespins.com.** In Brevo, go to Senders, Domains & Dedicated IPs → Domains → Add a domain → `marblespins.com`.
@@ -156,6 +156,7 @@ Email is off until Brevo is set up. When it's on, "Forgot your password?" appear
    2. Enter your own account's email.
    3. The email arrives within a minute. The link opens `/reset-password` and works once, for 60 minutes.
    4. Brevo → Transactional → Logs shows each message.
+   5. Sign up a test account (or save a guest): "Check your email" shows; the email's link opens `/confirm-email` and says it's confirmed (`users.email_verified_at`). Try it from a Swedish browser too.
 
 To turn email off again, remove `BREVO_API_KEY` and restart.
 
@@ -208,6 +209,13 @@ It calls a **Vercel Deploy Hook**: a secret URL that rebuilds Main. The URL is k
 4. **On 1 Dec, morning:** Actions shows the 00:05 run green; `marblespins.com/tracks` lists the holiday tracks.
 
 A hook that leaks only lets someone rebuild the website (no code or data). Replace it then: delete it in Vercel, make a new one, update the secret.
+
+## Starter marbles and the save pop-up (20 Oct 2026)
+
+- **Every player's own 4 starters** are made when an account is made; players from before get theirs the first time they race or open their Marble Bag. Check in Railway → Postgres → Query: `SELECT count(DISTINCT owner_id) AS players_with_starters, count(*) AS starters FROM marbles WHERE owner_id IS NOT NULL;` (4 per player).
+- **A player asks about a starter's ID:** `SELECT m.name, m.marble_code, u.username FROM marbles m JOIN users u ON u.id = m.owner_id WHERE m.marble_code = 'STXXXXX1';` Its certificate: `marblespins.com/certificate/<ID>`.
+- **The pop-up** shows for guests after every 3rd finished race; nothing to switch. To see it yourself: play 3 races as a guest (a private window), then open Race.
+- **Under 13** at sign-up: no account is made and nothing is stored; the player keeps racing as a guest.
 
 ## Checking the website's routing before a push
 

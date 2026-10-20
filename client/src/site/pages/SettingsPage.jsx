@@ -148,6 +148,7 @@ export default function SettingsPage() {
     <div className="ms-page ms-page--narrow" style={{ display: 'grid', gap: 16 }}>
       <h1 className="ms-h1" style={{ fontFamily: 'var(--ms-cond)', fontWeight: 800, margin: 0 }}>Settings</h1>
       {user && <span style={{ color: 'var(--ms-soft)' }}>@{user.username}{user.is_guest ? ' · guest' : ` · ${user.email}`}</span>}
+      {user && !user.is_guest && !user.email_verified_at && <ConfirmEmail />}
       <SeasonPasses />
       <NewsByEmail />
       <section className="ms-card" style={{ display: 'grid', gap: 6 }} aria-labelledby="buy-h">
@@ -162,5 +163,26 @@ export default function SettingsPage() {
       <DeleteAccount user={user} onDeleted={() => { logout(); navigate('/?deleted=1'); }} />
       <div className="ms-row"><button type="button" className="ms-btn" onClick={() => { logout(); navigate('/'); }}>Log out</button></div>
     </div>
+  );
+}
+
+/** "Your email isn't confirmed yet": a new confirmation link (only once emails are switched on). */
+function ConfirmEmail() {
+  const [on, setOn] = useState(false);
+  const [state, setState] = useState(null);
+  useEffect(() => { api.passwordResetEnabled().then((r) => setOn(Boolean(r.enabled))).catch(() => {}); }, []);
+  if (!on) return null;
+  const send = () => { setState('busy'); api.resendConfirmEmail(/^sv\b/i.test(navigator.language || '') ? 'sv' : 'en').then((r) => setState(r.confirm === 'sent' ? 'sent' : r.confirm)).catch((e) => setState(e.message)); };
+  return (
+    <section className="ms-card" style={{ display: 'grid', gap: 8 }} aria-labelledby="confirm-h">
+      <h2 id="confirm-h" className="ms-h3" style={{ margin: 0 }}>Confirm your email</h2>
+      <span>Your email address isn't confirmed yet. Confirm it to keep your account safe and get a new password if you forget it.</span>
+      <div className="ms-row">
+        <button type="button" className="ms-btn ms-btn--sm" disabled={state === 'busy' || state === 'sent'} onClick={send}>Send the confirmation link</button>
+        {state === 'sent' && <span className="ms-note">Sent: check your inbox.</span>}
+        {state === 'limit' && <span className="ms-note">Sent a few times already: try again in an hour.</span>}
+        {state && !['busy', 'sent', 'limit', 'off', 'confirmed'].includes(state) && <span className="ms-msg ms-msg--bad">{state}</span>}
+      </div>
+    </section>
   );
 }

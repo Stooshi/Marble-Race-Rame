@@ -47,7 +47,7 @@ export default function Home() {
             </div>
           ) : (
             <ol className="steps">
-              <li><strong>Pick your marble</strong> — 4 starters free, more in the shop.</li>
+              <li><strong>Pick your marble</strong> — your own 4 starter marbles, more in the shop.</li>
               <li><strong>Pick a track</strong> — or roll a random one.</li>
               <li><strong>Watch it live</strong> — every player sees the same race.</li>
             </ol>

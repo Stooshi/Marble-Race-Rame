@@ -2,6 +2,7 @@ import { Link, useParams } from 'react-router-dom';
 import { api } from '../../api/client';
 import { useAsync } from '../../hooks/useAsync';
 import Certificate from '../marbles/Certificate';
+import StarterCertificate from '../marbles/StarterCertificate';
 
 /** A marble's certificate by its ID (shareable: anyone with the link can see it). */
 export default function CertificatePage() {
@@ -17,7 +18,7 @@ export default function CertificatePage() {
           <Link to="/collection" className="ms-btn">See the collection</Link>
         </div>
       )}
-      {data && <Certificate cert={data.certificate} />}
+      {data && (data.certificate.kind === 'starter' ? <StarterCertificate cert={data.certificate} /> : <Certificate cert={data.certificate} />)}
       {data && <Link to="/bag" style={{ color: 'var(--ms-soft)' }}>← Marble Bag</Link>}
     </div>
   );

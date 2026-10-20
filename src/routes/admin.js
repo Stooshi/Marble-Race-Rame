@@ -111,7 +111,7 @@ router.get('/players/:id', async (req, res) => {
     db.query('SELECT item_slug, source, marble_code, price_paid, acquired_at FROM user_collection WHERE user_id = $1 ORDER BY acquired_at', [id]),
     db.query(
       `SELECT m.slug, m.name, m.is_starter FROM marbles m
-        WHERE m.is_starter OR EXISTS (SELECT 1 FROM user_marbles um WHERE um.user_id = $1 AND um.marble_id = m.id) ORDER BY m.name`,
+        WHERE m.owner_id = $1 OR EXISTS (SELECT 1 FROM user_marbles um WHERE um.user_id = $1 AND um.marble_id = m.id) ORDER BY m.starter_no NULLS LAST, m.name`,
       [id],
     ),
     db.query('SELECT kind, host(ip) AS ip, country, created_at FROM security_events WHERE user_id = $1 ORDER BY created_at DESC LIMIT 50', [id]),

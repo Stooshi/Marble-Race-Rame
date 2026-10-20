@@ -88,7 +88,7 @@ router.post('/:key/remind', remindLimiter, optionalAuth, async (req, res) => {
   });
   const season = await seasonOf(req.params.key);
   const user = req.user
-    ? (await db.query('SELECT id, email, is_guest FROM users WHERE id = $1', [req.user.id])).rows[0] ?? null
+    ? (await db.query('SELECT id, email, is_guest, email_verified_at FROM users WHERE id = $1', [req.user.id])).rows[0] ?? null
     : null;
   // A bot: the same answer, nothing saved.
   if (body.website) return res.status(201).json({ reminder: { inGame: false, email: true, confirmed: false } });

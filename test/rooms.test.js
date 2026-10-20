@@ -7,6 +7,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 
 const DB = process.env.ROOMS_TEST_DATABASE_URL;
+process.env.NODE_ENV = process.env.NODE_ENV || 'test'; // (the 20-guest room: past the sign-up rate limit)
 process.env.DATABASE_URL = DB || process.env.DATABASE_URL || 'postgres://localhost:1/unused';
 const rooms = require('../src/routes/rooms');
 
@@ -83,18 +84,27 @@ test('a room from start to the next race, on a real database', { skip: !DB }, as
     assert.equal((await call(`/rooms/${code}/join`, { method: 'POST', token: friend })).status, 410);
     assert.equal((await call('/rooms/ABCDEF')).status, 404);
 
-    // No free marble (pre-launch item 18): the message says why and what to do.
+    // 20 new guests in one friend room (20 Oct 2026): everyone gets in with one of their own 4 starters,
+    // no two showing the same look (before, the 4 shared starters let only 4 new players in).
+    const starters = require('../src/marbles/starters');
     const guests = [];
-    for (let i = 0; i < 6; i += 1) guests.push((await call('/auth/guest', { method: 'POST' })).body.token);
-    const { code: code6 } = (await call('/rooms', { method: 'POST', body: {}, token: guests[0] })).body.room;
-    const results = [];
-    for (const g of guests.slice(1)) results.push(await call(`/rooms/${code6}/join`, { method: 'POST', token: g }));
-    const refused = results.filter((r) => r.status === 409);
-    for (const r of refused) {
-      assert.equal(r.body.details?.code, 'no_free_marble');
-      assert.match(r.body.error, /taken in this race by other players/);
+    for (let i = 0; i < 20; i += 1) guests.push((await call('/auth/guest', { method: 'POST' })).body);
+    const room20 = (await call('/rooms', { method: 'POST', body: {}, token: guests[0].token })).body;
+    for (const g of guests.slice(1)) assert.equal((await call(`/rooms/${room20.room.code}/join`, { method: 'POST', token: g.token })).status, 200);
+    const { rows: lined } = await db.query(
+      `SELECT e.user_id, m.owner_id, m.is_starter, m.pattern, m.color_primary, m.color_secondary, m.marble_code
+         FROM race_entries e JOIN marbles m ON m.id = e.marble_id WHERE e.race_id = $1`,
+      [room20.race.id],
+    );
+    assert.equal(lined.length, 20);
+    for (const e of lined) {
+      assert.equal(e.owner_id, e.user_id, 'each races one of their own starters');
+      assert.ok(e.is_starter);
+      assert.match(e.marble_code, /^ST[A-HJ-NP-Z2-9]{5}[1-4]$/);
     }
-    console.log(`# room of 6 guests: ${results.filter((r) => r.status === 200).length + 1} in, ${refused.length} refused`);
+    assert.equal(new Set(lined.map(starters.keyOfRow)).size, 20, 'all 20 look different');
+    // The room's view shows all 20 players.
+    assert.equal((await call(`/rooms/${room20.room.code}`, { token: guests[0].token })).body.players.length, 20);
   } finally {
     server.close();
     await db.pool?.end?.();

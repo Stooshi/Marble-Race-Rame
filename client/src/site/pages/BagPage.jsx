@@ -14,7 +14,7 @@ const FILTERS = ['all', ...RARITY_ORDER];
 
 /**
  * The Marble Bag: every marble the player owns (collection shades and their
- * plain marbles, the free starters among them), the ones still to collect, Set badges, and picking the Shooter.
+ * plain marbles: the player's own 4 starters and any bought), the ones still to collect, Set badges, and picking the Shooter.
  */
 export default function BagPage() {
   const { isAuthenticated, loading: authLoading } = useAuth();
@@ -44,13 +44,16 @@ export default function BagPage() {
       };
     });
     const originals = data.originals.map((m) => ({
-      key: m.id, marble: m, owned: true, rarity: 'original', name: m.name,
-      note: m.is_starter ? 'Free starter' : 'Plain marble',
+      key: m.id, marble: m, owned: true, rarity: 'original', name: m.name, starterCode: m.marble_code ?? null,
+      note: m.is_starter ? `Starter ${m.starter_no ?? ''} of 4`.replace('  ', ' ') : 'Plain marble',
       shooter: data.shooter?.original === m.id,
     }));
     // Marbles not owned: only those that can still be had (never a retired seasonal one, or a pass marble after its season).
     const gettable = (t) => !['retired', 'closed'].includes(windowOf(ITEM[t.slug]));
-    return [...collection.filter((t) => t.owned), ...originals, ...collection.filter((t) => !t.owned && gettable(t))];
+    // (your own 4 starters first: every player has them, each with its own Marble ID)
+    const starters = originals.filter((t) => t.marble.is_starter);
+    const plain = originals.filter((t) => !t.marble.is_starter);
+    return [...starters, ...collection.filter((t) => t.owned), ...plain, ...collection.filter((t) => !t.owned && gettable(t))];
   }, [data]);
 
   if (!authLoading && !isAuthenticated) {
@@ -133,13 +136,16 @@ export default function BagPage() {
             <h2 className="ms-h3" style={{ fontFamily: 'var(--ms-cond)', fontWeight: 800, fontSize: '1.6rem' }}>{pick.name}</h2>
             {pick.slug && <span className="ms-row" style={{ gap: 8 }}><span className="ms-id ms-id--big">#{pick.id}</span><span className="ms-sheet__col">{pick.collection.toUpperCase()}</span></span>}
             {pick.slug && <p style={{ margin: 0, color: 'var(--ms-soft)' }}>{ITEM[pick.slug].shade.description}</p>}
-            {pick.marble && <p style={{ margin: 0, color: 'var(--ms-soft)' }}>{pick.marble.description}</p>}
+            {pick.starterCode && <span className="ms-row" style={{ gap: 8 }}><span className="ms-id ms-id--big">{pick.starterCode}</span><span className="ms-sheet__col">YOUR STARTER {pick.marble.starter_no} OF 4</span></span>}
+            {pick.starterCode && <p style={{ margin: 0, color: 'var(--ms-soft)' }}>One of your own 4 starter marbles: plain glass, {pick.marble.pattern === 'half' ? 'two colours, half and half' : 'one colour'}. Its Marble ID is yours alone, and in a race nobody else shows the same look.</p>}
+            {pick.marble?.description && <p style={{ margin: 0, color: 'var(--ms-soft)' }}>{pick.marble.description}</p>}
             {error && <div className="ms-msg ms-msg--bad">{error}</div>}
             <div className="ms-row">
               {pick.owned && (pick.shooter
                 ? <span className="ms-btn" aria-disabled="true">YOUR SHOOTER</span>
                 : <button type="button" className="ms-btn ms-btn--primary" disabled={busy} onClick={() => makeShooter(pick)}>{busy ? 'SAVING…' : 'MAKE IT MY SHOOTER'}</button>)}
               {pick.copy && <Link to={`/certificate/${pick.copy.marbleCode}`} className="ms-btn">{pick.copy.editionNo ? 'CERTIFICATE' : 'MARBLE ID'}</Link>}
+              {pick.starterCode && <Link to={`/certificate/${pick.starterCode}`} className="ms-btn">MARBLE ID</Link>}
               {!pick.owned && (ITEM[pick.slug].kind === 'pass'
                 ? <Link to="/pass" className="ms-btn ms-btn--primary">COMES WITH THE SEASON PASS</Link>
                 : <Link to={`/collection/${ITEM[pick.slug].design.key}?shade=${ITEM[pick.slug].shade.key}`} className="ms-btn ms-btn--primary">GET IT IN THE SHOP</Link>)}
@@ -164,6 +170,7 @@ export default function BagPage() {
               {t.slug ? <MarbleBadge slug={t.slug} size={72} still={!t.owned} /> : <MarbleBadge marble={t.marble} size={72} />}
               <span style={{ fontWeight: 700, fontSize: '0.95rem' }}>{t.name}</span>
               {t.id && <span className="ms-id">#{t.id}</span>}
+              {t.starterCode && <span className="ms-id">{t.starterCode}</span>}
               {t.collection && <span className="ms-mcard__col">{t.collection}</span>}
               <span style={{ color: colour, fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
                 {t.rarity === 'original' ? (t.marble.is_starter ? 'Starter' : 'Plain') : rarityInfo(t.rarity).label}

@@ -62,7 +62,7 @@ async function assertCanUseMarble(client, userId, marbleId) {
   const { rows } = await client.query(
     `SELECT m.id FROM marbles m
       WHERE m.id = $2 AND m.is_active
-        AND (m.is_starter OR EXISTS (SELECT 1 FROM user_marbles um WHERE um.user_id = $1 AND um.marble_id = m.id))`,
+        AND (m.owner_id = $1 OR EXISTS (SELECT 1 FROM user_marbles um WHERE um.user_id = $1 AND um.marble_id = m.id))`,
     [userId, marbleId],
   );
   if (!rows[0]) throw badRequest('You do not own that marble or it is not available');
@@ -83,6 +83,12 @@ async function joinRace(client, raceId, userId, marbleId) {
 
   // No marble given: race with the player's Shooter (or another of their marbles if it's taken).
   if (!marbleId) marbleId = await pickRacingMarble(client, raceId, userId);
+  else {
+    // One of their own starters asked for ("Race again with …"): that one if nobody in the race shows
+    // the same look, else their next (no two players show the same starter).
+    const { rows: [own] } = await client.query('SELECT 1 FROM marbles WHERE id = $1 AND owner_id = $2 AND is_starter', [marbleId, userId]);
+    if (own) marbleId = await pickRacingMarble(client, raceId, userId, marbleId);
+  }
   await assertCanUseMarble(client, userId, marbleId);
 
   const { rows: counts } = await client.query(

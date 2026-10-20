@@ -38,6 +38,8 @@ import Results from './pages/Results';
 import { Spinner } from './components/Status';
 import { importOrReload } from './utils/staleCode';
 import { useSoundUnlock } from './sound/settings';
+import { SavePromptProvider } from './site/account/SavePrompt';
+import ConfirmEmailPage from './site/account/ConfirmEmailPage';
 
 // 3D preview (beta) is loaded on demand so the rest of the site stays light.
 // (If a file is gone after an update, the page reloads once for the new version.)
@@ -78,7 +80,7 @@ export default function App() {
     return <Suspense fallback={<div className="page"><Spinner /></div>}><AdminApp /></Suspense>;
   }
   return (
-    <>
+    <SavePromptProvider>
       <OfflineScreen />
       <SiteHeader />
       <PassOnSaleNotice />
@@ -100,6 +102,7 @@ export default function App() {
           <Route path="/checkout" element={<CheckoutPage />} />
           <Route path="/pass" element={<PassPage />} />
           <Route path="/pass/reminder" element={<PassReminderLink />} />
+          <Route path="/confirm-email" element={<ConfirmEmailPage />} />
           <Route path="/bag" element={<BagPage />} />
           <Route path="/purchases" element={<PurchasesPage />} />
           <Route path="/settings" element={<SettingsPage />} />
@@ -163,7 +166,7 @@ export default function App() {
       </main>
       <SiteFooter />
       <ConsentManager />
-    </>
+    </SavePromptProvider>
   );
 }
 

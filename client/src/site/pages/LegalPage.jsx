@@ -57,7 +57,7 @@ export default function LegalPage() {
       <p>{company.name} (org.nr {company.orgNo}), {ADDRESS}, is the data controller for the personal data handled in Marble Spins, on the website and in the apps. Questions about your data: <ProtectedEmail address={company.privacyEmail} />, or the <Link to={CONTACT_PATH}>contact form</Link>.</p>
       <h2 className="ms-legal__h2">What we collect</h2>
       <ul>
-      <li>Account: player name, email, age group (under 13, 13–17, 18 or older), whether you want news by email, and sign-in provider if you use Google or Apple.</li>
+      <li>Account: player name, email and whether you have confirmed it, birth year and month (to work out your age group: under 13, 13–17, 18 or older; no day), whether you want news by email, and sign-in provider if you use Google or Apple. Your own 4 starter marbles and their Marble IDs.</li>
       <li>Gameplay: races, results, coins, your Marble Bag, friends and rooms.</li>
       <li>Purchases: what you bought and when. Card details stay with Stripe; we never see them.</li>
       <li>Settings: your sound levels and similar choices, so they follow you to another device.</li>

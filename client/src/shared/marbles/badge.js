@@ -268,6 +268,13 @@ export function plainLookOf({ color_primary: a = '#888888', color_secondary: b =
     const pale = 0.2126 * r + 0.7152 * g + 0.0722 * bl > 190;
     const band = { map: 'band', axis: [0.35, 0.9, 0.25], width: 10, soft: 5, color: alpha(toward(a, pale ? '#000000' : '#FFFFFF', 0.45), 0.3), view: 'front', repeat: 180 };
     look = { material: 'plain-solid', layers: [{ type: 'ball', pattern: band, view: 'front' }, body], parts: { body: [body], pattern: band } };
+  } else if (pattern === 'half') {
+    // A starter's two colours, half and half (20 Oct 2026, approved on the preview): one colour on each
+    // half of the ball with a soft seam, fixed in the ball so it shows as it rolls; the picture is the
+    // ball seen from the front, shaded like a one-colour marble.
+    const halves = { map: 'caps', base: a, caps: [{ at: [-0.55, 0.75, 0.37], size: 90, color: b }], view: 'front' };
+    const shade = { type: 'radial', at: [35, 30], stops: [[alpha('#FFFFFF', 0.22), 0], [T, 42], [alpha('#000000', 0.42), 100]] };
+    look = { material: 'plain-half', layers: [shade, { type: 'ball', pattern: halves, view: 'front' }], parts: { pattern: halves } };
   } else if (pattern === 'striped') {
     look = { material: 'plain-striped', ...LOOKS.stripe([b, a]) };
   } else {

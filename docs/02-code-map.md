@@ -1,6 +1,6 @@
 # 2. Code map
 
-*Last updated 18 Oct 2026.* Where everything is, and where to look to fix something. Paths are relative to the repository root.
+*Last updated 20 Oct 2026.* Where everything is, and where to look to fix something. Paths are relative to the repository root.
 
 ## Find it fast
 
@@ -8,6 +8,8 @@
 |---|---|
 | Change how much a race pays, the daily goal, starting coins or bag discounts | `client/src/shared/economy.json` (read by server and website) |
 | Start a scoreboard season | A row in the `seasons` table (a data update: name, `starts_at`, `ends_at`, `badge_top`); the board, its end and the badges follow its dates. Only when the table has no season on or ended: `client/src/shared/economy.json` → `season` (`number`, `startsAt`, `endsAt`, `badgeTop`) |
+| Change the starter marbles' colours | `client/src/shared/marbles/starters.json` (palette, two-colour minimum difference), `src/marbles/starters.js` (making them, the race line-up), `badge.js` `plainLookOf` (pattern `half`) |
+| Change the save pop-up or quick sign-up texts (EN/SV) | `client/src/site/account/saveTexts.js`; the pop-up's rule in `SavePrompt.jsx` |
 | Change how a player's name shows to others ("@name", a guest as "Guest 0DA1") | `client/src/shared/playerName.js` (`handle()`, `plainName()`); friend rooms: `src/routes/rooms.js` `nameOf` |
 | Change the social media links | `client/src/shared/socialLinks.json` (icons from the `simple-icons` package, CC0) |
 | Show the App Store / Google Play buttons on the website | `client/src/shared/storeLinks.json` (`appStore`, `googlePlay`: the store page's https link; empty hides the button). Never shown inside the apps |
@@ -122,6 +124,7 @@
   - the season pass's marble: `grantSeasonMarble` (numbered in order: `copy_no` = `edition_no`, price 0, source `grant`), `takeBackSeasonMarble` (a refunded pass), `passNumber` ("Holiday 2026 #0001"); `certificate()` also says a pass marble's `edition` and `number`, and a retired seasonal marble's `retiredAt`;
   - the Marble Bag, the Shooter, certificates, find by ID;
   - `pickRacingMarble`.
+- `starters.js`: every player's own 4 starter marbles (20 Oct 2026): the 76 looks from 12 colours, `create()`/`ensure()` (their `marbles` rows, Marble IDs `ST…`), `lineUp()` (the starter a joining player races with so no two show the same look: their next one first; only if all 4 are shown, an earlier player moves). Used by `collection.js` `pickRacingMarble`.
 - `showcase.js`: dresses computer players in collection looks in beginner races. It uses its own randomness, never the race seed.
 
 **`economy/index.js`: coins.**
@@ -155,6 +158,7 @@
 - `email/index.js`: sends email through Brevo when `BREVO_API_KEY` is set (`enabled()`, `send()`). Tests swap the transport.
 - `email/templates.js`: the emails' HTML (password reset, support notification, support reply).
 - `email/unsubscribe.js`: signed unsubscribe links and RFC 8058 one-click headers.
+- `account/emailConfirm.js`: "Confirm your email" after sign-up (double opt-in, sent once email is set up): EN/SV email, `send()` (3 an hour), `confirm()` → `users.email_verified_at`.
 - `account/passwordReset.js`: "Forgot your password?":
   - `request()` emails a one-time link, says nothing about whether the account exists, and sends at most 3 an hour;
   - `reset()` sets the new password, ends older logins and back-office sessions.
@@ -168,7 +172,7 @@
 
 | File | Covers |
 |---|---|
-| `auth.js` | Sign-up (refuses under-13s), guest, claim (guest → account), login, me; password reset (`GET /password-reset`, `POST /forgot`, `POST /reset`) |
+| `auth.js` | Sign-up (birth year and month → age group; refuses under-13s, code `under_13`), guest, claim (guest → account), login, me (a guest's `racesFinished` for the save pop-up; renews the login), `GET /suggest-name`, `POST /confirm-email` and `/confirm-email/resend`; password reset (`GET /password-reset`, `POST /forgot`, `POST /reset`). New accounts get their 4 starters (`marbles/starters.js`) |
 | `users.js` | Profile, settings, news-by-email, unsubscribe, cookie consent record (`POST /me/cookie-consent`), data export, delete account, appearance, the old marble bag, leaderboard, public profiles |
 | `races.js` | Lobby list, create (a track, random, or `season`: Holiday races), join and leave (free; season tracks checked), next race, start, cancel, results, replay, showcase race |
 | `rooms.js` | Friend rooms (create, join, leave, track, remove, start, close) and `afterRace`; a season track only if the host may race it (`hostedSeason` in the room view) |
@@ -282,7 +286,8 @@ Defined in `src/sockets/index.js`. The client may send a JWT in `auth.token`; an
   - `trackCount.js`: the track count the texts give, the live count at build time rounded down to ten ("90+ tracks"; `roundedTracks`, `tracksPhrase`; `BUILD_TRACK_SERIES`: the live series, for the Help Centre), so no description, share preview, Help answer or landing line goes stale; without a count, "dozens of tracks";
   - `consent/`: the cookie banner and the trackers (website only, never in the apps): `consent.js` (the choice in local storage `marble-consent`, version `CONSENT_VERSION`; `STORAGE_LIST`), `ConsentManager.jsx` (banner with REJECT ALL and ACCEPT ALL side by side, Settings per category with nothing ticked, reopened by "Cookie settings" in the footer and on `/cookies`; logs the choice to the account when logged in), `tracking.js` (Google Analytics 4 with Consent Mode v2 after statistics consent, the Meta Pixel after marketing consent and never under 13; `track()` events: `sign_up`, `first_race`, `race_finished`, `shop_view`, `checkout_started`, `purchase`);
   - `landing/` (landing page, 3D hero replay; `SERIES`: the series cards, each with one of its tracks' pictures; the tracks-and-series heading is counted from the live track list);
-  - `marbles/` (badge, 3D turntable, certificate, `useCollection`, with `limitedSale`/`limitedLine`: the limited edition's "Coming 1 December — limited to 500", how many are left, "Sold out"; `seasonalSale`/`seasonalLine`/`retiredLine`: a seasonal marble's "Coming 1 December · on sale until 7 January", "Leaving in N days", "Retired 7 Jan 2027"); the shop's **Seasonal** shelf (`ShopPage.jsx` `SeasonalShelf`: a seasonal collection until it retires, a season pass's marble while the pass is sold);
+  - `account/`: the save pop-up for guests (`SavePrompt.jsx`: after every 3rd finished race, before the next race; `SavePromptProvider` in `App.jsx`, `useSavePrompt().beforeNextRace()` before "Race again"), the quick sign-up form (`QuickSignup.jsx`, also the sign-up page's form: suggested name, birth year and month, under-13 message, confirm step), its EN/SV texts (`saveTexts.js`), `/confirm-email` (`ConfirmEmailPage.jsx`);
+  - `marbles/` (badge, 3D turntable, certificate, `StarterCertificate.jsx` for a starter's Marble ID, `useCollection`, with `limitedSale`/`limitedLine`: the limited edition's "Coming 1 December — limited to 500", how many are left, "Sold out"; `seasonalSale`/`seasonalLine`/`retiredLine`: a seasonal marble's "Coming 1 December · on sale until 7 January", "Leaving in N days", "Retired 7 Jan 2027"); the shop's **Seasonal** shelf (`ShopPage.jsx` `SeasonalShelf`: a seasonal collection until it retires, a season pass's marble while the pass is sold);
   - `pages/PassPage.jsx` (`/pass?season=`): the season pass: a header with the season's marble and dates, four cards (the season's tracks with their count, the Track of the Day with today's track, the season marble, friend rooms), the price (the store's own in the apps), the countdown, buying it with the pass's own consent (`consent.json` `passWithdrawal`; Stripe's button `passStripeSubmit`); the track picker, track pages and room picker show season tracks locked with "Get the pass", and holders get "Holiday races";
   - `payments/index.js`: `buyPass()` (the season pass: Stripe on the web, Google Play or the App Store in the apps, kept not consumed); `buyCoins()` for every screen: Stripe on the website; Google Play Billing in the Android app (`@capgo/native-purchases`: purchase with the player's Play account id, then `api.googleVerify`); the App Store in the iPhone app (the same plugin's StoreKit 2: purchase with the player's account token, `api.appleVerify` with the signed transaction, then `finishTransaction`); `resumeStorePurchases()` (unconfirmed purchases resent at login, from `App.jsx`; on iPhone the unfinished transactions); `restoreStorePurchases()` (iPhone "Restore purchases", on the pass page); `useStorePrices()` (the store's prices in the player's currency, on the shop and checkout);
   - `pages/` (every website page; see the routes below);

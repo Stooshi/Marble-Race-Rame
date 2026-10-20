@@ -1,6 +1,6 @@
 # 3. Data model
 
-*Last updated 18 Oct 2026.* The database is PostgreSQL. The schema is defined in `docs/database_schema.sql`. The server applies that file at every start; it only adds what is missing and never deletes or changes rows. Changes to existing rows go in `docs/data_updates/` (see the [runbook](05-runbook.md#data-updates)).
+*Last updated 20 Oct 2026.* The database is PostgreSQL. The schema is defined in `docs/database_schema.sql`. The server applies that file at every start; it only adds what is missing and never deletes or changes rows. Changes to existing rows go in `docs/data_updates/` (see the [runbook](05-runbook.md#data-updates)).
 
 **Conventions:**
 - Ids are UUIDs (`gen_random_uuid()`), except where noted.
@@ -60,7 +60,9 @@ marbles ──< user_marbles   (the older plain marbles; looks only)
 | `skill_refund_coins` | One-time notice: coins refunded when marbles stopped carrying strength (12 Oct 2026). NULL once seen |
 | `is_guest` | Playing without an account yet ("Play free"). Saving the account clears it and keeps coins and marbles |
 | `marketing_opt_in` | Current answer to news by email. Its history is in `email_consents`. Always false under 13 |
-| `age_group` | `under-13`, `13-17`, `18+`, or NULL for older accounts. Asked at sign-up |
+| `age_group` | `under-13`, `13-17`, `18+`, or NULL for older accounts. Worked out at sign-up from the birth year and month (older apps send the group) |
+| `birth_month` | The first day of the birth month (year and month asked at sign-up, no day; since 20 Oct 2026). NULL for older accounts and guests |
+| `email_verified_at` | When the player opened the link in the "Confirm your email" email (sent once email is set up). Cleared when the email changes |
 | `settings` | JSON that follows the player across devices, e.g. `{ "sound": { "music": 0.6, "effects": 0.8, "muted": false } }` |
 | `streak_days`, `streak_last_day` | Days in a row the daily goal was met (shown; pays nothing) |
 | `last_login_at`, `created_at`, `updated_at` | `updated_at` is set by a trigger |
@@ -71,7 +73,7 @@ marbles ──< user_marbles   (the older plain marbles; looks only)
 | `store_account_id` | Random id (unique, up to 64 characters) the Android app gives Google Play with each purchase (`obfuscatedAccountId`), so the server can check a purchase belongs to this player. Made at the first purchase; never the user id or email. Cleared when the account is deleted |
 
 **Account deletion** (`src/account/index.js`) doesn't remove the `users` row.
-- **It anonymises the account:** name, email, password, shown name, settings, age group and consent are cleared.
+- **It anonymises the account:** name, email, password, shown name, settings, age group, birth month, email confirmation and consent are cleared.
 - **It deletes:** `email_consents`, `security_events`, `support_messages` (with their replies; also messages sent from the account's email without a link), `admin_sessions` and `admin_2fa` rows. It also clears the marble label and closes rooms the player hosts.
 - **It keeps:**
   - race results, so other players' places never change;
@@ -191,10 +193,16 @@ One row per item: `bought` and `gifted` so far.
 Two players can never get the same number, and unique constraints back this up.
 
 ### `user_shooter`
-The look the player races in: either a collection item (`item_slug`) or one of the older plain marbles (`marble_id`), never both. With neither set, the player races in a plain starter.
+The look the player races in: either a collection item (`item_slug`) or one of the older plain marbles (`marble_id`), never both. With neither set, the player races in one of their own starters (see `marbles`).
 
 ### `marbles`, `user_marbles`
-The older catalogue of plain marbles (free starters and "Originals") and who owns them. **Looks only:** the stat columns (`top_speed`, `acceleration`, `handling`, `luck`) are a historical record and are no longer read by races. `on_sale` and `price_coins` cover the plain marbles still for sale.
+The older catalogue of plain marbles ("Originals") and who owns them, and **every player's own 4 starter marbles** (since 20 Oct 2026, `src/marbles/starters.js`). **Looks only:** the stat columns (`top_speed`, `acceleration`, `handling`, `luck`) are a historical record and are no longer read by races. `on_sale` and `price_coins` cover the plain marbles still for sale.
+- **A player's starter** is their own `marbles` row: `owner_id` (the player), `starter_no` 1–4, `is_starter`, `marble_code` (its Marble ID, `ST` + the player's 5-character code + 1–4, e.g. `STLVAS82`; unique; its certificate at `/certificate/<ID>`), `pattern` `solid` (one colour) or `half` (two colours, half and half), colours from `client/src/shared/marbles/starters.json`. Made when the account is made, or for older players the first time they need them. Never sold.
+- **The catalogue** is the rows with `owner_id` NULL: the shop's plain marbles and the computer players' marbles. The 4 shared starters of before (Ruby, Sapphire, Emerald, Topaz) are still there (`is_starter` with no owner): computer players race in them, nobody owns them since data update `2027-04-01-own-starter-marbles`.
+- A race still holds each marble row once (`race_entries_unique_marble`); since each player has their own, any number of new players fit in a race.
+
+### `email_confirmations`
+The "Confirm your email" links (`src/account/emailConfirm.js`): the address it was sent to, the token's SHA-256 (never the token), the language, `expires_at` (7 days), `used_at`. At most 3 an hour per player. Deleted with the account.
 
 ### `marble_colors`, `marble_surfaces`, `marble_effects`, `marble_appearances`
 The first cosmetic system: a curated colour, surface and effect per player. Options are retired with `is_active = false`. The `label` is always NULL; custom text needs a word filter first. Looks only.

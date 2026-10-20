@@ -41,6 +41,7 @@ test('the reset flow on a real database', { skip: !DB }, async () => {
     assert.equal((await call('/auth/password-reset')).body.enabled, true);
     const name = `t_pw_${Date.now() % 1e6}`;
     const me = (await call('/auth/register', { method: 'POST', body: { username: name, email: `${name}@test.invalid`, password: 'oldpassword1', age_group: '18+' } })).body;
+    assert.match(sent.splice(0)[0]?.subject ?? '', /Confirm your email/); // (the sign-up's confirmation email, since 20 Oct 2026)
 
     // Unknown address: the same answer, no email.
     const unknown = await call('/auth/forgot', { method: 'POST', body: { email: `nobody_${name}@test.invalid` } });

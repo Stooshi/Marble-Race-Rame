@@ -8,4 +8,5 @@ Disallow: /forgot-password
 Disallow: /reset-password
 Disallow: /unsubscribe
 Disallow: /pass/reminder
+Disallow: /confirm-email
 Sitemap: https://marblespins.com/sitemap.xml

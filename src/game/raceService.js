@@ -40,7 +40,7 @@ function withSnapshot(race) {
 }
 
 /** What the race engine gets of an entry: everything but its look (a look can never change a race). */
-const engineEntry = ({ look, marble_rarity, marble_starter, ...entry }) => entry; // (exactly the fields it always had)
+const engineEntry = ({ look, marble_rarity, marble_starter, marble_code, ...entry }) => entry; // (exactly the fields it always had)
 
 /**
  * The collection look an entry races in (drawing only): a player's Shooter, or
@@ -68,7 +68,7 @@ async function loadSimulationInput(client, raceId) {
             e.finish_position, e.finish_time_ms,
             m.name AS marble_name, m.slug AS marble_slug, m.color_primary, m.color_secondary, m.pattern,
             u.username,
-            m.rarity AS marble_rarity, m.is_starter AS marble_starter,
+            m.rarity AS marble_rarity, (m.is_starter AND m.owner_id IS NOT NULL) AS marble_starter, m.marble_code,
             ${LOOK_SQL} AS look
        FROM race_entries e
        JOIN marbles m ON m.id = e.marble_id
@@ -164,7 +164,7 @@ async function decide(raceId, actor) {
       }
       const taken = current.map((e) => e.marble_id);
       const { rows: pool } = await client.query(
-        `SELECT id FROM marbles WHERE is_active AND NOT (id = ANY($1::uuid[])) ORDER BY slug`,
+        `SELECT id FROM marbles WHERE is_active AND owner_id IS NULL AND NOT (id = ANY($1::uuid[])) ORDER BY slug`,
         [taken],
       );
       const needed = race.min_marbles - entryIds.length;
@@ -303,7 +303,7 @@ async function getResults(client, raceId) {
     `SELECT e.id AS entry_id, e.finish_position AS position, e.finish_time_ms, e.split_time_ms,
             e.lane, e.is_bot, e.coins_awarded,
             e.marble_id, m.name AS marble_name, m.color_primary, m.color_secondary, m.pattern,
-            m.rarity AS marble_rarity, m.is_starter AS marble_starter, ${LOOK_SQL} AS look,
+            m.rarity AS marble_rarity, (m.is_starter AND m.owner_id IS NOT NULL) AS marble_starter, m.marble_code, ${LOOK_SQL} AS look,
             e.user_id, u.username
        FROM race_entries e
        JOIN marbles m ON m.id = e.marble_id

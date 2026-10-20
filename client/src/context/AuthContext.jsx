@@ -52,11 +52,11 @@ export function AuthProvider({ children }) {
     isAuthenticated: Boolean(token && user),
     socket: getSocket(token),
     login: async (login, password) => applySession(await api.login({ login, password })),
-    register: async (fields) => applySession(await api.register(fields)),
+    register: async (fields) => { const r = await api.register(fields); applySession(r); return r; },
     /** "Play free": a guest account, so a race can start straight away. */
     playAsGuest: async () => applySession(await api.guest()),
     /** A guest saves their marble: name, email and password, keeping coins and marbles. */
-    claim: async (fields) => applySession(await api.claim(fields)),
+    claim: async (fields) => { const r = await api.claim(fields); applySession(r); return r; },
     /** A new password from an emailed link (logs in with it). */
     resetPassword: async (resetToken, password) => applySession(await api.resetPassword(resetToken, password)),
     logout,

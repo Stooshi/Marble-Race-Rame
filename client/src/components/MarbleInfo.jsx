@@ -13,7 +13,7 @@ export function marbleFacts(marble) {
     const info = rarityInfo(item.rarity);
     return { name: lookName(item.slug), rarity: `${info.label} · ${item.collection} · #${item.id}`, colour: info.colour, shop: `/collection/${item.design.key}?shade=${item.shade.key}`, note: item.design.inRaces };
   }
-  if (marble?.starter) return { name: marble.name, rarity: 'Starter', colour: 'var(--ms-muted)', shop: null, note: 'A free starter marble: every player has it.' };
+  if (marble?.starter) return { name: marble.name, rarity: marble.code ? `Starter · ${marble.code}` : 'Starter', colour: 'var(--ms-muted)', shop: null, note: "One of this player's own 4 starter marbles: every player gets 4 of their own, each with its own Marble ID." };
   return { name: marble?.name ?? 'Marble', rarity: cap(marble?.rarity) || 'Plain', colour: 'var(--ms-soft)', shop: '/dashboard', note: 'A plain marble from the shop.' };
 }
 

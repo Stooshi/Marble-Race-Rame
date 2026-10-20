@@ -726,3 +726,20 @@ a.ms-tile:hover, a.ms-card:hover { text-decoration: none; border-color: var(--ms
 .ms-notfound { min-height: 300px; position: relative; overflow: hidden; }
 .ms-notfound__ball { flex: none !important; width: 120px; height: 120px; border-radius: 50%; margin-left: auto; background: radial-gradient(circle at 32% 28%, #FFF6C8 0%, var(--ms-yellow) 28%, #E08A12 70%, #7A3E05 100%); box-shadow: 0 18px 30px rgba(0,0,0,0.45); transform: translateX(30%); }
 @media (max-width: 520px) { .ms-notfound__ball { width: 80px; height: 80px; } }
+
+/* The save pop-up and quick sign-up (for guests after every 3rd race; "Later" always works). */
+.ms-sheet--save { z-index: 80; }
+.ms-save-panel { text-align: left; align-items: stretch; }
+.ms-save { display: grid; gap: 10px; width: 100%; text-align: left; }
+.ms-save--center { justify-items: center; text-align: center; }
+.ms-save__eyebrow { font-family: var(--ms-cond); font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; font-size: 0.85rem; color: var(--ms-muted); }
+.ms-save__h { margin: 0; font-family: var(--ms-cond); font-weight: 800; font-size: 1.9rem; line-height: 1.05; text-wrap: balance; }
+.ms-save__p { margin: 0; color: var(--ms-soft); }
+.ms-save__ticks { list-style: none; margin: 0 0 6px; padding: 0; display: grid; gap: 7px; color: var(--ms-soft); }
+.ms-save__ticks li { display: grid; grid-template-columns: 22px 1fr; gap: 6px; }
+.ms-save__ticks li::before { content: '✓'; color: var(--ms-green); font-weight: 800; }
+.ms-save__later { justify-self: center; background: none; border: 0; color: var(--ms-soft); font: inherit; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; min-height: 44px; padding: 0 16px; cursor: pointer; }
+.ms-save__later:hover, .ms-save__later:focus-visible { color: var(--ms-text); }
+.ms-save__born { border: 0; padding: 0; margin: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.ms-save__born legend { font-weight: 600; margin-bottom: 6px; padding: 0; }
+.ms-save__env { font-size: 3rem; line-height: 1; }

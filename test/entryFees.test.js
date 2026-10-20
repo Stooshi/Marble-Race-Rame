@@ -41,7 +41,7 @@ test('races are always free to enter, whatever the request asks', { skip: !DB },
     assert.equal(made.status, 201, JSON.stringify(made.body));
     const race = made.body.race;
     assert.equal(race.entry_fee_coins, 0);
-    const { rows: [m] } = await db.query('SELECT id FROM marbles WHERE is_starter AND is_active LIMIT 1');
+    const { rows: [m] } = await db.query('SELECT id FROM marbles WHERE owner_id = $1 AND is_starter LIMIT 1', [me.user.id]); // (one of their own 4)
     const before = (await call('/auth/me', { token: me.token })).body.user.coins;
     const joined = await call(`/races/${race.id}/join`, { method: 'POST', token: me.token, body: { marble_id: m.id } });
     assert.ok(joined.status < 300, JSON.stringify(joined.body));

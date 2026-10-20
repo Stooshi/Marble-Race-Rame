@@ -180,7 +180,7 @@ export function buildFaq({ tracks } = {}) {
     ]],
     ['Marbles and the collection', [
       ['What marbles do I start with?',
-        'Every player gets **4 free starter marbles**.'],
+        "Every player gets **4 starter marbles of their own**, free: plain glass, one in one colour and three in two colours, each with its own Marble ID (like STLVAS82) and certificate. In a race, no two players show the same starter."],
       ['How do I get new marbles?',
         'In the **Shop**, with coins you earn by racing or buy.'],
       ['What are the rarities and prices?', [
@@ -334,9 +334,9 @@ export function buildFaq({ tracks } = {}) {
     ]],
     ['Younger players and parents', [
       ['Is there an age limit?',
-        'Marble Spins is for all ages. When you save an account, we ask for your age group.'],
+        'Marble Spins is for all ages. When you save an account, we ask for the year and month you were born (no day), to know your age group.'],
       ["What's different for players under 13?",
-        "Players under 13 can race as guests. Saving an account needs a parent or guardian's approval, which isn't available yet, so for now players under 13 race as guests. Under-13s are never asked about news emails and are never sent marketing."],
+        "Players under 13 can race as guests as much as they like. Saving an account is for players 13 and older (parental approval isn't available yet), so if the birth year and month say under 13, no account is made and nothing is stored. Under-13s are never asked about news emails and are never sent marketing."],
       ['A note for parents', [
         ['ul',
           'Marble Spins is free to play, with no ads.',
