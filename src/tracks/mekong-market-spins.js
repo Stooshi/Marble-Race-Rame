@@ -1,6 +1,6 @@
 'use strict';
 
-// Mekong Market Spins: Rivers track 2, through a floating market on a great river. Launched off a moored
+// Mekong Market Spins: Rivers track 2, through a floating market on a great river. Off a moored
 // river boat's deck, along the palm-lined bank, skimming low between boats heaped with fruit, under a long
 // pier, a spin past stilt houses, and over a line of floats to the temple on the bank.
 const { track, opening, layout } = require('../trackKit');
@@ -10,7 +10,7 @@ module.exports = track({
   name: 'Mekong Market Spins',
   family: 'river',
   difficulty: 'extreme',
-  description: 'A floating market on a great river: launched off a moored boat, skimming low between boats heaped with fruit, under a long pier, a spin past stilt houses, and over a line of floats to the temple roofs on the bank.',
+  description: 'A floating market on a great river: off a moored boat\'s deck, skimming low between boats heaped with fruit, a peg under a long pier, a spin past stilt houses, and over a line of floats to the temple roofs on the bank.',
   surface: 'ice',
   biome: 'jungle',
   lighting: 'day',
@@ -21,13 +21,13 @@ module.exports = track({
   start: { landmark: 'wat-roofs', scenery: ['river-palms'], type: 'river-boat', gate: 'stalls', shots: { countdown: 'front', launch: 'high-behind' } },
   finish: { landmark: 'longtail-boat' },
   designChanges: [
-    'Built from the boost launch (off the river boat\'s deck: the boost-launch opening now also races from a river-boat start) and the market maze, the library layout made for this track: deep S-bends along the bank, a long slalom low over the water among the boats, pegs under a pier, a spin, a sweep along the market bank, the hairpin, moguls over a line of floats and the run-in.',
+    'Built from the crest start (off the river boat\'s deck, over its gangway) and the market maze, the library layout made for this track: deep S-bends along the bank, a long slalom low over the water among the boats, a peg under a pier, a spin, a sweep along the market bank, the hairpin, moguls over a line of floats and the run-in.',
     'The market boats float on the river beside the slalom; the slalom poles are the boats\' mooring poles (looks only).',
   ],
-  opening: opening('boost-launch', {
+  opening: opening('crest-start', {
     costumes: { block: 'wooden-crate', slalom: 'river-stake' },
-    names: { drop: 'Off the boat', launch: 'The launch', plunge: 'Down to the bank' },
-    dress: { drop: { height: 0, river: 'right' }, launch: { height: 0, river: 'right' }, plunge: { height: 0, river: 'right' } },
+    names: { plunge: 'Off the boat', climb: 'Over the gangway', drop: 'Down to the bank' },
+    dress: { plunge: { height: 0, river: 'right' }, climb: { height: 0, river: 'right' }, drop: { height: 0, river: 'right' } },
   }),
   sections: layout('market-maze', {
     mirror: true,
