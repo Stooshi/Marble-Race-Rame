@@ -1361,7 +1361,7 @@ const LAYOUTS = {
   'lock-staircase': (L, R, c) => [
     { key: 'locks', name: 'Lock staircase', shape: straight(100, { grade: 0.15 }), features: [steps({ from: 0.3, to: 0.9, count: 5, drag: 0.01 })], billboards: 1 },
     { key: 'damCrest', name: 'Over the dam crest', shape: climb(12, { grade: -0.05, after: 0.1 }) },
-    { key: 'bridgeRun', name: 'Bridge slalom', shape: plunge(65, { grade: 0.3, from: 0.09 }), obstacles: [slalom({ costume: c.slalom, from: 0.2, to: 0.95, count: 5, loss: 0.15 })] },
+    { key: 'bridgeRun', name: 'Bridge slalom', shape: plunge(65, { grade: 0.3, from: 0.09 }), obstacles: [slalom({ costume: c.slalom, from: 0.15, to: 0.95, count: 6, loss: 0.25 })] },
     { key: 'riverSweep', name: 'River sweep', shape: sweep({ side: R, radius: 85, degrees: 100, grade: 0.1 }), billboards: 2 },
     { key: 'sBends', name: 'S-bends', shape: sBends({ first: R, radius: 75, degrees: 60, grade: 0.12 }), billboards: 1 },
     { key: 'spin', name: 'Spiral', shape: spiral({ side: L, radius: 50, turns: 1, grade: 0.16 }) },

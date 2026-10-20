@@ -1366,6 +1366,17 @@
    "side": 1,
    "marbles": 4
   },
+  "yangtze-lock-run": {
+   "name": "Yangtze Lock Run",
+   "series": "Rivers",
+   "lighting": "dawn",
+   "v": "0875b80a",
+   "bytes": 17792,
+   "bytes2x": 43532,
+   "t": 10498,
+   "side": 1,
+   "marbles": 6
+  },
   "yarlung-tsangpo-spins": {
    "name": "Yarlung Tsangpo Spins",
    "series": "Canyons",
