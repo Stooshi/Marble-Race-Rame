@@ -26,7 +26,7 @@
 "copper-spins": {"family":"canyon","reach":0.25,"seq":["opening: boost-launch","drop","pileUp","straight","boost","drop","slalom","sweep left","straight","slalom"]},
 "coptic-cairo-lights": {"family":"world-tour","reach":0.252,"seq":["opening: tunnel-launch","drop","pileUp","slalom","drop","slalom","S-bends left","slalom","straight","box"]},
 "cotahuasi-free-fall": {"family":"canyon","reach":0.233,"seq":["opening: tunnel-launch","drop","pileUp","slalom","drop","slalom","sweep right"]},
-"danube-night-run": {"family":"river","reach":0.232,"seq":["opening: tunnel-launch","drop","pileUp","slalom","drop","slalom","straight","block","straight","slalom","climb"]},
+"danube-night-run": {"family":"river","reach":0.222,"seq":["opening: tunnel-launch","drop","pileUp","slalom","drop","slalom","straight","peg ×2","climb","straight","slalom"]},
 "deep-mine": {"family":"block","reach":0.233,"seq":["opening: tunnel-launch","drop","pileUp","slalom","drop","slalom","straight","moguls","S-bends right"]},
 "delhi-red-fort-marble-grand-prix": {"family":"grand-prix","reach":0.216,"seq":["opening: classic","drop","pileUp","slalom","S-bends left"]},
 "dubai-marble-grand-prix": {"family":"grand-prix","reach":0.216,"seq":["opening: classic","drop","pileUp","slalom","S-bends left"]},
