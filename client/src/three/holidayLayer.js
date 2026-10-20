@@ -8,11 +8,11 @@
  * LOOKS ONLY: built from the track's shape and drawn on the race clock; nothing here is read by the
  * race. Nothing solid: the lights are tiny unlit points hung above the gate and on the arch's beam and
  * posts (outside the channel), the weather is soft points round the camera and the fireworks are
- * points high over the line, so no camera is ever blocked. Three draw calls at most (the fireworks
- * only for a few seconds); fewer points on a phone (the quality setting's `lite`).
+ * points high over the line, so no camera is ever blocked. Two draw calls at most (the lights and the
+ * weather share one; the fireworks show only for a few seconds); fewer points on a phone (the quality setting's `lite`).
  */
 import {
-  AdditiveBlending, BufferGeometry, CanvasTexture, Color, Float32BufferAttribute, Group, Points, PointsMaterial, SRGBColorSpace, Vector3,
+  AdditiveBlending, BufferGeometry, CanvasTexture, Color, Float32BufferAttribute, Group, Points, PointsMaterial, ShaderMaterial, SRGBColorSpace, Vector2, Vector3,
 } from 'three';
 import HOLIDAY from '../shared/holidayLayer.json';
 
@@ -39,51 +39,97 @@ function dotTexture() {
   t.colorSpace = SRGBColorSpace;
   return t;
 }
-/** A small square (a piece of confetti). */
-function squareTexture() {
-  const c = document.createElement('canvas');
-  c.width = c.height = 16;
-  const g = c.getContext('2d');
-  g.fillStyle = '#ffffff';
-  g.fillRect(3, 5, 10, 6);
-  const t = new CanvasTexture(c);
-  t.colorSpace = SRGBColorSpace;
-  return t;
-}
 const hash = (a, b = 0) => { const x = Math.sin(a * 127.1 + b * 311.7) * 43758.5453; return x - Math.floor(x); };
 const WARM = ['#ffd98a', '#ffc35c', '#fff1c9', '#ff9f43', '#ffe3a3'];
 
 /**
- * The string lights: along curves, as points with their own colours (twinkling on the clock).
- * curves: [[Vector3, …], …] (each a row of light positions).
+ * The lights and the weather share one draw call: soft points, each with its own size and colour
+ * (additive: they glow), drawn by one small shader. Every holiday track has warm lights; its weather is
+ * at night or in warm light, where additive points read well.
  */
-function stringLights(rows, lite) {
-  const pts = rows.flat();
-  const pos = new Float32Array(pts.length * 3);
-  const base = [];
-  pts.forEach((p, k) => {
-    pos.set([p.x, p.y, p.z], k * 3);
-    base.push(new Color(WARM[k % WARM.length]));
-  });
-  const col = new Float32Array(pts.length * 3);
+const VERTEX = `
+attribute float size;
+attribute vec3 color;
+uniform float scale;
+varying vec3 vColor;
+void main() {
+  vColor = color;
+  vec4 mv = modelViewMatrix * vec4(position, 1.0);
+  gl_PointSize = size * scale / max(0.1, -mv.z);
+  gl_Position = projectionMatrix * mv;
+}`;
+const FRAGMENT = `
+uniform sampler2D map;
+varying vec3 vColor;
+void main() {
+  vec4 t = texture2D(map, gl_PointCoord);
+  if (t.a < 0.02) discard;
+  gl_FragColor = vec4(vColor * t.a, t.a);
+}`;
+
+/**
+ * One Points object: the string lights (rows of positions, fixed) and the weather ('snow',
+ * 'confetti', 'sparkles' or null) falling in a box round the camera.
+ */
+function lightsAndWeather(rows, kind, lite) {
+  const bulbs = rows.flat();
+  const L = bulbs.length;
+  const W = !kind ? 0 : kind === 'snow' ? (lite ? 450 : 2200) : (lite ? 300 : 1200);
+  const n = L + W;
+  const pos = new Float32Array(n * 3);
+  const col = new Float32Array(n * 3);
+  const size = new Float32Array(n);
+  const warm = bulbs.map((_, k) => new Color(WARM[k % WARM.length]));
+  bulbs.forEach((p, k) => { pos.set([p.x, p.y, p.z], k * 3); size[k] = lite ? 1.25 : 1.05; });
+  const box = { w: 60, h: 34 };
+  const base = new Float32Array(W * 3);
+  const palette = ['#ff4d6d', '#ffd23f', '#3ddc97', '#4cc9f0', '#b388ff', '#ffffff', '#ff9f1c'].map((c) => new Color(c));
+  for (let k = 0; k < W; k += 1) {
+    base.set([(hash(k, 1) - 0.5) * box.w, hash(k, 2) * box.h, (hash(k, 3) - 0.5) * box.w], k * 3);
+    const c = kind === 'confetti' ? palette[k % palette.length] : kind === 'sparkles' ? new Color('#ffcf6e') : new Color('#e8eef6');
+    col.set([c.r, c.g, c.b], (L + k) * 3);
+    size[L + k] = kind === 'confetti' ? (lite ? 0.55 : 0.45) : kind === 'sparkles' ? (lite ? 0.42 : 0.34) : (lite ? 0.4 : 0.32);
+  }
   const g = new BufferGeometry();
   g.setAttribute('position', new Float32BufferAttribute(pos, 3));
   g.setAttribute('color', new Float32BufferAttribute(col, 3));
-  g.computeBoundingSphere();
+  g.setAttribute('size', new Float32BufferAttribute(size, 1));
   const tex = dotTexture();
-  const object = new Points(g, new PointsMaterial({ size: lite ? 1.25 : 1.05, map: tex, vertexColors: true, transparent: true, depthWrite: false, blending: AdditiveBlending, fog: false }));
-  object.name = 'holiday: string lights';
-  const update = (sec) => {
+  const material = new ShaderMaterial({
+    uniforms: { map: { value: tex }, scale: { value: 300 } },
+    vertexShader: VERTEX, fragmentShader: FRAGMENT,
+    transparent: true, depthWrite: false, blending: AdditiveBlending,
+  });
+  const object = new Points(g, material);
+  object.name = 'holiday: lights and weather';
+  object.frustumCulled = false;
+  const drawn = new Vector2();
+  object.onBeforeRender = (renderer) => { material.uniforms.scale.value = renderer.getDrawingBufferSize(drawn).y / 2; };
+  const fall = kind === 'snow' ? 1.3 : kind === 'confetti' ? 2.2 : 0.9; // metres per second
+  const sway = kind === 'confetti' ? 1.4 : 0.8;
+  const wrap = (v, sz) => ((((v + sz / 2) % sz) + sz) % sz) - sz / 2;
+  const update = (sec, at) => {
     const C = g.getAttribute('color');
-    for (let k = 0; k < pts.length; k += 1) {
+    for (let k = 0; k < L; k += 1) {
       // Gently: each bulb breathes on its own slow rhythm, between 55% and 100%.
       const w = 0.55 + 0.45 * (0.5 + 0.5 * Math.sin(sec * (1.2 + hash(k) * 1.6) + hash(k, 3) * 6.28));
-      C.setXYZ(k, base[k].r * w, base[k].g * w, base[k].b * w);
+      C.setXYZ(k, warm[k].r * w, warm[k].g * w, warm[k].b * w);
     }
     C.needsUpdate = true;
+    if (!W || !at) return;
+    const P = g.getAttribute('position');
+    for (let k = 0; k < W; k += 1) {
+      const x = at.x + wrap(base[k * 3] + Math.sin(sec * 0.8 + k) * sway - at.x, box.w);
+      const z = at.z + wrap(base[k * 3 + 2] + Math.cos(sec * 0.6 + k * 1.3) * sway - at.z, box.w);
+      const y = at.y + wrap(base[k * 3 + 1] - sec * fall - at.y, box.h);
+      P.setXYZ(L + k, x, y, z);
+    }
+    P.needsUpdate = true;
   };
-  update(0);
-  return { object, update, dispose: () => { g.dispose(); object.material.dispose(); tex.dispose(); } };
+  update(0, null);
+  // (Weather points start far below until the first tick puts them round the camera.)
+  for (let k = 0; k < W; k += 1) g.getAttribute('position').setXYZ(L + k, 0, -1e5, 0);
+  return { object, update, dispose: () => { g.dispose(); material.dispose(); tex.dispose(); } };
 }
 
 /** A garland from a to b sagging `sag` metres in the middle, `n` bulbs. */
@@ -94,53 +140,6 @@ function garland(a, b, sag, n) {
     out.push(a.clone().lerp(b, f).addScaledVector(UP, -sag * 4 * f * (1 - f)));
   }
   return out;
-}
-
-/**
- * Falling weather in a box round the camera: 'snow' (soft white flakes), 'confetti' (bright squares
- * tumbling) or 'sparkles' (warm golden glints drifting down). One draw call.
- */
-function weather(kind, lite) {
-  const n = kind === 'snow' ? (lite ? 450 : 2200) : (lite ? 300 : 1200);
-  const box = { w: 60, h: 34 };
-  const base = new Float32Array(n * 3);
-  for (let k = 0; k < n; k += 1) base.set([(hash(k, 1) - 0.5) * box.w, hash(k, 2) * box.h, (hash(k, 3) - 0.5) * box.w], k * 3);
-  const g = new BufferGeometry();
-  g.setAttribute('position', new Float32BufferAttribute(new Float32Array(n * 3), 3));
-  let tex;
-  let material;
-  if (kind === 'confetti') {
-    const palette = ['#ff4d6d', '#ffd23f', '#3ddc97', '#4cc9f0', '#b388ff', '#ffffff', '#ff9f1c'].map((c) => new Color(c));
-    const col = new Float32Array(n * 3);
-    for (let k = 0; k < n; k += 1) { const c = palette[k % palette.length]; col.set([c.r, c.g, c.b], k * 3); }
-    g.setAttribute('color', new Float32BufferAttribute(col, 3));
-    tex = squareTexture();
-    material = new PointsMaterial({ size: lite ? 0.6 : 0.5, map: tex, vertexColors: true, transparent: true, alphaTest: 0.3, depthWrite: false });
-  } else if (kind === 'sparkles') {
-    tex = dotTexture();
-    material = new PointsMaterial({ size: lite ? 0.42 : 0.34, map: tex, color: '#ffd27a', transparent: true, opacity: 0.85, depthWrite: false, blending: AdditiveBlending });
-  } else {
-    tex = dotTexture();
-    material = new PointsMaterial({ size: lite ? 0.4 : 0.32, map: tex, color: '#ffffff', transparent: true, opacity: 0.9, depthWrite: false });
-  }
-  const object = new Points(g, material);
-  object.name = `holiday: ${kind}`;
-  object.frustumCulled = false;
-  const fall = kind === 'snow' ? 1.3 : kind === 'confetti' ? 2.2 : 0.9; // metres per second
-  const wrap = (v, size) => ((((v + size / 2) % size) + size) % size) - size / 2;
-  const update = (sec, at) => {
-    if (!at) return;
-    const P = g.getAttribute('position');
-    const sway = kind === 'confetti' ? 1.4 : 0.8;
-    for (let k = 0; k < n; k += 1) {
-      const x = at.x + wrap(base[k * 3] + Math.sin(sec * 0.8 + k) * sway - at.x, box.w);
-      const z = at.z + wrap(base[k * 3 + 2] + Math.cos(sec * 0.6 + k * 1.3) * sway - at.z, box.w);
-      const y = at.y + wrap(base[k * 3 + 1] - sec * fall - at.y, box.h);
-      P.setXYZ(k, x, y, z);
-    }
-    P.needsUpdate = true;
-  };
-  return { object, update, dispose: () => { g.dispose(); material.dispose(); tex.dispose(); } };
 }
 
 /**
@@ -233,13 +232,11 @@ export function buildHolidayLayer(track, centerline, { half, archH, startHalf, l
     for (let q = 0; q <= n; q += 1) col.push(post.clone().setY(end.pos.y + 1 + ((archH - 1.2) * q) / n));
     rows.push(col);
   }
-  const lights = stringLights(rows, lite);
-  group.add(lights.object);
-  parts.push(lights);
-
-  // The weather (none where the track's own sky already snows).
-  const w = holiday.weather && !(holiday.weather === 'snow' && precipitation) ? weather(holiday.weather, lite) : null;
-  if (w) { group.add(w.object); parts.push(w); }
+  // The lights and the weather (none where the track's own sky already snows): one draw call.
+  const kind = holiday.weather && !(holiday.weather === 'snow' && precipitation) ? holiday.weather : null;
+  const lw = lightsAndWeather(rows, kind, lite);
+  group.add(lw.object);
+  parts.push(lw);
 
   // The winner's fireworks, over the finish.
   const fw = finishFireworks(end.pos.clone(), lite);
@@ -249,7 +246,7 @@ export function buildHolidayLayer(track, centerline, { half, archH, startHalf, l
   return {
     group,
     weather: holiday.weather,
-    tick: (sec, at) => { lights.update(sec); w?.update(sec, at); },
+    tick: (sec, at) => lw.update(sec, at),
     race: (raceMs, winnerMs) => fw.update(winnerMs == null ? -1 : (raceMs - winnerMs) / 1000),
     dispose: () => { for (const p of parts) p.dispose(); group.removeFromParent(); },
   };
