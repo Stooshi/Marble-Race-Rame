@@ -7,6 +7,7 @@
  * go only to a confirmed address. Texts in English and Swedish (the browser's language at sign-up),
  * for Moses's review in the project doc claude/signup-confirm-email.md.
  */
+const { ENGLISH_ONLY } = require('../../client/src/shared/language.json');
 const crypto = require('crypto');
 const config = require('../config');
 const email = require('../email');
@@ -43,8 +44,8 @@ const TEXTS = {
 
 /** The email: { subject, html }. */
 function message({ lang = 'en', name, link }) {
-  const t = TEXTS[lang] ?? TEXTS.en;
-  const L = TEXTS[lang] ? lang : 'en';
+  const L = !ENGLISH_ONLY && TEXTS[lang] ? lang : 'en'; // (English only for now: ../../client/src/shared/language.json)
+  const t = TEXTS[L];
   return {
     subject: t.subject,
     html: `<!doctype html><html lang="${L}"><body style="margin:0;padding:0;background:#f2f4f8">
@@ -76,7 +77,8 @@ async function send(db, user, { lang = 'en', siteUrl = config.publicSiteUrl } = 
   );
   if (recent >= MAX_PER_HOUR) return 'limit';
   const token = crypto.randomBytes(32).toString('base64url');
-  const language = lang === 'sv' ? 'sv' : 'en';
+  // English only for now (Moses, 21 Oct 2026); the Swedish texts stay below for later.
+  const language = ENGLISH_ONLY ? 'en' : lang === 'sv' ? 'sv' : 'en';
   await db.query(
     `INSERT INTO email_confirmations (user_id, email, token_hash, lang, expires_at) VALUES ($1, $2, $3, $4, now() + make_interval(days => $5))`,
     [user.id, user.email, hash(token), language, LINK_DAYS],

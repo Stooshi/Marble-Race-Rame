@@ -1,3 +1,4 @@
+import { lang } from '../account/saveTexts';
 import LogoutButton from '../account/LogoutButton';
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
@@ -173,7 +174,7 @@ function ConfirmEmail() {
   const [state, setState] = useState(null);
   useEffect(() => { api.passwordResetEnabled().then((r) => setOn(Boolean(r.enabled))).catch(() => {}); }, []);
   if (!on) return null;
-  const send = () => { setState('busy'); api.resendConfirmEmail(/^sv\b/i.test(navigator.language || '') ? 'sv' : 'en').then((r) => setState(r.confirm === 'sent' ? 'sent' : r.confirm)).catch((e) => setState(e.message)); };
+  const send = () => { setState('busy'); api.resendConfirmEmail(lang()).then((r) => setState(r.confirm === 'sent' ? 'sent' : r.confirm)).catch((e) => setState(e.message)); };
   return (
     <section className="ms-card" style={{ display: 'grid', gap: 8 }} aria-labelledby="confirm-h">
       <h2 id="confirm-h" className="ms-h3" style={{ margin: 0 }}>Confirm your email</h2>

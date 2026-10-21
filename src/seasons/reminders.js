@@ -22,6 +22,7 @@
  *   email); deleted with the account, and by the hourly job once cancelled or 30 days after the
  *   sale opened, sent or not.
  */
+const { ENGLISH_ONLY } = require('../../client/src/shared/language.json');
 const crypto = require('crypto');
 const consent = require('../../client/src/shared/payments/consent.json');
 const { HttpError, badRequest } = require('../utils/httpError');
@@ -73,7 +74,9 @@ async function ofPlayer(db, userId, seasonKey) {
  */
 async function remind(db, season, user, { email = null, consent: agreed = false, emailToo = false, lang = 'en' } = {}, now = new Date()) {
   assertOpen(season, now);
-  const language = lang === 'sv' ? 'sv' : 'en'; // (the emails' language: Swedish or English)
+  // English only for now (Moses, 21 Oct 2026: the site is in English); the Swedish texts stay in
+  // reminderEmails.js for later: then `lang === 'sv' ? 'sv' : 'en'` again.
+  const language = ENGLISH_ONLY ? 'en' : lang === 'sv' ? 'sv' : 'en';
   const token = crypto.randomBytes(24).toString('base64url');
   if (user && !user.is_guest && user.email) {
     const text = `[${consent.version}] ${fill(consent.reminderPlayer, season)}${emailToo ? ` / ${fill(consent.reminderPlayerEmail, season, { email: user.email })}` : ''}`;

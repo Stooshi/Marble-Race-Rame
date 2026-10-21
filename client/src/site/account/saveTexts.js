@@ -1,8 +1,10 @@
+import LANGUAGE from '../../shared/language.json';
 /**
  * The save pop-up and quick sign-up in English and Swedish (Moses, 20 Oct 2026; approved on the
- * preview page). The language: Swedish for a Swedish browser or phone, otherwise English.
+ * preview page). English only for now (Moses, 21 Oct: the site is in English; ../../shared/language.json);
+ * the Swedish texts stay here for later, when a Swedish browser or phone gets Swedish again.
  */
-export const lang = () => (typeof navigator !== 'undefined' && /^sv\b/i.test(navigator.language || '') ? 'sv' : 'en');
+export const lang = () => (!LANGUAGE.ENGLISH_ONLY && typeof navigator !== 'undefined' && /^sv\b/i.test(navigator.language || '') ? 'sv' : 'en');
 
 export const MONTHS = {
   en: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],

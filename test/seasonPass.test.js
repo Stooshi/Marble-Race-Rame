@@ -547,11 +547,11 @@ test('sending the pass reminders: off until BREVO_API_KEY and PASS_REMINDERS_SEN
     process.env.PASS_REMINDERS_SENDING = 'on';
     assert.equal(reminderMail.sendingOn(), true);
 
-    // 1. Confirmations, once each, to the two email reminders; Swedish for the Swedish browser.
+    // 1. Confirmations, once each, to the two email reminders; in English, also for a Swedish browser (English only for now).
     assert.deepEqual(await reminderMail.run(db, [season]), { confirmations: 2, reminders: 0 });
     assert.deepEqual(await reminderMail.run(db, [season]), { confirmations: 0, reminders: 0 });
     const sv = sent.find((m) => m.to[0].email === `sv_${run}@test.invalid`);
-    assert.equal(sv.subject, 'Bekräfta din påminnelse om Send Season Pass 2026');
+    assert.equal(sv.subject, 'Confirm your reminder for the Send Season Pass 2026');
     const { rows: [svRow] } = await db.query('SELECT token FROM pass_reminders WHERE email = $1', [`sv_${run}@test.invalid`]);
     assert.ok(sv.htmlContent.includes(`/pass/reminder?confirm=${svRow.token}`));
     assert.ok(sv.htmlContent.includes(`/pass/reminder?cancel=${svRow.token}`));
@@ -574,7 +574,7 @@ test('sending the pass reminders: off until BREVO_API_KEY and PASS_REMINDERS_SEN
     assert.deepEqual(await reminderMail.run(db, [open]), { confirmations: 0, reminders: 0 });
     assert.equal(sent.length, 1);
     assert.equal(sent[0].to[0].email, `sv_${run}@test.invalid`);
-    assert.equal(sent[0].subject, 'Send Season Pass 2026 säljs nu');
+    assert.equal(sent[0].subject, 'The Send Season Pass 2026 is on sale now');
     assert.ok(sent[0].htmlContent.includes(`/pass?season=${key}`) && sent[0].htmlContent.includes(`/pass/reminder?cancel=${svRow.token}`));
 
     // The in-game notice: for both players (whatever their email), until closed; never for others.

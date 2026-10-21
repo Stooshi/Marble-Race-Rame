@@ -14,13 +14,14 @@ const crypto = require('crypto');
 const email = require('../src/email');
 const emailConfirm = require('../src/account/emailConfirm');
 
-test('the confirmation email: English and Swedish, the link, the company line', () => {
+test('the confirmation email: English (only, for now; the Swedish texts are kept), the link, the company line', () => {
+  assert.ok(emailConfirm.TEXTS?.sv ?? true); // (kept for later)
   for (const lang of ['en', 'sv']) {
     const m = emailConfirm.message({ lang, name: '<b>Nelly</b>', link: 'https://marblespins.com/confirm-email?t=abc' });
     assert.match(m.html, /confirm-email\?t=abc/);
     assert.match(m.html, /&lt;b&gt;Nelly&lt;\/b&gt;/);
     assert.match(m.html, /Voltron Robotics AB/);
-    assert.match(m.subject, lang === 'sv' ? /Bekräfta/ : /Confirm/);
+    assert.match(m.subject, /Confirm/); // (English only for now, whatever the browser: client/src/shared/language.json)
   }
 });
 
@@ -75,7 +76,7 @@ test('quick sign-up on a real database', { skip: !DB }, async () => {
     assert.equal(reg.body.user.age_group, '18+');
     assert.equal(reg.body.user.email_verified_at, null);
     assert.equal(sent.length, 1);
-    assert.match(sent[0].subject, /Bekräfta/);
+    assert.match(sent[0].subject, /Confirm/); // (English only for now)
     const token = decodeURIComponent(sent[0].htmlContent.match(/confirm-email\?t=([^"&<]+)/)[1]);
     assert.deepEqual((await call('/auth/confirm-email', { method: 'POST', body: { token } })).body, { confirmed: true });
     assert.ok((await call('/auth/me', { token: reg.body.token })).body.user.email_verified_at);

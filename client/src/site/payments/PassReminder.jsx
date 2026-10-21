@@ -1,3 +1,4 @@
+import LANGUAGE from '../../shared/language.json';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import CONSENT from '../../shared/payments/consent.json';
@@ -14,8 +15,8 @@ import { activatesDay } from './preSale';
  */
 const LISTED = (key) => `marble-pass-reminder:${key}`;
 const remembered = (key) => { try { return localStorage.getItem(LISTED(key)) === '1'; } catch { return false; } };
-// The emails' language: Swedish for a Swedish browser, otherwise English.
-const LANG = () => (typeof navigator !== 'undefined' && /^sv\b/i.test(navigator.language || '') ? 'sv' : 'en');
+// The emails' language: English only for now (Moses, 21 Oct), else Swedish for a Swedish browser.
+const LANG = () => (!LANGUAGE.ENGLISH_ONLY && typeof navigator !== 'undefined' && /^sv\b/i.test(navigator.language || '') ? 'sv' : 'en');
 const remember = (key) => { try { localStorage.setItem(LISTED(key), '1'); } catch { /* (private window) */ } };
 
 export default function PassReminder({ season, user, onChange }) {

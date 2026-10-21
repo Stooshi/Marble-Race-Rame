@@ -8,6 +8,7 @@
  *
  * Every email has a cancel link (and List-Unsubscribe headers, so a mail app's own button works).
  */
+const { ENGLISH_ONLY } = require('../../client/src/shared/language.json');
 const company = require('../../client/src/shared/company.json');
 
 const TEXTS = {
@@ -88,7 +89,7 @@ const p = (text, style = '') => `<p style="margin:0 0 12px;${style}">${esc(text)
 
 /** The confirmation email (double opt-in). → { subject, html } */
 function confirmEmail({ lang = 'en', season, confirmLink, cancelLink }) {
-  const L = TEXTS[lang] ? lang : 'en';
+  const L = !ENGLISH_ONLY && TEXTS[lang] ? lang : 'en'; // (English only for now: ../../client/src/shared/language.json)
   const t = TEXTS[L].confirm;
   const vars = { pass: season.pass_name, opens: dayText(season.pass_sale_starts_at, L, season.time_zone) };
   return {
@@ -106,7 +107,7 @@ function confirmEmail({ lang = 'en', season, confirmLink, cancelLink }) {
 
 /** The one reminder when the sale opens. → { subject, html } */
 function reminderEmail({ lang = 'en', season, passLink, cancelLink }) {
-  const L = TEXTS[lang] ? lang : 'en';
+  const L = !ENGLISH_ONLY && TEXTS[lang] ? lang : 'en'; // (English only for now: ../../client/src/shared/language.json)
   const t = TEXTS[L].reminder;
   const vars = { pass: season.pass_name, activates: dayText(season.starts_at, L, season.time_zone) };
   return {
