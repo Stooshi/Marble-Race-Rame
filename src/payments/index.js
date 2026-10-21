@@ -123,6 +123,7 @@ async function checkout(client, userId, { productId, provider: providerName, con
   if (!provider.configured() || provider.name === 'google' || provider.name === 'apple') {
     return { payment: null, next: await provider.start(null, {}) };
   }
+  await savedAccount(client, userId);
   if (agreed !== true) throw badRequest('Please agree to immediate delivery and the terms of sale first');
   const { rows: [payment] } = await client.query(
     `INSERT INTO payments (user_id, provider, product_id, coins, amount_cents, currency, order_no, consent_at, consent_text)
@@ -183,7 +184,7 @@ async function passCheckout(client, userId, { seasonKey, provider: providerName 
 
 // What a player sees of their own orders (Purchases page).
 const ORDER_COLUMNS = `order_no, provider, product_id, season_key, coins, amount_cents, upper(currency) AS currency, charged_cents, charged_currency,
-  tax_cents, status, refunded_cents, receipt_url, created_at, paid_at, refunded_at`;
+  tax_cents, status, refunded_cents, receipt_url, created_at, paid_at, refunded_at, withdrawn_at`;
 
 /** A player's orders, newest first (lapsed checkouts that were never paid are left out). */
 async function ordersOf(client, userId) {
@@ -256,8 +257,19 @@ async function refund(db, paymentId, { amountCents = null, adminId, reason }) {
   throw badRequest(`${pay.provider} purchases are refunded by the store itself`);
 }
 
-/** The player's account id for Google Play purchases (the app buys with it). */
-const googleAccountId = (db, userId) => google.accountIdFor(db, userId);
+/**
+ * Coin packs and the season pass are for saved accounts only (Moses, 21 Oct 2026: a guest who logs
+ * out, or is away 180 days, would lose what they paid for). → 401 for a guest (the website shows the
+ * quick sign-up, "Save your marble to buy").
+ */
+const SAVE_FIRST = 'Save your marble first, so what you buy stays yours on every device';
+async function savedAccount(db, userId) {
+  const { rows: [u] } = await db.query('SELECT is_guest FROM users WHERE id = $1 AND deleted_at IS NULL', [userId]);
+  if (!u || u.is_guest) throw new HttpError(401, SAVE_FIRST, { code: 'save_first' });
+}
+
+/** The player's account id for Google Play purchases (the app buys with it; saved accounts only). */
+const googleAccountId = async (db, userId) => { await savedAccount(db, userId); return google.accountIdFor(db, userId); };
 
 /** A Google Play purchase from the app (or from Google's notification): verified with Google, coins once. */
 function googlePurchase(db, { userId = null, productId, purchaseToken }) {
@@ -266,7 +278,7 @@ function googlePurchase(db, { userId = null, productId, purchaseToken }) {
 }
 
 /** The player's App Store account token (the iPhone app buys with it as StoreKit's appAccountToken). */
-const appleAccountToken = (db, userId) => apple.accountTokenFor(db, userId);
+const appleAccountToken = async (db, userId) => { await savedAccount(db, userId); return apple.accountTokenFor(db, userId); };
 
 /** An App Store purchase from the iPhone app: Apple's signature checked, then the coins (or the pass) once. */
 function applePurchase(db, { userId, signedTransaction }) {

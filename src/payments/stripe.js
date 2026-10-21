@@ -73,7 +73,7 @@ async function start(payment, { pack, email, locale, siteUrl }) {
         product_data: {
           name: pass ? `Marble Spins ${pack.name}` : `${pack.coins.toLocaleString('en-US')} Marble Spins coins`,
           description: `${pass
-            ? `${pack.season.name}: every holiday track and the Track of the Day bonus until ${new Intl.DateTimeFormat('en-GB', { timeZone: pack.season.time_zone, day: 'numeric', month: 'long', year: 'numeric' }).format(new Date(pack.season.free_from))}, and the season marble. One payment, not a subscription. ${preSale ? `Activates ${activates} at 00:00 Swedish time, with a full refund on request until then` : 'Delivered right away'}; no cash value.`
+            ? `${pack.season.name}: every holiday track and the Holiday Track of the Day bonus until ${new Intl.DateTimeFormat('en-GB', { timeZone: pack.season.time_zone, day: 'numeric', month: 'long', year: 'numeric' }).format(new Date(pack.season.free_from))}, and the season marble. One payment, not a subscription. ${preSale ? `Activates ${activates} at 00:00 Swedish time, with a full refund on request until then` : 'Delivered right away'}; no cash value.`
             : 'Coins for the Marble Spins shop: looks only, never speed. Delivered right away; no cash value.'} Sold by ${company.name} (org.nr ${company.orgNo}, VAT ${company.vatNo}). Questions: ${company.supportEmail}`,
           tax_code: config.stripe.taxCode,
           metadata: { product_id: pack.id },
@@ -264,7 +264,7 @@ async function requestRefund(payment, { amountCents, adminId, reason }) {
     payment_intent: payment.payment_intent,
     ...(amountCents && { amount: amountCents }),
     reason: 'requested_by_customer',
-    metadata: { payment_id: payment.id, order_no: payment.order_no ?? '', admin_id: adminId, reason: reason.slice(0, 450) },
+    metadata: { payment_id: payment.id, order_no: payment.order_no ?? '', admin_id: adminId ?? 'player', reason: reason.slice(0, 450) },
   }, { idempotencyKey: `refund-${payment.id}-${payment.refunded_cents}-${amountCents ?? 'all'}` });
   return { id: refund.id, status: refund.status, amount: refund.amount };
 }

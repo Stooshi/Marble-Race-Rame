@@ -30,11 +30,11 @@ describe('the questions', () => {
 
   it('keeps the [bracket] placeholders only Moses can answer, and fills the others (19 Oct)', () => {
     const text = all.map((q) => q.text).join('\n');
-    for (const p of ['[coming at launch]', '[To decide: e.g. "No, your coins don\'t expire as long as your account exists."]',
-      '[Live once email is switched on.]', '[2 working days]']) {
+    for (const p of ['[coming at launch]', '[Live once email is switched on.]', '[2 working days]']) {
       expect(text, p).toContain(p);
     }
-    for (const p of ['[Google and Apple sign-in: later.]', '[01:00 / 02:00 Swedish time]', '[To confirm:', '[approval process coming]', "[If there's a quality setting"]) {
+    expect(bySlug['do-coins-expire'].text).toMatch(/^No\. Your coins stay in your account until you use them or delete your account/); // (Moses, 21 Oct)
+    for (const p of ['[To decide:', '[Google and Apple sign-in: later.]', '[01:00 / 02:00 Swedish time]', '[To confirm:', '[approval process coming]', "[If there's a quality setting"]) {
       expect(text, p).not.toContain(p);
     }
     expect(bySlug['when-does-a-new-day-start'].text).toBe('At midnight UTC, which is 01:00 Swedish time in winter and 02:00 in summer.');
@@ -121,7 +121,7 @@ describe('the season pass and seasonal answers', () => {
     expect(bySlug['whats-in-the-holiday-season-pass'].text).toContain('all 31 holiday tracks from around the world, from 1 December 2026');
     expect(bySlug['how-long-does-the-pass-last'].text).toContain('7 January 2027 at 23:59 Swedish time');
     expect(bySlug['how-do-i-get-a-refund-for-the-pass'].text).toContain('Winter Solstice leaves your Marble Bag');
-    expect(bySlug['what-is-the-track-of-the-day'].text).toContain("doesn't count on the scoreboards");
+    expect(bySlug['what-is-the-holiday-track-of-the-day'].text).toContain("doesn't count on the scoreboards");
   });
   it('take the seasonal collection from the catalogue', () => {
     expect(bySlug['what-is-a-seasonal-collection'].text).toContain('Snowball (800 coins), Frost Clearie (800 coins), Candy Cane (2,000 coins), Evergreen (4,500 coins) and Midwinter Star (9,000 coins), on sale from 1 December 2026 to 7 January 2027');

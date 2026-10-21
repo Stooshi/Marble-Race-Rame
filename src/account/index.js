@@ -89,6 +89,8 @@ async function exportData(db, userId) {
  * → { username } the anonymous name, or null if there was no such (live) account.
  */
 async function deleteAccount(client, userId, { by = 'player', reason = null } = {}) {
+  const byPlayer = by === 'player';
+  const byRetention = by === 'retention'; // (a guest away 180 days: ./retention.js)
   const { rows: [user] } = await client.query('SELECT id, role FROM users WHERE id = $1 AND deleted_at IS NULL FOR UPDATE', [userId]);
   if (!user) return null;
   const name = anonName(userId);
@@ -121,7 +123,9 @@ async function deleteAccount(client, userId, { by = 'player', reason = null } = 
   await client.query(`UPDATE rooms SET status = 'closed' WHERE host_id = $1 AND status = 'open'`, [userId]);
   await client.query(
     'INSERT INTO admin_audit (admin_id, action, target_user_id, reason, details) VALUES ($1, $2, $3, $4, $5)',
-    [by === 'player' ? null : by, 'account-deleted', userId, by === 'player' ? 'Deleted by the player in settings' : reason || 'Deleted in the back office', JSON.stringify({ anonymised_as: name })],
+    [byPlayer || byRetention ? null : by, 'account-deleted', userId,
+      byPlayer ? 'Deleted by the player in settings' : byRetention ? 'Guest account: 180 days without a visit' : reason || 'Deleted in the back office',
+      JSON.stringify({ anonymised_as: name })],
   );
   return { username: name };
 }

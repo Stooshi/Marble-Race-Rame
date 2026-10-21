@@ -457,7 +457,7 @@ function CoinPacks() {
           </Link>
         ))}
       </div>
-      <p className="ms-note">Coins are for the shop only and can't be cashed out. {Object.keys(storePrices).length ? 'Prices in your local currency, including VAT.' : 'Prices shown in your local currency at checkout, including VAT.'} Under 18? Ask a parent or guardian before buying. <Link to="/legal#sale">Terms of sale</Link> · <Link to="/help#buying-coins">Help with buying coins</Link> · <Link to="/help#contact">Contact us</Link></p>
+      <p className="ms-note">Coins are for the shop only and can't be cashed out, and coin packs are for saved accounts (a guest saves their marble first). {Object.keys(storePrices).length ? 'Prices in your local currency, including VAT.' : 'Prices shown in your local currency at checkout, including VAT.'} Under 18? Ask a parent or guardian before buying. <Link to="/legal#sale">Terms of sale</Link> · <Link to="/help#buying-coins">Help with buying coins</Link> · <Link to="/help#contact">Contact us</Link></p>
     </section>
   );
 }

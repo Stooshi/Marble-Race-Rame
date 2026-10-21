@@ -9,6 +9,7 @@ const db = require('../db');
 const { signToken } = require('../utils/jwt');
 const starters = require('../marbles/starters');
 const emailConfirm = require('../account/emailConfirm');
+const retention = require('../account/retention');
 const { validate } = require('../utils/validate');
 const { HttpError, badRequest, unauthorized, conflict, forbidden } = require('../utils/httpError');
 const { requireAuth } = require('../middleware/auth');
@@ -20,13 +21,23 @@ const email = require('../email');
 
 const router = express.Router();
 
-const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  limit: config.isTest ? 1000 : 20,
+const limiter = (windowMs, limit, error = 'Too many attempts, please try again later') => rateLimit({
+  windowMs,
+  limit: config.isTest ? 1000 : limit,
   standardHeaders: 'draft-8',
   legacyHeaders: false,
-  message: { error: 'Too many attempts, please try again later' },
+  message: { error },
 });
+// Per address (Moses, 21 Oct 2026): a class, a pilot group or League Night in a bar share one Wi-Fi,
+// so starting to play doesn't count toward the sign-in limit. Each kind of request has its own:
+//   log in, password reset, email confirmation: strict (guessing passwords)  20 / 15 min
+//   saving an account (sign-up, saving a guest):                              60 / 15 min
+//   starting as a guest ("Play free"):                                       300 / hour
+//   suggested player names (the sign-up form asks once when it opens):      300 / 15 min
+const authLimiter = limiter(15 * 60 * 1000, 20);
+const signupLimiter = limiter(15 * 60 * 1000, 60);
+const guestLimiter = limiter(60 * 60 * 1000, 300, 'Too many new players from this address right now, please try again in a few minutes');
+const nameLimiter = limiter(15 * 60 * 1000, 300);
 
 // `streak`: days in a row with the daily goal met, alive while the goal was met today or yesterday
 // (UTC days, as in src/economy/index.js today()); 0 otherwise.
@@ -85,7 +96,7 @@ function refuseUnder13(ageGroup) {
 }
 
 /** POST /api/auth/register */
-router.post('/register', authLimiter, async (req, res) => {
+router.post('/register', signupLimiter, async (req, res) => {
   const body = validate(req.body, registerSchema);
   const { ageGroup, birthMonth } = ageOf(body);
   refuseUnder13(ageGroup);
@@ -120,7 +131,7 @@ router.post('/register', authLimiter, async (req, res) => {
  * away (a made-up name, no email or password the player knows). Saving the
  * marble later (POST /api/auth/claim) keeps everything it has won.
  */
-router.post('/guest', authLimiter, async (req, res) => {
+router.post('/guest', guestLimiter, async (req, res) => {
   const id = crypto.randomBytes(5).toString('hex');
   const hash = await bcrypt.hash(crypto.randomBytes(24).toString('hex'), config.auth.bcryptRounds);
   const { rows } = await db.query(
@@ -138,7 +149,7 @@ router.post('/guest', authLimiter, async (req, res) => {
 });
 
 /** POST /api/auth/claim — a guest saves their marble: picks a name, email and password, keeping coins and marbles. */
-router.post('/claim', requireAuth, authLimiter, async (req, res) => {
+router.post('/claim', requireAuth, signupLimiter, async (req, res) => {
   const body = validate(req.body, registerSchema);
   const { ageGroup, birthMonth } = ageOf(body);
   refuseUnder13(ageGroup);
@@ -221,6 +232,7 @@ router.post('/reset', authLimiter, async (req, res) => {
 /** GET /api/auth/me */
 router.get('/me', requireAuth, async (req, res) => {
   const { rows } = await db.query(`SELECT ${PUBLIC_USER_COLUMNS} FROM users WHERE id = $1`, [req.user.id]);
+  await retention.seen(db, req.user.id); // (guests: deleted after 180 days without a visit)
   // A visit renews the login (sliding expiry): a login older than a day gets a fresh token, valid
   // config.auth.jwtExpiresIn from now. The app stores it; the old one stays valid until it expires.
   const age = Math.floor(Date.now() / 1000) - (req.user.tokenPayload?.iat ?? 0);
@@ -241,7 +253,7 @@ router.get('/me', requireAuth, async (req, res) => {
 const NAME_A = ['Swift', 'Lucky', 'Rapid', 'Bouncy', 'Shiny', 'Rolling', 'Cosmic', 'Golden', 'Turbo', 'Zippy', 'Mighty', 'Brave', 'Clever', 'Sunny', 'Frosty', 'Speedy', 'Jolly', 'Daring', 'Bright', 'Nimble'];
 const NAME_B = ['Comet', 'Rocket', 'Racer', 'Spinner', 'Pebble', 'Bolt', 'Glider', 'Orbit', 'Flash', 'Marble', 'Shooter', 'Roller', 'Dash', 'Spark', 'Meteor', 'Swirl', 'Zoom', 'Breeze', 'Arrow', 'Drift'];
 /** GET /api/auth/suggest-name — a free player name to start from. */
-router.get('/suggest-name', authLimiter, async (_req, res) => {
+router.get('/suggest-name', nameLimiter, async (_req, res) => {
   for (let tries = 0; tries < 12; tries += 1) {
     const name = `${NAME_A[crypto.randomInt(NAME_A.length)]}${NAME_B[crypto.randomInt(NAME_B.length)]}${crypto.randomInt(10, 100)}`;
     const { rows } = await db.query('SELECT 1 FROM users WHERE lower(username) = lower($1)', [name]);

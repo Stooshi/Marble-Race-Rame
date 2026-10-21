@@ -220,7 +220,7 @@ export function TrackStep() {
                   <TrackBanner slug={t.slug} />
                   {t.locked
                     ? <span className="ms-badge-label" aria-label="Locked: in the season pass">🔒 {t.season.state === 'before' ? 'SOON' : 'GET THE PASS'}</span>
-                    : t.season?.featured ? <span className="ms-badge-label" style={{ background: 'var(--ms-green)' }}>TRACK OF THE DAY</span>
+                    : t.season?.featured ? <span className="ms-badge-label" style={{ background: 'var(--ms-green)' }}>HOLIDAY TRACK OF THE DAY</span>
                     : newest.includes(t.id) && <span className="ms-badge-label" style={{ background: 'var(--ms-green)' }}>NEW</span>}
                 </div>
                 <div className="ms-trackcard__body">

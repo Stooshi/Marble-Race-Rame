@@ -16,7 +16,7 @@ const time = (iso) => new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Stock
 
 /**
  * /pass?season=holiday-2026: the season pass. The season's marble and dates up top, what it gives (the
- * season's tracks, the Track of the Day, the season marble, friend rooms), today's Track of the Day, the
+ * season's tracks, the Holiday Track of the Day, the season marble, friend rooms), today's Holiday Track of the Day, the
  * price and buying it with real money only (Stripe on the web, Google Play or the App Store in the apps;
  * the apps never show or link to the website's price). Opened from the lock on a season track.
  * Before the season starts (its pre-sale, from 28 Nov): "Activates 1 December" and a countdown, the
@@ -57,8 +57,7 @@ export default function PassPage() {
   const countdown = before ? countdownText(left) : null;
   // Changing your mind before the pass activates: a full refund, from whoever took the payment.
   const refundBefore = provider === 'apple' ? 'ask Apple for a full refund at reportaproblem.apple.com'
-    : provider === 'google' ? 'ask Google Play for a full refund, or contact us with your order number'
-      : 'contact us with your order number for a full refund';
+    : 'withdraw from it for a full refund with "Withdraw from this purchase" on your Purchases page';
 
   // iPhone: "Restore Purchases" (Apple requires it for the pass, a non-consumable).
   const restore = async () => {
@@ -113,10 +112,10 @@ export default function PassPage() {
           {countdown && <span className="ms-pass-activates__count" style={{ fontVariantNumeric: 'tabular-nums' }}>in {countdown}</span>}
           <span className="ms-note" style={{ flexBasis: '100%' }}>
             {owned
-              ? `Your pass is ready: the holiday tracks, the Track of the Day and holiday rooms open on ${activates} at 00:00 Swedish time.`
+              ? `Your pass is ready: the holiday tracks, the Holiday Track of the Day and holiday rooms open on ${activates} at 00:00 Swedish time.`
               : pass.onSale
-              ? `Buy it now and it's yours: the holiday tracks, the Track of the Day and holiday rooms open on ${activates} at 00:00 Swedish time, for every pass holder.`
-              : `On sale from ${activatesDay(pass.saleStartsAt ?? season.startsAt)}. The holiday tracks, the Track of the Day and holiday rooms open on ${activates} at 00:00 Swedish time.`}
+              ? `Buy it now and it's yours: the holiday tracks, the Holiday Track of the Day and holiday rooms open on ${activates} at 00:00 Swedish time, for every pass holder.`
+              : `On sale from ${activatesDay(pass.saleStartsAt ?? season.startsAt)}. The holiday tracks, the Holiday Track of the Day and holiday rooms open on ${activates} at 00:00 Swedish time.`}
           </span>
         </div>
       )}
@@ -129,7 +128,7 @@ export default function PassPage() {
         </article>
         <article className="ms-pass-feature">
           <span className="ms-pass-feature__k">Every day</span>
-          <h2>Track of the Day +{bonus}%</h2>
+          <h2>Holiday Track of the Day +{bonus}%</h2>
           <p>Each day one holiday track pays you +{bonus}% race coins on your full-pay races. The bonus doesn't count on the scoreboards.</p>
           {season.featured && <Link to={`/tracks/${season.featured.slug}`} className="ms-pass-feature__link">Today: {BANNERS.banners[season.featured.slug]?.name ?? season.featured.slug.replace(/-/g, ' ')}</Link>}
         </article>

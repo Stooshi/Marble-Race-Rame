@@ -9,6 +9,7 @@ import { importOrReload } from '../../utils/staleCode';
 import { isNativeApp } from '../../app/native';
 import TrackBanner from '../TrackBanner';
 import { BUILD_TRACK_COUNT, roundedTracks } from '../trackCount';
+import { FREE_TO_PLAY, holidayPassNeeded } from '../../shared/holidayWording';
 
 const NUMBER_WORDS = ['no', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten'];
 
@@ -28,7 +29,9 @@ const SERIES = [
   ['Arcade', 'neon and pixels', 'linear-gradient(150deg,#0A0A12,#3FD8FF)', 'checkpoint-rush'],
 ];
 const FAQ = [
-  ['Is Marble Spins free?', 'Yes. Every race is free and unlimited. You can buy extra marble looks in the shop if you want to.'],
+  ['Is Marble Spins free?', holidayPassNeeded()
+    ? `Yes. ${FREE_TO_PLAY} until 7 January. You can buy extra marble looks in the shop if you want to.`
+    : 'Yes. Every race is free and unlimited. You can buy extra marble looks in the shop if you want to.'],
   ['Do I need to download anything?', 'No. It plays in your browser on phone or computer. Apps for iPhone and Android are on the way.'],
   ['Can money make my marble faster?', 'Never. Every player\'s marble races at the same level, whatever it looks like: the race itself decides who wins. Purchases only change how it looks.'],
   ['How long is a race?', 'About a minute. Perfect for a quick break, or ten in a row.'],

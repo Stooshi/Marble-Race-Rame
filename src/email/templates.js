@@ -66,4 +66,49 @@ ${paragraphs(body)}
   };
 }
 
-module.exports = { passwordReset, supportNotification, supportReply, esc };
+const infoRow = (k, v) => `<tr><td style="padding:3px 14px 3px 0;color:#6b7280;vertical-align:top;white-space:nowrap">${esc(k)}</td><td style="padding:3px 0">${esc(v)}</td></tr>`;
+const button = (href, text) => `<p style="margin:20px 0"><a href="${esc(href)}" style="background:#ffd21f;color:#0e1320;text-decoration:none;font-weight:bold;padding:12px 22px;border-radius:10px;display:inline-block">${esc(text)}</a></p>`;
+
+/**
+ * The purchase confirmation (EU consumer rules: the contract confirmed on a durable medium, with the
+ * buyer's agreement to immediate delivery and its effect on the right of withdrawal).
+ * order: { orderNo, item, price (e.g. "$9.99 incl. VAT"), paidAt (text), kind: 'coins' | 'pass' | 'pre-sale-pass',
+ *          activates (text, pre-sale only), agreed: [the consent sentences], purchasesUrl, termsUrl }
+ */
+function purchaseConfirmation({ username, orderNo, item, price, paidAt, kind, activates, agreed, purchasesUrl, termsUrl }) {
+  const delivered = {
+    coins: '<p>Your coins were added to your account right away.</p>',
+    pass: '<p>Your pass is active now: the holiday tracks are open for you until the season ends.</p>',
+    'pre-sale-pass': `<p>Your pass activates on <b>${esc(activates)}</b>. Until then you can withdraw from this purchase for a full refund: open your Purchases page and press <b>Withdraw from this purchase</b>. Once the pass activates, your 14-day right of withdrawal ends.</p>${button(purchasesUrl, 'My purchases')}`,
+  }[kind];
+  return {
+    subject: `Your Marble Spins order ${orderNo}`,
+    html: layout('Thanks for your order', `
+<p>Hi ${esc(username)},</p>
+<p>This confirms your purchase from Marble Spins.</p>
+<table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 14px;font-size:14px">
+${infoRow('Order', orderNo)}${infoRow('Item', item)}${infoRow('Price', price)}${infoRow('Paid', paidAt)}
+</table>
+${delivered}
+<p style="margin:16px 0 6px"><b>What you agreed to when you bought it:</b></p>
+<ul style="margin:0 0 14px;padding-left:20px">${agreed.map((a) => `<li style="margin:0 0 6px">${esc(a)}</li>`).join('')}</ul>
+<p>Your receipt comes in a separate email from Stripe, our payment provider. The terms of sale: <a href="${esc(termsUrl)}" style="color:#1d4ed8">${esc(termsUrl.replace(/^https?:\/\//, ''))}</a>. Keep this email for your records.</p>`),
+  };
+}
+
+/** The acknowledgement of a withdrawal (sent without delay once the player has withdrawn). */
+function withdrawalReceived({ username, orderNo, item, price, receivedAt }) {
+  return {
+    subject: `We've received your withdrawal (order ${orderNo})`,
+    html: layout('Withdrawal received', `
+<p>Hi ${esc(username)},</p>
+<p>We received your withdrawal from this purchase on <b>${esc(receivedAt)}</b>:</p>
+<table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 14px;font-size:14px">
+${infoRow('Order', orderNo)}${infoRow('Item', item)}${infoRow('Refund', price)}
+</table>
+<p>You get the full amount back, the same way you paid, within 14 days (it usually shows within 5–10 working days). The ${esc(item)} is removed from your account.</p>
+<p>Changed your mind? You can buy it again while it's on sale.</p>`),
+  };
+}
+
+module.exports = { passwordReset, supportNotification, supportReply, purchaseConfirmation, withdrawalReceived, esc };

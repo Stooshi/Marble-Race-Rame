@@ -20,6 +20,7 @@ export function money(cents, currency) {
 const STATUS = { pending: 'Waiting for payment', paid: 'Paid', refunded: 'Refunded', failed: 'Not paid' };
 
 function statusOf(o) {
+  if (o.withdrawn_at && o.status === 'paid' && !(o.refunded_cents > 0)) return 'Withdrawn · refund on its way';
   if (o.status === 'paid' && o.refunded_cents > 0) return 'Partly refunded';
   return STATUS[o.status] ?? o.status;
 }
@@ -36,6 +37,7 @@ export default function PurchasesPage() {
   const [orders, setOrders] = useState(null);
   const [error, setError] = useState(null);
   const [waiting, setWaiting] = useState(Boolean(justPaid));
+  const [withdrawn, setWithdrawn] = useState(null); // { orderNo, email } once the player has withdrawn
   // The seasons, for a pass bought in its pre-sale: "Season pass · activates 1 December".
   const [seasonList, setSeasonList] = useState([]);
   useEffect(() => { if (isAuthenticated) api.seasons().then((r) => setSeasonList(r.seasons ?? [])).catch(() => {}); }, [isAuthenticated]);
@@ -111,6 +113,9 @@ export default function PurchasesPage() {
       {!orders && !error && <p className="ms-note">Loading your orders…</p>}
       {orders?.length === 0 && <p className="ms-lede">No purchases yet. Coin packs are in the <Link to="/checkout">shop's checkout</Link>.</p>}
 
+      {withdrawn && <div className="ms-msg" role="status">Withdrawal received for order {withdrawn.orderNo}. You get the full amount back, the same way you paid, within 14 days, and the pass is removed from your account.{withdrawn.email ? " We've emailed you a confirmation." : ''}</div>}
+      {orders?.some((o) => o.withdraw) && <Withdrawals orders={orders.filter((o) => o.withdraw)} nameOf={(o) => passOf(o)?.pass?.name ?? 'Season pass'} onDone={(w) => { setWithdrawn(w); return Promise.all([load(), refresh.current?.()]); }} />}
+
       {orders?.length > 0 && (
         <div className="ms-card" style={{ padding: 0, overflowX: 'auto' }}>
           <table className="ms-table">
@@ -138,5 +143,58 @@ export default function PurchasesPage() {
       )}
       <span className="ms-note">Questions about an order? <Link to="/help#i-paid-but-my-coins-didnt-arrive-what-do-i-do">Help with payments</Link>, or <Link to="/help#contact">contact us</Link> with its order number. Coins can't be cashed out; refunds follow the <Link to="/legal#sale">terms of sale</Link>.</span>
     </div>
+  );
+}
+
+const until = (iso) => new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Stockholm', day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' }).format(new Date(iso)).replace(', ', ' at ');
+
+/**
+ * The online withdrawal function (EU rules; Moses, 21 Oct 2026): each purchase still within its
+ * withdrawal period (a season pass bought in its pre-sale, until it activates) gets a clearly labelled
+ * "Withdraw from this purchase" button, then a confirmation step. Bought in the iPhone app: Apple's.
+ */
+function Withdrawals({ orders, nameOf, onDone }) {
+  const [asking, setAsking] = useState(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState(null);
+  const confirm = async (o) => {
+    setBusy(true);
+    setError(null);
+    try {
+      const r = await api.withdrawOrder(o.order_no);
+      setAsking(null);
+      await onDone({ orderNo: o.order_no, email: r.email });
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <section className="ms-card" aria-labelledby="withdraw-h" style={{ display: 'grid', gap: 12 }}>
+      <h2 id="withdraw-h" className="ms-h3" style={{ margin: 0 }}>Right of withdrawal</h2>
+      {error && <div className="ms-msg ms-msg--bad" role="alert">{error}</div>}
+      {orders.map((o) => (
+        <div key={o.order_no} style={{ display: 'grid', gap: 8 }}>
+          <p style={{ margin: 0 }}>
+            <b>{nameOf(o)}</b> · order {o.order_no} · {o.charged_cents != null ? money(o.charged_cents, o.charged_currency) : money(o.amount_cents, o.currency)}.
+            {' '}You can withdraw from this purchase for a full refund until it activates on {until(o.withdraw.until)} (Swedish time).
+          </p>
+          {o.withdraw.via === 'apple' ? (
+            <p className="ms-note" style={{ margin: 0 }}>Bought in the iPhone app: Apple handles withdrawals and refunds for App Store purchases. Ask Apple at reportaproblem.apple.com.</p>
+          ) : asking === o.order_no ? (
+            <div className="ms-msg" style={{ display: 'grid', gap: 10 }}>
+              <span>Withdraw from order {o.order_no}? You get the full {o.charged_cents != null ? money(o.charged_cents, o.charged_currency) : money(o.amount_cents, o.currency)} back the same way you paid, and the {nameOf(o)} is removed from your account.</span>
+              <div className="ms-row">
+                <button type="button" className="ms-btn ms-btn--primary" disabled={busy} onClick={() => confirm(o)}>{busy ? 'ONE MOMENT…' : 'Confirm withdrawal'}</button>
+                <button type="button" className="ms-btn" disabled={busy} onClick={() => setAsking(null)}>Keep my purchase</button>
+              </div>
+            </div>
+          ) : (
+            <div><button type="button" className="ms-btn" onClick={() => setAsking(o.order_no)}>Withdraw from this purchase</button></div>
+          )}
+        </div>
+      ))}
+    </section>
   );
 }

@@ -8,6 +8,8 @@ const payments = require('../payments');
 const stripe = require('../payments/stripe');
 const google = require('../payments/google');
 const apple = require('../payments/apple');
+const withdrawal = require('../payments/withdrawal');
+const { badRequest } = require('../utils/httpError');
 
 const security = require('../security');
 const config = require('../config');
@@ -137,7 +139,18 @@ router.post('/apple/notifications', async (req, res) => {
 
 /** GET /api/payments/mine — the player's orders (the Purchases page). */
 router.get('/mine', requireAuth, async (req, res) => {
-  res.json({ orders: await payments.ordersOf(db, req.user.id) });
+  res.json({ orders: await withdrawal.annotate(db, await payments.ordersOf(db, req.user.id)) });
+});
+
+/**
+ * POST /api/payments/orders/:orderNo/withdraw { confirm: true } — the online withdrawal function: the
+ * player withdraws from a purchase still within its withdrawal period (src/payments/withdrawal.js).
+ */
+router.post('/orders/:orderNo/withdraw', requireAuth, async (req, res) => {
+  const { confirm } = validate(req.body ?? {}, { confirm: { type: 'boolean', required: true } });
+  if (confirm !== true) throw badRequest('Please confirm the withdrawal');
+  const out = await withdrawal.withdraw(db, req.user.id, String(req.params.orderNo).slice(0, 16), { refund: payments.refund });
+  res.json({ ...out, email: require('../email').enabled() }); // (whether an acknowledgement email follows)
 });
 
 /** GET /api/payments/orders/:orderNo — one order (polled after Stripe sends the player back). */

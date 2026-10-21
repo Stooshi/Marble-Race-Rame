@@ -1083,3 +1083,21 @@ CREATE TABLE IF NOT EXISTS email_confirmations (
     used_at     timestamptz
 );
 CREATE INDEX IF NOT EXISTS idx_email_confirmations_user ON email_confirmations (user_id, created_at);
+
+-- ---------------------------------------------------------------------------
+-- Guest accounts are deleted after 180 days without a visit (21 Oct 2026, src/account/retention.js):
+-- last_seen_at is set when an account is made and on a visit at most once a day (GET /auth/me).
+-- Accounts from before start counting from when this column was added.
+-- ---------------------------------------------------------------------------
+ALTER TABLE users ADD COLUMN IF NOT EXISTS last_seen_at timestamptz DEFAULT now();
+CREATE INDEX IF NOT EXISTS idx_users_guest_seen ON users (last_seen_at) WHERE is_guest AND deleted_at IS NULL;
+
+-- ---------------------------------------------------------------------------
+-- The online withdrawal function and purchase emails (21 Oct 2026, src/payments/withdrawal.js and
+-- src/payments/emails.js): withdrawn_at is when the player withdrew from the purchase (a season pass
+-- bought in its pre-sale, before it activates); confirmation_sent_at and withdrawal_ack_sent_at are
+-- when the purchase confirmation and the withdrawal acknowledgement were emailed (once email is on).
+-- ---------------------------------------------------------------------------
+ALTER TABLE payments ADD COLUMN IF NOT EXISTS withdrawn_at           timestamptz;
+ALTER TABLE payments ADD COLUMN IF NOT EXISTS confirmation_sent_at   timestamptz;
+ALTER TABLE payments ADD COLUMN IF NOT EXISTS withdrawal_ack_sent_at timestamptz;

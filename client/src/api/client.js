@@ -110,6 +110,7 @@ export const api = {
   appleAccount: () => request('/payments/apple/account'),
   appleVerify: (body) => request('/payments/apple/verify', { method: 'POST', body }),
   myOrders: () => request('/payments/mine'),
+  withdrawOrder: (orderNo) => request(`/payments/orders/${encodeURIComponent(orderNo)}/withdraw`, { method: 'POST', body: { confirm: true } }),
   // Seasons and the season pass (real money only: Stripe on the web, Google Play in the Android app).
   seasons: () => request('/seasons'),
   season: (key) => request(`/seasons/${encodeURIComponent(key)}`),

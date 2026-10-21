@@ -163,7 +163,7 @@ function PbCell({ result: r }) {
 
 /** Personal summary card: this race against your history on the track. */
 // What each coin line was for (the coin economy, client/src/shared/economy.json).
-const COIN_LINE = { race: 'Taking part', 'finish-bonus': 'Finishing bonus', 'daily-goal': 'Daily goal', 'featured-bonus': 'Track of the Day bonus' };
+const COIN_LINE = { race: 'Taking part', 'finish-bonus': 'Finishing bonus', 'daily-goal': 'Daily goal', 'featured-bonus': 'Holiday Track of the Day bonus' };
 
 /** The coins this race paid you, line by line: taking part, the finishing bonus, the daily goal. */
 function CoinLines({ raceId }) {

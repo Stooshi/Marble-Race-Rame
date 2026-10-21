@@ -1,6 +1,6 @@
 # 1. Architecture
 
-*Last updated 20 Oct 2026.*
+*Last updated 21 Oct 2026.*
 
 ## The parts
 
@@ -95,7 +95,7 @@
 
 **Email.**
 - Sent through **Brevo** (EU), and switched off until `BREVO_API_KEY` is set on Railway.
-- Today it sends **password-reset** links (`/forgot-password` → email → `/reset-password?token=…`), a **notification to the support address** for each new contact-form message (when `SUPPORT_EMAIL` is set; replying to it goes straight to the player), and **replies from the back office** to players.
+- Today it sends **password-reset** links (`/forgot-password` → email → `/reset-password?token=…`), a **notification to the support address** for each new contact-form message (when `SUPPORT_EMAIL` is set; replying to it goes straight to the player), and **replies from the back office** to players. Once it is on it also sends a **confirmation of each website purchase** (with the words agreed to at checkout) and an **acknowledgement of each withdrawal** (`src/payments/emails.js`).
 - News emails will use the same sender; signed unsubscribe links are ready (`src/email/unsubscribe.js`).
 - Stripe sends its own receipts.
 

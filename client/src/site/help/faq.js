@@ -23,6 +23,7 @@ import { catalog, isStandard } from '../../shared/marbles';
 import supportSettings from '../../shared/support.json';
 import company from '../../shared/company.json';
 import { BUILD_TRACK_COUNT, BUILD_TRACK_SERIES, roundedTracks } from '../trackCount';
+import { FREE_TO_PLAY, holidayPassNeeded } from '../../shared/holidayWording';
 
 const n = (v) => Number(v).toLocaleString('en-US');
 const ordinal = (k) => `${k}${['th', 'st', 'nd', 'rd'][(k % 100 > 10 && k % 100 < 14) || k % 10 > 3 ? 0 : k % 10]}`;
@@ -119,11 +120,13 @@ export function buildFaq({ tracks } = {}) {
       ['Do I need an account?',
         'No. You can race as a guest straight away. To keep your coins, marbles and progress on every device, save your account with your email and a password at any time.'],
       ["What's the difference between a guest and a saved account?",
-        "A guest account lives on the device you're using. If you clear your browser, switch phones, log out, or don't play for 180 days, a guest account can be lost. When you tap **Save your marble**, everything you've won as a guest moves into your saved account, and you can log in anywhere."],
+        "A guest account lives on the device you're using. If you clear your browser, switch phones or log out, a guest account can be lost, and it's deleted after 180 days without a visit. When you tap **Save your marble**, everything you've won as a guest moves into your saved account, and you can log in anywhere."],
       ['What can I play on?',
         "Any modern browser on a phone, tablet or computer at marblespins.com. The iPhone and Android apps are [coming at launch]. It's the same game and the same account everywhere."],
       ['Is it really free?',
-        'Yes. Every race, every track and every way of earning coins is free. You can buy coins if you want to collect marbles faster, but you never need to, and buying never makes your marble faster.'],
+        holidayPassNeeded()
+          ? `Yes. ${FREE_TO_PLAY} until ${HOLIDAY.ends}; every other track and every way of earning coins is free. You can buy coins if you want to collect marbles faster, but you never need to, and buying never makes your marble faster.`
+          : 'Yes. Every race, every track and every way of earning coins is free. You can buy coins if you want to collect marbles faster, but you never need to, and buying never makes your marble faster.'],
     ]],
     ['Races', [
       ['How is a race decided?',
@@ -172,9 +175,9 @@ export function buildFaq({ tracks } = {}) {
       ["What's the difference between earned and bought coins?",
         "They're the same coins in your wallet and buy the same things. We keep them apart in your history so scoreboards only count earned coins."],
       ['Can I turn coins into money?',
-        "No. Coins can't be cashed out, sold or traded for money. They can only be used in the game."],
+        "No. Coins can't be cashed out, sold, traded or given to another player. They can only be used in the game. Marbles can't be sold, traded or transferred either."],
       ['Do coins expire?',
-        '[To decide: e.g. "No, your coins don\'t expire as long as your account exists."]'],
+        "No. Your coins stay in your account until you use them or delete your account. (A guest account, and its coins, is deleted after 180 days without a visit: save your marble to keep them for good.)"],
       ['Where can I see my coin history?',
         '**Purchases** (tap your @name, then Purchases) lists your orders and receipts, and each race\'s results show the coins it paid. **Download my data** in Settings has your full coin history, every coin in and out with its date.'],
     ]],
@@ -217,7 +220,7 @@ export function buildFaq({ tracks } = {}) {
     ]],
     ['Buying coins', [
       ['How do I buy coins?',
-        'In the shop, choose a coin pack and pay. On the website, payment goes through Stripe. In the iPhone and Android apps, it goes through Apple or Google.'],
+        'In the shop, choose a coin pack and pay. Coin packs are for saved accounts: playing as a guest, you save your marble first (it takes a minute, and everything you\'ve won comes with you). On the website, payment goes through Stripe, and we email you a confirmation of your order. In the iPhone and Android apps, it goes through Apple or Google.'],
       ['What do coin packs cost?', [
         ['table', ['Pack', 'Coins'], ...packRows],
         'Prices are shown in your local currency, including VAT.',
@@ -259,19 +262,19 @@ export function buildFaq({ tracks } = {}) {
         `The **${HOLIDAY.pass}** costs ${HOLIDAY.price} (shown in your local currency, VAT included) and gives you, until the season ends on ${HOLIDAY.ends} at ${HOLIDAY.endTime}:`,
         ['ul',
           `all ${HOLIDAY.tracks} holiday tracks from around the world, from ${HOLIDAY.starts};`,
-          `the **Track of the Day** bonus: +${HOLIDAY.bonus}% race coins on the featured track, on your full-pay races (the first 10 of the day);`,
+          `the **Holiday Track of the Day** bonus: +${HOLIDAY.bonus}% race coins on the featured track, on your full-pay races (the first 10 of the day);`,
           'holiday tracks in your friend rooms: when you host, everyone in the room races them, pass or not;',
           `the season marble, **${HOLIDAY.marble}**, yours to keep.`],
         "It's one payment, not a subscription, and it's real money only: it can't be bought with coins. Under 18? Ask a parent or guardian first.",
       ]],
       ['Can I buy the pass before 1 December?', [
-        `Yes. The pass is on sale from **${HOLIDAY.saleStarts}** at 00:00 Swedish time, on the website and in the apps. Bought before the season starts, it's yours straight away but **activates on ${HOLIDAY.starts}** at 00:00 Swedish time: that's when the holiday tracks, the Track of the Day and holiday rooms open, for every pass holder at once. The pass page shows a countdown, and your account says "activates 1 December" until then.`,
-        `Changed your mind before ${HOLIDAY.starts}? You get a full refund, no questions asked: contact us with your order number, or, if you bought it in an app, ask Apple (reportaproblem.apple.com) or Google Play.`,
+        `Yes. The pass is on sale from **${HOLIDAY.saleStarts}** at 00:00 Swedish time, on the website and in the apps. Bought before the season starts, it's yours straight away but **activates on ${HOLIDAY.starts}** at 00:00 Swedish time: that's when the holiday tracks, the Holiday Track of the Day and holiday rooms open, for every pass holder at once. The pass page shows a countdown, and your account says "activates 1 December" until then.`,
+        `Changed your mind before ${HOLIDAY.starts}? You can withdraw from the purchase for a full refund: on your **Purchases** page, press **Withdraw from this purchase** and confirm (for a pass bought on the website or in the Android app). Bought in the iPhone app? Apple handles that: ask at reportaproblem.apple.com.`,
       ]],
       ['Can I get a reminder when the pass goes on sale?', [
         `Yes. On the pass page, tap **Remind me**. Logged in, you get a reminder in the game, and an email too if you tick it; without an account, give your email address and tick the box. We first email you a link to confirm your address, and only a confirmed address gets the reminder, once, on ${HOLIDAY.saleStarts}. You can cancel it any time (a link in every email), and we delete your address within 30 days after the sale opens.`,
       ]],
-      ['What is the Track of the Day?',
+      ['What is the Holiday Track of the Day?',
         `Every day of the season one holiday track is featured. Race it with the pass and you get +${HOLIDAY.bonus}% race coins on your full-pay races of the day (your first ${n(e.dailyLimit.fullRaces)}). The bonus doesn't count on the scoreboards: scoreboards only count coins earned by racing.`],
       ['I bought the pass on 15 December. Do I get every track?',
         `Yes. All ${HOLIDAY.tracks} holiday tracks are yours straight away, whenever you buy the pass during the season.`],
@@ -289,7 +292,7 @@ export function buildFaq({ tracks } = {}) {
           "The season's collection is retired and never sold again."],
       ]],
       ['How do I get a refund for the pass?', [
-        `Bought before ${HOLIDAY.starts}? Until the pass activates on ${HOLIDAY.starts}, you get a full refund on request: contact us with your order number (or ask Apple or Google, if you bought it in an app).`,
+        `Bought before ${HOLIDAY.starts}? Until the pass activates on ${HOLIDAY.starts}, you can withdraw from it for a full refund with **Withdraw from this purchase** on your **Purchases** page (in the iPhone app, ask Apple).`,
         "From the day the season starts the pass is digital content you have, so when you buy it you agree that this ends your 14-day right of withdrawal. We still give refunds where the law requires it: contact us with your order number. Bought in an app? Ask Apple (reportaproblem.apple.com) or Google (your Google Play order history).",
         `A refunded pass is taken back: the holiday tracks lock again until the season ends, and ${HOLIDAY.marble} leaves your Marble Bag.`,
       ]],

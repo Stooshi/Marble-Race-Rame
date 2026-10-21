@@ -7,6 +7,7 @@ import { api } from '../../api/client';
 import { formatNumber } from '../../utils/format';
 import { STORE_NAME, buyCoins, storeProvider, useStorePrices } from '../payments';
 import { track } from '../consent/tracking';
+import QuickSignup from '../account/QuickSignup';
 
 /**
  * Checkout for a coin pack bought with real money: ?pack=coins-10500 (Stripe
@@ -15,7 +16,7 @@ import { track } from '../consent/tracking';
  */
 export default function CheckoutPage() {
   const [search] = useSearchParams();
-  const { isAuthenticated, refreshUser } = useAuth();
+  const { isAuthenticated, user, refreshUser } = useAuth();
   const pack = PACK[search.get('pack')] ?? COIN_PACKS.find((p) => p.popular) ?? COIN_PACKS[0];
   const [withdrawal, setWithdrawal] = useState(false);
   const [terms, setTerms] = useState(false);
@@ -41,6 +42,24 @@ export default function CheckoutPage() {
           <h1 className="ms-h2">Checkout</h1>
           <p className="ms-lede" style={{ margin: 0 }}>Log in or make a free account first, so your coins and marbles are saved to you.</p>
           <div className="ms-row"><Link to={`/signup?next=${encodeURIComponent(`/checkout?${search}`)}`} className="ms-btn ms-btn--primary">SIGN UP</Link><Link to={`/signup?mode=login&next=${encodeURIComponent(`/checkout?${search}`)}`} className="ms-btn">Log in</Link></div>
+        </div>
+      </div>
+    );
+  }
+
+  // Coin packs are for saved accounts (Moses, 21 Oct 2026): a guest saves their marble first, right here.
+  if (user?.is_guest) {
+    return (
+      <div className="ms-page ms-page--narrow">
+        <div className="ms-card" style={{ display: 'grid', gap: 12 }}>
+          <QuickSignup
+            heading="h1"
+            title="Save your marble to buy"
+            sub="Coin packs are for saved accounts, so what you buy stays yours on every device. Everything you've won as a guest comes with you."
+            onSaved={() => track('sign_up')}
+            onDone={() => refreshUser()}
+          />
+          <Link to="/shop#coins" style={{ textAlign: 'center', color: 'var(--ms-soft)' }}>Back to the shop</Link>
         </div>
       </div>
     );
