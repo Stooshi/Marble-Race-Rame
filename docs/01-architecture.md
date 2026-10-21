@@ -44,7 +44,7 @@
 
 **Website or app → server (REST).**
 - Every call goes to `${VITE_API_URL}/api/...` as JSON.
-- A player is identified by a JWT in the `Authorization: Bearer` header. On the website it is stored in localStorage under `marble-race-token`. A login lasts 180 days after the player's last visit: on each visit `GET /api/auth/me` sends a fresh token when the current one is over a day old, and the app stores it (sliding expiry, since 20 Oct 2026; before, 7 days from the login, which lost guests after a week). A password reset ends every older login. Every new account (guest or saved) gets its own 4 starter marbles (`src/marbles/starters.js`). Guests see the "Save your marble" pop-up after every 3rd finished race (client `site/account/SavePrompt.jsx`); sign-up asks for birth year and month, and once email is set up sends a "Confirm your email" link (`src/account/emailConfirm.js`).
+- A player is identified by a JWT in the `Authorization: Bearer` header. On the website it is stored in localStorage under `marble-race-token`. A login lasts 180 days after the player's last visit, a guest's 90 (21 Oct 2026): on each visit `GET /api/auth/me` sends a fresh token when the current one is over a day old, and the app stores it (sliding expiry, since 20 Oct 2026; before, 7 days from the login, which lost guests after a week). A password reset ends every older login. Every new account (guest or saved) gets its own 4 starter marbles (`src/marbles/starters.js`). Guests see the "Save your marble" pop-up after every 3rd finished race (client `site/account/SavePrompt.jsx`); sign-up asks for birth year and month, and once email is set up sends a "Confirm your email" link (`src/account/emailConfirm.js`).
 - Guests ("Play free") get a real account with `is_guest = true`. Saving the account turns it into a normal one.
 - The API reference is in the root `README.md`.
 
@@ -121,6 +121,8 @@ There is no separate staging server. Vercel makes a preview build for every bran
 | `DATABASE_POOL_MAX` | no | Pool size (default 10) |
 | `JWT_SECRET` | **yes** (at least 32 characters in production) | Signs login tokens. Also the fallback key for the admin 2-step secrets and email links, so changing it logs everyone out |
 | `JWT_EXPIRES_IN` | no | How long a login lasts after the player's last visit (default 180 days; `GET /api/auth/me` renews it once a day). Leave unset |
+| `GUEST_JWT_EXPIRES_IN` | no | The same for a guest (default 90 days). Leave unset |
+| `GUEST_RETENTION_MODE` | no | `delete`: guests not seen for 90 days are anonymised (daily). Unset: a **dry run** that only logs how many it would anonymise (`[retention] DRY RUN …`). Set to `delete` once the log has been checked |
 | `BCRYPT_ROUNDS` | no | Password hashing cost (default 12) |
 | `ADMIN_2FA_KEY` | recommended | Encrypts the admin 2-step secrets. Changing it forces every admin to set up the 2-step login again |
 | `EMAIL_LINK_SECRET` | recommended | Signs unsubscribe links. Changing it breaks links in emails already sent |

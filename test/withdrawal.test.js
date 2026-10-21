@@ -6,7 +6,8 @@
 //     Purchases page until it activates (full refund, the pass goes); coin packs can't (delivered at once);
 //   - the purchase confirmation email (with the words agreed to at checkout) and the withdrawal
 //     acknowledgement, each once, only while email is on;
-//   - guests not seen for 180 days are deleted (anonymised); saved accounts never are.
+//   - guests not seen for 90 days are deleted (anonymised; a dry run unless GUEST_RETENTION_MODE=delete);
+//     saved accounts never are; a guest's login lasts 90 days, a saved account's 180.
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const crypto = require('node:crypto');
@@ -164,23 +165,51 @@ test('guests can\'t buy; a pre-sale pass is withdrawn from online, refunded and 
   }
 });
 
-test('guests not seen for 180 days are deleted (anonymised); saved accounts and recent guests stay', { skip: !DB }, async () => {
+test('a guest\'s login lasts 90 days, a saved account\'s 180', () => {
+  const { signToken, verifyToken } = require('../src/utils/jwt');
+  const life = (user) => { const p = verifyToken(signToken(user)); return Math.round((p.exp - p.iat) / 86400); };
+  assert.equal(life({ id: 'g', username: 'guest_x', role: 'player', is_guest: true }), 90);
+  assert.equal(life({ id: 's', username: 'Nova', role: 'player', is_guest: false }), 180);
+});
+
+test('guests not seen for 90 days: a dry run by default (counted, nothing changed), deleted with GUEST_RETENTION_MODE=delete; a visit is the latest of last seen, created, last login and last race', { skip: !DB }, async () => {
   const db = require('../src/db');
   const { deleteIdleGuests } = require('../src/account/retention');
   const run = crypto.randomBytes(3).toString('hex');
-  const make = async (tag, guest, seenDaysAgo) => (await db.query(
-    `INSERT INTO users (username, email, password_hash, is_guest, last_seen_at) VALUES ($1, $2, 'x', $3, now() - make_interval(days => $4)) RETURNING id`,
-    [`t_ret${tag}_${run}`, `t_ret${tag}_${run}@test.invalid`, guest, seenDaysAgo],
+  const make = async (tag, guest, seenDaysAgo, { loginDaysAgo = null } = {}) => (await db.query(
+    `INSERT INTO users (username, email, password_hash, is_guest, last_seen_at, created_at, last_login_at)
+     VALUES ($1, $2, 'x', $3, now() - make_interval(days => $4), now() - interval '400 days', CASE WHEN $5::int IS NULL THEN NULL ELSE now() - make_interval(days => $5::int) END) RETURNING id`,
+    [`t_ret${tag}_${run}`, `t_ret${tag}_${run}@test.invalid`, guest, seenDaysAgo, loginDaysAgo],
   )).rows[0].id;
-  const old = await make('a', true, 181);
-  const recent = await make('b', true, 179);
+  const old = await make('a', true, 91);
+  const recent = await make('b', true, 89);
   const saved = await make('c', false, 400);
-  await deleteIdleGuests(db);
+  const loggedIn = await make('d', true, 300, { loginDaysAgo: 10 }); // (an old last_seen_at, but a recent login)
+  const raced = await make('e', true, 300);
+  const { rows: [race] } = await db.query(`SELECT id FROM races ORDER BY created_at DESC LIMIT 1`);
+  if (race) await db.query(`INSERT INTO race_entries (race_id, user_id, marble_id, joined_at) VALUES ($1, $2, (SELECT m.id FROM marbles m WHERE NOT EXISTS (SELECT 1 FROM race_entries x WHERE x.race_id = $1 AND x.marble_id = m.id) LIMIT 1), now() - interval '5 days')`, [race.id, raced]);
   const state = async (id) => (await db.query('SELECT deleted_at IS NOT NULL AS gone, username FROM users WHERE id = $1', [id])).rows[0];
+
+  // Dry run (the default): counted, nothing changed.
+  delete process.env.GUEST_RETENTION_MODE;
+  const dry = await deleteIdleGuests(db);
+  assert.equal(dry.mode, 'dry-run');
+  assert.ok(dry.count >= 1);
+  assert.equal((await state(old)).gone, false);
+
+  process.env.GUEST_RETENTION_MODE = 'delete';
+  try {
+    const real = await deleteIdleGuests(db);
+    assert.equal(real.mode, 'delete');
+  } finally {
+    delete process.env.GUEST_RETENTION_MODE;
+  }
   assert.equal((await state(old)).gone, true);
   assert.match((await state(old)).username, /^(?!t_reta_)/);
   assert.equal((await state(recent)).gone, false);
   assert.equal((await state(saved)).gone, false);
+  assert.equal((await state(loggedIn)).gone, false);
+  if (race) assert.equal((await state(raced)).gone, false); // (raced 5 days ago)
   const { rows: [audit] } = await db.query(`SELECT reason FROM admin_audit WHERE target_user_id = $1 AND action = 'account-deleted'`, [old]);
-  assert.equal(audit.reason, 'Guest account: 180 days without a visit');
+  assert.equal(audit.reason, 'Guest account: 90 days without a visit');
 });

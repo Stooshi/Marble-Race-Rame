@@ -66,14 +66,14 @@ marbles ──< user_marbles   (the older plain marbles; looks only)
 | `settings` | JSON that follows the player across devices, e.g. `{ "sound": { "music": 0.6, "effects": 0.8, "muted": false } }` |
 | `streak_days`, `streak_last_day` | Days in a row the daily goal was met (shown; pays nothing) |
 | `last_login_at`, `created_at`, `updated_at` | `updated_at` is set by a trigger |
-| `last_seen_at` | The last visit (set when the account is made, then at most once a day by `GET /auth/me`). A guest not seen for 180 days is deleted (`src/account/retention.js`, daily); accounts from before 21 Oct 2026 count from when the column was added |
+| `last_seen_at` | The last visit (set when the account is made, then at most once a day by `GET /auth/me`). A guest not seen for 90 days is deleted (`src/account/retention.js`, daily, once `GUEST_RETENTION_MODE=delete`; the last visit counts the latest of this, `created_at`, `last_login_at` and the last race); accounts from before 21 Oct 2026 count from when the column was added |
 | `suspended_at` | Set by the back office. A suspended player can't log in or race |
 | `deleted_at` | The player deleted the account. The row stays, anonymised (see below) |
 | `password_changed_at` | When the password was last reset by email. Logins made before it stop working |
 | `apple_account_token` | A random UUID the iPhone app buys with (StoreKit's appAccountToken): ties an App Store purchase to this player without giving Apple anything personal. Made at the first App Store purchase; cleared when the account is deleted |
 | `store_account_id` | Random id (unique, up to 64 characters) the Android app gives Google Play with each purchase (`obfuscatedAccountId`), so the server can check a purchase belongs to this player. Made at the first purchase; never the user id or email. Cleared when the account is deleted |
 
-**Account deletion** (`src/account/index.js`; by the player, the back office, or for a guest 180 days without a visit) doesn't remove the `users` row.
+**Account deletion** (`src/account/index.js`; by the player, the back office, or for a guest 90 days without a visit) doesn't remove the `users` row.
 - **It anonymises the account:** name, email, password, shown name, settings, age group, birth month, email confirmation and consent are cleared.
 - **It deletes:** `email_consents`, `security_events`, `support_messages` (with their replies; also messages sent from the account's email without a link), `admin_sessions` and `admin_2fa` rows. It also clears the marble label and closes rooms the player hosts.
 - **It keeps:**

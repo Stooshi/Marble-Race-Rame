@@ -83,6 +83,9 @@ module.exports = Object.freeze({
     // (Moses, 20 Oct 2026: a guest is lost only after 180 days without a visit; was 7 days from
     // the login, for everyone). The back office has its own 30-minute login.
     jwtExpiresIn: process.env.JWT_EXPIRES_IN || '180d',
+    // Guests: 90 days after their last visit (Moses, 21 Oct 2026); their accounts are deleted after
+    // 90 days without a visit too (src/account/retention.js). Saving the account gives the 180 days.
+    guestJwtExpiresIn: process.env.GUEST_JWT_EXPIRES_IN || '90d',
     renewAfterSeconds: 24 * 3600,
     bcryptRounds: int('BCRYPT_ROUNDS', 12),
   },

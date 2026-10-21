@@ -75,6 +75,14 @@ Pushing to `Main` does **not** deploy the server. Moses deploys it by uploading 
   - Don't delete rows from the `data_updates` table; that makes a file run again.
 - **Race results are never rolled back.** If a code change would alter past races, the race-fingerprint tests fail before it ships.
 
+## Guest accounts: the deletion job (from the deploy of 21 Oct 2026)
+
+Guests not seen for 90 days are anonymised once a day (`src/account/retention.js`). It starts as a **dry run**: each day the Railway logs show
+`[retention] DRY RUN (GUEST_RETENTION_MODE is not "delete"): would anonymise N guest accounts … Nothing was changed.`
+- **Last visit:** the latest of the account's last seen (set to the deploy time for every account that existed then), its creation, its last login and its last race. So nobody can be due before 90 days after the deploy, and the dry run should say 0 for now.
+- **Switching it on:** after reading the log (Moses: after 7 days), set `GUEST_RETENTION_MODE=delete` in Railway → Variables and restart the server. The next run logs `[retention] anonymised N guest accounts …`. Remove the variable to go back to the dry run.
+- Each anonymised guest is in the audit log (`account-deleted`, "Guest account: 90 days without a visit").
+
 ## Backups
 
 **[check]** Whether Railway takes automatic backups of the Postgres database on the current plan. Look in Railway → the Postgres service → **Backups**. Until that is confirmed, take manual backups:

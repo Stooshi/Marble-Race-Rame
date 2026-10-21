@@ -232,7 +232,7 @@ router.post('/reset', authLimiter, async (req, res) => {
 /** GET /api/auth/me */
 router.get('/me', requireAuth, async (req, res) => {
   const { rows } = await db.query(`SELECT ${PUBLIC_USER_COLUMNS} FROM users WHERE id = $1`, [req.user.id]);
-  await retention.seen(db, req.user.id); // (guests: deleted after 180 days without a visit)
+  await retention.seen(db, req.user.id); // (guests: deleted after 90 days without a visit)
   // A visit renews the login (sliding expiry): a login older than a day gets a fresh token, valid
   // config.auth.jwtExpiresIn from now. The app stores it; the old one stays valid until it expires.
   const age = Math.floor(Date.now() / 1000) - (req.user.tokenPayload?.iat ?? 0);

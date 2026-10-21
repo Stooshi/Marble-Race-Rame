@@ -5,7 +5,8 @@ const config = require('../config');
 
 function signToken(user) {
   return jwt.sign({ sub: user.id, username: user.username, role: user.role }, config.auth.jwtSecret, {
-    expiresIn: config.auth.jwtExpiresIn,
+    // A guest's login lasts 90 days after the last visit, a saved account's 180 (Moses, 21 Oct 2026).
+    expiresIn: user.is_guest ? config.auth.guestJwtExpiresIn : config.auth.jwtExpiresIn,
     algorithm: 'HS256',
   });
 }

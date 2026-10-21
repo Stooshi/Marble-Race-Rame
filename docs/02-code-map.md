@@ -159,7 +159,7 @@
 - `admin/totp.js`: RFC 6238 codes and the encrypted secret.
 - `security/index.js`: `record()` stores IP and country for sign-up, login and purchase. `trimIps()` blanks IPs older than 90 days (security events and support messages) and runs daily. Countries are looked up offline (geoip-country).
 - `account/index.js`: `exportData()` ("Download my data", support messages and replies included) and `deleteAccount()` (anonymises, deletes support messages, keeps payments and race results).
-- `account/retention.js`: guests not seen for 180 days are deleted (anonymised like a deleted account), daily; `seen()` records a visit (`users.last_seen_at`, at most once a day, from `GET /auth/me`).
+- `account/retention.js`: guests not seen for 90 days are deleted (anonymised like a deleted account), daily; a dry run that only logs the count unless `GUEST_RETENTION_MODE=delete`; a guest's last visit is the latest of `last_seen_at`, created, last login and last race; `seen()` records a visit (`users.last_seen_at`, at most once a day, from `GET /auth/me`).
 - `support/index.js`: support messages. The form token (`formToken`, `checkFormToken`: under 3 s is a bot, over 12 h asks for a fresh form), `readScreenshot` (PNG, JPEG, WebP or GIF by their first bytes, at most 4 MB), `create` (links the account, keeps a repeat within 10 minutes once, emails `SUPPORT_EMAIL`), `reply` (saves and emails a back-office reply).
 - `email/index.js`: sends email through Brevo when `BREVO_API_KEY` is set (`enabled()`, `send()`). Tests swap the transport.
 - `email/templates.js`: the emails' HTML (password reset, support notification, support reply).
