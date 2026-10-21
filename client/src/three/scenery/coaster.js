@@ -101,6 +101,53 @@ const topAt = (channel, i, step) => {
   return channelRadiusAt(channel, s) * (1 - Math.cos(channelLipAt(channel, s)));
 };
 
+/** The rails' thickness (strut's t: a triangular beam of half-width about 0.6·t). */
+export const RAIL_THICKNESS = 0.36;
+/** How far (metres, seen from above) a rail piece may stray from the rim between its ends. */
+const RAIL_STRAY = 0.06;
+
+/**
+ * The coaster's two rails along the middle of the rims, as polylines (one per side): long straight
+ * pieces (`lite`: up to 6 samples, else 3) where the track runs straight, and shorter ones on the
+ * bends, so that no piece cuts the corner over the running surface (Moses, 21 Oct 2026: on Beijing
+ * Nest 200's hairpin the 12 m pieces on a phone crossed the floor). Looks only.
+ */
+export function coasterRails(centerline, channel, { lite = false } = {}) {
+  const { samples, segments } = centerline;
+  const step = channel.arc / segments;
+  const maxStep = lite ? 6 : 3;
+  const lines = [];
+  for (const sign of [1, -1]) {
+    const at = (i) => {
+      const s = samples[i];
+      const side = new Vector3(s.side.x, 0, s.side.z).normalize();
+      return s.pos.clone().addScaledVector(side, sign * (edgeAt(channel, i, step) - RIM_WIDTH * 0.5)).addScaledVector(UP, topAt(channel, i, step) + 0.2);
+    };
+    const pts = Array.from({ length: segments + 1 }, (_, i) => at(i));
+    // Horizontal distance from p to the piece a–b.
+    const stray = (p, a, b) => {
+      const dx = b.x - a.x; const dz = b.z - a.z; const L = dx * dx + dz * dz;
+      const t = L ? Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.z - a.z) * dz) / L)) : 0;
+      return Math.hypot(p.x - (a.x + t * dx), p.z - (a.z + t * dz));
+    };
+    const line = [pts[0]];
+    let i = 0;
+    while (i < segments) {
+      let j = Math.min(segments, i + maxStep);
+      while (j > i + 1) {
+        let worst = 0;
+        for (let k = i + 1; k < j; k += 1) worst = Math.max(worst, stray(pts[k], pts[i], pts[j]));
+        if (worst <= RAIL_STRAY) break;
+        j -= 1;
+      }
+      line.push(pts[j]);
+      i = j;
+    }
+    lines.push(line);
+  }
+  return lines;
+}
+
 /**
  * How the coaster starts (the varied starts, `kit.start.type`): what stands behind the gate.
  *   straight-lift: a straight chain lift hill from its foot up to the gate (every coaster's, before);
@@ -328,17 +375,15 @@ export function buildCoaster(centerline, channel, kit, { lite = false, groundAt,
     return { s, side: new Vector3(s.side.x, 0, s.side.z).normalize(), along: new Vector3(s.tangent.x, 0, s.tangent.z).normalize() };
   };
 
-  // Rails along both rims and a spine under the floor, one strip of beams along the whole track.
+  // Rails along both rims (following the rim: shorter pieces on the bends, coasterRails) and a spine
+  // under the floor, one strip of beams along the whole track.
   const railStep = lite ? 6 : 3;
+  for (const line of coasterRails(centerline, channel, { lite })) {
+    for (let k = 1; k < line.length; k += 1) steel.push(strut(line[k - 1], line[k], RAIL_THICKNESS, RAIL));
+  }
   for (let i = 0; i + railStep <= segments; i += railStep) {
-    const j = i + railStep;
     const a = frameAt(i);
-    const b = frameAt(j);
-    for (const sign of [1, -1]) {
-      const pa = a.s.pos.clone().addScaledVector(a.side, sign * (edgeAt(channel, i, step) - RIM_WIDTH * 0.5)).addScaledVector(UP, topAt(channel, i, step) + 0.2);
-      const pb = b.s.pos.clone().addScaledVector(b.side, sign * (edgeAt(channel, j, step) - RIM_WIDTH * 0.5)).addScaledVector(UP, topAt(channel, j, step) + 0.2);
-      steel.push(strut(pa, pb, 0.36, RAIL));
-    }
+    const b = frameAt(i + railStep);
     steel.push(strut(a.s.pos.clone().addScaledVector(UP, -SKIRT - 0.35), b.s.pos.clone().addScaledVector(UP, -SKIRT - 0.35), 0.55, TIE));
   }
   // Cross-ties under the channel, rim to rim.

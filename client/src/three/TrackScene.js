@@ -668,6 +668,7 @@ export class TrackScene {
         if (frame.t < 0) this.inset.ready = false; // waiting at the gate: sit right behind it
         this.updateFollowCamera(there, frame.p[k] ?? 0, dt, this.inset);
         this.insetOn = true;
+        this.insetIndex = k;
       }
     }
     this.render();
@@ -1176,7 +1177,12 @@ export class TrackScene {
         r.setScissorTest(true);
         r.setScissor(x, bottom, width, height);
         r.setViewport(x, bottom, width, height);
+        // (No pointer over the marble the corner view follows: that close behind it, the pointer
+        // would hide the marble itself.)
+        const own = (this.marbles.pointers ?? []).filter((p) => p.index === this.insetIndex && p.mesh.visible);
+        for (const p of own) p.mesh.visible = false;
         r.render(this.scene, this.inset.camera);
+        for (const p of own) p.mesh.visible = true;
         r.setScissorTest(false);
         r.setViewport(0, 0, this.size.width, this.size.height);
       }

@@ -76,16 +76,19 @@ const raceFrame = (t) => {
   const f = frameAtTime(race.frames, race.tickMs, t);
   return t < 0 && f ? { ...f, t } : f; // (waiting at the gate during the countdown)
 };
+// ?mine=<entry index>: that marble is the viewer's (its pointer) and the corner view follows it, as in the game.
+const mine = params.get('mine') === null ? null : Number(params.get('mine'));
 function beginRace() {
-  scene.setRace(race.entries, [], race.results, race.start ? { ...race.start, countdownMs: countdown, frame: race.frames[0] } : null);
+  scene.setRace(race.entries, mine === null ? [] : [mine], race.results, race.start ? { ...race.start, countdownMs: countdown, frame: race.frames[0] } : null);
   scene.setCameraMode('follow');
+  if (mine !== null) scene.setInset({ x: 12, y: window.innerHeight - 132, width: 150, height: 120 });
   clock = -countdown;
 }
 /** Plays the race on to `to` ms, 20 frames a second, as a viewer would see it. */
 function advance(to, follow = 'leader') {
   if (clock === null || to < clock || follow !== following) beginRace();
   following = follow;
-  for (; clock <= to; clock += 50) scene.updateRace(raceFrame(clock), follow, 0.05);
+  for (; clock <= to; clock += 50) scene.updateRace(raceFrame(clock), follow, 0.05, mine);
 }
 /** Draw calls the marbles themselves cost in this view (each marble its own; their shadows one). */
 function marbleCalls() {
