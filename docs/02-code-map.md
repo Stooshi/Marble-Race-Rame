@@ -254,7 +254,7 @@ Defined in `src/sockets/index.js`. The client may send a JWT in `auth.token`; an
 
 | Path | What it is |
 |---|---|
-| `package.json` | `npm run dev`, `npm run build` (`vite build`, then `scripts/prerender.mjs`; output `dist/`, which Vercel serves), `npm test` (vitest, about 8 minutes), `npm run app:sync` |
+| `package.json` | `npm run dev`, `npm run build` (`vite build`, then `scripts/prerender.mjs`; output `dist/`, which Vercel serves), `npm test` (vitest, about 8 minutes), `npm run app:sync`; app releases: `npm run app:version`, `npm run app:notes`, `npm run android:key`, `npm run android:release`, `npm run ios:release` (runbook, "App versions and release notes") |
 | `vite.config.js`, `vercel.json` | Build settings. `vercel.json`: `cleanUrls` (so `/help` serves the pre-rendered `help.html`), the site's own routes (the first part of every path in `App.jsx`: `/play/…`, `/race/…`, `/admin/…`, …) are rewritten to `/app-shell` (keep the list in step when a route with a new first part is added, or it answers 404) and any other address gets `404.html` with HTTP 404 (written without `.html`: with clean URLs that file is served at `/app-shell`, and a rewrite to `/app-shell.html` finds nothing, which made every in-game address answer 404 on 16 Oct 2026; a test checks), `noindex` headers on `/admin` |
 | `.vercelignore` | Keeps the app projects out of Vercel uploads |
 | `index.html` | The single page: meta, canonical, Open Graph and share-picture tags |
@@ -264,11 +264,16 @@ Defined in `src/sockets/index.js`. The client may send a JWT in `auth.token`; an
 | `capacitor.config.json` | App id, name, splash and status-bar settings |
 | `ios/`, `android/` | The native app projects (see "Apps" below) |
 | `assets/` | Source images for the app icons and splash screens |
-| `scripts/app-sync.mjs` | Builds the site against the live server and copies it into both apps |
+| `scripts/app-sync.mjs` | Builds the site against the live server and copies it into both apps (`node scripts/app-sync.mjs ios` or `android`: one app) |
 | `scripts/android-upload-key.mjs` | `npm run android:key`: makes the Google Play upload key once, in `MarbleSpins-keys` in your home folder (outside the project), and `android/keystore.properties` (gitignored, no password) |
-| `scripts/android-release.mjs` | `npm run android:release`: the signed `.aab` for Google Play, copied to `MarbleSpins-releases` in your home folder |
-| `app-version.json` | The apps' `versionCode` (raise by 1 for every Play upload) and `versionName` |
-| `APP-TESTING.md` | Running the apps on your own phone |
+| `scripts/android-release.mjs` | `npm run android:release`: the signed `.aab` for Google Play, copied to `MarbleSpins-releases` in your home folder as `marblespins-<versionName>-<versionCode>.aab`. Never raises the version; refuses a `versionCode` that already has a bundle there (`-- --again` overrides); prints the `git tag app-v…` command |
+| `scripts/ios-release.mjs` | `npm run ios:release` (Mac with Xcode): builds the site into the iPhone app (`app-sync.mjs ios`), sets the iPhone project's version from `app-version.json`, `xcodebuild archive` of `ios/App/App.xcodeproj` (Swift Package Manager, no CocoaPods workspace), scheme App, Release, to `MarbleSpins-releases/MarbleSpins-<versionName>-<versionCode>.xcarchive`, then `-exportArchive` with a generated `ExportOptions.plist` (app-store-connect, automatic signing) to an `.ipa`; `-- --upload` uploads to App Store Connect instead; `-- --again` rebuilds the same build. Team ID from `MS_APPLE_TEAM_ID` or `ios/apple-team-id.txt` (gitignored) |
+| `scripts/app-version.mjs` | `npm run app:version -- [patch\|minor\|major\|build\|x.y.z]`: raises `versionCode` by 1 and `versionName` (default patch) in `app-version.json` and `MARKETING_VERSION` / `CURRENT_PROJECT_VERSION` in both build configurations of the iPhone App target (`project.pbxproj`), then writes the notes draft |
+| `scripts/app-notes.mjs` | `npm run app:notes`: first run writes `release-notes/<versionName>.md` (a player text to edit, and commit subjects since the previous `app-v*` tag, or the last 30, grouped by what they touched); later runs write `<versionName>.play.txt` (`<en-US>` block, ≤ 500 characters) and `<versionName>.appstore.txt` (≤ 4000) |
+| `scripts/app-release-lib.mjs` | The release scripts' pure logic (version raising, pbxproj edit, notes grouping, store-text limits, release-folder check), tested by `test/appRelease.test.js` |
+| `release-notes/` | One draft per app version and its store texts (made by `npm run app:notes`, edited by hand, committed) |
+| `app-version.json` | The apps' `versionCode` (Android's versionCode and the iPhone build number; +1 for every upload) and `versionName` (what players see). Changed by `npm run app:version` |
+| `APP-TESTING.md` | Beginner guide: Mac and Windows setup, running the apps on your own phone, raising the version, release notes, uploading to Play Console and TestFlight, common errors |
 | `dev/` | The development "kit view": draws a track straight from its file, with no server |
 | `report/` | Browser-based report checks (view checks, screenshots), run by the root report script |
 | `test/` | Client tests (vitest) |
@@ -405,7 +410,7 @@ Defined in `src/sockets/index.js`. The client may send a JWT in `auth.token`; an
 - **Never edit these** (written by `npx cap sync`, and gitignored): `ios/App/App/public` and `android/app/src/main/assets/public`.
 - **Generated from `client/assets/`:** the icons and splash screens.
 - **Edited by hand:**
-  - iPhone: `Info.plist`, `AppDelegate.swift` (sets the `.ambient` audio category at launch, for the silent switch), `project.pbxproj`;
+  - iPhone: `Info.plist` (version and build number come from `MARKETING_VERSION` / `CURRENT_PROJECT_VERSION`), `AppDelegate.swift` (sets the `.ambient` audio category at launch, for the silent switch), `project.pbxproj` (its two version lines are set by `npm run app:version`; it uses Swift Package Manager, `CapApp-SPM`, so there is no CocoaPods workspace);
   - Android: `AndroidManifest.xml` (removes the advertising-ID permission: no ads or tracking), `res/values/*.xml`, the Gradle files (`app/build.gradle`: version from `client/app-version.json`, release signing from `android/keystore.properties` or `MS_UPLOAD_*` variables).
 - **Push notifications** (switched off; `src/app/push.js`): `@capacitor/push-notifications`. iPhone: `App/App.entitlements` (`aps-environment`, linked as `CODE_SIGN_ENTITLEMENTS`), `AppDelegate.swift` hands the APNs token to Capacitor. Android: `AndroidManifest.xml` sets the small icon (`res/drawable/ic_stat_marble.xml`), its colour and the default channel (`friends`); Firebase needs `android/app/google-services.json` from the Firebase console (not in the repository yet: `app/build.gradle` applies the Google services plugin only when the file is there). `capacitor.config.json` → `PushNotifications.presentationOptions`.
 - **After adding a plugin, run `npx cap sync`** (or `npm run app:sync`): it writes the plugin lists, `android/capacitor.settings.gradle`, `android/app/capacitor.build.gradle` and the iPhone's `ios/App/CapApp-SPM/Package.swift`. (Until 21 Oct 2026 the iPhone's list lacked `@capgo/native-purchases`, so iPhone purchases would have failed; fixed by the sync.)
@@ -423,7 +428,7 @@ Defined in `src/sockets/index.js`. The client may send a JWT in `auth.token`; an
   - `grandPrix`, `lighting`, `billboards`, `costumes`;
   - `clearTrack`, `sceneFingerprints`.
 - **Marbles:** `marbleLooks`, `marbleQuality` (every look against its shop picture).
-- **Other:** `finishShow`, `confetti`, `utils`, `sound`, `appShell`, `staleCode`, `canonical`, `trackBanners` (every track has a picture, both sizes, under 40 kB), `help` (the Help Centre's texts, numbers from the settings files, placeholders kept, the search).
+- **Other:** `finishShow`, `confetti`, `utils`, `sound`, `appShell`, `appRelease` (app version, iPhone project version lines on the real `project.pbxproj`, release notes, store-text limits), `staleCode`, `canonical`, `trackBanners` (every track has a picture, both sizes, under 40 kB), `help` (the Help Centre's texts, numbers from the settings files, placeholders kept, the search).
 
 ## Known stale comments
 

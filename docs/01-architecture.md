@@ -36,7 +36,7 @@
 | **Game server** | Railway service; public address https://marble-race-rame-production.up.railway.app | `src/` (Node 20 or later, Express 5, socket.io 4) | **By hand** by Moses (see the [runbook](05-runbook.md)). Pushing to `Main` does **not** deploy the server |
 | **Database** | Railway PostgreSQL | `docs/database_schema.sql` + `docs/data_updates/*.sql` | Applied automatically by the server at every start |
 | **Payments** | Stripe (website only); Google Play Billing (Android app) | `src/payments/` | Settings in the Stripe dashboard and Google Play Console |
-| **Apps** | iPhone and Android (Capacitor 8), app id `com.marblespins.app` | `client/ios`, `client/android` (wrapping `client/`) | Built on Moses's computer: Android with `npm run android:release` (signed `.aab` for Google Play, [runbook](05-runbook.md#android-release-google-play)); iPhone not released yet |
+| **Apps** | iPhone and Android (Capacitor 8), app id `com.marblespins.app` | `client/ios`, `client/android` (wrapping `client/`) | Built on Moses's computer: version with `npm run app:version`, Android with `npm run android:release` (signed `.aab` for Google Play, [runbook](05-runbook.md#android-release-google-play)), iPhone with `npm run ios:release` on a Mac (archive for TestFlight, [runbook](05-runbook.md#iphone-release-app-store)); iPhone not released yet |
 
 **Note on the shared data files:** the server reads data files from inside the client folder: `client/src/shared/economy.json`, `client/src/shared/marbles/catalog.json` and `client/src/shared/payments/*.json`. Website and server therefore always use the same numbers. It also means the server must be deployed from the **whole repository**, not from `src/` alone.
 

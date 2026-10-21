@@ -5,9 +5,46 @@ server. No App Store or Google Play account is needed. You do the setup once; af
 getting the latest version takes about a minute (see "Getting the latest version").
 
 What you need:
-- **Android:** your Windows PC, your Android phone and a USB cable that carries data (not just
-  charging).
+- **Android:** your Windows PC or your Mac, your Android phone and a USB cable that carries data
+  (not just charging).
 - **iPhone:** a Mac, your iPhone, a cable and your normal Apple ID.
+
+On a Mac, do "Mac: one-time setup for both apps" first. The second half of this guide,
+"Releasing a new version", says how to send the apps to Google Play and the App Store, and
+"When something fails" has the usual fixes.
+
+---
+
+## Mac: one-time setup for both apps (1–2 hours, mostly downloads)
+
+1. **Install Xcode** from the Mac App Store (free, very large).
+   1. Open it once and accept the terms.
+   2. If it asks which platforms to install, tick **iOS**.
+   3. If Xcode was already installed: open **Xcode → Settings… → Locations** and check that
+      **Command Line Tools** shows your Xcode version (not empty).
+2. **Install Node.js:** https://nodejs.org. Choose the "LTS" version and the macOS installer.
+3. **Install Android Studio:** https://developer.android.com/studio. Choose the Mac version for
+   your chip (Apple chip or Intel; see the Apple menu → **About This Mac**). Drag it to **Applications**.
+   Open it, choose **Standard** setup, and click **Next** and **Finish** until it has downloaded
+   everything.
+4. **CocoaPods is not needed.** The iPhone project uses Swift Package Manager, which comes with
+   Xcode.
+5. **Get the game's code.** Open **Terminal** (Cmd+Space, type Terminal) and type these lines one
+   at a time, pressing Enter after each:
+   ```
+   cd ~/Documents
+   git clone https://github.com/Stooshi/Marble-Race-Rame.git
+   cd Marble-Race-Rame/client
+   npm install
+   npm run app:sync
+   ```
+   If the Mac offers to install "command line developer tools", click **Install**, then type the
+   `git clone` line again. Sign in to GitHub if asked.
+6. **Open the Android project once**, so Android Studio downloads what it needs: type
+   `npx cap open android` and wait until "Gradle sync" at the bottom has finished (3–10 minutes).
+
+Then follow "Run the app" in the Android section (the steps are the same on a Mac; use Terminal
+instead of Command Prompt) and the iPhone section from step 4 ("Add your Apple ID to Xcode").
 
 ---
 
@@ -163,3 +200,151 @@ Then click ▶ Run again in Android Studio or Xcode.
   purchases use Google Play Billing: test them in the build installed from Play's internal test
   track, signed in with your license-tester account (test cards, nothing charged). Release builds:
   `npm run android:key` once, then `npm run android:release` (docs/05-runbook.md).
+
+---
+
+# Releasing a new version
+
+Do these steps in Terminal, in the `client` folder (`cd ~/Documents/Marble-Race-Rame/client`).
+Get the latest code first: `git pull` and `npm install`.
+
+Every upload to Google Play or the App Store needs a new **build number** (`versionCode`).
+Players see the **version** (`versionName`, like 1.0.1). Both live in `client/app-version.json`,
+and both apps read them from there.
+
+## 1. Raise the version
+
+1. Type `npm run app:version`. This raises 1.0.0 (build 1) to 1.0.1 (build 2).
+   - For a bigger update: `npm run app:version -- minor` (1.0.1 → 1.1.0) or
+     `npm run app:version -- major` (1.1.0 → 2.0.0).
+   - For an exact version: `npm run app:version -- 1.2.0`.
+   - Same version, only a new build (for example, Apple rejected the build):
+     `npm run app:version -- build`.
+2. It changes `app-version.json` (Android) and the iPhone project, and writes a release-notes
+   draft. It prints two `git` lines at the end. Type them to save the new version:
+   ```
+   git add app-version.json ios/App/App.xcodeproj/project.pbxproj release-notes
+   git commit -m "App 1.0.1 (2)"
+   git push
+   ```
+
+## 2. Write the release notes
+
+1. Open `client/release-notes/<version>.md` (for example `1.0.1.md`) in any text editor.
+2. At the top, between the two "player text" lines, write what players will notice. Use short
+   plain lines. Delete the lines that start with `[EDIT]`.
+3. Below, "The commits" lists every change since the last release, grouped:
+   - **Game and website:** players get these in the apps only with this update.
+   - **Server:** already live for app players; no need to mention them.
+   - Use the list as a reminder only. Commit messages are written for us, not for players.
+4. Type `npm run app:notes`. It makes two files next to the draft:
+   - `<version>.play.txt` for Google Play (at most 500 characters);
+   - `<version>.appstore.txt` for the App Store (at most 4000 characters).
+   If the text is too long or still has `[EDIT]` lines, it says so. Fix it and run it again.
+5. Save them in git: `git add release-notes`, `git commit -m "Release notes 1.0.1"`, `git push`.
+
+## 3. Android: build and upload to Google Play
+
+**Once:** make the upload key with `npm run android:key` and back it up at once
+(docs/05-runbook.md, "The upload key").
+
+1. Type `npm run android:release`. Type the upload key password when it asks.
+   - It refuses to build if this build number was already built. Then do step 1 first.
+   - It takes 3–10 minutes. At the end it says "Signed bundle ready" and where the `.aab`
+     file is (the `MarbleSpins-releases` folder in your home folder).
+2. Open https://play.google.com/console and click **Marble Spins**.
+3. In the left menu: **Test and release → Testing → Internal testing**.
+4. Click **Create new release**.
+5. Under **App bundles**, click **Upload** and choose the `.aab` from `MarbleSpins-releases`.
+6. **Release name:** for example `1.0.1 (2)`.
+7. **Release notes:** paste everything from `<version>.play.txt`, including the `<en-US>` lines.
+8. Click **Next**. Errors must be fixed; warnings are fine. Click **Save and publish**.
+9. On your phone, open the Play Store, find Marble Spins and tap **Update**. It can take up to an
+   hour to appear.
+10. When the internal test looks good: on the release, click **Promote release** and choose the
+    next track (closed testing, then production).
+
+The first upload ever has a few more steps: docs/05-runbook.md, "First upload: internal
+testing".
+
+## 4. iPhone: build and upload to TestFlight
+
+**Once (needs the paid Apple Developer account, $99/year, for Voltron Robotics AB):**
+
+1. **Find your Team ID.** Go to https://developer.apple.com/account, sign in, and open
+   **Membership details**. Copy **Team ID** (10 letters and digits).
+2. **Save it for the build script.** In Terminal, in the `client` folder, type (with your own ID):
+   `echo ABCDE12345 > ios/apple-team-id.txt`. Git ignores this file.
+3. **Sign in to Xcode with the company Apple ID:** **Xcode → Settings… → Accounts → + → Apple ID**.
+4. **Make the app in App Store Connect.** Go to https://appstoreconnect.apple.com → **Apps** →
+   **+** → **New App**.
+   - Platforms: **iOS**. Name: **Marble Spins**. Primary language: **English (U.S.)**.
+   - Bundle ID: **com.marblespins.app**. If it isn't in the list, register it first: on
+     developer.apple.com → **Certificates, Identifiers & Profiles → Identifiers → +** →
+     **App IDs** → **App**, Bundle ID "Explicit", `com.marblespins.app`. Tick **In-App
+     Purchase**. Then start **New App** again.
+   - SKU: `marblespins-ios`. User Access: **Full Access**. Click **Create**.
+
+**Every release:**
+
+1. Type `npm run ios:release`. It builds the game, then the iPhone app (5–15 minutes).
+   - It refuses to build if this build number was already built. Then do step 1 first.
+   - At the end it shows where the archive is (`MarbleSpins-releases` in your home folder).
+2. **Upload with Xcode (the easy way):**
+   1. In **Finder**, open your home folder → **MarbleSpins-releases**.
+   2. Double-click `MarbleSpins-<version>-<build>.xcarchive`. Xcode's **Organizer** window opens
+      with the archive selected. (Or open it in Xcode: **Window → Organizer → Archives**.)
+   3. Click **Distribute App**.
+   4. Choose **TestFlight & App Store** (older Xcode: **App Store Connect**), then click
+      **Distribute**. Keep the suggested choices.
+   5. Wait for "Uploaded". This takes a few minutes.
+   - Instead of the Organizer, `npm run ios:release -- --upload` builds and uploads in one go.
+3. **Add the release notes:** go to https://appstoreconnect.apple.com → **Apps → Marble Spins →
+   TestFlight**. After 5–30 minutes the build shows there (Apple emails you). Click the build
+   and paste `<version>.appstore.txt` into **What to Test**.
+4. **Test it yourself, once:** in **TestFlight → Internal Testing**, click **+**, make a group
+   "Marble Spins team" and add yourself. On the iPhone, install the **TestFlight** app from the
+   App Store and open the invitation. Tap **Install**.
+5. **To the App Store (when ready):** **Apps → Marble Spins → Distribution**, make the version
+   (for example 1.0.1), paste `<version>.appstore.txt` into **What's New in This Version**,
+   choose the build under **Build**, and click **Add for Review**.
+
+## 5. Mark the release in git
+
+When the upload worked, the release command prints one line like this. Type it:
+
+```
+git tag app-v1.0.1 && git push origin app-v1.0.1
+```
+
+The next release notes then start from this point. Tag once per version, after the first
+upload (Android or iPhone, whichever comes first).
+
+---
+
+# When something fails
+
+1. **"versionCode 2 already has a bundle" or "Build 2 was already made", or Google Play / App
+   Store says the version code or build number is already used.**
+   Run `npm run app:version` (or `npm run app:version -- build` to keep the same version), commit,
+   and build again. Never built-but-not-uploaded? Add `-- --again`:
+   `npm run android:release -- --again`.
+2. **"xcodebuild requires Xcode, but active developer directory … is a command line tools
+   instance", or "Xcode isn't ready".**
+   Install Xcode from the App Store and open it once. Then type
+   `sudo xcode-select -s /Applications/Xcode.app/Contents/Developer` and your Mac password.
+3. **iPhone: "No Accounts", "No profiles for 'com.marblespins.app' were found", or "Signing
+   for App requires a development team".**
+   Open **Xcode → Settings… → Accounts** and sign in with the Apple ID of the paid team. Check
+   that `ios/apple-team-id.txt` has the right Team ID. Check that the app exists in App Store
+   Connect (step 4, "Once"). Then run `npm run ios:release -- --again`.
+4. **Android: "Wrong password for the upload key", "No upload key yet", or Play says "signed
+   with the wrong key".**
+   Use the password from your password manager. If the key is missing, restore the
+   `MarbleSpins-keys` folder from your backup into your home folder. Never make a second key;
+   docs/05-runbook.md says how to reset a lost one.
+5. **Android: "SDK location not found", "JAVA_HOME is not set" or "Java not found".**
+   Open Android Studio once and let it finish its setup. Then type `npx cap open android` and
+   wait until "Gradle sync" is done. Close Android Studio and run the command again.
+
+Still stuck? Copy the last 30 lines of the Terminal window and send them to Claude.

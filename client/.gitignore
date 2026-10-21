@@ -5,3 +5,6 @@ dist/
 dev/.tracks/
 dev/.shots/
 .vercel/
+
+# The Apple Developer Team ID for npm run ios:release (per person, made by hand)
+ios/apple-team-id.txt

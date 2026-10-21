@@ -11,7 +11,10 @@
     "test": "vitest run",
     "app:sync": "node scripts/app-sync.mjs",
     "android:key": "node scripts/android-upload-key.mjs",
-    "android:release": "node scripts/android-release.mjs"
+    "android:release": "node scripts/android-release.mjs",
+    "app:version": "node scripts/app-version.mjs",
+    "app:notes": "node scripts/app-notes.mjs",
+    "ios:release": "node scripts/ios-release.mjs"
   },
   "dependencies": {
     "@capacitor/android": "8.5.2",

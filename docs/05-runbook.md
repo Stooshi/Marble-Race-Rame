@@ -285,6 +285,19 @@ Any change to `client/vercel.json`, the build, or the pre-rendering: build exact
 2. `node scripts/serve-vercel-output.mjs . 4300` serves that output with Vercel's own routing rules.
 3. Open, and refresh, at least: `/`, `/help`, a `/help/<question>`, `/tracks/<slug>`, `/cookies`, `/play/track`, a race (`/race/<id>`), `/preview/physics?track=spawn-point`, `/preview/banners`, `/admin`, and a made-up address (it must show the app's "Lost the marble" page with HTTP 404, not "404: NOT_FOUND"; `curl -s -o /dev/null -w '%{http_code}' localhost:4300/made-up` says 404, and every in-game address 200).
 
+## App versions and release notes
+
+Both apps take their version from `client/app-version.json`: `versionCode` is Android's versionCode **and** the iPhone build number (+1 for every upload to either store), `versionName` is what players see (`1.0.1`). Android's `app/build.gradle` reads the file; the iPhone project carries `MARKETING_VERSION` and `CURRENT_PROJECT_VERSION` itself (Info.plist reads them), so the script writes them into both build configurations of the App target in `project.pbxproj` (and `npm run ios:release` puts them back in step if they differ).
+
+In `client/` (step by step for beginners: `client/APP-TESTING.md`, "Releasing a new version"):
+1. `npm run app:version` (patch: 1.0.0 (1) → 1.0.1 (2)); `-- minor`, `-- major`, `-- 1.2.0`, or `-- build` (same version, new build number, e.g. after a rejected build). A lower or equal version is refused.
+2. It writes the release-notes draft `client/release-notes/<versionName>.md` (same as `npm run app:notes`): a short **player text** with `[EDIT]` template lines, and the commit subjects since the previous `app-v*` tag (no tag yet: the last 30 commits), grouped by what they touched (the apps; game and website, which reach app players only with an update; server, already live; docs and tools). Commit subjects aren't player language, so a person writes the player text.
+3. Edit the player text, then `npm run app:notes` again: it keeps the `.md` and writes `<versionName>.play.txt` (Google Play, `<en-US>…</en-US>`, at most 500 characters) and `<versionName>.appstore.txt` (App Store "What's New", at most 4000). It refuses while `[EDIT]` lines, `<` or `>` remain or the text is too long. `-- --fresh` rewrites the draft.
+4. Commit `app-version.json`, `ios/App/App.xcodeproj/project.pbxproj` and `release-notes/`. Nothing is committed, tagged or pushed by the scripts.
+5. Build and upload (sections below). After the first successful upload of a version, tag it with the command the release script prints: `git tag app-vX.Y.Z && git push origin app-vX.Y.Z`. The next notes start from that tag.
+
+Release files go to `MarbleSpins-releases` in your home folder (`MS_RELEASE_DIR` overrides). Both release scripts refuse a build number that already has a file there (`-- --again` rebuilds it, for a build never uploaded).
+
 ## Android release (Google Play)
 
 Built on **your own computer** (the Windows PC, or a Mac), in a terminal in `client/` (Command Prompt on Windows), with Android Studio installed (it brings Java 21 and the Android SDK; open `client/android` in it once so it downloads the SDK, as in `client/APP-TESTING.md`). The cloud workspace can't build Android apps: Google's download servers are blocked there.
@@ -311,9 +324,10 @@ It also prints the key's SHA-256 fingerprint. The folder is in your home folder 
 
 ### Building the bundle
 
-1. Raise `versionCode` in `client/app-version.json` by 1 (every upload needs a higher one; `versionName` is what players see, e.g. `1.0.1`). Commit it.
-2. `npm run android:release`. It asks for the key password, builds the app against the live Railway server (`npm run app:sync`), runs Gradle's `bundleRelease`, checks that the bundle is signed with the upload key, and copies it to `MarbleSpins-releases\marblespins-<versionName>-<versionCode>.aab` in your home folder.
-3. The password can also come from `MS_UPLOAD_STOREPASSWORD` (e.g. for a build machine); it is never written to a file.
+1. `npm run app:version` and the release notes (above). Commit them.
+2. `npm run android:release`. It never changes the version, and refuses if `MarbleSpins-releases` already has a bundle with this `versionCode` or higher (`npm run android:release -- --again` to rebuild one never uploaded). It asks for the key password, builds the app against the live Railway server (`npm run app:sync`), runs Gradle's `bundleRelease`, checks that the bundle is signed with the upload key, and copies it to `MarbleSpins-releases\marblespins-<versionName>-<versionCode>.aab` in your home folder. At the end it prints the `git tag` command for this version (run it after the upload).
+3. Release notes in Play Console: paste `client/release-notes/<versionName>.play.txt` (the whole `<en-US>` block).
+4. The password can also come from `MS_UPLOAD_STOREPASSWORD` (e.g. for a build machine); it is never written to a file.
 
 Android Studio instead: Build → Generate Signed App Bundle, with the same `.jks`, alias `upload`.
 
@@ -327,6 +341,27 @@ Voltron Robotics AB is an organisation account, so the "12 testers for 14 days" 
 5. Check the upload key: Setup → App signing → *Upload key certificate* SHA-256 must equal the fingerprint `npm run android:key` printed.
 6. *Testers* tab → **Copy link** ("Join on the web"). Open it on the phone, signed in with that Google account → *Accept invite* → *Download it on Google Play*. The first release can take a few minutes to an hour to appear.
 Play may first ask for some "App content" answers (privacy policy, ads, app access, content rating, target audience, data safety): the answers are in `claude/store-submission-drafts.md` in the project.
+
+## iPhone release (App Store)
+
+Built on a **Mac with Xcode** (the cloud workspace and Windows can't), in Terminal in `client/`. The iPhone project uses **Swift Package Manager** (`ios/App/CapApp-SPM`), not CocoaPods: there is no `App.xcworkspace`, and the build uses `ios/App/App.xcodeproj` (the script switches to a workspace if one ever appears).
+
+### Once
+
+1. The paid **Apple Developer Program** account (Voltron Robotics AB). Its **Team ID** (developer.apple.com → Account → Membership details; 10 letters and digits, not secret) goes in `client/ios/apple-team-id.txt` (gitignored) or the `MS_APPLE_TEAM_ID` variable. **Not set yet: Moses provides it once the account exists.**
+2. Xcode → Settings → Accounts: sign in with an Apple ID of that team (signing is automatic: Xcode makes the certificates and profiles).
+3. App Store Connect → Apps → + → New App: iOS, Marble Spins, English (U.S.), bundle id `com.marblespins.app` (register it under Certificates, Identifiers & Profiles → Identifiers if it isn't listed, with In-App Purchase), SKU `marblespins-ios`.
+
+### Building and uploading
+
+1. `npm run app:version` and the release notes (above). Commit them.
+2. `npm run ios:release`. It checks it runs on a Mac with Xcode and has the Team ID, refuses a build number that already has an archive in `MarbleSpins-releases` (`-- --again` overrides), sets the iPhone project's version from `app-version.json`, builds the site against the live server (`app-sync.mjs ios`: `vite build`, `npx cap sync ios`), then:
+   - `xcodebuild -project ios/App/App.xcodeproj -scheme App -configuration Release -destination generic/platform=iOS -archivePath ~/MarbleSpins-releases/MarbleSpins-<versionName>-<versionCode>.xcarchive -allowProvisioningUpdates DEVELOPMENT_TEAM=<team> archive`
+   - `xcodebuild -exportArchive` with a generated `ExportOptions.plist` (method `app-store-connect`, automatic signing, the team, `manageAppVersionAndBuildNumber` off) into `MarbleSpins-<versionName>-<versionCode>-export/App.ipa`.
+3. **Upload (beginner path):** double-click the `.xcarchive` in Finder → Xcode Organizer → **Distribute App** → **TestFlight & App Store** (older Xcode: App Store Connect) → Distribute. Or `npm run ios:release -- --upload` (export destination `upload`; uses the Xcode account).
+4. App Store Connect → the app → TestFlight: the build appears after 5–30 minutes; paste `<versionName>.appstore.txt` into **What to Test**; add internal testers. `ITSAppUsesNonExemptEncryption` is already false in `Info.plist`, so no export-compliance question.
+5. For the App Store: Distribution → the version → **What's New in This Version** (`.appstore.txt`) → pick the build → Add for Review. Purchases first need the steps in "App Store purchases" below.
+6. Tag the version with the printed `git tag` command (once per version, after the first upload of either app).
 
 ## Google Play Billing: coins in the Android app
 
@@ -431,7 +466,11 @@ The iPhone app sells the same four coin packs and the season pass through the Ap
 | Android app: "This purchase belongs to another account" | The purchase was made while logged in to a different Marble Spins account on that phone; log in to that one |
 | No Google notifications (`[google-play]` never in logs) | Pub/Sub topic permission for `google-play-developer-notifications@…`, the push address, or the `?token=` doesn't match `GOOGLE_PLAY_RTDN_TOKEN` (the server answers 403) |
 | Play refuses the `.aab`: "signed with the wrong key" | Built with another key: use the original `.jks` from the backup, or request an upload-key reset |
-| Play refuses the `.aab`: "version code already used" | Raise `versionCode` in `client/app-version.json` and build again |
+| Play refuses the `.aab`: "version code already used" | `npm run app:version` (or `-- build`), commit, and build again |
+| `npm run android:release` / `ios:release`: "already has a bundle" / "was already made" | That build number was built before: `npm run app:version` first. Never uploaded? Add `-- --again` |
+| `npm run ios:release`: "Xcode isn't ready", or xcodebuild says the developer directory is a command line tools instance | Install and open Xcode once, then `sudo xcode-select -s /Applications/Xcode.app/Contents/Developer` |
+| `xcodebuild archive`: "No Accounts", "No profiles for 'com.marblespins.app'", "requires a development team" | Sign in under Xcode → Settings → Accounts with the paid team's Apple ID; check `ios/apple-team-id.txt`; the bundle id must be registered and the app made in App Store Connect |
+| App Store Connect refuses the upload: "bundle version must be higher" or "train is closed" | The build number was used (`npm run app:version -- build`), or that version is already approved (`npm run app:version`, a new version) |
 | Checkout says Stripe isn't connected | No `STRIPE_SECRET_KEY`, or a live key without `STRIPE_ALLOW_LIVE=true` |
 | A race seems stuck in countdown or running | Restart the server: `recover()` finishes or resumes every unfinished race from what is stored |
 | Players see an old version of the website | It reloads itself once when old code files are gone. Otherwise a hard refresh. Check that Vercel finished building `Main` |
