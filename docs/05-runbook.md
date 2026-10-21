@@ -1,6 +1,6 @@
 # 5. Operations runbook
 
-*Last updated 20 Oct 2026.* How to deploy, change data, roll back, back up, and fix the usual problems. Items marked **[check]** should be confirmed the first time they are done.
+*Last updated 21 Oct 2026.* How to deploy, change data, roll back, back up, and fix the usual problems. Items marked **[check]** should be confirmed the first time they are done.
 
 ## Deploying
 
@@ -88,6 +88,24 @@ pg_restore --clean --if-exists --no-owner -d "<DATABASE_URL>" marble-spins-YYYY-
 - **When:** before every deploy with data updates, before switching Stripe to live, and weekly.
 - **Where:** keep backups off the laptop too, encrypted. They contain personal data.
 - **Retention:** payment records must be kept 7 years (Swedish bookkeeping law). The Stripe dashboard also keeps its own records.
+
+### When the Railway dashboard is down
+
+A Railway outage can take down the dashboard, the API and the CLI while the database itself keeps running. The connection string is then out of reach in Railway, so **keep a copy of `DATABASE_PUBLIC_URL` in your password manager** (Railway → the Postgres service → Variables → `DATABASE_PUBLIC_URL`; copy it again whenever Railway changes it, for example after a password reset of the database).
+
+With it, a backup needs only your own computer:
+
+1. **Install the Postgres tools** once, the same major version as the database or newer (`pg_dump --version`). On a Mac: `brew install postgresql@16`. On Windows: the "Command Line Tools" from the PostgreSQL installer.
+2. **Put the URL in a variable** without leaving it in the shell's history. Mac/Linux: type `read -rs DB` and paste the URL from the password manager, then press Enter (nothing shows).
+3. **Back up:**
+   ```bash
+   pg_dump "$DB" -Fc -f marble-spins-$(date +%F).dump
+   ```
+   If it says SSL is required, add `?sslmode=require` to the end of the URL.
+4. **Check the file:** `pg_restore -l marble-spins-YYYY-MM-DD.dump | head` lists the tables. A file of a few kB means it failed.
+5. **Store it** encrypted, off the laptop, like any backup (it holds personal data). Then `unset DB`.
+
+If `pg_dump` cannot connect at all (a timeout or "connection refused"), the database itself is down too: wait for Railway's status page (status.railway.com) to show it back. Don't restore anything or change variables during an outage.
 
 ## Back office: admins and the 2-step login
 
