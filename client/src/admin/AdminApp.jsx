@@ -39,6 +39,7 @@ export default function AdminApp() {
           <NavLink to="/admin/players">Players</NavLink>
           <NavLink to="/admin/payments">Payments</NavLink>
           <NavLink to="/admin/support">Support messages</NavLink>
+          <NavLink to="/admin/gift-codes">Gift codes</NavLink>
           <NavLink to="/admin/economy">Economy</NavLink>
           <NavLink to="/admin/emails">Email list</NavLink>
           <NavLink to="/admin/audit">Audit log</NavLink>
@@ -55,6 +56,8 @@ export default function AdminApp() {
           <Route path="/admin/payments" element={<Payments />} />
           <Route path="/admin/support" element={<SupportInbox />} />
           <Route path="/admin/support/:id" element={<SupportMessage />} />
+          <Route path="/admin/gift-codes" element={<GiftCodes />} />
+          <Route path="/admin/gift-codes/:id" element={<GiftCode />} />
           <Route path="/admin/economy" element={<Economy />} />
           <Route path="/admin/emails" element={<Emails />} />
           <Route path="/admin/audit" element={<Audit />} />
@@ -232,6 +235,176 @@ function Payments() {
       </form>
       <Err error={list.error} />
       {list.data && <PaymentTable rows={list.data.payments} showPlayer onChanged={list.reload} />}
+    </section>
+  );
+}
+
+// ── Gift codes ────────────────────────────────────────────────────────────
+
+const CODE_STATE = { active: 'Active', expired: 'Expired', 'used-up': 'Used up', disabled: 'Switched off' };
+const giftWhat = (c) => (c.kind === 'coins' ? `${n(c.coins)} coins` : `${c.season_name ?? c.season_key} pass`);
+const inDays = (d) => new Date(Date.now() + d * 864e5).toISOString().slice(0, 10);
+
+/** The codes just made, to copy or download (a CSV for a batch). */
+function MadeCodes({ codes, onClose }) {
+  const text = codes.map((c) => c.code).join('\n');
+  const csv = () => {
+    const rows = [['code', 'gives', 'uses', 'expires', 'tag'], ...codes.map((c) => [c.code, giftWhat(c), c.max_uses, c.expires_at, c.tag])];
+    const blob = new Blob([rows.map((r) => r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n')], { type: 'text/csv' });
+    const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(blob), download: `gift-codes-${codes[0].tag}-${codes[0].created_at.slice(0, 10)}.csv` });
+    a.click();
+    URL.revokeObjectURL(a.href);
+  };
+  return (
+    <div className="adm-action">
+      <b>{codes.length === 1 ? 'Code made' : `${codes.length} codes made`}: {giftWhat(codes[0])}, tag “{codes[0].tag}”</b>
+      <textarea readOnly rows={Math.min(10, codes.length)} value={text} style={{ fontFamily: 'monospace', fontSize: '1.05rem' }} onFocus={(e) => e.target.select()} />
+      <div className="adm-row">
+        <button type="button" className="adm-btn" onClick={() => navigator.clipboard?.writeText(text).catch(() => {})}>Copy</button>
+        <button type="button" className="adm-btn" onClick={csv}>Download CSV</button>
+        <button type="button" className="adm-btn" onClick={onClose}>Done</button>
+      </div>
+    </div>
+  );
+}
+
+function MakeCodes({ seasons, onMade }) {
+  const [f, setF] = useState({ kind: 'coins', coins: 5000, season_key: '', uses: 'single', max_uses: 100, count: 1, expires: inDays(30), tag: '', code: '', note: '', reason: '' });
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState(null);
+  const set = (k) => (e) => setF((x) => ({ ...x, [k]: e.target.value }));
+  const submit = async (e) => {
+    e.preventDefault();
+    setBusy(true); setError(null);
+    try {
+      const single = f.uses === 'single';
+      const r = await adminApi.makeGiftCodes({
+        kind: f.kind,
+        ...(f.kind === 'coins' ? { coins: Number(f.coins) } : { season_key: f.season_key || seasons[0]?.key }),
+        max_uses: single ? 1 : Number(f.max_uses),
+        ...(single && Number(f.count) > 1 ? { count: Number(f.count) } : {}),
+        ...(!single || Number(f.count) === 1 ? (f.code.trim() ? { code: f.code.trim() } : {}) : {}),
+        // (The end of the chosen day, Swedish time.)
+        expires_at: `${f.expires}T23:59:59+01:00`,
+        tag: f.tag.trim(), note: f.note.trim() || undefined, reason: f.reason.trim(),
+      });
+      onMade(r.codes);
+      setF((x) => ({ ...x, code: '', reason: '' }));
+    } catch (err) { setError(err); } finally { setBusy(false); }
+  };
+  const batch = f.uses === 'single' && Number(f.count) > 1;
+  return (
+    <form className="adm-action" onSubmit={submit}>
+      <b>Make codes</b>
+      <div className="adm-row">
+        <label>Gives <select value={f.kind} onChange={set('kind')}><option value="coins">Coins</option><option value="pass" disabled={!seasons.length}>A season pass</option></select></label>
+        {f.kind === 'coins'
+          ? <label>Coins <input type="number" min={1} max={100000} value={f.coins} onChange={set('coins')} required style={{ width: 110 }} /></label>
+          : <label>Season <select value={f.season_key || seasons[0]?.key} onChange={set('season_key')}>{seasons.map((x) => <option key={x.key} value={x.key}>{x.name}</option>)}</select></label>}
+      </div>
+      <div className="adm-row">
+        <label>Uses <select value={f.uses} onChange={set('uses')}><option value="single">Single-use</option><option value="multi">Multi-use, up to</option></select></label>
+        {f.uses === 'multi'
+          ? <label>Limit <input type="number" min={2} max={100000} value={f.max_uses} onChange={set('max_uses')} required style={{ width: 110 }} /></label>
+          : <label>How many codes <input type="number" min={1} max={500} value={f.count} onChange={set('count')} required style={{ width: 90 }} /></label>}
+        <label>Expires (end of day) <input type="date" value={f.expires} min={inDays(0)} onChange={set('expires')} required /></label>
+      </div>
+      <div className="adm-row">
+        <label style={{ flex: 1 }}>Creator or campaign (tag) <input value={f.tag} onChange={set('tag')} required minLength={2} maxLength={64} placeholder="e.g. creator-marblejoe or launch-giveaway" /></label>
+        {!batch && <label>Own code (optional) <input value={f.code} onChange={(e) => setF((x) => ({ ...x, code: e.target.value.toUpperCase() }))} maxLength={24} placeholder="e.g. MARBLEJOE" /></label>}
+      </div>
+      <label>Note (optional) <input value={f.note} onChange={set('note')} maxLength={500} placeholder="What it's for, who it went to" /></label>
+      <label>Reason (for the audit log) <input value={f.reason} onChange={set('reason')} required minLength={5} maxLength={500} /></label>
+      <Err error={error} />
+      <div className="adm-row"><button type="submit" className="adm-btn adm-btn--primary" disabled={busy}>{busy ? 'Making…' : batch ? `Make ${f.count} codes` : 'Make code'}</button>
+        <span className="adm-muted">Single-use codes are 12 random letters and digits; an own code is for a multi-use creator code. Each account can use a code once.</span></div>
+    </form>
+  );
+}
+
+function GiftCodes() {
+  const [q, setQ] = useState('');
+  const [filter, setFilter] = useState({ q: '', tag: '' });
+  const [made, setMade] = useState(null);
+  const list = useLoad(() => adminApi.giftCodes(filter), [filter.q, filter.tag]);
+  const d = list.data;
+  return (
+    <section className="adm-stack">
+      <h1 className="adm-h1">Gift codes</h1>
+      {d && !d.enabled && <p className="adm-msg">Redeeming is <b>switched off</b> for players (client/src/shared/giftCodes.json). Codes made now work once it is switched on.</p>}
+      <Err error={list.error} />
+      {made ? <MadeCodes codes={made} onClose={() => setMade(null)} /> : d && <MakeCodes seasons={d.seasons} onMade={(c) => { setMade(c); list.reload(); }} />}
+      {d?.tags.length > 0 && (
+        <div className="adm-scroll"><table className="adm-table">
+          <thead><tr><th>Creator or campaign</th><th className="num">Codes</th><th className="num">Redeemed</th><th className="num">Coins given</th><th className="num">Passes given</th><th>Last made</th></tr></thead>
+          <tbody>{d.tags.map((t) => (
+            <tr key={t.tag}><td><button type="button" className="adm-btn adm-btn--ghost" onClick={() => setFilter({ q: '', tag: t.tag })}>{t.tag}</button></td><td className="num">{n(t.codes)}</td><td className="num">{n(t.redemptions)}</td><td className="num">{n(t.coins_given)}</td><td className="num">{n(t.passes_given)}</td><td>{when(t.last_made)}</td></tr>
+          ))}</tbody>
+        </table></div>
+      )}
+      <form className="adm-row" onSubmit={(e) => { e.preventDefault(); setFilter({ q: q.trim(), tag: '' }); }}>
+        <input className="adm-search" placeholder="A code, or words from its tag or note" value={q} onChange={(e) => setQ(e.target.value)} />
+        <button type="submit" className="adm-btn adm-btn--primary">Search</button>
+        {(filter.tag || filter.q) && <button type="button" className="adm-btn" onClick={() => { setQ(''); setFilter({ q: '', tag: '' }); }}>Show all{filter.tag ? ` (now: ${filter.tag})` : ''}</button>}
+      </form>
+      {d && (d.codes.length === 0 ? <p className="adm-muted">No codes.</p> : (
+        <div className="adm-scroll"><table className="adm-table">
+          <thead><tr><th>Code</th><th>Gives</th><th className="num">Used</th><th>Expires</th><th>Tag</th><th>State</th><th>Made</th></tr></thead>
+          <tbody>{d.codes.map((c) => (
+            <tr key={c.id}><td><Link to={`/admin/gift-codes/${c.id}`}><b style={{ fontFamily: 'monospace' }}>{c.code}</b></Link></td><td>{giftWhat(c)}</td><td className="num">{n(c.uses)} / {n(c.max_uses)}</td><td>{when(c.expires_at)}</td><td>{c.tag}</td><td>{CODE_STATE[c.state]}</td><td>{when(c.created_at)} <span className="adm-muted">{c.created_by_name ?? ''}</span></td></tr>
+          ))}</tbody>
+        </table></div>
+      ))}
+    </section>
+  );
+}
+
+function GiftCode() {
+  const { id } = useParams();
+  const one = useLoad(() => adminApi.giftCode(id), [id]);
+  const [reason, setReason] = useState('');
+  const [error, setError] = useState(null);
+  const off = async (e) => {
+    e.preventDefault();
+    setError(null);
+    try { await adminApi.disableGiftCode(id, reason.trim()); setReason(''); one.reload(); } catch (err) { setError(err); }
+  };
+  const c = one.data?.code;
+  return (
+    <section className="adm-stack">
+      <Link to="/admin/gift-codes" className="adm-muted">← Gift codes</Link>
+      <Err error={one.error} />
+      {c && (
+        <>
+          <h1 className="adm-h1" style={{ fontFamily: 'monospace' }}>{c.code}</h1>
+          <dl className="adm-facts">
+            <div><dt>Gives</dt><dd>{giftWhat(c)}</dd></div>
+            <div><dt>Used</dt><dd>{n(c.uses)} of {n(c.max_uses)} · {CODE_STATE[c.state]}</dd></div>
+            <div><dt>Expires</dt><dd>{when(c.expires_at)}</dd></div>
+            <div><dt>Tag</dt><dd>{c.tag}</dd></div>
+            {c.note && <div><dt>Note</dt><dd>{c.note}</dd></div>}
+            <div><dt>Made</dt><dd>{when(c.created_at)} by {c.created_by_name ?? '–'}{c.batch_id ? ' (in a batch)' : ''}</dd></div>
+            {c.disabled_at && <div><dt>Switched off</dt><dd>{when(c.disabled_at)}</dd></div>}
+          </dl>
+          {!c.disabled_at && (
+            <form className="adm-row" onSubmit={off}>
+              <input className="adm-search" placeholder="Reason for switching it off" value={reason} onChange={(e) => setReason(e.target.value)} required minLength={5} />
+              <button type="submit" className="adm-btn adm-btn--danger">Switch off</button>
+              <span className="adm-muted">No more redemptions; what was redeemed stays.</span>
+            </form>
+          )}
+          <Err error={error} />
+          <h2 className="adm-h1" style={{ fontSize: 18 }}>Redeemed by</h2>
+          {one.data.redemptions.length === 0 ? <p className="adm-muted">Nobody yet.</p> : (
+            <div className="adm-scroll"><table className="adm-table">
+              <thead><tr><th>When</th><th>Player</th><th>Got</th></tr></thead>
+              <tbody>{one.data.redemptions.map((r) => (
+                <tr key={r.player_id + r.redeemed_at}><td>{when(r.redeemed_at)}</td><td><Link to={`/admin/players/${r.player_id}`}>@{r.player}</Link></td><td>{r.coins ? `${n(r.coins)} coins` : `pass${r.pass_revoked_at ? ' (since taken back)' : ''}`}</td></tr>
+              ))}</tbody>
+            </table></div>
+          )}
+        </>
+      )}
     </section>
   );
 }
@@ -593,6 +766,7 @@ function Economy() {
             <div><span>Coins in players' bags</span><b>{n(e.totals.in_circulation)}</b></div>
             <div><span>Earned racing ({days} d)</span><b>{n(sum('earned'))}</b></div>
             <div><span>Bought ({days} d)</span><b>{n(sum('bought'))}</b></div>
+            <div><span>From gift codes ({days} d)</span><b>{n(sum('gifted'))}</b><small>counted as bought, never on scoreboards</small></div>
             <div><span>Spent in the shop ({days} d)</span><b>{n(sum('spent'))}</b></div>
             <div><span>Given by support ({days} d)</span><b>{n(sum('support'))}</b></div>
             <div><span>Races ({days} d)</span><b>{n(sum('races'))}</b></div>
@@ -601,8 +775,8 @@ function Economy() {
             <div><span>News by email</span><b>{n(e.players.email_ok)}</b><small>{n(e.players.suspended)} suspended accounts</small></div>
           </div>
           <Bars rows={e.daily} />
-          <div className="adm-scroll"><table className="adm-table"><thead><tr><th>Day</th><th className="num">Players</th><th className="num">New accounts</th><th className="num">Races</th><th className="num">Earned</th><th className="num">Bought</th><th className="num">Refunded</th><th className="num">Spent</th><th className="num">Support</th></tr></thead>
-            <tbody>{[...e.daily].reverse().map((r) => <tr key={r.day}><td>{String(r.day).slice(0, 10)}</td><td className="num">{n(r.players)}</td><td className="num">{n(r.new_accounts)}</td><td className="num">{n(r.races)}</td><td className="num">{n(r.earned)}</td><td className="num">{n(r.bought)}</td><td className="num">{n(r.refunded)}</td><td className="num">{n(r.spent)}</td><td className="num">{n(r.support)}</td></tr>)}</tbody></table></div>
+          <div className="adm-scroll"><table className="adm-table"><thead><tr><th>Day</th><th className="num">Players</th><th className="num">New accounts</th><th className="num">Races</th><th className="num">Earned</th><th className="num">Bought</th><th className="num">Gift codes</th><th className="num">Refunded</th><th className="num">Spent</th><th className="num">Support</th></tr></thead>
+            <tbody>{[...e.daily].reverse().map((r) => <tr key={r.day}><td>{String(r.day).slice(0, 10)}</td><td className="num">{n(r.players)}</td><td className="num">{n(r.new_accounts)}</td><td className="num">{n(r.races)}</td><td className="num">{n(r.earned)}</td><td className="num">{n(r.bought)}</td><td className="num">{n(r.gifted)}</td><td className="num">{n(r.refunded)}</td><td className="num">{n(r.spent)}</td><td className="num">{n(r.support)}</td></tr>)}</tbody></table></div>
           <div className="adm-row adm-row--top">
             <div className="adm-stack" style={{ flex: '1 1 380px', minWidth: 0 }}>
               <b>Marbles sold ({days} d)</b>

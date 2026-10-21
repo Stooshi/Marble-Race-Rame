@@ -110,6 +110,9 @@ export const api = {
   appleAccount: () => request('/payments/apple/account'),
   appleVerify: (body) => request('/payments/apple/verify', { method: 'POST', body }),
   myOrders: () => request('/payments/mine'),
+  // Gift codes (src/giftCodes on the server; off until shared/giftCodes.json is switched on).
+  redeemCode: (code) => request('/gift-codes/redeem', { method: 'POST', body: { code } }),
+  myGiftCodes: () => request('/gift-codes/mine'),
   withdrawOrder: (orderNo) => request(`/payments/orders/${encodeURIComponent(orderNo)}/withdraw`, { method: 'POST', body: { confirm: true } }),
   // Seasons and the season pass (real money only: Stripe on the web, Google Play in the Android app).
   seasons: () => request('/seasons'),

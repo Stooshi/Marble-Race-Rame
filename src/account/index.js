@@ -30,7 +30,7 @@ async function exportData(db, userId) {
        FROM users WHERE id = $1 AND deleted_at IS NULL`,
   );
   if (!account) return null;
-  const [stats, emailAnswers, cookieAnswers, ledger, collection, shooter, look, startingMarbles, races, days, payments, rooms, security, support, supportReplies, passes, badges, passReminders] = await Promise.all([
+  const [stats, emailAnswers, cookieAnswers, ledger, collection, shooter, look, startingMarbles, races, days, payments, rooms, security, support, supportReplies, passes, badges, passReminders, giftCodes] = await Promise.all([
     one('SELECT * FROM user_stats WHERE user_id = $1'),
     all('SELECT consent, source, created_at FROM email_consents WHERE user_id = $1 ORDER BY created_at'),
     all('SELECT version, statistics, marketing, decided_at FROM cookie_consents WHERE user_id = $1 ORDER BY created_at'),
@@ -62,6 +62,8 @@ async function exportData(db, userId) {
          SELECT r.season_key, r.email_wanted, r.consent_text, r.created_at, r.sent_at, r.cancelled_at FROM pass_reminders r
           WHERE r.user_id IS NULL AND lower(r.email) = (SELECT lower(email) FROM users WHERE id = $1 AND NOT is_guest)
           ORDER BY created_at`),
+    all(`SELECT g.code, g.kind, r.coins, g.season_key, r.redeemed_at FROM gift_code_redemptions r JOIN gift_codes g ON g.id = r.code_id
+          WHERE r.user_id = $1 ORDER BY r.redeemed_at`),
   ]);
   return {
     about: 'Everything Marble Spins stores about your account. Passwords are stored only as a one-way hash and are not included. IP addresses are kept for security and fraud checks for at most 90 days, then only the country.',
@@ -76,6 +78,7 @@ async function exportData(db, userId) {
     dailyRaces: days,
     payments,
     seasonPasses: passes,
+    giftCodesRedeemed: giftCodes,
     passReminders,
     badges,
     friendRoomsHosted: rooms,

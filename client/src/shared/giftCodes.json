@@ -1,0 +1,7 @@
+{
+  "enabled": false,
+  "note": "Gift codes (src/giftCodes): while false players can't redeem (the server answers 404 and the site has no 'Redeem a code' link); the back office can already create codes. Switch on here, then deploy the server and let Vercel build the website.",
+  "maxCoins": 100000,
+  "maxUses": 100000,
+  "maxBatch": 500
+}

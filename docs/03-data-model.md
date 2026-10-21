@@ -248,6 +248,7 @@ The most specific row wins, then the newest. A slot with no row shows a built-in
 | `daily-goal` | **Earned:** the daily goal |
 | `coin-pack` | **Bought:** a coin pack |
 | `credit-conversion` | **Bought:** old credits converted |
+| `gift-code` | **Bought:** coins from a gift code (`src/giftCodes`); the note names the code and its tag. Never on the scoreboards |
 | `purchase` | Spent on a marble |
 | `bag` | Spent on a bag |
 | `entry-fee` | Old races only; fees are switched off |
@@ -327,8 +328,24 @@ A player's pass for a season. Granted once when its payment is paid; a full refu
 | Column | Meaning |
 |---|---|
 | `user_id`, `season_key` | Whose and which |
-| `payment_id`, `provider` | The payment that bought it |
+| `payment_id`, `provider` | The payment that bought it; a pass from a gift code has `provider` `gift-code` and no payment (its `gift_code_redemptions` row points here) |
 | `granted_at`, `revoked_at`, `revoke_reason` | |
+
+### `gift_codes`
+Gift codes made in the back office (`src/giftCodes`, 21 Oct 2026) for creators, campaigns and giveaways. **Redeeming is switched off** until `client/src/shared/giftCodes.json` `enabled` is true.
+
+| Column | Meaning |
+|---|---|
+| `code` | Unique, normalised: upper case, no spaces or dashes (`ABCDEFGH2345`, shown `ABCD-EFGH-2345`; or a custom word like `MARBLEJOE`) |
+| `kind`, `coins`, `season_key` | What it gives: `coins` (how many) or `pass` (which season's) |
+| `max_uses`, `uses` | 1 = single-use; more = multi-use up to the limit. `uses` counts redemptions |
+| `expires_at` | After this it can't be redeemed |
+| `tag` | The creator or campaign it was made for (the back office sums by tag) |
+| `note`, `batch_id`, `created_by`, `created_at` | Free text; codes made together; who made it and when |
+| `disabled_at`, `disabled_by` | Switched off in the back office (no more redemptions; what was redeemed stays) |
+
+### `gift_code_redemptions`
+One row per code and account (unique): `code_id`, `user_id`, `coins` (for a coins code), `season_pass_id` (for a pass code), `redeemed_at`. In the player's data download (`giftCodesRedeemed`).
 
 ### `pass_reminders`
 "Remind me when sales open" on the pass page, asked for before the pass goes on sale (`src/seasons/reminders.js`). Sent by `src/seasons/reminderMail.js`, **off until `BREVO_API_KEY` is set and `PASS_REMINDERS_SENDING=on`**. One live reminder per player or email address and season.

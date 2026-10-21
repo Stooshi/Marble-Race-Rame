@@ -23,6 +23,10 @@
  *   GET  /support?q=&status=&category=   the support inbox (contact-form messages), newest first, with counts by status
  *   GET  /support/:id              one message, its replies and its audit trail   GET /support/:id/screenshot  the image
  *   POST /support/:id/status       { status: 'new'|'open'|'done', reason? }   POST /support/:id/reply { text } (emailed when email is on)
+ *   GET  /gift-codes?q=&tag=       gift codes, newest first, with a summary by tag (creator / campaign)
+ *   POST /gift-codes               { kind: 'coins'|'pass', coins?, season_key?, max_uses, expires_at, tag, note?, code?, count?, reason }
+ *                                  make one code, or `count` single-use codes → { codes: [...] }
+ *   GET  /gift-codes/:id           one code and who redeemed it   POST /gift-codes/:id/disable { reason }
  */
 const express = require('express');
 const db = require('../db');
@@ -36,6 +40,8 @@ const { IP_DAYS } = require('../security');
 const paymentsSvc = require('../payments');
 const account = require('../account');
 const support = require('../support');
+const giftCodes = require('../giftCodes');
+const seasons = require('../seasons');
 
 const router = express.Router();
 router.use('/session', sessionRouter);
@@ -403,6 +409,7 @@ router.get('/economy', async (req, res) => {
       `SELECT to_char(d, 'YYYY-MM-DD') AS day,
               COALESCE(SUM(l.amount) FILTER (WHERE l.kind IN ('race', 'finish-bonus', 'daily-goal')), 0)::int AS earned,
               COALESCE(SUM(l.amount) FILTER (WHERE l.kind = 'coin-pack'), 0)::int AS bought,
+              COALESCE(SUM(l.amount) FILTER (WHERE l.kind = 'gift-code'), 0)::int AS gifted,
               COALESCE(-SUM(l.amount) FILTER (WHERE l.kind IN ('purchase', 'bag', 'entry-fee') AND l.amount < 0), 0)::int AS spent,
               COALESCE(-SUM(l.amount) FILTER (WHERE l.kind = 'pack-refund'), 0)::int AS refunded,
               COALESCE(SUM(l.amount) FILTER (WHERE l.kind = 'admin'), 0)::int AS support,
@@ -459,6 +466,96 @@ router.get('/economy', async (req, res) => {
     possibleFarming: farming.rows,
     topEarners7d: earners.rows,
   });
+});
+
+// ── Gift codes (src/giftCodes) ────────────────────────────────────────────
+
+const codeRow = (c) => ({ ...c, code: giftCodes.display(c.code), state: giftCodes.stateOf(c) });
+
+/** GET /gift-codes?q=&tag= — q: a code or words from its tag or note. */
+router.get('/gift-codes', async (req, res) => {
+  const q = String(req.query.q ?? '').trim().slice(0, 64);
+  const tag = String(req.query.tag ?? '').trim().slice(0, 64);
+  const [codes, tags] = await Promise.all([
+    db.query(
+      `SELECT g.*, s.name AS season_name, a.username AS created_by_name
+         FROM gift_codes g LEFT JOIN seasons s ON s.key = g.season_key LEFT JOIN users a ON a.id = g.created_by
+        WHERE ($1 = '' OR g.code = $2 OR g.tag ILIKE $3 OR g.note ILIKE $3) AND ($4 = '' OR g.tag = $4)
+        ORDER BY g.created_at DESC, g.code LIMIT 500`,
+      [q, giftCodes.normalise(q), `%${q}%`, tag],
+    ),
+    db.query(
+      `SELECT g.tag, COUNT(*)::int AS codes, COALESCE(SUM(g.uses), 0)::int AS redemptions,
+              COALESCE(SUM(g.uses * g.coins) FILTER (WHERE g.kind = 'coins'), 0)::int AS coins_given,
+              COALESCE(SUM(g.uses) FILTER (WHERE g.kind = 'pass'), 0)::int AS passes_given, MAX(g.created_at) AS last_made
+         FROM gift_codes g GROUP BY g.tag ORDER BY last_made DESC LIMIT 200`,
+    ),
+  ]);
+  // (The seasons a pass code can be made for: with a pass, not yet ended.)
+  const seasonList = (await seasons.all(db)).filter((x) => x.pass_product_id && seasons.stateOf(x) !== 'free').map((x) => ({ key: x.key, name: x.name, startsAt: x.starts_at, freeFrom: x.free_from }));
+  res.json({ enabled: giftCodes.enabled(), codes: codes.rows.map(codeRow), tags: tags.rows, seasons: seasonList });
+});
+
+/** POST /gift-codes — make a code, or a batch of single-use codes. */
+router.post('/gift-codes', async (req, res) => {
+  const body = validate(req.body, {
+    kind: { type: 'enum', values: ['coins', 'pass'], required: true },
+    coins: { type: 'int', min: 1, max: 1_000_000 },
+    season_key: { type: 'string', max: 32 },
+    max_uses: { type: 'int', required: true, min: 1, max: 1_000_000 },
+    expires_at: { type: 'string', required: true, max: 40 },
+    tag: { type: 'string', required: true, min: 2, max: 64 },
+    note: { type: 'string', max: 500 },
+    code: { type: 'string', max: 40 },
+    count: { type: 'int', min: 1, max: 10_000 },
+    reason: REASON,
+  });
+  const made = await db.withTransaction(async (client) => {
+    const rows = await giftCodes.create(client, {
+      kind: body.kind, coins: body.coins ?? null, seasonKey: body.season_key ?? null, maxUses: body.max_uses, expiresAt: body.expires_at,
+      tag: body.tag, note: body.note ?? null, code: body.code ?? null, count: body.count ?? 1, adminId: req.admin.id,
+    });
+    await audit(client, req, 'gift-codes-create', null, body.reason, {
+      count: rows.length, kind: body.kind, coins: body.coins ?? null, season: body.season_key ?? null, max_uses: body.max_uses,
+      expires_at: rows[0].expires_at, tag: body.tag, batch_id: rows[0].batch_id, codes: rows.length <= 20 ? rows.map((r) => giftCodes.display(r.code)) : undefined,
+    });
+    return rows;
+  });
+  res.status(201).json({ codes: made.map(codeRow) });
+});
+
+/** GET /gift-codes/:id — a code and its redemptions. */
+router.get('/gift-codes/:id', async (req, res) => {
+  const id = assertUuid(req.params.id);
+  const { rows: [c] } = await db.query(
+    `SELECT g.*, s.name AS season_name, a.username AS created_by_name FROM gift_codes g
+       LEFT JOIN seasons s ON s.key = g.season_key LEFT JOIN users a ON a.id = g.created_by WHERE g.id = $1`,
+    [id],
+  );
+  if (!c) throw notFound('No such code');
+  const { rows: redemptions } = await db.query(
+    `SELECT r.redeemed_at, r.coins, r.season_pass_id, p.revoked_at AS pass_revoked_at, u.id AS player_id, u.username AS player
+       FROM gift_code_redemptions r JOIN users u ON u.id = r.user_id LEFT JOIN season_passes p ON p.id = r.season_pass_id
+      WHERE r.code_id = $1 ORDER BY r.redeemed_at DESC LIMIT 1000`,
+    [id],
+  );
+  res.json({ code: codeRow(c), redemptions });
+});
+
+/** POST /gift-codes/:id/disable { reason } — no more redemptions (what was redeemed stays). */
+router.post('/gift-codes/:id/disable', async (req, res) => {
+  const id = assertUuid(req.params.id);
+  const body = validate(req.body, { reason: REASON });
+  const out = await db.withTransaction(async (client) => {
+    const { rows: [c] } = await client.query(
+      'UPDATE gift_codes SET disabled_at = now(), disabled_by = $2 WHERE id = $1 AND disabled_at IS NULL RETURNING *',
+      [id, req.admin.id],
+    );
+    if (!c) throw conflict('No such code, or already switched off');
+    await audit(client, req, 'gift-code-disable', null, body.reason, { code: giftCodes.display(c.code), tag: c.tag, uses: c.uses });
+    return c;
+  });
+  res.json({ code: codeRow(out) });
 });
 
 /** GET /consents?reason=&format=csv — the email list (who agreed, when); the export itself is audited. */

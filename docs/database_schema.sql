@@ -1101,3 +1101,43 @@ CREATE INDEX IF NOT EXISTS idx_users_guest_seen ON users (last_seen_at) WHERE is
 ALTER TABLE payments ADD COLUMN IF NOT EXISTS withdrawn_at           timestamptz;
 ALTER TABLE payments ADD COLUMN IF NOT EXISTS confirmation_sent_at   timestamptz;
 ALTER TABLE payments ADD COLUMN IF NOT EXISTS withdrawal_ack_sent_at timestamptz;
+
+-- ---------------------------------------------------------------------------
+-- Gift codes (21 Oct 2026, src/giftCodes): made in the back office for creators, campaigns and
+-- giveaways; each is worth coins (kind 'coins', ledger kind 'gift-code': bought coins, never on the
+-- scoreboards) or a season's pass (kind 'pass': a season_passes row with provider 'gift-code').
+-- code: normalised (upper case, no spaces or dashes). max_uses 1 = single-use. tag: the creator or
+-- campaign. batch_id: codes made together. A player redeems a code once (gift_code_redemptions).
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS gift_codes (
+    id          uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
+    code        varchar(24) NOT NULL UNIQUE CHECK (code ~ '^[A-Z0-9]{4,24}$'),
+    kind        varchar(8)  NOT NULL CHECK (kind IN ('coins', 'pass')),
+    coins       integer     CHECK (coins > 0),
+    season_key  varchar(32) REFERENCES seasons(key),
+    max_uses    integer     NOT NULL DEFAULT 1 CHECK (max_uses > 0),
+    uses        integer     NOT NULL DEFAULT 0 CHECK (uses >= 0),
+    expires_at  timestamptz NOT NULL,
+    tag         varchar(64) NOT NULL,
+    note        text,
+    batch_id    uuid,
+    created_by  uuid        REFERENCES users(id) ON DELETE SET NULL,
+    created_at  timestamptz NOT NULL DEFAULT now(),
+    disabled_at timestamptz,
+    disabled_by uuid        REFERENCES users(id) ON DELETE SET NULL,
+    CHECK (uses <= max_uses),
+    CHECK ((kind = 'coins' AND coins IS NOT NULL AND season_key IS NULL) OR (kind = 'pass' AND season_key IS NOT NULL AND coins IS NULL))
+);
+CREATE INDEX IF NOT EXISTS idx_gift_codes_tag ON gift_codes (tag, created_at);
+CREATE INDEX IF NOT EXISTS idx_gift_codes_batch ON gift_codes (batch_id) WHERE batch_id IS NOT NULL;
+
+CREATE TABLE IF NOT EXISTS gift_code_redemptions (
+    id              bigserial   PRIMARY KEY,
+    code_id         uuid        NOT NULL REFERENCES gift_codes(id),
+    user_id         uuid        NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    coins           integer,
+    season_pass_id  uuid        REFERENCES season_passes(id) ON DELETE SET NULL,
+    redeemed_at     timestamptz NOT NULL DEFAULT now(),
+    UNIQUE (code_id, user_id)
+);
+CREATE INDEX IF NOT EXISTS idx_gift_code_redemptions_user ON gift_code_redemptions (user_id, redeemed_at);

@@ -68,5 +68,10 @@ export const adminApi = {
   supportScreenshot: async (id) => (await request(`/admin/support/${id}/screenshot`, { raw: true })).blob(),
   supportStatus: (id, status, reason) => request(`/admin/support/${id}/status`, { method: 'POST', body: { status, ...(reason && { reason }) } }),
   supportReply: (id, text) => request(`/admin/support/${id}/reply`, { method: 'POST', body: { text } }),
+  // Gift codes (creators, campaigns, giveaways).
+  giftCodes: ({ q = '', tag = '' } = {}) => request(`/admin/gift-codes?${new URLSearchParams({ q, tag })}`),
+  giftCode: (id) => request(`/admin/gift-codes/${id}`),
+  makeGiftCodes: (body) => request('/admin/gift-codes', { method: 'POST', body }),
+  disableGiftCode: (id, reason) => request(`/admin/gift-codes/${id}/disable`, { method: 'POST', body: { reason } }),
   consentsCsv: (reason) => request(`/admin/consents?format=csv&reason=${encodeURIComponent(reason)}`, { raw: true }),
 };

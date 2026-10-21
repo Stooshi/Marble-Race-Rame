@@ -5,6 +5,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { api } from '../../api/client';
 import { activatesDay } from '../payments/preSale';
+import { giftCodesOn } from './RedeemPage';
 
 const day = (t) => (t ? new Date(t).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : null);
 
@@ -157,6 +158,12 @@ export default function SettingsPage() {
         <h2 id="buy-h" className="ms-h3" style={{ margin: 0 }}>Purchases</h2>
         <span>Your orders (coin packs and the season pass) and receipts: <Link to="/purchases">Purchases</Link></span>
       </section>
+      {giftCodesOn() && user && !user.is_guest && (
+        <section className="ms-card" style={{ display: 'grid', gap: 6 }} aria-labelledby="code-h">
+          <h2 id="code-h" className="ms-h3" style={{ margin: 0 }}>Gift codes</h2>
+          <span>Got a code from a creator or a giveaway? <Link to="/redeem">Redeem a code</Link></span>
+        </section>
+      )}
       <section className="ms-card" style={{ display: 'grid', gap: 6 }} aria-labelledby="help-h">
         <h2 id="help-h" className="ms-h3" style={{ margin: 0 }}>Help</h2>
         <span>Answers about coins, marbles, payments and your account: <Link to="/help">Help Centre</Link> · <Link to="/help#contact">Contact us</Link></span>

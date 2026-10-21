@@ -137,6 +137,8 @@
 - `payRace` also pays a pass holder's Track of the Day bonus (`featured-bonus`, from `seasons.bonusLine`; kept in `race_entries.bonus_coins`, never earned coins).
 - Also: `spend`, `opening`, `placeCoins`, `raceLines`, `streakAfter`, `bagPrice`, and `refundEntryFee` (for fees paid before entry fees were switched off).
 
+**`giftCodes/index.js`:** gift codes (21 Oct 2026). `create()` (one code, a custom code, or a batch of single-use codes; generated codes are 12 letters and digits without 0/O/1/I/L), `redeem()` (saved accounts only; the code row is locked; coins through `economy.change()` as kind `gift-code`, a bought kind; a pass into `season_passes` with provider `gift-code` and the season marble), `mine()`, `stateOf()` (active, expired, used-up, disabled), `normalise()`/`display()`. On/off: `client/src/shared/giftCodes.json` (`enabled`, `maxCoins`, `maxUses`, `maxBatch`). Tests: `test/giftCodes.test.js`.
+
 **`payments/`:**
 - `index.js`: providers (stripe, apple, google, test). `grant()` adds a pack's coins once, or gives a season pass once (a payment with `season_key` and 0 coins). Also `checkout()` (with consent and order number), `passCheckout()` (the season pass on the website: refused outside its sale window or when already held), `passProduct()`, `stripeEvent()`, `refund()`, `ordersOf`/`orderOf`, and for Google Play `googleAccountId`, `googlePurchase`, `googleSync`, `startGoogleJobs` (hourly: consume leftovers; every 6 hours: voided purchases), and for the App Store `appleAccountToken`, `applePurchase`, `appleNotification`.
 - `stripe.js`: Checkout sessions (coin packs and the season pass), webhook verification, `handleEvent()` (paid, expired, refund, dispute), `revoke()` (takes coins back in proportion; a full refund or a dispute of a pass revokes the pass), `requestRefund()`. Live keys are refused unless `STRIPE_ALLOW_LIVE`.
@@ -187,7 +189,8 @@
 | `seasons.js` | `GET /` and `GET /:key`: a season's dates, state, today's Track of the Day, the pass (price, on sale, countdown, owned, `remindersOpen`, the player's `reminder`); `POST /:key/remind` and `DELETE /:key/remind` ("Remind me when sales open"; visitors limited to 20 an hour per address, with a hidden bot field), `POST /reminders/confirm { token }` (double opt-in), `POST /reminders/cancel { token }`, `POST /reminders/unsubscribe?t=` (mail apps' one-click), `POST /:key/remind/seen` (close the in-game notice); the season view's `pass.onSaleNotice` |
 | `collection.js` | Collection, Marble Bag, Shooter, bags, buy, find by ID, certificates |
 | `payments.js` | Packs, checkout, `POST /pass/checkout` (the season pass), my orders (`GET /mine`, each with `withdraw`), `POST /orders/:orderNo/withdraw { confirm: true }` (the online withdrawal function), the Stripe webhook; Google Play: `GET /google/account` (the player's Play account id, and whether purchases are on), `POST /google/verify` (a purchase token from the app), `POST /google/rtdn?token=` (Google's notifications); the App Store: `GET /apple/account` (the player's account token), `POST /apple/verify` (a signed transaction from the app), `POST /apple/notifications` (Apple's Server Notifications v2) |
-| `admin.js` | The back office: players (with their support messages), coins, items, suspend, rename, delete, consent, payments and refunds, audit, economy, email list, the support inbox (list, message, screenshot, status, reply) |
+| `admin.js` | The back office: players (with their support messages), coins, items, suspend, rename, delete, consent, payments and refunds, audit, economy (with coins from gift codes), email list, the support inbox (list, message, screenshot, status, reply), gift codes (`GET /gift-codes?q=&tag=` with a summary by tag, `POST /gift-codes` one code or a batch, `GET /gift-codes/:id` with its redemptions, `POST /gift-codes/:id/disable`) |
+| `giftCodes.js` | `POST /redeem { code }` (a saved account; 10 tries per 15 min per account, 30 per address), `GET /mine`; both 404 while gift codes are off |
 | `support.js` | The Help Centre's contact form: `GET /form` (a form token), `POST /` (a message; rate-limited to 6 an hour per address) |
 | `economy.js` | Economy numbers, my day, race payouts, my ledger |
 | `scoreboard.js` | Season, all-time and friends boards (earned coins only); the season is a season in the `seasons` table that is on or ended last (`currentSeason`, counted from its start to its end), else the numbered one in `economy.json` → `season` (`seasonFrom`), else `null`, and the season board then counts all time |
@@ -317,6 +320,7 @@ Defined in `src/sockets/index.js`. The client may send a JWT in `auth.token`; an
   - `storeLinks.json` (the website footer's App Store and Google Play links; empty = hidden);
   - `socialLinks.json` (YouTube, Instagram, TikTok profile links: the footer's icon links via `site/SocialLinks.jsx`, the Help Centre's "Follow Marble Spins", and `sameAs` in the landing page's Organization data; website only, an empty link hides its icon);
   - `company.json` (who runs Marble Spins: Voltron Robotics AB, org.nr, VAT no., address, support and privacy email, the legal texts' date; `client/src/site/company.js` formats it);
+  - `giftCodes.json` (gift codes on or off for players, and their limits; read by the server too);
   - `trackBanners.json` (the track pictures: `enabled` in the picker, and per track its version, sizes, name and series);
   - `support.json` (contact-form categories and limits, checked by the server too; "Privacy and your data" is the topic for data requests);
   - `payments/packs.json`, `payments/consent.json` (what a buyer agrees to: coin packs, and the season pass's own wording; stored with each payment);
@@ -344,7 +348,8 @@ Defined in `src/sockets/index.js`. The client may send a JWT in `auth.token`; an
 | `/certificate/:code` | Marble certificate |
 | `/checkout?pack=` | Coin-pack checkout |
 | `/purchases?paid=` | Orders and receipts |
-| `/settings` | News by email, purchases, download my data, delete my account |
+| `/settings` | News by email, purchases, download my data, delete my account; "Redeem a code" once gift codes are on (website only) |
+| `/redeem` | **Redeem a code** (`site/pages/RedeemPage.jsx`): a gift code for coins or a season pass; saved accounts only; a 404 while gift codes are off, and always in the apps |
 | `/unsubscribe?u=&t=` | Unsubscribe link from emails (no login) |
 | `/forgot-password`, `/reset-password?token=` | Password reset (`site/pages/PasswordPages.jsx`) |
 | `/scores` | Scoreboards |
@@ -357,7 +362,7 @@ Defined in `src/sockets/index.js`. The client may send a JWT in `auth.token`; an
 | `/dashboard`, `/profile/:userId` | Retired (21 Oct 2026): go to `/home` and `/scores` |
 | `/race/:raceId`, `/results/:raceId` | Live race and results |
 | `/preview/3d`, `/preview/3d/race/:raceId`, `/preview/marbles`, `/preview/marbles/compare`, `/preview/marbles/roll`, `/preview/marbles/northern-lights` (the Northern Lights launch edition's design review: the original `aurora-glass` next to its upgrade `aurora-glow`, now the catalogue's (badge.js `GLOW_STRENGTH` and `SHIMMER`, materials.js's shimmer), drawn with `materials.js` `createCustomLook`), `/preview/marbles/holiday` (the Holiday Season's design review: the season marble's three options and the Winter collection's five designs, `site/marbles/holidayDesigns.js`, with the Snowball before and after on snow; the chosen ones are now in the catalogue (Winter 2026, Winter Solstice). Designs under review race in the dev kit view with `&designs=<key>,<key>`: `three/marbles.js` draws a marble's `customLook`), `/preview/physics`, `/preview/banners` | Preview and check pages (not linked); `/preview/banners`: every track picture as a picker card, for review |
-| `/admin/*` | Back office: Players, Player detail (tabs: Coins, Races, Marbles, Payments, Messages, Security, Emails, Audit), Payments, Support messages (`/admin/support`, `/admin/support/:id`), Economy, Email list, Audit log |
+| `/admin/*` | Back office: Players, Player detail (tabs: Coins, Races, Marbles, Payments, Messages, Security, Emails, Audit), Payments, Support messages (`/admin/support`, `/admin/support/:id`), Gift codes (`/admin/gift-codes`: make codes, totals by creator or campaign, every code; `/admin/gift-codes/:id`: who redeemed it, switch off), Economy, Email list, Audit log |
 
 ### 3D: `client/src/three/`
 

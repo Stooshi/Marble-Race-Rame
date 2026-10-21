@@ -39,6 +39,7 @@ import MarblesHubRoute from './hub/route';
 import { useSoundUnlock } from './sound/settings';
 import { SavePromptProvider } from './site/account/SavePrompt';
 import ConfirmEmailPage from './site/account/ConfirmEmailPage';
+import RedeemPage from './site/pages/RedeemPage';
 
 // 3D preview (beta) is loaded on demand so the rest of the site stays light.
 // (If a file is gone after an update, the page reloads once for the new version.)
@@ -106,6 +107,8 @@ export default function App() {
           <Route path="/bag" element={<BagPage />} />
           <Route path="/purchases" element={<PurchasesPage />} />
           <Route path="/settings" element={<SettingsPage />} />
+          {/* Gift codes: a 404 until src/shared/giftCodes.json switches them on; never in the apps. */}
+          <Route path="/redeem" element={<RedeemPage NotFound={NotFound} />} />
           <Route path="/unsubscribe" element={<UnsubscribePage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/reset-password" element={<ResetPasswordPage />} />

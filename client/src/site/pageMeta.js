@@ -26,7 +26,7 @@ const STATIC = {
 };
 
 // Pages for players, not for search results (their own data, one-time links, the game itself).
-const NOINDEX = [/^\/(home|lobby|bag|purchases|settings|checkout|unsubscribe|pass\/reminder|confirm-email|forgot-password|reset-password|dashboard)$/, /^\/(race|results|r|profile|certificate|preview|admin)\//, /^\/play\/(track|shooter|start)$/, /^\/preview$/, /^\/admin$/];
+const NOINDEX = [/^\/(home|lobby|bag|purchases|settings|redeem|checkout|unsubscribe|pass\/reminder|confirm-email|forgot-password|reset-password|dashboard)$/, /^\/(race|results|r|profile|certificate|preview|admin)\//, /^\/play\/(track|shooter|start)$/, /^\/preview$/, /^\/admin$/];
 
 let faqCache = null;
 const faqQuestions = () => {

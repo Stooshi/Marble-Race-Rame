@@ -188,6 +188,16 @@ To turn email off again, remove `BREVO_API_KEY` and restart.
 
 **Support emails.** Contact-form messages go to support@marblespins.com (the company's address in `client/src/shared/company.json`; `SUPPORT_EMAIL` on Railway overrides it). With Brevo on, every new message is emailed there, with a link to it in the back office; replying to that email goes straight to the player (but isn't logged in the back office, so prefer replying there). Replies written in the back office are emailed to the player from `EMAIL_FROM`, with `SUPPORT_EMAIL` as the reply-to address. Without Brevo, messages and replies are still saved; the back office says a reply wasn't emailed.
 
+## Gift codes (back office)
+
+**Switched off for players** until `client/src/shared/giftCodes.json` has `"enabled": true`; switching on = change it, push to Main (Vercel builds the website) **and deploy the server** (it reads the same file). Before switching on, the database needs the two new tables (`gift_codes`, `gift_code_redemptions`): the server makes them by itself when it starts after the deploy (the `[db-setup]` lines in its log). Codes can be made before that and work once it's on.
+
+- **Make codes:** back office → **Gift codes** → *Make codes*. Choose what it gives (coins, or a season's pass), single-use (and how many: up to 500 at once, e.g. one per giveaway winner) or multi-use up to a limit (e.g. a creator's code for their viewers; give it an own word like `MARBLEJOE`), the expiry date (the end of that day), the creator or campaign (**tag**: use one tag per creator, e.g. `creator-marblejoe`, so their totals add up), an optional note and a reason. The codes appear at once: **Copy**, or **Download CSV** for a batch. Making codes is in the audit log.
+- **See how a creator or campaign did:** the table at the top sums every tag: codes, redemptions, coins given, passes given. Click a tag to list its codes; click a code to see who redeemed it.
+- **Switch a code off** (posted publicly by mistake, a creator deal ended): open the code → reason → *Switch off*. No more redemptions; what was redeemed stays. To take coins or a pass back from a player, use their page (Coins, or Marbles for the season marble) with a reason.
+- **What players see:** Settings → *Redeem a code* (website only, saved accounts). Coins from codes count as bought coins and never on scoreboards; the Economy page shows them per day (*Gift codes*).
+- **In the apps:** no field and no link, on purpose (Apple guideline 3.1.1). Don't tell players in the app to go to the website to redeem; say it in the creator's video, an email or social posts instead.
+
 ## Support messages (back office)
 
 - **Where:** back office → **Support messages**. Filter by New / Open / Done and by category; search by name, email, player, order number, reference (`S-1001`) or words in the message.
