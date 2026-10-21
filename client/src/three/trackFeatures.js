@@ -176,7 +176,7 @@ function seaLionShape(head = 1, detail = 1) {
  * Builds the features of a track on an ice channel.
  * Returns { group, update(t) } (t: ms after the start) or null if it has none.
  */
-export function buildTrackFeatures(centerline, channel, features, { lite = false, compact = false } = {}) {
+export function buildTrackFeatures(centerline, channel, features, { lite = false, compact = false, season = false } = {}) {
   if (!channel || !Array.isArray(features) || features.length === 0) return null;
   const across = channel.radius * channel.maxAngle; // metres along the wall from the middle to the top, per unit of l
   const group = new Group();
@@ -1130,7 +1130,8 @@ export function buildTrackFeatures(centerline, channel, features, { lite = false
   }
   if (plainPieces.length) {
     const shared = new MeshLambertMaterial({ vertexColors: true, flatShading: true });
-    for (const geometry of mergeByArea(plainPieces, 250)) {
+    // (Bigger areas on a phone on the season's tracks, which also carry the holiday layer: fewer draw calls.)
+    for (const geometry of mergeByArea(plainPieces, lite && season ? 400 : 250)) {
       const mesh = new Mesh(geometry, shared);
       mesh.name = 'costumes';
       group.add(mesh);

@@ -435,7 +435,7 @@ export function buildKitScenery(centerline, track, theme, { lite = false } = {})
   const maxZ = Math.max(...zs);
   const spacing = lite ? 12 : 7;
   const arcadeBoard = biome === 'circuit-board' || biome === 'blacklight-carpet';
-  const maxItems = kit.canyon || ground.river ? (lite ? 160 : 450) : kit.block ? (lite ? 220 : 650) : kit.athletics ? (lite ? 160 : 450) : lite ? (biome === 'meadow' ? 150 : kit.grandPrix || arcadeBoard ? 220 : 300) : 900; // (fewer of the meadow's broadleaf trees on a phone, and fewer beside a Grand Prix's grandstands or on an arcade board, where the compact layouts show most of the world at once)
+  const maxItems = lite && kit.season ? 180 : kit.canyon || ground.river ? (lite ? 160 : 450) : kit.block ? (lite ? 220 : 650) : kit.athletics ? (lite ? 160 : 450) : lite ? (biome === 'meadow' ? 150 : kit.grandPrix || arcadeBoard ? 220 : 300) : 900; // (fewer of the meadow's broadleaf trees on a phone, and fewer beside a Grand Prix's grandstands or on an arcade board, where the compact layouts show most of the world at once; on the season's tracks on a phone, which also carry the holiday layer)
   const spots = [];
   for (let x = minX - 260; x <= maxX + 260; x += spacing) {
     for (let z = minZ - 260; z <= maxZ + 260; z += spacing) spots.push([x + (rand() - 0.5) * spacing * 0.9, z + (rand() - 0.5) * spacing * 0.9, rand(), rand()]);
@@ -550,7 +550,7 @@ export function buildKitScenery(centerline, track, theme, { lite = false } = {})
     for (const o of stillScenery) o.removeFromParent();
     const mat = new MeshLambertMaterial({ vertexColors: true, flatShading: true });
     // (A canyon or a Block Series world on a phone: bigger squares, fewer draw calls; their walls and lit parts cost more of the budget.)
-    for (const geometry of mergeByArea(pieces, (kit.canyon || kit.block || kit.athletics || kit.river) && lite ? 900 : 400)) group.add(Object.assign(new Mesh(geometry, mat), { name: 'scenery: still' }));
+    for (const geometry of mergeByArea(pieces, (kit.canyon || kit.block || kit.athletics || kit.river || kit.season) && lite ? 900 : 400)) group.add(Object.assign(new Mesh(geometry, mat), { name: 'scenery: still' }));
   }
 
   group.userData = { ...group.userData, cameraKeepOut: [...cameraKeepOut, ...centrepieces.keepOut], stillParts: [...landmarkBoxes, ...(group.userData.stillParts ?? [])], update, field, groundAt, biome, ground, floorY: ground.floorY, ...(coaster && { liftHill: coaster.liftHill, station: coaster.station }) };

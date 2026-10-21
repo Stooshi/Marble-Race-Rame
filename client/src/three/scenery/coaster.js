@@ -580,7 +580,9 @@ export function buildCoaster(centerline, channel, kit, { lite = false, groundAt,
   }
 
   const mat = new MeshLambertMaterial({ vertexColors: true, flatShading: true });
-  for (const [name, parts] of [['coaster track', steel], ['coaster supports', towers], ['coaster station', station]]) {
+  // (A season track on a phone: its supports and station one mesh, one draw call fewer where both show.)
+  const lumped = lite && kit.season;
+  for (const [name, parts] of lumped ? [['coaster track', steel], ['coaster supports', [...towers, ...station]]] : [['coaster track', steel], ['coaster supports', towers], ['coaster station', station]]) {
     if (!parts.length) continue;
     const mesh = new Mesh(merge(parts), mat);
     mesh.name = name;
