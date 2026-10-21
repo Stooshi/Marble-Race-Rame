@@ -110,7 +110,7 @@ export default function ContactForm() {
     return (
       <div className="ms-msg" role="status" style={{ display: 'grid', gap: 8 }}>
         <strong>Thanks, your message is in{sent.ref ? ` (reference ${sent.ref})` : ''}.</strong>
-        <span>We'll answer by email at {sent.email}. We aim to reply within <span className="ms-help-ph">[2 working days]</span>.</span>
+        <span>We'll answer by email at {sent.email}. We aim to reply within 2 working days.</span>
         <div><button type="button" className="ms-linkbtn" style={{ padding: 0 }} onClick={() => setSent(null)}>Send another message</button></div>
       </div>
     );

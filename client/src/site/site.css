@@ -503,6 +503,7 @@ a.ms-tile:hover, a.ms-card:hover { text-decoration: none; border-color: var(--ms
 .marble-info__name { font: 800 1.4rem/1.1 var(--ms-cond); }
 .marble-info__rarity { font-weight: 700; font-size: 0.85rem; letter-spacing: 0.04em; text-transform: uppercase; }
 .marble-info__note { color: var(--ms-muted); font-size: 0.88rem; }
+.marble-info__owner { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; font-size: 0.88rem; color: var(--ms-soft); margin-top: 4px; }
 .marble-info__actions { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 8px; }
 .marble-info__actions .ms-btn--primary { flex: 1; }
 
@@ -765,3 +766,11 @@ a.ms-tile:hover, a.ms-card:hover { text-decoration: none; border-color: var(--ms
   .ms-promo { padding: 22px 20px; gap: 16px; }
   .ms-promo__points li { font-size: 1rem; }
 }
+
+/* "Report this name" (components/ReportName.jsx) */
+.report-name__btn { background: none; border: 0; padding: 4px 6px; min-height: 32px; color: var(--ms-muted); font: inherit; font-size: 0.85rem; cursor: pointer; border-radius: 6px; }
+.report-name__btn:hover, .report-name__btn:focus-visible { color: var(--ms-text); background: rgba(255, 255, 255, 0.06); }
+.report-name__btn--compact { opacity: 0.55; font-size: 0.8rem; padding: 2px 6px; min-height: 28px; }
+tr:hover .report-name__btn--compact, .report-name__btn--compact:focus-visible { opacity: 1; }
+.report-name { display: inline-flex; flex-wrap: wrap; gap: 6px 8px; align-items: center; font-size: 0.9rem; color: var(--ms-soft); }
+.report-name--done { color: var(--ms-green); }

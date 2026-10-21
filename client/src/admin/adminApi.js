@@ -68,6 +68,9 @@ export const adminApi = {
   supportScreenshot: async (id) => (await request(`/admin/support/${id}/screenshot`, { raw: true })).blob(),
   supportStatus: (id, status, reason) => request(`/admin/support/${id}/status`, { method: 'POST', body: { status, ...(reason && { reason }) } }),
   supportReply: (id, text) => request(`/admin/support/${id}/reply`, { method: 'POST', body: { text } }),
+  // Reported player names, and names the filter would block.
+  nameReports: () => request('/admin/name-reports'),
+  resolveName: (userId, action, reason) => request(`/admin/name-reports/${userId}/resolve`, { method: 'POST', body: { action, reason } }),
   // Gift codes (creators, campaigns, giveaways).
   giftCodes: ({ q = '', tag = '' } = {}) => request(`/admin/gift-codes?${new URLSearchParams({ q, tag })}`),
   giftCode: (id) => request(`/admin/gift-codes/${id}`),

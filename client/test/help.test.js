@@ -20,8 +20,8 @@ describe('the questions', () => {
   it('has the draft\'s 12 categories and the Season pass, every question once, each with its own link', () => {
     expect(faq.map((s) => s.title)).toEqual(['Getting started', 'Races', 'Fair play', 'Coins', 'Marbles and the collection', 'Buying coins',
       'Refunds', 'Season pass', 'Friend rooms', 'Account and settings', 'Younger players and parents', 'Technical help', 'Contact us']);
-    expect(all.length).toBe(87); // (the draft: 6, 8, 4, 9, 10, 8, 4, 6, 7, 3, 5 and 4; then seasonal collections, the season marble and the Season pass's 11, with the pre-sale and the reminder)
-    expect(faq.map((s) => s.questions.length)).toEqual([6, 8, 4, 9, 12, 8, 4, 11, 6, 7, 3, 5, 4]);
+    expect(all.length).toBe(88); // (the draft: 6, 8, 4, 9, 10, 8, 4, 6, 7, 3, 5 and 4; then seasonal collections, the season marble and the Season pass's 11, with the pre-sale and the reminder; "How do I report an offensive player name?", 22 Oct)
+    expect(faq.map((s) => s.questions.length)).toEqual([6, 8, 4, 9, 12, 8, 4, 11, 6, 8, 3, 5, 4]);
     expect(new Set(all.map((q) => q.slug)).size).toBe(all.length);
     for (const q of all) expect(q.slug).toMatch(/^[a-z0-9]+(-[a-z0-9]+)*$/);
     expect(bySlug['whats-my-daily-streak'].q).toBe("What's my daily streak?");
@@ -30,9 +30,10 @@ describe('the questions', () => {
 
   it('keeps the [bracket] placeholders only Moses can answer, and fills the others (19 Oct)', () => {
     const text = all.map((q) => q.text).join('\n');
-    for (const p of ['[coming at launch]', '[Live once email is switched on.]', '[2 working days]']) {
+    for (const p of ['[coming at launch]', '[Live once email is switched on.]']) {
       expect(text, p).toContain(p);
     }
+    expect(text).not.toContain('[2 working days]'); // (Moses, 22 Oct: filled)
     expect(bySlug['do-coins-expire'].text).toMatch(/^No\. Your coins stay in your account until you use them or delete your account/); // (Moses, 21 Oct)
     for (const p of ['[To decide:', '[Google and Apple sign-in: later.]', '[01:00 / 02:00 Swedish time]', '[To confirm:', '[approval process coming]', "[If there's a quality setting"]) {
       expect(text, p).not.toContain(p);
@@ -69,7 +70,7 @@ describe('the questions', () => {
     // (no live list and no build count in tests: no made-up number, never the old draft's "50 tracks in five series")
     expect(bySlug['what-are-the-different-tracks'].text).toBe('There are dozens of tracks in several series. Each track has its own layout, start and scenery.');
     expect(bySlug['what-is-marble-spins'].text).toContain('on one of dozens of tracks');
-    expect(bySlug['still-need-help'].text).toBe('Use the contact form below. Tell us your player name and, for payment questions, your order number. We aim to reply within [2 working days].');
+    expect(bySlug['still-need-help'].text).toBe('Use the contact form below. Tell us your player name and, for payment questions, your order number. We aim to reply within 2 working days.');
   });
 
   it('fills the company details from shared/company.json (16 Oct 2026)', () => {

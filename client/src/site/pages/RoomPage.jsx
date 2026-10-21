@@ -7,6 +7,7 @@ import MarbleBadge from '../marbles/MarbleBadge';
 import { SITE_URL } from '../canonical';
 import { useRacer, useTracks } from './RaceFlow';
 import pushSwitch from '../../shared/push.json';
+import { NAME_NOT_ALLOWED, checkName } from '../../shared/nameFilter';
 
 /**
  * The host invites friends with a notification on their phone (once push is switched on,
@@ -161,6 +162,7 @@ export default function RoomPage() {
     try { await navigator.share({ title: 'Race me on Marble Spins', text: `Join my marble race: room ${code}`, url: link }); } catch { /* (closed) */ }
   };
   const saveName = run('name', async () => {
+    if (checkName(name.trim())) throw new Error(NAME_NOT_ALLOWED);
     await api.setName(name.trim().slice(0, 40));
     await refreshUser?.();
     setName('');

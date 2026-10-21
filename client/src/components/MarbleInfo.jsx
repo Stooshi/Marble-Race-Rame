@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { Link } from 'react-router-dom';
 import { ITEM, lookName, rarityInfo } from '../shared/marbles';
 import MarbleBall from './MarbleBall';
+import ReportName from './ReportName';
 
 const cap = (s) => (s ? s[0].toUpperCase() + s.slice(1) : '');
 
@@ -22,7 +23,7 @@ export function marbleFacts(marble, isBot = false) {
  * A small card about a marble tapped after a race: its name, rarity and a way
  * to the shop. Closes with the button, Escape or a tap outside.
  */
-export default function MarbleInfo({ marble, isBot, onClose }) {
+export default function MarbleInfo({ marble, isBot, onClose, player = null, where = 'results' }) {
   const ref = useRef(null);
   const f = marbleFacts(marble, isBot);
   useEffect(() => {
@@ -39,6 +40,7 @@ export default function MarbleInfo({ marble, isBot, onClose }) {
           <b className="marble-info__name">{f.name}</b>
           <span className="marble-info__rarity" style={{ color: f.colour }}>{f.rarity}{isBot && f.rarity !== 'Computer player' ? ' · raced by a computer player' : ''}</span>
           <span className="marble-info__note">{f.note}</span>
+          {player?.id && !isBot && <span className="marble-info__owner">Raced by {player.name} <ReportName userId={player.id} name={player.name} where={where} /></span>}
         </div>
         <div className="marble-info__actions">
           {f.shop && <Link to={f.shop} className="ms-btn ms-btn--primary ms-btn--sm" onClick={onClose}>GET IT IN THE SHOP</Link>}

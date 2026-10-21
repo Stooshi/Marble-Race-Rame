@@ -213,6 +213,13 @@ Built and **switched off twice**: the apps don't ask until `client/src/shared/pu
 - **Turn everything off at once:** remove `PUSH_SENDING` (or set it to anything else) and redeploy.
 - **Privacy:** the store forms (App Privacy, Data safety) must list the push token as "Device ID / other identifiers… App functionality"; see `docs/08-store-rules.md` when it exists.
 
+## Player names: reports and the word list
+
+- **Back office → Name reports:** open reports by player (most reporters first). Write a reason, then **Rename** (the account gets a neutral name like Player48213 and its shown name is cleared; a guest's shown name is cleared) or **Dismiss** (the reports close, the name stays). Both are in the audit log. The player can log in with their email as before (tell them their new name if they ask; they can ask support for another friendly one).
+- **Names the filter would block:** names chosen before the filter (or set by an admin). Rename them the same way.
+- **A word gets through:** add it to `client/src/shared/nameFilter.js` (the right language; CONTAINS only if it never occurs inside an ordinary word, else WORDS), run `npx vitest run test/nameFilter.test.js` in `client/`, push. The website checks with the new list after Vercel's build, the server after the next deploy.
+- **An ordinary name is refused:** add it to `ALLOW` in the same file.
+
 ## Gift codes (back office)
 
 **Switched off for players** until `client/src/shared/giftCodes.json` has `"enabled": true`; switching on = change it, push to Main (Vercel builds the website) **and deploy the server** (it reads the same file). Before switching on, the database needs the two new tables (`gift_codes`, `gift_code_redemptions`): the server makes them by itself when it starts after the deploy (the `[db-setup]` lines in its log). Codes can be made before that and work once it's on.

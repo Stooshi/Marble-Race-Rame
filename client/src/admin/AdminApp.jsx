@@ -39,6 +39,7 @@ export default function AdminApp() {
           <NavLink to="/admin/players">Players</NavLink>
           <NavLink to="/admin/payments">Payments</NavLink>
           <NavLink to="/admin/support">Support messages</NavLink>
+          <NavLink to="/admin/name-reports">Name reports</NavLink>
           <NavLink to="/admin/gift-codes">Gift codes</NavLink>
           <NavLink to="/admin/economy">Economy</NavLink>
           <NavLink to="/admin/emails">Email list</NavLink>
@@ -56,6 +57,7 @@ export default function AdminApp() {
           <Route path="/admin/payments" element={<Payments />} />
           <Route path="/admin/support" element={<SupportInbox />} />
           <Route path="/admin/support/:id" element={<SupportMessage />} />
+          <Route path="/admin/name-reports" element={<NameReports />} />
           <Route path="/admin/gift-codes" element={<GiftCodes />} />
           <Route path="/admin/gift-codes/:id" element={<GiftCode />} />
           <Route path="/admin/economy" element={<Economy />} />
@@ -235,6 +237,72 @@ function Payments() {
       </form>
       <Err error={list.error} />
       {list.data && <PaymentTable rows={list.data.payments} showPlayer onChanged={list.reload} />}
+    </section>
+  );
+}
+
+// ── Name reports ──────────────────────────────────────────────────────────
+
+/** One player's reported or flagged name: rename (to PlayerNNNN) or dismiss, with a reason. */
+function NameAction({ row, onDone, flagged = false }) {
+  const [reason, setReason] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState(null);
+  const go = async (action) => {
+    setBusy(true); setError(null);
+    try { await adminApi.resolveName(row.player_id, action, reason.trim()); await onDone(); } catch (err) { setError(err); } finally { setBusy(false); }
+  };
+  return (
+    <div className="adm-row" style={{ gap: 6 }}>
+      <input placeholder="Reason (audit log)" value={reason} onChange={(e) => setReason(e.target.value)} style={{ minWidth: 180 }} />
+      <button type="button" className="adm-btn adm-btn--danger" disabled={busy || reason.trim().length < 5} onClick={() => go('rename')}>{row.is_guest ? 'Clear the name' : 'Rename'}</button>
+      {!flagged && <button type="button" className="adm-btn" disabled={busy || reason.trim().length < 5} onClick={() => go('dismiss')}>Dismiss</button>}
+      <Err error={error} />
+    </div>
+  );
+}
+
+function NameReports() {
+  const list = useLoad(() => adminApi.nameReports(), []);
+  const d = list.data;
+  const shown = (r) => (r.display_name ? <>{r.display_name} <span className="adm-muted">@{r.username}</span></> : <>@{r.username}</>);
+  return (
+    <section className="adm-stack">
+      <h1 className="adm-h1">Name reports</h1>
+      <p className="adm-muted">Players report names from the scoreboards and race results. <b>Rename</b> gives the account a neutral name (PlayerNNNN) and clears its shown name; a guest's shown name is cleared. <b>Dismiss</b> closes the reports and keeps the name. New names are already checked by the filter (client/src/shared/nameFilter.js); add words there.</p>
+      <Err error={list.error} />
+      {d && (
+        <>
+          <h2 className="adm-h1" style={{ fontSize: 18 }}>Open reports ({d.open.length})</h2>
+          {d.open.length === 0 ? <p className="adm-muted">None.</p> : (
+            <div className="adm-scroll"><table className="adm-table">
+              <thead><tr><th>Player</th><th className="num">Reporters</th><th>Where</th><th>Last report</th><th>Action</th></tr></thead>
+              <tbody>{d.open.map((r) => (
+                <tr key={r.player_id}><td><Link to={`/admin/players/${r.player_id}`}>{shown(r)}</Link>{r.is_guest && <span className="adm-tag">guest</span>}</td><td className="num">{n(r.reporters)}</td><td>{r.places.join(', ')}</td><td>{when(r.last_at)}</td><td><NameAction row={r} onDone={list.reload} /></td></tr>
+              ))}</tbody>
+            </table></div>
+          )}
+          <h2 className="adm-h1" style={{ fontSize: 18 }}>Names the filter would block ({d.flagged.length})</h2>
+          <p className="adm-muted">Names chosen before the filter (or set by an admin) that it would refuse today.</p>
+          {d.flagged.length === 0 ? <p className="adm-muted">None.</p> : (
+            <div className="adm-scroll"><table className="adm-table">
+              <thead><tr><th>Player</th><th>Matched</th><th>Action</th></tr></thead>
+              <tbody>{d.flagged.map((r) => (
+                <tr key={r.player_id}><td><Link to={`/admin/players/${r.player_id}`}>{shown(r)}</Link></td><td>{r.word} <span className="adm-muted">({r.lang})</span></td><td><NameAction row={r} onDone={list.reload} flagged /></td></tr>
+              ))}</tbody>
+            </table></div>
+          )}
+          {d.resolved.length > 0 && (
+            <>
+              <h2 className="adm-h1" style={{ fontSize: 18 }}>Resolved, last 30 days</h2>
+              <div className="adm-scroll"><table className="adm-table">
+                <thead><tr><th>Player (now)</th><th>Outcome</th><th className="num">Reports</th><th>When</th></tr></thead>
+                <tbody>{d.resolved.map((r) => <tr key={r.player_id + r.resolution}><td><Link to={`/admin/players/${r.player_id}`}>@{r.username}</Link></td><td>{r.resolution}</td><td className="num">{n(r.reports)}</td><td>{when(r.resolved_at)}</td></tr>)}</tbody>
+              </table></div>
+            </>
+          )}
+        </>
+      )}
     </section>
   );
 }

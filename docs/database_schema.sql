@@ -1187,3 +1187,21 @@ CREATE TABLE IF NOT EXISTS push_sends (
     UNIQUE (user_id, key)
 );
 CREATE INDEX IF NOT EXISTS idx_push_sends_kind ON push_sends (kind, sent_at);
+
+-- ---------------------------------------------------------------------------
+-- Name reports (22 Oct 2026, src/names): a player reports another player's name as offensive, from
+-- a scoreboard, race results or a room; the back office renames the player (resolution 'renamed')
+-- or dismisses the reports ('dismissed'). One open report per reporter and player.
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS name_reports (
+    id                bigserial   PRIMARY KEY,
+    reported_user_id  uuid        NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    reporter_id       uuid        REFERENCES users(id) ON DELETE SET NULL,
+    place             varchar(16) NOT NULL DEFAULT 'scoreboard',
+    name_shown        varchar(64),
+    created_at        timestamptz NOT NULL DEFAULT now(),
+    resolved_at       timestamptz,
+    resolved_by       uuid        REFERENCES users(id) ON DELETE SET NULL,
+    resolution        varchar(16) CHECK (resolution IN ('renamed', 'dismissed'))
+);
+CREATE INDEX IF NOT EXISTS idx_name_reports_open ON name_reports (reported_user_id) WHERE resolved_at IS NULL;

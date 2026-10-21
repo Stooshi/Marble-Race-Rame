@@ -19,6 +19,7 @@ import { BOARD_HOLD_MS, finishPlan } from '../utils/finishShow';
 import { ErrorMessage, Spinner } from '../components/Status';
 import { formatDelta, formatTime, ordinal } from '../utils/format';
 import { plainName } from '../shared/playerName';
+import ReportName from '../components/ReportName';
 
 export default function Results() {
   const { raceId } = useParams();
@@ -56,7 +57,7 @@ export default function Results() {
 
   return (
     <div className="page results">
-      {tapped && <MarbleInfo marble={asMarble(tapped)} isBot={tapped.is_bot} onClose={() => setTapped(null)} />}
+      {tapped && <MarbleInfo marble={asMarble(tapped)} isBot={tapped.is_bot} player={tapped.user_id ? { id: tapped.user_id, name: plainName(tapped.username) } : null} onClose={() => setTapped(null)} />}
       <header className="race-header">
         <div>
           <p className="eyebrow">
@@ -126,7 +127,7 @@ export default function Results() {
                       <span>
                         <button type="button" className="marble-tap" onClick={() => setTapped(r)}><strong>{nameOf(r)}</strong></button>
                         <small className="muted block">
-                          {r.user_id ? <Link to={`/profile/${r.user_id}`}>{plainName(r.username)}</Link> : <CpuTag />}
+                          {r.user_id ? <><Link to={`/profile/${r.user_id}`}>{plainName(r.username)}</Link><ReportName userId={r.user_id} name={plainName(r.username)} where="results" compact /></> : <CpuTag />}
                         </small>
                       </span>
                     </span>

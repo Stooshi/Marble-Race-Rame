@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { api } from '../../api/client';
 import { useAuth } from '../../context/AuthContext';
 import { MONTHS, TEXTS, ageFrom, lang as browserLang } from './saveTexts';
+import { NAME_NOT_ALLOWED, checkName } from '../../shared/nameFilter';
 
 const thisYear = new Date().getUTCFullYear();
 const YEARS = Array.from({ length: 100 }, (_, i) => thisYear - i);
@@ -43,6 +44,7 @@ export default function QuickSignup({ onDone, onLater, onSaved, onStep, heading:
     if (!f.year || !f.month) { setError(t.needBirth); return; }
     if (ageFrom(Number(f.year), Number(f.month)) < 13) { setStep('young'); return; } // (nothing sent, nothing stored)
     if (!/^[A-Za-z0-9_]{3,24}$/.test(f.username.trim())) { setError(t.needName); return; }
+    if (checkName(f.username.trim())) { setError(NAME_NOT_ALLOWED); return; }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.email.trim())) { setError(t.needEmail); return; }
     if (f.password.length < 8) { setError(t.needPassword); return; }
     if (!f.terms) { setError(t.needTerms); return; }

@@ -377,7 +377,7 @@ function Board({ rows, trackName, next }) {
         </tbody>
       </table>
       {next && <footer className="board__next">{next}</footer>}
-      {tapped && <MarbleInfo marble={tapped.marble} isBot={tapped.isBot} onClose={() => setTapped(null)} />}
+      {tapped && <MarbleInfo marble={tapped.marble} isBot={tapped.isBot} player={tapped.userId ? { id: tapped.userId, name: handle(tapped.username) } : null} onClose={() => setTapped(null)} />}
     </div>
   );
 }

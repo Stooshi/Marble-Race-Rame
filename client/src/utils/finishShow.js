@@ -93,6 +93,7 @@ export function boardRows({ entries, finishes, official = null, mine = [] }) {
       start: Number.isInteger(e?.lane) ? e.lane + 1 : null,
       marble: e?.marble ?? null,
       username: e?.user?.username ?? null,
+      userId: e?.user?.id ?? null,
       isBot: Boolean(e?.isBot),
       record: Boolean(f.is_track_record),
       pb: Boolean(f.is_personal_best) && !f.is_track_record,

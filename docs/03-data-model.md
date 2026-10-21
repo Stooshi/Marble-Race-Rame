@@ -331,6 +331,9 @@ A player's pass for a season. Granted once when its payment is paid; a full refu
 | `payment_id`, `provider` | The payment that bought it; a pass from a gift code has `provider` `gift-code` and no payment (its `gift_code_redemptions` row points here) |
 | `granted_at`, `revoked_at`, `revoke_reason` | |
 
+### `name_reports`
+"Report this name" (`src/names`, 22 Oct 2026): `reported_user_id`, `reporter_id` (a player or guest), `place` (scoreboard, results, room), `name_shown`, `created_at`; `resolved_at`, `resolved_by`, `resolution` (`renamed`: the back office gave a neutral name; `dismissed`). One open report per reporter and player.
+
 ### `push_devices`, `push_preferences`, `push_sends`
 Push notifications in the apps (`src/push`, switched off).
 - **`push_devices`:** a phone's token for an account (`platform` ios/android, `token` unique: it moves to whoever logged in on that phone last, `app_id`, `app_version`, `created_at`, `last_seen_at`; `disabled_at`/`disabled_why` when Apple or Google says the token is dead). Deleted on log out on that phone and when the account is deleted.

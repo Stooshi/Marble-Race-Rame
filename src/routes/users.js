@@ -15,6 +15,8 @@ const unsubscribe = require('../email/unsubscribe');
 const account = require('../account');
 
 const seasons = require('../seasons');
+const names = require('../names');
+const rateLimit = require('express-rate-limit');
 const router = express.Router();
 
 const STATS_COLUMNS = 'races_played, wins, podiums, best_win_time_ms, avg_position, coins_won, best_split_ms, best_finish_time_ms';
@@ -92,7 +94,10 @@ router.patch('/me', requireAuth, async (req, res) => {
   const params = [req.user.id];
   const set = (column, value) => { params.push(value); sets.push(`${column} = $${params.length}`); };
 
-  if ('display_name' in body) set('display_name', body.display_name);
+  if ('display_name' in body) {
+    await names.assertAllowed({ display_name: body.display_name });
+    set('display_name', body.display_name);
+  }
   if ('avatar_url' in body) set('avatar_url', body.avatar_url);
   // News by email: yes or no, with its history (the back office's consent log).
   if ('marketing_opt_in' in body) {
@@ -258,6 +263,19 @@ router.get('/leaderboard', async (req, res) => {
 });
 
 /** GET /api/users/:id — public profile */
+// (A player can report at most 30 names an hour.)
+const reportLimiter = rateLimit({ windowMs: 60 * 60 * 1000, limit: config.isTest ? 1000 : 30, keyGenerator: (req) => `u:${req.user.id}`, standardHeaders: 'draft-8', legacyHeaders: false, message: { error: 'Thanks: that is a lot of reports. Try again in an hour.' } });
+
+/**
+ * POST /api/users/:id/report-name { where: 'scoreboard'|'results'|'room', name? } — "Report this name"
+ * (src/names). Logged-in players and guests; once per player while open. → { reported: true }
+ */
+router.post('/:id/report-name', requireAuth, reportLimiter, async (req, res) => {
+  const id = assertUuid(req.params.id);
+  const body = validate(req.body ?? {}, { where: { type: 'enum', values: names.WHERE }, name: { type: 'string', max: 64 } });
+  res.json(await names.report(db, { reporterId: req.user.id, userId: id, where: body.where, nameShown: body.name }));
+});
+
 router.get('/:id', async (req, res) => {
   const id = assertUuid(req.params.id);
   const { rows } = await db.query(

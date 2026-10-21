@@ -6,6 +6,7 @@ import { useAsync } from '../../hooks/useAsync';
 import { ITEM } from '../../shared/marbles';
 import MarbleBadge from '../marbles/MarbleBadge';
 import { handle } from '../../shared/playerName';
+import ReportName from '../../components/ReportName';
 
 // The season comes from the server (a season in its seasons table that is on or ended last, or the
 // numbered one in economy.json): without one there is no "This season" board and no season label.
@@ -69,7 +70,7 @@ export default function ScoresPage() {
               ) : (
                 <tr key={r.key} className={r.me ? 'is-me' : undefined}>
                   <td style={{ color: MEDAL[r.rank] ?? 'var(--ms-text)', fontWeight: 800 }}>{r.rank}</td>
-                  <td className="ms-scores__player">{handle(r.username)}{r.me ? ' (you)' : ''}</td>
+                  <td className="ms-scores__player">{handle(r.username)}{r.me ? ' (you)' : <ReportName userId={r.userId} name={handle(r.username)} where="scoreboard" compact />}</td>
                   <td>
                     <span className="ms-row" style={{ gap: 8, flexWrap: 'nowrap' }}>
                       {r.shooter?.item ? <MarbleBadge slug={r.shooter.item} size={22} still /> : <MarbleBadge marble={r.shooter?.original} size={22} still />}

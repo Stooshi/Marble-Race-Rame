@@ -2,6 +2,7 @@
 
 const crypto = require('crypto');
 const express = require('express');
+const names = require('../names');
 const bcrypt = require('bcryptjs');
 const rateLimit = require('express-rate-limit');
 const config = require('../config');
@@ -100,6 +101,7 @@ router.post('/register', signupLimiter, async (req, res) => {
   const body = validate(req.body, registerSchema);
   const { ageGroup, birthMonth } = ageOf(body);
   refuseUnder13(ageGroup);
+  await names.assertAllowed({ username: body.username, display_name: body.display_name });
   const hash = await bcrypt.hash(body.password, config.auth.bcryptRounds);
   try {
     const { rows } = await db.query(
@@ -153,6 +155,7 @@ router.post('/claim', requireAuth, signupLimiter, async (req, res) => {
   const body = validate(req.body, registerSchema);
   const { ageGroup, birthMonth } = ageOf(body);
   refuseUnder13(ageGroup);
+  await names.assertAllowed({ username: body.username });
   const hash = await bcrypt.hash(body.password, config.auth.bcryptRounds);
   try {
     const { rows } = await db.query(

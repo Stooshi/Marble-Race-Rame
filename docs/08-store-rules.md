@@ -60,7 +60,7 @@ What the stores' rules ask of Marble Spins, checked against the code on 21 Octob
 | **Gambling, simulated gambling, loot boxes** | OK | Coin entry fees are off (14 Oct decision), there is no betting, no random paid items, and coins can't be cashed out or traded. |
 | **Real-money gambling, contests** | OK | None. Giveaways are run by us outside the app. |
 | **Spam and minimum functionality** | OK | A full game, bundled in the app, not a web view of the website. |
-| **User-generated content** | OK, needs Moses | Only the player name is visible to others (scoreboards, rooms). No chat, no uploads shown to other players. Names can be changed in the back office; there is no automatic name filter yet. |
+| **User-generated content** (Apple 1.2: filter, report, act) | OK (22 Oct) | Only the player name is visible to others (scoreboards, race results, rooms). No chat, no uploads shown to other players. **Filter:** offensive names are refused when chosen or changed (English and 11 more languages, leetspeak, separators; `client/src/shared/nameFilter.js`). **Report:** "Report this name" (⚑) on scoreboards and race results and on the tapped-marble card. **Act:** the back office's Name reports page renames (PlayerNNNN) or dismisses, audited, and lists older names the filter would block. Apple 1.2's "block abusive users" fits a chat app; here a player can't contact anyone, and the back office can suspend an account. |
 
 ## Target audience (both stores)
 
@@ -78,7 +78,7 @@ Under-13s can play as guests, but nothing is aimed at them: no account, no purch
 | In-app controls: parental controls | No |
 | In-app controls: age assurance | No (we ask the birth year and month, but don't verify it) |
 | Unrestricted web access | No (all links stay inside the app; social links are hidden in the apps) |
-| User-generated content | No (only a player name; see Needs Moses) |
+| User-generated content | No: the only free text is the player name, filtered when chosen, reportable and moderated (Moses, 22 Oct). If App Review disagrees, answer Yes: the filter, reports and moderation are what Apple 1.2 asks for, and the rating stays low |
 | Social media | No |
 | Messaging and chat | No |
 | Advertising | No |
@@ -145,12 +145,12 @@ Tracking: **No**. No data used for tracking. No third-party advertising or analy
 
 ## Needs Moses
 
-1. **Target audience:** confirm 13–15, 16–17, 18+ on Google Play and no Kids Category on Apple, and keep the store texts and graphics neutral (never "for kids", no "all ages" in the listing). Optionally change the Help answer "Marble Spins is for all ages" to "Anyone can race as a guest; saving an account is for 13 and older."
+1. ~~**Target audience:**~~ confirmed by Moses 22 Oct: 13–15, 16–17, 18+ on Google Play and no Kids Category on Apple, and keep the store texts and graphics neutral (never "for kids", no "all ages" in the listing). Optionally change the Help answer "Marble Spins is for all ages" to "Anyone can race as a guest; saving an account is for 13 and older."
 2. **Store forms:** enter the age-rating, App Privacy and Data safety answers above; the deletion URL https://marblespins.com/help/how-do-i-delete-my-account; the privacy policy https://marblespins.com/legal#privacy (remove the legal page's DRAFT banner first).
 3. **Review notes and demo account:** a saved demo account for Apple and Google, "guests can play without an account", the native features (4.2), and how the reviewer can see the pass before 28 Nov (tester account, sandbox).
-4. **Placeholders:** fill "[2 working days]" and "[Live once email is switched on.]" in the Help Centre (and "[coming at launch]" on the website) before review.
+4. **Placeholders:** "[2 working days]" filled (22 Oct). "[Live once email is switched on.]" stays until Brevo is on (Moses): if email isn't on by submission, reviewers will see that bracket in the Help Centre.
 5. **Deletion by message:** confirm "within one month" for deletions asked through the contact form, and that support handles them in the back office (Players → delete).
-6. **Player names:** decide on an automatic filter for offensive names (today only a back-office rename). Without it, the "user-generated content: No" answer leans on names being the only free text.
+6. ~~**Player names:**~~ done 22 Oct: the name filter, "Report this name" and the back-office Name reports page.
 7. **iPad:** screenshots and a test on an iPad (the app runs on iPad).
 8. **Giveaways:** if one is ever announced inside the app, add its official rules in the app with "Apple is not a sponsor".
 9. **Project doc:** the Help answer texts in the project doc `claude/help-faq-draft.md` differ now for the deletion answer and the in-app buying answers; update the draft if it stays the source.
