@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect, useLayoutEffect } from 'react';
-import { Link, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
+import { Link, Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import ErrorBoundary from './components/ErrorBoundary';
 import SiteHeader from './site/SiteHeader';
 import SiteFooter from './site/SiteFooter';
@@ -31,8 +31,6 @@ import CookiesPage from './site/pages/CookiesPage';
 import { TrackPage, TracksPage } from './site/pages/TrackPages';
 import ConsentManager from './site/consent/ConsentManager';
 import { applyMeta, metaFor } from './site/pageMeta';
-import Home from './pages/Home';
-import Dashboard from './pages/Dashboard';
 import Race from './pages/Race';
 import Results from './pages/Results';
 import { Spinner } from './components/Status';
@@ -57,7 +55,7 @@ const AdminApp = lazy(() => importOrReload(() => import('./admin/AdminApp')));
 
 export default function App() {
   const { pathname } = useLocation();
-  const { isAuthenticated, refreshUser } = useAuth();
+  const { isAuthenticated, loading: authLoading, refreshUser } = useAuth();
   // Android: a Google Play purchase the server hasn't confirmed yet (app closed mid-purchase, a
   // pending payment that completed) is sent again once the player is logged in; coins are added once.
   useEffect(() => {
@@ -88,8 +86,9 @@ export default function App() {
         <ErrorBoundary resetKey={pathname}>
         <Routes>
           <Route path="/" element={isAuthenticated ? <HomeHub /> : <LandingPage />} />
-          <Route path="/home" element={isAuthenticated ? <HomeHub /> : <Home />} />
-          <Route path="/lobby" element={<Home />} />
+          {/* (The first version's lobby, dashboard and profile pages: their places are taken by /home, /play/… and /scores.) */}
+          <Route path="/home" element={isAuthenticated ? <HomeHub /> : authLoading ? null : <Navigate to="/" replace />} />
+          <Route path="/lobby" element={<Navigate to="/home" replace />} />
           <Route path="/play/friends" element={<FriendsStep />} />
           <Route path="/play/track" element={<TrackStep />} />
           <Route path="/play/shooter" element={<ShooterStep />} />
@@ -117,8 +116,8 @@ export default function App() {
           <Route path="/cookies" element={<CookiesPage />} />
           <Route path="/tracks" element={<TracksPage />} />
           <Route path="/tracks/:slug" element={<TrackPage />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/profile/:userId" element={<Dashboard />} />
+          <Route path="/dashboard" element={<Navigate to="/home" replace />} />
+          <Route path="/profile/:userId" element={<Navigate to="/scores" replace />} />
           <Route path="/race/:raceId" element={<Race />} />
           <Route path="/results/:raceId" element={<Results />} />
           <Route

@@ -15,7 +15,7 @@ export function marbleFacts(marble, isBot = false) {
   }
   if (isBot) return { name: marble?.name ?? 'Computer player', rarity: 'Computer player', colour: 'var(--ms-muted)', shop: null, note: 'A computer player: it fills an empty place so every race is full, and races by the same physics as everyone else.' };
   if (marble?.starter) return { name: marble.name, rarity: marble.code ? `Starter · ${marble.code}` : 'Starter', colour: 'var(--ms-muted)', shop: null, note: "One of this player's own 4 starter marbles: every player gets 4 of their own, each with its own Marble ID." };
-  return { name: marble?.name ?? 'Marble', rarity: cap(marble?.rarity) || 'Plain', colour: 'var(--ms-soft)', shop: '/dashboard', note: 'A plain marble from the shop.' };
+  return { name: marble?.name ?? 'Marble', rarity: cap(marble?.rarity) || 'Plain', colour: 'var(--ms-soft)', shop: '/shop', note: 'A plain marble from the shop.' };
 }
 
 /**

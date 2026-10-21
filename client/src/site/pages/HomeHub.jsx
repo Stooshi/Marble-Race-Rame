@@ -51,7 +51,7 @@ export default function HomeHub() {
               {data?.races?.length ? `NEXT RACE OPEN · ${waiting || data.races.length} ${waiting ? 'players' : 'races'} waiting` : 'START THE NEXT RACE'}
             </span>
             <span className="ms-eyebrow" style={{ color: 'var(--ms-soft)' }}>Track of the day</span>
-            <h1 id="tod-h" className="ms-h1" style={{ fontFamily: 'var(--ms-cond)', fontWeight: 800 }}>{today?.name ?? '[Track]'}</h1>
+            <h1 id="tod-h" className="ms-h1" style={{ fontFamily: 'var(--ms-cond)', fontWeight: 800 }}>{today?.name ?? 'Quick race'}</h1>
             <span style={{ color: 'var(--ms-soft)' }}>{today?.description ?? ''}</span>
           </div>
         </section>

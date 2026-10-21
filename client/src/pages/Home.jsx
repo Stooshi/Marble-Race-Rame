@@ -36,7 +36,7 @@ export default function Home() {
           <h1>20 marbles. Up to 90 seconds. One winner.</h1>
           <p className="lead">
             Pick a marble, choose a track — or let fate pick one — and watch every race unfold live with
-            everyone else. Chase personal bests, beat your halfway splits and climb the leaderboard.
+            everyone else. Chase personal bests, beat your halfway splits and climb the scoreboard.
           </p>
           {isAuthenticated ? (
             <div className="hero__actions">

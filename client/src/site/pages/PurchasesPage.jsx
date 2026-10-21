@@ -89,7 +89,7 @@ export default function PurchasesPage() {
       <div className="ms-page ms-page--narrow">
         <div className="ms-card" style={{ display: 'grid', gap: 12 }}>
           <h1 className="ms-h2">Your purchases</h1>
-          <p className="ms-lede" style={{ margin: 0 }}>Log in to see your coin-pack orders and receipts.</p>
+          <p className="ms-lede" style={{ margin: 0 }}>Log in to see your orders (coin packs and the season pass) and receipts.</p>
           <div className="ms-row"><Link to="/signup?mode=login&next=/purchases" className="ms-btn ms-btn--primary">Log in</Link></div>
         </div>
       </div>

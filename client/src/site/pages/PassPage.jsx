@@ -9,6 +9,7 @@ import { ITEMS, collectionOf } from '../../shared/marbles';
 import MarbleBadge from '../marbles/MarbleBadge';
 import { activatesDay, countdownText, useCountdown } from '../payments/preSale';
 import PassReminder from '../payments/PassReminder';
+import BANNERS from '../../shared/trackBanners.json';
 
 const day = (iso) => new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Stockholm', day: 'numeric', month: 'long', year: 'numeric' }).format(new Date(iso));
 const time = (iso) => new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Stockholm', hour: '2-digit', minute: '2-digit' }).format(new Date(iso));
@@ -130,7 +131,7 @@ export default function PassPage() {
           <span className="ms-pass-feature__k">Every day</span>
           <h2>Track of the Day +{bonus}%</h2>
           <p>Each day one holiday track pays you +{bonus}% race coins on your full-pay races. The bonus doesn't count on the scoreboards.</p>
-          {season.featured && <Link to={`/tracks/${season.featured.slug}`} className="ms-pass-feature__link">Today: {season.featured.slug.replace(/-/g, ' ')}</Link>}
+          {season.featured && <Link to={`/tracks/${season.featured.slug}`} className="ms-pass-feature__link">Today: {BANNERS.banners[season.featured.slug]?.name ?? season.featured.slug.replace(/-/g, ' ')}</Link>}
         </article>
         <article className="ms-pass-feature">
           <span className="ms-pass-feature__k">Yours to keep</span>

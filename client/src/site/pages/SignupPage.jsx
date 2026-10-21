@@ -14,6 +14,8 @@ export default function SignupPage() {
   const navigate = useNavigate();
   const { login, user } = useAuth();
   const guest = Boolean(user?.is_guest);
+  const visitor = !user; // (not even a guest yet: nothing to save, a new account)
+  const [step, setStep] = useState('form');
   const mode = search.get('mode') === 'login' ? 'login' : 'signup';
   const [resetOn, setResetOn] = useState(false);
   useEffect(() => {
@@ -36,7 +38,8 @@ export default function SignupPage() {
       await login(f.login, f.password);
       navigate(next, { replace: true });
     } catch (err) {
-      setError(err.message);
+      // (The server's "Invalid credentials", in plain words.)
+      setError(err.status === 401 || /invalid credentials/i.test(err.message ?? '') ? "That player name or email and password don't match. Check them and try again." : err.message);
       setBusy(false);
     }
   };
@@ -48,9 +51,17 @@ export default function SignupPage() {
       {mode === 'signup' ? (
         <div className="ms-card" style={{ display: 'grid', gap: 12 }}>
           {guest && <span className="ms-pill" style={{ justifySelf: 'start' }}>You're racing as a guest: saving keeps everything you've won</span>}
-          <QuickSignup heading="h1" onDone={() => navigate(next, { replace: true })} onSaved={() => track('sign_up') /* (only to what the player allowed in the cookie banner; no name or email) */} />
-          <Link to="/home" style={{ textAlign: 'center', color: 'var(--ms-soft)' }}>Not now, keep racing as a guest</Link>
-          <button type="button" onClick={swap} className="ms-linkbtn">Already have an account? Log in</button>
+          <QuickSignup
+            heading="h1"
+            {...(visitor && { title: 'Make your free account', sub: 'Your coins, marbles and races are saved to it, on every device.' })}
+            onStep={setStep}
+            onDone={() => navigate(next, { replace: true })}
+            onSaved={() => track('sign_up') /* (only to what the player allowed in the cookie banner; no name or email) */}
+          />
+          {step === 'form' && (visitor
+            ? <Link to="/play/start?quick=1" style={{ textAlign: 'center', color: 'var(--ms-soft)' }}>Not now, play free as a guest</Link>
+            : <Link to="/home" style={{ textAlign: 'center', color: 'var(--ms-soft)' }}>Not now, keep racing as a guest</Link>)}
+          {step === 'form' && <button type="button" onClick={swap} className="ms-linkbtn">Already have an account? Log in</button>}
         </div>
       ) : (
         <form className="ms-card ms-form" onSubmit={submit} noValidate>
@@ -60,8 +71,10 @@ export default function SignupPage() {
           {resetOn && <Link to="/forgot-password" style={{ justifySelf: 'start', color: 'var(--ms-soft)' }}>Forgot your password?</Link>}
           {error && <div className="ms-msg ms-msg--bad" role="alert">{error}</div>}
           <button type="submit" className="ms-btn ms-btn--primary ms-btn--lg" disabled={busy}>{busy ? 'ONE MOMENT…' : 'LOG IN'}</button>
-          <Link to="/home" style={{ textAlign: 'center', color: 'var(--ms-soft)' }}>Not now, keep racing as a guest</Link>
-          <button type="button" onClick={swap} className="ms-linkbtn">New here? Save your marble</button>
+          {visitor
+            ? <Link to="/play/start?quick=1" style={{ textAlign: 'center', color: 'var(--ms-soft)' }}>Not now, play free as a guest</Link>
+            : <Link to="/home" style={{ textAlign: 'center', color: 'var(--ms-soft)' }}>Not now, keep racing as a guest</Link>}
+          <button type="button" onClick={swap} className="ms-linkbtn">{visitor ? 'New here? Make a free account' : 'New here? Save your marble'}</button>
         </form>
       )}
     </div>

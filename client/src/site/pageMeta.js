@@ -16,7 +16,7 @@ const STATIC = {
   '/': { title: 'Marble Spins: live marble races with your friends', description: DEFAULT_DESCRIPTION },
   '/shop': { title: 'Shop: Schoolyard Classics marbles', description: 'Collect the Schoolyard Classics: 10 classic marbles in 5 shades, each with its own Marble ID and certificate. Looks only, never speed.' },
   '/collection': { title: 'Shop: Schoolyard Classics marbles', description: 'Collect the Schoolyard Classics: 10 classic marbles in 5 shades, each with its own Marble ID and certificate. Looks only, never speed.', canonical: '/shop' },
-  '/scores': { title: 'Scoreboards', description: 'This season\'s top racers, ranked by coins earned in races. Money can\'t buy a place on the board.' },
+  '/scores': { title: 'Scoreboards', description: 'The top racers, ranked by coins earned in races. Money can\'t buy a place on the board.' },
   '/help': { title: 'Help Centre', description: 'Answers about races, coins, marbles, buying coins, refunds, friend rooms and your account, and a way to contact Marble Spins support.' },
   '/legal': { title: 'Terms, privacy and contact', description: 'Marble Spins terms of use, terms of sale, privacy policy and contact details.' },
   '/cookies': { title: 'Cookie policy', description: 'What Marble Spins stores in your browser: necessary storage, and statistics and marketing cookies only with your consent.' },

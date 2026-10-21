@@ -82,7 +82,7 @@ export default function SiteHeader() {
         ) : (
           <div className="ms-chips">
             <Link to="/signup?mode=login" className="ms-header__login">Log in</Link>
-            <Link to="/signup" className="ms-btn ms-btn--primary ms-btn--sm"><span className="ms-wide-only">SAVE YOUR MARBLE</span><span className="ms-narrow-only">SIGN UP</span></Link>
+            <Link to="/play/start?quick=1" className="ms-btn ms-btn--primary ms-btn--sm">PLAY FREE</Link>
           </div>
         )}
       </div>

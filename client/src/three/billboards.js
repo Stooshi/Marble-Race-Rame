@@ -30,7 +30,7 @@ const UP = new Vector3(0, 1, 0);
 
 /** Our own promotions, shown until (or unless) the server hands a slot an image. */
 export const PROMOTIONS = [
-  { title: 'MARBLE RACE', line: 'Pick your marble. Join the next race.', bg: ['#1d4ed8', '#0b1f5c'], ink: '#ffffff', accent: '#ffd21f' },
+  { title: 'MARBLE SPINS', line: 'Pick your marble. Join the next race.', bg: ['#1d4ed8', '#0b1f5c'], ink: '#ffffff', accent: '#ffd21f' },
   { title: 'NEW MARBLES', line: 'Fresh colours and finishes every season', bg: ['#e23b3b', '#7a1020'], ink: '#ffffff', accent: '#ffe7a8' },
   { title: 'CLIMB THE LADDER', line: 'Every race counts toward your ranking', bg: ['#0f9d8a', '#05453d'], ink: '#ffffff', accent: '#b6f5e8' },
   { title: 'LIMITED EDITIONS', line: 'Collect them before they roll away', bg: ['#7a3fd0', '#2b0f5c'], ink: '#ffffff', accent: '#ffd21f' },
@@ -45,7 +45,7 @@ export const MARQUEE_PROMOTIONS = [
   { title: 'WIZARD MODE', line: 'STORM THE CASTLE TABLE', glow: '#ffd23f', bg: '#1a2a5c' },
   { title: 'PHANTOM PEAK', line: 'RIDE THE COASTER SERIES', glow: '#3fd8ff', bg: '#0a1426' },
   { title: 'TILT', line: 'THE 1970S DINER TABLE', glow: '#7af2ff', bg: '#0f3a4a' },
-  { title: 'MARBLE RACE', line: 'INSERT MARBLE TO PLAY', glow: '#ffd23f', bg: '#2a0a3a' },
+  { title: 'MARBLE SPINS', line: 'INSERT MARBLE TO PLAY', glow: '#ffd23f', bg: '#2a0a3a' },
 ];
 
 /** Paints a marquee promotion: a dark lit panel, the title in big glowing letters, a row of bulbs top and bottom. */

@@ -178,7 +178,7 @@ function ConfirmEmail() {
   return (
     <section className="ms-card" style={{ display: 'grid', gap: 8 }} aria-labelledby="confirm-h">
       <h2 id="confirm-h" className="ms-h3" style={{ margin: 0 }}>Confirm your email</h2>
-      <span>Your email address isn't confirmed yet. Confirm it to keep your account safe and get a new password if you forget it.</span>
+      <span>Your email address isn't confirmed yet. Confirm it to keep your account safe.</span>
       <div className="ms-row">
         <button type="button" className="ms-btn ms-btn--sm" disabled={state === 'busy' || state === 'sent'} onClick={send}>Send the confirmation link</button>
         {state === 'sent' && <span className="ms-note">Sent: check your inbox.</span>}

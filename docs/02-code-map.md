@@ -323,7 +323,7 @@ Defined in `src/sockets/index.js`. The client may send a JWT in `auth.token`; an
 | Path | Page |
 |---|---|
 | `/` | Landing page (visitors) or `HomeHub` (signed in) |
-| `/home`, `/lobby` | Home hub / lobby |
+| `/home` | Home hub (signed in; a visitor goes to `/`). `/lobby` goes to `/home` (the first version's lobby is retired) |
 | `/play/friends`, `/play/track`, `/play/shooter`, `/play/start` | The race flow (`site/pages/RaceFlow.jsx`) |
 | `/r/:code` | Friend room |
 | `/shop`, `/collection`, `/collection/:design` | Shop |
@@ -340,7 +340,7 @@ Defined in `src/sockets/index.js`. The client may send a JWT in `auth.token`; an
 | `/cookies` | Cookie policy: everything the site stores, by category, and the visitor's choice (`site/pages/CookiesPage.jsx`) |
 | `/tracks`, `/tracks/:slug` | Public track pages: every live track by series; one track's name, series, picture, description and "Race it" (`site/pages/TrackPages.jsx`) |
 | `/help`, `/help/<question-slug>`, `/help#<question-slug>` | Help Centre: every question has its own link (the slug is the question in lowercase with dashes, e.g. `/help#i-forgot-my-password`); `#contact` is the contact form. Linked from the header, footer, Settings, shop, checkout, Purchases, the offline screen, the error box and the 404 page |
-| `/dashboard`, `/profile/:userId` | Dashboard and public profiles |
+| `/dashboard`, `/profile/:userId` | Retired (21 Oct 2026): go to `/home` and `/scores` |
 | `/race/:raceId`, `/results/:raceId` | Live race and results |
 | `/preview/3d`, `/preview/3d/race/:raceId`, `/preview/marbles`, `/preview/marbles/compare`, `/preview/marbles/roll`, `/preview/marbles/northern-lights` (the Northern Lights launch edition's design review: the original `aurora-glass` next to its upgrade `aurora-glow`, now the catalogue's (badge.js `GLOW_STRENGTH` and `SHIMMER`, materials.js's shimmer), drawn with `materials.js` `createCustomLook`), `/preview/marbles/holiday` (the Holiday Season's design review: the season marble's three options and the Winter collection's five designs, `site/marbles/holidayDesigns.js`, with the Snowball before and after on snow; the chosen ones are now in the catalogue (Winter 2026, Winter Solstice). Designs under review race in the dev kit view with `&designs=<key>,<key>`: `three/marbles.js` draws a marble's `customLook`), `/preview/physics`, `/preview/banners` | Preview and check pages (not linked); `/preview/banners`: every track picture as a picker card, for review |
 | `/admin/*` | Back office: Players, Player detail (tabs: Coins, Races, Marbles, Payments, Messages, Security, Emails, Audit), Payments, Support messages (`/admin/support`, `/admin/support/:id`), Economy, Email list, Audit log |

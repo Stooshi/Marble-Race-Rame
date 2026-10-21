@@ -119,7 +119,7 @@ function PublicNext({ raceId, entries, nextRaceId = null }) {
       </p>
       <div className="next-race__actions">
         {action}
-        <Link to="/dashboard" className="btn btn--ghost btn--sm">All races</Link>
+        <Link to="/home" className="btn btn--ghost btn--sm">Back to Race</Link>
       </div>
       {error && <p className="next-race__error">{error}</p>}
     </div>

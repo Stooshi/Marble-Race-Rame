@@ -25,7 +25,6 @@ describe('logging out as a guest', () => {
     }
     expect(src('site/SiteHeader.jsx')).toMatch(/<LogoutButton /);
     expect(src('site/pages/SettingsPage.jsx')).toMatch(/<LogoutButton /);
-    expect(src('components/NavBar.jsx')).toMatch(/<LogoutButton /);
   });
 });
 

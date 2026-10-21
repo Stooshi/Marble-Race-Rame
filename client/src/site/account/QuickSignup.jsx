@@ -16,13 +16,14 @@ const YEARS = Array.from({ length: 100 }, (_, i) => thisYear - i);
  * `onDone()`: the player goes on racing. `onLater()`: closes it. `onSaved()`: right after saving.
  * Used by the save pop-up (SavePrompt) and the sign-up page alike: one form, one age rule.
  */
-export default function QuickSignup({ onDone, onLater, onSaved, heading: H = 'h2' }) {
+export default function QuickSignup({ onDone, onLater, onSaved, onStep, heading: H = 'h2', title = null, sub = null }) {
   const L = browserLang();
   const t = TEXTS[L];
   const { user, claim, register } = useAuth();
   const guest = Boolean(user?.is_guest);
   const [f, setF] = useState({ username: '', email: '', password: '', year: '', month: '', terms: false, news: false });
   const [step, setStep] = useState('form'); // form | confirm | saved | young
+  useEffect(() => { onStep?.(step); }, [step, onStep]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
   const [resent, setResent] = useState(false);
@@ -85,8 +86,8 @@ export default function QuickSignup({ onDone, onLater, onSaved, heading: H = 'h2
   }
   return (
     <form className="ms-form ms-save" onSubmit={submit} noValidate>
-      <H className="ms-save__h">{t.formTitle}</H>
-      <p className="ms-save__p">{t.formSub}</p>
+      <H className="ms-save__h">{title ?? t.formTitle}</H>
+      <p className="ms-save__p">{sub ?? t.formSub}</p>
       <label>{t.name}
         <input value={f.username} onChange={set('username')} autoComplete="username" pattern="[A-Za-z0-9_]{3,24}" required maxLength={24} />
         <span className="ms-note" style={{ fontWeight: 400 }}>{t.nameHint}</span>

@@ -210,7 +210,7 @@ export default function LiveRaceViewer3D({
           </button>
         )}
         <button type="button" aria-pressed={camera === 'overview'} onClick={() => setCamera('overview')}>
-          Whole track
+          <span className="ms-wide-only">Whole track</span><span className="ms-narrow-only">Track</span>
         </button>
         <button type="button" aria-pressed={tv.on} onClick={tv.toggle} title="TV moments: cut to trackside cameras as the marble you follow comes by">
           TV

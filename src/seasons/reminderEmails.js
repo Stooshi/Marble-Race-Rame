@@ -26,7 +26,7 @@ const TEXTS = {
       subject: 'The {pass} is on sale now',
       title: 'The {pass} is on sale',
       intro: 'As you asked, here\'s your reminder: the {pass} is on sale now.',
-      details: 'It activates on {activates} at 00:00 Swedish time: 31 holiday tracks from around the world, a Track of the Day with +50% race coins, and the numbered Winter Solstice marble. One payment, not a subscription.',
+      details: 'It activates on {activates} at 00:00 Swedish time: 31 holiday tracks from around the world, a Track of the Day with +50% race coins on your full-pay races, and the numbered Winter Solstice marble. One payment, not a subscription.',
       button: 'See the pass',
       refund: 'Bought before {activates}? Until the pass activates, you get a full refund if you ask.',
       last: 'This is the one reminder you asked for. We won\'t email you about it again, and we delete your address within 30 days.',

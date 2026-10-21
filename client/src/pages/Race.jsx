@@ -302,7 +302,7 @@ function Lobby({ details, onChange }) {
           <dl className="kv">
             <div><dt>Track</dt><dd>{race.track_name}</dd></div>
             <div><dt>Length</dt><dd>{track ? `${Number(track.length_m)} m` : '—'}</dd></div>
-            <div><dt>Race time</dt><dd>{track?.physics ? 'About 45 seconds' : '90 seconds'}</dd></div>
+            <div><dt>Race time</dt><dd>{track?.physics ? 'About a minute' : '90 seconds'}</dd></div>
             <div><dt>Track record</dt><dd>{trackStats?.record_ms ? `${formatTime(trackStats.record_ms)} (${trackStats.record_marble})` : '—'}</dd></div>
             <div><dt>Best halfway</dt><dd>{formatTime(trackStats?.best_split_ms)}</dd></div>
           </dl>
