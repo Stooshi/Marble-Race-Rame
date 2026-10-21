@@ -8,11 +8,11 @@
  * LOOKS ONLY: built from the track's shape and drawn on the race clock; nothing here is read by the
  * race. Nothing solid: the lights are tiny unlit points hung above the gate and on the arch's beam and
  * posts (outside the channel), the weather is soft points round the camera and the fireworks are
- * points high over the line, so no camera is ever blocked. Two draw calls at most (the lights and the
- * weather share one; the fireworks show only for a few seconds); fewer points on a phone (the quality setting's `lite`).
+ * points high over the line, so no camera is ever blocked. One draw call (the lights, the weather and
+ * the fireworks share one Points object); fewer points on a phone (the quality setting's `lite`).
  */
 import {
-  AdditiveBlending, BufferGeometry, CanvasTexture, Color, Float32BufferAttribute, Group, Points, PointsMaterial, ShaderMaterial, SRGBColorSpace, Vector2, Vector3,
+  AdditiveBlending, BufferGeometry, CanvasTexture, Color, Float32BufferAttribute, Group, Points, ShaderMaterial, SRGBColorSpace, Vector2, Vector3,
 } from 'three';
 import HOLIDAY from '../shared/holidayLayer.json';
 
@@ -68,14 +68,15 @@ void main() {
 }`;
 
 /**
- * One Points object: the string lights (rows of positions, fixed) and the weather ('snow',
- * 'confetti', 'sparkles' or null) falling in a box round the camera.
+ * One Points object: the string lights (rows of positions, fixed), the weather ('snow',
+ * 'confetti', 'sparkles' or null) falling in a box round the camera, and `extra` more points at the
+ * end (the fireworks', from `offset`; hidden far below until used).
  */
-function lightsAndWeather(rows, kind, lite) {
+function lightsAndWeather(rows, kind, lite, extra = 0) {
   const bulbs = rows.flat();
   const L = bulbs.length;
   const W = !kind ? 0 : kind === 'snow' ? (lite ? 450 : 2200) : (lite ? 300 : 1200);
-  const n = L + W;
+  const n = L + W + extra;
   const pos = new Float32Array(n * 3);
   const col = new Float32Array(n * 3);
   const size = new Float32Array(n);
@@ -128,8 +129,8 @@ function lightsAndWeather(rows, kind, lite) {
   };
   update(0, null);
   // (Weather points start far below until the first tick puts them round the camera.)
-  for (let k = 0; k < W; k += 1) g.getAttribute('position').setXYZ(L + k, 0, -1e5, 0);
-  return { object, update, dispose: () => { g.dispose(); material.dispose(); tex.dispose(); } };
+  for (let k = 0; k < W + extra; k += 1) g.getAttribute('position').setXYZ(L + k, 0, -1e5, 0);
+  return { object, geometry: g, offset: L + W, update, dispose: () => { g.dispose(); material.dispose(); tex.dispose(); } };
 }
 
 /** A garland from a to b sagging `sag` metres in the middle, `n` bulbs. */
@@ -146,9 +147,11 @@ function garland(a, b, sag, n) {
  * The winner's fireworks: three quick bursts high over the finish arch, opening one after another as
  * the winner crosses the line (race time), drifting down and fading; hidden before and after.
  */
-function finishFireworks(at, lite) {
-  const BURSTS = 3;
-  const SPARKS = lite ? 60 : 120;
+const BURSTS = 3;
+const sparksOf = (lite) => (lite ? 60 : 120);
+/** g, offset: the shared Points geometry and the first of its BURSTS × sparks points kept for the fireworks. */
+function finishFireworks(g, offset, at, lite) {
+  const SPARKS = sparksOf(lite);
   const LIFE = 1.8;
   const START = [0, 0.45, 0.95]; // seconds after the winner crosses
   const COLOURS = [[1, 0.82, 0.35], [1, 0.4, 0.45], [0.45, 0.8, 1]].map(([r, g, b]) => new Color(r, g, b));
@@ -159,22 +162,21 @@ function finishFireworks(at, lite) {
     const a = k * 2.39996;
     dirs.push([Math.cos(a) * r, y, Math.sin(a) * r]);
   }
-  const g = new BufferGeometry();
-  g.setAttribute('position', new Float32BufferAttribute(new Float32Array(BURSTS * SPARKS * 3), 3));
-  g.setAttribute('color', new Float32BufferAttribute(new Float32Array(BURSTS * SPARKS * 3), 3));
-  const tex = dotTexture();
-  const object = new Points(g, new PointsMaterial({ size: lite ? 1.6 : 1.3, map: tex, vertexColors: true, transparent: true, depthWrite: false, blending: AdditiveBlending, fog: false }));
-  object.name = 'holiday: finish fireworks';
-  object.frustumCulled = false;
-  object.visible = false;
+  const S = g.getAttribute('size');
+  for (let i = 0; i < BURSTS * SPARKS; i += 1) S.setX(offset + i, lite ? 1.6 : 1.3);
+  let shown = false;
   const centres = [new Vector3(-9, 30, 6), new Vector3(8, 34, -4), new Vector3(0, 27, -12)].map((o) => at.clone().add(o));
   /** since: seconds since the winner crossed (negative before). */
   const update = (since) => {
     const live = since >= 0 && since < START[BURSTS - 1] + LIFE;
-    object.visible = live;
-    if (!live) return;
     const P = g.getAttribute('position');
     const C = g.getAttribute('color');
+    if (!live) {
+      if (shown) { for (let i = 0; i < BURSTS * SPARKS; i += 1) P.setXYZ(offset + i, 0, -1e5, 0); P.needsUpdate = true; }
+      shown = false;
+      return;
+    }
+    shown = true;
     for (let b = 0; b < BURSTS; b += 1) {
       const tau = since - START[b];
       const on = tau >= 0 && tau < LIFE;
@@ -183,7 +185,7 @@ function finishFireworks(at, lite) {
       const fade = on ? (1 - t) ** 1.4 : 0;
       for (let k = 0; k < SPARKS; k += 1) {
         const [dx, dy, dz] = dirs[k];
-        const i = b * SPARKS + k;
+        const i = offset + b * SPARKS + k;
         P.setXYZ(i, centres[b].x + dx * radius, centres[b].y + dy * radius - 3 * t * t, centres[b].z + dz * radius);
         const c = COLOURS[(b + (k % 5 === 0 ? 1 : 0)) % COLOURS.length];
         C.setXYZ(i, c.r * fade, c.g * fade, c.b * fade);
@@ -192,7 +194,7 @@ function finishFireworks(at, lite) {
     P.needsUpdate = true;
     C.needsUpdate = true;
   };
-  return { object, update, dispose: () => { g.dispose(); object.material.dispose(); tex.dispose(); } };
+  return { update, dispose: () => {} };
 }
 
 /**
@@ -232,15 +234,13 @@ export function buildHolidayLayer(track, centerline, { half, archH, startHalf, l
     for (let q = 0; q <= n; q += 1) col.push(post.clone().setY(end.pos.y + 1 + ((archH - 1.2) * q) / n));
     rows.push(col);
   }
-  // The lights and the weather (none where the track's own sky already snows): one draw call.
+  // The lights, the weather (none where the track's own sky already snows) and the winner's
+  // fireworks over the finish: one draw call.
   const kind = holiday.weather && !(holiday.weather === 'snow' && precipitation) ? holiday.weather : null;
-  const lw = lightsAndWeather(rows, kind, lite);
+  const lw = lightsAndWeather(rows, kind, lite, BURSTS * sparksOf(lite));
   group.add(lw.object);
   parts.push(lw);
-
-  // The winner's fireworks, over the finish.
-  const fw = finishFireworks(end.pos.clone(), lite);
-  group.add(fw.object);
+  const fw = finishFireworks(lw.geometry, lw.offset, end.pos.clone(), lite);
   parts.push(fw);
 
   return {

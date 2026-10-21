@@ -317,7 +317,7 @@ export class TrackScene {
     // Kit tracks: the finish's pieces drawn as one mesh per material (a few draw calls, not a dozen).
     this.trackGroup.add(track?.physics?.kit ? mergeByMaterial(arch) : arch);
     // Boost pads, speed bumps and obstacles (ice channels with physics.features).
-    this.features = this.channel ? buildTrackFeatures(this.centerline, this.channel, track?.physics?.features, { lite: this.lite, compact: Boolean(track?.physics?.kit) }) : null;
+    this.features = this.channel ? buildTrackFeatures(this.centerline, this.channel, track?.physics?.features, { lite: this.lite, compact: Boolean(track?.physics?.kit), season: Boolean(track?.physics?.kit?.season) }) : null;
     if (this.features) this.trackGroup.add(this.features.group);
     // Track and Field: the tartan's white lane lines, start and finish lines and lane numbers (part of the track's surface).
     if (this.channel && track?.physics?.kit?.athletics) {
