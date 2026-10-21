@@ -2,7 +2,9 @@
  * Website build, step 2 (after `vite build`): the public pages rendered to plain HTML, so Google and
  * link previews (WhatsApp, Facebook, X) read them without running the game, plus sitemap.xml.
  *
- *   /, /shop, /scores, /help, /help/<question>, /legal, /cookies, /tracks, /tracks/<track>
+ *   /, /shop, /scores, /help, /help/<question>, /legal, /cookies, /tracks, /tracks/<track>,
+ *   and the marbles hub (/marbles, /marbles/<section>, /marbles/<section>/<article>) once it is
+ *   switched on (src/shared/marblesHub.json); while it's off, none of its pages are written.
  *
  * Each page is written as dist/<path>.html (Vercel serves it at /<path>: cleanUrls in vercel.json)
  * with its own title, description, canonical link, share picture and, for /help, the FAQ data.
@@ -88,7 +90,7 @@ async function main() {
     build: { ssr: 'src/prerender/entry.jsx', outDir: ssrOut, emptyOutDir: true, rollupOptions: { output: { format: 'es', entryFileNames: 'entry.mjs' } } },
     ssr: { noExternal: true },
   });
-  const { render, metaFor, buildFaq, faqStructuredData, organizationStructuredData, socialLinks, SITE_URL } = await import(pathToFileURL(join(ssrOut, 'entry.mjs')).href);
+  const { render, metaFor, buildFaq, faqStructuredData, organizationStructuredData, socialLinks, SITE_URL, hub } = await import(pathToFileURL(join(ssrOut, 'entry.mjs')).href);
 
   const template = readFileSync(join(dist, 'index.html'), 'utf8');
   writeFileSync(join(dist, 'app-shell.html'), template); // (the plain page, for every other address)
@@ -101,12 +103,13 @@ async function main() {
   const sections = buildFaq({ tracks });
   const faq = sections.flatMap((s) => s.questions);
   const routes = ['/', '/shop', '/scores', '/help', '/legal', '/cookies', '/tracks',
-    ...faq.map((q) => `/help/${q.slug}`), ...tracks.map((t) => `/tracks/${t.slug}`)];
+    ...faq.map((q) => `/help/${q.slug}`), ...tracks.map((t) => `/tracks/${t.slug}`), ...hub.routes()];
 
   const sitemap = [];
   for (const path of routes) {
     const track = path.startsWith('/tracks/') ? tracks.find((t) => `/tracks/${t.slug}` === path) : null;
-    const m = metaFor(path, { track });
+    // (The hub's pages carry their own structured data in the page: Article, BreadcrumbList.)
+    const m = path === '/marbles' || path.startsWith('/marbles/') ? hub.meta(path) : metaFor(path, { track });
     // A track without its own share picture (public/share/tracks/<slug>.jpg) uses its banner.
     if (track && !existsSync(join(dist, 'share', 'tracks', `${track.slug}.jpg`))) m.image = m.image.replace(`/share/tracks/${track.slug}.jpg`, `/tracks/${track.slug}@2x.webp`);
     let html;
@@ -128,7 +131,7 @@ async function main() {
   writeFileSync(join(dist, 'sitemap.xml'), `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${
     sitemap.map((u) => `  <url><loc>${esc(u)}</loc></url>`).join('\n')}\n</urlset>\n`);
   rmSync(ssrOut, { recursive: true, force: true });
-  console.log(`prerender: ${routes.length} pages, ${sitemap.length} in the sitemap (${tracks.length} tracks)`);
+  console.log(`prerender: ${routes.length} pages, ${sitemap.length} in the sitemap (${tracks.length} tracks; marbles hub ${hub.enabled ? `on, ${hub.routes().length} pages` : 'off'})`);
 }
 
 main().then(() => process.exit(0), (e) => { console.error(e); process.exit(1); });

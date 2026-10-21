@@ -14,6 +14,7 @@ import '@fontsource/source-sans-3/700.css';
 import './styles.css';
 import './site/site.css';
 import { reloadOnceForNewCode } from './utils/staleCode';
+import { preloadHub } from './hub/route';
 
 // A code file gone after a new version of the site went live: reload once to pick up the new version.
 window.addEventListener('vite:preloadError', (event) => {
@@ -21,19 +22,25 @@ window.addEventListener('vite:preloadError', (event) => {
 });
 
 const root = document.getElementById('root');
-createRoot(root).render(
-  <StrictMode>
-    <BrowserRouter>
-      <AuthProvider>
-        <App />
-      </AuthProvider>
-    </BrowserRouter>
-  </StrictMode>,
-);
+function start() {
+  createRoot(root).render(
+    <StrictMode>
+      <BrowserRouter>
+        <AuthProvider>
+          <App />
+        </AuthProvider>
+      </BrowserRouter>
+    </StrictMode>,
+  );
 
-// The pre-rendered copy of the page (scripts/prerender.mjs) is replaced by the app: once the app has
-// drawn, make sure no copy is left and nothing stays hidden.
-requestAnimationFrame(() => requestAnimationFrame(() => {
-  root.querySelectorAll(':scope > [data-ms-prerender]').forEach((el) => el.remove());
-  document.documentElement.removeAttribute('data-ms-shell');
-}));
+  // The pre-rendered copy of the page (scripts/prerender.mjs) is replaced by the app: once the app has
+  // drawn, make sure no copy is left and nothing stays hidden.
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    root.querySelectorAll(':scope > [data-ms-prerender]').forEach((el) => el.remove());
+    document.documentElement.removeAttribute('data-ms-shell');
+  }));
+}
+// On a marbles hub address its code is loaded first, so the page is drawn at once (src/hub/route.jsx);
+// anywhere else the app starts straight away, as before.
+const hubLoading = preloadHub(window.location.pathname);
+if (hubLoading) hubLoading.finally(start); else start();

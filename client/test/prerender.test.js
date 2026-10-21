@@ -34,6 +34,10 @@ it("the site's own addresses get the app (vercel.json), any other a real 404: wi
   const app = readFileSync(join(__dirname, '..', 'src', 'App.jsx'), 'utf8');
   const firsts = new Set([...app.matchAll(/path="\/([^/":*]+)/g)].map((m) => m[1]));
   firsts.add('admin');
+  // (The marbles hub is the exception: every one of its pages is a pre-rendered file, served as it is,
+  // and any other /marbles address must be a real 404. While it is off there is no file at all.)
+  firsts.delete('marbles');
+  expect(vercel.rewrites.some((r) => r.source.includes('marbles'))).toBe(false);
   const covered = (seg) => vercel.rewrites.some((r) => new RegExp(`^${r.source.replace(/:rest\*$/, '.*').replace(/\/\(/g, '/(?:')}$`).test(`/${seg}`) || new RegExp(`^${r.source.replace(/:rest\*$/, '.*').replace(/\/\(/g, '/(?:')}$`).test(`/${seg}/x`));
   for (const seg of firsts) expect(covered(seg), `/${seg}`).toBe(true);
   // Anything else: Vercel serves dist/404.html with HTTP 404 (a real 404, not a "soft" one), noindex.

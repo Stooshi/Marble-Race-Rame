@@ -35,6 +35,7 @@ import Race from './pages/Race';
 import Results from './pages/Results';
 import { Spinner } from './components/Status';
 import { importOrReload } from './utils/staleCode';
+import MarblesHubRoute from './hub/route';
 import { useSoundUnlock } from './sound/settings';
 import { SavePromptProvider } from './site/account/SavePrompt';
 import ConfirmEmailPage from './site/account/ConfirmEmailPage';
@@ -116,6 +117,8 @@ export default function App() {
           <Route path="/cookies" element={<CookiesPage />} />
           <Route path="/tracks" element={<TracksPage />} />
           <Route path="/tracks/:slug" element={<TrackPage />} />
+          {/* The marbles knowledge hub: a 404 until src/shared/marblesHub.json switches it on (src/hub/route.jsx). */}
+          <Route path="/marbles/*" element={<MarblesHubRoute NotFound={NotFound} />} />
           <Route path="/dashboard" element={<Navigate to="/home" replace />} />
           <Route path="/profile/:userId" element={<Navigate to="/scores" replace />} />
           <Route path="/race/:raceId" element={<Race />} />
