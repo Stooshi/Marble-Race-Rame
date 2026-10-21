@@ -1141,3 +1141,49 @@ CREATE TABLE IF NOT EXISTS gift_code_redemptions (
     UNIQUE (code_id, user_id)
 );
 CREATE INDEX IF NOT EXISTS idx_gift_code_redemptions_user ON gift_code_redemptions (user_id, redeemed_at);
+
+-- ---------------------------------------------------------------------------
+-- Push notifications in the apps (21 Oct 2026, src/push): built switched off (the apps don't ask
+-- until client/src/shared/push.json is on; the server sends nothing until PUSH_SENDING=on and the
+-- Firebase / Apple keys are set).
+--   push_devices: a phone's push token (Firebase Cloud Messaging on Android, APNs on iPhone) for an
+--     account; app_id tells the iPhone test app (com.marblespins.app.dev, APNs sandbox) from the store one.
+--   push_preferences: the player's switches (Settings → Notifications). Season news (the pass on
+--     sale, the season starting) is marketing: off until the player turns it on, and never for guests
+--     or under-13s. Friend room invites: on. The daily goal reminder: off.
+--   push_sends: what was sent to whom, once per message key (e.g. 'pass-sale:holiday-2026').
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS push_devices (
+    id            uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id       uuid        NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    platform      varchar(8)  NOT NULL CHECK (platform IN ('ios', 'android')),
+    token         text        NOT NULL UNIQUE,
+    app_id        varchar(64),
+    app_version   varchar(16),
+    created_at    timestamptz NOT NULL DEFAULT now(),
+    last_seen_at  timestamptz NOT NULL DEFAULT now(),
+    disabled_at   timestamptz,
+    disabled_why  varchar(64)
+);
+CREATE INDEX IF NOT EXISTS idx_push_devices_user ON push_devices (user_id) WHERE disabled_at IS NULL;
+
+CREATE TABLE IF NOT EXISTS push_preferences (
+    user_id       uuid        PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+    room_invites  boolean     NOT NULL DEFAULT true,
+    season_news   boolean     NOT NULL DEFAULT false,
+    daily_goal    boolean     NOT NULL DEFAULT false,
+    season_news_at timestamptz,
+    updated_at    timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS push_sends (
+    id            bigserial   PRIMARY KEY,
+    user_id       uuid        NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    kind          varchar(24) NOT NULL,
+    key           varchar(96) NOT NULL,
+    devices       smallint    NOT NULL DEFAULT 0,
+    delivered     smallint    NOT NULL DEFAULT 0,
+    sent_at       timestamptz NOT NULL DEFAULT now(),
+    UNIQUE (user_id, key)
+);
+CREATE INDEX IF NOT EXISTS idx_push_sends_kind ON push_sends (kind, sent_at);

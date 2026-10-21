@@ -331,6 +331,12 @@ A player's pass for a season. Granted once when its payment is paid; a full refu
 | `payment_id`, `provider` | The payment that bought it; a pass from a gift code has `provider` `gift-code` and no payment (its `gift_code_redemptions` row points here) |
 | `granted_at`, `revoked_at`, `revoke_reason` | |
 
+### `push_devices`, `push_preferences`, `push_sends`
+Push notifications in the apps (`src/push`, switched off).
+- **`push_devices`:** a phone's token for an account (`platform` ios/android, `token` unique: it moves to whoever logged in on that phone last, `app_id`, `app_version`, `created_at`, `last_seen_at`; `disabled_at`/`disabled_why` when Apple or Google says the token is dead). Deleted on log out on that phone and when the account is deleted.
+- **`push_preferences`:** the player's switches: `room_invites` (default on), `season_news` (marketing; default off; `season_news_at` when turned on; never used for guests or under-13s), `daily_goal` (default off). No row = the defaults.
+- **`push_sends`:** one row per player and message key (`pass-sale:<season>`, `season-start:<season>`, `daily-goal:<day>`, `room-invite:<code>:<host>:<10-minute slot>`), with how many phones and how many got it. The unique key makes each message go once.
+
 ### `gift_codes`
 Gift codes made in the back office (`src/giftCodes`, 21 Oct 2026) for creators, campaigns and giveaways. **Redeeming is switched off** until `client/src/shared/giftCodes.json` `enabled` is true.
 

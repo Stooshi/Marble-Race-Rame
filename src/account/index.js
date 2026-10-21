@@ -6,7 +6,7 @@
  *   exportData(userId)        everything stored about the player, as one JSON document
  *   deleteAccount(client, …)  deletes the account by anonymising it:
  *     - the person is removed: name, email, password, shown name, picture, settings, age group,
- *       email answers, IP addresses (security log), support messages (with their replies) and admin
+ *       email answers, IP addresses (security log), push tokens and switches, support messages (with their replies) and admin
  *       logins are wiped or deleted; the
  *       marble's own label is cleared; rooms they host are closed; every login stops at once;
  *     - what isn't about the person stays, under a name like deleted_3f2a91c07b4e: race results
@@ -30,7 +30,7 @@ async function exportData(db, userId) {
        FROM users WHERE id = $1 AND deleted_at IS NULL`,
   );
   if (!account) return null;
-  const [stats, emailAnswers, cookieAnswers, ledger, collection, shooter, look, startingMarbles, races, days, payments, rooms, security, support, supportReplies, passes, badges, passReminders, giftCodes] = await Promise.all([
+  const [stats, emailAnswers, cookieAnswers, ledger, collection, shooter, look, startingMarbles, races, days, payments, rooms, security, support, supportReplies, passes, badges, passReminders, giftCodes, pushDevices, pushPrefs] = await Promise.all([
     one('SELECT * FROM user_stats WHERE user_id = $1'),
     all('SELECT consent, source, created_at FROM email_consents WHERE user_id = $1 ORDER BY created_at'),
     all('SELECT version, statistics, marketing, decided_at FROM cookie_consents WHERE user_id = $1 ORDER BY created_at'),
@@ -64,6 +64,8 @@ async function exportData(db, userId) {
           ORDER BY created_at`),
     all(`SELECT g.code, g.kind, r.coins, g.season_key, r.redeemed_at FROM gift_code_redemptions r JOIN gift_codes g ON g.id = r.code_id
           WHERE r.user_id = $1 ORDER BY r.redeemed_at`),
+    all(`SELECT platform, app_version, '…' || right(token, 8) AS token_ends, created_at, last_seen_at, disabled_at FROM push_devices WHERE user_id = $1 ORDER BY created_at`),
+    one('SELECT room_invites, season_news, daily_goal, season_news_at, updated_at FROM push_preferences WHERE user_id = $1'),
   ]);
   return {
     about: 'Everything Marble Spins stores about your account. Passwords are stored only as a one-way hash and are not included. IP addresses are kept for security and fraud checks for at most 90 days, then only the country.',
@@ -79,6 +81,7 @@ async function exportData(db, userId) {
     payments,
     seasonPasses: passes,
     giftCodesRedeemed: giftCodes,
+    pushNotifications: { switches: pushPrefs, devices: pushDevices },
     passReminders,
     badges,
     friendRoomsHosted: rooms,
@@ -120,6 +123,8 @@ async function deleteAccount(client, userId, { by = 'player', reason = null } = 
   await client.query('DELETE FROM email_consents WHERE user_id = $1', [userId]);
   await client.query('DELETE FROM cookie_consents WHERE user_id = $1', [userId]);
   await client.query('DELETE FROM security_events WHERE user_id = $1', [userId]);
+  await client.query('DELETE FROM push_devices WHERE user_id = $1', [userId]);
+  await client.query('DELETE FROM push_preferences WHERE user_id = $1', [userId]);
   await client.query('DELETE FROM admin_sessions WHERE user_id = $1', [userId]);
   await client.query('DELETE FROM admin_2fa WHERE user_id = $1', [userId]);
   await client.query('UPDATE marble_appearances SET label = NULL WHERE user_id = $1', [userId]);

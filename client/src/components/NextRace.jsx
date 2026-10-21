@@ -4,6 +4,7 @@ import { api } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import MarbleBall from './MarbleBall';
 import { useSavePrompt } from '../site/account/SavePrompt';
+import { PushAsk } from '../site/account/PushSettings';
 
 const clockText = (ms) => {
   const s = Math.ceil(ms / 1000);
@@ -18,8 +19,13 @@ const clockText = (ms) => {
  * (live, the server announces it); otherwise it is looked up once.
  */
 export default function NextRace({ raceId, entries, nextRaceId = null, roomCode = null }) {
-  if (roomCode) return <RoomNext code={roomCode} />;
-  return <PublicNext raceId={raceId} entries={entries} nextRaceId={nextRaceId} />;
+  // (In the apps, once switched on: after the first finished race, the notifications question.)
+  return (
+    <>
+      {roomCode ? <RoomNext code={roomCode} /> : <PublicNext raceId={raceId} entries={entries} nextRaceId={nextRaceId} />}
+      <PushAsk />
+    </>
+  );
 }
 
 /** A friend room's race: the room's next race is already set up with everyone in it; the host starts it. */

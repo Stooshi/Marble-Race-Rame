@@ -188,6 +188,31 @@ To turn email off again, remove `BREVO_API_KEY` and restart.
 
 **Support emails.** Contact-form messages go to support@marblespins.com (the company's address in `client/src/shared/company.json`; `SUPPORT_EMAIL` on Railway overrides it). With Brevo on, every new message is emailed there, with a link to it in the back office; replying to that email goes straight to the player (but isn't logged in the back office, so prefer replying there). Replies written in the back office are emailed to the player from `EMAIL_FROM`, with `SUPPORT_EMAIL` as the reply-to address. Without Brevo, messages and replies are still saved; the back office says a reply wasn't emailed.
 
+## Push notifications (apps): setting up and switching on
+
+Built and **switched off twice**: the apps don't ask until `client/src/shared/push.json` has `"enabled": true` (needs a new app build in the stores), and the server sends nothing until `PUSH_SENDING=on` on Railway (until then it logs `[push] DRY RUN …`). Do the accounts first, then test with the test apps, then switch on.
+
+**1. Firebase (Android), about 15 minutes:**
+1. Go to console.firebase.google.com → **Add project** → name "Marble Spins" → Google Analytics: **off** (the apps use no analytics) → Create.
+2. In the project: **Add app → Android** → package name `com.marblespins.app` → nickname "Marble Spins Android" → Register. **Download `google-services.json`** and put it in `client/android/app/` (it holds no secrets; commit it). Skip the SDK steps (the plugin has them).
+3. Project settings (gear) → **Cloud Messaging**: check "Firebase Cloud Messaging API (V1)" says **Enabled** (if not, click its menu → Manage API in Google Cloud Console → Enable).
+4. Project settings → **Service accounts** → **Generate new private key** → a JSON file downloads. Put its whole contents in Railway as `FCM_SERVICE_ACCOUNT` (Railway → server service → Variables). Keep the file in your password manager, then delete the download. Never paste it in chat or docs.
+
+**2. Apple (iPhone), about 15 minutes, once the Apple Developer account exists:**
+1. developer.apple.com → Account → **Certificates, Identifiers & Profiles → Identifiers** → `com.marblespins.app` (and `com.marblespins.app.dev`) → tick **Push Notifications** → Save.
+2. **Keys** → **+** → name "Marble Spins push" → tick **Apple Push Notifications service (APNs)** → Configure: Environment **Sandbox & Production**, Key Restriction **Team Scoped** → Continue → Register → **Download** the `AuthKey_XXXXXXXXXX.p8` (only once!). Note the **Key ID** (10 characters) and your **Team ID** (top right, or Membership).
+3. Railway: `APNS_KEY` = the .p8 file's text (open it in TextEdit, copy all, including the BEGIN/END lines), `APNS_KEY_ID`, `APNS_TEAM_ID`. Keep the .p8 in your password manager.
+4. Xcode: open `client/ios/App/App.xcworkspace` (or `App.xcodeproj`) → target **App** → **Signing & Capabilities** → check **Push Notifications** is listed (the entitlement file is already there; with automatic signing Xcode adds the capability to your app id).
+
+**3. Test, then switch on:**
+1. Set `"enabled": true` in `client/src/shared/push.json` on a test branch, build the test apps (APP-TESTING.md), finish a race: the question appears; say yes; the phone asks.
+2. Railway: `PUSH_SENDING=on` → redeploy → the log says `[push] sending ON; Android keys set, iPhone keys set`.
+3. Turn on the daily reminder in the test app's Settings → Notifications; or host a room on the website and **Invite** the test account (it must have raced in a room with you): the phone gets it.
+4. When it works: push the `push.json` change to Main, build the store apps with it (a new version), and keep `PUSH_SENDING=on`.
+- **Season news** goes by itself: within 6 hours after the pass sale opens (28 Nov 00:00) and after the season starts (1 Dec 00:00), to saved accounts that turned it on. Nothing to do on the night.
+- **Turn everything off at once:** remove `PUSH_SENDING` (or set it to anything else) and redeploy.
+- **Privacy:** the store forms (App Privacy, Data safety) must list the push token as "Device ID / other identifiers… App functionality"; see `docs/08-store-rules.md` when it exists.
+
 ## Gift codes (back office)
 
 **Switched off for players** until `client/src/shared/giftCodes.json` has `"enabled": true`; switching on = change it, push to Main (Vercel builds the website) **and deploy the server** (it reads the same file). Before switching on, the database needs the two new tables (`gift_codes`, `gift_code_redemptions`): the server makes them by itself when it starts after the deploy (the `[db-setup]` lines in its log). Codes can be made before that and work once it's on.

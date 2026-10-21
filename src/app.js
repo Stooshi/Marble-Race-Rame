@@ -43,6 +43,7 @@ function createApp() {
   app.use('/api/scoreboard', require('./routes/scoreboard'));
   app.use('/api/seasons', require('./routes/seasons'));
   app.use('/api/gift-codes', require('./routes/giftCodes'));
+  app.use('/api/push', require('./routes/push'));
   app.use('/api/economy', require('./routes/economy'));
   app.use('/api/appearance', require('./routes/appearance'));
   app.use('/api/physics', require('./routes/physics'));

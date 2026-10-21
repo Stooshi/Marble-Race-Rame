@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { api, getStoredToken, storeToken } from '../api/client';
 import { getSocket } from '../api/socket';
+import { forgetPush } from '../app/push';
 
 const AuthContext = createContext(null);
 
@@ -16,6 +17,8 @@ export function AuthProvider({ children }) {
   }, []);
 
   const logout = useCallback(() => {
+    // (In the apps: this phone stops getting the account's notifications; sent before the token goes.)
+    forgetPush();
     storeToken(null);
     setToken(null);
     setUser(null);

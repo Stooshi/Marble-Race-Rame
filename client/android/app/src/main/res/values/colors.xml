@@ -5,4 +5,5 @@
     <color name="colorPrimary">#0E1320</color>
     <color name="colorPrimaryDark">#0E1320</color>
     <color name="colorAccent">#FFD21F</color>
+    <color name="notification_accent">#FFD21F</color>
 </resources>

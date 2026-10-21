@@ -207,6 +207,13 @@ A season (the first: **Holiday Season 2026**, `holiday-2026`, 1 Dec 2026 00:00 t
 - **What the website says during the season** (Moses, 21 Oct 2026): "Free to play — holiday tracks need the Holiday Pass" replaces "Every race is free" from 1 Dec to 7 Jan (`client/src/shared/holidayWording.js`; the pre-rendered pages get it from the season-start rebuild). The pass's featured track is called the **Holiday Track of the Day** everywhere (the signed-in home's own daily pick stays "Track of the day").
 - **The season marble** comes with the pass ("Kinds of collection" above).
 
+## Push notifications (in the apps; switched off until launch)
+
+- **Asked only after the first finished race**, never when the app first opens: our own question first ("Get a ping when a friend wants to race?"), and the phone's own dialog only after a yes. "Not now" isn't asked again; the player can turn them on in Settings → Notifications.
+- **The messages:** a friend invites you to their room (on by default), the daily goal reminder at 17:00 UTC if today's goal isn't done (off by default), and **season news**: the season pass on sale (28 Nov) and the season starting (1 Dec). Season news is marketing: **off until the player turns it on** (a box, unticked, under the first question, or the switch in Settings), and **never for guests or under-13s**, whatever is stored.
+- **Room invites** go only from a room's host to players who raced in a friend room with them in the last 30 days, at most one per friend and room every 10 minutes. The host never learns whether it reached a phone.
+- Each message goes once (per season, per day, per invite). Logging out on a phone stops its notifications; deleting the account deletes the tokens and switches.
+
 ## Age and accounts
 
 - **Birth year and month at sign-up** (no day; since 20 Oct 2026): the age group (under 13, 13–17, 18+) is worked out from them, counting the birth month as not yet reached.

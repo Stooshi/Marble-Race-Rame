@@ -6,6 +6,7 @@ import { useAuth } from '../../context/AuthContext';
 import { api } from '../../api/client';
 import { activatesDay } from '../payments/preSale';
 import { giftCodesOn } from './RedeemPage';
+import { PushSettings } from '../account/PushSettings';
 
 const day = (t) => (t ? new Date(t).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : null);
 
@@ -153,6 +154,7 @@ export default function SettingsPage() {
       {user && <span style={{ color: 'var(--ms-soft)' }}>@{user.username}{user.is_guest ? ' · guest' : ` · ${user.email}`}</span>}
       {user && !user.is_guest && !user.email_verified_at && <ConfirmEmail />}
       <SeasonPasses />
+      <PushSettings />
       <NewsByEmail />
       <section className="ms-card" style={{ display: 'grid', gap: 6 }} aria-labelledby="buy-h">
         <h2 id="buy-h" className="ms-h3" style={{ margin: 0 }}>Purchases</h2>

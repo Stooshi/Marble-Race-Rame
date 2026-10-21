@@ -6,6 +6,40 @@ import { useAuth } from '../../context/AuthContext';
 import MarbleBadge from '../marbles/MarbleBadge';
 import { SITE_URL } from '../canonical';
 import { useRacer, useTracks } from './RaceFlow';
+import pushSwitch from '../../shared/push.json';
+
+/**
+ * The host invites friends with a notification on their phone (once push is switched on,
+ * src/shared/push.json): players who raced in a friend room with them in the last 30 days.
+ * Whether a phone gets it is up to the friend's own switches; the host only sees "Invited".
+ */
+function PushInvites({ code }) {
+  const [friends, setFriends] = useState(null);
+  const [done, setDone] = useState({});
+  useEffect(() => {
+    if (!pushSwitch.enabled) return;
+    api.roomInvitable(code).then((r) => setFriends(r.pushOn ? r.friends : null)).catch(() => {});
+  }, [code]);
+  if (!friends?.length) return null;
+  const invite = async (f) => {
+    setDone((d) => ({ ...d, [f.userId]: 'busy' }));
+    try { await api.roomInvite(code, f.userId); setDone((d) => ({ ...d, [f.userId]: 'sent' })); } catch { setDone((d) => ({ ...d, [f.userId]: 'failed' })); }
+  };
+  return (
+    <div style={{ display: 'grid', gap: 6, width: '100%' }}>
+      <b>Raced with you before</b>
+      {friends.map((f) => (
+        <div key={f.userId} className="ms-row" style={{ justifyContent: 'space-between' }}>
+          <span>{f.name}</span>
+          <button type="button" className="ms-btn ms-btn--sm" disabled={Boolean(done[f.userId])} onClick={() => invite(f)}>
+            {done[f.userId] === 'sent' ? 'Invited' : done[f.userId] === 'failed' ? 'Try later' : 'Invite'}
+          </button>
+        </div>
+      ))}
+      <p className="ms-note">They get a notification in the Marble Spins app, if they have it switched on.</p>
+    </div>
+  );
+}
 
 /**
  * A friend room (/r/CODE): anyone with the link is in. A friend without an
@@ -253,6 +287,7 @@ export default function RoomPage() {
           </div>
           {qr && <img src={qr} alt={`QR code for room ${code}`} width={180} height={180} style={{ borderRadius: 12, background: '#fff' }} />}
           <p className="ms-note">Friends open the link or scan the code: no account needed, up to {view.room.size} players. The room stays open for two hours after the last race.</p>
+          {me?.isHost && open && <PushInvites code={code} />}
         </section>
       </div>
     </div>

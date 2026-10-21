@@ -12,6 +12,10 @@
  *   POST /api/rooms/:code/remove       host: { user_id } takes a player out of the waiting race
  *   POST /api/rooms/:code/start        host: start the race (empty places fill with CPU players)
  *   POST /api/rooms/:code/close        host: close the room
+ *   GET  /api/rooms/:code/invitable    host: friends to invite (who raced in a friend room with them in the last
+ *                                      30 days) → { friends: [{ userId, name }], pushOn }
+ *   POST /api/rooms/:code/invite       host: { user_id } a push to that friend's phones (src/push; their switch
+ *                                      decides; at most one per friend and room every 10 minutes)
  *
  * A room's races are ordinary races (races.room_id) that never show in the public
  * lists and never start by themselves. When one finishes, the next is set up at
@@ -283,6 +287,34 @@ router.post('/:code/start', requireAuth, async (req, res) => {
   await raceManager.start(raceId, req.user);
   emitRoom(code);
   res.status(202).json(await roomView(code, req.user));
+});
+
+const pushNotes = require('../push');
+const pushSwitch = require('../../client/src/shared/push.json');
+const invitesSent = new Map(); // host id → times of their invites in the last hour (at most 30)
+
+/** GET /api/rooms/:code/invitable */
+router.get('/:code/invitable', requireAuth, async (req, res) => {
+  const room = await db.withTransaction((client) => lockRoom(client, req.params.code));
+  assertOpen(room);
+  assertHost(room, req.user);
+  res.json({ friends: pushSwitch.enabled ? await pushNotes.invitable(db, req.user.id) : [], pushOn: pushSwitch.enabled === true });
+});
+
+/** POST /api/rooms/:code/invite { user_id } */
+router.post('/:code/invite', requireAuth, async (req, res) => {
+  const body = validate(req.body ?? {}, { user_id: { type: 'uuid', required: true } });
+  if (!pushSwitch.enabled) throw notFound('Invites are not available yet');
+  const room = await db.withTransaction((client) => lockRoom(client, req.params.code));
+  assertOpen(room);
+  assertHost(room, req.user);
+  const recent = (invitesSent.get(req.user.id) ?? []).filter((t) => t > Date.now() - 3600_000);
+  if (recent.length >= 30) throw new HttpError(429, 'That\'s a lot of invites. Try again in a while.');
+  invitesSent.set(req.user.id, [...recent, Date.now()]);
+  const r = await pushNotes.inviteToRoom(db, { host: req.user, hostName: nameOf(req.user), room, userId: body.user_id });
+  if (r.why === 'not-a-room-friend') throw forbidden('You can invite players you have raced with in a friend room');
+  // (Whether it reached a phone isn't told: their switches are their own business.)
+  res.json({ invited: true });
 });
 
 /** POST /api/rooms/:code/close */

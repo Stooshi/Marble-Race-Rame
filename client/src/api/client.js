@@ -110,6 +110,13 @@ export const api = {
   appleAccount: () => request('/payments/apple/account'),
   appleVerify: (body) => request('/payments/apple/verify', { method: 'POST', body }),
   myOrders: () => request('/payments/mine'),
+  // Push notifications in the apps (src/push on the server).
+  pushSettings: () => request('/push/settings'),
+  setPushSettings: (body) => request('/push/settings', { method: 'PUT', body }),
+  pushRegister: (body) => request('/push/devices', { method: 'POST', body }),
+  pushForget: (token) => request('/push/devices/forget', { method: 'POST', body: { token } }),
+  roomInvitable: (code) => request(`/rooms/${encodeURIComponent(code)}/invitable`),
+  roomInvite: (code, userId) => request(`/rooms/${encodeURIComponent(code)}/invite`, { method: 'POST', body: { user_id: userId } }),
   // Gift codes (src/giftCodes on the server; off until shared/giftCodes.json is switched on).
   redeemCode: (code) => request('/gift-codes/redeem', { method: 'POST', body: { code } }),
   myGiftCodes: () => request('/gift-codes/mine'),

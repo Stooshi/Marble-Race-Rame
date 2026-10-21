@@ -36,6 +36,7 @@ import Results from './pages/Results';
 import { Spinner } from './components/Status';
 import { importOrReload } from './utils/staleCode';
 import MarblesHubRoute from './hub/route';
+import { startPush } from './app/push';
 import { useSoundUnlock } from './sound/settings';
 import { SavePromptProvider } from './site/account/SavePrompt';
 import ConfirmEmailPage from './site/account/ConfirmEmailPage';
@@ -55,11 +56,16 @@ const PhysicsPreview = lazy(() => importOrReload(() => import('./pages/PhysicsPr
 // The back office (/admin): its own chunk, never linked from the site; the server checks every request.
 const AdminApp = lazy(() => importOrReload(() => import('./admin/AdminApp')));
 
+// (The router's navigate, for a tapped notification: set on every draw.)
+const navigateRef = { current: null };
+
 export default function App() {
   const { pathname } = useLocation();
   const { isAuthenticated, loading: authLoading, refreshUser } = useAuth();
   // Android: a Google Play purchase the server hasn't confirmed yet (app closed mid-purchase, a
   // pending payment that completed) is sent again once the player is logged in; coins are added once.
+  // In the apps, once switched on: register this phone for notifications again if it was allowed before.
+  useEffect(() => { if (isAuthenticated) startPush({ navigate: (url) => navigateRef.current?.(url) }); }, [isAuthenticated]);
   useEffect(() => {
     if (!isAuthenticated) return;
     resumeStorePurchases().then((n) => { if (n) refreshUser?.(); });
@@ -69,6 +75,7 @@ export default function App() {
   // effect, so it runs before the pages' own (a track's page, the not-found page) and they win.
   useLayoutEffect(() => { applyMeta(metaFor(pathname)); }, [pathname]);
   const navigate = useNavigate();
+  navigateRef.current = navigate;
   // In the iPhone and Android apps: splash, status bar, back button, sound in the background.
   useEffect(() => {
     startNativeShell({ goBack: () => navigate(-1), atHome: () => ['/', '/home'].includes(window.location.pathname) });
