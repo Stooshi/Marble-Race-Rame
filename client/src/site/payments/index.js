@@ -222,6 +222,16 @@ export async function restoreStorePurchases() {
   return n;
 }
 
+/**
+ * The price to show for a product. In the apps only the store's own price (null until the store
+ * answers): never the website's dollar price (App Store 3.1.1 / Google Play Payments: the apps
+ * show and use only their store's purchase). On the website: the website's price label.
+ */
+export function shownPrice(id, webLabel, storePrices = {}, provider = storeProvider()) {
+  if (provider === 'apple' || provider === 'google') return storePrices[id] ?? null;
+  return webLabel;
+}
+
 /** The apps: the products' prices as Google Play or the App Store shows them (local currency) → { [packId]: '49,00 kr' }. */
 export function useStorePrices(packs) {
   const [prices, setPrices] = useState({});

@@ -7,6 +7,7 @@ import { buildFaq, faqStructuredData } from './faq';
 import { buildIndex, highlight, search, snippet } from './search';
 import ContactForm from './ContactForm';
 import SocialLinks from '../SocialLinks';
+import { nativePlatform } from '../../app/native';
 
 /** **bold** and [placeholder] inside a line of answer text. */
 function Inline({ text }) {
@@ -176,7 +177,8 @@ export default function HelpPage() {
   const hash = realHash || (question ? `#${question}` : '');
   const navigate = useNavigate();
   const { data } = useAsync(() => api.tracks().catch(() => null), [], 'tracks');
-  const sections = useMemo(() => buildFaq({ tracks: data?.tracks }), [data]);
+  // (In an app the answers about buying speak of that app's store only: ./faq.js.)
+  const sections = useMemo(() => buildFaq({ tracks: data?.tracks, platform: nativePlatform() }), [data]);
   const index = useMemo(() => buildIndex(sections), [sections]);
   const [openSet, setOpenSet] = useState(() => new Set());
   const scrolled = useRef(null); // (the hash last scrolled to; null before the first)

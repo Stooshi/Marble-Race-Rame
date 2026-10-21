@@ -13,7 +13,7 @@ import MarbleBadge from '../marbles/MarbleBadge';
 import { editionLine, limitedLine, limitedSale, seasonalLine, seasonalSale, useCollection } from '../marbles/useCollection';
 import { TEASERS } from '../shop/comingSoon';
 import { track } from '../consent/tracking';
-import { useStorePrices } from '../payments';
+import { shownPrice, useStorePrices } from '../payments';
 
 const Turntable = lazy(() => importOrReload(() => import('../marbles/Turntable')));
 
@@ -453,7 +453,7 @@ function CoinPacks() {
           <Link key={p.id} to={isAuthenticated ? `/checkout?pack=${p.id}` : `/signup?next=${encodeURIComponent(`/checkout?pack=${p.id}`)}`} className="ms-mcard" style={{ padding: 18, borderColor: p.popular ? 'var(--ms-yellow)' : undefined }}>
             <span className="ms-coins" style={{ fontSize: '1.8rem' }}>● {p.coins.toLocaleString('en-US')}</span>
             <span style={{ color: 'var(--ms-soft)' }}>coins{p.popular ? ' · most popular' : ''}</span>
-            <span className="ms-price-btn">{storePrices[p.id] ?? p.priceLabel}</span>
+            <span className="ms-price-btn">{shownPrice(p.id, p.priceLabel, storePrices) ?? 'See price'}</span>
           </Link>
         ))}
       </div>

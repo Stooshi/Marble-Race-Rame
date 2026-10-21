@@ -32,7 +32,7 @@ const FAQ = [
   ['Is Marble Spins free?', holidayPassNeeded()
     ? `Yes. ${FREE_TO_PLAY} until 7 January. You can buy extra marble looks in the shop if you want to.`
     : 'Yes. Every race is free and unlimited. You can buy extra marble looks in the shop if you want to.'],
-  ['Do I need to download anything?', 'No. It plays in your browser on phone or computer. Apps for iPhone and Android are on the way.'],
+  ['Do I need to download anything?', 'No. It plays in your browser on phone or computer. Apps for iPhone and Android are on the way.', true],
   ['Can money make my marble faster?', 'Never. Every player\'s marble races at the same level, whatever it looks like: the race itself decides who wins. Purchases only change how it looks.'],
   ['How long is a race?', 'About a minute. Perfect for a quick break, or ten in a row.'],
 ];
@@ -164,7 +164,8 @@ export default function LandingPage() {
       <section id="faq" aria-labelledby="faq-h" className="ms-page ms-page--narrow">
         <h2 id="faq-h" className="ms-landing__h2">Questions</h2>
         <div style={{ display: 'grid', gap: 10 }}>
-          {FAQ.map(([q, a]) => (
+          {/* (The apps leave out "Do I need to download anything?": it speaks about the browser and other platforms.) */}
+          {FAQ.filter(([, , webOnly]) => !(webOnly && isNativeApp())).map(([q, a]) => (
             <details key={q} className="ms-card ms-faq"><summary>{q}</summary><p>{a}</p></details>
           ))}
         </div>

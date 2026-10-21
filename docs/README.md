@@ -11,6 +11,7 @@ This is the starting point for anyone taking over the code, such as a future CTO
 | 5 | [Operations runbook](05-runbook.md) | Deploying, data updates, rollback, backups, the admin 2-step reset, Stripe test/live, app versions and release notes, the Android and iPhone releases, Google Play Billing setup, common problems |
 | 6 | [Decisions log](06-decisions.md) | Key decisions, with the date and the reason for each |
 | 7 | [Known gaps and roadmap](07-gaps-roadmap.md) | What isn't built or isn't finished yet |
+| 8 | [Store rules](08-store-rules.md) | The App Store and Google Play rules checked against the app, account deletion (in the app and the web link), the proposed age-rating, App Privacy and Data safety answers |
 
 **Other documentation in the repository:**
 - `README.md`: the server's REST and socket API reference.

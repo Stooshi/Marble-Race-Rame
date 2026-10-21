@@ -90,9 +90,19 @@ function seasonalAnswer() {
  * The 13 categories with their questions. `tracks`: the live track list ([{ series }]) when the page
  * has it, for the number of tracks and series; without it, the build's live count and series
  * (src/site/trackCount.js); without those either (no server at build time), no numbers at all.
+ * `platform`: 'web' (the website, and the pre-rendered pages), 'ios' or 'android' (inside an app,
+ * from app/native.js). In an app the answers about buying name only that app's store and show no
+ * website price or Stripe (App Store 3.1.1 and 3.1.3, Google Play Payments), and the iPhone app
+ * doesn't name Android or Google Play (App Store 2.3.10). See docs/08-store-rules.md.
  */
-export function buildFaq({ tracks } = {}) {
+export function buildFaq({ tracks, platform = 'web' } = {}) {
   const e = economy;
+  const app = platform === 'ios' || platform === 'android';
+  const ios = platform === 'ios';
+  const STORE = ios ? 'the App Store' : 'Google Play';
+  const STORE_CO = ios ? 'Apple' : 'Google';
+  const ACCOUNT = ios ? 'Apple account' : 'Google account';
+  const APP_REFUND = ios ? 'ask Apple at reportaproblem.apple.com' : 'ask Google in your Google Play order history';
   const live = Array.isArray(tracks) && tracks.length > 0;
   // Rounded down ("80+"), so an answer never goes stale between builds (src/site/trackCount.js).
   const trackCount = roundedTracks(live ? tracks.length : BUILD_TRACK_COUNT); // (null: no count known)
@@ -122,7 +132,9 @@ export function buildFaq({ tracks } = {}) {
       ["What's the difference between a guest and a saved account?",
         "A guest account lives on the device you're using. If you clear your browser, switch phones or log out, a guest account can be lost. Guests are also lost after 90 days away: save your marble to keep it. When you tap **Save your marble**, everything you've won as a guest moves into your saved account, and you can log in anywhere."],
       ['What can I play on?',
-        "Any modern browser on a phone, tablet or computer at marblespins.com. The iPhone and Android apps are [coming at launch]. It's the same game and the same account everywhere."],
+        app
+          ? "This app, or any modern browser on a phone, tablet or computer at marblespins.com. It's the same game and the same account everywhere."
+          : "Any modern browser on a phone, tablet or computer at marblespins.com. The iPhone and Android apps are [coming at launch]. It's the same game and the same account everywhere."],
       ['Is it really free?',
         holidayPassNeeded()
           ? `Yes. ${FREE_TO_PLAY} until ${HOLIDAY.ends}; every other track and every way of earning coins is free. You can buy coins if you want to collect marbles faster, but you never need to, and buying never makes your marble faster.`
@@ -220,19 +232,29 @@ export function buildFaq({ tracks } = {}) {
     ]],
     ['Buying coins', [
       ['How do I buy coins?',
-        'In the shop, choose a coin pack and pay. Coin packs are for saved accounts: playing as a guest, you save your marble first (it takes a minute, and everything you\'ve won comes with you). On the website, payment goes through Stripe, and we email you a confirmation of your order. In the iPhone and Android apps, it goes through Apple or Google.'],
-      ['What do coin packs cost?', [
-        ['table', ['Pack', 'Coins'], ...packRows],
-        'Prices are shown in your local currency, including VAT.',
-      ]],
+        app
+          ? `In the shop, choose a coin pack and pay with ${STORE}. Coin packs are for saved accounts: playing as a guest, you save your marble first (it takes a minute, and everything you've won comes with you). ${STORE_CO} handles the payment and sends you its receipt.`
+          : 'In the shop, choose a coin pack and pay. Coin packs are for saved accounts: playing as a guest, you save your marble first (it takes a minute, and everything you\'ve won comes with you). On the website, payment goes through Stripe, and we email you a confirmation of your order. In the iPhone and Android apps, it goes through Apple or Google.'],
+      ['What do coin packs cost?', app
+        ? `There are ${NUMBER_WORDS[COIN_PACKS.length] ?? COIN_PACKS.length} packs: ${listJoin(COIN_PACKS.map((p) => n(p.coins)))} coins. The shop shows each pack's price in your own currency, VAT included, as ${STORE} sets it.`
+        : [
+          ['table', ['Pack', 'Coins'], ...packRows],
+          'Prices are shown in your local currency, including VAT.',
+        ]],
       ['How can I pay?',
-        'On the website: card, Apple Pay or Google Pay (where available). In the apps: your Apple or Google account.'],
+        app
+          ? `With the payment method saved in your ${ACCOUNT}: ${STORE} handles the payment.`
+          : 'On the website: card, Apple Pay or Google Pay (where available). In the apps: your Apple or Google account.'],
       ['Is my card safe?',
-        'Yes. Payments are handled by Stripe, Apple or Google. We never see or store your card details.'],
+        app
+          ? `Yes. Payments in the app are handled by ${STORE_CO}. We never see or store your card details.`
+          : 'Yes. Payments are handled by Stripe, Apple or Google. We never see or store your card details.'],
       ['Why is the price different for me?',
         "Prices are shown in your own currency and include your country's VAT, so the amount can differ slightly between countries."],
       ['Where do I find my receipt?',
-        'Stripe emails a receipt after each website purchase. You can also see every purchase, with its order number (for example MS-1001), on your **Purchases** page. App purchases appear in your Apple or Google account.'],
+        app
+          ? `${STORE_CO} sends you a receipt, and the purchase is listed in your ${ACCOUNT}. You can also see every purchase, with its order number (for example MS-1001), on your **Purchases** page.`
+          : 'Stripe emails a receipt after each website purchase. You can also see every purchase, with its order number (for example MS-1001), on your **Purchases** page. App purchases appear in your Apple or Google account.'],
       ["I paid but my coins didn't arrive. What do I do?", [
         "Coins are added as soon as the payment is confirmed, usually within seconds. If they haven't arrived after a few minutes:",
         ['ol',
@@ -248,18 +270,22 @@ export function buildFaq({ tracks } = {}) {
         'Coins are digital content delivered straight away. When you buy, you agree that delivery starts immediately and that this ends your 14-day right of withdrawal. We still give refunds where the law requires it, for example if coins weren\'t delivered or something went wrong with the payment. Contact us with your order number.'],
       ['What happens to my coins if I get a refund?',
         "The refunded coins are removed from your wallet. If you've already spent them, your balance goes down to 0."],
-      ['I bought coins in the app. How do I get a refund?', [
-        'Purchases made in the iPhone or Android app are handled by Apple or Google, so request a refund from them directly:',
-        ['ul',
-          '**Apple:** at reportaproblem.apple.com.',
-          '**Google:** in your Google Play order history.'],
-      ]],
+      ['I bought coins in the app. How do I get a refund?', app
+        ? `Purchases made in the app are handled by ${STORE_CO}, so request a refund from them directly: ${APP_REFUND}.`
+        : [
+          'Purchases made in the iPhone or Android app are handled by Apple or Google, so request a refund from them directly:',
+          ['ul',
+            '**Apple:** at reportaproblem.apple.com.',
+            '**Google:** in your Google Play order history.'],
+        ]],
       ['My child bought coins without asking. What can I do?',
         'Contact us with the order number. We handle purchases made by minors without consent case by case.'],
     ]],
     ['Season pass', [
       ["What's in the Holiday Season pass?", [
-        `The **${HOLIDAY.pass}** costs ${HOLIDAY.price} (shown in your local currency, VAT included) and gives you, until the season ends on ${HOLIDAY.ends} at ${HOLIDAY.endTime}:`,
+        app
+          ? `The **${HOLIDAY.pass}** (its price is on the pass page, in your own currency, VAT included) gives you, until the season ends on ${HOLIDAY.ends} at ${HOLIDAY.endTime}:`
+          : `The **${HOLIDAY.pass}** costs ${HOLIDAY.price} (shown in your local currency, VAT included) and gives you, until the season ends on ${HOLIDAY.ends} at ${HOLIDAY.endTime}:`,
         ['ul',
           `all ${HOLIDAY.tracks} holiday tracks from around the world, from ${HOLIDAY.starts};`,
           `the **Holiday Track of the Day** bonus: +${HOLIDAY.bonus}% race coins on the featured track, on your full-pay races (the first 10 of the day);`,
@@ -269,7 +295,11 @@ export function buildFaq({ tracks } = {}) {
       ]],
       ['Can I buy the pass before 1 December?', [
         `Yes. The pass is on sale from **${HOLIDAY.saleStarts}** at 00:00 Swedish time, on the website and in the apps. Bought before the season starts, it's yours straight away but **activates on ${HOLIDAY.starts}** at 00:00 Swedish time: that's when the holiday tracks, the Holiday Track of the Day and holiday rooms open, for every pass holder at once. The pass page shows a countdown, and your account says "activates 1 December" until then.`,
-        `Changed your mind before ${HOLIDAY.starts}? You can withdraw from the purchase for a full refund: on your **Purchases** page, press **Withdraw from this purchase** and confirm (for a pass bought on the website or in the Android app). Bought in the iPhone app? Apple handles that: ask at reportaproblem.apple.com.`,
+        ios
+          ? `Changed your mind before ${HOLIDAY.starts}? A pass bought in this app is refunded by Apple: ask at reportaproblem.apple.com.`
+          : platform === 'android'
+            ? `Changed your mind before ${HOLIDAY.starts}? You can withdraw from the purchase for a full refund: on your **Purchases** page, press **Withdraw from this purchase** and confirm.`
+            : `Changed your mind before ${HOLIDAY.starts}? You can withdraw from the purchase for a full refund: on your **Purchases** page, press **Withdraw from this purchase** and confirm (for a pass bought on the website or in the Android app). Bought in the iPhone app? Apple handles that: ask at reportaproblem.apple.com.`,
       ]],
       ['Can I get a reminder when the pass goes on sale?', [
         `Yes. On the pass page, tap **Remind me**. Logged in, you get a reminder in the game, and an email too if you tick it; without an account, give your email address and tick the box. We first email you a link to confirm your address, and only a confirmed address gets the reminder, once, on ${HOLIDAY.saleStarts}. You can cancel it any time (a link in every email), and we delete your address within 30 days after the sale opens.`,
@@ -281,7 +311,9 @@ export function buildFaq({ tracks } = {}) {
       ['How long does the pass last?',
         `Until the season ends on ${HOLIDAY.ends} at ${HOLIDAY.endTime}. It's sold from ${HOLIDAY.saleStarts} (activating on ${HOLIDAY.starts}) until then, with a countdown in its last week.`],
       ['I bought it on my phone. Does it work on the website?',
-        'Yes. The pass belongs to your account, so it works on the website and in both apps, wherever you log in. Buy it once only: if you already have it, the app shows it as yours.'],
+        app
+          ? 'Yes. The pass belongs to your account, so it works wherever you log in with it, in the app and on the website. Buy it once only: if you already have it, the app shows it as yours.'
+          : 'Yes. The pass belongs to your account, so it works on the website and in both apps, wherever you log in. Buy it once only: if you already have it, the app shows it as yours.'],
       ['Can my friends race the holiday tracks with me?',
         "Yes. In a friend room you host, you can pick a holiday track and everyone in the room races it, with or without a pass. Anyone can also watch holiday races and replays for free."],
       ['What happens when the season ends?', [
@@ -292,12 +324,16 @@ export function buildFaq({ tracks } = {}) {
           "The season's collection is retired and never sold again."],
       ]],
       ['How do I get a refund for the pass?', [
-        `Bought before ${HOLIDAY.starts}? Until the pass activates on ${HOLIDAY.starts}, you can withdraw from it for a full refund with **Withdraw from this purchase** on your **Purchases** page (in the iPhone app, ask Apple).`,
-        "From the day the season starts the pass is digital content you have, so when you buy it you agree that this ends your 14-day right of withdrawal. We still give refunds where the law requires it: contact us with your order number. Bought in an app? Ask Apple (reportaproblem.apple.com) or Google (your Google Play order history).",
+        ios
+          ? 'Bought in this app? Apple handles refunds for App Store purchases: ask at reportaproblem.apple.com.'
+          : `Bought before ${HOLIDAY.starts}? Until the pass activates on ${HOLIDAY.starts}, you can withdraw from it for a full refund with **Withdraw from this purchase** on your **Purchases** page${app ? '' : ' (in the iPhone app, ask Apple)'}.`,
+        app
+          ? `From the day the season starts the pass is digital content you have, so when you buy it you agree that this ends your 14-day right of withdrawal. We still give refunds where the law requires it: ${APP_REFUND}.`
+          : "From the day the season starts the pass is digital content you have, so when you buy it you agree that this ends your 14-day right of withdrawal. We still give refunds where the law requires it: contact us with your order number. Bought in an app? Ask Apple (reportaproblem.apple.com) or Google (your Google Play order history).",
         `A refunded pass is taken back: the holiday tracks lock again until the season ends, and ${HOLIDAY.marble} leaves your Marble Bag.`,
       ]],
-      ['How do I restore my pass on iPhone?',
-        'Log in with the same Marble Spins account, open the pass page and tap **Restore purchases**. A pass you already bought comes back; you are never charged twice.'],
+      ...(platform === 'android' ? [] : [['How do I restore my pass on iPhone?',
+        'Log in with the same Marble Spins account, open the pass page and tap **Restore purchases**. A pass you already bought comes back; you are never charged twice.']]),
     ]],
     ['Friend rooms', [
       ['How do I race with friends?',
@@ -324,14 +360,20 @@ export function buildFaq({ tracks } = {}) {
         'Tap the **speaker** button at the top. You can set music and effects separately, or mute everything. Your choice is remembered.'],
       ['How do I download my data?',
         '**Settings → Download my data.** You get one file with everything we store about you (passwords are never included).'],
+      // (Also the page Google Play's Data safety form links to, for deleting an account without the
+      // app: /help/how-do-i-delete-my-account. It must name the app, give the steps, and say what is
+      // deleted and what is kept, and for how long. docs/08-store-rules.md.)
       ['How do I delete my account?', [
-        "**Settings → Delete my account.** You'll be asked to confirm. When you delete:",
+        `**In ${app ? 'the app' : 'Marble Spins'}:** open **Settings** (tap your @name at the top; as a guest, open your **Marble Bag** and tap **Settings**), then **Delete my account**. Type DELETE (and, for a saved account, your password) to confirm. It works the same ${app ? 'in the app and on the website' : 'on the website and in the apps'}.`,
+        `**Without the app:** log in at marblespins.com, open **Settings** and delete your account there. Can't log in? Send us a message with the contact form, choose **Privacy and your data**, and give your player name and your account's email address. ${company.name}, who runs Marble Spins, deletes the account within one month and tells you when it's done. A guest account has no login, so it can only be deleted on the device it lives on; a guest account not used for 90 days is deleted by itself.`,
+        'There are no subscriptions to cancel first: coin packs and the season pass are one-off payments. When you delete:',
         ['ul',
           "you're logged out everywhere;",
-          'your name, email, settings and IP addresses are removed;',
+          'your name, email, password, settings, notification tokens and IP addresses are removed;',
           "your old race results stay under an anonymous name, so other players' places don't change;",
-          'purchase records are kept because bookkeeping law requires it.'],
+          'purchase records (order number, product, amount and date) are kept for 7 years, as the Swedish Bookkeeping Act requires, without your name or email.'],
         "Deleting can't be undone, and your coins and marbles are lost.",
+        ['contact', 'Contact us'],
       ]],
       ['I forgot my password.',
         "On the log-in page, tap **Forgot your password?** and type your account's email. We email you a link to choose a new password. The link works once, for 60 minutes; if it doesn't arrive, check your spam folder. Choosing a new password logs you out on your other devices. Guest accounts have no password: save your marble to keep it. [Live once email is switched on.]"],
@@ -347,7 +389,9 @@ export function buildFaq({ tracks } = {}) {
           'Buying is optional and never makes a marble faster.',
           'There are no random packs or loot boxes: every purchase shows exactly what you get.',
           'There is no chat.',
-          "You can turn off purchases on your child's phone through Apple's Screen Time or Google Play's parental controls.",
+          ios ? "You can turn off purchases on your child's iPhone or iPad with Screen Time."
+            : platform === 'android' ? "You can turn off purchases on your child's phone with Google Play's parental controls."
+              : "You can turn off purchases on your child's phone through Apple's Screen Time or Google Play's parental controls.",
           'If your child bought something without your consent, contact us.'],
       ]],
     ]],
