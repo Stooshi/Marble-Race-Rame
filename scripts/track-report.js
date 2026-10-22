@@ -132,7 +132,7 @@ async function main() {
     if (!frame.skipped) {
       report.lines.push({
         part: 'Clear track',
-        what: 'The finish camera\'s picture (390×844 and 430×932 phones, 1280×720 computer; following the arrivals and the winner): nothing hanging over the finish covers more than 10%, every finished marble clearly in the picture above the results, none right in front of the lens',
+        what: 'The finish camera\'s picture (390×844 and 430×932 phones, 1280×720 computer; following the arrivals and the winner): nothing hanging over the finish covers more than 10% (after the win, and in the last 5 s before it), every finished marble clearly in the picture above the results, none right in front of the lens',
         value: frame.pass ? 'clear' : frame.problems.join('; '),
         target: 'all clear',
         pass: frame.pass,

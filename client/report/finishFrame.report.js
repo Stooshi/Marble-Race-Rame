@@ -31,6 +31,8 @@ const LOOK_EVERY_MS = 250; // the marbles' check, four times a second
 const SETTLED_MS = 3000;   // a finished marble counts as parked this long after it crossed
 const HIDDEN_EVERY_MS = 1000; // the finished marbles' sight lines, once a second
 const NEAR_M = 90;         // metres round the finish that count
+const BEFORE_MS = 5000;    // the last seconds before the winner crosses, checked too
+const BEFORE_COVER_AT = [4500, 3000, 1500, 250]; // ms before the win: the cover then
 
 it.skipIf(!process.env.REPORT_FINISH)('finish camera: the picture on phones and computers', () => {
   const list = JSON.parse(fs.readFileSync(process.env.REPORT_FINISH, 'utf8'));
@@ -67,14 +69,14 @@ it.skipIf(!process.env.REPORT_FINISH)('finish camera: the picture on phones and 
           const winner = race.results.find((x) => x.finishTimeMs === winnerMs).index;
           for (const follow of ['arriving', winner]) {
             const camera = new PerspectiveCamera(50, s.width / s.height, 0.5, 6000);
-            const scene = Object.assign(Object.create(TrackScene.prototype), { centerline, channel, track, scenery, camera, cameraMode: 'follow' });
+            const scene = Object.assign(Object.create(TrackScene.prototype), { centerline, channel, track, scenery, camera, cameraMode: 'follow', lite });
             scene.main = { camera, cam: new Vector3(), target: new Vector3(), ready: false, leader: null, leaderT: undefined };
             const marbles = [];
             scene.glow = { set() {} };
             scene.marbles = { positionOf: (k) => marbles[k] };
             scene.setCelebration({ index: winner, ms: winnerMs });
             const crossed = new Map();
-            const run = { race: r + 1, screen: s.screen, follow: follow === 'arriving' ? 'the marbles coming home' : 'the winner', worst: { cover: null, lens: null }, hidden: [], looks: 0 };
+            const run = { race: r + 1, screen: s.screen, follow: follow === 'arriving' ? 'the marbles coming home' : 'the winner', worst: { cover: null, lens: null, before: null }, hidden: [], looks: 0, roofless: scene.roofless() };
             for (let t = Math.max(0, winnerMs - 6000); t <= lastMs + 2500; t += STEP_MS) {
               const f = frameAtTime(race.frames, race.tickMs, t);
               layoutMarbles(centerline, f, track.lane_count, null, { channel, out: marbles, crossedAt: crossed });
@@ -83,7 +85,18 @@ it.skipIf(!process.env.REPORT_FINISH)('finish camera: the picture on phones and 
               scene.main.atFinish = true;
               scene.main.holdFinish = follow === 'arriving' && f.p.some((p) => p >= 1);
               scene.updateFollowCamera(marbles[index], f.p[index] ?? 0, STEP_MS / 1000, scene.main);
-              if (t < winnerMs || (t - winnerMs) % LOOK_EVERY_MS !== 0) continue;
+              // The last 5 s before the line (Moses, 22 Oct 2026): what hangs over the finish as the leaders come in
+              // (a canopy that pops away when the finish shot begins, a beam across the picture), and the lens.
+              if (t < winnerMs) {
+                if (t < winnerMs - BEFORE_MS || (winnerMs - t) % LOOK_EVERY_MS !== 0) continue;
+                const coverBefore = BEFORE_COVER_AT.some((m) => Math.abs(winnerMs - m - t) < LOOK_EVERY_MS / 2);
+                const res = finishFrame(centerline, channel, camera, near, { marbles, home: [], parked: [], finished: [], cut: scene.finishCutOn ? scene.finishCut : null, grid: coverBefore ? 24 : 0, pieceAt });
+                run.looks += 1;
+                if (coverBefore && (!run.worst.before || res.cover > run.worst.before.cover)) run.worst.before = { t: t - winnerMs, cover: res.cover, by: res.coverBy };
+                // (The roof popping away: on a screen that cuts it at the finish shot, whether it was in the picture just before.)
+                continue;
+              }
+              if ((t - winnerMs) % LOOK_EVERY_MS !== 0) continue;
               const finished = race.results.filter((x) => Number.isFinite(x.finishTimeMs) && t - x.finishTimeMs >= SETTLED_MS).map((x) => x.index);
               // The cover at a few moments (the camera settles on the finish shot): just after the win, as the winner's moment ends, at the end.
               const coverNow = [winnerMs + 1500, winnerMs + 4500, lastMs + 2000].some((m) => Math.abs(t - m) < LOOK_EVERY_MS / 2);

@@ -4,7 +4,8 @@
  * The finish camera's picture on every track (Moses, 22 Oct 2026): on a 390×844 and a 430×932 phone
  * and a 1280×720 computer, the game's camera driven through the end of a real race (following the
  * marbles coming home, and following the winner). Fails a track where
- *   - anything high over the finish (a roof, a beam, a banner, a board) covers more than 10% of the picture;
+ *   - anything high over the finish (a roof, a beam, a banner, a board) covers more than 10% of the picture,
+ *     after the win or in the last 5 seconds before it (Moses, 22 Oct 2026);
  *   - a finished marble is not clearly in the picture: under the results at the bottom, under the
  *     banner at the top, out of the picture or behind something drawn;
  *   - a finished marble is drawn right in front of the lens: a parked one taller than 7% of the picture's
@@ -45,6 +46,8 @@ function verdict(runs) {
   for (const run of runs) {
     const where = `${run.screen}, following ${run.follow}`;
     if (run.worst.cover && run.worst.cover.cover > 0.1) problems.push(`${where}: ${Math.round(run.worst.cover.cover * 100)}% of the picture covered (${run.worst.cover.by.join(', ')})`);
+    const before = run.worst.before;
+    if (before && before.cover > 0.1) problems.push(`${where}: ${Math.round(before.cover * 100)}% of the picture covered ${(-before.t / 1000).toFixed(1)} s before the win (${before.by.join(', ')})`);
     const lens = run.worst.lens;
     if (lens && lens.over > 1) problems.push(`${where}: a ${lens.parked ? 'parked' : 'finished'} marble right in front of the lens, drawn ${Math.round(lens.size * 100)}% of the picture's height${lens.inBand ? '' : ' (under the results)'}`);
     const { hidden } = run;

@@ -44,6 +44,8 @@ const PHONE_FRAME_MS = 1000 / 60;
 const PHONE_MIN_PIXEL_RATIO = 0.75;
 const FINISH_FROM = 12; // metres short of the line where the big view starts over to the finish shot…
 const FINISH_TO = 6; // …and past it where it is there
+const ROOF_ON_COMPUTERS = false; // (true: computers keep the canopy until the finish shot cuts it away)
+const ROOFLESS_ASPECT = 0.8; // a screen narrower than this (a phone upright) never shows a station's canopy: roofless
 const FINISH_CUT_FROM = 0.3; // how far over to the finish shot the big view is when a station's canopy is cut away
 const FINISH_HOLD = 0.5;     // …and from when it keeps to the finish shot's own spot (not the followed marble's road)
 const SIGHT_EASE = 0.6; // seconds: how gently the follow camera moves back out after coming in to keep its marble in sight
@@ -980,6 +982,17 @@ export class TrackScene {
     await frame();
   }
 
+  /**
+   * No station roof on phones (Moses, 22 Oct 2026, option A): on a phone (the light scenery) or any
+   * tall screen the canopy over a coaster's finish is cut away for the whole race, so it never pops
+   * out of the picture when the finish shot begins, and the camera needn't stay under it. On computers
+   * too while ROOF_ON_COMPUTERS is off: the finish check's last 5 seconds found the canopy covering
+   * 5–8% of a computer's picture just before it was cut away (the same pop). Looks only.
+   */
+  roofless() {
+    return !ROOF_ON_COMPUTERS || Boolean(this.lite) || (this.main?.camera?.aspect ?? 1) < ROOFLESS_ASPECT;
+  }
+
   /** The finish shot's cutaway (a coaster station's canopy), or null: finishCutaway. */
   cutaway() {
     if (this.finishCut === undefined) {
@@ -1159,7 +1172,7 @@ export class TrackScene {
     // A coaster's station canopy: the camera stays under it with its marble, and is never seen through it.
     const st = this.scenery?.userData?.station;
     if (st && !this.stationRoof) this.stationRoof = stationRoof(st);
-    const roof = st ? this.stationRoof : null;
+    const roof = st && !this.roofless() ? this.stationRoof : null;
     // Scenery standing right by the track (a splitter's centrepiece, the start's landmark): never
     // inside it, nor seen through it (clearCheck.js checks the camera keeps CAMERA_CLEAR from it).
     const keepOut = this.scenery?.userData?.cameraKeepOut ?? null;
@@ -1230,7 +1243,8 @@ export class TrackScene {
     }
     const { camera: desired, target, roadTop, clearAbove, level, sight } = this.followPose(at, progress, (rig === this.inset ? INSET_CLOSER : 1) * (rig.push ?? 1), reach, finish);
     // The big view on the finish shot: a coaster station's canopy cut away (the corner view keeps it, see render).
-    const cutting = rig === this.main && finish >= FINISH_CUT_FROM && Boolean(this.cutaway());
+    // (On phones and tall screens the canopy is never drawn: roofless.)
+    const cutting = rig === this.main && (finish >= FINISH_CUT_FROM || this.roofless()) && Boolean(this.cutaway());
     if (rig === this.main) {
       this.finishCutOn = cutting;
       this.finishCut?.set(cutting);
@@ -1323,7 +1337,7 @@ export class TrackScene {
         // would hide the marble itself.)
         const own = (this.marbles.pointers ?? []).filter((p) => p.index === this.insetIndex && p.mesh.visible);
         for (const p of own) p.mesh.visible = false;
-        this.finishCut?.set(false);
+        this.finishCut?.set(this.roofless());
         r.render(this.scene, this.inset.camera);
         this.finishCut?.set(Boolean(this.finishCutOn));
         for (const p of own) p.mesh.visible = true;

@@ -142,3 +142,17 @@ describe("a coaster station's canopy, cut away from the finish shot", () => {
     }
   }, 120_000);
 });
+
+describe('no station roof (Moses, 22 Oct 2026, option A)', () => {
+  const scene = (lite, aspect) => Object.assign(Object.create(TrackScene.prototype), { lite, main: { camera: { aspect } } });
+  it('phones and tall screens never draw the canopy over a coaster finish, nor do computers for now', () => {
+    expect(scene(true, 1.8).roofless()).toBe(true);
+    expect(scene(false, 390 / 844).roofless()).toBe(true);
+    expect(scene(false, 1280 / 720).roofless()).toBe(true); // (ROOF_ON_COMPUTERS off: the last-5-seconds check)
+  });
+  it('the finish check also looks at the last 5 seconds before the win', () => {
+    const report = createRequire(import.meta.url)('node:fs').readFileSync(new URL('../report/finishFrame.report.js', import.meta.url), 'utf8');
+    expect(report).toContain('const BEFORE_MS = 5000;');
+    expect(report).toContain("lite });");
+  });
+});
