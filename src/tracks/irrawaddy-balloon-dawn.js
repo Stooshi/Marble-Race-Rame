@@ -26,6 +26,7 @@ module.exports = track({
     'Its first 20 seconds were the same as Arcade Spins\' (a straight with two pegs, then S-bends: 1.00), so the sandbank is a long gentle drop with three pegs and the S-bends carry two (closest now 0.70). A levee crest out of the tunnel was tried and dropped: the front starting group won too often over it.',
     'Fairness and pace: the slalom drop from three gates at 0.15 to five at 0.2; the last sweep from 90 to 60 degrees, the first from 80 to 65, the spiral from 0.8 to 0.7 of a turn, the last straight from 80 to 65 m.',
     'Looks: the balloons drift low over the plain well ahead of the S-bends, so they fill the sky in a tall frame as the field comes through (they were 40 to 64 m up, out of the follow camera\'s picture); the river a calm grey-blue (it read as sand).',
+    'Looks (the portrait review): the S-bends, the climb to the terrace, the slalom drop and the spiral fly higher (30 to 40 m), so the land under them no longer stands as a big earth wall beside the run down the river (36 s) (looks only; a retune data update).',
   ],
   opening: opening('tunnel-launch', {
     costumes: { block: 'log', slalom: 'river-stake' },
@@ -37,10 +38,10 @@ module.exports = track({
     costumes: { slalom: 'river-stake', peg: 'mooring-pole', swipe: 'fisherman', parked: 'river-ferry' },
     dress: {
       sandbank: { name: 'Down to the sandbank', height: 0, river: 'left' },
-      plainBends: { name: 'Among the balloons', height: 14, river: 'under', overhead: ['hot-air-balloons'] },
-      rise: { name: 'Up to the terrace', height: 0, river: 'right' },
-      slalomDrop: { name: 'Past the temple plain', height: 0, river: 'right', landmarks: [{ name: 'brick-temples', at: 0.5, side: 'left', distance: 220 }] },
-      spin: { name: 'Sandbank spiral', height: 0, river: 'right' },
+      plainBends: { name: 'Among the balloons', height: 30, river: 'under', overhead: ['hot-air-balloons'] },
+      rise: { name: 'Up to the terrace', height: 40, river: 'right' },
+      slalomDrop: { name: 'Past the temple plain', height: 40, river: 'right', landmarks: [{ name: 'brick-temples', at: 0.5, side: 'left', distance: 220 }] },
+      spin: { name: 'Sandbank spiral', height: 40, river: 'right' },
       brakingStraight: { name: 'Run to the hairpin', height: 0, river: 'right' },
       hairpin: { name: 'Fisherman hairpin', height: 0, river: 'right' },
       sweep1: { name: 'Down the river', height: 0, river: 'right', scenery: ['river-palms'] },

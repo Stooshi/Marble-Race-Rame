@@ -348,47 +348,59 @@ function bascule({ s, side, along, parts, lines, spots, groundAt, lite, night, g
   }
 }
 
-/** A suspension bridge across the track: two towers well clear of it, the main cables sagging to the deck. */
+/**
+ * A suspension bridge across the track: two towers close beside it (the nearest spots clear of every stretch, so a
+ * tall portrait frame catches them as the field comes up), a dark steel deck girder high over the track, and the
+ * main cables sagging from tower top to tower top and on out to the anchorages.
+ */
 function suspension({ s, side, along, parts, lines, spots, groundAt, lite, trackTopNear, clear }) {
+  const STEEL = '#46545c';
+  const TOWER = '#7d8f99';
   const reach = 120;
   const top = topAcross(s, side, reach, trackTopNear);
   const deckY = top + SPAN_CLEAR + 3;
-  sbox(parts, reach * 2, 1.8, 14, new Vector3(s.pos.x, deckY, s.pos.z), side, '#8a9a8a');
-  sbox(parts, reach * 2, 0.5, 14.4, new Vector3(s.pos.x, deckY + 1.1, s.pos.z), side, '#5a6a5a');
-  // The towers: at the first spots either side clear of every stretch.
+  // (The deck: a dark girder with a pale road on it and parapet rails, never a flat pale slab against the sky.)
+  sbox(parts, reach * 2, 2.2, 12, new Vector3(s.pos.x, deckY - 0.4, s.pos.z), side, STEEL);
+  sbox(parts, reach * 2, 0.3, 12.4, new Vector3(s.pos.x, deckY + 0.85, s.pos.z), side, '#8c8c84');
+  for (const j of [-6.1, 6.1]) sbox(parts, reach * 2, 1.1, 0.35, s.pos.clone().addScaledVector(along, j).setY(deckY + 1.5), side, STEEL);
+  if (!lite) for (let x = -reach + 6; x < reach; x += 12) for (const j of [-6.1, 6.1]) sbox(parts, 0.5, 2.2, 0.5, s.pos.clone().addScaledVector(side, x).addScaledVector(along, j).setY(deckY - 0.4), side, '#2e383e');
+  // The towers: at the nearest spots either side clear of every stretch.
   const at = [];
   for (const k of [1, -1]) {
-    for (const d of [42, 55, 70, 88]) {
+    for (const d of [22, 27, 33, 40, 48, 58, 70, 88]) {
       const p = s.pos.clone().addScaledVector(side, k * d);
-      if (clear(p.x, p.z, 16)) { at.push({ p, d: k * d }); break; }
+      if (clear(p.x, p.z, 12)) { at.push({ p, d: k * d }); break; }
     }
   }
-  const H = 34;
+  const H = 28;
   for (const { p } of at) {
-    for (const j of [-6, 6]) {
+    // Two legs either side of the deck, three cross beams (the top one an arched portal), a pointed cap on each leg.
+    for (const j of [-7, 7]) {
       const leg = p.clone().addScaledVector(along, j);
-      parts.push(beam(leg.clone().setY(groundAt(leg.x, leg.z) - 1), leg.clone().setY(deckY + H), 2.4, '#6a7a6c'));
+      parts.push(beam(leg.clone().setY(groundAt(leg.x, leg.z) - 1), leg.clone().setY(deckY + H), 3, TOWER));
+      parts.push(piece(new ConeGeometry(2.2, 3, 4), STEEL, new Matrix4().makeTranslation(leg.x, deckY + H + 1.5, leg.z)));
     }
-    for (const y of [deckY + H - 1, deckY + 12]) parts.push(beam(p.clone().addScaledVector(along, -6).setY(y), p.clone().addScaledVector(along, 6).setY(y), 1.6, '#6a7a6c'));
-    spots.push({ x: p.x, z: p.z, r: 12 });
+    for (const y of [deckY + H - 2, deckY + H - 9, deckY - 3]) parts.push(beam(p.clone().addScaledVector(along, -7).setY(y), p.clone().addScaledVector(along, 7).setY(y), 2, TOWER));
+    for (const j of [-1, 1]) parts.push(beam(p.clone().addScaledVector(along, j * 7).setY(deckY + H - 13), p.clone().addScaledVector(along, j * 2).setY(deckY + H - 9), 1.2, TOWER)); // the portal's haunches
+    spots.push({ x: p.x, z: p.z, r: 11 });
   }
   if (at.length < 2) return;
   // The main cables, one each side of the deck, sagging from tower top to tower top, and on out to the anchorages.
   const [A, B] = at[0].d < at[1].d ? [at[0], at[1]] : [at[1], at[0]];
-  for (const j of [-6, 6]) {
+  for (const j of [-6.5, 6.5]) {
     const n = lite ? 10 : 20;
     let prev = null;
     for (let q = 0; q <= n; q += 1) {
       const f = q / n;
       const d = A.d + (B.d - A.d) * f;
-      const p = s.pos.clone().addScaledVector(side, d).addScaledVector(along, j).setY(deckY + 2 + (H - 3) * (2 * f - 1) ** 2);
-      if (prev) parts.push(beam(prev, p, 0.7, '#3a4a3c'));
-      if (q && q < n) lines.push(p.x, p.y, p.z, p.x, deckY + 0.9, p.z);
+      const p = s.pos.clone().addScaledVector(side, d).addScaledVector(along, j).setY(deckY + 3 + (H - 4) * (2 * f - 1) ** 2);
+      if (prev) parts.push(beam(prev, p, 0.9, '#2a3236'));
+      if (q && q < n) lines.push(p.x, p.y, p.z, p.x, deckY + 1.2, p.z);
       prev = p;
     }
     for (const [T, end] of [[A, -reach], [B, reach]]) {
       const head = s.pos.clone().addScaledVector(side, T.d).addScaledVector(along, j).setY(deckY + H - 1);
-      parts.push(beam(head, s.pos.clone().addScaledVector(side, end).addScaledVector(along, j).setY(deckY + 1), 0.7, '#3a4a3c'));
+      parts.push(beam(head, s.pos.clone().addScaledVector(side, end).addScaledVector(along, j).setY(deckY + 1), 0.9, '#2a3236'));
     }
   }
 }
