@@ -376,16 +376,16 @@ export class RaceMarbles {
       let mesh;
       let look = null;
       // (A design still under review, on the dev and preview pages only: { key, look } as the preview pages draw it.)
-      if (e?.marble?.customLook) look = createCustomLook(e.marble.customLook.key, e.marble.customLook.look, { radius: MARBLE_RADIUS, geometry: this.geometry });
+      if (e?.marble?.customLook) look = createCustomLook(e.marble.customLook.key, e.marble.customLook.look, { radius: MARBLE_RADIUS, geometry: this.geometry, quality: 'race' });
       else if (e?.marble?.look) {
         try {
-          look = createMarbleLook(e.marble.look, { radius: MARBLE_RADIUS, geometry: this.geometry });
+          look = createMarbleLook(e.marble.look, { radius: MARBLE_RADIUS, geometry: this.geometry, quality: 'race' });
         } catch {
           look = null; // an unknown look: fall back to the plain marble
         }
       }
       // A plain marble (a starter, an Original, a computer player's): the same marble as its picture.
-      if (!look) look = createPlainLook(e?.marble ?? {}, { radius: MARBLE_RADIUS, geometry: this.geometry });
+      if (!look) look = createPlainLook(e?.marble ?? {}, { radius: MARBLE_RADIUS, geometry: this.geometry, quality: 'race' });
       mesh = look.object;
       if (look.trail) this.group.add(look.trail);
       this.looks.push(look);

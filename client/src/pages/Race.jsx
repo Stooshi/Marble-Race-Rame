@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
+import { Link, Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { api } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { useAsync } from '../hooks/useAsync';
@@ -49,6 +49,21 @@ export default function Race() {
 
   const race = details.data?.race;
   const status = stream.status !== 'connecting' ? stream.status : race?.status;
+  // A solo race opened with ?go=1 (the starting line's START THE RACE): its 3D view is built first,
+  // then this page starts it, so the player always sees the countdown (Moses, 22 Oct 2026).
+  const [search] = useSearchParams();
+  const startsHere = search.get('go') === '1';
+  const started = useRef(false);
+  const startWhenReady = useCallback(() => {
+    if (started.current) return;
+    started.current = true;
+    api.startRace(raceId).catch(() => reload());
+  }, [raceId, reload]);
+
+  // (A track without a 3D view to get ready: started at once.)
+  useEffect(() => {
+    if (startsHere && race?.status === 'lobby' && user && race.created_by === user.id && details.data && !details.data.track?.physics) startWhenReady();
+  }, [startsHere, race?.status, race?.created_by, user, details.data, startWhenReady]);
 
   // A race that finished before we opened the page goes straight to results.
   useEffect(() => {
@@ -73,15 +88,17 @@ export default function Race() {
     }
   }, [stream.status]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // The countdown's beeps, the GO beep on GO (the 3-2-1 above the view).
-  useEffect(() => {
-    if (stream.status === 'countdown' && stream.startsAt) raceCountdown(raceId, stream.startsAt - Date.now());
-  }, [stream.status, stream.startsAt, raceId]);
   // Leaving the race (or moving on to the next one): its music stops.
   useEffect(() => () => raceEnd(raceId), [raceId]);
 
   // Tracks on the new physics (the gate, splitter and catch area live in 3D) open in 3D; 2D stays an option.
   const [view, setView] = useState(null); // null = the track's default
+  // The countdown's beeps, the GO beep on GO (the 3-2-1 above the view). The 3D view times its own,
+  // to the countdown as it shows it.
+  const twoDView = view === '2d' || (view === null && !(stream.meta?.track ?? details.data?.track)?.physics);
+  useEffect(() => {
+    if (twoDView && stream.status === 'countdown' && stream.startsAt) raceCountdown(raceId, stream.startsAt - Date.now());
+  }, [stream.status, stream.startsAt, raceId, twoDView]);
   const myIndexes = useMemo(
     () => (stream.meta?.entries ?? []).filter((e) => e.user?.id && e.user.id === user?.id).map((e) => e.index),
     [stream.meta, user?.id],
@@ -128,13 +145,22 @@ export default function Race() {
   // A friend room's race waits at the start in its room.
   if (status === 'lobby' && race.room_code) return <Navigate to={`/r/${race.room_code}`} replace />;
 
-  if (status === 'lobby') {
+  // The track known before the countdown (the race's own row): the 3D view builds it straight away.
+  const known = details.data?.track;
+  const preload = known?.physics ? {
+    id: known.id, slug: known.slug, name: known.name, length_m: Number(known.length_m), lane_count: known.lane_count,
+    waypoints: known.waypoints, obstacles: known.obstacles, physics: known.physics,
+  } : null;
+  const isCreator = Boolean(user && race.created_by === user.id);
+  const preparing = status === 'lobby' && startsHere && isCreator && Boolean(preload) && view !== '2d';
+
+  if (status === 'lobby' && !preparing) {
     return <div className="page">{header}<Lobby details={details.data} onChange={reload} /></div>;
   }
 
   const meta = stream.meta;
   const finished = status === 'finished';
-  const newPhysics = Boolean(meta?.track?.physics);
+  const newPhysics = Boolean((meta?.track ?? preload)?.physics);
   const shown = view ?? (newPhysics ? '3d' : '2d');
   // The finish show: the official times as marbles cross, then the board with the next race.
   // Skipping to the results: only in a solo race (one real player); a group watches to the end together.
@@ -152,16 +178,20 @@ export default function Race() {
   return (
     <div className="page race-page">
       {header}
-      {status === 'countdown' && <Countdown startsAt={stream.startsAt} grandPrix={Boolean((meta?.track ?? details.data?.track)?.physics?.kit?.grandPrix)} />}
+      {status === 'countdown' && shown === '2d' && <Countdown startsAt={stream.startsAt} grandPrix={Boolean((meta?.track ?? details.data?.track)?.physics?.kit?.grandPrix)} />}
       {meta && newPhysics && (
         <div className="segmented segmented--sm" role="group" aria-label="View">
           <button type="button" aria-pressed={shown === '3d'} onClick={() => setView('3d')}>3D</button>
           <button type="button" aria-pressed={shown === '2d'} onClick={() => setView('2d')}>2D</button>
         </div>
       )}
-      {meta && shown === '3d' ? (
+      {(meta || preparing) && shown === '3d' ? (
         <LiveRaceViewer3D
           meta={meta}
+          track={preload}
+          onPrepared={preparing ? startWhenReady : null}
+          holdBack={stream.holdBack}
+          lagNow={stream.lagNow}
           sample={stream.sample}
           frame={stream.frame}
           startsAt={stream.startsAt}

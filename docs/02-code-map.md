@@ -294,12 +294,12 @@ Defined in `src/sockets/index.js`. The client may send a JWT in `auth.token`; an
   - `billboards.js`.
 - `context/AuthContext.jsx`: the signed-in player, token and socket; login, register, guest, claim, refresh.
 - `hooks/`:
-  - `useRaceStream.js`: live frames, buffered 400 ms behind and interpolated, so motion is smooth;
+  - `useRaceStream.js`: live frames, buffered 400 ms behind and interpolated, so motion is smooth; `holdBack(ms, startsAt)` / `lagNow()`: a view that got ready late plays that far behind the live race (at most 12 s), showing the countdown and the start, then catches up at 1.35× from 1.5 s after the GO as shown (`CATCH_UP`, `holdLag`); until the hold is decided it keeps every frame since the start;
   - `useReplay.js`: playback of a finished race;
   - `useTrackScene.js`: loads the 3D scene and reports failures;
   - `useAsync.js`, `useLobby.js`.
 - `components/`: the race viewers and shared UI:
-  - `LiveRaceViewer3D.jsx`: live 3D race; FPS button, corner view, finish show, skip. On phones (CSS in `styles.css`, "The race on phones"): the camera buttons share the row with short labels (Leader, My marble), the clock hides once the winner is across so it can't sit under the medals or the winner banner, and the "home" list sits bottom right, clear of the corner view;
+  - `LiveRaceViewer3D.jsx`: live 3D race; FPS button, corner view, finish show, skip. **Getting ready (22 Oct 2026):** it builds the track from the `track` prop as soon as the 3D view exists (before the countdown when the page knows it), waits for `TrackScene.whenReady()` (the scenery built, every material compiled), calls `onPrepared()` (the solo race page then starts the race), and once the race's marbles are in and drawn decides the hold (`holdFor`: ready more than 250 ms after the countdown began and less than 8 s past GO), times the beeps to the countdown as shown and draws the countdown (numbers, or the start lights on a Grand Prix) over the view; "Getting the track ready…" until then; the clock and the order show the race as shown while held back. On phones (CSS in `styles.css`, "The race on phones"): the camera buttons share the row with short labels (Leader, My marble), the clock hides once the winner is across so it can't sit under the medals or the winner banner, and the "home" list sits bottom right, clear of the corner view;
   - `RaceReplayViewer.jsx`: 3D replay;
   - `RaceViewer.jsx`: the 2D viewer;
   - `FinishShow.jsx`, `Confetti.jsx`, `StartLights.jsx`, `CornerView.jsx`, `FrameMeter.jsx`, `SceneFailure.jsx`;
@@ -351,7 +351,7 @@ Defined in `src/sockets/index.js`. The client may send a JWT in `auth.token`; an
   - `marbles/materials.js`: the 3D marble material;
   - `marbles/index.js` (`collectionOf`, `isStandard`, `windowOf`: where an item stands by its dates, `passNumber`).
 - `sound/`:
-  - `engine.js` (Web Audio): nothing before the first tap; no music outside races. A race: the start beeps over the 3-2-1 (the last beep on GO), one of 8 race tracks from GO (shuffled rounds, never the previous race's), looping, mixed under the effects; at the finish ceremony the ceremony song instead, looping, fading out after 45 s; silence when the player leaves. The three race sounds as before; pauses in the background.
+  - `engine.js` (Web Audio): nothing before the first tap; no music outside races. A race: the start beeps over the 3-2-1 (the last beep on GO; **only on a running sound clock**, scheduled when it wakes during the countdown, and stopped by the wall clock once their GO beep is over, so a paused clock (Android before a tap) never plays them mid-race; the race sounds are skipped on a paused clock too), one of 8 race tracks from GO (shuffled rounds, never the previous race's), looping, mixed under the effects; at the finish ceremony the ceremony song instead, looping, fading out after 45 s; silence when the player leaves. The three race sounds as before; pauses in the background.
   - `settings.js`: volumes and mute, saved on the device and in the account.
 - `three/`: the 3D renderer (next section).
 - `utils/`: formatting, splits, the 2D track geometry, finish-show timing, confetti, `staleCode.js` (reload after deploy).

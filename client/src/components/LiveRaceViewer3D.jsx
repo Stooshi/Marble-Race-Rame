@@ -13,9 +13,12 @@ import { CEREMONY_PHASES } from '../utils/finishShow';
 import SkipToResults from './SkipToResults';
 import FrameMeter, { useFrameMeter } from './FrameMeter';
 import { useTvMoments } from './tvMomentsSetting';
-import { play as playSound, raceCeremony, raceGo } from '../sound/engine';
+import { play as playSound, raceCeremony, raceCountdown, raceGo } from '../sound/engine';
+import StartLights from './StartLights';
 
 const WHOOSH_GAP_MS = 3500; // an overtaking whoosh at most this often
+const HOLD_FROM_MS = 250;     // the view held back when it gets ready later than this after the countdown began…
+const JOIN_LIVE_AFTER_MS = 8000; // …unless the race is already this far past GO: then it joins live
 
 /**
  * A live race in 3D (tracks on the new physics, e.g. Bobsleigh Run): the
@@ -32,14 +35,64 @@ const NONE = {};
  * `complete` (the race is over), `clock()` (the stream's race clock, running
  * on after the last frame) and `next` (the next-race panel for the board).
  */
+/**
+ * How far to hold the view back when it is ready at `now`: as late as it is after the countdown began
+ * (from HOLD_FROM_MS), unless the race is already JOIN_LIVE_AFTER_MS past GO (then 0: it joins live).
+ * `go`: GO by the wall clock, known only when this page saw the countdown (then the frames from the
+ * start are kept, see useRaceStream).
+ */
+export function holdFor(go, countdownMs, now = Date.now()) {
+  if (!go) return 0;
+  const late = now - (go - countdownMs);
+  return late > HOLD_FROM_MS && now < go + JOIN_LIVE_AFTER_MS ? late : 0;
+}
+
+/**
+ * Getting ready (Moses, 22 Oct 2026: on phones the view was ready only after the countdown): `track`
+ * (the race's track, known before the countdown) is built as soon as the 3D view exists, and
+ * `onPrepared()` is called once its whole world is built and compiled (the solo race then starts its
+ * countdown). When the race's marbles are in and drawn, the view holds itself back
+ * (`holdBack(ms, startsAt)` from useRaceStream) if it got ready after the countdown began, so the
+ * countdown, its beeps and the gates opening always show from the start, and then catches up
+ * (`lagNow()`).
+ */
 export default function LiveRaceViewer3D({
   meta, sample, frame, startsAt, countdownMs = COUNTDOWN_MS, highlight = NOBODY, footer = null,
   finishes = NONE, complete = false, clock = null, next = null, canSkip = false,
+  track = null, onPrepared = null, holdBack = null, lagNow = null,
 }) {
   const { wrapRef, canvasRef, sceneRef, status, failure, fail } = useTrackScene();
   const [camera, setCamera] = useState('follow'); // follow | overview
   const [follow, setFollow] = useState('leader'); // 'leader' or an entry index
   const [built, setBuilt] = useState(false);
+  const [trackReady, setTrackReady] = useState(false);
+  const [ready, setReady] = useState(false); // the race's marbles in and drawn, the hold decided
+  const [shownT, setShownT] = useState(null); // the countdown as shown (whole tenths), for its overlay
+  const [shown, setShown] = useState(null); // the race as shown (its clock and order), when held back
+  const builtSlug = useRef(null);
+  const onPreparedRef = useRef(onPrepared);
+  onPreparedRef.current = onPrepared;
+  const theTrack = meta?.track ?? track;
+
+  // The track first (before the countdown when it is known), its whole world built and compiled.
+  useEffect(() => {
+    const scene = sceneRef.current;
+    if (status !== 'ready' || !scene || !theTrack || builtSlug.current === theTrack.slug) return;
+    try {
+      scene.setTrack(theTrack);
+      builtSlug.current = theTrack.slug;
+    } catch (err) {
+      fail(`building "${theTrack?.name}"`, err);
+      return;
+    }
+    let live = true;
+    scene.whenReady().then(() => {
+      if (!live) return;
+      setTrackReady(true);
+      onPreparedRef.current?.();
+    });
+    return () => { live = false; };
+  }, [status, theTrack?.slug]); // eslint-disable-line react-hooks/exhaustive-deps
   const meter = useFrameMeter();
   const tv = useTvMoments();
   useEffect(() => { sceneRef.current?.setTvMoments(tv.on); }, [tv.on, sceneRef, status]);
@@ -47,16 +100,33 @@ export default function LiveRaceViewer3D({
 
   useEffect(() => {
     const scene = sceneRef.current;
-    if (status !== 'ready' || !scene || !meta) return;
+    if (status !== 'ready' || !scene || !meta || builtSlug.current !== meta.track?.slug) return;
     try {
-      scene.setTrack(meta.track);
       // Live, the starting camera runs over the race's whole countdown (the gate's own is shorter).
       scene.setRace(meta.entries, highlight, [], meta.start && meta.firstFrame ? { ...meta.start, countdownMs, frame: meta.firstFrame } : null);
       setBuilt(true);
     } catch (err) {
       fail(`building the race on "${meta.track?.name}"`, err);
     }
-  }, [status, meta?.raceId, highlight.join(',')]); // the header repeats (countdown, start): build once per race
+  }, [status, meta?.raceId, highlight.join(','), trackReady]); // the header repeats (countdown, start): build once per race
+
+  // Ready: the marbles compiled and drawn too. Hold the view back if that came after the countdown began.
+  useEffect(() => {
+    const scene = sceneRef.current;
+    if (!built || !trackReady || !scene || ready) return undefined;
+    let live = true;
+    scene.whenReady().then(() => {
+      if (!live) return;
+      const go = startRef.current;
+      const lag = holdFor(go, countdownMs);
+      holdBack?.(lag, go);
+      lagRef.current = lagNow;
+      // The countdown's beeps, timed to the countdown as shown (none if it is already over).
+      if (go && meta?.raceId) raceCountdown(meta.raceId, go + lag - Date.now());
+      setReady(true);
+    });
+    return () => { live = false; };
+  }, [built, trackReady, ready, startsAt]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     sceneRef.current?.setCameraMode(camera);
@@ -71,6 +141,7 @@ export default function LiveRaceViewer3D({
   startRef.current = startsAt;
   const firstRef = useRef(meta?.firstFrame);
   firstRef.current = meta?.firstFrame;
+  const lagRef = useRef(null);
   const entryCount = meta?.entries?.length ?? 0;
   const show = useFinishShow({ finishes, count: entryCount, complete, clock });
   // Once the winner's moment has passed, the camera following the leader
@@ -96,8 +167,10 @@ export default function LiveRaceViewer3D({
     setFollow(inset);
   };
   useEffect(() => {
-    if (!built) return undefined;
+    if (!built || !ready) return undefined;
     let raf;
+    let lastShown = null;
+    let lastShownClock = null;
     let lastNow = performance.now();
     let lastT = null;
     const grandPrix = Boolean(meta?.track?.physics?.kit?.grandPrix);
@@ -106,7 +179,14 @@ export default function LiveRaceViewer3D({
       lastNow = now;
       let f = sampleRef.current();
       // (Running BUFFER_MS behind, as the live race itself does, so GO flows straight on into the race.)
-      if (!f && firstRef.current) f = { ...firstRef.current, t: Math.max(-countdownMs, Math.min(0, Date.now() - BUFFER_MS - (startRef.current ?? Date.now()))) };
+      const lag = lagRef.current ? lagRef.current() : 0;
+      if (!f && firstRef.current) f = { ...firstRef.current, t: Math.max(-countdownMs, Math.min(0, Date.now() - BUFFER_MS - lag - (startRef.current ?? Date.now()))) };
+      // The countdown's overlay follows the countdown as shown (tenths: the start lights need them).
+      const tenth = f && f.t < 600 ? Math.floor(f.t / 100) : null;
+      if (tenth !== lastShown) { lastShown = tenth; setShownT(tenth === null ? null : tenth * 100); }
+      // While held back, the clock and the order on screen are the race as shown, not the live stream.
+      if (lag > 0 && f && Math.floor(f.t / 50) !== lastShownClock) { lastShownClock = Math.floor(f.t / 50); setShown({ t: f.t, s: f.s }); }
+      else if (lag === 0 && lastShownClock !== null) { lastShownClock = null; setShown(null); }
       const scene = sceneRef.current;
       // The gates open (GO, as drawn): the pack leaving the gate, and on a Grand Prix the crowd.
       // (Or within its first 1.5 s if the 3D world was still being built at GO.)
@@ -130,7 +210,7 @@ export default function LiveRaceViewer3D({
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [built]);
+  }, [built, ready]);
 
   // The finish ceremony appears: the race music gives way to the ceremony song.
   useEffect(() => {
@@ -138,7 +218,7 @@ export default function LiveRaceViewer3D({
   }, [show.phase, meta?.raceId]);
 
   const entries = meta?.entries ?? [];
-  const standings = frame?.s ?? meta?.firstFrame?.s ?? [];
+  const standings = shown?.s ?? frame?.s ?? meta?.firstFrame?.s ?? [];
 
   // Your own marble overtakes or is overtaken while the camera follows it: a whoosh (now and then).
   const rankRef = useRef(null);
@@ -161,10 +241,18 @@ export default function LiveRaceViewer3D({
       <div className={`preview3d__stage${show.phase !== 'racing' ? ' is-finishing' : ''}`} ref={wrapRef}>
         <canvas ref={canvasRef} className="preview3d__canvas" aria-label="Live race in 3D" />
         {status === 'loading' && <div className="preview3d__overlay"><Spinner label="Loading 3D…" /></div>}
+        {status === 'ready' && !ready && <div className="preview3d__overlay"><Spinner label="Getting the track ready…" /></div>}
+        {ready && shownT !== null && (
+          <div className="replay3d__countdownwrap" aria-live="polite">
+            {theTrack?.physics?.kit?.grandPrix
+              ? <StartLights t={shownT} className="replay3d__lights" />
+              : <span key={shownT >= 0 ? 'go' : Math.ceil(-shownT / 1000)} className={`replay3d__countdown${shownT >= 0 ? ' is-go' : ''}`}>{shownT >= 0 ? 'GO!' : Math.ceil(-shownT / 1000)}</span>}
+          </div>
+        )}
         {status === 'failed' && failure && <SceneFailure failure={failure} />}
-        {built && (
+        {built && ready && (
           <>
-            {show.phase !== 'winner' && <div className="replay3d__clock">{formatTime(Math.max(0, frame?.t ?? 0))}</div>}
+            {show.phase !== 'winner' && <div className="replay3d__clock">{formatTime(Math.max(0, shown?.t ?? frame?.t ?? 0))}</div>}
             {speed !== null && (
               <div className="replay3d__speed" aria-label="Speed of the marble the camera follows">
                 <strong>{Math.round(speed * 3.6)}</strong> km/h

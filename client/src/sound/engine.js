@@ -196,7 +196,27 @@ export function raceCountdown(raceId, msToGo) {
   if (!ctx || settings.muted || settings.effects === 0 || beeps?.raceId === raceId || !(msToGo > 150)) return false;
   const buf = buffers.get(SOUNDS.beeps);
   if (!buf || typeof buf.then === 'function') return false;
-  if (ctx.state === 'suspended') ctx.resume().catch(() => {});
+  const goAt = Date.now() + msToGo;
+  // Only on a running sound clock (Moses, 22 Oct 2026: on Android the beeps played 20–30 s into the
+  // race). A suspended context doesn't advance its clock, so beeps scheduled on it played whenever
+  // it next woke, e.g. at a tap mid-race. Suspended: try to wake it, and schedule only if it wakes
+  // while there is still a countdown to beep over.
+  if (ctx.state !== 'running') {
+    beeps = { raceId, src: null };
+    ctx.resume().then(() => {
+      if (beeps?.raceId !== raceId || beeps.src || ctx.state !== 'running') return;
+      const left = goAt - Date.now();
+      if (left > 150) startBeeps(raceId, buf, left, goAt);
+      else beeps = null;
+    }).catch(() => { if (beeps?.raceId === raceId && !beeps.src) beeps = null; });
+    return false;
+  }
+  startBeeps(raceId, buf, msToGo, goAt);
+  return true;
+}
+
+/** The beeps on the running clock, their GO beep `msToGo` from now; cut off if they would run past their time (the clock paused meanwhile). */
+function startBeeps(raceId, buf, msToGo, goAt) {
   const src = ctx.createBufferSource();
   src.buffer = buf;
   src.connect(fxBus);
@@ -204,7 +224,13 @@ export function raceCountdown(raceId, msToGo) {
   if (wait >= 0) src.start(ctx.currentTime + wait);
   else src.start(0, -wait);
   beeps = { raceId, src };
-  return true;
+  // The beeps end with the GO beep: never later than that (by the wall clock, which a paused sound clock can't hold up).
+  const tailMs = Math.max(0, (buf.duration - BEEPS_GO_S) * 1000) + 250;
+  setTimeout(() => {
+    if (beeps?.src !== src) return;
+    try { src.stop(); } catch { /* (done) */ }
+    beeps = null;
+  }, Math.max(0, goAt + tailMs - Date.now()));
 }
 
 /** GO: this race's track starts (once per race), looping. Fetches the ceremony song meanwhile. */
@@ -271,14 +297,15 @@ function loadSound(name) {
 }
 
 /**
- * Plays a race sound now (if loaded; a sound not ready yet is skipped rather than
- * played late). Returns at once. The music dips under it while it plays.
+ * Plays a race sound now (if loaded and the sound is running; a sound not ready yet is skipped rather
+ * than played late). Returns at once. The music dips under it while it plays.
  */
 export function play(key) {
   if (!ctx || settings.muted || settings.effects === 0) return false;
   const buf = buffers.get(SOUNDS[key] ?? key);
   if (!buf || typeof buf.then === 'function') return false;
-  if (ctx.state === 'suspended') ctx.resume().catch(() => {});
+  // Not on a paused sound clock: it would play whenever the clock next runs (a launch heard mid-race).
+  if (ctx.state !== 'running') { ctx.resume().catch(() => {}); return false; }
   const src = ctx.createBufferSource();
   src.buffer = buf;
   src.connect(fxBus);

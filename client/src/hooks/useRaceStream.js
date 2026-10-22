@@ -15,7 +15,18 @@ import { detectCrossings, lerpFrame } from '../utils/splits';
  * marbles leap forward.
  */
 export const BUFFER_MS = 400; // how far behind the newest frame playback runs: rides out a late frame or two (a patchy phone network) without the marbles stopping
-const KEEP = 40; // frames kept for blending
+const KEEP = 40; // frames kept for blending (more while the view is held back, see below)
+/**
+ * Holding the view back (Moses, 22 Oct 2026: on phones the 3D view was ready only after the countdown,
+ * so players never saw the start). When the view gets ready late, playback runs `lag` ms behind the
+ * live race: the countdown and the gates opening are shown from the start. From 1.5 s after the GO as
+ * shown, it catches up, playing CATCH_UP faster than real time until it is live again.
+ * Looks only: the race itself runs on the server as always.
+ */
+export const CATCH_UP = 0.35; // lag shed per second (the race plays at 1.35× while catching up)
+export const MAX_HOLD_MS = 12000; // never held back further than this
+/** The hold `{ base, decayFrom }` at performance time `now`: base ms, shed at CATCH_UP from decayFrom on. */
+export const holdLag = (h, now) => Math.max(0, h.base - Math.max(0, now - h.decayFrom) * CATCH_UP);
 export function useRaceStream(raceId, { onLobbyUpdate } = {}) {
   const { socket } = useAuth();
   const [status, setStatus] = useState('connecting');
@@ -32,6 +43,8 @@ export function useRaceStream(raceId, { onLobbyUpdate } = {}) {
   const frames = useRef({ prev: null, curr: null, at: 0 });
   // Recent frames, oldest first, and the steady playback clock: race time = now + offset.
   const buffer = useRef({ list: [], offset: null, shown: -Infinity });
+  // The hold: { base, decayFrom } (base ms behind, shed from performance time decayFrom on).
+  const hold = useRef({ base: 0, decayFrom: Infinity, decided: false });
   const splitsRef = useRef({});
   const metaRef = useRef(null);
   metaRef.current = meta;
@@ -60,7 +73,10 @@ export function useRaceStream(raceId, { onLobbyUpdate } = {}) {
     frames.current = { prev: curr, curr: f, at: now };
     const b = buffer.current;
     b.list.push(f);
-    if (b.list.length > KEEP) b.list.shift();
+    // (Enough frames to play from while held back: the last few seconds plus the hold; until the view
+    // has decided its hold, everything it might need.)
+    const keepMs = (hold.current.decided ? hold.current.base : MAX_HOLD_MS) + 3000;
+    while (b.list.length > KEEP && b.list[1].t < f.t - keepMs) b.list.shift();
     // Ease the clock towards what this frame says (never jumping), so network
     // jitter is smoothed out; a big gap (a reconnect, a sleeping tab) resets it.
     const off = f.t - now;
@@ -75,6 +91,7 @@ export function useRaceStream(raceId, { onLobbyUpdate } = {}) {
     if (!raceId) return undefined;
     frames.current = { prev: null, curr: null, at: 0 };
     buffer.current = { list: [], offset: null, shown: -Infinity };
+    hold.current = { base: 0, decayFrom: Infinity, decided: false };
     splitsRef.current = {};
     setSplits({});
     setEvents([]);
@@ -146,15 +163,30 @@ export function useRaceStream(raceId, { onLobbyUpdate } = {}) {
     };
   }, [raceId, socket, ingest, mergeFinishes, takeResults]);
 
+  /** How far the view is held back now (ms; see MAX_HOLD_MS above). */
+  const lagNow = useCallback((now = performance.now()) => holdLag(hold.current, now), []);
+  /**
+   * Hold the view `ms` behind the live race (the 3D view calls it once it is ready): `startsAt`, the
+   * race's GO (wall clock ms). The catching up starts 1.5 s after the GO as shown.
+   */
+  const holdBack = useCallback((ms, startsAt) => {
+    const base = Math.max(0, Math.min(MAX_HOLD_MS, ms || 0));
+    const goShown = (startsAt ?? Date.now()) + base;
+    hold.current = { base, decayFrom: performance.now() + (goShown + 1500 - Date.now()), decided: true };
+  }, []);
+
   /** Interpolated frame for rendering at the current instant (see BUFFER_MS above). */
   const sample = useCallback(() => {
     const b = buffer.current;
     const list = b.list;
     if (!list.length) return null;
     const last = list[list.length - 1];
+    const lag = lagNow();
+    // Held back to before GO: the countdown is still being shown (the caller draws the gate).
+    if (lag > 0 && b.offset !== null && performance.now() + b.offset - BUFFER_MS - lag < 0 && list[0].t <= 200) return null;
     if (list.length === 1 || b.offset === null) return last;
     // Playback time: steady, a little behind the newest frame, never going backwards.
-    let t = performance.now() + b.offset - BUFFER_MS;
+    let t = performance.now() + b.offset - BUFFER_MS - lag;
     t = Math.min(last.t, Math.max(t, b.shown, list[0].t));
     b.shown = t;
     let i = list.length - 2;
@@ -163,7 +195,7 @@ export function useRaceStream(raceId, { onLobbyUpdate } = {}) {
     const c = list[i + 1];
     const span = c.t - a.t || 1;
     return lerpFrame(a, c, Math.min(1, Math.max(0, (t - a.t) / span)));
-  }, []);
+  }, [lagNow]);
 
   /**
    * The race clock (ms) in step with sample(), carrying on at real speed after
@@ -174,8 +206,8 @@ export function useRaceStream(raceId, { onLobbyUpdate } = {}) {
     const b = buffer.current;
     if (!b.list.length) return null;
     if (b.offset === null) return b.list[b.list.length - 1].t;
-    return Math.max(b.shown, performance.now() + b.offset - BUFFER_MS);
-  }, []);
+    return Math.max(b.shown, performance.now() + b.offset - BUFFER_MS - lagNow());
+  }, [lagNow]);
 
-  return { status, meta, startsAt, frame, splits, events, results, finishes, next, error, sample, clock };
+  return { status, meta, startsAt, frame, splits, events, results, finishes, next, error, sample, clock, holdBack, lagNow };
 }

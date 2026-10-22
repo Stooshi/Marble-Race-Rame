@@ -319,6 +319,8 @@ export function StartStep() {
   const [busy, setBusy] = useState(false);
   const [startError, setStartError] = useState(null);
   const grid = useMemo(() => previewShowcase(19, `${trackSlug}-${user?.id}`), [trackSlug, user?.id]);
+  // The race's 3D code fetched while the player is still here, so the race page starts building at once.
+  useEffect(() => { import('../../three/TrackScene').catch(() => {}); }, []); // (a failure here is retried by the race page)
 
   const start = async () => {
     setBusy(true);
@@ -330,9 +332,9 @@ export function StartStep() {
         min_marbles: 20,
         max_marbles: 20,
       });
-      // Solo for now (friend rooms come next): house marbles fill the field and it starts at once.
-      await api.startRace(race.id).catch(() => {});
-      navigate(`/race/${race.id}`);
+      // Solo: house marbles fill the field. The race page builds the track's 3D view first and then
+      // starts it (?go=1), so the countdown is never over before the player sees it (22 Oct 2026).
+      navigate(`/race/${race.id}?go=1`);
     } catch (e) {
       setStartError(e.message);
       setBusy(false);

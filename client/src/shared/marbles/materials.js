@@ -35,6 +35,20 @@ const TEX_H = 128;
 /** The camera-facing picture's size (px square). */
 const VIEW_N = 256;
 /**
+ * How finely a look's textures are painted. 'full' (the shop, the certificate, previews) or 'race':
+ * half the size each way and no supersampling, 8–16 times less painting, for the 20 marbles a race
+ * builds as its countdown begins (Moses, 22 Oct 2026: building them stalled phones for seconds; a
+ * marble in a race is never drawn larger than its race textures). Cached apart (`tag`).
+ */
+const QUALITY = { full: { n: 1, ss: 2, tag: '' }, race: { n: 0.5, ss: 1, tag: '@race' } };
+let Q = QUALITY.full;
+function withQuality(name, fn) {
+  const was = Q;
+  Q = QUALITY[name] ?? QUALITY.full;
+  try { return fn(); } finally { Q = was; }
+}
+const scaled = (size) => Math.max(16, Math.round(size * Q.n));
+/**
  * How fast a marble's pattern may turn on screen, per frame drawn (radians).
  * Up to this it turns exactly with the ball; a faster ball's pattern keeps
  * rolling forwards (same axis, same direction) at this rate. A pattern that
@@ -102,7 +116,9 @@ function makeNoise(rand) {
  * maps it) and returns [r, g, b, a] (sRGB 0–255, a 0–1), or null for nothing.
  * `w`, `h`: a finer texture for a look with tiny details (the Champion's flakes).
  */
-function paintSphere(paint, { w: W = TEX_W, h: H = TEX_H } = {}) {
+function paintSphere(paint, { w: fullW = TEX_W, h: fullH = TEX_H } = {}) {
+  const W = scaled(fullW);
+  const H = scaled(fullH);
   const data = new Uint8Array(W * H * 4);
   const d = new Vector3();
   for (let j = 0; j < H; j += 1) {
@@ -138,9 +154,11 @@ function dataTexture(data, w, h, { wrap = false } = {}) {
  */
 const viewCache = new Map();
 function viewTexture(key, layers, { premultiplied = false } = {}) {
-  if (viewCache.has(key)) return viewCache.get(key);
-  const tex = dataTexture(toBytes(rasterize(layers, VIEW_N), { premultiplied }), VIEW_N, VIEW_N);
-  viewCache.set(key, tex);
+  const k = `${key}${Q.tag}`;
+  if (viewCache.has(k)) return viewCache.get(k);
+  const n = scaled(VIEW_N);
+  const tex = dataTexture(toBytes(rasterize(layers, n, { ss: Q.ss }), { premultiplied }), n, n);
+  viewCache.set(k, tex);
   return tex;
 }
 /** The GLOSS shine, the same over every marble (premultiplied). */
@@ -180,8 +198,8 @@ function glowTexture() {
  */
 function patternTexture(pattern) {
   if (pattern.map === 'front') {
-    const N = 256;
-    const px = toBytes(rasterize(pattern.layers, N));
+    const N = scaled(256);
+    const px = toBytes(rasterize(pattern.layers, N, { ss: Q.ss }));
     return paintSphere((d) => {
       const u = Math.min(N - 1, Math.max(0, Math.floor((0.5 + 0.5 * d.x) * N)));
       const v = Math.min(N - 1, Math.max(0, Math.floor((0.5 - 0.5 * d.y) * N)));
@@ -342,7 +360,8 @@ function finish(spec, key) {
 
 /** The textures and settings for one item, made once and shared by every marble wearing it. */
 export function lookSpec(slug) {
-  if (cache.has(slug)) return cache.get(slug);
+  const key = `${slug}${Q.tag}`;
+  if (cache.has(key)) return cache.get(key);
   const item = ITEM[slug];
   if (!item) throw new Error(`Unknown marble ${slug}`);
   const look = lookOf(slug);
@@ -352,7 +371,7 @@ export function lookSpec(slug) {
   spec.built = Boolean(build);
   spec.look = look;
   finish(spec, slug);
-  cache.set(slug, spec);
+  cache.set(key, spec);
   return spec;
 }
 
@@ -361,27 +380,27 @@ export function lookSpec(slug) {
  * `look` as badge.js makes them ({ material, layers, parts, glow }), `key` naming it in the cache.
  */
 export function customSpec(key, look) {
-  if (cache.has(key)) return cache.get(key);
+  if (cache.has(`${key}${Q.tag}`)) return cache.get(`${key}${Q.tag}`);
   // (A preview of a catalogue material, e.g. its upgrade, is built exactly as the catalogue would build it.)
   const spec = (BUILDERS[look.material] ?? fromParts)(look, seeded(key));
   spec.slug = key;
   spec.built = true;
   spec.look = look;
   finish(spec, key);
-  cache.set(key, spec);
+  cache.set(`${key}${Q.tag}`, spec);
   return spec;
 }
 
 /** The same for a plain marble ({ color_primary, color_secondary, pattern }): the free starters, the Originals, the computer players'. */
 export function plainSpec(marble) {
   const look = plainLookOf(marble);
-  if (cache.has(look.key)) return cache.get(look.key);
+  if (cache.has(`${look.key}${Q.tag}`)) return cache.get(`${look.key}${Q.tag}`);
   const spec = fromParts(look);
   spec.slug = look.key;
   spec.built = true;
   spec.look = look;
   finish(spec, look.key);
-  cache.set(look.key, spec);
+  cache.set(`${look.key}${Q.tag}`, spec);
   return spec;
 }
 
@@ -486,17 +505,17 @@ function marbleMaterial(spec) {
  *   look.dispose() when done (shared textures stay cached).
  */
 export function createMarbleLook(slug, options = {}) {
-  return lookFromSpec(lookSpec(slug), options);
+  return withQuality(options.quality, () => lookFromSpec(lookSpec(slug), options));
 }
 
 /** A marble wearing a look that isn't in the catalogue (customSpec): for preview pages. */
 export function createCustomLook(key, look, options = {}) {
-  return lookFromSpec(customSpec(key, look), options);
+  return withQuality(options.quality, () => lookFromSpec(customSpec(key, look), options));
 }
 
 /** One plain marble (a starter, an Original, a computer player's): the same marble as its picture, as a collection look. */
 export function createPlainLook(marble, options = {}) {
-  return lookFromSpec(plainSpec(marble), options);
+  return withQuality(options.quality, () => lookFromSpec(plainSpec(marble), options));
 }
 
 function lookFromSpec(spec, { radius = 0.55, geometry = null } = {}) {

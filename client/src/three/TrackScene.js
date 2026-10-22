@@ -421,9 +421,12 @@ export class TrackScene {
     }
     // Scenery a moment later, so the track shows straight away even on slow phones.
     const token = (this.buildToken = (this.buildToken || 0) + 1);
+    // whenReady(): the whole world built (the scenery too), so a race can be shown without the view stalling.
+    let built;
+    this.builtPromise = new Promise((resolve) => { built = resolve; });
     if (theme.scenery && this.sceneryOn) {
       setTimeout(() => {
-        if (token !== this.buildToken || this.disposed) return; // another track was chosen meanwhile
+        if (token !== this.buildToken || this.disposed) { built(); return; } // another track was chosen meanwhile
         this.stationRoof = null;
         this.finishCut = undefined;
         this.scenery = buildScenery(theme, this.centerline, track, { lite: this.lite });
@@ -433,7 +436,10 @@ export class TrackScene {
           this.prepareFinishCut();
         }
         this.render();
+        built();
       }, 30);
+    } else {
+      built();
     }
 
     // Ground far bigger than the view, fading into the haze so no edge shows.
@@ -951,6 +957,27 @@ export class TrackScene {
    */
   finishShot() {
     return finishShotPose(this.centerline, this.channel, this.camera.aspect, { fov: this.tvLens ?? this.camera.fov });
+  }
+
+  /**
+   * Resolves once the track's whole world is built (the scenery comes a moment after the track) and
+   * every material in the scene is compiled for the graphics chip, so showing the race never stalls
+   * on it (Moses, 22 Oct 2026: on phones the countdown was gone before the first picture). Call it
+   * again after the race's marbles are added (setRace): it compiles theirs too. Looks only.
+   */
+  async whenReady() {
+    await (this.builtPromise ?? Promise.resolve());
+    if (this.disposed) return;
+    const frame = () => new Promise((resolve) => requestAnimationFrame(() => resolve()));
+    await frame();
+    try {
+      // Compiled off the main thread where the browser can (KHR_parallel_shader_compile), else at once.
+      if (typeof this.renderer.compileAsync === 'function') await this.renderer.compileAsync(this.scene, this.camera);
+      else this.renderer.compile(this.scene, this.camera);
+    } catch { /* (drawing compiles what's left) */ }
+    this.render();
+    await frame();
+    await frame();
   }
 
   /** The finish shot's cutaway (a coaster station's canopy), or null: finishCutaway. */
