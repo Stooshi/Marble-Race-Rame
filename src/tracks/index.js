@@ -103,6 +103,7 @@ module.exports = [
   require('./yangtze-lock-run'),
   require('./thames-bridges-run'),
   require('./volga-port-burst'),
+  require('./murray-red-gum-run'),
   // Holiday Season 2026 (season 'holiday-2026': locked to the pass until the season ends).
   require('./tromso-aurora-grand-prix'),
   require('./cape-town-summer-christmas'),

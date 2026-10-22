@@ -772,6 +772,17 @@
    "side": 1,
    "marbles": 2
   },
+  "murray-red-gum-run": {
+   "name": "Murray Red Gum Run",
+   "series": "Rivers",
+   "lighting": "day",
+   "v": "93ac23a7",
+   "bytes": 16852,
+   "bytes2x": 40490,
+   "t": 10469,
+   "side": 1,
+   "marbles": 4
+  },
   "nairobi-marble-grand-prix": {
    "name": "Nairobi Marble Grand Prix",
    "series": "Grand Prix",

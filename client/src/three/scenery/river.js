@@ -46,11 +46,11 @@ export const RIVER_PALETTES = {
   // The Volga: a wide blue river on the plains, sandy banks, birch woods.
   volga: { water: '#4a7aa0', deep: '#355f84', foam: '#eef2f6', bank: '#a8946a', quay: '#9a968e', sand: '#d8c49a',
     dressing: [['birch', 0.55], ['poplar', 0.25, '#5a8a42'], ['bush', 0.2, '#5f8a42']] },
-  // The Murray: olive-brown water through river red gum forest, golden sandy banks.
-  murray: { water: '#7a7a58', deep: '#5f6046', foam: '#eceadc', bank: '#a89068', quay: '#b8a07a', sand: '#d8b880',
+  // The Murray: dark olive-green water (it must read as water, not mud) through river red gum forest, golden sandy banks.
+  murray: { water: '#56705e', deep: '#3f5648', foam: '#eceadc', bank: '#a89068', quay: '#b8a07a', sand: '#d8b880',
     dressing: [['redgum', 0.6], ['bush', 0.25, '#7a8a5a'], ['rock', 0.15, '#b8945a']] },
-  // The Irrawaddy at dawn: wide silty water, pale sandbanks, sugar palms on a dusty green plain.
-  irrawaddy: { water: '#9a8a6a', deep: '#7f7056', foam: '#f2ead8', bank: '#b8a07a', quay: '#a89a80', sand: '#e0cfa4',
+  // The Irrawaddy at dawn: wide grey-blue water under the dawn sky (silty, but it must read as water beside the pale sandbanks), sugar palms on a dusty green plain.
+  irrawaddy: { water: '#6f8590', deep: '#566c78', foam: '#f2ead8', bank: '#b8a07a', quay: '#a89a80', sand: '#e0cfa4',
     dressing: [['sugar-palm', 0.45], ['broadleaf', 0.35, '#5f7a3a'], ['bush', 0.2, '#7a8a4a']] },
 };
 const BANK_COLOURS = { sand: 'sand', reeds: 'bank', bayou: 'bank', rock: 'quay', quay: 'quay', grass: null };
@@ -156,6 +156,7 @@ export function makeRiver(centerline, channel, kit, { flight, liftAt, bounds }) 
   const cfg = kit.river ?? {};
   const pal = RIVER_PALETTES[cfg.palette] ?? RIVER_PALETTES.danube;
   const width = cfg.width ?? 90;
+  const calm = cfg.calm === true; // (a slow lowland river: hardly any white water where it falls with the track)
   const homeSide = cfg.side === 'right' ? -1 : 1; // (+1: the left, as a track file's sides)
   const { samples, segments } = centerline;
   const step = channel.arc / segments;
@@ -374,7 +375,9 @@ export function makeRiver(centerline, channel, kit, { flight, liftAt, bounds }) 
         const c2 = (b1.x - a1.x) * (a1.z - a0.z) - (b1.z - a1.z) * (a1.x - a0.x);
         if (Math.sign(c1) !== Math.sign(c2)) continue;
         const mid = 1 - Math.abs((across[k] + across[k + 1]) / 2);
-        const c = new Color().copy(water).lerp(deep, mid * 0.8).lerp(foam, Math.min(0.65, smoothstep(0.04, 0.22, fall) + 0.04 * Math.sin(i * 0.37 + k)));
+        // (A calm lowland river, `river.calm`: a little white water only where it falls steeply, so it reads as water.)
+        const white = calm ? 0.18 * smoothstep(0.12, 0.3, fall) : Math.min(0.65, smoothstep(0.04, 0.22, fall) + 0.04 * Math.sin(i * 0.37 + k));
+        const c = new Color().copy(water).lerp(deep, mid * 0.8).lerp(foam, Math.max(0, white));
         for (const v of [[a0, b0, b1], [a0, b1, a1]]) {
           if (hits(...v) || !v.every(holds)) continue;
           for (const o of v) { pos.push(o.x, o.y, o.z); col.push(c.r, c.g, c.b); }

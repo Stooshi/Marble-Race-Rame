@@ -542,7 +542,8 @@ function riverRules({ spec, sections, where }) {
   const problems = [];
   const r = spec.river;
   if (!r || typeof r !== 'object') return [`${where('track')}: a Rivers track says its river: river: { palette (${RIVERS.join(', ')}), side, width, banks }.`];
-  for (const k of Object.keys(r)) if (!['palette', 'side', 'width', 'banks'].includes(k)) problems.push(`${where('river')}: unknown setting ${k} (palette, side, width, banks).`);
+  for (const k of Object.keys(r)) if (!['palette', 'side', 'width', 'banks', 'calm'].includes(k)) problems.push(`${where('river')}: unknown setting ${k} (palette, side, width, banks, calm).`);
+  if (r.calm !== undefined && typeof r.calm !== 'boolean') problems.push(`${where('river')}: calm is true or false (a slow lowland river: hardly any white water).`);
   if (!RIVERS.includes(r.palette)) problems.push(`${where('river')}: unknown palette ${JSON.stringify(r.palette)} (${RIVERS.join(', ')}).`);
   if (r.side !== undefined && !['left', 'right'].includes(r.side)) problems.push(`${where('river')}: the river runs on the left or the right of the track.`);
   if (r.width !== undefined && !(Number.isFinite(r.width) && r.width >= RIVER_WIDTH[0] && r.width <= RIVER_WIDTH[1])) problems.push(`${where('river')}: width is metres bank to bank, ${RIVER_WIDTH[0]} to ${RIVER_WIDTH[1]}.`);
