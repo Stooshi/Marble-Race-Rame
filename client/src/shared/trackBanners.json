@@ -860,6 +860,17 @@
    "side": 1,
    "marbles": 5
   },
+  "nile-felucca-burst": {
+   "name": "Nile Felucca Burst",
+   "series": "Rivers",
+   "lighting": "day",
+   "v": "445ec2d1",
+   "bytes": 16250,
+   "bytes2x": 39958,
+   "t": 10411,
+   "side": 1,
+   "marbles": 1
+  },
   "nuremberg-christmas-market-run": {
    "name": "Nuremberg Christmas Market Run",
    "series": "World Tour",
