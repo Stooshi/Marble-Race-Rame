@@ -1,6 +1,6 @@
 # 5. Operations runbook
 
-*Last updated 21 Oct 2026.* How to deploy, change data, roll back, back up, and fix the usual problems. Items marked **[check]** should be confirmed the first time they are done.
+*Last updated 22 Oct 2026.* How to deploy, change data, roll back, back up, and fix the usual problems. Items marked **[check]** should be confirmed the first time they are done.
 
 ## Deploying
 
@@ -121,6 +121,64 @@ With it, a backup needs only your own computer:
 5. **Store it** encrypted, off the laptop, like any backup (it holds personal data). Then `unset DB`.
 
 If `pg_dump` cannot connect at all (a timeout or "connection refused"), the database itself is down too: wait for Railway's status page (status.railway.com) to show it back. Don't restore anything or change variables during an outage.
+
+## The server's own address: api.marblespins.com (prepared 22 Oct 2026, not switched yet)
+
+**Why:** today the website, the apps and the payment providers all call `https://marble-race-rame-production.up.railway.app`, which only Railway controls. With **api.marblespins.com** as the address, a move to another host is just a DNS change ([below](#moving-to-another-host)), and nothing in the apps or the stores has to change. The Railway address keeps working as the **fallback**. **Do this before the store submissions**, so the apps in the stores are built against api.marblespins.com.
+
+Nothing is live until step 4. Steps 1 and 2 need the Railway dashboard.
+
+### 1. Railway: add the custom domain
+1. railway.com → log in → the project → click the **server** service (not Postgres).
+2. **Settings** tab → **Networking** → **Public Networking** → **+ Custom Domain**.
+3. Type `api.marblespins.com`. For the **port**, pick the one the existing `marble-race-rame-production.up.railway.app` domain uses (shown next to it, the port the server listens on). → **Add Domain**.
+4. Railway now shows **two records** to add at the DNS provider: a **CNAME** (name `api`, value like `xxxxxx.up.railway.app`) and a **TXT** for proof of ownership. Both are needed: with only the CNAME the domain is never verified and answers 404. Copy both **exactly** and keep the page open.
+5. **Leave the `…up.railway.app` domain as it is.** It is the fallback, and the apps already installed use it. (The Hobby plan allows two custom domains per service.)
+
+### 2. Simply.com: the DNS records
+1. simply.com → log in → your account → **marblespins.com** → **DNS**.
+2. First take a screenshot of the records as they are. Don't touch the ones for `marblespins.com` and `www` (Vercel) or the email ones (MX, SPF, DKIM, DMARC: Brevo and the mailbox).
+3. Check that no record is already named `api` (an A or AAAA record there would clash with the CNAME). If one is, ask before deleting it.
+4. **New record** → type **CNAME** → **Name** `api` (Simply adds `.marblespins.com` itself; if the form clearly wants the full name, type `api.marblespins.com`) → **Value** the target Railway showed in step 1.4, exactly → TTL 300 if it can be chosen, otherwise leave it → **Save**.
+5. **New record** → type **TXT** → **Name** the name Railway shows, without `.marblespins.com` at the end → **Value** Railway's text exactly → **Save**.
+6. Wait. Usually minutes; Railway says up to 72 hours at worst. Railway shows a **green check** next to the domain once verified, and issues the certificate (Let's Encrypt, renewed by itself), usually within an hour.
+7. From your computer: `nslookup -type=CNAME api.marblespins.com` shows the Railway target.
+
+### 3. Check it before switching anything
+From a checkout of the code (any computer with Node):
+```bash
+node scripts/check-api-address.js
+```
+It checks api.marblespins.com against the Railway address and changes nothing: the name and the certificate; `/health` and that it is the same server code; the track list; the website's and the apps' calls allowed (CORS from marblespins.com, www, `capacitor://localhost`, `https://localhost`); the live connection (socket.io); and the Stripe, Google Play and App Store notification addresses (each must refuse an empty unsigned call: 400, 403, 400). **Switch only when all 13 pass.**
+
+### 4. Switch, in this order
+1. **Railway** → server → Variables → `PUBLIC_API_URL` = `https://api.marblespins.com` (the address in the emails' one-click unsubscribe header) → the service redeploys.
+2. **Vercel** → project `marble-race-rame-client` → Settings → Environment Variables → `VITE_API_URL` → Edit → `https://api.marblespins.com` for Production (and Preview) → Save → Deployments → the latest Production deployment → ⋯ → **Redeploy**. The address is built into the website, so it only changes with a new build. Check marblespins.com: play a race, and in the browser's developer tools (Network) the calls go to api.marblespins.com.
+3. **Stripe** (test mode now) → Developers → Webhooks → our endpoint → ⋯ → **Update details** → Endpoint URL `https://api.marblespins.com/api/payments/stripe/webhook` → Update. **Editing keeps the signing secret**, so `STRIPE_WEBHOOK_SECRET` stays as it is. → *Send test webhook* → 200. When going live later, create the live endpoint with the api address from the start ([Stripe](#switching-to-live-only-when-moses-says-so)).
+4. **Google Play notifications** (once set up, [Google Play Billing](#google-play-billing-coins-in-the-android-app) step 8): Google Cloud console → Pub/Sub → Subscriptions → `play-rtdn-push` → **Edit** → endpoint `https://api.marblespins.com/api/payments/google/rtdn?token=` + the same token → Update. Play Console → Monetization setup → **Send test notification** → Railway's log shows `[google-play] test notification received`. Not set up yet: use the api address from the start.
+5. **App Store notifications** (once set up, [App Store purchases](#app-store-purchases-the-iphone-app) step 4): App Store Connect → the app → App Information → App Store Server Notifications → Production URL and Sandbox URL `https://api.marblespins.com/api/payments/apple/notifications` → Save → *Request a test notification* → the log shows `[app-store] notification: test`.
+6. **The apps:** in `client/app-api.json` set `"api"` to `"https://api.marblespins.com"` (Claude does this with the docs, step 7). From then on `npm run app:sync`, `npm run android:release` and `npm run ios:release` build against it; they refuse to build if its `/health` doesn't answer. App builds already installed keep calling the Railway address, which is why it stays.
+7. **Docs:** the Railway address is replaced by api.marblespins.com in `docs/01-architecture.md`, this runbook and `client/README.md` (the Railway address kept as the fallback), in the same commit as step 6.
+8. **CORS:** nothing to change. CORS is about who calls the server (marblespins.com, www, the apps), not the server's own address. The check in step 3 shows it.
+
+**Back to the Railway address** (if api.marblespins.com ever fails): Vercel `VITE_API_URL` back plus Redeploy; Stripe, Google and Apple URLs back (the same secrets); `client/app-api.json` `"api"` back to the `"fallback"` before the next app build. Apps built against api.marblespins.com need the DNS fixed, which is why the check in step 3 must pass before any store build.
+
+## Moving to another host
+
+Once the website, the apps, Stripe, Google and Apple all call api.marblespins.com, moving the server is a new host and one DNS change. Nothing in the apps or the stores changes.
+
+1. **A day before:** Simply.com → DNS → the `api` record → TTL 300 (5 minutes), so the switch spreads fast. On the new host, make a Node service (Node 20 or later) with a PostgreSQL database (version 15 or later). It runs `npm start` from the repository's root (the same folder as a Railway deploy), must listen on the `PORT` it is given and must allow WebSockets.
+2. **Variables:** copy every variable from Railway → server → Variables (the **Raw Editor** shows them all at once) into the new service, through the password manager, never chat, email or Git. The names are listed in [01-architecture.md, Variables](01-architecture.md#variables-names-only). Change `DATABASE_URL` (and `DATABASE_SSL` if the new database requires TLS) to the new database. Leave out `RAILWAY_*`. `PUBLIC_API_URL` stays `https://api.marblespins.com`.
+3. **Rehearse** with a copy: take a [backup](#backups), restore it into the new database (`pg_restore --no-owner -d "<new DATABASE_URL>" marble-spins-YYYY-MM-DD.dump`), deploy the code and open the new host's own address `/health` (status ok, the same `codeFingerprint` as `node -e "console.log(require('./src/version').VERSION.codeFingerprint)"`). Then empty the new database again (drop and recreate it) for the real move.
+4. **The move**, at a quiet hour (races stop for about 15 minutes):
+   1. Stop the Railway server so nothing more is written: Railway → server → Deployments → the active one → ⋯ → **Remove**. The website shows "Can't reach the race track" until step 5.
+   2. Take the final backup with `pg_dump` ([Backups](#backups)) and check it (`pg_restore -l … | head`).
+   3. Restore it into the new, empty database: `pg_restore --no-owner -d "<new DATABASE_URL>" marble-spins-YYYY-MM-DD.dump`.
+   4. Start the new server. At start it adds anything missing from the schema, skips data updates already applied and finishes or resumes races that were running (`recover()`). Check its own address `/health`.
+   5. Add `api.marblespins.com` as a custom domain on the new host. At Simply.com change the `api` record's value to the target the new host gives (a CNAME, or an A record if it gives an IP address), plus any verification TXT it asks for.
+   6. After a few minutes: `node scripts/check-api-address.js https://api.marblespins.com --against https://<the new host's own address>` → all pass. Play a race on the website and in an app.
+5. **Nothing else changes:** Vercel, the apps, Stripe, Google Play and the App Store all keep calling api.marblespins.com.
+6. **Keep** the stopped Railway service and its database for a week before deleting them, and keep the final backup ([Retention](#backups)). The Railway fallback address stops working once the Railway server is gone: put Vercel's `VITE_API_URL` on api.marblespins.com before the move if it isn't already.
 
 ## Back office: admins and the 2-step login
 
@@ -496,7 +554,7 @@ The iPhone app sells the same four coin packs and the season pass through the Ap
 | Contact-form messages don't arrive by email | They are always in the back office (Support messages). The email needs `BREVO_API_KEY` (the address is support@marblespins.com unless `SUPPORT_EMAIL` overrides it), and that mailbox must exist; Railway logs show `[support] notification … failed` if Brevo refused it |
 | A player says the contact form keeps failing | The form allows 6 messages an hour from one address ("Too many messages from here"). A form left open over 12 hours fetches a new token by itself |
 | A player asks for their data or to be deleted | They can do both themselves in Settings. Support can delete from the back office (player → Delete account, with a reason) |
-| App shows "Can't reach the race track" | Same as the first row. The app talks to the Railway address built in by `npm run app:sync` |
+| App shows "Can't reach the race track" | Same as the first row. The app talks to the address built in by `npm run app:sync` (`client/app-api.json`: the Railway address now, api.marblespins.com after the [switch](#the-servers-own-address-apimarblespinscom-prepared-22-oct-2026-not-switched-yet)) |
 
 ## Monitoring (today)
 

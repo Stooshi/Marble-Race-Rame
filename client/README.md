@@ -79,7 +79,9 @@ test/               Vitest unit tests
 name "Marble Spins"). They load the built site from inside the app and talk to the live server.
 
 - **Update the apps after a website change:** `npm run app:sync` (builds the site against the live
-  server, https://marble-race-rame-production.up.railway.app, and copies it into both projects).
+  server, the address in `app-api.json`: https://marble-race-rame-production.up.railway.app until the
+  switch to https://api.marblespins.com; it checks that the address answers first, then copies the
+  build into both projects).
 - **Icons and splash screens** come from `assets/` (icon-only, icon-foreground, icon-background, splash,
   splash-dark PNGs); after changing them: `npx capacitor-assets generate --ios --android` with the
   night-blue colours (#0E1320). Android 12+'s system splash uses `res/drawable-nodpi/splash_icon.png`.

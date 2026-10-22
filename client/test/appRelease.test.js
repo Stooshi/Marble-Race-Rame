@@ -165,3 +165,13 @@ describe('release folder and tags', () => {
     expect(tagCommand('1.0.1')).toBe('git tag app-v1.0.1 && git push origin app-v1.0.1');
   });
 });
+
+describe("the apps' server address (app-api.json, used by npm run app:sync)", () => {
+  const api = JSON.parse(fs.readFileSync(path.join(ROOT, 'app-api.json'), 'utf8'));
+  it('is an https address, with the Railway address kept as the fallback and api.marblespins.com planned', () => {
+    for (const k of ['api', 'planned', 'fallback']) expect(api[k]).toMatch(/^https:\/\/[a-z0-9.-]+$/);
+    expect(api.fallback).toBe('https://marble-race-rame-production.up.railway.app');
+    expect(api.planned).toBe('https://api.marblespins.com');
+    expect([api.planned, api.fallback]).toContain(api.api);
+  });
+});
