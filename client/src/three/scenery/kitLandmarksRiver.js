@@ -5,7 +5,7 @@
  * reproductions, and no ship's, company's or building's name anywhere.
  */
 import { BoxGeometry, ConeGeometry, CylinderGeometry, IcosahedronGeometry, Matrix4, Quaternion, SphereGeometry, Vector3 } from 'three';
-import { box, merge, piece } from './parts';
+import { beam, box, merge, piece } from './parts';
 
 const Y = new Vector3(0, 1, 0);
 const M = (x, y, z) => new Matrix4().makeTranslation(x, y, z);
@@ -401,6 +401,231 @@ export function hotAirBalloons(lite = false) {
   return merge(p);
 }
 
+// ── The other ten: Amazon, Nile, Congo, Rhine, Ganges ───────────────────────
+
+const V = (x, y, z) => new Vector3(x, y, z);
+/** A local frame turned by yaw and moved to (x, z): T(lx, ly, lz) → its matrix, P(lx, ly, lz) → its point. */
+const frameAt = (x, z, yaw) => {
+  const P = (lx, ly, lz) => V(lx, ly, lz).applyAxisAngle(Y, yaw).add(V(x, 0, z));
+  const T = (lx, ly, lz) => { const q = P(lx, ly, lz); return turned(q.x, q.y, q.z, yaw); };
+  return { P, T };
+};
+
+/** Giant lily pads on still water: broad round pads with upturned red rims, two flowers (on the water). */
+function lilyPads() {
+  const p = [];
+  const spots = [[0, 0, 2.2], [5, 3, 1.8], [-4.5, 4, 1.6], [2, -5, 2], [-6, -3, 1.4], [8, -2, 1.5], [-2, 8, 1.7], [6, 8, 1.3], [-8, 7, 1.2]];
+  for (const [x, z, r] of spots) {
+    p.push(piece(new CylinderGeometry(r, r, 0.12, 14), '#4f8a34', M(x, 0.1, z)));
+    p.push(piece(new CylinderGeometry(r + 0.08, r + 0.02, 0.32, 14, 1, true), '#a8443a', M(x, 0.2, z))); // the upturned rim
+  }
+  for (const [x, z, c] of [[5, 3, '#f4f0ea'], [-2, 8, '#e88aa8']]) {
+    for (let k = 0; k < 6; k += 1) p.push(piece(new ConeGeometry(0.22, 0.7, 4), c, turned(x + Math.cos(k) * 0.3, 0.55, z + Math.sin(k) * 0.3, k).multiply(new Matrix4().makeRotationX(Math.cos(k) * 0.5))));
+    p.push(piece(new SphereGeometry(0.22, 6, 4), '#f2d040', M(x, 0.6, z)));
+  }
+  return merge(p);
+}
+
+/** Floating houses: wooden houses on log rafts moored in the river, tin roofs, a canoe tied alongside (on the water). */
+function floatingHouses() {
+  const p = [];
+  const walls = ['#c8a070', '#6f9ab0', '#d88a5a', '#a8c08a'];
+  [[-16, 0, 0.1], [0, 3, -0.15], [16, -1, 0.2]].forEach(([x, z, yaw], k) => {
+    const { P, T } = frameAt(x, z, yaw);
+    for (let l = -2; l <= 2; l += 1) p.push(piece(new CylinderGeometry(0.7, 0.7, 11, 7), '#6a4a30', T(l * 1.6, 0.1, 0).multiply(new Matrix4().makeRotationX(Math.PI / 2))));
+    p.push(piece(new BoxGeometry(8.4, 0.25, 11), '#8a6a46', T(0, 0.75, 0)));
+    p.push(piece(new BoxGeometry(6.5, 3.4, 7), walls[k % walls.length], T(0, 2.6, -1)), piece(new BoxGeometry(1.2, 2, 0.15), '#4a3424', T(0, 1.9, 2.55)), piece(new BoxGeometry(1.2, 1, 0.15), '#2b3c52', T(2, 2.8, 2.55)));
+    const r = P(0, 4.3, -1);
+    p.push(roof(7.6, 2, 8, r.x, r.y, r.z, '#9aa0a4', yaw));
+  });
+  p.push(box(0.9, 0.5, 7, -7, 0.15, 9, '#4a3020'));
+  people(p, [[-14, 3], [1, 5.5], [17, 2]], 0.9);
+  return merge(p);
+}
+
+/** Feluccas: three wooden sailing boats with tall white lateen sails on long slanting yards (on the water). */
+function feluccas() {
+  const p = [];
+  [[0, 0, 0.1], [-14, 10, -0.25], [12, -12, 0.3]].forEach(([x, z, yaw], k) => {
+    const { P, T } = frameAt(x, z, yaw);
+    const hull = k % 2 ? '#3a5a8a' : '#f2efe6';
+    p.push(piece(new BoxGeometry(2.6, 1, 9), hull, T(0, 0.3, 0)));
+    p.push(piece(new ConeGeometry(1.84, 2.4, 4), hull, T(0, 0.3, 5.6).multiply(new Matrix4().makeRotationX(Math.PI / 2)).multiply(new Matrix4().makeRotationY(Math.PI / 4)).multiply(S(0, 0, 0, 1, 1, 0.38))));
+    p.push(piece(new BoxGeometry(2.7, 0.2, 9.1), '#a8322a', T(0, 0.85, 0)));
+    p.push(piece(new CylinderGeometry(0.12, 0.15, 7, 5), '#6a4a30', T(0, 4.3, 1.5)));
+    // The sail: a tall thin triangle leaning back along the yard, from low at the bow to high over the stern.
+    p.push(piece(new ConeGeometry(3.4, 11, 3), '#fbfaf6', T(0.1, 6.6, 0).multiply(new Matrix4().makeRotationX(-0.42)).multiply(S(0, 0, 0, 0.06, 1, 1))));
+    p.push(beam(P(0, 2.2, 5.8), P(0, 12, -3.4), 0.14, '#6a4a30'));
+  });
+  return merge(p);
+}
+
+/** Granite boulder islands in a rapid: rounded dark-red and grey granite humps, white water between them, a few shrubs (on the water). */
+function graniteIslands() {
+  const p = [];
+  const stones = [[0, 0, 6, 3], [9, 5, 4, 2.4], [-8, 6, 5, 2.8], [4, -9, 4.5, 2.2], [-11, -6, 3.5, 2], [15, -4, 3, 1.8], [-3, 13, 3.6, 2]];
+  stones.forEach(([x, z, r, h], k) => {
+    p.push(piece(new IcosahedronGeometry(r, 1), k % 2 ? '#4a3e3a' : '#6a4e46', S(x, h * 0.2, z, 1.1, h / r, 0.9)));
+    p.push(piece(new IcosahedronGeometry(r * 0.5, 0), '#3a3230', S(x + r * 0.4, h * 0.55, z - r * 0.2, 1, 0.7, 1)));
+  });
+  for (const [x, z, w, d] of [[4.5, 3, 4, 2], [-4, 3, 3, 1.6], [6, -4, 3, 2], [-9, 0, 3, 2], [11, 1, 2.6, 1.4]]) p.push(box(w, 0.2, d, x, 0.1, z, '#f4f8f6'));
+  for (const [x, z] of [[1, 1], [-8, 7], [9, 5]]) p.push(piece(new IcosahedronGeometry(1.1, 0), '#5a7a34', S(x, 3, z, 1, 0.8, 1)));
+  return merge(p);
+}
+
+/** A palm grove on the far bank: tall date palms, a few flat-roofed mud-brick houses in their shade. */
+function palmGrove() {
+  const p = [];
+  for (let k = 0; k < 14; k += 1) {
+    const x = -42 + k * 6.4 + (k % 3) * 1.2;
+    const z = (k % 2 ? -6 : 3) + (k % 5) * 1.2;
+    const h = 9 + (k % 4) * 1.4;
+    p.push(piece(new CylinderGeometry(0.28, 0.4, h, 5), '#8a6a48', M(x, h / 2, z)));
+    for (let f = 0; f < 6; f += 1) {
+      const a = (f / 6) * Math.PI * 2 + k;
+      p.push(piece(new ConeGeometry(0.6, 4, 4), '#3f7a34', new Matrix4().compose(V(x + Math.cos(a) * 1.6, h - 0.3, z + Math.sin(a) * 1.6), new Quaternion().setFromAxisAngle(V(-Math.sin(a), 0, Math.cos(a)), 1.9), V(1, 1, 0.3))));
+    }
+  }
+  for (const [x, z, w] of [[-30, -16, 8], [-14, -18, 6], [6, -15, 9], [26, -17, 7]]) p.push(box(w, 4, 6, x, 2, z, '#c89a68'), box(w + 0.4, 0.4, 6.4, x, 4.2, z, '#a87a4e'), box(1, 1.8, 0.1, x, 1, z + 3.05, '#4a3424'));
+  return merge(p);
+}
+
+/** Fishermen's tripods in the rapids: tall wooden tripods lashed at the top, crossbars, conical basket traps hanging in the white water (on the water). */
+function fishingTripods() {
+  const p = [];
+  [[-14, 0, 9], [-5, 3, 11], [4, -2, 10], [13, 2, 8.5], [21, -3, 9.5]].forEach(([x, z, h], k) => {
+    const top = V(x, h + 0.6, z);
+    for (let l = 0; l < 3; l += 1) {
+      const a = (l / 3) * Math.PI * 2 + k;
+      p.push(beam(V(x + Math.cos(a) * 2.6, -1, z + Math.sin(a) * 2.6), top, 0.22, l % 2 ? '#6a5038' : '#7a5e42'));
+    }
+    for (const y of [3, 6]) p.push(beam(V(x - 1.8 + y * 0.1, y, z - 0.6), V(x + 1.8 - y * 0.1, y, z + 0.6), 0.14, '#7a5e42'));
+    for (const d of [-1.2, 1.2]) {
+      p.push(beam(V(x + d, 6, z), V(x + d * 1.1, 1.6, z + 0.4), 0.05, '#4a3a2a'));
+      p.push(piece(new ConeGeometry(0.6, 2.2, 7, 1, true), '#b8965a', new Matrix4().makeTranslation(x + d * 1.1, 0.6, z + 0.4).multiply(new Matrix4().makeRotationX(Math.PI))));
+    }
+    p.push(box(5, 0.15, 3, x, 0.05, z + 1.5, '#f4f2ec'));
+  });
+  return merge(p);
+}
+
+/** Dugout canoes: long narrow dark wooden canoes, paddlers standing in them (on the water). */
+function dugoutCanoes() {
+  const p = [];
+  [[0, 0, 0.1], [-8, 7, -0.2], [9, -6, 0.25]].forEach(([x, z, yaw]) => {
+    const { P, T } = frameAt(x, z, yaw);
+    p.push(piece(new BoxGeometry(1.1, 0.6, 10), '#4a3020', T(0, 0.2, 0)), piece(new ConeGeometry(0.78, 1.6, 4), '#4a3020', T(0, 0.2, 5.8).multiply(new Matrix4().makeRotationX(Math.PI / 2)).multiply(new Matrix4().makeRotationY(Math.PI / 4)).multiply(S(0, 0, 0, 1, 1, 0.5))));
+    for (const lz of [-2.5, 2]) {
+      const q = P(0, 0, lz);
+      p.push(box(0.4, 1.1, 0.3, q.x, 1, q.z, '#c8a040'), box(0.3, 0.3, 0.3, q.x, 1.75, q.z, '#5a3a24'));
+      p.push(beam(V(q.x + 0.4, 2, q.z), V(q.x + 0.9, -0.2, q.z + 0.6), 0.07, '#7a5a3a'));
+    }
+  });
+  return merge(p);
+}
+
+/**
+ * A castle on an island in the river (a spiral's centrepiece): a long ship-shaped wall of white plaster,
+ * pointed upstream, under a dark slate roof, a tall five-sided tower with a stepped dark cap, the river's
+ * water round its rocky island.
+ */
+function islandCastle() {
+  const WHITE = '#f2eee4';
+  const SLATE = '#3a3e46';
+  const p = [piece(new CylinderGeometry(21, 21, 0.3, 24), '#4f7a72', M(0, 0.15, 0))];
+  p.push(piece(new IcosahedronGeometry(9, 1), '#8a8478', S(0, -1.5, 0, 1.6, 0.4, 0.8)));
+  p.push(box(20, 5, 9, 0, 3, 0, WHITE));
+  p.push(piece(new ConeGeometry(6.4, 7, 4), WHITE, new Matrix4().makeTranslation(13.4, 3, 0).multiply(new Matrix4().makeRotationZ(-Math.PI / 2)).multiply(new Matrix4().makeRotationY(Math.PI / 4)).multiply(S(0, 0, 0, 1, 1, 0.7))));
+  p.push(box(20.2, 0.6, 9.2, 0, 5.7, 0, SLATE));
+  for (let x = -8; x <= 8; x += 2.6) for (const z of [-4.55, 4.55]) p.push(box(0.8, 1, 0.1, x, 4, z, '#2b3c52'));
+  p.push(roof(18, 3, 7, 0, 6, 0, SLATE));
+  for (const x of [-10, 10]) p.push(piece(new CylinderGeometry(1.6, 1.8, 7, 8), WHITE, M(x, 3.5, 4.3)), piece(new ConeGeometry(2, 3, 8), SLATE, M(x, 8.5, 4.3)));
+  p.push(piece(new CylinderGeometry(3.4, 3.6, 16, 5), WHITE, M(2, 8, 0)));
+  p.push(piece(new CylinderGeometry(3.8, 3.4, 1, 5), SLATE, M(2, 16.5, 0)), piece(new SphereGeometry(3.2, 8, 5, 0, Math.PI * 2, 0, Math.PI / 2), SLATE, S(2, 17, 0, 1, 0.7, 1)));
+  p.push(piece(new CylinderGeometry(1, 1.2, 2, 6), SLATE, M(2, 20, 0)), piece(new ConeGeometry(0.9, 3, 6), SLATE, M(2, 22.5, 0)));
+  return merge(p);
+}
+
+/** A castle on a hilltop above the river: a rocky wooded crag, curtain walls with battlements, a tall round keep, a hall with a red roof. */
+function hilltopCastle() {
+  const STONE = '#b8ae9a';
+  const p = [piece(new IcosahedronGeometry(22, 1), '#6a7a4a', S(0, -4, 0, 1.3, 0.75, 1)), piece(new IcosahedronGeometry(12, 0), '#7a7266', S(-6, 6, 4, 1.2, 0.6, 1))];
+  const y0 = 11;
+  for (const [x, z, w, d] of [[0, 9, 30, 2], [0, -9, 30, 2], [14, 0, 2, 18], [-14, 0, 2, 18]]) {
+    p.push(box(w, 6, d, x, y0 + 3, z, STONE));
+    if (w > d) for (let k = -w / 2 + 1; k < w / 2; k += 2.4) p.push(box(1.2, 1, d, x + k, y0 + 6.5, z, STONE));
+    else for (let k = -d / 2 + 1; k < d / 2; k += 2.4) p.push(box(w, 1, 1.2, x, y0 + 6.5, z + k, STONE));
+  }
+  p.push(piece(new CylinderGeometry(4.5, 5, 22, 12), STONE, M(-6, y0 + 11, -2)), piece(new CylinderGeometry(5.2, 5.2, 1.2, 12), '#9a907e', M(-6, y0 + 22.5, -2)));
+  p.push(box(14, 8, 9, 5, y0 + 4, 0, '#d8ccb4'), roof(14, 5, 9, 5, y0 + 8, 0, '#a8442f'));
+  return merge(p);
+}
+
+/** Vineyard terraces on a slope: stepped stone-walled terraces rising away from the track, rows of vines along each, a vintner's hut. */
+function vineyardTerraces() {
+  const p = [];
+  for (let k = 0; k < 6; k += 1) {
+    const y = k * 3;
+    const z = -k * 7;
+    p.push(box(70, y + 3, 7, 0, (y + 3) / 2 - 1, z, '#8a6e4e'), box(70, 1.2, 0.8, 0, y + 1.6, z + 3.4, '#9a9284'));
+    for (const dz of [-2, 0.5]) p.push(box(66, 1, 0.6, 0, y + 2.6, z + dz, k % 2 ? '#5a8a34' : '#4f7f2e'));
+  }
+  p.push(box(5, 4, 4, 24, 20, -38, '#e8e0d0'), roof(5.6, 2.4, 4.6, 24, 22, -38, '#8a3a2a'));
+  return merge(p);
+}
+
+/**
+ * River steps (ghats): long broad stone steps down towards the track (front +z), old tall houses in ochre,
+ * rose and cream along the top, big cane umbrellas on platforms at the foot. No shrine or temple.
+ */
+function ghatSteps() {
+  const p = [];
+  for (let k = 0; k < 9; k += 1) p.push(box(90, 0.8 * (k + 1), 2.4, 0, 0.4 * (k + 1) - 0.8, 10 - k * 2.4, k % 2 ? '#c8b494' : '#b8a280'));
+  const yTop = 0.8 * 9 - 0.8;
+  const walls = ['#d8a04a', '#e0a0a0', '#efe4cc', '#c8784a', '#e8c88a', '#a8c0b8'];
+  for (let k = 0; k < 9; k += 1) {
+    const x = -40 + k * 10;
+    const h = 10 + ((k * 7) % 4) * 3;
+    p.push(box(9, h, 10, x, yTop + h / 2, -15, walls[k % walls.length]));
+    for (let f = 1; f * 3.2 < h - 1; f += 1) p.push(box(7, 0.9, 0.12, x, yTop + f * 3.2, -9.94, '#5a4030'));
+    p.push(box(9.4, 0.5, 10.4, x, yTop + h + 0.25, -15, '#8a6a4a'));
+  }
+  for (let x = -36; x <= 36; x += 12) {
+    p.push(box(4, 0.4, 3, x, 0.2, 11.5, '#a8987a'), piece(new CylinderGeometry(0.08, 0.08, 3, 4), '#5a4030', M(x, 1.9, 11.5)));
+    p.push(piece(new ConeGeometry(2.4, 1, 10), '#c8aa6a', M(x, 3.6, 11.5)));
+  }
+  return merge(p);
+}
+
+/** Small lamps floating on the water at dawn: leaf boats with marigolds, a tiny flame in each (drawn as light). */
+const LAMP_SPOTS = Array.from({ length: 26 }, (_, k) => [Math.sin(k * 2.39) * (4 + (k % 7) * 2.2), Math.cos(k * 2.39) * (4 + (k % 5) * 2.6)]);
+function floatingLamps() {
+  return merge(LAMP_SPOTS.flatMap(([x, z], k) => [box(0.5, 0.12, 0.5, x, 0.06, z, '#4f7a34'), box(0.3, 0.12, 0.3, x, 0.14, z, k % 2 ? '#f2a330' : '#e8d040')]));
+}
+function floatingLampsGlow() {
+  return merge(LAMP_SPOTS.map(([x, z]) => piece(new SphereGeometry(0.14, 5, 3), '#ffd98a', M(x, 0.35, z))));
+}
+
+/** Wooden rowing boats in the morning mist: painted hulls, a rower at the oars in each (the mist drawn faint). */
+function rowingBoats() {
+  const p = [];
+  const hulls = ['#2f6a8a', '#c43a2f', '#e8c040', '#3a8a5a'];
+  [[0, 0, 0.2], [-10, 6, -0.3], [9, 7, 0.1], [-4, -9, 0.5]].forEach(([x, z, yaw], k) => {
+    const { P, T } = frameAt(x, z, yaw);
+    p.push(piece(new BoxGeometry(2, 0.8, 6), hulls[k], T(0, 0.25, 0)), piece(new BoxGeometry(2.05, 0.2, 6.05), '#f2efe6', T(0, 0.7, 0)));
+    p.push(piece(new BoxGeometry(1.8, 0.6, 1.5), '#e8dcc0', T(0, 0.9, -2.4)));
+    const r = P(0, 0, 0.6);
+    p.push(box(0.45, 0.9, 0.35, r.x, 1.2, r.z, '#f2f0ea'), box(0.32, 0.32, 0.32, r.x, 1.85, r.z, '#8a5a3a'));
+    for (const sx of [-1, 1]) p.push(beam(P(sx * 0.6, 1.2, 0.6), P(sx * 3, 0, 0.2), 0.08, '#8a6a48'));
+  });
+  return merge(p);
+}
+function morningMist() {
+  const p = [];
+  for (let k = -3; k <= 3; k += 1) p.push(piece(new SphereGeometry(9, 8, 5), '#ffffff', S(k * 12, 1.5, (k % 2) * 6, 1.6, 0.25, 1)));
+  return merge(p);
+}
+
 export const RIVER_LANDMARKS = {
   'river-clipper': { build: riverClipper, radius: 18 },
   'glass-towers': { build: glassTowers, radius: 90 },
@@ -426,4 +651,17 @@ export const RIVER_LANDMARKS = {
   'ship-locks': { build: shipLocks, radius: 62 },
   'green-peaks': { build: greenPeaks, radius: 90 },
   'levee-houses': { build: leveeHouses, radius: 48 },
+  'lily-pads': { build: lilyPads, radius: 11 },
+  'floating-houses': { build: floatingHouses, radius: 22 },
+  feluccas: { build: feluccas, radius: 18 },
+  'granite-islands': { build: graniteIslands, radius: 18 },
+  'palm-grove': { build: palmGrove, radius: 46 },
+  'fishing-tripods': { build: fishingTripods, radius: 24 },
+  'dugout-canoes': { build: dugoutCanoes, radius: 12 },
+  'island-castle': { build: islandCastle, radius: 21 },
+  'hilltop-castle': { build: hilltopCastle, radius: 28 },
+  'vineyard-terraces': { build: vineyardTerraces, radius: 40 },
+  'ghat-steps': { build: ghatSteps, radius: 46 },
+  'floating-lamps': { build: floatingLamps, glow: floatingLampsGlow, radius: 16 },
+  'rowing-boats': { build: rowingBoats, haze: morningMist, radius: 14 },
 };

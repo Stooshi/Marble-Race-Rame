@@ -52,6 +52,23 @@ export const RIVER_PALETTES = {
   // The Irrawaddy at dawn: wide grey-blue water under the dawn sky (silty, but it must read as water beside the pale sandbanks), sugar palms on a dusty green plain.
   irrawaddy: { water: '#6f8590', deep: '#566c78', foam: '#f2ead8', bank: '#b8a07a', quay: '#a89a80', sand: '#e0cfa4',
     dressing: [['sugar-palm', 0.45], ['broadleaf', 0.35, '#5f7a3a'], ['bush', 0.2, '#7a8a4a']] },
+  // The meeting of the waters: a black-water river and a sandy one side by side, not mixing (`seam`: the
+  // colour of each half, across the river's side vector), the line between them down its middle; rainforest.
+  // (`glint`: pale streaks of sky on the water along the current, so dark or brown water reads as water.)
+  amazon: { water: '#3a2a1c', deep: '#2a1e14', foam: '#efe2c8', bank: '#7a5a3a', quay: '#8a7a64', sand: '#d8c08a', seam: ['#1c2730', '#8a6640'], glint: '#d6e6f0', rapids: [0.18, 0.32],
+    dressing: [['broadleaf', 0.5, '#2f6a2e'], ['palm', 0.3], ['banana', 0.2]] },
+  // The Nile at the cataract: clear blue-green water between dark granite, desert sand on the land, date palms.
+  nile: { water: '#2f7f86', deep: '#1f6470', foam: '#f2f6f4', bank: '#8a6e4e', quay: '#5a524c', sand: '#e0c08a', glint: '#e8f4f6', rapids: [0.18, 0.32],
+    dressing: [['palm', 0.35], ['rock', 0.45, '#b8925e'], ['bush', 0.2, '#8a8a4a']] },
+  // The Congo's rapids: dark tea-brown water, white where it falls, deep rainforest to the banks.
+  congo: { water: '#4a4c3c', deep: '#3a3c30', foam: '#f4efe4', bank: '#6a4a32', quay: '#6f665a', sand: '#b8946a', glint: '#e4ecee', rapids: [0.18, 0.32],
+    dressing: [['broadleaf', 0.6, '#2a5f2a'], ['palm', 0.2], ['banana', 0.2]] },
+  // The Rhine gorge: green-grey water, slate banks, vineyards and woods on the slopes.
+  rhine: { water: '#4f7a72', deep: '#3a6058', foam: '#eef2ee', bank: '#7a7466', quay: '#8a8478', sand: '#b8ae94', glint: '#e8f0f2', rapids: [0.18, 0.32],
+    dressing: [['broadleaf', 0.45, '#3f6a34'], ['poplar', 0.25, '#4a7a3e'], ['bush', 0.3, '#5f7a3a']] },
+  // The Ganges at dawn: wide milky grey-green water, pale sand on the far bank, a few trees.
+  ganges: { water: '#7f9a96', deep: '#678480', foam: '#f2f0e8', bank: '#a89878', quay: '#b8a07a', sand: '#e0d0aa', glint: '#f6e8d4', rapids: [0.18, 0.32],
+    dressing: [['broadleaf', 0.5, '#4f7a3a'], ['palm', 0.2], ['bush', 0.3, '#6f8a46']] },
 };
 const BANK_COLOURS = { sand: 'sand', reeds: 'bank', bayou: 'bank', rock: 'quay', quay: 'quay', grass: null };
 
@@ -355,6 +372,11 @@ export function makeRiver(centerline, channel, kit, { flight, liftAt, bounds }) 
     const water = C(pal.water);
     const deep = C(pal.deep);
     const foam = C(pal.foam);
+    const seam = pal.seam ? pal.seam.map(C) : null;
+    const glint = pal.glint ? C(pal.glint) : null;
+    // (How steeply the water falls before it turns white: `rapids`, a palette's own, so a river beside a
+    // steadily falling track stays water and only its real rapids foam.)
+    const rapids = pal.rapids ?? [0.04, 0.22];
     const every = Math.max(1, Math.round((lite ? 7 : 3.5) / step));
     const across = lite ? [-1, 0, 1] : [-1, -0.5, 0, 0.5, 1];
     const pt = (i, f) => ({ x: cx[i] + tx[i] * f * (halfW[i] + 0.6), y: level[i], z: cz[i] + tz[i] * f * (halfW[i] + 0.6) });
@@ -376,11 +398,75 @@ export function makeRiver(centerline, channel, kit, { flight, liftAt, bounds }) 
         if (Math.sign(c1) !== Math.sign(c2)) continue;
         const mid = 1 - Math.abs((across[k] + across[k + 1]) / 2);
         // (A calm lowland river, `river.calm`: a little white water only where it falls steeply, so it reads as water.)
-        const white = calm ? 0.18 * smoothstep(0.12, 0.3, fall) : Math.min(0.65, smoothstep(0.04, 0.22, fall) + 0.04 * Math.sin(i * 0.37 + k));
-        const c = new Color().copy(water).lerp(deep, mid * 0.8).lerp(foam, Math.max(0, white));
+        // (Two rivers side by side without mixing: each half its own colour, the line between them sharp.)
+        const base = seam ? seam[(across[k] + across[k + 1]) / 2 < 0 ? 0 : 1] : null;
+        const white = calm ? 0.18 * smoothstep(0.12, 0.3, fall) : Math.min(0.65, smoothstep(rapids[0], rapids[1], fall) + (base ? 0 : 0.04 * Math.sin(i * 0.37 + k)));
+        const c = base
+          ? new Color().copy(base).lerp(glint ?? foam, glint ? 0.05 + 0.035 * Math.sin(i * 0.23 + k * 1.7) : 0).lerp(foam, Math.max(0, white))
+          : new Color().copy(water).lerp(deep, mid * 0.8).lerp(foam, Math.max(0, white));
         for (const v of [[a0, b0, b1], [a0, b1, a1]]) {
           if (hits(...v) || !v.every(holds)) continue;
           for (const o of v) { pos.push(o.x, o.y, o.z); col.push(c.r, c.g, c.b); }
+        }
+        // (`glint`: pale streaks of sky on the water, along the current, so a brown or dark river reads as water.)
+        if (seam && across[k + 1] === 0) {
+          // (The line where the two waters meet: a narrow band of pale swirls.)
+          const wI = 1.2 / (halfW[i] + 0.6);
+          const wJ = 1.2 / (halfW[j] + 0.6);
+          const up = (o) => ({ x: o.x, y: o.y + 0.03, z: o.z });
+          const e = [up(pt(i, -wI)), up(pt(j, -wJ)), up(pt(j, wJ)), up(pt(i, wI))];
+          const fc = new Color().copy(seam[1]).lerp(foam, 0.35 + 0.15 * Math.sin(i * 0.9));
+          for (const v of [[e[0], e[1], e[2]], [e[0], e[2], e[3]]]) {
+            if (hits(...v) || !v.every(holds)) continue;
+            for (const o of v) { pos.push(o.x, o.y, o.z); col.push(fc.r, fc.g, fc.b); }
+          }
+        }
+        if (glint && (k === 0 || k === across.length - 2)) {
+          // (A pale line of ripples along each shore.)
+          const edge = k === 0 ? across[0] : across[k + 1];
+          const inI = edge - Math.sign(edge) * (1.6 / (halfW[i] + 0.6));
+          const inJ = edge - Math.sign(edge) * (1.6 / (halfW[j] + 0.6));
+          const up = (o) => ({ x: o.x, y: o.y + 0.03, z: o.z });
+          const e = [up(pt(i, edge)), up(pt(j, edge)), up(pt(j, inJ)), up(pt(i, inI))];
+          const fc = new Color().copy(c).lerp(foam, 0.5);
+          for (const v of [[e[0], e[1], e[2]], [e[0], e[2], e[3]]]) {
+            if (hits(...v) || !v.every(holds)) continue;
+            for (const o of v) { pos.push(o.x, o.y, o.z); col.push(fc.r, fc.g, fc.b); }
+          }
+        }
+        if (glint) {
+          // (Short wavelets across the current, scattered at random: never in rows, so never a road's markings.)
+          const n = lite ? 2 : 3;
+          for (let g = 0; g < n; g += 1) {
+            const h = Math.sin(i * 12.9898 + k * 78.233 + g * 37.719) * 43758.5453;
+            const r = h - Math.floor(h);
+            if (r > 0.45) continue;
+            const f = across[k] + (across[k + 1] - across[k]) * ((r * 7.31) % 1);
+            const pa = pt(i, f);
+            const pb = pt(j, f);
+            const s0 = (r * 3.17) % 1;
+            const m = { x: pa.x + (pb.x - pa.x) * s0, y: pa.y + (pb.y - pa.y) * s0 + 0.04, z: pa.z + (pb.z - pa.z) * s0 };
+            const fl = Math.hypot(pb.x - pa.x, pb.z - pa.z) || 1;
+            const ax = (pb.x - pa.x) / fl;
+            const az = (pb.z - pa.z) / fl;
+            const tilt = ((r * 13.7) % 1) - 0.5; // (a wavelet lies roughly across the flow, never square to it)
+            const cxv = -az + ax * tilt;
+            const czv = ax + az * tilt;
+            const cl = Math.hypot(cxv, czv);
+            const L = (lite ? 1.6 : 1.1) + ((r * 9.13) % 1) * (lite ? 1.8 : 1.4);
+            const W = lite ? 0.35 : 0.22;
+            const ux = (cxv / cl) * L;
+            const uz = (czv / cl) * L;
+            const q = [
+              { x: m.x - ux - ax * W, y: m.y, z: m.z - uz - az * W }, { x: m.x + ux - ax * W, y: m.y, z: m.z + uz - az * W },
+              { x: m.x + ux * 0.8 + ax * W, y: m.y, z: m.z + uz * 0.8 + az * W }, { x: m.x - ux * 0.8 + ax * W, y: m.y, z: m.z - uz * 0.8 + az * W },
+            ];
+            const gc = new Color().copy(c).lerp(glint, 0.22 + 0.22 * ((r * 5.7) % 1));
+            for (const v of [[q[0], q[1], q[2]], [q[0], q[2], q[3]]]) {
+              if (hits(...v) || !v.every(holds)) continue;
+              for (const o of v) { pos.push(o.x, o.y, o.z); col.push(gc.r, gc.g, gc.b); }
+            }
+          }
         }
       }
     }

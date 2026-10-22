@@ -22,6 +22,7 @@ const NAMES = {
   'photo-finish': 'Photo Finish', 'relay-legs': 'Relay Legs', 'steeple-water': 'Steeple Water', 'anchor-arches': 'Anchor Arches', 'golden-lap': 'Golden Lap',
   'half-pipe-run': 'Half-Pipe Run', 'mid-lottery': 'Mid Lottery', 'jib-run': 'Jib Run', 'jump-run': 'Jump Run', 'clean-drop': 'Clean Drop',
   'bridge-slalom': 'Bridge Slalom', 'market-maze': 'Market Maze', 'steamer-pass': 'Steamer Pass', 'falls-edge': 'Falls Edge', 'lock-staircase': 'Lock Staircase', 'bridge-gate': 'Bridge Gate', 'arch-run': 'Arch Run', 'port-cranes': 'Port Cranes', 'flooded-forest': 'Flooded Forest', 'balloon-plain': 'Balloon Plain', 'peg-drop': 'Peg Drop', 'pipe-drop': 'Pipe Drop',
+  'two-waters': 'Two Waters', cataract: 'Cataract', 'rapids-ladder': 'Rapids Ladder', 'island-castle': 'Island Castle', 'river-steps': 'River Steps',
 };
 
 const base = (slug, name, description) => ({
@@ -58,7 +59,7 @@ const PINBALL_LAYOUTS = ['staircases', 'siege-routes', 'stage-hairpin', 'saucer-
 // A layout whose results depend on how the field arrives (a splitter's balance, the spread) is proven with its table's own opening.
 // Layouts made for one arcade world are proven on a test track built as an arcade world.
 const ARCADE_LAYOUTS = ['cabinet-rows', 'maze-corridors', 'bullet-spirals', 'up-up-down-down', 'bracket-splits', 'coast-road', 'co-op-street'];
-const OWN_OPENING = { 'bridge-gate': 'pipe-drop', 'arch-run': 'pipe-drop', 'port-cranes': ['clean-drop', { side: 'right' }], 'balloon-plain': 'tunnel-launch', 'bridge-slalom': 'tunnel-launch', 'market-maze': 'peg-drop', 'steamer-pass': 'staggered-drop', 'lock-staircase': 'clean-drop', 'siege-routes': 'crest-start', 'saucer-sweeps': 'staggered-drop', 'clock-tower': 'funnel-drop', 'encore-split': 'split-start', 'cabinet-rows': 'funnel-drop', 'maze-corridors': 'split-start', 'bullet-spirals': 'staggered-drop', 'up-up-down-down': 'crest-start', 'bracket-splits': 'banked-turn', 'coast-road': 'boost-launch', 'co-op-street': 'tunnel-launch', 'lower-playfield': ['banked-turn', { side: 'right' }] };
+const OWN_OPENING = { 'bridge-gate': 'pipe-drop', 'arch-run': 'pipe-drop', 'port-cranes': ['clean-drop', { side: 'right' }], 'balloon-plain': 'tunnel-launch', 'two-waters': 'funnel-drop', cataract: ['banked-turn', { side: 'left' }], 'rapids-ladder': 'staggered-drop', 'island-castle': 'split-start', 'river-steps': 'peg-drop', 'bridge-slalom': 'tunnel-launch', 'market-maze': 'peg-drop', 'steamer-pass': 'staggered-drop', 'lock-staircase': 'clean-drop', 'siege-routes': 'crest-start', 'saucer-sweeps': 'staggered-drop', 'clock-tower': 'funnel-drop', 'encore-split': 'split-start', 'cabinet-rows': 'funnel-drop', 'maze-corridors': 'split-start', 'bullet-spirals': 'staggered-drop', 'up-up-down-down': 'crest-start', 'bracket-splits': 'banked-turn', 'coast-road': 'boost-launch', 'co-op-street': 'tunnel-launch', 'lower-playfield': ['banked-turn', { side: 'right' }] };
 // (Lower playfield: the banked turn the other way, so the test track is Tilt's exact mirror image.)
 // Layouts made for one canyon are proven on a test track built as a canyon (on the canyon floor, climbing out where its canyon does).
 const CANYON_LAYOUTS = ['horseshoe-bend', 'great-bend', 'terrace-steps', 'rafting-run', 'six-canyons', 'basalt-gorge', 'twin-peaks', 'cliff-ledge', 'free-fall', 'meanders',
@@ -111,7 +112,7 @@ const ATHLETICS_DRESS = {
 };
 // Layouts made for one Rivers track are proven on a test track built as a river (on its banks, flying out
 // over the water where its track does), with the opening its track races.
-const RIVER_LAYOUTS = ['bridge-slalom', 'market-maze', 'steamer-pass', 'falls-edge', 'lock-staircase', 'bridge-gate', 'arch-run', 'port-cranes', 'flooded-forest', 'balloon-plain'];
+const RIVER_LAYOUTS = ['bridge-slalom', 'market-maze', 'steamer-pass', 'falls-edge', 'lock-staircase', 'bridge-gate', 'arch-run', 'port-cranes', 'flooded-forest', 'balloon-plain', 'two-waters', 'cataract', 'rapids-ladder', 'island-castle', 'river-steps'];
 const RIVER_HEIGHTS = {
   'bridge-slalom': { flyOut: { height: 14 } },
   'market-maze': {},
@@ -123,7 +124,14 @@ const RIVER_HEIGHTS = {
   'port-cranes': { bridgeRun: { height: 10 } },
   'flooded-forest': { trunks: { height: 7 } },
   'balloon-plain': { plainBends: { height: 14 } },
+  'two-waters': { seam: { height: 8 }, seamSweep: { height: 8 } },
+  cataract: { sails: { height: 12 } },
+  'rapids-ladder': { whiteWater: { height: 8 } },
+  'island-castle': { bargeSweep: { height: 10 } },
+  'river-steps': { lamps: { height: 6 } },
 };
+// (Each test track starts the way its track does: looks only, but the land behind the gate differs.)
+const RIVER_START = { 'market-maze': 'river-boat', cataract: 'cliff', 'rapids-ladder': 'stepped-platform', 'island-castle': 'castle-tower', 'river-steps': 'stepped-platform' };
 // (Falls edge is proven the way Zambezi Falls Run races it: mirrored, its first bend to the right.)
 const RIVER_MIRROR = { 'falls-edge': true };
 const TOUCHDOWNS = { 'sea-crossing': { tunnelRun: { height: 0 } }, 'terrace-run': { swoops: { height: 0 } }, 'wall-dive': { tunnelRun: { height: 0 } } };
@@ -134,7 +142,7 @@ const layouts = LAYOUT_KINDS.map((kind) => track({
   ...(CANYON_LAYOUTS.includes(kind) && { series: 'canyon', biome: 'desert', canyon: { palette: 'grand-canyon' } }),
   ...(BLOCK_LAYOUTS.includes(kind) && { series: 'block', biome: 'meadow', block: { world: 'meadow' } }),
   ...(ATHLETICS_LAYOUTS.includes(kind) && { series: 'athletics', biome: 'city', surface: 'tartan', athletics: { stadium: 'bislett' } }),
-  ...(RIVER_LAYOUTS.includes(kind) && { series: 'river', biome: 'meadow', river: { palette: 'danube' }, start: { landmark: 'mountain-hut', type: kind === 'market-maze' ? 'river-boat' : 'pier' } }),
+  ...(RIVER_LAYOUTS.includes(kind) && { series: 'river', biome: 'meadow', river: { palette: 'danube' }, start: { landmark: 'mountain-hut', type: RIVER_START[kind] ?? 'pier' } }),
   ...(PINBALL_LAYOUTS.includes(kind) && { series: 'pinball', biome: 'playfield', lighting: 'parlour' }),
   ...(ARCADE_LAYOUTS.includes(kind) && { series: 'arcade', biome: 'circuit-board', lighting: 'neon-night', billboardFrame: 'marquee' }),
   opening: opening(...[].concat(OWN_OPENING[kind] ?? 'classic')),

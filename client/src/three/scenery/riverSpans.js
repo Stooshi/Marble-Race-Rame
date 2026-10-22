@@ -20,13 +20,15 @@
  *                        across and out over the river, a trolley and a container hanging over the water.
  *   multi-span-bridge:   a long bridge of many girder spans on slim piers, across the river beside the
  *                        section (laid along it, clear of every stretch), level with the track.
+ *   truss-bridge:        a railway bridge crossing the track square: a deck between two steel truss girders
+ *                        (verticals and diagonals), a short train on it, stone piers clear of the track.
  */
 import { BoxGeometry, BufferGeometry, ConeGeometry, CylinderGeometry, Float32BufferAttribute, Group, LineBasicMaterial, LineSegments, Matrix4, Mesh, MeshLambertMaterial, Quaternion, SphereGeometry, Vector3 } from 'three';
 import { merge, piece } from './parts';
 
 const SPAN_CLEAR = 18; // metres over the track's rim, at the lowest
 const PIER_CLEAR = 9;  // metres from any stretch's middle to a pier's side
-export const RIVER_SPAN_KINDS = ['chain-bridge', 'steel-arch-bridge', 'cable-stayed-bridge', 'bascule-bridge', 'river-suspension-bridge', 'stone-arch-bridges', 'loading-gantry', 'multi-span-bridge'];
+export const RIVER_SPAN_KINDS = ['chain-bridge', 'steel-arch-bridge', 'cable-stayed-bridge', 'bascule-bridge', 'river-suspension-bridge', 'stone-arch-bridges', 'loading-gantry', 'multi-span-bridge', 'truss-bridge'];
 
 function beam(a, b, t, colour, t2 = t) {
   const dir = new Vector3().subVectors(b, a);
@@ -82,7 +84,7 @@ export function buildRiverSpans(centerline, channel, kit, { river, groundAt, cor
         // (Five, evenly along the section, each crossing it square; the arch over the track alternately to its left and right.)
         for (let k = 0; k < 5; k += 1) stoneArches({ ...ctx, ...square(Math.round(i0 + (i1 - i0) * (0.1 + 0.2 * k))), shift: k % 2 ? -2.5 : 2.5 });
       } else {
-        const build = { 'steel-arch-bridge': steelArch, 'cable-stayed-bridge': cableStayed, 'bascule-bridge': bascule, 'river-suspension-bridge': suspension, 'loading-gantry': gantry }[kind];
+        const build = { 'steel-arch-bridge': steelArch, 'cable-stayed-bridge': cableStayed, 'bascule-bridge': bascule, 'river-suspension-bridge': suspension, 'loading-gantry': gantry, 'truss-bridge': trussBridge }[kind];
         build({ ...ctx, ...square(im) });
       }
     }
@@ -513,5 +515,43 @@ function multiSpan({ samples, i0, i1, parts, spots, groundAt, lite, clear }) {
     parts.push(beam(p0, p1, 9, '#9a2a24', 2.2)); // the girder (red), the deck on it
     parts.push(beam(p0.clone().setY(deckY + 1.3), p1.clone().setY(deckY + 1.3), 10, '#d8d4c8', 0.5));
     if (!lite) for (const j of [-1, 1]) parts.push(beam(p0.clone().addScaledVector(across, j * 4.6).setY(deckY + 2.2), p1.clone().addScaledVector(across, j * 4.6).setY(deckY + 2.2), 0.2, '#3a3d44'));
+  }
+}
+
+/** A railway truss bridge crossing the track square: a deck between two steel truss girders, on stone piers clear of the track. */
+function trussBridge({ s, side, along, parts, spots, groundAt, lite, trackTopNear, clear }) {
+  const reach = 70;
+  let top = -Infinity;
+  for (let d = -reach; d <= reach; d += 6) {
+    const p = s.pos.clone().addScaledVector(side, d);
+    top = Math.max(top, trackTopNear(p.x, p.z, 12));
+  }
+  const deckY = top + SPAN_CLEAR;
+  const STEEL = '#5a6a5e';
+  const across = new Quaternion().setFromUnitVectors(new Vector3(0, 0, 1), side);
+  parts.push(piece(new BoxGeometry(8, 1.2, reach * 2), '#6b6a66', new Matrix4().compose(new Vector3(s.pos.x, deckY, s.pos.z), across, new Vector3(1, 1, 1))));
+  // Two girders: top and bottom chords, verticals and alternating diagonals (a Warren truss), 7 m high.
+  const H = 7;
+  const bay = lite ? 14 : 7;
+  for (const k of [1, -1]) {
+    const at = (d, y) => s.pos.clone().addScaledVector(side, d).addScaledVector(along, k * 4).setY(y);
+    parts.push(beam(at(-reach, deckY + 0.6), at(reach, deckY + 0.6), 0.7, STEEL), beam(at(-reach, deckY + H), at(reach, deckY + H), 0.7, STEEL));
+    for (let d = -reach, n = 0; d < reach; d += bay, n += 1) {
+      parts.push(beam(at(d, deckY + 0.6), at(d, deckY + H), 0.4, STEEL));
+      parts.push(beam(at(d + (n % 2 ? bay : 0), deckY + 0.6), at(d + (n % 2 ? 0 : bay), deckY + H), 0.35, STEEL));
+    }
+  }
+  // Cross-beams between the girders' tops, and a short train on the deck.
+  for (let d = -reach + 7; d < reach; d += lite ? 28 : 14) {
+    const c = s.pos.clone().addScaledVector(side, d);
+    parts.push(beam(c.clone().addScaledVector(along, 4).setY(deckY + H), c.clone().addScaledVector(along, -4).setY(deckY + H), 0.3, STEEL));
+  }
+  for (let c = 0; c < 3; c += 1) parts.push(piece(new BoxGeometry(3, 3.4, 14), c ? '#c8442f' : '#3a4048', new Matrix4().compose(s.pos.clone().addScaledVector(side, 20 + c * 15).setY(deckY + 2.3), across, new Vector3(1, 1, 1))));
+  // Stone piers under the deck, wherever they stand clear of every stretch.
+  for (let d = -reach + 10; d <= reach - 10; d += 20) {
+    const p = s.pos.clone().addScaledVector(side, d);
+    if (!clear(p.x, p.z, PIER_CLEAR + 2)) continue;
+    pier(parts, groundAt, p, deckY - 0.6, 5, '#a49c8f');
+    spots.push({ x: p.x, z: p.z, r: 6 });
   }
 }

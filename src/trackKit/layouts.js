@@ -1456,6 +1456,98 @@ const LAYOUTS = {
       obstacles: [parked({ costume: c.parked, at: 0.2, side: R, length: 6 }), peg({ costume: c.peg, at: 0.45, line: 'left' })], features: [rumble({ from: 0.7, to: 0.95, count: 3 })],
     },
   ],
+  /** L79 Two waters (Rivers): a long straight on the seam where two rivers meet without mixing (two pegs, two slalom poles and a row of moguls), a sweep along the seam, the lily-pad lagoon (a half-pipe, the field rocking wall to wall), S-bends past the floating houses, a drop, the hairpin, a spiral round a river island, a short climb and a parked piece and a peg at the run-in. */
+  'two-waters': (L, R, c) => [
+    {
+      key: 'seam', name: 'Along the seam', shape: straight(85, { grade: 0.11 }), billboards: 1,
+      obstacles: [peg({ costume: c.peg, at: 0.12, line: 'left' }), peg({ costume: c.peg, at: 0.3, line: 'right' }), slalom({ costume: c.slalom, from: 0.44, to: 0.54, count: 2, loss: 0.15 })], features: [moguls({ from: 0.66, to: 0.92, count: 4 })],
+    },
+    { key: 'seamSweep', name: 'Seam sweep', shape: sweep({ side: L, radius: 90, degrees: 100, grade: 0.12 }), billboards: 2 },
+    { key: 'lagoonRunIn', name: 'Into the lagoon', shape: straight(30, { grade: 0.12 }) },
+    { key: 'lagoon', name: 'Lagoon half-pipe', shape: halfPipe({ first: R, width: 8, swings: 3, radius: 150, degrees: 18, grade: 0.12 }) },
+    { key: 'village', name: 'S-bends', shape: sBends({ first: L, radius: 75, degrees: 65, grade: 0.12 }), billboards: 1 },
+    { key: 'drop', name: 'Drop', shape: plunge(45, { grade: 0.22, from: 0.12 }) },
+    { key: 'brakingStraight', name: 'Run to the hairpin', shape: straight(50, { grade: 0.12 }) },
+    { key: 'hairpin', name: 'Hairpin', shape: hairpin({ side: R }), obstacles: [swipe({ costume: c.swipe, side: 'high' })] },
+    { key: 'island', name: 'Spiral', shape: spiral({ side: L, radius: 52, turns: 0.65, grade: 0.15 }) },
+    { key: 'rise', name: 'Short climb', shape: climb(12, { grade: -0.05, after: 0.12 }) },
+    {
+      key: 'lastStraight', name: 'Last straight', shape: straight(75, { grade: 0.15 }),
+      obstacles: [parked({ costume: c.parked, at: 0.2, side: R, length: 6 }), peg({ costume: c.peg, at: 0.45, line: 'left' })], features: [rumble({ from: 0.7, to: 0.95, count: 3 })],
+    },
+  ],
+  /** L80 Cataract (Rivers): a desert-bank straight (a short slalom, moguls and a peg: granite boulders), the cataract (a waterfall), a slalom straight between the boulder islands, a long sweep out among the sails (it flies here), S-bends along the palm bank, the hairpin, a spiral round a palm island, a short climb, a drop and a parked piece and a peg at the run-in. */
+  cataract: (L, R, c) => [
+    { key: 'desertBank', name: 'Desert bank', shape: straight(80, { grade: 0.1 }), obstacles: [slalom({ costume: c.slalom, from: 0.1, to: 0.25, count: 2, loss: 0.15 }), peg({ costume: c.peg, at: 0.75, line: 'center' })], features: [moguls({ from: 0.42, to: 0.64, count: 4 })], billboards: 1 },
+    { key: 'cataract', name: 'The cataract', shape: waterfall(45, { grade: 0.55 }) },
+    { key: 'boulders', name: 'Boulder slalom', shape: straight(60, { grade: 0.12 }), obstacles: [slalom({ costume: c.slalom, from: 0.3, to: 0.85, count: 3, loss: 0.15 })] },
+    { key: 'sails', name: 'Sweep among the sails', shape: sweep({ side: R, radius: 90, degrees: 110, grade: 0.085 }), billboards: 2 },
+    { key: 'palmBank', name: 'S-bends', shape: sBends({ first: L, radius: 75, degrees: 55, grade: 0.12 }), billboards: 1 },
+    { key: 'brakingStraight', name: 'Run to the hairpin', shape: straight(50, { grade: 0.12 }) },
+    { key: 'hairpin', name: 'Hairpin', shape: hairpin({ side: R }), obstacles: [swipe({ costume: c.swipe, side: 'high' })] },
+    { key: 'palmIsland', name: 'Spiral', shape: spiral({ side: L, radius: 52, turns: 0.75, grade: 0.15 }) },
+    { key: 'rise', name: 'Short climb', shape: climb(12, { grade: -0.05, after: 0.12 }) },
+    { key: 'drop', name: 'Drop', shape: plunge(40, { grade: 0.22, from: 0.12 }) },
+    {
+      key: 'lastStraight', name: 'Last straight', shape: straight(75, { grade: 0.15 }),
+      obstacles: [parked({ costume: c.parked, at: 0.2, side: L, length: 6 }), peg({ costume: c.peg, at: 0.45, line: 'right' })], features: [rumble({ from: 0.7, to: 0.95, count: 3 })],
+    },
+  ],
+  /** L81 Rapids ladder (Rivers): a straight above the rapids, three short rapid drops with a pool between each, a slalom straight out over the white water (it flies here), a sweep along the forest bank, the hairpin, S-bends, a spiral and a parked piece and a peg at the run-in. */
+  'rapids-ladder': (L, R, c) => [
+    { key: 'aboveRapids', name: 'Above the rapids', shape: straight(50, { grade: 0.1 }), obstacles: [peg({ costume: c.peg, at: 0.5, line: 'center' })], billboards: 1 },
+    { key: 'rapid1', name: 'First rapid', shape: plunge(35, { grade: 0.24, from: 0.1 }) },
+    { key: 'pool1', name: 'First pool', shape: straight(35, { grade: 0.1 }) },
+    { key: 'rapid2', name: 'Second rapid', shape: plunge(35, { grade: 0.24, from: 0.1 }) },
+    { key: 'pool2', name: 'Second pool', shape: straight(35, { grade: 0.1 }) },
+    { key: 'rapid3', name: 'Third rapid', shape: plunge(35, { grade: 0.24, from: 0.1 }) },
+    { key: 'whiteWater', name: 'White-water slalom', shape: straight(90, { grade: 0.12 }), obstacles: [slalom({ costume: c.slalom, from: 0.3, to: 0.85, count: 3, loss: 0.22 })] },
+    { key: 'forestSweep', name: 'Forest sweep', shape: sweep({ side: R, radius: 85, degrees: 120, grade: 0.09 }), billboards: 2 },
+    { key: 'brakingStraight', name: 'Run to the hairpin', shape: straight(50, { grade: 0.12 }) },
+    { key: 'hairpin', name: 'Hairpin', shape: hairpin({ side: L }), obstacles: [swipe({ costume: c.swipe, side: 'high' })] },
+    { key: 'landingBends', name: 'S-bends', shape: sBends({ first: R, radius: 75, degrees: 65, grade: 0.12 }), billboards: 1 },
+    { key: 'spin', name: 'Spiral', shape: spiral({ side: L, radius: 52, turns: 0.9, grade: 0.15 }) },
+    {
+      key: 'lastStraight', name: 'Last straight', shape: straight(90, { grade: 0.15 }),
+      obstacles: [parked({ costume: c.parked, at: 0.2, side: R, length: 6 }), peg({ costume: c.peg, at: 0.45, line: 'left' })], features: [rumble({ from: 0.7, to: 0.95, count: 3 })],
+    },
+  ],
+  /** L82 Island castle (Rivers): a straight down to the river (a peg, two slalom poles and a peg), a spiral round the castle island, a sweep along the barge reach, a short climb up to the vineyards, S-bends up the vineyard terraces, a drop under a rail bridge, the hairpin, a long sweep past the barges and a parked piece and a peg at the run-in. */
+  'island-castle': (L, R, c) => [
+    {
+      key: 'toTheRiver', name: 'Down to the river', shape: straight(60, { grade: 0.12 }),
+      obstacles: [peg({ costume: c.peg, at: 0.15, line: 'center' }), slalom({ costume: c.slalom, from: 0.4, to: 0.52, count: 2, loss: 0.15 }), peg({ costume: c.peg, at: 0.8, line: 'right' })],
+    },
+    { key: 'island', name: 'Spiral', shape: spiral({ side: L, radius: 58, turns: 0.75, grade: 0.15 }) },
+    { key: 'bargeReach', name: 'Barge reach', shape: sweep({ side: R, radius: 85, degrees: 100, grade: 0.1 }), billboards: 2 },
+    { key: 'vineyardClimb', name: 'Short climb', shape: climb(12, { grade: -0.05, after: 0.12 }) },
+    { key: 'switchbacks', name: 'S-bends', shape: sBends({ first: L, radius: 70, degrees: 70, grade: 0.13 }), billboards: 1 },
+    { key: 'railBridge', name: 'Drop', shape: plunge(45, { grade: 0.22, from: 0.13 }) },
+    { key: 'brakingStraight', name: 'Run to the hairpin', shape: straight(50, { grade: 0.12 }) },
+    { key: 'hairpin', name: 'Hairpin', shape: hairpin({ side: R }), obstacles: [swipe({ costume: c.swipe, side: 'high' })] },
+    { key: 'bargeSweep', name: 'Barge sweep', shape: sweep({ side: L, radius: 85, degrees: 100, grade: 0.1 }), billboards: 1 },
+    {
+      key: 'lastStraight', name: 'Last straight', shape: straight(90, { grade: 0.15 }),
+      obstacles: [parked({ costume: c.parked, at: 0.2, side: R, length: 6 }), peg({ costume: c.peg, at: 0.45, line: 'left' })], features: [rumble({ from: 0.7, to: 0.95, count: 3 })],
+    },
+  ],
+  /** L83 River steps (Rivers): a straight down five stone river steps, a slalom straight low over the water among the floating lamps (the lottery after a peg drop), a sweep, part of a spiral round a moored boat, S-bends along the steps, a short climb and a drop to the water, the hairpin, a sweep and a parked piece and a peg at the run-in. */
+  'river-steps': (L, R, c) => [
+    { key: 'riverSteps', name: 'River steps', shape: straight(80, { grade: 0.15 }), features: [steps({ from: 0.36, to: 0.92, count: 5, drag: 0.02 })], billboards: 1 },
+    { key: 'lamps', name: 'Lamp slalom', shape: straight(85, { grade: 0.11 }), obstacles: [slalom({ costume: c.slalom, from: 0.2, to: 0.9, count: 5, loss: 0.22 })] },
+    { key: 'lampSweep', name: 'Sweep', shape: sweep({ side: L, radius: 85, degrees: 110, grade: 0.11 }), billboards: 2 },
+    { key: 'boatTurn', name: 'Spiral', shape: spiral({ side: R, radius: 50, turns: 0.6, grade: 0.15 }) },
+    { key: 'alongSteps', name: 'S-bends', shape: sBends({ first: L, radius: 75, degrees: 65, grade: 0.12 }), billboards: 1 },
+    { key: 'rise', name: 'Short climb', shape: climb(12, { grade: -0.05, after: 0.12 }) },
+    { key: 'drop', name: 'Drop', shape: plunge(45, { grade: 0.22, from: 0.12 }) },
+    { key: 'brakingStraight', name: 'Run to the hairpin', shape: straight(50, { grade: 0.12 }) },
+    { key: 'hairpin', name: 'Hairpin', shape: hairpin({ side: L }), obstacles: [swipe({ costume: c.swipe, side: 'high' })] },
+    { key: 'sweep2', name: 'Second sweep', shape: sweep({ side: R, radius: 85, degrees: 90, grade: 0.1 }) },
+    {
+      key: 'lastStraight', name: 'Last straight', shape: straight(75, { grade: 0.15 }),
+      obstacles: [parked({ costume: c.parked, at: 0.2, side: L, length: 6 }), peg({ costume: c.peg, at: 0.45, line: 'right' })], features: [rumble({ from: 0.7, to: 0.95, count: 3 })],
+    },
+  ],
 };
 
 const LAYOUT_KINDS = Object.keys(LAYOUTS);

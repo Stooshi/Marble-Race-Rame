@@ -354,7 +354,10 @@ module.exports = {
     // The Rivers (client/src/three/scenery/kitLandmarksRiver.js; boats float on the river: `river: true`).
     'river-cruiser', 'longtail-boat', 'market-boats', 'paddle-steamer', 'river-barge', 'river-ferry',
     'domed-hall', 'quay-lamps', 'wat-roofs', 'falls-lip', 'hippo-pool', 'ship-locks', 'green-peaks', 'levee-houses', 'pontoon-floats',
-    'river-clipper', 'glass-towers', 'weeping-willow', 'quay-cranes', 'red-gums', 'pelicans', 'lock-weir', 'limestone-cliffs', 'brick-temples'],
+    'river-clipper', 'glass-towers', 'weeping-willow', 'quay-cranes', 'red-gums', 'pelicans', 'lock-weir', 'limestone-cliffs', 'brick-temples',
+    // (The other ten: Amazon, Nile, Congo, Rhine, Ganges.)
+    'lily-pads', 'floating-houses', 'feluccas', 'granite-islands', 'palm-grove', 'fishing-tripods', 'dugout-canoes',
+    'island-castle', 'hilltop-castle', 'vineyard-terraces', 'ghat-steps', 'floating-lamps', 'rowing-boats'],
   OVERHEAD: ['gondola', 'cable-car', 'chairlift', 'vulture',
     // The Canyon Series: birds circling over the gorge, and what spans it from rim to rim, high over the track.
     'condor', 'prayer-flags', 'arch-bridge', 'railway-trestle', 'suspension-bridge',
@@ -363,7 +366,7 @@ module.exports = {
     'chain-bridge', 'steel-arch-bridge', 'cable-stayed-bridge',
     // (A raised bascule bridge's towers either side of the track, a suspension bridge, five stone arch bridges in a row,
     // a port's loading gantry over the track, a long many-span bridge beside a section; hot-air balloons drifting high above.)
-    'bascule-bridge', 'river-suspension-bridge', 'stone-arch-bridges', 'loading-gantry', 'multi-span-bridge', 'hot-air-balloons'],
+    'bascule-bridge', 'river-suspension-bridge', 'stone-arch-bridges', 'loading-gantry', 'multi-span-bridge', 'hot-air-balloons', 'truss-bridge'],
   // A Block Series world (family 'block': `block: { world }`): its voxel land's colours and what stands
   // on it, the client's BLOCK_WORLDS (client/src/three/scenery/blocks.js).
   BLOCK_WORLDS: ['meadow', 'valley', 'snow', 'mine', 'magma', 'puzzle', 'fortress', 'portal', 'sky', 'harbour', 'temple', 'bonus'],
@@ -373,12 +376,13 @@ module.exports = {
   // A canyon's rock and river (family 'canyon': `canyon: { palette }`), the client's CANYON_PALETTES.
   CANYONS: ['grand-canyon', 'himalaya', 'andes', 'limestone', 'copper', 'basalt', 'karakoram', 'namib', 'slot', 'verdon', 'jinsha', 'waimea', 'mujib'],
   // A river's water, banks and plants (family 'river': `river: { palette }`), the client's RIVER_PALETTES.
-  RIVERS: ['danube', 'mekong', 'mississippi', 'zambezi', 'yangtze', 'thames', 'seine', 'volga', 'murray', 'irrawaddy'],
+  RIVERS: ['danube', 'mekong', 'mississippi', 'zambezi', 'yangtze', 'thames', 'seine', 'volga', 'murray', 'irrawaddy', 'amazon', 'nile', 'congo', 'rhine', 'ganges'],
   // What stands in the middle of a splitter, between its two channels (the arch: over one of
   // them), or in the middle of a spiral or a hairpin.
   AROUND: ['mountain-hut', 'big-rock', 'mountain-restaurant', 'mine-headframe', 'nunatak', 'bell-tower', 'arc-de-triomphe', 'obelisk', 'notre-dame', 'oasis', 'twisted-tower', 'river-island', 'anaconda', 'watchtower', 'pagoda',
     'museum-of-the-future', 'dubai-frame', 'opera-house', 'tulip-garden', 'roundabout-monument', 'acacia', 'mughal-fountain', 'giant-tree', 'snow-island', 'fallen-statue', 'volcano-rock', 'sagrada-familia', 'frozen-waterfall', 'limestone-island', 'sea-islet', 'giant-redwood', 'lantern-chedi', 'watermill', 'confucius-temple', 'castle-keep', 'magician-trunk', 'top-hat', 'jukebox-tower', 'clocktower', 'lighting-rig', 'claw-tower', 'glitch-tower', 'ringed-planet', 'laser-turret', 'water-tower', 'fork-signpost', 'neon-plaza', 'snow-peak',
-    'settling-stack', 'voxel-peak', 'basalt-spire', 'beam-tower', 'level-pillars', 'floodlight-mast', 'flame-cauldron', 'medal-podium'],
+    'settling-stack', 'voxel-peak', 'basalt-spire', 'beam-tower', 'level-pillars', 'floodlight-mast', 'flame-cauldron', 'medal-podium',
+    'island-castle'],
   // Scenery near a section (or the start or finish): what grows and stands beside the track there.
   SCENERY: ['bare', 'rocks', 'birches', 'pines', 'race-netting', 'funicular', 'wooden-houses', 'frozen-lake',
     'wood-clad', 'chalets', 'pasture', 'aspens', 'shopfronts',

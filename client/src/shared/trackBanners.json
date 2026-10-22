@@ -13,6 +13,17 @@
    "side": 1,
    "marbles": 1
   },
+  "amazon-meeting-spins": {
+   "name": "Amazon Meeting Spins",
+   "series": "Rivers",
+   "lighting": "day",
+   "v": "2daa6ce4",
+   "bytes": 15836,
+   "bytes2x": 39898,
+   "t": 10561,
+   "side": 1,
+   "marbles": 4
+  },
   "amazon-water-run": {
    "name": "Amazon Water Run",
    "series": "World Tour",
