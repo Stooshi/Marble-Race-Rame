@@ -353,13 +353,17 @@ module.exports = {
     'golden-arch', 'floodlight-mast', 'field-events', 'medal-podium',
     // The Rivers (client/src/three/scenery/kitLandmarksRiver.js; boats float on the river: `river: true`).
     'river-cruiser', 'longtail-boat', 'market-boats', 'paddle-steamer', 'river-barge', 'river-ferry',
-    'domed-hall', 'quay-lamps', 'wat-roofs', 'falls-lip', 'hippo-pool', 'ship-locks', 'green-peaks', 'levee-houses', 'pontoon-floats'],
+    'domed-hall', 'quay-lamps', 'wat-roofs', 'falls-lip', 'hippo-pool', 'ship-locks', 'green-peaks', 'levee-houses', 'pontoon-floats',
+    'river-clipper', 'glass-towers', 'weeping-willow', 'quay-cranes', 'red-gums', 'pelicans', 'lock-weir', 'limestone-cliffs', 'brick-temples'],
   OVERHEAD: ['gondola', 'cable-car', 'chairlift', 'vulture',
     // The Canyon Series: birds circling over the gorge, and what spans it from rim to rim, high over the track.
     'condor', 'prayer-flags', 'arch-bridge', 'railway-trestle', 'suspension-bridge',
     // The Rivers: the bridges the track runs under (a chain bridge's piers along the section, the field
     // weaving between them; a steel arch or a cable-stayed bridge crossing high over it).
-    'chain-bridge', 'steel-arch-bridge', 'cable-stayed-bridge'],
+    'chain-bridge', 'steel-arch-bridge', 'cable-stayed-bridge',
+    // (A raised bascule bridge's towers either side of the track, a suspension bridge, five stone arch bridges in a row,
+    // a port's loading gantry over the track, a long many-span bridge beside a section; hot-air balloons drifting high above.)
+    'bascule-bridge', 'river-suspension-bridge', 'stone-arch-bridges', 'loading-gantry', 'multi-span-bridge', 'hot-air-balloons'],
   // A Block Series world (family 'block': `block: { world }`): its voxel land's colours and what stands
   // on it, the client's BLOCK_WORLDS (client/src/three/scenery/blocks.js).
   BLOCK_WORLDS: ['meadow', 'valley', 'snow', 'mine', 'magma', 'puzzle', 'fortress', 'portal', 'sky', 'harbour', 'temple', 'bonus'],
@@ -369,7 +373,7 @@ module.exports = {
   // A canyon's rock and river (family 'canyon': `canyon: { palette }`), the client's CANYON_PALETTES.
   CANYONS: ['grand-canyon', 'himalaya', 'andes', 'limestone', 'copper', 'basalt', 'karakoram', 'namib', 'slot', 'verdon', 'jinsha', 'waimea', 'mujib'],
   // A river's water, banks and plants (family 'river': `river: { palette }`), the client's RIVER_PALETTES.
-  RIVERS: ['danube', 'mekong', 'mississippi', 'zambezi', 'yangtze'],
+  RIVERS: ['danube', 'mekong', 'mississippi', 'zambezi', 'yangtze', 'thames', 'seine', 'volga', 'murray', 'irrawaddy'],
   // What stands in the middle of a splitter, between its two channels (the arch: over one of
   // them), or in the middle of a spiral or a hairpin.
   AROUND: ['mountain-hut', 'big-rock', 'mountain-restaurant', 'mine-headframe', 'nunatak', 'bell-tower', 'arc-de-triomphe', 'obelisk', 'notre-dame', 'oasis', 'twisted-tower', 'river-island', 'anaconda', 'watchtower', 'pagoda',

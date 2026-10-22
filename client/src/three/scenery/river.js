@@ -37,6 +37,21 @@ export const RIVER_PALETTES = {
   // The Yangtze: grey-green water under steep green mountains, bamboo on the banks.
   yangtze: { water: '#6f8f7e', deep: '#56746a', foam: '#eef2ee', bank: '#8a8670', quay: '#8f8b80', sand: '#b8ae8e',
     dressing: [['bamboo', 0.4], ['broadleaf', 0.4, '#3f6f3a'], ['rock', 0.2, '#6f6a60']] },
+  // The Thames: a grey-green tidal river between stone embankments, plane trees and city land.
+  thames: { water: '#5a7a78', deep: '#46625f', foam: '#e4ecea', bank: '#7f7a6c', quay: '#a8a090', sand: '#b8ac8e',
+    dressing: [['broadleaf', 0.6, '#4a7040'], ['poplar', 0.2, '#557a42'], ['bush', 0.2, '#4f7a3e']] },
+  // The Seine: a green river between pale stone quays, plane trees and willows.
+  seine: { water: '#4f7f74', deep: '#3a6158', foam: '#e8f0ec', bank: '#a89c84', quay: '#c8bca2', sand: '#c8b894',
+    dressing: [['broadleaf', 0.55, '#557a3a'], ['willow', 0.25], ['bush', 0.2, '#5a7f3e']] },
+  // The Volga: a wide blue river on the plains, sandy banks, birch woods.
+  volga: { water: '#4a7aa0', deep: '#355f84', foam: '#eef2f6', bank: '#a8946a', quay: '#9a968e', sand: '#d8c49a',
+    dressing: [['birch', 0.55], ['poplar', 0.25, '#5a8a42'], ['bush', 0.2, '#5f8a42']] },
+  // The Murray: olive-brown water through river red gum forest, golden sandy banks.
+  murray: { water: '#7a7a58', deep: '#5f6046', foam: '#eceadc', bank: '#a89068', quay: '#b8a07a', sand: '#d8b880',
+    dressing: [['redgum', 0.6], ['bush', 0.25, '#7a8a5a'], ['rock', 0.15, '#b8945a']] },
+  // The Irrawaddy at dawn: wide silty water, pale sandbanks, sugar palms on a dusty green plain.
+  irrawaddy: { water: '#9a8a6a', deep: '#7f7056', foam: '#f2ead8', bank: '#b8a07a', quay: '#a89a80', sand: '#e0cfa4',
+    dressing: [['sugar-palm', 0.45], ['broadleaf', 0.35, '#5f7a3a'], ['bush', 0.2, '#7a8a4a']] },
 };
 const BANK_COLOURS = { sand: 'sand', reeds: 'bank', bayou: 'bank', rock: 'quay', quay: 'quay', grass: null };
 
@@ -83,6 +98,28 @@ export function riverDressing(paletteKey) {
     reeds: () => (lite) => merge(Array.from({ length: lite ? 4 : 7 }, (_, k) => piece(
       new ConeGeometry(0.12, 2.4 + (k % 3) * 0.5, 3, 1, true), k % 2 ? '#8a9a4a' : '#a8a05a', Ry(Math.cos(k * 1.9) * 0.6, 1.2, Math.sin(k * 1.9) * 0.6, (k - 3) * 0.08),
     ))),
+    // A birch: a slim white trunk with dark marks, a light airy crown.
+    birch: () => (lite) => merge([
+      piece(new CylinderGeometry(0.16, 0.24, 6, 5, 1, true), '#eeeae2', T(0, 3, 0)),
+      ...(lite ? [] : [piece(new CylinderGeometry(0.25, 0.25, 0.3, 5, 1, true), '#2a2a2a', T(0, 2.2, 0))]),
+      piece(new IcosahedronGeometry(1.8, 0), '#8ab04a', T(0, 6.4, 0, 1, 1.6, 1)),
+    ]),
+    // A weeping willow: a short trunk, a dome of drooping pale green.
+    willow: () => () => merge([
+      piece(new CylinderGeometry(0.35, 0.55, 3, 5, 1, true), '#5a4a38', T(0, 1.5, 0)),
+      piece(new ConeGeometry(3.4, 6, 7, 1, true), '#8aa84a', T(0, 4.2, 0)),
+    ]),
+    // A river red gum: a pale mottled trunk, leaning limbs, a broad grey-green crown.
+    redgum: () => (lite) => merge([
+      piece(new CylinderGeometry(0.45, 0.8, 5, 6, 1, true), '#d8d0c0', Ry(0, 2.5, 0, 0.12)),
+      ...(lite ? [] : [piece(new CylinderGeometry(0.15, 0.35, 3.4, 5, 1, true), '#d0c8b8', Ry(-1.2, 5.4, 0, 0.7))]),
+      piece(new IcosahedronGeometry(2.8, 0), '#7a8a5a', T(0.4, 6.8, 0, 1.4, 0.65, 1.3)),
+    ]),
+    // A sugar palm: a tall straight trunk, a round ball of fan leaves.
+    'sugar-palm': () => () => merge([
+      piece(new CylinderGeometry(0.22, 0.3, 9, 5, 1, true), '#6a5a48', T(0, 4.5, 0)),
+      piece(new IcosahedronGeometry(1.9, 0), '#4f7a34', T(0, 9.6, 0, 1.2, 0.9, 1.2)),
+    ]),
     rock: (colour = '#7a756c') => () => merge([piece(new IcosahedronGeometry(1.5, 0), colour, T(0, 0.5, 0, 1.3, 0.75, 1.1))]),
     bush: (colour = '#4d8a3c') => () => merge([piece(new IcosahedronGeometry(0.9, 0), colour, T(0, 0.5, 0, 1.3, 0.7, 1.2))]),
   };

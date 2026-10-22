@@ -458,6 +458,8 @@ function arcadeRules({ spec, where }) {
 const START_TYPES = ['straight-lift', 'curving-lift', 'spiral-tower', 'elevator', 'cliff', 'rooftop', 'station-launch', 'stepped-platform', 'lighthouse', 'ski-jump', 'castle-tower', 'pier', 'river-boat', 'lock-gate'];
 // (The Rivers' starts: on a timber pier over the water, on a moored boat's top deck, at a lock's upper gates.)
 const RIVER_STARTS = ['pier', 'river-boat', 'lock-gate'];
+// (A Rivers track's own look for a start type, looks only: the lift inside a bridge tower or up a port crane, a mansard roof.)
+const START_LOOKS = { elevator: ['bridge-tower', 'port-crane'], rooftop: ['mansard'] };
 const GATES = ['paddle', 'trapdoor', 'stalls', 'barrier'];
 const COUNTDOWN_SHOTS = ['front', 'side', 'above', 'chase'];
 const LAUNCH_SHOTS = ['high-behind', 'low-chase', 'side', 'overhead', 'look-back'];
@@ -471,6 +473,8 @@ function startRules({ spec, where }) {
     if (!isCoaster(spec)) problems.push(`${where('start')}: a start type is for coasters (family: 'coaster').`);
     else if (!START_TYPES.includes(st.type)) problems.push(`${where('start')}: unknown start type ${JSON.stringify(st.type)} (${START_TYPES.join(', ')}).`);
     if (RIVER_STARTS.includes(st.type) && !isRiver(spec)) problems.push(`${where('start')}: a ${st.type} start stands on a river (family: 'river').`);
+    if (st.look !== undefined && !(START_LOOKS[st.type] ?? []).includes(st.look)) problems.push(`${where('start')}: unknown look ${JSON.stringify(st.look)} for a ${st.type} start (${Object.entries(START_LOOKS).map(([t, l]) => `${t}: ${l.join(', ')}`).join('; ')}).`);
+    if (st.look !== undefined && !isRiver(spec)) problems.push(`${where('start')}: a start's look is for Rivers tracks (family: 'river').`);
     if (st.type === 'station-launch' && spec.opening?.kind !== 'boost-launch') problems.push(`${where('start')}: a launch from the station races the boost-launch opening (opening('boost-launch')).`);
   }
   if (spec.opening?.kind === 'boost-launch' && isCoaster(spec) && !['station-launch', 'river-boat'].includes(st.type)) problems.push(`${where('start')}: a coaster takes the boost-launch opening only as a launch from the station or off a river boat's deck (start.type 'station-launch' or 'river-boat').`);
@@ -612,4 +616,4 @@ function athleticsRules({ spec, sections, where }) {
   return problems;
 }
 
-module.exports = { checkRecipe, isCanyon, isBlock, isAthletics, isWinterWonders, isRiver, MIN_SPIRAL_RADIUS, MIN_SWEEP_RADIUS, BILLBOARDS, GRAND_PRIX_BILLBOARDS, isCoaster, isPinball, PINBALL_ART, isArcade, ARCADE_ART, START_TYPES, GATES, COUNTDOWN_SHOTS, LAUNCH_SHOTS };
+module.exports = { START_LOOKS, checkRecipe, isCanyon, isBlock, isAthletics, isWinterWonders, isRiver, MIN_SPIRAL_RADIUS, MIN_SWEEP_RADIUS, BILLBOARDS, GRAND_PRIX_BILLBOARDS, isCoaster, isPinball, PINBALL_ART, isArcade, ARCADE_ART, START_TYPES, GATES, COUNTDOWN_SHOTS, LAUNCH_SHOTS };

@@ -539,7 +539,7 @@ export function buildCoaster(centerline, channel, kit, { lite = false, groundAt,
 
   // What stands behind the gate (the start type): the lift hill, a lift tower, an elevator shaft, a cliff ledge, a rooftop or a launch platform.
   const lift = liftHillOf(centerline, flight, kit.start?.type);
-  buildStart(lift, { towers, feet, tower, groundAt, lite, RAIL, SUPPORT });
+  buildStart(lift, { towers, feet, tower, groundAt, lite, RAIL, SUPPORT, look: kit.start?.look });
 
   // The station over the finish and the run-out: a platform each side, a canopy on posts, a queue behind.
   // (Track and Field finishes at a finish line with its photo-finish camera instead: ./athletics.js.)
@@ -632,7 +632,7 @@ export function buildCoaster(centerline, channel, kit, { lite = false, groundAt,
  * The start's structure (liftHillOf's types) into `towers`: a chain lift along its path (a deck with
  * rails and the chain up its middle, a catwalk and handrail beside it, on towers), and what else the type has.
  */
-function buildStart(lift, { towers, feet, tower, groundAt, lite, RAIL, SUPPORT }) {
+function buildStart(lift, { towers, feet, tower, groundAt, lite, RAIL, SUPPORT, look = null }) {
   const { type, top, back, side, path } = lift;
   const half = 4;
   const yawOf = (dir) => Math.atan2(dir.x, dir.z);
@@ -683,7 +683,57 @@ function buildStart(lift, { towers, feet, tower, groundAt, lite, RAIL, SUPPORT }
     }
   };
 
-  if (type === 'elevator') {
+  if (type === 'elevator' && look === 'bridge-tower') {
+    // (Rivers) The lift inside a bridge tower: a square stone tower behind the gate, its lift door level with
+    // the gate and a short deck on to it, slim corner turrets, a steep pointed roof and a raised bascule leaf
+    // standing up beside it.
+    const at = top.clone().addScaledVector(back, ELEVATOR.at + 1.5);
+    const yaw = yawOf(back);
+    const landY = groundAt(at.x, at.z) - 0.5;
+    const W = 9;
+    const STONE = '#cfc6b2';
+    const h = top.y + 9 - landY;
+    towers.push(obox(W, h, W, at.clone().setY(landY + h / 2), yaw, STONE));
+    // Bands of tall windows on the face towards the gate, and the lift door.
+    for (let y = top.y + 3; y > landY + 4; y -= lite ? 9 : 4.5) for (const k of [-2.2, 2.2]) towers.push(obox(1.1, 2.6, 0.2, at.clone().addScaledVector(back, -W / 2 - 0.05).addScaledVector(side, k).setY(y), yaw, '#3a4250'));
+    towers.push(obox(3.4, 3, 0.25, at.clone().addScaledVector(back, -W / 2 - 0.08).setY(top.y + 0.4), yaw, '#2a2e36'));
+    // The corner turrets and the roof.
+    for (const [i, j] of [[1, 1], [1, -1], [-1, -1], [-1, 1]]) {
+      const c = at.clone().addScaledVector(back, i * (W / 2 - 0.6)).addScaledVector(side, j * (W / 2 - 0.6));
+      towers.push(obox(1.6, 6, 1.6, c.clone().setY(top.y + 12), yaw, STONE));
+      towers.push(piece(new ConeGeometry(1.2, 3.4, 4), '#4a5a6a', new Matrix4().makeRotationY(yaw + Math.PI / 4).setPosition(c.clone().setY(top.y + 16.7))));
+    }
+    towers.push(piece(new ConeGeometry(W * 0.62, 9, 4), '#4a5a6a', new Matrix4().makeRotationY(yaw + Math.PI / 4).setPosition(at.clone().setY(top.y + 13.5))));
+    towers.push(obox(W + 0.6, 0.8, W + 0.6, at.clone().setY(top.y + 9.2), yaw, '#b8ae98'));
+    // A raised bascule leaf beside the tower (to one side of the track, standing up).
+    const leaf = at.clone().addScaledVector(side, -(W / 2 + 5)).addScaledVector(back, 0);
+    towers.push(obox(7, 16, 1.2, leaf.clone().setY(top.y - 2 + 8), yaw + Math.PI / 2, '#6a7f8f'));
+    towers.push(obox(7.2, 0.6, 1.4, leaf.clone().setY(top.y - 2 + 15.4), yaw + Math.PI / 2, '#d8cfa8'));
+    deckAlong([top, top.clone().addScaledVector(back, ELEVATOR.at + 1.5 - W / 2)], { chain: false });
+    feet.push({ x: at.x, z: at.z, r: 12 });
+  } else if (type === 'elevator' && look === 'port-crane') {
+    // (Rivers) The lift up a port crane: its lattice tower behind the gate in crane yellow, the operator's cab at
+    // the top, a long jib out to one side with its hook hanging, a counter-jib and its weights the other way.
+    const at = top.clone().addScaledVector(back, ELEVATOR.at);
+    const yaw = yawOf(back);
+    const landY = groundAt(at.x, at.z) - 0.5;
+    const CRANE = '#e8a52a';
+    lattice(at, ELEVATOR.half, ELEVATOR.half, landY, top.y + 8, yaw, CRANE);
+    deckAlong([top, top.clone().addScaledVector(back, ELEVATOR.at - ELEVATOR.half)], { chain: false });
+    towers.push(obox(ELEVATOR.half * 2 + 1, 0.6, ELEVATOR.half * 2 + 1, at.clone().setY(top.y + 8.3), yaw, '#3b3f46'));
+    towers.push(obox(4, 3, 3.4, at.clone().addScaledVector(back, -1).setY(top.y + 10.2), yaw, '#f2efe6'), obox(4.1, 1, 3.5, at.clone().addScaledVector(back, -1).setY(top.y + 10.6), yaw, '#2b3c52'));
+    const jibY = top.y + 13;
+    const out = side.clone().multiplyScalar(-1);
+    const tip = at.clone().addScaledVector(out, 30).setY(jibY);
+    const tail = at.clone().addScaledVector(out, -11).setY(jibY);
+    towers.push(strut(tail, tip, 1.2, CRANE), strut(tail.clone().setY(jibY - 1.6), tip.clone().setY(jibY - 0.6), 0.5, CRANE));
+    const peak = at.clone().setY(jibY + 7);
+    towers.push(strut(at.clone().setY(top.y + 8.6), peak, 0.8, CRANE), strut(peak, tip, 0.18, '#2a2e30'), strut(peak, tail, 0.18, '#2a2e30'));
+    towers.push(obox(3.2, 3, 3.2, tail.clone().setY(jibY - 1.2), yaw, '#7a7f86')); // the counterweights
+    const hook = at.clone().addScaledVector(out, 24);
+    towers.push(strut(hook.clone().setY(jibY - 0.8), hook.clone().setY(jibY - 9), 0.1, '#2a2e30'), obox(1.2, 1, 0.8, hook.clone().setY(jibY - 9.5), yaw, '#c8302a'));
+    feet.push({ x: at.x, z: at.z, r: 8 }, { x: hook.x, z: hook.z, r: 6 });
+  } else if (type === 'elevator') {
     // A lattice shaft behind the gate, its cage at the top, a short bridge on to the gate and a winding wheel above.
     const at = top.clone().addScaledVector(back, ELEVATOR.at);
     const yaw = yawOf(back);
@@ -714,6 +764,34 @@ function buildStart(lift, { towers, feet, tower, groundAt, lite, RAIL, SUPPORT }
       towers.push(obox(2.4 + (k & 1), 1.6, 2, b, k * 0.7, '#7d776d'));
     }
     feet.push({ x: lift.foot.x, z: lift.foot.z, r: 14 });
+  } else if (type === 'rooftop' && look === 'mansard') {
+    // (Rivers) A stone apartment building on the quay behind the gate, its roof terrace just under the track: cream
+    // stone floors with tall windows and iron balconies, a mansard roof of grey zinc round the terrace with dormers,
+    // and chimney stacks along its back.
+    const yaw = yawOf(back);
+    const mid = top.clone().addScaledVector(back, ROOF.depth / 2 - 1);
+    const roofY = top.y - 2.0;
+    let low = Infinity;
+    for (const [i, j] of [[0, 0], [1, 1], [1, -1], [-1, 1], [-1, -1]]) low = Math.min(low, groundAt(mid.x + back.x * i * ROOF.depth / 2 + side.x * j * ROOF.half, mid.z + back.z * i * ROOF.depth / 2 + side.z * j * ROOF.half));
+    const mans = 4; // the mansard storey under the terrace
+    const h = roofY - mans - low + 1;
+    towers.push(obox(ROOF.half * 2, h, ROOF.depth, mid.clone().setY(low - 1 + h / 2), yaw, '#e8dcc2'));
+    towers.push(obox(ROOF.half * 2 - 1.2, mans, ROOF.depth - 1.2, mid.clone().setY(roofY - mans / 2), yaw, '#6f7a84'));
+    towers.push(obox(ROOF.half * 2 + 0.6, 0.6, ROOF.depth + 0.6, mid.clone().setY(roofY - mans), yaw, '#cfc2a6')); // the cornice
+    const floors = Math.max(1, Math.floor((h - 3) / (lite ? 7 : 3.5)));
+    for (let f = 0; f < floors; f += 1) {
+      const y = low + 3 + f * (h - 3) / floors;
+      for (const sign of [1, -1]) {
+        for (let d = -ROOF.depth / 2 + 3; d <= ROOF.depth / 2 - 3; d += lite ? 6 : 3) towers.push(obox(0.2, 1.8, 1.3, mid.clone().addScaledVector(side, sign * (ROOF.half + 0.05)).addScaledVector(back, d).setY(y), yaw, '#3a4250'));
+        if (!lite) towers.push(obox(0.5, 0.15, ROOF.depth - 4, mid.clone().addScaledVector(side, sign * (ROOF.half + 0.3)).setY(y - 1), yaw, '#2a2e30')); // the iron balconies
+      }
+    }
+    for (const sign of [1, -1]) for (let d = -ROOF.depth / 2 + 4; d <= ROOF.depth / 2 - 4; d += lite ? 8 : 4) {
+      towers.push(obox(1, 1.6, 1.4, mid.clone().addScaledVector(side, sign * (ROOF.half - 0.4)).addScaledVector(back, d).setY(roofY - mans / 2), yaw, '#e8dcc2')); // dormers
+    }
+    for (const sign of [1, -1]) towers.push(obox(0.4, 0.9, ROOF.depth - 1, mid.clone().addScaledVector(side, sign * (ROOF.half - 0.8)).setY(roofY + 0.45), yaw, '#2a2e30')); // the terrace's railings
+    for (const j of [-6, -2, 2, 6]) towers.push(obox(1.4, 2.4, 0.9, mid.clone().addScaledVector(back, ROOF.depth / 2 - 1.5).addScaledVector(side, j).setY(roofY + 1.2), yaw, '#b86a4a'));
+    feet.push({ x: mid.x, z: mid.z, r: ROOF.depth / 2 + ROOF.half });
   } else if (type === 'rooftop') {
     // A tall building behind the gate, its roof just under the track: windows, a parapet, a water tank.
     const yaw = yawOf(back);

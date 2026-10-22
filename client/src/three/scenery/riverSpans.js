@@ -9,13 +9,24 @@
  *                        bank, the deck on struts over it.
  *   cable-stayed-bridge: a long deck crossing the track square, held by fans of cables from one tall
  *                        pylon standing well clear of the track.
+ *   bascule-bridge:      a raised bascule bridge crossing the track square: two stone towers either side of
+ *                        the track (the field races between them), its two leaves raised upright beside them,
+ *                        high walkways joining the towers' tops, chains slung out to the banks.
+ *   river-suspension-bridge: a long deck crossing the track square, two tall towers well clear of the
+ *                        track, the main cables sagging between them, hangers down to the deck.
+ *   stone-arch-bridges:  five stone arch bridges crossing the section one after another, the track under one
+ *                        arch of each, that arch's middle on alternating sides of the track.
+ *   loading-gantry:      a port's gantry crane straddling the track: a leg frame either side, the girder high
+ *                        across and out over the river, a trolley and a container hanging over the water.
+ *   multi-span-bridge:   a long bridge of many girder spans on slim piers, across the river beside the
+ *                        section (laid along it, clear of every stretch), level with the track.
  */
-import { BoxGeometry, BufferGeometry, CylinderGeometry, Float32BufferAttribute, Group, LineBasicMaterial, LineSegments, Matrix4, Mesh, MeshLambertMaterial, Quaternion, SphereGeometry, Vector3 } from 'three';
+import { BoxGeometry, BufferGeometry, ConeGeometry, CylinderGeometry, Float32BufferAttribute, Group, LineBasicMaterial, LineSegments, Matrix4, Mesh, MeshLambertMaterial, Quaternion, SphereGeometry, Vector3 } from 'three';
 import { merge, piece } from './parts';
 
 const SPAN_CLEAR = 18; // metres over the track's rim, at the lowest
 const PIER_CLEAR = 9;  // metres from any stretch's middle to a pier's side
-export const RIVER_SPAN_KINDS = ['chain-bridge', 'steel-arch-bridge', 'cable-stayed-bridge'];
+export const RIVER_SPAN_KINDS = ['chain-bridge', 'steel-arch-bridge', 'cable-stayed-bridge', 'bascule-bridge', 'river-suspension-bridge', 'stone-arch-bridges', 'loading-gantry', 'multi-span-bridge'];
 
 function beam(a, b, t, colour, t2 = t) {
   const dir = new Vector3().subVectors(b, a);
@@ -61,11 +72,18 @@ export function buildRiverSpans(centerline, channel, kit, { river, groundAt, cor
       const i0 = Math.round(sec.from * segments);
       const i1 = Math.round(sec.to * segments);
       const im = Math.round(((sec.from + sec.to) / 2) * segments);
+      const square = (i) => {
+        const s = samples[i];
+        return { s, side: new Vector3(s.side.x, 0, s.side.z).normalize(), along: new Vector3(s.tangent.x, 0, s.tangent.z).normalize() };
+      };
       if (kind === 'chain-bridge') chainBridge({ ...ctx, a: samples[i0].pos, b: samples[i1].pos });
-      else {
-        const s = samples[im];
-        const side = new Vector3(s.side.x, 0, s.side.z).normalize();
-        (kind === 'steel-arch-bridge' ? steelArch : cableStayed)({ ...ctx, s, side, along: new Vector3(s.tangent.x, 0, s.tangent.z).normalize() });
+      else if (kind === 'multi-span-bridge') multiSpan({ ...ctx, samples, i0, i1 });
+      else if (kind === 'stone-arch-bridges') {
+        // (Five, evenly along the section, each crossing it square; the arch over the track alternately to its left and right.)
+        for (let k = 0; k < 5; k += 1) stoneArches({ ...ctx, ...square(Math.round(i0 + (i1 - i0) * (0.1 + 0.2 * k))), shift: k % 2 ? -2.5 : 2.5 });
+      } else {
+        const build = { 'steel-arch-bridge': steelArch, 'cable-stayed-bridge': cableStayed, 'bascule-bridge': bascule, 'river-suspension-bridge': suspension, 'loading-gantry': gantry }[kind];
+        build({ ...ctx, ...square(im) });
       }
     }
   }
@@ -249,5 +267,251 @@ function cableStayed({ s, side, along, parts, lines, spots, groundAt, lite, trac
         lines.push(head.x, head.y, head.z, at.x, deckY + 0.6, at.z);
       }
     }
+  }
+}
+
+/** The highest rim within `reach` metres either side of s along `dir` (12 m round each point). */
+function topAcross(s, dir, reach, trackTopNear) {
+  let top = -Infinity;
+  for (let d = -reach; d <= reach; d += 6) {
+    const p = s.pos.clone().addScaledVector(dir, d);
+    top = Math.max(top, trackTopNear(p.x, p.z, 12));
+  }
+  return top;
+}
+/** A box `w` long across the track (along `side`), `h` high, `d` deep (along the track), its middle at c. */
+function sbox(parts, w, h, d, c, side, colour) {
+  const yaw = Math.atan2(side.x, side.z);
+  parts.push(piece(new BoxGeometry(d, h, w), colour, new Matrix4().makeRotationY(yaw).setPosition(c)));
+}
+
+/** A raised bascule bridge: two stone towers either side of the track, its leaves raised, walkways high between them. */
+function bascule({ s, side, along, parts, lines, spots, groundAt, lite, night, glow, trackTopNear, clear }) {
+  const STONE = '#d6ccb4';
+  const STEEL = '#5f7f96';
+  const off = 15; // metres from the track's middle to each tower's middle
+  const W = 9;
+  const top = topAcross(s, side, 40, trackTopNear);
+  const hingeY = top - 1; // (the road's level: about the rims')
+  const walkY = top + SPAN_CLEAR + 6;
+  const towerTop = walkY + 6;
+  for (const k of [1, -1]) {
+    const c = s.pos.clone().addScaledVector(side, k * off);
+    if (!clear(c.x, c.z, W / 2 + 6)) continue;
+    const y0 = groundAt(c.x, c.z) - 2;
+    sbox(parts, W, towerTop - y0, W, new Vector3(c.x, (towerTop + y0) / 2, c.z), side, STONE);
+    sbox(parts, W + 1.4, 3, W + 1.4, new Vector3(c.x, y0 + 1.5, c.z), side, '#a89c84'); // the pier's foot
+    // Tall windows, corner turrets, a steep pointed roof.
+    for (let y = hingeY + 4; y < towerTop - 3; y += lite ? 10 : 5) for (const a of [-2, 2]) sbox(parts, 1, 2.8, W + 0.1, new Vector3(c.x, y, c.z).addScaledVector(side, a), side, '#3a4250');
+    for (const [i, j] of [[1, 1], [1, -1], [-1, -1], [-1, 1]]) {
+      const t = c.clone().addScaledVector(side, i * (W / 2 - 0.7)).addScaledVector(along, j * (W / 2 - 0.7));
+      sbox(parts, 1.6, 6, 1.6, new Vector3(t.x, towerTop + 3, t.z), side, STONE);
+      parts.push(piece(new ConeGeometry(1.2, 3.6, 4), '#46586a', new Matrix4().makeTranslation(t.x, towerTop + 7.8, t.z)));
+    }
+    parts.push(piece(new ConeGeometry(W * 0.62, 10, 4), '#46586a', new Matrix4().makeRotationY(Math.atan2(side.x, side.z) + Math.PI / 4).setPosition(c.x, towerTop + 5, c.z)));
+    // The leaf, raised almost upright from its hinge at the tower's inner face (never over the track).
+    const hinge = s.pos.clone().addScaledVector(side, k * (off - W / 2 - 0.4));
+    const lean = 0.12; // (out of the upright, towards the track)
+    const L = 11;
+    const tip = hinge.clone().addScaledVector(side, -k * L * Math.sin(lean)).setY(hingeY + L * Math.cos(lean));
+    parts.push(beam(hinge.clone().setY(hingeY), tip, 1, STEEL, 8));
+    for (const j of [-3.6, 3.6]) parts.push(beam(hinge.clone().setY(hingeY).addScaledVector(along, j), tip.clone().addScaledVector(along, j), 0.5, '#e8e0c8'));
+    // The fixed span out to the bank, on the tower's far side, hung from chains off the tower top.
+    const out = s.pos.clone().addScaledVector(side, k * (off + W / 2));
+    const bank = s.pos.clone().addScaledVector(side, k * (off + 60));
+    let fine = true;
+    for (let d = 0; d <= 56; d += 8) { const p = out.clone().addScaledVector(side, k * d); if (!clear(p.x, p.z, 10)) fine = false; }
+    if (fine) {
+      parts.push(beam(out.clone().setY(hingeY), bank.clone().setY(hingeY), 1.2, '#7a7466', 11));
+      const n = lite ? 6 : 12;
+      let prev = null;
+      for (let q = 0; q <= n; q += 1) {
+        const f = q / n;
+        const p = out.clone().lerp(bank, f).setY(hingeY + 2 + (towerTop - 6 - hingeY) * (1 - f) ** 2);
+        if (prev) parts.push(beam(prev, p, 0.6, STEEL));
+        if (q && q < n) lines.push(p.x, p.y, p.z, p.x, hingeY + 0.6, p.z);
+        prev = p;
+      }
+      spots.push({ x: bank.x, z: bank.z, r: 8 });
+    }
+    spots.push({ x: c.x, z: c.z, r: W });
+    if (night) for (const a of [-3, 3]) glow.push(piece(new SphereGeometry(0.5, 6, 4), '#ffd98a', new Matrix4().makeTranslation(c.x + along.x * a, walkY + 2.2, c.z + along.z * a)));
+  }
+  // The two high walkways between the towers' tops.
+  for (const j of [-2.6, 2.6]) {
+    const a = s.pos.clone().addScaledVector(side, off).addScaledVector(along, j).setY(walkY);
+    const b = s.pos.clone().addScaledVector(side, -off).addScaledVector(along, j).setY(walkY);
+    parts.push(beam(a, b, 2.4, STEEL, 3.2));
+    parts.push(beam(a.clone().setY(walkY + 2.2), b.clone().setY(walkY + 2.2), 0.4, '#e8e0c8'));
+  }
+}
+
+/** A suspension bridge across the track: two towers well clear of it, the main cables sagging to the deck. */
+function suspension({ s, side, along, parts, lines, spots, groundAt, lite, trackTopNear, clear }) {
+  const reach = 120;
+  const top = topAcross(s, side, reach, trackTopNear);
+  const deckY = top + SPAN_CLEAR + 3;
+  sbox(parts, reach * 2, 1.8, 14, new Vector3(s.pos.x, deckY, s.pos.z), side, '#8a9a8a');
+  sbox(parts, reach * 2, 0.5, 14.4, new Vector3(s.pos.x, deckY + 1.1, s.pos.z), side, '#5a6a5a');
+  // The towers: at the first spots either side clear of every stretch.
+  const at = [];
+  for (const k of [1, -1]) {
+    for (const d of [42, 55, 70, 88]) {
+      const p = s.pos.clone().addScaledVector(side, k * d);
+      if (clear(p.x, p.z, 16)) { at.push({ p, d: k * d }); break; }
+    }
+  }
+  const H = 34;
+  for (const { p } of at) {
+    for (const j of [-6, 6]) {
+      const leg = p.clone().addScaledVector(along, j);
+      parts.push(beam(leg.clone().setY(groundAt(leg.x, leg.z) - 1), leg.clone().setY(deckY + H), 2.4, '#6a7a6c'));
+    }
+    for (const y of [deckY + H - 1, deckY + 12]) parts.push(beam(p.clone().addScaledVector(along, -6).setY(y), p.clone().addScaledVector(along, 6).setY(y), 1.6, '#6a7a6c'));
+    spots.push({ x: p.x, z: p.z, r: 12 });
+  }
+  if (at.length < 2) return;
+  // The main cables, one each side of the deck, sagging from tower top to tower top, and on out to the anchorages.
+  const [A, B] = at[0].d < at[1].d ? [at[0], at[1]] : [at[1], at[0]];
+  for (const j of [-6, 6]) {
+    const n = lite ? 10 : 20;
+    let prev = null;
+    for (let q = 0; q <= n; q += 1) {
+      const f = q / n;
+      const d = A.d + (B.d - A.d) * f;
+      const p = s.pos.clone().addScaledVector(side, d).addScaledVector(along, j).setY(deckY + 2 + (H - 3) * (2 * f - 1) ** 2);
+      if (prev) parts.push(beam(prev, p, 0.7, '#3a4a3c'));
+      if (q && q < n) lines.push(p.x, p.y, p.z, p.x, deckY + 0.9, p.z);
+      prev = p;
+    }
+    for (const [T, end] of [[A, -reach], [B, reach]]) {
+      const head = s.pos.clone().addScaledVector(side, T.d).addScaledVector(along, j).setY(deckY + H - 1);
+      parts.push(beam(head, s.pos.clone().addScaledVector(side, end).addScaledVector(along, j).setY(deckY + 1), 0.7, '#3a4a3c'));
+    }
+  }
+}
+
+/** One stone arch bridge across the track: a row of round arches on piers, the track under the one at `shift` from its middle. */
+function stoneArches({ s, side, along, parts, spots, groundAt, lite, trackTopNear, clear, shift }) {
+  const STONE = '#d8cdb2';
+  const SHADE = '#bfb196';
+  const span = 26;
+  const R = span / 2;
+  const top = topAcross(s, side, 50, trackTopNear);
+  const deckY = top + SPAN_CLEAR + 4;
+  const spring = deckY - 2.2 - R;
+  const depth = 11;
+  const segs = lite ? 6 : 10;
+  for (let k = -2; k <= 2; k += 1) {
+    const c = shift + k * span; // the arch's middle, across the track
+    // The arch ring and the spandrel walls over it, up to the deck.
+    for (let q = 0; q < segs; q += 1) {
+      const a0 = Math.PI * (q / segs);
+      const a1 = Math.PI * ((q + 1) / segs);
+      const x0 = c + R * Math.cos(a0);
+      const x1 = c + R * Math.cos(a1);
+      const y0 = spring + R * Math.sin(a0);
+      const y1 = spring + R * Math.sin(a1);
+      parts.push(beam(s.pos.clone().addScaledVector(side, x0).setY(y0), s.pos.clone().addScaledVector(side, x1).setY(y1), 1.6, SHADE, depth));
+      const low = Math.max(y0, y1) + 0.6;
+      if (deckY - low > 0.4) sbox(parts, Math.abs(x1 - x0) + 0.05, deckY - low, depth - 0.4, s.pos.clone().addScaledVector(side, (x0 + x1) / 2).setY((deckY + low) / 2), side, STONE);
+    }
+    // The pier between this arch and the next (from the river bed or the land), never in any stretch.
+    if (k < 2) {
+      const p = s.pos.clone().addScaledVector(side, c + R);
+      if (clear(p.x, p.z, PIER_CLEAR + 1)) {
+        const y0 = groundAt(p.x, p.z) - 1;
+        sbox(parts, 3.2, spring + 0.6 - y0, depth + 1.2, new Vector3(p.x, (spring + 0.6 + y0) / 2, p.z), side, SHADE);
+        parts.push(piece(new ConeGeometry(2.2, 3, 4), STONE, new Matrix4().makeTranslation(p.x, spring + 2, p.z)));
+        spots.push({ x: p.x, z: p.z, r: 5 });
+      }
+    }
+  }
+  // The deck, its parapets and a row of lamps.
+  const L = span * 5;
+  sbox(parts, L, 1.2, depth + 1, s.pos.clone().addScaledVector(side, shift).setY(deckY - 0.4), side, '#a89c84');
+  for (const j of [-1, 1]) sbox(parts, L, 1, 0.6, s.pos.clone().addScaledVector(side, shift).addScaledVector(along, j * (depth / 2 + 0.2)).setY(deckY + 0.6), side, STONE);
+  for (let x = -L / 2 + 6; x < L / 2; x += lite ? 26 : 13) {
+    for (const j of [-1, 1]) {
+      const p = s.pos.clone().addScaledVector(side, shift + x).addScaledVector(along, j * (depth / 2 + 0.2));
+      parts.push(piece(new CylinderGeometry(0.12, 0.16, 3.4, 4), '#2a3a30', new Matrix4().makeTranslation(p.x, deckY + 2.2, p.z)));
+      parts.push(piece(new SphereGeometry(0.4, 6, 4), '#e8e2c8', new Matrix4().makeTranslation(p.x, deckY + 4, p.z)));
+    }
+  }
+  for (const j of [-1, 1]) { const e = s.pos.clone().addScaledVector(side, shift + j * L / 2); spots.push({ x: e.x, z: e.z, r: 8 }); }
+}
+
+/** A port's gantry crane straddling the track: two leg frames, the girder high across and out over the river. */
+function gantry({ s, side, along, parts, lines, spots, groundAt, trackTopNear, clear }) {
+  const CRANE = '#f2b01e';
+  const top = topAcross(s, side, 30, trackTopNear);
+  const girderY = top + SPAN_CLEAR + 5;
+  // (Out over the lower side: the river's.)
+  const k = groundAt(s.pos.x + side.x * 40, s.pos.z + side.z * 40) <= groundAt(s.pos.x - side.x * 40, s.pos.z - side.z * 40) ? 1 : -1;
+  let legs = 0;
+  for (const sg of [1, -1]) {
+    const c = s.pos.clone().addScaledVector(side, sg * 16);
+    if (!clear(c.x, c.z, 10)) continue;
+    legs += 1;
+    for (const j of [-7, 7]) {
+      const f = c.clone().addScaledVector(along, j);
+      parts.push(beam(f.clone().setY(groundAt(f.x, f.z) - 0.5), f.clone().setY(girderY), 1.4, CRANE));
+    }
+    parts.push(beam(c.clone().addScaledVector(along, -7).setY(girderY - 6), c.clone().addScaledVector(along, 7).setY(girderY - 6), 0.9, CRANE));
+    parts.push(piece(new BoxGeometry(3, 1.2, 16), '#3a3d44', new Matrix4().makeRotationY(Math.atan2(along.x, along.z)).setPosition(c.x, groundAt(c.x, c.z) + 0.6, c.z))); // the bogies on their rail
+    spots.push({ x: c.x, z: c.z, r: 9 });
+  }
+  if (!legs) return;
+  // The girder, out over the river on its side and back a little behind the other leg.
+  const a = s.pos.clone().addScaledVector(side, -k * 24).setY(girderY);
+  const b = s.pos.clone().addScaledVector(side, k * 52).setY(girderY);
+  for (const j of [-2.4, 2.4]) parts.push(beam(a.clone().addScaledVector(along, j), b.clone().addScaledVector(along, j), 2, CRANE, 2.6));
+  sbox(parts, 4, 3, 4, s.pos.clone().addScaledVector(side, k * 16).setY(girderY + 2.6), side, '#f2efe6'); // the cab
+  // The trolley out over the water, a container hanging from it.
+  const t = s.pos.clone().addScaledVector(side, k * 40);
+  sbox(parts, 5, 1.6, 6, t.clone().setY(girderY + 1.4), side, '#3a3d44');
+  for (const j of [-1.2, 1.2]) lines.push(t.x + along.x * j, girderY, t.z + along.z * j, t.x + along.x * j, girderY - 8, t.z + along.z * j);
+  sbox(parts, 12, 2.6, 2.6, t.clone().setY(girderY - 9.4), side, '#2f6fa8');
+}
+
+/** A long bridge of many girder spans across the river beside a section: laid along it, clear of every stretch, level with it. */
+function multiSpan({ samples, i0, i1, parts, spots, groundAt, lite, clear }) {
+  const a = samples[i0].pos;
+  const b = samples[i1].pos;
+  const dir = new Vector3(b.x - a.x, 0, b.z - a.z);
+  const len = dir.length();
+  dir.normalize();
+  const across = new Vector3(-dir.z, 0, dir.x);
+  const ext = 70;
+  const L = len + ext * 2;
+  // (Beside the section, at the first offset where the whole bridge stays 14 m clear of every stretch.)
+  let off = null;
+  for (const o of [30, -30, 40, -40, 52, -52, 66, -66, 80, -80]) {
+    let ok = true;
+    for (let t = 0; t <= L && ok; t += 8) {
+      const p = new Vector3(a.x, 0, a.z).addScaledVector(dir, t - ext).addScaledVector(across, o);
+      if (!clear(p.x, p.z, 14)) ok = false;
+    }
+    if (ok) { off = o; break; }
+  }
+  if (off === null) return;
+  const deckY = Math.max(a.y, b.y) + 2;
+  const start = new Vector3(a.x, 0, a.z).addScaledVector(dir, -ext).addScaledVector(across, off);
+  const spanL = 24;
+  const n = Math.ceil(L / spanL);
+  for (let q = 0; q <= n; q += 1) {
+    const p0 = start.clone().addScaledVector(dir, Math.min(L, q * spanL)).setY(deckY);
+    // A slim pier at each joint, from the river bed or the land.
+    const y0 = groundAt(p0.x, p0.z) - 1;
+    if (deckY - y0 > 2) {
+      parts.push(beam(p0.clone().setY(y0), p0.clone().setY(deckY - 1), 2.4, '#c8c4bc', 7));
+      parts.push(beam(p0.clone().setY(y0 + 0.4), p0.clone().setY(y0 + 2.4), 3.4, '#a8a49c', 8));
+    }
+    spots.push({ x: p0.x, z: p0.z, r: 5 });
+    if (q === n) break;
+    const p1 = start.clone().addScaledVector(dir, Math.min(L, (q + 1) * spanL)).setY(deckY);
+    parts.push(beam(p0, p1, 9, '#9a2a24', 2.2)); // the girder (red), the deck on it
+    parts.push(beam(p0.clone().setY(deckY + 1.3), p1.clone().setY(deckY + 1.3), 10, '#d8d4c8', 0.5));
+    if (!lite) for (const j of [-1, 1]) parts.push(beam(p0.clone().addScaledVector(across, j * 4.6).setY(deckY + 2.2), p1.clone().addScaledVector(across, j * 4.6).setY(deckY + 2.2), 0.2, '#3a3d44'));
   }
 }

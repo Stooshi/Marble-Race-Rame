@@ -242,7 +242,174 @@ function leveeHouses() {
   return merge(p);
 }
 
+// ── Rivers, the second ten ───────────────────────────────────────────────────
+
+/** A river clipper: a fast low catamaran river bus, a long glazed cabin on twin white hulls, a dark roof. */
+function riverClipper() {
+  const p = [];
+  for (const x of [-2.6, 2.6]) {
+    p.push(box(2, 1.6, 34, x, 0.3, 0, '#f2f2ee'), box(2.05, 0.4, 34, x, -0.3, 0, '#1f3a5a'));
+    p.push(piece(new ConeGeometry(1.4, 4, 4), '#f2f2ee', new Matrix4().makeTranslation(x, 0.3, 19).multiply(new Matrix4().makeRotationX(Math.PI / 2)).multiply(new Matrix4().makeRotationY(Math.PI / 4))));
+  }
+  p.push(box(7.4, 0.5, 34, 0, 1.3, 0, '#e8e8e4'));
+  p.push(box(6.8, 2.2, 26, 0, 2.6, -2, '#f7f7f4'), box(6.9, 1.3, 25, 0, 2.8, -2, '#2b3c52'));
+  p.push(box(7, 0.4, 27, 0, 3.9, -2, '#3a4048'), box(3, 1.4, 3.4, 0, 4.6, 9, '#f7f7f4'), box(3.1, 0.6, 3.5, 0, 4.8, 9, '#2b3c52'));
+  return merge(p);
+}
+
+/** Glass towers on the far bank: a tall tapering shard, a rounded egg-like tower, slab towers, all in blue-green glass. */
+function glassTowers() {
+  const GLASS = '#7fa4b8';
+  const p = [];
+  p.push(piece(new ConeGeometry(14, 140, 4), '#9ab8c8', turned(0, 70, 0, Math.PI / 4))); // the shard
+  p.push(piece(new SphereGeometry(13, 12, 10), '#7f9aa8', S(-46, 30, 20, 1, 2.4, 1))); // the egg
+  for (const [x, z, w, h, d, c] of [[40, 10, 22, 90, 18, GLASS], [64, -20, 18, 70, 18, '#6f94a8'], [-78, -10, 20, 60, 22, '#8aaab8'], [-30, -40, 24, 100, 20, '#6a8a9c'], [20, -50, 16, 120, 16, '#86a8ba']]) {
+    p.push(box(w, h, d, x, h / 2, z, c));
+    for (let y = 8; y < h; y += 12) p.push(box(w + 0.3, 0.6, d + 0.3, x, y, z, '#c8d4da'));
+  }
+  return merge(p);
+}
+
+/** A weeping willow at an island's tip: a stout leaning trunk, a dome of drooping green curtains to the water, a low stone prow. */
+function weepingWillow() {
+  const p = [box(16, 2, 10, 0, 0.5, 0, '#bfb196'), bow(16, 2, 8, 5, 0.5, '#bfb196')];
+  p.push(piece(new CylinderGeometry(0.9, 1.4, 7, 7), '#5a4a38', turned(0, 4.5, 0, 0).multiply(new Matrix4().makeRotationZ(0.2))));
+  p.push(piece(new SphereGeometry(7, 10, 6, 0, Math.PI * 2, 0, Math.PI / 2), '#8aa84a', S(1.2, 7.5, 0, 1.1, 1.1, 1.1)));
+  for (let k = 0; k < 14; k += 1) {
+    const a = (k / 14) * Math.PI * 2;
+    p.push(piece(new ConeGeometry(1.6, 7, 4), k % 2 ? '#9ab85a' : '#7f9a3e', turned(1.2 + Math.cos(a) * 6.2, 5, Math.sin(a) * 6.2, a).multiply(new Matrix4().makeRotationX(Math.PI))));
+  }
+  p.push(box(1.6, 0.9, 0.6, -4, 1.9, 2, '#2f5a3a'), box(1.6, 0.9, 0.6, 3, 1.9, -2.5, '#2f5a3a')); // two benches
+  return merge(p);
+}
+
+/** Quay cranes at a river port: two ship-to-shore container cranes on the quay, their booms up, stacks of containers. */
+function quayCranes() {
+  const RED = '#c8442f';
+  const p = [box(90, 1, 34, 0, 0.5, 0, '#8a8a84')];
+  for (const x of [-22, 18]) {
+    for (const [dx, dz] of [[-5, -7], [5, -7], [-5, 7], [5, 7]]) p.push(box(1.4, 30, 1.4, x + dx, 15, dz, RED));
+    p.push(box(12, 1.6, 1.6, x, 30, -7, RED), box(12, 1.6, 1.6, x, 30, 7, RED), box(1.6, 1.6, 16, x, 18, 0, RED));
+    p.push(box(3, 2.4, 60, x, 32, 12, RED), box(4, 3, 4, x, 29.5, 18, '#f2efe6')); // the boom out over the water, the cab
+    p.push(box(1.2, 14, 1.2, x, 40, -6, RED), box(4, 4, 6, x, 33, -16, '#5a5e66'));
+  }
+  const cols = ['#2f7fc4', '#f2c230', '#4aa35a', '#d8442f', '#e8e4dc', '#7a4ab0'];
+  for (let k = 0; k < 24; k += 1) p.push(box(12, 2.6, 2.6, -36 + (k % 6) * 13.5, 2.3 + Math.floor(k / 12) * 2.6, -12 + (Math.floor(k / 6) % 2) * 3, cols[k % cols.length]));
+  return merge(p);
+}
+
+/** A stand of river red gums in the flood: pale mottled trunks rising from the water, twisting limbs, grey-green crowns. */
+function redGums() {
+  const p = [];
+  for (const [x, z, h, r] of [[0, 0, 14, 1.3], [-9, 6, 12, 1.1], [8, 7, 15, 1.4], [-6, -8, 11, 1], [12, -6, 13, 1.2], [-15, -2, 10, 0.9]]) {
+    p.push(piece(new CylinderGeometry(r * 0.6, r, h, 7), '#d8d0c0', M(x, h / 2 - 1, z)));
+    p.push(piece(new CylinderGeometry(r * 0.62, r * 0.85, h * 0.3, 7), '#a89a86', M(x, h * 0.25, z))); // the darker water-stained foot
+    for (const a of [0.6, 2.7, 4.5]) p.push(piece(new CylinderGeometry(0.2, r * 0.4, 6, 5), '#d0c8b8', turned(x + Math.cos(a) * 2, h - 1, z + Math.sin(a) * 2, a).multiply(new Matrix4().makeRotationZ(0.7))));
+    p.push(piece(new IcosahedronGeometry(4.2, 0), '#7a8a5a', S(x, h + 2.5, z, 1.4, 0.6, 1.4)));
+  }
+  return merge(p);
+}
+
+/** Pelicans on the water: big white birds with black wingtips and long pale bills, a few gliding in a line. */
+function pelicans() {
+  const p = [];
+  for (const [x, z, yaw] of [[0, 0, 0.2], [3.4, 2, 0.3], [6.8, 4.2, 0.1], [-4, 3, 2.6], [-2, -4, 1.4]]) {
+    const at = (lx, ly, lz) => new Vector3(lx, ly, lz).applyAxisAngle(Y, yaw).add(new Vector3(x, 0, z));
+    const b = at(0, 0.3, 0);
+    p.push(piece(new SphereGeometry(0.75, 8, 5), '#f4f4f0', S(b.x, b.y, b.z, 0.8, 0.6, 1.4)));
+    const n = at(0, 1.1, 0.8);
+    p.push(piece(new SphereGeometry(0.28, 6, 4), '#f4f4f0', M(n.x, n.y, n.z)));
+    const bill = at(0, 1, 1.5);
+    p.push(piece(new ConeGeometry(0.16, 1.4, 4), '#f2c88a', turned(bill.x, bill.y, bill.z, yaw).multiply(new Matrix4().makeRotationX(Math.PI / 2))));
+    const t = at(0, 0.5, -0.9);
+    p.push(box(0.9, 0.2, 0.5, t.x, t.y, t.z, '#2a2a2e'));
+  }
+  return merge(p);
+}
+
+/** A lock and weir across a river: a concrete lock chamber with its gates and a keeper's cottage, the weir's row of piers and trestles, white water below. */
+function lockWeir() {
+  const CONC = '#cfc8b8';
+  const p = [];
+  for (const x of [-7, 7]) p.push(box(3, 7, 70, x, 2, 0, CONC));
+  for (const z of [-34, 34]) p.push(box(11, 6, 1.6, 0, 2, z, '#5a4a3a'), box(0.4, 0.4, 8, 4, 5.6, z + Math.sign(z) * 3, '#f2f0ea'));
+  p.push(box(11, 0.3, 66, 0, 3.6, 0, '#4f7a8a'));
+  p.push(box(9, 5, 7, -14, 3, 10, '#f2ece0'), roof(10, 3, 8, -14, 5.5, 10, '#b84a3a'), box(10, 0.3, 8, -14, 1, 10, '#a89a86')); // the keeper's cottage
+  for (let k = 0; k < 12; k += 1) {
+    const x = 12 + k * 6;
+    p.push(box(1.6, 7, 4, x, 2, 0, CONC), box(6, 0.8, 1.2, x + 3, 5.8, -1.2, '#7a5a3a'));
+    p.push(box(4.4, 1.6, 0.4, x + 3, 1.6, 0.6, '#5a4a3a'));
+  }
+  p.push(box(74, 0.5, 6, 45, 0.3, 5, '#eef4f4')); // white water under the weir
+  return merge(p);
+}
+
+/** Golden limestone cliffs along the river: a long wall of banded ochre rock, its top fringed with scrub. */
+function limestoneCliffs() {
+  const p = [];
+  for (let k = -6; k <= 6; k += 1) {
+    const h = 24 + ((k * 7919) % 7 + 7) % 7 * 2;
+    for (let b = 0; b < 3; b += 1) p.push(box(15, h / 3, 10 - b * 1.5, k * 14, (h / 3) * (b + 0.5), -b * 1.2, ['#d8a860', '#c8944a', '#e0b874'][(k + b + 9) % 3]));
+    p.push(piece(new IcosahedronGeometry(3, 0), '#6f7a4a', S(k * 14 + 3, h + 1, -4, 1.4, 0.5, 1.2)));
+  }
+  return merge(p);
+}
+
+/** A plain of old brick temples far off (distant architecture only): many red-brown stupas and terraced shrines on a dusty green plain. */
+function brickTemples() {
+  const p = [];
+  const brick = ['#a85a3a', '#b8683f', '#9a4f34', '#c07850'];
+  for (let k = 0; k < 26; k += 1) {
+    const x = ((k * 37) % 26 - 13) * 18;
+    const z = ((k * 53) % 9 - 4) * 26;
+    const s = 0.6 + ((k * 13) % 7) / 6;
+    const c = brick[k % brick.length];
+    if (k % 3) {
+      // A stupa: stepped square terraces, a bell dome and a slim spire.
+      for (let t = 0; t < 3; t += 1) p.push(box((12 - t * 3) * s, 2.4 * s, (12 - t * 3) * s, x, (1.2 + t * 2.4) * s, z, c));
+      p.push(piece(new SphereGeometry(3.2 * s, 8, 5, 0, Math.PI * 2, 0, Math.PI / 2), c, M(x, 7.2 * s, z)));
+      p.push(piece(new ConeGeometry(1.2 * s, 7 * s, 6), '#8a4a30', M(x, 13 * s, z)));
+    } else {
+      // A terraced shrine: a square hall on a plinth, a tiered roof rising to a curved tower.
+      p.push(box(16 * s, 7 * s, 16 * s, x, 3.5 * s, z, c), box(12 * s, 3 * s, 12 * s, x, 8.5 * s, z, c));
+      p.push(piece(new CylinderGeometry(1.4 * s, 4.2 * s, 10 * s, 6), c, M(x, 15 * s, z)), piece(new ConeGeometry(1.2 * s, 4 * s, 6), '#8a4a30', M(x, 22 * s, z)));
+    }
+  }
+  return merge(p);
+}
+
+/**
+ * Hot-air balloons drifting high over a section (a section's `overhead`: 'hot-air-balloons'): envelopes in plain
+ * stripes of colour (no lettering or logos), baskets under them, spread over about 200 m, the lowest 34 m up.
+ * Origin at the group's middle, on the track's level; one mesh (it drifts as a whole: kit.js).
+ */
+export function hotAirBalloons(lite = false) {
+  const p = [];
+  const sets = [['#d8442f', '#f2c230'], ['#2f6fa8', '#f2efe6'], ['#4aa35a', '#f2c230'], ['#e07a3a', '#7a3fd0'], ['#c8302a', '#f2efe6'], ['#f2c230', '#2f7fc4']];
+  const spots = [[0, 40, 0], [-70, 52, 40], [60, 46, -50], [-30, 64, -80], [90, 58, 60], [-100, 44, -20]].slice(0, lite ? 4 : 6);
+  spots.forEach(([x, y, z], k) => {
+    const [a, b] = sets[k % sets.length];
+    const bands = lite ? 4 : 6;
+    for (let q = 0; q < bands; q += 1) {
+      p.push(piece(new SphereGeometry(7, lite ? 8 : 12, 8, (q / bands) * Math.PI * 2, (Math.PI * 2) / bands, 0, Math.PI * 0.62), q % 2 ? a : b, S(x, y + 2, z, 1, 1.15, 1)));
+    }
+    p.push(piece(new CylinderGeometry(4.9, 1.6, 6, lite ? 8 : 12, 1, true), a, M(x, y - 6.4, z)));
+    p.push(box(1.6, 1.3, 1.6, x, y - 12, z, '#8a6440'));
+    for (const [dx, dz] of [[-0.7, -0.7], [0.7, 0.7]]) p.push(box(0.08, 2.6, 0.08, x + dx, y - 10.4, z + dz, '#3a2e24'));
+  });
+  return merge(p);
+}
+
 export const RIVER_LANDMARKS = {
+  'river-clipper': { build: riverClipper, radius: 18 },
+  'glass-towers': { build: glassTowers, radius: 90 },
+  'weeping-willow': { build: weepingWillow, radius: 12 },
+  'quay-cranes': { build: quayCranes, radius: 48 },
+  'red-gums': { build: redGums, radius: 20 },
+  pelicans: { build: pelicans, radius: 8 },
+  'lock-weir': { build: lockWeir, radius: 60 },
+  'limestone-cliffs': { build: limestoneCliffs, radius: 95 },
+  'brick-temples': { build: brickTemples, radius: 240 },
   'river-cruiser': { build: riverCruiser, radius: 28 },
   'longtail-boat': { build: longtailBoat, radius: 8 },
   'market-boats': { build: marketBoats, radius: 12 },

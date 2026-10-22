@@ -21,7 +21,7 @@ const NAMES = {
   'horseshoe-sprint': 'Horseshoe Sprint', 'blue-lanes': 'Blue Lanes', 'bell-lap': 'Bell Lap', 'hurdles-straight': 'Hurdles Straight', 'nest-bend': 'Nest Bend',
   'photo-finish': 'Photo Finish', 'relay-legs': 'Relay Legs', 'steeple-water': 'Steeple Water', 'anchor-arches': 'Anchor Arches', 'golden-lap': 'Golden Lap',
   'half-pipe-run': 'Half-Pipe Run', 'mid-lottery': 'Mid Lottery', 'jib-run': 'Jib Run', 'jump-run': 'Jump Run', 'clean-drop': 'Clean Drop',
-  'bridge-slalom': 'Bridge Slalom', 'market-maze': 'Market Maze', 'steamer-pass': 'Steamer Pass', 'falls-edge': 'Falls Edge', 'lock-staircase': 'Lock Staircase', 'peg-drop': 'Peg Drop', 'pipe-drop': 'Pipe Drop',
+  'bridge-slalom': 'Bridge Slalom', 'market-maze': 'Market Maze', 'steamer-pass': 'Steamer Pass', 'falls-edge': 'Falls Edge', 'lock-staircase': 'Lock Staircase', 'bridge-gate': 'Bridge Gate', 'arch-run': 'Arch Run', 'port-cranes': 'Port Cranes', 'flooded-forest': 'Flooded Forest', 'balloon-plain': 'Balloon Plain', 'peg-drop': 'Peg Drop', 'pipe-drop': 'Pipe Drop',
 };
 
 const base = (slug, name, description) => ({
@@ -58,7 +58,7 @@ const PINBALL_LAYOUTS = ['staircases', 'siege-routes', 'stage-hairpin', 'saucer-
 // A layout whose results depend on how the field arrives (a splitter's balance, the spread) is proven with its table's own opening.
 // Layouts made for one arcade world are proven on a test track built as an arcade world.
 const ARCADE_LAYOUTS = ['cabinet-rows', 'maze-corridors', 'bullet-spirals', 'up-up-down-down', 'bracket-splits', 'coast-road', 'co-op-street'];
-const OWN_OPENING = { 'bridge-slalom': 'tunnel-launch', 'market-maze': 'peg-drop', 'steamer-pass': 'staggered-drop', 'lock-staircase': 'clean-drop', 'siege-routes': 'crest-start', 'saucer-sweeps': 'staggered-drop', 'clock-tower': 'funnel-drop', 'encore-split': 'split-start', 'cabinet-rows': 'funnel-drop', 'maze-corridors': 'split-start', 'bullet-spirals': 'staggered-drop', 'up-up-down-down': 'crest-start', 'bracket-splits': 'banked-turn', 'coast-road': 'boost-launch', 'co-op-street': 'tunnel-launch', 'lower-playfield': ['banked-turn', { side: 'right' }] };
+const OWN_OPENING = { 'bridge-gate': 'pipe-drop', 'arch-run': ['pipe-drop', { side: 'right' }], 'port-cranes': ['clean-drop', { side: 'right' }], 'balloon-plain': 'tunnel-launch', 'bridge-slalom': 'tunnel-launch', 'market-maze': 'peg-drop', 'steamer-pass': 'staggered-drop', 'lock-staircase': 'clean-drop', 'siege-routes': 'crest-start', 'saucer-sweeps': 'staggered-drop', 'clock-tower': 'funnel-drop', 'encore-split': 'split-start', 'cabinet-rows': 'funnel-drop', 'maze-corridors': 'split-start', 'bullet-spirals': 'staggered-drop', 'up-up-down-down': 'crest-start', 'bracket-splits': 'banked-turn', 'coast-road': 'boost-launch', 'co-op-street': 'tunnel-launch', 'lower-playfield': ['banked-turn', { side: 'right' }] };
 // (Lower playfield: the banked turn the other way, so the test track is Tilt's exact mirror image.)
 // Layouts made for one canyon are proven on a test track built as a canyon (on the canyon floor, climbing out where its canyon does).
 const CANYON_LAYOUTS = ['horseshoe-bend', 'great-bend', 'terrace-steps', 'rafting-run', 'six-canyons', 'basalt-gorge', 'twin-peaks', 'cliff-ledge', 'free-fall', 'meanders',
@@ -111,13 +111,18 @@ const ATHLETICS_DRESS = {
 };
 // Layouts made for one Rivers track are proven on a test track built as a river (on its banks, flying out
 // over the water where its track does), with the opening its track races.
-const RIVER_LAYOUTS = ['bridge-slalom', 'market-maze', 'steamer-pass', 'falls-edge', 'lock-staircase'];
+const RIVER_LAYOUTS = ['bridge-slalom', 'market-maze', 'steamer-pass', 'falls-edge', 'lock-staircase', 'bridge-gate', 'arch-run', 'port-cranes', 'flooded-forest', 'balloon-plain'];
 const RIVER_HEIGHTS = {
   'bridge-slalom': { flyOut: { height: 14 } },
   'market-maze': {},
   'steamer-pass': { bayou: { height: 10 } },
   'falls-edge': { lip: { height: 14 }, lipBend: { height: 14 } },
   'lock-staircase': {},
+  'bridge-gate': { reach: { height: 12 } },
+  'arch-run': {},
+  'port-cranes': { bridgeRun: { height: 10 } },
+  'flooded-forest': { trunks: { height: 7 } },
+  'balloon-plain': { plainBends: { height: 14 } },
 };
 // (Falls edge is proven the way Zambezi Falls Run races it: mirrored, its first bend to the right.)
 const RIVER_MIRROR = { 'falls-edge': true };

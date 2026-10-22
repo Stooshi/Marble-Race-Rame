@@ -67,7 +67,7 @@ export const COSTUME_COLORS = {
   // Coasters: Sognefjord.
   fjordRock: '#6f7378', fjordMoss: '#4f7a3a', netPole: '#7a5a3a', netCord: '#d9cfb8', fjordTroll: '#7d7466', fjordTrollMoss: '#5f7f42', trollNose: '#8f8274',
   barrelWood: '#7a4f2e', barrelHoop: '#3a3634', tombstone: '#9a968c', tombMoss: '#5a6a48', totemWood: '#6a4a8a', totemFace: '#e8b33c', totemEye: '#ff7a1a',
-  pineCone: '#8a5a32', pineConeTip: '#5a3a20', grizzly: '#6a4a30', grizzlyDark: '#4a3220', grizzlyMuzzle: '#a8885a', statueStone: '#c8a46a', statueStripe: '#2f5a8a', statueGold: '#d8b84a', buoyRed: '#d8442f', buoyWhite: '#f2efe6', bamboo: '#b8a050', bambooDark: '#8a7a3a', oarWood: '#8a6a48', fisherShirt: '#2f6f8a', conicalHat: '#e8d8a8', skin: '#c8956a', containerRed: '#c8442f', containerBlue: '#2f6fa8', containerRib: '#3a3d44', bollard: '#2a2d32', bollardTop: '#f2c230', craneRed: '#d8442f', craneDark: '#5a2a22', toadStalk: '#f2ecd8', toadCap: '#d8342a', toadSpot: '#ffffff', blackBear: '#2a2622', blackBearMuzzle: '#8a6a48', tileBlue: '#2f7fc4', tileYellow: '#f2c230', tileGreen: '#4aa35a', tileRed: '#d8442f', tileWhite: '#f2efe6', hippo: '#7a6a78', hippoBelly: '#d89a9a', hippoTooth: '#f2efe6', termite: '#a8653a', termiteDark: '#8a4f2a', jeep: '#5f6a3a', jeepCanvas: '#c8b88a', hay: '#d8b85a', hayDark: '#b8963a', fencePost: '#7a5a3a', cartWood: '#8a6a42', horse: '#6a4a30', horseMane: '#2a1e17', lionStone: '#a8a296', lionDark: '#8a8478', ginkgoTrunk: '#6a5a42', ginkgoLeaf: '#f2c230', guardianStone: '#9a948a', guardianRed: '#a8322a', ferryHull: '#f2efe6', ferryBlue: '#2f5d9a', ferryCabin: '#d8d4c8', bumperBase: '#1e1f26', bumperRed: '#ff3a4a', bumperBlue: '#3a8aff', bumperYellow: '#ffd23f', bumperRing: '#f4f4f0', chrome: '#d0d4da', targetOrange: '#ff8a1a', targetPink: '#ff4fb8', spinnerYellow: '#ffe14a', flipperWhite: '#f6f6f2', flipperRubber: '#d8342a', tombGrey: '#8a8a90', tombGlow: '#c6ff4f', bookWood: '#3a2416', bookRed: '#a8322a', bookGreen: '#2f6a3a', bookBlue: '#2a3f7a', ironDark: '#26262c', candleGold: '#ffcf5a', lightning: '#d8f2ff', shieldBlue: '#2f4a8a', shieldGold: '#ffd23f', catapultWood: '#6a4a2a', curtainRed: '#a8122a', curtainGold: '#e0b43a', spotlight: '#fff2c4', wandBlack: '#141418', saucerSilver: '#b8c4cc', alienGreen: '#7dff6a', rayPink: '#ff4fd8',
+  pineCone: '#8a5a32', pineConeTip: '#5a3a20', grizzly: '#6a4a30', grizzlyDark: '#4a3220', grizzlyMuzzle: '#a8885a', statueStone: '#c8a46a', statueStripe: '#2f5a8a', statueGold: '#d8b84a', buoyRed: '#d8442f', buoyWhite: '#f2efe6', bamboo: '#b8a050', bambooDark: '#8a7a3a', oarWood: '#8a6a48', fisherShirt: '#2f6f8a', conicalHat: '#e8d8a8', skin: '#c8956a', containerRed: '#c8442f', containerBlue: '#2f6fa8', containerRib: '#3a3d44', bollard: '#2a2d32', bollardTop: '#f2c230', gumBark: '#ddd5c4', gumStain: '#9a8c78', gumLeaf: '#7a8a5a', craneRed: '#d8442f', craneDark: '#5a2a22', toadStalk: '#f2ecd8', toadCap: '#d8342a', toadSpot: '#ffffff', blackBear: '#2a2622', blackBearMuzzle: '#8a6a48', tileBlue: '#2f7fc4', tileYellow: '#f2c230', tileGreen: '#4aa35a', tileRed: '#d8442f', tileWhite: '#f2efe6', hippo: '#7a6a78', hippoBelly: '#d89a9a', hippoTooth: '#f2efe6', termite: '#a8653a', termiteDark: '#8a4f2a', jeep: '#5f6a3a', jeepCanvas: '#c8b88a', hay: '#d8b85a', hayDark: '#b8963a', fencePost: '#7a5a3a', cartWood: '#8a6a42', horse: '#6a4a30', horseMane: '#2a1e17', lionStone: '#a8a296', lionDark: '#8a8478', ginkgoTrunk: '#6a5a42', ginkgoLeaf: '#f2c230', guardianStone: '#9a948a', guardianRed: '#a8322a', ferryHull: '#f2efe6', ferryBlue: '#2f5d9a', ferryCabin: '#d8d4c8', bumperBase: '#1e1f26', bumperRed: '#ff3a4a', bumperBlue: '#3a8aff', bumperYellow: '#ffd23f', bumperRing: '#f4f4f0', chrome: '#d0d4da', targetOrange: '#ff8a1a', targetPink: '#ff4fb8', spinnerYellow: '#ffe14a', flipperWhite: '#f6f6f2', flipperRubber: '#d8342a', tombGrey: '#8a8a90', tombGlow: '#c6ff4f', bookWood: '#3a2416', bookRed: '#a8322a', bookGreen: '#2f6a3a', bookBlue: '#2a3f7a', ironDark: '#26262c', candleGold: '#ffcf5a', lightning: '#d8f2ff', shieldBlue: '#2f4a8a', shieldGold: '#ffd23f', catapultWood: '#6a4a2a', curtainRed: '#a8122a', curtainGold: '#e0b43a', spotlight: '#fff2c4', wandBlack: '#141418', saucerSilver: '#b8c4cc', alienGreen: '#7dff6a', rayPink: '#ff4fd8',
   netFloat: '#d8322b',
   // Pinball: Tilt, Replay and Grand Champion.
   shakeGlass: '#e8f4f8', shakePink: '#ff8ac0', cherry: '#d8142a', jukeWood: '#7a3a1a', jukeGlow: '#ffb83a', jukeChrome: '#e8eaee', jukeNeon: '#ff4fa8',
@@ -954,6 +954,15 @@ function mooringPole(add, mat, group, point, q, { height }) {
   const h = height;
   add('bamboo', new CylinderGeometry(0.1, 0.12, h, 6), local(point, q, 0, h / 2, 0));
   for (const y of [0.3, 0.6]) add('bambooDark', new CylinderGeometry(0.13, 0.13, 0.06, 6), local(point, q, 0, h * y, 0));
+  return [];
+}
+
+/** A river red gum's trunk standing in the flood (Murray Red Gum Run's poles): pale and mottled, stained dark at its foot, a leafy stub on top. */
+function redGum(add, mat, group, point, q, { height }) {
+  const h = height + 0.6;
+  add('gumBark', new CylinderGeometry(0.11, 0.16, h, 7), local(point, q, 0, h / 2, 0));
+  add('gumStain', new CylinderGeometry(0.165, 0.17, 0.5, 7), local(point, q, 0, 0.25, 0));
+  add('gumLeaf', new IcosahedronGeometry(0.32, 0), local(point, q, 0, h + 0.15, 0));
   return [];
 }
 
@@ -2024,6 +2033,7 @@ export const KIT_COSTUMES = {
     arm: { colour: 'blackBear', shoulder: [0.85, 2.5, 0.3], radii: [0.28, 0.4], segments: 7, tip: 0.5, tipDetail: 1, end: 0.25, endDetail: 0, endColour: 'blackBearMuzzle', lift: 0.4, outLift: 0.5, nose: 0.25 },
   },
   'mooring-pole': { places: 'slalom', build: mooringPole },
+  'red-gum': { places: 'slalom', build: redGum },
   fisherman: {
     places: 'swipe',
     body: fishermanBody,

@@ -22,6 +22,7 @@ import { buildArcade } from './arcade';
 import { condor } from './kitLandmarksCanyon';
 import { canyonDressing } from './canyon';
 import { riverDressing, riverExtras } from './river';
+import { hotAirBalloons } from './kitLandmarksRiver';
 import { RIVER_SPAN_KINDS, buildRiverSpans } from './riverSpans';
 import { blockDressing } from './blocks';
 import { buildBlockEffects } from './kitLandmarksBlock';
@@ -267,6 +268,7 @@ export function buildKitScenery(centerline, track, theme, { lite = false } = {})
   const liftParts = [];
   const cablePos = [];
   const birds = [];
+  const drifters = []; // (Rivers) hot-air balloons drifting slowly over a section, as one mesh
   for (const sec of kit.sections) {
     for (const kind of sec.overhead ?? []) {
       if (kind === 'vulture') {
@@ -276,6 +278,16 @@ export function buildKitScenery(centerline, track, theme, { lite = false } = {})
         mesh.name = 'vulture';
         group.add(mesh);
         birds.push({ mesh, centre: s.pos.clone().add(new Vector3(0, LIFT_HEIGHT + 22, 0)), radius: 38 });
+        continue;
+      }
+      if (kind === 'hot-air-balloons') {
+        // Hot-air balloons drifting high over the section's middle (the lowest basket about 26 m over the track).
+        const { s } = frame((sec.from + sec.to) / 2);
+        const mesh = new Mesh(hotAirBalloons(lite), new MeshLambertMaterial({ vertexColors: true, flatShading: true }));
+        mesh.name = 'hot-air balloons';
+        mesh.position.copy(s.pos);
+        group.add(mesh);
+        drifters.push({ mesh, centre: s.pos.clone() });
         continue;
       }
       if (kind === 'condor') {
@@ -511,6 +523,10 @@ export function buildKitScenery(centerline, track, theme, { lite = false } = {})
     funicular?.update(t);
     lake?.update(t);
     for (const m of turning) m.mesh.quaternion.copy(m.base).multiply(cabinQ.setFromAxisAngle(m.axis, turnAngle(m.moving, sec)));
+    for (const d of drifters) {
+      // (A slow drift on the race clock, back and forth over a few tens of metres.)
+      d.mesh.position.set(d.centre.x + Math.sin(sec * 0.03) * 24, d.centre.y + Math.sin(sec * 0.05) * 3, d.centre.z + Math.cos(sec * 0.025) * 16);
+    }
     for (const b of birds) {
       const a = sec * 0.16 + (b.phase ?? 0); // once round every 40 s
       b.mesh.position.set(b.centre.x + Math.cos(a) * b.radius, b.centre.y + Math.sin(a * 2) * 2, b.centre.z + Math.sin(a) * b.radius);
