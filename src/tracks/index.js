@@ -109,6 +109,7 @@ module.exports = [
   require('./amazon-meeting-spins'),
   require('./nile-felucca-burst'),
   require('./congo-rapids-burst'),
+  require('./rhine-castle-run'),
   // Holiday Season 2026 (season 'holiday-2026': locked to the pass until the season ends).
   require('./tromso-aurora-grand-prix'),
   require('./cape-town-summer-christmas'),

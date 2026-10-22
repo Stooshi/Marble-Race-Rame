@@ -1025,6 +1025,17 @@
    "side": -1,
    "marbles": 7
   },
+  "rhine-castle-run": {
+   "name": "Rhine Castle Run",
+   "series": "Rivers",
+   "lighting": "day",
+   "v": "91395f6a",
+   "bytes": 14118,
+   "bytes2x": 36744,
+   "t": 10232,
+   "side": -1,
+   "marbles": 4
+  },
   "rio-jungle-rumble": {
    "name": "Rio Jungle Rumble",
    "series": "World Tour",

@@ -59,7 +59,7 @@ const PINBALL_LAYOUTS = ['staircases', 'siege-routes', 'stage-hairpin', 'saucer-
 // A layout whose results depend on how the field arrives (a splitter's balance, the spread) is proven with its table's own opening.
 // Layouts made for one arcade world are proven on a test track built as an arcade world.
 const ARCADE_LAYOUTS = ['cabinet-rows', 'maze-corridors', 'bullet-spirals', 'up-up-down-down', 'bracket-splits', 'coast-road', 'co-op-street'];
-const OWN_OPENING = { 'bridge-gate': 'pipe-drop', 'arch-run': 'pipe-drop', 'port-cranes': ['clean-drop', { side: 'right' }], 'balloon-plain': 'tunnel-launch', 'two-waters': 'funnel-drop', cataract: ['banked-turn', { side: 'left' }], 'rapids-ladder': 'staggered-drop', 'island-castle': 'split-start', 'river-steps': 'peg-drop', 'bridge-slalom': 'tunnel-launch', 'market-maze': 'peg-drop', 'steamer-pass': 'staggered-drop', 'lock-staircase': 'clean-drop', 'siege-routes': 'crest-start', 'saucer-sweeps': 'staggered-drop', 'clock-tower': 'funnel-drop', 'encore-split': 'split-start', 'cabinet-rows': 'funnel-drop', 'maze-corridors': 'split-start', 'bullet-spirals': 'staggered-drop', 'up-up-down-down': 'crest-start', 'bracket-splits': 'banked-turn', 'coast-road': 'boost-launch', 'co-op-street': 'tunnel-launch', 'lower-playfield': ['banked-turn', { side: 'right' }] };
+const OWN_OPENING = { 'bridge-gate': 'pipe-drop', 'arch-run': 'pipe-drop', 'port-cranes': ['clean-drop', { side: 'right' }], 'balloon-plain': 'tunnel-launch', 'two-waters': 'funnel-drop', cataract: ['banked-turn', { side: 'left' }], 'rapids-ladder': 'staggered-drop', 'island-castle': ['split-start', { dress: { after: { height: 12 } } }], 'river-steps': 'peg-drop', 'bridge-slalom': 'tunnel-launch', 'market-maze': 'peg-drop', 'steamer-pass': 'staggered-drop', 'lock-staircase': 'clean-drop', 'siege-routes': 'crest-start', 'saucer-sweeps': 'staggered-drop', 'clock-tower': 'funnel-drop', 'encore-split': 'split-start', 'cabinet-rows': 'funnel-drop', 'maze-corridors': 'split-start', 'bullet-spirals': 'staggered-drop', 'up-up-down-down': 'crest-start', 'bracket-splits': 'banked-turn', 'coast-road': 'boost-launch', 'co-op-street': 'tunnel-launch', 'lower-playfield': ['banked-turn', { side: 'right' }] };
 // (Lower playfield: the banked turn the other way, so the test track is Tilt's exact mirror image.)
 // Layouts made for one canyon are proven on a test track built as a canyon (on the canyon floor, climbing out where its canyon does).
 const CANYON_LAYOUTS = ['horseshoe-bend', 'great-bend', 'terrace-steps', 'rafting-run', 'six-canyons', 'basalt-gorge', 'twin-peaks', 'cliff-ledge', 'free-fall', 'meanders',
@@ -127,10 +127,11 @@ const RIVER_HEIGHTS = {
   'two-waters': { seam: { height: 8 }, seamSweep: { height: 8 } },
   cataract: { sails: { height: 12 } },
   'rapids-ladder': { whiteWater: { height: 8 } },
-  'island-castle': { bargeSweep: { height: 10 } },
+  'island-castle': { bargeReach: { height: 8 }, bargeSweep: { height: 10 } },
   'river-steps': { lamps: { height: 6 } },
 };
 // (Each test track starts the way its track does: looks only, but the land behind the gate differs.)
+// (Island castle: out of the chutes on supports, as Rhine Castle Run, so the barge reach below has no bank of it to pass through.)
 const RIVER_START = { 'market-maze': 'river-boat', cataract: 'cliff', 'rapids-ladder': 'stepped-platform', 'island-castle': 'castle-tower', 'river-steps': 'stepped-platform' };
 // (Falls edge is proven the way Zambezi Falls Run races it: mirrored, its first bend to the right.)
 const RIVER_MIRROR = { 'falls-edge': true };
