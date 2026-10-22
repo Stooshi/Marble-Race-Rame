@@ -1036,6 +1036,17 @@
    "side": 1,
    "marbles": 4
   },
+  "seine-quays-spins": {
+   "name": "Seine Quays Spins",
+   "series": "Rivers",
+   "lighting": "sunset",
+   "v": "24ec6fa4",
+   "bytes": 14848,
+   "bytes2x": 37546,
+   "t": 10334,
+   "side": -1,
+   "marbles": 6
+  },
   "seoul-winter-lights": {
    "name": "Seoul Winter Lights",
    "series": "Arcade",

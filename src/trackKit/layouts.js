@@ -1389,18 +1389,18 @@ const LAYOUTS = {
       obstacles: [parked({ costume: c.parked, at: 0.2, side: L, length: 6 }), peg({ costume: c.peg, at: 0.45, line: 'right' })], features: [rumble({ from: 0.7, to: 0.95, count: 3 })],
     },
   ],
-  /** L85 Arch run (Rivers): a slalom straight under five stone arch bridges in a row (seven gates, alternating sides), a sweep round an island's tip, a drop, the hairpin, two sweeps along the quays (a peg), a short climb up to the upper quay and a drop back down, a spiral and a parked piece and a peg at the run-in. */
+  /** L85 Arch run (Rivers): a slalom straight under five stone arch bridges in a row (eight gates, alternating sides), a sweep round an island's tip (three pegs), a drop, the hairpin, two sweeps along the quays (three pegs), a short climb up to the upper quay and a drop back down, a spiral and a parked piece and a peg at the run-in. */
   'arch-run': (L, R, c) => [
-    { key: 'arches', name: 'Arch slalom', shape: straight(90, { grade: 0.13 }), obstacles: [slalom({ costume: c.slalom, from: 0.1, to: 0.95, count: 7, loss: 0.3 })] },
-    { key: 'islandTip', name: 'Round the island tip', shape: sweep({ side: R, radius: 75, degrees: 130, grade: 0.09 }), billboards: 1 },
+    { key: 'arches', name: 'Arch slalom', shape: straight(90, { grade: 0.18 }), obstacles: [slalom({ costume: c.slalom, from: 0.08, to: 0.95, count: 8, loss: 0.25 })] },
+    { key: 'islandTip', name: 'Round the island tip', shape: sweep({ side: R, radius: 75, degrees: 150, grade: 0.09 }), obstacles: [peg({ costume: c.peg, at: 0.3, line: 'left' }), peg({ costume: c.peg, at: 0.55, line: 'right' }), peg({ costume: c.peg, at: 0.8, line: 'left' })], billboards: 1 },
     { key: 'drop', name: 'Drop', shape: plunge(40, { grade: 0.22, from: 0.09 }) },
     { key: 'brakingStraight', name: 'Run to the hairpin', shape: straight(50, { grade: 0.12 }) },
     { key: 'hairpin', name: 'Hairpin', shape: hairpin({ side: R }), obstacles: [swipe({ costume: c.swipe, side: 'high' })] },
-    { key: 'lowQuay', name: 'Lower quay sweep', shape: sweep({ side: L, radius: 85, degrees: 75, grade: 0.1 }), billboards: 2 },
+    { key: 'lowQuay', name: 'Lower quay sweep', shape: sweep({ side: L, radius: 85, degrees: 75, grade: 0.1 }), obstacles: [peg({ costume: c.peg, at: 0.35, line: 'left' }), peg({ costume: c.peg, at: 0.65, line: 'right' })], billboards: 2 },
     { key: 'quayBend', name: 'Quay sweep', shape: sweep({ side: R, radius: 85, degrees: 60, grade: 0.1 }), obstacles: [peg({ costume: c.peg, at: 0.5, line: 'center' })], billboards: 1 },
     { key: 'rise', name: 'Up to the upper quay', shape: climb(12, { grade: -0.05, after: 0.12 }) },
     { key: 'downQuay', name: 'Back down', shape: plunge(40, { grade: 0.22, from: 0.12 }) },
-    { key: 'spin', name: 'Spiral', shape: spiral({ side: L, radius: 52, turns: 0.6, grade: 0.15 }) },
+    { key: 'spin', name: 'Spiral', shape: spiral({ side: L, radius: 52, turns: 0.5, grade: 0.15 }) },
     {
       key: 'lastStraight', name: 'Last straight', shape: straight(65, { grade: 0.15 }),
       obstacles: [parked({ costume: c.parked, at: 0.2, side: R, length: 6 }), peg({ costume: c.peg, at: 0.45, line: 'left' })], features: [rumble({ from: 0.7, to: 0.95, count: 3 })],

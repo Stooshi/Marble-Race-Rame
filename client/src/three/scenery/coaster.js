@@ -789,6 +789,12 @@ function buildStart(lift, { towers, feet, tower, groundAt, lite, RAIL, SUPPORT, 
     for (const sign of [1, -1]) for (let d = -ROOF.depth / 2 + 4; d <= ROOF.depth / 2 - 4; d += lite ? 8 : 4) {
       towers.push(obox(1, 1.6, 1.4, mid.clone().addScaledVector(side, sign * (ROOF.half - 0.4)).addScaledVector(back, d).setY(roofY - mans / 2), yaw, '#e8dcc2')); // dormers
     }
+    // The terrace seen from above (the countdown's shot): pale stone paving, two glazed skylights, planters along its edges.
+    towers.push(obox(ROOF.half * 2 - 2.2, 0.2, ROOF.depth - 2.2, mid.clone().setY(roofY + 0.1), yaw, '#d9cfb8'));
+    for (const d of [-ROOF.depth / 4, ROOF.depth / 4]) towers.push(obox(ROOF.half * 0.9, 0.5, ROOF.depth / 5, mid.clone().addScaledVector(back, d).setY(roofY + 0.3), yaw, '#8fb2c8'));
+    for (const sign of [1, -1]) for (let d = -ROOF.depth / 2 + 3; d <= ROOF.depth / 2 - 3; d += lite ? 9 : 4.5) {
+      towers.push(obox(1.2, 0.8, 1.2, mid.clone().addScaledVector(side, sign * (ROOF.half - 2.2)).addScaledVector(back, d).setY(roofY + 0.5), yaw, '#5f8a3e'));
+    }
     for (const sign of [1, -1]) towers.push(obox(0.4, 0.9, ROOF.depth - 1, mid.clone().addScaledVector(side, sign * (ROOF.half - 0.8)).setY(roofY + 0.45), yaw, '#2a2e30')); // the terrace's railings
     for (const j of [-6, -2, 2, 6]) towers.push(obox(1.4, 2.4, 0.9, mid.clone().addScaledVector(back, ROOF.depth / 2 - 1.5).addScaledVector(side, j).setY(roofY + 1.2), yaw, '#b86a4a'));
     feet.push({ x: mid.x, z: mid.z, r: ROOF.depth / 2 + ROOF.half });

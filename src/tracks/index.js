@@ -98,6 +98,7 @@ module.exports = [
   require('./mississippi-steamer-run'),
   require('./danube-night-run'),
   require('./zambezi-falls-run'),
+  require('./seine-quays-spins'),
   require('./mekong-market-spins'),
   require('./yangtze-lock-run'),
   require('./thames-bridges-run'),
