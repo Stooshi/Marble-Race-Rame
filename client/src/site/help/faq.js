@@ -356,6 +356,8 @@ export function buildFaq({ tracks, platform = 'web' } = {}) {
         "You can't change it yourself yet: contact us with the name you'd like, and we'll change it for you. Names must be friendly: offensive names can't be chosen, and those that slip through are changed."],
       ['How do I report an offensive player name?',
         "Tap **⚑** next to the name on a scoreboard or in the race results (or tap the player's marble after a race and choose **Report this name**), then **Report**. We check every report and give offensive names a neutral one. The player isn't told who reported them."],
+      ['How do I choose the country I race for?',
+        "Choose it when you save your account, or later in **Settings → Your country**. It's optional, it needn't be where you live, and only saved accounts have one. Your best time on a track counts for your country's record there (**Scoreboards → Countries**, and each track's page). You can change your country once every 90 days. Picked the wrong one? You can correct it within 24 hours. A change never moves records you already set."],
       ['How do I turn news emails on or off?',
         'Tap your @name at the top to open **Settings**, and use the news-by-email switch. You can also click **Unsubscribe** in any email we send.'],
       ['How do I change the sound?',

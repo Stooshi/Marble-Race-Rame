@@ -226,3 +226,14 @@ A season (the first: **Holiday Season 2026**, `holiday-2026`, 1 Dec 2026 00:00 t
 - **Quick sign-up** (the pop-up and the sign-up page alike): player name (a suggested free name the player can change), email, password, birth year and month, the terms (required), news by email (optional, unticked). Everything the guest won stays: it is the same account.
 - **Confirm your email** (double opt-in): once email is set up (`BREVO_API_KEY`), a link to confirm the address, valid 7 days; Settings sends a new one. Until then accounts are saved without it.
 - **Accounts:** players can download their data and delete their account in Settings. Deletion anonymises the account and keeps race results and payment records.
+
+## The country you race for
+
+*Moses, 22 Oct 2026. `src/country`, `client/src/site/country/`.*
+- **Optional, saved accounts only.** Asked (optional) on the quick sign-up and changeable in **Settings → Your country**. Any country on the ISO 3166-1 list (249, by CLDR's English names); it needn't be where the player lives. The picker is pre-filled with a guess (the connection's country, looked up at that moment and not stored for this; else the browser's region), which the player can change or clear.
+- **Never from the IP address:** the IP's country is kept for security and fraud only (`security_events`).
+- **The change rule:** the first choice is free; for **24 hours** after a choice, changes are corrections; after that **one change every 90 days**, counted from the last choice. Removing the country is allowed any time but doesn't restart the clock. Settings shows the date of the next change. Help: "You can change your country once every 90 days."
+- **History:** every choice is kept (`user_country_history`), so national leagues can use **the country a player had at the start of the month** (`country.countryAt`).
+- **Country records:** on each live track, the fastest finishing time by a player of each country. Counted: finished races, the player's own marble (never a computer player), saved accounts, with the country they had when they joined the race (so records start from when a player chose a country, and a later change never moves one). Deleted and suspended players drop out; a tie goes to the earlier race. Shown on each track's page (the top 10) and on **Scoreboards → Countries** (by track, or one country's record on every track), with the player's name and the date. Read only: no coins or prizes.
+- **Shown by name, never a flag:** names read the same on every device (flag emoji show as two letters on Windows) and avoid flag politics; the stores' and the law's rules allow either.
+- **Later (not built):** an overall country table from finishing places (points for the top 3, averaged per player), and national leagues (see `claude/leagues-plan.md` in the project).

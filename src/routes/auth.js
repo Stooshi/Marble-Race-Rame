@@ -20,6 +20,7 @@ const security = require('../security');
 const passwordReset = require('../account/passwordReset');
 const email = require('../email');
 
+const country = require('../country');
 const router = express.Router();
 
 const limiter = (windowMs, limit, error = 'Too many attempts, please try again later') => rateLimit({
@@ -42,7 +43,7 @@ const nameLimiter = limiter(15 * 60 * 1000, 300);
 
 // `streak`: days in a row with the daily goal met, alive while the goal was met today or yesterday
 // (UTC days, as in src/economy/index.js today()); 0 otherwise.
-const PUBLIC_USER_COLUMNS = `id, username, email, display_name, avatar_url, role, coins, coins_earned, coins_bought, is_guest, skill, skill_refund_coins, settings, age_group, marketing_opt_in, email_verified_at, created_at,
+const PUBLIC_USER_COLUMNS = `id, username, email, display_name, avatar_url, role, coins, coins_earned, coins_bought, is_guest, skill, skill_refund_coins, settings, age_group, marketing_opt_in, email_verified_at, country, created_at,
   CASE WHEN streak_last_day >= (now() AT TIME ZONE 'UTC')::date - 1 THEN streak_days ELSE 0 END AS streak`;
 
 const registerSchema = {
@@ -59,6 +60,7 @@ const registerSchema = {
   birth_year: { type: 'int', min: 1900, max: 2100 },
   birth_month: { type: 'int', min: 1, max: 12 },
   lang: { type: 'enum', values: ['en', 'sv'] }, // (the confirmation email's language)
+  country: { type: 'string', max: 2, nullable: true }, // (optional: the country the player races for, src/country)
 };
 
 /**
@@ -111,6 +113,7 @@ router.post('/register', signupLimiter, async (req, res) => {
       [body.username, body.email.toLowerCase(), hash, body.display_name ?? null, body.marketing_opt_in ?? false, economy.economy.startingCoins, ageGroup, birthMonth],
     );
     const user = rows[0];
+    if (body.country) user.country = (await country.choose(db, user.id, body.country)).country;
     await logConsent(db, user.id, body.marketing_opt_in ?? false, 'signup');
     await security.record(req, user.id, 'signup');
     await economy.opening(db, user.id, user.coins);
@@ -166,6 +169,7 @@ router.post('/claim', requireAuth, signupLimiter, async (req, res) => {
       [req.user.id, body.username, body.email.toLowerCase(), hash, body.marketing_opt_in ?? false, ageGroup, birthMonth],
     );
     if (!rows[0]) throw conflict('This account is already saved');
+    if (body.country) rows[0].country = (await country.choose(db, rows[0].id, body.country)).country;
     await logConsent(db, rows[0].id, body.marketing_opt_in ?? false, 'claim');
     await security.record(req, rows[0].id, 'claim');
     // Everything the guest won stays: it's the same account (coins, marbles, starters, races).

@@ -5,6 +5,7 @@ import { useAsync } from '../../hooks/useAsync';
 import TrackBanner, { SERIES_PIC } from '../TrackBanner';
 import { applyMeta, metaFor } from '../pageMeta';
 import { FREE_TO_PLAY, holidayPassNeeded } from '../../shared/holidayWording';
+import { TrackCountryRecords } from './CountryRecords';
 
 export const SERIES_ORDER = ['World Tour', 'Grand Prix', 'Coasters', 'Canyons', 'Blocks', 'Track and Field', 'Rivers', 'Pinball', 'Arcade', 'Winter Wonders', 'Classic'];
 const lengthOf = (m) => (Number(m) > 0 ? `${(Number(m) / 1000).toFixed(1)} km` : null);
@@ -84,6 +85,15 @@ export function TrackPage() {
         <Link to={`/play/friends?track=${encodeURIComponent(track.slug)}`} className="ms-btn ms-btn--lg ms-btn--ghost">RACE IT WITH FRIENDS</Link>
       </div>
       )}
+      <section style={{ display: 'grid', gap: 10 }}>
+        <TrackCountryRecords
+          slug={track.slug}
+          limit={10}
+          heading={<h2 id="country-records-h" className="ms-h3" style={{ margin: 0 }}>Country records</h2>}
+          empty={<p className="ms-note" style={{ margin: 0 }}>No country records yet: the fastest player of each country gets one. Choose the country you race for in <Link to="/settings">Settings</Link>.</p>}
+          more={<Link to={`/scores?board=countries&track=${encodeURIComponent(track.slug)}`}>All country records on this track</Link>}
+        />
+      </section>
     </div>
   );
 }

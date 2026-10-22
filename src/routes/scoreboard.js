@@ -4,7 +4,8 @@ const express = require('express');
 const db = require('../db');
 const { optionalAuth } = require('../middleware/auth');
 const { validate } = require('../utils/validate');
-const { unauthorized } = require('../utils/httpError');
+const { notFound, unauthorized } = require('../utils/httpError');
+const countryRecords = require('../country/records');
 const { EARNED } = require('../economy');
 const economy = require('../../client/src/shared/economy.json');
 const seasons = require('../seasons');
@@ -103,6 +104,26 @@ router.get('/', optionalAuth, async (req, res) => {
         : r.shooter_original ? { original: { name: r.shooter_original, color_primary: r.color_primary, color_secondary: r.color_secondary, pattern: r.pattern } } : null,
     })),
   });
+});
+
+/**
+ * GET /api/scoreboard/countries?track=<slug> — the country records on one live track (src/country/records):
+ * the fastest time by a player of each country, fastest first.
+ */
+router.get('/countries', async (req, res) => {
+  const { track } = validate(req.query, { track: { type: 'string', required: true, max: 64, pattern: /^[a-z0-9-]+$/, patternMessage: 'must be a track slug' } });
+  const out = await countryRecords.byTrack(db, track);
+  if (!out) throw notFound('No such live track');
+  res.set('Cache-Control', 'public, max-age=60');
+  res.json(out);
+});
+
+/** GET /api/scoreboard/countries/:code — one country's records: its fastest time on each live track. */
+router.get('/countries/:code', async (req, res) => {
+  const out = await countryRecords.byCountry(db, String(req.params.code).toUpperCase());
+  if (!out) throw notFound('No such country');
+  res.set('Cache-Control', 'public, max-age=60');
+  res.json(out);
 });
 
 module.exports = router;

@@ -16,6 +16,8 @@ const account = require('../account');
 
 const seasons = require('../seasons');
 const names = require('../names');
+const country = require('../country');
+const security = require('../security');
 const rateLimit = require('express-rate-limit');
 const router = express.Router();
 
@@ -77,6 +79,33 @@ router.put('/me/settings', requireAuth, async (req, res) => {
     [req.user.id, JSON.stringify(clean)],
   );
   res.json({ settings: rows[0].settings });
+});
+
+/**
+ * GET /api/users/me/country — the country the player races for and the change rule's state
+ * (src/country), plus `suggested`: the country of this request's IP address, only to pre-fill the
+ * picker (looked up, never stored for this).
+ */
+router.get('/me/country', requireAuth, async (req, res) => {
+  const { rows: [u] } = await db.query('SELECT country, country_chosen_at, is_guest FROM users WHERE id = $1', [req.user.id]);
+  if (!u) throw notFound('No such player');
+  const ip = security.countryOf(security.clientIp(req));
+  res.set('Cache-Control', 'no-store');
+  res.json({ ...country.status(u), saved: !u.is_guest, suggested: country.isCountry(ip) ? ip : null, changeDays: country.CHANGE_DAYS });
+});
+
+/** GET /api/users/country-suggestion — the country of this request's IP address, only to pre-fill the sign-up form's picker (nothing stored). */
+router.get('/country-suggestion', async (req, res) => {
+  const ip = security.countryOf(security.clientIp(req));
+  res.set('Cache-Control', 'no-store');
+  res.json({ suggested: country.isCountry(ip) ? ip : null });
+});
+
+/** PUT /api/users/me/country { country: 'SE' | null } — choose, correct, change or remove it (the change rule: src/country). */
+router.put('/me/country', requireAuth, async (req, res) => {
+  if (!req.body || !('country' in req.body)) throw badRequest('Provide country: a two-letter code, or null to remove it');
+  const body = validate(req.body, { country: { type: 'string', max: 2, nullable: true } });
+  res.json(await country.choose(db, req.user.id, body.country ?? null));
 });
 
 /** PATCH /api/users/me — update profile; changing password requires current_password */

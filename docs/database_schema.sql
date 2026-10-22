@@ -1205,3 +1205,38 @@ CREATE TABLE IF NOT EXISTS name_reports (
     resolution        varchar(16) CHECK (resolution IN ('renamed', 'dismissed'))
 );
 CREATE INDEX IF NOT EXISTS idx_name_reports_open ON name_reports (reported_user_id) WHERE resolved_at IS NULL;
+
+-- ---------------------------------------------------------------------------
+-- The country a player races for (22 Oct 2026, src/country): chosen by the player (optional; it
+-- needn't be where they live), never taken from the IP address, which is kept for security only.
+-- users.country: ISO 3166-1 two letters, or NULL. users.country_chosen_at: when the player last
+-- chose (the first choice or a change), which starts a 24-hour window for corrections and the 90
+-- days until the next change. user_country_history: every choice, for "which country did they have
+-- on a date" (national leagues qualify by the country at the start of the month).
+-- race_entries.country: the player's country when they joined the race (BEFORE INSERT trigger),
+-- for the country records per track; NULL for computer players, guests and players without one.
+-- ---------------------------------------------------------------------------
+ALTER TABLE users ADD COLUMN IF NOT EXISTS country           char(2) CHECK (country ~ '^[A-Z]{2}$');
+ALTER TABLE users ADD COLUMN IF NOT EXISTS country_chosen_at timestamptz;
+CREATE TABLE IF NOT EXISTS user_country_history (
+    id          bigserial   PRIMARY KEY,
+    user_id     uuid        NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    country     char(2)     CHECK (country ~ '^[A-Z]{2}$'),
+    kind        varchar(12) NOT NULL CHECK (kind IN ('first', 'correction', 'change', 'removed')),
+    created_at  timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_user_country_history_user ON user_country_history (user_id, created_at);
+ALTER TABLE race_entries ADD COLUMN IF NOT EXISTS country char(2) CHECK (country ~ '^[A-Z]{2}$');
+CREATE INDEX IF NOT EXISTS idx_race_entries_country ON race_entries (country, race_id) WHERE country IS NOT NULL;
+CREATE OR REPLACE FUNCTION race_entry_country() RETURNS trigger AS $$
+BEGIN
+    IF NEW.user_id IS NOT NULL AND NEW.country IS NULL THEN
+        SELECT CASE WHEN is_guest OR deleted_at IS NOT NULL THEN NULL ELSE country END INTO NEW.country
+          FROM users WHERE id = NEW.user_id;
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+DROP TRIGGER IF EXISTS trg_race_entries_country ON race_entries;
+CREATE TRIGGER trg_race_entries_country BEFORE INSERT ON race_entries
+    FOR EACH ROW EXECUTE FUNCTION race_entry_country();

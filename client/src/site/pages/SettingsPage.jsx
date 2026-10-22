@@ -7,6 +7,8 @@ import { api } from '../../api/client';
 import { activatesDay } from '../payments/preSale';
 import { giftCodesOn } from './RedeemPage';
 import { PushSettings } from '../account/PushSettings';
+import CountryPicker from '../country/CountryPicker';
+import { CHANGE_RULE, countryName } from '../country/countries';
 
 const day = (t) => (t ? new Date(t).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : null);
 
@@ -35,6 +37,48 @@ function NewsByEmail() {
           <span className="ms-note">
             {state.news ? 'On' : 'Off'}{state.since ? ` since ${day(state.since)}` : ''}. Every email has a link to stop them; you can change this here any time.
           </span>
+        </>
+      )}
+      {error && <div className="ms-msg ms-msg--bad" role="alert">{error}</div>}
+    </section>
+  );
+}
+
+/**
+ * The country the player races for (src/country on the server): optional; the first choice is free,
+ * changes within 24 hours are corrections, then one change every 90 days (shown with its date).
+ */
+function YourCountry() {
+  const [state, setState] = useState(null);
+  const [pick, setPick] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState(null);
+  const [saved, setSaved] = useState(false);
+  useEffect(() => { api.myCountry().then((s) => { setState(s); setPick(s.country ?? ''); }).catch((e) => setError(e.message)); }, []);
+  const save = async () => {
+    setBusy(true); setError(null); setSaved(false);
+    try { const s = await api.setCountry(pick || null); setState((v) => ({ ...v, ...s })); setPick(s.country ?? ''); setSaved(true); } catch (e) { setError(e.message); } finally { setBusy(false); }
+  };
+  const locked = state && !state.canChange;
+  return (
+    <section className="ms-card" style={{ display: 'grid', gap: 10 }} aria-labelledby="country-h">
+      <h2 id="country-h" className="ms-h3" style={{ margin: 0 }}>Your country</h2>
+      {!state && !error && <span className="ms-note">Loading…</span>}
+      {state && !state.saved && <p style={{ margin: 0 }}>You're playing as a guest. <Link to="/signup">Save your account</Link> to race for a country.</p>}
+      {state?.saved && (
+        <>
+          <p style={{ margin: 0 }}>The country you race for, shown with your best times on the <Link to="/scores?board=countries">country records</Link>. It needn't be where you live, and it's optional.</p>
+          <div className="ms-row" style={{ gap: 8 }}>
+            <CountryPicker id="country-pick" label="Your country" value={pick} onChange={(v) => { setPick(v); setSaved(false); }} disabled={busy || (locked && !state.country)} />
+            <button type="button" className="ms-btn" onClick={save} disabled={busy || pick === (state.country ?? '') || (locked && pick !== '')}>{busy ? 'Saving…' : 'Save'}</button>
+          </div>
+          <span className="ms-note">
+            {state.country ? `Racing for ${countryName(state.country)}. ` : 'No country chosen. '}
+            {state.correctionUntil ? `Picked the wrong one? You can still correct it until ${new Date(state.correctionUntil).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}. ` : ''}
+            {locked ? `Your next change is possible from ${day(state.nextChangeAt)}. ` : ''}
+            {CHANGE_RULE}
+          </span>
+          {saved && <span className="ms-msg" role="status">Saved.</span>}
         </>
       )}
       {error && <div className="ms-msg ms-msg--bad" role="alert">{error}</div>}
@@ -156,6 +200,7 @@ export default function SettingsPage() {
       <SeasonPasses />
       <PushSettings />
       <NewsByEmail />
+      <YourCountry />
       <section className="ms-card" style={{ display: 'grid', gap: 6 }} aria-labelledby="buy-h">
         <h2 id="buy-h" className="ms-h3" style={{ margin: 0 }}>Purchases</h2>
         <span>Your orders (coin packs and the season pass) and receipts: <Link to="/purchases">Purchases</Link></span>

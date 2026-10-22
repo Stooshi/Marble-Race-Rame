@@ -118,6 +118,9 @@ The auth endpoints are rate-limited to 20 requests per 15 minutes per IP.
 | PATCH | `/users/me` | ✔ | `{ display_name?, avatar_url?, email?, password?, current_password? }`. Changing email or password needs `current_password` |
 | GET | `/users/me/marbles` | ✔ | Owned marbles plus the free starter marbles |
 | PUT | `/users/me/marbles/:marbleId/favorite` | ✔ | `{ is_favorite }` |
+| GET | `/users/me/country` | ✔ | The country the player races for and the change rule's state: `{ country, name, chosenAt, correctionUntil, nextChangeAt, canChange, saved, suggested, changeDays }` (`suggested`: the request IP's country, to pre-fill the picker; not stored) |
+| PUT | `/users/me/country` | ✔ | `{ country: 'SE' \| null }`: choose, correct (24 h), change (once every 90 days; 409 `country_locked` with `nextChangeAt`) or remove. Saved accounts only |
+| GET | `/users/country-suggestion` | – | `{ suggested }`: the request IP's country, for the sign-up form's picker (not stored) |
 | POST | `/users/me/cookie-consent` | ✔ | `{ version, statistics, marketing, decided_at? }`: the website's cookie choice, kept as a consent record (`cookie_consents`) |
 | GET | `/users/leaderboard` | – | `?sort=wins\|podiums\|races_played\|coins_won&limit&offset` |
 | GET | `/users/:id` | – | Public profile + stats |
@@ -193,6 +196,8 @@ The collection (Collection 1 · Schoolyard Classics: 10 designs in 5 shades, 50 
 | POST | `/payments/checkout` | ✔ | `{ productId, provider }`: start buying a coin pack (Stripe on the web; placeholder until there are keys) |
 | POST | `/payments/receipt` | ✔ | `{ provider: 'apple' \| 'google', receipt }`: an app store purchase (placeholder until the apps exist) |
 | GET | `/scoreboard` | optional | `?board=season\|all\|friends`: players ranked by coins earned racing (places, personal bests, daily goals, streaks); `season` is `null` until set in `economy.json` (then `season` counts all time) |
+| GET | `/scoreboard/countries` | – | `?track=<slug>`: the country records on one live track (the fastest time by a player of each country), fastest first; cached for a minute |
+| GET | `/scoreboard/countries/:code` | – | One country's record on every live track |
 | GET | `/races/showcase` | – | A recent close race for the landing page's replay |
 
 **Marble IDs.** Every item has one: the collection's two letters (SC = Schoolyard Classics; later collections get their own, e.g. HH, MG, AG; LE for the limited editions), the design's number 01–10 and the shade's 1–5 (Classic, Ocean, Forest, Berry, Sunset), no dashes: SC105 is the Champion Shooter in Sunset. The shop finds a marble by ID however it's typed. The next collections and their dates are in `catalog.json` → `comingSoon`.

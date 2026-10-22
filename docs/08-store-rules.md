@@ -118,7 +118,7 @@ Tracking: **No**. No data used for tracking. No third-party advertising or analy
 | Usage data: Gameplay content (races, results, marbles) | Yes | Yes | App functionality |
 | Location: Coarse location (country from the IP address; the IP itself deleted after 90 days) | Yes | Yes | App functionality (security, fraud prevention) |
 | User content: Customer support (contact form messages, screenshots) | Yes | Yes | Customer support |
-| Other data: birth year and month (saved accounts) | Yes | Yes | App functionality (age group) |
+| Other data: birth year and month (saved accounts); the country the player chooses to race for (optional, from 22 Oct 2026) | Yes | Yes | App functionality (age group; country records) |
 | Diagnostics (crash data, performance) | No | | |
 | Health, financial info, contacts, browsing history, search history, precise location, sensitive info | No | | |
 
@@ -134,7 +134,7 @@ Tracking: **No**. No data used for tracking. No third-party advertising or analy
 | Personal info: Email address | Optional (guests have none) | App functionality, account management, developer communications (news only if opted in) |
 | Personal info: User IDs | Required | App functionality, account management, fraud prevention and security |
 | Personal info: Name | Optional (contact form) | Customer support (counts under App functionality) |
-| Personal info: Other info (birth year and month) | Optional (saved accounts) | App functionality, account management |
+| Personal info: Other info (birth year and month; the country the player chooses to race for) | Optional (saved accounts) | App functionality, account management |
 | Financial info: Purchase history | Optional | App functionality, account management |
 | Location: Approximate location (country from IP) | Required | Fraud prevention, security and compliance |
 | Messages: Other in-app messages (contact form) | Optional | App functionality (support) |

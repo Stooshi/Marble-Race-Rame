@@ -71,11 +71,13 @@ marbles ──< user_marbles   (the older plain marbles; looks only)
 | `deleted_at` | The player deleted the account. The row stays, anonymised (see below) |
 | `password_changed_at` | When the password was last reset by email. Logins made before it stop working |
 | `apple_account_token` | A random UUID the iPhone app buys with (StoreKit's appAccountToken): ties an App Store purchase to this player without giving Apple anything personal. Made at the first App Store purchase; cleared when the account is deleted |
+| `country` | The country the player races for (ISO 3166-1, two letters), chosen by the player; optional, saved accounts only; it needn't be where they live. **Never from the IP address** (that country is for security only). See `src/country` and [Game rules](04-game-rules.md#the-country-you-race-for) |
+| `country_chosen_at` | When the player last chose (the first choice or a change): it opens 24 hours of corrections and starts the 90 days to the next change. Removing the country doesn't change it |
 | `store_account_id` | Random id (unique, up to 64 characters) the Android app gives Google Play with each purchase (`obfuscatedAccountId`), so the server can check a purchase belongs to this player. Made at the first purchase; never the user id or email. Cleared when the account is deleted |
 
 **Account deletion** (`src/account/index.js`; by the player, the back office, or for a guest 90 days without a visit) doesn't remove the `users` row.
-- **It anonymises the account:** name, email, password, shown name, settings, age group, birth month, email confirmation and consent are cleared.
-- **It deletes:** `email_consents`, `security_events`, `support_messages` (with their replies; also messages sent from the account's email without a link), `admin_sessions` and `admin_2fa` rows. It also clears the marble label and closes rooms the player hosts.
+- **It anonymises the account:** name, email, password, shown name, settings, age group, birth month, the country (also on the player's race entries, so they leave the country records), email confirmation and consent are cleared.
+- **It deletes:** `email_consents`, `security_events`, `user_country_history`, `support_messages` (with their replies; also messages sent from the account's email without a link), `admin_sessions` and `admin_2fa` rows. It also clears the marble label and closes rooms the player hosts.
 - **It keeps:**
   - race results, so other players' places never change;
   - marble IDs, so serial numbers stay unique;
@@ -99,6 +101,9 @@ One row per player per day (UTC): `races` finished that day and `goal_met_at` (w
 
 ### `email_consents`
 History of every yes/no to news by email: `consent`, `source` (`signup`, `claim`, `settings`, `support`, `unsubscribe`), `created_at`. Deleted with the account.
+
+### `user_country_history`
+Every choice of the country a player races for: `country` (NULL when removed), `kind` (`first`, `correction`, `change`, `removed`), `created_at`. For "which country did the player have at a moment" (`country.countryAt`: national leagues qualify by the country at the start of the month). In Download my data; deleted with the account.
 
 ### `security_events`
 Sign-up, login and purchase events: `kind`, `ip` (inet), `country` (2 letters, looked up offline), `created_at`. **The full IP is kept for at most 90 days**: a daily job blanks it and keeps only the country (`src/security`). The table is used only for security and fraud checks, such as many accounts from one address.
@@ -145,6 +150,7 @@ One marble in one race. Computer players have `user_id NULL` and `is_bot = true`
 | `snap_top_speed`, `snap_acceleration`, `snap_handling`, `snap_luck` | The four engine stats the entry raced with, copied at decision time (today all four equal the player's skill) |
 | `finish_position`, `finish_time_ms`, `split_time_ms` | Results (`split_time_ms` is the halfway time). **Written at decision time but hidden by the API until the race is finished** |
 | `coins_awarded` | Coins paid for this race (taking part, the finishing bonus, the daily goal) |
+| `country` | The player's country when they joined the race (a `BEFORE INSERT` trigger copies `users.country`; NULL for computer players, guests and players without one). The country records read it, so a later change of country never moves a record (`src/country/records.js`) |
 | `bonus_coins` | The Track of the Day bonus a pass holder got on this race (0 otherwise). Kept out of `coins_awarded`, which the stats and scoreboards read |
 | `joined_at` | |
 

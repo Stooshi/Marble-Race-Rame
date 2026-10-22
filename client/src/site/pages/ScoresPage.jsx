@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { api } from '../../api/client';
 import { useAuth } from '../../context/AuthContext';
 import { useAsync } from '../../hooks/useAsync';
@@ -7,10 +7,11 @@ import { ITEM } from '../../shared/marbles';
 import MarbleBadge from '../marbles/MarbleBadge';
 import { handle } from '../../shared/playerName';
 import ReportName from '../../components/ReportName';
+import CountryRecords from './CountryRecords';
 
 // The season comes from the server (a season in its seasons table that is on or ended last, or the
 // numbered one in economy.json): without one there is no "This season" board and no season label.
-const BOARDS = [['season', 'This season'], ['all', 'All time'], ['friends', 'Friends']];
+const BOARDS = [['season', 'This season'], ['all', 'All time'], ['friends', 'Friends'], ['countries', 'Countries']];
 const MEDAL = { 1: 'var(--ms-yellow)', 2: 'var(--ms-soft)', 3: 'var(--ms-orange)' };
 
 export function daysLeftIn(season) {
@@ -21,10 +22,12 @@ export function daysLeftIn(season) {
 /** Scoreboards: players ranked by coins earned in races (money can't buy a place). */
 export default function ScoresPage() {
   const { isAuthenticated } = useAuth();
-  const [board, setBoard] = useState('season');
+  const [params] = useSearchParams();
+  const [board, setBoard] = useState(BOARDS.some(([k]) => k === params.get('board')) ? params.get('board') : 'season');
+  const countries = board === 'countries';
   const [hasSeason, setHasSeason] = useState(true);
   const { data, error, loading } = useAsync(
-    () => (board === 'friends' && !isAuthenticated ? Promise.resolve(null) : api.scoreboard(board)),
+    () => (countries || (board === 'friends' && !isAuthenticated) ? Promise.resolve(null) : api.scoreboard(board)),
     [board, isAuthenticated],
   );
   // No season on the server: open on All time and leave the season tab out.
@@ -43,7 +46,7 @@ export default function ScoresPage() {
       <div className="ms-row" style={{ justifyContent: 'space-between', alignItems: 'end' }}>
         <div style={{ display: 'grid', gap: 6, flex: '1 1 320px' }}>
           <h1 className="ms-h1" style={{ fontFamily: 'var(--ms-cond)', fontWeight: 800 }}>Scoreboards</h1>
-          <span style={{ color: 'var(--ms-soft)' }}>Ranked by coins earned in races. Money can't buy a place here.</span>
+          <span style={{ color: 'var(--ms-soft)' }}>{countries ? 'The fastest time on each track, country by country.' : 'Ranked by coins earned in races. Money can\'t buy a place here.'}</span>
         </div>
         <div role="tablist" aria-label="Scoreboard" className="ms-tabs">
           {BOARDS.filter(([k]) => k !== 'season' || hasSeason).map(([k, label]) => <button key={k} type="button" role="tab" aria-selected={board === k} onClick={() => setBoard(k)}>{label}</button>)}
@@ -57,6 +60,7 @@ export default function ScoresPage() {
       )}
       {board === 'friends' && <p className="ms-note" style={{ margin: 0 }}>Friends: the players you raced with in the last day.</p>}
       {board === 'friends' && !isAuthenticated && <div className="ms-card"><Link to="/signup?mode=login&next=/scores">Log in</Link> to see your friends.</div>}
+      {countries && <CountryRecords initialTrack={params.get('track')} />}
       {error && <div className="ms-msg ms-msg--bad">{error.message}</div>}
       {loading && !data && <p className="ms-note">Loading…</p>}
       {data && (

@@ -140,6 +140,12 @@ export const api = {
   resetPassword: (token, password) => request('/auth/reset', { method: 'POST', body: { token, password }, token: null }),
   // Account settings: news by email, the data download, deleting the account.
   emailStatus: () => request('/users/me/email'),
+  // The country a player races for (src/country on the server).
+  myCountry: () => request('/users/me/country'),
+  setCountry: (country) => request('/users/me/country', { method: 'PUT', body: { country } }),
+  countrySuggestion: () => request('/users/country-suggestion', { token: null }),
+  countryRecords: (track) => request(`/scoreboard/countries?track=${encodeURIComponent(track)}`, { token: null }),
+  countryRecordsOf: (code) => request(`/scoreboard/countries/${encodeURIComponent(code)}`, { token: null }),
   setNews: (on) => request('/users/me', { method: 'PATCH', body: { marketing_opt_in: on } }),
   unsubscribe: (u, t) => request('/users/unsubscribe', { method: 'POST', body: { u, t }, token: null }),
   deleteAccount: (body) => request('/users/me', { method: 'DELETE', body }),

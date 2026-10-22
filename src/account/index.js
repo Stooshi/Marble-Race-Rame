@@ -26,11 +26,11 @@ async function exportData(db, userId) {
   const all = async (sql) => (await db.query(sql, [userId])).rows;
   const account = await one(
     `SELECT id, username, email, display_name, avatar_url, role, is_guest, age_group, to_char(birth_month, 'YYYY-MM') AS birth_year_month, email_verified_at, marketing_opt_in, coins, coins_earned,
-            coins_bought, skill, streak_days, streak_last_day, settings, created_at, updated_at, last_login_at, suspended_at
+            coins_bought, skill, streak_days, streak_last_day, settings, country, country_chosen_at, created_at, updated_at, last_login_at, suspended_at
        FROM users WHERE id = $1 AND deleted_at IS NULL`,
   );
   if (!account) return null;
-  const [stats, emailAnswers, cookieAnswers, ledger, collection, shooter, look, startingMarbles, races, days, payments, rooms, security, support, supportReplies, passes, badges, passReminders, giftCodes, pushDevices, pushPrefs] = await Promise.all([
+  const [stats, emailAnswers, cookieAnswers, ledger, collection, shooter, look, startingMarbles, races, days, payments, rooms, security, support, supportReplies, passes, badges, passReminders, giftCodes, pushDevices, pushPrefs, countryHistory] = await Promise.all([
     one('SELECT * FROM user_stats WHERE user_id = $1'),
     all('SELECT consent, source, created_at FROM email_consents WHERE user_id = $1 ORDER BY created_at'),
     all('SELECT version, statistics, marketing, decided_at FROM cookie_consents WHERE user_id = $1 ORDER BY created_at'),
@@ -41,7 +41,7 @@ async function exportData(db, userId) {
     all(`SELECT m.name, m.marble_code, m.starter_no, um.is_favorite, coalesce(um.acquired_at, m.created_at) AS acquired_at
            FROM marbles m LEFT JOIN user_marbles um ON um.marble_id = m.id AND um.user_id = $1
           WHERE m.owner_id = $1 OR um.user_id IS NOT NULL ORDER BY m.starter_no NULLS LAST, m.name`),
-    all(`SELECT r.id AS race_id, t.name AS track, r.finished_at, e.finish_position, e.finish_time_ms, e.coins_awarded, r.room_id IS NOT NULL AS friend_room
+    all(`SELECT r.id AS race_id, t.name AS track, r.finished_at, e.finish_position, e.finish_time_ms, e.coins_awarded, e.country, r.room_id IS NOT NULL AS friend_room
            FROM race_entries e JOIN races r ON r.id = e.race_id LEFT JOIN tracks t ON t.id = r.track_id
           WHERE e.user_id = $1 ORDER BY r.created_at`),
     all('SELECT day, races, goal_met_at FROM user_days WHERE user_id = $1 ORDER BY day'),
@@ -66,6 +66,7 @@ async function exportData(db, userId) {
           WHERE r.user_id = $1 ORDER BY r.redeemed_at`),
     all(`SELECT platform, app_version, '…' || right(token, 8) AS token_ends, created_at, last_seen_at, disabled_at FROM push_devices WHERE user_id = $1 ORDER BY created_at`),
     one('SELECT room_invites, season_news, daily_goal, season_news_at, updated_at FROM push_preferences WHERE user_id = $1'),
+    all('SELECT country, kind, created_at FROM user_country_history WHERE user_id = $1 ORDER BY created_at, id'),
   ]);
   return {
     about: 'Everything Marble Spins stores about your account. Passwords are stored only as a one-way hash and are not included. IP addresses are kept for security and fraud checks for at most 90 days, then only the country.',
@@ -82,6 +83,7 @@ async function exportData(db, userId) {
     seasonPasses: passes,
     giftCodesRedeemed: giftCodes,
     pushNotifications: { switches: pushPrefs, devices: pushDevices },
+    countryYouRaceFor: { country: account.country, chosenAt: account.country_chosen_at, history: countryHistory },
     passReminders,
     badges,
     friendRoomsHosted: rooms,
@@ -116,13 +118,15 @@ async function deleteAccount(client, userId, { by = 'player', reason = null } = 
   await client.query(
     `UPDATE users SET username = $2, email = $3, password_hash = $4, display_name = NULL, avatar_url = NULL,
             settings = '{}'::jsonb, age_group = NULL, birth_month = NULL, email_verified_at = NULL, marketing_opt_in = false, last_login_at = NULL,
-            role = 'player', store_account_id = NULL, apple_account_token = NULL, deleted_at = now(), updated_at = now()
+            role = 'player', store_account_id = NULL, apple_account_token = NULL, country = NULL, country_chosen_at = NULL, deleted_at = now(), updated_at = now()
       WHERE id = $1`,
     [userId, name, `${name}@deleted.invalid`, unusable],
   );
   await client.query('DELETE FROM email_consents WHERE user_id = $1', [userId]);
   await client.query('DELETE FROM cookie_consents WHERE user_id = $1', [userId]);
   await client.query('DELETE FROM security_events WHERE user_id = $1', [userId]);
+  await client.query('DELETE FROM user_country_history WHERE user_id = $1', [userId]);
+  await client.query('UPDATE race_entries SET country = NULL WHERE user_id = $1 AND country IS NOT NULL', [userId]); // (off the country records)
   await client.query('DELETE FROM push_devices WHERE user_id = $1', [userId]);
   await client.query('DELETE FROM push_preferences WHERE user_id = $1', [userId]);
   await client.query('DELETE FROM admin_sessions WHERE user_id = $1', [userId]);
