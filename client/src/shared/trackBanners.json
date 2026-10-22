@@ -1190,6 +1190,17 @@
    "side": -1,
    "marbles": 4
   },
+  "thames-bridges-run": {
+   "name": "Thames Bridges Run",
+   "series": "Rivers",
+   "lighting": "day",
+   "v": "daa93bf0",
+   "bytes": 14148,
+   "bytes2x": 34232,
+   "t": 21182,
+   "side": -1,
+   "marbles": 6
+  },
   "the-stack": {
    "name": "The Stack",
    "series": "Blocks",
