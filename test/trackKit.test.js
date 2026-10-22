@@ -728,6 +728,22 @@ const HIDDEN_KIT_TRACKS = [
   ['harbin-ice-city', '2027-03-03-add-harbin-ice-city.sql', 'Holiday Season 2026 track: Harbin Ice City (a frozen night among huge castles of ice lit blue, red, green and gold: a half-pipe of ice through the castles, past the snow sculptures and over the frozen river, and back past the glowing towers to the line), added switched off and in the Holiday Season pass (season holiday-2026).'],
   ['accra-december-beats', '2027-03-02-add-accra-december-beats.sql', 'Holiday Season 2026 track: Accra December Beats (a summer December evening under the floodlights: past drummers and dancers outside the stadium, round the hairpin and a spiral, a lap of the stadium in kente colours and a table top on the home straight, the beach beyond), added switched off and in the Holiday Season pass (season holiday-2026).'],
   ['new-york-winter-run', '2027-03-01-add-new-york-winter-run.sql', 'Holiday Season 2026 track: New York Winter Run (a floodlit winter night among the skyscrapers: down an avenue, a box line between the avenues, past a sunken ice rink under a giant lit tree, round the towers and down the long avenue to the line), added switched off and in the Holiday Season pass (season holiday-2026).'],
+  // The Rivers (all fifteen, switched off until Moses has watched the previews).
+  ['danube-night-run', '2027-04-02-add-danube-night-run.sql', 'Rivers track (switched off until Moses has watched the preview).'],
+  ['mekong-market-spins', '2027-04-03-add-mekong-market-spins.sql', 'Rivers track (switched off until Moses has watched the preview).'],
+  ['mississippi-steamer-run', '2027-04-04-add-mississippi-steamer-run.sql', 'Rivers track (switched off until Moses has watched the preview).'],
+  ['zambezi-falls-run', '2027-04-05-add-zambezi-falls-run.sql', 'Rivers track (switched off until Moses has watched the preview).'],
+  ['yangtze-lock-run', '2027-04-06-add-yangtze-lock-run.sql', 'Rivers track (switched off until Moses has watched the preview).'],
+  ['amazon-meeting-spins', '2027-04-07-add-amazon-meeting-spins.sql', 'Rivers track (switched off until Moses has watched the preview).'],
+  ['nile-felucca-burst', '2027-04-08-add-nile-felucca-burst.sql', 'Rivers track (switched off until Moses has watched the preview).'],
+  ['congo-rapids-burst', '2027-04-09-add-congo-rapids-burst.sql', 'Rivers track (switched off until Moses has watched the preview).'],
+  ['rhine-castle-run', '2027-04-10-add-rhine-castle-run.sql', 'Rivers track (switched off until Moses has watched the preview).'],
+  ['ganges-dawn-run', '2027-04-11-add-ganges-dawn-run.sql', 'Rivers track (switched off until Moses has watched the preview).'],
+  ['thames-bridges-run', '2027-04-12-add-thames-bridges-run.sql', 'Rivers track (switched off until Moses has watched the preview).'],
+  ['seine-quays-spins', '2027-04-13-add-seine-quays-spins.sql', 'Rivers track (switched off until Moses has watched the preview).'],
+  ['volga-port-burst', '2027-04-14-add-volga-port-burst.sql', 'Rivers track (switched off until Moses has watched the preview).'],
+  ['murray-red-gum-run', '2027-04-15-add-murray-red-gum-run.sql', 'Rivers track (switched off until Moses has watched the preview).'],
+  ['irrawaddy-balloon-dawn', '2027-04-16-add-irrawaddy-balloon-dawn.sql', 'Rivers track (switched off until Moses has watched the preview).'],
 ];
 for (const [slug, file, note] of HIDDEN_KIT_TRACKS) {
   test(`${slug} is added by its data update, switched off, exactly as its track file builds it`, () => {

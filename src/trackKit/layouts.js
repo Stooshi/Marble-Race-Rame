@@ -1332,7 +1332,7 @@ const LAYOUTS = {
     { key: 'brakingStraight', name: 'Run to the hairpin', shape: straight(50, { grade: 0.12 }) },
     { key: 'hairpin', name: 'Hairpin', shape: hairpin({ side: L }), obstacles: [swipe({ costume: c.swipe, side: 'high' })] },
     { key: 'town', name: 'S-bends', shape: sBends({ first: R, radius: 75, degrees: 70, grade: 0.12 }), billboards: 1 },
-    { key: 'slalomDrop', name: 'Slalom drop', shape: plunge(50, { grade: 0.2, from: 0.12 }), obstacles: [slalom({ costume: c.slalom, from: 0.15, to: 0.95, count: 7, loss: 0.3 })] },
+    { key: 'slalomDrop', name: 'Slalom drop', shape: plunge(50, { grade: 0.2, from: 0.12 }), obstacles: [slalom({ costume: c.slalom, from: 0.4, to: 0.9, count: 3, loss: 0.15 })] },
     { key: 'landing', name: 'Sweep to the landing', shape: sweep({ side: R, radius: 85, degrees: 150, grade: 0.085 }) },
     {
       key: 'lastStraight', name: 'Last straight', shape: straight(95, { grade: 0.14 }),

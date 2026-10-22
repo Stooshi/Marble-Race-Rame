@@ -152,6 +152,16 @@ module.exports = track({
   | `steamer-pass` (rivers) | levee (two pegs), steamer (a tunnel through a paddle steamer; a boost), bayou, drop, brakingStraight, hairpin, town (S-bends), slalomDrop, landing, lastStraight |
   | `falls-edge` (rivers) | lipBend, lip (pegs), falls (a waterfall), gorge (a slalom), spin, brakingStraight, hairpin, upstream (S-bends), lastStraight |
   | `lock-staircase` (rivers) | locks (five steps), damCrest (a short climb), bridgeRun (a steep slalom drop), riverSweep (two pegs), sBends (a peg), spin, brakingStraight, hairpin, lastStraight |
+  | `two-waters` (rivers) | seam (two pegs, two slalom poles, moguls), seamSweep, lagoonRunIn, lagoon (a half-pipe), village (S-bends), drop, brakingStraight, hairpin, island (a spiral), rise (a short climb), lastStraight |
+  | `cataract` (rivers) | desertBank (a short slalom, moguls and a peg), cataract (a waterfall), boulders (a slalom), sails, palmBank (S-bends), brakingStraight, hairpin, palmIsland (a spiral), rise (a short climb), drop, lastStraight |
+  | `rapids-ladder` (rivers) | aboveRapids (a peg), rapid1, pool1, rapid2, pool2, rapid3 (three short drops with pools between), whiteWater (a slalom), forestSweep, brakingStraight, hairpin, landingBends (S-bends), spin, lastStraight |
+  | `island-castle` (rivers) | toTheRiver (a peg, two slalom poles and a peg), island (a spiral), bargeReach, vineyardClimb (a short climb), switchbacks (S-bends), railBridge (a drop), brakingStraight, hairpin, bargeSweep, lastStraight |
+  | `river-steps` (rivers) | riverSteps (steps), lamps (a slalom), lampSweep, boatTurn (part of a spiral), alongSteps (S-bends), rise (a short climb), drop, brakingStraight, hairpin, sweep2, lastStraight |
+  | `bridge-gate` (rivers) | embankment (two pegs), bascule (a slalom drop between a raised bascule bridge's towers), dock (a spiral), reach (a sweep, two pegs; it flies here), brakingStraight, hairpin, sBends (a peg), rise (a short climb), drop, longReach (a sweep), lastStraight |
+  | `arch-run` (rivers) | arches (a slalom under five stone arch bridges), islandTip (a sweep, three pegs), drop, brakingStraight, hairpin, lowQuay (a sweep, two pegs), quayBend (a sweep, a peg), rise (a short climb), downQuay (a drop), spin, lastStraight |
+  | `port-cranes` (rivers) | cranes (a slalom drop), plain (a sweep, three pegs), birches (a sweep, two pegs), brakingStraight, hairpin, rise (a short climb), drop, spin, bridgeRun (S-bends, a peg; it flies here), lastStraight |
+  | `flooded-forest` (rivers) | trunks (a slalom; it flies here), offStilts (a drop), cliffs (a sweep), spin, brakingStraight, hairpin, lock (a short climb), weir (a drop), sBends (a peg), landing (a sweep), lastStraight |
+  | `balloon-plain` (rivers) | sandbank (a long gentle drop, three pegs), plainBends (S-bends, two pegs; they fly here), rise (a short climb), slalomDrop, spin, brakingStraight, hairpin, sweep1, sweep2 (a peg), sweep3, lastStraight |
 
   A track may still write its own sections by hand; the sameness check makes sure they differ.
 - **`family`**: `'world-tour'` (the default), `'grand-prix'` (any `grandPrix` track),
