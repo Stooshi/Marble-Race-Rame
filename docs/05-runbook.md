@@ -17,7 +17,14 @@ Pushing to `Main` does **not** deploy the server. Moses deploys it by uploading 
 2. Install the Railway tool: `npm i -g @railway/cli`.
 3. Log in: `railway login`.
 
+**After Railway invalidates its tokens (the October 2026 security incident) or when `railway` says you're not logged in:**
+1. `railway logout`, then `railway login` (it opens the browser; sign in to the Railway account that owns the project). On a computer without a browser: `railway login --browserless` and follow the link it prints.
+2. `railway whoami` shows your account; `railway status` (in the project folder) shows the project and service it's linked to. If it says "No linked project", run `railway link` again (step 3 below).
+3. If you use a Railway API token anywhere else (for example a GitHub Actions secret or a script), make a new one in the Railway dashboard (Account → Tokens) and replace the old one: invalidated tokens don't come back. Never paste a token in chat or docs.
+4. Also check Railway's own instructions for the incident (status.railway.com, their email): if they ask for anything else (rotating the database password, new variables), do that first, then copy the new `DATABASE_PUBLIC_URL` to your password manager ([below](#when-the-railway-dashboard-is-down)).
+
 **Every deploy:**
+0. Check you're logged in: `railway whoami`. If not, log in as above.
 1. On GitHub, open `Stooshi/Marble-Race-Rame` and check that the branch is **Main**. Choose **Code → Download ZIP**, then unzip it.
    - Deploy the **whole folder**, including `client/`: the server reads data files from `client/src/shared/`.
 2. Open a terminal in the unzipped folder.
