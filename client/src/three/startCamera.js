@@ -164,10 +164,16 @@ const COUNTDOWN_KEYS = {
   ],
   // Low among the marbles: just behind the row, a little above it, sliding across the channel along it.
   // (Measured along the slope, so on a steep starting ramp it stays above the ice behind the row.)
-  chase: (at, wide, on) => [
-    [on(-5, -3, 2.4), on(2, -1.5, 0.4)], [on(-4.8, -1.5, 2.2), on(2, -0.5, 0.4)], [on(-4.6, 0.5, 2.1), on(2, 0.5, 0.4)],
-    [on(-4.6, 2.5, 2.2), on(2, 1.5, 0.4)], [on(-5, 1, 2.6), on(2, 0, 0.4)], [on(-8, 0, 3.4), on(2, 0, 0.4)],
-  ],
+  // (On a narrow portrait screen, `wide` > 1, it stands further back and a little higher, so the starting blocks and
+  // the stall walls behind the row don't crowd the picture; on wider screens, wide = 1, exactly as before.)
+  chase: (at, wide, on) => {
+    const b = (d) => d * (1 + (wide - 1) * 0.6);
+    const h = (n) => n * (1 + (wide - 1) * 0.5);
+    return [
+      [on(b(-5), -3, h(2.4)), on(2, -1.5, 0.4)], [on(b(-4.8), -1.5, h(2.2)), on(2, -0.5, 0.4)], [on(b(-4.6), 0.5, h(2.1)), on(2, 0.5, 0.4)],
+      [on(b(-4.6), 2.5, h(2.2)), on(2, 1.5, 0.4)], [on(b(-5), 1, h(2.6)), on(2, 0, 0.4)], [on(b(-8), 0, h(3.4)), on(2, 0, 0.4)],
+    ];
+  },
 };
 
 /** How long a first-seconds shot holds after GO before it hands over to the follow camera (ms), and the hand-over. */
