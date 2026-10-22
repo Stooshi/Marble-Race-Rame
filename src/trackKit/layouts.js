@@ -1406,19 +1406,19 @@ const LAYOUTS = {
       obstacles: [parked({ costume: c.parked, at: 0.2, side: R, length: 6 }), peg({ costume: c.peg, at: 0.45, line: 'left' })], features: [rumble({ from: 0.7, to: 0.95, count: 3 })],
     },
   ],
-  /** L86 Port cranes (Rivers): a slalom drop through the container cranes (the lottery: the clean drop has none at the gate), a sweep across the plain, a sweep by the birch woods (two pegs), the run under a loading gantry, the hairpin, a short climb and a drop, a wide spiral, S-bends along a long many-span bridge (a peg) and a parked piece and a peg at the run-in. */
+  /** L86 Port cranes (Rivers): a slalom drop through the container cranes (eight gates: the lottery the clean drop lacks), a sweep across the plain (three pegs), a sweep by the birch woods (two pegs), the run under a loading gantry, the hairpin, a short climb and a drop, a wide spiral, S-bends along a long many-span bridge (a peg) and a parked piece and a peg at the run-in. */
   'port-cranes': (L, R, c) => [
-    { key: 'cranes', name: 'Crane slalom', shape: plunge(70, { grade: 0.3, from: 0.13 }), obstacles: [slalom({ costume: c.slalom, from: 0.15, to: 0.97, count: 7, loss: 0.3 })] },
-    { key: 'plain', name: 'Plain sweep', shape: sweep({ side: R, radius: 85, degrees: 100, grade: 0.1 }), obstacles: [peg({ costume: c.peg, at: 0.45, line: 'right' }), peg({ costume: c.peg, at: 0.7, line: 'left' })], billboards: 2 },
+    { key: 'cranes', name: 'Crane slalom', shape: plunge(70, { grade: 0.3, from: 0.13 }), obstacles: [slalom({ costume: c.slalom, from: 0.12, to: 0.97, count: 8, loss: 0.18 })] },
+    { key: 'plain', name: 'Plain sweep', shape: sweep({ side: R, radius: 85, degrees: 115, grade: 0.1 }), obstacles: [peg({ costume: c.peg, at: 0.35, line: 'right' }), peg({ costume: c.peg, at: 0.6, line: 'left' }), peg({ costume: c.peg, at: 0.85, line: 'right' })], billboards: 2 },
     { key: 'birches', name: 'Birch sweep', shape: sweep({ side: L, radius: 80, degrees: 90, grade: 0.1 }), obstacles: [peg({ costume: c.peg, at: 0.4, line: 'left' }), peg({ costume: c.peg, at: 0.65, line: 'right' })], billboards: 1 },
     { key: 'brakingStraight', name: 'Run to the hairpin', shape: straight(50, { grade: 0.12 }) },
     { key: 'hairpin', name: 'Hairpin', shape: hairpin({ side: R }), obstacles: [swipe({ costume: c.swipe, side: 'high' })] },
     { key: 'rise', name: 'Up to the quay', shape: climb(12, { grade: -0.05, after: 0.12 }) },
     { key: 'drop', name: 'Off the quay', shape: plunge(40, { grade: 0.22, from: 0.12 }) },
-    { key: 'spin', name: 'Wide spiral', shape: spiral({ side: L, radius: 60, turns: 0.8, grade: 0.15 }) },
+    { key: 'spin', name: 'Wide spiral', shape: spiral({ side: L, radius: 60, turns: 0.7, grade: 0.15 }) },
     { key: 'bridgeRun', name: 'S-bends', shape: sBends({ first: R, radius: 75, degrees: 60, grade: 0.12 }), obstacles: [peg({ costume: c.peg, at: 0.5, line: 'center' })], billboards: 1 },
     {
-      key: 'lastStraight', name: 'Last straight', shape: straight(85, { grade: 0.15 }),
+      key: 'lastStraight', name: 'Last straight', shape: straight(70, { grade: 0.15 }),
       obstacles: [parked({ costume: c.parked, at: 0.2, side: L, length: 6 }), peg({ costume: c.peg, at: 0.45, line: 'right' })], features: [rumble({ from: 0.7, to: 0.95, count: 3 })],
     },
   ],

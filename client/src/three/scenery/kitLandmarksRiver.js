@@ -290,11 +290,12 @@ function quayCranes() {
   for (const x of [-22, 18]) {
     for (const [dx, dz] of [[-5, -7], [5, -7], [-5, 7], [5, 7]]) p.push(box(1.4, 30, 1.4, x + dx, 15, dz, RED));
     p.push(box(12, 1.6, 1.6, x, 30, -7, RED), box(12, 1.6, 1.6, x, 30, 7, RED), box(1.6, 1.6, 16, x, 18, 0, RED));
-    p.push(box(3, 2.4, 60, x, 32, 12, RED), box(4, 3, 4, x, 29.5, 18, '#f2efe6')); // the boom out over the water, the cab
-    p.push(box(1.2, 14, 1.2, x, 40, -6, RED), box(4, 4, 6, x, 33, -16, '#5a5e66'));
+    // (The boom reaches away from the track, +z being towards it: out over the water when the cranes stand between them.)
+    p.push(box(3, 2.4, 60, x, 32, -12, RED), box(4, 3, 4, x, 29.5, -18, '#f2efe6')); // the boom out over the water, the cab
+    p.push(box(1.2, 14, 1.2, x, 40, 6, RED), box(4, 4, 6, x, 33, 16, '#5a5e66'));
   }
   const cols = ['#2f7fc4', '#f2c230', '#4aa35a', '#d8442f', '#e8e4dc', '#7a4ab0'];
-  for (let k = 0; k < 24; k += 1) p.push(box(12, 2.6, 2.6, -36 + (k % 6) * 13.5, 2.3 + Math.floor(k / 12) * 2.6, -12 + (Math.floor(k / 6) % 2) * 3, cols[k % cols.length]));
+  for (let k = 0; k < 24; k += 1) p.push(box(12, 2.6, 2.6, -36 + (k % 6) * 13.5, 2.3 + Math.floor(k / 12) * 2.6, 9 + (Math.floor(k / 6) % 2) * 3, cols[k % cols.length]));
   return merge(p);
 }
 
