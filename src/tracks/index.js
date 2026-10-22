@@ -107,6 +107,7 @@ module.exports = [
   require('./irrawaddy-balloon-dawn'),
   // Rivers (Amazon, Ganges, Nile, Congo, Rhine).
   require('./amazon-meeting-spins'),
+  require('./ganges-dawn-run'),
   require('./nile-felucca-burst'),
   require('./congo-rapids-burst'),
   require('./rhine-castle-run'),

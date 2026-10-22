@@ -587,7 +587,7 @@ function ghatSteps() {
     const x = -40 + k * 10;
     const h = 10 + ((k * 7) % 4) * 3;
     p.push(box(9, h, 10, x, yTop + h / 2, -15, walls[k % walls.length]));
-    for (let f = 1; f * 3.2 < h - 1; f += 1) p.push(box(7, 0.9, 0.12, x, yTop + f * 3.2, -9.94, '#5a4030'));
+    for (let f = 1; f * 3.2 < h - 1; f += 2) p.push(box(7, 0.9, 0.12, x, yTop + f * 3.2, -9.94, '#5a4030'));
     p.push(box(9.4, 0.5, 10.4, x, yTop + h + 0.25, -15, '#8a6a4a'));
   }
   for (let x = -36; x <= 36; x += 12) {
@@ -598,7 +598,7 @@ function ghatSteps() {
 }
 
 /** Small lamps floating on the water at dawn: leaf boats with marigolds, a tiny flame in each (drawn as light). */
-const LAMP_SPOTS = Array.from({ length: 26 }, (_, k) => [Math.sin(k * 2.39) * (4 + (k % 7) * 2.2), Math.cos(k * 2.39) * (4 + (k % 5) * 2.6)]);
+const LAMP_SPOTS = Array.from({ length: 18 }, (_, k) => [Math.sin(k * 2.39) * (4 + (k % 7) * 2.2), Math.cos(k * 2.39) * (4 + (k % 5) * 2.6)]);
 function floatingLamps() {
   return merge(LAMP_SPOTS.flatMap(([x, z], k) => [box(0.5, 0.12, 0.5, x, 0.06, z, '#4f7a34'), box(0.3, 0.12, 0.3, x, 0.14, z, k % 2 ? '#f2a330' : '#e8d040')]));
 }
@@ -622,7 +622,7 @@ function rowingBoats() {
 }
 function morningMist() {
   const p = [];
-  for (let k = -3; k <= 3; k += 1) p.push(piece(new SphereGeometry(9, 8, 5), '#ffffff', S(k * 12, 1.5, (k % 2) * 6, 1.6, 0.25, 1)));
+  for (let k = -3; k <= 3; k += 1) p.push(piece(new SphereGeometry(9, 6, 3), '#ffffff', S(k * 12, 1.5, (k % 2) * 6, 1.6, 0.25, 1)));
   return merge(p);
 }
 

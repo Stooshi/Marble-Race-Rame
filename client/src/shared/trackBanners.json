@@ -497,6 +497,17 @@
    "side": 1,
    "marbles": 5
   },
+  "ganges-dawn-run": {
+   "name": "Ganges Dawn Run",
+   "series": "Rivers",
+   "lighting": "dawn",
+   "v": "a770b8e6",
+   "bytes": 19892,
+   "bytes2x": 48724,
+   "t": 10431,
+   "side": 1,
+   "marbles": 4
+  },
   "gingerbread-village": {
    "name": "Gingerbread Village",
    "series": "Winter Wonders",
