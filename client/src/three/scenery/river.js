@@ -25,8 +25,10 @@ export const RIVER_PALETTES = {
   // The Danube by night: a deep green-blue river between stone quays, plane trees and city land.
   danube: { water: '#2f6f82', deep: '#1f4f63', foam: '#dfeef2', bank: '#8f8a7e', quay: '#9b958a', sand: '#c9b994',
     dressing: [['broadleaf', 0.55, '#3f6a3a'], ['poplar', 0.3, '#4a7a3e'], ['bush', 0.15, '#4f7a3e']] },
-  // The Mekong: wide brown water, palms and banana plants, red earth banks.
-  mekong: { water: '#9a7a4e', deep: '#7f6240', foam: '#efe4cf', bank: '#a8784a', quay: '#9a8f7a', sand: '#c9a06a',
+  // The Mekong: wide brown water, palms and banana plants, red earth banks. (Moses, 22 Oct 2026: it read as
+  // sand. Silty olive at the banks, a green-grey middle (a river players read as water), a glint of sky, white only
+  // where it really falls: `rapids`.)
+  mekong: { water: '#6c7452', deep: '#466467', foam: '#ece4d2', glint: '#dce8ee', rapids: [0.18, 0.32], bank: '#a8784a', quay: '#9a8f7a', sand: '#c9a06a',
     dressing: [['palm', 0.45], ['banana', 0.3], ['broadleaf', 0.25, '#3f7f3a']] },
   // The Mississippi's bayou: muddy olive-brown water, cypress hung with moss, reeds on the banks.
   mississippi: { water: '#6f6a44', deep: '#57533a', foam: '#e8e6d4', bank: '#7a6f48', quay: '#8f8676', sand: '#b8a67a',
