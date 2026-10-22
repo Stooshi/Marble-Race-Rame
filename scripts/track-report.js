@@ -25,6 +25,7 @@ const { reachOf, startSequence, saveSequence, firstSecondsCheck } = require('../
 const { lookVector, saveLook, startLookCheck } = require('../src/report/startLook');
 const { simulatePhysicsRace } = require('../src/game/physicsSimulator');
 const { houseField, computeFingerprints, readFingerprints } = require('./race-fingerprints');
+const { verdict: finishVerdict } = require('./finish-frame-check');
 const { runBatch, batchSeeds } = require('../src/report/batch');
 const { summarize } = require('../src/report/summarize');
 const { renderReport } = require('../src/report/html');
@@ -117,6 +118,27 @@ async function main() {
       cwd: CLIENT, stdio: 'inherit', env: { ...process.env, REPORT_TRACK: path.join(dev, `${slug}.json`), REPORT_RACES: racesFile, REPORT_OUT: viewFile },
     });
     report.lines.push(...viewLines(JSON.parse(fs.readFileSync(viewFile, 'utf8')), Boolean(track.physics.kit)));
+    // The finish camera's picture on two phones and a computer (scripts/finish-frame-check.js).
+    log('view checks: the finish camera\'s picture…');
+    const finishRaces = path.join(out, 'finish-races.json');
+    const finishList = path.join(out, 'finish-list.json');
+    const finishFile = path.join(out, 'finish-frame.json');
+    fs.writeFileSync(finishRaces, JSON.stringify(sims.map((s) => ({ frames: s.frames, tickMs: s.tickMs, durationMs: s.durationMs, results: s.results }))));
+    fs.writeFileSync(finishList, JSON.stringify([{ track: path.join(dev, `${slug}.json`), races: finishRaces }]));
+    execFileSync('npx', ['vitest', 'run', '--config', 'report/vitest.config.js', 'report/finishFrame.report.js'], {
+      cwd: CLIENT, stdio: 'inherit', env: { ...process.env, REPORT_FINISH: finishList, REPORT_OUT: finishFile },
+    });
+    const frame = finishVerdict(JSON.parse(fs.readFileSync(finishFile, 'utf8'))[slug]);
+    if (!frame.skipped) {
+      report.lines.push({
+        part: 'Clear track',
+        what: 'The finish camera\'s picture (390×844 and 430×932 phones, 1280×720 computer; following the arrivals and the winner): nothing hanging over the finish covers more than 10%, every finished marble clearly in the picture above the results, none right in front of the lens',
+        value: frame.pass ? 'clear' : frame.problems.join('; '),
+        target: 'all clear',
+        pass: frame.pass,
+      });
+    }
+    for (const f of [finishRaces, finishList]) fs.rmSync(f, { force: true });
   }
   fs.rmSync(racesFile, { force: true });
 

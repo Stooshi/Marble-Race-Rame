@@ -208,7 +208,7 @@ export function markStructures(group) {
 }
 
 /** Raycast both faces (the check looks from inside things too), without changing how they draw. */
-function bothSides(meshes, fn) {
+export function bothSides(meshes, fn) {
   const was = meshes.map((m) => m.material.side);
   for (const m of meshes) m.material.side = DoubleSide;
   try { return fn(); } finally { meshes.forEach((m, k) => { m.material.side = was[k]; }); }
@@ -291,14 +291,14 @@ export function corridorIntrusions(centerline, channel, meshes, { pieceAt = null
 }
 
 /**
- * The finish shot's view (`pose`: { camera, target } as TrackScene finishShotPose): nothing drawn
+ * The finish shot's view (`pose`: { camera, target } as TrackScene finishShotPose; `cut`: what it cuts away, TrackScene finishCutaway): nothing drawn
  * between the camera and the finish (the last 25 m of track, at a marble's height, across the
  * floor) or the catch area past the line, and nothing close round the camera itself.
  * → { blocked: [{ at (metres past the line, negative before it), by }], near: { by, metres } | null }
  */
 const SHOT_FOV = 50; // degrees, top to bottom (TrackScene's camera)
 
-export function finishShotView(centerline, channel, pose, meshes, ground = [], { pieceAt = null } = {}) {
+export function finishShotView(centerline, channel, pose, meshes, ground = [], { pieceAt = null, cut = null } = {}) {
   const { samples, segments } = centerline;
   const end = samples[segments];
   const forward = new Vector3(end.tangent.x, 0, end.tangent.z).normalize();
@@ -328,11 +328,11 @@ export function finishShotView(centerline, channel, pose, meshes, ground = [], {
       if (!inShot(p)) continue; // (behind the camera, or outside its picture)
       ray.set(pose.camera, dir.clone().normalize());
       ray.far = dir.length() - 0.6;
-      const hit = ray.intersectObjects(meshes, false)[0];
+      const hit = ray.intersectObjects(meshes, false).find((h) => !cut?.contains(h.point));
       if (hit) blocked.push({ at: d, by: (/^scenery: still$|^landmarks$/.test(nameOf(hit.object)) && pieceAt?.(hit.point)) || nameOf(hit.object), point: hit.point.toArray().map((v) => +v.toFixed(1)) });
     }
   });
-  const { near, inside } = cameraClearance(pose.camera, meshes, ground, { pieceAt });
+  const { near, inside } = cameraClearance(pose.camera, meshes, ground, { pieceAt, cut });
   return { blocked, near, inside, looks: points.filter(({ p }) => inShot(p)).length };
 }
 
@@ -340,14 +340,14 @@ export function finishShotView(centerline, channel, pose, meshes, ground = [], {
  * How close the scenery comes to the camera at `cam`: { near: { by, metres } | null, inside: name | null }.
  * `ground`: the land's meshes (for the inside-the-land test: the land's surface above the camera).
  */
-export function cameraClearance(cam, meshes, ground, { pieceAt = null } = {}) {
+export function cameraClearance(cam, meshes, ground, { pieceAt = null, cut = null } = {}) {
   const ray = new Raycaster();
   return bothSides(meshes, () => {
     let near = null;
     for (const d of DIRECTIONS) {
       ray.set(cam, d);
       ray.far = CAMERA_CLEAR;
-      const hit = ray.intersectObjects(meshes, false)[0];
+      const hit = ray.intersectObjects(meshes, false).find((h) => !cut?.contains(h.point));
       if (hit && (!near || hit.distance < near.metres)) near = { by: (/^scenery: still$|^landmarks$|^grandstands$/.test(nameOf(hit.object)) && pieceAt?.(hit.point)) || nameOf(hit.object), metres: +hit.distance.toFixed(2) };
     }
     // Inside the land: straight up, the first land surface met faces up (the camera is under it).
@@ -375,3 +375,125 @@ export function stretchesOf(hits, arc, key = 'height') {
   }
   return runs.map((r) => ({ ...r, metres: Math.max(1, Math.round((r.to - r.from) * arc)) }));
 }
+
+
+/**
+ * The finish camera's picture (Moses, 22 Oct 2026: Ha Long Bay Spins on an iPhone, the station's roof
+ * filling the top half, the parked marbles squeezed into a strip behind it, a finished marble right in
+ * front of the lens). For one moment of the finish, seen through `camera` (a PerspectiveCamera with its
+ * screen's aspect, placed and aimed as the game places it):
+ *   cover:  the share of the picture covered by anything drawn high over the finish (a roof, a beam, a
+ *           banner, a board, an overhanging rock) nearer than the finishers: rays through a grid of the
+ *           picture, counted where the first thing met hangs over the run-in or the catch area, OVERHEAD
+ *           metres or more over its floor (the scenery beside the track and the view beyond do not count).
+ *   hidden: finished marbles (`finished`: entry indices) not clearly in the picture: outside it, under
+ *           the results at the bottom (FRAME.box) or the banner at the top (FRAME.top), or behind something drawn.
+ *   lens:   the biggest a marble across the line (`home`: entry indices; all when null) is drawn, as a share
+ *           of the picture's height, against its limit (`over` above 1: too big): a parked one (`parked`, or
+ *           in `finished`) in the clear part of the picture or anywhere, or one still rolling in.
+ * `cut`: { contains(point) } — what the finish camera cuts away (a coaster station's canopy): not drawn, so never in the way.
+ * `marbles`: Vector3 per entry index (centres). Looks only: none of it touches a race.
+ */
+export const FRAME = {
+  OVERHEAD: 3,                   // metres over the floor: above a marble and the catch area's walls
+  cover: 0.1,                    // at most this share of the picture covered (a small strip)
+  top: 0.1,                      // the winner's banner and the medals over the top of the picture
+  box: { tall: 0.3, wide: 0.2 }, // the results (the arrivals list) over the bottom
+  lens: { band: 0.07, anywhere: 0.1, rolling: 0.12 }, // a marble's drawn size, share of the picture's height: parked, in the clear band / anywhere; still rolling in
+  beside: 0.8,                   // metres beyond the run-in's and the catch area's edges that still count as over them
+};
+
+export function finishFrame(centerline, channel, camera, meshes, { marbles = [], finished = [], parked: parkedAll = null, home = null, cut = null, grid = 24, pieceAt = null } = {}) {
+  const { samples } = centerline;
+  const end = samples[samples.length - 1];
+  const forward = new Vector3(end.tangent.x, 0, end.tangent.z).normalize();
+  const side = new Vector3(end.side.x, 0, end.side.z).normalize();
+  const pen = channel.runout ?? { length: 30, halfWidth: 3.5 };
+  // What lies under a point: over the catch area past the line, over the run-in before it (its own floor
+  // height, coming down to the line), or beside them (null). → the floor's height there.
+  const segs = centerline.segments ?? samples.length - 1;
+  const runInFrom = Math.max(0, segs - Math.round(segs * 0.15));
+  const floorUnder = (p) => {
+    const rel = p.clone().sub(end.pos);
+    const d = rel.dot(forward);
+    if (d >= 0) return d <= pen.length && Math.abs(rel.dot(side)) <= pen.halfWidth + FRAME.beside ? end.pos.y - d * PEN_DROP : null;
+    let best = segs;
+    let bestD = Infinity;
+    for (let i = runInFrom; i <= segs; i += 1) {
+      const h = (samples[i].pos.x - p.x) ** 2 + (samples[i].pos.z - p.z) ** 2;
+      if (h < bestD) { bestD = h; best = i; }
+    }
+    const q = samples[best];
+    const arc = (best / segs) * channel.arc;
+    const half = channelRadiusAt(channel, arc) * Math.sin(channelLipAt(channel, arc));
+    const across = Math.abs((p.x - q.pos.x) * q.side.x + (p.z - q.pos.z) * q.side.z) / (Math.hypot(q.side.x, q.side.z) || 1);
+    return across <= half + FRAME.beside ? q.pos.y : null;
+  };
+  camera.updateMatrixWorld(true);
+  camera.updateProjectionMatrix();
+  const tall = camera.aspect < 1;
+  const box = tall ? FRAME.box.tall : FRAME.box.wide;
+  const far = end.pos.clone().addScaledVector(forward, pen.length);
+  const reach = camera.position.distanceTo(far) + 3;
+  const ray = new Raycaster();
+  const first = (hits) => hits.find((h) => !cut?.contains(h.point));
+  const label = (h) => (/^scenery: still$|^landmarks$|^grandstands$/.test(nameOf(h.object)) && pieceAt?.(h.point)) || nameOf(h.object);
+  for (const m of meshes) m.updateMatrixWorld(true);
+  return bothSides(meshes, () => {
+    // The cover: a grid of rays through the picture.
+    // (About grid × grid / 2 rays, whatever the screen's shape.)
+    const rows = grid ? Math.round(grid / Math.sqrt(2 * camera.aspect)) : 0;
+    const cols = rows ? Math.max(8, Math.round(rows * camera.aspect)) : 0;
+    let covered = 0;
+    const by = {};
+    for (let r = 0; r < rows; r += 1) {
+      for (let c = 0; c < cols; c += 1) {
+        ray.setFromCamera({ x: ((c + 0.5) / cols) * 2 - 1, y: 1 - ((r + 0.5) / rows) * 2 }, camera);
+        ray.far = reach;
+        const hit = first(ray.intersectObjects(meshes, false));
+        if (!hit) continue;
+        // Only what hangs over the run-in or the catch area counts: not the scenery beside them, nor the view beyond.
+        const floor = floorUnder(hit.point);
+        if (floor === null || hit.point.y < floor + FRAME.OVERHEAD) continue;
+        covered += 1;
+        const name = label(hit);
+        by[name] = (by[name] ?? 0) + 1;
+      }
+    }
+    const cover = rows ? covered / (rows * cols) : null;
+    // The finished marbles: in the clear part of the picture, nothing drawn in front of them.
+    const hidden = [];
+    for (const k of finished) {
+      const p = marbles[k];
+      if (!p) continue;
+      const v = p.clone().project(camera);
+      const x = (v.x + 1) / 2;
+      const y = (1 - v.y) / 2;
+      if (v.z > 1 || x < 0.03 || x > 0.97 || y < FRAME.top || y > 1 - box) {
+        hidden.push({ index: k, why: v.z > 1 ? 'behind the camera' : y > 1 - box ? 'under the results' : y < FRAME.top ? 'under the banner' : 'out of the picture', at: [+x.toFixed(2), +y.toFixed(2)] });
+        continue;
+      }
+      const dir = p.clone().sub(camera.position);
+      ray.set(camera.position, dir.clone().normalize());
+      ray.far = dir.length() - 0.6;
+      const hit = first(ray.intersectObjects(meshes, false));
+      if (hit) hidden.push({ index: k, why: `behind ${label(hit)}`, at: [+x.toFixed(2), +y.toFixed(2)] });
+    }
+    // The nearest marble: how big it is drawn (only where it is in the picture).
+    const tan = Math.tan((camera.fov * Math.PI) / 360);
+    let lens = null;
+    marbles.forEach((p, k) => {
+      if (!p || (home && !home.includes(k))) return;
+      const v = p.clone().project(camera);
+      if (v.z > 1 || Math.abs(v.x) > 1.05 || Math.abs(v.y) > 1.05) return;
+      const size = (2 * MARBLE_R) / (camera.position.distanceTo(p) * 2 * tan);
+      const y = (1 - v.y) / 2;
+      const inBand = y >= FRAME.top && y <= 1 - box;
+      const parked = finished.includes(k) || parkedAll?.includes(k);
+      const over = size / (!parked ? FRAME.lens.rolling : inBand ? FRAME.lens.band : FRAME.lens.anywhere);
+      if (!lens || over > lens.over) lens = { index: k, size: +size.toFixed(3), at: [+((v.x + 1) / 2).toFixed(2), +y.toFixed(2)], inBand, parked, over: +over.toFixed(2) };
+    });
+    return { cover: cover === null ? null : +cover.toFixed(3), coverBy: Object.entries(by).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([n, k]) => `${n} ${Math.round((k / (rows * cols)) * 100)}%`), hidden, lens };
+  });
+}
+const MARBLE_R = 0.55; // (as src/three/marbles.js MARBLE_RADIUS)

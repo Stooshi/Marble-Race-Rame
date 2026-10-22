@@ -95,7 +95,7 @@ describe('San Francisco (3D)', () => {
     }
   });
 
-  it('films the finish from behind the line: the line, the catch area and the Golden Gate beyond, all in view (desktop and phone)', () => {
+  it('films the finish from behind the line: the catch area and the Golden Gate beyond (desktop and phone), the line too on a wide screen', () => {
     const scenery = buildSanFrancisco(centerline, track, themeFor('san-francisco'));
     const end = centerline.samples[centerline.segments];
     const forward = new Vector3(end.tangent.x, 0, end.tangent.z).normalize();
@@ -124,12 +124,18 @@ describe('San Francisco (3D)', () => {
         const v = p.clone().project(camera);
         return Math.abs(v.x) < 1 && Math.abs(v.y) < 1 && v.z < 1;
       };
-      // The middle of the line, the cushion at the end of the catch area, and the top of the bridge's towers.
-      expect(seen(end.pos)).toBe(true);
+      // The cushion at the end of the catch area (where the finishers gather) on every screen; on a wide
+      // one also the middle of the line and the top of the bridge's towers. (A tall phone's shot comes
+      // closer and looks down on the finishers: Moses, 22 Oct 2026; the bridge's deck still shows there.)
       expect(seen(end.pos.clone().addScaledVector(forward, pen.length).setY(end.pos.y - pen.length * PEN_DROP))).toBe(true);
-      expect(seen(bridge.position.clone().setY(60))).toBe(true);
-      // Well under the finish banner (14 m up), so it stays out of the picture.
-      expect(shot.camera.y - end.pos.y).toBeLessThan(10);
+      if (aspect > 1) {
+        expect(seen(end.pos)).toBe(true);
+        expect(seen(bridge.position.clone().setY(60))).toBe(true);
+      } else {
+        expect(seen(bridge.position.clone().setY(25))).toBe(true);
+      }
+      // Under the finish banner (14 m up), and it stays out of the picture.
+      expect(shot.camera.y - end.pos.y).toBeLessThan(11);
       expect(seen(end.pos.clone().setY(end.pos.y + 13.3))).toBe(false);
     }
   });

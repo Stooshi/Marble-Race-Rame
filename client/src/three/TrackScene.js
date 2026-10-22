@@ -8,7 +8,7 @@
 import {
   AmbientLight, BackSide, BoxGeometry, CanvasTexture, Color, NearestFilter, DirectionalLight, DoubleSide, Float32BufferAttribute, Fog,
   FrontSide, Group, HemisphereLight, Mesh, MeshBasicMaterial, MeshLambertMaterial, PerspectiveCamera, PlaneGeometry,
-  Scene, SphereGeometry, SRGBColorSpace, Vector3, WebGLRenderer,
+  Box3, Plane, Scene, SphereGeometry, SRGBColorSpace, Vector3, WebGLRenderer,
 } from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { buildCenterline, buildTrackGeometry, TRACK_STYLE } from './trackModel';
@@ -44,6 +44,8 @@ const PHONE_FRAME_MS = 1000 / 60;
 const PHONE_MIN_PIXEL_RATIO = 0.75;
 const FINISH_FROM = 12; // metres short of the line where the big view starts over to the finish shot…
 const FINISH_TO = 6; // …and past it where it is there
+const FINISH_CUT_FROM = 0.3; // how far over to the finish shot the big view is when a station's canopy is cut away
+const FINISH_HOLD = 0.5;     // …and from when it keeps to the finish shot's own spot (not the followed marble's road)
 const SIGHT_EASE = 0.6; // seconds: how gently the follow camera moves back out after coming in to keep its marble in sight
 const INSET_CLOSER = 0.6; // the corner view's follow camera sits this much nearer its marble
 const OWN_STRETCH = 60;   // metres along the track either side of a marble that count as its own stretch (ice channels; the corkscrew's levels are 155 m apart)
@@ -175,26 +177,102 @@ export function prefersScenery() {
 
 
 /**
- * The finish shot (ice channels with a catch area): from above the street
- * just short of the line, looking down over it into the catch area, so the
- * marbles cross the line and roll in to settle right in front of the camera,
- * with the view beyond (San Francisco: the Golden Gate) behind them. Further
- * back on a narrow (phone) screen, so the street's width still fits.
- * → { camera, target } (also used by the clear-track check, scenery/clearCheck.js).
+ * The finish shot (ice channels with a catch area): from above the run-in, looking down over the line
+ * into the catch area, where the finished marbles gather against its end cushion, with the view
+ * beyond behind them. Framed for the screen (Moses, 22 Oct 2026): the finishers sit a little above
+ * the middle of the picture, clear of the results over the bottom and the winner's banner over the
+ * top; on a tall phone the camera comes closer, so the catch area's width just fits and the marbles
+ * are drawn bigger, with the view beyond still along the top. A coaster station's canopy over the finish is cut away from this
+ * shot (finishCutaway), so nothing hangs over the picture. Looks only.
+ * → { camera, target } (also used by the finish checks, scenery/clearCheck.js and client/report).
  */
-export function finishShotPose(centerline, channel, aspect, { roof = null } = {}) {
+export const FINISH_SHOT = {
+  gather: 2.5,          // metres short of the catch area's end where the finishers gather (its cushion)
+  back: [40, 30],       // metres from them to the camera along the track: wide screen, tall phone
+  up: 8,                // the camera's height over the line
+  share: 0.45,          // where they sit in the picture, from the top
+  widthShare: 0.8,      // the catch area and a metre either side fill at most this share of the picture's width
+};
+export function finishShotPose(centerline, channel, aspect, { fov = 50 } = {}) {
   const { samples } = centerline;
   const end = samples[samples.length - 1];
   const forward = new Vector3(end.tangent.x, 0, end.tangent.z).normalize();
   const narrow = 1 - Math.min(1, Math.max(0, (aspect - 0.5) / 0.9)); // 0 on a wide screen, 1 on a tall phone
-  const back = 14 + 7 * narrow;
-  const camera = end.pos.clone().addScaledVector(forward, -back);
-  camera.y = end.pos.y + 7.5 + narrow; // well under the finish banner (14 m up)
-  if (roof) camera.y = Math.min(camera.y, roof.bottom - 1.5); // (a coaster station over the finish: under its canopy, never in it)
-  const ahead = (channel.runout.length ?? 30) * 0.75; // looking level enough to show the view beyond
-  const target = end.pos.clone().addScaledVector(forward, ahead);
-  target.y = end.pos.y - ahead * PEN_DROP;
+  const mix = ([wide, tall]) => wide + (tall - wide) * narrow;
+  const pen = channel.runout ?? { length: RUNOUT_LENGTH, halfWidth: 3.5 };
+  const d = Math.max(0, pen.length - FINISH_SHOT.gather);
+  const finishers = end.pos.clone().addScaledVector(forward, d);
+  finishers.y = end.pos.y - d * PEN_DROP + MARBLE_RADIUS;
+  const tan = Math.tan((fov * Math.PI) / 360);
+  const fit = (pen.halfWidth + 1) / (FINISH_SHOT.widthShare * tan * aspect);
+  const back = Math.max(fit, mix(FINISH_SHOT.back));
+  const camera = finishers.clone().addScaledVector(forward, -back);
+  camera.y = end.pos.y + FINISH_SHOT.up;
+  // Aimed so the finishers sit `share` of the way down the picture.
+  const pitch = Math.atan2(camera.y - finishers.y, back) + Math.atan((1 - 2 * FINISH_SHOT.share) * tan);
+  const target = camera.clone().addScaledVector(forward, back * Math.cos(pitch)).setY(camera.y - back * Math.sin(pitch));
   return { camera, target };
+}
+
+/**
+ * The finish shot pushing in on the winner (`zoom` 0–1): towards them across the ground at its own
+ * height (coming down with them, the marbles rolling in under the camera would be drawn right in
+ * front of the lens), never nearer than PUSH_NEAREST metres across the ground. On a tall phone the shot
+ * is already that close, so it stays put. Changes `shot` in place.
+ */
+const PUSH_NEAREST = 32;
+export function finishPush(shot, at, zoom) {
+  if (!(zoom > 0) || !at) return shot;
+  const across = new Vector3(at.x - shot.camera.x, 0, at.z - shot.camera.z);
+  const gap = across.length();
+  const move = Math.min(zoom * 0.9 * gap, Math.max(0, gap - PUSH_NEAREST));
+  if (gap > 0) shot.camera.addScaledVector(across.normalize(), move);
+  shot.target.lerp(at, Math.min(1, zoom * 2.2));
+  return shot;
+}
+
+/**
+ * What the finish shot cuts away: a coaster station's canopy over the finish (and the boards standing
+ * on it), seen from the finish camera only. `roof`: coaster.js stationRoof. → { contains(point), planes(on) } or null.
+ */
+export function finishCutaway(roof) {
+  if (!roof) return null;
+  const halfLength = roof.halfLength + 1;
+  const halfWidth = roof.halfWidth + 0.6;
+  const bottom = roof.bottom - 0.4;
+  const along = new Vector3(roof.along.x, 0, roof.along.z).normalize();
+  const side = new Vector3(roof.side.x, 0, roof.side.z).normalize();
+  const c = roof.centre;
+  const local = (p) => [(p.x - c.x) * along.x + (p.z - c.z) * along.z, (p.x - c.x) * side.x + (p.z - c.z) * side.z];
+  // Clipping planes whose inner (cut) sides meet in the canopy's box: with clipIntersection, only what lies inside all five is cut.
+  const at = along.x * c.x + along.z * c.z;
+  const st = side.x * c.x + side.z * c.z;
+  const planes = [
+    new Plane(new Vector3(0, -1, 0), bottom),
+    new Plane(along.clone(), -at - halfLength),
+    new Plane(along.clone().negate(), at - halfLength),
+    new Plane(side.clone(), -st - halfWidth),
+    new Plane(side.clone().negate(), st - halfWidth),
+  ];
+  return {
+    halfLength, halfWidth, bottom,
+    contains(p) {
+      const [a, s] = local(p);
+      return p.y > bottom && Math.abs(a) <= halfLength && Math.abs(s) <= halfWidth;
+    },
+    /** Does a mesh (its world box) reach into the cut? */
+    touches(box) {
+      if (box.max.y < bottom) return false;
+      const corners = [[box.min.x, box.min.z], [box.min.x, box.max.z], [box.max.x, box.min.z], [box.max.x, box.max.z]].map(([x, z]) => local({ x, z }));
+      const span = (k) => [Math.min(...corners.map((q) => q[k])), Math.max(...corners.map((q) => q[k]))];
+      const [a0, a1] = span(0);
+      const [s0, s1] = span(1);
+      return a1 >= -halfLength && a0 <= halfLength && s1 >= -halfWidth && s0 <= halfWidth;
+    },
+    planes,
+    /** On: cut; off: the bottom plane raised out of reach, so nothing is cut (the shader stays the same). */
+    set(on) { planes[0].constant = on ? bottom : 1e7; },
+  };
 }
 
 export class TrackScene {
@@ -209,6 +287,7 @@ export class TrackScene {
     this.frameCap = lite ? PHONE_FRAME_MS : 0;
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, lowEnd || lite ? 1.5 : maxPixelRatio));
     this.renderer.outputColorSpace = SRGBColorSpace;
+    this.renderer.localClippingEnabled = true; // (the finish shot's cutaway: finishCutaway)
     this.renderer.info.autoReset = false; // counted over both views (see render)
     this.size = { width: 1, height: 1 };
 
@@ -346,10 +425,12 @@ export class TrackScene {
       setTimeout(() => {
         if (token !== this.buildToken || this.disposed) return; // another track was chosen meanwhile
         this.stationRoof = null;
+        this.finishCut = undefined;
         this.scenery = buildScenery(theme, this.centerline, track, { lite: this.lite });
         if (this.scenery) {
           this.scenery.traverse((o) => o.layers.set(SCENERY_LAYER));
           this.trackGroup.add(this.scenery);
+          this.prepareFinishCut();
         }
         this.render();
       }, 30);
@@ -382,6 +463,7 @@ export class TrackScene {
     const half = (pen ? pen.halfWidth + 0.6 : (lanes * TRACK_STYLE.laneWidth) / 2) + TRACK_STYLE.wallThickness;
     const end = this.centerline.samples[this.centerline.samples.length - 1];
     const group = new Group();
+    group.name = 'finish arch';
     const archH = pen ? 14 : 6; // tall over a catch area, so the finish shot looks under it at the finishers and the view beyond
     this.archSize = { half, archH };
     const post = new BoxGeometry(0.6, archH, 0.6);
@@ -434,6 +516,7 @@ export class TrackScene {
    */
   buildCatchArea(pen, end) {
     const area = new Group();
+    area.name = 'catch area';
     const drop = pen.length * PEN_DROP;
     const tilt = Math.atan(PEN_DROP);
     const floorLen = Math.hypot(pen.length, drop);
@@ -852,10 +935,7 @@ export class TrackScene {
     const sight = level ? this.keepInSight(camera, at, level, reach) : 1;
     if (finish > 0) {
       // Coming home: over to the finish shot. Pushing in on the winner (closer < 1) moves it in towards them.
-      const shot = this.finishShot();
-      const zoom = 1 - Math.min(1, closer);
-      shot.camera.lerp(at, zoom * 0.9);
-      shot.target.lerp(at, Math.min(1, zoom * 2.2));
+      const shot = finishPush(this.finishShot(), at, 1 - Math.min(1, closer));
       camera.lerp(shot.camera, finish);
       target.lerp(shot.target, finish);
     }
@@ -870,9 +950,35 @@ export class TrackScene {
    * back on a narrow (phone) screen, so the street's width still fits.
    */
   finishShot() {
-    const st = this.scenery?.userData?.station;
-    if (st && !this.stationRoof) this.stationRoof = stationRoof(st);
-    return finishShotPose(this.centerline, this.channel, this.camera.aspect, { roof: st ? this.stationRoof : null });
+    return finishShotPose(this.centerline, this.channel, this.camera.aspect, { fov: this.tvLens ?? this.camera.fov });
+  }
+
+  /** The finish shot's cutaway (a coaster station's canopy), or null: finishCutaway. */
+  cutaway() {
+    if (this.finishCut === undefined) {
+      const st = this.scenery?.userData?.station;
+      if (st && !this.stationRoof) this.stationRoof = stationRoof(st);
+      this.finishCut = finishCutaway(st ? this.stationRoof : null);
+    }
+    return this.finishCut;
+  }
+
+  /** Gives everything drawn reaching into the cutaway (the canopy, the boards on it) its clipping planes, cutting nothing until the finish shot. */
+  prepareFinishCut() {
+    const cut = this.cutaway();
+    if (!cut) return;
+    cut.set(false);
+    const box = new Box3();
+    this.trackGroup.traverse((o) => {
+      if (!o.isMesh || !o.material) return;
+      box.setFromObject(o);
+      if (!cut.touches(box)) return;
+      for (const m of [].concat(o.material)) {
+        m.clippingPlanes = cut.planes;
+        m.clipIntersection = true;
+        m.needsUpdate = true;
+      }
+    });
   }
 
   /** Ice channels: how much of the way the track is still the wide starting funnel at progress p (1 at the top, 0 once it is the channel). */
@@ -1096,11 +1202,17 @@ export class TrackScene {
       finish = rig.holdFinish ? 1 : k * k * (3 - 2 * k);
     }
     const { camera: desired, target, roadTop, clearAbove, level, sight } = this.followPose(at, progress, (rig === this.inset ? INSET_CLOSER : 1) * (rig.push ?? 1), reach, finish);
+    // The big view on the finish shot: a coaster station's canopy cut away (the corner view keeps it, see render).
+    const cutting = rig === this.main && finish >= FINISH_CUT_FROM && Boolean(this.cutaway());
+    if (rig === this.main) {
+      this.finishCutOn = cutting;
+      this.finishCut?.set(cutting);
+    }
     rig.sight = sight;
     // Come in close, it looks down at its marble more (not ahead over it, with the
     // marble at the very bottom of the picture), easing between the two.
     rig.close = rig.ready && rig.close !== undefined ? rig.close + (1 - sight - rig.close) * (1 - Math.exp(-Math.min(0.25, dt) / 0.3)) : 1 - sight;
-    target.lerp(at, rig.close * 0.6);
+    target.lerp(at, rig.close * 0.6 * (1 - finish)); // (not on the finish shot: it keeps the finishers framed)
     if (!rig.ready) {
       rig.cam.copy(desired);
       rig.target.copy(target);
@@ -1109,9 +1221,12 @@ export class TrackScene {
       const k = 1 - Math.exp(-Math.min(0.25, dt) * 3.5);
       rig.cam.lerp(desired, k);
       rig.target.lerp(target, Math.min(1, k * 2));
-      // Never lag down into the road or the hillside.
-      rig.cam.y = Math.max(rig.cam.y, roadTop + 2.5, clearAbove(rig.cam.x, rig.cam.z) + 2.5);
-      if (level) {
+      // Never lag down into the road or the hillside. (Not once over on the finish shot: there the road
+      // and the stretches are those of a marble still coming home, maybe far up the hill, and the finish
+      // shot's own spot is checked clear, scenery/clearCheck.js finishShotView.)
+      const settling = finish < FINISH_HOLD;
+      if (settling) rig.cam.y = Math.max(rig.cam.y, roadTop + 2.5, clearAbove(rig.cam.x, rig.cam.z) + 2.5);
+      if (level && settling) {
         // Nor up into a stretch passing overhead (it eases towards a spot
         // already clear of every other stretch, see keepInSight).
         const { ceiling } = this.channelBounds(rig.cam.x, rig.cam.z, level);
@@ -1119,7 +1234,7 @@ export class TrackScene {
       }
       // Nor, easing down to a spot under a coaster's station canopy, still up inside it (its front
       // beam would cut across the picture): straight down under it with its marble.
-      const roof = this.stationRoof;
+      const roof = cutting || !settling ? null : this.stationRoof;
       if (roof && at.y < roof.bottom) {
         const reach = { ...roof, halfLength: roof.halfLength + 0.6, bottom: roof.bottom - 0.6 };
         if (roofBlocks(reach, rig.cam, rig.cam)) rig.cam.y = Math.max(at.y + 1.2, reach.bottom);
@@ -1181,7 +1296,9 @@ export class TrackScene {
         // would hide the marble itself.)
         const own = (this.marbles.pointers ?? []).filter((p) => p.index === this.insetIndex && p.mesh.visible);
         for (const p of own) p.mesh.visible = false;
+        this.finishCut?.set(false);
         r.render(this.scene, this.inset.camera);
+        this.finishCut?.set(Boolean(this.finishCutOn));
         for (const p of own) p.mesh.visible = true;
         r.setScissorTest(false);
         r.setViewport(0, 0, this.size.width, this.size.height);

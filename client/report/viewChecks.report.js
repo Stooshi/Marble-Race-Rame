@@ -18,7 +18,7 @@ import { TrackScene } from '../src/three/TrackScene';
 import { frameAtTime } from '../src/utils/splits';
 import { flaggedStretches, wallExposure } from '../src/three/scenery/groundCheck';
 import { cameraClearance, corridorIntrusions, finishShotView, markStructures, nameOf, pieceFinder, stretchesOf, tunnelAllowance } from '../src/three/scenery/clearCheck';
-import { finishShotPose } from '../src/three/TrackScene';
+import { finishCutaway, finishShotPose } from '../src/three/TrackScene';
 import { stationRoof } from '../src/three/scenery/coaster';
 
 const anything = new Proxy(function stub() {}, { get: () => anything, apply: () => anything, set: () => true });
@@ -68,7 +68,8 @@ it.skipIf(!process.env.REPORT_TRACK)('track report: view checks', () => {
     // between it and the line or the catch area, nothing close round it, never inside the land.
     if (channel.runout) {
       const land = drawnHere.filter((o) => o.userData.ground || /^terrain|^banks/.test(nameOf(o)));
-      const shots = [['wide', 16 / 9], ['tall', 9 / 19.5]].map(([screen, aspect]) => ({ screen, ...finishShotView(centerline, channel, finishShotPose(centerline, channel, aspect, { roof: scenery.userData?.station ? stationRoof(scenery.userData.station) : null }), drawnHere, land, { pieceAt: pieceFinder(scenery) }) }));
+      const cut = finishCutaway(scenery.userData?.station ? stationRoof(scenery.userData.station) : null);
+      const shots = [['wide', 16 / 9], ['tall', 9 / 19.5]].map(([screen, aspect]) => ({ screen, ...finishShotView(centerline, channel, finishShotPose(centerline, channel, aspect), drawnHere, land, { pieceAt: pieceFinder(scenery), cut }) }));
       out.clear.finish ??= {};
       out.clear.finish[lite ? 'phone' : 'computer'] = shots.map((x) => ({ screen: x.screen, looks: x.looks, blocked: x.blocked, near: x.near, inside: x.inside }));
     }
