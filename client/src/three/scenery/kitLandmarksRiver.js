@@ -381,13 +381,13 @@ function brickTemples() {
 
 /**
  * Hot-air balloons drifting high over a section (a section's `overhead`: 'hot-air-balloons'): envelopes in plain
- * stripes of colour (no lettering or logos), baskets under them, spread over about 200 m, the lowest 34 m up.
+ * stripes of colour (no lettering or logos), baskets under them, spread over about 180 m, the lowest 16 m up.
  * Origin at the group's middle, on the track's level; one mesh (it drifts as a whole: kit.js).
  */
 export function hotAirBalloons(lite = false) {
   const p = [];
   const sets = [['#d8442f', '#f2c230'], ['#2f6fa8', '#f2efe6'], ['#4aa35a', '#f2c230'], ['#e07a3a', '#7a3fd0'], ['#c8302a', '#f2efe6'], ['#f2c230', '#2f7fc4']];
-  const spots = [[0, 40, 0], [-70, 52, 40], [60, 46, -50], [-30, 64, -80], [90, 58, 60], [-100, 44, -20]].slice(0, lite ? 4 : 6);
+  const spots = [[0, 18, 0], [-90, 26, 80], [80, 22, -70], [-50, 32, -140], [120, 28, 110], [-140, 20, -40]].slice(0, lite ? 4 : 6);
   spots.forEach(([x, y, z], k) => {
     const [a, b] = sets[k % sets.length];
     const bands = lite ? 4 : 6;

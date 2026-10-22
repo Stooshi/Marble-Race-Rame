@@ -596,6 +596,17 @@
    "side": -1,
    "marbles": 1
   },
+  "irrawaddy-balloon-dawn": {
+   "name": "Irrawaddy Balloon Dawn",
+   "series": "Rivers",
+   "lighting": "dawn",
+   "v": "c17912c9",
+   "bytes": 16354,
+   "bytes2x": 41510,
+   "t": 10243,
+   "side": 1,
+   "marbles": 4
+  },
   "istanbul-marble-grand-prix": {
    "name": "Istanbul Marble Grand Prix",
    "series": "Grand Prix",

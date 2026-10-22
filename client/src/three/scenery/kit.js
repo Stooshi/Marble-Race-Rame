@@ -281,13 +281,14 @@ export function buildKitScenery(centerline, track, theme, { lite = false } = {})
         continue;
       }
       if (kind === 'hot-air-balloons') {
-        // Hot-air balloons drifting high over the section's middle (the lowest basket about 26 m over the track).
-        const { s } = frame((sec.from + sec.to) / 2);
+        // Hot-air balloons drifting over the plain well ahead of the section's end, low on the sky in a
+        // tall frame as the field comes through the section (150 m on, low over the plain: the lowest basket about 6 m over the track's level there).
+        const { s, along } = frame(sec.to);
         const mesh = new Mesh(hotAirBalloons(lite), new MeshLambertMaterial({ vertexColors: true, flatShading: true }));
         mesh.name = 'hot-air balloons';
-        mesh.position.copy(s.pos);
+        mesh.position.copy(s.pos).addScaledVector(new Vector3(along.x, 0, along.z).normalize(), 150);
         group.add(mesh);
-        drifters.push({ mesh, centre: s.pos.clone() });
+        drifters.push({ mesh, centre: mesh.position.clone() });
         continue;
       }
       if (kind === 'condor') {
