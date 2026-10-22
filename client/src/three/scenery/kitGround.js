@@ -38,6 +38,7 @@ const SHOULDER = 1.5;    // metres of level ground at the rim before a bank slop
 // Today's sceneries use 0.6; on a track that folds back over itself 100 m lower, that leaves
 // the upper stretch on a towering embankment.
 const MOUNTAIN_CAP = 1.4;
+// (A Rivers track may ask for gentler hillsides, `river: { slope }`: lower land where it folds back past itself, no tall cut walls.)
 const LAND_RADIUS = 480;       // metres from the track to where the land reaches the valley floor (computer)…
 const LAND_RADIUS_PHONE = 400; // …and on phones (a smaller patch of land)
 const LAKE_RADIUS = 95;        // metres: a frozen lake beyond the finish
@@ -187,7 +188,7 @@ export function buildKitGround(centerline, track, { lite = false } = {}) {
   const line = flight
     ? { ...hug.groundLine, samples: hug.groundLine.samples.map((x, i) => (i <= segments ? { ...x, pos: x.pos.clone().setY(x.pos.y - flight[i]) } : x)) }
     : hug.groundLine;
-  const base = makeHeightField(line, lanes, { hillHeight: biome.hills, landRadius, sinkFrom: 0.3, seaLevel: biome.sea, street: { ...hug.street, cap: MOUNTAIN_CAP } });
+  const base = makeHeightField(line, lanes, { hillHeight: biome.hills, landRadius, sinkFrom: 0.3, seaLevel: biome.sea, street: { ...hug.street, cap: kit.river?.slope ?? MOUNTAIN_CAP } });
   const bridgeSpots = samples.filter((_, i) => onBridge[i]).map((s) => s.pos);
   const ravineFloor = bridgeSpots.length ? Math.min(...bridgeSpots.map((p) => p.y)) - 24 : 0;
   // A frozen lake (scenery 'frozen-lake' at the finish): a flat basin just beyond the run-out.

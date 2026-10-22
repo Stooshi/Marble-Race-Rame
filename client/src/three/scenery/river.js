@@ -63,13 +63,13 @@ export const RIVER_PALETTES = {
   nile: { water: '#2f7f86', deep: '#1f6470', foam: '#f2f6f4', bank: '#8a6e4e', quay: '#5a524c', sand: '#e0c08a', glint: '#e8f4f6', rapids: [0.18, 0.32],
     dressing: [['palm', 0.35], ['rock', 0.45, '#b8925e'], ['bush', 0.2, '#8a8a4a']] },
   // The Congo's rapids: dark tea-brown water, white where it falls, deep rainforest to the banks.
-  congo: { water: '#4a4c3c', deep: '#3a3c30', foam: '#f4efe4', bank: '#6a4a32', quay: '#6f665a', sand: '#b8946a', glint: '#e4ecee', rapids: [0.18, 0.32],
+  congo: { water: '#5e6258', deep: '#4a4e46', hillside: ['#3f6f30', '#2f5a2a'], foam: '#f4efe4', bank: '#6a4a32', quay: '#6f665a', sand: '#b8946a', glint: '#e4ecee', rapids: [0.1, 0.22],
     dressing: [['broadleaf', 0.6, '#2a5f2a'], ['palm', 0.2], ['banana', 0.2]] },
   // The Rhine gorge: green-grey water, slate banks, vineyards and woods on the slopes.
-  rhine: { water: '#4f7a72', deep: '#3a6058', foam: '#eef2ee', bank: '#7a7466', quay: '#8a8478', sand: '#b8ae94', glint: '#e8f0f2', rapids: [0.18, 0.32],
+  rhine: { water: '#4f7a72', deep: '#3a6058', hillside: ['#6a8a3e', '#4f7a36'], foam: '#eef2ee', bank: '#7a7466', quay: '#8a8478', sand: '#b8ae94', glint: '#e8f0f2', rapids: [0.18, 0.32],
     dressing: [['broadleaf', 0.45, '#3f6a34'], ['poplar', 0.25, '#4a7a3e'], ['bush', 0.3, '#5f7a3a']] },
   // The Ganges at dawn: wide milky grey-green water, pale sand on the far bank, a few trees.
-  ganges: { water: '#7f9a96', deep: '#678480', foam: '#f2f0e8', bank: '#a89878', quay: '#b8a07a', sand: '#e0d0aa', glint: '#f6e8d4', rapids: [0.18, 0.32],
+  ganges: { water: '#7f9a96', deep: '#678480', hillside: ['#9ab062', '#86a456'], foam: '#f2f0e8', bank: '#a89878', quay: '#b8a07a', sand: '#e0d0aa', glint: '#f6e8d4', rapids: [0.18, 0.32],
     dressing: [['broadleaf', 0.5, '#4f7a3a'], ['palm', 0.2], ['bush', 0.3, '#6f8a46']] },
 };
 const BANK_COLOURS = { sand: 'sand', reeds: 'bank', bayou: 'bank', rock: 'quay', quay: 'quay', grass: null };
@@ -158,11 +158,11 @@ export function riverExtras() {
   };
 }
 
-const BANK_GAP = 15;      // metres from the track's middle to the water's edge beside a stretch on the ground
+const BANK_GAP_M = 15;    // metres from the track's middle to the water's edge beside a stretch on the ground
 const UNDER_HEIGHT = 5;   // metres: a stretch flying at least this high may have the water right under it
 const EASE_M = 45;        // metres along the track over which the river swings from one side to the other
-const SHORE = 9;          // metres of shore from the water's edge up to the land
-const KEEP = 11;          // metres from a stretch on the ground within which the land is never lowered
+const SHORE_M = 9;        // metres of shore from the water's edge up to the land
+const KEEP_M = 11;        // metres from a stretch on the ground within which the land is never lowered
 const GRID = 10;          // metres: the lookup grid of the nearest samples
 const BED = 2.2;          // metres from the water's surface to its bed in the middle
 
@@ -177,6 +177,15 @@ export function makeRiver(centerline, channel, kit, { flight, liftAt, bounds }) 
   const width = cfg.width ?? 90;
   const calm = cfg.calm === true; // (a slow lowland river: hardly any white water where it falls with the track)
   const homeSide = cfg.side === 'right' ? -1 : 1; // (+1: the left, as a track file's sides)
+  // (`gap`: a track's own BANK_GAP, nearer, so the water comes into a tall phone picture; the land kept whole
+  // beside a stretch on the ground shrinks with it, still well past the channel's rim and shoulder.)
+  const BANK_GAP = cfg.gap ?? BANK_GAP_M;
+  const KEEP = cfg.gap ? Math.max(7, cfg.gap - 4) : KEEP_M;
+  const KEEP_EASE = cfg.gap ? 3 : 6;
+  // (With the water nearer, the shore runs out further and rises more gently, never above the channel's rim
+  // between the track and the water: no ridge hides the river from the follow camera.)
+  const SHORE = cfg.gap ? 16 : SHORE_M;
+  const SHORE_RISE = cfg.gap ? 0.2 : 0.55;
   const { samples, segments } = centerline;
   const step = channel.arc / segments;
   const n = segments + 1;
@@ -322,12 +331,13 @@ export function makeRiver(centerline, channel, kit, { flight, liftAt, bounds }) 
     if (!r || r.d > SHORE) return base;
     // (Never lowered beside a stretch on the ground: its bank stays whole.)
     const dg = groundStretch(x, z, g);
-    const keep = 1 - smoothstep(KEEP, KEEP + 6, dg);
+    const keep = 1 - smoothstep(KEEP, KEEP + KEEP_EASE, dg);
     const inside = Math.max(0, -r.d);
     const bed = r.level - 0.6 - Math.min(BED, inside * 0.25);
-    const shore = r.level + 0.3 + Math.max(0, r.d) * 0.55;
-    const want = r.d <= 0 ? bed : Math.min(shore, r.level + 0.3 + r.d * 0.55);
-    const h = Math.min(base, want);
+    const shore = r.level + 0.3 + Math.max(0, r.d) * SHORE_RISE;
+    const want = r.d <= 0 ? bed : Math.min(shore, r.level + 0.3 + r.d * SHORE_RISE);
+    // (A nearer river's shore eases back into the land over its last 6 m: no step where the shore ends.)
+    const h = Math.min(base, cfg.gap ? want + (base - want) * smoothstep(SHORE - 6, SHORE, r.d) : want);
     return base + (h - base) * (1 - keep);
   }
 
@@ -336,11 +346,22 @@ export function makeRiver(centerline, channel, kit, { flight, liftAt, bounds }) 
   const shoreC = bankKey ? C(pal[bankKey]) : null;
   const wetC = C(pal.bank);
   const out = new Color();
+  // (`hillside`: a palette's own colours for the land away from the water, two greens in patches, darker
+  // where it is steep: forested hills, never bare brown walls where the track folds back past itself.)
+  const hill = pal.hillside ? pal.hillside.map(C) : null;
+  const shadeC = C('#2f3a26');
+  const hillside = (x, z, steep) => {
+    const h = Math.sin(Math.floor(x / 9) * 12.9898 + Math.floor(z / 9) * 78.233) * 43758.5453;
+    out.copy(hill[0]).lerp(hill[1], h - Math.floor(h));
+    return steep > 4 ? out.lerp(shadeC, Math.min(0.35, (steep - 4) * 0.03)) : out;
+  };
   /** A triangle's colour at its middle: the shore's by the water; null elsewhere (the land's own). */
   function colourAt(x, y, z, steep) {
     const g = gridAt(x, z);
     const r = riverAt(x, z, g);
-    if (!r || r.d > SHORE) return null;
+    if (!r || r.d > SHORE) return hill ? hillside(x, z, steep) : null;
+    // (Land far below the water's level holds no water: it is no river bed, but the valley's own hillside.)
+    if (hill && y < r.level - BED - 2.2) return hillside(x, z, steep);
     if (y < r.level + 0.6) return out.copy(wetC);
     if (shoreC) return out.copy(shoreC).lerp(wetC, steep > 2 ? 0.2 : 0);
     return out.copy(wetC).lerp(C('#6f8f4a'), smoothstep(1, SHORE, r.d));
@@ -402,10 +423,19 @@ export function makeRiver(centerline, channel, kit, { flight, liftAt, bounds }) 
         // (A calm lowland river, `river.calm`: a little white water only where it falls steeply, so it reads as water.)
         // (Two rivers side by side without mixing: each half its own colour, the line between them sharp.)
         const base = seam ? seam[(across[k] + across[k + 1]) / 2 < 0 ? 0 : 1] : null;
-        const white = calm ? 0.18 * smoothstep(0.12, 0.3, fall) : Math.min(0.65, smoothstep(rapids[0], rapids[1], fall) + (base ? 0 : 0.04 * Math.sin(i * 0.37 + k)));
+        const white0 = calm ? 0.18 * smoothstep(0.12, 0.3, fall) : Math.min(0.65, smoothstep(rapids[0], rapids[1], fall) + (base ? 0 : 0.04 * Math.sin(i * 0.37 + k)));
+        // (`glint` rivers: the white water strongest down the middle of the rapid, calmer at the edges.)
+        const white = glint ? white0 * (0.45 + 0.55 * mid) : white0;
         const c = base
           ? new Color().copy(base).lerp(glint ?? foam, glint ? 0.05 + 0.035 * Math.sin(i * 0.23 + k * 1.7) : 0).lerp(foam, Math.max(0, white))
           : new Color().copy(water).lerp(deep, mid * 0.8).lerp(foam, Math.max(0, white));
+        if (glint) {
+          // (Facets of the water a little lighter or darker each, the white water broken into patches: never a flat floor.)
+          const hv = Math.sin(i * 7.137 + k * 3.71) * 9631.77;
+          const v = hv - Math.floor(hv);
+          c.multiplyScalar(0.92 + 0.16 * v);
+          if (white > 0.05) c.lerp(foam, Math.min(0.3, white * (v - 0.35)));
+        }
         for (const v of [[a0, b0, b1], [a0, b1, a1]]) {
           if (hits(...v) || !v.every(holds)) continue;
           for (const o of v) { pos.push(o.x, o.y, o.z); col.push(c.r, c.g, c.b); }
@@ -438,7 +468,7 @@ export function makeRiver(centerline, channel, kit, { flight, liftAt, bounds }) 
         }
         if (glint) {
           // (Short wavelets across the current, scattered at random: never in rows, so never a road's markings.)
-          const n = lite ? 1 : 3;
+          const n = lite ? 2 : 3;
           for (let g = 0; g < n; g += 1) {
             const h = Math.sin(i * 12.9898 + k * 78.233 + g * 37.719) * 43758.5453;
             const r = h - Math.floor(h);
@@ -455,8 +485,8 @@ export function makeRiver(centerline, channel, kit, { flight, liftAt, bounds }) 
             const cxv = -az + ax * tilt;
             const czv = ax + az * tilt;
             const cl = Math.hypot(cxv, czv);
-            const L = (lite ? 1.6 : 1.1) + ((r * 9.13) % 1) * (lite ? 1.8 : 1.4);
-            const W = lite ? 0.35 : 0.22;
+            const L = (lite ? 2.2 : 1.1) + ((r * 9.13) % 1) * (lite ? 2.2 : 1.4);
+            const W = lite ? 0.45 : 0.22;
             const ux = (cxv / cl) * L;
             const uz = (czv / cl) * L;
             const q = [

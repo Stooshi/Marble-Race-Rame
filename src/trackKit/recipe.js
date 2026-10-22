@@ -542,7 +542,11 @@ function riverRules({ spec, sections, where }) {
   const problems = [];
   const r = spec.river;
   if (!r || typeof r !== 'object') return [`${where('track')}: a Rivers track says its river: river: { palette (${RIVERS.join(', ')}), side, width, banks }.`];
-  for (const k of Object.keys(r)) if (!['palette', 'side', 'width', 'banks', 'calm'].includes(k)) problems.push(`${where('river')}: unknown setting ${k} (palette, side, width, banks, calm).`);
+  for (const k of Object.keys(r)) if (!['palette', 'side', 'width', 'banks', 'calm', 'slope', 'gap'].includes(k)) problems.push(`${where('river')}: unknown setting ${k} (palette, side, width, banks, calm, slope, gap).`);
+  // (slope: how steeply the land may rise beside another stretch of the track, 0.5 to 1.4; looks only.)
+  // (gap: metres from the track's middle to the water beside a stretch on the ground, 10 to 15; looks only.)
+  if (r.gap !== undefined && !(Number.isFinite(r.gap) && r.gap >= 10 && r.gap <= 15)) problems.push(`${where('river')}: gap is metres from the track's middle to the water, 10 to 15.`);
+  if (r.slope !== undefined && !(Number.isFinite(r.slope) && r.slope >= 0.5 && r.slope <= 1.4)) problems.push(`${where('river')}: slope is how steeply the land may rise beside another stretch, 0.5 to 1.4.`);
   if (r.calm !== undefined && typeof r.calm !== 'boolean') problems.push(`${where('river')}: calm is true or false (a slow lowland river: hardly any white water).`);
   if (!RIVERS.includes(r.palette)) problems.push(`${where('river')}: unknown palette ${JSON.stringify(r.palette)} (${RIVERS.join(', ')}).`);
   if (r.side !== undefined && !['left', 'right'].includes(r.side)) problems.push(`${where('river')}: the river runs on the left or the right of the track.`);

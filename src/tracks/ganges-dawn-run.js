@@ -15,7 +15,7 @@ module.exports = track({
   biome: 'meadow',
   lighting: 'dawn',
   variants: ['day'],
-  river: { palette: 'ganges', side: 'left', width: 160, banks: 'sand' },
+  river: { palette: 'ganges', side: 'left', width: 160, banks: 'sand', slope: 0.8, gap: 10 },
   coaster: { colours: { support: '#8a7a62', rail: '#f4ecd8', tie: '#4a3e30' } },
   signature: 'Down the river steps',
   start: { type: 'stepped-platform', gate: 'stalls', shots: { countdown: 'above', launch: 'look-back' } },
@@ -25,6 +25,7 @@ module.exports = track({
     'The steps and the old houses above them only; no shrines, temples, figures or ceremonies (looks only).',
     'Tuned on the layout\'s test track: the first draft raced a 57.7 s winner, so the steps straight is 80 m (90), the lamp slalom 85 m (100), the first sweep steeper (0.11), the second sweep 90 degrees (120) and the run-in 75 m (85).',
     'The lamp slalom flies 10 m over the river, the lamps and a rowing boat close either side of it, so the morning river shows from the follow camera; fewer lamps and a lighter mist keep the phone under 60k triangles (looks only).',
+    'Looks, from the portrait review (October 2026): the river runs 10 m from the track beside the ground stretches (`gap`, 15 elsewhere), its shore low and gentle so no ridge hides it; the land rises at most 0.8 beside another stretch (`slope`) and the hills are meadow green (`hillside`) (looks only).',
   ],
   opening: opening('peg-drop', {
     costumes: { peg: 'mooring-pole' },
