@@ -421,7 +421,7 @@ export function makeRiver(centerline, channel, kit, { flight, liftAt, bounds }) 
             for (const o of v) { pos.push(o.x, o.y, o.z); col.push(fc.r, fc.g, fc.b); }
           }
         }
-        if (glint && (k === 0 || k === across.length - 2)) {
+        if (glint && !lite && (k === 0 || k === across.length - 2)) {
           // (A pale line of ripples along each shore.)
           const edge = k === 0 ? across[0] : across[k + 1];
           const inI = edge - Math.sign(edge) * (1.6 / (halfW[i] + 0.6));
@@ -436,7 +436,7 @@ export function makeRiver(centerline, channel, kit, { flight, liftAt, bounds }) 
         }
         if (glint) {
           // (Short wavelets across the current, scattered at random: never in rows, so never a road's markings.)
-          const n = lite ? 2 : 3;
+          const n = lite ? 1 : 3;
           for (let g = 0; g < n; g += 1) {
             const h = Math.sin(i * 12.9898 + k * 78.233 + g * 37.719) * 43758.5453;
             const r = h - Math.floor(h);

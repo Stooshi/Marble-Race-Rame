@@ -465,7 +465,7 @@ function graniteIslands() {
   const p = [];
   const stones = [[0, 0, 6, 3], [9, 5, 4, 2.4], [-8, 6, 5, 2.8], [4, -9, 4.5, 2.2], [-11, -6, 3.5, 2], [15, -4, 3, 1.8], [-3, 13, 3.6, 2]];
   stones.forEach(([x, z, r, h], k) => {
-    p.push(piece(new IcosahedronGeometry(r, 1), k % 2 ? '#4a3e3a' : '#6a4e46', S(x, h * 0.2, z, 1.1, h / r, 0.9)));
+    p.push(piece(new IcosahedronGeometry(r, k < 3 ? 1 : 0), k % 2 ? '#4a3e3a' : '#6a4e46', S(x, h * 0.2, z, 1.1, h / r, 0.9)));
     p.push(piece(new IcosahedronGeometry(r * 0.5, 0), '#3a3230', S(x + r * 0.4, h * 0.55, z - r * 0.2, 1, 0.7, 1)));
   });
   for (const [x, z, w, d] of [[4.5, 3, 4, 2], [-4, 3, 3, 1.6], [6, -4, 3, 2], [-9, 0, 3, 2], [11, 1, 2.6, 1.4]]) p.push(box(w, 0.2, d, x, 0.1, z, '#f4f8f6'));

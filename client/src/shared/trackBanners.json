@@ -299,6 +299,17 @@
    "side": 1,
    "marbles": 6
   },
+  "congo-rapids-burst": {
+   "name": "Congo Rapids Burst",
+   "series": "Rivers",
+   "lighting": "day",
+   "v": "4025fa0b",
+   "bytes": 14924,
+   "bytes2x": 37788,
+   "t": 10026,
+   "side": 1,
+   "marbles": 4
+  },
   "copper-spins": {
    "name": "Copper Spins",
    "series": "Canyons",
