@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { api } from '../../api/client';
 import { PACK } from '../../shared/payments/packs';
 import { formatNumber } from '../../utils/format';
+import { wanted } from '../payments/GetCoins';
 import { track } from '../consent/tracking';
 import { activatesDay } from '../payments/preSale';
 
@@ -34,6 +35,7 @@ export default function PurchasesPage() {
   const [search] = useSearchParams();
   const { isAuthenticated, loading: authLoading, refreshUser } = useAuth();
   const justPaid = search.get('paid');
+  const navigate = useNavigate();
   const [orders, setOrders] = useState(null);
   const [error, setError] = useState(null);
   const [waiting, setWaiting] = useState(Boolean(justPaid));
@@ -76,6 +78,9 @@ export default function PurchasesPage() {
           }
           setWaiting(false);
           await Promise.all([load(), refresh.current?.()]);
+          // Came through Get coins: back to the marble wanted (coin packs only; this tab remembers it).
+          const w = order.status === 'paid' && !order.season_key ? wanted({ clear: true }) : null;
+          if (w && !stop) navigate(w.back, { replace: true, state: { coinsAdded: order.coins } });
           return;
         }
       } catch { /* (try again) */ }
@@ -84,7 +89,7 @@ export default function PurchasesPage() {
     };
     tick();
     return () => { stop = true; };
-  }, [isAuthenticated, justPaid, load]);
+  }, [isAuthenticated, justPaid, load, navigate]);
 
   if (!authLoading && !isAuthenticated) {
     return (

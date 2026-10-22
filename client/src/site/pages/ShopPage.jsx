@@ -1,6 +1,6 @@
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { api } from '../../api/client';
 import { useAuth } from '../../context/AuthContext';
 import { useAsync } from '../../hooks/useAsync';
@@ -14,6 +14,7 @@ import { editionLine, limitedLine, limitedSale, seasonalLine, seasonalSale, useC
 import { TEASERS } from '../shop/comingSoon';
 import { track } from '../consent/tracking';
 import { shownPrice, useStorePrices } from '../payments';
+import GetCoins, { notEnoughCoins, shortOf } from '../payments/GetCoins';
 
 const Turntable = lazy(() => importOrReload(() => import('../marbles/Turntable')));
 
@@ -36,6 +37,7 @@ export default function ShopPage() {
   const { design: designParam } = useParams();
   const [search] = useSearchParams();
   const navigate = useNavigate();
+  const { state: arrived } = useLocation();
   const { live, owned, buy, reload } = useCollection();
   const [rarity, setRarity] = useState('all');
   const [shade, setShade] = useState('all');
@@ -122,7 +124,7 @@ export default function ShopPage() {
 
       <p className="ms-note">Looks only, never speed: every marble races exactly the same. The first {catalog.editionSize} of every marble on sale are a numbered First Edition.</p>
 
-      {open && ITEM[open] && <MarbleSheet slug={open} onSlug={setOpen} owned={owned} live={live} buy={buy} onClose={close} />}
+      {open && ITEM[open] && <MarbleSheet slug={open} onSlug={setOpen} owned={owned} live={live} buy={buy} onClose={close} coinsAdded={open === fromUrl ? arrived?.coinsAdded : null} />}
     </div>
   );
 }
@@ -147,7 +149,7 @@ function MarbleCard({ item, owned, onOpen, tag = null }) {
 
 /** The live collection's hero: its name and story, three of its marbles, and the two bags with a shade to pick. */
 function Hero({ owned, onBought }) {
-  const { isAuthenticated, refreshUser } = useAuth();
+  const { isAuthenticated, user, refreshUser } = useAuth();
   const navigate = useNavigate();
   const [shade, setShade] = useState('classic');
   const [confirm, setConfirm] = useState(null);
@@ -158,8 +160,17 @@ function Hero({ owned, onBought }) {
   const shadeName = SHADES.find((s) => s.key === shade)?.name;
   const heroBalls = ['steelie-classic', 'champion-classic', 'flame-swirl-sunset'].filter((s) => ITEM[s]);
 
+  // A bag's price in coins: the server's offer (only the marbles not owned yet), else the full bag.
+  const bagCost = (key) => {
+    const o = offer(key);
+    if (o) return o.price;
+    const worth = SC_ITEMS.filter((i) => economy.bags[key].rarities.includes(i.rarity) && i.shade.key === shade).reduce((n, i) => n + (i.price.coins ?? 0), 0);
+    return bagPrice(key, worth);
+  };
+
   const buyBag = async (key) => {
     if (!isAuthenticated) { navigate('/signup?next=/shop'); return; }
+    if (shortOf(bagCost(key), user?.coins)) { setConfirm(null); setMsg({ ok: false, key }); return; } // (Get coins, never "not enough coins")
     if (confirm !== key) { setConfirm(key); setMsg(null); return; }
     setBusy(true);
     try {
@@ -167,7 +178,8 @@ function Hero({ owned, onBought }) {
       setMsg({ ok: true, text: `${economy.bags[key].label} (${shadeName}): ${r.copies.length} marble${r.copies.length === 1 ? '' : 's'} added to your Marble Bag.` });
       await Promise.all([onBought(), refreshUser(), offers.reload()]);
     } catch (err) {
-      setMsg({ ok: false, text: err.message });
+      if (notEnoughCoins(err)) refreshUser();
+      setMsg(notEnoughCoins(err) ? { ok: false, key } : { ok: false, text: err.message });
     } finally {
       setBusy(false);
       setConfirm(null);
@@ -180,7 +192,7 @@ function Hero({ owned, onBought }) {
     const count = o?.items.length ?? SC_DESIGNS.filter((d) => bag.rarities.includes(d.rarity)).length;
     const full = o ? o.missing === o.items.length : true;
     const worth = SC_ITEMS.filter((i) => bag.rarities.includes(i.rarity) && i.shade.key === shade).reduce((n, i) => n + (i.price.coins ?? 0), 0);
-    const price = priceLabel({ coins: o ? o.price : bagPrice(key, worth) });
+    const price = priceLabel({ coins: bagCost(key) });
     const done = o && !o.missing;
     return (
       <button type="button" className={`ms-bag${main ? ' ms-bag--main' : ''}`} onClick={() => buyBag(key)} disabled={busy || done}>
@@ -209,7 +221,8 @@ function Hero({ owned, onBought }) {
           {bagButton('starter', false)}
         </div>
         {confirm && <button type="button" className="ms-btn ms-btn--ghost ms-btn--sm" style={{ justifySelf: 'start' }} onClick={() => setConfirm(null)}>Cancel</button>}
-        {msg && <div className={`ms-msg${msg.ok ? '' : ' ms-msg--bad'}`} role={msg.ok ? 'status' : 'alert'}>{msg.text}{msg.ok && <> <Link to="/bag">Marble Bag</Link></>}</div>}
+        {msg?.key && <GetCoins need={Math.max(1, shortOf(bagCost(msg.key), user?.coins))} back="/shop" label={`the ${economy.bags[msg.key].label}`} />}
+        {msg && !msg.key && <div className={`ms-msg${msg.ok ? '' : ' ms-msg--bad'}`} role={msg.ok ? 'status' : 'alert'}>{msg.text}{msg.ok && <> <Link to="/bag">Marble Bag</Link></>}</div>}
       </div>
       <div className="ms-hero__balls">
         {heroBalls.map((s, k) => <MarbleBadge key={s} slug={s} size={k === 1 ? 150 : 110} label={`${ITEM[s].design.name}, ${ITEM[s].shade.name}`} />)}
@@ -219,7 +232,7 @@ function Hero({ owned, onBought }) {
 }
 
 /** The big view: the real 3D marble, its collection, name, Marble ID (Copy ID), story, shade switcher and buying. */
-function MarbleSheet({ slug, onSlug, owned, live, buy, onClose }) {
+function MarbleSheet({ slug, onSlug, owned, live, buy, onClose, coinsAdded = null }) {
   const { isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
   const ref = useRef(null);
@@ -237,6 +250,8 @@ function MarbleSheet({ slug, onSlug, owned, live, buy, onClose }) {
   const seasonal = seasonalSale(item);
   const col = collectionOf(d);
   const pass = item.kind === 'pass';
+  const here = `/collection/${d.key}?shade=${item.shade.key}`;
+  const short = isAuthenticated ? shortOf(item.price.coins, user?.coins) : 0;
 
   useEffect(() => {
     ref.current?.focus();
@@ -270,7 +285,7 @@ function MarbleSheet({ slug, onSlug, owned, live, buy, onClose }) {
       const { copy } = await buy(slug);
       setMessage({ ok: true, copy });
     } catch (err) {
-      setMessage({ ok: false, text: err.message });
+      setMessage(notEnoughCoins(err) ? null : { ok: false, text: err.message }); // (the coin count is refreshed: Get coins shows)
     } finally {
       setBusy(false);
       setConfirming(false);
@@ -323,6 +338,7 @@ function MarbleSheet({ slug, onSlug, owned, live, buy, onClose }) {
           </div>
         )}
         {message && !message.ok && <div className="ms-msg ms-msg--bad" role="alert">{message.text}</div>}
+        {coinsAdded && !have && !message && <div className="ms-msg" role="status">● {coinsAdded.toLocaleString('en-US')} coins added. You have ● {(user?.coins ?? 0).toLocaleString('en-US')}{short ? '.' : ': this marble is yours with one tap.'}</div>}
         {have ? (
           <span className="ms-btn ms-sheet__buy" aria-disabled="true">OWNED</span>
         ) : pass ? (
@@ -341,6 +357,11 @@ function MarbleSheet({ slug, onSlug, owned, live, buy, onClose }) {
           <span className="ms-btn ms-sheet__buy" aria-disabled="true">NO LONGER FOR SALE</span>
         ) : noPrice ? (
           <span className="ms-btn ms-sheet__buy" aria-disabled="true">PRICE COMING SOON</span>
+        ) : short ? (
+          <>
+            <GetCoins big need={short} back={here} label={`${d.name} · ${item.shade.name}`} />
+            <span className="ms-note">You have {(user?.coins ?? 0).toLocaleString('en-US')} coins. Racing earns coins too.</span>
+          </>
         ) : (
           <>
             <button type="button" className="ms-btn ms-btn--primary ms-sheet__buy" onClick={onBuy} disabled={busy}>

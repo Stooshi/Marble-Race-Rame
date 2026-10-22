@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { COIN_PACKS, PACK } from '../../shared/payments/packs';
 import CONSENT from '../../shared/payments/consent.json';
@@ -8,6 +8,7 @@ import { formatNumber } from '../../utils/format';
 import { STORE_NAME, buyCoins, shownPrice, storeProvider, useStorePrices } from '../payments';
 import { track } from '../consent/tracking';
 import QuickSignup from '../account/QuickSignup';
+import { rememberWanted, safeBack, wanted } from '../payments/GetCoins';
 
 /**
  * Checkout for a coin pack bought with real money: ?pack=coins-10500 (Stripe
@@ -16,7 +17,12 @@ import QuickSignup from '../account/QuickSignup';
  */
 export default function CheckoutPage() {
   const [search] = useSearchParams();
+  const navigate = useNavigate();
   const { isAuthenticated, user, refreshUser } = useAuth();
+  // Came from Get coins: the marble wanted, to go back to once paid (?back=, or this tab's memory after Stripe's page).
+  const remembered = wanted();
+  const back = safeBack(search.get('back')) ?? remembered?.back ?? null;
+  const backLabel = remembered?.back === back ? remembered.label : null;
   const pack = PACK[search.get('pack')] ?? COIN_PACKS.find((p) => p.popular) ?? COIN_PACKS[0];
   const [withdrawal, setWithdrawal] = useState(false);
   const [terms, setTerms] = useState(false);
@@ -71,8 +77,14 @@ export default function CheckoutPage() {
     setResult(null);
     track('checkout_started', { productId: pack.id, value: pack.amountCents / 100, currency: pack.currency });
     try {
+      if (back) rememberWanted(back, backLabel); // (for the way back from Stripe's payment page)
       const r = await buyCoins(pack, { consent: withdrawal && terms });
       if (r.status === 'paid') await refreshUser();
+      if (r.status === 'paid' && back) { // (the app stores and test payments: straight back to the marble)
+        wanted({ clear: true });
+        navigate(back, { replace: true, state: { coinsAdded: pack.coins } });
+        return;
+      }
       setResult(r);
       if (r.status !== 'redirecting') setBusy(false); // (on the way to Stripe's page: stay busy)
     } catch (err) {
@@ -111,6 +123,7 @@ export default function CheckoutPage() {
             <span>{CONSENT.terms.replace(/the terms of sale\.$/, '')}<Link to="/legal#sale">the terms of sale</Link>.</span>
           </label>
           {cancelled && !result && <div className="ms-msg" role="status">Payment cancelled: nothing was charged. You can try again whenever you like.</div>}
+          {back && !result && <div className="ms-msg" role="status">Once paid, you go straight back to {backLabel ?? 'the marble you wanted'}. <Link to={back}>Back without buying</Link></div>}
           {result?.status === 'paid' && <div className="ms-msg" role="status">Paid: ● {formatNumber(pack.coins)} coins added. You now have ● {formatNumber(result.coins ?? 0)}. <Link to="/purchases">Your purchases</Link> · <Link to="/shop">Back to the shop</Link></div>}
           {result?.status === 'redirecting' && <div className="ms-msg" role="status">Taking you to Stripe's secure payment page…</div>}
           {result?.status === 'pending' && <div className="ms-msg" role="status">{result.message}</div>}
@@ -129,7 +142,7 @@ export default function CheckoutPage() {
             <span>VAT</span><span>included</span>
             <span>Total</span><span>{web ? `${pack.priceLabel}.00` : priceOf(pack) ?? '…'}</span>
           </div>
-          <div className="ms-row">{COIN_PACKS.filter((p) => p.id !== pack.id).map((p) => <Link key={p.id} to={`/checkout?pack=${p.id}`} className="ms-chip">● {formatNumber(p.coins)}{priceOf(p) ? ` · ${priceOf(p)}` : ''}</Link>)}</div>
+          <div className="ms-row">{COIN_PACKS.filter((p) => p.id !== pack.id).map((p) => <Link key={p.id} to={`/checkout?pack=${p.id}${back ? `&back=${encodeURIComponent(back)}` : ''}`} className="ms-chip">● {formatNumber(p.coins)}{priceOf(p) ? ` · ${priceOf(p)}` : ''}</Link>)}</div>
           <ul style={{ margin: 0, paddingLeft: '1.2em', color: 'var(--ms-muted)', display: 'grid', gap: 4 }}>
             <li>Coins work only in the Marble Spins shop: for looks, never speed.</li>
             <li>Coins can't be cashed out or exchanged for money.</li>

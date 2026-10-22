@@ -16,7 +16,13 @@ export function useCollection() {
   const owned = useMemo(() => new Set(state.data?.owned ?? []), [state.data]);
   const { reload } = state;
   const buy = useCallback(async (slug) => {
-    const result = await api.buyItem(slug);
+    let result;
+    try {
+      result = await api.buyItem(slug);
+    } catch (err) {
+      await Promise.resolve(refreshUser()).catch(() => {}); // (the real coin count, so Get coins shows the right amount)
+      throw err;
+    }
     await Promise.all([reload(), refreshUser()]);
     return result;
   }, [reload, refreshUser]);

@@ -566,6 +566,9 @@ a.ms-tile:hover, a.ms-card:hover { text-decoration: none; border-color: var(--ms
 .ms-sheet__shades button { background: none; border: 2px solid transparent; border-radius: 50%; padding: 3px; cursor: pointer; min-width: 44px; min-height: 44px; }
 .ms-sheet__shades button[aria-pressed="true"] { border-color: var(--ms-yellow); }
 .ms-sheet__buy { width: 100%; min-height: 54px; font-family: var(--ms-cond); font-size: 1.4rem; }
+.ms-getcoins { display: grid; gap: 8px; justify-items: start; width: 100%; }
+.ms-getcoins .ms-sheet__buy { justify-self: stretch; text-align: center; display: inline-flex; align-items: center; justify-content: center; }
+.ms-sheet .ms-getcoins { justify-items: center; }
 .ms-soon { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); }
 .ms-soon__card { border-radius: 22px; border: 1px dashed #46527A; background: var(--ms-card); padding: 20px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
 .ms-soon__date { align-self: flex-start; font-weight: 800; font-size: 0.8rem; letter-spacing: 0.06em; border-radius: 7px; padding: 4px 9px; background: #26304A; }
@@ -602,6 +605,117 @@ a.ms-tile:hover, a.ms-card:hover { text-decoration: none; border-color: var(--ms
 .is-app body { overscroll-behavior: none; -webkit-user-select: none; user-select: none; }
 .is-app input, .is-app textarea { -webkit-user-select: text; user-select: text; }
 .is-app { -webkit-tap-highlight-color: transparent; }
+
+/* The apps' own header (AppHeader.jsx; Moses, 22 Oct 2026): one compact bar, a small logo, the coins,
+   sound and one menu button, clear of the notch and the status bar. The website keeps .ms-header. */
+.ms-apphead {
+  position: sticky; top: 0; z-index: 50;
+  background: rgba(14, 19, 32, 0.94); backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--ms-border);
+  padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px) 0 env(safe-area-inset-left, 0px);
+}
+.ms-apphead__bar { display: flex; align-items: center; gap: 6px; height: 48px; padding: 0 6px 0 8px; }
+.ms-apphead__logo { display: inline-flex; align-items: center; min-height: 44px; padding: 0 4px; }
+.ms-apphead__logo:hover { text-decoration: none; }
+.ms-apphead__icon {
+  display: inline-grid; place-items: center; width: 44px; height: 44px; flex: none;
+  background: none; border: 0; border-radius: 12px; color: var(--ms-text); cursor: pointer;
+}
+.ms-apphead__icon:active { background: rgba(255, 255, 255, 0.08); }
+.ms-apphead__back { margin-right: -6px; }
+.ms-apphead__coins { padding: 4px 10px; font-size: 0.9rem; }
+.ms-apphead .ms-sound__btn { width: 44px; height: 44px; border: 0; }
+
+/* The menu: a bottom sheet. */
+.ms-appmenu { position: fixed; inset: 0; z-index: 90; background: rgba(5, 8, 16, 0.6); display: flex; align-items: flex-end; justify-content: center; }
+.ms-appmenu__panel {
+  width: min(100%, 520px); max-height: calc(100dvh - env(safe-area-inset-top, 0px) - 12px); overflow-y: auto;
+  background: var(--ms-card); border: 1px solid var(--ms-border); border-bottom: 0; border-radius: 22px 22px 0 0;
+  padding: 8px max(16px, env(safe-area-inset-right, 0px)) calc(16px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
+  display: grid; gap: 12px; animation: ms-sheet-up 0.18s ease-out;
+}
+@keyframes ms-sheet-up { from { transform: translateY(24px); opacity: 0; } to { transform: none; opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .ms-appmenu__panel { animation: none; } }
+.ms-appmenu__grip { justify-self: center; width: 40px; height: 4px; border-radius: 2px; background: var(--ms-border); }
+.ms-appmenu__who { display: grid; gap: 2px; padding: 4px 4px 0; }
+.ms-appmenu__who span { color: var(--ms-soft); font-size: 0.9rem; }
+.ms-appmenu__pages { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.ms-appmenu__pages a {
+  display: flex; align-items: center; min-height: 52px; padding: 0 14px; border-radius: 14px;
+  background: var(--ms-bg); border: 1px solid var(--ms-border); color: var(--ms-text);
+  font-family: var(--ms-cond); font-weight: 700; font-size: 1.1rem; text-transform: uppercase; letter-spacing: 0.03em;
+}
+.ms-appmenu__pages a:hover { text-decoration: none; }
+.ms-appmenu__pages a.active { background: var(--ms-yellow); border-color: var(--ms-yellow); color: var(--ms-ink); }
+.ms-appmenu__more { display: grid; }
+.ms-appmenu__more a, .ms-appmenu__logout {
+  display: flex; align-items: center; min-height: 46px; padding: 0 6px; border: 0; border-top: 1px solid var(--ms-border);
+  background: none; color: var(--ms-soft); font: inherit; font-weight: 600; text-align: left; cursor: pointer;
+}
+.ms-appmenu__more a.is-strong { color: var(--ms-yellow); }
+.ms-appmenu__close { min-height: 46px; }
+
+/* A race in the apps: the whole screen (html.is-race-full, while the 3D view shows; Race.jsx). The bar
+   becomes two floating buttons (back, menu), the race fills the screen in portrait and landscape, the
+   camera buttons lie over its foot, and everything keeps clear of the notch and the home bar. */
+.is-app.is-race-full body { overflow: hidden; }
+.is-app.is-race-full .ms-footer, .is-app.is-race-full .ms-onsale { display: none; }
+.is-app.is-race-full .ms-apphead { position: fixed; inset: 0 0 auto 0; z-index: 70; background: none; backdrop-filter: none; border: 0; pointer-events: none; }
+.is-app.is-race-full .ms-apphead__bar { height: 52px; padding: 4px 6px; }
+.is-app.is-race-full .ms-apphead__logo, .is-app.is-race-full .ms-apphead__coins, .is-app.is-race-full .ms-apphead .ms-grow { display: none; }
+.is-app.is-race-full .ms-apphead__bar > * { pointer-events: auto; }
+.is-app.is-race-full .ms-apphead__bar { justify-content: space-between; }
+.is-app.is-race-full .ms-apphead__icon, .is-app.is-race-full .ms-apphead .ms-sound__btn {
+  background: rgba(17, 19, 26, 0.62); border-radius: 50%; color: #fff; width: 40px; height: 40px;
+}
+.is-app.is-race-full .ms-apphead .ms-sound { margin-left: auto; }
+.is-app.is-race-full .race-page {
+  position: fixed; inset: 0; z-index: 40; max-width: none; margin: 0; padding: 0; background: #0E1320;
+}
+.is-app.is-race-full .race-page > .race-header,
+.is-app.is-race-full .race-page .event-feed { display: none; }
+.is-app.is-race-full .race-page .live3d { position: absolute; inset: 0; }
+.is-app.is-race-full .race-page .preview3d__stage { position: absolute; inset: 0; height: auto; min-height: 0; border: 0; border-radius: 0; }
+/* 3D / 2D: top centre, between the floating buttons. */
+.is-app.is-race-full .race-page > .segmented {
+  position: fixed; z-index: 71; top: calc(env(safe-area-inset-top, 0px) + 10px); left: 50%; transform: translateX(-50%); margin: 0;
+  background: rgba(17, 19, 26, 0.62);
+}
+/* The race's own overlays move clear of the floating buttons and the camera bar. */
+.is-app.is-race-full .replay3d__standings { top: calc(env(safe-area-inset-top, 0px) + 58px); left: calc(env(safe-area-inset-left, 0px) + 8px); }
+.is-app.is-race-full .replay3d__clock { top: calc(env(safe-area-inset-top, 0px) + 58px); right: calc(env(safe-area-inset-right, 0px) + 8px); }
+.is-app.is-race-full .replay3d__speed { bottom: calc(env(safe-area-inset-bottom, 0px) + 62px); right: calc(env(safe-area-inset-right, 0px) + 8px); }
+.is-app.is-race-full .cornerview { bottom: calc(env(safe-area-inset-bottom, 0px) + 62px); left: calc(env(safe-area-inset-left, 0px) + 8px); }
+.is-app.is-race-full .segmented--camera {
+  position: fixed; z-index: 45; left: calc(env(safe-area-inset-left, 0px) + 8px); right: calc(env(safe-area-inset-right, 0px) + 8px);
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 8px); width: auto; margin: 0; max-width: 560px; margin-inline: auto;
+  background: rgba(17, 19, 26, 0.62); border-color: transparent;
+}
+.is-app.is-race-full .segmented--camera button { color: #fff; min-height: 44px; }
+.is-app.is-race-full .skip-results {
+  position: fixed; z-index: 45; right: calc(env(safe-area-inset-right, 0px) + 10px); bottom: calc(env(safe-area-inset-bottom, 0px) + 58px); margin: 0;
+}
+.is-app.is-race-full .skip-results__link { color: #fff; background: rgba(17, 19, 26, 0.62); border-radius: 999px; padding: 6px 10px; }
+/* Landscape phones: the standings smaller, so more of the track shows. */
+@media (orientation: landscape) and (max-height: 500px) {
+  .is-app.is-race-full .replay3d__standings { top: calc(env(safe-area-inset-top, 0px) + 54px); font-size: 0.8rem; max-width: 34%; }
+  .is-app.is-race-full .replay3d__clock { top: calc(env(safe-area-inset-top, 0px) + 54px); }
+  .is-app.is-race-full .segmented--camera { max-width: 460px; }
+  .is-app.is-race-full .cornerview { width: clamp(110px, 18%, 160px); }
+}
+@media (orientation: landscape) and (max-height: 500px) {
+  .ms-appmenu__pages { grid-template-columns: repeat(3, 1fr); }
+  .ms-appmenu__pages a { min-height: 46px; }
+}
+/* The finish show's banner and results board keep clear of the buttons too. */
+.is-app.is-race-full .finish__banner { top: calc(env(safe-area-inset-top, 0px) + 56px); }
+.is-app.is-race-full .finish__board {
+  top: calc(env(safe-area-inset-top, 0px) + 56px); bottom: calc(env(safe-area-inset-bottom, 0px) + 60px);
+  left: calc(env(safe-area-inset-left, 0px) + 8px); right: calc(env(safe-area-inset-right, 0px) + 8px);
+}
+/* Short camera labels over the race ("Leader", "My marble", "Track"), whatever the width. */
+.is-app.is-race-full .segmented--camera .ms-wide-only { display: none; }
+.is-app.is-race-full .segmented--camera .ms-narrow-only { display: inline; }
 
 /* ── Help Centre (/help) ───────────────────────────────────────────────── */
 .ms-visually-hidden { position: absolute !important; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }

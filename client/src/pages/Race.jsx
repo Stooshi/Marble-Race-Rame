@@ -17,6 +17,7 @@ import StartLights from '../components/StartLights';
 import { play as playSound, raceCountdown, raceEnd, raceGo } from '../sound/engine';
 import { track, trackingActive } from '../site/consent/tracking';
 import { plainName } from '../shared/playerName';
+import { isNativeApp } from '../app/native';
 
 const obstacleName = (o) => o?.replace(/_/g, ' ');
 
@@ -185,6 +186,7 @@ export default function Race() {
           <button type="button" aria-pressed={shown === '2d'} onClick={() => setView('2d')}>2D</button>
         </div>
       )}
+      {(meta || preparing) && shown === '3d' && <RaceFullScreen />}
       {(meta || preparing) && shown === '3d' ? (
         <LiveRaceViewer3D
           meta={meta}
@@ -217,6 +219,21 @@ export default function Race() {
       {stream.error && <ErrorMessage error={{ message: stream.error }} />}
     </div>
   );
+}
+
+/**
+ * In the apps the 3D race takes the whole screen (Moses, 22 Oct 2026): html.is-race-full, while the 3D
+ * view is shown. The header becomes floating back and menu buttons, the camera buttons lie over the
+ * race, and in landscape the whole race is on screen (site.css, "The apps"). The website is unchanged.
+ */
+function RaceFullScreen() {
+  useEffect(() => {
+    if (!isNativeApp()) return undefined;
+    const root = document.documentElement;
+    root.classList.add('is-race-full');
+    return () => root.classList.remove('is-race-full');
+  }, []);
+  return null;
 }
 
 function statusLabel(status) {

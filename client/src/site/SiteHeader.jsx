@@ -5,6 +5,8 @@ import Logo from './Logo';
 import SoundControl from './SoundControl';
 import { handle } from '../shared/playerName';
 import LogoutButton from './account/LogoutButton';
+import AppHeader from './AppHeader';
+import { isNativeApp } from '../app/native';
 
 /** Which header a page wears: the landing page's, the race flow's slim one, checkout's, or the game's. */
 export function headerKind(pathname, isAuthenticated) {
@@ -27,6 +29,12 @@ function UserChips({ user }) {
 }
 
 export default function SiteHeader() {
+  // The iPhone and Android apps have their own compact header (AppHeader); the website keeps this one.
+  if (isNativeApp()) return <AppHeader />;
+  return <WebHeader />;
+}
+
+function WebHeader() {
   const { pathname } = useLocation();
   const { user, isAuthenticated, loading, token } = useAuth();
   // (Signed in, or still checking a stored login: the logo goes to the home hub, never to the visitors' landing page.)

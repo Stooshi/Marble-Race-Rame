@@ -1,10 +1,12 @@
 import { useMemo, useState } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import { api } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { useAsync } from '../hooks/useAsync';
 import { formatNumber } from '../utils/format';
 import MarbleBall from './MarbleBall';
 import { ErrorMessage, Spinner } from './Status';
+import { getCoinsHref, notEnoughCoins, rememberWanted } from '../site/payments/GetCoins';
 
 /** A marble's own history with you: races, wins and podiums with it as your Shooter. */
 function history(m) {
@@ -21,7 +23,9 @@ function history(m) {
  * Props: value (marble id), onChange(marble), disabledIds (already in race)
  */
 export default function MarbleSelector({ value, onChange, disabledIds = [] }) {
-  const { user, setCoins } = useAuth();
+  const { user, setCoins, refreshUser } = useAuth();
+  const { pathname, search } = useLocation();
+  const here = pathname + search;
   // Mine: the player's own marbles (their 4 starters and any bought), the shop: the catalogue.
   const { data, error, loading, reload } = useAsync(async () => {
     const [own, all] = await Promise.all([api.myMarbles(), api.marbles()]);
@@ -47,7 +51,8 @@ export default function MarbleSelector({ value, onChange, disabledIds = [] }) {
       setTab('mine');
       onChange?.(marble);
     } catch (err) {
-      setBuyError(err.message);
+      if (notEnoughCoins(err)) refreshUser?.(); // (the real coin count: Get coins shows instead)
+      else setBuyError(err.message);
     } finally {
       setBuying(null);
     }
@@ -106,11 +111,17 @@ export default function MarbleSelector({ value, onChange, disabledIds = [] }) {
               {m.description && <p className="marble-card__desc">{m.description}</p>}
               {tab === 'mine' && <small className="marble-card__history">{selected ? 'Your Shooter · ' : ''}{history(m)}</small>}
               {taken && <small className="muted">Already in this race</small>}
-              {tab === 'shop' && (
+              {tab === 'shop' && !affordable && (
+                <Link className="btn btn--sm btn--block btn--primary" to={getCoinsHref(m.price_coins - (user?.coins ?? 0), here)} onClick={() => rememberWanted(here, m.name)}
+                  aria-label={`Get coins: ${formatNumber(m.price_coins - (user?.coins ?? 0))} more needed for ${m.name}`}>
+                  Get coins · {formatNumber(m.price_coins - (user?.coins ?? 0))} more
+                </Link>
+              )}
+              {tab === 'shop' && affordable && (
                 <button
                   type="button"
                   className="btn btn--sm btn--block"
-                  disabled={!affordable || buying === m.id}
+                  disabled={buying === m.id}
                   onClick={() => buy(m)}
                 >
                   {buying === m.id ? 'Buying…' : `Buy · ${formatNumber(m.price_coins)} coins`}

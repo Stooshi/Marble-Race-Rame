@@ -13,6 +13,7 @@ What the stores' rules ask of Marble Spins, checked against the code on 21 Octob
 - Capacitor 8 wraps the same React client as the website. The pages are **bundled in the app** (`webDir: dist`, no `server.url`): the app does not load the website.
 - Native parts: App Store / Google Play purchases (`@capgo/native-purchases`), Restore Purchases on iPhone, push notifications (built, switched off in `client/src/shared/push.json`), offline screen with the phone's own network status, Android back button, status bar and splash, sound that pauses in the background and follows the iPhone's silent switch. No haptics.
 - No ads, no analytics or crash SDK in the apps. Google Analytics and the Meta Pixel load only on the website, after cookie consent (`client/src/site/consent/tracking.js` stops in the apps). The Android manifest removes `AD_ID`.
+- The apps have their own layout (`AppHeader.jsx`, `.is-app` rules in `site.css`): a compact header with one menu button, and the race on the whole screen. **Get coins** (a marble the player can't afford) opens the same checkout, which in the apps buys through the App Store or Google Play only (`buyCoins`), never Stripe or a link to the website.
 - Email and password accounts only. No Sign in with Apple or Google.
 - Guests (any age) play without an account. Saving an account needs 13+ (birth year and month asked; under 13: no account, nothing stored). Coin packs and the pass are for saved accounts only.
 
