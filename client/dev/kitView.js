@@ -128,6 +128,12 @@ window.kitView = {
     const start = s0 && { top: v(s0.pos), back: v(new Vector3(-s0.tangent.x, 0, -s0.tangent.z).normalize()), side: v(new Vector3(s0.side.x, 0, s0.side.z).normalize()) };
     return { liftHill: u.liftHill && { top: v(u.liftHill.top), foot: v(u.liftHill.foot), back: v(u.liftHill.back), side: v(u.liftHill.side), length: u.liftHill.length }, start };
   },
+  /** Dev: a Rivers track's river: samples, its middle, level and half-width at sample i (null on other tracks). */
+  river() {
+    const r = scene.scenery?.userData?.ground?.river;
+    if (!r) return null;
+    return { n: scene.centerline.samples.length, centre: (i) => r.centreAt(i), water: (i) => r.waterAt(i), half: (i) => r.halfAt(i) };
+  },
   /** Dev: the land's height at (x, z). */
   ground(x, z) {
     return scene.scenery?.userData?.groundAt?.(x, z);
@@ -163,6 +169,7 @@ window.kitView = {
   pick({ x, y }) {
     const ray = new Raycaster();
     ray.setFromCamera({ x: (x / window.innerWidth) * 2 - 1, y: -(y / window.innerHeight) * 2 + 1 }, scene.camera);
+    ray.layers.enableAll(); // (the scenery is drawn on its own layer)
     const hit = ray.intersectObjects(scene.scene.children, true).find((h) => h.object.visible);
     if (!hit) return null;
     const names = [];

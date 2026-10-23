@@ -160,12 +160,19 @@ function seine() {
   ]);
 }
 
-/** A row of the bouquinistes' green bookstalls on the quay wall. */
+/**
+ * A row of the bouquinistes' green bookstalls on the quay wall. (Moses, 23 Oct 2026: read as sandstone
+ * blocks. Now a low grey parapet with four big dark-green boxes on it, lids open over rows of coloured
+ * books and prints, so the green and the books are what shows.)
+ */
 function bookstalls() {
-  const parts = [box(16, 1.2, 1.4, 0, 0.6, 0, '#c9bea4')];
+  const parts = [box(17, 0.7, 1.2, 0, 0.35, 0, '#9a968c')]; // the quay's parapet, low and grey
+  const books = ['#c42d24', '#2d5fa8', '#e8b62a', '#f2efe6', '#3f8f5a', '#8a3fa0'];
   for (let k = 0; k < 4; k += 1) {
-    parts.push(box(3.2, 0.9, 1.1, -6 + k * 4, 1.65, 0, '#2f5d3a'));
-    parts.push(piece(new BoxGeometry(3.2, 1.2, 0.08), '#2f5d3a', turned(-6 + k * 4, 2.6, -0.5, 0).multiply(new Matrix4().makeRotationX(-0.3)))); // the open lid
+    const x = -6 + k * 4;
+    parts.push(box(3.4, 1.3, 1.5, x, 1.35, 0, '#1f5a34'));                                         // the box
+    parts.push(piece(new BoxGeometry(3.4, 1.5, 0.1), '#1f5a34', turned(x, 2.75, -0.75, 0).multiply(new Matrix4().makeRotationX(-0.35)))); // the open lid
+    for (let b = 0; b < 6; b += 1) parts.push(box(0.5, 0.45, 1.1, x - 1.25 + b * 0.5, 2.15, 0.05, books[(k + b) % books.length])); // books and prints
   }
   return merge(parts);
 }

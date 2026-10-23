@@ -21,7 +21,7 @@ import { buildPinball } from './pinball';
 import { buildArcade } from './arcade';
 import { condor } from './kitLandmarksCanyon';
 import { canyonDressing } from './canyon';
-import { riverDressing, riverExtras } from './river';
+import { RIVER_PALETTES, riverDressing, riverExtras } from './river';
 import { hotAirBalloons } from './kitLandmarksRiver';
 import { RIVER_SPAN_KINDS, buildRiverSpans } from './riverSpans';
 import { blockDressing } from './blocks';
@@ -486,6 +486,28 @@ export function buildKitScenery(centerline, track, theme, { lite = false } = {})
     else if (tags.includes('plane-trees')) k = 0; // (the landscape's own broadleaf trees, in rows of them)
     items[Math.max(0, k)].push({ x, y: groundAt(x, z), z, yaw: rand() * Math.PI * 2, scale: 0.75 + rand() * 0.6, tint: 0.85 + rand() * 0.25 });
     total += 1;
+  }
+  // A rainforest river (a palette's `undergrowth`, Amazon): low bushes thick on the ground right up to the
+  // track's banks, cheap on a phone (a few triangles each), so no bare ground shows beside the track.
+  const under = ground.river ? RIVER_PALETTES[kit.river.palette]?.undergrowth : null;
+  if (under) {
+    const want = lite ? 140 : 380;
+    const near = [];
+    for (let x = minX - 120; x <= maxX + 120 && near.length < want * 4; x += lite ? 6 : 4) {
+      for (let z = minZ - 120; z <= maxZ + 120; z += lite ? 6 : 4) near.push([x + (rand() - 0.5) * 4, z + (rand() - 0.5) * 4, rand()]);
+    }
+    near.sort((p, q) => p[2] - q[2]);
+    let n = 0;
+    const bushIndex = RIVER_PALETTES[kit.river.palette].dressing.findIndex(([kind]) => kind === 'bush');
+    for (const [x, z] of near) {
+      if (n >= want || bushIndex < 0) break;
+      const c = field.clearance(x, z);
+      if (c < 6 || c > 45) continue; // (from just beyond the banks out to 45 m)
+      if (solids.some((o) => (o.x - x) ** 2 + (o.z - z) ** 2 < o.r * o.r)) continue;
+      if (!ground.river.dressable(x, z)) continue;
+      items[bushIndex].push({ x, y: groundAt(x, z), z, yaw: rand() * Math.PI * 2, scale: 0.9 + rand() * 0.9, tint: 0.85 + rand() * 0.25 });
+      n += 1;
+    }
   }
   // Every kind merged together by neighbourhood (each tree tinted a little): a few draw calls in all.
   const m4 = new Matrix4();

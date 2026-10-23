@@ -20,56 +20,60 @@ import { merge, piece, smoothstep } from './parts';
  * The rivers' colours and plants: `water` and `deep` the river (its edge and its middle), `foam` its
  * rapids, `bank` the shore by the water (`banks`: what the shore is made of, by the track file's
  * `banks`), `quay` the stone of a quay; `dressing` what grows on the land, as kit.js's dressing kinds.
+ * (Moses, 23 Oct 2026, the preview review: every river's water moved towards the blue-green of the
+ * Nile's, which read as water on a phone; each keeps its own character. The shine and the moving
+ * ripples are the water material's, water.js.)
  */
 export const RIVER_PALETTES = {
   // The Danube by night: a deep green-blue river between stone quays, plane trees and city land.
-  danube: { water: '#2f6f82', deep: '#1f4f63', glint: '#d8e8f0', rapids: [0.18, 0.32], hillside: ['#4f6f3a', '#3f6034'], foam: '#dfeef2', bank: '#8f8a7e', quay: '#9b958a', sand: '#c9b994',
+  danube: { water: '#2a6f86', deep: '#1a4f68', glint: '#d8e8f0', rapids: [0.18, 0.32], hillside: ['#4f6f3a', '#3f6034'], foam: '#dfeef2', bank: '#8f8a7e', quay: '#9b958a', sand: '#c9b994',
     dressing: [['broadleaf', 0.55, '#3f6a3a'], ['poplar', 0.3, '#4a7a3e'], ['bush', 0.15, '#4f7a3e']] },
   // The Mekong: wide brown water, palms and banana plants, red earth banks. (Moses, 22 Oct 2026: it read as
   // sand. Silty olive at the banks, a green-grey middle (a river players read as water), a glint of sky, white only
   // where it really falls: `rapids`.)
-  mekong: { water: '#6c7452', deep: '#466467', foam: '#ece4d2', glint: '#dce8ee', rapids: [0.18, 0.32], hillside: ['#5a8a3a', '#4a7a32'], bank: '#a8784a', quay: '#9a8f7a', sand: '#c9a06a',
+  mekong: { water: '#5c7a5e', deep: '#3c6a6c', foam: '#ece4d2', glint: '#dce8ee', rapids: [0.18, 0.32], hillside: ['#5a8a3a', '#4a7a32'], bank: '#a8784a', quay: '#9a8f7a', sand: '#c9a06a',
     dressing: [['palm', 0.45], ['banana', 0.3], ['broadleaf', 0.25, '#3f7f3a']] },
   // The Mississippi's bayou: muddy olive-brown water, cypress hung with moss, reeds on the banks.
-  mississippi: { water: '#6f6a44', deep: '#57533a', glint: '#dce4e8', rapids: [0.18, 0.32], hillside: ['#5f7a3a', '#4f6a34'], foam: '#e8e6d4', bank: '#7a6f48', quay: '#8f8676', sand: '#b8a67a',
+  mississippi: { water: '#5c6e4c', deep: '#3e5e54', glint: '#dce4e8', rapids: [0.18, 0.32], hillside: ['#5f7a3a', '#4f6a34'], foam: '#e8e6d4', bank: '#7a6f48', quay: '#8f8676', sand: '#b8a67a',
     dressing: [['cypress', 0.5], ['broadleaf', 0.3, '#4f6f34'], ['bush', 0.2, '#5f7a3e']] },
   // The Zambezi: dark water above the great falls, rocky lips, savannah with acacias.
-  zambezi: { water: '#4f7a6e', deep: '#3a5f56', glint: '#e4eef0', rapids: [0.18, 0.32], hillside: ['#8f9a52', '#7a8a48'], foam: '#f4f8f6', bank: '#6f6656', quay: '#7a7468', sand: '#c4ac7e',
+  zambezi: { water: '#3a7e7c', deep: '#2a6266', glint: '#e4eef0', rapids: [0.18, 0.32], hillside: ['#8f9a52', '#7a8a48'], foam: '#f4f8f6', bank: '#6f6656', quay: '#7a7468', sand: '#c4ac7e',
     dressing: [['acacia', 0.5], ['broadleaf', 0.25, '#5f7f3a'], ['rock', 0.25, '#5a544c']] },
   // The Yangtze: grey-green water under steep green mountains, bamboo on the banks.
-  yangtze: { water: '#6f8f7e', deep: '#56746a', glint: '#e4eef0', rapids: [0.18, 0.32], hillside: ['#4f8a3e', '#3f7a36'], foam: '#eef2ee', bank: '#8a8670', quay: '#8f8b80', sand: '#b8ae8e',
+  yangtze: { water: '#4c8a84', deep: '#367070', glint: '#e4eef0', rapids: [0.18, 0.32], hillside: ['#4f8a3e', '#3f7a36'], foam: '#eef2ee', bank: '#8a8670', quay: '#8f8b80', sand: '#b8ae8e',
     dressing: [['bamboo', 0.4], ['broadleaf', 0.4, '#3f6f3a'], ['rock', 0.2, '#6f6a60']] },
   // The Thames: a grey-green tidal river between stone embankments, plane trees and city land.
-  thames: { water: '#5a7a78', deep: '#46625f', foam: '#e4ecea', bank: '#7f7a6c', quay: '#a8a090', sand: '#b8ac8e',
+  thames: { water: '#3f7f86', deep: '#2c656e', foam: '#e4ecea', bank: '#7f7a6c', quay: '#a8a090', sand: '#b8ac8e',
     dressing: [['broadleaf', 0.6, '#4a7040'], ['poplar', 0.2, '#557a42'], ['bush', 0.2, '#4f7a3e']] },
   // The Seine: a green river between pale stone quays, plane trees and willows.
-  seine: { water: '#4f7f74', deep: '#3a6158', foam: '#e8f0ec', bank: '#a89c84', quay: '#c8bca2', sand: '#c8b894',
+  seine: { water: '#3a7a88', deep: '#285e70', foam: '#e8f0ec', bank: '#a89c84', quay: '#c8bca2', sand: '#c8b894',
     dressing: [['broadleaf', 0.55, '#557a3a'], ['willow', 0.25], ['bush', 0.2, '#5a7f3e']] },
   // The Volga: a wide blue river on the plains, sandy banks, birch woods.
-  volga: { water: '#4a7aa0', deep: '#355f84', foam: '#eef2f6', bank: '#a8946a', quay: '#9a968e', sand: '#d8c49a',
+  volga: { water: '#3a78aa', deep: '#285e8e', foam: '#eef2f6', bank: '#a8946a', quay: '#9a968e', sand: '#d8c49a',
     dressing: [['birch', 0.55], ['poplar', 0.25, '#5a8a42'], ['bush', 0.2, '#5f8a42']] },
   // The Murray: dark olive-green water (it must read as water, not mud) through river red gum forest, golden sandy banks.
-  murray: { water: '#56705e', deep: '#3f5648', foam: '#eceadc', bank: '#a89068', quay: '#b8a07a', sand: '#d8b880',
+  murray: { water: '#467a6c', deep: '#30605a', foam: '#eceadc', bank: '#a89068', quay: '#b8a07a', sand: '#d8b880',
     dressing: [['redgum', 0.6], ['bush', 0.25, '#7a8a5a'], ['rock', 0.15, '#b8945a']] },
   // The Irrawaddy at dawn: wide grey-blue water under the dawn sky (silty, but it must read as water beside the pale sandbanks), sugar palms on a dusty green plain.
-  irrawaddy: { water: '#6f8590', deep: '#566c78', foam: '#f2ead8', bank: '#b8a07a', quay: '#a89a80', sand: '#e0cfa4',
+  irrawaddy: { water: '#5a8c9c', deep: '#447488', foam: '#f2ead8', bank: '#b8a07a', quay: '#a89a80', sand: '#e0cfa4',
     dressing: [['sugar-palm', 0.45], ['broadleaf', 0.35, '#5f7a3a'], ['bush', 0.2, '#7a8a4a']] },
   // The meeting of the waters: a black-water river and a sandy one side by side, not mixing (`seam`: the
   // colour of each half, across the river's side vector), the line between them down its middle; rainforest.
   // (`glint`: pale streaks of sky on the water along the current, so dark or brown water reads as water.)
-  amazon: { water: '#3a2a1c', deep: '#2a1e14', foam: '#efe2c8', bank: '#7a5a3a', quay: '#8a7a64', sand: '#d8c08a', seam: ['#1c2730', '#8a6640'], glint: '#d6e6f0', rapids: [0.18, 0.32],
-    dressing: [['broadleaf', 0.5, '#2f6a2e'], ['palm', 0.3], ['banana', 0.2]] },
+  amazon: { water: '#2e4a44', deep: '#22383a', foam: '#efe2c8', bank: '#4f5a2e', hillside: ['#2f6a2c', '#245a26'], quay: '#8a7a64', sand: '#d8c08a', seam: ['#1f3c46', '#6f7a5a'], glint: '#d6e6f0', rapids: [0.18, 0.32],
+    // (Moses, 23 Oct 2026: rainforest dense and green right up to the track: undergrowth near it, `undergrowth`.)
+    dressing: [['broadleaf', 0.45, '#2f6a2e'], ['palm', 0.25], ['banana', 0.2], ['bush', 0.1, '#2f6a2c']], undergrowth: '#2f6a2c' },
   // The Nile at the cataract: clear blue-green water between dark granite, desert sand on the land, date palms.
   nile: { water: '#2f7f86', deep: '#1f6470', foam: '#f2f6f4', bank: '#8a6e4e', quay: '#5a524c', sand: '#e0c08a', glint: '#e8f4f6', rapids: [0.18, 0.32],
     dressing: [['palm', 0.35], ['rock', 0.45, '#b8925e'], ['bush', 0.2, '#8a8a4a']] },
   // The Congo's rapids: dark tea-brown water, white where it falls, deep rainforest to the banks.
-  congo: { water: '#5e6258', deep: '#4a4e46', hillside: ['#3f6f30', '#2f5a2a'], foam: '#f4efe4', bank: '#6a4a32', quay: '#6f665a', sand: '#b8946a', glint: '#e4ecee', rapids: [0.1, 0.22],
+  congo: { water: '#3e6a5e', deep: '#2c5248', hillside: ['#3f6f30', '#2f5a2a'], foam: '#f4efe4', bank: '#6a4a32', quay: '#6f665a', sand: '#b8946a', glint: '#e4ecee', rapids: [0.1, 0.22],
     dressing: [['broadleaf', 0.6, '#2a5f2a'], ['palm', 0.2], ['banana', 0.2]] },
   // The Rhine gorge: green-grey water, slate banks, vineyards and woods on the slopes.
-  rhine: { water: '#4f7a72', deep: '#3a6058', hillside: ['#6a8a3e', '#4f7a36'], foam: '#eef2ee', bank: '#7a7466', quay: '#8a8478', sand: '#b8ae94', glint: '#e8f0f2', rapids: [0.18, 0.32],
+  rhine: { water: '#3a7e80', deep: '#286468', hillside: ['#6a8a3e', '#4f7a36'], foam: '#eef2ee', bank: '#7a7466', quay: '#8a8478', sand: '#b8ae94', glint: '#e8f0f2', rapids: [0.18, 0.32],
     dressing: [['broadleaf', 0.45, '#3f6a34'], ['poplar', 0.25, '#4a7a3e'], ['bush', 0.3, '#5f7a3a']] },
   // The Ganges at dawn: wide milky grey-green water, pale sand on the far bank, a few trees.
-  ganges: { water: '#7f9a96', deep: '#678480', hillside: ['#9ab062', '#86a456'], foam: '#f2f0e8', bank: '#a89878', quay: '#b8a07a', sand: '#e0d0aa', glint: '#f6e8d4', rapids: [0.18, 0.32],
+  ganges: { water: '#5a929a', deep: '#447c88', hillside: ['#9ab062', '#86a456'], foam: '#f2f0e8', bank: '#a89878', quay: '#b8a07a', sand: '#e0d0aa', glint: '#f6e8d4', rapids: [0.18, 0.32],
     dressing: [['broadleaf', 0.5, '#4f7a3a'], ['palm', 0.2], ['bush', 0.3, '#6f8a46']] },
 };
 const BANK_COLOURS = { sand: 'sand', reeds: 'bank', bayou: 'bank', rock: 'quay', quay: 'quay', grass: null };
@@ -194,6 +198,7 @@ export function makeRiver(centerline, channel, kit, { flight, liftAt, bounds }) 
   const tx = new Float64Array(n);
   const tz = new Float64Array(n);
   const groundY = new Float64Array(n);
+  const trackY = new Float64Array(n);
   const air = new Float64Array(n);
   for (let i = 0; i < n; i += 1) {
     const s = samples[i];
@@ -201,6 +206,7 @@ export function makeRiver(centerline, channel, kit, { flight, liftAt, bounds }) 
     pz[i] = s.pos.z;
     air[i] = flight ? flight[i] : 0;
     groundY[i] = s.pos.y - air[i] + liftAt(i) - 0.25 - 0.6;
+    trackY[i] = s.pos.y;
     const l = Math.hypot(s.side.x, s.side.z) || 1;
     tx[i] = s.side.x / l;
     tz[i] = s.side.z / l;
@@ -389,7 +395,7 @@ export function makeRiver(centerline, channel, kit, { flight, liftAt, bounds }) 
    * falls steeply. Drawn only where the land holds it (both banks no lower than the water), never
    * into the track. Triangles ({ pos, col }, flat lists) are drawn with the banks (kitGround.js).
    */
-  function riverTriangles({ lite = false, corridor = null, groundAt = null } = {}) {
+  function riverTriangles({ lite = false, corridor = null, groundAt = null, shaded = false } = {}) {
     const pos = [];
     const col = [];
     const water = C(pal.water);
@@ -400,11 +406,32 @@ export function makeRiver(centerline, channel, kit, { flight, liftAt, bounds }) 
     // (How steeply the water falls before it turns white: `rapids`, a palette's own, so a river beside a
     // steadily falling track stays water and only its real rapids foam.)
     const rapids = pal.rapids ?? [0.04, 0.22];
-    const every = Math.max(1, Math.round((lite ? 7 : 3.5) / step));
+    // (Phones: every 10 m along with the water material, 7 m otherwise, so its triangles stay in budget.)
+    const every = Math.max(1, Math.round((lite ? (shaded ? 10 : 7) : 3.5) / step));
     const across = lite ? [-1, 0, 1] : [-1, -0.5, 0, 0.5, 1];
-    const pt = (i, f) => ({ x: cx[i] + tx[i] * f * (halfW[i] + 0.6), y: level[i], z: cz[i] + tz[i] * f * (halfW[i] + 0.6) });
-    // (The land under it is the river's bed, never far below: water over a lower stretch or a valley would float.)
-    const holds = (p) => !groundAt || groundAt(p.x, p.z) > p.y - BED - 2.2;
+    const pt0 = (i, f) => ({ x: cx[i] + tx[i] * f * (halfW[i] + 0.6), y: level[i], z: cz[i] + tz[i] * f * (halfW[i] + 0.6) });
+    // (The land under it is the river's bed, never far below: water over a lower stretch or a valley would float.
+    // Moses, 23 Oct 2026: where it was left out, a dry brown bed showed instead (Amazon's "tar road"). With the
+    // water material, `shaded`, the water there comes down to the land and runs on over it, a little above it.)
+    const holds = (p) => (shaded ? !p.skip : !groundAt || groundAt(p.x, p.z) > p.y - BED - 2.2);
+    // (Never settled near the track, where it would reach into a stretch, the catch area or the camera's
+    // path: there it's left out as before.)
+    const nearTrack = (x, z, y) => {
+      const c = nearestOn(px, pz, x, z, gTrack[gridAt(x, z)]);
+      // (Past the line the catch area runs on beyond the last sample: kept clear further out there.)
+      return c.d < (c.i >= segments - 2 ? 70 : 22) && y > lerp(trackY, c) - 14;
+    };
+    // (Past the line: no water in the catch area or the finish shot, settled or not.)
+    const pastLine = (x, z, y) => Math.hypot(x - px[segments], z - pz[segments]) < 75 && y > trackY[segments] - 14;
+    const settle = (p) => {
+      if (!shaded || !groundAt) return p;
+      if (pastLine(p.x, p.z, p.y)) return { ...p, skip: true };
+      const g = groundAt(p.x, p.z);
+      if (g >= p.y - BED - 1) return p;
+      const y = g + 1.1;
+      return nearTrack(p.x, p.z, y) ? { x: p.x, y, z: p.z, skip: true } : { x: p.x, y, z: p.z };
+    };
+    const pt = (i, f) => settle(pt0(i, f));
     const hits = (a, b, cc) => corridor && corridor.hitsTriangle(a, b, cc);
     for (let i = 0; i + every <= segments; i += every) {
       const j = i + every;
@@ -445,7 +472,7 @@ export function makeRiver(centerline, channel, kit, { flight, liftAt, bounds }) 
           // (The line where the two waters meet: a narrow band of pale swirls.)
           const wI = 1.2 / (halfW[i] + 0.6);
           const wJ = 1.2 / (halfW[j] + 0.6);
-          const up = (o) => ({ x: o.x, y: o.y + 0.03, z: o.z });
+          const up = (o) => ({ x: o.x, y: o.y + 0.03, z: o.z, skip: o.skip });
           const e = [up(pt(i, -wI)), up(pt(j, -wJ)), up(pt(j, wJ)), up(pt(i, wI))];
           const fc = new Color().copy(seam[1]).lerp(foam, 0.35 + 0.15 * Math.sin(i * 0.9));
           for (const v of [[e[0], e[1], e[2]], [e[0], e[2], e[3]]]) {
@@ -458,7 +485,7 @@ export function makeRiver(centerline, channel, kit, { flight, liftAt, bounds }) 
           const edge = k === 0 ? across[0] : across[k + 1];
           const inI = edge - Math.sign(edge) * (1.6 / (halfW[i] + 0.6));
           const inJ = edge - Math.sign(edge) * (1.6 / (halfW[j] + 0.6));
-          const up = (o) => ({ x: o.x, y: o.y + 0.03, z: o.z });
+          const up = (o) => ({ x: o.x, y: o.y + 0.03, z: o.z, skip: o.skip });
           const e = [up(pt(i, edge)), up(pt(j, edge)), up(pt(j, inJ)), up(pt(i, inI))];
           const fc = new Color().copy(c).lerp(foam, 0.5);
           for (const v of [[e[0], e[1], e[2]], [e[0], e[2], e[3]]]) {
@@ -466,8 +493,9 @@ export function makeRiver(centerline, channel, kit, { flight, liftAt, bounds }) 
             for (const o of v) { pos.push(o.x, o.y, o.z); col.push(fc.r, fc.g, fc.b); }
           }
         }
-        if (glint) {
-          // (Short wavelets across the current, scattered at random: never in rows, so never a road's markings.)
+        if (glint && !shaded) {
+          // (Short wavelets across the current, scattered at random: never in rows, so never a road's markings.
+          // Drawn with the water material (`shaded`, water.js) the ripples move in the shader instead.)
           const n = lite ? 1 : 2;
           for (let g = 0; g < n; g += 1) {
             const h = Math.sin(i * 12.9898 + k * 78.233 + g * 37.719) * 43758.5453;

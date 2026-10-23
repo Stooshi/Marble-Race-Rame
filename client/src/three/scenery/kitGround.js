@@ -25,6 +25,7 @@ import { trackCorridor } from './clearCheck';
 import { buildWater, coasterFlight, isLifted, liftHillCut, liftHillOf, liftHillRaise } from './coaster';
 import { makeCanyon } from './canyon';
 import { makeRiver } from './river';
+import { animateWater, waterMaterial } from './water';
 import { BLOCK_WORLDS, makeBlockLand } from './blocks';
 
 const RIM_WIDTH = 0.45;  // the channel's white rim beyond the lip (iceChannel.js)
@@ -253,7 +254,7 @@ export function buildKitGround(centerline, track, { lite = false } = {}) {
     ...(canyon && { detailFine: lite ? 6.5 : 3.4 }), // (a canyon's walls, drawn finer all along, a little coarser than over the ice: within the drawing budget)
     ...(canyon && { detail: canyon.detail, colorAt: canyon.colourAt }), // (a canyon's walls drawn finer, in their bands of colour)
     ...(blocks && { colorAt: blocks.colourAt }), // (a block world's terraces: tops in tiles, risers in earth or stone)
-    ...(river && { detailFine: lite ? 6 : 3.4, detail: river.detail, colorAt: river.colourAt }), // (a river's banks drawn finer, the shore in its colours)
+    ...(river && { detailFine: lite ? 7 : 3.4, detail: river.detail, colorAt: river.colourAt }), // (a river's banks drawn finer, the shore in its colours; on a phone 7 m, 23 Oct 2026, to keep Danube and Mekong in the 60k budget)
   });
   const group = new Group();
   group.name = 'kit-ground';
@@ -354,11 +355,23 @@ export function buildKitGround(centerline, track, { lite = false } = {}) {
       quad(a.shoulder, b.shoulder, b.out, a.out, bankColour);
     }
   }
-  // A canyon's river, or a Rivers track's, drawn with the banks (the same material: one draw call less).
-  const water = canyon?.riverTriangles({ lite, corridor }) ?? river?.riverTriangles({ lite, corridor, groundAt: (x, z) => terrain.groundAt(x, z) });
+  // A canyon's river drawn with the banks (the same material: one draw call less). A Rivers track's river
+  // is its own mesh with the water material (water.js: the sky mirrored, moving ripples; Moses, 23 Oct 2026).
+  const water = canyon?.riverTriangles({ lite, corridor });
   if (water) {
     pos.push(...water.pos);
     col.push(...water.col);
+  }
+  const riverWater = !canyon && river ? river.riverTriangles({ lite, corridor, groundAt: (x, z) => terrain.groundAt(x, z), shaded: true }) : null;
+  if (riverWater) {
+    const g = new BufferGeometry();
+    g.setAttribute('position', new Float32BufferAttribute(riverWater.pos, 3));
+    g.setAttribute('color', new Float32BufferAttribute(riverWater.col, 3));
+    g.computeVertexNormals();
+    const waterMesh = animateWater(new Mesh(g, waterMaterial({ lite })));
+    waterMesh.name = 'river water';
+    waterMesh.userData.ground = true;
+    group.add(waterMesh);
   }
   const banks = new BufferGeometry();
   banks.setAttribute('position', new Float32BufferAttribute(pos, 3));
