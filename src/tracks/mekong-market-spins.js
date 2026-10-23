@@ -15,7 +15,7 @@ module.exports = track({
   biome: 'jungle',
   lighting: 'day',
   variants: ['sunset'],
-  river: { palette: 'mekong', side: 'right', width: 130, banks: 'sand' },
+  river: { palette: 'mekong', side: 'right', width: 130, banks: 'sand', slope: 0.8, gap: 10 },
   coaster: { colours: { support: '#6a4428', rail: '#f2e6c8', tie: '#3a2a1e' } },
   signature: 'The floating market',
   start: { landmark: 'wat-roofs', scenery: ['river-palms'], type: 'river-boat', gate: 'stalls', shots: { countdown: 'front', launch: 'high-behind' } },
@@ -23,6 +23,7 @@ module.exports = track({
   designChanges: [
     'Built from the peg drop (down from the river boat\'s deck between mooring poles) and the market maze, the library layout made for this track: a long slalom low over the water among the boats, S-bends along the bank, up a pier ramp and off the pier, the hairpin, a sweep along the market bank, a spin, a peg under a pier, pegs past a line of floats and the run-in.',
     'The market boats float on the river beside the slalom; the slalom poles are the boats\' mooring poles (looks only).',
+    'Looks, from the portrait review (approved 23 Oct 2026): the river 10 m from the track beside the ground stretches with a low, gentle shore (`gap`), the land rising at most 0.8 beside another stretch (`slope`), green hills in patches away from the water (`hillside`) (looks only).',
   ],
   opening: opening('peg-drop', {
     costumes: { peg: 'mooring-pole' },

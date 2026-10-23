@@ -23,21 +23,21 @@ import { merge, piece, smoothstep } from './parts';
  */
 export const RIVER_PALETTES = {
   // The Danube by night: a deep green-blue river between stone quays, plane trees and city land.
-  danube: { water: '#2f6f82', deep: '#1f4f63', foam: '#dfeef2', bank: '#8f8a7e', quay: '#9b958a', sand: '#c9b994',
+  danube: { water: '#2f6f82', deep: '#1f4f63', glint: '#d8e8f0', rapids: [0.18, 0.32], hillside: ['#4f6f3a', '#3f6034'], foam: '#dfeef2', bank: '#8f8a7e', quay: '#9b958a', sand: '#c9b994',
     dressing: [['broadleaf', 0.55, '#3f6a3a'], ['poplar', 0.3, '#4a7a3e'], ['bush', 0.15, '#4f7a3e']] },
   // The Mekong: wide brown water, palms and banana plants, red earth banks. (Moses, 22 Oct 2026: it read as
   // sand. Silty olive at the banks, a green-grey middle (a river players read as water), a glint of sky, white only
   // where it really falls: `rapids`.)
-  mekong: { water: '#6c7452', deep: '#466467', foam: '#ece4d2', glint: '#dce8ee', rapids: [0.18, 0.32], bank: '#a8784a', quay: '#9a8f7a', sand: '#c9a06a',
+  mekong: { water: '#6c7452', deep: '#466467', foam: '#ece4d2', glint: '#dce8ee', rapids: [0.18, 0.32], hillside: ['#5a8a3a', '#4a7a32'], bank: '#a8784a', quay: '#9a8f7a', sand: '#c9a06a',
     dressing: [['palm', 0.45], ['banana', 0.3], ['broadleaf', 0.25, '#3f7f3a']] },
   // The Mississippi's bayou: muddy olive-brown water, cypress hung with moss, reeds on the banks.
-  mississippi: { water: '#6f6a44', deep: '#57533a', foam: '#e8e6d4', bank: '#7a6f48', quay: '#8f8676', sand: '#b8a67a',
+  mississippi: { water: '#6f6a44', deep: '#57533a', glint: '#dce4e8', rapids: [0.18, 0.32], hillside: ['#5f7a3a', '#4f6a34'], foam: '#e8e6d4', bank: '#7a6f48', quay: '#8f8676', sand: '#b8a67a',
     dressing: [['cypress', 0.5], ['broadleaf', 0.3, '#4f6f34'], ['bush', 0.2, '#5f7a3e']] },
   // The Zambezi: dark water above the great falls, rocky lips, savannah with acacias.
-  zambezi: { water: '#4f7a6e', deep: '#3a5f56', foam: '#f4f8f6', bank: '#6f6656', quay: '#7a7468', sand: '#c4ac7e',
+  zambezi: { water: '#4f7a6e', deep: '#3a5f56', glint: '#e4eef0', rapids: [0.18, 0.32], hillside: ['#8f9a52', '#7a8a48'], foam: '#f4f8f6', bank: '#6f6656', quay: '#7a7468', sand: '#c4ac7e',
     dressing: [['acacia', 0.5], ['broadleaf', 0.25, '#5f7f3a'], ['rock', 0.25, '#5a544c']] },
   // The Yangtze: grey-green water under steep green mountains, bamboo on the banks.
-  yangtze: { water: '#6f8f7e', deep: '#56746a', foam: '#eef2ee', bank: '#8a8670', quay: '#8f8b80', sand: '#b8ae8e',
+  yangtze: { water: '#6f8f7e', deep: '#56746a', glint: '#e4eef0', rapids: [0.18, 0.32], hillside: ['#4f8a3e', '#3f7a36'], foam: '#eef2ee', bank: '#8a8670', quay: '#8f8b80', sand: '#b8ae8e',
     dressing: [['bamboo', 0.4], ['broadleaf', 0.4, '#3f6f3a'], ['rock', 0.2, '#6f6a60']] },
   // The Thames: a grey-green tidal river between stone embankments, plane trees and city land.
   thames: { water: '#5a7a78', deep: '#46625f', foam: '#e4ecea', bank: '#7f7a6c', quay: '#a8a090', sand: '#b8ac8e',
@@ -374,7 +374,7 @@ export function makeRiver(centerline, channel, kit, { flight, liftAt, bounds }) 
     for (let i = 0; i < n; i += every) {
       if (halfW[i] < 2) continue;
       for (const sg of [1, -1]) {
-        for (let d = -3; d <= SHORE + 2; d += Math.min(cell / 2.2, 5)) {
+        for (let d = -3; d <= SHORE + 2; d += Math.min(cell / 2.2, 5) * (SHORE / SHORE_M)) { // (a nearer river's longer shore: as many points, further apart)
           const e = halfW[i] + d;
           // (The bank's edge, either side of the river's middle, across the river: the track's side vector.)
           pts.push({ x: cx[i] + tx[i] * sg * e, z: cz[i] + tz[i] * sg * e });
@@ -468,7 +468,7 @@ export function makeRiver(centerline, channel, kit, { flight, liftAt, bounds }) 
         }
         if (glint) {
           // (Short wavelets across the current, scattered at random: never in rows, so never a road's markings.)
-          const n = lite ? 2 : 3;
+          const n = lite ? 1 : 2;
           for (let g = 0; g < n; g += 1) {
             const h = Math.sin(i * 12.9898 + k * 78.233 + g * 37.719) * 43758.5453;
             const r = h - Math.floor(h);

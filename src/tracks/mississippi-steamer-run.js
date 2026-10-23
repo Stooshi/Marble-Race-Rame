@@ -16,7 +16,7 @@ module.exports = track({
   biome: 'meadow',
   lighting: 'sunset',
   variants: ['day'],
-  river: { palette: 'mississippi', side: 'left', width: 150, banks: 'bayou' },
+  river: { palette: 'mississippi', side: 'left', width: 150, banks: 'bayou', slope: 0.8, gap: 10 },
   coaster: { colours: { support: '#6a4a32', rail: '#f4f2ea', tie: '#3a2a20' } },
   signature: 'Through the steamer',
   start: { landmark: 'levee-houses', scenery: ['cypress'], type: 'river-boat', gate: 'barrier', shots: { countdown: 'above', launch: 'side' } },
@@ -24,6 +24,7 @@ module.exports = track({
   designChanges: [
     'Built from the staggered drop and the steamer pass, the library layout made for this track: a levee straight, a straight through a paddle steamer (a boost), a sweep out over the bayou, a drop, the hairpin, S-bends through the river town, a slalom drop, a sweep to the landing and the run-in.',
     'The steamer is a tunnel (its lower deck: white planking, red bands, lamps); it stands on the land at the water\'s edge (looks only).',
+    'Looks, from the portrait review (approved 23 Oct 2026): the river 10 m from the track beside the ground stretches with a low, gentle shore (`gap`), the land rising at most 0.8 beside another stretch (`slope`), green hills in patches away from the water (`hillside`), wavelets on the water and white water only at real rapids (looks only).',
   ],
   opening: opening('staggered-drop', {
     costumes: { block: 'barrel', slalom: 'fence-post' },

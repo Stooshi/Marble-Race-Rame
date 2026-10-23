@@ -50,6 +50,8 @@ Pushing to `Main` does **not** deploy the server. Moses deploys it by uploading 
 
 **Restart without a new deploy:** Railway dashboard → service → ⋮ → Restart. Races in progress resume or finish correctly after a restart.
 
+**Changing variables:** deploying staged variable changes in the dashboard can restart the service on an **older build** (seen 23 Oct 2026: `/health` without a code fingerprint, `/api/admin/session/start` 404). After any variables deploy, open `/health` and compare `codeFingerprint` as in step 7; if it's missing or different, run `railway up` again from the same folder.
+
 **[check] Deploying from GitHub:** Railway can also deploy automatically from the GitHub repository. That is switched off on purpose. If it's ever switched on, the "Deploying" section of the root README becomes true again.
 
 ## Data updates

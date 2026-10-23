@@ -16,7 +16,7 @@ module.exports = track({
   biome: 'city',
   lighting: 'night',
   variants: ['day'],
-  river: { palette: 'danube', side: 'left', width: 110, banks: 'quay' },
+  river: { palette: 'danube', side: 'left', width: 110, banks: 'quay', slope: 0.8, gap: 10 },
   coaster: { colours: { support: '#5a5e66', rail: '#e8e2cc', tie: '#2f3238' } },
   signature: 'The chain bridge slalom',
   start: { type: 'pier', gate: 'trapdoor', shots: { countdown: 'side', launch: 'low-chase' } },
@@ -24,6 +24,7 @@ module.exports = track({
   designChanges: [
     'Built from the tunnel launch (out from under the quay) and the bridge slalom, the library layout made for this track: a quay straight, a short climb, a slalom between a chain bridge\'s piers, a sweep out over the river, a drop, the hairpin, a spiral round an island, S-bends along the far bank and the run-in.',
     'The chain bridge stands high over the slalom (18 m clear of the rim at the lowest); its piers stand in the river and beside the track, never in it (looks only).',
+    'Looks, from the portrait review (approved 23 Oct 2026): the river 10 m from the track beside the ground stretches with a low, gentle shore (`gap`), the land rising at most 0.8 beside another stretch (`slope`), green hills in patches away from the water (`hillside`), wavelets on the water and white water only at real rapids (looks only).',
   ],
   opening: opening('tunnel-launch', {
     costumes: { block: 'stone-block', slalom: 'street-lamp' },
