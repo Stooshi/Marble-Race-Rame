@@ -42,7 +42,7 @@ export default function AuthForm({ onSuccess }) {
           <label className="field">
             <span>Username</span>
             <input value={fields.username} onChange={update('username')} autoComplete="username"
-              pattern="[A-Za-z0-9_]{3,24}" title="3–24 letters, numbers or underscores" required />
+              pattern="[A-Za-z0-9_]{3,24}" title="3–24 letters, numbers or underscores" required placeholder="Type your player name" />
           </label>
           <label className="field">
             <span>Email</span>

@@ -444,7 +444,7 @@ Defined in `src/sockets/index.js`. The client may send a JWT in `auth.token`; an
 - **Marbles:** `marbleLooks`, `marbleQuality` (every look against its shop picture).
 - **Checks over every track:** `edgeCheck`, `floorCheck`, `finishFrame`, `trackText`, `riverBeyond`; series: `athletics`, `blocks`, `canyon`, `tvMoments`.
 - **Players, names and buying:** `playerName` (the client's names match the server's), `nameFilter`, `country`, `starters`, `guestLogout`, `language`, `consent`, `getCoins`, `giftCodes`, `googlePlayBilling`, `limitedEdition`, `holidayCollection`, `push`, `roomTimer`, `storeRules` (`docs/08-store-rules.md`).
-- **Other:** `finishShow`, `confetti`, `utils`, `sound`, `appShell`, `appLayout`, `raceStart` (a late view held back to show the countdown), `prerender`, `launchFixes`, `appRelease` (app version, iPhone project version lines on the real `project.pbxproj`, release notes, store-text limits), `staleCode`, `canonical`, `trackBanners` (every track has a picture, both sizes, under 40 kB), `help` (the Help Centre's texts, numbers from the settings files, placeholders kept, the search).
+- **Other:** `finishShow`, `confetti`, `utils`, `sound`, `appShell`, `appLayout`, `namePlaceholder` (every empty player-name field shows "Type your player name"), `raceStart` (a late view held back to show the countdown), `prerender`, `launchFixes`, `appRelease` (app version, iPhone project version lines on the real `project.pbxproj`, release notes, store-text limits), `staleCode`, `canonical`, `trackBanners` (every track has a picture, both sizes, under 40 kB), `help` (the Help Centre's texts, numbers from the settings files, placeholders kept, the search).
 
 ## Known stale comments
 

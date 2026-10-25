@@ -78,7 +78,7 @@ export function ChooseNameForm({ user, label = 'Choose your name', note = 'Shown
     <form className="ms-namemenu__form" onSubmit={submit}>
       <label htmlFor="ms-choose-name">{label}</label>
       <div className="ms-namemenu__row">
-        <input id="ms-choose-name" value={name} onChange={(e) => { setName(e.target.value); setSaved(false); }} maxLength={24} autoComplete="nickname" placeholder="Your name" />
+        <input id="ms-choose-name" value={name} onChange={(e) => { setName(e.target.value); setSaved(false); }} maxLength={24} autoComplete="nickname" placeholder="Type your player name" />
         <button type="submit" className="ms-btn ms-btn--sm" disabled={busy}>{busy ? 'Saving…' : 'Save'}</button>
       </div>
       {error && <span className="ms-namemenu__error" role="alert">{error}</span>}

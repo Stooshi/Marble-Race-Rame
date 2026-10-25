@@ -252,7 +252,7 @@ export default function RoomPage() {
           {race?.track.hostedSeason && <span className="ms-note" role="note">{race.track.hostedSeason.name.replace(/ \d{4}$/, '')} track: hosted by a pass holder, so everyone here races it.</span>}
           {isGuestName && (
             <form className="ms-form ms-row" style={{ display: 'flex', gap: 8 }} onSubmit={(e) => { e.preventDefault(); if (name.trim()) saveName(); }}>
-              <input aria-label="Your name in the room" placeholder="Your name, so friends know it's you" maxLength={40} value={name} onChange={(e) => setName(e.target.value)} style={{ flex: '1 1 200px' }} />
+              <input aria-label="Your name in the room" placeholder="Type your player name" maxLength={40} value={name} onChange={(e) => setName(e.target.value)} style={{ flex: '1 1 200px' }} />
               <button type="submit" className="ms-btn ms-btn--sm" disabled={!name.trim() || Boolean(busy)}>Save</button>
             </form>
           )}

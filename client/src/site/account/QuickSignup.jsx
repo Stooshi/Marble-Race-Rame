@@ -105,7 +105,7 @@ export default function QuickSignup({ onDone, onLater, onSaved, onStep, heading:
       <H className="ms-save__h">{title ?? t.formTitle}</H>
       <p className="ms-save__p">{sub ?? t.formSub}</p>
       <label>{t.name}
-        <input value={f.username} onChange={set('username')} autoComplete="username" pattern="[A-Za-z0-9_]{3,24}" required maxLength={24} />
+        <input value={f.username} onChange={set('username')} autoComplete="username" pattern="[A-Za-z0-9_]{3,24}" required maxLength={24} placeholder={t.namePlaceholder} />
         <span className="ms-note" style={{ fontWeight: 400 }}>{t.nameHint}</span>
       </label>
       <label>{t.email}<input type="email" value={f.email} onChange={set('email')} autoComplete="email" inputMode="email" required maxLength={254} placeholder="you@example.com" /></label>
