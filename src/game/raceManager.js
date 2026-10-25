@@ -30,6 +30,8 @@ class RaceManager {
     this.io = null;
     this.active = new Map(); // raceId -> ActiveRace
     this.schedulerTimer = null;
+    this.startTimers = new Map(); // raceId -> a timer starting it at its scheduled time (to the second)
+    this.starting = new Set(); // races being started by the scheduler right now (never twice)
   }
 
   init(io) {
@@ -213,6 +215,50 @@ class RaceManager {
     }
   }
 
+  /**
+   * Starts a lobby race whose scheduled time has come (still waiting, still scheduled, the time
+   * reached: a cancel or an early start in the meantime wins). Then `afterScheduledStart(raceId)`
+   * (a friend room tells everyone in it). Never twice at once.
+   */
+  async startScheduled(id) {
+    if (this.starting.has(id)) return false;
+    this.starting.add(id);
+    try {
+      const { rows } = await db.query(
+        `SELECT 1 FROM races WHERE id = $1 AND status = 'lobby' AND scheduled_at IS NOT NULL AND scheduled_at <= now()`,
+        [id],
+      );
+      if (!rows.length) return false;
+      await this.start(id, null);
+      this.afterScheduledStart?.(id);
+      return true;
+    } catch (err) {
+      console.error(`[race ${id}] scheduled start failed: ${err.message}`);
+      // Leave it in the lobby for a manual start instead of retrying forever.
+      await db.query(`UPDATE races SET scheduled_at = NULL WHERE id = $1 AND status = 'lobby'`, [id]).catch(() => {});
+      this.afterScheduledStart?.(id);
+      return false;
+    } finally {
+      this.starting.delete(id);
+    }
+  }
+
+  /**
+   * A start to the second at `at` (a friend room's "Start in…", 23 Oct 2026). The scheduler's poll
+   * every 5 s stays the safety net (after a restart the timer is gone, the scheduled time is not).
+   */
+  scheduleStart(id, at) {
+    this.unscheduleStart(id);
+    const timer = setTimeout(() => { this.startTimers.delete(id); this.startScheduled(id); }, Math.max(0, new Date(at).getTime() - Date.now()));
+    timer.unref?.();
+    this.startTimers.set(id, timer);
+  }
+
+  unscheduleStart(id) {
+    clearTimeout(this.startTimers.get(id));
+    this.startTimers.delete(id);
+  }
+
   /** Periodically auto-starts lobby races whose scheduled time has arrived. */
   startScheduler() {
     const run = async () => {
@@ -220,13 +266,7 @@ class RaceManager {
         const { rows } = await db.query(
           `SELECT id FROM races WHERE status = 'lobby' AND scheduled_at IS NOT NULL AND scheduled_at <= now()`,
         );
-        for (const { id } of rows) {
-          await this.start(id, null).catch(async (err) => {
-            console.error(`[race ${id}] scheduled start failed: ${err.message}`);
-            // Leave it in the lobby for a manual start instead of retrying forever.
-            await db.query(`UPDATE races SET scheduled_at = NULL WHERE id = $1 AND status = 'lobby'`, [id]);
-          });
-        }
+        for (const { id } of rows) await this.startScheduled(id);
       } catch (err) {
         console.error('[scheduler] poll failed', err);
       }
@@ -237,6 +277,7 @@ class RaceManager {
 
   shutdown() {
     clearInterval(this.schedulerTimer);
+    for (const id of [...this.startTimers.keys()]) this.unscheduleStart(id);
     for (const raceId of [...this.active.keys()]) this.stop(raceId);
   }
 }

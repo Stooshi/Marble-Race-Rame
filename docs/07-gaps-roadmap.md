@@ -77,4 +77,4 @@
    - new collections (Handmade Heritage 8 Dec, Moonies & Glow 15 Dec, Art Glass 22 Dec);
    - track series;
    - trading.
-- **Queued (not before Sunday 25 Oct): friend rooms' start timer.** The host taps "Start in…" (30 s, 1 min, 2 min); everyone in the room and anyone opening the link sees the countdown; at zero the server starts the race (computer players fill the empty places), even if the host's app has closed; the host can start early or cancel; the host-only Start stays. Built on `races.scheduled_at` and the race scheduler (no schema change), exact to the second for rooms. Estimate given to Moses: about 5 hours and a server deploy; he asked for the estimate before building.
+- **Friend rooms' start timer: built 25 Oct 2026, waits for the server deploy** ("Start in…" 30 s / 1 min / 2 min, server-side, start now, cancel; `docs/04-game-rules.md`).

@@ -11,6 +11,9 @@
  *   POST /api/rooms/:code/track        host: { track_id } or { random: true } for the race waiting to start
  *   POST /api/rooms/:code/remove       host: { user_id } takes a player out of the waiting race
  *   POST /api/rooms/:code/start        host: start the race (empty places fill with CPU players)
+ *   POST /api/rooms/:code/start-in     host: { seconds: 30 | 60 | 120 } start the waiting race then, on the
+ *                                      server (it starts even if the host's app closes); again: a new time
+ *   POST /api/rooms/:code/start-in/cancel  host: no timed start (the race waits for Start again)
  *   POST /api/rooms/:code/close        host: close the room
  *   GET  /api/rooms/:code/invitable    host: friends to invite (who raced in a friend room with them in the last
  *                                      30 days) → { friends: [{ userId, name }], pushOn }
@@ -18,7 +21,8 @@
  *                                      decides; at most one per friend and room every 10 minutes)
  *
  * A room's races are ordinary races (races.room_id) that never show in the public
- * lists and never start by themselves. When one finishes, the next is set up at
+ * lists and never start by themselves, unless the host sets a start timer (races.scheduled_at:
+ * the race manager starts it to the second, its 5-second poll the safety net). When one finishes, the next is set up at
  * once with everyone who raced (rooms.afterRace, called by the race manager), so
  * the group moves on together. Socket: 'room:watch' { code } → 'room:updated' { code }.
  */
@@ -41,6 +45,7 @@ const CODE_LENGTH = 6;
 const IDLE_HOURS = 2;
 const ROOMS_PER_HOUR = 10;
 const PLAYERS = 20; // a room race: up to 20 marbles, CPU players fill the rest
+const START_IN = [30, 60, 120]; // the host's "Start in…" choices, in seconds
 
 function newCode() {
   let code = '';
@@ -133,7 +138,7 @@ async function roomView(code, user) {
   const room = await db.withTransaction((client) => lockRoom(client, c));
   const { rows: host } = await db.query('SELECT id, username, display_name, is_guest FROM users WHERE id = $1', [room.host_id]);
   const { rows: race } = await db.query(
-    `SELECT r.id, r.status, r.started_at, r.countdown_ms, r.finished_at, t.id AS track_id, t.slug AS track_slug, t.name AS track_name, t.season_key
+    `SELECT r.id, r.status, r.started_at, r.countdown_ms, r.finished_at, r.scheduled_at, t.id AS track_id, t.slug AS track_slug, t.name AS track_name, t.season_key
        FROM races r JOIN tracks t ON t.id = r.track_id WHERE r.id = $1`,
     [room.current_race_id],
   );
@@ -171,6 +176,9 @@ async function roomView(code, user) {
       id: race[0].id,
       status: race[0].status,
       startedAt: race[0].started_at,
+      // The host's start timer: when the race starts by itself (and the server's clock now, for the countdown).
+      startsAt: race[0].status === 'lobby' && race[0].scheduled_at ? new Date(race[0].scheduled_at).toISOString() : null,
+      serverNow: new Date().toISOString(),
       track: { id: race[0].track_id, slug: race[0].track_slug, name: race[0].track_name, ...(hostedSeason && { hostedSeason }) },
     } : null,
     players: players.map((p) => ({
@@ -283,11 +291,56 @@ router.post('/:code/start', requireAuth, async (req, res) => {
     if (!race || race.status !== 'lobby') throw conflict('This race has already started');
     raceId = race.id;
   });
-  // (Decided outside the room's transaction: the race service locks the race itself.)
+  // (Decided outside the room's transaction: the race service locks the race itself. A start timer goes.)
+  raceManager.unscheduleStart(raceId);
   await raceManager.start(raceId, req.user);
   emitRoom(code);
   res.status(202).json(await roomView(code, req.user));
 });
+
+/** POST /api/rooms/:code/start-in { seconds: 30 | 60 | 120 } */
+router.post('/:code/start-in', requireAuth, async (req, res) => {
+  const body = validate(req.body ?? {}, { seconds: { type: 'int', required: true } });
+  if (!START_IN.includes(body.seconds)) throw badRequest('Start in 30 seconds, 1 minute or 2 minutes');
+  let raceId = null;
+  let at = null;
+  const code = await onRoom(req, async (client, room, race) => {
+    assertHost(room, req.user);
+    if (!race || race.status !== 'lobby') throw conflict('This race has already started');
+    const { rows } = await client.query(
+      `UPDATE races SET scheduled_at = now() + make_interval(secs => $2), updated_at = now() WHERE id = $1 RETURNING scheduled_at`,
+      [race.id, body.seconds],
+    );
+    raceId = race.id;
+    at = rows[0].scheduled_at;
+  });
+  raceManager.scheduleStart(raceId, at);
+  res.json(await roomView(code, req.user));
+});
+
+/** POST /api/rooms/:code/start-in/cancel */
+router.post('/:code/start-in/cancel', requireAuth, async (req, res) => {
+  let raceId = null;
+  const code = await onRoom(req, async (client, room, race) => {
+    assertHost(room, req.user);
+    if (race?.status === 'lobby') {
+      await client.query('UPDATE races SET scheduled_at = NULL, updated_at = now() WHERE id = $1', [race.id]);
+      raceId = race.id;
+    }
+  });
+  if (raceId) raceManager.unscheduleStart(raceId);
+  res.json(await roomView(code, req.user));
+});
+
+/** A room's race started by its timer: everyone in the room is told (they go to the race). */
+raceManager.afterScheduledStart = async (raceId) => {
+  try {
+    const { rows } = await db.query('SELECT ro.code FROM rooms ro JOIN races r ON r.room_id = ro.id WHERE r.id = $1', [raceId]);
+    if (rows[0]) emitRoom(rows[0].code);
+  } catch (err) {
+    console.error(`[room] telling the room about race ${raceId} failed`, err);
+  }
+};
 
 const pushNotes = require('../push');
 const pushSwitch = require('../../client/src/shared/push.json');

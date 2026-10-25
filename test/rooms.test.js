@@ -110,3 +110,4 @@ test('a room from start to the next race, on a real database', { skip: !DB }, as
     await db.pool?.end?.();
   }
 });
+

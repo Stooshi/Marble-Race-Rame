@@ -173,6 +173,7 @@ Reports are saved in `reports/<slug>/`. Track design rules:
 
 - The host creates a room and shares its link (`/r/CODE`). Friends join, as guests if they need to.
 - The host picks the track and starts each race. Empty places fill with computer players, up to 20.
+- **Start timer** (25 Oct 2026): instead, the host can tap "Start in…" 30 s, 1 min or 2 min. Everyone in the room, and anyone opening the link, sees the countdown; at zero the server starts the race, even if the host's app has closed. The host can start early (Start now) or cancel the countdown; a new choice replaces the old one.
 - After a race, the next one is set up with everyone still in the room. There is no chat.
 - A room closes after 2 hours without a race.
 - **Season tracks in rooms:** a host with the season pass can pick a season track, and everyone in the room races it, pass or not ("hosted by a pass holder"). A host without the pass sees season tracks locked. If the host's pass is refunded, the room's next race goes back to a random free track.

@@ -517,6 +517,8 @@ a.ms-tile:hover, a.ms-card:hover { text-decoration: none; border-color: var(--ms
   color: var(--ms-soft); font: inherit; font-weight: 700; font-size: 0.95rem; cursor: pointer;
 }
 .ms-chips button[aria-pressed="true"] { background: var(--ms-text); border-color: var(--ms-text); color: var(--ms-ink); }
+.ms-room-timer { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.ms-room-timer__clock { font-family: var(--ms-cond); font-size: 2.4rem; line-height: 1; font-variant-numeric: tabular-nums; color: var(--ms-yellow); }
 .ms-chips button:focus-visible, .ms-bag:focus-visible, .ms-mcard--grid:focus-visible, .ms-sheet__shades button:focus-visible { outline: 3px solid var(--ms-yellow); outline-offset: 2px; }
 .ms-find {
   font: inherit; font-size: 0.95rem; min-height: 40px; width: min(220px, 100%); padding: 8px 14px; border-radius: 999px;

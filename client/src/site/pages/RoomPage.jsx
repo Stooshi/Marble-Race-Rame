@@ -49,6 +49,40 @@ function PushInvites({ code }) {
  * empty places). When the race starts, everyone in it goes to the race; after
  * the finish the room's next race is ready with the same players.
  */
+const START_IN = [[30, '30 s'], [60, '1 min'], [120, '2 min']];
+
+/** "1:05", "0:09". */
+export function clock(ms) {
+  const s = Math.max(0, Math.ceil(ms / 1000));
+  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+}
+
+/**
+ * The host's start timer, as everyone in the room sees it (Moses, 24 Oct 2026): the time left by the
+ * server's clock (`skew`: how far this device's clock is from the server's). At zero the server starts
+ * the race; `onZero` looks again a moment later in case the room's message was missed.
+ */
+function StartCountdown({ startsAt, skew, onZero }) {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const t = setInterval(() => setNow(Date.now()), 250);
+    return () => clearInterval(t);
+  }, []);
+  const left = new Date(startsAt).getTime() - (now + skew);
+  const zero = left <= 0;
+  useEffect(() => {
+    if (!zero) return undefined;
+    const t = setTimeout(onZero, 1500);
+    return () => clearTimeout(t);
+  }, [zero, onZero]);
+  return (
+    <div className="ms-msg ms-room-timer" role="timer" aria-label={zero ? 'The race is starting' : `The race starts in ${clock(left)}`}>
+      <span>{zero ? 'Starting…' : 'The race starts in'}</span>
+      {!zero && <b className="ms-room-timer__clock">{clock(left)}</b>}
+    </div>
+  );
+}
+
 export default function RoomPage() {
   const { code: rawCode } = useParams();
   const code = (rawCode ?? '').toUpperCase();
@@ -70,9 +104,12 @@ export default function RoomPage() {
   // (In the apps the page's own address is the app's inside one, so share the website's.)
   const link = `${window.Capacitor?.isNativePlatform?.() ? SITE_URL : window.location.origin}/r/${code}`;
 
+  const [skew, setSkew] = useState(0); // (the server's clock minus this device's, for the start timer)
   const load = useCallback(async () => {
     try {
-      setView(await api.room(code));
+      const v = await api.room(code);
+      if (v?.race?.serverNow) setSkew(new Date(v.race.serverNow).getTime() - Date.now());
+      setView(v);
       setError(null);
     } catch (e) {
       setError(e);
@@ -236,6 +273,7 @@ export default function RoomPage() {
             {view.players.length === 0 && <li className="ms-note">Nobody is in yet.</li>}
           </ul>
 
+          {open && waiting && race.startsAt && <StartCountdown key={race.startsAt} startsAt={race.startsAt} skew={skew} onZero={load} />}
           {open && waiting && me?.isHost && (
             <div style={{ display: 'grid', gap: 10 }}>
               <label className="ms-form" style={{ display: 'grid', gap: 6 }}>
@@ -251,11 +289,24 @@ export default function RoomPage() {
                 </select>
               </label>
               <button type="button" className="ms-btn ms-btn--primary ms-btn--lg" disabled={Boolean(busy) || !me.inRace} onClick={run('start', () => api.roomStart(code))}>
-                {busy === 'start' ? 'STARTING…' : `START THE RACE (${view.players.length} ${view.players.length === 1 ? 'player' : 'players'})`}
+                {busy === 'start' ? 'STARTING…' : race.startsAt ? 'START NOW' : `START THE RACE (${view.players.length} ${view.players.length === 1 ? 'player' : 'players'})`}
               </button>
+              {race.startsAt ? (
+                <button type="button" className="ms-btn ms-btn--ghost ms-btn--sm" style={{ justifySelf: 'start' }} disabled={Boolean(busy)} onClick={run('cancel-timer', () => api.roomStartInCancel(code))}>
+                  Cancel the countdown
+                </button>
+              ) : (
+                <div className="ms-chips" role="group" aria-label="Start in…">
+                  <span className="ms-chips__label">Start in…</span>
+                  {START_IN.map(([s, label]) => (
+                    <button key={s} type="button" disabled={Boolean(busy) || !me.inRace} onClick={run(`timer-${s}`, () => api.roomStartIn(code, s))}>{label}</button>
+                  ))}
+                </div>
+              )}
+              <span className="ms-note">The race starts by itself when the countdown ends, even if you close the app. Empty places fill with computer players.</span>
             </div>
           )}
-          {open && waiting && !me?.isHost && me?.inRace && <p className="ms-note" aria-live="polite">You're in. Waiting for {host?.name ?? 'the host'} to start the race…</p>}
+          {open && waiting && !me?.isHost && me?.inRace && !race.startsAt && <p className="ms-note" aria-live="polite">You're in. Waiting for {host?.name ?? 'the host'} to start the race…</p>}
           {open && waiting && !me?.inRace && (
             <button type="button" className="ms-btn ms-btn--primary" disabled={Boolean(busy) || full} onClick={() => { setLeft(false); run('join', () => api.joinRoom(code))(); }}>
               {full ? 'THE ROOM IS FULL' : 'JOIN THE RACE'}

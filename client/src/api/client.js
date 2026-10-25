@@ -178,6 +178,9 @@ export const api = {
   roomTrack: (code, trackId) => request(`/rooms/${encodeURIComponent(code)}/track`, { method: 'POST', body: trackId ? { track_id: trackId } : { random: true } }),
   roomRemove: (code, userId) => request(`/rooms/${encodeURIComponent(code)}/remove`, { method: 'POST', body: { user_id: userId } }),
   roomStart: (code) => request(`/rooms/${encodeURIComponent(code)}/start`, { method: 'POST' }),
+  // The host's start timer: 30, 60 or 120 seconds; the server starts the race then (POST again: a new time).
+  roomStartIn: (code, seconds) => request(`/rooms/${encodeURIComponent(code)}/start-in`, { method: 'POST', body: { seconds } }),
+  roomStartInCancel: (code) => request(`/rooms/${encodeURIComponent(code)}/start-in/cancel`, { method: 'POST' }),
   roomClose: (code) => request(`/rooms/${encodeURIComponent(code)}/close`, { method: 'POST' }),
   setName: (name) => request('/users/me', { method: 'PATCH', body: { display_name: name } }),
   saveSettings: (settings) => request('/users/me/settings', { method: 'PUT', body: settings }),
