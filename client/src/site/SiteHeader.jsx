@@ -5,9 +5,8 @@ import { formatNumber } from '../utils/format';
 import Logo from './Logo';
 import SoundControl from './SoundControl';
 import LogoutButton from './account/LogoutButton';
-import AppHeader, { MenuSheet } from './AppHeader';
+import { MenuSheet } from './MenuSheet';
 import NameChip from './account/NameChip';
-import { isNativeApp } from '../app/native';
 
 /** Which header a page wears: the landing page's, the race flow's slim one, checkout's, or the game's. */
 export function headerKind(pathname, isAuthenticated) {
@@ -30,9 +29,13 @@ function UserChips({ user }) {
   );
 }
 
+/**
+ * One header for the website and the iPhone and Android apps (Moses, 25 Oct 2026: "the apps use the same
+ * phone layout as the mobile website"). On a phone's screen it is the compact bar with the menu drawer
+ * (site.css); the apps are a phone's screen, so they get exactly that. test/appLayout.test.jsx checks
+ * the apps render the same header as the website.
+ */
 export default function SiteHeader() {
-  // The iPhone and Android apps have their own compact header (AppHeader); the website keeps this one.
-  if (isNativeApp()) return <AppHeader />;
   return <WebHeader />;
 }
 

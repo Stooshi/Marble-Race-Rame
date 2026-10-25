@@ -213,7 +213,7 @@ a.ms-chip:hover { text-decoration: none; border-color: var(--ms-muted); }
 
 /* Phones (portrait up to 700 px wide, or landscape up to 500 px tall; Moses, 25 Oct 2026): the header as
    in the apps, a small logo, the coins, SAVE and one menu button; the pages, sound and log out in a
-   drawer (MenuSheet, AppHeader.jsx). Computers keep the row of pages. */
+   drawer (MenuSheet.jsx); the apps get exactly this (Moses, 25 Oct 2026). Computers keep the row of pages. */
 .ms-header .ms-header__menu { display: none; }
 @media (max-width: 700px), (orientation: landscape) and (max-height: 500px) {
   .ms-header .ms-nav, .ms-header .ms-sound, .ms-header .ms-header__logout, .ms-header .ms-chip--streak, .ms-header .ms-header__save, .ms-header .ms-wide-only { display: none; }
@@ -230,7 +230,6 @@ a.ms-chip:hover { text-decoration: none; border-color: var(--ms-muted); }
 .ms-chip--name { gap: 6px; max-width: 220px; cursor: pointer; font: inherit; font-family: var(--ms-cond); font-weight: 700; font-size: 0.95rem; }
 .ms-chip--name .ms-chip__text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
 .ms-chip__unsaved { flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--ms-orange); box-shadow: 0 0 0 2px rgba(255, 140, 66, 0.25); }
-.ms-apphead__name { max-width: 30vw; padding: 4px 10px; font-size: 0.9rem; }
 .ms-namemenu { position: fixed; inset: 0; z-index: 90; background: rgba(5, 8, 16, 0.5); display: flex; justify-content: flex-end; align-items: flex-start; }
 .ms-namemenu__panel {
   margin: calc(env(safe-area-inset-top, 0px) + 60px) max(12px, env(safe-area-inset-right, 0px)) 0 12px; width: calc(100% - 24px); max-width: 340px; box-sizing: border-box;
@@ -294,6 +293,7 @@ a.ms-chip::after, button.ms-chip::after { content: ''; position: absolute; inset
 .ms-social a { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 10px; color: var(--ms-soft); }
 .ms-social a:hover, .ms-social a:focus-visible { color: var(--ms-text); background: rgba(255, 255, 255, 0.06); }
 .ms-footer__company { flex-basis: 100%; margin: 0; font-size: 0.82rem; line-height: 1.5; }
+.ms-footer__build { flex-basis: 100%; margin: 0; font-size: 0.72rem; color: var(--ms-soft); opacity: 0.7; }
 .ms-footer__company a { color: var(--ms-soft); }
 .ms-legal__address { font-style: normal; color: var(--ms-soft); line-height: 1.6; }
 
@@ -671,25 +671,13 @@ a.ms-tile:hover, a.ms-card:hover { text-decoration: none; border-color: var(--ms
 .is-app input, .is-app textarea { -webkit-user-select: text; user-select: text; }
 .is-app { -webkit-tap-highlight-color: transparent; }
 
-/* The apps' own header (AppHeader.jsx; Moses, 22 Oct 2026): one compact bar, a small logo, the coins,
-   sound and one menu button, clear of the notch and the status bar. The website keeps .ms-header. */
-.ms-apphead {
-  position: sticky; top: 0; z-index: 50;
-  background: rgba(14, 19, 32, 0.94); backdrop-filter: blur(10px);
-  border-bottom: 1px solid var(--ms-border);
-  padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px) 0 env(safe-area-inset-left, 0px);
-}
-.ms-apphead__bar { display: flex; align-items: center; gap: 6px; height: 48px; padding: 0 6px 0 8px; }
-.ms-apphead__logo { display: inline-flex; align-items: center; min-height: 44px; padding: 0 4px; }
-.ms-apphead__logo:hover { text-decoration: none; }
+/* (The apps use the website's header and its phone layout: SiteHeader.jsx, Moses, 25 Oct 2026. The
+   round icon buttons, the menu button among them, keep this class.) */
 .ms-apphead__icon {
   display: inline-grid; place-items: center; width: 44px; height: 44px; flex: none;
   background: none; border: 0; border-radius: 12px; color: var(--ms-text); cursor: pointer;
 }
 .ms-apphead__icon:active { background: rgba(255, 255, 255, 0.08); }
-.ms-apphead__back { margin-right: -6px; }
-.ms-apphead__coins { padding: 4px 10px; font-size: 0.9rem; }
-.ms-apphead .ms-sound__btn { width: 44px; height: 44px; border: 0; }
 
 /* The menu: a bottom sheet. */
 .ms-appmenu { position: fixed; inset: 0; z-index: 90; background: rgba(5, 8, 16, 0.6); display: flex; align-items: flex-end; justify-content: center; }
@@ -732,21 +720,20 @@ a.ms-tile:hover, a.ms-card:hover { text-decoration: none; border-color: var(--ms
 .ms-appmenu__top { display: flex; justify-content: space-between; align-items: center; }
 .ms-appmenu--drawer .ms-appmenu__pages { grid-template-columns: 1fr; }
 
-/* A race on the whole screen (html.is-race-full, while the 3D view shows; Race.jsx): in the apps, and on a
-   phone's website (html.is-race-web, Moses, 25 Oct 2026). The race fills the screen in portrait and
-   landscape, the camera buttons lie over its foot, and everything keeps clear of the notch and the home
-   bar. In the apps the bar becomes two floating buttons (back, menu); on the website the header and
-   footer go, and a ✕ (leave) and a ⋯ (the 2D view) float over the race instead. */
+/* A race on the whole screen (html.is-race-full with html.is-race-phone, while the 3D view shows; Race.jsx):
+   on a phone's screen, the website and the apps alike (Moses, 25 Oct 2026). The race fills the screen in
+   portrait and landscape, the camera buttons lie over its foot, and everything keeps clear of the notch
+   and the home bar. The header and footer go, and a ✕ (leave) and a ⋯ (the 2D view) float over the race. */
 .is-race-full, .is-race-full body { overflow: hidden; overscroll-behavior: none; } /* (html too: Safari scrolls the page under a fixed layer otherwise) */
-.is-race-web.is-race-full .ms-header { display: none; }
+.is-race-phone.is-race-full .ms-header { display: none; }
 .race-float { display: none; }
-.is-race-web.is-race-full .race-float {
+.is-race-phone.is-race-full .race-float {
   display: inline-grid; place-items: center; position: fixed; z-index: 71; top: calc(env(safe-area-inset-top, 0px) + 8px);
   width: 40px; height: 40px; border: 0; border-radius: 50%; background: rgba(17, 19, 26, 0.62); color: #fff; cursor: pointer;
 }
 .race-float::after { content: ''; position: absolute; inset: -2px; } /* (a 44 px tap target) */
-.is-race-web.is-race-full .race-float--exit { left: calc(env(safe-area-inset-left, 0px) + 8px); }
-.is-race-web.is-race-full .race-float--more { right: calc(env(safe-area-inset-right, 0px) + 8px); }
+.is-race-phone.is-race-full .race-float--exit { left: calc(env(safe-area-inset-left, 0px) + 8px); }
+.is-race-phone.is-race-full .race-float--more { right: calc(env(safe-area-inset-right, 0px) + 8px); }
 .race-more-menu {
   position: fixed; z-index: 72; top: calc(env(safe-area-inset-top, 0px) + 54px); right: calc(env(safe-area-inset-right, 0px) + 8px);
   display: grid; min-width: 170px; padding: 6px; border-radius: 14px; background: rgba(17, 19, 26, 0.92); border: 1px solid var(--ms-border);
@@ -754,15 +741,6 @@ a.ms-tile:hover, a.ms-card:hover { text-decoration: none; border-color: var(--ms
 .race-more-menu button { min-height: 44px; padding: 0 12px; border: 0; border-radius: 10px; background: none; color: #fff; font: inherit; font-weight: 600; text-align: left; cursor: pointer; }
 .race-more-menu button:hover, .race-more-menu button:focus-visible { background: rgba(255, 255, 255, 0.08); }
 .is-race-full .ms-footer, .is-race-full .ms-onsale { display: none; }
-.is-app.is-race-full .ms-apphead { position: fixed; inset: 0 0 auto 0; z-index: 70; background: none; backdrop-filter: none; border: 0; pointer-events: none; }
-.is-app.is-race-full .ms-apphead__bar { height: 52px; padding: 4px 6px; }
-.is-app.is-race-full .ms-apphead__logo, .is-app.is-race-full .ms-apphead__coins, .is-app.is-race-full .ms-apphead .ms-grow { display: none; }
-.is-app.is-race-full .ms-apphead__bar > * { pointer-events: auto; }
-.is-app.is-race-full .ms-apphead__bar { justify-content: space-between; }
-.is-app.is-race-full .ms-apphead__icon, .is-app.is-race-full .ms-apphead .ms-sound__btn {
-  background: rgba(17, 19, 26, 0.62); border-radius: 50%; color: #fff; width: 40px; height: 40px;
-}
-.is-app.is-race-full .ms-apphead .ms-sound { margin-left: auto; }
 .is-race-full .race-page {
   position: fixed; inset: 0; z-index: 40; max-width: none; margin: 0; padding: 0; background: #0E1320;
 }
@@ -770,8 +748,8 @@ a.ms-tile:hover, a.ms-card:hover { text-decoration: none; border-color: var(--ms
 .is-race-full .race-page .event-feed { display: none; }
 .is-race-full .race-page .live3d { position: absolute; inset: 0; }
 .is-race-full .race-page .preview3d__stage { position: absolute; inset: 0; height: auto; min-height: 0; border: 0; border-radius: 0; }
-/* 3D / 2D: top centre, between the floating buttons (apps); on the website behind the ⋯. */
-.is-race-web.is-race-full .race-page > .segmented { display: none; }
+/* 3D / 2D: behind the ⋯ on a phone; on a computer's full race (none now) top centre. */
+.is-race-phone.is-race-full .race-page > .segmented { display: none; }
 .is-race-full .race-page > .segmented {
   position: fixed; z-index: 71; top: calc(env(safe-area-inset-top, 0px) + 10px); left: 50%; transform: translateX(-50%); margin: 0;
   background: rgba(17, 19, 26, 0.62);

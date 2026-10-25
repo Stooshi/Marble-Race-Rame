@@ -226,14 +226,14 @@ export const PHONE_QUERY = '(max-width: 700px), (orientation: landscape) and (ma
 
 /**
  * The 3D race on the whole screen, from the countdown to the results: html.is-race-full while the 3D
- * view is shown. In the apps (Moses, 22 Oct 2026) the header becomes floating back and menu buttons; on
- * a phone's website (html.is-race-web, Moses, 25 Oct 2026) the header and footer go, a ✕ leaves the
- * race and a ⋯ holds the 2D view. The camera buttons lie over the race and in landscape the whole race is
- * on screen (site.css). Computers keep the page as it was.
+ * view is shown, on a phone's screen (html.is-race-phone, Moses, 25 Oct 2026): the header and footer go,
+ * a ✕ leaves the race and a ⋯ holds the 2D view; the camera buttons lie over the race and in landscape
+ * the whole race is on screen (site.css). The iPhone and Android apps always get this phone layout, the
+ * same as the mobile website (test/appLayout.test.jsx). Computers keep the page as it was.
  */
-function RaceFullScreen({ onLeave, on2d }) {
+export function RaceFullScreen({ onLeave, on2d }) {
   const native = isNativeApp();
-  const [phone, setPhone] = useState(() => !native && typeof window !== 'undefined' && Boolean(window.matchMedia?.(PHONE_QUERY).matches));
+  const [phone, setPhone] = useState(() => native || (typeof window !== 'undefined' && Boolean(window.matchMedia?.(PHONE_QUERY).matches)));
   const [more, setMore] = useState(false);
   useEffect(() => {
     if (native || !window.matchMedia) return undefined;
@@ -242,16 +242,14 @@ function RaceFullScreen({ onLeave, on2d }) {
     mq.addEventListener?.('change', change);
     return () => mq.removeEventListener?.('change', change);
   }, [native]);
-  const full = native || phone;
   useEffect(() => {
-    if (!full) return undefined;
+    if (!phone) return undefined;
     const root = document.documentElement;
-    root.classList.add('is-race-full');
-    if (!native) root.classList.add('is-race-web');
+    root.classList.add('is-race-full', 'is-race-phone');
     window.scrollTo?.(0, 0);
-    return () => root.classList.remove('is-race-full', 'is-race-web');
-  }, [full, native]);
-  if (native || !phone) return null;
+    return () => root.classList.remove('is-race-full', 'is-race-phone');
+  }, [phone]);
+  if (!phone) return null;
   return (
     <>
       <button type="button" className="race-float race-float--exit" aria-label="Leave the race" onClick={onLeave}>

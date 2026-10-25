@@ -38,6 +38,9 @@ On a Mac, do "Mac: one-time setup for both apps" first. The second half of this 
    npm install
    npm run app:sync
    ```
+   At the end it prints "Done (build <date> UTC)". Always open the projects with `npx cap open
+   android` / `npx cap open ios` from this same folder, so you run this build (the app's footer shows
+   "Build <date> UTC · app": it should match).
    If the Mac offers to install "command line developer tools", click **Install**, then type the
    `git clone` line again. Sign in to GitHub if asked.
 6. **Open the Android project once**, so Android Studio downloads what it needs: type

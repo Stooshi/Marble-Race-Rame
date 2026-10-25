@@ -1,52 +1,10 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { Link, NavLink } from 'react-router-dom';
 import { formatNumber } from '../utils/format';
 import { shownName } from '../shared/playerName';
-import Logo from './Logo';
 import SoundControl from './SoundControl';
 import LogoutButton from './account/LogoutButton';
-import NameChip from './account/NameChip';
-
-/**
- * The header inside the iPhone and Android apps (Moses, 22 Oct 2026, first Android test: "the apps look
- * like the website"). The website keeps SiteHeader. One compact bar, clear of the notch and the status
- * bar: a small logo, the coins, sound and one menu button; the pages behind the menu open in a bottom
- * sheet. In a race (html.is-race-full, set by the race page) the bar becomes two floating buttons over
- * the full-screen race: back, and the menu.
- */
-export default function AppHeader() {
-  const { pathname } = useLocation();
-  const navigate = useNavigate();
-  const { user, isAuthenticated, loading, token } = useAuth();
-  const signedIn = isAuthenticated || (loading && Boolean(token));
-  const home = signedIn ? '/home' : '/';
-  const [open, setOpen] = useState(false);
-  useEffect(() => { setOpen(false); }, [pathname]);
-  const back = () => (window.history.length > 1 ? navigate(-1) : navigate(home));
-
-  return (
-    <header className="ms-apphead">
-      <div className="ms-apphead__bar">
-        {!['/', '/home'].includes(pathname) && (
-          <button type="button" className="ms-apphead__icon ms-apphead__back" onClick={back} aria-label="Back">
-            <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M15 5l-7 7 7 7" /></svg>
-          </button>
-        )}
-        <Link to={home} aria-label="Marble Spins home" className="ms-apphead__logo"><Logo size={20} /></Link>
-        <span className="ms-grow" />
-        {isAuthenticated && <Link to="/shop#coins" className="ms-chip ms-apphead__coins" title="Coins">{`● ${formatNumber(user.coins ?? 0)}`}</Link>}
-        {isAuthenticated && <NameChip user={user} className="ms-apphead__name" />}
-        <SoundControl />
-        <button type="button" className="ms-apphead__icon ms-apphead__menu" aria-expanded={open} aria-haspopup="dialog" aria-label="Menu" onClick={() => setOpen(true)}>
-          <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round"><path d="M4 7h16M4 12h16M4 17h16" /></svg>
-        </button>
-      </div>
-      {open && <MenuSheet user={isAuthenticated ? user : null} onClose={() => setOpen(false)} />}
-    </header>
-  );
-}
 
 const PAGES = [
   ['/home', 'Race'],
@@ -58,9 +16,10 @@ const PAGES = [
 ];
 
 /**
- * The menu: the pages, the account and, for a guest, saving their marble. In the apps a bottom sheet;
- * on a phone's website (WebHeader, Moses, 25 Oct 2026) the same menu as a drawer from the right, with
- * the sound control in it (the header keeps only the logo, the coins, SAVE and the menu button).
+ * The menu: the pages, the account and, for a guest, saving their marble. On a phone's screen, on the
+ * website and in the apps alike (SiteHeader, Moses, 25 Oct 2026), a drawer from the right with the sound
+ * control in it (the header keeps only the logo, the coins, SAVE and the menu button). (`drawer` off: the
+ * older bottom sheet, unused now.)
  */
 export function MenuSheet({ user, onClose, drawer = false }) {
   const panel = useRef(null);

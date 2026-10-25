@@ -557,6 +557,7 @@ The iPhone app sells the same four coin packs and the season pass through the Ap
 | Contact-form messages don't arrive by email | They are always in the back office (Support messages). The email needs `BREVO_API_KEY` (the address is support@marblespins.com unless `SUPPORT_EMAIL` overrides it), and that mailbox must exist; Railway logs show `[support] notification … failed` if Brevo refused it |
 | A player says the contact form keeps failing | The form allows 6 messages an hour from one address ("Too many messages from here"). A form left open over 12 hours fetches a new token by itself |
 | A player asks for their data or to be deleted | They can do both themselves in Settings. Support can delete from the back office (player → Delete account, with a reason) |
+| The app shows an older design than the website | Compare the build at the bottom of any page (footer: "Build <date> UTC · app") with what `npm run app:sync` printed last ("Done (build …)"). Different: Android Studio or Xcode is running a project from another folder (an older download). In the folder you just synced, run `npx cap open android` (or `ios`) and Run from there. `app:sync` itself stops with an error if an app's copy of the web files isn't this build's |
 | App shows "Can't reach the race track" | Same as the first row. The app talks to the address built in by `npm run app:sync` (`client/app-api.json`: the Railway address now, api.marblespins.com after the [switch](#the-servers-own-address-apimarblespinscom-prepared-22-oct-2026-not-switched-yet)) |
 
 ## Monitoring (today)

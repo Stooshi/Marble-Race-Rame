@@ -22,6 +22,8 @@ export default function SiteFooter() {
         </nav>
         <SocialLinks />
         <p className="ms-footer__company">{OPERATED_BY} · <Link to={CONTACT_PATH}>Contact us</Link> · <Link to="/legal#contact">Legal</Link></p>
+        {/* (Which build this is: the apps and the website alike; vite.config.js BUILD_STAMP.) */}
+        <p className="ms-footer__build">Build {import.meta.env.VITE_BUILD_STAMP || 'dev'}{app ? ' · app' : ''}</p>
         {!app && STORES.length > 0 && (
           <div className="ms-footer__stores">{STORES.map(([name, url]) => <a key={name} href={url} target="_blank" rel="noopener noreferrer">{name}</a>)}</div>
         )}

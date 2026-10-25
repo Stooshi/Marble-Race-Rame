@@ -28,6 +28,13 @@ async function liveTracks(apiUrl) {
 /** "80+ tracks" for index.html (the same rounding as src/site/trackCount.js). */
 const phrase = (n) => (n ? `${n < 10 ? n : `${Math.floor(n / 10) * 10}+`} tracks` : 'dozens of tracks');
 
+/**
+ * When this build was made (UTC), shown small in the footer and written into index.html as
+ * <meta name="ms-build">, so a phone shows which build it runs, and app-sync.mjs can check the apps
+ * got this build's files (Moses, 25 Oct 2026: an Android build that showed an older design).
+ */
+const BUILD_STAMP = process.env.VITE_BUILD_STAMP || `${new Date().toISOString().slice(0, 16).replace('T', ' ')} UTC`;
+
 export default defineConfig(async ({ command, mode }) => {
   const env = loadEnv(mode, process.cwd(), 'VITE_');
   const live = command === 'build' && mode !== 'test' && !Number(process.env.VITE_TRACK_COUNT)
@@ -41,10 +48,12 @@ export default defineConfig(async ({ command, mode }) => {
     plugins: [
       react(),
       { name: 'track-count-in-html', transformIndexHtml: (html) => html.replace(/__TRACKS_PHRASE__/g, phrase(count)) },
+      { name: 'build-stamp', transformIndexHtml: (html) => html.replace('</head>', `    <meta name="ms-build" content="${BUILD_STAMP}" />\n  </head>`) },
     ],
     define: {
       'import.meta.env.VITE_TRACK_COUNT': JSON.stringify(count ? String(count) : ''),
       'import.meta.env.VITE_TRACK_SERIES': JSON.stringify(count ? series : ''),
+      'import.meta.env.VITE_BUILD_STAMP': JSON.stringify(command === 'build' ? BUILD_STAMP : 'dev'),
     },
     server: { port: 5173 },
     // The 3D scene (Three.js) is one lazily loaded chunk of about 140 KB gzipped.

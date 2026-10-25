@@ -29,4 +29,22 @@ const run = (cmd) => execSync(cmd, { stdio: 'inherit', env: { ...process.env, VI
 console.log(`Building the apps against ${api}`);
 run('npx vite build');
 run(`npx cap sync${platform ? ` ${platform}` : ''}`);
-console.log('\nDone. Open the projects with: npx cap open ios (Xcode, on a Mac) · npx cap open android (Android Studio)');
+
+// The apps must now hold this build's web files: the build stamp in dist/index.html (vite.config.js)
+// must be in each app's copy too. (Moses, 25 Oct 2026: an Android build showed an older design.)
+const stampOf = (file) => (fs.existsSync(file) ? /<meta name="ms-build" content="([^"]+)"/.exec(fs.readFileSync(file, 'utf8'))?.[1] ?? null : null);
+const built = stampOf(new URL('../dist/index.html', import.meta.url));
+const copies = { android: new URL('../android/app/src/main/assets/public/index.html', import.meta.url), ios: new URL('../ios/App/App/public/index.html', import.meta.url) };
+let stale = false;
+for (const [name, file] of Object.entries(copies)) {
+  if (platform && platform !== name) continue;
+  const got = stampOf(file);
+  if (got === built) console.log(`${name}: has this build's web files (build ${built})`);
+  else { stale = true; console.error(`${name}: its web files are NOT this build's (it has ${got ?? 'none'}, this build is ${built})`); }
+}
+if (stale) process.exit(1);
+const here = new URL('..', import.meta.url).pathname;
+console.log(`\nDone (build ${built}). Open the projects from THIS folder, so Android Studio and Xcode run this build:`);
+console.log(`  npx cap open android   (opens ${here}android)`);
+console.log(`  npx cap open ios       (opens ${here}ios/App, on a Mac)`);
+console.log('In the app, the footer at the bottom of any page shows "Build <date> · app": it should match the build above.');
