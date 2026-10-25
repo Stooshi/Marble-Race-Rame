@@ -1,6 +1,6 @@
 # 4. Game and economy rules (plain English)
 
-*Last updated 21 Oct 2026.* The numbers live in `client/src/shared/economy.json` and `client/src/shared/marbles/catalog.json`. If this page and those files ever disagree, the files are right; then update this page.
+*Last updated 25 Oct 2026.* The numbers live in `client/src/shared/economy.json` and `client/src/shared/marbles/catalog.json`. If this page and those files ever disagree, the files are right; then update this page.
 
 ## The golden rules
 
@@ -22,7 +22,7 @@
 4. **The finish.**
    - The race is marked finished and coins are paid in the same transaction.
    - Solo players may race again straight away. A group moves on to a rematch on the same track (about 40 s later).
-   - In a friend room, the next race is set up automatically for everyone in the room.
+   - In a friend room, the next race is set up automatically for everyone in the room. A quick race is one race: its room closes and the results offer "Quick race again" (25 Oct 2026).
 
 **Two engines:**
 - **New physics** (`tracks.physics` set; every current and new track). A real 3D physics simulation of marbles in a channel with obstacles, boosts, splitters and gates. The complete race is saved, so the engine can be tuned later without changing old races.
@@ -160,7 +160,7 @@ Every track must pass a **full report** (`npm run report -- <slug>`) before it i
 | Showcase looks | each rarity wins its share (chi-square test, p above 0.001) |
 | Sameness | layout not too close to another track (fails at 0.80 similarity, 0.70 when key sections match); start looks different; the first 20 seconds (what the field races through after the gate) not too close to another track's (fails at 0.80; held for every track from Bislett Mile on), and no start part straight after the gate on two tracks in a row |
 | Safety | the same seed gives the same race; the database matches the track file; the race fingerprints are unchanged |
-| Drawing | no scenery inside the track (up to 2.5 m above the rim); nothing within 0.5 m of the follow camera; ground and phone drawing load within budget |
+| Drawing | no scenery inside the track (up to 2.5 m above the rim); nothing within 0.5 m of the follow camera; the finish camera's picture clear on two phones and a computer; ground and phone drawing load within budget. Also a test on every track (not in the report, 25 Oct 2026): the drawn channel has no holes, phone and computer, also where the finish cutaway passes (`client/src/three/floorCheck.js`) |
 
 Reports are saved in `reports/<slug>/`. Track design rules:
 - bends long and flowing, with at most one sharp bend per track;
@@ -176,7 +176,7 @@ Reports are saved in `reports/<slug>/`. Track design rules:
 - **Start timer** (25 Oct 2026): instead, the host can tap "Start in…" 30 s, 1 min or 2 min. Everyone in the room, and anyone opening the link, sees the countdown; at zero the server starts the race, even if the host's app has closed. The host can start early (Start now) or cancel the countdown; a new choice replaces the old one.
 - After a race, the next one is set up with everyone still in the room. There is no chat.
 - A room closes after 2 hours without a race.
-- **Private or public** (25 Oct 2026): a new room is private (only people with the link or code, as before). The host can make it public when creating it or in the waiting room (and back): a public room is listed under "Join a race" on Race with friends (track, players such as 4/20, the countdown if one runs), and anyone can join with a tap, guests too. Full and started rooms drop off the list. The host can take a player out, and they can't join that room again.
+- **Private or public** (25 Oct 2026): a new room is private (only people with the link or code, as before). The host can make it public when creating it or in the waiting room (and back): a public room is listed under "Join a race" on Race with friends (track, players such as 4/20, the countdown if one runs), and anyone can join with a tap, guests too. Full and started rooms drop off the list, and a quick race in its last 3 seconds. The host can take a player out, and they can't join that room again.
 - **Quick race** (25 Oct 2026): always public, one tap. If a quick race starting soon has a free place, the player joins it; otherwise a new one opens on a random track and starts by itself 15 s later (computer players fill it to 20), and others tapping Quick race join it until its last 3 seconds. The player doesn't pick the track; a quick race has no host (nobody changes the track, starts it early or takes players out). It is one race: afterwards "Quick race again". If everyone leaves before it starts, it isn't run.
 - **Race solo** is unchanged: only the player and computer players, on the track they pick.
 - **Same rules everywhere:** no chat; names are filtered and can be reported; the start timer; coins as any race; limits per player on joining rooms (60 in 10 minutes) and Quick race (30 in 10 minutes), and on making rooms (10 an hour).
@@ -225,10 +225,11 @@ A season (the first: **Holiday Season 2026**, `holiday-2026`, 1 Dec 2026 00:00 t
 - **Under 13:** no saved account (13 and older only, decided 21 Oct 2026; there is no parental approval): the sign-up form says so kindly and the player keeps racing as a guest; the server refuses too and stores nothing. Never news emails. Guests can play without giving an age.
 - **Buying needs a saved account** (21 Oct 2026): coin packs and the season pass. A guest at checkout gets "Save your marble to buy" with the quick sign-up; the server refuses a guest's checkout and store account ids (401, `save_first`).
 - **Guests are deleted after 90 days without a visit** (Moses, 21 Oct 2026; the last visit is the latest of `users.last_seen_at`, created, last login and last race; a daily job, the same anonymising as a deleted account; a dry run that only logs until `GUEST_RETENTION_MODE=delete`). A guest's login also lasts 90 days after the last visit; a saved account's 180. Saved accounts stay until the player deletes them; purchase records 7 years (Swedish Bookkeeping Act).
+- **The name shown** (Moses, 25 Oct 2026): every list (live standings, replays, results, scoreboards, country records, rooms) shows the player's name, with the marble's name as a small second line: the name they chose, else their player name, else for a guest `guest_<5 digits>` (the same every time; no made-up names). A guest can choose a name (tap their name in the top bar, "Choose your name") and keeps it when saving the account. A chosen name is 3–24 letters, digits, spaces, `_` or `-`, passes the name filter, is never `guest_…` and never another player's player name or chosen name. Computer players keep their friendly names and the computer-player mark.
 - **Player names** (Moses, 22 Oct 2026): offensive names are refused when chosen or changed (the account name at sign-up and when a guest saves, the shown name): a maintained word list in English and Swedish, German, French, Spanish, Italian, Portuguese, Dutch, Polish, Turkish, Norwegian/Danish and Finnish, read through leetspeak (0→o, 1→i/l, 3→e, 4→a, 5→s, @, $…), separators and repeated letters; unambiguous words anywhere in a name, short or ambiguous ones only as a whole part of it (so "Scunthorpe" or "therapist" pass). Any logged-in player (guests too) can **report a name** (⚑ on scoreboards and race results, and on the tapped-marble card), once per player while open; the reported player isn't told who. The back office renames (a neutral PlayerNNNN, the shown name cleared) or dismisses.
 - **No trading:** coins and marbles can't be sold, traded or transferred. **Coins don't expire.**
 - **Save your marble pop-up** (guests only): after every 3rd finished race (3, 6, 9 …, counted by the server across visits), before the next race starts. Headline "Save your marble — it's free", six reasons, a big "Sign up now" and a plain "Later". **"Later" always works and racing is never blocked** (App Store rules). Never shown to saved players (the app review accounts are saved accounts). In English (English only for now, 21 Oct 2026).
-- **Quick sign-up** (the pop-up and the sign-up page alike): player name (a suggested free name the player can change), email, password, birth year and month, the terms (required), news by email (optional, unticked). Everything the guest won stays: it is the same account.
+- **Quick sign-up** (the pop-up and the sign-up page alike): player name (a suggested free name, or the name the guest chose, which the player can change), email, password, birth year and month, the terms (required), news by email (optional, unticked). Everything the guest won stays: it is the same account.
 - **Confirm your email** (double opt-in): once email is set up (`BREVO_API_KEY`), a link to confirm the address, valid 7 days; Settings sends a new one. Until then accounts are saved without it.
 - **Accounts:** players can download their data and delete their account in Settings. Deletion anonymises the account and keeps race results and payment records.
 

@@ -8,4 +8,5 @@
 - **Database:** `docs/database_schema.sql` only adds. Changes to existing rows go in a new `docs/data_updates/<name>.sql` (sorting after the last file). Never edit one that has run.
 - **Coins only move through `economy.change()`**, which writes the coin ledger.
 - **Deploys:** the server is deployed by hand by Moses. Vercel builds the website from `Main`.
+- **Every Sunday: a docs review** (Moses, 25 Oct 2026; a scheduled task runs it): every doc in `docs/` and the project (`cto/*`, `claude/*`) checked against the code and fixed; the week's changelog `claude/changelog/<year>-W<week>.md`; `claude/open-decisions.md` and `claude/known-issues.md` kept current; `docs/README.md` (= `cto/README.md`) a one-page status; a PDF of the technical documentation saved as `cto/pdf/Marble-Spins-Tech-Docs-<date>.pdf` and sent to Moses.
 - **Commits:** push with `git fetch -q origin Main && git rebase -q origin/Main; git push -q origin HEAD:Main`.

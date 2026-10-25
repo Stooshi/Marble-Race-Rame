@@ -1,6 +1,6 @@
 # 1. Architecture
 
-*Last updated 21 Oct 2026.*
+*Last updated 25 Oct 2026.*
 
 ## The parts
 
@@ -45,18 +45,21 @@
 **Website or app → server (REST).**
 - Every call goes to `${VITE_API_URL}/api/...` as JSON.
 - A player is identified by a JWT in the `Authorization: Bearer` header. On the website it is stored in localStorage under `marble-race-token`. A login lasts 180 days after the player's last visit, a guest's 90 (21 Oct 2026): on each visit `GET /api/auth/me` sends a fresh token when the current one is over a day old, and the app stores it (sliding expiry, since 20 Oct 2026; before, 7 days from the login, which lost guests after a week). A password reset ends every older login. Every new account (guest or saved) gets its own 4 starter marbles (`src/marbles/starters.js`). Guests see the "Save your marble" pop-up after every 3rd finished race (client `site/account/SavePrompt.jsx`); sign-up asks for birth year and month, and once email is set up sends a "Confirm your email" link (`src/account/emailConfirm.js`).
-- Guests ("Play free") get a real account with `is_guest = true`. Saving the account turns it into a normal one.
+- Guests ("Play free") get a real account with `is_guest = true` (username `guest_<10 hex>`). Saving the account turns it into a normal one.
+- Every list shows a player by the same rule (25 Oct 2026): the name they chose (`users.display_name`; guests can choose one too), else the username, else for a guest `guest_<5 digits>`. Server `src/names/shown.js`, website and apps `client/src/shared/playerName.js`; a test keeps the two the same.
 - The API reference is in the root `README.md`.
 
 **Website or app → server (live races).**
 - socket.io runs on the same address. The client sends `race:watch` with a race id.
 - The server streams `race:countdown`, `race:start`, `race:frame` (10–20 a second), `race:finished` and `race:next`.
+- A room page sends `room:watch` with the room code and gets `room:updated` whenever the room changes (players, track, start timer, the next race).
 - The full event list is in the [code map](02-code-map.md#sockets).
 
 **How a race is run.**
 - Every race is decided entirely on the server before its countdown, from a random seed.
 - The result is written to the database at that point, but the API keeps it hidden until the race has finished.
 - The client only draws the positions it is sent. Nothing on the client can change a result.
+- A race with a start time (`races.scheduled_at`: a friend room's start timer, a quick race's 15 s) is started by the server to the second, even if nobody's app is open; a check every 5 s is the safety net after a restart (25 Oct 2026, `src/game/raceManager.js`).
 
 **Back office.**
 - The `/admin` pages are on Vercel. They aren't linked from the site, and search engines are told not to index them.
@@ -84,8 +87,9 @@
 **CORS.**
 - The server accepts calls from:
   - https://marblespins.com and https://www.marblespins.com (always);
-  - the addresses listed in `CORS_ORIGIN` (for example the vercel.app address);
-  - the apps' own addresses (`capacitor://localhost`, `https://localhost`).
+  - the addresses listed in `CORS_ORIGIN` (for example the vercel.app address; an entry may use one `*` for a subdomain, e.g. `https://*.vercel.app` for preview builds);
+  - `PUBLIC_SITE_URL`;
+  - the apps' own addresses (`capacitor://localhost`, `https://localhost`, `http://localhost`).
 - `CORS_ORIGIN=*` (the default) accepts every address.
 
 **Support messages.**
@@ -151,6 +155,9 @@ There is no separate staging server. Vercel makes a preview build for every bran
 | `APNS_KEY` | for iPhone pushes | The text of Apple's push key file (`AuthKey_XXXXXXXXXX.p8`, or base64 of it) |
 | `APNS_KEY_ID`, `APNS_TEAM_ID` | with `APNS_KEY` | The key's 10-character id and the Apple Developer team id |
 | `APNS_BUNDLE_ID` | no | Default `com.marblespins.app` (the phone tells the server its own app id; the `.dev` test app goes to Apple's sandbox) |
+| `APPLE_IAP_ENABLED` | for iPhone purchases | `true` switches on App Store purchases (`src/payments/apple.js`). No secret is needed: Apple's signature is checked with Apple's public certificates |
+| `APPLE_BUNDLE_ID` | no | Default `com.marblespins.app` |
+| `APPLE_ACCEPT_SANDBOX` | no | Default: sandbox purchases accepted (App Review and TestFlight buy in Apple's sandbox, even against the live server). `false` refuses them |
 | `PAYMENTS_TEST` | never in production | `true`: instant fake payments, for local development |
 | `RACE_COUNTDOWN_MS`, `RACE_MIN_DURATION_MS`, `RACE_MAX_DURATION_MS`, `RACE_DEFAULT_MARBLES`, `RACE_TICK_RATE_HZ`, `RACE_NEXT_DELAY_MS` | no | Race timing defaults (see the root README) |
 | `RAILWAY_GIT_COMMIT_SHA`, `SOURCE_COMMIT` | set by the platform | Shown on `/health` as the commit, when known |
@@ -170,7 +177,7 @@ There is no separate staging server. Vercel makes a preview build for every bran
 
 The apps are built with `npm run app:sync`. This sets `VITE_API_URL` to the address in `client/app-api.json` (`api`: the Railway address now, api.marblespins.com after the switch; `fallback`: the Railway address) unless another https address is given, and refuses to build if that address's `/health` doesn't answer. They need no other settings. The apps never show the cookie banner and never load Analytics or the Pixel, even if those IDs are set.
 
-`npm run build` (what Vercel runs) also **pre-renders** the public pages (`client/scripts/prerender.mjs`): `/`, `/shop`, `/scores`, `/help` and each `/help/<question>`, `/legal`, `/cookies`, `/tracks` and each live `/tracks/<slug>` are written as plain HTML with their own title, description, canonical link and share picture, so search engines and link previews read them without running the game. It reads the live track list from `VITE_API_URL` at build time (so a newly switched-on track gets its page at the next website build) and writes `sitemap.xml`. Structured data for search engines: the FAQ (FAQPage) on `/help`, and on `/` the Organization (Marble Spins, run by Voltron Robotics AB) with its social profiles as `sameAs`. Every other address gets `app-shell.html`. **The track count** in the meta descriptions, share previews (`index.html`'s `__TRACKS_PHRASE__`), the landing page and the Help answers is the live count at build time, rounded down to ten ("100+ tracks" with 105 live): `vite.config.js` reads it from `VITE_API_URL/api/tracks` (or `VITE_TRACK_COUNT`, if set, for a local build) together with the live series (`VITE_TRACK_SERIES`, for the Help Centre's "in eight series: …"), and `src/site/trackCount.js` rounds it; without the server it says "dozens of tracks" (never a fixed number). A track switched on shows in the count at the next website build. A season's tracks are left out of `/api/tracks` until the season starts (switched on early, they still don't show), so the holiday tracks join the pages and the count at the first website build after 1 Dec 00:00: a GitHub Actions workflow starts one at 00:05 through a Vercel Deploy Hook (`.github/workflows/season-start-rebuild.yml`). **Push notifications** (`src/push`, `/api/push`, room invites in `/api/rooms/:code/invite`; in the apps `client/src/app/push.js`) are built but switched off twice: the apps don't ask for permission until `client/src/shared/push.json` is on, and the server sends nothing until `PUSH_SENDING=on` with the Firebase (Android) and Apple (iPhone) keys. The server talks to Firebase Cloud Messaging (HTTP v1) and Apple's push service (HTTP/2) directly, without SDKs. **Gift codes** (`src/giftCodes`, `/api/gift-codes`, the website's `/redeem`) are built but switched off (`client/src/shared/giftCodes.json`); the back office can make codes already. Every other address than the site's own answers HTTP 404 with the app's "Lost the marble" page (`dist/404.html`). **The marbles hub** (`/marbles`, `/marbles/<section>`, `/marbles/<section>/<article>`; `client/src/hub/`) is built but **switched off** (`client/src/shared/marblesHub.json` `enabled: false`, 21 Oct 2026): every `/marbles` address is the 404 page, nothing links to it, no page is pre-rendered and none is in the sitemap. Switched on, the build pre-renders the hub, its sections that have articles and each published article (with Article / CollectionPage and BreadcrumbList structured data in the page) and adds them to the sitemap; Vercel serves those files directly, so `vercel.json` needs no rewrite for it. The hub's code is its own chunk, loaded only on `/marbles` addresses.
+`npm run build` (what Vercel runs) also **pre-renders** the public pages (`client/scripts/prerender.mjs`): `/`, `/shop`, `/scores`, `/help` and each `/help/<question>`, `/legal`, `/cookies`, `/tracks` and each live `/tracks/<slug>` are written as plain HTML with their own title, description, canonical link and share picture, so search engines and link previews read them without running the game. It reads the live track list from `VITE_API_URL` at build time (so a newly switched-on track gets its page at the next website build) and writes `sitemap.xml`. Structured data for search engines: the FAQ (FAQPage) on `/help`, and on `/` the Organization (Marble Spins, run by Voltron Robotics AB) with its social profiles as `sameAs`. Every other address gets `app-shell.html`. **The track count** in the meta descriptions, share previews (`index.html`'s `__TRACKS_PHRASE__`), the landing page and the Help answers is the live count at build time, rounded down to ten ("100+ tracks" with 105 live): `vite.config.js` reads it from `VITE_API_URL/api/tracks` (or `VITE_TRACK_COUNT`, if set, for a local build) together with the live series (`VITE_TRACK_SERIES`, for the Help Centre's "in nine series: …", worked out from the live tracks; nine since the Rivers were switched on, 25 Oct 2026), and `src/site/trackCount.js` rounds it; without the server it says "dozens of tracks" (never a fixed number). A track switched on shows in the count at the next website build. A season's tracks are left out of `/api/tracks` until the season starts (switched on early, they still don't show), so the holiday tracks join the pages and the count at the first website build after 1 Dec 00:00: a GitHub Actions workflow starts one at 00:05 through a Vercel Deploy Hook (`.github/workflows/season-start-rebuild.yml`). **Push notifications** (`src/push`, `/api/push`, room invites in `/api/rooms/:code/invite`; in the apps `client/src/app/push.js`) are built but switched off twice: the apps don't ask for permission until `client/src/shared/push.json` is on, and the server sends nothing until `PUSH_SENDING=on` with the Firebase (Android) and Apple (iPhone) keys. The server talks to Firebase Cloud Messaging (HTTP v1) and Apple's push service (HTTP/2) directly, without SDKs. **Gift codes** (`src/giftCodes`, `/api/gift-codes`, the website's `/redeem`) are built but switched off (`client/src/shared/giftCodes.json`); the back office can make codes already. Every other address than the site's own answers HTTP 404 with the app's "Lost the marble" page (`dist/404.html`). **The marbles hub** (`/marbles`, `/marbles/<section>`, `/marbles/<section>/<article>`; `client/src/hub/`) is built but **switched off** (`client/src/shared/marblesHub.json` `enabled: false`, 21 Oct 2026): every `/marbles` address is the 404 page, nothing links to it, no page is pre-rendered and none is in the sitemap. Switched on, the build pre-renders the hub, its sections that have articles and each published article (with Article / CollectionPage and BreadcrumbList structured data in the page) and adds them to the sitemap; Vercel serves those files directly, so `vercel.json` needs no rewrite for it. The hub's code is its own chunk, loaded only on `/marbles` addresses.
 
 ### Google Play Console (settings, not variables)
 
@@ -200,6 +207,6 @@ The apps are built with `npm run app:sync`. This sets `VITE_API_URL` to the addr
 
 ## Scaling limits (today)
 
-- **One server instance only.** Race timers live in the memory of the server that started the race. Running several instances would need the socket.io Redis adapter and one owner per race (see "Scaling notes" in the root README).
+- **One server instance only.** Race timers (and the start timers of rooms and quick races) live in the memory of the server that started the race. Running several instances would need the socket.io Redis adapter and one owner per race (see "Scaling notes" in the root README).
 - Races are simulated in a worker thread, so the main thread keeps streaming.
 - The database is a single Railway Postgres.

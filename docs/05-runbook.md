@@ -1,6 +1,6 @@
 # 5. Operations runbook
 
-*Last updated 22 Oct 2026.* How to deploy, change data, roll back, back up, and fix the usual problems. Items marked **[check]** should be confirmed the first time they are done.
+*Last updated 25 Oct 2026.* How to deploy, change data, roll back, back up, and fix the usual problems. Items marked **[check]** should be confirmed the first time they are done.
 
 ## Deploying
 
@@ -47,6 +47,7 @@ Pushing to `Main` does **not** deploy the server. Moses deploys it by uploading 
 3. New data updates run once each.
 4. Unfinished races are recovered.
 5. The race scheduler starts, and the IP trimming runs (then daily).
+6. The background jobs start: guest retention, push (dry runs until `PUSH_SENDING=on`), purchase emails, Google Play (hourly and every 6 hours) and the season jobs (`src/server.js`).
 
 **Restart without a new deploy:** Railway dashboard → service → ⋮ → Restart. Races in progress resume or finish correctly after a restart.
 
@@ -59,7 +60,7 @@ Pushing to `Main` does **not** deploy the server. Moses deploys it by uploading 
 `docs/database_schema.sql` can only **add** things: tables, columns and indexes. Any change to **existing rows** goes in a one-time file in `docs/data_updates/`. Examples: switching a track on, fixing a value, granting admin.
 
 **How to write one:**
-1. Create `docs/data_updates/<name>.sql`. Files run in **name order**, and names are only an ordering key (many are dated in the future). Pick a name that sorts **after the last existing file**; today that is `2027-02-16-season-pass.sql`, so the next one would be, for example, `2027-02-17-<what>.sql`.
+1. Create `docs/data_updates/<name>.sql`. Files run in **name order**, and names are only an ordering key (many are dated in the future). Pick a name that sorts **after the last existing file**; today (25 Oct 2026) that is `2027-04-19-zambezi-falls-run-looks.sql`, so the next one would be, for example, `2027-04-20-<what>.sql`.
 2. Start with a comment saying what the file changes and why, and how it was generated if a script made it.
 3. Write it so that running it on a database where the change is already done changes nothing. For example, `UPDATE … WHERE role <> 'admin'`.
 4. Optionally, end with a `SELECT` returning one row. That row is saved as the file's summary in the `data_updates` table.
@@ -238,7 +239,7 @@ Email is off until Brevo is set up. When it's on, "Forgot your password?" appear
 1. **Create the account.** Make a Brevo account (brevo.com) in the company's name.
 2. **Authenticate marblespins.com.** In Brevo, go to Senders, Domains & Dedicated IPs → Domains → Add a domain → `marblespins.com`.
    - Brevo shows DNS records: a Brevo code, DKIM, DMARC and SPF.
-   - Add each record in **Vercel → Domains → marblespins.com → DNS records**, exactly as Brevo shows it, then click **Verify** in Brevo.
+   - Add each record at the domain's DNS provider, **Simply.com → marblespins.com → DNS** (as in [Simply.com: the DNS records](#2-simplycom-the-dns-records)), exactly as Brevo shows it, then click **Verify** in Brevo.
 3. **Add the sender.** Go to Senders → Add a sender → `no-reply@marblespins.com`, name "Marble Spins". It is verified through the domain.
 4. **Create the key.** Go to SMTP & API → API keys → Generate a new API key, named for example "railway".
 5. **Set the variables on Railway, then restart:**
@@ -269,7 +270,7 @@ Built and **switched off twice**: the apps don't ask until `client/src/shared/pu
 1. developer.apple.com → Account → **Certificates, Identifiers & Profiles → Identifiers** → `com.marblespins.app` (and `com.marblespins.app.dev`) → tick **Push Notifications** → Save.
 2. **Keys** → **+** → name "Marble Spins push" → tick **Apple Push Notifications service (APNs)** → Configure: Environment **Sandbox & Production**, Key Restriction **Team Scoped** → Continue → Register → **Download** the `AuthKey_XXXXXXXXXX.p8` (only once!). Note the **Key ID** (10 characters) and your **Team ID** (top right, or Membership).
 3. Railway: `APNS_KEY` = the .p8 file's text (open it in TextEdit, copy all, including the BEGIN/END lines), `APNS_KEY_ID`, `APNS_TEAM_ID`. Keep the .p8 in your password manager.
-4. Xcode: open `client/ios/App/App.xcworkspace` (or `App.xcodeproj`) → target **App** → **Signing & Capabilities** → check **Push Notifications** is listed (the entitlement file is already there; with automatic signing Xcode adds the capability to your app id).
+4. Xcode: open `client/ios/App/App.xcodeproj` (there is no workspace: the project uses Swift Package Manager) → target **App** → **Signing & Capabilities** → check **Push Notifications** is listed (the entitlement file is already there; with automatic signing Xcode adds the capability to your app id).
 
 **3. Test, then switch on:**
 1. Set `"enabled": true` in `client/src/shared/push.json` on a test branch, build the test apps (APP-TESTING.md), finish a race: the question appears; say yes; the phone asks.
@@ -278,7 +279,7 @@ Built and **switched off twice**: the apps don't ask until `client/src/shared/pu
 4. When it works: push the `push.json` change to Main, build the store apps with it (a new version), and keep `PUSH_SENDING=on`.
 - **Season news** goes by itself: within 6 hours after the pass sale opens (28 Nov 00:00) and after the season starts (1 Dec 00:00), to saved accounts that turned it on. Nothing to do on the night.
 - **Turn everything off at once:** remove `PUSH_SENDING` (or set it to anything else) and redeploy.
-- **Privacy:** the store forms (App Privacy, Data safety) must list the push token as "Device ID / other identifiers… App functionality"; see `docs/08-store-rules.md` when it exists.
+- **Privacy:** the store forms (App Privacy, Data safety) must list the push token as "Device ID / other identifiers… App functionality"; see `docs/08-store-rules.md`.
 
 ## Player names: reports and the word list
 
@@ -329,13 +330,13 @@ Built and **switched off twice**: the apps don't ask until `client/src/shared/pu
 
 ## Season, store buttons and the iPhone silent switch
 
-- **Start a season:** set `season.number`, `season.startsAt` and `season.endsAt` (e.g. `2026-11-01T00:00:00Z`) in `client/src/shared/economy.json`, push, and **deploy the server** too (it reads the same file). The "This season" board, the season name and the days left appear by themselves. Until then nothing about seasons is shown.
+- **Start a season:** add a row to the `seasons` table with a data update (`key`, `name`, `starts_at`, `ends_at`, `free_from`, `badge_top`) and deploy the server. The "This season" board, the season name and the days left follow its dates by themselves (`src/routes/scoreboard.js` `currentSeason`; the Holiday Season 2026 is in that table). Only when no season in the table is on or has ended is `season` in `client/src/shared/economy.json` used (`number`, `startsAt`, `endsAt`, e.g. `2026-11-01T00:00:00Z`; all empty today, 25 Oct 2026): set it, push, and deploy the server too (it reads the same file).
 - **App Store / Google Play buttons on the website:** put each store page's https link in `client/src/shared/storeLinks.json` and push. An empty link hides its button. The apps never show them.
 - **iPhone silent switch:** the app uses an "ambient" audio session, so the switch mutes the game's music and sounds and the player's own music keeps playing. Check it on a real iPhone after each app build (switch on and off during a race, and with Spotify or Apple Music playing).
 
 ## The season-start website rebuild (1 Dec 2026, automatic)
 
-The website learns of the holiday tracks only at a build (their pages, the sitemap, the track count: "130+ tracks" with them); the server shows them from 1 Dec 00:00 by date. The GitHub Actions workflow **"Season start: rebuild the website"** (`.github/workflows/season-start-rebuild.yml`) starts that build at **1 Dec 2026 00:05 Swedish time** (spares at 00:35 and 01:15, which do nothing once the holiday tracks are on the site), waits for it, and checks the sitemap has `/tracks/tromso-aurora-grand-prix`. If anything fails, the run fails and GitHub emails the repository's owner; then press Redeploy in Vercel by hand. Nobody has to be awake for it.
+The website learns of the holiday tracks only at a build (their pages, the sitemap, the track count: 105 live tracks in nine series today, "100+ tracks"; with the 31 holiday tracks from 1 Dec, "130+ tracks"; 25 Oct 2026); the server shows them from 1 Dec 00:00 by date. The GitHub Actions workflow **"Season start: rebuild the website"** (`.github/workflows/season-start-rebuild.yml`) starts that build at **1 Dec 2026 00:05 Swedish time** (spares at 00:35 and 01:15, which do nothing once the holiday tracks are on the site), waits for it, and checks the sitemap has `/tracks/tromso-aurora-grand-prix`. If anything fails, the run fails and GitHub emails the repository's owner; then press Redeploy in Vercel by hand. Nobody has to be awake for it.
 
 It calls a **Vercel Deploy Hook**: a secret URL that rebuilds Main. The URL is kept only in GitHub's secret `VERCEL_DEPLOY_HOOK_SEASON`, never in code, chat, docs or logs. Set-up (once):
 1. **Vercel:** the project `marble-race-rame-client` → **Settings** → **Git** → **Deploy Hooks**. Name: `season-start`, branch: `Main` → **Create Hook**. Copy the URL it shows (Vercel shows it again on that page).

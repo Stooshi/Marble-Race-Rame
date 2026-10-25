@@ -1,6 +1,6 @@
 # 7. Known gaps and roadmap
 
-*Last updated 20 Oct 2026.* What isn't built, isn't finished, or is a known weakness. The launch target is **1 December 2026** (web, iPhone and Android), after a full site check this week and a soft start (social media, 10–20 test pilots) from the week of 26 Oct. When something here is fixed, remove it and note the change in the [decisions log](06-decisions.md) if it was a decision.
+*Last updated 25 Oct 2026 (Sunday docs review).* What isn't built, isn't finished, or is a known weakness. The launch target is **1 December 2026** (web, iPhone and Android), after a full site check and a soft start (social media, 10–20 test pilots) from the week of 26 Oct. Smaller bugs and rough edges are in the project doc `claude/known-issues.md`; decisions waiting for Moses in `claude/open-decisions.md`. When something here is fixed, remove it and note the change in the [decisions log](06-decisions.md) if it was a decision.
 
 ## Must fix before launch
 
@@ -14,7 +14,7 @@
 | **Stripe live** | Test mode now. Before going live: the company's Stripe account, the accountant's confirmation of tax code and VAT (OSS), live webhook. See the [runbook](05-runbook.md#switching-to-live-only-when-moses-says-so) | Railway variables |
 | **Store accounts and listings** | Google Play account done (Voltron Robotics AB, an organisation account, so the 14-day closed test with 12 testers doesn't apply). Still: Apple Developer account; the Play listing, data safety, content rating and target audience (answers drafted; target audience 13+ recommended, Moses to decide). Drafts are in the project doc `claude/store-submission-drafts.md` | — |
 | **Support email** | support@marblespins.com and privacy@marblespins.com are in the texts. The mailboxes must exist and receive mail, and Brevo must be on (`BREVO_API_KEY`) for contact-form notifications to be emailed (they go to support@marblespins.com unless `SUPPORT_EMAIL` says otherwise) | Railway variables, the mail host |
-| **Help Centre placeholders** | Answers still holding `[brackets]` (reply time, coins expiry, Swedish time, what happens when someone leaves a room, changing a name, Google/Apple sign-in, app launch, quality setting, parent approval, email switched on). Fill them in the project doc and in `faq.js` together | `client/src/site/help/faq.js` |
+| **Help Centre placeholders** | Two answers still hold a `[bracket]` (25 Oct): the apps "[coming at launch]" and "[Live once email is switched on.]"; whether coins expire is also still open. Fill them in the project doc `claude/help-faq-draft.md` and in `faq.js` together | `client/src/site/help/faq.js` |
 | **Holiday Season pass: the rest** | Built (steps 1, 3 and 5 of the plan): the `seasons` row, the scoreboard season and its end, the top-100 badge (profile and Marble Bag), the pass on Stripe (test mode), Google Play and the App Store, locked season tracks checked by the server, friend rooms, Holiday races and the Track of the Day bonus, and the pre-sale from 28 Nov (activating on 1 Dec, the same on every platform). The seasonal collections (Winter 2026, on sale 1 Dec–7 Jan, then retired) and the season marble (Winter Solstice, given with the pass, numbered) are built too, and the boost-pad jump (on Veliky Ustyug and Sapporo). Still to do: the `holiday-pass-2026` product in Play Console ([runbook](05-runbook.md#the-season-pass-holiday-season-2026)); the App Store setup ([runbook](05-runbook.md#app-store-purchases-the-iphone-app)); the pass page's final design, store texts, terms and Help answers (step 6) (with "Activates 1 December" in the store descriptions) | `src/seasons`, project doc `claude/holiday-season-plan.md` |
 | **App store links** | The website footer shows the App Store / Google Play buttons once their links are in `storeLinks.json` | `client/src/shared/storeLinks.json` |
 | **50 launch tracks** | Done: 105 tracks live (25 Oct 2026, Moses): the fifteen Rivers switched on 25 Oct after the deploy; Track and Field on 19 Oct, Canyon and Block 11–15 on 16 Oct, the Canyon Series on 15 Oct, and the Block Series. The 31 holiday tracks join on 1 Dec (136). Check that every series the landing page shows has live tracks | `docs/data_updates`, `tracks.is_active` |
@@ -24,12 +24,12 @@
 
 - **News emails.** Brevo is the chosen provider and the sending code is in place (`src/email`). Consent and unsubscribe links are ready; still to build: the news email itself, its sending, and the list from the back office.
 - **Sign in with Google and Apple.** Not built; the buttons are hidden on the sign-up page. Mentioned in the privacy policy. If Google sign-in is added, Apple requires Sign in with Apple too.
-- **Push notifications** (app plan step 5).
+- **Push notifications:** built, switched off (`src/push`, the apps' plugin). They ship in the first app update in December (decision A, 22 Oct).
 - **Marble trading** between players. `user_collection.first_owner_id` is ready for it.
-- **Custom marble labels.** The column exists, but a word filter is needed first.
+- **Custom marble labels.** The column exists. The name filter (`src/names`, 22 Oct) could check them, but nothing lets a player set one yet.
 - **Subscriptions** (later). The season pass is being built (see "Holiday Season pass" above).
 - **Automated social posting** of race clips, approved by Moses.
-- **Holiday Season tracks (31 planned): being built.** Each passes its full report and is added **switched off** and in the Holiday Season pass (`season_key` `holiday-2026`), from `docs/data_updates/2027-02-17-…`; they are switched on ahead of time by data update `2027-03-31-switch-on-holiday-tracks` and open by date at 1 Dec 00:00 (hidden from the track list and closed until then). Added so far: Tromsø Aurora Grand Prix, Zermatt Marble Grand Prix, Gamla Stan Christmas Run, Outback Christmas Burst, Cape Town Summer Christmas, Québec Old Town Spins, Medellín Lights, Oaxaca Posadas Run, Nuremberg Christmas Market Run, Belgrade Badnjak Run, Coptic Cairo Lights, Veliky Ustyug Frost Run, New York Winter Run, Accra December Beats, Harbin Ice City, Sapporo Snow Sculptures, Queenstown Pōhutukawa Run, Buenos Aires Summer Christmas, Edinburgh Hogmanay Grand Prix, Reykjavik Yule Lights, Lalibela Genna Spins, San Fernando Lantern Spins, Trinidad Parang Run, Goa Star Lanterns, Seoul Winter Lights, Gingerbread Village, Sydney Harbour New Year, Rio New Year Burst, Ice Palace, Night Train North, Sleigh Bell Forest: **all 31 are on Main** (switched off), the switch-on data update is on Main too: one server deploy, any day before 1 Dec, and they open by themselves at 00:00. The boost-pad jump is on Veliky Ustyug Frost Run (river jump) and Sapporo Snow Sculptures (ski jump). Eight holiday splitters with under 30% in one channel were replaced with bends (19 Oct); only Coptic Cairo Lights and Goa Star Lanterns keep a splitter.
+- **Holiday Season tracks (31): built and on the server.** Each passed its full report and was added **switched off** and in the Holiday Season pass (`season_key` `holiday-2026`), from `docs/data_updates/2027-02-17-…`; they are switched on ahead of time by data update `2027-03-31-switch-on-holiday-tracks` and open by date at 1 Dec 00:00 (hidden from the track list and closed until then). Added so far: Tromsø Aurora Grand Prix, Zermatt Marble Grand Prix, Gamla Stan Christmas Run, Outback Christmas Burst, Cape Town Summer Christmas, Québec Old Town Spins, Medellín Lights, Oaxaca Posadas Run, Nuremberg Christmas Market Run, Belgrade Badnjak Run, Coptic Cairo Lights, Veliky Ustyug Frost Run, New York Winter Run, Accra December Beats, Harbin Ice City, Sapporo Snow Sculptures, Queenstown Pōhutukawa Run, Buenos Aires Summer Christmas, Edinburgh Hogmanay Grand Prix, Reykjavik Yule Lights, Lalibela Genna Spins, San Fernando Lantern Spins, Trinidad Parang Run, Goa Star Lanterns, Seoul Winter Lights, Gingerbread Village, Sydney Harbour New Year, Rio New Year Burst, Ice Palace, Night Train North, Sleigh Bell Forest: **all 31 are on Main**, and the switch-on data update ran with the server deploy of 23 Oct: they are switched on, hidden and closed until they open by themselves at 1 Dec 00:00. The boost-pad jump is on Veliky Ustyug Frost Run (river jump) and Sapporo Snow Sculptures (ski jump). Eight holiday splitters with under 30% in one channel were replaced with bends (19 Oct); only Coptic Cairo Lights and Goa Star Lanterns keep a splitter.
 - **Rivers (15 tracks): live** (switched on by Moses on 25 Oct 2026, after the deploy that ran their five `2027-04-19-…-looks` updates; 105 tracks live in all): Danube Night Run, Mekong Market Spins, Mississippi Steamer Run, Zambezi Falls Run, Yangtze Lock Run (`docs/data_updates/2027-04-02-…` to `2027-04-06-…`), Amazon Meeting Spins, Nile Felucca Burst, Congo Rapids Burst, Rhine Castle Run, Ganges Dawn Run, Thames Bridges Run, Seine Quays Spins, Volga Port Burst, Murray Red Gum Run, Irrawaddy Balloon Dawn (`2027-04-07-…` to `2027-04-16-…`), each passing its full report. Since the previews: the water that reads as water, Amazon's forest, Seine's bookstalls (23 Oct), the river running on past the start and the finish (Moses's option B after the Nile's review, 25 Oct). The series shows in the track picker's Series filter and as its own section on `/tracks`; the landing page's Rivers card shows by itself. Accepted for now (Moses, 23 Oct): on Congo and Ganges the river barely shows from the portrait follow camera. Still open, small: Rhine's castle only ~2 s at the frame's edge; a few rock faces on Rhine and Congo; Thames's bridge deck above the portrait frame as the leader passes under. Next: Peaks (plan only until Moses says go). Plan: project doc `claude/rivers-and-peaks-plan.md`; results: `claude/rivers-status.md`.
 - **Quick race with many players (later):** wait 5–10 s with "Players joining…" before starting a new quick race, so more players meet in one race (Moses, 25 Oct 2026). Today a new quick race starts 15 s after it opens and others join it until then.
 - **Names over the marbles (later, maybe):** small player names over real players' marbles in the 3D race (never over computer players'). For now names show in the lists only (Moses, 25 Oct 2026).
@@ -50,22 +50,22 @@
 - **No monitoring or alerts.** There are no uptime checks, error tracking or paging. Suggested: an uptime monitor on `/health`, and log alerts for `FAILED, rolled back` and `[stripe]` errors.
 - **The admin lockout counter is in memory** (5 wrong codes give a 15-minute pause). A restart clears it, and it isn't shared if there is ever more than one instance.
 - **No staging environment.** Vercel previews talk to the production server.
-- **Rate limiting** only on the login and sign-up routes.
+- **Rate limiting** on the login and sign-up routes (per address, 20 per 15 minutes, which shared Wi-Fi can hit), the pass reminders, and per player on rooms (joining 60 and Quick race 30 per 10 minutes, making rooms 10 an hour). Not on the other routes.
 - **The server reads files from `client/`** (economy, catalogue, packs, consent). Deploys must include the whole repository.
 - **Two race engines.** The classic engine must stay frozen for old races. Moving every remaining classic track to physics would allow it to be retired from new races, but never deleted (old replays need it).
 - **Slow test suites:** server about 5 minutes, client about 8 minutes.
 - **Stale comments and docs:** `physicsSimulator.js` and `routes/physics.js` still describe physics as preview-only; the schema comment on `user_collection` shows an old Marble ID format; the "Database" table in the root `README.md` is from the first version.
 - **Legacy tables:** `marbles` / `user_marbles` (plain marbles) and `marble_colors` / `marble_surfaces` / `marble_effects` / `marble_appearances` (the first look system) coexist with the collection. They are kept because old races and players reference them.
 
-## Roadmap (as known on 14 Oct 2026)
+## Roadmap (14 Oct 2026; updated 25 Oct)
 
 1. **Now to mid-November:**
    - store accounts;
    - legal details;
    - in-app purchases;
-   - the 50 tracks;
+   - ~~the 50 tracks~~ (done: 105 live);
    - phone testing with the apps;
-   - start the Google closed test.
+   - Google Play internal testing (an organisation account needs no 12-tester closed test).
 2. **Second half of November:**
    - store listings and screenshots;
    - Stripe live;
@@ -79,4 +79,5 @@
    - new collections (Handmade Heritage 8 Dec, Moonies & Glow 15 Dec, Art Glass 22 Dec);
    - track series;
    - trading.
-- **Friend rooms' start timer: built 25 Oct 2026, waits for the server deploy** ("Start in…" 30 s / 1 min / 2 min, server-side, start now, cancel; `docs/04-game-rules.md`).
+- **Friend rooms' start timer:** live since the server deploy of 25 Oct 2026 ("Start in…" 30 s / 1 min / 2 min, server-side, start now, cancel; `docs/04-game-rules.md`).
+- **Public rooms and Quick race; player names everywhere:** built 25 Oct 2026, in Moses's server deploy of 25 Oct (about 11:50).

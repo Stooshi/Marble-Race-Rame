@@ -1085,7 +1085,7 @@ CREATE TABLE IF NOT EXISTS email_confirmations (
 CREATE INDEX IF NOT EXISTS idx_email_confirmations_user ON email_confirmations (user_id, created_at);
 
 -- ---------------------------------------------------------------------------
--- Guest accounts are deleted after 180 days without a visit (21 Oct 2026, src/account/retention.js):
+-- Guest accounts are deleted after 90 days without a visit (21 Oct 2026, src/account/retention.js):
 -- last_seen_at is set when an account is made and on a visit at most once a day (GET /auth/me).
 -- Accounts from before start counting from when this column was added.
 -- ---------------------------------------------------------------------------

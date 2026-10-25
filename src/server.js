@@ -19,7 +19,7 @@ async function start() {
   await raceManager.recover();
   raceManager.startScheduler();
   require('./security').startTrimming(); // IP addresses: 90 days, then the country only
-  require('./account/retention').startJobs(db); // guest accounts: deleted after 180 days without a visit
+  require('./account/retention').startJobs(db); // guest accounts: deleted after 90 days without a visit
   require('./push').startJobs(db); // push notifications: season news and the daily goal reminder (dry runs until PUSH_SENDING=on)
   require('./payments/emails').startJobs(db); // purchase confirmations and withdrawal acknowledgements (once email is on)
   require('./payments').startGoogleJobs(db); // Google Play: consume leftovers hourly, refunds/chargebacks every 6 h

@@ -1,6 +1,6 @@
 # 3. Data model
 
-*Last updated 21 Oct 2026.* The database is PostgreSQL. The schema is defined in `docs/database_schema.sql`. The server applies that file at every start; it only adds what is missing and never deletes or changes rows. Changes to existing rows go in `docs/data_updates/` (see the [runbook](05-runbook.md#data-updates)).
+*Last updated 25 Oct 2026.* The database is PostgreSQL. The schema is defined in `docs/database_schema.sql`. The server applies that file at every start; it only adds what is missing and never deletes or changes rows. Changes to existing rows go in `docs/data_updates/` (see the [runbook](05-runbook.md#data-updates)).
 
 **Conventions:**
 - Ids are UUIDs (`gen_random_uuid()`), except where noted.
@@ -47,10 +47,10 @@ marbles ──< user_marbles   (the older plain marbles; looks only)
 | Column | Meaning |
 |---|---|
 | `id` | Player id |
-| `username` | Player name, 3–24 letters, digits or `_`, unique regardless of case. Deleted accounts become `deleted_<12 hex>` |
+| `username` | Player name, 3–24 letters, digits or `_`, unique regardless of case. Guests get `guest_<10 hex>` (shown as `guest_<5 digits>` until they choose a name); deleted accounts become `deleted_<12 hex>` |
 | `email` | Unique. Guests get a placeholder `guest-<id>@guest.marblespins.invalid`; deleted accounts get `…@deleted.invalid` |
 | `password_hash` | bcrypt hash. Deleted accounts get a value no password can match |
-| `display_name` | The name the player chose to be shown by (a guest can choose one; it stays when they save the account, cleared if it's the same as their new player name). 3–24 letters, digits, spaces, `_` or `-`, the name filter, never `guest_…`, never another player's player name or chosen name (case ignored; `users_display_name_lower` index). Shown instead of the player name everywhere (`src/names/shown.js`) |
+| `display_name` | The name the player chose to be shown by (25 Oct 2026; a guest can choose one; it stays when they save the account, cleared if it's the same as their new player name). 3–24 letters, digits, spaces, `_` or `-`, the name filter, never `guest_…`, never another player's player name or chosen name (case ignored; `users_display_name_lower` index). Shown instead of the player name everywhere (`src/names/shown.js`) |
 | `avatar_url` | Not used by the website today |
 | `role` | `player` or `admin` (the back office) |
 | `coins` | Current balance, never below 0. **Only changed through `economy.change()`**, which also writes `coin_ledger` |
@@ -118,7 +118,7 @@ Sign-up, login and purchase events: `kind`, `ip` (inet), `country` (2 letters, l
 | `waypoints`, `obstacles` | JSON: the classic engine's polyline and obstacles |
 | `physics` | JSON settings for the **new physics engine** (channel, sections, features, start, kit looks). NULL means the track uses the classic engine |
 | `thumbnail_url`, `created_by`, `created_at`, `updated_at` | |
-| `is_active` | Shown and raced. New tracks are added switched off and turned on later by a data update |
+| `is_active` | Shown and raced. New tracks are added switched off and turned on later, by hand in Railway's query box (`UPDATE tracks SET is_active = true WHERE slug = …`, as the Rivers were on 25 Oct 2026) or by a data update (the holiday tracks: `2027-03-31-switch-on-holiday-tracks`). So the live count is in the database, not the repository (105 on 25 Oct 2026; the 31 holiday tracks join on 1 Dec) |
 | `season_key` | A season's track (e.g. `holiday-2026`): raced only by pass holders while the season is on, by nobody before it, by everyone after (see [Seasons](#seasons-and-the-season-pass)). NULL for every ordinary track |
 
 ### `races`
@@ -132,10 +132,10 @@ Sign-up, login and purchase events: `kind`, `ip` (inet), `country` (2 letters, l
 | `target_duration_ms` | Race length: classic races are scaled to it; physics races take what they take (20–90 s) |
 | `tick_rate_hz`, `countdown_ms` | Streaming rate and countdown length |
 | `track_snapshot` | A copy of the track as it was when the race was decided, including the physics settings and engine version. Later track edits never change a past race |
-| `created_by`, `scheduled_at` | Who made it; when the scheduler should start it |
+| `created_by`, `scheduled_at` | Who made it; when the server starts it by itself (a friend room's start timer, a quick race's 15 s; 25 Oct 2026). NULL: it waits for a start |
 | `decided_at`, `started_at`, `finished_at` | Lifecycle times. `started_at` = decision time + countdown |
 | `next_race_id` | The rematch: the follow-up race on the same track |
-| `room_id` | Set for friend-room races, which never appear in public lists |
+| `room_id` | Set for a room's races (friend rooms and quick races). They never appear in the public race list (`GET /api/races`); a public room shows in its own list (`GET /api/rooms/public`) |
 
 **Checks on the table:**
 - A race outside the lobby must have a seed, a duration and a snapshot.
@@ -168,16 +168,16 @@ Friend rooms, public rooms and quick races (25 Oct 2026).
 | Column | Meaning |
 |---|---|
 | `code` | Short code from the room link, e.g. `/r/K7QF2M` |
-| `host_id` | The host |
-| `track_id` | The host's chosen track |
+| `host_id` | The host (a quick race: the player who opened it, with no host powers) |
+| `track_id` | The host's chosen track; NULL: a random track each race (always for a quick race) |
 | `current_race_id` | The room's current race |
 | `status` | `open` or `closed` |
-| `created_at`, `last_active_at` | A room closes after 2 hours without a race |
-
-## Marbles and the collection
+| `created_at`, `last_active_at` | A room closes after 2 hours without a race; a quick race closes after its race |
 | `is_public` | Listed under "Join a race" (`GET /api/rooms/public`); false (the default): only people with the link or code. The host may change it at any time |
 | `kind` | `friends` (a room someone made; they are its host) or `quick` (Quick race: always public, no host powers, a random track, starts by itself 15 s after it opens, closes after its race) |
 | `removed` | Players the host took out: they can't join that room again |
+
+## Marbles and the collection
 
 ### `user_collection`: one owned copy of a collection marble
 | Column | Meaning |

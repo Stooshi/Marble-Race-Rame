@@ -1,6 +1,6 @@
 # Store rules: App Store and Google Play
 
-What the stores' rules ask of Marble Spins, checked against the code on 21 October 2026 (app plan step 6). The proposed answers for the store forms (age rating, App Privacy, Data safety) are at the end, then the list of things only Moses can decide.
+What the stores' rules ask of Marble Spins, checked against the code on 21 October 2026 (app plan step 6) and again on 25 October 2026. The proposed answers for the store forms (age rating, App Privacy, Data safety) are at the end, then the list of things only Moses can decide.
 
 **Status:** OK = the app already complies. Fixed = changed in the code on 21 Oct 2026. Needs Moses = a decision or a store-console task.
 
@@ -14,12 +14,13 @@ What the stores' rules ask of Marble Spins, checked against the code on 21 Octob
 - Native parts: App Store / Google Play purchases (`@capgo/native-purchases`), Restore Purchases on iPhone, push notifications (built, switched off in `client/src/shared/push.json`), offline screen with the phone's own network status, Android back button, status bar and splash, sound that pauses in the background and follows the iPhone's silent switch. No haptics.
 - No ads, no analytics or crash SDK in the apps. Google Analytics and the Meta Pixel load only on the website, after cookie consent (`client/src/site/consent/tracking.js` stops in the apps). The Android manifest removes `AD_ID`.
 - The apps have their own layout (`AppHeader.jsx`, `.is-app` rules in `site.css`): a compact header with one menu button, and the race on the whole screen. **Get coins** (a marble the player can't afford) opens the same checkout, which in the apps buys through the App Store or Google Play only (`buyCoins`), never Stripe or a link to the website.
+- The website's App Store and Google Play buttons (`client/src/shared/storeLinks.json`, both empty on 25 Oct 2026, so hidden) never show in the apps (`site/SiteFooter.jsx`); nor do the social links (`site/SocialLinks.jsx`).
 - Email and password accounts only. No Sign in with Apple or Google.
 - Guests (any age) play without an account. Saving an account needs 13+ (birth year and month asked; under 13: no account, nothing stored). Coin packs and the pass are for saved accounts only.
 
 ## Account deletion
 
-**In the apps:** Settings → **Delete my account** (`client/src/site/pages/SettingsPage.jsx`, `DeleteAccount`). Settings opens from the @name chip in the header (saved accounts), from the Marble Bag (everyone), and now from the footer of every page in the apps (fixed). The button shows for guests and saved accounts. A guest types DELETE; a saved account types DELETE and its password. The client calls `DELETE /api/users/me` (`src/routes/users.js`), the server anonymises the account in one transaction (`src/account/index.js` `deleteAccount`), then the app logs out and opens `/?deleted=1` ("Your account has been deleted"). Nothing in the native shell blocks it: it is an ordinary API call (CORS allows the app origins and DELETE). There are no subscriptions, so there is nothing to cancel first or warn about.
+**In the apps:** Settings → **Delete my account** (`client/src/site/pages/SettingsPage.jsx`, `DeleteAccount`). Settings opens from the name chip in the header (saved accounts; `client/src/site/account/NameChip.jsx`, without "@" since 25 Oct 2026; a guest's chip opens "Save your marble" and "Choose your name" instead), from the apps' menu (saved accounts), from the Marble Bag (everyone), and now from the footer of every page in the apps (fixed). The button shows for guests and saved accounts. A guest types DELETE; a saved account types DELETE and its password. The client calls `DELETE /api/users/me` (`src/routes/users.js`), the server anonymises the account in one transaction (`src/account/index.js` `deleteAccount`), then the app logs out and opens `/?deleted=1` ("Your account has been deleted"). Nothing in the native shell blocks it: it is an ordinary API call (CORS allows the app origins and DELETE). There are no subscriptions, so there is nothing to cancel first or warn about.
 
 **Without the app (Google's "delete account URL"):** **https://marblespins.com/help/how-do-i-delete-my-account**. It is a pre-rendered Help Centre page, in the sitemap. It names Marble Spins and Voltron Robotics AB, gives the steps in the app, on the website (log in, Settings), and with the contact form (topic "Privacy and your data") for someone who can't log in, says what is deleted and what is kept (purchase records, 7 years, without name or email), and that there are no subscriptions to cancel. A guest account can't be found without its device, so the page says it is deleted by itself after 90 days unused.
 
@@ -36,7 +37,7 @@ What the stores' rules ask of Marble Spins, checked against the code on 21 Octob
 | **3.1.1 In-app purchase** (coins, the pass) | OK, fixed | Coins and the pass are bought with StoreKit 2 in the iPhone app; Stripe is never used in the apps (`client/src/site/payments/index.js`). Coins never expire. Fixed: the shop and checkout showed the website's dollar price until the App Store answered; now only the App Store's price (or nothing). |
 | **3.1.1 restore** (non-consumable pass) | OK | Pass page: **Restore purchases** on iPhone (`restoreStorePurchases`). Help answer "How do I restore my pass on iPhone?". |
 | **3.1.1 loot boxes** | OK | None. Bags list exactly which marbles they hold, and the player picks the shade. No random paid item anywhere (the only server randomness is starter marbles, room codes, track picks). |
-| **3.1.1 codes** (own codes may not unlock content) | OK | Gift codes are website only: `/redeem` and the Settings link are hidden in the apps (`giftCodesOn()` checks `isNativeApp()`). |
+| **3.1.1 codes** (own codes may not unlock content) | OK | Gift codes are website only: `/redeem` and the Settings link are hidden in the apps (`giftCodesOn()` checks `isNativeApp()`). On 25 Oct 2026 they are off everywhere too (`client/src/shared/giftCodes.json` `enabled: false`). |
 | **3.1.1(a) / 3.1.3 no other purchase methods** | OK, fixed | No link to Stripe, `/checkout` on the web, or the website's shop in the apps. In-app `/checkout` uses the store. Fixed: Help answers about buying in the apps now speak only of that app's store (no Stripe, no "on the website: card…", no dollar price table, no "$9.99"). The footer's links (Help, Shop, Terms, Privacy, Cookies, Tracks, Contact) stay inside the app. |
 | **3.1.3(b) multiplatform** | OK | Coins and the pass bought on the website work in the app. Both are also sold as in-app purchases, as the rule requires. |
 | **4.2 minimum functionality** (web wrapper risk) | OK, argue it | A full 3D game, bundled in the app, not a website in a frame. Native: in-app purchases and restore, push (when switched on), offline screen, silent-switch audio, back button, splash, status bar. Put this in the review notes. |
@@ -61,7 +62,7 @@ What the stores' rules ask of Marble Spins, checked against the code on 21 Octob
 | **Gambling, simulated gambling, loot boxes** | OK | Coin entry fees are off (14 Oct decision), there is no betting, no random paid items, and coins can't be cashed out or traded. |
 | **Real-money gambling, contests** | OK | None. Giveaways are run by us outside the app. |
 | **Spam and minimum functionality** | OK | A full game, bundled in the app, not a web view of the website. |
-| **User-generated content** (Apple 1.2: filter, report, act) | OK (22 Oct) | Only the player name is visible to others (scoreboards, race results, rooms). No chat, no uploads shown to other players. **Filter:** offensive names are refused when chosen or changed (English and 11 more languages, leetspeak, separators; `client/src/shared/nameFilter.js`). **Report:** "Report this name" (⚑) on scoreboards and race results and on the tapped-marble card. **Act:** the back office's Name reports page renames (PlayerNNNN) or dismisses, audited, and lists older names the filter would block. Apple 1.2's "block abusive users" fits a chat app; here a player can't contact anyone, and the back office can suspend an account. |
+| **User-generated content** (Apple 1.2: filter, report, act) | OK (22 Oct) | Only the player name is visible to others (scoreboards, country records, race results, friend and public rooms). Since 25 Oct 2026 a player, guests too, may choose the name shown (`users.display_name`); a guest who hasn't shows as `guest_<number>`. No chat, no uploads shown to other players. **Filter:** offensive names are refused when chosen or changed, the shown name included (English and 11 more languages, leetspeak, separators; `client/src/shared/nameFilter.js`; `src/names` `assertShownName`). **Report:** "Report this name" (⚑) on scoreboards, country records and race results and on the tapped-marble card. **Act:** the back office's Name reports page renames (PlayerNNNN) or dismisses, audited, and lists older names the filter would block. Apple 1.2's "block abusive users" fits a chat app; here a player can't contact anyone, and the back office can suspend an account. |
 
 ## Target audience (both stores)
 
@@ -97,7 +98,7 @@ Expected rating: **4+**. In-app purchases are shown on the listing anyway. (A hi
 |---|---|
 | Violence, fear, sexuality, language, controlled substances, crude humour | No |
 | Gambling: real-money gambling, simulated gambling | No |
-| Users can interact or exchange content (chat, voice, photos) | No (friend rooms show player names only) |
+| Users can interact or exchange content (chat, voice, photos) | No (friend and public rooms show player names only) |
 | Shares the user's location with others | No |
 | Allows purchases of digital goods | Yes |
 | Randomised items for purchase (loot boxes) | No |

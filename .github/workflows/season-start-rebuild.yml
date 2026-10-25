@@ -1,5 +1,5 @@
 # Rebuild the website when the Holiday Season 2026 starts, so its pre-rendered track pages, the
-# sitemap and the "90+ tracks" count include the 31 holiday tracks (the server shows them from
+# sitemap and the "100+ tracks" count include the 31 holiday tracks (the server shows them from
 # 1 Dec 2026 00:00 Swedish time by date; the website only learns of them at a build).
 #
 # How it works: a POST to a Vercel Deploy Hook (a URL that rebuilds Main). The URL is a secret: it
