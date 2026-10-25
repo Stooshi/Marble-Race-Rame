@@ -169,6 +169,9 @@ const SHORE_M = 9;        // metres of shore from the water's edge up to the lan
 const KEEP_M = 11;        // metres from a stretch on the ground within which the land is never lowered
 const GRID = 10;          // metres: the lookup grid of the nearest samples
 const BED = 2.2;          // metres from the water's surface to its bed in the middle
+const BEYOND_M = 320;     // metres the river runs on past the start and past the finish
+const DETAIL_BEYOND_M = 25; // …of which the banks are drawn finer near the ends only
+const BEYOND_FALL = 0.004; // its fall per metre out there (rising gently upstream of the start)
 
 /**
  * The river around a kit track: { heightAt(x, z, base), colourAt(x, y, z, steep), detail(cell),
@@ -265,6 +268,42 @@ export function makeRiver(centerline, channel, kit, { flight, liftAt, bounds }) 
     level[i] = i ? Math.max(Math.min(level[i - 1], want), groundY[i] - 4) : want;
   }
 
+  // The river itself runs on past both ends of the track (Moses, 25 Oct 2026, option B after the Nile's
+  // review: "unclear how the waterways connect"; it began at the start and stopped at the finish). Its
+  // course: the track's samples, with BEYOND_M metres more before the start (upstream, along the
+  // start's direction) and after the finish (downstream), the same width and side as at each end.
+  // River index k is the track's sample k - pre. (The per-sample getters below stay the track's.)
+  const pre = halfW[0] > 1 ? Math.round(BEYOND_M / step) : 0;
+  const post = halfW[segments] > 1 ? Math.round(BEYOND_M / step) : 0;
+  const m = n + pre + post;
+  const last = m - 1;
+  const rx = new Float64Array(m);
+  const rz = new Float64Array(m);
+  const rtx = new Float64Array(m);
+  const rtz = new Float64Array(m);
+  const rHalf = new Float64Array(m);
+  const rLevel = new Float64Array(m);
+  {
+    const dirAt = (i) => {
+      const t = samples[i].tangent;
+      const l = Math.hypot(t.x, t.z) || 1;
+      return [t.x / l, t.z / l];
+    };
+    const [ax0, az0] = dirAt(0);
+    const [ax1, az1] = dirAt(segments);
+    for (let k = 0; k < m; k += 1) {
+      const i = Math.min(segments, Math.max(0, k - pre));
+      const d = k < pre ? -(pre - k) * step : k - pre > segments ? (k - pre - segments) * step : 0;
+      const [ax, az] = d < 0 ? [ax0, az0] : [ax1, az1];
+      rx[k] = cx[i] + ax * d;
+      rz[k] = cz[i] + az * d;
+      rtx[k] = tx[i];
+      rtz[k] = tz[i];
+      rHalf[k] = halfW[i];
+      rLevel[k] = level[i] - d * BEYOND_FALL;
+    }
+  }
+
   // The lookup grid: for each square, the nearest track sample and the nearest river sample.
   const minX = bounds.minX;
   const minZ = bounds.minZ;
@@ -277,7 +316,9 @@ export function makeRiver(centerline, channel, kit, { flight, liftAt, bounds }) 
     const keep = [];
     for (let i = 0; i < n; i += every) keep.push(i);
     if (keep[keep.length - 1] !== segments) keep.push(segments);
-    const wet = keep.filter((i) => halfW[i] > 1);
+    const wet = [];
+    for (let k = 0; k < m; k += every) if (rHalf[k] > 1) wet.push(k);
+    if (rHalf[last] > 1 && wet[wet.length - 1] !== last) wet.push(last);
     for (let gz = 0; gz < gh; gz += 1) {
       const z = minZ + gz * GRID;
       for (let gx = 0; gx < gw; gx += 1) {
@@ -288,7 +329,7 @@ export function makeRiver(centerline, channel, kit, { flight, liftAt, bounds }) 
         gTrack[gz * gw + gx] = bi;
         best = Infinity;
         let bj = -1;
-        for (const i of wet) { const d = (cx[i] - x) ** 2 + (cz[i] - z) ** 2 - halfW[i] ** 2; if (d < best) { best = d; bj = i; } }
+        for (const k of wet) { const d = (rx[k] - x) ** 2 + (rz[k] - z) ** 2 - rHalf[k] ** 2; if (d < best) { best = d; bj = k; } }
         gRiver[gz * gw + gx] = bj;
       }
     }
@@ -300,11 +341,11 @@ export function makeRiver(centerline, channel, kit, { flight, liftAt, bounds }) 
   };
   const window = Math.ceil((GRID * 2 + 30) / step) + 2;
   // The nearest point of a polyline (xs, zs) around sample i0: { d, i, u }.
-  const nearestOn = (xs, zs, x, z, i0) => {
+  const nearestOn = (xs, zs, x, z, i0, end = segments) => {
     let best = Infinity;
     let bi = i0;
     let bu = 0;
-    for (let i = Math.max(0, i0 - window); i < Math.min(segments, i0 + window); i += 1) {
+    for (let i = Math.max(0, i0 - window); i < Math.min(end, i0 + window); i += 1) {
       const ax = xs[i + 1] - xs[i];
       const az = zs[i + 1] - zs[i];
       const u = Math.max(0, Math.min(1, ((x - xs[i]) * ax + (z - zs[i]) * az) / (ax * ax + az * az || 1)));
@@ -313,7 +354,7 @@ export function makeRiver(centerline, channel, kit, { flight, liftAt, bounds }) 
     }
     return { d: Math.sqrt(best), i: bi, u: bu };
   };
-  const lerp = (arr, c) => arr[c.i] + (arr[Math.min(segments, c.i + 1)] - arr[c.i]) * c.u;
+  const lerp = (arr, c, end = segments) => arr[c.i] + (arr[Math.min(end, c.i + 1)] - arr[c.i]) * c.u;
 
   // How far (x, z) is from a stretch on the ground (Infinity if the nearest stretch flies).
   const groundStretch = (x, z, g) => {
@@ -324,10 +365,10 @@ export function makeRiver(centerline, channel, kit, { flight, liftAt, bounds }) 
   const riverAt = (x, z, g) => {
     const j = gRiver[g];
     if (j < 0) return null;
-    const c = nearestOn(cx, cz, x, z, j);
-    const h = lerp(halfW, c);
+    const c = nearestOn(rx, rz, x, z, j, last);
+    const h = lerp(rHalf, c, last);
     if (h < 1) return null;
-    return { d: c.d - h, level: lerp(level, c), c, half: h };
+    return { d: c.d - h, level: lerp(rLevel, c, last), c, half: h };
   };
 
   /** The land's height at (x, z), given the ordinary land's `base` there. */
@@ -377,13 +418,17 @@ export function makeRiver(centerline, channel, kit, { flight, liftAt, bounds }) 
   function detail(cell) {
     const pts = [];
     const every = Math.max(1, Math.round(Math.min(cell / 2.2, 8) / step));
-    for (let i = 0; i < n; i += every) {
-      if (halfW[i] < 2) continue;
+    // (Past the ends only the first DETAIL_BEYOND_M metres: further out the banks are seen from afar, and
+    // finer land there would cost a phone triangles it doesn't have.)
+    const from = Math.max(0, pre - Math.round(DETAIL_BEYOND_M / step));
+    const to = Math.min(m, pre + n + Math.round(DETAIL_BEYOND_M / step));
+    for (let i = from; i < to; i += every) {
+      if (rHalf[i] < 2) continue;
       for (const sg of [1, -1]) {
         for (let d = -3; d <= SHORE + 2; d += Math.min(cell / 2.2, 5) * (SHORE / SHORE_M)) { // (a nearer river's longer shore: as many points, further apart)
-          const e = halfW[i] + d;
+          const e = rHalf[i] + d;
           // (The bank's edge, either side of the river's middle, across the river: the track's side vector.)
-          pts.push({ x: cx[i] + tx[i] * sg * e, z: cz[i] + tz[i] * sg * e });
+          pts.push({ x: rx[i] + rtx[i] * sg * e, z: rz[i] + rtz[i] * sg * e });
         }
       }
     }
@@ -409,7 +454,7 @@ export function makeRiver(centerline, channel, kit, { flight, liftAt, bounds }) 
     // (Phones: every 10 m along with the water material, 7 m otherwise, so its triangles stay in budget.)
     const every = Math.max(1, Math.round((lite ? (shaded ? 10 : 7) : 3.5) / step));
     const across = lite ? [-1, 0, 1] : [-1, -0.5, 0, 0.5, 1];
-    const pt0 = (i, f) => ({ x: cx[i] + tx[i] * f * (halfW[i] + 0.6), y: level[i], z: cz[i] + tz[i] * f * (halfW[i] + 0.6) });
+    const pt0 = (i, f) => ({ x: rx[i] + rtx[i] * f * (rHalf[i] + 0.6), y: rLevel[i], z: rz[i] + rtz[i] * f * (rHalf[i] + 0.6) });
     // (The land under it is the river's bed, never far below: water over a lower stretch or a valley would float.
     // Moses, 23 Oct 2026: where it was left out, a dry brown bed showed instead (Amazon's "tar road"). With the
     // water material, `shaded`, the water there comes down to the land and runs on over it, a little above it.)
@@ -433,10 +478,10 @@ export function makeRiver(centerline, channel, kit, { flight, liftAt, bounds }) 
     };
     const pt = (i, f) => settle(pt0(i, f));
     const hits = (a, b, cc) => corridor && corridor.hitsTriangle(a, b, cc);
-    for (let i = 0; i + every <= segments; i += every) {
+    for (let i = 0; i + every <= last; i += every) {
       const j = i + every;
-      if (halfW[i] < 2 || halfW[j] < 2) continue;
-      const fall = (level[i] - level[j]) / (every * step);
+      if (rHalf[i] < 2 || rHalf[j] < 2) continue;
+      const fall = (rLevel[i] - rLevel[j]) / (every * step);
       for (let k = 0; k + 1 < across.length; k += 1) {
         const a0 = pt(i, across[k]);
         const a1 = pt(i, across[k + 1]);
@@ -470,8 +515,8 @@ export function makeRiver(centerline, channel, kit, { flight, liftAt, bounds }) 
         // (`glint`: pale streaks of sky on the water, along the current, so a brown or dark river reads as water.)
         if (seam && across[k + 1] === 0) {
           // (The line where the two waters meet: a narrow band of pale swirls.)
-          const wI = 1.2 / (halfW[i] + 0.6);
-          const wJ = 1.2 / (halfW[j] + 0.6);
+          const wI = 1.2 / (rHalf[i] + 0.6);
+          const wJ = 1.2 / (rHalf[j] + 0.6);
           const up = (o) => ({ x: o.x, y: o.y + 0.03, z: o.z, skip: o.skip });
           const e = [up(pt(i, -wI)), up(pt(j, -wJ)), up(pt(j, wJ)), up(pt(i, wI))];
           const fc = new Color().copy(seam[1]).lerp(foam, 0.35 + 0.15 * Math.sin(i * 0.9));
@@ -483,8 +528,8 @@ export function makeRiver(centerline, channel, kit, { flight, liftAt, bounds }) 
         if (glint && !lite && (k === 0 || k === across.length - 2)) {
           // (A pale line of ripples along each shore.)
           const edge = k === 0 ? across[0] : across[k + 1];
-          const inI = edge - Math.sign(edge) * (1.6 / (halfW[i] + 0.6));
-          const inJ = edge - Math.sign(edge) * (1.6 / (halfW[j] + 0.6));
+          const inI = edge - Math.sign(edge) * (1.6 / (rHalf[i] + 0.6));
+          const inJ = edge - Math.sign(edge) * (1.6 / (rHalf[j] + 0.6));
           const up = (o) => ({ x: o.x, y: o.y + 0.03, z: o.z, skip: o.skip });
           const e = [up(pt(i, edge)), up(pt(j, edge)), up(pt(j, inJ)), up(pt(i, inI))];
           const fc = new Color().copy(c).lerp(foam, 0.5);
