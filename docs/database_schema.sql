@@ -1244,3 +1244,12 @@ CREATE TRIGGER trg_race_entries_country BEFORE INSERT ON race_entries
 -- Chosen names (users.display_name; 25 Oct 2026): a guest can choose one and keeps it when saving the
 -- account; no one may choose another player's player name or chosen name (case ignored: src/names).
 CREATE INDEX IF NOT EXISTS users_display_name_lower ON users (lower(display_name)) WHERE display_name IS NOT NULL;
+
+-- Public rooms and Quick race (25 Oct 2026): a room is private (link or code only, as before) or public
+-- (listed under "Join a race"); a quick race is a public room with no host, on a random track, that
+-- starts by itself 15 s after it opens and closes after its race. `removed`: players the host took out
+-- (they can't join that room again).
+ALTER TABLE rooms ADD COLUMN IF NOT EXISTS is_public boolean NOT NULL DEFAULT false;
+ALTER TABLE rooms ADD COLUMN IF NOT EXISTS kind varchar(10) NOT NULL DEFAULT 'friends' CHECK (kind IN ('friends', 'quick'));
+ALTER TABLE rooms ADD COLUMN IF NOT EXISTS removed uuid[] NOT NULL DEFAULT '{}';
+CREATE INDEX IF NOT EXISTS idx_rooms_public ON rooms (kind, created_at) WHERE is_public AND status = 'open';

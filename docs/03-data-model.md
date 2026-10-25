@@ -163,7 +163,7 @@ Looks only; the race engine never reads them.
 - `house_looks`: the collection look a computer player wore in a beginner race (showcase).
 
 ### `rooms`
-Friend rooms.
+Friend rooms, public rooms and quick races (25 Oct 2026).
 
 | Column | Meaning |
 |---|---|
@@ -175,6 +175,9 @@ Friend rooms.
 | `created_at`, `last_active_at` | A room closes after 2 hours without a race |
 
 ## Marbles and the collection
+| `is_public` | Listed under "Join a race" (`GET /api/rooms/public`); false (the default): only people with the link or code. The host may change it at any time |
+| `kind` | `friends` (a room someone made; they are its host) or `quick` (Quick race: always public, no host powers, a random track, starts by itself 15 s after it opens, closes after its race) |
+| `removed` | Players the host took out: they can't join that room again |
 
 ### `user_collection`: one owned copy of a collection marble
 | Column | Meaning |

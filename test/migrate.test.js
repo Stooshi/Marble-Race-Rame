@@ -17,7 +17,7 @@ test('reads every table and its columns from the schema file', () => {
   assert.ok(cols.races.includes('track_snapshot'));
   assert.ok(cols.races.includes('room_id'));
   for (const c of ['order_no', 'consent_at', 'payment_intent', 'charged_cents', 'refunded_cents', 'receipt_url']) assert.ok(cols.payments.includes(c), c);
-  assert.deepEqual(cols.rooms, ['id', 'code', 'host_id', 'track_id', 'current_race_id', 'status', 'created_at', 'last_active_at']);
+  assert.deepEqual(cols.rooms, ['id', 'code', 'host_id', 'track_id', 'current_race_id', 'status', 'created_at', 'last_active_at', 'is_public', 'kind', 'removed']);
   assert.ok(cols.race_entries.includes('split_time_ms'));
   for (const c of ['owner_id', 'starter_no', 'marble_code']) assert.ok(cols.marbles.includes(c), c); // (every player's own starters)
   for (const c of ['birth_month', 'email_verified_at']) assert.ok(cols.users.includes(c), c);

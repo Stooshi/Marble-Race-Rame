@@ -27,7 +27,8 @@ const RACE_LIST_SQL = `
          t.id AS track_id, t.slug AS track_slug, t.name AS track_name, t.difficulty, t.season_key AS track_season,
          (SELECT COUNT(*)::int FROM race_entries e WHERE e.race_id = r.id) AS entry_count,
          (SELECT COUNT(*)::int FROM race_entries e WHERE e.race_id = r.id AND NOT e.is_bot) AS player_count,
-         (SELECT ro.code FROM rooms ro WHERE ro.id = r.room_id) AS room_code
+         (SELECT ro.code FROM rooms ro WHERE ro.id = r.room_id) AS room_code,
+         (SELECT ro.kind FROM rooms ro WHERE ro.id = r.room_id) AS room_kind
     FROM races r JOIN tracks t ON t.id = r.track_id`;
 
 async function getRaceRow(id) {

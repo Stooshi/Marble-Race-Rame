@@ -248,6 +248,16 @@ a.ms-chip:hover { text-decoration: none; border-color: var(--ms-muted); }
 .ms-namemenu__error { color: var(--ms-red, #ff6b6b); font-size: 0.9rem; }
 .ms-namemenu__ok { color: var(--ms-green, #3ddc97); font-size: 0.9rem; }
 
+/* Public rooms under "Join a race" (RaceFlow.jsx PublicRooms), and the Private | Public toggle. */
+.ms-public { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.ms-public__row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 12px; border-radius: 14px; background: var(--ms-bg); border: 1px solid var(--ms-border); color: var(--ms-text); min-height: 56px; }
+.ms-public__row:hover { text-decoration: none; border-color: var(--ms-muted); }
+.ms-public__what { display: grid; min-width: 0; }
+.ms-public__what b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ms-public__when { color: var(--ms-yellow); font-variant-numeric: tabular-nums; }
+.ms-privacy { justify-self: start; }
+.ms-privacy button { min-height: 44px; min-width: 96px; }
+
 /* ── Footer ───────────────────────────────────────────────────────────── */
 .ms-footer {
   border-top: 1px solid var(--ms-border);

@@ -20,19 +20,19 @@ export default function HomeHub() {
   const { user } = useAuth();
   const { data } = useAsync(async () => {
     const [races, tracks, board, day] = await Promise.all([
-      api.races('lobby', 10).catch(() => ({ races: [] })),
+      api.publicRooms().catch(() => ({ rooms: [] })), // (public rooms and quick races waiting at the start)
       api.tracks().catch(() => ({ tracks: [] })),
       api.scoreboard('season').catch(() => null),
       user ? api.economyMe().catch(() => null) : null,
     ]);
-    return { races: races.races ?? [], tracks: tracks.tracks ?? tracks ?? [], board, day };
+    return { races: races.rooms ?? [], tracks: tracks.tracks ?? tracks ?? [], board, day };
   }, [user?.id]);
 
   const today = trackOfTheDay(data?.tracks?.filter((t) => t.is_active !== false));
   // The day's track's own picture behind the card (pre-launch item 12), over the gradient until it has loaded.
   const pic = today && BANNERS_ON ? bannerSrc(today.slug) : null;
   const [picLoaded, setPicLoaded] = useState(false);
-  const waiting = (data?.races ?? []).reduce((n, r) => n + (r.entry_count ?? r.entries_count ?? 0), 0);
+  const waiting = (data?.races ?? []).reduce((n, r) => n + (r.players ?? 0), 0);
   const me = data?.board?.rows?.find((r) => r.me);
   // The daily goal and its streak (client/src/shared/economy.json): days run midnight to midnight UTC.
   const goal = data?.day?.goal?.races ?? economy.dailyGoal.races;
@@ -58,7 +58,7 @@ export default function HomeHub() {
         <aside style={{ display: 'grid', gap: 14, flexBasis: 320, alignContent: 'start' }}>
           {/* (Phones: three identical yellow buttons, stacked full width; Moses, 25 Oct 2026. Computers: as before. site.css .ms-race-choices) */}
           <div className="ms-race-choices">
-            <Link to="/play/start?quick=1" className="ms-btn ms-btn--primary ms-btn--lg ms-race-quick">QUICK RACE</Link>
+            <Link to="/play/quick" className="ms-btn ms-btn--primary ms-btn--lg ms-race-quick">QUICK RACE</Link>
             <div className="ms-row ms-race-more">
               <Link to="/play/track" className="ms-card ms-tile ms-race-choice"><b>Race solo</b><span>Pick a track</span></Link>
               <Link to="/play/friends" className="ms-card ms-tile ms-race-choice"><b>Race with friends</b><span>Invite and go</span></Link>

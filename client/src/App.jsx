@@ -9,7 +9,7 @@ import { startNativeShell } from './app/native';
 import { resumeStorePurchases } from './site/payments';
 import { useAuth } from './context/AuthContext';
 import LandingPage from './site/landing/LandingPage';
-import { FriendsStep, ShooterStep, StartStep, TrackStep } from './site/pages/RaceFlow';
+import { FriendsStep, QuickStep, ShooterStep, StartOrQuick, TrackStep } from './site/pages/RaceFlow';
 import ShopPage from './site/pages/ShopPage';
 import RoomPage from './site/pages/RoomPage';
 import CertificatePage from './site/pages/CertificatePage';
@@ -101,7 +101,8 @@ export default function App() {
           <Route path="/play/friends" element={<FriendsStep />} />
           <Route path="/play/track" element={<TrackStep />} />
           <Route path="/play/shooter" element={<ShooterStep />} />
-          <Route path="/play/start" element={<StartStep />} />
+          <Route path="/play/start" element={<StartOrQuick />} />
+          <Route path="/play/quick" element={<QuickStep />} />
           <Route path="/r/:code" element={<RoomPage />} />
           <Route path="/shop" element={<ShopPage />} />
           <Route path="/collection" element={<ShopPage />} />

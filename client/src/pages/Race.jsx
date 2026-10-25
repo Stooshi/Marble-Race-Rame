@@ -171,7 +171,7 @@ export default function Race() {
     complete: finished,
     clock: stream.clock,
     canSkip: Boolean(session?.canSkip),
-    next: meta ? <NextRace raceId={raceId} entries={meta.entries} nextRaceId={stream.next?.nextRaceId ?? race?.next_race_id ?? null} roomCode={race?.room_code ?? null} /> : null,
+    next: meta ? <NextRace raceId={raceId} entries={meta.entries} nextRaceId={stream.next?.nextRaceId ?? race?.next_race_id ?? null} roomCode={race?.room_code ?? null} roomKind={race?.room_kind ?? null} /> : null,
   };
   // Race commentary while it runs; once it's over, the results board takes over (inside the view).
   const footer = finished ? null : <EventFeed events={stream.events} entries={meta?.entries ?? []} />;

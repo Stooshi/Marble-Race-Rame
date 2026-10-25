@@ -171,7 +171,10 @@ export const api = {
   results: (id) => request(`/races/${id}/results`),
   replay: (id) => request(`/races/${id}/replay`).then(nameLooks), // marbles named after the looks they wear
   // Friend rooms: a private race with friends, joined by a short code (marblespins.com/r/CODE).
-  createRoom: (trackId) => request('/rooms', { method: 'POST', body: trackId ? { track_id: trackId } : {} }),
+  createRoom: (trackId, isPublic = false) => request('/rooms', { method: 'POST', body: { ...(trackId && { track_id: trackId }), public: Boolean(isPublic) } }),
+  roomVisibility: (code, isPublic) => request(`/rooms/${encodeURIComponent(code)}/visibility`, { method: 'POST', body: { public: Boolean(isPublic) } }),
+  publicRooms: () => request('/rooms/public'),
+  quickRace: () => request('/rooms/quick', { method: 'POST' }),
   room: (code) => request(`/rooms/${encodeURIComponent(code)}`),
   joinRoom: (code) => request(`/rooms/${encodeURIComponent(code)}/join`, { method: 'POST' }),
   leaveRoom: (code) => request(`/rooms/${encodeURIComponent(code)}/leave`, { method: 'POST' }),

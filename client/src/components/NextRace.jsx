@@ -18,11 +18,11 @@ const clockText = (ms) => {
  * countdown and joins the same race. nextRaceId: the rematch if already known
  * (live, the server announces it); otherwise it is looked up once.
  */
-export default function NextRace({ raceId, entries, nextRaceId = null, roomCode = null }) {
+export default function NextRace({ raceId, entries, nextRaceId = null, roomCode = null, roomKind = null }) {
   // (In the apps, once switched on: after the first finished race, the notifications question.)
   return (
     <>
-      {roomCode ? <RoomNext code={roomCode} /> : <PublicNext raceId={raceId} entries={entries} nextRaceId={nextRaceId} />}
+      {roomKind === 'quick' ? <QuickNext /> : roomCode ? <RoomNext code={roomCode} /> : <PublicNext raceId={raceId} entries={entries} nextRaceId={nextRaceId} />}
       <PushAsk />
     </>
   );
@@ -41,6 +41,19 @@ function RoomNext({ code }) {
   );
 }
 
+/** A quick race is one race: the next one is another tap on Quick race (Moses, 25 Oct 2026). */
+function QuickNext() {
+  return (
+    <div className="next-race">
+      <p className="next-race__text">Race again: Quick race puts you in the next race starting, with whoever else is racing.</p>
+      <div className="next-race__actions">
+        <Link to="/play/quick" className="btn btn--primary">Quick race again</Link>
+        <Link to="/home" className="btn btn--ghost btn--sm">Back to Race</Link>
+      </div>
+    </div>
+  );
+}
+
 function PublicNext({ raceId, entries, nextRaceId = null }) {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -54,12 +67,13 @@ function PublicNext({ raceId, entries, nextRaceId = null }) {
 
   useEffect(() => { if (nextRaceId) setNextId(nextRaceId); }, [nextRaceId]);
   const [roomCode, setRoomCode] = useState(null); // (a friend room's race, found when looking it up)
+  const [roomKind, setRoomKind] = useState(null);
   useEffect(() => {
     if (!raceId) return undefined;
     let stop = false;
     api.race(raceId).then((d) => {
       if (stop) return;
-      if (d.race.room_code) setRoomCode(d.race.room_code);
+      if (d.race.room_code) { setRoomCode(d.race.room_code); setRoomKind(d.race.room_kind ?? null); }
       else if (!nextRaceId && d.race.next_race_id) setNextId(d.race.next_race_id);
     }).catch(() => {});
     return () => { stop = true; };
@@ -97,6 +111,7 @@ function PublicNext({ raceId, entries, nextRaceId = null }) {
     }
   };
 
+  if (roomKind === 'quick') return <QuickNext />;
   if (roomCode) return <RoomNext code={roomCode} />;
 
   let action;

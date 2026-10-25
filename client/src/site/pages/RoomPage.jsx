@@ -5,7 +5,7 @@ import { api } from '../../api/client';
 import { useAuth } from '../../context/AuthContext';
 import MarbleBadge from '../marbles/MarbleBadge';
 import { SITE_URL } from '../canonical';
-import { useRacer, useTracks } from './RaceFlow';
+import { RoomPrivacy, useRacer, useTracks } from './RaceFlow';
 import pushSwitch from '../../shared/push.json';
 import { NAME_NOT_ALLOWED, checkName } from '../../shared/nameFilter';
 
@@ -156,11 +156,11 @@ export default function RoomPage() {
 
   // In by opening the link (once per race, unless you left).
   useEffect(() => {
-    if (!view || !open || !waiting || me?.inRace || left || full) return;
+    if (!view || !open || !waiting || me?.inRace || me?.removed || left || full) return;
     if (joinTried.current === race.id) return;
     joinTried.current = race.id;
     run('join', () => api.joinRoom(code))();
-  }, [view, open, waiting, me?.inRace, left, full, race?.id, code]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [view, open, waiting, me?.inRace, me?.removed, left, full, race?.id, code]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Back from changing the Shooter: race with the new one.
   useEffect(() => {
@@ -222,17 +222,22 @@ export default function RoomPage() {
   if (!view) return <div className="ms-page"><p className="ms-note">Opening room {code}…</p></div>;
 
   const host = view.room.host;
+  const quick = view.room.kind === 'quick';
   return (
     <div className="ms-page">
       <div className="ms-row" style={{ justifyContent: 'space-between', alignItems: 'baseline' }}>
-        <h1 className="ms-h1" style={{ fontFamily: 'var(--ms-cond)', fontWeight: 800 }}>{me?.isHost ? 'Your room' : `${host?.name ?? 'A friend'}'s room`}</h1>
+        <h1 className="ms-h1" style={{ fontFamily: 'var(--ms-cond)', fontWeight: 800 }}>{quick ? 'Quick race' : me?.isHost ? 'Your room' : `${host?.name ?? 'A friend'}'s room`}</h1>
         <span className="ms-id ms-id--big" aria-label={`Room code ${code.split('').join(' ')}`}>{code}</span>
       </div>
-      {!open && <div className="ms-msg ms-msg--bad">This room has closed. <Link to="/play/friends">Make a new room</Link></div>}
-      {error && (
+      {!open && (quick
+        ? <div className="ms-msg">This quick race is over. <Link to="/play/quick">Quick race again</Link></div>
+        : <div className="ms-msg ms-msg--bad">This room has closed. <Link to="/play/friends">Make a new room</Link></div>)}
+      {me?.removed && <div className="ms-msg ms-msg--bad">The host took you out of this room. <Link to="/play/quick">Quick race</Link></div>}
+      {error && !(me?.removed && error.details?.code === 'removed') && (
         <div className="ms-msg ms-msg--bad" role="alert">
           {error.message}
-          {error.details?.code === 'no_free_marble' && <> <Link to="/play/start?quick=1">Quick race instead</Link> · <Link to="/shop">Shop</Link></>}
+          {error.details?.code === 'no_free_marble' && <> <Link to="/play/quick">Quick race instead</Link> · <Link to="/shop">Shop</Link></>}
+          {error.details?.code === 'quick_starting' && <> <Link to="/play/quick">Quick race</Link></>}
         </div>
       )}
 
@@ -274,6 +279,14 @@ export default function RoomPage() {
           </ul>
 
           {open && waiting && race.startsAt && <StartCountdown key={race.startsAt} startsAt={race.startsAt} skew={skew} onZero={load} />}
+          {quick && open && waiting && <p className="ms-note">A quick race starts by itself: anyone tapping Quick race joins until then. Computer players fill the empty places.</p>}
+          {open && me?.isHost && (
+            <div style={{ display: 'grid', gap: 6 }}>
+              <span className="ms-eyebrow" style={{ color: 'var(--ms-muted)' }}>Who can join</span>
+              <RoomPrivacy value={view.room.public} disabled={Boolean(busy)} onChange={(v) => { if (v !== view.room.public) run('visibility', () => api.roomVisibility(code, v))(); }} />
+              <span className="ms-note">{view.room.public ? 'Public: listed under "Join a race", anyone can join.' : 'Private: only people with the link or code.'}</span>
+            </div>
+          )}
           {open && waiting && me?.isHost && (
             <div style={{ display: 'grid', gap: 10 }}>
               <label className="ms-form" style={{ display: 'grid', gap: 6 }}>
@@ -307,7 +320,7 @@ export default function RoomPage() {
             </div>
           )}
           {open && waiting && !me?.isHost && me?.inRace && !race.startsAt && <p className="ms-note" aria-live="polite">You're in. Waiting for {host?.name ?? 'the host'} to start the race…</p>}
-          {open && waiting && !me?.inRace && (
+          {open && waiting && !me?.inRace && !me?.removed && (
             <button type="button" className="ms-btn ms-btn--primary" disabled={Boolean(busy) || full} onClick={() => { setLeft(false); run('join', () => api.joinRoom(code))(); }}>
               {full ? 'THE ROOM IS FULL' : 'JOIN THE RACE'}
             </button>
@@ -329,7 +342,7 @@ export default function RoomPage() {
         </section>
 
         <section className="ms-card" style={{ display: 'grid', gap: 12, flex: '0 1 320px', justifyItems: 'start' }} aria-labelledby="invite-h">
-          <h2 id="invite-h" className="ms-h3" style={{ fontFamily: 'var(--ms-cond)', fontWeight: 800, fontSize: '1.6rem' }}>Invite friends</h2>
+          <h2 id="invite-h" className="ms-h3" style={{ fontFamily: 'var(--ms-cond)', fontWeight: 800, fontSize: '1.6rem' }}>{quick ? 'Bring a friend' : 'Invite friends'}</h2>
           <div className="ms-row" style={{ width: '100%', flexWrap: 'nowrap' }}>
             <div className="ms-field-like" title={link}>{link.replace(/^https?:\/\//, '')}</div>
             <button type="button" className="ms-btn ms-btn--sm" onClick={copy}>{copied ? 'Copied' : 'Copy'}</button>
@@ -339,7 +352,9 @@ export default function RoomPage() {
             {typeof navigator !== 'undefined' && navigator.share && <button type="button" className="ms-btn ms-btn--sm" onClick={share}>Share…</button>}
           </div>
           {qr && <img src={qr} alt={`QR code for room ${code}`} width={180} height={180} style={{ borderRadius: 12, background: '#fff' }} />}
-          <p className="ms-note">Friends open the link or scan the code: no account needed, up to {view.room.size} players. The room stays open for two hours after the last race.</p>
+          <p className="ms-note">{quick
+            ? `Friends open the link or scan the code before it starts: no account needed, up to ${view.room.size} players.`
+            : `Friends open the link or scan the code: no account needed, up to ${view.room.size} players. The room stays open for two hours after the last race.`}</p>
           {me?.isHost && open && <PushInvites code={code} />}
         </section>
       </div>

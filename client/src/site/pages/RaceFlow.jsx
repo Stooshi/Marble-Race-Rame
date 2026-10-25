@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 import { api } from '../../api/client';
 import { useAuth } from '../../context/AuthContext';
 import { useAsync } from '../../hooks/useAsync';
@@ -67,6 +67,106 @@ function shooterOf(bag) {
   return original ? { marble: original, name: original.name, rarity: original.rarity } : null;
 }
 
+// ── Quick race ────────────────────────────────────────────────────────────
+
+/**
+ * Quick race (Moses, 25 Oct 2026): one tap, racing within seconds. The server puts the player into a
+ * public quick race starting soon with a free place, else opens a new one on a random track that starts
+ * by itself in 15 s; others tapping Quick race join it until then. The player doesn't pick the track.
+ * The room page (/r/CODE) shows who's in and the countdown, then goes to the race.
+ */
+export function QuickStep() {
+  const { ready, error: racerError } = useRacer();
+  const navigate = useNavigate();
+  const [error, setError] = useState(null);
+  const [tries, setTries] = useState(0);
+  useEffect(() => {
+    if (!ready) return undefined;
+    let stop = false;
+    api.quickRace()
+      .then((v) => { if (!stop) navigate(`/r/${v.room.code}`, { replace: true }); })
+      .catch((e) => {
+        if (stop) return;
+        // (A server from before Quick race (until its deploy): the solo race on a random track, as before.)
+        if (e?.status === 404) navigate('/play/start', { replace: true });
+        else setError(e);
+      });
+    return () => { stop = true; };
+  }, [ready, tries, navigate]);
+  const e = racerError ? { message: racerError } : error;
+  return (
+    <div className="ms-page" style={{ display: 'grid', gap: 16, justifyItems: 'start' }}>
+      <h1 className="ms-h1" style={{ fontFamily: 'var(--ms-cond)', fontWeight: 800 }}>Quick race</h1>
+      {!e && <p className="ms-note" aria-live="polite">Finding the next race…</p>}
+      {e && (
+        <>
+          <div className="ms-msg ms-msg--bad" role="alert">
+            {e.message}
+            {e.details?.code === 'no_free_marble' && <> <Link to="/shop">Shop</Link></>}
+          </div>
+          <div className="ms-row">
+            <button type="button" className="ms-btn ms-btn--primary" onClick={() => { setError(null); setTries((n) => n + 1); }}>TRY AGAIN</button>
+            <Link to="/play/track" className="ms-btn">RACE SOLO</Link>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+/** /play/start?quick=1 (the "Play free" buttons, older links): Quick race; anything else, the starting line. */
+export function StartOrQuick() {
+  const [search] = useSearchParams();
+  return search.get('quick') === '1' ? <Navigate to="/play/quick" replace /> : <StartStep />;
+}
+
+/** "Starts in 0:12" / "Waiting for the host", for a public room in the list. */
+function RoomWhen({ startsAt, serverNow }) {
+  const skew = useMemo(() => (serverNow ? new Date(serverNow).getTime() - Date.now() : 0), [serverNow]);
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    if (!startsAt) return undefined;
+    const t = setInterval(() => setNow(Date.now()), 500);
+    return () => clearInterval(t);
+  }, [startsAt]);
+  if (!startsAt) return <span>waiting for the host</span>;
+  const s = Math.max(0, Math.ceil((new Date(startsAt).getTime() - (now + skew)) / 1000));
+  return <span className="ms-public__when">starts in {Math.floor(s / 60)}:{String(s % 60).padStart(2, '0')}</span>;
+}
+
+/**
+ * The public rooms (Moses, 25 Oct 2026), quick races too: track, players (4/20), the countdown if one
+ * runs; a tap opens the room, which puts the player in (guests too). Full and started rooms drop off.
+ */
+export function PublicRooms({ ready }) {
+  const [rooms, setRooms] = useState(null);
+  useEffect(() => {
+    if (!ready) return undefined;
+    let stop = false;
+    const load = () => api.publicRooms().then((r) => { if (!stop) setRooms(r.rooms ?? []); }).catch(() => { if (!stop) setRooms((x) => x ?? []); });
+    load();
+    const t = setInterval(load, 5000);
+    return () => { stop = true; clearInterval(t); };
+  }, [ready]);
+  if (!rooms) return <p className="ms-note">Looking for races…</p>;
+  if (!rooms.length) return <p className="ms-note">No public races waiting right now. Tap Quick race to start one, or make a public room.</p>;
+  return (
+    <ul className="ms-public">
+      {rooms.map((r) => (
+        <li key={r.code}>
+          <Link to={`/r/${r.code}`} className="ms-public__row">
+            <span className="ms-public__what">
+              <b>{r.track.name}</b>
+              <span className="ms-note">{r.kind === 'quick' ? 'Quick race · ' : ''}{r.players}/{r.size} players · <RoomWhen startsAt={r.startsAt} serverNow={r.serverNow} /></span>
+            </span>
+            <span className="ms-btn ms-btn--sm ms-btn--primary">JOIN</span>
+          </Link>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 // ── 1 · Friends ───────────────────────────────────────────────────────────
 
 export function FriendsStep() {
@@ -76,11 +176,10 @@ export function FriendsStep() {
   const navigate = useNavigate();
   const { data } = useAsync(async () => {
     if (!ready) return null;
-    const [board, open] = await Promise.all([api.scoreboard('friends').catch(() => null), api.races('lobby', 12).catch(() => ({ races: [] }))]);
-    return { friends: (board?.rows ?? []).filter((r) => !r.me), open: open.races ?? [] };
+    const board = await api.scoreboard('friends').catch(() => null);
+    return { friends: (board?.rows ?? []).filter((r) => !r.me) };
   }, [ready]);
-  const [joining, setJoining] = useState(null);
-  const [joinError, setJoinError] = useState(null);
+  const [isPublic, setIsPublic] = useState(false); // (a new room: private by default, Moses 25 Oct 2026)
   const [making, setMaking] = useState(false);
   const [roomError, setRoomError] = useState(null);
   const [roomCode, setRoomCode] = useState('');
@@ -92,7 +191,7 @@ export function FriendsStep() {
     setRoomError(null);
     try {
       const t = tracks.find((x) => x.slug === trackSlug);
-      const v = await api.createRoom(t?.id);
+      const v = await api.createRoom(t?.id, isPublic);
       navigate(`/r/${v.room.code}`);
     } catch (e) {
       setRoomError(e.message);
@@ -100,17 +199,6 @@ export function FriendsStep() {
     }
   };
 
-  const join = async (race) => {
-    setJoining(race.id);
-    setJoinError(null);
-    try {
-      await api.joinRace(race.id);
-      navigate(`/race/${race.id}`);
-    } catch (e) {
-      setJoinError(e.message);
-      setJoining(null);
-    }
-  };
 
   return (
     <div className="ms-page">
@@ -120,7 +208,10 @@ export function FriendsStep() {
       <div className="ms-two">
         <section className="ms-card" style={{ display: 'grid', gap: 12 }} aria-labelledby="room-h">
           <h2 id="room-h" className="ms-h3" style={{ fontFamily: 'var(--ms-cond)', fontWeight: 800, fontSize: '1.6rem' }}>Race with friends</h2>
-          <p className="ms-note">Make a room and send its link: friends join from their phone or computer, no account needed. Up to 20 players; computer players fill the empty places. You pick the track and start.</p>
+          <RoomPrivacy value={isPublic} onChange={setIsPublic} />
+          <p className="ms-note">{isPublic
+            ? 'A public room is listed under "Join a race": anyone can join until it starts, and you can still send the link. Up to 20 players; computer players fill the empty places. You pick the track and start.'
+            : 'Make a room and send its link: friends join from their phone or computer, no account needed. Up to 20 players; computer players fill the empty places. You pick the track and start.'}</p>
           {roomError && <div className="ms-msg ms-msg--bad">{roomError}</div>}
           <button type="button" className="ms-btn ms-btn--primary" disabled={!ready || making} onClick={makeRoom}>{making ? 'MAKING YOUR ROOM…' : 'MAKE A ROOM'}</button>
           <form className="ms-form ms-row" style={{ display: 'flex', gap: 8 }} onSubmit={(e) => { e.preventDefault(); if (roomCode.trim()) navigate(`/r/${roomCode.trim().toUpperCase().replace(/[^A-Z0-9]/g, '')}`); }}>
@@ -129,15 +220,8 @@ export function FriendsStep() {
           </form>
         </section>
         <section className="ms-card" style={{ display: 'grid', gap: 12 }} aria-labelledby="friends-h">
-          <h2 id="friends-h" className="ms-h3" style={{ fontFamily: 'var(--ms-cond)', fontWeight: 800, fontSize: '1.6rem' }}>Open races to join</h2>
-          {joinError && <div className="ms-msg ms-msg--bad">{joinError}</div>}
-          {data && data.open.length === 0 && <p className="ms-note">No open races right now. Start one: pick a track next.</p>}
-          {data?.open.slice(0, 5).map((r) => (
-            <div key={r.id} className="ms-row" style={{ justifyContent: 'space-between', flexWrap: 'nowrap' }}>
-              <div style={{ display: 'grid', minWidth: 0 }}><b style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.name || r.track_name}</b><span className="ms-note">{r.entry_count} of {r.max_marbles} in · {r.track_name}</span></div>
-              <button type="button" className="ms-btn ms-btn--sm ms-btn--primary" disabled={joining === r.id || !ready} onClick={() => join(r)}>{joining === r.id ? '…' : 'Join'}</button>
-            </div>
-          ))}
+          <h2 id="friends-h" className="ms-h3" style={{ fontFamily: 'var(--ms-cond)', fontWeight: 800, fontSize: '1.6rem' }}>Join a race</h2>
+          <PublicRooms ready={ready} />
           <h3 style={{ margin: '8px 0 0' }}>Raced with today</h3>
           {data && data.friends.length === 0 && <p className="ms-note">Players you race with show up here for a day.</p>}
           {data?.friends.slice(0, 6).map((f) => (
@@ -155,6 +239,16 @@ export function FriendsStep() {
         <span className="ms-note">Or race on your own: computer players fill every other place</span>
         <Link to={`/play/track?${search}`} className="ms-btn">RACE SOLO: PICK A TRACK</Link>
       </div>
+    </div>
+  );
+}
+
+/** Private (link or code only, the default) | Public (listed under "Join a race"). */
+export function RoomPrivacy({ value, onChange, disabled = false }) {
+  return (
+    <div className="segmented ms-privacy" role="group" aria-label="Who can join">
+      <button type="button" aria-pressed={!value} disabled={disabled} onClick={() => onChange(false)}>Private</button>
+      <button type="button" aria-pressed={value} disabled={disabled} onClick={() => onChange(true)}>Public</button>
     </div>
   );
 }
