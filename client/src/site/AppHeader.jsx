@@ -55,8 +55,12 @@ const PAGES = [
   ['/help', 'Help'],
 ];
 
-/** The menu: a bottom sheet with the pages, the account and, for a guest, saving their marble. */
-function MenuSheet({ user, onClose }) {
+/**
+ * The menu: the pages, the account and, for a guest, saving their marble. In the apps a bottom sheet;
+ * on a phone's website (WebHeader, Moses, 25 Oct 2026) the same menu as a drawer from the right, with
+ * the sound control in it (the header keeps only the logo, the coins, SAVE and the menu button).
+ */
+export function MenuSheet({ user, onClose, drawer = false }) {
   const panel = useRef(null);
   useEffect(() => {
     panel.current?.querySelector('a, button')?.focus();
@@ -66,9 +70,16 @@ function MenuSheet({ user, onClose }) {
   }, [onClose]);
   // (On the page itself, not in the header: the header's blur would hold a fixed sheet inside it.)
   return createPortal((
-    <div className="ms-appmenu" role="presentation" onClick={onClose}>
+    <div className={`ms-appmenu${drawer ? ' ms-appmenu--drawer' : ''}`} role="presentation" onClick={onClose}>
       <nav className="ms-appmenu__panel" role="dialog" aria-modal="true" aria-label="Menu" ref={panel} onClick={(e) => e.stopPropagation()}>
-        <span className="ms-appmenu__grip" aria-hidden="true" />
+        {drawer ? (
+          <div className="ms-appmenu__top">
+            <SoundControl />
+            <button type="button" className="ms-apphead__icon" aria-label="Close the menu" onClick={onClose}>
+              <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round"><path d="M6 6l12 12M18 6L6 18" /></svg>
+            </button>
+          </div>
+        ) : <span className="ms-appmenu__grip" aria-hidden="true" />}
         {user && (
           <div className="ms-appmenu__who">
             <b>{handle(user.username)}</b>
@@ -94,7 +105,7 @@ function MenuSheet({ user, onClose }) {
           )}
           <Link to="/legal" onClick={onClose}>Terms and privacy</Link>
         </div>
-        <button type="button" className="ms-btn ms-btn--ghost ms-appmenu__close" onClick={onClose}>Close</button>
+        {!drawer && <button type="button" className="ms-btn ms-btn--ghost ms-appmenu__close" onClick={onClose}>Close</button>}
       </nav>
     </div>
   ), document.body);

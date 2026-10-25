@@ -211,6 +211,19 @@ a.ms-chip:hover { text-decoration: none; border-color: var(--ms-muted); }
   .ms-header__inner--landing .ms-header__login { margin-left: 0; }
 }
 
+/* Phones (portrait up to 700 px wide, or landscape up to 500 px tall; Moses, 25 Oct 2026): the header as
+   in the apps, a small logo, the coins, SAVE and one menu button; the pages, sound and log out in a
+   drawer (MenuSheet, AppHeader.jsx). Computers keep the row of pages. */
+.ms-header .ms-header__menu { display: none; }
+@media (max-width: 700px), (orientation: landscape) and (max-height: 500px) {
+  .ms-header .ms-nav, .ms-header .ms-sound, .ms-header .ms-header__logout, .ms-header .ms-chip--streak, .ms-header .ms-chip--user, .ms-header .ms-wide-only { display: none; }
+  .ms-header .ms-narrow-only { display: inline; }
+  .ms-header .ms-header__menu { display: inline-grid; margin-right: -8px; }
+  .ms-header__inner { flex-wrap: nowrap; gap: 8px; padding-top: 6px; padding-bottom: 6px; }
+  .ms-header__logo .ms-logo { font-size: 21px !important; }
+  .ms-header .ms-chips { flex-wrap: nowrap; }
+}
+
 /* ── Footer ───────────────────────────────────────────────────────────── */
 .ms-footer {
   border-top: 1px solid var(--ms-border);
@@ -423,6 +436,22 @@ a.ms-mcard:hover { text-decoration: none; border-color: var(--ms-muted); }
   .ms-table--scores .ms-scores__player { max-width: 34vw; overflow: hidden; text-overflow: ellipsis; }
 }
 .ms-tile { display: grid; gap: 2px; flex: 1 1 0; color: var(--ms-text); padding: 16px; }
+/* The home hub's race buttons (HomeHub.jsx): on computers QUICK RACE over two tiles; on phones three
+   identical yellow buttons stacked full width (Moses, 25 Oct 2026), the same size and style. */
+.ms-race-choices { display: grid; gap: 14px; }
+.ms-race-quick { min-height: 72px; font-size: 1.6rem; }
+.ms-race-more { flex-wrap: nowrap; }
+@media (max-width: 700px), (orientation: landscape) and (max-height: 500px) {
+  .ms-race-choices, .ms-race-more { display: grid; gap: 12px; grid-template-columns: 1fr; }
+  .ms-race-quick, .ms-race-choice {
+    min-height: 84px; width: 100%; padding: 12px 18px; border-radius: 18px; border: 2px solid var(--ms-yellow);
+    background: var(--ms-yellow); color: var(--ms-ink); display: grid; place-content: center; justify-items: center; gap: 4px;
+    font-family: var(--ms-cond); font-weight: 800; font-size: 1.6rem; line-height: 1; text-transform: uppercase; letter-spacing: 0.04em; text-align: center;
+  }
+  .ms-race-choice b { font-weight: 800; }
+  a.ms-race-choice span { color: var(--ms-ink); opacity: 0.78; font-family: var(--ms-body); font-weight: 600; font-size: 0.95rem; text-transform: none; letter-spacing: 0; }
+  a.ms-race-choice:hover { border-color: var(--ms-yellow-hover); background: var(--ms-yellow-hover); }
+}
 .ms-tile span { color: var(--ms-muted); font-size: 0.9rem; }
 a.ms-tile:hover, a.ms-card:hover { text-decoration: none; border-color: var(--ms-muted); }
 .ms-home-hero { min-height: 340px; background: radial-gradient(circle at 70% 10%, #2A4A7A 0%, #13284A 45%, var(--ms-bg) 100%); align-items: flex-end; position: relative; overflow: hidden; isolation: isolate; }
@@ -657,11 +686,40 @@ a.ms-tile:hover, a.ms-card:hover { text-decoration: none; border-color: var(--ms
 .ms-appmenu__more a.is-strong { color: var(--ms-yellow); }
 .ms-appmenu__close { min-height: 46px; }
 
-/* A race in the apps: the whole screen (html.is-race-full, while the 3D view shows; Race.jsx). The bar
-   becomes two floating buttons (back, menu), the race fills the screen in portrait and landscape, the
-   camera buttons lie over its foot, and everything keeps clear of the notch and the home bar. */
-.is-app.is-race-full body { overflow: hidden; }
-.is-app.is-race-full .ms-footer, .is-app.is-race-full .ms-onsale { display: none; }
+/* The menu as a drawer from the right (a phone's website). */
+.ms-appmenu--drawer { justify-content: flex-end; align-items: stretch; }
+.ms-appmenu--drawer .ms-appmenu__panel {
+  width: min(86vw, 340px); max-height: none; height: 100%; align-content: start; border: 0; border-left: 1px solid var(--ms-border); border-radius: 0;
+  padding: calc(8px + env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) calc(16px + env(safe-area-inset-bottom, 0px)) 16px;
+  animation: ms-drawer-in 0.18s ease-out;
+}
+@keyframes ms-drawer-in { from { transform: translateX(24px); opacity: 0; } to { transform: none; opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .ms-appmenu--drawer .ms-appmenu__panel { animation: none; } }
+.ms-appmenu__top { display: flex; justify-content: space-between; align-items: center; }
+.ms-appmenu--drawer .ms-appmenu__pages { grid-template-columns: 1fr; }
+
+/* A race on the whole screen (html.is-race-full, while the 3D view shows; Race.jsx): in the apps, and on a
+   phone's website (html.is-race-web, Moses, 25 Oct 2026). The race fills the screen in portrait and
+   landscape, the camera buttons lie over its foot, and everything keeps clear of the notch and the home
+   bar. In the apps the bar becomes two floating buttons (back, menu); on the website the header and
+   footer go, and a ✕ (leave) and a ⋯ (the 2D view) float over the race instead. */
+.is-race-full, .is-race-full body { overflow: hidden; overscroll-behavior: none; } /* (html too: Safari scrolls the page under a fixed layer otherwise) */
+.is-race-web.is-race-full .ms-header { display: none; }
+.race-float { display: none; }
+.is-race-web.is-race-full .race-float {
+  display: inline-grid; place-items: center; position: fixed; z-index: 71; top: calc(env(safe-area-inset-top, 0px) + 8px);
+  width: 40px; height: 40px; border: 0; border-radius: 50%; background: rgba(17, 19, 26, 0.62); color: #fff; cursor: pointer;
+}
+.race-float::after { content: ''; position: absolute; inset: -2px; } /* (a 44 px tap target) */
+.is-race-web.is-race-full .race-float--exit { left: calc(env(safe-area-inset-left, 0px) + 8px); }
+.is-race-web.is-race-full .race-float--more { right: calc(env(safe-area-inset-right, 0px) + 8px); }
+.race-more-menu {
+  position: fixed; z-index: 72; top: calc(env(safe-area-inset-top, 0px) + 54px); right: calc(env(safe-area-inset-right, 0px) + 8px);
+  display: grid; min-width: 170px; padding: 6px; border-radius: 14px; background: rgba(17, 19, 26, 0.92); border: 1px solid var(--ms-border);
+}
+.race-more-menu button { min-height: 44px; padding: 0 12px; border: 0; border-radius: 10px; background: none; color: #fff; font: inherit; font-weight: 600; text-align: left; cursor: pointer; }
+.race-more-menu button:hover, .race-more-menu button:focus-visible { background: rgba(255, 255, 255, 0.08); }
+.is-race-full .ms-footer, .is-race-full .ms-onsale { display: none; }
 .is-app.is-race-full .ms-apphead { position: fixed; inset: 0 0 auto 0; z-index: 70; background: none; backdrop-filter: none; border: 0; pointer-events: none; }
 .is-app.is-race-full .ms-apphead__bar { height: 52px; padding: 4px 6px; }
 .is-app.is-race-full .ms-apphead__logo, .is-app.is-race-full .ms-apphead__coins, .is-app.is-race-full .ms-apphead .ms-grow { display: none; }
@@ -671,53 +729,54 @@ a.ms-tile:hover, a.ms-card:hover { text-decoration: none; border-color: var(--ms
   background: rgba(17, 19, 26, 0.62); border-radius: 50%; color: #fff; width: 40px; height: 40px;
 }
 .is-app.is-race-full .ms-apphead .ms-sound { margin-left: auto; }
-.is-app.is-race-full .race-page {
+.is-race-full .race-page {
   position: fixed; inset: 0; z-index: 40; max-width: none; margin: 0; padding: 0; background: #0E1320;
 }
-.is-app.is-race-full .race-page > .race-header,
-.is-app.is-race-full .race-page .event-feed { display: none; }
-.is-app.is-race-full .race-page .live3d { position: absolute; inset: 0; }
-.is-app.is-race-full .race-page .preview3d__stage { position: absolute; inset: 0; height: auto; min-height: 0; border: 0; border-radius: 0; }
-/* 3D / 2D: top centre, between the floating buttons. */
-.is-app.is-race-full .race-page > .segmented {
+.is-race-full .race-page > .race-header,
+.is-race-full .race-page .event-feed { display: none; }
+.is-race-full .race-page .live3d { position: absolute; inset: 0; }
+.is-race-full .race-page .preview3d__stage { position: absolute; inset: 0; height: auto; min-height: 0; border: 0; border-radius: 0; }
+/* 3D / 2D: top centre, between the floating buttons (apps); on the website behind the ⋯. */
+.is-race-web.is-race-full .race-page > .segmented { display: none; }
+.is-race-full .race-page > .segmented {
   position: fixed; z-index: 71; top: calc(env(safe-area-inset-top, 0px) + 10px); left: 50%; transform: translateX(-50%); margin: 0;
   background: rgba(17, 19, 26, 0.62);
 }
 /* The race's own overlays move clear of the floating buttons and the camera bar. */
-.is-app.is-race-full .replay3d__standings { top: calc(env(safe-area-inset-top, 0px) + 58px); left: calc(env(safe-area-inset-left, 0px) + 8px); }
-.is-app.is-race-full .replay3d__clock { top: calc(env(safe-area-inset-top, 0px) + 58px); right: calc(env(safe-area-inset-right, 0px) + 8px); }
-.is-app.is-race-full .replay3d__speed { bottom: calc(env(safe-area-inset-bottom, 0px) + 62px); right: calc(env(safe-area-inset-right, 0px) + 8px); }
-.is-app.is-race-full .cornerview { bottom: calc(env(safe-area-inset-bottom, 0px) + 62px); left: calc(env(safe-area-inset-left, 0px) + 8px); }
-.is-app.is-race-full .segmented--camera {
+.is-race-full .replay3d__standings { top: calc(env(safe-area-inset-top, 0px) + 58px); left: calc(env(safe-area-inset-left, 0px) + 8px); }
+.is-race-full .replay3d__clock { top: calc(env(safe-area-inset-top, 0px) + 58px); right: calc(env(safe-area-inset-right, 0px) + 8px); }
+.is-race-full .replay3d__speed { bottom: calc(env(safe-area-inset-bottom, 0px) + 62px); right: calc(env(safe-area-inset-right, 0px) + 8px); }
+.is-race-full .cornerview { bottom: calc(env(safe-area-inset-bottom, 0px) + 62px); left: calc(env(safe-area-inset-left, 0px) + 8px); }
+.is-race-full .segmented--camera {
   position: fixed; z-index: 45; left: calc(env(safe-area-inset-left, 0px) + 8px); right: calc(env(safe-area-inset-right, 0px) + 8px);
   bottom: calc(env(safe-area-inset-bottom, 0px) + 8px); width: auto; margin: 0; max-width: 560px; margin-inline: auto;
   background: rgba(17, 19, 26, 0.62); border-color: transparent;
 }
-.is-app.is-race-full .segmented--camera button { color: #fff; min-height: 44px; }
-.is-app.is-race-full .skip-results {
+.is-race-full .segmented--camera button { color: #fff; min-height: 44px; }
+.is-race-full .skip-results {
   position: fixed; z-index: 45; right: calc(env(safe-area-inset-right, 0px) + 10px); bottom: calc(env(safe-area-inset-bottom, 0px) + 58px); margin: 0;
 }
-.is-app.is-race-full .skip-results__link { color: #fff; background: rgba(17, 19, 26, 0.62); border-radius: 999px; padding: 6px 10px; }
+.is-race-full .skip-results__link { color: #fff; background: rgba(17, 19, 26, 0.62); border-radius: 999px; padding: 6px 10px; }
 /* Landscape phones: the standings smaller, so more of the track shows. */
 @media (orientation: landscape) and (max-height: 500px) {
-  .is-app.is-race-full .replay3d__standings { top: calc(env(safe-area-inset-top, 0px) + 54px); font-size: 0.8rem; max-width: 34%; }
-  .is-app.is-race-full .replay3d__clock { top: calc(env(safe-area-inset-top, 0px) + 54px); }
-  .is-app.is-race-full .segmented--camera { max-width: 460px; }
-  .is-app.is-race-full .cornerview { width: clamp(110px, 18%, 160px); }
+  .is-race-full .replay3d__standings { top: calc(env(safe-area-inset-top, 0px) + 54px); font-size: 0.8rem; max-width: 34%; }
+  .is-race-full .replay3d__clock { top: calc(env(safe-area-inset-top, 0px) + 54px); }
+  .is-race-full .segmented--camera { max-width: 460px; }
+  .is-race-full .cornerview { width: clamp(110px, 18%, 160px); }
 }
 @media (orientation: landscape) and (max-height: 500px) {
   .ms-appmenu__pages { grid-template-columns: repeat(3, 1fr); }
   .ms-appmenu__pages a { min-height: 46px; }
 }
 /* The finish show's banner and results board keep clear of the buttons too. */
-.is-app.is-race-full .finish__banner { top: calc(env(safe-area-inset-top, 0px) + 56px); }
-.is-app.is-race-full .finish__board {
+.is-race-full .finish__banner { top: calc(env(safe-area-inset-top, 0px) + 56px); }
+.is-race-full .finish__board {
   top: calc(env(safe-area-inset-top, 0px) + 56px); bottom: calc(env(safe-area-inset-bottom, 0px) + 60px);
   left: calc(env(safe-area-inset-left, 0px) + 8px); right: calc(env(safe-area-inset-right, 0px) + 8px);
 }
 /* Short camera labels over the race ("Leader", "My marble", "Track"), whatever the width. */
-.is-app.is-race-full .segmented--camera .ms-wide-only { display: none; }
-.is-app.is-race-full .segmented--camera .ms-narrow-only { display: inline; }
+.is-race-full .segmented--camera .ms-wide-only { display: none; }
+.is-race-full .segmented--camera .ms-narrow-only { display: inline; }
 
 /* ── Help Centre (/help) ───────────────────────────────────────────────── */
 .ms-visually-hidden { position: absolute !important; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }

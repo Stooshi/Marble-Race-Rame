@@ -23,7 +23,9 @@ describe('the header', () => {
     const html = header('/home');
     expect(html).toContain('ms-header');
     expect(html).toContain('Scoreboards');
-    expect(html).not.toContain('ms-apphead');
+    expect(html).not.toContain('class="ms-apphead"');
+    // (On a phone's screen the row of pages gives way to the menu button: site.css, Moses, 25 Oct 2026.)
+    expect(html).toContain('ms-header__menu');
   });
   it('the apps: one compact bar, a small logo, the coins, sound and one menu button; back off the home screen', () => {
     globalThis.window.Capacitor = { isNativePlatform: () => true, getPlatform: () => 'android' };
@@ -37,20 +39,25 @@ describe('the header', () => {
   });
 });
 
-describe('the race on the whole screen (apps only)', () => {
+describe('the race on the whole screen (the apps, and a phone\'s website)', () => {
   const css = src('src/site/site.css');
-  it('the race page marks it while the 3D view shows, only in the apps', () => {
+  it('the race page marks it while the 3D view shows: in the apps, and on a phone\'s website (its own class)', () => {
     const page = src('src/pages/Race.jsx');
-    expect(page).toContain("{(meta || preparing) && shown === '3d' && <RaceFullScreen />}");
-    expect(page).toMatch(/if \(!isNativeApp\(\)\) return undefined;\s+const root = document\.documentElement;\s+root\.classList\.add\('is-race-full'\)/);
+    expect(page).toContain("{(meta || preparing) && shown === '3d' && <RaceFullScreen");
+    expect(page).toContain("const full = native || phone;");
+    expect(page).toContain("if (!native) root.classList.add('is-race-web');");
+    expect(page).toContain("export const PHONE_QUERY = '(max-width: 700px), (orientation: landscape) and (max-height: 500px)';");
   });
-  it('fills the screen, the buttons over it, clear of the notch and the home bar; every rule only in the apps', () => {
-    expect(css).toContain('.is-app.is-race-full .race-page .preview3d__stage { position: absolute; inset: 0;');
-    expect(css).toMatch(/\.is-app\.is-race-full \.segmented--camera \{\s*position: fixed;[^}]*bottom: calc\(env\(safe-area-inset-bottom/);
+  it('fills the screen, the buttons over it, clear of the notch and the home bar; only while html.is-race-full is set', () => {
+    expect(css).toContain('.is-race-full .race-page .preview3d__stage { position: absolute; inset: 0;');
+    expect(css).toMatch(/\.is-race-full \.segmented--camera \{\s*position: fixed;[^}]*bottom: calc\(env\(safe-area-inset-bottom/);
+    // (The website: no header, a ✕ and a ⋯ over the race, the 3D / 2D switch behind the ⋯.)
+    expect(css).toContain('.is-race-web.is-race-full .ms-header { display: none; }');
+    expect(css).toContain('.is-race-web.is-race-full .race-page > .segmented { display: none; }');
     expect(css).toMatch(/\.ms-apphead \{[^}]*padding: env\(safe-area-inset-top, 0px\) env\(safe-area-inset-right, 0px\) 0 env\(safe-area-inset-left, 0px\)/);
     const raceRules = css.split('\n').filter((l) => /is-race-full/.test(l) && /^\S/.test(l));
     expect(raceRules.length).toBeGreaterThan(10);
-    for (const l of raceRules) expect(l.startsWith('.is-app.is-race-full') || l.startsWith('/*')).toBe(true);
+    for (const l of raceRules) expect(/^(\.is-app|\.is-race-web)?\.is-race-full\b/.test(l) || l.startsWith('/*')).toBe(true);
   });
   it('the menu sheet goes on the page itself (the header\'s blur would trap it)', () => {
     expect(src('src/site/AppHeader.jsx')).toContain('createPortal(');

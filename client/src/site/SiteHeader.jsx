@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { formatNumber } from '../utils/format';
@@ -5,7 +6,7 @@ import Logo from './Logo';
 import SoundControl from './SoundControl';
 import { handle } from '../shared/playerName';
 import LogoutButton from './account/LogoutButton';
-import AppHeader from './AppHeader';
+import AppHeader, { MenuSheet } from './AppHeader';
 import { isNativeApp } from '../app/native';
 
 /** Which header a page wears: the landing page's, the race flow's slim one, checkout's, or the game's. */
@@ -23,7 +24,7 @@ function UserChips({ user }) {
       {user.streak > 0 && <span className="ms-chip ms-chip--streak" title={`Daily streak: the daily goal met ${user.streak} day${user.streak === 1 ? '' : 's'} in a row`}>▲ {user.streak}</span>}
       {user.is_guest
         ? <Link to="/signup" className="ms-btn ms-btn--primary ms-btn--sm"><span className="ms-wide-only">SAVE YOUR MARBLE</span><span className="ms-narrow-only">SAVE</span></Link>
-        : <Link to="/settings" className="ms-chip" title="Settings">{handle(user.username)}</Link>}
+        : <Link to="/settings" className="ms-chip ms-chip--user" title="Settings">{handle(user.username)}</Link>}
     </div>
   );
 }
@@ -41,6 +42,8 @@ function WebHeader() {
   const signedIn = isAuthenticated || (loading && Boolean(token));
   const home = signedIn ? '/home' : '/';
   const kind = headerKind(pathname, signedIn);
+  const [menu, setMenu] = useState(false);
+  useEffect(() => { setMenu(false); }, [pathname]);
 
   if (kind === 'checkout') {
     return (
@@ -93,7 +96,14 @@ function WebHeader() {
             <Link to="/play/start?quick=1" className="ms-btn ms-btn--primary ms-btn--sm">PLAY FREE</Link>
           </div>
         )}
+        {kind === 'app' && (
+          // (Phones: the row of pages, sound and log out move into a drawer behind this button; site.css.)
+          <button type="button" className="ms-apphead__icon ms-header__menu" aria-expanded={menu} aria-haspopup="dialog" aria-label="Menu" onClick={() => setMenu(true)}>
+            <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round"><path d="M4 7h16M4 12h16M4 17h16" /></svg>
+          </button>
+        )}
       </div>
+      {menu && <MenuSheet drawer user={isAuthenticated ? user : null} onClose={() => setMenu(false)} />}
     </header>
   );
 }

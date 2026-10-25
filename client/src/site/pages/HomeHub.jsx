@@ -56,10 +56,13 @@ export default function HomeHub() {
           </div>
         </section>
         <aside style={{ display: 'grid', gap: 14, flexBasis: 320, alignContent: 'start' }}>
-          <Link to="/play/start?quick=1" className="ms-btn ms-btn--primary ms-btn--lg" style={{ minHeight: 72, fontSize: '1.6rem' }}>QUICK RACE</Link>
-          <div className="ms-row" style={{ flexWrap: 'nowrap' }}>
-            <Link to="/play/track" className="ms-card ms-tile"><b>Race solo</b><span>Pick a track</span></Link>
-            <Link to="/play/friends" className="ms-card ms-tile"><b>Race with friends</b><span>Invite and go</span></Link>
+          {/* (Phones: three identical yellow buttons, stacked full width; Moses, 25 Oct 2026. Computers: as before. site.css .ms-race-choices) */}
+          <div className="ms-race-choices">
+            <Link to="/play/start?quick=1" className="ms-btn ms-btn--primary ms-btn--lg ms-race-quick">QUICK RACE</Link>
+            <div className="ms-row ms-race-more">
+              <Link to="/play/track" className="ms-card ms-tile ms-race-choice"><b>Race solo</b><span>Pick a track</span></Link>
+              <Link to="/play/friends" className="ms-card ms-tile ms-race-choice"><b>Race with friends</b><span>Invite and go</span></Link>
+            </div>
           </div>
           <div className="ms-card" style={{ display: 'grid', gap: 8 }}>
             <div className="ms-row" style={{ justifyContent: 'space-between' }}><b>Daily goal</b><span style={{ color: 'var(--ms-soft)' }}>{done} of {goal} races</span></div>

@@ -186,7 +186,7 @@ export default function Race() {
           <button type="button" aria-pressed={shown === '2d'} onClick={() => setView('2d')}>2D</button>
         </div>
       )}
-      {(meta || preparing) && shown === '3d' && <RaceFullScreen />}
+      {(meta || preparing) && shown === '3d' && <RaceFullScreen onLeave={() => (window.history.length > 1 ? navigate(-1) : navigate('/home'))} on2d={meta && newPhysics ? () => setView('2d') : null} />}
       {(meta || preparing) && shown === '3d' ? (
         <LiveRaceViewer3D
           meta={meta}
@@ -221,19 +221,56 @@ export default function Race() {
   );
 }
 
+/** A phone's screen (portrait up to 700 px wide, landscape up to 500 px tall), as site.css has it. */
+export const PHONE_QUERY = '(max-width: 700px), (orientation: landscape) and (max-height: 500px)';
+
 /**
- * In the apps the 3D race takes the whole screen (Moses, 22 Oct 2026): html.is-race-full, while the 3D
- * view is shown. The header becomes floating back and menu buttons, the camera buttons lie over the
- * race, and in landscape the whole race is on screen (site.css, "The apps"). The website is unchanged.
+ * The 3D race on the whole screen, from the countdown to the results: html.is-race-full while the 3D
+ * view is shown. In the apps (Moses, 22 Oct 2026) the header becomes floating back and menu buttons; on
+ * a phone's website (html.is-race-web, Moses, 25 Oct 2026) the header and footer go, a ✕ leaves the
+ * race and a ⋯ holds the 2D view. The camera buttons lie over the race and in landscape the whole race is
+ * on screen (site.css). Computers keep the page as it was.
  */
-function RaceFullScreen() {
+function RaceFullScreen({ onLeave, on2d }) {
+  const native = isNativeApp();
+  const [phone, setPhone] = useState(() => !native && typeof window !== 'undefined' && Boolean(window.matchMedia?.(PHONE_QUERY).matches));
+  const [more, setMore] = useState(false);
   useEffect(() => {
-    if (!isNativeApp()) return undefined;
+    if (native || !window.matchMedia) return undefined;
+    const mq = window.matchMedia(PHONE_QUERY);
+    const change = () => setPhone(mq.matches);
+    mq.addEventListener?.('change', change);
+    return () => mq.removeEventListener?.('change', change);
+  }, [native]);
+  const full = native || phone;
+  useEffect(() => {
+    if (!full) return undefined;
     const root = document.documentElement;
     root.classList.add('is-race-full');
-    return () => root.classList.remove('is-race-full');
-  }, []);
-  return null;
+    if (!native) root.classList.add('is-race-web');
+    window.scrollTo?.(0, 0);
+    return () => root.classList.remove('is-race-full', 'is-race-web');
+  }, [full, native]);
+  if (native || !phone) return null;
+  return (
+    <>
+      <button type="button" className="race-float race-float--exit" aria-label="Leave the race" onClick={onLeave}>
+        <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round"><path d="M6 6l12 12M18 6L6 18" /></svg>
+      </button>
+      {on2d && (
+        <>
+          <button type="button" className="race-float race-float--more" aria-label="More" aria-expanded={more} onClick={() => setMore((v) => !v)}>
+            <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><circle cx="5" cy="12" r="2" /><circle cx="12" cy="12" r="2" /><circle cx="19" cy="12" r="2" /></svg>
+          </button>
+          {more && (
+            <div className="race-more-menu" role="menu">
+              <button type="button" role="menuitem" onClick={() => { setMore(false); on2d(); }}>Switch to the 2D view</button>
+            </div>
+          )}
+        </>
+      )}
+    </>
+  );
 }
 
 function statusLabel(status) {
