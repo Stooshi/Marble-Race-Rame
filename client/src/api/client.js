@@ -62,7 +62,6 @@ export const api = {
   register: (body) => request('/auth/register', { method: 'POST', body, token: null }),
   login: (body) => request('/auth/login', { method: 'POST', body, token: null }),
   me: () => request('/auth/me'),
-  suggestName: () => request('/auth/suggest-name', { token: null }),
   confirmEmail: (token) => request('/auth/confirm-email', { method: 'POST', body: { token }, token: null }),
   resendConfirmEmail: (lang) => request('/auth/confirm-email/resend', { method: 'POST', body: { lang } }),
   guest: () => request('/auth/guest', { method: 'POST', token: null }),

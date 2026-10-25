@@ -34,14 +34,12 @@ export default function QuickSignup({ onDone, onLater, onSaved, onStep, heading:
   const [resent, setResent] = useState(false);
   const set = (k) => (e) => setF((v) => ({ ...v, [k]: e.target.type === 'checkbox' ? e.target.checked : e.target.value }));
 
-  // The player name to start from: the name the guest chose (Moses, 25 Oct 2026: it's kept), as a player
-  // name (spaces become _); else a suggested free one. The player may change it.
-  const chosen = String(user?.display_name ?? '').trim().replace(/[\s-]+/g, '_').replace(/[^A-Za-z0-9_]/g, '').slice(0, 24);
+  // The player name starts empty (Moses, 25 Oct 2026: no suggested names), with the grey hint "Type your
+  // player name"; only a name the guest chose themselves is filled in, as a player name (spaces become _).
+  // Never a name hidden after reports.
+  const chosen = user?.name_hidden ? '' : String(user?.display_name ?? '').trim().replace(/[\s-]+/g, '_').replace(/[^A-Za-z0-9_]/g, '').slice(0, 24);
   useEffect(() => {
-    if (chosen.length >= 3) { setF((v) => (v.username ? v : { ...v, username: chosen })); return undefined; }
-    let on = true;
-    api.suggestName().then((r) => { if (on && r?.name) setF((v) => (v.username ? v : { ...v, username: r.name })); }).catch(() => {});
-    return () => { on = false; };
+    if (chosen.length >= 3) setF((v) => (v.username ? v : { ...v, username: chosen }));
   }, [chosen]);
   // The country picker's guess (the player may change or clear it).
   useEffect(() => {

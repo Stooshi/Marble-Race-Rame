@@ -7,7 +7,6 @@ import { describe, expect, it } from 'vitest';
 import { BLOCKED, checkName, plain } from '../src/shared/nameFilter';
 
 const server = readFileSync(join(__dirname, '..', '..', 'src', 'routes', 'auth.js'), 'utf8');
-const list = (name) => JSON.parse(server.match(new RegExp(`const ${name} = (\\[[^\\]]*\\])`))[1].replace(/'/g, '"'));
 
 describe('the name filter', () => {
   it('blocks offensive names, also disguised', () => {
@@ -20,12 +19,6 @@ describe('the name filter', () => {
     for (const n of ['NovaRacer', 'Cassandra', 'Scunthorpe', 'therapist', 'Dickens', 'Sussex', 'Essex', 'Hancock', 'Peacock', 'Assassin42', 'Classic', 'GlassBass', 'Grape', 'Analyst', 'Shiitake', 'Cocktail', 'Fukuoka', 'Stefan', 'Fantastic', 'Crisis', 'Reputation', 'Computation', 'Speedo', 'Torpedo', 'Pedro', 'Monique', 'Unique', 'Economy', 'Catering', 'Watering', 'Fickle', 'Principal', 'Spice_Girl', 'Centipede', 'IGotThis', 'Nigeria', 'NazirKhan', 'Titan', 'Kitty', 'Skill', 'Cumulus', 'Sextant', 'Arsenal', 'Japan', 'Canal', 'Bogart', 'Horatio', 'Mongolia', 'Pakistan', 'Diet', 'Conan', 'Falcon', 'Icon', 'Sluttspurt', 'Kitten', 'Noble', 'Hoenn', 'Lulu', 'Sikh', 'Gothic', 'Spacecat', 'Marble_Queen', 'Gaymer', 'Assistant', 'Passion', 'Mass', 'Bass_Drop', 'Kassandra', 'Ashitaka', 'Scrape', 'Drape', 'Therapy', 'Titmouse', 'Snigger'].filter((n) => n !== 'Snigger')) {
       expect(checkName(n), n).toBeNull();
     }
-  });
-  it('every name the sign-up form suggests passes', () => {
-    const a = list('NAME_A');
-    const b = list('NAME_B');
-    expect(a.length * b.length).toBeGreaterThan(300);
-    for (const x of a) for (const y of b) expect(checkName(`${x}${y}42`), `${x}${y}`).toBeNull();
   });
   it('random numbers and hex never spell a word by chance (guest names, test names, PlayerNNNN)', async () => {
     const { randomBytes, randomInt } = await import('node:crypto');

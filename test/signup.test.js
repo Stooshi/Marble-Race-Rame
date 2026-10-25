@@ -1,7 +1,7 @@
 'use strict';
 
 // The quick sign-up and the save pop-up's server side (Moses, 20 Oct 2026): birth year and month (no
-// account under 13), a suggested player name, everything a guest won kept, the confirm-your-email link
+// account under 13), no suggested player name (the field starts empty), everything a guest won kept, the confirm-your-email link
 // once email is set up (double opt-in), and a guest's finished races for the every-3rd-race pop-up.
 const test = require('node:test');
 const assert = require('node:assert/strict');
@@ -39,9 +39,8 @@ test('quick sign-up on a real database', { skip: !DB }, async () => {
   const sent = [];
   try {
     email.setTransport(null);
-    // A suggested name: free, and valid as a player name.
-    const { name } = (await call('/auth/suggest-name')).body;
-    assert.match(name, /^[A-Za-z0-9_]{3,24}$/);
+    // No suggested names any more (Moses, 25 Oct 2026: the name field starts empty).
+    assert.equal((await call('/auth/suggest-name')).status, 404);
 
     // A guest with races, their own starters and coins.
     const g = (await call('/auth/guest', { method: 'POST' })).body;

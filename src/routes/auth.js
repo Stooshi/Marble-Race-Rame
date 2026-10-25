@@ -35,11 +35,9 @@ const limiter = (windowMs, limit, error = 'Too many attempts, please try again l
 //   log in, password reset, email confirmation: strict (guessing passwords)  20 / 15 min
 //   saving an account (sign-up, saving a guest):                              60 / 15 min
 //   starting as a guest ("Play free"):                                       300 / hour
-//   suggested player names (the sign-up form asks once when it opens):      300 / 15 min
 const authLimiter = limiter(15 * 60 * 1000, 20);
 const signupLimiter = limiter(15 * 60 * 1000, 60);
 const guestLimiter = limiter(60 * 60 * 1000, 300, 'Too many new players from this address right now, please try again in a few minutes');
-const nameLimiter = limiter(15 * 60 * 1000, 300);
 
 // `streak`: days in a row with the daily goal met, alive while the goal was met today or yesterday
 // (UTC days, as in src/economy/index.js today()); 0 otherwise.
@@ -266,19 +264,6 @@ router.get('/me', requireAuth, async (req, res) => {
     racesFinished = n.n;
   }
   res.json({ user: rows[0], ...(token && { token }), ...(racesFinished != null && { racesFinished }) });
-});
-
-// Suggested player names for the quick sign-up ("SwiftComet42"): free ones, the player may change it.
-const NAME_A = ['Swift', 'Lucky', 'Rapid', 'Bouncy', 'Shiny', 'Rolling', 'Cosmic', 'Golden', 'Turbo', 'Zippy', 'Mighty', 'Brave', 'Clever', 'Sunny', 'Frosty', 'Speedy', 'Jolly', 'Daring', 'Bright', 'Nimble'];
-const NAME_B = ['Comet', 'Rocket', 'Racer', 'Spinner', 'Pebble', 'Bolt', 'Glider', 'Orbit', 'Flash', 'Marble', 'Shooter', 'Roller', 'Dash', 'Spark', 'Meteor', 'Swirl', 'Zoom', 'Breeze', 'Arrow', 'Drift'];
-/** GET /api/auth/suggest-name — a free player name to start from. */
-router.get('/suggest-name', nameLimiter, async (_req, res) => {
-  for (let tries = 0; tries < 12; tries += 1) {
-    const name = `${NAME_A[crypto.randomInt(NAME_A.length)]}${NAME_B[crypto.randomInt(NAME_B.length)]}${crypto.randomInt(10, 100)}`;
-    const { rows } = await db.query('SELECT 1 FROM users WHERE lower(username) = lower($1)', [name]);
-    if (!rows.length) return res.json({ name });
-  }
-  res.json({ name: null });
 });
 
 /** POST /api/auth/confirm-email { token } — the link in the confirmation email. */

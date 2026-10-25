@@ -11,7 +11,18 @@ describe('the player-name fields', () => {
     expect(SAVE_TEXTS.sv.namePlaceholder).toBe('Skriv ditt spelarnamn');
     expect(src('src/site/account/QuickSignup.jsx')).toContain('placeholder={t.namePlaceholder}');
   });
-  it('choosing a name, a room\'s name and the old sign-up form', () => {
-    for (const f of ['src/site/account/NameChip.jsx', 'src/site/pages/RoomPage.jsx', 'src/components/AuthForm.jsx']) expect(src(f)).toContain('placeholder="Type your player name"');
+  it('choosing a name and a room\'s name', () => {
+    for (const f of ['src/site/account/NameChip.jsx', 'src/site/pages/RoomPage.jsx']) expect(src(f)).toContain('placeholder="Type your player name"');
+  });
+  it('sign-up starts empty: no suggested name, only a name the guest chose (never one hidden after reports)', () => {
+    const form = src('src/site/account/QuickSignup.jsx');
+    expect(form).not.toMatch(/suggestName|suggest-name/);
+    expect(src('src/api/client.js')).not.toMatch(/suggestName|suggest-name/);
+    expect(form).toContain("username: ''");
+    expect(form).toContain("user?.name_hidden ? '' :");
+  });
+  it('one sign-up form: the old one (AuthForm, the old home page) is gone', () => {
+    expect(() => src('src/components/AuthForm.jsx')).toThrow();
+    expect(() => src('src/pages/Home.jsx')).toThrow();
   });
 });
