@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { standingsRows } from '../utils/standingsRows';
+import { standingsRows, standingsShown } from '../utils/standingsRows';
+import YourGate from './YourGate';
 import { entryLabel } from '../shared/playerName';
 import { useTrackScene } from '../hooks/useTrackScene';
 import MarbleBall from './MarbleBall';
@@ -71,6 +72,7 @@ export default function LiveRaceViewer3D({
   const [ready, setReady] = useState(false); // the race's marbles in and drawn, the hold decided
   const [shownT, setShownT] = useState(null); // the countdown as shown (whole tenths), for its overlay
   const [shown, setShown] = useState(null); // the race as shown (its clock and order), when held back
+  const [gone, setGone] = useState(false); // the gates have opened (as shown): the standings appear
   const builtSlug = useRef(null);
   const onPreparedRef = useRef(onPrepared);
   onPreparedRef.current = onPrepared;
@@ -175,6 +177,7 @@ export default function LiveRaceViewer3D({
     let lastShownClock = null;
     let lastNow = performance.now();
     let lastT = null;
+    let lastGone = null;
     const grandPrix = Boolean(meta?.track?.physics?.kit?.grandPrix);
     const tick = (now) => {
       const dt = (now - lastNow) / 1000;
@@ -198,6 +201,7 @@ export default function LiveRaceViewer3D({
       }
       // GO: the race's music (once per race; also when the page opens mid-race).
       if (f && f.t >= 0 && (lastT === null || lastT < 0) && meta?.raceId) raceGo(meta.raceId);
+      if (f && standingsShown(f.t) !== lastGone) { lastGone = standingsShown(f.t); setGone(lastGone); }
       if (f) lastT = f.t;
       if (f && scene) {
         const who = followRef.current;
@@ -270,7 +274,8 @@ export default function LiveRaceViewer3D({
             />
             {meter.on && <FrameMeter sceneRef={sceneRef} />}
             <FinishShow show={show} finishes={finishes} entries={entries} mine={highlight} raceId={meta?.raceId} trackName={meta?.track?.name} next={next} />
-            {show.phase === 'racing' && (
+            {show.phase === 'racing' && !gone && <YourGate entries={entries} mine={highlight} />}
+            {show.phase === 'racing' && gone && (
               <ol className="replay3d__standings" aria-label="Current standings">
                 {standingsRows(standings, highlight).map(({ index: i, pos, own }) => {
                   const e = entries[i];

@@ -10,6 +10,8 @@ import { raceCeremony } from '../sound/engine';
 import { CEREMONY_PHASES } from '../utils/finishShow';
 import SkipToResults from './SkipToResults';
 import { entryLabel } from '../shared/playerName';
+import YourGate from './YourGate';
+import { standingsShown } from '../utils/standingsRows';
 
 /**
  * Renders a race: the track on a canvas with marbles animated along it, plus
@@ -147,7 +149,9 @@ export default function RaceViewer({
       <aside className="race-viewer__side">
         <section className="panel">
           <h3>Standings</h3>
-          <ol className="standings">
+          {/* (They appear at GO: before it the order is only the starting order. Moses, 25 Oct 2026.) */}
+          {!standingsShown(frame?.t) && <YourGate entries={entries} mine={highlight} className="standings__gate" />}
+          {standingsShown(frame?.t) && <ol className="standings">
             {standings.map((i, rank) => {
               const e = entries[i];
               if (!e) return null;
@@ -169,7 +173,7 @@ export default function RaceViewer({
                 </li>
               );
             })}
-          </ol>
+          </ol>}
         </section>
 
         <section className="panel">

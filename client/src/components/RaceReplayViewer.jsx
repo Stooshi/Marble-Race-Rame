@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { standingsRows } from '../utils/standingsRows';
+import { standingsRows, standingsShown } from '../utils/standingsRows';
+import YourGate from './YourGate';
 import { entryLabel } from '../shared/playerName';
 import { useReplay } from '../hooks/useReplay';
 import { useTrackScene } from '../hooks/useTrackScene';
@@ -172,7 +173,8 @@ export default function RaceReplayViewer({ data, loading = false, mine = NOBODY,
               marble={entries[insetIndex]?.marble}
               onSwap={swapViews}
             />
-            {show.phase === 'racing' && (
+            {show.phase === 'racing' && !standingsShown(replay.time) && <YourGate entries={data?.entries ?? []} mine={mine} />}
+            {show.phase === 'racing' && standingsShown(replay.time) && (
               <ol className="replay3d__standings" aria-label="Current standings">
                 {standingsRows(standings, mine).map(({ index: i, pos, own }) => {
                   const e = entries[i];

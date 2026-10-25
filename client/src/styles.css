@@ -353,6 +353,8 @@ main { padding-bottom: 48px; }
 .panel { background: var(--bg-elev); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px; }
 .panel h3 { margin-bottom: 8px; color: var(--muted); text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.06em; }
 
+.standings__gate { margin: 0; color: var(--muted); }
+.standings__gate strong { color: var(--text, inherit); font-variant-numeric: tabular-nums; }
 .standings { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; max-height: 560px; overflow-y: auto; }
 @media (max-width: 959px) { .standings { max-height: 360px; } }
 .standings li { display: grid; grid-template-columns: 22px 18px minmax(0, 1fr) 60px 50px; gap: 8px; align-items: center; padding: 4px 6px; border-radius: 6px; font-size: 0.85rem; }
@@ -469,6 +471,8 @@ main { padding-bottom: 48px; }
 .replay3d__standings li.is-followed button { background: rgba(255, 255, 255, 0.18); }
 .replay3d__standings li.is-mine .replay3d__name { color: #facc15; }
 .replay3d__standings li.is-own-below { margin-top: 4px; border-top: 1px dashed rgba(255, 255, 255, 0.25); padding-top: 2px; } /* (the viewer's own place, below the first five) */
+.replay3d__gate { padding: 5px 10px; color: #fff; font-size: 0.8rem; } /* "Your gate: 13" during the countdown, where the standings appear at GO */
+.replay3d__gate strong { color: #facc15; font-variant-numeric: tabular-nums; }
 .replay3d__pos { width: 1.1em; font-weight: 700; font-variant-numeric: tabular-nums; }
 .replay3d__name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
