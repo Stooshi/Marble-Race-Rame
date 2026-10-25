@@ -54,7 +54,7 @@
   - `claude/open-decisions.md`: what Moses still has to decide;
   - `claude/known-issues.md`: bugs and rough edges;
   - `claude/changelog/`: one file per week;
-  - `cto/pdf/`: a PDF of these documents every Sunday.
+  - a PDF of these documents every Sunday, sent to Moses (for `cto/pdf/`: the project can only take it as an upload in claude.ai).
 - **Plans and status per feature:** `claude/*`, for example `prelaunch-check`, `store-submission-drafts`, `rivers-status` and `holiday-season-plan`.
 
 ## The documents
