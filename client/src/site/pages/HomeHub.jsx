@@ -56,12 +56,12 @@ export default function HomeHub() {
           </div>
         </section>
         <aside style={{ display: 'grid', gap: 14, flexBasis: 320, alignContent: 'start' }}>
-          {/* (Phones: three identical yellow buttons, stacked full width; Moses, 25 Oct 2026. Computers: as before. site.css .ms-race-choices) */}
+          {/* (Three identical yellow buttons, stacked full width, on phones and computers; Moses, 25 Oct 2026. site.css .ms-race-choices) */}
           <div className="ms-race-choices">
-            <Link to="/play/quick" className="ms-btn ms-btn--primary ms-btn--lg ms-race-quick">QUICK RACE</Link>
+            <Link to="/play/quick" className="ms-race-choice ms-race-quick"><b>QUICK RACE</b></Link>
             <div className="ms-row ms-race-more">
-              <Link to="/play/track" className="ms-card ms-tile ms-race-choice"><b>Race solo</b><span>Pick a track</span></Link>
-              <Link to="/play/friends" className="ms-card ms-tile ms-race-choice"><b>Race with friends</b><span>Invite and go</span></Link>
+              <Link to="/play/track" className="ms-race-choice"><b>Race solo</b><span>Pick a track</span></Link>
+              <Link to="/play/friends" className="ms-race-choice"><b>Race with friends</b><span>Invite and go</span></Link>
             </div>
           </div>
           <div className="ms-card" style={{ display: 'grid', gap: 8 }}>

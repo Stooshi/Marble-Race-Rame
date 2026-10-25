@@ -470,22 +470,17 @@ a.ms-mcard:hover { text-decoration: none; border-color: var(--ms-muted); }
   .ms-table--scores .ms-scores__player { max-width: 34vw; overflow: hidden; text-overflow: ellipsis; }
 }
 .ms-tile { display: grid; gap: 2px; flex: 1 1 0; color: var(--ms-text); padding: 16px; }
-/* The home hub's race buttons (HomeHub.jsx): on computers QUICK RACE over two tiles; on phones three
-   identical yellow buttons stacked full width (Moses, 25 Oct 2026), the same size and style. */
-.ms-race-choices { display: grid; gap: 14px; }
-.ms-race-quick { min-height: 72px; font-size: 1.6rem; }
-.ms-race-more { flex-wrap: nowrap; }
-@media (max-width: 700px), (orientation: landscape) and (max-height: 500px) {
-  .ms-race-choices, .ms-race-more { display: grid; gap: 12px; grid-template-columns: 1fr; }
-  .ms-race-quick, .ms-race-choice {
-    min-height: 84px; width: 100%; padding: 12px 18px; border-radius: 18px; border: 2px solid var(--ms-yellow);
-    background: var(--ms-yellow); color: var(--ms-ink); display: grid; place-content: center; justify-items: center; gap: 4px;
-    font-family: var(--ms-cond); font-weight: 800; font-size: 1.6rem; line-height: 1; text-transform: uppercase; letter-spacing: 0.04em; text-align: center;
-  }
-  .ms-race-choice b { font-weight: 800; }
-  a.ms-race-choice span { color: var(--ms-ink); opacity: 0.78; font-family: var(--ms-body); font-weight: 600; font-size: 0.95rem; text-transform: none; letter-spacing: 0; }
-  a.ms-race-choice:hover { border-color: var(--ms-yellow-hover); background: var(--ms-yellow-hover); }
+/* The home hub's race buttons (HomeHub.jsx): three identical yellow buttons stacked full width, on phones
+   and computers alike (Moses, 25 Oct 2026). */
+.ms-race-choices, .ms-race-more { display: grid; gap: 12px; grid-template-columns: 1fr; }
+.ms-race-quick, .ms-race-choice {
+  min-height: 84px; width: 100%; padding: 12px 18px; border-radius: 18px; border: 2px solid var(--ms-yellow);
+  background: var(--ms-yellow); color: var(--ms-ink); display: grid; place-content: center; justify-items: center; gap: 4px;
+  font-family: var(--ms-cond); font-weight: 800; font-size: 1.6rem; line-height: 1; text-transform: uppercase; letter-spacing: 0.04em; text-align: center;
 }
+.ms-race-choice b { font-weight: 800; }
+a.ms-race-choice span { color: var(--ms-ink); opacity: 0.78; font-family: var(--ms-body); font-weight: 600; font-size: 0.95rem; text-transform: none; letter-spacing: 0; }
+a.ms-race-quick:hover, a.ms-race-choice:hover { border-color: var(--ms-yellow-hover); background: var(--ms-yellow-hover); text-decoration: none; }
 .ms-tile span { color: var(--ms-muted); font-size: 0.9rem; }
 a.ms-tile:hover, a.ms-card:hover { text-decoration: none; border-color: var(--ms-muted); }
 .ms-home-hero { min-height: 340px; background: radial-gradient(circle at 70% 10%, #2A4A7A 0%, #13284A 45%, var(--ms-bg) 100%); align-items: flex-end; position: relative; overflow: hidden; isolation: isolate; }
@@ -720,20 +715,20 @@ a.ms-tile:hover, a.ms-card:hover { text-decoration: none; border-color: var(--ms
 .ms-appmenu__top { display: flex; justify-content: space-between; align-items: center; }
 .ms-appmenu--drawer .ms-appmenu__pages { grid-template-columns: 1fr; }
 
-/* A race on the whole screen (html.is-race-full with html.is-race-phone, while the 3D view shows; Race.jsx):
-   on a phone's screen, the website and the apps alike (Moses, 25 Oct 2026). The race fills the screen in
-   portrait and landscape, the camera buttons lie over its foot, and everything keeps clear of the notch
-   and the home bar. The header and footer go, and a ✕ (leave) and a ⋯ (the 2D view) float over the race. */
+/* A race on the whole screen (html.is-race-full, while the 3D view shows; Race.jsx): on phones, computers
+   and in the apps alike (Moses, 25 Oct 2026). The race fills the screen or the browser window, the
+   standings over its left side and the camera buttons over its foot, everything clear of the notch and
+   the home bar. The header and footer go, and a ✕ (leave) and a ⋯ (the 2D view) float over the race. */
 .is-race-full, .is-race-full body { overflow: hidden; overscroll-behavior: none; } /* (html too: Safari scrolls the page under a fixed layer otherwise) */
-.is-race-phone.is-race-full .ms-header { display: none; }
+.is-race-full .ms-header { display: none; }
 .race-float { display: none; }
-.is-race-phone.is-race-full .race-float {
+.is-race-full .race-float {
   display: inline-grid; place-items: center; position: fixed; z-index: 71; top: calc(env(safe-area-inset-top, 0px) + 8px);
   width: 40px; height: 40px; border: 0; border-radius: 50%; background: rgba(17, 19, 26, 0.62); color: #fff; cursor: pointer;
 }
 .race-float::after { content: ''; position: absolute; inset: -2px; } /* (a 44 px tap target) */
-.is-race-phone.is-race-full .race-float--exit { left: calc(env(safe-area-inset-left, 0px) + 8px); }
-.is-race-phone.is-race-full .race-float--more { right: calc(env(safe-area-inset-right, 0px) + 8px); }
+.is-race-full .race-float--exit { left: calc(env(safe-area-inset-left, 0px) + 8px); }
+.is-race-full .race-float--more { right: calc(env(safe-area-inset-right, 0px) + 8px); }
 .race-more-menu {
   position: fixed; z-index: 72; top: calc(env(safe-area-inset-top, 0px) + 54px); right: calc(env(safe-area-inset-right, 0px) + 8px);
   display: grid; min-width: 170px; padding: 6px; border-radius: 14px; background: rgba(17, 19, 26, 0.92); border: 1px solid var(--ms-border);
@@ -748,8 +743,8 @@ a.ms-tile:hover, a.ms-card:hover { text-decoration: none; border-color: var(--ms
 .is-race-full .race-page .event-feed { display: none; }
 .is-race-full .race-page .live3d { position: absolute; inset: 0; }
 .is-race-full .race-page .preview3d__stage { position: absolute; inset: 0; height: auto; min-height: 0; border: 0; border-radius: 0; }
-/* 3D / 2D: behind the ⋯ on a phone; on a computer's full race (none now) top centre. */
-.is-race-phone.is-race-full .race-page > .segmented { display: none; }
+/* 3D / 2D: behind the ⋯. */
+.is-race-full .race-page > .segmented { display: none; }
 .is-race-full .race-page > .segmented {
   position: fixed; z-index: 71; top: calc(env(safe-area-inset-top, 0px) + 10px); left: 50%; transform: translateX(-50%); margin: 0;
   background: rgba(17, 19, 26, 0.62);
@@ -769,6 +764,11 @@ a.ms-tile:hover, a.ms-card:hover { text-decoration: none; border-color: var(--ms
   position: fixed; z-index: 45; right: calc(env(safe-area-inset-right, 0px) + 10px); bottom: calc(env(safe-area-inset-bottom, 0px) + 58px); margin: 0;
 }
 .is-race-full .skip-results__link { color: #fff; background: rgba(17, 19, 26, 0.62); border-radius: 999px; padding: 6px 10px; }
+/* Big windows (a computer's browser): the standings and the clock a little larger, beside the track. */
+@media (min-width: 1200px) and (min-height: 700px) {
+  .is-race-full .replay3d__standings button { font-size: 0.95rem; padding: 4px 8px; }
+  .is-race-full .replay3d__standings { max-width: 300px; }
+}
 /* Landscape phones: the standings smaller, so more of the track shows. */
 @media (orientation: landscape) and (max-height: 500px) {
   .is-race-full .replay3d__standings { top: calc(env(safe-area-inset-top, 0px) + 54px); font-size: 0.8rem; max-width: 34%; }

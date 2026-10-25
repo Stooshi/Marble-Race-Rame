@@ -17,7 +17,6 @@ import StartLights from '../components/StartLights';
 import { play as playSound, raceCountdown, raceEnd, raceGo } from '../sound/engine';
 import { track, trackingActive } from '../site/consent/tracking';
 import { entryLabel, plainName } from '../shared/playerName';
-import { isNativeApp } from '../app/native';
 
 const obstacleName = (o) => o?.replace(/_/g, ' ');
 
@@ -221,35 +220,21 @@ export default function Race() {
   );
 }
 
-/** A phone's screen (portrait up to 700 px wide, landscape up to 500 px tall), as site.css has it. */
-export const PHONE_QUERY = '(max-width: 700px), (orientation: landscape) and (max-height: 500px)';
-
 /**
- * The 3D race on the whole screen, from the countdown to the results: html.is-race-full while the 3D
- * view is shown, on a phone's screen (html.is-race-phone, Moses, 25 Oct 2026): the header and footer go,
- * a ✕ leaves the race and a ⋯ holds the 2D view; the camera buttons lie over the race and in landscape
- * the whole race is on screen (site.css). The iPhone and Android apps always get this phone layout, the
- * same as the mobile website (test/appLayout.test.jsx). Computers keep the page as it was.
+ * The 3D race on the whole screen, from the countdown to the results: html.is-race-full while the 3D view
+ * is shown, on phones, computers and in the apps alike (Moses, 25 Oct 2026): the race fills the screen
+ * or the browser window, the header and footer go and nothing scrolls; a ✕ leaves the race and a ⋯ holds
+ * the 2D view; the standings lie over the race's left side and the camera buttons over its foot
+ * (site.css). The 2D view is the page as it was. test/appLayout.test.jsx.
  */
 export function RaceFullScreen({ onLeave, on2d }) {
-  const native = isNativeApp();
-  const [phone, setPhone] = useState(() => native || (typeof window !== 'undefined' && Boolean(window.matchMedia?.(PHONE_QUERY).matches)));
   const [more, setMore] = useState(false);
   useEffect(() => {
-    if (native || !window.matchMedia) return undefined;
-    const mq = window.matchMedia(PHONE_QUERY);
-    const change = () => setPhone(mq.matches);
-    mq.addEventListener?.('change', change);
-    return () => mq.removeEventListener?.('change', change);
-  }, [native]);
-  useEffect(() => {
-    if (!phone) return undefined;
     const root = document.documentElement;
-    root.classList.add('is-race-full', 'is-race-phone');
+    root.classList.add('is-race-full');
     window.scrollTo?.(0, 0);
-    return () => root.classList.remove('is-race-full', 'is-race-phone');
-  }, [phone]);
-  if (!phone) return null;
+    return () => root.classList.remove('is-race-full');
+  }, []);
   return (
     <>
       <button type="button" className="race-float race-float--exit" aria-label="Leave the race" onClick={onLeave}>
