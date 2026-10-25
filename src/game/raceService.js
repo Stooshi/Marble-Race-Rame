@@ -1,5 +1,6 @@
 'use strict';
 
+const { shownName } = require('../names/shown');
 const { dressRows } = require('../marbles/computerPlayers');
 const { dressComputerPlayers } = require('../marbles/showcase');
 const crypto = require('crypto');
@@ -68,7 +69,7 @@ async function loadSimulationInput(client, raceId) {
             e.snap_top_speed, e.snap_acceleration, e.snap_handling, e.snap_luck,
             e.finish_position, e.finish_time_ms,
             m.name AS marble_name, m.slug AS marble_slug, m.color_primary, m.color_secondary, m.pattern,
-            u.username,
+            u.username, u.display_name, u.is_guest,
             m.rarity AS marble_rarity, (m.is_starter AND m.owner_id IS NOT NULL) AS marble_starter, m.marble_code,
             ${LOOK_SQL} AS look
        FROM race_entries e
@@ -116,7 +117,8 @@ function describeForClients(race, rows) {
       entryId: e.id,
       lane: e.lane,
       isBot: e.is_bot,
-      user: e.user_id ? { id: e.user_id, username: e.username } : null,
+      // (The player's name as shown, src/names/shown.js; the lists show it, the marble's name under it.)
+      user: e.user_id ? { id: e.user_id, username: e.username, name: shownName(e) } : null,
       marble: {
         id: e.marble_id,
         slug: e.marble_slug,
@@ -306,7 +308,7 @@ async function getResults(client, raceId) {
             e.lane, e.is_bot, e.coins_awarded,
             e.marble_id, m.name AS marble_name, m.color_primary, m.color_secondary, m.pattern,
             m.rarity AS marble_rarity, (m.is_starter AND m.owner_id IS NOT NULL) AS marble_starter, m.marble_code, ${LOOK_SQL} AS look,
-            e.user_id, u.username
+            e.user_id, u.username, u.display_name, u.is_guest
        FROM race_entries e
        JOIN marbles m ON m.id = e.marble_id
        LEFT JOIN users u ON u.id = e.user_id
@@ -314,7 +316,8 @@ async function getResults(client, raceId) {
       ORDER BY e.finish_position ASC NULLS LAST`,
     [raceId],
   );
-  return dressRows(raceId, rows, { idField: 'entry_id' }); // (computer players' names and looks)
+  // (player_name: the player's name as shown, src/names/shown.js; null for a computer player.)
+  return dressRows(raceId, rows, { idField: 'entry_id' }).map(({ display_name: _d, is_guest: _g, ...r }) => ({ ...r, player_name: r.user_id ? shownName({ username: r.username, display_name: _d }) : null }));
 }
 
 /**

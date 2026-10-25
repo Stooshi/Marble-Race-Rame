@@ -13,6 +13,8 @@ import { lookName } from '../shared/marbles';
 const asMarble = (r) => ({ ...r, name: nameOf(r), rarity: r.marble_rarity, starter: r.marble_starter, code: r.marble_code });
 /** The name a result shows: the look it raced in, else the marble's own. */
 const nameOf = (r) => (r.look && lookName(r.look)) || r.marble_name;
+// (The player's name, shown first: Moses, 25 Oct 2026. The server sends it as player_name.)
+const who = (r) => r.player_name ?? plainName(r.username);
 import RaceViewer from '../components/RaceViewer';
 import NextRace from '../components/NextRace';
 import { BOARD_HOLD_MS, finishPlan } from '../utils/finishShow';
@@ -57,7 +59,7 @@ export default function Results() {
 
   return (
     <div className="page results">
-      {tapped && <MarbleInfo marble={asMarble(tapped)} isBot={tapped.is_bot} player={tapped.user_id ? { id: tapped.user_id, name: plainName(tapped.username) } : null} onClose={() => setTapped(null)} />}
+      {tapped && <MarbleInfo marble={asMarble(tapped)} isBot={tapped.is_bot} player={tapped.user_id ? { id: tapped.user_id, name: who(tapped) } : null} onClose={() => setTapped(null)} />}
       <header className="race-header">
         <div>
           <p className="eyebrow">
@@ -80,9 +82,9 @@ export default function Results() {
           <div key={r.entry_id} className={`podium__step podium__step--${r.position}`}>
             <button type="button" className="marble-tap" style={{ flexDirection: 'column' }} onClick={() => setTapped(r)} aria-label={`About ${nameOf(r)}`}>
               <MarbleBall marble={r} size={r.position === 1 ? 56 : 44} />
-              <strong>{nameOf(r)}</strong>
+              <strong>{r.user_id ? who(r) : nameOf(r)}</strong>
             </button>
-            <small>{r.username ? plainName(r.username) : <CpuTag />}</small>
+            <small>{r.user_id ? nameOf(r) : <CpuTag />}</small>
             <span className="podium__time">{formatTime(r.finish_time_ms)}</span>
             {r.comparison.is_track_record && <span className="badge badge--gold">Track record</span>}
             <span className="podium__block">{r.position}</span>
@@ -125,9 +127,11 @@ export default function Results() {
                         <MarbleBall marble={r} size={20} />
                       </button>
                       <span>
-                        <button type="button" className="marble-tap" onClick={() => setTapped(r)}><strong>{nameOf(r)}</strong></button>
+                        {r.user_id
+                          ? <><Link to={`/profile/${r.user_id}`}><strong>{who(r)}</strong></Link><ReportName userId={r.user_id} name={who(r)} where="results" compact /></>
+                          : <button type="button" className="marble-tap" onClick={() => setTapped(r)}><strong>{nameOf(r)}</strong></button>}
                         <small className="muted block">
-                          {r.user_id ? <><Link to={`/profile/${r.user_id}`}>{plainName(r.username)}</Link><ReportName userId={r.user_id} name={plainName(r.username)} where="results" compact /></> : <CpuTag />}
+                          {r.user_id ? <button type="button" className="marble-tap" onClick={() => setTapped(r)}>{nameOf(r)}</button> : <CpuTag />}
                         </small>
                       </span>
                     </span>

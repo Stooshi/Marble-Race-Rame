@@ -216,13 +216,37 @@ a.ms-chip:hover { text-decoration: none; border-color: var(--ms-muted); }
    drawer (MenuSheet, AppHeader.jsx). Computers keep the row of pages. */
 .ms-header .ms-header__menu { display: none; }
 @media (max-width: 700px), (orientation: landscape) and (max-height: 500px) {
-  .ms-header .ms-nav, .ms-header .ms-sound, .ms-header .ms-header__logout, .ms-header .ms-chip--streak, .ms-header .ms-chip--user, .ms-header .ms-wide-only { display: none; }
+  .ms-header .ms-nav, .ms-header .ms-sound, .ms-header .ms-header__logout, .ms-header .ms-chip--streak, .ms-header .ms-header__save, .ms-header .ms-wide-only { display: none; }
+  .ms-header .ms-chip--name { max-width: 36vw; }
+  .ms-header .ms-chips { gap: 6px; }
   .ms-header .ms-narrow-only { display: inline; }
   .ms-header .ms-header__menu { display: inline-grid; margin-right: -8px; }
   .ms-header__inner { flex-wrap: nowrap; gap: 8px; padding-top: 6px; padding-bottom: 6px; }
   .ms-header__logo .ms-logo { font-size: 21px !important; }
   .ms-header .ms-chips { flex-wrap: nowrap; }
 }
+
+/* The player's name in the top bar (NameChip.jsx): a guest's with a small "not saved" dot; long names end in "…". */
+.ms-chip--name { gap: 6px; max-width: 220px; cursor: pointer; font: inherit; font-family: var(--ms-cond); font-weight: 700; font-size: 0.95rem; }
+.ms-chip--name .ms-chip__text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.ms-chip__unsaved { flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--ms-orange); box-shadow: 0 0 0 2px rgba(255, 140, 66, 0.25); }
+.ms-apphead__name { max-width: 30vw; padding: 4px 10px; font-size: 0.9rem; }
+.ms-namemenu { position: fixed; inset: 0; z-index: 90; background: rgba(5, 8, 16, 0.5); display: flex; justify-content: flex-end; align-items: flex-start; }
+.ms-namemenu__panel {
+  margin: calc(env(safe-area-inset-top, 0px) + 60px) max(12px, env(safe-area-inset-right, 0px)) 0 12px; width: calc(100% - 24px); max-width: 340px; box-sizing: border-box;
+  display: grid; gap: 12px; padding: 16px; border-radius: 18px; background: var(--ms-card); border: 1px solid var(--ms-border);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45); animation: ms-sheet-up 0.16s ease-out;
+}
+.ms-namemenu__who { display: grid; gap: 4px; }
+.ms-namemenu__who b { font-family: var(--ms-cond); font-size: 1.2rem; overflow-wrap: anywhere; }
+.ms-namemenu__who span { color: var(--ms-soft); font-size: 0.9rem; }
+.ms-namemenu__form { display: grid; gap: 6px; padding-top: 10px; border-top: 1px solid var(--ms-border); }
+.ms-namemenu__form label { font-weight: 700; }
+.ms-namemenu__row { display: flex; gap: 8px; }
+.ms-namemenu__row input { flex: 1; min-width: 0; min-height: 44px; box-sizing: border-box; }
+.ms-namemenu__row .ms-btn { min-height: 44px; }
+.ms-namemenu__error { color: var(--ms-red, #ff6b6b); font-size: 0.9rem; }
+.ms-namemenu__ok { color: var(--ms-green, #3ddc97); font-size: 0.9rem; }
 
 /* ── Footer ───────────────────────────────────────────────────────────── */
 .ms-footer {

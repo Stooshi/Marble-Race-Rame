@@ -50,7 +50,7 @@ marbles ──< user_marbles   (the older plain marbles; looks only)
 | `username` | Player name, 3–24 letters, digits or `_`, unique regardless of case. Deleted accounts become `deleted_<12 hex>` |
 | `email` | Unique. Guests get a placeholder `guest-<id>@guest.marblespins.invalid`; deleted accounts get `…@deleted.invalid` |
 | `password_hash` | bcrypt hash. Deleted accounts get a value no password can match |
-| `display_name` | Optional shown name (40 characters) |
+| `display_name` | The name the player chose to be shown by (a guest can choose one; it stays when they save the account, cleared if it's the same as their new player name). 3–24 letters, digits, spaces, `_` or `-`, the name filter, never `guest_…`, never another player's player name or chosen name (case ignored; `users_display_name_lower` index). Shown instead of the player name everywhere (`src/names/shown.js`) |
 | `avatar_url` | Not used by the website today |
 | `role` | `player` or `admin` (the back office) |
 | `coins` | Current balance, never below 0. **Only changed through `economy.change()`**, which also writes `coin_ledger` |

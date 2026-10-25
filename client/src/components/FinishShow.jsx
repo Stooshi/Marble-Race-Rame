@@ -6,7 +6,7 @@ import MarbleInfo from './MarbleInfo';
 import Confetti from './Confetti';
 import { formatTime, ordinal } from '../utils/format';
 import { PODIUM_STEP_MS, ROW_MS, arrivals, boardRows, finishPlan, phaseAt, showerFor } from '../utils/finishShow';
-import { handle } from '../shared/playerName';
+import { entryLabel } from '../shared/playerName';
 
 /**
  * The finish show's clock and stage, for a race viewer: `time` (a replay's
@@ -149,7 +149,7 @@ export default function FinishShow({ show, finishes, entries, mine = [], raceId 
             <li key={a.index} className={mine.includes(a.index) ? 'is-mine' : undefined}>
               <span className="finish__place">{ordinal(a.place)}</span>
               <MarbleBall marble={entries[a.index]?.marble} size={14} />
-              <span className="finish__tname">{entries[a.index]?.marble?.name}{entries[a.index]?.isBot && <CpuTag />}</span>
+              <span className="finish__tname">{entryLabel(entries[a.index])}{entries[a.index]?.isBot && <CpuTag />}</span>
               <span className="finish__ttime">{formatTime(a.ms)}</span>
             </li>
           ))}
@@ -211,7 +211,7 @@ function MedalSlot({ kind, label, a, e, isMine, elapsed, paused }) {
       </span>
       <span className="medal__text">
         <span className="medal__label">{label}</span>
-        <span className="medal__name" style={{ color: readable(e?.marble?.color_primary) }}>{e?.marble?.name}{e?.isBot && <CpuTag />}</span>
+        <span className="medal__name" style={{ color: readable(e?.marble?.color_primary) }}>{entryLabel(e)}{e?.isBot && <CpuTag />}</span>
         <span className="medal__time">{formatTime(a.ms)}</span>
       </span>
     </li>
@@ -228,10 +228,10 @@ function WinnerBanner({ small, mineWon, winner, ms, elapsed, paused }) {
       <span className="finish__title" data-text={mineWon ? 'You win!' : 'Winner'}>{mineWon ? 'You win!' : 'Winner'}</span>
       <span className="finish__who">
         <MarbleBall marble={winner.marble} size={small ? 20 : 32} />
-        <span className="finish__name" style={{ color: readable(winner.marble?.color_primary) }}>{winner.marble?.name}</span>
+        <span className="finish__name" style={{ color: readable(winner.marble?.color_primary) }}>{entryLabel(winner)}</span>
       </span>
       <span className="finish__owner">
-        {winner.user ? handle(winner.user.username) : <CpuTag />} <span className="finish__dot">◆</span> {formatTime(ms)}
+        {winner.user ? winner.marble?.name : <CpuTag />} <span className="finish__dot">◆</span> {formatTime(ms)}
       </span>
     </div>
   );
@@ -304,8 +304,8 @@ function Podium({ top, entries, mine, elapsed, paused }) {
               <div className="podium-step__block">
                 <span className="podium-step__num">{a.place}</span>
                 <span className="podium-step__plate">
-                  <span className="podium-step__name" style={{ color: readable(e?.marble?.color_primary) }}>{e?.marble?.name}</span>
-                  <span className="podium-step__owner">{e?.user ? handle(e.user.username) : <CpuTag />}</span>
+                  <span className="podium-step__name" style={{ color: readable(e?.marble?.color_primary) }}>{entryLabel(e)}</span>
+                  <span className="podium-step__owner">{e?.user ? e?.marble?.name : <CpuTag />}</span>
                   <span className="podium-step__time">{formatTime(a.ms)}</span>
                 </span>
               </div>
@@ -347,8 +347,8 @@ function Board({ rows, trackName, next }) {
           <tr>
             <th scope="col" className="num">Pl</th>
             <th scope="col" className="num" title="Starting place">Start</th>
-            <th scope="col">Marble</th>
-            <th scope="col" className="board__ownercol">Owner</th>
+            <th scope="col">Player</th>
+            <th scope="col" className="board__ownercol">Marble</th>
             <th scope="col" className="num">Time</th>
             <th scope="col" className="num">Gap</th>
           </tr>
@@ -362,14 +362,14 @@ function Board({ rows, trackName, next }) {
                 <div className="board__marble">
                   <button type="button" className="marble-tap" onClick={() => setTapped(r)} aria-label={`About ${r.marble?.name}`}>
                     <MarbleBall marble={r.marble} size={14} />
-                    <span className="board__name" style={{ color: readable(r.marble?.color_primary) }}>{r.marble?.name}</span>
+                    <span className="board__name" style={{ color: readable(r.marble?.color_primary) }}>{r.player ?? r.marble?.name}</span>
                   </button>
                   {r.record && <span className="board__flag board__flag--record">Track record</span>}
                   {r.pb && <span className="board__flag board__flag--pb">Personal best</span>}
-                  {r.username ? <span className="board__owner board__owner--under">{handle(r.username)}</span> : r.isBot && <span className="board__owner board__owner--under"><CpuTag /></span>}
+                  {r.player ? <span className="board__owner board__owner--under">{r.marble?.name}</span> : r.isBot && <span className="board__owner board__owner--under"><CpuTag /></span>}
                 </div>
               </td>
-              <td className="board__owner board__ownercol">{r.username ? handle(r.username) : <CpuTag />}</td>
+              <td className="board__owner board__ownercol">{r.player ? r.marble?.name : <CpuTag />}</td>
               <td className="num board__time">{r.racing ? <span className="muted">still racing</span> : formatTime(r.ms)}</td>
               <td className="num board__gap">{r.racing ? '' : r.gap === 0 ? '' : `+${(r.gap / 1000).toFixed(2)}`}</td>
             </tr>
@@ -377,7 +377,7 @@ function Board({ rows, trackName, next }) {
         </tbody>
       </table>
       {next && <footer className="board__next">{next}</footer>}
-      {tapped && <MarbleInfo marble={tapped.marble} isBot={tapped.isBot} player={tapped.userId ? { id: tapped.userId, name: handle(tapped.username) } : null} onClose={() => setTapped(null)} />}
+      {tapped && <MarbleInfo marble={tapped.marble} isBot={tapped.isBot} player={tapped.userId ? { id: tapped.userId, name: tapped.player } : null} onClose={() => setTapped(null)} />}
     </div>
   );
 }

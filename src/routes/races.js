@@ -1,5 +1,6 @@
 'use strict';
 
+const { shownName } = require('../names/shown');
 const { dressRows } = require('../marbles/computerPlayers');
 const express = require('express');
 const config = require('../config');
@@ -46,7 +47,7 @@ async function getEntries(raceId, revealResults) {
             m.id AS marble_id, m.slug AS marble_slug, m.name AS marble_name,
             m.color_primary, m.color_secondary, m.pattern, m.rarity,
             (SELECT h.item_slug FROM house_looks h WHERE h.entry_id = e.id) AS look,
-            u.id AS user_id, u.username, u.display_name
+            u.id AS user_id, u.username, u.display_name, u.is_guest
        FROM race_entries e
        JOIN marbles m ON m.id = e.marble_id
        LEFT JOIN users u ON u.id = e.user_id
@@ -54,9 +55,11 @@ async function getEntries(raceId, revealResults) {
       ORDER BY ${revealResults ? 'e.finish_position' : 'e.lane NULLS LAST, e.joined_at'}`,
     [raceId],
   );
-  return dressRows(raceId, rows).map(({ finish_position, finish_time_ms, split_time_ms, coins_awarded, ...rest }) => (
-    revealResults ? { ...rest, finish_position, finish_time_ms, split_time_ms, coins_awarded } : rest
-  ));
+  // (player_name: the player's name as shown, src/names/shown.js; null for a computer player.)
+  return dressRows(raceId, rows).map(({ finish_position, finish_time_ms, split_time_ms, coins_awarded, display_name, is_guest: _g, ...rest }) => {
+    const row = { ...rest, player_name: rest.user_id ? shownName({ username: rest.username, display_name }) : null };
+    return revealResults ? { ...row, finish_position, finish_time_ms, split_time_ms, coins_awarded } : row;
+  });
 }
 
 /** Throws unless the user may race the marble (starter or owned). */

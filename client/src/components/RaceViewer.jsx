@@ -9,7 +9,7 @@ import FinishShow, { useFinishShow } from './FinishShow';
 import { raceCeremony } from '../sound/engine';
 import { CEREMONY_PHASES } from '../utils/finishShow';
 import SkipToResults from './SkipToResults';
-import { plainName } from '../shared/playerName';
+import { entryLabel } from '../shared/playerName';
 
 /**
  * Renders a race: the track on a canvas with marbles animated along it, plus
@@ -158,8 +158,8 @@ export default function RaceViewer({
                   <span className="standings__pos">{rank + 1}</span>
                   <MarbleBall marble={e.marble} size={18} />
                   <span className="standings__name">
-                    {e.marble.name}
-                    <small>{e.user ? plainName(e.user.username) : <CpuTag />}</small>
+                    {entryLabel(e)}
+                    <small>{e.user ? e.marble.name : <CpuTag />}</small>
                   </span>
                   <span className="standings__bar" title={`${Math.round(p * 100)}%`}>
                     <span style={{ width: `${p * 100}%` }} />
@@ -182,7 +182,7 @@ export default function RaceViewer({
                 <li key={i} className={highlightSet.has(i) ? 'is-me' : undefined}>
                   <span>{rank + 1}</span>
                   <MarbleBall marble={entries[i]?.marble} size={14} />
-                  <span className="split-board__name">{entries[i]?.marble.name}</span>
+                  <span className="split-board__name">{entryLabel(entries[i])}</span>
                   <span className="num">{rank === 0 ? formatTime(splits[i]) : formatDelta(splits[i] - leaderSplit)}</span>
                 </li>
               ))}

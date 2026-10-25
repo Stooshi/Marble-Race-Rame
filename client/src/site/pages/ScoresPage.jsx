@@ -74,7 +74,7 @@ export default function ScoresPage() {
               ) : (
                 <tr key={r.key} className={r.me ? 'is-me' : undefined}>
                   <td style={{ color: MEDAL[r.rank] ?? 'var(--ms-text)', fontWeight: 800 }}>{r.rank}</td>
-                  <td className="ms-scores__player">{handle(r.username)}{r.me ? ' (you)' : <ReportName userId={r.userId} name={handle(r.username)} where="scoreboard" compact />}</td>
+                  <td className="ms-scores__player">{r.name ?? handle(r.username)}{r.me ? ' (you)' : <ReportName userId={r.userId} name={r.name ?? handle(r.username)} where="scoreboard" compact />}</td>
                   <td>
                     <span className="ms-row" style={{ gap: 8, flexWrap: 'nowrap' }}>
                       {r.shooter?.item ? <MarbleBadge slug={r.shooter.item} size={22} still /> : <MarbleBadge marble={r.shooter?.original} size={22} still />}

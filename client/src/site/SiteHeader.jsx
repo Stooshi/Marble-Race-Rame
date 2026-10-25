@@ -4,9 +4,9 @@ import { useAuth } from '../context/AuthContext';
 import { formatNumber } from '../utils/format';
 import Logo from './Logo';
 import SoundControl from './SoundControl';
-import { handle } from '../shared/playerName';
 import LogoutButton from './account/LogoutButton';
 import AppHeader, { MenuSheet } from './AppHeader';
+import NameChip from './account/NameChip';
 import { isNativeApp } from '../app/native';
 
 /** Which header a page wears: the landing page's, the race flow's slim one, checkout's, or the game's. */
@@ -20,11 +20,12 @@ export function headerKind(pathname, isAuthenticated) {
 function UserChips({ user }) {
   return (
     <div className="ms-chips">
-      <Link to="/shop#coins" className="ms-chip" title="Coins: earned racing or bought in coin packs">● {formatNumber(user.coins ?? 0)} coins</Link>
+      <Link to="/shop#coins" className="ms-chip" title="Coins: earned racing or bought in coin packs">● {formatNumber(user.coins ?? 0)}<span className="ms-wide-only">{"\u00a0"}coins</span></Link>
       {user.streak > 0 && <span className="ms-chip ms-chip--streak" title={`Daily streak: the daily goal met ${user.streak} day${user.streak === 1 ? '' : 's'} in a row`}>▲ {user.streak}</span>}
-      {user.is_guest
-        ? <Link to="/signup" className="ms-btn ms-btn--primary ms-btn--sm"><span className="ms-wide-only">SAVE YOUR MARBLE</span><span className="ms-narrow-only">SAVE</span></Link>
-        : <Link to="/settings" className="ms-chip ms-chip--user" title="Settings">{handle(user.username)}</Link>}
+      {/* (The player's name, always: Moses, 25 Oct 2026. On phones it takes SAVE's place; a guest's
+          name has a "not saved" dot and its menu starts with "Save your marble". NameChip.jsx) */}
+      <NameChip user={user} />
+      {user.is_guest && <Link to="/signup" className="ms-btn ms-btn--primary ms-btn--sm ms-header__save">SAVE YOUR MARBLE</Link>}
     </div>
   );
 }

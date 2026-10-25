@@ -12,6 +12,7 @@
  *   byCountry(db, code)    → { country, name, records: [{ slug, track, ms, userId, username, at }] } by track name
  * Both cached for a minute (they're shown on public pages).
  */
+const { shownName } = require('../names/shown');
 const { nameOf, isCountry } = require('.');
 
 const CACHE_MS = 60_000;
@@ -36,7 +37,7 @@ async function byTrack(db, slug) {
     if (!track) return null;
     const { rows } = await db.query(
       `SELECT * FROM (
-         SELECT DISTINCT ON (e.country) e.country, e.finish_time_ms AS ms, u.id AS user_id, u.username, r.finished_at AS at
+         SELECT DISTINCT ON (e.country) e.country, e.finish_time_ms AS ms, u.id AS user_id, u.username, u.display_name, r.finished_at AS at
            FROM race_entries e
            JOIN races r ON r.id = e.race_id AND r.status = 'finished'
            JOIN users u ON u.id = e.user_id
@@ -47,7 +48,7 @@ async function byTrack(db, slug) {
     );
     return {
       track: { slug: track.slug, name: track.name },
-      records: rows.map((r) => ({ country: r.country, name: nameOf(r.country), ms: r.ms, userId: r.user_id, username: r.username, at: r.at })),
+      records: rows.map((r) => ({ country: r.country, name: nameOf(r.country), ms: r.ms, userId: r.user_id, username: r.username, player: shownName(r), at: r.at })),
     };
   });
 }
@@ -57,7 +58,7 @@ async function byCountry(db, code) {
   return cached(`c:${code}`, async () => {
     const { rows } = await db.query(
       `SELECT * FROM (
-         SELECT DISTINCT ON (t.id) t.slug, t.name AS track, e.finish_time_ms AS ms, u.id AS user_id, u.username, r.finished_at AS at
+         SELECT DISTINCT ON (t.id) t.slug, t.name AS track, e.finish_time_ms AS ms, u.id AS user_id, u.username, u.display_name, r.finished_at AS at
            FROM race_entries e
            JOIN races r ON r.id = e.race_id AND r.status = 'finished'
            JOIN tracks t ON t.id = r.track_id AND ${LIVE}
@@ -67,7 +68,7 @@ async function byCountry(db, code) {
        ) best ORDER BY track`,
       [code],
     );
-    return { country: code, name: nameOf(code), records: rows.map((r) => ({ slug: r.slug, track: r.track, ms: r.ms, userId: r.user_id, username: r.username, at: r.at })) };
+    return { country: code, name: nameOf(code), records: rows.map((r) => ({ slug: r.slug, track: r.track, ms: r.ms, userId: r.user_id, username: r.username, player: shownName(r), at: r.at })) };
   });
 }
 

@@ -1,3 +1,4 @@
+import { entryPlayer } from '../shared/playerName';
 /**
  * The finish of a race, as a show on the race clock (so it plays the same live
  * and in replays, and a replay rewound past the finish takes it away again):
@@ -93,6 +94,7 @@ export function boardRows({ entries, finishes, official = null, mine = [] }) {
       start: Number.isInteger(e?.lane) ? e.lane + 1 : null,
       marble: e?.marble ?? null,
       username: e?.user?.username ?? null,
+      player: entryPlayer(e), // (the player's name as shown; null for a computer player)
       userId: e?.user?.id ?? null,
       isBot: Boolean(e?.isBot),
       record: Boolean(f.is_track_record),

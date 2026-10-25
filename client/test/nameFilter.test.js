@@ -49,11 +49,11 @@ describe('the name filter', () => {
     expect(src('src/site/pages/RoomPage.jsx')).toMatch(/checkName\(name\.trim\(\)\)/);
     expect(server).toMatch(/names\.assertAllowed\(\{ username: body\.username, display_name: body\.display_name \}\)/);
     expect(server).toMatch(/names\.assertAllowed\(\{ username: body\.username \}\)/);
-    expect(readFileSync(join(__dirname, '..', '..', 'src', 'routes', 'users.js'), 'utf8')).toMatch(/names\.assertAllowed\(\{ display_name: body\.display_name \}\)/);
+    expect(readFileSync(join(__dirname, '..', '..', 'src', 'routes', 'users.js'), 'utf8')).toMatch(/names\.assertShownName\(db, req\.user\.id, body\.display_name\)/);
   });
   it('"Report this name" on scoreboards, race results and the tapped-marble card', () => {
     const src = (p) => readFileSync(join(__dirname, '..', p), 'utf8');
-    expect(src('src/site/pages/ScoresPage.jsx')).toMatch(/<ReportName userId=\{r\.userId\} name=\{handle\(r\.username\)\} where="scoreboard" compact \/>/);
+    expect(src('src/site/pages/ScoresPage.jsx')).toMatch(/<ReportName userId=\{r\.userId\} name=\{r\.name \?\? handle\(r\.username\)\} where="scoreboard" compact \/>/);
     expect(src('src/pages/Results.jsx')).toMatch(/<ReportName userId=\{r\.user_id\}/);
     expect(src('src/components/MarbleInfo.jsx')).toMatch(/<ReportName userId=\{player\.id\}/);
     expect(src('src/components/FinishShow.jsx')).toMatch(/player=\{tapped\.userId \?/);

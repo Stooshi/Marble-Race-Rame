@@ -51,7 +51,7 @@ test('a room from start to the next race, on a real database', { skip: !DB }, as
     assert.equal(joined.status, 200);
     assert.equal(joined.body.players.length, 2);
     assert.ok(joined.body.players[0].host);
-    assert.match(joined.body.players[1].name, /^Guest [A-Z0-9]{4}$/);
+    assert.match(joined.body.players[1].name, /^guest_\d{5}$/); // (a guest without a chosen name: src/names/shown.js)
 
     // Private: not in the public list of races; only the host starts, changes the track, removes players.
     const list = await call('/races?status=lobby&limit=100');

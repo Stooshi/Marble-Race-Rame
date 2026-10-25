@@ -1,5 +1,6 @@
 'use strict';
 
+const { shownName } = require('../names/shown');
 const express = require('express');
 const db = require('../db');
 const { optionalAuth } = require('../middleware/auth');
@@ -78,7 +79,7 @@ router.get('/', optionalAuth, async (req, res) => {
      ),
      s AS (SELECT p.user_id, COALESCE(x.coins, 0) AS coins, p.wins, p.races FROM played p LEFT JOIN earned x ON x.user_id = p.user_id),
      ranked AS (SELECT s.*, rank() OVER (ORDER BY s.coins DESC, s.wins DESC)::int AS rank FROM s)
-     SELECT ranked.rank, ranked.coins, ranked.wins, ranked.races, u.id AS user_id, u.username,
+     SELECT ranked.rank, ranked.coins, ranked.wins, ranked.races, u.id AS user_id, u.username, u.display_name,
             sh.item_slug AS shooter_item, m.name AS shooter_original, m.color_primary, m.color_secondary, m.pattern
        FROM ranked
        JOIN users u ON u.id = ranked.user_id
@@ -95,6 +96,7 @@ router.get('/', optionalAuth, async (req, res) => {
       rank: r.rank,
       userId: r.user_id,
       username: r.username,
+      name: shownName(r), // (the player's name as shown: src/names/shown.js)
       me: r.user_id === me,
       wins: r.wins,
       coins: r.coins,

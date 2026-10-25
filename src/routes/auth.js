@@ -104,6 +104,7 @@ router.post('/register', signupLimiter, async (req, res) => {
   const { ageGroup, birthMonth } = ageOf(body);
   refuseUnder13(ageGroup);
   await names.assertAllowed({ username: body.username, display_name: body.display_name });
+  await names.assertNotSomeonesShownName(db, null, body.username);
   const hash = await bcrypt.hash(body.password, config.auth.bcryptRounds);
   try {
     const { rows } = await db.query(
@@ -159,14 +160,17 @@ router.post('/claim', requireAuth, signupLimiter, async (req, res) => {
   const { ageGroup, birthMonth } = ageOf(body);
   refuseUnder13(ageGroup);
   await names.assertAllowed({ username: body.username });
+  await names.assertNotSomeonesShownName(db, req.user.id, body.username);
   const hash = await bcrypt.hash(body.password, config.auth.bcryptRounds);
   try {
     const { rows } = await db.query(
       `UPDATE users SET username = $2, email = $3, password_hash = $4, marketing_opt_in = $5, is_guest = false,
-                        age_group = COALESCE($6, age_group), birth_month = COALESCE($7::date, birth_month)
+                        age_group = COALESCE($6, age_group), birth_month = COALESCE($7::date, birth_month),
+                        -- (A name the guest chose stays, unless it's now their player name anyway.)
+                        display_name = CASE WHEN lower(display_name) = lower($8) THEN NULL ELSE display_name END
         WHERE id = $1 AND is_guest
         RETURNING ${PUBLIC_USER_COLUMNS}`,
-      [req.user.id, body.username, body.email.toLowerCase(), hash, body.marketing_opt_in ?? false, ageGroup, birthMonth],
+      [req.user.id, body.username, body.email.toLowerCase(), hash, body.marketing_opt_in ?? false, ageGroup, birthMonth, String(body.username)],
     );
     if (!rows[0]) throw conflict('This account is already saved');
     if (body.country) rows[0].country = (await country.choose(db, rows[0].id, body.country)).country;

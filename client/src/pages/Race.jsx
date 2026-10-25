@@ -16,7 +16,7 @@ import { formatTime } from '../utils/format';
 import StartLights from '../components/StartLights';
 import { play as playSound, raceCountdown, raceEnd, raceGo } from '../sound/engine';
 import { track, trackingActive } from '../site/consent/tracking';
-import { plainName } from '../shared/playerName';
+import { entryLabel, plainName } from '../shared/playerName';
 import { isNativeApp } from '../app/native';
 
 const obstacleName = (o) => o?.replace(/_/g, ' ');
@@ -309,7 +309,7 @@ function EventFeed({ events, entries }) {
   return (
     <ul className="event-feed" aria-live="polite">
       {events.slice(0, 4).map((e, k) => {
-        const name = entries[e.i]?.marble.name ?? 'A marble';
+        const name = entries[e.i] ? entryLabel(entries[e.i]) : 'A marble';
         return <li key={`${e.t}-${e.i}-${k}`} className={`event event--${e.type}`}>{formatTime(e.t)} · {EVENT_TEXT[e.type]?.(name, e.obstacle) ?? e.type}</li>;
       })}
     </ul>
@@ -353,7 +353,7 @@ function Lobby({ details, onChange }) {
             {entries.map((e) => (
               <li key={e.id} className={e.user_id === user?.id ? 'is-me' : undefined}>
                 <MarbleBall marble={e} size={24} />
-                <span><strong>{e.marble_name}</strong><small>{e.username ? plainName(e.username) : <CpuTag />}</small></span>
+                <span><strong>{e.user_id ? (e.player_name ?? plainName(e.username)) : e.marble_name}</strong><small>{e.user_id ? e.marble_name : <CpuTag />}</small></span>
               </li>
             ))}
             {Array.from({ length: Math.max(0, slots) }, (_, i) => (

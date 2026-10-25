@@ -124,8 +124,8 @@ router.patch('/me', requireAuth, async (req, res) => {
   const set = (column, value) => { params.push(value); sets.push(`${column} = $${params.length}`); };
 
   if ('display_name' in body) {
-    await names.assertAllowed({ display_name: body.display_name });
-    set('display_name', body.display_name);
+    // (A chosen name: the rules and the filter, never someone else's name; null clears it. src/names.)
+    set('display_name', body.display_name ? await names.assertShownName(db, req.user.id, body.display_name) : null);
   }
   if ('avatar_url' in body) set('avatar_url', body.avatar_url);
   // News by email: yes or no, with its history (the back office's consent log).

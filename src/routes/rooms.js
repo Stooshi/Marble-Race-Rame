@@ -26,6 +26,7 @@
  * once with everyone who raced (rooms.afterRace, called by the race manager), so
  * the group moves on together. Socket: 'room:watch' { code } → 'room:updated' { code }.
  */
+const { shownName } = require('../names/shown');
 const crypto = require('crypto');
 const express = require('express');
 const config = require('../config');
@@ -128,7 +129,7 @@ function assertHost(room, user) {
 }
 
 /** A player's name in the room: the name they gave, else their username (a guest's short and readable). */
-const nameOf = (u) => u.display_name || (u.is_guest ? `Guest ${String(u.username).replace(/^guest_/, '').slice(0, 4).toUpperCase()}` : u.username);
+const nameOf = (u) => shownName(u); // (src/names/shown.js: the chosen name, the username, or guest_<number>)
 
 /** What the room page shows. */
 async function roomView(code, user) {

@@ -1,4 +1,5 @@
 import { useLayoutEffect, useRef } from 'react';
+import { entryLabel } from '../shared/playerName';
 import MarbleBall from './MarbleBall';
 
 /**
@@ -63,5 +64,5 @@ export function followLabel(follow, mine, entries) {
   if (follow === 'leader') return 'Leader';
   if (follow === 'second') return '2nd place';
   if (mine.includes(follow)) return 'My marble';
-  return entries[follow]?.marble?.name ?? 'Marble';
+  return entryLabel(entries[follow]);
 }

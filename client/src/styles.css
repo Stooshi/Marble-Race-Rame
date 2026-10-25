@@ -468,6 +468,7 @@ main { padding-bottom: 48px; }
 .replay3d__standings button { display: flex; align-items: center; gap: 6px; width: 100%; padding: 3px 6px; border: 0; border-radius: 6px; background: transparent; color: #fff; font: inherit; font-size: 0.8rem; text-align: left; cursor: pointer; }
 .replay3d__standings li.is-followed button { background: rgba(255, 255, 255, 0.18); }
 .replay3d__standings li.is-mine .replay3d__name { color: #facc15; }
+.replay3d__standings li.is-own-below { margin-top: 4px; border-top: 1px dashed rgba(255, 255, 255, 0.25); padding-top: 2px; } /* (the viewer's own place, below the first five) */
 .replay3d__pos { width: 1.1em; font-weight: 700; font-variant-numeric: tabular-nums; }
 .replay3d__name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 

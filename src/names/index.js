@@ -62,4 +62,34 @@ async function neutralName(client) {
   throw new Error('No free neutral name');
 }
 
-module.exports = { load, check, assertAllowed, report, neutralName, WHERE };
+/**
+ * The name a player chooses to be shown by (users.display_name; Moses, 25 Oct 2026: a guest who
+ * chooses a name keeps it, and keeps it when they save the account). 3–24 letters, digits, spaces,
+ * "_" or "-"; the name filter; never "guest_…" (that is how guests without a name show); and never
+ * another player's player name or chosen name (case ignored), so no one shows as someone else.
+ * Throws 400; → the name, trimmed.
+ */
+const SHOWN = /^[\p{L}\p{N}][\p{L}\p{N} _-]{1,22}[\p{L}\p{N}_]$/u;
+async function assertShownName(db, userId, raw) {
+  const name = String(raw ?? '').trim().replace(/\s+/g, ' ');
+  if (!SHOWN.test(name)) throw new HttpError(400, 'A name is 3 to 24 letters, digits, spaces, _ or -', { code: 'name_invalid', field: 'display_name' });
+  if (/^guest[_ -]?\d/i.test(name)) throw new HttpError(400, 'Choose a name of your own', { code: 'name_invalid', field: 'display_name' });
+  await assertAllowed({ display_name: name });
+  const { rows } = await db.query(
+    `SELECT 1 FROM users WHERE id <> $1 AND deleted_at IS NULL AND (username = $2::citext OR lower(display_name) = lower($2)) LIMIT 1`,
+    [userId, name],
+  );
+  if (rows.length) throw new HttpError(409, 'That name is taken: try another', { code: 'name_taken', field: 'display_name' });
+  return name;
+}
+
+/** A new player name may not be another player's chosen name either (case ignored). Throws 409. */
+async function assertNotSomeonesShownName(db, userId, username) {
+  const { rows } = await db.query(
+    'SELECT 1 FROM users WHERE ($1::uuid IS NULL OR id <> $1) AND deleted_at IS NULL AND lower(display_name) = lower($2) LIMIT 1',
+    [userId ?? null, String(username ?? '')],
+  );
+  if (rows.length) throw new HttpError(409, 'Username is taken', { code: 'name_taken', field: 'username' });
+}
+
+module.exports = { load, check, assertAllowed, assertShownName, assertNotSomeonesShownName, report, neutralName, WHERE };

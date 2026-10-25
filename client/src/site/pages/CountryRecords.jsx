@@ -32,7 +32,7 @@ export function TrackCountryRecords({ slug, limit = null, empty = null, heading 
             <tr key={r.country} className={user?.id === r.userId ? 'is-me' : undefined}>
               <td style={{ color: MEDAL[i + 1] ?? 'var(--ms-text)', fontWeight: 800 }}>{i + 1}</td>
               <td>{r.name ?? countryName(r.country) ?? r.country}</td>
-              <td className="ms-scores__player">{handle(r.username)}{user?.id === r.userId ? ' (you)' : <ReportName userId={r.userId} name={handle(r.username)} where="scoreboard" compact />}</td>
+              <td className="ms-scores__player">{r.player ?? handle(r.username)}{user?.id === r.userId ? ' (you)' : <ReportName userId={r.userId} name={r.player ?? handle(r.username)} where="scoreboard" compact />}</td>
               <td className="num">{formatTime(r.ms)}</td>
               <td className="ms-wide-only" style={{ color: 'var(--ms-soft)' }}>{day(r.at)}</td>
             </tr>
@@ -61,7 +61,7 @@ function CountryOwnRecords({ code }) {
           {data.records.map((r) => (
             <tr key={r.slug} className={user?.id === r.userId ? 'is-me' : undefined}>
               <td><Link to={`/tracks/${r.slug}`}>{r.track}</Link></td>
-              <td className="ms-scores__player">{handle(r.username)}{user?.id === r.userId ? ' (you)' : <ReportName userId={r.userId} name={handle(r.username)} where="scoreboard" compact />}</td>
+              <td className="ms-scores__player">{r.player ?? handle(r.username)}{user?.id === r.userId ? ' (you)' : <ReportName userId={r.userId} name={r.player ?? handle(r.username)} where="scoreboard" compact />}</td>
               <td className="num">{formatTime(r.ms)}</td>
               <td className="ms-wide-only" style={{ color: 'var(--ms-soft)' }}>{day(r.at)}</td>
             </tr>

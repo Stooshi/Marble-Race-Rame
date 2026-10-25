@@ -40,7 +40,7 @@ test('names on a real database: refused at sign-up, saving and renaming; reports
     const ok = (await reg(`Nova_${run}`)).body;
     assert.ok(ok.token);
     assert.equal((await call('/users/me', { method: 'PATCH', token: ok.token, body: { display_name: 'Kurw4' } })).status, 400);
-    assert.equal((await call('/users/me', { method: 'PATCH', token: ok.token, body: { display_name: 'Nova the Great' } })).status, 200);
+    assert.equal((await call('/users/me', { method: 'PATCH', token: ok.token, body: { display_name: `Nova the Great ${run}` } })).status, 200);
     const guest = (await call('/auth/guest', { method: 'POST', body: {} })).body;
     const claim = await call('/auth/claim', { method: 'POST', token: guest.token, body: { username: `Fuck_${run}`, email: `g_${run}@test.invalid`, password: 'password123', birth_year: 1990, birth_month: 5 } });
     assert.equal(claim.status, 400);

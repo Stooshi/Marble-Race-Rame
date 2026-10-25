@@ -353,7 +353,7 @@ export function buildFaq({ tracks, platform = 'web' } = {}) {
       ['How do I save my account?',
         'Tap **Save your marble** and sign up with your email and a password. Everything you won as a guest is kept.'],
       ['How do I change my player name?',
-        "You can't change it yourself yet: contact us with the name you'd like, and we'll change it for you. Names must be friendly: offensive names can't be chosen, and those that slip through are changed."],
+        "Before you save your marble, tap your name at the top of the screen and choose **Choose your name**: other players see it in races, rooms and scoreboards, and it stays when you save your marble. Until you choose one, you show as guest and a number. Once your marble is saved, contact us with the name you'd like and we'll change it for you. Names must be friendly and your own: offensive names and other players' names can't be chosen, and those that slip through are changed."],
       ['How do I report an offensive player name?',
         "Tap **⚑** next to the name on a scoreboard or in the race results (or tap the player's marble after a race and choose **Report this name**), then **Report**. We check every report and give offensive names a neutral one. The player isn't told who reported them."],
       ['How do I choose the country I race for?',

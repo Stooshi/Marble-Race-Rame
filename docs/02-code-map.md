@@ -12,7 +12,7 @@
 | Change the save pop-up or quick sign-up texts (EN/SV) | `client/src/site/account/saveTexts.js`; the pop-up's rule in `SavePrompt.jsx` |
 | Switch Swedish texts back on (save pop-up, quick sign-up, confirm-email and pass-reminder emails) | `client/src/shared/language.json` → `ENGLISH_ONLY: false` (English only since 21 Oct) |
 | Change what a guest sees on "Log out" | `client/src/site/account/LogoutButton.jsx` (header, Settings, the old nav bar) |
-| Change how a player's name shows to others ("@name", a guest as "Guest 0DA1") | `client/src/shared/playerName.js` (`handle()`, `plainName()`); friend rooms: `src/routes/rooms.js` `nameOf` |
+| Change how a player's name shows to others (the chosen name, else the player name, else a guest's `guest_<number>`; 25 Oct 2026) | `src/names/shown.js` (`shownName`, the server: race data `user.name`, results `player_name`, scoreboards `name`, country records `player`, rooms, push) and `client/src/shared/playerName.js` (`shownName`, `plainName`, `entryLabel`: the lists show the player's name, a computer player's marble name); a test keeps the two the same. Choosing a name: `src/names` `assertShownName` (PATCH `/api/users/me` `display_name`), the top bar's `client/src/site/account/NameChip.jsx` |
 | Change the social media links | `client/src/shared/socialLinks.json` (icons from the `simple-icons` package, CC0) |
 | Show the App Store / Google Play buttons on the website | `client/src/shared/storeLinks.json` (`appStore`, `googlePlay`: the store page's https link; empty hides the button). Never shown inside the apps |
 | Change marble prices, designs, shades or the collection | `client/src/shared/marbles/catalog.json`, then `client/src/shared/marbles/badge.js` for how a design looks |

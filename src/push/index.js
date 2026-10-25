@@ -17,6 +17,7 @@
  * Marketing (season news) is off until the player turns it on (Settings → Notifications, or the
  * question after the first race), and is never sent to guests or under-13s, whatever is stored.
  */
+const { shownName } = require('../names/shown');
 const settings = require('../../client/src/shared/push.json');
 const transports = require('./transports');
 
@@ -143,7 +144,7 @@ async function invitable(db, hostId) {
     [hostId],
   );
   // (The name the room shows: the one they gave, else the username; a guest's short and readable.)
-  const name = (u) => u.display_name || (u.is_guest ? `Guest ${String(u.username).replace(/^guest_/, '').slice(0, 4).toUpperCase()}` : u.username);
+  const name = (u) => shownName(u);
   return rows.map((r) => ({ userId: r.user_id, name: name(r) }));
 }
 

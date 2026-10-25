@@ -1240,3 +1240,7 @@ $$ LANGUAGE plpgsql;
 DROP TRIGGER IF EXISTS trg_race_entries_country ON race_entries;
 CREATE TRIGGER trg_race_entries_country BEFORE INSERT ON race_entries
     FOR EACH ROW EXECUTE FUNCTION race_entry_country();
+
+-- Chosen names (users.display_name; 25 Oct 2026): a guest can choose one and keeps it when saving the
+-- account; no one may choose another player's player name or chosen name (case ignored: src/names).
+CREATE INDEX IF NOT EXISTS users_display_name_lower ON users (lower(display_name)) WHERE display_name IS NOT NULL;

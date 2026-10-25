@@ -6,7 +6,7 @@ import { useAsync } from '../../hooks/useAsync';
 import { ITEM, previewShowcase } from '../../shared/marbles';
 import MarbleBadge from '../marbles/MarbleBadge';
 import TrackBanner, { SERIES_PIC } from '../TrackBanner';
-import { handle } from '../../shared/playerName';
+import { handle, shownName } from '../../shared/playerName';
 
 /**
  * The race flow: 1 Friends → 2 Track → 3 Shooter → 4 Starting line.
@@ -144,7 +144,7 @@ export function FriendsStep() {
             <div key={f.userId} className="ms-row" style={{ justifyContent: 'space-between' }}>
               <span className="ms-row" style={{ flexWrap: 'nowrap', gap: 10 }}>
                 {f.shooter?.item ? <MarbleBadge slug={f.shooter.item} size={34} still /> : <MarbleBadge marble={f.shooter?.original} size={34} still />}
-                <span>{handle(f.username)}</span>
+                <span>{f.name ?? handle(f.username)}</span>
               </span>
 
             </div>
@@ -364,7 +364,7 @@ export function StartStep() {
           <h1 className="ms-h2" style={{ fontFamily: 'var(--ms-cond)', fontWeight: 800 }}>The starting line</h1>
           <div className="ms-row" style={{ flexWrap: 'nowrap' }}>
             {shooter && (shooter.slug ? <MarbleBadge slug={shooter.slug} size={44} /> : <MarbleBadge marble={shooter.marble} size={44} />)}
-            <div style={{ display: 'grid', flex: 1, minWidth: 0 }}><b>{user?.username ? handle(user.username) : '…'} (host)</b><span className="ms-note">{shooter?.name ?? 'Picking a Shooter…'}</span></div>
+            <div style={{ display: 'grid', flex: 1, minWidth: 0 }}><b>{user?.username ? shownName(user) : '…'} (host)</b><span className="ms-note">{shooter?.name ?? 'Picking a Shooter…'}</span></div>
             <span style={{ color: 'var(--ms-green)', fontWeight: 700 }}>✓ Ready</span>
           </div>
           <span className="ms-note">Computer players fill every other place. Racing with friends? <Link to={`/play/friends${track?.slug ? `?track=${encodeURIComponent(track.slug)}` : ''}`}>Make a friend room</Link> and send them the link.</span>

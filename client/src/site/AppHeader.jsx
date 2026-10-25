@@ -3,10 +3,11 @@ import { createPortal } from 'react-dom';
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { formatNumber } from '../utils/format';
-import { handle } from '../shared/playerName';
+import { shownName } from '../shared/playerName';
 import Logo from './Logo';
 import SoundControl from './SoundControl';
 import LogoutButton from './account/LogoutButton';
+import NameChip from './account/NameChip';
 
 /**
  * The header inside the iPhone and Android apps (Moses, 22 Oct 2026, first Android test: "the apps look
@@ -36,6 +37,7 @@ export default function AppHeader() {
         <Link to={home} aria-label="Marble Spins home" className="ms-apphead__logo"><Logo size={20} /></Link>
         <span className="ms-grow" />
         {isAuthenticated && <Link to="/shop#coins" className="ms-chip ms-apphead__coins" title="Coins">{`● ${formatNumber(user.coins ?? 0)}`}</Link>}
+        {isAuthenticated && <NameChip user={user} className="ms-apphead__name" />}
         <SoundControl />
         <button type="button" className="ms-apphead__icon ms-apphead__menu" aria-expanded={open} aria-haspopup="dialog" aria-label="Menu" onClick={() => setOpen(true)}>
           <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round"><path d="M4 7h16M4 12h16M4 17h16" /></svg>
@@ -82,7 +84,7 @@ export function MenuSheet({ user, onClose, drawer = false }) {
         ) : <span className="ms-appmenu__grip" aria-hidden="true" />}
         {user && (
           <div className="ms-appmenu__who">
-            <b>{handle(user.username)}</b>
+            <b>{shownName(user)}</b>
             <span>● {formatNumber(user.coins ?? 0)} coins{user.streak > 0 ? ` · ▲ ${user.streak} day streak` : ''}</span>
           </div>
         )}

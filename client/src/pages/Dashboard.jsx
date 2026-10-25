@@ -48,7 +48,7 @@ export default function Dashboard() {
         <div className="avatar" aria-hidden="true">{plainName(who.username, who.display_name).slice(0, 1).toUpperCase()}</div>
         <div className="profile-header__text">
           <h1>{plainName(who.username, who.display_name)}</h1>
-          <p className="muted">{handle(who.username)} · racing since {new Date(who.created_at).toLocaleDateString()}</p>
+          <p className="muted">{handle(who.username, who.display_name)} · racing since {new Date(who.created_at).toLocaleDateString()}</p>
           {badges.length > 0 && <p className="profile-badges">{badges.map((b) => <span key={b.key} className="badge badge--season" title={`${b.name}, #${b.rank}`}>★ {b.name}{b.rank ? ` · #${b.rank}` : ''}</span>)}</p>}
         </div>
         {isSelf && (
