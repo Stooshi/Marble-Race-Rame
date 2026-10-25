@@ -16,6 +16,18 @@ function guestNumberName(username) {
   return `guest_${String(parseInt(m[1].slice(0, 8), 16) % 100000).padStart(5, '0')}`;
 }
 
+/**
+ * What a saved account shows while its reported name is hidden (25 Oct 2026): Player_<number>, five
+ * digits from the account id, the same every time. (A guest shows guest_<number>.)
+ */
+function hiddenPlaceholder(id) {
+  const hex = String(id ?? '').replace(/[^0-9a-f]/gi, '').slice(0, 8) || '0';
+  return `Player_${String(parseInt(hex, 16) % 100000).padStart(5, '0')}`;
+}
+
+/** Whether a name is one of the stand-ins (guest_12345, Player_12345): nothing to hide. */
+const isStandIn = (name) => /^(guest|player)_\d{5}$/i.test(String(name ?? ''));
+
 /** { username, display_name, is_guest } → the name shown. */
 function shownName(u) {
   if (!u) return null;
@@ -23,4 +35,4 @@ function shownName(u) {
   return guestNumberName(u.username) ?? String(u.username ?? '');
 }
 
-module.exports = { shownName, guestNumberName };
+module.exports = { shownName, guestNumberName, hiddenPlaceholder, isStandIn };

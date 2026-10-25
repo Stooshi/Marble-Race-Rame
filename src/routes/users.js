@@ -125,7 +125,15 @@ router.patch('/me', requireAuth, async (req, res) => {
 
   if ('display_name' in body) {
     // (A chosen name: the rules and the filter, never someone else's name; null clears it. src/names.)
+    const { rows: [me] } = await db.query('SELECT username, name_hidden_at, name_hidden_name FROM users WHERE id = $1', [req.user.id]);
+    // (While a reported name is hidden, or when the hidden name was the player name itself, clearing the
+    // chosen name would bring the hidden one back: a new name instead.)
+    if (!body.display_name && (me.name_hidden_at || (me.name_hidden_name && me.name_hidden_name.toLowerCase() === String(me.username).toLowerCase()))) {
+      throw badRequest('Your name was reported and is hidden: choose a new name');
+    }
     set('display_name', body.display_name ? await names.assertShownName(db, req.user.id, body.display_name) : null);
+    // A new name ends the hiding (the reports stay for the back office to look at).
+    if (body.display_name && me.name_hidden_at) set('name_hidden_at', null);
   }
   if ('avatar_url' in body) set('avatar_url', body.avatar_url);
   // News by email: yes or no, with its history (the back office's consent log).
@@ -302,7 +310,7 @@ const reportLimiter = rateLimit({ windowMs: 60 * 60 * 1000, limit: config.isTest
 router.post('/:id/report-name', requireAuth, reportLimiter, async (req, res) => {
   const id = assertUuid(req.params.id);
   const body = validate(req.body ?? {}, { where: { type: 'enum', values: names.WHERE }, name: { type: 'string', max: 64 } });
-  res.json(await names.report(db, { reporterId: req.user.id, userId: id, where: body.where, nameShown: body.name }));
+  res.json(await names.report(db, { reporterId: req.user.id, userId: id, where: body.where, ip: security.clientIp(req) }));
 });
 
 router.get('/:id', async (req, res) => {

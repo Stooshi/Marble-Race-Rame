@@ -47,7 +47,8 @@ describe('the name filter', () => {
     const src = (p) => readFileSync(join(__dirname, '..', p), 'utf8');
     expect(src('src/site/account/QuickSignup.jsx')).toMatch(/checkName\(f\.username\.trim\(\)\)/);
     expect(src('src/site/pages/RoomPage.jsx')).toMatch(/checkName\(name\.trim\(\)\)/);
-    expect(server).toMatch(/names\.assertAllowed\(\{ username: body\.username, display_name: body\.display_name \}\)/);
+    // (Sign-up: the player name through the filter; a name to be shown through all the rules, 25 Oct 2026.)
+    expect(server).toMatch(/names\.assertShownName\(db, null, body\.display_name\)/);
     expect(server).toMatch(/names\.assertAllowed\(\{ username: body\.username \}\)/);
     expect(readFileSync(join(__dirname, '..', '..', 'src', 'routes', 'users.js'), 'utf8')).toMatch(/names\.assertShownName\(db, req\.user\.id, body\.display_name\)/);
   });

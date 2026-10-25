@@ -44,6 +44,7 @@ const nameLimiter = limiter(15 * 60 * 1000, 300);
 // `streak`: days in a row with the daily goal met, alive while the goal was met today or yesterday
 // (UTC days, as in src/economy/index.js today()); 0 otherwise.
 const PUBLIC_USER_COLUMNS = `id, username, email, display_name, avatar_url, role, coins, coins_earned, coins_bought, is_guest, skill, skill_refund_coins, settings, age_group, marketing_opt_in, email_verified_at, country, created_at,
+  name_hidden_at IS NOT NULL AS name_hidden,
   CASE WHEN streak_last_day >= (now() AT TIME ZONE 'UTC')::date - 1 THEN streak_days ELSE 0 END AS streak`;
 
 const registerSchema = {
@@ -103,15 +104,18 @@ router.post('/register', signupLimiter, async (req, res) => {
   const body = validate(req.body, registerSchema);
   const { ageGroup, birthMonth } = ageOf(body);
   refuseUnder13(ageGroup);
-  await names.assertAllowed({ username: body.username, display_name: body.display_name });
+  await names.assertAllowed({ username: body.username });
   await names.assertNotSomeonesShownName(db, null, body.username);
+  names.assertNotStandIn(body.username);
+  // (A name to be shown, if one is sent: the same rules as choosing one later. src/names.)
+  const displayName = body.display_name ? await names.assertShownName(db, null, body.display_name) : null;
   const hash = await bcrypt.hash(body.password, config.auth.bcryptRounds);
   try {
     const { rows } = await db.query(
       `INSERT INTO users (username, email, password_hash, display_name, marketing_opt_in, coins, age_group, birth_month)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
        RETURNING ${PUBLIC_USER_COLUMNS}`,
-      [body.username, body.email.toLowerCase(), hash, body.display_name ?? null, body.marketing_opt_in ?? false, economy.economy.startingCoins, ageGroup, birthMonth],
+      [body.username, body.email.toLowerCase(), hash, displayName, body.marketing_opt_in ?? false, economy.economy.startingCoins, ageGroup, birthMonth],
     );
     const user = rows[0];
     if (body.country) user.country = (await country.choose(db, user.id, body.country)).country;
@@ -161,13 +165,17 @@ router.post('/claim', requireAuth, signupLimiter, async (req, res) => {
   refuseUnder13(ageGroup);
   await names.assertAllowed({ username: body.username });
   await names.assertNotSomeonesShownName(db, req.user.id, body.username);
+  names.assertNotStandIn(body.username);
+  await names.assertNotHiddenName(db, req.user.id, body.username, 'username');
   const hash = await bcrypt.hash(body.password, config.auth.bcryptRounds);
   try {
     const { rows } = await db.query(
       `UPDATE users SET username = $2, email = $3, password_hash = $4, marketing_opt_in = $5, is_guest = false,
                         age_group = COALESCE($6, age_group), birth_month = COALESCE($7::date, birth_month),
                         -- (A name the guest chose stays, unless it's now their player name anyway.)
-                        display_name = CASE WHEN lower(display_name) = lower($8) THEN NULL ELSE display_name END
+                        display_name = CASE WHEN lower(display_name) = lower($8) THEN NULL ELSE display_name END,
+                        -- (A guest whose name was hidden after reports: the new player name is their new name.)
+                        name_hidden_at = NULL
         WHERE id = $1 AND is_guest
         RETURNING ${PUBLIC_USER_COLUMNS}`,
       [req.user.id, body.username, body.email.toLowerCase(), hash, body.marketing_opt_in ?? false, ageGroup, birthMonth, String(body.username)],

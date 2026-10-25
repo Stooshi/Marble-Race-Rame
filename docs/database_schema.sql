@@ -1253,3 +1253,20 @@ ALTER TABLE rooms ADD COLUMN IF NOT EXISTS is_public boolean NOT NULL DEFAULT fa
 ALTER TABLE rooms ADD COLUMN IF NOT EXISTS kind varchar(10) NOT NULL DEFAULT 'friends' CHECK (kind IN ('friends', 'quick'));
 ALTER TABLE rooms ADD COLUMN IF NOT EXISTS removed uuid[] NOT NULL DEFAULT '{}';
 CREATE INDEX IF NOT EXISTS idx_rooms_public ON rooms (kind, created_at) WHERE is_public AND status = 'open';
+
+-- ---------------------------------------------------------------------------
+-- Reported names hidden by themselves (25 Oct 2026, src/names): when the name a player shows gets
+-- open reports from 3 different players on 3 different addresses, it is hidden at once until the
+-- back office has looked: users.display_name becomes NULL for a guest (guest_<number> shows) or
+-- Player_<number> for a saved account, users.name_hidden_at is set and users.name_hidden_name keeps
+-- the hidden name (for the back office, and so it can't be chosen again). The player is told and
+-- chooses a new name (that clears name_hidden_at); the back office restores the name (the reports
+-- dismissed: it takes 3 new reports to hide it again), keeps it hidden or renames the account.
+-- name_reports.reporter_ip_hash: a keyed hash of the reporter's address (never the address), so one
+-- person with several accounts on one connection counts once.
+-- ---------------------------------------------------------------------------
+ALTER TABLE users ADD COLUMN IF NOT EXISTS name_hidden_at   timestamptz;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS name_hidden_name varchar(64);
+ALTER TABLE name_reports ADD COLUMN IF NOT EXISTS reporter_ip_hash varchar(64);
+CREATE INDEX IF NOT EXISTS idx_name_reports_reporter ON name_reports (reporter_id, created_at);
+CREATE INDEX IF NOT EXISTS idx_users_name_hidden ON users (name_hidden_at) WHERE name_hidden_at IS NOT NULL;

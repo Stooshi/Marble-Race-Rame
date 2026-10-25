@@ -23,8 +23,9 @@
  *   GET  /support?q=&status=&category=   the support inbox (contact-form messages), newest first, with counts by status
  *   GET  /support/:id              one message, its replies and its audit trail   GET /support/:id/screenshot  the image
  *   POST /support/:id/status       { status: 'new'|'open'|'done', reason? }   POST /support/:id/reply { text } (emailed when email is on)
- *   GET  /name-reports             reported names (open, by player, most reporters first) and existing names the
- *                                  filter would block    POST /name-reports/:userId/resolve { action: 'rename'|'dismiss', reason }
+ *   GET  /name-reports             reported names (open, by player; hidden names first, then most reporters) and
+ *                                  existing names the filter would block
+ *   POST /name-reports/:userId/resolve { action: 'restore'|'dismiss'|'keep-hidden'|'rename', reason }
  *   GET  /gift-codes?q=&tag=       gift codes, newest first, with a summary by tag (creator / campaign)
  *   POST /gift-codes               { kind: 'coins'|'pass', coins?, season_key?, max_uses, expires_at, tag, note?, code?, count?, reason }
  *                                  make one code, or `count` single-use codes → { codes: [...] }
@@ -473,16 +474,24 @@ router.get('/economy', async (req, res) => {
 
 // ── Name reports (src/names) ──────────────────────────────────────────────
 
-/** GET /name-reports — open reports grouped by player, and names already taken that the filter blocks. */
+/**
+ * GET /name-reports — open reports grouped by player, hidden names first (auto-hidden after reports,
+ * src/names: `hidden`, `hidden_name`, `hidden_at`, and `changed` once the player chose a new one), and
+ * names already taken that the filter blocks.
+ */
 router.get('/name-reports', async (req, res) => {
   const { rows: open } = await db.query(
     `SELECT u.id AS player_id, u.username, u.display_name, u.is_guest, u.suspended_at,
+            u.name_hidden_at IS NOT NULL AS hidden, u.name_hidden_name AS hidden_name, u.name_hidden_at AS hidden_at,
+            (u.name_hidden_name IS NOT NULL AND u.name_hidden_at IS NULL) AS changed,
             COUNT(*)::int AS reports, COUNT(DISTINCT r.reporter_id)::int AS reporters,
+            COUNT(DISTINCT COALESCE(r.reporter_ip_hash, r.reporter_id::text))::int AS addresses,
             MIN(r.created_at) AS first_at, MAX(r.created_at) AS last_at,
             array_agg(DISTINCT r.place) AS places, array_agg(DISTINCT r.name_shown) AS names_shown
        FROM name_reports r JOIN users u ON u.id = r.reported_user_id
       WHERE r.resolved_at IS NULL AND u.deleted_at IS NULL
-      GROUP BY u.id ORDER BY reporters DESC, last_at DESC LIMIT 300`,
+      GROUP BY u.id
+      ORDER BY (u.name_hidden_at IS NOT NULL) DESC, (u.name_hidden_name IS NOT NULL) DESC, reporters DESC, last_at DESC LIMIT 300`,
   );
   const { rows: done } = await db.query(
     `SELECT r.reported_user_id AS player_id, u.username, r.resolution, MAX(r.resolved_at) AS resolved_at, COUNT(*)::int AS reports
@@ -505,26 +514,36 @@ router.get('/name-reports', async (req, res) => {
 });
 
 /**
- * POST /name-reports/:userId/resolve { action, reason } — 'rename': the account gets a neutral name
- * (PlayerNNNN; the shown name cleared) and its open reports are closed as renamed; 'dismiss': the
- * reports are closed, the name stays. Either way in the audit log.
+ * POST /name-reports/:userId/resolve { action, reason } — the open reports are closed, in the audit log:
+ *   'restore' (or 'dismiss'): the name is fine. A hidden name comes back (unless the player has chosen
+ *     a new one since); the reports are dismissed, so it takes 3 new reports to hide it again.
+ *   'keep-hidden': the name stays hidden (the player still chooses a new one); closed as renamed.
+ *   'rename': the account gets a neutral player name (PlayerNNNN; a guest keeps guest_<number>), the
+ *     shown name cleared; closed as renamed.
  */
 router.post('/name-reports/:userId/resolve', async (req, res) => {
   const id = assertUuid(req.params.userId);
-  const body = validate(req.body, { action: { type: 'enum', values: ['rename', 'dismiss'], required: true }, reason: REASON });
+  const body = validate(req.body, { action: { type: 'enum', values: ['restore', 'dismiss', 'keep-hidden', 'rename'], required: true }, reason: REASON });
+  const action = body.action === 'dismiss' ? 'restore' : body.action;
   const out = await db.withTransaction(async (client) => {
     const p = await lockPlayer(client, id);
     let after = null;
-    if (body.action === 'rename') {
-      after = p.is_guest ? p.username : await names.neutralName(client);
-      await client.query('UPDATE users SET username = $2, display_name = NULL, updated_at = now() WHERE id = $1', [id, after]);
+    if (action === 'rename') {
+      after = { username: p.is_guest ? p.username : await names.neutralName(client), display_name: null };
+      await client.query('UPDATE users SET username = $2, display_name = NULL, name_hidden_at = NULL, name_hidden_name = NULL, updated_at = now() WHERE id = $1', [id, after.username]);
+    } else if (action === 'restore' && p.name_hidden_name) {
+      // (The hidden name back: as the shown name, or none if it was the player name itself.)
+      const back = p.name_hidden_at ? (p.name_hidden_name.toLowerCase() === String(p.username).toLowerCase() ? null : p.name_hidden_name) : p.display_name;
+      after = { username: p.username, display_name: back };
+      await client.query('UPDATE users SET display_name = $2, name_hidden_at = NULL, name_hidden_name = NULL, updated_at = now() WHERE id = $1', [id, back]);
     }
     const { rowCount } = await client.query(
       `UPDATE name_reports SET resolved_at = now(), resolved_by = $2, resolution = $3 WHERE reported_user_id = $1 AND resolved_at IS NULL`,
-      [id, req.admin.id, body.action === 'rename' ? 'renamed' : 'dismissed'],
+      [id, req.admin.id, action === 'restore' ? 'dismissed' : 'renamed'],
     );
-    await audit(client, req, body.action === 'rename' ? 'name-reset' : 'name-reports-dismissed', id, body.reason, { before: { username: p.username, display_name: p.display_name }, after: after ? { username: after, display_name: null } : undefined, reports: rowCount });
-    return { player_id: id, username: after ?? p.username, closed: rowCount };
+    const auditAction = { rename: 'name-reset', restore: 'name-reports-dismissed', 'keep-hidden': 'name-kept-hidden' }[action];
+    await audit(client, req, auditAction, id, body.reason, { before: { username: p.username, display_name: p.display_name, hidden_name: p.name_hidden_name, hidden: Boolean(p.name_hidden_at) }, after: after ?? undefined, reports: rowCount });
+    return { player_id: id, username: after?.username ?? p.username, display_name: after ? after.display_name : p.display_name, hidden: action === 'keep-hidden' ? Boolean(p.name_hidden_at) : false, closed: rowCount };
   });
   res.json(out);
 });

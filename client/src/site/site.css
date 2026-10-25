@@ -983,3 +983,7 @@ a.ms-tile:hover, a.ms-card:hover { text-decoration: none; border-color: var(--ms
 tr:hover .report-name__btn--compact, .report-name__btn--compact:focus-visible { opacity: 1; }
 .report-name { display: inline-flex; flex-wrap: wrap; gap: 6px 8px; align-items: center; font-size: 0.9rem; color: var(--ms-soft); }
 .report-name--done { color: var(--ms-green); }
+
+/* A name hidden after reports (25 Oct 2026): the notice under the top bar, with "Choose a new name". */
+.ms-hidden-name { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px 14px; padding: 10px 16px; background: #3a2a0c; color: #ffe2a3; border-bottom: 1px solid #6b4d14; font-size: 0.95rem; text-align: center; }
+.is-race-full .ms-hidden-name { display: none; }

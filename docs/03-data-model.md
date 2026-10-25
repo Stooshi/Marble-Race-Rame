@@ -51,6 +51,7 @@ marbles ──< user_marbles   (the older plain marbles; looks only)
 | `email` | Unique. Guests get a placeholder `guest-<id>@guest.marblespins.invalid`; deleted accounts get `…@deleted.invalid` |
 | `password_hash` | bcrypt hash. Deleted accounts get a value no password can match |
 | `display_name` | The name the player chose to be shown by (25 Oct 2026; a guest can choose one; it stays when they save the account, cleared if it's the same as their new player name). 3–24 letters, digits, spaces, `_` or `-`, the name filter, never `guest_…`, never another player's player name or chosen name (case ignored; `users_display_name_lower` index). Shown instead of the player name everywhere (`src/names/shown.js`) |
+| `name_hidden_at`, `name_hidden_name` | A reported name hidden by itself (25 Oct 2026, `src/names` `hideIfReported`): open reports on the name now shown from 3 different players on 3 different addresses set `name_hidden_at` and keep the name in `name_hidden_name`; `display_name` becomes NULL (a guest: `guest_<number>` shows) or `Player_<number>` (a saved account). The player is told (`GET /auth/me` → `name_hidden`) and chooses a new name, which clears `name_hidden_at` (`name_hidden_name` stays, so the name can't come back). The back office's restore clears both and puts the name back; rename clears both |
 | `avatar_url` | Not used by the website today |
 | `role` | `player` or `admin` (the back office) |
 | `coins` | Current balance, never below 0. **Only changed through `economy.change()`**, which also writes `coin_ledger` |
@@ -341,7 +342,7 @@ A player's pass for a season. Granted once when its payment is paid; a full refu
 | `granted_at`, `revoked_at`, `revoke_reason` | |
 
 ### `name_reports`
-"Report this name" (`src/names`, 22 Oct 2026): `reported_user_id`, `reporter_id` (a player or guest), `place` (scoreboard, results, room), `name_shown`, `created_at`; `resolved_at`, `resolved_by`, `resolution` (`renamed`: the back office gave a neutral name; `dismissed`). One open report per reporter and player.
+"Report this name" (`src/names`, 22 Oct 2026): `reported_user_id`, `reporter_id` (a player or guest), `place` (scoreboard, results, room), `name_shown`, `created_at`; `resolved_at`, `resolved_by`, `resolution` (`renamed`: the back office gave a neutral name, or kept a hidden name hidden; `dismissed`: the name is fine, restored if hidden). One open report per reporter and player. `reporter_ip_hash` (25 Oct 2026): a keyed hash of the reporter's address (never the address), so several accounts on one connection count once towards hiding a name.
 
 ### `push_devices`, `push_preferences`, `push_sends`
 Push notifications in the apps (`src/push`, switched off).

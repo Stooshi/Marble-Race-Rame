@@ -256,7 +256,8 @@ function NameAction({ row, onDone, flagged = false }) {
     <div className="adm-row" style={{ gap: 6 }}>
       <input placeholder="Reason (audit log)" value={reason} onChange={(e) => setReason(e.target.value)} style={{ minWidth: 180 }} />
       <button type="button" className="adm-btn adm-btn--danger" disabled={busy || reason.trim().length < 5} onClick={() => go('rename')}>{row.is_guest ? 'Clear the name' : 'Rename'}</button>
-      {!flagged && <button type="button" className="adm-btn" disabled={busy || reason.trim().length < 5} onClick={() => go('dismiss')}>Dismiss</button>}
+      {!flagged && row.hidden && <button type="button" className="adm-btn" disabled={busy || reason.trim().length < 5} onClick={() => go('keep-hidden')}>Keep hidden</button>}
+      {!flagged && <button type="button" className="adm-btn" disabled={busy || reason.trim().length < 5} onClick={() => go('restore')}>{row.hidden ? 'Restore the name' : 'Dismiss'}</button>}
       <Err error={error} />
     </div>
   );
@@ -269,16 +270,17 @@ function NameReports() {
   return (
     <section className="adm-stack">
       <h1 className="adm-h1">Name reports</h1>
-      <p className="adm-muted">Players report names from the scoreboards and race results. <b>Rename</b> gives the account a neutral name (PlayerNNNN) and clears its shown name; a guest's shown name is cleared. <b>Dismiss</b> closes the reports and keeps the name. New names are already checked by the filter (client/src/shared/nameFilter.js); add words there.</p>
+      <p className="adm-muted">Players report names from the scoreboards, race results and rooms. A name reported by 3 different players (on 3 different connections) is <b>hidden</b> at once: other players see guest_12345 or Player_12345, and the player is asked to choose a new name. Hidden names are listed first. <b>Restore the name</b> brings it back and dismisses the reports (3 new reports hide it again); <b>Keep hidden</b> closes the reports and leaves it hidden until the player chooses a new name; <b>Rename</b> gives the account a neutral name (PlayerNNNN) and clears its shown name (a guest's shown name is cleared). <b>Dismiss</b> closes the reports and keeps the name. New names are already checked by the filter (client/src/shared/nameFilter.js); add words there.</p>
       <Err error={list.error} />
       {d && (
         <>
           <h2 className="adm-h1" style={{ fontSize: 18 }}>Open reports ({d.open.length})</h2>
           {d.open.length === 0 ? <p className="adm-muted">None.</p> : (
             <div className="adm-scroll"><table className="adm-table">
-              <thead><tr><th>Player</th><th className="num">Reporters</th><th>Where</th><th>Last report</th><th>Action</th></tr></thead>
+              <thead><tr><th>Player</th><th>Reported name</th><th className="num">Reporters</th><th>Where</th><th>Last report</th><th>Action</th></tr></thead>
               <tbody>{d.open.map((r) => (
-                <tr key={r.player_id}><td><Link to={`/admin/players/${r.player_id}`}>{shown(r)}</Link>{r.is_guest && <span className="adm-tag">guest</span>}</td><td className="num">{n(r.reporters)}</td><td>{r.places.join(', ')}</td><td>{when(r.last_at)}</td><td><NameAction row={r} onDone={list.reload} /></td></tr>
+                <tr key={r.player_id}><td><Link to={`/admin/players/${r.player_id}`}>{shown(r)}</Link>{r.is_guest && <span className="adm-tag">guest</span>}{r.hidden && <span className="adm-tag adm-tag--warn">hidden {when(r.hidden_at)}</span>}{r.changed && <span className="adm-tag">new name chosen</span>}</td>
+                  <td>{r.hidden_name ?? r.names_shown.join(', ')}</td><td className="num">{n(r.reporters)}{r.addresses < r.reporters && <span className="adm-muted"> ({n(r.addresses)} connections)</span>}</td><td>{r.places.join(', ')}</td><td>{when(r.last_at)}</td><td><NameAction row={r} onDone={list.reload} /></td></tr>
               ))}</tbody>
             </table></div>
           )}

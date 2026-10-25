@@ -22,6 +22,7 @@ import CheckoutPage from './site/pages/CheckoutPage';
 import PassPage from './site/pages/PassPage';
 import PassReminderLink from './site/pages/PassReminderLink';
 import PassOnSaleNotice from './site/payments/PassOnSaleNotice';
+import { HiddenNameNotice } from './site/account/NameChip';
 import ScoresPage from './site/pages/ScoresPage';
 import SignupPage from './site/pages/SignupPage';
 import LegalPage from './site/pages/LegalPage';
@@ -91,6 +92,7 @@ export default function App() {
       <OfflineScreen />
       <SiteHeader />
       <PassOnSaleNotice />
+      <HiddenNameNotice />
       <main>
         <ErrorBoundary resetKey={pathname}>
         <Routes>

@@ -51,7 +51,7 @@ export async function request(path, { method = 'GET', body, token = getStoredTok
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
     // (a machine-readable `code` is for the page, never shown in the message)
-    const details = data.details ? Object.entries(data.details).filter(([k]) => k !== 'code').map(([k, v]) => `${k} ${v}`).join(', ') : '';
+    const details = data.details ? Object.entries(data.details).filter(([k]) => k !== 'code' && k !== 'field').map(([k, v]) => `${k} ${v}`).join(', ') : '';
     throw new ApiError(res.status, details ? `${data.error}: ${details}` : data.error || res.statusText, data.details);
   }
   return data;
