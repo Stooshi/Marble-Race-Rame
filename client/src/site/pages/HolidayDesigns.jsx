@@ -106,7 +106,7 @@ function Panel({ entry, theme }) {
 const THEME = { light: { label: 'Light', bg: '#f2f4f8' }, dark: { label: 'Dark', bg: '#0b1020' }, snow: { label: 'On snow', bg: '#f7fafd' } };
 const RARITY = { common: 'Common', uncommon: 'Uncommon', rare: 'Rare', epic: 'Epic' };
 
-function Row({ e, tag, snow = false }) {
+export function Row({ e, tag, snow = false }) {
   return (
     <section className="nl-row" aria-labelledby={`hd-${e.key}`}>
       <div className="nl-row__text">
@@ -154,7 +154,7 @@ export default function HolidayDesigns() {
   );
 }
 
-const CSS = `
+export const CSS = `
 .nl-page { max-width: 1120px; margin: 0 auto; padding: 32px 16px 64px; color: var(--ms-text, #e8ecf4); display: grid; gap: 24px; }
 .nl-head h1 { font-family: var(--ms-cond, inherit); font-size: clamp(1.8rem, 4vw, 2.6rem); margin: 4px 0 8px; text-wrap: balance; }
 .nl-head p { max-width: 68ch; margin: 0; color: var(--ms-muted, #a9b1c3); line-height: 1.55; }
