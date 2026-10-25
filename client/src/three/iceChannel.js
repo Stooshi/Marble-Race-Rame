@@ -314,7 +314,7 @@ export function buildIceChannelGeometry(centerline, channel, {
       if (kerbHere && (k === 0 || k === segmentsAcross - 1)) color = Math.floor(s / KERB_LENGTH) % 2 === 0 ? KERB.kerbA : KERB.kerbB;
       if (!half) { quad(a.ring[k], b.ring[k], b.ring[k + 1], a.ring[k + 1], color); continue; }
       if (!clip) {
-        // (A splitter's: each strip wholly on its own side of the middle, as always.)
+        // (Each strip wholly on its own side of the middle: no longer used, see the splitters below.)
         const own = half > 0
           ? Math.min(a.lateral[k], a.lateral[k + 1], b.lateral[k], b.lateral[k + 1]) >= 0
           : Math.max(a.lateral[k], a.lateral[k + 1], b.lateral[k], b.lateral[k + 1]) <= 0;
@@ -365,12 +365,23 @@ export function buildIceChannelGeometry(centerline, channel, {
       // flat top joining their inner rims, with a red nose where it starts.
       const gap = (o) => 2 * o - 2 * (forkRadius(fork, channel.radius, sMid) * Math.sin(channel.maxAngle) + rimWidth);
       const apart = gap(oa) > 0 && gap(ob) > 0;
-      // (Twin chutes, the split-and-merge opening's: their floors clipped at the middle, so neither a gap nor a wall shows.)
-      channelStrip(inA, inB, stripe, apart ? 0 : 1, 0, channel.maxAngle, Boolean(fork.chutes));
-      channelStrip(outA, outB, stripe, apart ? 0 : -1, 0, channel.maxAngle, Boolean(fork.chutes));
+      // Both channels' floors clipped at the middle while they overlap, so neither a gap nor a wall shows
+      // there. (Until 25 Oct 2026 a splitter's kept only the strips wholly on their own side: the strip
+      // across the middle was missing from both, a slit along the ridge where a split opens and closes.)
+      channelStrip(inA, inB, stripe, apart ? 0 : 1, 0, channel.maxAngle, true);
+      channelStrip(outA, outB, stripe, apart ? 0 : -1, 0, channel.maxAngle, true);
       if (apart) {
         const nose = gap((oa + ob) / 2) < 1.2 && sMid < (fork.s0 + fork.s1) / 2;
         quad(outA.rimOut[1], outB.rimOut[1], inB.rimOut[0], inA.rimOut[0], nose ? C.nose : C.divider);
+      } else if (oa > Ra * Math.sin(channel.maxAngle) || ob > Rb * Math.sin(channel.maxAngle)) {
+        // The inner lips past the middle but their rims not yet apart: the divider from lip to lip
+        // (before, nothing: a notch down between the two channels).
+        const lipAt = (smp, o, R, k) => {
+          const side = new Vector3(smp.side.x, 0, smp.side.z).normalize();
+          return smp.pos.clone().addScaledVector(side, k * Math.max(0, o - R * Math.sin(channel.maxAngle))).addScaledVector(UP, R * (1 - Math.cos(channel.maxAngle)));
+        };
+        const nose = sMid < (fork.s0 + fork.s1) / 2;
+        quad(lipAt(a, oa, Ra, -1), lipAt(b, ob, Rb, -1), lipAt(b, ob, Rb, 1), lipAt(a, oa, Ra, 1), nose ? C.nose : C.divider);
       }
     } else {
       const sa = i * step;
@@ -394,6 +405,21 @@ export function buildIceChannelGeometry(centerline, channel, {
   geometry.computeBoundingSphere();
   geometry.userData.segmentStarts = starts;
   return geometry;
+}
+
+/**
+ * How finely the channel is drawn (buildIceChannelGeometry's options): on phones a street's U in fewer
+ * strips across, a kit track's coarser, a coaster's (seen from further out) coarser still.
+ */
+export function channelDetail(track, channel, lite) {
+  if (!lite) return undefined;
+  if (channel?.look === 'street') return { segmentsAcross: 20 };
+  return track?.physics?.kit ? { segmentsAcross: track.physics.kit.coaster ? 8 : 10 } : undefined;
+}
+
+/** How many segments each drawn piece of the channel holds (channelPieces). */
+export function channelPieceSize(track, lite) {
+  return track?.physics?.kit ? (lite ? 200 : 150) : 40;
 }
 
 /**

@@ -14,7 +14,7 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { buildCenterline, buildTrackGeometry, TRACK_STYLE } from './trackModel';
 import { MARBLE_RADIUS, PEN_DROP, RaceMarbles, RUNOUT_LENGTH } from './marbles';
 import { buildScenery } from './scenery';
-import { buildIceChannelGeometry, channelLipAt, channelPieces, channelColors, channelOf, channelRadiusAt, forkAt, forkOffset, forkRadius, ICE_COLORS, STREET_COLORS } from './iceChannel';
+import { buildIceChannelGeometry, channelDetail, channelLipAt, channelPieces, channelPieceSize, channelColors, channelOf, channelRadiusAt, forkAt, forkOffset, forkRadius, ICE_COLORS, STREET_COLORS } from './iceChannel';
 import { DEFAULT_THEME, themeFor } from './themes';
 import { gatePlaces, StartGate } from './startGate';
 import { countdownPose, handover, launchHandover, launchPose, startLineShot } from './startCamera';
@@ -236,35 +236,42 @@ export function finishPush(shot, at, zoom) {
 /**
  * What the finish shot cuts away: a coaster station's canopy over the finish (and the boards standing
  * on it), seen from the finish camera only. `roof`: coaster.js stationRoof. → { contains(point), planes(on) } or null.
+ * A box with a lid (Moses, 25 Oct 2026: a hole in Wadi Mujib Burst's floor at 36 s on an iPhone): open at
+ * the top, it cut everything above the canopy too, and on a phone, where the canopy is cut for the whole
+ * race (roofless), a stretch passing high over the station lost its floor, walls and the land round it.
+ * Looks only.
  */
+export const CUT_ABOVE = 8; // metres over the canopy's top still cut (the boards standing on it reach about 5.5)
 export function finishCutaway(roof) {
   if (!roof) return null;
   const halfLength = roof.halfLength + 1;
   const halfWidth = roof.halfWidth + 0.6;
   const bottom = roof.bottom - 0.4;
+  const top = roof.top + CUT_ABOVE;
   const along = new Vector3(roof.along.x, 0, roof.along.z).normalize();
   const side = new Vector3(roof.side.x, 0, roof.side.z).normalize();
   const c = roof.centre;
   const local = (p) => [(p.x - c.x) * along.x + (p.z - c.z) * along.z, (p.x - c.x) * side.x + (p.z - c.z) * side.z];
-  // Clipping planes whose inner (cut) sides meet in the canopy's box: with clipIntersection, only what lies inside all five is cut.
+  // Clipping planes whose inner (cut) sides meet in the canopy's box: with clipIntersection, only what lies inside all six is cut.
   const at = along.x * c.x + along.z * c.z;
   const st = side.x * c.x + side.z * c.z;
   const planes = [
     new Plane(new Vector3(0, -1, 0), bottom),
+    new Plane(new Vector3(0, 1, 0), -top),
     new Plane(along.clone(), -at - halfLength),
     new Plane(along.clone().negate(), at - halfLength),
     new Plane(side.clone(), -st - halfWidth),
     new Plane(side.clone().negate(), st - halfWidth),
   ];
   return {
-    halfLength, halfWidth, bottom,
+    halfLength, halfWidth, bottom, top,
     contains(p) {
       const [a, s] = local(p);
-      return p.y > bottom && Math.abs(a) <= halfLength && Math.abs(s) <= halfWidth;
+      return p.y > bottom && p.y < top && Math.abs(a) <= halfLength && Math.abs(s) <= halfWidth;
     },
     /** Does a mesh (its world box) reach into the cut? */
     touches(box) {
-      if (box.max.y < bottom) return false;
+      if (box.max.y < bottom || box.min.y > top) return false;
       const corners = [[box.min.x, box.min.z], [box.min.x, box.max.z], [box.max.x, box.min.z], [box.max.x, box.max.z]].map(([x, z]) => local({ x, z }));
       const span = (k) => [Math.min(...corners.map((q) => q[k])), Math.max(...corners.map((q) => q[k]))];
       const [a0, a1] = span(0);
@@ -374,16 +381,14 @@ export class TrackScene {
     const style = { ...TRACK_STYLE, colors: { ...TRACK_STYLE.colors, ...theme.track } };
     this.channel = channelOf(track, this.centerline); // ice channel (bobsleigh) instead of a road
     // (On phones a street's U is drawn in fewer strips across.)
-    const lighter = this.lite && this.channel?.look === 'street' ? { segmentsAcross: 20 }
-      : this.lite && track?.physics?.kit ? { segmentsAcross: track.physics.kit.coaster ? 8 : 10 } : undefined; // (kit tracks on phones: a coarser U; coasters, seen from further out, coarser still)
-    const geometry = this.channel ? buildIceChannelGeometry(this.centerline, this.channel, lighter) : buildTrackGeometry(track, this.centerline, style);
+    const geometry = this.channel ? buildIceChannelGeometry(this.centerline, this.channel, channelDetail(track, this.channel, this.lite)) : buildTrackGeometry(track, this.centerline, style);
     this.trackMesh = new Mesh(geometry, this.trackMaterial);
     this.trackGroup.add(this.trackMesh);
     if (this.channel) {
       // Drawn in pieces along the track, so only those in view are drawn (the whole
       // channel stays as trackMesh, hidden, for its size and shape).
       this.trackMesh.visible = false;
-      for (const piece of channelPieces(geometry, track?.physics?.kit ? (this.lite ? 200 : 150) : 40)) this.trackGroup.add(new Mesh(piece, this.trackMaterial));
+      for (const piece of channelPieces(geometry, channelPieceSize(track, this.lite))) this.trackGroup.add(new Mesh(piece, this.trackMaterial));
     }
     const arch = this.buildFinishArch(track);
     // The Holiday Season's layer (looks only): string lights, the place's weather, the winner's fireworks (./holidayLayer.js).

@@ -350,6 +350,8 @@ window.kitView = {
   track,
   ready: new Promise((resolve) => setTimeout(resolve, 400)), // the scenery is built a moment after the track
   /** Moves the camera to look at a spot on the track and draws one frame, at race time `t` ms. */
+  /** The finish cutaway on or off (as the game has it: on for the whole race on a phone, see TrackScene.roofless). */
+  cut(on) { scene.cutaway()?.set(on); },
   shot({ at: p, l = 0, back = 12, up = 5, side = 0, t = 0, rise = 0 }) {
     const arc = scene.channel?.arc ?? scene.centerline.length ?? 1000;
     const target = at(p);
