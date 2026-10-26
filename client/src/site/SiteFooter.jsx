@@ -15,7 +15,7 @@ export default function SiteFooter() {
       <div className="ms-footer__inner">
         <span className="ms-logo" style={{ fontSize: 26 }}>marblespins</span>
         <nav aria-label="Footer" className="ms-footer__nav">
-          <Link to="/help">Help Centre</Link><Link to="/shop">Shop</Link><Link to="/legal#use">Terms</Link><Link to="/legal#privacy">Privacy</Link><Link to="/cookies">Cookies</Link><Link to="/tracks">Tracks</Link><Link to={CONTACT_PATH}>Contact us</Link>
+          <Link to="/help">Help Centre</Link><Link to="/shop">Shop</Link><Link to="/legal#use">Terms</Link><Link to="/legal#privacy">Privacy</Link><Link to="/cookies">Cookies</Link><Link to="/tracks">Tracks</Link><Link to="/marbles">Marbles</Link><Link to={CONTACT_PATH}>Contact us</Link>
           {/* (The apps: Settings, with "Delete my account", one tap from every page, for guests too. App Store 5.1.1(v), Google Play account deletion.) */}
           {app && <Link to="/settings">Settings</Link>}
           {!app && <button type="button" className="ms-footer__link" onClick={openCookieSettings}>Cookie settings</button>}

@@ -17,7 +17,6 @@
 - **Built, switched off:**
   - push notifications (first app update, December);
   - gift codes;
-  - the marbles hub;
   - email: pass reminders and confirmations, waiting for Brevo and its key;
   - the guest deletion job (dry run).
 - **Newest this week:**
@@ -25,7 +24,8 @@
   - public rooms and a one-tap Quick race;
   - the friend-room start timer;
   - the phone website with a full-screen race;
-  - Rivers live.
+  - Rivers live;
+  - the marbles hub at /marbles, five articles (26 Oct).
 
 **How it runs:**
 

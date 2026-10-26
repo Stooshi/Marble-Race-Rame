@@ -1,4 +1,4 @@
 {
-  "enabled": false,
-  "note": "The marbles knowledge hub at /marbles. Off until Moses publishes the first batch: while false every /marbles address is a 404, nothing links to it and it is not in the sitemap. See docs/02-code-map.md (Marbles hub)."
+  "enabled": true,
+  "note": "The marbles knowledge hub at /marbles. On since 26 Oct 2026 (Moses published the first five articles): its pages are pre-rendered, in the sitemap and linked from the site footer. Setting this to false makes every /marbles address a 404 again. See docs/02-code-map.md (Marbles hub)."
 }

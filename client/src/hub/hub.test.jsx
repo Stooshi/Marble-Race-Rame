@@ -12,8 +12,9 @@ import { ARTICLES, hubRoutes, readArticle, readArticles, related } from './conte
 import { blocks, headings, slugify } from './Markdown';
 import { crumbs, hubMeta, resolve, structuredData } from './seo';
 import HubPages from './HubPages';
-import MarblesHubRoute, { hubOpen, preloadHub } from './route';
+import { hubOpen, preloadHub } from './route';
 import PICTURES from './pictures.json';
+import SiteFooter from '../site/SiteFooter';
 
 const article = (over = {}) => `---
 title: ${over.title ?? 'Ringer rules'}
@@ -65,15 +66,13 @@ const FIXTURE = readArticles({
 const NF = () => <p>NOT FOUND</p>;
 const at = (path, el) => renderToString(<MemoryRouter initialEntries={[path]}><Routes><Route path="/marbles/*" element={el} /><Route path="*" element={<NF />} /></Routes></MemoryRouter>);
 
-describe('switched off until Moses publishes', () => {
-  it('is off in the repository, so every /marbles address is the 404 page', () => {
-    expect(hubSwitch.enabled).toBe(false);
-    expect(hubOpen()).toBe(false);
-    expect(at('/marbles', <MarblesHubRoute NotFound={NF} />)).toContain('NOT FOUND');
-    expect(at('/marbles/games/ringer', <MarblesHubRoute NotFound={NF} />)).toContain('NOT FOUND');
-    expect(preloadHub('/marbles')).toBeNull();
+describe('published (Moses, 26 Oct 2026)', () => {
+  it('is on in the repository, so /marbles and its articles are pages', () => {
+    expect(hubSwitch.enabled).toBe(true);
+    expect(hubOpen()).toBe(true);
+    expect(preloadHub('/marbles')).not.toBeNull();
   });
-  it('nothing on the site links to it (only the hub itself)', () => {
+  it('the site links to it from the footer, and nowhere else outside the hub', () => {
     const src = join(__dirname, '..');
     const hits = [];
     const walk = (dir) => {
@@ -83,14 +82,14 @@ describe('switched off until Moses publishes', () => {
         if (!/\.(jsx?|json|md)$/.test(f) || /\.test\./.test(f)) continue;
         const text = readFileSync(p, 'utf8');
         // (links and navigation; the server's /api/marbles calls are something else)
-        if (/(\b(to|href)=\{?\s*["'`]|navigate\(\s*["'`]|\]\(|path:\s*["'`])\/marbles\b/.test(text)) hits.push(p);
+        if (/(\b(to|href)=\{?\s*["'`]|navigate\(\s*["'`]|\]\(|path:\s*["'`])\/marbles\b/.test(text)) hits.push(p.slice(src.length + 1));
       }
     };
     walk(src);
-    expect(hits).toEqual([]);
-    expect(readFileSync(join(src, '..', 'vercel.json'), 'utf8')).not.toMatch(/marbles/);
+    expect(hits).toEqual(['site/SiteFooter.jsx']);
+    expect(renderToString(<MemoryRouter><SiteFooter /></MemoryRouter>)).toMatch(/<a href="\/marbles"[^>]*>Marbles<\/a>/);
   });
-  it('the first five articles are ready behind the switch (26 Oct 2026), and no draft is in the site\'s code', () => {
+  it('the first five articles are published (26 Oct 2026), and no draft is in the site\'s code', () => {
     expect(ARTICLES.map((a) => a.path).sort()).toEqual([
       '/marbles/games/how-to-play-marbles', '/marbles/games/ringer', '/marbles/history/history-of-marbles',
       '/marbles/making/how-glass-marbles-are-made', '/marbles/types/marble-types-guide',
