@@ -212,6 +212,7 @@ window.kitView = {
   /** The follow camera's drawing load every `every` ms through the whole race. */
   /** The flyover before a race (the start show), drawn every `every` ms: each frame's drawing load. */
   flyoverLoad({ every = 350 } = {}) {
+    if (race) advance(-countdown); // (the field at the gate: the flight ends where the countdown's camera begins)
     const out = [];
     for (let ms = 0; ms <= FLYOVER_MS; ms += every) {
       scene.showFlyover(ms);
@@ -219,6 +220,16 @@ window.kitView = {
       out.push({ t: ms, ...drawNow(0) });
     }
     return out;
+  },
+
+  /** The flyover at `ms` into it, the field at the gate (for clips, frame by frame); past its end, the countdown. */
+  flyoverShot({ ms }) {
+    if (race && clock === null) advance(-countdown);
+    if (ms <= FLYOVER_MS) scene.showFlyover(ms);
+    else advance(-countdown + (ms - FLYOVER_MS));
+    scene.camera.updateMatrixWorld();
+    drawNow(ms <= FLYOVER_MS ? -countdown : -countdown + (ms - FLYOVER_MS));
+    return { highlight: scene.flyover?.path?.highlight, side: scene.flyover?.path?.side, plan: scene.flyover?.path?.plan, cut: scene.flyover?.path?.cut };
   },
 
   raceLoad({ every = 2000 } = {}) {

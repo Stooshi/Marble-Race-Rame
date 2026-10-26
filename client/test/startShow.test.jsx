@@ -5,7 +5,7 @@ import { readFileSync } from 'node:fs';
 import { renderToString } from 'react-dom/server';
 import { Vector3 } from 'three';
 import { describe, expect, it } from 'vitest';
-import { FLYOVER_CLEAR_M, FLYOVER_MS, flyoverPath, flyoverTop } from '../src/three/flyover';
+import { FLYOVER_CLEAR_M, FLYOVER_MS, flyoverHighlight, flyoverPath, flyoverTop } from '../src/three/flyover';
 import { FlyoverTitle, GateMoment, TrackCard } from '../src/components/StartShow';
 
 const src = (f) => readFileSync(new URL(`../${f}`, import.meta.url), 'utf8');
@@ -32,27 +32,51 @@ describe('the flyover', () => {
     if (x >= tower.min.x && x <= tower.max.x && z >= tower.min.z && z <= tower.max.z) top = Math.max(top, tower.max.y);
     return top;
   };
-  const path = flyoverPath(centerline, topAt);
+  const end = { camera: new Vector3(0, 135, -14), target: new Vector3(0, 120, 2) };
+  const path = flyoverPath(centerline, topAt, { highlight: { name: 'The middle', from: 0.45, to: 0.55 }, end });
   const poses = [];
-  for (let ms = 0; ms <= FLYOVER_MS; ms += 20) poses.push({ ms, camera: path.poseAt(ms).camera.clone(), target: path.poseAt(ms).target.clone() });
+  for (let k = 0; k <= (FLYOVER_MS * 30) / 1000; k += 1) { const ms = (k * 1000) / 30; poses.push({ ms, camera: path.poseAt(ms).camera.clone(), target: path.poseAt(ms).target.clone() }); }
+  const look = (p) => p.target.clone().sub(p.camera).normalize();
 
-  it('starts behind and above the start, ends above the finish looking at it', () => {
+  it('4 s: first the overview from the side, all but still, for at least 1.6 s, looking at the whole track', () => {
+    expect(FLYOVER_MS).toBe(4000);
+    expect(path.plan.holdMs).toBeGreaterThanOrEqual(1600);
     const first = poses[0];
-    const last = poses[poses.length - 1];
-    expect(first.camera.z).toBeLessThan(centerline.samples[0].pos.z);
-    expect(first.camera.y).toBeGreaterThan(centerline.samples[0].pos.y + 25);
-    expect(last.target.distanceTo(centerline.samples[centerline.segments].pos)).toBeLessThan(60);
+    const held = path.poseAt(path.plan.holdMs).camera;
+    const far = first.camera.distanceTo(first.target);
+    expect(far).toBeGreaterThan(500);
+    expect(held.distanceTo(first.camera)).toBeLessThan(far * 0.06);
   });
-  it(`never lower than ${FLYOVER_CLEAR_M} m over anything below it (the tall landmark too)`, () => {
-    for (const { ms, camera } of poses) expect(camera.y - topAt(camera.x, camera.z), `${ms} ms`).toBeGreaterThan(FLYOVER_CLEAR_M - 2);
+  it('then one slow move in to the highlight; then either the glide to the gate pose or the countdown takes over', () => {
+    const inAt = path.poseAt(path.plan.holdMs + path.plan.inMs);
+    const h = centerline.samples[120].pos;
+    expect(inAt.camera.distanceTo(h)).toBeLessThan(poses[0].camera.distanceTo(h) * 0.8);
+    expect(look(inAt).angleTo(h.clone().sub(inAt.camera).normalize())).toBeLessThan(0.35);
+    expect(path.highlight.name).toBe('The middle');
+    const last = path.poseAt(FLYOVER_MS);
+    if (!path.cut) expect(last.camera.distanceTo(end.camera)).toBeLessThan(0.01);
+    else expect(last.camera.distanceTo(inAt.camera)).toBeLessThan(1);
   });
-  it('smooth: starts and ends at rest, no jumps between frames', () => {
-    const steps = poses.slice(1).map((p, i) => p.camera.distanceTo(poses[i].camera));
-    expect(steps[0]).toBeLessThan(1);
-    expect(steps[steps.length - 1]).toBeLessThan(1);
-    const biggest = Math.max(...steps);
-    const mean = steps.reduce((a, b) => a + b, 0) / steps.length;
-    expect(biggest).toBeLessThan(mean * 2.2);
+  it('slow: the picture never changes fast (the camera moves at most 3.5% of its distance to what it looks at per frame)', () => {
+    const fast = poses.slice(1).map((p, i) => [Math.round(p.ms), p.camera.distanceTo(poses[i].camera) / p.camera.distanceTo(p.target)]).filter(([, r]) => r > 0.035);
+    expect(fast).toEqual([]);
+  });
+  it(`never lower than ${FLYOVER_CLEAR_M} m over anything below it (the tall landmark too), but at the gate`, () => {
+    for (const { ms, camera } of poses.slice(0, -12)) expect(camera.y - topAt(camera.x, camera.z), `${ms} ms`).toBeGreaterThan(FLYOVER_CLEAR_M - 2);
+  });
+  it('smooth: starts and ends at rest, no jolts, the view turning smoothly, never rolling', () => {
+    const v = poses.slice(1).map((p, i) => p.camera.clone().sub(poses[i].camera));
+    const top = Math.max(...v.map((x) => x.length()));
+    expect(v[0].length()).toBeLessThan(top * 0.1);
+    expect(v[v.length - 1].length()).toBeLessThan(top * 0.15);
+    const jolts = v.slice(1).map((x, i) => [Math.round(poses[i + 1].ms), +(x.clone().sub(v[i]).length() / top).toFixed(2)]).filter(([, j]) => j >= 0.2); expect(jolts).toEqual([]);
+    const turns = poses.slice(1).map((p, i) => look(p).angleTo(look(poses[i])));
+    for (let i = 1; i < turns.length; i += 1) expect(Math.abs(turns[i] - turns[i - 1]), `${poses[i].ms} ms`).toBeLessThan(0.06);
+  });
+  it('the highlight is the track kit\'s signature section', () => {
+    const track = { physics: { kit: { signature: 'The chain bridge slalom', sections: [{ name: 'Along the embankment', from: 0.09, to: 0.16 }, { name: 'The chain bridge slalom', from: 0.2, to: 0.26 }] } } };
+    expect(flyoverHighlight(track)).toEqual({ name: 'The chain bridge slalom', from: 0.2, to: 0.26 });
+    expect(flyoverHighlight({ physics: {} })).toBe(null);
   });
   it('the height over the drawn scenery: the highest vertex near the spot, anything drawn (a tower too)', async () => {
     const { BoxGeometry, Group, Mesh } = await import('three');
@@ -84,9 +108,9 @@ describe('the show on screen', () => {
   });
   it('the timing: flyover 3.5 s, then the 5 s countdown: "Your gate" for 2 s, a big 3-2-1, GO for 1 s; never caught up', () => {
     const viewer = src('src/components/LiveRaceViewer3D.jsx');
-    expect(viewer).toContain('const FLYOVER_SHOW_MS = 3500;');
-    // (Switched off on 26 Oct 2026 until the new flyover is ready: card, gate, 3-2-1, GO.)
-    expect(viewer).toContain('export const FLYOVER_ON = false;');
+    expect(viewer).toContain('const FLYOVER_SHOW_MS = 4000;');
+    // (Its switch: on with the helicopter overview, 26 Oct 2026.)
+    expect(viewer).toContain('export const FLYOVER_ON = true;');
     expect(viewer).toContain('const flight = still || !FLYOVER_ON ? 0 : FLYOVER_SHOW_MS;');
     expect(viewer).toContain('const COUNT_FROM_MS = 3000;');
     expect(viewer).toContain('const GO_SHOWN_MS = 1000;');

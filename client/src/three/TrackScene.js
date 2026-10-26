@@ -18,7 +18,7 @@ import { buildIceChannelGeometry, channelDetail, channelLipAt, channelPieces, ch
 import { DEFAULT_THEME, themeFor } from './themes';
 import { gatePlaces, StartGate } from './startGate';
 import { countdownPose, handover, launchHandover, launchPose, startLineShot } from './startCamera';
-import { flyoverPath, flyoverTop } from './flyover';
+import { flyoverHighlight, flyoverPath, flyoverTop } from './flyover';
 import { buildTrackFeatures } from './trackFeatures';
 import { buildLaneMarkings } from './scenery/athletics';
 import { TV, tvCameras, tvMoment } from './tvMoments';
@@ -664,15 +664,36 @@ export class TrackScene {
    */
   flyoverFor() {
     if (!this.centerline) return null;
-    if (this.flyover?.slug === this.track?.slug) return this.flyover.path;
-    const topAt = flyoverTop({
-      groups: [this.scenery, this.structures?.group, this.billboards?.group, this.trackMesh],
-      trackBelow: (x, z) => this.trackBelow(x, z),
-      groundY: TRACK_STYLE.groundY,
+    // (Worked out again for another track, another screen shape, or once the field is at the gate.)
+    const key = `${this.track?.slug}|${this.camera.aspect.toFixed(2)}|${Boolean(this.gate)}`;
+    if (this.flyover?.key === key) return this.flyover.path;
+    this.flyoverTopAt ??= { slug: null };
+    if (this.flyoverTopAt.slug !== this.track?.slug) {
+      this.flyoverTopAt = {
+        slug: this.track?.slug,
+        topAt: flyoverTop({
+          groups: [this.scenery, this.structures?.group, this.billboards?.group, this.trackMesh],
+          trackBelow: (x, z) => this.trackBelow(x, z),
+          groundY: TRACK_STYLE.groundY,
+        }),
+      };
+    }
+    const path = flyoverPath(this.centerline, this.flyoverTopAt.topAt, {
+      highlight: flyoverHighlight(this.track), end: this.countdownStart(), aspect: this.camera.aspect, fov: this.camera.fov,
     });
-    const path = flyoverPath(this.centerline, topAt);
-    this.flyover = { slug: this.track?.slug, path };
+    this.flyover = { key, path };
     return path;
+  }
+
+  /** Where the countdown's camera begins (the flyover ends there), once the field is at the gate; else null. */
+  countdownStart() {
+    const gate = this.gate?.startFrame?.();
+    if (!gate) return null;
+    const shots = (this.track?.physics?.kit?.start ?? this.track?.physics?.startLook)?.shots;
+    const launch = shots?.launch && shots.launch !== 'high-behind' ? shots.launch : null;
+    const shot = (launch && launchPose(launch, gate)) || startLineShot(gate, this.camera.aspect, this.camera.fov);
+    const cd = this.countdownMs ?? 3000;
+    return countdownPose(-cd, cd, gate, shot, this.camera.aspect, { liftHill: this.scenery?.userData?.liftHill, shot: shots?.countdown ?? 'classic' });
   }
 
   /** The big view `ms` into the flyover (the race's own camera moves are overridden for that frame). */

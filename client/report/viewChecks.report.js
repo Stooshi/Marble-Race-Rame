@@ -20,7 +20,7 @@ import { flaggedStretches, wallExposure } from '../src/three/scenery/groundCheck
 import { cameraClearance, corridorIntrusions, finishShotView, markStructures, nameOf, pieceFinder, stretchesOf, tunnelAllowance } from '../src/three/scenery/clearCheck';
 import { finishCutaway, finishShotPose } from '../src/three/TrackScene';
 import { stationRoof } from '../src/three/scenery/coaster';
-import { FLYOVER_MS, flyoverPath, flyoverTop } from '../src/three/flyover';
+import { FLYOVER_MS, flyoverHighlight, flyoverPath, flyoverTop } from '../src/three/flyover';
 import { TRACK_STYLE } from '../src/three/trackModel';
 
 const anything = new Proxy(function stub() {}, { get: () => anything, apply: () => anything, set: () => true });
@@ -82,9 +82,10 @@ it.skipIf(!process.env.REPORT_TRACK)('track report: view checks', () => {
     {
       const flyScene = Object.assign(Object.create(TrackScene.prototype), { centerline, track });
       const topAt = flyoverTop({ groups: [scenery, structures?.group, boardsHere?.group], trackBelow: (x, z) => flyScene.trackBelow(x, z), groundY: TRACK_STYLE.groundY });
-      const path = flyoverPath(centerline, topAt);
+      // (Without the field at the gate the flight ends on its highlight; the countdown's camera is checked on its own.)
+      const path = flyoverPath(centerline, topAt, { highlight: flyoverHighlight(track), aspect: lite ? 9 / 19.5 : 16 / 9 });
       const land = drawnHere.filter((o) => o.userData.ground || /^terrain|^banks/.test(nameOf(o)));
-      const fly = { looks: 0, near: [], inside: [], height: Math.round(path.height) };
+      const fly = { looks: 0, near: [], inside: [], height: Math.round(path.height), side: path.side, highlight: path.highlight };
       for (let ms = 0; ms <= FLYOVER_MS; ms += 50) {
         const { camera } = path.poseAt(ms);
         const c = cameraClearance(camera, drawnHere, land, { pieceAt: pieceFinder(scenery) });
