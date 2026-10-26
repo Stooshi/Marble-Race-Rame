@@ -465,18 +465,18 @@ router.post('/:code/start-in/cancel', requireAuth, async (req, res) => {
  */
 router.post('/:code/start-now', requireAuth, async (req, res) => {
   let raceId = null;
-  let at = null;
   const code = await onRoom(req, async (client, room, race) => {
     if (room.kind !== 'quick') throw badRequest('Only a quick race can be started this way');
     if (!race || race.status !== 'lobby') throw conflict('This race has already started');
     const { rows: humans } = await client.query('SELECT user_id FROM race_entries WHERE race_id = $1 AND NOT is_bot', [race.id]);
     if (!humans.some((h) => h.user_id === req.user.id)) throw forbidden('Join the race first');
     if (humans.length > 1) throw conflict('Other players are in this race: it starts on its timer');
-    const { rows } = await client.query('UPDATE races SET scheduled_at = now(), updated_at = now() WHERE id = $1 RETURNING scheduled_at', [race.id]);
+    await client.query('UPDATE races SET scheduled_at = now(), updated_at = now() WHERE id = $1', [race.id]);
     raceId = race.id;
-    at = rows[0].scheduled_at;
   });
-  raceManager.scheduleStart(raceId, at);
+  // Started before answering, so the player's page goes straight to the race (and its start show).
+  raceManager.unscheduleStart(raceId);
+  await raceManager.startScheduled(raceId);
   res.json(await roomView(code, req.user));
 });
 

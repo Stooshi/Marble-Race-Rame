@@ -194,6 +194,7 @@ export default function Race() {
         <LiveRaceViewer3D
           key={raceId}
           intro={Boolean(showFor.current[raceId])}
+          raceId={raceId}
           meta={meta}
           track={preload}
           onPrepared={preparing ? startWhenReady : null}
@@ -202,7 +203,7 @@ export default function Race() {
           sample={stream.sample}
           frame={stream.frame}
           startsAt={stream.startsAt}
-          countdownMs={race?.countdown_ms ?? 5000}
+          countdownMs={meta?.countdownMs ?? race?.countdown_ms ?? 5000}
           highlight={myIndexes}
           footer={footer}
           {...finish}
@@ -288,7 +289,8 @@ function Countdown({ startsAt, grandPrix = false }) {
   const left = Math.max(0, Math.ceil(((startsAt ?? now) - now) / 1000));
   return (
     <div className="countdown" role="timer" aria-live="assertive">
-      <span key={left}>{left || 'GO!'}</span>
+      {/* (A room's longer countdown, the start show's time in 3D: "Get ready" until the last 5 s.) */}
+      {left > 5 ? <span key="ready" className="countdown__ready">Get ready</span> : <span key={left}>{left || 'GO!'}</span>}
     </div>
   );
 }

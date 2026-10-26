@@ -376,6 +376,7 @@ main { padding-bottom: 48px; }
 
 .countdown { display: grid; place-items: center; padding: 8px 0 16px; }
 .countdown span { font-size: clamp(3rem, 14vw, 6rem); font-weight: 900; color: var(--accent); animation: pop 1s ease-out; text-shadow: 0 6px 30px rgba(250, 204, 21, 0.4); }
+.countdown span.countdown__ready { font-size: clamp(1.8rem, 8vw, 3rem); }
 @keyframes pop { from { transform: scale(1.6); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 
 .event-feed { list-style: none; margin: 0; padding: 4px 6px; min-height: 2.6em; font-size: 0.85rem; }

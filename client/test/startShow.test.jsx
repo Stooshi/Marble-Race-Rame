@@ -189,4 +189,27 @@ describe('the show on screen', () => {
     expect(viewer).toContain("visible={inset !== null && phase === 'race'}");
     expect(src('src/hooks/useRaceStream.js')).toContain('decayFrom: stay ? Infinity');
   });
+  it('rooms and Quick race: the flyover over the extra countdown, by the race clock (in sync), no hold, a local skip', () => {
+    const viewer = src('src/components/LiveRaceViewer3D.jsx');
+    expect(viewer).toContain('const roomShow = !intro && countdownMs > COUNTDOWN_MS;');
+    expect(viewer).toContain('const ms = f.t + countdownMs;');
+    expect(viewer).toContain('const lag = flying ? 0 : holdFor(go, COUNTDOWN_MS);');
+    expect(viewer).toContain("if (fly.room) { setPhase('race'); return; }");
+    expect(src('src/pages/Race.jsx')).toContain('countdownMs={meta?.countdownMs ?? race?.countdown_ms ?? 5000}');
+  });
+  it('the room page builds the scene during the wait; the race page takes it over; Start now alone in Quick race', () => {
+    const room = src('src/site/pages/RoomPage.jsx');
+    expect(room).toContain('preloadScene({');
+    expect(room).toContain("quick && open && waiting && me?.inRace && view.players.length === 1");
+    expect(room).toContain('api.roomStartNow(code)');
+    expect(src('src/hooks/useTrackScene.js')).toContain('takeScene(adoptFor)');
+  });
+});
+
+describe('the scene pool', () => {
+  it('hands over only the scene built for that race, once', async () => {
+    const { takeScene, pooledRace } = await import('../src/three/scenePool');
+    expect(pooledRace()).toBe(null);
+    expect(takeScene('r1')).toBe(null);
+  });
 });
