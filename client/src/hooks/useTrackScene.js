@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { graphicsReport } from '../three/diagnostics';
 import { importOrReload } from '../utils/staleCode';
+import { takeScene } from '../three/scenePool';
 
 /** Records a failure: shown on screen and logged to the console in full. */
 function failureFrom(stage, error, report) {
@@ -15,10 +16,11 @@ function failureFrom(stage, error, report) {
  * Render the canvas from the very first paint (even while data loads) so it
  * always exists when the scene starts. Each stage reports its own failure.
  */
-export function useTrackScene() {
+export function useTrackScene({ adoptFor = null } = {}) {
   const wrapRef = useRef(null);
   const canvasRef = useRef(null);
   const sceneRef = useRef(null);
+  const adopted = useRef(null); // the slug of a pooled scene taken over (its track already built)
   const [status, setStatus] = useState('loading'); // loading | ready | failed
   const [failure, setFailure] = useState(null);
 
@@ -30,8 +32,17 @@ export function useTrackScene() {
   useEffect(() => {
     let cancelled = false;
     let observer;
-    const canvas = canvasRef.current;
+    let canvas = canvasRef.current;
     if (!canvas) return undefined;
+    // A scene already built for this race (the room page, during the wait: three/scenePool.js): its
+    // canvas goes in beside this one (which hides), and its scene is this view's.
+    const pooled = adoptFor ? takeScene(adoptFor) : null;
+    if (pooled) {
+      canvas.style.display = 'none';
+      wrapRef.current.insertBefore(pooled.canvas, canvas);
+      canvas = pooled.canvas;
+      adopted.current = pooled.slug;
+    }
     const onLost = (e) => {
       e.preventDefault();
       fail('drawing (the browser took the 3D context away)', new Error('WebGL context lost'));
@@ -53,7 +64,7 @@ export function useTrackScene() {
         return;
       }
       try {
-        const scene = new mod.TrackScene(canvas);
+        const scene = pooled?.scene ?? new mod.TrackScene(canvas);
         sceneRef.current = scene;
         observer = new ResizeObserver(([entry]) => {
           const { width, height } = entry.contentRect;
@@ -71,8 +82,9 @@ export function useTrackScene() {
       observer?.disconnect();
       sceneRef.current?.dispose();
       sceneRef.current = null;
+      if (pooled) pooled.canvas.remove();
     };
   }, []);
 
-  return { wrapRef, canvasRef, sceneRef, status, failure, fail };
+  return { wrapRef, canvasRef, sceneRef, status, failure, fail, adopted };
 }

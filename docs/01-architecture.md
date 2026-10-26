@@ -159,7 +159,7 @@ There is no separate staging server. Vercel makes a preview build for every bran
 | `APPLE_BUNDLE_ID` | no | Default `com.marblespins.app` |
 | `APPLE_ACCEPT_SANDBOX` | no | Default: sandbox purchases accepted (App Review and TestFlight buy in Apple's sandbox, even against the live server). `false` refuses them |
 | `PAYMENTS_TEST` | never in production | `true`: instant fake payments, for local development |
-| `RACE_COUNTDOWN_MS`, `RACE_MIN_DURATION_MS`, `RACE_MAX_DURATION_MS`, `RACE_DEFAULT_MARBLES`, `RACE_TICK_RATE_HZ`, `RACE_NEXT_DELAY_MS` | no | Race timing defaults (see the root README) |
+| `RACE_COUNTDOWN_MS`, `RACE_START_SHOW_MS` (3500: the start show's extra countdown in rooms and Quick race, 26 Oct 2026), `RACE_MIN_DURATION_MS`, `RACE_MAX_DURATION_MS`, `RACE_DEFAULT_MARBLES`, `RACE_TICK_RATE_HZ`, `RACE_NEXT_DELAY_MS` | no | Race timing defaults (see the root README) |
 | `RAILWAY_GIT_COMMIT_SHA`, `SOURCE_COMMIT` | set by the platform | Shown on `/health` as the commit, when known |
 
 ### Vercel (website)

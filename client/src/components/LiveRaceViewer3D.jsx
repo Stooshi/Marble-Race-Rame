@@ -28,6 +28,7 @@ const JOIN_LIVE_AFTER_MS = 8000; // …unless the race is already this far past 
 const FLYOVER_SHOW_MS = 3500;  // the start show's flyover (storyboard, Moses 26 Oct 2026)
 const COUNT_FROM_MS = 3000;    // the big 3-2-1 over the countdown's last three seconds (before that: "Your gate")
 const GO_SHOWN_MS = 1000;      // "GO!" stays this long
+const ROOM_FLY_MIN_MS = 1200;  // a room's flyover only with at least this much of it left when the view is ready
 
 /**
  * A live race in 3D (tracks on the new physics, e.g. Bobsleigh Run): the
@@ -68,9 +69,16 @@ export function holdFor(go, countdownMs, now = Date.now()) {
 export default function LiveRaceViewer3D({
   meta, sample, frame, startsAt, countdownMs = COUNTDOWN_MS, highlight = NOBODY, footer = null,
   finishes = NONE, complete = false, clock = null, next = null, canSkip = false,
-  track = null, onPrepared = null, holdBack = null, lagNow = null, intro = false,
+  track = null, onPrepared = null, holdBack = null, lagNow = null, intro = false, raceId = null,
 }) {
-  const { wrapRef, canvasRef, sceneRef, status, failure, fail } = useTrackScene();
+  // (A scene the room page built during the wait, for this race: taken over, not built again.)
+  const { wrapRef, canvasRef, sceneRef, status, failure, fail, adopted } = useTrackScene({ adoptFor: raceId });
+  // The rooms' and Quick race's start show (Moses, 26 Oct 2026): the server counts down longer
+  // (RACE_START_SHOW_MS more), so everyone sees the flyover in sync over the extra time, then the gate
+  // and the 3-2-1 over the usual COUNTDOWN_MS. Late joiners join where it is (no hold), and a skip is
+  // only this screen's.
+  const roomShow = !intro && countdownMs > COUNTDOWN_MS;
+  const showMs = roomShow ? countdownMs - COUNTDOWN_MS : 0;
   const [camera, setCamera] = useState('follow'); // follow | overview
   const [follow, setFollow] = useState('leader'); // 'leader' or an entry index
   const [built, setBuilt] = useState(false);
@@ -81,9 +89,10 @@ export default function LiveRaceViewer3D({
   const [gone, setGone] = useState(false); // the gates have opened (as shown): the standings appear
   // The start show (`intro`: a solo race started here): 'loading' (the track card) → 'flying' (the
   // flyover) → 'race' (at the gate, 3-2-1, GO). Without it: straight to 'race', as before.
-  const [phase, setPhase] = useState(intro ? 'loading' : 'race');
+  const [phase, setPhase] = useState(intro || roomShow ? 'loading' : 'race');
   const flyRef = useRef(null); // the flyover: { startedAt (performance ms), go }
   const builtSlug = useRef(null);
+  if (adopted.current && !builtSlug.current) builtSlug.current = adopted.current;
   const onPreparedRef = useRef(onPrepared);
   onPreparedRef.current = onPrepared;
   const theTrack = meta?.track ?? track;
@@ -91,7 +100,14 @@ export default function LiveRaceViewer3D({
   // The track first (before the countdown when it is known), its whole world built and compiled.
   useEffect(() => {
     const scene = sceneRef.current;
-    if (status !== 'ready' || !scene || !theTrack || builtSlug.current === theTrack.slug) return;
+    if (status !== 'ready' || !scene || !theTrack) return;
+    if (builtSlug.current === theTrack.slug) {
+      // (Built during the wait: ready as soon as it says so.)
+      if (adopted.current !== theTrack.slug || trackReady) return;
+      let live = true;
+      scene.whenReady().then(() => { if (live) { setTrackReady(true); onPreparedRef.current?.(); } });
+      return () => { live = false; };
+    }
     try {
       scene.setTrack(theTrack);
       builtSlug.current = theTrack.slug;
@@ -117,7 +133,8 @@ export default function LiveRaceViewer3D({
     if (status !== 'ready' || !scene || !meta || builtSlug.current !== meta.track?.slug) return;
     try {
       // Live, the starting camera runs over the race's whole countdown (the gate's own is shorter).
-      scene.setRace(meta.entries, highlight, [], meta.start && meta.firstFrame ? { ...meta.start, countdownMs, frame: meta.firstFrame } : null);
+      // (In a room's show, over the gate and 3-2-1 part only: the flyover has the time before it.)
+      scene.setRace(meta.entries, highlight, [], meta.start && meta.firstFrame ? { ...meta.start, countdownMs: roomShow ? COUNTDOWN_MS : countdownMs, frame: meta.firstFrame } : null);
       setBuilt(true);
     } catch (err) {
       fail(`building the race on "${meta.track?.name}"`, err);
@@ -150,11 +167,30 @@ export default function LiveRaceViewer3D({
         setReady(true);
         return;
       }
+      if (roomShow && go) {
+        // The room's show: the flyover while there is more than the countdown to GO; ready later than
+        // that, the countdown is held back to show from its beginning (the short fallback for slow phones).
+        const still = typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+        // (Not for a last moment of flight: under ROOM_FLY_MIN_MS left, straight to the gate.)
+        const flying = !still && Date.now() < go - COUNTDOWN_MS - ROOM_FLY_MIN_MS;
+        if (flying) {
+          scene.flyoverFor();
+          flyRef.current = { room: true, go };
+        }
+        const lag = flying ? 0 : holdFor(go, COUNTDOWN_MS);
+        holdBack?.(lag, go);
+        lagRef.current = lagNow;
+        if (meta?.raceId) raceCountdown(meta.raceId, go + lag - Date.now());
+        setPhase(flying ? 'flying' : 'race');
+        setReady(true);
+        return;
+      }
       const lag = holdFor(go, countdownMs);
       holdBack?.(lag, go);
       lagRef.current = lagNow;
       // The countdown's beeps, timed to the countdown as shown (none if it is already over).
       if (go && meta?.raceId) raceCountdown(meta.raceId, go + lag - Date.now());
+      if (roomShow) setPhase('race'); // (no GO known: no show)
       setReady(true);
     });
     return () => { live = false; };
@@ -195,6 +231,8 @@ export default function LiveRaceViewer3D({
     const fly = flyRef.current;
     if (!fly) return;
     flyRef.current = null;
+    // (A room's: everyone else's goes on; here straight to the gate, the countdown as it is.)
+    if (fly.room) { setPhase('race'); return; }
     const lag = Math.max(0, Date.now() - (fly.go - countdownMs));
     holdBack?.(lag, fly.go, { stay: true });
     if (meta?.raceId) { stopCountdown(meta.raceId); raceCountdown(meta.raceId, fly.go + lag - Date.now()); }
@@ -247,7 +285,12 @@ export default function LiveRaceViewer3D({
           scene.updateRace(f, who, dt, insetRef.current); // 'leader', 'second' or an entry index (the scene keeps the leader steady)
           // The flyover: its camera over the race's own until it ends (or is skipped).
           const fly = flyRef.current;
-          if (fly) {
+          if (fly?.room) {
+            // In step with everyone: the flight runs over the time before the countdown, by the race's clock.
+            const ms = f.t + countdownMs;
+            if (f.t < -COUNTDOWN_MS) scene.showFlyover(Math.max(0, (ms / showMs) * FLYOVER_MS));
+            else { flyRef.current = null; setPhase('race'); }
+          } else if (fly) {
             const ms = now - fly.startedAt;
             if (ms < FLYOVER_SHOW_MS) scene.showFlyover((ms / FLYOVER_SHOW_MS) * FLYOVER_MS);
             else { flyRef.current = null; setPhase('race'); }
@@ -291,9 +334,9 @@ export default function LiveRaceViewer3D({
     <div className="live3d">
       <div className={`preview3d__stage${show.phase !== 'racing' ? ' is-finishing' : ''}`} ref={wrapRef}>
         <canvas ref={canvasRef} className="preview3d__canvas" aria-label="Live race in 3D" />
-        {intro && phase === 'loading' && <TrackCard track={theTrack} />}
-        {!intro && status === 'loading' && <div className="preview3d__overlay"><Spinner label="Loading 3D…" /></div>}
-        {!intro && status === 'ready' && !ready && <div className="preview3d__overlay"><Spinner label="Getting the track ready…" /></div>}
+        {(intro || roomShow) && phase === 'loading' && <TrackCard track={theTrack} />}
+        {!intro && !roomShow && status === 'loading' && <div className="preview3d__overlay"><Spinner label="Loading 3D…" /></div>}
+        {!intro && !roomShow && status === 'ready' && !ready && <div className="preview3d__overlay"><Spinner label="Getting the track ready…" /></div>}
         {phase === 'flying' && <FlyoverTitle track={theTrack} onSkip={skipFlyover} />}
         {ready && phase === 'race' && shownT !== null && (
           <div className="replay3d__countdownwrap" aria-live="polite">

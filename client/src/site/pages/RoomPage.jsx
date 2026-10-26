@@ -8,6 +8,7 @@ import { SITE_URL } from '../canonical';
 import { RoomPrivacy, useRacer, useTracks } from './RaceFlow';
 import pushSwitch from '../../shared/push.json';
 import { NAME_NOT_ALLOWED, checkName } from '../../shared/nameFilter';
+import { preloadScene } from '../../three/scenePool';
 
 /**
  * The host invites friends with a notification on their phone (once push is switched on,
@@ -169,6 +170,25 @@ export default function RoomPage() {
     run('join', () => api.joinRoom(code))();
   }, [view, search, waiting, open, code, setSearch]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // The 3D scene built during the wait (Moses, 26 Oct 2026), so after the timer the race page goes
+  // straight into the start show: the flyover, the gate, the 3-2-1. (The track is known by now; the
+  // race page takes the scene over, see three/scenePool.js.)
+  const preloaded = useRef(null);
+  useEffect(() => {
+    if (!race || !me?.inRace || !['lobby', 'countdown'].includes(race.status) || !race.track?.id) return;
+    const key = `${race.id}:${race.track?.id}`; // (again if the host picks another track)
+    if (preloaded.current === key) return;
+    preloaded.current = key;
+    api.track(race.track?.id).then((d) => {
+      const t = d?.track;
+      if (!t?.physics) return;
+      preloadScene({
+        raceId: race.id,
+        track: { id: t.id, slug: t.slug, name: t.name, length_m: Number(t.length_m), lane_count: t.lane_count, waypoints: t.waypoints, obstacles: t.obstacles, physics: t.physics },
+      });
+    }).catch(() => {});
+  }, [race?.id, race?.track?.id, race?.status, me?.inRace]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // The race is on: to the race.
   useEffect(() => {
     if (!race || !me?.inRace || !['countdown', 'running'].includes(race.status)) return;
@@ -279,6 +299,11 @@ export default function RoomPage() {
           </ul>
 
           {open && waiting && race.startsAt && <StartCountdown key={race.startsAt} startsAt={race.startsAt} skew={skew} onZero={load} />}
+          {quick && open && waiting && me?.inRace && view.players.length === 1 && (
+            <button type="button" className="ms-btn ms-btn--primary ms-btn--lg" disabled={Boolean(busy)} onClick={run('start-now', () => api.roomStartNow(code))}>
+              {busy === 'start-now' ? 'STARTING…' : 'START NOW'}
+            </button>
+          )}
           {quick && open && waiting && <p className="ms-note">A quick race starts by itself: anyone tapping Quick race joins until then. Computer players fill the empty places.</p>}
           {open && me?.isHost && (
             <div style={{ display: 'grid', gap: 6 }}>
