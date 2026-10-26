@@ -1,0 +1,207 @@
+{
+ "article": "marble-types-guide",
+ "pictures": [
+  {
+   "name": "header",
+   "alt": "Illustration of marble types side by side: a banded agate aggie, an onionskin covered in coloured streaks, a cat's eye, a sulphide with a white dog inside, a handmade swirl, an oxblood, a Lutz with glittering copper bands, a clay marble, a moonie and a corkscrew.",
+   "caption": "Some of the marble types in this guide. Illustration in the Marble Spins style, not photos of real marbles.",
+   "files": [
+    {
+     "file": "header-1600.webp",
+     "width": 1600,
+     "height": 900,
+     "bytes": 58846
+    },
+    {
+     "file": "header-800.webp",
+     "width": 800,
+     "height": 450,
+     "bytes": 25858
+    }
+   ]
+  },
+  {
+   "name": "clay-and-china",
+   "alt": "Illustration of five early marbles: a dull tan clay marble, a faded blue dyed clay marble, glossy brown and blue Bennington marbles with small light spots in the glaze, and a white china marble with hand-painted green and red rings and lines.",
+   "caption": "Clay marbles are plain and slightly rough. Benningtons are glazed, with light \"eyes\" where they touched other marbles in the kiln. Chinas are glazed porcelain with painted lines. Illustration.",
+   "files": [
+    {
+     "file": "clay-and-china-1600.webp",
+     "width": 1600,
+     "height": 560,
+     "bytes": 21990
+    },
+    {
+     "file": "clay-and-china-800.webp",
+     "width": 800,
+     "height": 280,
+     "bytes": 9920
+    }
+   ]
+  },
+  {
+   "name": "aggie-and-steelie",
+   "alt": "Illustration of an aggie, a polished agate marble with wavy bands of red-brown, orange and cream, next to a steelie, a shiny steel ball.",
+   "caption": "An aggie (agate, or glass made to look like agate) and a steelie (steel). Illustration.",
+   "files": [
+    {
+     "file": "aggie-and-steelie-1600.webp",
+     "width": 1600,
+     "height": 740,
+     "bytes": 18172
+    },
+    {
+     "file": "aggie-and-steelie-800.webp",
+     "width": 800,
+     "height": 370,
+     "bytes": 7884
+    }
+   ]
+  },
+  {
+   "name": "handmade-swirl",
+   "alt": "Illustration of a handmade glass swirl marble: in the clear glass a core of fine white threads in a lattice, with red, blue, yellow and green ribbons twisting round it from pole to pole. A small rough pontil mark is marked at the top.",
+   "caption": "A handmade swirl, its bands twisting from pole to pole, with the small rough pontil mark where it was cut free. Illustration.",
+   "files": [
+    {
+     "file": "handmade-swirl-1600.webp",
+     "width": 1600,
+     "height": 1000,
+     "bytes": 34648
+    },
+    {
+     "file": "handmade-swirl-800.webp",
+     "width": 800,
+     "height": 500,
+     "bytes": 15448
+    }
+   ]
+  },
+  {
+   "name": "onionskin",
+   "alt": "Illustration of an onionskin marble: its whole surface covered with closely packed thin streaks of red, yellow, white, blue, orange and green running from pole to pole, under clear glass, with the pontil mark at the top where the streaks meet.",
+   "caption": "An onionskin: closely packed streaks of colour all over, like the layers of an onion. Illustration.",
+   "files": [
+    {
+     "file": "onionskin-1600.webp",
+     "width": 1600,
+     "height": 1000,
+     "bytes": 58066
+    },
+    {
+     "file": "onionskin-800.webp",
+     "width": 800,
+     "height": 500,
+     "bytes": 24576
+    }
+   ]
+  },
+  {
+   "name": "lutz",
+   "alt": "Illustration of a Lutz marble: clear glass with bands of glittering copper flecks twisting through it, each band edged with thin white strands.",
+   "caption": "A Lutz: bands of glittering copper flecks (goldstone) in the glass, edged with thin white strands. Illustration.",
+   "files": [
+    {
+     "file": "lutz-1600.webp",
+     "width": 1600,
+     "height": 1000,
+     "bytes": 44906
+    },
+    {
+     "file": "lutz-800.webp",
+     "width": 800,
+     "height": 500,
+     "bytes": 14798
+    }
+   ]
+  },
+  {
+   "name": "sulphide",
+   "alt": "Illustration of a sulphide marble: a large clear glass marble with a small white figure of a sitting dog on a little base inside it.",
+   "caption": "A sulphide: a large clear marble with a small white figure inside, here a dog. The figure is porcelain, not sulfur. Illustration.",
+   "files": [
+    {
+     "file": "sulphide-1600.webp",
+     "width": 1600,
+     "height": 1000,
+     "bytes": 15482
+    },
+    {
+     "file": "sulphide-800.webp",
+     "width": 800,
+     "height": 500,
+     "bytes": 7482
+    }
+   ]
+  },
+  {
+   "name": "clearie-and-cats-eye",
+   "alt": "Illustration of two machine-made glass marbles: a plain transparent green clearie with a few tiny air bubbles, and a clear cat's eye with a red and yellow vane in the middle shaped like a cat's pupil.",
+   "caption": "A clearie (plain transparent glass) and a cat's eye (clear glass with coloured vanes inside). Illustration.",
+   "files": [
+    {
+     "file": "clearie-and-cats-eye-1600.webp",
+     "width": 1600,
+     "height": 740,
+     "bytes": 15112
+    },
+    {
+     "file": "clearie-and-cats-eye-800.webp",
+     "width": 800,
+     "height": 370,
+     "bytes": 7232
+    }
+   ]
+  },
+  {
+   "name": "corkscrew-oxblood-moonie",
+   "alt": "Illustration of three machine-made marbles: a corkscrew with red and yellow spirals winding round a white marble, an oxblood with a deep red swirl containing fine black threads on milky white glass, and a moonie of milky white opalescent glass with a bluish sheen and a warm glow at one edge.",
+   "caption": "A corkscrew (spirals of colour winding from pole to pole), an oxblood (a deep red swirl with fine black threads) and a moonie (milky white opalescent glass). Illustration.",
+   "files": [
+    {
+     "file": "corkscrew-oxblood-moonie-1600.webp",
+     "width": 1600,
+     "height": 660,
+     "bytes": 22118
+    },
+    {
+     "file": "corkscrew-oxblood-moonie-800.webp",
+     "width": 800,
+     "height": 330,
+     "bytes": 10682
+    }
+   ]
+  },
+  {
+   "name": "sizes",
+   "alt": "Diagram of marble sizes drawn to scale over a millimetre ruler: a 16 millimetre (5/8 inch) play marble, a 19 millimetre (3/4 inch) shooter and a 5 centimetre (about 2 inch) big marble.",
+   "caption": "Marble sizes to scale: a standard play marble, a tournament shooter at its largest, and a big marble. Illustration.",
+   "files": [
+    {
+     "file": "sizes-1600.webp",
+     "width": 1600,
+     "height": 900,
+     "bytes": 47840
+    },
+    {
+     "file": "sizes-800.webp",
+     "width": 800,
+     "height": 450,
+     "bytes": 20384
+    }
+   ]
+  },
+  {
+   "name": "share",
+   "alt": "Marble types: a beginner's guide. Illustrated marbles: a sulphide, an onionskin, a cat's eye and an aggie.",
+   "files": [
+    {
+     "file": "share-1200x630.jpg",
+     "width": 1200,
+     "height": 630,
+     "bytes": 65427
+    }
+   ]
+  }
+ ]
+}
