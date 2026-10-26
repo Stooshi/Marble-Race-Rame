@@ -85,6 +85,9 @@ describe('the show on screen', () => {
   it('the timing: flyover 3.5 s, then the 5 s countdown: "Your gate" for 2 s, a big 3-2-1, GO for 1 s; never caught up', () => {
     const viewer = src('src/components/LiveRaceViewer3D.jsx');
     expect(viewer).toContain('const FLYOVER_SHOW_MS = 3500;');
+    // (Switched off on 26 Oct 2026 until the new flyover is ready: card, gate, 3-2-1, GO.)
+    expect(viewer).toContain('export const FLYOVER_ON = false;');
+    expect(viewer).toContain('const flight = still || !FLYOVER_ON ? 0 : FLYOVER_SHOW_MS;');
     expect(viewer).toContain('const COUNT_FROM_MS = 3000;');
     expect(viewer).toContain('const GO_SHOWN_MS = 1000;');
     expect(viewer).toContain('holdBack?.(lag, go, { stay: true });');

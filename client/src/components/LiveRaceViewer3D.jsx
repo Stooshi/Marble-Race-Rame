@@ -26,6 +26,10 @@ const WHOOSH_GAP_MS = 3500; // an overtaking whoosh at most this often
 const HOLD_FROM_MS = 250;     // the view held back when it gets ready later than this after the countdown began…
 const JOIN_LIVE_AFTER_MS = 8000; // …unless the race is already this far past GO: then it joins live
 const FLYOVER_SHOW_MS = 3500;  // the start show's flyover (storyboard, Moses 26 Oct 2026)
+// The flyover is switched off (Moses, 26 Oct 2026: it followed the track and swung) until its new
+// version, a wide side view of the whole track, then its highlight, then down to the gate, is ready.
+// Off, the show is the track card, the gate, the 3-2-1 and GO.
+export const FLYOVER_ON = false;
 const COUNT_FROM_MS = 3000;    // the big 3-2-1 over the countdown's last three seconds (before that: "Your gate")
 const GO_SHOWN_MS = 1000;      // "GO!" stays this long
 
@@ -139,7 +143,7 @@ export default function LiveRaceViewer3D({
         // good (a solo race: no one to catch up with), so nothing jumps or plays fast afterwards.
         // (No flight for a player who asked for less motion: straight to the gate.)
         const still = typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-        const flight = still ? 0 : FLYOVER_SHOW_MS;
+        const flight = still || !FLYOVER_ON ? 0 : FLYOVER_SHOW_MS;
         if (flight) scene.flyoverFor();
         const lag = Math.max(0, Date.now() + flight - (go - countdownMs));
         holdBack?.(lag, go, { stay: true });
