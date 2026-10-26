@@ -23,6 +23,8 @@ const CLIENT = path.join(ROOT, 'client');
 const args = process.argv.slice(2);
 // --clear-only: the clear-track checks (inside the track, the finish, the catch area, the finish shot) without the follow camera's races.
 const clearOnly = args.includes('--clear-only');
+// --fly-only: only the flyover before the race (the start show) on each track.
+const flyOnly = args.includes('--fly-only');
 const outFile = args.includes('--out') ? args[args.indexOf('--out') + 1] : path.join(ROOT, 'reports', 'clear-check.json');
 const RACE_TRACK = (slug) => !/^variety-|^kit-proving-ground/.test(slug);
 const slugs = args.includes('--all')
@@ -39,12 +41,12 @@ for (const slug of slugs) {
   const track = physicsTrack(slug);
   const trackFile = path.join(dev, `${slug}.json`);
   fs.writeFileSync(trackFile, JSON.stringify(track));
-  const sims = batchSeeds(0, 2).map((s) => simulatePhysicsRace({ seed: s, track, entries: houseField(s), level: 3 }));
+  const sims = clearOnly || flyOnly ? [] : batchSeeds(0, 2).map((s) => simulatePhysicsRace({ seed: s, track, entries: houseField(s), level: 3 }));
   const racesFile = path.join(tmp, `${slug}.races.json`);
   fs.writeFileSync(racesFile, JSON.stringify(sims.map((s) => ({ frames: s.frames, tickMs: s.tickMs, durationMs: s.durationMs }))));
   const viewFile = path.join(tmp, `${slug}.view.json`);
   execFileSync('npx', ['vitest', 'run', '--config', 'report/vitest.config.js'], {
-    cwd: CLIENT, stdio: 'pipe', env: { ...process.env, REPORT_TRACK: trackFile, REPORT_RACES: racesFile, REPORT_OUT: viewFile, ...(clearOnly && { REPORT_CLEAR_ONLY: '1' }) },
+    cwd: CLIENT, stdio: 'pipe', env: { ...process.env, REPORT_TRACK: trackFile, REPORT_RACES: racesFile, REPORT_OUT: viewFile, ...(clearOnly && { REPORT_CLEAR_ONLY: '1' }), ...(flyOnly && { REPORT_FLY_ONLY: '1' }) },
   });
   const view = JSON.parse(fs.readFileSync(viewFile, 'utf8'));
   all[slug] = { name: track.name, clear: view.clear };
@@ -56,7 +58,8 @@ for (const slug of slugs) {
   const finishBlocked = finish.reduce((n, x) => n + x.blocked.length, 0);
   const pen = inTrack.filter((r) => r.from > 1);
   all[slug].finish = view.clear.finish ?? null;
-  console.log(`${slug.padEnd(36)} inside the track: computer ${view.clear.computer.stretches.length} / phone ${view.clear.phone.stretches.length} stretches (${inTrack.reduce((n, r) => n + r.metres, 0)} m) · near the camera: ${near} of ${looks} · camera in the land: ${inside} · after the line: ${pen.length} · finish shot blocked: ${finishBlocked}`);
+  const fly = Object.values(view.clear.flyover ?? {}).reduce((n, f) => n + f.near.length + f.inside.length, 0);
+  console.log(`${slug.padEnd(36)} inside the track: computer ${view.clear.computer.stretches.length} / phone ${view.clear.phone.stretches.length} stretches (${inTrack.reduce((n, r) => n + r.metres, 0)} m) · near the camera: ${near} of ${looks} · camera in the land: ${inside} · after the line: ${pen.length} · finish shot blocked: ${finishBlocked} · flyover: ${fly}`);
   fs.writeFileSync(outFile, JSON.stringify(all, null, 1));
 }
 fs.rmSync(tmp, { recursive: true, force: true });

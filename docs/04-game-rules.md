@@ -19,6 +19,7 @@
    - The whole race is then simulated, start to finish.
    - The finishing order, times and halfway splits are written to the database straight away. The API keeps them hidden until the race has finished.
 3. **The countdown** (5 s), then the race is **streamed** to everyone watching at 10–20 frames a second. Viewers only see positions; their device can't affect anything.
+   - **The start show** (26 Oct 2026; looks only, the race itself unchanged): a solo race started from the starting line shows the track card until everything is loaded, a 3.5 s flyover over the track (tap to skip), then the countdown from its beginning: "Your gate N" for 2 s, a big 3-2-1 with its beeps, "GO!" with the gates opening and the standings appearing. The solo player's view stays that far behind the race on the server, never playing faster to catch up. (Quick race and rooms: the same show in sync for everyone, with the scene loaded during the wait: next.)
 4. **The finish.**
    - The race is marked finished and coins are paid in the same transaction.
    - Solo players may race again straight away. A group moves on to a rematch on the same track (about 40 s later).

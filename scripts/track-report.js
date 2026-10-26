@@ -159,7 +159,7 @@ async function main() {
     const screens = JSON.parse(fs.readFileSync(path.join(out, 'screens.json'), 'utf8'));
     report.shots = screens.shots;
     report.load = screens.load;
-    report.lines.push(...loadLines(screens.load));
+    report.lines.push(...loadLines(screens.load, screens.flyLoad));
     if (screens.startLook) {
       // The "first 3 seconds" on screen, against every other track of its family (and kept for the next track's check).
       const vector = lookVector(screens.startLook);
@@ -256,6 +256,12 @@ function viewLines(view, kit) {
       lines.push({ part: 'Clear track', what: 'The finish shot: nothing drawn between it and the line or the catch area', value: blocked.length ? blocked.map((x) => `${x.drawing}, ${x.screen} screen: ${x.blocked.length} of ${x.looks} looks (${[...new Set(x.blocked.map((b) => b.by))].join(', ')})`).join('; ') : `clear (${fs.length} views)`, target: 'none', pass: blocked.length === 0 });
       lines.push({ part: 'Clear track', what: `The finish shot: nothing within ${CAMERA_CUT_M} m of its camera, never in the land`, value: close.length ? close.map((x) => `${x.drawing}, ${x.screen}: ${x.inside ? `inside ${x.inside}` : `${x.near.by} ${x.near.metres} m`}`).join('; ') : 'clear', target: 'none', pass: close.length === 0 });
     }
+    // The flyover before a race (phone and computer drawings): never near or inside anything drawn.
+    if (view.clear.flyover) {
+      const fl = Object.entries(view.clear.flyover).flatMap(([drawing, f]) => [...f.near.map((x) => ({ ...x, drawing })), ...f.inside.map((x) => ({ ...x, drawing, inside: true }))]);
+      const flyLooks = Object.values(view.clear.flyover).reduce((n, f) => n + f.looks, 0);
+      lines.push({ part: 'Clear track', what: `The flyover before the race: nothing within ${CAMERA_CLEAR_M} m of its camera, never in the land`, value: fl.length ? `${fl.length} of ${flyLooks} looks (first: ${fl[0].drawing}, ${(fl[0].ms / 1000).toFixed(2)} s, ${fl[0].inside ? `inside ${fl[0].by}` : `${fl[0].by} ${fl[0].metres} m`})` : `clear (${flyLooks} looks)`, target: 'none', pass: fl.length === 0 });
+    }
     const cc = view.clear.camera;
     const looks = cc.reduce((n, c) => n + c.looks, 0);
     const near = cc.flatMap((c) => c.near.map((x) => ({ ...x, race: c.race, screen: c.screen })));
@@ -269,7 +275,7 @@ function viewLines(view, kit) {
   return lines;
 }
 
-function loadLines(load) {
+function loadLines(load, flyLoad = null) {
   const lines = [];
   for (const screen of ['computer', 'phone']) {
     // The track and its world, judged on its budget; the race's own marbles (the same on every
@@ -287,6 +293,19 @@ function loadLines(load) {
       target: `at most ${b.calls} calls, ${b.triangles / 1000}k triangles`,
       pass: calls[calls.length - 1] <= b.calls && tris[tris.length - 1] <= b.triangles,
     });
+    // The flyover before the race (the start show): its busiest frame, on the same budget.
+    if (flyLoad?.[screen]?.length) {
+      const fly = flyLoad[screen].map((f) => ({ t: f.t, calls: f.calls - (f.marbles?.calls ?? 0), tris: f.triangles - (f.marbles?.triangles ?? 0) }));
+      const top = fly.reduce((w, f) => (f.calls > w.calls ? f : w), fly[0]);
+      const topTris = Math.max(...fly.map((f) => f.tris));
+      lines.push({
+        part: 'Drawing load',
+        what: `${screen === 'phone' ? 'Phone' : 'Computer'}: the flyover before the race (busiest frame)`,
+        value: `${top.calls} calls, ${Math.round(topTris / 1000)}k triangles (at ${(top.t / 1000).toFixed(1)} s of the flight)`,
+        target: `at most ${b.calls} calls, ${b.triangles / 1000}k triangles`,
+        pass: top.calls <= b.calls && topTris <= b.triangles,
+      });
+    }
   }
   return lines;
 }

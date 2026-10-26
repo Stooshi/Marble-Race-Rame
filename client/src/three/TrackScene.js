@@ -18,6 +18,7 @@ import { buildIceChannelGeometry, channelDetail, channelLipAt, channelPieces, ch
 import { DEFAULT_THEME, themeFor } from './themes';
 import { gatePlaces, StartGate } from './startGate';
 import { countdownPose, handover, launchHandover, launchPose, startLineShot } from './startCamera';
+import { flyoverPath, flyoverTop } from './flyover';
 import { buildTrackFeatures } from './trackFeatures';
 import { buildLaneMarkings } from './scenery/athletics';
 import { TV, tvCameras, tvMoment } from './tvMoments';
@@ -654,6 +655,34 @@ export class TrackScene {
       this.camera.updateProjectionMatrix();
     }
     this.applyMarbleScale();
+    this.render();
+  }
+
+  /**
+   * The flyover before a race (flyover.js): the flight over this track, worked out once per track.
+   * → { durationMs, poseAt(ms) } or null (no track yet).
+   */
+  flyoverFor() {
+    if (!this.centerline) return null;
+    if (this.flyover?.slug === this.track?.slug) return this.flyover.path;
+    const topAt = flyoverTop({
+      groups: [this.scenery, this.structures?.group, this.billboards?.group, this.trackMesh],
+      trackBelow: (x, z) => this.trackBelow(x, z),
+      groundY: TRACK_STYLE.groundY,
+    });
+    const path = flyoverPath(this.centerline, topAt);
+    this.flyover = { slug: this.track?.slug, path };
+    return path;
+  }
+
+  /** The big view `ms` into the flyover (the race's own camera moves are overridden for that frame). */
+  showFlyover(ms) {
+    const path = this.flyoverFor();
+    if (!path) return;
+    const { camera, target } = path.poseAt(ms);
+    this.camera.position.copy(camera);
+    this.camera.lookAt(target);
+    this.main.ready = false; // (the follow camera starts afresh from wherever the race's camera puts it next)
     this.render();
   }
 

@@ -256,6 +256,23 @@ export function raceEnd(raceId) {
   sync();
 }
 
+/**
+ * The start show's loading (Moses, 26 Oct 2026: the race begins only once everything is ready): the
+ * race sounds and this race's music, fetched and decoded. Resolves when they're in, at once when the
+ * sound isn't started yet (no gesture yet: nothing to load into), and never later than `maxMs`.
+ */
+export function preloadRace(raceId, maxMs = 2500) {
+  if (!ctx) return Promise.resolve(false);
+  const track = trackFor(raceId);
+  const loads = [...Object.values(SOUNDS), ...(buffered(track) ? [track] : [])].map((name) => Promise.resolve(loadSound(name)));
+  return Promise.race([Promise.all(loads).then(() => true), new Promise((ok) => setTimeout(() => ok(false), maxMs))]);
+}
+
+/** The countdown's beeps for this race stopped (the start show re-times them when the flyover is skipped). */
+export function stopCountdown(raceId) {
+  if (beeps && beeps.raceId === raceId) { try { beeps.src?.stop(); } catch { /* (done) */ } beeps = null; }
+}
+
 /** What is meant to play now (for tests and checks): { raceId, kind, track } or null. */
 export const musicState = () => (want ? { raceId: want.raceId, kind: want.kind, track: want.track ?? CEREMONY } : null);
 export const nowPlaying = () => (playing ? { raceId: playing.raceId, kind: playing.kind, name: playing.handle.name } : null);

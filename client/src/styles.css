@@ -458,6 +458,28 @@ main { padding-bottom: 48px; }
 .replay3d__countdown.is-go { color: #facc15; }
 @keyframes countdown-pop { 0% { transform: translate(-50%, -50%) scale(1.25); opacity: 1; } 80% { transform: translate(-50%, -50%) scale(0.95); opacity: 0.9; } 100% { transform: translate(-50%, -50%) scale(0.9); opacity: 0.6; } }
 @media (prefers-reduced-motion: reduce) { .replay3d__countdown { animation: none; } }
+/* The start show (StartShow.jsx; Moses, 26 Oct 2026): the track card while loading, the flyover's title and
+   "Tap to skip", and "Your gate" big while the camera settles on the field. */
+.startshow__card { position: absolute; inset: 0; z-index: 5; display: grid; align-items: end; overflow: hidden; color: #fff; }
+.startshow__pic { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.startshow__card::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(8, 11, 20, 0.05) 0%, rgba(8, 11, 20, 0.35) 45%, rgba(8, 11, 20, 0.9) 100%); }
+.startshow__cardtext { position: relative; z-index: 1; display: grid; gap: 6px; padding: 24px max(20px, env(safe-area-inset-left, 0px)) calc(28px + env(safe-area-inset-bottom, 0px)); max-width: 640px; }
+.startshow__series { font-family: var(--ms-cond, inherit); font-weight: 800; font-size: 0.85rem; letter-spacing: 0.12em; text-transform: uppercase; color: #ffd21f; }
+.startshow__name { font-family: var(--ms-cond, inherit); font-weight: 800; font-size: clamp(2rem, 7vw, 3.4rem); line-height: 1; text-wrap: balance; }
+.startshow__loading { display: grid; gap: 8px; color: rgba(255, 255, 255, 0.8); font-size: 0.95rem; }
+.startshow__loading i { display: block; height: 4px; width: min(260px, 70%); border-radius: 4px; background: linear-gradient(90deg, rgba(255,255,255,0.15) 0%, #ffd21f 50%, rgba(255,255,255,0.15) 100%); background-size: 200% 100%; animation: startshow-load 1.4s linear infinite; }
+@keyframes startshow-load { from { background-position: 100% 0; } to { background-position: -100% 0; } }
+.startshow__fly { position: absolute; inset: 0; z-index: 5; display: block; width: 100%; padding: 0; border: 0; background: none; color: #fff; cursor: pointer; text-align: left; font: inherit; }
+.startshow__flytitle { position: absolute; top: calc(env(safe-area-inset-top, 0px) + 14px); left: 50%; transform: translateX(-50%); display: grid; justify-items: center; gap: 2px; padding: 8px 16px; border-radius: 14px; background: rgba(8, 11, 20, 0.55); text-align: center; max-width: calc(100% - 120px); animation: startshow-in 0.5s ease-out both; }
+.startshow__flytitle strong { font-family: var(--ms-cond, inherit); font-weight: 800; font-size: clamp(1.3rem, 4.4vw, 2rem); line-height: 1.05; }
+.startshow__flytitle span { font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; color: #ffd21f; font-weight: 700; }
+.startshow__skip { position: absolute; bottom: calc(env(safe-area-inset-bottom, 0px) + 18px); right: calc(env(safe-area-inset-right, 0px) + 16px); padding: 8px 14px; border-radius: 999px; background: rgba(8, 11, 20, 0.6); font-weight: 700; font-size: 0.9rem; }
+@keyframes startshow-in { from { opacity: 0; transform: translate(-50%, -6px); } to { opacity: 1; transform: translate(-50%, 0); } }
+.startshow__gate { position: absolute; top: 30%; left: 50%; transform: translate(-50%, -50%); display: grid; justify-items: center; gap: 2px; padding: 10px 22px; border-radius: 18px; background: rgba(8, 11, 20, 0.6); color: #fff; font-family: var(--ms-cond, inherit); font-weight: 800; font-size: clamp(1.1rem, 3.6vw, 1.6rem); letter-spacing: 0.06em; text-transform: uppercase; animation: startshow-gate 0.4s ease-out both; }
+.startshow__gate strong { font-size: clamp(3rem, 12vw, 5.5rem); line-height: 1; color: #ffd21f; }
+@keyframes startshow-gate { from { opacity: 0; transform: translate(-50%, -50%) scale(0.92); } to { opacity: 1; transform: translate(-50%, -50%) scale(1); } }
+@media (prefers-reduced-motion: reduce) { .startshow__loading i, .startshow__flytitle, .startshow__gate { animation: none; } }
+.segmented--camera[hidden] { display: none !important; } /* (during the start show's card and flyover) */
 /* Grand Prix tracks: five start lights instead of 3, 2, 1 (they go out at GO). */
 .start-lights { display: flex; justify-content: center; gap: clamp(6px, 1.6vw, 12px); padding: 8px 12px; border-radius: 12px; background: rgba(17, 19, 26, 0.85); width: max-content; margin: 0 auto; }
 .start-lights__pod { display: flex; flex-direction: column; gap: 6px; padding: 6px; border-radius: 8px; background: #0b0c10; }

@@ -20,6 +20,8 @@ import { flaggedStretches, wallExposure } from '../src/three/scenery/groundCheck
 import { cameraClearance, corridorIntrusions, finishShotView, markStructures, nameOf, pieceFinder, stretchesOf, tunnelAllowance } from '../src/three/scenery/clearCheck';
 import { finishCutaway, finishShotPose } from '../src/three/TrackScene';
 import { stationRoof } from '../src/three/scenery/coaster';
+import { FLYOVER_MS, flyoverPath, flyoverTop } from '../src/three/flyover';
+import { TRACK_STYLE } from '../src/three/trackModel';
 
 const anything = new Proxy(function stub() {}, { get: () => anything, apply: () => anything, set: () => true });
 globalThis.document ??= { createElement: () => ({ getContext: () => anything, width: 0, height: 0 }) };
@@ -51,7 +53,8 @@ it.skipIf(!process.env.REPORT_TRACK)('track report: view checks', () => {
         if (o.userData.built) built.push(o);
       });
     }
-    const exposure = wallExposure(centerline, channel, track, ground, built);
+    const flyOnly = Boolean(process.env.REPORT_FLY_ONLY); // (only the flyover: checking every track at once)
+    const exposure = flyOnly ? [] : wallExposure(centerline, channel, track, ground, built);
     // The clear-track check, inside the track: everything drawn round it (land, banks, dressing,
     // landmarks, structures, billboards; not the obstacles, which stand in the channel on purpose,
     // nor see-through water and spray). Tunnels and caves close over the track on purpose.
@@ -62,20 +65,39 @@ it.skipIf(!process.env.REPORT_TRACK)('track report: view checks', () => {
       g.traverse((o) => { if (o.isMesh && o.visible && !o.material?.transparent && !/^tunnel/.test(nameOf(o))) drawnHere.push(o); });
     }
     markStructures(structures?.group);
-    const intrusions = corridorIntrusions(centerline, channel, drawnHere, { pieceAt: pieceFinder(scenery), allowed: tunnelAllowance(track.physics.kit) });
+    const intrusions = flyOnly ? [] : corridorIntrusions(centerline, channel, drawnHere, { pieceAt: pieceFinder(scenery), allowed: tunnelAllowance(track.physics.kit) });
     out.clear[lite ? 'phone' : 'computer'] = { stretches: stretchesOf(intrusions, channel.arc), samples: intrusions.length };
     // The finish shot (where the big view settles once anyone is home), on a wide and a tall screen: nothing
     // between it and the line or the catch area, nothing close round it, never inside the land.
-    if (channel.runout) {
+    if (channel.runout && !flyOnly) {
       const land = drawnHere.filter((o) => o.userData.ground || /^terrain|^banks/.test(nameOf(o)));
       const cut = finishCutaway(scenery.userData?.station ? stationRoof(scenery.userData.station) : null);
       const shots = [['wide', 16 / 9], ['tall', 9 / 19.5]].map(([screen, aspect]) => ({ screen, ...finishShotView(centerline, channel, finishShotPose(centerline, channel, aspect), drawnHere, land, { pieceAt: pieceFinder(scenery), cut }) }));
       out.clear.finish ??= {};
       out.clear.finish[lite ? 'phone' : 'computer'] = shots.map((x) => ({ screen: x.screen, looks: x.looks, blocked: x.blocked, near: x.near, inside: x.inside }));
     }
+    // The flyover before a race (Moses, 26 Oct 2026): the flight this drawing makes (its own scenery, as
+    // TrackScene.flyoverFor works it out), checked every 50 ms: nothing within CAMERA_CLEAR of the camera,
+    // never inside the land.
+    {
+      const flyScene = Object.assign(Object.create(TrackScene.prototype), { centerline, track });
+      const topAt = flyoverTop({ groups: [scenery, structures?.group, boardsHere?.group], trackBelow: (x, z) => flyScene.trackBelow(x, z), groundY: TRACK_STYLE.groundY });
+      const path = flyoverPath(centerline, topAt);
+      const land = drawnHere.filter((o) => o.userData.ground || /^terrain|^banks/.test(nameOf(o)));
+      const fly = { looks: 0, near: [], inside: [], height: Math.round(path.height) };
+      for (let ms = 0; ms <= FLYOVER_MS; ms += 50) {
+        const { camera } = path.poseAt(ms);
+        const c = cameraClearance(camera, drawnHere, land, { pieceAt: pieceFinder(scenery) });
+        fly.looks += 1;
+        if (c.near) fly.near.push({ ms, ...c.near, at: camera.toArray().map((x) => +x.toFixed(1)) });
+        if (c.inside) fly.inside.push({ ms, by: c.inside, at: camera.toArray().map((x) => +x.toFixed(1)) });
+      }
+      out.clear.flyover ??= {};
+      out.clear.flyover[lite ? 'phone' : 'computer'] = fly;
+    }
     out.ground[lite ? 'phone' : 'computer'] = {
       flagged: flaggedStretches(exposure, channel.arc),
-      normalMetres: Math.round((exposure.filter((e) => e.kind === 'normal').length / exposure.length) * channel.arc),
+      normalMetres: exposure.length ? Math.round((exposure.filter((e) => e.kind === 'normal').length / exposure.length) * channel.arc) : 0,
     };
   }
 
@@ -142,7 +164,7 @@ it.skipIf(!process.env.REPORT_TRACK)('track report: view checks', () => {
   const q = new Vector3();
   const ray = new Raycaster();
   // (REPORT_CLEAR_ONLY: only the clear-track checks above, for checking many tracks at once.)
-  for (const [r, race] of (process.env.REPORT_CLEAR_ONLY ? [] : races).entries()) {
+  for (const [r, race] of (process.env.REPORT_CLEAR_ONLY || process.env.REPORT_FLY_ONLY ? [] : races).entries()) {
     for (const [screen, aspect] of [['computer', 16 / 9], ['phone', 9 / 19.5]]) {
       const scene = Object.create(TrackScene.prototype);
       const camera = new PerspectiveCamera(50, aspect, 0.3, 3000);

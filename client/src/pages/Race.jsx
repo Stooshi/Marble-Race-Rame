@@ -54,6 +54,7 @@ export default function Race() {
   const [search] = useSearchParams();
   const startsHere = search.get('go') === '1';
   const started = useRef(false);
+  const showFor = useRef({}); // (the races this page plays the start show for; see `preparing` below)
   const startWhenReady = useCallback(() => {
     if (started.current) return;
     started.current = true;
@@ -153,6 +154,9 @@ export default function Race() {
   } : null;
   const isCreator = Boolean(user && race.created_by === user.id);
   const preparing = status === 'lobby' && startsHere && isCreator && Boolean(preload) && view !== '2d';
+  // The start show (track card, flyover, the gate, 3-2-1, GO: Moses, 26 Oct 2026) for a solo race started
+  // on this page: decided once per race, so it carries on after the race has started.
+  if (preparing) showFor.current[raceId] = true;
 
   if (status === 'lobby' && !preparing) {
     return <div className="page">{header}<Lobby details={details.data} onChange={reload} /></div>;
@@ -188,6 +192,8 @@ export default function Race() {
       {(meta || preparing) && shown === '3d' && <RaceFullScreen onLeave={() => (window.history.length > 1 ? navigate(-1) : navigate('/home'))} on2d={meta && newPhysics ? () => setView('2d') : null} />}
       {(meta || preparing) && shown === '3d' ? (
         <LiveRaceViewer3D
+          key={raceId}
+          intro={Boolean(showFor.current[raceId])}
           meta={meta}
           track={preload}
           onPrepared={preparing ? startWhenReady : null}

@@ -169,10 +169,12 @@ export function useRaceStream(raceId, { onLobbyUpdate } = {}) {
    * Hold the view `ms` behind the live race (the 3D view calls it once it is ready): `startsAt`, the
    * race's GO (wall clock ms). The catching up starts 1.5 s after the GO as shown.
    */
-  const holdBack = useCallback((ms, startsAt) => {
+  const holdBack = useCallback((ms, startsAt, { stay = false } = {}) => {
     const base = Math.max(0, Math.min(MAX_HOLD_MS, ms || 0));
     const goShown = (startsAt ?? Date.now()) + base;
-    hold.current = { base, decayFrom: performance.now() + (goShown + 1500 - Date.now()), decided: true };
+    // `stay` (a solo race's start show, Moses 26 Oct 2026): held back for good, never played faster to
+    // catch up (no one else is watching it live). Called again, it replaces the hold (the flyover skipped).
+    hold.current = { base, decayFrom: stay ? Infinity : performance.now() + (goShown + 1500 - Date.now()), decided: true };
   }, []);
 
   /** Interpolated frame for rendering at the current instant (see BUFFER_MS above). */

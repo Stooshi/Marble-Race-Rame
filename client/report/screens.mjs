@@ -58,6 +58,9 @@ try {
   for (const screen of ['computer', 'phone']) {
     const page = await open({ phone: screen === 'phone' });
     result.load[screen] = await page.evaluate((every) => window.kitView.raceLoad({ every }), plan.loadEvery ?? 2000);
+    // (The flyover before the race, the start show: a wider view, on the same budget.)
+    result.flyLoad ??= {};
+    result.flyLoad[screen] = await page.evaluate(() => window.kitView.flyoverLoad());
     await page.close();
   }
 } finally {

@@ -15,6 +15,7 @@ import { Frustum, Matrix4, Raycaster, Vector3 } from 'three';
 import { TrackScene } from '../src/three/TrackScene';
 import { frameAtTime } from '../src/utils/splits';
 import { COUNTDOWN_MS } from '../src/three/startCamera';
+import { FLYOVER_MS } from '../src/three/flyover';
 import { ITEMS, dressEntries } from '../src/shared/marbles';
 import { BUILT_MATERIALS } from '../src/shared/marbles/materials';
 
@@ -209,6 +210,17 @@ window.kitView = {
     return drawNow(t);
   },
   /** The follow camera's drawing load every `every` ms through the whole race. */
+  /** The flyover before a race (the start show), drawn every `every` ms: each frame's drawing load. */
+  flyoverLoad({ every = 350 } = {}) {
+    const out = [];
+    for (let ms = 0; ms <= FLYOVER_MS; ms += every) {
+      scene.showFlyover(ms);
+      scene.camera.updateMatrixWorld();
+      out.push({ t: ms, ...drawNow(0) });
+    }
+    return out;
+  },
+
   raceLoad({ every = 2000 } = {}) {
     const out = [];
     for (let t = 0; t <= race.durationMs; t += every) {
