@@ -21,6 +21,7 @@ import { FLYOVER_MS } from '../three/flyover';
 import { ownGate } from '../utils/standingsRows';
 import { FlyoverTitle, GateMoment, TrackCard } from './StartShow';
 import StartLights from './StartLights';
+import { useKeepAwake } from '../app/keepAwake';
 
 const WHOOSH_GAP_MS = 3500; // an overtaking whoosh at most this often
 const HOLD_FROM_MS = 250;     // the view held back when it gets ready later than this after the countdown began…
@@ -179,6 +180,8 @@ export default function LiveRaceViewer3D({
   const lagRef = useRef(null);
   const entryCount = meta?.entries?.length ?? 0;
   const show = useFinishShow({ finishes, count: entryCount, complete, clock });
+  // The screen stays on from the start show and countdown until the results board (app/keepAwake.js).
+  useKeepAwake(show.phase !== 'board');
   // Once the winner's moment has passed, the camera following the leader
   // watches the rest come home instead; the corner view bows out.
   const finishing = show.phase !== 'racing' && show.phase !== 'winner';

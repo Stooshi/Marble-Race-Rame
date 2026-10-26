@@ -12,6 +12,7 @@ import SkipToResults from './SkipToResults';
 import { entryLabel } from '../shared/playerName';
 import YourGate from './YourGate';
 import { standingsShown } from '../utils/standingsRows';
+import { useKeepAwake } from '../app/keepAwake';
 
 /**
  * Renders a race: the track on a canvas with marbles animated along it, plus
@@ -109,6 +110,8 @@ export default function RaceViewer({
   }, [size, meta, path, sample, entries, highlightSet]);
 
   const show = useFinishShow({ finishes, count: entries.length, complete, clock, time });
+  // A live race: the screen stays on until the results board (app/keepAwake.js); a replay leaves it alone.
+  useKeepAwake(live && show.phase !== 'board');
   // A live race (not a replay): the ceremony song when the finish ceremony appears.
   useEffect(() => {
     if (live && meta?.raceId && CEREMONY_PHASES.includes(show.phase)) raceCeremony(meta.raceId);
