@@ -7,7 +7,7 @@
 import { useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { applyMeta } from '../site/pageMeta';
-import Markdown, { headings } from './Markdown';
+import Markdown, { headings, Picture } from './Markdown';
 import { ARTICLES, related, sectionsWith } from './content';
 import { HUB } from './sections';
 import { crumbs, hubMeta, resolve, structuredData } from './seo';
@@ -113,7 +113,8 @@ function ArticlePage({ where, articles }) {
             <ol>{toc.map((h) => <li key={h.id}><a href={`#${h.id}`}>{h.text}</a></li>)}</ol>
           </nav>
         )}
-        <div className="hub-prose"><Markdown text={a.body} /></div>
+        <Picture slug={a.slug} name="header" eager />
+        <div className="hub-prose"><Markdown text={a.body} slug={a.slug} /></div>
         {a.sources.length > 0 && (
           <section className="hub-sources" aria-labelledby="hub-sources-h">
             <h2 id="hub-sources-h">Sources</h2>

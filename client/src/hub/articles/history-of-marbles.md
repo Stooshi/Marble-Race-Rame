@@ -4,8 +4,9 @@ description: From stone balls in ancient graves and Roman nut games to German gl
 section: history
 slug: history-of-marbles
 type: history
-status: draft
-updated: 2026-10-21
+status: published
+published: 2026-10-26
+updated: 2026-10-26
 shop: The Schoolyard Classics collection on Marble Spins is inspired by classic playground marbles, if you'd like to race in one.
 sources:
   - title: "Marble (toy) – Britannica"
@@ -13,7 +14,7 @@ sources:
     used_for: Pebbles, nuts and fruit pits; Augustus and nut marbles; marbles in North American mounds; materials; origin of the name
   - title: "Marble (toy) – Wikipedia"
     url: https://en.wikipedia.org/wiki/Marble_(toy)
-    used_for: Stone balls at Mohenjo-daro; the claim that marbles reached Britain from the Low Countries; Akro Agate founding year 1911
+    used_for: Stone balls at Mohenjo-daro; Akro Agate founding year 1911
   - title: "Porphyry balls, LDUCE-UC5174 – Petrie Museum of Egyptian and Sudanese Archaeology, UCL"
     url: https://collections.ucl.ac.uk/Details/collect/9522
     used_for: Naqada III stone balls from a grave, catalogued as "perhaps gaming pieces"
@@ -65,9 +66,17 @@ sources:
   - title: "National Marbles Tournament – Wikipedia"
     url: https://en.wikipedia.org/wiki/National_Marbles_Tournament
     used_for: Alternative founding year (1923); Wildwood since 1960
+  - title: "Ivory chess disc and two chess figures (Vats, Excavations at Harappa, 1940) – Harappa.com"
+    url: https://www.harappa.com/slide/ivory-chess-disc-and-two-chess-figures
+    used_for: Vats's 1940 note that balls and marbles of stone, shell, faience and pottery were unmistakably game objects at Harappa
+  - title: "nux – Lewis & Short, A Latin Dictionary"
+    url: https://alatius.com/ls/index.php?l=nux
+    used_for: Children playing with nuts, citing Suetonius, Augustus 83
 ---
 
 Marbles feel timeless, and in a way they are. But a lot of what gets repeated about their history is guesswork. This short history sticks to what museums, collectors' societies and historians can actually show, and says so when the evidence is thin.
+
+::picture timeline
 
 ## Ancient beginnings
 
@@ -75,21 +84,21 @@ The first "marbles" were not made at all. Britannica says early players used sea
 
 Some finds are suggestive:
 
-- **The Indus Valley.** Small stone balls from about 2500 BCE found at Mohenjo-daro have been identified by archaeologists as marbles [2] [REVIEW: this comes from Wikipedia citing Marshall's 1931 excavation report; check the report or a museum source before publishing].
+- **The Indus Valley.** Small stone balls from Mohenjo-daro, from about 2500 BCE, are often described as marbles [2]. At Harappa, another Indus city, the excavator Madho Sarup Vats wrote in 1940 that "balls and marbles in stone, shell, faience and pottery" were among the objects that could be said to be unmistakably for games [20].
 - **Egypt.** The Petrie Museum in London holds a set of small porphyry balls from a grave at Naqada, dated to the Naqada III period, late in Egypt's prehistory. The museum catalogues them as "perhaps gaming pieces" [3]. That is the honest answer: they may have been used in a game, but nobody can say they were marbles.
 - **North America.** Britannica notes that engraved marbles have been found in earthen mounds built by some early Native American peoples [1].
 
+::picture before-glass
+
 ## Rome: games with nuts
 
-Roman children played games with nuts, and Britannica says the young Octavian, the future Emperor Augustus, played with nut marbles like other Roman children [1]. The Roman writer Suetonius says that the grown-up Augustus relaxed by playing with little boys. In a well-known English translation, he played "at dice, marbles and nuts with little boys" [4] [REVIEW: "marbles" is the translator's word; check which Latin word Suetonius used before quoting it as marbles].
+Roman children played games with nuts, and Britannica says the young Octavian, the future Emperor Augustus, played with nut marbles like other Roman children [1]. The Roman writer Suetonius says that the grown-up Augustus relaxed by playing games with little boys. The classic Latin dictionary by Lewis and Short cites this passage for children playing with nuts [21]. One well-known English translation renders the game pieces as "dice, marbles and nuts" [4], so the "marbles" there are the translator's word.
 
-A Roman poem called the *Nux* ("The Walnut Tree") is often quoted in marble histories. It was once credited to Ovid, but scholars now consider it the work of someone else [5] [REVIEW: check the passage on children's nut games in the poem itself before describing it].
+A Roman poem called the *Nux* ("The Walnut Tree") is often quoted in marble histories. It was once credited to Ovid, but scholars now consider it the work of someone else [5].
 
 ## Medieval and early modern Europe
 
-Written evidence from the Middle Ages is patchy. Some histories say marbles reached Britain from the Low Countries in the medieval period [2] [REVIEW: Wikipedia cites Joy et al. 2016, Hide and Seek; check the book].
-
-By the 16th century the picture is clearer. Pieter Bruegel the Elder's painting *Children's Games* (1560), now in the Kunsthistorisches Museum in Vienna, includes children playing marbles among the dozens of games it shows [6].
+Written evidence from the Middle Ages is patchy. By the 16th century the picture is clearer. Pieter Bruegel the Elder's painting *Children's Games* (1560), now in the Kunsthistorisches Museum in Vienna, includes children playing marbles among the dozens of games it shows [6].
 
 The English word itself comes from stone. Britannica explains that the name comes from the 18th-century practice of making marbles from chips of marble [1]. In parts of Germany and Austria, stone marbles were ground into shape in water-powered mills on streams, and working historic mills survive at Neidlingen in the Swabian Alps and Seeham in Austria [8].
 
@@ -101,6 +110,8 @@ The marbles collectors prize most today come from the glassmaking villages of Th
 - Playing marbles were being made by about **1850**, and German handmade marbles were produced until just before the Second World War [7].
 - Lauscha stayed the world's marble capital until the early 20th century [8].
 
+::picture marble-scissors
+
 German makers lost their lead in the early 1900s. The Marble Collectors Society of America points to three reasons: American machines that could mass-produce marbles, the cut-off of German imports during the First World War, and US import tariffs in the 1920s [7].
 
 ## Clay and china
@@ -111,10 +122,12 @@ For most children, though, the everyday marble was clay. The Marble Collectors S
 
 The big change came in Akron, Ohio. **Martin F. Christensen** filed a patent for a "machine for making spherical bodies or balls" on 19 December 1902. It was published as US patent 802,495 on 24 October 1905 [11]. His company made machine-made glass marbles in Akron from 1904 to 1917 [12]. (You will see other start dates, such as 1903, in some histories.)
 
+::picture christensen-machine
+
 Ohio and West Virginia soon became marble country. West Virginia already had a strong glass industry, and by the late 1930s several marble plants were running there [13].
 
 - **Akro Agate** was founded in Akron in 1910 [13][14], or 1911 by some accounts [2], moved to Clarksburg, West Virginia, in 1914, and closed in 1951 [13][14].
-- **Vitro Agate** was making marbles in Vienna and Parkersburg, West Virginia, from 1932 [13] [REVIEW: e-WV gives 1932 to 1987 before a sale, and other sources give later end dates; confirm before giving an end date].
+- **Vitro Agate** was making marbles in Vienna and Parkersburg, West Virginia, from 1932 [13].
 - **Marble King** was founded in 1949 by Berry Pink and Sellers Peltier. After a fire in January 1958 it moved to Paden City, West Virginia, where it still makes marbles [15].
 
 By the 1950s the **cat's eye**, a clear marble with a colored vane inside, was common. The Marble Collectors Society of America says cat's eyes became the main marble after the Second World War, made both in East Asia and in the US [16]. Marble King's Roger Howdyshell is credited with the first American-made ones [15], but who made the very first cat's eye is disputed.
@@ -126,7 +139,7 @@ Interest in marbles as a children's game peaked in the first half of the 1900s a
 Two famous events keep competitive marbles alive.
 
 - **Tinsley Green, England.** Local legend says marbles were played at Tinsley Green, West Sussex, as far back as 1588, when two young men supposedly settled a contest over a local girl with a game of marbles. The modern championship began in **1932** and became the British and World Marbles Championship in 1938. It is played every Good Friday at the Greyhound pub, by teams of six [17].
-- **Wildwood, USA.** The US National Marbles Tournament began in the early 1920s. The tournament gives 1922 [18], Wikipedia gives 1923 [19] [REVIEW: founding year differs between sources]. It has been held in Wildwood, New Jersey, since 1960 [19].
+- **Wildwood, USA.** The US National Marbles Tournament began in the early 1920s. The tournament itself gives 1922 [18], and other accounts, including Wikipedia, give 1923 [19]. It has been held in Wildwood, New Jersey, since 1960 [19].
 
 ## Marbles today
 

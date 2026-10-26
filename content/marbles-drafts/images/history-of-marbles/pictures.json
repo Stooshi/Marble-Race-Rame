@@ -29,13 +29,13 @@
      "file": "timeline-1600.webp",
      "width": 1600,
      "height": 900,
-     "bytes": 37998
+     "bytes": 40512
     },
     {
      "file": "timeline-800.webp",
      "width": 800,
      "height": 450,
-     "bytes": 17112
+     "bytes": 18444
     }
    ]
   },
@@ -48,13 +48,13 @@
      "file": "before-glass-1600.webp",
      "width": 1600,
      "height": 900,
-     "bytes": 26946
+     "bytes": 23478
     },
     {
      "file": "before-glass-800.webp",
      "width": 800,
      "height": 450,
-     "bytes": 12580
+     "bytes": 11498
     }
    ]
   },
@@ -86,13 +86,13 @@
      "file": "christensen-machine-1600.webp",
      "width": 1600,
      "height": 960,
-     "bytes": 34164
+     "bytes": 36856
     },
     {
      "file": "christensen-machine-800.webp",
      "width": 800,
      "height": 480,
-     "bytes": 16756
+     "bytes": 18506
     }
    ]
   },

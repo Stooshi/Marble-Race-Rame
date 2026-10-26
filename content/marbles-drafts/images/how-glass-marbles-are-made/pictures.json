@@ -29,13 +29,13 @@
      "file": "cane-cut-1600.webp",
      "width": 1600,
      "height": 900,
-     "bytes": 36900
+     "bytes": 37650
     },
     {
      "file": "cane-cut-800.webp",
      "width": 800,
      "height": 450,
-     "bytes": 17636
+     "bytes": 18156
     }
    ]
   },
@@ -48,13 +48,13 @@
      "file": "single-gather-1600.webp",
      "width": 1600,
      "height": 860,
-     "bytes": 22998
+     "bytes": 26146
     },
     {
      "file": "single-gather-800.webp",
      "width": 800,
      "height": 430,
-     "bytes": 10916
+     "bytes": 12874
     }
    ]
   },
@@ -67,13 +67,13 @@
      "file": "pontil-1600.webp",
      "width": 1600,
      "height": 1000,
-     "bytes": 33284
+     "bytes": 34632
     },
     {
      "file": "pontil-800.webp",
      "width": 800,
      "height": 500,
-     "bytes": 14828
+     "bytes": 15692
     }
    ]
   },
@@ -86,13 +86,13 @@
      "file": "christensen-machine-1600.webp",
      "width": 1600,
      "height": 960,
-     "bytes": 34164
+     "bytes": 36856
     },
     {
      "file": "christensen-machine-800.webp",
      "width": 800,
      "height": 480,
-     "bytes": 16756
+     "bytes": 18506
     }
    ]
   },
@@ -105,13 +105,13 @@
      "file": "machine-method-1600.webp",
      "width": 1600,
      "height": 980,
-     "bytes": 28962
+     "bytes": 32740
     },
     {
      "file": "machine-method-800.webp",
      "width": 800,
      "height": 490,
-     "bytes": 13972
+     "bytes": 16726
     }
    ]
   },
@@ -124,13 +124,13 @@
      "file": "colour-1600.webp",
      "width": 1600,
      "height": 860,
-     "bytes": 22590
+     "bytes": 23532
     },
     {
      "file": "colour-800.webp",
      "width": 800,
      "height": 430,
-     "bytes": 11272
+     "bytes": 12062
     }
    ]
   },
@@ -143,13 +143,13 @@
      "file": "annealing-1600.webp",
      "width": 1600,
      "height": 860,
-     "bytes": 25416
+     "bytes": 28814
     },
     {
      "file": "annealing-800.webp",
      "width": 800,
      "height": 430,
-     "bytes": 10554
+     "bytes": 12800
     }
    ]
   },

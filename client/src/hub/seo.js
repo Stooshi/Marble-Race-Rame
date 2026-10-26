@@ -7,6 +7,12 @@
 import { metaFor, SITE_NAME } from '../site/pageMeta';
 import { SITE_URL } from '../site/canonical';
 import { HUB, HUB_PATH, sectionOf } from './sections';
+import PICTURES from './pictures.json';
+
+/** An article's share picture (public/share/marbles/<slug>.jpg, 1200 × 630), if it has one. */
+export const shareImage = (article) => (PICTURES[article?.slug] ? `${SITE_URL}/share/marbles/${article.slug}.jpg` : null);
+/** An article's header picture, wide (16:9), if it has one. */
+const headerImage = (article) => (PICTURES[article?.slug]?.pictures?.header ? `${SITE_URL}/hub-img/${article.slug}/header-1600.webp` : null);
 
 const PUBLISHER = { '@type': 'Organization', name: SITE_NAME, url: `${SITE_URL}/`, logo: { '@type': 'ImageObject', url: `${SITE_URL}/icon-512.png` } };
 const at = (path) => `${SITE_URL}${path}`;
@@ -42,7 +48,8 @@ export function hubMeta(pathname, articles, { preview = false } = {}) {
   const m = where?.kind === 'article' ? { title: where.article.title, description: where.article.description }
     : where?.kind === 'section' ? { title: where.section.heading, description: where.section.description }
       : where?.kind === 'hub' ? { title: HUB.title, description: HUB.description } : { title: 'Page not found', description: base.description };
-  return { ...base, title: `${m.title} · ${SITE_NAME}`, description: m.description, noindex: preview || !where || where.article?.status === 'draft' };
+  const image = where?.kind === 'article' ? shareImage(where.article) : null;
+  return { ...base, ...(image ? { image } : {}), title: `${m.title} · ${SITE_NAME}`, description: m.description, noindex: preview || !where || where.article?.status === 'draft' };
 }
 
 export function breadcrumbLd(where) {
@@ -53,13 +60,15 @@ export function breadcrumbLd(where) {
   };
 }
 
-export function articleLd(article, image = `${SITE_URL}/share/marble-spins-1200x630.png`) {
+export function articleLd(article) {
+  const own = [headerImage(article), shareImage(article)].filter(Boolean);
+  const image = own.length ? own : [`${SITE_URL}/share/marble-spins-1200x630.png`];
   return {
     '@context': 'https://schema.org',
     '@type': 'Article',
     headline: article.title,
     description: article.description,
-    image: [image],
+    image,
     datePublished: isoDate(article.published),
     dateModified: isoDate(article.updated),
     author: { '@type': 'Organization', name: SITE_NAME, url: `${SITE_URL}/` },

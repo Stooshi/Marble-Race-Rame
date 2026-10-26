@@ -4,8 +4,9 @@ description: Clay, china, aggies, swirls, onionskins, sulphides, Lutzes, cat's e
 section: types
 slug: marble-types-guide
 type: guide
-status: draft
-updated: 2026-10-21
+status: published
+published: 2026-10-26
+updated: 2026-10-26
 shop: Clearies, cat's eyes, aggies and steelies inspired the Schoolyard Classics collection on Marble Spins, if you'd like to race in one.
 sources:
   - title: "Marble (toy) – Wikipedia"
@@ -53,6 +54,8 @@ Pick up a jar of old marbles and you will find dozens of different looks. Collec
 
 ## Clay and china
 
+::picture clay-and-china
+
 ### Clay marbles
 
 Clay marbles are the plain, slightly rough ones, often tan, sometimes dyed red, blue, green or yellow. The Marble Collectors Society of America calls them "the most common old marble that you will find" [2]. Wikipedia notes they were made in huge numbers in the 1800s and early 1900s, which is why they are sometimes called **commies**, short for "commons" [1].
@@ -64,6 +67,8 @@ A glazed version, usually brown or blue with small light "eyes" where marbles to
 **Chinas** are made of glazed porcelain, often with painted lines or patterns [1].
 
 ## Stone and steel
+
+::picture aggie-and-steelie
 
 ### Aggies
 
@@ -81,17 +86,25 @@ These are the marbles collectors prize most. Most were made in Germany between a
 
 A **swirl** has bands or threads of color twisting from pole to pole. Handmade swirls get their twist from the way they were turned while being made [6]. Machine-made swirls exist too, and Wikipedia describes the common "swirly" as a glass marble with one swirly color [1].
 
+::picture handmade-swirl
+
 ### Onionskins
 
 An **onionskin** is a handmade swirl whose surface is covered with many closely packed streaks of color, a bit like the layers of an onion [1].
+
+::picture onionskin
 
 ### Lutzes
 
 A **Lutz** has bands of glittering metallic flecks in the glass, made with finely ground copper flakes or goldstone. The bands are usually edged with thin white strands [4]. There are banded, onionskin, ribbon and other Lutz varieties [4]. The name is often linked to the glassmaker Nicholas Lutz, but he is wrongly credited with them [1].
 
+::picture lutz
+
 ### Sulphides
 
 A **sulphide** is a large clear glass marble with a small white figure inside, usually an animal, sometimes a person or a religious figure. The figure is porcelain, not sulfur. Early collectors simply assumed it was sulfur, and the name stuck. Sulphides were made in Lauscha, Germany, from the mid-1800s until 1936 [5].
+
+::picture sulphide
 
 ## Machine-made glass
 
@@ -105,6 +118,8 @@ A **clearie** is a plain transparent marble, clear or colored, with nothing insi
 
 A **cat's eye** is a clear marble with colored vanes inside, like the pupil of a cat's eye [1][7]. By the 1950s they were common. The Marble Collectors Society of America says they became the main marble after the Second World War, made in East Asia and in the US [6]. Marble King's Roger Howdyshell is credited with the first American-made cat's eyes [7], but who made the very first one is disputed.
 
+::picture clearie-and-cats-eye
+
 ### Other names you will see
 
 Machine-made marbles come in many patterns, and makers gave them their own names. A few examples from Akro Agate of West Virginia, which made marbles from 1910 to 1951 [8]:
@@ -112,6 +127,8 @@ Machine-made marbles come in many patterns, and makers gave them their own names
 - **Corkscrews**: two or more spirals of color winding from pole to pole.
 - **Oxbloods**: a deep red patch or swirl with fine black threads in it.
 - **Moonies**: milky white opalescent glass.
+
+::picture corkscrew-oxblood-moonie
 
 ## Shooters and taws
 
@@ -129,6 +146,8 @@ Marbles come in many sizes. Wikipedia gives a typical range of about 0.5 to 3.5 
 - **Standard play marbles** are about 5/8 inch, or 16 mm. The US tournament uses 5/8 inch targets [11], and the Spielwarenmesse magazine gives 16 mm as the size for club play [10].
 - **Shooters** are usually a bit bigger, up to about 3/4 inch for tournaments [11][12].
 - **Big marbles**, like many modern art marbles, can be around 2 inches (5 cm) across. Wikipedia notes these are sometimes called "toe breakers" [1].
+
+::picture sizes
 
 ## A note for new collectors
 

@@ -4,8 +4,9 @@ description: Cane-cut handmades, marble scissors and punties, then the machines 
 section: making
 slug: how-glass-marbles-are-made
 type: explainer
-status: draft
-updated: 2026-10-21
+status: published
+published: 2026-10-26
+updated: 2026-10-26
 shop: Curious how the classics looked? Browse the Marble Spins shop for racing marbles with traditional glass designs.
 sources:
   - title: "Handmade Marbles – Marble Collectors Society of America (marblecollecting.com)"
@@ -44,6 +45,9 @@ sources:
   - title: "Marble King – e-WV: The West Virginia Encyclopedia"
     url: https://www.wvencyclopedia.org/entries/1443
     used_for: Present-day factory output of more than a million marbles a day
+  - title: "Colored glass – Corning Museum of Glass, All About Glass"
+    url: https://allaboutglass.cmog.org/definition/colored-glass
+    used_for: Glass colored with a dissolved metallic oxide
 ---
 
 A glass marble looks simple: a small, perfectly round ball. Getting molten glass into that shape, with a swirl of color locked inside, took glassmakers a lot of ingenuity. There are two main ways to do it: by hand, one marble at a time, or by machine, by the thousand.
@@ -68,15 +72,21 @@ Almost all old handmade glass marbles were made this way [1].
 4. **Twist.** As the end is rounded, it is also twisted. That twist is what gives many handmade marbles their spiral, or helix, pattern [2].
 5. **Cut it free.** The ball is snipped off the cane with the scissors, and the next marble is started from the same rod [2].
 
+::picture cane-cut
+
 Making one handmade swirl could take between four and twelve separate steps by hand [1].
 
 ### Single-gather marbles
 
 The other method builds one marble at a time on the end of a metal rod called a **punty** [1]. A blob of glass is built up in layers on the punty, rounded, and then cut free [2]. Sulphide marbles, with a small white figure inside, were made in a similar way: a heated figure was pressed into glass on a punty, or wrapped in glass from a heated rod, and more glass was folded around it [6].
 
+::picture single-gather
+
 ### The pontil mark
 
 Every handmade glass marble has at least one **pontil**: a small rough spot at one pole where it was cut off the cane or the punty [1]. Collectors use it to tell handmade marbles from machine-made ones.
+
+::picture pontil
 
 ## Machine-made marbles
 
@@ -90,6 +100,8 @@ Until the early 1900s, all glass marbles were handmade [11]. That changed in Akr
 - a chain drive that turns the rolls in **opposite directions**, so a soft lump of glass fed in between them is rolled into a sphere;
 - a spring-loaded mounting that lets one roll move aside when the ball is big enough, so the finished marble drops out [4].
 
+::picture christensen-machine
+
 Christensen's machines were not automatic. They had no automatic feed, so the glass had to be fed in by hand [5]. His marbles were made from a single stream of glass, in one or two colors [5].
 
 ### The modern method
@@ -102,6 +114,8 @@ Later machines automated the whole process. The Marble Collectors Society of Ame
 4. **Roll.** The gob drops onto a pair of long, spiral-grooved rollers turning in opposite directions. As it travels along the rollers, it is turned and pressed into a sphere.
 5. **Collect.** The finished marbles roll off the end to cool.
 
+::picture machine-method
+
 Done this way, a factory can make a huge number of marbles. Marble King in West Virginia says it makes more than a million marbles a day [12]. Most go to industry rather than toy boxes, for example as the agitator balls in aerosol cans [11].
 
 ## Where the color comes from
@@ -110,13 +124,17 @@ Done this way, a factory can make a huge number of marbles. Marble King in West 
 - **Machine-made marbles** get their color from the glass streams. Feeding several streams of different colored glass together gives multicolored marbles [2].
 - **Cat's eyes** are made by injecting colored glass vanes into a stream of clear glass as it is made [10].
 
-Glass itself is colored with metal compounds added to the melt [REVIEW: general glass chemistry, not checked against a marble-specific source; add a source such as the Corning Museum of Glass or drop this line].
+::picture colour
+
+The glass itself is usually colored by a metal oxide dissolved in it, one of the ways glassmakers color glass [13].
 
 ## Annealing: the slow cool
 
 Hot glass can't just be left to cool on a bench. If it cools too fast, it is left strained inside and may break, either while cooling or much later [7]. So glassmakers **anneal** it, cooling it slowly in a special oven called a **lehr** [7][8]. Historic lehrs were long tunnels that the glass was slowly pushed through; today they work with conveyor belts [8].
 
-Handmade sulphide marbles were put in an annealing chamber to cool slowly and avoid breaking [6]. Glass artists who make marbles today still do the same. One describes putting each finished marble into an annealing oven to cool over a 12-hour period [9]. Whether, and how, factories anneal machine-made marbles varies [REVIEW: no factory source found describing the annealing of machine-made toy marbles; confirm or drop].
+::picture annealing
+
+Handmade sulphide marbles were put in an annealing chamber to cool slowly and avoid breaking [6]. Glass artists who make marbles today still do the same. One describes putting each finished marble into an annealing oven to cool over a 12-hour period [9].
 
 ## Handmade marbles today
 

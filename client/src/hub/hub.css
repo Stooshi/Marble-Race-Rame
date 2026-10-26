@@ -66,3 +66,9 @@
   .hub-play, .hub-shop, .hub-related, .hub-crumbs, .hub-toc { display: none; }
   .hub-prose, .hub-sources { color: #000; max-width: none; }
 }
+
+/* The articles' pictures (./pictures.json): full width of the reading column on phones, rounded. */
+.hub-figure { margin: 0 0 1.4em; max-width: 940px; }
+.hub-figure img { display: block; width: 100%; height: auto; border-radius: 14px; background: var(--ms-card); }
+.hub-figure figcaption { margin-top: 8px; font-size: 0.92rem; line-height: 1.45; color: var(--ms-muted); max-width: 68ch; }
+.hub-article > .hub-figure { margin: 0; }

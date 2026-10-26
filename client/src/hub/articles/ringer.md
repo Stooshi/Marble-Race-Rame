@@ -4,8 +4,9 @@ description: How Ringer works, as played at the US National Marbles Tournament: 
 section: games
 slug: ringer
 type: rules
-status: draft
-updated: 2026-10-21
+status: published
+published: 2026-10-26
+updated: 2026-10-26
 shop: Want a classic look for your racer? The Schoolyard Classics collection on Marble Spins is inspired by old playground marbles.
 sources:
   - title: "Tournament Rules – US National Marbles Tournament (rules and equipment PDF)"
@@ -32,7 +33,7 @@ sources:
 
 ## A little background
 
-The national tournament began in the early 1920s. The tournament's own website gives 1922 [2], while other accounts, including Wikipedia, give 1923 [3] [REVIEW: founding year differs between sources, 1922 vs 1923; ask the tournament or check a 1920s newspaper]. It has moved between several New Jersey shore towns and has been held in Wildwood every year since 1960, apart from 2020 and 2021, when it was canceled during the COVID-19 pandemic [3]. Players, often called **mibsters** [4], must be local champions aged 7 to 14 [1]. The tournament says it runs more than 1,200 games over four days, and each year national champions win college scholarships [2].
+The national tournament began in the early 1920s. The tournament's own website gives 1922 [2], while other accounts, including Wikipedia, give 1923 [3]. It has moved between several New Jersey shore towns and has been held in Wildwood every year since 1960, apart from 2020 and 2021, when it was canceled during the COVID-19 pandemic [3]. Players, often called **mibsters** [4], must be local champions aged 7 to 14 [1]. The tournament says it runs more than 1,200 games over four days, and each year national champions win college scholarships [2].
 
 ## Ringer is not Ring Taw
 
@@ -44,13 +45,19 @@ Britain's big marble event, the British and World Marbles Championship at Tinsle
 - **Target marbles.** 13 identical glass marbles, the standard 5/8 inch (about 16 mm) size [1].
 - **Shooters.** Each player has one shooter, different from the targets. It must be glass or stone, such as agate or flint, never metal, and between 1/2 and 3/4 inch across. Shooters are measured before the tournament and may only be swapped at the start of a game [1].
 
+::picture court
+
 ## Setting up: the cross
 
 The 13 marbles are placed in an **X**: one in the center, with three more along each of the four arms, spaced 3 inches apart, center to center [1]. Tournaments use a template called a **rack** to place them exactly. The player who shoots first chooses the angle of the X [1].
 
+::picture the-cross
+
 ## Lagging: who goes first
 
 Both players stand or kneel at the edge of the circle farthest from a lag line and toss their shooters toward it at the same time. The shooter that stops closest to the line wins the lag and that player goes first [1]. A lag is lost if the shooter hits the rack or the border, or if the player cups it. If both players foul, they lag again. Lagging is also used to break a tie at the end of a game [1].
+
+::picture lagging
 
 ## Shooting
 
@@ -69,12 +76,16 @@ Every turn starts from outside the ring, with the player crouching or kneeling a
 4. If you knock nothing out, your turn ends [1].
 5. All marbles must stop moving before you shoot again. Picking up a shooter while it is still rolling or spinning ends your turn [1].
 
+::picture shooting
+
 **Marbles on the line.** A marble resting on the line is out if more than half of it is outside the circle. The rules sum this up as: a target on the line is out, a shooter on the line is in [1].
+
+::picture on-the-line
 
 ## Winning
 
 - **First to seven.** A player who knocks out seven marbles wins straight away. Seven or more in the first inning is called a **stick** and wins the game [1].
-- **Innings.** An inning is complete when both players have shot once from the edge of the ring. The rules say "there are six innings in a game", but the tie rule speaks of a tie "after the seventh inning", allowing up to two more innings and then a lag to decide [1] [REVIEW: the official PDF itself is inconsistent on six vs seven innings; confirm with the National Marbles Committee].
+- **Innings.** An inning is complete when both players have shot once from the edge of the ring. The official rules set a limit on the number of innings in a game. If the game is still tied at the end, up to two more innings are played, and then a lag decides [1].
 - **Finals.** In the final games there is no inning limit, and play goes on until someone reaches seven [1].
 - Otherwise, the player with the most marbles at the end of the last inning wins. The National Marbles Committee may shorten games to keep the schedule [1].
 
@@ -95,7 +106,7 @@ A forfeited point puts one marble back in the center. A player with no points wh
 - **Home and school games** often use a smaller ring, any number of marbles, and more than two players.
 - **Keeps or fun.** The tournament plays for points only. In casual games, agree in advance whether anyone keeps the marbles they win.
 - **Local tournaments** may set their own ages, inning limits or time limits. Check with the organizer.
-- **The rules change over time.** The official PDF carries no year or edition [REVIEW: no date on the rules document; re-check the official site before publishing in case a newer version is posted].
+- **The rules change over time.** The official rules document carries no year or edition, so check the tournament's website for the current version before you rely on a detail.
 
 ## Play it online
 

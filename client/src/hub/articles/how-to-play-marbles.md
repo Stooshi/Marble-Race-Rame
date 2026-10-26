@@ -4,8 +4,9 @@ description: New to marbles? Learn the words, how to hold and flick a shooter, h
 section: games
 slug: how-to-play-marbles
 type: guide
-status: draft
-updated: 2026-10-21
+status: published
+published: 2026-10-26
+updated: 2026-10-26
 shop: If you like the look of old playground marbles, the Schoolyard Classics collection on Marble Spins has racing marbles inspired by them.
 sources:
   - title: "Marble (toy) – Britannica"
@@ -40,6 +41,8 @@ Marbles is one of the oldest games there is. Long before glass marbles existed, 
 - **A playing surface.** Packed dirt, a smooth floor, a short carpet or a paved yard all work. Very bumpy ground makes aiming a matter of luck.
 - **Something to mark a ring.** Chalk on pavement, a stick in dirt, or a loop of string or yarn on a carpet.
 
+::picture what-you-need
+
 ## The words you will hear
 
 Marble players have their own vocabulary, and it changes from place to place. A few common ones [7]:
@@ -59,11 +62,17 @@ The classic shot is a flick of the thumb, not a throw.
 3. Put at least one knuckle of your shooting hand on the ground. This is called **knuckling down** [1][5].
 4. Aim, then flick your thumb forward to send the shooter off.
 
+::picture knuckling-down
+
 Your hand should stay still while you shoot. Pushing your hand forward as you flick gets you closer to the target, so tournaments treat it as a foul. In the US it is called **hunching** [5], and at the British championship it is called **fudging** [6]. If knuckling down feels hard at first, younger children can simply flick the marble with a finger instead [2].
+
+::picture hunching
 
 ## Deciding who goes first: lagging
 
 In a lag, each player shoots or tosses their shooter toward a line drawn on the ground. Whoever gets closest to the line goes first [5]. In casual play you can also just take turns, or flip a coin.
+
+::picture lagging
 
 ## Three easy first games
 
@@ -78,6 +87,8 @@ This is the game most people picture when they think of marbles. It is a casual 
 5. When you miss, it is the next player's turn.
 6. Whoever has knocked out the most marbles when the ring is empty wins.
 
+::picture ring-game
+
 ### 2. Conqueror
 
 A good game for two or more players on open ground [2].
@@ -86,6 +97,8 @@ A good game for two or more players on open ground [2].
 2. The next player shoots at it. A hit captures the marble.
 3. After a hit, the shooter puts down a new marble to start the next round. After a miss, the shooter's marble stays where it landed and becomes a new target.
 4. Play until one player has all the marbles, or until everyone has had enough.
+
+::picture conqueror
 
 ### 3. Hundreds
 
@@ -97,12 +110,14 @@ A two-player game scored in points, so nobody loses any marbles [2].
 4. If only one player's marble lands inside, that player scores 10 points and keeps shooting, scoring 10 more each time they land inside, until they miss.
 5. The first player to reach 100 points wins.
 
+::picture hundreds
+
 ## Playing for fun or for keeps
 
 Before you start, agree on whether marbles change hands.
 
 - **Playing for keeps** (keepsies) means the marbles you win are yours to keep. Many people who grew up with marbles remember it this way. One writer at The Strong museum recalls the chant "Winner keeps, loser weeps!" [4]
-- **Playing for fun**, sometimes called **playing for fair** [REVIEW: no authoritative source found for the term "for fair"; check before publishing], means everyone gets their own marbles back at the end. You count the marbles you knocked out, or keep score in points as in Hundreds.
+- **Playing for fun** means everyone gets their own marbles back at the end. You count the marbles you knocked out, or keep score in points as in Hundreds.
 
 Playing for keeps is an option, not the default. With young children it often ends in tears, and The Toy Association's Genius of Play site advises against it for younger and less experienced players [3]. For family games, play for fun.
 

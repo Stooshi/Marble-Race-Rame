@@ -29,13 +29,13 @@
      "file": "what-you-need-1600.webp",
      "width": 1600,
      "height": 800,
-     "bytes": 25106
+     "bytes": 26386
     },
     {
      "file": "what-you-need-800.webp",
      "width": 800,
      "height": 400,
-     "bytes": 11742
+     "bytes": 12906
     }
    ]
   },
@@ -48,13 +48,13 @@
      "file": "knuckling-down-1600.webp",
      "width": 1600,
      "height": 900,
-     "bytes": 28878
+     "bytes": 34676
     },
     {
      "file": "knuckling-down-800.webp",
      "width": 800,
      "height": 450,
-     "bytes": 13642
+     "bytes": 17396
     }
    ]
   },
@@ -67,13 +67,13 @@
      "file": "hunching-1600.webp",
      "width": 1600,
      "height": 900,
-     "bytes": 21520
+     "bytes": 23544
     },
     {
      "file": "hunching-800.webp",
      "width": 800,
      "height": 450,
-     "bytes": 10458
+     "bytes": 11748
     }
    ]
   },
@@ -86,13 +86,13 @@
      "file": "lagging-1600.webp",
      "width": 1600,
      "height": 900,
-     "bytes": 24656
+     "bytes": 27138
     },
     {
      "file": "lagging-800.webp",
      "width": 800,
      "height": 450,
-     "bytes": 9554
+     "bytes": 10970
     }
    ]
   },
@@ -105,13 +105,13 @@
      "file": "ring-game-1600.webp",
      "width": 1600,
      "height": 1000,
-     "bytes": 37122
+     "bytes": 39532
     },
     {
      "file": "ring-game-800.webp",
      "width": 800,
      "height": 500,
-     "bytes": 13182
+     "bytes": 15372
     }
    ]
   },
@@ -124,13 +124,13 @@
      "file": "conqueror-1600.webp",
      "width": 1600,
      "height": 900,
-     "bytes": 29628
+     "bytes": 24856
     },
     {
      "file": "conqueror-800.webp",
      "width": 800,
      "height": 450,
-     "bytes": 11154
+     "bytes": 9202
     }
    ]
   },
@@ -143,13 +143,13 @@
      "file": "hundreds-1600.webp",
      "width": 1600,
      "height": 900,
-     "bytes": 28056
+     "bytes": 29886
     },
     {
      "file": "hundreds-800.webp",
      "width": 800,
      "height": 450,
-     "bytes": 10560
+     "bytes": 11806
     }
    ]
   },

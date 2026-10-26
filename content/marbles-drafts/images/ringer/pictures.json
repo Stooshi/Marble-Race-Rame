@@ -28,14 +28,14 @@
     {
      "file": "court-1600.webp",
      "width": 1600,
-     "height": 1060,
-     "bytes": 33450
+     "height": 1130,
+     "bytes": 38496
     },
     {
      "file": "court-800.webp",
      "width": 800,
-     "height": 530,
-     "bytes": 14184
+     "height": 565,
+     "bytes": 17250
     }
    ]
   },
@@ -48,13 +48,13 @@
      "file": "the-cross-1600.webp",
      "width": 1600,
      "height": 1000,
-     "bytes": 29838
+     "bytes": 33278
     },
     {
      "file": "the-cross-800.webp",
      "width": 800,
      "height": 500,
-     "bytes": 12274
+     "bytes": 15042
     }
    ]
   },
@@ -67,13 +67,13 @@
      "file": "lagging-1600.webp",
      "width": 1600,
      "height": 1000,
-     "bytes": 36234
+     "bytes": 39372
     },
     {
      "file": "lagging-800.webp",
      "width": 800,
      "height": 500,
-     "bytes": 13292
+     "bytes": 15602
     }
    ]
   },
@@ -86,13 +86,13 @@
      "file": "shooting-1600.webp",
      "width": 1600,
      "height": 1000,
-     "bytes": 44970
+     "bytes": 47870
     },
     {
      "file": "shooting-800.webp",
      "width": 800,
      "height": 500,
-     "bytes": 18136
+     "bytes": 20204
     }
    ]
   },
@@ -105,13 +105,13 @@
      "file": "on-the-line-1600.webp",
      "width": 1600,
      "height": 940,
-     "bytes": 27252
+     "bytes": 31610
     },
     {
      "file": "on-the-line-800.webp",
      "width": 800,
      "height": 470,
-     "bytes": 10966
+     "bytes": 14074
     }
    ]
   },

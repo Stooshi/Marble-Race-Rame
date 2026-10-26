@@ -1,0 +1,244 @@
+{
+ "history-of-marbles": {
+  "pictures": {
+   "header": {
+    "alt": "Illustration of a row of objects on a shelf, from left to right: a round pebble, a walnut, a clay marble, a china marble, a handmade onionskin, a machine-made corkscrew and a cat's eye.",
+    "caption": "From pebbles and nuts to glass. Illustration, not photos of historical objects.",
+    "width": 1600,
+    "height": 900
+   },
+   "timeline": {
+    "alt": "Illustrated timeline of marbles: stone balls at Mohenjo-daro around 2500 BCE; Roman children's nut games; Bruegel's 1560 painting of children at marbles; marble scissors in Lauscha around 1846; clay marbles mass-made in the US from the 1870s; Christensen's machine patent, filed 1902 and published 1905; tournaments from the 1920s and 1930s; cat's eyes common by the 1950s.",
+    "caption": "Some milestones from this history, as an illustrated timeline. Illustration.",
+    "width": 1600,
+    "height": 900
+   },
+   "before-glass": {
+    "alt": "Illustration of what the earliest marbles may have been: round pebbles, nuts and fruit pits, and small stone balls, on bare earth.",
+    "caption": "Before glass: pebbles, nuts and fruit pits, and small stone balls whose use is uncertain. An illustration, not a picture of particular finds.",
+    "width": 1600,
+    "height": 900
+   },
+   "marble-scissors": {
+    "alt": "Illustration of a glowing glass cane with a hot, newly rounded swirl marble at its end, held between the blades of a pair of marble scissors.",
+    "caption": "Marble scissors cutting a marble from a glass cane, the method used in Lauscha from around 1846. Illustration.",
+    "width": 1600,
+    "height": 900
+   },
+   "christensen-machine": {
+    "alt": "Diagram of the principle of Christensen's marble machine: two grooved rolls turning in opposite directions roll a lump of soft glass into a ball between them, with a spring letting one roll move aside.",
+    "caption": "The idea behind Christensen's machine (patent filed 1902, published 1905): two grooved rolls turning in opposite directions. A simplified illustration, not a copy of the patent drawing.",
+    "width": 1600,
+    "height": 960
+   }
+  }
+ },
+ "how-glass-marbles-are-made": {
+  "pictures": {
+   "header": {
+    "alt": "Illustration of a glowing glass cane with a hot, newly rounded swirl marble at its end, held between the blades of a pair of marble scissors.",
+    "caption": "A marble cut from a glass cane with marble scissors. Illustration.",
+    "width": 1600,
+    "height": 900
+   },
+   "cane-cut": {
+    "alt": "Illustration of the five steps of making a cane-cut marble: make a glass cane with the design inside, heat its end until soft, round it off, twist it for the spiral, and cut it free with the marble scissors.",
+    "caption": "Cane-cut marbles in five steps. Illustration.",
+    "width": 1600,
+    "height": 900
+   },
+   "single-gather": {
+    "alt": "Illustration of a single-gather marble: a ball of hot glass built up in layers on the end of a metal rod called a punty.",
+    "caption": "A single-gather marble is built up on a punty, then rounded and cut free. Illustration.",
+    "width": 1600,
+    "height": 860
+   },
+   "pontil": {
+    "alt": "Illustration of a handmade swirl marble with its pontil mark, the small rough spot at one pole where it was cut free, circled.",
+    "caption": "Every handmade marble has a pontil: a small rough spot where it was cut free. Illustration.",
+    "width": 1600,
+    "height": 1000
+   },
+   "christensen-machine": {
+    "alt": "Diagram of the principle of Christensen's marble machine: two grooved rolls turning in opposite directions roll a lump of soft glass into a ball between them, with a spring letting one roll move aside when the ball is big enough.",
+    "caption": "Christensen's machine (patent filed 1902, published 1905): two grooved rolls turning in opposite directions. A simplified illustration, not a copy of the patent drawing.",
+    "width": 1600,
+    "height": 960
+   },
+   "machine-method": {
+    "alt": "Illustration of the machine method in five numbered steps: glass melted in a furnace, a stream of molten glass, a rotating shear cutting a gob, spiral-grooved rollers turning it into a sphere, and finished marbles collected to cool.",
+    "caption": "The machine method: melt, stream, cut, roll, collect. Illustration.",
+    "width": 1600,
+    "height": 980
+   },
+   "colour": {
+    "alt": "Illustration of where a marble's colour comes from: a handmade marble's coloured rods built into the cane, a machine-made marble's streams of coloured glass flowing together, and a cat's eye's coloured vanes injected into clear glass.",
+    "caption": "Where the colour comes from: the cane, the glass streams, or vanes injected into clear glass. Illustration.",
+    "width": 1600,
+    "height": 860
+   },
+   "annealing": {
+    "alt": "Illustration of annealing: marbles travelling on a conveyor through a long oven called a lehr, from hot at one end to cool at the other.",
+    "caption": "Annealing: the glass cools slowly in a lehr so it doesn't crack later. Illustration.",
+    "width": 1600,
+    "height": 860
+   }
+  }
+ },
+ "how-to-play-marbles": {
+  "pictures": {
+   "header": {
+    "alt": "Illustration seen from above: a chalk ring on pavement with a small group of marbles in the middle and a shooter marble at the edge, a dotted line showing its aim.",
+    "caption": "A ring, some marbles and a shooter: all you need to start. Illustration.",
+    "width": 1600,
+    "height": 900
+   },
+   "what-you-need": {
+    "alt": "Illustration of what you need to play marbles: a few small target marbles, one slightly bigger shooter marble, and a stick of chalk and a piece of string for marking a ring.",
+    "caption": "Target marbles, a shooter, and chalk or string to mark a ring. Illustration.",
+    "width": 1600,
+    "height": 800
+   },
+   "knuckling-down": {
+    "alt": "Labelled diagram of a hand knuckling down, seen from the side: the knuckles rest on the ground, the marble sits in the bent index finger, the thumb is tucked behind it, and an arrow shows the thumb flicking the marble forward.",
+    "caption": "Knuckling down: a knuckle on the ground, the marble in the bent index finger, the thumb behind it. Diagram.",
+    "width": 1600,
+    "height": 900
+   },
+   "hunching": {
+    "alt": "Diagram comparing two shots: on the left, marked right, the hand stays still and only the thumb moves; on the right, marked wrong, the hand is pushed forward while shooting, which is the foul called hunching.",
+    "caption": "Only the thumb moves. Pushing your hand forward is a foul: hunching in the US, fudging in Britain. Diagram.",
+    "width": 1600,
+    "height": 900
+   },
+   "lagging": {
+    "alt": "Diagram of lagging seen from above: two players send their shooters toward a line, and the shooter that stops closest to the line wins the first turn.",
+    "caption": "Lagging: whoever stops closest to the line goes first. Diagram.",
+    "width": 1600,
+    "height": 900
+   },
+   "ring-game": {
+    "alt": "Diagram of a simple ring game seen from above, in three numbered steps: a shooter fired from outside the chalk ring, a target marble knocked out of the ring, and the shooter stopping inside the ring, where the player shoots again from.",
+    "caption": "A simple ring game: shoot from outside the ring; knock a marble out and stay inside, and you shoot again from where your shooter stopped. Diagram.",
+    "width": 1600,
+    "height": 1000
+   },
+   "conqueror": {
+    "alt": "Diagram of Conqueror: one player tosses a marble onto the ground, the next player shoots at it; a hit captures it, a miss leaves the shooter's marble where it stopped as the new target.",
+    "caption": "Conqueror: hit the marble and it's yours; miss, and your marble becomes the next target. Diagram.",
+    "width": 1600,
+    "height": 900
+   },
+   "hundreds": {
+    "alt": "Diagram of Hundreds: two players shoot toward a small circle; when only one marble lands inside, that player scores 10 points and shoots again, and the first to 100 wins.",
+    "caption": "Hundreds: only one marble in the circle scores 10. First to 100 wins. Diagram.",
+    "width": 1600,
+    "height": 900
+   }
+  }
+ },
+ "marble-types-guide": {
+  "pictures": {
+   "header": {
+    "alt": "Illustration of marble types side by side: a banded agate aggie, an onionskin covered in coloured streaks, a cat's eye, a sulphide with a white dog inside, a handmade swirl, an oxblood, a Lutz with glittering copper bands, a clay marble, a moonie and a corkscrew.",
+    "caption": "Some of the marble types in this guide. Illustration in the Marble Spins style, not photos of real marbles.",
+    "width": 1600,
+    "height": 900
+   },
+   "clay-and-china": {
+    "alt": "Illustration of five early marbles: a dull tan clay marble, a faded blue dyed clay marble, glossy brown and blue Bennington marbles with small light spots in the glaze, and a white china marble with hand-painted green and red rings and lines.",
+    "caption": "Clay marbles are plain and slightly rough. Benningtons are glazed, with light \"eyes\" where they touched other marbles in the kiln. Chinas are glazed porcelain with painted lines. Illustration.",
+    "width": 1600,
+    "height": 550
+   },
+   "aggie-and-steelie": {
+    "alt": "Illustration of an aggie, a polished agate marble with wavy bands of red-brown, orange and cream, next to a steelie, a shiny steel ball.",
+    "caption": "An aggie (agate, or glass made to look like agate) and a steelie (steel). Illustration.",
+    "width": 1600,
+    "height": 740
+   },
+   "handmade-swirl": {
+    "alt": "Illustration of a handmade glass swirl marble: in the clear glass a core of fine white threads in a lattice, with red, blue, yellow and green ribbons twisting round it from pole to pole. A small rough pontil mark is marked at the top.",
+    "caption": "A handmade swirl, its bands twisting from pole to pole, with the small rough pontil mark where it was cut free. Illustration.",
+    "width": 1600,
+    "height": 1000
+   },
+   "onionskin": {
+    "alt": "Illustration of an onionskin marble: its whole surface covered with closely packed thin streaks of red, yellow, white, blue, orange and green running from pole to pole, under clear glass, with the pontil mark at the top where the streaks meet.",
+    "caption": "An onionskin: closely packed streaks of colour all over, like the layers of an onion. Illustration.",
+    "width": 1600,
+    "height": 1000
+   },
+   "lutz": {
+    "alt": "Illustration of a Lutz marble: clear glass with bands of glittering copper flecks twisting through it, each band edged with thin white strands.",
+    "caption": "A Lutz: bands of glittering copper flecks (goldstone) in the glass, edged with thin white strands. Illustration.",
+    "width": 1600,
+    "height": 1000
+   },
+   "sulphide": {
+    "alt": "Illustration of a sulphide marble: a large clear glass marble with a small white figure of a sitting dog on a little base inside it.",
+    "caption": "A sulphide: a large clear marble with a small white figure inside, here a dog. The figure is porcelain, not sulfur. Illustration.",
+    "width": 1600,
+    "height": 1000
+   },
+   "clearie-and-cats-eye": {
+    "alt": "Illustration of two machine-made glass marbles: a plain transparent green clearie with a few tiny air bubbles, and a clear cat's eye with a red and yellow vane in the middle shaped like a cat's pupil.",
+    "caption": "A clearie (plain transparent glass) and a cat's eye (clear glass with coloured vanes inside). Illustration.",
+    "width": 1600,
+    "height": 740
+   },
+   "corkscrew-oxblood-moonie": {
+    "alt": "Illustration of three machine-made marbles: a corkscrew with red and yellow spirals winding round a white marble, an oxblood with a deep red swirl containing fine black threads on milky white glass, and a moonie of milky white opalescent glass with a bluish sheen and a warm glow at one edge.",
+    "caption": "A corkscrew (spirals of colour winding from pole to pole), an oxblood (a deep red swirl with fine black threads) and a moonie (milky white opalescent glass). Illustration.",
+    "width": 1600,
+    "height": 660
+   },
+   "sizes": {
+    "alt": "Diagram of marble sizes drawn to scale over a millimetre ruler: a 16 millimetre (5/8 inch) play marble, a 19 millimetre (3/4 inch) shooter and a 5 centimetre (about 2 inch) big marble.",
+    "caption": "Marble sizes to scale: a standard play marble, a tournament shooter at its largest, and a big marble. Illustration.",
+    "width": 1600,
+    "height": 900
+   }
+  }
+ },
+ "ringer": {
+  "pictures": {
+   "header": {
+    "alt": "Illustration seen from above: a Ringer court, a chalk circle on concrete inside a wooden border, with 13 marbles in an X in the middle and a shooter at the edge.",
+    "caption": "Ringer: 13 marbles in a cross in a 10-foot ring. Illustration.",
+    "width": 1600,
+    "height": 900
+   },
+   "court": {
+    "alt": "Diagram of the Ringer court seen from above, drawn to scale: a 12-foot square of concrete with a raised wooden border, a 10-foot circle in the middle, a centre mark where the 13 marbles go, and two lag lines that touch the circle and run parallel to the border.",
+    "caption": "The court: a 10-foot circle on a 12-foot square, with two lag lines touching the circle. The court is drawn to scale; the marbles are drawn larger. Diagram.",
+    "width": 1600,
+    "height": 1130
+   },
+   "the-cross": {
+    "alt": "Diagram of the Ringer set-up drawn to scale: 13 marbles in an X, one in the middle and three along each arm, 3 inches apart centre to centre.",
+    "caption": "The cross: one marble in the middle and three on each arm, 3 inches apart. The first shooter chooses which way the X points. Drawn to scale. Diagram.",
+    "width": 1600,
+    "height": 1000
+   },
+   "lagging": {
+    "alt": "Diagram of lagging in Ringer: both players toss their shooters at the same time from the far edge of the circle toward the lag line; the shooter that stops closest to the line wins first shot.",
+    "caption": "Lagging: both toss from the far edge at the same time; closest to the lag line shoots first. Diagram.",
+    "width": 1600,
+    "height": 1000
+   },
+   "shooting": {
+    "alt": "Diagram of a Ringer turn seen from above: the first shot is taken from outside the circle and knocks a target marble out for one point; the shooter stops inside the circle, and the next shot is taken from where it stopped.",
+    "caption": "Each marble knocked out scores one. If your shooter stays inside, shoot again from where it stopped. Diagram.",
+    "width": 1600,
+    "height": 1000
+   },
+   "on-the-line": {
+    "alt": "Diagram of the on-the-line rule: a target marble lying on the circle's line with more than half of it outside counts as out, while a shooter lying on the line counts as in.",
+    "caption": "On the line: a target on the line is out, a shooter on the line is in. Diagram.",
+    "width": 1600,
+    "height": 940
+   }
+  }
+ }
+}

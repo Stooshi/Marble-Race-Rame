@@ -13,6 +13,7 @@ import { blocks, headings, slugify } from './Markdown';
 import { crumbs, hubMeta, resolve, structuredData } from './seo';
 import HubPages from './HubPages';
 import MarblesHubRoute, { hubOpen, preloadHub } from './route';
+import PICTURES from './pictures.json';
 
 const article = (over = {}) => `---
 title: ${over.title ?? 'Ringer rules'}
@@ -89,9 +90,12 @@ describe('switched off until Moses publishes', () => {
     expect(hits).toEqual([]);
     expect(readFileSync(join(src, '..', 'vercel.json'), 'utf8')).not.toMatch(/marbles/);
   });
-  it('has no published article yet, and no draft is in the site\'s code', () => {
-    expect(ARTICLES).toEqual([]);
-    expect(hubRoutes()).toEqual(['/marbles']);
+  it('the first five articles are ready behind the switch (26 Oct 2026), and no draft is in the site\'s code', () => {
+    expect(ARTICLES.map((a) => a.path).sort()).toEqual([
+      '/marbles/games/how-to-play-marbles', '/marbles/games/ringer', '/marbles/history/history-of-marbles',
+      '/marbles/making/how-glass-marbles-are-made', '/marbles/types/marble-types-guide',
+    ]);
+    expect(hubRoutes()).toContain('/marbles/games');
   });
 });
 
@@ -189,5 +193,38 @@ describe('the review drafts (content/marbles-drafts/)', () => {
       // every [n] cited has a source
       for (const m of a.body.matchAll(/\[(\d+(?:\s*,\s*\d+)*)\](?!\()/g)) for (const n of m[1].split(',')) expect(Number(n)).toBeLessThanOrEqual(a.sources.length);
     }
+  });
+});
+
+describe('the published articles and their pictures', () => {
+  const pub = join(__dirname, '..', '..', 'public');
+  it('no [REVIEW] mark left, every citation has its source', () => {
+    for (const a of ARTICLES) {
+      expect(a.body, a.slug).not.toMatch(/\[REVIEW/);
+      for (const m of a.body.matchAll(/\[(\d+(?:\s*,\s*\d+)*)\](?!\()/g)) for (const n of m[1].split(',')) expect(Number(n), a.slug).toBeLessThanOrEqual(a.sources.length);
+    }
+  });
+  it('every picture placed has its alt text, caption and files (800 and 1600 px), and every article a header and a share picture', () => {
+    for (const a of ARTICLES) {
+      const own = PICTURES[a.slug];
+      expect(own, a.slug).toBeTruthy();
+      const names = ['header', ...[...a.body.matchAll(/^::picture\s+([a-z0-9-]+)\s*$/gm)].map((m) => m[1])];
+      for (const n of names) {
+        const p = own.pictures[n];
+        expect(p, `${a.slug}/${n}`).toBeTruthy();
+        expect(p.alt.length, `${a.slug}/${n}`).toBeGreaterThan(40);
+        for (const w of [800, 1600]) expect(existsSync(join(pub, 'hub-img', a.slug, `${n}-${w}.webp`)), `${a.slug}/${n}-${w}`).toBe(true);
+      }
+      expect(existsSync(join(pub, 'share', 'marbles', `${a.slug}.jpg`)), a.slug).toBe(true);
+    }
+  });
+  it('the article page shows its pictures; its share picture is its own', () => {
+    const a = ARTICLES.find((x) => x.slug === 'ringer');
+    const html = at(a.path, <HubPages NotFound={NF} />);
+    expect(html).toContain('/hub-img/ringer/header-800.webp');
+    expect(html).toContain('/hub-img/ringer/court-1600.webp 1600w');
+    expect(html).toContain('<figcaption>');
+    expect(hubMeta(a.path, ARTICLES).image).toMatch(/\/share\/marbles\/ringer\.jpg$/);
+    expect(structuredData(resolve(a.path, ARTICLES), ARTICLES)[0].image[0]).toMatch(/header-1600\.webp$/);
   });
 });

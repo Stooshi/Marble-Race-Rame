@@ -19,15 +19,18 @@ export const C = {
 const esc = (t) => String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;');
 
 /** A label: big condensed capitals (and an optional smaller line under it). anchor: start | middle | end. */
-export function label(x, y, text, { size = 40, anchor = 'start', color = C.chalk, sub = null, subColor = C.muted } = {}) {
+// Text is set larger than it looks on a big screen, so it can still be read on a phone (where the
+// 1600 px picture is shown about 360 px wide).
+export const TEXT_SCALE = 1.45;
+export function label(x, y, text, { size: size0 = 40, anchor = 'start', color = C.chalk, sub = null, subColor = C.muted } = {}) {
+  const size = size0 * TEXT_SCALE;
   return `<text x="${x}" y="${y}" fill="${color}" font-family="Barlow Condensed" font-weight="800" font-size="${size}" letter-spacing="1" text-anchor="${anchor}">${esc(String(text).toUpperCase())}</text>`
     + (sub ? `<text x="${x}" y="${y + size * 0.9}" fill="${subColor}" font-family="Source Sans 3" font-size="${Math.round(size * 0.68)}" text-anchor="${anchor}">${esc(sub)}</text>` : '');
 }
 /** A plain line of text. */
-export const text = (x, y, t, { size = 30, anchor = 'start', color = C.soft, weight = 400 } = {}) =>
-  `<text x="${x}" y="${y}" fill="${color}" font-family="Source Sans 3" font-weight="${weight}" font-size="${size}" text-anchor="${anchor}">${esc(t)}</text>`;
+export const text = (x, y, t, { size: size0 = 30, anchor = 'start', color = C.soft, weight = 400 } = {}) => { const size = size0 * TEXT_SCALE; return `<text x="${x}" y="${y}" fill="${color}" font-family="Source Sans 3" font-weight="${weight}" font-size="${size}" text-anchor="${anchor}">${esc(t)}</text>`; };
 /** A title across the top left. */
-export const title = (t, { x = 70, y = 92, size = 54 } = {}) => label(x, y, t, { size });
+export const title = (t, { x = 70, y = 92, size = 44 } = {}) => label(x, y, t, { size });
 
 /** A marble (one of marbles.mjs's pictures) of diameter d centred at x, y, with a soft shadow (top-down: just below right). */
 export function marble(ctx, img, x, y, d, { shadow = true, topDown = true } = {}) {
@@ -48,7 +51,8 @@ export function arrow(x1, y1, x2, y2, { color = C.yellow, width = 6, dash = null
     + `<path d="M${p1[0]} ${p1[1]} L${x2} ${y2} L${p2[0]} ${p2[1]}" stroke="${color}" stroke-width="${width}" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`;
 }
 /** A dimension line with end ticks and its measure written beside it. */
-export function dim(x1, y1, x2, y2, t, { color = C.yellow, side = -1, size = 34 } = {}) {
+export function dim(x1, y1, x2, y2, t, { color = C.yellow, side = -1, size: size0 = 34 } = {}) {
+  const size = size0 * TEXT_SCALE;
   const a = Math.atan2(y2 - y1, x2 - x1); const nx = -Math.sin(a) * 16; const ny = Math.cos(a) * 16;
   const mx = (x1 + x2) / 2; const my = (y1 + y2) / 2;
   const tx = mx + side * -Math.sin(a) * 34; const ty = my + side * Math.cos(a) * 34 + size * 0.35;
@@ -126,9 +130,9 @@ export const PLAY = {
     let b = title('What you need');
     b += marble(ctx, 'clearie', 270, 380, 120, { topDown: false }) + marble(ctx, 'corkscrew', 400, 400, 110, { topDown: false }) + marble(ctx, 'clay-tan', 330, 500, 105, { topDown: false })
       + marble(ctx, 'oxblood', 200, 520, 100, { topDown: false });
-    b += label(300, 650, 'Target marbles', { anchor: 'middle', sub: 'any small marbles · 16 mm in tournaments' });
+    b += label(300, 650, 'Target marbles', { anchor: 'middle', sub: 'any small ones' });
     b += marble(ctx, 'cats-eye', 800, 450, 170, { topDown: false });
-    b += label(800, 650, 'A shooter', { anchor: 'middle', sub: 'a little bigger · glass or stone' });
+    b += label(800, 650, 'A shooter', { anchor: 'middle', sub: 'a little bigger' });
     // Chalk and string.
     b += `<g transform="rotate(-18 1270 430)"><rect x="1180" y="410" width="190" height="44" rx="10" fill="${C.chalk}"/><rect x="1180" y="410" width="40" height="44" rx="10" fill="#C9D0DE"/></g>`;
     b += `<path d="M1150 520 C 1230 470 1330 560 1400 500 C 1440 470 1460 520 1420 545" stroke="#E8C88A" stroke-width="7" fill="none" stroke-linecap="round"/>`;
@@ -166,7 +170,7 @@ export const PLAY = {
     b += `<g opacity="0.3">${hand(1060, gy, 0.85)}</g>` + hand(1180, gy, 0.85) + marble(ctx, 'cats-eye', 1180 + 143, gy - 109, 58, { shadow: false });
     b += arrow(1000, gy + 60, 1170, gy + 60, { color: C.red, width: 7 });
     b += nope(950, 190) + label(1000, 205, 'Hunching', { sub: 'pushing the hand forward: a foul', color: C.chalk });
-    b += text(1030, gy + 140, 'In Britain the same foul is called fudging.', { size: 30, color: C.muted });
+    b += text(1000, gy + 140, 'In Britain: fudging.', { size: 30, color: C.muted });
     return svg(1600, 900, b, { mark: 'Diagram' });
   },
 
@@ -198,7 +202,7 @@ export const PLAY = {
     b += marble(ctx, 'cats-eye', cx + 0.22 * r, cy + 0.02 * r + 40, 44) + `<circle cx="${cx + 0.22 * r}" cy="${cy + 0.02 * r + 40}" r="34" stroke="${C.yellow}" stroke-width="5" fill="none" stroke-dasharray="10 8"/>`;
     b += badge(cx + 0.22 * r + 60, cy + 150, 3) + label(cx + r + 110, cy + 120, 'Still inside?', { sub: 'shoot again from here' });
     b += `<path d="M${cx + 0.22 * r + 30} ${cy + 0.02 * r + 60} L ${cx + r + 100} ${cy + 115}" stroke="${C.yellow}" stroke-width="4" stroke-dasharray="6 8"/>`;
-    b += label(sx - 60, sy + 110, 'Shoot from', { sub: 'outside the ring' });
+    b += label(40, sy + 110, 'Shoot from', { sub: 'outside the ring' });
     return svg(1600, 1000, b, { mark: 'Diagram' });
   },
 
@@ -206,11 +210,11 @@ export const PLAY = {
     let b = title('Conqueror');
     b += slab(60, 150, 1480, 690);
     // 1: a marble tossed out; 2: the next player shoots at it. Then: hit, captured; miss, the new target.
-    b += marble(ctx, 'corkscrew', 560, 360, 60) + badge(640, 330, 1) + label(680, 345, 'Toss a marble', { sub: 'onto the ground' });
-    b += marble(ctx, 'cats-eye', 230, 700, 60) + arrow(262, 676, 528, 392, { dash: '2 16', width: 6 }) + badge(150, 620, 2) + label(300, 740, 'Next player shoots at it');
-    b += `<line x1="930" y1="200" x2="930" y2="800" stroke="#3A4560" stroke-width="3"/>`;
-    b += yes(1010, 360) + label(1060, 375, 'Hit', { sub: 'the marble is yours' }) + text(1060, 450, 'Put down a new one to start again.', { size: 28, color: C.muted });
-    b += nope(1010, 610) + label(1060, 625, 'Miss', { sub: 'your marble stays where it stopped' }) + text(1060, 700, 'It is the next target.', { size: 28, color: C.muted });
+    b += marble(ctx, 'corkscrew', 520, 330, 60) + badge(600, 300, 1) + label(640, 312, 'Toss', { sub: 'a marble out' });
+    b += marble(ctx, 'cats-eye', 230, 680, 60) + arrow(262, 656, 490, 362, { dash: '2 16', width: 6 }) + badge(150, 600, 2) + label(300, 720, 'Shoot at it');
+    b += `<line x1="1000" y1="200" x2="1000" y2="800" stroke="#3A4560" stroke-width="3"/>`;
+    b += yes(1080, 330) + label(1130, 345, 'Hit', { sub: 'it\'s yours' });
+    b += nope(1080, 600) + label(1130, 615, 'Miss', { sub: 'yours is the' }) + text(1130, 720, 'next target', { size: 27, color: C.muted });
     return svg(1600, 900, b, { mark: 'Diagram' });
   },
 
@@ -223,8 +227,8 @@ export const PLAY = {
     b += marble(ctx, 'cats-eye', 260, 400, 54) + marble(ctx, 'aggie', 260, 600, 54) + label(180, 300, 'Two players');
     b += arrow(290, 400, cx - 30, cy - 20, { dash: '2 16', via: [650, 320], width: 6 }) + marble(ctx, 'cats-eye', cx - 10, cy - 10, 54);
     b += arrow(290, 600, cx - 220, cy + 140, { dash: '2 16', via: [600, 680], color: C.soft, width: 6 }) + marble(ctx, 'aggie', cx - 200, cy + 150, 54);
-    b += label(cx + 170, cy - 20, '+10 points', { color: C.yellow, sub: 'only one inside: shoot again' });
-    b += text(cx + 170, cy + 80, 'First to 100 wins.', { size: 32, color: C.chalk, weight: 600 });
+    b += label(cx + 150, cy - 40, '+10 points', { color: C.yellow, sub: 'if only yours is in' });
+    b += text(cx + 150, cy + 120, 'First to 100 wins.', { size: 26, color: C.chalk, weight: 600 });
     return svg(1600, 900, b, { mark: 'Diagram' });
   },
 };
@@ -252,7 +256,7 @@ export const RINGER = {
 
   court: (ctx) => {
     // To scale: 12 ft square (70 px a foot), the 10 ft circle, the centre mark, two lag lines.
-    const ft = 66; const w = 1600; const h = 1060;
+    const ft = 66; const w = 1600; const h = 1130;
     const cx = 640; const cy = 560; const half = 6 * ft; const r = 5 * ft;
     let b = title('The Ringer court');
     b += `<rect x="${cx - half - 14}" y="${cy - half - 14}" width="${2 * half + 28}" height="${2 * half + 28}" rx="6" fill="${C.wood}"/>`;
@@ -284,8 +288,8 @@ export const RINGER = {
     b += label(1170, 380, '3 on each arm');
     b += label(1170, 460, '3 in apart', { sub: 'centre to centre' });
     b += label(1170, 590, 'Marbles 5/8 in', { sub: 'drawn to scale' });
-    b += text(1170, 720, 'The first shooter chooses', { size: 32, color: C.soft });
-    b += text(1170, 760, 'which way the X points.', { size: 32, color: C.soft });
+    b += text(1170, 720, 'The first shooter', { size: 26, color: C.soft });
+    b += text(1170, 770, 'picks its angle.', { size: 26, color: C.soft });
     return svg(1600, 1000, b, { mark: 'Diagram' });
   },
 
@@ -311,12 +315,12 @@ export const RINGER = {
     b += ring(cx, cy, r);
     b += cross(ctx, cx + 20, cy, 46, 24);
     const sx = cx - r - 70; const sy = cy + 120;
-    b += badge(sx - 30, sy - 80, 1) + marble(ctx, 'cats-eye', sx, sy, 40) + label(sx - 120, sy + 90, 'First shot', { sub: 'hand outside the circle' });
+    b += badge(sx - 30, sy - 80, 1) + marble(ctx, 'cats-eye', sx, sy, 40) + label(30, sy + 120, 'First shot', { sub: 'from outside' });
     b += arrow(sx + 22, sy - 8, cx - 30, cy + 24, { dash: '2 16', width: 6 });
     b += marble(ctx, 'clearie', cx + r + 80, cy + 60, 24) + arrow(cx + 10, cy + 6, cx + r + 60, cy + 56, { dash: '2 14', color: C.chalk, width: 5, head: 16 });
     b += label(cx + r + 110, cy + 70, 'Out: 1 point');
     b += marble(ctx, 'cats-eye', cx - 40, cy + 70, 40) + `<circle cx="${cx - 40}" cy="${cy + 70}" r="32" stroke="${C.yellow}" stroke-width="5" fill="none" stroke-dasharray="10 8"/>`;
-    b += badge(cx - 40, cy + 140, 2) + `<path d="M${cx - 10} ${cy + 86} L ${cx + r + 90} ${cy + 200}" stroke="${C.yellow}" stroke-width="4" stroke-dasharray="6 8"/>` + label(cx + r + 110, cy + 210, 'Shooter still inside', { sub: 'shoot again from here' });
+    b += badge(cx - 40, cy + 140, 2) + `<path d="M${cx - 10} ${cy + 86} L ${cx + r + 90} ${cy + 200}" stroke="${C.yellow}" stroke-width="4" stroke-dasharray="6 8"/>` + label(cx + r + 110, cy + 210, 'Still inside', { sub: 'shoot again here' });
     b += text(70, 940, 'Shooter rolls out? Your turn ends, but the points count.', { size: 32, color: C.soft });
     return svg(1600, 1000, b, { mark: 'Diagram' });
   },
@@ -369,11 +373,11 @@ export const MAKING = {
   caneCut: (ctx) => {
     let b = title('Cane-cut: five steps');
     const steps = [
-      ['Make the cane', 'a rod with the design inside'],
-      ['Heat the end', 'until it is soft'],
-      ['Round it off', 'in a rounding tool'],
+      ['Make a cane', 'design inside'],
+      ['Heat the end', 'until soft'],
+      ['Round it', 'in a tool'],
       ['Twist', 'for the spiral'],
-      ['Cut it free', 'with the marble scissors'],
+      ['Cut it free', 'marble scissors'],
     ];
     const colW = 300; const x0 = 60; const y = 420;
     steps.forEach(([t, s], i) => {
@@ -384,7 +388,7 @@ export const MAKING = {
       if (i === 2) b += cane(x + 10, y, 160, 84, { hot: 0.3 }) + `<circle cx="${x + 215}" cy="${y}" r="62" fill="url(#hot)"/>` + `<path d="M${x + 150} ${y - 100} A 80 80 0 0 1 ${x + 280} ${y - 60}" stroke="${C.yellow}" stroke-width="6" fill="none"/>` + arrow(x + 270, y - 72, x + 280, y - 60, { head: 18, width: 6 });
       if (i === 3) b += cane(x + 10, y, 160, 84, { hot: 0.2 }) + marble(ctx, 'handmade-swirl', x + 215, y, 124, { shadow: false }) + `<path d="M${x + 150} ${y - 92} A 70 26 0 1 0 ${x + 280} ${y - 92}" stroke="${C.yellow}" stroke-width="6" fill="none"/>` + arrow(x + 270, y - 100, x + 280, y - 92, { head: 18, width: 6 });
       if (i === 4) b += cane(x + 10, y, 120, 84) + scissors(x + 200, y + 24, 0.55, 10, 110) + marble(ctx, 'handmade-swirl', x + 200, y + 24, 110, { shadow: false });
-      b += label(x + 140, 640, t, { anchor: 'middle', size: 38, sub: s });
+      b += label(x + 140, 640, t, { anchor: 'middle', size: 31, sub: s });
       if (i < 4) b += arrow(x + 270, 190, x + colW - 20, 190, { color: C.muted, width: 4, head: 14 });
     });
     b += text(800, 830, 'Then the next marble is started from the same cane.', { size: 32, anchor: 'middle', color: C.soft });
@@ -395,10 +399,10 @@ export const MAKING = {
     let b = title('Single gather: on a punty');
     b += `<line x1="60" y1="470" x2="900" y2="470" stroke="#9AA5B8" stroke-width="22" stroke-linecap="round"/>`;
     b += `<circle cx="990" cy="470" r="120" fill="url(#hot)" opacity="0.9"/>` + `<circle cx="990" cy="470" r="84" fill="#FFE7A0" opacity="0.35"/>` + `<circle cx="990" cy="470" r="48" fill="#FFF4D0" opacity="0.35"/>`;
-    b += label(300, 420, 'Punty', { sub: 'a metal rod' });
-    b += label(1140, 330, 'Glass built up in layers', { sub: 'then rounded and cut free' });
-    b += `<path d="M1080 360 L 1140 330" stroke="${C.yellow}" stroke-width="4"/>`;
-    b += text(80, 760, 'Sulphides were made like this: a white figure set in glass on a punty, with more glass folded round it.', { size: 30, color: C.soft });
+    b += label(200, 370, 'Punty', { sub: 'a metal rod' });
+    b += label(1140, 300, 'Built up', { sub: 'in layers, then' }) + text(1140, 420, 'rounded and cut free', { size: 27, color: C.muted });
+    b += `<path d="M1080 360 L 1130 330" stroke="${C.yellow}" stroke-width="4"/>`;
+    b += text(80, 700, 'Sulphides were made this way: a white figure', { size: 27, color: C.soft }) + text(80, 750, 'set in glass on a punty, more glass folded round it.', { size: 27, color: C.soft });
     return svg(1600, 860, b);
   },
 
@@ -420,7 +424,7 @@ export const MAKING = {
     b += label(560, 790, 'Grooved roll', { anchor: 'middle' }) + label(1040, 790, 'Grooved roll', { anchor: 'middle' });
     b += label(800, 230, 'Soft glass', { anchor: 'middle', color: C.orange, sub: 'rolled into a ball between them' }) + `<path d="M800 290 L 800 455" stroke="${C.orange}" stroke-width="4" stroke-dasharray="6 8"/>`;
     b += `<path d="M1240 520 C 1300 470 1300 570 1360 520 C 1420 470 1420 570 1480 520" stroke="${C.soft}" stroke-width="6" fill="none"/>` + label(1250, 620, 'Spring', { sub: 'lets a roll move aside' });
-    b += text(800, 900, 'The rolls turn in opposite directions; when the ball is big enough it drops out. Fed by hand.', { size: 30, anchor: 'middle', color: C.soft });
+    b += text(800, 900, 'The rolls turn opposite ways. Fed by hand.', { size: 28, anchor: 'middle', color: C.soft });
     return svg(1600, 960, b);
   },
 
@@ -433,7 +437,7 @@ export const MAKING = {
     b += badge(500, 450, 2) + label(560, 470, 'A stream of glass');
     // The rotating shear.
     b += `<g transform="translate(470 610)"><circle r="56" fill="none" stroke="#9AA5B8" stroke-width="10"/><path d="M-60 0 L 60 0" stroke="#9AA5B8" stroke-width="10"/></g>` + `<circle cx="470" cy="700" r="26" fill="url(#hot)"/>`;
-    b += badge(380, 610, 3) + label(200, 760, 'Cut', { sub: 'a rotating shear snips a gob' });
+    b += badge(380, 610, 3) + label(170, 760, 'Cut', { sub: 'a shear snips' }) + text(170, 860, 'a gob of glass', { size: 27, color: C.muted });
     // The spiral rollers.
     const rx = 620; const ry = 760;
     b += `<rect x="${rx}" y="${ry - 34}" width="700" height="68" rx="34" fill="url(#steel)"/><rect x="${rx}" y="${ry + 36}" width="700" height="68" rx="34" fill="url(#steel)" opacity="0.8"/>`;
@@ -442,7 +446,7 @@ export const MAKING = {
     b += arrow(rx + 120, ry - 90, rx + 540, ry - 90, { width: 6 });
     b += badge(rx + 20, ry + 150, 4) + label(rx + 60, ry + 162, 'Roll', { sub: 'spiral-grooved rollers turn it into a sphere' });
     b += marble(ctx, 'clearie', 1420, 820, 50, { topDown: false }) + marble(ctx, 'oxblood', 1480, 830, 50, { topDown: false }) + marble(ctx, 'cats-eye', 1450, 780, 50, { topDown: false });
-    b += badge(1380, 640, 5) + label(1420, 660, 'Collect', { sub: 'to cool' });
+    b += badge(1300, 640, 5) + label(1340, 660, 'Collect', { sub: 'to cool' });
     return svg(1600, 980, b);
   },
 
@@ -450,13 +454,13 @@ export const MAKING = {
     let b = title('Where the colour comes from');
     // Handmade: threads in the cane; machine: streams; cat's eye: vanes injected into clear glass.
     b += cane(80, 420, 380, 110);
-    b += label(270, 600, 'Handmade', { anchor: 'middle', sub: 'coloured rods in the cane' });
+    b += label(270, 600, 'Handmade', { anchor: 'middle', sub: 'rods in the cane' });
     b += `<path d="M700 260 L 700 470" stroke="#E5322D" stroke-width="22" stroke-linecap="round"/><path d="M740 260 L 740 470" stroke="#F4F1EA" stroke-width="22" stroke-linecap="round"/><path d="M780 260 L 780 470" stroke="#FFD21F" stroke-width="22" stroke-linecap="round"/>`;
     b += arrow(740, 480, 740, 520, { color: C.muted, width: 5, head: 14 }) + marble(ctx, 'corkscrew', 740, 600, 110, { topDown: false });
-    b += label(740, 740, 'Machine-made', { anchor: 'middle', sub: 'streams of coloured glass together' });
+    b += label(740, 740, 'Machine-made', { anchor: 'middle', sub: 'coloured streams' });
     b += `<path d="M1190 260 L 1190 470" stroke="#CFE6EC" stroke-width="80" stroke-linecap="round" opacity="0.6"/><path d="M1190 280 L 1190 460" stroke="#E5322D" stroke-width="10"/><path d="M1205 280 L 1205 460" stroke="#FFD21F" stroke-width="8"/>`;
     b += arrow(1190, 480, 1190, 520, { color: C.muted, width: 5, head: 14 }) + marble(ctx, 'cats-eye', 1190, 600, 110, { topDown: false });
-    b += label(1190, 740, 'Cat\'s eye', { anchor: 'middle', sub: 'coloured vanes injected into clear glass' });
+    b += label(1190, 740, 'Cat\'s eye', { anchor: 'middle', sub: 'vanes in clear glass' });
     return svg(1600, 860, b);
   },
 
@@ -511,8 +515,8 @@ export const HISTORY = {
       else if (m === 'walnut') b += walnut(x, my, 76);
       else b += marble(ctx, m, x, my, 80, { topDown: false });
       const ty = up ? y + 64 : y - 92;
-      b += `<text x="${x}" y="${ty}" fill="${C.yellow}" font-family="Barlow Condensed" font-weight="800" font-size="34" text-anchor="middle">${when}</text>`;
-      b += text(x, ty + 34, a, { size: 25, anchor: 'middle', color: C.soft }) + text(x, ty + 62, c, { size: 25, anchor: 'middle', color: C.soft });
+      b += `<text x="${x}" y="${ty}" fill="${C.yellow}" font-family="Barlow Condensed" font-weight="800" font-size="${26 * TEXT_SCALE}" text-anchor="middle">${when}</text>`;
+      b += text(x, ty + 38, a, { size: 18, anchor: 'middle', color: C.soft }) + text(x, ty + 66, c, { size: 18, anchor: 'middle', color: C.soft });
     });
     return svg(1600, 900, b);
   },
@@ -523,12 +527,12 @@ export const HISTORY = {
     b += `<rect x="0" y="${gy}" width="1600" height="300" fill="url(#dirt)"/>`;
     const pebbles = [[190, gy - 40, 110, '#8C8F96'], [330, gy - 30, 84, '#9C8F80'], [450, gy - 36, 96, '#7E838C']];
     for (const [x, y, d, c] of pebbles) b += `<ellipse cx="${x}" cy="${y}" rx="${d * 0.55}" ry="${d * 0.42}" fill="${c}"/><ellipse cx="${x - 12}" cy="${y - d * 0.18}" rx="${d * 0.2}" ry="${d * 0.09}" fill="#fff" opacity="0.3"/>`;
-    b += label(320, gy + 90, 'Round pebbles', { anchor: 'middle' });
+    b += label(320, gy + 90, 'Pebbles', { anchor: 'middle' });
     b += walnut(700, gy - 66, 140) + walnut(850, gy - 52, 110) + `<ellipse cx="960" cy="${gy - 28}" rx="34" ry="28" fill="#7A3A22"/><ellipse cx="1040" cy="${gy - 24}" rx="28" ry="23" fill="#9A5A32"/>`;
-    b += label(860, gy + 90, 'Nuts and fruit pits', { anchor: 'middle' });
+    b += label(860, gy + 90, 'Nuts and pits', { anchor: 'middle' });
     b += `<circle cx="1250" cy="${gy - 62}" r="64" fill="#7A2E3A"/><circle cx="1250" cy="${gy - 62}" r="64" fill="url(#grain)"/><circle cx="1390" cy="${gy - 50}" r="52" fill="#6A2A34"/><ellipse cx="1232" cy="${gy - 96}" rx="20" ry="10" fill="#fff" opacity="0.25"/>`;
-    b += label(1320, gy + 90, 'Small stone balls', { anchor: 'middle', sub: 'found in graves: perhaps game pieces' });
-    b += text(800, 860, 'An illustration of what the earliest "marbles" may have been, not of particular finds.', { size: 30, anchor: 'middle', color: C.chalk });
+    b += label(1320, gy + 90, 'Stone balls', { anchor: 'middle', sub: 'perhaps game pieces' });
+    b += text(800, 860, 'An illustration, not particular finds.', { size: 26, anchor: 'middle', color: C.chalk });
     return svg(1600, 900, b);
   },
 };

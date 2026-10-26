@@ -33,9 +33,9 @@ body { width: var(--w); height: var(--h); overflow: hidden; color: #F2F4F8; font
 .ball::after { content: ''; position: absolute; left: 12%; right: 12%; bottom: -5%; height: 14%; border-radius: 50%;
   background: radial-gradient(closest-side, rgba(0,0,0,0.55), rgba(0,0,0,0)); z-index: 0; }
 .label { font-family: 'Barlow Condensed'; font-weight: 800; font-size: var(--lf); letter-spacing: 0.03em; text-transform: uppercase; line-height: 1; text-align: center; }
-.sub { font-family: 'Source Sans 3'; font-weight: 400; font-size: calc(var(--lf) * 0.62); color: #A9B1C3; margin-top: 6px; text-align: center; }
+.sub { font-family: 'Source Sans 3'; font-weight: 400; font-size: calc(var(--lf) * 0.66); color: #A9B1C3; margin-top: 6px; text-align: center; }
 .tag { position: absolute; right: 26px; bottom: 20px; font-family: 'Barlow Condensed'; font-weight: 700; font-size: 26px; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(169,177,195,0.75); }
-.callout { position: absolute; z-index: 2; font-family: 'Barlow Condensed'; font-weight: 800; font-size: 40px; letter-spacing: 0.04em; text-transform: uppercase; color: #FFD21F; white-space: nowrap; }
+.callout { position: absolute; z-index: 2; font-family: 'Barlow Condensed'; font-weight: 800; font-size: 58px; letter-spacing: 0.04em; text-transform: uppercase; color: #FFD21F; white-space: nowrap; }
 svg.lines { position: absolute; inset: 0; z-index: 2; overflow: visible; }
 `;
 
@@ -46,7 +46,7 @@ const page = (w, h, vars, body) => `<!doctype html><html><head><meta charset="ut
 function row(items, { w = 1600, h = 900, d = 380, gap = 70, lf = 46 } = {}, dir) {
   const balls = items.map((it) => `<div class="m"><div class="ball" style="${it.d ? `width:${it.d}px;height:${it.d}px` : ''}"><img src="${pathToFileURL(path.join(dir, `${it.img}.png`)).href}"></div>
     ${it.label ? `<div><div class="label">${it.label}</div>${it.sub ? `<div class="sub">${it.sub}</div>` : ''}</div>` : ''}</div>`).join('');
-  return page(w, h, { d: `${d}px`, gap: `${gap}px`, pad: '60px', lf: `${lf}px` }, `<div class="stage">${balls}</div><div class="tag">Illustration</div>`);
+  return page(w, h, { d: `${d}px`, gap: `${gap}px`, pad: '60px', lf: `${lf * 1.45}px` }, `<div class="stage">${balls}</div><div class="tag">Illustration</div>`);
 }
 
 /** One marble, big, with a label pointing at a spot on it (e.g. its pontil). */
@@ -63,7 +63,7 @@ function single({ img, label, sub, point, note }, { w = 1600, h = 1000, d = 760 
   }
   const body = `<div class="ball" style="position:absolute;left:${cx - d / 2}px;top:${cy - d / 2}px;width:${d}px;height:${d}px"><img src="${pathToFileURL(path.join(dir, `${img}.png`)).href}"></div>
     ${callout}
-    ${label ? `<div style="position:absolute;left:${point ? cx + d / 2 + 50 : 60}px;bottom:70px"><div class="label" style="--lf:52px;text-align:left">${label}</div>${sub ? `<div class="sub" style="--lf:52px;text-align:left">${sub}</div>` : ''}</div>` : ''}
+    ${label ? `<div style="position:absolute;left:${point ? cx + d / 2 + 50 : 60}px;bottom:70px"><div class="label" style="--lf:72px;text-align:left">${label}</div>${sub ? `<div class="sub" style="--lf:72px;text-align:left">${sub}</div>` : ''}</div>` : ''}
     <div class="tag">Illustration</div>`;
   return page(w, h, { d: `${d}px`, lf: '46px' }, body);
 }
@@ -84,7 +84,7 @@ function sizes(dir, { w = 1600, h = 900 } = {}) {
   const balls = list.map((it) => {
     const d = it.mm * mm;
     const html = `<div class="ball" style="position:absolute;left:${x}px;top:${base - d}px;width:${d}px;height:${d}px"><img src="${pathToFileURL(path.join(dir, `${it.img}.png`)).href}"></div>
-      <div style="position:absolute;left:${x + d / 2 - 170}px;width:340px;top:${base + 92}px"><div class="label" style="--lf:44px">${it.label}</div><div class="sub" style="--lf:44px">${it.sub}</div></div>`;
+      <div style="position:absolute;left:${x + d / 2 - 200}px;width:400px;top:${base + 92}px"><div class="label" style="--lf:60px">${it.label}</div><div class="sub" style="--lf:60px">${it.sub}</div></div>`;
     // Its width: a dimension line with end ticks under it.
     const y = base + 44;
     lines.push(`<line x1="${x}" y1="${y}" x2="${x + d}" y2="${y}" stroke="#FFD21F" stroke-width="4"/>`,
@@ -100,7 +100,7 @@ function sizes(dir, { w = 1600, h = 900 } = {}) {
     `<line x1="${sx + 10 * mm}" y1="${sy - 12}" x2="${sx + 10 * mm}" y2="${sy + 12}" stroke="#C7CEDC" stroke-width="4"/>`,
     `<text x="${sx + 10 * mm + 18}" y="${sy + 10}" fill="#C7CEDC" font-family="Barlow Condensed" font-weight="700" font-size="30">1 cm</text>`);
   const svg = `<svg class="lines" width="${w}" height="${h}">${lines.join('')}</svg>`;
-  const title = `<div style="position:absolute;left:70px;top:56px"><div class="label" style="--lf:56px;text-align:left">Marble sizes, to scale</div></div>`;
+  const title = `<div style="position:absolute;left:70px;top:56px"><div class="label" style="--lf:64px;text-align:left">Marble sizes, to scale</div></div>`;
   return page(w, h, { d: '10px', lf: '46px' }, `${title}${balls}${svg}<div class="tag">Illustration</div>`);
 }
 
@@ -133,7 +133,7 @@ const TYPES = {
       caption: 'Some of the marble types in this guide. Illustration in the Marble Spins style, not photos of real marbles.',
     },
     {
-      name: 'clay-and-china', kind: 'row', layout: { d: 260, gap: 40, lf: 40 },
+      name: 'clay-and-china', kind: 'row', layout: { d: 250, gap: 50, lf: 33 },
       items: [{ img: 'clay-tan', label: 'Clay' }, { img: 'clay-blue', label: 'Clay', sub: 'dyed' }, { img: 'bennington-brown', label: 'Bennington' }, { img: 'bennington-blue', label: 'Bennington' }, { img: 'china', label: 'China' }],
       alt: 'Illustration of five early marbles: a dull tan clay marble, a faded blue dyed clay marble, glossy brown and blue Bennington marbles with small light spots in the glaze, and a white china marble with hand-painted green and red rings and lines.',
       caption: 'Clay marbles are plain and slightly rough. Benningtons are glazed, with light "eyes" where they touched other marbles in the kiln. Chinas are glazed porcelain with painted lines. Illustration.',

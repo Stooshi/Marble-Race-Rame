@@ -28,14 +28,14 @@
     {
      "file": "clay-and-china-1600.webp",
      "width": 1600,
-     "height": 560,
-     "bytes": 21990
+     "height": 550,
+     "bytes": 22758
     },
     {
      "file": "clay-and-china-800.webp",
      "width": 800,
-     "height": 280,
-     "bytes": 9920
+     "height": 275,
+     "bytes": 10694
     }
    ]
   },
@@ -48,13 +48,13 @@
      "file": "aggie-and-steelie-1600.webp",
      "width": 1600,
      "height": 740,
-     "bytes": 18172
+     "bytes": 18630
     },
     {
      "file": "aggie-and-steelie-800.webp",
      "width": 800,
      "height": 370,
-     "bytes": 7884
+     "bytes": 8848
     }
    ]
   },
@@ -67,13 +67,13 @@
      "file": "handmade-swirl-1600.webp",
      "width": 1600,
      "height": 1000,
-     "bytes": 34648
+     "bytes": 36370
     },
     {
      "file": "handmade-swirl-800.webp",
      "width": 800,
      "height": 500,
-     "bytes": 15448
+     "bytes": 16648
     }
    ]
   },
@@ -86,13 +86,13 @@
      "file": "onionskin-1600.webp",
      "width": 1600,
      "height": 1000,
-     "bytes": 58066
+     "bytes": 58760
     },
     {
      "file": "onionskin-800.webp",
      "width": 800,
      "height": 500,
-     "bytes": 24576
+     "bytes": 25242
     }
    ]
   },
@@ -105,13 +105,13 @@
      "file": "lutz-1600.webp",
      "width": 1600,
      "height": 1000,
-     "bytes": 44906
+     "bytes": 45868
     },
     {
      "file": "lutz-800.webp",
      "width": 800,
      "height": 500,
-     "bytes": 14798
+     "bytes": 15480
     }
    ]
   },
@@ -124,13 +124,13 @@
      "file": "sulphide-1600.webp",
      "width": 1600,
      "height": 1000,
-     "bytes": 15482
+     "bytes": 16416
     },
     {
      "file": "sulphide-800.webp",
      "width": 800,
      "height": 500,
-     "bytes": 7482
+     "bytes": 7778
     }
    ]
   },
@@ -143,13 +143,13 @@
      "file": "clearie-and-cats-eye-1600.webp",
      "width": 1600,
      "height": 740,
-     "bytes": 15112
+     "bytes": 15858
     },
     {
      "file": "clearie-and-cats-eye-800.webp",
      "width": 800,
      "height": 370,
-     "bytes": 7232
+     "bytes": 8242
     }
    ]
   },
@@ -162,13 +162,13 @@
      "file": "corkscrew-oxblood-moonie-1600.webp",
      "width": 1600,
      "height": 660,
-     "bytes": 22118
+     "bytes": 23258
     },
     {
      "file": "corkscrew-oxblood-moonie-800.webp",
      "width": 800,
      "height": 330,
-     "bytes": 10682
+     "bytes": 11482
     }
    ]
   },
@@ -181,13 +181,13 @@
      "file": "sizes-1600.webp",
      "width": 1600,
      "height": 900,
-     "bytes": 47840
+     "bytes": 50366
     },
     {
      "file": "sizes-800.webp",
      "width": 800,
      "height": 450,
-     "bytes": 20384
+     "bytes": 21928
     }
    ]
   },

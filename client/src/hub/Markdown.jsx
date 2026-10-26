@@ -3,10 +3,37 @@
  * ## / ### / #### headings (with anchor ids), paragraphs, - and 1. lists, > quotes, --- rules,
  * **bold**, *italic*, `code`, [links](url) (site addresses stay in the app, others open in a new tab),
  * source citations [1] (to the page's source list, #source-1) and [REVIEW: …] notes, drawn as a
- * highlighted mark so an unchecked fact can't be missed in a preview.
+ * highlighted mark so an unchecked fact can't be missed in a preview. A line `::picture <name>` places
+ * one of the article's pictures (./pictures.json: its alt text and caption) as a figure.
  */
 import { Fragment } from 'react';
 import { Link } from 'react-router-dom';
+import PICTURES from './pictures.json';
+
+/** The address of an article's picture at a width (public/hub-img/<article>/<name>-<width>.webp). */
+export const pictureSrc = (slug, name, width) => `/hub-img/${slug}/${name}-${width}.webp`;
+
+/** One of an article's pictures as a figure: 800 px for phones, 1600 px for wide screens, its caption under it. */
+export function Picture({ slug, name, eager = false }) {
+  const p = PICTURES[slug]?.pictures?.[name];
+  if (!p) return null;
+  return (
+    <figure className="hub-figure">
+      <img
+        src={pictureSrc(slug, name, 800)}
+        srcSet={`${pictureSrc(slug, name, 800)} 800w, ${pictureSrc(slug, name, 1600)} 1600w`}
+        sizes="(max-width: 1000px) 100vw, 940px"
+        width={p.width}
+        height={p.height}
+        alt={p.alt}
+        loading={eager ? 'eager' : 'lazy'}
+        decoding="async"
+        {...(eager ? { fetchPriority: 'high' } : {})}
+      />
+      {p.caption && <figcaption>{p.caption}</figcaption>}
+    </figure>
+  );
+}
 
 export const slugify = (s) => String(s).toLowerCase().replace(/[*_`[\]()]/g, '').replace(/&/g, ' and ').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
 
@@ -43,10 +70,12 @@ export function blocks(md) {
   const lines = String(md).replace(/\r\n?/g, '\n').split('\n');
   const out = [];
   let i = 0;
-  const isBlockStart = (l) => /^(#{1,4})\s/.test(l) || /^\s*[-*]\s+/.test(l) || /^\s*\d+[.)]\s+/.test(l) || /^>\s?/.test(l) || /^-{3,}\s*$/.test(l);
+  const isBlockStart = (l) => /^::picture\s/.test(l) || /^(#{1,4})\s/.test(l) || /^\s*[-*]\s+/.test(l) || /^\s*\d+[.)]\s+/.test(l) || /^>\s?/.test(l) || /^-{3,}\s*$/.test(l);
   while (i < lines.length) {
     const l = lines[i];
     if (!l.trim()) { i++; continue; }
+    const pic = /^::picture\s+([a-z0-9-]+)\s*$/.exec(l);
+    if (pic) { out.push({ type: 'picture', name: pic[1] }); i++; continue; }
     const h = /^(#{1,4})\s+(.*)$/.exec(l);
     if (h) { out.push({ type: 'h', level: Math.max(2, h[1].length), text: h[2].trim() }); i++; continue; }
     if (/^-{3,}\s*$/.test(l)) { out.push({ type: 'hr' }); i++; continue; }
@@ -79,7 +108,7 @@ export function blocks(md) {
 /** The headings of a text (for a contents list): [{ id, text, level }]. */
 export const headings = (md) => blocks(md).filter((b) => b.type === 'h').map((b) => ({ id: slugify(b.text), text: b.text, level: b.level }));
 
-export default function Markdown({ text }) {
+export default function Markdown({ text, slug = null }) {
   return blocks(text).map((b, i) => {
     const k = `b${i}`;
     switch (b.type) {
@@ -91,6 +120,7 @@ export default function Markdown({ text }) {
       case 'ol': return <ol key={k}>{b.items.map((t, j) => <li key={j}>{inline(t, `${k}-${j}`)}</li>)}</ol>;
       case 'quote': return <blockquote key={k}><p>{inline(b.text, k)}</p></blockquote>;
       case 'hr': return <hr key={k} />;
+      case 'picture': return slug ? <Picture key={k} slug={slug} name={b.name} /> : null;
       default: return <p key={k}>{inline(b.text, k)}</p>;
     }
   });
