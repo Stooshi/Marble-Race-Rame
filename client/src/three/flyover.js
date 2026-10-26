@@ -47,6 +47,10 @@ export function flyoverHighlight(track) {
 /** A view direction (camera → target) at azimuth `az` (radians) looking down at `el`. */
 const lookDir = (az, el) => new Vector3(Math.cos(az) * Math.cos(el), -Math.sin(el), Math.sin(az) * Math.cos(el));
 
+// The phone's detail level in the flyover (detailAt): left out of the wide view, back as the camera moves in.
+export const DETAIL_FROM = 0.5;   // share of the wide view's distance: left out from here out (and back only within the phone's budget)
+export const DETAIL_FADE_MS = 450; // the fade back in (a glide: done by the end of the move in)
+
 /**
  * centerline: trackModel's { samples: [{ pos, tangent, side }], segments }.
  * topAt(x, z): the highest drawn surface at (x, z) in world metres.
@@ -227,9 +231,27 @@ export function flyoverPath(centerline, topAt, { highlight = null, end = null, a
     target.copy(v.c);
     return { camera, target };
   };
+  // Phones (Moses, 26 Oct 2026): the smallest details (the obstacles and their costumes, the billboards, the
+  // gate and the field) are left out of the high wide view, where the whole track is in the picture at once and
+  // they are specks, to keep it within the phone's draw-call budget. They fade back as the camera moves in to
+  // the highlight (from DETAIL_FROM of the wide view's distance, over DETAIL_FADE_MS); a glide down to the gate has them
+  // all back by the end of the move in, so the gate never sees them appear, and a flight that ends on the
+  // highlight hands over to the countdown's camera (a cut) with them all. → 0 (left out) to 1 (all there).
+  // (When the fade begins: once the camera is in to DETAIL_FROM of the wide view's distance, and for a glide at the
+  // latest DETAIL_FADE_MS before the end of the move in. A fade always takes DETAIL_FADE_MS, never a jump.)
+  let fadeFrom = Infinity;
+  for (let ms = t1; ms <= t2; ms += 20) if (viewAt(ms).D / wide0.D <= DETAIL_FROM) { fadeFrom = ms; break; }
+  if (glide) fadeFrom = Math.min(fadeFrom, t2 - DETAIL_FADE_MS);
+  const detailAt = (ms) => {
+    const t = Math.min(durationMs, Math.max(0, ms));
+    if (t >= durationMs || (glide && t >= t2)) return 1;
+    const k = Math.min(1, Math.max(0, (t - fadeFrom) / DETAIL_FADE_MS));
+    return k * k * (3 - 2 * k);
+  };
   return {
     durationMs,
     poseAt,
+    detailAt,
     cut: !glide, // (true: the countdown's camera takes over at the gate with a cut)
     plan: { holdMs: Math.round(hold), inMs: Math.round(inMs), reach: +reach.toFixed(2), glideMs: glide ? Math.round(durationMs - t2) : 0 },
     points: [wide0, wide1, hView, ...(glide ? [endView] : [])].map(viewCamera),

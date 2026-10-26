@@ -73,6 +73,75 @@ describe('the flyover', () => {
     const turns = poses.slice(1).map((p, i) => look(p).angleTo(look(poses[i])));
     for (let i = 1; i < turns.length; i += 1) expect(Math.abs(turns[i] - turns[i - 1]), `${poses[i].ms} ms`).toBeLessThan(0.06);
   });
+  it('phones: the smallest details left out of the wide view, fading back as it moves in, all back before the gate', () => {
+    const t2 = path.plan.holdMs + path.plan.inMs;
+    for (let ms = 0; ms <= path.plan.holdMs; ms += 100) expect(path.detailAt(ms), `${ms} ms`).toBe(0);
+    expect(path.detailAt(t2)).toBe(1);
+    // (A glide: all back before the gate. A cut: the countdown's camera takes over with them all.)
+    if (!path.cut) expect(path.detailAt(t2 - 1)).toBeGreaterThan(0.99);
+    expect(path.detailAt(FLYOVER_MS)).toBe(1);
+    // (Never back out once in: no flicker; and a fade, not a jump.)
+    const k = poses.map((p) => path.detailAt(p.ms));
+    for (let i = 1; i < k.length; i += 1) expect(k[i], `${poses[i].ms} ms`).toBeGreaterThanOrEqual(k[i - 1]);
+    // (They may come back once the camera is in to half its first distance.)
+    expect(k.some((x) => x > 0)).toBe(true);
+    expect(Math.max(0, ...k.slice(1, -1).map((x, i) => x - k[i]))).toBeLessThan(0.3); // (a fade, never a jump, but at the hand-over)
+    // Every frame of the race's own camera has them all, and the computer's flyover too (only phones leave them out).
+    const scene = src('src/three/TrackScene.js');
+    expect(scene).toContain('this.setFlyoverDetail(this.lite ? this.flyoverDetailAt(path, ms) : 1);');
+    expect(scene).toMatch(/updateRace\(frame[^)]*\) \{\n {4}this\.setFlyoverDetail\(1\);/);
+    expect(scene).toContain('[this.features?.group, this.billboards?.group, this.gate?.group, this.marbles?.group, ...this.flyFigures.figures]');
+  });
+  it('a flight that gets in close: the details fade back over about half a second before the hand-over', () => {
+    const close = flyoverPath(centerline, topAt, { highlight: { name: 'A spot', from: 0.5, to: 0.505 } });
+    const k = [];
+    for (let ms = 0; ms < FLYOVER_MS; ms += 1000 / 30) k.push(close.detailAt(ms));
+    const fading = k.filter((x) => x > 0.02 && x < 0.98).length;
+    expect(fading).toBeGreaterThan(8); // (about 450 ms at 30 frames a second)
+    expect(Math.max(...k.slice(1).map((x, i) => x - k[i]))).toBeLessThan(0.15);
+  });
+  it('on a phone they come back only while the frame stays within 35 draw calls, then fade in, never back out', async () => {
+    const { TrackScene } = await import('../src/three/TrackScene');
+    const scene = Object.create(TrackScene.prototype);
+    let calls = 50;
+    scene.flyoverCallsWithDetail = () => calls;
+    const fake = { cut: true, durationMs: 4000, detailAt: (ms) => (ms >= 2000 ? 1 : 0) };
+    const at = (ms) => scene.flyoverDetailAt(fake, ms);
+    expect(at(0)).toBe(0);
+    expect(at(2100)).toBe(0); // (allowed by the flight, but 50 calls with them: they stay out)
+    calls = 30;
+    expect(at(2200)).toBe(0); // (the fade begins here)
+    const half = at(2425);
+    expect(half).toBeGreaterThan(0.3);
+    calls = 50;
+    expect(at(2500)).toBeGreaterThan(half); // (never back out once fading in)
+    expect(at(2700)).toBe(1);
+    expect(at(0)).toBe(0); // (a new flight starts afresh)
+    expect(at(4000)).toBe(1); // (the hand-over: the countdown's camera has them all)
+  });
+  it('leaving out and fading back: the groups hidden, then see-through copies, then the very same materials again', async () => {
+    const { Group, Mesh, MeshLambertMaterial, BoxGeometry } = await import('three');
+    const { TrackScene } = await import('../src/three/TrackScene');
+    const scene = Object.create(TrackScene.prototype);
+    const mat = new MeshLambertMaterial();
+    const make = () => { const g = new Group(); g.add(new Mesh(new BoxGeometry(), mat)); return g; };
+    Object.assign(scene, { features: { group: make() }, billboards: { group: make() }, gate: { group: make() }, marbles: { group: make() } });
+    scene.billboards.group.visible = false; // (hidden for its own reasons: stays hidden)
+    const mesh = scene.features.group.children[0];
+    scene.setFlyoverDetail(0);
+    expect(scene.features.group.visible).toBe(false);
+    expect(scene.marbles.group.visible).toBe(false);
+    scene.setFlyoverDetail(0.5);
+    expect(scene.features.group.visible).toBe(true);
+    expect(mesh.material).not.toBe(mat);
+    expect(mesh.material.transparent).toBe(true);
+    expect(mesh.material.opacity).toBeCloseTo(0.5);
+    expect(mat.transparent).toBe(false); // (the shared material itself untouched)
+    scene.setFlyoverDetail(1);
+    expect(mesh.material).toBe(mat);
+    expect(scene.features.group.visible).toBe(true);
+    expect(scene.billboards.group.visible).toBe(false);
+  });
   it('the highlight is the track kit\'s signature section', () => {
     const track = { physics: { kit: { signature: 'The chain bridge slalom', sections: [{ name: 'Along the embankment', from: 0.09, to: 0.16 }, { name: 'The chain bridge slalom', from: 0.2, to: 0.26 }] } } };
     expect(flyoverHighlight(track)).toEqual({ name: 'The chain bridge slalom', from: 0.2, to: 0.26 });

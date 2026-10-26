@@ -8,7 +8,7 @@
 import {
   AmbientLight, BackSide, BoxGeometry, CanvasTexture, Color, NearestFilter, DirectionalLight, DoubleSide, Float32BufferAttribute, Fog,
   FrontSide, Group, HemisphereLight, Mesh, MeshBasicMaterial, MeshLambertMaterial, PerspectiveCamera, PlaneGeometry,
-  Box3, Plane, Scene, SphereGeometry, SRGBColorSpace, Vector3, WebGLRenderer,
+  Box3, Frustum, Matrix4, Plane, Scene, SphereGeometry, SRGBColorSpace, Vector3, WebGLRenderer,
 } from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { buildCenterline, buildTrackGeometry, TRACK_STYLE } from './trackModel';
@@ -18,7 +18,7 @@ import { buildIceChannelGeometry, channelDetail, channelLipAt, channelPieces, ch
 import { DEFAULT_THEME, themeFor } from './themes';
 import { gatePlaces, StartGate } from './startGate';
 import { countdownPose, handover, launchHandover, launchPose, startLineShot } from './startCamera';
-import { flyoverHighlight, flyoverPath, flyoverTop } from './flyover';
+import { DETAIL_FADE_MS, flyoverHighlight, flyoverPath, flyoverTop } from './flyover';
 import { buildTrackFeatures } from './trackFeatures';
 import { buildLaneMarkings } from './scenery/athletics';
 import { TV, tvCameras, tvMoment } from './tvMoments';
@@ -43,6 +43,7 @@ const PHONE_FRAME_MS = 1000 / 60;
 // How far a phone that still can't keep up may drop its resolution (below 1 pixel per screen
 // pixel: a little softer, but smooth).
 const PHONE_MIN_PIXEL_RATIO = 0.75;
+const PHONE_FLY_CALLS = 35; // the flyover's details come back on a phone only while the frame stays within this many draw calls (the marbles aside)
 const FINISH_FROM = 12; // metres short of the line where the big view starts over to the finish shot…
 const FINISH_TO = 6; // …and past it where it is there
 const ROOF_ON_COMPUTERS = false; // (true: computers keep the canopy until the finish shot cuts it away)
@@ -704,7 +705,94 @@ export class TrackScene {
     this.camera.position.copy(camera);
     this.camera.lookAt(target);
     this.main.ready = false; // (the follow camera starts afresh from wherever the race's camera puts it next)
+    // (Phones: the smallest details left out of the high wide view, fading back as the camera moves in.)
+    this.setFlyoverDetail(this.lite ? this.flyoverDetailAt(path, ms) : 1);
     this.render();
+  }
+
+  /**
+   * Phones: how much of the flyover's details to draw at `ms` (0 to 1). The flight says when they may come
+   * back (path.detailAt: in close, or before a glide reaches the gate); they then fade in over DETAIL_FADE_MS,
+   * but only once the frame with them stays within PHONE_FLY_CALLS draw calls; until then they stay out, and
+   * the countdown's camera, where the flight hands over, has them all. Never back out once fading in.
+   */
+  flyoverDetailAt(path, ms) {
+    const fly = this.flyDetailRun;
+    if (!fly || fly.path !== path || ms < fly.ms) this.flyDetailRun = { path, ms, from: null };
+    const run = this.flyDetailRun;
+    run.ms = ms;
+    const may = path.detailAt?.(ms) ?? 1;
+    if (may >= 1 && (ms >= path.durationMs || !path.cut)) return 1; // (the hand-over, or a glide at the gate)
+    if (run.from === null) {
+      if (may <= 0) return 0;
+      if (!path.cut && may > 0) run.from = ms; // (a glide: on schedule, so all is back before the gate)
+      else if (this.flyoverCallsWithDetail() <= PHONE_FLY_CALLS) run.from = ms;
+      else return 0;
+    }
+    const k = Math.min(1, Math.max(0, (ms - run.from) / DETAIL_FADE_MS));
+    return k * k * (3 - 2 * k);
+  }
+
+  /** The draw calls the big view would make with the flyover's details (as the renderer culls; the marbles aside). */
+  flyoverCallsWithDetail() {
+    this.camera.updateMatrixWorld();
+    const frustum = (this.flyFrustum ??= new Frustum());
+    frustum.setFromProjectionMatrix((this.flyMatrix ??= new Matrix4()).multiplyMatrices(this.camera.projectionMatrix, this.camera.matrixWorldInverse));
+    const marbles = this.marbles?.group;
+    const shown = (o) => (o.isMesh || o.isLine || o.isPoints || o.isSprite) && (!o.frustumCulled || frustum.intersectsObject(o));
+    // (A see-through two-sided material draws twice: its back faces, then its front.)
+    const one = (m) => (m?.transparent && m.side === DoubleSide && !m.forceSinglePass ? 2 : 1);
+    const calls = (o) => (Array.isArray(o.material) ? o.material.reduce((t, m) => t + one(m), 0) : one(o.material));
+    let n = 0;
+    this.scene.traverseVisible((o) => { if (shown(o)) n += calls(o); }); // (now, with the details left out)
+    for (const g of this.flyDetailGroups ?? []) {
+      if (g === marbles || g.userData.flyHidden === false) continue;
+      g.traverse((o) => { if ((o === g || o.visible) && shown(o)) n += calls(o); });
+    }
+    return n;
+  }
+
+  /**
+   * The flyover's detail level on phones (flyover.js detailAt; Moses, 26 Oct 2026): 0 leaves out the
+   * obstacles and their costumes, the billboards, the gate and the field, 1 draws them as always, and in
+   * between they fade in (their materials swapped for see-through copies only for those frames). Looks only.
+   */
+  setFlyoverDetail(k) {
+    const level = Math.min(1, Math.max(0, k));
+    if (this.flyDetail === level || (this.flyDetail === undefined && level === 1)) return;
+    this.flyDetail = level;
+    // (The scenery's people too: tiny figures, one or two calls of their own.)
+    if (!this.flyFigures || this.flyFigures.of !== this.scenery) {
+      const figures = [];
+      this.scenery?.traverse((o) => { if (/^figures/.test(o.name)) figures.push(o); });
+      this.flyFigures = { of: this.scenery, figures };
+    }
+    const groups = [this.features?.group, this.billboards?.group, this.gate?.group, this.marbles?.group, ...this.flyFigures.figures].filter(Boolean);
+    this.flyDetailGroups = groups;
+    for (const g of groups) {
+      if (level === 0) {
+        if (g.userData.flyHidden === undefined) g.userData.flyHidden = g.visible;
+        g.visible = false;
+      } else if (g.userData.flyHidden !== undefined) {
+        g.visible = g.userData.flyHidden;
+        delete g.userData.flyHidden;
+      }
+      g.traverse((o) => {
+        if (!o.isMesh && !o.isPoints && !o.isSprite) return;
+        const own = o.userData.flyMaterial;
+        if (level <= 0 || level >= 1) {
+          if (own) { o.material = own; delete o.userData.flyMaterial; }
+          return;
+        }
+        if (!own) {
+          o.userData.flyMaterial = o.material;
+          const fade = (m) => { const c = m.clone(); c.transparent = true; c.userData.flyOpacity = m.opacity ?? 1; return c; };
+          o.userData.flyFade ??= Array.isArray(o.material) ? o.material.map(fade) : fade(o.material);
+          o.material = o.userData.flyFade;
+        }
+        for (const m of [o.material].flat()) m.opacity = m.userData.flyOpacity * level;
+      });
+    }
   }
 
   /** How long the countdown before GO runs (ms), for the starting camera. */
@@ -758,6 +846,7 @@ export class TrackScene {
    * dt = seconds since the last call.
    */
   updateRace(frame, follow = 'leader', dt = 1 / 60, insetFollow = null) {
+    this.setFlyoverDetail(1); // (the race's own camera has every detail: the flyover leaves some out only on its frames)
     if (!this.marbles || !frame) return;
     this.gate?.update(frame.t);
     this.marbles.update(this.centerline, frame);
