@@ -1,0 +1,112 @@
+{
+ "article": "history-of-marbles",
+ "pictures": [
+  {
+   "name": "header",
+   "alt": "Illustration of a row of objects on a shelf, from left to right: a round pebble, a walnut, a clay marble, a china marble, a handmade onionskin, a machine-made corkscrew and a cat's eye.",
+   "caption": "From pebbles and nuts to glass. Illustration, not photos of historical objects.",
+   "files": [
+    {
+     "file": "header-1600.webp",
+     "width": 1600,
+     "height": 900,
+     "bytes": 25142
+    },
+    {
+     "file": "header-800.webp",
+     "width": 800,
+     "height": 450,
+     "bytes": 10706
+    }
+   ]
+  },
+  {
+   "name": "timeline",
+   "alt": "Illustrated timeline of marbles: stone balls at Mohenjo-daro around 2500 BCE; Roman children's nut games; Bruegel's 1560 painting of children at marbles; marble scissors in Lauscha around 1846; clay marbles mass-made in the US from the 1870s; Christensen's machine patent, filed 1902 and published 1905; tournaments from the 1920s and 1930s; cat's eyes common by the 1950s.",
+   "caption": "Some milestones from this history, as an illustrated timeline. Illustration.",
+   "files": [
+    {
+     "file": "timeline-1600.webp",
+     "width": 1600,
+     "height": 900,
+     "bytes": 37998
+    },
+    {
+     "file": "timeline-800.webp",
+     "width": 800,
+     "height": 450,
+     "bytes": 17112
+    }
+   ]
+  },
+  {
+   "name": "before-glass",
+   "alt": "Illustration of what the earliest marbles may have been: round pebbles, nuts and fruit pits, and small stone balls, on bare earth.",
+   "caption": "Before glass: pebbles, nuts and fruit pits, and small stone balls whose use is uncertain. An illustration, not a picture of particular finds.",
+   "files": [
+    {
+     "file": "before-glass-1600.webp",
+     "width": 1600,
+     "height": 900,
+     "bytes": 26946
+    },
+    {
+     "file": "before-glass-800.webp",
+     "width": 800,
+     "height": 450,
+     "bytes": 12580
+    }
+   ]
+  },
+  {
+   "name": "marble-scissors",
+   "alt": "Illustration of a glowing glass cane with a hot, newly rounded swirl marble at its end, held between the blades of a pair of marble scissors.",
+   "caption": "Marble scissors cutting a marble from a glass cane, the method used in Lauscha from around 1846. Illustration.",
+   "files": [
+    {
+     "file": "marble-scissors-1600.webp",
+     "width": 1600,
+     "height": 900,
+     "bytes": 14254
+    },
+    {
+     "file": "marble-scissors-800.webp",
+     "width": 800,
+     "height": 450,
+     "bytes": 6070
+    }
+   ]
+  },
+  {
+   "name": "christensen-machine",
+   "alt": "Diagram of the principle of Christensen's marble machine: two grooved rolls turning in opposite directions roll a lump of soft glass into a ball between them, with a spring letting one roll move aside.",
+   "caption": "The idea behind Christensen's machine (patent filed 1902, published 1905): two grooved rolls turning in opposite directions. A simplified illustration, not a copy of the patent drawing.",
+   "files": [
+    {
+     "file": "christensen-machine-1600.webp",
+     "width": 1600,
+     "height": 960,
+     "bytes": 34164
+    },
+    {
+     "file": "christensen-machine-800.webp",
+     "width": 800,
+     "height": 480,
+     "bytes": 16756
+    }
+   ]
+  },
+  {
+   "name": "share",
+   "alt": "A short history of marbles. Illustrated marbles: an onionskin, a clay marble, a cat's eye and a china.",
+   "files": [
+    {
+     "file": "share-1200x630.jpg",
+     "width": 1200,
+     "height": 630,
+     "bytes": 59850
+    }
+   ]
+  }
+ ]
+}

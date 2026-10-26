@@ -1,0 +1,169 @@
+{
+ "article": "how-glass-marbles-are-made",
+ "pictures": [
+  {
+   "name": "header",
+   "alt": "Illustration of a glowing glass cane with a hot, newly rounded swirl marble at its end, held between the blades of a pair of marble scissors.",
+   "caption": "A marble cut from a glass cane with marble scissors. Illustration.",
+   "files": [
+    {
+     "file": "header-1600.webp",
+     "width": 1600,
+     "height": 900,
+     "bytes": 14254
+    },
+    {
+     "file": "header-800.webp",
+     "width": 800,
+     "height": 450,
+     "bytes": 6070
+    }
+   ]
+  },
+  {
+   "name": "cane-cut",
+   "alt": "Illustration of the five steps of making a cane-cut marble: make a glass cane with the design inside, heat its end until soft, round it off, twist it for the spiral, and cut it free with the marble scissors.",
+   "caption": "Cane-cut marbles in five steps. Illustration.",
+   "files": [
+    {
+     "file": "cane-cut-1600.webp",
+     "width": 1600,
+     "height": 900,
+     "bytes": 36900
+    },
+    {
+     "file": "cane-cut-800.webp",
+     "width": 800,
+     "height": 450,
+     "bytes": 17636
+    }
+   ]
+  },
+  {
+   "name": "single-gather",
+   "alt": "Illustration of a single-gather marble: a ball of hot glass built up in layers on the end of a metal rod called a punty.",
+   "caption": "A single-gather marble is built up on a punty, then rounded and cut free. Illustration.",
+   "files": [
+    {
+     "file": "single-gather-1600.webp",
+     "width": 1600,
+     "height": 860,
+     "bytes": 22998
+    },
+    {
+     "file": "single-gather-800.webp",
+     "width": 800,
+     "height": 430,
+     "bytes": 10916
+    }
+   ]
+  },
+  {
+   "name": "pontil",
+   "alt": "Illustration of a handmade swirl marble with its pontil mark, the small rough spot at one pole where it was cut free, circled.",
+   "caption": "Every handmade marble has a pontil: a small rough spot where it was cut free. Illustration.",
+   "files": [
+    {
+     "file": "pontil-1600.webp",
+     "width": 1600,
+     "height": 1000,
+     "bytes": 33284
+    },
+    {
+     "file": "pontil-800.webp",
+     "width": 800,
+     "height": 500,
+     "bytes": 14828
+    }
+   ]
+  },
+  {
+   "name": "christensen-machine",
+   "alt": "Diagram of the principle of Christensen's marble machine: two grooved rolls turning in opposite directions roll a lump of soft glass into a ball between them, with a spring letting one roll move aside when the ball is big enough.",
+   "caption": "Christensen's machine (patent filed 1902, published 1905): two grooved rolls turning in opposite directions. A simplified illustration, not a copy of the patent drawing.",
+   "files": [
+    {
+     "file": "christensen-machine-1600.webp",
+     "width": 1600,
+     "height": 960,
+     "bytes": 34164
+    },
+    {
+     "file": "christensen-machine-800.webp",
+     "width": 800,
+     "height": 480,
+     "bytes": 16756
+    }
+   ]
+  },
+  {
+   "name": "machine-method",
+   "alt": "Illustration of the machine method in five numbered steps: glass melted in a furnace, a stream of molten glass, a rotating shear cutting a gob, spiral-grooved rollers turning it into a sphere, and finished marbles collected to cool.",
+   "caption": "The machine method: melt, stream, cut, roll, collect. Illustration.",
+   "files": [
+    {
+     "file": "machine-method-1600.webp",
+     "width": 1600,
+     "height": 980,
+     "bytes": 28962
+    },
+    {
+     "file": "machine-method-800.webp",
+     "width": 800,
+     "height": 490,
+     "bytes": 13972
+    }
+   ]
+  },
+  {
+   "name": "colour",
+   "alt": "Illustration of where a marble's colour comes from: a handmade marble's coloured rods built into the cane, a machine-made marble's streams of coloured glass flowing together, and a cat's eye's coloured vanes injected into clear glass.",
+   "caption": "Where the colour comes from: the cane, the glass streams, or vanes injected into clear glass. Illustration.",
+   "files": [
+    {
+     "file": "colour-1600.webp",
+     "width": 1600,
+     "height": 860,
+     "bytes": 22590
+    },
+    {
+     "file": "colour-800.webp",
+     "width": 800,
+     "height": 430,
+     "bytes": 11272
+    }
+   ]
+  },
+  {
+   "name": "annealing",
+   "alt": "Illustration of annealing: marbles travelling on a conveyor through a long oven called a lehr, from hot at one end to cool at the other.",
+   "caption": "Annealing: the glass cools slowly in a lehr so it doesn't crack later. Illustration.",
+   "files": [
+    {
+     "file": "annealing-1600.webp",
+     "width": 1600,
+     "height": 860,
+     "bytes": 25416
+    },
+    {
+     "file": "annealing-800.webp",
+     "width": 800,
+     "height": 430,
+     "bytes": 10554
+    }
+   ]
+  },
+  {
+   "name": "share",
+   "alt": "How glass marbles are made. Illustrated glass marbles: a handmade swirl, a Lutz, an onionskin and a clearie.",
+   "files": [
+    {
+     "file": "share-1200x630.jpg",
+     "width": 1200,
+     "height": 630,
+     "bytes": 58529
+    }
+   ]
+  }
+ ]
+}

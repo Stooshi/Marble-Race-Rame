@@ -1,0 +1,169 @@
+{
+ "article": "how-to-play-marbles",
+ "pictures": [
+  {
+   "name": "header",
+   "alt": "Illustration seen from above: a chalk ring on pavement with a small group of marbles in the middle and a shooter marble at the edge, a dotted line showing its aim.",
+   "caption": "A ring, some marbles and a shooter: all you need to start. Illustration.",
+   "files": [
+    {
+     "file": "header-1600.webp",
+     "width": 1600,
+     "height": 900,
+     "bytes": 24494
+    },
+    {
+     "file": "header-800.webp",
+     "width": 800,
+     "height": 450,
+     "bytes": 7220
+    }
+   ]
+  },
+  {
+   "name": "what-you-need",
+   "alt": "Illustration of what you need to play marbles: a few small target marbles, one slightly bigger shooter marble, and a stick of chalk and a piece of string for marking a ring.",
+   "caption": "Target marbles, a shooter, and chalk or string to mark a ring. Illustration.",
+   "files": [
+    {
+     "file": "what-you-need-1600.webp",
+     "width": 1600,
+     "height": 800,
+     "bytes": 25106
+    },
+    {
+     "file": "what-you-need-800.webp",
+     "width": 800,
+     "height": 400,
+     "bytes": 11742
+    }
+   ]
+  },
+  {
+   "name": "knuckling-down",
+   "alt": "Labelled diagram of a hand knuckling down, seen from the side: the knuckles rest on the ground, the marble sits in the bent index finger, the thumb is tucked behind it, and an arrow shows the thumb flicking the marble forward.",
+   "caption": "Knuckling down: a knuckle on the ground, the marble in the bent index finger, the thumb behind it. Diagram.",
+   "files": [
+    {
+     "file": "knuckling-down-1600.webp",
+     "width": 1600,
+     "height": 900,
+     "bytes": 28878
+    },
+    {
+     "file": "knuckling-down-800.webp",
+     "width": 800,
+     "height": 450,
+     "bytes": 13642
+    }
+   ]
+  },
+  {
+   "name": "hunching",
+   "alt": "Diagram comparing two shots: on the left, marked right, the hand stays still and only the thumb moves; on the right, marked wrong, the hand is pushed forward while shooting, which is the foul called hunching.",
+   "caption": "Only the thumb moves. Pushing your hand forward is a foul: hunching in the US, fudging in Britain. Diagram.",
+   "files": [
+    {
+     "file": "hunching-1600.webp",
+     "width": 1600,
+     "height": 900,
+     "bytes": 21520
+    },
+    {
+     "file": "hunching-800.webp",
+     "width": 800,
+     "height": 450,
+     "bytes": 10458
+    }
+   ]
+  },
+  {
+   "name": "lagging",
+   "alt": "Diagram of lagging seen from above: two players send their shooters toward a line, and the shooter that stops closest to the line wins the first turn.",
+   "caption": "Lagging: whoever stops closest to the line goes first. Diagram.",
+   "files": [
+    {
+     "file": "lagging-1600.webp",
+     "width": 1600,
+     "height": 900,
+     "bytes": 24656
+    },
+    {
+     "file": "lagging-800.webp",
+     "width": 800,
+     "height": 450,
+     "bytes": 9554
+    }
+   ]
+  },
+  {
+   "name": "ring-game",
+   "alt": "Diagram of a simple ring game seen from above, in three numbered steps: a shooter fired from outside the chalk ring, a target marble knocked out of the ring, and the shooter stopping inside the ring, where the player shoots again from.",
+   "caption": "A simple ring game: shoot from outside the ring; knock a marble out and stay inside, and you shoot again from where your shooter stopped. Diagram.",
+   "files": [
+    {
+     "file": "ring-game-1600.webp",
+     "width": 1600,
+     "height": 1000,
+     "bytes": 37122
+    },
+    {
+     "file": "ring-game-800.webp",
+     "width": 800,
+     "height": 500,
+     "bytes": 13182
+    }
+   ]
+  },
+  {
+   "name": "conqueror",
+   "alt": "Diagram of Conqueror: one player tosses a marble onto the ground, the next player shoots at it; a hit captures it, a miss leaves the shooter's marble where it stopped as the new target.",
+   "caption": "Conqueror: hit the marble and it's yours; miss, and your marble becomes the next target. Diagram.",
+   "files": [
+    {
+     "file": "conqueror-1600.webp",
+     "width": 1600,
+     "height": 900,
+     "bytes": 29628
+    },
+    {
+     "file": "conqueror-800.webp",
+     "width": 800,
+     "height": 450,
+     "bytes": 11154
+    }
+   ]
+  },
+  {
+   "name": "hundreds",
+   "alt": "Diagram of Hundreds: two players shoot toward a small circle; when only one marble lands inside, that player scores 10 points and shoots again, and the first to 100 wins.",
+   "caption": "Hundreds: only one marble in the circle scores 10. First to 100 wins. Diagram.",
+   "files": [
+    {
+     "file": "hundreds-1600.webp",
+     "width": 1600,
+     "height": 900,
+     "bytes": 28056
+    },
+    {
+     "file": "hundreds-800.webp",
+     "width": 800,
+     "height": 450,
+     "bytes": 10560
+    }
+   ]
+  },
+  {
+   "name": "share",
+   "alt": "How to play marbles. Illustrated marbles: a cat's eye, a corkscrew, a clearie and an aggie.",
+   "files": [
+    {
+     "file": "share-1200x630.jpg",
+     "width": 1200,
+     "height": 630,
+     "bytes": 44124
+    }
+   ]
+  }
+ ]
+}

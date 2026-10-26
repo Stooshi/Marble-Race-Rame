@@ -1,0 +1,131 @@
+{
+ "article": "ringer",
+ "pictures": [
+  {
+   "name": "header",
+   "alt": "Illustration seen from above: a Ringer court, a chalk circle on concrete inside a wooden border, with 13 marbles in an X in the middle and a shooter at the edge.",
+   "caption": "Ringer: 13 marbles in a cross in a 10-foot ring. Illustration.",
+   "files": [
+    {
+     "file": "header-1600.webp",
+     "width": 1600,
+     "height": 900,
+     "bytes": 19210
+    },
+    {
+     "file": "header-800.webp",
+     "width": 800,
+     "height": 450,
+     "bytes": 6882
+    }
+   ]
+  },
+  {
+   "name": "court",
+   "alt": "Diagram of the Ringer court seen from above, drawn to scale: a 12-foot square of concrete with a raised wooden border, a 10-foot circle in the middle, a centre mark where the 13 marbles go, and two lag lines that touch the circle and run parallel to the border.",
+   "caption": "The court: a 10-foot circle on a 12-foot square, with two lag lines touching the circle. The court is drawn to scale; the marbles are drawn larger. Diagram.",
+   "files": [
+    {
+     "file": "court-1600.webp",
+     "width": 1600,
+     "height": 1060,
+     "bytes": 33450
+    },
+    {
+     "file": "court-800.webp",
+     "width": 800,
+     "height": 530,
+     "bytes": 14184
+    }
+   ]
+  },
+  {
+   "name": "the-cross",
+   "alt": "Diagram of the Ringer set-up drawn to scale: 13 marbles in an X, one in the middle and three along each arm, 3 inches apart centre to centre.",
+   "caption": "The cross: one marble in the middle and three on each arm, 3 inches apart. The first shooter chooses which way the X points. Drawn to scale. Diagram.",
+   "files": [
+    {
+     "file": "the-cross-1600.webp",
+     "width": 1600,
+     "height": 1000,
+     "bytes": 29838
+    },
+    {
+     "file": "the-cross-800.webp",
+     "width": 800,
+     "height": 500,
+     "bytes": 12274
+    }
+   ]
+  },
+  {
+   "name": "lagging",
+   "alt": "Diagram of lagging in Ringer: both players toss their shooters at the same time from the far edge of the circle toward the lag line; the shooter that stops closest to the line wins first shot.",
+   "caption": "Lagging: both toss from the far edge at the same time; closest to the lag line shoots first. Diagram.",
+   "files": [
+    {
+     "file": "lagging-1600.webp",
+     "width": 1600,
+     "height": 1000,
+     "bytes": 36234
+    },
+    {
+     "file": "lagging-800.webp",
+     "width": 800,
+     "height": 500,
+     "bytes": 13292
+    }
+   ]
+  },
+  {
+   "name": "shooting",
+   "alt": "Diagram of a Ringer turn seen from above: the first shot is taken from outside the circle and knocks a target marble out for one point; the shooter stops inside the circle, and the next shot is taken from where it stopped.",
+   "caption": "Each marble knocked out scores one. If your shooter stays inside, shoot again from where it stopped. Diagram.",
+   "files": [
+    {
+     "file": "shooting-1600.webp",
+     "width": 1600,
+     "height": 1000,
+     "bytes": 44970
+    },
+    {
+     "file": "shooting-800.webp",
+     "width": 800,
+     "height": 500,
+     "bytes": 18136
+    }
+   ]
+  },
+  {
+   "name": "on-the-line",
+   "alt": "Diagram of the on-the-line rule: a target marble lying on the circle's line with more than half of it outside counts as out, while a shooter lying on the line counts as in.",
+   "caption": "On the line: a target on the line is out, a shooter on the line is in. Diagram.",
+   "files": [
+    {
+     "file": "on-the-line-1600.webp",
+     "width": 1600,
+     "height": 940,
+     "bytes": 27252
+    },
+    {
+     "file": "on-the-line-800.webp",
+     "width": 800,
+     "height": 470,
+     "bytes": 10966
+    }
+   ]
+  },
+  {
+   "name": "share",
+   "alt": "Ringer rules. Illustrated marbles set out in a cross, with a cat's eye shooter.",
+   "files": [
+    {
+     "file": "share-1200x630.jpg",
+     "width": 1200,
+     "height": 630,
+     "bytes": 32388
+    }
+   ]
+  }
+ ]
+}

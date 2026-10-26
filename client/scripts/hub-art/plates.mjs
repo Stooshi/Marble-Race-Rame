@@ -10,6 +10,7 @@ import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { chromium } from 'playwright-core';
 import sharp from 'sharp';
+import { HISTORY, MAKING, PLAY, RINGER } from './diagrams.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const fonts = path.resolve(here, '../../node_modules/@fontsource');
@@ -188,7 +189,66 @@ const TYPES = {
   },
 };
 
-const ARTICLES = { [TYPES.slug]: TYPES };
+// ── The rules, history and making articles: diagrams and illustrations (diagrams.mjs) ──
+
+const P = (fn, alt, caption) => ({ kind: 'svg', fn, alt, caption });
+
+const HOW_TO_PLAY = {
+  slug: 'how-to-play-marbles',
+  pictures: [
+    { name: 'header', ...P(PLAY.header, 'Illustration seen from above: a chalk ring on pavement with a small group of marbles in the middle and a shooter marble at the edge, a dotted line showing its aim.', 'A ring, some marbles and a shooter: all you need to start. Illustration.') },
+    { name: 'what-you-need', ...P(PLAY.needs, 'Illustration of what you need to play marbles: a few small target marbles, one slightly bigger shooter marble, and a stick of chalk and a piece of string for marking a ring.', 'Target marbles, a shooter, and chalk or string to mark a ring. Illustration.') },
+    { name: 'knuckling-down', ...P(PLAY.knuckle, 'Labelled diagram of a hand knuckling down, seen from the side: the knuckles rest on the ground, the marble sits in the bent index finger, the thumb is tucked behind it, and an arrow shows the thumb flicking the marble forward.', 'Knuckling down: a knuckle on the ground, the marble in the bent index finger, the thumb behind it. Diagram.') },
+    { name: 'hunching', ...P(PLAY.hunching, 'Diagram comparing two shots: on the left, marked right, the hand stays still and only the thumb moves; on the right, marked wrong, the hand is pushed forward while shooting, which is the foul called hunching.', 'Only the thumb moves. Pushing your hand forward is a foul: hunching in the US, fudging in Britain. Diagram.') },
+    { name: 'lagging', ...P(PLAY.lagging, 'Diagram of lagging seen from above: two players send their shooters toward a line, and the shooter that stops closest to the line wins the first turn.', 'Lagging: whoever stops closest to the line goes first. Diagram.') },
+    { name: 'ring-game', ...P(PLAY.ringGame, 'Diagram of a simple ring game seen from above, in three numbered steps: a shooter fired from outside the chalk ring, a target marble knocked out of the ring, and the shooter stopping inside the ring, where the player shoots again from.', 'A simple ring game: shoot from outside the ring; knock a marble out and stay inside, and you shoot again from where your shooter stopped. Diagram.') },
+    { name: 'conqueror', ...P(PLAY.conqueror, 'Diagram of Conqueror: one player tosses a marble onto the ground, the next player shoots at it; a hit captures it, a miss leaves the shooter\'s marble where it stopped as the new target.', 'Conqueror: hit the marble and it\'s yours; miss, and your marble becomes the next target. Diagram.') },
+    { name: 'hundreds', ...P(PLAY.hundreds, 'Diagram of Hundreds: two players shoot toward a small circle; when only one marble lands inside, that player scores 10 points and shoots again, and the first to 100 wins.', 'Hundreds: only one marble in the circle scores 10. First to 100 wins. Diagram.') },
+  ],
+  share: { kicker: 'Marble games', title: 'How to play marbles', items: [['cats-eye', 905, 300, 300], ['corkscrew', 1100, 500, 220], ['clearie', 780, 520, 190], ['aggie', 1120, 130, 180]], alt: 'How to play marbles. Illustrated marbles: a cat\'s eye, a corkscrew, a clearie and an aggie.' },
+};
+
+const RINGER_ARTICLE = {
+  slug: 'ringer',
+  pictures: [
+    { name: 'header', ...P(RINGER.header, 'Illustration seen from above: a Ringer court, a chalk circle on concrete inside a wooden border, with 13 marbles in an X in the middle and a shooter at the edge.', 'Ringer: 13 marbles in a cross in a 10-foot ring. Illustration.') },
+    { name: 'court', ...P(RINGER.court, 'Diagram of the Ringer court seen from above, drawn to scale: a 12-foot square of concrete with a raised wooden border, a 10-foot circle in the middle, a centre mark where the 13 marbles go, and two lag lines that touch the circle and run parallel to the border.', 'The court: a 10-foot circle on a 12-foot square, with two lag lines touching the circle. The court is drawn to scale; the marbles are drawn larger. Diagram.') },
+    { name: 'the-cross', ...P(RINGER.rack, 'Diagram of the Ringer set-up drawn to scale: 13 marbles in an X, one in the middle and three along each arm, 3 inches apart centre to centre.', 'The cross: one marble in the middle and three on each arm, 3 inches apart. The first shooter chooses which way the X points. Drawn to scale. Diagram.') },
+    { name: 'lagging', ...P(RINGER.lag, 'Diagram of lagging in Ringer: both players toss their shooters at the same time from the far edge of the circle toward the lag line; the shooter that stops closest to the line wins first shot.', 'Lagging: both toss from the far edge at the same time; closest to the lag line shoots first. Diagram.') },
+    { name: 'shooting', ...P(RINGER.shooting, 'Diagram of a Ringer turn seen from above: the first shot is taken from outside the circle and knocks a target marble out for one point; the shooter stops inside the circle, and the next shot is taken from where it stopped.', 'Each marble knocked out scores one. If your shooter stays inside, shoot again from where it stopped. Diagram.') },
+    { name: 'on-the-line', ...P(RINGER.line, 'Diagram of the on-the-line rule: a target marble lying on the circle\'s line with more than half of it outside counts as out, while a shooter lying on the line counts as in.', 'On the line: a target on the line is out, a shooter on the line is in. Diagram.') },
+  ],
+  share: { kicker: 'Marble games', title: 'Ringer rules', items: [['clearie', 860, 320, 96], ['clearie', 950, 230, 96], ['clearie', 1040, 140, 96], ['clearie', 770, 230, 96], ['clearie', 680, 140, 96], ['clearie', 950, 410, 96], ['clearie', 1040, 500, 96], ['clearie', 770, 410, 96], ['clearie', 680, 500, 96], ['cats-eye', 570, 560, 120]], alt: 'Ringer rules. Illustrated marbles set out in a cross, with a cat\'s eye shooter.' },
+};
+
+const HISTORY_ARTICLE = {
+  slug: 'history-of-marbles',
+  pictures: [
+    { name: 'header', ...P(HISTORY.header, 'Illustration of a row of objects on a shelf, from left to right: a round pebble, a walnut, a clay marble, a china marble, a handmade onionskin, a machine-made corkscrew and a cat\'s eye.', 'From pebbles and nuts to glass. Illustration, not photos of historical objects.') },
+    { name: 'timeline', ...P(HISTORY.timeline, 'Illustrated timeline of marbles: stone balls at Mohenjo-daro around 2500 BCE; Roman children\'s nut games; Bruegel\'s 1560 painting of children at marbles; marble scissors in Lauscha around 1846; clay marbles mass-made in the US from the 1870s; Christensen\'s machine patent, filed 1902 and published 1905; tournaments from the 1920s and 1930s; cat\'s eyes common by the 1950s.', 'Some milestones from this history, as an illustrated timeline. Illustration.') },
+    { name: 'before-glass', ...P(HISTORY.ancient, 'Illustration of what the earliest marbles may have been: round pebbles, nuts and fruit pits, and small stone balls, on bare earth.', 'Before glass: pebbles, nuts and fruit pits, and small stone balls whose use is uncertain. An illustration, not a picture of particular finds.') },
+    { name: 'marble-scissors', ...P(MAKING.header, 'Illustration of a glowing glass cane with a hot, newly rounded swirl marble at its end, held between the blades of a pair of marble scissors.', 'Marble scissors cutting a marble from a glass cane, the method used in Lauscha from around 1846. Illustration.') },
+    { name: 'christensen-machine', ...P(MAKING.christensen, 'Diagram of the principle of Christensen\'s marble machine: two grooved rolls turning in opposite directions roll a lump of soft glass into a ball between them, with a spring letting one roll move aside.', 'The idea behind Christensen\'s machine (patent filed 1902, published 1905): two grooved rolls turning in opposite directions. A simplified illustration, not a copy of the patent drawing.') },
+  ],
+  share: { kicker: 'Marbles', title: 'A short history of marbles', items: [['onionskin', 905, 300, 300], ['clay-tan', 1100, 520, 200], ['cats-eye', 780, 520, 190], ['china', 1120, 130, 180]], alt: 'A short history of marbles. Illustrated marbles: an onionskin, a clay marble, a cat\'s eye and a china.' },
+};
+
+const MAKING_ARTICLE = {
+  slug: 'how-glass-marbles-are-made',
+  pictures: [
+    { name: 'header', ...P(MAKING.header, 'Illustration of a glowing glass cane with a hot, newly rounded swirl marble at its end, held between the blades of a pair of marble scissors.', 'A marble cut from a glass cane with marble scissors. Illustration.') },
+    { name: 'cane-cut', ...P(MAKING.caneCut, 'Illustration of the five steps of making a cane-cut marble: make a glass cane with the design inside, heat its end until soft, round it off, twist it for the spiral, and cut it free with the marble scissors.', 'Cane-cut marbles in five steps. Illustration.') },
+    { name: 'single-gather', ...P(MAKING.punty, 'Illustration of a single-gather marble: a ball of hot glass built up in layers on the end of a metal rod called a punty.', 'A single-gather marble is built up on a punty, then rounded and cut free. Illustration.') },
+    { name: 'pontil', kind: 'single', img: 'handmade-swirl', label: 'Pontil mark', sub: 'where it was cut free', point: 'pontil', note: 'Pontil', alt: 'Illustration of a handmade swirl marble with its pontil mark, the small rough spot at one pole where it was cut free, circled.', caption: 'Every handmade marble has a pontil: a small rough spot where it was cut free. Illustration.' },
+    { name: 'christensen-machine', ...P(MAKING.christensen, 'Diagram of the principle of Christensen\'s marble machine: two grooved rolls turning in opposite directions roll a lump of soft glass into a ball between them, with a spring letting one roll move aside when the ball is big enough.', 'Christensen\'s machine (patent filed 1902, published 1905): two grooved rolls turning in opposite directions. A simplified illustration, not a copy of the patent drawing.') },
+    { name: 'machine-method', ...P(MAKING.modern, 'Illustration of the machine method in five numbered steps: glass melted in a furnace, a stream of molten glass, a rotating shear cutting a gob, spiral-grooved rollers turning it into a sphere, and finished marbles collected to cool.', 'The machine method: melt, stream, cut, roll, collect. Illustration.') },
+    { name: 'colour', ...P(MAKING.colour, 'Illustration of where a marble\'s colour comes from: a handmade marble\'s coloured rods built into the cane, a machine-made marble\'s streams of coloured glass flowing together, and a cat\'s eye\'s coloured vanes injected into clear glass.', 'Where the colour comes from: the cane, the glass streams, or vanes injected into clear glass. Illustration.') },
+    { name: 'annealing', ...P(MAKING.annealing, 'Illustration of annealing: marbles travelling on a conveyor through a long oven called a lehr, from hot at one end to cool at the other.', 'Annealing: the glass cools slowly in a lehr so it doesn\'t crack later. Illustration.') },
+  ],
+  share: { kicker: 'Marbles', title: 'How glass marbles are made', items: [['handmade-swirl', 905, 300, 300], ['lutz', 1100, 520, 200], ['onionskin', 780, 520, 190], ['clearie', 1120, 130, 180]], alt: 'How glass marbles are made. Illustrated glass marbles: a handmade swirl, a Lutz, an onionskin and a clearie.' },
+};
+
+const ARTICLES = Object.fromEntries([TYPES, HOW_TO_PLAY, RINGER_ARTICLE, HISTORY_ARTICLE, MAKING_ARTICLE].map((a) => [a.slug, a]));
 
 async function shoot(browser, html, w, h, file) {
   const tmp = `${file}.html`;
@@ -212,8 +272,11 @@ async function main() {
   const meta = [];
   try {
     for (const p of art.pictures) {
-      const h = p.kind === 'single' ? 1000 : p.kind === 'row' ? Math.round((p.layout?.d ?? 380) + 300) : 900;
-      const html = p.kind === 'row' ? row(p.items, { ...p.layout, h }, dir)
+      let h = p.kind === 'single' ? 1000 : p.kind === 'row' ? Math.round((p.layout?.d ?? 380) + 300) : 900;
+      let drawn = null;
+      if (p.kind === 'svg') { drawn = p.fn({ dir }); h = Number(/height="(\d+)"/.exec(drawn)[1]); }
+      const html = p.kind === 'svg' ? page(1600, h, {}, drawn)
+        : p.kind === 'row' ? row(p.items, { ...p.layout, h }, dir)
         : p.kind === 'single' ? single(p, { h }, dir, notes)
           : p.kind === 'sizes' ? sizes(dir)
             : header(p.items, dir);
