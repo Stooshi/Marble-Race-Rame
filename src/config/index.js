@@ -134,6 +134,10 @@ module.exports = Object.freeze({
     minDurationMs: int('RACE_MIN_DURATION_MS', 90_000),
     maxDurationMs: int('RACE_MAX_DURATION_MS', 90_000),
     countdownMs: int('RACE_COUNTDOWN_MS', 5000),
+    // The start show's flyover before a room's or a quick race's countdown (Moses, 26 Oct 2026): GO is
+    // this much later, so everyone in the room sees the flight in sync. Solo races play it on the player's
+    // own screen instead (the client holds its view back).
+    startShowMs: int('RACE_START_SHOW_MS', 3500),
     tickRateHz: int('RACE_TICK_RATE_HZ', 10),
     // A rematch (POST /api/races/:id/next) starts by itself this long after it is set up.
     nextRaceDelayMs: int('RACE_NEXT_DELAY_MS', 40_000),

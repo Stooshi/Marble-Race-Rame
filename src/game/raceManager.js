@@ -2,6 +2,7 @@
 
 const db = require('../db');
 const raceService = require('./raceService');
+const config = require('../config');
 
 /**
  * Owns the real-time side of races: countdown timers, frame streaming over
@@ -73,6 +74,8 @@ class RaceManager {
       tickMs: sim.tickMs,
       tickRateHz: sim.tickRateHz,
       startsAt: new Date(race.started_at).toISOString(),
+      // The whole countdown (ms): longer than the usual for a room's start show (the flyover first).
+      countdownMs: Number(race.countdown_ms) || config.game.countdownMs,
       // The starting gate (new physics): when each paddle drops, and the field waiting behind it.
       ...(sim.start && { start: sim.start, firstFrame: sim.frames[0] }),
     };
