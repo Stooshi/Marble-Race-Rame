@@ -13,7 +13,9 @@
  */
 const LIGHTINGS = ['day', 'sunset', 'midnight-sun', 'night-northern-lights', 'fog', 'snow', 'rain', 'night', 'fireworks-night', 'parlour', 'neon-night', 'synthwave',
   // The Block Series: a calm dawn, a dark mine lit by its lamps and gems, a cave lit only by magma.
-  'dawn', 'cave', 'magma'];
+  'dawn', 'cave', 'magma',
+  // Peaks: the thin air's deep blue sky, a small sharp sun and crisp shadows, hardly any haze.
+  'high-altitude'];
 
 // The track's own preset comes up this many times as often as each variant.
 const OWN_WEIGHT = 2;

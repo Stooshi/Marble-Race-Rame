@@ -8,7 +8,7 @@
  * Each problem names the rule and the section, in plain words.
  */
 
-const { SHARP_RADIUS, TUNNELS, BRIDGES, SURFACES, BIOMES, LANDMARKS, OVERHEAD, FRAMES, AROUND, SCENERY, CROWDS, BARRIERS, CANYONS, BLOCK_WORLDS, STADIUMS, RIVERS } = require('./parts');
+const { SHARP_RADIUS, TUNNELS, BRIDGES, SURFACES, BIOMES, LANDMARKS, OVERHEAD, FRAMES, AROUND, SCENERY, CROWDS, BARRIERS, CANYONS, BLOCK_WORLDS, STADIUMS, RIVERS, PEAKS } = require('./parts');
 
 const MIN_SPIRAL_RADIUS = 40;  // Table Mountain Run's corkscrew
 const MIN_SWEEP_RADIUS = 45;   // San Francisco's Embarcadero
@@ -19,7 +19,7 @@ const LONGEST_CLIMB_M = 40;    // San Francisco's 35 m
 const { LIGHTINGS } = require('./lighting');
 const { OPENING_KINDS } = require('./openings');
 // Track families (the sameness check compares openings within one): 'test' tracks are never compared.
-const FAMILIES = ['world-tour', 'grand-prix', 'coaster', 'pinball', 'arcade', 'canyon', 'block', 'athletics', 'winter-wonders', 'river', 'test'];
+const FAMILIES = ['world-tour', 'grand-prix', 'coaster', 'pinball', 'arcade', 'canyon', 'block', 'athletics', 'winter-wonders', 'river', 'peak', 'test'];
 // A canyon: the canyon family, or a library test track built as one (series 'canyon'). It is built
 // as a coaster too (the track climbs out of the canyon on its supports and touches down on its floor).
 const isCanyon = (spec) => spec.family === 'canyon' || (spec.family === 'test' && spec.series === 'canyon');
@@ -34,10 +34,19 @@ const isAthletics = (spec) => spec.family === 'athletics' || (spec.family === 't
 // A Rivers track: the river family, or a library test track built as one (series 'river'). Built as a coaster:
 // on the bank unless a section flies (out over the water on its supports, across the river).
 const isRiver = (spec) => spec.family === 'river' || (spec.family === 'test' && spec.series === 'river');
-// A coaster: the coaster family, or a library test track built as one (series 'coaster'), or a canyon, a Block Series, a Track and Field or a Rivers track.
-const isCoaster = (spec) => spec.family === 'coaster' || (spec.family === 'test' && spec.series === 'coaster') || isCanyon(spec) || isBlock(spec) || isAthletics(spec) || isRiver(spec);
-// (Tracks whose sections run on the ground unless they say: a canyon's floor, a Block Series world's land, a stadium's ground, a river's bank.)
-const onTheFloor = (spec) => isCanyon(spec) || isBlock(spec) || isAthletics(spec) || isRiver(spec);
+// A Peaks track: the peak family, or a library test track built as one (series 'peak'). Built as a coaster: on
+// the mountain's snow, ice and rock unless a section flies (along a ridge, over a crevasse, out over a drop).
+const isPeak = (spec) => spec.family === 'peak' || (spec.family === 'test' && spec.series === 'peak');
+// A coaster: the coaster family, or a library test track built as one (series 'coaster'), or a canyon, a Block Series, a Track and Field, a Rivers or a Peaks track.
+const isCoaster = (spec) => spec.family === 'coaster' || (spec.family === 'test' && spec.series === 'coaster') || isCanyon(spec) || isBlock(spec) || isAthletics(spec) || isRiver(spec) || isPeak(spec);
+// (Tracks whose sections run on the ground unless they say: a canyon's floor, a Block Series world's land, a stadium's ground, a river's bank, a mountain's snow.)
+const onTheFloor = (spec) => isCanyon(spec) || isBlock(spec) || isAthletics(spec) || isRiver(spec) || isPeak(spec);
+// A Peaks track's mountain (`peak: { palette }`), and per section (`peak: { zone, ridge, crevasse }`): the land's zone
+// there (its colours and what grows: a mountain's climate bands), a knife-edge ridge (the land falling away on
+// both sides; the section flies), a crevasse crossed on a ladder or an ice-arch bridge (the section flies). Looks only.
+const PEAK_ZONES = ['snow', 'ice', 'rock', 'alpine-desert', 'moorland', 'heath', 'cloud-forest', 'black-sand'];
+const PEAK_CREVASSES = ['ladder', 'ice-arch'];
+const MIN_OVER_CREVASSE = 6; // metres: a section over a crevasse or along a ridge flies at least this high
 // A river's width (metres, bank to bank), and where it runs by a section: beside the track, under it (the track
 // flying over the water), or away from it.
 const RIVER_WIDTH = [40, 160];
@@ -49,7 +58,7 @@ const LANE_COLOURS = ['red', 'blue'];
 // A canyon's depth (metres from its floor to its rim), and its river's side.
 const CANYON_DEPTH = [20, 60];
 const RIVER_SIDES = ['left', 'right', 'none'];
-const COASTER_STYLES = ['steel', 'timber', 'blocks', 'concrete'];
+const COASTER_STYLES = ['steel', 'timber', 'blocks', 'concrete', 'alpine'];
 // A pinball table: the pinball family, or a library test track built as one (series 'pinball').
 const isPinball = (spec) => spec.family === 'pinball' || (spec.family === 'test' && spec.series === 'pinball');
 // A pinball table's backglass art (original art, one style per table) and its dot-matrix call-out.
@@ -376,7 +385,7 @@ function checkRecipe({ spec, sections, span, generated, owner, placed, total, wh
   }
 
   // Coasters: their own rules (a lift hill, supports, touchdowns, water).
-  if (spec.series !== undefined && !(spec.family === 'test' && ['coaster', 'pinball', 'arcade', 'canyon', 'block', 'athletics', 'river'].includes(spec.series))) problems.push(`${where('track')}: series is for test tracks: 'coaster', 'pinball', 'arcade', 'canyon', 'block', 'athletics' or 'river' (a library test track built as a coaster, a pinball table, an arcade world, a canyon, a Block Series world, a stadium or a river).`);
+  if (spec.series !== undefined && !(spec.family === 'test' && ['coaster', 'pinball', 'arcade', 'canyon', 'block', 'athletics', 'river', 'peak'].includes(spec.series))) problems.push(`${where('track')}: series is for test tracks: 'coaster', 'pinball', 'arcade', 'canyon', 'block', 'athletics' or 'river' (a library test track built as a coaster, a pinball table, an arcade world, a canyon, a Block Series world, a stadium or a river).`);
   if (isAthletics(spec)) problems.push(...athleticsRules({ spec, sections, where }));
   else {
     if (spec.athletics !== undefined) problems.push(`${where('track')}: athletics settings are for Track and Field (family: 'athletics').`);
@@ -393,6 +402,11 @@ function checkRecipe({ spec, sections, span, generated, owner, placed, total, wh
   else {
     if (spec.river !== undefined) problems.push(`${where('track')}: river settings are for Rivers tracks (family: 'river').`);
     sections.forEach((s) => { if (s.river !== undefined) problems.push(`${where(s.name)}: river is for Rivers tracks (family: 'river').`); });
+  }
+  if (isPeak(spec)) problems.push(...peakRules({ spec, sections, where }));
+  else {
+    if (spec.peak !== undefined) problems.push(`${where('track')}: peak settings are for Peaks tracks (family: 'peak').`);
+    sections.forEach((s) => { if (s.peak !== undefined) problems.push(`${where(s.name)}: peak is for Peaks tracks (family: 'peak').`); });
   }
   if (isPinball(spec)) problems.push(...pinballRules({ spec, where }));
   else if (spec.pinball !== undefined) problems.push(`${where('track')}: pinball settings are for pinball tables (family: 'pinball').`);
@@ -455,7 +469,9 @@ function arcadeRules({ spec, where }) {
 }
 
 // The varied starts: how a track's first seconds look (drawing only; the race is its opening's).
-const START_TYPES = ['straight-lift', 'curving-lift', 'spiral-tower', 'elevator', 'cliff', 'rooftop', 'station-launch', 'stepped-platform', 'lighthouse', 'ski-jump', 'castle-tower', 'pier', 'river-boat', 'lock-gate'];
+const START_TYPES = ['straight-lift', 'curving-lift', 'spiral-tower', 'elevator', 'cliff', 'rooftop', 'station-launch', 'stepped-platform', 'lighthouse', 'ski-jump', 'castle-tower', 'pier', 'river-boat', 'lock-gate', 'ice-ledge', 'gondola', 'ski-plane'];
+// (The Peaks' starts: on an overhanging snow ledge, out of a cable-car cabin at a needle-top station, down a ski plane's ramp on a glacier.)
+const PEAK_STARTS = ['ice-ledge', 'gondola', 'ski-plane'];
 // (The Rivers' starts: on a timber pier over the water, on a moored boat's top deck, at a lock's upper gates.)
 const RIVER_STARTS = ['pier', 'river-boat', 'lock-gate'];
 // (A Rivers track's own look for a start type, looks only: the lift inside a bridge tower or up a port crane, a mansard roof.)
@@ -473,6 +489,7 @@ function startRules({ spec, where }) {
     if (!isCoaster(spec)) problems.push(`${where('start')}: a start type is for coasters (family: 'coaster').`);
     else if (!START_TYPES.includes(st.type)) problems.push(`${where('start')}: unknown start type ${JSON.stringify(st.type)} (${START_TYPES.join(', ')}).`);
     if (RIVER_STARTS.includes(st.type) && !isRiver(spec)) problems.push(`${where('start')}: a ${st.type} start stands on a river (family: 'river').`);
+    if (PEAK_STARTS.includes(st.type) && !isPeak(spec)) problems.push(`${where('start')}: a ${st.type} start stands on a mountain (family: 'peak').`);
     if (st.look !== undefined && !(START_LOOKS[st.type] ?? []).includes(st.look)) problems.push(`${where('start')}: unknown look ${JSON.stringify(st.look)} for a ${st.type} start (${Object.entries(START_LOOKS).map(([t, l]) => `${t}: ${l.join(', ')}`).join('; ')}).`);
     if (st.look !== undefined && !isRiver(spec)) problems.push(`${where('start')}: a start's look is for Rivers tracks (family: 'river').`);
     if (st.type === 'station-launch' && spec.opening?.kind !== 'boost-launch') problems.push(`${where('start')}: a launch from the station races the boost-launch opening (opening('boost-launch')).`);
@@ -530,6 +547,29 @@ function canyonRules({ spec, sections, where }) {
   if (c.river !== undefined && !RIVER_SIDES.includes(c.river)) problems.push(`${where('canyon')}: the river runs on the ${RIVER_SIDES.slice(0, 2).join(' or ')} (or 'none').`);
   sections.forEach((s) => {
     if (s.walls !== undefined && !(Number.isFinite(s.walls) && s.walls >= 0 && s.walls <= 1)) problems.push(`${where(s.name)}: walls is the share of the canyon's walls standing here, 0 to 1.`);
+  });
+  return problems;
+}
+
+/**
+ * A Peaks track's own rules: its mountain (`peak: { palette }`) and, per section, its zone, a ridge or a crevasse
+ * (`peak: { zone, ridge, crevasse }`); a ridge or a crevasse flies (height). The summit is scenery, never track.
+ */
+function peakRules({ spec, sections, where }) {
+  const problems = [];
+  const pk = spec.peak;
+  if (!pk || typeof pk !== 'object') return [`${where('track')}: a Peaks track says its mountain: peak: { palette (${PEAKS.join(', ')}) }.`];
+  for (const k of Object.keys(pk)) if (!['palette'].includes(k)) problems.push(`${where('peak')}: unknown setting ${k} (palette).`);
+  if (!PEAKS.includes(pk.palette)) problems.push(`${where('peak')}: unknown palette ${JSON.stringify(pk.palette)} (${PEAKS.join(', ')}).`);
+  sections.forEach((s) => {
+    if (s.peak === undefined) return;
+    if (typeof s.peak !== 'object') { problems.push(`${where(s.name)}: peak is { zone, ridge, crevasse }.`); return; }
+    for (const k of Object.keys(s.peak)) if (!['zone', 'ridge', 'crevasse'].includes(k)) problems.push(`${where(s.name)}: unknown peak setting ${k} (zone, ridge, crevasse).`);
+    if (s.peak.zone !== undefined && !PEAK_ZONES.includes(s.peak.zone)) problems.push(`${where(s.name)}: unknown zone ${JSON.stringify(s.peak.zone)} (${PEAK_ZONES.join(', ')}).`);
+    if (s.peak.crevasse !== undefined && !PEAK_CREVASSES.includes(s.peak.crevasse)) problems.push(`${where(s.name)}: a crevasse is crossed on a ${PEAK_CREVASSES.join(' or ')} bridge.`);
+    if (s.peak.ridge !== undefined && typeof s.peak.ridge !== 'boolean') problems.push(`${where(s.name)}: ridge is true or false.`);
+    if ((s.peak.ridge || s.peak.crevasse) && !(s.height >= MIN_OVER_CREVASSE)) problems.push(`${where(s.name)}: a ridge or a crevasse flies at least ${MIN_OVER_CREVASSE} m high (height).`);
+    if (s.peak.crevasse && s.shape.shape !== 'straight') problems.push(`${where(s.name)}: a crevasse is crossed on a straight.`);
   });
   return problems;
 }
@@ -621,4 +661,4 @@ function athleticsRules({ spec, sections, where }) {
   return problems;
 }
 
-module.exports = { START_LOOKS, checkRecipe, isCanyon, isBlock, isAthletics, isWinterWonders, isRiver, MIN_SPIRAL_RADIUS, MIN_SWEEP_RADIUS, BILLBOARDS, GRAND_PRIX_BILLBOARDS, isCoaster, isPinball, PINBALL_ART, isArcade, ARCADE_ART, START_TYPES, GATES, COUNTDOWN_SHOTS, LAUNCH_SHOTS };
+module.exports = { START_LOOKS, checkRecipe, isCanyon, isBlock, isAthletics, isWinterWonders, isRiver, isPeak, PEAK_ZONES, MIN_SPIRAL_RADIUS, MIN_SWEEP_RADIUS, BILLBOARDS, GRAND_PRIX_BILLBOARDS, isCoaster, isPinball, PINBALL_ART, isArcade, ARCADE_ART, START_TYPES, GATES, COUNTDOWN_SHOTS, LAUNCH_SHOTS };

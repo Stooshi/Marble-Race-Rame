@@ -148,7 +148,7 @@ function twinChutes(length, { grade = 0.45 } = {}) {
 
 const OPENING_KINDS = Object.keys(OPENINGS);
 // Dressing an opening: what may change (looks only) on each of its sections.
-const DRESS = ['name', 'scenery', 'landmarks', 'billboards', 'billboardFrame', 'surface', 'figures', 'overhead', 'tunnel', 'height', 'water', 'waterCurtain', 'stadium', 'river'];
+const DRESS = ['name', 'scenery', 'landmarks', 'billboards', 'billboardFrame', 'surface', 'figures', 'overhead', 'tunnel', 'height', 'water', 'waterCurtain', 'stadium', 'river', 'peak'];
 
 /**
  * An opening from the library. `costumes`: what its obstacles look like

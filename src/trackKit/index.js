@@ -17,7 +17,7 @@
 
 const { generate } = require('../game/trackShape');
 const parts = require('./parts');
-const { checkRecipe, isCoaster, isPinball, isArcade, isCanyon, isBlock, isAthletics, isWinterWonders, isRiver } = require('./recipe');
+const { checkRecipe, isCoaster, isPinball, isArcade, isCanyon, isBlock, isAthletics, isWinterWonders, isRiver, isPeak } = require('./recipe');
 
 const round4 = (x) => Math.round(x * 10000) / 10000;
 
@@ -298,7 +298,7 @@ function track(spec) {
     // A coaster (family 'coaster'): the track flies on steel supports `height` metres above the land
     // (a section's own `height`; 0 where it touches down), a lift hill behind the gate, a station at
     // the finish; `water`: sections that fly over water. Looks only, like everything here.
-    ...(isCoaster(spec) && { coaster: { height: isCanyon(spec) || isBlock(spec) || isAthletics(spec) || isRiver(spec) ? 0 : COASTER_HEIGHT, ...spec.coaster, colours: { ...COASTER_COLOURS, ...spec.coaster?.colours } } }),
+    ...(isCoaster(spec) && { coaster: { height: isCanyon(spec) || isBlock(spec) || isAthletics(spec) || isRiver(spec) || isPeak(spec) ? 0 : COASTER_HEIGHT, ...spec.coaster, colours: { ...COASTER_COLOURS, ...spec.coaster?.colours } } }),
     // A canyon (family 'canyon', built as a coaster): the track runs along the floor of a canyon `depth`
     // metres deep in the rock and river of its `palette`, the river on one side; where the track flies
     // on its supports it climbs out over the rock. Looks only.
@@ -307,6 +307,10 @@ function track(spec) {
     // banks, plants and buildings; `width` bank to bank; `banks`: quays, sand, reeds…), on one side of the track
     // unless a section says (`river`: 'left', 'right', 'under' where the track flies over it, or 'none'). Looks only.
     ...(isRiver(spec) && { river: { side: 'left', width: 90, banks: 'grass', ...spec.river } }),
+    // A Peaks track (family 'peak', built as a coaster): a run down one of the world's great mountains (`palette`:
+    // its snow, ice and rock, its zones, its sky and the summit in the backdrop, never touched), on its snow unless
+    // a section flies (a knife-edge ridge, a crevasse on a ladder or ice-arch bridge). Looks only.
+    ...(isPeak(spec) && { peak: { ...spec.peak } }),
     // A Block Series track (family 'block', built as a coaster): a voxel world (`world`: its land's
     // colours and cube scenery), the track on its land unless a section flies on block pillars. Looks only.
     ...(isBlock(spec) && { block: { ...spec.block } }),
@@ -347,6 +351,7 @@ function track(spec) {
       ...(sec.water && { water: true }),
       ...(sec.walls !== undefined && { walls: sec.walls }),
       ...(sec.river !== undefined && { river: sec.river }),
+      ...(sec.peak !== undefined && { peak: sec.peak }),
       ...(sec.stadium && { stadium: true }),
       ...(sec.waterCurtain && { waterCurtain: true }),
     })),

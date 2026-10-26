@@ -25,6 +25,7 @@ import { trackCorridor } from './clearCheck';
 import { buildWater, coasterFlight, isLifted, liftHillCut, liftHillOf, liftHillRaise } from './coaster';
 import { makeCanyon } from './canyon';
 import { makeRiver } from './river';
+import { makePeak } from './peak';
 import { animateWater, waterMaterial } from './water';
 import { BLOCK_WORLDS, makeBlockLand } from './blocks';
 
@@ -216,6 +217,8 @@ export function buildKitGround(centerline, track, { lite = false } = {}) {
   const canyon = kit.canyon ? makeCanyon(centerline, channel, kit, { flight, liftAt: hug.street.liftAt, bounds: landBounds, landRadius, seaLevel: biome.sea }) : null;
   // A Rivers track (family 'river'): the river shaped into the land beside and under the track (./river.js).
   const river = kit.river ? makeRiver(centerline, channel, kit, { flight, liftAt: hug.street.liftAt, bounds: landBounds }) : null;
+  // A Peaks track (family 'peak'): the mountain shaped round the track: ridges, crevasses, its zones (./peak.js).
+  const peak = kit.peak ? makePeak(centerline, channel, kit, { flight, liftAt: hug.street.liftAt, bounds: landBounds }) : null;
   const blocks = blockWorld ? makeBlockLand(kit.block.world, base) : null;
   const field = {
     ...base,
@@ -224,6 +227,7 @@ export function buildKitGround(centerline, track, { lite = false } = {}) {
       let h = base.heightAt(x, z);
       if (canyon) h = canyon.heightAt(x, z, h);
       if (river) h = river.heightAt(x, z, h);
+      if (peak) h = peak.heightAt(x, z, h);
       if (blocks) h = blocks.heightAt(x, z, h); // (stepped in terraces away from the track: only ever lower)
       if (lake) {
         const d = Math.hypot(x - lake.x, z - lake.z) - lake.radius * lake.shape(Math.atan2(z - lake.z, x - lake.x));
@@ -255,6 +259,7 @@ export function buildKitGround(centerline, track, { lite = false } = {}) {
     ...(canyon && { detail: canyon.detail, colorAt: canyon.colourAt }), // (a canyon's walls drawn finer, in their bands of colour)
     ...(blocks && { colorAt: blocks.colourAt }), // (a block world's terraces: tops in tiles, risers in earth or stone)
     ...(river && { detailFine: lite ? 7 : 3.4, detail: river.detail, colorAt: river.colourAt }), // (a river's banks drawn finer, the shore in its colours; on a phone 7 m, 23 Oct 2026, to keep Danube and Mekong in the 60k budget)
+    ...(peak && { colorAt: peak.colourAt }), // (a mountain's zones, snow, ice, rock, crevasse lines and moraine stripes in vertex colours)
   });
   const group = new Group();
   group.name = 'kit-ground';
@@ -271,6 +276,13 @@ export function buildKitGround(centerline, track, { lite = false } = {}) {
   // The banks: from the top of each rim out to the land, every sample, both sides.
   const bankColour = new Color(canyon?.palette.bank ?? biome.bank);
   const fillColour = new Color(biome.fill);
+  // (A mountain's banks in the colours of its zone there: snow, black sand, moorland… and its own rock below.)
+  const peakBank = peak ? samples.map((s) => {
+    const c = peak.colourAt(s.pos.x + s.side.x * 9, s.pos.y, s.pos.z + s.side.z * 9, 0.2);
+    return c ? c.clone() : bankColour;
+  }) : null;
+  // (A mountain's built-up banks: its zone's colour there, a shade darker, with some of its rock in it.)
+  const peakFill = peak ? peakBank.map((c) => c.clone().lerp(new Color(peak.palette.rock), 0.3)) : null;
   const pos = [];
   const col = [];
   const rows = []; // per sample, per side: { inner, shoulder, mid, out } (no bank is drawn between two lifted samples)
@@ -331,9 +343,11 @@ export function buildKitGround(centerline, track, { lite = false } = {}) {
       const lifted = (k) => over[k] || onBridge[k] || (flight && isLifted(flight, k));
       if (lifted(i) && lifted(i + 1)) continue;
       const steep = Math.max(r0.steep, r1.steep);
-      const near = steep > 0.55 ? fillColour : bankColour;
-      const far = steep > 0.35 ? fillColour : bankColour;
-      quad(r0.inner, r1.inner, r1.shoulder, r0.shoulder, bankColour);
+      const bankHere = peakBank ? peakBank[i] : bankColour;
+      const fillHere = peakFill ? peakFill[i] : fillColour;
+      const near = steep > 0.55 ? fillHere : bankHere;
+      const far = steep > 0.35 ? fillHere : bankHere;
+      quad(r0.inner, r1.inner, r1.shoulder, r0.shoulder, bankHere);
       if (lite) {
         quad(r0.shoulder, r1.shoulder, r1.out, r0.out, near); // (phones: the bank in one slope)
         continue;
@@ -431,5 +445,5 @@ export function buildKitGround(centerline, track, { lite = false } = {}) {
   }
 
   const bounds = { minX: Math.min(...xs) - margin, maxX: Math.max(...xs) + margin, minZ: Math.min(...zs) - margin, maxZ: Math.max(...zs) + margin, floorY: biome.sea - 6 };
-  return { group, field, groundAt: (x, z) => terrain.groundAt(x, z), hug, biome, rows, over, onBridge, lake, flight, waterY, floorY: biome.sea - 6, bounds, canyon, blocks, river };
+  return { group, field, groundAt: (x, z) => terrain.groundAt(x, z), hug, biome, rows, over, onBridge, lake, flight, waterY, floorY: biome.sea - 6, bounds, canyon, blocks, river, peak };
 }

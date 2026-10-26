@@ -7,7 +7,7 @@ import { applyMeta, metaFor } from '../pageMeta';
 import { FREE_TO_PLAY, holidayPassNeeded } from '../../shared/holidayWording';
 import { TrackCountryRecords } from './CountryRecords';
 
-export const SERIES_ORDER = ['World Tour', 'Grand Prix', 'Coasters', 'Canyons', 'Blocks', 'Track and Field', 'Rivers', 'Pinball', 'Arcade', 'Winter Wonders', 'Classic'];
+export const SERIES_ORDER = ['World Tour', 'Grand Prix', 'Coasters', 'Canyons', 'Blocks', 'Track and Field', 'Rivers', 'Peaks', 'Pinball', 'Arcade', 'Winter Wonders', 'Classic'];
 const lengthOf = (m) => (Number(m) > 0 ? `${(Number(m) / 1000).toFixed(1)} km` : null);
 
 /** The live track list (pre-rendered pages get it from the build: seed 'tracks'). */

@@ -85,7 +85,10 @@ export const COSTUME_COLORS = {
   drumBlue: '#2a5ad8', drumRust: '#8a4a2a', signGreen: '#1a8a4a', signPole: '#8a8a94', canSilver: '#9aa0aa', canLid: '#6a707a',
   // The Canyon Series.
   maniPole: '#6a4a32', flagBlue: '#2f6fc4', flagWhite: '#f4f4f0', flagRed: '#c43a2f', flagGreen: '#2f9a4a', flagYellow: '#f2c230',
-  cairnStone: '#b08a68', cairnDark: '#7d5f48', cairnPale: '#d8bf98', raftRed: '#d8452f', raftTube: '#2a2c33', raftPaddle: '#e8c44a', raftVest: '#f2a330', raftRope: '#e9e4d8',
+  cairnStone: '#b08a68', cairnDark: '#7d5f48', cairnPale: '#d8bf98',
+  // Peaks: serac ice (pale blue-white, a deeper blue in its cracks), dark nunatak rock under a snow cap, a giant groundsel's grey trunk and green rosettes.
+  seracIce: '#e6f4fb', seracBlue: '#9fd0ea', seracDeep: '#5fa6cf', nunatakRock: '#3f3b38', nunatakDark: '#2b2826', nunatakSnow: '#f4f7fa',
+  groundselTrunk: '#8a8a7a', groundselDead: '#b8ae8e', groundselLeaf: '#5f8f3e', groundselLeafDark: '#466f2e', raftRed: '#d8452f', raftTube: '#2a2c33', raftPaddle: '#e8c44a', raftVest: '#f2a330', raftRope: '#e9e4d8',
   // The Block Series: stone and lit cubes, our own block pieces in calm colours.
   cubeStone: '#8e949b', cubeStoneDark: '#6b7179', cubeLamp: '#f4d28e', cubeGrass: '#7fae5f', cubeDirt: '#8a6a4a',
   cubeBasalt: '#3a3436', cubeMagma: '#ff8a3c', gemCyan: '#6fd6dc', blockArm: '#b99a6e',
@@ -1669,6 +1672,39 @@ function cairn(add, mat, group, point, q, { height, radius = 0.15 }) {
   return [];
 }
 
+/** A serac: a block of glacier ice, faceted, leaning a little, blue in its cracks (the Peaks' slalom poles and pegs). */
+function serac(add, mat, group, point, q, { height, radius = 0.15, at = 0 }) {
+  // (No wider than its footprint where marbles can touch it; above them a broader, leaning cap of ice.)
+  // (The broad top starts at 1.3 m, clear above the marbles; below it a slim column no wider than the footprint.)
+  const base = 1.3;
+  const h = Math.max(base + 0.8, height + 0.9);
+  const lean = ((Math.round(at * 991) % 5) - 2) * 0.05;
+  const top = Math.max(radius, 0.32);
+  add('seracBlue', new CylinderGeometry(radius * 0.9, radius * 0.95, base, 5), local(point, q, 0, base / 2, 0));
+  add('seracIce', new IcosahedronGeometry(top, 0), local(point, q, 0, base + top * 0.9 + (h - base - top * 1.8) * 0.5, 0, 1, Math.max(1, (h - base) / (top * 2)), 0.9).multiply(new Matrix4().makeRotationZ(lean)));
+  add('seracDeep', new BoxGeometry(0.04, (h - base) * 0.6, top * 0.9), local(point, q, top * 0.55, base + (h - base) * 0.5, 0));
+  return [];
+}
+
+/** A nunatak: a dark rock spire standing out of the ice, a cap of snow on top (the Peaks' slalom poles and pegs). */
+function nunatakPost(add, mat, group, point, q, { height, radius = 0.15 }) {
+  const h = Math.max(1.4, height + 0.9);
+  add('nunatakRock', new CylinderGeometry(radius * 0.6, radius * 0.95, h * 0.75, 5), local(point, q, 0, h * 0.375, 0));
+  add('nunatakDark', new ConeGeometry(Math.max(radius, 0.2) * 0.8, h * 0.4, 5), local(point, q, 0, h * 0.75 + h * 0.2, 0));
+  add('nunatakSnow', new ConeGeometry(Math.max(radius, 0.2) * 0.5, h * 0.18, 5), local(point, q, 0, h * 0.75 + h * 0.31, 0));
+  return [];
+}
+
+/** A giant groundsel of the high moorland: a thick grey trunk in its skirt of dead leaves, rosettes of green leaves on top (the Peaks' slalom poles and pegs). */
+function groundsel(add, mat, group, point, q, { height, radius = 0.15 }) {
+  const h = Math.max(1.6, height + 1.2);
+  add('groundselDead', new CylinderGeometry(radius * 0.95, radius * 0.95, h * 0.55, 7), local(point, q, 0, h * 0.275, 0));
+  add('groundselTrunk', new CylinderGeometry(radius * 0.55, radius * 0.7, h * 0.35, 6), local(point, q, 0, h * 0.55 + h * 0.175, 0));
+  add('groundselLeaf', new IcosahedronGeometry(0.42, 0), local(point, q, 0, h * 0.92, 0, 1, 0.55, 1));
+  add('groundselLeafDark', new IcosahedronGeometry(0.3, 0), local(point, q, 0.25, h * 0.86, 0.1, 1, 0.5, 1));
+  return [];
+}
+
 /** A prayer-flag pole: a tall thin pole wrapped in a column of flags in the five colours (the Himalayan canyons' slalom poles and pegs). */
 function maniPost(add, mat, group, point, q, { height }) {
   const h = height + 1.2;
@@ -2225,6 +2261,10 @@ export const KIT_COSTUMES = {
   },
   'river-ferry': { places: 'parked', build: riverFerry },
   cairn: { places: 'slalom', build: cairn },
+  // Peaks.
+  serac: { places: 'slalom', build: serac },
+  nunatak: { places: 'slalom', build: nunatakPost },
+  groundsel: { places: 'slalom', build: groundsel },
   'mani-post': { places: 'slalom', build: maniPost },
   'river-raft': { places: 'parked', build: riverRaft },
   'dragon-tail': {

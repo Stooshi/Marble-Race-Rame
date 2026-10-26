@@ -744,6 +744,12 @@ const HIDDEN_KIT_TRACKS = [
   ['volga-port-burst', '2027-04-14-add-volga-port-burst.sql', 'Rivers track (switched off until Moses has watched the preview).'],
   ['murray-red-gum-run', '2027-04-15-add-murray-red-gum-run.sql', 'Rivers track (switched off until Moses has watched the preview).'],
   ['irrawaddy-balloon-dawn', '2027-04-16-add-irrawaddy-balloon-dawn.sql', 'Rivers track (switched off until Moses has watched the preview).'],
+  // The Peaks test five (switched off until Moses has watched the previews).
+  ['everest-icefall-run', '2027-04-20-add-everest-icefall-run.sql', 'Peaks track (switched off until Moses has watched the preview).'],
+  ['mont-blanc-needle-ridge', '2027-04-21-add-mont-blanc-needle-ridge.sql', 'Peaks track (switched off until Moses has watched the preview).'],
+  ['vinson-blue-ice', '2027-04-22-add-vinson-blue-ice.sql', 'Peaks track (switched off until Moses has watched the preview).'],
+  ['kilimanjaro-five-zones', '2027-04-23-add-kilimanjaro-five-zones.sql', 'Peaks track (switched off until Moses has watched the preview).'],
+  ['vatnajokull-blue-cave', '2027-04-24-add-vatnajokull-blue-cave.sql', 'Peaks track (switched off until Moses has watched the preview).'],
 ];
 for (const [slug, file, note] of HIDDEN_KIT_TRACKS) {
   test(`${slug} is added by its data update, switched off, exactly as its track file builds it`, () => {

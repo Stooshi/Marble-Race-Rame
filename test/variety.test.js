@@ -228,7 +228,7 @@ test('a track may retune a layout splitter (balance, added pegs), mirrored with 
 
 test('the varied starts: a new track says how its start looks, checked like any opening', () => {
   const { START_TYPES, GATES, COUNTDOWN_SHOTS, LAUNCH_SHOTS } = require('../src/trackKit/recipe');
-  assert.deepEqual(START_TYPES, ['straight-lift', 'curving-lift', 'spiral-tower', 'elevator', 'cliff', 'rooftop', 'station-launch', 'stepped-platform', 'lighthouse', 'ski-jump', 'castle-tower', 'pier', 'river-boat', 'lock-gate']);
+  assert.deepEqual(START_TYPES, ['straight-lift', 'curving-lift', 'spiral-tower', 'elevator', 'cliff', 'rooftop', 'station-launch', 'stepped-platform', 'lighthouse', 'ski-jump', 'castle-tower', 'pier', 'river-boat', 'lock-gate', 'ice-ledge', 'gondola', 'ski-plane']);
   assert.deepEqual(GATES, ['paddle', 'trapdoor', 'stalls', 'barrier']);
   assert.deepEqual(COUNTDOWN_SHOTS, ['front', 'side', 'above', 'chase']);
   assert.deepEqual(LAUNCH_SHOTS, ['high-behind', 'low-chase', 'side', 'overhead', 'look-back']);
@@ -249,6 +249,10 @@ test('the varied starts: a new track says how its start looks, checked like any 
   assert.equal(track(river({ ...START, type: 'lock-gate' })).variety.start.type, 'lock-gate');
   assert.equal(track(river({ ...START, type: 'river-boat' }, { opening: opening('boost-launch') })).variety.start.type, 'river-boat');
   assert.throws(() => track(spec({ river: { palette: 'danube' } })), /river settings are for Rivers tracks/);
+  // The Peaks' starts stand on a mountain: only a Peaks track takes them.
+  assert.throws(() => track(coaster({ ...START, type: 'gondola' })), /stands on a mountain/);
+  assert.equal(physicsTrack('mont-blanc-needle-ridge').variety.start.type, 'gondola');
+  assert.throws(() => track(spec({ peak: { palette: 'everest' } })), /peak settings are for Peaks tracks/);
   // What the variety value says (tracks built before: the start every track had).
   const sog = physicsTrack('sognefjord');
   assert.deepEqual(sog.variety.start, { type: 'cliff', gate: 'trapdoor', countdown: 'side', launch: 'low-chase' });

@@ -171,6 +171,7 @@ it.skipIf(!process.env.REPORT_TRACK)('track report: view checks', () => {
       const camera = new PerspectiveCamera(50, aspect, 0.3, 3000);
       Object.assign(scene, { centerline, channel, track, scenery, camera }); // (the kit scenery: its viaducts count as the track above)
       scene.main = { camera, cam: new Vector3(), target: new Vector3(), ready: false, leader: null, leaderT: undefined };
+      const roofCut = scene.roofless() ? scene.cutaway() : null;
       const marbles = [];
       const result = { race: r + 1, screen, frames: 0, blocked: [], behindObstacle: 0, offLevel: [], jumps: [], sunk: [], worstJump: 0, worstSink: 0, highest: 0 };
       const clear = { race: r + 1, screen, looks: 0, near: [], inside: [] };
@@ -203,7 +204,9 @@ it.skipIf(!process.env.REPORT_TRACK)('track report: view checks', () => {
         if (t % RAY_EVERY_MS !== 0) continue;
         ray.set(cam, marbles[i].clone().sub(cam).normalize());
         ray.far = cam.distanceTo(marbles[i]) - 1;
-        const hit = ray.intersectObjects(solids, false)[0];
+        // (What the game cuts away is not drawn: a coaster station's canopy and its front beam, cut for the
+        // whole race while the scene is roofless (TrackScene.roofless), so a hit inside the cut hides nothing.)
+        const hit = ray.intersectObjects(solids, false).find((h) => !(roofCut && h.point && roofCut.contains(h.point)));
         if (hit) result.blocked.push({ t, by: named(hit.object), at: +f.p[i].toFixed(4), point: hit.point.toArray().map((v) => +v.toFixed(1)), from: cam.toArray().map((v) => +v.toFixed(1)) });
         else if (ray.intersectObjects(obstacles, false).length) result.behindObstacle += 1;
         const gap = Math.min(...near(f.p[i]).map((tri) => tri.closestPointToPoint(marbles[i], q).distanceTo(marbles[i]))) - MARBLE_RADIUS;

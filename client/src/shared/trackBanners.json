@@ -431,6 +431,17 @@
    "side": -1,
    "marbles": 5
   },
+  "everest-icefall-run": {
+   "name": "Everest Icefall Run",
+   "series": "Peaks",
+   "lighting": "high-altitude",
+   "v": "b0c318d2",
+   "bytes": 20146,
+   "bytes2x": 49710,
+   "t": 29834,
+   "side": -1,
+   "marbles": 10
+  },
   "final-level": {
    "name": "Final Level",
    "series": "Blocks",
@@ -673,6 +684,17 @@
    "side": 1,
    "marbles": 4
   },
+  "kilimanjaro-five-zones": {
+   "name": "Kilimanjaro Five Zones",
+   "series": "Peaks",
+   "lighting": "dawn",
+   "v": "d5852bdd",
+   "bytes": 12480,
+   "bytes2x": 33708,
+   "t": 10614,
+   "side": 1,
+   "marbles": 4
+  },
   "kill-screen": {
    "name": "Kill Screen",
    "series": "Arcade",
@@ -804,6 +826,17 @@
    "t": 9772,
    "side": 1,
    "marbles": 4
+  },
+  "mont-blanc-needle-ridge": {
+   "name": "Mont Blanc Needle Ridge",
+   "series": "Peaks",
+   "lighting": "sunset",
+   "v": "dcc8d8c2",
+   "bytes": 16686,
+   "bytes2x": 40720,
+   "t": 14602,
+   "side": 1,
+   "marbles": 5
   },
   "multiball-manor": {
    "name": "Multiball Manor",
@@ -1355,6 +1388,17 @@
    "side": 1,
    "marbles": 6
   },
+  "vatnajokull-blue-cave": {
+   "name": "Vatnajökull Blue Cave",
+   "series": "Peaks",
+   "lighting": "fog",
+   "v": "21c394be",
+   "bytes": 11362,
+   "bytes2x": 27622,
+   "t": 9855,
+   "side": -1,
+   "marbles": 4
+  },
   "veliky-ustyug-frost-run": {
    "name": "Veliky Ustyug Frost Run",
    "series": "World Tour",
@@ -1374,6 +1418,17 @@
    "bytes": 14938,
    "bytes2x": 35918,
    "t": 10254,
+   "side": 1,
+   "marbles": 5
+  },
+  "vinson-blue-ice": {
+   "name": "Vinson Blue Ice",
+   "series": "Peaks",
+   "lighting": "midnight-sun",
+   "v": "58140616",
+   "bytes": 13564,
+   "bytes2x": 32404,
+   "t": 9986,
    "side": 1,
    "marbles": 5
   },

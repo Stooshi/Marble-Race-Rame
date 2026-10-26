@@ -161,11 +161,16 @@ module.exports = track({
   | `arch-run` (rivers) | arches (a slalom under five stone arch bridges), islandTip (a sweep, three pegs), drop, brakingStraight, hairpin, lowQuay (a sweep, two pegs), quayBend (a sweep, a peg), rise (a short climb), downQuay (a drop), spin, lastStraight |
   | `port-cranes` (rivers) | cranes (a slalom drop), plain (a sweep, three pegs), birches (a sweep, two pegs), brakingStraight, hairpin, rise (a short climb), drop, spin, bridgeRun (S-bends, a peg; it flies here), lastStraight |
   | `flooded-forest` (rivers) | trunks (a slalom; it flies here), offStilts (a drop), cliffs (a sweep), spin, brakingStraight, hairpin, lock (a short climb), weir (a drop), sBends (a peg), landing (a sweep), lastStraight |
+  | `icefall-ladders` (peaks) | icefall1 (a slalom drop between seracs, four gates), ladder1 (a crevasse crossing, a peg), bends1 (S-bends, a peg), icefall2 (a drop), ladder2, bends2, icefall3, ladder3 (an ice-arch crossing), glacier (a long sweep, two pegs), brakingStraight, hairpin, lastStraight |
+  | `needle-ridge` (peaks) | ridge (a long straight along a knife-edge ridge: two pegs and a slalom, five gates; it flies here), offRidge (a slalom drop, five gates), sBends (a peg), glacier1, glacier2 (sweeps, a peg), brakingStraight, hairpin, moraine (a short climb), drop, lastStraight |
+  | `blue-ice-plain` (peaks) | sweep1, sweep2 (a peg), nunataks (a slalom straight, five gates), brakingStraight, hairpin, sastrugi (moguls), rise (a short climb), drop, campSpin (a spiral), lastStraight |
+  | `zone-descent` (peaks) | iceTerrace (two pegs, two slalom poles), ice (S-bends), desert (a sweep, two pegs), moorland (a slalom straight, four gates), heath (a spiral), forest (a drop), brakingStraight, hairpin, sweep2 (a peg), lastStraight |
+  | `ice-cave-run` (peaks) | caveDrop (a drop, two pegs), cave (S-bends; the blue-ice tunnel), streams (a slalom straight, five gates), gravelBar (a spiral), brakingStraight, hairpin, terrace (a drop), outwash (a sweep, a peg), lastStraight |
   | `balloon-plain` (rivers) | sandbank (a long gentle drop, three pegs), plainBends (S-bends, two pegs; they fly here), rise (a short climb), slalomDrop, spin, brakingStraight, hairpin, sweep1, sweep2 (a peg), sweep3, lastStraight |
 
   A track may still write its own sections by hand; the sameness check makes sure they differ.
 - **`family`**: `'world-tour'` (the default), `'grand-prix'` (any `grandPrix` track),
-  `'coaster'`, `'pinball'`, `'arcade'`, `'canyon'`, `'block'`, `'athletics'`, `'winter-wonders'`, `'river'` or `'test'` (test tracks, never compared).
+  `'coaster'`, `'pinball'`, `'arcade'`, `'canyon'`, `'block'`, `'athletics'`, `'winter-wonders'`, `'river'`, `'peak'` or `'test'` (test tracks, never compared).
   A Rivers track (`'river'`) gives `river: { palette, side, width, banks }`; each section may say where the river runs
   by it (`river: 'left' | 'right' | 'under' | 'none'`; `under` needs a `height` of at least 6 m). Boats are landmarks
   with `river: true` (`distance`: metres from the river's middle towards the track).
@@ -547,6 +552,36 @@ as a coaster (everything above applies), like a canyon (looks only, like everyth
   straight), Beijing Nest 200 (clean drop, nest bend), Tokyo Photo Finish (pipe drop, photo finish),
   Stockholm 1912 Relay (split start, relay legs), London Steeplechase (peg drop, steeple water), Coliseum
   Anchor Leg (clean drop, anchor arches), Zurich Golden Lap (tunnel launch, golden lap).
+
+## Peaks
+
+`family: 'peak'` (Peaks, 25 Oct 2026; plan: project doc `claude/rivers-and-peaks-plan.md`, section 2) is a run down
+one of the world's great mountains. It is built as a coaster (everything above applies), like the Rivers (looks only):
+
+- **On the mountain's snow**: a section without a `height` runs on the land; a section's `height` lifts it onto
+  supports. `coaster: { style: 'alpine' }`: steel trusses held by cable stays out to the slope.
+- **The mountain**: `peak: { palette }`, one of `everest`, `mont-blanc`, `vinson`, `kilimanjaro`, `vatnajokull`
+  (client `PEAK_PALETTES`, `scenery/peak.js`): its snow, ice and rock, its zones, what stands on it, and its summit
+  and neighbours in a far backdrop (one mesh; Everest's with a snow plume). **The summit is scenery, never track**,
+  with nothing of ours on it.
+- **Per section** `peak: { zone, ridge, crevasse }`: `zone` the land there (`snow`, `ice`, `rock`, `alpine-desert`,
+  `moorland`, `heath`, `cloud-forest`, `black-sand`: its colours and what grows); `ridge: true` a knife-edge ridge
+  (the land falls away steeply on both sides; the section flies, `height` 6 or more); `crevasse: 'ladder' | 'ice-arch'`
+  a crevasse cut across under a straight, crossed on a ladder or an ice-arch bridge (the section flies).
+- **Starts** (Peaks only): `ice-ledge` (an overhanging snow ledge), `gondola` (a cable-car station on a granite
+  needle), `ski-plane` (a ski plane's cargo ramp on a glacier runway).
+- **Tunnel** `blue-ice`: a long cave of glowing blue ice (opaque; holes of daylight in its roof).
+- **Lighting** `high-altitude`: the thin air's deep blue sky, a small sharp sun, hardly any haze.
+- **Scenery** `sea-of-clouds` (a section's or the finish's): cloud tops over the far valleys, one mesh.
+- **Spindrift**: snow blown off the outside of fast bends and drops, on the race clock, one point cloud.
+- **Landmarks** (client `kitLandmarksPeak.js`): `peak-camp` (plain tents, no flag), `serac-field`, `granite-needles`,
+  `nunataks`, `ski-plane`, `crater-ice-cliffs`, `giant-groundsels`, `meltwater-streams`, `pass-cairn` (only on mountains
+  without a sacred-summit request), `glacier-tongue`.
+- **Costumes**: `serac`, `nunatak`, `groundsel` (slalom poles and pegs).
+- **Never**: religious objects (prayer flags, chortens, shrines, torii, offerings), flags of any kind, expedition,
+  guide, gear, lift or airline names, anything on a summit.
+- The layouts made for the series are the `(peaks)` rows above (L89 to L93); each has a test track built as a
+  mountain (`series: 'peak'`).
 
 ## TV moments
 

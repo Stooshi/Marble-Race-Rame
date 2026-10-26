@@ -90,6 +90,7 @@ router.get('/', optionalAuth, async (req, res) => {
             jsonb_array_length(obstacles) AS obstacle_count, physics IS NOT NULL AS new_physics, created_at,
             CASE WHEN physics->'kit' ? 'pinball' THEN 'Pinball'
                  WHEN physics->'kit' ? 'river' THEN 'Rivers'
+                 WHEN physics->'kit' ? 'peak' THEN 'Peaks'
                  WHEN physics->'kit' ? 'arcade' THEN 'Arcade'
                  WHEN physics->'kit' ? 'canyon' THEN 'Canyons'
                  WHEN physics->'kit' ? 'block' THEN 'Blocks'

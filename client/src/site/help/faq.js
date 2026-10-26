@@ -33,7 +33,7 @@ const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', '
 const shortDate = (iso) => { const [, m, d] = iso.split('-').map(Number); return `${d} ${MONTHS[m - 1]}`; };
 
 /** The series as the draft names them, in its order (the live track list decides which exist). */
-export const SERIES_ORDER = ['Grand Prix', 'World Tour', 'Coasters', 'Pinball', 'Arcade', 'Canyons', 'Blocks', 'Track and Field', 'Rivers', 'Winter Wonders'];
+export const SERIES_ORDER = ['Grand Prix', 'World Tour', 'Coasters', 'Pinball', 'Arcade', 'Canyons', 'Blocks', 'Track and Field', 'Rivers', 'Peaks', 'Winter Wonders'];
 
 /** "1st place +50, 2nd +30, 3rd +20, 4th–10th +5" from economy.race.places. */
 export function placesLine(places = economy.race.places) {

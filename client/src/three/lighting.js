@@ -19,7 +19,9 @@ import { channelLipAt, channelRadiusAt, forkAt, forkOffset, forkRadius } from '.
 
 export const LIGHTINGS = ['day', 'sunset', 'midnight-sun', 'night-northern-lights', 'fog', 'snow', 'rain', 'night', 'fireworks-night', 'parlour', 'neon-night', 'synthwave',
   // The Block Series: a calm dawn, a dark mine lit by its lamps and gems, a cave lit only by magma.
-  'dawn', 'cave', 'magma'];
+  'dawn', 'cave', 'magma',
+  // Peaks: the thin air's deep blue sky, a small sharp sun and crisp shadows, hardly any haze.
+  'high-altitude'];
 
 /** Each preset's sky, haze and light (day: the landscape's own). fogRange: metres, near and far. */
 export const PRESETS = {
@@ -138,6 +140,16 @@ export const PRESETS = {
     sun: { color: '#ff8a4a', intensity: 0.95, direction: [0.3, 0.7, 0.2] },
     groundTint: 0.5,
     effects: { night: true, edge: '#ff8a45', embers: true },
+  },
+  // High altitude (Everest, Aconcagua): the thin air's sky, a deep blue overhead fading pale at the horizon,
+  // a small sharp sun, crisp shadows, hardly any haze: the far mountains stay clear.
+  'high-altitude': {
+    sky: { top: '#123a8c', horizon: '#c9dcef', glow: '#fffaf0' },
+    fog: '#d4e2f0',
+    fogRange: [600, 4200],
+    hemisphere: { sky: '#dbe8ff', ground: '#7d8ba0', intensity: 1.45 },
+    ambient: 0.36,
+    sun: { color: '#ffffff', intensity: 2.1, direction: [-0.55, 0.62, 0.4] },
   },
   fog: {
     sky: { top: '#b6c0c9', horizon: '#d3d8dc', glow: null },

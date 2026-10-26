@@ -1548,11 +1548,98 @@ const LAYOUTS = {
       obstacles: [parked({ costume: c.parked, at: 0.2, side: L, length: 6 }), peg({ costume: c.peg, at: 0.45, line: 'right' })], features: [rumble({ from: 0.7, to: 0.95, count: 3 })],
     },
   ],
+  // ── Peaks (25 Oct 2026; plan: project doc claude/rivers-and-peaks-plan.md, section 2) ─────────────────
+  /** L89 Icefall ladders (Peaks): three short drops down a staircase of seracs, the first a slalom between them (four gates: the lottery the clean drop's waves need further on), each followed by a straight over a crevasse (a peg; the ladder and ice-arch bridges, looks only) and tight S-bends between the steps, alternating; a long glacier sweep (two pegs) down to the base camp, the hairpin and the run-in past the tents (a parked supply sled and a peg). */
+  'icefall-ladders': (L, R, c) => [
+    { key: 'icefall1', name: 'First icefall step', shape: plunge(40, { grade: 0.26, from: 0.13 }), obstacles: [slalom({ costume: c.slalom, from: 0.2, to: 0.92, count: 4, loss: 0.22 })] },
+    { key: 'ladder1', name: 'First ladder', shape: straight(30, { grade: 0.1 }), obstacles: [peg({ costume: c.peg, at: 0.55, line: 'left' })] },
+    { key: 'bends1', name: 'Serac S-bends', shape: sBends({ first: R, radius: 65, degrees: 70, grade: 0.12 }), obstacles: [peg({ costume: c.peg, at: 0.5, line: 'center' })], billboards: 1 },
+    { key: 'icefall2', name: 'Second icefall step', shape: plunge(35, { grade: 0.24, from: 0.12 }) },
+    { key: 'ladder2', name: 'Second ladder', shape: straight(30, { grade: 0.1 }), obstacles: [peg({ costume: c.peg, at: 0.55, line: 'right' })] },
+    { key: 'bends2', name: 'Lower serac S-bends', shape: sBends({ first: L, radius: 65, degrees: 70, grade: 0.12 }), obstacles: [peg({ costume: c.peg, at: 0.5, line: 'center' })], billboards: 1 },
+    { key: 'icefall3', name: 'Third icefall step', shape: plunge(35, { grade: 0.24, from: 0.12 }) },
+    { key: 'ladder3', name: 'Ice-arch bridge', shape: straight(35, { grade: 0.1 }), obstacles: [peg({ costume: c.peg, at: 0.5, line: 'center' })] },
+    { key: 'glacier', name: 'Glacier sweep', shape: sweep({ side: L, radius: 95, degrees: 140, grade: 0.09 }), obstacles: [peg({ costume: c.peg, at: 0.35, line: 'left' }), peg({ costume: c.peg, at: 0.65, line: 'right' })], billboards: 2 },
+    { key: 'brakingStraight', name: 'Run to the hairpin', shape: straight(50, { grade: 0.12 }) },
+    { key: 'hairpin', name: 'Hairpin', shape: hairpin({ side: L }), obstacles: [swipe({ costume: c.swipe, side: 'high' })] },
+    {
+      key: 'lastStraight', name: 'Last straight', shape: straight(110, { grade: 0.15 }),
+      obstacles: [parked({ costume: c.parked, at: 0.2, side: R, length: 6 }), peg({ costume: c.peg, at: 0.45, line: 'left' })], features: [rumble({ from: 0.7, to: 0.95, count: 3 })],
+    },
+  ],
+  /** L90 Needle ridge (Peaks): a long, almost straight traverse along a knife-edge ridge (two pegs and a slalom between them, five gates; it flies on high supports over drops on both sides), the plunge off the ridge onto the glacier (a slalom drop, five gates), S-bends (a peg), a wide double sweep down the glacier under the cable car (a peg), the hairpin, a short climb over a moraine and a drop, and a parked piece and a peg at the run-in (110 m: at 100 m Mont Blanc's winner took 47.9 s, under the 48 s floor). (Its first draft had the hairpin at the ridge's end: the field then reached it strung out in starting order, the front starting places finished ahead and the gap ran to 21 s.) */
+  'needle-ridge': (L, R, c) => [
+    {
+      key: 'ridge', name: 'The ridge', shape: straight(130, { grade: 0.08 }), billboards: 1,
+      obstacles: [peg({ costume: c.peg, at: 0.12, line: 'left' }), slalom({ costume: c.slalom, from: 0.25, to: 0.62, count: 5, loss: 0.16 }), peg({ costume: c.peg, at: 0.72, line: 'right' })],
+    },
+    { key: 'hairpin', name: 'Corniced hairpin', shape: hairpin({ side: R }), obstacles: [swipe({ costume: c.swipe, side: 'high' })] },
+    { key: 'offRidge', name: 'Off the ridge', shape: plunge(60, { grade: 0.26, from: 0.1 }), obstacles: [peg({ costume: c.peg, at: 0.35, line: 'left' }), peg({ costume: c.peg, at: 0.7, line: 'right' })] },
+    { key: 'glacier1', name: 'Glacier sweep', shape: sweep({ side: L, radius: 95, degrees: 110, grade: 0.1 }), billboards: 1 },
+    { key: 'glacier2', name: 'Second glacier sweep', shape: sweep({ side: R, radius: 95, degrees: 110, grade: 0.1 }), obstacles: [peg({ costume: c.peg, at: 0.5, line: 'center' })], billboards: 1 },
+    { key: 'moraine', name: 'Over the moraine', shape: climb(12, { grade: -0.05, after: 0.12 }) },
+    { key: 'drop', name: 'Moraine drop', shape: plunge(45, { grade: 0.22, from: 0.12 }) },
+    { key: 'sBends', name: 'S-bends', shape: sBends({ first: R, radius: 75, degrees: 65, grade: 0.12 }), obstacles: [peg({ costume: c.peg, at: 0.5, line: 'center' })], billboards: 1 },
+    {
+      key: 'lastStraight', name: 'Last straight', shape: straight(110, { grade: 0.15 }),
+      obstacles: [parked({ costume: c.parked, at: 0.2, side: L, length: 6 }), peg({ costume: c.peg, at: 0.45, line: 'right' })], features: [rumble({ from: 0.7, to: 0.95, count: 3 })],
+    },
+  ],
+  /** L91 Blue-ice plain (Peaks): a long open double sweep over wind-polished ice, a slalom between nunataks (five gates: the lottery the peg drop's waves need further on), the hairpin, a straight over sastrugi (a row of moguls), a short climb and a drop, and a spiral round the camp before a parked piece and a peg at the run-in. */
+  'blue-ice-plain': (L, R, c) => [
+    { key: 'sweep1', name: 'Blue-ice sweep', shape: sweep({ side: L, radius: 100, degrees: 90, grade: 0.1 }), billboards: 2 },
+    { key: 'sweep2', name: 'Second blue-ice sweep', shape: sweep({ side: R, radius: 100, degrees: 90, grade: 0.1 }), obstacles: [peg({ costume: c.peg, at: 0.5, line: 'center' })], billboards: 1 },
+    { key: 'nunataks', name: 'Nunatak slalom', shape: straight(80, { grade: 0.14 }), obstacles: [slalom({ costume: c.slalom, from: 0.12, to: 0.92, count: 5, loss: 0.22 })] },
+    { key: 'brakingStraight', name: 'Run to the hairpin', shape: straight(50, { grade: 0.12 }) },
+    { key: 'hairpin', name: 'Hairpin', shape: hairpin({ side: L }), obstacles: [swipe({ costume: c.swipe, side: 'high' })] },
+    { key: 'sastrugi', name: 'Sastrugi straight', shape: straight(90, { grade: 0.12 }), features: [moguls({ from: 0.4, to: 0.85, count: 5 })], billboards: 1 },
+    { key: 'rise', name: 'Over the drift', shape: climb(12, { grade: -0.05, after: 0.12 }) },
+    { key: 'drop', name: 'Drift drop', shape: plunge(45, { grade: 0.22, from: 0.12 }) },
+    { key: 'campSpin', name: 'Spiral round the camp', shape: spiral({ side: R, radius: 54, turns: 1, grade: 0.15 }) },
+    {
+      key: 'lastStraight', name: 'Last straight', shape: straight(90, { grade: 0.15 }),
+      obstacles: [parked({ costume: c.parked, at: 0.2, side: L, length: 6 }), peg({ costume: c.peg, at: 0.45, line: 'right' })], features: [rumble({ from: 0.7, to: 0.95, count: 3 })],
+    },
+  ],
+  /** L92 Zone descent (Peaks): down a mountain's climate zones in one run, each zone a change of rhythm: an ice terrace (two pegs, two slalom poles: the field mixed after the funnel), S-bends on the ice, a long sweep across the alpine desert, a slalom straight among giant groundsels on the moorland (four gates), a spiral through the heath, a dive into the forest (a drop), the hairpin, a last sweep (a peg) and a parked piece and a peg at the run-in. */
+  'zone-descent': (L, R, c) => [
+    {
+      key: 'iceTerrace', name: 'Ice terrace', shape: straight(70, { grade: 0.11 }),
+      obstacles: [peg({ costume: c.peg, at: 0.12, line: 'left' }), peg({ costume: c.peg, at: 0.3, line: 'right' })], features: [steps({ from: 0.45, to: 0.92, count: 4, drag: 0.01 })],
+    },
+    { key: 'ice', name: 'Ice S-bends', shape: sBends({ first: R, radius: 70, degrees: 70, grade: 0.12 }), billboards: 2 },
+    { key: 'desert', name: 'Alpine desert sweep', shape: sweep({ side: R, radius: 95, degrees: 85, grade: 0.1 }), obstacles: [peg({ costume: c.peg, at: 0.5, line: 'left' })], billboards: 2 },
+    { key: 'moorland', name: 'Groundsel slalom', shape: straight(70, { grade: 0.14 }), obstacles: [slalom({ costume: c.slalom, from: 0.15, to: 0.85, count: 4, loss: 0.12 })] },
+    { key: 'heath', name: 'Heath spiral', shape: spiral({ side: L, radius: 54, turns: 0.75, grade: 0.15 }) },
+    { key: 'forest', name: 'Into the forest', shape: plunge(50, { grade: 0.24, from: 0.12 }) },
+    { key: 'brakingStraight', name: 'Run to the hairpin', shape: straight(50, { grade: 0.12 }) },
+    { key: 'hairpin', name: 'Hairpin', shape: hairpin({ side: L }), obstacles: [swipe({ costume: c.swipe, side: 'high' })] },
+    { key: 'sweep2', name: 'Forest sweep', shape: sweep({ side: R, radius: 85, degrees: 75, grade: 0.1 }), obstacles: [peg({ costume: c.peg, at: 0.5, line: 'center' })], billboards: 1 },
+    {
+      key: 'lastStraight', name: 'Last straight', shape: straight(65, { grade: 0.15 }),
+      obstacles: [parked({ costume: c.parked, at: 0.2, side: R, length: 6 }), peg({ costume: c.peg, at: 0.45, line: 'left' })], features: [rumble({ from: 0.7, to: 0.95, count: 3 })],
+    },
+  ],
+  /** L93 Ice-cave run (Peaks): a drop into a long cave under the ice cap (two pegs), S-bends through it, out onto black sand, a slalom across braided meltwater streams (five gates), a spiral round a gravel bar, the hairpin, a drop over the outwash terrace, a long sweep (a peg) and a parked piece and a peg at the run-in. */
+  'ice-cave-run': (L, R, c) => [
+    { key: 'caveDrop', name: 'Into the cave', shape: plunge(55, { grade: 0.2, from: 0.12 }), obstacles: [peg({ costume: c.peg, at: 0.4, line: 'left' }), peg({ costume: c.peg, at: 0.7, line: 'right' })] },
+    { key: 'cave', name: 'The blue cave', shape: sBends({ first: R, radius: 75, degrees: 60, grade: 0.12 }) },
+    { key: 'streams', name: 'Braided streams', shape: straight(80, { grade: 0.14 }), obstacles: [slalom({ costume: c.slalom, from: 0.15, to: 0.9, count: 5, loss: 0.18 })] },
+    { key: 'gravelBar', name: 'Gravel-bar spiral', shape: spiral({ side: L, radius: 54, turns: 0.9, grade: 0.15 }) },
+    { key: 'brakingStraight', name: 'Run to the hairpin', shape: straight(50, { grade: 0.12 }) },
+    { key: 'hairpin', name: 'Hairpin', shape: hairpin({ side: R }), obstacles: [swipe({ costume: c.swipe, side: 'high' })] },
+    { key: 'terrace', name: 'Outwash drop', shape: plunge(45, { grade: 0.22, from: 0.12 }), billboards: 1 },
+    { key: 'outwash', name: 'Outwash sweep', shape: sweep({ side: L, radius: 90, degrees: 110, grade: 0.09 }), obstacles: [peg({ costume: c.peg, at: 0.5, line: 'center' })], billboards: 3 },
+    {
+      key: 'lastStraight', name: 'Last straight', shape: straight(80, { grade: 0.15 }),
+      obstacles: [parked({ costume: c.parked, at: 0.2, side: R, length: 6 }), peg({ costume: c.peg, at: 0.45, line: 'left' })], features: [rumble({ from: 0.7, to: 0.95, count: 3 })],
+    },
+  ],
 };
 
 const LAYOUT_KINDS = Object.keys(LAYOUTS);
 // Dressing a layout's section: looks only, and the splitter's proven channel settings (`balance`) once batches say so.
-const DRESS = ['name', 'scenery', 'landmarks', 'billboards', 'billboardFrame', 'surface', 'figures', 'overhead', 'tunnel', 'bridge', 'around', 'height', 'water', 'waterCurtain', 'walls', 'stadium', 'river'];
+const DRESS = ['name', 'scenery', 'landmarks', 'billboards', 'billboardFrame', 'surface', 'figures', 'overhead', 'tunnel', 'bridge', 'around', 'height', 'water', 'waterCurtain', 'walls', 'stadium', 'river', 'peak'];
 
 /**
  * A layout from the library, as a track's `sections`. `mirror`: every bend the

@@ -22,6 +22,7 @@ import { buildArcade } from './arcade';
 import { condor } from './kitLandmarksCanyon';
 import { canyonDressing } from './canyon';
 import { RIVER_PALETTES, riverDressing, riverExtras } from './river';
+import { buildPeakBackdrop, buildSeaOfClouds, buildSpindrift, peakDressing, pickKind } from './peak';
 import { hotAirBalloons } from './kitLandmarksRiver';
 import { RIVER_SPAN_KINDS, buildRiverSpans } from './riverSpans';
 import { blockDressing } from './blocks';
@@ -429,7 +430,9 @@ export function buildKitScenery(centerline, track, theme, { lite = false } = {})
   // ── Set dressing for the landscape (instanced, drawn in tiles) ─────────
   // The landscape's own, plus what a section's scenery asks for (snow-rimed rocks, birches);
   // a bare stretch (a wind-swept summit) keeps only a few rocks.
-  const baseKinds = ground.canyon ? canyonDressing(kit.canyon.palette) : ground.river ? riverDressing(kit.river.palette) : kit.block ? blockDressing(kit.block.world) : dressingFor(biome);
+  // (A mountain: what stands on it by zone: seracs and snow-rimed rocks on the ice, groundsels on the moorland, ./peak.js.)
+  const peakDress = ground.peak ? peakDressing(kit.peak.palette) : null;
+  const baseKinds = ground.canyon ? canyonDressing(kit.canyon.palette) : ground.river ? riverDressing(kit.river.palette) : peakDress ? peakDress.kinds : kit.block ? blockDressing(kit.block.world) : dressingFor(biome);
   const kinds = [...baseKinds, [(l) => snowRock(l), 0], [(l) => winterBirch(l), 0], [(l) => aspen(l), 0], [() => palm(true), 0], [() => jacaranda(), 0], [() => acaciaTree(), 0], [(l) => riverExtras().cypress(l), 0], [(l) => riverExtras().reeds(l), 0]];
   const ROCK = baseKinds.length;
   const BIRCH = baseKinds.length + 1;
@@ -448,7 +451,7 @@ export function buildKitScenery(centerline, track, theme, { lite = false } = {})
   const maxZ = Math.max(...zs);
   const spacing = lite ? 12 : 7;
   const arcadeBoard = biome === 'circuit-board' || biome === 'blacklight-carpet';
-  const maxItems = lite && kit.season ? 180 : kit.canyon || ground.river ? (lite ? 160 : 450) : kit.block ? (lite ? 220 : 650) : kit.athletics ? (lite ? 160 : 450) : lite ? (biome === 'meadow' ? 150 : kit.grandPrix || arcadeBoard ? 220 : 300) : 900; // (fewer of the meadow's broadleaf trees on a phone, and fewer beside a Grand Prix's grandstands or on an arcade board, where the compact layouts show most of the world at once; on the season's tracks on a phone, which also carry the holiday layer)
+  const maxItems = lite && kit.season ? 180 : kit.canyon || ground.river || ground.peak ? (lite ? 160 : 450) : kit.block ? (lite ? 220 : 650) : kit.athletics ? (lite ? 160 : 450) : lite ? (biome === 'meadow' ? 150 : kit.grandPrix || arcadeBoard ? 220 : 300) : 900; // (fewer of the meadow's broadleaf trees on a phone, and fewer beside a Grand Prix's grandstands or on an arcade board, where the compact layouts show most of the world at once; on the season's tracks on a phone, which also carry the holiday layer)
   const spots = [];
   for (let x = minX - 260; x <= maxX + 260; x += spacing) {
     for (let z = minZ - 260; z <= maxZ + 260; z += spacing) spots.push([x + (rand() - 0.5) * spacing * 0.9, z + (rand() - 0.5) * spacing * 0.9, rand(), rand()]);
@@ -464,9 +467,10 @@ export function buildKitScenery(centerline, track, theme, { lite = false } = {})
     if (solids.some((o) => (o.x - x) ** 2 + (o.z - z) ** 2 < o.r * o.r)) continue;
     if (ground.canyon && !ground.canyon.dressable(x, z)) continue; // (a canyon: nothing on its walls or in its river)
     if (ground.river && !ground.river.dressable(x, z)) continue; // (a river: nothing in the water)
+    if (ground.peak && !ground.peak.dressable(x, z)) continue; // (a mountain: nothing in a crevasse)
     const tags = tagsAt(x, z);
     let acc = 0;
-    let k = baseKinds.findIndex(([, share]) => (acc += share) >= pick);
+    let k = peakDress ? pickKind(peakDress.byZone, ground.peak.zoneAt(x, z), pick) : baseKinds.findIndex(([, share]) => (acc += share) >= pick);
     if (tags.includes('bare')) {
       if (pick > 0.12) continue;
       k = ROCK;
@@ -532,6 +536,18 @@ export function buildKitScenery(centerline, track, theme, { lite = false } = {})
   for (const geometry of mergeByArea(dressing, lite ? DRESSING_AREA * 4 : DRESSING_AREA)) dressGroup.add(new Mesh(geometry, dressMat));
   group.add(dressGroup);
 
+  // ── A mountain's far backdrop (its summit and neighbours, never touched), its sea of clouds, its spindrift ──
+  let spindrift = null;
+  if (ground.peak) {
+    const backdrop = buildPeakBackdrop(centerline, kit, { lite, floorY: ground.floorY });
+    group.add(backdrop.mesh);
+    if (backdrop.plume) group.add(backdrop.plume);
+    const cloudy = (kit.finish?.scenery ?? []).includes('sea-of-clouds') || (kit.sections ?? []).some((s) => (s.scenery ?? []).includes('sea-of-clouds'));
+    if (cloudy) group.add(buildSeaOfClouds(centerline, { y: Math.min(...samples.map((s) => s.pos.y)) - 30, lite }));
+    spindrift = buildSpindrift(centerline, channel, kit, { lite });
+    if (spindrift) group.add(spindrift.points);
+  }
+
   // ── Moving things, on the race clock ───────────────────────────────────
   const cabinQ = new Quaternion();
   const update = (t, ctx) => {
@@ -545,6 +561,7 @@ export function buildKitScenery(centerline, track, theme, { lite = false } = {})
     centrepieces.update(t);
     funicular?.update(t);
     lake?.update(t);
+    spindrift?.update(t);
     for (const m of turning) m.mesh.quaternion.copy(m.base).multiply(cabinQ.setFromAxisAngle(m.axis, turnAngle(m.moving, sec)));
     for (const d of drifters) {
       // (A slow drift on the race clock, back and forth over a few tens of metres.)
@@ -592,6 +609,6 @@ export function buildKitScenery(centerline, track, theme, { lite = false } = {})
     for (const geometry of mergeByArea(pieces, (kit.canyon || kit.block || kit.athletics || kit.river || kit.season) && lite ? 900 : 400)) group.add(Object.assign(new Mesh(geometry, mat), { name: 'scenery: still' }));
   }
 
-  group.userData = { ...group.userData, cameraKeepOut: [...cameraKeepOut, ...centrepieces.keepOut], stillParts: [...landmarkBoxes, ...(group.userData.stillParts ?? [])], update, field, groundAt, biome, ground, floorY: ground.floorY, ...(coaster && { liftHill: coaster.liftHill, station: coaster.station }) };
+  group.userData = { ...group.userData, cameraKeepOut: [...cameraKeepOut, ...centrepieces.keepOut, ...(kit.peak && coaster?.stationPosts ? coaster.stationPosts : [])], stillParts: [...landmarkBoxes, ...(group.userData.stillParts ?? [])], update, field, groundAt, biome, ground, floorY: ground.floorY, ...(coaster && { liftHill: coaster.liftHill, station: coaster.station }) };
   return group;
 }

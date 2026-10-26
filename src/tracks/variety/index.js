@@ -23,6 +23,7 @@ const NAMES = {
   'half-pipe-run': 'Half-Pipe Run', 'mid-lottery': 'Mid Lottery', 'jib-run': 'Jib Run', 'jump-run': 'Jump Run', 'clean-drop': 'Clean Drop',
   'bridge-slalom': 'Bridge Slalom', 'market-maze': 'Market Maze', 'steamer-pass': 'Steamer Pass', 'falls-edge': 'Falls Edge', 'lock-staircase': 'Lock Staircase', 'bridge-gate': 'Bridge Gate', 'arch-run': 'Arch Run', 'port-cranes': 'Port Cranes', 'flooded-forest': 'Flooded Forest', 'balloon-plain': 'Balloon Plain', 'peg-drop': 'Peg Drop', 'pipe-drop': 'Pipe Drop',
   'two-waters': 'Two Waters', cataract: 'Cataract', 'rapids-ladder': 'Rapids Ladder', 'island-castle': 'Island Castle', 'river-steps': 'River Steps',
+  'icefall-ladders': 'Icefall Ladders', 'needle-ridge': 'Needle Ridge', 'blue-ice-plain': 'Blue-Ice Plain', 'zone-descent': 'Zone Descent', 'ice-cave-run': 'Ice-Cave Run',
 };
 
 const base = (slug, name, description) => ({
@@ -59,7 +60,7 @@ const PINBALL_LAYOUTS = ['staircases', 'siege-routes', 'stage-hairpin', 'saucer-
 // A layout whose results depend on how the field arrives (a splitter's balance, the spread) is proven with its table's own opening.
 // Layouts made for one arcade world are proven on a test track built as an arcade world.
 const ARCADE_LAYOUTS = ['cabinet-rows', 'maze-corridors', 'bullet-spirals', 'up-up-down-down', 'bracket-splits', 'coast-road', 'co-op-street'];
-const OWN_OPENING = { 'bridge-gate': 'pipe-drop', 'arch-run': 'pipe-drop', 'port-cranes': ['clean-drop', { side: 'right' }], 'balloon-plain': 'tunnel-launch', 'two-waters': 'funnel-drop', cataract: ['banked-turn', { side: 'left' }], 'rapids-ladder': 'staggered-drop', 'island-castle': ['split-start', { dress: { after: { height: 12 } } }], 'river-steps': 'peg-drop', 'bridge-slalom': 'tunnel-launch', 'market-maze': 'peg-drop', 'steamer-pass': 'staggered-drop', 'lock-staircase': 'clean-drop', 'siege-routes': 'crest-start', 'saucer-sweeps': 'staggered-drop', 'clock-tower': 'funnel-drop', 'encore-split': 'split-start', 'cabinet-rows': 'funnel-drop', 'maze-corridors': 'split-start', 'bullet-spirals': 'staggered-drop', 'up-up-down-down': 'crest-start', 'bracket-splits': 'banked-turn', 'coast-road': 'boost-launch', 'co-op-street': 'tunnel-launch', 'lower-playfield': ['banked-turn', { side: 'right' }] };
+const OWN_OPENING = { 'icefall-ladders': ['clean-drop', { side: 'left' }], 'needle-ridge': 'classic', 'blue-ice-plain': 'peg-drop', 'zone-descent': 'funnel-drop', 'ice-cave-run': ['banked-turn', { side: 'right' }], 'bridge-gate': 'pipe-drop', 'arch-run': 'pipe-drop', 'port-cranes': ['clean-drop', { side: 'right' }], 'balloon-plain': 'tunnel-launch', 'two-waters': 'funnel-drop', cataract: ['banked-turn', { side: 'left' }], 'rapids-ladder': 'staggered-drop', 'island-castle': ['split-start', { dress: { after: { height: 12 } } }], 'river-steps': 'peg-drop', 'bridge-slalom': 'tunnel-launch', 'market-maze': 'peg-drop', 'steamer-pass': 'staggered-drop', 'lock-staircase': 'clean-drop', 'siege-routes': 'crest-start', 'saucer-sweeps': 'staggered-drop', 'clock-tower': 'funnel-drop', 'encore-split': 'split-start', 'cabinet-rows': 'funnel-drop', 'maze-corridors': 'split-start', 'bullet-spirals': 'staggered-drop', 'up-up-down-down': 'crest-start', 'bracket-splits': 'banked-turn', 'coast-road': 'boost-launch', 'co-op-street': 'tunnel-launch', 'lower-playfield': ['banked-turn', { side: 'right' }] };
 // (Lower playfield: the banked turn the other way, so the test track is Tilt's exact mirror image.)
 // Layouts made for one canyon are proven on a test track built as a canyon (on the canyon floor, climbing out where its canyon does).
 const CANYON_LAYOUTS = ['horseshoe-bend', 'great-bend', 'terrace-steps', 'rafting-run', 'six-canyons', 'basalt-gorge', 'twin-peaks', 'cliff-ledge', 'free-fall', 'meanders',
@@ -135,19 +136,32 @@ const RIVER_HEIGHTS = {
 const RIVER_START = { 'market-maze': 'river-boat', cataract: 'cliff', 'rapids-ladder': 'stepped-platform', 'island-castle': 'castle-tower', 'river-steps': 'stepped-platform' };
 // (Falls edge is proven the way Zambezi Falls Run races it: mirrored, its first bend to the right.)
 const RIVER_MIRROR = { 'falls-edge': true };
+// Layouts made for one Peaks track are proven on a test track built as a mountain (on its snow, flying along a
+// ridge or over a crevasse where its track does), with the opening and start its track races.
+const PEAK_LAYOUTS = ['icefall-ladders', 'needle-ridge', 'blue-ice-plain', 'zone-descent', 'ice-cave-run'];
+const PEAK_HEIGHTS = {
+  'icefall-ladders': { ladder1: { height: 8, peak: { crevasse: 'ladder' } }, ladder2: { height: 8, peak: { crevasse: 'ladder' } }, ladder3: { height: 8, peak: { crevasse: 'ice-arch' } } },
+  'needle-ridge': { ridge: { height: 14, peak: { ridge: true } } },
+  'blue-ice-plain': {},
+  'zone-descent': {},
+  'ice-cave-run': { cave: { tunnel: 'blue-ice' } },
+};
+const PEAK_START = { 'icefall-ladders': 'ice-ledge', 'needle-ridge': 'gondola', 'blue-ice-plain': 'ski-plane', 'zone-descent': 'stepped-platform', 'ice-cave-run': 'spiral-tower' };
+const PEAK_PALETTE = { 'icefall-ladders': 'everest', 'needle-ridge': 'mont-blanc', 'blue-ice-plain': 'vinson', 'zone-descent': 'kilimanjaro', 'ice-cave-run': 'vatnajokull' };
 const TOUCHDOWNS = { 'sea-crossing': { tunnelRun: { height: 0 } }, 'terrace-run': { swoops: { height: 0 } }, 'wall-dive': { tunnelRun: { height: 0 } } };
 
 const layouts = LAYOUT_KINDS.map((kind) => track({
-  ...base(`variety-layout-${kind}`, `Variety Test: ${NAMES[kind]} Layout`, `The layout library's test track for the ${NAMES[kind].toLowerCase()} layout, with the ${OWN_OPENING[kind] ? `${NAMES[[].concat(OWN_OPENING[kind])[0]].toLowerCase()} opening its table races` : 'classic opening'}${COASTER_LAYOUTS.includes(kind) ? ', built as a coaster' : CANYON_LAYOUTS.includes(kind) ? ', built as a canyon' : BLOCK_LAYOUTS.includes(kind) ? ', built as a Block Series world' : ATHLETICS_LAYOUTS.includes(kind) ? ', built as a stadium' : RIVER_LAYOUTS.includes(kind) ? ', built as a river' : PINBALL_LAYOUTS.includes(kind) ? ', built as a pinball table' : ARCADE_LAYOUTS.includes(kind) ? ', built as an arcade world' : ''}.`),
+  ...base(`variety-layout-${kind}`, `Variety Test: ${NAMES[kind]} Layout`, `The layout library's test track for the ${NAMES[kind].toLowerCase()} layout, with the ${OWN_OPENING[kind] ? `${NAMES[[].concat(OWN_OPENING[kind])[0]].toLowerCase()} opening its table races` : 'classic opening'}${COASTER_LAYOUTS.includes(kind) ? ', built as a coaster' : CANYON_LAYOUTS.includes(kind) ? ', built as a canyon' : BLOCK_LAYOUTS.includes(kind) ? ', built as a Block Series world' : ATHLETICS_LAYOUTS.includes(kind) ? ', built as a stadium' : RIVER_LAYOUTS.includes(kind) ? ', built as a river' : PEAK_LAYOUTS.includes(kind) ? ', built as a mountain' : PINBALL_LAYOUTS.includes(kind) ? ', built as a pinball table' : ARCADE_LAYOUTS.includes(kind) ? ', built as an arcade world' : ''}.`),
   ...(COASTER_LAYOUTS.includes(kind) && { series: 'coaster', coaster: { height: 18 } }),
   ...(CANYON_LAYOUTS.includes(kind) && { series: 'canyon', biome: 'desert', canyon: { palette: 'grand-canyon' } }),
   ...(BLOCK_LAYOUTS.includes(kind) && { series: 'block', biome: 'meadow', block: { world: 'meadow' } }),
   ...(ATHLETICS_LAYOUTS.includes(kind) && { series: 'athletics', biome: 'city', surface: 'tartan', athletics: { stadium: 'bislett' } }),
   ...(RIVER_LAYOUTS.includes(kind) && { series: 'river', biome: 'meadow', river: { palette: 'danube' }, start: { landmark: 'mountain-hut', type: RIVER_START[kind] ?? 'pier' } }),
+  ...(PEAK_LAYOUTS.includes(kind) && { series: 'peak', biome: 'alpine', surface: 'snow', peak: { palette: PEAK_PALETTE[kind] }, start: { landmark: 'mountain-hut', type: PEAK_START[kind] } }),
   ...(PINBALL_LAYOUTS.includes(kind) && { series: 'pinball', biome: 'playfield', lighting: 'parlour' }),
   ...(ARCADE_LAYOUTS.includes(kind) && { series: 'arcade', biome: 'circuit-board', lighting: 'neon-night', billboardFrame: 'marquee' }),
   opening: opening(...[].concat(OWN_OPENING[kind] ?? 'classic')),
-  sections: layout(kind, COASTER_LAYOUTS.includes(kind) ? { dress: { brakingStraight: { height: 0 }, ...TOUCHDOWNS[kind] } } : CANYON_LAYOUTS.includes(kind) ? { dress: CANYON_HEIGHTS[kind] } : BLOCK_LAYOUTS.includes(kind) ? { dress: BLOCK_HEIGHTS[kind] ?? {} } : ATHLETICS_LAYOUTS.includes(kind) ? { dress: ATHLETICS_DRESS[kind] } : RIVER_LAYOUTS.includes(kind) ? { dress: RIVER_HEIGHTS[kind], mirror: Boolean(RIVER_MIRROR[kind]) } : {}),
+  sections: layout(kind, COASTER_LAYOUTS.includes(kind) ? { dress: { brakingStraight: { height: 0 }, ...TOUCHDOWNS[kind] } } : CANYON_LAYOUTS.includes(kind) ? { dress: CANYON_HEIGHTS[kind] } : BLOCK_LAYOUTS.includes(kind) ? { dress: BLOCK_HEIGHTS[kind] ?? {} } : ATHLETICS_LAYOUTS.includes(kind) ? { dress: ATHLETICS_DRESS[kind] } : RIVER_LAYOUTS.includes(kind) ? { dress: RIVER_HEIGHTS[kind], mirror: Boolean(RIVER_MIRROR[kind]) } : PEAK_LAYOUTS.includes(kind) ? { dress: PEAK_HEIGHTS[kind] } : {}),
 }));
 
 module.exports = [...openings, ...layouts];

@@ -105,6 +105,12 @@ module.exports = [
   require('./volga-port-burst'),
   require('./murray-red-gum-run'),
   require('./irrawaddy-balloon-dawn'),
+  // Peaks (25 Oct 2026, the test five, switched off until Moses has reviewed them).
+  require('./everest-icefall-run'),
+  require('./kilimanjaro-five-zones'),
+  require('./mont-blanc-needle-ridge'),
+  require('./vinson-blue-ice'),
+  require('./vatnajokull-blue-cave'),
   // Rivers (Amazon, Ganges, Nile, Congo, Rhine).
   require('./amazon-meeting-spins'),
   require('./ganges-dawn-run'),

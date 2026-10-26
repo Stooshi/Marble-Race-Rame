@@ -293,7 +293,9 @@ module.exports = {
   plunge, straight, climb, sBends, sweep, spiral, hairpin, splitter, waterfall, runIn, halfPipe, box, rail, tableTop, jibLine, boostJump,
   block, pileUp, curtain, swipe, parked, slalom, peg,
   bump, boost, brake, moguls, steps, paint, rumble,
-  TUNNELS: ['mine', 'ice-cave', 'dragon', 'rock', 'roots', 'bazaar', 'canyon', 'mosaic', 'pyramid', 'sea-cave', 'lit-tunnel', 'redwood-trunk', 'city-wall', 'subway', 'steamer'],
+  TUNNELS: ['mine', 'ice-cave', 'dragon', 'rock', 'roots', 'bazaar', 'canyon', 'mosaic', 'pyramid', 'sea-cave', 'lit-tunnel', 'redwood-trunk', 'city-wall', 'subway', 'steamer',
+    // Peaks: a long cave under an ice cap, its blue ice glowing with the light through it (opaque: no see-through).
+    'blue-ice'],
   BRIDGES: ['ice', 'stone', 'wood', 'steel'],
   // Scenery names (looks only; the 3D view draws them, client/src/three/scenery/kit*.js).
   SURFACES: ['ice', 'snow', 'sand', 'stone', 'water', 'asphalt', 'tartan', 'tartan-blue'],
@@ -357,7 +359,10 @@ module.exports = {
     'river-clipper', 'glass-towers', 'weeping-willow', 'quay-cranes', 'red-gums', 'pelicans', 'lock-weir', 'limestone-cliffs', 'brick-temples',
     // (The other ten: Amazon, Nile, Congo, Rhine, Ganges.)
     'lily-pads', 'floating-houses', 'feluccas', 'granite-islands', 'palm-grove', 'fishing-tripods', 'dugout-canoes',
-    'island-castle', 'hilltop-castle', 'vineyard-terraces', 'ghat-steps', 'floating-lamps', 'rowing-boats'],
+    'island-castle', 'hilltop-castle', 'vineyard-terraces', 'ghat-steps', 'floating-lamps', 'rowing-boats',
+    // Peaks (client/src/three/scenery/kitLandmarksPeak.js; no religious objects, no flags, nothing on a summit).
+    'peak-camp', 'serac-field', 'granite-needles', 'nunataks', 'ski-plane', 'crater-ice-cliffs', 'giant-groundsels',
+    'meltwater-streams', 'pass-cairn', 'glacier-tongue'],
   OVERHEAD: ['gondola', 'cable-car', 'chairlift', 'vulture',
     // The Canyon Series: birds circling over the gorge, and what spans it from rim to rim, high over the track.
     'condor', 'prayer-flags', 'arch-bridge', 'railway-trestle', 'suspension-bridge',
@@ -377,6 +382,8 @@ module.exports = {
   CANYONS: ['grand-canyon', 'himalaya', 'andes', 'limestone', 'copper', 'basalt', 'karakoram', 'namib', 'slot', 'verdon', 'jinsha', 'waimea', 'mujib'],
   // A river's water, banks and plants (family 'river': `river: { palette }`), the client's RIVER_PALETTES.
   RIVERS: ['danube', 'mekong', 'mississippi', 'zambezi', 'yangtze', 'thames', 'seine', 'volga', 'murray', 'irrawaddy', 'amazon', 'nile', 'congo', 'rhine', 'ganges'],
+  // A mountain's snow, ice, rock, zones, sky and backdrop (family 'peak': `peak: { palette }`), the client's PEAK_PALETTES.
+  PEAKS: ['everest', 'mont-blanc', 'vinson', 'kilimanjaro', 'vatnajokull'],
   // What stands in the middle of a splitter, between its two channels (the arch: over one of
   // them), or in the middle of a spiral or a hairpin.
   AROUND: ['mountain-hut', 'big-rock', 'mountain-restaurant', 'mine-headframe', 'nunatak', 'bell-tower', 'arc-de-triomphe', 'obelisk', 'notre-dame', 'oasis', 'twisted-tower', 'river-island', 'anaconda', 'watchtower', 'pagoda',
@@ -388,7 +395,9 @@ module.exports = {
     'wood-clad', 'chalets', 'pasture', 'aspens', 'shopfronts',
     'stone-houses', 'colourful-houses', 'icefjord', 'haussmann', 'plane-trees', 'skyscrapers', 'stilt-houses', 'forbidden-city', 'battlements', 'grandstand', 'crowd', 'sandstone-terraces', 'market-stalls', 'palms', 'jacarandas', 'savannah', 'merchant-houses',
     // The Rivers.
-    'balcony-houses', 'river-palms', 'cypress', 'reeds', 'city-quay'],
+    'balcony-houses', 'river-palms', 'cypress', 'reeds', 'city-quay',
+    // Peaks: a sea of clouds below the track.
+    'sea-of-clouds'],
   // Billboard frames: plain, a jungle timber frame, a city LED screen, a Paris advertising column, expedition crates, a fantasy banner, an arcade cabinet's marquee.
   FRAMES: ['plain', 'wood', 'led', 'column', 'crates', 'banner', 'marquee'],
   // Grand Prix tracks (`grandPrix` in a track file): who fills the grandstands, and what lines the bends.

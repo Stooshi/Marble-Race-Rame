@@ -41,6 +41,9 @@ export const STRUCTURE_COLORS = {
   // bridges
   plank: '#8a6340', plankDark: '#6a4a2f', stone: '#a49c8f', stoneDark: '#837b70', iceSlab: '#cdeefc',
   steel: '#8d939b', steelDark: '#6c727a', bridgeWater: '#3f7fa8',
+  // Peaks: the blue-ice cave (light through the ice, holes of daylight in its roof), the crevasse bridges
+  blueIce: '#7fd0f2', blueIceDeep: '#2f86c4', blueIceLight: '#d8f4ff', blueIceVein: '#1f5f9a', skyHole: '#f6fcff',
+  ladderRail: '#b8bec6', ladderRung: '#8f969e', rope: '#e8792a', arch: '#cfeaf6', archDeep: '#8fc6e4',
   // waterfalls
   water: '#3f9ad6', foam: '#ffffff', cliff: '#7c7a74', cliffDark: '#5d5b56',
 };
@@ -62,6 +65,8 @@ const TUNNEL_STYLES = {
   subway: { out: 0.9, rise: 4.2, ribEvery: 3 },
   // Through a paddle steamer's lower deck: white-painted timber ribs, a red band low, warm lamps.
   steamer: { out: 1.0, rise: 4.4, ribEvery: 3 },
+  // Peaks: a long cave under an ice cap, its blue ice bright with the light coming through (opaque: no see-through).
+  'blue-ice': { out: 0.8, rise: 3.2, ribEvery: 6 }, // (low and snug: going in and coming out of the cave's S-bends the follow camera rides just over its crown; a 5.2 m roof came within 0.5 m of it)
   // A canyon: no roof, towering red rock walls either side, spectators along the cliff tops.
   canyon: { out: 1.2, rise: 0, ribEvery: 0, open: true },
 };
@@ -108,7 +113,7 @@ function waterTexture() {
 }
 
 export function buildStructures(centerline, channel, kit, { lite = false } = {}) {
-  const sections = kit?.sections?.filter((s) => s.tunnel || s.bridge || s.waterfall);
+  const sections = kit?.sections?.filter((s) => s.tunnel || s.bridge || s.waterfall || s.peak?.crevasse);
   if (!channel || !sections?.length) return null;
   const group = new Group();
   group.name = 'structures';
@@ -196,6 +201,15 @@ export function buildStructures(centerline, channel, kit, { lite = false } = {})
         // (j counts across the arch from the left wall, 0 to `across`: the crown is at across / 2.)
         rock: (k, j) => (noise(k * 17 + j * 7) > 0.45 ? C.rock : C.rockDark),
         'ice-cave': (k, j, n, across) => (ribRings && k % ribRings === 0 ? C.iceRib : j / across > 0.3 && j / across < 0.7 ? C.ice : C.iceDeep),
+        // The blue cave: bright blue ice, paler where the light comes through near the crown, darker veins in
+        // waves, now and then a hole of daylight in the roof (a pale tile).
+        'blue-ice': (k, j, n, across) => {
+          const crown = Math.abs(j + 0.5 - across / 2) < across * 0.18;
+          if (crown && k % 11 === 5) return C.skyHole;
+          if ((k + Math.round(Math.sin(j * 0.9) * 2)) % 7 === 0) return C.blueIceVein;
+          if (crown) return C.blueIceLight;
+          return noise(k * 7 + j * 3) > 0.45 ? C.blueIce : C.blueIceDeep;
+        },
         dragon: (k, j, n, across) => {
           if (Math.abs(j + 0.5 - across / 2) < 1) return C.gold; // the golden spine along the crown
           if (k >= n - 3) return C.scaleDark; // inside the mouth
@@ -245,7 +259,7 @@ export function buildStructures(centerline, channel, kit, { lite = false } = {})
 
       // From outside: banks beside the channel (rock, ice or the dragon's coils), never across
       // it, so the follow camera above sees the run dive in under them.
-      const bank = { mine: ['rock', 'rockDark'], rock: ['rock', 'rockDark'], roots: ['root', 'rock'], 'ice-cave': ['iceRib', 'ice'], dragon: ['scale', 'scaleDark'], bazaar: ['plaster', 'plasterDark'], canyon: ['redRock', 'redRockDark'], mosaic: ['tileGreen', 'tileWhite'], pyramid: ['sandstone', 'sandstoneDark'], 'sea-cave': ['caveStone', 'caveStoneDark'], 'lit-tunnel': ['concrete', 'concreteDark'], 'redwood-trunk': ['bark', 'barkDark'], 'city-wall': ['wallBrick', 'wallBrickDark'], subway: ['concrete', 'concreteDark'], steamer: ['steamerWhite', 'steamerRed'] }[s.tunnel] ?? ['rock', 'rockDark'];
+      const bank = { mine: ['rock', 'rockDark'], rock: ['rock', 'rockDark'], roots: ['root', 'rock'], 'ice-cave': ['iceRib', 'ice'], dragon: ['scale', 'scaleDark'], bazaar: ['plaster', 'plasterDark'], canyon: ['redRock', 'redRockDark'], mosaic: ['tileGreen', 'tileWhite'], pyramid: ['sandstone', 'sandstoneDark'], 'sea-cave': ['caveStone', 'caveStoneDark'], 'lit-tunnel': ['concrete', 'concreteDark'], 'redwood-trunk': ['bark', 'barkDark'], 'city-wall': ['wallBrick', 'wallBrickDark'], subway: ['concrete', 'concreteDark'], steamer: ['steamerWhite', 'steamerRed'], 'blue-ice': ['blueIceLight', 'blueIce'] }[s.tunnel] ?? ['rock', 'rockDark'];
       const bankStep = lite ? 6 : 3.5;
       const nb = Math.max(2, Math.round(len / bankStep));
       for (let k = 0; k <= nb; k += 1) {
@@ -384,6 +398,33 @@ export function buildStructures(centerline, channel, kit, { lite = false } = {})
             spike.translate(0, r * 0.9, 0);
             add('gold', spike, new Matrix4().makeTranslation(at.x, at.y, at.z));
           }
+        }
+      }
+    }
+
+    // ── Peaks: a crevasse crossed on a ladder bridge (aluminium ladders lashed end to end, ropes either side) or
+    // an ice-arch bridge (a thick bow of blue-white ice), under the channel along the section ─────────────
+    if (s.peak?.crevasse) {
+      const step = lite ? 3 : 1.5;
+      const n = Math.max(2, Math.round(len / step));
+      for (let k = 0; k <= n; k += 1) {
+        const p = s.from + ((s.to - s.from) * k) / n;
+        const { pos, side, along } = frameAt(centerline, p);
+        const down = along.clone().normalize();
+        const deckUp = new Vector3().crossVectors(down, side).normalize();
+        if (deckUp.y < 0) deckUp.negate();
+        const qs = new Quaternion().setFromRotationMatrix(new Matrix4().makeBasis(new Vector3().crossVectors(deckUp, down).normalize(), deckUp, down));
+        const half = channelRadiusAt(channel, p * channel.arc) * Math.sin(channelLipAt(channel, p * channel.arc)) + 0.6;
+        const under = pos.clone().addScaledVector(deckUp, -2);
+        if (s.peak.crevasse === 'ladder') {
+          for (const x of [-half, half]) add('ladderRail', new BoxGeometry(0.22, 0.28, step * 1.02), new Matrix4().compose(under.clone().addScaledVector(side, x), qs, new Vector3(1, 1, 1)));
+          if (k % (lite ? 1 : 2) === 0) add('ladderRung', new BoxGeometry(2 * half, 0.12, 0.14), new Matrix4().compose(under, qs, new Vector3(1, 1, 1)));
+          for (const x of [-half - 0.6, half + 0.6]) add('rope', new BoxGeometry(0.06, 0.06, step * 1.02), new Matrix4().compose(under.clone().addScaledVector(side, x).addScaledVector(deckUp, 1.4), qs, new Vector3(1, 1, 1)));
+        } else {
+          // (The arch's underside dips in the middle of the span, bowed like a snow bridge.)
+          const t = k / n;
+          const sag = 2.2 + Math.sin(Math.PI * t) * 3.2;
+          add(k % 2 ? 'arch' : 'archDeep', new BoxGeometry(2 * half + 1.2, sag, step * 1.02), new Matrix4().compose(under.clone().addScaledVector(deckUp, -sag / 2 + 0.6), qs, new Vector3(1, 1, 1)));
         }
       }
     }

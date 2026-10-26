@@ -25,6 +25,7 @@ const SERIES = [
   ['Blocks', 'worlds built of blocks', 'linear-gradient(150deg,#5B7FB8,#7FAE5F)', 'spawn-point', true],
   ['Track and Field', 'through famous stadiums', 'linear-gradient(150deg,#B9493A,#2F5D9A)', 'marble-stadium-sprint', true],
   ['Rivers', 'along the great rivers', 'linear-gradient(150deg,#2E86AB,#3F7A4A)', 'danube-night-run', true],
+  ['Peaks', 'down the great mountains', 'linear-gradient(150deg,#123A8C,#C9DCEF)', 'everest-icefall-run', true],
   ['Pinball', 'bumpers and flippers', 'linear-gradient(150deg,#3A1E6B,#FF3FA8)', 'flipper-spins'],
   ['Arcade', 'neon and pixels', 'linear-gradient(150deg,#0A0A12,#3FD8FF)', 'checkpoint-rush'],
 ];

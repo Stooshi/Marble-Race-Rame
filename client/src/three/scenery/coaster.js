@@ -12,9 +12,10 @@
  *     phones), the lift hill and its chain, the station and its queue, water
  *     curtains, and a tower under each billboard that stands on one.
  */
-import { BoxGeometry, BufferGeometry, CircleGeometry, Color, ConeGeometry, CylinderGeometry, DoubleSide, Float32BufferAttribute, Group, Matrix4, Mesh, MeshBasicMaterial, MeshLambertMaterial, Vector3 } from 'three';
+import { Box3, BoxGeometry, BufferGeometry, CircleGeometry, Color, ConeGeometry, CylinderGeometry, DoubleSide, Float32BufferAttribute, Group, IcosahedronGeometry, Matrix4, Mesh, MeshBasicMaterial, MeshLambertMaterial, Quaternion, Vector3 } from 'three';
 import { channelLipAt, channelRadiusAt, forkAt, forkOffset, forkRadius } from '../iceChannel';
 import { box, merge, piece } from './parts';
+import { skiPlaneModel } from './kitLandmarksPeak';
 
 const UP = new Vector3(0, 1, 0);
 const SKIRT = 1.6;           // the channel's outer wall reaches this far below its floor (iceChannel.js)
@@ -164,6 +165,10 @@ export function coasterRails(centerline, channel, { lite = false } = {}) {
  *   pier:          (Rivers) the gate at the end of a long wooden pier on piles, out over a pool of the river;
  *   river-boat:    (Rivers) a moored river boat behind the gate, its top deck level with the gate, a gangway on to it;
  *   lock-gate:     (Rivers) the gate is a lock's gate: a lock chamber behind it, full of high water.
+ *   ice-ledge:     (Peaks) the gate on an overhanging snow ledge at the top of a drop, the snowfield raised behind it;
+ *   gondola:       (Peaks) a cable-car station on a granite needle behind the gate, a cabin docked at its platform,
+ *                  the cables running away down the mountain;
+ *   ski-plane:     (Peaks) a ski plane parked on a glacier runway behind the gate, its cargo ramp down to the gate.
  * Returns { type, top, foot, back, side, length, path (top to foot, for a chain lift), cut
  * (the land carved down along the path, so the whole climb shows), plateau (a cliff top) }.
  * `foot` is where the start's landmark is placed beyond, and the countdown's lift shot looks.
@@ -234,6 +239,19 @@ export function liftHillOf(centerline, flight, type = 'straight-lift') {
     path = [top.clone(), go(top, LOCK.length, 0, 0)];
     cut = false;
     foot = go(top, LOCK.length, 0, 0);
+  } else if (type === 'ice-ledge') {
+    path = [top.clone(), go(top, ICE_LEDGE.edge, 0, 0)];
+    cut = false;
+    plateau = { y: top.y - 2.2, edge: ICE_LEDGE.edge, half: ICE_LEDGE.half, depth: ICE_LEDGE.depth };
+    foot = go(top, 16, 0, 0, plateau.y);
+  } else if (type === 'gondola') {
+    path = [top.clone(), go(top, GONDOLA.at, 0, 0)];
+    foot = go(top, GONDOLA.at, 0, rise);
+  } else if (type === 'ski-plane') {
+    path = [top.clone(), go(top, SKI_PLANE.at, 0, 0)];
+    cut = false;
+    plateau = { y: top.y - SKI_PLANE.floor, edge: 2, half: SKI_PLANE.half, depth: SKI_PLANE.depth };
+    foot = go(top, SKI_PLANE.at, 0, 0, plateau.y);
   } else if (type === 'ski-jump') {
     // (Up from the gate: the in-run's top, with its start hut, stands SKI_JUMP.rise over the gate.)
     path = [top.clone(), go(top, SKI_JUMP.length, 0, -SKI_JUMP.rise)];
@@ -257,6 +275,9 @@ const PIER = { length: 34, half: 5.5 };        // metres: the pier behind the ga
 const BOAT = { at: 18, half: 6, length: 30 };   // metres: the boat's middle behind the gate, its half-beam and length
 const LOCK = { length: 36, half: 6.5 };         // metres: the lock chamber behind the gate, its half-width inside the walls
 const SKI_JUMP = { length: 34, rise: 14, half: 3 }; // metres: the in-run behind the gate (along, up), its half-width
+const ICE_LEDGE = { edge: 7, half: 26, depth: 70 }; // metres: the snow ledge behind the gate, the snowfield's half-width and depth
+const GONDOLA = { at: 14, half: 5 };                // metres: the station's middle behind the gate, its half-width
+const SKI_PLANE = { at: 15, floor: 3.4, half: 22, depth: 90 }; // metres: the plane's middle behind the gate, the runway under the gate, its half-width and length
 const STEPS = { tiers: 4, depth: (k) => 10 + 6 * k, half: (k) => 8 + 4 * k, drop: 2.6, colours: ['#c9a676', '#b38f60'] };
 
 /** How low the land must lie at (x, z) to show the lift (Infinity away from it): below its path, falling away either side. */
@@ -367,6 +388,7 @@ export function buildCoaster(centerline, channel, kit, { lite = false, groundAt,
   const steel = [];   // rails, spine and ties (the track)
   const towers = [];  // the supports and the lift hill
   const station = []; // the station
+  const stationPosts = []; // its posts' and platforms' boxes (for the follow camera)
   const feet = [];
   const group = new Group();
   group.name = 'coaster';
@@ -420,6 +442,9 @@ export function buildCoaster(centerline, channel, kit, { lite = false, groundAt,
   const blocks = kit.coaster?.style === 'blocks';
   // (`coaster.style` 'concrete' (Track and Field's ramps): two slim grey columns and a beam, as a stadium's concourse.)
   const concrete = kit.coaster?.style === 'concrete';
+  // (`coaster.style` 'alpine' (Peaks): tall steel trusses anchored into rock and ice, each held by a pair of cable
+  // stays out to the slope either side, for long flights over drops: a ridge, a crevasse. Thin, in the support colour.)
+  const alpine = kit.coaster?.style === 'alpine';
   const CUBE = 1.6;
   const SUPPORT_DARK = `#${new Color(SUPPORT).multiplyScalar(0.78).getHexString()}`;
   const tower = (top, side, half, i, { light = lite } = {}) => {
@@ -504,6 +529,18 @@ export function buildCoaster(centerline, channel, kit, { lite = false, groundAt,
       }
       return;
     }
+    if (alpine && h > 6) {
+      // The cable stays: from high on each leg out and down to the land, anchored in a block of rock.
+      for (const [a, b] of legs) {
+        const out = new Vector3(b.x - a.x, 0, b.z - a.z).normalize();
+        const anchor = a.clone().addScaledVector(out, Math.min(h * 0.9, 26));
+        anchor.y = groundAt(anchor.x, anchor.z) - 0.2;
+        if (!below(anchor, i, a.y) && !inPen(anchor)) {
+          towers.push(strut(a.clone().lerp(b, 0.15), anchor, 0.07, '#2a2e30'));
+          if (!light) towers.push(box(1.1, 0.7, 1.1, anchor.x, anchor.y + 0.2, anchor.z, '#55524f'));
+        }
+      }
+    }
     const rung = light ? 12 : 7;
     const n = Math.floor(h / rung);
     for (let k = 1; k <= n; k += 1) {
@@ -558,9 +595,17 @@ export function buildCoaster(centerline, channel, kit, { lite = false, groundAt,
       const p = centre.clone().addScaledVector(side, sign * (half - STATION.platform / 2 + 0.6));
       p.y = rimY - 0.4;
       station.push(place(new BoxGeometry(STATION.platform, 0.8, STATION.length), p, '#d9d4c8'));
+      // (The platform too, in 2 m pieces so each box hugs it whichever way the station faces: the run-in bends into it.)
+      for (let d = -STATION.length / 2 + 1; d < STATION.length / 2; d += 2) {
+        const c = p.clone().addScaledVector(along, d);
+        const ext = new Vector3(Math.abs(along.x) * 1 + Math.abs(side.x) * STATION.platform / 2, 0.4, Math.abs(along.z) * 1 + Math.abs(side.z) * STATION.platform / 2);
+        stationPosts.push(new Box3(c.clone().sub(ext), c.clone().add(ext)));
+      }
       for (let k = -2; k <= 2; k += 1) {
         const post = centre.clone().addScaledVector(side, sign * (half + 0.4)).addScaledVector(along, k * (STATION.length / 4.4));
         station.push(strut(new Vector3(post.x, groundAt(post.x, post.z) - 0.5, post.z), new Vector3(post.x, rimY + STATION.roof, post.z), 0.4, SUPPORT));
+        // (Each post a box the follow camera keeps clear of: on a mountain, kit.js; it swung out through one, 2 checks in 800.)
+        stationPosts.push(new Box3(new Vector3(post.x - 0.3, groundAt(post.x, post.z) - 0.5, post.z - 0.3), new Vector3(post.x + 0.3, rimY + STATION.roof, post.z + 0.3)));
       }
       // The queue: a rail and a row of waiting riders behind the platform.
       if (!lite) {
@@ -625,7 +670,7 @@ export function buildCoaster(centerline, channel, kit, { lite = false, groundAt,
     group.add(curtain);
   }
 
-  return { group, feet, liftHill: lift, station: st };
+  return { group, feet, liftHill: lift, station: st, stationPosts };
 }
 
 /**
@@ -901,6 +946,63 @@ function buildStart(lift, { towers, feet, tower, groundAt, lite, RAIL, SUPPORT, 
       towers.push(strut(m.clone().setY(groundAt(m.x, m.z) - 0.5), m, 0.5, '#b8b4ac'));
     }
     feet.push({ x: hut.x, z: hut.z, r: 10 });
+  } else if (type === 'ice-ledge') {
+    // (Peaks) A snow ledge overhanging the drop: a cornice of snow under the gate, its lip curling over, icicles
+    // under it; the snowfield behind it (the land raised: lift.plateau); a pair of marker poles at its edge.
+    const pl = lift.plateau;
+    const yaw = yawOf(back);
+    const lip = top.clone().addScaledVector(back, 1).setY(top.y - 1.6);
+    towers.push(obox(pl.half * 0.9, 1.6, pl.edge + 3, top.clone().addScaledVector(back, pl.edge / 2 + 0.5).setY(top.y - 2.1), yaw, '#f2f6fa'));
+    towers.push(piece(new CylinderGeometry(1.2, 1.2, pl.half * 0.9, 8, 1, false, 0, Math.PI), '#e6eef6', new Matrix4().makeRotationY(yaw + Math.PI / 2).setPosition(lip).multiply(new Matrix4().makeRotationX(Math.PI / 2))));
+    for (let k = -5; k <= 5; k += lite ? 2 : 1) towers.push(piece(new ConeGeometry(0.25, 1.6 + (k % 3) * 0.5, 5), '#cfe8f4', new Matrix4().makeTranslation(...lip.clone().addScaledVector(side, k * 1.9).addScaledVector(back, -0.6).setY(top.y - 3.2).toArray()).multiply(new Matrix4().makeRotationX(Math.PI))));
+    // The face of the drop under the ledge: blue ice and snow.
+    const faceH = 16;
+    towers.push(obox(pl.half * 2, faceH, 2.4, top.clone().addScaledVector(back, pl.edge + 0.8).setY(pl.y - faceH / 2), yaw, '#a9d4ec'));
+    for (const sign of [1, -1]) {
+      const m = top.clone().addScaledVector(back, 2).addScaledVector(side, sign * (half + 2.2));
+      towers.push(strut(m.clone().setY(top.y - 1.4), m.clone().setY(top.y + 2), 0.12, '#e8792a'));
+    }
+    feet.push({ x: lift.foot.x, z: lift.foot.z, r: 14 });
+  } else if (type === 'gondola') {
+    // (Peaks) A cable-car station on a granite needle: the needle from the land up to the platform, the station
+    // (a glass-fronted box under a flat roof), a cabin docked at the platform behind the gate, its two cables
+    // running away down the mountain to one side, and a short deck from the platform to the gate.
+    const at = top.clone().addScaledVector(back, GONDOLA.at);
+    const yaw = yawOf(back);
+    const landY = groundAt(at.x, at.z) - 1;
+    const needleH = top.y - 1.4 - landY;
+    if (needleH > 1) {
+      towers.push(piece(new CylinderGeometry(GONDOLA.half + 1, GONDOLA.half + 5, needleH, lite ? 6 : 8), '#7a645a', new Matrix4().makeTranslation(at.x, landY + needleH / 2, at.z)));
+      for (let k = 0; k < (lite ? 2 : 4); k += 1) towers.push(piece(new IcosahedronGeometry(3.2, 0), '#f2f6fa', new Matrix4().compose(at.clone().addScaledVector(side, (k % 2 ? 1 : -1) * (GONDOLA.half + 3)).setY(landY + needleH * (0.3 + 0.18 * k)), new Quaternion(), new Vector3(1.2, 0.3, 1.2))));
+    }
+    towers.push(obox(GONDOLA.half * 2 + 2, 0.6, GONDOLA.half * 2 + 4, at.clone().setY(top.y - 1.4), yaw, '#3b3f46'));
+    towers.push(obox(GONDOLA.half * 2, 4.4, GONDOLA.half * 1.4, at.clone().addScaledVector(back, GONDOLA.half * 0.5).setY(top.y + 1.1), yaw, '#d8dce2'));
+    towers.push(obox(GONDOLA.half * 2 + 0.1, 2, 0.2, at.clone().addScaledVector(back, -GONDOLA.half * 0.2 + 0.1).setY(top.y + 1.6), yaw, '#3a5a7a'));
+    towers.push(obox(GONDOLA.half * 2 + 1.6, 0.5, GONDOLA.half * 1.4 + 1.6, at.clone().addScaledVector(back, GONDOLA.half * 0.5).setY(top.y + 3.5), yaw, '#5a5e66'));
+    // The cabin at the platform, beside the gate's line; its hanger up to the cables.
+    const cab = at.clone().addScaledVector(side, -(GONDOLA.half + 3.5)).setY(top.y + 0.2);
+    towers.push(obox(3.2, 2.6, 4, cab, yaw, '#c8302a'), obox(3.25, 0.9, 4.05, cab.clone().setY(top.y + 0.6), yaw, '#2b3c52'));
+    towers.push(strut(cab.clone().setY(top.y + 1.5), cab.clone().setY(top.y + 5), 0.18, '#3b3f46'));
+    const away = side.clone().multiplyScalar(-1).addScaledVector(back, -0.4).normalize();
+    for (const k of [-0.6, 0.6]) towers.push(strut(cab.clone().addScaledVector(back, k).setY(top.y + 5), cab.clone().addScaledVector(back, k).addScaledVector(away, 160).setY(top.y - 70), 0.08, '#2a2e30'));
+    deckAlong([top, top.clone().addScaledVector(back, GONDOLA.at - GONDOLA.half - 1)], { chain: false, legs: false });
+    feet.push({ x: at.x, z: at.z, r: GONDOLA.half + 8 }, { x: cab.x, z: cab.z, r: 6 });
+  } else if (type === 'ski-plane') {
+    // (Peaks) A ski plane parked on a glacier runway behind the gate (the land raised flat: lift.plateau), its
+    // cargo door level with the gate and a ramp from it to the gate; runway marker poles along the snow.
+    const yaw = yawOf(back);
+    const pl = lift.plateau;
+    const plane = skiPlaneModel();
+    const at = top.clone().addScaledVector(back, SKI_PLANE.at + 4).setY(pl.y);
+    plane.applyMatrix4(new Matrix4().compose(at, new Quaternion().setFromAxisAngle(UP, yaw), new Vector3(1.5, 1.5, 1.5))); // (its tail and cargo door towards the gate)
+    towers.push(plane);
+    // The ramp from the plane's tail door down to the gate's deck.
+    deckAlong([top, top.clone().addScaledVector(back, SKI_PLANE.at - 4)], { chain: false, legs: false });
+    for (let d = 10; d < pl.depth; d += lite ? 20 : 10) for (const sign of [1, -1]) {
+      const m = top.clone().addScaledVector(back, d).addScaledVector(side, sign * 12).setY(pl.y);
+      towers.push(strut(m, m.clone().setY(pl.y + 1.6), 0.1, '#e8792a'));
+    }
+    feet.push({ x: at.x, z: at.z, r: 18 });
   } else if (type === 'pier' || type === 'river-boat' || type === 'lock-gate') {
     // (Rivers) A pool of the river behind the gate, at the land's lowest there, and what stands in it.
     const yaw = yawOf(back);

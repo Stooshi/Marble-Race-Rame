@@ -279,7 +279,9 @@ export function buildTerrain(field, bounds, { cells = 96, colors, tiles = 1, bel
       const tri = [a, b, d];
       const y = (a[1] + b[1] + d[1]) / 3;
       const steep = Math.max(...tri.map((p) => p[1])) - Math.min(...tri.map((p) => p[1]));
-      const own = colorAt && colorAt((a[0] + b[0] + d[0]) / 3, y, (a[2] + b[2] + d[2]) / 3, steep);
+      // (`span`: the triangle's widest horizontal reach, so a colouring can tell a slope from a big flat-ish square.)
+      const span = colorAt ? Math.max(Math.hypot(a[0] - b[0], a[2] - b[2]), Math.hypot(a[0] - d[0], a[2] - d[2]), Math.hypot(b[0] - d[0], b[2] - d[2])) : 0;
+      const own = colorAt && colorAt((a[0] + b[0] + d[0]) / 3, y, (a[2] + b[2] + d[2]) / 3, steep, span);
       if (own) c.copy(own);
       else if (y < 0.3) c.copy(C.sand);
       else c.copy(C.grass).lerp(C.dry, Math.min(1, y / (top || 1)) * 0.9);

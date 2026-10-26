@@ -53,6 +53,7 @@ function seriesOf(track) {
   if (kit?.block) return 'Blocks';
   if (kit?.athletics) return 'Track and Field';
   if (kit?.river) return 'Rivers';
+  if (kit?.peak) return 'Peaks';
   if (kit?.winterWonders) return 'Winter Wonders';
   if (kit?.coaster) return 'Coasters';
   if (kit?.grandPrix) return 'Grand Prix';
