@@ -122,7 +122,8 @@ async function newRoomRace(client, room) {
   const { rows } = await client.query(
     `INSERT INTO races (track_id, min_marbles, max_marbles, fill_with_bots, created_by, tick_rate_hz, countdown_ms, room_id)
      VALUES ($1, $2, $2, true, $3, $4, $5, $6) RETURNING id`,
-    [trackId, PLAYERS, room.host_id, config.game.tickRateHz, config.game.countdownMs, room.id],
+    // (A room's race counts down longer: the start show's flyover, in sync for everyone, then the countdown.)
+    [trackId, PLAYERS, room.host_id, config.game.tickRateHz, config.game.countdownMs + config.game.startShowMs, room.id],
   );
   await client.query('UPDATE rooms SET current_race_id = $2, last_active_at = now() WHERE id = $1', [room.id, rows[0].id]);
   return rows[0].id;
@@ -455,6 +456,27 @@ router.post('/:code/start-in/cancel', requireAuth, async (req, res) => {
     }
   });
   if (raceId) raceManager.unscheduleStart(raceId);
+  res.json(await roomView(code, req.user));
+});
+
+/**
+ * POST /api/rooms/:code/start-now: a quick race where the player is the only real player (computer
+ * players don't count; Moses, 26 Oct 2026): it starts at once instead of waiting out its timer.
+ */
+router.post('/:code/start-now', requireAuth, async (req, res) => {
+  let raceId = null;
+  let at = null;
+  const code = await onRoom(req, async (client, room, race) => {
+    if (room.kind !== 'quick') throw badRequest('Only a quick race can be started this way');
+    if (!race || race.status !== 'lobby') throw conflict('This race has already started');
+    const { rows: humans } = await client.query('SELECT user_id FROM race_entries WHERE race_id = $1 AND NOT is_bot', [race.id]);
+    if (!humans.some((h) => h.user_id === req.user.id)) throw forbidden('Join the race first');
+    if (humans.length > 1) throw conflict('Other players are in this race: it starts on its timer');
+    const { rows } = await client.query('UPDATE races SET scheduled_at = now(), updated_at = now() WHERE id = $1 RETURNING scheduled_at', [race.id]);
+    raceId = race.id;
+    at = rows[0].scheduled_at;
+  });
+  raceManager.scheduleStart(raceId, at);
   res.json(await roomView(code, req.user));
 });
 

@@ -255,7 +255,8 @@ async function decide(raceId, actor) {
               track_snapshot = $6
         WHERE id = $1
         RETURNING *`,
-      [raceId, seed, sim.durationMs, tickRateHz, config.game.countdownMs, JSON.stringify({
+      // (The race's own countdown: a room's race counts down longer, for the start show; at least the usual.)
+      [raceId, seed, sim.durationMs, tickRateHz, Math.min(config.game.countdownMs + 10_000, Math.max(config.game.countdownMs, Number(race.countdown_ms) || 0)), JSON.stringify({
         length_m: Number(input.race.length_m),
         lane_count: input.race.lane_count,
         waypoints: input.race.waypoints,
