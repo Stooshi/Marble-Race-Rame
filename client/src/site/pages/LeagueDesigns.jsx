@@ -15,7 +15,7 @@ export default function LeagueDesigns() {
       <header className="nl-head">
         <span className="nl-eyebrow">Design review · not in the shop</span>
         <h1>The league marble</h1>
-        <p>One marble for every league, given only to a league&apos;s winner and never sold. Three options; each shows its picture (large, and at the card&apos;s size) and the 3D marble rolling as it does in races, on a light and a dark background.</p>
+        <p>The Pro League winner&apos;s marble, never sold. Three options; Moses chose <b>Racing Stripes</b> (26 Oct). Each shows its picture (large, and at the card&apos;s size) and the 3D marble rolling as it does in races, on a light and a dark background.</p>
       </header>
       {LEAGUE_OPTIONS.map((e) => <Row key={e.key} e={e} tag={e.letter} />)}
       <p className="nl-foot">Once one is chosen, it is built as a real catalogue item that only the league end job gives out.</p>

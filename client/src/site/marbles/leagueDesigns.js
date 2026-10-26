@@ -49,6 +49,6 @@ function victoryLap() {
 
 export const LEAGUE_OPTIONS = [
   { key: 'laurel', letter: 'A', name: "Champion's Laurel", idea: 'Warm gold glass with a wreath of pale leaves in pairs round its middle and a bright star at its heart. The classic winner\'s look: reads as "champion" at any size.', look: championsLaurel() },
-  { key: 'stripes', letter: 'B', name: 'Racing Stripes', idea: 'Midnight-blue glass with two white racing stripes edged in gold, as on a race car, and a few gold sparks. The most "racing" of the three, and it stands out on light and dark tracks.', look: racingStripes() },
+  { key: 'stripes', letter: 'B · chosen', name: 'Racing Stripes', idea: 'Midnight-blue glass with two white racing stripes edged in gold, as on a race car, and a few gold sparks. The most "racing" of the three, and it stands out on light and dark tracks.', look: racingStripes() },
   { key: 'lap', letter: 'C', name: 'Victory Lap', idea: 'Our own idea: deep teal glass with three gold orbits looping round it like laps, a small sun where they cross. Different from every marble in the shop; calm, and still gold enough to feel like a prize.', look: victoryLap() },
 ];
