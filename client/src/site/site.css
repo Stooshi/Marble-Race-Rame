@@ -1038,3 +1038,10 @@ tr:hover .report-name__btn--compact, .report-name__btn--compact:focus-visible { 
 .ms-league-night__form input[type="datetime-local"] { min-height: 44px; border-radius: 12px; padding: 0 12px; background: var(--ms-bg); color: var(--ms-text); border: 1px solid var(--ms-border); }
 .ms-league-list__night { color: var(--ms-yellow); font-weight: 700; font-size: 0.9rem; }
 .ms-room-night { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; background: rgba(255,210,31,0.08); border-color: rgba(255,210,31,0.45); }
+/* The league's name and its creator's pencil (LeaguesPages.jsx LeagueName) */
+.ms-league-name { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.ms-league-name__edit { flex: none; width: 40px; height: 40px; border-radius: 999px; display: grid; place-items: center; background: var(--ms-card); border: 1px solid var(--ms-border); color: var(--ms-soft); cursor: pointer; }
+.ms-league-name__edit:hover { color: var(--ms-text); border-color: var(--ms-muted); }
+.ms-league-name__edit:focus-visible { outline: 3px solid var(--ms-yellow); outline-offset: 2px; }
+.ms-league-name__form { display: grid; gap: 8px; max-width: 520px; }
+.ms-league-name__form input { font-family: var(--ms-cond); font-weight: 800; font-size: 1.8rem; min-height: 52px; }

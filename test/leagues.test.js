@@ -94,6 +94,20 @@ test('a League from start to end: create, join, tries, best times, the total, th
     assert.equal(made.body.tracks.length, 5);
     assert.deepEqual(made.body.tracks.map((t) => t.tries_left), [3, 3, 3, 3, 3]);
 
+    // The name: the player-name filter, at creation and when the creator renames it (Moses, 27 Oct 2026).
+    const rude = await call('/leagues', { method: 'POST', token: a.token, body: { name: 'Fuuuck league', track_ids: five, days: 3 } });
+    assert.equal(rude.status, 400);
+    assert.equal(rude.body.details.code, 'name_not_allowed');
+    assert.equal((await call(`/leagues/${code}`, { method: 'PATCH', token: b.token, body: { name: 'Mine now' } })).status, 403);
+    const rudeRename = await call(`/leagues/${code}`, { method: 'PATCH', token: a.token, body: { name: 'Fuuuck league' } });
+    assert.equal(rudeRename.status, 400);
+    assert.equal(rudeRename.body.details.code, 'name_not_allowed');
+    assert.equal((await call(`/leagues/${code}`, { method: 'PATCH', token: a.token, body: { name: 'x' } })).status, 400);
+    const renamed = await call(`/leagues/${code}`, { method: 'PATCH', token: a.token, body: { name: '  Office   Cup  ' } });
+    assert.equal(renamed.status, 200, JSON.stringify(renamed.body));
+    assert.equal(renamed.body.league.name, 'Office Cup');
+    await call(`/leagues/${code}`, { method: 'PATCH', token: a.token, body: { name: 'Office league' } });
+
     // Join by link; a guest can't; the creator adds C by name, then removes them (they can't come back).
     assert.equal((await call(`/leagues/${code}/join`, { method: 'POST', token: guest.token })).status, 403);
     assert.equal((await call(`/leagues/${code}/join`, { method: 'POST', token: b.token })).status, 200);

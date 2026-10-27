@@ -8,6 +8,7 @@
  *   GET    /api/leagues/mine                my open and recently ended leagues, my place and tracks done
  *   POST   /api/leagues                     { name, track_ids[5], days 1-7, attempts null|3|5|10 } create
  *   GET    /api/leagues/:code               the league: tracks, scoreboard, my bests and tries left
+ *   PATCH  /api/leagues/:code               creator: { name } rename it (the player-name filter)
  *   POST   /api/leagues/:code/join          join (by its link or code)
  *   DELETE /api/leagues/:code/join          leave
  *   POST   /api/leagues/:code/members       creator: { username } add a player by name
@@ -129,6 +130,15 @@ router.post('/', requireAuth, open, createLimiter, async (req, res) => {
 router.get('/:code', optionalAuth, open, async (req, res) => {
   const league = await leagues.byCode(db, req.params.code);
   res.json(await view(league, req.user?.id ?? null));
+});
+
+router.patch('/:code', requireAuth, open, async (req, res) => {
+  const { name } = validate(req.body ?? {}, { name: { type: 'string', required: true, max: 80 } });
+  const league = await db.withTransaction(async (client) => {
+    const l = await leagues.byCode(client, req.params.code, { lock: true });
+    return leagues.rename(client, l, req.user.id, name);
+  });
+  res.json(await view(league, req.user.id));
 });
 
 router.post('/:code/join', requireAuth, open, async (req, res) => {

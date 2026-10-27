@@ -9,6 +9,7 @@ import { SITE_URL } from '../canonical';
 import TrackBanner, { SERIES_PIC } from '../TrackBanner';
 import { useTracks } from '../pages/RaceFlow';
 import { GO_PRO, lapTime, timeLeft, triesText, useLeaguesOn } from './status';
+import { NAME_NOT_ALLOWED, checkName } from '../../shared/nameFilter';
 
 /**
  * Leagues, the website's side (Leagues v1 part 1, 27 Oct 2026; plan: project doc
@@ -193,7 +194,7 @@ function CreateLeagueIn() {
     while (out.length < TRACKS && free.length) out.push(free.splice(Math.floor(Math.random() * free.length), 1)[0]);
     setPicked(out);
   };
-  const nameOk = name.trim().length >= 2 && name.trim().length <= 40;
+  const nameOk = name.trim().length >= 2 && name.trim().length <= 40 && !checkName(name.trim());
   const create = async () => {
     setBusy(true);
     setError(null);
@@ -252,7 +253,7 @@ function CreateLeagueIn() {
           <button type="button" className="ms-btn ms-btn--primary ms-btn--lg" disabled={busy || !nameOk || picked.length !== TRACKS} onClick={create}>
             {busy ? 'CREATING…' : 'CREATE THE LEAGUE'}
           </button>
-          {!nameOk && name.length > 0 && <span className="ms-note">A name of 2 to 40 characters.</span>}
+          {!nameOk && name.length > 0 && <span className="ms-note">{checkName(name.trim()) ? NAME_NOT_ALLOWED : 'A name of 2 to 40 characters.'}</span>}
         </section>
         <section className="ms-card ms-league-col ms-league-create__pick" aria-labelledby="pick-h">
           <div className="ms-row" style={{ justifyContent: 'space-between' }}>
@@ -374,7 +375,9 @@ function LeaguePageIn() {
       <div className="ms-row" style={{ justifyContent: 'space-between', alignItems: 'baseline' }}>
         <div style={{ display: 'grid', gap: 4, minWidth: 0 }}>
           <span className="ms-eyebrow" style={{ color: 'var(--ms-orange)' }}>League{league.creator ? ` · by ${league.creator.name}` : ''}</span>
-          <h1 className="ms-h1" style={{ ...h1, overflowWrap: 'anywhere' }}>{league.name}</h1>
+          {mine
+            ? <LeagueName code={code} name={league.name} onView={setView} />
+            : <h1 className="ms-h1" style={{ ...h1, overflowWrap: 'anywhere' }}>{league.name}</h1>}
         </div>
         <span className="ms-id ms-id--big" aria-label={`League code ${code.split('').join(' ')}`}>{code}</span>
       </div>
@@ -683,5 +686,45 @@ function LeagueNight({ code, view, member, mine, isOpen, now, skew, userId, onVi
       )}
       {n && !live && n.status === 'cancelled' && !n.standings?.length && <p className="ms-note" style={{ margin: 0 }}>The last League Night was called off.</p>}
     </section>
+  );
+}
+
+/**
+ * The league's name with a pencil for its creator (Moses, 27 Oct 2026): rename it in place. The same
+ * filter as player names (client/src/shared/nameFilter.js; the server checks it again).
+ */
+function LeagueName({ code, name, onView }) {
+  const [editing, setEditing] = useState(false);
+  const [text, setText] = useState(name);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState(null);
+  useEffect(() => { if (!editing) setText(name); }, [name, editing]);
+  const tidy = text.trim().replace(/\s+/g, ' ');
+  const problem = tidy.length < 2 || tidy.length > 40 ? 'A name of 2 to 40 characters.' : checkName(tidy) ? NAME_NOT_ALLOWED : null;
+  const save = async (e) => {
+    e.preventDefault();
+    if (problem || tidy === name) { if (tidy === name) setEditing(false); return; }
+    setBusy(true); setError(null);
+    try { onView(await api.renameLeague(code, tidy)); setEditing(false); } catch (err) { setError(err.message); } finally { setBusy(false); }
+  };
+  if (!editing) {
+    return (
+      <div className="ms-league-name">
+        <h1 className="ms-h1" style={{ ...h1, overflowWrap: 'anywhere' }}>{name}</h1>
+        <button type="button" className="ms-league-name__edit" aria-label="Rename the league" title="Rename the league" onClick={() => setEditing(true)}>
+          <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16v4zM14 6l4 4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+        </button>
+      </div>
+    );
+  }
+  return (
+    <form className="ms-form ms-league-name__form" onSubmit={save}>
+      <input aria-label="The league's name" value={text} maxLength={40} autoFocus onChange={(e) => setText(e.target.value)} onKeyDown={(e) => { if (e.key === 'Escape') setEditing(false); }} />
+      <div className="ms-row">
+        <button type="submit" className="ms-btn ms-btn--sm ms-btn--primary" disabled={busy || Boolean(problem)}>{busy ? 'Saving…' : 'Save'}</button>
+        <button type="button" className="ms-btn ms-btn--sm ms-btn--ghost" onClick={() => { setEditing(false); setError(null); }}>Cancel</button>
+      </div>
+      {(error || (problem && tidy !== name && tidy.length > 0)) && <span className="ms-note" role="alert" style={{ color: error ? 'var(--ms-red)' : undefined }}>{error ?? problem}</span>}
+    </form>
   );
 }

@@ -191,6 +191,7 @@ export const api = {
   myLeagues: () => request('/leagues/mine'),
   createLeague: (body) => request('/leagues', { method: 'POST', body }),
   league: (code) => request(`/leagues/${encodeURIComponent(code)}`),
+  renameLeague: (code, name) => request(`/leagues/${encodeURIComponent(code)}`, { method: 'PATCH', body: { name } }),
   joinLeague: (code) => request(`/leagues/${encodeURIComponent(code)}/join`, { method: 'POST' }),
   leaveLeague: (code) => request(`/leagues/${encodeURIComponent(code)}/join`, { method: 'DELETE' }),
   leagueAdd: (code, username) => request(`/leagues/${encodeURIComponent(code)}/members`, { method: 'POST', body: { username } }),

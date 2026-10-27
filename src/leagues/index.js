@@ -93,8 +93,7 @@ async function isMember(db, leagueId, userId) {
  * the creator may race now (a holiday track: the creator has the pass and the season is on).
  */
 async function checkSettings(db, userId, body) {
-  const name = String(body.name ?? '').trim().replace(/\s+/g, ' ');
-  if (name.length < 2 || name.length > 40) throw badRequest('Give the league a name (2 to 40 characters)');
+  const name = await checkName(body.name);
   const trackIds = Array.isArray(body.track_ids) ? body.track_ids : [];
   if (trackIds.length !== TRACKS) throw badRequest(`Pick ${TRACKS} tracks`);
   if (new Set(trackIds).size !== TRACKS) throw badRequest('Pick five different tracks');
@@ -107,6 +106,25 @@ async function checkSettings(db, userId, body) {
   if (tracks.length !== TRACKS) throw badRequest('One of those tracks is not available');
   for (const t of tracks) await seasons.assertTrackAccess(db, t, { userId });
   return { trackIds, days, attemptCap, name };
+}
+
+/**
+ * A league's name: 2 to 40 characters, spaces tidied, through the same filter as player names
+ * (client/src/shared/nameFilter.js: 400 name_not_allowed). → the name.
+ */
+async function checkName(text) {
+  const name = String(text ?? '').trim().replace(/\s+/g, ' ');
+  if (name.length < 2 || name.length > 40) throw badRequest('Give the league a name (2 to 40 characters)');
+  await require('../names').assertAllowed({ name });
+  return name;
+}
+
+/** The creator renames their league (Moses, 27 Oct 2026) → the league row. */
+async function rename(client, league, userId, text) {
+  if (league.created_by !== userId) throw forbidden('Only the league\'s creator can rename it');
+  const name = await checkName(text);
+  const { rows: [l] } = await client.query('UPDATE leagues SET name = $2 WHERE id = $1 RETURNING *', [league.id, name]);
+  return l;
 }
 
 /** Creates a League (5 tracks) with its creator as its first member → the league row. */
@@ -281,6 +299,6 @@ function startJobs(db, { everyMs = 30_000 } = {}) {
 
 module.exports = {
   MODES, TRACKS, DAYS, CAPS, OPEN_PER_CREATOR, MEMBERS,
-  mode, openFor, assertOpen, normaliseCode, byCode, isMember, assertSaved, checkSettings, create, join,
+  mode, openFor, assertOpen, normaliseCode, byCode, isMember, assertSaved, checkName, checkSettings, create, rename, join,
   triesUsed, assertCanRace, recordStart, recordRace, cancelRace, scoreboard, endDue, startJobs,
 };

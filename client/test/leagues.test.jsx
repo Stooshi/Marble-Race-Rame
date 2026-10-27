@@ -144,3 +144,15 @@ describe('League Night on the website', () => {
     expect(room).toContain("error.details?.code === 'league_only'");
   });
 });
+
+describe('renaming a league', () => {
+  it('a pencil next to the name for the creator only, the player-name filter, the server checks it again', () => {
+    expect(PAGES).toContain('{mine\n            ? <LeagueName code={code} name={league.name} onView={setView} />');
+    expect(PAGES).toContain('aria-label="Rename the league"');
+    expect(PAGES).toContain("checkName(tidy) ? NAME_NOT_ALLOWED : null");
+    expect(PAGES).toContain('onView(await api.renameLeague(code, tidy))');
+    // (Creating one: the same filter.)
+    expect(PAGES).toContain('&& !checkName(name.trim())');
+    expect(src('src/api/client.js')).toContain("renameLeague: (code, name) => request(`/leagues/${encodeURIComponent(code)}`, { method: 'PATCH', body: { name } })");
+  });
+});
