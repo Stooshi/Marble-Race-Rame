@@ -176,7 +176,7 @@ export default function LiveRaceViewer3D({
         // that, the countdown is held back to show from its beginning (the short fallback for slow phones).
         const still = typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
         // (Not for a last moment of flight: under ROOM_FLY_MIN_MS left, straight to the gate.)
-        const flying = !still && Date.now() < go - COUNTDOWN_MS - ROOM_FLY_MIN_MS;
+        const flying = !still && FLYOVER_ON && Date.now() < go - COUNTDOWN_MS - ROOM_FLY_MIN_MS;
         if (flying) {
           scene.flyoverFor();
           flyRef.current = { room: true, go };

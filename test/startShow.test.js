@@ -14,7 +14,7 @@ process.env.DATABASE_URL = DB || process.env.DATABASE_URL || 'postgres://localho
 test('the timings: 3.5 s of show before a room race\'s 5 s countdown', () => {
   const config = require('../src/config');
   assert.equal(config.game.countdownMs, 5000);
-  assert.equal(config.game.startShowMs, 3500);
+  assert.equal(config.game.startShowMs, 4000);
 });
 
 test('room races count down longer; solo races don\'t; Start now only alone in a quick race', { skip: !DB }, async () => {
@@ -29,11 +29,11 @@ test('room races count down longer; solo races don\'t; Start now only alone in a
   const guest = async () => (await call('/auth/guest', { method: 'POST' })).body;
   const raceOf = async (code) => (await db.query('SELECT r.* FROM rooms ro JOIN races r ON r.id = ro.current_race_id WHERE ro.code = $1', [code])).rows[0];
   try {
-    // A friend room's race: 8.5 s from start to GO.
+    // A friend room's race: 9 s from start to GO.
     const host = await guest();
     const made = await call('/rooms', { method: 'POST', body: {}, token: host.token });
     const roomRace = await raceOf(made.body.room.code);
-    assert.equal(roomRace.countdown_ms, 8500);
+    assert.equal(roomRace.countdown_ms, 9000);
 
     // A solo race: the usual 5 s (the show is the player's own).
     const solo = await guest();
@@ -66,7 +66,7 @@ test('room races count down longer; solo races don\'t; Start now only alone in a
       await new Promise((ok) => setTimeout(ok, 100));
     }
     assert.equal(qRace.status, 'countdown');
-    assert.equal(qRace.countdown_ms, 8500);
+    assert.equal(qRace.countdown_ms, 9000);
     // A friend room isn't started this way.
     assert.equal((await call(`/rooms/${made.body.room.code}/start-now`, { method: 'POST', token: host.token })).status, 400);
   } finally {
