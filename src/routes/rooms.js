@@ -43,6 +43,8 @@ const { validate } = require('../utils/validate');
 const { HttpError, badRequest, conflict, forbidden, notFound } = require('../utils/httpError');
 const raceManager = require('../game/raceManager');
 const { joinRace } = require('./races');
+// (League Night's rooms: src/leagues/night.js, loaded when first needed.)
+const leagueNight = () => require('../leagues/night');
 const seasons = require('../seasons');
 
 const router = express.Router();
@@ -194,7 +196,18 @@ async function roomView(code, user) {
     [room.id],
   );
   const quick = room.kind === 'quick';
+  // A League Night room: which league, and which race of the night this is.
+  let night = null;
+  if (room.league_night_id) {
+    const { rows: [n] } = await db.query(
+      `SELECT n.races, n.status, l.code, l.name, r.league_night_race AS k
+         FROM league_nights n JOIN leagues l ON l.id = n.league_id LEFT JOIN races r ON r.id = $2 WHERE n.id = $1`,
+      [room.league_night_id, room.current_race_id],
+    );
+    if (n) night = { league: { code: n.code, name: n.name }, race: n.k ?? null, races: n.races, status: n.status };
+  }
   return {
+    ...(night && { night }),
     room: {
       code: room.code,
       status: room.status,
@@ -361,6 +374,10 @@ async function onRoom(req, fn) {
 router.post('/:code/join', requireAuth, joinLimiter, async (req, res) => {
   const code = await onRoom(req, async (client, room, race) => {
     assertNotRemoved(room, req.user);
+    // A League Night room: the league's players only (saved accounts in the league).
+    if (room.league_night_id && !(await leagueNight().isNightMember(client, room.league_night_id, req.user.id))) {
+      throw new HttpError(403, 'This is a League Night room: only the league\'s players can join', { code: 'league_only' });
+    }
     if (!race || race.status !== 'lobby') throw conflict('A race is on: you can join the next one as soon as it finishes');
     // (A quick race takes nobody new in its last seconds.)
     if (room.kind === 'quick' && race.scheduled_at && new Date(race.scheduled_at) - Date.now() < QUICK_JOIN_BEFORE_S * 1000) {
@@ -388,6 +405,7 @@ router.post('/:code/track', requireAuth, async (req, res) => {
   if (!body.track_id && !body.random) throw badRequest('Provide track_id or random: true');
   const code = await onRoom(req, async (client, room, race) => {
     assertHost(room, req.user);
+    if (room.league_night_id) throw conflict('League Night races the league\'s tracks in order');
     if (!race || race.status !== 'lobby') throw conflict('The track can change once this race has finished');
     const trackId = await pickTrack(client, body.random ? null : body.track_id, room.host_id);
     await client.query('UPDATE rooms SET track_id = $2 WHERE id = $1', [room.id, body.random ? null : trackId]);
@@ -523,6 +541,7 @@ router.post('/:code/visibility', requireAuth, async (req, res) => {
   const body = validate(req.body ?? {}, { public: { type: 'boolean', required: true } });
   const code = await onRoom(req, async (client, room) => {
     assertHost(room, req.user);
+    if (room.league_night_id) throw conflict('A League Night room is for the league\'s players only');
     await client.query('UPDATE rooms SET is_public = $2 WHERE id = $1', [room.id, body.public]);
   });
   res.json(await roomView(code, req.user));
@@ -534,6 +553,8 @@ router.post('/:code/close', requireAuth, async (req, res) => {
     assertHost(room, req.user);
     if (race?.status === 'lobby') await client.query(`UPDATE races SET status = 'cancelled' WHERE id = $1`, [race.id]);
     await client.query(`UPDATE rooms SET status = 'closed' WHERE id = $1`, [room.id]);
+    // (A League Night room closed by its host: the night ends with the races run so far.)
+    if (room.league_night_id) await leagueNight().nobodyCame(client, room.league_night_id);
   });
   res.json(await roomView(code, req.user));
 });
@@ -543,6 +564,7 @@ router.post('/:code/close', requireAuth, async (req, res) => {
  * random one), with everyone who raced in this one entered again with their Shooter.
  */
 async function afterRace(raceId) {
+  let nightStart = null; // (a League Night's next race: it starts by itself)
   const code = await db.withTransaction(async (client) => {
     const { rows } = await client.query(
       `SELECT ro.* FROM rooms ro JOIN races r ON r.room_id = ro.id
@@ -556,7 +578,16 @@ async function afterRace(raceId) {
       await client.query(`UPDATE rooms SET status = 'closed' WHERE id = $1`, [room.id]);
       return room.code;
     }
-    const nextId = await newRoomRace(client, room);
+    // A League Night room: the night's next race on the league's next track (or the night is over).
+    let nextId;
+    if (room.league_night_id) {
+      const next = await leagueNight().afterNightRace(client, room, raceId);
+      if (!next) return room.code;
+      nextId = next.id;
+      nightStart = next;
+    } else {
+      nextId = await newRoomRace(client, room);
+    }
     const { rows: players } = await client.query(
       'SELECT user_id FROM race_entries WHERE race_id = $1 AND NOT is_bot AND user_id IS NOT NULL ORDER BY joined_at',
       [raceId],
@@ -572,6 +603,7 @@ async function afterRace(raceId) {
     }
     return room.code;
   });
+  if (nightStart) raceManager.scheduleStart(nightStart.id, nightStart.scheduled_at);
   if (code) emitRoom(code);
   return code;
 }

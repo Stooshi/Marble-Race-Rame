@@ -136,6 +136,7 @@ Sign-up, login and purchase events: `kind`, `ip` (inet), `country` (2 letters, l
 | `created_by`, `scheduled_at` | Who made it; when the server starts it by itself (a friend room's start timer, a quick race's 15 s; 25 Oct 2026). NULL: it waits for a start |
 | `decided_at`, `started_at`, `finished_at` | Lifecycle times. `started_at` = decision time + countdown |
 | `next_race_id` | The rematch: the follow-up race on the same track |
+| `league_night_id`, `league_night_race` | A League Night's race and which of the night's races it is (27 Oct 2026). A room race, never a league race (no try) |
 | `league_id` | Set for a league race (27 Oct 2026): a solo race made from a league's page (`POST /api/leagues/:code/race`). Never in the public race list |
 | `room_id` | Set for a room's races (friend rooms and quick races). They never appear in the public race list (`GET /api/races`); a public room shows in its own list (`GET /api/rooms/public`) |
 
@@ -190,6 +191,7 @@ Leagues (Leagues v1 part 1, 27 Oct 2026; behind the `LEAGUES` switch). Rules: [G
 | `league_members` | `league_id`, `user_id`, `joined_at`, `removed_at` (taken out by the creator: they can't come back), `final_place` and `final_total_ms` (frozen when the league ends; NULL for a member who didn't finish every track) |
 | `league_runs` | One try: `league_id`, `user_id`, `track_id`, `race_id` (unique), `created_at` (the try is counted from here), `time_ms` and `finished_at` (filled when the race finishes). A cancelled race's row is removed (the try comes back) |
 | `league_results` | Part 2 (Pro Leagues feeding the Major League): created, nothing writes it yet |
+| `league_nights` | League Night: `league_id`, `starts_at`, `races` (3–5), `status` (`scheduled` → `open` when its room opens 15 minutes before → `done`, or `cancelled`), `room_id`, `opened_at`, `ended_at`. One scheduled or open per league. Its room: `rooms.league_night_id`; its races: `races.league_night_id` and `league_night_race` (1 to `races`) |
 
 ## Marbles and the collection
 

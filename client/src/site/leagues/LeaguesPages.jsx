@@ -123,6 +123,7 @@ export function LeagueList({ leagues, skew = 0, compact = false }) {
                 {l.status === 'open' ? timeLeft(l.ends_at, Date.now(), skew) : 'Final standings'}
                 {' · '}{l.players} {l.players === 1 ? 'player' : 'players'}
               </span>
+              {l.night && <span className="ms-league-list__night">{nightLine(l.night, skew)}</span>}
             </span>
             <span className="ms-league-list__me">
               {l.place ? <b>{ordinal(l.place)}</b> : <b>{l.done} of {l.tracks}</b>}
@@ -433,6 +434,8 @@ function LeaguePageIn() {
         {member && isOpen && <ShareCard code={code} name={league.name} />}
       </div>
 
+      <LeagueNight code={code} view={view} member={member} mine={mine} isOpen={isOpen} now={now} skew={skew} userId={user?.id} onView={setView} />
+
       <section className="ms-card" style={{ padding: 0, overflowX: 'auto' }} aria-labelledby="board-h">
         <h2 id="board-h" className="ms-h3" style={{ ...h2, padding: '16px 16px 0' }}>{isOpen ? 'Scoreboard' : 'Final standings'}</h2>
         <table className="ms-table ms-table--league">
@@ -541,6 +544,142 @@ function ShareCard({ code, name }) {
       </div>
       {qr && <img src={qr} alt={`QR code for league ${code}`} width={160} height={160} style={{ borderRadius: 12, background: '#fff' }} />}
       <p className="ms-note" style={{ margin: 0 }}>Friends open the link or scan the code, and join with a saved account (free).</p>
+    </section>
+  );
+}
+
+// ── League Night ──────────────────────────────────────────────────────────
+
+const NIGHT_RACES = [3, 4, 5];
+const OPEN_BEFORE_MIN = 15; // (the league room opens this long before: src/leagues/night.js)
+const RACE_ROOM_MIN = 4;
+
+/** "League Night in 2 h: Join", "League Night is on: Join", "League Night Thu 29 Oct, 20:00". */
+export function nightLine(n, skew = 0, now = Date.now()) {
+  if (n.status === 'open') return 'League Night is on: Join';
+  const ms = new Date(n.starts_at).getTime() - (now + skew);
+  if (ms <= 24 * 3600_000) {
+    const min = Math.max(1, Math.round(ms / 60000));
+    return `League Night in ${min < 60 ? `${min} min` : `${Math.round(min / 60)} h`}${ms <= OPEN_BEFORE_MIN * 60_000 ? ': Join' : ''}`;
+  }
+  return `League Night ${whenText(n.starts_at)}`;
+}
+
+const whenText = (iso) => new Date(iso).toLocaleString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+
+/** A date and time for <input type="datetime-local"> in this device's time ("2026-10-29T20:00"). */
+const localInput = (d) => {
+  const p = (n) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
+};
+
+/**
+ * League Night on the league page (the slim version, Leagues v1): the creator sets a date, a time and
+ * 3–5 races inside the league's days (or moves it, or calls it off); 15 minutes before, everyone gets
+ * "Join the league room"; the night's own scoreboard, live and after: points for each place among the
+ * league's players (10-8-6-5-4-3-2-1). It never uses tries.
+ */
+function LeagueNight({ code, view, member, mine, isOpen, now, skew, userId, onView }) {
+  const n = view.night;
+  const live = n && ['scheduled', 'open'].includes(n.status);
+  const [editing, setEditing] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState(null);
+  const ends = new Date(view.league.ends_at);
+  const soonest = new Date(now + skew + 10 * 60_000);
+  const [races, setRaces] = useState(n?.races ?? 4);
+  const [when, setWhen] = useState(() => {
+    if (live) return localInput(new Date(n.starts_at));
+    // (A first guess: tonight at 20:00, or tomorrow's, inside the league.)
+    const d = new Date(now); d.setHours(20, 0, 0, 0);
+    if (d < soonest) d.setDate(d.getDate() + 1);
+    return localInput(d < ends ? d : soonest);
+  });
+  if (!member && !n) return null;
+  if (!live && !mine && !n?.standings?.length) return null;
+  const save = async () => {
+    setBusy(true); setError(null);
+    try { onView(await api.leagueNight(code, new Date(when).toISOString(), races)); setEditing(false); } catch (e) { setError(e.message); } finally { setBusy(false); }
+  };
+  const off = async () => {
+    setBusy(true); setError(null);
+    try { onView(await api.leagueNightOff(code)); } catch (e) { setError(e.message); } finally { setBusy(false); }
+  };
+  const latest = new Date(ends.getTime() - races * RACE_ROOM_MIN * 60_000);
+  const trackName = (id) => view.tracks.find((t) => t.id === id)?.name ?? '';
+  const startsIn = live ? new Date(n.starts_at).getTime() - (now + skew) : null;
+  return (
+    <section className="ms-card ms-league-col ms-league-night" aria-labelledby="night-h">
+      <div className="ms-row" style={{ justifyContent: 'space-between', alignItems: 'baseline' }}>
+        <h2 id="night-h" className="ms-h3" style={h2}>League Night</h2>
+        {live && <span className="ms-pill" style={{ color: 'var(--ms-yellow)' }}>{n.status === 'open' ? 'On now' : whenText(n.starts_at)}</span>}
+      </div>
+      {!live && !editing && (
+        <p className="ms-note" style={{ margin: 0 }}>Race live together: pick a time and 3 to 5 races. Everyone joins the league room and races the league's tracks in order, all in the same races. Points for each place go on the night's own scoreboard. It never uses your tries.</p>
+      )}
+      {live && n.status === 'scheduled' && (
+        <p style={{ margin: 0 }}>{n.races} races on the league's tracks, starting {whenText(n.starts_at)} ({timeLeft(n.starts_at, now, skew).replace(' left', ' from now')}). The league room opens {OPEN_BEFORE_MIN} minutes before.</p>
+      )}
+      {live && n.status === 'open' && (
+        <div className="ms-league-join">
+          <span>{startsIn > 0 ? `The league room is open: race 1 of ${n.races} starts ${timeLeft(n.starts_at, now, skew).replace(' left', '')} from now.` : `League Night is on: ${n.race_list.filter((r) => r.status === 'finished').length} of ${n.races} races run.`}</span>
+          {member && n.room_code && <Link to={`/r/${n.room_code}`} className="ms-btn ms-btn--primary ms-btn--lg">JOIN THE LEAGUE ROOM</Link>}
+        </div>
+      )}
+      {mine && isOpen && (!live || n.status === 'scheduled') && (editing || !live ? (
+        <form className="ms-form ms-league-night__form" onSubmit={(e) => { e.preventDefault(); save(); }}>
+          <label style={{ display: 'grid', gap: 6 }}>
+            <span className="ms-eyebrow" style={{ color: 'var(--ms-muted)' }}>Date and time</span>
+            <input type="datetime-local" value={when} min={localInput(soonest)} max={localInput(latest)} onChange={(e) => setWhen(e.target.value)} required />
+          </label>
+          <div style={{ display: 'grid', gap: 6 }}>
+            <span className="ms-eyebrow" style={{ color: 'var(--ms-muted)' }}>Races</span>
+            <div className="ms-chips" role="group" aria-label="Races">
+              {NIGHT_RACES.map((k) => <button key={k} type="button" aria-pressed={races === k} onClick={() => setRaces(k)}>{k}</button>)}
+            </div>
+          </div>
+          <div className="ms-row">
+            <button type="submit" className="ms-btn ms-btn--primary" disabled={busy || !when}>{busy ? 'SAVING…' : live ? 'MOVE LEAGUE NIGHT' : 'SET LEAGUE NIGHT'}</button>
+            {live && <button type="button" className="ms-btn ms-btn--ghost ms-btn--sm" onClick={() => setEditing(false)}>Keep it</button>}
+          </div>
+          <span className="ms-note">Inside the league's days: it has to finish before the league ends ({whenText(view.league.ends_at)}).</span>
+        </form>
+      ) : (
+        <div className="ms-row">
+          <button type="button" className="ms-btn ms-btn--sm" disabled={busy} onClick={() => setEditing(true)}>Move it</button>
+          <button type="button" className="ms-btn ms-btn--sm ms-btn--ghost" disabled={busy} onClick={off}>Call it off</button>
+        </div>
+      ))}
+      {mine && isOpen && n?.status === 'open' && startsIn > 0 && <button type="button" className="ms-btn ms-btn--sm ms-btn--ghost" style={{ justifySelf: 'start' }} disabled={busy} onClick={off}>Call it off</button>}
+      {error && <div className="ms-msg ms-msg--bad" role="alert">{error}</div>}
+      {n?.standings?.length > 0 && (
+        <div style={{ overflowX: 'auto' }}>
+          <table className="ms-table ms-table--league" aria-label="League Night scoreboard">
+            <thead>
+              <tr>
+                <th scope="col">Place</th>
+                <th scope="col">Player</th>
+                <th scope="col" className="num">Points</th>
+                {n.race_list.map((r) => <th key={r.k} scope="col" className="num ms-league-wide" title={trackName(r.track_id)}>R{r.k}</th>)}
+                <th scope="col" className="num">Wins</th>
+              </tr>
+            </thead>
+            <tbody>
+              {n.standings.map((s) => (
+                <tr key={s.user_id} className={s.user_id === userId ? 'is-me' : undefined}>
+                  <td>{ordinal(s.place)}</td>
+                  <td className="ms-league-player">{s.name}{s.user_id === userId ? ' (you)' : ''}</td>
+                  <td className="num"><b>{s.points}</b></td>
+                  {s.places.map((p, k) => <td key={k} className="num ms-league-wide">{p ? ordinal(p) : '—'}</td>)}
+                  <td className="num">{s.wins}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <p className="ms-note" style={{ margin: '8px 0 0' }}>{n.status === 'done' ? 'Final: ' : ''}10, 8, 6, 5, 4, 3, 2 and 1 points for the first eight of the league in each race. Same points: most race wins, then the better place in the last race.</p>
+        </div>
+      )}
+      {n && !live && n.status === 'cancelled' && !n.standings?.length && <p className="ms-note" style={{ margin: 0 }}>The last League Night was called off.</p>}
     </section>
   );
 }

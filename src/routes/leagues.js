@@ -15,11 +15,14 @@
  *   POST   /api/leagues/:code/race          { track_id, marble_id? } a league race on one of its tracks
  *                                           (a solo race, house marbles fill the field; the page starts it)
  *   POST   /api/leagues/:code/again         creator: Run again (a new league with the same settings)
+ *   POST   /api/leagues/:code/night         creator: { starts_at, races 3-5 } set (or move) League Night
+ *   DELETE /api/leagues/:code/night         creator: call it off (before its first race has started)
  */
 const express = require('express');
 const config = require('../config');
 const db = require('../db');
 const leagues = require('../leagues');
+const night = require('../leagues/night');
 const { optionalAuth, requireAuth } = require('../middleware/auth');
 const { validate } = require('../utils/validate');
 const { badRequest, conflict, forbidden, notFound } = require('../utils/httpError');
@@ -60,7 +63,15 @@ async function view(league, userId) {
   const used = member ? await leagues.triesUsed(db, league.id, userId) : new Map();
   const { rows: [creator] } = await db.query('SELECT id, username, display_name FROM users WHERE id = $1', [league.created_by]);
   const mine = board.find((r) => r.user_id === userId) ?? null;
+  // League Night: the one planned or on, else the last one, with its scoreboard.
+  const n = await night.current(db, league.id);
+  const nightView = n && {
+    starts_at: n.starts_at, races: n.races, status: n.status,
+    room_code: n.status === 'open' ? n.room_code : null,
+    ...(await night.standings(db, n, league)),
+  };
   return {
+    night: nightView,
     league: {
       code: league.code,
       kind: league.kind,
@@ -100,9 +111,11 @@ router.get('/mine', requireAuth, open, async (req, res) => {
   for (const l of rows) {
     const board = await leagues.scoreboard(db, l);
     const me = board.find((r) => r.user_id === req.user.id);
+    const n = await night.current(db, l.id);
     out.push({
       code: l.code, kind: l.kind, name: l.name, status: l.status, ends_at: l.ends_at,
       tracks: l.track_ids.length, players: board.length, place: me?.place ?? null, done: me?.done ?? 0,
+      night: n && ['scheduled', 'open'].includes(n.status) ? { starts_at: n.starts_at, status: n.status, room_code: n.status === 'open' ? n.room_code : null } : null,
     });
   }
   res.json({ leagues: out, serverNow: new Date().toISOString() });
@@ -188,6 +201,27 @@ router.post('/:code/race', requireAuth, open, async (req, res) => {
   const { rows: [race] } = await db.query('SELECT * FROM races WHERE id = $1', [raceId]);
   raceManager.emitLobby('lobby:race_created', race);
   res.status(201).json({ race });
+});
+
+router.post('/:code/night', requireAuth, open, async (req, res) => {
+  const body = validate(req.body ?? {}, { starts_at: { type: 'string', required: true, max: 40 }, races: { type: 'int', required: true } });
+  const league = await db.withTransaction(async (client) => {
+    const l = await leagues.byCode(client, req.params.code, { lock: true });
+    await night.schedule(client, l, req.user.id, body);
+    return l;
+  });
+  // (Due within 15 minutes: its room opens now.)
+  await night.openDue(db);
+  res.json(await view(league, req.user.id));
+});
+
+router.delete('/:code/night', requireAuth, open, async (req, res) => {
+  const league = await db.withTransaction(async (client) => {
+    const l = await leagues.byCode(client, req.params.code, { lock: true });
+    await night.cancelNight(client, l, req.user.id);
+    return l;
+  });
+  res.json(await view(league, req.user.id));
 });
 
 router.post('/:code/again', requireAuth, open, createLimiter, async (req, res) => {

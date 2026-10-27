@@ -9,7 +9,7 @@ const schema = fs.readFileSync(SCHEMA_PATH, 'utf8');
 
 test('reads every table and its columns from the schema file', () => {
   const cols = expectedColumns(schema);
-  assert.deepEqual(Object.keys(cols).sort(), ['admin_2fa', 'admin_audit', 'admin_sessions', 'billboards', 'coin_ledger', 'collection_counters', 'cookie_consents', 'data_updates', 'email_confirmations', 'email_consents', 'gift_code_redemptions', 'gift_codes', 'house_looks', 'league_members', 'league_results', 'league_runs', 'leagues', 'marble_appearances', 'marble_colors', 'marble_effects', 'marble_surfaces', 'marbles', 'name_reports', 'pass_reminders', 'password_resets', 'payment_refunds', 'payments', 'push_devices', 'push_preferences', 'push_sends', 'race_entries', 'race_entry_looks', 'race_replays', 'races', 'rooms', 'season_passes', 'seasons', 'security_events', 'stripe_events', 'support_messages', 'support_replies', 'tracks', 'user_badges', 'user_collection', 'user_country_history', 'user_days', 'user_marbles', 'user_shooter', 'users']);
+  assert.deepEqual(Object.keys(cols).sort(), ['admin_2fa', 'admin_audit', 'admin_sessions', 'billboards', 'coin_ledger', 'collection_counters', 'cookie_consents', 'data_updates', 'email_confirmations', 'email_consents', 'gift_code_redemptions', 'gift_codes', 'house_looks', 'league_members', 'league_nights', 'league_results', 'league_runs', 'leagues', 'marble_appearances', 'marble_colors', 'marble_effects', 'marble_surfaces', 'marbles', 'name_reports', 'pass_reminders', 'password_resets', 'payment_refunds', 'payments', 'push_devices', 'push_preferences', 'push_sends', 'race_entries', 'race_entry_looks', 'race_replays', 'races', 'rooms', 'season_passes', 'seasons', 'security_events', 'stripe_events', 'support_messages', 'support_replies', 'tracks', 'user_badges', 'user_collection', 'user_country_history', 'user_days', 'user_marbles', 'user_shooter', 'users']);
   assert.ok(cols.tracks.includes('physics'));
   assert.deepEqual(cols.billboards, ['id', 'track_slug', 'slot', 'image_url', 'kind', 'note', 'starts_at', 'ends_at', 'created_at']);
   assert.ok(cols.race_replays.includes('data'));
@@ -17,7 +17,7 @@ test('reads every table and its columns from the schema file', () => {
   assert.ok(cols.races.includes('track_snapshot'));
   assert.ok(cols.races.includes('room_id'));
   for (const c of ['order_no', 'consent_at', 'payment_intent', 'charged_cents', 'refunded_cents', 'receipt_url']) assert.ok(cols.payments.includes(c), c);
-  assert.deepEqual(cols.rooms, ['id', 'code', 'host_id', 'track_id', 'current_race_id', 'status', 'created_at', 'last_active_at', 'is_public', 'kind', 'removed']);
+  assert.deepEqual(cols.rooms, ['id', 'code', 'host_id', 'track_id', 'current_race_id', 'status', 'created_at', 'last_active_at', 'is_public', 'kind', 'removed', 'league_night_id']);
   assert.ok(cols.race_entries.includes('split_time_ms'));
   for (const c of ['owner_id', 'starter_no', 'marble_code']) assert.ok(cols.marbles.includes(c), c); // (every player's own starters)
   for (const c of ['birth_month', 'email_verified_at']) assert.ok(cols.users.includes(c), c);

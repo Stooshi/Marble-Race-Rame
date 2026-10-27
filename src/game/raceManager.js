@@ -228,16 +228,18 @@ class RaceManager {
     this.starting.add(id);
     try {
       const { rows } = await db.query(
-        `SELECT room_id, (SELECT kind FROM rooms WHERE rooms.id = races.room_id) AS room_kind,
+        `SELECT room_id, league_night_id, (SELECT kind FROM rooms WHERE rooms.id = races.room_id) AS room_kind,
                 EXISTS (SELECT 1 FROM race_entries e WHERE e.race_id = races.id AND NOT e.is_bot) AS players
            FROM races WHERE id = $1 AND status = 'lobby' AND scheduled_at IS NOT NULL AND scheduled_at <= now()`,
         [id],
       );
       if (!rows.length) return false;
-      // (A quick race everyone left before it started: not run for computer players alone; its room closes.)
-      if (rows[0].room_kind === 'quick' && !rows[0].players) {
+      // (A quick race everyone left before it started: not run for computer players alone; its room closes.
+      // So too a League Night race nobody is in: the night ends there, src/leagues/night.js.)
+      if ((rows[0].room_kind === 'quick' || rows[0].league_night_id) && !rows[0].players) {
         await db.query(`UPDATE races SET status = 'cancelled', updated_at = now() WHERE id = $1 AND status = 'lobby'`, [id]);
         await db.query(`UPDATE rooms SET status = 'closed' WHERE current_race_id = $1`, [id]);
+        if (rows[0].league_night_id) await require('../leagues/night').nobodyCame(db, rows[0].league_night_id);
         this.afterScheduledStart?.(id);
         return false;
       }

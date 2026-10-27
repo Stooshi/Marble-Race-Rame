@@ -1343,3 +1343,31 @@ CREATE UNIQUE INDEX IF NOT EXISTS uq_league_results ON league_results (league_id
 
 ALTER TABLE races ADD COLUMN IF NOT EXISTS league_id uuid REFERENCES leagues(id) ON DELETE SET NULL;
 CREATE INDEX IF NOT EXISTS idx_races_league ON races (league_id) WHERE league_id IS NOT NULL;
+
+-- ---------------------------------------------------------------------------
+-- League Night (Leagues v1 part 1, slim; 27 Oct 2026): the league racing live together. The creator sets
+-- a date, a time and 3 to 5 races; 15 minutes before, a league room opens (a friend room only the
+-- league's players can join, rooms.league_night_id), and the races run one after another on the league's
+-- tracks in order, each starting by itself. Points for each place among the league's players
+-- (10-8-6-5-4-3-2-1; computer players score nothing) go on the night's own scoreboard, worked out from
+-- the races' results (races.league_night_id, league_night_race). Never a league race: no tries used.
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS league_nights (
+    id          uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
+    league_id   uuid        NOT NULL REFERENCES leagues(id) ON DELETE CASCADE,
+    starts_at   timestamptz NOT NULL,
+    races       smallint    NOT NULL CHECK (races BETWEEN 3 AND 5),
+    status      varchar(10) NOT NULL DEFAULT 'scheduled' CHECK (status IN ('scheduled', 'open', 'done', 'cancelled')),
+    room_id     uuid        REFERENCES rooms(id) ON DELETE SET NULL,
+    created_at  timestamptz NOT NULL DEFAULT now(),
+    opened_at   timestamptz,
+    ended_at    timestamptz
+);
+-- (One League Night planned or on at a time per league.)
+CREATE UNIQUE INDEX IF NOT EXISTS uq_league_nights_live ON league_nights (league_id) WHERE status IN ('scheduled', 'open');
+CREATE INDEX IF NOT EXISTS idx_league_nights_due ON league_nights (starts_at) WHERE status = 'scheduled';
+
+ALTER TABLE rooms ADD COLUMN IF NOT EXISTS league_night_id uuid REFERENCES league_nights(id) ON DELETE SET NULL;
+ALTER TABLE races ADD COLUMN IF NOT EXISTS league_night_id uuid REFERENCES league_nights(id) ON DELETE SET NULL;
+ALTER TABLE races ADD COLUMN IF NOT EXISTS league_night_race smallint;
+CREATE INDEX IF NOT EXISTS idx_races_league_night ON races (league_night_id) WHERE league_night_id IS NOT NULL;

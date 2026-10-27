@@ -118,3 +118,29 @@ describe('leagues: the texts', () => {
     expect(PAGES.match(/Pro League/g)?.length ?? 0).toBeLessThanOrEqual(2);
   });
 });
+
+describe('League Night on the website', () => {
+  it('the creator sets it (date, time, 3–5 races) inside the league; everyone joins the league room', () => {
+    expect(PAGES).toContain('const NIGHT_RACES = [3, 4, 5];');
+    expect(PAGES).toContain('api.leagueNight(code, new Date(when).toISOString(), races)');
+    expect(PAGES).toContain('api.leagueNightOff(code)');
+    expect(PAGES).toContain('<Link to={`/r/${n.room_code}`} className="ms-btn ms-btn--primary ms-btn--lg">JOIN THE LEAGUE ROOM</Link>');
+    expect(PAGES).toContain('It never uses your tries.');
+    expect(src('src/api/client.js')).toContain("leagueNight: (code, startsAt, races) => request(`/leagues/${encodeURIComponent(code)}/night`");
+  });
+  it('"League Night in 2 h: Join" on My leagues', async () => {
+    const { nightLine } = await import('../src/site/leagues/LeaguesPages');
+    const now = Date.UTC(2026, 9, 29, 18, 0);
+    expect(nightLine({ status: 'scheduled', starts_at: new Date(now + 2 * 3600_000).toISOString() }, 0, now)).toBe('League Night in 2 h');
+    expect(nightLine({ status: 'scheduled', starts_at: new Date(now + 10 * 60_000).toISOString() }, 0, now)).toBe('League Night in 10 min: Join');
+    expect(nightLine({ status: 'open', starts_at: new Date(now).toISOString() }, 0, now)).toBe('League Night is on: Join');
+    expect(nightLine({ status: 'scheduled', starts_at: new Date(now + 3 * 86_400_000).toISOString() }, 0, now)).toMatch(/^League Night [A-Z][a-z]{2} \d/);
+  });
+  it('the league room: the league\'s players only, its races in order by themselves (no track, privacy or timer for the host)', () => {
+    const room = src('src/site/pages/RoomPage.jsx');
+    expect(room).toContain("{night ? 'League Night' : quick ? 'Quick race'");
+    expect(room).toContain('{open && me?.isHost && !night && (');
+    expect(room).toContain('{open && waiting && me?.isHost && !night && (');
+    expect(room).toContain("error.details?.code === 'league_only'");
+  });
+});

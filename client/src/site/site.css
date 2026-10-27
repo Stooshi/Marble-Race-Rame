@@ -1033,3 +1033,8 @@ tr:hover .report-name__btn--compact, .report-name__btn--compact:focus-visible { 
   .ms-table--league th, .ms-table--league td { padding: 10px 10px; }
   .ms-league-player { max-width: 40vw; }
 }
+/* League Night (LeaguesPages.jsx LeagueNight; RoomPage.jsx in a league room) */
+.ms-league-night__form { display: grid; gap: 12px; max-width: 420px; }
+.ms-league-night__form input[type="datetime-local"] { min-height: 44px; border-radius: 12px; padding: 0 12px; background: var(--ms-bg); color: var(--ms-text); border: 1px solid var(--ms-border); }
+.ms-league-list__night { color: var(--ms-yellow); font-weight: 700; font-size: 0.9rem; }
+.ms-room-night { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; background: rgba(255,210,31,0.08); border-color: rgba(255,210,31,0.45); }

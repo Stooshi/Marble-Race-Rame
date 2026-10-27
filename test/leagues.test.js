@@ -194,6 +194,127 @@ test('a League from start to end: create, join, tries, best times, the total, th
     process.env.LEAGUES = 'off';
     raceManager.shutdown();
     server.close();
+  }
+});
+
+test('League Night: set by the creator, its room opens 15 minutes before, races in order, points, never a try', { skip: !DB }, async () => {
+  process.env.LEAGUES = 'on';
+  const { createApp } = require('../src/app');
+  const db = require('../src/db');
+  const raceManager = require('../src/game/raceManager');
+  const raceService = require('../src/game/raceService');
+  const rooms = require('../src/routes/rooms');
+  const night = require('../src/leagues/night');
+  const server = createApp().listen(0);
+  const base = `http://127.0.0.1:${server.address().port}/api`;
+  const call = async (p, { method = 'GET', body, token } = {}) => {
+    const res = await fetch(base + p, { method, headers: { 'content-type': 'application/json', ...(token && { authorization: `Bearer ${token}` }) }, body: body ? JSON.stringify(body) : undefined });
+    return { status: res.status, body: await res.json().catch(() => null) };
+  };
+  const register = async (name) => (await call('/auth/register', { method: 'POST', body: { username: name, email: `${name}@test.invalid`, password: 'password123', age_group: '18+' } })).body;
+  const stamp = Date.now().toString(36).slice(-5);
+  try {
+    const [a, b, c, outsider] = [await register(`lnA${stamp}`), await register(`lnB${stamp}`), await register(`lnC${stamp}`), await register(`lnX${stamp}`)];
+    const { rows: tracks } = await db.query('SELECT id FROM tracks WHERE is_active AND season_key IS NULL ORDER BY physics IS NULL, slug LIMIT 5');
+    const five = tracks.map((t) => t.id);
+    const { code } = (await call('/leagues', { method: 'POST', token: a.token, body: { name: 'Night league', track_ids: five, days: 2 } })).body.league;
+    for (const p of [b, c]) await call(`/leagues/${code}/join`, { method: 'POST', token: p.token });
+    const { rows: [lg] } = await db.query('SELECT * FROM leagues WHERE code = $1', [code]);
+
+    // Set: the creator only, 3 to 5 races, at least 5 minutes ahead, finished before the league ends.
+    const at = new Date(Date.now() + 60 * 60_000);
+    assert.equal((await call(`/leagues/${code}/night`, { method: 'POST', token: b.token, body: { starts_at: at.toISOString(), races: 3 } })).status, 403);
+    assert.equal((await call(`/leagues/${code}/night`, { method: 'POST', token: a.token, body: { starts_at: at.toISOString(), races: 6 } })).status, 400);
+    assert.equal((await call(`/leagues/${code}/night`, { method: 'POST', token: a.token, body: { starts_at: new Date(Date.now() + 60_000).toISOString(), races: 3 } })).status, 400);
+    assert.equal((await call(`/leagues/${code}/night`, { method: 'POST', token: a.token, body: { starts_at: new Date(Date.now() + 3 * 86_400_000).toISOString(), races: 3 } })).status, 400);
+    const set = await call(`/leagues/${code}/night`, { method: 'POST', token: a.token, body: { starts_at: at.toISOString(), races: 3 } });
+    assert.equal(set.status, 200, JSON.stringify(set.body));
+    assert.equal(set.body.night.status, 'scheduled');
+    assert.equal(set.body.night.races, 3);
+    assert.equal(set.body.night.room_code, null);
+    assert.equal((await call('/leagues/mine', { token: b.token })).body.leagues[0].night.status, 'scheduled');
+
+    // 15 minutes before: the room opens with the first race on the league's first track, starting by itself at the time set.
+    assert.equal((await night.openDue(db, new Date(at.getTime() - 16 * 60_000))).some((o) => o.leagueId === lg.id), false);
+    const opened = (await night.openDue(db, new Date(at.getTime() - 14 * 60_000))).find((o) => o.leagueId === lg.id);
+    raceManager.unscheduleStart(opened.raceId); // (run by hand below)
+    let view = (await call(`/leagues/${code}`, { token: b.token })).body;
+    assert.equal(view.night.status, 'open');
+    assert.equal(view.night.room_code, opened.code);
+    const room = (await call(`/rooms/${opened.code}`, { token: b.token })).body;
+    assert.equal(room.night.league.code, code);
+    assert.equal(room.night.race, 1);
+    assert.equal(room.night.races, 3);
+    assert.equal(room.room.public, false);
+    const { rows: [r1] } = await db.query('SELECT * FROM races WHERE id = $1', [opened.raceId]);
+    assert.equal(r1.track_id, five[0]);
+    assert.equal(new Date(r1.scheduled_at).getTime(), at.getTime());
+    assert.equal(r1.league_id, null); // (never a league race: no try used)
+
+    // The league's players join; anyone else can't; the host can't change the track or make it public.
+    for (const p of [a, b, c]) assert.equal((await call(`/rooms/${opened.code}/join`, { method: 'POST', token: p.token })).status, 200);
+    const out = await call(`/rooms/${opened.code}/join`, { method: 'POST', token: outsider.token });
+    assert.equal(out.status, 403);
+    assert.equal(out.body.details.code, 'league_only');
+    assert.equal((await call(`/rooms/${opened.code}/track`, { method: 'POST', token: a.token, body: { random: true } })).status, 409);
+    assert.equal((await call(`/rooms/${opened.code}/visibility`, { method: 'POST', token: a.token, body: { public: true } })).status, 409);
+
+    // The three races, one after another on the league's tracks in order; each next one starts by itself.
+    const runNightRace = async (raceId) => {
+      await raceManager.start(raceId, null);
+      raceManager.stop(raceId);
+      await raceService.finalize(raceId);
+      await rooms.afterRace(raceId);
+    };
+    await runNightRace(opened.raceId);
+    let { rows: [r2] } = await db.query('SELECT * FROM races WHERE league_night_race = 2 AND room_id = (SELECT id FROM rooms WHERE code = $1)', [opened.code]);
+    assert.equal(r2.track_id, five[1]);
+    assert.ok(new Date(r2.scheduled_at) > new Date(Date.now() + 60_000));
+    raceManager.unscheduleStart(r2.id);
+    assert.equal((await db.query('SELECT COUNT(*)::int AS n FROM race_entries WHERE race_id = $1 AND NOT is_bot', [r2.id])).rows[0].n, 3);
+    await runNightRace(r2.id);
+    const { rows: [r3] } = await db.query('SELECT * FROM races WHERE league_night_race = 3 AND room_id = (SELECT id FROM rooms WHERE code = $1)', [opened.code]);
+    assert.equal(r3.track_id, five[2]);
+    raceManager.unscheduleStart(r3.id);
+    await runNightRace(r3.id);
+
+    // Over: the room closes; the night's scoreboard from the places among the league's players.
+    view = (await call(`/leagues/${code}`, { token: a.token })).body;
+    assert.equal(view.night.status, 'done');
+    assert.equal((await db.query('SELECT status FROM rooms WHERE code = $1', [opened.code])).rows[0].status, 'closed');
+    assert.equal(view.night.race_list.length, 3);
+    assert.equal(view.night.standings.length, 3);
+    const { rows: places } = await db.query(
+      `SELECT e.race_id, e.user_id, e.finish_position FROM race_entries e WHERE e.race_id = ANY($1::uuid[]) AND NOT e.is_bot ORDER BY e.race_id, e.finish_position`,
+      [[opened.raceId, r2.id, r3.id]],
+    );
+    const want = new Map();
+    for (const id of [opened.raceId, r2.id, r3.id]) places.filter((p) => p.race_id === id).forEach((p, rank) => want.set(p.user_id, (want.get(p.user_id) ?? 0) + night.POINTS[rank]));
+    for (const s of view.night.standings) assert.equal(s.points, want.get(s.user_id), s.name);
+    assert.deepEqual(view.night.standings.map((s) => s.place), [1, 2, 3]);
+    assert.ok(view.night.standings[0].points >= view.night.standings[1].points);
+    assert.equal(view.night.standings.reduce((n, s) => n + s.wins, 0), 3);
+    // Never a try: the league's own scoreboard has no times from it.
+    assert.equal((await db.query('SELECT COUNT(*)::int AS n FROM league_runs WHERE league_id = $1', [lg.id])).rows[0].n, 0);
+    assert.ok(view.scoreboard.every((r) => r.done === 0));
+
+    // A night nobody comes to: called off at its time, its room closed. And one called off before.
+    const at2 = new Date(Date.now() + 30 * 60_000);
+    await call(`/leagues/${code}/night`, { method: 'POST', token: a.token, body: { starts_at: at2.toISOString(), races: 3 } });
+    const o2 = (await night.openDue(db, new Date(at2.getTime() - 10 * 60_000))).find((o) => o.leagueId === lg.id);
+    raceManager.unscheduleStart(o2.raceId);
+    await db.query('UPDATE races SET scheduled_at = now() WHERE id = $1', [o2.raceId]);
+    assert.equal(await raceManager.startScheduled(o2.raceId), false);
+    view = (await call(`/leagues/${code}`, { token: a.token })).body;
+    assert.equal(view.night.status, 'cancelled');
+    await call(`/leagues/${code}/night`, { method: 'POST', token: a.token, body: { starts_at: at2.toISOString(), races: 4 } });
+    assert.equal((await call(`/leagues/${code}/night`, { method: 'DELETE', token: b.token })).status, 403);
+    view = (await call(`/leagues/${code}/night`, { method: 'DELETE', token: a.token })).body;
+    assert.equal(view.night.status, 'cancelled');
+  } finally {
+    process.env.LEAGUES = 'off';
+    raceManager.shutdown();
+    server.close();
     await db.pool?.end?.();
   }
 });

@@ -266,9 +266,13 @@ async function endDue(db, now = new Date()) {
   return due.length;
 }
 
-/** Every minute: end the leagues whose time is up (the switch only hides leagues; ending runs always). */
-function startJobs(db, { everyMs = 60_000 } = {}) {
-  const run = () => endDue(db).catch((err) => console.error('[leagues] ending leagues failed:', err.message));
+/** Every 30 s: end the leagues whose time is up, and open the League Nights about to start (the switch only hides leagues; these run always). */
+function startJobs(db, { everyMs = 30_000 } = {}) {
+  const run = async () => {
+    await endDue(db).catch((err) => console.error('[leagues] ending leagues failed:', err.message));
+    // League Nights due within 15 minutes: their room opens, the first race set to start by itself.
+    await require('./night').openDue(db).catch((err) => console.error('[leagues] opening League Night failed:', err.message));
+  };
   run();
   const timer = setInterval(run, everyMs);
   timer.unref?.();

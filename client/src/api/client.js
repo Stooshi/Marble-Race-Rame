@@ -197,6 +197,9 @@ export const api = {
   leagueRemove: (code, userId) => request(`/leagues/${encodeURIComponent(code)}/members/${encodeURIComponent(userId)}`, { method: 'DELETE' }),
   leagueRace: (code, trackId) => request(`/leagues/${encodeURIComponent(code)}/race`, { method: 'POST', body: { track_id: trackId } }),
   leagueAgain: (code) => request(`/leagues/${encodeURIComponent(code)}/again`, { method: 'POST' }),
+  // League Night: the creator sets it ({ starts_at ISO, races 3-5 }) or calls it off.
+  leagueNight: (code, startsAt, races) => request(`/leagues/${encodeURIComponent(code)}/night`, { method: 'POST', body: { starts_at: startsAt, races } }),
+  leagueNightOff: (code) => request(`/leagues/${encodeURIComponent(code)}/night`, { method: 'DELETE' }),
   setName: (name) => request('/users/me', { method: 'PATCH', body: { display_name: name } }),
   saveSettings: (settings) => request('/users/me/settings', { method: 'PUT', body: settings }),
   physicsPreview: (track, seed, level) => request(`/physics/preview?track=${encodeURIComponent(track)}&seed=${seed}&level=${level}`),
