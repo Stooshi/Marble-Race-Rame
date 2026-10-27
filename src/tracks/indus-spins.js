@@ -18,6 +18,10 @@ module.exports = track({
   canyon: { palette: 'karakoram', depth: 46, river: 'right' },
   coaster: { colours: { support: '#6e6254', rail: '#f2ede2', tie: '#3a3430' } },
   signature: 'The cliff ledge',
+  tvCameras: [
+    { section: 'Ledge bend', at: 0.8, side: 'left', distance: 10, height: 12 },
+    { section: 'Gorge spin', at: 0.8, side: 'right', distance: 10, height: 12 },
+  ],
   start: { landmark: 'hill-fort', scenery: ['rocks'], type: 'cliff', gate: 'barrier', shots: { countdown: 'above', launch: 'look-back' } },
   finish: { landmark: 'trail-village' },
   designChanges: [

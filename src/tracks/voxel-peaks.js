@@ -19,6 +19,10 @@ module.exports = track({
   block: { world: 'snow' },
   coaster: { style: 'blocks', colours: { support: '#8a929c', rail: '#f2ede2', tie: '#4f565f' } },
   signature: 'Out on the beams',
+  tvCameras: [
+    { section: 'Out on the beams', at: 0.8, side: 'right', distance: 10, height: 12 },
+    { section: 'Peak spiral', at: 0.8, side: 'right', distance: 10, height: 12 },
+  ],
   start: { landmark: 'beam-tower', type: 'cliff', gate: 'trapdoor', shots: { countdown: 'above', launch: 'overhead' } },
   finish: { landmark: 'cube-cabin' },
   designChanges: [

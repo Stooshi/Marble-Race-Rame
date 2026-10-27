@@ -19,6 +19,10 @@ module.exports = track({
   canyon: { palette: 'slot', depth: 44, river: 'none', narrow: true },
   coaster: { colours: { support: '#7a4a32', rail: '#f2e6d6', tie: '#4a2e22' } },
   signature: 'The light-beam hall',
+  tvCameras: [
+    { section: 'Out over the slot', at: 0.8, side: 'left', distance: 6, height: 12 },
+    { section: 'The twists', at: 0.8, side: 'right', distance: 10, height: 12 },
+  ],
   start: { landmark: 'slot-stairs', scenery: ['rocks'], type: 'straight-lift', gate: 'trapdoor', shots: { countdown: 'front', launch: 'low-chase' } },
   finish: { landmark: 'tour-trucks' },
   designChanges: [

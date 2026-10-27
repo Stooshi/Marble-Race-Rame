@@ -18,6 +18,10 @@ module.exports = track({
   river: { palette: 'nile', side: 'right', width: 140, banks: 'rock' },
   coaster: { colours: { support: '#6a5a4a', rail: '#f4ecd8', tie: '#3a3028' } },
   signature: 'The cataract',
+  tvCameras: [
+    { section: 'The cataract', at: 0.8, side: 'right', distance: 6, height: 12 },
+    { section: 'Round the palm island', at: 0.8, side: 'right', distance: 10, height: 12 },
+  ],
   start: { landmark: 'palm-grove', type: 'cliff', gate: 'stalls', shots: { countdown: 'chase', launch: 'overhead' } },
   finish: { landmark: 'river-dock' },
   designChanges: [

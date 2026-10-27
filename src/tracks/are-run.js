@@ -17,6 +17,10 @@ module.exports = track({
   biome: 'alpine',
   lighting: 'night-northern-lights',
   signature: 'Funicular spiral',
+  tvCameras: [
+    { section: 'Funicular spiral', at: 0.6, side: 'left', distance: 6, height: 8 },
+    { section: 'Splitter', at: 0.8, side: 'right', distance: 6, height: 5 },
+  ],
   billboardFrame: 'wood',
   // The gate near the top of Åreskutan, bare and wind-swept; the finish in the village by
   // the frozen Åresjön, warm lights in the wooden houses and the old stone church nearby.

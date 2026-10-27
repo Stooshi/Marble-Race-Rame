@@ -13,6 +13,10 @@ module.exports = track({
   variants: ['sunset'],
   grandPrix: { barrier: 'marigolds' },
   signature: 'Rampart plunge',
+  tvCameras: [
+    { section: 'Garden splitter', at: 0.8, side: 'left', distance: 10, height: 8 },
+    { section: 'Avenue spiral', at: 0.8, side: 'left', distance: 10, height: 12 },
+  ],
   billboardFrame: 'plain',
   start: { landmark: 'red-fort', scenery: ['grandstand'], shots: { countdown: 'above', launch: 'side' } },
   finish: { landmark: 'india-gate', scenery: ['grandstand'] },

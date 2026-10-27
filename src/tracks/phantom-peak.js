@@ -17,6 +17,10 @@ module.exports = track({
   lighting: 'sunset',
   coaster: { height: 18, colours: { support: '#4a2a5a', rail: '#c8c2d8', tie: '#2a2430' } },
   signature: 'Airtime hills',
+  tvCameras: [
+    { section: 'Airtime hills', at: 0.8, side: 'left', distance: 10, height: 12 },
+    { section: 'Haunted splitter', at: 0.8, side: 'right', distance: 10, height: 8 },
+  ],
   start: { landmark: 'skull-rock', scenery: ['bare'], type: 'spiral-tower', gate: 'stalls', shots: { countdown: 'front', launch: 'look-back' } },
   finish: { landmark: 'park-midway', billboards: 2, scenery: ['crowd'] },
   designChanges: [

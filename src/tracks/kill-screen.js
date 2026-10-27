@@ -19,6 +19,10 @@ module.exports = track({
   billboardFrame: 'marquee',
   arcade: { art: 'maze', finish: 'LEVEL 256' },
   signature: 'Dot corridor',
+  tvCameras: [
+    { section: 'Dot corridor', at: 0.8, side: 'left', distance: 6, height: 8 },
+    { section: 'Glitch spin', at: 0.8, side: 'right', distance: 6, height: 12 },
+  ],
   start: { landmark: 'neon-maze', gate: 'barrier', shots: { countdown: 'above', launch: 'low-chase' } },
   finish: { landmark: 'level-sign' },
   designChanges: [

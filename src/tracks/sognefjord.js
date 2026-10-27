@@ -16,6 +16,10 @@ module.exports = track({
   lighting: 'day',
   coaster: { height: 18, colours: { support: '#2f5d9a', rail: '#d9dde3', tie: '#4a505a' } },
   signature: 'Fjord crossing',
+  tvCameras: [
+    { section: 'Fjord crossing', at: 0.8, side: 'right', distance: 10, height: 12 },
+    { section: 'Fjord spin', at: 0.8, side: 'left', distance: 10, height: 12 },
+  ],
   start: { landmark: 'stave-church', scenery: ['pines'], type: 'cliff', gate: 'trapdoor', shots: { countdown: 'side', launch: 'low-chase' } },
   finish: { landmark: 'fjord-village', billboards: 2, scenery: ['wooden-houses'] },
   designChanges: [

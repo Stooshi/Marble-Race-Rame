@@ -19,6 +19,10 @@ module.exports = track({
   canyon: { palette: 'waimea', depth: 50, river: 'right' },
   coaster: { colours: { support: '#6a4a3a', rail: '#f4ece2', tie: '#3a2a22' } },
   signature: 'The free fall',
+  tvCameras: [
+    { section: 'The free fall', at: 0.8, side: 'right', distance: 6, height: 12 },
+    { section: 'Last sweep', at: 0.6, side: 'left', distance: 10, height: 12 },
+  ],
   start: { landmark: 'ridge-lookout', scenery: ['rocks'], type: 'stepped-platform', gate: 'barrier', shots: { countdown: 'front', launch: 'overhead' } },
   finish: { landmark: 'coast-palms' },
   designChanges: [

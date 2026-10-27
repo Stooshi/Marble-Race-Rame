@@ -19,6 +19,10 @@ module.exports = track({
   lighting: 'day',
   variants: ['rain', 'fog'],
   signature: 'Second waterfall',
+  tvCameras: [
+    { section: 'Second waterfall', at: 0.8, side: 'left', distance: 6, height: 12 },
+    { section: 'Island splitter', at: 0.8, side: 'right', distance: 6, height: 5 },
+  ],
   billboardFrame: 'wood',
   // The gate on mossy rocks at the top of a waterfall, toucans on the branches overhead; the
   // finish at a wooden river dock beside a village on stilts, the Teatro Amazonas far off.

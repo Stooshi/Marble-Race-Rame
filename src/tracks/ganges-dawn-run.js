@@ -18,6 +18,10 @@ module.exports = track({
   river: { palette: 'ganges', side: 'left', width: 160, banks: 'sand', slope: 0.8, gap: 10 },
   coaster: { colours: { support: '#8a7a62', rail: '#f4ecd8', tie: '#4a3e30' } },
   signature: 'Down the river steps',
+  tvCameras: [
+    { section: 'Round the moored boat', at: 0.8, side: 'left', distance: 10, height: 12 },
+    { section: 'Boatman hairpin', at: 0.4, side: 'right', distance: 10, height: 12 },
+  ],
   start: { type: 'stepped-platform', gate: 'stalls', shots: { countdown: 'above', launch: 'look-back' } },
   finish: { landmark: 'ghat-steps' },
   designChanges: [

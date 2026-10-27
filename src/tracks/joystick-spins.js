@@ -19,6 +19,10 @@ module.exports = track({
   billboardFrame: 'marquee',
   arcade: { art: 'coin-op', finish: 'NEW HIGH SCORE!' },
   signature: 'Past the cabinet rows',
+  tvCameras: [
+    { section: 'Past the cabinet rows', at: 0.8, side: 'right', distance: 6, height: 8 },
+    { section: 'Claw machine hairpin', at: 0.4, side: 'right', distance: 10, height: 12 },
+  ],
   start: { landmark: 'arcade-hall', gate: 'trapdoor', shots: { countdown: 'front', launch: 'high-behind' } },
   finish: { landmark: 'prize-counter' },
   designChanges: [

@@ -13,6 +13,10 @@ module.exports = track({
   variants: ['sunset'],
   grandPrix: true,
   signature: 'Grand Bazaar tunnel',
+  tvCameras: [
+    { section: 'Grand Bazaar tunnel', at: 0.8, side: 'left', distance: 6, height: 12 },
+    { section: 'Tulip splitter', at: 0.8, side: 'left', distance: 10, height: 8 },
+  ],
   billboardFrame: 'plain',
   start: { landmark: 'galata-tower', scenery: ['colourful-houses'], shots: { countdown: 'front', launch: 'look-back' } },
   finish: { landmark: 'bosphorus-bridge', scenery: ['grandstand'] },

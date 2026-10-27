@@ -17,6 +17,10 @@ module.exports = track({
   lighting: 'day',
   coaster: { height: 18, colours: { support: '#2f6f4a', rail: '#e8eef2', tie: '#3a3d44' } },
   signature: 'Spin two',
+  tvCameras: [
+    { section: 'Spin two', at: 0.8, side: 'right', distance: 10, height: 12 },
+    { section: 'Spin one', at: 0.8, side: 'left', distance: 10, height: 12 },
+  ],
   start: { landmark: 'inukshuk', scenery: ['pines'], type: 'elevator', gate: 'paddle', shots: { countdown: 'chase', launch: 'overhead' } },
   finish: { landmark: 'whistler-village', billboards: 1, scenery: ['chalets'] },
   designChanges: [

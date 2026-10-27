@@ -19,6 +19,10 @@ module.exports = track({
   lighting: 'parlour',
   pinball: { art: 'manor', display: 'MULTIBALL!', finish: 'JACKPOT!' },
   signature: 'Grand staircase',
+  tvCameras: [
+    { section: 'Grand staircase', at: 0.8, side: 'left', distance: 6, height: 8 },
+    { section: 'Back staircase', at: 0.6, side: 'right', distance: 6, height: 8 },
+  ],
   start: { landmark: 'graveyard', gate: 'trapdoor', shots: { countdown: 'above', launch: 'low-chase' } },
   finish: {},
   designChanges: [

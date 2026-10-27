@@ -17,6 +17,10 @@ module.exports = track({
   lighting: 'parlour',
   pinball: { art: 'castle', display: 'WIZARD MODE', finish: 'WIZARD MODE LIT' },
   signature: 'Drawbridge',
+  tvCameras: [
+    { section: 'Drawbridge', at: 0.8, side: 'left', distance: 6, height: 8 },
+    { section: 'Siege route', at: 0.8, side: 'right', distance: 6, height: 5 },
+  ],
   start: { landmark: 'siege-castle', gate: 'barrier', shots: { countdown: 'side', launch: 'overhead' } },
   finish: {},
   designChanges: [

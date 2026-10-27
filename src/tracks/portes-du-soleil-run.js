@@ -17,6 +17,10 @@ module.exports = track({
   biome: 'alpine',
   lighting: 'day',
   signature: 'The Swiss Wall',
+  tvCameras: [
+    { section: 'The Swiss Wall', at: 0.8, side: 'left', distance: 6, height: 8 },
+    { section: 'Splitter', at: 0.8, side: 'left', distance: 6, height: 5 },
+  ],
   billboardFrame: 'wood',
   // The gate in Avoriaz among its wood-clad buildings, the Dents du Midi on the horizon; the
   // finish in a Swiss village square, chalets with flower boxes round it and a church spire.

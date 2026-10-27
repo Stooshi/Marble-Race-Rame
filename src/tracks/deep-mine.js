@@ -18,6 +18,10 @@ module.exports = track({
   block: { world: 'mine' },
   coaster: { style: 'blocks', colours: { support: '#6b6f78', rail: '#d8d2c4', tie: '#3a3d44' } },
   signature: 'Down the shaft',
+  tvCameras: [
+    { section: 'Down the shaft', at: 0.8, side: 'left', distance: 6, height: 12 },
+    { section: 'Tight bends', at: 0.8, side: 'right', distance: 10, height: 12 },
+  ],
   start: { landmark: 'mine-entrance', type: 'elevator', gate: 'stalls', shots: { countdown: 'chase', launch: 'look-back' } },
   finish: { landmark: 'cart-depot' },
   designChanges: [

@@ -66,6 +66,9 @@ function bobsleighRun() {
       // funnel's `release`), a quick ripple in a random order each race.
       // How its start looks (drawing only, as a kit track's start.gate and start.shots): its own gate and first camera shots.
       startLook: { gate: 'trapdoor', shots: { countdown: 'side', launch: 'low-chase' } },
+      // Its TV cameras (drawing only, as a kit track's tvCameras; client tvMoments.js tvSpots): facing back up
+      // the track at the oncoming marbles, after the splitter and at the hairpin (p: share of the track; side 1 left, -1 right).
+      tv: [{ p: 0.3866, side: -1, distance: 10, height: 5 }, { p: 0.6773, side: -1, distance: 6, height: 8 }],
       gate: { countdownMs: 3000 },
       collisions: true,        // marbles bump into each other
       // Boost pads, speed bumps and obstacles marbles really slam into
@@ -202,6 +205,8 @@ function sanFrancisco() {
       channel: { radius: 3.6, maxAngle: 88, funnel: { length: 70, radius: 22, spacing: 1.15, stagger: 0.2, release: 0.45 } },
       // How its start looks (drawing only, as a kit track's start.gate and start.shots): its own gate and first camera shots.
       startLook: { gate: 'stalls', shots: { countdown: 'above', launch: 'overhead' } },
+      // Its TV cameras (drawing only): Lombard Street's second hairpin and the last of the Telegraph Hill crest jumps.
+      tv: [{ p: 0.5124, side: 1, distance: 6, height: 12 }, { p: 0.751, side: 1, distance: 6, height: 12 }],
       gate: { countdownMs: 3000 },
       collisions: true,
       noHitBoost: true,        // an obstacle hit never speeds a marble up
@@ -306,6 +311,8 @@ function tableMountainRun() {
       channel: { radius: 3.6, maxAngle: 80, funnel: { length: 70, radius: 22, spacing: 1.15, stagger: 0.2, release: 0.45 } },
       // How its start looks (drawing only, as a kit track's start.gate and start.shots): its own gate and first camera shots.
       startLook: { gate: 'barrier', shots: { countdown: 'chase', launch: 'high-behind' } },
+      // Its TV cameras (drawing only): the end of the splitter, and of the Lion's Head splitter.
+      tv: [{ p: 0.345, side: -1, distance: 10, height: 5 }, { p: 0.7072, side: 1, distance: 10, height: 5 }],
       gate: { countdownMs: 3000 },
       collisions: true,
       // Bobsleigh Run's obstacles, as Cape Town's animals (`look`). They stand in

@@ -19,6 +19,10 @@ module.exports = track({
   canyon: { palette: 'mujib', depth: 40, river: 'left', narrow: true },
   coaster: { colours: { support: '#7a3a2e', rail: '#f2e8de', tie: '#3a2420' } },
   signature: 'The siq',
+  tvCameras: [
+    { section: 'The siq', at: 0.8, side: 'left', distance: 10, height: 12 },
+    { section: 'Out of the walls', at: 0.6, side: 'right', distance: 10, height: 12 },
+  ],
   start: { landmark: 'wadi-gate', scenery: ['rocks'], type: 'station-launch', gate: 'stalls', shots: { countdown: 'chase', launch: 'overhead' } },
   finish: { landmark: 'dead-sea-shore' },
   designChanges: [

@@ -18,6 +18,10 @@ module.exports = track({
   canyon: { palette: 'andes', depth: 44, river: 'left' },
   coaster: { colours: { support: '#5a6a3a', rail: '#f2ede2', tie: '#3a302a' } },
   signature: 'Condor sweep',
+  tvCameras: [
+    { section: 'Condor sweep', at: 0.8, side: 'left', distance: 10, height: 12 },
+    { section: 'Condor hairpin', at: 0.4, side: 'right', distance: 10, height: 12 },
+  ],
   start: { landmark: 'andean-church', scenery: ['pasture'], type: 'curving-lift', gate: 'stalls', shots: { countdown: 'side', launch: 'overhead' } },
   finish: { landmark: 'andean-village' },
   designChanges: [

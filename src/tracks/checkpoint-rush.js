@@ -19,6 +19,10 @@ module.exports = track({
   billboardFrame: 'marquee',
   arcade: { art: 'highway', finish: 'GOAL!' },
   signature: 'The fork',
+  tvCameras: [
+    { section: 'The fork', at: 0.8, side: 'right', distance: 6, height: 5 },
+    { section: 'Toll booth turn', at: 0.4, side: 'right', distance: 10, height: 12 },
+  ],
   start: { landmark: 'starting-grid', gate: 'stalls', shots: { countdown: 'side', launch: 'low-chase' } },
   finish: { landmark: 'goal-banner' },
   designChanges: [

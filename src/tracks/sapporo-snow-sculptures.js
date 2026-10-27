@@ -18,6 +18,10 @@ module.exports = track({
   lighting: 'snow',
   coaster: { height: 16, colours: { support: '#e8eef4', rail: '#c8302a', tie: '#3a4a5a' } },
   signature: 'Sculpture park box line',
+  tvCameras: [
+    { section: 'Sculpture park box line', at: 0.8, side: 'left', distance: 10, height: 12 },
+    { section: 'Long park sweep', at: 0.8, side: 'right', distance: 10, height: 12 },
+  ],
   start: { landmark: 'tv-tower', scenery: ['pines'], type: 'ski-jump', gate: 'stalls', shots: { countdown: 'chase', launch: 'high-behind' } },
   finish: { landmark: 'snow-lanterns', scenery: ['birches'] },
   designChanges: [

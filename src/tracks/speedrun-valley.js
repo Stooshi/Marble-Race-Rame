@@ -19,6 +19,10 @@ module.exports = track({
   block: { world: 'valley' },
   coaster: { style: 'blocks', colours: { support: '#a39a8c', rail: '#f2ede2', tie: '#5b616b' } },
   signature: 'Long straight',
+  tvCameras: [
+    { section: 'Long straight', at: 0.8, side: 'left', distance: 10, height: 12 },
+    { section: 'Cottage straight', at: 0.8, side: 'left', distance: 6, height: 12 },
+  ],
   start: { landmark: 'cube-windmill', type: 'station-launch', gate: 'barrier', shots: { countdown: 'side', launch: 'low-chase' } },
   finish: { landmark: 'block-hall' },
   designChanges: [

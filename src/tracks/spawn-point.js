@@ -17,6 +17,10 @@ module.exports = track({
   block: { world: 'meadow' },
   coaster: { style: 'blocks', colours: { support: '#9a9fa6', rail: '#f2ede2', tie: '#5b616b' } },
   signature: 'Over the brook',
+  tvCameras: [
+    { section: 'Over the brook', at: 0.8, side: 'right', distance: 10, height: 12 },
+    { section: 'Dawn sweep', at: 0.8, side: 'right', distance: 10, height: 12 },
+  ],
   start: { landmark: 'spawn-beacon', type: 'straight-lift', gate: 'paddle', shots: { countdown: 'front', launch: 'high-behind' } },
   finish: { landmark: 'cube-cottage' },
   designChanges: [

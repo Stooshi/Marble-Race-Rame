@@ -19,6 +19,10 @@ module.exports = track({
   billboardFrame: 'marquee',
   arcade: { art: 'side-scroller', finish: '30 LIVES' },
   signature: 'Pixel waterfall',
+  tvCameras: [
+    { section: 'Pixel waterfall', at: 0.8, side: 'left', distance: 10, height: 12 },
+    { section: 'Hammer turn', at: 0.4, side: 'left', distance: 6, height: 8 },
+  ],
   start: { landmark: 'pixel-hills', gate: 'stalls', shots: { countdown: 'chase', launch: 'look-back' } },
   finish: { landmark: 'ba-buttons' },
   designChanges: [

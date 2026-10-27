@@ -19,6 +19,10 @@ module.exports = track({
   river: { palette: 'mississippi', side: 'left', width: 150, banks: 'bayou', slope: 0.8, gap: 10 },
   coaster: { colours: { support: '#6a4a32', rail: '#f4f2ea', tie: '#3a2a20' } },
   signature: 'Through the steamer',
+  tvCameras: [
+    { section: 'Through the steamer', at: 0.8, side: 'left', distance: 6, height: 12 },
+    { section: 'Bear hairpin', at: 0.4, side: 'right', distance: 10, height: 12 },
+  ],
   start: { landmark: 'levee-houses', scenery: ['cypress'], type: 'river-boat', gate: 'barrier', shots: { countdown: 'above', launch: 'side' } },
   finish: { landmark: 'paddle-steamer' },
   designChanges: [

@@ -20,6 +20,10 @@ module.exports = track({
   peak: { palette: 'everest' },
   coaster: { style: 'alpine', colours: { support: '#8f969e', rail: '#e8eef4', tie: '#5b616b' } },
   signature: 'First ladder',
+  tvCameras: [
+    { section: 'First ladder', at: 0.8, side: 'left', distance: 10, height: 12 },
+    { section: 'Camp hairpin', at: 0.4, side: 'right', distance: 10, height: 12 },
+  ],
   start: { landmark: 'serac-field', type: 'ice-ledge', gate: 'trapdoor', shots: { countdown: 'chase', launch: 'high-behind' } },
   finish: { landmark: 'peak-camp' },
   designChanges: [

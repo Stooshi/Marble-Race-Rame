@@ -19,6 +19,10 @@ module.exports = track({
   river: { palette: 'thames', side: 'left', width: 120, banks: 'quay', calm: true },
   coaster: { colours: { support: '#4a5560', rail: '#eef0f2', tie: '#2a3038' } },
   signature: 'Between the bascule towers',
+  tvCameras: [
+    { section: 'Between the bascule towers', at: 0.8, side: 'left', distance: 6, height: 12 },
+    { section: 'Barrier hairpin', at: 0.4, side: 'right', distance: 10, height: 12 },
+  ],
   start: { type: 'elevator', look: 'bridge-tower', gate: 'paddle', shots: { countdown: 'front', launch: 'low-chase' } },
   finish: { landmark: 'river-barge' },
   designChanges: [

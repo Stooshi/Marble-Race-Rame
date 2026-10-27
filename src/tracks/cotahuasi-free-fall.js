@@ -18,6 +18,10 @@ module.exports = track({
   canyon: { palette: 'andes', depth: 50, river: 'right' },
   coaster: { colours: { support: '#7a5a3a', rail: '#f2ede2', tie: '#3a302a' } },
   signature: 'The free fall',
+  tvCameras: [
+    { section: 'The free fall', at: 0.8, side: 'right', distance: 6, height: 12 },
+    { section: 'Hawk hairpin', at: 0.4, side: 'right', distance: 10, height: 12 },
+  ],
   start: { landmark: 'andean-church', scenery: ['rocks'], type: 'elevator', gate: 'trapdoor', shots: { countdown: 'front', launch: 'side' } },
   finish: { landmark: 'andean-village' },
   designChanges: [

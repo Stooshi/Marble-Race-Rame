@@ -19,6 +19,10 @@ module.exports = track({
   billboardFrame: 'marquee',
   arcade: { art: 'downtown', finish: 'CONTINUE? YES' },
   signature: 'Co-op lane',
+  tvCameras: [
+    { section: 'Co-op lane', at: 0.8, side: 'right', distance: 6, height: 5 },
+    { section: 'Neon spin', at: 0.8, side: 'right', distance: 6, height: 8 },
+  ],
   start: { landmark: 'subway-entrance', gate: 'trapdoor', shots: { countdown: 'above', launch: 'look-back' } },
   finish: { landmark: 'continue-clock' },
   designChanges: [

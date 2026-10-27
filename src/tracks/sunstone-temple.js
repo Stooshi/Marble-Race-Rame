@@ -19,6 +19,10 @@ module.exports = track({
   block: { world: 'temple' },
   coaster: { style: 'blocks', colours: { support: '#b8955e', rail: '#f4ecdc', tie: '#6a5236' } },
   signature: 'The great stairs',
+  tvCameras: [
+    { section: 'The great stairs', at: 0.8, side: 'left', distance: 10, height: 12 },
+    { section: 'Sun sweep', at: 0.6, side: 'left', distance: 10, height: 12 },
+  ],
   start: { landmark: 'sun-temple', type: 'stepped-platform', gate: 'barrier', shots: { countdown: 'front', launch: 'low-chase' } },
   finish: { landmark: 'temple-gate' },
   designChanges: [

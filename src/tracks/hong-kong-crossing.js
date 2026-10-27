@@ -17,6 +17,10 @@ module.exports = track({
   lighting: 'day',
   coaster: { height: 20, colours: { support: '#5a6a7a', rail: '#e8eef2', tie: '#2a2d32' } },
   signature: 'Sea crossing',
+  tvCameras: [
+    { section: 'Sea crossing', at: 0.8, side: 'left', distance: 10, height: 12 },
+    { section: 'Island spin', at: 0.9, side: 'right', distance: 10, height: 12 },
+  ],
   start: { landmark: 'victoria-peak', type: 'rooftop', gate: 'barrier', shots: { countdown: 'front', launch: 'side' } },
   finish: { landmark: 'zhuhai-waterfront', billboards: 1 },
   designChanges: [

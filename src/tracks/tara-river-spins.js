@@ -18,6 +18,10 @@ module.exports = track({
   canyon: { palette: 'limestone', depth: 46, river: 'right' },
   coaster: { colours: { support: '#5f6a72', rail: '#f2f2ee', tie: '#3a3f44' } },
   signature: 'Under the arch bridge',
+  tvCameras: [
+    { section: 'Under the arch bridge', at: 0.8, side: 'left', distance: 10, height: 12 },
+    { section: 'Whirlpool spin', at: 0.2, side: 'right', distance: 10, height: 12 },
+  ],
   start: { landmark: 'mountain-hut', scenery: ['pines'], type: 'straight-lift', gate: 'barrier', shots: { countdown: 'chase', launch: 'side' } },
   finish: { landmark: 'rafting-camp' },
   designChanges: [

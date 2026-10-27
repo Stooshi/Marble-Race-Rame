@@ -18,6 +18,10 @@ module.exports = track({
   lighting: 'day',
   variants: ['sunset'],
   signature: 'The Twister',
+  tvCameras: [
+    { section: 'The Twister', at: 0.8, side: 'left', distance: 6, height: 12 },
+    { section: 'Oasis splitter', at: 0.8, side: 'right', distance: 6, height: 5 },
+  ],
   billboardFrame: 'led',
   // The gate on the crest of a tall red dune beside a Bedouin tent and resting camels; the
   // finish on the Palm Jumeirah boardwalk, the Burj Khalifa in the distance behind the line.

@@ -19,6 +19,10 @@ module.exports = track({
   lighting: 'day',
   variants: ['fog', 'sunset'],
   signature: 'Dragon',
+  tvCameras: [
+    { section: 'Dragon', at: 0.8, side: 'left', distance: 6, height: 12 },
+    { section: 'Watchtower splitter', at: 0.8, side: 'right', distance: 6, height: 5 },
+  ],
   billboardFrame: 'plain',
   // The gate on a watchtower terrace on the Wall, a red-columned hipped-roof hall behind the
   // start line; the finish before the Temple of Heaven, its round blue roofs behind the line.

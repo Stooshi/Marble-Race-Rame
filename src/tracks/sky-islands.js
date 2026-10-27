@@ -19,6 +19,10 @@ module.exports = track({
   block: { world: 'sky' },
   coaster: { style: 'blocks', colours: { support: '#8a7a64', rail: '#f4f2ec', tie: '#5a4a3a' } },
   signature: 'Second bridge',
+  tvCameras: [
+    { section: 'Second bridge', at: 0.8, side: 'left', distance: 10, height: 12 },
+    { section: 'Off the island', at: 0.6, side: 'left', distance: 6, height: 12 },
+  ],
   start: { landmark: 'island-house', type: 'cliff', gate: 'paddle', shots: { countdown: 'above', launch: 'look-back' } },
   finish: { landmark: 'island-garden' },
   designChanges: [

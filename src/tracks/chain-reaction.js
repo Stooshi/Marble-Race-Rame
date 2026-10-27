@@ -19,6 +19,10 @@ module.exports = track({
   block: { world: 'puzzle' },
   coaster: { style: 'blocks', colours: { support: '#5d6c8c', rail: '#eef0f4', tie: '#20263a' } },
   signature: 'The cascade run',
+  tvCameras: [
+    { section: 'The cascade run', at: 0.8, side: 'left', distance: 10, height: 12 },
+    { section: 'Chain spiral', at: 0.8, side: 'left', distance: 10, height: 12 },
+  ],
   start: { landmark: 'block-hall', type: 'stepped-platform', gate: 'stalls', shots: { countdown: 'side', launch: 'overhead' } },
   finish: { landmark: 'block-well' },
   designChanges: [

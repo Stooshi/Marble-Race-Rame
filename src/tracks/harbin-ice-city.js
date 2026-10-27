@@ -17,6 +17,10 @@ module.exports = track({
   lighting: 'night',
   coaster: { height: 16, colours: { support: '#cfe6f4', rail: '#5ab8ff', tie: '#2a3a5a' } },
   signature: 'Ice castle half-pipe',
+  tvCameras: [
+    { section: 'Ice castle half-pipe', at: 0.9, side: 'right', distance: 6, height: 12 },
+    { section: 'Tower spin', at: 0.8, side: 'left', distance: 10, height: 12 },
+  ],
   start: { landmark: 'ice-castles', scenery: ['birches'], type: 'castle-tower', gate: 'stalls', shots: { countdown: 'front', launch: 'high-behind' } },
   finish: { landmark: 'ice-castles' },
   designChanges: [

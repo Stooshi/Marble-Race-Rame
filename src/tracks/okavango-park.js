@@ -18,6 +18,10 @@ module.exports = track({
   lighting: 'day',
   coaster: { height: 16, colours: { support: '#c8a24a', rail: '#f2ead6', tie: '#5a4a32' } },
   signature: 'Channel skim',
+  tvCameras: [
+    { section: 'Floodplain sweep', at: 0.8, side: 'right', distance: 10, height: 12 },
+    { section: 'Acacia spin', at: 0.8, side: 'left', distance: 10, height: 12 },
+  ],
   start: { landmark: 'baobab', scenery: ['savannah'], type: 'spiral-tower', gate: 'barrier', shots: { countdown: 'above', launch: 'look-back' } },
   finish: { landmark: 'stilt-lodge', billboards: 1 },
   designChanges: [

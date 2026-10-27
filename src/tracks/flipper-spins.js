@@ -17,6 +17,10 @@ module.exports = track({
   lighting: 'parlour',
   pinball: { art: 'theatre', display: 'SKILL SHOT!', finish: 'TAKE A BOW!' },
   signature: 'Through the curtain',
+  tvCameras: [
+    { section: 'Through the curtain', at: 0.8, side: 'left', distance: 6, height: 8 },
+    { section: 'Top hat spin', at: 0.8, side: 'right', distance: 6, height: 8 },
+  ],
   start: { landmark: 'grand-theatre', gate: 'stalls', shots: { countdown: 'front', launch: 'look-back' } },
   finish: {},
   designChanges: [

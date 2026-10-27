@@ -18,6 +18,10 @@ module.exports = track({
   lighting: 'night',
   coaster: { height: 16, colours: { support: '#2a2f3a', rail: '#ffd23f', tie: '#5a3a6a' } },
   signature: 'River of lights',
+  tvCameras: [
+    { section: 'River of lights', at: 0.9, side: 'left', distance: 6, height: 12 },
+    { section: 'Cable car sweep', at: 0.8, side: 'left', distance: 10, height: 12 },
+  ],
   start: { landmark: 'light-figures', type: 'stepped-platform', gate: 'stalls', shots: { countdown: 'front', launch: 'low-chase' } },
   finish: { landmark: 'light-arches' },
   designChanges: [

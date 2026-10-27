@@ -19,6 +19,10 @@ module.exports = track({
   lighting: 'sunset',
   coaster: { height: 18, colours: { support: '#9a2f2a', rail: '#ecdcae', tie: '#4a3a2a' } },
   signature: 'Temple spin',
+  tvCameras: [
+    { section: 'Temple spin', at: 0.8, side: 'left', distance: 10, height: 12 },
+    { section: 'Rice terrace sweep', at: 0.8, side: 'right', distance: 10, height: 12 },
+  ],
   start: { landmark: 'doi-suthep', scenery: ['palms'], type: 'curving-lift', gate: 'stalls', shots: { countdown: 'front', launch: 'overhead' } },
   finish: { landmark: 'chiang-mai-gate', billboards: 1, scenery: ['market-stalls'] },
   designChanges: [

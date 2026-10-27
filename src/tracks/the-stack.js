@@ -19,6 +19,10 @@ module.exports = track({
   block: { world: 'puzzle' },
   coaster: { style: 'blocks', colours: { support: '#7a7f96', rail: '#eef0f4', tie: '#2a3447' } },
   signature: 'Round the stack',
+  tvCameras: [
+    { section: 'Round the stack', at: 0.8, side: 'left', distance: 10, height: 12 },
+    { section: 'Stack sweep', at: 0.8, side: 'left', distance: 10, height: 12 },
+  ],
   start: { landmark: 'block-well', type: 'spiral-tower', gate: 'stalls', shots: { countdown: 'chase', launch: 'overhead' } },
   finish: { landmark: 'block-hall' },
   designChanges: [

@@ -18,6 +18,10 @@ module.exports = track({
   block: { world: 'bonus' },
   coaster: { style: 'blocks', colours: { support: '#3a3456', rail: '#f4eedc', tie: '#1c1830' } },
   signature: 'Score wall straight',
+  tvCameras: [
+    { section: 'Score wall straight', at: 0.8, side: 'left', distance: 10, height: 12 },
+    { section: 'Bonus spin', at: 0.8, side: 'left', distance: 10, height: 12 },
+  ],
   start: { landmark: 'block-hall', type: 'rooftop', gate: 'paddle', shots: { countdown: 'chase', launch: 'high-behind' } },
   finish: { landmark: 'final-stage' },
   designChanges: [

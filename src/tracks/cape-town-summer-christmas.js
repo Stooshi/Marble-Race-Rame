@@ -18,6 +18,10 @@ module.exports = track({
   lighting: 'day',
   coaster: { height: 16, colours: { support: '#f2efe6', rail: '#d23a3a', tie: '#2e4a66' } },
   signature: 'Promenade jib line',
+  tvCameras: [
+    { section: 'Promenade jib line', at: 0.8, side: 'left', distance: 10, height: 12 },
+    { section: 'Beach sweep', at: 0.8, side: 'right', distance: 10, height: 12 },
+  ],
   start: { landmark: 'flat-top-mountain', scenery: ['colourful-houses'], type: 'stepped-platform', gate: 'stalls', shots: { countdown: 'above', launch: 'overhead' } },
   finish: { landmark: 'harbour', scenery: ['palms'] },
   designChanges: [

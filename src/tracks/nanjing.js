@@ -18,6 +18,10 @@ module.exports = track({
   lighting: 'sunset',
   coaster: { height: 16, colours: { support: '#a8322a', rail: '#ece6d6', tie: '#3a3d44' } },
   signature: 'Zhonghua Gate',
+  tvCameras: [
+    { section: 'Zhonghua Gate', at: 0.8, side: 'left', distance: 6, height: 12 },
+    { section: 'Xuanwu Lake sweep', at: 0.8, side: 'right', distance: 10, height: 12 },
+  ],
   start: { landmark: 'sun-yat-sen-mausoleum', scenery: ['pines'], type: 'rooftop', gate: 'paddle', shots: { countdown: 'side', launch: 'overhead' } },
   finish: { landmark: 'yangtze-bridge', billboards: 0 },
   designChanges: [

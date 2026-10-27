@@ -13,6 +13,10 @@ module.exports = track({
   variants: ['day', 'fog'],
   grandPrix: { crowd: 'elves', barrier: 'logs', fireworks: 'sparkles' },
   signature: 'Great Tree spiral',
+  tvCameras: [
+    { section: 'Great Tree spiral', at: 0.8, side: 'right', distance: 6, height: 8 },
+    { section: 'Fern splitter', at: 0.8, side: 'left', distance: 10, height: 8 },
+  ],
   billboardFrame: 'banner',
   start: { landmark: 'tree-platform', shots: { countdown: 'side', launch: 'low-chase' } },
   finish: { landmark: 'glow-flowers' },

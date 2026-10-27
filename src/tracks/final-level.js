@@ -18,6 +18,10 @@ module.exports = track({
   block: { world: 'portal' },
   coaster: { style: 'blocks', colours: { support: '#3a3f62', rail: '#e8ecf8', tie: '#1d2038' } },
   signature: 'The loop',
+  tvCameras: [
+    { section: 'The loop', at: 0.8, side: 'right', distance: 10, height: 12 },
+    { section: 'Through the portal', at: 0.8, side: 'left', distance: 10, height: 12 },
+  ],
   start: { landmark: 'spawn-beacon', type: 'elevator', gate: 'barrier', shots: { countdown: 'above', launch: 'side' } },
   finish: { landmark: 'gg-arch' },
   designChanges: [

@@ -18,6 +18,10 @@ module.exports = track({
   canyon: { palette: 'copper', depth: 40, river: 'left' },
   coaster: { style: 'timber', colours: { support: '#7a5434', rail: '#e8dcc0', tie: '#4f3622' } },
   signature: 'Railway trestle',
+  tvCameras: [
+    { section: 'Railway trestle', at: 0.8, side: 'right', distance: 10, height: 12 },
+    { section: 'Fifth canyon spin', at: 0.8, side: 'left', distance: 10, height: 12 },
+  ],
   start: { landmark: 'adobe-mission', scenery: ['rocks'], type: 'station-launch', gate: 'barrier', shots: { countdown: 'front', launch: 'look-back' } },
   finish: { landmark: 'canyon-station' },
   designChanges: [

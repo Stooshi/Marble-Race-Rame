@@ -18,6 +18,10 @@ module.exports = track({
   canyon: { palette: 'namib', depth: 36, river: 'left' },
   coaster: { colours: { support: '#8a6a4a', rail: '#f2ede2', tie: '#4a3a2e' } },
   signature: 'The meanders',
+  tvCameras: [
+    { section: 'The meanders', at: 0.8, side: 'left', distance: 10, height: 12 },
+    { section: 'Over the rock', at: 0.8, side: 'right', distance: 10, height: 12 },
+  ],
   start: { landmark: 'quiver-grove', scenery: ['rocks'], type: 'curving-lift', gate: 'trapdoor', shots: { countdown: 'above', launch: 'overhead' } },
   finish: { landmark: 'hot-springs' },
   designChanges: [

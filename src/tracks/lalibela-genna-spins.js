@@ -19,6 +19,10 @@ module.exports = track({
   canyon: { palette: 'mujib', depth: 26, river: 'right' },
   coaster: { colours: { support: '#a8644a', rail: '#f2ede2', tie: '#4a2e24' } },
   signature: 'Rock trench half-pipe',
+  tvCameras: [
+    { section: 'Rock trench half-pipe', at: 0.9, side: 'right', distance: 6, height: 12 },
+    { section: 'Spire spiral', at: 0.9, side: 'left', distance: 6, height: 12 },
+  ],
   start: { landmark: 'pilgrims', scenery: ['rocks'], type: 'castle-tower', gate: 'paddle', shots: { countdown: 'side', launch: 'high-behind' } },
   finish: { landmark: 'pilgrims' },
   designChanges: [

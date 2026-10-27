@@ -18,6 +18,10 @@ module.exports = track({
   block: { world: 'puzzle' },
   coaster: { style: 'blocks', colours: { support: '#6a6f8a', rail: '#eef0f4', tie: '#2a3447' } },
   signature: 'Combo steps',
+  tvCameras: [
+    { section: 'Combo steps', at: 0.8, side: 'left', distance: 10, height: 12 },
+    { section: 'Well sweep', at: 0.8, side: 'left', distance: 10, height: 12 },
+  ],
   start: { landmark: 'block-hall', type: 'rooftop', gate: 'trapdoor', shots: { countdown: 'above', launch: 'low-chase' } },
   finish: { landmark: 'block-well' },
   designChanges: [

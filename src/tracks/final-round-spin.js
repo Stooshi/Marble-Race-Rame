@@ -19,6 +19,10 @@ module.exports = track({
   billboardFrame: 'marquee',
   arcade: { art: 'fighter', finish: 'PERFECT!' },
   signature: 'The final',
+  tvCameras: [
+    { section: 'The final', at: 0.8, side: 'left', distance: 6, height: 5 },
+    { section: 'Semi-finals', at: 0.8, side: 'left', distance: 6, height: 5 },
+  ],
   start: { landmark: 'rooftop-stage', gate: 'barrier', shots: { countdown: 'front', launch: 'side' } },
   finish: { landmark: 'health-bars' },
   designChanges: [

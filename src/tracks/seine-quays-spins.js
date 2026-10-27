@@ -19,6 +19,10 @@ module.exports = track({
   river: { palette: 'seine', side: 'right', width: 90, banks: 'quay' },
   coaster: { colours: { support: '#7a7468', rail: '#f2ece0', tie: '#3a3630' } },
   signature: 'Under the five arches',
+  tvCameras: [
+    { section: 'Under the five arches', at: 0.8, side: 'right', distance: 6, height: 12 },
+    { section: 'Spiral', at: 0.6, side: 'right', distance: 10, height: 12 },
+  ],
   start: { type: 'rooftop', look: 'mansard', gate: 'trapdoor', shots: { countdown: 'above', launch: 'overhead' } },
   finish: { landmark: 'river-barge' },
   designChanges: [

@@ -19,6 +19,10 @@ module.exports = track({
   canyon: { palette: 'verdon', depth: 46, river: 'right' },
   coaster: { colours: { support: '#8a8478', rail: '#f4f2ec', tie: '#4a463e' } },
   signature: 'The cliff road',
+  tvCameras: [
+    { section: 'The cliff road', at: 0.8, side: 'left', distance: 10, height: 12 },
+    { section: 'Down into the gorge', at: 0.8, side: 'right', distance: 10, height: 12 },
+  ],
   start: { landmark: 'perched-village', scenery: ['rocks'], type: 'stepped-platform', gate: 'trapdoor', shots: { countdown: 'chase', launch: 'low-chase' } },
   finish: { landmark: 'lake-pedalos' },
   designChanges: [

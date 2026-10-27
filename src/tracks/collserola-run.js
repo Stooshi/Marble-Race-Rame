@@ -17,6 +17,10 @@ module.exports = track({
   lighting: 'day',
   coaster: { height: 18, colours: { support: '#c8442f', rail: '#f2efe6', tie: '#3a3d44' } },
   signature: 'Sagrada spin',
+  tvCameras: [
+    { section: 'Sagrada spin', at: 0.8, side: 'left', distance: 10, height: 12 },
+    { section: 'Seafront splitter', at: 0.6, side: 'left', distance: 6, height: 5 },
+  ],
   start: { landmark: 'tibidabo', scenery: ['pines'], type: 'curving-lift', gate: 'barrier', shots: { countdown: 'above', launch: 'side' } },
   finish: { landmark: 'barceloneta-beach', billboards: 1, scenery: ['palms'] },
   designChanges: [

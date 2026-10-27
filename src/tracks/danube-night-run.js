@@ -19,6 +19,10 @@ module.exports = track({
   river: { palette: 'danube', side: 'left', width: 110, banks: 'quay', slope: 0.8, gap: 10 },
   coaster: { colours: { support: '#5a5e66', rail: '#e8e2cc', tie: '#2f3238' } },
   signature: 'The chain bridge slalom',
+  tvCameras: [
+    { section: 'The chain bridge slalom', at: 0.8, side: 'left', distance: 10, height: 12 },
+    { section: 'Round the island', at: 0.8, side: 'right', distance: 10, height: 12 },
+  ],
   start: { type: 'pier', gate: 'trapdoor', shots: { countdown: 'side', launch: 'low-chase' } },
   finish: { landmark: 'domed-hall' },
   designChanges: [

@@ -12,6 +12,10 @@ module.exports = track({
   lighting: 'night',
   grandPrix: true,
   signature: 'Fountain S-bends',
+  tvCameras: [
+    { section: 'Fountain S-bends', at: 0.8, side: 'left', distance: 10, height: 12 },
+    { section: 'Museum splitter', at: 0.8, side: 'left', distance: 10, height: 8 },
+  ],
   billboardFrame: 'led',
   start: { landmark: 'burj-khalifa', scenery: ['skyscrapers'], shots: { countdown: 'side', launch: 'high-behind' } },
   finish: { landmark: 'marina', scenery: ['skyscrapers'] },

@@ -19,6 +19,10 @@ module.exports = track({
   peak: { palette: 'vatnajokull' },
   coaster: { style: 'alpine', colours: { support: '#3a3836', rail: '#e8eef4', tie: '#2b2826' } },
   signature: 'The blue cave',
+  tvCameras: [
+    { section: 'The blue cave', at: 0.8, side: 'right', distance: 6, height: 12 },
+    { section: 'Gravel-bar spiral', at: 0.8, side: 'right', distance: 10, height: 12 },
+  ],
   start: { landmark: 'glacier-tongue', type: 'spiral-tower', gate: 'barrier', shots: { countdown: 'chase', launch: 'look-back' } },
   finish: { landmark: 'peak-camp' }, // (the research huts on the ice cap; the streams, 50 m across, reached into the catch area)
   designChanges: [

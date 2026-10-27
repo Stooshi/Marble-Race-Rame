@@ -18,6 +18,10 @@ module.exports = track({
   lighting: 'parlour',
   pinball: { art: 'clocks', display: 'TIME WARP!', finish: 'REPLAY!' },
   signature: 'Through the floating door',
+  tvCameras: [
+    { section: 'Clocktower spin', at: 0.8, side: 'right', distance: 6, height: 12 },
+    { section: 'Off the stairs', at: 0.8, side: 'left', distance: 6, height: 8 },
+  ],
   start: { landmark: 'gumball-machine', gate: 'trapdoor', shots: { countdown: 'chase', launch: 'high-behind' } },
   finish: {},
   designChanges: [

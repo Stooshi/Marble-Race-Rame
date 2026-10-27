@@ -19,6 +19,10 @@ module.exports = track({
   river: { palette: 'yangtze', side: 'right', width: 160, banks: 'rock', slope: 0.8, gap: 10 },
   coaster: { colours: { support: '#8a8a86', rail: '#f2f0ea', tie: '#4a4a48' } },
   signature: 'The lock staircase',
+  tvCameras: [
+    { section: 'The lock staircase', at: 0.8, side: 'right', distance: 10, height: 12 },
+    { section: 'Spiral', at: 0.8, side: 'right', distance: 10, height: 12 },
+  ],
   start: { landmark: 'green-peaks', scenery: ['rocks'], type: 'lock-gate', gate: 'paddle', shots: { countdown: 'front', launch: 'overhead' } },
   finish: { landmark: 'river-ferry' },
   designChanges: [

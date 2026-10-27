@@ -19,6 +19,10 @@ module.exports = track({
   block: { world: 'fortress' },
   coaster: { style: 'blocks', colours: { support: '#8a8278', rail: '#f2ede2', tie: '#4f4a44' } },
   signature: 'The block gate',
+  tvCameras: [
+    { section: 'The block gate', at: 0.8, side: 'left', distance: 10, height: 12 },
+    { section: 'Castle sweep', at: 0.8, side: 'right', distance: 10, height: 12 },
+  ],
   start: { landmark: 'cube-cottage', type: 'straight-lift', gate: 'paddle', shots: { countdown: 'front', launch: 'look-back' } },
   finish: { landmark: 'block-hall' },
   designChanges: [

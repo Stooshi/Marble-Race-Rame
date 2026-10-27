@@ -18,6 +18,10 @@ module.exports = track({
   lighting: 'day',
   coaster: { height: 18, colours: { support: '#6a4a2a', rail: '#e2dcc8', tie: '#3a2a20' } },
   signature: 'Through the trunk',
+  tvCameras: [
+    { section: 'Through the trunk', at: 0.8, side: 'left', distance: 6, height: 12 },
+    { section: 'Trunk spin', at: 0.8, side: 'left', distance: 10, height: 12 },
+  ],
   start: { landmark: 'drive-through-redwood', scenery: ['pines'], type: 'elevator', gate: 'paddle', shots: { countdown: 'chase', launch: 'look-back' } },
   finish: { landmark: 'sea-stacks-beach' },
   designChanges: [

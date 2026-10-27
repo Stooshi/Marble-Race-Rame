@@ -19,6 +19,10 @@ module.exports = track({
   river: { palette: 'murray', side: 'right', width: 110, banks: 'sand', calm: true },
   coaster: { colours: { support: '#7a6450', rail: '#f2eadc', tie: '#40342a' } },
   signature: 'Through the red gums',
+  tvCameras: [
+    { section: 'Pelican spiral', at: 0.8, side: 'left', distance: 10, height: 12 },
+    { section: 'S-bends', at: 0.8, side: 'left', distance: 10, height: 12 },
+  ],
   start: { type: 'lock-gate', gate: 'barrier', shots: { countdown: 'side', launch: 'look-back' } },
   finish: { landmark: 'paddle-steamer' },
   designChanges: [

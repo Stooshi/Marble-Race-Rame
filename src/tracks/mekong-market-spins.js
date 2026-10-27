@@ -18,6 +18,10 @@ module.exports = track({
   river: { palette: 'mekong', side: 'right', width: 130, banks: 'sand', slope: 0.8, gap: 10 },
   coaster: { colours: { support: '#6a4428', rail: '#f2e6c8', tie: '#3a2a1e' } },
   signature: 'The floating market',
+  tvCameras: [
+    { section: 'Stilt-house spin', at: 0.6, side: 'right', distance: 10, height: 12 },
+    { section: 'Fisherman hairpin', at: 0.4, side: 'right', distance: 10, height: 12 },
+  ],
   start: { landmark: 'wat-roofs', scenery: ['river-palms'], type: 'river-boat', gate: 'stalls', shots: { countdown: 'front', launch: 'high-behind' } },
   finish: { landmark: 'longtail-boat' },
   designChanges: [

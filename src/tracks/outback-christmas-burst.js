@@ -19,6 +19,10 @@ module.exports = track({
   canyon: { palette: 'namib', depth: 34, river: 'right' },
   coaster: { colours: { support: '#8a5a3a', rail: '#f2ede2', tie: '#4a3a2e' } },
   signature: 'Gorge floor jib line',
+  tvCameras: [
+    { section: 'Gorge floor jib line', at: 0.8, side: 'left', distance: 10, height: 12 },
+    { section: 'Eagle hairpin', at: 0.4, side: 'right', distance: 10, height: 12 },
+  ],
   start: { landmark: 'kangaroo-mob', scenery: ['rocks'], type: 'rooftop', gate: 'barrier', shots: { countdown: 'chase', launch: 'look-back' } },
   finish: { landmark: 'outback-homestead' },
   designChanges: [

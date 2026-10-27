@@ -18,6 +18,10 @@ module.exports = track({
   river: { palette: 'rhine', side: 'right', width: 120, banks: 'rock', slope: 0.8 },
   coaster: { colours: { support: '#8a8478', rail: '#f2f0ea', tie: '#4a4640' } },
   signature: 'Round the island castle',
+  tvCameras: [
+    { section: 'Round the island castle', at: 0.8, side: 'right', distance: 10, height: 12 },
+    { section: 'Stag hairpin', at: 0.4, side: 'left', distance: 10, height: 12 },
+  ],
   start: { landmark: 'hilltop-castle', type: 'castle-tower', gate: 'trapdoor', shots: { countdown: 'front', launch: 'look-back' } },
   finish: { landmark: 'river-barge' },
   designChanges: [

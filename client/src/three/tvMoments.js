@@ -22,6 +22,16 @@ export const TV = {
 };
 const RIM = 0.45;
 
+/**
+ * Where a track's TV cameras are: a kit track's `kit.tv` (from its track file's `tvCameras`); the three
+ * hand-built tracks (Bobsleigh Run, San Francisco, Table Mountain Run) carry theirs as `physics.tv`,
+ * in the same form ({ p, side, distance, height }), drawing only like their `startLook`.
+ */
+export function tvSpots(physics) {
+  if (physics?.kit?.tv?.length) return physics.kit;
+  return physics?.tv?.length ? { tv: physics.tv } : null;
+}
+
 /** The track's TV cameras: [{ s (metres along), pos (where the camera stands) }]. */
 export function tvCameras(centerline, channel, kit) {
   if (!channel || !kit?.tv?.length) return [];

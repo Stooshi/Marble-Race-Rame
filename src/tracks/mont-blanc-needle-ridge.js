@@ -19,6 +19,10 @@ module.exports = track({
   peak: { palette: 'mont-blanc' },
   coaster: { style: 'alpine', colours: { support: '#8a7166', rail: '#eef2f6', tie: '#4f4a47' } },
   signature: 'The ridge',
+  tvCameras: [
+    { section: 'Corniced hairpin', at: 0.4, side: 'right', distance: 10, height: 12 },
+    { section: 'Moraine drop', at: 0.8, side: 'left', distance: 6, height: 12 },
+  ],
   start: { landmark: 'granite-needles', type: 'gondola', gate: 'barrier', shots: { countdown: 'side', launch: 'low-chase' } },
   finish: { landmark: 'pass-cairn' },
   designChanges: [

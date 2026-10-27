@@ -17,6 +17,10 @@ module.exports = track({
   lighting: 'day',
   coaster: { height: 14, colours: { support: '#2f8a7a', rail: '#f2efe6', tie: '#3a3d44' } },
   signature: 'Island spin one',
+  tvCameras: [
+    { section: 'Island spin one', at: 0.8, side: 'right', distance: 10, height: 12 },
+    { section: 'Water run', at: 0.8, side: 'left', distance: 10, height: 12 },
+  ],
   start: { landmark: 'fighting-cocks', type: 'cliff', gate: 'trapdoor', shots: { countdown: 'above', launch: 'low-chase' } },
   finish: { landmark: 'floating-village', billboards: 1 },
   designChanges: [

@@ -19,6 +19,10 @@ module.exports = track({
   canyon: { palette: 'grand-canyon', depth: 42, river: 'left' },
   coaster: { colours: { support: '#7a4a2c', rail: '#e8dcc4', tie: '#4a3426' } },
   signature: 'Horseshoe Bend',
+  tvCameras: [
+    { section: 'Horseshoe Bend', at: 0.8, side: 'left', distance: 10, height: 12 },
+    { section: 'Trestle climb', at: 0.8, side: 'right', distance: 10, height: 12 },
+  ],
   start: { landmark: 'rim-lookout', scenery: ['rocks'], type: 'cliff', gate: 'trapdoor', shots: { countdown: 'above', launch: 'low-chase' } },
   finish: { landmark: 'river-camp' },
   designChanges: [

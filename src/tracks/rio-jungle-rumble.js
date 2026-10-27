@@ -18,6 +18,10 @@ module.exports = track({
   lighting: 'day',
   variants: ['sunset'],
   signature: 'Selarón Steps',
+  tvCameras: [
+    { section: 'Selarón Steps', at: 0.8, side: 'left', distance: 6, height: 8 },
+    { section: 'Anaconda splitter', at: 0.8, side: 'right', distance: 6, height: 5 },
+  ],
   billboardFrame: 'plain',
   // The gate in the Tijuca jungle, Corcovado far behind with its distant silhouette and a
   // monkey in a tree beside the gate; the finish on Copacabana's promenade, Sugarloaf behind.

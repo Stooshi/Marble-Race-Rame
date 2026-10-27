@@ -18,6 +18,10 @@ module.exports = track({
   river: { palette: 'volga', side: 'left', width: 160, banks: 'sand' },
   coaster: { colours: { support: '#6a7078', rail: '#f0f0ec', tie: '#30343a' } },
   signature: 'Through the container cranes',
+  tvCameras: [
+    { section: 'Through the container cranes', at: 0.8, side: 'left', distance: 6, height: 12 },
+    { section: 'Wide spiral', at: 0.8, side: 'right', distance: 10, height: 12 },
+  ],
   start: { type: 'elevator', look: 'port-crane', gate: 'trapdoor', shots: { countdown: 'chase', launch: 'high-behind' } },
   finish: { landmark: 'river-ferry' },
   designChanges: [

@@ -13,6 +13,10 @@ module.exports = track({
   variants: ['fog', 'sunset'],
   grandPrix: { crowd: 'desert-folk' },
   signature: 'Canyon run',
+  tvCameras: [
+    { section: 'Oasis splitter', at: 0.8, side: 'left', distance: 10, height: 8 },
+    { section: 'Spiral', at: 0.8, side: 'left', distance: 10, height: 12 },
+  ],
   billboardFrame: 'crates',
   start: { landmark: 'kasbah', shots: { countdown: 'chase', launch: 'look-back' } },
   finish: { landmark: 'mud-mosque' },

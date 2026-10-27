@@ -19,6 +19,10 @@ module.exports = track({
   block: { world: 'harbour' },
   coaster: { style: 'blocks', colours: { support: '#5e636a', rail: '#eef0f4', tie: '#2a2f36' } },
   signature: 'The quay',
+  tvCameras: [
+    { section: 'The quay', at: 0.8, side: 'right', distance: 10, height: 12 },
+    { section: 'Crane hairpin', at: 0.4, side: 'right', distance: 10, height: 12 },
+  ],
   start: { landmark: 'harbour-office', type: 'curving-lift', gate: 'trapdoor', shots: { countdown: 'chase', launch: 'low-chase' } },
   finish: { landmark: 'block-lighthouse' },
   designChanges: [

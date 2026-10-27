@@ -16,6 +16,10 @@ module.exports = track({
   biome: 'alpine',
   lighting: 'day',
   signature: 'Bell-tower spiral',
+  tvCameras: [
+    { section: 'Bell-tower spiral', at: 0.8, side: 'left', distance: 6, height: 8 },
+    { section: 'Splitter', at: 0.8, side: 'right', distance: 6, height: 5 },
+  ],
   billboardFrame: 'wood',
   // The gate on a high sunlit ridge, wide views over the valley; the finish in an Aranese
   // village of grey stone houses and slate roofs, beside a Romanesque church.

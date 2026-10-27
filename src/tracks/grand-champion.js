@@ -18,6 +18,10 @@ module.exports = track({
   lighting: 'parlour',
   pinball: { art: 'concert', display: 'ENCORE!', finish: 'GRAND CHAMPION' },
   signature: 'The encore',
+  tvCameras: [
+    { section: 'The encore', at: 0.6, side: 'left', distance: 10, height: 5 },
+    { section: 'Lighting rig spin', at: 0.6, side: 'left', distance: 6, height: 8 },
+  ],
   start: { landmark: 'speaker-wall', gate: 'barrier', shots: { countdown: 'above', launch: 'look-back' } },
   finish: {},
   designChanges: [

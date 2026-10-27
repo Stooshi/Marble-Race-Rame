@@ -18,6 +18,10 @@ module.exports = track({
   river: { palette: 'congo', side: 'left', width: 110, banks: 'rock', slope: 0.7 },
   coaster: { colours: { support: '#5a4030', rail: '#efe4cc', tie: '#33261c' } },
   signature: 'Between the tripods',
+  tvCameras: [
+    { section: 'Between the tripods', at: 0.8, side: 'left', distance: 10, height: 12 },
+    { section: 'Forest spiral', at: 0.8, side: 'right', distance: 10, height: 12 },
+  ],
   start: { landmark: 'parrot-tree', type: 'stepped-platform', gate: 'paddle', shots: { countdown: 'side', launch: 'high-behind' } },
   finish: { landmark: 'river-dock' },
   designChanges: [

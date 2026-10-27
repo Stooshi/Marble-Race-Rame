@@ -19,6 +19,10 @@ module.exports = track({
   block: { world: 'puzzle' },
   coaster: { style: 'blocks', colours: { support: '#5d6c8c', rail: '#eef0f4', tie: '#2a3447' } },
   signature: 'Row steps',
+  tvCameras: [
+    { section: 'Row steps', at: 0.8, side: 'left', distance: 10, height: 12 },
+    { section: 'Clearing sweep', at: 0.6, side: 'right', distance: 10, height: 12 },
+  ],
   start: { landmark: 'block-well', type: 'curving-lift', gate: 'barrier', shots: { countdown: 'front', launch: 'side' } },
   finish: { landmark: 'block-hall' },
   designChanges: [

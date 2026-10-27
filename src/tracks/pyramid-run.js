@@ -18,6 +18,10 @@ module.exports = track({
   lighting: 'sunset',
   coaster: { height: 18, colours: { support: '#b8863a', rail: '#f2e6c8', tie: '#5a3a22' } },
   signature: 'Pyramid passage',
+  tvCameras: [
+    { section: 'Dune splitter', at: 0.8, side: 'right', distance: 10, height: 8 },
+    { section: 'Palm splitter', at: 0.6, side: 'left', distance: 6, height: 5 },
+  ],
   start: { landmark: 'sphinx', type: 'straight-lift', gate: 'stalls', shots: { countdown: 'side', launch: 'high-behind' } },
   finish: { landmark: 'nile-station', billboards: 1, scenery: ['palms'] },
   designChanges: [

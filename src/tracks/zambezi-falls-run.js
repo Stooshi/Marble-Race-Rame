@@ -19,6 +19,10 @@ module.exports = track({
   river: { palette: 'zambezi', side: 'right', width: 140, banks: 'rock', slope: 0.8, gap: 10 },
   coaster: { colours: { support: '#5a4a3a', rail: '#f2e8d4', tie: '#3a3028' } },
   signature: 'Along the lip',
+  tvCameras: [
+    { section: 'Along the lip', at: 0.8, side: 'right', distance: 10, height: 12 },
+    { section: 'Spiral', at: 0.8, side: 'right', distance: 10, height: 12 },
+  ],
   start: { landmark: 'hippo-pool', scenery: ['savannah'], type: 'cliff', gate: 'barrier', shots: { countdown: 'chase', launch: 'look-back' } },
   finish: { landmark: 'hippo-pool' },
   designChanges: [

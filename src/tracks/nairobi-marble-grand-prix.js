@@ -13,6 +13,10 @@ module.exports = track({
   variants: ['sunset'],
   grandPrix: true,
   signature: 'Park boundary run',
+  tvCameras: [
+    { section: 'Park boundary run', at: 0.8, side: 'left', distance: 6, height: 8 },
+    { section: 'Acacia splitter', at: 0.8, side: 'left', distance: 10, height: 8 },
+  ],
   billboardFrame: 'plain',
   start: { landmark: 'kicc-tower', scenery: ['skyscrapers'], shots: { countdown: 'chase', launch: 'overhead' } },
   finish: { landmark: 'safari-truck', scenery: ['savannah'] },

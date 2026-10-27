@@ -18,6 +18,10 @@ module.exports = track({
   canyon: { palette: 'basalt', depth: 44, river: 'right' },
   coaster: { style: 'timber', colours: { support: '#6a4a30', rail: '#e8dcc0', tie: '#3a2a20' } },
   signature: 'Whitewater run',
+  tvCameras: [
+    { section: 'Whitewater run', at: 0.8, side: 'left', distance: 10, height: 12 },
+    { section: 'Bear hairpin', at: 0.4, side: 'left', distance: 10, height: 12 },
+  ],
   start: { landmark: 'fire-lookout', scenery: ['rocks'], type: 'elevator', gate: 'stalls', shots: { countdown: 'chase', launch: 'high-behind' } },
   finish: { landmark: 'river-ranch' },
   designChanges: [

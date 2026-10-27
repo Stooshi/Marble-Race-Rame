@@ -19,6 +19,10 @@ module.exports = track({
   billboardFrame: 'marquee',
   arcade: { art: 'space', finish: 'BOSS DEFEATED!' },
   signature: 'Laser curtain',
+  tvCameras: [
+    { section: 'Laser curtain', at: 0.8, side: 'left', distance: 10, height: 12 },
+    { section: 'Bullet spiral', at: 0.8, side: 'right', distance: 6, height: 8 },
+  ],
   start: { landmark: 'alien-formation', gate: 'paddle', shots: { countdown: 'side', launch: 'overhead' } },
   finish: { landmark: 'mothership' },
   designChanges: [

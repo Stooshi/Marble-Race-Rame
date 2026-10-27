@@ -13,6 +13,10 @@ module.exports = track({
   variants: ['sunset'],
   grandPrix: true,
   signature: 'Lagoon bridge sweep',
+  tvCameras: [
+    { section: 'Lagoon bridge sweep', at: 0.8, side: 'right', distance: 6, height: 8 },
+    { section: 'Roundabout splitter', at: 0.6, side: 'right', distance: 6, height: 5 },
+  ],
   billboardFrame: 'led',
   start: { landmark: 'lagos-skyline', scenery: ['grandstand'], shots: { countdown: 'above', launch: 'low-chase' } },
   finish: { landmark: 'national-theatre', scenery: ['grandstand'] },

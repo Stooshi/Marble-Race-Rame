@@ -18,6 +18,10 @@ module.exports = track({
   lighting: 'day',
   variants: ['rain', 'fog'], // (daylight only)
   signature: 'Arc de Triomphe splitter',
+  tvCameras: [
+    { section: 'Arc de Triomphe splitter', at: 0.8, side: 'right', distance: 6, height: 5 },
+    { section: 'Notre-Dame spiral', at: 0.6, side: 'left', distance: 6, height: 8 },
+  ],
   billboardFrame: 'column',
   // The gate on the cobbled square before Sacré-Cœur, the roofs of Paris below; the finish
   // on the Champ de Mars, the Eiffel Tower rising straight behind the line.

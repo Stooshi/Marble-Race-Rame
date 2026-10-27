@@ -19,6 +19,10 @@ module.exports = track({
   canyon: { palette: 'himalaya', depth: 48, river: 'right' },
   coaster: { colours: { support: '#8a2a22', rail: '#f2ede2', tie: '#3a302a' } },
   signature: 'The great bend',
+  tvCameras: [
+    { section: 'The great bend', at: 0.8, side: 'left', distance: 10, height: 12 },
+    { section: 'Over the rock', at: 0.8, side: 'left', distance: 10, height: 12 },
+  ],
   start: { landmark: 'gompa', scenery: ['rocks'], type: 'spiral-tower', gate: 'paddle', shots: { countdown: 'front', launch: 'high-behind' } },
   finish: { landmark: 'tibetan-village' },
   designChanges: [

@@ -19,6 +19,10 @@ module.exports = track({
   canyon: { palette: 'himalaya', depth: 32, river: 'left' },
   coaster: { colours: { support: '#7a7a72', rail: '#f2ede2', tie: '#3a3a36' } },
   signature: 'Gorge half-pipe',
+  tvCameras: [
+    { section: 'Gorge half-pipe', at: 0.9, side: 'left', distance: 6, height: 12 },
+    { section: 'Drop back in', at: 0.8, side: 'left', distance: 6, height: 12 },
+  ],
   start: { landmark: 'pohutukawa-trees', scenery: ['pines'], type: 'ski-jump', gate: 'barrier', shots: { countdown: 'above', launch: 'side' } },
   finish: { landmark: 'pohutukawa-trees', scenery: ['frozen-lake'] },
   designChanges: [

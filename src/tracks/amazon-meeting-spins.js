@@ -18,6 +18,10 @@ module.exports = track({
   river: { palette: 'amazon', side: 'left', width: 150, banks: 'reeds' },
   coaster: { colours: { support: '#5a4632', rail: '#f2e8d4', tie: '#3a2c20' } },
   signature: 'On the meeting of the waters',
+  tvCameras: [
+    { section: 'Lily-pad lagoon', at: 0.9, side: 'left', distance: 6, height: 12 },
+    { section: 'Round the river island', at: 0.8, side: 'right', distance: 10, height: 12 },
+  ],
   start: { landmark: 'toucan-tree', type: 'pier', gate: 'trapdoor', shots: { countdown: 'above', launch: 'low-chase' } },
   finish: { landmark: 'river-dock' },
   designChanges: [

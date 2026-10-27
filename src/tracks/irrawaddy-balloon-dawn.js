@@ -19,6 +19,10 @@ module.exports = track({
   river: { palette: 'irrawaddy', side: 'left', width: 160, banks: 'sand', calm: true },
   coaster: { colours: { support: '#8a6a4a', rail: '#f4ece0', tie: '#4a3a2a' } },
   signature: 'Among the balloons',
+  tvCameras: [
+    { section: 'Among the balloons', at: 0.8, side: 'left', distance: 10, height: 12 },
+    { section: 'Sandbank spiral', at: 0.8, side: 'left', distance: 10, height: 12 },
+  ],
   start: { type: 'curving-lift', gate: 'barrier', shots: { countdown: 'front', launch: 'side' } },
   finish: { landmark: 'river-ferry' },
   designChanges: [

@@ -18,6 +18,10 @@ module.exports = track({
   lighting: 'parlour',
   pinball: { art: 'diner', display: 'DON\'T TILT!', finish: 'MATCH!' },
   signature: 'Soda fountain',
+  tvCameras: [
+    { section: 'Soda fountain', at: 0.6, side: 'left', distance: 6, height: 12 },
+    { section: 'Jukebox spin', at: 0.6, side: 'right', distance: 6, height: 8 },
+  ],
   start: { landmark: 'retro-diner', gate: 'paddle', shots: { countdown: 'front', launch: 'overhead' } },
   finish: {},
   designChanges: [

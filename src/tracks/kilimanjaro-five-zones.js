@@ -19,6 +19,10 @@ module.exports = track({
   peak: { palette: 'kilimanjaro' },
   coaster: { style: 'alpine', colours: { support: '#6a5f58', rail: '#eef2f6', tie: '#4a423c' } },
   signature: 'Groundsel slalom',
+  tvCameras: [
+    { section: 'Groundsel slalom', at: 0.8, side: 'left', distance: 10, height: 12 },
+    { section: 'Forest hairpin', at: 0.4, side: 'right', distance: 10, height: 12 },
+  ],
   start: { landmark: 'crater-ice-cliffs', type: 'stepped-platform', gate: 'stalls', shots: { countdown: 'front', launch: 'side' } },
   finish: { landmark: 'giant-groundsels', scenery: ['sea-of-clouds'] },
   designChanges: [

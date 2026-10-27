@@ -17,6 +17,10 @@ module.exports = track({
   lighting: 'parlour',
   pinball: { art: 'saucers', display: 'INVASION!', finish: 'EXTRA BALL!' },
   signature: 'Under the saucer',
+  tvCameras: [
+    { section: 'Under the saucer', at: 0.8, side: 'left', distance: 6, height: 8 },
+    { section: 'Alien hairpin', at: 0.4, side: 'left', distance: 6, height: 8 },
+  ],
   start: { landmark: 'flying-saucer', gate: 'paddle', shots: { countdown: 'chase', launch: 'side' } },
   finish: {},
   designChanges: [

@@ -19,6 +19,10 @@ module.exports = track({
   lighting: 'day',
   coaster: { height: 16, colours: { support: '#2f5a8a', rail: '#e8e4dc', tie: '#3a3d44' } },
   signature: 'Watermill spin',
+  tvCameras: [
+    { section: 'Watermill spin', at: 0.8, side: 'right', distance: 10, height: 12 },
+    { section: 'Spruce spin', at: 0.8, side: 'right', distance: 10, height: 12 },
+  ],
   start: { landmark: 'pancic-mausoleum', scenery: ['pines'], type: 'straight-lift', gate: 'trapdoor', shots: { countdown: 'chase', launch: 'side' } },
   finish: { landmark: 'kolo-village', billboards: 1, scenery: ['wooden-houses'] },
   designChanges: [

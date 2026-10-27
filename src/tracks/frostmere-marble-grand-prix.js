@@ -13,6 +13,10 @@ module.exports = track({
   variants: ['snow'],
   grandPrix: { crowd: 'kingdom-folk', barrier: 'snow', groupsEvery: 700 },
   signature: 'Ice palace hall',
+  tvCameras: [
+    { section: 'Ice palace hall', at: 0.8, side: 'left', distance: 6, height: 12 },
+    { section: 'Frozen lake splitter', at: 0.8, side: 'left', distance: 10, height: 8 },
+  ],
   billboardFrame: 'banner',
   start: { landmark: 'snow-castle', shots: { countdown: 'above', launch: 'overhead' } },
   finish: { landmark: 'ice-palace' },

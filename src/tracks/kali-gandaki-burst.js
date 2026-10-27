@@ -18,6 +18,10 @@ module.exports = track({
   canyon: { palette: 'himalaya', depth: 50, river: 'left' },
   coaster: { colours: { support: '#5a6a7a', rail: '#f2ede2', tie: '#3a302a' } },
   signature: 'Between the giants',
+  tvCameras: [
+    { section: 'Mule-trail sweep', at: 0.6, side: 'right', distance: 10, height: 12 },
+    { section: 'Yak hairpin', at: 0.4, side: 'right', distance: 10, height: 12 },
+  ],
   start: { landmark: 'chorten-row', scenery: ['rocks'], type: 'spiral-tower', gate: 'paddle', shots: { countdown: 'side', launch: 'low-chase' } },
   finish: { landmark: 'trail-village' },
   designChanges: [

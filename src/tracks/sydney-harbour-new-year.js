@@ -18,6 +18,10 @@ module.exports = track({
   lighting: 'fireworks-night',
   coaster: { height: 16, colours: { support: '#f2f2ee', rail: '#2a7ac8', tie: '#2e3a4a' } },
   signature: 'Bridge sweep',
+  tvCameras: [
+    { section: 'Bridge sweep', at: 0.8, side: 'right', distance: 10, height: 12 },
+    { section: 'Ferry spin', at: 0.8, side: 'left', distance: 10, height: 12 },
+  ],
   start: { landmark: 'harbour-arch-bridge', scenery: ['palms'], type: 'lighthouse', gate: 'stalls', shots: { countdown: 'above', launch: 'high-behind' } },
   finish: { landmark: 'marina' },
   designChanges: [

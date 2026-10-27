@@ -17,6 +17,10 @@ module.exports = track({
   biome: 'alpine',
   lighting: 'day',
   signature: 'Mine tunnel',
+  tvCameras: [
+    { section: 'Mine tunnel', at: 0.8, side: 'left', distance: 6, height: 12 },
+    { section: 'Mine splitter', at: 0.8, side: 'right', distance: 6, height: 5 },
+  ],
   billboardFrame: 'wood',
   // The gate at a summit lift station, the Wasatch peaks all around; the finish at the
   // bottom of Main Street, Old West shopfronts and the town lift overhead. (No Olympic rings.)

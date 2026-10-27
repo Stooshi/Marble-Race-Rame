@@ -20,6 +20,10 @@ module.exports = track({
   canyon: { palette: 'jinsha', depth: 52, river: 'left' },
   coaster: { colours: { support: '#6a665e', rail: '#efece4', tie: '#3a3833' } },
   signature: 'The tiger rock',
+  tvCameras: [
+    { section: 'The tiger rock', at: 0.8, side: 'left', distance: 10, height: 12 },
+    { section: 'The whirlpool', at: 0.8, side: 'right', distance: 10, height: 12 },
+  ],
   start: { landmark: 'trail-guesthouse', scenery: ['pines'], type: 'rooftop', gate: 'stalls', shots: { countdown: 'side', launch: 'look-back' } },
   finish: { landmark: 'gorge-viewpoint' },
   designChanges: [

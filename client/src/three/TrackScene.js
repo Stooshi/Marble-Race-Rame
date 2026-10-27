@@ -21,7 +21,7 @@ import { countdownPose, handover, launchHandover, launchPose, startLineShot } fr
 import { DETAIL_FADE_MS, flyoverHighlight, flyoverPath, flyoverTop } from './flyover';
 import { buildTrackFeatures } from './trackFeatures';
 import { buildLaneMarkings } from './scenery/athletics';
-import { TV, tvCameras, tvMoment } from './tvMoments';
+import { TV, tvCameras, tvMoment, tvSpots } from './tvMoments';
 import { buildStructures } from './structures';
 import { roofBlocks, stationRoof } from './scenery/coaster';
 import { keepOutBlocks } from './scenery/clearCheck';
@@ -416,7 +416,7 @@ export class TrackScene {
       if (marks.numbers) this.trackGroup.add(marks.numbers);
     }
     // TV moments: the track's fixed trackside cameras (./tvMoments.js).
-    this.tvCams = tvCameras(this.centerline, this.channel, track?.physics?.kit);
+    this.tvCams = tvCameras(this.centerline, this.channel, tvSpots(track?.physics));
     // Tunnels, bridges and waterfalls (tracks built with the track kit).
     this.structures = this.channel ? buildStructures(this.centerline, this.channel, track?.physics?.kit, { lite: this.lite }) : null;
     if (this.structures) this.trackGroup.add(this.structures.group);

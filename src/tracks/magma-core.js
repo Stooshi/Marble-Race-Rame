@@ -18,6 +18,10 @@ module.exports = track({
   block: { world: 'magma' },
   coaster: { style: 'blocks', colours: { support: '#3a3234', rail: '#e8d8c4', tie: '#231e20' } },
   signature: 'Over the magma',
+  tvCameras: [
+    { section: 'Over the magma', at: 0.8, side: 'left', distance: 10, height: 12 },
+    { section: 'Spire spiral', at: 0.8, side: 'left', distance: 10, height: 12 },
+  ],
   start: { landmark: 'basalt-spire', type: 'spiral-tower', gate: 'paddle', shots: { countdown: 'side', launch: 'high-behind' } },
   finish: { landmark: 'lava-falls' },
   designChanges: [

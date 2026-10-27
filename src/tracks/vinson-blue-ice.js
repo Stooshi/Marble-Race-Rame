@@ -19,6 +19,10 @@ module.exports = track({
   peak: { palette: 'vinson' },
   coaster: { style: 'alpine', colours: { support: '#3a3633', rail: '#eef2f6', tie: '#2b2826' } },
   signature: 'Nunatak slalom',
+  tvCameras: [
+    { section: 'Nunatak slalom', at: 0.8, side: 'left', distance: 10, height: 12 },
+    { section: 'Spiral round the camp', at: 0.6, side: 'left', distance: 10, height: 12 },
+  ],
   start: { landmark: 'ski-plane', type: 'ski-plane', gate: 'stalls', shots: { countdown: 'above', launch: 'overhead' } },
   finish: { landmark: 'peak-camp' },
   designChanges: [

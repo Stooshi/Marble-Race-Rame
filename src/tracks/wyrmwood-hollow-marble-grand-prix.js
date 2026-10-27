@@ -13,6 +13,10 @@ module.exports = track({
   variants: ['fog', 'day'],
   grandPrix: { crowd: 'villagers', barrier: 'stone' },
   signature: 'Dragon hairpin',
+  tvCameras: [
+    { section: 'Dragon hairpin', at: 0.4, side: 'right', distance: 10, height: 12 },
+    { section: 'Statue splitter', at: 0.8, side: 'left', distance: 10, height: 8 },
+  ],
   billboardFrame: 'banner',
   start: { landmark: 'ruined-castle', shots: { countdown: 'chase', launch: 'high-behind' } },
   finish: { landmark: 'amphitheatre' },

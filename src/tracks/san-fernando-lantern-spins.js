@@ -19,6 +19,10 @@ module.exports = track({
   block: { world: 'bonus' },
   coaster: { style: 'blocks', colours: { support: '#5a4a6a', rail: '#eef0f4', tie: '#2a2f36' } },
   signature: 'Lantern table top',
+  tvCameras: [
+    { section: 'Lantern table top', at: 0.8, side: 'left', distance: 10, height: 12 },
+    { section: 'Lantern spiral', at: 0.8, side: 'right', distance: 6, height: 12 },
+  ],
   start: { landmark: 'parol-lanterns', type: 'castle-tower', gate: 'stalls', shots: { countdown: 'above', launch: 'high-behind' } },
   finish: { landmark: 'parol-lanterns' },
   designChanges: [

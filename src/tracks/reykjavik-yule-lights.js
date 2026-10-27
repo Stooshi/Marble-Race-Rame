@@ -19,6 +19,10 @@ module.exports = track({
   block: { world: 'snow' },
   coaster: { style: 'blocks', colours: { support: '#d8dee6', rail: '#eef0f4', tie: '#2a2f36' } },
   signature: 'Harbour street jib line',
+  tvCameras: [
+    { section: 'Church hill spiral', at: 0.8, side: 'right', distance: 10, height: 12 },
+    { section: 'Hairpin', at: 0.4, side: 'right', distance: 10, height: 12 },
+  ],
   start: { landmark: 'block-lighthouse', type: 'lighthouse', gate: 'paddle', shots: { countdown: 'front', launch: 'overhead' } },
   finish: { landmark: 'harbour-office' },
   designChanges: [

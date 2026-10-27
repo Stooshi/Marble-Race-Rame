@@ -18,6 +18,10 @@ module.exports = track({
   biome: 'arctic',
   lighting: 'midnight-sun',
   signature: 'Crevasse bridge',
+  tvCameras: [
+    { section: 'Crevasse bridge', at: 0.8, side: 'left', distance: 6, height: 8 },
+    { section: 'Glacier splitter', at: 0.2, side: 'left', distance: 6, height: 8 },
+  ],
   billboardFrame: 'crates',
   // The gate at a base camp on the ice sheet (orange tents, flags, a loaded dog sled); the
   // finish on Ilulissat's harbour front, painted wooden houses and icebergs in the bay.

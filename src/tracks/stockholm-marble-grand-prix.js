@@ -13,6 +13,10 @@ module.exports = track({
   variants: ['sunset', 'midnight-sun'],
   grandPrix: true,
   signature: 'Bridge sweep',
+  tvCameras: [
+    { section: 'Bridge sweep', at: 0.8, side: 'right', distance: 6, height: 8 },
+    { section: 'Island splitter', at: 0.6, side: 'right', distance: 6, height: 5 },
+  ],
   billboardFrame: 'plain',
   start: { scenery: ['colourful-houses'], shots: { countdown: 'front', launch: 'high-behind' } },
   finish: { landmark: 'steamboats', scenery: ['grandstand'] },

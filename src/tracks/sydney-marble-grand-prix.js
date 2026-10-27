@@ -13,6 +13,10 @@ module.exports = track({
   variants: ['sunset'],
   grandPrix: true,
   signature: 'Arch plunge',
+  tvCameras: [
+    { section: 'Opera splitter', at: 0.8, side: 'left', distance: 10, height: 8 },
+    { section: 'Quay spiral', at: 0.8, side: 'right', distance: 10, height: 12 },
+  ],
   billboardFrame: 'plain',
   start: { scenery: ['sandstone-terraces'], shots: { countdown: 'chase', launch: 'side' } },
   finish: { landmark: 'opera-house', scenery: ['grandstand'] },
