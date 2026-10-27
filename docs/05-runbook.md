@@ -47,7 +47,7 @@ Pushing to `Main` does **not** deploy the server. Moses deploys it by uploading 
 3. New data updates run once each.
 4. Unfinished races are recovered.
 5. The race scheduler starts, and the IP trimming runs (then daily).
-6. The background jobs start: guest retention, push (dry runs until `PUSH_SENDING=on`), purchase emails, Google Play (hourly and every 6 hours) and the season jobs (`src/server.js`).
+6. The background jobs start: guest retention, push (dry runs until `PUSH_SENDING=on`), purchase emails, Google Play (hourly and every 6 hours), the season jobs, the leagues (every 30 s: leagues that have ended, League Nights about to start) and the replays over 30 days old (daily, dry runs until `REPLAY_TRIM=on`) (`src/server.js`).
 
 **Restart without a new deploy:** Railway dashboard → service → ⋮ → Restart. Races in progress resume or finish correctly after a restart.
 
