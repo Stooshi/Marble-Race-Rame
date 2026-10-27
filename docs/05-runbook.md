@@ -54,7 +54,7 @@ Pushing to `Main` does **not** deploy the server. Moses deploys it by uploading 
 
 **Changing variables: never with the dashboard's Deploy button.** Deploying staged variable changes in the dashboard does not restart our last `railway up`: Railway **rebuilds the service from the GitHub branch still linked to it**, `claude/kind-franklin-mj16u8`, frozen at 2 Oct 2026 (seen twice: 23 Oct and 27 Oct 2026). That build has no `version` on `/health` (`{"status":"ok","db":"ok","uptime":…}` only) and none of the routes added since, including saving a guest's marble (`POST /api/auth/claim`: "Route … not found") and starting as a guest, on the website and in the apps alike. Railway users report the same: a variable change redeploys the last linked commit, not the last CLI deployment ([Railway Help Station](https://station.railway.com/questions/deploy-after-variable-update-skips-cli-d-53228681)).
 
-1. **Once (stops it for good):** Railway → the server service → **Settings → Source → Disconnect** the GitHub repository. Our deploys come only from `railway up`, so nothing else changes. (The old branch can then be deleted on GitHub; ask first, it is the only copy of the 2 Oct code.)
+1. **Once (stops it for good; done 27 Oct 2026):** Railway → the server service → **Settings → Source → Disconnect** the GitHub repository. Our deploys come only from `railway up`, so nothing else changes. (The old branch can then be deleted on GitHub; ask first, it is the only copy of the 2 Oct code.)
 2. **Every variable change, from the unzipped folder of the build that is live** (a fresh ZIP of Main if unsure):
    ```
    railway variables --set "LEAGUES=admins" --skip-deploys
@@ -273,7 +273,7 @@ Built 27 Oct 2026 (`src/game/replayRetention.js`). After the deploy that brings 
 
 ## Leagues: testing and switching on
 
-Built switched off (27 Oct 2026). The server variable `LEAGUES` decides (see `docs/01-architecture.md`):
+Built switched off; **on for everyone since 27 Oct 2026** (`LEAGUES=on`, the deploy `b10e1672d598`). The server variable `LEAGUES` decides (see `docs/01-architecture.md`):
 1. **After the deploy** that brings leagues: leave `LEAGUES` unset (off). `GET /api/leagues/status` answers `{"enabled":false}`; everything else under `/api/leagues` answers 404, and the website shows nothing.
 2. **To test in production:** `railway variables --set "LEAGUES=admins" --skip-deploys`, then `railway up` from the folder, then check `/health` ([Changing variables](#the-game-server-railway-by-hand)); never the dashboard's Deploy button. Only admin accounts then see LEAGUES on the home page and can make and race leagues.
 3. **For everyone:** `railway variables --set "LEAGUES=on" --skip-deploys`, then `railway up`, then check `/health` (it must show `version`; if not, `railway up` again). Check the variable with `railway variables --kv | grep '^LEAGUES='`. While off or admins only, an invite link shows "Leagues are coming soon" (not a 404). Back to off: delete the variable (or `off`). Leagues already made stay in the database and come back when switched on again; their end job keeps running either way.

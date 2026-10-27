@@ -14,12 +14,12 @@
   - Stripe on the website, in **test mode** until Moses says otherwise.
   - Google Play Billing and Apple in-app purchases are built.
   - Coin packs and the Holiday Season pass, pre-sale from 28 Nov.
+- **Leagues part 1: on for everyone** since the evening of 27 Oct 2026 (`LEAGUES=on`, deploy `b10e1672d598`): the free 5-track League and the slim League Night, with the rename, Start League Night now, track names on the scoreboards, "Leagues are coming soon" on invite links while off, and the Leagues Help answers. Part 2 (credits, Pro League) after 1 Nov, behind `LEAGUES_PRO`.
 - **Built, switched off:**
   - push notifications (first app update, December);
   - gift codes;
   - email: pass reminders and confirmations, waiting for Brevo and its key;
   - the guest deletion job (dry run);
-  - **Leagues part 1** (the free 5-track League and the slim League Night; `LEAGUES` on Railway, off until Moses has tested it; built 27 Oct, on the server since the deploy of 27 Oct, `126e6e6cd6fa`);
   - deleting replays over 30 days old (dry run until `REPLAY_TRIM=on`; new replays are already a third of the size).
 - **Newest this week:**
   - player names everywhere;
