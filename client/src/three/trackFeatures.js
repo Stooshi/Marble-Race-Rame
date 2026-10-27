@@ -10,7 +10,7 @@
  */
 import {
   AdditiveBlending, BoxGeometry, BufferGeometry, CanvasTexture, Color, ConeGeometry, CylinderGeometry, DoubleSide, Float32BufferAttribute,
-  Group, IcosahedronGeometry, Matrix4, Mesh, MeshBasicMaterial, MeshLambertMaterial, Quaternion, SphereGeometry, SRGBColorSpace, Vector3,
+  Group, IcosahedronGeometry, InstancedBufferAttribute, InstancedMesh, Matrix4, Mesh, MeshBasicMaterial, MeshLambertMaterial, Object3D, Quaternion, SphereGeometry, SRGBColorSpace, Vector3,
 } from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { channelLipAt, placeOnChannel } from './iceChannel';
@@ -173,10 +173,62 @@ function seaLionShape(head = 1, detail = 1) {
 }
 
 /**
+ * Phones: one see-through effect (the boost streak, the booster flame's plume or its core) for every marble
+ * in a single instanced draw call instead of a mesh each (Moses, 27 Oct 2026: a boost pad with the whole
+ * field on it was 30 draw calls). `proxy()` hands out a stand-in for one marble's mesh (an Object3D whose
+ * `visible`, position, rotation, scale and `material.opacity` the effect code sets as before); `commit()`
+ * writes them all into the instances, the opacity as each copy's own alpha. The same picture.
+ */
+function effectPool(geometry, material, max, renderOrder) {
+  const mesh = new InstancedMesh(geometry, material, max);
+  const alpha = new InstancedBufferAttribute(new Float32Array(max), 1);
+  mesh.geometry = geometry.clone();
+  mesh.geometry.setAttribute('instanceAlpha', alpha);
+  material.onBeforeCompile = (shader) => {
+    shader.vertexShader = shader.vertexShader
+      .replace('#include <common>', '#include <common>\nattribute float instanceAlpha;\nvarying float vInstanceAlpha;')
+      .replace('#include <begin_vertex>', '#include <begin_vertex>\nvInstanceAlpha = instanceAlpha;');
+    shader.fragmentShader = shader.fragmentShader
+      .replace('#include <common>', '#include <common>\nvarying float vInstanceAlpha;')
+      .replace('vec4 diffuseColor = vec4( diffuse, opacity );', 'vec4 diffuseColor = vec4( diffuse, opacity * vInstanceAlpha );');
+  };
+  material.forceSinglePass = true;
+  mesh.count = 0;
+  mesh.visible = false;
+  mesh.frustumCulled = false; // (only drawn while one is on, and they move about)
+  mesh.renderOrder = renderOrder;
+  const proxies = [];
+  return {
+    mesh,
+    proxy() {
+      const p = new Object3D();
+      p.visible = false;
+      p.material = { opacity: 0 };
+      proxies.push(p);
+      return p;
+    },
+    commit() {
+      let n = 0;
+      for (const p of proxies) {
+        if (!p.visible || n >= max) continue;
+        p.updateMatrix();
+        mesh.setMatrixAt(n, p.matrix);
+        alpha.setX(n, p.material.opacity);
+        n += 1;
+      }
+      mesh.count = n;
+      mesh.visible = n > 0;
+      mesh.instanceMatrix.needsUpdate = true;
+      alpha.needsUpdate = true;
+    },
+  };
+}
+
+/**
  * Builds the features of a track on an ice channel.
  * Returns { group, update(t) } (t: ms after the start) or null if it has none.
  */
-export function buildTrackFeatures(centerline, channel, features, { lite = false, compact = false, season = false } = {}) {
+export function buildTrackFeatures(centerline, channel, features, { lite = false, compact = false, season = false, area = null } = {}) {
   if (!channel || !Array.isArray(features) || features.length === 0) return null;
   const across = channel.radius * channel.maxAngle; // metres along the wall from the middle to the top, per unit of l
   const group = new Group();
@@ -1107,7 +1159,10 @@ export function buildTrackFeatures(centerline, channel, features, { lite = false
     ...Object.fromEntries(['baboon', 'baboonFace', 'elephant', 'tusk', 'zebraW', 'zebraB', 'giraffe', 'giraffeSpot'].map((k) => [k, new MeshLambertMaterial({ color: FEATURE_COLORS[k], flatShading: true })])),
   };
   const plainPieces = [];
-  const plain = (m) => m.isMeshLambertMaterial && m.flatShading && !m.transparent && !m.map && !m.vertexColors && !m.polygonOffset && m.emissive.getHex() === 0;
+  const smoothPieces = [];
+  // (Phones: the smooth-shaded plain colours too, into a smooth shared mesh: the older tracks' costumes,
+  // a dozen calls on Bobsleigh Run; 27 Oct 2026. Kit tracks' costumes are all flat already.)
+  const plain = (m) => m.isMeshLambertMaterial && (m.flatShading || lite) && !m.transparent && !m.map && !m.vertexColors && !m.polygonOffset && m.emissive.getHex() === 0;
   for (const [key, list] of Object.entries(parts)) {
     // Merge like with like (all with the same attributes).
     const keep = ['position', 'normal', ...(key === 'chevron' ? ['uv'] : []), ...(key === 'bump' || key === 'cobbles' || key === 'jib' ? ['color'] : [])];
@@ -1121,7 +1176,7 @@ export function buildTrackFeatures(centerline, channel, features, { lite = false
     materials[key] ??= new MeshLambertMaterial({ color: COSTUME_COLORS[key] ?? FEATURE_COLORS[key] ?? '#ff00ff', flatShading: true });
     // Kit tracks (compact): plain flat colours go into shared meshes, merged by neighbourhood below.
     if (compact && plain(materials[key]) && keep.length === 2) {
-      for (const g of ready) plainPieces.push(piece(g, materials[key].color));
+      for (const g of ready) (materials[key].flatShading ? plainPieces : smoothPieces).push(piece(g, materials[key].color));
       continue;
     }
     const mesh = new Mesh(mergeGeometries(ready), materials[key]);
@@ -1131,7 +1186,15 @@ export function buildTrackFeatures(centerline, channel, features, { lite = false
   if (plainPieces.length) {
     const shared = new MeshLambertMaterial({ vertexColors: true, flatShading: true });
     // (Bigger areas on a phone on the season's tracks, which also carry the holiday layer: fewer draw calls.)
-    for (const geometry of mergeByArea(plainPieces, lite && season ? 400 : 250)) {
+    for (const geometry of mergeByArea(plainPieces, area ?? (lite && season ? 400 : 250))) {
+      const mesh = new Mesh(geometry, shared);
+      mesh.name = 'costumes';
+      group.add(mesh);
+    }
+  }
+  if (smoothPieces.length) {
+    const shared = new MeshLambertMaterial({ vertexColors: true });
+    for (const geometry of mergeByArea(smoothPieces, area ?? 400)) {
       const mesh = new Mesh(geometry, shared);
       mesh.name = 'costumes';
       group.add(mesh);
@@ -1179,7 +1242,17 @@ export function buildTrackFeatures(centerline, channel, features, { lite = false
     plumeGeo.setAttribute('color', new Float32BufferAttribute(colors, 4));
   }
   const streaks = new Map(); // marble index → { mesh, plume, core, start, dir }
+  // (Phones: every marble's streak, plume and core in three instanced draw calls; see effectPool.)
+  const pools = lite ? {
+    streak: effectPool(streakGeo, new MeshBasicMaterial({ color: '#ffd21f', transparent: true, opacity: 1, depthWrite: false, blending: AdditiveBlending, side: DoubleSide }), 24, 3),
+    plume: effectPool(plumeGeo, new MeshBasicMaterial({ vertexColors: true, transparent: true, opacity: 1, depthWrite: false, side: DoubleSide }), 24, 4),
+    core: effectPool(plumeGeo, new MeshBasicMaterial({ color: '#fffbe6', transparent: true, opacity: 1, depthWrite: false, side: DoubleSide }), 24, 5),
+  } : null;
+  if (pools) for (const p of Object.values(pools)) group.add(p.mesh);
   const streakOf = (i) => {
+    if (pools && !streaks.has(i)) {
+      streaks.set(i, { mesh: pools.streak.proxy(), plume: pools.plume.proxy(), core: pools.core.proxy(), start: -Infinity, dir: new Vector3(0, 0, 1) });
+    }
     if (!streaks.has(i)) {
       const m = new Mesh(streakGeo, new MeshBasicMaterial({ color: '#ffd21f', transparent: true, opacity: 0, depthWrite: false, blending: AdditiveBlending, side: DoubleSide }));
       m.visible = false;
@@ -1318,6 +1391,7 @@ export function buildTrackFeatures(centerline, channel, features, { lite = false
       s.mesh.position.copy(pos).addScaledVector(s.dir, -len / 2 - 0.3);
       s.mesh.material.opacity = 0.75 * (1 - k);
     }
+    if (pools) for (const p of Object.values(pools)) p.commit();
     for (let i = 0; i < n; i += 1) (prevPos[i] ??= new Vector3()).copy(positions[i]);
     prevT = t;
   };

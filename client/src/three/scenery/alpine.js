@@ -17,7 +17,7 @@ import {
 import { beam, box, hashString, merge, piece, seededRandom, smoothstep, triangles } from './parts';
 import { trackCorridor } from './clearCheck';
 import { buildTerrain, makeHeightField } from './terrain';
-import { channelGround, tiledInstances } from './channelGround';
+import { channelGround, mergeMeshes, ONE_TILE, tiledInstances } from './channelGround';
 
 const SNOW_LEVEL = -2.05; // the valley floor (the theme's ground)
 const SNOW_BANK = 2;      // metres of snow bank beside the channel's rim, at its height
@@ -179,7 +179,7 @@ export function buildAlpine(centerline, track, theme, { lite = false } = {}) {
   const ground = buildTerrain(field, { minX: minX - margin, maxX: maxX + margin, minZ: minZ - margin, maxZ: maxZ + margin }, {
     cells: lite ? 90 : 140,
     colors: { sand: '#eef3f8', grass: '#f2f6fa', dry: '#ffffff', shade: '#8e9fb3' },
-    tiles: lite ? 4 : 6,
+    tiles: lite ? 1 : 6, // (phones: one piece, one draw call: the race's camera sees nearly all of it anyway; 27 Oct 2026)
   });
   const terrain = new Group();
   const groundMat = new MeshLambertMaterial({ vertexColors: true, flatShading: true });
@@ -260,7 +260,7 @@ export function buildAlpine(centerline, track, theme, { lite = false } = {}) {
     // Side-on to the track, head turned towards the marbles coming down.
     put(mooseGeometry(), 'moose', at.x, at.z, Math.atan2(-along.z, along.x) + Math.PI, 4);
   }
-  group.add(placed);
+  group.add(lite ? mergeMeshes(placed) : placed); // (phones: the buildings and flags in one draw call)
 
   // Wooden trestles where the channel runs high above the ground (over the corkscrew's lower loop).
   const supported = []; // where (share of the track) a trestle stands
@@ -347,8 +347,8 @@ export function buildAlpine(centerline, track, theme, { lite = false } = {}) {
     mesh.setColorAt(i, tint.setScalar(h.tint));
   };
   const treeMat = new MeshLambertMaterial({ vertexColors: true, flatShading: true });
-  group.add(...tiledInstances(trees, [pineGeometry(lite)], [treeMat], ['forest'], place));
-  group.add(...tiledInstances(bushes, [bushGeometry()], [treeMat], ['bushes'], place));
+  group.add(...tiledInstances(trees, [pineGeometry(lite)], [treeMat], ['forest'], place, { tile: lite ? ONE_TILE : undefined }));
+  group.add(...tiledInstances(bushes, [bushGeometry()], [treeMat], ['bushes'], place, { tile: lite ? ONE_TILE : undefined }));
 
   // Snowy peaks all around, far off.
   const peaks = [];

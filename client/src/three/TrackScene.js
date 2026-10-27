@@ -403,9 +403,11 @@ export class TrackScene {
     });
     if (this.holiday) this.trackGroup.add(this.holiday.group);
     // Kit tracks: the finish's pieces drawn as one mesh per material (a few draw calls, not a dozen).
-    this.trackGroup.add(track?.physics?.kit ? mergeByMaterial(arch) : arch);
+    // (Phones on the older worlds too: 27 Oct 2026, the phone's 35 calls. All boxes, so their plain colours
+    // baked into one flat-shaded mesh look the same.)
+    this.trackGroup.add(track?.physics?.kit || this.lite ? mergeByMaterial(arch) : arch);
     // Boost pads, speed bumps and obstacles (ice channels with physics.features).
-    this.features = this.channel ? buildTrackFeatures(this.centerline, this.channel, track?.physics?.features, { lite: this.lite, compact: Boolean(track?.physics?.kit), season: Boolean(track?.physics?.kit?.season) }) : null;
+    this.features = this.channel ? buildTrackFeatures(this.centerline, this.channel, track?.physics?.features, { lite: this.lite, compact: Boolean(track?.physics?.kit) || this.lite, ...(this.lite && !track?.physics?.kit && { area: 1000 }), season: Boolean(track?.physics?.kit?.season) }) : null;
     if (this.features) this.trackGroup.add(this.features.group);
     // Track and Field: the tartan's white lane lines, start and finish lines and lane numbers (part of the track's surface).
     if (this.channel && track?.physics?.kit?.athletics) {

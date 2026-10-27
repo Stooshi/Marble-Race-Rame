@@ -68,8 +68,11 @@ describe('Table Mountain Run in Cape Town', () => {
 
   it('has its landmarks: Table Mountain, Lion\'s Head, the stadium, the clock tower, the Bo-Kaap, forest, fynbos and the city', () => {
     for (const scenery of Object.values(built)) {
+      // (On phones the buildings are one mesh, 27 Oct 2026: its parts named in userData.parts.)
+      const parts = [];
+      scenery.traverse((o) => { if (o.userData.parts) parts.push(...o.userData.parts); });
       for (const name of ['Table Mountain', "Lion's Head", 'Cape Town Stadium', 'clock tower', 'start house', 'big rock', "Lion's Head (divider)"]) {
-        expect(named(scenery, name).length, name).toBe(1);
+        expect(named(scenery, name).length + parts.filter((n) => n === name).length, name).toBe(1);
       }
       const { trees, bushes, city, boKaap } = scenery.userData;
       expect(trees).toBeGreaterThan(100);

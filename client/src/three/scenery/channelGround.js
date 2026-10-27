@@ -3,7 +3,8 @@
  * street, Bobsleigh Run's ice): the ground that hugs the channel, and drawing
  * many copies of a thing in tiles so only those in view are drawn.
  */
-import { Group, InstancedMesh, Vector3 } from 'three';
+import { Group, InstancedMesh, Mesh, Vector3 } from 'three';
+import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { channelLipAt, channelOf, channelRadiusAt, forkAt, forkOffset, forkRadius } from '../iceChannel';
 import { PEN_DROP } from '../marbles';
 
@@ -45,16 +46,47 @@ export function channelGround(centerline, track, { rim, dip = 0, under = 2 }) {
 }
 
 const TILE = 180; // metres: copies are drawn in blocks this size, each skipped when out of view
+// (The older hand-built worlds on phones: one block for everything, so each kind of copy is one draw call
+// (Moses, 27 Oct 2026: within the phone's 35 calls in the race and the flyover). Looks the same.)
+export const ONE_TILE = 1e6;
+
+/**
+ * The meshes of `group` merged into one per material (their placement baked in), for phones: the same
+ * picture in fewer draw calls. Instanced meshes and anything see-through stay as they are. → the group.
+ */
+export function mergeMeshes(group) {
+  group.updateMatrixWorld(true);
+  const byKey = new Map();
+  const keep = [];
+  for (const o of [...group.children]) {
+    if (!o.isMesh || o.isInstancedMesh || Array.isArray(o.material) || o.material.transparent || o.children.length) { keep.push(o); continue; }
+    const g = (o.geometry.index ? o.geometry.toNonIndexed() : o.geometry.clone()).applyMatrix4(o.matrix);
+    const key = `${o.material.uuid}|${Object.keys(g.attributes).sort().join()}`;
+    if (!byKey.has(key)) byKey.set(key, { material: o.material, list: [], parts: [] });
+    byKey.get(key).list.push(g);
+    byKey.get(key).parts.push(o.name);
+  }
+  group.clear();
+  for (const o of keep) group.add(o);
+  for (const { material, list, parts } of byKey.values()) {
+    const mesh = new Mesh(list.length > 1 ? mergeGeometries(list) : list[0], material);
+    mesh.name = group.name;
+    mesh.userData.parts = parts; // (what it is made of, by name)
+    group.add(mesh);
+  }
+  return group;
+}
 
 /**
  * Instanced copies of each geometry in `geometries` (sharing the materials),
  * one set per TILE-sized block of ground, so blocks out of view aren't drawn.
  * `set(mesh, i, item, n)` places copy i of geometry n. Returns one Group per geometry.
+ * `tile`: the block size (phones on the older worlds: ONE_TILE, all copies in one draw call per geometry).
  */
-export function tiledInstances(items, geometries, materials, names, set) {
+export function tiledInstances(items, geometries, materials, names, set, { tile = TILE } = {}) {
   const blocks = new Map();
   for (const h of items) {
-    const k = `${Math.floor(h.x / TILE)},${Math.floor(h.z / TILE)}`;
+    const k = tile >= ONE_TILE ? 'all' : `${Math.floor(h.x / tile)},${Math.floor(h.z / tile)}`;
     if (!blocks.has(k)) blocks.set(k, []);
     blocks.get(k).push(h);
   }

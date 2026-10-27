@@ -19,7 +19,7 @@ import {
 } from 'three';
 import { box, hashString, merge, piece, seededRandom, smoothstep, triangles } from './parts';
 import { buildTerrain, makeHeightField } from './terrain';
-import { channelGround, tiledInstances } from './channelGround';
+import { channelGround, mergeMeshes, ONE_TILE, tiledInstances } from './channelGround';
 import { forkOffset } from '../iceChannel';
 
 const SEA_LEVEL = -1.2;  // the bay and the harbour (the theme's ground)
@@ -219,7 +219,7 @@ export function buildCapeTown(centerline, track, theme, { lite = false } = {}) {
   const ground = buildTerrain(field, { minX: minX - margin, maxX: maxX + margin, minZ: minZ - margin, maxZ: maxZ + margin }, {
     cells: lite ? 90 : 140,
     colors: { sand: '#e3d3a3', grass: '#7f9455', dry: '#a59c68', shade: '#5f6243' },
-    tiles: lite ? 4 : 6,
+    tiles: lite ? 3 : 6, // (phones: 9 pieces, so the race's camera draws about half: 27 Oct 2026)
   });
   const terrain = new Group();
   const groundMat = new MeshLambertMaterial({ vertexColors: true, flatShading: true });
@@ -334,7 +334,7 @@ export function buildCapeTown(centerline, track, theme, { lite = false } = {}) {
       placed.add(mesh);
     }
   }
-  group.add(placed);
+  group.add(lite ? mergeMeshes(placed) : placed); // (phones: the buildings in one draw call)
 
   // Table Mountain and Lion's Head, far off behind the run (beyond the start, up the mountain), always in view.
   {
@@ -409,17 +409,17 @@ export function buildCapeTown(centerline, track, theme, { lite = false } = {}) {
     mesh.setColorAt(i, tint.setScalar(h.tint));
   };
   const instMat = new MeshLambertMaterial({ vertexColors: true, flatShading: true });
-  group.add(...tiledInstances(trees, [stonePineGeometry(lite)], [instMat], ['forest'], place));
-  group.add(...tiledInstances(bushes, [fynbosGeometry(lite)], [instMat], ['fynbos'], place));
-  group.add(...tiledInstances(rocks, [boulderGeometry()], [instMat], ['boulders'], place));
+  group.add(...tiledInstances(trees, [stonePineGeometry(lite)], [instMat], ['forest'], place, { tile: lite ? ONE_TILE : undefined }));
+  group.add(...tiledInstances(bushes, [fynbosGeometry(lite)], [instMat], ['fynbos'], place, { tile: lite ? ONE_TILE : undefined }));
+  group.add(...tiledInstances(rocks, [boulderGeometry()], [instMat], ['boulders'], place, { tile: lite ? ONE_TILE : undefined }));
   group.add(...tiledInstances(blocks, [blockGeometry()], [instMat], ['city'], (mesh, i, h) => {
     mesh.setMatrixAt(i, m.compose(new Vector3(h.x, h.y - 0.5, h.z), q.setFromAxisAngle(up, h.yaw), new Vector3(h.w, h.h, h.d)));
     mesh.setColorAt(i, tint.setScalar(h.tint));
-  }));
+  }, { tile: lite ? ONE_TILE : undefined }));
   group.add(...tiledInstances(boKaap, [boKaapGeometry()], [instMat], ['Bo-Kaap'], (mesh, i, h) => {
     mesh.setMatrixAt(i, m.compose(new Vector3(h.x, h.y - 0.2, h.z), q.setFromAxisAngle(up, h.yaw), new Vector3(1, 1, 1)));
     mesh.setColorAt(i, tint.set(h.color));
-  }));
+  }, { tile: lite ? ONE_TILE : undefined }));
 
   // The highest solid thing at a spot (ground, tree tops, buildings), so the race camera stays clear of it.
   const cell = 10;

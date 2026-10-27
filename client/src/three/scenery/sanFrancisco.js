@@ -13,7 +13,7 @@ import {
 } from 'three';
 import { beam, box, hashString, merge, seededRandom, smoothstep, triangles } from './parts';
 import { buildTerrain, makeHeightField } from './terrain';
-import { channelGround, tiledInstances } from './channelGround';
+import { channelGround, ONE_TILE, tiledInstances } from './channelGround';
 
 const PAVEMENT = 3; // metres of pavement each side of a street channel (as iceChannel.js draws it)
 const BRIDGE_AHEAD = 620; // metres from the finish line out to the Golden Gate, straight ahead across the bay (pier finish)
@@ -300,7 +300,7 @@ export function buildSanFrancisco(centerline, track, theme, { lite = false } = {
   const ground = buildTerrain(field, { minX: minX - margin, maxX: maxX + margin, minZ: minZ - margin, maxZ: maxZ + margin }, {
     // Finer for a street channel, so the ground meets its pavements (about 10 m squares; 12 on phones).
     cells: street ? (lite ? 100 : 150) : 80,
-    tiles: lite ? 4 : 6,
+    tiles: lite ? 2 : 6, // (phones: 4 pieces: 27 Oct 2026)
   });
   const terrain = new Group();
   const groundMat = new MeshLambertMaterial({ vertexColors: true, flatShading: true });
@@ -324,8 +324,8 @@ export function buildSanFrancisco(centerline, track, theme, { lite = false } = {
   const simple = farHouseGeometry();
   const simpleMat = new MeshLambertMaterial({ vertexColors: true, flatShading: true });
   if (lite) {
-    // Phones: every house the simple kind (walls, gables, roof), in one set of tiles.
-    group.add(...tiledInstances([...spots.near, ...spots.far], [simple], [simpleMat], ['houses'], paint));
+    // Phones: every house the simple kind (walls, gables, roof), all in one draw call (27 Oct 2026; it was a set of tiles).
+    group.add(...tiledInstances([...spots.near, ...spots.far], [simple], [simpleMat], ['houses'], paint, { tile: ONE_TILE }));
   } else {
     const [bodies, trims] = tiledInstances(spots.near, [body, trim], [
       new MeshLambertMaterial({ flatShading: true }),

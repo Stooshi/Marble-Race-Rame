@@ -419,7 +419,7 @@ export function channelDetail(track, channel, lite) {
 
 /** How many segments each drawn piece of the channel holds (channelPieces). */
 export function channelPieceSize(track, lite) {
-  return track?.physics?.kit ? (lite ? 200 : 150) : 40;
+  return track?.physics?.kit ? (lite ? 200 : 150) : lite ? 60 : 40; // (phones: the older tracks in 60 m pieces, 27 Oct 2026)
 }
 
 /**
