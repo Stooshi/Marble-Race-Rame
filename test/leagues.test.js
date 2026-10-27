@@ -119,7 +119,14 @@ test('a League from start to end: create, join, tries, best times, the total, th
 
     const timesA = [];
     for (const t of five) timesA.push(await raceOn(a, t));
+    // The race's results name the league, and whether it was a new best there.
+    const { rows: [firstRun] } = await db.query('SELECT race_id FROM league_runs WHERE user_id = $1 ORDER BY created_at LIMIT 1', [a.user.id]);
+    const res1 = (await call(`/races/${firstRun.race_id}/results`)).body;
+    assert.equal(res1.league.code, code);
+    assert.equal(res1.league.new_best, true);
     const again = await raceOn(a, five[0]); // a second try on the first track: the better one counts
+    const { rows: [secondRun] } = await db.query('SELECT race_id FROM league_runs WHERE user_id = $1 AND track_id = $2 ORDER BY created_at DESC LIMIT 1', [a.user.id, five[0]]);
+    assert.equal((await call(`/races/${secondRun.race_id}/results`)).body.league.new_best, again < timesA[0]);
     const bestA0 = Math.min(timesA[0], again);
     let view = (await call(`/leagues/${code}`, { token: a.token })).body;
     assert.equal(view.me.done, 5);

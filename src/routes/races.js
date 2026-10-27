@@ -28,7 +28,8 @@ const RACE_LIST_SQL = `
          (SELECT COUNT(*)::int FROM race_entries e WHERE e.race_id = r.id) AS entry_count,
          (SELECT COUNT(*)::int FROM race_entries e WHERE e.race_id = r.id AND NOT e.is_bot) AS player_count,
          (SELECT ro.code FROM rooms ro WHERE ro.id = r.room_id) AS room_code,
-         (SELECT ro.kind FROM rooms ro WHERE ro.id = r.room_id) AS room_kind
+         (SELECT ro.kind FROM rooms ro WHERE ro.id = r.room_id) AS room_kind,
+         r.league_id, (SELECT lg.code FROM leagues lg WHERE lg.id = r.league_id) AS league_code
     FROM races r JOIN tracks t ON t.id = r.track_id`;
 
 async function getRaceRow(id) {
@@ -373,8 +374,22 @@ router.get('/:id/results', async (req, res) => {
     raceService.getComparisons(db, id),
   ]);
   const winner = results[0];
+  // A league race: which league, and for its member whether it was a new best on this track there.
+  let league = null;
+  if (race.league_id) {
+    const { rows: [lg] } = await db.query('SELECT code, name, status FROM leagues WHERE id = $1', [race.league_id]);
+    const { rows: [run] } = await db.query(
+      `SELECT lr.user_id, lr.time_ms,
+              (SELECT MIN(o.time_ms) FROM league_runs o WHERE o.league_id = lr.league_id AND o.user_id = lr.user_id
+                  AND o.track_id = lr.track_id AND o.id <> lr.id AND o.time_ms IS NOT NULL AND o.created_at < lr.created_at) AS best_before
+         FROM league_runs lr WHERE lr.race_id = $1`,
+      [id],
+    );
+    if (lg) league = { code: lg.code, name: lg.name, status: lg.status, user_id: run?.user_id ?? null, time_ms: run?.time_ms ?? null, best_before_ms: run?.best_before ?? null, new_best: Boolean(run?.time_ms && (run.best_before === null || run.time_ms < run.best_before)) };
+  }
   res.json({
     race,
+    ...(league && { league }),
     results: results.map((r) => {
       const c = comparisons[r.entry_id] || {};
       const beats = (value, previous) => previous === null || previous === undefined || value < previous;
