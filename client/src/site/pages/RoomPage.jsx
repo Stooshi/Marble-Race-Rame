@@ -393,9 +393,9 @@ export default function RoomPage() {
             {typeof navigator !== 'undefined' && navigator.share && <button type="button" className="ms-btn ms-btn--sm" onClick={share}>Share…</button>}
           </div>
           {qr && <img src={qr} alt={`QR code for room ${code}`} width={180} height={180} style={{ borderRadius: 12, background: '#fff' }} />}
-          <p className="ms-note">{quick
+          {!night && <p className="ms-note">{quick
             ? `Friends open the link or scan the code before it starts: no account needed, up to ${view.room.size} players.`
-            : `Friends open the link or scan the code: no account needed, up to ${view.room.size} players. The room stays open for two hours after the last race.`}</p>
+            : `Friends open the link or scan the code: no account needed, up to ${view.room.size} players. The room stays open for two hours after the last race.`}</p>}
           {me?.isHost && open && <PushInvites code={code} />}
         </section>
       </div>

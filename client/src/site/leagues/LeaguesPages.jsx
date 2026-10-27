@@ -608,6 +608,8 @@ function LeagueNight({ code, view, member, mine, isOpen, now, skew, userId, onVi
   const latest = new Date(ends.getTime() - races * RACE_ROOM_MIN * 60_000);
   const trackName = (id) => view.tracks.find((t) => t.id === id)?.name ?? '';
   const startsIn = live ? new Date(n.starts_at).getTime() - (now + skew) : null;
+  // (Under way once a race has started: the host may start the first one early.)
+  const started = Boolean(n?.race_list?.some((r) => r.status !== 'lobby'));
   return (
     <section className="ms-card ms-league-col ms-league-night" aria-labelledby="night-h">
       <div className="ms-row" style={{ justifyContent: 'space-between', alignItems: 'baseline' }}>
@@ -622,7 +624,7 @@ function LeagueNight({ code, view, member, mine, isOpen, now, skew, userId, onVi
       )}
       {live && n.status === 'open' && (
         <div className="ms-league-join">
-          <span>{startsIn > 0 ? `The league room is open: race 1 of ${n.races} starts ${timeLeft(n.starts_at, now, skew).replace(' left', '')} from now.` : `League Night is on: ${n.race_list.filter((r) => r.status === 'finished').length} of ${n.races} races run.`}</span>
+          <span>{!started && startsIn > 0 ? `The league room is open: race 1 of ${n.races} starts ${timeLeft(n.starts_at, now, skew).replace(' left', '')} from now.` : `League Night is on: ${n.race_list.filter((r) => r.status === 'finished').length} of ${n.races} races run.`}</span>
           {member && n.room_code && <Link to={`/r/${n.room_code}`} className="ms-btn ms-btn--primary ms-btn--lg">JOIN THE LEAGUE ROOM</Link>}
         </div>
       )}
@@ -650,7 +652,7 @@ function LeagueNight({ code, view, member, mine, isOpen, now, skew, userId, onVi
           <button type="button" className="ms-btn ms-btn--sm ms-btn--ghost" disabled={busy} onClick={off}>Call it off</button>
         </div>
       ))}
-      {mine && isOpen && n?.status === 'open' && startsIn > 0 && <button type="button" className="ms-btn ms-btn--sm ms-btn--ghost" style={{ justifySelf: 'start' }} disabled={busy} onClick={off}>Call it off</button>}
+      {mine && isOpen && n?.status === 'open' && !started && <button type="button" className="ms-btn ms-btn--sm ms-btn--ghost" style={{ justifySelf: 'start' }} disabled={busy} onClick={off}>Call it off</button>}
       {error && <div className="ms-msg ms-msg--bad" role="alert">{error}</div>}
       {n?.standings?.length > 0 && (
         <div style={{ overflowX: 'auto' }}>
