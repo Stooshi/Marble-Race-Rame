@@ -52,9 +52,19 @@ Pushing to `Main` does **not** deploy the server. Moses deploys it by uploading 
 
 **Restart without a new deploy:** Railway dashboard → service → ⋮ → Restart. Races in progress resume or finish correctly after a restart.
 
-**Changing variables:** deploying staged variable changes in the dashboard can restart the service on an **older build** (seen 23 Oct 2026: `/health` without a code fingerprint, `/api/admin/session/start` 404). After any variables deploy, open `/health` and compare `codeFingerprint` as in step 7; if it's missing or different, run `railway up` again from the same folder.
+**Changing variables: never with the dashboard's Deploy button.** Deploying staged variable changes in the dashboard does not restart our last `railway up`: Railway **rebuilds the service from the GitHub branch still linked to it**, `claude/kind-franklin-mj16u8`, frozen at 2 Oct 2026 (seen twice: 23 Oct and 27 Oct 2026). That build has no `version` on `/health` (`{"status":"ok","db":"ok","uptime":…}` only) and none of the routes added since, including saving a guest's marble (`POST /api/auth/claim`: "Route … not found") and starting as a guest, on the website and in the apps alike. Railway users report the same: a variable change redeploys the last linked commit, not the last CLI deployment ([Railway Help Station](https://station.railway.com/questions/deploy-after-variable-update-skips-cli-d-53228681)).
 
-**[check] Deploying from GitHub:** Railway can also deploy automatically from the GitHub repository. That is switched off on purpose. If it's ever switched on, the "Deploying" section of the root README becomes true again.
+1. **Once (stops it for good):** Railway → the server service → **Settings → Source → Disconnect** the GitHub repository. Our deploys come only from `railway up`, so nothing else changes. (The old branch can then be deleted on GitHub; ask first, it is the only copy of the 2 Oct code.)
+2. **Every variable change, from the unzipped folder of the build that is live** (a fresh ZIP of Main if unsure):
+   ```
+   railway variables --set "LEAGUES=admins" --skip-deploys
+   railway up
+   ```
+   `--skip-deploys` sets the variable without Railway redeploying anything; `railway up` then starts our code with it. Several variables: one `--set "NAME=value"` each, in the same command.
+3. **Then check `/health` as in step 7:** `version.codeFingerprint` must be there and match. **No `version` block at all means the old 2 Oct build:** run `railway up` again from the folder at once.
+4. A variable changed in the dashboard by mistake: don't press Deploy; discard the staged change and do it as in step 2. Pressed Deploy anyway: check `/health` and, without `version`, run `railway up` from the folder.
+
+**[check] Deploying from GitHub:** switched off on purpose, and the repository should not even be linked to the service (above: a linked branch is what Railway rebuilds on a variable change). If it's ever switched on, the "Deploying" section of the root README becomes true again.
 
 ## Data updates
 
@@ -259,14 +269,14 @@ To turn email off again, remove `BREVO_API_KEY` and restart.
 
 ## Replays: kept 30 days (switching on)
 
-Built 27 Oct 2026 (`src/game/replayRetention.js`). After the deploy that brings it, the server logs once a day (and 5 minutes after it starts) what it would delete: `[replays] DRY RUN: N replays over 30 days old would be deleted (X MB)`. Results are never deleted, and the replays something shows are kept (the latest 200 races, track, player and country records, each collection marble's first win). Once the number looks right: Railway → the server → Variables → `REPLAY_TRIM` = `on`. New replays are already about a third of the old size (no switch). The first deleting run takes at most 20,000 replays; the rest follow day by day. The database reuses the freed space; the next backup is smaller at once.
+Built 27 Oct 2026 (`src/game/replayRetention.js`). After the deploy that brings it, the server logs once a day (and 5 minutes after it starts) what it would delete: `[replays] DRY RUN: N replays over 30 days old would be deleted (X MB)`. Results are never deleted, and the replays something shows are kept (the latest 200 races, track, player and country records, each collection marble's first win). Once the number looks right: `railway variables --set "REPLAY_TRIM=on" --skip-deploys`, then `railway up` from the folder and check `/health` (never the dashboard's Deploy button: see Changing variables). New replays are already about a third of the old size (no switch). The first deleting run takes at most 20,000 replays; the rest follow day by day. The database reuses the freed space; the next backup is smaller at once.
 
 ## Leagues: testing and switching on
 
 Built switched off (27 Oct 2026). The server variable `LEAGUES` decides (see `docs/01-architecture.md`):
 1. **After the deploy** that brings leagues: leave `LEAGUES` unset (off). `GET /api/leagues/status` answers `{"enabled":false}`; everything else under `/api/leagues` answers 404, and the website shows nothing.
-2. **To test in production:** Railway → the server → Variables → `LEAGUES` = `admins`. Railway restarts the server; only admin accounts then see LEAGUES on the home page and can make and race leagues.
-3. **For everyone:** `LEAGUES` = `on`. Back to off: delete the variable (or `off`). Leagues already made stay in the database and come back when switched on again; their end job keeps running either way.
+2. **To test in production:** `railway variables --set "LEAGUES=admins" --skip-deploys`, then `railway up` from the folder, then check `/health` ([Changing variables](#the-game-server-railway-by-hand)); never the dashboard's Deploy button. Only admin accounts then see LEAGUES on the home page and can make and race leagues.
+3. **For everyone:** `LEAGUES=on`, the same way. Back to off: delete the variable (or `off`). Leagues already made stay in the database and come back when switched on again; their end job keeps running either way.
 
 ## Push notifications (apps): setting up and switching on
 
