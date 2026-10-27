@@ -124,6 +124,10 @@ test('a League from start to end: create, join, tries, best times, the total, th
     const res1 = (await call(`/races/${firstRun.race_id}/results`)).body;
     assert.equal(res1.league.code, code);
     assert.equal(res1.league.new_best, true);
+    // (Race again on a league race goes through the league, so the try counts there: never a plain rematch.)
+    const rematch = await call(`/races/${firstRun.race_id}/next`, { method: 'POST', token: a.token, body: {} });
+    assert.equal(rematch.status, 409);
+    assert.equal(rematch.body.details.code, 'league_race');
     const again = await raceOn(a, five[0]); // a second try on the first track: the better one counts
     const { rows: [secondRun] } = await db.query('SELECT race_id FROM league_runs WHERE user_id = $1 AND track_id = $2 ORDER BY created_at DESC LIMIT 1', [a.user.id, five[0]]);
     assert.equal((await call(`/races/${secondRun.race_id}/results`)).body.league.new_best, again < timesA[0]);

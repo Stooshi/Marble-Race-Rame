@@ -6,6 +6,8 @@ import { useAsync } from '../../hooks/useAsync';
 import { daysLeftIn } from './ScoresPage';
 import economy from '../../shared/economy.json';
 import { BANNERS_ON, bannerSrc } from '../TrackBanner';
+import { MyLeaguesCard } from '../leagues/LeaguesPages';
+import { useLeaguesOn } from '../leagues/status';
 
 /** Today's track: the same for everyone all day, a different one each day. */
 export function trackOfTheDay(tracks, date = new Date()) {
@@ -18,6 +20,7 @@ export function trackOfTheDay(tracks, date = new Date()) {
 /** The signed-in home: the next race, today's track, quick ways to race, today's training and your season. */
 export default function HomeHub() {
   const { user } = useAuth();
+  const leaguesOn = useLeaguesOn();
   const { data } = useAsync(async () => {
     const [races, tracks, board, day] = await Promise.all([
       api.publicRooms().catch(() => ({ rooms: [] })), // (public rooms and quick races waiting at the start)
@@ -56,14 +59,17 @@ export default function HomeHub() {
           </div>
         </section>
         <aside style={{ display: 'grid', gap: 14, flexBasis: 320, alignContent: 'start' }}>
-          {/* (Three identical yellow buttons, stacked full width, on phones and computers; Moses, 25 Oct 2026. site.css .ms-race-choices) */}
+          {/* (Three identical yellow buttons (a fourth, LEAGUES, when leagues are open), stacked full width, on phones and computers; Moses, 25 Oct 2026. site.css .ms-race-choices) */}
           <div className="ms-race-choices">
             <Link to="/play/quick" className="ms-race-choice ms-race-quick"><b>QUICK RACE</b></Link>
             <div className="ms-row ms-race-more">
               <Link to="/play/track" className="ms-race-choice"><b>Race solo</b><span>Pick a track</span></Link>
               <Link to="/play/friends" className="ms-race-choice"><b>Race with friends</b><span>Invite and go</span></Link>
             </div>
+            {/* (The fourth, identical button: Leagues, only while the server's LEAGUES switch is open to this player; Moses, 26 Oct 2026.) */}
+            {leaguesOn && <Link to="/leagues" className="ms-race-choice ms-race-leagues"><b>LEAGUES</b><span>Race your friends all week</span></Link>}
           </div>
+          <MyLeaguesCard />
           <div className="ms-card" style={{ display: 'grid', gap: 8 }}>
             <div className="ms-row" style={{ justifyContent: 'space-between' }}><b>Daily goal</b><span style={{ color: 'var(--ms-soft)' }}>{done} of {goal} races</span></div>
             <div className="ms-progress"><div><div style={{ width: `${(done / goal) * 100}%` }} /></div></div>

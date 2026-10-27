@@ -37,6 +37,7 @@ import Results from './pages/Results';
 import { Spinner } from './components/Status';
 import { importOrReload } from './utils/staleCode';
 import MarblesHubRoute from './hub/route';
+import { CreateLeague, LeaguePage, LeaguesHome } from './site/leagues/LeaguesPages';
 import { startPush } from './app/push';
 import { useSoundUnlock } from './sound/settings';
 import { SavePromptProvider } from './site/account/SavePrompt';
@@ -107,6 +108,9 @@ export default function App() {
           <Route path="/play/start" element={<StartOrQuick />} />
           <Route path="/play/quick" element={<QuickStep />} />
           <Route path="/r/:code" element={<RoomPage />} />
+          <Route path="/leagues" element={<LeaguesHome NotFound={NotFound} />} />
+          <Route path="/leagues/new" element={<CreateLeague NotFound={NotFound} />} />
+          <Route path="/l/:code" element={<LeaguePage NotFound={NotFound} />} />
           <Route path="/shop" element={<ShopPage />} />
           <Route path="/collection" element={<ShopPage />} />
           <Route path="/collection/:design" element={<ShopPage />} />

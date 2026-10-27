@@ -965,3 +965,71 @@ tr:hover .report-name__btn--compact, .report-name__btn--compact:focus-visible { 
 /* A name hidden after reports (25 Oct 2026): the notice under the top bar, with "Choose a new name". */
 .ms-hidden-name { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px 14px; padding: 10px 16px; background: #3a2a0c; color: #ffe2a3; border-bottom: 1px solid #6b4d14; font-size: 0.95rem; text-align: center; }
 .is-race-full .ms-hidden-name { display: none; }
+
+/* ── Leagues (site/leagues/LeaguesPages.jsx; Leagues v1, 27 Oct 2026) ───────── */
+.ms-league-lede { max-width: 62ch; margin: 0; }
+.ms-league-col { display: grid; gap: 12px; align-content: start; min-width: 0; }
+.ms-league-kind { display: grid; gap: 2px; padding: 12px 14px; border-radius: 14px; border: 2px solid var(--ms-yellow); background: rgba(255,210,31,0.08); }
+.ms-league-kind b { font-family: var(--ms-cond); font-weight: 800; font-size: 1.3rem; letter-spacing: 0.02em; }
+.ms-league-kind span { color: var(--ms-soft); font-weight: 600; }
+.ms-go-pro { margin: 0; font-size: 0.85rem; }
+.ms-league-save { display: grid; gap: 12px; }
+.ms-league-link { color: var(--ms-soft); font-weight: 600; }
+.ms-league-new, .ms-league-join { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; }
+.ms-league-select { min-height: 44px; border-radius: 12px; padding: 0 12px; background: var(--ms-bg); color: var(--ms-text); border: 1px solid var(--ms-border); }
+/* My leagues */
+.ms-league-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.ms-league-list__row { display: flex; gap: 12px; align-items: center; justify-content: space-between; padding: 10px 12px; border-radius: 12px; background: var(--ms-bg); border: 1px solid var(--ms-border); color: var(--ms-text); }
+.ms-league-list__row:hover { text-decoration: none; border-color: var(--ms-muted); }
+.ms-league-list__what { display: grid; gap: 2px; min-width: 0; }
+.ms-league-list__what b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ms-league-list__me { display: grid; justify-items: end; text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.ms-league-list--compact .ms-league-list__row { padding: 8px 10px; }
+/* Create: the five picked, and the track list */
+.ms-league-col .ms-chips { margin-left: 0; }
+.ms-league-create { display: grid; gap: 16px; grid-template-columns: minmax(0, 360px) minmax(0, 1fr); grid-template-areas: "set pick" "sum pick"; align-items: start; }
+.ms-league-create__set { grid-area: set; }
+.ms-league-create__sum { grid-area: sum; }
+.ms-league-create__pick { grid-area: pick; }
+@media (max-width: 760px) {
+  .ms-league-create { grid-template-columns: minmax(0, 1fr); grid-template-areas: "set" "pick" "sum"; }
+  .ms-league-create__sum { position: sticky; bottom: 0; z-index: 2; box-shadow: 0 -8px 24px rgba(0,0,0,0.35); }
+  .ms-league-create__sum .ms-league-picked { display: none; }
+  .ms-league-create__sum .ms-league-create__note { display: none; }
+}
+.ms-league-picked { margin: 0; padding-left: 1.4em; display: grid; gap: 4px; font-variant-numeric: tabular-nums; }
+.ms-league-picked li { min-height: 36px; }
+.ms-league-picked li { line-height: 36px; }
+.ms-league-picked li .ms-btn { float: right; min-height: 32px; padding: 0 10px; }
+.ms-league-share { flex: 0 1 320px; }
+.ms-league-share__link { display: flex; gap: 8px; min-width: 0; }
+.ms-league-share__link .ms-btn { flex: none; }
+.ms-league-tracks { display: grid; gap: 8px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 240px), 1fr)); max-height: 70vh; overflow-y: auto; padding-right: 2px; }
+.ms-league-track { display: grid; grid-template-columns: 72px 1fr auto; gap: 10px; align-items: center; text-align: left; padding: 6px; border-radius: 12px; background: var(--ms-bg); border: 1px solid var(--ms-border); color: var(--ms-text); cursor: pointer; min-height: 56px; }
+.ms-league-track[aria-pressed="true"] { border-color: var(--ms-yellow); background: rgba(255,210,31,0.10); }
+.ms-league-track:disabled { opacity: 0.45; cursor: not-allowed; }
+.ms-league-track:focus-visible { outline: 3px solid var(--ms-yellow); outline-offset: 2px; }
+.ms-league-track__pic { position: relative; width: 72px; aspect-ratio: 16 / 9; border-radius: 8px; overflow: hidden; }
+.ms-league-track__pic img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.ms-league-track__name { display: grid; gap: 2px; min-width: 0; }
+.ms-league-track__name b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ms-league-track__name span { color: var(--ms-muted); font-size: 0.85rem; }
+.ms-league-track__mark { width: 28px; height: 28px; border-radius: 999px; display: grid; place-items: center; font-weight: 800; border: 1px solid var(--ms-border); color: var(--ms-soft); }
+.ms-league-track[aria-pressed="true"] .ms-league-track__mark { background: var(--ms-yellow); border-color: var(--ms-yellow); color: var(--ms-ink); }
+/* The league's tracks to race */
+.ms-league-run { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.ms-league-run li { display: flex; gap: 12px; align-items: center; padding: 10px 12px; border-radius: 12px; background: var(--ms-bg); border: 1px solid var(--ms-border); }
+.ms-league-run__n { width: 28px; height: 28px; flex: none; border-radius: 999px; display: grid; place-items: center; font-weight: 800; background: var(--ms-card); color: var(--ms-soft); }
+.ms-league-run__what { display: grid; gap: 2px; flex: 1; min-width: 0; }
+.ms-league-run__what b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ms-league-run .ms-btn { flex: none; }
+/* The scoreboard: each track's best on wide screens, "3/5" on phones */
+.ms-table--league { min-width: 0; }
+.ms-table--league .ms-league-narrow { display: none; }
+.ms-league-player { max-width: 260px; overflow: hidden; text-overflow: ellipsis; }
+@media (max-width: 760px) {
+  .ms-table--league .ms-league-wide { display: none; }
+  .ms-table--league .ms-league-narrow { display: table-cell; }
+  .ms-table--league th, .ms-table--league td { padding: 10px 10px; }
+  .ms-league-player { max-width: 40vw; }
+}

@@ -7,6 +7,7 @@ import { ITEM, previewShowcase } from '../../shared/marbles';
 import MarbleBadge from '../marbles/MarbleBadge';
 import TrackBanner, { SERIES_PIC } from '../TrackBanner';
 import { handle, shownName } from '../../shared/playerName';
+import { useLeaguesOn } from '../leagues/status';
 
 /**
  * The race flow: 1 Friends → 2 Track → 3 Shooter → 4 Starting line.
@@ -185,6 +186,7 @@ export function FriendsStep() {
   const [roomCode, setRoomCode] = useState('');
   const trackSlug = search.get('track');
   const tracks = useTracks();
+  const leaguesOn = useLeaguesOn();
 
   const makeRoom = async () => {
     setMaking(true);
@@ -218,6 +220,7 @@ export function FriendsStep() {
             <input aria-label="Room code" placeholder="Got a code? e.g. K7QF2M" value={roomCode} onChange={(e) => setRoomCode(e.target.value)} maxLength={10} style={{ flex: '1 1 160px', textTransform: 'uppercase' }} />
             <button type="submit" className="ms-btn ms-btn--sm" disabled={!roomCode.trim()}>Join</button>
           </form>
+          {leaguesOn && <Link to="/leagues/new" className="ms-league-link">Or start a league: race your friends all week, best times count</Link>}
         </section>
         <section className="ms-card" style={{ display: 'grid', gap: 12 }} aria-labelledby="friends-h">
           <h2 id="friends-h" className="ms-h3" style={{ fontFamily: 'var(--ms-cond)', fontWeight: 800, fontSize: '1.6rem' }}>Join a race</h2>

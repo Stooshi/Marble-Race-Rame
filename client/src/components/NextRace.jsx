@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import MarbleBall from './MarbleBall';
 import { useSavePrompt } from '../site/account/SavePrompt';
 import { PushAsk } from '../site/account/PushSettings';
+import { lapTime } from '../site/leagues/status';
 
 const clockText = (ms) => {
   const s = Math.ceil(ms / 1000);
@@ -18,11 +19,11 @@ const clockText = (ms) => {
  * countdown and joins the same race. nextRaceId: the rematch if already known
  * (live, the server announces it); otherwise it is looked up once.
  */
-export default function NextRace({ raceId, entries, nextRaceId = null, roomCode = null, roomKind = null }) {
+export default function NextRace({ raceId, entries, nextRaceId = null, roomCode = null, roomKind = null, leagueCode = null }) {
   // (In the apps, once switched on: after the first finished race, the notifications question.)
   return (
     <>
-      {roomKind === 'quick' ? <QuickNext /> : roomCode ? <RoomNext code={roomCode} /> : <PublicNext raceId={raceId} entries={entries} nextRaceId={nextRaceId} />}
+      {leagueCode ? <LeagueNext raceId={raceId} code={leagueCode} /> : roomKind === 'quick' ? <QuickNext /> : roomCode ? <RoomNext code={roomCode} /> : <PublicNext raceId={raceId} entries={entries} nextRaceId={nextRaceId} />}
       <PushAsk />
     </>
   );
@@ -37,6 +38,64 @@ function RoomNext({ code }) {
       <div className="next-race__actions">
         <button type="button" className="btn btn--primary" onClick={() => navigate(`/r/${code}`)}>Back to the room</button>
       </div>
+    </div>
+  );
+}
+
+/**
+ * A league race (Leagues v1, 27 Oct 2026): the time, "New best!" when it beat the player's best on this
+ * track in the league, the tries left, and the next try from the league (so it counts there).
+ */
+export function LeagueNext({ raceId, code }) {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const [res, setRes] = useState(null); // the results' league block
+  const [view, setView] = useState(null); // the league as its page shows it
+  const [trackId, setTrackId] = useState(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState(null);
+  useEffect(() => {
+    let stop = false;
+    // (Results come a moment after the last marble: asked again a few times.)
+    const load = (n) => api.results(raceId)
+      .then((d) => { if (!stop) { setRes(d.league ?? null); setTrackId(d.race?.track_id ?? null); } })
+      .catch(() => { if (!stop && n > 0) setTimeout(() => load(n - 1), 1500); });
+    load(6);
+    api.league(code).then((v) => !stop && setView(v)).catch(() => {});
+    return () => { stop = true; };
+  }, [raceId, code]);
+  const track = view?.tracks?.find((t) => t.id === trackId) ?? null;
+  const open = view?.league?.status === 'open' && new Date(view.league.ends_at).getTime() > Date.now();
+  const mine = res && res.user_id && res.user_id === user?.id;
+  const left = track?.tries_left;
+  const again = async () => {
+    setBusy(true);
+    setError(null);
+    try {
+      const { race } = await api.leagueRace(code, trackId);
+      navigate(`/race/${race.id}?go=1`);
+    } catch (e) {
+      setError(e.message);
+      setBusy(false);
+    }
+  };
+  return (
+    <div className="next-race next-race--league">
+      {mine && res.time_ms && (res.new_best
+        ? <p className="next-race__best" role="status"><strong>New best!</strong> {lapTime(res.time_ms)}{res.best_before_ms ? ` (was ${lapTime(res.best_before_ms)})` : ''} in {res.name}</p>
+        : <p className="next-race__text">{lapTime(res.time_ms)} · your best here in {res.name}: {lapTime(track?.best_ms ?? res.best_before_ms)}</p>)}
+      {!mine && <p className="next-race__text">A race in the league {res?.name ?? view?.league?.name ?? ''}.</p>}
+      <div className="next-race__actions">
+        {mine && open && trackId && left !== 0 && (
+          <button type="button" className="btn btn--primary" disabled={busy || !track} onClick={again}>
+            {busy ? 'Starting…' : `Race it again${left !== null && left !== undefined ? ` (${left} ${left === 1 ? 'try' : 'tries'} left)` : ''}`}
+          </button>
+        )}
+        <Link to={`/l/${code}`} className={`btn ${mine && open && left !== 0 ? 'btn--ghost btn--sm' : 'btn--primary'}`}>Back to the league</Link>
+      </div>
+      {mine && open && left === 0 && <p className="next-race__text">No tries left on this track. The other tracks are on the league page.</p>}
+      {view && !open && <p className="next-race__text">This league has ended: see the final standings.</p>}
+      {error && <p className="next-race__error">{error}</p>}
     </div>
   );
 }
@@ -68,12 +127,14 @@ function PublicNext({ raceId, entries, nextRaceId = null }) {
   useEffect(() => { if (nextRaceId) setNextId(nextRaceId); }, [nextRaceId]);
   const [roomCode, setRoomCode] = useState(null); // (a friend room's race, found when looking it up)
   const [roomKind, setRoomKind] = useState(null);
+  const [leagueCode, setLeagueCode] = useState(null);
   useEffect(() => {
     if (!raceId) return undefined;
     let stop = false;
     api.race(raceId).then((d) => {
       if (stop) return;
-      if (d.race.room_code) { setRoomCode(d.race.room_code); setRoomKind(d.race.room_kind ?? null); }
+      if (d.race.league_code) setLeagueCode(d.race.league_code);
+      else if (d.race.room_code) { setRoomCode(d.race.room_code); setRoomKind(d.race.room_kind ?? null); }
       else if (!nextRaceId && d.race.next_race_id) setNextId(d.race.next_race_id);
     }).catch(() => {});
     return () => { stop = true; };
@@ -111,6 +172,7 @@ function PublicNext({ raceId, entries, nextRaceId = null }) {
     }
   };
 
+  if (leagueCode) return <LeagueNext raceId={raceId} code={leagueCode} />;
   if (roomKind === 'quick') return <QuickNext />;
   if (roomCode) return <RoomNext code={roomCode} />;
 

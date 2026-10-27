@@ -7,7 +7,7 @@ const config = require('../config');
 const db = require('../db');
 const { requireAuth } = require('../middleware/auth');
 const { validate, assertUuid, pagination } = require('../utils/validate');
-const { badRequest, conflict, notFound } = require('../utils/httpError');
+const { HttpError, badRequest, conflict, notFound } = require('../utils/httpError');
 const raceManager = require('../game/raceManager');
 const raceService = require('../game/raceService');
 const { RACE_STATUSES } = require('../game/raceStatus');
@@ -278,6 +278,8 @@ router.post('/:id/next', requireAuth, async (req, res) => {
     const { rows } = await client.query('SELECT * FROM races WHERE id = $1 FOR UPDATE', [id]);
     const race = rows[0];
     if (!race) throw notFound('Race not found');
+    // (A league race's next try is made from the league, so it counts there: POST /api/leagues/:code/race.)
+    if (race.league_id) throw new HttpError(409, 'Race again from the league, so the try counts there', { code: 'league_race' });
     if (race.status !== 'finished') {
       // A solo player may race again straight away; a group waits for the last marble.
       const { rows: entries } = await client.query('SELECT user_id, is_bot FROM race_entries WHERE race_id = $1', [id]);

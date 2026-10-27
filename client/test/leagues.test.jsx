@@ -1,0 +1,120 @@
+// Leagues on the website (Leagues v1 part 1, 27 Oct 2026): behind the server's LEAGUES switch, the
+// fourth yellow button, the My leagues card, the pages, "New best!" on a league race's result, and the
+// texts (never a frequency, dates or prizes for the Major League; with Pro off no credits).
+import { readFileSync } from 'node:fs';
+import { renderToString } from 'react-dom/server';
+import { MemoryRouter } from 'react-router-dom';
+import { describe, expect, it } from 'vitest';
+import { GO_PRO, lapTime, timeLeft, triesText } from '../src/site/leagues/status';
+import { LeagueList } from '../src/site/leagues/LeaguesPages';
+import { metaFor } from '../src/site/pageMeta';
+
+const src = (f) => readFileSync(new URL(`../${f}`, import.meta.url), 'utf8');
+const PAGES = src('src/site/leagues/LeaguesPages.jsx');
+const STATUS = src('src/site/leagues/status.js');
+
+describe('leagues: small helpers', () => {
+  it('time left by the server\'s clock, then Ended', () => {
+    const now = Date.UTC(2026, 9, 27, 12, 0);
+    expect(timeLeft(new Date(now + 9 * 60000 - 1).toISOString(), now)).toBe('9 min left');
+    expect(timeLeft(new Date(now + (3 * 60 + 12) * 60000).toISOString(), now)).toBe('3 h 12 min left');
+    expect(timeLeft(new Date(now + (2 * 24 + 4) * 3600000).toISOString(), now)).toBe('2 days 4 h left');
+    expect(timeLeft(new Date(now + 24 * 3600000).toISOString(), now)).toBe('1 day left');
+    expect(timeLeft(new Date(now - 1).toISOString(), now)).toBe('Ended');
+    // (skew: this device's clock 5 minutes behind the server's)
+    expect(timeLeft(new Date(now + 10 * 60000).toISOString(), now, 5 * 60000)).toBe('5 min left');
+  });
+  it('times and tries', () => {
+    expect(lapTime(52310)).toBe('52.31 s');
+    expect(lapTime(61020)).toBe('1:01.02');
+    expect(lapTime(269150)).toBe('4:29.15');
+    expect(lapTime(null)).toBe('—');
+    expect(triesText(null)).toBe('Unlimited tries');
+    expect(triesText(5)).toBe('5 tries per track');
+  });
+});
+
+describe('leagues: behind the switch', () => {
+  it('the site asks the server (GET /api/leagues/status); an older server (404) means off', () => {
+    expect(STATUS).toContain('api.leaguesStatus().catch(() => ({ enabled: false }))');
+    expect(src('src/api/client.js')).toContain("leaguesStatus: () => request('/leagues/status')");
+  });
+  it('off: every league page is the 404, and nothing else shows', () => {
+    expect(PAGES).toContain('return on ? children : <NotFound />;');
+    for (const page of ['LeaguesHome', 'CreateLeague', 'LeaguePage']) expect(PAGES).toContain(`export function ${page}({ NotFound }) {\n  return <Gate NotFound={NotFound}>`);
+    const hub = src('src/site/pages/HomeHub.jsx');
+    expect(hub).toContain('{leaguesOn && <Link to="/leagues" className="ms-race-choice ms-race-leagues"><b>LEAGUES</b><span>Race your friends all week</span></Link>}');
+    expect(hub).toContain('<MyLeaguesCard />');
+    expect(PAGES).toContain('if (!on || !open.length) return null;');
+    expect(src('src/site/pages/RaceFlow.jsx')).toContain('{leaguesOn && <Link to="/leagues/new" className="ms-league-link">Or start a league');
+    const app = src('src/App.jsx');
+    for (const r of ['"/leagues"', '"/leagues/new"', '"/l/:code"']) expect(app).toContain(`<Route path=${r}`);
+  });
+  it('league pages stay out of search results', () => {
+    for (const p of ['/leagues', '/leagues/new', '/l/K7QF2M']) expect(metaFor(p).noindex).toBe(true);
+  });
+});
+
+describe('leagues: the pages', () => {
+  it('My leagues: time left, players, my place or tracks done', () => {
+    const html = renderToString(
+      <MemoryRouter>
+        <LeagueList leagues={[
+          { code: 'AB12CD', name: 'Office Cup', status: 'open', ends_at: new Date(Date.now() + 3 * 3600000 - 30000).toISOString(), players: 4, place: 2, done: 5, tracks: 5 },
+          { code: 'EF34GH', name: 'Family', status: 'open', ends_at: new Date(Date.now() + 26 * 3600000 + 30000).toISOString(), players: 1, place: null, done: 3, tracks: 5 },
+          { code: 'JK56LM', name: 'Last time', status: 'ended', ends_at: new Date(Date.now() - 3600000).toISOString(), players: 6, place: 1, done: 5, tracks: 5 },
+        ]} />
+      </MemoryRouter>,
+    );
+    expect(html).toContain('href="/l/AB12CD"');
+    expect(html).toContain('3 h left');
+    expect(html).toContain('4<!-- --> <!-- -->players');
+    expect(html).toContain('2nd');
+    expect(html).toContain('3<!-- --> of <!-- -->5');
+    expect(html).toContain('1<!-- --> <!-- -->player<');
+    expect(html).toContain('Final standings');
+    expect(html).toContain('you finished');
+  });
+  it('create: 5 different tracks, 1–7 days, unlimited/3/5/10 tries; holiday tracks only for pass holders', () => {
+    expect(PAGES).toContain('const DAYS = [1, 2, 3, 4, 5, 6, 7];');
+    expect(PAGES).toContain("const TRIES = [[null, 'Unlimited'], [3, '3'], [5, '5'], [10, '10']];");
+    expect(PAGES).toContain('api.createLeague({ name: name.trim(), track_ids: picked, days, attempts: tries })');
+    expect(PAGES).toContain("disabled={busy || !nameOk || picked.length !== TRACKS}");
+    // (A season track locked for this player can't be picked: the server refuses it too.)
+    expect(PAGES).toContain('disabled={(t.locked && !on) || (full && !on)}');
+    expect(PAGES).toContain("'Season pass holders only'");
+    expect(PAGES).toContain('<b>League</b><span>5 tracks · free · for fun</span>');
+  });
+  it('saved accounts only: a guest saves their marble, a visitor saves one or logs in and comes back', () => {
+    expect(PAGES).toContain("<SaveFirst next={`/l/${code}`}");
+    expect(PAGES).toContain('<QuickSignup heading="h3"');
+    expect(PAGES).toContain('to={`/signup?mode=login&next=${encodeURIComponent(next)}`}');
+  });
+  it('a league race: started from the league, then the start show (?go=1); the next try from the league too', () => {
+    expect(PAGES).toContain('const { race: r } = await api.leagueRace(code, trackId);');
+    expect(PAGES).toContain('navigate(`/race/${r.id}?go=1`);');
+    const next = src('src/components/NextRace.jsx');
+    expect(next).toContain('{leagueCode ? <LeagueNext raceId={raceId} code={leagueCode} />');
+    expect(next).toContain('<strong>New best!</strong>');
+    expect(next).toContain('const { race } = await api.leagueRace(code, trackId);');
+    expect(next).toContain('to={`/l/${code}`}');
+    expect(src('src/pages/Race.jsx')).toContain('leagueCode={race?.league_code ?? null}');
+  });
+  it('the creator: add by name, remove (two taps, no browser dialogs), Run again once it has ended', () => {
+    expect(PAGES).toContain("api.leagueAdd(code, name)");
+    expect(PAGES).toContain("api.leagueRemove(code, r.user_id)");
+    expect(PAGES).toContain("{sure ? 'Remove for good?' : 'Remove'}");
+    expect(PAGES).toContain("{mine && !isOpen && <button type=\"button\" className=\"ms-btn ms-btn--primary\" disabled={Boolean(busy)} onClick={again}>");
+    expect(PAGES).not.toMatch(/window\.(confirm|alert|prompt)\(/);
+  });
+});
+
+describe('leagues: the texts', () => {
+  it('never a frequency, dates or prizes for the Major League; with Pro off, no credits', () => {
+    const texts = [PAGES, STATUS, src('src/components/NextRace.jsx')].join('\n');
+    for (const word of [/weekly/i, /monthly/i, /every week/i, /every month/i, /prize/i, /credit/i]) expect(texts).not.toMatch(word);
+    expect(GO_PRO).toBe('Pro Leagues are coming. Race your way to the Marble Spins Major League. Date to be announced.');
+    // (Pro League appears only in the Go pro line.)
+    expect(PAGES.match(/Pro League/g)?.length ?? 0).toBeLessThanOrEqual(2);
+  });
+});
