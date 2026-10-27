@@ -5,7 +5,7 @@
   "android": {
     "package": "com.marblespins.app",
     "fingerprints": {
-      "debug": "",
+      "debug": "5F:71:0D:C8:0A:D6:E7:59:22:A8:3B:89:4E:90:9B:19:F6:73:41:D5:50:06:E1:6B:5C:9D:6E:23:39:4D:ED:45",
       "upload": "",
       "playAppSigning": ""
     }
