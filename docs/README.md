@@ -18,14 +18,18 @@
   - push notifications (first app update, December);
   - gift codes;
   - email: pass reminders and confirmations, waiting for Brevo and its key;
-  - the guest deletion job (dry run).
+  - the guest deletion job (dry run);
+  - **Leagues part 1** (the free 5-track League and the slim League Night; `LEAGUES` on Railway, off until Moses has tested it; built 27 Oct, waiting for the next server deploy);
+  - deleting replays over 30 days old (dry run until `REPLAY_TRIM=on`; new replays are already a third of the size).
 - **Newest this week:**
   - player names everywhere;
   - public rooms and a one-tap Quick race;
   - the friend-room start timer;
   - the phone website with a full-screen race;
   - Rivers live;
-  - the marbles hub at /marbles, five articles (26 Oct).
+  - the marbles hub at /marbles, five articles (26 Oct);
+  - the first five Peaks live (27 Oct);
+  - a backward-facing TV camera on every track (27 Oct; reaches the database with the next server deploy).
 
 **How it runs:**
 
