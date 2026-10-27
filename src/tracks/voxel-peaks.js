@@ -21,7 +21,7 @@ module.exports = track({
   signature: 'Out on the beams',
   tvCameras: [
     { section: 'Out on the beams', at: 0.8, side: 'right', distance: 10, height: 12 },
-    { section: 'Peak spiral', at: 0.8, side: 'right', distance: 10, height: 12 },
+    { section: 'Peak spiral', at: 0.8, side: 'right', distance: 6, height: 12 },
   ],
   start: { landmark: 'beam-tower', type: 'cliff', gate: 'trapdoor', shots: { countdown: 'above', launch: 'overhead' } },
   finish: { landmark: 'cube-cabin' },

@@ -43,6 +43,18 @@ Rules that come with it:
 
 This applies from Peaks 6–15 on (after Leagues part 1). Tracks built before 27 Oct 2026, the first five Peaks among them, stay as they are.
 
+## Every track has a backward-facing TV camera (Moses, 27 Oct 2026)
+
+Every track, current and future, has **at least one backward-facing TV camera**: a `tvCameras` entry
+(see [TV moments](#tv-moments)), facing back up the track at the oncoming marbles. Put it at a good
+moment: at the track's big feature (its end, so the marbles come through the feature at the camera) or
+just before it; a second one where the track is long enough (at least 300 m from the first). The same
+camera and scenery checks apply (nothing at the lens, a clear view of the track: `client/test/tvMoments.test.js`).
+`test/tvCameras.test.js` fails if any track in the database has none. The three hand-built tracks
+(Bobsleigh Run, San Francisco, Table Mountain Run) carry theirs as `physics.tv` in `src/game/physicsTracks.js`.
+On 27 Oct 2026 the 110 tracks without one got two each (at their signature or biggest features), in
+looks-only data updates (`docs/data_updates/2027-04-25-…-tv-cameras.sql`); races unchanged.
+
 ## What the kit does for you
 
 - Opens every track with the 16 m starting ramp and the paddle gate, and ends

@@ -8,7 +8,7 @@ import { buildCenterline } from '../src/three/trackModel';
 import { channelOf } from '../src/three/iceChannel';
 import { buildScenery } from '../src/three/scenery';
 import { themeFor } from '../src/three/themes';
-import { TV, tvCameras, tvMoment } from '../src/three/tvMoments';
+import { TV, tvCameras, tvMoment, tvSpots } from '../src/three/tvMoments';
 
 const require = createRequire(import.meta.url);
 const { physicsTrack } = require('../../src/game/physicsTracks');
@@ -34,13 +34,15 @@ describe('TV moments', () => {
     expect(tvCameras(centerline, channel, { ...track.physics.kit, tv: undefined })).toEqual([]);
   });
 
-  // Every track with TV cameras (the Track and Field tracks).
-  const withCameras = require('../../src/tracks').filter((t) => t.physics?.kit?.tv?.length).map((t) => t.slug);
+  // Every track with TV cameras: every track since 27 Oct 2026 (Moses: at least one backward-facing camera
+  // on each; test/tvCameras.test.js checks none is missing), the hand-built three with physics.tv.
+  const { PHYSICS_TRACKS } = require('../../src/game/physicsTracks');
+  const withCameras = PHYSICS_TRACKS.filter((t) => tvSpots(t.physics)).map((t) => t.slug);
   it.each(withCameras)('%s: no scenery stands where a TV camera does, nor between it and the track (the camera clear check)', (slug) => {
     const track = physicsTrack(slug);
     const centerline = buildCenterline(track);
     const channel = channelOf(track, centerline);
-    const cams = tvCameras(centerline, channel, track.physics.kit);
+    const cams = tvCameras(centerline, channel, tvSpots(track.physics));
     expect(cams.length).toBeGreaterThan(0);
     const scenery = buildScenery(themeFor(track.slug, track), centerline, track, {});
     scenery.updateMatrixWorld(true);
@@ -90,5 +92,17 @@ describe('TV moments', () => {
     expect(tvMoment(cams, cam.s, TV.startGuard - 1, channel.arc - 140)).toBeNull();
     expect(tvMoment(cams, cam.s, 20000, cam.s - 1)).toBeNull();
     expect(tvMoment([], cam.s, 20000, channel.arc)).toBeNull();
+  });
+});
+
+describe('where a track\'s TV cameras come from', () => {
+  it('a kit track\'s kit.tv; the hand-built tracks\' physics.tv; none without either', () => {
+    expect(tvSpots({ kit: { tv: [{ p: 0.5 }], mirrored: true } })).toEqual({ tv: [{ p: 0.5 }], mirrored: true });
+    expect(tvSpots({ tv: [{ p: 0.4, side: -1, distance: 10, height: 5 }] })).toEqual({ tv: [{ p: 0.4, side: -1, distance: 10, height: 5 }] });
+    expect(tvSpots({ kit: {} })).toBeNull();
+    expect(tvSpots(null)).toBeNull();
+    const bob = physicsTrack('bobsleigh-run');
+    const cl = buildCenterline(bob);
+    expect(tvCameras(cl, channelOf(bob, cl), tvSpots(bob.physics))).toHaveLength(2);
   });
 });

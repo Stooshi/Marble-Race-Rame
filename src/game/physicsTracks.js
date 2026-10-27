@@ -205,8 +205,8 @@ function sanFrancisco() {
       channel: { radius: 3.6, maxAngle: 88, funnel: { length: 70, radius: 22, spacing: 1.15, stagger: 0.2, release: 0.45 } },
       // How its start looks (drawing only, as a kit track's start.gate and start.shots): its own gate and first camera shots.
       startLook: { gate: 'stalls', shots: { countdown: 'above', launch: 'overhead' } },
-      // Its TV cameras (drawing only): Lombard Street's second hairpin and the last of the Telegraph Hill crest jumps.
-      tv: [{ p: 0.5124, side: 1, distance: 6, height: 12 }, { p: 0.751, side: 1, distance: 6, height: 12 }],
+      // Its TV camera (drawing only): Lombard Street's second hairpin (the Telegraph Hill crests have no clear spot for one).
+      tv: [{ p: 0.5124, side: -1, distance: 6, height: 12 }],
       gate: { countdownMs: 3000 },
       collisions: true,
       noHitBoost: true,        // an obstacle hit never speeds a marble up

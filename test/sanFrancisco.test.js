@@ -37,12 +37,12 @@ const fairnessBatch = () => {
 test('San Francisco is moved onto the new physics, then re-tuned, by its data updates: together exactly the track in code', () => {
   const dir = path.join(__dirname, '..', 'docs', 'data_updates');
   const script = path.join(__dirname, '..', 'scripts', 'physics-track-sql.js');
-  const LATEST = '2026-12-06-san-francisco-new-start.sql'; // (its own gate and first camera shots)
+  const LATEST = '2027-04-25-san-francisco-tv-cameras.sql'; // (after 2026-12-06-san-francisco-new-start.sql, its own gate and first camera shots: its TV cameras)
   // The rebuild (already run live, so never edited) moved it onto the new physics…
   const rebuild = fs.readFileSync(path.join(dir, '2026-10-07-san-francisco-rebuild.sql'), 'utf8');
   assert.match(rebuild, /WHERE slug = 'san-francisco' AND physics IS NULL;/);
   // …re-tunes followed (each already run live is never edited, only followed by a new one)…
-  for (const f of ['2026-10-08-san-francisco-retune.sql', '2026-10-09-san-francisco-sea-lions.sql', '2026-10-10-san-francisco-bends.sql', '2026-10-11-san-francisco-slower-bends.sql', '2026-10-12-san-francisco-flowing-bends.sql', LATEST]) {
+  for (const f of ['2026-10-08-san-francisco-retune.sql', '2026-10-09-san-francisco-sea-lions.sql', '2026-10-10-san-francisco-bends.sql', '2026-10-11-san-francisco-slower-bends.sql', '2026-10-12-san-francisco-flowing-bends.sql', '2026-12-06-san-francisco-new-start.sql', LATEST]) {
     assert.match(fs.readFileSync(path.join(dir, f), 'utf8'), /^UPDATE tracks$[\s\S]*^ WHERE slug = 'san-francisco';$/m, f);
   }
   // …and the latest sets everything as it is now in code (its header only says what changed).

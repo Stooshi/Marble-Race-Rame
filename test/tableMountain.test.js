@@ -38,7 +38,7 @@ test('Table Mountain Run is added switched off, then re-tuned, by its data updat
   assert.match(add, /physics, is_active\)/);
   assert.match(add, /v\.physics::jsonb, false/, 'switched off until it has been watched');
   // …then re-tuned: the latest update sets everything as it is now in code, and never switches it on.
-  const LATEST = '2026-12-07-table-mountain-run-new-start.sql'; // (after 2026-10-14-table-mountain-closer-racing.sql: its own gate and first camera shots)
+  const LATEST = '2027-04-25-table-mountain-run-tv-cameras.sql'; // (after 2026-12-07-table-mountain-run-new-start.sql, its own gate and first camera shots: its TV cameras)
   const latest = fs.readFileSync(path.join(dir, LATEST), 'utf8');
   const body = (sql) => sql.slice(sql.indexOf('UPDATE tracks'));
   const generated = execFileSync(process.execPath, [script, 'table-mountain-run', '--retune'], { encoding: 'utf8' });
