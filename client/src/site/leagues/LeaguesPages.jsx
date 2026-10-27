@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import QRCode from 'qrcode';
 import { api } from '../../api/client';
@@ -62,7 +62,7 @@ export function LeaguesSoon() {
 }
 
 /** Saved accounts only: a guest saves their marble, a visitor saves one or logs in (then back here). */
-function SaveFirst({ next, why = 'Leagues are for saved accounts.' }) {
+function SaveFirst({ next, why = 'Leagues are for saved accounts.', onSaved }) {
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
   return (
@@ -70,7 +70,7 @@ function SaveFirst({ next, why = 'Leagues are for saved accounts.' }) {
       <h2 id="save-h" className="ms-h3" style={h2}>Save your marble to race in leagues</h2>
       <p className="ms-note" style={{ margin: 0 }}>{why} It's free: a name, an email and a password{user?.is_guest ? ', and your coins and marbles stay yours' : ''}.</p>
       {open
-        ? <QuickSignup heading="h3" onDone={() => setOpen(false)} onLater={() => setOpen(false)} />
+        ? <QuickSignup heading="h3" onSaved={onSaved} onDone={() => setOpen(false)} onLater={() => setOpen(false)} />
         : (
           <div className="ms-row">
             <button type="button" className="ms-btn ms-btn--primary" onClick={() => setOpen(true)}>SAVE MY MARBLE</button>
@@ -331,11 +331,18 @@ function LeaguePageIn() {
   const [now, setNow] = useState(() => Date.now());
   const [skew, setSkew] = useState(0);
   const isNew = search.get('new') === '1';
+  // The invite's welcome (Moses, 27 Oct 2026): `?join=1` back from logging in joins by itself;
+  // `?joined=1` is the "You're in" line with track 1's RACE.
+  const wantsJoin = search.get('join') === '1';
+  const joined = search.get('joined') === '1';
+  const [peek, setPeek] = useState(false);
+  const joining = useRef(false);
 
   const load = useCallback(async () => {
     try {
       const v = await api.league(code);
       if (v?.serverNow) setSkew(new Date(v.serverNow).getTime() - Date.now());
+      if (joining.current) return; // (a view from before the join would show the welcome again)
       setView(v);
       setError(null);
     } catch (e) {
@@ -343,6 +350,30 @@ function LeaguePageIn() {
     }
   }, [code]);
   useEffect(() => { if (!authLoading) load(); }, [authLoading, load, user?.id]);
+
+  /** Join, then the league page with "You're in" and track 1 ready to race. */
+  const joinNow = useCallback(async () => {
+    if (joining.current) return;
+    joining.current = true;
+    setBusy('join'); setError(null);
+    try {
+      setView(await api.joinLeague(code));
+      setSearch({ joined: '1' }, { replace: true });
+      if (typeof window !== 'undefined') window.scrollTo?.({ top: 0 });
+    } catch (e) {
+      setError(e);
+      setSearch({}, { replace: true });
+    } finally {
+      joining.current = false;
+      setBusy(null);
+    }
+  }, [code, setSearch]);
+  // Back from logging in (or saving the marble elsewhere) with ?join=1: join by itself.
+  useEffect(() => {
+    if (!wantsJoin || !view || !user) return;
+    if (view.member) setSearch({ joined: '1' }, { replace: true });
+    else if (saved && view.league.status === 'open') joinNow();
+  }, [wantsJoin, view, user, saved, joinNow, setSearch]);
   // Fresh while it runs (other players' times), and the clock.
   useEffect(() => {
     if (view?.league.status !== 'open') return undefined;
@@ -393,6 +424,10 @@ function LeaguePageIn() {
   const mine = league.mine_to_run;
   const ends = new Date(league.ends_at);
   const winner = league.status === 'ended' ? scoreboard.find((r) => r.place === 1) : null;
+  // Someone opening an invite: the welcome first (a member goes straight to the league page).
+  if (!member && isOpen && !peek) {
+    return <LeagueWelcome view={view} code={code} saved={saved} guest={Boolean(user?.is_guest)} busy={busy === 'join' || (wantsJoin && saved)} error={error} now={now} skew={skew} onJoin={joinNow} onPeek={() => setPeek(true)} />;
+  }
   return (
     <div className="ms-page">
       <div className="ms-row" style={{ justifyContent: 'space-between', alignItems: 'baseline' }}>
@@ -418,16 +453,25 @@ function LeaguePageIn() {
           <button type="button" className="ms-btn ms-btn--sm ms-btn--ghost" onClick={() => setSearch({}, { replace: true })}>OK</button>
         </div>
       )}
+      {joined && member && isOpen && tracks[0] && (
+        <div className="ms-msg ms-league-new ms-league-in" role="status">
+          <span><b>You're in!</b> Race track 1, {tracks[0].name}, to get on the scoreboard: your best time on each track counts.</span>
+          <span className="ms-row" style={{ gap: 8 }}>
+            <button type="button" className="ms-btn ms-btn--primary" disabled={Boolean(busy) || tracks[0].tries_left === 0} onClick={() => race(tracks[0].id)}>{busy === `race-${tracks[0].id}` ? 'STARTING…' : 'RACE TRACK 1'}</button>
+            <button type="button" className="ms-btn ms-btn--sm ms-btn--ghost" onClick={() => setSearch({}, { replace: true })}>Later</button>
+          </span>
+        </div>
+      )}
       {winner && <div className="ms-msg" role="status"><b>{winner.name}</b> won with {lapTime(winner.total_ms)}{winner.user_id === user?.id ? '. Well raced!' : '.'}</div>}
 
       {!member && isOpen && (saved
         ? (
           <section className="ms-card ms-league-join" aria-label="Join">
             <span>{league.creator ? `${league.creator.name} invited you` : 'Join this league'}: race its {tracks.length} tracks, your best time on each counts.</span>
-            <button type="button" className="ms-btn ms-btn--primary ms-btn--lg" disabled={Boolean(busy)} onClick={run('join', () => api.joinLeague(code))}>{busy === 'join' ? 'JOINING…' : 'JOIN THE LEAGUE'}</button>
+            <button type="button" className="ms-btn ms-btn--primary ms-btn--lg" disabled={Boolean(busy)} onClick={joinNow}>{busy === 'join' ? 'JOINING…' : 'JOIN AND START RACING'}</button>
           </section>
         )
-        : <SaveFirst next={`/l/${code}`} why="Leagues are for saved accounts, so your times keep your name." />)}
+        : <SaveFirst next={`/l/${code}?join=1`} onSaved={joinNow} why="Leagues are for saved accounts, so your times keep your name." />)}
 
       <div className="ms-two" style={{ alignItems: 'start' }}>
         <section className="ms-card ms-league-col" style={{ flex: '1 1 440px' }} aria-labelledby="tracks-h">
@@ -504,6 +548,67 @@ function LeaguePageIn() {
         <Link to="/leagues" style={{ color: 'var(--ms-soft)' }}>My leagues</Link>
       </div>
       <p className="ms-note ms-go-pro">{GO_PRO}</p>
+    </div>
+  );
+}
+
+/**
+ * An invite link's welcome (Moses, 27 Oct 2026): who invited you to which league, its 5 tracks' pictures,
+ * when it ends, how many have joined, the tries; one big JOIN AND START RACING. A saved player joins at
+ * once; a guest or visitor is told leagues need a saved account (free) and saves one right here (or logs
+ * in, then comes back with ?join=1): either way they land on the league page already in, track 1 ready.
+ */
+export function LeagueWelcome({ view, code, saved, guest, busy, error, now, skew, onJoin, onPeek }) {
+  const { league, tracks, scoreboard } = view;
+  const all = useTracks();
+  const series = useMemo(() => new Map(all.map((t) => [t.slug, t.series])), [all]);
+  const [signing, setSigning] = useState(false);
+  const formRef = useRef(null);
+  useEffect(() => { if (signing) formRef.current?.scrollIntoView?.({ behavior: 'smooth', block: 'start' }); }, [signing]);
+  const players = scoreboard.length;
+  const ends = new Date(league.ends_at).toLocaleString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+  const back = `/l/${code}?join=1`;
+  return (
+    <div className="ms-page ms-league-welcome">
+      <section className="ms-card ms-league-welcome__card" aria-labelledby="welcome-h">
+        <span className="ms-eyebrow" style={{ color: 'var(--ms-orange)' }}>League invite · {code}</span>
+        <h1 id="welcome-h" className="ms-h1" style={{ ...h1, overflowWrap: 'anywhere', textWrap: 'balance' }}>
+          {league.creator ? <>{league.creator.name} has invited you to join <span className="ms-league-welcome__name">{league.name}</span></> : <>You're invited to join <span className="ms-league-welcome__name">{league.name}</span></>}
+        </h1>
+        <ol className="ms-league-welcome__tracks" aria-label={`The league's ${tracks.length} tracks`}>
+          {tracks.map((t, k) => (
+            <li key={t.id}>
+              <span className="ms-league-welcome__pic" style={{ background: SERIES_PIC[series.get(t.slug)] ?? SERIES_PIC.Classic }}>
+                <TrackBanner slug={t.slug} />
+                <span className="ms-league-welcome__n">{k + 1}</span>
+              </span>
+              <span className="ms-league-welcome__tname">{t.name}</span>
+            </li>
+          ))}
+        </ol>
+        <ul className="ms-league-welcome__facts">
+          <li><b>Ends {ends}</b><span>{timeLeft(league.ends_at, now, skew)}</span></li>
+          <li><b>{players} {players === 1 ? 'player' : 'players'}</b><span>joined so far</span></li>
+          <li><b>{triesText(league.attempts)}</b><span>your best time on each track counts</span></li>
+        </ul>
+        {error && <div className="ms-msg ms-msg--bad" role="alert">{error.message}</div>}
+        {!signing && (
+          <div className="ms-league-welcome__go">
+            <button type="button" className="ms-btn ms-btn--primary ms-btn--lg ms-league-welcome__btn" disabled={busy} onClick={() => (saved ? onJoin() : setSigning(true))}>
+              {busy ? 'JOINING…' : 'JOIN AND START RACING'}
+            </button>
+            {!saved && <span className="ms-note">Leagues need a saved account, so your times keep your name. It's free.</span>}
+          </div>
+        )}
+      </section>
+      {signing && !saved && (
+        <section ref={formRef} className="ms-card ms-league-save" aria-label="Save your marble to join">
+          <p style={{ margin: 0 }}><b>Leagues need a saved account (free).</b> Save yours and you're straight into {league.name}, ready to race track 1.</p>
+          <QuickSignup heading="h2" title={guest ? 'Save your marble to join' : 'Make your free account to join'} sub={guest ? null : 'A player name, an email and a password: your times keep your name.'} onSaved={() => onJoin()} onDone={() => {}} onLater={() => setSigning(false)} />
+          {!guest && <Link to={`/signup?mode=login&next=${encodeURIComponent(back)}`} className="ms-league-link">I already have an account: log in</Link>}
+        </section>
+      )}
+      <button type="button" className="ms-league-link ms-league-welcome__peek" onClick={onPeek}>See the scoreboard first</button>
     </div>
   );
 }

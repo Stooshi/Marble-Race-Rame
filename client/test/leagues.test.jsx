@@ -6,7 +6,7 @@ import { renderToString } from 'react-dom/server';
 import { MemoryRouter } from 'react-router-dom';
 import { describe, expect, it } from 'vitest';
 import { GO_PRO, lapTime, timeLeft, triesText } from '../src/site/leagues/status';
-import { LeagueList, LeaguesSoon } from '../src/site/leagues/LeaguesPages';
+import { LeagueList, LeagueWelcome, LeaguesSoon } from '../src/site/leagues/LeaguesPages';
 import { metaFor } from '../src/site/pageMeta';
 
 const src = (f) => readFileSync(new URL(`../${f}`, import.meta.url), 'utf8');
@@ -91,7 +91,7 @@ describe('leagues: the pages', () => {
     expect(PAGES).toContain('<b>League</b><span>5 tracks · free · for fun</span>');
   });
   it('saved accounts only: a guest saves their marble, a visitor saves one or logs in and comes back', () => {
-    expect(PAGES).toContain("<SaveFirst next={`/l/${code}`}");
+    expect(PAGES).toContain("<SaveFirst next={`/l/${code}?join=1`} onSaved={joinNow}");
     expect(PAGES).toContain('<QuickSignup heading="h3"');
     expect(PAGES).toContain('to={`/signup?mode=login&next=${encodeURIComponent(next)}`}');
   });
@@ -121,6 +121,42 @@ describe('leagues: the texts', () => {
     expect(GO_PRO).toBe('Pro Leagues are coming. Race your way to the Marble Spins Major League. Date to be announced.');
     // (Pro League appears only in the Go pro line.)
     expect(PAGES.match(/Pro League/g)?.length ?? 0).toBeLessThanOrEqual(2);
+  });
+});
+
+describe('an invite link: the welcome', () => {
+  const now = Date.UTC(2026, 9, 27, 18, 0);
+  const view = {
+    league: { code: 'K7QF2M', name: 'Friday Spins', status: 'open', ends_at: new Date(now + (2 * 24 + 3) * 3600_000).toISOString(), attempts: 3, creator: { id: 'a', name: 'Nia' } },
+    tracks: ['meadow-loop', 'are-run', 'bobsleigh-run', 'san-francisco', 'table-mountain-run'].map((slug, k) => ({ id: `t${k}`, slug, name: `Track ${k + 1}` })),
+    scoreboard: [{ user_id: 'a' }, { user_id: 'b' }, { user_id: 'c' }],
+    member: false,
+  };
+  const page = (props) => renderToString(<MemoryRouter><LeagueWelcome view={view} code="K7QF2M" now={now} skew={0} onJoin={() => {}} onPeek={() => {}} {...props} /></MemoryRouter>);
+  it('who invited you to which league, its 5 tracks, when it ends, players, tries, one big button', () => {
+    const html = page({ saved: true });
+    expect(html).toContain('Nia<!-- --> has invited you to join <span class="ms-league-welcome__name">Friday Spins</span>');
+    expect(html.match(/ms-league-welcome__pic/g)).toHaveLength(5);
+    for (let k = 1; k <= 5; k += 1) expect(html).toContain(`Track ${k}`);
+    expect(html).toMatch(/Ends <!-- -->[A-Z][a-z]{2} \d{1,2} [A-Z][a-z]{2}, \d{2}:\d{2}/);
+    expect(html).toContain('2 days 3 h left');
+    expect(html).toMatch(/3<!-- --> <!-- -->players/);
+    expect(html).toContain('3 tries per track');
+    expect(html.match(/JOIN AND START RACING/g)).toHaveLength(1);
+    expect(html).not.toContain('saved account');
+  });
+  it('a guest or visitor: one line that leagues need a saved account (free)', () => {
+    const html = page({ saved: false });
+    expect(html).toContain('Leagues need a saved account, so your times keep your name. It&#x27;s free.');
+    expect(html).toContain('JOIN AND START RACING');
+  });
+  it('the page: a member skips it; a guest saves and joins, a visitor may log in and come back joined, track 1 ready', () => {
+    expect(PAGES).toContain('if (!member && isOpen && !peek) {');
+    expect(PAGES).toContain('onSaved={() => onJoin()}');
+    expect(PAGES).toContain('const back = `/l/${code}?join=1`;');
+    expect(PAGES).toContain("else if (saved && view.league.status === 'open') joinNow();");
+    expect(PAGES).toContain("setSearch({ joined: '1' }, { replace: true });");
+    expect(PAGES).toContain("'RACE TRACK 1'");
   });
 });
 
