@@ -52,3 +52,20 @@ describe('the name shown', () => {
     expect(src).toContain('const SHOWN = /^[\\p{L}\\p{N}][\\p{L}\\p{N} _-]{1,22}[\\p{L}\\p{N}_]$/u;');
   });
 });
+
+describe('a saved account chooses its shown name too (Moses, 27 Oct 2026)', () => {
+  it('the name chip opens a menu with "Your name" and Settings; Settings has "Your name"', async () => {
+    const { readFileSync } = await import('node:fs');
+    const chip = readFileSync(new URL('../src/site/account/NameChip.jsx', import.meta.url), 'utf8');
+    const settings = readFileSync(new URL('../src/site/pages/SettingsPage.jsx', import.meta.url), 'utf8');
+    expect(chip).toContain('{open && <SavedNameMenu user={user} onClose={() => setOpen(false)} />}');
+    expect(chip).toContain('<ChooseNameForm user={user} label="Your name" note={SAVED_NOTE(user)} />');
+    expect(chip).not.toContain('<Link to="/settings" className={`ms-chip');
+    // (the same rules and filter for everyone: one form, the server's check)
+    expect(chip.match(/api\.setName\(n\)/g)).toHaveLength(1);
+    expect(chip).toContain('if (checkName(n)) { setError(NAME_NOT_ALLOWED); return; }');
+    expect(chip).toContain("const canReset = Boolean(user && !isGuest(user) && user.display_name && !user.name_hidden);");
+    expect(settings).toContain('{user && <YourName user={user} />}');
+    expect(settings).not.toContain('@{user.username}');
+  });
+});

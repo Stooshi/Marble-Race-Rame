@@ -13,7 +13,9 @@ export const SHOWN_NAME = /^[\p{L}\p{N}][\p{L}\p{N} _-]{1,22}[\p{L}\p{N}_]$/u;
  * The player's name in the top bar, next to the coins (Moses, 25 Oct 2026), on the website and in
  * the apps. A saved account: a link to Settings. A guest: the name with a small "not saved" dot; a tap
  * opens a menu with "Save your marble" first, then "Choose your name" (stored on the account with
- * the name filter; it stays when they save the account). Long names end in "…" on phones (site.css).
+ * the name filter; it stays when they save the account). A saved account (admins too, Moses, 27 Oct
+ * 2026): a menu with "Your name" (the same rules and filter) and Settings. Long names end in "…" on
+ * phones (site.css).
  */
 export default function NameChip({ user, className = '' }) {
   const [open, setOpen] = useState(false);
@@ -31,7 +33,14 @@ export default function NameChip({ user, className = '' }) {
     );
   }
   if (!isGuest(user)) {
-    return <Link to="/settings" className={`ms-chip ms-chip--name ${className}`} title={`${name}: Settings`}><span className="ms-chip__text">{name}</span></Link>;
+    return (
+      <>
+        <button type="button" className={`ms-chip ms-chip--name ${className}`} aria-haspopup="dialog" aria-expanded={open} onClick={() => setOpen(true)} title={`${name}: your name and Settings`}>
+          <span className="ms-chip__text">{name}</span>
+        </button>
+        {open && <SavedNameMenu user={user} onClose={() => setOpen(false)} />}
+      </>
+    );
   }
   return (
     <>
@@ -47,8 +56,13 @@ export default function NameChip({ user, className = '' }) {
 
 export const HIDDEN_NOTICE = 'Your name was reported and is hidden. Choose a new name.';
 
-/** "Choose your name": the same rules as the server (src/names assertShownName). */
-export function ChooseNameForm({ user, label = 'Choose your name', note = 'Shown to other players in races, rooms and scoreboards. It stays when you save your marble.' }) {
+export const SAVED_NOTE = (user) => `Shown to other players in races, rooms, leagues and scoreboards. You still log in with your player name ${user?.username ?? ''} or your email.`;
+
+/**
+ * "Choose your name": the same rules as the server (src/names assertShownName). A saved account with a
+ * chosen name can go back to its player name (`reset`).
+ */
+export function ChooseNameForm({ user, label = 'Choose your name', note = 'Shown to other players in races, rooms and scoreboards. It stays when you save your marble.', id = 'ms-choose-name' }) {
   const { refreshUser } = useAuth();
   const [name, setName] = useState(user?.name_hidden ? '' : (user?.display_name ?? ''));
   const [busy, setBusy] = useState(false);
@@ -74,13 +88,31 @@ export function ChooseNameForm({ user, label = 'Choose your name', note = 'Shown
     }
   };
 
+  // (Back to the player name: a saved account only, and never while a reported name is hidden.)
+  const canReset = Boolean(user && !isGuest(user) && user.display_name && !user.name_hidden);
+  const reset = async () => {
+    setBusy(true);
+    setError(null);
+    try {
+      await api.setName(null);
+      await refreshUser?.();
+      setName('');
+      setSaved(true);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
   return (
-    <form className="ms-namemenu__form" onSubmit={submit}>
-      <label htmlFor="ms-choose-name">{label}</label>
+    <form className="ms-form ms-namemenu__form" onSubmit={submit}>
+      <label htmlFor={id}>{label}</label>
       <div className="ms-namemenu__row">
-        <input id="ms-choose-name" value={name} onChange={(e) => { setName(e.target.value); setSaved(false); }} maxLength={24} autoComplete="nickname" placeholder="Type your player name" />
+        <input id={id} value={name} onChange={(e) => { setName(e.target.value); setSaved(false); }} maxLength={24} autoComplete="nickname" placeholder="Type your player name" />
         <button type="submit" className="ms-btn ms-btn--sm" disabled={busy}>{busy ? 'Saving…' : 'Save'}</button>
       </div>
+      {canReset && <button type="button" className="ms-linkbtn ms-namemenu__reset" disabled={busy} onClick={reset}>Use my player name, {user.username}</button>}
       {error && <span className="ms-namemenu__error" role="alert">{error}</span>}
       {saved && !error && <span className="ms-namemenu__ok" role="status">Saved: other players see you as {shownName(user)}.</span>}
       {note && <span className="ms-note">{note}</span>}
@@ -134,6 +166,20 @@ export function HiddenNameNotice() {
       <button type="button" className="ms-btn ms-btn--primary ms-btn--sm" onClick={() => setOpen(true)}>Choose a new name</button>
       {open && <NameDialog user={user} onClose={() => setOpen(false)} />}
     </div>
+  );
+}
+
+/** A saved account's menu: its name (change it) and Settings. */
+export function SavedNameMenu({ user, onClose }) {
+  return (
+    <Panel label="Your name" onClose={onClose}>
+      <div className="ms-namemenu__who">
+        <b>{shownName(user)}</b>
+        <span>{user?.display_name ? `Player name ${user.username}` : 'Saved account'}</span>
+      </div>
+      <ChooseNameForm user={user} label="Your name" note={SAVED_NOTE(user)} />
+      <Link to="/settings" className="ms-btn" onClick={onClose}>Settings</Link>
+    </Panel>
   );
 }
 

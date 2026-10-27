@@ -9,8 +9,21 @@ import { giftCodesOn } from './RedeemPage';
 import { PushSettings } from '../account/PushSettings';
 import CountryPicker from '../country/CountryPicker';
 import { CHANGE_RULE, countryName } from '../country/countries';
+import { ChooseNameForm, SAVED_NOTE } from '../account/NameChip';
+import { shownName } from '../../shared/playerName';
 
 const day = (t) => (t ? new Date(t).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : null);
+
+/** "Your name": the name other players see (saved accounts and guests, the same rules and filter). */
+function YourName({ user }) {
+  return (
+    <section className="ms-card" style={{ display: 'grid', gap: 10 }} aria-labelledby="name-h">
+      <h2 id="name-h" className="ms-h3" style={{ margin: 0 }}>Your name</h2>
+      <p style={{ margin: 0 }}>Other players see you as <b>{shownName(user)}</b>.</p>
+      <ChooseNameForm id="settings-name" user={user} label={user.name_hidden ? 'Choose a new name' : 'Change the name other players see'} note={user.is_guest ? undefined : SAVED_NOTE(user)} />
+    </section>
+  );
+}
 
 /** News by email: on or off, saved with the date. Not offered under 13, or to guests without an email. */
 function NewsByEmail() {
@@ -195,8 +208,9 @@ export default function SettingsPage() {
   return (
     <div className="ms-page ms-page--narrow" style={{ display: 'grid', gap: 16 }}>
       <h1 className="ms-h1" style={{ fontFamily: 'var(--ms-cond)', fontWeight: 800, margin: 0 }}>Settings</h1>
-      {user && <span style={{ color: 'var(--ms-soft)' }}>@{user.username}{user.is_guest ? ' · guest' : ` · ${user.email}`}</span>}
+      {user && <span style={{ color: 'var(--ms-soft)' }}>{user.is_guest ? 'Guest, not saved yet' : `Player name ${user.username} · ${user.email}`}</span>}
       {user && !user.is_guest && !user.email_verified_at && <ConfirmEmail />}
+      {user && <YourName user={user} />}
       <SeasonPasses />
       <PushSettings />
       <NewsByEmail />
