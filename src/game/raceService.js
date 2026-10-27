@@ -4,7 +4,6 @@ const { shownName } = require('../names/shown');
 const { dressRows } = require('../marbles/computerPlayers');
 const { dressComputerPlayers } = require('../marbles/showcase');
 const crypto = require('crypto');
-const zlib = require('zlib');
 const db = require('../db');
 const config = require('../config');
 const { createRng } = require('./rng');
@@ -15,11 +14,12 @@ const simulationPool = require('./simulationPool');
 const { HOUSE_SKILLS, skillStats } = require('./skill');
 const { raceSession } = require('./raceSession');
 const { withLighting } = require('../trackKit/lighting');
+const { unpackReplay } = require('./replayPack');
 
 // Races on tracks with physics settings run on the new physics engine, at a
 // smoother frame rate, and are stored as they were decided (race_replays).
 const PHYSICS_TICK_HZ = 20;
-const { badRequest, conflict, forbidden, notFound } = require('../utils/httpError');
+const { HttpError, badRequest, conflict, forbidden, notFound } = require('../utils/httpError');
 const economy = require('../economy');
 
 /**
@@ -90,8 +90,12 @@ async function loadSimulationInput(client, raceId) {
 async function loadRun(client, race, entries) {
   if (!race.physics) return runSimulation(race, entries.map(engineEntry));
   const { rows } = await client.query('SELECT data FROM race_replays WHERE race_id = $1', [race.id]);
-  if (!rows[0]) throw new Error(`Race ${race.id} has no stored replay`);
-  return JSON.parse(zlib.gunzipSync(rows[0].data).toString('utf8'));
+  if (!rows[0]) {
+    // (Replays are kept 30 days, src/game/replayRetention.js; the results stay for ever.)
+    if (race.status === 'finished') throw new HttpError(410, 'This race\'s replay is no longer kept: replays are kept for 30 days. Its results stay.', { code: 'replay_gone' });
+    throw new Error(`Race ${race.id} has no stored replay`);
+  }
+  return unpackReplay(rows[0].data); // (either version: src/game/replayPack.js)
 }
 
 /** Public, result-free description of a race used for the stream header. */

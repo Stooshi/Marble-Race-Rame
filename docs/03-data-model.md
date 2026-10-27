@@ -157,7 +157,9 @@ One marble in one race. Computer players have `user_id NULL` and `is_bot = true`
 | `joined_at` | |
 
 ### `race_replays`
-For physics races, the whole race is stored as `data` (gzipped JSON: frames, events, gate) along with the `engine` version. Classic races aren't stored; they are re-simulated from their seed.
+For physics races, the whole race is stored as `data` along with the `engine` version. Classic races aren't stored; they are re-simulated from their seed.
+- **Two forms, both read** (`src/game/replayPack.js`): until 27 Oct 2026 gzipped JSON (frames, events, gate; about 160–180 KB a race); since then version 2, starting with the bytes `MSR2`: Brotli over JSON with the frames stored by column as whole numbers and differences (about 50–70 KB a race, lossless: the race plays back exactly as it ran).
+- **Kept 30 days** (Moses, 27 Oct 2026; `src/game/replayRetention.js`, daily at 04:30 UTC, deleting only once `REPLAY_TRIM=on`): older replays are deleted, except the latest 200 finished races (the landing page's closest finish), each track's record (by anyone, and by a player), each country's record on each track, and each collection marble's first win. The race and its results (`races`, `race_entries`) are kept for ever; its replay then answers 410 `replay_gone`.
 
 ### `race_entry_looks`, `house_looks`
 Looks only; the race engine never reads them.

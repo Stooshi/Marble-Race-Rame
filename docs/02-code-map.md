@@ -69,7 +69,7 @@
 ## The server: `src/`
 
 **Starting up:**
-- `server.js`: builds the app and socket server, checks the database, then runs `migrate()`, `raceManager.recover()`, the race scheduler and the daily IP trimming, and starts the background jobs: guest retention (`account/retention.js`), push (`push`), purchase emails (`payments/emails.js`), Google Play (`payments` `startGoogleJobs`) and seasons (`seasons` `startJobs`). Shuts down cleanly on SIGTERM.
+- `server.js`: builds the app and socket server, checks the database, then runs `migrate()`, `raceManager.recover()`, the race scheduler and the daily IP trimming, and starts the background jobs: guest retention (`account/retention.js`), push (`push`), purchase emails (`payments/emails.js`), Google Play (`payments` `startGoogleJobs`), seasons (`seasons` `startJobs`), leagues (`leagues` `startJobs`: the end of each league) and replays (`game/replayRetention.js`: over 30 days old). Shuts down cleanly on SIGTERM.
 - `app.js`: Express setup (helmet, CORS, `/health`). The Stripe webhook is mounted **before** the JSON parser, because it needs the raw body; so is `/api/support`, which reads its own larger body (a screenshot). The `/api/*` routers come after.
 - `version.js`: `VERSION` (commit, `codeFingerprint`, engine versions, start time), shown on `/health`.
 - `config/index.js`: every environment setting in one frozen object, including CORS (`isSiteOrigin`) and Stripe. It refuses to start in production without a `JWT_SECRET` of at least 32 characters.
@@ -78,7 +78,7 @@
 - `index.js`: the Postgres pool, `query`, and `withTransaction(fn)`.
 - `migrate.js`: `migrate()` runs at every start (see the [runbook](05-runbook.md#data-updates)). It applies `docs/database_schema.sql`, then any `docs/data_updates/*.sql` not yet in the `data_updates` table, all in one transaction under an advisory lock. Afterwards it logs `[db-setup]` health lines.
 
-**`game/`: races.**
+**`game/`: races.** (Also `replayPack.js`: `packReplay`/`unpackReplay`, the stored replay, version 2 since 27 Oct 2026, old gzipped ones still read; `replayRetention.js`: replays kept 30 days, `trimReplays`, `startJobs`, dry runs until `REPLAY_TRIM=on`.)
 - `rng.js`: the seeded random-number generator (mulberry32). The engines never use `Math.random` or the clock.
 - `skill.js`: skill is the player's, not the marble's. `skillStats(skill)` sets all four engine stats to the skill. Also `HOUSE_SKILLS` (the computer players, 45–55) and `STARTING_SKILL` (50).
 - `simulator.js`: the **classic** 1-D engine (`SIMULATOR_VERSION = 'solid-marbles-1'`). Old races are **re-simulated** from their seed, so this file must never change behaviour.

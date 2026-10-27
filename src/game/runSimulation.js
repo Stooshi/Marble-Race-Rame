@@ -3,7 +3,6 @@
 // Running a race's engine, apart from the database: the main server calls it
 // through simulationPool (in a worker thread, so working out a race never
 // holds up the live races being streamed), and the tests call it directly.
-const zlib = require('zlib');
 const config = require('../config');
 const { simulateRace } = require('./simulator');
 const { simulatePhysicsRace } = require('./physicsSimulator');
@@ -51,10 +50,8 @@ function runSimulation(race, entries) {
 }
 
 /** What is stored for a race on the new physics: everything its replay needs. */
-function packReplay(sim) {
-  const { durationMs, tickMs, tickRateHz, results, events, frames, start, stats } = sim;
-  return zlib.gzipSync(Buffer.from(JSON.stringify({ durationMs, tickMs, tickRateHz, results, events, frames, start, stats })));
-}
+// (The stored replay's packing, src/game/replayPack.js: version 2 since 27 Oct 2026, about a third of the size.)
+const { packReplay } = require('./replayPack');
 
 
 module.exports = { runSimulation, packReplay };

@@ -256,6 +256,10 @@ To turn email off again, remove `BREVO_API_KEY` and restart.
 
 **Support emails.** Contact-form messages go to support@marblespins.com (the company's address in `client/src/shared/company.json`; `SUPPORT_EMAIL` on Railway overrides it). With Brevo on, every new message is emailed there, with a link to it in the back office; replying to that email goes straight to the player (but isn't logged in the back office, so prefer replying there). Replies written in the back office are emailed to the player from `EMAIL_FROM`, with `SUPPORT_EMAIL` as the reply-to address. Without Brevo, messages and replies are still saved; the back office says a reply wasn't emailed.
 
+## Replays: kept 30 days (switching on)
+
+Built 27 Oct 2026 (`src/game/replayRetention.js`). After the deploy that brings it, the server logs once a day (and 5 minutes after it starts) what it would delete: `[replays] DRY RUN: N replays over 30 days old would be deleted (X MB)`. Results are never deleted, and the replays something shows are kept (the latest 200 races, track, player and country records, each collection marble's first win). Once the number looks right: Railway → the server → Variables → `REPLAY_TRIM` = `on`. New replays are already about a third of the old size (no switch). The first deleting run takes at most 20,000 replays; the rest follow day by day. The database reuses the freed space; the next backup is smaller at once.
+
 ## Leagues: testing and switching on
 
 Built switched off (27 Oct 2026). The server variable `LEAGUES` decides (see `docs/01-architecture.md`):

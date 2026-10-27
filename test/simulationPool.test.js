@@ -4,7 +4,7 @@
 // and the server keeps ticking meanwhile (live races never freeze).
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const zlib = require('node:zlib');
+const { unpackReplay } = require('../src/game/replayPack');
 const { physicsTrack } = require('../src/game/physicsTracks');
 const { runSimulation } = require('../src/game/runSimulation');
 const { simulate, simulatePhysics } = require('../src/game/simulationPool');
@@ -23,8 +23,9 @@ test('a race worked out in the worker is exactly the race worked out here, with 
   const { sim, replay } = await simulate(race, entries);
   const here = runSimulation(race, entries);
   assert.equal(JSON.stringify(sim), JSON.stringify(here));
-  // (Packed as JSON, as replays always are: -0 is stored as 0.)
-  const unpacked = JSON.parse(zlib.gunzipSync(replay).toString('utf8'));
+  // (Packed as JSON, as replays always are: -0 is stored as 0. Version 2 since 27 Oct 2026: src/game/replayPack.js.)
+  const unpacked = unpackReplay(replay);
+  assert.equal(replay.subarray(0, 4).toString(), 'MSR2');
   assert.equal(JSON.stringify(unpacked.frames), JSON.stringify(here.frames));
   assert.equal(JSON.stringify(unpacked.results), JSON.stringify(here.results));
   // The physics preview page too.

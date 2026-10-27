@@ -159,6 +159,7 @@ There is no separate staging server. Vercel makes a preview build for every bran
 | `APPLE_BUNDLE_ID` | no | Default `com.marblespins.app` |
 | `APPLE_ACCEPT_SANDBOX` | no | Default: sandbox purchases accepted (App Review and TestFlight buy in Apple's sandbox, even against the live server). `false` refuses them |
 | `LEAGUES` | no | Leagues (Leagues v1 part 1, 27 Oct 2026): `off` (the default; unset or anything else is off too): the leagues API answers 404 except `GET /api/leagues/status`, and the website shows no leagues; `admins`: only admin accounts see and use leagues (to test in production); `on`: everyone. Changing it needs no deploy: Railway restarts the server with the new value |
+| `REPLAY_TRIM` | no | Replays kept 30 days (`src/game/replayRetention.js`, 27 Oct 2026): unset (the default) the daily job only logs what it would delete (`[replays] DRY RUN: … would be deleted`); `on` deletes them. Results are never deleted |
 | `PAYMENTS_TEST` | never in production | `true`: instant fake payments, for local development |
 | `RACE_COUNTDOWN_MS`, `RACE_START_SHOW_MS` (4000: the start show's extra countdown in rooms and Quick race, the flyover's 4 s; 26 Oct 2026), `RACE_MIN_DURATION_MS`, `RACE_MAX_DURATION_MS`, `RACE_DEFAULT_MARBLES`, `RACE_TICK_RATE_HZ`, `RACE_NEXT_DELAY_MS` | no | Race timing defaults (see the root README) |
 | `RAILWAY_GIT_COMMIT_SHA`, `SOURCE_COMMIT` | set by the platform | Shown on `/health` as the commit, when known |
