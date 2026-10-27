@@ -185,7 +185,7 @@ Reports are saved in `reports/<slug>/`. Track design rules:
 
 ## Leagues
 
-Built 27 Oct 2026 (Leagues v1 part 1), **switched off** (`LEAGUES` on Railway: `off`, `admins` to test, `on`). Plan: project doc `claude/leagues-v1-build-plan.md`; decisions 25–26 Oct 2026.
+Built 27 Oct 2026 (Leagues v1 part 1), **on for everyone since 27 Oct 2026** (`LEAGUES` on Railway: `off`, `admins` to test, `on`). Plan: project doc `claude/leagues-v1-build-plan.md`; decisions 25–26 Oct 2026.
 
 - **A League:** a saved player picks a name, **5 different tracks**, how long it runs (**1 to 7 days**, from now) and the **tries per track** (unlimited, 3, 5 or 10), and shares its link (`/l/CODE`). The name goes through the same filter as player names; the creator can rename the league at any time (the pencil next to its name). Guests are asked to save their marble first. A creator can have **5 leagues open** at once; anyone can be in any number. Up to **50 players**; the creator can add players by name and take them out (they can't come back). Free, for fun: no league marble, nothing toward the Major League.
 - **Racing:** each try is a solo race on one of the league's tracks, with computer players filling the field to 20, decided and paid exactly like any race (coins and the daily full-pay races as usual). A try counts from the moment the race is made; a cancelled race, or one left waiting over 10 minutes, gives the try back. A race made before the league ends counts even if it finishes just after. After a league race, "Race it again" makes the next try from the league (never a plain rematch), and the result says "New best!" when it beat the player's best on that track in the league.
