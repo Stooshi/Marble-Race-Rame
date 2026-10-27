@@ -264,6 +264,7 @@ Defined in `src/sockets/index.js`. The client may send a JWT in `auth.token`; an
 - **Races:** `raceManager`, `raceSession`, `rooms`, `roomTimer` (the host's start timer), `publicRooms` (public rooms and Quick race, 25 Oct 2026), `startShow` (a room race's start show, 27 Oct 2026), `leagues` (the switch, the rules, tries, the scoreboard and tie-break, the end, Run again; 27 Oct 2026).
 - **Players:** `signup`, `loginRenewal`, `names`, `playerNames` (shown names, 25 Oct 2026), `country`, `cookieConsent`, `starters`, `computerPlayers`.
 - **Money and items:** `economy`, `entryFees`, `collection`, `showcase`, `payments`, `stripe`, `googlePlay`, `applePurchases`, `withdrawal`, `giftCodes`, `limitedEdition`, `season`, `seasonPass`, `seasonMarble`.
+- **The website and the server agree:** `apiRoutes` (every call in `client/src/api/client.js` has its route on the server: never "Route … not found"; 27 Oct 2026).
 - **Platform:** `account`, `passwordReset`, `admin`, `push`, `support` (contact form spam checks, screenshots, account linking, inbox, statuses, replies, audit), `origins`, `migrate` (the table list is fixed here), `appearance`.
 
 ---
