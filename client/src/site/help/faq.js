@@ -241,7 +241,7 @@ export function buildFaq({ tracks, platform = 'web' } = {}) {
         ? `There are ${NUMBER_WORDS[COIN_PACKS.length] ?? COIN_PACKS.length} packs: ${listJoin(COIN_PACKS.map((p) => n(p.coins)))} coins. The shop shows each pack's price in your own currency, VAT included, as ${STORE} sets it.`
         : [
           ['table', ['Pack', 'Coins'], ...packRows],
-          'Prices are shown in your local currency, including VAT.',
+          'Prices are shown in your local currency, including VAT. In the apps, the App Store or Google Play shows its own price, in your currency.',
         ]],
       ['How can I pay?',
         app
@@ -287,7 +287,7 @@ export function buildFaq({ tracks, platform = 'web' } = {}) {
       ["What's in the Holiday Season pass?", [
         app
           ? `The **${HOLIDAY.pass}** (its price is on the pass page, in your own currency, VAT included) gives you, until the season ends on ${HOLIDAY.ends} at ${HOLIDAY.endTime}:`
-          : `The **${HOLIDAY.pass}** costs ${HOLIDAY.price} (shown in your local currency, VAT included) and gives you, until the season ends on ${HOLIDAY.ends} at ${HOLIDAY.endTime}:`,
+          : `The **${HOLIDAY.pass}** costs ${HOLIDAY.price} on the website (shown in your local currency, VAT included; in the apps, the App Store or Google Play shows its own price, in your currency) and gives you, until the season ends on ${HOLIDAY.ends} at ${HOLIDAY.endTime}:`,
         ['ul',
           `all ${HOLIDAY.tracks} holiday tracks from around the world, from ${HOLIDAY.starts};`,
           `the **Holiday Track of the Day** bonus: +${HOLIDAY.bonus}% race coins on the featured track, on your full-pay races (the first 10 of the day);`,
