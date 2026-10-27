@@ -8,12 +8,27 @@
  *   - iPhone: the silent switch mutes the game's music and sounds, and the player's own music
  *     (Spotify, Apple Music…) keeps playing under the game (an "ambient" audio session; the app
  *     sets the same in ios/App/App/AppDelegate.swift).
+ *   - app links: a marblespins.com link to a league, room, track, result, certificate or the
+ *     scoreboards opens that page in the app (client/app-links.json; `linkPath`).
  * On the website none of this loads: the plugins are fetched only inside the apps.
  */
+import appLinks from '../../app-links.json';
 export const isNativeApp = () => typeof window !== 'undefined' && Boolean(window.Capacitor?.isNativePlatform?.());
 export const nativePlatform = () => (isNativeApp() ? window.Capacitor.getPlatform() : 'web');
 
 let started = false;
+
+/**
+ * The app's page for an opened link (https://marblespins.com/l/K7QF2M → "/l/K7QF2M"), or null for a
+ * link the app doesn't open (another site, the shop, checkout…: those stay on the website).
+ */
+export function linkPath(url, cfg = appLinks) {
+  let u;
+  try { u = new URL(url); } catch { return null; }
+  if (u.protocol !== 'https:' || u.hostname.replace(/^www\./, '') !== cfg.host) return null;
+  const ok = cfg.paths.some((p) => (p.endsWith('/') ? u.pathname.startsWith(p) && u.pathname.length > p.length : u.pathname === p || u.pathname.startsWith(`${p}/`)));
+  return ok ? `${u.pathname}${u.search}${u.hash}` : null;
+}
 
 /**
  * iPhone app: ask WebKit for an "ambient" audio session (iOS 17+: navigator.audioSession), so the
@@ -25,8 +40,8 @@ export function preferAmbientAudio(nav = typeof navigator !== 'undefined' ? navi
   try { nav.audioSession.type = 'ambient'; return true; } catch { return false; }
 }
 
-/** Call once, after the first render. `navigate(-1)` goes back; `atHome()` says whether we're on the first screen. */
-export async function startNativeShell({ goBack, atHome } = {}) {
+/** Call once, after the first render. `navigate(-1)` goes back; `atHome()` says whether we're on the first screen; `open(path)` opens a page (app links). */
+export async function startNativeShell({ goBack, atHome, open } = {}) {
   if (!isNativeApp() || started) return;
   started = true;
   preferAmbientAudio();
@@ -49,6 +64,17 @@ export async function startNativeShell({ goBack, atHome } = {}) {
     else App.exitApp();
   });
   App.addListener('appStateChange', ({ isActive }) => sound.setBackground(!isActive));
+  // App links: a link tapped while the app runs, and the one that started it (each opened once).
+  let last = null;
+  const follow = (url) => {
+    const to = linkPath(url);
+    if (!to || to === last) return;
+    last = to;
+    console.info('[app-links] open', to);
+    open?.(to);
+  };
+  App.addListener('appUrlOpen', ({ url }) => follow(url));
+  App.getLaunchUrl?.().then((r) => r?.url && follow(r.url)).catch(() => {});
   // Two frames after the first render, so the game is on screen when the splash goes.
   requestAnimationFrame(() => requestAnimationFrame(() => SplashScreen.hide({ fadeOutDuration: 250 }).catch(() => {})));
 }

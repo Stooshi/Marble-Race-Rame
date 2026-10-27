@@ -10,6 +10,7 @@
     "preview": "vite preview",
     "test": "vitest run",
     "app:sync": "node scripts/app-sync.mjs",
+    "app:links": "node scripts/app-links.mjs",
     "android:key": "node scripts/android-upload-key.mjs",
     "android:release": "node scripts/android-release.mjs",
     "app:version": "node scripts/app-version.mjs",

@@ -7,5 +7,13 @@
 	     Developer account (docs/05-runbook.md, Push notifications). -->
 	<key>aps-environment</key>
 	<string>development</string>
+	<!-- Universal Links (27 Oct 2026): marblespins.com pages open the app; iOS checks
+	     https://marblespins.com/.well-known/apple-app-site-association (client/app-links.json, once the
+	     Team ID is filled in). Needs the Associated Domains capability on the app id (Xcode adds it with
+	     automatic signing under the paid team). -->
+	<key>com.apple.developer.associated-domains</key>
+	<array>
+		<string>applinks:marblespins.com</string>
+	</array>
 </dict>
 </plist>

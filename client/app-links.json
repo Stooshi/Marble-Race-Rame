@@ -1,0 +1,17 @@
+{
+  "_about": "App links (Moses, 27 Oct 2026): links to these pages open the app when it's installed, else the website as before. The source for client/public/.well-known/assetlinks.json (Android App Links) and apple-app-site-association (iPhone Universal Links): change this file, then run `npm run app:links` and commit both. Certificate fingerprints and the Team ID are public (anyone can read them on the website), never secrets. Where to find each: docs/05-runbook.md, App links.",
+  "host": "marblespins.com",
+  "paths": ["/l/", "/r/", "/leagues", "/tracks", "/certificate/", "/results/", "/scores"],
+  "android": {
+    "package": "com.marblespins.app",
+    "fingerprints": {
+      "debug": "",
+      "upload": "",
+      "playAppSigning": ""
+    }
+  },
+  "ios": {
+    "bundleId": "com.marblespins.app",
+    "teamId": ""
+  }
+}

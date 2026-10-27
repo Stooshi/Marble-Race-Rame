@@ -81,7 +81,7 @@ export default function App() {
   navigateRef.current = navigate;
   // In the iPhone and Android apps: splash, status bar, back button, sound in the background.
   useEffect(() => {
-    startNativeShell({ goBack: () => navigate(-1), atHome: () => ['/', '/home'].includes(window.location.pathname) });
+    startNativeShell({ goBack: () => navigate(-1), atHome: () => ['/', '/home'].includes(window.location.pathname), open: (to) => navigate(to) });
   }, [navigate]);
   // Sound starts with the first tap (not on the landing page: music only once you're in the game).
   const admin = pathname === '/admin' || pathname.startsWith('/admin/');
