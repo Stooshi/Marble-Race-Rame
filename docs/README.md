@@ -2,13 +2,13 @@
 
 *One-page status for anyone taking over the code, such as a new CTO. Read this first, then the documents below. Last reviewed 25 Oct 2026, in the Sunday docs review that runs every week. Mirrored in the claude.ai project "Marble Race" under `cto/`.*
 
-## Status, 25 Oct 2026
+## Status, 27 Oct 2026
 
 **What it is:** Marble Spins is a free online marble racing game. Players drop a marble into a live 20-marble race, decided on the server by real physics. Purchases only change how a marble looks, never how it races. Races are decided once, from a seed, and never change.
 
 **Where it stands:**
 - **Website:** live at marblespins.com. Soft start (social media, 10–20 invited test pilots) in the week of 26 Oct. **Official launch 1 Dec 2026**, with the Holiday Season, the season pass and the apps.
-- **Tracks:** **105 live in nine series**: World Tour, Grand Prix, Coasters, Canyons, Blocks, Track and Field, Rivers, Pinball and Arcade. The 31 holiday tracks are switched on but hidden and closed until 1 Dec 00:00 Swedish time (136 then). **Peaks:** the test five (Everest, Mont Blanc, Vinson, Kilimanjaro, Vatnajökull) are on Main, switched off, waiting for Moses's review; added to the database switched off by the next server deploy (planned 27 Oct).
+- **Tracks:** **110 live in ten series**: World Tour, Grand Prix, Coasters, Canyons, Blocks, Track and Field, Rivers, Peaks, Pinball and Arcade. The 31 holiday tracks are switched on but hidden and closed until 1 Dec 00:00 Swedish time (141 then). **Peaks:** the first five (Everest, Mont Blanc, Vinson, Kilimanjaro, Vatnajökull) switched on by Moses on 27 Oct 2026 (after the server deploy that added them); the other ten after Leagues part 1, each with its big feature listed for Moses's approval first.
 - **Apps:** iPhone and Android (Capacitor) are built; the Android app is tested on Moses's phone. Store submission is planned for 16–20 Nov.
 - **Payments:**
   - Stripe on the website, in **test mode** until Moses says otherwise.
