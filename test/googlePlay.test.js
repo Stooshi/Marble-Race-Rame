@@ -117,7 +117,8 @@ test('Google Play: verified, credited once to the buyer only, consumed; voided p
     assert.deepEqual(ledger, [{ amount: 10500, kind: 'coin-pack' }]);
     // Bought coins never count as earned.
     // (Bought as coins_10500 in Google Play; kept as our own id, coins-10500.)
-    assert.equal((await db.query("SELECT product_id FROM payments WHERE provider = 'google' AND store_token = $1", [tok])).rows[0].product_id, 'coins-10500');
+    // (…at the store's US price, $9.99, not the website's $10: Moses, 27 Oct 2026.)
+    assert.deepEqual((await db.query("SELECT product_id, amount_cents FROM payments WHERE provider = 'google' AND store_token = $1", [tok])).rows[0], { product_id: 'coins-10500', amount_cents: 999 });
     const { rows: [u] } = await db.query('SELECT coins_bought FROM users WHERE id = $1', [me.user.id]);
     assert.ok(u.coins_bought >= 10500);
 
@@ -198,4 +199,11 @@ test('Google Play product ids: no hyphens there (coins_5000), our own ids everyw
   const client = fs.readFileSync(path.join(__dirname, '../client/src/site/payments/index.js'), 'utf8');
   assert.match(client, /export const playId = \(id\) => String\(id\)\.replace\(\/-\/g, '_'\);/);
   assert.equal((client.match(/productIdentifier: playId\(/g) ?? []).length, 2);
+});
+
+test('the coin packs: website $5/$10/$25/$50, the stores $4.99/$9.99/$24.99/$49.99 (like credits and the pass)', () => {
+  const packs = require('../client/src/shared/payments/packs.json').packs;
+  assert.deepEqual(packs.map((p) => [p.id, p.amountCents, p.storeAmountCents]), [
+    ['coins-5000', 500, 499], ['coins-10500', 1000, 999], ['coins-27500', 2500, 2499], ['coins-57500', 5000, 4999],
+  ]);
 });

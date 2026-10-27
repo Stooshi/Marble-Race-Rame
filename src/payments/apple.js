@@ -147,7 +147,7 @@ async function redeem(db, { userId, signedTransaction }, { grant, product, now =
       `INSERT INTO payments (user_id, provider, provider_ref, store_token, product_id, coins, amount_cents, currency, order_no, status, season_key)
        VALUES ($1, 'apple', $2, $3, $4, $5, $6, $7, 'MS-' || nextval('payment_order_seq'), 'pending', $8)
        ON CONFLICT DO NOTHING RETURNING id, order_no`,
-      [userId, ref, String(tx.originalTransactionId ?? ref), p.id, p.coins, p.amountCents, p.currency, p.seasonKey ?? null],
+      [userId, ref, String(tx.originalTransactionId ?? ref), p.id, p.coins, p.storeAmountCents ?? p.amountCents, p.currency, p.seasonKey ?? null], // (the store's US price: $4.99 for the $5 pack)
     );
     if (!payment) return { status: 'duplicate', orderNo: null, finish: true };
     const granted = await grant(client, payment.id, ref);

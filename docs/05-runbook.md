@@ -487,12 +487,12 @@ The app sells the same four packs through Google Play; the server checks every p
 
    | Product ID | Name | Description | Price (US) |
    |---|---|---|---|
-   | `coins_5000` | 5,000 coins | 5,000 Marble Spins coins for the shop. For looks only. | USD 5.00 |
-   | `coins_10500` | 10,500 coins | 10,500 Marble Spins coins for the shop. For looks only. | USD 10.00 |
-   | `coins_27500` | 27,500 coins | 27,500 Marble Spins coins for the shop. For looks only. | USD 25.00 |
-   | `coins_57500` | 57,500 coins | 57,500 Marble Spins coins for the shop. For looks only. | USD 50.00 |
+   | `coins_5000` | 5,000 coins | 5,000 Marble Spins coins for the shop. For looks only. | USD 4.99 |
+   | `coins_10500` | 10,500 coins | 10,500 Marble Spins coins for the shop. For looks only. | USD 9.99 |
+   | `coins_27500` | 27,500 coins | 27,500 Marble Spins coins for the shop. For looks only. | USD 24.99 |
+   | `coins_57500` | 57,500 coins | 57,500 Marble Spins coins for the shop. For looks only. | USD 49.99 |
 
-   The IDs must be exactly these, **with underscores** (Google Play allows no hyphens in product ids; our own ids are `coins-5000` and so on, and the app and server translate: `playId` in `src/payments/google.js` and `client/src/site/payments/index.js`). They can never be changed or reused. Set the price (purchase option "buy", consumable), let Play convert the other countries, check SEK and EUR look sensible, then **Activate** each one. Prices shown to players are Play's own, in their currency with VAT.
+   Prices in the apps: $4.99 / $9.99 / $24.99 / $49.99 (the website stays $5 / $10 / $25 / $50; `storeAmountCents` in `client/src/shared/payments/packs.json`). The IDs must be exactly these, **with underscores** (Google Play allows no hyphens in product ids; our own ids are `coins-5000` and so on, and the app and server translate: `playId` in `src/payments/google.js` and `client/src/site/payments/index.js`). They can never be changed or reused. Set the price (purchase option "buy", consumable), let Play convert the other countries, check SEK and EUR look sensible, then **Activate** each one. Prices shown to players are Play's own, in their currency with VAT.
 5. **Google Cloud project and API:** console.cloud.google.com, signed in as the account that owns the Play developer account → create project `marble-spins-play` → APIs & Services → Library → enable **Google Play Android Developer API** and **Cloud Pub/Sub API**. (If Play Console shows Setup → *API access* with "Link a Google Cloud project", link this project there.)
 6. **Service account:** Cloud console → IAM & Admin → Service accounts → *Create*: name `play-billing`, no project roles → Done. Open it → *Keys* → Add key → JSON → it downloads one file. Paste the **whole file's contents** into Railway as `GOOGLE_PLAY_SERVICE_ACCOUNT`. Then put the file in your password manager and delete the download. Never in chat, email or Git.
 7. **Give it access in Play:** Play Console → **Users and permissions** → *Invite new users* → the service account's email (`play-billing@marble-spins-play.iam.gserviceaccount.com`) → App permissions → add Marble Spins → tick **View financial data, orders and cancellation survey responses** and **Manage orders and subscriptions** → Invite. It can take up to 24 hours before Google accepts its calls (until then the server logs `Google Play 401/403`). Editing and saving one product's description sometimes makes it work sooner.
@@ -548,13 +548,13 @@ The iPhone app sells the same four coin packs and the season pass through the Ap
 
    | Product ID | Type | Reference name | Price (US) |
    |---|---|---|---|
-   | `coins-5000` | Consumable | 5,000 coins | USD 5.00 (tier) |
-   | `coins-10500` | Consumable | 10,500 coins | USD 10.00 |
-   | `coins-27500` | Consumable | 27,500 coins | USD 25.00 |
-   | `coins-57500` | Consumable | 57,500 coins | USD 50.00 |
+   | `coins-5000` | Consumable | 5,000 coins | USD 4.99 |
+   | `coins-10500` | Consumable | 10,500 coins | USD 9.99 |
+   | `coins-27500` | Consumable | 27,500 coins | USD 24.99 |
+   | `coins-57500` | Consumable | 57,500 coins | USD 49.99 |
    | `holiday-pass-2026` | Non-Consumable, Family Sharing off | Holiday Season Pass 2026 | USD 9.99 |
 
-   The IDs must be exactly these. Apple's price points are fixed: pick the nearest to each US price and let Apple set the other countries. Players see Apple's own price in their currency.
+   The IDs must be exactly these. Prices in the apps are $4.99 / $9.99 / $24.99 / $49.99 (Moses, 27 Oct 2026, like the credits and the pass; the website stays $5 / $10 / $25 / $50): pick these US price points and let Apple set the other countries. Players see Apple's own price in their currency.
 4. **Server Notifications** (App Store Connect → the app → App Information → App Store Server Notifications): **Version 2**, Production URL and Sandbox URL both `https://marble-race-rame-production.up.railway.app/api/payments/apple/notifications`. Then *Request a test notification*: Railway's log shows `[app-store] notification: test`.
 5. **Railway:** `APPLE_IAP_ENABLED=true` (and `APPLE_BUNDLE_ID` only if it isn't `com.marblespins.app`). Restart. `GET /api/payments/apple/account` (logged in) now says `"live": true`. Sandbox purchases (TestFlight, App Review) are accepted by default, as App Review needs; `APPLE_ACCEPT_SANDBOX=false` refuses them.
 6. **Sandbox testers:** App Store Connect → Users and Access → Sandbox → Test Accounts. On the test iPhone, sign in to the sandbox account under Settings → App Store → Sandbox Account.

@@ -134,7 +134,8 @@ export default function PurchasesPage() {
                   <td>{new Date(o.paid_at ?? o.created_at).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}</td>
                   <td className="num">{o.season_key ? (passOf(o)?.state === 'before' && o.status === 'paid' ? `Season pass · activates ${activatesDay(passOf(o).pass.activatesAt)}` : 'Season pass') : `● ${formatNumber(o.coins)}`}</td>
                   <td className="num">
-                    {o.charged_cents != null ? money(o.charged_cents, o.charged_currency) : `${PACK[o.product_id]?.priceLabel ?? money(o.amount_cents, o.currency)}`}
+                    {o.charged_cents != null ? money(o.charged_cents, o.charged_currency) : ['apple', 'google'].includes(o.provider) ? money(o.amount_cents, o.currency) : `${PACK[o.product_id]?.priceLabel ?? money(o.amount_cents, o.currency)}`}
+                    {['apple', 'google'].includes(o.provider) && o.charged_cents == null && <span className="ms-note" style={{ display: 'block' }}>US price; {o.provider === 'apple' ? 'Apple' : 'Google'}'s receipt has what you paid</span>}
                     {o.tax_cents > 0 && <span className="ms-note" style={{ display: 'block' }}>VAT {money(o.tax_cents, o.charged_currency)}</span>}
                     {o.refunded_cents > 0 && <span className="ms-note" style={{ display: 'block' }}>Refunded {money(o.refunded_cents, o.charged_currency ?? o.currency)}</span>}
                   </td>

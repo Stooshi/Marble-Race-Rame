@@ -1,9 +1,9 @@
 {
-  "note": "Coin packs, bought with real money. The id is the product id in every store: Stripe on the web, Apple App Store and Google Play in-app purchases (consumable products). Coins bought here are counted as bought coins, never as earned.",
+  "note": "Coin packs, bought with real money. The id is the product id in every store: Stripe on the web, Apple App Store and Google Play in-app purchases (consumable products; in Google Play written with _ instead of -). amountCents: the website price; storeAmountCents: the US price set in App Store Connect and Play Console (Moses, 27 Oct 2026: $4.99/$9.99/$24.99/$49.99, like credits and the pass; each store sets other countries itself). Coins bought here are counted as bought coins, never as earned.",
   "packs": [
-    { "id": "coins-5000", "coins": 5000, "amountCents": 500, "currency": "usd" },
-    { "id": "coins-10500", "coins": 10500, "amountCents": 1000, "currency": "usd", "popular": true },
-    { "id": "coins-27500", "coins": 27500, "amountCents": 2500, "currency": "usd" },
-    { "id": "coins-57500", "coins": 57500, "amountCents": 5000, "currency": "usd" }
+    { "id": "coins-5000", "coins": 5000, "amountCents": 500, "storeAmountCents": 499, "currency": "usd" },
+    { "id": "coins-10500", "coins": 10500, "amountCents": 1000, "storeAmountCents": 999, "currency": "usd", "popular": true },
+    { "id": "coins-27500", "coins": 27500, "amountCents": 2500, "storeAmountCents": 2499, "currency": "usd" },
+    { "id": "coins-57500", "coins": 57500, "amountCents": 5000, "storeAmountCents": 4999, "currency": "usd" }
   ]
 }

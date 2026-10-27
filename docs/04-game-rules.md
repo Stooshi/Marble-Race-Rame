@@ -59,12 +59,14 @@ Days run midnight to midnight **UTC**. Friend-room races pay like any race and c
 
 **Buying (coin packs):**
 
-| Pack | Price | Coins |
-|---|---|---|
-| `coins-5000` | $5 | 5,000 |
-| `coins-10500` (marked popular) | $10 | 10,500 |
-| `coins-27500` | $25 | 27,500 |
-| `coins-57500` | $50 | 57,500 |
+| Pack | Website | Apps (US) | Coins |
+|---|---|---|---|
+| `coins-5000` | $5 | $4.99 | 5,000 |
+| `coins-10500` (marked popular) | $10 | $9.99 | 10,500 |
+| `coins-27500` | $25 | $24.99 | 27,500 |
+| `coins-57500` | $50 | $49.99 | 57,500 |
+
+(In the apps each store shows its own price in the player's currency; Google Play's product ids use _ instead of -.)
 
 - **On the web:** Stripe Checkout shows the price in the player's own currency, with VAT included.
 - **Coins arrive only** when Stripe confirms the payment.
