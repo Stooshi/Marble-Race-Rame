@@ -23,11 +23,19 @@ test('the prices: a Pro League 2 credits, the Pro pass 5 for 30 days', () => {
   assert.equal(credits.PASS_DAYS, 30);
 });
 
-test('credits and coins never meet: no code path between them, either way', () => {
+test('one way only: credits can become coins (1,000 each), coins never become credits', () => {
+  assert.equal(credits.SWAP_RATE, 1000);
   const credit = code('src/credits/index.js');
   const economy = code('src/economy/index.js');
-  assert.doesNotMatch(credit, /economy|coin_ledger|\bcoins\b\s*[=+-]/);
+  // economy never knows credits: no way from coins to credits.
   assert.doesNotMatch(economy, /credits\.|credit_ledger|user_credits|require\('\.\.\/credits'\)/);
+  // The only coin moves in src/credits: the swap's coins in, and a refunded pack's swapped coins out, both through economy.change().
+  const coinMoves = [...credit.matchAll(/require\('\.\.\/economy'\)\.(\w+)\(client, \{ userId, amount: ([^,]+), kind: '([\w-]+)'/g)].map((m) => [m[1], m[2], m[3]]);
+  assert.deepEqual(coinMoves, [['change', 'coins', 'credit-swap'], ['change', '-out.coinsTaken', 'pack-refund']]);
+  assert.doesNotMatch(credit, /coin_ledger|UPDATE users SET coins/);
+  // Credits only ever go up from a credit pack (or the back office), never from coins.
+  assert.doesNotMatch(credit, /kind: 'swap'[^}]*amount: [^-]/);
+  assert.match(credit, /spend\(client, \{ userId, price: count, kind: 'swap'/);
   // Every credits change is through credits.change(): nothing else writes the balance or the ledger.
   const src = (dir) => fs.readdirSync(path.join(__dirname, '..', dir), { withFileTypes: true }).flatMap((e) => (e.isDirectory() ? src(path.join(dir, e.name)) : e.name.endsWith('.js') ? [path.join(dir, e.name)] : []));
   for (const f of src('src')) {
@@ -91,9 +99,38 @@ test('the ledger: change, spend, never below 0, the Pro pass, a refund with cred
     );
     assert.equal(await credits.balance(db, userId), 3);
     const back = await db.withTransaction((c) => credits.takeBack(c, { userId, paymentId: pay.id, credits: 10 }));
-    assert.deepEqual(back, { taken: 3, short: 7 });
+    assert.deepEqual(back, { taken: 3, swappedBack: 0, coinsTaken: 0, coinsShort: 0, short: 7 });
     assert.equal(await credits.balance(db, userId), 0);
     assert.equal((await db.query('SELECT credits_short FROM payments WHERE id = $1', [pay.id])).rows[0].credits_short, 7);
+
+    // The swap: 2 credits → 2,000 coins (bought coins, never earned); coins never back into credits.
+    await db.withTransaction((c) => credits.change(c, { userId, amount: 4, kind: 'admin', note: 'test' }));
+    const coinsBefore = (await db.query('SELECT coins, coins_bought, coins_earned FROM users WHERE id = $1', [userId])).rows[0];
+    const swapped = await db.withTransaction((c) => credits.swapToCoins(c, userId, 2));
+    assert.equal(swapped.credits, 2);
+    assert.equal(swapped.coins, coinsBefore.coins + 2000);
+    const coinsAfter = (await db.query('SELECT coins_bought, coins_earned FROM users WHERE id = $1', [userId])).rows[0];
+    assert.equal(coinsAfter.coins_bought, coinsBefore.coins_bought + 2000);
+    assert.equal(coinsAfter.coins_earned, coinsBefore.coins_earned);
+    await assert.rejects(() => db.withTransaction((c) => credits.swapToCoins(c, userId, 3)), (e) => e.status === 402);
+    await assert.rejects(() => db.withTransaction((c) => credits.swapToCoins(c, userId, 0)), (e) => e.status === 400);
+    // A 5-credit pack refunded with 2 credits left and 2 swapped (their 2,000 coins spent down to 500):
+    // 2 credits back, 2 swapped credits' coins taken (500 there, 1,500 short), 1 credit short (spent).
+    await db.query('UPDATE users SET coins = 500 WHERE id = $1', [userId]);
+    const { rows: [pay2] } = await db.query(
+      "INSERT INTO payments (user_id, provider, product_id, coins, credit_amount, amount_cents, currency, status) VALUES ($1, 'test', 'credits-5', 0, 5, 500, 'usd', 'paid') RETURNING id",
+      [userId],
+    );
+    const back2 = await db.withTransaction((c) => credits.takeBack(c, { userId, paymentId: pay2.id, credits: 5 }));
+    assert.deepEqual(back2, { taken: 2, swappedBack: 2, coinsTaken: 500, coinsShort: 1500, short: 1 });
+    assert.equal((await db.query('SELECT coins FROM users WHERE id = $1', [userId])).rows[0].coins, 0);
+    assert.deepEqual((await db.query('SELECT credits_short, credits_swapped_back, swap_coins_short FROM payments WHERE id = $1', [pay2.id])).rows[0], { credits_short: 1, credits_swapped_back: 2, swap_coins_short: 1500 });
+    // (Those 2 swapped credits are claimed: another refund doesn't take their coins again.)
+    const { rows: [pay3] } = await db.query(
+      "INSERT INTO payments (user_id, provider, product_id, coins, credit_amount, amount_cents, currency, status) VALUES ($1, 'test', 'credits-5', 0, 5, 500, 'usd', 'paid') RETURNING id",
+      [userId],
+    );
+    assert.deepEqual(await db.withTransaction((c) => credits.takeBack(c, { userId, paymentId: pay3.id, credits: 5 })), { taken: 0, swappedBack: 0, coinsTaken: 0, coinsShort: 0, short: 5 });
 
     // The ledger adds up to the balance, line by line.
     const { rows: lines } = await db.query('SELECT amount, balance_after FROM credit_ledger WHERE user_id = $1 ORDER BY created_at, balance_after', [userId]);
@@ -102,6 +139,8 @@ test('the ledger: change, spend, never below 0, the Pro pass, a refund with cred
     const s = await credits.summary(db, userId, now);
     assert.equal(s.balance, 0);
     assert.ok(s.pass);
+    // A pass bought now waits for the two running/queued ones: "Starts on <date>".
+    assert.equal(new Date(s.nextPassStarts).getTime(), new Date(second.pass.ends_at).getTime());
     assert.equal(s.lines.length, lines.length);
   } finally {
     await db.pool?.end?.();

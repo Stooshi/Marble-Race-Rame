@@ -197,6 +197,13 @@ Built 27 Oct 2026 (Leagues v1 part 1), **on for everyone since 27 Oct 2026** (`L
 - **Holiday tracks:** only a pass holder can put them in a league; the league's players then race them there without the pass (as in a pass holder's room). Before 1 Dec nobody can.
 - **Later (part 2, after 1 Nov, behind `LEAGUES_PRO`):** credits, the Pro League (10 tracks), the league marble and the Major League.
 
+### Credits and Pro Leagues (Leagues part 2: branch `leagues-pro`, behind `LEAGUES_PRO`, not live)
+
+- **Credits** are a second currency for Pro Leagues, bought with real money ($1 = 1 credit; packs of 5, 10 and 25; sold only on the league pages, labelled "for Pro Leagues"). They never expire. A Pro League costs its creator 2 credits; the **Pro pass** costs 5 credits for 30 days of unlimited Pro Leagues, never renews by itself, and one bought while another runs is queued: it starts when that one ends ("Starts on <date>").
+- **One way only** (Moses, 27 Oct 2026): credits can be swapped into coins at **1,000 coins per credit** (counted as bought coins, never earned); coins can never become credits. Before confirming, the player sees "Swapped credits can't be refunded".
+- **Refunds:** a refunded or disputed credit pack takes back its credits that are left; for its credits that were swapped, the coins they became (as far as the player still has them); credits spent on Pro Leagues or the pass stay spent. What can't be taken back is logged as short, as with coin packs.
+- **Wallet:** coins and credits side by side in the account menu, each labelled with what it's for; the top bar shows coins only.
+
 ## Seasons and the season pass
 
 A season (the first: **Holiday Season 2026**, `holiday-2026`, 1 Dec 2026 00:00 to 7 Jan 2027 23:59 Swedish time) has its own tracks and a pass. Everything follows the season's dates in the `seasons` table, so nothing is deployed on any day of the season (`src/seasons`).

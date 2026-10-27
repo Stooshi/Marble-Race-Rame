@@ -22,7 +22,9 @@ const { race: RACE, dailyGoal: GOAL, dailyLimit: LIMIT } = economy;
 // pass, and money never buys a place on a scoreboard.
 const EARNED = ['race', 'finish-bonus', 'daily-goal'];
 // ('gift-code': coins from a gift code count as bought, never on the scoreboards: src/giftCodes.)
-const BOUGHT = ['coin-pack', 'credit-conversion', 'gift-code'];
+// ('credit-swap': credits swapped into coins, Leagues part 2 (src/credits swapToCoins): bought, like a coin pack.
+// 'credit-conversion': the old one-off conversion when coins became the only currency.)
+const BOUGHT = ['coin-pack', 'credit-conversion', 'credit-swap', 'gift-code'];
 const KINDS = ['start', 'opening-balance', ...EARNED, ...BOUGHT, 'purchase', 'bag', 'entry-fee', 'entry-refund', 'refund', 'skill-refund', 'admin', 'pack-refund', 'featured-bonus'];
 
 /**

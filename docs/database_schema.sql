@@ -1394,8 +1394,9 @@ CREATE TABLE IF NOT EXISTS race_readiness (
 CREATE INDEX IF NOT EXISTS idx_race_readiness_created ON race_readiness (created_at);
 CREATE INDEX IF NOT EXISTS idx_race_readiness_race ON race_readiness (race_id);
 -- Credits and the Pro pass (Leagues part 2; 27 Oct 2026; behind LEAGUES_PRO). Credits are a second
--- currency, bought with real money ($1 = 1 credit), spent only on Pro Leagues (2) and the 30-day Pro
--- pass (5); they never expire and are never exchanged with coins in either direction. Every change
+-- currency, bought with real money ($1 = 1 credit), spent on Pro Leagues (2) and the 30-day Pro pass (5);
+-- they never expire. One way only: credits can be swapped into coins (1,000 coins per credit, Moses
+-- 27 Oct 2026), never coins into credits. Every change
 -- goes through credits.change() (src/credits), which writes credit_ledger, so the ledger always adds
 -- up to the balance. (Named user_credits / payments.credit_amount, not users.credits or payments.credits:
 -- the run-once data update 2027-01-03-coins-only drops columns of those old names on a new database.)
@@ -1411,7 +1412,7 @@ CREATE TABLE IF NOT EXISTS credit_ledger (
     user_id        uuid        NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     amount         integer     NOT NULL CHECK (amount <> 0),
     balance_after  integer     NOT NULL CHECK (balance_after >= 0),
-    kind           varchar(20) NOT NULL CHECK (kind IN ('credit-pack', 'pack-refund', 'pro-league', 'pro-pass', 'admin')),
+    kind           varchar(20) NOT NULL CHECK (kind IN ('credit-pack', 'pack-refund', 'pro-league', 'pro-pass', 'swap', 'admin')),
     payment_id     uuid        REFERENCES payments(id) ON DELETE SET NULL,
     league_id      uuid        REFERENCES leagues(id) ON DELETE SET NULL,
     note           text,
@@ -1432,10 +1433,14 @@ CREATE TABLE IF NOT EXISTS pro_passes (
 );
 CREATE INDEX IF NOT EXISTS idx_pro_passes_user ON pro_passes (user_id, ends_at DESC);
 
--- A credit pack payment: its credits (0 for coin packs and season passes), and on a refund or dispute
--- the credits that couldn't be taken back because they were already spent ("short").
+-- A credit pack payment: its credits (0 for coin packs and season passes). On a refund or dispute: the
+-- credits that had been swapped into coins (their coins taken back, credits_swapped_back), and what
+-- couldn't be taken back: credits spent on Pro Leagues or the pass (credits_short) and swapped coins
+-- already spent (swap_coins_short).
 ALTER TABLE payments ADD COLUMN IF NOT EXISTS credit_amount integer NOT NULL DEFAULT 0;
 ALTER TABLE payments ADD COLUMN IF NOT EXISTS credits_short integer NOT NULL DEFAULT 0;
+ALTER TABLE payments ADD COLUMN IF NOT EXISTS credits_swapped_back integer NOT NULL DEFAULT 0;
+ALTER TABLE payments ADD COLUMN IF NOT EXISTS swap_coins_short integer NOT NULL DEFAULT 0;
 
 -- A Pro League: how its creator paid ('credits' or 'pass'; null for a League), and at its end the
 -- winner who got the league marble, or why there was none ('too_few_finishers').

@@ -3,11 +3,13 @@
 /**
  * Credits (Leagues part 2, 27 Oct 2026; plan: project doc claude/leagues-v1-build-plan.md, "Credits").
  *
- * A second currency, bought with real money in credit packs ($1 = 1 credit: 5, 10 or 25), spent only on
- * a Pro League (PRO_LEAGUE, 2) and the 30-day Pro pass (PRO_PASS, 5). Credits never expire and are
- * never exchanged with coins in either direction: nothing here touches coins, and nothing in
- * src/economy touches credits (test/credits.test.js reads both to check). Each purchase is fully in
- * one currency.
+ * A second currency, bought with real money in credit packs ($1 = 1 credit: 5, 10 or 25), spent on a
+ * Pro League (PRO_LEAGUE, 2) and the 30-day Pro pass (PRO_PASS, 5). Credits never expire. Each purchase
+ * is fully in one currency. One way only (Moses, 27 Oct 2026): credits can be swapped into coins at
+ * SWAP_RATE (1,000 coins a credit), never coins into credits: swapToCoins is the only place the two
+ * meet, and it moves coins only through economy.change() (test/credits.test.js reads the code to check).
+ * Swapped credits can't be refunded; a refunded credit pack takes back the coins its swapped credits
+ * became (takeBack).
  *
  * Every change goes through change() below, which moves the balance (user_credits) and writes a line
  * in credit_ledger, so the ledger always adds up to the balance. Behind LEAGUES_PRO (pro.js).
@@ -15,7 +17,8 @@
 
 const { badRequest } = require('../utils/httpError');
 
-const KINDS = ['credit-pack', 'pack-refund', 'pro-league', 'pro-pass', 'admin'];
+const KINDS = ['credit-pack', 'pack-refund', 'pro-league', 'pro-pass', 'swap', 'admin'];
+const SWAP_RATE = 1000; // coins for one credit (one way: credits → coins)
 const PRO_LEAGUE = 2;   // credits for one Pro League (the creator pays; members join free)
 const PRO_PASS = 5;     // credits for the Pro pass
 const PASS_DAYS = 30;
@@ -63,18 +66,57 @@ async function spend(client, { price, ...line }) {
 }
 
 /**
- * A credit pack refunded or disputed: takes back what's left of its credits (never below 0). Credits
- * already spent stay spent ("short", kept on the payment for the back office); what they bought keeps
- * running. → { taken, short }.
+ * Swaps `count` credits into coins (SWAP_RATE each), one way: never coins into credits. The player has
+ * seen "Swapped credits can't be refunded" and confirmed. → { credits, coins } (the new balances).
+ */
+async function swapToCoins(client, userId, count) {
+  if (!Number.isInteger(count) || count < 1 || count > 1000) throw badRequest('Swap a whole number of credits');
+  const coins = count * SWAP_RATE;
+  const paid = await spend(client, { userId, price: count, kind: 'swap', note: `${count} credit${count === 1 ? '' : 's'} → ${coins.toLocaleString('en-US')} coins` });
+  const got = await require('../economy').change(client, { userId, amount: coins, kind: 'credit-swap', note: `${count} credit${count === 1 ? '' : 's'} swapped` });
+  return { credits: paid.balance, coins: got.balance };
+}
+
+/** Credits this player swapped into coins and no refund has claimed back yet. */
+async function unclaimedSwaps(client, userId) {
+  const { rows: [r] } = await client.query(
+    `SELECT COALESCE((SELECT -SUM(amount) FROM credit_ledger WHERE user_id = $1 AND kind = 'swap'), 0)::int
+          - COALESCE((SELECT SUM(credits_swapped_back) FROM payments WHERE user_id = $1), 0)::int AS n`,
+    [userId],
+  );
+  return Math.max(0, r.n);
+}
+
+/**
+ * A credit pack refunded or disputed (Moses, 27 Oct 2026): takes back what's left of its credits (never
+ * below 0); of the rest, credits that had been swapped into coins have their coins taken back (as far
+ * as the player still has them); credits spent on Pro Leagues or the pass stay spent. What can't be
+ * taken back is kept on the payment as "short" for the back office (credits_short, swap_coins_short),
+ * as with coin packs; what the credits bought keeps running.
+ * → { taken, swappedBack, coinsTaken, coinsShort, short }.
  */
 async function takeBack(client, { userId, paymentId, credits, note = null }) {
-  if (!(credits > 0)) return { taken: 0, short: 0 };
+  const out = { taken: 0, swappedBack: 0, coinsTaken: 0, coinsShort: 0, short: 0 };
+  if (!(credits > 0)) return out;
   const have = await balance(client, userId);
-  const taken = Math.min(have, credits);
-  if (taken > 0) await change(client, { userId, amount: -taken, kind: 'pack-refund', paymentId, note });
-  const short = credits - taken;
-  if (short > 0) await client.query('UPDATE payments SET credits_short = credits_short + $2 WHERE id = $1', [paymentId, short]);
-  return { taken, short };
+  out.taken = Math.min(have, credits);
+  if (out.taken > 0) await change(client, { userId, amount: -out.taken, kind: 'pack-refund', paymentId, note });
+  let rest = credits - out.taken;
+  out.swappedBack = Math.min(rest, await unclaimedSwaps(client, userId));
+  if (out.swappedBack > 0) {
+    const owed = out.swappedBack * SWAP_RATE;
+    const { rows: [u] } = await client.query('SELECT coins FROM users WHERE id = $1', [userId]);
+    out.coinsTaken = Math.min(owed, Math.max(0, u?.coins ?? 0));
+    out.coinsShort = owed - out.coinsTaken;
+    if (out.coinsTaken > 0) await require('../economy').change(client, { userId, amount: -out.coinsTaken, kind: 'pack-refund', paymentId, note: `${out.swappedBack} swapped credit${out.swappedBack === 1 ? '' : 's'} of a refunded credit pack` });
+    rest -= out.swappedBack;
+  }
+  out.short = rest;
+  await client.query(
+    'UPDATE payments SET credits_short = credits_short + $2, credits_swapped_back = credits_swapped_back + $3, swap_coins_short = swap_coins_short + $4 WHERE id = $1',
+    [paymentId, out.short, out.swappedBack, out.coinsShort],
+  );
+  return out;
 }
 
 /** The player's Pro pass running at `now` (the one that ends last), or null. */
@@ -116,7 +158,9 @@ async function summary(db, userId, now = new Date()) {
     ),
     db.query('SELECT max(ends_at) AS ends_at FROM pro_passes WHERE user_id = $1 AND ends_at > $2', [userId, now]),
   ]);
-  return { balance: bal, pass: pass ? { starts_at: pass.starts_at, ends_at: until?.ends_at ?? pass.ends_at } : null, lines, prices: { proLeague: PRO_LEAGUE, proPass: PRO_PASS, passDays: PASS_DAYS } };
+  return { balance: bal, pass: pass ? { starts_at: pass.starts_at, ends_at: until?.ends_at ?? pass.ends_at } : null, lines, prices: { proLeague: PRO_LEAGUE, proPass: PRO_PASS, passDays: PASS_DAYS, swapRate: SWAP_RATE },
+    // (A pass bought now starts here: now, or when the running/waiting one ends. Shown as "Starts on <date>".)
+    nextPassStarts: until?.ends_at ?? now };
 }
 
-module.exports = { KINDS, PRO_LEAGUE, PRO_PASS, PASS_DAYS, balance, change, spend, takeBack, activePass, buyPass, summary };
+module.exports = { KINDS, PRO_LEAGUE, PRO_PASS, PASS_DAYS, SWAP_RATE, balance, change, spend, swapToCoins, takeBack, activePass, buyPass, summary };
