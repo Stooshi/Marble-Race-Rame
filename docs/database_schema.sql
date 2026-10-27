@@ -1393,3 +1393,52 @@ CREATE TABLE IF NOT EXISTS race_readiness (
 );
 CREATE INDEX IF NOT EXISTS idx_race_readiness_created ON race_readiness (created_at);
 CREATE INDEX IF NOT EXISTS idx_race_readiness_race ON race_readiness (race_id);
+-- Credits and the Pro pass (Leagues part 2; 27 Oct 2026; behind LEAGUES_PRO). Credits are a second
+-- currency, bought with real money ($1 = 1 credit), spent only on Pro Leagues (2) and the 30-day Pro
+-- pass (5); they never expire and are never exchanged with coins in either direction. Every change
+-- goes through credits.change() (src/credits), which writes credit_ledger, so the ledger always adds
+-- up to the balance. (Named user_credits / payments.credit_amount, not users.credits or payments.credits:
+-- the run-once data update 2027-01-03-coins-only drops columns of those old names on a new database.)
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS user_credits (
+    user_id     uuid        PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+    balance     integer     NOT NULL DEFAULT 0 CHECK (balance >= 0),
+    updated_at  timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS credit_ledger (
+    id             uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id        uuid        NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    amount         integer     NOT NULL CHECK (amount <> 0),
+    balance_after  integer     NOT NULL CHECK (balance_after >= 0),
+    kind           varchar(20) NOT NULL CHECK (kind IN ('credit-pack', 'pack-refund', 'pro-league', 'pro-pass', 'admin')),
+    payment_id     uuid        REFERENCES payments(id) ON DELETE SET NULL,
+    league_id      uuid        REFERENCES leagues(id) ON DELETE SET NULL,
+    note           text,
+    actor_id       uuid        REFERENCES users(id) ON DELETE SET NULL,
+    created_at     timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_credit_ledger_user ON credit_ledger (user_id, created_at DESC);
+
+-- The 30-day Pro pass: unlimited Pro Leagues from starts_at to ends_at, no renewal. Bought while one
+-- runs, the new one starts when it ends.
+CREATE TABLE IF NOT EXISTS pro_passes (
+    id          uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id     uuid        NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    starts_at   timestamptz NOT NULL,
+    ends_at     timestamptz NOT NULL,
+    ledger_id   uuid        REFERENCES credit_ledger(id) ON DELETE SET NULL,
+    created_at  timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_pro_passes_user ON pro_passes (user_id, ends_at DESC);
+
+-- A credit pack payment: its credits (0 for coin packs and season passes), and on a refund or dispute
+-- the credits that couldn't be taken back because they were already spent ("short").
+ALTER TABLE payments ADD COLUMN IF NOT EXISTS credit_amount integer NOT NULL DEFAULT 0;
+ALTER TABLE payments ADD COLUMN IF NOT EXISTS credits_short integer NOT NULL DEFAULT 0;
+
+-- A Pro League: how its creator paid ('credits' or 'pass'; null for a League), and at its end the
+-- winner who got the league marble, or why there was none ('too_few_finishers').
+ALTER TABLE leagues ADD COLUMN IF NOT EXISTS paid_with varchar(10) CHECK (paid_with IN ('credits', 'pass'));
+ALTER TABLE leagues ADD COLUMN IF NOT EXISTS winner_id uuid REFERENCES users(id) ON DELETE SET NULL;
+ALTER TABLE leagues ADD COLUMN IF NOT EXISTS no_winner_reason varchar(30);

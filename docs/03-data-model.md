@@ -195,6 +195,9 @@ Leagues (Leagues v1 part 1, 27 Oct 2026; behind the `LEAGUES` switch). Rules: [G
 | `league_runs` | One try: `league_id`, `user_id`, `track_id`, `race_id` (unique), `created_at` (the try is counted from here), `time_ms` and `finished_at` (filled when the race finishes). A cancelled race's row is removed (the try comes back) |
 | `league_results` | Part 2 (Pro Leagues feeding the Major League): created, nothing writes it yet |
 | `league_nights` | League Night: `league_id`, `starts_at`, `races` (3–5), `status` (`scheduled` → `open` when its room opens 15 minutes before → `done`, or `cancelled`), `room_id`, `opened_at`, `ended_at`. One scheduled or open per league. Its room: `rooms.league_night_id`; its races: `races.league_night_id` and `league_night_race` (1 to `races`) |
+| `user_credits` | Credits (Leagues part 2, branch `leagues-pro`, behind `LEAGUES_PRO`): one row per player with credits, `balance` (never below 0). Changed only by `credits.change()` (`src/credits`) |
+| `credit_ledger` | Every credits change: `amount`, `balance_after`, `kind` (`credit-pack`, `pack-refund`, `pro-league`, `pro-pass`, `admin`), `payment_id`, `league_id`, `note`, `actor_id`. Adds up to the balance. Never linked to coins |
+| `pro_passes` | The 30-day Pro pass: `starts_at`, `ends_at` (bought while one runs, it starts when that ends), `ledger_id` |
 
 ## Marbles and the collection
 
