@@ -6,7 +6,7 @@ import { renderToString } from 'react-dom/server';
 import { MemoryRouter } from 'react-router-dom';
 import { describe, expect, it } from 'vitest';
 import { GO_PRO, lapTime, timeLeft, triesText } from '../src/site/leagues/status';
-import { LeagueList } from '../src/site/leagues/LeaguesPages';
+import { LeagueList, LeaguesSoon } from '../src/site/leagues/LeaguesPages';
 import { metaFor } from '../src/site/pageMeta';
 
 const src = (f) => readFileSync(new URL(`../${f}`, import.meta.url), 'utf8');
@@ -39,9 +39,14 @@ describe('leagues: behind the switch', () => {
     expect(STATUS).toContain('api.leaguesStatus().catch(() => ({ enabled: false }))');
     expect(src('src/api/client.js')).toContain("leaguesStatus: () => request('/leagues/status')");
   });
-  it('off: every league page is the 404, and nothing else shows', () => {
-    expect(PAGES).toContain('return on ? children : <NotFound />;');
-    for (const page of ['LeaguesHome', 'CreateLeague', 'LeaguePage']) expect(PAGES).toContain(`export function ${page}({ NotFound }) {\n  return <Gate NotFound={NotFound}>`);
+  it('off: /leagues and /leagues/new are the 404, an invite link "Leagues are coming soon", and nothing else shows', () => {
+    expect(PAGES).toContain('return on ? children : <Closed />;');
+    for (const page of ['LeaguesHome', 'CreateLeague']) expect(PAGES).toContain(`export function ${page}({ NotFound }) {\n  return <Gate NotFound={NotFound}>`);
+    expect(PAGES).toContain('export function LeaguePage({ NotFound }) {\n  return <Gate NotFound={NotFound} Closed={LeaguesSoon}>');
+    const soon = renderToString(<MemoryRouter><LeaguesSoon /></MemoryRouter>);
+    expect(soon).toContain('Leagues are coming soon');
+    expect(soon).toContain('href="/race"');
+    expect(soon).not.toMatch(/404|not found/i);
     const hub = src('src/site/pages/HomeHub.jsx');
     expect(hub).toContain('{leaguesOn && <Link to="/leagues" className="ms-race-choice ms-race-leagues"><b>LEAGUES</b><span>Race your friends all week</span></Link>}');
     expect(hub).toContain('<MyLeaguesCard />');
@@ -127,6 +132,18 @@ describe('League Night on the website', () => {
     expect(PAGES).toContain('<Link to={`/r/${n.room_code}`} className="ms-btn ms-btn--primary ms-btn--lg">JOIN THE LEAGUE ROOM</Link>');
     expect(PAGES).toContain('It never uses your tries.');
     expect(src('src/api/client.js')).toContain("leagueNight: (code, startsAt, races) => request(`/leagues/${encodeURIComponent(code)}/night`");
+  });
+  it('the League Night button by the header, and "Start it now" for the creator', () => {
+    expect(PAGES).toContain('<NightButton night={view.night} member={member} mine={mine} isOpen={isOpen} skew={skew} now={now} />');
+    expect(PAGES).toContain('JOIN LEAGUE NIGHT</Link>');
+    expect(PAGES).toContain('api.leagueNightNow(code, races)');
+    expect(src('src/api/client.js')).toContain("body: { now: true, races }");
+  });
+  it('the scoreboards name each track (not 1–5, R1–R5)', () => {
+    expect(PAGES).toContain('<span>{t.name}</span></th>');
+    expect(PAGES).toContain("<span>{trackName(r.track_id) || `Race ${r.k}`}</span></th>");
+    expect(PAGES).not.toContain('>R{r.k}</th>');
+    expect(PAGES).not.toContain('>{k + 1}</th>');
   });
   it('"League Night in 2 h: Join" on My leagues', async () => {
     const { nightLine } = await import('../src/site/leagues/LeaguesPages');

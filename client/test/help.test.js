@@ -19,9 +19,9 @@ const n = (v) => v.toLocaleString('en-US');
 describe('the questions', () => {
   it('has the draft\'s 12 categories and the Season pass, every question once, each with its own link', () => {
     expect(faq.map((s) => s.title)).toEqual(['Getting started', 'Races', 'Fair play', 'Coins', 'Marbles and the collection', 'Buying coins',
-      'Refunds', 'Season pass', 'Friend rooms', 'Account and settings', 'Younger players and parents', 'Technical help', 'Contact us']);
-    expect(all.length).toBe(92); // (the draft: 6, 8, 4, 9, 10, 8, 4, 6, 7, 3, 5 and 4; then seasonal collections, the season marble and the Season pass's 11, with the pre-sale and the reminder; "How do I report an offensive player name?" and "How do I choose the country I race for?", 22 Oct; "What is a quick race?" and "How do I join a race with other players?", 25 Oct; "My name is hidden. Why?", 25 Oct)
-    expect(faq.map((s) => s.questions.length)).toEqual([6, 9, 4, 9, 12, 8, 4, 11, 7, 10, 3, 5, 4]);
+      'Refunds', 'Season pass', 'Friend rooms', 'Leagues', 'Account and settings', 'Younger players and parents', 'Technical help', 'Contact us']);
+    expect(all.length).toBe(94); // (Leagues' two, 27 Oct) (the draft: 6, 8, 4, 9, 10, 8, 4, 6, 7, 3, 5 and 4; then seasonal collections, the season marble and the Season pass's 11, with the pre-sale and the reminder; "How do I report an offensive player name?" and "How do I choose the country I race for?", 22 Oct; "What is a quick race?" and "How do I join a race with other players?", 25 Oct; "My name is hidden. Why?", 25 Oct)
+    expect(faq.map((s) => s.questions.length)).toEqual([6, 9, 4, 9, 12, 8, 4, 11, 7, 2, 10, 3, 5, 4]);
     expect(new Set(all.map((q) => q.slug)).size).toBe(all.length);
     for (const q of all) expect(q.slug).toMatch(/^[a-z0-9]+(-[a-z0-9]+)*$/);
     expect(bySlug['whats-my-daily-streak'].q).toBe("What's my daily streak?");
@@ -176,5 +176,12 @@ describe('the search', () => {
     const s = snippet(bySlug['can-i-get-a-refund'].text, new Set(['refund']), 60);
     expect(s).toMatch(/refund/);
     expect(s.length).toBeLessThan(70);
+  });
+
+  it('Leagues (draft 2, Pro off): never a frequency, dates or prizes for the Major League; no credits', () => {
+    const text = [bySlug['how-do-leagues-work'], bySlug['what-is-league-night']].map((q) => q.text).join('\n');
+    expect(text).toContain('Pro Leagues are coming. Race your way to the Marble Spins Major League. Date to be announced.');
+    for (const word of [/weekly/i, /monthly/i, /every week/i, /every month/i, /prize/i, /credit/i]) expect(text).not.toMatch(word);
+    expect(text).toContain('full-pay races of the day');
   });
 });

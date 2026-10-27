@@ -325,6 +325,22 @@ test('League Night: set by the creator, its room opens 15 minutes before, races 
     assert.equal((await call(`/leagues/${code}/night`, { method: 'DELETE', token: b.token })).status, 403);
     view = (await call(`/leagues/${code}/night`, { method: 'DELETE', token: a.token })).body;
     assert.equal(view.night.status, 'cancelled');
+
+    // "Start League Night now": the creator only; the room opens at once, race 1 two minutes later.
+    assert.equal((await call(`/leagues/${code}/night`, { method: 'POST', token: b.token, body: { now: true, races: 3 } })).status, 403);
+    assert.equal((await call(`/leagues/${code}/night`, { method: 'POST', token: a.token, body: { races: 3 } })).status, 400);
+    const t0 = Date.now();
+    const nowSet = await call(`/leagues/${code}/night`, { method: 'POST', token: a.token, body: { now: true, races: 3 } });
+    assert.equal(nowSet.status, 200, JSON.stringify(nowSet.body));
+    assert.equal(nowSet.body.night.status, 'open');
+    assert.ok(nowSet.body.night.room_code);
+    const lead = new Date(nowSet.body.night.starts_at).getTime() - t0;
+    assert.ok(lead > 100_000 && lead < 125_000, `starts ${lead} ms after`);
+    const { rows: [first] } = await db.query('SELECT scheduled_at FROM races WHERE league_night_race = 1 AND room_id = (SELECT id FROM rooms WHERE code = $1)', [nowSet.body.night.room_code]);
+    assert.equal(new Date(first.scheduled_at).getTime(), new Date(nowSet.body.night.starts_at).getTime());
+    assert.equal((await call(`/leagues/${code}/night`, { method: 'POST', token: a.token, body: { now: true, races: 3 } })).status, 409);
+    view = (await call(`/leagues/${code}/night`, { method: 'DELETE', token: a.token })).body;
+    assert.equal(view.night.status, 'cancelled');
   } finally {
     process.env.LEAGUES = 'off';
     raceManager.shutdown();

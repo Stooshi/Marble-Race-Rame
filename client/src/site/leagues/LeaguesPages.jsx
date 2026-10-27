@@ -31,11 +31,34 @@ const TRIES = [[null, 'Unlimited'], [3, '3'], [5, '5'], [10, '10']];
 const h1 = { fontFamily: 'var(--ms-cond)', fontWeight: 800 };
 const h2 = { fontFamily: 'var(--ms-cond)', fontWeight: 800, fontSize: '1.6rem' };
 
-/** The page itself while the switch is open to this player; the 404 while it is off; nothing while asking. */
-function Gate({ NotFound, children }) {
+/**
+ * The page itself while the switch is open to this player; while it is off (or admins only), the 404,
+ * or `Closed` instead (an invite link: "Leagues are coming soon"); nothing while asking.
+ */
+function Gate({ NotFound, Closed = NotFound, children }) {
   const on = useLeaguesOn();
   if (on === null) return <div className="ms-page"><p className="ms-note">Loading…</p></div>;
-  return on ? children : <NotFound />;
+  return on ? children : <Closed />;
+}
+
+/** An invite link while Leagues aren't open to everyone yet (Moses, 27 Oct 2026: not a 404). */
+export function LeaguesSoon() {
+  return (
+    <div className="ms-page">
+      <section className="ms-hero ms-notfound" aria-labelledby="soon-h">
+        <div style={{ display: 'grid', gap: 12 }}>
+          <span className="ms-eyebrow" style={{ color: 'var(--ms-orange)' }}>Leagues</span>
+          <h1 id="soon-h" className="ms-h1" style={h1}>Leagues are coming soon</h1>
+          <p style={{ color: 'var(--ms-soft)', margin: 0, maxWidth: '52ch' }}>A friend sent you a league: your own competition on the tracks you pick, best times count. It opens here soon, so keep the link. Until then, race now.</p>
+          <div className="ms-row">
+            <Link to="/race" className="ms-btn ms-btn--primary">RACE NOW</Link>
+            <Link to="/" className="ms-btn">Back home</Link>
+          </div>
+        </div>
+        <div className="ms-notfound__ball" aria-hidden="true" />
+      </section>
+    </div>
+  );
 }
 
 /** Saved accounts only: a guest saves their marble, a visitor saves one or logs in (then back here). */
@@ -292,7 +315,7 @@ function CreateLeagueIn() {
 // ── /l/:code ──────────────────────────────────────────────────────────────
 
 export function LeaguePage({ NotFound }) {
-  return <Gate NotFound={NotFound}><LeaguePageIn /></Gate>;
+  return <Gate NotFound={NotFound} Closed={LeaguesSoon}><LeaguePageIn /></Gate>;
 }
 
 function LeaguePageIn() {
@@ -386,6 +409,7 @@ function LeaguePageIn() {
         <span className="ms-pill">{tracks.length} tracks</span>
         <span className="ms-pill">{triesText(league.attempts)}</span>
         <span className="ms-pill">{isOpen ? 'Ends' : 'Ended'} {ends.toLocaleString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</span>
+        <NightButton night={view.night} member={member} mine={mine} isOpen={isOpen} skew={skew} now={now} />
       </div>
       {error && <div className="ms-msg ms-msg--bad" role="alert">{error.message}</div>}
       {isNew && member && isOpen && (
@@ -447,7 +471,7 @@ function LeaguePageIn() {
               <th scope="col">Place</th>
               <th scope="col">Player</th>
               <th scope="col" className="num">Total</th>
-              {tracks.map((t, k) => <th key={t.id} scope="col" className="num ms-league-wide" title={t.name}>{k + 1}</th>)}
+              {tracks.map((t, k) => <th key={t.id} scope="col" className="num ms-league-wide ms-league-th" title={`${k + 1}. ${t.name}`}><span>{t.name}</span></th>)}
               <th scope="col" className="num ms-league-narrow">Tracks</th>
               {mine && isOpen && <th scope="col"><span className="ms-visually-hidden">Remove</span></th>}
             </tr>
@@ -553,9 +577,29 @@ function ShareCard({ code, name }) {
 
 // ── League Night ──────────────────────────────────────────────────────────
 
+/**
+ * The League Night button by the league's header: "Join League Night" to its room while it's on, its
+ * time while it's set (to the League Night card), "League Night" for the creator to set or start one.
+ */
+function NightButton({ night: n, member, mine, isOpen, now, skew }) {
+  if (!member || !isOpen) return null;
+  const live = n && ['scheduled', 'open'].includes(n.status);
+  if (live && n.status === 'open' && n.room_code) {
+    return <Link to={`/r/${n.room_code}`} className="ms-btn ms-btn--sm ms-btn--primary ms-league-nightbtn">JOIN LEAGUE NIGHT</Link>;
+  }
+  if (!live && !mine) return null;
+  const go = () => document.getElementById('night-h')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  return (
+    <button type="button" className="ms-btn ms-btn--sm ms-league-nightbtn" onClick={go}>
+      {live ? nightLine(n, skew, now).replace(': Join', '') : 'LEAGUE NIGHT'}
+    </button>
+  );
+}
+
 const NIGHT_RACES = [3, 4, 5];
 const OPEN_BEFORE_MIN = 15; // (the league room opens this long before: src/leagues/night.js)
 const RACE_ROOM_MIN = 4;
+const NOW_LEAD_MIN = 2; // ("Start it now": race 1 this long after, NOW_LEAD_S in src/leagues/night.js)
 
 /** "League Night in 2 h: Join", "League Night is on: Join", "League Night Thu 29 Oct, 20:00". */
 export function nightLine(n, skew = 0, now = Date.now()) {
@@ -604,11 +648,17 @@ function LeagueNight({ code, view, member, mine, isOpen, now, skew, userId, onVi
     setBusy(true); setError(null);
     try { onView(await api.leagueNight(code, new Date(when).toISOString(), races)); setEditing(false); } catch (e) { setError(e.message); } finally { setBusy(false); }
   };
+  const startNow = async () => {
+    setBusy(true); setError(null);
+    try { onView(await api.leagueNightNow(code, races)); setEditing(false); } catch (e) { setError(e.message); } finally { setBusy(false); }
+  };
   const off = async () => {
     setBusy(true); setError(null);
     try { onView(await api.leagueNightOff(code)); } catch (e) { setError(e.message); } finally { setBusy(false); }
   };
   const latest = new Date(ends.getTime() - races * RACE_ROOM_MIN * 60_000);
+  // ("Start it now" while there's time left in the league for the races.)
+  const canNow = now + skew + NOW_LEAD_MIN * 60_000 <= latest.getTime();
   const trackName = (id) => view.tracks.find((t) => t.id === id)?.name ?? '';
   const startsIn = live ? new Date(n.starts_at).getTime() - (now + skew) : null;
   // (Under way once a race has started: the host may start the first one early.)
@@ -645,13 +695,15 @@ function LeagueNight({ code, view, member, mine, isOpen, now, skew, userId, onVi
           </div>
           <div className="ms-row">
             <button type="submit" className="ms-btn ms-btn--primary" disabled={busy || !when}>{busy ? 'SAVING…' : live ? 'MOVE LEAGUE NIGHT' : 'SET LEAGUE NIGHT'}</button>
+            {canNow && <button type="button" className="ms-btn" disabled={busy} onClick={startNow}>START IT NOW</button>}
             {live && <button type="button" className="ms-btn ms-btn--ghost ms-btn--sm" onClick={() => setEditing(false)}>Keep it</button>}
           </div>
-          <span className="ms-note">Inside the league's days: it has to finish before the league ends ({whenText(view.league.ends_at)}).</span>
+          <span className="ms-note">Inside the league's days: it has to finish before the league ends ({whenText(view.league.ends_at)}).{canNow ? ` Start it now: the league room opens at once and race 1 starts in ${NOW_LEAD_MIN} minutes (or when you start it).` : ''}</span>
         </form>
       ) : (
         <div className="ms-row">
           <button type="button" className="ms-btn ms-btn--sm" disabled={busy} onClick={() => setEditing(true)}>Move it</button>
+          {canNow && <button type="button" className="ms-btn ms-btn--sm" disabled={busy} onClick={startNow}>Start it now</button>}
           <button type="button" className="ms-btn ms-btn--sm ms-btn--ghost" disabled={busy} onClick={off}>Call it off</button>
         </div>
       ))}
@@ -665,7 +717,7 @@ function LeagueNight({ code, view, member, mine, isOpen, now, skew, userId, onVi
                 <th scope="col">Place</th>
                 <th scope="col">Player</th>
                 <th scope="col" className="num">Points</th>
-                {n.race_list.map((r) => <th key={r.k} scope="col" className="num ms-league-wide" title={trackName(r.track_id)}>R{r.k}</th>)}
+                {n.race_list.map((r) => <th key={r.k} scope="col" className="num ms-league-wide ms-league-th" title={`Race ${r.k}: ${trackName(r.track_id)}`}><span>{trackName(r.track_id) || `Race ${r.k}`}</span></th>)}
                 <th scope="col" className="num">Wins</th>
               </tr>
             </thead>

@@ -276,7 +276,7 @@ Built 27 Oct 2026 (`src/game/replayRetention.js`). After the deploy that brings 
 Built switched off (27 Oct 2026). The server variable `LEAGUES` decides (see `docs/01-architecture.md`):
 1. **After the deploy** that brings leagues: leave `LEAGUES` unset (off). `GET /api/leagues/status` answers `{"enabled":false}`; everything else under `/api/leagues` answers 404, and the website shows nothing.
 2. **To test in production:** `railway variables --set "LEAGUES=admins" --skip-deploys`, then `railway up` from the folder, then check `/health` ([Changing variables](#the-game-server-railway-by-hand)); never the dashboard's Deploy button. Only admin accounts then see LEAGUES on the home page and can make and race leagues.
-3. **For everyone:** `LEAGUES=on`, the same way. Back to off: delete the variable (or `off`). Leagues already made stay in the database and come back when switched on again; their end job keeps running either way.
+3. **For everyone:** `railway variables --set "LEAGUES=on" --skip-deploys`, then `railway up`, then check `/health` (it must show `version`; if not, `railway up` again). Check the variable with `railway variables --kv | grep '^LEAGUES='`. While off or admins only, an invite link shows "Leagues are coming soon" (not a 404). Back to off: delete the variable (or `off`). Leagues already made stay in the database and come back when switched on again; their end job keeps running either way.
 
 ## Push notifications (apps): setting up and switching on
 

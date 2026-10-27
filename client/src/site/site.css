@@ -1033,6 +1033,10 @@ tr:hover .report-name__btn--compact, .report-name__btn--compact:focus-visible { 
   .ms-table--league th, .ms-table--league td { padding: 10px 10px; }
   .ms-league-player { max-width: 40vw; }
 }
+/* The scoreboards' track columns: each track's name (two lines at most), not a number. */
+.ms-table--league th.ms-league-th { white-space: normal; vertical-align: bottom; text-transform: none; letter-spacing: 0; font-size: 0.78rem; line-height: 1.2; min-width: 6.5em; max-width: 9em; }
+.ms-table--league th.ms-league-th span { display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; }
+.ms-league-nightbtn { min-height: 34px; }
 /* League Night (LeaguesPages.jsx LeagueNight; RoomPage.jsx in a league room) */
 .ms-league-night__form { display: grid; gap: 12px; max-width: 420px; }
 .ms-league-night__form input[type="datetime-local"] { min-height: 44px; border-radius: 12px; padding: 0 12px; background: var(--ms-bg); color: var(--ms-text); border: 1px solid var(--ms-border); }

@@ -19,7 +19,8 @@ const POINTS = [10, 8, 6, 5, 4, 3, 2, 1];
 const OPEN_BEFORE_MIN = 15;
 const GAP_S = 90;            // from one race's finish to the next race's start: the results, then the start show
 const RACE_ROOM_MIN = 4;     // the time a race takes with its start show and results, for "it must fit in the league"
-const SOONEST_MIN = 5;       // a night is set at least this far ahead
+const SOONEST_MIN = 5;       // a night is set at least this far ahead…
+const NOW_LEAD_S = 120;      // …or started now: its room opens at once and race 1 starts by itself 2 minutes later (the host may start it sooner)
 
 /** The night (scheduled or on, else the last one) of a league, or null. */
 async function current(db, leagueId) {
@@ -35,11 +36,12 @@ async function current(db, leagueId) {
 async function schedule(client, league, userId, body, now = new Date()) {
   if (league.created_by !== userId) throw forbidden('Only the league\'s creator can set its League Night');
   if (league.status !== 'open') throw conflict('This league has ended');
-  const at = new Date(body.starts_at);
+  // `now: true`: League Night now (the creator's "Start League Night now"), else at `starts_at`.
+  const at = body.now ? new Date(now.getTime() + NOW_LEAD_S * 1000) : new Date(body.starts_at);
   if (Number.isNaN(at.getTime())) throw badRequest('Pick a date and time for League Night');
   const races = Number(body.races);
   if (!Number.isInteger(races) || races < RACES[0] || races > RACES[1]) throw badRequest('League Night is 3 to 5 races');
-  if (at.getTime() < now.getTime() + SOONEST_MIN * 60_000) throw badRequest(`Set League Night at least ${SOONEST_MIN} minutes from now`);
+  if (!body.now && at.getTime() < now.getTime() + SOONEST_MIN * 60_000) throw badRequest(`Set League Night at least ${SOONEST_MIN} minutes from now, or start it now`);
   if (at.getTime() + races * RACE_ROOM_MIN * 60_000 > new Date(league.ends_at).getTime()) throw badRequest('League Night has to finish before the league ends');
   const { rows: [live] } = await client.query("SELECT * FROM league_nights WHERE league_id = $1 AND status IN ('scheduled', 'open') FOR UPDATE", [league.id]);
   if (live?.status === 'open') throw conflict('League Night is already on');
@@ -214,6 +216,6 @@ async function standings(db, night, league) {
 }
 
 module.exports = {
-  RACES, POINTS, OPEN_BEFORE_MIN, GAP_S, RACE_ROOM_MIN, SOONEST_MIN,
+  RACES, POINTS, OPEN_BEFORE_MIN, GAP_S, RACE_ROOM_MIN, SOONEST_MIN, NOW_LEAD_S,
   current, schedule, cancelNight, isNightMember, openDue, afterNightRace, nobodyCame, standings, trackFor,
 };

@@ -32,8 +32,8 @@ describe('prices in the apps', () => {
 });
 
 describe('the Help Centre inside the apps', () => {
-  it('the website keeps its answers (92 questions, the price table, Stripe)', () => {
-    expect(questions('web').length).toBe(92);
+  it('the website keeps its answers (94 questions, the price table, Stripe)', () => {
+    expect(questions('web').length).toBe(94);
     expect(bySlug('web')['what-do-coin-packs-cost'].text).toMatch(/Pack: \$5, Coins: 5,000/);
     expect(buyingText('web')).toMatch(/Stripe/);
   });

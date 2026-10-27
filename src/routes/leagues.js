@@ -16,7 +16,7 @@
  *   POST   /api/leagues/:code/race          { track_id, marble_id? } a league race on one of its tracks
  *                                           (a solo race, house marbles fill the field; the page starts it)
  *   POST   /api/leagues/:code/again         creator: Run again (a new league with the same settings)
- *   POST   /api/leagues/:code/night         creator: { starts_at, races 3-5 } set (or move) League Night
+ *   POST   /api/leagues/:code/night         creator: { starts_at | now: true, races 3-5 } set (or move) League Night, or start it now
  *   DELETE /api/leagues/:code/night         creator: call it off (before its first race has started)
  */
 const express = require('express');
@@ -214,7 +214,7 @@ router.post('/:code/race', requireAuth, open, async (req, res) => {
 });
 
 router.post('/:code/night', requireAuth, open, async (req, res) => {
-  const body = validate(req.body ?? {}, { starts_at: { type: 'string', required: true, max: 40 }, races: { type: 'int', required: true } });
+  const body = validate(req.body ?? {}, { starts_at: { type: 'string', max: 40 }, now: { type: 'boolean' }, races: { type: 'int', required: true } });
   const league = await db.withTransaction(async (client) => {
     const l = await leagues.byCode(client, req.params.code, { lock: true });
     await night.schedule(client, l, req.user.id, body);

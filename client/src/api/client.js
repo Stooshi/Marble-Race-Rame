@@ -200,6 +200,7 @@ export const api = {
   leagueAgain: (code) => request(`/leagues/${encodeURIComponent(code)}/again`, { method: 'POST' }),
   // League Night: the creator sets it ({ starts_at ISO, races 3-5 }) or calls it off.
   leagueNight: (code, startsAt, races) => request(`/leagues/${encodeURIComponent(code)}/night`, { method: 'POST', body: { starts_at: startsAt, races } }),
+  leagueNightNow: (code, races) => request(`/leagues/${encodeURIComponent(code)}/night`, { method: 'POST', body: { now: true, races } }),
   leagueNightOff: (code) => request(`/leagues/${encodeURIComponent(code)}/night`, { method: 'DELETE' }),
   setName: (name) => request('/users/me', { method: 'PATCH', body: { display_name: name } }),
   saveSettings: (settings) => request('/users/me/settings', { method: 'PUT', body: settings }),
