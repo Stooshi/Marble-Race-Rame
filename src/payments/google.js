@@ -1,10 +1,12 @@
 'use strict';
 
 /**
- * Google Play Billing for the Android app: coin packs are one-time ("consumable") products with
- * the same ids as on the website (coins-5000, coins-10500, coins-27500, coins-57500). A season pass
- * (holiday-pass-2026) is a one-time product that is kept: acknowledged, never consumed. Stripe stays
- * for the website only.
+ * Google Play Billing for the Android app: coin packs are one-time ("consumable") products. Google
+ * Play's product ids allow only lowercase letters, digits, _ and . (no hyphens), so in Google Play our
+ * ids are written with _ (playId: coins-5000 → coins_5000, holiday-pass-2026 → holiday_pass_2026);
+ * everywhere else (payments.product_id, the website, the App Store) they keep their hyphens (ourId turns
+ * a Play id back). A season pass is a one-time product that is kept: acknowledged, never consumed.
+ * Stripe stays for the website only.
  *
  * The flow (docs/05-runbook.md, "Google Play"):
  *   1. The app asks for the player's Play account id (accountIdFor: a random id kept in
@@ -38,6 +40,13 @@ const API = 'https://androidpublisher.googleapis.com/androidpublisher/v3/applica
 const SCOPE = 'https://www.googleapis.com/auth/androidpublisher';
 
 let fetchImpl = (...args) => fetch(...args);
+
+/** Our product id as Google Play writes it (Moses, 27 Oct 2026: Play refuses hyphens): coins-5000 → coins_5000. */
+const playId = (id) => String(id).replace(/-/g, '_');
+/** A Google Play product id back to ours: coins_5000 → coins-5000 (our ids never contain _). */
+const ourId = (id) => String(id).replace(/_/g, '-');
+/** Google Play's rule for product ids. */
+const PLAY_ID = /^[a-z0-9][a-z0-9_.]*$/;
 let accountOverride; // (tests)
 /** Tests: a fake fetch (and service account). */
 function setTransport(fn, account = undefined) { fetchImpl = fn; accountOverride = account; token = null; }
@@ -171,8 +180,8 @@ const VOID_REASON = { 0: 'Other', 1: 'Remorse', 2: 'Not received', 3: 'Defective
  */
 async function redeem(db, { userId = null, productId, purchaseToken }, { grant, product }) {
   if (typeof purchaseToken !== 'string' || purchaseToken.length < 10 || purchaseToken.length > 2000) throw badRequest('Not a Google Play purchase');
-  const p = await product(productId);
-  const g = await getPurchase(p.id, purchaseToken);
+  const p = await product(ourId(productId));
+  const g = await getPurchase(playId(p.id), purchaseToken);
   if (!g) throw badRequest('Google Play doesn\'t know this purchase');
   const state = STATE[g.purchaseState] ?? 'unknown';
   if (state === 'pending') return { status: 'pending' };
@@ -218,7 +227,7 @@ async function redeem(db, { userId = null, productId, purchaseToken }, { grant, 
   if (p.keep) {
     if ((out.status === 'paid' || out.status === 'duplicate') && Number(g.acknowledgementState) !== 1) {
       try {
-        await acknowledge(p.id, purchaseToken);
+        await acknowledge(playId(p.id), purchaseToken);
         await db.query(`UPDATE payments SET store_acknowledged_at = now() WHERE provider = 'google' AND store_token = $1`, [purchaseToken]);
         out.acknowledged = true;
       } catch (err) {
@@ -233,7 +242,7 @@ async function redeem(db, { userId = null, productId, purchaseToken }, { grant, 
   // Consume at Google (outside the transaction: the coins are already safely recorded).
   if ((out.status === 'paid' || out.status === 'duplicate') && Number(g.consumptionState) !== 1) {
     try {
-      await consume(p.id, purchaseToken);
+      await consume(playId(p.id), purchaseToken);
       await db.query(`UPDATE payments SET store_consumed_at = now() WHERE provider = 'google' AND store_token = $1`, [purchaseToken]);
       out.consumed = true;
     } catch (err) {
@@ -256,7 +265,7 @@ async function consumeLeftovers(db) {
   for (const r of rows) {
     try {
       // eslint-disable-next-line no-await-in-loop
-      await consume(r.product_id, r.store_token);
+      await consume(playId(r.product_id), r.store_token);
       // eslint-disable-next-line no-await-in-loop
       await db.query(`UPDATE payments SET store_consumed_at = now() WHERE provider = 'google' AND store_token = $1`, [r.store_token]);
       done += 1;
@@ -277,7 +286,7 @@ async function acknowledgeLeftovers(db) {
   for (const r of rows) {
     try {
       // eslint-disable-next-line no-await-in-loop
-      await acknowledge(r.product_id, r.store_token);
+      await acknowledge(playId(r.product_id), r.store_token);
       // eslint-disable-next-line no-await-in-loop
       await db.query(`UPDATE payments SET store_acknowledged_at = now() WHERE provider = 'google' AND store_token = $1`, [r.store_token]);
       done += 1;
@@ -341,5 +350,5 @@ function decodeRtdn(body) {
 
 module.exports = {
   configured, packageName, accountIdFor, redeem, consume, consumeLeftovers, acknowledge, acknowledgeLeftovers, syncVoided, refundOrder,
-  getPurchase, voidedPurchases, rtdnTokenOk, decodeRtdn, setTransport, VOID_REASON,
+  getPurchase, voidedPurchases, rtdnTokenOk, decodeRtdn, setTransport, VOID_REASON, playId, ourId, PLAY_ID,
 };

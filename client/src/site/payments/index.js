@@ -31,6 +31,12 @@ export const STORE_NAME = { stripe: 'Stripe', apple: 'the App Store', google: 'G
 
 const billing = () => import('@capgo/native-purchases');
 
+/**
+ * A product's id in Google Play: Play allows no hyphens, so coins-5000 is coins_5000 there (the same
+ * rule as src/payments/google.js playId; the server turns it back). The App Store and the website keep ours.
+ */
+export const playId = (id) => String(id).replace(/-/g, '_');
+
 /** Google's own error for "the player closed the purchase sheet". */
 const cancelled = (err) => /cancel/i.test(`${err?.code ?? ''} ${err?.message ?? ''}`);
 
@@ -56,7 +62,7 @@ const ADAPTERS = {
     let t;
     try {
       t = await NativePurchases.purchaseProduct({
-        productIdentifier: pack.id,
+        productIdentifier: playId(pack.id),
         productType: PURCHASE_TYPE.INAPP,
         appAccountToken: accountId, // (Google's obfuscatedAccountId: ties the purchase to this player)
         isConsumable: false, // (the server consumes it, after checking it and adding the coins)
@@ -139,7 +145,7 @@ export async function buyPass(season, { consent = false } = {}) {
     let t;
     try {
       t = await NativePurchases.purchaseProduct({
-        productIdentifier: season.pass.productId,
+        productIdentifier: playId(season.pass.productId),
         productType: PURCHASE_TYPE.INAPP,
         appAccountToken: accountId,
         isConsumable: false, // (a pass is kept: the server acknowledges it after checking it)
@@ -239,8 +245,11 @@ export function useStorePrices(packs) {
   useEffect(() => {
     if (storeProvider() !== 'google' && storeProvider() !== 'apple') return undefined;
     let live = true;
-    billing().then(({ NativePurchases, PURCHASE_TYPE }) => NativePurchases.getProducts({ productIdentifiers: ids.split(','), productType: PURCHASE_TYPE.INAPP }))
-      .then(({ products = [] }) => { if (live) setPrices(Object.fromEntries(products.map((p) => [p.identifier, p.priceString]))); })
+    // (Google Play knows them by their Play ids, coins_5000: the prices come back keyed by ours.)
+    const google = storeProvider() === 'google';
+    const byStore = new Map(ids.split(',').map((id) => [google ? playId(id) : id, id]));
+    billing().then(({ NativePurchases, PURCHASE_TYPE }) => NativePurchases.getProducts({ productIdentifiers: [...byStore.keys()], productType: PURCHASE_TYPE.INAPP }))
+      .then(({ products = [] }) => { if (live) setPrices(Object.fromEntries(products.map((p) => [byStore.get(p.identifier) ?? p.identifier, p.priceString]))); })
       .catch(() => {});
     return () => { live = false; };
   }, [ids]);

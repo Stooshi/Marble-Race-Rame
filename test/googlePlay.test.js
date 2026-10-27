@@ -88,26 +88,26 @@ test('Google Play: verified, credited once to the buyer only, consumed; voided p
     const otherAcc = (await call('/payments/google/account', { token: other.token })).body.accountId;
 
     const tok = `play-token-${run}-aaaaaaaaaaaaaaaa`;
-    g.state.purchases.set(tok, { productId: 'coins-10500', purchaseState: 0, orderId: `GPA.3300-${run}-1`, accountId: acc.accountId });
+    g.state.purchases.set(tok, { productId: 'coins_10500', purchaseState: 0, orderId: `GPA.3300-${run}-1`, accountId: acc.accountId });
 
     // A made-up token, or a pack that doesn't exist: nothing.
-    assert.equal((await call('/payments/google/verify', { method: 'POST', token: me.token, body: { productId: 'coins-10500', purchaseToken: `nope-${run}-xxxxxxxxxxxx` } })).status, 400);
+    assert.equal((await call('/payments/google/verify', { method: 'POST', token: me.token, body: { productId: 'coins_10500', purchaseToken: `nope-${run}-xxxxxxxxxxxx` } })).status, 400);
     assert.equal((await call('/payments/google/verify', { method: 'POST', token: me.token, body: { productId: 'coins-999999', purchaseToken: tok } })).status, 404);
     // Someone else sending the buyer's token gets nothing.
-    assert.equal((await call('/payments/google/verify', { method: 'POST', token: other.token, body: { productId: 'coins-10500', purchaseToken: tok } })).status, 403);
+    assert.equal((await call('/payments/google/verify', { method: 'POST', token: other.token, body: { productId: 'coins_10500', purchaseToken: tok } })).status, 403);
     assert.equal(await coinsOf(me.token), start);
 
     // The buyer: checked with Google, the coins once, consumed at Google.
-    const paid = (await call('/payments/google/verify', { method: 'POST', token: me.token, body: { productId: 'coins-10500', purchaseToken: tok } })).body;
+    const paid = (await call('/payments/google/verify', { method: 'POST', token: me.token, body: { productId: 'coins_10500', purchaseToken: tok } })).body;
     assert.equal(paid.status, 'paid');
     assert.match(paid.orderNo, /^MS-\d+$/);
     assert.equal(paid.consumed, true);
     assert.deepEqual(g.state.consumed, [tok]);
     assert.equal(await coinsOf(me.token), start + 10500);
     // Again (the app retrying), or from Google's notification: nothing more.
-    assert.equal((await call('/payments/google/verify', { method: 'POST', token: me.token, body: { productId: 'coins-10500', purchaseToken: tok } })).body.status, 'duplicate');
+    assert.equal((await call('/payments/google/verify', { method: 'POST', token: me.token, body: { productId: 'coins_10500', purchaseToken: tok } })).body.status, 'duplicate');
     const push = (n) => call(`/payments/google/rtdn?token=rtdn-secret-for-tests`, { method: 'POST', body: { message: { data: Buffer.from(JSON.stringify({ packageName: 'com.marblespins.app', ...n })).toString('base64') } } });
-    assert.equal((await push({ oneTimeProductNotification: { notificationType: 1, purchaseToken: tok, sku: 'coins-10500' } })).status, 204);
+    assert.equal((await push({ oneTimeProductNotification: { notificationType: 1, purchaseToken: tok, sku: 'coins_10500' } })).status, 204);
     assert.equal(await coinsOf(me.token), start + 10500);
     const { rows: [pay] } = await db.query(`SELECT * FROM payments WHERE provider = 'google' AND store_token = $1`, [tok]);
     assert.equal(pay.status, 'paid');
@@ -116,26 +116,28 @@ test('Google Play: verified, credited once to the buyer only, consumed; voided p
     const { rows: ledger } = await db.query('SELECT amount, kind FROM coin_ledger WHERE payment_id = $1', [pay.id]);
     assert.deepEqual(ledger, [{ amount: 10500, kind: 'coin-pack' }]);
     // Bought coins never count as earned.
+    // (Bought as coins_10500 in Google Play; kept as our own id, coins-10500.)
+    assert.equal((await db.query("SELECT product_id FROM payments WHERE provider = 'google' AND store_token = $1", [tok])).rows[0].product_id, 'coins-10500');
     const { rows: [u] } = await db.query('SELECT coins_bought FROM users WHERE id = $1', [me.user.id]);
     assert.ok(u.coins_bought >= 10500);
 
     // A purchase with another player's account id is refused, whoever sends it.
     const tok2 = `play-token-${run}-bbbbbbbbbbbbbbbb`;
-    g.state.purchases.set(tok2, { productId: 'coins-5000', purchaseState: 0, orderId: `GPA.3300-${run}-2`, accountId: otherAcc });
-    assert.equal((await call('/payments/google/verify', { method: 'POST', token: me.token, body: { productId: 'coins-5000', purchaseToken: tok2 } })).status, 403);
+    g.state.purchases.set(tok2, { productId: 'coins_5000', purchaseState: 0, orderId: `GPA.3300-${run}-2`, accountId: otherAcc });
+    assert.equal((await call('/payments/google/verify', { method: 'POST', token: me.token, body: { productId: 'coins_5000', purchaseToken: tok2 } })).status, 403);
 
     // Pending (e.g. paid in cash at a shop): nothing yet; Google's notification credits it once paid.
     const tok3 = `play-token-${run}-cccccccccccccccc`;
-    g.state.purchases.set(tok3, { productId: 'coins-5000', purchaseState: 2, orderId: `GPA.3300-${run}-3`, accountId: acc.accountId });
-    assert.equal((await call('/payments/google/verify', { method: 'POST', token: me.token, body: { productId: 'coins-5000', purchaseToken: tok3 } })).body.status, 'pending');
+    g.state.purchases.set(tok3, { productId: 'coins_5000', purchaseState: 2, orderId: `GPA.3300-${run}-3`, accountId: acc.accountId });
+    assert.equal((await call('/payments/google/verify', { method: 'POST', token: me.token, body: { productId: 'coins_5000', purchaseToken: tok3 } })).body.status, 'pending');
     assert.equal(await coinsOf(me.token), start + 10500);
     g.state.purchases.get(tok3).purchaseState = 0;
-    assert.equal((await push({ oneTimeProductNotification: { notificationType: 1, purchaseToken: tok3, sku: 'coins-5000' } })).status, 204);
+    assert.equal((await push({ oneTimeProductNotification: { notificationType: 1, purchaseToken: tok3, sku: 'coins_5000' } })).status, 204);
     assert.equal(await coinsOf(me.token), start + 15500);
 
     // Pushes without the secret are refused; unknown products don't make Pub/Sub retry.
     assert.equal((await call('/payments/google/rtdn?token=wrong', { method: 'POST', body: { message: { data: 'e30=' } } })).status, 403);
-    assert.equal((await push({ oneTimeProductNotification: { notificationType: 1, purchaseToken: tok, sku: 'coins-999' } })).status, 204);
+    assert.equal((await push({ oneTimeProductNotification: { notificationType: 1, purchaseToken: tok, sku: 'coins_999' } })).status, 204);
 
     // A refund at Google (voided purchase): the coins go back once, in the ledger and the audit log.
     g.state.voided = [{ purchaseToken: tok, orderId: `GPA.3300-${run}-1`, voidedTimeMillis: String(Date.now()), voidedSource: 0, voidedReason: 1 }];
@@ -162,8 +164,8 @@ test('Google Play: verified, credited once to the buyer only, consumed; voided p
 
     // The back office refunds a Google order in full through Google (part refunds aren't possible).
     const tok4 = `play-token-${run}-dddddddddddddddd`;
-    g.state.purchases.set(tok4, { productId: 'coins-5000', purchaseState: 0, orderId: `GPA.3300-${run}-4`, accountId: acc.accountId });
-    await call('/payments/google/verify', { method: 'POST', token: me.token, body: { productId: 'coins-5000', purchaseToken: tok4 } });
+    g.state.purchases.set(tok4, { productId: 'coins_5000', purchaseState: 0, orderId: `GPA.3300-${run}-4`, accountId: acc.accountId });
+    await call('/payments/google/verify', { method: 'POST', token: me.token, body: { productId: 'coins_5000', purchaseToken: tok4 } });
     const { rows: [p4] } = await db.query(`SELECT id FROM payments WHERE store_token = $1`, [tok4]);
     const { rows: [admin] } = await db.query(`SELECT id FROM users WHERE role = 'admin' LIMIT 1`);
     if (admin) {
@@ -176,4 +178,24 @@ test('Google Play: verified, credited once to the buyer only, consumed; voided p
     server.close();
     await db.pool?.end?.();
   }
+});
+
+test('Google Play product ids: no hyphens there (coins_5000), our own ids everywhere else', () => {
+  const google = require('../src/payments/google');
+  const packs = require('../client/src/shared/payments/packs.json').packs.map((p) => p.id);
+  const fs = require('fs');
+  const path = require('path');
+  const seasonIds = [...fs.readFileSync(path.join(__dirname, '../docs/data_updates/2027-02-16-season-pass.sql'), 'utf8').matchAll(/'([a-z0-9-]+-pass-\d{4})'/g)].map((m) => m[1]);
+  assert.ok(seasonIds.includes('holiday-pass-2026'));
+  for (const id of [...packs, ...seasonIds]) {
+    assert.doesNotMatch(id, /_/, `${id}: our ids never contain _`);
+    assert.match(google.playId(id), google.PLAY_ID, `${id} → ${google.playId(id)} is a valid Google Play id`);
+    assert.equal(google.ourId(google.playId(id)), id);
+  }
+  assert.equal(google.playId('coins-5000'), 'coins_5000');
+  assert.equal(google.playId('holiday-pass-2026'), 'holiday_pass_2026');
+  // The app buys and prices with the Play id (client/src/site/payments/index.js).
+  const client = fs.readFileSync(path.join(__dirname, '../client/src/site/payments/index.js'), 'utf8');
+  assert.match(client, /export const playId = \(id\) => String\(id\)\.replace\(\/-\/g, '_'\);/);
+  assert.equal((client.match(/productIdentifier: playId\(/g) ?? []).length, 2);
 });

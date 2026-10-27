@@ -25,11 +25,12 @@ describe('Google Play Billing in the Android app', () => {
 
   it('uses Google Play, never Stripe, inside the Android app', async () => {
     expect(storeProvider()).toBe('google');
-    plugin.purchaseProduct.mockResolvedValue({ purchaseToken: 'tok-1', orderId: 'GPA.1', productIdentifier: pack.id });
+    plugin.purchaseProduct.mockResolvedValue({ purchaseToken: 'tok-1', orderId: 'GPA.1', productIdentifier: 'coins_10500' });
     api.googleVerify.mockResolvedValue({ status: 'paid', coins: 12000, orderNo: 'MS-1' });
     const r = await buyCoins(pack, { consent: true });
     expect(r).toMatchObject({ status: 'paid', coins: 12000 });
-    expect(plugin.purchaseProduct).toHaveBeenCalledWith(expect.objectContaining({ productIdentifier: 'coins-10500', productType: 'inapp', appAccountToken: 'acct-123', autoAcknowledgePurchases: false }));
+    // (Google Play's id: no hyphens, coins_10500.)
+    expect(plugin.purchaseProduct).toHaveBeenCalledWith(expect.objectContaining({ productIdentifier: 'coins_10500', productType: 'inapp', appAccountToken: 'acct-123', autoAcknowledgePurchases: false }));
     expect(api.googleVerify).toHaveBeenCalledWith({ productId: 'coins-10500', purchaseToken: 'tok-1' });
     expect(api.checkout).not.toHaveBeenCalled();
   });
@@ -53,7 +54,7 @@ describe('Google Play Billing in the Android app', () => {
   });
 
   it('unconfirmed purchases are sent to the server again', async () => {
-    plugin.getPurchases.mockResolvedValue({ purchases: [{ purchaseToken: 'tok-3', productIdentifier: 'coins-5000' }, { purchaseToken: 'tok-4', productIdentifier: 'coins-57500' }] });
+    plugin.getPurchases.mockResolvedValue({ purchases: [{ purchaseToken: 'tok-3', productIdentifier: 'coins_5000' }, { purchaseToken: 'tok-4', productIdentifier: 'coins_57500' }] });
     api.googleVerify.mockResolvedValueOnce({ status: 'paid' }).mockResolvedValueOnce({ status: 'pending' });
     expect(await resumeStorePurchases()).toBe(1);
     expect(api.googleVerify).toHaveBeenCalledTimes(2);
