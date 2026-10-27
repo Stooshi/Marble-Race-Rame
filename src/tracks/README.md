@@ -25,6 +25,24 @@ module.exports = track({
 
 Then add it to `index.js` in this folder.
 
+## Every new track has a big feature (Moses, 27 Oct 2026)
+
+No "safe only" tracks. Every new track has **at least one big, exciting feature**:
+- a jump or hop over a gap (the boost-pad jump, a hop);
+- a splitter with two paths;
+- a loop;
+- a funnel;
+- a big drop;
+- a dramatic banked turn.
+
+Rules that come with it:
+- **Vary the features across a series**, so no two tracks of a series lean on the same one.
+- **Place them where the flyover and the TV cameras show them.** Make the feature the track's `signature` (the flyover's highlight) or give it a TV moment.
+- **The checks still apply:** fairness, the phone budget and the scenery checks. If a feature fails one, **tune it rather than remove it**.
+- **A new series' plan lists each track's feature** for Moses's approval before anything is built.
+
+This applies from Peaks 6–15 on (after Leagues part 1). Tracks built before 27 Oct 2026, the first five Peaks among them, stay as they are.
+
 ## What the kit does for you
 
 - Opens every track with the 16 m starting ramp and the paddle gate, and ends

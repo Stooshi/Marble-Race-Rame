@@ -4,6 +4,7 @@
   - Any change that alters architecture, routes, files, tables or columns, game or economy rules, deploy steps or a decision updates the matching document, in the same commit.
   - Then re-upload the changed files to the project mirror.
   - Never write secret values in docs; variable names only.
+- **Every new track has a big feature** (Moses, 27 Oct 2026): a jump/hop over a gap, a splitter, a loop, a funnel, a drop or a dramatic banked turn; varied across a series and placed where the flyover and TV cameras show it; tune it if a check fails, never remove it; a new series' plan lists each track's feature for Moses's approval first. Details: `src/tracks/README.md`.
 - **Race results must never change.** Looks never affect results. Run the fingerprint tests (`test/raceFingerprints.test.js`) when touching `src/game/`.
 - **Database:** `docs/database_schema.sql` only adds. Changes to existing rows go in a new `docs/data_updates/<name>.sql` (sorting after the last file). Never edit one that has run.
 - **Coins only move through `economy.change()`**, which writes the coin ledger.
