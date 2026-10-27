@@ -21,10 +21,13 @@ let queue = Promise.resolve();
 let listening = false;
 let hiddenApp = false; // the app in the background (Capacitor's appStateChange), besides document.hidden
 
-// (Swappable in tests: the plugin, the document and the navigator.)
+// (Swappable in tests: the plugin's module, the document and the navigator.)
+// The plugin's MODULE, never the plugin itself: a Capacitor plugin is a proxy that answers every
+// property, `then` too, so a promise resolving to it is taken for a promise and fails (`"KeepAwake.then()"
+// is not implemented on android`): the screen was never kept on (Moses's Samsung, 27 Oct 2026).
 const env = {
   native: () => isNativeApp(),
-  plugin: () => import('@capacitor-community/keep-awake').then((m) => m.KeepAwake),
+  plugin: () => import('@capacitor-community/keep-awake'),
   doc: () => (typeof document === 'undefined' ? null : document),
   nav: () => (typeof navigator === 'undefined' ? null : navigator),
 };
@@ -44,11 +47,16 @@ async function apply() {
   if (env.native()) {
     if (want === nativeOn) return;
     try {
-      const plugin = await env.plugin();
-      if (want) await plugin.keepAwake();
-      else await plugin.allowSleep();
+      const { KeepAwake } = await env.plugin();
+      if (want) await KeepAwake.keepAwake();
+      else await KeepAwake.allowSleep();
       nativeOn = want;
-    } catch { /* (the plugin missing in an older app build: the screen behaves as before) */ }
+      // (In the app's log: Android Studio → Logcat, filter "keep-awake"; the WebView's console is the tag Capacitor/Console.)
+      console.info(`[keep-awake] screen ${want ? 'kept on' : 'allowed to sleep'}`);
+    } catch (err) {
+      // (The plugin missing in an older app build: the screen behaves as before. Said in the log.)
+      console.warn('[keep-awake] the app could not keep the screen on:', err?.message ?? err);
+    }
     return;
   }
   if (want && !sentinel) {

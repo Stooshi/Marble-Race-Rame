@@ -30,12 +30,26 @@ function browser({ supported = true, refuse = false } = {}) {
   return { env: { native: () => false, doc: () => doc, nav: () => nav }, log, hide };
 }
 
-/** The app: the native plugin, recording its calls. */
+/**
+ * The app: the native plugin, recording its calls. Like a real Capacitor plugin it is a proxy that
+ * answers every property, `then` too, with a native call (one it doesn't have rejects): a promise that
+ * resolved to the plugin itself would fail, as it did on Moses's Samsung (27 Oct 2026).
+ */
+function capacitorPlugin(methods, log) {
+  return new Proxy({}, {
+    get: (_, prop) => (...args) => {
+      if (methods[prop]) return methods[prop](...args);
+      log.push(`not implemented: ${String(prop)}`);
+      return Promise.reject(new Error(`"KeepAwake.${String(prop)}()" is not implemented on android`));
+    },
+  });
+}
 function app() {
   const log = [];
-  const plugin = { keepAwake: async () => { log.push('keepAwake'); }, allowSleep: async () => { log.push('allowSleep'); } };
+  const KeepAwake = capacitorPlugin({ keepAwake: async () => { log.push('keepAwake'); }, allowSleep: async () => { log.push('allowSleep'); } }, log);
   const doc = { visibilityState: 'visible', addEventListener() {} };
-  return { env: { native: () => true, plugin: async () => plugin, doc: () => doc, nav: () => ({}) }, log };
+  // (The plugin's module, as import() gives it.)
+  return { env: { native: () => true, plugin: async () => ({ KeepAwake }), doc: () => doc, nav: () => ({}) }, log };
 }
 
 describe('the website: the Screen Wake Lock API', () => {
@@ -164,5 +178,25 @@ describe('when: from the start show and countdown until the results board', () =
     expect(src('src/components/RaceViewer.jsx')).toContain("useKeepAwake(live && show.phase !== 'board');");
     // (Leaving the race unmounts the viewer: the hook lets go.)
     expect(src('src/app/keepAwake.js')).toContain('useEffect(() => (on ? holdAwake() : undefined), [on]);');
+  });
+
+  it('the plugin is used through its module, never resolved as itself (a Capacitor plugin answers `then`)', async () => {
+    const { env, log } = app();
+    T.reset(env);
+    const release = holdAwake();
+    await T.settled();
+    expect(log).toEqual(['keepAwake']);
+    expect(T.state().native).toBe(true);
+    release();
+    await T.settled();
+    expect(log).toEqual(['keepAwake', 'allowSleep']);
+    expect(log.some((l) => l.startsWith('not implemented'))).toBe(false);
+    const code = src('src/app/keepAwake.js');
+    expect(code).toContain("plugin: () => import('@capacitor-community/keep-awake'),");
+    expect(code).not.toMatch(/import\('@capacitor-community\/keep-awake'\)\.then\(\(m\) => m\.KeepAwake\)/);
+    // (In the log: "[keep-awake] screen kept on", and why when it can't.)
+    expect(code).toContain('[keep-awake] screen ${want ? \'kept on\' : \'allowed to sleep\'}');
+    // The same trap in push: its module, not the plugin, from an async function.
+    expect(src('src/app/push.js')).toContain("if (!mod) mod = await import('@capacitor/push-notifications');");
   });
 });

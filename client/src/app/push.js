@@ -26,10 +26,12 @@ export const pushOn = () => settings.enabled === true && isNativeApp();
 const read = () => { try { return JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch { return {}; } };
 const write = (v) => { try { localStorage.setItem(KEY, JSON.stringify({ ...read(), ...v })); } catch { /* (private mode) */ } };
 
-let plugin = null;
+// (The plugin's module, not the plugin: a Capacitor plugin answers `then` too, so an async function
+// returning it never resolves to it. Callers use `(await Push()).PushNotifications`.)
+let mod = null;
 async function Push() {
-  if (!plugin) plugin = (await import('@capacitor/push-notifications')).PushNotifications;
-  return plugin;
+  if (!mod) mod = await import('@capacitor/push-notifications');
+  return mod;
 }
 
 /** A race finished on this phone (counted for "ask after the first race"). */
@@ -50,7 +52,7 @@ export const markAsked = (answer) => write({ asked: new Date().toISOString(), an
 /** The phone's permission: 'granted' | 'denied' | 'prompt' | 'unavailable'. */
 export async function permission() {
   if (!pushOn()) return 'unavailable';
-  try { return (await (await Push()).checkPermissions()).receive; } catch { return 'unavailable'; }
+  try { return (await (await Push()).PushNotifications.checkPermissions()).receive; } catch { return 'unavailable'; }
 }
 
 let listening = false;
@@ -58,7 +60,7 @@ let lastToken = null;
 async function listen(navigate) {
   if (listening) return;
   listening = true;
-  const P = await Push();
+  const P = (await Push()).PushNotifications;
   await P.addListener('registration', async ({ value }) => {
     lastToken = value;
     write({ token: value });
@@ -81,13 +83,13 @@ export async function startPush({ navigate } = {}) {
   if (!pushOn() || !getStoredToken()) return;
   if ((await permission()) !== 'granted') return;
   await listen(navigate);
-  await (await Push()).register().catch(() => {});
+  await (await Push()).PushNotifications.register().catch(() => {});
 }
 
 /** The player said yes: the phone's own dialog, then registration. → the permission it ends with. */
 export async function enablePush({ navigate } = {}) {
   if (!pushOn()) return 'unavailable';
-  const P = await Push();
+  const P = (await Push()).PushNotifications;
   let state = (await P.checkPermissions()).receive;
   if (state === 'prompt' || state === 'prompt-with-rationale') state = (await P.requestPermissions()).receive;
   if (state === 'granted') {
