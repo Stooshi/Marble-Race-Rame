@@ -81,11 +81,13 @@ async function joinRace(client, raceId, userId, marbleId) {
   if (!race) throw notFound('Race not found');
   if (race.status !== 'lobby') throw conflict('Race is no longer accepting entries');
   // A season track: pass holders only (or anyone in a friend room whose host has the pass).
+  // (A league race: the league's creator added the track with their pass, so members race it as in a room.)
   const { rows: [track] } = await client.query(
-    'SELECT t.slug, t.season_key, ro.host_id AS room_host_id FROM tracks t LEFT JOIN rooms ro ON ro.id = $2 WHERE t.id = $1',
-    [race.track_id, race.room_id ?? null],
+    `SELECT t.slug, t.season_key, ro.host_id AS room_host_id, lg.created_by AS league_creator
+       FROM tracks t LEFT JOIN rooms ro ON ro.id = $2 LEFT JOIN leagues lg ON lg.id = $3 WHERE t.id = $1`,
+    [race.track_id, race.room_id ?? null, race.league_id ?? null],
   );
-  await seasons.assertTrackAccess(client, track, { userId, roomHostId: track?.room_host_id ?? null });
+  await seasons.assertTrackAccess(client, track, { userId, roomHostId: track?.room_host_id ?? track?.league_creator ?? null });
 
   // No marble given: race with the player's Shooter (or another of their marbles if it's taken).
   if (!marbleId) marbleId = await pickRacingMarble(client, raceId, userId);

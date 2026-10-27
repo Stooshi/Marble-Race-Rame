@@ -24,6 +24,7 @@ async function start() {
   require('./payments/emails').startJobs(db); // purchase confirmations and withdrawal acknowledgements (once email is on)
   require('./payments').startGoogleJobs(db); // Google Play: consume leftovers hourly, refunds/chargebacks every 6 h
   require('./seasons').startJobs(db, { earned: require('./economy').EARNED }); // a season's badges once it has ended
+  require('./leagues').startJobs(db); // leagues whose time is up: ended, their scoreboards frozen
 
   await new Promise((resolve) => server.listen(config.port, resolve));
   console.log(`Marble Race backend listening on :${server.address().port} (${config.env})`);

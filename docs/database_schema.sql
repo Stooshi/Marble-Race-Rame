@@ -1270,3 +1270,76 @@ ALTER TABLE users ADD COLUMN IF NOT EXISTS name_hidden_name varchar(64);
 ALTER TABLE name_reports ADD COLUMN IF NOT EXISTS reporter_ip_hash varchar(64);
 CREATE INDEX IF NOT EXISTS idx_name_reports_reporter ON name_reports (reporter_id, created_at);
 CREATE INDEX IF NOT EXISTS idx_users_name_hidden ON users (name_hidden_at) WHERE name_hidden_at IS NOT NULL;
+
+-- ---------------------------------------------------------------------------
+-- Leagues (Leagues v1, part 1, 27 Oct 2026; src/leagues, behind LEAGUES=off|admins|on). A league is a
+-- player's own competition: its tracks (5 for a League; 10 for a Pro League, part 2), 1-7 days, an
+-- attempt cap (NULL: unlimited), the best time per track, the total ranked once every track is done.
+-- leagues.kind: 'league' (free, for fun) or 'pro' (part 2: paid by the creator, the league marble,
+-- feeds the Major League: feeds_major). league_members.final_*: the scoreboard frozen when it ends.
+-- league_runs: one per league race a member starts (a try), its time once the race is finished.
+-- league_results: written once per member when a Pro League (or its League Night) ends: never for a
+-- League, solo, Quick race or room races (part 2; empty until then). races.league_id: a league race.
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS leagues (
+    id           uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
+    code         varchar(8)  NOT NULL UNIQUE,
+    kind         varchar(10) NOT NULL DEFAULT 'league' CHECK (kind IN ('league', 'pro')),
+    name         varchar(60) NOT NULL,
+    created_by   uuid        NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    track_ids    uuid[]      NOT NULL,
+    attempt_cap  integer     CHECK (attempt_cap IN (3, 5, 10)),
+    starts_at    timestamptz NOT NULL DEFAULT now(),
+    ends_at      timestamptz NOT NULL,
+    status       varchar(10) NOT NULL DEFAULT 'open' CHECK (status IN ('open', 'ended')),
+    feeds_major  boolean     NOT NULL DEFAULT false,
+    again_of     uuid        REFERENCES leagues(id) ON DELETE SET NULL,
+    created_at   timestamptz NOT NULL DEFAULT now(),
+    ended_at     timestamptz
+);
+CREATE INDEX IF NOT EXISTS idx_leagues_creator_open ON leagues (created_by) WHERE status = 'open';
+CREATE INDEX IF NOT EXISTS idx_leagues_open_ends ON leagues (ends_at) WHERE status = 'open';
+
+CREATE TABLE IF NOT EXISTS league_members (
+    league_id       uuid        NOT NULL REFERENCES leagues(id) ON DELETE CASCADE,
+    user_id         uuid        NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    joined_at       timestamptz NOT NULL DEFAULT now(),
+    removed_at      timestamptz,
+    final_place     integer,
+    final_total_ms  integer,
+    PRIMARY KEY (league_id, user_id)
+);
+CREATE INDEX IF NOT EXISTS idx_league_members_user ON league_members (user_id) WHERE removed_at IS NULL;
+
+CREATE TABLE IF NOT EXISTS league_runs (
+    id           uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
+    league_id    uuid        NOT NULL REFERENCES leagues(id) ON DELETE CASCADE,
+    user_id      uuid        NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    track_id     uuid        NOT NULL REFERENCES tracks(id) ON DELETE CASCADE,
+    race_id      uuid        UNIQUE REFERENCES races(id) ON DELETE SET NULL,
+    time_ms      integer     CHECK (time_ms > 0),
+    created_at   timestamptz NOT NULL DEFAULT now(),
+    finished_at  timestamptz
+);
+CREATE INDEX IF NOT EXISTS idx_league_runs_member ON league_runs (league_id, user_id, track_id);
+
+CREATE TABLE IF NOT EXISTS league_results (
+    id               uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
+    league_id        uuid        NOT NULL REFERENCES leagues(id) ON DELETE CASCADE,
+    user_id          uuid        NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    kind             varchar(10) NOT NULL CHECK (kind IN ('challenge', 'night')),
+    night_id         uuid,
+    month            date        NOT NULL,
+    place            integer     NOT NULL,
+    ranked_humans    integer     NOT NULL,
+    points           integer,
+    tracks_finished  integer     NOT NULL DEFAULT 0,
+    counted_runs     integer     NOT NULL DEFAULT 0,
+    racing_days      integer     NOT NULL DEFAULT 0,
+    country          char(2),
+    created_at       timestamptz NOT NULL DEFAULT now()
+);
+CREATE UNIQUE INDEX IF NOT EXISTS uq_league_results ON league_results (league_id, user_id, kind, COALESCE(night_id, '00000000-0000-0000-0000-000000000000'::uuid));
+
+ALTER TABLE races ADD COLUMN IF NOT EXISTS league_id uuid REFERENCES leagues(id) ON DELETE SET NULL;
+CREATE INDEX IF NOT EXISTS idx_races_league ON races (league_id) WHERE league_id IS NOT NULL;

@@ -298,6 +298,8 @@ async function finalize(raceId) {
 
     // Coins by place, a personal best, and the daily goal and streak (src/economy).
     await economy.payRace(client, raceId);
+    // A league race: the member's time on that track (src/leagues).
+    await require('../leagues').recordRace(client, raceId);
 
     return getResults(client, raceId);
   });
@@ -384,6 +386,7 @@ async function cancel(raceId, actor) {
 
     const { rows: entrants } = await client.query('SELECT user_id FROM race_entries WHERE race_id = $1 AND user_id IS NOT NULL', [raceId]);
     for (const e of entrants) await economy.refundEntryFee(client, e.user_id, raceId);
+    await require('../leagues').cancelRace(client, raceId); // (a league race: the try is given back)
     const { rows: updated } = await client.query(
       `UPDATE races SET status = 'cancelled', finished_at = now() WHERE id = $1 RETURNING *`,
       [raceId],
