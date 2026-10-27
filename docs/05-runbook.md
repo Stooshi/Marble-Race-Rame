@@ -256,6 +256,13 @@ To turn email off again, remove `BREVO_API_KEY` and restart.
 
 **Support emails.** Contact-form messages go to support@marblespins.com (the company's address in `client/src/shared/company.json`; `SUPPORT_EMAIL` on Railway overrides it). With Brevo on, every new message is emailed there, with a link to it in the back office; replying to that email goes straight to the player (but isn't logged in the back office, so prefer replying there). Replies written in the back office are emailed to the player from `EMAIL_FROM`, with `SUPPORT_EMAIL` as the reply-to address. Without Brevo, messages and replies are still saved; the back office says a reply wasn't emailed.
 
+## Leagues: testing and switching on
+
+Built switched off (27 Oct 2026). The server variable `LEAGUES` decides (see `docs/01-architecture.md`):
+1. **After the deploy** that brings leagues: leave `LEAGUES` unset (off). `GET /api/leagues/status` answers `{"enabled":false}`; everything else under `/api/leagues` answers 404, and the website shows nothing.
+2. **To test in production:** Railway → the server → Variables → `LEAGUES` = `admins`. Railway restarts the server; only admin accounts then see LEAGUES on the home page and can make and race leagues.
+3. **For everyone:** `LEAGUES` = `on`. Back to off: delete the variable (or `off`). Leagues already made stay in the database and come back when switched on again; their end job keeps running either way.
+
 ## Push notifications (apps): setting up and switching on
 
 Built and **switched off twice**: the apps don't ask until `client/src/shared/push.json` has `"enabled": true` (needs a new app build in the stores), and the server sends nothing until `PUSH_SENDING=on` on Railway (until then it logs `[push] DRY RUN …`). Do the accounts first, then test with the test apps, then switch on.

@@ -52,7 +52,7 @@ test('room races count down longer; solo races don\'t; Start now only alone in a
     const c = await guest();
     const own = (await db.query(
       `INSERT INTO rooms (code, host_id, track_id, is_public, kind) VALUES ($1, $2, NULL, true, 'quick') RETURNING code`,
-      [`T${Date.now().toString(36).slice(-5).toUpperCase()}`, c.user.id],
+      [`T${Array.from({ length: 5 }, () => 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'[Math.floor(Math.random() * 32)]).join('')}`, c.user.id], // (room code letters only: no 0/O, 1/I)
     )).rows[0];
     // (Its race comes from the quick route; this room is only for the "not in it" check.)
     assert.equal((await call(`/rooms/${own.code}/start-now`, { method: 'POST', token: c.token })).status, 409);

@@ -183,6 +183,17 @@ Reports are saved in `reports/<slug>/`. Track design rules:
 - **Same rules everywhere:** no chat; names are filtered and can be reported; the start timer; coins as any race; limits per player on joining rooms (60 in 10 minutes) and Quick race (30 in 10 minutes), and on making rooms (10 an hour).
 - **Season tracks in rooms:** a host with the season pass can pick a season track, and everyone in the room races it, pass or not ("hosted by a pass holder"). A host without the pass sees season tracks locked. If the host's pass is refunded, the room's next race goes back to a random free track.
 
+## Leagues
+
+Built 27 Oct 2026 (Leagues v1 part 1), **switched off** (`LEAGUES` on Railway: `off`, `admins` to test, `on`). Plan: project doc `claude/leagues-v1-build-plan.md`; decisions 25–26 Oct 2026.
+
+- **A League:** a saved player picks a name, **5 different tracks**, how long it runs (**1 to 7 days**, from now) and the **tries per track** (unlimited, 3, 5 or 10), and shares its link (`/l/CODE`). Guests are asked to save their marble first. A creator can have **5 leagues open** at once; anyone can be in any number. Up to **50 players**; the creator can add players by name and take them out (they can't come back). Free, for fun: no league marble, nothing toward the Major League.
+- **Racing:** each try is a solo race on one of the league's tracks, with computer players filling the field to 20, decided and paid exactly like any race (coins and the daily full-pay races as usual). A try counts from the moment the race is made; a cancelled race, or one left waiting over 10 minutes, gives the try back. A race made before the league ends counts even if it finishes just after.
+- **Scoring:** each player's **best time on each track**; their **total** is the sum of the five bests, ranked once all five are done (players still racing are listed below them, by tracks done). The lowest total wins; on the same total, **whoever set it first** ranks higher.
+- **The end:** at its end time the league closes by itself (checked every minute) and its final places are frozen. The creator can **Run again**: a new league with the same tracks, length and tries, and the same players.
+- **Holiday tracks:** only a pass holder can put them in a league; the league's players then race them there without the pass (as in a pass holder's room). Before 1 Dec nobody can.
+- **Later (part 2, after 1 Nov, behind `LEAGUES_PRO`):** credits, the Pro League (10 tracks), the league marble and the Major League.
+
 ## Seasons and the season pass
 
 A season (the first: **Holiday Season 2026**, `holiday-2026`, 1 Dec 2026 00:00 to 7 Jan 2027 23:59 Swedish time) has its own tracks and a pass. Everything follows the season's dates in the `seasons` table, so nothing is deployed on any day of the season (`src/seasons`).

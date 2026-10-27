@@ -136,6 +136,7 @@ Sign-up, login and purchase events: `kind`, `ip` (inet), `country` (2 letters, l
 | `created_by`, `scheduled_at` | Who made it; when the server starts it by itself (a friend room's start timer, a quick race's 15 s; 25 Oct 2026). NULL: it waits for a start |
 | `decided_at`, `started_at`, `finished_at` | Lifecycle times. `started_at` = decision time + countdown |
 | `next_race_id` | The rematch: the follow-up race on the same track |
+| `league_id` | Set for a league race (27 Oct 2026): a solo race made from a league's page (`POST /api/leagues/:code/race`). Never in the public race list |
 | `room_id` | Set for a room's races (friend rooms and quick races). They never appear in the public race list (`GET /api/races`); a public room shows in its own list (`GET /api/rooms/public`) |
 
 **Checks on the table:**
@@ -177,6 +178,16 @@ Friend rooms, public rooms and quick races (25 Oct 2026).
 | `is_public` | Listed under "Join a race" (`GET /api/rooms/public`); false (the default): only people with the link or code. The host may change it at any time |
 | `kind` | `friends` (a room someone made; they are its host) or `quick` (Quick race: always public, no host powers, a random track, starts by itself 15 s after it opens, closes after its race) |
 | `removed` | Players the host took out: they can't join that room again |
+
+### `leagues`, `league_members`, `league_runs`, `league_results`
+Leagues (Leagues v1 part 1, 27 Oct 2026; behind the `LEAGUES` switch). Rules: [Game rules: leagues](04-game-rules.md#leagues).
+
+| Table | Columns |
+|---|---|
+| `leagues` | `code` (6 letters, `/l/CODE`), `kind` (`league`; `pro` is part 2), `name`, `created_by`, `track_ids` (uuid[], in the creator's order), `attempt_cap` (NULL unlimited, 3, 5 or 10), `starts_at`, `ends_at`, `status` (`open`, `ended`), `ended_at`, `feeds_major` (part 2; false), `again_of` (the league this one is a Run again of) |
+| `league_members` | `league_id`, `user_id`, `joined_at`, `removed_at` (taken out by the creator: they can't come back), `final_place` and `final_total_ms` (frozen when the league ends; NULL for a member who didn't finish every track) |
+| `league_runs` | One try: `league_id`, `user_id`, `track_id`, `race_id` (unique), `created_at` (the try is counted from here), `time_ms` and `finished_at` (filled when the race finishes). A cancelled race's row is removed (the try comes back) |
+| `league_results` | Part 2 (Pro Leagues feeding the Major League): created, nothing writes it yet |
 
 ## Marbles and the collection
 
