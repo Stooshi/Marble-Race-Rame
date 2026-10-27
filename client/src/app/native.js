@@ -25,7 +25,7 @@ let started = false;
 export function linkPath(url, cfg = appLinks) {
   let u;
   try { u = new URL(url); } catch { return null; }
-  if (u.protocol !== 'https:' || u.hostname.replace(/^www\./, '') !== cfg.host) return null;
+  if (u.protocol !== 'https:' || !cfg.hosts.includes(u.hostname)) return null;
   const ok = cfg.paths.some((p) => (p.endsWith('/') ? u.pathname.startsWith(p) && u.pathname.length > p.length : u.pathname === p || u.pathname.startsWith(`${p}/`)));
   return ok ? `${u.pathname}${u.search}${u.hash}` : null;
 }

@@ -103,7 +103,8 @@ export default function RoomPage() {
   const joinTried = useRef(null);
 
   // (In the apps the page's own address is the app's inside one, so share the website's.)
-  const link = `${window.Capacitor?.isNativePlatform?.() ? SITE_URL : window.location.origin}/r/${code}`;
+  // (Always marblespins.com, without www: the address the apps' app links are checked on.)
+  const link = `${SITE_URL}/r/${code}`;
 
   const [skew, setSkew] = useState(0); // (the server's clock minus this device's, for the start timer)
   const load = useCallback(async () => {

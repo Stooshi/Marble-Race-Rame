@@ -31,6 +31,11 @@ describe('app links: the website\'s files', () => {
     expect(ios.applinks.details[0].components).toContainEqual({ '/': '/tracks/*' });
     expect(() => build({ ...cfg, ios: { ...cfg.ios, teamId: 'nope' } })).toThrow(/teamId/);
   });
+  it('shared league and room links are always marblespins.com (no www, never the page\'s own address)', () => {
+    expect(src('src/site/leagues/LeaguesPages.jsx')).toContain('const link = `${SITE_URL}/l/${code}`;');
+    expect(src('src/site/pages/RoomPage.jsx')).toContain('const link = `${SITE_URL}/r/${code}`;');
+    expect(src('src/site/canonical.js')).toContain("'https://marblespins.com'");
+  });
   it('Vercel serves the iPhone file as JSON', () => {
     const v = JSON.parse(src('vercel.json'));
     const h = v.headers.find((x) => x.source === '/.well-known/apple-app-site-association');
@@ -45,12 +50,14 @@ describe('app links: the apps', () => {
   it('Android: a verified link filter for the same host and paths', () => {
     const m = src('android/app/src/main/AndroidManifest.xml');
     expect(m).toContain('<intent-filter android:autoVerify="true">');
-    expect(m).toContain(`<data android:host="${cfg.host}" />`);
+    const hosts = [...m.matchAll(/android:host="([^"]+)"/g)].map((x) => x[1]);
+    expect(hosts).toEqual(cfg.hosts);
+    expect(cfg.hosts).toEqual(['marblespins.com', 'www.marblespins.com']);
     const prefixes = [...m.matchAll(/android:pathPrefix="([^"]+)"/g)].map((x) => x[1]);
     expect(prefixes).toEqual(cfg.paths);
   });
   it('iPhone: the Associated Domains entitlement', () => {
-    expect(src('ios/App/App/App.entitlements')).toContain(`<string>applinks:${cfg.host}</string>`);
+    for (const h of cfg.hosts) expect(src('ios/App/App/App.entitlements')).toContain(`<string>applinks:${h}</string>`);
   });
   it('the app opens the page of a link it handles, and leaves the rest to the website', () => {
     expect(linkPath('https://marblespins.com/l/K7QF2M')).toBe('/l/K7QF2M');

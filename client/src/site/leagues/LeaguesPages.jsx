@@ -648,8 +648,9 @@ function AddPlayer({ busy, onAdd }) {
 
 /** The league's link: copy, WhatsApp, the phone's Share, and a QR code. */
 function ShareCard({ code, name }) {
-  // (In the apps the page's own address is the app's inside one, so share the website's.)
-  const link = `${typeof window !== 'undefined' && window.Capacitor?.isNativePlatform?.() ? SITE_URL : window.location.origin}/l/${code}`;
+  // (Always the website's own address, marblespins.com without www, Moses 27 Oct 2026: the one the
+  // apps' app links are checked on; in the apps the page's own address is the app's inside one.)
+  const link = `${SITE_URL}/l/${code}`;
   const [copied, setCopied] = useState(false);
   const [qr, setQr] = useState(null);
   useEffect(() => {

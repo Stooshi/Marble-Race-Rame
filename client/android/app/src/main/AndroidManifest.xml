@@ -20,7 +20,7 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
             <!-- App links (27 Oct 2026): these marblespins.com pages open the app when it's installed; Android
-                 checks https://marblespins.com/.well-known/assetlinks.json (from client/app-links.json, the
+                 checks https://marblespins.com/.well-known/assetlinks.json (and www's) (from client/app-links.json, the
                  same paths; test/appLinks.test.js keeps the two the same). Not verified: the website opens. -->
             <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW" />
@@ -28,6 +28,7 @@
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="https" />
                 <data android:host="marblespins.com" />
+                <data android:host="www.marblespins.com" />
                 <data android:pathPrefix="/l/" />
                 <data android:pathPrefix="/r/" />
                 <data android:pathPrefix="/leagues" />
