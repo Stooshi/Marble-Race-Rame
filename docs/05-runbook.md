@@ -26,11 +26,12 @@ Pushing to `Main` does **not** deploy the server. Moses deploys it by uploading 
 **Every deploy:**
 0. Check you're logged in: `railway whoami`. If not, log in as above.
 1. On GitHub, open `Stooshi/Marble-Race-Rame` and check that the branch is **Main**. Choose **Code → Download ZIP**, then unzip it.
-   - Deploy the **whole folder**, including `client/`: the server reads data files from `client/src/shared/`.
+   - Run it in the **whole unzipped folder** (the top folder): the server reads data files from `client/src/shared/`; `.railwayignore` picks what is uploaded.
 2. Open a terminal in the unzipped folder.
 3. The first time in a new folder, run `railway link` and choose the project and the server service.
 4. **If the deploy contains data updates** (new files in `docs/data_updates/`), take a [backup](#backups) first.
 5. Run `railway up`. This uploads the folder; Railway installs and starts it with `npm start`.
+   - **What goes up** (`.railwayignore`, 27 Oct 2026, after uploads of the whole 88 MB folder kept failing): only what the server reads, about 7 MB (about 1.6 MB packed): `package.json`, `package-lock.json`, `src/`, `scripts/`, `docs/database_schema.sql`, `docs/data_updates/` and `client/src/shared/`. The website, the apps, pictures, music, store material, tests and the other docs stay behind. **If the server starts reading a new file outside these, check `.railwayignore` doesn't leave it out.**
 6. Watch the logs, either in the Railway dashboard → service → Deployments → View logs, or with `railway logs`. Look for:
    - `[db-setup] Applying docs/database_schema.sql` … `OK`
    - `[db-setup] Data update <name>: applied …` for each new data update
