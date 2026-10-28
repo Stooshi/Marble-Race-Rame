@@ -1,0 +1,17 @@
+{
+  "_about": "Every word shown in the videos (client/video/README.md). Change a line here and render again; nothing else needs editing. Each tagline shows for about 2.5 s, big and clean, at the top or bottom of the picture, never over the pack.",
+  "opening": "20 marbles. One winner.",
+  "trackCard": "{track}",
+  "countdown": "Who takes the lead?",
+  "midRace": ["Who takes the lead?", "Hold on tight!", "Still anyone's race"],
+  "lastStretch": "Final stretch!",
+  "photoFinish": "Photo finish!",
+  "closeFinish": "Close finish!",
+  "replay": "Replay",
+  "slowMotion": "Slow motion",
+  "winner": "{marble} wins!",
+  "podiumTitle": "Podium",
+  "pickYourWinner": "Who wins?",
+  "pickYourWinnerAnswer": "Did you pick {marble}?",
+  "endCard": ["Pick your marble. Race your friends.", "Play free at marblespins.com"]
+}

@@ -1,0 +1,36 @@
+<!doctype html>
+<!-- The video recorder's page (development only; client/video/README.md). -->
+<html><head><meta charset="utf-8"><title>Video recorder</title>
+<style>
+  @font-face { font-family: 'Lilita One'; src: url('../node_modules/@fontsource/lilita-one/files/lilita-one-latin-400-normal.woff2') format('woff2'); }
+  @font-face { font-family: 'Barlow Condensed'; font-weight: 700; src: url('../node_modules/@fontsource/barlow-condensed/files/barlow-condensed-latin-700-normal.woff2') format('woff2'); }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #0E1320; }
+  #view { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+  /* The taglines: big and clean, in the top band (the pack is in the middle and below). */
+  #texts { position: absolute; left: 0; right: 0; top: 6.5vh; text-align: center; pointer-events: none; }
+  #top { font-family: 'Lilita One', sans-serif; font-size: 7.6vmin; color: #fff; line-height: 1.05;
+         text-shadow: 0 0.05em 0.3em rgba(5, 8, 20, 0.85), 0 0 0.08em rgba(5, 8, 20, 0.95); -webkit-text-stroke: 0.02em rgba(5, 8, 20, 0.7); paint-order: stroke fill; padding: 0 6vw; }
+  #texts.big #top { font-size: 11vmin; }
+  #sub { font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 4.2vmin; color: #FFD21F; letter-spacing: 0.04em; text-transform: uppercase;
+         margin-top: 1.2vmin; text-shadow: 0 0.06em 0.3em rgba(5, 8, 20, 0.8); }
+  @media (orientation: portrait) { #texts { top: 11vh; } #top { font-size: 8.4vmin; } #texts.big #top { font-size: 11vmin; } #sub { font-size: 4.6vmin; } }
+  /* The podium card. */
+  #podium { position: absolute; right: 4vw; bottom: 7vh; width: 62vmin; opacity: 0; padding: 2.4vmin 2.8vmin; border-radius: 2.4vmin;
+            background: rgba(14, 19, 32, 0.82); border: 0.25vmin solid rgba(255, 210, 31, 0.55); box-shadow: 0 1.2vmin 4vmin rgba(0, 0, 0, 0.45); }
+  @media (orientation: portrait) { #podium { left: 6vw; right: 6vw; width: auto; bottom: 9vh; } }
+  #podium h2 { margin: 0 0 1.4vmin; font: 400 4.4vmin 'Lilita One', sans-serif; color: #FFD21F; text-align: center; letter-spacing: 0.02em; }
+  .row { display: grid; grid-template-columns: 7vmin 6.4vmin 1fr auto; align-items: center; gap: 1.6vmin; padding: 1vmin 0; font-family: 'Barlow Condensed', sans-serif; font-weight: 700; color: #F2F4F8; font-size: 3.6vmin; }
+  .row + .row { border-top: 0.15vmin solid rgba(255, 255, 255, 0.12); }
+  .row.r1 { font-size: 4.4vmin; }
+  .place { color: #C7CEDC; } .r1 .place { color: #FFD21F; }
+  .ball { width: 5.6vmin; height: 5.6vmin; border-radius: 50%; box-shadow: inset -0.5vmin -0.6vmin 1.2vmin rgba(0,0,0,0.45), 0 0.3vmin 0.8vmin rgba(0,0,0,0.5); }
+  .r1 .ball { width: 6.4vmin; height: 6.4vmin; }
+  .who { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .time { color: #C7CEDC; font-variant-numeric: tabular-nums; }
+</style></head>
+<body>
+<canvas id="view"></canvas>
+<div id="texts"><div id="top"></div><div id="sub"></div></div>
+<div id="podium"><h2 id="podiumTitle">Podium</h2><div class="rows"></div></div>
+<script type="module" src="./recorder.js"></script>
+</body></html>

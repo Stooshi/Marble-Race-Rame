@@ -1,0 +1,122 @@
+<!doctype html>
+<!--
+  The Marble Spins logo sting for the videos (client/video/README.md): three versions, A, B and C,
+  drawn as a pure function of time, so record.mjs can draw any frame exactly (?v=A|B|C, then
+  window.logoAt(seconds)). The real logo: the marble (white → #FFD21F → #E8580C), its two orbit arcs
+  (#FF7A1A, #FFD21F) and the white shine, "marblespins" in Lilita One, on the site's dark #0E1320.
+  ?end=1: the end card (the logo with the end card's lines from texts.json, passed as &l1=…&l2=…).
+-->
+<html><head><meta charset="utf-8">
+<style>
+  @font-face { font-family: 'Lilita One'; src: url('../node_modules/@fontsource/lilita-one/files/lilita-one-latin-400-normal.woff2') format('woff2'); }
+  @font-face { font-family: 'Barlow Condensed'; font-weight: 700; src: url('../node_modules/@fontsource/barlow-condensed/files/barlow-condensed-latin-700-normal.woff2') format('woff2'); }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #0E1320; }
+  #stage { position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 45%, #202d55 0%, #141b33 38%, #0E1320 75%); }
+  svg { position: absolute; left: 0; top: 0; width: 100%; height: 100%; }
+  .name { font-family: 'Lilita One', 'Arial Rounded MT Bold', sans-serif; fill: #F2F4F8; }
+  .line { font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; font-weight: 700; fill: #F2F4F8; letter-spacing: 0.02em; }
+  .url { fill: #FFD21F; }
+</style></head>
+<body><div id="stage"><svg id="svg" viewBox="-960 -540 1920 1080" preserveAspectRatio="xMidYMid meet">
+  <defs>
+    <radialGradient id="ball" cx="35%" cy="30%" r="75%">
+      <stop offset="0%" stop-color="#FFFFFF" /><stop offset="28%" stop-color="#FFD21F" /><stop offset="100%" stop-color="#E8580C" />
+    </radialGradient>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="10" result="b" /><feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge></filter>
+    <radialGradient id="shadow" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#000" stop-opacity="0.45" /><stop offset="100%" stop-color="#000" stop-opacity="0" /></radialGradient>
+  </defs>
+  <ellipse id="shadowEl" cx="0" cy="95" rx="80" ry="12" fill="url(#shadow)" />
+  <g id="mark">
+    <g id="arcs">
+      <path id="arcA" d="M 104 0 A 104 104 0 0 1 52 90" fill="none" stroke="#FF7A1A" stroke-width="14" stroke-linecap="round" />
+      <path id="arcB" d="M -104 0 A 104 104 0 0 1 -52 -90" fill="none" stroke="#FFD21F" stroke-width="14" stroke-linecap="round" />
+    </g>
+    <g id="ballG">
+      <circle cx="0" cy="0" r="80" fill="url(#ball)" />
+      <path id="shine" d="M -64 16 C -34 -46 34 -50 62 -16" fill="none" stroke="#FFFFFF" stroke-opacity="0.9" stroke-width="15" stroke-linecap="round" />
+    </g>
+  </g>
+  <text id="name" class="name" x="0" y="0" text-anchor="middle" font-size="150">marblespins</text>
+  <text id="l1" class="line" x="0" y="0" text-anchor="middle" font-size="64"></text>
+  <text id="l2" class="line url" x="0" y="0" text-anchor="middle" font-size="64"></text>
+</svg></div>
+<script>
+const q = new URLSearchParams(location.search);
+const V = (q.get('v') || 'A').toUpperCase();
+const END = q.get('end') === '1';
+const tall = innerHeight > innerWidth;
+const svg = document.getElementById('svg');
+if (tall) svg.setAttribute('viewBox', '-540 -960 1080 1920');
+const $ = (id) => document.getElementById(id);
+const clamp = (x) => Math.max(0, Math.min(1, x));
+const span = (t, a, b) => clamp((t - a) / (b - a));
+const outCubic = (x) => 1 - (1 - x) ** 3;
+const outBack = (x, s = 1.7) => 1 + (s + 1) * (x - 1) ** 3 + s * (x - 1) ** 2;
+const inOut = (x) => (x < 0.5 ? 4 * x ** 3 : 1 - (-2 * x + 2) ** 3 / 2);
+// The finished layout: the mark above the name (scaled up), the end card's lines under it.
+const S = tall ? 2.1 : 2.3;        // the mark's size
+const MY = END ? (tall ? -330 : -230) : (tall ? -160 : -120); // the mark's centre
+const NY = MY + 130 * S + (tall ? 80 : 55);                  // the name's baseline
+$('name').setAttribute('font-size', tall ? 165 : 185);
+$('l1').textContent = q.get('l1') || '';
+$('l2').textContent = q.get('l2') || '';
+const lines = [q.get('l1'), q.get('l2')].filter(Boolean).length;
+$('l1').setAttribute('y', NY + (tall ? 170 : 115));
+$('l2').setAttribute('y', NY + (tall ? 270 : 195));
+if (tall) { $('l1').setAttribute('font-size', 70); $('l2').setAttribute('font-size', 70); }
+
+function place({ x = 0, y = 0, scale = 1, spin = 0, ballSpin = 0, arcSpin = 0, arcScale = 1, arcOpacity = 1, arcGlow = false, sx = 1, sy = 1,
+  shadow = 0, nameOpacity = 0, nameDy = 0, nameDx = 0, lineOpacity = 0 }) {
+  $('mark').setAttribute('transform', `translate(${x} ${MY + y}) scale(${S * scale}) rotate(${spin})`);
+  $('ballG').setAttribute('transform', `rotate(${ballSpin}) scale(${sx} ${sy})`);
+  $('arcs').setAttribute('transform', `rotate(${arcSpin}) scale(${arcScale})`);
+  $('arcs').setAttribute('opacity', arcOpacity);
+  $('arcs').setAttribute('filter', arcGlow ? 'url(#glow)' : '');
+  $('shadowEl').setAttribute('transform', `translate(${x} ${MY + 95 * S - 95}) scale(${S * (0.6 + 0.4 * shadow)} ${S})`);
+  $('shadowEl').setAttribute('opacity', shadow);
+  $('name').setAttribute('x', nameDx);
+  $('name').setAttribute('y', NY + nameDy);
+  $('name').setAttribute('opacity', nameOpacity);
+  $('l1').setAttribute('opacity', lineOpacity);
+  $('l2').setAttribute('opacity', lineOpacity);
+}
+
+const W = tall ? 1080 : 1920;
+const versions = {
+  // A) Rolls in from the side, stops in the centre; the arcs swing into place; the name slides in below.
+  A(t) {
+    const r = outCubic(span(t, 0, 0.85));
+    const x = (-W / 2 - 260) * (1 - r);
+    const roll = (x / (80 * S)) * (180 / Math.PI);  // rolling: turned by the distance covered
+    const a = span(t, 0.7, 1.25);
+    const n = outCubic(span(t, 1.05, 1.55));
+    return { x, ballSpin: roll, arcSpin: -120 * (1 - outBack(a)), arcScale: 0.6 + 0.4 * outBack(a), arcOpacity: clamp(a * 3), shadow: 1,
+      nameOpacity: n, nameDy: 90 * (1 - n), lineOpacity: span(t, 1.5, 1.8) };
+  },
+  // B) Spins in the centre with the arcs circling round it, then slows into the logo.
+  B(t) {
+    const s = outCubic(span(t, 0, 1.45));
+    const grow = outBack(span(t, 0, 0.5), 1.2);
+    const n = outCubic(span(t, 1.15, 1.65));
+    return { scale: 0.35 + 0.65 * grow, ballSpin: -1080 * (1 - s), arcSpin: 1440 * (1 - s), arcScale: 1 + 0.35 * (1 - s), arcOpacity: clamp(t * 4), shadow: grow,
+      nameOpacity: n, nameDy: 40 * (1 - n), lineOpacity: span(t, 1.55, 1.85) };
+  },
+  // C) Drops in, bounces once; the arcs light up; the name fades in.
+  C(t) {
+    // Falling from above, hitting at 0.45 s, one bounce (up 120, down again by 0.85 s), squashing on each landing.
+    const H = (tall ? 960 : 540) + 260;
+    let y; let sq = 0;
+    if (t < 0.45) { const u = t / 0.45; y = -H * (1 - u * u); }
+    else if (t < 0.85) { const u = (t - 0.45) / 0.4; y = -120 * 4 * u * (1 - u); }
+    else y = 0;
+    const hit = (at) => { const d = (t - at) / 0.09; return d >= 0 && d < 1 ? Math.sin(d * Math.PI) : 0; };
+    sq = 0.22 * hit(0.45) + 0.1 * hit(0.85);
+    const light = span(t, 0.9, 1.25);
+    const n = inOut(span(t, 1.15, 1.65));
+    return { y, sx: 1 + sq, sy: 1 - sq, shadow: clamp(1 - Math.abs(y) / 500), arcOpacity: light, arcGlow: light > 0 && light < 1, arcScale: 0.92 + 0.08 * outBack(light),
+      nameOpacity: n, lineOpacity: span(t, 1.55, 1.85) };
+  },
+};
+window.logoAt = (t) => { place(versions[V](t)); };
+window.ready = document.fonts.load('150px "Lilita One"').then(() => document.fonts.load('700 64px "Barlow Condensed"')).then(() => { window.logoAt(0); return true; });
+</script></body></html>
