@@ -5,8 +5,8 @@
 # the sound engine loads only the one the device plays, and only when needed).
 #   bash scripts/convert-audio.sh            everything
 #   SKIP_EFFECTS=1 bash scripts/convert-audio.sh   the music and the countdown only
-# Levels: music at -20 LUFS, the race sounds at -16 LUFS (the engine mixes the music
-# lower still, under the sounds). Two passes: the loudness is measured first, then one
+# Levels: everything at -20 LUFS, the crowd at -24 (the engine mixes the music under the
+# effects and the crowd under the music). Two passes: the loudness is measured first, then one
 # steady gain is applied to the whole file (loudnorm's linear mode), so a looping track
 # sounds the same at its end as at its start.
 set -euo pipefail
@@ -25,27 +25,34 @@ enc() { # <input> <name> <loudness> <opus kbps> <aac kbps> [filters before level
   ffmpeg -v error -y -i "$f" -vn -map_metadata -1 -af "$af" -c:a aac -b:a "${ak}k" -ar 44100 -movflags +faststart "$OUT/$name.m4a"
 }
 
-# The race music: one of 8 tracks per race, from GO, looping if the race is longer.
-for i in 1 2 3 4 5 6 7 8; do
-  f=$(ls "$IN"/RACE\ SOUND\ $i[!0-9]*.mp3)
-  case $i in
-    1) pre="atrim=0:61.9" ;;   # (a stray click after 0.5 s of silence at the end)
-    8) pre="atrim=0:167.3" ;;  # (4 s of silence at the end)
-    *) pre="" ;;
-  esac
-  enc "$f" "race-$i" -20 40 56 "$pre"
+# The sound reset (Moses, 28 Oct 2026). Everything at about -20 LUFS (the engine mixes the music under
+# the effects); the crowd 4 LU lower. Licences: music-inbox/LICENCES.md.
+#
+# The race tunes: one of 6 per race, from GO, played once. Each fades in over 30 ms (no click) and out
+# over its last TUNE_FADE seconds, so a race longer than its tune goes quiet gently instead of stopping
+# or looping (engine.js TRACK_SECONDS / TUNE_FADE_S).
+TUNE_FADE=3
+dur() { ffprobe -v error -show_entries format=duration -of csv=p=0 "$1"; }
+fades() { # <file>: fade in 30 ms, fade out over the last TUNE_FADE s
+  local d; d=$(dur "$1")
+  echo "afade=t=in:st=0:d=0.03,afade=t=out:st=$(echo "$d - $TUNE_FADE" | bc -l):d=$TUNE_FADE"
+}
+for i in 1 2 3 4 5 6; do
+  f=$(ls "$IN"/RACE\ MUSIC\ $i\ -*.mp3)
+  enc "$f" "tune-$i" -20 40 56 "$(fades "$f")"
 done
-# The finish ceremony's song: loops while the ceremony is on screen, fading out after 45 s.
+# The finish ceremony's song (unchanged rule, Moses 28 Oct 2026: only the file is new): loops while the
+# ceremony is on screen, fading out after 45 s (engine.js CEREMONY_SECONDS).
 enc "$IN"/FINISH\ LINE*.mp3 ceremony -20 40 56
-# The countdown: four beeps a second apart, the last (GO) at 3.02 s.
-enc "$IN"/RACE\ START\ BEEPS*.mp3 start-beeps -16 64 96
+# The countdown: four beeps, at 0.024, 1.026, 2.035 and 3.023 s (the fourth on GO: engine.js BEEPS_GO_S).
+enc "$IN"/RACE\ START\ BEEPS*.mp3 start-beeps -20 64 96
 
 if [ -z "${SKIP_EFFECTS:-}" ]; then
-  # The crowd at the gates of a Grand Prix (all of it, 3 s).
-  enc "$IN"/CROWD\ GRAND\ PRIX*.mp3 crowd-grand-prix -16 64 96
+  # The crowd cheering as the player's own marble passes a stand (all of it, 3 s), under the music.
+  enc "$IN"/CROWD\ GRAND\ PRIX*.mp3 crowd-grand-prix -24 64 96
   # The pack leaving the gate: the first 5 s, fading out from 3.5 s.
-  enc "$IN"/MARBLES\ SPEEDING\ UP*.mp3 launch -16 64 96 "atrim=0:5,afade=t=out:st=3.5:d=1.5"
+  enc "$IN"/MARBLES\ SPEEDING\ UP*.mp3 launch -20 64 96 "atrim=0:5,afade=t=out:st=3.5:d=1.5"
   # The whoosh of an overtake: its first 2.2 s (the whoosh peaks at 1.1 s), fading out from 1.6 s.
-  enc "$IN"/MARBLES\ OVERTAKING*.mp3 whoosh -16 64 96 "atrim=0:2.2,afade=t=out:st=1.6:d=0.6"
+  enc "$IN"/MARBLES\ OVERTAKING*.mp3 whoosh -20 64 96 "atrim=0:2.2,afade=t=out:st=1.6:d=0.6"
 fi
 ls -l "$OUT"

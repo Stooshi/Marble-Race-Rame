@@ -32,6 +32,7 @@ import { buildEffects } from './lighting';
 import { WinnerGlow } from './winnerGlow';
 import { buildHolidayLayer } from './holidayLayer';
 import { WINNER_MS } from '../utils/finishShow';
+import { CHEER_NEAR } from './scenery/grandPrix';
 
 const LEADER_MARGIN = 3; // metres: the follow camera only switches to a new leader that is clearly ahead
 const SCENERY_LAYER = 1;  // scenery is drawn in the big view only (the small corner view skips it, for speed)
@@ -839,6 +840,19 @@ export class TrackScene {
     let len = 0;
     for (let i = 1; i < samples.length; i += 1) len += samples[i].pos.distanceTo(samples[i - 1].pos);
     return len;
+  }
+
+  /**
+   * The crowd stands (Grand Prix) within `metres` of marble `index` now → their numbers (the race view
+   * plays the crowd's cheer once per stand when the player's own marble passes one). Drawing only.
+   */
+  crowdsNear(index, metres = CHEER_NEAR) {
+    const crowds = this.scenery?.userData?.crowds;
+    const pos = this.marbles?.positions?.[index];
+    if (!crowds?.length || !pos) return [];
+    const near = [];
+    crowds.forEach((c, k) => { if (c.distanceTo(pos) <= metres) near.push(k); });
+    return near;
   }
 
   /**

@@ -16,7 +16,7 @@ import { CEREMONY_PHASES } from '../utils/finishShow';
 import SkipToResults from './SkipToResults';
 import FrameMeter, { useFrameMeter } from './FrameMeter';
 import { useTvMoments } from './tvMomentsSetting';
-import { play as playSound, preloadRace, raceCeremony, raceCountdown, raceGo, stopCountdown } from '../sound/engine';
+import { crowdCheer, play as playSound, preloadRace, raceCeremony, raceCountdown, raceGo, stopCountdown } from '../sound/engine';
 import { FLYOVER_MS } from '../three/flyover';
 import { ownGate } from '../utils/standingsRows';
 import { FlyoverTitle, GateMoment, TrackCard } from './StartShow';
@@ -88,6 +88,8 @@ export default function LiveRaceViewer3D({
   const [built, setBuilt] = useState(false);
   const [trackReady, setTrackReady] = useState(false);
   const [ready, setReady] = useState(false); // the race's marbles in and drawn, the hold decided
+  const ownRef = useRef(highlight); // (the player's own marbles, for the crowd's cheer)
+  ownRef.current = highlight;
   const [shownT, setShownT] = useState(null); // the countdown as shown (whole tenths), for its overlay
   const [shown, setShown] = useState(null); // the race as shown (its clock and order), when held back
   const [gone, setGone] = useState(false); // the gates have opened (as shown): the standings appear
@@ -260,6 +262,7 @@ export default function LiveRaceViewer3D({
     let lastNow = performance.now();
     let lastT = null;
     let lastGone = null;
+    let crowdCheckAt = 0;
     const grandPrix = Boolean(meta?.track?.physics?.kit?.grandPrix);
     const tick = (now) => {
       const dt = (now - lastNow) / 1000;
@@ -275,12 +278,9 @@ export default function LiveRaceViewer3D({
       if (lag > 0 && f && Math.floor(f.t / 50) !== lastShownClock) { lastShownClock = Math.floor(f.t / 50); setShown({ t: f.t, s: f.s }); }
       else if (lag === 0 && lastShownClock !== null) { lastShownClock = null; setShown(null); }
       const scene = sceneRef.current;
-      // The gates open (GO, as drawn): the pack leaving the gate, and on a Grand Prix the crowd.
+      // The gates open (GO, as drawn): the pack leaving the gate.
       // (Or within its first 1.5 s if the 3D world was still being built at GO.)
-      if (f && f.t >= 0 && ((lastT !== null && lastT < 0) || (lastT === null && f.t < 1500))) {
-        playSound('launch');
-        if (grandPrix) playSound('crowd');
-      }
+      if (f && f.t >= 0 && ((lastT !== null && lastT < 0) || (lastT === null && f.t < 1500))) playSound('launch');
       // GO: the race's music (once per race; also when the page opens mid-race).
       if (f && f.t >= 0 && (lastT === null || lastT < 0) && meta?.raceId) raceGo(meta.raceId);
       if (f && standingsShown(f.t) !== lastGone) { lastGone = standingsShown(f.t); setGone(lastGone); }
@@ -289,6 +289,11 @@ export default function LiveRaceViewer3D({
         const who = followRef.current;
         try {
           scene.updateRace(f, who, dt, insetRef.current); // 'leader', 'second' or an entry index (the scene keeps the leader steady)
+          // The crowd: the player's own marble passing a stand (Grand Prix) cheers it, once per stand (Moses, 28 Oct 2026).
+          if (grandPrix && f.t >= 0 && meta?.raceId && now - crowdCheckAt > 200) {
+            crowdCheckAt = now;
+            for (const i of ownRef.current) if (!(f.p?.[i] >= 1)) for (const k of scene.crowdsNear(i)) crowdCheer(meta.raceId, k);
+          }
           // The flyover: its camera over the race's own until it ends (or is skipped).
           const fly = flyRef.current;
           if (fly?.room) {

@@ -1,12 +1,13 @@
-// The sound: no sound before a tap, the music always under the race sounds, one race track
-// per race (shuffled, never the previous race's), the ceremony song after it, and small,
-// phone-friendly files.
+// The sound (the sound reset, Moses 28 Oct 2026): no sound before a tap, the music always under the race
+// sounds, one of 6 race tunes per race (shuffled, never the previous race's), played once and fading at
+// its end, the ceremony song after it (unchanged rule), the crowd under the music once per stand, and
+// small, phone-friendly files.
 import fs from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
-  BEEPS_GO_S, CEREMONY, CEREMONY_FADE_S, CEREMONY_SECONDS, DUCK, LOOP_BUFFER_S, MUSIC_UNDER, RACE_TRACKS, SOUNDS, TRACK_SECONDS,
-  _resetOrder, buffered, isUnlocked, levels, musicState, nextTrack, nowPlaying, play, raceCeremony, raceCountdown, raceEnd, raceGo, trackFor,
+  BEEPS_GO_S, CEREMONY, CEREMONY_FADE_S, CEREMONY_SECONDS, CROWD_UNDER, DUCK, MUSIC_UNDER, RACE_TRACKS, SOUNDS, TRACK_SECONDS, TUNE_FADE_S,
+  _resetOrder, crowdCheer, isUnlocked, levels, musicState, nextTrack, nowPlaying, play, raceCeremony, raceCountdown, raceEnd, raceGo, trackFor,
 } from '../src/sound/engine';
 import { CEREMONY_PHASES, phaseAt } from '../src/utils/finishShow';
 
@@ -36,7 +37,7 @@ describe('sound', () => {
     expect(levels({ music: 1, effects: 1, muted: true })).toEqual({ music: 0, effects: 0 });
   });
 
-  it('race tracks come in shuffled rounds of all 8, never the same one twice in a row', () => {
+  it('race tunes come in shuffled rounds of all 6, never the same one twice in a row', () => {
     _resetOrder();
     const random = seeded();
     let last = null;
@@ -92,32 +93,49 @@ describe('sound', () => {
     expect(CEREMONY_FADE_S).toBeGreaterThanOrEqual(3);
   });
 
-  it('the countdown beeps put their last beep on GO', () => {
-    expect(BEEPS_GO_S).toBeGreaterThan(2.9);
-    expect(BEEPS_GO_S).toBeLessThan(3.1);
+  it('the countdown beeps: a second apart, matching the 3-2-1 on screen, the fourth exactly on GO', () => {
+    // (Measured in the file: beeps at 0.024, 1.026, 2.035 and 3.023 s; the 3, 2 and 1 show at GO-3, -2, -1 s.)
+    expect(BEEPS_GO_S).toBe(3.023);
+    for (const [beep, digit] of [[0.024, -3], [1.026, -2], [2.035, -1]]) expect(Math.abs(beep - BEEPS_GO_S - digit)).toBeLessThan(0.015);
     expect(SOUNDS.beeps).toBe('start-beeps');
   });
 
-  it('short tracks loop gaplessly from memory, long ones stream (phones keep little in memory)', () => {
-    for (const t of RACE_TRACKS) expect(TRACK_SECONDS[t], t).toBeGreaterThan(15);
-    const decoded = RACE_TRACKS.filter(buffered);
-    expect(decoded.length).toBeGreaterThanOrEqual(6);
-    for (const t of decoded) expect(TRACK_SECONDS[t] * 48_000 * 2 * 4).toBeLessThan(18e6); // (decoded: under 18 MB)
-    expect(TRACK_SECONDS[CEREMONY]).toBeGreaterThan(CEREMONY_SECONDS); // (it fades out before it would loop: it streams)
-    expect(buffered(CEREMONY)).toBe(false);
-    expect(LOOP_BUFFER_S).toBeLessThanOrEqual(45);
+  it('the 6 race tunes play once from GO and fade out at their end (never loop); they stream', () => {
+    expect(RACE_TRACKS).toEqual(['tune-1', 'tune-2', 'tune-3', 'tune-4', 'tune-5', 'tune-6']);
+    for (const t of RACE_TRACKS) expect(TRACK_SECONDS[t], t).toBeGreaterThan(20);
+    expect(TUNE_FADE_S).toBeGreaterThanOrEqual(2);
+    const engine = fs.readFileSync(path.resolve(__dirname, '../src/sound/engine.js'), 'utf8');
+    expect(engine).toContain("el.loop = name === CEREMONY;");
+    const script = fs.readFileSync(path.resolve(__dirname, '../../scripts/convert-audio.sh'), 'utf8');
+    expect(script).toContain('enc "$f" "tune-$i" -20 40 56 "$(fades "$f")"');
+    expect(script).toContain(`TUNE_FADE=${TUNE_FADE_S}`);
+    expect(TRACK_SECONDS[CEREMONY]).toBeGreaterThan(CEREMONY_SECONDS); // (the ceremony song fades out before it would loop)
   });
 
-  it('every file in both formats, small; the old background music is gone', () => {
+  it('the crowd: once per stand per race, under the music, never ducking it', () => {
+    expect(crowdCheer('cr', 0)).toBe(false); // (not unlocked: nothing plays, but the stand is counted)
+    expect(crowdCheer('cr', 0)).toBe(false);
+    expect(CROWD_UNDER).toBeLessThan(MUSIC_UNDER * 1.5);
+    const engine = fs.readFileSync(path.resolve(__dirname, '../src/sound/engine.js'), 'utf8');
+    expect(engine).toContain("return play('crowd', { gain: CROWD_UNDER, duck: false });");
+    const view = fs.readFileSync(path.resolve(__dirname, '../src/components/LiveRaceViewer3D.jsx'), 'utf8');
+    expect(view).toContain('for (const k of scene.crowdsNear(i)) crowdCheer(meta.raceId, k);');
+    expect(view).not.toContain("playSound('crowd')");
+  });
+
+  it('every file in both formats, small; the old music is gone', () => {
     for (const fmt of ['webm', 'm4a']) {
       for (const t of [...RACE_TRACKS, CEREMONY]) {
         const size = fs.statSync(path.join(AUDIO, `${t}.${fmt}`)).size;
         expect(size, `${t}.${fmt}`).toBeLessThan(TRACK_SECONDS[t] * 9_000); // (under 72 kbps)
       }
       const all = [...RACE_TRACKS, CEREMONY].reduce((n, t) => n + fs.statSync(path.join(AUDIO, `${t}.${fmt}`)).size, 0);
-      expect(all, fmt).toBeLessThan(4.5e6);
+      expect(all, fmt).toBeLessThan(2.6e6);
       for (const s of Object.values(SOUNDS)) expect(fs.statSync(path.join(AUDIO, `${s}.${fmt}`)).size, `${s}.${fmt}`).toBeLessThan(120e3);
     }
-    expect(fs.readdirSync(AUDIO).filter((f) => f.startsWith('music-'))).toEqual([]);
+    expect(fs.readdirSync(AUDIO).filter((f) => /^(music-|race-\d)/.test(f))).toEqual([]);
+    // (Only what the engine plays: no originals, nothing else.)
+    const used = new Set([...RACE_TRACKS, CEREMONY, ...Object.values(SOUNDS)]);
+    for (const f of fs.readdirSync(AUDIO)) expect(used.has(f.replace(/\.(webm|m4a)$/, '')), f).toBe(true);
   });
 });

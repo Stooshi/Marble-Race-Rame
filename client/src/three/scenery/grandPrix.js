@@ -29,7 +29,7 @@ const MAX_FOOTING = 14;         // metres: no stand on scaffolding taller than t
 const SCAFFOLD = '#8d929a';
 const OTHER_CLEAR = 16;         // metres a stand keeps from any other stretch of the track
 const SMALL_EVERY = 230;        // metres between the smaller groups of spectators along the way (a track's grandPrix.groupsEvery overrides it)
-const CHEER_NEAR = 35;          // metres: marbles this close bring a stand's crowd to its feet…
+export const CHEER_NEAR = 35;          // metres: marbles this close bring a stand's crowd to its feet…
 const CHEER_FAR = 70;           // …and they are sitting again by this far
 const FIREWORKS_FOR = 14000;    // ms of fireworks after the winner is home
 const BURST_LIFE = 1800;        // ms each burst lasts
@@ -493,5 +493,6 @@ export function buildGrandPrix(centerline, channel, kit, { lite = false, ground,
     fire(t);
   };
   update(0);
-  return { group, update, spots, stands: stands.length };
+  // (The stands' places, for the crowd's cheer when the player's own marble passes one: the race view.)
+  return { group, update, spots, stands: stands.length, crowds: stands.map((st) => st.centre.clone()) };
 }

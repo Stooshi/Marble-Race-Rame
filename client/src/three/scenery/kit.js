@@ -609,6 +609,6 @@ export function buildKitScenery(centerline, track, theme, { lite = false } = {})
     for (const geometry of mergeByArea(pieces, (kit.canyon || kit.block || kit.athletics || kit.river || kit.season) && lite ? 900 : 400)) group.add(Object.assign(new Mesh(geometry, mat), { name: 'scenery: still' }));
   }
 
-  group.userData = { ...group.userData, cameraKeepOut: [...cameraKeepOut, ...centrepieces.keepOut, ...(kit.peak && coaster?.stationPosts ? coaster.stationPosts : [])], stillParts: [...landmarkBoxes, ...(group.userData.stillParts ?? [])], update, field, groundAt, biome, ground, floorY: ground.floorY, ...(coaster && { liftHill: coaster.liftHill, station: coaster.station }) };
+  group.userData = { ...group.userData, cameraKeepOut: [...cameraKeepOut, ...centrepieces.keepOut, ...(kit.peak && coaster?.stationPosts ? coaster.stationPosts : [])], stillParts: [...landmarkBoxes, ...(group.userData.stillParts ?? [])], update, crowds: grandPrix?.crowds ?? [], field, groundAt, biome, ground, floorY: ground.floorY, ...(coaster && { liftHill: coaster.liftHill, station: coaster.station }) };
   return group;
 }
