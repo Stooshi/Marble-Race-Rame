@@ -3,7 +3,7 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { preferAmbientAudio } from '../src/app/native';
+import { preferAmbientAudio, startNativeAudio } from '../src/app/native';
 import economy from '../src/shared/economy.json';
 import storeLinks from '../src/shared/storeLinks.json';
 
@@ -19,6 +19,18 @@ describe('iPhone silent switch', () => {
     expect(preferAmbientAudio(web, 'android')).toBe(false);
     expect(web.audioSession.type).toBe('auto');
     expect(preferAmbientAudio({}, 'ios')).toBe(false); // (older iOS: the app's own session does it)
+  });
+
+  it('the apps play the game through the native audio plugin when the build has it (ambient: configure({ focus: false }))', async () => {
+    const used = [];
+    const sound = { useNativeAudio: (p) => used.push(p) };
+    const NativeAudio = { configure() {} };
+    expect(await startNativeAudio(sound, { available: true, load: async () => ({ NativeAudio }) })).toBe(true);
+    expect(used).toEqual([NativeAudio]);
+    expect(await startNativeAudio(sound, { available: false })).toBe(false); // (an older app build: Web Audio)
+    expect(used.length).toBe(1);
+    expect(src('src/sound/nativeBackend.js')).toContain('plugin.configure?.({ focus: false, fade: false })');
+    expect(JSON.parse(src('package.json')).dependencies['@capacitor-community/native-audio']).toBe('8.0.0');
   });
 
   it('the iPhone app sets the ambient category at launch', () => {

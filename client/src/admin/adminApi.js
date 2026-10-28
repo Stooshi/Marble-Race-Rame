@@ -58,6 +58,7 @@ export const adminApi = {
   deleteAccount: (id, reason) => request(`/admin/players/${id}/delete`, { method: 'POST', body: { reason } }),
   consentOff: (id, reason) => request(`/admin/players/${id}/consent`, { method: 'POST', body: { consent: false, reason } }),
   payments: (q) => request(`/admin/payments?q=${encodeURIComponent(q ?? '')}`),
+  readiness: (days) => request(`/admin/readiness?days=${days}`),
   refund: (id, reason, amountCents) => request(`/admin/payments/${id}/refund`, { method: 'POST', body: { reason, ...(amountCents && { amount_cents: amountCents }) } }),
   audit: () => request('/admin/audit?limit=300'),
   economy: (days) => request(`/admin/economy?days=${days}`),

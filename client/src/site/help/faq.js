@@ -388,7 +388,7 @@ export function buildFaq({ tracks, platform = 'web' } = {}) {
         'There are no subscriptions to cancel first: coin packs and the season pass are one-off payments. When you delete:',
         ['ul',
           "you're logged out everywhere;",
-          'your name, email, password, settings, notification tokens and IP addresses are removed;',
+          'your name, email, password, settings, notification tokens, race loading checks and IP addresses are removed;',
           "your old race results stay under an anonymous name, so other players' places don't change;",
           'purchase records (order number, product, amount and date) are kept for 7 years, as the Swedish Bookkeeping Act requires, without your name or email.'],
         "Deleting can't be undone, and your coins and marbles are lost.",

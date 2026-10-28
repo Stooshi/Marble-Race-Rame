@@ -166,6 +166,7 @@ export const api = {
   leaveRace: (id) => request(`/races/${id}/join`, { method: 'DELETE' }),
   startRace: (id) => request(`/races/${id}/start`, { method: 'POST' }),
   cancelRace: (id) => request(`/races/${id}/cancel`, { method: 'POST' }),
+  raceReadiness: (id, body) => request(`/races/${id}/readiness`, { method: 'POST', body }),
   nextRace: (id, marbleId) => request(`/races/${id}/next`, { method: 'POST', body: marbleId ? { marble_id: marbleId } : {} }),
   results: (id) => request(`/races/${id}/results`),
   replay: (id) => request(`/races/${id}/replay`).then(nameLooks), // marbles named after the looks they wear

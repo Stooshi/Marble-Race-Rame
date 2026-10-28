@@ -55,6 +55,12 @@
 - A room page sends `room:watch` with the room code and gets `room:updated` whenever the room changes (players, track, start timer, the next race).
 - The full event list is in the [code map](02-code-map.md#sockets).
 
+**The race's sound (28 Oct 2026).**
+- Everything a race needs (the start beeps, the gate sound, the crowd, the ceremony song and the next 2 race tunes) is loaded into memory as soon as the player opens the race page, a room, Quick race, the starting line or League Night; never during the countdown.
+- The website plays it through Web Audio (started on the player's first tap, Safari's rule, and resumed whenever Safari suspends it). The iPhone/iPad and Android apps play it through the native audio plugin (`@capacitor-community/native-audio`; no tap needed; the iPhone's silent switch mutes it).
+- Every sound is timed on the race clock as shown on that screen (the server's `startsAt`, plus the viewer's 0.4 s buffer and any hold). A sound that isn't loaded in time starts when it arrives, part-way in, in step; never late from its start.
+- Readiness: a solo race starts its countdown only once the track, the marbles, the scenery and the sound are in ("Loading…", at most 12 s for the sound). A shared race (rooms, Quick race, League Night) never waits for anyone: a screen that isn't ready joins in step. Each screen reports once per race whether it was ready by GO (`POST /api/races/:id/readiness`, table `race_readiness`, the back office's Race readiness page).
+
 **How a race is run.**
 - Every race is decided entirely on the server before its countdown, from a random seed.
 - The result is written to the database at that point, but the API keeps it hidden until the race has finished.

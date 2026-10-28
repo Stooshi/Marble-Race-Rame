@@ -5,6 +5,7 @@
 # the sound engine loads only the one the device plays, and only when needed).
 #   bash scripts/convert-audio.sh            everything
 #   SKIP_EFFECTS=1 bash scripts/convert-audio.sh   the music and the countdown only
+#   ONLY_TUNES=1 bash scripts/convert-audio.sh     the 6 race tunes only
 # Levels: everything at -20 LUFS, the crowd at -24 (the engine mixes the music under the
 # effects and the crowd under the music). Two passes: the loudness is measured first, then one
 # steady gain is applied to the whole file (loudnorm's linear mode), so a looping track
@@ -22,25 +23,30 @@ enc() { # <input> <name> <loudness> <opus kbps> <aac kbps> [filters before level
   val() { echo "$m" | sed -n "s/.*\"$1\" : \"\(.*\)\".*/\1/p"; }
   local af="${pre:+$pre,}loudnorm=I=${lufs}:TP=-1.5:LRA=11:measured_I=$(val input_i):measured_TP=$(val input_tp):measured_LRA=$(val input_lra):measured_thresh=$(val input_thresh):offset=$(val target_offset):linear=true"
   ffmpeg -v error -y -i "$f" -vn -map_metadata -1 -af "$af" -ar 48000 -c:a libopus -b:a "${ok}k" -vbr on -application audio "$OUT/$name.webm"
-  ffmpeg -v error -y -i "$f" -vn -map_metadata -1 -af "$af" -c:a aac -b:a "${ak}k" -ar 44100 -movflags +faststart "$OUT/$name.m4a"
+  # (-movie_timescale 44100: the edit list that tells players where the audio really starts and ends is
+  # then exact to the sample, so the apps' players loop a tune without a gap.)
+  ffmpeg -v error -y -i "$f" -vn -map_metadata -1 -af "$af" -c:a aac -b:a "${ak}k" -ar 44100 -movie_timescale 44100 -movflags +faststart "$OUT/$name.m4a"
 }
 
 # The sound reset (Moses, 28 Oct 2026). Everything at about -20 LUFS (the engine mixes the music under
 # the effects); the crowd 4 LU lower. Licences: music-inbox/LICENCES.md.
 #
-# The race tunes: one of 6 per race, from GO, played once. Each fades in over 30 ms (no click) and out
-# over its last TUNE_FADE seconds, so a race longer than its tune goes quiet gently instead of stopping
-# or looping (engine.js TRACK_SECONDS / TUNE_FADE_S).
-TUNE_FADE=3
+# The race tunes (Moses, 28 Oct 2026, the loop rule): the tune picked at GO loops seamlessly until the
+# finish ceremony. So no fades at all, and any silence at the start and the end trimmed (below -60 dB),
+# so the end runs straight into the start: no dip, no gap (engine.js plays them looping from memory).
+TRIM="silenceremove=start_periods=1:start_threshold=-60dB:start_silence=0,areverse,silenceremove=start_periods=1:start_threshold=-60dB:start_silence=0,areverse"
 dur() { ffprobe -v error -show_entries format=duration -of csv=p=0 "$1"; }
-fades() { # <file>: fade in 30 ms, fade out over the last TUNE_FADE s
-  local d; d=$(dur "$1")
-  echo "afade=t=in:st=0:d=0.03,afade=t=out:st=$(echo "$d - $TUNE_FADE" | bc -l):d=$TUNE_FADE"
-}
+# Then cut at zero crossings (scripts/loop-cut.py, needs python3 and numpy), so the loop point never clicks.
+TMP=$(mktemp -d)
 for i in 1 2 3 4 5 6; do
   f=$(ls "$IN"/RACE\ MUSIC\ $i\ -*.mp3)
-  enc "$f" "tune-$i" -20 40 56 "$(fades "$f")"
+  ffmpeg -v error -y -i "$f" -vn -af "$TRIM" -ac 2 -ar 48000 -f f32le - | python3 scripts/loop-cut.py > "$TMP/t.raw"
+  ffmpeg -v error -y -f f32le -ar 48000 -ac 2 -i "$TMP/t.raw" -c:a flac "$TMP/tune-$i.flac"
+  enc "$TMP/tune-$i.flac" "tune-$i" -20 40 56
+  echo "tune-$i: $(ffprobe -v error -show_entries stream=duration_ts,sample_rate -of csv=p=0 "$TMP/tune-$i.flac" | awk -F, '{printf "%.6f", $2/$1}') s (engine.js TRACK_SECONDS: the exact loop length)"
 done
+rm -rf "$TMP"
+[ -n "${ONLY_TUNES:-}" ] && exit 0
 # The finish ceremony's song (unchanged rule, Moses 28 Oct 2026: only the file is new): loops while the
 # ceremony is on screen, fading out after 45 s (engine.js CEREMONY_SECONDS).
 enc "$IN"/FINISH\ LINE*.mp3 ceremony -20 40 56

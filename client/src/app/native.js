@@ -40,6 +40,21 @@ export function preferAmbientAudio(nav = typeof navigator !== 'undefined' ? navi
   try { nav.audioSession.type = 'ambient'; return true; } catch { return false; }
 }
 
+/** The apps' sound through @capacitor-community/native-audio, when this build has it. → whether it does. */
+export async function startNativeAudio(sound, { available = null, load = () => import('@capacitor-community/native-audio') } = {}) {
+  try {
+    const has = available ?? (await import('@capacitor/core')).Capacitor.isPluginAvailable('NativeAudio');
+    if (!has) return false;
+    // (Destructured here: a plugin proxy answers `then`, so it is never what a promise resolves to.)
+    const { NativeAudio } = await load();
+    sound.useNativeAudio(NativeAudio);
+    return true;
+  } catch (err) {
+    console.warn('[sound] native audio unavailable', err?.message ?? err);
+    return false;
+  }
+}
+
 /** Call once, after the first render. `navigate(-1)` goes back; `atHome()` says whether we're on the first screen; `open(path)` opens a page (app links). */
 export async function startNativeShell({ goBack, atHome, open } = {}) {
   if (!isNativeApp() || started) return;
@@ -64,6 +79,9 @@ export async function startNativeShell({ goBack, atHome, open } = {}) {
     else App.exitApp();
   });
   App.addListener('appStateChange', ({ isActive }) => sound.setBackground(!isActive));
+  // The game's sound through the native audio plugin (Moses, 28 Oct 2026), like a normal game: preloaded
+  // into memory, no tap needed, exact timing. (An older app build without it: the website's Web Audio.)
+  await startNativeAudio(sound);
   // App links: a link tapped while the app runs, and the one that started it (each opened once).
   let last = null;
   const follow = (url) => {

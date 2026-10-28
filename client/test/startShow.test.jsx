@@ -164,7 +164,7 @@ describe('the show on screen', () => {
     const html = renderToString(<TrackCard track={{ slug: 'danube-night-run', name: 'Danube Night Run', difficulty: 'hard' }} />);
     expect(html).toContain('Danube Night Run');
     expect(html).toContain('Rivers');
-    expect(html).toContain('Loading the track');
+    expect(html).toContain('Loading…');
   });
   it('the flyover: the name, the series and "Tap to skip" (the whole picture skips)', () => {
     const html = renderToString(<FlyoverTitle track={{ slug: 'danube-night-run', name: 'Danube Night Run' }} onSkip={() => {}} />);

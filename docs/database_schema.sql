@@ -1371,3 +1371,25 @@ ALTER TABLE rooms ADD COLUMN IF NOT EXISTS league_night_id uuid REFERENCES leagu
 ALTER TABLE races ADD COLUMN IF NOT EXISTS league_night_id uuid REFERENCES league_nights(id) ON DELETE SET NULL;
 ALTER TABLE races ADD COLUMN IF NOT EXISTS league_night_race smallint;
 CREATE INDEX IF NOT EXISTS idx_races_league_night ON races (league_night_id) WHERE league_night_id IS NOT NULL;
+
+-- ---------------------------------------------------------------------------
+-- Race readiness (28 Oct 2026): each screen's report at GO, once per race: whether the track (with
+-- its scenery), the marbles and the sound were all loaded, what was missing and how long after GO it
+-- caught up (late_ms). For seeing the pattern (src/readiness, GET /api/admin/readiness). No IP address;
+-- device is the user agent (cut to 200). Deleted after 30 days.
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS race_readiness (
+    id          bigserial   PRIMARY KEY,
+    race_id     uuid        NOT NULL REFERENCES races(id) ON DELETE CASCADE,
+    user_id     uuid        REFERENCES users(id) ON DELETE SET NULL,
+    platform    varchar(10) NOT NULL CHECK (platform IN ('web', 'ios', 'android')),
+    kind        varchar(10) NOT NULL CHECK (kind IN ('solo', 'room')),
+    device      varchar(200),
+    ready       boolean     NOT NULL,
+    missing     text[]      NOT NULL DEFAULT '{}',
+    late_ms     integer     NOT NULL DEFAULT 0,
+    details     jsonb       NOT NULL DEFAULT '{}',
+    created_at  timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_race_readiness_created ON race_readiness (created_at);
+CREATE INDEX IF NOT EXISTS idx_race_readiness_race ON race_readiness (race_id);

@@ -25,6 +25,7 @@ async function start() {
   require('./payments').startGoogleJobs(db); // Google Play: consume leftovers hourly, refunds/chargebacks every 6 h
   require('./seasons').startJobs(db, { earned: require('./economy').EARNED }); // a season's badges once it has ended
   require('./leagues').startJobs(db); // leagues whose time is up: ended, their scoreboards frozen
+  require('./readiness').startJobs(db); // race readiness reports: deleted after 30 days
   require('./game/replayRetention').startJobs(db); // replays over 30 days old (dry runs until REPLAY_TRIM=on)
 
   await new Promise((resolve) => server.listen(config.port, resolve));

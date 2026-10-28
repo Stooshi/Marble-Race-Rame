@@ -14,7 +14,7 @@ import NextRace from '../components/NextRace';
 import { Empty, ErrorMessage, Spinner } from '../components/Status';
 import { formatTime } from '../utils/format';
 import StartLights from '../components/StartLights';
-import { play as playSound, raceCountdown, raceEnd, raceGo } from '../sound/engine';
+import { play as playSound, prepare as prepareSound, raceCountdown, raceEnd, raceGo } from '../sound/engine';
 import { track, trackingActive } from '../site/consent/tracking';
 import { entryLabel, plainName } from '../shared/playerName';
 
@@ -89,8 +89,9 @@ export default function Race() {
     }
   }, [stream.status]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Leaving the race (or moving on to the next one): its music stops.
-  useEffect(() => () => raceEnd(raceId), [raceId]);
+  // The race's sound loaded into memory as soon as the page opens. Leaving the race (or moving on to
+  // the next one): its music stops.
+  useEffect(() => { prepareSound(raceId); return () => raceEnd(raceId); }, [raceId]);
 
   // Tracks on the new physics (the gate, splitter and catch area live in 3D) open in 3D; 2D stays an option.
   const [view, setView] = useState(null); // null = the track's default

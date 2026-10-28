@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useSyncExternalStore } from 'react';
 import { api } from '../api/client';
-import { getSettings, isRunning, setSettings, unlock } from './engine';
+import { getSettings, prepare, setSettings, unlock } from './engine';
 
 /**
  * The player's sound settings (music and effects volume, mute), remembered on the
@@ -36,14 +36,20 @@ if (saved) { current = clean(saved); setSettings(current); }
  * Starts sound on the first tap, click or key anywhere (browsers allow sound only then).
  * Call once at the app's root.
  */
+/**
+ * The race's sound loaded into memory early (Moses, 28 Oct 2026): from when the player opens the
+ * starting line, a room, Quick race or League Night (not during the countdown). Safe to use anywhere.
+ */
+export function useRaceSoundPreload(on = true) {
+  useEffect(() => { if (on) prepare(); }, [on]);
+}
+
 export function useSoundUnlock(paused = false) {
   useEffect(() => {
     if (paused) return undefined;
-    const go = () => {
-      unlock();
-      // (Running: done. An iPhone may only allow it on a later tap: keep listening until then.)
-      setTimeout(() => { if (isRunning()) for (const e of EVENTS) window.removeEventListener(e, go, true); }, 50);
-    };
+    // Every tap: starts the sound the first time (Safari's rule), and afterwards resumes it if Safari
+    // suspended it meanwhile (a call, another app's sound). (Cheap: nothing to do while it runs.)
+    const go = () => unlock();
     const EVENTS = ['pointerup', 'touchend', 'click', 'keydown'];
     for (const e of EVENTS) window.addEventListener(e, go, true);
     return () => { for (const e of EVENTS) window.removeEventListener(e, go, true); };

@@ -127,6 +127,7 @@ async function deleteAccount(client, userId, { by = 'player', reason = null } = 
   await client.query('DELETE FROM security_events WHERE user_id = $1', [userId]);
   await client.query('DELETE FROM user_country_history WHERE user_id = $1', [userId]);
   await client.query('UPDATE race_entries SET country = NULL WHERE user_id = $1 AND country IS NOT NULL', [userId]); // (off the country records)
+  await client.query('DELETE FROM race_readiness WHERE user_id = $1', [userId]);
   await client.query('DELETE FROM push_devices WHERE user_id = $1', [userId]);
   await client.query('DELETE FROM push_preferences WHERE user_id = $1', [userId]);
   await client.query('DELETE FROM admin_sessions WHERE user_id = $1', [userId]);

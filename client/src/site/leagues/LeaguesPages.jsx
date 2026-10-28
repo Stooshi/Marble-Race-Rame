@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useRaceSoundPreload } from '../../sound/settings';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import QRCode from 'qrcode';
 import { api } from '../../api/client';
@@ -735,6 +736,7 @@ const localInput = (d) => {
 function LeagueNight({ code, view, member, mine, isOpen, now, skew, userId, onView }) {
   const n = view.night;
   const live = n && ['scheduled', 'open'].includes(n.status);
+  useRaceSoundPreload(Boolean(live && member)); // (a League Night coming up: its sound loaded early)
   const [editing, setEditing] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);

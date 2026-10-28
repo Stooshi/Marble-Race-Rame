@@ -39,7 +39,9 @@ describe('the view holds back when it is ready late', () => {
     expect(stream).toContain('(hold.current.decided ? hold.current.base : MAX_HOLD_MS) + 3000');
     const viewer = src('src/components/LiveRaceViewer3D.jsx');
     expect(viewer).toContain('Date.now() - BUFFER_MS - lag - (startRef.current ?? Date.now())');
-    expect(viewer).toContain('raceCountdown(meta.raceId, go + lag - Date.now())');
+    // (The beeps and the tunes on GO as shown here: BUFFER_MS behind the stream, plus any hold.)
+    expect(viewer).toContain('shownGo(go + BUFFER_MS + lag);');
+    expect(viewer).toContain('if (meta?.raceId) raceCountdown(meta.raceId, wall - Date.now());');
     expect(viewer).toContain('Getting the track ready…');
   });
 });
@@ -58,34 +60,37 @@ describe('the track is built before the race starts', () => {
   });
 });
 
-describe('beeps only over the countdown', () => {
-  let state;
+describe('beeps only over the countdown, in step with it', () => {
+  let ctx;
   let sources;
   let engine;
   beforeEach(async () => {
     vi.resetModules();
     vi.useFakeTimers();
-    state = 'running';
     sources = [];
-    const gain = () => ({ gain: { value: 1, setTargetAtTime() {}, cancelScheduledValues() {} }, connect(x) { return x ?? this; } });
+    const gain = () => ({ gain: { value: 1, setTargetAtTime() {}, cancelScheduledValues() {}, setValueAtTime() {}, linearRampToValueAtTime() {} }, connect(x) { return x ?? this; }, disconnect() {} });
     class FakeContext {
-      constructor() { this.currentTime = 100; this.destination = {}; }
-      get state() { return state; }
-      resume() { return Promise.resolve(); }
+      constructor() { this.t0 = Date.now(); this.destination = {}; this._state = 'running'; ctx = this; }
+      get currentTime() { return 100 + (Date.now() - this.t0) / 1000; }
+      get state() { return this._state; }
+      set state(v) { this._state = v; this.onstatechange?.(); }
+      resume() { return Promise.resolve(); } // (an Android phone before a tap: stays suspended)
       createGain() { return gain(); }
       createBufferSource() {
-        const s = { started: null, stopped: false, connect() {}, start(when = 0, offset = 0) { this.started = { when, offset }; }, stop() { this.stopped = true; } };
+        const s = { started: null, stopAt: null, connect() {}, start(when = 0, offset = 0) { this.started = { when, offset }; }, stop(at) { this.stopAt = at; } };
         sources.push(s);
         return s;
       }
       decodeAudioData(_b, ok) { ok({ duration: 3.6 }); }
     }
-    globalThis.window = { AudioContext: FakeContext };
+    globalThis.window = { AudioContext: FakeContext, addEventListener() {} };
     globalThis.Audio = class { canPlayType() { return 'probably'; } };
-    globalThis.fetch = async () => ({ arrayBuffer: async () => new ArrayBuffer(8) });
+    globalThis.fetch = async () => ({ ok: true, arrayBuffer: async () => new ArrayBuffer(8) });
     engine = await import('../src/sound/engine');
+    engine.setSettings({ music: 0, effects: 0.8, muted: false }); // (the beeps alone)
     engine.unlock();
-    await vi.runAllTimersAsync();
+    await engine.prepare();
+    await vi.advanceTimersByTimeAsync(1);
   });
   afterEach(() => {
     vi.useRealTimers();
@@ -94,29 +99,30 @@ describe('beeps only over the countdown', () => {
     delete globalThis.fetch;
   });
 
-  it('a running sound clock: the beeps are timed to GO, and stopped once their GO beep is over', () => {
+  it('a running sound clock: the GO beep exactly on GO, and stopped just after it', () => {
     expect(engine.raceCountdown('r1', 4000)).toBe(true);
     const beeps = sources.at(-1);
-    expect(beeps.started.when).toBeCloseTo(100 + 4 - engine.BEEPS_GO_S, 6);
-    vi.advanceTimersByTime(4000 + (3.6 - engine.BEEPS_GO_S) * 1000 + 300);
-    expect(beeps.stopped).toBe(true); // (a no-op when it played on time; cuts it off if the clock was paused)
+    expect(beeps.started.when).toBeCloseTo(ctx.currentTime + 4 - engine.BEEPS_GO_S, 6);
+    expect(beeps.stopAt).toBeCloseTo(ctx.currentTime + 4 + 0.9, 6); // (cut off just after the GO beep)
   });
 
-  it('a paused sound clock (Android before a tap): nothing is scheduled to play later', async () => {
-    state = 'suspended';
+  it('a paused sound clock (Android before a tap): nothing plays, and nothing plays late after the countdown', async () => {
+    ctx.state = 'suspended';
     const before = sources.length;
-    expect(engine.raceCountdown('r2', 4000)).toBe(false);
-    await vi.advanceTimersByTimeAsync(10);
-    expect(sources.length).toBe(before); // (still paused after trying to wake it: no beeps)
+    engine.raceCountdown('r2', 4000);
+    expect(sources.length).toBe(before);
     expect(engine.play('launch')).toBe(false); // (nor the launch, which would be heard mid-race)
+    await vi.advanceTimersByTimeAsync(6000);
+    ctx.state = 'running'; // (a tap after GO)
+    expect(sources.length).toBe(before); // (the countdown is over: no beeps)
   });
 
-  it('a clock that wakes during the countdown beeps over what is left of it', async () => {
-    state = 'suspended';
+  it('a clock that wakes during the countdown beeps over what is left of it, in step', async () => {
+    ctx.state = 'suspended';
     engine.raceCountdown('r3', 4000);
-    state = 'running';
-    await vi.advanceTimersByTimeAsync(5);
+    await vi.advanceTimersByTimeAsync(2000);
+    ctx.state = 'running';
     const beeps = sources.at(-1);
-    expect(beeps.started).not.toBe(null);
+    expect(beeps.started.offset).toBeCloseTo(2 - (4 - engine.BEEPS_GO_S), 2); // (where the countdown is)
   });
 });

@@ -358,7 +358,18 @@ Built and **switched off twice**: the apps don't ask until `client/src/shared/pu
 
 - **Start a season:** add a row to the `seasons` table with a data update (`key`, `name`, `starts_at`, `ends_at`, `free_from`, `badge_top`) and deploy the server. The "This season" board, the season name and the days left follow its dates by themselves (`src/routes/scoreboard.js` `currentSeason`; the Holiday Season 2026 is in that table). Only when no season in the table is on or has ended is `season` in `client/src/shared/economy.json` used (`number`, `startsAt`, `endsAt`, e.g. `2026-11-01T00:00:00Z`; all empty today, 25 Oct 2026): set it, push, and deploy the server too (it reads the same file).
 - **App Store / Google Play buttons on the website:** put each store page's https link in `client/src/shared/storeLinks.json` and push. An empty link hides its button. The apps never show them.
-- **iPhone silent switch:** the app uses an "ambient" audio session, so the switch mutes the game's music and sounds and the player's own music keeps playing. Check it on a real iPhone after each app build (switch on and off during a race, and with Spotify or Apple Music playing).
+- **iPhone silent switch:** the app uses an "ambient" audio session, so the switch mutes the game's music and sounds and the player's own music keeps playing. Since the native audio plugin (28 Oct 2026) the game sets it with `NativeAudio.configure({ focus: false })` at start-up (the plugin itself would choose "playback", which ignores the switch). Check it on a real iPhone after each app build (switch on and off during a race, and with Spotify or Apple Music playing).
+
+## Race sound: checking it on a device (28 Oct 2026)
+
+The apps play the sound through `@capacitor-community/native-audio` (a native plugin: the apps need a new build, `npm run app:sync`, to have it; an older build keeps using Web Audio). The website uses Web Audio. Check after each app build, on an iPhone or iPad, an Android phone, Safari on a Mac or iPhone, and Chrome:
+1. A solo race: the track card says "Loading…" (then maybe "Loading the sound…"), the countdown follows; the fourth beep is exactly on GO, the race tune starts on GO.
+2. The same on a slow connection (a phone on 3G, or Chrome DevTools → Network → Slow 3G): the countdown still waits for the sound in a solo race; in a room it doesn't, and a tune that arrives late starts part-way in, in step with the race.
+3. A long race (or a tune shorter than the race): the tune loops with no gap, no dip and no click at the loop point (Android's player is the one to listen to most closely).
+4. Lock the phone (or switch apps) mid-race for 10 s and come back: the music picks up where the race is.
+5. iPhone: the silent switch mutes the game; music from another app keeps playing under it.
+6. Safari: play a video in another tab mid-race, come back and tap: the sound resumes.
+7. Back office → **Race readiness**: your test races are there (platform, missing, how late). Railway logs show `[readiness] race … NOT READY …` for each screen that wasn't ready.
 
 ## The season-start website rebuild (1 Dec 2026, automatic)
 

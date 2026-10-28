@@ -138,6 +138,7 @@ The auth endpoints are rate-limited to 20 requests per 15 minutes per IP.
 | DELETE | `/races/:id/join` | ✔ | Leave a lobby race. The entry fee is refunded |
 | POST | `/races/:id/start` | ✔ creator/admin | Decides the race and starts the countdown → `202` |
 | POST | `/races/:id/cancel` | ✔ creator/admin | Lobby races only. Entry fees are refunded |
+| POST | `/races/:id/readiness` | optional | This screen's readiness at GO, once per race: `{ platform: web\|ios\|android, kind: solo\|room, missing: [...], lateMs, details }` → `204`. Never holds the race up (`src/readiness`) |
 | GET | `/races/:id/results` | – | `409` until the race is finished. Each result includes `split_time_ms`, `gap_to_winner_ms` and a `comparison` (see below) |
 | GET | `/races/:id/replay` | – | Full frames, events and results for a finished race |
 

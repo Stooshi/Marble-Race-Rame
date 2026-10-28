@@ -28,6 +28,9 @@ android {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
              // Default: https://android.googlesource.com/platform/frameworks/base/+/282e181b58cf72b6ca770dc7ca5f91f135444502/tools/aapt/AaptAssets.cpp#61
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
+            // The game's sound files stay uncompressed in the app, so the native audio plugin can open
+            // them directly (AssetManager.openFd; Moses, 28 Oct 2026).
+            noCompress 'm4a'
         }
     }
     signingConfigs {

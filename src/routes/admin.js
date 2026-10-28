@@ -74,6 +74,12 @@ async function lockPlayer(client, id) {
   return rows[0];
 }
 
+/** GET /readiness?days= — which screens weren't ready by GO, and what they missed (src/readiness). */
+router.get('/readiness', async (req, res) => {
+  const days = Math.min(30, Math.max(1, Number(req.query.days) || 7));
+  res.json(await require('../readiness').summary(db, { days }));
+});
+
 /** GET /players?q=&limit= */
 router.get('/players', async (req, res) => {
   const q = String(req.query.q ?? '').trim();

@@ -162,6 +162,9 @@ For physics races, the whole race is stored as `data` along with the `engine` ve
 - **Two forms, both read** (`src/game/replayPack.js`): until 27 Oct 2026 gzipped JSON (frames, events, gate; about 160–180 KB a race); since then version 2, starting with the bytes `MSR2`: Brotli over JSON with the frames stored by column as whole numbers and differences (about 50–70 KB a race, lossless: the race plays back exactly as it ran).
 - **Kept 30 days** (Moses, 27 Oct 2026; `src/game/replayRetention.js`, daily at 04:30 UTC, deleting only once `REPLAY_TRIM=on`): older replays are deleted, except the latest 200 finished races (the landing page's closest finish), each track's record (by anyone, and by a player), each country's record on each track, and each collection marble's first win. The race and its results (`races`, `race_entries`) are kept for ever; its replay then answers 410 `replay_gone`.
 
+### `race_readiness`
+Each screen's report at GO, once per race (28 Oct 2026; `src/readiness`): `race_id`, `user_id` (null for a visitor; set to null when the account is deleted), `platform` (`web`, `ios`, `android`), `kind` (`solo`, `room`: any shared race), `device` (the browser's user agent, cut to 200 characters; no IP address), `ready` (everything in by GO), `missing` (`track`, `marbles`, or a sound file's name such as `tune-3`), `late_ms` (how long after GO this screen caught up; 60000 = still missing after a minute), `details` (the sound's backend `web` or `native`, whether it was started (`started: false` = no tap yet on the website), the connection type and device memory when the browser says). **Kept 30 days**, then deleted by the daily job.
+
 ### `race_entry_looks`, `house_looks`
 Looks only; the race engine never reads them.
 - `race_entry_looks`: which collection marble a player raced in. Used for the certificate's race record.

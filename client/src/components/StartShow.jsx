@@ -9,7 +9,7 @@ import { BANNERS, SERIES_PIC, bannerSrc } from '../site/TrackBanner';
  */
 export const seriesOf = (slug) => BANNERS[slug]?.series ?? null;
 
-export function TrackCard({ track }) {
+export function TrackCard({ track, label = 'Loading…' }) {
   const series = seriesOf(track?.slug);
   const pic = track?.slug ? bannerSrc(track.slug) : null;
   return (
@@ -18,7 +18,7 @@ export function TrackCard({ track }) {
       <div className="startshow__cardtext">
         {series && <span className="startshow__series">{series}{track?.difficulty ? ` · ${track.difficulty}` : ''}</span>}
         <strong className="startshow__name">{track?.name ?? 'The next race'}</strong>
-        <span className="startshow__loading">Loading the track…<i aria-hidden="true" /></span>
+        <span className="startshow__loading">{label}<i aria-hidden="true" /></span>
       </div>
     </div>
   );

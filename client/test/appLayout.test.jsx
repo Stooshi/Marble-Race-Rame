@@ -99,6 +99,7 @@ describe('no app-only layout anywhere', () => {
       'app/push.js': 'push notifications exist only in the apps',
       'app/OfflineScreen.jsx': 'the offline screen re-checks the connection in the apps',
       'app/keepAwake.js': 'the screen kept on during a race: the native plugin in the apps, the Screen Wake Lock API on the website',
+      'components/raceReadiness.js': 'the readiness report says which platform it came from (web, ios, android)',
             'site/SiteFooter.jsx': 'Settings instead of cookie settings, no store buttons (store rules)',
       'site/SocialLinks.jsx': 'no links out to social media in the apps (store rules)',
       'site/help/HelpPage.jsx': 'the Help answers for the platform',

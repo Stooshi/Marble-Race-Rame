@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useRaceSoundPreload } from '../../sound/settings';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import QRCode from 'qrcode';
 import { api } from '../../api/client';
@@ -90,6 +91,7 @@ export default function RoomPage() {
   const [search, setSearch] = useSearchParams();
   const navigate = useNavigate();
   const { ready, error: racerError } = useRacer();
+  useRaceSoundPreload(); // (the race's sound in memory while the player waits)
   const { user, socket, refreshUser } = useAuth();
   const tracks = useTracks();
   const [view, setView] = useState(null);

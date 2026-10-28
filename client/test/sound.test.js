@@ -1,12 +1,12 @@
 // The sound (the sound reset, Moses 28 Oct 2026): no sound before a tap, the music always under the race
-// sounds, one of 6 race tunes per race (shuffled, never the previous race's), played once and fading at
+// sounds, one of 6 race tunes per race (shuffled, never the previous race's), looping seamlessly to the ceremony
 // its end, the ceremony song after it (unchanged rule), the crowd under the music once per stand, and
 // small, phone-friendly files.
 import fs from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
-  BEEPS_GO_S, CEREMONY, CEREMONY_FADE_S, CEREMONY_SECONDS, CROSSFADE_S, CROWD_UNDER, DUCK, MUSIC_UNDER, RACE_TRACKS, SOUNDS, TRACK_SECONDS, TUNE_FADE_S,
+  BEEPS_GO_S, CEREMONY, CEREMONY_FADE_S, CEREMONY_SECONDS, CROWD_UNDER, DUCK, MUSIC_UNDER, RACE_TRACKS, SOUNDS, TRACK_SECONDS,
   _resetOrder, crowdCheer, isUnlocked, levels, musicState, nextTrack, nowPlaying, play, raceCeremony, raceCountdown, raceEnd, raceGo, trackFor,
 } from '../src/sound/engine';
 import { CEREMONY_PHASES, phaseAt } from '../src/utils/finishShow';
@@ -69,7 +69,7 @@ describe('sound', () => {
   it('a race: its track from GO, the ceremony song from the ceremony, nothing after leaving', () => {
     raceCountdown('a', 5000);
     expect(musicState()).toBe(null); // (no music during the countdown)
-    raceGo('a');
+    raceGo('a', Date.now()); // (GO as shown, now)
     expect(musicState()).toEqual({ raceId: 'a', kind: 'race', track: trackFor('a') });
     raceGo('a'); // (again, e.g. the 3D view after the 2D one: still the same one track)
     expect(musicState().track).toBe(trackFor('a'));
@@ -100,22 +100,35 @@ describe('sound', () => {
     expect(SOUNDS.beeps).toBe('start-beeps');
   });
 
-  it('the race tunes stream from GO, never loop, and crossfade into another (never the same) until the finish', () => {
+  it('the race tune picked at GO loops seamlessly from memory until the ceremony: no crossfade, no fades, no gap', () => {
     expect(RACE_TRACKS).toEqual(['tune-1', 'tune-2', 'tune-3', 'tune-4', 'tune-5', 'tune-6']);
     for (const t of RACE_TRACKS) expect(TRACK_SECONDS[t], t).toBeGreaterThan(20);
-    expect(TUNE_FADE_S).toBeGreaterThanOrEqual(2);
     const engine = fs.readFileSync(path.resolve(__dirname, '../src/sound/engine.js'), 'utf8');
-    expect(engine).toContain("el.loop = name === CEREMONY;");
-    const script = fs.readFileSync(path.resolve(__dirname, '../../scripts/convert-audio.sh'), 'utf8');
-    expect(script).toContain('enc "$f" "tune-$i" -20 40 56 "$(fades "$f")"');
-    expect(script).toContain(`TUNE_FADE=${TUNE_FADE_S}`);
+    expect(engine).toContain("race.tune.voice = backend.start(name, { atWall, bus: 'music', loop: true, loopLength: TRACK_SECONDS[name] });");
+    expect(engine).not.toMatch(/crossfade\(|CROSSFADE_S|TUNE_FADE_S|takeTune\(name\)/);
+    expect(engine).toContain("c.voice = backend.start(CEREMONY, { atWall: now(), bus: 'music', loop: true });"); // (the ceremony rule as before)
     expect(TRACK_SECONDS[CEREMONY]).toBeGreaterThan(CEREMONY_SECONDS); // (the ceremony song fades out before it would loop)
-    // A tune that ends before the finish: about 2 s of crossfade into another random tune, never the same one.
-    expect(CROSSFADE_S).toBeGreaterThanOrEqual(1.5);
-    expect(CROSSFADE_S).toBeLessThanOrEqual(2.5);
-    expect(engine).toContain('for (let k = 0; t === name && k < RACE_TRACKS.length; k += 1) t = nextTrack(name);');
-    expect(engine).toContain('playRaceTune(slot, next, 0, CROSSFADE_S);');
-    expect(engine).toContain("if (playing !== slot || slot.handle !== handle || want?.kind !== 'race' || want.raceId !== slot.raceId) return;");
+    // The files: no fades, the silence at both ends trimmed, cut at zero crossings (no click at the loop point).
+    const script = fs.readFileSync(path.resolve(__dirname, '../../scripts/convert-audio.sh'), 'utf8');
+    const tunes = script.slice(script.indexOf('# The race tunes'), script.indexOf('# The finish ceremony'));
+    expect(tunes).not.toContain('afade');
+    expect(tunes).toContain('silenceremove=start_periods=1:start_threshold=-60dB');
+    expect(tunes).toContain('python3 scripts/loop-cut.py');
+    expect(script).toContain('-movie_timescale 44100'); // (the apps' players: an edit list exact to the sample)
+    // Each tune's loop length is the file's real length: the m4a's edit list, sample-exact.
+    for (const t of RACE_TRACKS) {
+      const b = fs.readFileSync(path.join(AUDIO, `${t}.m4a`));
+      const k = b.indexOf('elst');
+      const v = b[k + 4];
+      const samples = v === 0 ? b.readUInt32BE(k + 12) : Number(b.readBigUInt64BE(k + 12));
+      expect(Math.abs(samples / 44100 - TRACK_SECONDS[t]), t).toBeLessThan(0.0001);
+    }
+    // Web Audio only on the website: no <audio> elements play anything.
+    for (const f of ['engine.js', 'webBackend.js']) expect(fs.readFileSync(path.resolve(__dirname, `../src/sound/${f}`), 'utf8')).not.toMatch(/new Audio\(\)\.play|createMediaElementSource|\.play\(\)/);
+    // The website loops the buffer itself (loopStart/loopEnd: the music only, sample for sample).
+    const web = fs.readFileSync(path.resolve(__dirname, '../src/sound/webBackend.js'), 'utf8');
+    expect(web).toContain('src.loopStart = from;');
+    expect(web).toContain('src.loopEnd = to;');
   });
 
   it('no overtaking whoosh for now; the gate sound at GO stays', () => {

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useRaceSoundPreload } from '../../sound/settings';
 import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 import { api } from '../../api/client';
 import { useAuth } from '../../context/AuthContext';
@@ -78,6 +79,7 @@ function shooterOf(bag) {
  */
 export function QuickStep() {
   const { ready, error: racerError } = useRacer();
+  useRaceSoundPreload(); // (the race's sound in memory while Quick race finds a room)
   const navigate = useNavigate();
   const [error, setError] = useState(null);
   const [tries, setTries] = useState(0);
@@ -418,6 +420,7 @@ export function StartStep() {
   const grid = useMemo(() => previewShowcase(19, `${trackSlug}-${user?.id}`), [trackSlug, user?.id]);
   // The race's 3D code fetched while the player is still here, so the race page starts building at once.
   useEffect(() => { import('../../three/TrackScene').catch(() => {}); }, []); // (a failure here is retried by the race page)
+  useRaceSoundPreload(); // (and its sound loaded into memory)
 
   const start = async () => {
     setBusy(true);

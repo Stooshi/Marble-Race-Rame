@@ -16,13 +16,20 @@ import { CEREMONY_PHASES } from '../utils/finishShow';
 import SkipToResults from './SkipToResults';
 import FrameMeter, { useFrameMeter } from './FrameMeter';
 import { useTvMoments } from './tvMomentsSetting';
-import { crowdCheer, play as playSound, preloadRace, raceCeremony, raceCountdown, raceGo, stopCountdown } from '../sound/engine';
+import { crowdCheer, play as playSound, prepare as prepareSound, raceCeremony, raceCountdown, raceGo, soundReport, stopCountdown, whenSoundReady } from '../sound/engine';
+import { watchReadiness } from './raceReadiness';
+import { api } from '../api/client';
 import { FLYOVER_MS } from '../three/flyover';
 import { ownGate } from '../utils/standingsRows';
 import { FlyoverTitle, GateMoment, TrackCard } from './StartShow';
 import StartLights from './StartLights';
 import { useKeepAwake } from '../app/keepAwake';
 
+// A solo race's countdown starts only once the track, the marbles, the scenery and the sound are all
+// in (Moses, 28 Oct 2026); the sound gets at most this long (a very slow connection: the race goes on,
+// each sound joining in step when it arrives).
+const SOLO_SOUND_WAIT_MS = 12000;
+const SOUND_RECHECK_MS = 2500;
 const HOLD_FROM_MS = 250;     // the view held back when it gets ready later than this after the countdown began…
 const JOIN_LIVE_AFTER_MS = 8000; // …unless the race is already this far past GO: then it joins live
 const FLYOVER_SHOW_MS = 4000;  // the start show's flyover: a helicopter overview (three/flyover.js)
@@ -101,6 +108,22 @@ export default function LiveRaceViewer3D({
   const onPreparedRef = useRef(onPrepared);
   onPreparedRef.current = onPrepared;
   const theTrack = meta?.track ?? track;
+  // Everything the race's sound needs, loaded into memory from the moment the page opens (not during
+  // the countdown). A solo race waits for it (showing "Loading…") before it starts.
+  useEffect(() => { prepareSound(raceId ?? meta?.raceId ?? null); }, [raceId]); // eslint-disable-line react-hooks/exhaustive-deps
+  const [soundWait, setSoundWait] = useState(false);
+  // GO as shown on this screen (wall ms): the race clock the beeps and the tunes are timed on.
+  // (The view runs BUFFER_MS behind the stream, plus any hold: so does the sound.)
+  const goWallRef = useRef(null);
+  const shownGo = (wall) => {
+    goWallRef.current = wall;
+    if (meta?.raceId) raceCountdown(meta.raceId, wall - Date.now());
+  };
+  const soloSound = () => {
+    if (!onPreparedRef.current) return null;
+    setSoundWait(true);
+    return whenSoundReady(raceId ?? meta?.raceId ?? null, SOLO_SOUND_WAIT_MS).then((r) => { setSoundWait(false); return r; });
+  };
 
   // The track first (before the countdown when it is known), its whole world built and compiled.
   useEffect(() => {
@@ -110,7 +133,7 @@ export default function LiveRaceViewer3D({
       // (Built during the wait: ready as soon as it says so.)
       if (adopted.current !== theTrack.slug || trackReady) return;
       let live = true;
-      scene.whenReady().then(() => { if (live) { setTrackReady(true); onPreparedRef.current?.(); } });
+      scene.whenReady().then(() => { if (!live) return null; setTrackReady(true); return soloSound(); }).then(() => { if (live) onPreparedRef.current?.(); });
       return () => { live = false; };
     }
     try {
@@ -122,10 +145,10 @@ export default function LiveRaceViewer3D({
     }
     let live = true;
     scene.whenReady().then(() => {
-      if (!live) return;
+      if (!live) return null;
       setTrackReady(true);
-      onPreparedRef.current?.();
-    });
+      return soloSound();
+    }).then(() => { if (live) onPreparedRef.current?.(); });
     return () => { live = false; };
   }, [status, theTrack?.slug]); // eslint-disable-line react-hooks/exhaustive-deps
   const meter = useFrameMeter();
@@ -151,8 +174,10 @@ export default function LiveRaceViewer3D({
     const scene = sceneRef.current;
     if (!built || !trackReady || !scene || ready) return undefined;
     let live = true;
-    // (The start show waits for the race's sounds too, so the beeps are there for the countdown.)
-    const sounds = intro && meta?.raceId ? preloadRace(meta.raceId) : Promise.resolve();
+    // (The start show checks the race's sounds once more, briefly: they were waited for before the race
+    // started, and the race's clock is running now (a longer wait here would cut the countdown short).
+    // A shared race never waits: its sounds join in step as they arrive.)
+    const sounds = intro && meta?.raceId ? whenSoundReady(meta.raceId, SOUND_RECHECK_MS) : Promise.resolve();
     Promise.all([scene.whenReady(), sounds]).then(() => {
       if (!live) return;
       const go = startRef.current;
@@ -167,7 +192,7 @@ export default function LiveRaceViewer3D({
         holdBack?.(lag, go, { stay: true });
         lagRef.current = lagNow;
         flyRef.current = flight ? { startedAt: performance.now(), go } : null;
-        if (meta?.raceId) raceCountdown(meta.raceId, go + lag - Date.now());
+        shownGo(go + BUFFER_MS + lag);
         setPhase(flight ? 'flying' : 'race');
         setReady(true);
         return;
@@ -185,7 +210,7 @@ export default function LiveRaceViewer3D({
         const lag = flying ? 0 : holdFor(go, COUNTDOWN_MS);
         holdBack?.(lag, go);
         lagRef.current = lagNow;
-        if (meta?.raceId) raceCountdown(meta.raceId, go + lag - Date.now());
+        shownGo(go + BUFFER_MS + lag);
         setPhase(flying ? 'flying' : 'race');
         setReady(true);
         return;
@@ -194,7 +219,7 @@ export default function LiveRaceViewer3D({
       holdBack?.(lag, go);
       lagRef.current = lagNow;
       // The countdown's beeps, timed to the countdown as shown (none if it is already over).
-      if (go && meta?.raceId) raceCountdown(meta.raceId, go + lag - Date.now());
+      if (go) shownGo(go + BUFFER_MS + lag);
       if (roomShow) setPhase('race'); // (no GO known: no show)
       setReady(true);
     });
@@ -215,6 +240,20 @@ export default function LiveRaceViewer3D({
   const firstRef = useRef(meta?.firstFrame);
   firstRef.current = meta?.firstFrame;
   const lagRef = useRef(null);
+  // The readiness report (./raceReadiness): at GO as shown, was everything in? (Sent once per race.)
+  const piecesRef = useRef({ track: false, marbles: false });
+  piecesRef.current = { track: trackReady, marbles: built && ready };
+  useEffect(() => {
+    const id = meta?.raceId;
+    if (!id || !startsAt) return undefined;
+    return watchReadiness({
+      kind: intro ? 'solo' : 'room',
+      goWall: () => goWallRef.current ?? (startRef.current ? startRef.current + BUFFER_MS : null),
+      pieces: () => piecesRef.current,
+      sound: () => soundReport(id),
+      send: (body) => api.raceReadiness(id, body).catch(() => {}),
+    });
+  }, [meta?.raceId, Boolean(startsAt)]); // eslint-disable-line react-hooks/exhaustive-deps
   const entryCount = meta?.entries?.length ?? 0;
   const show = useFinishShow({ finishes, count: entryCount, complete, clock });
   // The screen stays on from the start show and countdown until the results board (app/keepAwake.js).
@@ -242,7 +281,8 @@ export default function LiveRaceViewer3D({
     if (fly.room) { setPhase('race'); return; }
     const lag = Math.max(0, Date.now() - (fly.go - countdownMs));
     holdBack?.(lag, fly.go, { stay: true });
-    if (meta?.raceId) { stopCountdown(meta.raceId); raceCountdown(meta.raceId, fly.go + lag - Date.now()); }
+    if (meta?.raceId) stopCountdown(meta.raceId);
+    shownGo(fly.go + BUFFER_MS + lag);
     setPhase('race');
   };
   const swapViews = () => {
@@ -281,7 +321,8 @@ export default function LiveRaceViewer3D({
       // (Or within its first 1.5 s if the 3D world was still being built at GO.)
       if (f && f.t >= 0 && ((lastT !== null && lastT < 0) || (lastT === null && f.t < 1500))) playSound('launch');
       // GO: the race's music (once per race; also when the page opens mid-race).
-      if (f && f.t >= 0 && (lastT === null || lastT < 0) && meta?.raceId) raceGo(meta.raceId);
+      // (GO as shown here: f.t ms ago. A page opened mid-race: the tune joins where the race is.)
+      if (f && f.t >= 0 && (lastT === null || lastT < 0) && meta?.raceId) raceGo(meta.raceId, Date.now() - f.t);
       if (f && standingsShown(f.t) !== lastGone) { lastGone = standingsShown(f.t); setGone(lastGone); }
       if (f) lastT = f.t;
       if (f && scene) {
@@ -333,7 +374,7 @@ export default function LiveRaceViewer3D({
     <div className="live3d">
       <div className={`preview3d__stage${show.phase !== 'racing' ? ' is-finishing' : ''}`} ref={wrapRef}>
         <canvas ref={canvasRef} className="preview3d__canvas" aria-label="Live race in 3D" />
-        {(intro || roomShow) && phase === 'loading' && <TrackCard track={theTrack} />}
+        {(intro || roomShow) && phase === 'loading' && <TrackCard track={theTrack} label={soundWait && trackReady ? 'Loading the sound…' : 'Loading…'} />}
         {!intro && !roomShow && status === 'loading' && <div className="preview3d__overlay"><Spinner label="Loading 3D…" /></div>}
         {!intro && !roomShow && status === 'ready' && !ready && <div className="preview3d__overlay"><Spinner label="Getting the track ready…" /></div>}
         {phase === 'flying' && <FlyoverTitle track={theTrack} onSkip={skipFlyover} />}

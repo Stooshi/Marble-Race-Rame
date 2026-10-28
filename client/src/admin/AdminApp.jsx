@@ -44,6 +44,7 @@ export default function AdminApp() {
           <NavLink to="/admin/economy">Economy</NavLink>
           <NavLink to="/admin/emails">Email list</NavLink>
           <NavLink to="/admin/audit">Audit log</NavLink>
+          <NavLink to="/admin/readiness">Race readiness</NavLink>
         </nav>
         <span className="adm-grow" />
         <span className="adm-muted">@{session.user?.username}</span>
@@ -63,6 +64,7 @@ export default function AdminApp() {
           <Route path="/admin/economy" element={<Economy />} />
           <Route path="/admin/emails" element={<Emails />} />
           <Route path="/admin/audit" element={<Audit />} />
+          <Route path="/admin/readiness" element={<Readiness />} />
           <Route path="*" element={<Navigate to="/admin/players" replace />} />
         </Routes>
       </main>
@@ -237,6 +239,52 @@ function Payments() {
       </form>
       <Err error={list.error} />
       {list.data && <PaymentTable rows={list.data.payments} showPlayer onChanged={list.reload} />}
+    </section>
+  );
+}
+
+// ── Race readiness ────────────────────────────────────────────────────────
+
+/** Which screens weren't ready by GO, and what they were missing (kept 30 days). */
+function Readiness() {
+  const [days, setDays] = useState(7);
+  const r = useLoad(() => adminApi.readiness(days), [days]);
+  const pct = (a, b) => (b ? `${Math.round((100 * a) / b)}%` : '—');
+  return (
+    <section className="adm-stack">
+      <h1 className="adm-h1">Race readiness</h1>
+      <p className="adm-muted">Each screen reports once per race whether the track, the marbles and the sound were all loaded by GO. Reports are kept 30 days.</p>
+      <div className="adm-row">
+        {[1, 7, 30].map((d) => <button key={d} type="button" className={`adm-btn${d === days ? ' adm-btn--primary' : ''}`} onClick={() => setDays(d)}>Last {d === 1 ? 'day' : `${d} days`}</button>)}
+      </div>
+      <Err error={r.error} />
+      {r.data && (
+        <>
+          <h2 className="adm-h2">By platform</h2>
+          <div className="adm-scroll"><table className="adm-table">
+            <thead><tr><th>Platform</th><th>Race</th><th>Screens</th><th>Ready by GO</th><th>Caught up after (avg)</th></tr></thead>
+            <tbody>{r.data.byPlatform.map((p) => (
+              <tr key={`${p.platform}-${p.kind}`}><td>{p.platform}</td><td>{p.kind}</td><td>{p.screens}</td><td>{pct(p.ready, p.screens)}</td><td>{p.avg_late_ms == null ? '—' : `${(p.avg_late_ms / 1000).toFixed(1)} s`}</td></tr>
+            ))}</tbody>
+          </table></div>
+          <h2 className="adm-h2">What was missing</h2>
+          <div className="adm-scroll"><table className="adm-table">
+            <thead><tr><th>Platform</th><th>Missing</th><th>Kind</th><th>Times</th></tr></thead>
+            <tbody>{r.data.missing.map((m) => <tr key={`${m.platform}-${m.missing}`}><td>{m.platform}</td><td>{m.missing}</td><td>{m.piece}</td><td>{m.times}</td></tr>)}</tbody>
+          </table></div>
+          <h2 className="adm-h2">Latest screens not ready</h2>
+          <div className="adm-scroll"><table className="adm-table">
+            <thead><tr><th>When</th><th>Platform</th><th>Missing</th><th>Caught up after</th><th>Sound</th><th>Connection</th><th>Device</th></tr></thead>
+            <tbody>{r.data.latest.map((l) => (
+              <tr key={`${l.race_id}-${l.created_at}`}>
+                <td>{new Date(l.created_at).toLocaleString()}</td><td>{l.platform} · {l.kind}</td><td>{l.missing.join(', ')}</td>
+                <td>{(l.late_ms / 1000).toFixed(1)} s</td><td>{l.details?.backend ?? '—'}{l.details?.started === false ? ' (no tap)' : ''}</td>
+                <td>{l.details?.connection ?? '—'}</td><td className="adm-muted">{l.device ?? '—'}</td>
+              </tr>
+            ))}</tbody>
+          </table></div>
+        </>
+      )}
     </section>
   );
 }

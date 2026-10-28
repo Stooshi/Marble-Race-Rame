@@ -5,7 +5,9 @@ const { dressRows } = require('../marbles/computerPlayers');
 const express = require('express');
 const config = require('../config');
 const db = require('../db');
-const { requireAuth } = require('../middleware/auth');
+const { requireAuth, optionalAuth } = require('../middleware/auth');
+const rateLimit = require('express-rate-limit');
+const readiness = require('../readiness');
 const { validate, assertUuid, pagination } = require('../utils/validate');
 const { HttpError, badRequest, conflict, notFound } = require('../utils/httpError');
 const raceManager = require('../game/raceManager');
@@ -351,6 +353,30 @@ router.post('/:id/start', requireAuth, async (req, res) => {
     race: { id: race.id, status: race.status, started_at: race.started_at, countdown_ms: race.countdown_ms },
     stream: { room: raceManager.room(id), event: 'race:watch' },
   });
+});
+
+/**
+ * POST /api/races/:id/readiness — this screen's readiness at GO (src/readiness): { platform, kind,
+ * missing: [...], lateMs, details }. Anyone watching (a login optional). Never holds the race up.
+ */
+const readinessLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000,
+  limit: config.isTest ? 1000 : 60,
+  keyGenerator: (req) => req.user?.id ?? rateLimit.ipKeyGenerator(req.ip ?? ''),
+  standardHeaders: 'draft-8',
+  legacyHeaders: false,
+  message: { error: 'Too many reports.' },
+});
+router.post('/:id/readiness', optionalAuth, readinessLimiter, async (req, res) => {
+  const id = assertUuid(req.params.id);
+  const report = readiness.clean(req.body);
+  try {
+    await readiness.record(db, { raceId: id, userId: req.user?.id ?? null, device: req.get('user-agent'), report });
+  } catch (err) {
+    if (err.code === '23503') throw notFound('Race not found');
+    throw err;
+  }
+  res.status(204).end();
 });
 
 /** POST /api/races/:id/cancel — creator/admin, lobby only */
