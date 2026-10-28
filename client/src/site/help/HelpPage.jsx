@@ -169,6 +169,39 @@ function useStructuredData(sections) {
   }, [sections]);
 }
 
+/**
+ * A question's own page as the build pre-renders it (/help/<question>, Moses 28 Oct 2026): only that
+ * question and its answer, with links back to the Help Centre and to the other questions of its topic.
+ * (Each page used to hold the whole Help Centre: 94 pages of about 110 kB.) In the browser the full Help
+ * Centre draws over it, with the question open, as before.
+ */
+export function QuestionPage({ sections, slug }) {
+  const section = sections.find((s) => s.questions.some((q) => q.slug === slug));
+  if (!section) return null;
+  const q = section.questions.find((x) => x.slug === slug);
+  const others = section.questions.filter((x) => x.slug !== slug);
+  return (
+    <div className="ms-page ms-page--narrow ms-help">
+      <header className="ms-help__top">
+        <nav aria-label="Breadcrumb" className="ms-eyebrow"><Link to="/help">Help Centre</Link> › <Link to={`/help#${section.id}`}>{section.title}</Link></nav>
+        <h1 className="ms-h1" style={{ margin: 0 }}><Inline text={q.q} /></h1>
+      </header>
+      <section id={q.slug} aria-label={q.q} className="ms-card ms-help__sec">
+        <div className="ms-help-a"><Answer blocks={q.blocks} /></div>
+      </section>
+      {others.length > 0 && (
+        <nav aria-labelledby="more-h" className="ms-card ms-help__sec">
+          <h2 id="more-h">More about {section.title}</h2>
+          <ul>{others.map((x) => <li key={x.slug}><Link to={`/help/${x.slug}`}><Inline text={x.q} /></Link></li>)}</ul>
+        </nav>
+      )}
+      <p style={{ margin: 0 }}>
+        <Link to="/help">All help topics</Link> · <Link to="/help#contact">Still need help? Send us a message</Link>
+      </p>
+    </div>
+  );
+}
+
 /** /help: the Help Centre. Every question has its own link (/help#question-slug) for support to send. */
 export default function HelpPage() {
   const { hash: realHash } = useLocation();
@@ -210,6 +243,11 @@ export default function HelpPage() {
     scrolled.current = '';
     navigate(`/help#${slug}`, { replace: hash !== '' });
   };
+
+  // The build (src/prerender): a question's own page holds just that question.
+  if (question && globalThis.__MS_PRERENDER__ && sections.some((s) => s.questions.some((q) => q.slug === question))) {
+    return <QuestionPage sections={sections} slug={question} />;
+  }
 
   return (
     <div className="ms-page ms-page--narrow ms-help">
