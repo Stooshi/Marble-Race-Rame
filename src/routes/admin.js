@@ -186,6 +186,31 @@ router.post('/players/:id/coins', async (req, res) => {
   res.json(out);
 });
 
+/**
+ * GET /players/:id/credits — the player's credits, Pro pass and credits history (Leagues part 2).
+ * POST /players/:id/credits { amount, reason } — support adds or takes credits (credits ledger 'admin';
+ * test credits for a review). Credits never become coins here.
+ */
+router.get('/players/:id/credits', async (req, res) => {
+  const id = assertUuid(req.params.id);
+  res.json(await require('../credits').summary(db, id));
+});
+router.post('/players/:id/credits', async (req, res) => {
+  const id = assertUuid(req.params.id);
+  const body = validate(req.body, { amount: { type: 'int', required: true, min: -10_000, max: 10_000 }, reason: REASON });
+  if (body.amount === 0) throw badRequest('amount must not be 0');
+  const credits = require('../credits');
+  const out = await db.withTransaction(async (client) => {
+    await lockPlayer(client, id);
+    const before = await credits.balance(client, id);
+    const done = await credits.change(client, { userId: id, amount: body.amount, kind: 'admin', note: body.reason, actorId: req.admin.id });
+    if (!done) throw conflict(`That would take the credits below 0 (they are ${before})`);
+    await audit(client, req, 'credits', id, body.reason, { amount: body.amount, before, after: done.balance });
+    return done;
+  });
+  res.json(out);
+});
+
 /** POST /players/:id/items { item, action, reason } — item: a slug or a Marble ID */
 router.post('/players/:id/items', async (req, res) => {
   const id = assertUuid(req.params.id);

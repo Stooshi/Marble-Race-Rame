@@ -142,6 +142,16 @@ The auth endpoints are rate-limited to 20 requests per 15 minutes per IP.
 | GET | `/races/:id/results` | – | `409` until the race is finished. Each result includes `split_time_ms`, `gap_to_winner_ms` and a `comparison` (see below) |
 | GET | `/races/:id/replay` | – | Full frames, events and results for a finished race |
 
+**Credits** (Leagues part 2, branch `leagues-pro`, behind `LEAGUES_PRO`: off, 404):
+
+| Method | Path | Auth | Notes |
+|---|---|---|---|
+| GET | `/credits` | ✔ | The wallet: `balance`, `coins`, `pass` (running or waiting), `lines` (the credits history), `prices`, `packs`, `nextPassStarts` |
+| POST | `/credits/swap` | ✔ saved | `{ credits, confirm: true }`: credits into coins, 1,000 each, one way |
+| POST | `/credits/pass` | ✔ saved | `{ confirm: true }`: the 30-day Pro pass for 5 credits (queued after a running one) |
+
+Credit packs (`credits-5`, `credits-10`, `credits-25`) are bought with `POST /api/payments/checkout` (`back`: the league page to come back to). `POST /api/leagues` with `kind: 'pro'` makes a Pro League (10 tracks; 402 `not_enough_credits`).
+
 If `fill_with_bots` is `false`, starting a race with fewer than `min_marbles` entries fails with `400`.
 
 Each result's `comparison` compares the race with earlier finished races on the same track:

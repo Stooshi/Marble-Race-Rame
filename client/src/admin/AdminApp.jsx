@@ -735,6 +735,9 @@ function Player() {
   const d = useLoad(() => adminApi.player(id), [id]);
   const [tab, setTab] = useState('Coins');
   const [amount, setAmount] = useState('');
+  const [creditAmount, setCreditAmount] = useState('');
+  // (Credits: Leagues part 2. A server without them answers 404: the line stays hidden.)
+  const cr = useLoad(() => adminApi.playerCredits(id).catch(() => null), [id]);
   const [item, setItem] = useState('');
   const [itemAction, setItemAction] = useState('grant');
   const [name, setName] = useState('');
@@ -742,7 +745,7 @@ function Player() {
   if (d.error) return <Err error={d.error} />;
   if (!d.data) return <p className="adm-muted">Loading…</p>;
   const { player: p, coins, races, marbles, security, consents, payments, audit, messages = [] } = d.data;
-  const after = (text) => async (fn) => { const r = await fn(); await d.reload(); return typeof text === 'function' ? text(r) : text; };
+  const after = (text) => async (fn) => { const r = await fn(); await d.reload(); cr.reload(); return typeof text === 'function' ? text(r) : text; };
   return (
     <section className="adm-stack">
       <Link to="/admin/players" className="adm-muted">← Players</Link>
@@ -755,6 +758,7 @@ function Player() {
             <div><dt>Age group</dt><dd>{p.age_group ?? 'not asked (older account)'}</dd></div>
             <div><dt>News by email</dt><dd>{p.marketing_opt_in ? 'yes' : 'no'}</dd></div>
             <div><dt>Coins</dt><dd>{n(p.coins)} <span className="adm-muted">(earned {n(p.coins_earned)}, bought {n(p.coins_bought)})</span></dd></div>
+            {cr.data && <div><dt>Credits</dt><dd>{n(cr.data.balance)} {cr.data.pass ? <span className="adm-muted">(Pro pass until {when(cr.data.pass.ends_at)})</span> : null}</dd></div>}
             <div><dt>Races</dt><dd>{n(races.recent.length)}{races.recent.length === 50 ? '+' : ''} <span className="adm-muted">({races.last24h} in the last 24 h)</span></dd></div>
             <div><dt>Skill · streak</dt><dd>{p.skill} · {p.streak_days} days</dd></div>
             <div><dt>Joined · last login</dt><dd>{when(p.created_at)} · {when(p.last_login_at)}</dd></div>
@@ -765,6 +769,11 @@ function Player() {
           <Action title="Coins: add or take" submit="Change coins" onSubmit={(reason) => after((r) => `New balance: ${n(r.balance)}`)(() => adminApi.coins(p.id, Number(amount), reason))}>
             <label>Amount (minus to take)<input type="number" step="1" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="e.g. 500 or -200" /></label>
           </Action>
+          {cr.data && (
+            <Action title="Credits: add or take" submit="Change credits" onSubmit={(reason) => after((r) => `New credits: ${n(r.balance)}`)(() => adminApi.credits(p.id, Number(creditAmount), reason))}>
+              <label>Credits (minus to take)<input type="number" step="1" value={creditAmount} onChange={(e) => setCreditAmount(e.target.value)} placeholder="e.g. 10 or -2" /></label>
+            </Action>
+          )}
           <Action title="Marble: give or take away" submit={itemAction === 'grant' ? 'Give marble' : 'Take marble'} onSubmit={(reason) => after(itemAction === 'grant' ? 'Given (a gift copy).' : 'Taken away.')(() => adminApi.item(p.id, item, itemAction, reason))}>
             <div className="adm-row">
               <select value={itemAction} onChange={(e) => setItemAction(e.target.value)}><option value="grant">Give</option><option value="remove">Take away</option></select>

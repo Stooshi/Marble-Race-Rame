@@ -52,6 +52,8 @@ export const adminApi = {
   players: (q) => request(`/admin/players?q=${encodeURIComponent(q ?? '')}`),
   player: (id) => request(`/admin/players/${id}`),
   coins: (id, amount, reason) => request(`/admin/players/${id}/coins`, { method: 'POST', body: { amount, reason } }),
+  playerCredits: (id) => request(`/admin/players/${id}/credits`),
+  credits: (id, amount, reason) => request(`/admin/players/${id}/credits`, { method: 'POST', body: { amount, reason } }),
   item: (id, item, action, reason) => request(`/admin/players/${id}/items`, { method: 'POST', body: { item, action, reason } }),
   suspend: (id, on, reason) => request(`/admin/players/${id}/${on ? 'suspend' : 'unsuspend'}`, { method: 'POST', body: { reason } }),
   name: (id, displayName, reason) => request(`/admin/players/${id}/name`, { method: 'POST', body: { display_name: displayName, reason } }),

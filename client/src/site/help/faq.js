@@ -95,7 +95,7 @@ function seasonalAnswer() {
  * website price or Stripe (App Store 3.1.1 and 3.1.3, Google Play Payments), and the iPhone app
  * doesn't name Android or Google Play (App Store 2.3.10). See docs/08-store-rules.md.
  */
-export function buildFaq({ tracks, platform = 'web' } = {}) {
+export function buildFaq({ tracks, platform = 'web', pro = false } = {}) {
   const e = economy;
   const app = platform === 'ios' || platform === 'android';
   const ios = platform === 'ios';
@@ -358,7 +358,17 @@ export function buildFaq({ tracks, platform = 'web' } = {}) {
     ['Leagues', [
       ['How do leagues work?', [
         `A league is your own competition with friends. Pick 5 tracks and how long it runs (1 to 7 days), then share the league link. Everyone races the tracks as often as they like, or as many tries as the league allows, and the best time on each track counts. Your score is your best times added together: finish all 5 tracks to get a place on the scoreboard. The fastest total when the league ends wins. If two players have the same total, the one who set it first is ahead. Leagues are free and just for fun. League races pay coins like any race and count toward your ${n(e.dailyLimit.fullRaces)} full-pay races of the day. You need a saved account to join: guests can save their marble first, free.`,
-        '**Go pro:** Pro Leagues are coming. Race your way to the Marble Spins Major League. Date to be announced.']],
+        pro
+          ? '**Go pro:** join a Pro League and race your way to the Marble Spins Major League. Date to be announced.'
+          : '**Go pro:** Pro Leagues are coming. Race your way to the Marble Spins Major League. Date to be announced.']],
+      // Pro Leagues and credits (Leagues part 2, Help answers draft 2 with the one-way swap of 27 Oct 2026):
+      // shown only while LEAGUES_PRO is on for the player (`pro`, from the server).
+      ...(pro ? [
+        ['What is a Pro League?',
+          "A Pro League has 10 tracks and counts toward the Marble Spins Major League. Its winner gets the league marble, Racing Stripes, which only league winners can have, if at least 3 players finish every track; each win after the first adds 1 to League wins on its certificate. The player who creates a Pro League pays for it with credits: 2 credits for one Pro League, or 5 credits for a Pro pass with unlimited Pro Leagues for 30 days (it doesn't renew by itself). Everyone else joins free. Computer players race with you, but they never win a league. Date of the Major League to be announced."],
+        ['What are credits?',
+          `Credits are for Pro Leagues. 1 credit costs about $1 (${app ? `${STORE} shows the price in your currency` : 'the price is shown in your currency at checkout'}), and they're sold on the league pages in packs of 5, 10 and 25. Credits never expire. Your Wallet (tap your name) shows your coins and credits side by side. You can swap credits into coins there, 1,000 coins for each credit, but coins can't be swapped into credits, and swapped credits can't be refunded. Each purchase is paid fully in one or the other.`],
+      ] : []),
       ['What is League Night?',
         "League Night is your league racing live, together. The league's creator picks a date and time and how many races (3 to 5). At that time everyone in the league joins the league room, and you race the league's tracks one after another, all in the same races. Points for each place go on the League Night scoreboard: the most points after the last race wins the night. League Night has its own scoreboard, so it never uses up your tries in the league."],
     ]],

@@ -99,7 +99,8 @@ export function GetCreditsSheet({ wallet, prices, back, onClose, onPaid }) {
   const web = provider === 'stripe' || provider === 'test';
   const packs = wallet?.packs ?? [];
   const storePrices = useStorePrices(packs);
-  const [pick, setPick] = useState(packs.find((p) => p.popular)?.id ?? packs[0]?.id ?? null);
+  const [picked, setPick] = useState(null);
+  const pick = picked ?? packs.find((p) => p.popular)?.id ?? packs[0]?.id ?? null; // (the popular one until the player picks)
   const [withdrawal, setWithdrawal] = useState(false);
   const [terms, setTerms] = useState(false);
   const [busy, setBusy] = useState(false);

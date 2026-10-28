@@ -183,5 +183,17 @@ describe('the search', () => {
     expect(text).toContain('Pro Leagues are coming. Race your way to the Marble Spins Major League. Date to be announced.');
     for (const word of [/weekly/i, /monthly/i, /every week/i, /every month/i, /prize/i, /credit/i]) expect(text).not.toMatch(word);
     expect(text).toContain('full-pay races of the day');
+    // (Pro off: no Pro League or credits answers at all.)
+    expect(buildFaq().flatMap((sec) => sec.questions).some((q) => /credit/i.test(q.q ?? q.question ?? ''))).toBe(false);
+  });
+
+  it('Pro on: "What is a Pro League?" and "What are credits?" (draft 2 with the one-way swap), the Go pro line', () => {
+    const qs = buildFaq({ pro: true }).flatMap((sec) => sec.questions);
+    const all = JSON.stringify(qs);
+    expect(all).toContain('What is a Pro League?');
+    expect(all).toContain('What are credits?');
+    expect(all).toContain('join a Pro League and race your way to the Marble Spins Major League. Date to be announced.');
+    expect(all).toContain("1,000 coins for each credit, but coins can't be swapped into credits, and swapped credits can't be refunded");
+    for (const word of [/weekly/i, /monthly/i, /every week/i, /every month/i, /prize/i]) expect(all).not.toMatch(word);
   });
 });

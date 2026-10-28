@@ -63,7 +63,7 @@ function racingStripes([sky, mid, deep, stripe, edge, spark]) {
   const body = { type: 'radial', at: [42, 36], stops: [[sky, 0], [mid, 55], [deep, 100]] };
   const band = (from, to) => ({ type: 'linear', angle: 90, stops: [[T, from - 0.9], [alpha(edge, 0.95), from - 0.3], [alpha(stripe, 0.97), from + 0.3], [alpha(stripe, 0.97), to - 0.3], [alpha(edge, 0.95), to + 0.3], [T, to + 0.9]] });
   const sparks = [[22, 22], [76, 20], [80, 74], [24, 80], [70, 46]].map(([x, y]) => ({ type: 'radial', at: [x, y], stops: [[spark, 0, 0.8], [alpha(spark, 0.35), 2], [T, 3.2]] }));
-  const pattern = [band(40, 46), band(54, 60), ...sparks];
+  const pattern = [band(40.5, 45.5), band(54.5, 59.5), ...sparks];
   return { layers: [...pattern, body], parts: { body: [body], pattern: { layers: pattern, map: 'front', repeat: 180 } } };
 }
 
