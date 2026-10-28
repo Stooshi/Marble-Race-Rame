@@ -56,8 +56,9 @@ enc "$IN"/RACE\ START\ BEEPS*.mp3 start-beeps -20 64 96
 if [ -z "${SKIP_EFFECTS:-}" ]; then
   # The crowd cheering as the player's own marble passes a stand (all of it, 3 s), under the music.
   enc "$IN"/CROWD\ GRAND\ PRIX*.mp3 crowd-grand-prix -24 64 96
-  # The pack leaving the gate: the first 5 s, fading out from 3.5 s.
-  enc "$IN"/MARBLES\ SPEEDING\ UP*.mp3 launch -20 64 96 "atrim=0:5,afade=t=out:st=3.5:d=1.5"
+  # The pack leaving the gate: the first 5 s, fading out from 3.5 s; at -26 LUFS, half as loud as the other
+  # sounds (Moses, 28 Oct 2026: it was too loud).
+  enc "$IN"/MARBLES\ SPEEDING\ UP*.mp3 launch -26 64 96 "atrim=0:5,afade=t=out:st=3.5:d=1.5"
   # (No overtaking whoosh for now: Moses, 28 Oct 2026.)
 fi
 ls -l "$OUT"
