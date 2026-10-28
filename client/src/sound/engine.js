@@ -10,7 +10,7 @@
  *       plugin uses Web Audio.
  * - Preloaded early (prepare(), from the race page, a room, Quick race and League Night as soon as the
  *   player is there): the start beeps, the gate sound, the crowd, the ceremony song and the next two
- *   race tunes (this race's and the next race's). The tunes come from shuffled rounds of the 6, decided
+ *   race tunes (this race's and the next race's). The tunes come from shuffled rounds of all 13, decided
  *   ahead so they can be loaded: a race's tune is never the previous race's.
  * - Timing on the race clock: raceCountdown(raceId, msToGo) and raceGo(raceId, goAt) give GO as shown
  *   on this screen (a wall-clock moment). The beeps (their fourth beep exactly on GO) and the race's
@@ -28,12 +28,17 @@
 import { createWebBackend } from './webBackend';
 import { createNativeBackend } from './nativeBackend';
 
-export const RACE_TRACKS = ['tune-1', 'tune-2', 'tune-3', 'tune-4', 'tune-5', 'tune-6'];
+/** The race tunes (Moses, 28 Oct 2026: 13, RACE MUSIC 1 and 3–14; RACE MUSIC 2 is no longer in the game). */
+export const RACE_TRACKS = ['tune-1', 'tune-3', 'tune-4', 'tune-5', 'tune-6', 'tune-7', 'tune-8', 'tune-9', 'tune-10', 'tune-11', 'tune-12', 'tune-13', 'tune-14'];
 /**
  * Lengths in seconds. The tunes: their exact loop lengths (scripts/convert-audio.sh prints them; no
  * fades, the silence at both ends trimmed, cut at zero crossings), so the loop is seamless.
  */
-export const TRACK_SECONDS = { 'tune-1': 71.316542, 'tune-2': 27.4415, 'tune-3': 43.139458, 'tune-4': 37.716083, 'tune-5': 30.733125, 'tune-6': 50.521917, ceremony: 59.1 };
+export const TRACK_SECONDS = {
+  'tune-1': 71.316542, 'tune-3': 43.139458, 'tune-4': 37.716083, 'tune-5': 30.733125, 'tune-6': 50.521917,
+  'tune-7': 48.228708, 'tune-8': 27.382583, 'tune-9': 27.513625, 'tune-10': 54.095521, 'tune-11': 53.579333,
+  'tune-12': 32.22, 'tune-13': 28.548729, 'tune-14': 28.138437, ceremony: 59.1,
+};
 export const CEREMONY = 'ceremony';
 export const SOUNDS = { crowd: 'crowd-grand-prix', launch: 'launch', beeps: 'start-beeps' };
 /** In "start beeps" the four beeps start at 0.024, 1.026, 2.035 and 3.023 s: the fourth, the GO, this far in. */
@@ -61,17 +66,35 @@ function pickFormat() {
 }
 const urlOf = (name) => `${BASE}${name}.${pickFormat()}`;
 
+const log = (...a) => { try { console.info('[sound]', ...a); } catch { /* (no console) */ } };
 let backend = createWebBackend({ urlOf });
 let unlocked = false;
+let nativeFailed = false;
 
 /** The apps: play through the native audio plugin from now on (app/native.js, at start-up). */
 export function useNativeAudio(plugin) {
-  if (!plugin || backend.kind === 'native') return;
+  if (!plugin || backend.kind === 'native' || nativeFailed) return;
   backend = createNativeBackend({ plugin, durations: TRACK_SECONDS });
   backend.init();
   unlocked = true;
   backend.setLevels(levels());
+  log(`backend: native (the app's audio player), ${wantedLoads.size} sounds to load`);
   if (wantedLoads.size) for (const n of wantedLoads) backend.load(n);
+}
+
+/**
+ * The native player couldn't load what a race needs (Moses's Android test, 28 Oct 2026): the game plays
+ * through Web Audio instead, for the rest of this visit, and says so in the log.
+ */
+function fallBackToWeb(why) {
+  if (backend.kind !== 'native') return;
+  nativeFailed = true;
+  log(`native audio failed (${why}): falling back to web audio`);
+  backend = createWebBackend({ urlOf });
+  unlocked = false;
+  unlock(); // (an app's web view lets sound start without a tap; on the website the next tap does it)
+  backend.setLevels(levels());
+  for (const n of wantedLoads) backend.load(n);
 }
 export const soundBackend = () => backend.kind;
 
@@ -81,7 +104,7 @@ let lastTrack = null;
 let queue = []; // the upcoming tunes, in the order they'll play (kept loaded)
 const chosen = new Map(); // raceId → its first tune
 
-/** The next tune from shuffled rounds of the 6, never `last`. */
+/** The next tune from shuffled rounds of all the tunes (13), never `last`. */
 export function nextTrack(last, random = Math.random) {
   if (!order.length) {
     order = [...RACE_TRACKS];
@@ -119,18 +142,25 @@ export const upcoming = () => [...queue];
 
 // ── Loading ──────────────────────────────────────────────────────────────
 const wantedLoads = new Set();
-function load(name) { wantedLoads.add(name); return backend.load(name); }
+function load(name, opts) { wantedLoads.add(name); return backend.load(name, opts); }
+/**
+ * What a race's start needs (a solo race waits for these): the beeps, the gate sound and its own tune
+ * (picked now, from the queue). The rest loads after them.
+ */
+const essentials = (raceId) => [SOUNDS.beeps, SOUNDS.launch, ...(raceId ? [trackFor(raceId)] : [])];
 /** What a race needs loaded: the beeps, the gate sound, the crowd, the ceremony song and the next tunes. */
 const needed = (raceId) => [...Object.values(SOUNDS), CEREMONY, ...(raceId && chosen.has(raceId) ? [chosen.get(raceId)] : []), ...queue];
 
 /**
  * Preloads everything a race needs (the race page, a room, Quick race, League Night: as soon as the
- * player is there). Safe to call often. → a promise of { ready, missing }.
+ * player is there), the start's essentials first. Safe to call often. → a promise of { ready, missing }.
  */
 export function prepare(raceId = null) {
   fillQueue();
-  const list = needed(raceId);
-  return Promise.all(list.map(load)).then(() => ({ ready: soundMissing(raceId).length === 0, missing: soundMissing(raceId) }));
+  const first = essentials(raceId);
+  const firstDone = Promise.all(first.map((n) => load(n, { urgent: true })));
+  const rest = needed(raceId).filter((n) => !first.includes(n));
+  return Promise.all([firstDone, ...rest.map((n) => load(n))]).then(() => ({ ready: soundMissing(raceId).length === 0, missing: soundMissing(raceId) }));
 }
 /** The sounds a race needs that aren't loaded yet. */
 export function soundMissing(raceId = null) {
@@ -142,10 +172,31 @@ export function soundMissing(raceId = null) {
 export function soundReport(raceId = null) {
   return { backend: backend.kind, started: unlocked, running: isRunning(), missing: soundMissing(raceId) };
 }
-/** Resolves { ready, missing } once the race's sound is loaded, or after `maxMs` with what is missing. */
-export function whenSoundReady(raceId = null, maxMs = 12000) {
-  const done = prepare(raceId);
-  return Promise.race([done, new Promise((ok) => setTimeout(() => ok({ ready: false, missing: soundMissing(raceId) }), maxMs))]);
+/**
+ * Resolves { ready, missing } once the race's start has its sounds (essentials(): the beeps, the gate
+ * sound, its tune; the rest keeps loading), or after `maxMs` with what is missing. In the apps, essentials
+ * the native player failed to load switch the game to Web Audio (fallBackToWeb) within the same wait.
+ */
+export function whenSoundReady(raceId = null, maxMs = 6000) {
+  const t0 = Date.now();
+  prepare(raceId);
+  const first = essentials(raceId);
+  const has = () => (backend.ready() ? backend.loaded : backend.fetched);
+  const check = () => Promise.all(first.map((n) => load(n, { urgent: true })));
+  const done = check().then(async (oks) => {
+    if (backend.kind === 'native' && oks.some((ok) => !ok)) {
+      fallBackToWeb(`${first.filter((n, k) => !oks[k]).join(', ')} not loaded`);
+      await check();
+    }
+    return null;
+  });
+  const out = (timedOut) => {
+    const missing = first.filter((n) => !has()(n));
+    const r = { ready: missing.length === 0, missing };
+    log(`${raceId ? `race ${String(raceId).slice(0, 8)}: ` : ''}${r.ready ? 'sound ready' : `sound NOT ready${timedOut ? ` after ${maxMs / 1000} s` : ''}, missing ${missing.join(', ')}`} (${Date.now() - t0} ms, ${backend.kind})`);
+    return r;
+  };
+  return Promise.race([done.then(() => out(false)), new Promise((ok) => setTimeout(() => ok(out(true)), maxMs))]);
 }
 /** (Kept for the start show: resolves when the race's sound is in, at most `maxMs`.) */
 export const preloadRace = (raceId, maxMs = 2500) => whenSoundReady(raceId, maxMs).then((r) => r.ready);
@@ -204,6 +255,7 @@ function begin(raceId, goAt) {
 export function raceCountdown(raceId, msToGo) {
   const goAt = now() + msToGo;
   const fresh = !race || race.id !== raceId;
+  if (fresh || Math.abs((race?.goAt ?? 0) - goAt) > 30) log(`race ${String(raceId).slice(0, 8)}: GO in ${Math.round(msToGo)} ms (${backend.kind}; beeps ${backend.loaded(SOUNDS.beeps) ? 'loaded' : 'NOT loaded'}, tune ${trackFor(raceId)} ${backend.loaded(trackFor(raceId)) ? 'loaded' : 'NOT loaded'})`);
   const moved = begin(raceId, goAt);
   const first = trackFor(raceId);
   prepare(raceId);

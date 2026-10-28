@@ -290,3 +290,84 @@ describe('the engine: beeps and tunes on the race clock', () => {
     expect(calls.some(([k, a]) => k === 'play' && a.assetId.startsWith('tune-'))).toBe(true);
   });
 });
+
+// Moses's Android test (28 Oct 2026, build 18:50): "Loading…" for 10–12 s, then the beeps 2 s after GO
+// and the music late. The fixes: timed by when the sound is heard (an output that lags), late beeps
+// never played, the player's start-up time measured, and Web Audio instead when the native player
+// can't load what the start needs.
+describe('the Android fixes', () => {
+  beforeEach(() => { vi.useFakeTimers(); vi.setSystemTime(T0); });
+  afterEach(() => { vi.useRealTimers(); delete globalThis.window; delete globalThis.fetch; delete globalThis.Audio; });
+
+  it('web: an output that lags 2 s still plays the GO beep on GO (scheduled 2 s earlier on the sound clock)', async () => {
+    const audio = fakeAudio({ duration: 4.05 });
+    class Laggy extends audio.Ctx { constructor(o) { super(o); this.outputLatency = 2; } }
+    globalThis.window = { AudioContext: Laggy };
+    globalThis.fetch = async () => ({ ok: true, arrayBuffer: async () => new ArrayBuffer(8) });
+    const b = createWebBackend({ urlOf: (n) => `/audio/${n}.webm` });
+    b.init();
+    await b.load('start-beeps');
+    await vi.advanceTimersByTimeAsync(1);
+    const ctx = audio.made[0];
+    b.start('start-beeps', { atWall: Date.now() + 3000 });
+    expect(audio.sources.at(-1).started.when).toBeCloseTo(ctx.currentTime + 1, 6); // (heard 2 s later: at +3 s)
+    // Too late to be heard in time: in step, part-way in, by as much as it will be late when heard.
+    b.start('start-beeps', { atWall: Date.now() - 500, until: Date.now() + 5000 });
+    expect(audio.sources.at(-1).started.offset).toBeCloseTo(2.5, 2);
+    // Its time (GO + 0.9 s) passed by the time it would be heard: not played at all.
+    const n = audio.sources.length;
+    b.start('start-beeps', { atWall: Date.now() - 2000, until: Date.now() + 1000 });
+    expect(audio.sources.length).toBe(n);
+  });
+
+  it('native: beeps loaded only after their time are not played; the start-up time is measured and allowed for', async () => {
+    const calls = [];
+    let resolvePreload;
+    let position = 0;
+    const plugin = {
+      configure: async () => {},
+      preload: (a) => new Promise((ok) => { calls.push(['preload', a]); if (a.assetId === 'start-beeps') resolvePreload = ok; else ok(); }),
+      getDuration: async () => ({ duration: 4.05 }),
+      play: async (a) => { calls.push(['play', a]); },
+      loop: async () => {},
+      stop: async () => {},
+      setVolume: async () => {},
+      getCurrentTime: async () => ({ currentTime: position }),
+      addListener: () => {},
+    };
+    const b = createNativeBackend({ plugin });
+    b.load('start-beeps');
+    b.start('start-beeps', { atWall: Date.now() + 500, until: Date.now() + 1500 });
+    await vi.advanceTimersByTimeAsync(2000); // (still loading at its time and past `until`)
+    resolvePreload();
+    await vi.advanceTimersByTimeAsync(10);
+    expect(calls.filter(([k]) => k === 'play')).toEqual([]);
+    // On time: played; 0.5 s later the player is 0.3 s behind (it took 300 ms to start): allowed for next time.
+    await b.load('launch');
+    b.start('launch', { atWall: Date.now() });
+    await vi.advanceTimersByTimeAsync(1);
+    position = 0.2;
+    await vi.advanceTimersByTimeAsync(520);
+    b.start('launch', { atWall: Date.now() + 1000 });
+    await vi.advanceTimersByTimeAsync(870);
+    expect(calls.filter(([k]) => k === 'play').length).toBe(1);
+    await vi.advanceTimersByTimeAsync(15); // (started 120 ms early: 0.4 × 300 ms, smoothed)
+    expect(calls.filter(([k]) => k === 'play').length).toBe(2);
+  });
+
+  it('the engine: the native player can\'t load the start\'s sounds → Web Audio instead, within the wait', async () => {
+    const audio = fakeAudio({ duration: 40 });
+    globalThis.window = { AudioContext: audio.Ctx, addEventListener() {} };
+    globalThis.Audio = class { canPlayType() { return 'probably'; } };
+    globalThis.fetch = async () => ({ ok: true, arrayBuffer: async () => new ArrayBuffer(8) });
+    vi.resetModules();
+    const engine = await import('../src/sound/engine');
+    const broken = { configure: async () => {}, preload: async () => { throw new Error('This file can not be opened as a file descriptor'); }, addListener: () => {}, setVolume: async () => {} };
+    engine.useNativeAudio(broken);
+    expect(engine.soundBackend()).toBe('native');
+    const r = await engine.whenSoundReady('android-1', 6000);
+    expect(engine.soundBackend()).toBe('web');
+    expect(r.ready).toBe(true);
+    expect(engine.soundReport('android-1').backend).toBe('web');
+  });
+});

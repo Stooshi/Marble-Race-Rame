@@ -25,6 +25,20 @@ if (!process.argv.includes('--no-check')) {
   }
 }
 const platform = ['ios', 'android'].includes(process.argv[2]) ? process.argv[2] : '';
+
+// The apps' native plugins must be installed here first (Moses, 28 Oct 2026: an Android build had no
+// native audio, so its sound fell back to the web view's): every Capacitor plugin package.json lists,
+// at its version, in node_modules; if one isn't, `npm install` first. `cap sync` only copies what's there.
+const pkg = JSON.parse(fs.readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
+const plugins = Object.entries(pkg.dependencies ?? {}).filter(([n]) => /^@capacitor(-community)?\/|^@capgo\//.test(n) && !/^@capacitor\/(core|cli|android|ios)$/.test(n));
+const installed = (name) => { try { return JSON.parse(fs.readFileSync(new URL(`../node_modules/${name}/package.json`, import.meta.url), 'utf8')).version; } catch { return null; } };
+const wrong = plugins.filter(([n, v]) => installed(n) !== v.replace(/^[\^~]/, ''));
+if (wrong.length) {
+  console.log(`Installing the app plugins first (${wrong.map(([n, v]) => `${n} ${v}: ${installed(n) ?? 'missing'}`).join(', ')})`);
+  execSync('npm install', { stdio: 'inherit' });
+  const still = plugins.filter(([n, v]) => installed(n) !== v.replace(/^[\^~]/, ''));
+  if (still.length) { console.error(`Still not installed: ${still.map(([n]) => n).join(', ')}. Run npm install and try again.`); process.exit(1); }
+}
 const run = (cmd) => execSync(cmd, { stdio: 'inherit', env: { ...process.env, VITE_API_URL: api, VITE_PAYMENTS_TEST: 'false' } });
 console.log(`Building the apps against ${api}`);
 run('npx vite build');
@@ -43,6 +57,16 @@ for (const [name, file] of Object.entries(copies)) {
   else { stale = true; console.error(`${name}: its web files are NOT this build's (it has ${got ?? 'none'}, this build is ${built})`); }
 }
 if (stale) process.exit(1);
+
+// Every plugin is in each app's native project (Android: capacitor.settings.gradle; iPhone: CapApp-SPM/Package.swift).
+const projects = { android: new URL('../android/capacitor.settings.gradle', import.meta.url), ios: new URL('../ios/App/CapApp-SPM/Package.swift', import.meta.url) };
+for (const [name, file] of Object.entries(projects)) {
+  if (platform && platform !== name) continue;
+  const text = fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : '';
+  const missing = plugins.filter(([n]) => !text.includes(`node_modules/${n}`));
+  if (missing.length) { console.error(`${name}: these plugins are NOT in the project: ${missing.map(([n]) => n).join(', ')}`); process.exit(1); }
+  console.log(`${name}: all ${plugins.length} plugins are in the project, native audio included (${plugins.map(([n]) => n.split('/').pop()).join(', ')})`);
+}
 const here = new URL('..', import.meta.url).pathname;
 console.log(`\nDone (build ${built}). Open the projects from THIS folder, so Android Studio and Xcode run this build:`);
 console.log(`  npx cap open android   (opens ${here}android)`);

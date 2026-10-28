@@ -1,5 +1,5 @@
 // The sound (the sound reset, Moses 28 Oct 2026): no sound before a tap, the music always under the race
-// sounds, one of 6 race tunes per race (shuffled, never the previous race's), looping seamlessly to the ceremony
+// sounds, one of 13 race tunes per race (shuffled, never the previous race's), looping seamlessly to the ceremony
 // its end, the ceremony song after it (unchanged rule), the crowd under the music once per stand, and
 // small, phone-friendly files.
 import fs from 'node:fs';
@@ -37,7 +37,7 @@ describe('sound', () => {
     expect(levels({ music: 1, effects: 1, muted: true })).toEqual({ music: 0, effects: 0 });
   });
 
-  it('race tunes come in shuffled rounds of all 6, never the same one twice in a row', () => {
+  it('race tunes come in shuffled rounds of all 13, never the same one twice in a row', () => {
     _resetOrder();
     const random = seeded();
     let last = null;
@@ -101,7 +101,7 @@ describe('sound', () => {
   });
 
   it('the race tune picked at GO loops seamlessly from memory until the ceremony: no crossfade, no fades, no gap', () => {
-    expect(RACE_TRACKS).toEqual(['tune-1', 'tune-2', 'tune-3', 'tune-4', 'tune-5', 'tune-6']);
+    expect(RACE_TRACKS).toEqual(['tune-1', 'tune-3', 'tune-4', 'tune-5', 'tune-6', 'tune-7', 'tune-8', 'tune-9', 'tune-10', 'tune-11', 'tune-12', 'tune-13', 'tune-14']); // (RACE MUSIC 2 out, 7-14 in: 28 Oct 2026)
     for (const t of RACE_TRACKS) expect(TRACK_SECONDS[t], t).toBeGreaterThan(20);
     const engine = fs.readFileSync(path.resolve(__dirname, '../src/sound/engine.js'), 'utf8');
     expect(engine).toContain("race.tune.voice = backend.start(name, { atWall, bus: 'music', loop: true, loopLength: TRACK_SECONDS[name] });");
@@ -136,8 +136,8 @@ describe('sound', () => {
     const view = fs.readFileSync(path.resolve(__dirname, '../src/components/LiveRaceViewer3D.jsx'), 'utf8');
     expect(view).not.toContain("'whoosh'");
     expect(view).toContain("playSound('launch')");
-    // (A third as loud as the other sounds, Moses 28 Oct 2026: -30 LUFS, about 10 dB under the -20 of the rest.)
-    expect(fs.readFileSync(path.resolve(__dirname, '../../scripts/convert-audio.sh'), 'utf8')).toContain('launch -30 64 96');
+    // (About a fifth as loud as the other sounds, Moses 28 Oct 2026: -33.5 LUFS, about 13.5 dB under the -20 of the rest.)
+    expect(fs.readFileSync(path.resolve(__dirname, '../../scripts/convert-audio.sh'), 'utf8')).toContain('launch -33.5 64 96');
   });
 
   it('the crowd: once per stand per race, under the music, never ducking it', () => {
@@ -158,7 +158,7 @@ describe('sound', () => {
         expect(size, `${t}.${fmt}`).toBeLessThan(TRACK_SECONDS[t] * 9_000); // (under 72 kbps)
       }
       const all = [...RACE_TRACKS, CEREMONY].reduce((n, t) => n + fs.statSync(path.join(AUDIO, `${t}.${fmt}`)).size, 0);
-      expect(all, fmt).toBeLessThan(2.6e6);
+      expect(all, fmt).toBeLessThan(5e6); // (13 tunes; a race loads only its own and the next one)
       for (const s of Object.values(SOUNDS)) expect(fs.statSync(path.join(AUDIO, `${s}.${fmt}`)).size, `${s}.${fmt}`).toBeLessThan(120e3);
     }
     expect(fs.readdirSync(AUDIO).filter((f) => /^(music-|race-\d)/.test(f))).toEqual([]);

@@ -26,9 +26,9 @@ import StartLights from './StartLights';
 import { useKeepAwake } from '../app/keepAwake';
 
 // A solo race's countdown starts only once the track, the marbles, the scenery and the sound are all
-// in (Moses, 28 Oct 2026); the sound gets at most this long (a very slow connection: the race goes on,
+// in (Moses, 28 Oct 2026); the sound (its beeps, gate sound and tune) gets at most this long (a very slow phone: the race goes on,
 // each sound joining in step when it arrives).
-const SOLO_SOUND_WAIT_MS = 12000;
+const SOLO_SOUND_WAIT_MS = 6000;
 const SOUND_RECHECK_MS = 2500;
 const HOLD_FROM_MS = 250;     // the view held back when it gets ready later than this after the countdown began…
 const JOIN_LIVE_AFTER_MS = 8000; // …unless the race is already this far past GO: then it joins live

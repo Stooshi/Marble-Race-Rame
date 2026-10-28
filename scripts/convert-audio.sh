@@ -38,7 +38,8 @@ TRIM="silenceremove=start_periods=1:start_threshold=-60dB:start_silence=0,arever
 dur() { ffprobe -v error -show_entries format=duration -of csv=p=0 "$1"; }
 # Then cut at zero crossings (scripts/loop-cut.py, needs python3 and numpy), so the loop point never clicks.
 TMP=$(mktemp -d)
-for i in 1 2 3 4 5 6; do
+# (RACE MUSIC 2 is no longer in the game: Moses, 28 Oct 2026. Its original stays in music-inbox.)
+for i in 1 3 4 5 6 7 8 9 10 11 12 13 14; do
   f=$(ls "$IN"/RACE\ MUSIC\ $i\ -*.mp3)
   ffmpeg -v error -y -i "$f" -vn -af "$TRIM" -ac 2 -ar 48000 -f f32le - | python3 scripts/loop-cut.py > "$TMP/t.raw"
   ffmpeg -v error -y -f f32le -ar 48000 -ac 2 -i "$TMP/t.raw" -c:a flac "$TMP/tune-$i.flac"
@@ -56,9 +57,9 @@ enc "$IN"/RACE\ START\ BEEPS*.mp3 start-beeps -20 64 96
 if [ -z "${SKIP_EFFECTS:-}" ]; then
   # The crowd cheering as the player's own marble passes a stand (all of it, 3 s), under the music.
   enc "$IN"/CROWD\ GRAND\ PRIX*.mp3 crowd-grand-prix -24 64 96
-  # The pack leaving the gate: the first 5 s, fading out from 3.5 s; at -30 LUFS, a third as loud as the other
-  # sounds, about -10 dB (Moses, 28 Oct 2026: -6 dB, then 35% less again).
-  enc "$IN"/MARBLES\ SPEEDING\ UP*.mp3 launch -30 64 96 "atrim=0:5,afade=t=out:st=3.5:d=1.5"
+  # The pack leaving the gate: the first 5 s, fading out from 3.5 s; at -33.5 LUFS, about a fifth as loud as
+  # the other sounds, about -13.5 dB (Moses, 28 Oct 2026: -6 dB, then 35% less, then 35% less again).
+  enc "$IN"/MARBLES\ SPEEDING\ UP*.mp3 launch -33.5 64 96 "atrim=0:5,afade=t=out:st=3.5:d=1.5"
   # (No overtaking whoosh for now: Moses, 28 Oct 2026.)
 fi
 ls -l "$OUT"

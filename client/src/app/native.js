@@ -44,7 +44,7 @@ export function preferAmbientAudio(nav = typeof navigator !== 'undefined' ? navi
 export async function startNativeAudio(sound, { available = null, load = () => import('@capacitor-community/native-audio') } = {}) {
   try {
     const has = available ?? (await import('@capacitor/core')).Capacitor.isPluginAvailable('NativeAudio');
-    if (!has) return false;
+    if (!has) { console.warn('[sound] the NativeAudio plugin is NOT in this app build: web audio instead (run npm install, then npm run app:sync)'); return false; }
     // (Destructured here: a plugin proxy answers `then`, so it is never what a promise resolves to.)
     const { NativeAudio } = await load();
     sound.useNativeAudio(NativeAudio);

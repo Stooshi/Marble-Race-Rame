@@ -7,10 +7,19 @@
  *   - Safari starts the sound only on a tap (unlock()), and may suspend it (another app's sound, the
  *     tab hidden): it is resumed at the next chance, and the voices restart where the race is by then;
  *   - decoded at 32 kHz where the browser lets us choose (half the memory of 48 kHz, nothing audible
- *     lost from these files), so a phone keeps the tunes in memory comfortably.
+ *     lost from these files), so a phone keeps the tunes in memory comfortably;
+ *   - one file decoded at a time, the race's own first (urgent: the beeps, the gate sound, its tune), so a
+ *     slow phone has what the start needs soonest (Moses's Android test, 28 Oct 2026);
+ *   - timed by when the sound is HEARD, not when it is computed: the output's own timestamp
+ *     (getOutputTimestamp, else outputLatency), so a phone whose audio output lags (an Android WebView:
+ *     seconds, at first) still plays the GO beep on GO; music checked every 2 s and put back in step if
+ *     it drifts.
+ * Every step is logged as "[sound] …" (Logcat: Capacitor/Console in the apps).
  */
 
 const RATE = 32000;
+const DRIFT_S = 0.06; // (a tune more than this out of step is put back)
+const log = (...a) => { try { console.info('[sound]', ...a); } catch { /* (no console) */ } };
 
 export function createWebBackend({ urlOf, now = () => Date.now() } = {}) {
   let ctx = null;
@@ -37,7 +46,22 @@ export function createWebBackend({ urlOf, now = () => Date.now() } = {}) {
     }
     return regions.get(buf);
   }
-  const ctxAt = (wall) => ctx.currentTime + Math.max(0, (wall - now()) / 1000);
+  /**
+   * The sound clock as heard: a sound-clock time and the wall-clock moment it reaches the speaker. From
+   * the output's own timestamp where the browser has it, else the context's stated output latency.
+   */
+  function heard() {
+    const ts = ctx.getOutputTimestamp?.();
+    const perf = typeof performance !== 'undefined' ? performance : null;
+    if (ts && ts.contextTime > 0 && ts.performanceTime > 0 && perf) return { ctx: ts.contextTime, wall: now() - (perf.now() - ts.performanceTime) };
+    const lat = (Number(ctx.outputLatency) || 0) + (Number(ctx.baseLatency) || 0);
+    return { ctx: ctx.currentTime, wall: now() + lat * 1000 };
+  }
+  /** The sound-clock time at which a wall-clock moment is heard (never before now). */
+  const rawCtxAt = (wall) => { const h = heard(); return h.ctx + (wall - h.wall) / 1000; };
+  const ctxAt = (wall) => Math.max(ctx.currentTime, rawCtxAt(wall));
+  /** When something started at sound-clock time `t` is heard (wall clock). */
+  const wallAt = (t) => { const h = heard(); return h.wall + (t - h.ctx) * 1000; };
 
   /** (Re)starts a voice's source where it should be by now. */
   function startSource(v) {
@@ -45,10 +69,16 @@ export function createWebBackend({ urlOf, now = () => Date.now() } = {}) {
     if (!buf || typeof buf.then === 'function' || !ctx || ctx.state !== 'running' || heldBack) return;
     try { v.src?.stop(); } catch { /* (done) */ }
     v.src = null;
-    const lateS = Math.max(0, (now() - v.atWall) / 1000);
+    // On time: at the sound-clock time `atWall` is heard. Late (the sound came late, the output lags):
+    // at once, part-way in, by as much as it will be late when heard.
+    let at = rawCtxAt(v.atWall);
+    const soonest = ctx.currentTime;
+    const lateS = at < soonest ? Math.max(0, (wallAt(soonest) - v.atWall) / 1000) : 0;
+    if (at < soonest) at = soonest;
     let offset = v.offset + lateS;
-    if (!v.loop && offset >= buf.duration - 0.02) { voices.delete(v); return; } // (over by now)
-    if (v.until && now() >= v.until) { voices.delete(v); return; }
+    if (!v.loop && offset >= buf.duration - 0.02) { voices.delete(v); log(`${v.name}: over by now, not played (${Math.round(lateS * 1000)} ms late)`); return; }
+    if (v.until && wallAt(at) >= v.until) { voices.delete(v); log(`${v.name}: its time has passed, not played (${Math.round(lateS * 1000)} ms late)`); return; }
+    if (lateS > 0.04) log(`${v.name}: starts ${Math.round(lateS * 1000)} ms late, ${offset.toFixed(2)} s in (in step)`);
     const src = ctx.createBufferSource();
     src.buffer = buf;
     src.loop = v.loop;
@@ -61,15 +91,50 @@ export function createWebBackend({ urlOf, now = () => Date.now() } = {}) {
       offset = from + (offset % (to - from)); // (the music's own time, in the loop: where the race is)
     }
     src.connect(v.gain);
-    const at = lateS > 0 ? ctx.currentTime : ctxAt(v.atWall);
     src.start(at, offset);
     src.onended = () => { if (v.src === src && !v.loop) voices.delete(v); };
     v.src = src;
-    v.startedAt = { ctx: at, wall: lateS > 0 ? now() : v.atWall, offset };
+    v.startedAt = { ctx: at, since: lateS }; // (sound-clock time `at` is `since` s after atWall, as heard)
     if (v.until) { try { src.stop(ctxAt(v.until)); } catch { /* (fine) */ } }
   }
 
   function resync() { for (const v of voices) startSource(v); }
+
+  /** Every 2 s: a looping tune whose start, as heard now, has moved more than DRIFT_S is put back in step. */
+  let drift = null;
+  function watchDrift() {
+    if (drift || typeof setInterval === 'undefined') return;
+    drift = setInterval(() => {
+      if (!ctx || ctx.state !== 'running' || heldBack) return;
+      for (const v of voices) {
+        if (!v.loop || !v.src || !v.startedAt) continue;
+        const off = v.startedAt.ctx - (rawCtxAt(v.atWall) + v.startedAt.since); // (how far its start is off, as heard now)
+        if (Math.abs(off) > DRIFT_S) { log(`${v.name}: ${Math.round(off * 1000)} ms out of step, put back`); startSource(v); }
+      }
+    }, 2000);
+    drift.unref?.();
+  }
+
+  // One file decoded at a time, urgent ones first.
+  const waiting = [];
+  let decoding = false;
+  function nextDecode() {
+    if (decoding || !waiting.length) return;
+    decoding = true;
+    const job = waiting.shift();
+    const t0 = now();
+    job.run().then((buf) => {
+      log(`${job.name}: ${buf ? `decoded in ${now() - t0} ms` : 'could not be decoded'}`);
+      job.done(buf);
+    }).finally(() => { decoding = false; nextDecode(); });
+  }
+  function decode(name, b, urgent) {
+    return new Promise((done) => {
+      const job = { name, run: () => new Promise((ok, no) => ctx.decodeAudioData(b.slice(0), ok, no)).catch((e) => { log(`${name}: decode failed (${e?.message ?? e})`); return null; }), done };
+      if (urgent) waiting.unshift(job); else waiting.push(job);
+      nextDecode();
+    });
+  }
 
   const api = {
     kind: 'web',
@@ -79,6 +144,8 @@ export function createWebBackend({ urlOf, now = () => Date.now() } = {}) {
       const AC = typeof window !== 'undefined' && (window.AudioContext || window.webkitAudioContext);
       if (!AC) return false;
       try { ctx = new AC({ sampleRate: RATE, latencyHint: 'interactive' }); } catch { ctx = new AC(); }
+      log(`web audio started: ${ctx.sampleRate} Hz, ${ctx.state}, output latency ${Math.round(((Number(ctx.outputLatency) || 0) + (Number(ctx.baseLatency) || 0)) * 1000)} ms`);
+      watchDrift();
       const master = ctx.createGain();
       musicBus = ctx.createGain();
       duckBus = ctx.createGain();
@@ -90,7 +157,7 @@ export function createWebBackend({ urlOf, now = () => Date.now() } = {}) {
       fxBus.gain.value = levels.effects;
       // Safari suspends the sound now and then (a call, another app's sound): resumed at the next
       // chance, the voices pick up in step with the race.
-      ctx.onstatechange = () => { if (ctx.state === 'running') resync(); };
+      ctx.onstatechange = () => { log(`web audio ${ctx.state}`); if (ctx.state === 'running') resync(); };
       ctx.resume?.().catch(() => {});
       for (const name of [...bytes.keys()]) api.load(name); // (fetched before the tap: decoded now)
       return true;
@@ -99,19 +166,25 @@ export function createWebBackend({ urlOf, now = () => Date.now() } = {}) {
     running: () => ctx?.state === 'running',
     /** Keeps the sound running: resumed whenever it isn't (called on taps and when the page shows again). */
     wake() { if (ctx && ctx.state !== 'running' && ctx.state !== 'closed' && !heldBack) ctx.resume().catch(() => {}); },
-    load(name) {
+    load(name, { urgent = false } = {}) {
       // (The file is fetched at once, even before the first tap; it is decoded once the sound has started.)
       if (!bytes.has(name)) {
+        const t0 = now();
         bytes.set(name, fetch(urlOf(name))
           .then((r) => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.arrayBuffer(); })
-          .then((b) => { got.add(name); return b; })
-          .catch(() => { bytes.delete(name); return null; }));
+          .then((b) => { got.add(name); log(`${name}: fetched in ${now() - t0} ms (${Math.round(b.byteLength / 1000)} KB)`); return b; })
+          .catch((e) => { bytes.delete(name); log(`${name}: fetch failed (${e?.message ?? e})`); return null; }));
       }
       if (!ctx) return bytes.get(name).then((b) => Boolean(b));
       const had = buffers.get(name);
-      if (had) return Promise.resolve(had).then(Boolean);
+      if (had) {
+        // (Waiting to be decoded and wanted now: to the front of the line.)
+        const k = urgent ? waiting.findIndex((j) => j.name === name) : -1;
+        if (k > 0) waiting.unshift(...waiting.splice(k, 1));
+        return Promise.resolve(had).then(Boolean);
+      }
       const p = bytes.get(name)
-        .then((b) => (b ? new Promise((ok, no) => ctx.decodeAudioData(b.slice(0), ok, no)) : null))
+        .then((b) => (b ? decode(name, b, urgent) : null))
         .then((buf) => {
           if (!buf) { buffers.delete(name); return null; }
           buffers.set(name, buf);

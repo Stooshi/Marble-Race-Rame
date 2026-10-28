@@ -371,6 +371,15 @@ The apps play the sound through `@capacitor-community/native-audio` (a native pl
 6. Safari: play a video in another tab mid-race, come back and tap: the sound resumes.
 7. Back office → **Race readiness**: your test races are there (platform, missing, how late). Railway logs show `[readiness] race … NOT READY …` for each screen that wasn't ready.
 
+**Android: reading the sound log in Logcat** (28 Oct 2026). `npm run app:sync` prints `native audio included` (it runs `npm install` first if a plugin is missing; without it the app falls back to the slower Web Audio). In Android Studio → Logcat, filter `package:mine message:"[sound]"` (the lines come from tag `Capacitor/Console`). Expect, in a solo race:
+- `[sound] backend: native` (not `backend: web`; `native audio plugin missing` means the build lacks it);
+- `[sound] start-beeps: loaded in N ms`, `launch: …`, `tune-N: …` (each well under a second);
+- `[sound] sound ready in N ms` (or `NOT ready after 6000 ms: …`, naming what's missing);
+- `[sound] race …: GO in N ms (native, beeps loaded, tune …)`;
+- `[sound] the player took N ms to start` (the start-up time allowed for);
+- trouble shows as `skipped … (late)`, `load … timed out` or `falling back to web audio: …`.
+To check the plugin itself registered: filter `tag:Capacitor message:NativeAudio`. Back office → **Race readiness** shows the Sound column (native/web) per race.
+
 ## The season-start website rebuild (1 Dec 2026, automatic)
 
 The website learns of the holiday tracks only at a build (their pages, the sitemap, the track count: 110 live tracks in ten series today, "110+ tracks"; with the 31 holiday tracks from 1 Dec, "140+ tracks"; 27 Oct 2026); the server shows them from 1 Dec 00:00 by date. The GitHub Actions workflow **"Season start: rebuild the website"** (`.github/workflows/season-start-rebuild.yml`) starts that build at **1 Dec 2026 00:05 Swedish time** (spares at 00:35 and 01:15, which do nothing once the holiday tracks are on the site), waits for it, and checks the sitemap has `/tracks/tromso-aurora-grand-prix`. If anything fails, the run fails and GitHub emails the repository's owner; then press Redeploy in Vercel by hand. Nobody has to be awake for it.
