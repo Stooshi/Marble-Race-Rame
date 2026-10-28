@@ -23,6 +23,8 @@ const economy = require('../economy');
 const seasons = require('../seasons');
 const { HttpError, badRequest } = require('../utils/httpError');
 
+const creditsText = require('../../client/src/shared/payments/credits.json').description;
+
 let injected = null; // (tests: a fake Stripe client)
 let real = null;
 
@@ -54,10 +56,12 @@ function mode() {
  * A Stripe Checkout page for a pending payment → { kind: 'redirect', url }. `pack`: a coin pack, or a
  * season pass (src/payments passProduct: { id, name, amountCents, currency, seasonKey }).
  */
-async function start(payment, { pack, email, locale, siteUrl }) {
+async function start(payment, { pack, email, locale, siteUrl, back = null }) {
   const site = siteUrl || config.stripe.siteUrl;
   const pass = Boolean(pack.seasonKey);
-  const what = pass ? pack.name : `${pack.coins} coins`;
+  // A credit pack (Leagues part 2): back to the league page it was bought on (`back`, checked by src/payments).
+  const credits = pack.credits > 0;
+  const what = pass ? pack.name : credits ? `${pack.credits} credits` : `${pack.coins} coins`;
   // The pass's pre-sale (before the season starts): "Activates 1 December", a full refund until then.
   const preSale = pass && seasons.stateOf(pack.season) === 'before';
   const activates = pass ? seasons.activatesText(pack.season) : null;
@@ -71,8 +75,8 @@ async function start(payment, { pack, email, locale, siteUrl }) {
         unit_amount: pack.amountCents,
         tax_behavior: 'inclusive', // (the price already includes VAT)
         product_data: {
-          name: pass ? `Marble Spins ${pack.name}` : `${pack.coins.toLocaleString('en-US')} Marble Spins coins`,
-          description: `${pass
+          name: pass ? `Marble Spins ${pack.name}` : credits ? `${pack.credits} Marble Spins credits` : `${pack.coins.toLocaleString('en-US')} Marble Spins coins`,
+          description: `${credits ? `${creditsText} Delivered right away; no cash value.` : pass
             ? `${pack.season.name}: every holiday track and the Holiday Track of the Day bonus until ${new Intl.DateTimeFormat('en-GB', { timeZone: pack.season.time_zone, day: 'numeric', month: 'long', year: 'numeric' }).format(new Date(pack.season.free_from))}, and the season marble. One payment, not a subscription. ${preSale ? `Activates ${activates} at 00:00 Swedish time, with a full refund on request until then` : 'Delivered right away'}; no cash value.`
             : 'Coins for the Marble Spins shop: looks only, never speed. Delivered right away; no cash value.'} Sold by ${company.name} (org.nr ${company.orgNo}, VAT ${company.vatNo}). Questions: ${company.supportEmail}`,
           tax_code: config.stripe.taxCode,
@@ -87,9 +91,11 @@ async function start(payment, { pack, email, locale, siteUrl }) {
       description: `Marble Spins ${payment.order_no}: ${what}`,
       metadata: { payment_id: payment.id, order_no: payment.order_no, product_id: pack.id },
     },
-    success_url: `${site}/purchases?paid=${encodeURIComponent(payment.order_no)}&session_id={CHECKOUT_SESSION_ID}`,
-    cancel_url: pass ? `${site}/pass?cancelled=1` : `${site}/checkout?pack=${encodeURIComponent(pack.id)}&cancelled=1`,
-    custom_text: { submit: { message: pass ? (preSale ? consent.passPreSaleStripeSubmit.replace('{activates}', activates) : consent.passStripeSubmit) : consent.stripeSubmit } },
+    success_url: credits
+      ? `${site}${back ?? '/leagues'}?paid=${encodeURIComponent(payment.order_no)}&session_id={CHECKOUT_SESSION_ID}`
+      : `${site}/purchases?paid=${encodeURIComponent(payment.order_no)}&session_id={CHECKOUT_SESSION_ID}`,
+    cancel_url: credits ? `${site}${back ?? '/leagues'}?credits=cancelled` : pass ? `${site}/pass?cancelled=1` : `${site}/checkout?pack=${encodeURIComponent(pack.id)}&cancelled=1`,
+    custom_text: { submit: { message: credits ? consent.creditsStripeSubmit : pass ? (preSale ? consent.passPreSaleStripeSubmit.replace('{activates}', activates) : consent.passStripeSubmit) : consent.stripeSubmit } },
     locale: locale || 'auto',
     expires_at: Math.floor(Date.now() / 1000) + 60 * 60, // (an hour, then the order lapses)
   };
@@ -184,6 +190,16 @@ async function revoke(db, { payment, refundId, amountCents, adminId = null, reas
     `UPDATE payments SET refunded_cents = $2, refunded_at = now(), status = CASE WHEN $3 THEN 'refunded' ELSE status END WHERE id = $1`,
     [payment.id, refundedAfter, full],
   );
+  // A credit pack (Leagues part 2): its credits taken back as far as the refund goes (all of them on a full
+  // refund or a dispute, else in proportion), through src/credits takeBack: what's left of them, then the
+  // coins any swapped credits became; credits spent on Pro stay spent and are recorded as short.
+  let creditsBack = null;
+  if (payment.credit_amount > 0) {
+    const { rows: [{ given }] } = await db.query('SELECT COALESCE(sum(credits_removed), 0)::int AS given FROM payment_refunds WHERE payment_id = $1', [payment.id]);
+    const owed = Math.max(0, (full || action === 'dispute' ? payment.credit_amount : Math.min(payment.credit_amount, Math.round((payment.credit_amount * refundedAfter) / paidCents))) - given);
+    creditsBack = await require('../credits').takeBack(db, { userId: payment.user_id, paymentId: payment.id, credits: owed, note: `${payment.order_no ?? payment.product_id} refunded` });
+    await db.query('UPDATE payment_refunds SET credits_removed = $2 WHERE id = $1', [refundId, owed]);
+  }
   const passRevoked = payment.season_key && (full || action === 'dispute')
     ? await seasons.revokeForPayment(db, payment, action === 'dispute' ? 'chargeback' : 'refunded')
     : false;
@@ -193,9 +209,10 @@ async function revoke(db, { payment, refundId, amountCents, adminId = null, reas
       order_no: payment.order_no, payment_id: payment.id, refund_id: refundId, amount_cents: amountCents,
       currency: payment.charged_currency ?? payment.currency, coins_removed: removed, coins_short: short, full,
       ...(payment.season_key && { season: payment.season_key, pass_revoked: passRevoked }),
+      ...(creditsBack && { credits: creditsBack }),
     })],
   );
-  return { removed, short, full, ...(payment.season_key && { passRevoked }) };
+  return { removed, short, full, ...(payment.season_key && { passRevoked }), ...(creditsBack && { credits: creditsBack }) };
 }
 
 async function paymentForIntent(db, intentId) {

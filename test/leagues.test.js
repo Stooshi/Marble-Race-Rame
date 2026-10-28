@@ -40,10 +40,10 @@ test('the rules in the code: 5 tracks, 1-7 days, unlimited/3/5/10 tries, 5 open 
   assert.match(races, /roomHostId: track\?\.room_host_id \?\? track\?\.league_creator \?\? null/);
   const lib = fs.readFileSync(path.join(__dirname, '../src/leagues/index.js'), 'utf8');
   assert.match(lib, /for \(const t of tracks\) await seasons\.assertTrackAccess\(db, t, \{ userId \}\);/);
-  // Part 1 never writes league_results (Pro Leagues only, part 2), and nothing sets feeds_major.
-  const code = ['../src/leagues/index.js', '../src/routes/leagues.js'].map((f) => fs.readFileSync(path.join(__dirname, f), 'utf8')).join('\n');
-  assert.doesNotMatch(code, /INSERT INTO league_results/);
-  assert.doesNotMatch(code, /feeds_major\s*=\s*true|'pro'\s*,\s*\$/);
+  // A League never writes league_results nor feeds the Major League: only a Pro League's end does
+  // (part 2: test/leaguesPro.test.js).
+  assert.match(lib, /if \(league\.kind === 'pro'\) await endPro\(client/);
+  assert.equal((lib.match(/INSERT INTO league_results/g) ?? []).length, 1);
 });
 
 test('a League from start to end: create, join, tries, best times, the total, the tie-break, frozen at the end', { skip: !DB }, async () => {

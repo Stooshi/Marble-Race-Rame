@@ -154,6 +154,7 @@ async function afterNightRace(client, room, finishedRaceId, now = new Date()) {
   if (!k || k >= night.races) {
     await client.query("UPDATE league_nights SET status = 'done', ended_at = now() WHERE id = $1", [night.id]);
     await client.query("UPDATE rooms SET status = 'closed' WHERE id = $1", [room.id]);
+    await writeResults(client, night.id);
     return null;
   }
   const { rows: [league] } = await client.query('SELECT * FROM leagues WHERE id = $1', [night.league_id]);
@@ -172,6 +173,33 @@ async function nobodyCame(db, nightId) {
     [nightId],
   );
   await db.query("UPDATE rooms SET status = 'closed' WHERE league_night_id = $1", [nightId]);
+  await writeResults(db, nightId);
+}
+
+/**
+ * A Pro League's League Night is over (done): one league_results row per player who raced in it
+ * (kind 'night'), with its place and points, written once. Never for a League's night.
+ */
+async function writeResults(db, nightId) {
+  const { rows: [night] } = await db.query("SELECT * FROM league_nights WHERE id = $1 AND status = 'done'", [nightId]);
+  if (!night) return 0;
+  const { rows: [league] } = await db.query('SELECT * FROM leagues WHERE id = $1', [night.league_id]);
+  if (league?.kind !== 'pro') return 0;
+  const { standings: list } = await standings(db, night, league);
+  const { rows: [{ month, from }] } = await db.query(
+    `SELECT date_trunc('month', $1::timestamptz AT TIME ZONE 'Europe/Stockholm')::date AS month,
+            date_trunc('month', $1::timestamptz AT TIME ZONE 'Europe/Stockholm') AT TIME ZONE 'Europe/Stockholm' AS "from"`,
+    [night.ended_at ?? new Date()],
+  );
+  const { countryAt } = require('../country');
+  for (const s of list) {
+    await db.query(
+      `INSERT INTO league_results (league_id, user_id, kind, night_id, month, place, ranked_humans, points, tracks_finished, counted_runs, racing_days, country)
+       VALUES ($1, $2, 'night', $3, $4, $5, $6, $7, $8, $8, 1, $9) ON CONFLICT DO NOTHING`,
+      [league.id, s.user_id, night.id, month, s.place, list.length, s.points, s.places.filter((p) => p !== null).length, await countryAt(db, s.user_id, from)],
+    );
+  }
+  return list.length;
 }
 
 /**
@@ -217,5 +245,5 @@ async function standings(db, night, league) {
 
 module.exports = {
   RACES, POINTS, OPEN_BEFORE_MIN, GAP_S, RACE_ROOM_MIN, SOONEST_MIN, NOW_LEAD_S,
-  current, schedule, cancelNight, isNightMember, openDue, afterNightRace, nobodyCame, standings, trackFor,
+  current, schedule, cancelNight, isNightMember, openDue, afterNightRace, nobodyCame, standings, trackFor, writeResults,
 };

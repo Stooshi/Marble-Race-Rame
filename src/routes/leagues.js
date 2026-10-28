@@ -6,7 +6,9 @@
  *
  *   GET    /api/leagues/status              { enabled } for this player (the site shows leagues only then)
  *   GET    /api/leagues/mine                my open and recently ended leagues, my place and tracks done
- *   POST   /api/leagues                     { name, track_ids[5], days 1-7, attempts null|3|5|10 } create
+ *   POST   /api/leagues                     { name, track_ids[5], days 1-7, attempts null|3|5|10 } create;
+ *                                           { kind: 'pro', track_ids[10], … } a Pro League (behind LEAGUES_PRO:
+ *                                           2 credits, or the Pro pass; 402 not_enough_credits)
  *   GET    /api/leagues/:code               the league: tracks, scoreboard, my bests and tries left
  *   PATCH  /api/leagues/:code               creator: { name } rename it (the player-name filter)
  *   POST   /api/leagues/:code/join          join (by its link or code)
@@ -15,7 +17,8 @@
  *   DELETE /api/leagues/:code/members/:id   creator: remove a player (they can't come back)
  *   POST   /api/leagues/:code/race          { track_id, marble_id? } a league race on one of its tracks
  *                                           (a solo race, house marbles fill the field; the page starts it)
- *   POST   /api/leagues/:code/again         creator: Run again (a new league with the same settings)
+ *   POST   /api/leagues/:code/again         creator: Run again (a new league with the same settings; a Pro
+ *                                           League pays again)
  *   POST   /api/leagues/:code/night         creator: { starts_at | now: true, races 3-5 } set (or move) League Night, or start it now
  *   DELETE /api/leagues/:code/night         creator: call it off (before its first race has started)
  */
@@ -24,6 +27,8 @@ const config = require('../config');
 const db = require('../db');
 const leagues = require('../leagues');
 const night = require('../leagues/night');
+const pro = require('../leagues/pro');
+const credits = require('../credits');
 const { optionalAuth, requireAuth } = require('../middleware/auth');
 const { validate } = require('../utils/validate');
 const { badRequest, conflict, forbidden, notFound } = require('../utils/httpError');
@@ -50,7 +55,13 @@ const addLimiter = perPlayer(10 * 60 * 1000, 40, 'That\'s a lot of players added
 const open = (req, _res, next) => { leagues.assertOpen(req.user); next(); };
 
 router.get('/status', optionalAuth, (req, res) => {
-  res.json({ enabled: leagues.openFor(req.user), tracks: leagues.TRACKS, days: leagues.DAYS, attempts: leagues.CAPS });
+  // (pro: Pro Leagues and credits open to this player, LEAGUES_PRO. Off, nothing about them shows.)
+  const proOn = pro.openFor(req.user);
+  res.json({
+    enabled: leagues.openFor(req.user), tracks: leagues.TRACKS, days: leagues.DAYS, attempts: leagues.CAPS,
+    pro: proOn,
+    ...(proOn && { proTracks: leagues.PRO_TRACKS, minRanked: leagues.MIN_RANKED, prices: { proLeague: credits.PRO_LEAGUE, proPass: credits.PRO_PASS, passDays: credits.PASS_DAYS, swapRate: credits.SWAP_RATE } }),
+  });
 });
 
 const TRACK_SQL = `SELECT t.id, t.slug, t.name, t.difficulty, t.season_key FROM tracks t WHERE t.id = ANY($1::uuid[])`;
@@ -71,11 +82,29 @@ async function view(league, userId) {
     room_code: n.status === 'open' ? n.room_code : null,
     ...(await night.standings(db, n, league)),
   };
+  // A Pro League: how many have finished every track (the winner's marble needs MIN_RANKED), and at its
+  // end who won the marble, or why nobody did.
+  let winner = null;
+  if (league.kind === 'pro' && league.winner_id) {
+    const { rows: [w] } = await db.query('SELECT id, username, display_name FROM users WHERE id = $1', [league.winner_id]);
+    const { rows: [c] } = await db.query(
+      "SELECT c.marble_code, (SELECT COUNT(*)::int FROM leagues WHERE winner_id = $1 AND kind = 'pro') AS wins FROM user_collection c WHERE c.user_id = $1 AND c.item_slug = 'racing-stripes-pro'",
+      [league.winner_id],
+    );
+    winner = w && { id: w.id, name: shownName(w), marble_code: c?.marble_code ?? null, league_wins: c?.wins ?? null };
+  }
   return {
     night: nightView,
     league: {
       code: league.code,
       kind: league.kind,
+      ...(league.kind === 'pro' && {
+        paid_with: league.created_by === userId ? league.paid_with : undefined,
+        ranked: board.filter((r) => r.total_ms !== null).length,
+        min_ranked: leagues.MIN_RANKED,
+        winner,
+        no_winner_reason: league.no_winner_reason,
+      }),
       name: league.name,
       status: league.status,
       starts_at: league.starts_at,
@@ -122,8 +151,17 @@ router.get('/mine', requireAuth, open, async (req, res) => {
   res.json({ leagues: out, serverNow: new Date().toISOString() });
 });
 
+/** A Pro League only while Pro is open to the player (LEAGUES_PRO). */
+function kindFor(req, kind) {
+  if (kind === undefined || kind === null || kind === 'league') return 'league';
+  if (kind !== 'pro') throw badRequest('A league is a League or a Pro League');
+  if (!pro.openFor(req.user)) throw notFound('Pro Leagues are coming');
+  return 'pro';
+}
+
 router.post('/', requireAuth, open, createLimiter, async (req, res) => {
-  const league = await db.withTransaction((client) => leagues.create(client, req.user.id, req.body ?? {}));
+  const kind = kindFor(req, req.body?.kind);
+  const league = await db.withTransaction((client) => leagues.create(client, req.user.id, req.body ?? {}, { kind }));
   res.status(201).json(await view(league, req.user.id));
 });
 
@@ -239,7 +277,8 @@ router.post('/:code/again', requireAuth, open, createLimiter, async (req, res) =
     const old = await leagues.byCode(client, req.params.code);
     if (old.created_by !== req.user.id) throw forbidden('Only the league\'s creator can run it again');
     const days = Math.max(leagues.DAYS[0], Math.min(leagues.DAYS[1], Math.round((new Date(old.ends_at) - new Date(old.starts_at)) / 86_400_000)));
-    const fresh = await leagues.create(client, req.user.id, { name: old.name, track_ids: old.track_ids, days, attempts: old.attempt_cap }, { againOf: old.id });
+    // (A Pro League runs again as a Pro League, paid again: 2 credits or the Pro pass.)
+    const fresh = await leagues.create(client, req.user.id, { name: old.name, track_ids: old.track_ids, days, attempts: old.attempt_cap }, { againOf: old.id, kind: old.kind === 'pro' ? kindFor(req, 'pro') : 'league' });
     // (The old league's members are in the new one too: Run again keeps the group together.)
     await client.query(
       `INSERT INTO league_members (league_id, user_id)

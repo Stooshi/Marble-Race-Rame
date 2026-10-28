@@ -81,6 +81,13 @@
    "price": {
     "coins": null
    }
+  },
+  "league": {
+   "label": "League marble",
+   "colour": "#FFC94A",
+   "price": {
+    "coins": null
+   }
   }
  },
  "designs": [
@@ -1591,6 +1598,60 @@
     }
    ],
    "collection": "HS"
+  },
+  {
+   "key": "racing-stripes",
+   "no": 1,
+   "name": "Racing Stripes",
+   "rarity": "league",
+   "material": "racing-stripes",
+   "story": "The league marble: only Pro League winners ever get one, numbered in the order they were won. Each win after the first adds 1 to League wins on its certificate.",
+   "inRaces": "Midnight-blue glass with two white racing stripes edged in gold, as on a race car, and a few gold sparks.",
+   "slots": [
+    "sky",
+    "mid",
+    "deep",
+    "stripe",
+    "edge",
+    "spark"
+   ],
+   "shades": [
+    {
+     "key": "pro",
+     "no": 1,
+     "name": "Racing Stripes",
+     "description": "Midnight-blue glass with two white racing stripes edged in gold.",
+     "colours": [
+      {
+       "name": "Night blue",
+       "hex": "#2B3D7A"
+      },
+      {
+       "name": "Midnight",
+       "hex": "#152154"
+      },
+      {
+       "name": "Deep night",
+       "hex": "#080D26"
+      },
+      {
+       "name": "Stripe white",
+       "hex": "#F4F6FB"
+      },
+      {
+       "name": "Gold edge",
+       "hex": "#FFC94A"
+      },
+      {
+       "name": "Gold spark",
+       "hex": "#FFC94A"
+      }
+     ],
+     "text": "review",
+     "original": true
+    }
+   ],
+   "collection": "LG"
   }
  ],
  "review": {
@@ -1623,7 +1684,7 @@
   ]
  },
  "approved3d": {
-  "note": "Designs whose 3D look is approved (passed the colour and rolling checks and Moses's review). Only these show the 3D marble in the shop; every other design shows its shop picture, never a stand-in. plain: the plain marbles (starters, Originals) too. The Winter 2026 designs and Winter Solstice: approved on /preview/marbles/holiday, 17 Oct 2026.",
+  "note": "Designs whose 3D look is approved (passed the colour and rolling checks and Moses's review). Only these show the 3D marble in the shop; every other design shows its shop picture, never a stand-in. plain: the plain marbles (starters, Originals) too. The Winter 2026 designs and Winter Solstice: approved on /preview/marbles/holiday, 17 Oct 2026. Racing Stripes (the league marble): design B as chosen on /preview/marbles/league, 26 Oct 2026; its 3D look for Moses's review with Leagues part 2.",
   "designs": [
    "clearie",
    "aggie",
@@ -1641,12 +1702,13 @@
    "candy-cane",
    "evergreen",
    "midwinter-star",
-   "winter-solstice"
+   "winter-solstice",
+   "racing-stripes"
   ],
   "plain": true
  },
  "collections": {
-  "note": "Collections other than the live standard one (catalog.collection), by the code in their Marble IDs. kind: 'limited' (numbered editions with their own sale window, in the design's `limited`), 'seasonal' (on sale from releaseAt to retireAt at its own prices per rarity, then retired: never sold again, owners keep theirs), 'pass' (never sold: given to every holder of its season's pass, numbered in order, an open edition that closes at closesAt).",
+  "note": "Collections other than the live standard one (catalog.collection), by the code in their Marble IDs. kind: 'limited' (numbered editions with their own sale window, in the design's `limited`), 'seasonal' (on sale from releaseAt to retireAt at its own prices per rarity, then retired: never sold again, owners keep theirs), 'pass' (never sold: given to every holder of its season's pass, numbered in order, an open edition that closes at closesAt), 'league' (never sold: the league marble, given to the winner of a Pro League with at least 3 ranked players, once per player; numbered in award order, its certificate counting League wins).",
   "LE": {
    "kind": "limited",
    "name": "Limited edition"
@@ -1682,6 +1744,12 @@
    "edition": "Holiday Season 2026 pass edition",
    "numberLabel": "Holiday 2026",
    "closesAt": "2027-01-07T23:59:59+01:00"
+  },
+  "LG": {
+   "kind": "league",
+   "name": "League marble",
+   "edition": "League marble",
+   "numberLabel": "League"
   }
  }
 }

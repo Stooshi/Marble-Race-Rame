@@ -31,6 +31,15 @@ const consent = require('../../client/src/shared/payments/consent.json');
 const seasons = require('../seasons');
 
 const PACKS = new Map(packsFile.packs.map((p) => [p.id, p]));
+/**
+ * Credit packs (Leagues part 2, behind LEAGUES_PRO; client/src/shared/payments/credits.json): a payment
+ * with credits (payments.credit_amount) and no coins, granted through credits.change() (src/credits),
+ * never as coins. Each purchase is fully in one currency.
+ */
+const creditsFile = require('../../client/src/shared/payments/credits.json');
+const CREDIT_PACKS = new Map(creditsFile.packs.map((p) => [p.id, { ...p, coins: 0 }]));
+/** A coin pack, a credit pack or null, by product id. */
+const anyPack = (id) => PACKS.get(id) ?? CREDIT_PACKS.get(id) ?? null;
 
 const notYet = (what) => ({ kind: 'unavailable', message: `${what} isn't connected yet. [Placeholder]` });
 
@@ -64,7 +73,7 @@ const PROVIDERS = {
 };
 
 function pack(productId) {
-  const p = PACKS.get(productId);
+  const p = anyPack(productId);
   if (!p) throw notFound('No such coin pack');
   return p;
 }
@@ -92,17 +101,26 @@ async function passProduct(db, productId) {
 async function grant(client, paymentId, providerRef = null) {
   const { rows: [pay] } = await client.query(
     `UPDATE payments SET status = 'paid', paid_at = now(), provider_ref = COALESCE($2, provider_ref)
-      WHERE id = $1 AND status = 'pending' RETURNING id, user_id, coins, product_id, season_key, provider, order_no`,
+      WHERE id = $1 AND status = 'pending' RETURNING id, user_id, coins, credit_amount, product_id, season_key, provider, order_no`,
     [paymentId, providerRef],
   );
   if (!pay) return null;
   if (pay.season_key) return `pass-${await seasons.grantForPayment(client, pay)}`;
+  // A credit pack: its credits, through the credits ledger (never coins). → the new credits balance.
+  if (pay.credit_amount > 0) {
+    const done = await require('../credits').change(client, { userId: pay.user_id, amount: pay.credit_amount, kind: 'credit-pack', paymentId: pay.id, note: `${pay.order_no ?? pay.product_id}` });
+    return done.balance;
+  }
   const done = await economy.change(client, { userId: pay.user_id, amount: pay.coins, kind: 'coin-pack', paymentId: pay.id, note: pay.product_id });
   return done.balance;
 }
 
 /** The consent a player gave at checkout, stored with the payment (EU withdrawal-right waiver + terms). */
 const CONSENT_TEXT = `[${consent.version}] ${consent.withdrawal} / ${consent.terms}`;
+/** …for a credit pack. */
+const CREDITS_CONSENT_TEXT = `[${consent.version}] ${consent.creditsWithdrawal} / ${consent.terms}`;
+/** Where Stripe sends a credit buyer back to (a league page, Leagues or the wallet; never anywhere else). */
+const backPath = (b) => (typeof b === 'string' && /^\/(l\/[A-Z0-9]{6}|leagues|leagues\/new|wallet)$/.test(b) ? b : '/leagues');
 /** …and for the season pass. */
 /** The pass's consent as stored with the payment: in its pre-sale (before the season starts), the "activates on 1 December" one. */
 const passConsentText = (season, now = new Date()) => `[${consent.version}] ${seasons.stateOf(season, now) === 'before'
@@ -115,10 +133,13 @@ const passConsentText = (season, now = new Date()) => `[${consent.version}] ${se
  * order number (MS-1001…). Stripe returns a Checkout page to go to; its coins come only from
  * the webhook. The test provider pays at once.
  */
-async function checkout(client, userId, { productId, provider: providerName, consent: agreed, locale, siteUrl = null }) {
+async function checkout(client, userId, { productId, provider: providerName, consent: agreed, locale, siteUrl = null, proOpen = false, back = null }) {
   const provider = PROVIDERS[providerName];
   if (!provider) throw badRequest('Unknown payment provider');
   const p = pack(productId);
+  // Credit packs only while Pro Leagues are open to this player (LEAGUES_PRO): otherwise there are none.
+  const isCredits = p.credits > 0;
+  if (isCredits && !proOpen) throw notFound('No such coin pack');
   // The app stores have no web checkout: the apps buy in the store and send the purchase to be checked.
   if (!provider.configured() || provider.name === 'google' || provider.name === 'apple') {
     return { payment: null, next: await provider.start(null, {}) };
@@ -126,22 +147,22 @@ async function checkout(client, userId, { productId, provider: providerName, con
   await savedAccount(client, userId);
   if (agreed !== true) throw badRequest('Please agree to immediate delivery and the terms of sale first');
   const { rows: [payment] } = await client.query(
-    `INSERT INTO payments (user_id, provider, product_id, coins, amount_cents, currency, order_no, consent_at, consent_text)
-     VALUES ($1, $2, $3, $4, $5, $6, 'MS-' || nextval('payment_order_seq'), now(), $7)
-     RETURNING id, user_id, order_no, status, product_id, coins, amount_cents, currency`,
-    [userId, provider.name, p.id, p.coins, p.amountCents, p.currency, CONSENT_TEXT],
+    `INSERT INTO payments (user_id, provider, product_id, coins, credit_amount, amount_cents, currency, order_no, consent_at, consent_text)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, 'MS-' || nextval('payment_order_seq'), now(), $8)
+     RETURNING id, user_id, order_no, status, product_id, coins, credit_amount, amount_cents, currency`,
+    [userId, provider.name, p.id, p.coins, p.credits ?? 0, p.amountCents, p.currency, isCredits ? CREDITS_CONSENT_TEXT : CONSENT_TEXT],
   );
   const { rows: [user] } = await client.query('SELECT email, is_guest FROM users WHERE id = $1', [userId]);
-  const next = await provider.start(payment, { userId, pack: p, email: user && !user.is_guest ? user.email : null, locale, siteUrl });
+  const next = await provider.start(payment, { userId, pack: p, email: user && !user.is_guest ? user.email : null, locale, siteUrl, back: isCredits ? backPath(back) : null });
   if (next.kind === 'done') {
-    const coins = await grant(client, payment.id, `test-${payment.id}`);
-    return { payment: { ...payment, status: 'paid' }, next, coins };
+    const balance = await grant(client, payment.id, `test-${payment.id}`);
+    return { payment: { ...payment, status: 'paid' }, next, ...(isCredits ? { credits: balance } : { coins: balance }) };
   }
   if (next.sessionId) {
     await client.query('UPDATE payments SET stripe_session_id = $2 WHERE id = $1', [payment.id, next.sessionId]);
   }
   const { sessionId, ...shown } = next;
-  return { payment: { order_no: payment.order_no, status: payment.status, product_id: payment.product_id, coins: payment.coins }, next: shown };
+  return { payment: { order_no: payment.order_no, status: payment.status, product_id: payment.product_id, coins: payment.coins, credits: payment.credit_amount }, next: shown };
 }
 
 /**
@@ -183,7 +204,7 @@ async function passCheckout(client, userId, { seasonKey, provider: providerName 
 }
 
 // What a player sees of their own orders (Purchases page).
-const ORDER_COLUMNS = `order_no, provider, product_id, season_key, coins, amount_cents, upper(currency) AS currency, charged_cents, charged_currency,
+const ORDER_COLUMNS = `order_no, provider, product_id, season_key, coins, credit_amount AS credits, amount_cents, upper(currency) AS currency, charged_cents, charged_currency,
   tax_cents, status, refunded_cents, receipt_url, created_at, paid_at, refunded_at, withdrawn_at`;
 
 /** A player's orders, newest first (lapsed checkouts that were never paid are left out). */
@@ -274,7 +295,7 @@ const googleAccountId = async (db, userId) => { await savedAccount(db, userId); 
 /** A Google Play purchase from the app (or from Google's notification): verified with Google, coins once. */
 function googlePurchase(db, { userId = null, productId, purchaseToken }) {
   if (!google.configured()) throw new HttpError(503, 'Google Play purchases are not connected yet');
-  return google.redeem(db, { userId, productId, purchaseToken }, { grant, product: async (id) => PACKS.get(id) ?? (await passProduct(db, id)) ?? pack(id) });
+  return google.redeem(db, { userId, productId, purchaseToken }, { grant, product: async (id) => anyPack(id) ?? (await passProduct(db, id)) ?? pack(id) });
 }
 
 /** The player's App Store account token (the iPhone app buys with it as StoreKit's appAccountToken). */
@@ -283,7 +304,7 @@ const appleAccountToken = async (db, userId) => { await savedAccount(db, userId)
 /** An App Store purchase from the iPhone app: Apple's signature checked, then the coins (or the pass) once. */
 function applePurchase(db, { userId, signedTransaction }) {
   if (!apple.configured()) throw new HttpError(503, 'App Store purchases are not connected yet');
-  return apple.redeem(db, { userId, signedTransaction }, { grant, product: async (id) => PACKS.get(id) ?? (await passProduct(db, id)) ?? pack(id) });
+  return apple.redeem(db, { userId, signedTransaction }, { grant, product: async (id) => anyPack(id) ?? (await passProduct(db, id)) ?? pack(id) });
 }
 
 /** An App Store Server Notification (v2): refunds and revocations take the coins (or the pass) back. */
@@ -333,4 +354,4 @@ async function redeemReceipt(client, userId, { provider: providerName, receipt }
   return { coins: await grant(client, payment.id) };
 }
 
-module.exports = { PROVIDERS, PACKS, CONSENT_TEXT, available, checkout, passCheckout, passProduct, grant, redeemReceipt, ordersOf, orderOf, stripeEvent, refund, googleAccountId, googlePurchase, appleAccountToken, applePurchase, appleNotification, googleSync, startGoogleJobs, pack };
+module.exports = { PROVIDERS, PACKS, CREDIT_PACKS, CONSENT_TEXT, CREDITS_CONSENT_TEXT, backPath, available, checkout, passCheckout, passProduct, grant, redeemReceipt, ordersOf, orderOf, stripeEvent, refund, googleAccountId, googlePurchase, appleAccountToken, applePurchase, appleNotification, googleSync, startGoogleJobs, pack };

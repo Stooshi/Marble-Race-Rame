@@ -1393,6 +1393,8 @@ CREATE TABLE IF NOT EXISTS race_readiness (
 );
 CREATE INDEX IF NOT EXISTS idx_race_readiness_created ON race_readiness (created_at);
 CREATE INDEX IF NOT EXISTS idx_race_readiness_race ON race_readiness (race_id);
+
+-- ---------------------------------------------------------------------------
 -- Credits and the Pro pass (Leagues part 2; 27 Oct 2026; behind LEAGUES_PRO). Credits are a second
 -- currency, bought with real money ($1 = 1 credit), spent on Pro Leagues (2) and the 30-day Pro pass (5);
 -- they never expire. One way only: credits can be swapped into coins (1,000 coins per credit, Moses
@@ -1441,6 +1443,8 @@ ALTER TABLE payments ADD COLUMN IF NOT EXISTS credit_amount integer NOT NULL DEF
 ALTER TABLE payments ADD COLUMN IF NOT EXISTS credits_short integer NOT NULL DEFAULT 0;
 ALTER TABLE payments ADD COLUMN IF NOT EXISTS credits_swapped_back integer NOT NULL DEFAULT 0;
 ALTER TABLE payments ADD COLUMN IF NOT EXISTS swap_coins_short integer NOT NULL DEFAULT 0;
+-- Each refund of a credit pack: how many of its credits it claimed back (taken, swapped back or short).
+ALTER TABLE payment_refunds ADD COLUMN IF NOT EXISTS credits_removed integer NOT NULL DEFAULT 0;
 
 -- A Pro League: how its creator paid ('credits' or 'pass'; null for a League), and at its end the
 -- winner who got the league marble, or why there was none ('too_few_finishers').

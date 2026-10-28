@@ -325,6 +325,8 @@ const BUILDERS = {
   'midwinter-star': fromParts,
   /** Winter Solstice: the picture's blue glass staying put, its star burst and snowflakes rolling with the ball, a soft halo. */
   'winter-solstice': fromParts,
+  /** Racing Stripes (the league marble): the picture's midnight-blue glass staying put, its gold-edged stripes and sparks rolling with the ball, a soft gold halo. */
+  'racing-stripes': fromParts,
 
   /** Northern Lights: the picture's night sky, with its three aurora ribbons and stars fixed in the ball. */
   'aurora-glass': fromParts,

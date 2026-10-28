@@ -212,16 +212,16 @@ async function redeem(db, { userId = null, productId, purchaseToken }, { grant, 
       if (await seasons.hasPass(client, owner, p.seasonKey)) return { status: 'already-owned' };
     }
     const { rows: [payment] } = await client.query(
-      `INSERT INTO payments (user_id, provider, provider_ref, store_token, product_id, coins, amount_cents, currency, order_no, status, season_key)
-       VALUES ($1, 'google', $2, $3, $4, $5, $6, $7, 'MS-' || nextval('payment_order_seq'), 'pending', $8)
+      `INSERT INTO payments (user_id, provider, provider_ref, store_token, product_id, coins, amount_cents, currency, order_no, status, season_key, credit_amount)
+       VALUES ($1, 'google', $2, $3, $4, $5, $6, $7, 'MS-' || nextval('payment_order_seq'), 'pending', $8, $9)
        ON CONFLICT DO NOTHING RETURNING id, order_no`,
-      [owner, ref, purchaseToken, p.id, p.coins, p.storeAmountCents ?? p.amountCents, p.currency, p.seasonKey ?? null], // (the store's US price: $4.99 for the $5 pack)
+      [owner, ref, purchaseToken, p.id, p.coins, p.storeAmountCents ?? p.amountCents, p.currency, p.seasonKey ?? null, p.credits ?? 0], // (the store's US price: $4.99 for the $5 pack)
     );
     if (!payment) return { status: 'duplicate', orderNo: null };
     const granted = await grant(client, payment.id, ref);
     return p.keep
       ? { status: 'paid', pass: granted, orderNo: payment.order_no, paymentId: payment.id }
-      : { status: 'paid', coins: granted, orderNo: payment.order_no, paymentId: payment.id };
+      : { status: 'paid', ...(p.credits ? { credits: granted } : { coins: granted }), orderNo: payment.order_no, paymentId: payment.id };
   });
   // A season pass: acknowledge at Google (never consume: it stays owned).
   if (p.keep) {

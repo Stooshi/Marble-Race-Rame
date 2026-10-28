@@ -55,6 +55,18 @@ const SNOW = [
   [71, 62, 0.7], [84, 72, 0.6], [38, 82, 0.8], [57, 88, 0.6], [15, 78, 0.5], [92, 58, 0.5], [62, 36, 0.5], [42, 52, 0.5], [30, 38, 0.4], [76, 44, 0.4],
 ];
 
+/**
+ * The league marble, Racing Stripes (design B, chosen 26 Oct 2026 on /preview/marbles/league): midnight-blue
+ * glass with two white racing stripes edged in gold, as on a race car, and a few gold sparks.
+ */
+function racingStripes([sky, mid, deep, stripe, edge, spark]) {
+  const body = { type: 'radial', at: [42, 36], stops: [[sky, 0], [mid, 55], [deep, 100]] };
+  const band = (from, to) => ({ type: 'linear', angle: 90, stops: [[T, from - 0.9], [alpha(edge, 0.95), from - 0.3], [alpha(stripe, 0.97), from + 0.3], [alpha(stripe, 0.97), to - 0.3], [alpha(edge, 0.95), to + 0.3], [T, to + 0.9]] });
+  const sparks = [[22, 22], [76, 20], [80, 74], [24, 80], [70, 46]].map(([x, y]) => ({ type: 'radial', at: [x, y], stops: [[spark, 0, 0.8], [alpha(spark, 0.35), 2], [T, 3.2]] }));
+  const pattern = [band(40, 46), band(54, 60), ...sparks];
+  return { layers: [...pattern, body], parts: { body: [body], pattern: { layers: pattern, map: 'front', repeat: 180 } } };
+}
+
 const HOLIDAY_LOOKS = {
   /** Winter Solstice (the pass marble): deep blue glass, a frosted star burst at its heart, snowflakes drifting through it. */
   'winter-solstice': ([sky, mid, deep, rays, core, glow]) => {
@@ -203,6 +215,7 @@ const LOOKS = {
    */
   'aurora-glow': (colours) => auroraGlass(colours),
   ...HOLIDAY_LOOKS,
+  'racing-stripes': racingStripes,
   // Plain striped Originals.
   stripe: ([s, b]) => {
     const bands = { type: 'linear', repeat: true, angle: 0, stops: [[s, 0, 16], [b, 16, 32]] };
@@ -211,9 +224,9 @@ const LOOKS = {
 };
 
 /** Which looks turn in their picture (moving patterns), and how fast. */
-const SPIN = { corkscrew: 'fast', 'flame-swirl': 'slow', 'aurora-glass': 'slow', 'aurora-glow': 'slow', 'winter-solstice': 'slow', 'candy-cane': 'slow', 'midwinter-star': 'slow' };
+const SPIN = { 'racing-stripes': 'slow', corkscrew: 'fast', 'flame-swirl': 'slow', 'aurora-glass': 'slow', 'aurora-glow': 'slow', 'winter-solstice': 'slow', 'candy-cane': 'slow', 'midwinter-star': 'slow' };
 /** Which looks glow, and in what colour (slot index). */
-const GLOW = { 'flame-swirl': 0, champion: 0, 'aurora-glass': 0, 'aurora-glow': 0, 'winter-solstice': 5, 'midwinter-star': 3 };
+const GLOW = { 'racing-stripes': 4, 'flame-swirl': 0, champion: 0, 'aurora-glass': 0, 'aurora-glow': 0, 'winter-solstice': 5, 'midwinter-star': 3 };
 /** How strong a look's glow is in its picture (the shadow's opacity; 0.5 unless set here). */
 export const GLOW_STRENGTH = { 'aurora-glow': 0.72 };
 /** Which looks shimmer as they roll (the 3D ribbons brighten and fade; the picture's sheen drifts). */

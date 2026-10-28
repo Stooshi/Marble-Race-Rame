@@ -25,7 +25,7 @@ export const marbleId = (design, shade) => `${design.collection ?? catalog.colle
 /**
  * The collection a design belongs to (catalog.json → collections): the live standard one, or a
  * limited edition, a seasonal collection (on sale between its dates, then retired) or a season pass's
- * marble (never sold). → { code, kind: 'standard'|'limited'|'seasonal'|'pass', name, … }
+ * marble (never sold), or the league marble (never sold). → { code, kind: 'standard'|'limited'|'seasonal'|'pass'|'league', name, … }
  */
 export function collectionOf(design) {
   const code = design.collection ?? catalog.collection.code;
@@ -54,7 +54,7 @@ export const ITEMS = DESIGNS.flatMap((design) => design.shades.map((shade) => {
     shade,
     rarity: design.rarity,
     price: col.prices?.[design.rarity] ?? catalog.rarities[design.rarity].price,
-    editionSize: col.kind === 'pass' ? null : design.limited?.editionSize ?? catalog.editionSize,
+    editionSize: col.kind === 'pass' || col.kind === 'league' ? null : design.limited?.editionSize ?? catalog.editionSize,
     collection: col.name,
     kind: col.kind,
     saleStartsAt: design.limited?.saleStartsAt ?? col.releaseAt ?? null,
@@ -67,9 +67,11 @@ export const ITEM = Object.fromEntries(ITEMS.map((i) => [i.slug, i]));
  * Where an item stands by its dates (what the screen shows; the server decides what can be bought):
  * 'coming' (before its window), 'on-sale', 'sold-out' (a limited edition after its window), 'retired'
  * (a seasonal collection after its retirement: never sold again), 'pass-only' (a season pass's
- * marble while its season's pass is sold) or 'closed' (a pass marble's edition after its season).
+ * marble while its season's pass is sold) or 'closed' (a pass marble's edition after its season);
+ * 'league-only': the league marble, never sold (Pro League winners only).
  */
 export function windowOf(item, now = new Date()) {
+  if (item.kind === 'league') return 'league-only';
   const ended = item.saleEndsAt && now >= new Date(item.saleEndsAt);
   if (item.kind === 'pass') return ended ? 'closed' : 'pass-only';
   if (item.saleStartsAt && now < new Date(item.saleStartsAt)) return 'coming';
@@ -166,7 +168,7 @@ export const PLAIN_3D = Boolean(catalog.approved3d?.plain);
 
 /** The designs whose 3D look is finished (materials.js builds exactly these). */
 export const BUILT_MATERIALS = ['vane-glass', 'steel', 'champion', 'aurora-glass', 'aurora-glow', 'clear-glass', 'agate-rings', 'patch', 'corkscrew', 'bee-bands', 'oxblood', 'flame-swirl',
-  'snowball', 'frost-clearie', 'candy-cane', 'evergreen', 'midwinter-star', 'winter-solstice'];
+  'snowball', 'frost-clearie', 'candy-cane', 'evergreen', 'midwinter-star', 'winter-solstice', 'racing-stripes'];
 
 /** Looks the previews can dress marbles in: every finished design of the standard collection (never a limited, seasonal or pass one). */
 export const HOUSE_LOOKS = ITEMS.filter((i) => BUILT_MATERIALS.includes(i.design.material) && i.kind === 'standard').map((i) => i.slug);

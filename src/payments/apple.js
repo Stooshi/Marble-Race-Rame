@@ -144,16 +144,16 @@ async function redeem(db, { userId, signedTransaction }, { grant, product, now =
       if (await seasons.hasPass(client, userId, p.seasonKey)) { await flag('A second pass'); return { status: 'already-owned', finish: true }; }
     }
     const { rows: [payment] } = await client.query(
-      `INSERT INTO payments (user_id, provider, provider_ref, store_token, product_id, coins, amount_cents, currency, order_no, status, season_key)
-       VALUES ($1, 'apple', $2, $3, $4, $5, $6, $7, 'MS-' || nextval('payment_order_seq'), 'pending', $8)
+      `INSERT INTO payments (user_id, provider, provider_ref, store_token, product_id, coins, amount_cents, currency, order_no, status, season_key, credit_amount)
+       VALUES ($1, 'apple', $2, $3, $4, $5, $6, $7, 'MS-' || nextval('payment_order_seq'), 'pending', $8, $9)
        ON CONFLICT DO NOTHING RETURNING id, order_no`,
-      [userId, ref, String(tx.originalTransactionId ?? ref), p.id, p.coins, p.storeAmountCents ?? p.amountCents, p.currency, p.seasonKey ?? null], // (the store's US price: $4.99 for the $5 pack)
+      [userId, ref, String(tx.originalTransactionId ?? ref), p.id, p.coins, p.storeAmountCents ?? p.amountCents, p.currency, p.seasonKey ?? null, p.credits ?? 0], // (the store's US price: $4.99 for the $5 pack)
     );
     if (!payment) return { status: 'duplicate', orderNo: null, finish: true };
     const granted = await grant(client, payment.id, ref);
     return p.keep
       ? { status: 'paid', pass: granted, orderNo: payment.order_no, paymentId: payment.id, finish: true }
-      : { status: 'paid', coins: granted, orderNo: payment.order_no, paymentId: payment.id, finish: true };
+      : { status: 'paid', ...(p.credits ? { credits: granted } : { coins: granted }), orderNo: payment.order_no, paymentId: payment.id, finish: true };
   });
 }
 

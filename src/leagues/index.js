@@ -19,8 +19,15 @@
  * Behind the LEAGUES switch on Railway: off (the default: the API answers 404 and the site shows
  * nothing), admins (only admin accounts, to test in production) or on (everyone).
  *
- * Pro Leagues (kind 'pro'), credits, the league marble and league_results are part 2 (after 1 Nov):
- * the tables are ready (leagues.kind, feeds_major, league_results); nothing here writes them yet.
+ * Pro Leagues (kind 'pro'; Leagues part 2, behind LEAGUES_PRO: ./pro.js): 10 tracks (PRO_TRACKS), paid
+ * by the creator only, 2 credits (src/credits PRO_LEAGUE) or nothing with a running Pro pass
+ * (leagues.paid_with), taken in the same transaction as the create; members join free; Run again pays
+ * again. feeds_major is true for Pro Leagues only. At the end (endDue): with at least MIN_RANKED ranked
+ * players (saved accounts that finished every track; computer players are never members) the winner
+ * gets the league marble, Racing Stripes, once (src/marbles grantLeagueMarble; every win counts as
+ * League wins), else leagues.no_winner_reason = 'too_few_finishers'; and one league_results row per
+ * member (Pro only: never a League, solo, Quick race or room races). A Pro League's League Night writes
+ * its own rows (kind 'night', ./night.js).
  */
 
 const crypto = require('crypto');
@@ -29,6 +36,10 @@ const seasons = require('../seasons');
 
 const MODES = ['off', 'admins', 'on'];
 const TRACKS = 5;            // a League's tracks
+const PRO_TRACKS = 10;       // a Pro League's tracks
+const KINDS = ['league', 'pro'];
+const MIN_RANKED = 3;        // ranked players a Pro League needs for its winner's marble
+const tracksFor = (kind) => (kind === 'pro' ? PRO_TRACKS : TRACKS);
 const DAYS = [1, 7];         // how long a league runs
 const CAPS = [null, 3, 5, 10]; // tries per track: unlimited, 3, 5 or 10
 const OPEN_PER_CREATOR = 5;  // open leagues a player may have created at once
@@ -92,18 +103,19 @@ async function isMember(db, leagueId, userId) {
  * Checks a new league's settings → { trackIds, days, attemptCap, name }. Every track active and one
  * the creator may race now (a holiday track: the creator has the pass and the season is on).
  */
-async function checkSettings(db, userId, body) {
+async function checkSettings(db, userId, body, kind = 'league') {
   const name = await checkName(body.name);
+  const n = tracksFor(kind);
   const trackIds = Array.isArray(body.track_ids) ? body.track_ids : [];
-  if (trackIds.length !== TRACKS) throw badRequest(`Pick ${TRACKS} tracks`);
-  if (new Set(trackIds).size !== TRACKS) throw badRequest('Pick five different tracks');
-  if (!trackIds.every((t) => typeof t === 'string' && /^[0-9a-f-]{36}$/i.test(t))) throw badRequest('Pick five tracks');
+  if (trackIds.length !== n) throw badRequest(`Pick ${n} tracks`);
+  if (new Set(trackIds).size !== n) throw badRequest(`Pick ${n} different tracks`);
+  if (!trackIds.every((t) => typeof t === 'string' && /^[0-9a-f-]{36}$/i.test(t))) throw badRequest(`Pick ${n} tracks`);
   const days = Number(body.days);
   if (!Number.isInteger(days) || days < DAYS[0] || days > DAYS[1]) throw badRequest('A league runs 1 to 7 days');
   const attemptCap = body.attempts === undefined || body.attempts === null ? null : Number(body.attempts);
   if (!CAPS.includes(attemptCap)) throw badRequest('Tries per track: unlimited, 3, 5 or 10');
   const { rows: tracks } = await db.query('SELECT id, slug, season_key FROM tracks WHERE id = ANY($1::uuid[]) AND is_active', [trackIds]);
-  if (tracks.length !== TRACKS) throw badRequest('One of those tracks is not available');
+  if (tracks.length !== n) throw badRequest('One of those tracks is not available');
   for (const t of tracks) await seasons.assertTrackAccess(db, t, { userId });
   return { trackIds, days, attemptCap, name };
 }
@@ -127,25 +139,45 @@ async function rename(client, league, userId, text) {
   return l;
 }
 
-/** Creates a League (5 tracks) with its creator as its first member → the league row. */
-async function create(client, userId, body, { againOf = null } = {}) {
+/**
+ * Creates a League (5 tracks) or a Pro League (10 tracks, `kind: 'pro'`) with its creator as its first
+ * member → the league row. A Pro League is paid here, in the caller's transaction: nothing with a
+ * running Pro pass, else PRO_LEAGUE credits (402 not_enough_credits: nothing is created). The caller
+ * checks Pro is open to the player (./pro.js).
+ */
+async function create(client, userId, body, { againOf = null, kind = 'league', now = new Date() } = {}) {
+  if (!KINDS.includes(kind)) throw badRequest('A league is a League or a Pro League');
   await assertSaved(client, userId);
-  const s = await checkSettings(client, userId, body);
+  const s = await checkSettings(client, userId, body, kind);
   const { rows: [{ n }] } = await client.query("SELECT COUNT(*)::int AS n FROM leagues WHERE created_by = $1 AND status = 'open'", [userId]);
   if (n >= OPEN_PER_CREATOR) throw conflict(`You can have ${OPEN_PER_CREATOR} leagues open at once. One has to end first.`);
   let league = null;
   for (let tries = 0; !league && tries < 8; tries += 1) {
     const { rows } = await client.query(
-      `INSERT INTO leagues (code, kind, name, created_by, track_ids, attempt_cap, ends_at, again_of)
-       VALUES ($1, 'league', $2, $3, $4::uuid[], $5, now() + make_interval(days => $6), $7)
+      `INSERT INTO leagues (code, kind, name, created_by, track_ids, attempt_cap, ends_at, again_of, feeds_major)
+       VALUES ($1, $8::varchar, $2, $3, $4::uuid[], $5, now() + make_interval(days => $6), $7, $8::varchar = 'pro')
        ON CONFLICT (code) DO NOTHING RETURNING *`,
-      [newCode(), s.name, userId, s.trackIds, s.attemptCap, s.days, againOf],
+      [newCode(), s.name, userId, s.trackIds, s.attemptCap, s.days, againOf, kind],
     );
     league = rows[0] ?? null;
   }
   if (!league) throw new Error('Could not find a free league code');
+  if (kind === 'pro') league = await payForPro(client, league, userId, now);
   await client.query('INSERT INTO league_members (league_id, user_id) VALUES ($1, $2)', [league.id, userId]);
   return league;
+}
+
+/**
+ * The creator pays for a Pro League: with a running Pro pass nothing, else PRO_LEAGUE credits through
+ * the credits ledger (src/credits: never from members, never in coins). → the league with paid_with.
+ */
+async function payForPro(client, league, userId, now = new Date()) {
+  const credits = require('../credits');
+  await client.query('SELECT 1 FROM users WHERE id = $1 FOR UPDATE', [userId]);
+  const pass = await credits.activePass(client, userId, now);
+  if (!pass) await credits.spend(client, { userId, price: credits.PRO_LEAGUE, kind: 'pro-league', leagueId: league.id, note: league.name });
+  const { rows: [l] } = await client.query('UPDATE leagues SET paid_with = $2 WHERE id = $1 RETURNING *', [league.id, pass ? 'pass' : 'credits']);
+  return l;
 }
 
 /** Joins a league (by its link or code). Idempotent for a member; a removed player can't come back. */
@@ -278,10 +310,53 @@ async function endDue(db, now = new Date()) {
         await client.query('UPDATE league_members SET final_place = $3, final_total_ms = $4 WHERE league_id = $1 AND user_id = $2', [id, r.user_id, r.place, r.total_ms]);
       }
       await client.query("UPDATE leagues SET status = 'ended', ended_at = now() WHERE id = $1", [id]);
-      // (Pro Leagues, part 2: the league marble and league_results are written here.)
+      if (league.kind === 'pro') await endPro(client, { ...league, ended_at: now }, board);
     });
   }
   return due.length;
+}
+
+/**
+ * A Pro League's end (in endDue's transaction), from its frozen scoreboard: with at least MIN_RANKED
+ * ranked players, the winner (place 1) gets the league marble (once: a second win counts as League
+ * wins) and leagues.winner_id; else no_winner_reason 'too_few_finishers'. Then one league_results row
+ * per member, written once (kind 'challenge'): the month it ended (Swedish time), their country at the
+ * start of that month, place (null if not ranked), the ranked count, tracks finished, counted runs and
+ * the days they raced in it. → { winnerId, reason, rows }.
+ */
+async function endPro(client, league, board) {
+  const ranked = board.filter((r) => r.place !== null && r.place !== undefined);
+  let winnerId = null;
+  let reason = null;
+  if (ranked.length >= MIN_RANKED) {
+    winnerId = ranked.find((r) => r.place === 1)?.user_id ?? null;
+    if (winnerId) await require('../marbles/collection').grantLeagueMarble(client, winnerId);
+  } else reason = 'too_few_finishers';
+  await client.query('UPDATE leagues SET winner_id = $2, no_winner_reason = $3 WHERE id = $1', [league.id, winnerId, reason]);
+  const { rows: [{ month, from }] } = await client.query(
+    `SELECT date_trunc('month', $1::timestamptz AT TIME ZONE 'Europe/Stockholm')::date AS month,
+            date_trunc('month', $1::timestamptz AT TIME ZONE 'Europe/Stockholm') AT TIME ZONE 'Europe/Stockholm' AS "from"`,
+    [league.ended_at ?? new Date()],
+  );
+  const { rows: activity } = await client.query(
+    `SELECT lr.user_id, COUNT(*) FILTER (WHERE lr.time_ms IS NOT NULL)::int AS runs,
+            COUNT(DISTINCT (lr.finished_at AT TIME ZONE 'Europe/Stockholm')::date) FILTER (WHERE lr.time_ms IS NOT NULL)::int AS days
+       FROM league_runs lr JOIN races r ON r.id = lr.race_id
+      WHERE lr.league_id = $1 AND r.created_at <= $2
+      GROUP BY lr.user_id`,
+    [league.id, league.ends_at],
+  );
+  const act = new Map(activity.map((a) => [a.user_id, a]));
+  const { countryAt } = require('../country');
+  for (const r of board) {
+    const country = await countryAt(client, r.user_id, from);
+    await client.query(
+      `INSERT INTO league_results (league_id, user_id, kind, month, place, ranked_humans, tracks_finished, counted_runs, racing_days, country)
+       VALUES ($1, $2, 'challenge', $3, $4, $5, $6, $7, $8, $9) ON CONFLICT DO NOTHING`,
+      [league.id, r.user_id, month, r.place ?? null, ranked.length, r.done, act.get(r.user_id)?.runs ?? 0, act.get(r.user_id)?.days ?? 0, country],
+    );
+  }
+  return { winnerId, reason, rows: board.length };
 }
 
 /** Every 30 s: end the leagues whose time is up, and open the League Nights about to start (the switch only hides leagues; these run always). */
@@ -298,7 +373,7 @@ function startJobs(db, { everyMs = 30_000 } = {}) {
 }
 
 module.exports = {
-  MODES, TRACKS, DAYS, CAPS, OPEN_PER_CREATOR, MEMBERS,
+  MODES, TRACKS, PRO_TRACKS, KINDS, MIN_RANKED, DAYS, CAPS, OPEN_PER_CREATOR, MEMBERS, tracksFor, payForPro, endPro,
   mode, openFor, assertOpen, normaliseCode, byCode, isMember, assertSaved, checkName, checkSettings, create, rename, join,
   triesUsed, assertCanRace, recordStart, recordRace, cancelRace, scoreboard, endDue, startJobs,
 };

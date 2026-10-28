@@ -45,10 +45,11 @@ for (const design of catalog.designs) {
       shade,
       rarity: design.rarity,
       // A seasonal collection has its own prices per rarity; a pass marble is never sold (no price).
-      price: col.kind === 'pass' ? { coins: null } : col.prices?.[design.rarity] ?? rarity.price,
+      price: col.kind === 'pass' || col.kind === 'league' ? { coins: null } : col.prices?.[design.rarity] ?? rarity.price,
       // A pass marble: every copy numbered in order, an open edition (no size) that closes with its season.
-      editionSize: col.kind === 'pass' ? null : design.limited?.editionSize ?? catalog.editionSize,
-      allNumbered: Boolean(design.limited?.allNumbered) || col.kind === 'pass',
+      // The league marble likewise: numbered in the order it was won, never closing.
+      editionSize: col.kind === 'pass' || col.kind === 'league' ? null : design.limited?.editionSize ?? catalog.editionSize,
+      allNumbered: Boolean(design.limited?.allNumbered) || col.kind === 'pass' || col.kind === 'league',
       saleStartsAt: design.limited?.saleStartsAt ?? col.releaseAt ?? null,
       saleEndsAt: design.limited?.saleEndsAt ?? col.retireAt ?? col.closesAt ?? null,
     });
@@ -72,9 +73,11 @@ function marbleCode(item, { copyNo, giftNo }) {
  * Where an item's sale stands: 'coming' (before its window opens: a limited edition or a seasonal
  * collection), 'on-sale', 'sold-out' (a limited edition whose window has closed or whose numbered copies
  * are all sold), 'retired' (a seasonal collection after its retirement) or 'pass-only' (a season pass's
- * marble, never sold). Sold out and retired are for good: never sold again.
+ * marble, never sold) or 'league-only' (the league marble: Pro League winners only, never sold). Sold
+ * out and retired are for good: never sold again.
  */
 function saleState(item, now = new Date(), sold = 0) {
+  if (item.kind === 'league') return 'league-only';
   if (item.kind === 'pass') return 'pass-only';
   if (item.saleStartsAt && now < new Date(item.saleStartsAt)) return 'coming';
   if (item.saleEndsAt && now >= new Date(item.saleEndsAt)) return item.kind === 'seasonal' ? 'retired' : 'sold-out';
@@ -93,9 +96,12 @@ const isStandard = (item) => item.kind === 'standard';
 /** The season pass's marble of a season ('holiday-2026'), or null. */
 const passMarbleOf = (seasonKey) => items.find((i) => i.kind === 'pass' && i.season === seasonKey) ?? null;
 
+/** The league marble (Racing Stripes: catalog.json collection LG). */
+const leagueMarble = () => items.find((i) => i.kind === 'league') ?? null;
+
 /** A design's shades as item slugs (for the Set badge). */
 function setOf(designKey) {
   return items.filter((i) => i.design.key === designKey).map((i) => i.slug);
 }
 
-module.exports = { catalog, items, bySlug, byId, marbleId, normaliseId, marbleCode, saleState, onSale, setOf, collectionOf, isStandard, passMarbleOf };
+module.exports = { catalog, items, bySlug, byId, marbleId, normaliseId, marbleCode, saleState, onSale, setOf, collectionOf, isStandard, passMarbleOf, leagueMarble };

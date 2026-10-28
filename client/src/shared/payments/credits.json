@@ -1,0 +1,9 @@
+{
+  "note": "Credit packs (Leagues part 2, behind LEAGUES_PRO), bought with real money on the league pages only, labelled \"for Pro Leagues\". $1 = 1 credit. The id is the product id in every store: Stripe on the web, App Store and Google Play in-app purchases (consumable; in Google Play written with _ instead of -: credits_5). amountCents: the website price; storeAmountCents: the US price in App Store Connect and Play Console (each store sets other countries itself). Credits never expire; they can be swapped into coins (1,000 a credit), never coins into credits.",
+  "packs": [
+    { "id": "credits-5", "credits": 5, "amountCents": 500, "storeAmountCents": 499, "currency": "usd", "line": "2 Pro Leagues, or a Pro pass" },
+    { "id": "credits-10", "credits": 10, "amountCents": 1000, "storeAmountCents": 999, "currency": "usd", "popular": true, "line": "5 Pro Leagues" },
+    { "id": "credits-25", "credits": 25, "amountCents": 2500, "storeAmountCents": 2499, "currency": "usd", "line": "12 Pro Leagues, or 5 Pro passes" }
+  ],
+  "description": "Credits for Pro Leagues in Marble Spins. Credits never expire. They can be swapped into coins, but coins can't be swapped into credits."
+}

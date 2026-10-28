@@ -35,6 +35,7 @@ function createApp() {
   app.use('/api/races', require('./routes/races'));
   app.use('/api/rooms', require('./routes/rooms'));
   app.use('/api/leagues', require('./routes/leagues'));
+  app.use('/api/credits', require('./routes/credits')); // (Leagues part 2: behind LEAGUES_PRO)
   // The back office: every request checked for an admin account, the 2-step login and a live session.
   app.use('/api/admin', require('./routes/admin'));
   app.use('/api/tracks', require('./routes/tracks'));
