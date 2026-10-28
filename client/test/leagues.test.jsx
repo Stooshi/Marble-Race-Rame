@@ -83,8 +83,8 @@ describe('leagues: the pages', () => {
   it('create: 5 different tracks, 1–7 days, unlimited/3/5/10 tries; holiday tracks only for pass holders', () => {
     expect(PAGES).toContain('const DAYS = [1, 2, 3, 4, 5, 6, 7];');
     expect(PAGES).toContain("const TRIES = [[null, 'Unlimited'], [3, '3'], [5, '5'], [10, '10']];");
-    expect(PAGES).toContain('api.createLeague({ name: name.trim(), track_ids: picked, days, attempts: tries })');
-    expect(PAGES).toContain("disabled={busy || !nameOk || picked.length !== TRACKS}");
+    expect(PAGES).toContain("api.createLeague({ name: name.trim(), track_ids: picked, days, attempts: tries, ...(isPro && { kind: 'pro' }) })");
+    expect(PAGES).toContain("disabled={busy || !nameOk || picked.length !== TRACKS || (isPro && !wallet)}");
     // (A season track locked for this player can't be picked: the server refuses it too.)
     expect(PAGES).toContain('disabled={(t.locked && !on) || (full && !on)}');
     expect(PAGES).toContain("'Season pass holders only'");
@@ -109,18 +109,23 @@ describe('leagues: the pages', () => {
     expect(PAGES).toContain("api.leagueAdd(code, name)");
     expect(PAGES).toContain("api.leagueRemove(code, r.user_id)");
     expect(PAGES).toContain("{sure ? 'Remove for good?' : 'Remove'}");
-    expect(PAGES).toContain("{mine && !isOpen && <button type=\"button\" className=\"ms-btn ms-btn--primary\" disabled={Boolean(busy)} onClick={again}>");
+    expect(PAGES).toContain('disabled={Boolean(busy) || (isPro && !status?.pro)} onClick={again}>');
     expect(PAGES).not.toMatch(/window\.(confirm|alert|prompt)\(/);
   });
 });
 
 describe('leagues: the texts', () => {
-  it('never a frequency, dates or prizes for the Major League; with Pro off, no credits', () => {
-    const texts = [PAGES, STATUS, src('src/components/NextRace.jsx')].join('\n');
-    for (const word of [/weekly/i, /monthly/i, /every week/i, /every month/i, /prize/i, /credit/i]) expect(texts).not.toMatch(word);
+  it('never a frequency, dates or prizes for the Major League; Pro and credits only behind LEAGUES_PRO', () => {
+    const PRO = src('src/site/leagues/Pro.jsx');
+    const texts = [PAGES, STATUS, PRO, src('src/components/NextRace.jsx')].join('\n');
+    for (const word of [/weekly/i, /monthly/i, /every week/i, /every month/i, /prize/i]) expect(texts).not.toMatch(word);
     expect(GO_PRO).toBe('Pro Leagues are coming. Race your way to the Marble Spins Major League. Date to be announced.');
-    // (Pro League appears only in the Go pro line.)
-    expect(PAGES.match(/Pro League/g)?.length ?? 0).toBeLessThanOrEqual(2);
+    // (Credits and Pro are drawn only when the server says Pro is open to this player: status.pro.)
+    expect(PAGES).toContain('const pro = Boolean(status?.pro);');
+    expect(PAGES).toContain('{pro ? GO_PRO_ON : GO_PRO}');
+    expect(PRO).toContain("if (!status?.pro) return NotFound ? <NotFound /> : null;");
+    expect(src('src/site/account/NameChip.jsx')).toContain("{pro && <Link to=\"/wallet\"");
+    expect(src('src/components/NextRace.jsx')).not.toMatch(/credit/i);
   });
 });
 
