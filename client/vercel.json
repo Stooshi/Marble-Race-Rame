@@ -1,4 +1,5 @@
 {
+  "ignoreCommand": "node scripts/vercel-ignore.mjs",
   "rewrites": [
     {
       "source": "/(home|lobby|shop|collection|certificate|checkout|pass|bag|purchases|settings|redeem|unsubscribe|forgot-password|reset-password|scores|signup|legal|help|cookies|tracks|dashboard|profile|race|results|play|r|l|leagues|preview|admin|confirm-email)",

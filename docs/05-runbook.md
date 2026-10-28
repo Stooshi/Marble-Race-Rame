@@ -5,9 +5,13 @@
 ## Deploying
 
 ### The website (Vercel): automatic
-Every push to `Main` builds `client/` on Vercel and puts it live at marblespins.com within a few minutes. There is nothing to do by hand. Each branch also gets a preview address.
+Every push to `Main` that changes the website builds `client/` on Vercel and puts it live at marblespins.com within a few minutes. There is nothing to do by hand. Only `leagues-pro` also gets preview builds (below).
 - **Settings:** Vercel → project `marble-race-rame-client` → Settings → Environment Variables (`VITE_API_URL`).
 - After changing a variable, **redeploy** the latest build, because variables are built into the website.
+
+**Which commits build the website (Ignored Build Step, 28 Oct 2026; `client/scripts/vercel-ignore.mjs`, `ignoreCommand` in `client/vercel.json`):** only branches `Main` (the live site) and `leagues-pro` (Leagues part 2 previews) build; other branches make no preview deployments. A commit that changes nothing the website is built from (docs, server code `src/`, server tests, data updates, `client/test/`, `client/report/`, the Android and iPhone projects, Markdown) is skipped: the build log shows `[ignored build step] SKIP: …` and the deployment shows as ignored. Always built: the same commit again (**Redeploy**, or a Deploy Hook), and anything in the forced window around the season-start rebuild (1 Dec 2026, 22:30–03:00 UTC). When it can't tell, it builds. A track switched on by SQL needs a website build for its page and the count: press **Redeploy** on the latest production deployment.
+
+**Old deployments (Moses sets once, Vercel → the project → Settings → Security → Deployment Retention Policy):** previews, canceled and errored deployments removed after about a month; production deployments kept longer (the live one is never removed). One website build is about 35 MB (static files about 25 MB: track pictures 8 MB, music 7 MB in two formats, share pictures 4 MB, code 3.4 MB; pre-rendered pages about 10 MB, of which the Help Centre's 94 question pages are 9.7 MB because each holds the whole Help Centre).
 
 ### The game server (Railway): by hand
 Pushing to `Main` does **not** deploy the server. Moses deploys it by uploading the code from his computer with the Railway command-line tool.
