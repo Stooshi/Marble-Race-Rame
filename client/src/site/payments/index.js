@@ -106,7 +106,7 @@ async function verifyApple(t) {
     const { NativePurchases } = await billing();
     await NativePurchases.finishTransaction({ transactionId: String(t.transactionId) }).catch(() => {});
   }
-  if (r.status === 'paid' || r.status === 'duplicate') return { status: 'paid', coins: r.coins, pass: r.pass, orderNo: r.orderNo };
+  if (r.status === 'paid' || r.status === 'duplicate') return { status: 'paid', coins: r.coins, credits: r.credits, pass: r.pass, orderNo: r.orderNo };
   if (r.status === 'already-owned') return { status: 'unavailable', message: 'You already have this pass. You can ask Apple for a refund of the second payment (reportaproblem.apple.com).' };
   if (r.status === 'not-on-sale') return { status: 'unavailable', message: 'This pass isn\'t on sale now. You can ask Apple for a refund (reportaproblem.apple.com).' };
   return { status: 'unavailable', message: 'The App Store refunded or cancelled this purchase.' };
@@ -114,7 +114,7 @@ async function verifyApple(t) {
 
 async function verifyGoogle(productId, purchaseToken) {
   const r = await api.googleVerify({ productId, purchaseToken });
-  if (r.status === 'paid' || r.status === 'duplicate') return { status: 'paid', coins: r.coins, pass: r.pass, orderNo: r.orderNo };
+  if (r.status === 'paid' || r.status === 'duplicate') return { status: 'paid', coins: r.coins, credits: r.credits, pass: r.pass, orderNo: r.orderNo };
   if (r.status === 'already-owned') return { status: 'unavailable', message: 'You already have this pass. Google Play refunds the second payment by itself within 3 days.' };
   if (r.status === 'not-on-sale') return { status: 'unavailable', message: 'This pass isn\'t on sale now. Google Play refunds the payment by itself within 3 days.' };
   if (r.status === 'pending') return { status: 'pending', message: 'Google Play is still processing your payment. Your coins arrive as soon as it\'s done.' };
@@ -128,6 +128,25 @@ export function buyCoins(pack, { consent = false } = {}) {
   if (provider === 'google') return ADAPTERS.google(pack);
   if (provider === 'apple') return ADAPTERS.apple(pack.id);
   return ADAPTERS.web(pack, provider, { consent });
+}
+
+/**
+ * Buys a credit pack (Leagues part 2, behind LEAGUES_PRO; sold only on the league pages). Web: Stripe
+ * Checkout, back to `back` (the league page) afterwards, the credits from Stripe's webhook; apps: the
+ * store (credits_5 in Google Play, credits-5 in the App Store), checked by the server. Resolves like
+ * buyCoins, with credits instead of coins.
+ */
+export async function buyCredits(pack, { consent = false, back = null } = {}) {
+  const provider = storeProvider();
+  if (provider === 'google') return ADAPTERS.google(pack);
+  if (provider === 'apple') return ADAPTERS.apple(pack.id, 'credits');
+  const { next, credits } = await api.checkout({ productId: pack.id, provider, consent, ...(back && { back }) });
+  if (next.kind === 'redirect') {
+    window.location.assign(next.url);
+    return { status: 'redirecting' };
+  }
+  if (next.kind === 'done') return { status: 'paid', credits };
+  return { status: 'unavailable', message: next.message };
 }
 
 /**

@@ -38,6 +38,7 @@ import { Spinner } from './components/Status';
 import { importOrReload } from './utils/staleCode';
 import MarblesHubRoute from './hub/route';
 import { CreateLeague, LeaguePage, LeaguesHome } from './site/leagues/LeaguesPages';
+import { WalletPage } from './site/leagues/Pro';
 import { startPush } from './app/push';
 import { useSoundUnlock } from './sound/settings';
 import { SavePromptProvider } from './site/account/SavePrompt';
@@ -121,6 +122,7 @@ export default function App() {
           <Route path="/confirm-email" element={<ConfirmEmailPage />} />
           <Route path="/bag" element={<BagPage />} />
           <Route path="/purchases" element={<PurchasesPage />} />
+          <Route path="/wallet" element={<WalletPage NotFound={NotFound} />} />
           <Route path="/settings" element={<SettingsPage />} />
           {/* Gift codes: a 404 until src/shared/giftCodes.json switches them on; never in the apps. */}
           <Route path="/redeem" element={<RedeemPage NotFound={NotFound} />} />

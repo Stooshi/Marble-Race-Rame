@@ -424,6 +424,7 @@ a.ms-mcard:hover { text-decoration: none; border-color: var(--ms-muted); }
 }
 .ms-cert__tag { align-self: flex-start; background: var(--ms-orange); color: var(--ms-ink); font-size: 0.75rem; font-weight: 800; padding: 4px 10px; border-radius: 6px; letter-spacing: 0.04em; }
 .ms-cert__title { font-family: var(--ms-cond); font-weight: 800; font-size: 1.9rem; line-height: 1; }
+.ms-cert__wins { display: inline-block; justify-self: start; border: 1px solid rgba(255, 210, 31, 0.55); color: var(--ms-yellow); border-radius: 999px; padding: 3px 10px; font-weight: 800; font-variant-numeric: tabular-nums; }
 .ms-kv { display: grid; grid-template-columns: auto 1fr; gap: 8px 16px; font-size: 0.95rem; }
 .ms-kv > :nth-child(odd) { color: var(--ms-muted); }
 .ms-kv > :nth-child(even) { font-weight: 700; overflow-wrap: anywhere; }
@@ -1068,3 +1069,48 @@ tr:hover .report-name__btn--compact, .report-name__btn--compact:focus-visible { 
 .ms-league-name__edit:focus-visible { outline: 3px solid var(--ms-yellow); outline-offset: 2px; }
 .ms-league-name__form { display: grid; gap: 8px; max-width: 520px; }
 .ms-league-name__form input { font-family: var(--ms-cond); font-weight: 800; font-size: 1.8rem; min-height: 52px; }
+
+/* ── Pro Leagues and credits (Leagues part 2, behind LEAGUES_PRO; ./leagues/Pro.jsx) ── */
+.ms-ok { color: var(--ms-green); font-weight: 700; }
+.ms-tab { font-variant-numeric: tabular-nums; }
+.ms-pro-mark { display: inline-block; background: var(--ms-yellow); color: var(--ms-ink); font: 800 0.66rem/1 var(--ms-font, inherit); letter-spacing: 0.08em; padding: 3px 6px; border-radius: 5px; vertical-align: middle; }
+.ms-credits-chip { border-color: rgba(255, 210, 31, 0.55); color: var(--ms-yellow); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.ms-league-kinds { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr)); gap: 10px; }
+.ms-league-kind--pick { border-color: var(--ms-border); background: var(--ms-bg); color: var(--ms-text); text-align: left; cursor: pointer; font: inherit; text-decoration: none; align-content: start; }
+.ms-league-kind--pick:hover { border-color: var(--ms-soft); }
+.ms-league-kind--pick[aria-checked="true"] { border-color: var(--ms-yellow); background: rgba(255, 210, 31, 0.08); }
+.ms-league-kind--pro b { display: flex; gap: 6px; align-items: center; }
+.ms-pro-included { color: var(--ms-yellow); }
+.ms-credits-sheet { text-align: left; align-items: stretch; gap: 12px; }
+.ms-credits-sheet__head { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; justify-content: space-between; padding-right: 36px; }
+.ms-credit-packs { display: grid; gap: 8px; }
+.ms-credit-pack { display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: center; text-align: left; padding: 12px 14px; border-radius: 14px; border: 2px solid var(--ms-border); background: var(--ms-bg); color: var(--ms-text); font: inherit; cursor: pointer; min-height: 56px; }
+.ms-credit-pack.is-popular { border-color: rgba(255, 210, 31, 0.55); }
+.ms-credit-pack[aria-checked="true"] { border-color: var(--ms-yellow); background: rgba(255, 210, 31, 0.08); }
+.ms-credit-pack__what { display: grid; gap: 2px; min-width: 0; }
+.ms-credit-pack__what b { font-family: var(--ms-cond); font-weight: 800; font-size: 1.3rem; }
+.ms-credit-pack__price { font-family: var(--ms-cond); font-weight: 800; font-size: 1.1rem; background: var(--ms-yellow); color: var(--ms-ink); padding: 7px 12px; border-radius: 10px; font-variant-numeric: tabular-nums; }
+.ms-credits-check { display: flex; gap: 10px; align-items: flex-start; cursor: pointer; color: var(--ms-soft); }
+.ms-credits-check input { width: 22px; height: 22px; flex: none; }
+.ms-pro-pass { display: grid; gap: 12px; max-width: 560px; }
+.ms-pro-pass__card { display: grid; gap: 8px; padding: 14px; border-radius: 16px; border: 1px solid rgba(255, 210, 31, 0.55); background: linear-gradient(180deg, rgba(255, 210, 31, 0.08), transparent 60%), var(--ms-bg); }
+.ms-pro-pass__h { margin: 0; font-family: var(--ms-cond); font-weight: 800; font-size: 1.4rem; }
+.ms-pro-starts { color: var(--ms-yellow); }
+.ms-confirm { display: grid; gap: 8px; border-color: rgba(255, 210, 31, 0.55); }
+.ms-two-btns { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 150px), 1fr)); gap: 8px; }
+.ms-pro-marble, .ms-pro-end { display: grid; gap: 10px; border-color: rgba(255, 210, 31, 0.55); background: linear-gradient(180deg, rgba(255, 210, 31, 0.08), transparent 60%), var(--ms-card); }
+.ms-pro-meter { height: 8px; border-radius: 99px; background: var(--ms-card-2, #222A3F); overflow: hidden; }
+.ms-pro-meter i { display: block; height: 100%; background: var(--ms-green); border-radius: 99px; transition: width 0.4s; }
+.ms-pro-end__h { margin: 0; font-family: var(--ms-cond); font-weight: 800; font-size: 1.5rem; line-height: 1.05; overflow-wrap: anywhere; }
+.ms-wallet { display: grid; gap: 16px; }
+.ms-wallet__h1 { font-family: var(--ms-cond); font-weight: 800; }
+.ms-wallet__h2 { margin: 0; font-family: var(--ms-cond); font-weight: 800; font-size: 1.3rem; }
+.ms-wallet__two { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 160px), 1fr)); gap: 10px; }
+.ms-wallet__box { display: grid; gap: 2px; }
+.ms-wallet__box--credits { border-color: rgba(255, 210, 31, 0.55); background: linear-gradient(180deg, rgba(255, 210, 31, 0.08), transparent 60%), var(--ms-card); }
+.ms-wallet__n { font-family: var(--ms-cond); font-weight: 800; font-size: 2rem; font-variant-numeric: tabular-nums; line-height: 1.1; }
+.ms-wallet__swap, .ms-wallet__history { display: grid; gap: 10px; }
+.ms-wallet__count input { width: 90px; min-height: 44px; }
+.ms-wallet__lines { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.ms-wallet__lines li { display: flex; justify-content: space-between; gap: 10px; color: var(--ms-soft); font-size: 0.92rem; border-bottom: 1px solid var(--ms-border); padding-bottom: 6px; }
+.ms-wallet__lines li span:first-child { min-width: 0; overflow-wrap: anywhere; }

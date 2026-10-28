@@ -203,6 +203,10 @@ export const api = {
   leagueNight: (code, startsAt, races) => request(`/leagues/${encodeURIComponent(code)}/night`, { method: 'POST', body: { starts_at: startsAt, races } }),
   leagueNightNow: (code, races) => request(`/leagues/${encodeURIComponent(code)}/night`, { method: 'POST', body: { now: true, races } }),
   leagueNightOff: (code) => request(`/leagues/${encodeURIComponent(code)}/night`, { method: 'DELETE' }),
+  // Credits (Leagues part 2, behind LEAGUES_PRO): the wallet, the one-way swap, the Pro pass.
+  credits: () => request('/credits'),
+  creditsSwap: (credits) => request('/credits/swap', { method: 'POST', body: { credits, confirm: true } }),
+  creditsPass: () => request('/credits/pass', { method: 'POST', body: { confirm: true } }),
   setName: (name) => request('/users/me', { method: 'PATCH', body: { display_name: name } }),
   saveSettings: (settings) => request('/users/me/settings', { method: 'PUT', body: settings }),
   physicsPreview: (track, seed, level) => request(`/physics/preview?track=${encodeURIComponent(track)}&seed=${seed}&level=${level}`),

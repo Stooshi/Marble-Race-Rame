@@ -22,6 +22,23 @@ export function leaguesStatus(userId) {
 /** For tests and after logging in or out. */
 export function forgetLeaguesStatus() { cache.clear(); }
 
+/**
+ * The whole answer (null while asking): { enabled, pro, proTracks, minRanked, prices }. `pro`: Pro Leagues
+ * and credits open to this player (the server's LEAGUES_PRO switch, never more open than LEAGUES).
+ */
+export function useLeaguesStatus() {
+  const { user, loading } = useAuth();
+  const [status, setStatus] = useState(null);
+  useEffect(() => {
+    if (loading) return undefined;
+    let stop = false;
+    setStatus(null);
+    leaguesStatus(user?.id).then((s) => { if (!stop) setStatus(s ?? { enabled: false }); });
+    return () => { stop = true; };
+  }, [user?.id, loading]);
+  return status;
+}
+
 /** null while asking, then true or false. */
 export function useLeaguesOn() {
   const { user, loading } = useAuth();

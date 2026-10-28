@@ -10,6 +10,7 @@ import { SITE_URL } from '../canonical';
 import TrackBanner, { SERIES_PIC } from '../TrackBanner';
 import { useTracks } from '../pages/RaceFlow';
 import { GO_PRO, lapTime, timeLeft, triesText, useLeaguesOn } from './status';
+import { CreditsChip, CreditsReturn, GO_PRO_ON, GetCreditsSheet, KindPick, LeagueMarbleCard, ProEndCard, ProMark, ProPassCard, day, proCost, useWallet } from './Pro';
 import { NAME_NOT_ALLOWED, checkName } from '../../shared/nameFilter';
 
 /**
@@ -22,8 +23,9 @@ import { NAME_NOT_ALLOWED, checkName } from '../../shared/nameFilter';
  *   /l/:code        A league: join (its link), the tracks with my bests and tries, the scoreboard,
  *                   time left, sharing; the creator adds and removes players and can Run again
  *
- * Saved accounts only: a guest saves their marble first, a visitor saves or logs in. Pro Leagues and
- * what pays for them are part 2 (after 1 Nov): until then only the "Go pro" line mentions them.
+ * Saved accounts only: a guest saves their marble first, a visitor saves or logs in. Pro Leagues
+ * (10 tracks, paid by the creator with credits or the Pro pass) and credits are part 2 (./Pro.jsx),
+ * behind the server's LEAGUES_PRO switch: off, only the "Go pro" line mentions them.
  */
 
 const TRACKS = 5;
@@ -91,30 +93,55 @@ export function LeaguesHome({ NotFound }) {
 function LeaguesHomeIn() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [search, setSearch] = useSearchParams();
   const saved = Boolean(user && !user.is_guest);
   const { data, error } = useAsync(() => (saved ? api.myLeagues() : null), [saved, user?.id]);
+  const { wallet, reload, setWallet, status } = useWallet();
+  const pro = Boolean(status?.pro);
+  const selling = search.get('credits') === 'get';
+  const sell = (on) => { const s = new URLSearchParams(search); if (on) s.set('credits', 'get'); else s.delete('credits'); setSearch(s, { replace: !on }); };
+  const cost = proCost(wallet, status?.prices);
   const [code, setCode] = useState('');
   const skew = data?.serverNow ? new Date(data.serverNow).getTime() - Date.now() : 0;
   const open = (data?.leagues ?? []).filter((l) => l.status === 'open');
   const ended = (data?.leagues ?? []).filter((l) => l.status !== 'open');
   return (
     <div className="ms-page">
-      <h1 className="ms-h1" style={h1}>Leagues</h1>
-      <p className="ms-note ms-league-lede">Your own competition with friends: pick 5 tracks and how long it runs, share the link, and everyone's best time on each track counts. The fastest total when it ends wins.</p>
+      <div className="ms-row" style={{ justifyContent: 'space-between', alignItems: 'baseline' }}>
+        <h1 className="ms-h1" style={h1}>Leagues</h1>
+        {pro && saved && <CreditsChip balance={wallet?.balance ?? null} />}
+      </div>
+      <p className="ms-note ms-league-lede">Your own competition with friends: pick {pro ? 'the' : '5'} tracks and how long it runs, share the link, and everyone's best time on each track counts. The fastest total when it ends wins.</p>
+      {pro && <CreditsReturn reload={reload} />}
       {!saved && <SaveFirst next="/leagues" />}
       <div className="ms-two" style={{ alignItems: 'start' }}>
         <section className="ms-card ms-league-col" aria-labelledby="create-h">
           <h2 id="create-h" className="ms-h3" style={h2}>Create a league</h2>
-          <div className="ms-league-kind" aria-current="true">
-            <b>League</b>
-            <span>5 tracks · free · for fun</span>
-          </div>
-          <button type="button" className="ms-btn ms-btn--primary ms-btn--lg" disabled={!saved} onClick={() => navigate('/leagues/new')}>CREATE A LEAGUE</button>
+          {pro ? (
+            <>
+              <div className="ms-league-kinds">
+                <Link to="/leagues/new" className="ms-league-kind ms-league-kind--pick" aria-disabled={!saved}><b>League</b><span>5 tracks · free · for fun</span></Link>
+                <Link to="/leagues/new?kind=pro" className="ms-league-kind ms-league-kind--pick ms-league-kind--pro" aria-disabled={!saved}>
+                  <b>Pro League <ProMark /></b>
+                  <span>{status.proTracks ?? 10} tracks · league marble for the winner · counts toward the Major League · {cost.how === 'pass' ? <span className="ms-pro-included">included in your Pro pass</span> : `${cost.price} credits`}</span>
+                </Link>
+              </div>
+              {saved && <button type="button" className="ms-btn" onClick={() => sell(true)}>GET CREDITS</button>}
+            </>
+          ) : (
+            <>
+              <div className="ms-league-kind" aria-current="true">
+                <b>League</b>
+                <span>5 tracks · free · for fun</span>
+              </div>
+              <button type="button" className="ms-btn ms-btn--primary ms-btn--lg" disabled={!saved} onClick={() => navigate('/leagues/new')}>CREATE A LEAGUE</button>
+            </>
+          )}
           <form className="ms-form ms-row" style={{ display: 'flex', gap: 8 }} onSubmit={(e) => { e.preventDefault(); const c = code.trim().toUpperCase().replace(/[^A-Z0-9]/g, ''); if (c) navigate(`/l/${c}`); }}>
             <input aria-label="League code" placeholder="Got a league code?" value={code} onChange={(e) => setCode(e.target.value)} maxLength={10} style={{ flex: '1 1 160px', textTransform: 'uppercase' }} />
             <button type="submit" className="ms-btn ms-btn--sm" disabled={!code.trim()}>Open</button>
           </form>
-          <p className="ms-note ms-go-pro">{GO_PRO}</p>
+          <p className="ms-note ms-go-pro">{pro ? GO_PRO_ON : GO_PRO}</p>
         </section>
         <section className="ms-card ms-league-col" style={{ flex: '1 1 420px' }} aria-labelledby="mine-h">
           <h2 id="mine-h" className="ms-h3" style={h2}>My leagues</h2>
@@ -131,6 +158,8 @@ function LeaguesHomeIn() {
           )}
         </section>
       </div>
+      {pro && saved && wallet && <ProPassCard wallet={wallet} prices={status.prices} onWallet={setWallet} onGetCredits={() => sell(true)} />}
+      {pro && selling && <GetCreditsSheet wallet={wallet} prices={status.prices} back="/leagues" onClose={() => sell(false)} onPaid={() => reload()} />}
     </div>
   );
 }
@@ -143,7 +172,7 @@ export function LeagueList({ leagues, skew = 0, compact = false }) {
         <li key={l.code}>
           <Link to={`/l/${l.code}`} className="ms-league-list__row">
             <span className="ms-league-list__what">
-              <b>{l.name}</b>
+              <b>{l.name}{l.kind === 'pro' && <> <ProMark /></>}</b>
               <span className="ms-note">
                 {l.status === 'open' ? timeLeft(l.ends_at, Date.now(), skew) : 'Final standings'}
                 {' · '}{l.players} {l.players === 1 ? 'player' : 'players'}
@@ -192,15 +221,42 @@ export function CreateLeague({ NotFound }) {
   return <Gate NotFound={NotFound}><CreateLeagueIn /></Gate>;
 }
 
+/**
+ * The create form's draft, kept in this tab while the player goes to Stripe for credits and back
+ * (Pro: "creating is one tap after buying"). Per-tab conveniences only; the page works without it.
+ */
+const DRAFT = 'ms:league-draft';
+const readDraft = () => { try { const d = JSON.parse(sessionStorage.getItem(DRAFT) ?? 'null'); return d && Date.now() - d.at < 3600_000 ? d : null; } catch { return null; } };
+const writeDraft = (d) => { try { sessionStorage.setItem(DRAFT, JSON.stringify({ ...d, at: Date.now() })); } catch { /* (private mode) */ } };
+const dropDraft = () => { try { sessionStorage.removeItem(DRAFT); } catch { /* (private mode) */ } };
+
 function CreateLeagueIn() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const tracks = useTracks();
+  const [search, setSearch] = useSearchParams();
   const saved = Boolean(user && !user.is_guest);
-  const [name, setName] = useState('');
-  const [picked, setPicked] = useState([]); // track ids, in order
-  const [days, setDays] = useState(7);
-  const [tries, setTries] = useState(null);
+  const { wallet, reload, status } = useWallet();
+  const pro = Boolean(status?.pro);
+  const back = search.get('paid') ? readDraft() : null; // (back from Stripe: the form as it was)
+  const [kind, setKindRaw] = useState(() => back?.kind ?? (search.get('kind') === 'pro' ? 'pro' : 'league'));
+  const isPro = pro && kind === 'pro';
+  const TRACKS = isPro ? (status?.proTracks ?? 10) : 5;
+  const [name, setName] = useState(back?.name ?? '');
+  const [picked, setPicked] = useState(back?.picked ?? []); // track ids, in order
+  const [days, setDays] = useState(back?.days ?? 7);
+  const [tries, setTries] = useState(back?.tries ?? null);
+  const [selling, setSelling] = useState(false);
+  const setKind = (k) => {
+    setKindRaw(k);
+    const s = new URLSearchParams(search);
+    if (k === 'pro') s.set('kind', 'pro'); else s.delete('kind');
+    setSearch(s, { replace: true });
+    if (k !== 'pro') setPicked((p) => p.slice(0, 5));
+  };
+  const cost = proCost(wallet, status?.prices);
+  const short = isPro && cost.how === 'short';
+  const sell = () => { writeDraft({ kind, name, picked, days, tries }); setSelling(true); };
   const [q, setQ] = useState('');
   const [series, setSeries] = useState('');
   const [busy, setBusy] = useState(false);
@@ -223,9 +279,12 @@ function CreateLeagueIn() {
     setBusy(true);
     setError(null);
     try {
-      const v = await api.createLeague({ name: name.trim(), track_ids: picked, days, attempts: tries });
+      const v = await api.createLeague({ name: name.trim(), track_ids: picked, days, attempts: tries, ...(isPro && { kind: 'pro' }) });
+      dropDraft();
       navigate(`/l/${v.league.code}?new=1`);
     } catch (e) {
+      // (Not enough credits after all: the credit packs, the form kept.)
+      if (e.details?.code === 'not_enough_credits') { reload(); sell(); }
       setError(e);
       setBusy(false);
     }
@@ -240,7 +299,12 @@ function CreateLeagueIn() {
       </div>
       <div className="ms-league-create">
         <section className="ms-card ms-league-col ms-league-create__set" aria-label="Settings">
-          <div className="ms-league-kind" aria-current="true"><b>League</b><span>5 tracks · free · for fun</span></div>
+          {pro
+            ? <>
+              <div className="ms-row" style={{ justifyContent: 'space-between' }}><span className="ms-eyebrow" style={{ color: 'var(--ms-orange)' }}>Create a league</span><CreditsChip balance={wallet?.balance ?? null} /></div>
+              <KindPick kind={kind} onKind={setKind} wallet={wallet} prices={status.prices} proTracks={status.proTracks ?? 10} />
+            </>
+            : <div className="ms-league-kind" aria-current="true"><b>League</b><span>5 tracks · free · for fun</span></div>}
           <label className="ms-form" style={{ display: 'grid', gap: 6 }}>
             <span className="ms-eyebrow" style={{ color: 'var(--ms-muted)' }}>Name</span>
             <input value={name} onChange={(e) => setName(e.target.value)} maxLength={40} placeholder="e.g. Office Cup" />
@@ -273,16 +337,30 @@ function CreateLeagueIn() {
             </ol>
           </div>
           <p className="ms-note ms-league-create__note" style={{ margin: 0 }}>{days} {days === 1 ? 'day' : 'days'} from now · {triesText(tries).toLowerCase()} · your best time on each track counts. League races pay coins like any race.</p>
+          {pro && <CreditsReturn reload={reload} />}
           {error && <div className="ms-msg ms-msg--bad" role="alert">{error.message}</div>}
-          <button type="button" className="ms-btn ms-btn--primary ms-btn--lg" disabled={busy || !nameOk || picked.length !== TRACKS} onClick={create}>
-            {busy ? 'CREATING…' : 'CREATE THE LEAGUE'}
-          </button>
+          {short
+            ? <button type="button" className="ms-btn ms-btn--primary ms-btn--lg" onClick={sell}>GET CREDITS</button>
+            : (
+              <button type="button" className="ms-btn ms-btn--primary ms-btn--lg" disabled={busy || !nameOk || picked.length !== TRACKS || (isPro && !wallet)} onClick={create}>
+                {busy ? 'CREATING…' : !isPro ? 'CREATE THE LEAGUE' : cost.how === 'pass' ? 'CREATE PRO LEAGUE' : `CREATE FOR ${cost.price} CREDITS`}
+              </button>
+            )}
+          {isPro && wallet && (
+            <span className="ms-note">
+              {cost.how === 'pass'
+                ? `Pro pass until ${day(cost.until)}: unlimited Pro Leagues.`
+                : short
+                  ? `A Pro League is ${cost.price} credits; you have ${cost.have}. Or make a free League with 5 tracks.`
+                  : `You have ${cost.have} credits: ${cost.have - cost.price} left after. Only you pay; friends join free.`}
+            </span>
+          )}
           {!nameOk && name.length > 0 && <span className="ms-note">{checkName(name.trim()) ? NAME_NOT_ALLOWED : 'A name of 2 to 40 characters.'}</span>}
         </section>
         <section className="ms-card ms-league-col ms-league-create__pick" aria-labelledby="pick-h">
           <div className="ms-row" style={{ justifyContent: 'space-between' }}>
-            <h2 id="pick-h" className="ms-h3" style={h2}>Pick 5 tracks</h2>
-            <button type="button" className="ms-btn ms-btn--sm" onClick={random} disabled={!tracks.length}>5 at random</button>
+            <h2 id="pick-h" className="ms-h3" style={h2}>Pick {TRACKS} tracks</h2>
+            <button type="button" className="ms-btn ms-btn--sm" onClick={random} disabled={!tracks.length}>{TRACKS} at random</button>
           </div>
           <div className="ms-row ms-form" style={{ display: 'flex', gap: 8 }}>
             <input type="search" placeholder={`Search ${tracks.length} tracks`} aria-label="Search tracks" value={q} onChange={(e) => setQ(e.target.value)} style={{ flex: '1 1 200px' }} />
@@ -309,6 +387,7 @@ function CreateLeagueIn() {
           </div>
         </section>
       </div>
+      {selling && <GetCreditsSheet wallet={wallet} prices={status?.prices} back="/leagues/new" onClose={() => setSelling(false)} onPaid={() => { reload(); setError(null); }} />}
     </div>
   );
 }
@@ -338,6 +417,8 @@ function LeaguePageIn() {
   const joined = search.get('joined') === '1';
   const [peek, setPeek] = useState(false);
   const joining = useRef(false);
+  const { wallet, reload: reloadWallet, status } = useWallet();
+  const [selling, setSelling] = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -403,11 +484,16 @@ function LeaguePageIn() {
     navigate(`/race/${r.id}?go=1`);
     return null;
   })();
-  const again = run('again', async () => {
+  const againRun = run('again', async () => {
     const v = await api.leagueAgain(code);
     navigate(`/l/${v.league.code}?new=1`);
     return v;
   });
+  // (A Pro League runs again paid again: short of credits, the credit packs first.)
+  const again = async () => {
+    const v = await againRun();
+    if (!v) reloadWallet();
+  };
 
   if (error && !view) {
     return (
@@ -424,7 +510,9 @@ function LeaguePageIn() {
   const isOpen = league.status === 'open' && new Date(league.ends_at).getTime() > now + skew;
   const mine = league.mine_to_run;
   const ends = new Date(league.ends_at);
-  const winner = league.status === 'ended' ? scoreboard.find((r) => r.place === 1) : null;
+  const isPro = league.kind === 'pro';
+  const winner = league.status === 'ended' && !isPro ? scoreboard.find((r) => r.place === 1) : null;
+  const cost = proCost(wallet, status?.prices);
   // Someone opening an invite: the welcome first (a member goes straight to the league page).
   if (!member && isOpen && !peek) {
     return <LeagueWelcome view={view} code={code} saved={saved} guest={Boolean(user?.is_guest)} busy={busy === 'join' || (wantsJoin && saved)} error={error} now={now} skew={skew} onJoin={joinNow} onPeek={() => setPeek(true)} />;
@@ -433,7 +521,7 @@ function LeaguePageIn() {
     <div className="ms-page">
       <div className="ms-row" style={{ justifyContent: 'space-between', alignItems: 'baseline' }}>
         <div style={{ display: 'grid', gap: 4, minWidth: 0 }}>
-          <span className="ms-eyebrow" style={{ color: 'var(--ms-orange)' }}>League{league.creator ? ` · by ${league.creator.name}` : ''}</span>
+          <span className="ms-eyebrow" style={{ color: 'var(--ms-orange)' }}>League{league.creator ? ` · by ${league.creator.name}` : ''}{isPro && <> · <ProMark /></>}</span>
           {mine
             ? <LeagueName code={code} name={league.name} onView={setView} />
             : <h1 className="ms-h1" style={{ ...h1, overflowWrap: 'anywhere' }}>{league.name}</h1>}
@@ -464,6 +552,9 @@ function LeaguePageIn() {
         </div>
       )}
       {winner && <div className="ms-msg" role="status"><b>{winner.name}</b> won with {lapTime(winner.total_ms)}{winner.user_id === user?.id ? '. Well raced!' : '.'}</div>}
+      {isPro && status?.pro && <CreditsReturn reload={reloadWallet} />}
+      {isPro && league.status === 'ended' && <ProEndCard league={league} scoreboard={scoreboard} userId={user?.id} tracks={tracks.length} />}
+      {isPro && isOpen && <LeagueMarbleCard league={league} tracks={tracks.length} />}
 
       {!member && isOpen && (saved
         ? (
@@ -543,12 +634,18 @@ function LeaguePageIn() {
       {mine && isOpen && <AddPlayer busy={busy} onAdd={(name) => run('add', () => api.leagueAdd(code, name))()} />}
 
       <div className="ms-row" style={{ gap: 14 }}>
-        {mine && !isOpen && <button type="button" className="ms-btn ms-btn--primary" disabled={Boolean(busy)} onClick={again}>{busy === 'again' ? 'STARTING…' : 'RUN IT AGAIN'}</button>}
-        {mine && !isOpen && <span className="ms-note">The same tracks, length and tries, with the same players.</span>}
+        {mine && !isOpen && (!isPro || !status?.pro || cost.how !== 'short') && (
+          <button type="button" className="ms-btn ms-btn--primary" disabled={Boolean(busy) || (isPro && !status?.pro)} onClick={again}>
+            {busy === 'again' ? 'STARTING…' : isPro ? (cost.how === 'pass' ? 'RUN IT AGAIN · PRO PASS' : `RUN IT AGAIN · ${cost.price} CREDITS`) : 'RUN IT AGAIN'}
+          </button>
+        )}
+        {mine && !isOpen && isPro && status?.pro && cost.how === 'short' && <button type="button" className="ms-btn ms-btn--primary" onClick={() => setSelling(true)}>GET CREDITS TO RUN IT AGAIN</button>}
+        {mine && !isOpen && <span className="ms-note">The same tracks, length and tries, with the same players.{isPro ? ' A Pro League is paid again: only you pay.' : ''}</span>}
         {member && !mine && isOpen && <LeaveButton disabled={Boolean(busy)} onLeave={run('leave', async () => { await api.leaveLeague(code); navigate('/leagues'); return null; })} />}
         <Link to="/leagues" style={{ color: 'var(--ms-soft)' }}>My leagues</Link>
       </div>
-      <p className="ms-note ms-go-pro">{GO_PRO}</p>
+      <p className="ms-note ms-go-pro">{status?.pro ? GO_PRO_ON : GO_PRO}</p>
+      {selling && <GetCreditsSheet wallet={wallet} prices={status?.prices} back={`/l/${code}`} onClose={() => setSelling(false)} onPaid={() => reloadWallet()} />}
     </div>
   );
 }
@@ -572,7 +669,7 @@ export function LeagueWelcome({ view, code, saved, guest, busy, error, now, skew
   return (
     <div className="ms-page ms-league-welcome">
       <section className="ms-card ms-league-welcome__card" aria-labelledby="welcome-h">
-        <span className="ms-eyebrow" style={{ color: 'var(--ms-orange)' }}>League invite · {code}</span>
+        <span className="ms-eyebrow" style={{ color: 'var(--ms-orange)' }}>{league.kind === 'pro' ? <>Pro League invite · {code} · <ProMark /></> : <>League invite · {code}</>}</span>
         <h1 id="welcome-h" className="ms-h1" style={{ ...h1, overflowWrap: 'anywhere', textWrap: 'balance' }}>
           {league.creator ? <>{league.creator.name} has invited you to join <span className="ms-league-welcome__name">{league.name}</span></> : <>You're invited to join <span className="ms-league-welcome__name">{league.name}</span></>}
         </h1>
@@ -591,6 +688,7 @@ export function LeagueWelcome({ view, code, saved, guest, busy, error, now, skew
           <li><b>Ends {ends}</b><span>{timeLeft(league.ends_at, now, skew)}</span></li>
           <li><b>{players} {players === 1 ? 'player' : 'players'}</b><span>joined so far</span></li>
           <li><b>{triesText(league.attempts)}</b><span>your best time on each track counts</span></li>
+          {league.kind === 'pro' && <li><b>Free to join</b><span>the winner gets Racing Stripes, the league marble</span></li>}
         </ul>
         {error && <div className="ms-msg ms-msg--bad" role="alert">{error.message}</div>}
         {!signing && (

@@ -5,6 +5,7 @@ import { api } from '../../api/client';
 import { useAuth } from '../../context/AuthContext';
 import { checkName, NAME_NOT_ALLOWED } from '../../shared/nameFilter';
 import { isGuest, shownName } from '../../shared/playerName';
+import { useLeaguesStatus } from '../leagues/status';
 
 /** A chosen name, as the server takes it (src/names assertShownName): 3–24 letters, digits, spaces, _ or -. */
 export const SHOWN_NAME = /^[\p{L}\p{N}][\p{L}\p{N} _-]{1,22}[\p{L}\p{N}_]$/u;
@@ -169,8 +170,9 @@ export function HiddenNameNotice() {
   );
 }
 
-/** A saved account's menu: its name (change it) and Settings. */
+/** A saved account's menu: its name (change it), the Wallet (while Pro Leagues are on: coins and credits) and Settings. */
 export function SavedNameMenu({ user, onClose }) {
+  const pro = useLeaguesStatus()?.pro;
   return (
     <Panel label="Your name" onClose={onClose}>
       <div className="ms-namemenu__who">
@@ -178,6 +180,7 @@ export function SavedNameMenu({ user, onClose }) {
         <span>{user?.display_name ? `Player name ${user.username}` : 'Saved account'}</span>
       </div>
       <ChooseNameForm user={user} label="Your name" note={SAVED_NOTE(user)} />
+      {pro && <Link to="/wallet" className="ms-btn" onClick={onClose}>Wallet: coins and credits</Link>}
       <Link to="/settings" className="ms-btn" onClick={onClose}>Settings</Link>
     </Panel>
   );
