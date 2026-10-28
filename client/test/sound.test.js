@@ -6,7 +6,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
-  BEEPS_GO_S, CEREMONY, CEREMONY_FADE_S, CEREMONY_SECONDS, CROWD_UNDER, DUCK, MUSIC_UNDER, RACE_TRACKS, SOUNDS, TRACK_SECONDS, TUNE_FADE_S,
+  BEEPS_GO_S, CEREMONY, CEREMONY_FADE_S, CEREMONY_SECONDS, CROSSFADE_S, CROWD_UNDER, DUCK, MUSIC_UNDER, RACE_TRACKS, SOUNDS, TRACK_SECONDS, TUNE_FADE_S,
   _resetOrder, crowdCheer, isUnlocked, levels, musicState, nextTrack, nowPlaying, play, raceCeremony, raceCountdown, raceEnd, raceGo, trackFor,
 } from '../src/sound/engine';
 import { CEREMONY_PHASES, phaseAt } from '../src/utils/finishShow';
@@ -100,7 +100,7 @@ describe('sound', () => {
     expect(SOUNDS.beeps).toBe('start-beeps');
   });
 
-  it('the 6 race tunes play once from GO and fade out at their end (never loop); they stream', () => {
+  it('the race tunes stream from GO, never loop, and crossfade into another (never the same) until the finish', () => {
     expect(RACE_TRACKS).toEqual(['tune-1', 'tune-2', 'tune-3', 'tune-4', 'tune-5', 'tune-6']);
     for (const t of RACE_TRACKS) expect(TRACK_SECONDS[t], t).toBeGreaterThan(20);
     expect(TUNE_FADE_S).toBeGreaterThanOrEqual(2);
@@ -110,6 +110,19 @@ describe('sound', () => {
     expect(script).toContain('enc "$f" "tune-$i" -20 40 56 "$(fades "$f")"');
     expect(script).toContain(`TUNE_FADE=${TUNE_FADE_S}`);
     expect(TRACK_SECONDS[CEREMONY]).toBeGreaterThan(CEREMONY_SECONDS); // (the ceremony song fades out before it would loop)
+    // A tune that ends before the finish: about 2 s of crossfade into another random tune, never the same one.
+    expect(CROSSFADE_S).toBeGreaterThanOrEqual(1.5);
+    expect(CROSSFADE_S).toBeLessThanOrEqual(2.5);
+    expect(engine).toContain('for (let k = 0; t === name && k < RACE_TRACKS.length; k += 1) t = nextTrack(name);');
+    expect(engine).toContain('playRaceTune(slot, next, 0, CROSSFADE_S);');
+    expect(engine).toContain("if (playing !== slot || slot.handle !== handle || want?.kind !== 'race' || want.raceId !== slot.raceId) return;");
+  });
+
+  it('no overtaking whoosh for now; the gate sound at GO stays', () => {
+    expect(SOUNDS).toEqual({ crowd: 'crowd-grand-prix', launch: 'launch', beeps: 'start-beeps' });
+    const view = fs.readFileSync(path.resolve(__dirname, '../src/components/LiveRaceViewer3D.jsx'), 'utf8');
+    expect(view).not.toContain("'whoosh'");
+    expect(view).toContain("playSound('launch')");
   });
 
   it('the crowd: once per stand per race, under the music, never ducking it', () => {

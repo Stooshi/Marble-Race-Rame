@@ -52,7 +52,6 @@ if [ -z "${SKIP_EFFECTS:-}" ]; then
   enc "$IN"/CROWD\ GRAND\ PRIX*.mp3 crowd-grand-prix -24 64 96
   # The pack leaving the gate: the first 5 s, fading out from 3.5 s.
   enc "$IN"/MARBLES\ SPEEDING\ UP*.mp3 launch -20 64 96 "atrim=0:5,afade=t=out:st=3.5:d=1.5"
-  # The whoosh of an overtake: its first 2.2 s (the whoosh peaks at 1.1 s), fading out from 1.6 s.
-  enc "$IN"/MARBLES\ OVERTAKING*.mp3 whoosh -20 64 96 "atrim=0:2.2,afade=t=out:st=1.6:d=0.6"
+  # (No overtaking whoosh for now: Moses, 28 Oct 2026.)
 fi
 ls -l "$OUT"

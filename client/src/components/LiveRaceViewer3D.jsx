@@ -23,7 +23,6 @@ import { FlyoverTitle, GateMoment, TrackCard } from './StartShow';
 import StartLights from './StartLights';
 import { useKeepAwake } from '../app/keepAwake';
 
-const WHOOSH_GAP_MS = 3500; // an overtaking whoosh at most this often
 const HOLD_FROM_MS = 250;     // the view held back when it gets ready later than this after the countdown began…
 const JOIN_LIVE_AFTER_MS = 8000; // …unless the race is already this far past GO: then it joins live
 const FLYOVER_SHOW_MS = 4000;  // the start show's flyover: a helicopter overview (three/flyover.js)
@@ -325,18 +324,7 @@ export default function LiveRaceViewer3D({
   const entries = meta?.entries ?? [];
   const standings = shown?.s ?? frame?.s ?? meta?.firstFrame?.s ?? [];
 
-  // Your own marble overtakes or is overtaken while the camera follows it: a whoosh (now and then).
-  const rankRef = useRef(null);
-  const whooshAt = useRef(0);
-  const mine = typeof follow === 'number' && highlight.includes(follow) ? follow : null;
-  useEffect(() => {
-    if (mine === null || camera !== 'follow' || show.phase !== 'racing' || !frame?.s || frame.t < 2000 || frame.p?.[mine] >= 1) { rankRef.current = null; return; }
-    const rank = frame.s.indexOf(mine);
-    if (rankRef.current !== null && rank !== rankRef.current && Date.now() - whooshAt.current > WHOOSH_GAP_MS) {
-      if (playSound('whoosh')) whooshAt.current = Date.now();
-    }
-    rankRef.current = rank;
-  }, [frame, mine, camera, show.phase]);
+  // (No overtaking whoosh for now: Moses, 28 Oct 2026.)
   const followIndex = followedNow(follow, standings);
   const insetIndex = inset === null ? undefined : followedNow(inset, standings);
   const speed = show.phase === 'racing' && gone && frame?.v && followIndex !== undefined && frame.p[followIndex] < 1 ? frame.v[followIndex] : null;

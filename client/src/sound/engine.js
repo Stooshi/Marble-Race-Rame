@@ -7,9 +7,9 @@
  * - A race (raceCountdown → raceGo → raceCeremony → raceEnd, called by the race views):
  *     countdown  "start beeps" over the 3-2-1, its fourth beep exactly on GO (Effects); the
  *                race's tune is fetched meanwhile so it starts on time;
- *     GO         one of the 6 race tunes (shuffled rounds, never the previous race's), played
- *                once: the files fade out at their end (scripts/convert-audio.sh), so a race
- *                longer than its tune goes quiet gently, never an abrupt loop;
+ *     GO         one of the 6 race tunes (shuffled rounds, never the previous race's); a tune that
+ *                ends before the finish crossfades (CROSSFADE_S) into another random one, never
+ *                the same, so music plays all the way to the finish (Moses, 28 Oct 2026);
  *     ceremony   unchanged (Moses, 28 Oct 2026: only its file is new): when the finish ceremony
  *                appears the race tune stops (a short fade) and the ceremony song starts, looping
  *                while the player stays, fading out softly (CEREMONY_FADE_S) after CEREMONY_SECONDS;
@@ -30,7 +30,11 @@ export const RACE_TRACKS = ['tune-1', 'tune-2', 'tune-3', 'tune-4', 'tune-5', 't
 export const TRACK_SECONDS = { 'tune-1': 71.4, 'tune-2': 27.5, 'tune-3': 43.2, 'tune-4': 37.7, 'tune-5': 30.8, 'tune-6': 50.6, ceremony: 59.1 };
 export const CEREMONY = 'ceremony';
 export const TUNE_FADE_S = 3;
-export const SOUNDS = { crowd: 'crowd-grand-prix', launch: 'launch', whoosh: 'whoosh', beeps: 'start-beeps' };
+/** A tune ending before the finish crossfades into the next over this long. */
+export const CROSSFADE_S = 2;
+/** The next tune starts loading this long before the one playing ends. */
+const PREPARE_NEXT_S = 12;
+export const SOUNDS = { crowd: 'crowd-grand-prix', launch: 'launch', beeps: 'start-beeps' };
 /** In "start beeps" the four beeps start at 0.024, 1.026, 2.035 and 3.023 s: the fourth, the GO, this far in. */
 export const BEEPS_GO_S = 3.023;
 /** The ceremony song fades out (over CEREMONY_FADE_S) this long after it started. */
@@ -128,13 +132,16 @@ function prepareTune(raceId, name = trackFor(raceId)) {
   ready.set(key, tuneElement(name));
 }
 
-/** A race's tune on the music bus, played once from the start → { stop(fadeS), pause(), resume() }. */
-function startTune(raceId, name, from = 0) {
+/**
+ * A tune on the music bus, from `from` s → { stop(fadeS), pause(), resume() }. `fadeIn`: seconds to fade in
+ * (a crossfade); `onSoon(left)`: called as it nears its end (PREPARE_NEXT_S, then CROSSFADE_S left).
+ */
+function startTune(raceId, name, from = 0, { fadeIn = 0, onSoon = null } = {}) {
   const key = `${raceId}:${name}`;
   const el = ready.get(key) ?? tuneElement(name);
   ready.delete(key);
   const gain = ctx.createGain();
-  gain.gain.value = 1;
+  gain.gain.value = fadeIn > 0 ? 0 : 1;
   gain.connect(duckBus);
   ctx.createMediaElementSource(el).connect(gain);
   let stopped = false;
@@ -145,7 +152,15 @@ function startTune(raceId, name, from = 0) {
     gain.gain.linearRampToValueAtTime(to, t + seconds);
   };
   const finish = () => { el.pause(); el.removeAttribute('src'); el.load?.(); gain.disconnect(); };
-  el.addEventListener?.('ended', () => { if (!stopped) { stopped = true; finish(); } });
+  if (fadeIn > 0) fadeTo(1, fadeIn);
+  const said = new Set();
+  const near = (left) => { for (const at of [PREPARE_NEXT_S, CROSSFADE_S]) if (left <= at && !said.has(at)) { said.add(at); onSoon?.(at); } };
+  el.addEventListener?.('timeupdate', () => {
+    if (stopped || !onSoon) return;
+    const total = Number.isFinite(el.duration) && el.duration > 0 ? el.duration : TRACK_SECONDS[name];
+    if (total) near(total - el.currentTime);
+  });
+  el.addEventListener?.('ended', () => { if (!stopped) { near(0); stopped = true; finish(); } });
   if (from > 0) {
     const seek = () => { try { el.currentTime = from; } catch { /* (not seekable yet) */ } };
     if (el.readyState >= 1) seek(); else el.addEventListener?.('loadedmetadata', seek, { once: true });
@@ -189,9 +204,36 @@ function sync() {
   }
   // (A tune plays once from GO: turned on again mid-race, or tapped late, it joins where the race is;
   // past its end, the race stays quiet.)
+  // (Joining past the race's first tune: a fresh one from its start.)
   const late = Math.max(0, (Date.now() - target.at) / 1000);
-  if (late > (TRACK_SECONDS[target.track] ?? Infinity) - TUNE_FADE_S) return;
-  playing = { raceId: target.raceId, kind: target.kind, handle: startTune(target.raceId, target.track, late > 0.5 ? late : 0) };
+  const first = late <= (TRACK_SECONDS[target.track] ?? Infinity) - TUNE_FADE_S;
+  playing = { raceId: target.raceId, kind: 'race' };
+  playRaceTune(playing, first ? target.track : anotherTune(target.track), first && late > 0.5 ? late : 0);
+}
+
+/** A random tune other than `name` (from the same shuffled rounds, so the next race doesn't repeat it either). */
+function anotherTune(name) {
+  let t = nextTrack(name);
+  for (let k = 0; t === name && k < RACE_TRACKS.length; k += 1) t = nextTrack(name);
+  lastTrack = t;
+  return t;
+}
+
+/** Plays a race tune into `slot`; as it nears its end the next one loads, then crossfades in (until the finish). */
+function playRaceTune(slot, name, from = 0, fadeIn = 0) {
+  let next = null;
+  const handle = startTune(slot.raceId, name, from, {
+    fadeIn,
+    onSoon: (left) => {
+      if (playing !== slot || slot.handle !== handle || want?.kind !== 'race' || want.raceId !== slot.raceId) return;
+      if (!next) { next = anotherTune(name); prepareTune(slot.raceId, next); }
+      if (left === CROSSFADE_S) {
+        handle.stop(CROSSFADE_S);
+        playRaceTune(slot, next, 0, CROSSFADE_S);
+      }
+    },
+  });
+  slot.handle = handle;
 }
 
 /**
