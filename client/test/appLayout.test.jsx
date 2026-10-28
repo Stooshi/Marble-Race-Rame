@@ -10,7 +10,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 let auth = { isAuthenticated: true, loading: false, token: 't', user: { id: 'u1', username: 'Nova', is_guest: false, coins: 1234, streak: 0 } };
 vi.mock('../src/context/AuthContext', () => ({ useAuth: () => auth }));
-vi.mock('../src/sound/settings', () => ({ useSoundSettings: () => ({ settings: { music: 1, effects: 1, muted: false }, update: () => {} }) }));
+vi.mock('../src/sound/settings', () => ({ useSoundSettings: () => ({ settings: { music: true, muted: false }, update: () => {} }) }));
 const { default: SiteHeader } = await import('../src/site/SiteHeader');
 const { RaceFullScreen } = await import('../src/pages/Race');
 

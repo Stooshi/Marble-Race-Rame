@@ -3,6 +3,7 @@ import LogoutButton from '../account/LogoutButton';
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { useSoundSettings } from '../../sound/settings';
 import { api } from '../../api/client';
 import { activatesDay } from '../payments/preSale';
 import { giftCodesOn } from './RedeemPage';
@@ -212,6 +213,7 @@ export default function SettingsPage() {
       {user && !user.is_guest && !user.email_verified_at && <ConfirmEmail />}
       {user && <YourName user={user} />}
       <SeasonPasses />
+      <GameMusic />
       <PushSettings />
       <NewsByEmail />
       <YourCountry />
@@ -233,6 +235,25 @@ export default function SettingsPage() {
       <DeleteAccount user={user} onDeleted={() => { logout(); navigate('/?deleted=1'); }} />
       <div className="ms-row"><LogoutButton className="ms-btn" onLoggedOut={() => navigate('/')} /></div>
     </div>
+  );
+}
+
+/**
+ * "Game music": the race music and the ceremony song on or off (the sound effects stay). No volume
+ * controls (Moses, 28 Oct 2026): the device's own volume, and the speaker button to mute everything.
+ */
+function GameMusic() {
+  const { user } = useAuth();
+  const { settings, update } = useSoundSettings(user);
+  return (
+    <section className="ms-card" style={{ display: 'grid', gap: 10 }} aria-labelledby="music-h">
+      <h2 id="music-h" className="ms-h3" style={{ margin: 0 }}>Sound</h2>
+      <label style={{ display: 'flex', gap: 10, alignItems: 'center', cursor: 'pointer' }}>
+        <input type="checkbox" role="switch" checked={settings.music} onChange={(e) => update({ music: e.target.checked })} style={{ width: 22, height: 22, flex: 'none' }} />
+        <span><b>Game music</b> {settings.music ? 'on' : 'off'}</span>
+      </label>
+      <span className="ms-note">The race music and the finish ceremony's song. Sound effects stay on. For the volume, use your device's own buttons; the speaker button at the top mutes all sound.</span>
+    </section>
   );
 }
 

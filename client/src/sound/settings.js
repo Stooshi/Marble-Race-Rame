@@ -1,15 +1,20 @@
 import { useCallback, useEffect, useRef, useSyncExternalStore } from 'react';
 import { api } from '../api/client';
-import { getSettings, prepare, setSettings, unlock } from './engine';
+import { prepare, setSettings, unlock } from './engine';
 
 /**
- * The player's sound settings (music and effects volume, mute), remembered on the
- * device and, when signed in, in their account (so they follow them to another
- * device). The account's settings win when the player signs in.
+ * The player's sound settings (Moses, 28 Oct 2026: no volume controls anywhere; players use the device's
+ * own volume): `muted` (the speaker button) and `music` (Settings → "Game music", on or off). The levels
+ * are fixed (engine.js levels(): the music under the effects as before). Remembered on the device and,
+ * when signed in, in the account (so they follow the player to another device); the account's settings
+ * win when the player signs in. Volumes saved before (numbers from the old sliders) are read once as
+ * "music on unless it was at 0" and written back without them.
  */
 const KEY = 'marble-sound';
+const MUSIC_LEVEL = 0.7;   // (fixed: the engine mixes the music under the effects)
+const EFFECTS_LEVEL = 0.8;
 const listeners = new Set();
-let current = getSettings();
+let current = { muted: false, music: true };
 
 function read() {
   try { return JSON.parse(localStorage.getItem(KEY) ?? 'null'); } catch { return null; }
@@ -17,20 +22,23 @@ function read() {
 function write(s) {
   try { localStorage.setItem(KEY, JSON.stringify(s)); } catch { /* (private mode) */ }
 }
-function clean(s) {
-  const level = (v, d) => (typeof v === 'number' && v >= 0 && v <= 1 ? v : d);
-  return { music: level(s?.music, current.music), effects: level(s?.effects, current.effects), muted: typeof s?.muted === 'boolean' ? s.muted : current.muted };
+/** { muted, music } from anything saved before: the old { music: 0.6, effects: 0.8, muted } too. */
+export function clean(s) {
+  const music = typeof s?.music === 'boolean' ? s.music : typeof s?.music === 'number' ? s.music > 0 : current.music;
+  return { muted: typeof s?.muted === 'boolean' ? s.muted : current.muted, music };
 }
+/** What the engine plays at: fixed levels, music off when switched off. */
+export const engineSettings = (s) => ({ music: s.music ? MUSIC_LEVEL : 0, effects: EFFECTS_LEVEL, muted: s.muted });
 function apply(s) {
   current = clean(s);
-  setSettings(current);
+  setSettings(engineSettings(current));
   write(current);
   for (const l of listeners) l();
 }
 
-// On load: this device's settings.
+// On load: this device's settings (old volume numbers dropped from storage).
 const saved = read();
-if (saved) { current = clean(saved); setSettings(current); }
+if (saved) apply(saved); else setSettings(engineSettings(current));
 
 /**
  * Starts sound on the first tap, click or key anywhere (browsers allow sound only then).
@@ -56,7 +64,7 @@ export function useSoundUnlock(paused = false) {
   }, [paused]);
 }
 
-/** { settings, update(patch) } for the sound controls; `user` from the auth context. */
+/** { settings: { muted, music }, update(patch) } for the speaker button and Settings; `user` from the auth context. */
 export function useSoundSettings(user) {
   const settings = useSyncExternalStore((l) => { listeners.add(l); return () => listeners.delete(l); }, () => current, () => current);
   // Signing in: the account's settings (if it has any).
@@ -64,7 +72,12 @@ export function useSoundSettings(user) {
   useEffect(() => {
     if (!user?.id || adopted.current === user.id) return;
     adopted.current = user.id;
-    if (user.settings?.sound) apply({ ...current, ...user.settings.sound });
+    const had = user.settings?.sound;
+    if (had) {
+      apply({ ...current, ...had });
+      // (Old volume numbers saved with the account: written back without them.)
+      if (typeof had.music === 'number' || 'effects' in had) api.saveSettings({ sound: current }).catch(() => {});
+    }
   }, [user?.id, user?.settings?.sound]);
   const timer = useRef(null);
   const update = useCallback((patch) => {

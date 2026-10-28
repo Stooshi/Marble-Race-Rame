@@ -56,25 +56,24 @@ router.get('/me', requireAuth, async (req, res) => {
 });
 
 /**
- * PUT /api/users/me/settings { sound: { music, effects, muted } } — the player's own settings
- * (kept with the account so they follow the player to another device). Merged into what is saved.
+ * PUT /api/users/me/settings { sound: { muted, music } } — the player's own settings (kept with the
+ * account so they follow the player to another device): muted (the speaker button) and music (Settings
+ * → "Game music"), both true or false. No volumes (Moses, 28 Oct 2026: the device's own volume): an
+ * old app's numbers are read as music on unless 0, and never stored.
  */
 router.put('/me/settings', requireAuth, async (req, res) => {
   const sound = req.body?.sound;
-  if (!sound || typeof sound !== 'object') throw badRequest('Provide sound: { music, effects, muted }');
-  const level = (v, name) => {
+  if (!sound || typeof sound !== 'object') throw badRequest('Provide sound: { muted, music }');
+  const flag = (v, name) => {
     if (v === undefined) return undefined;
-    if (typeof v !== 'number' || !(v >= 0 && v <= 1)) throw badRequest(`sound.${name} must be a number from 0 to 1`);
-    return Math.round(v * 100) / 100;
+    if (typeof v === 'boolean') return v;
+    if (name === 'music' && typeof v === 'number' && v >= 0 && v <= 1) return v > 0; // (an older app's slider)
+    throw badRequest(`sound.${name} must be true or false`);
   };
   const clean = {};
-  for (const k of ['music', 'effects']) { const v = level(sound[k], k); if (v !== undefined) clean[k] = v; }
-  if (sound.muted !== undefined) {
-    if (typeof sound.muted !== 'boolean') throw badRequest('sound.muted must be true or false');
-    clean.muted = sound.muted;
-  }
+  for (const k of ['muted', 'music']) { const v = flag(sound[k], k); if (v !== undefined) clean[k] = v; }
   const { rows } = await db.query(
-    `UPDATE users SET settings = jsonb_set(settings, '{sound}', COALESCE(settings->'sound', '{}'::jsonb) || $2::jsonb)
+    `UPDATE users SET settings = jsonb_set(settings, '{sound}', (COALESCE(settings->'sound', '{}'::jsonb) - 'effects') || $2::jsonb)
       WHERE id = $1 RETURNING settings`,
     [req.user.id, JSON.stringify(clean)],
   );

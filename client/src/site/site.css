@@ -642,10 +642,6 @@ a.ms-tile:hover, a.ms-card:hover { text-decoration: none; border-color: var(--ms
 .ms-sound { position: relative; flex: none; }
 .ms-sound__btn { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 12px; border: 1px solid var(--ms-border); background: transparent; color: var(--ms-text); cursor: pointer; }
 .ms-sound__btn:focus-visible { outline: 3px solid var(--ms-yellow); outline-offset: 1px; }
-.ms-sound__panel { position: absolute; right: 0; top: calc(100% + 8px); z-index: 50; width: min(260px, calc(100vw - 32px)); display: grid; gap: 12px; padding: 14px 16px; border-radius: 14px; background: var(--ms-card, #161C2D); border: 1px solid var(--ms-border); box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45); }
-.ms-sound__row { display: grid; grid-template-columns: 64px 1fr; align-items: center; gap: 10px; font-weight: 600; }
-.ms-sound__row input[type="range"] { width: 100%; accent-color: var(--ms-yellow); }
-.ms-sound__mute { grid-template-columns: auto 1fr; font-weight: 500; }
 
 /* ── Offline screen (no connection, or the app can't reach the server) ── */
 .ms-offline {

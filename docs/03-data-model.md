@@ -64,7 +64,7 @@ marbles ──< user_marbles   (the older plain marbles; looks only)
 | `age_group` | `under-13`, `13-17`, `18+`, or NULL for older accounts. Worked out at sign-up from the birth year and month (older apps send the group) |
 | `birth_month` | The first day of the birth month (year and month asked at sign-up, no day; since 20 Oct 2026). NULL for older accounts and guests |
 | `email_verified_at` | When the player opened the link in the "Confirm your email" email (sent once email is set up). Cleared when the email changes |
-| `settings` | JSON that follows the player across devices, e.g. `{ "sound": { "music": 0.6, "effects": 0.8, "muted": false } }` |
+| `settings` | JSON that follows the player across devices: `{ "sound": { "muted": false, "music": true } }` (mute, and Game music on/off; no volumes since 28 Oct 2026: data update `2027-04-26-sound-settings.sql` dropped the old slider numbers, music on unless it was at 0) |
 | `streak_days`, `streak_last_day` | Days in a row the daily goal was met (shown; pays nothing) |
 | `last_login_at`, `created_at`, `updated_at` | `updated_at` is set by a trigger |
 | `last_seen_at` | The last visit (set when the account is made, then at most once a day by `GET /auth/me`). A guest not seen for 90 days is deleted (`src/account/retention.js`, daily, once `GUEST_RETENTION_MODE=delete`; the last visit counts the latest of this, `created_at`, `last_login_at` and the last race); accounts from before 21 Oct 2026 count from when the column was added |
