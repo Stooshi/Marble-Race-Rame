@@ -136,8 +136,8 @@ describe('sound', () => {
     const view = fs.readFileSync(path.resolve(__dirname, '../src/components/LiveRaceViewer3D.jsx'), 'utf8');
     expect(view).not.toContain("'whoosh'");
     expect(view).toContain("playSound('launch')");
-    // (Half as loud as the other sounds, Moses 28 Oct 2026: -26 LUFS, 6 dB under the -20 of the rest.)
-    expect(fs.readFileSync(path.resolve(__dirname, '../../scripts/convert-audio.sh'), 'utf8')).toContain('launch -26 64 96');
+    // (A third as loud as the other sounds, Moses 28 Oct 2026: -30 LUFS, about 10 dB under the -20 of the rest.)
+    expect(fs.readFileSync(path.resolve(__dirname, '../../scripts/convert-audio.sh'), 'utf8')).toContain('launch -30 64 96');
   });
 
   it('the crowd: once per stand per race, under the music, never ducking it', () => {
