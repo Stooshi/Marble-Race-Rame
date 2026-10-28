@@ -1,0 +1,67 @@
+{
+  "_about": "The Marble Spins video template (Moses, 28 Oct 2026): every video (the productions, the cut-downs and the short clips) is drawn from this one file, so a new video follows it automatically. Calm and stylish: the races bring the energy. Clean frames, few words, no flashy effects, no shouting text; the music lifts a little at the big moments. Change a word or a setting here and render again; nothing else needs editing. {track} and {marble} are filled in.",
+
+  "colours": {
+    "navy": "#0E1320",
+    "yellow": "#FFD21F",
+    "orange": "#FF7A1A",
+    "text": "#F2F4F8",
+    "_text": "the logo's own near-white (the wordmark's colour), for words on the picture"
+  },
+  "font": "Lilita One",
+
+  "text": {
+    "_about": "Every tagline: the same font, size, colour and place, every time. One line, centred in the top band (the pack is in the middle and below), fading in and out; never moving, popping or flashing.",
+    "sizeVmin": 5.6,
+    "topWide": "7vh",
+    "topTall": "10.5vh",
+    "colour": "text",
+    "shadow": "navy",
+    "seconds": 2.6,
+    "fadeInSeconds": 0.35,
+    "fadeOutSeconds": 0.4
+  },
+
+  "mark": {
+    "_about": "The small Marble Spins mark (the marble and its two arcs), in the same corner on every frame except the logo intro and the end card.",
+    "corner": "top-right",
+    "sizeVmin": 7,
+    "marginVmin": 3.2,
+    "opacity": 0.92
+  },
+
+  "intro": { "logo": "A", "on": ["production"] },
+
+  "endCard": {
+    "lines": ["Pick your marble. Race your friends.", "Play free at marblespins.com"],
+    "seconds": { "production": 5, "cutdown": 4, "clip": 4 }
+  },
+
+  "sound": {
+    "_about": "The signature: the whoosh of intro A (soundreality, Pixabay 383023), on the intro and as the end card's mark lands, on every video. Music: the game's race tunes (Pixabay), lifted a little at the big moments (photo finishes, jumps).",
+    "signature": "whoosh",
+    "signatureGain": 0.55,
+    "musicGain": 0.5,
+    "liftDb": 2.5,
+    "loudnessLufs": -14
+  },
+
+  "podium": {
+    "_about": "The podium card: navy, a thin yellow edge, the first three with their marbles and times.",
+    "title": "Podium",
+    "places": ["1st", "2nd", "3rd"]
+  },
+
+  "words": {
+    "opening": "20 marbles. One winner.",
+    "trackCard": "{track}",
+    "countdown": "Who takes the lead?",
+    "lastStretch": "Final stretch",
+    "photoFinish": "Photo finish!",
+    "winner": "{marble} wins",
+    "replay": "Replay",
+    "slowMotion": "Slow-motion replay",
+    "pickYourWinner": "Who wins?",
+    "pickYourWinnerAnswer": "Did you pick {marble}?"
+  }
+}

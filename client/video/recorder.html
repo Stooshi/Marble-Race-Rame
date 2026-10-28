@@ -1,36 +1,44 @@
 <!doctype html>
-<!-- The video recorder's page (development only; client/video/README.md). -->
+<!-- The video recorder's page (development only; client/video/README.md). Its look comes from
+     template.json (recorder.js sets the colours, the font, the text's size and place and the mark's corner). -->
 <html><head><meta charset="utf-8"><title>Video recorder</title>
 <style>
   @font-face { font-family: 'Lilita One'; src: url('../node_modules/@fontsource/lilita-one/files/lilita-one-latin-400-normal.woff2') format('woff2'); }
-  @font-face { font-family: 'Barlow Condensed'; font-weight: 700; src: url('../node_modules/@fontsource/barlow-condensed/files/barlow-condensed-latin-700-normal.woff2') format('woff2'); }
-  html, body { margin: 0; height: 100%; overflow: hidden; background: #0E1320; }
+  :root { --navy: #0E1320; --yellow: #FFD21F; --orange: #FF7A1A; --text: #F2F4F8; --font: 'Lilita One';
+          --text-size: 5.6vmin; --text-top: 7vh; --mark-size: 7vmin; --mark-margin: 3.2vmin; --mark-opacity: 0.92; }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: var(--navy); }
   #view { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
-  /* The taglines: big and clean, in the top band (the pack is in the middle and below). */
-  #texts { position: absolute; left: 0; right: 0; top: 6.5vh; text-align: center; pointer-events: none; }
-  #top { font-family: 'Lilita One', sans-serif; font-size: 7.6vmin; color: #fff; line-height: 1.05;
-         text-shadow: 0 0.05em 0.3em rgba(5, 8, 20, 0.85), 0 0 0.08em rgba(5, 8, 20, 0.95); -webkit-text-stroke: 0.02em rgba(5, 8, 20, 0.7); paint-order: stroke fill; padding: 0 6vw; }
-  #texts.big #top { font-size: 11vmin; }
-  #sub { font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 4.2vmin; color: #FFD21F; letter-spacing: 0.04em; text-transform: uppercase;
-         margin-top: 1.2vmin; text-shadow: 0 0.06em 0.3em rgba(5, 8, 20, 0.8); }
-  @media (orientation: portrait) { #texts { top: 11vh; } #top { font-size: 8.4vmin; } #texts.big #top { font-size: 11vmin; } #sub { font-size: 4.6vmin; } }
+  /* The one text style: one line, centred in the top band. */
+  #texts { position: absolute; left: 0; right: 0; top: var(--text-top); text-align: center; pointer-events: none; padding: 0 12vw; }
+  #top { font-family: var(--font), sans-serif; font-size: var(--text-size); color: var(--text); line-height: 1.1; letter-spacing: 0.01em;
+         text-shadow: 0 0.04em 0.28em color-mix(in srgb, var(--navy) 80%, transparent), 0 0 0.06em color-mix(in srgb, var(--navy) 90%, transparent); }
+  /* The mark, always in the same corner. */
+  #mark { position: absolute; width: var(--mark-size); height: var(--mark-size); opacity: var(--mark-opacity);
+          filter: drop-shadow(0 0.3vmin 0.6vmin color-mix(in srgb, var(--navy) 70%, transparent)); }
+  #mark.top-right { top: var(--mark-margin); right: var(--mark-margin); } #mark.top-left { top: var(--mark-margin); left: var(--mark-margin); }
+  #mark.bottom-right { bottom: var(--mark-margin); right: var(--mark-margin); } #mark.bottom-left { bottom: var(--mark-margin); left: var(--mark-margin); }
   /* The podium card. */
   #podium { position: absolute; right: 4vw; bottom: 7vh; width: 62vmin; opacity: 0; padding: 2.4vmin 2.8vmin; border-radius: 2.4vmin;
-            background: rgba(14, 19, 32, 0.82); border: 0.25vmin solid rgba(255, 210, 31, 0.55); box-shadow: 0 1.2vmin 4vmin rgba(0, 0, 0, 0.45); }
+            background: color-mix(in srgb, var(--navy) 88%, transparent); border: 0.25vmin solid var(--yellow); }
   @media (orientation: portrait) { #podium { left: 6vw; right: 6vw; width: auto; bottom: 9vh; } }
-  #podium h2 { margin: 0 0 1.4vmin; font: 400 4.4vmin 'Lilita One', sans-serif; color: #FFD21F; text-align: center; letter-spacing: 0.02em; }
-  .row { display: grid; grid-template-columns: 7vmin 6.4vmin 1fr auto; align-items: center; gap: 1.6vmin; padding: 1vmin 0; font-family: 'Barlow Condensed', sans-serif; font-weight: 700; color: #F2F4F8; font-size: 3.6vmin; }
-  .row + .row { border-top: 0.15vmin solid rgba(255, 255, 255, 0.12); }
-  .row.r1 { font-size: 4.4vmin; }
-  .place { color: #C7CEDC; } .r1 .place { color: #FFD21F; }
+  #podium h2 { margin: 0 0 1.2vmin; font: 400 4.2vmin var(--font), sans-serif; color: var(--yellow); text-align: center; letter-spacing: 0.02em; }
+  .row { display: grid; grid-template-columns: 7vmin 6.4vmin 1fr auto; align-items: center; gap: 1.6vmin; padding: 1vmin 0; font-family: var(--font), sans-serif; color: var(--text); font-size: 3.4vmin; }
+  .row + .row { border-top: 0.15vmin solid color-mix(in srgb, var(--text) 14%, transparent); }
+  .place { color: var(--orange); } .r1 .place { color: var(--yellow); }
   .ball { width: 5.6vmin; height: 5.6vmin; border-radius: 50%; box-shadow: inset -0.5vmin -0.6vmin 1.2vmin rgba(0,0,0,0.45), 0 0.3vmin 0.8vmin rgba(0,0,0,0.5); }
-  .r1 .ball { width: 6.4vmin; height: 6.4vmin; }
   .who { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .time { color: #C7CEDC; font-variant-numeric: tabular-nums; }
+  .time { color: var(--text); opacity: 0.8; font-variant-numeric: tabular-nums; }
 </style></head>
 <body>
 <canvas id="view"></canvas>
-<div id="texts"><div id="top"></div><div id="sub"></div></div>
+<div id="texts"><div id="top"></div></div>
+<svg id="mark" class="top-right" viewBox="-120 -120 240 240" aria-hidden="true">
+  <defs><radialGradient id="mk" cx="35%" cy="30%" r="75%"><stop offset="0%" stop-color="#FFFFFF" /><stop offset="28%" stop-color="#FFD21F" /><stop offset="100%" stop-color="#E8580C" /></radialGradient></defs>
+  <path d="M 104 0 A 104 104 0 0 1 52 90" fill="none" stroke="#FF7A1A" stroke-width="14" stroke-linecap="round" />
+  <path d="M -104 0 A 104 104 0 0 1 -52 -90" fill="none" stroke="#FFD21F" stroke-width="14" stroke-linecap="round" />
+  <circle cx="0" cy="0" r="80" fill="url(#mk)" />
+  <path d="M -64 16 C -34 -46 34 -50 62 -16" fill="none" stroke="#FFFFFF" stroke-opacity="0.9" stroke-width="15" stroke-linecap="round" />
+</svg>
 <div id="podium"><h2 id="podiumTitle">Podium</h2><div class="rows"></div></div>
 <script type="module" src="./recorder.js"></script>
 </body></html>

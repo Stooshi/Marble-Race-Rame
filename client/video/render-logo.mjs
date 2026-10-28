@@ -1,6 +1,6 @@
 // The logo sting (logo.html) as an MP4 with its sound: 2 s at 60 fps.
 //   node video/render-logo.mjs <A|B|C> <out.mp4> [--tall] [--seconds 2] [--end] [--hold 0]
-// --end: the end card (the logo and texts.json's end card lines); --hold: seconds held on the last frame.
+// --end: the end card (the logo and template.json's end card lines); --hold: seconds held on the last frame.
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';

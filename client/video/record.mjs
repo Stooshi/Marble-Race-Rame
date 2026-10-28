@@ -12,7 +12,7 @@ import { spawn, execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { createServer } from 'vite';
 import { chromium } from 'playwright-core';
-import { TEXTS, SOUNDS } from './assets.mjs';
+import { TEMPLATE, TEXTS, SOUNDS, LANDS } from './assets.mjs';
 import * as PLANS from './plans.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -22,13 +22,14 @@ const TUNE_SECONDS = { 1: 71.316542, 3: 43.139458, 4: 37.716083, 5: 30.733125, 6
 const BEEPS_GO_S = 3.023;
 const log = (...m) => console.log('[record]', ...m);
 
-/** A text's opacity at video second v: in over 0.25 s, out over 0.3 s. */
+/** The line of text at video second v and its opacity (the template's fades). */
 function textAt(texts, v) {
+  const { fadeInSeconds: fin, fadeOutSeconds: fout } = TEMPLATE.text;
   for (const x of texts) {
     const u = v - x.at;
     if (u < 0 || u > x.dur) continue;
-    const k = Math.min(1, u / 0.25, (x.dur - u) / 0.3);
-    return { top: x.top, sub: x.sub ?? null, big: Boolean(x.big), opacity: k * k * (3 - 2 * k) };
+    const k = Math.min(1, u / fin, (x.dur - u) / fout);
+    return { top: x.top, opacity: k * k * (3 - 2 * k) };
   }
   return null;
 }
@@ -42,36 +43,44 @@ export function mix(plan, length, { tune }, file) {
     execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-i', SOUNDS.tune(tune).file, '-t', String(TUNE_SECONDS[tune]), '-ar', '48000', '-ac', '2', loop]);
     const inputs = [];
     const parts = [];
-    const add = (src, { at, dur = null, offset = 0, gain = 1, fadeIn = 0, fadeOut = 0, loop: looped = false }) => {
+    const add = (src, { at, dur = null, offset = 0, gain = 1, fadeIn = 0, fadeOut = 0, loop: looped = false, lift = null }) => {
       const k = parts.length;
       inputs.push(...(looped ? ['-stream_loop', '-1'] : []), '-i', src);
       const span = dur ?? 3600;
       let f = `[${k}:a]aresample=48000,aformat=channel_layouts=stereo,atrim=${offset}:${offset + span},asetpts=PTS-STARTPTS`;
       if (fadeIn) f += `,afade=t=in:st=0:d=${fadeIn}`;
       if (fadeOut && dur) f += `,afade=t=out:st=${Math.max(0, dur - fadeOut)}:d=${fadeOut}`;
-      f += `,volume=${gain},adelay=${Math.round(at * 1000)}:all=1[s${k}]`;
+      f += `,volume=${gain},adelay=${Math.round(at * 1000)}:all=1`;
+      // (Lifted at the big moments: t here is video time, after the delay.)
+      if (lift) f += `,volume='if(${lift.expr},${lift.k.toFixed(4)},1)':eval=frame`;
+      f += `[s${k}]`;
       parts.push(f);
     };
     const s = plan.sound;
-    for (const [a, b] of s.music ?? []) add(loop, { at: a, dur: b - a, gain: 0.55, fadeIn: 0.8, fadeOut: 1.2, loop: true });
-    if (s.teaserMusic) add(loop, { at: s.teaserMusic[0], dur: s.teaserMusic[1] - s.teaserMusic[0], offset: 8, gain: 0.5, fadeOut: 0.35, loop: true });
-    if (s.beeps) add(SOUNDS.beeps.file, { at: s.goAt - BEEPS_GO_S, dur: BEEPS_GO_S + 0.9, gain: 0.9, fadeOut: 0.15 });
-    add(SOUNDS.launch.file, { at: s.goAt, dur: 5, gain: 1.6 });
-    if (s.ceremony) add(SOUNDS.ceremony.file, { at: s.ceremony[0], dur: s.ceremony[1] - s.ceremony[0], gain: 0.6, fadeIn: 0.4, fadeOut: 1.5 });
-    // The logo's whoosh, loudest as the mark lands.
-    for (const sh of plan.shots.filter((x) => x.type === 'logo')) {
-      const peak = { A: 0.85, B: 1.3, C: 0.45 }[sh.version] ?? 1;
+    const T = TEMPLATE.sound;
+    // The music, lifted a little (the template's liftDb) at the big moments.
+    const lift = 10 ** (T.liftDb / 20);
+    const lifted = (s.lifts ?? []).map(([a, b]) => `between(t,${a.toFixed(2)},${b.toFixed(2)})`).join('+');
+    for (const [a, b] of s.music ?? []) add(loop, { at: a, dur: b - a, gain: T.musicGain, fadeIn: 0.8, fadeOut: 1.2, loop: true, lift: lifted ? { expr: lifted, k: lift } : null });
+    if (s.teaserMusic) add(loop, { at: s.teaserMusic[0], dur: s.teaserMusic[1] - s.teaserMusic[0], offset: 8, gain: T.musicGain * lift, fadeOut: 0.35, loop: true });
+    if (s.beeps && s.goAt !== null) add(SOUNDS.beeps.file, { at: s.goAt - BEEPS_GO_S, dur: BEEPS_GO_S + 0.9, gain: 0.9, fadeOut: 0.15 });
+    if (s.goAt !== null && s.goAt !== undefined) add(SOUNDS.launch.file, { at: s.goAt, dur: 5, gain: 1.6 });
+    if (s.ceremony) add(SOUNDS.ceremony.file, { at: s.ceremony[0], dur: s.ceremony[1] - s.ceremony[0], gain: 0.55, fadeIn: 0.4, fadeOut: 1.5 });
+    // The signature sound: intro A's whoosh as the mark lands, on the intro and on every end card.
+    for (const sh of plan.shots.filter((x) => x.type === 'logo' || x.type === 'end')) {
+      const peak = LANDS[sh.type === 'logo' ? sh.version : TEMPLATE.intro.logo] ?? 1;
       add(SOUNDS.whoosh.file, { at: sh.at + Math.max(0, peak - SOUNDS.whoosh.peak), offset: Math.max(0, SOUNDS.whoosh.peak - peak), dur: 2.2, gain: SOUNDS.whoosh.gain, fadeOut: 0.5 });
     }
     const n = parts.length;
-    const graph = `${parts.join(';')};${Array.from({ length: n }, (_, k) => `[s${k}]`).join('')}amix=inputs=${n}:normalize=0:duration=longest,atrim=0:${length},apad=whole_dur=${length},loudnorm=I=-14:TP=-1.5:LRA=11[out]`;
+    const graph = `${parts.join(';')};${Array.from({ length: n }, (_, k) => `[s${k}]`).join('')}amix=inputs=${n}:normalize=0:duration=longest,atrim=0:${length},apad=whole_dur=${length},loudnorm=I=${TEMPLATE.sound.loudnessLufs}:TP=-1.5:LRA=11[out]`;
     execFileSync('ffmpeg', ['-y', '-loglevel', 'error', ...inputs, '-filter_complex', graph, '-map', '[out]', '-ar', '48000', '-c:a', 'pcm_s16le', file]);
   } finally {
     fs.rmSync(tmp, { recursive: true, force: true });
   }
 }
 
-export async function record({ slug, race: raceName, kind = 'production', format = 'wide', tune = 7, logo = 'A', out, from = null, to = null, fly = 15, stills = null }) {
+export async function record({ slug, race: raceName, kind = 'production', format = 'wide', tune = 7, logo = TEMPLATE.intro.logo, out, from = null, to = null, fly = null, stills = null, clip = null, at = null }) {
+  fly ??= kind === 'clip' ? 12 : 15; // (seconds: the flyover's length)
   const [W, H] = SIZES[format];
   const race = JSON.parse(fs.readFileSync(path.join(here, '..', 'dev', '.tracks', `${raceName}.json`), 'utf8'));
   const server = await createServer({ root: path.resolve(here, '..'), logLevel: 'error', server: { port: 0, strictPort: false } });
@@ -88,7 +97,7 @@ export async function record({ slug, race: raceName, kind = 'production', format
     await page.waitForFunction(() => window.rec, null, { timeout: 300_000 });
     await page.evaluate(() => window.rec.ready);
     const info = await page.evaluate(() => window.rec.info());
-    const plan = PLANS[kind](info, race, { logo, fly });
+    const plan = PLANS[kind](info, race, { logo, fly, clip, at });
     // (The plan beside the video: swap-logo.mjs uses it to put another logo version in.)
     fs.writeFileSync(`${out}.plan.json`, JSON.stringify({ slug, race: raceName, kind, format, tune, logo, length: plan.length, shots: plan.shots, sound: plan.sound }));
     log(`${info.name}: ${kind} ${format}, ${plan.length.toFixed(1)} s, ${plan.shots.length} shots; winner ${info.podium[0].name} by ${info.margin} ms`);
@@ -120,7 +129,7 @@ export async function record({ slug, race: raceName, kind = 'production', format
       if (sh.type === 'logo' || sh.type === 'end') {
         const key = sh.type === 'logo' ? `logo-${sh.version}` : 'end';
         if (cardKey !== key) {
-          await cardFor(sh.type === 'logo' ? { v: sh.version } : { v: logo, end: '1', l1: TEXTS.endCard[0], l2: TEXTS.endCard[1] });
+          await cardFor(sh.type === 'logo' ? { v: sh.version } : { v: TEMPLATE.intro.logo, end: '1', l1: TEXTS.endCard[0], l2: TEXTS.endCard[1] });
           cardKey = key;
         }
         await card.evaluate((t) => window.logoAt(t), Math.min(u, 1.99));
@@ -169,7 +178,8 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   const opt = (n, d) => (args.includes(`--${n}`) ? args[args.indexOf(`--${n}`) + 1] : d);
   const num = (n) => (opt(n, null) === null ? null : Number(opt(n)));
   await record({
-    slug, race, kind: opt('kind', 'production'), format: opt('format', 'wide'), tune: Number(opt('tune', 7)), logo: opt('logo', 'A'),
+    slug, race, kind: opt('kind', 'production'), format: opt('format', 'wide'), tune: Number(opt('tune', 7)), logo: opt('logo', TEMPLATE.intro.logo),
+    clip: opt('clip', null), at: num('at'), fly: num('fly'),
     out: opt('out', path.join(process.cwd(), `${slug}-${opt('kind', 'production')}-${opt('format', 'wide')}.mp4`)), from: num('from'), to: num('to'), stills: opt('stills', null)?.split(',').map(Number) ?? null,
   });
   process.exit(0); // (the browser and the dev server can keep the process waiting after closing)

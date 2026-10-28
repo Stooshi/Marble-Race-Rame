@@ -11,8 +11,9 @@
 //                               frames must come in order (jumping back starts the race again)
 //   look(t, { from, to, fov })  the race at t from a fixed camera ([x, y, z] each)
 //   finishSide(t, opts)         the race at t from beside the finish line (the slow-motion replay)
-//   text({ top, sub, big })     the video's texts (null: none), and their opacity: { opacity }
+//   text({ top, opacity })      the video's one line of text (template.json's style and place; null: none)
 //   podium(k, rows)             the podium card (k: 0 hidden … 1 shown)
+// The look (colours, font, the text's size and place, the mark's corner) comes from template.json.
 import { Vector3 } from 'three';
 import { TrackScene } from '../src/three/TrackScene';
 import { frameAtTime } from '../src/utils/splits';
@@ -26,6 +27,21 @@ const params = new URLSearchParams(window.location.search);
 const slug = params.get('track');
 const FLY_MS = Number(params.get('fly') || 13000);
 const track = await (await fetch(`../dev/.tracks/${slug}.json`)).json();
+// The template: the brand's colours, font, text style and the mark's corner (template.json).
+const T = await (await fetch('./template.json')).json();
+{
+  const css = document.documentElement.style;
+  const tall = window.innerHeight > window.innerWidth;
+  for (const k of ['navy', 'yellow', 'orange', 'text']) css.setProperty(`--${k}`, T.colours[k]);
+  css.setProperty('--font', `'${T.font}'`);
+  css.setProperty('--text-size', `${T.text.sizeVmin}vmin`);
+  css.setProperty('--text-top', tall ? T.text.topTall : T.text.topWide);
+  css.setProperty('--mark-size', `${T.mark.sizeVmin}vmin`);
+  css.setProperty('--mark-margin', `${T.mark.marginVmin}vmin`);
+  css.setProperty('--mark-opacity', String(T.mark.opacity));
+  document.getElementById('mark').setAttribute('class', T.mark.corner);
+  document.getElementById('podiumTitle').textContent = T.podium.title;
+}
 const race = await (await fetch(`../dev/.tracks/${params.get('race')}.json`)).json();
 // The field in the standard collection's finished looks (never a seasonal or limited one), named after them.
 race.entries = dressEntries(race.entries, params.get('race'), HOUSE_LOOKS).map((e) => ({ ...e, marble: { ...e.marble, name: lookName(e.marble.look) ?? e.marble.name } }));
@@ -166,11 +182,9 @@ window.rec = {
     const to = spot(p + ahead / (scene.channel?.arc ?? 1000)).pos.add(new Vector3(0, lookUp, 0));
     return { from: from.toArray(), to: to.toArray(), fov };
   },
-  text({ top = null, sub = null, opacity = 1, big = false } = {}) {
+  text({ top = null, opacity = 1 } = {}) {
     $('top').textContent = top ?? '';
-    $('sub').textContent = sub ?? '';
     $('texts').style.opacity = String(opacity);
-    $('texts').classList.toggle('big', big);
   },
   podium(k, rows = []) {
     const el = $('podium');
@@ -179,7 +193,7 @@ window.rec = {
     if (el.dataset.key !== JSON.stringify(rows)) {
       el.dataset.key = JSON.stringify(rows);
       el.querySelector('.rows').innerHTML = rows.map((r, i) => `
-        <div class="row r${i + 1}"><span class="place">${['1st', '2nd', '3rd'][i]}</span>
+        <div class="row r${i + 1}"><span class="place">${T.podium.places[i]}</span>
         <span class="ball" style="background:${GLOSS}, ${pictureBackground(badgeOf(r.look), r.look)}"></span>
         <span class="who">${r.name}</span><span class="time">${i === 0 ? fmt(r.ms) : `+${((r.ms - rows[0].ms) / 1000).toFixed(2)} s`}</span></div>`).join('');
     }
