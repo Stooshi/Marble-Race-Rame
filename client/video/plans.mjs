@@ -260,13 +260,14 @@ export function clip(info, race, { clip: kind, at = null, fly = 12, promoStart =
     p.say(b + 2.3, 'winner', name, 2.2);
     p.lift(b, b + 4.5);
   } else if (kind === 'wild') {
-    // (A given moment: the marble highest in the air then, the jumper; if none is in the air, e.g. an
-    // overtake on the line, the one leading just after it.)
+    // (A given moment: the marble highest in the air then, the jumper, when it is really flying (1.5 m
+    // or more: a small hop at the back is not the moment); otherwise, e.g. an overtake on the line, the
+    // one leading just after it.)
     const jumper = (t) => {
       const f = race.frames[Math.max(0, Math.min(race.frames.length - 1, Math.round(t / race.tickMs)))];
       const h = f.h ?? [];
       const top = h.reduce((b, x, i) => (x > (h[b] ?? 0) ? i : b), 0);
-      if ((h[top] ?? 0) > 0.2) return top;
+      if ((h[top] ?? 0) >= 1.5) return top;
       const g = race.frames[Math.min(race.frames.length - 1, Math.round((t + 300) / race.tickMs))];
       return g.s?.[0] ?? 'leader';
     };
