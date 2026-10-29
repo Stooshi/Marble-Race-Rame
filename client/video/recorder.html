@@ -11,7 +11,8 @@
   /* The one text style: one line, centred in the top band. */
   #texts { position: absolute; left: 0; right: 0; top: var(--text-top); text-align: center; pointer-events: none; padding: 0 12vw; }
   #top { font-family: var(--font), sans-serif; font-size: var(--text-size); color: var(--text); line-height: 1.1; letter-spacing: 0.01em;
-         text-shadow: 0 0.04em 0.28em color-mix(in srgb, var(--navy) 80%, transparent), 0 0 0.06em color-mix(in srgb, var(--navy) 90%, transparent); }
+         /* (A soft navy halo, so the line reads on a pale sky as well as on dark ground.) */
+         text-shadow: 0 0 0.05em var(--navy), 0 0.03em 0.1em var(--navy), 0 0 0.35em color-mix(in srgb, var(--navy) 85%, transparent), 0 0 0.9em color-mix(in srgb, var(--navy) 55%, transparent); }
   /* The mark, always in the same corner. */
   #mark { position: absolute; width: var(--mark-size); height: var(--mark-size); opacity: var(--mark-opacity);
           filter: drop-shadow(0 0.3vmin 0.6vmin color-mix(in srgb, var(--navy) 70%, transparent)); }
