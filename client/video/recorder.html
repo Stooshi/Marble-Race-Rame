@@ -9,7 +9,8 @@
   html, body { margin: 0; height: 100%; overflow: hidden; background: var(--navy); }
   #view { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
   /* The one text style: one line, centred in the top band. */
-  #texts { position: absolute; left: 0; right: 0; top: var(--text-top); text-align: center; pointer-events: none; padding: 0 12vw; }
+  #texts { position: absolute; left: 0; right: 0; top: var(--text-top); text-align: center; pointer-events: none; padding: 0 12vw; text-wrap: balance; }
+  #top { text-wrap: balance; }
   #top { font-family: var(--font), sans-serif; font-size: var(--text-size); color: var(--text); line-height: 1.1; letter-spacing: 0.01em;
          /* (A soft navy halo, so the line reads on a pale sky as well as on dark ground.) */
          text-shadow: 0 0 0.05em var(--navy), 0 0.03em 0.1em var(--navy), 0 0 0.35em color-mix(in srgb, var(--navy) 85%, transparent), 0 0 0.9em color-mix(in srgb, var(--navy) 55%, transparent); }

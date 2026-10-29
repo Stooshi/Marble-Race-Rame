@@ -74,6 +74,43 @@ function builder(kind) {
   return p;
 }
 
+/**
+ * The game's lines (template.json promos): the next `count` in the list for this video (rotating
+ * across videos by `key`), placed in calm moments: over the flyover, the race (not the finish) and
+ * the podium, at least 1.2 s from any other line, spread across the video.
+ */
+function promos(p, kind, key, start = null) {
+  const P = TEMPLATE.promos;
+  const count = P.perVideo[kind] ?? 0;
+  if (!count) return;
+  // (Where in the list this video starts: given (`--promos <n>`, so a batch of videos rotates through the
+  // list evenly), else from the video's name.)
+  let h = 2166136261;
+  for (const ch of key) h = Math.imul(h ^ ch.charCodeAt(0), 16777619) >>> 0;
+  const first = start ?? h;
+  const lines = Array.from({ length: count }, (_, k) => P.lines[(first + k) % P.lines.length]);
+  const calm = p.shots.filter((s) => s.type === 'fly' || ((s.type === 'race' || s.type === 'group' || s.type === 'pan') && (s.speed ?? 1) === 1 && s.from >= 0));
+  const inCalm = (x) => calm.some((s) => x >= s.at && x <= s.at + s.dur);
+  const covered = (a, b) => { for (let x = a; x < b; x += 0.25) if (!inCalm(x)) return false; return inCalm(b); };
+  const free = (a, b) => covered(a, b) && !p.texts.some((x) => a < x.at + x.dur + 1.2 && b > x.at - 1.2);
+  const placed = [];
+  const seg = p.v / (count + 1);
+  for (const [k, line] of lines.entries()) {
+    const parts = Array.isArray(line) ? line : [line];
+    const d = P.seconds * parts.length + 0.3 * (parts.length - 1);
+    const want = seg * (k + 1);
+    let best = null;
+    for (let a = 0; a + d < p.v; a += 0.25) {
+      if (!free(a, a + d) || placed.some(([x, y]) => a < y + 2 && a + d > x - 2)) continue;
+      if (best === null || Math.abs(a - want) < Math.abs(best - want)) best = a;
+    }
+    if (best === null) continue;
+    parts.forEach((part, j) => p.texts.push({ at: best + j * (P.seconds + 0.3), dur: P.seconds, top: part }));
+    placed.push([best, best + d]);
+  }
+  p.texts.sort((x, y) => x.at - y.at);
+}
+
 /** The finish as it happens: the leader into the last stretch, then head-on as the leader and the chasers arrive. */
 function liveFinish(p, W, { stretch = 8000, after = 1800 } = {}) {
   const a = p.add({ type: 'race', follow: 'leader', from: W - stretch, dur: (stretch - 1600) / 1000 });
@@ -89,7 +126,7 @@ function tvPackMoment(A, race, c) {
 }
 
 /** The big production (horizontal, about 2 minutes). */
-export function production(info, race, { logo = TEMPLATE.intro.logo, fly = 15 } = {}) {
+export function production(info, race, { logo = TEMPLATE.intro.logo, fly = 15, promoStart = null } = {}) {
   const m = moments(info, race);
   const A = analyse(race, info.arc, m.W + 8000);
   const G = info.countdownMs;
@@ -135,8 +172,9 @@ export function production(info, race, { logo = TEMPLATE.intro.logo, fly = 15 } 
   }
   // 7. The podium, over the finish.
   const podAt = p.add({ type: 'race', follow: 'leader', from: m.W + 7000, dur: 11 });
-  // 8. The end card.
+  // 8. The end card, and the game's lines in the calm moments.
   const endAt = p.end();
+  promos(p, 'production', `${info.name}|production`, promoStart);
   return {
     shots: p.shots, texts: p.texts, podium: { at: podAt + 0.6, dur: 10.4 }, length: p.v, packShare,
     marks: { logoAt, flyAt, goAt, podAt, endAt },
@@ -149,7 +187,7 @@ function within3(A, a, b) {
 }
 
 /** The vertical cut-down (30–60 s): the start wide, the pack's best moments, a TV camera, the finish head-on, the podium, the end card. */
-export function cutdown(info, race) {
+export function cutdown(info, race, { promoStart = null } = {}) {
   const m = moments(info, race);
   const A = analyse(race, info.arc, m.W + 8000);
   const p = builder('cutdown');
@@ -187,6 +225,7 @@ export function cutdown(info, race) {
   }
   const podAt = p.add({ type: 'race', follow: 'leader', from: m.W + 4000, dur: 5.5 });
   p.end();
+  promos(p, 'cutdown', `${info.name}|cutdown`, promoStart === null ? null : promoStart + TEMPLATE.promos.perVideo.production);
   return {
     shots: p.shots, texts: p.texts, podium: { at: podAt + 0.3, dur: 5.2 }, length: p.v,
     marks: { goAt, podAt },
@@ -201,7 +240,7 @@ export function cutdown(info, race) {
  *   wild     a big moment in the pack (`at`: race ms; else the race's busiest), then again at half speed
  *   pick     the field at the gate, "Who wins?", the start wide, a cut to the finish head-on, "Did you pick <marble>?"
  */
-export function clip(info, race, { clip: kind, at = null, fly = 12 } = {}) {
+export function clip(info, race, { clip: kind, at = null, fly = 12, promoStart = null } = {}) {
   const m = moments(info, race);
   const A = analyse(race, info.arc, m.W + 8000);
   const p = builder('clip');
@@ -240,6 +279,7 @@ export function clip(info, race, { clip: kind, at = null, fly = 12 } = {}) {
     p.say(b + 7.2, 'pickYourWinnerAnswer', name, 2.3);
   } else throw new Error(`No clip kind "${kind}"`);
   p.end();
+  promos(p, 'clip', `${info.name}|clip|${kind}`, promoStart);
   return {
     shots: p.shots, texts: p.texts, podium: null, length: p.v,
     marks: {},

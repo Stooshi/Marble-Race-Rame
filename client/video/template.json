@@ -52,6 +52,22 @@
     "places": ["1st", "2nd", "3rd"]
   },
 
+  "promos": {
+    "_about": "Lines about the game, shown 3–4 per video (productions 4, cut-downs 3, short clips as many as fit, at most 2), in the same text style, about 2.6 s each, in calm moments away from the other lines, never over the pack (the top band). Each video gets the next few in the list, so they rotate across videos. A line given as a list is shown in parts, one after the other. Only what is live: no qualifying, no prizes. The fjords line: Sognefjord is a live track (checked 29 Oct 2026, not holiday-locked); if it ever isn't, use the other version in `fjordsFallback`.",
+    "perVideo": { "production": 4, "cutdown": 3, "clip": 2 },
+    "seconds": 2.6,
+    "lines": [
+      "Real physics",
+      "Invite and race your friends",
+      "Create your own league",
+      "Build your Marble Bag. Collect your favourite marbles.",
+      "Don't just watch marble races. Race them.",
+      "Race. Earn coins. Collect marbles.",
+      ["Amazing tracks: from Norwegian fjords to pinball tables.", "Every track has its own start, layout and surprises."]
+    ],
+    "fjordsFallback": ["Amazing tracks: from the Grand Canyon to pinball tables.", "Every track has its own start, layout and surprises."]
+  },
+
   "words": {
     "opening": "20 marbles. One winner.",
     "trackCard": "{track}",
