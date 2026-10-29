@@ -128,7 +128,7 @@ export function directRace(A, { from, to, packShare = 0.55, start = true }) {
     let onPack = lead >= 8 ? false : (behind ? pk > 1 : pk > lead + 3.5);
     if (two) onPack = last[0] !== 'pack'; // (never three of the same in a row)
     const at = within(A, t, t + 500)[0] ?? A[A.length - 1];
-    if (onPack && at.n >= 4) {
+    if (onPack && at.n >= (behind ? 3 : 4)) { // (a smaller bunch will do when the pack is behind its share)
       if (wide && at.members.length >= 4) shots.push({ type: 'group', members: at.members.slice(0, 8), shot: `pack-${t}`, from: t, dur: len / 1000 });
       else shots.push({ type: 'race', follow: at.mid, from: t, dur: len / 1000 });
       wide = !wide;
