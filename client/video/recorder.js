@@ -73,16 +73,28 @@ function draw(t) {
   scene.holiday?.tick(t / 1000, scene.camera.position);
   scene.renderer.render(scene.scene, scene.camera);
 }
-/** The race on to `t`, a step of `step` race ms at a time (the cameras easing 1/60 s a step). */
-function advanceTo(t, step = 1000 / 60) {
+/**
+ * The race on to `t`, a step of `step` race ms at a time (the cameras easing 1/60 s a step), the game's
+ * camera following `follow` ('leader' or an entry index: a marble in the pack). A new marble to follow
+ * is a cut: the camera starts afresh behind it rather than sweeping across.
+ */
+let following = 'leader';
+function advanceTo(t, step = 1000 / 60, follow = 'leader') {
   if (clock === null || t < clock - 1) beginRace();
   if (clock < -countdown) clock = -countdown;
+  if (follow !== following) { following = follow; scene.main.ready = false; }
   // (Far behind: catch up in bigger steps, the cameras settled by the last few.)
-  while (t - clock > 400) { clock += 50; scene.updateRace(frameAt(clock), 'leader', 0.05); }
-  while (clock < t - 0.5) { clock = Math.min(t, clock + step); scene.updateRace(frameAt(clock), 'leader', 1 / 60); }
+  while (t - clock > 400) { clock += 50; scene.updateRace(frameAt(clock), follow, 0.05); }
+  while (clock < t - 0.5) { clock = Math.min(t, clock + step); scene.updateRace(frameAt(clock), follow, 1 / 60); }
   clock = t;
 }
+let groupState = null;
+const BASE_FOV = scene.camera.fov;
+let custom = false; // (a shot of this page's own camera: the game's camera starts afresh after it, at its own lens)
 function place({ from, to, fov }) {
+  scene.tvLens = undefined;
+  custom = true;
+  scene.camera.fov = BASE_FOV;
   scene.camera.position.set(...from);
   scene.camera.near = 0.3;
   scene.camera.far = scene.sky.scale.x * 1.2;
@@ -123,6 +135,7 @@ window.rec = {
     const tv = (scene.tvCams ?? []).map((c) => ({ p: c.p, s: c.s, pos: c.pos.toArray() }));
     return {
       name: track.name, countdownMs: countdown, durationMs: race.durationMs, winnerMs: fin[0], margin: fin[1] - fin[0], flyMs: FLY_MS, tv,
+      arc: scene.channel?.arc ?? scene.centerline.samples.reduce((a, x, i, all) => a + (i ? x.pos.distanceTo(all[i - 1].pos) : 0), 0),
       podium: [...race.results].sort((a, b) => a.finishTimeMs - b.finishTimeMs).slice(0, 3).map((r) => {
         const e = race.entries[r.index];
         return { name: e.marble.name, look: e.marble.look, ms: r.finishTimeMs, index: r.index };
@@ -146,8 +159,31 @@ window.rec = {
     scene.structures?.update(-countdown);
     draw(-countdown);
   },
-  race(t, { step } = {}) {
-    advanceTo(t, step);
+  race(t, { step, follow = 'leader' } = {}) {
+    if (custom) { custom = false; scene.tvLens = undefined; scene.camera.fov = BASE_FOV; scene.camera.updateProjectionMatrix(); scene.main.ready = false; }
+    advanceTo(t, step, follow);
+    draw(t);
+  },
+  /**
+   * The race at t from a camera riding behind and above a group of marbles (`members`: entry
+   * indexes; the pack, or the whole field leaving the gate), looking on down the track at them:
+   * the broadcast's wide chase. Eased, so it glides; `shot` (any key) snaps it when a new shot starts.
+   */
+  group(t, { members, shot, back = 11, up = 6.5, ahead = 6, fov = 46, step }) {
+    advanceTo(t, step, 'leader');
+    const pts = members.map((i) => scene.marbles.positionOf(i)).filter(Boolean);
+    if (!pts.length) { draw(t); return; }
+    const c = pts.reduce((a, q) => a.add(q), new Vector3()).multiplyScalar(1 / pts.length);
+    const f = frameAt(t);
+    const p = members.reduce((a, i) => a + Math.min(1, f.p[i] ?? 0), 0) / members.length;
+    const s = spot(p);
+    const cam = c.clone().addScaledVector(s.ahead, -back).add(new Vector3(0, up, 0));
+    const ground = scene.scenery?.userData?.groundAt?.(cam.x, cam.z);
+    if (Number.isFinite(ground) && cam.y < ground + 3) cam.y = ground + 3;
+    const aim = c.clone().addScaledVector(s.ahead, ahead);
+    if (!groupState || groupState.shot !== shot) groupState = { shot, cam: cam.clone(), aim: aim.clone() };
+    else { groupState.cam.lerp(cam, 0.08); groupState.aim.lerp(aim, 0.12); }
+    place({ from: groupState.cam.toArray(), to: groupState.aim.toArray(), fov });
     draw(t);
   },
   look(t, eye) {
@@ -160,11 +196,13 @@ window.rec = {
    * (follow: 'leader', 'second' or an entry index; the turn eased so the picture never jerks):
    * a broadcast's trackside pan.
    */
-  pan(t, { from, follow = 'leader', fov = 32, ease = 0.18, lead = 0.6 }) {
+  pan(t, { from, follow = 'leader', members = null, fov = 32, ease = 0.18, lead = 0.6 }) {
     advanceTo(t);
     const f = frameAt(t);
     const index = typeof follow === 'number' ? follow : (f.s ?? [])[follow === 'second' ? 1 : 0] ?? 0;
-    const at = scene.marbles.positionOf(index);
+    // (members: aimed at the middle of a group instead, e.g. the whole field leaving the gate.)
+    const pts = members ? members.map((i) => scene.marbles.positionOf(i)).filter(Boolean) : [];
+    const at = pts.length ? pts.reduce((a, q) => a.add(q), new Vector3()).multiplyScalar(1 / pts.length) : scene.marbles.positionOf(index);
     const key = JSON.stringify(from);
     // (Aimed a little ahead of the marble, so it runs into the picture.)
     const aim = at ? at.clone().add(new Vector3(0, lead * 0.4, 0)) : null;

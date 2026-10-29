@@ -11,6 +11,9 @@
 // Sound: { goAt (GO in video seconds, or null), beeps, music: [[from, to]], lifts: [[from, to]] (the music lifted
 // a little: the big moments), ceremony: [from, to] } (record.mjs mix(); the end card's signature sound is always added).
 import { TEMPLATE, TEXTS, fill } from './assets.mjs';
+import { FINISH_EYE, START_SHOT, analyse, busiest, directRace, reaches } from './director.mjs';
+
+export { FINISH_EYE };
 
 /** When the leader first reaches share p of the track (race ms). */
 export function leaderAt(race, p) {
@@ -60,8 +63,6 @@ export function moments(info, race) {
   return { W, close, tv, moves: overtakes(race, W, tvWindows, 3) };
 }
 
-/** The photo-finish camera: 9 m past the line, 3 m up, looking back up the track through the finish arch (checked on all six tracks). */
-export const FINISH_EYE = { p: 1, back: -9, beside: 0, up: 3, ahead: -12, lookUp: 0, fov: 34 };
 
 /** A plan under construction: shots one after another, the template's one text style, the end card. */
 function builder(kind) {
@@ -73,16 +74,31 @@ function builder(kind) {
   return p;
 }
 
+/** The finish as it happens: the leader into the last stretch, then head-on as the leader and the chasers arrive. */
+function liveFinish(p, W, { stretch = 8000, after = 1800 } = {}) {
+  const a = p.add({ type: 'race', follow: 'leader', from: W - stretch, dur: (stretch - 1600) / 1000 });
+  p.add({ type: 'look', from: W - 1600, dur: (1600 + after) / 1000, eye: FINISH_EYE });
+  return a;
+}
+
+/** The pack's moment at a TV camera: the marble in the thick of the bunch there, followed through the TV camera's shot. */
+function tvPackMoment(A, race, c) {
+  const near = busiest(A, Math.max(6000, c.t - 4000), c.t + 6000, 3000) ?? { mid: null };
+  const at = near.mid !== null ? reaches(race, near.mid, c.p) : null;
+  return at === null ? { follow: 'leader', t: c.t } : { follow: near.mid, t: at };
+}
+
 /** The big production (horizontal, about 2 minutes). */
 export function production(info, race, { logo = TEMPLATE.intro.logo, fly = 15 } = {}) {
   const m = moments(info, race);
+  const A = analyse(race, info.arc, m.W + 8000);
   const G = info.countdownMs;
   const p = builder('production');
   const name = { track: info.name, marble: info.podium[0].name };
 
-  // 1. The teaser: the race's best moment (the game's camera at the last TV camera), a little slowed.
-  const tease = m.tv[m.tv.length - 1] ?? { t: m.W * 0.7 };
-  p.add({ type: 'race', from: tease.t - 2200, speed: 0.75, dur: 2.6 });
+  // 1. The teaser: the race's busiest moment in the pack, a little slowed.
+  const tease = busiest(A, 8000, m.W - 8000, 2500) ?? { t: m.W * 0.5, mid: 'leader' };
+  p.add({ type: 'race', follow: tease.mid, from: tease.t - 300, speed: 0.75, dur: 2.6 });
   // 2. Intro A.
   const logoAt = p.add({ type: 'logo', version: logo, dur: 2 });
   // 3. The flyover: the wide overview, then slowly to the highlights.
@@ -93,62 +109,83 @@ export function production(info, race, { logo = TEMPLATE.intro.logo, fly = 15 } 
   const cdAt = p.add({ type: 'race', from: -G, dur: G / 1000 });
   p.say(cdAt + 1.2, 'countdown');
   const goAt = p.v;
-  // 5. The race: the game's cameras and the track's TV cameras, start to finish.
-  p.add({ type: 'race', from: 0, dur: (m.W + 7000) / 1000 });
-  for (const c of m.tv) p.lift(goAt + (c.t - 3000) / 1000, goAt + (c.t + 1500) / 1000);
+  // 5. The race, directed: the start wide, the pack and the leader by where the action is, the finish head-on.
+  const { shots, packShare } = directRace(A, { from: 0, to: m.W - 8000 });
+  for (const s of shots) {
+    const at = p.add(s);
+    if (s.follow !== 'leader' && within3(A, s.from, s.from + s.dur * 1000)) p.lift(at, at + s.dur);
+  }
+  liveFinish(p, m.W, { after: 1800 });
+  p.add({ type: 'race', follow: 'leader', from: m.W + 1800, dur: 5.2 });
   p.say(goAt + (m.W - 7500) / 1000, 'lastStretch');
   p.lift(goAt + (m.W - 3000) / 1000, goAt + (m.W + 3000) / 1000);
   p.say(goAt + (m.W + 250) / 1000, m.close ? 'photoFinish' : 'winner', name);
   if (m.close) p.say(goAt + (m.W + 3100) / 1000, 'winner', name);
-  // 6. The replays: the finish in slow motion head-on through the finish arch (when it was close), then
-  // the best overtaking moment and the first TV camera's moment again, at half speed, through the game's cameras.
+  // 6. The replays: the finish in slow motion through the game's camera (when it was close), the pack's
+  // busiest moment and the pack at the first TV camera, at half speed.
   if (m.close) {
-    const at = p.add({ type: 'look', from: m.W - 1300, speed: 0.25, dur: 6.4, eye: FINISH_EYE });
+    const at = p.add({ type: 'race', follow: 'leader', from: m.W - 1300, speed: 0.25, dur: 6.4 });
     p.say(at + 0.4, 'slowMotion');
     p.lift(at, at + 6.4);
   }
-  if (m.moves[0]) p.say(p.add({ type: 'race', from: m.moves[0].t - 2500, speed: 0.5, dur: 6 }) + 0.4, 'replay');
-  if (m.tv[0]) p.say(p.add({ type: 'race', from: m.tv[0].t - 3000, speed: 0.5, dur: 6 }) + 0.4, 'replay');
+  if (tease.mid !== 'leader') p.say(p.add({ type: 'race', follow: tease.mid, from: tease.t - 1000, speed: 0.5, dur: 6 }) + 0.4, 'replay');
+  if (m.tv[0]) {
+    const tv = tvPackMoment(A, race, m.tv[0]);
+    p.say(p.add({ type: 'race', follow: tv.follow, from: tv.t - 3200, speed: 0.5, dur: 6 }) + 0.4, 'replay');
+  }
   // 7. The podium, over the finish.
-  const podAt = p.add({ type: 'race', from: m.W + 7000, dur: 11 });
+  const podAt = p.add({ type: 'race', follow: 'leader', from: m.W + 7000, dur: 11 });
   // 8. The end card.
   const endAt = p.end();
   return {
-    shots: p.shots, texts: p.texts, podium: { at: podAt + 0.6, dur: 10.4 }, length: p.v,
+    shots: p.shots, texts: p.texts, podium: { at: podAt + 0.6, dur: 10.4 }, length: p.v, packShare,
     marks: { logoAt, flyAt, goAt, podAt, endAt },
     sound: { goAt, beeps: true, music: [[flyAt, podAt + 0.4]], teaserMusic: [0, logoAt], lifts: p.lifts, ceremony: [podAt, p.v] },
   };
 }
+/** A big moment between a and b: several in the air, or a pile of contacts. */
+function within3(A, a, b) {
+  return A.some((x) => x.t >= a && x.t < b && (x.air >= 3 || x.contacts >= 4));
+}
 
-/** The vertical cut-down (30–60 s): the start, the TV moments, an overtake, the finish, the podium, the end card. */
+/** The vertical cut-down (30–60 s): the start wide, the pack's best moments, a TV camera, the finish head-on, the podium, the end card. */
 export function cutdown(info, race) {
   const m = moments(info, race);
+  const A = analyse(race, info.arc, m.W + 8000);
   const p = builder('cutdown');
   const name = { track: info.name, marble: info.podium[0].name };
   const cdAt = p.add({ type: 'race', from: -3400, dur: 3.4 });
   p.say(cdAt + 0.2, 'opening');
   const goAt = p.v;
-  p.add({ type: 'race', from: 0, dur: 5 });
+  p.add(START_SHOT(0, 4.5));
   p.say(goAt + 0.6, 'trackCard', name);
-  const bits = m.tv.map((c) => ({ t: c.t - 3200, dur: 5, tv: true }));
-  if (m.moves[0]) bits.push({ t: m.moves[0].t - 2000, dur: 4 });
-  bits.sort((a, b) => a.t - b.t);
+  // The pack's two busiest moments and the pack at a TV camera, in race order.
+  const bits = [];
+  const a1 = busiest(A, 6000, m.W - 9000, 4000);
+  if (a1) bits.push({ type: 'race', follow: a1.mid, from: a1.t - 300, dur: 4 });
+  const a2 = busiest(A, 6000, m.W - 9000, 4000, a1 ? [[a1.t - 5000, a1.t + 9000]] : []);
+  if (a2) bits.push({ type: 'group', members: a2.members.slice(0, 8), shot: 'a2', from: a2.t - 300, dur: 4 });
+  if (m.tv[0]) {
+    const tv = tvPackMoment(A, race, m.tv[0]);
+    if (!bits.some((b) => Math.abs(b.from - (tv.t - 3200)) < 5000)) bits.push({ type: 'race', follow: tv.follow, from: tv.t - 3200, dur: 5 });
+  }
+  bits.sort((x, y) => x.from - y.from);
   for (const b of bits) {
-    if (b.t < 5500 || b.t + b.dur * 1000 > m.W - 8500) continue;
-    const at = p.add({ type: 'race', from: b.t, dur: b.dur });
-    if (b.tv) p.lift(at + 0.5, at + b.dur);
+    if (b.from < 4500 || b.from + b.dur * 1000 > m.W - 6500) continue;
+    const at = p.add(b);
+    p.lift(at + 0.5, at + b.dur);
   }
-  const finAt = p.add({ type: 'race', from: m.W - 8000, dur: 10.5 });
-  p.say(finAt + 0.8, 'lastStretch');
-  p.lift(finAt + 5, finAt + 10.5);
-  p.say(finAt + 8.25, m.close ? 'photoFinish' : 'winner', name);
+  const finAt = liveFinish(p, m.W, { stretch: 6500, after: 1500 });
+  p.say(finAt + 0.5, 'lastStretch');
+  p.lift(finAt + 3, p.v);
+  p.say(finAt + 6.75, m.close ? 'photoFinish' : 'winner', name);
   if (m.close) {
-    const at = p.add({ type: 'look', from: m.W - 1000, speed: 0.25, dur: 5, eye: { ...FINISH_EYE, fov: 40 } });
-    p.say(at + 0.2, 'slowMotion', {}, 2.2);
-    p.say(at + 2.6, 'winner', name, 2.3);
-    p.lift(at, at + 5);
+    const at = p.add({ type: 'race', follow: 'leader', from: m.W - 1100, speed: 0.3, dur: 4.5 });
+    p.say(at + 0.2, 'slowMotion', {}, 2);
+    p.say(at + 2.3, 'winner', name, 2.2);
+    p.lift(at, at + 4.5);
   }
-  const podAt = p.add({ type: 'race', from: m.W + 4000, dur: 5.5 });
+  const podAt = p.add({ type: 'race', follow: 'leader', from: m.W + 4000, dur: 5.5 });
   p.end();
   return {
     shots: p.shots, texts: p.texts, podium: { at: podAt + 0.3, dur: 5.2 }, length: p.v,
@@ -160,12 +197,13 @@ export function cutdown(info, race) {
 /**
  * A short clip (vertical, 10–30 s), one of four kinds (`clip`):
  *   flyover  the calm helicopter flight with the track's name
- *   close    the last 8 s, "Photo finish!", the finish again in slow motion head-on, the winner
- *   wild     a big moment (`at`: race ms; a jump, a drop, a splitter, an overtake on the line), then again at half speed
- *   pick     the field at the gate, "Who wins?", the start, a cut to the finish, "Did you pick <marble>?"
+ *   close    the last stretch, the finish head-on (the leader and the chasers), "Photo finish!", again in slow motion
+ *   wild     a big moment in the pack (`at`: race ms; else the race's busiest), then again at half speed
+ *   pick     the field at the gate, "Who wins?", the start wide, a cut to the finish head-on, "Did you pick <marble>?"
  */
 export function clip(info, race, { clip: kind, at = null, fly = 12 } = {}) {
   const m = moments(info, race);
+  const A = analyse(race, info.arc, m.W + 8000);
   const p = builder('clip');
   const name = { track: info.name, marble: info.podium[0].name };
   let goAt = null;
@@ -174,19 +212,20 @@ export function clip(info, race, { clip: kind, at = null, fly = 12 } = {}) {
     const a = p.add({ type: 'fly', dur: fly });
     p.say(a + 1, 'trackCard', name, 3);
   } else if (kind === 'close') {
-    const a = p.add({ type: 'race', from: m.W - 8000, dur: 9.5 });
+    const a = liveFinish(p, m.W, { stretch: 8000, after: 1500 });
     p.say(a + 0.6, 'lastStretch');
     p.say(a + 8.25, 'photoFinish', name, 2.2);
-    p.lift(a + 5, a + 9.5);
-    const b = p.add({ type: 'look', from: m.W - 1000, speed: 0.25, dur: 5, eye: { ...FINISH_EYE, fov: 40 } });
-    p.say(b + 0.2, 'slowMotion', {}, 2.2);
-    p.say(b + 2.6, 'winner', name, 2.3);
-    p.lift(b, b + 5);
+    p.lift(a + 4, p.v);
+    const b = p.add({ type: 'race', follow: 'leader', from: m.W - 1100, speed: 0.3, dur: 4.5 });
+    p.say(b + 0.2, 'slowMotion', {}, 2);
+    p.say(b + 2.3, 'winner', name, 2.2);
+    p.lift(b, b + 4.5);
   } else if (kind === 'wild') {
-    const a = p.add({ type: 'race', from: at - 3000, dur: 5.5 });
+    const w = at !== null ? { t: at, mid: (A.find((x) => x.t >= at) ?? A[0]).mid } : busiest(A, 6000, m.W - 6000, 3000);
+    const a = p.add({ type: 'race', follow: w.mid, from: w.t - 2500, dur: 5.5 });
     p.say(a + 0.3, 'trackCard', name);
     p.lift(a + 2, a + 5.5);
-    const b = p.add({ type: 'race', from: at - 1500, speed: 0.5, dur: 5 });
+    const b = p.add({ type: 'race', follow: w.mid, from: w.t - 1200, speed: 0.5, dur: 5 });
     p.say(b + 0.3, 'slowMotion', {}, 2.2);
     p.lift(b, b + 5);
   } else if (kind === 'pick') {
@@ -194,11 +233,11 @@ export function clip(info, race, { clip: kind, at = null, fly = 12 } = {}) {
     p.say(a + 0.3, 'pickYourWinner', name, 3.4);
     goAt = p.v;
     beeps = true;
-    p.add({ type: 'race', from: 0, dur: 3 });
-    const b = p.add({ type: 'race', from: m.W - 7000, dur: 9.5 });
+    p.add(START_SHOT(0, 3.5));
+    const b = liveFinish(p, m.W, { stretch: 7000, after: 2000 });
     p.say(b + 0.4, 'trackCard', name);
-    p.lift(b + 4, b + 9.5);
-    p.say(b + 7.25, 'pickYourWinnerAnswer', name, 2.25);
+    p.lift(b + 3, p.v);
+    p.say(b + 7.2, 'pickYourWinnerAnswer', name, 2.3);
   } else throw new Error(`No clip kind "${kind}"`);
   p.end();
   return {

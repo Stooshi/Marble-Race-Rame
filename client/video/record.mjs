@@ -100,8 +100,8 @@ export async function record({ slug, race: raceName, kind = 'production', format
     const plan = PLANS[kind](info, race, { logo, fly, clip, at });
     // (The plan beside the video: swap-logo.mjs uses it to put another logo version in.)
     fs.writeFileSync(`${out}.plan.json`, JSON.stringify({ slug, race: raceName, kind, format, tune, logo, length: plan.length, shots: plan.shots, sound: plan.sound }));
-    log(`${info.name}: ${kind} ${format}, ${plan.length.toFixed(1)} s, ${plan.shots.length} shots; winner ${info.podium[0].name} by ${info.margin} ms`);
-    for (const sh of plan.shots) log(`  ${sh.at.toFixed(1).padStart(6)} s  ${sh.type.padEnd(4)} ${sh.from !== undefined ? `race ${Math.round(sh.from)} ms` : ''} ${sh.speed && sh.speed !== 1 ? `×${sh.speed}` : ''} ${sh.dur.toFixed(1)} s`);
+    log(`${info.name}: ${kind} ${format}, ${plan.length.toFixed(1)} s, ${plan.shots.length} shots; winner ${info.podium[0].name} by ${info.margin} ms${plan.packShare !== undefined ? `; the race ${Math.round(plan.packShare * 100)}% on the pack` : ''}`);
+    for (const sh of plan.shots) log(`  ${sh.at.toFixed(1).padStart(6)} s  ${(sh.type + (sh.follow !== undefined && sh.follow !== 'leader' ? ` #${sh.follow}` : sh.type === 'race' ? ' lead' : '')).padEnd(10)} ${sh.from !== undefined ? `race ${Math.round(sh.from)} ms` : ''} ${sh.speed && sh.speed !== 1 ? `×${sh.speed}` : ''} ${sh.dur.toFixed(1)} s`);
     // The rows on the podium card.
     await page.evaluate(([title]) => { document.getElementById('podiumTitle').textContent = title; }, [TEXTS.podiumTitle]);
     const rows = info.podium.map((r) => ({ name: r.name, look: r.look, ms: r.ms }));
@@ -119,6 +119,8 @@ export async function record({ slug, race: raceName, kind = 'production', format
     const started = Date.now();
     let cardKey = null;
     // --stills: only these video seconds, each as a JPEG (for checking the picture), no MP4.
+    // (--stills shots: the middle of every shot.)
+    if (stills === 'shots') stills = plan.shots.map((x) => +(x.at + x.dur / 2).toFixed(2));
     const list = stills ? stills.map((x) => Math.round(x * FPS)) : null;
     const first = Math.round(v0 * FPS);
     for (let i = list ? list[0] : first; list ? i !== undefined : i < Math.round(v1 * FPS); i = list ? list[list.indexOf(i) + 1] : i + 1) {
@@ -143,13 +145,14 @@ export async function record({ slug, race: raceName, kind = 'production', format
           r.text(text ?? { opacity: 0 });
           r.podium(pod, rows);
           if (s.type === 'fly') r.flyover(t);
-          else if (s.type === 'race') r.race(t, { step });
+          else if (s.type === 'race') r.race(t, { step, follow: s.follow ?? 'leader' });
+          else if (s.type === 'group') r.group(t, { step, members: s.members, shot: s.shot, back: s.back, up: s.up, ahead: s.ahead, fov: s.fov });
           else {
             const eye = s.eye.from ? s.eye : r.eye(s.eye);
             if (s.type === 'look') r.look(t, eye);
-            else r.pan(t, { from: eye.from, follow: s.follow, fov: s.fov ?? eye.fov ?? 32 });
+            else r.pan(t, { from: eye.from, follow: s.follow, members: s.members, fov: s.fov ?? eye.fov ?? 32 });
           }
-        }, [{ type: sh.type, eye: sh.eye, follow: sh.follow, fov: sh.fov }, t, step, textAt(plan.texts, v), pod, rows]);
+        }, [{ type: sh.type, eye: sh.eye, follow: sh.follow, fov: sh.fov, members: sh.members, shot: sh.shot, back: sh.back, up: sh.up, ahead: sh.ahead }, t, step, textAt(plan.texts, v), pod, rows]);
         shot = await page.screenshot({ type: 'jpeg', quality: 92 });
       }
       if (list) { fs.writeFileSync(`${out.replace(/\.mp4$/, '')}-${v.toFixed(2)}.jpg`, shot); frames += 1; continue; }
@@ -180,7 +183,7 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   await record({
     slug, race, kind: opt('kind', 'production'), format: opt('format', 'wide'), tune: Number(opt('tune', 7)), logo: opt('logo', TEMPLATE.intro.logo),
     clip: opt('clip', null), at: num('at'), fly: num('fly'),
-    out: opt('out', path.join(process.cwd(), `${slug}-${opt('kind', 'production')}-${opt('format', 'wide')}.mp4`)), from: num('from'), to: num('to'), stills: opt('stills', null)?.split(',').map(Number) ?? null,
+    out: opt('out', path.join(process.cwd(), `${slug}-${opt('kind', 'production')}-${opt('format', 'wide')}.mp4`)), from: num('from'), to: num('to'), stills: opt('stills', null) === 'shots' ? 'shots' : opt('stills', null)?.split(',').map(Number) ?? null,
   });
   process.exit(0); // (the browser and the dev server can keep the process waiting after closing)
 }
