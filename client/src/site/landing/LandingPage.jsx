@@ -97,7 +97,7 @@ export default function LandingPage() {
       <section id="tracks" aria-labelledby="tracks-h" className="ms-page">
         <div style={{ display: 'grid', gap: 6 }}>
           <h2 id="tracks-h" className="ms-landing__h2">{total ? `${total} tracks` : 'Tracks'} in {NUMBER_WORDS[liveSeries] ?? liveSeries} series</h2>
-          <p className="ms-lede" style={{ margin: 0 }}>From Swedish fjords to pinball tables, every track has its own start, layout and surprises.</p>
+          <p className="ms-lede" style={{ margin: 0 }}>From Norwegian fjords to pinball tables, every track has its own start, layout and surprises.</p>
         </div>
         <div className="ms-cards" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 180px), 1fr))' }}>
           {cards.map(([name, line, pic, picture]) => (

@@ -451,6 +451,7 @@ main { padding-bottom: 48px; }
 .preview3d__racelist a { display: flex; flex-direction: column; gap: 2px; padding: 10px 12px; border-radius: 10px; background: var(--bg-inset); border: 1px solid var(--border); color: var(--text); text-decoration: none; }
 .preview3d__racelist a:hover { border-color: var(--accent); }
 .preview3d + .replay__controls, .preview3d .replay__controls { margin: 10px 0; padding: 0; }
+.replay3d__nowplaying { position: absolute; top: 44px; right: 8px; padding: 2px 8px; border-radius: 6px; background: rgba(17, 19, 26, 0.6); color: #FFD21F; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.04em; pointer-events: none; }
 .replay3d__clock { position: absolute; top: 8px; right: 8px; padding: 4px 10px; border-radius: 8px; background: rgba(17, 19, 26, 0.7); color: #fff; font-weight: 700; font-variant-numeric: tabular-nums; }
 /* The starting countdown over the 3D view: 3, 2, 1, GO! */
 /* Wrapper keeps the live region stable while the number inside is swapped. */

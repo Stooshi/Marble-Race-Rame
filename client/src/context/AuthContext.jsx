@@ -70,6 +70,11 @@ export function AuthProvider({ children }) {
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
+/** The signed-in user, or null (also outside an AuthProvider, e.g. a component shown on its own in a test). */
+export function useOptionalUser() {
+  return useContext(AuthContext)?.user ?? null;
+}
+
 export function useAuth() {
   const ctx = useContext(AuthContext);
   if (!ctx) throw new Error('useAuth must be used inside <AuthProvider>');

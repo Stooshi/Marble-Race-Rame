@@ -23,6 +23,7 @@ import { FLYOVER_MS } from '../three/flyover';
 import { ownGate } from '../utils/standingsRows';
 import { FlyoverTitle, GateMoment, TrackCard } from './StartShow';
 import StartLights from './StartLights';
+import NowPlaying from './NowPlaying';
 import { useKeepAwake } from '../app/keepAwake';
 
 // A solo race's countdown starts only once the track, the marbles, the scenery and the sound are all
@@ -393,6 +394,7 @@ export default function LiveRaceViewer3D({
         {built && ready && (
           <>
             {show.phase !== 'winner' && phase === 'race' && <div className="replay3d__clock">{formatTime(Math.max(0, shown?.t ?? frame?.t ?? 0))}</div>}
+            <NowPlaying />
             {speed !== null && (
               <div className="replay3d__speed" aria-label="Speed of the marble the camera follows">
                 <strong>{Math.round(speed * 3.6)}</strong> km/h
