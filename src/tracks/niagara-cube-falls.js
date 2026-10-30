@@ -36,11 +36,10 @@ module.exports = track({
     costumes: { slalom: 'cube-pillar', peg: 'cube-pillar', swipe: 'block-crane', parked: 'block-pieces' },
     dress: {
       upperRiver: { height: 4, water: true },
-      rapids: { height: 4, water: true, landmarks: [{ name: 'mist-boat', at: 0.5, side: 'left', distance: 14 }] },
+      rapids: { height: 4, water: true },
       falls: { landmarks: [{ name: 'horseshoe-falls', at: 0.5, side: 'left', distance: 30 }] },
       mist: { landmarks: [{ name: 'mist-boat', at: 0.5, side: 'right', distance: 14 }] },
       gorge: { landmarks: [{ name: 'gorge-walls', at: 0.3, side: 'left', distance: 26 }, { name: 'gorge-walls', at: 0.7, side: 'right', distance: 26 }] },
-      gorgeBends: { landmarks: [{ name: 'gorge-walls', at: 0.5, side: 'left', distance: 24 }] },
       whirlpool: {},
       lastStraight: { name: 'To the arch bridge', landmarks: [{ name: 'gorge-walls', at: 0.5, side: 'left', distance: 24 }] },
     },

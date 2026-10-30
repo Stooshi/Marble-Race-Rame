@@ -1831,7 +1831,7 @@ const LAYOUTS = {
       key: 'riverStraight', name: 'Between the towers', shape: straight(75, { grade: 0.11 }), billboards: 1,
       obstacles: [peg({ costume: c.peg, at: 0.12, line: 'left' }), peg({ costume: c.peg, at: 0.26, line: 'right' }), slalom({ costume: c.slalom, from: 0.62, to: 0.9, count: 3, loss: 0.2 })],
     },
-    { key: 'split1', name: 'First karst tower', shape: splitter({ side: L, degrees: 0, balance: L === 'left' ? { ...b(L), right: { drag: 1.75, scrub: 1.75 } } : { ...b(L), left: { drag: 1.75, scrub: 1.75 } } }) },
+    { key: 'split1', name: 'First karst tower', shape: splitter({ side: L, degrees: 0, balance: L === 'left' ? { ...b(L), right: { drag: 2.1, scrub: 2.1 } } : { ...b(L), left: { drag: 2.1, scrub: 2.1 } } }) },
     { key: 'raftSweep', name: 'Raft sweep', shape: sweep({ side: R, radius: 95, degrees: 100, grade: 0.1 }), obstacles: [peg({ costume: c.peg, at: 0.5, line: 'center' })], billboards: 2 },
     { key: 'terraces', name: 'Rice terraces', shape: straight(60, { grade: 0.12 }), obstacles: [slalom({ costume: c.slalom, from: 0.25, to: 0.75, count: 3, loss: 0.15 })] },
     { key: 'split2', name: 'Second karst tower', shape: splitter({ side: R, degrees: 40, balance: { ...insideDrag(R, 2.6), [L]: { drag: 0.6, scrub: 0.7 } } }) },
@@ -1840,13 +1840,14 @@ const LAYOUTS = {
     { key: 'brakingStraight', name: 'Run to the hairpin', shape: straight(50, { grade: 0.12 }) },
     { key: 'hairpin', name: 'Hairpin', shape: hairpin({ side: L }), obstacles: [swipe({ costume: c.swipe, side: 'high' })] },
     {
-      key: 'lastStraight', name: 'Last straight', shape: straight(95, { grade: 0.15 }),
+      key: 'lastStraight', name: 'Last straight', shape: straight(80, { grade: 0.15 }),
       obstacles: [parked({ costume: c.parked, at: 0.2, side: R, length: 6 }), peg({ costume: c.peg, at: 0.45, line: 'left' }), peg({ costume: c.peg, at: 0.6, line: 'right' })], features: [rumble({ from: 0.7, to: 0.95, count: 3 })],
     },
   ],
   /** L106 Grand canal (Blocks 2, Venice): a sweep between the palazzi (a peg), a straight to the fork (a peg), the splitter where two canals fork (straight channels; big feature one), a straight under the arched bridges (a slalom), a run-in, the Grand Canal half-pipe (big feature two: the field rocks wall to wall), a drop, the hairpin, a lagoon sweep (a peg) and a parked piece and a peg at the run-in. */
   'grand-canal': (L, R, c, b) => [
-    { key: 'palazzi', name: 'Between the palazzi', shape: sweep({ side: R, radius: 90, degrees: 100, grade: 0.11 }), obstacles: [peg({ costume: c.peg, at: 0.5, line: 'center' })], billboards: 2 },
+    { key: 'quay', name: 'Over the first bridge', shape: climb(12, { grade: -0.05, after: 0.12 }) },
+    { key: 'palazzi', name: 'Between the palazzi', shape: sweep({ side: L, radius: 90, degrees: 90, grade: 0.12 }), obstacles: [slalom({ costume: c.slalom, from: 0.3, to: 0.7, count: 3, loss: 0.15 })], billboards: 2 },
     { key: 'toTheFork', name: 'To the fork', shape: straight(40, { grade: 0.11 }), obstacles: [peg({ costume: c.peg, at: 0.4, line: 'right' })] },
     { key: 'fork', name: 'The canal fork', shape: splitter({ side: R, degrees: 0, balance: R === 'left' ? { ...b(R), right: { drag: 0.8, scrub: 0.9 } } : { ...b(R), right: { drag: 1.9, scrub: 1.9 }, left: { drag: 0.8, scrub: 0.9 } } }) },
     { key: 'bridges', name: 'Under the bridges', shape: straight(70, { grade: 0.12 }), obstacles: [slalom({ costume: c.slalom, from: 0.25, to: 0.7, count: 3, loss: 0.15 })], billboards: 1 },
@@ -1865,7 +1866,7 @@ const LAYOUTS = {
   'horseshoe-falls': (L, R, c) => [
     { key: 'upperRiver', name: 'Upper river', shape: sweep({ side: L, radius: 95, degrees: 110, grade: 0.09 }), billboards: 1 },
     { key: 'rapids', name: 'The rapids', shape: straight(100, { grade: 0.09 }), obstacles: [peg({ costume: c.peg, at: 0.15, line: 'left' }), peg({ costume: c.peg, at: 0.3, line: 'right' }), slalom({ costume: c.slalom, from: 0.45, to: 0.65, count: 3, loss: 0.2 })], billboards: 1 },
-    { key: 'falls', name: 'The falls', shape: waterfall(45, { grade: 0.55 }) },
+    { key: 'falls', name: 'The falls', shape: waterfall(45, { grade: 0.5 }) },
     { key: 'mist', name: 'Through the mist', shape: straight(30, { grade: 0.12 }) },
     { key: 'gorge', name: 'Whirlpool rapids', shape: halfPipe({ first: R, width: 8, swings: 3, radius: 150, degrees: 18, grade: 0.12 }) },
     { key: 'gorgeBends', name: 'Gorge S-bends', shape: sBends({ first: L, radius: 75, degrees: 65, grade: 0.12 }), obstacles: [peg({ costume: c.peg, at: 0.5, line: 'center' })], billboards: 1 },
@@ -1880,28 +1881,28 @@ const LAYOUTS = {
   ],
   /** L108 Three towers (Blocks 2, Tre Cime): a scree straight (steps), S-bends on the scree (a peg), the long spiral round the three towers (big feature one), a meadow straight (a slalom), a short climb over the col, the scree-gully plunge (big feature two), the hairpin at the hut, S-bends across the meadows (a peg) and a parked piece and a peg at the run-in. */
   'three-towers': (L, R, c) => [
-    { key: 'scree', name: 'Scree steps', shape: straight(70, { grade: 0.12 }), features: [steps({ from: 0.5, to: 0.9, count: 3, drag: 0.01 })] },
+    { key: 'scree', name: 'Scree steps', shape: straight(70, { grade: 0.12 }), obstacles: [peg({ costume: c.peg, at: 0.12, line: 'left' }), peg({ costume: c.peg, at: 0.28, line: 'right' })], features: [steps({ from: 0.55, to: 0.9, count: 3, drag: 0.01 })] },
     { key: 'screeBends', name: 'Scree S-bends', shape: sBends({ first: R, radius: 75, degrees: 65, grade: 0.12 }), obstacles: [peg({ costume: c.peg, at: 0.5, line: 'center' })], billboards: 2 },
-    { key: 'towers', name: 'Round the three towers', shape: spiral({ side: L, radius: 50, turns: 1, grade: 0.16 }) },
+    { key: 'towers', name: 'Round the three towers', shape: spiral({ side: L, radius: 48, turns: 0.85, grade: 0.16 }) },
     { key: 'meadow', name: 'Meadow straight', shape: straight(45, { grade: 0.11 }), obstacles: [slalom({ costume: c.slalom, from: 0.2, to: 0.8, count: 3, loss: 0.25 })] },
     { key: 'rise', name: 'Over the col', shape: climb(12, { grade: -0.05, after: 0.12 }) },
     { key: 'gully', name: 'The scree gully', shape: plunge(60, { grade: 0.3, from: 0.11 }) },
     { key: 'brakingStraight', name: 'Run to the hut', shape: straight(50, { grade: 0.12 }), billboards: 1 },
     { key: 'hairpin', name: 'Hut hairpin', shape: hairpin({ side: R }), obstacles: [swipe({ costume: c.swipe, side: 'high' })] },
-    { key: 'meadows', name: 'Across the meadows', shape: sBends({ first: L, radius: 85, degrees: 70, grade: 0.11 }), obstacles: [peg({ costume: c.peg, at: 0.5, line: 'center' })], billboards: 2 },
+    { key: 'meadows', name: 'Across the meadows', shape: sBends({ first: L, radius: 62, degrees: 95, grade: 0.12 }), obstacles: [peg({ costume: c.peg, at: 0.5, line: 'center' })], billboards: 2 },
     {
       key: 'lastStraight', name: 'Last straight', shape: straight(90, { grade: 0.15 }),
-      obstacles: [parked({ costume: c.parked, at: 0.2, side: R, length: 6 }), peg({ costume: c.peg, at: 0.45, line: 'left' })], features: [rumble({ from: 0.7, to: 0.95, count: 3 })],
+      obstacles: [parked({ costume: c.parked, at: 0.2, side: R, length: 6 }), peg({ costume: c.peg, at: 0.45, line: 'left' }), peg({ costume: c.peg, at: 0.6, line: 'right' })], features: [rumble({ from: 0.7, to: 0.95, count: 3 })],
     },
   ],
-  /** L109 Aurora fell (Blocks 2, Abisko): a straight along the fell edge (moguls), two pairs of banked switchbacks down the snowy fell (big feature one: the second pair wider), a birch-wood straight (a slalom), a run onto the frozen lake, the splitter round the lake island (channels curving 40°; big feature two), a drop off the shore, the hairpin by the hut, a part spiral and a parked piece and a peg at the run-in. */
+  /** L109 Aurora fell (Blocks 2, Abisko): a short climb over the fell shoulder, two pairs of banked switchbacks down the snowy fell (big feature one: the second pair wider), a birch-wood straight (a slalom), a run onto the frozen lake, the splitter round the lake island (channels curving 40°; big feature two), a drop off the shore, the hairpin by the hut, a part spiral and a parked piece and a peg at the run-in. */
   'aurora-fell': (L, R, c) => [
-    { key: 'fellEdge', name: 'Along the fell edge', shape: straight(40, { grade: 0.11 }), features: [moguls({ from: 0.25, to: 0.85, count: 3 })] },
+    { key: 'fellEdge', name: 'Over the fell shoulder', shape: climb(12, { grade: -0.05, after: 0.12 }) },
     { key: 'switch1', name: 'First switchbacks', shape: sBends({ first: R, radius: 50, degrees: 100, grade: 0.13 }), obstacles: [peg({ costume: c.peg, at: 0.5, line: 'center' })] },
     { key: 'switch2', name: 'Second switchbacks', shape: sBends({ first: R, radius: 66, degrees: 92, grade: 0.12 }), billboards: 1 },
     { key: 'birches', name: 'Birch wood', shape: straight(65, { grade: 0.11 }), obstacles: [slalom({ costume: c.slalom, from: 0.2, to: 0.7, count: 3, loss: 0.15 })], billboards: 1 },
     { key: 'onTheLake', name: 'Onto the lake', shape: straight(30, { grade: 0.1 }) },
-    { key: 'splitter', name: 'Round the island', shape: splitter({ side: L, degrees: 40, balance: { ...insideDrag(L, 1.6), [R]: { drag: 1.3, scrub: 1.3 } } }) },
+    { key: 'splitter', name: 'Round the island', shape: splitter({ side: L, degrees: 40, balance: { ...insideDrag(L, 1.6), [R]: { drag: 1.8, scrub: 1.8 } } }) },
     { key: 'shore', name: 'Off the shore', shape: plunge(45, { grade: 0.22, from: 0.12 }), billboards: 1 },
     { key: 'brakingStraight', name: 'Run to the hut', shape: straight(50, { grade: 0.12 }), billboards: 1 },
     { key: 'hairpin', name: 'Sauna hairpin', shape: hairpin({ side: R }), obstacles: [swipe({ costume: c.swipe, side: 'high' })] },

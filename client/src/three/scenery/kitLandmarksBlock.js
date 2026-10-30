@@ -698,8 +698,8 @@ function mistBoat() {
 /** Gorge walls: a long cliff of layered grey and tan stone cubes, trees on top. */
 function gorgeWalls() {
   const p = [];
-  for (let x = -5; x <= 5; x += 1) for (let y = 0; y < 6; y += 1) p.push(C(4.2, 3, 4 + ((x + y) % 3) * 0.6, x * 4, 1.5 + y * 3, -(x + y) % 2, (y % 2 ? '#7d7a72' : '#8f8a80')));
-  for (let x = -5; x <= 5; x += 2) p.push(C(3, 3, 3, x * 4, 19.5, -1, '#4f8a3f'));
+  for (let x = -3; x <= 3; x += 1) for (let y = 0; y < 3; y += 1) p.push(C(6.6, 6, 4 + ((x + y) % 3) * 0.8, x * 6.4, 3 + y * 6, -(x + y) % 2, (y % 2 ? '#7d7a72' : '#8f8a80')));
+  for (let x = -3; x <= 3; x += 2) p.push(C(4, 3, 3, x * 6.4, 19.5, -1, '#4f8a3f'));
   return merge(p);
 }
 /** A steel arch bridge of cubes across the gorge: a stepped grey arch under a straight deck. */
@@ -840,7 +840,7 @@ export const BLOCK_LANDMARKS = {
   'final-stage': { build: finalStage, radius: 13, fx: 'final-stage' },
   // Blocks Series 2.
   'karst-towers': { build: karstTowers, radius: 20 },
-  'karst-tower': { build: () => karstTower(0, 6), radius: 5, fit: 3.6 },
+  'karst-tower': { build: () => karstTower(0, 3), radius: 5, fit: 3.6 },
   'bamboo-rafts': { build: bambooRafts, radius: 8 },
   'river-village': { build: riverVillage, glow: riverVillageGlow, radius: 14 },
   'palazzo-row': { build: palazzoRow, radius: 15 },
