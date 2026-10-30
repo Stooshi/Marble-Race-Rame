@@ -83,7 +83,7 @@ export async function record({ slug, race: raceName, kind = 'production', format
   fly ??= kind === 'clip' ? 12 : 15; // (seconds: the flyover's length)
   const [W, H] = SIZES[format];
   const race = JSON.parse(fs.readFileSync(path.join(here, '..', 'dev', '.tracks', `${raceName}.json`), 'utf8'));
-  const server = await createServer({ root: path.resolve(here, '..'), logLevel: 'error', server: { port: 0, strictPort: false } });
+  const server = await createServer({ root: path.resolve(here, '..'), logLevel: 'error', server: { port: 0, strictPort: false, fs: { allow: [path.resolve(here, '..', '..', '..')] } } }); // (allow: a worktree whose node_modules link to another checkout still loads the fonts)
   await server.listen();
   const { port } = server.httpServer.address();
   const browser = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
