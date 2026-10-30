@@ -59,9 +59,11 @@ export const MUSIC_UNDER = 0.32;
 export const CROWD_UNDER = 0.35;
 /**
  * The own marble's hits: from HIT_LEVEL.soft (the lightest that sounds) to HIT_LEVEL.hard (the hardest), on the
- * effects bus; even the hardest stays under the music (MUSIC_UNDER).
+ * effects bus (Moses, 30 Oct 2026: 50% louder at every strength, +3.5 dB); even the hardest peaks under the
+ * music's (the 0.13 s click peaks at -9 dBFS in its file: HIT_PEAK_DB).
  */
-export const HIT_LEVEL = { soft: 0.07, hard: 0.24 };
+export const HIT_LEVEL = { soft: 0.105, hard: 0.36 };
+export const HIT_PEAK_DB = -9;
 /** While the gate sound plays the music dips by this much more (-6 dB). */
 export const DUCK = 0.5;
 /** How many upcoming tunes are kept loaded (this race's and the next race's). */

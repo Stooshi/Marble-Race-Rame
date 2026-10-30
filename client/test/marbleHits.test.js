@@ -5,7 +5,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { HIT, createHitDetector } from '../src/sound/hits';
-import { HIT_LEVEL, MUSIC_UNDER, marbleHit } from '../src/sound/engine';
+import { HIT_LEVEL, HIT_PEAK_DB, MUSIC_UNDER, levels, marbleHit } from '../src/sound/engine';
 
 const ARC = 1000;
 const ROOM = 5;
@@ -55,7 +55,14 @@ describe('the own marble\'s hits', () => {
     expect(d.step(frame(10600, 501.1), [0])).toBeNull(); // 0.6 s gap: no speed measured
   });
   it('soft and under the music, never ducking it; only the live viewer plays it, for the own marbles', () => {
-    expect(HIT_LEVEL.hard).toBeLessThan(MUSIC_UNDER);
+    // (50% louder from 30 Oct 2026, at every strength.) The hardest hit's peak, as played, stays under a typical
+    // race tune's (the tunes peak at -2.7 to -10.2 dBFS in their files, -4.7 the middle one).
+    expect(HIT_LEVEL.soft).toBeCloseTo(0.07 * 1.5, 5);
+    expect(HIT_LEVEL.hard).toBeCloseTo(0.24 * 1.5, 5);
+    const l = levels();
+    const db = (g) => 20 * Math.log10(g);
+    expect(HIT_PEAK_DB + db(HIT_LEVEL.hard * l.effects)).toBeLessThan(-4.7 + db(l.music));
+    expect(MUSIC_UNDER).toBeGreaterThan(0);
     expect(HIT_LEVEL.soft).toBeLessThan(HIT_LEVEL.hard);
     expect(marbleHit('x', 1)).toBe(false); // (not unlocked in a test: nothing plays)
     const engine = fs.readFileSync(path.resolve(__dirname, '../src/sound/engine.js'), 'utf8');
