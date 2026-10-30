@@ -160,7 +160,7 @@ const layouts = LAYOUT_KINDS.map((kind) => track({
   ...(BLOCK_LAYOUTS.includes(kind) && { series: 'block', biome: 'meadow', block: { world: 'meadow' } }),
   ...(ATHLETICS_LAYOUTS.includes(kind) && { series: 'athletics', biome: 'city', surface: 'tartan', athletics: { stadium: 'bislett' } }),
   ...(RIVER_LAYOUTS.includes(kind) && { series: 'river', biome: 'meadow', river: { palette: 'danube' }, start: { landmark: 'mountain-hut', type: RIVER_START[kind] ?? 'pier' } }),
-  ...(PEAK_LAYOUTS.includes(kind) && { series: 'peak', biome: 'alpine', surface: 'snow', peak: { palette: PEAK_PALETTE[kind] }, start: { landmark: 'mountain-hut', type: PEAK_START[kind] } }),
+  ...(PEAK_LAYOUTS.includes(kind) && { series: 'peak', biome: 'alpine', surface: 'snow', peak: { palette: PEAK_PALETTE[kind] }, start: { ...(kind !== 'tepui-wall' && { landmark: 'mountain-hut' }), type: PEAK_START[kind] } }), // (the tepui wall's lift stands beside its finish: no hut there, as on Roraima)
   ...(PINBALL_LAYOUTS.includes(kind) && { series: 'pinball', biome: 'playfield', lighting: 'parlour' }),
   ...(ARCADE_LAYOUTS.includes(kind) && { series: 'arcade', biome: 'circuit-board', lighting: 'neon-night', billboardFrame: 'marquee' }),
   opening: opening(...[].concat(OWN_OPENING[kind] ?? 'classic')),
