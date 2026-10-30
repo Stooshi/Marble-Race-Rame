@@ -1,21 +1,23 @@
 /**
  * Racing look (SAMPLE ONLY, Moses 30 Oct 2026: "subtle, samples only, don't roll out yet"): small racing
  * touches painted flat on the ice, looks only (the race never sees them):
- *   - short red-and-white kerbs on the inside of a few key bends (the tightest apexes, not every bend);
- *   - a few painted chevrons on one main straight (decoration, not boost pads);
- *   - a chequered start line and finish line.
+ *   - a chequered start line and finish line, on every track;
+ *   - short, muted red-and-white kerbs on the inside of the 1–2 sharpest bends only (a nature world:
+ *     Canyons, Rivers, Peaks, at most one).
+ * The lighter version (Moses, 30 Oct 2026, 09:35): fewer and shorter kerbs, muted colours, no chevrons.
  * Drawn as one mesh in vertex colours (one draw call). Only the dev kit view turns it on
  * (`?racing=1`, TrackScene's `racingLook` option); no track carries it.
  */
 import { BufferGeometry, Color, DoubleSide, Float32BufferAttribute, Mesh, MeshLambertMaterial, Vector3 } from 'three';
-import { channelLipAt, channelRadiusAt, forkAt, placeOnChannel } from '../iceChannel';
+import { channelLipAt, forkAt, placeOnChannel } from '../iceChannel';
 
-const KERB = { red: '#c63a32', white: '#ece7dc', block: 1.1, from: 0.5, to: 0.66, half: 11 }; // metres along; share of the lip across
+const KERB = { red: '#a9554d', white: '#d9d2c4', block: 0.9, from: 0.52, to: 0.64, half: 6.5, sharp: 0.016 }; // metres along; share of the lip across
 const CHECK = { dark: '#202126', light: '#eeece6', depth: 0.5, rows: 2, columns: 12 };
-const CHEVRON = { colour: '#e6e1d6', count: 4, gap: 7, length: 3, width: 0.36, thick: 0.24 };
 const START_AT = 2.3; // metres: just in front of the gate's front row (as the Track and Field start line)
 
-export function buildRacingLook(centerline, channel, { lite = false } = {}) {
+/** `nature`: a Canyons, Rivers or Peaks track (kit.canyon / kit.river / kit.peak): at most one kerb. */
+export function buildRacingLook(centerline, channel, { lite = false, nature = false } = {}) {
+  const most = nature ? 1 : 2;
   const arc = channel.arc;
   const { samples, segments } = centerline;
   const out = new Vector3();
@@ -46,16 +48,16 @@ export function buildRacingLook(centerline, channel, { lite = false } = {}) {
     return d / 10; // (atan2(x, z) grows turning left when y is up)
   };
 
-  // ── Kerbs: the three tightest apexes, at least 80 m apart, away from the start and the finish ──
+  // ── Kerbs: the sharpest one or two apexes, at least 80 m apart, away from the start and the finish ──
   const step = 2;
   const turns = [];
   for (let s = 40; s < arc - 70; s += step) turns.push({ s, k: turn(s) });
   const apexes = [];
   for (const t of [...turns].sort((x, y) => Math.abs(y.k) - Math.abs(x.k))) {
-    if (Math.abs(t.k) < 0.012) break; // (a gentle sweep is no key bend)
+    if (Math.abs(t.k) < KERB.sharp) break; // (only a sharp bend gets one)
     if (apexes.some((a) => Math.abs(a.s - t.s) < 80)) continue;
     apexes.push(t);
-    if (apexes.length === 3) break;
+    if (apexes.length === most) break;
   }
   for (const apex of apexes) {
     const inside = (apex.k > 0 ? 1 : -1) * leftSign(apex.s); // (the l sign of the bend's inside)
@@ -67,30 +69,6 @@ export function buildRacingLook(centerline, channel, { lite = false } = {}) {
       const m0 = inside * KERB.from * lipShare(s + KERB.block);
       const m1 = inside * KERB.to * lipShare(s + KERB.block);
       quad(at(s, l0), at(s + KERB.block, m0), at(s + KERB.block, m1), at(s, l1), n % 2 ? KERB.white : KERB.red);
-    }
-  }
-
-  // ── Chevrons: on the longest nearly straight stretch (not the first 40 m nor the last 70 m) ──
-  let best = null;
-  let run = null;
-  for (const t of turns) {
-    if (Math.abs(t.k) < 0.004 && !forkAt(channel, t.s)) {
-      run = run ?? { from: t.s, to: t.s };
-      run.to = t.s;
-      if (!best || run.to - run.from > best.to - best.from) best = { ...run };
-    } else run = null;
-  }
-  if (best && best.to - best.from > CHEVRON.gap * CHEVRON.count + 10) {
-    const mid = (best.from + best.to) / 2;
-    for (let k = 0; k < CHEVRON.count; k += 1) {
-      const s = mid + (k - (CHEVRON.count - 1) / 2) * CHEVRON.gap;
-      const w = CHEVRON.width * lipShare(s);
-      const tk = CHEVRON.thick / (channelRadiusAt(channel, s) * channel.maxAngle); // (the arm's width as a share across)
-      // A V pointing down the track: two thin arms from the edges back to the tip.
-      for (const sgn of [1, -1]) {
-        quad(at(s, sgn * w), at(s + CHEVRON.length, 0), at(s + CHEVRON.length + 0.3, 0), at(s + 0.3, sgn * w), CHEVRON.colour);
-        quad(at(s, sgn * (w - tk)), at(s + CHEVRON.length - 0.05, 0), at(s + CHEVRON.length, 0), at(s, sgn * w), CHEVRON.colour);
-      }
     }
   }
 
@@ -117,6 +95,5 @@ export function buildRacingLook(centerline, channel, { lite = false } = {}) {
   const mesh = new Mesh(g, new MeshLambertMaterial({ vertexColors: true, flatShading: true, side: DoubleSide, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }));
   mesh.name = 'racing look (sample)';
   mesh.userData.apexes = apexes.map((a) => +(a.s / arc).toFixed(3));
-  mesh.userData.chevronsAt = best ? +(((best.from + best.to) / 2) / arc).toFixed(3) : null;
   return mesh;
 }

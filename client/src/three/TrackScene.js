@@ -418,8 +418,8 @@ export class TrackScene {
       this.trackGroup.add(marks.lines);
       if (marks.numbers) this.trackGroup.add(marks.numbers);
     }
-    // The racing-look sample (kerbs, chevrons, chequered lines): only where the dev kit view asks for it.
-    if (this.racingLook && this.channel && track?.physics?.kit) this.trackGroup.add(buildRacingLook(this.centerline, this.channel, { lite: this.lite }));
+    // The racing-look sample (chequered lines, a few kerbs): only where the dev kit view asks for it.
+    if (this.racingLook && this.channel && track?.physics?.kit) this.trackGroup.add(buildRacingLook(this.centerline, this.channel, { lite: this.lite, nature: Boolean(track.physics.kit.canyon || track.physics.kit.river || track.physics.kit.peak) }));
     // TV moments: the track's fixed trackside cameras (./tvMoments.js).
     this.tvCams = tvCameras(this.centerline, this.channel, tvSpots(track?.physics));
     // Mid race, a camera or two keep for the pack shot (TV.pack); the others follow the marble as before.
