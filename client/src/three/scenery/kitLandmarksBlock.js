@@ -840,7 +840,7 @@ export const BLOCK_LANDMARKS = {
   'final-stage': { build: finalStage, radius: 13, fx: 'final-stage' },
   // Blocks Series 2.
   'karst-towers': { build: karstTowers, radius: 20 },
-  'karst-tower': { build: () => karstTower(0, 3), radius: 5, fit: 3.6 },
+  'karst-tower': { build: () => karstTower(0, 2), radius: 5, fit: 3.2 },
   'bamboo-rafts': { build: bambooRafts, radius: 8 },
   'river-village': { build: riverVillage, glow: riverVillageGlow, radius: 14 },
   'palazzo-row': { build: palazzoRow, radius: 15 },

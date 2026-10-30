@@ -2,6 +2,17 @@
  "note": "The track picker's pictures (client/public/tracks/<slug>.webp and @2x), written by scripts/track-banners.js. enabled: shown in the track picker (false: only on /preview/banners). v: changes with the picture, so browsers fetch a new one.",
  "enabled": true,
  "banners": {
+  "abisko-aurora-run": {
+   "name": "Abisko Aurora Run",
+   "series": "Blocks",
+   "lighting": "night-northern-lights",
+   "v": "26cb7426",
+   "bytes": 14494,
+   "bytes2x": 34932,
+   "t": 10052,
+   "side": 1,
+   "marbles": 5
+  },
   "accra-december-beats": {
    "name": "Accra December Beats",
    "series": "Track and Field",
@@ -838,6 +849,17 @@
    "side": 1,
    "marbles": 7
   },
+  "li-river-karst-run": {
+   "name": "Li River Karst Run",
+   "series": "Blocks",
+   "lighting": "day",
+   "v": "42cc679c",
+   "bytes": 15414,
+   "bytes2x": 37582,
+   "t": 16917,
+   "side": 1,
+   "marbles": 5
+  },
   "line-clear": {
    "name": "Line Clear",
    "series": "Blocks",
@@ -991,6 +1013,17 @@
    "t": 15398,
    "side": 1,
    "marbles": 5
+  },
+  "niagara-cube-falls": {
+   "name": "Niagara Cube Falls",
+   "series": "Blocks",
+   "lighting": "day",
+   "v": "fb199e7d",
+   "bytes": 25880,
+   "bytes2x": 62158,
+   "t": 19926,
+   "side": 1,
+   "marbles": 7
   },
   "night-train-north": {
    "name": "Night Train North",
@@ -1487,6 +1520,17 @@
    "side": -1,
    "marbles": 6
   },
+  "tre-cime-cube-towers": {
+   "name": "Tre Cime Cube Towers",
+   "series": "Blocks",
+   "lighting": "day",
+   "v": "09a60d7a",
+   "bytes": 15158,
+   "bytes2x": 36326,
+   "t": 25830,
+   "side": 1,
+   "marbles": 8
+  },
   "trinidad-parang-run": {
    "name": "Trinidad Parang Run",
    "series": "Pinball",
@@ -1530,6 +1574,17 @@
    "t": 35789,
    "side": 1,
    "marbles": 6
+  },
+  "venice-cube-canals": {
+   "name": "Venice Cube Canals",
+   "series": "Blocks",
+   "lighting": "sunset",
+   "v": "f7b50aaf",
+   "bytes": 9530,
+   "bytes2x": 22484,
+   "t": 9739,
+   "side": 1,
+   "marbles": 4
   },
   "verdon-burst": {
    "name": "Verdon Burst",
