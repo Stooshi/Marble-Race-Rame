@@ -1,6 +1,6 @@
 # 4. Game and economy rules (plain English)
 
-*Last updated 25 Oct 2026.* The numbers live in `client/src/shared/economy.json` and `client/src/shared/marbles/catalog.json`. If this page and those files ever disagree, the files are right; then update this page.
+*Last updated 30 Oct 2026.* The numbers live in `client/src/shared/economy.json` and `client/src/shared/marbles/catalog.json`. If this page and those files ever disagree, the files are right; then update this page.
 
 ## The golden rules
 
@@ -168,7 +168,7 @@ Every track must pass a **full report** (`npm run report -- <slug>`) before it i
 Reports are saved in `reports/<slug>/`. Track design rules:
 - bends long and flowing, with at most one sharp bend per track;
 - a race needs its luck: the openings without the pile-up and slalom (clean drop, peg drop, pipe drop) let the field go in **waves** (five waves of four starting places, 0.3 s apart, in a new order every race); a track that opens without the pile-up and slalom and without the waves has a pile-up or a hard slalom (5+ gates, loss 0.3) in its first half;
-- TV moments (looks only): up to two trackside cameras a track cuts to as the followed marble passes, about 3–5 s each, never in the first 8 s or the last 150 m; viewers can switch them off (the TV button);
+- TV moments (looks only): up to two trackside cameras a track cuts to as the followed marble comes up to them (from about 70 m out, cutting back 6 m before the camera: about 2.6 s), never in the first 8 s or the last 150 m; viewers can switch them off (the TV button). Since 30 Oct 2026 (Moses): the cameras stand 2 m higher wherever the scenery leaves room and aim a little up the track; in **about every other race** (picked from the field, the same live, in rooms and in the replay) a camera between 35% and 70% of the way (else the one nearest the middle, 25–78%) instead shows the **pack shot**: the first bunch of **at least 5 marbles** within 20 m of each other coming up to it, framed whole, about 3 s, cutting back 6 m before the camera; no such bunch, no pack shot that race. In every TV shot the player's own marble has a ring in its colour; during the pack shot a label shows where the player stands ("Leader +1.8 s", "7th, in the pack", "12th, 3.4 s behind") for up to 2.6 s;
 - tracks sit in the ground like a trench, raised only where they drop away or cross;
 - at least 35 of the 50 launch tracks must be truly unique (mirrors count towards the 50).
 

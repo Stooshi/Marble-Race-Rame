@@ -82,6 +82,8 @@ const mine = params.get('mine') === null ? null : Number(params.get('mine'));
 function beginRace() {
   scene.setRace(race.entries, mine === null ? [] : [mine], race.results, race.start ? { ...race.start, countdownMs: countdown, frame: race.frames[0] } : null);
   scene.setCameraMode('follow');
+  // ?pack=1 / 0: this race with or without its TV pack shot (normally about every other race).
+  if (params.get('pack') !== null) scene.tvPackRace = params.get('pack') === '1';
   // ?show=1: the winner's moment as in the game (the golden spotlight and the push-in on the winner).
   if (params.get('show')) {
     const won = race.results.reduce((a, r, i) => (r.finishTimeMs < race.results[a].finishTimeMs ? i : a), 0);

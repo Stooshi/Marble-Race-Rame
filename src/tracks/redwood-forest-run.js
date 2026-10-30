@@ -20,7 +20,7 @@ module.exports = track({
   signature: 'Through the trunk',
   tvCameras: [
     { section: 'Through the trunk', at: 0.8, side: 'left', distance: 6, height: 12 },
-    { section: 'Trunk spin', at: 0.8, side: 'left', distance: 10, height: 12 },
+    { section: 'Trunk spin', at: 0.4, side: 'left', distance: 10, height: 12 },
   ],
   start: { landmark: 'drive-through-redwood', scenery: ['pines'], type: 'elevator', gate: 'paddle', shots: { countdown: 'chase', launch: 'look-back' } },
   finish: { landmark: 'sea-stacks-beach' },
@@ -30,6 +30,7 @@ module.exports = track({
     'The ranger\'s truck is parked on the beach, not on the track; banana slugs crawl on the giant redwood in the spin.',
     'No billboard on the station roof: its frame stood in the follow camera\'s view at the line. Five boards stand on the support towers instead.',
     'Daylight rather than the design\'s mist: in fog the giants and the coast were lost from every view.',
+    'The second TV camera moved from late in the Trunk spin to its middle, 67% of the way, so the track has a mid-race camera for the pack shot (30 Oct 2026); looks only.',
   ],
   opening: opening('banked-turn', {
     costumes: { block: 'log', slalom: 'toadstool' },

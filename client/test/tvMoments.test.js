@@ -8,7 +8,7 @@ import { buildCenterline } from '../src/three/trackModel';
 import { channelOf } from '../src/three/iceChannel';
 import { buildScenery } from '../src/three/scenery';
 import { themeFor } from '../src/three/themes';
-import { TV, biggestBunch, packCams, packWeight, standingLabel, tvCameras, tvMoment, tvSpots, tvWeight } from '../src/three/tvMoments';
+import { TV, biggestBunch, packCams, packRace, packWeight, standingLabel, tvCameras, tvMoment, tvSpots, tvWeight } from '../src/three/tvMoments';
 
 const require = createRequire(import.meta.url);
 const { physicsTrack } = require('../../src/game/physicsTracks');
@@ -69,20 +69,17 @@ describe('TV moments', () => {
     }
   });
 
-  it('cuts by where the marble is: from 50 m before a camera, fully on to 12 m past, easing back over 30 m', () => {
+  it('cuts by where the marble is: from about 70 m before a camera, cutting back just before it reaches it', () => {
     const [cam] = cams;
     const finishAt = channel.arc - 140;
     const t = 20000;
     expect(tvMoment(cams, cam.s - TV.before - 1, t, finishAt)).toBeNull();
     expect(tvMoment(cams, cam.s - TV.before + 1, t, finishAt)).toEqual({ cam, w: 1 });
     expect(tvMoment(cams, cam.s + TV.after, t, finishAt).w).toBe(1);
-    const easing = tvMoment(cams, cam.s + TV.after + TV.blend / 2, t, finishAt).w;
-    expect(easing).toBeGreaterThan(0.4);
-    expect(easing).toBeLessThan(0.6);
-    expect(tvMoment(cams, cam.s + TV.after + TV.blend + 1, t, finishAt)).toBeNull();
-    // At racing speed (about 25 m/s) a moment lasts about 3–5 s.
-    const seconds = (TV.before + TV.after + TV.blend) / 25;
-    expect(seconds).toBeGreaterThanOrEqual(3);
+    expect(tvMoment(cams, cam.s + TV.after + 1, t, finishAt)).toBeNull();
+    // At racing speed (about 25 m/s) a moment lasts about 2.5–5 s.
+    const seconds = (TV.before + TV.after) / 25;
+    expect(seconds).toBeGreaterThanOrEqual(2.5);
     expect(seconds).toBeLessThanOrEqual(5);
     // The same place and time always give the same shot (replays show the same moments).
     expect(tvMoment(cams, cam.s, t, finishAt)).toEqual(tvMoment(cams, cam.s, t, finishAt));
@@ -130,16 +127,24 @@ describe('TV pack shot', () => {
     const without = all.filter((t) => tvSpots(t.physics)).filter((t) => !packCams(tvSpots(t.physics).tv).length).map((t) => t.slug);
     expect(without.length).toBeLessThanOrEqual(1); // (redwood-forest-run: cameras at 17% and 78% of the way)
   });
-  it('eases the shot in and out by distance, as the other TV moments', () => {
+  it('cuts in and out by distance, as the other TV moments', () => {
     expect(tvWeight(-TV.before - 1)).toBeNull();
-    expect(tvWeight(0)).toBe(1);
-    expect(tvWeight(TV.after + TV.blend / 2)).toBeCloseTo(0.5, 5);
-    expect(tvWeight(TV.after + TV.blend + 1)).toBeNull();
+    expect(tvWeight(-TV.before)).toBe(1);
+    expect(tvWeight(TV.after)).toBe(1);
+    expect(tvWeight(TV.after + 1)).toBeNull();
     // (the pack shot lets go before the bunch reaches the camera, so it never swings round as they pass)
     expect(packWeight(-TV.pack.before - 1)).toBeNull();
     expect(packWeight(-TV.pack.before)).toBe(1);
     expect(packWeight(-TV.pack.hold - 1)).toBe(1);
     expect(packWeight(-TV.pack.hold / 2)).toBeNull();
+  });
+  it('comes in about every other race, the same each time for the same race', () => {
+    const field = (n) => Array.from({ length: 20 }, (_, i) => ({ entryId: `r${n}-${i}`, lane: (i * 7 + n) % 20 }));
+    const picks = Array.from({ length: 400 }, (_, n) => packRace(field(n)));
+    const share = picks.filter(Boolean).length / picks.length;
+    expect(share).toBeGreaterThan(0.4);
+    expect(share).toBeLessThan(0.6);
+    expect(packRace(field(7))).toBe(packRace(field(7)));
   });
   it('labels where the player stands', () => {
     expect(standingLabel({ place: 1, aheadMs: 1840 })).toBe('Leader +1.8 s');

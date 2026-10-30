@@ -650,7 +650,11 @@ tvCameras: [
 ```
 
 The big view cuts to one as the followed marble (the leader, or the player's own) comes up to it
-(50 m before), follows it past and eases back over 30 m: about 3–5 s. The cut is worked out from
+(72 m before) and cuts back just before it reaches it (6 m short): about 2.6 s. In about every other race a camera
+between 35% and 70% of the way (else the one nearest the middle, 25–78%) is kept for the **pack shot**
+instead: the first bunch of at least 5 marbles coming up to it, framed whole (no such bunch, no shot).
+Cameras stand `TV.raise` (2 m) above their `height` wherever that stays clear of the scenery
+(`client/src/three/tvMoments.js`; Moses, 30 Oct 2026). Put one camera between 35% and 70% of the way. The cut is worked out from
 where the marble is, so replays show the same moments. Rules: at a section of the track, `at` 0 to 1,
 `distance` 6–25 m out from the rim, `height` 2–15 m, at least 250 m from the gate and 150 m from the line,
 two cameras at least 300 m apart. The viewer's **TV** button switches them off. A client test checks

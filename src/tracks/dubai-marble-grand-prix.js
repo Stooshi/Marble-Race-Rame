@@ -13,8 +13,8 @@ module.exports = track({
   grandPrix: true,
   signature: 'Fountain S-bends',
   tvCameras: [
-    { section: 'Fountain S-bends', at: 0.8, side: 'left', distance: 10, height: 12 },
-    { section: 'Museum splitter', at: 0.8, side: 'left', distance: 10, height: 8 },
+    { section: 'Fountain S-bends', at: 0.8, side: 'left', distance: 7, height: 15 },
+    { section: 'Highway sweep', at: 0.5, side: 'left', distance: 8, height: 12 },
   ],
   billboardFrame: 'led',
   start: { landmark: 'burj-khalifa', scenery: ['skyscrapers'], shots: { countdown: 'side', launch: 'high-behind' } },
@@ -24,6 +24,7 @@ module.exports = track({
     'The Museum splitter comes straight after the Fountain S-bends, before the Highway sweep, rather than after the Frame hairpin: out of the hairpin the whole field rides one side of the channel, and in 400 races at each of eight settings the marbles taking the other channel always lost more than a place on the way through (the recipe allows half a place).',
     'A 50 m straight, "Run to the hairpin", before the Frame hairpin: the recipe needs a braking zone before the one sharp bend.',
     'The rumble strips and the parked safety car are on a straight, "Marina straight", between the spiral and the finish rather than on the spiral and the run-in: the recipe keeps bumps off bends (marbles high on the wall are thrown off them) and keeps the last 25 m before the line clear.',
+    'TV cameras higher and closer in (30 Oct 2026): the Fountain S-bends camera at 15 m, 7 m out, and the second camera moved from the end of the Museum splitter (8 m up, low beside the barrier, with the museum in the way) to the middle of the Highway sweep, 12 m up, 8 m out; looks only.',
   ],
   sections: [
     {

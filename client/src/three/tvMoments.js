@@ -2,7 +2,7 @@
  * TV moments (drawing only, never the race): fixed trackside cameras at a track's dramatic spots
  * (track file `tvCameras`, physics.kit.tv), facing back up the track at the oncoming marbles. The big
  * view cuts to one as the followed marble (the leader, or the player's own) comes up to it, follows
- * it past, then eases back to the follow camera once it has gone by.
+ * it in, then cuts back to the follow camera as it goes by.
  *
  * Everything is worked out from where the followed marble is (its progress), never from the wall
  * clock, so a replay shows the same moments at the same places. No cut in the first seconds (the
@@ -13,17 +13,18 @@ import { Raycaster, Vector3 } from 'three';
 import { channelLipAt, channelRadiusAt } from './iceChannel';
 
 export const TV = {
-  before: 50,      // metres before the camera's spot where the cut comes (with the ease back, about 3–5 s at racing speed)
-  after: 12,       // metres past it where the camera lets go…
-  blend: 30,       // …easing back to the follow camera over these metres
+  before: 72,      // metres before the camera's spot where the cut comes (about 2.6 s at racing speed)
+  after: -6,       // metres past it where it cuts back to the follow camera: just before it reaches it (30 Oct 2026: before, it followed the marble 12 m
+                   // past and eased back over 30 m, the blend swinging the view through the barrier or the ground)
   startGuard: 8000, // ms after GO before any cut
   frame: 7,        // metres of the scene across the shot round the followed marble: the TV camera zooms to keep it so…
   lens: [14, 42],  // …within these fields of view (degrees)
   raise: 2,        // metres the cameras stand higher than their track file says, so more of the chasing pack shows, wherever that stays clear of the scenery (30 Oct 2026)
   tilt: 3,         // metres up the track (towards the chasers) the camera aims behind what it follows
   // The pack shot (Moses, 30 Oct 2026): mid race, the TV camera frames the biggest bunch, not only the leader.
-  pack: { from: 0.35, to: 0.7, near: [0.25, 0.78], most: 2, bunch: 20, members: 3, before: 80, hold: 6, margin: 1.35, lens: [14, 55], label: 2600 },
-  // (bunch: metres between the first and last of a bunch, about a second at racing speed; members: the fewest that make one;
+  pack: { from: 0.35, to: 0.7, near: [0.25, 0.78], most: 2, bunch: 20, members: 5, share: 0.5, before: 80, hold: 6, margin: 1.35, lens: [14, 55], label: 2600 },
+  // (bunch: metres between the first and last of a bunch, about a second at racing speed; members: the fewest that make one (Moses: a real bunch, 5);
+  //  share: the races that get one, picked at random but the same for every viewer and the replay (Moses: about every other race);
   //  before: metres out where the shot starts, about 3 s at racing speed so the label can be read; hold: metres short of the camera where the shot cuts back, so it never swings round as they pass;
   //  margin: room round the bunch in the shot; lens: the fields of view it zooms within)
 };
@@ -112,12 +113,9 @@ export function packWeight(d) {
   return d >= -TV.pack.before && d <= -TV.pack.hold ? 1 : null;
 }
 
-/** How much a TV camera has the shot when what it watches is d metres past its spot: 1, easing to 0; null: not its moment. */
+/** Whether a TV camera has the shot when what it watches is d metres past its spot: 1, else null (a clean cut in and out). */
 export function tvWeight(d) {
-  if (d < -TV.before || d > TV.after + TV.blend) return null;
-  if (d <= TV.after) return 1;
-  const k = (d - TV.after) / TV.blend;
-  return 1 - k * k * (3 - 2 * k);
+  return d >= -TV.before && d <= TV.after ? 1 : null;
 }
 
 /**
@@ -147,6 +145,17 @@ export function packCams(cams) {
   if (mid.length) return mid;
   const near = cams.filter((c) => c.p >= TV.pack.near[0] && c.p <= TV.pack.near[1]).sort((a, b) => Math.abs(a.p - 0.5) - Math.abs(b.p - 0.5));
   return near.slice(0, 1);
+}
+
+/**
+ * Whether this race gets its pack shot (TV.pack.share of races): a stable hash of the field (who is in
+ * it, in which lane), so it is "random" yet the same live, in the room and in the replay.
+ */
+export function packRace(entries) {
+  const key = (entries ?? []).map((e) => `${e?.entryId ?? e?.marble?.id ?? ''}@${e?.lane ?? ''}`).join('|');
+  let h = 2166136261;
+  for (let i = 0; i < key.length; i += 1) { h ^= key.charCodeAt(i); h = Math.imul(h, 16777619); }
+  return ((h >>> 0) % 1000) / 1000 < TV.pack.share;
 }
 
 const ordinal = (n) => `${n}${n % 100 >= 11 && n % 100 <= 13 ? 'th' : ({ 1: 'st', 2: 'nd', 3: 'rd' }[n % 10] ?? 'th')}`;

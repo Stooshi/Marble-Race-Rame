@@ -21,7 +21,7 @@ import { countdownPose, handover, launchHandover, launchPose, startLineShot } fr
 import { DETAIL_FADE_MS, flyoverHighlight, flyoverPath, flyoverTop } from './flyover';
 import { buildTrackFeatures } from './trackFeatures';
 import { buildLaneMarkings } from './scenery/athletics';
-import { TV, biggestBunch, packCams, packWeight, standingLabel, tvCameras, tvMoment, tvSpots } from './tvMoments';
+import { TV, biggestBunch, packCams, packRace, packWeight, standingLabel, tvCameras, tvMoment, tvSpots } from './tvMoments';
 import { buildStructures } from './structures';
 import { roofBlocks, stationRoof } from './scenery/coaster';
 import { keepOutBlocks } from './scenery/clearCheck';
@@ -617,6 +617,7 @@ export class TrackScene {
     this.main.leader = null;
     this.tvPack = null;
     this.tvPackDone = null;
+    this.tvPackRace = packRace(entries); // (about every other race: TV.pack.share)
     this.tvShot = null;
     this.leadTrail = [];
     this.inset.leader = null;
@@ -958,7 +959,8 @@ export class TrackScene {
     const finishAt = arc - 140;
     // The pack shot first (mid race, the biggest bunch), else the followed marble's own TV moment.
     const pack = this.packMoment(frame, arc, finishAt);
-    const m = pack ?? tvMoment(this.tvFollowCams ?? this.tvCams, (frame.p[index] ?? 0) * arc, frame.t, finishAt);
+    // (A race without its pack shot: every camera follows the marble, as before.)
+    const m = pack ?? tvMoment(this.tvPackRace ? this.tvFollowCams ?? this.tvCams : this.tvCams, (frame.p[index] ?? 0) * arc, frame.t, finishAt);
     if (!m) { lensBack(); return; }
     if (this.tvLens === undefined) this.tvLens = this.camera.fov;
     // The TV camera zooms in as a camera operator would: the marble (or the bunch) the same size in the shot however far off.
@@ -983,7 +985,7 @@ export class TrackScene {
    * { cam, w, centre (Vector3), across (metres), metres } or null. Worked out from the race's frames only.
    */
   packMoment(frame, arc, finishAt) {
-    if (!this.tvPackCams?.length || !(frame.t >= TV.startGuard)) { this.tvPack = null; return null; }
+    if (!this.tvPackRace || !this.tvPackCams?.length || !(frame.t >= TV.startGuard)) { this.tvPack = null; return null; }
     if (this.tvPack && frame.t < this.tvPack.from) this.tvPack = null; // a replay scrubbed back
     const metresOf = (members) => {
       const live = members.filter((i) => frame.p[i] < 1);
