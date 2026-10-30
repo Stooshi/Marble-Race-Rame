@@ -6,7 +6,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
-  BEEPS_GO_S, CEREMONY, CEREMONY_FADE_S, CEREMONY_SECONDS, CROWD_UNDER, DUCK, MUSIC_UNDER, RACE_TRACKS, SOUNDS, TRACK_SECONDS,
+  BEEPS_GO_S, CEREMONY, CEREMONY_FADE_S, CEREMONY_SECONDS, CROWD_UNDER, DUCK, MUSIC_UNDER, RACE_TRACKS, SOUNDS, START_SOUND_MS, TRACK_SECONDS,
   _resetOrder, crowdCheer, isUnlocked, levels, musicState, nextTrack, nowPlaying, play, raceCeremony, raceCountdown, raceEnd, raceGo, trackFor,
 } from '../src/sound/engine';
 import { CEREMONY_PHASES, phaseAt } from '../src/utils/finishShow';
@@ -138,9 +138,12 @@ describe('sound', () => {
     for (const n of ['start-rolling', 'marble-hit']) for (const ext of ['webm', 'm4a']) expect(fs.existsSync(path.resolve(__dirname, `../public/audio/${n}.${ext}`))).toBe(true);
     const view = fs.readFileSync(path.resolve(__dirname, '../src/components/LiveRaceViewer3D.jsx'), 'utf8');
     expect(view).not.toContain("'whoosh'");
-    expect(view).toContain("playSound('launch')");
-    // (The same level as the old gate sound, Moses 28 and 30 Oct 2026: -33.5 LUFS, about 13.5 dB under the -20 of the rest.)
-    expect(fs.readFileSync(path.resolve(__dirname, '../../scripts/convert-audio.sh'), 'utf8')).toContain('start-rolling -33.5 64 96');
+    // (1 s after the GO beep, on the race clock, not dipping the music; Moses, 30 Oct 2026.)
+    expect(START_SOUND_MS).toBe(1000);
+    expect(view).toContain("playSound('launch', { duck: false })");
+    expect(view).toContain('f.t >= START_SOUND_MS && ((lastT !== null && lastT < START_SOUND_MS)');
+    // (50% louder than the old gate sound, Moses 30 Oct 2026: its mean -29.9 dB, 3.5 dB over the old one's -33.4.)
+    expect(fs.readFileSync(path.resolve(__dirname, '../../scripts/convert-audio.sh'), 'utf8')).toContain("print -29.9 - m");
   });
 
   it('the crowd: once per stand per race, under the music, never ducking it', () => {

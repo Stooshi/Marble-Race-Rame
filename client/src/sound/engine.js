@@ -21,7 +21,7 @@
  * - The finish ceremony (unchanged): the tune stops with a short fade and the ceremony song plays,
  *   looping while the player stays, fading out softly (CEREMONY_FADE_S) after CEREMONY_SECONDS.
  * - The crowd: when the player's own marble passes a Grand Prix stand (crowdCheer, once per stand per
- *   race), under the music. The start sound at GO (the marbles start rolling; 30 Oct 2026). The player's
+ *   race), under the music. The start sound 1 s after GO (the marbles start rolling; 30 Oct 2026). The player's
  *   own marble hitting another (marbleHit, from ./hits.js): soft, louder for harder hits, under the music,
  *   at most one a second (30 Oct 2026). (No overtaking whoosh for now.)
  * - The music sits well under the effects (MUSIC_UNDER) and dips under the gate sound (DUCK).
@@ -43,6 +43,11 @@ export const TRACK_SECONDS = {
 };
 export const CEREMONY = 'ceremony';
 export const SOUNDS = { crowd: 'crowd-grand-prix', launch: 'start-rolling', beeps: 'start-beeps', hit: 'marble-hit' };
+/**
+ * The start sound (the marbles start rolling) plays this long after the GO beep, on the race clock (Moses,
+ * 30 Oct 2026), without dipping the music: its file 50% louder than the old gate sound's (+3.5 dB).
+ */
+export const START_SOUND_MS = 1000;
 /** In "start beeps" the four beeps start at 0.024, 1.026, 2.035 and 3.023 s: the fourth, the GO, this far in. */
 export const BEEPS_GO_S = 3.023;
 /** The ceremony song fades out (over CEREMONY_FADE_S) this long after it started. */

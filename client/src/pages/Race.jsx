@@ -14,7 +14,7 @@ import NextRace from '../components/NextRace';
 import { Empty, ErrorMessage, Spinner } from '../components/Status';
 import { formatTime } from '../utils/format';
 import StartLights from '../components/StartLights';
-import { play as playSound, prepare as prepareSound, raceCountdown, raceEnd, raceGo } from '../sound/engine';
+import { START_SOUND_MS, play as playSound, prepare as prepareSound, raceCountdown, raceEnd, raceGo } from '../sound/engine';
 import { track, trackingActive } from '../site/consent/tracking';
 import { entryLabel, plainName } from '../shared/playerName';
 
@@ -76,14 +76,14 @@ export default function Race() {
     if (stream.status === 'countdown') reload();
   }, [stream.status, reload]);
 
-  // The 2D view's start (the 3D view times its own to the gate): the pack leaving, when the race
+  // The 2D view's start (the 3D view times its own to the gate): the start sound 1 s after GO, when the race
   // goes from its countdown to running (not when the page opens mid-race).
   const sawCountdown = useRef(false);
   useEffect(() => {
     if (stream.status === 'countdown') sawCountdown.current = true;
     const twoD = view === '2d' || (view === null && !stream.meta?.track?.physics);
     if (stream.status === 'running' && twoD) {
-      if (sawCountdown.current) playSound('launch');
+      if (sawCountdown.current) setTimeout(() => playSound('launch', { duck: false }), START_SOUND_MS); // (1 s after GO, as in 3D)
       sawCountdown.current = false;
       raceGo(raceId); // the race's music (the 3D view starts it at its own GO)
     }

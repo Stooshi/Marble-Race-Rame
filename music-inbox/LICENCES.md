@@ -46,7 +46,7 @@ So:
 | `tune-14` (from 28 Oct 2026) | RACE MUSIC 14 - xtremefreddy-game-music-loop-20-156390-cut (mp3cut.net).mp3 | xtremefreddy | 156390 | music | to check |
 | `ceremony` (the finish ceremony) | FINISH LINE and CEREMONY SONG - freesound_community-suits-you-69233.mp3 | freesound_community | 69233 | music | to check |
 | `crowd-grand-prix` (a stand cheering) | CROWD GRAND PRIX - freesound_community-scream-ride-start-91271.mp3 | freesound_community | 91271 | sound effect | (sound effect) |
-| `start-rolling` (the start sound at GO, from 30 Oct 2026) | MARLES START ROLLING  - freesound_community-bowling-ball-90863-CUT (mp3cut.net) - pixabay.mp3 | freesound_community | 90863 | sound effect | to check (sound effect: usually not registered) |
+| `start-rolling` (the start sound, 1 s after GO, from 30 Oct 2026) | MARLES START ROLLING  - freesound_community-bowling-ball-90863-CUT (mp3cut.net) - pixabay.mp3 | freesound_community | 90863 | sound effect | to check (sound effect: usually not registered) |
 | `marble-hit` (the player's own marble hitting another, from 30 Oct 2026) | MARBLE COLLISSION  - freesound_community-lotto-ball-105088 (mp3cut.net) - pixabay.mp3 | freesound_community | 105088 | sound effect | to check (sound effect: usually not registered) |
 | (not in the game since 30 Oct 2026; replaced by `start-rolling`) launch | MARBLES SPEEDING UP - diff_style-start-your-engine-13152.mp3 | diff_style | 13152 | sound effect | (sound effect) |
 | (not in the game since 28 Oct 2026) whoosh | MARBLES OVERTAKING ONLY PLAYED NEXT TO THE PLAYERS OWN MARBLE-soundreality-whoosh-race-2-383023.mp3 | soundreality | 383023 | sound effect | (sound effect) |

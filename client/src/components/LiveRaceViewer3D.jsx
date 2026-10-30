@@ -18,7 +18,7 @@ import SkipToResults from './SkipToResults';
 import FrameMeter, { useFrameMeter } from './FrameMeter';
 import { useTvMoments } from './tvMomentsSetting';
 import { createHitDetector } from '../sound/hits';
-import { crowdCheer, marbleHit, play as playSound, prepare as prepareSound, raceCeremony, raceCountdown, raceGo, soundReport, stopCountdown, whenSoundReady } from '../sound/engine';
+import { START_SOUND_MS, crowdCheer, marbleHit, play as playSound, prepare as prepareSound, raceCeremony, raceCountdown, raceGo, soundReport, stopCountdown, whenSoundReady } from '../sound/engine';
 import { watchReadiness } from './raceReadiness';
 import { api } from '../api/client';
 import { FLYOVER_MS } from '../three/flyover';
@@ -321,9 +321,9 @@ export default function LiveRaceViewer3D({
       if (lag > 0 && f && Math.floor(f.t / 50) !== lastShownClock) { lastShownClock = Math.floor(f.t / 50); setShown({ t: f.t, s: f.s }); }
       else if (lag === 0 && lastShownClock !== null) { lastShownClock = null; setShown(null); }
       const scene = sceneRef.current;
-      // The gates open (GO, as drawn): the pack leaving the gate.
-      // (Or within its first 1.5 s if the 3D world was still being built at GO.)
-      if (f && f.t >= 0 && ((lastT !== null && lastT < 0) || (lastT === null && f.t < 1500))) playSound('launch');
+      // The start sound: the marbles start rolling, START_SOUND_MS after the GO beep, on the race clock (Moses, 30 Oct 2026).
+      // (Or within 1.5 s of that if the 3D world was still being built then.)
+      if (f && f.t >= START_SOUND_MS && ((lastT !== null && lastT < START_SOUND_MS) || (lastT === null && f.t < START_SOUND_MS + 1500))) playSound('launch', { duck: false });
       // GO: the race's music (once per race; also when the page opens mid-race).
       // (GO as shown here: f.t ms ago. A page opened mid-race: the tune joins where the race is.)
       if (f && f.t >= 0 && (lastT === null || lastT < 0) && meta?.raceId) raceGo(meta.raceId, Date.now() - f.t);

@@ -61,8 +61,14 @@ if [ -z "${SKIP_EFFECTS:-}" ]; then
   # The crowd cheering as the player's own marble passes a stand (all of it, 3 s), under the music.
   enc "$IN"/CROWD\ GRAND\ PRIX*.mp3 crowd-grand-prix -24 64 96
   # The start sound at GO: the marbles start rolling (Moses, 30 Oct 2026; it replaces MARBLES SPEEDING UP,
-  # "launch", at the same level: -33.5 LUFS, about a fifth as loud as the other sounds). All of it (3.2 s).
-  enc "$IN"/MARLES\ START\ ROLLING*.mp3 start-rolling -33.5 64 96
+  # "launch"). First at the old sound's level (-33.5 LUFS by loudnorm: mean -33.4 dB), then 50% louder, +3.5 dB
+  # (Moses, 30 Oct 2026): a mean of -29.9 dB. At 3.2 s loudnorm levels it dynamically and not exactly, so one
+  # steady gain to that mean instead (its peak about -14 dBFS, under the music's).
+  f=$(ls "$IN"/MARLES\ START\ ROLLING*.mp3)
+  g=$(ffmpeg -hide_banner -nostats -i "$f" -af volumedetect -f null - 2>&1 | sed -n 's/.*mean_volume: \(.*\) dB/\1/p')
+  ff="volume=$(awk -v m="$g" 'BEGIN { print -29.9 - m }')dB"
+  ffmpeg -v error -y -i "$f" -vn -map_metadata -1 -af "$ff" -ar 48000 -c:a libopus -b:a 64k -vbr on -application audio "$OUT/start-rolling.webm"
+  ffmpeg -v error -y -i "$f" -vn -map_metadata -1 -af "$ff" -c:a aac -b:a 96k -ar 44100 -movflags +faststart "$OUT/start-rolling.m4a"
   # The player's own marble hitting another (Moses, 30 Oct 2026): a 0.13 s click, too short for the loudness
   # measure, so levelled by its peak instead (to -9 dBFS); the engine plays it soft, under the music (HIT_LEVEL).
   f=$(ls "$IN"/MARBLE\ COLLISSION*.mp3)
