@@ -640,9 +640,11 @@ one of the world's great mountains. It is built as a coaster (everything above a
 ## The racing look
 
 Every kit track gets it by itself (Moses, 30 Oct 2026; `client/src/three/scenery/racingLook.js`), looks
-only: chequered start and finish lines and short, muted red-and-white kerbs on the inside of the 1–2
-sharpest bends (sharper than 0.016 rad a metre, at least 80 m apart; one at most on Canyons, Rivers and
-Peaks; Track and Field: the finish's chequer only). Nothing to set in the track file.
+only, the same in every series: chequered start and finish lines; short, muted red-and-white kerbs on the
+inside of the 3 sharpest bends (the first sharper than 0.016 rad a metre, the others than 0.012, at least
+80 m apart); 3 sets of muted off-white chevrons on the longest nearly straight stretches of 45 m and more
+(fewer where a track has fewer), never within 15 m of a speed pad. Track and Field: the finish's chequer
+only. Nothing to set in the track file; a new track with fewer than two long straights gets fewer chevrons.
 
 ## TV moments
 

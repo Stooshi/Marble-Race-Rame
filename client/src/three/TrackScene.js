@@ -420,11 +420,11 @@ export class TrackScene {
       this.trackMesh.visible = false;
       const per = channelPieceSize(track, this.lite);
       const pieces = channelPieces(geometry, per);
-      // The racing look (./scenery/racingLook.js: chequered start and finish lines, a kerb or two), painted
+      // The racing look (./scenery/racingLook.js: chequered start and finish lines, 3 kerbs, 3 chevron sets), painted
       // into the channel's own pieces: no draw call of its own. (Kit tracks; `racingLook: false` leaves it out.)
       const kit = track?.physics?.kit;
       if (kit && this.racingLook) {
-        const { parts } = buildRacingLook(this.centerline, this.channel, { lite: this.lite, nature: Boolean(kit.canyon || kit.river || kit.peak), athletics: Boolean(kit.athletics), more: this.racingLook === 'more' });
+        const { parts } = buildRacingLook(this.centerline, this.channel, { lite: this.lite, athletics: Boolean(kit.athletics), features: track.physics.features });
         for (const part of parts) {
           const k = Math.min(pieces.length - 1, Math.floor(Math.min(this.centerline.segments - 1, Math.floor((part.s / this.channel.arc) * this.centerline.segments)) / per));
           pieces[k] = paintInto(pieces[k], part);
