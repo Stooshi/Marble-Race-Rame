@@ -208,6 +208,11 @@ module.exports = track({
   | `rhododendron-drop` (peaks) | traverse (a long straight: a peg and a brake zone), brakingStraight, hairpin, terrace (a table top; the first big feature), terraceDrop (a drop; the second), moraine (a short slalom), moraineDrop (a drop), rhodo1 (S-bends, a peg), rhodo2 (S-bends), gully (a sweep, a peg), lastStraight |
   | `tidewater` (peaks) | glacier (a sweep, a peg), jumpStraight (a 140 m straight with the boost-pad jump over a crevasse; the first big feature; a peg at its end), cliffTop (a sweep), fjordDrop (a drop, a peg; the second), brakingStraight, hairpin, seaIce (a one-turn spiral), fjordS (a sweep, a peg), lastStraight |
   | `island-channels` (rivers) | floodplain (a straight: two pegs and a slalom), splitter (two channels curving 40° round a river island, the inside one rougher; the big feature), elephants (S-bends), drop, brakingStraight, hairpin, sandbank (a spiral), lastStraight |
+  | `karst-splits` (blocks 2) | riverStraight (two pegs), split1 (a straight splitter round a karst tower; feature one), raftSweep (a peg), terraces (a slalom), split2 (a splitter curving 40°; feature two), village (S-bends), drop, brakingStraight, hairpin, lastStraight |
+  | `grand-canal` (blocks 2) | palazzi (S-bends, a peg), toTheFork (a peg), fork (a straight splitter; feature one), bridges (a slalom), canalRunIn, grandCanal (a half-pipe; feature two), drop, brakingStraight, hairpin, lagoon (a sweep, a peg), lastStraight |
+  | `horseshoe-falls` (blocks 2) | upperRiver (a sweep), rapids (two pegs), falls (a waterfall; feature one), mist, gorge (a half-pipe; feature two), gorgeBends (S-bends, a peg), brakingStraight, hairpin, whirlpool (a part spiral), lastStraight |
+  | `three-towers` (blocks 2) | scree (steps), screeBends (S-bends, a peg), towers (a spiral of 1.25 turns; feature one), meadow (a slalom), rise, gully (a plunge; feature two), brakingStraight, hairpin, meadows (S-bends, a peg), lastStraight |
+  | `aurora-fell` (blocks 2) | switch1, switch2 (two pairs of banked switchbacks; feature one), birches (a slalom), onTheLake, splitter (curving 40° round the lake island; feature two), shore (a drop), brakingStraight, hairpin, valley (a part spiral), lastStraight |
 
   A track may still write its own sections by hand; the sameness check makes sure they differ.
 - **`family`**: `'world-tour'` (the default), `'grand-prix'` (any `grandPrix` track),
@@ -553,6 +558,29 @@ as a coaster (everything above applies), like a canyon (looks only, like everyth
 - The ten tracks (switched off until reviewed): Spawn Point (the proof track), Speedrun Valley,
   Voxel Peaks, Deep Mine, Magma Core, Line Clear, Combo Drop, The Stack, Block Fortress,
   Final Level.
+
+### Blocks Series 2 (from 30 Oct 2026)
+
+`family: 'block-2'`: real places built from cubes, in four themes (cities, rivers, mountains,
+winter landscapes, year-round), built exactly as the Block Series (`block: { world }`, the voxel
+land, cube pillars) but its own family for the variety rules (openings, start types and start
+shots counted within the 20). Plan: project doc `claude/blocks-series-2-plan.md`.
+
+- **Two big features on every track** (Moses, 30 Oct 2026): a splitter, a half-pipe, a spiral, a
+  waterfall drop, a big drop, a funnel (the `funnel-drop` opening), banked switchbacks, a two-step
+  drop, a table top or a curtain waterfall, two of them, varied across the series; one is the
+  `signature`, the other has a TV camera.
+- **Worlds**: `karst` (Li River: rice-field green, karst rock), `canal` (Venice: pale stone and
+  terracotta round canals), `falls` (Niagara: parkland over a grey gorge), `dolomite` (pale
+  limestone, high meadows, larches), `aurora` (snow over dark rock, birch woods).
+- **Landmarks** (generic architecture and landscape; no logos, no protected landmarks, nothing on a
+  summit): `karst-towers`, `karst-tower` (round a splitter), `bamboo-rafts`, `river-village`,
+  `palazzo-row`, `cube-campanile` (round a splitter), `arched-cube-bridge`, `cube-gondolas`,
+  `domed-basilica`, `horseshoe-falls`, `mist-boat`, `gorge-walls`, `steel-arch-cube`, `three-towers`
+  (round a spiral), `scree-fan`, `dolomite-ridge`, `aurora-station`, `sauna-hut`, `ice-lake`,
+  `lake-island` (round a splitter), `fell-peaks`.
+- The layouts made for it are the `(blocks 2)` rows (L105 onwards); each has a test track built as
+  a Block Series world in its own world.
 
 ## Track and Field
 

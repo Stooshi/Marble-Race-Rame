@@ -160,4 +160,10 @@ module.exports = [
   require('./ice-palace'),
   require('./night-train-north'),
   require('./sleigh-bell-forest'),
+  // Blocks Series 2 (30 Oct 2026).
+  require('./li-river-karst-run'),
+  require('./venice-cube-canals'),
+  require('./niagara-cube-falls'),
+  require('./tre-cime-cube-towers'),
+  require('./abisko-aurora-run'),
 ];
