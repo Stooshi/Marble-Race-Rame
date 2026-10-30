@@ -7,7 +7,7 @@
  */
 import {
   CanvasTexture, CircleGeometry, Color, DynamicDrawUsage, InstancedMesh, Matrix4, Mesh, MeshBasicMaterial,
-  Quaternion, SphereGeometry, Vector3, ConeGeometry, CylinderGeometry, Group,
+  Quaternion, SphereGeometry, Vector3, ConeGeometry, CylinderGeometry, Group, TorusGeometry,
 } from 'three';
 import { merge, piece } from './scenery/parts';
 import { pointOnTrack, TRACK_STYLE } from './trackModel';
@@ -421,6 +421,19 @@ export class RaceMarbles {
       this.group.add(m);
       return { index: i, mesh: m };
     });
+    // In TV shots, a ring round the viewer's own marbles in their own colour, so they find theirs at once
+    // (Moses, 30 Oct 2026): hidden until a TV shot (setOwnRings), faded in and out with it.
+    this.ringGeo = new TorusGeometry(MARBLE_RADIUS * 1.75, MARBLE_RADIUS * 0.16, 8, 32);
+    this.ringGeo.rotateX(Math.PI / 2);
+    this.rings = highlight.filter((i) => this.balls[i]).map((i) => {
+      const colour = entries[i]?.marble?.color_primary ?? '#facc15';
+      const mat = new MeshBasicMaterial({ color: colour, transparent: true, opacity: 0, depthWrite: false });
+      const m = new Mesh(this.ringGeo, mat);
+      m.visible = false;
+      m.renderOrder = 2;
+      this.group.add(m);
+      return { index: i, mesh: m };
+    });
 
     this.positions = [];
     this.layoutMemory = {}; // how marbles were nudged apart last draw (smooths crowds)
@@ -500,6 +513,23 @@ export class RaceMarbles {
       p.mesh.scale.setScalar(this.scale);
       p.mesh.position.set(at.x, at.y + r + 1.2 * this.scale, at.z);
     }
+    for (const g of this.rings) {
+      if (!g.mesh.visible) continue;
+      g.mesh.scale.setScalar(this.scale);
+      g.mesh.position.copy(this.balls[g.index].mesh.position);
+    }
+  }
+
+  /** The own marbles' rings: k from 0 (hidden) to 1 (fully shown), for the TV shots. */
+  setOwnRings(k) {
+    for (const g of this.rings) {
+      g.mesh.visible = k > 0.02;
+      g.mesh.material.opacity = 0.9 * k;
+      if (g.mesh.visible) {
+        g.mesh.scale.setScalar(this.scale);
+        g.mesh.position.copy(this.balls[g.index].mesh.position);
+      }
+    }
   }
 
   /** Current position of one marble (for the follow camera). */
@@ -517,5 +547,7 @@ export class RaceMarbles {
     this.shadowTex.dispose();
     this.pointerGeo.dispose();
     this.pointerMat.dispose();
+    this.ringGeo.dispose();
+    for (const g of this.rings) g.mesh.material.dispose();
   }
 }

@@ -21,7 +21,7 @@ import { countdownPose, handover, launchHandover, launchPose, startLineShot } fr
 import { DETAIL_FADE_MS, flyoverHighlight, flyoverPath, flyoverTop } from './flyover';
 import { buildTrackFeatures } from './trackFeatures';
 import { buildLaneMarkings } from './scenery/athletics';
-import { TV, tvCameras, tvMoment, tvSpots } from './tvMoments';
+import { TV, biggestBunch, packCams, packWeight, standingLabel, tvCameras, tvMoment, tvSpots } from './tvMoments';
 import { buildStructures } from './structures';
 import { roofBlocks, stationRoof } from './scenery/coaster';
 import { keepOutBlocks } from './scenery/clearCheck';
@@ -418,6 +418,9 @@ export class TrackScene {
     }
     // TV moments: the track's fixed trackside cameras (./tvMoments.js).
     this.tvCams = tvCameras(this.centerline, this.channel, tvSpots(track?.physics));
+    // Mid race, a camera or two keep for the pack shot (TV.pack); the others follow the marble as before.
+    this.tvPackCams = packCams(this.tvCams);
+    this.tvFollowCams = this.tvCams.filter((c) => !this.tvPackCams.includes(c));
     // Tunnels, bridges and waterfalls (tracks built with the track kit).
     this.structures = this.channel ? buildStructures(this.centerline, this.channel, track?.physics?.kit, { lite: this.lite }) : null;
     if (this.structures) this.trackGroup.add(this.structures.group);
@@ -446,6 +449,10 @@ export class TrackScene {
           this.scenery.traverse((o) => o.layers.set(SCENERY_LAYER));
           this.trackGroup.add(this.scenery);
           this.prepareFinishCut();
+          // The TV cameras stand a little higher wherever the scenery leaves room (TV.raise).
+          this.tvCams = tvCameras(this.centerline, this.channel, tvSpots(track?.physics), { scenery: this.scenery });
+          this.tvPackCams = packCams(this.tvCams);
+          this.tvFollowCams = this.tvCams.filter((c) => !this.tvPackCams.includes(c));
         }
         this.render();
         built();
@@ -608,6 +615,10 @@ export class TrackScene {
   setRace(entries, highlight = [], results = [], start = null) {
     this.clearRace();
     this.main.leader = null;
+    this.tvPack = null;
+    this.tvPackDone = null;
+    this.tvShot = null;
+    this.leadTrail = [];
     this.inset.leader = null;
     this.inset.ready = false;
     this.countdownMs = start?.countdownMs;
@@ -933,27 +944,128 @@ export class TrackScene {
   applyTvMoment(frame, index, at) {
     const pulse = (k) => { for (const p of this.marbles.pointers ?? []) if (p.index === index) p.mesh.scale.multiplyScalar(1 + 0.9 * k); };
     const lensBack = () => {
+      this.marbles.setOwnRings?.(0);
+      this.tvShot = null;
       if (this.tvLens === undefined) return;
       this.camera.fov = this.tvLens;
       this.camera.updateProjectionMatrix();
       this.tvLens = undefined;
     };
-    if (!this.tvOn || !this.tvCams?.length || !at) { lensBack(); return; }
     if (!this.arcLength) this.arcLength = this.measureArc();
-    const metres = (frame.p[index] ?? 0) * (this.channel?.arc ?? this.arcLength);
-    const finishAt = (this.channel?.arc ?? this.arcLength) - 140;
-    const m = tvMoment(this.tvCams, metres, frame.t, finishAt);
+    const arc = this.channel?.arc ?? this.arcLength;
+    this.trailLeader(frame, arc);
+    if (!this.tvOn || !this.tvCams?.length || !at) { lensBack(); return; }
+    const finishAt = arc - 140;
+    // The pack shot first (mid race, the biggest bunch), else the followed marble's own TV moment.
+    const pack = this.packMoment(frame, arc, finishAt);
+    const m = pack ?? tvMoment(this.tvFollowCams ?? this.tvCams, (frame.p[index] ?? 0) * arc, frame.t, finishAt);
     if (!m) { lensBack(); return; }
     if (this.tvLens === undefined) this.tvLens = this.camera.fov;
-    // The TV camera zooms in on the marble as a camera operator would: the same size in the shot however far off.
-    const zoom = Math.min(TV.lens[1], Math.max(TV.lens[0], (2 * Math.atan(TV.frame / 2 / Math.max(1, m.cam.pos.distanceTo(at))) * 180) / Math.PI));
+    // The TV camera zooms in as a camera operator would: the marble (or the bunch) the same size in the shot however far off.
+    const target = pack ? pack.centre : at.clone();
+    const zoom = pack ? pack.fov : Math.min(TV.lens[1], Math.max(TV.lens[0], (2 * Math.atan(TV.frame / 2 / Math.max(1, m.cam.pos.distanceTo(target))) * 180) / Math.PI));
     this.camera.fov = this.tvLens + (zoom - this.tvLens) * m.w;
     this.camera.updateProjectionMatrix();
-    const target = at.clone();
+    // Aimed a little up the track behind the marble it follows, so more of the chasers are in the shot (the pack shot: the bunch's middle).
+    const back = pack ? null : this.tangentAt(frame.p[index] ?? 0);
+    if (back) target.addScaledVector(back, -TV.tilt);
     this.camera.position.lerpVectors(this.main.cam, m.cam.pos, m.w);
     this.camera.lookAt(this.main.target.clone().lerp(target, m.w));
-    // The player's own marble, followed: its pointer pulses as it comes past.
-    pulse(m.w * (0.5 + 0.5 * Math.sin(frame.t / 120)));
+    // The player's own marble: a ring in its colour while the TV camera has the shot; the pointer pulses as it comes past.
+    this.marbles.setOwnRings?.(m.w);
+    if (!pack) pulse(m.w * (0.5 + 0.5 * Math.sin(frame.t / 120)));
+    this.tvShot = { pack: Boolean(pack), w: m.w, label: pack && frame.t - this.tvPack.from < TV.pack.label ? this.tvPack.label : null };
+  }
+
+  /**
+   * The pack shot (TV.pack; Moses, 30 Oct 2026): as the biggest bunch (at least TV.pack.members) comes up
+   * to one of the mid-race cameras, that bunch is held for the shot and framed whole:
+   * { cam, w, centre (Vector3), across (metres), metres } or null. Worked out from the race's frames only.
+   */
+  packMoment(frame, arc, finishAt) {
+    if (!this.tvPackCams?.length || !(frame.t >= TV.startGuard)) { this.tvPack = null; return null; }
+    if (this.tvPack && frame.t < this.tvPack.from) this.tvPack = null; // a replay scrubbed back
+    const metresOf = (members) => {
+      const live = members.filter((i) => frame.p[i] < 1);
+      return live.length ? live.reduce((n, i) => n + frame.p[i] * arc, 0) / live.length : null;
+    };
+    if (!this.tvPack) {
+      // The biggest bunch coming up to a mid-race camera not yet used, as soon as it is one (TV.pack.members).
+      for (const cam of this.tvPackCams) {
+        if (this.tvPackDone?.has(cam) || cam.s >= finishAt) continue;
+        const bunch = biggestBunch(frame, arc, [cam.s - TV.pack.before, cam.s - TV.pack.hold]);
+        if (!bunch || bunch.members.length < TV.pack.members) continue;
+        this.tvPack = { cam, members: bunch.members, from: frame.t, label: this.standing(frame, arc, bunch.members) };
+        break;
+      }
+      if (!this.tvPack) return null;
+    }
+    const metres = metresOf(this.tvPack.members);
+    const w = metres === null ? null : packWeight(metres - this.tvPack.cam.s);
+    if (w === null) {
+      (this.tvPackDone ??= new Set()).add(this.tvPack.cam);
+      this.tvPack = null;
+      return null;
+    }
+    const pos = this.tvPack.members.map((i) => this.marbles.positions[i]).filter(Boolean);
+    const centre = new Vector3();
+    for (const v of pos) centre.add(v);
+    centre.divideScalar(Math.max(1, pos.length));
+    // The lens that keeps the whole bunch in the shot as the camera sees it (its widest angle off the middle, across
+    // the picture's narrower side), with a margin, within TV.pack.lens.
+    const eye = this.tvPack.cam.pos;
+    const ahead = centre.clone().sub(eye).normalize();
+    const off = pos.reduce((n, v) => Math.max(n, ahead.angleTo(v.clone().sub(eye))), 0) + Math.atan((2 * MARBLE_RADIUS * (this.marbles.scale ?? 1)) / Math.max(1, eye.distanceTo(centre)));
+    const aspect = Math.min(1, this.camera.aspect || 1);
+    const fov = (2 * Math.atan(Math.tan(Math.min(1.2, off * TV.pack.margin)) / aspect) * 180) / Math.PI;
+    return { cam: this.tvPack.cam, w, centre, fov: Math.min(TV.pack.lens[1], Math.max(TV.pack.lens[0], fov)), metres };
+  }
+
+  /** The leader's trail ([{ t, m }]), for how far behind the leader a place on the track is in time. */
+  trailLeader(frame, arc) {
+    const lead = frame.s?.[0];
+    if (lead === undefined || !Number.isFinite(frame.p[lead])) return;
+    const trail = (this.leadTrail ??= []);
+    if (trail.length && frame.t < trail[trail.length - 1].t) { trail.length = 0; this.tvPackDone = null; } // scrubbed back / a new race
+    if (!trail.length || frame.t > trail[trail.length - 1].t) trail.push({ t: frame.t, m: frame.p[lead] * arc });
+  }
+
+  /** How long ago (ms) the leader was `metres` along; null if unknown. */
+  leaderAgo(t, metres) {
+    const trail = this.leadTrail ?? [];
+    if (!trail.length || trail[0].m > metres) return null;
+    let lo = 0;
+    let hi = trail.length - 1;
+    while (lo < hi) { const mid = (lo + hi) >> 1; if (trail[mid].m >= metres) hi = mid; else lo = mid + 1; }
+    return trail[lo].m >= metres ? t - trail[lo].t : null;
+  }
+
+  /** The label for the player's own marble during a pack shot ("Leader +1.8 s", "7th, in the pack"…), or null without one. */
+  standing(frame, arc, members) {
+    const own = this.marbles.rings?.[0]?.index;
+    if (own === undefined || !(frame.p[own] < 1)) return null;
+    const order = frame.s ?? [];
+    const place = order.indexOf(own) + 1;
+    if (place < 1) return null;
+    const second = order[1];
+    return standingLabel({
+      place,
+      inPack: members.includes(own),
+      aheadMs: place === 1 && second !== undefined ? this.leaderAgo(frame.t, frame.p[second] * arc) : null,
+      behindMs: place > 1 ? this.leaderAgo(frame.t, frame.p[own] * arc) : null,
+    });
+  }
+
+  /** The way along the track (level unit vector) at progress p, or null. */
+  tangentAt(p) {
+    const { samples, segments } = this.centerline ?? {};
+    const s = samples?.[Math.min(segments, Math.max(0, Math.round(p * segments)))];
+    return s?.tangent ? new Vector3(s.tangent.x, 0, s.tangent.z).normalize() : null;
+  }
+
+  /** The TV shot now ({ pack, w, label }) or null: the viewer shows the label. */
+  tvNow() {
+    return this.tvOn ? this.tvShot ?? null : null;
   }
 
   /** Switches TV moments on or off (the viewer's setting). */
