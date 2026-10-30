@@ -8,7 +8,7 @@
 
 **Where it stands:**
 - **Website:** live at marblespins.com. Soft start (social media, 10–20 invited test pilots) in the week of 26 Oct. **Official launch 1 Dec 2026**, with the Holiday Season, the season pass and the apps.
-- **Tracks:** **110 live in ten series**: World Tour, Grand Prix, Coasters, Canyons, Blocks, Track and Field, Rivers, Peaks, Pinball and Arcade. The 31 holiday tracks are switched on but hidden and closed until 1 Dec 00:00 Swedish time (141 then). **Peaks:** the first five (Everest, Mont Blanc, Vinson, Kilimanjaro, Vatnajökull) switched on by Moses on 27 Oct 2026 (after the server deploy that added them); the other ten after Leagues part 1, each with its big feature listed for Moses's approval first.
+- **Tracks:** **121 live in ten series**: World Tour, Grand Prix, Coasters, Canyons, Blocks, Track and Field, Rivers (16), Peaks (15), Pinball and Arcade. The 31 holiday tracks are switched on but hidden and closed until 1 Dec 00:00 Swedish time (152 then). **Peaks:** all fifteen live: the first five since 27 Oct 2026, Peaks 6–15 and the Chobe (the 16th river) switched on by Moses on 30 Oct 2026, after the server deploy that added them.
 - **Apps:** iPhone and Android (Capacitor) are built; the Android app is tested on Moses's phone. Store submission is planned for 16–20 Nov.
 - **Payments:**
   - Stripe on the website, in **test mode** until Moses says otherwise.
