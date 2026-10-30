@@ -194,7 +194,12 @@ export function launchPose(shot, { centre, down, normal, side }) {
   switch (shot) {
     case 'low-chase': return { camera: at(-8, 0, 1.8), target: at(6, 0, 0.3) }; //   low behind, at marble height
     case 'side': return { camera: at(-2, -14, 5), target: at(3, 0, 0) }; //            alongside, tracking the pack
-    case 'overhead': return { camera: at(-6, 0, 26), target: at(4, 0, 0) }; //         from high above, nearly straight down
+    case 'overhead': {
+      // From high above, nearly straight down, measured level and straight up: on a steep start the slope's
+      // normal leans far forward, and 26 m along it put the camera ahead of the field, looking back (30 Oct 2026).
+      const flat = new Vector3(down.x, 0, down.z).normalize();
+      return { camera: c.clone().addScaledVector(flat, -6).add(new Vector3(0, 26, 0)), target: c.clone().addScaledVector(flat, 4) };
+    }
     case 'look-back': return { camera: at(16, 0, 4), target: at(-2, 0, 0.3) }; //      ahead, the field racing at the camera
     default: return null;
   }

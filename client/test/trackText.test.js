@@ -1,6 +1,6 @@
-// No text on a track is mirrored (src/three/textCheck.js): the Track and Field lane numbers read left
-// to right for the marbles coming, their tops towards the finish, lane 1 on the inside of the stadium's
-// bend; and every other mesh carrying text (scoreboards, timing boards, billboards, backglasses, cabinet
+// No text on a track is mirrored (src/three/textCheck.js): the Track and Field lane numbers painted as on
+// a real track (Moses, 30 Oct 2026), readable from behind the start looking down the track, their tops
+// towards the finish, lane 1 the leftmost as the marbles run; and every other mesh carrying text (scoreboards, timing boards, billboards, backglasses, cabinet
 // art) reads the right way round from its front, or, seen from both sides, from the track.
 import { createRequire } from 'node:module';
 import { describe, expect, it } from 'vitest';
@@ -10,7 +10,7 @@ import { channelOf } from '../src/three/iceChannel';
 import { buildScenery } from '../src/three/scenery';
 import { buildBillboards } from '../src/three/billboards';
 import { themeFor } from '../src/three/themes';
-import { buildLaneMarkings, insideSide } from '../src/three/scenery/athletics';
+import { buildLaneMarkings } from '../src/three/scenery/athletics';
 import { mirroredText, textTriangles } from '../src/three/textCheck';
 
 const require = createRequire(import.meta.url);
@@ -45,25 +45,34 @@ describe('track text is never mirrored', () => {
   });
 
   for (const slug of ATHLETICS) {
-    it(`${slug}: the lane numbers read for the marbles coming, lane 1 on the inside`, () => {
+    it(`${slug}: the lane numbers read from behind the start, tops to the finish, lane 1 on the left`, () => {
       const track = physicsTrack(slug);
       const centerline = buildCenterline(track);
       const channel = channelOf(track, centerline);
       const { numbers } = buildLaneMarkings(centerline, channel, { kit: track.physics.kit });
       expect(numbers.userData.text).toEqual({ floor: true });
       expect(mirroredText(numbers, trackLooks(centerline))).toEqual([]);
-      // Lane 1 (the picture's first eighth) on the inside of the stadium's bend: the left when it bends left.
+      // Lane 1 (the picture's first eighth) the leftmost as the marbles run: left = up × forward.
       const s0 = centerline.samples[0];
-      const left = new Vector3(s0.side.x, 0, s0.side.z).normalize();
+      const forward = new Vector3(s0.tangent.x, 0, s0.tangent.z).normalize();
+      const left = new Vector3(forward.z, 0, -forward.x);
       const tris = textTriangles(numbers);
       const lane = (k) => {
         const mine = tris.slice(k * 2, k * 2 + 2);
         return mine.reduce((v, t) => v.add(t.centre), new Vector3()).divideScalar(mine.length);
       };
       const across = (k) => lane(k).sub(s0.pos).dot(left);
-      const inside = insideSide(centerline, track.physics.kit);
-      expect(Math.sign(across(0) - across(7))).toBe(inside);
-      for (let k = 1; k < 8; k += 1) expect(inside * (across(k - 1) - across(k))).toBeGreaterThan(0); // (1, 2, … 8 outwards)
+      for (let k = 1; k < 8; k += 1) expect(across(k - 1) - across(k)).toBeGreaterThan(0); // (1, 2, … 8 from the left)
+      // Tops towards the finish: the picture's up (v) runs down the track, so the numbers read the right way up from behind.
+      const g = numbers.geometry;
+      const P = g.getAttribute('position');
+      const V = g.getAttribute('uv');
+      for (let k = 0; k < 8; k += 1) {
+        const i0 = k * 6; // (near left, near right, far right: v 0, 0, 1)
+        const up = new Vector3().fromBufferAttribute(P, i0 + 2).sub(new Vector3().fromBufferAttribute(P, i0 + 1));
+        expect(V.getY(i0 + 2) - V.getY(i0 + 1)).toBeGreaterThan(0);
+        expect(up.dot(forward)).toBeGreaterThan(0);
+      }
     });
   }
 

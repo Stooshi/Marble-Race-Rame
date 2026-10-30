@@ -571,7 +571,12 @@ as a coaster (everything above applies), like a canyon (looks only, like everyth
   through them, stepped down under a ramp flying over them, and kept clear of a finish inside the stadium.
 - **The track**: `surface: 'tartan'` or `'tartan-blue'` (looks; it races like ice), with white lane lines,
   a start line and lane numbers in front of the gate, and a finish line; the braking-zone strips are dark
-  rubber; `paint({ look: 'exchange-zone' })` marks a relay's exchange zone on the lanes.
+  rubber; `paint({ look: 'exchange-zone' })` marks a relay's exchange zone on the lanes. The lane numbers are
+  painted as on a real track (Moses, 30 Oct 2026): readable from behind the start looking down the track, their
+  tops towards the finish, lane 1 the leftmost as the marbles run, on every track. So a Track and Field track's
+  start shots look down the track from behind the field: no `front` countdown and no `look-back` first seconds.
+- **Gates, every track**: gate 1 is the leftmost seen from behind the gate looking down the track, counting
+  left to right ("Your gate: N" is the entry's lane + 1; checked on all tracks, 30 Oct 2026).
 - **Furniture** (drawn for every Track and Field track): starting blocks at the gate; the starter on his
   stand beside it, his gun flashing and smoking at GO; the scoreboard, whose clock runs with the race clock
   and stops at the winner's time; the photo-finish camera at the line, flashing as the winner crosses; at

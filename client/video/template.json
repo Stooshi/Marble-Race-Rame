@@ -6,6 +6,7 @@
     "yellow": "#FFD21F",
     "orange": "#FF7A1A",
     "text": "#F2F4F8",
+  "white": "#FFFFFF",
     "_text": "the logo's own near-white (the wordmark's colour), for words on the picture"
   },
   "font": "Lilita One",
@@ -15,11 +16,11 @@
     "sizeVmin": 5.6,
     "topWide": "7vh",
     "topTall": "10.5vh",
-    "colour": "text",
+    "colour": "white",
     "shadow": "navy",
     "seconds": 2.6,
-    "fadeInSeconds": 0.35,
-    "fadeOutSeconds": 0.4
+    "fadeInSeconds": 0.15,
+    "fadeOutSeconds": 0.25
   },
 
   "mark": {

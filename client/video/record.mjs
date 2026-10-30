@@ -150,9 +150,9 @@ export async function record({ slug, race: raceName, kind = 'production', format
           else {
             const eye = s.eye.from ? s.eye : r.eye(s.eye);
             if (s.type === 'look') r.look(t, eye);
-            else r.pan(t, { from: eye.from, follow: s.follow, members: s.members, fov: s.fov ?? eye.fov ?? 32 });
+            else r.pan(t, { from: eye.from, follow: s.follow, members: s.members, fov: s.fov ?? eye.fov ?? 32, ...(s.lead !== undefined && { lead: s.lead }) });
           }
-        }, [{ type: sh.type, eye: sh.eye, follow: sh.follow, fov: sh.fov, members: sh.members, shot: sh.shot, back: sh.back, up: sh.up, ahead: sh.ahead }, t, step, textAt(plan.texts, v), pod, rows]);
+        }, [{ type: sh.type, eye: sh.eye, follow: sh.follow, fov: sh.fov, members: sh.members, shot: sh.shot, back: sh.back, up: sh.up, ahead: sh.ahead, lead: sh.lead }, t, step, textAt(plan.texts, v), pod, rows]);
         shot = await page.screenshot({ type: 'jpeg', quality: 92 });
       }
       if (list) { fs.writeFileSync(`${out.replace(/\.mp4$/, '')}-${v.toFixed(2)}.jpg`, shot); frames += 1; continue; }

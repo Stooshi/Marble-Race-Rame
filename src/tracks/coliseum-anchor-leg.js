@@ -23,10 +23,11 @@ module.exports = track({
     { section: 'The arena pipe', at: 0.5, side: 'right', distance: 8, height: 14 },
     { section: 'Hairpin', at: 0.5, side: 'left', distance: 8, height: 9 },
   ],
-  start: { landmark: 'field-events', type: 'stepped-platform', gate: 'barrier', shots: { countdown: 'front', launch: 'overhead' } },
+  start: { landmark: 'field-events', type: 'stepped-platform', gate: 'barrier', shots: { countdown: 'chase', launch: 'overhead' } },
   designChanges: [
     'Built from the clean drop (its first S-bends to the right, the field let go in waves) and the anchor arches, the library layout made for this track: a half-pipe through the arena, a climb and a drop through the arches, a sweep, a peg straight with a slalom, a spiral, the hairpin, a long sweep into the bowl and a long final sprint.',
     'The stadium is drawn round the last sweep and the final sprint: a great open bowl, a row of tall arches at one end and a plain flame cauldron on them, our own plain bowl (looks only).',
+    'Start shots that look down the track (30 Oct 2026, Moses): the lane numbers, painted as on a real track, read the right way up only from behind the field, so no face-on countdown or look-back first seconds on Track and Field.',
   ],
   opening: opening('clean-drop', { side: 'right' }),
   sections: layout('anchor-arches', {

@@ -24,11 +24,12 @@ module.exports = track({
     { section: 'The marble end', at: 0.5, side: 'left', distance: 6, height: 9 },
     { section: 'More S-bends', at: 0.5, side: 'right', distance: 8, height: 9 },
   ],
-  start: { landmark: 'herm-gateway', type: 'stepped-platform', gate: 'barrier', shots: { countdown: 'front', launch: 'high-behind' } },
+  start: { landmark: 'herm-gateway', type: 'stepped-platform', gate: 'barrier', shots: { countdown: 'side', launch: 'high-behind' } },
   finish: { landmark: 'medal-podium' },
   designChanges: [
     'Built from the classic plunge (from a stepped platform) and the horseshoe sprint, the library layout made for this track: deep, tight S-bends in through the open end (they mix the field), the home straight, the hairpin round the marble end, the far straight, a sweep out, a spiral, a drop and S-bends.',
     'The stadium is drawn round the home straight, the hairpin and the far straight: white marble stands, open at the end the track comes in by, no roof (looks only).',
+    'Start shots that look down the track (30 Oct 2026, Moses): the lane numbers, painted as on a real track, read the right way up only from behind the field, so no face-on countdown or look-back first seconds on Track and Field.',
   ],
   opening: opening('classic', {
     costumes: { block: 'steeple-barrier', slalom: 'hurdle' },

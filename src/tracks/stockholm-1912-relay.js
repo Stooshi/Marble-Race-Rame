@@ -22,11 +22,12 @@ module.exports = track({
     { section: 'The exchange zones', at: 0.5, side: 'right', distance: 8, height: 9 },
     { section: 'Hairpin', at: 0.5, side: 'left', distance: 8, height: 9 },
   ],
-  start: { landmark: 'brick-tower', type: 'elevator', gate: 'stalls', shots: { countdown: 'front', launch: 'look-back' } },
+  start: { landmark: 'brick-tower', type: 'elevator', gate: 'stalls', shots: { countdown: 'chase', launch: 'low-chase' } },
   finish: { landmark: 'relay-batons' },
   designChanges: [
     'Built from the split start (two teams in the twin chutes) and the relay legs, the library layout made for this track: four straights joined by sweeps, an exchange zone painted on each (looks only), the hairpin, a sweep and a part-spiral.',
     'The stadium is drawn round the first leg, the bend and the second leg: brick stands, two brick towers with pointed roofs, old floodlight masts (looks only).',
+    'Start shots that look down the track (30 Oct 2026, Moses): the lane numbers, painted as on a real track, read the right way up only from behind the field, so no face-on countdown or look-back first seconds on Track and Field.',
   ],
   opening: opening('split-start', {
     costumes: { block: 'steeple-barrier', slalom: 'hurdle' },

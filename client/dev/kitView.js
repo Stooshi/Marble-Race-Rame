@@ -198,6 +198,26 @@ window.kitView = {
     scene.camera.updateProjectionMatrix();
     return drawNow(t);
   },
+  /** Dev: the field at the gate, left to right as seen from behind it looking down the track: each marble's lane (0-based) in that order. */
+  gateOrder() {
+    advance(-countdown + 200);
+    const g = scene.gate.startFrame();
+    const left = new Vector3().crossVectors(new Vector3(0, 1, 0), g.forward).normalize(); // (up × forward: the left)
+    const list = race.entries.map((e, i) => ({ lane: e.lane ?? i, x: scene.marbles.positions[i] ? scene.marbles.positions[i].clone().sub(g.centre).dot(left) : null }));
+    const s0 = scene.centerline.samples[0];
+    const toLeft = Math.sign(s0.side.x * s0.tangent.z - s0.side.z * s0.tangent.x) || 1;
+    return { order: list.filter((m) => m.x !== null).sort((a, b) => b.x - a.x).map((m) => m.lane), toLeft };
+  },
+  /** Dev: where the camera is and which way it looks, and the screen's up, as [x, y, z] each. */
+  camera() {
+    const c = scene.camera;
+    c.updateMatrixWorld();
+    const dir = new Vector3(); c.getWorldDirection(dir);
+    const up = new Vector3(0, 1, 0).applyQuaternion(c.quaternion);
+    const v = (x) => x.toArray().map((n) => +n.toFixed(3));
+    const g = scene.gate?.startFrame?.();
+    return { pos: v(c.position), dir: v(dir), screenUp: v(up), gateDown: g ? v(g.down) : null, gateCentre: g ? v(g.centre) : null };
+  },
   /** The race at t ms (negative: the countdown) through the game's camera: 'follow' or 'overview'. */
   raceShot({ t, follow = 'leader', camera = 'follow' }) {
     advance(t, follow);

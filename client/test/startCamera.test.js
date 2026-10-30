@@ -179,7 +179,13 @@ describe('starting camera (countdown)', () => {
     }
     expect(dirs['low-chase'].dot(frame.down)).toBeLessThan(-0.9);
     expect(Math.abs(dirs.side.dot(frame.side))).toBeGreaterThan(0.9);
-    expect(dirs.overhead.dot(frame.normal)).toBeGreaterThan(0.95);
+    expect(dirs.overhead.y).toBeGreaterThan(0.95); // (straight up, not along the slope's normal)
+    // From behind, looking down the track, even on a steep start (the slope's normal leaning far forward):
+    // the camera behind the field, its view running forward (30 Oct 2026: it used to look back from ahead).
+    const steep = { centre: new Vector3(0, 10, 0), down: new Vector3(0, -0.79, 0.61).normalize(), normal: new Vector3(0, 0.61, 0.79).normalize(), side: new Vector3(1, 0, 0) };
+    const o = launchPose('overhead', steep);
+    expect(o.camera.z).toBeLessThan(steep.centre.z);
+    expect(o.target.clone().sub(o.camera).z).toBeGreaterThan(0);
     expect(dirs['look-back'].dot(frame.down)).toBeGreaterThan(0.9);
     expect(launchHandover(0)).toBe(0);
     expect(launchHandover(LAUNCH_HOLD_MS)).toBe(0);

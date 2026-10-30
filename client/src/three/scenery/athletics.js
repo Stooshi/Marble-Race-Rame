@@ -260,11 +260,12 @@ export function insideSide(centerline, kit) {
 /**
  * The lane lines, the start and finish lines and the lane numbers on the tartan:
  * { lines (one white mesh), numbers (a mesh of number squares at the start, or null) }.
- * The numbers read the right way round for the marbles coming (and the follow and start cameras
- * behind them): left to right across the track, their tops towards the finish, lane 1 on the
- * inside (`kit`: the stadium's bend decides which side; see insideSide).
+ * The numbers are painted as on a real track (Moses, 30 Oct 2026): readable from behind the start line
+ * looking down the track (the follow and start cameras behind the field), their tops towards the finish,
+ * lane 1 the leftmost as the marbles run and 8 the rightmost, on every track whichever way its stadium
+ * bends (a real track runs anticlockwise: lane 1, the innermost, on the runners' left).
  */
-export function buildLaneMarkings(centerline, channel, { lite = false, kit = null } = {}) {
+export function buildLaneMarkings(centerline, channel, { lite = false } = {}) {
   const arc = channel.arc;
   const out = new Vector3();
   const nrm = new Vector3();
@@ -301,8 +302,7 @@ export function buildLaneMarkings(centerline, channel, { lite = false, kit = nul
   const lines = new Mesh(t.geometry(), new MeshLambertMaterial({ vertexColors: true, flatShading: true, side: DoubleSide, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }));
   lines.name = 'athletics: lane lines';
 
-  // The lane numbers, 1 to 8 from the inside, white squares with a dark number, just past the start line.
-  const inside = insideSide(centerline, kit);
+  // The lane numbers, 1 to 8 from the left as the marbles run, white squares with a dark number, just past the start line.
   // Which way round the picture goes: the channel's `side` (l > 0) is not always on the left of a marble
   // looking down the track (the plan's y runs to the drawing's z), so the left is worked out here.
   const s0 = centerline.samples[0];
@@ -325,8 +325,8 @@ export function buildLaneMarkings(centerline, channel, { lite = false, kit = nul
   const lip = lipShare(NUMBERS_AT);
   const edges = [-1, ...LANE_LINES, 1];
   for (let k = 0; k < 8; k += 1) {
-    // Lane k + 1, counted from the inside (l is positive to the left).
-    const mid = -inside * ((edges[k] + edges[k + 1]) / 2) * lip;
+    // Lane k + 1, counted from the left (toLeft: the sign of l on the marbles' left).
+    const mid = -toLeft * ((edges[k] + edges[k + 1]) / 2) * lip;
     const half = 0.07 * lip;
     // Its square: near left, near right, far right, far left (as the marbles coming see it).
     const l = toLeft * half;

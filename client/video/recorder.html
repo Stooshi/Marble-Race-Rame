@@ -11,9 +11,10 @@
   /* The one text style: one line, centred in the top band. */
   #texts { position: absolute; left: 0; right: 0; top: var(--text-top); text-align: center; pointer-events: none; padding: 0 12vw; text-wrap: balance; }
   #top { text-wrap: balance; }
-  #top { font-family: var(--font), sans-serif; font-size: var(--text-size); color: var(--text); line-height: 1.1; letter-spacing: 0.01em;
-         /* (A soft navy halo, so the line reads on a pale sky as well as on dark ground.) */
-         text-shadow: 0 0 0.05em var(--navy), 0 0.03em 0.1em var(--navy), 0 0 0.35em color-mix(in srgb, var(--navy) 85%, transparent), 0 0 0.9em color-mix(in srgb, var(--navy) 55%, transparent); }
+  #top { font-family: var(--font), sans-serif; font-size: var(--text-size); color: var(--line, #FFFFFF); line-height: 1.1; letter-spacing: 0.01em;
+         /* (High contrast, Moses 30 Oct 2026: pure white, a tight dark outline and a soft shadow, so the line reads
+            on a pale sky, on dark ground and on a night stadium alike; it fades in quickly, never sitting half grey.) */
+         text-shadow: 0 0 0.04em var(--navy), 0 0 0.08em var(--navy), 0 0.05em 0.12em rgba(0, 0, 0, 0.7), 0 0 0.4em color-mix(in srgb, var(--navy) 80%, transparent), 0 0 1em rgba(0, 0, 0, 0.35); }
   /* The mark, always in the same corner. */
   #mark { position: absolute; width: var(--mark-size); height: var(--mark-size); opacity: var(--mark-opacity);
           filter: drop-shadow(0 0.3vmin 0.6vmin color-mix(in srgb, var(--navy) 70%, transparent)); }

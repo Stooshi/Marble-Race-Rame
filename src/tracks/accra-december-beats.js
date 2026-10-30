@@ -24,11 +24,12 @@ module.exports = track({
     { section: 'Drummers sweep', at: 0.5, side: 'left', distance: 8, height: 12 },
     { section: 'The kente lap', at: 0.5, side: 'right', distance: 8, height: 12 },
   ],
-  start: { landmark: 'drum-circle', scenery: ['palms'], type: 'curving-lift', gate: 'stalls', shots: { countdown: 'above', launch: 'look-back' } },
+  start: { landmark: 'drum-circle', scenery: ['palms'], type: 'curving-lift', gate: 'stalls', shots: { countdown: 'above', launch: 'high-behind' } },
   finish: { scenery: ['palms'] },
   designChanges: [
     'A plunge into a banked turn at the gate (barriers and a slalom of hurdles) rather than the planned peg drop: two Track and Field tracks already open with a peg drop, the most one opening may have.',
     'The stadium is a generic open bowl in kente colours (gold seats, green risers, red walls) with no team or league names; the drummers and dancers stand outside it, by the Drummers sweep and the start.',
+    'Start shots that look down the track (30 Oct 2026, Moses): the lane numbers, painted as on a real track, read the right way up only from behind the field, so no face-on countdown or look-back first seconds on Track and Field.',
   ],
   opening: opening('banked-turn', { side: 'left', costumes: { block: 'steeple-barrier', slalom: 'hurdle' }, names: { plunge: 'Start plunge', turn: 'Banked turn' } }),
   sections: [

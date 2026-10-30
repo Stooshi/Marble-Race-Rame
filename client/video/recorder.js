@@ -33,6 +33,7 @@ const T = await (await fetch('./template.json')).json();
   const css = document.documentElement.style;
   const tall = window.innerHeight > window.innerWidth;
   for (const k of ['navy', 'yellow', 'orange', 'text']) css.setProperty(`--${k}`, T.colours[k]);
+  css.setProperty('--line', T.colours[T.text.colour] ?? T.colours.text); // (the tagline's colour: template text.colour)
   css.setProperty('--font', `'${T.font}'`);
   css.setProperty('--text-size', `${T.text.sizeVmin}vmin`);
   css.setProperty('--text-top', tall ? T.text.topTall : T.text.topWide);

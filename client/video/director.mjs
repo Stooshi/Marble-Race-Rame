@@ -19,8 +19,8 @@ export const FINISH_EYE = { p: 1, back: -9, beside: 0, up: 3, ahead: -12, lookUp
  * The start, wide: a camera 3% of the way down the track, 6 m up, looking back up at the gate, turning with
  * the middle of the field as all 20 leave it and bunch towards the lens (checked on all six tracks).
  */
-export const START_EYE = { p: 0.03, back: 0, beside: 0, up: 6, ahead: -30, fov: 40 };
-export const START_SHOT = (from, dur) => ({ type: 'pan', eye: START_EYE, members: Array.from({ length: 20 }, (_, i) => i), from, dur, fov: 40 });
+export const START_EYE = { p: 0, back: 6, beside: 0, up: 22, ahead: 12, fov: 46 }; // (behind the field, looking down the track: the lane and gate markings read the right way up; Moses, 30 Oct 2026)
+export const START_SHOT = (from, dur) => ({ type: 'pan', eye: START_EYE, members: Array.from({ length: 20 }, (_, i) => i), from, dur, fov: START_EYE.fov, lead: 16 }); // (aimed above the field, so the gate sits low in the picture and the run ahead fills it)
 
 const STEP = 250;          // ms between readings
 const BUNCH_M = 10;        // metres: marbles this close together along the track are a bunch

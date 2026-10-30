@@ -22,11 +22,12 @@ module.exports = track({
     { section: 'Hairpin', at: 0.5, side: 'right', distance: 8, height: 9 },
     { section: 'The golden lap', at: 0.5, side: 'left', distance: 8, height: 9 },
   ],
-  start: { landmark: 'athletes-village', type: 'rooftop', gate: 'stalls', shots: { countdown: 'chase', launch: 'look-back' } },
+  start: { landmark: 'athletes-village', type: 'rooftop', gate: 'stalls', shots: { countdown: 'above', launch: 'side' } },
   finish: { landmark: 'golden-arch' },
   designChanges: [
     'Built from the tunnel launch (the players\' tunnel) and the golden lap, the library layout made for this track: a peg straight, a sweep, a drop, a peg straight, the hairpin, a part-spiral, the long golden sweep round the stadium and S-bends.',
     'The stadium is drawn round the golden lap and the S-bends: a dark roof all round with a band of floodlights under it; once the winner is home, gold lamps light by the line and gold confetti flies (looks only).',
+    'Start shots that look down the track (30 Oct 2026, Moses): the lane numbers, painted as on a real track, read the right way up only from behind the field, so no face-on countdown or look-back first seconds on Track and Field.',
   ],
   opening: opening('tunnel-launch', {
     tunnel: 'subway',
