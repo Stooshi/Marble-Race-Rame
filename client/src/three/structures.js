@@ -189,6 +189,9 @@ export function buildStructures(centerline, channel, kit, { lite = false } = {})
     return m;
   };
 
+  // The waterfalls' see-through water, all of a track's falls in one mesh of each kind (one texture,
+  // one call each however many falls: Huascarán's three were twelve calls, over the phone's budget).
+  const falls = { tex: null, floors: [], cascades: [], sprays: [], rainbows: [] };
   for (const s of sections) {
     const len = metres(s);
     // ── Tunnels and caves ──────────────────────────────────────────────
@@ -478,10 +481,12 @@ export function buildStructures(centerline, channel, kit, { lite = false } = {})
 
     // ── Waterfalls: water down the chute, cascades beside it, spray, a curtain ─
     if (s.waterfall) {
-      const tex = waterTexture();
-      owned.push(tex);
-      const sheetMat = new MeshBasicMaterial({ map: tex, transparent: true, opacity: 0.55, depthWrite: false, side: DoubleSide, polygonOffset: true, polygonOffsetFactor: -2 });
-      owned.push(sheetMat);
+      if (!falls.tex) {
+        falls.tex = waterTexture();
+        owned.push(falls.tex);
+        water.push({ tex: falls.tex, speed: 1.6 });
+      }
+      const tex = falls.tex;
       // Water running down the floor of the chute (see-through: the marbles race on it).
       const rows = Math.max(4, Math.round(len / (lite ? 4 : 2)));
       const cols = lite ? 6 : 10;
@@ -506,15 +511,9 @@ export function buildStructures(centerline, channel, kit, { lite = false } = {})
       floor.setAttribute('position', new Float32BufferAttribute(pos, 3));
       floor.setAttribute('uv', new Float32BufferAttribute(uv, 2));
       floor.setIndex(index);
-      const floorMesh = new Mesh(floor, sheetMat);
-      floorMesh.name = 'waterfall-water';
-      floorMesh.renderOrder = 1;
-      group.add(floorMesh);
-      water.push({ tex, speed: 1.6 });
+      falls.floors.push(floor);
 
       // Rock cliffs either side of the chute, outside the rims, with water pouring down their faces.
-      const cascadeMat = new MeshBasicMaterial({ map: tex, transparent: true, opacity: 0.7, depthWrite: false, side: DoubleSide });
-      owned.push(cascadeMat);
       const cascades = [];
       const steps = Math.max(3, Math.round(len / 6));
       for (let k = 0; k <= steps; k += 1) {
@@ -554,9 +553,7 @@ export function buildStructures(centerline, channel, kit, { lite = false } = {})
         cg.setAttribute('position', new Float32BufferAttribute(cpos, 3));
         cg.setAttribute('uv', new Float32BufferAttribute(cuv, 2));
         cg.setIndex(cidx);
-        const cm = new Mesh(cg, cascadeMat);
-        cm.name = 'waterfall-cascades';
-        group.add(cm);
+        falls.cascades.push(cg);
       }
 
       // Spray at the foot of the falls: white drops, drifting (see-through).
@@ -569,12 +566,7 @@ export function buildStructures(centerline, channel, kit, { lite = false } = {})
       }
       const sg = new BufferGeometry();
       sg.setAttribute('position', new Float32BufferAttribute(spray, 3));
-      const sprayMat = new PointsMaterial({ color: STRUCTURE_COLORS.foam, size: 0.45, transparent: true, opacity: 0.7, depthWrite: false });
-      owned.push(sprayMat);
-      const sprayPoints = new Points(sg, sprayMat);
-      sprayPoints.name = 'waterfall-spray';
-      group.add(sprayPoints);
-      water.push({ spray: sprayPoints, base: spray.slice() });
+      falls.sprays.push(sg);
 
       // A rainbow in the spray, off to one side (see-through).
       if (!lite) {
@@ -598,11 +590,7 @@ export function buildStructures(centerline, channel, kit, { lite = false } = {})
         const rg = new BufferGeometry();
         rg.setAttribute('position', new Float32BufferAttribute(rpos, 3));
         rg.setAttribute('color', new Float32BufferAttribute(rcol, 3));
-        const rm = new MeshBasicMaterial({ vertexColors: true, transparent: true, opacity: 0.35, depthWrite: false, side: DoubleSide, blending: AdditiveBlending });
-        owned.push(rm);
-        const rainbow = new Mesh(rg, rm);
-        rainbow.name = 'rainbow';
-        group.add(rainbow);
+        falls.rainbows.push(rg);
       }
 
       // The curtain: a see-through sheet of water across the channel, the marbles racing through it.
@@ -623,6 +611,39 @@ export function buildStructures(centerline, channel, kit, { lite = false } = {})
         curtain.name = 'waterfall-curtain';
         group.add(curtain);
       }
+    }
+  }
+
+  if (falls.floors.length) {
+    const one = (list) => (list.length === 1 ? list[0] : mergeGeometries(list));
+    const sheetMat = new MeshBasicMaterial({ map: falls.tex, transparent: true, opacity: 0.55, depthWrite: false, side: DoubleSide, polygonOffset: true, polygonOffsetFactor: -2 });
+    owned.push(sheetMat);
+    const floorMesh = new Mesh(one(falls.floors), sheetMat);
+    floorMesh.name = 'waterfall-water';
+    floorMesh.renderOrder = 1;
+    group.add(floorMesh);
+    // (Phones: the water down the chute only, no cascades or spray: two calls fewer, within their budget.)
+    if (falls.cascades.length && !lite) {
+      const cascadeMat = new MeshBasicMaterial({ map: falls.tex, transparent: true, opacity: 0.7, depthWrite: false, side: DoubleSide });
+      owned.push(cascadeMat);
+      const cm = new Mesh(one(falls.cascades), cascadeMat);
+      cm.name = 'waterfall-cascades';
+      group.add(cm);
+    }
+    if (!lite) {
+      const sprayMat = new PointsMaterial({ color: STRUCTURE_COLORS.foam, size: 0.45, transparent: true, opacity: 0.7, depthWrite: false });
+      owned.push(sprayMat);
+      const sprayPoints = new Points(one(falls.sprays), sprayMat);
+      sprayPoints.name = 'waterfall-spray';
+      group.add(sprayPoints);
+      water.push({ spray: sprayPoints, base: sprayPoints.geometry.getAttribute('position').array.slice() });
+    }
+    if (falls.rainbows.length) {
+      const rm = new MeshBasicMaterial({ vertexColors: true, transparent: true, opacity: 0.35, depthWrite: false, side: DoubleSide, blending: AdditiveBlending });
+      owned.push(rm);
+      const rainbow = new Mesh(one(falls.rainbows), rm);
+      rainbow.name = 'rainbow';
+      group.add(rainbow);
     }
   }
 
@@ -649,7 +670,8 @@ export function buildStructures(centerline, channel, kit, { lite = false } = {})
   solidMats.solid = new MeshLambertMaterial({ vertexColors: true, flatShading: true });
   for (const [kind, list] of Object.entries(coloured)) {
     if (!list.length) continue;
-    for (const geometry of mergeByArea(list, 250)) {
+    // (Phones: in cells of 1 km, not 250 m: a short structure on a cell corner was four calls.)
+    for (const geometry of mergeByArea(list, lite ? 1000 : 250)) {
       const mesh = new Mesh(geometry, solidMats.solid);
       mesh.name = kind === 'built' ? 'bridge' : 'structure';
       if (kind === 'built') mesh.userData.built = true;

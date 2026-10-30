@@ -13,6 +13,28 @@
    "side": 1,
    "marbles": 1
   },
+  "aconcagua-penitentes": {
+   "name": "Aconcagua Penitentes",
+   "series": "Peaks",
+   "lighting": "high-altitude",
+   "v": "56d8c73a",
+   "bytes": 15260,
+   "bytes2x": 37028,
+   "t": 10965,
+   "side": 1,
+   "marbles": 7
+  },
+  "alaska-tidewater-run": {
+   "name": "Alaska Tidewater Run",
+   "series": "Peaks",
+   "lighting": "night-northern-lights",
+   "v": "38397b36",
+   "bytes": 13118,
+   "bytes2x": 32298,
+   "t": 9742,
+   "side": 1,
+   "marbles": 1
+  },
   "amazon-meeting-spins": {
    "name": "Amazon Meeting Spins",
    "series": "Rivers",
@@ -45,6 +67,17 @@
    "t": 10430,
    "side": 1,
    "marbles": 4
+  },
+  "aoraki-ice-lake-run": {
+   "name": "Aoraki Ice Lake Run",
+   "series": "Peaks",
+   "lighting": "night",
+   "v": "99fbbc45",
+   "bytes": 13610,
+   "bytes2x": 33026,
+   "t": 15188,
+   "side": 1,
+   "marbles": 5
   },
   "arcade-spins": {
    "name": "Arcade Spins",
@@ -255,6 +288,17 @@
    "side": 1,
    "marbles": 4
   },
+  "chobe-river-run": {
+   "name": "Chobe River Run",
+   "series": "Rivers",
+   "lighting": "sunset",
+   "v": "54f573a5",
+   "bytes": 14356,
+   "bytes2x": 37978,
+   "t": 9970,
+   "side": 1,
+   "marbles": 4
+  },
   "colca-spin": {
    "name": "Colca Spin",
    "series": "Canyons",
@@ -409,6 +453,17 @@
    "side": -1,
    "marbles": 4
   },
+  "elbrus-twin-saddle": {
+   "name": "Elbrus Twin Saddle",
+   "series": "Peaks",
+   "lighting": "sunset",
+   "v": "b2f74fab",
+   "bytes": 10988,
+   "bytes2x": 27196,
+   "t": 10322,
+   "side": 1,
+   "marbles": 4
+  },
   "elderglade-marble-grand-prix": {
    "name": "Elderglade Marble Grand Prix",
    "series": "Grand Prix",
@@ -494,6 +549,17 @@
    "bytes": 17614,
    "bytes2x": 41332,
    "t": 10509,
+   "side": 1,
+   "marbles": 4
+  },
+  "fuji-cinder-sunrise": {
+   "name": "Fuji Cinder Sunrise",
+   "series": "Peaks",
+   "lighting": "dawn",
+   "v": "693e309e",
+   "bytes": 11552,
+   "bytes2x": 29710,
+   "t": 10433,
    "side": 1,
    "marbles": 4
   },
@@ -618,6 +684,17 @@
    "side": -1,
    "marbles": 6
   },
+  "huascaran-turquoise-lakes": {
+   "name": "Huascarán Turquoise Lakes",
+   "series": "Peaks",
+   "lighting": "day",
+   "v": "f748b5e1",
+   "bytes": 12418,
+   "bytes2x": 30142,
+   "t": 10542,
+   "side": 1,
+   "marbles": 4
+  },
   "ice-palace": {
    "name": "Ice Palace",
    "series": "Winter Wonders",
@@ -673,6 +750,17 @@
    "side": 1,
    "marbles": 6
   },
+  "k2-concordia": {
+   "name": "K2 Concordia",
+   "series": "Peaks",
+   "lighting": "snow",
+   "v": "1772b885",
+   "bytes": 21806,
+   "bytes2x": 53110,
+   "t": 34067,
+   "side": 1,
+   "marbles": 2
+  },
   "kali-gandaki-burst": {
    "name": "Kali Gandaki Burst",
    "series": "Canyons",
@@ -682,6 +770,17 @@
    "bytes2x": 47880,
    "t": 9861,
    "side": 1,
+   "marbles": 4
+  },
+  "kangchenjunga-five-snows": {
+   "name": "Kangchenjunga Five Snows",
+   "series": "Peaks",
+   "lighting": "dawn",
+   "v": "967b5437",
+   "bytes": 15356,
+   "bytes2x": 36746,
+   "t": 8906,
+   "side": -1,
    "marbles": 4
   },
   "kilimanjaro-five-zones": {
@@ -1101,6 +1200,28 @@
    "t": 9898,
    "side": 1,
    "marbles": 6
+  },
+  "roraima-cloud-falls": {
+   "name": "Roraima Cloud Falls",
+   "series": "Peaks",
+   "lighting": "rain",
+   "v": "7fa143b3",
+   "bytes": 11646,
+   "bytes2x": 29280,
+   "t": 10756,
+   "side": -1,
+   "marbles": 6
+  },
+  "rwenzori-moss-glaciers": {
+   "name": "Rwenzori Moss Glaciers",
+   "series": "Peaks",
+   "lighting": "fog",
+   "v": "70f514e5",
+   "bytes": 14998,
+   "bytes2x": 35736,
+   "t": 10493,
+   "side": 1,
+   "marbles": 5
   },
   "sahara-marble-grand-prix": {
    "name": "Sahara Marble Grand Prix",

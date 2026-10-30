@@ -197,6 +197,17 @@ module.exports = track({
   | `zone-descent` (peaks) | iceTerrace (two pegs, two slalom poles), ice (S-bends), desert (a sweep, two pegs), moorland (a slalom straight, four gates), heath (a spiral), forest (a drop), brakingStraight, hairpin, sweep2 (a peg), lastStraight |
   | `ice-cave-run` (peaks) | caveDrop (a drop, two pegs), cave (S-bends; the blue-ice tunnel), streams (a slalom straight, five gates), gravelBar (a spiral), brakingStraight, hairpin, terrace (a drop), outwash (a sweep, a peg), lastStraight |
   | `balloon-plain` (rivers) | sandbank (a long gentle drop, three pegs), plainBends (S-bends, two pegs; they fly here), rise (a short climb), slalomDrop, spin, brakingStraight, hairpin, sweep1, sweep2 (a peg), sweep3, lastStraight |
+  | `cinder-switchbacks` (peaks) | cinders (a peg), switch1, switch2, switch3 (three pairs of banked switchbacks, each wider than the last: radius 48, 60, 74 m; the big feature; pegs), cloudSea (a slalom straight over the sea of clouds; it flies here), plunge (a drop), brakingStraight, hairpin, forest (a sweep, a peg), lastStraight |
+  | `penitente-maze` (peaks) | scree (a straight: steps and moguls), intoField (a short slalom), halfPipe (a half-pipe through the penitentes, width 8, three swings; the big feature), drop, tower (a spiral), brakingStraight, hairpin, rise (a short climb), washDrop (a drop), wash (S-bends, a peg), lastStraight |
+  | `glacier-junction` (peaks) | moraine (a long straight: a peg and a brake zone), splitter (two straight channels round a rock island; the outside one has its own balance; the big feature), sweep (150°), icefall (a drop, a peg), brakingStraight, hairpin, sBends (a peg), rise (a short climb), drop, lastStraight |
+  | `saddle-traverse` (peaks) | saddle (a sweep, a peg), saddleStraight (a slalom straight), rise (a short climb), ridgeDrop (a drop), spiral1, between (a peg), spiral2 (twin one-turn spirals, one each way; the big feature), brakingStraight, hairpin, lastStraight |
+  | `iceberg-lake` (peaks) | wall1, shelf (a peg), wall2 (a two-step drop; the first big feature), lake (a slalom straight, five gates), splitter (two curving channels round an iceberg, 110°, turning left, its inside channel rougher; the second), sBends, brakingStraight, hairpin, spin (a spiral), lastStraight |
+  | `moss-glacier` (peaks) | snout (two pegs), falls (a waterfall through a curtain of water; the big feature), forest (a slalom straight), boardwalk (a sweep, 150°), clearing (two pegs), bogSweep, spin (a spiral), brakingStraight, hairpin, sBends (a peg), lastStraight |
+  | `lake-terraces` (peaks) | lake1 (a peg), outflow1 (a peg), fall1, lake2, outflow2 (a peg), fall2, lake3, outflow3 (a peg), fall3 (three sweeps, each followed by its outflow and a waterfall step: the big feature), puya (a slalom straight), brakingStraight, hairpin, lastStraight |
+  | `tepui-wall` (peaks) | wall (a 140 m straight along the wall: two pegs and a hard slalom, six gates), hairpin, sBends, talus (the series' longest straight drop, 85 m; the big feature), shelf (a peg), forestDrop (a drop), savanna (a sweep, a peg), spin (a spiral), lastStraight |
+  | `rhododendron-drop` (peaks) | traverse (a long straight: a peg and a brake zone), brakingStraight, hairpin, terrace (a table top; the first big feature), terraceDrop (a drop; the second), moraine (a short slalom), moraineDrop (a drop), rhodo1 (S-bends, a peg), rhodo2 (S-bends), gully (a sweep, a peg), lastStraight |
+  | `tidewater` (peaks) | glacier (a sweep, a peg), jumpStraight (a 140 m straight with the boost-pad jump over a crevasse; the first big feature; a peg at its end), cliffTop (a sweep), fjordDrop (a drop, a peg; the second), brakingStraight, hairpin, seaIce (a one-turn spiral), fjordS (a sweep, a peg), lastStraight |
+  | `island-channels` (rivers) | floodplain (a straight: two pegs and a slalom), splitter (two channels curving 40° round a river island, the inside one rougher; the big feature), elephants (S-bends), drop, brakingStraight, hairpin, sandbank (a spiral), lastStraight |
 
   A track may still write its own sections by hand; the sameness check makes sure they differ.
 - **`family`**: `'world-tour'` (the default), `'grand-prix'` (any `grandPrix` track),
@@ -590,10 +601,15 @@ one of the world's great mountains. It is built as a coaster (everything above a
 
 - **On the mountain's snow**: a section without a `height` runs on the land; a section's `height` lifts it onto
   supports. `coaster: { style: 'alpine' }`: steel trusses held by cable stays out to the slope.
-- **The mountain**: `peak: { palette }`, one of `everest`, `mont-blanc`, `vinson`, `kilimanjaro`, `vatnajokull`
+- **The mountain**: `peak: { palette }`, one of `everest`, `mont-blanc`, `vinson`, `kilimanjaro`, `vatnajokull`, `fuji`,
+  `aconcagua`, `k2`, `elbrus`, `aoraki`, `rwenzori`, `huascaran`, `roraima`, `kangchenjunga`, `alaska`
   (client `PEAK_PALETTES`, `scenery/peak.js`): its snow, ice and rock, its zones, what stands on it, and its summit
   and neighbours in a far backdrop (one mesh; Everest's with a snow plume). **The summit is scenery, never track**,
   with nothing of ours on it.
+  A palette may give `zones` its own colours for a zone (`{ zone: [flat, steep] }`, over the shared ones), and its
+  `dressing` what stands on each zone; the kinds are `snow-rock`, `serac`, `boulder`, `scree-rock`, `moss-rock`,
+  `tussock`, `forest-tree`, `pine`, `heather`, `groundsel`, and (Peaks 6–15) `penitente` (a blade of snow), `rime-rock`, `moss-heather`,
+  `lobelia`, `puya` (a giant flower spike) and `rhododendron`.
 - **Per section** `peak: { zone, ridge, crevasse }`: `zone` the land there (`snow`, `ice`, `rock`, `alpine-desert`,
   `moorland`, `heath`, `cloud-forest`, `black-sand`: its colours and what grows); `ridge: true` a knife-edge ridge
   (the land falls away steeply on both sides; the section flies, `height` 6 or more); `crevasse: 'ladder' | 'ice-arch'`
@@ -603,14 +619,17 @@ one of the world's great mountains. It is built as a coaster (everything above a
 - **Tunnel** `blue-ice`: a long cave of glowing blue ice (opaque; holes of daylight in its roof).
 - **Lighting** `high-altitude`: the thin air's deep blue sky, a small sharp sun, hardly any haze.
 - **Scenery** `sea-of-clouds` (a section's or the finish's): cloud tops over the far valleys, one mesh.
-- **Spindrift**: snow blown off the outside of fast bends and drops, on the race clock, one point cloud.
+- **Spindrift**: snow blown off the outside of fast bends and drops, on the race clock, one point cloud; only where
+  the section's zone is snow or ice (none over moorland, forest, desert or rock; 30 Oct 2026).
 - **Landmarks** (client `kitLandmarksPeak.js`): `peak-camp` (plain tents, no flag), `serac-field`, `granite-needles`,
   `nunataks`, `ski-plane`, `crater-ice-cliffs`, `giant-groundsels`, `meltwater-streams`, `pass-cairn` (only on mountains
-  without a sacred-summit request), `glacier-tongue`.
+  without a sacred-summit request), `glacier-tongue`; Peaks 6–15: `cinder-cones`, `penitentes`, `glacial-lake`, `barrel-hut`
+  (a round mountain hut), `icebergs`, `giant-lobelias`, `tepui-falls` (ribbon falls off a table mountain), `rhododendrons`,
+  `calving-ice` (a tidewater glacier's ice cliff) and `rock-island`.
 - **Costumes**: `serac`, `nunatak`, `groundsel` (slalom poles and pegs).
 - **Never**: religious objects (prayer flags, chortens, shrines, torii, offerings), flags of any kind, expedition,
   guide, gear, lift or airline names, anything on a summit.
-- The layouts made for the series are the `(peaks)` rows above (L89 to L93); each has a test track built as a
+- The layouts made for the series are the `(peaks)` rows above (L89 to L93 for the test five, L94 to L103 for Peaks 6–15); each has a test track built as a
   mountain (`series: 'peak'`).
 
 ## TV moments

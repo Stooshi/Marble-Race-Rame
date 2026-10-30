@@ -57,6 +57,10 @@ export const RIVER_PALETTES = {
   // The Irrawaddy at dawn: wide grey-blue water under the dawn sky (silty, but it must read as water beside the pale sandbanks), sugar palms on a dusty green plain.
   irrawaddy: { water: '#5a8c9c', deep: '#447488', foam: '#f2ead8', bank: '#b8a07a', quay: '#a89a80', sand: '#e0cfa4',
     dressing: [['sugar-palm', 0.45], ['broadleaf', 0.35, '#5f7a3a'], ['bush', 0.2, '#7a8a4a']] },
+  // The Chobe (29 Oct 2026): a wide blue river on the Botswana floodplain, golden grass and acacias on the banks,
+  // elephants and hippos at the water; sunset light.
+  chobe: { water: '#3f7f96', deep: '#2c6680', glint: '#f2dcb8', hillside: ['#a89a5a', '#8f8248'], foam: '#f2ead8', bank: '#a8905a', quay: '#9a8a6a', sand: '#d8bc84',
+    dressing: [['acacia', 0.5], ['bush', 0.3, '#8a8a4a'], ['broadleaf', 0.2, '#6f7a3a']] },
   // The meeting of the waters: a black-water river and a sandy one side by side, not mixing (`seam`: the
   // colour of each half, across the river's side vector), the line between them down its middle; rainforest.
   // (`glint`: pale streaks of sky on the water along the current, so dark or brown water reads as water.)

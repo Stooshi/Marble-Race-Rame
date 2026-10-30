@@ -24,6 +24,7 @@ const NAMES = {
   'bridge-slalom': 'Bridge Slalom', 'market-maze': 'Market Maze', 'steamer-pass': 'Steamer Pass', 'falls-edge': 'Falls Edge', 'lock-staircase': 'Lock Staircase', 'bridge-gate': 'Bridge Gate', 'arch-run': 'Arch Run', 'port-cranes': 'Port Cranes', 'flooded-forest': 'Flooded Forest', 'balloon-plain': 'Balloon Plain', 'peg-drop': 'Peg Drop', 'pipe-drop': 'Pipe Drop',
   'two-waters': 'Two Waters', cataract: 'Cataract', 'rapids-ladder': 'Rapids Ladder', 'island-castle': 'Island Castle', 'river-steps': 'River Steps',
   'icefall-ladders': 'Icefall Ladders', 'needle-ridge': 'Needle Ridge', 'blue-ice-plain': 'Blue-Ice Plain', 'zone-descent': 'Zone Descent', 'ice-cave-run': 'Ice-Cave Run',
+  'cinder-switchbacks': 'Cinder Switchbacks', 'penitente-maze': 'Penitente Maze', 'glacier-junction': 'Glacier Junction', 'saddle-traverse': 'Saddle Traverse', 'iceberg-lake': 'Iceberg Lake', 'moss-glacier': 'Moss Glacier', 'lake-terraces': 'Lake Terraces', 'tepui-wall': 'Tepui Wall', 'rhododendron-drop': 'Rhododendron Drop', tidewater: 'Tidewater', 'island-channels': 'Island Channels',
 };
 
 const base = (slug, name, description) => ({
@@ -60,7 +61,7 @@ const PINBALL_LAYOUTS = ['staircases', 'siege-routes', 'stage-hairpin', 'saucer-
 // A layout whose results depend on how the field arrives (a splitter's balance, the spread) is proven with its table's own opening.
 // Layouts made for one arcade world are proven on a test track built as an arcade world.
 const ARCADE_LAYOUTS = ['cabinet-rows', 'maze-corridors', 'bullet-spirals', 'up-up-down-down', 'bracket-splits', 'coast-road', 'co-op-street'];
-const OWN_OPENING = { 'icefall-ladders': ['clean-drop', { side: 'left' }], 'needle-ridge': 'classic', 'blue-ice-plain': 'peg-drop', 'zone-descent': 'funnel-drop', 'ice-cave-run': ['banked-turn', { side: 'right' }], 'bridge-gate': 'pipe-drop', 'arch-run': 'pipe-drop', 'port-cranes': ['clean-drop', { side: 'right' }], 'balloon-plain': 'tunnel-launch', 'two-waters': 'funnel-drop', cataract: ['banked-turn', { side: 'left' }], 'rapids-ladder': 'staggered-drop', 'island-castle': ['split-start', { dress: { after: { height: 12 } } }], 'river-steps': 'peg-drop', 'bridge-slalom': 'tunnel-launch', 'market-maze': 'peg-drop', 'steamer-pass': 'staggered-drop', 'lock-staircase': 'clean-drop', 'siege-routes': 'crest-start', 'saucer-sweeps': 'staggered-drop', 'clock-tower': 'funnel-drop', 'encore-split': 'split-start', 'cabinet-rows': 'funnel-drop', 'maze-corridors': 'split-start', 'bullet-spirals': 'staggered-drop', 'up-up-down-down': 'crest-start', 'bracket-splits': 'banked-turn', 'coast-road': 'boost-launch', 'co-op-street': 'tunnel-launch', 'lower-playfield': ['banked-turn', { side: 'right' }] };
+const OWN_OPENING = { 'cinder-switchbacks': 'staggered-drop', 'penitente-maze': ['banked-turn', { side: 'left' }], 'glacier-junction': 'split-start', 'saddle-traverse': 'tunnel-launch', 'iceberg-lake': ['clean-drop', { side: 'right' }], 'moss-glacier': 'funnel-drop', 'lake-terraces': 'staggered-drop', 'tepui-wall': 'pipe-drop', 'rhododendron-drop': 'crest-start', tidewater: 'classic', 'island-channels': 'funnel-drop', 'icefall-ladders': ['clean-drop', { side: 'left' }], 'needle-ridge': 'classic', 'blue-ice-plain': 'peg-drop', 'zone-descent': 'funnel-drop', 'ice-cave-run': ['banked-turn', { side: 'right' }], 'bridge-gate': 'pipe-drop', 'arch-run': 'pipe-drop', 'port-cranes': ['clean-drop', { side: 'right' }], 'balloon-plain': 'tunnel-launch', 'two-waters': 'funnel-drop', cataract: ['banked-turn', { side: 'left' }], 'rapids-ladder': 'staggered-drop', 'island-castle': ['split-start', { dress: { after: { height: 12 } } }], 'river-steps': 'peg-drop', 'bridge-slalom': 'tunnel-launch', 'market-maze': 'peg-drop', 'steamer-pass': 'staggered-drop', 'lock-staircase': 'clean-drop', 'siege-routes': 'crest-start', 'saucer-sweeps': 'staggered-drop', 'clock-tower': 'funnel-drop', 'encore-split': 'split-start', 'cabinet-rows': 'funnel-drop', 'maze-corridors': 'split-start', 'bullet-spirals': 'staggered-drop', 'up-up-down-down': 'crest-start', 'bracket-splits': 'banked-turn', 'coast-road': 'boost-launch', 'co-op-street': 'tunnel-launch', 'lower-playfield': ['banked-turn', { side: 'right' }] };
 // (Lower playfield: the banked turn the other way, so the test track is Tilt's exact mirror image.)
 // Layouts made for one canyon are proven on a test track built as a canyon (on the canyon floor, climbing out where its canyon does).
 const CANYON_LAYOUTS = ['horseshoe-bend', 'great-bend', 'terrace-steps', 'rafting-run', 'six-canyons', 'basalt-gorge', 'twin-peaks', 'cliff-ledge', 'free-fall', 'meanders',
@@ -113,7 +114,7 @@ const ATHLETICS_DRESS = {
 };
 // Layouts made for one Rivers track are proven on a test track built as a river (on its banks, flying out
 // over the water where its track does), with the opening its track races.
-const RIVER_LAYOUTS = ['bridge-slalom', 'market-maze', 'steamer-pass', 'falls-edge', 'lock-staircase', 'bridge-gate', 'arch-run', 'port-cranes', 'flooded-forest', 'balloon-plain', 'two-waters', 'cataract', 'rapids-ladder', 'island-castle', 'river-steps'];
+const RIVER_LAYOUTS = ['bridge-slalom', 'market-maze', 'steamer-pass', 'falls-edge', 'lock-staircase', 'bridge-gate', 'arch-run', 'port-cranes', 'flooded-forest', 'balloon-plain', 'two-waters', 'cataract', 'rapids-ladder', 'island-castle', 'river-steps', 'island-channels'];
 const RIVER_HEIGHTS = {
   'bridge-slalom': { flyOut: { height: 14 } },
   'market-maze': {},
@@ -138,16 +139,18 @@ const RIVER_START = { 'market-maze': 'river-boat', cataract: 'cliff', 'rapids-la
 const RIVER_MIRROR = { 'falls-edge': true };
 // Layouts made for one Peaks track are proven on a test track built as a mountain (on its snow, flying along a
 // ridge or over a crevasse where its track does), with the opening and start its track races.
-const PEAK_LAYOUTS = ['icefall-ladders', 'needle-ridge', 'blue-ice-plain', 'zone-descent', 'ice-cave-run'];
+const PEAK_LAYOUTS = ['icefall-ladders', 'needle-ridge', 'blue-ice-plain', 'zone-descent', 'ice-cave-run', 'cinder-switchbacks', 'penitente-maze', 'glacier-junction', 'saddle-traverse', 'iceberg-lake', 'moss-glacier', 'lake-terraces', 'tepui-wall', 'rhododendron-drop', 'tidewater'];
 const PEAK_HEIGHTS = {
   'icefall-ladders': { ladder1: { height: 8, peak: { crevasse: 'ladder' } }, ladder2: { height: 8, peak: { crevasse: 'ladder' } }, ladder3: { height: 8, peak: { crevasse: 'ice-arch' } } },
   'needle-ridge': { ridge: { height: 14, peak: { ridge: true } } },
   'blue-ice-plain': {},
   'zone-descent': {},
   'ice-cave-run': { cave: { tunnel: 'blue-ice' } },
+  'cinder-switchbacks': { cloudSea: { height: 12 } },
+  'tepui-wall': { wall: { height: 10 } },
 };
-const PEAK_START = { 'icefall-ladders': 'ice-ledge', 'needle-ridge': 'gondola', 'blue-ice-plain': 'ski-plane', 'zone-descent': 'stepped-platform', 'ice-cave-run': 'spiral-tower' };
-const PEAK_PALETTE = { 'icefall-ladders': 'everest', 'needle-ridge': 'mont-blanc', 'blue-ice-plain': 'vinson', 'zone-descent': 'kilimanjaro', 'ice-cave-run': 'vatnajokull' };
+const PEAK_START = { 'cinder-switchbacks': 'curving-lift', 'penitente-maze': 'cliff', 'glacier-junction': 'cliff', 'saddle-traverse': 'rooftop', 'iceberg-lake': 'ice-ledge', 'moss-glacier': 'stepped-platform', 'lake-terraces': 'straight-lift', 'tepui-wall': 'elevator', 'rhododendron-drop': 'straight-lift', tidewater: 'ski-plane', 'icefall-ladders': 'ice-ledge', 'needle-ridge': 'gondola', 'blue-ice-plain': 'ski-plane', 'zone-descent': 'stepped-platform', 'ice-cave-run': 'spiral-tower' };
+const PEAK_PALETTE = { 'cinder-switchbacks': 'fuji', 'penitente-maze': 'aconcagua', 'glacier-junction': 'k2', 'saddle-traverse': 'elbrus', 'iceberg-lake': 'aoraki', 'moss-glacier': 'rwenzori', 'lake-terraces': 'huascaran', 'tepui-wall': 'roraima', 'rhododendron-drop': 'kangchenjunga', tidewater: 'alaska', 'icefall-ladders': 'everest', 'needle-ridge': 'mont-blanc', 'blue-ice-plain': 'vinson', 'zone-descent': 'kilimanjaro', 'ice-cave-run': 'vatnajokull' };
 const TOUCHDOWNS = { 'sea-crossing': { tunnelRun: { height: 0 } }, 'terrace-run': { swoops: { height: 0 } }, 'wall-dive': { tunnelRun: { height: 0 } } };
 
 const layouts = LAYOUT_KINDS.map((kind) => track({

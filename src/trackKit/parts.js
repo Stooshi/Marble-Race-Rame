@@ -362,7 +362,7 @@ module.exports = {
     'island-castle', 'hilltop-castle', 'vineyard-terraces', 'ghat-steps', 'floating-lamps', 'rowing-boats',
     // Peaks (client/src/three/scenery/kitLandmarksPeak.js; no religious objects, no flags, nothing on a summit).
     'peak-camp', 'serac-field', 'granite-needles', 'nunataks', 'ski-plane', 'crater-ice-cliffs', 'giant-groundsels',
-    'meltwater-streams', 'pass-cairn', 'glacier-tongue'],
+    'meltwater-streams', 'pass-cairn', 'glacier-tongue', 'penitentes', 'icebergs', 'glacial-lake', 'rhododendrons', 'barrel-hut', 'rock-island', 'cinder-cones', 'tepui-falls', 'calving-ice', 'giant-lobelias'],
   OVERHEAD: ['gondola', 'cable-car', 'chairlift', 'vulture',
     // The Canyon Series: birds circling over the gorge, and what spans it from rim to rim, high over the track.
     'condor', 'prayer-flags', 'arch-bridge', 'railway-trestle', 'suspension-bridge',
@@ -381,9 +381,9 @@ module.exports = {
   // A canyon's rock and river (family 'canyon': `canyon: { palette }`), the client's CANYON_PALETTES.
   CANYONS: ['grand-canyon', 'himalaya', 'andes', 'limestone', 'copper', 'basalt', 'karakoram', 'namib', 'slot', 'verdon', 'jinsha', 'waimea', 'mujib'],
   // A river's water, banks and plants (family 'river': `river: { palette }`), the client's RIVER_PALETTES.
-  RIVERS: ['danube', 'mekong', 'mississippi', 'zambezi', 'yangtze', 'thames', 'seine', 'volga', 'murray', 'irrawaddy', 'amazon', 'nile', 'congo', 'rhine', 'ganges'],
+  RIVERS: ['danube', 'mekong', 'mississippi', 'zambezi', 'yangtze', 'thames', 'seine', 'volga', 'murray', 'irrawaddy', 'amazon', 'nile', 'congo', 'rhine', 'ganges', 'chobe'],
   // A mountain's snow, ice, rock, zones, sky and backdrop (family 'peak': `peak: { palette }`), the client's PEAK_PALETTES.
-  PEAKS: ['everest', 'mont-blanc', 'vinson', 'kilimanjaro', 'vatnajokull'],
+  PEAKS: ['everest', 'mont-blanc', 'vinson', 'kilimanjaro', 'vatnajokull', 'fuji', 'aconcagua', 'k2', 'elbrus', 'aoraki', 'rwenzori', 'huascaran', 'roraima', 'kangchenjunga', 'alaska'],
   // What stands in the middle of a splitter, between its two channels (the arch: over one of
   // them), or in the middle of a spiral or a hairpin.
   AROUND: ['mountain-hut', 'big-rock', 'mountain-restaurant', 'mine-headframe', 'nunatak', 'bell-tower', 'arc-de-triomphe', 'obelisk', 'notre-dame', 'oasis', 'twisted-tower', 'river-island', 'anaconda', 'watchtower', 'pagoda',

@@ -88,6 +88,120 @@ export const PEAK_PALETTES = {
     ],
     dressing: { 'black-sand': [['moss-rock', 0.7], ['boulder', 0.3]], ice: [['serac', 0.4], ['snow-rock', 0.6]], snow: [['snow-rock', 1]], rock: [['boulder', 1]] },
   },
+  // ── Peaks 6–15 (29 Oct 2026). `zones`: a palette's own colours for a zone ([flat, steep]), over ZONE_COLOURS. ──
+  // Fuji: the cone's black and red cinder below a snowcap, pine forest low down, a sea of clouds at sunrise.
+  // The summit crater and its shrines are never shown up close (a far, smooth cone only); no torii.
+  fuji: {
+    zone: 'black-sand', crevasses: false,
+    snow: '#f4f6f9', snowShade: '#d6dce6', ice: '#cfe2ee', iceDeep: '#9cc0dc', rock: '#4a3a36', rockDark: '#2e2624', moraine: '#6a524a',
+    zones: { 'black-sand': ['#3a2c2a', '#6a3a2e'], 'cloud-forest': ['#3a5f36', '#2c4a2c'] },
+    summits: [{ bearing: Math.PI, dist: 1500, height: 780, radius: 1100, snowline: 0.7, colour: '#4a3e3c' }],
+    dressing: { 'black-sand': [['scree-rock', 0.7], ['boulder', 0.3]], 'cloud-forest': [['pine', 0.8], ['boulder', 0.2]], snow: [['snow-rock', 1]], rock: [['boulder', 1]] },
+  },
+  // Aconcagua: the dry red Andean high desert, fields of penitentes (blade-like snow spikes), the peak above.
+  aconcagua: {
+    zone: 'alpine-desert', crevasses: false,
+    snow: '#f6f7f9', snowShade: '#dadfe6', ice: '#d4e8f2', iceDeep: '#9cc4dc', rock: '#8a4a36', rockDark: '#5f3226', moraine: '#a0705a',
+    zones: { 'alpine-desert': ['#b0704e', '#8a5038'] },
+    summits: [
+      { bearing: 0.2, dist: 1450, height: 760, radius: 700, snowline: 0.35, colour: '#7a4a3a' },
+      { bearing: -0.7, dist: 1400, height: 460, radius: 480, snowline: 0.5, colour: '#8a5a44' },
+    ],
+    dressing: { 'alpine-desert': [['scree-rock', 0.6], ['boulder', 0.4]], snow: [['penitente', 0.7], ['snow-rock', 0.3]], ice: [['penitente', 1]], rock: [['boulder', 1]] },
+  },
+  // K2 at Concordia: two great glaciers meeting, dark moraine stripes like roads, the steep pyramid above.
+  k2: {
+    zone: 'ice', crevasses: true,
+    snow: '#f1f5f9', snowShade: '#ccd8e4', ice: '#a6cfe6', iceDeep: '#5a96c2', rock: '#4a4642', rockDark: '#322f2c', moraine: '#5f5a54',
+    summits: [
+      { bearing: 0, dist: 1450, height: 900, radius: 420, snowline: 0.3, colour: '#4f4a46' },
+      { bearing: 0.7, dist: 1500, height: 600, radius: 460, snowline: 0.25, colour: '#55504b' },
+      { bearing: -0.7, dist: 1500, height: 640, radius: 460, snowline: 0.25, colour: '#4c4743' },
+    ],
+    dressing: { ice: [['serac', 0.4], ['snow-rock', 0.6]], snow: [['snow-rock', 0.8], ['serac', 0.2]], rock: [['boulder', 0.7], ['scree-rock', 0.3]] },
+  },
+  // Elbrus: the snow saddle between two old volcanic summits, rime ice on dark rocks, golden light.
+  elbrus: {
+    zone: 'snow', crevasses: false,
+    snow: '#f5f7fa', snowShade: '#d8dee8', ice: '#c4e0ee', iceDeep: '#86b6d6', rock: '#4f4440', rockDark: '#352d2a', moraine: '#7a6a62',
+    summits: [
+      { bearing: 0.45, dist: 1100, height: 520, radius: 620, snowline: 0.05, colour: '#5a4e48' },
+      { bearing: -0.45, dist: 1100, height: 500, radius: 620, snowline: 0.05, colour: '#584c46' },
+    ],
+    dressing: { snow: [['rime-rock', 0.7], ['snow-rock', 0.3]], rock: [['rime-rock', 0.6], ['boulder', 0.4]], ice: [['snow-rock', 1]] },
+  },
+  // Aoraki: the moraine wall above the glacier's lake, icebergs on it, a star-thick night sky. Aoraki itself only
+  // in the far backdrop, never touched, nothing on it.
+  aoraki: {
+    zone: 'rock', crevasses: false,
+    snow: '#eef2f7', snowShade: '#c8d2de', ice: '#b8dcec', iceDeep: '#6aa6cc', rock: '#5f5a56', rockDark: '#403c39', moraine: '#7a746e',
+    summits: [
+      { bearing: 0, dist: 1500, height: 720, radius: 520, snowline: 0.3, colour: '#56504b' },
+      { bearing: 0.65, dist: 1450, height: 520, radius: 480, snowline: 0.3, colour: '#5a544f' },
+    ],
+    dressing: { rock: [['scree-rock', 0.6], ['boulder', 0.4]], snow: [['snow-rock', 1]], ice: [['serac', 0.5], ['snow-rock', 0.5]], heath: [['tussock', 0.7], ['boulder', 0.3]] },
+  },
+  // Rwenzori: equatorial glaciers melting into a cloud forest of moss-hung giant heathers and lobelias, in mist.
+  rwenzori: {
+    zone: 'cloud-forest', crevasses: false,
+    snow: '#f2f5f8', snowShade: '#d0d8e2', ice: '#c4e2ee', iceDeep: '#8ab8d6', rock: '#4a4a40', rockDark: '#33332c', moraine: '#6a6a5a',
+    zones: { 'cloud-forest': ['#4a7a3a', '#365c2e'], moorland: ['#7f8a4a', '#5f6a3a'] },
+    summits: [
+      { bearing: 0.1, dist: 1300, height: 520, radius: 700, snowline: 0.25, colour: '#4a4a40' },
+      { bearing: -0.8, dist: 1400, height: 420, radius: 560, snowline: 0.35, colour: '#47473e' },
+    ],
+    dressing: { 'cloud-forest': [['moss-heather', 0.6], ['lobelia', 0.4]], moorland: [['lobelia', 1]], ice: [['moss-rock', 1]], snow: [['moss-rock', 1]], rock: [['moss-rock', 1]] }, // (three kinds: each is a draw call, and the phone's budget is 35)
+  },
+  // Huascarán: a valley of three turquoise glacial lakes, giant flower spikes (Puya) on the slopes, the white
+  // tropical peak above.
+  huascaran: {
+    zone: 'moorland', crevasses: false,
+    snow: '#f6f8fa', snowShade: '#d8e0e8', ice: '#c8e6f0', iceDeep: '#8cc2dc', rock: '#5a5650', rockDark: '#3f3c38', moraine: '#7f786e',
+    zones: { moorland: ['#9a9a5a', '#787a48'] },
+    summits: [
+      { bearing: 0, dist: 1400, height: 760, radius: 640, snowline: 0.45, colour: '#5a5650' },
+      { bearing: 0.5, dist: 1450, height: 700, radius: 600, snowline: 0.45, colour: '#57534d' },
+    ],
+    dressing: { moorland: [['tussock', 0.6], ['puya', 0.4]], rock: [['boulder', 1]], snow: [['snow-rock', 1]], ice: [['snow-rock', 1]] },
+  },
+  // Roraima: the sheer wall of the great flat-topped table mountain, its ribbon falls, cloud forest at its foot and
+  // open savanna below. The plateau top stays untouched (held sacred by the Pemón): no track, prop or marker on it.
+  roraima: {
+    zone: 'cloud-forest', crevasses: false,
+    snow: '#e8ecef', snowShade: '#c8d0d6', ice: '#cfe4ec', iceDeep: '#8cb8cc', rock: '#5a4a42', rockDark: '#3e322c', moraine: '#7a6a5a',
+    zones: { 'cloud-forest': ['#3a6a34', '#2c522a'], moorland: ['#a8a05a', '#86803e'], rock: ['#5a4a42', '#3e322c'] },
+    summits: [
+      { bearing: Math.PI, dist: 1300, height: 560, radius: 900, snowline: 2, colour: '#4f4038', flat: true },
+      { bearing: Math.PI - 0.9, dist: 1500, height: 420, radius: 640, snowline: 2, colour: '#55463e', flat: true },
+    ],
+    dressing: { 'cloud-forest': [['forest-tree', 0.8], ['moss-rock', 0.2]], moorland: [['tussock', 0.7], ['boulder', 0.3]], rock: [['moss-rock', 1]], snow: [['moss-rock', 1]], ice: [['moss-rock', 1]] },
+  },
+  // Kangchenjunga: snowfields far below the five summits ("where climbers turn back"), then rhododendron forest
+  // in bloom. No summit, no cairn, no religious objects.
+  kangchenjunga: {
+    zone: 'snow', crevasses: true,
+    snow: '#f3f6fa', snowShade: '#d0dbe6', ice: '#b0d6ea', iceDeep: '#6aa2c8', rock: '#56514c', rockDark: '#3c3834', moraine: '#7f7870',
+    zones: { 'cloud-forest': ['#3f6a3a', '#2f522e'] },
+    summits: [
+      { bearing: 0, dist: 1500, height: 820, radius: 540, snowline: 0.2, colour: '#59534e' },
+      { bearing: 0.3, dist: 1520, height: 740, radius: 420, snowline: 0.2, colour: '#5c5651' },
+      { bearing: -0.3, dist: 1520, height: 760, radius: 420, snowline: 0.2, colour: '#57514c' },
+      { bearing: 0.6, dist: 1560, height: 620, radius: 380, snowline: 0.25, colour: '#5f5954' },
+      { bearing: -0.6, dist: 1560, height: 640, radius: 380, snowline: 0.25, colour: '#5a544f' },
+    ],
+    dressing: { snow: [['snow-rock', 1]], ice: [['serac', 0.5], ['snow-rock', 0.5]], rock: [['boulder', 1]], 'cloud-forest': [['rhododendron', 0.7], ['forest-tree', 0.3]] },
+  },
+  // Alaska: a wide glacier flowing to the sea, ending in a tall calving ice cliff over the fjord; the northern lights.
+  alaska: {
+    zone: 'ice', crevasses: true,
+    snow: '#eef3f8', snowShade: '#c6d2e0', ice: '#9ccfea', iceDeep: '#4f92c4', rock: '#3f3d3c', rockDark: '#2a2928', moraine: '#5a5856',
+    summits: [
+      { bearing: 0, dist: 1500, height: 700, radius: 800, snowline: 0.1, colour: '#454340' },
+      { bearing: 0.8, dist: 1450, height: 480, radius: 560, snowline: 0.15, colour: '#43413e' },
+      { bearing: -0.8, dist: 1450, height: 500, radius: 560, snowline: 0.15, colour: '#474542' },
+    ],
+    dressing: { ice: [['serac', 0.5], ['snow-rock', 0.5]], snow: [['snow-rock', 0.8], ['serac', 0.2]], rock: [['boulder', 1]], 'black-sand': [['boulder', 1]] },
+  },
 };
 
 /** The zones' own colours: [flat land, steep land]. (`snow`, `ice`, `rock` come from the palette.) */
@@ -240,7 +354,7 @@ export function makePeak(centerline, channel, kit, { flight, liftAt, bounds }) {
   const ROCK = C(pal.rock);
   const ROCK_DARK = C(pal.rockDark);
   const MORAINE = C(pal.moraine);
-  const zoneCols = Object.fromEntries(Object.entries(ZONE_COLOURS).map(([k, [a, b]]) => [k, [C(a), C(b)]]));
+  const zoneCols = Object.fromEntries(Object.entries({ ...ZONE_COLOURS, ...(pal.zones ?? {}) }).map(([k, [a, b]]) => [k, [C(a), C(b)]]));
   const STREAM = C('#9fc4d4');
   const out = new Color();
   const hash = (x, z, s = 9) => {
@@ -346,6 +460,37 @@ export function peakDressing(paletteKey) {
     ]),
     // A mossy lava rock on the black sand.
     'moss-rock': () => () => merge([piece(new IcosahedronGeometry(1.2, 0), '#2f2d2c', T(0, 0.35, 0, 1.4, 0.6, 1.2)), piece(new IcosahedronGeometry(0.9, 0), '#6f8a4a', T(0.2, 0.7, 0, 1.2, 0.3, 1))]),
+    // A penitente: a tall blade of snow, leaning a little to the sun (Aconcagua).
+    penitente: () => () => merge([
+      piece(new ConeGeometry(0.9, 4.5, 4), pal.snow, T(0, 2.2, 0, 1, 1, 0.35, 0.4)),
+      piece(new ConeGeometry(0.7, 3.2, 4), pal.snowShade, T(1.3, 1.6, 0.5, 1, 1, 0.35, 0.6)),
+      piece(new ConeGeometry(0.6, 2.6, 4), pal.snow, T(-1.1, 1.3, -0.4, 1, 1, 0.35, 0.2)),
+    ]),
+    // A dark rock furred white with rime ice on its windward side (Elbrus).
+    'rime-rock': () => () => merge([
+      piece(new IcosahedronGeometry(1.3, 0), pal.rockDark, T(0, 0.5, 0, 1.3, 0.9, 1.1)),
+      piece(new IcosahedronGeometry(1, 0), '#eef4f8', T(-0.5, 0.8, 0, 0.6, 0.9, 1)),
+    ]),
+    // A giant heather hung with moss (Rwenzori).
+    'moss-heather': () => (lite) => merge([
+      piece(new CylinderGeometry(0.2, 0.32, 3, 5, 1, true), '#5a4a32', T(0, 1.5, 0)),
+      piece(new IcosahedronGeometry(1.8, lite ? 0 : 1), '#5a8a3a', T(0, 3.6, 0, 1, 1.2, 1)),
+      piece(new ConeGeometry(0.5, 1.6, 5), '#8aa85a', T(0.9, 2.4, 0.3)),
+    ]),
+    // A giant lobelia: a tall green-grey spike.
+    lobelia: () => () => merge([piece(new ConeGeometry(0.5, 3, 6), '#7a8f6a', T(0, 1.5, 0)), piece(new IcosahedronGeometry(0.7, 0), '#5f7a4a', T(0, 0.3, 0, 1.2, 0.4, 1.2))]),
+    // A Puya: a rosette of spiky leaves and its towering flower spike (Huascarán).
+    puya: () => () => merge([
+      piece(new IcosahedronGeometry(1.2, 0), '#6f8a5a', T(0, 0.6, 0, 1.3, 0.6, 1.3)),
+      piece(new CylinderGeometry(0.35, 0.5, 6, 6), '#a8a86a', T(0, 4, 0)),
+    ]),
+    // A rhododendron in bloom, pink or red (Kangchenjunga).
+    rhododendron: () => (lite) => merge([
+      piece(new CylinderGeometry(0.15, 0.22, 1.4, 5, 1, true), '#5a4632', T(0, 0.7, 0)),
+      piece(new IcosahedronGeometry(1.6, lite ? 0 : 1), '#3f6a3a', T(0, 2.2, 0, 1.2, 0.9, 1.2)),
+      piece(new IcosahedronGeometry(0.9, 0), '#e0507a', T(0.6, 2.8, 0.3, 1, 0.6, 1)),
+      piece(new IcosahedronGeometry(0.8, 0), '#c83a4a', T(-0.7, 2.6, -0.2, 1, 0.6, 1)),
+    ]),
   };
   const names = [...new Set(Object.values(pal.dressing).flatMap((list) => list.map(([k]) => k)))];
   const kinds = names.map((k) => [make[k](), 0]);
@@ -503,6 +648,8 @@ export function buildSpindrift(centerline, channel, kit, { lite = false } = {}) 
   for (const sec of kit.sections ?? []) {
     if (!['sweep', 'plunge', 'sBends', 'spiral'].includes(sec.shape)) continue;
     if (sec.tunnel) continue;
+    // (Snow is blown only off snow and ice: none over a mountain's moorland, forest, desert or rock.)
+    if (sec.peak?.zone && !['snow', 'ice'].includes(sec.peak.zone)) continue;
     const i = Math.round(((sec.from + sec.to) / 2) * segments);
     const s = samples[i];
     // (On the outside of a bend: away from its centre; a drop's lip either side.)

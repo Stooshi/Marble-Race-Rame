@@ -169,6 +169,114 @@ function glacierTongue() {
   return merge(p);
 }
 
+// ── Peaks 6–15 (29 Oct 2026) ──
+/** A field of penitentes: tall blade-like spikes of snow, all leaning the same way to the sun (Aconcagua). */
+function penitentes() {
+  const p = [];
+  for (let k = 0; k < 26; k += 1) {
+    const x = (r01(k) - 0.5) * 50;
+    const z = (r01(k + 30) - 0.5) * 40;
+    const h = 3 + r01(k + 60) * 3.5;
+    p.push(piece(new ConeGeometry(0.9 + r01(k + 7) * 0.4, h, 4), k % 4 ? '#f4f7fa' : '#d6e2ec', leaning(x, h / 2, z, 0.5, 0.18, 1, 1, 0.38)));
+  }
+  return merge(p);
+}
+
+/** A glacial lake: a flat sheet of turquoise water with a pale shore line (sits on the land). */
+function glacialLake() {
+  return merge([
+    piece(new CylinderGeometry(38, 38, 0.2, 18), '#5fc4c8', S(0, 0.1, 0, 1, 1, 0.7)),
+    piece(new CylinderGeometry(40, 40, 0.1, 18), '#cfd8d2', S(0, 0.02, 0, 1, 1, 0.7)),
+  ]);
+}
+
+/** Icebergs on a glacial lake: blue-white blocks of ice afloat on turquoise water (Aoraki). */
+function icebergs() {
+  const p = [piece(new CylinderGeometry(34, 34, 0.2, 16), '#6ab4c8', S(0, 0.1, 0, 1, 1, 0.75))];
+  [[-14, -6, 4], [6, -10, 6], [16, 6, 3.5], [-6, 10, 5], [2, 2, 2.5]].forEach(([x, z, r], k) => {
+    p.push(piece(new IcosahedronGeometry(r, 0), k % 2 ? '#e8f4fa' : '#b8e0f0', turned(x, r * 0.45, z, k, 1.3, 0.8, 1)));
+  });
+  return merge(p);
+}
+
+/** A rock island where two glaciers meet: a dark prow of rock with snow on its shelves (K2, the splitter). */
+function rockIsland() {
+  return merge([
+    piece(new IcosahedronGeometry(9, 0), '#3a3633', S(0, 6, 0, 0.9, 1.1, 1.8)),
+    piece(new IcosahedronGeometry(6, 0), '#f2f6fa', S(0, 13, 1, 0.8, 0.35, 1.4)),
+  ]);
+}
+
+/** Rhododendrons in bloom: a grove of dark green bushes covered in pink and red flowers (Kangchenjunga). */
+function rhododendrons() {
+  const p = [];
+  for (let k = 0; k < 9; k += 1) {
+    const x = (r01(k) - 0.5) * 30;
+    const z = (r01(k + 11) - 0.5) * 22;
+    p.push(piece(new CylinderGeometry(0.25, 0.35, 2, 5), '#5a4632', M(x, 1, z)));
+    p.push(piece(new IcosahedronGeometry(2.4, 0), '#3a6436', S(x, 3, z, 1.2, 0.9, 1.2)));
+    p.push(piece(new IcosahedronGeometry(1.2, 0), k % 2 ? '#e0507a' : '#c8344a', S(x + 0.8, 3.8, z + 0.4, 1, 0.6, 1)));
+    p.push(piece(new IcosahedronGeometry(1, 0), '#f07a9a', S(x - 0.9, 3.5, z - 0.5, 1, 0.6, 1)));
+  }
+  return merge(p);
+}
+
+/** A barrel hut: a big metal barrel lying on its side on stilts, windows down its length (Elbrus). */
+function barrelHut() {
+  const p = [];
+  for (let k = 0; k < 3; k += 1) {
+    const z = (k - 1) * 9;
+    p.push(piece(new CylinderGeometry(2.4, 2.4, 7, 12), k % 2 ? '#c8ccd0' : '#b03a2e', turned(0, 3.4, z, 0, 1, 1, 1).multiply(new Matrix4().makeRotationZ(Math.PI / 2))));
+    for (const x of [-2.5, 2.5]) p.push(box(0.3, 1.2, 0.3, x, 0.6, z, '#3a3f46'));
+    p.push(box(7.2, 0.5, 1.2, 0, 3.6, z + 2.1, '#2a3a4a'));
+  }
+  return merge(p);
+}
+
+/** Cinder cones: small black and red volcanic cones on the flank (Fuji). */
+function cinderCones() {
+  const p = [];
+  [[-20, 0, 7, '#3a2c2a'], [6, -12, 5, '#6a3a2e'], [22, 8, 6, '#4a3230']].forEach(([x, z, h, c]) => {
+    p.push(piece(new ConeGeometry(h * 1.8, h, 9), c, M(x, h / 2, z)));
+  });
+  return merge(p);
+}
+
+/** A ribbon waterfall pouring off a sheer rock wall, its spray at the foot (Roraima: the track passes behind such falls). */
+function tepuiFalls() {
+  const p = [box(30, 70, 8, 0, 35, -6, '#5a4a42'), box(30.2, 3, 8.2, 0, 69, -6, '#3e6a34')];
+  for (const x of [-8, 6]) {
+    p.push(box(3, 68, 0.6, x, 35, -1.6, '#e8f2f6'));
+    p.push(piece(new IcosahedronGeometry(4, 0), '#f2f6f8', S(x, 1.5, 0, 1.4, 0.4, 1)));
+  }
+  return merge(p);
+}
+
+/** A calving ice cliff: the glacier's front over the fjord, blue-white, a slab of ice breaking off it (Alaska). */
+function calvingIce() {
+  const p = [];
+  for (let k = -4; k <= 4; k += 1) {
+    const h = 26 + ((k * 7 + 30) % 3) * 4;
+    p.push(box(11, h, 14, k * 10.5, h / 2 - 2, 0, k % 2 ? '#d4ecf6' : '#a8d6ee'));
+    p.push(box(0.7, h * 0.4, 14.2, k * 10.5 + 5.2, h * 0.8, 0, '#4f92c4'));
+  }
+  p.push(piece(new IcosahedronGeometry(6, 0), '#cfe8f4', leaning(14, 6, 12, 0.3, 0.5, 1, 1.6, 0.8)));
+  p.push(piece(new CylinderGeometry(60, 60, 0.3, 14), '#2a5a7a', S(0, -1.8, 30, 1.4, 1, 0.6)));
+  return merge(p);
+}
+
+/** Giant lobelias: tall spikes of green-grey rosettes in the mist (Rwenzori). */
+function giantLobelias() {
+  const p = [];
+  for (let k = 0; k < 8; k += 1) {
+    const x = (r01(k) - 0.5) * 20;
+    const z = (r01(k + 5) - 0.5) * 16;
+    const h = 2.5 + r01(k + 9) * 2;
+    p.push(piece(new ConeGeometry(0.5, h, 6), '#7a8f6a', M(x, h / 2, z)), piece(new IcosahedronGeometry(0.9, 0), '#5f7a4a', S(x, 0.3, z, 1.3, 0.4, 1.3)));
+  }
+  return merge(p);
+}
+
 export const PEAK_LANDMARKS = {
   'peak-camp': { build: peakCamp, radius: 16 },
   'serac-field': { build: seracField, radius: 34 },
@@ -180,4 +288,14 @@ export const PEAK_LANDMARKS = {
   'meltwater-streams': { build: meltwaterStreams, radius: 50 },
   'pass-cairn': { build: passCairn, radius: 3 },
   'glacier-tongue': { build: glacierTongue, radius: 70 },
+  penitentes: { build: penitentes, radius: 30 },
+  'glacial-lake': { build: glacialLake, radius: 40 },
+  icebergs: { build: icebergs, radius: 34 },
+  'rock-island': { build: rockIsland, radius: 16 },
+  rhododendrons: { build: rhododendrons, radius: 20 },
+  'barrel-hut': { build: barrelHut, radius: 14 },
+  'cinder-cones': { build: cinderCones, radius: 32 },
+  'tepui-falls': { build: tepuiFalls, radius: 18 },
+  'calving-ice': { build: calvingIce, radius: 60 },
+  'giant-lobelias': { build: giantLobelias, radius: 12 },
 };
