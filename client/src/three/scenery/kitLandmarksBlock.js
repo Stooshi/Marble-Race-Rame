@@ -591,16 +591,11 @@ function karstTower(seed = 0, H = 11) {
   p.push(C(3.4, 2.4, 3.4, 0, 3 * H + 1.2, 0, '#5e9a54'));
   return merge(p);
 }
-/** The karst tower round a splitter: a slimmer stack (4.4 m square, under 6 m tall: below the follow camera) so it stands
+/** The karst tower round a splitter: a slimmer stack (4.4 m square, 4 m tall: below the follow camera, which passes over the divider on the curving split) so it stands
  * clear inside the divider and the follow camera never sweeps through it on the curving split. */
 function karstNeedle() {
-  const p = [];
-  for (let k = 0; k < 2; k += 1) {
-    const w = 4.4 - k * 0.6;
-    p.push(C(w, 2.4, w, k * 0.2, 1.2 + k * 2.4, -k * 0.15, k % 2 ? '#8d9187' : '#9a9d92'));
-    p.push(C(w * 0.7, 0.5, w * 0.5, w * 0.18, 2.6 + k * 2.4, w * 0.25, '#6aa25c'));
-  }
-  p.push(C(2.6, 1, 2.6, 0.1, 5.3, 0, '#5e9a54'));
+  const p = [C(4.4, 2.2, 4.4, 0, 1.1, 0, '#9a9d92'), C(3.1, 0.5, 2.2, 0.8, 2.45, 1.1, '#6aa25c')];
+  p.push(C(3.2, 1.2, 3.2, 0.2, 2.8, -0.15, '#8d9187'), C(2.2, 0.6, 2.2, 0.2, 3.7, -0.1, '#5e9a54'));
   return merge(p);
 }
 /** Karst towers: three or four of them together, the tallest behind (a backdrop beside the river). */
