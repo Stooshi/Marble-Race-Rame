@@ -1102,6 +1102,11 @@ export class TrackScene {
     return s?.tangent ? new Vector3(s.tangent.x, 0, s.tangent.z).normalize() : null;
   }
 
+  /** The race laid out flat, for the own marble's hit sound (../sound/hits.js): { arc, room } (metres), or null. */
+  raceSpan() {
+    return this.channel ? { arc: this.channel.arc, room: this.channel.maxAngle * this.channel.radius } : null;
+  }
+
   /** The TV shot now ({ pack, w, label }) or null: the viewer shows the label. */
   tvNow() {
     return this.tvOn ? this.tvShot ?? null : null;

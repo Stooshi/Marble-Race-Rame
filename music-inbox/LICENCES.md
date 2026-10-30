@@ -1,6 +1,6 @@
 # Music and sound licences
 
-The game's music and sounds (28 Oct 2026, the sound reset; RACE MUSIC 7–14 added and RACE MUSIC 2 taken out the same evening: 13 race tunes). The originals here are converted by
+The game's music and sounds (28 Oct 2026, the sound reset; RACE MUSIC 7–14 added and RACE MUSIC 2 taken out the same evening: 13 race tunes; 30 Oct 2026: the start sound "Marles start rolling" replaced "Marbles speeding up", and the own marble's hit sound "Marble collision" added). The originals here are converted by
 `scripts/convert-audio.sh` into `client/public/audio/`. This folder is never part of the website build or
 the server upload.
 
@@ -26,7 +26,7 @@ It forbids:
 So:
 - **A commercial game (website and apps):** allowed. The sounds are part of a larger work, the game, and are never offered as files to download on their own.
 - **Our videos (social media, ads, store previews):** allowed. Pixabay's FAQ: "You may use Pixabay music in commercial video projects, including content you sell or distribute", as part of a larger creative work.
-- **YouTube Content ID:** some Pixabay contributors register their tracks with Content ID. Those pages show a shield icon. A claim isn't a copyright strike, but it can take a video's ad money. If a video gets one, dispute it in YouTube Studio: "I have permission or a license to use the content", with the track's Pixabay page as proof. **To do (Moses):** open each music track's page below and note whether it shows the shield.
+- **YouTube Content ID:** some Pixabay contributors register their tracks with Content ID. Those pages show a shield icon. A claim isn't a copyright strike, but it can take a video's ad money. If a video gets one, dispute it in YouTube Studio: "I have permission or a license to use the content", with the track's Pixabay page as proof. **To do (Moses):** open each music track's page below and note whether it shows the shield (and the two new sound effects, 90863 and 105088, added 30 Oct 2026).
 
 | In the game (`client/public/audio/`) | Original in this folder | Pixabay contributor | Pixabay id | Type | Content ID shield? |
 |---|---|---|---|---|---|
@@ -46,7 +46,9 @@ So:
 | `tune-14` (from 28 Oct 2026) | RACE MUSIC 14 - xtremefreddy-game-music-loop-20-156390-cut (mp3cut.net).mp3 | xtremefreddy | 156390 | music | to check |
 | `ceremony` (the finish ceremony) | FINISH LINE and CEREMONY SONG - freesound_community-suits-you-69233.mp3 | freesound_community | 69233 | music | to check |
 | `crowd-grand-prix` (a stand cheering) | CROWD GRAND PRIX - freesound_community-scream-ride-start-91271.mp3 | freesound_community | 91271 | sound effect | (sound effect) |
-| `launch` (the pack leaving the gate) | MARBLES SPEEDING UP - diff_style-start-your-engine-13152.mp3 | diff_style | 13152 | sound effect | (sound effect) |
+| `start-rolling` (the start sound at GO, from 30 Oct 2026) | MARLES START ROLLING  - freesound_community-bowling-ball-90863-CUT (mp3cut.net) - pixabay.mp3 | freesound_community | 90863 | sound effect | to check (sound effect: usually not registered) |
+| `marble-hit` (the player's own marble hitting another, from 30 Oct 2026) | MARBLE COLLISSION  - freesound_community-lotto-ball-105088 (mp3cut.net) - pixabay.mp3 | freesound_community | 105088 | sound effect | to check (sound effect: usually not registered) |
+| (not in the game since 30 Oct 2026; replaced by `start-rolling`) launch | MARBLES SPEEDING UP - diff_style-start-your-engine-13152.mp3 | diff_style | 13152 | sound effect | (sound effect) |
 | (not in the game since 28 Oct 2026) whoosh | MARBLES OVERTAKING ONLY PLAYED NEXT TO THE PLAYERS OWN MARBLE-soundreality-whoosh-race-2-383023.mp3 | soundreality | 383023 | sound effect | (sound effect) |
 
 **No longer in the game** (28 Oct 2026; the originals stay here, unused): RACE SOUND 1–8, and RACE MUSIC 2 (darren_hirst, "Gamer Music 140 BPM", Pixabay id 355954; taken out by Moses, 28 Oct 2026).

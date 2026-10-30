@@ -373,7 +373,7 @@ The apps play the sound through `@capacitor-community/native-audio` (a native pl
 
 **Android: reading the sound log in Logcat** (28 Oct 2026). `npm run app:sync` prints `native audio included` (it runs `npm install` first if a plugin is missing; without it the app falls back to the slower Web Audio). In Android Studio → Logcat, filter `package:mine message:"[sound]"` (the lines come from tag `Capacitor/Console`). Expect, in a solo race:
 - `[sound] backend: native` (not `backend: web`; `native audio plugin missing` means the build lacks it);
-- `[sound] start-beeps: loaded in N ms`, `launch: …`, `tune-N: …` (each well under a second);
+- `[sound] start-beeps: loaded in N ms`, `start-rolling: …`, `marble-hit: …`, `tune-N: …` (each well under a second);
 - `[sound] sound ready in N ms` (or `NOT ready after 6000 ms: …`, naming what's missing);
 - `[sound] race …: GO in N ms (native, beeps loaded, tune …)`;
 - `[sound] the player took N ms to start` (the start-up time allowed for);

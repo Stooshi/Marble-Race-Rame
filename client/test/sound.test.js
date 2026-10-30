@@ -131,13 +131,16 @@ describe('sound', () => {
     expect(web).toContain('src.loopEnd = to;');
   });
 
-  it('no overtaking whoosh for now; the gate sound at GO stays', () => {
-    expect(SOUNDS).toEqual({ crowd: 'crowd-grand-prix', launch: 'launch', beeps: 'start-beeps' });
+  it('no overtaking whoosh for now; the start sound at GO (the marbles start rolling, 30 Oct 2026)', () => {
+    expect(SOUNDS).toEqual({ crowd: 'crowd-grand-prix', launch: 'start-rolling', beeps: 'start-beeps', hit: 'marble-hit' });
+    // (The old gate sound, MARBLES SPEEDING UP, is gone from the game.)
+    expect(fs.existsSync(path.resolve(__dirname, '../public/audio/launch.webm'))).toBe(false);
+    for (const n of ['start-rolling', 'marble-hit']) for (const ext of ['webm', 'm4a']) expect(fs.existsSync(path.resolve(__dirname, `../public/audio/${n}.${ext}`))).toBe(true);
     const view = fs.readFileSync(path.resolve(__dirname, '../src/components/LiveRaceViewer3D.jsx'), 'utf8');
     expect(view).not.toContain("'whoosh'");
     expect(view).toContain("playSound('launch')");
-    // (About a fifth as loud as the other sounds, Moses 28 Oct 2026: -33.5 LUFS, about 13.5 dB under the -20 of the rest.)
-    expect(fs.readFileSync(path.resolve(__dirname, '../../scripts/convert-audio.sh'), 'utf8')).toContain('launch -33.5 64 96');
+    // (The same level as the old gate sound, Moses 28 and 30 Oct 2026: -33.5 LUFS, about 13.5 dB under the -20 of the rest.)
+    expect(fs.readFileSync(path.resolve(__dirname, '../../scripts/convert-audio.sh'), 'utf8')).toContain('start-rolling -33.5 64 96');
   });
 
   it('the crowd: once per stand per race, under the music, never ducking it', () => {

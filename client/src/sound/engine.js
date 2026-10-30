@@ -21,7 +21,9 @@
  * - The finish ceremony (unchanged): the tune stops with a short fade and the ceremony song plays,
  *   looping while the player stays, fading out softly (CEREMONY_FADE_S) after CEREMONY_SECONDS.
  * - The crowd: when the player's own marble passes a Grand Prix stand (crowdCheer, once per stand per
- *   race), under the music. The gate sound at GO. (No overtaking whoosh for now.)
+ *   race), under the music. The start sound at GO (the marbles start rolling; 30 Oct 2026). The player's
+ *   own marble hitting another (marbleHit, from ./hits.js): soft, louder for harder hits, under the music,
+ *   at most one a second (30 Oct 2026). (No overtaking whoosh for now.)
  * - The music sits well under the effects (MUSIC_UNDER) and dips under the gate sound (DUCK).
  * - Readiness: whenSoundReady() / soundMissing() for the race page's readiness check and report.
  */
@@ -40,7 +42,7 @@ export const TRACK_SECONDS = {
   'tune-12': 32.22, 'tune-13': 28.548729, 'tune-14': 28.138437, ceremony: 59.1,
 };
 export const CEREMONY = 'ceremony';
-export const SOUNDS = { crowd: 'crowd-grand-prix', launch: 'launch', beeps: 'start-beeps' };
+export const SOUNDS = { crowd: 'crowd-grand-prix', launch: 'start-rolling', beeps: 'start-beeps', hit: 'marble-hit' };
 /** In "start beeps" the four beeps start at 0.024, 1.026, 2.035 and 3.023 s: the fourth, the GO, this far in. */
 export const BEEPS_GO_S = 3.023;
 /** The ceremony song fades out (over CEREMONY_FADE_S) this long after it started. */
@@ -50,6 +52,11 @@ export const CEREMONY_FADE_S = 4;
 export const MUSIC_UNDER = 0.32;
 /** The crowd plays this far under the effects slider (its file 4 LU under the music's): about 6 dB under the music. */
 export const CROWD_UNDER = 0.35;
+/**
+ * The own marble's hits: from HIT_LEVEL.soft (the lightest that sounds) to HIT_LEVEL.hard (the hardest), on the
+ * effects bus; even the hardest stays under the music (MUSIC_UNDER).
+ */
+export const HIT_LEVEL = { soft: 0.07, hard: 0.24 };
 /** While the gate sound plays the music dips by this much more (-6 dB). */
 export const DUCK = 0.5;
 /** How many upcoming tunes are kept loaded (this race's and the next race's). */
@@ -324,6 +331,13 @@ export function crowdCheer(raceId, key) {
   if (done.has(key)) return false;
   done.add(key);
   return play('crowd', { gain: CROWD_UNDER, duck: false });
+}
+
+/** The player's own marble hit another (`strength` 0 to 1, from ./hits.js): soft, never ducking the music. */
+export function marbleHit(raceId, strength) {
+  if (race && race.id !== raceId) return false;
+  const k = Math.max(0, Math.min(1, strength));
+  return play('hit', { gain: HIT_LEVEL.soft + (HIT_LEVEL.hard - HIT_LEVEL.soft) * k, duck: false });
 }
 
 /** A race sound now (only if loaded and the sound is running: never played late). → whether it played. */
