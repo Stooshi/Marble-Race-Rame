@@ -10,9 +10,12 @@
  * (the same material), so it costs no draw call of its own.
  */
 import { Color, Vector3 } from 'three';
-import { channelLipAt, forkAt, placeOnChannel } from '../iceChannel';
+import { channelLipAt, channelRadiusAt, forkAt, placeOnChannel } from '../iceChannel';
 
 const KERB = { red: '#a9554d', white: '#d9d2c4', block: 0.9, from: 0.52, to: 0.64, half: 6.5, sharp: 0.016 }; // metres along; share of the lip across
+// (PROPOSAL `more`, Moses 30 Oct 2026 12:50: about 3 kerbs and 3 chevron sets a track; samples only)
+const MORE = { kerbs: 3, sharp: 0.012, chevrons: 3, straight: 45 };
+const CHEVRON = { colour: '#cfc8ba', count: 3, gap: 6, length: 2.4, width: 0.3, thick: 0.2 };
 const CHECK = { dark: '#202126', light: '#eeece6', depth: 0.5, rows: 2, columns: 12 };
 const START_AT = 2.3; // metres: just in front of the gate's front row (as the Track and Field start line)
 
@@ -21,8 +24,8 @@ const START_AT = 2.3; // metres: just in front of the gate's front row (as the T
  * `athletics`: a Track and Field track: the finish's chequer only.
  * → { parts: [{ s (metres along), positions, colors }], apexes (progress of the kerbed bends) }
  */
-export function buildRacingLook(centerline, channel, { lite = false, nature = false, athletics = false } = {}) {
-  const most = athletics ? 0 : nature ? 1 : 2;
+export function buildRacingLook(centerline, channel, { lite = false, nature = false, athletics = false, more = false } = {}) {
+  const most = athletics ? 0 : more ? MORE.kerbs : nature ? 1 : 2;
   const arc = channel.arc;
   const { samples, segments } = centerline;
   const out = new Vector3();
@@ -60,7 +63,7 @@ export function buildRacingLook(centerline, channel, { lite = false, nature = fa
   for (let s = 40; s < arc - 70; s += step) turns.push({ s, k: turn(s) });
   const apexes = [];
   for (const t of [...turns].sort((x, y) => Math.abs(y.k) - Math.abs(x.k))) {
-    if (Math.abs(t.k) < KERB.sharp) break; // (only a sharp bend gets one)
+    if (Math.abs(t.k) < (more && apexes.length >= 1 ? MORE.sharp : KERB.sharp)) break; // (only a sharp bend gets one; the proposal's extra ones: a fairly sharp bend)
     if (apexes.some((a) => Math.abs(a.s - t.s) < 80)) continue;
     apexes.push(t);
     if (apexes.length >= most) break;
@@ -80,6 +83,31 @@ export function buildRacingLook(centerline, channel, { lite = false, nature = fa
     }
   }
 
+  // ── PROPOSAL `more`: muted chevron sets on the longest nearly straight stretches (45 m and more) ──
+  const chevronsAt = [];
+  if (more && !athletics) {
+    const runs = [];
+    let run = null;
+    for (const t of turns) {
+      if (Math.abs(t.k) < 0.004 && !forkAt(channel, t.s)) { run = run ?? { from: t.s, to: t.s }; run.to = t.s; } else { if (run) runs.push(run); run = null; }
+    }
+    if (run) runs.push(run);
+    for (const r of runs.filter((x) => x.to - x.from >= MORE.straight).sort((a, b) => (b.to - b.from) - (a.to - a.from)).slice(0, MORE.chevrons)) {
+      const mid = (r.from + r.to) / 2;
+      chevronsAt.push(+(mid / arc).toFixed(3));
+      begin(mid);
+      for (let k = 0; k < CHEVRON.count; k += 1) {
+        const s0 = mid + (k - (CHEVRON.count - 1) / 2) * CHEVRON.gap;
+        const w = CHEVRON.width * lipShare(s0);
+        const tk = CHEVRON.thick / (channelRadiusAt(channel, s0) * channel.maxAngle);
+        for (const sgn of [1, -1]) {
+          quad(at(s0, sgn * w), at(s0 + CHEVRON.length, 0), at(s0 + CHEVRON.length + 0.25, 0), at(s0 + 0.25, sgn * w), CHEVRON.colour);
+          quad(at(s0, sgn * (w - tk)), at(s0 + CHEVRON.length - 0.05, 0), at(s0 + CHEVRON.length, 0), at(s0, sgn * w), CHEVRON.colour);
+        }
+      }
+    }
+  }
+
   // ── Chequered start and finish lines: two rows of squares across the floor ──
   const chequer = (s0) => {
     begin(s0);
@@ -96,5 +124,5 @@ export function buildRacingLook(centerline, channel, { lite = false, nature = fa
   };
   if (!athletics) chequer(START_AT);
   chequer(arc - 0.45 - CHECK.depth);
-  return { parts, apexes: apexes.map((x) => +(x.s / arc).toFixed(3)) };
+  return { parts, apexes: apexes.map((x) => +(x.s / arc).toFixed(3)), chevronsAt };
 }
