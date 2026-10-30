@@ -219,6 +219,19 @@ window.kitView = {
     return { pos: v(c.position), dir: v(dir), screenUp: v(up), gateDown: g ? v(g.down) : null, gateCentre: g ? v(g.centre) : null };
   },
   /** The race at t ms (negative: the countdown) through the game's camera: 'follow' or 'overview'. */
+  /** The TV shots through the race (TrackScene.tvNow every `every` ms, nothing drawn): [{ t, pack, w, label }]. */
+  tvScan({ every = 100, follow = 'leader' } = {}) {
+    const end = race.frames.length * race.tickMs;
+    const out = [];
+    for (let t = 0; t < end; t += every) {
+      advance(t, follow);
+      const s = scene.tvNow();
+      if (s) out.push({ t, pack: s.pack, w: +s.w.toFixed(2), label: s.label });
+    }
+    return out;
+  },
+  /** The TV shot now ({ pack, w, label } or null). */
+  tvNow() { return scene.tvNow(); },
   raceShot({ t, follow = 'leader', camera = 'follow' }) {
     advance(t, follow);
     if (camera === 'overview') {

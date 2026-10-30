@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { standingsRows, standingsShown } from '../utils/standingsRows';
 import YourGate from './YourGate';
+import TvStanding from './TvStanding';
 import { entryLabel } from '../shared/playerName';
 import { useReplay } from '../hooks/useReplay';
 import { useTrackScene } from '../hooks/useTrackScene';
@@ -191,6 +192,7 @@ export default function RaceReplayViewer({ data, loading = false, mine = NOBODY,
               </ol>
             )}
             {meter.on && <FrameMeter sceneRef={sceneRef} />}
+            {tv.on && <TvStanding sceneRef={sceneRef} />}
             <FinishShow show={show} finishes={finishes} entries={entries} mine={mine} raceId={raceId} trackName={data?.track?.name} next={next} />
           </>
         )}

@@ -497,6 +497,9 @@ main { padding-bottom: 48px; }
 .replay3d__standings li.is-own-below { margin-top: 4px; border-top: 1px dashed rgba(255, 255, 255, 0.25); padding-top: 2px; } /* (the viewer's own place, below the first five) */
 .replay3d__gate { padding: 5px 10px; color: #fff; font-size: 0.8rem; } /* "Your gate: 13" during the countdown, where the standings appear at GO */
 .replay3d__gate strong { color: #facc15; font-variant-numeric: tabular-nums; }
+/* The TV pack shot's label: where the player's marble stands, low in the middle for a few seconds */
+.replay3d__tvstanding { position: absolute; left: 50%; bottom: 18%; transform: translateX(-50%); padding: 5px 12px; border-radius: 999px; background: rgba(15, 23, 42, 0.72); color: #fff; font-size: 0.85rem; font-weight: 700; font-variant-numeric: tabular-nums; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6); pointer-events: none; white-space: nowrap; animation: tvstanding-in 0.25s ease-out; }
+@keyframes tvstanding-in { from { opacity: 0; transform: translate(-50%, 6px); } to { opacity: 1; transform: translate(-50%, 0); } }
 .replay3d__pos { width: 1.1em; font-weight: 700; font-variant-numeric: tabular-nums; }
 .replay3d__name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 

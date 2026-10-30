@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { standingsRows, standingsShown } from '../utils/standingsRows';
 import YourGate from './YourGate';
+import TvStanding from './TvStanding';
 import { entryLabel } from '../shared/playerName';
 import { useTrackScene } from '../hooks/useTrackScene';
 import MarbleBall from './MarbleBall';
@@ -409,6 +410,7 @@ export default function LiveRaceViewer3D({
               onSwap={swapViews}
             />
             {meter.on && <FrameMeter sceneRef={sceneRef} />}
+            {tv.on && <TvStanding sceneRef={sceneRef} />}
             <FinishShow show={show} finishes={finishes} entries={entries} mine={highlight} raceId={meta?.raceId} trackName={meta?.track?.name} next={next} />
             {show.phase === 'racing' && !gone && phase === 'race' && <YourGate entries={entries} mine={highlight} />}
             {show.phase === 'racing' && gone && (
