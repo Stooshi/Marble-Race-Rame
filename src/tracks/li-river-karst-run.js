@@ -36,11 +36,10 @@ module.exports = track({
     costumes: { slalom: 'cube-pillar', peg: 'cube-pillar', swipe: 'block-crane', parked: 'block-pieces' },
     dress: {
       riverStraight: { height: 4, water: true, landmarks: [{ name: 'bamboo-rafts', at: 0.5, side: 'left', distance: 12 }, { name: 'karst-towers', at: 0.6, side: 'right', distance: 40 }] },
-      split1: { around: 'karst-tower' },
       raftSweep: { landmarks: [{ name: 'karst-towers', at: 0.5, side: 'left', distance: 45 }] },
       terraces: { landmarks: [{ name: 'bamboo-rafts', at: 0.4, side: 'right', distance: 14 }] },
       split2: { around: 'karst-tower' },
-      village: { landmarks: [{ name: 'river-village', at: 0.5, side: 'left', distance: 22 }] },
+      village: { landmarks: [{ name: 'river-village', at: 0.5, side: 'left', distance: 34 }] },
       hairpin: { landmarks: [{ name: 'karst-towers', at: 0.5, side: 'high', distance: 40 }] },
       lastStraight: { name: 'To the landing', landmarks: [{ name: 'karst-towers', at: 0.5, side: 'right', distance: 45 }] },
     },

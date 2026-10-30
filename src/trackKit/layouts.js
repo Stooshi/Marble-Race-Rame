@@ -1846,10 +1846,11 @@ const LAYOUTS = {
   ],
   /** L106 Grand canal (Blocks 2, Venice): a sweep between the palazzi (a peg), a straight to the fork (a peg), the splitter where two canals fork (straight channels; big feature one), a straight under the arched bridges (a slalom), a run-in, the Grand Canal half-pipe (big feature two: the field rocks wall to wall), a drop, the hairpin, a lagoon sweep (a peg) and a parked piece and a peg at the run-in. */
   'grand-canal': (L, R, c, b) => [
-    { key: 'quay', name: 'Over the first bridge', shape: climb(12, { grade: -0.05, after: 0.12 }) },
+    { key: 'quayRun', name: 'Along the quay', shape: straight(25, { grade: 0.14 }) },
+    { key: 'quay', name: 'Over the first bridge', shape: climb(10, { grade: -0.04, after: 0.12 }) },
     { key: 'palazzi', name: 'Between the palazzi', shape: sweep({ side: L, radius: 90, degrees: 90, grade: 0.12 }), obstacles: [slalom({ costume: c.slalom, from: 0.3, to: 0.7, count: 3, loss: 0.15 })], billboards: 2 },
     { key: 'toTheFork', name: 'To the fork', shape: straight(40, { grade: 0.11 }), obstacles: [peg({ costume: c.peg, at: 0.4, line: 'right' })] },
-    { key: 'fork', name: 'The canal fork', shape: splitter({ side: R, degrees: 0, balance: R === 'left' ? { ...b(R), right: { drag: 0.8, scrub: 0.9 } } : { ...b(R), right: { drag: 1.9, scrub: 1.9 }, left: { drag: 0.8, scrub: 0.9 } } }) },
+    { key: 'fork', name: 'The canal fork', shape: splitter({ side: R, degrees: 0, balance: R === 'left' ? { ...b(R), right: { drag: 0.8, scrub: 0.9 } } : { ...b(R), right: { drag: 1.5, scrub: 1.5 }, left: { drag: 0.8, scrub: 0.9 } } }) },
     { key: 'bridges', name: 'Under the bridges', shape: straight(70, { grade: 0.12 }), obstacles: [slalom({ costume: c.slalom, from: 0.25, to: 0.7, count: 3, loss: 0.15 })], billboards: 1 },
     { key: 'canalRunIn', name: 'Into the Grand Canal', shape: straight(30, { grade: 0.12 }) },
     { key: 'grandCanal', name: 'Grand Canal half-pipe', shape: halfPipe({ first: L, width: 8, swings: 3, radius: 150, degrees: 18, grade: 0.12 }) },
@@ -1902,7 +1903,7 @@ const LAYOUTS = {
     { key: 'switch2', name: 'Second switchbacks', shape: sBends({ first: R, radius: 66, degrees: 92, grade: 0.12 }), billboards: 1 },
     { key: 'birches', name: 'Birch wood', shape: straight(65, { grade: 0.11 }), obstacles: [slalom({ costume: c.slalom, from: 0.2, to: 0.7, count: 3, loss: 0.15 })], billboards: 1 },
     { key: 'onTheLake', name: 'Onto the lake', shape: straight(30, { grade: 0.1 }) },
-    { key: 'splitter', name: 'Round the island', shape: splitter({ side: L, degrees: 40, balance: { ...insideDrag(L, 1.6), [R]: { drag: 1.8, scrub: 1.8 } } }) },
+    { key: 'splitter', name: 'Round the island', shape: splitter({ side: L, degrees: 40, balance: { ...insideDrag(L, 1.6), [R]: { drag: 2.3, scrub: 2.3 } } }) },
     { key: 'shore', name: 'Off the shore', shape: plunge(45, { grade: 0.22, from: 0.12 }), billboards: 1 },
     { key: 'brakingStraight', name: 'Run to the hut', shape: straight(50, { grade: 0.12 }), billboards: 1 },
     { key: 'hairpin', name: 'Sauna hairpin', shape: hairpin({ side: R }), obstacles: [swipe({ costume: c.swipe, side: 'high' })] },
