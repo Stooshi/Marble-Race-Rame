@@ -591,6 +591,19 @@ function karstTower(seed = 0, H = 11) {
   p.push(C(3.4, 2.4, 3.4, 0, 3 * H + 1.2, 0, '#5e9a54'));
   return merge(p);
 }
+/** The karst tower round a splitter: a slimmer stack (about 5 m square, 11 m tall) so it stands
+ * clear inside the divider and the follow camera never sweeps through it on the curving split. */
+function karstNeedle() {
+  const p = [];
+  for (let k = 0; k < 4; k += 1) {
+    const w = 5 - Math.abs(k - 1) * 0.5;
+    const off = (hashK(k + 3) - 0.5) * 0.5;
+    p.push(C(w, 2.6, w, off, 1.3 + k * 2.6, -off * 0.6, k % 2 ? '#8d9187' : '#9a9d92'));
+    if (k % 2 === 0) p.push(C(w * 0.7, 0.6, w * 0.5, off + w * 0.18, 2.7 + k * 2.6, w * 0.25, '#6aa25c'));
+  }
+  p.push(C(2.4, 1.8, 2.4, 0, 11.3, 0, '#5e9a54'));
+  return merge(p);
+}
 /** Karst towers: three or four of them together, the tallest behind (a backdrop beside the river). */
 function karstTowers() {
   const g = [];
@@ -840,7 +853,7 @@ export const BLOCK_LANDMARKS = {
   'final-stage': { build: finalStage, radius: 13, fx: 'final-stage' },
   // Blocks Series 2.
   'karst-towers': { build: karstTowers, radius: 20 },
-  'karst-tower': { build: () => karstTower(0, 3), radius: 5, fit: 4.7 },
+  'karst-tower': { build: karstNeedle, radius: 4, fit: 2.8 },
   'bamboo-rafts': { build: bambooRafts, radius: 8 },
   'river-village': { build: riverVillage, glow: riverVillageGlow, radius: 14 },
   'palazzo-row': { build: palazzoRow, radius: 15 },
