@@ -21,6 +21,7 @@ import { countdownPose, handover, launchHandover, launchPose, startLineShot } fr
 import { DETAIL_FADE_MS, flyoverHighlight, flyoverPath, flyoverTop } from './flyover';
 import { buildTrackFeatures } from './trackFeatures';
 import { buildLaneMarkings } from './scenery/athletics';
+import { buildRacingLook } from './scenery/racingLook';
 import { TV, biggestBunch, packCams, packRace, packWeight, standingLabel, tvCameras, tvMoment, tvSpots } from './tvMoments';
 import { buildStructures } from './structures';
 import { roofBlocks, stationRoof } from './scenery/coaster';
@@ -288,7 +289,8 @@ export function finishCutaway(roof) {
 }
 
 export class TrackScene {
-  constructor(canvas, { interactive = true, maxPixelRatio = 2, lite = prefersLite(), scenery = prefersScenery() } = {}) {
+  constructor(canvas, { interactive = true, maxPixelRatio = 2, lite = prefersLite(), scenery = prefersScenery(), racingLook = false } = {}) {
+    this.racingLook = racingLook; // (the racing-look sample: dev kit view only, ?racing=1)
     const lowEnd = (navigator.hardwareConcurrency || 4) <= 4 && window.devicePixelRatio >= 2;
     this.lite = lite;
     this.sceneryOn = scenery;
@@ -416,6 +418,8 @@ export class TrackScene {
       this.trackGroup.add(marks.lines);
       if (marks.numbers) this.trackGroup.add(marks.numbers);
     }
+    // The racing-look sample (kerbs, chevrons, chequered lines): only where the dev kit view asks for it.
+    if (this.racingLook && this.channel && track?.physics?.kit) this.trackGroup.add(buildRacingLook(this.centerline, this.channel, { lite: this.lite }));
     // TV moments: the track's fixed trackside cameras (./tvMoments.js).
     this.tvCams = tvCameras(this.centerline, this.channel, tvSpots(track?.physics));
     // Mid race, a camera or two keep for the pack shot (TV.pack); the others follow the marble as before.
