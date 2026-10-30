@@ -984,7 +984,6 @@ export class TrackScene {
   applyTvMoment(frame, index, at) {
     const pulse = (k) => { for (const p of this.marbles.pointers ?? []) if (p.index === index) p.mesh.scale.multiplyScalar(1 + 0.9 * k); };
     const lensBack = () => {
-      this.marbles.setOwnRings?.(0);
       this.tvShot = null;
       if (this.tvLens === undefined) return;
       this.camera.fov = this.tvLens;
@@ -1012,8 +1011,7 @@ export class TrackScene {
     if (back) target.addScaledVector(back, -TV.tilt);
     this.camera.position.lerpVectors(this.main.cam, m.cam.pos, m.w);
     this.camera.lookAt(this.main.target.clone().lerp(target, m.w));
-    // The player's own marble: a ring in its colour while the TV camera has the shot; the pointer pulses as it comes past.
-    this.marbles.setOwnRings?.(m.w);
+    // The player's own marble: its pointer (the arrow over it) pulses as it comes past.
     if (!pack) pulse(m.w * (0.5 + 0.5 * Math.sin(frame.t / 120)));
     this.tvShot = { pack: Boolean(pack), w: m.w, label: pack && frame.t - this.tvPack.from < TV.pack.label ? this.tvPack.label : null };
   }
@@ -1083,7 +1081,7 @@ export class TrackScene {
 
   /** The label for the player's own marble during a pack shot ("Leader +1.8 s", "7th, in the pack"…), or null without one. */
   standing(frame, arc, members) {
-    const own = this.marbles.rings?.[0]?.index;
+    const own = this.marbles.pointers?.[0]?.index;
     if (own === undefined || !(frame.p[own] < 1)) return null;
     const order = frame.s ?? [];
     const place = order.indexOf(own) + 1;
