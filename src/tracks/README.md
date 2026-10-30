@@ -637,6 +637,13 @@ one of the world's great mountains. It is built as a coaster (everything above a
 - The layouts made for the series are the `(peaks)` rows above (L89 to L93 for the test five, L94 to L103 for Peaks 6–15); each has a test track built as a
   mountain (`series: 'peak'`).
 
+## The racing look
+
+Every kit track gets it by itself (Moses, 30 Oct 2026; `client/src/three/scenery/racingLook.js`), looks
+only: chequered start and finish lines and short, muted red-and-white kerbs on the inside of the 1–2
+sharpest bends (sharper than 0.016 rad a metre, at least 80 m apart; one at most on Canyons, Rivers and
+Peaks; Track and Field: the finish's chequer only). Nothing to set in the track file.
+
 ## TV moments
 
 A track can have one or two fixed trackside cameras at its dramatic spots (drawing only, never

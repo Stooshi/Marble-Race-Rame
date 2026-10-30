@@ -8,7 +8,7 @@
 import {
   AmbientLight, BackSide, BoxGeometry, CanvasTexture, Color, NearestFilter, DirectionalLight, DoubleSide, Float32BufferAttribute, Fog,
   FrontSide, Group, HemisphereLight, Mesh, MeshBasicMaterial, MeshLambertMaterial, PerspectiveCamera, PlaneGeometry,
-  Box3, Frustum, Matrix4, Plane, Scene, SphereGeometry, SRGBColorSpace, Vector3, WebGLRenderer,
+  Box3, BufferGeometry, Frustum, Matrix4, Plane, Scene, SphereGeometry, SRGBColorSpace, Vector3, WebGLRenderer,
 } from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { buildCenterline, buildTrackGeometry, TRACK_STYLE } from './trackModel';
@@ -88,6 +88,31 @@ function chequerMaterial(width) {
   map.colorSpace = SRGBColorSpace;
   map.magFilter = NearestFilter;
   return new MeshLambertMaterial({ map, emissive: '#2a2a2a' });
+}
+
+/** A channel piece with a racing-look part ({ positions, colors }) added to it (both unindexed; the part's normals per triangle). */
+function paintInto(piece, part) {
+  const g = new BufferGeometry();
+  const normals = [];
+  const p = part.positions;
+  for (let i = 0; i < p.length; i += 9) {
+    const ux = p[i + 3] - p[i]; const uy = p[i + 4] - p[i + 1]; const uz = p[i + 5] - p[i + 2];
+    const vx = p[i + 6] - p[i]; const vy = p[i + 7] - p[i + 1]; const vz = p[i + 8] - p[i + 2];
+    let nx = uy * vz - uz * vy; let ny = uz * vx - ux * vz; let nz = ux * vy - uy * vx;
+    const len = Math.hypot(nx, ny, nz) || 1;
+    nx /= len; ny /= len; nz /= len;
+    normals.push(nx, ny, nz, nx, ny, nz, nx, ny, nz);
+  }
+  for (const [name, extra] of [['position', part.positions], ['color', part.colors], ['normal', normals]]) {
+    const a = piece.getAttribute(name);
+    if (!a) continue;
+    const merged = new Float32Array(a.array.length + extra.length);
+    merged.set(a.array);
+    merged.set(extra, a.array.length);
+    g.setAttribute(name, new Float32BufferAttribute(merged, 3));
+  }
+  g.computeBoundingSphere();
+  return g;
 }
 
 function mergeByMaterial(group) {
@@ -289,8 +314,8 @@ export function finishCutaway(roof) {
 }
 
 export class TrackScene {
-  constructor(canvas, { interactive = true, maxPixelRatio = 2, lite = prefersLite(), scenery = prefersScenery(), racingLook = false } = {}) {
-    this.racingLook = racingLook; // (the racing-look sample: dev kit view only, ?racing=1)
+  constructor(canvas, { interactive = true, maxPixelRatio = 2, lite = prefersLite(), scenery = prefersScenery(), racingLook = true } = {}) {
+    this.racingLook = racingLook; // (the racing look: on by default; the dev kit view's ?racing=0 leaves it out, for before pictures)
     const lowEnd = (navigator.hardwareConcurrency || 4) <= 4 && window.devicePixelRatio >= 2;
     this.lite = lite;
     this.sceneryOn = scenery;
@@ -393,7 +418,19 @@ export class TrackScene {
       // Drawn in pieces along the track, so only those in view are drawn (the whole
       // channel stays as trackMesh, hidden, for its size and shape).
       this.trackMesh.visible = false;
-      for (const piece of channelPieces(geometry, channelPieceSize(track, this.lite))) this.trackGroup.add(new Mesh(piece, this.trackMaterial));
+      const per = channelPieceSize(track, this.lite);
+      const pieces = channelPieces(geometry, per);
+      // The racing look (./scenery/racingLook.js: chequered start and finish lines, a kerb or two), painted
+      // into the channel's own pieces: no draw call of its own. (Kit tracks; `racingLook: false` leaves it out.)
+      const kit = track?.physics?.kit;
+      if (kit && this.racingLook) {
+        const { parts } = buildRacingLook(this.centerline, this.channel, { lite: this.lite, nature: Boolean(kit.canyon || kit.river || kit.peak), athletics: Boolean(kit.athletics) });
+        for (const part of parts) {
+          const k = Math.min(pieces.length - 1, Math.floor(Math.min(this.centerline.segments - 1, Math.floor((part.s / this.channel.arc) * this.centerline.segments)) / per));
+          pieces[k] = paintInto(pieces[k], part);
+        }
+      }
+      for (const piece of pieces) this.trackGroup.add(new Mesh(piece, this.trackMaterial));
     }
     const arch = this.buildFinishArch(track);
     // The Holiday Season's layer (looks only): string lights, the place's weather, the winner's fireworks (./holidayLayer.js).
@@ -418,8 +455,6 @@ export class TrackScene {
       this.trackGroup.add(marks.lines);
       if (marks.numbers) this.trackGroup.add(marks.numbers);
     }
-    // The racing-look sample (chequered lines, a few kerbs): only where the dev kit view asks for it.
-    if (this.racingLook && this.channel && track?.physics?.kit) this.trackGroup.add(buildRacingLook(this.centerline, this.channel, { lite: this.lite, nature: Boolean(track.physics.kit.canyon || track.physics.kit.river || track.physics.kit.peak) }));
     // TV moments: the track's fixed trackside cameras (./tvMoments.js).
     this.tvCams = tvCameras(this.centerline, this.channel, tvSpots(track?.physics));
     // Mid race, a camera or two keep for the pack shot (TV.pack); the others follow the marble as before.
