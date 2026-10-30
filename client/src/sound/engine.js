@@ -10,7 +10,7 @@
  *       plugin uses Web Audio.
  * - Preloaded early (prepare(), from the race page, a room, Quick race and League Night as soon as the
  *   player is there): the start beeps, the gate sound, the crowd, the ceremony song and the next two
- *   race tunes (this race's and the next race's). The tunes come from shuffled rounds of all 13, decided
+ *   race tunes (this race's and the next race's). The tunes come from shuffled rounds of all 12, decided
  *   ahead so they can be loaded: a race's tune is never the previous race's.
  * - Timing on the race clock: raceCountdown(raceId, msToGo) and raceGo(raceId, goAt) give GO as shown
  *   on this screen (a wall-clock moment). The beeps (their fourth beep exactly on GO) and the race's
@@ -30,14 +30,14 @@
 import { createWebBackend } from './webBackend';
 import { createNativeBackend } from './nativeBackend';
 
-/** The race tunes (Moses, 28 Oct 2026: 13, RACE MUSIC 1 and 3–14; RACE MUSIC 2 is no longer in the game). */
-export const RACE_TRACKS = ['tune-1', 'tune-3', 'tune-4', 'tune-5', 'tune-6', 'tune-7', 'tune-8', 'tune-9', 'tune-10', 'tune-11', 'tune-12', 'tune-13', 'tune-14'];
+/** The race tunes (Moses: 12 from 30 Oct 2026, RACE MUSIC 3–14; RACE MUSIC 1 and 2 are no longer in the game). */
+export const RACE_TRACKS = ['tune-3', 'tune-4', 'tune-5', 'tune-6', 'tune-7', 'tune-8', 'tune-9', 'tune-10', 'tune-11', 'tune-12', 'tune-13', 'tune-14'];
 /**
  * Lengths in seconds. The tunes: their exact loop lengths (scripts/convert-audio.sh prints them; no
  * fades, the silence at both ends trimmed, cut at zero crossings), so the loop is seamless.
  */
 export const TRACK_SECONDS = {
-  'tune-1': 71.316542, 'tune-3': 43.139458, 'tune-4': 37.716083, 'tune-5': 30.733125, 'tune-6': 50.521917,
+  'tune-3': 43.139458, 'tune-4': 37.716083, 'tune-5': 30.733125, 'tune-6': 50.521917,
   'tune-7': 48.228708, 'tune-8': 27.382583, 'tune-9': 27.513625, 'tune-10': 54.095521, 'tune-11': 53.579333,
   'tune-12': 32.22, 'tune-13': 28.548729, 'tune-14': 28.138437, ceremony: 59.1,
 };
@@ -118,7 +118,7 @@ let lastTrack = null;
 let queue = []; // the upcoming tunes, in the order they'll play (kept loaded)
 const chosen = new Map(); // raceId → its first tune
 
-/** The next tune from shuffled rounds of all the tunes (13), never `last`. */
+/** The next tune from shuffled rounds of all the tunes (12), never `last`. */
 export function nextTrack(last, random = Math.random) {
   if (!order.length) {
     order = [...RACE_TRACKS];

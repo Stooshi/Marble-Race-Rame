@@ -40,8 +40,8 @@ dur() { ffprobe -v error -show_entries format=duration -of csv=p=0 "$1"; }
 # Then cut at zero crossings (scripts/loop-cut.py, needs python3 and numpy), so the loop point never clicks.
 if [ -z "${ONLY_EFFECTS:-}" ]; then
 TMP=$(mktemp -d)
-# (RACE MUSIC 2 is no longer in the game: Moses, 28 Oct 2026. Its original stays in music-inbox.)
-for i in 1 3 4 5 6 7 8 9 10 11 12 13 14; do
+# (RACE MUSIC 2 is no longer in the game: Moses, 28 Oct 2026; nor RACE MUSIC 1, 30 Oct 2026. Their originals stay in music-inbox.)
+for i in 3 4 5 6 7 8 9 10 11 12 13 14; do
   f=$(ls "$IN"/RACE\ MUSIC\ $i\ -*.mp3)
   ffmpeg -v error -y -i "$f" -vn -af "$TRIM" -ac 2 -ar 48000 -f f32le - | python3 scripts/loop-cut.py > "$TMP/t.raw"
   ffmpeg -v error -y -f f32le -ar 48000 -ac 2 -i "$TMP/t.raw" -c:a flac "$TMP/tune-$i.flac"
