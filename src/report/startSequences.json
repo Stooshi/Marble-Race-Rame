@@ -1,5 +1,5 @@
 {
-"abisko-aurora-run": {"family":"block-2","reach":0.242,"seq":["opening: split-start","drop","pileUp","slalom","chutes","drop","slalom","climb","S-bends right","peg"]},
+"abisko-aurora-run": {"family":"block-2","reach":0.223,"seq":["opening: split-start","drop","pileUp","slalom","chutes","drop","slalom","climb","S-bends right","peg"]},
 "accra-december-beats": {"family":"athletics","reach":0.24,"seq":["opening: banked-turn","drop","pileUp","slalom","sweep left","straight","peg","slalom"]},
 "aconcagua-penitentes": {"family":"peak","reach":0.235,"seq":["opening: banked-turn","drop","pileUp","slalom","sweep left","straight","steps","moguls"]},
 "alaska-tidewater-run": {"family":"peak","reach":0.228,"seq":["opening: classic","drop","pileUp","slalom","sweep right","peg","straight","peg","jump"]},
@@ -137,7 +137,7 @@
 "tromso-aurora-grand-prix": {"family":"grand-prix","reach":0.28,"seq":["opening: peg-drop","drop","peg ×7","S-bends right","straight","drop","slalom"]},
 "vatnajokull-blue-cave": {"family":"peak","reach":0.268,"seq":["opening: banked-turn","drop","pileUp","slalom","sweep right","drop","peg ×2","S-bends right"]},
 "veliky-ustyug-frost-run": {"family":"world-tour","reach":0.344,"seq":["opening: clean-drop","drop","S-bends left","straight","peg","jump","S-bends right","curtain"]},
-"venice-cube-canals": {"family":"block-2","reach":0.215,"seq":["opening: staggered-drop","drop","pileUp","slalom","brake","straight","climb","sweep left","slalom"]},
+"venice-cube-canals": {"family":"block-2","reach":0.204,"seq":["opening: staggered-drop","drop","pileUp","slalom","brake","straight","climb","sweep left","slalom"]},
 "verdon-burst": {"family":"canyon","reach":0.216,"seq":["opening: crest-start","drop","pileUp","slalom","climb","drop","sweep right","boost"]},
 "vinson-blue-ice": {"family":"peak","reach":0.34,"seq":["opening: peg-drop","drop","peg ×7","sweep left","sweep right","peg"]},
 "volga-port-burst": {"family":"river","reach":0.315,"seq":["opening: clean-drop","drop","S-bends right","drop","slalom","sweep right","peg ×3"]},

@@ -6,12 +6,12 @@
    "name": "Abisko Aurora Run",
    "series": "Blocks",
    "lighting": "night-northern-lights",
-   "v": "846ab35f",
-   "bytes": 15518,
-   "bytes2x": 37226,
-   "t": 10478,
+   "v": "4176f20a",
+   "bytes": 13112,
+   "bytes2x": 32632,
+   "t": 34370,
    "side": 1,
-   "marbles": 6
+   "marbles": 2
   },
   "accra-december-beats": {
    "name": "Accra December Beats",
@@ -1524,12 +1524,12 @@
    "name": "Tre Cime Cube Towers",
    "series": "Blocks",
    "lighting": "day",
-   "v": "b5580e1b",
-   "bytes": 14996,
-   "bytes2x": 36852,
-   "t": 15664,
+   "v": "e873cda9",
+   "bytes": 14434,
+   "bytes2x": 34040,
+   "t": 32796,
    "side": 1,
-   "marbles": 6
+   "marbles": 7
   },
   "trinidad-parang-run": {
    "name": "Trinidad Parang Run",
@@ -1579,10 +1579,10 @@
    "name": "Venice Cube Canals",
    "series": "Blocks",
    "lighting": "sunset",
-   "v": "538c4cb8",
-   "bytes": 9596,
-   "bytes2x": 24992,
-   "t": 10205,
+   "v": "7d5f6528",
+   "bytes": 10990,
+   "bytes2x": 25808,
+   "t": 10481,
    "side": 1,
    "marbles": 4
   },
