@@ -109,6 +109,27 @@ export const BLOCK_WORLDS = {
     tops: ['#e9f0f6', '#dde6ee'], riser: '#5a606a', deep: '#4a505a', floor: '#dde6ee', bank: '#e5ecf3', fill: '#5a606a', hills: 30, step: 3,
     dressing: [['birch', 0.45], ['snowPine', 0.3], ['snowRock', 0.25]],
   },
+  // ── Blocks Series 2, the cities (31 Oct 2026) ──
+  // Kyoto: moss-green temple grounds, dark grey stone, maples and stone lanterns.
+  moss: {
+    tops: ['#6f9a52', '#638e48'], riser: '#6a6560', deep: '#4f4c49', floor: '#638e48', bank: '#6c9750', fill: '#6a6560', hills: 24, step: 3,
+    dressing: [['maple', 0.35], ['stoneLantern', 0.2], ['bush', 0.25], ['stoneRock', 0.2]],
+  },
+  // Marrakesh: ochre earth and terracotta walls, palms.
+  souk: {
+    tops: ['#d4a06a', '#c99560'], riser: '#b5643f', deep: '#8f4f33', floor: '#c99560', bank: '#cf9b66', fill: '#b5643f', hills: 12, step: 2,
+    dressing: [['palmCube', 0.35], ['sandRock', 0.25], ['crates', 0.2], ['planter', 0.2]],
+  },
+  // Singapore: lush tropical green round the bay.
+  tropic: {
+    tops: ['#5f9e4e', '#549444'], riser: '#7a7f86', deep: '#3d6f86', floor: '#3d6f86', bank: '#5a9a4a', fill: '#7a7f86', hills: 14, step: 2,
+    dressing: [['palmCube', 0.3], ['tree', 0.3], ['flowers', 0.2], ['lampPost', 0.2]],
+  },
+  // Lisbon: cream pavements, terracotta and tile-blue risers, the river below.
+  azulejo: {
+    tops: ['#ddd3c0', '#d2c7b2'], riser: '#5b84b0', deep: '#3f6f8a', floor: '#3f6f8a', bank: '#d8ceba', fill: '#c4703f', hills: 28, step: 4,
+    dressing: [['lampPost', 0.3], ['planter', 0.3], ['tree', 0.25], ['crates', 0.15]],
+  },
 };
 export const BLOCK_WORLD_NAMES = Object.keys(BLOCK_WORLDS);
 
@@ -256,6 +277,14 @@ const MAKE = {
     cube(2.2, 1.6, 2.2, 0, 5.2, 0, '#b9b98a'),
     ...(lite ? [] : [cube(1.8, 0.3, 1.8, 0, 6.1, 0, '#f2f6fa')]),
   ]),
+  // The cities (31 Oct 2026). A maple: a dark trunk, a wide red-orange crown.
+  maple: (lite) => merge([
+    cube(0.6, 2.4, 0.6, 0, 1.2, 0, '#5a4030'),
+    cube(3.4, 1.6, 3.0, 0, 3.0, 0, '#c8553a'),
+    ...(lite ? [] : [cube(2.2, 1.0, 2.0, 0.3, 4.2, -0.2, '#d8703e')]),
+  ]),
+  // A stone lantern: a grey post, a wide cap, a warm light in its box.
+  stoneLantern: () => merge([cube(0.6, 1.4, 0.6, 0, 0.7, 0, '#8a8580'), cube(1.0, 0.7, 1.0, 0, 1.75, 0, '#f2d28e'), cube(1.4, 0.35, 1.4, 0, 2.3, 0, '#7a7570')]),
 };
 
 /** A world's dressing: [[make(lite) → geometry with colours, share], …], shares adding up to 1. */

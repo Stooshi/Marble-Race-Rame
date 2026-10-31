@@ -1913,6 +1913,75 @@ const LAYOUTS = {
       obstacles: [parked({ costume: c.parked, at: 0.2, side: R, length: 6 }), peg({ costume: c.peg, at: 0.45, line: 'left' })], features: [rumble({ from: 0.7, to: 0.95, count: 3 })],
     },
   ],
+  /** L110 Temple terraces (Blocks 2, Kyoto): down the temple steps, banked switchbacks down the hillside terraces, three pairs with a path through the red gates (a slalom) after the first (big feature one), the spiral round the five-storey pagoda (big feature two), a sweep round the moss garden (two pegs), the hairpin by the pond, S-bends past the pond (a peg) and a parked piece and a peg at the run-in. */
+  'temple-terraces': (L, R, c) => [
+    { key: 'templeSteps', name: 'Down the temple steps', shape: straight(45, { grade: 0.13 }), features: [steps({ from: 0.35, to: 0.9, count: 4, drag: 0.01 })] },
+    { key: 'switch1', name: 'First switchbacks', shape: sBends({ first: L, radius: 50, degrees: 100, grade: 0.13 }) },
+    { key: 'gatePath', name: 'Through the red gates', shape: straight(60, { grade: 0.11 }), obstacles: [slalom({ costume: c.slalom, from: 0.15, to: 0.85, count: 4, loss: 0.2 })] },
+    { key: 'switch2', name: 'Second switchbacks', shape: sBends({ first: L, radius: 58, degrees: 95, grade: 0.12 }), billboards: 1 },
+    { key: 'switch3', name: 'Third switchbacks', shape: sBends({ first: L, radius: 66, degrees: 90, grade: 0.12 }) },
+    { key: 'pagoda', name: 'Round the pagoda', shape: spiral({ side: R, radius: 50, turns: 0.9, grade: 0.15 }) },
+    { key: 'mossGarden', name: 'Round the moss garden', shape: sweep({ side: L, radius: 85, degrees: 100, grade: 0.09 }), obstacles: [peg({ costume: c.peg, at: 0.3, line: 'left' }), peg({ costume: c.peg, at: 0.65, line: 'right' })], billboards: 1 },
+    { key: 'brakingStraight', name: 'Run to the pond', shape: straight(50, { grade: 0.12 }), billboards: 1 },
+    { key: 'hairpin', name: 'Pond hairpin', shape: hairpin({ side: L }), obstacles: [swipe({ costume: c.swipe, side: 'high' })] },
+    { key: 'pondSweep', name: 'Pond S-bends', shape: sBends({ first: R, radius: 75, degrees: 70, grade: 0.12 }), obstacles: [peg({ costume: c.peg, at: 0.5, line: 'center' })], billboards: 1 },
+    {
+      key: 'lastStraight', name: 'Last straight', shape: straight(80, { grade: 0.15 }),
+      obstacles: [parked({ costume: c.parked, at: 0.2, side: L, length: 6 }), peg({ costume: c.peg, at: 0.45, line: 'right' })], features: [rumble({ from: 0.7, to: 0.95, count: 3 })],
+    },
+  ],
+  /** L111 Souk walls (Blocks 2, Marrakesh; with the funnel opening, big feature one): S-bends through the covered souk alleys (a peg), an alley straight past the stalls (a slalom), the sweep round the big square under the minaret, along the kasbah walls (pegs), the two-step drop off the walls (big feature two: two drops, a ledge between), the hairpin, the palm-garden slalom, S-bends to the gate and a parked piece and a peg at the run-in. */
+  'souk-walls': (L, R, c) => [
+    { key: 'alleys', name: 'Through the souk alleys', shape: sBends({ first: R, radius: 60, degrees: 80, grade: 0.12 }), obstacles: [peg({ costume: c.peg, at: 0.5, line: 'center' })] },
+    { key: 'stalls', name: 'Past the stalls', shape: straight(55, { grade: 0.11 }), obstacles: [slalom({ costume: c.slalom, from: 0.15, to: 0.85, count: 4, loss: 0.2 })] },
+    { key: 'square', name: 'Round the big square', shape: sweep({ side: L, radius: 85, degrees: 160, grade: 0.09 }), billboards: 2 },
+    { key: 'walls', name: 'Along the kasbah walls', shape: straight(50, { grade: 0.1 }), obstacles: [peg({ costume: c.peg, at: 0.3, line: 'left' }), peg({ costume: c.peg, at: 0.6, line: 'right' })] },
+    { key: 'drop1', name: 'Off the kasbah walls', shape: plunge(40, { grade: 0.26, from: 0.12 }) },
+    { key: 'ledge', name: 'The ledge', shape: straight(35, { grade: 0.1 }), obstacles: [peg({ costume: c.peg, at: 0.5, line: 'center' })], billboards: 1 },
+    { key: 'drop2', name: 'Down to the palm garden', shape: plunge(40, { grade: 0.26, from: 0.1 }) },
+    { key: 'brakingStraight', name: 'Run to the hairpin', shape: straight(50, { grade: 0.12 }), billboards: 1 },
+    { key: 'hairpin', name: 'Hairpin', shape: hairpin({ side: R }), obstacles: [swipe({ costume: c.swipe, side: 'high' })] },
+    { key: 'palms', name: 'Palm garden slalom', shape: straight(60, { grade: 0.11 }), obstacles: [slalom({ costume: c.slalom, from: 0.15, to: 0.85, count: 4, loss: 0.18 })] },
+    { key: 'gateBends', name: 'S-bends to the gate', shape: sBends({ first: L, radius: 75, degrees: 70, grade: 0.12 }) },
+    {
+      key: 'lastStraight', name: 'Last straight', shape: straight(80, { grade: 0.15 }),
+      obstacles: [parked({ costume: c.parked, at: 0.2, side: R, length: 6 }), peg({ costume: c.peg, at: 0.45, line: 'left' })], features: [rumble({ from: 0.7, to: 0.95, count: 3 })],
+    },
+  ],
+  /** L112 Garden domes (Blocks 2, Singapore): up from the tunnel and down to the bay, a bay sweep, the spiral round the tall garden towers (big feature one), the skywalk sweep (a peg), a straight into the dome, the curtain waterfall inside the glass dome (big feature two: racing through the falling water), the cloud-forest slalom, the hairpin under the dome, S-bends along the bay and a parked piece and a peg at the run-in. */
+  'garden-domes': (L, R, c) => [
+    { key: 'rise', name: 'Up from the tunnel', shape: climb(10, { grade: -0.04, after: 0.12 }) },
+    { key: 'bay', name: 'Down to the bay', shape: plunge(45, { grade: 0.28, from: 0.1 }) },
+    { key: 'baySweep', name: 'Bay sweep', shape: sweep({ side: R, radius: 90, degrees: 100, grade: 0.09 }), billboards: 2 },
+    { key: 'towers', name: 'Round the garden towers', shape: spiral({ side: R, radius: 52, turns: 0.9, grade: 0.15 }) },
+    { key: 'skywalk', name: 'Skywalk sweep', shape: sweep({ side: L, radius: 95, degrees: 120, grade: 0.09 }), obstacles: [peg({ costume: c.peg, at: 0.5, line: 'center' })], billboards: 1 },
+    { key: 'intoDome', name: 'Into the dome', shape: straight(35, { grade: 0.1 }) },
+    { key: 'domeFall', name: 'Through the dome waterfall', shape: waterfall(35, { grade: 0.5, curtain: true }) },
+    { key: 'cloudForest', name: 'Cloud-forest slalom', shape: straight(60, { grade: 0.12 }), obstacles: [slalom({ costume: c.slalom, from: 0.15, to: 0.85, count: 4, loss: 0.18 })] },
+    { key: 'brakingStraight', name: 'Run to the hairpin', shape: straight(50, { grade: 0.12 }), billboards: 1 },
+    { key: 'hairpin', name: 'Hairpin under the dome', shape: hairpin({ side: L }), obstacles: [swipe({ costume: c.swipe, side: 'high' })] },
+    { key: 'bayBends', name: 'Bay S-bends', shape: sBends({ first: R, radius: 72, degrees: 70, grade: 0.12 }), billboards: 1 },
+    {
+      key: 'lastStraight', name: 'Last straight', shape: straight(85, { grade: 0.15 }),
+      obstacles: [parked({ costume: c.parked, at: 0.2, side: L, length: 6 }), peg({ costume: c.peg, at: 0.45, line: 'right' })], features: [rumble({ from: 0.7, to: 0.95, count: 3 })],
+    },
+  ],
+  /** L113 Tram hills (Blocks 2, Lisbon; after the classic opening): a short run to the top of the tram hill, the big drop down it (big feature one), past the tiled houses (pegs), the sweep across the square, two pairs of banked switchbacks down the old quarter (big feature two), the run to the quay, the hairpin, a sweep along the river and a parked piece and a peg at the run-in. */
+  'tram-hills': (L, R, c) => [
+    { key: 'hillTop', name: 'Top of the tram hill', shape: straight(30, { grade: 0.1 }), obstacles: [peg({ costume: c.peg, at: 0.5, line: 'center' })] },
+    { key: 'tramHill', name: 'Down the tram hill', shape: plunge(70, { grade: 0.3, from: 0.12 }) },
+    { key: 'houses', name: 'Past the tiled houses', shape: straight(55, { grade: 0.11 }), obstacles: [peg({ costume: c.peg, at: 0.25, line: 'left' }), peg({ costume: c.peg, at: 0.5, line: 'right' }), peg({ costume: c.peg, at: 0.75, line: 'center' })] },
+    { key: 'square', name: 'Across the square', shape: sweep({ side: R, radius: 85, degrees: 120, grade: 0.09 }), billboards: 2 },
+    { key: 'switch1', name: 'Old quarter switchbacks', shape: sBends({ first: R, radius: 52, degrees: 100, grade: 0.13 }) },
+    { key: 'switch2', name: 'Down to the river', shape: sBends({ first: R, radius: 62, degrees: 92, grade: 0.12 }) },
+    { key: 'brakingStraight', name: 'Along the quay', shape: straight(50, { grade: 0.12 }), obstacles: [slalom({ costume: c.slalom, from: 0.2, to: 0.75, count: 3, loss: 0.18 })] },
+    { key: 'hairpin', name: 'Quay hairpin', shape: hairpin({ side: L }), obstacles: [swipe({ costume: c.swipe, side: 'high' })] },
+    { key: 'river', name: 'Along the river', shape: sweep({ side: R, radius: 95, degrees: 110, grade: 0.1 }), billboards: 2 },
+    {
+      key: 'lastStraight', name: 'Last straight', shape: straight(80, { grade: 0.15 }),
+      obstacles: [parked({ costume: c.parked, at: 0.2, side: L, length: 6 }), peg({ costume: c.peg, at: 0.45, line: 'right' })], features: [rumble({ from: 0.7, to: 0.95, count: 3 })],
+    },
+  ],
 };
 
 const LAYOUT_KINDS = Object.keys(LAYOUTS);

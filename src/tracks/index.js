@@ -166,4 +166,8 @@ module.exports = [
   require('./niagara-cube-falls'),
   require('./tre-cime-cube-towers'),
   require('./abisko-aurora-run'),
+  require('./kyoto-block-gardens'),
+  require('./marrakesh-cube-souk'),
+  require('./singapore-block-gardens'),
+  require('./lisbon-cube-hills'),
 ];
