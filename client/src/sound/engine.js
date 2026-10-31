@@ -23,7 +23,9 @@
  * - The crowd: when the player's own marble passes a Grand Prix stand (crowdCheer, once per stand per
  *   race), under the music. The start sound 1 s after GO (the marbles start rolling; 30 Oct 2026). The player's
  *   own marble hitting another (marbleHit, from ./hits.js): soft, louder for harder hits, under the music,
- *   at most one a second (30 Oct 2026). (No overtaking whoosh for now.)
+ *   at most one a second (30 Oct 2026). The own marble hitting an obstacle (marbleBump, from ./hits.js;
+ *   31 Oct 2026): the same, at the same level; the two share one limit (at most one hit sound every
+ *   0.5 s). (No overtaking whoosh for now.)
  * - The music sits well under the effects (MUSIC_UNDER) and dips under the gate sound (DUCK).
  * - Readiness: whenSoundReady() / soundMissing() for the race page's readiness check and report.
  */
@@ -42,7 +44,7 @@ export const TRACK_SECONDS = {
   'tune-12': 32.22, 'tune-13': 28.548729, 'tune-14': 28.138437, ceremony: 59.1,
 };
 export const CEREMONY = 'ceremony';
-export const SOUNDS = { crowd: 'crowd-grand-prix', launch: 'start-rolling', beeps: 'start-beeps', hit: 'marble-hit' };
+export const SOUNDS = { crowd: 'crowd-grand-prix', launch: 'start-rolling', beeps: 'start-beeps', hit: 'marble-hit', bump: 'marble-bump' };
 /**
  * The start sound (the marbles start rolling) plays this long after the GO beep, on the race clock (Moses,
  * 30 Oct 2026), without dipping the music: its file 50% louder than the old gate sound's (+3.5 dB).
@@ -342,9 +344,16 @@ export function crowdCheer(raceId, key) {
 
 /** The player's own marble hit another (`strength` 0 to 1, from ./hits.js): soft, never ducking the music. */
 export function marbleHit(raceId, strength) {
+  return hitSound('hit', raceId, strength);
+}
+/** The player's own marble hit an obstacle (`strength` 0 to 1, from ./hits.js): as marbleHit, at the same level. */
+export function marbleBump(raceId, strength) {
+  return hitSound('bump', raceId, strength);
+}
+function hitSound(key, raceId, strength) {
   if (race && race.id !== raceId) return false;
   const k = Math.max(0, Math.min(1, strength));
-  return play('hit', { gain: HIT_LEVEL.soft + (HIT_LEVEL.hard - HIT_LEVEL.soft) * k, duck: false });
+  return play(key, { gain: HIT_LEVEL.soft + (HIT_LEVEL.hard - HIT_LEVEL.soft) * k, duck: false });
 }
 
 /** A race sound now (only if loaded and the sound is running: never played late). → whether it played. */

@@ -17,8 +17,8 @@ import { CEREMONY_PHASES } from '../utils/finishShow';
 import SkipToResults from './SkipToResults';
 import FrameMeter, { useFrameMeter } from './FrameMeter';
 import { useTvMoments } from './tvMomentsSetting';
-import { createHitDetector } from '../sound/hits';
-import { START_SOUND_MS, crowdCheer, marbleHit, play as playSound, prepare as prepareSound, raceCeremony, raceCountdown, raceGo, soundReport, stopCountdown, whenSoundReady } from '../sound/engine';
+import { createBumpDetector, createHitDetector, createHitGate } from '../sound/hits';
+import { START_SOUND_MS, crowdCheer, marbleBump, marbleHit, play as playSound, prepare as prepareSound, raceCeremony, raceCountdown, raceGo, soundReport, stopCountdown, whenSoundReady } from '../sound/engine';
 import { watchReadiness } from './raceReadiness';
 import { api } from '../api/client';
 import { FLYOVER_MS } from '../three/flyover';
@@ -99,6 +99,11 @@ export default function LiveRaceViewer3D({
   const [ready, setReady] = useState(false); // the race's marbles in and drawn, the hold decided
   const ownRef = useRef(highlight); // (the player's own marbles, for the crowd's cheer)
   ownRef.current = highlight;
+  // The own marble hitting an obstacle (../sound/hits.js; 31 Oct 2026): its hits come with the streamed
+  // frames, ahead of the race as shown, and sound when the race as shown reaches them.
+  const bumpRef = useRef({ raceId: null, d: createBumpDetector() });
+  if (bumpRef.current.raceId !== (meta?.raceId ?? null)) bumpRef.current = { raceId: meta?.raceId ?? null, d: createBumpDetector() };
+  useEffect(() => { if (frame && highlight.length) bumpRef.current.d.add(frame, highlight); }, [frame, highlight]);
   const [shownT, setShownT] = useState(null); // the countdown as shown (whole tenths), for its overlay
   const [shown, setShown] = useState(null); // the race as shown (its clock and order), when held back
   const [gone, setGone] = useState(false); // the gates have opened (as shown): the standings appear
@@ -335,9 +340,14 @@ export default function LiveRaceViewer3D({
           scene.updateRace(f, who, dt, insetRef.current); // 'leader', 'second' or an entry index (the scene keeps the leader steady)
           // The player's own marble hitting another: a soft click, louder for harder hits (../sound/hits.js; 30 Oct 2026).
           if (ownRef.current.length && meta?.raceId) {
-            if (!hits || hits.raceId !== meta.raceId) { const span = scene.raceSpan?.(); hits = span ? { raceId: meta.raceId, d: createHitDetector(span) } : { raceId: meta.raceId, d: null }; }
+            if (!hits || hits.raceId !== meta.raceId) { const span = scene.raceSpan?.(); hits = { raceId: meta.raceId, d: span ? createHitDetector(span) : null, gate: createHitGate() }; }
             const k = hits.d?.step(f, ownRef.current);
-            if (k !== null && k !== undefined) marbleHit(meta.raceId, k);
+            const b = bumpRef.current.raceId === meta.raceId ? bumpRef.current.d.step(f.t) : null;
+            // (The two share one limit, so they never stack into a rattle: the harder of the two plays.)
+            if ((k ?? b) !== null && (k ?? b) !== undefined && hits.gate.allow(f.t)) {
+              if (b !== null && (k === null || k === undefined || b > k)) marbleBump(meta.raceId, b);
+              else marbleHit(meta.raceId, k);
+            }
           }
           // The crowd: the player's own marble passing a stand (Grand Prix) cheers it, once per stand (Moses, 28 Oct 2026).
           if (grandPrix && f.t >= 0 && meta?.raceId && now - crowdCheckAt > 200) {

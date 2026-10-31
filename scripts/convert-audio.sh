@@ -6,7 +6,7 @@
 #   bash scripts/convert-audio.sh            everything
 #   SKIP_EFFECTS=1 bash scripts/convert-audio.sh   the music and the countdown only
 #   ONLY_TUNES=1 bash scripts/convert-audio.sh     the race tunes only
-#   ONLY_EFFECTS=1 bash scripts/convert-audio.sh   the race sounds only (gate, crowd, collision)
+#   ONLY_EFFECTS=1 bash scripts/convert-audio.sh   the race sounds only (start, crowd, collision, bump)
 # Levels: everything at -20 LUFS, the crowd at -24 (the engine mixes the music under the
 # effects and the crowd under the music). Two passes: the loudness is measured first, then one
 # steady gain is applied to the whole file (loudnorm's linear mode), so a looping track
@@ -76,6 +76,18 @@ if [ -z "${SKIP_EFFECTS:-}" ]; then
   ff="volume=$(awk -v m="$g" 'BEGIN { print -9 - m }')dB"
   ffmpeg -v error -y -i "$f" -vn -map_metadata -1 -af "$ff" -ar 48000 -c:a libopus -b:a 64k -vbr on -application audio "$OUT/marble-hit.webm"
   ffmpeg -v error -y -i "$f" -vn -map_metadata -1 -af "$ff" -c:a aac -b:a 96k -ar 44100 -movflags +faststart "$OUT/marble-hit.m4a"
+  # The player's own marble hitting an obstacle (Moses, 31 Oct 2026): "the same level as the collision sound".
+  # The bump is a dense 0.13 s knock, the collision a sharp click, so matched by energy (their mean level),
+  # not by peak: the bump's mean set to the levelled click's (its peak then well under the click's). The
+  # 30 ms of silence at its start trimmed, so it sounds on the hit.
+  hm=$(ffmpeg -hide_banner -nostats -i "$f" -af volumedetect -f null - 2>&1 | sed -n 's/.*mean_volume: \(.*\) dB/\1/p')
+  target=$(awk -v m="$hm" -v p="$g" 'BEGIN { print m + (-9 - p) }')
+  b=$(ls "$IN"/MARBLE\ BUMP\ ON\ OBSTICALS*.mp3)
+  trim="atrim=start=0.028,asetpts=PTS-STARTPTS"
+  bm=$(ffmpeg -hide_banner -nostats -i "$b" -af "$trim,volumedetect" -f null - 2>&1 | sed -n 's/.*mean_volume: \(.*\) dB/\1/p')
+  ff="$trim,volume=$(awk -v t="$target" -v m="$bm" 'BEGIN { print t - m }')dB"
+  ffmpeg -v error -y -i "$b" -vn -map_metadata -1 -af "$ff" -ar 48000 -c:a libopus -b:a 64k -vbr on -application audio "$OUT/marble-bump.webm"
+  ffmpeg -v error -y -i "$b" -vn -map_metadata -1 -af "$ff" -c:a aac -b:a 96k -ar 44100 -movflags +faststart "$OUT/marble-bump.m4a"
   # (No overtaking whoosh for now: Moses, 28 Oct 2026.)
 fi
 ls -l "$OUT"
