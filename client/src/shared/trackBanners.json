@@ -915,6 +915,17 @@
    "side": 1,
    "marbles": 1
   },
+  "marrakesh-cube-souk": {
+   "name": "Marrakesh Cube Souk",
+   "series": "Blocks",
+   "lighting": "day",
+   "v": "d0a29e53",
+   "bytes": 15680,
+   "bytes2x": 40974,
+   "t": 9104,
+   "side": 1,
+   "marbles": 4
+  },
   "meadow-loop": {
    "name": "Meadow Loop",
    "series": "Classic",
