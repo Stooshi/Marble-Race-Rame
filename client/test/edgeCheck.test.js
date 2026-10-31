@@ -6,8 +6,8 @@ import { createRequire } from 'node:module';
 import { Vector3 } from 'three';
 import { describe, expect, it } from 'vitest';
 import { buildCenterline } from '../src/three/trackModel';
-import { channelOf, channelLipAt, channelRadiusAt } from '../src/three/iceChannel';
-import { railCrossings, rimCrossings } from '../src/three/edgeCheck';
+import { buildIceChannelGeometry, channelDetail, channelOf, channelLipAt, channelRadiusAt } from '../src/three/iceChannel';
+import { railCrossings, railGaps, railGapStretches, rimCrossings } from '../src/three/edgeCheck';
 import { coasterRails } from '../src/three/scenery/coaster';
 
 const require = createRequire(import.meta.url);
@@ -59,4 +59,31 @@ describe('the edge check', () => {
     });
     expect(bad).toEqual([]);
   }, 120000);
+
+  it('finds rails floating over a rim (Pyramid Run\'s splitters before 31 Oct 2026: the rails at the main channel\'s height over the narrower twin channels)', () => {
+    const t = coasterTracks.find((x) => x.slug === 'pyramid-run');
+    const c = buildCenterline(t);
+    const ch = channelOf(t, c);
+    const step = ch.arc / c.segments;
+    const UP = new Vector3(0, 1, 0);
+    const raised = coasterRails(c, ch).map((line) => line.map((p) => {
+      // (each point back at the main channel's rim height, as before the fix)
+      let i = 0; let best = Infinity;
+      c.samples.forEach((s, k) => { const d = (s.pos.x - p.x) ** 2 + (s.pos.z - p.z) ** 2; if (d < best) { best = d; i = k; } });
+      const R = channelRadiusAt(ch, i * step);
+      return p.clone().setY(c.samples[i].pos.y).addScaledVector(UP, R * (1 - Math.cos(channelLipAt(ch, i * step))) + 0.2);
+    }));
+    const found = railGapStretches(railGaps(c, ch, raised, buildIceChannelGeometry(c, ch)));
+    expect(found.filter((r) => r.to - r.from > 100 && r.worst > 0.8)).toHaveLength(2); // (both splitters)
+  }, 120000);
+
+  it('every coaster\'s rails sit on the rim all along (splitters, the foot of a drop, over a crest), on a phone and on a computer', () => {
+    const bad = coasterTracks.flatMap((t) => {
+      const c = buildCenterline(t);
+      const ch = channelOf(t, c);
+      return [true, false].flatMap((lite) => railGapStretches(railGaps(c, ch, coasterRails(c, ch, { lite }), buildIceChannelGeometry(c, ch, channelDetail(t, ch, lite))))
+        .slice(0, 2).map((r) => `${t.slug} at ${Math.round(r.from)} m (${r.worst === Infinity ? 'no rim under it' : `${r.worst.toFixed(2)} m`})${lite ? ' (phone)' : ''}`));
+    });
+    expect(bad).toEqual([]);
+  }, 600000);
 });

@@ -7,7 +7,7 @@
  * Looks only: the race never reads this mesh (the physics' walls are the channel's lip angle,
  * src/game/physicsSimulator.js).
  */
-import { Vector3 } from 'three';
+import { Ray, Vector3 } from 'three';
 import { channelLipAt, channelRadiusAt, forkAt } from './iceChannel';
 
 const flat = (v) => new Vector3(v.x, 0, v.z).normalize();
@@ -117,4 +117,70 @@ export function railCrossings(centerline, channel, lines, { half = 0.22, margin 
     }
   });
   return found;
+}
+
+/**
+ * Rails that don't sit on the rim (Moses, 31 Oct 2026: on Pyramid Run's splitters the rails floated
+ * above the channels' rims, with a gap; a splitter's two channels are narrower, so their rims are
+ * lower than the main channel's). For every rail point (each piece's ends and middle), the rim drawn
+ * under it (the channel `geometry`, buildIceChannelGeometry's, its triangles by segment) is found
+ * straight below; the rail's middle should stand `lift` (0.2 m: half its beam) above it. Returns
+ * [{ line, s (metres), gap (metres: + floating above the rim, - sunk into it; Infinity: no rim under
+ * it at all) }] for the points off by more than `margin`. Looks only.
+ */
+export function railGaps(centerline, channel, lines, geometry, { lift = 0.2, margin = 0.15 } = {}) {
+  const { samples, segments } = centerline;
+  const step = channel.arc / segments;
+  const pos = geometry.getAttribute('position');
+  const starts = geometry.userData.segmentStarts;
+  const endOf = (seg) => (seg + 1 < starts.length ? starts[seg + 1] : pos.count);
+  const a = new Vector3(); const b = new Vector3(); const c = new Vector3(); const hit = new Vector3();
+  const ray = new Ray(new Vector3(), new Vector3(0, -1, 0));
+  const found = [];
+  lines.forEach((line, n) => {
+    let j = 0; // the nearest sample, moving on along the line
+    const nearest = (p) => {
+      let best = j; let bestD = Infinity;
+      for (let k = Math.max(0, j - 6); k <= Math.min(segments, j + 60); k += 1) {
+        const d = (samples[k].pos.x - p.x) ** 2 + (samples[k].pos.z - p.z) ** 2;
+        if (d < bestD) { bestD = d; best = k; }
+      }
+      j = best;
+      return best;
+    };
+    const points = [];
+    for (let k = 0; k < line.length; k += 1) {
+      // (Each end a hair along the piece: it stands exactly where two drawn stretches of rim meet, and
+      // at the very ends where the rim ends; a ray down a seam can slip between the two.)
+      points.push(line[k].clone().lerp(line[k === line.length - 1 ? k - 1 : k + 1], 0.02));
+      if (k + 1 < line.length) points.push(line[k].clone().lerp(line[k + 1], 0.5));
+    }
+    for (const p of points) {
+      const i = nearest(p);
+      ray.origin.set(p.x, p.y + 0.6, p.z); // (from just over the rail: a stretch passing above doesn't count)
+      let top = -Infinity;
+      for (let seg = Math.max(0, i - 2); seg < Math.min(starts.length, i + 2); seg += 1) {
+        for (let v = starts[seg]; v + 2 < endOf(seg); v += 3) {
+          a.fromBufferAttribute(pos, v); b.fromBufferAttribute(pos, v + 1); c.fromBufferAttribute(pos, v + 2);
+          if (ray.intersectTriangle(a, b, c, false, hit)) top = Math.max(top, hit.y);
+        }
+      }
+      const gap = top === -Infinity ? Infinity : p.y - lift - top;
+      if (Math.abs(gap) > margin) found.push({ line: n, s: i * step, gap });
+    }
+  });
+  return found;
+}
+
+/** railGaps' finds as stretches: [{ from, to (metres), worst (metres, the biggest gap, signed) }]. */
+export function railGapStretches(found, join = 8) {
+  const out = [];
+  for (const f of [...found].sort((x, y) => x.s - y.s)) {
+    const last = out[out.length - 1];
+    if (last && f.s - last.to <= join) {
+      last.to = f.s;
+      if (Math.abs(f.gap) > Math.abs(last.worst)) last.worst = f.gap;
+    } else out.push({ from: f.s, to: f.s, worst: f.gap });
+  }
+  return out;
 }

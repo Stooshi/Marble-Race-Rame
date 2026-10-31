@@ -225,6 +225,19 @@ function viewLines(view, kit) {
       pass: kit ? !g.flagged.length : null,
     });
   }
+  // The rails on the rims (client/src/three/edgeCheck.js railGaps): none floating over the rim or sunk into it.
+  if (view.rails) {
+    for (const screen of ['computer', 'phone']) {
+      const r = view.rails[screen] ?? [];
+      lines.push({
+        part: 'Clear track',
+        what: `The rails sit on the rims all along (none floating above the rim or sunk into it by more than 0.15 m), ${screen}`,
+        value: r.length ? r.map((x) => `${x.metres} m at ${Math.round(x.from * 100)}% (${x.worst === null ? 'no rim under it' : `${x.worst > 0 ? 'floating' : 'sunk'} ${Math.abs(x.worst)} m`})`).join('; ') : 'none',
+        target: 'none',
+        pass: !r.length,
+      });
+    }
+  }
   const cams = view.camera;
   const sum = (key) => cams.reduce((n, c) => n + c[key].length, 0);
   const frames = cams.reduce((n, c) => n + c.frames, 0);

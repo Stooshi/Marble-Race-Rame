@@ -7,7 +7,8 @@ import fs from 'node:fs';
 import { it } from 'vitest';
 import { PerspectiveCamera, Raycaster, Triangle, Vector3 } from 'three';
 import { buildCenterline } from '../src/three/trackModel';
-import { buildIceChannelGeometry, channelOf } from '../src/three/iceChannel';
+import { buildIceChannelGeometry, channelDetail, channelOf } from '../src/three/iceChannel';
+import { railGaps, railGapStretches } from '../src/three/edgeCheck';
 import { buildScenery } from '../src/three/scenery';
 import { buildStructures } from '../src/three/structures';
 import { buildBillboards } from '../src/three/billboards';
@@ -19,7 +20,7 @@ import { frameAtTime } from '../src/utils/splits';
 import { flaggedStretches, wallExposure } from '../src/three/scenery/groundCheck';
 import { cameraClearance, corridorIntrusions, finishShotView, markStructures, nameOf, pieceFinder, stretchesOf, tunnelAllowance } from '../src/three/scenery/clearCheck';
 import { finishCutaway, finishShotPose } from '../src/three/TrackScene';
-import { stationRoof } from '../src/three/scenery/coaster';
+import { coasterRails, stationRoof } from '../src/three/scenery/coaster';
 import { FLYOVER_MS, flyoverHighlight, flyoverPath, flyoverTop } from '../src/three/flyover';
 import { TRACK_STYLE } from '../src/three/trackModel';
 
@@ -95,6 +96,13 @@ it.skipIf(!process.env.REPORT_TRACK)('track report: view checks', () => {
       }
       out.clear.flyover ??= {};
       out.clear.flyover[lite ? 'phone' : 'computer'] = fly;
+    }
+    // The rails on the rims (a coaster: the kit's tracks): each sits on the rim drawn under it, all
+    // along, on splitters and where the slope changes too (railGaps; Moses, 31 Oct 2026).
+    if (track.physics.kit?.coaster) {
+      const geometry = buildIceChannelGeometry(centerline, channel, channelDetail(track, channel, lite));
+      (out.rails ??= {})[lite ? 'phone' : 'computer'] = railGapStretches(railGaps(centerline, channel, coasterRails(centerline, channel, { lite }), geometry))
+        .map((r) => ({ from: +(r.from / channel.arc).toFixed(4), to: +(r.to / channel.arc).toFixed(4), metres: Math.max(1, Math.round(r.to - r.from)), worst: r.worst === Infinity ? null : +r.worst.toFixed(2) }));
     }
     out.ground[lite ? 'phone' : 'computer'] = {
       flagged: flaggedStretches(exposure, channel.arc),

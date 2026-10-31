@@ -97,8 +97,11 @@ function edgeAt(channel, i, step) {
   if (fork) return Math.abs(forkOffset(fork, s)) + forkRadius(fork, channel.radius, s) * Math.sin(channel.maxAngle) + RIM_WIDTH;
   return channelRadiusAt(channel, s) * Math.sin(channelLipAt(channel, s)) + RIM_WIDTH;
 }
+/** The rim's height over the centre line at sample i (a splitter's two channels: theirs, lower as they are narrower). */
 const topAt = (channel, i, step) => {
   const s = i * step;
+  const fork = forkAt(channel, s);
+  if (fork) return forkRadius(fork, channel.radius, s) * (1 - Math.cos(channel.maxAngle));
   return channelRadiusAt(channel, s) * (1 - Math.cos(channelLipAt(channel, s)));
 };
 
@@ -106,6 +109,10 @@ const topAt = (channel, i, step) => {
 export const RAIL_THICKNESS = 0.36;
 /** How far (metres, seen from above) a rail piece may stray from the rim between its ends. */
 const RAIL_STRAY = 0.06;
+/** How far (metres, up or down) a rail piece may stray from the rim between its ends: where the track's
+ * slope changes (the foot of a drop, over a crest) a long straight piece lifted off the rim or sank into it
+ * (Moses, 31 Oct 2026). */
+const RAIL_RISE = 0.08;
 
 /**
  * The coaster's two rails along the middle of the rims, as polylines (one per side): long straight
@@ -125,11 +132,14 @@ export function coasterRails(centerline, channel, { lite = false } = {}) {
       return s.pos.clone().addScaledVector(side, sign * (edgeAt(channel, i, step) - RIM_WIDTH * 0.5)).addScaledVector(UP, topAt(channel, i, step) + 0.2);
     };
     const pts = Array.from({ length: segments + 1 }, (_, i) => at(i));
-    // Horizontal distance from p to the piece a–b.
+    // How far p lies off the piece a–b, as a share of what's allowed: seen from above (RAIL_STRAY) and
+    // up or down (RAIL_RISE), whichever is more.
     const stray = (p, a, b) => {
       const dx = b.x - a.x; const dz = b.z - a.z; const L = dx * dx + dz * dz;
       const t = L ? Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.z - a.z) * dz) / L)) : 0;
-      return Math.hypot(p.x - (a.x + t * dx), p.z - (a.z + t * dz));
+      const across = Math.hypot(p.x - (a.x + t * dx), p.z - (a.z + t * dz)) / RAIL_STRAY;
+      const up = Math.abs(p.y - (a.y + t * (b.y - a.y))) / RAIL_RISE;
+      return Math.max(across, up);
     };
     const line = [pts[0]];
     let i = 0;
@@ -138,7 +148,7 @@ export function coasterRails(centerline, channel, { lite = false } = {}) {
       while (j > i + 1) {
         let worst = 0;
         for (let k = i + 1; k < j; k += 1) worst = Math.max(worst, stray(pts[k], pts[i], pts[j]));
-        if (worst <= RAIL_STRAY) break;
+        if (worst <= 1) break;
         j -= 1;
       }
       line.push(pts[j]);
