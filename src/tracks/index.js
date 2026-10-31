@@ -162,4 +162,5 @@ module.exports = [
   require('./sleigh-bell-forest'),
   // Blocks Series 2 (30 Oct 2026).
   require('./li-river-karst-run'),
+  require('./venice-cube-canals'),
 ];

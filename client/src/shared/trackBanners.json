@@ -1542,6 +1542,17 @@
    "side": 1,
    "marbles": 6
   },
+  "venice-cube-canals": {
+   "name": "Venice Cube Canals",
+   "series": "Blocks",
+   "lighting": "sunset",
+   "v": "7d5f6528",
+   "bytes": 10990,
+   "bytes2x": 25808,
+   "t": 10481,
+   "side": 1,
+   "marbles": 4
+  },
   "verdon-burst": {
    "name": "Verdon Burst",
    "series": "Canyons",
