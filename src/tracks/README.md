@@ -581,6 +581,18 @@ shots counted within the 20). Plan: project doc `claude/blocks-series-2-plan.md`
   `lake-island` (round a splitter), `fell-peaks`.
 - The layouts made for it are the `(blocks 2)` rows (L105 onwards); each has a test track built as
   a Block Series world in its own world.
+- **Lessons from the test five** (31 Oct 2026):
+  - A landmark round a **curving** splitter must stay low (`karst-tower` is a 4 m outcrop): the
+    follow camera swings over the divider on the bend. Give every `around` landmark a `fit` of at
+    least its real half-width, or it is scaled too big and reaches over the channels.
+  - When a splitter can't be fair on both wins and places by roughness alone, change its geometry
+    (the side it curves to, the line of the peg before it) rather than its roughness: Abisko's
+    island split curves right with a rough inside channel (3.5) and a near-smooth outside one (0.35).
+  - A fast check of the splitter, overtakes and pace figures: run the batch races alone
+    (`src/report/batch.js`: `runBatch(slug, batchSeeds(b, 1000))` for b = 0, 1, 2), about 5 minutes
+    for 3,000 races; the full report is still the pass.
+  - The track is still listed under **Blocks** (the API and the banners name the series from the
+    kit's `block` settings).
 
 ## Track and Field
 
