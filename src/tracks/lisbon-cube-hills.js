@@ -21,7 +21,7 @@ module.exports = track({
   signature: 'Down the tram hill',
   tvCameras: [
     { section: 'Old quarter switchbacks', at: 0.6, side: 'left', distance: 10, height: 12 },
-    { section: 'Along the river', at: 0.5, side: 'left', distance: 10, height: 12 },
+    { section: 'Along the river', at: 0.35, side: 'left', distance: 10, height: 12 },
   ],
   start: { landmark: 'tiled-houses', type: 'rooftop', gate: 'trapdoor', shots: { countdown: 'front', launch: 'look-back' } },
   finish: { landmark: 'cube-arch' },
