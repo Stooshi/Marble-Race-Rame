@@ -827,6 +827,17 @@
    "side": 1,
    "marbles": 4
   },
+  "kyoto-block-gardens": {
+   "name": "Kyoto Block Gardens",
+   "series": "Blocks",
+   "lighting": "dawn",
+   "v": "7e86ee0a",
+   "bytes": 10202,
+   "bytes2x": 25178,
+   "t": 9969,
+   "side": 1,
+   "marbles": 4
+  },
   "lagos-marble-grand-prix": {
    "name": "Lagos Marble Grand Prix",
    "series": "Grand Prix",

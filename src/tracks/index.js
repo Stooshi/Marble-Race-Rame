@@ -166,4 +166,5 @@ module.exports = [
   require('./niagara-cube-falls'),
   require('./tre-cime-cube-towers'),
   require('./abisko-aurora-run'),
+  require('./kyoto-block-gardens'),
 ];
