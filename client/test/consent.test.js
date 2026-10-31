@@ -48,6 +48,7 @@ describe('consent', () => {
     for (const f of files) for (const m of readFileSync(f, 'utf8').matchAll(/'(marble-[a-z-]+(?::[a-z-]+)?)/g)) keys.add(m[1]);
     for (const k of keys) {
       if (k === 'marble-spins-my-data') continue; // (the "Download my data" file name)
+      if (k === 'marble-hit') continue; // (the own marble's hit sound, an audio file name: not a stored key)
       if (manifest.banners[k]) continue; // (a track's name, Marble Stadium Sprint's: not a stored key)
       const short = k.replace(/:.*$/, '');
       expect(names, `${k} is missing from the cookie list`).toContain(short);
