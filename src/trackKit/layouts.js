@@ -1983,6 +1983,59 @@ const LAYOUTS = {
       obstacles: [parked({ costume: c.parked, at: 0.2, side: L, length: 6 }), peg({ costume: c.peg, at: 0.45, line: 'right' })], features: [rumble({ from: 0.7, to: 0.95, count: 3 })],
     },
   ],
+  /** L114 Quay terraces (Blocks 2, Douro; after the staggered drop): S-bends past the wine lodges (a peg), the long quay with a table top (big feature one: the field spreads out on the flat), the run to the farmhouse, the hairpin, S-bends along the river (a slalom), up into the vineyards, the two-step drop down the terraces (big feature two: two drops, a terrace between), a sweep under the iron bridge (a peg) and a parked piece and a peg at the run-in. */
+  'quay-terraces': (L, R, c) => [
+    { key: 'lodges', name: 'Past the wine lodges', shape: sBends({ first: R, radius: 75, degrees: 55, grade: 0.13 }), obstacles: [peg({ costume: c.peg, at: 0.5, line: 'center' })], billboards: 1 },
+    { key: 'quay', name: 'Along the quay', shape: straight(90, { grade: 0.1 }), features: [tableTop({ at: 0.35, length: 30, height: 0.3, down: 8 })] },
+    { key: 'brakingStraight', name: 'Run to the farmhouse', shape: straight(50, { grade: 0.12 }), billboards: 1 },
+    { key: 'hairpin', name: 'Farmhouse hairpin', shape: hairpin({ side: L }), obstacles: [swipe({ costume: c.swipe, side: 'high' })] },
+    { key: 'riverBends', name: 'Along the river', shape: sBends({ first: R, radius: 80, degrees: 70, grade: 0.12 }), obstacles: [slalom({ costume: c.slalom, from: 0.3, to: 0.7, count: 3, loss: 0.12 })], billboards: 2 },
+    { key: 'rise', name: 'Up into the vineyards', shape: climb(12, { grade: -0.05, after: 0.12 }) },
+    { key: 'vines', name: 'The top terrace', shape: straight(40, { grade: 0.1 }), obstacles: [peg({ costume: c.peg, at: 0.5, line: 'center' })] },
+    { key: 'drop1', name: 'Down the first terrace', shape: plunge(45, { grade: 0.26, from: 0.12 }) },
+    { key: 'ledge', name: 'The middle terrace', shape: straight(30, { grade: 0.1 }), obstacles: [peg({ costume: c.peg, at: 0.5, line: 'center' })] },
+    { key: 'drop2', name: 'Down to the river', shape: plunge(45, { grade: 0.26, from: 0.1 }) },
+    { key: 'bridgeSweep', name: 'Under the iron bridge', shape: sweep({ side: R, radius: 95, degrees: 125, grade: 0.11 }), obstacles: [peg({ costume: c.peg, at: 0.5, line: 'center' })], billboards: 1 },
+    {
+      key: 'lastStraight', name: 'Last straight', shape: straight(80, { grade: 0.15 }),
+      obstacles: [parked({ costume: c.parked, at: 0.2, side: L, length: 6 }), peg({ costume: c.peg, at: 0.45, line: 'right' })], features: [rumble({ from: 0.7, to: 0.95, count: 3 })],
+    },
+  ],
+  /** L115 Château moat (Blocks 2, Loire; after the peg drop): a straight through the garden maze (a slalom of five hedge gates: the start's luck, as the half-pipe gives none), a sweep round the parterre (a peg), a short drop to the moat, the moat half-pipe (big feature one: the field rocks wall to wall), a sweep along the river (a peg), the stone bridge with a table top (big feature two), the run to the vineyard, the hairpin, S-bends past the château (a peg) and a parked piece and a peg at the run-in. */
+  'chateau-moat': (L, R, c) => [
+    { key: 'maze', name: 'Through the garden maze', shape: straight(50, { grade: 0.12 }), obstacles: [slalom({ costume: c.slalom, from: 0.1, to: 0.9, count: 5, loss: 0.22 })] },
+    { key: 'parterre', name: 'Round the parterre', shape: sweep({ side: R, radius: 70, degrees: 100, grade: 0.11 }), obstacles: [peg({ costume: c.peg, at: 0.5, line: 'center' })], billboards: 1 },
+    { key: 'toTheMoat', name: 'Down to the moat', shape: plunge(30, { grade: 0.2, from: 0.15 }) },
+    { key: 'moat', name: 'The moat half-pipe', shape: halfPipe({ first: L, width: 8, swings: 3, radius: 150, degrees: 18, grade: 0.12 }) },
+    { key: 'riverSweep', name: 'Along the Loire', shape: sweep({ side: R, radius: 90, degrees: 160, grade: 0.1 }), obstacles: [peg({ costume: c.peg, at: 0.5, line: 'center' })], billboards: 2 },
+    { key: 'bridge', name: 'Across the stone bridge', shape: straight(85, { grade: 0.1 }), features: [tableTop({ at: 0.4, length: 30, height: 0.3, down: 8 })] },
+    { key: 'brakingStraight', name: 'Run to the vineyard', shape: straight(50, { grade: 0.12 }), billboards: 1 },
+    { key: 'hairpin', name: 'Vineyard hairpin', shape: hairpin({ side: R }), obstacles: [swipe({ costume: c.swipe, side: 'high' })] },
+    { key: 'chateauBends', name: 'Past the château', shape: sBends({ first: L, radius: 75, degrees: 80, grade: 0.12 }), obstacles: [peg({ costume: c.peg, at: 0.5, line: 'center' })], billboards: 1 },
+    {
+      key: 'lastStraight', name: 'Last straight', shape: straight(80, { grade: 0.15 }),
+      obstacles: [parked({ costume: c.parked, at: 0.2, side: R, length: 6 }), peg({ costume: c.peg, at: 0.45, line: 'left' })], features: [rumble({ from: 0.7, to: 0.95, count: 3 })],
+    },
+  ],
+  /** L116 Castle weir (Blocks 2, Vltava; after the tunnel launch): out of the castle gate (a peg), two pairs of banked switchbacks down the castle hill (big feature one) with two pegs down the castle steps between, across the old square (pegs), a sweep along the river under the bridges, the run to the weir, the curtain waterfall at the weir (big feature two), onto the island (a slalom), the hairpin on the island, a sweep to the bridge tower (a peg) and a parked piece and a peg at the run-in. */
+  'castle-weir': (L, R, c) => [
+    { key: 'castleGate', name: 'Out of the castle gate', shape: straight(35, { grade: 0.12 }), obstacles: [peg({ costume: c.peg, at: 0.5, line: 'center' })] },
+    { key: 'switch1', name: 'Castle switchbacks', shape: sBends({ first: L, radius: 50, degrees: 78, grade: 0.14 }) },
+    { key: 'castleSteps', name: 'Down the castle steps', shape: straight(40, { grade: 0.13 }), obstacles: [peg({ costume: c.peg, at: 0.35, line: 'left' }), peg({ costume: c.peg, at: 0.7, line: 'right' })] },
+    { key: 'switch2', name: 'Lower switchbacks', shape: sBends({ first: R, radius: 54, degrees: 70, grade: 0.13 }), billboards: 1 },
+    { key: 'square', name: 'Across the old square', shape: straight(55, { grade: 0.11 }), obstacles: [peg({ costume: c.peg, at: 0.3, line: 'left' }), peg({ costume: c.peg, at: 0.7, line: 'right' })] },
+    { key: 'riverSweep', name: 'Under the bridges', shape: sweep({ side: L, radius: 95, degrees: 100, grade: 0.1 }), billboards: 2 },
+    { key: 'toTheWeir', name: 'To the weir', shape: straight(35, { grade: 0.12 }) },
+    { key: 'weir', name: 'Through the weir', shape: waterfall(35, { grade: 0.5, curtain: true }) },
+    { key: 'island', name: 'Onto the island', shape: straight(45, { grade: 0.12 }), obstacles: [slalom({ costume: c.slalom, from: 0.2, to: 0.8, count: 3, loss: 0.12 })] },
+    { key: 'brakingStraight', name: 'Run to the island hairpin', shape: straight(50, { grade: 0.12 }), billboards: 1 },
+    { key: 'hairpin', name: 'Island hairpin', shape: hairpin({ side: R }), obstacles: [swipe({ costume: c.swipe, side: 'high' })] },
+    { key: 'towerSweep', name: 'To the bridge tower', shape: sweep({ side: L, radius: 90, degrees: 110, grade: 0.11 }), obstacles: [peg({ costume: c.peg, at: 0.5, line: 'center' })], billboards: 1 },
+    {
+      key: 'lastStraight', name: 'Last straight', shape: straight(80, { grade: 0.15 }),
+      obstacles: [parked({ costume: c.parked, at: 0.2, side: L, length: 6 }), peg({ costume: c.peg, at: 0.45, line: 'right' })], features: [rumble({ from: 0.7, to: 0.95, count: 3 })],
+    },
+  ],
 };
 
 const LAYOUT_KINDS = Object.keys(LAYOUTS);

@@ -130,6 +130,22 @@ export const BLOCK_WORLDS = {
     tops: ['#ddd3c0', '#d2c7b2'], riser: '#5b84b0', deep: '#3f6f8a', floor: '#3f6f8a', bank: '#d8ceba', fill: '#c4703f', hills: 28, step: 4,
     dressing: [['lampPost', 0.3], ['planter', 0.3], ['tree', 0.25], ['crates', 0.15]],
   },
+  // ── Blocks Series 2, the rivers (1 Nov 2026) ──
+  // The Douro: steep vineyard terraces on brown schist above a green river.
+  vineyard: {
+    tops: ['#7f9a48', '#73903f'], riser: '#6a5a4a', deep: '#4f4338', floor: '#3f6f6a', bank: '#7a9644', fill: '#6a5a4a', hills: 30, step: 4,
+    dressing: [['vineRow', 0.45], ['tree', 0.2], ['stoneRock', 0.2], ['crates', 0.15]],
+  },
+  // The Loire: soft green lawns and pale tuffeau stone, clipped hedges.
+  chateau: {
+    tops: ['#7fae5a', '#73a050'], riser: '#d8d0bc', deep: '#a89f88', floor: '#4f7f8f', bank: '#79a854', fill: '#d8d0bc', hills: 10, step: 2,
+    dressing: [['hedge', 0.35], ['tree', 0.3], ['flowers', 0.2], ['bush', 0.15]],
+  },
+  // The Vltava: a green castle hill, sandstone walls and red roofs above the river.
+  bohemia: {
+    tops: ['#86a05c', '#7a9452'], riser: '#c8a878', deep: '#8a7458', floor: '#4a6f80', bank: '#82a058', fill: '#c8a878', hills: 22, step: 3,
+    dressing: [['tree', 0.4], ['lampPost', 0.25], ['bush', 0.2], ['planter', 0.15]],
+  },
 };
 export const BLOCK_WORLD_NAMES = Object.keys(BLOCK_WORLDS);
 
@@ -283,6 +299,10 @@ const MAKE = {
     cube(3.4, 1.6, 3.0, 0, 3.0, 0, '#c8553a'),
     ...(lite ? [] : [cube(2.2, 1.0, 2.0, 0.3, 4.2, -0.2, '#d8703e')]),
   ]),
+  // The rivers (1 Nov 2026). A row of vines: low green blocks on a line of posts.
+  vineRow: () => merge([cube(4.4, 0.9, 0.7, 0, 0.75, 0, '#5f8a3a'), cube(0.2, 1.4, 0.2, -2.2, 0.7, 0, '#6e5136'), cube(0.2, 1.4, 0.2, 2.2, 0.7, 0, '#6e5136'), cube(0.5, 0.4, 0.5, 0.8, 0.55, 0.3, '#5a2f4a')]),
+  // A clipped hedge: a long dark-green box with a rounder top.
+  hedge: () => merge([cube(3.6, 1.4, 1.2, 0, 0.7, 0, '#3f7a3a'), cube(3.2, 0.4, 0.9, 0, 1.6, 0, '#4a8a42')]),
   // A stone lantern: a grey post, a wide cap, a warm light in its box.
   stoneLantern: () => merge([cube(0.6, 1.4, 0.6, 0, 0.7, 0, '#8a8580'), cube(1.0, 0.7, 1.0, 0, 1.75, 0, '#f2d28e'), cube(1.4, 0.35, 1.4, 0, 2.3, 0, '#7a7570')]),
 };

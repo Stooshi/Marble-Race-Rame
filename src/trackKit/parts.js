@@ -355,6 +355,9 @@ module.exports = {
     // …the cities (31 Oct 2026): Kyoto, Marrakesh, Singapore, Lisbon.
     'temple-hall', 'red-gates', 'cube-pagoda', 'moss-garden', 'souk-arcade', 'cube-minaret', 'kasbah-walls', 'palm-grove', 'garden-towers', 'glass-dome', 'bay-skyline',
     'tiled-houses', 'yellow-tram', 'cube-arch', 'river-ferry',
+    // …the rivers (1 Nov 2026): the Douro, the Loire, the Vltava.
+    'wine-lodges', 'rabelo-boats', 'iron-arch-bridge', 'quinta-house', 'vine-terraces', 'river-chateau', 'hedge-maze', 'stone-arch-bridge', 'moat-towers',
+    'castle-hill', 'statue-bridge', 'river-weir', 'bridge-tower', 'twin-spires',
     // Track and Field (generic stadium architecture; no protected names, rings, torch designs or sponsors).
     'athletes-village', 'herm-gateway', 'stone-colonnade', 'stadium-bell-tower', 'warm-up-track', 'timber-stand',
     'woven-lattice', 'wooden-eaves', 'brick-tower', 'relay-batons', 'steeple-pit', 'peristyle-arches', 'flame-cauldron',
@@ -383,7 +386,8 @@ module.exports = {
   BLOCK_WORLDS: ['meadow', 'valley', 'snow', 'mine', 'magma', 'puzzle', 'fortress', 'portal', 'sky', 'harbour', 'temple', 'bonus',
     // Blocks Series 2: Li River's karst and rice fields, Venice's canal town, Niagara's gorge, the Dolomites' pale rock, Lapland under the aurora;
     // the cities (31 Oct 2026): Kyoto's moss gardens, Marrakesh's souk, Singapore's tropical bay, Lisbon's tiled hills.
-    'karst', 'canal', 'falls', 'dolomite', 'aurora', 'moss', 'souk', 'tropic', 'azulejo'],
+    // the rivers (1 Nov 2026): the Douro's vineyards, the Loire's châteaux, the Vltava's castle hill.
+    'karst', 'canal', 'falls', 'dolomite', 'aurora', 'moss', 'souk', 'tropic', 'azulejo', 'vineyard', 'chateau', 'bohemia'],
   // A Track and Field stadium (family 'athletics': `athletics: { stadium }`): its generic architecture, the
   // client's STADIUMS (client/src/three/scenery/athletics.js).
   STADIUMS: ['panathenaic', 'berlin-1936', 'bislett', 'hayward', 'nest', 'tokyo', 'stockholm-1912', 'london', 'coliseum', 'letzigrund', 'accra'],

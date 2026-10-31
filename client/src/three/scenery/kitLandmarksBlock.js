@@ -948,6 +948,159 @@ function riverFerry() {
   return merge([C(16, 2.2, 5, 0, 1.1, 0, '#f2ede2'), C(16.2, 0.5, 5.2, 0, 1.6, 0, '#3f6f9a'), C(8, 2.4, 4, -1, 3.4, 0, '#f2ede2'), C(1.4, 2, 1.4, 2, 5.6, 0, '#e8c040')]);
 }
 
+// ── Blocks Series 2, the rivers (1 Nov 2026): generic river landscapes built from cubes, nothing copied ──
+
+/** Wine lodges by the river: long low whitewashed warehouses side by side, terracotta roofs, dark doors. */
+function wineLodges() {
+  const p = [];
+  for (let k = -2; k <= 2; k += 1) {
+    const x = k * 9;
+    p.push(C(8.4, 5, 16, x, 2.5, 0, '#efe8da'), C(9, 1, 16.6, x, 5.5, 0, '#c4703f'), C(8, 0.8, 15, x, 6.4, 0, '#b5643f'));
+    p.push(C(2.2, 3, 0.2, x, 1.5, 8.05, '#4a3326'), C(8.5, 0.6, 0.3, x, 4.4, 8.1, '#3d2a20'));
+  }
+  return merge(p);
+}
+/** Flat-bottomed river boats with a square sail, moored side by side, barrels stacked on deck. */
+function rabeloBoats() {
+  const p = [];
+  for (let k = -1; k <= 1; k += 1) {
+    const z = k * 5.5;
+    p.push(C(14, 1.4, 3.6, k * 1.5, 0.7, z, '#5a3a24'), C(14.4, 0.4, 3.9, k * 1.5, 1.5, z, '#3d2a20'), C(0.4, 9, 0.4, k * 1.5 + 1, 5.9, z, '#4a3326'), C(0.3, 6, 5, k * 1.5 + 1.4, 6.6, z, '#efe8da'));
+    for (let b = 0; b < 3; b += 1) p.push(C(1.1, 1.1, 1.1, k * 1.5 - 3 + b * 1.4, 2.2, z, '#8a5a3a'));
+  }
+  return merge(p);
+}
+/** A double-deck iron arch bridge over the river: a dark lattice arch springing from stone piers, a deck on top and one below. */
+function ironArchBridge() {
+  const p = [C(6, 16, 8, -36, 8, 0, '#8a8478'), C(6, 16, 8, 36, 8, 0, '#8a8478')];
+  for (let k = -12; k <= 12; k += 1) {
+    const x = k * 2.8;
+    const y = 4 + 22 * (1 - (x / 34) ** 2);
+    p.push(C(2.9, 1.6, 7, x, y, 0, '#4a4e54'));
+    if (k % 3 === 0) p.push(C(0.6, Math.max(0.5, 27 - y), 0.6, x, (y + 27) / 2, 3, '#4a4e54'), C(0.6, Math.max(0.5, 27 - y), 0.6, x, (y + 27) / 2, -3, '#4a4e54'));
+  }
+  p.push(C(80, 1.2, 8, 0, 27.6, 0, '#5a5f66'), C(80, 0.6, 0.4, 0, 28.6, 3.9, '#4a4e54'), C(80, 0.6, 0.4, 0, 28.6, -3.9, '#4a4e54'), C(40, 1, 7, 0, 10, 0, '#5a5f66'));
+  return merge(p);
+}
+/** A wine farmhouse among the vines: a white house with a terracotta roof, a stone terrace in front, a cypress. */
+function quintaHouse() {
+  return merge([
+    C(16, 2, 12, 0, 1, 0, '#8a7a68'), C(12, 6, 8, 0, 5, -1, '#efe8da'), C(13, 1, 9, 0, 8.5, -1, '#c4703f'), C(9, 1, 6, 0, 9.5, -1, '#b5643f'),
+    C(1.6, 2.6, 0.2, 0, 3.3, 3.05, '#4a3326'), C(1.4, 1.6, 0.2, -3.6, 5, 3.05, '#3f6f9a'), C(1.4, 1.6, 0.2, 3.6, 5, 3.05, '#3f6f9a'),
+    C(1.4, 9, 1.4, 7, 6.5, 3, '#2f5a32'), C(1, 2, 1, 7, 12, 3, '#3a6a3a'),
+  ]);
+}
+/** Vineyard terraces: four stepped terraces of schist walls, a row of vines on each. */
+function vineTerraces() {
+  const p = [];
+  for (let k = 0; k < 4; k += 1) {
+    const z = -k * 5;
+    p.push(C(36, 2.2 + k * 2.2, 5, 0, (2.2 + k * 2.2) / 2, z, k % 2 ? '#6a5a4a' : '#5f5142'));
+    for (let v = -3; v <= 3; v += 1) p.push(C(4, 1, 0.8, v * 5, 2.2 + k * 2.2 + 0.5, z + 1, '#5f8a3a'));
+  }
+  return merge(p);
+}
+/** A river château: pale stone wings round a court, round towers of stepped cubes under tall slate cones, tall chimneys. */
+function riverChateau() {
+  const p = [C(40, 10, 10, 0, 5, -10, '#e2dccb'), C(10, 10, 26, -15, 5, 3, '#e2dccb'), C(10, 10, 26, 15, 5, 3, '#e2dccb')];
+  p.push(C(40.6, 3, 10.6, 0, 11.5, -10, '#4a5560'), C(10.6, 3, 26.6, -15, 11.5, 3, '#4a5560'), C(10.6, 3, 26.6, 15, 11.5, 3, '#4a5560'));
+  for (const [x, z] of [[-20, -15], [20, -15], [-20, 16], [20, 16]]) {
+    p.push(C(7, 15, 7, x, 7.5, z, '#e8e2d2'), C(7.8, 1, 7.8, x, 15.2, z, '#d0c8b4'));
+    for (let k = 0; k < 4; k += 1) p.push(C(6.6 - k * 1.6, 1.6, 6.6 - k * 1.6, x, 16.5 + k * 1.6, z, '#4a5560'));
+  }
+  for (const x of [-8, 0, 8]) p.push(C(1.2, 4, 1.2, x, 14.5, -10, '#d0c8b4'));
+  for (let k = -3; k <= 3; k += 1) p.push(C(1.2, 1.8, 0.2, k * 5, 6, -4.9, '#3f4a5a'));
+  return merge(p);
+}
+/** A garden maze of clipped cube hedges on a lawn, a small fountain in the middle. */
+function hedgeMaze() {
+  const p = [C(30, 0.3, 30, 0, 0.15, 0, '#7fae5a')];
+  const wall = (x, z, w, d) => p.push(C(w, 2, d, x, 1.1, z, '#3f7a3a'));
+  for (const r of [14, 10, 6]) {
+    wall(0, -r, 2 * r, 1.2); wall(-r, 0, 1.2, 2 * r);
+    wall(r * 0.3, r, 1.4 * r, 1.2); wall(r, -r * 0.3, 1.2, 1.4 * r);
+  }
+  p.push(C(3, 0.6, 3, 0, 0.6, 0, '#d8d0bc'), C(1, 1.6, 1, 0, 1.4, 0, '#d8d0bc'), C(2.4, 0.2, 2.4, 0, 0.95, 0, '#7fb8d8'));
+  return merge(p);
+}
+/** A long stone bridge of many low arches over the river, a parapet along the top. */
+function stoneArchBridge() {
+  const p = [];
+  for (let k = -5; k <= 5; k += 1) {
+    const x = k * 9;
+    p.push(C(2.6, 9, 9, x - 4.5, 4.5, 0, '#d8d0bc'), C(2, 1.6, 9.6, x - 4.5, 0.8, 0, '#c4bca8'));
+    for (let a = 0; a < 3; a += 1) p.push(C(6.4 - a * 2, 1, 9, x, 6.4 + a, 0, '#d8d0bc'));
+  }
+  p.push(C(2.6, 9, 9, 6 * 9 - 4.5, 4.5, 0, '#d8d0bc'), C(104, 1.4, 9, 0, 9.4, 0, '#cfc7b2'), C(104, 1, 0.6, 0, 10.6, 4.2, '#c4bca8'), C(104, 1, 0.6, 0, 10.6, -4.2, '#c4bca8'));
+  return merge(p);
+}
+/** Moat towers: a stretch of pale wall rising out of the water with two round towers under slate cones. */
+function moatTowers() {
+  const p = [C(30, 9, 3, 0, 4.5, 0, '#e2dccb')];
+  for (let x = -14; x <= 14; x += 2.5) p.push(C(1.4, 1.2, 3.2, x, 9.6, 0, '#d0c8b4'));
+  for (const x of [-15, 15]) {
+    p.push(C(7, 13, 7, x, 6.5, 0, '#e8e2d2'));
+    for (let k = 0; k < 4; k += 1) p.push(C(6.6 - k * 1.6, 1.6, 6.6 - k * 1.6, x, 13.8 + k * 1.6, 0, '#4a5560'));
+  }
+  return merge(p);
+}
+/** A castle on its hill: a long palace front of sandstone on a high wall, red roofs, and a great church with a tall stepped spire behind it (generic). */
+function castleHill() {
+  const p = [C(70, 10, 18, 0, 5, 0, '#a8936e'), C(64, 9, 12, 0, 14.5, -2, '#e8dcc0'), C(65, 2, 13, 0, 20, -2, '#b5503a')];
+  for (let k = -7; k <= 7; k += 1) p.push(C(1.6, 2.4, 0.2, k * 4.2, 14.5, 4.05, '#4a4438'));
+  p.push(C(14, 20, 22, 10, 20, -14, '#9a8a6a'), C(15, 2, 23, 10, 31, -14, '#4f5a58'));
+  for (let k = 0; k < 6; k += 1) p.push(C(7 - k * 1.1, 4, 7 - k * 1.1, 4, 34 + k * 4, -20, k % 2 ? '#4f5a58' : '#5f6a62'));
+  p.push(C(0.6, 4, 0.6, 4, 60, -20, '#c8a24a'));
+  for (const x of [20, 26]) { p.push(C(4, 30, 4, x, 25, -6, '#9a8a6a')); for (let k = 0; k < 3; k += 1) p.push(C(3.6 - k, 3, 3.6 - k, x, 41.5 + k * 3, -6, '#4f5a58')); }
+  return merge(p);
+}
+/** A long stone bridge with statues along both parapets and a gate tower at its end (generic). */
+function statueBridge() {
+  const p = [];
+  for (let k = -6; k <= 6; k += 1) {
+    const x = k * 8;
+    p.push(C(3, 8, 10, x - 4, 4, 0, '#8a7a62'));
+    for (let a = 0; a < 2; a += 1) p.push(C(5 - a * 2, 1.2, 10, x, 6 + a * 1.2, 0, '#8a7a62'));
+    if (k % 2 === 0) for (const z of [4.4, -4.4]) p.push(C(1, 0.6, 1, x, 9.8, z, '#6a5e4c'), C(0.8, 2.6, 0.8, x, 11.4, z, '#5a5246'), C(0.5, 0.6, 0.5, x, 13, z, '#5a5246'));
+  }
+  p.push(C(108, 1.4, 10, 0, 8.6, 0, '#7f705a'), C(108, 1, 0.6, 0, 9.8, 4.7, '#6a5e4c'), C(108, 1, 0.6, 0, 9.8, -4.7, '#6a5e4c'));
+  p.push(C(10, 26, 12, 56, 13, 0, '#6a5e4c'), C(10.6, 1, 12.6, 56, 26.5, 0, '#4f4a44'));
+  for (let k = 0; k < 4; k += 1) p.push(C(9 - k * 2.2, 2.4, 11 - k * 2.6, 56, 28.2 + k * 2.4, 0, '#3f4a48'));
+  return merge(p);
+}
+/** A river weir: a low slanting step of stone across the river, white water pouring over it, a mill house at one end. */
+function riverWeir() {
+  const p = [];
+  for (let k = -8; k <= 8; k += 1) p.push(C(4.2, 2, 3, k * 4, 1, k * 0.8, '#8a8478'), C(4.2, 0.4, 2.4, k * 4, 0.6, k * 0.8 + 2.4, '#eef6fa'), C(4.2, 0.3, 2, k * 4, 0.3, k * 0.8 + 4.2, '#cfe6f0'));
+  p.push(C(10, 8, 8, 38, 4, 8, '#e8dcc0'), C(10.6, 3, 8.6, 38, 9.5, 8, '#b5503a'), C(1.4, 6, 6, 32.4, 3, 8, '#5a3a24'));
+  return merge(p);
+}
+/** A gothic bridge tower: a tall dark stone gate tower over an archway, a steep stepped roof with small corner spires. */
+function bridgeTower() {
+  const p = [C(4, 14, 12, -5, 7, 0, '#6a5e4c'), C(4, 14, 12, 5, 7, 0, '#6a5e4c'), C(14, 14, 12, 0, 21, 0, '#6a5e4c'), C(14.6, 1, 12.6, 0, 28.5, 0, '#4f4a44')];
+  for (let k = 0; k < 5; k += 1) p.push(C(12 - k * 2.4, 2.6, 10 - k * 2, 0, 30.3 + k * 2.6, 0, '#3f4a48'));
+  for (const [x, z] of [[-6.4, -5.4], [6.4, -5.4], [-6.4, 5.4], [6.4, 5.4]]) p.push(C(1.2, 5, 1.2, x, 31.5, z, '#3f4a48'));
+  p.push(C(2, 3, 0.2, -3, 21, 6.05, '#c8a24a'), C(2, 3, 0.2, 3, 21, 6.05, '#c8a24a'));
+  return merge(p);
+}
+/** An old town square: pastel gabled houses round the square and a church with two tall dark spires behind them (generic). */
+function twinSpires() {
+  const p = [];
+  const fronts = ['#efe1b8', '#e8c8a8', '#d8e0c8', '#f2e6c8', '#e2c0b0'];
+  for (let k = -4; k <= 4; k += 1) {
+    const h = 12 + (k % 2 ? 2 : 0);
+    p.push(C(6.6, h, 8, k * 7, h / 2, 6, fronts[(k + 4) % fronts.length]), C(7, 1, 8.4, k * 7, h + 0.5, 6, '#b5503a'), C(4, 2, 8, k * 7, h + 2, 6, fronts[(k + 4) % fronts.length]));
+  }
+  p.push(C(18, 22, 14, 0, 11, -10, '#9a8a6a'));
+  for (const x of [-6, 6]) {
+    p.push(C(5, 36, 5, x, 18, -14, '#5f5850'));
+    for (let k = 0; k < 4; k += 1) p.push(C(4.4 - k, 4, 4.4 - k, x, 38 + k * 4, -14, '#3f4442'));
+    for (const [dx, dz] of [[-2, -2], [2, -2], [-2, 2], [2, 2]]) p.push(C(0.8, 4, 0.8, x + dx, 38, -14 + dz, '#3f4442'));
+    p.push(C(0.4, 3, 0.4, x, 55.5, -14, '#c8a24a'));
+  }
+  return merge(p);
+}
+
 export const BLOCK_LANDMARKS = {
   'spawn-beacon': { build: spawnBeacon, glow: spawnBeaconGlow, radius: 5 },
   'cube-cottage': { build: cubeCottage, glow: cubeCottageGlow, radius: 7 },
@@ -1030,6 +1183,21 @@ export const BLOCK_LANDMARKS = {
   'yellow-tram': { build: yellowTram, radius: 8 },
   'cube-arch': { build: cubeArch, radius: 13 },
   'river-ferry': { build: riverFerry, radius: 9 },
+  // …the rivers (1 Nov 2026).
+  'wine-lodges': { build: wineLodges, radius: 23 },
+  'rabelo-boats': { build: rabeloBoats, radius: 9 },
+  'iron-arch-bridge': { build: ironArchBridge, radius: 40 },
+  'quinta-house': { build: quintaHouse, radius: 9 },
+  'vine-terraces': { build: vineTerraces, radius: 19 },
+  'river-chateau': { build: riverChateau, radius: 24 },
+  'hedge-maze': { build: hedgeMaze, radius: 15 },
+  'stone-arch-bridge': { build: stoneArchBridge, radius: 52 },
+  'moat-towers': { build: moatTowers, radius: 19 },
+  'castle-hill': { build: castleHill, radius: 36 },
+  'statue-bridge': { build: statueBridge, radius: 61 },
+  'river-weir': { build: riverWeir, radius: 43 },
+  'bridge-tower': { build: bridgeTower, radius: 8 },
+  'twin-spires': { build: twinSpires, radius: 32 },
 };
 
 // ── The quiet effects, on the race clock ──────────────────────────────────────
