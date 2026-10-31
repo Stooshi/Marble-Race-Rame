@@ -169,4 +169,5 @@ module.exports = [
   require('./kyoto-block-gardens'),
   require('./marrakesh-cube-souk'),
   require('./singapore-block-gardens'),
+  require('./lisbon-cube-hills'),
 ];

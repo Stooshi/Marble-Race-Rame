@@ -882,6 +882,17 @@
    "side": 1,
    "marbles": 4
   },
+  "lisbon-cube-hills": {
+   "name": "Lisbon Cube Hills",
+   "series": "Blocks",
+   "lighting": "day",
+   "v": "5c583375",
+   "bytes": 18182,
+   "bytes2x": 44168,
+   "t": 9960,
+   "side": 1,
+   "marbles": 4
+  },
   "london-steeplechase": {
    "name": "London Steeplechase",
    "series": "Track and Field",
