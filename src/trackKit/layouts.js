@@ -2140,9 +2140,9 @@ const LAYOUTS = {
       obstacles: [parked({ costume: c.parked, at: 0.2, side: L, length: 6 }), peg({ costume: c.peg, at: 0.45, line: 'right' })], features: [rumble({ from: 0.7, to: 0.95, count: 3 })],
     },
   ],
-  /** L123 Geyser terraces (Blocks 2, Yellowstone; after the split start): S-bends past the steam vents (a peg), a straight across the geyser basin (pegs), the spiral round the geyser cone (big feature one), the run to the hairpin, the hairpin, a straight through the frosted forest (a slalom), a short climb, the top terrace (a peg), the two-step drop down the hot-spring terraces (big feature two), a sweep across the valley and a parked piece and a peg at the run-in. */
+  /** L123 Geyser terraces (Blocks 2, Yellowstone; after the split start): S-bends past the steam vents (two pegs), a straight across the geyser basin (pegs), the spiral round the geyser cone (big feature one), the run to the hairpin, the hairpin, a straight through the frosted forest (a slalom), a short climb, the top terrace (a peg), the two-step drop down the hot-spring terraces (big feature two), a sweep across the valley and a parked piece and a peg at the run-in. */
   'geyser-terraces': (L, R, c) => [
-    { key: 'vents', name: 'Past the steam vents', shape: sBends({ first: L, radius: 70, degrees: 60, grade: 0.12 }), obstacles: [peg({ costume: c.peg, at: 0.5, line: 'center' })], billboards: 2 },
+    { key: 'vents', name: 'Past the steam vents', shape: sBends({ first: L, radius: 60, degrees: 50, grade: 0.12 }), obstacles: [peg({ costume: c.peg, at: 0.3, line: 'left' }), peg({ costume: c.peg, at: 0.7, line: 'right' })], billboards: 2 },
     { key: 'basin', name: 'Across the geyser basin', shape: straight(55, { grade: 0.11 }), obstacles: [peg({ costume: c.peg, at: 0.3, line: 'left' }), peg({ costume: c.peg, at: 0.7, line: 'right' })] },
     { key: 'cone', name: 'Round the geyser cone', shape: spiral({ side: R, radius: 50, turns: 0.8, grade: 0.16 }) },
     { key: 'brakingStraight', name: 'Run to the hairpin', shape: straight(50, { grade: 0.12 }), billboards: 1 },
@@ -2153,7 +2153,7 @@ const LAYOUTS = {
     { key: 'drop1', name: 'Down the first terrace', shape: plunge(45, { grade: 0.26, from: 0.12 }) },
     { key: 'ledge', name: 'The middle terrace', shape: straight(30, { grade: 0.1 }), obstacles: [peg({ costume: c.peg, at: 0.5, line: 'center' })] },
     { key: 'drop2', name: 'Down to the river', shape: plunge(45, { grade: 0.26, from: 0.1 }) },
-    { key: 'valleySweep', name: 'Across the valley', shape: sweep({ side: R, radius: 95, degrees: 110, grade: 0.11 }), billboards: 1 },
+    { key: 'valleySweep', name: 'Across the valley', shape: sweep({ side: R, radius: 95, degrees: 135, grade: 0.11 }), billboards: 1 },
     {
       key: 'lastStraight', name: 'Last straight', shape: straight(85, { grade: 0.2 }),
       obstacles: [parked({ costume: c.parked, at: 0.2, side: R, length: 6 }), peg({ costume: c.peg, at: 0.45, line: 'left' })], features: [rumble({ from: 0.7, to: 0.95, count: 3 })],

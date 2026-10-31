@@ -34,12 +34,12 @@ module.exports = track({
   sections: layout('geyser-terraces', {
     costumes: { slalom: 'cube-pillar', peg: 'cube-pillar', swipe: 'block-crane', parked: 'block-pieces' },
     dress: {
-      basin: { landmarks: [{ name: 'steam-vents', at: 0.5, side: 'left', distance: 22 }] },
-      vents: { landmarks: [{ name: 'steam-vents', at: 0.5, side: 'right', distance: 24 }] },
+      basin: { landmarks: [{ name: 'steam-vents', at: 0.5, side: 'left', distance: 34 }] },
+      vents: { landmarks: [{ name: 'steam-vents', at: 0.5, side: 'right', distance: 36 }] },
       cone: { around: 'geyser-cone' },
       terraceTop: { landmarks: [{ name: 'hot-spring-terraces', at: 0.5, side: 'right', distance: 20 }] },
       ledge: { landmarks: [{ name: 'hot-spring-terraces', at: 0.5, side: 'left', distance: 20 }] },
-      valleySweep: { landmarks: [{ name: 'steam-vents', at: 0.5, side: 'left', distance: 30 }] },
+      valleySweep: { landmarks: [{ name: 'steam-vents', at: 0.5, side: 'left', distance: 40 }] },
       lastStraight: { name: 'To the terraces', landmarks: [{ name: 'hot-spring-terraces', at: 0.4, side: 'right', distance: 22 }] },
     },
   }),
