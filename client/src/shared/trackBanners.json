@@ -1344,6 +1344,17 @@
    "side": 1,
    "marbles": 7
   },
+  "singapore-block-gardens": {
+   "name": "Singapore Block Gardens",
+   "series": "Blocks",
+   "lighting": "day",
+   "v": "78dff60d",
+   "bytes": 17386,
+   "bytes2x": 41190,
+   "t": 22790,
+   "side": -1,
+   "marbles": 5
+  },
   "sky-islands": {
    "name": "Sky Islands",
    "series": "Blocks",

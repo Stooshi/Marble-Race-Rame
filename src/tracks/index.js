@@ -168,4 +168,5 @@ module.exports = [
   require('./abisko-aurora-run'),
   require('./kyoto-block-gardens'),
   require('./marrakesh-cube-souk'),
+  require('./singapore-block-gardens'),
 ];

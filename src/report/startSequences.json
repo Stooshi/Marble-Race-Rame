@@ -117,6 +117,7 @@
 "sapporo-snow-sculptures": {"family":"coaster","reach":0.236,"seq":["opening: classic","drop","pileUp","slalom","straight","box","rail","jump","spiral right"]},
 "seine-quays-spins": {"family":"river","reach":0.326,"seq":["opening: pipe-drop","drop","half-pipe","straight","slalom","sweep right","peg ×3"]},
 "seoul-winter-lights": {"family":"arcade","reach":0.369,"seq":["opening: clean-drop","drop","S-bends left","sweep right","curtain"]},
+"singapore-block-gardens": {"family":"block-2","reach":0.237,"seq":["opening: tunnel-launch","drop","pileUp","slalom","drop","slalom","climb","drop","sweep right"]},
 "sky-islands": {"family":"block","reach":0.239,"seq":["opening: classic","drop","pileUp","slalom","straight","peg ×2","sweep left","boost"]},
 "sleigh-bell-forest": {"family":"winter-wonders","reach":0.26,"seq":["opening: crest-start","drop","pileUp","slalom","climb","drop","straight","peg","rail","box","table-top"]},
 "slingshot-spins": {"family":"pinball","reach":0.256,"seq":["opening: staggered-drop","drop","pileUp","slalom","brake","sweep left"]},
