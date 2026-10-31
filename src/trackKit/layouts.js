@@ -2159,18 +2159,18 @@ const LAYOUTS = {
       obstacles: [parked({ costume: c.parked, at: 0.2, side: R, length: 6 }), peg({ costume: c.peg, at: 0.45, line: 'left' })], features: [rumble({ from: 0.7, to: 0.95, count: 3 })],
     },
   ],
-  /** L124 Bubble lake (Blocks 2, Abraham Lake; after the pipe drop): a shoulder straight (a peg), the big drop down the mountain slope (big feature one), a slalom straight (the start's luck), S-bends onto the lake (a peg), a straight across the bubble ice (pegs), the run to the fall, the curtain waterfall through the half-frozen fall (big feature two), the run to the hairpin, the hairpin, a sweep along the mountain shore and a parked piece and a peg at the run-in. */
+  /** L124 Bubble lake (Blocks 2, Abraham Lake; after the pipe drop): a shoulder straight (a peg), the big drop down the mountain slope (big feature one), a slalom straight (the start's luck), S-bends onto the lake (a peg), a slalom across the bubble ice, the run to the fall, the curtain waterfall through the half-frozen fall (big feature two), the run to the hairpin, the hairpin, a sweep along the mountain shore and a parked piece and a peg at the run-in. */
   'bubble-lake': (L, R, c) => [
     { key: 'shoulder', name: 'Over the shoulder', shape: straight(40, { grade: 0.11 }), obstacles: [peg({ costume: c.peg, at: 0.5, line: 'center' })] },
     { key: 'bigDrop', name: 'Down the mountainside', shape: plunge(70, { grade: 0.3, from: 0.12 }) },
     { key: 'pines', name: 'Through the pines', shape: straight(55, { grade: 0.11 }), obstacles: [slalom({ costume: c.slalom, from: 0.1, to: 0.9, count: 5, loss: 0.3 })] },
-    { key: 'lakeBends', name: 'Onto the lake', shape: sBends({ first: R, radius: 80, degrees: 60, grade: 0.12 }), obstacles: [peg({ costume: c.peg, at: 0.5, line: 'center' })], billboards: 2 },
-    { key: 'bubbles', name: 'Across the bubble ice', shape: straight(75, { grade: 0.11 }), obstacles: [peg({ costume: c.peg, at: 0.3, line: 'left' }), peg({ costume: c.peg, at: 0.7, line: 'right' })] },
+    { key: 'lakeBends', name: 'Onto the lake', shape: sBends({ first: R, radius: 80, degrees: 80, grade: 0.12 }), obstacles: [peg({ costume: c.peg, at: 0.5, line: 'center' })], billboards: 2 },
+    { key: 'bubbles', name: 'Across the bubble ice', shape: straight(75, { grade: 0.11 }), obstacles: [slalom({ costume: c.slalom, from: 0.15, to: 0.85, count: 4, loss: 0.2 })] },
     { key: 'toTheFall', name: 'To the frozen fall', shape: straight(35, { grade: 0.12 }) },
     { key: 'curtain', name: 'Through the frozen fall', shape: waterfall(35, { grade: 0.5, curtain: true }) },
     { key: 'brakingStraight', name: 'Run to the hairpin', shape: straight(50, { grade: 0.12 }), billboards: 1 },
     { key: 'hairpin', name: 'Hairpin', shape: hairpin({ side: R }), obstacles: [swipe({ costume: c.swipe, side: 'high' })] },
-    { key: 'shoreSweep', name: 'Along the mountain shore', shape: sweep({ side: L, radius: 95, degrees: 140, grade: 0.11 }), billboards: 1 },
+    { key: 'shoreSweep', name: 'Along the mountain shore', shape: sweep({ side: L, radius: 95, degrees: 160, grade: 0.11 }), billboards: 1 },
     {
       key: 'lastStraight', name: 'Last straight', shape: straight(85, { grade: 0.15 }),
       obstacles: [parked({ costume: c.parked, at: 0.2, side: L, length: 6 }), peg({ costume: c.peg, at: 0.45, line: 'right' })], features: [rumble({ from: 0.7, to: 0.95, count: 3 })],
