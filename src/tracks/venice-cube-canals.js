@@ -21,7 +21,7 @@ module.exports = track({
   signature: 'Grand Canal half-pipe',
   tvCameras: [
     { section: 'The canal fork', at: 0.3, side: 'right', distance: 10, height: 12 },
-    { section: 'Grand Canal half-pipe', at: 0.9, side: 'left', distance: 12, height: 12 },
+    { section: 'Grand Canal half-pipe', at: 0.9, side: 'left', distance: 10, height: 15 },
   ],
   start: { landmark: 'domed-basilica', type: 'spiral-tower', gate: 'barrier', shots: { countdown: 'above', launch: 'high-behind' } },
   finish: { landmark: 'cube-campanile' },
