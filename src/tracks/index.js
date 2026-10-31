@@ -171,4 +171,5 @@ module.exports = [
   require('./singapore-block-gardens'),
   require('./lisbon-cube-hills'),
   require('./douro-block-terraces'),
+  require('./loire-chateau-run'),
 ];

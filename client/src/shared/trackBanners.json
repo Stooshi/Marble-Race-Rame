@@ -904,6 +904,17 @@
    "side": 1,
    "marbles": 4
   },
+  "loire-chateau-run": {
+   "name": "Loire Château Run",
+   "series": "Blocks",
+   "lighting": "day",
+   "v": "452c9bc6",
+   "bytes": 10068,
+   "bytes2x": 25016,
+   "t": 20140,
+   "side": -1,
+   "marbles": 7
+  },
   "london-steeplechase": {
    "name": "London Steeplechase",
    "series": "Track and Field",
