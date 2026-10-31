@@ -574,6 +574,233 @@ function finalStage() {
   return merge(p);
 }
 
+// ── Blocks Series 2 (30 Oct 2026): real places built from cubes ───────────────
+// Generic architecture and landscape in calm colours; no logos, no protected landmarks, nothing on a summit.
+
+const hashK = (k) => { const x = Math.sin(k * 91.7 + 13.1) * 43758.5453; return x - Math.floor(x); };
+
+/** One karst tower: a steep stack of rounded-off stone cubes, green growing on every ledge (round a splitter: fitted). */
+function karstTower(seed = 0, H = 11) {
+  const p = [];
+  for (let k = 0; k < H; k += 1) {
+    const w = 9 - Math.abs(k - 3) * 0.55 - (k > 6 ? (k - 6) * 0.6 : 0);
+    const off = (hashK(seed * 7 + k) - 0.5) * 1.2;
+    p.push(C(w, 3, w * 0.92, off, 1.5 + k * 3, -off * 0.6, k % 2 ? '#8d9187' : '#9a9d92'));
+    if (k % 2 === 0) p.push(C(w * 0.7, 0.8, w * 0.5, off + w * 0.18, 3.1 + k * 3, w * 0.25, k > 7 ? '#5e9a54' : '#6aa25c'));
+  }
+  p.push(C(3.4, 2.4, 3.4, 0, 3 * H + 1.2, 0, '#5e9a54'));
+  return merge(p);
+}
+/** The karst tower round a splitter: a slimmer stack (4.4 m square, 4 m tall: below the follow camera, which passes over the divider on the curving split) so it stands
+ * clear inside the divider and the follow camera never sweeps through it on the curving split. */
+function karstNeedle() {
+  const p = [C(4.4, 2.2, 4.4, 0, 1.1, 0, '#9a9d92'), C(3.1, 0.5, 2.2, 0.8, 2.45, 1.1, '#6aa25c')];
+  p.push(C(3.2, 1.2, 3.2, 0.2, 2.8, -0.15, '#8d9187'), C(2.2, 0.6, 2.2, 0.2, 3.7, -0.1, '#5e9a54'));
+  return merge(p);
+}
+/** Karst towers: three or four of them together, the tallest behind (a backdrop beside the river). */
+function karstTowers() {
+  const g = [];
+  const at = [[-14, 0, 0.9], [0, -10, 1.25], [13, -2, 1.0], [5, 10, 0.7]];
+  at.forEach(([x, z, s], k) => {
+    const t = karstTower(k + 1);
+    t.applyMatrix4(turned(x, 0, z, k * 0.7, s, s, s));
+    g.push(t);
+  });
+  return merge(g);
+}
+/** Bamboo rafts on the river: long rafts of pale poles, one with a little canopy. */
+function bambooRafts() {
+  const p = [];
+  for (const [x, z, yaw] of [[-4, 0, 0.1], [5, 6, -0.2]]) {
+    for (let k = 0; k < 5; k += 1) p.push(C(0.42, 0.42, 9, x + (k - 2) * 0.45, 0.25, z, k % 2 ? '#c9b77a' : '#d8c68a', yaw));
+  }
+  p.push(C(2.2, 0.15, 2.4, -4, 1.8, -1, '#6a5a3a', 0.1), C(0.15, 1.6, 0.15, -5, 1, -2, '#8a7448'), C(0.15, 1.6, 0.15, -3, 1, 0, '#8a7448'));
+  return merge(p);
+}
+/** A river village: white cube houses under dark grey stepped roofs, a little stone landing. */
+function riverVillage() {
+  const p = [C(26, 0.6, 6, 0, 0.3, 4, '#8e949b')];
+  [[-9, 0], [0, -2], [9, 1], [-4, -9], [6, -9]].forEach(([x, z], k) => {
+    p.push(C(6, 4, 5, x, 2, z, k % 2 ? '#ece6d8' : '#f2ede2'));
+    p.push(C(7, 0.8, 6, x, 4.4, z, '#4a4f58'), C(5.6, 0.8, 4.6, x, 5.2, z, '#555b64'), C(3.6, 0.6, 2.6, x, 5.9, z, '#4a4f58'));
+    p.push(C(1.2, 1.2, 0.2, x - 1.4, 2.4, z + 2.55, '#3a3e44'), C(1.2, 1.2, 0.2, x + 1.4, 2.4, z + 2.55, '#3a3e44'));
+  });
+  return merge(p);
+}
+const riverVillageGlow = () => merge([[-9, 0], [0, -2], [9, 1]].map(([x, z]) => C(1.0, 1.0, 0.22, x - 1.4, 2.4, z + 2.6, B.lamp)));
+
+/** A row of palazzi: tall cube houses in plaster colours, arched windows in rows, a canal-side walk. */
+function palazzoRow() {
+  const p = [C(30, 0.8, 4, 0, 0.4, 5, '#c9c0ae')];
+  const tones = ['#d98a70', '#e2c47e', '#e8d9c0', '#c97b6a', '#d9b08a'];
+  [-11, -4, 3, 10].forEach((x, k) => {
+    const h = 10 + (k % 2) * 3;
+    p.push(C(7, h, 7, x, h / 2, 0, tones[k % tones.length]), C(7.4, 0.6, 7.4, x, h + 0.3, 0, '#9a5a44'));
+    for (let r = 0; r < 3; r += 1) for (let c = -1; c <= 1; c += 1) {
+      p.push(C(1.1, 1.8, 0.2, x + c * 2.1, 2.6 + r * 3.2, 3.55, '#3d3a44'), C(1.1, 0.5, 0.22, x + c * 2.1, 3.7 + r * 3.2, 3.56, '#f2ede2'));
+    }
+  });
+  return merge(p);
+}
+/** A square bell tower of cubes: a brick shaft, a white loggia, a pointed cube roof (round a splitter: fitted). */
+function cubeCampanile() {
+  const p = [C(7, 1, 7, 0, 0.5, 0, '#c9c0ae')];
+  for (let k = 0; k < 9; k += 1) p.push(C(5, 3, 5, 0, 2.5 + k * 3, 0, k % 2 ? '#b8644e' : '#c06c55'));
+  p.push(C(5.6, 3.4, 5.6, 0, 29.7, 0, '#f2ede2'));
+  for (const [x, z] of [[-1.5, 2.8], [1.5, 2.8], [-1.5, -2.8], [1.5, -2.8], [2.8, -1.5], [2.8, 1.5], [-2.8, -1.5], [-2.8, 1.5]]) p.push(C(Math.abs(x) > 2 ? 0.2 : 1.2, 2.2, Math.abs(z) > 2 ? 0.2 : 1.2, x, 29.6, z, '#3d3a44'));
+  p.push(C(5.8, 1, 5.8, 0, 31.9, 0, '#b8644e'), C(4.2, 1.6, 4.2, 0, 33.2, 0, '#5f8a6a'), C(2.6, 1.6, 2.6, 0, 34.8, 0, '#5f8a6a'), C(1.2, 1.8, 1.2, 0, 36.5, 0, '#5f8a6a'));
+  return merge(p);
+}
+/** An arched stone bridge of cubes over a canal: stepped up to the crown, a white parapet. */
+function archedCubeBridge() {
+  const p = [];
+  for (let k = -5; k <= 5; k += 1) {
+    const h = 4.4 - Math.abs(k) * 0.55;
+    p.push(C(1.6, 0.9, 5, k * 1.6, h, 0, '#ddd4c2'), C(1.6, 0.6, 0.4, k * 1.6, h + 0.75, 2.3, '#f2ede2'), C(1.6, 0.6, 0.4, k * 1.6, h + 0.75, -2.3, '#f2ede2'));
+    if (Math.abs(k) >= 4) p.push(C(1.6, h, 5, k * 1.6, h / 2, 0, '#c9c0ae'));
+  }
+  return merge(p);
+}
+/** Gondolas: long slim black boats with a raised bow and stern, moored in a row. */
+function cubeGondolas() {
+  const p = [];
+  [-4, 0, 4].forEach((x, k) => {
+    p.push(C(1.3, 0.6, 9, x, 0.3, k, '#1d1f24'), C(1.1, 0.9, 0.6, x, 0.9, k + 4.6, '#1d1f24'), C(1.1, 0.6, 0.6, x, 0.8, k - 4.6, '#1d1f24'), C(1.0, 0.25, 2.2, x, 0.7, k - 1, '#9a3a34'));
+    p.push(C(0.25, 3.4, 0.25, x + 1.2, 1.4, k + 2, k % 2 ? '#f2ede2' : '#2e5f8a'));
+  });
+  return merge(p);
+}
+/** A domed basilica of cubes: a broad front of arches, five stepped domes. */
+function domedBasilica() {
+  const p = [C(26, 9, 14, 0, 4.5, 0, '#e8dcc6'), C(26.6, 0.8, 14.6, 0, 9.4, 0, '#c9b896')];
+  for (let k = -2; k <= 2; k += 1) p.push(C(3.4, 5, 0.3, k * 5, 3.6, 7.05, '#7a6a5a'), C(3.4, 1.2, 0.32, k * 5, 6.6, 7.06, '#c9a46a'));
+  for (const [x, z, s] of [[0, 0, 1.2], [-8, 0, 0.9], [8, 0, 0.9], [0, -5, 0.9], [0, 5, 0.8]]) {
+    for (let k = 0; k < 4; k += 1) p.push(C((6 - k * 1.4) * s, 1.4 * s, (6 - k * 1.4) * s, x, 10.4 + k * 1.4 * s, z, '#8fa89a'));
+    p.push(C(0.5, 1.6, 0.5, x, 10.4 + 5.6 * s + 0.8, z, '#c9a46a'));
+  }
+  return merge(p);
+}
+
+/** The horseshoe falls: a curved lip of cubes, a wall of white water falling into a cloud of mist cubes. */
+function horseshoeFalls() {
+  const p = [];
+  for (let k = -7; k <= 7; k += 1) {
+    const a = (k / 7) * 1.2;
+    const x = Math.sin(a) * 22;
+    const z = -Math.cos(a) * 12 + 6;
+    p.push(C(3.4, 2, 3.4, x, 15, z - 2.6, '#5e7d6a', -a));
+    p.push(C(3.2, 14, 1.2, x, 7, z, k % 2 ? '#e8f2f6' : '#f6fafc', -a));
+    p.push(C(4, 2.6, 3.4, x, 1.3, z + 2.2, '#ffffff', -a));
+  }
+  for (const x of [-26, 26]) p.push(C(8, 18, 10, x, 9, 0, '#7d7a72'));
+  return merge(p);
+}
+/** A tour boat in the mist: a white cube boat, its blue-clad passengers as small cubes on deck. */
+function mistBoat() {
+  const p = [C(4, 1.4, 11, 0, 0.5, 0, '#f2f0ea'), C(3.6, 1.8, 6, 0, 2.1, -0.5, '#e8e6e0'), C(3.8, 0.3, 6.4, 0, 3.15, -0.5, '#2e5f8a')];
+  for (let k = 0; k < 6; k += 1) p.push(C(0.5, 0.8, 0.5, (k % 2 ? 1 : -1) * 1.4, 3.7, -3 + k, '#4f8fd0'));
+  return merge(p);
+}
+/** Gorge walls: a long cliff of layered grey and tan stone cubes, trees on top. */
+function gorgeWalls() {
+  const p = [];
+  for (let x = -3; x <= 3; x += 1) for (let y = 0; y < 3; y += 1) p.push(C(6.6, 6, 4 + ((x + y) % 3) * 0.8, x * 6.4, 3 + y * 6, -(x + y) % 2, (y % 2 ? '#7d7a72' : '#8f8a80')));
+  for (let x = -3; x <= 3; x += 2) p.push(C(4, 3, 3, x * 6.4, 19.5, -1, '#4f8a3f'));
+  return merge(p);
+}
+/** A steel arch bridge of cubes across the gorge: a stepped grey arch under a straight deck. */
+function steelArchCube() {
+  const p = [];
+  for (let k = -9; k <= 9; k += 1) {
+    const y = 16 - (k * k) * 0.16;
+    p.push(C(2.4, 1, 2, k * 2.4, y, 0, '#6b7179'), C(2.4, 0.8, 4, k * 2.4, 17.4, 0, '#8e949b'));
+    if (k % 3 === 0) p.push(C(0.4, 17.4 - y, 0.4, k * 2.4, (17.4 + y) / 2, 0, '#6b7179'));
+  }
+  return merge(p);
+}
+
+/** The three towers: three tall pale limestone towers of stepped cubes side by side (round a spiral: fitted). */
+function threeTowers() {
+  const p = [];
+  const tower = (x, z, H, w0) => {
+    for (let k = 0; k < H; k += 1) {
+      const w = w0 - k * (w0 * 0.035) - (k > H - 4 ? (k - (H - 4)) * 0.9 : 0);
+      p.push(C(w, 3, w * 0.86, x + (k % 3 - 1) * 0.3, 1.5 + k * 3, z, k % 2 ? '#c9c2b4' : '#d6cfc1'));
+    }
+  };
+  tower(-10, 0, 9, 8);
+  tower(0, -2, 13, 9.5);
+  tower(9.5, 1, 11, 8.5);
+  p.push(C(34, 2, 16, 0, 1, 0, '#a8a296'));
+  return merge(p);
+}
+/** A scree fan: a spread of grey cubes, bigger at the foot. */
+function screeFan() {
+  const p = [];
+  for (let k = 0; k < 18; k += 1) {
+    const a = hashK(k) * 2 - 1;
+    const r = 2 + hashK(k + 50) * 10;
+    const s = 0.8 + (r / 12) * 1.6;
+    p.push(C(s, s * 0.7, s, a * r, s * 0.35, -r * 0.5, k % 2 ? '#b8b2a6' : '#a8a296', a));
+  }
+  return merge(p);
+}
+/** A ridge of pale cube mountains, far behind (a backdrop). */
+function dolomiteRidge() {
+  const p = [];
+  for (let k = -4; k <= 4; k += 1) {
+    const H = 6 + Math.round(hashK(k + 9) * 6);
+    for (let j = 0; j < H; j += 1) p.push(C(12 - j * 0.9, 4, 10, k * 11, 2 + j * 4, -Math.abs(k), j > H - 3 ? '#e6e1d6' : j % 2 ? '#c2bbad' : '#b4ad9f'));
+  }
+  return merge(p);
+}
+
+/** A small railway station of cubes, red timber and white trim, lamps lit at night. */
+function auroraStation() {
+  const p = [C(18, 6, 8, 0, 3, 0, '#9a3a34'), C(19, 0.6, 9, 0, 6.3, 0, '#2f3440'), C(15, 1, 7.4, 0, 7.1, 0, '#2f3440'), C(19, 0.6, 9.2, 0, 6.9, 0, '#eef3f7')];
+  for (let k = -3; k <= 3; k += 1) p.push(C(1.4, 2, 0.2, k * 2.4, 3.4, 4.05, '#f2ede2'));
+  p.push(C(24, 0.5, 5, 0, 0.25, 7, '#8e949b'));
+  return merge(p);
+}
+const auroraStationGlow = () => merge([-3, -2, -1, 0, 1, 2, 3].map((k) => C(1.0, 1.4, 0.22, k * 2.4, 3.4, 4.12, '#ffd98a')));
+/** A sauna hut of dark timber cubes by the lake, snow on the roof, smoke-free, a warm window. */
+function saunaHut() {
+  const p = [];
+  for (let k = 0; k < 3; k += 1) p.push(C(5, 0.9, 4, 0, 0.45 + k * 0.9, 0, k % 2 ? '#5a4430' : '#6a5038'));
+  p.push(C(5.8, 0.6, 4.8, 0, 3.0, 0, '#3a2c20'), C(5.8, 0.35, 4.8, 0, 3.45, 0, B.snow), C(0.8, 1.6, 0.8, 1.6, 4.2, -1, '#4a4f58'));
+  p.push(C(3, 0.3, 6, 0, 0.15, 5, '#7a5a3a'));
+  return merge(p);
+}
+const saunaHutGlow = () => merge([C(1.0, 0.8, 0.22, -1.2, 1.6, 2.05, '#ffcf7a')]);
+/** A frozen lake: a broad slab of pale blue ice tiles, a few darker clear-ice patches and snow drifts. */
+function iceLake() {
+  const p = [];
+  for (let x = -4; x <= 4; x += 1) for (let z = -3; z <= 3; z += 1) {
+    if (Math.abs(x) === 4 && Math.abs(z) === 3) continue;
+    p.push(C(6, 0.3, 6, x * 6, 0.15, z * 6, (x * 3 + z) % 4 === 0 ? '#9fc6dc' : '#c8e0ec'));
+  }
+  for (const [x, z] of [[-18, 12], [20, -10], [6, 16]]) p.push(C(5, 0.6, 2.5, x, 0.45, z, B.snow, x * 0.1));
+  return merge(p);
+}
+/** An island in the frozen lake: a low rock of cubes, snow on top, a few birches (round a splitter: fitted). */
+function lakeIsland() {
+  const p = [C(14, 1.6, 10, 0, 0.8, 0, '#6b7179'), C(12, 0.6, 8.4, 0, 1.9, 0, B.snow)];
+  for (const [x, z] of [[-3, -1], [2, 2], [3.5, -2]]) {
+    p.push(C(0.5, 5, 0.5, x, 4.6, z, '#e8e6e0'), C(0.52, 0.4, 0.52, x, 3.2, z, '#2f3440'), C(2.4, 1.6, 2.4, x, 7.6, z, '#c9c49a'));
+  }
+  return merge(p);
+}
+/** Snowy fells: broad rounded cube hills, snow over dark rock (a backdrop). */
+function fellPeaks() {
+  const p = [];
+  for (let k = -3; k <= 3; k += 1) {
+    const H = 5 + Math.round(hashK(k + 3) * 4);
+    for (let j = 0; j < H; j += 1) p.push(C(22 - j * 2.2, 3, 16 - j * 1.2, k * 18, 1.5 + j * 3, -Math.abs(k) * 2, j > 1 ? B.snow : '#5a606a'));
+  }
+  return merge(p);
+}
+
 export const BLOCK_LANDMARKS = {
   'spawn-beacon': { build: spawnBeacon, glow: spawnBeaconGlow, radius: 5 },
   'cube-cottage': { build: cubeCottage, glow: cubeCottageGlow, radius: 7 },
@@ -618,6 +845,28 @@ export const BLOCK_LANDMARKS = {
   'score-wall': { build: scoreWall, radius: 9, fx: 'score-wall' },
   'checkpoint-arch': { build: checkpointArch, radius: 10, fx: 'checkpoint-flash' },
   'final-stage': { build: finalStage, radius: 13, fx: 'final-stage' },
+  // Blocks Series 2.
+  'karst-towers': { build: karstTowers, radius: 20 },
+  'karst-tower': { build: karstNeedle, radius: 3, fit: 2.4 },
+  'bamboo-rafts': { build: bambooRafts, radius: 8 },
+  'river-village': { build: riverVillage, glow: riverVillageGlow, radius: 14 },
+  'palazzo-row': { build: palazzoRow, radius: 15 },
+  'cube-campanile': { build: cubeCampanile, radius: 4, fit: 3 },
+  'arched-cube-bridge': { build: archedCubeBridge, radius: 9 },
+  'cube-gondolas': { build: cubeGondolas, radius: 7 },
+  'domed-basilica': { build: domedBasilica, radius: 15 },
+  'horseshoe-falls': { build: horseshoeFalls, radius: 28 },
+  'mist-boat': { build: mistBoat, radius: 6 },
+  'gorge-walls': { build: gorgeWalls, radius: 22 },
+  'steel-arch-cube': { build: steelArchCube, radius: 22 },
+  'three-towers': { build: threeTowers, radius: 17, fit: 12 },
+  'scree-fan': { build: screeFan, radius: 12 },
+  'dolomite-ridge': { build: dolomiteRidge, radius: 50 },
+  'aurora-station': { build: auroraStation, glow: auroraStationGlow, radius: 12 },
+  'sauna-hut': { build: saunaHut, glow: saunaHutGlow, radius: 5 },
+  'ice-lake': { build: iceLake, radius: 26 },
+  'lake-island': { build: lakeIsland, radius: 7, fit: 6 },
+  'fell-peaks': { build: fellPeaks, radius: 60 },
 };
 
 // ── The quiet effects, on the race clock ──────────────────────────────────────

@@ -83,6 +83,32 @@ export const BLOCK_WORLDS = {
     tops: ['#3a3456', '#342f4e'], riser: '#262140', deep: '#1c1830', floor: '#1c1830', bank: '#383254', fill: '#262140', hills: 16, step: 2,
     dressing: [['pillar', 0.4], ['crystal', 0.3], ['pieceStack', 0.3]],
   },
+  // ── Blocks Series 2 (30 Oct 2026) ──
+  // Li River: green rice-field land, grey karst rock in the risers.
+  karst: {
+    tops: ['#7fb062', '#73a458'], riser: '#8d9187', deep: '#5f6b62', floor: '#73a458', bank: '#7bab5e', fill: '#8d9187', hills: 22, step: 3,
+    dressing: [['bamboo', 0.4], ['bush', 0.25], ['rock', 0.2], ['flowers', 0.15]],
+  },
+  // Venice: pale stone pavements and terracotta, canals between.
+  canal: {
+    tops: ['#d6cdbb', '#cbc1ae'], riser: '#b8644e', deep: '#3f6f8a', floor: '#3f6f8a', bank: '#d2c9b6', fill: '#b8644e', hills: 10, step: 2,
+    dressing: [['lampPost', 0.35], ['planter', 0.35], ['crates', 0.15], ['bush', 0.15]],
+  },
+  // Niagara: green parkland over a grey-and-tan gorge.
+  falls: {
+    tops: ['#7fae5f', '#73a254'], riser: '#7d7a72', deep: '#5d6a66', floor: '#73a254', bank: '#7aa95c', fill: '#7d7a72', hills: 26, step: 4,
+    dressing: [['tree', 0.5], ['bush', 0.25], ['rock', 0.25]],
+  },
+  // The Dolomites: pale limestone, high green meadows, larches.
+  dolomite: {
+    tops: ['#93b86e', '#86ab62'], riser: '#c2bbad', deep: '#9a948a', floor: '#86ab62', bank: '#8fb46a', fill: '#c2bbad', hills: 40, step: 4,
+    dressing: [['larch', 0.35], ['paleRock', 0.35], ['flowers', 0.3]],
+  },
+  // Lapland under the aurora: snow over dark rock, birch woods (year-round; no holiday decorations).
+  aurora: {
+    tops: ['#e9f0f6', '#dde6ee'], riser: '#5a606a', deep: '#4a505a', floor: '#dde6ee', bank: '#e5ecf3', fill: '#5a606a', hills: 30, step: 3,
+    dressing: [['birch', 0.45], ['snowPine', 0.3], ['snowRock', 0.25]],
+  },
 };
 export const BLOCK_WORLD_NAMES = Object.keys(BLOCK_WORLDS);
 
@@ -207,6 +233,29 @@ const MAKE = {
   // A ruin: a broken column of sandstone cubes and a fallen block.
   ruin: () => merge([cube(1.4, 3.6, 1.4, 0, 1.8, 0, '#d8b980'), cube(1.6, 0.5, 1.6, 0, 3.85, 0, '#c9a46a'), cube(2.6, 1.3, 1.3, 2, 0.65, 0.8, '#c9a46a', 0.5)]),
   cactusCube: () => merge([cube(0.9, 3.2, 0.9, 0, 1.6, 0, '#5f8a4a'), cube(0.7, 0.7, 0.7, 0.8, 1.8, 0, '#5f8a4a'), cube(0.6, 1.2, 0.6, 1.0, 2.6, 0, '#5f8a4a')]),
+  // Blocks Series 2.
+  // A clump of bamboo: thin green cube stalks of different heights, a few leaf cubes.
+  bamboo: (lite) => merge([
+    ...[[0, 0, 6], [0.8, 0.4, 5], [-0.6, 0.7, 4.4], ...(lite ? [] : [[0.3, -0.8, 5.4]])].map(([x, z, h]) => cube(0.3, h, 0.3, x, h / 2, z, '#7fa64e')),
+    cube(1.6, 0.6, 1.2, 0.2, 5.6, 0.2, '#6a9a44'),
+  ]),
+  // A canal-side lamp post: a dark square post, a warm lamp cube.
+  lampPost: () => merge([cube(0.3, 3.6, 0.3, 0, 1.8, 0, '#2f3440'), cube(0.6, 0.6, 0.6, 0, 3.9, 0, '#f4d28e')]),
+  // A planter of flowers in terracotta.
+  planter: () => merge([cube(1.6, 0.8, 0.8, 0, 0.4, 0, '#b8644e'), cube(1.4, 0.5, 0.6, 0, 1.0, 0, '#5f9a48'), cube(0.3, 0.3, 0.3, -0.4, 1.35, 0, '#e86a7a'), cube(0.3, 0.3, 0.3, 0.4, 1.35, 0.1, '#f2d06a')]),
+  // A larch: a slim trunk, light green stepped tiers.
+  larch: (lite) => merge([
+    cube(0.6, 2.2, 0.6, 0, 1.1, 0, '#6e5136'),
+    ...[[2.8, 2.6], [2.0, 4.0], [1.2, 5.2]].slice(0, lite ? 2 : 3).map(([w, y]) => cube(w, 1.3, w, 0, y, 0, '#7fae52')),
+  ]),
+  paleRock: () => merge([cube(2.4, 1.6, 2, 0, 0.8, 0, '#c2bbad', 0.3), cube(1.3, 1.1, 1.2, 0.7, 2.1, -0.2, '#d6cfc1', 0.3)]),
+  // A birch: a white trunk with dark bands, a pale yellow-green crown, snow on it.
+  birch: (lite) => merge([
+    cube(0.45, 4.6, 0.45, 0, 2.3, 0, '#ece8de'),
+    cube(0.47, 0.35, 0.47, 0, 1.6, 0, '#2f3440'), cube(0.47, 0.3, 0.47, 0, 3.0, 0, '#2f3440'),
+    cube(2.2, 1.6, 2.2, 0, 5.2, 0, '#b9b98a'),
+    ...(lite ? [] : [cube(1.8, 0.3, 1.8, 0, 6.1, 0, '#f2f6fa')]),
+  ]),
 };
 
 /** A world's dressing: [[make(lite) → geometry with colours, share], …], shares adding up to 1. */

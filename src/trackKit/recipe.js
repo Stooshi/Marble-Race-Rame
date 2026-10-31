@@ -19,13 +19,14 @@ const LONGEST_CLIMB_M = 40;    // San Francisco's 35 m
 const { LIGHTINGS } = require('./lighting');
 const { OPENING_KINDS } = require('./openings');
 // Track families (the sameness check compares openings within one): 'test' tracks are never compared.
-const FAMILIES = ['world-tour', 'grand-prix', 'coaster', 'pinball', 'arcade', 'canyon', 'block', 'athletics', 'winter-wonders', 'river', 'peak', 'test'];
+const FAMILIES = ['world-tour', 'grand-prix', 'coaster', 'pinball', 'arcade', 'canyon', 'block', 'block-2', 'athletics', 'winter-wonders', 'river', 'peak', 'test'];
 // A canyon: the canyon family, or a library test track built as one (series 'canyon'). It is built
 // as a coaster too (the track climbs out of the canyon on its supports and touches down on its floor).
 const isCanyon = (spec) => spec.family === 'canyon' || (spec.family === 'test' && spec.series === 'canyon');
 // A Block Series track: the block family, or a library test track built as one (series 'block'). It is
 // built as a coaster too: on the voxel land unless a section flies (on block pillars, over the cube cliffs).
-const isBlock = (spec) => spec.family === 'block' || (spec.family === 'test' && spec.series === 'block');
+// (Blocks Series 2, 30 Oct 2026, is family 'block-2': the same voxel worlds, its own family for the variety rules.)
+const isBlock = (spec) => spec.family === 'block' || spec.family === 'block-2' || (spec.family === 'test' && spec.series === 'block');
 // A Track and Field track: the athletics family, or a library test track built as one (series 'athletics').
 // Built as a coaster too: on the ground (in and round its stadium) unless a section flies (a ramp over the stands).
 // A Winter Wonders track (the Holiday Season's own fairy-tale winter series): built as a World Tour track on the ground, listed as its own series.
@@ -392,7 +393,7 @@ function checkRecipe({ spec, sections, span, generated, owner, placed, total, wh
     for (const s of sections) if (s.stadium !== undefined) problems.push(`${where(s.name)}: stadium is for Track and Field (family: 'athletics').`);
   }
   if (isBlock(spec)) problems.push(...blockRules({ spec, where }));
-  else if (spec.block !== undefined) problems.push(`${where('track')}: block settings are for the Block Series (family: 'block').`);
+  else if (spec.block !== undefined) problems.push(`${where('track')}: block settings are for the Block Series (family: 'block' or 'block-2').`);
   if (isCanyon(spec)) problems.push(...canyonRules({ spec, sections, where }));
   else {
     if (spec.canyon !== undefined) problems.push(`${where('track')}: canyon settings are for canyons (family: 'canyon').`);
