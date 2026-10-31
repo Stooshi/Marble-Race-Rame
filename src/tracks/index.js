@@ -173,4 +173,12 @@ module.exports = [
   require('./douro-block-terraces'),
   require('./loire-chateau-run'),
   require('./vltava-bridges-run'),
+  require('./torres-del-paine-block-run'),
+  require('./rainier-ice-block-run'),
+  require('./kinabalu-cube-summit'),
+  require('./kirkjufell-block-falls'),
+  require('./baikal-clear-ice'),
+  require('./svalbard-glacier-run'),
+  require('./yellowstone-frost-run'),
+  require('./abraham-lake-frost'),
 ];
