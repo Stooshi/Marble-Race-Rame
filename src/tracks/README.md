@@ -575,7 +575,9 @@ shots counted within the 20). Plan: project doc `claude/blocks-series-2-plan.md`
   limestone, high meadows, larches), `aurora` (snow over dark rock, birch woods); the cities:
   `moss` (Kyoto: moss green over grey stone, maples and stone lanterns), `souk` (Marrakesh: ochre
   over red earth, cube palms), `tropic` (Singapore: tropical green, grey stone, a blue bay floor),
-  `azulejo` (Lisbon: pale stone over blue-tiled risers, terracotta, steep hills).
+  `azulejo` (Lisbon: pale stone over blue-tiled risers, terracotta, steep hills); the rivers: `vineyard`
+  (the Douro: vine terraces over brown schist, rows of vines), `chateau` (the Loire: lawns and pale
+  tuffeau stone, clipped hedges), `bohemia` (the Vltava: a green castle hill, sandstone, red roofs).
 - **Landmarks** (generic architecture and landscape; no logos, no protected landmarks, nothing on a
   summit): `karst-towers`, `karst-tower` (round a splitter), `bamboo-rafts`, `river-village`,
   `palazzo-row`, `cube-campanile` (round a splitter), `arched-cube-bridge`, `cube-gondolas`,
@@ -584,7 +586,9 @@ shots counted within the 20). Plan: project doc `claude/blocks-series-2-plan.md`
   `lake-island` (round a splitter), `fell-peaks`; the cities: `temple-hall`, `red-gates`,
   `cube-pagoda` (round a spiral), `moss-garden`, `souk-arcade`, `cube-minaret`, `kasbah-walls`,
   `palm-grove`, `garden-towers` (round a spiral), `glass-dome`, `bay-skyline`, `tiled-houses`,
-  `yellow-tram`, `cube-arch`, `river-ferry`.
+  `yellow-tram`, `cube-arch`, `river-ferry`; the rivers: `wine-lodges`, `rabelo-boats`,
+  `iron-arch-bridge`, `quinta-house`, `vine-terraces`, `river-chateau`, `hedge-maze`, `stone-arch-bridge`,
+  `moat-towers`, `castle-hill`, `statue-bridge`, `river-weir`, `bridge-tower`, `twin-spires`.
 - The layouts made for it are the `(blocks 2)` rows (L105 onwards); each has a test track built as
   a Block Series world in its own world.
 - **Lessons from the test five** (31 Oct 2026):
@@ -607,6 +611,11 @@ shots counted within the 20). Plan: project doc `claude/blocks-series-2-plan.md`
   - The sameness check finds city layouts alike quickly (the switchbacks and hairpins every city
     has): give each one its own order and shape of the middle (Kyoto's steps and moss-garden sweep,
     Singapore's climb and plunge after the tunnel).
+  - The first-20-seconds check is the one the rivers met (1 Nov 2026): Loire's opening S-bends with a
+    slalom were too like Medellín Lights' start, Vltava's switchbacks straight out of the tunnel too like
+    Arcade Spins'. A different first section fixes it (Loire: a slalom straight through the maze, then a
+    sweep; Vltava: a straight out of the castle gate before the switchbacks). Run
+    `node scripts/start-sequences.js <slug>` after every change to the first sections.
 
 ## Track and Field
 
