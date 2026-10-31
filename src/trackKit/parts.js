@@ -352,6 +352,9 @@ module.exports = {
     // Blocks Series 2 (real places built from cubes: generic architecture and landscape, no logos or protected landmarks).
     'karst-towers', 'karst-tower', 'bamboo-rafts', 'river-village', 'palazzo-row', 'cube-campanile', 'arched-cube-bridge', 'cube-gondolas', 'domed-basilica',
     'horseshoe-falls', 'mist-boat', 'gorge-walls', 'steel-arch-cube', 'three-towers', 'scree-fan', 'dolomite-ridge', 'aurora-station', 'sauna-hut', 'ice-lake', 'lake-island', 'fell-peaks',
+    // …the cities (31 Oct 2026): Kyoto, Marrakesh, Singapore, Lisbon.
+    'temple-hall', 'red-gates', 'cube-pagoda', 'moss-garden', 'souk-arcade', 'cube-minaret', 'kasbah-walls', 'palm-grove', 'garden-towers', 'glass-dome', 'bay-skyline',
+    'tiled-houses', 'yellow-tram', 'cube-arch', 'river-ferry',
     // Track and Field (generic stadium architecture; no protected names, rings, torch designs or sponsors).
     'athletes-village', 'herm-gateway', 'stone-colonnade', 'stadium-bell-tower', 'warm-up-track', 'timber-stand',
     'woven-lattice', 'wooden-eaves', 'brick-tower', 'relay-batons', 'steeple-pit', 'peristyle-arches', 'flame-cauldron',
@@ -378,8 +381,9 @@ module.exports = {
   // A Block Series world (family 'block': `block: { world }`): its voxel land's colours and what stands
   // on it, the client's BLOCK_WORLDS (client/src/three/scenery/blocks.js).
   BLOCK_WORLDS: ['meadow', 'valley', 'snow', 'mine', 'magma', 'puzzle', 'fortress', 'portal', 'sky', 'harbour', 'temple', 'bonus',
-    // Blocks Series 2: Li River's karst and rice fields, Venice's canal town, Niagara's gorge, the Dolomites' pale rock, Lapland under the aurora.
-    'karst', 'canal', 'falls', 'dolomite', 'aurora'],
+    // Blocks Series 2: Li River's karst and rice fields, Venice's canal town, Niagara's gorge, the Dolomites' pale rock, Lapland under the aurora;
+    // the cities (31 Oct 2026): Kyoto's moss gardens, Marrakesh's souk, Singapore's tropical bay, Lisbon's tiled hills.
+    'karst', 'canal', 'falls', 'dolomite', 'aurora', 'moss', 'souk', 'tropic', 'azulejo'],
   // A Track and Field stadium (family 'athletics': `athletics: { stadium }`): its generic architecture, the
   // client's STADIUMS (client/src/three/scenery/athletics.js).
   STADIUMS: ['panathenaic', 'berlin-1936', 'bislett', 'hayward', 'nest', 'tokyo', 'stockholm-1912', 'london', 'coliseum', 'letzigrund', 'accra'],
@@ -395,7 +399,7 @@ module.exports = {
     'museum-of-the-future', 'dubai-frame', 'opera-house', 'tulip-garden', 'roundabout-monument', 'acacia', 'mughal-fountain', 'giant-tree', 'snow-island', 'fallen-statue', 'volcano-rock', 'sagrada-familia', 'frozen-waterfall', 'limestone-island', 'sea-islet', 'giant-redwood', 'lantern-chedi', 'watermill', 'confucius-temple', 'castle-keep', 'magician-trunk', 'top-hat', 'jukebox-tower', 'clocktower', 'lighting-rig', 'claw-tower', 'glitch-tower', 'ringed-planet', 'laser-turret', 'water-tower', 'fork-signpost', 'neon-plaza', 'snow-peak',
     'settling-stack', 'voxel-peak', 'basalt-spire', 'beam-tower', 'level-pillars', 'floodlight-mast', 'flame-cauldron', 'medal-podium',
     'island-castle',
-    'karst-tower', 'cube-campanile', 'three-towers', 'lake-island'],
+    'karst-tower', 'cube-campanile', 'three-towers', 'lake-island', 'cube-pagoda', 'garden-towers'],
   // Scenery near a section (or the start or finish): what grows and stands beside the track there.
   SCENERY: ['bare', 'rocks', 'birches', 'pines', 'race-netting', 'funicular', 'wooden-houses', 'frozen-lake',
     'wood-clad', 'chalets', 'pasture', 'aspens', 'shopfronts',

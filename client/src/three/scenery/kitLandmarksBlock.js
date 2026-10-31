@@ -801,6 +801,153 @@ function fellPeaks() {
   return merge(p);
 }
 
+// ── Blocks Series 2, the cities (31 Oct 2026): generic architecture built from cubes, nothing copied ──
+
+/** A temple hall of dark wood on a stone base: a wide low hall, two stepped roofs with turned-up ends. */
+function templeHall() {
+  const p = [C(26, 1.6, 16, 0, 0.8, 0, '#8a8580'), C(22, 6, 12, 0, 4.6, 0, '#6b3f2a')];
+  for (let k = -4; k <= 4; k += 1) p.push(C(1, 6, 0.4, k * 2.6, 4.6, 6.2, '#3d2a20'));
+  p.push(C(28, 1.2, 18, 0, 8.2, 0, '#3f4448'), C(30, 0.6, 2, 0, 8.6, 8.6, '#3f4448'), C(30, 0.6, 2, 0, 8.6, -8.6, '#3f4448'));
+  p.push(C(16, 2.4, 9, 0, 10, 0, '#6b3f2a'), C(19, 1.1, 12, 0, 11.7, 0, '#3f4448'), C(6, 0.8, 2, 0, 12.6, 0, '#c8a24a'));
+  return merge(p);
+}
+const templeHallGlow = () => merge([-6, 0, 6].map((x) => C(2, 2.4, 0.22, x, 3.6, 6.4, B.lamp)));
+/** A path of red gates: frames of red cubes one after another, two posts and two beams each. */
+function redGates() {
+  const p = [];
+  for (let k = 0; k < 7; k += 1) {
+    const z = -12 + k * 4;
+    p.push(C(0.9, 6, 0.9, -2.6, 3, z, '#c8402e'), C(0.9, 6, 0.9, 2.6, 3, z, '#c8402e'), C(7.6, 0.8, 1.1, 0, 6.2, z, '#c8402e'), C(6.4, 0.5, 0.8, 0, 5.2, z, '#c8402e'), C(8, 0.4, 1.2, 0, 6.8, z, '#2b2b2e'));
+  }
+  return merge(p);
+}
+/** A five-storey pagoda of cubes: a stone base, five storeys getting smaller, each under a wide grey roof, a gold spire (round a spiral: fitted). */
+function cubePagoda() {
+  const p = [C(12, 1.4, 12, 0, 0.7, 0, '#8a8580')];
+  let y = 1.4;
+  for (let k = 0; k < 5; k += 1) {
+    const w = 8 - k * 1.1;
+    p.push(C(w, 3, w, 0, y + 1.5, 0, '#7a4630'), C(w + 3.4, 0.8, w + 3.4, 0, y + 3.4, 0, '#3f4448'));
+    y += 3.8;
+  }
+  p.push(C(0.6, 5, 0.6, 0, y + 2.5, 0, '#c8a24a'), C(1.4, 0.4, 1.4, 0, y + 1.2, 0, '#c8a24a'));
+  return merge(p);
+}
+/** A moss garden: a raked-gravel square with low rocks on it, moss mounds round it and a small pond. */
+function mossGarden() {
+  const p = [C(20, 0.3, 14, 0, 0.15, 0, '#d9d4c8')];
+  for (let k = -4; k <= 4; k += 1) p.push(C(19, 0.06, 0.2, 0, 0.33, k * 1.4, '#c4beb0'));
+  p.push(C(2.4, 1.4, 1.8, -5, 1, -2, '#6a6560'), C(1.6, 1, 1.4, -3.4, 0.8, -1.2, '#7a7570'), C(3, 1.8, 2.2, 5, 1.2, 2, '#6a6560'));
+  for (const [x, z] of [[-11, -8], [-6, -8.5], [0, -8], [6, -8.4], [11, -7.6], [11.6, 0], [-11.6, 2]]) p.push(C(4, 1.2, 3, x, 0.6, z, '#5f8a46'));
+  p.push(C(7, 0.2, 4, -7, 0.1, 9, '#4f7f8f'), C(8, 0.6, 0.6, -7, 0.3, 11.2, '#8a8580'));
+  return merge(p);
+}
+/** A covered souk alley: two rows of stalls under striped cloth awnings, piled goods in front. */
+function soukArcade() {
+  const p = [];
+  const cloth = ['#c8553a', '#e2b04a', '#3f7f8f', '#9a3f5a'];
+  for (let k = -3; k <= 3; k += 1) {
+    for (const sx of [-1, 1]) {
+      p.push(C(4.6, 4.5, 4, k * 5, 2.25, sx * 5, '#c99560'), C(5, 0.4, 3.4, k * 5, 4.6, sx * 3, cloth[(k + 3 + (sx > 0 ? 1 : 0)) % 4]));
+      p.push(C(1.2, 1, 1, k * 5 - 1, 0.5, sx * 2.4, '#d8703e'), C(1, 0.8, 1, k * 5 + 1, 0.4, sx * 2.4, '#e2c47e'));
+    }
+  }
+  return merge(p);
+}
+/** A square minaret of cubes: an ochre shaft with a band of lattice, a lantern storey and a small dome of stepped cubes. */
+function cubeMinaret() {
+  const p = [C(9, 1.2, 9, 0, 0.6, 0, '#b5643f'), C(7, 24, 7, 0, 13.2, 0, '#c99560')];
+  for (const y of [8, 15, 21]) p.push(C(7.3, 1.4, 7.3, 0, y, 0, '#3f7f6a'));
+  p.push(C(7.8, 0.8, 7.8, 0, 25.6, 0, '#b5643f'), C(4.6, 4, 4.6, 0, 28, 0, '#c99560'), C(5, 0.6, 5, 0, 30.3, 0, '#3f7f6a'));
+  p.push(C(3.2, 1, 3.2, 0, 31.1, 0, '#3f7f6a'), C(2, 1, 2, 0, 32.1, 0, '#3f7f6a'), C(0.4, 2.6, 0.4, 0, 33.9, 0, '#c8a24a'));
+  return merge(p);
+}
+const cubeMinaretGlow = () => merge([C(1.2, 2, 0.2, 0, 28, 2.42, B.lamp), C(1.2, 2, 0.2, 0, 28, -2.42, B.lamp)]);
+/** Kasbah walls: a long terracotta wall with square towers, stepped battlements along the top. */
+function kasbahWalls() {
+  const p = [C(44, 9, 3, 0, 4.5, 0, '#b5643f')];
+  for (let x = -21; x <= 21; x += 3) p.push(C(1.6, 1.4, 3.2, x, 9.7, 0, '#a85a38'));
+  for (const x of [-22, -7, 8, 22]) p.push(C(6, 13, 6, x, 6.5, 0.5, '#b0603c'), C(6.4, 1, 6.4, x, 13.5, 0.5, '#a85a38'), C(1.4, 2.4, 0.2, x, 9, 3.6, '#3d2a20'));
+  return merge(p);
+}
+/** A palm grove: palms of cubes on the ochre earth round a low wall. */
+function palmGrove() {
+  const p = [C(26, 1, 1, 0, 0.5, 9, '#b5643f'), C(26, 1, 1, 0, 0.5, -9, '#b5643f')];
+  for (const [x, z, h] of [[-9, -4, 9], [-3, 3, 11], [4, -2, 10], [10, 4, 8.5], [-11, 5, 8], [7, -7, 9.5]]) {
+    p.push(C(0.7, h, 0.7, x, h / 2, z, '#8a6a4a'));
+    p.push(C(5, 0.5, 1.2, x, h + 0.2, z, '#4f8a3a'), C(1.2, 0.5, 5, x, h + 0.2, z, '#4f8a3a'), C(1.6, 1, 1.6, x, h + 0.6, z, '#5f9a48'));
+  }
+  return merge(p);
+}
+/** Tall garden towers: a cluster of slim steel towers that open out at the top like trees, planted all over (generic; round a spiral: fitted). */
+function gardenTowers() {
+  const p = [C(26, 1, 26, 0, 0.5, 0, '#8a8f96')];
+  const tower = (x, z, h) => {
+    for (let k = 0; k < h; k += 3) p.push(C(1.6 + k * 0.04, 3, 1.6 + k * 0.04, x, 1 + k + 1.5, z, k % 6 ? '#5f9a48' : '#6b7179'));
+    for (let r = 0; r < 3; r += 1) p.push(C(3 + r * 2.2, 0.6, 3 + r * 2.2, x, h + 1 + r * 0.9, z, r % 2 ? '#c8553a' : '#6b7179'));
+    p.push(C(7, 0.4, 7, x, h + 3.8, z, '#5f9a48'));
+  };
+  tower(0, 0, 30);
+  tower(-8, 6, 22);
+  tower(8, -5, 25);
+  tower(6, 8, 18);
+  tower(-7, -7, 20);
+  return merge(p);
+}
+const gardenTowersGlow = () => merge([[0, 0, 30], [-8, 6, 22], [8, -5, 25]].map(([x, z, h]) => C(2.4, 0.3, 2.4, x, h + 1.4, z, B.lamp)));
+/** A big glass dome of cubes: a stepped shell of pale blue glass blocks over a green garden, a steel rim. */
+function glassDome() {
+  const p = [C(40, 1, 26, 0, 0.5, 0, '#8a8f96'), C(30, 3, 18, 0, 2.5, 0, '#5f9a48')];
+  for (let k = 0; k < 6; k += 1) {
+    const w = 38 - k * 5.6;
+    const d = 24 - k * 3.6;
+    p.push(C(w, 2.4, d, 0, 2.2 + k * 2.4, 0, k % 2 ? '#b8dcea' : '#a8d0e2'));
+  }
+  p.push(C(40.4, 0.6, 26.4, 0, 1.2, 0, '#6b7179'));
+  return merge(p);
+}
+/** A generic bay skyline: tall towers of glass and steel cubes in a row, of different heights. */
+function baySkyline() {
+  const p = [];
+  [[-30, 34, '#7f9db3'], [-18, 46, '#9ab3c4'], [-6, 30, '#6f8ea3'], [6, 52, '#a8bfcf'], [18, 38, '#7f9db3'], [30, 28, '#8fa9bb']].forEach(([x, h, c]) => {
+    p.push(C(9, h, 9, x, h / 2, 0, c));
+    for (let y = 4; y < h - 2; y += 6) p.push(C(9.2, 0.4, 9.2, x, y, 0, '#5a6a78'));
+  });
+  return merge(p);
+}
+const baySkylineGlow = () => merge([[-30, 34], [-18, 46], [6, 52], [18, 38]].map(([x, h]) => C(6, 0.6, 0.22, x, h - 3, 4.62, B.lamp)));
+/** Tiled houses on a hillside: narrow tall houses in cream, yellow and pink, blue tile fronts, terracotta roofs, stepping up the slope. */
+function tiledHouses() {
+  const p = [];
+  const fronts = ['#f2e6c8', '#e8c86a', '#e2a8a0', '#5b84b0', '#f2e6c8'];
+  for (let k = -3; k <= 3; k += 1) {
+    const h = 9 + ((k + 3) % 3) * 2;
+    const y0 = (k + 3) * 1.2;
+    p.push(C(5.6, h, 6, k * 5.8, y0 + h / 2, 0, fronts[(k + 3) % fronts.length]), C(6, 1, 6.4, k * 5.8, y0 + h + 0.5, 0, '#c4703f'));
+    for (let r = 0; r < 2; r += 1) p.push(C(1.2, 1.8, 0.2, k * 5.8 - 1.3, y0 + 3 + r * 3.4, 3.05, '#3d3a44'), C(1.2, 1.8, 0.2, k * 5.8 + 1.3, y0 + 3 + r * 3.4, 3.05, '#3d3a44'));
+  }
+  return merge(p);
+}
+/** A yellow tram of cubes on its rails: a short boxy car, a white roof, a pole up to the wire. */
+function yellowTram() {
+  const p = [C(14, 0.3, 2.6, 0, 0.15, 0, '#5a5f66'), C(9, 3.2, 2.6, 0, 2.1, 0, '#e8c040'), C(9.2, 0.5, 2.8, 0, 3.95, 0, '#f2ede2')];
+  for (let k = -3; k <= 3; k += 1) p.push(C(0.9, 1.1, 2.7, k * 1.25, 2.6, 0, '#3d3a44'));
+  p.push(C(0.15, 2.4, 0.15, 1.5, 5.4, 0, '#3d3a44'), C(14, 0.12, 0.12, 0, 6.6, 0, '#3d3a44'));
+  return merge(p);
+}
+/** A great arch of pale stone cubes over a square: a tall arched opening, columns each side, a stepped top. */
+function cubeArch() {
+  const p = [C(4, 18, 5, -8, 9, 0, '#e2d8c4'), C(4, 18, 5, 8, 9, 0, '#e2d8c4'), C(20, 5, 5, 0, 20.5, 0, '#e2d8c4')];
+  for (let k = -3; k <= 3; k += 1) p.push(C(12 - Math.abs(k) * 1.6, 1, 5.2, 0, 15 + (3 - Math.abs(k)) * 0.9, 0, '#e2d8c4'));
+  for (const x of [-11, -5, 5, 11]) p.push(C(1.2, 16, 1.2, x, 8, 2.8, '#f2ede2'));
+  p.push(C(14, 3, 4, 0, 24.5, 0, '#d6cbb4'), C(6, 2, 3, 0, 27, 0, '#d6cbb4'));
+  return merge(p);
+}
+/** A river ferry of cubes: a white hull, a blue band, a cabin and a funnel. */
+function riverFerry() {
+  return merge([C(16, 2.2, 5, 0, 1.1, 0, '#f2ede2'), C(16.2, 0.5, 5.2, 0, 1.6, 0, '#3f6f9a'), C(8, 2.4, 4, -1, 3.4, 0, '#f2ede2'), C(1.4, 2, 1.4, 2, 5.6, 0, '#e8c040')]);
+}
+
 export const BLOCK_LANDMARKS = {
   'spawn-beacon': { build: spawnBeacon, glow: spawnBeaconGlow, radius: 5 },
   'cube-cottage': { build: cubeCottage, glow: cubeCottageGlow, radius: 7 },
@@ -867,6 +1014,22 @@ export const BLOCK_LANDMARKS = {
   'ice-lake': { build: iceLake, radius: 26 },
   'lake-island': { build: lakeIsland, radius: 7, fit: 6 },
   'fell-peaks': { build: fellPeaks, radius: 60 },
+  // …the cities (31 Oct 2026).
+  'temple-hall': { build: templeHall, glow: templeHallGlow, radius: 15 },
+  'red-gates': { build: redGates, radius: 15 },
+  'cube-pagoda': { build: cubePagoda, radius: 7, fit: 6 },
+  'moss-garden': { build: mossGarden, radius: 13 },
+  'souk-arcade': { build: soukArcade, radius: 18 },
+  'cube-minaret': { build: cubeMinaret, glow: cubeMinaretGlow, radius: 5 },
+  'kasbah-walls': { build: kasbahWalls, radius: 23 },
+  'palm-grove': { build: palmGrove, radius: 14 },
+  'garden-towers': { build: gardenTowers, glow: gardenTowersGlow, radius: 14, fit: 13 },
+  'glass-dome': { build: glassDome, radius: 21 },
+  'bay-skyline': { build: baySkyline, glow: baySkylineGlow, radius: 36 },
+  'tiled-houses': { build: tiledHouses, radius: 21 },
+  'yellow-tram': { build: yellowTram, radius: 8 },
+  'cube-arch': { build: cubeArch, radius: 13 },
+  'river-ferry': { build: riverFerry, radius: 9 },
 };
 
 // ── The quiet effects, on the race clock ──────────────────────────────────────
