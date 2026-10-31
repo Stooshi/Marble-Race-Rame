@@ -2110,7 +2110,7 @@ const LAYOUTS = {
   /** L121 Clear ice (Blocks 2, Baikal; after the pipe drop): a sweep out of the ice grotto (a peg), a slalom of five gates through the pressure ridges (the start's luck: the pipe drop gives none), the long straight across the clear ice with a table top (big feature one), the run to the hairpin, the hairpin, a sweep round a rock island (a peg), the run to the icefall, the waterfall drop down the frozen icefall (big feature two), a straight across the hummocks (a slalom), a sweep along the shore and a parked piece and a peg at the run-in. */
   'clear-ice': (L, R, c) => [
     { key: 'grotto', name: 'Out of the grotto', shape: sweep({ side: L, radius: 80, degrees: 100, grade: 0.12 }), obstacles: [peg({ costume: c.peg, at: 0.5, line: 'center' })], billboards: 1 },
-    { key: 'ridges', name: 'Through the pressure ridges', shape: straight(50, { grade: 0.12 }), obstacles: [slalom({ costume: c.slalom, from: 0.1, to: 0.9, count: 5, loss: 0.22 })] },
+    { key: 'ridges', name: 'Through the pressure ridges', shape: straight(50, { grade: 0.12 }), obstacles: [slalom({ costume: c.slalom, from: 0.1, to: 0.9, count: 5, loss: 0.3 })] },
     { key: 'ice', name: 'Across the clear ice', shape: straight(90, { grade: 0.1 }), features: [tableTop({ at: 0.35, length: 30, height: 0.3, down: 8 })] },
     { key: 'brakingStraight', name: 'Run to the hairpin', shape: straight(50, { grade: 0.12 }), billboards: 1 },
     { key: 'hairpin', name: 'Hairpin', shape: hairpin({ side: L }), obstacles: [swipe({ costume: c.swipe, side: 'high' })] },
