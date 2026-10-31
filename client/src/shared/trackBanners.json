@@ -827,6 +827,17 @@
    "side": 1,
    "marbles": 4
   },
+  "kyoto-block-gardens": {
+   "name": "Kyoto Block Gardens",
+   "series": "Blocks",
+   "lighting": "dawn",
+   "v": "7e86ee0a",
+   "bytes": 10202,
+   "bytes2x": 25178,
+   "t": 9969,
+   "side": 1,
+   "marbles": 4
+  },
   "lagos-marble-grand-prix": {
    "name": "Lagos Marble Grand Prix",
    "series": "Grand Prix",
@@ -871,6 +882,17 @@
    "side": 1,
    "marbles": 4
   },
+  "lisbon-cube-hills": {
+   "name": "Lisbon Cube Hills",
+   "series": "Blocks",
+   "lighting": "day",
+   "v": "5c583375",
+   "bytes": 18182,
+   "bytes2x": 44168,
+   "t": 9960,
+   "side": 1,
+   "marbles": 4
+  },
   "london-steeplechase": {
    "name": "London Steeplechase",
    "series": "Track and Field",
@@ -903,6 +925,17 @@
    "t": 16000,
    "side": 1,
    "marbles": 1
+  },
+  "marrakesh-cube-souk": {
+   "name": "Marrakesh Cube Souk",
+   "series": "Blocks",
+   "lighting": "day",
+   "v": "d0a29e53",
+   "bytes": 15680,
+   "bytes2x": 40974,
+   "t": 9104,
+   "side": 1,
+   "marbles": 4
   },
   "meadow-loop": {
    "name": "Meadow Loop",
@@ -1321,6 +1354,17 @@
    "t": 30811,
    "side": 1,
    "marbles": 7
+  },
+  "singapore-block-gardens": {
+   "name": "Singapore Block Gardens",
+   "series": "Blocks",
+   "lighting": "day",
+   "v": "78dff60d",
+   "bytes": 17386,
+   "bytes2x": 41190,
+   "t": 22790,
+   "side": -1,
+   "marbles": 5
   },
   "sky-islands": {
    "name": "Sky Islands",

@@ -1924,7 +1924,7 @@ const LAYOUTS = {
     { key: 'mossGarden', name: 'Round the moss garden', shape: sweep({ side: R, radius: 85, degrees: 60, grade: 0.12 }), obstacles: [peg({ costume: c.peg, at: 0.5, line: 'center' })], billboards: 1 },
     { key: 'brakingStraight', name: 'Run to the pond', shape: straight(50, { grade: 0.12 }), billboards: 1 },
     { key: 'hairpin', name: 'Pond hairpin', shape: hairpin({ side: L }), obstacles: [swipe({ costume: c.swipe, side: 'high' })] },
-    { key: 'pondSweep', name: 'Pond S-bends', shape: sBends({ first: R, radius: 65, degrees: 45, grade: 0.12 }), obstacles: [peg({ costume: c.peg, at: 0.5, line: 'center' })], billboards: 1 },
+    { key: 'pondSweep', name: 'Pond S-bends', shape: sBends({ first: R, radius: 60, degrees: 45, grade: 0.12 }), obstacles: [peg({ costume: c.peg, at: 0.5, line: 'center' })], billboards: 1 },
     {
       key: 'lastStraight', name: 'Last straight', shape: straight(75, { grade: 0.15 }),
       obstacles: [parked({ costume: c.parked, at: 0.2, side: L, length: 6 }), peg({ costume: c.peg, at: 0.45, line: 'right' })], features: [rumble({ from: 0.7, to: 0.95, count: 3 })],

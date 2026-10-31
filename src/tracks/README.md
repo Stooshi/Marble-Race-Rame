@@ -572,13 +572,19 @@ shots counted within the 20). Plan: project doc `claude/blocks-series-2-plan.md`
   `signature`, the other has a TV camera.
 - **Worlds**: `karst` (Li River: rice-field green, karst rock), `canal` (Venice: pale stone and
   terracotta round canals), `falls` (Niagara: parkland over a grey gorge), `dolomite` (pale
-  limestone, high meadows, larches), `aurora` (snow over dark rock, birch woods).
+  limestone, high meadows, larches), `aurora` (snow over dark rock, birch woods); the cities:
+  `moss` (Kyoto: moss green over grey stone, maples and stone lanterns), `souk` (Marrakesh: ochre
+  over red earth, cube palms), `tropic` (Singapore: tropical green, grey stone, a blue bay floor),
+  `azulejo` (Lisbon: pale stone over blue-tiled risers, terracotta, steep hills).
 - **Landmarks** (generic architecture and landscape; no logos, no protected landmarks, nothing on a
   summit): `karst-towers`, `karst-tower` (round a splitter), `bamboo-rafts`, `river-village`,
   `palazzo-row`, `cube-campanile` (round a splitter), `arched-cube-bridge`, `cube-gondolas`,
   `domed-basilica`, `horseshoe-falls`, `mist-boat`, `gorge-walls`, `steel-arch-cube`, `three-towers`
   (round a spiral), `scree-fan`, `dolomite-ridge`, `aurora-station`, `sauna-hut`, `ice-lake`,
-  `lake-island` (round a splitter), `fell-peaks`.
+  `lake-island` (round a splitter), `fell-peaks`; the cities: `temple-hall`, `red-gates`,
+  `cube-pagoda` (round a spiral), `moss-garden`, `souk-arcade`, `cube-minaret`, `kasbah-walls`,
+  `palm-grove`, `garden-towers` (round a spiral), `glass-dome`, `bay-skyline`, `tiled-houses`,
+  `yellow-tram`, `cube-arch`, `river-ferry`.
 - The layouts made for it are the `(blocks 2)` rows (L105 onwards); each has a test track built as
   a Block Series world in its own world.
 - **Lessons from the test five** (31 Oct 2026):
@@ -593,6 +599,14 @@ shots counted within the 20). Plan: project doc `claude/blocks-series-2-plan.md`
     for 3,000 races; the full report is still the pass.
   - The track is still listed under **Blocks** (the API and the banners name the series from the
     kit's `block` settings).
+- **Lessons from the cities** (31 Oct 2026):
+  - A run-in that passes beside a much higher stretch (Kyoto's pond, 35 m from the switchbacks
+    80 m above) can catch a sliver of the phone's one-slope bank; a few metres' change to the bend
+    before it clears it (Kyoto's pond S-bends: radius 65 → 60). A quick check of only the clear
+    track, about a minute: `REPORT_CLEAR_ONLY=1` with the view checks (`client/report/viewChecks.report.js`).
+  - The sameness check finds city layouts alike quickly (the switchbacks and hairpins every city
+    has): give each one its own order and shape of the middle (Kyoto's steps and moss-garden sweep,
+    Singapore's climb and plunge after the tunnel).
 
 ## Track and Field
 
