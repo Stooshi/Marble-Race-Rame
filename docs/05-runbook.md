@@ -341,6 +341,7 @@ Built and **switched off twice**: the apps don't ask until `client/src/shared/pu
 
 ## Analytics, Meta Pixel and the cookie banner (website only)
 
+- **Status (31 Oct 2026):** Google Analytics 4 is **on**: `VITE_GA4_ID` is set in Vercel (Production), and GA4's Realtime report shows visits. The cookie banner shows on the website. The Meta Pixel is still off (`VITE_META_PIXEL_ID` not set).
 - **Switch on:** Vercel → project `marble-race-rame-client` → Settings → Environment Variables, Production: `VITE_GA4_ID` (the GA4 measurement ID, `G-…`, from Google Analytics → Admin → Data streams → the web stream) and/or `VITE_META_PIXEL_ID` (the Pixel's ID, digits, from Meta Events Manager → Data sources). Then **redeploy**. With both empty there is no banner and nothing loads.
 - **What a visitor sees:** a banner with REJECT ALL / ACCEPT ALL and Settings; nothing but necessary storage until they choose. "Cookie settings" in the footer and on `/cookies` changes it. Never in the apps; the Pixel never for an account under 13.
 - **In Google Analytics:** mark `sign_up` and `purchase` as key events. Events: `sign_up`, `first_race`, `race_finished`, `view_item_list` (shop), `begin_checkout`, `purchase` (value and currency; the order number is the transaction ID).

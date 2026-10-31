@@ -178,7 +178,7 @@ There is no separate staging server. Vercel makes a preview build for every bran
 | `VITE_SITE_URL` | Optional; canonical address, default https://marblespins.com |
 | `VITE_PAYMENTS_TEST` | Development only: `true` uses the fake payment provider |
 | `VITE_MARBLES_HUB` | Never set on Vercel. For a local review build of the marbles hub: `preview` shows `/marbles` even with the hub off (noindex), `drafts` also shows the review drafts from `content/marbles-drafts/`. Whether the hub is on for everyone is `client/src/shared/marblesHub.json`, not a variable |
-| `VITE_GA4_ID` | Optional. Google Analytics 4 measurement ID (`G-…`). Empty: no Analytics and, with `VITE_META_PIXEL_ID` also empty, no cookie banner. Loads only after the visitor allows statistics cookies |
+| `VITE_GA4_ID` | Optional; **set in Production since 31 Oct 2026** (GA4 on). Google Analytics 4 measurement ID (`G-…`). Empty: no Analytics and, with `VITE_META_PIXEL_ID` also empty, no cookie banner. Loads only after the visitor allows statistics cookies |
 | `VITE_META_PIXEL_ID` | Optional. Meta Pixel ID (digits). Empty: no Pixel. Loads only after the visitor allows marketing cookies, and never for an account under 13 |
 
 ### The apps

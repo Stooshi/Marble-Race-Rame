@@ -47,7 +47,7 @@
 - **Switching on the pass reminders** (built 19 Oct, off): needs Brevo set up (`BREVO_API_KEY` on Railway, the sending domain authenticated; Moses's task list, by 8 Nov), the email texts approved (project doc `claude/pass-reminder-emails.md`), a test with real inboxes from 9 Nov, then `PASS_REMINDERS_SENDING=on`. Confirmation emails should go out by about 20 Nov so people have time to confirm before 28 Nov.
 - **Race sound effects** (rolling, clacks), on hold.
 - **Support: a confirmation email to the player** ("we got your message, reference S-…") and canned replies. The form shows the reference on screen today.
-- **Analytics in the apps.** None. The website has Google Analytics 4 and the Meta Pixel, only with consent and only once `VITE_GA4_ID` / `VITE_META_PIXEL_ID` are set in Vercel. Adding anything to the apps needs the store privacy forms updated first.
+- **Analytics in the apps.** None. The website has Google Analytics 4 (on since 31 Oct 2026: `VITE_GA4_ID` set in Vercel) and the Meta Pixel (still off until `VITE_META_PIXEL_ID` is set), only with consent. Adding anything to the apps needs the store privacy forms updated first.
 - **Website pre-rendering is per build.** A track switched on gets its `/tracks/<slug>` page and sitemap entry at the next website build (a redeploy in Vercel, or any push). The holiday tracks join the website at the rebuild the GitHub Actions workflow "Season start: rebuild the website" starts at 1 Dec 00:05 (runbook). Unknown addresses answer a real HTTP 404 (since 20 Oct).
 
 ## Technical weaknesses
