@@ -2127,14 +2127,14 @@ const LAYOUTS = {
   /** L122 Ice valley (Blocks 2, Svalbard; after the banked turn): a scree straight (a slalom), S-bends down the moraine (a peg), a drop into the ice valley, the ice-valley half-pipe (big feature two; the funnel at the gate is the plan's big feature one, here the banked turn), a sweep along the sea ice past the icebergs (a peg), an iceberg straight (a slalom), the run to the glacier front, the hairpin, a sweep to the station and a parked piece and a peg at the run-in. */
   'ice-valley': (L, R, c) => [
     { key: 'scree', name: 'Down the scree', shape: straight(55, { grade: 0.11 }), obstacles: [slalom({ costume: c.slalom, from: 0.2, to: 0.8, count: 3, loss: 0.15 })] },
-    { key: 'moraineBends', name: 'Moraine S-bends', shape: sBends({ first: R, radius: 70, degrees: 70, grade: 0.13 }), obstacles: [peg({ costume: c.peg, at: 0.5, line: 'center' })], billboards: 1 },
+    { key: 'moraineBends', name: 'Moraine S-bends', shape: sBends({ first: R, radius: 70, degrees: 70, grade: 0.14 }), obstacles: [peg({ costume: c.peg, at: 0.5, line: 'center' })], billboards: 1 },
     { key: 'valleyDrop', name: 'Into the ice valley', shape: plunge(35, { grade: 0.22, from: 0.12 }) },
     { key: 'valley', name: 'The ice-valley half-pipe', shape: halfPipe({ first: L, width: 8, swings: 3, radius: 150, degrees: 18, grade: 0.12 }) },
     { key: 'seaIce', name: 'Along the sea ice', shape: sweep({ side: L, radius: 95, degrees: 120, grade: 0.1 }), obstacles: [peg({ costume: c.peg, at: 0.5, line: 'center' })], billboards: 2 },
     { key: 'bergs', name: 'Between the icebergs', shape: straight(50, { grade: 0.12 }), obstacles: [slalom({ costume: c.slalom, from: 0.2, to: 0.8, count: 3, loss: 0.15 })] },
     { key: 'brakingStraight', name: 'Run to the glacier front', shape: straight(50, { grade: 0.12 }), billboards: 1 },
     { key: 'hairpin', name: 'Glacier-front hairpin', shape: hairpin({ side: R }), obstacles: [swipe({ costume: c.swipe, side: 'high' })] },
-    { key: 'stationSweep', name: 'To the station', shape: sweep({ side: L, radius: 90, degrees: 100, grade: 0.11 }), billboards: 1 },
+    { key: 'stationSweep', name: 'To the station', shape: sweep({ side: L, radius: 90, degrees: 100, grade: 0.13 }), billboards: 1 },
     {
       key: 'lastStraight', name: 'Last straight', shape: straight(85, { grade: 0.2 }),
       obstacles: [parked({ costume: c.parked, at: 0.2, side: L, length: 6 }), peg({ costume: c.peg, at: 0.45, line: 'right' })], features: [rumble({ from: 0.7, to: 0.95, count: 3 })],
