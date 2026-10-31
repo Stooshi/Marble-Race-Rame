@@ -1806,6 +1806,17 @@
    "side": 1,
    "marbles": 4
   },
+  "yellowstone-frost-run": {
+   "name": "Yellowstone Frost Run",
+   "series": "Blocks",
+   "lighting": "dawn",
+   "v": "3eec1ca7",
+   "bytes": 16068,
+   "bytes2x": 40280,
+   "t": 14841,
+   "side": -1,
+   "marbles": 4
+  },
   "zambezi-falls-run": {
    "name": "Zambezi Falls Run",
    "series": "Rivers",
