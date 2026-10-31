@@ -146,6 +146,7 @@
 "venice-cube-canals": {"family":"block-2","reach":0.204,"seq":["opening: staggered-drop","drop","pileUp","slalom","brake","straight","climb","sweep left","slalom"]},
 "verdon-burst": {"family":"canyon","reach":0.216,"seq":["opening: crest-start","drop","pileUp","slalom","climb","drop","sweep right","boost"]},
 "vinson-blue-ice": {"family":"peak","reach":0.34,"seq":["opening: peg-drop","drop","peg ×7","sweep left","sweep right","peg"]},
+"vltava-bridges-run": {"family":"block-2","reach":0.251,"seq":["opening: tunnel-launch","drop","pileUp","slalom","drop","slalom","straight","peg","S-bends left","straight","peg ×2"]},
 "volga-port-burst": {"family":"river","reach":0.315,"seq":["opening: clean-drop","drop","S-bends right","drop","slalom","sweep right","peg ×3"]},
 "voxel-harbor": {"family":"block","reach":0.241,"seq":["opening: staggered-drop","drop","pileUp","slalom","brake","S-bends left"]},
 "voxel-peaks": {"family":"block","reach":0.207,"seq":["opening: banked-turn","drop","pileUp","slalom","sweep right","sweep left","boost"]},

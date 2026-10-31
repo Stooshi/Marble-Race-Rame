@@ -172,4 +172,5 @@ module.exports = [
   require('./lisbon-cube-hills'),
   require('./douro-block-terraces'),
   require('./loire-chateau-run'),
+  require('./vltava-bridges-run'),
 ];

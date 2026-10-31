@@ -1674,6 +1674,17 @@
    "side": 1,
    "marbles": 5
   },
+  "vltava-bridges-run": {
+   "name": "Vltava Bridges Run",
+   "series": "Blocks",
+   "lighting": "dawn",
+   "v": "8ec19bcb",
+   "bytes": 14950,
+   "bytes2x": 36342,
+   "t": 15039,
+   "side": -1,
+   "marbles": 5
+  },
   "volcano-run": {
    "name": "Volcano Run",
    "series": "Classic",
