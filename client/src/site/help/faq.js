@@ -145,6 +145,8 @@ export function buildFaq({ tracks, platform = 'web' } = {}) {
         "Every race is run by the game's physics, the same for every marble. Every player's marble races at the same level, whatever it looks like and however long you've played. The race itself decides who wins: the track, the start, the bumps and the bounces. Which marble you race with never changes the result."],
       ['Can I steer my marble during the race?',
         'No. Once the gates open, the race is decided by the track and the physics. Your choices are which track, which marble, and who you race.'],
+      ["Why don't the gates open at the same time?",
+        'The gates open in a random order every race, so the start is a short scramble and no gate is ever ahead of another. Every track is tested over thousands of races to make sure each gate wins equally often.'],
       ['What is a quick race?',
         "Tap **Quick race** and you're racing within seconds. You join the next quick race that's about to start with a free place, or a new one opens on a random track and starts 15 seconds later; anyone else who taps Quick race meanwhile joins it. Computer players fill the empty places. You don't pick the track. To pick it, tap **Race solo** (just you and computer players) or make a room."],
       ['How many marbles are in a race?',
