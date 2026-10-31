@@ -1509,6 +1509,17 @@
    "side": -1,
    "marbles": 6
   },
+  "tre-cime-cube-towers": {
+   "name": "Tre Cime Cube Towers",
+   "series": "Blocks",
+   "lighting": "day",
+   "v": "e873cda9",
+   "bytes": 14434,
+   "bytes2x": 34040,
+   "t": 32796,
+   "side": 1,
+   "marbles": 7
+  },
   "trinidad-parang-run": {
    "name": "Trinidad Parang Run",
    "series": "Pinball",
