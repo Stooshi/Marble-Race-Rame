@@ -112,7 +112,7 @@ export const BLOCK_WORLDS = {
   // ── Blocks Series 2, the cities (31 Oct 2026) ──
   // Kyoto: moss-green temple grounds, dark grey stone, maples and stone lanterns.
   moss: {
-    tops: ['#6f9a52', '#638e48'], riser: '#6a6560', deep: '#4f4c49', floor: '#638e48', bank: '#6c9750', fill: '#6a6560', hills: 24, step: 3,
+    tops: ['#6f9a52', '#638e48'], riser: '#6a6560', deep: '#4f4c49', floor: '#638e48', bank: '#6c9750', fill: '#6a6560', hills: 14, step: 3,
     dressing: [['maple', 0.35], ['stoneLantern', 0.2], ['bush', 0.25], ['stoneRock', 0.2]],
   },
   // Marrakesh: ochre earth and terracotta walls, palms.

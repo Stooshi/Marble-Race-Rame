@@ -3,7 +3,7 @@
 // Marrakesh Cube Souk: Blocks Series 2 (cities), Marrakesh built from cubes by day. Off a riad roof the field
 // squeezes out of the souk bowl (the funnel, big feature one), through the covered souk alleys and past the stalls,
 // round the big square under the minaret, along the kasbah walls and the two-step drop off them (big feature two),
-// the hairpin, the palm-garden slalom and S-bends to the gate.
+// the hairpin, the palm-garden slalom and a sweep to the gate.
 const { track, opening, layout } = require('../trackKit');
 
 module.exports = track({

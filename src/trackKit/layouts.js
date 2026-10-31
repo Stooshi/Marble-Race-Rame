@@ -1930,19 +1930,20 @@ const LAYOUTS = {
       obstacles: [parked({ costume: c.parked, at: 0.2, side: L, length: 6 }), peg({ costume: c.peg, at: 0.45, line: 'right' })], features: [rumble({ from: 0.7, to: 0.95, count: 3 })],
     },
   ],
-  /** L111 Souk walls (Blocks 2, Marrakesh; with the funnel opening, big feature one): S-bends through the covered souk alleys (a peg), an alley straight past the stalls (a slalom), the sweep round the big square under the minaret, along the kasbah walls (a peg), the two-step drop off the walls (big feature two: two drops, a ledge between), the hairpin, the palm-garden slalom, S-bends to the gate and a parked piece and a peg at the run-in. */
+  /** L111 Souk walls (Blocks 2, Marrakesh; with the funnel opening, big feature one): S-bends through the covered souk alleys (a peg), an alley straight past the stalls (a slalom), the sweep round the big square under the minaret, up to the kasbah and along its walls (a peg), the two-step drop off the walls (big feature two: two drops, a ledge between), the hairpin, the palm-garden slalom, a sweep to the gate and a parked piece and a peg at the run-in. */
   'souk-walls': (L, R, c) => [
-    { key: 'alleys', name: 'Through the souk alleys', shape: sBends({ first: R, radius: 60, degrees: 80, grade: 0.12 }), obstacles: [peg({ costume: c.peg, at: 0.5, line: 'center' })] },
-    { key: 'stalls', name: 'Past the stalls', shape: straight(55, { grade: 0.11 }), obstacles: [slalom({ costume: c.slalom, from: 0.15, to: 0.85, count: 4, loss: 0.14 })] },
-    { key: 'square', name: 'Round the big square', shape: sweep({ side: L, radius: 85, degrees: 160, grade: 0.09 }), billboards: 2 },
+    { key: 'alleys', name: 'Through the souk alleys', shape: sBends({ first: R, radius: 80, degrees: 55, grade: 0.13 }), obstacles: [peg({ costume: c.peg, at: 0.5, line: 'center' })] },
+    { key: 'stalls', name: 'Past the stalls', shape: straight(55, { grade: 0.11 }), obstacles: [slalom({ costume: c.slalom, from: 0.15, to: 0.85, count: 4, loss: 0.09 })] },
+    { key: 'square', name: 'Round the big square', shape: sweep({ side: L, radius: 70, degrees: 175, grade: 0.1 }), billboards: 2 },
+    { key: 'rise', name: 'Up to the kasbah', shape: climb(14, { grade: -0.05, after: 0.12 }) },
     { key: 'walls', name: 'Along the kasbah walls', shape: straight(50, { grade: 0.1 }), obstacles: [peg({ costume: c.peg, at: 0.45, line: 'center' })] },
-    { key: 'drop1', name: 'Off the kasbah walls', shape: plunge(40, { grade: 0.26, from: 0.12 }) },
+    { key: 'drop1', name: 'Off the kasbah walls', shape: plunge(55, { grade: 0.26, from: 0.12 }) },
     { key: 'ledge', name: 'The ledge', shape: straight(35, { grade: 0.1 }), obstacles: [peg({ costume: c.peg, at: 0.5, line: 'center' })], billboards: 1 },
-    { key: 'drop2', name: 'Down to the palm garden', shape: plunge(40, { grade: 0.26, from: 0.1 }) },
+    { key: 'drop2', name: 'Down to the palm garden', shape: plunge(55, { grade: 0.26, from: 0.1 }) },
     { key: 'brakingStraight', name: 'Run to the hairpin', shape: straight(50, { grade: 0.12 }), billboards: 1 },
     { key: 'hairpin', name: 'Hairpin', shape: hairpin({ side: R }), obstacles: [swipe({ costume: c.swipe, side: 'high' })] },
-    { key: 'palms', name: 'Palm garden slalom', shape: straight(60, { grade: 0.11 }), obstacles: [slalom({ costume: c.slalom, from: 0.15, to: 0.85, count: 4, loss: 0.12 })] },
-    { key: 'gateBends', name: 'S-bends to the gate', shape: sBends({ first: L, radius: 75, degrees: 70, grade: 0.12 }) },
+    { key: 'palms', name: 'Palm garden slalom', shape: straight(60, { grade: 0.11 }), obstacles: [slalom({ costume: c.slalom, from: 0.15, to: 0.85, count: 4, loss: 0.07 })] },
+    { key: 'gateBends', name: 'Sweep to the gate', shape: sweep({ side: L, radius: 95, degrees: 90, grade: 0.12 }) },
     {
       key: 'lastStraight', name: 'Last straight', shape: straight(80, { grade: 0.15 }),
       obstacles: [parked({ costume: c.parked, at: 0.2, side: R, length: 6 }), peg({ costume: c.peg, at: 0.45, line: 'left' })], features: [rumble({ from: 0.7, to: 0.95, count: 3 })],
