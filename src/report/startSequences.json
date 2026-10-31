@@ -36,6 +36,7 @@
 "danube-night-run": {"family":"river","reach":0.222,"seq":["opening: tunnel-launch","drop","pileUp","slalom","drop","slalom","straight","peg ×2","climb","straight","slalom"]},
 "deep-mine": {"family":"block","reach":0.233,"seq":["opening: tunnel-launch","drop","pileUp","slalom","drop","slalom","straight","moguls","S-bends right"]},
 "delhi-red-fort-marble-grand-prix": {"family":"grand-prix","reach":0.216,"seq":["opening: classic","drop","pileUp","slalom","S-bends left"]},
+"douro-block-terraces": {"family":"block-2","reach":0.266,"seq":["opening: staggered-drop","drop","pileUp","slalom","brake","S-bends right","peg","straight","table-top"]},
 "dubai-marble-grand-prix": {"family":"grand-prix","reach":0.216,"seq":["opening: classic","drop","pileUp","slalom","S-bends left"]},
 "dubai-twister": {"family":"world-tour","reach":0.203,"seq":["opening: classic","drop","pileUp","slalom","S-bends left"]},
 "edinburgh-hogmanay-grand-prix": {"family":"grand-prix","reach":0.249,"seq":["opening: funnel-drop","drop","pileUp","slalom","half-pipe","straight"]},

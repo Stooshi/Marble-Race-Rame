@@ -431,6 +431,17 @@
    "side": 1,
    "marbles": 1
   },
+  "douro-block-terraces": {
+   "name": "Douro Block Terraces",
+   "series": "Blocks",
+   "lighting": "sunset",
+   "v": "7134efd1",
+   "bytes": 12620,
+   "bytes2x": 31640,
+   "t": 10140,
+   "side": 1,
+   "marbles": 4
+  },
   "dubai-marble-grand-prix": {
    "name": "Dubai Marble Grand Prix",
    "series": "Grand Prix",
