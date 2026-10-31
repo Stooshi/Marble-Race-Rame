@@ -1921,7 +1921,7 @@ const LAYOUTS = {
     { key: 'switch2', name: 'Second switchbacks', shape: sBends({ first: L, radius: 52, degrees: 72, grade: 0.13 }), billboards: 1 },
     { key: 'switch3', name: 'Third switchbacks', shape: sBends({ first: L, radius: 56, degrees: 65, grade: 0.13 }) },
     { key: 'pagoda', name: 'Round the pagoda', shape: spiral({ side: R, radius: 50, turns: 0.55, grade: 0.16 }) },
-    { key: 'mossGarden', name: 'Round the moss garden', shape: sweep({ side: L, radius: 85, degrees: 60, grade: 0.12 }), obstacles: [peg({ costume: c.peg, at: 0.5, line: 'center' })], billboards: 1 },
+    { key: 'mossGarden', name: 'Round the moss garden', shape: sweep({ side: R, radius: 85, degrees: 60, grade: 0.12 }), obstacles: [peg({ costume: c.peg, at: 0.5, line: 'center' })], billboards: 1 },
     { key: 'brakingStraight', name: 'Run to the pond', shape: straight(50, { grade: 0.12 }), billboards: 1 },
     { key: 'hairpin', name: 'Pond hairpin', shape: hairpin({ side: L }), obstacles: [swipe({ costume: c.swipe, side: 'high' })] },
     { key: 'pondSweep', name: 'Pond S-bends', shape: sBends({ first: R, radius: 65, degrees: 45, grade: 0.12 }), obstacles: [peg({ costume: c.peg, at: 0.5, line: 'center' })], billboards: 1 },
