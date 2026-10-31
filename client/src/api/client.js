@@ -156,6 +156,7 @@ export const api = {
   order: (orderNo) => request(`/payments/orders/${encodeURIComponent(orderNo)}`),
 
   tracks: () => request('/tracks'),
+  popularTracks: () => request('/tracks/popular'), // (the most raced of the last 7 days: "Other players liked")
   track: (idOrSlug) => request(`/tracks/${idOrSlug}`),
 
   showcase: () => request('/races/showcase'),

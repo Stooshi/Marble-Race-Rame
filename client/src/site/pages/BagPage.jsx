@@ -92,7 +92,7 @@ export default function BagPage() {
         <div style={{ display: 'grid', gap: 6, flex: '1 1 320px' }}>
           <h1 className="ms-h1" style={{ fontFamily: 'var(--ms-cond)', fontWeight: 800 }}>Your Marble Bag</h1>
           <span style={{ color: 'var(--ms-soft)' }}>
-            {ownedCount} of {ITEMS.length} marbles collected · Shooter: {shooterTile ? shooterTile.name : 'your starter'} · <Link to="/purchases">Purchases</Link> · <Link to="/settings">Settings</Link>
+            {ownedCount} of {ITEMS.length} marbles collected · Your marble: {shooterTile ? shooterTile.name : 'your starter'} · <Link to="/purchases">Purchases</Link> · <Link to="/settings">Settings</Link>
           </span>
         </div>
         <div className="ms-progress" style={{ flex: '1 1 260px' }}>
@@ -142,8 +142,8 @@ export default function BagPage() {
             {error && <div className="ms-msg ms-msg--bad">{error}</div>}
             <div className="ms-row">
               {pick.owned && (pick.shooter
-                ? <span className="ms-btn" aria-disabled="true">YOUR SHOOTER</span>
-                : <button type="button" className="ms-btn ms-btn--primary" disabled={busy} onClick={() => makeShooter(pick)}>{busy ? 'SAVING…' : 'MAKE IT MY SHOOTER'}</button>)}
+                ? <span className="ms-btn" aria-disabled="true">YOUR MARBLE</span>
+                : <button type="button" className="ms-btn ms-btn--primary" disabled={busy} onClick={() => makeShooter(pick)}>{busy ? 'SAVING…' : 'MAKE IT MY MARBLE'}</button>)}
               {pick.copy && <Link to={`/certificate/${pick.copy.marbleCode}`} className="ms-btn">{pick.copy.editionNo ? 'CERTIFICATE' : 'MARBLE ID'}</Link>}
               {pick.starterCode && <Link to={`/certificate/${pick.starterCode}`} className="ms-btn">MARBLE ID</Link>}
               {!pick.owned && (ITEM[pick.slug].kind === 'pass'
@@ -176,7 +176,7 @@ export default function BagPage() {
                 {t.rarity === 'original' ? (t.marble.is_starter ? 'Starter' : 'Plain') : rarityInfo(t.rarity).label}
               </span>
               <span style={{ fontSize: '0.8rem', color: t.shooter ? 'var(--ms-yellow)' : 'var(--ms-muted)', minHeight: '1.2em' }}>
-                {t.shooter ? 'Shooter' : t.owned ? t.note : 'Not yet'}
+                {t.shooter ? 'Your marble' : t.owned ? t.note : 'Not yet'}
               </span>
             </button>
           );

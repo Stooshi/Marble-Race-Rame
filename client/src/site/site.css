@@ -515,6 +515,19 @@ a.ms-tile:hover, a.ms-card:hover { text-decoration: none; border-color: var(--ms
 @media (prefers-reduced-motion: reduce) { .ms-trackcard__img { transition: none; } }
 .ms-trackcard__body { display: grid; gap: 2px; padding: 12px 14px 14px; }
 .ms-trackcard__body span { font-size: 0.88rem; color: var(--ms-muted); }
+/* The solo starting line's links and "Other players liked" (31 Oct 2026). */
+.ms-start-links { display: flex; justify-content: center; gap: 22px; flex-wrap: wrap; }
+.ms-start-links a { color: var(--ms-soft); }
+.ms-liked { display: grid; gap: 8px; border-top: 1px solid var(--ms-border); padding-top: 12px; min-width: 0; }
+.ms-liked__h { margin: 0; font-size: 0.95rem; font-weight: 700; color: var(--ms-soft); }
+.ms-liked__row { display: grid; grid-auto-flow: column; grid-auto-columns: calc((100% - 16px) / 3); gap: 8px; overflow-x: auto; scroll-snap-type: x mandatory; overscroll-behavior-x: contain; scrollbar-width: none; padding-bottom: 2px; }
+.ms-liked__row::-webkit-scrollbar { display: none; }
+.ms-liked__card { display: grid; gap: 4px; padding: 0; text-align: left; background: none; border: 0; color: var(--ms-text); font: inherit; cursor: pointer; scroll-snap-align: start; min-width: 0; }
+.ms-liked__pic { position: relative; overflow: hidden; aspect-ratio: 16 / 9; border-radius: 10px; border: 2px solid transparent; }
+.ms-liked__card:hover .ms-liked__pic, .ms-liked__card:focus-visible .ms-liked__pic { border-color: var(--ms-yellow); }
+.ms-liked__card[aria-pressed="true"] .ms-liked__pic { border-color: var(--ms-yellow); box-shadow: 0 0 0 2px rgba(0,0,0,0.35); }
+.ms-liked__name { font-size: 0.8rem; line-height: 1.2; font-weight: 600; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+@media (max-width: 720px) { .ms-liked__row { grid-auto-columns: calc((100% - 16px) / 2.6); } }
 .ms-gate { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: center; padding: 18px 8px; background: rgba(0,0,0,0.25); border-radius: 18px; }
 .ms-gate__you { display: inline-flex; flex-direction: column; align-items: center; gap: 2px; color: var(--ms-yellow); font-weight: 800; }
 

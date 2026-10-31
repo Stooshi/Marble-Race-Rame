@@ -66,7 +66,7 @@ export default function ScoresPage() {
       {data && (
         <div className="ms-card" style={{ padding: 0, overflowX: 'auto' }}>
           <table className="ms-table ms-table--scores">
-            <thead><tr><th scope="col">Rank</th><th scope="col">Player</th><th scope="col">Shooter</th><th scope="col" className="num">Wins</th><th scope="col" className="num">Coins<span className="ms-wide-only"> earned</span></th></tr></thead>
+            <thead><tr><th scope="col">Rank</th><th scope="col">Player</th><th scope="col">Marble</th><th scope="col" className="num">Wins</th><th scope="col" className="num">Coins<span className="ms-wide-only"> earned</span></th></tr></thead>
             <tbody>
               {withGap.length === 0 && <tr><td colSpan={5} style={{ color: 'var(--ms-muted)' }}>No races counted here yet. Race to get on the board.</td></tr>}
               {withGap.map((r) => (r.gap ? (

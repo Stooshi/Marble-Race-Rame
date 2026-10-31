@@ -144,7 +144,7 @@ function NewRace({ records }) {
       <h3 className="step-title"><span>1</span> Track</h3>
       <TrackSelector value={track} onChange={setTrack} records={records} />
 
-      <h3 className="step-title"><span>2</span> Your Shooter</h3>
+      <h3 className="step-title"><span>2</span> Your marble</h3>
       <MarbleSelector value={marble?.id} onChange={setMarble} />
 
       <div className="new-race__footer">
@@ -154,7 +154,7 @@ function NewRace({ records }) {
         </label>
         <div className="new-race__summary">
           {marble && <MarbleBall marble={marble} size={26} />}
-          <span>{marble ? `${marble.name} is your Shooter` : 'Pick your Shooter from your Marble Bag'}</span>
+          <span>{marble ? `${marble.name} is your marble` : 'Pick your marble from your Marble Bag'}</span>
         </div>
         {error && <p className="error" role="alert">{error}</p>}
         <button className="btn btn--primary btn--lg" disabled={busy}>

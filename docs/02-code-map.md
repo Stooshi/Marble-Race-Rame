@@ -218,7 +218,7 @@
 | `support.js` | The Help Centre's contact form: `GET /form` (a form token), `POST /` (a message; rate-limited to 6 an hour per address) |
 | `economy.js` | Economy numbers, my day, race payouts, my ledger |
 | `scoreboard.js` | Season, all-time and friends boards (earned coins only), and the country records (`/countries`); the season is a season in the `seasons` table that is on or ended last (`currentSeason`, counted from its start to its end), else the numbered one in `economy.json` → `season` (`seasonFrom`), else `null`, and the season board then counts all time |
-| `tracks.js`, `marbles.js` | Public lists (a track's `season` and `locked` for the player asking); admin edits |
+| `tracks.js`, `marbles.js` | Public lists (a track's `season` and `locked` for the player asking; `GET /api/tracks/popular`: the most raced tracks of the last 7 days, 31 Oct 2026); admin edits |
 | `physics.js` | On-demand physics preview (nothing saved) |
 | `billboards.js`, `appearance.js` | Billboard images; look options |
 
@@ -386,7 +386,7 @@ Defined in `src/sockets/index.js`. The client may send a JWT in `auth.token`; an
 |---|---|
 | `/` | Landing page (visitors) or `HomeHub` (signed in: QUICK RACE, RACE SOLO and RACE WITH FRIENDS as three identical yellow buttons on every screen, `site.css` `.ms-race-choices`) |
 | `/home` | Home hub (signed in; a visitor goes to `/`). `/lobby` goes to `/home` (the first version's lobby is retired) |
-| `/play/friends`, `/play/track`, `/play/shooter`, `/play/start`, `/play/quick` | The race flow (`site/pages/RaceFlow.jsx`; `/play/quick` is Quick race, and `/play/start?quick=1` goes there) |
+| `/play/friends`, `/play/track`, `/play/shooter`, `/play/start`, `/play/quick` | The race flow (`site/pages/RaceFlow.jsx`; steps 1 Friends, 2 Track, 3 Marble, 4 Starting line; `/play/quick` is Quick race, and `/play/start?quick=1` goes there). The starting line (`StartStep`): START THE RACE, "Change marble" and "Change track", and `OthersLiked` ("Other players liked", 31 Oct 2026): the most raced tracks of the last 7 days from `GET /api/tracks/popular` (races with a player in them, live tracks, up to 12, worked out at most every 10 minutes), not the one just raced; one tap picks that track there; three show on a computer, a phone's row swipes; a server without the route: the newest tracks |
 | `/r/:code` | Friend room |
 | `/leagues`, `/leagues/new`, `/l/:code` | Leagues (`site/leagues/LeaguesPages.jsx`; while `LEAGUES` is off for the player the first two are the 404 page and `/l/:code` says "Leagues are coming soon"; kept out of search results) |
 | `/shop`, `/collection`, `/collection/:design` | Shop |

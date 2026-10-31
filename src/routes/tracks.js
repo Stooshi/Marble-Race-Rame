@@ -112,6 +112,31 @@ router.get('/', optionalAuth, async (req, res) => {
   res.json({ tracks });
 });
 
+/**
+ * GET /api/tracks/popular: the tracks raced most by players over the last 7 days (races with at least one
+ * player, not computer players alone), most first, up to 12 (Moses, 31 Oct 2026: "Other players liked" on
+ * the solo starting line). Live tracks only; worked out at most every 10 minutes.
+ */
+const POPULAR = { days: 7, limit: 12, cacheMs: 10 * 60 * 1000 };
+let popularCache = { at: 0, tracks: null };
+router.get('/popular', async (req, res) => {
+  const now = Date.now();
+  if (!popularCache.tracks || now - popularCache.at > POPULAR.cacheMs) {
+    const { rows } = await db.query(
+      `SELECT t.slug, COUNT(*)::int AS races
+         FROM races r JOIN tracks t ON t.id = r.track_id
+        WHERE r.status = 'finished' AND r.finished_at > now() - make_interval(days => $1) AND t.is_active
+          AND EXISTS (SELECT 1 FROM race_entries e WHERE e.race_id = r.id AND NOT e.is_bot)
+        GROUP BY t.slug
+        ORDER BY races DESC, t.slug
+        LIMIT $2`,
+      [POPULAR.days, POPULAR.limit],
+    );
+    popularCache = { at: now, tracks: rows };
+  }
+  res.json({ days: POPULAR.days, tracks: popularCache.tracks });
+});
+
 /** GET /api/tracks/:idOrSlug — full track including geometry */
 router.get('/:idOrSlug', optionalAuth, async (req, res) => {
   const key = req.params.idOrSlug;

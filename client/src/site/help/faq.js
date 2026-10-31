@@ -232,7 +232,7 @@ export function buildFaq({ tracks, platform = 'web' } = {}) {
       ['What is the season marble?',
         `A marble only season pass holders ever get. With the ${HOLIDAY.pass} it's **${HOLIDAY.marble}**: it's added to your Marble Bag the moment you get the pass, numbered in the order passes are bought (Holiday 2026 #0001, #0002…), with its own certificate. It's never sold, and it's yours to keep after the season. Like every marble it's looks only.`],
       ['How do I change which marble I race with?',
-        'Open your **Marble Bag** and pick the marble you want as your shooter.'],
+        'Open your **Marble Bag** and pick the marble you want to race with.'],
     ]],
     ['Buying coins', [
       ['How do I buy coins?',

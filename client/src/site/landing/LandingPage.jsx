@@ -84,7 +84,7 @@ export default function LandingPage() {
       <section id="how" aria-labelledby="how-h" className="ms-page">
         <h2 id="how-h" className="ms-landing__h2">How to play</h2>
         <div className="ms-grid">
-          {[['Pick your Shooter', 'Choose the marble you race with from your Marble Bag. Everyone starts with 4 free starter marbles of their own.'],
+          {[['Pick your marble', 'Choose the marble you race with from your Marble Bag. Everyone starts with 4 free starter marbles of their own.'],
             ['Pick a track, or Quick race', 'Race on the track you like, or jump straight into the next race with Quick race.'],
             ['Watch it race', 'A race lasts about a minute. Every finish earns coins, and the top three earn the most.']].map(([h, p], k) => (
             <div key={h} className="ms-card" style={{ display: 'grid', gap: 8 }}>

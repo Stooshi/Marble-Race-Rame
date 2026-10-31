@@ -11,7 +11,7 @@ import { handle, shownName } from '../../shared/playerName';
 import { useLeaguesOn } from '../leagues/status';
 
 /**
- * The race flow: 1 Friends → 2 Track → 3 Shooter → 4 Starting line.
+ * The race flow: 1 Friends → 2 Track → 3 Marble → 4 Starting line.
  * The choices travel in the address (?track=…&with=friends), so any step can
  * be opened, shared or reloaded. Racing with friends goes through a friend room
  * (RoomPage, /r/CODE); the Friends step makes one or opens one by its code.
@@ -29,7 +29,7 @@ function Steps({ at, track, shooter }) {
   const steps = [
     ['/play/friends', '1 · Friends'],
     ['/play/track', `2 · Track${track ? `: ${track}` : ''}`],
-    ['/play/shooter', `3 · Shooter${shooter ? `: ${shooter}` : ''}`],
+    ['/play/shooter', `3 · Marble${shooter ? `: ${shooter}` : ''}`],
     ['/play/start', '4 · Starting line'],
   ];
   return (
@@ -339,7 +339,7 @@ export function TrackStep() {
   );
 }
 
-// ── 3 · Shooter ───────────────────────────────────────────────────────────
+// ── 3 · Marble ────────────────────────────────────────────────────────────
 
 export function ShooterStep() {
   const [search] = useSearchParams();
@@ -367,7 +367,7 @@ export function ShooterStep() {
   return (
     <div className="ms-page">
       <Steps at={2} track={trackSlug === 'random' ? 'Random' : track?.name} />
-      <h1 className="ms-h1" style={{ fontFamily: 'var(--ms-cond)', fontWeight: 800 }}>Pick your Shooter</h1>
+      <h1 className="ms-h1" style={{ fontFamily: 'var(--ms-cond)', fontWeight: 800 }}>Pick your marble</h1>
       {error && <div className="ms-msg ms-msg--bad">{error}</div>}
       <div className="ms-two" style={{ alignItems: 'start' }}>
         <section className="ms-card" style={{ display: 'grid', gap: 10, justifyItems: 'center', textAlign: 'center', flex: '0 1 320px' }}>
@@ -404,7 +404,7 @@ export function ShooterStep() {
 // ── 4 · Starting line ─────────────────────────────────────────────────────
 
 export function StartStep() {
-  const [search] = useSearchParams();
+  const [search, setSearch] = useSearchParams();
   const navigate = useNavigate();
   const { ready, error } = useRacer();
   const { user } = useAuth();
@@ -464,16 +464,54 @@ export function StartStep() {
           <h1 className="ms-h2" style={{ fontFamily: 'var(--ms-cond)', fontWeight: 800 }}>The starting line</h1>
           <div className="ms-row" style={{ flexWrap: 'nowrap' }}>
             {shooter && (shooter.slug ? <MarbleBadge slug={shooter.slug} size={44} /> : <MarbleBadge marble={shooter.marble} size={44} />)}
-            <div style={{ display: 'grid', flex: 1, minWidth: 0 }}><b>{user?.username ? shownName(user) : '…'} (host)</b><span className="ms-note">{shooter?.name ?? 'Picking a Shooter…'}</span></div>
+            <div style={{ display: 'grid', flex: 1, minWidth: 0 }}><b>{user?.username ? shownName(user) : '…'} (host)</b><span className="ms-note">{shooter?.name ?? 'Picking a marble…'}</span></div>
             <span style={{ color: 'var(--ms-green)', fontWeight: 700 }}>✓ Ready</span>
           </div>
           <span className="ms-note">Computer players fill every other place. Racing with friends? <Link to={`/play/friends${track?.slug ? `?track=${encodeURIComponent(track.slug)}` : ''}`}>Make a friend room</Link> and send them the link.</span>
           {startError && <div className="ms-msg ms-msg--bad" role="alert">{startError}</div>}
           <button type="button" className="ms-btn ms-btn--primary ms-btn--lg" onClick={start} disabled={busy || !ready || !tracks.length}>{busy ? 'STARTING…' : 'START THE RACE'}</button>
-          {!quick && <Link to={`/play/shooter?${search}`} style={{ color: 'var(--ms-soft)', textAlign: 'center' }}>Change Shooter</Link>}
+          {!quick && (
+            <div className="ms-start-links">
+              <Link to={`/play/shooter?${search}`}>Change marble</Link>
+              <Link to={`/play/track?${search}`}>Change track</Link>
+            </div>
+          )}
           {quick && <Link to="/play/track" style={{ color: 'var(--ms-soft)', textAlign: 'center' }}>Pick the track yourself</Link>}
+          {!quick && <OthersLiked tracks={tracks} current={trackSlug} onPick={(slug) => { const n = new URLSearchParams(search); n.set('track', slug); setSearch(n, { replace: true }); }} />}
         </aside>
       </div>
     </div>
+  );
+}
+
+/**
+ * "Other players liked" (Moses, 31 Oct 2026): under START THE RACE, where a player lands after closing a
+ * solo race, the tracks raced most by players over the last 7 days (not the one just raced), as small
+ * pictures; one tap picks that track here. Three show on a computer; on a phone the row swipes for more.
+ * Until the server has the list (a server from before 31 Oct), the newest tracks instead.
+ */
+export function OthersLiked({ tracks, current, onPick }) {
+  const { data, error } = useAsync(() => api.popularTracks(), []);
+  const [skip] = useState(current); // (the track just raced: left out, even after another is picked here)
+  const bySlug = useMemo(() => new Map(tracks.map((t) => [t.slug, t])), [tracks]);
+  const list = useMemo(() => {
+    const ok = (t) => t && !t.locked && t.slug !== skip;
+    const popular = (data?.tracks ?? []).map((p) => bySlug.get(p.slug)).filter(ok);
+    if (popular.length >= 3 || (data && !error)) return popular.slice(0, 8);
+    return [...tracks].filter(ok).sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).slice(0, 8);
+  }, [data, error, bySlug, tracks, skip]);
+  if (list.length < 3) return null;
+  return (
+    <section className="ms-liked" aria-labelledby="ms-liked-h">
+      <h2 id="ms-liked-h" className="ms-liked__h">Other players liked</h2>
+      <div className="ms-liked__row">
+        {list.map((t) => (
+          <button key={t.slug} type="button" className="ms-liked__card" aria-pressed={t.slug === current} onClick={() => onPick(t.slug)}>
+            <span className="ms-liked__pic" style={{ background: SERIES_PIC[t.series] }}><TrackBanner slug={t.slug} /></span>
+            <span className="ms-liked__name">{t.name}</span>
+          </button>
+        ))}
+      </div>
+    </section>
   );
 }

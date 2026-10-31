@@ -11,7 +11,7 @@
 
 ## How a race is decided
 
-1. **The lobby.** A race is created with up to 20 places. Players join with their Shooter (the look they race in). Joining is free: coin entry fees were switched off on 14 Oct 2026.
+1. **The lobby.** A race is created with up to 20 places. Players join with their marble (the look they race in; the code's Shooter). Joining is free: coin entry fees were switched off on 14 Oct 2026.
 2. **The decision**, made once, on the server, when the race leaves the lobby:
    - A random **seed** is drawn.
    - Empty places are filled with **computer players**, up to the race size. They are always marked as computer players (a small robot icon, "Computer player"), have a fun made-up name from a fixed list (no real people or brands) and, unless they wear a showcase marble, a plain starter-style look (one colour or two half and half) that no one else in the race shows. Names and looks are worked out from the race when it is shown, never stored, and never given to the race engine.
@@ -133,7 +133,7 @@ A seasonal collection has its own prices per rarity (below). A season pass's mar
 
 **One copy each:** a player can own one copy of each marble.
 
-**The Shooter** is the marble a player races in.
+**Your marble** is the marble a player races in (the game says "your marble" since 31 Oct 2026; the code and the database still call it the Shooter, `shooter`).
 
 **Starter marbles** (since 20 Oct 2026; replaced the 4 shared ones): every player, guest or saved, gets **4 starter marbles of their own** when the account is made (older players the first time they need them). Plain glass from 12 clearly different colours (`client/src/shared/marbles/starters.json`): one in one colour and three in two colours, half and half, all different; two colours of one marble always clearly differ. Each has its own Marble ID (`ST` + 5 characters + 1–4) and certificate. Never sold. Looks only: they never change a race.
 - **In a race no two players show the same starter look.** A player without a collection Shooter races their Shooter starter (or their first); if someone in the race already shows that look, they get their own next starter. Only when all 4 are shown already does an earlier player waiting in the race move to another of theirs. (In 20,000 simulated races of 20 new players, everyone always got one of their own, all different.)

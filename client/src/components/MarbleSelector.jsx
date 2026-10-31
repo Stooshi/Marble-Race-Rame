@@ -8,7 +8,7 @@ import MarbleBall from './MarbleBall';
 import { ErrorMessage, Spinner } from './Status';
 import { getCoinsHref, notEnoughCoins, rememberWanted } from '../site/payments/GetCoins';
 
-/** A marble's own history with you: races, wins and podiums with it as your Shooter. */
+/** A marble's own history with you: races, wins and podiums with it as your marble. */
 function history(m) {
   if (!m.my_races) return 'Not raced yet';
   const n = (k, word) => `${formatNumber(k)} ${word}${k === 1 ? '' : 's'}`;
@@ -75,12 +75,12 @@ export default function MarbleSelector({ value, onChange, disabledIds = [] }) {
       </div>
       <p className="muted marble-selector__note">
         {tab === 'mine'
-          ? 'Every player\'s marble races at the same level: pick the look you like as your Shooter.'
+          ? 'Every player\'s marble races at the same level: pick the look you like as your marble.'
           : 'Marbles are sold for their looks only: they never change how fast you race.'}
       </p>
       {buyError && <p className="error">{buyError}</p>}
 
-      <div className="marble-grid" role={tab === 'mine' ? 'radiogroup' : undefined} aria-label="Choose your Shooter">
+      <div className="marble-grid" role={tab === 'mine' ? 'radiogroup' : undefined} aria-label="Choose your marble">
         {list.map((m) => {
           const taken = disabledIds.includes(m.id);
           const selected = value === m.id;
@@ -109,7 +109,7 @@ export default function MarbleSelector({ value, onChange, disabledIds = [] }) {
                 </div>
               </div>
               {m.description && <p className="marble-card__desc">{m.description}</p>}
-              {tab === 'mine' && <small className="marble-card__history">{selected ? 'Your Shooter · ' : ''}{history(m)}</small>}
+              {tab === 'mine' && <small className="marble-card__history">{selected ? 'Your marble · ' : ''}{history(m)}</small>}
               {taken && <small className="muted">Already in this race</small>}
               {tab === 'shop' && !affordable && (
                 <Link className="btn btn--sm btn--block btn--primary" to={getCoinsHref(m.price_coins - (user?.coins ?? 0), here)} onClick={() => rememberWanted(here, m.name)}
