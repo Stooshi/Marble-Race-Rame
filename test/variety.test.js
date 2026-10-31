@@ -163,7 +163,10 @@ test('Block Series: built as coasters on the voxel land unless a section flies, 
   assert.throws(() => track(spec({ block: { world: 'meadow' } })), /block settings are for the Block Series/);
   // The block layouts are on the list, and the series name is neutral.
   const { BLOCK_WORLDS } = require('../src/trackKit/parts');
-  assert.deepEqual(BLOCK_WORLDS, ['meadow', 'valley', 'snow', 'mine', 'magma', 'puzzle', 'fortress', 'portal', 'sky', 'harbour', 'temple', 'bonus']);
+  assert.deepEqual(BLOCK_WORLDS, ['meadow', 'valley', 'snow', 'mine', 'magma', 'puzzle', 'fortress', 'portal', 'sky', 'harbour', 'temple', 'bonus', 'karst', 'canal', 'falls', 'dolomite', 'aurora']);
+  // Blocks Series 2: its own family (the variety rules count its twenty on their own), built the same way.
+  assert.equal(track(blocky({ family: 'block-2', block: { world: 'karst' } })).variety.family, 'block-2');
+  for (const k of ['karst-splits', 'grand-canal', 'horseshoe-falls', 'three-towers', 'aurora-fell']) assert.ok(kit.LAYOUT_KINDS.includes(k), k);
   for (const k of ['spawn-meadow', 'speedrun-straights', 'peak-beams', 'mine-shaft', 'magma-loops', 'clear-rows', 'combo-steps', 'stack-spiral', 'fortress-gate', 'final-level']) assert.ok(kit.LAYOUT_KINDS.includes(k), k);
 });
 
