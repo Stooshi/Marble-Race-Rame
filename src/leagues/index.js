@@ -3,7 +3,8 @@
 /**
  * Leagues (Leagues v1, part 1, 27 Oct 2026; plan: project doc claude/leagues-v1-build-plan.md).
  *
- * A league is a player's own competition with friends: its tracks (5 for a League), how long it runs
+ * A league is a player's own competition with friends: its tracks (3 for a League: the free taster,
+ * Moses 31 Oct 2026; 5 until then, and leagues made before keep their 5), how long it runs
  * (1 to 7 days) and how many tries each track allows (unlimited, 3, 5 or 10). Members race the
  * tracks as solo races (a league race: races.league_id); a member's best time on each track counts;
  * their total is the sum of the bests, ranked once every track is done. The fastest total wins; on
@@ -28,7 +29,7 @@ const { HttpError, badRequest, conflict, forbidden, notFound } = require('../uti
 const seasons = require('../seasons');
 
 const MODES = ['off', 'admins', 'on'];
-const TRACKS = 5;            // a League's tracks
+const TRACKS = 3;            // a League's tracks (5 until 31 Oct 2026: leagues made before keep theirs)
 const DAYS = [1, 7];         // how long a league runs
 const CAPS = [null, 3, 5, 10]; // tries per track: unlimited, 3, 5 or 10
 const OPEN_PER_CREATOR = 5;  // open leagues a player may have created at once
@@ -96,8 +97,8 @@ async function checkSettings(db, userId, body) {
   const name = await checkName(body.name);
   const trackIds = Array.isArray(body.track_ids) ? body.track_ids : [];
   if (trackIds.length !== TRACKS) throw badRequest(`Pick ${TRACKS} tracks`);
-  if (new Set(trackIds).size !== TRACKS) throw badRequest('Pick five different tracks');
-  if (!trackIds.every((t) => typeof t === 'string' && /^[0-9a-f-]{36}$/i.test(t))) throw badRequest('Pick five tracks');
+  if (new Set(trackIds).size !== TRACKS) throw badRequest(`Pick ${TRACKS} different tracks`);
+  if (!trackIds.every((t) => typeof t === 'string' && /^[0-9a-f-]{36}$/i.test(t))) throw badRequest(`Pick ${TRACKS} tracks`);
   const days = Number(body.days);
   if (!Number.isInteger(days) || days < DAYS[0] || days > DAYS[1]) throw badRequest('A league runs 1 to 7 days');
   const attemptCap = body.attempts === undefined || body.attempts === null ? null : Number(body.attempts);
@@ -127,7 +128,7 @@ async function rename(client, league, userId, text) {
   return l;
 }
 
-/** Creates a League (5 tracks) with its creator as its first member → the league row. */
+/** Creates a League (TRACKS tracks) with its creator as its first member → the league row. */
 async function create(client, userId, body, { againOf = null } = {}) {
   await assertSaved(client, userId);
   const s = await checkSettings(client, userId, body);

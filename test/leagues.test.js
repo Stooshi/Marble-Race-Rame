@@ -24,8 +24,8 @@ test('the LEAGUES switch: off by default, admins, on; anything else is off', () 
   assert.throws(() => leagues.assertOpen({ role: 'admin' }, {}), (e) => e.status === 404);
 });
 
-test('the rules in the code: 5 tracks, 1-7 days, unlimited/3/5/10 tries, 5 open per creator, codes', () => {
-  assert.equal(leagues.TRACKS, 5);
+test('the rules in the code: 3 tracks (5 until 31 Oct 2026), 1-7 days, unlimited/3/5/10 tries, 5 open per creator, codes', () => {
+  assert.equal(leagues.TRACKS, 3);
   assert.deepEqual(leagues.DAYS, [1, 7]);
   assert.deepEqual(leagues.CAPS, [null, 3, 5, 10]);
   assert.equal(leagues.OPEN_PER_CREATOR, 5);
@@ -79,23 +79,25 @@ test('a League from start to end: create, join, tries, best times, the total, th
     const { rows: tracks } = await db.query('SELECT id FROM tracks WHERE is_active AND season_key IS NULL ORDER BY physics IS NULL, slug LIMIT 5');
     assert.equal(tracks.length, 5, 'five active tracks in the test database');
     const five = tracks.map((t) => t.id);
+    const three = five.slice(0, 3); // (a League's 3 tracks, from 31 Oct 2026)
 
     // Create: checked settings; a guest is asked to save first.
-    assert.equal((await call('/leagues', { method: 'POST', token: a.token, body: { name: 'Office', track_ids: five.slice(0, 4), days: 3 } })).status, 400);
-    assert.equal((await call('/leagues', { method: 'POST', token: a.token, body: { name: 'Office', track_ids: five, days: 8 } })).status, 400);
-    assert.equal((await call('/leagues', { method: 'POST', token: a.token, body: { name: 'Office', track_ids: five, days: 3, attempts: 4 } })).status, 400);
-    const asGuest = await call('/leagues', { method: 'POST', token: guest.token, body: { name: 'Office', track_ids: five, days: 3 } });
+    assert.equal((await call('/leagues', { method: 'POST', token: a.token, body: { name: 'Office', track_ids: three.slice(0, 2), days: 3 } })).status, 400);
+    assert.equal((await call('/leagues', { method: 'POST', token: a.token, body: { name: 'Office', track_ids: five, days: 3 } })).status, 400); // (5: no longer)
+    assert.equal((await call('/leagues', { method: 'POST', token: a.token, body: { name: 'Office', track_ids: three, days: 8 } })).status, 400);
+    assert.equal((await call('/leagues', { method: 'POST', token: a.token, body: { name: 'Office', track_ids: three, days: 3, attempts: 4 } })).status, 400);
+    const asGuest = await call('/leagues', { method: 'POST', token: guest.token, body: { name: 'Office', track_ids: three, days: 3 } });
     assert.equal(asGuest.status, 403);
     assert.equal(asGuest.body.details.code, 'save_account');
-    const made = await call('/leagues', { method: 'POST', token: a.token, body: { name: 'Office league', track_ids: five, days: 3, attempts: 3 } });
+    const made = await call('/leagues', { method: 'POST', token: a.token, body: { name: 'Office league', track_ids: three, days: 3, attempts: 3 } });
     assert.equal(made.status, 201, JSON.stringify(made.body));
     const { code } = made.body.league;
     assert.match(code, /^[A-Z2-9]{6}$/);
-    assert.equal(made.body.tracks.length, 5);
-    assert.deepEqual(made.body.tracks.map((t) => t.tries_left), [3, 3, 3, 3, 3]);
+    assert.equal(made.body.tracks.length, 3);
+    assert.deepEqual(made.body.tracks.map((t) => t.tries_left), [3, 3, 3]);
 
     // The name: the player-name filter, at creation and when the creator renames it (Moses, 27 Oct 2026).
-    const rude = await call('/leagues', { method: 'POST', token: a.token, body: { name: 'Fuuuck league', track_ids: five, days: 3 } });
+    const rude = await call('/leagues', { method: 'POST', token: a.token, body: { name: 'Fuuuck league', track_ids: three, days: 3 } });
     assert.equal(rude.status, 400);
     assert.equal(rude.body.details.code, 'name_not_allowed');
     assert.equal((await call(`/leagues/${code}`, { method: 'PATCH', token: b.token, body: { name: 'Mine now' } })).status, 403);
@@ -129,10 +131,10 @@ test('a League from start to end: create, join, tries, best times, the total, th
       return e.finish_time_ms;
     };
     assert.equal((await call(`/leagues/${code}/race`, { method: 'POST', token: a.token, body: { track_id: '00000000-0000-4000-8000-000000000000' } })).status, 400); // (not a league track)
-    assert.equal((await call(`/leagues/${code}/race`, { method: 'POST', token: c.token, body: { track_id: five[0] } })).status, 403); // (removed)
+    assert.equal((await call(`/leagues/${code}/race`, { method: 'POST', token: c.token, body: { track_id: three[0] } })).status, 403); // (removed)
 
     const timesA = [];
-    for (const t of five) timesA.push(await raceOn(a, t));
+    for (const t of three) timesA.push(await raceOn(a, t));
     // The race's results name the league, and whether it was a new best there.
     const { rows: [firstRun] } = await db.query('SELECT race_id FROM league_runs WHERE user_id = $1 ORDER BY created_at LIMIT 1', [a.user.id]);
     const res1 = (await call(`/races/${firstRun.race_id}/results`)).body;
@@ -142,36 +144,36 @@ test('a League from start to end: create, join, tries, best times, the total, th
     const rematch = await call(`/races/${firstRun.race_id}/next`, { method: 'POST', token: a.token, body: {} });
     assert.equal(rematch.status, 409);
     assert.equal(rematch.body.details.code, 'league_race');
-    const again = await raceOn(a, five[0]); // a second try on the first track: the better one counts
-    const { rows: [secondRun] } = await db.query('SELECT race_id FROM league_runs WHERE user_id = $1 AND track_id = $2 ORDER BY created_at DESC LIMIT 1', [a.user.id, five[0]]);
+    const again = await raceOn(a, three[0]); // a second try on the first track: the better one counts
+    const { rows: [secondRun] } = await db.query('SELECT race_id FROM league_runs WHERE user_id = $1 AND track_id = $2 ORDER BY created_at DESC LIMIT 1', [a.user.id, three[0]]);
     assert.equal((await call(`/races/${secondRun.race_id}/results`)).body.league.new_best, again < timesA[0]);
     const bestA0 = Math.min(timesA[0], again);
     let view = (await call(`/leagues/${code}`, { token: a.token })).body;
-    assert.equal(view.me.done, 5);
+    assert.equal(view.me.done, 3);
     assert.equal(view.me.place, 1);
     assert.equal(view.me.total_ms, bestA0 + timesA.slice(1).reduce((s, x) => s + x, 0));
     assert.equal(view.tracks[0].tries_left, 1);
     assert.equal(view.tracks[0].best_ms, bestA0);
 
     // The tries cap: the third try is the last.
-    await raceOn(a, five[0]);
-    const capped = await call(`/leagues/${code}/race`, { method: 'POST', token: a.token, body: { track_id: five[0] } });
+    await raceOn(a, three[0]);
+    const capped = await call(`/leagues/${code}/race`, { method: 'POST', token: a.token, body: { track_id: three[0] } });
     assert.equal(capped.status, 409);
 
-    // B: four tracks done is not ranked yet (listed below the ranked players).
-    for (const t of five.slice(0, 4)) await raceOn(b, t);
+    // B: two tracks done is not ranked yet (listed below the ranked players).
+    for (const t of three.slice(0, 2)) await raceOn(b, t);
     view = (await call(`/leagues/${code}`, { token: b.token })).body;
-    assert.equal(view.me.done, 4);
+    assert.equal(view.me.done, 2);
     assert.equal(view.me.place, null);
     assert.equal(view.scoreboard[0].user_id, a.user.id);
 
     // Tie-break: on the same total, the one who set it first ranks higher.
     const { rows: [lg] } = await db.query('SELECT * FROM leagues WHERE code = $1', [code]);
-    await raceOn(b, five[4]);
+    await raceOn(b, three[2]);
     const boardNow = await leagues.scoreboard(db, lg);
     const [ra, rb] = [boardNow.find((r) => r.user_id === a.user.id), boardNow.find((r) => r.user_id === b.user.id)];
     // (Make the totals equal: B's runs set later than A's.)
-    await db.query('UPDATE league_runs SET time_ms = time_ms + $3 WHERE league_id = $1 AND user_id = $2 AND track_id = $4 AND time_ms = (SELECT MIN(time_ms) FROM league_runs WHERE league_id = $1 AND user_id = $2 AND track_id = $4)', [lg.id, b.user.id, ra.total_ms - rb.total_ms, five[4]]);
+    await db.query('UPDATE league_runs SET time_ms = time_ms + $3 WHERE league_id = $1 AND user_id = $2 AND track_id = $4 AND time_ms = (SELECT MIN(time_ms) FROM league_runs WHERE league_id = $1 AND user_id = $2 AND track_id = $4)', [lg.id, b.user.id, ra.total_ms - rb.total_ms, three[2]]);
     const tied = await leagues.scoreboard(db, lg);
     assert.equal(tied[0].total_ms, tied[1].total_ms);
     assert.equal(tied[0].user_id, a.user.id, 'A set the total first');
@@ -181,7 +183,7 @@ test('a League from start to end: create, join, tries, best times, the total, th
     const mine = (await call('/leagues/mine', { token: b.token })).body.leagues;
     assert.equal(mine.length, 1);
     assert.equal(mine[0].code, code);
-    assert.equal(mine[0].done, 5);
+    assert.equal(mine[0].done, 3);
 
     // The end: frozen places; no more races; Run again keeps the group (the creator only).
     await db.query('UPDATE leagues SET ends_at = now() WHERE id = $1', [lg.id]);
@@ -189,17 +191,24 @@ test('a League from start to end: create, join, tries, best times, the total, th
     view = (await call(`/leagues/${code}`, { token: a.token })).body;
     assert.equal(view.league.status, 'ended');
     assert.deepEqual(view.scoreboard.map((r) => r.place), [1, 2]);
-    assert.equal((await call(`/leagues/${code}/race`, { method: 'POST', token: b.token, body: { track_id: five[1] } })).status, 409);
+    assert.equal((await call(`/leagues/${code}/race`, { method: 'POST', token: b.token, body: { track_id: three[1] } })).status, 409);
     assert.equal((await call(`/leagues/${code}/again`, { method: 'POST', token: b.token })).status, 403);
     const fresh = await call(`/leagues/${code}/again`, { method: 'POST', token: a.token });
     assert.equal(fresh.status, 201);
     assert.notEqual(fresh.body.league.code, code);
-    assert.deepEqual(fresh.body.tracks.map((t) => t.id), five);
+    assert.deepEqual(fresh.body.tracks.map((t) => t.id), three);
     assert.equal(fresh.body.scoreboard.length, 2);
+    // A League made before 31 Oct 2026 keeps its 5 tracks; run again, it keeps its first 3.
+    await db.query('UPDATE leagues SET track_ids = $2::uuid[] WHERE id = $1', [lg.id, five]);
+    assert.equal((await call(`/leagues/${code}`, { token: a.token })).body.tracks.length, 5);
+    const fromOld = await call(`/leagues/${code}/again`, { method: 'POST', token: a.token });
+    assert.equal(fromOld.status, 201, JSON.stringify(fromOld.body));
+    assert.deepEqual(fromOld.body.tracks.map((t) => t.id), three);
+    await db.query("UPDATE leagues SET status = 'ended' WHERE code = $1", [fromOld.body.league.code]); // (one open league from Run again, as before)
 
     // At most 5 open leagues per creator (the Run again above is one).
-    for (let k = 0; k < 4; k += 1) assert.equal((await call('/leagues', { method: 'POST', token: a.token, body: { name: `L${k}`, track_ids: five, days: 1 } })).status, 201);
-    assert.equal((await call('/leagues', { method: 'POST', token: a.token, body: { name: 'One too many', track_ids: five, days: 1 } })).status, 409);
+    for (let k = 0; k < 4; k += 1) assert.equal((await call('/leagues', { method: 'POST', token: a.token, body: { name: `L${k}`, track_ids: three, days: 1 } })).status, 201);
+    assert.equal((await call('/leagues', { method: 'POST', token: a.token, body: { name: 'One too many', track_ids: three, days: 1 } })).status, 409);
 
     // League races never wrote league_results (Pro Leagues only, part 2).
     const { rows: [{ n }] } = await db.query('SELECT COUNT(*)::int AS n FROM league_results WHERE league_id = $1', [lg.id]);
@@ -231,7 +240,7 @@ test('League Night: set by the creator, its room opens 15 minutes before, races 
     const [a, b, c, outsider] = [await register(`lnA${stamp}`), await register(`lnB${stamp}`), await register(`lnC${stamp}`), await register(`lnX${stamp}`)];
     const { rows: tracks } = await db.query('SELECT id FROM tracks WHERE is_active AND season_key IS NULL ORDER BY physics IS NULL, slug LIMIT 5');
     const five = tracks.map((t) => t.id);
-    const { code } = (await call('/leagues', { method: 'POST', token: a.token, body: { name: 'Night league', track_ids: five, days: 2 } })).body.league;
+    const { code } = (await call('/leagues', { method: 'POST', token: a.token, body: { name: 'Night league', track_ids: five.slice(0, 3), days: 2 } })).body.league;
     for (const p of [b, c]) await call(`/leagues/${code}/join`, { method: 'POST', token: p.token });
     const { rows: [lg] } = await db.query('SELECT * FROM leagues WHERE code = $1', [code]);
 

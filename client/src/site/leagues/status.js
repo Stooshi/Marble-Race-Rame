@@ -36,6 +36,25 @@ export function useLeaguesOn() {
   return on;
 }
 
+/**
+ * What the server says of leagues for this player: `pro` (Pro Leagues open: only once part 2 is live)
+ * and `tracks` (a League's tracks: 3 from 31 Oct 2026, 5 on a server not yet deployed with it), so the
+ * create page always asks for what the server takes. { pro: null, tracks: null } while asking.
+ */
+export function useLeaguesInfo() {
+  const { user, loading } = useAuth();
+  const [info, setInfo] = useState({ pro: null, tracks: null });
+  useEffect(() => {
+    if (loading) return undefined;
+    let stop = false;
+    leaguesStatus(user?.id).then((s) => {
+      if (!stop) setInfo({ pro: Boolean(s?.pro), tracks: Number.isInteger(s?.tracks) && s.tracks > 0 ? s.tracks : null });
+    });
+    return () => { stop = true; };
+  }, [user?.id, loading]);
+  return info;
+}
+
 /** "2 days 4 h left", "3 h 12 min left", "9 min left", "Ended". `skew`: the server's clock minus this device's. */
 export function timeLeft(endsAt, now = Date.now(), skew = 0) {
   const ms = new Date(endsAt).getTime() - (now + skew);
@@ -65,3 +84,11 @@ export function lapTime(ms) {
  * word on how often, when, or what is won in the Major League.
  */
 export const GO_PRO = 'Pro Leagues are coming. Race your way to the Marble Spins Major League. Date to be announced.';
+
+/**
+ * The taster line (Moses, 31 Oct 2026): on the create page and when a free League ends. Its "Go Pro"
+ * part shows only once Pro Leagues are switched on (`pro`); until then the first sentence alone.
+ */
+export const TASTER = 'Start with a free taster league: 3 races with friends.';
+export const TASTER_PRO = 'Ready for more? Go Pro: 10 tracks and a league marble.';
+export const tasterLine = (pro) => (pro ? `${TASTER} ${TASTER_PRO}` : TASTER);

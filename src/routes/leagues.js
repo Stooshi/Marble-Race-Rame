@@ -239,7 +239,8 @@ router.post('/:code/again', requireAuth, open, createLimiter, async (req, res) =
     const old = await leagues.byCode(client, req.params.code);
     if (old.created_by !== req.user.id) throw forbidden('Only the league\'s creator can run it again');
     const days = Math.max(leagues.DAYS[0], Math.min(leagues.DAYS[1], Math.round((new Date(old.ends_at) - new Date(old.starts_at)) / 86_400_000)));
-    const fresh = await leagues.create(client, req.user.id, { name: old.name, track_ids: old.track_ids, days, attempts: old.attempt_cap }, { againOf: old.id });
+    // (A league made before 31 Oct 2026 has 5 tracks: run again, it keeps its first 3, as every League now has.)
+    const fresh = await leagues.create(client, req.user.id, { name: old.name, track_ids: old.track_ids.slice(0, leagues.TRACKS), days, attempts: old.attempt_cap }, { againOf: old.id });
     // (The old league's members are in the new one too: Run again keeps the group together.)
     await client.query(
       `INSERT INTO league_members (league_id, user_id)

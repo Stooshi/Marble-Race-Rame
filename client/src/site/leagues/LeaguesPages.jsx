@@ -9,7 +9,7 @@ import QuickSignup from '../account/QuickSignup';
 import { SITE_URL } from '../canonical';
 import TrackBanner, { SERIES_PIC } from '../TrackBanner';
 import { useTracks } from '../pages/RaceFlow';
-import { GO_PRO, lapTime, timeLeft, triesText, useLeaguesOn } from './status';
+import { GO_PRO, lapTime, tasterLine, timeLeft, triesText, useLeaguesInfo, useLeaguesOn } from './status';
 import { NAME_NOT_ALLOWED, checkName } from '../../shared/nameFilter';
 
 /**
@@ -18,7 +18,7 @@ import { NAME_NOT_ALLOWED, checkName } from '../../shared/nameFilter';
  * here is the 404.
  *
  *   /leagues        Create a league, My leagues, a league's code
- *   /leagues/new    Create: the name, 5 tracks, 1–7 days, tries per track
+ *   /leagues/new    Create: the name, 3 tracks (the free taster; 5 until 31 Oct 2026), 1–7 days, tries per track
  *   /l/:code        A league: join (its link), the tracks with my bests and tries, the scoreboard,
  *                   time left, sharing; the creator adds and removes players and can Run again
  *
@@ -26,7 +26,7 @@ import { NAME_NOT_ALLOWED, checkName } from '../../shared/nameFilter';
  * what pays for them are part 2 (after 1 Nov): until then only the "Go pro" line mentions them.
  */
 
-const TRACKS = 5;
+const DEFAULT_TRACKS = 3; // (src/leagues TRACKS, as GET /api/leagues/status says it; leagues made before 31 Oct 2026 keep their 5)
 const DAYS = [1, 2, 3, 4, 5, 6, 7];
 const TRIES = [[null, 'Unlimited'], [3, '3'], [5, '5'], [10, '10']];
 const h1 = { fontFamily: 'var(--ms-cond)', fontWeight: 800 };
@@ -100,14 +100,14 @@ function LeaguesHomeIn() {
   return (
     <div className="ms-page">
       <h1 className="ms-h1" style={h1}>Leagues</h1>
-      <p className="ms-note ms-league-lede">Your own competition with friends: pick 5 tracks and how long it runs, share the link, and everyone's best time on each track counts. The fastest total when it ends wins.</p>
+      <p className="ms-note ms-league-lede">Your own competition with friends: pick 3 tracks and how long it runs, share the link, and everyone's best time on each track counts. The fastest total when it ends wins.</p>
       {!saved && <SaveFirst next="/leagues" />}
       <div className="ms-two" style={{ alignItems: 'start' }}>
         <section className="ms-card ms-league-col" aria-labelledby="create-h">
           <h2 id="create-h" className="ms-h3" style={h2}>Create a league</h2>
           <div className="ms-league-kind" aria-current="true">
             <b>League</b>
-            <span>5 tracks · free · for fun</span>
+            <span>3 tracks · free · for fun</span>
           </div>
           <button type="button" className="ms-btn ms-btn--primary ms-btn--lg" disabled={!saved} onClick={() => navigate('/leagues/new')}>CREATE A LEAGUE</button>
           <form className="ms-form ms-row" style={{ display: 'flex', gap: 8 }} onSubmit={(e) => { e.preventDefault(); const c = code.trim().toUpperCase().replace(/[^A-Z0-9]/g, ''); if (c) navigate(`/l/${c}`); }}>
@@ -196,6 +196,8 @@ function CreateLeagueIn() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const tracks = useTracks();
+  const { pro, tracks: told } = useLeaguesInfo();
+  const TRACKS = told ?? DEFAULT_TRACKS; // (what the server takes)
   const saved = Boolean(user && !user.is_guest);
   const [name, setName] = useState('');
   const [picked, setPicked] = useState([]); // track ids, in order
@@ -240,7 +242,8 @@ function CreateLeagueIn() {
       </div>
       <div className="ms-league-create">
         <section className="ms-card ms-league-col ms-league-create__set" aria-label="Settings">
-          <div className="ms-league-kind" aria-current="true"><b>League</b><span>5 tracks · free · for fun</span></div>
+          <div className="ms-league-kind" aria-current="true"><b>League</b><span>{TRACKS} tracks · free · for fun</span></div>
+          <p className="ms-note ms-league-taster">{tasterLine(pro)}</p>
           <label className="ms-form" style={{ display: 'grid', gap: 6 }}>
             <span className="ms-eyebrow" style={{ color: 'var(--ms-muted)' }}>Name</span>
             <input value={name} onChange={(e) => setName(e.target.value)} maxLength={40} placeholder="e.g. Office Cup" />
@@ -281,8 +284,8 @@ function CreateLeagueIn() {
         </section>
         <section className="ms-card ms-league-col ms-league-create__pick" aria-labelledby="pick-h">
           <div className="ms-row" style={{ justifyContent: 'space-between' }}>
-            <h2 id="pick-h" className="ms-h3" style={h2}>Pick 5 tracks</h2>
-            <button type="button" className="ms-btn ms-btn--sm" onClick={random} disabled={!tracks.length}>5 at random</button>
+            <h2 id="pick-h" className="ms-h3" style={h2}>Pick {TRACKS} tracks</h2>
+            <button type="button" className="ms-btn ms-btn--sm" onClick={random} disabled={!tracks.length}>{TRACKS} at random</button>
           </div>
           <div className="ms-row ms-form" style={{ display: 'flex', gap: 8 }}>
             <input type="search" placeholder={`Search ${tracks.length} tracks`} aria-label="Search tracks" value={q} onChange={(e) => setQ(e.target.value)} style={{ flex: '1 1 200px' }} />
@@ -325,6 +328,8 @@ function LeaguePageIn() {
   const [search, setSearch] = useSearchParams();
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
+  const { pro, tracks: told } = useLeaguesInfo();
+  const TRACKS = told ?? DEFAULT_TRACKS;
   const saved = Boolean(user && !user.is_guest);
   const [view, setView] = useState(null);
   const [error, setError] = useState(null);
@@ -544,17 +549,18 @@ function LeaguePageIn() {
 
       <div className="ms-row" style={{ gap: 14 }}>
         {mine && !isOpen && <button type="button" className="ms-btn ms-btn--primary" disabled={Boolean(busy)} onClick={again}>{busy === 'again' ? 'STARTING…' : 'RUN IT AGAIN'}</button>}
-        {mine && !isOpen && <span className="ms-note">The same tracks, length and tries, with the same players.</span>}
+        {mine && !isOpen && <span className="ms-note">{tracks.length > TRACKS ? `Its first ${TRACKS} tracks` : 'The same tracks'}, length and tries, with the same players.</span>}
         {member && !mine && isOpen && <LeaveButton disabled={Boolean(busy)} onLeave={run('leave', async () => { await api.leaveLeague(code); navigate('/leagues'); return null; })} />}
         <Link to="/leagues" style={{ color: 'var(--ms-soft)' }}>My leagues</Link>
       </div>
+      {!isOpen && league.kind === 'league' && <p className="ms-note ms-league-taster">{tasterLine(pro)}</p>}
       <p className="ms-note ms-go-pro">{GO_PRO}</p>
     </div>
   );
 }
 
 /**
- * An invite link's welcome (Moses, 27 Oct 2026): who invited you to which league, its 5 tracks' pictures,
+ * An invite link's welcome (Moses, 27 Oct 2026): who invited you to which league, its tracks' pictures,
  * when it ends, how many have joined, the tries; one big JOIN AND START RACING. A saved player joins at
  * once; a guest or visitor is told leagues need a saved account (free) and saves one right here (or logs
  * in, then comes back with ?join=1): either way they land on the league page already in, track 1 ready.

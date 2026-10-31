@@ -355,11 +355,11 @@ export function buildFaq({ tracks, platform = 'web' } = {}) {
       ['How long does a room stay open?',
         'Until the host closes it, or 2 hours after its last race. A quick race is a single race: afterwards, tap **Quick race again**.'],
     ]],
-    // Leagues (Help answers draft 2, approved by Moses 26 Oct 2026; live with LEAGUES=on, 27 Oct). The Pro-off
+    // Leagues (Help answers draft 2, approved by Moses 26 Oct 2026; live with LEAGUES=on, 27 Oct; 3 tracks from 31 Oct). The Pro-off
     // wording of "Go pro": never a frequency, dates or prizes for the Major League (client/test/help.test.js).
     ['Leagues', [
       ['How do leagues work?', [
-        `A league is your own competition with friends. Pick 5 tracks and how long it runs (1 to 7 days), then share the league link. Everyone races the tracks as often as they like, or as many tries as the league allows, and the best time on each track counts. Your score is your best times added together: finish all 5 tracks to get a place on the scoreboard. The fastest total when the league ends wins. If two players have the same total, the one who set it first is ahead. Leagues are free and just for fun. League races pay coins like any race and count toward your ${n(e.dailyLimit.fullRaces)} full-pay races of the day. You need a saved account to join: guests can save their marble first, free.`,
+        `A league is your own competition with friends. Start with a free taster league: pick 3 tracks and how long it runs (1 to 7 days), then share the league link. Everyone races the tracks as often as they like, or as many tries as the league allows, and the best time on each track counts. Your score is your best times added together: finish all its tracks to get a place on the scoreboard. The fastest total when the league ends wins. If two players have the same total, the one who set it first is ahead. Leagues are free and just for fun. League races pay coins like any race and count toward your ${n(e.dailyLimit.fullRaces)} full-pay races of the day. You need a saved account to join: guests can save their marble first, free.`,
         '**Go pro:** Pro Leagues are coming. Race your way to the Marble Spins Major League. Date to be announced.']],
       ['What is League Night?',
         "League Night is your league racing live, together. The league's creator picks a date and time and how many races (3 to 5). At that time everyone in the league joins the league room, and you race the league's tracks one after another, all in the same races. Points for each place go on the League Night scoreboard: the most points after the last race wins the night. League Night has its own scoreboard, so it never uses up your tries in the league."],

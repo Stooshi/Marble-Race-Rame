@@ -983,6 +983,7 @@ tr:hover .report-name__btn--compact, .report-name__btn--compact:focus-visible { 
 .ms-league-kind b { font-family: var(--ms-cond); font-weight: 800; font-size: 1.3rem; letter-spacing: 0.02em; }
 .ms-league-kind span { color: var(--ms-soft); font-weight: 600; }
 .ms-go-pro { margin: 0; font-size: 0.85rem; }
+.ms-league-taster { margin: 0; color: var(--ms-yellow); font-weight: 600; }
 .ms-league-save { display: grid; gap: 12px; }
 .ms-league-link { color: var(--ms-soft); font-weight: 600; }
 .ms-league-new, .ms-league-join { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; }

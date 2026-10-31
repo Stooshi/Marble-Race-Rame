@@ -5,7 +5,7 @@ import { readFileSync } from 'node:fs';
 import { renderToString } from 'react-dom/server';
 import { MemoryRouter } from 'react-router-dom';
 import { describe, expect, it } from 'vitest';
-import { GO_PRO, lapTime, timeLeft, triesText } from '../src/site/leagues/status';
+import { GO_PRO, TASTER, TASTER_PRO, lapTime, tasterLine, timeLeft, triesText } from '../src/site/leagues/status';
 import { LeagueList, LeagueWelcome, LeaguesSoon } from '../src/site/leagues/LeaguesPages';
 import { metaFor } from '../src/site/pageMeta';
 
@@ -80,7 +80,7 @@ describe('leagues: the pages', () => {
     expect(html).toContain('Final standings');
     expect(html).toContain('you finished');
   });
-  it('create: 5 different tracks, 1–7 days, unlimited/3/5/10 tries; holiday tracks only for pass holders', () => {
+  it('create: 3 different tracks (the free taster; leagues made before keep their 5), 1–7 days, unlimited/3/5/10 tries; holiday tracks only for pass holders', () => {
     expect(PAGES).toContain('const DAYS = [1, 2, 3, 4, 5, 6, 7];');
     expect(PAGES).toContain("const TRIES = [[null, 'Unlimited'], [3, '3'], [5, '5'], [10, '10']];");
     expect(PAGES).toContain('api.createLeague({ name: name.trim(), track_ids: picked, days, attempts: tries })');
@@ -88,7 +88,24 @@ describe('leagues: the pages', () => {
     // (A season track locked for this player can't be picked: the server refuses it too.)
     expect(PAGES).toContain('disabled={(t.locked && !on) || (full && !on)}');
     expect(PAGES).toContain("'Season pass holders only'");
-    expect(PAGES).toContain('<b>League</b><span>5 tracks · free · for fun</span>');
+    expect(PAGES).toContain('<b>League</b><span>{TRACKS} tracks · free · for fun</span>');
+    expect(PAGES).toContain('const DEFAULT_TRACKS = 3;');
+    // (As many as the server takes: GET /api/leagues/status's tracks, so the page never asks a not yet deployed server for 3.)
+    expect(PAGES.match(/const TRACKS = told \?\? DEFAULT_TRACKS;/g)).toHaveLength(2);
+    expect(STATUS).toContain('tracks: Number.isInteger(s?.tracks) && s.tracks > 0 ? s.tracks : null');
+    expect(PAGES).not.toMatch(/5 tracks|Pick 5|5 at random/);
+  });
+  it('the taster line: on the create page and when a free League ends; "Go Pro" only once Pro is on', () => {
+    expect(TASTER).toBe('Start with a free taster league: 3 races with friends.');
+    expect(TASTER_PRO).toBe('Ready for more? Go Pro: 10 tracks and a league marble.');
+    expect(tasterLine(false)).toBe(TASTER);
+    expect(tasterLine(null)).toBe(TASTER);
+    expect(tasterLine(true)).toBe(`${TASTER} ${TASTER_PRO}`);
+    expect(PAGES.match(/<p className="ms-note ms-league-taster">\{tasterLine\(pro\)\}<\/p>/g)).toHaveLength(2);
+    expect(PAGES).toContain("{!isOpen && league.kind === 'league' && <p className=\"ms-note ms-league-taster\">");
+    expect(STATUS).toContain('setInfo({ pro: Boolean(s?.pro),');
+    // (Run again on a league made with 5 tracks: its first 3.)
+    expect(PAGES).toContain("tracks.length > TRACKS ? `Its first ${TRACKS} tracks` : 'The same tracks'");
   });
   it('saved accounts only: a guest saves their marble, a visitor saves one or logs in and comes back', () => {
     expect(PAGES).toContain("<SaveFirst next={`/l/${code}?join=1`} onSaved={joinNow}");
