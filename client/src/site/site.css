@@ -1082,3 +1082,8 @@ tr:hover .report-name__btn--compact, .report-name__btn--compact:focus-visible { 
 .ms-league-name__edit:focus-visible { outline: 3px solid var(--ms-yellow); outline-offset: 2px; }
 .ms-league-name__form { display: grid; gap: 8px; max-width: 520px; }
 .ms-league-name__form input { font-family: var(--ms-cond); font-weight: 800; font-size: 1.8rem; min-height: 52px; }
+/* The save reminder when a guest buys with coins (GuestBuyReminder.jsx; Moses, 31 Oct 2026). */
+.ms-guestbuy { display: grid; gap: 10px; width: 100%; padding: 12px 14px; border-radius: 12px; background: rgba(255,210,31,0.08); border: 1px solid rgba(255,210,31,0.45); text-align: left; }
+.ms-guestbuy p { margin: 0; font-weight: 600; }
+.ms-guestbuy__buttons { display: flex; flex-wrap: wrap; gap: 8px; }
+.ms-guestbuy--form { background: transparent; border-color: var(--ms-line, rgba(255,255,255,0.15)); }

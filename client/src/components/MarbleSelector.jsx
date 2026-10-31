@@ -7,6 +7,7 @@ import { formatNumber } from '../utils/format';
 import MarbleBall from './MarbleBall';
 import { ErrorMessage, Spinner } from './Status';
 import { getCoinsHref, notEnoughCoins, rememberWanted } from '../site/payments/GetCoins';
+import { GuestBuyAfter, GuestBuyBefore } from '../site/account/GuestBuyReminder';
 
 /** A marble's own history with you: races, wins and podiums with it as your marble. */
 function history(m) {
@@ -34,6 +35,8 @@ export default function MarbleSelector({ value, onChange, disabledIds = [] }) {
   const [tab, setTab] = useState('mine');
   const [buying, setBuying] = useState(null);
   const [buyError, setBuyError] = useState(null);
+  const [asking, setAsking] = useState(null); // a guest's first tap on Buy: the save reminder first (marble id)
+  const [bought, setBought] = useState(null); // a guest's purchase: the reminder after it (marble name)
 
   const { mine, shop } = useMemo(() => {
     const own = data?.own ?? [];
@@ -44,9 +47,11 @@ export default function MarbleSelector({ value, onChange, disabledIds = [] }) {
   async function buy(marble) {
     setBuying(marble.id);
     setBuyError(null);
+    setAsking(null);
     try {
       const res = await api.purchaseMarble(marble.id);
       setCoins(res.coins);
+      setBought(marble.name);
       await reload();
       setTab('mine');
       onChange?.(marble);
@@ -65,6 +70,7 @@ export default function MarbleSelector({ value, onChange, disabledIds = [] }) {
 
   return (
     <div className="marble-selector">
+      {bought && <GuestBuyAfter name={bought} />}
       <div className="segmented segmented--sm" role="tablist" aria-label="Marble Bag and shop">
         <button type="button" role="tab" aria-selected={tab === 'mine'} onClick={() => setTab('mine')}>
           Marble Bag ({mine.length})
@@ -122,11 +128,12 @@ export default function MarbleSelector({ value, onChange, disabledIds = [] }) {
                   type="button"
                   className="btn btn--sm btn--block"
                   disabled={buying === m.id}
-                  onClick={() => buy(m)}
+                  onClick={() => (user?.is_guest && asking !== m.id ? setAsking(m.id) : buy(m))}
                 >
                   {buying === m.id ? 'Buying…' : `Buy · ${formatNumber(m.price_coins)} coins`}
                 </button>
               )}
+              {tab === 'shop' && affordable && asking === m.id && <GuestBuyBefore onBuy={() => buy(m)} busy={buying === m.id} />}
             </div>
           );
         })}

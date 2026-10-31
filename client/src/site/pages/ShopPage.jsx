@@ -15,6 +15,7 @@ import { TEASERS } from '../shop/comingSoon';
 import { track } from '../consent/tracking';
 import { shownPrice, useStorePrices } from '../payments';
 import GetCoins, { notEnoughCoins, shortOf } from '../payments/GetCoins';
+import { GUEST_BUY, GuestBuyAfter, GuestBuyBefore } from '../account/GuestBuyReminder';
 
 const Turntable = lazy(() => importOrReload(() => import('../marbles/Turntable')));
 
@@ -168,14 +169,17 @@ function Hero({ owned, onBought }) {
     return bagPrice(key, worth);
   };
 
-  const buyBag = async (key) => {
+  const guest = Boolean(user?.is_guest);
+  const buyBag = async (key, now = false) => {
     if (!isAuthenticated) { navigate('/signup?next=/shop'); return; }
     if (shortOf(bagCost(key), user?.coins)) { setConfirm(null); setMsg({ ok: false, key }); return; } // (Get coins, never "not enough coins")
-    if (confirm !== key) { setConfirm(key); setMsg(null); return; }
+    if (confirm !== key && !now) { setConfirm(key); setMsg(null); return; }
+    // (A guest confirms with BUY ANYWAY, or by saving first: the bag buttons only show the reminder.)
+    if (guest && !now) return;
     setBusy(true);
     try {
       const r = await api.buyBag(key, shade);
-      setMsg({ ok: true, text: `${economy.bags[key].label} (${shadeName}): ${r.copies.length} marble${r.copies.length === 1 ? '' : 's'} added to your Marble Bag.` });
+      setMsg({ ok: true, bought: `${economy.bags[key].label} (${shadeName})`, text: `${economy.bags[key].label} (${shadeName}): ${r.copies.length} marble${r.copies.length === 1 ? '' : 's'} added to your Marble Bag.` });
       await Promise.all([onBought(), refreshUser(), offers.reload()]);
     } catch (err) {
       if (notEnoughCoins(err)) refreshUser();
@@ -196,7 +200,7 @@ function Hero({ owned, onBought }) {
     const done = o && !o.missing;
     return (
       <button type="button" className={`ms-bag${main ? ' ms-bag--main' : ''}`} onClick={() => buyBag(key)} disabled={busy || done}>
-        <b>{confirm === key ? `CONFIRM: ${price.replace(/^[●◆] /, '')}` : bag.label.toUpperCase()}</b>
+        <b>{confirm === key && !guest ? `CONFIRM: ${price.replace(/^[●◆] /, '')}` : bag.label.toUpperCase()}</b>
         <small>
           {done ? `You own all ${count} in ${shadeName}` : `${key === 'full' ? `All ${count} marbles` : `The ${count} Commons`} in ${shadeName} · ${price}`}
           {!done && full && <> <s>{worth.toLocaleString('en-US')}</s> · {Math.round(bag.discount * 100)}% off</>}
@@ -220,9 +224,11 @@ function Hero({ owned, onBought }) {
           {bagButton('full', true)}
           {bagButton('starter', false)}
         </div>
+        {confirm && guest && <GuestBuyBefore onBuy={() => buyBag(confirm, true)} busy={busy} text={GUEST_BUY.beforeBag} />}
         {confirm && <button type="button" className="ms-btn ms-btn--ghost ms-btn--sm" style={{ justifySelf: 'start' }} onClick={() => setConfirm(null)}>Cancel</button>}
         {msg?.key && <GetCoins need={Math.max(1, shortOf(bagCost(msg.key), user?.coins))} back="/shop" label={`the ${economy.bags[msg.key].label}`} />}
         {msg && !msg.key && <div className={`ms-msg${msg.ok ? '' : ' ms-msg--bad'}`} role={msg.ok ? 'status' : 'alert'}>{msg.text}{msg.ok && <> <Link to="/bag">Marble Bag</Link></>}</div>}
+        {msg?.ok && msg.bought && <GuestBuyAfter name={`The ${msg.bought}`} />}
       </div>
       <div className="ms-hero__balls">
         {heroBalls.map((s, k) => <MarbleBadge key={s} slug={s} size={k === 1 ? 150 : 110} label={`${ITEM[s].design.name}, ${ITEM[s].shade.name}`} />)}
@@ -277,9 +283,14 @@ function MarbleSheet({ slug, onSlug, owned, live, buy, onClose, coinsAdded = nul
       setCopied('ID selected: copy it from your keyboard.');
     }
   };
+  const guest = Boolean(user?.is_guest);
   const onBuy = async () => {
     if (!isAuthenticated) { navigate(`/signup?next=${encodeURIComponent(`/collection/${d.key}?shade=${item.shade.key}`)}`); return; }
     if (!confirming) { setConfirming(true); return; }
+    await doBuy();
+  };
+  // The purchase itself (a guest's: BUY ANYWAY, or once SAVE MY ACCOUNT has saved them).
+  const doBuy = async () => {
     setBusy(true);
     try {
       const { copy } = await buy(slug);
@@ -337,6 +348,7 @@ function MarbleSheet({ slug, onSlug, owned, live, buy, onClose, coinsAdded = nul
             <Link to={`/certificate/${message.copy.marbleCode}`}>Certificate</Link> · <Link to="/bag">Marble Bag</Link>
           </div>
         )}
+        {message?.ok && <GuestBuyAfter name={d.name} />}
         {message && !message.ok && <div className="ms-msg ms-msg--bad" role="alert">{message.text}</div>}
         {coinsAdded && !have && !message && <div className="ms-msg" role="status">● {coinsAdded.toLocaleString('en-US')} coins added. You have ● {(user?.coins ?? 0).toLocaleString('en-US')}{short ? '.' : ': this marble is yours with one tap.'}</div>}
         {have ? (
@@ -364,9 +376,11 @@ function MarbleSheet({ slug, onSlug, owned, live, buy, onClose, coinsAdded = nul
           </>
         ) : (
           <>
-            <button type="button" className="ms-btn ms-btn--primary ms-sheet__buy" onClick={onBuy} disabled={busy}>
-              {busy ? 'BUYING…' : `${confirming ? 'CONFIRM: ' : 'BUY FOR '}${priceLabel(item.price).replace(/^[●◆] /, '').toUpperCase()}`}
-            </button>
+            {confirming && guest ? <GuestBuyBefore onBuy={doBuy} busy={busy} /> : (
+              <button type="button" className="ms-btn ms-btn--primary ms-sheet__buy" onClick={onBuy} disabled={busy}>
+                {busy ? 'BUYING…' : `${confirming ? 'CONFIRM: ' : 'BUY FOR '}${priceLabel(item.price).replace(/^[●◆] /, '').toUpperCase()}`}
+              </button>
+            )}
             {confirming && <button type="button" className="ms-btn ms-btn--ghost ms-btn--sm" onClick={() => setConfirming(false)}>Cancel</button>}
             {isAuthenticated && <span className="ms-note">You have {(user?.coins ?? 0).toLocaleString('en-US')} coins.</span>}
           </>
