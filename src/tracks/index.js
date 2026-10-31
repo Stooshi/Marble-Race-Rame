@@ -165,4 +165,5 @@ module.exports = [
   require('./venice-cube-canals'),
   require('./niagara-cube-falls'),
   require('./tre-cime-cube-towers'),
+  require('./abisko-aurora-run'),
 ];

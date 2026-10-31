@@ -1,4 +1,5 @@
 {
+"abisko-aurora-run": {"family":"block-2","reach":0.223,"seq":["opening: split-start","drop","pileUp","slalom","chutes","drop","slalom","climb","S-bends right","peg"]},
 "accra-december-beats": {"family":"athletics","reach":0.24,"seq":["opening: banked-turn","drop","pileUp","slalom","sweep left","straight","peg","slalom"]},
 "aconcagua-penitentes": {"family":"peak","reach":0.235,"seq":["opening: banked-turn","drop","pileUp","slalom","sweep left","straight","steps","moguls"]},
 "alaska-tidewater-run": {"family":"peak","reach":0.228,"seq":["opening: classic","drop","pileUp","slalom","sweep right","peg","straight","peg","jump"]},

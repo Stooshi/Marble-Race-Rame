@@ -2,6 +2,17 @@
  "note": "The track picker's pictures (client/public/tracks/<slug>.webp and @2x), written by scripts/track-banners.js. enabled: shown in the track picker (false: only on /preview/banners). v: changes with the picture, so browsers fetch a new one.",
  "enabled": true,
  "banners": {
+  "abisko-aurora-run": {
+   "name": "Abisko Aurora Run",
+   "series": "Blocks",
+   "lighting": "night-northern-lights",
+   "v": "4176f20a",
+   "bytes": 13112,
+   "bytes2x": 32632,
+   "t": 34370,
+   "side": 1,
+   "marbles": 2
+  },
   "accra-december-beats": {
    "name": "Accra December Beats",
    "series": "Track and Field",
