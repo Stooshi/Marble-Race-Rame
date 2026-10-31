@@ -838,6 +838,17 @@
    "side": 1,
    "marbles": 7
   },
+  "li-river-karst-run": {
+   "name": "Li River Karst Run",
+   "series": "Blocks",
+   "lighting": "day",
+   "v": "51e1a055",
+   "bytes": 15480,
+   "bytes2x": 37406,
+   "t": 16917,
+   "side": 1,
+   "marbles": 5
+  },
   "line-clear": {
    "name": "Line Clear",
    "series": "Blocks",

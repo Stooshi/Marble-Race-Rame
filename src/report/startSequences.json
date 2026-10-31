@@ -73,6 +73,7 @@
 "kopaonik-spins": {"family":"coaster","reach":0.24,"seq":["opening: classic","drop","pileUp","slalom","spiral left"]},
 "lagos-marble-grand-prix": {"family":"grand-prix","reach":0.207,"seq":["opening: classic","drop","pileUp","slalom","S-bends right"]},
 "lalibela-genna-spins": {"family":"canyon","reach":0.307,"seq":["opening: peg-drop","drop","peg ×7","straight","peg ×3","spiral right"]},
+"li-river-karst-run": {"family":"block-2","reach":0.296,"seq":["opening: clean-drop","drop","S-bends right","straight","peg ×2","slalom","splitter"]},
 "line-clear": {"family":"block","reach":0.22,"seq":["opening: staggered-drop","drop","pileUp","slalom","brake","straight","slalom","S-bends right"]},
 "london-steeplechase": {"family":"athletics","reach":0.273,"seq":["opening: peg-drop","drop","peg ×7","straight","peg","slalom","sweep left","straight","peg"]},
 "magma-core": {"family":"block","reach":0.21,"seq":["opening: funnel-drop","drop","pileUp","slalom","sweep right"]},
