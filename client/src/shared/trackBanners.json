@@ -1003,6 +1003,17 @@
    "side": 1,
    "marbles": 5
   },
+  "niagara-cube-falls": {
+   "name": "Niagara Cube Falls",
+   "series": "Blocks",
+   "lighting": "day",
+   "v": "fb199e7d",
+   "bytes": 25880,
+   "bytes2x": 62158,
+   "t": 19926,
+   "side": 1,
+   "marbles": 7
+  },
   "night-train-north": {
    "name": "Night Train North",
    "series": "Winter Wonders",
