@@ -82,7 +82,7 @@ export function holdFor(go, countdownMs, now = Date.now()) {
 export default function LiveRaceViewer3D({
   meta, sample, frame, startsAt, countdownMs = COUNTDOWN_MS, highlight = NOBODY, footer = null,
   finishes = NONE, complete = false, clock = null, next = null, canSkip = false,
-  track = null, onPrepared = null, holdBack = null, lagNow = null, intro = false, raceId = null,
+  track = null, onPrepared = null, holdBack = null, lagNow = null, intro = false, raceId = null, takeStreamed = null,
 }) {
   // (A scene the room page built during the wait, for this race: taken over, not built again.)
   const { wrapRef, canvasRef, sceneRef, status, failure, fail, adopted } = useTrackScene({ adoptFor: raceId });
@@ -103,7 +103,11 @@ export default function LiveRaceViewer3D({
   // frames, ahead of the race as shown, and sound when the race as shown reaches them.
   const bumpRef = useRef({ raceId: null, d: createBumpDetector() });
   if (bumpRef.current.raceId !== (meta?.raceId ?? null)) bumpRef.current = { raceId: meta?.raceId ?? null, d: createBumpDetector() };
-  useEffect(() => { if (frame && highlight.length) bumpRef.current.d.add(frame, highlight); }, [frame, highlight]);
+  // Fed every streamed frame (takeStreamed, read in the draw loop), so a frame's events are never lost
+  // when React draws two frames as one; without it (older callers), the frames as drawn.
+  const takeRef = useRef(takeStreamed);
+  takeRef.current = takeStreamed;
+  useEffect(() => { if (!takeRef.current && frame && highlight.length) bumpRef.current.d.add(frame, highlight); }, [frame, highlight]);
   const [shownT, setShownT] = useState(null); // the countdown as shown (whole tenths), for its overlay
   const [shown, setShown] = useState(null); // the race as shown (its clock and order), when held back
   const [gone, setGone] = useState(false); // the gates have opened (as shown): the standings appear
@@ -342,6 +346,7 @@ export default function LiveRaceViewer3D({
           if (ownRef.current.length && meta?.raceId) {
             if (!hits || hits.raceId !== meta.raceId) { const span = scene.raceSpan?.(); hits = { raceId: meta.raceId, d: span ? createHitDetector(span) : null, gate: createHitGate() }; }
             const k = hits.d?.step(f, ownRef.current);
+            if (takeRef.current && bumpRef.current.raceId === meta.raceId) for (const g of takeRef.current()) bumpRef.current.d.add(g, ownRef.current);
             const b = bumpRef.current.raceId === meta.raceId ? bumpRef.current.d.step(f.t) : null;
             // (The two share one limit, so they never stack into a rattle: the harder of the two plays.)
             if ((k ?? b) !== null && (k ?? b) !== undefined && hits.gate.allow(f.t)) {

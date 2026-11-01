@@ -14,6 +14,7 @@ import { detectCrossings, lerpFrame } from '../utils/splits';
  * so frames arriving in bursts (a busy phone, a patchy network) never make the
  * marbles leap forward.
  */
+const STREAMED_KEEP = 600; // frames kept for takeStreamed() if nobody reads them (about 30 s)
 export const BUFFER_MS = 400; // how far behind the newest frame playback runs: rides out a late frame or two (a patchy phone network) without the marbles stopping
 const KEEP = 40; // frames kept for blending (more while the view is held back, see below)
 /**
@@ -41,6 +42,7 @@ export function useRaceStream(raceId, { onLobbyUpdate } = {}) {
   const [error, setError] = useState(null);
 
   const frames = useRef({ prev: null, curr: null, at: 0 });
+  const streamed = useRef([]);
   // Recent frames, oldest first, and the steady playback clock: race time = now + offset.
   const buffer = useRef({ list: [], offset: null, shown: -Infinity });
   // The hold: { base, decayFrom } (base ms behind, shed from performance time decayFrom on).
@@ -64,6 +66,10 @@ export function useRaceStream(raceId, { onLobbyUpdate } = {}) {
   const ingest = useCallback((f) => {
     const { curr } = frames.current;
     if (curr && f.t <= curr.t) return;
+    // Every frame as it came, for whoever reads them all (the obstacle bump): React may draw two
+    // frames that arrive close together as one, and a frame's events come only once (1 Nov 2026).
+    streamed.current.push(f);
+    if (streamed.current.length > STREAMED_KEEP) streamed.current.splice(0, streamed.current.length - STREAMED_KEEP);
     const crossed = detectCrossings(curr, f, splitsRef.current);
     if (Object.keys(crossed).length) {
       splitsRef.current = { ...splitsRef.current, ...crossed };
@@ -91,6 +97,7 @@ export function useRaceStream(raceId, { onLobbyUpdate } = {}) {
     if (!raceId) return undefined;
     frames.current = { prev: null, curr: null, at: 0 };
     buffer.current = { list: [], offset: null, shown: -Infinity };
+    streamed.current = [];
     hold.current = { base: 0, decayFrom: Infinity, decided: false };
     splitsRef.current = {};
     setSplits({});
@@ -211,5 +218,7 @@ export function useRaceStream(raceId, { onLobbyUpdate } = {}) {
     return Math.max(b.shown, performance.now() + b.offset - BUFFER_MS - lagNow());
   }, [lagNow]);
 
-  return { status, meta, startsAt, frame, splits, events, results, finishes, next, error, sample, clock, holdBack, lagNow };
+  /** The frames streamed since the last call, each once, in order (none lost when React draws two as one). */
+  const takeStreamed = useCallback(() => { const list = streamed.current; streamed.current = []; return list; }, []);
+  return { status, meta, startsAt, frame, splits, events, results, finishes, next, error, sample, clock, holdBack, lagNow, takeStreamed };
 }

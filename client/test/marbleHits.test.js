@@ -140,5 +140,21 @@ describe('the own marble\'s bumps on obstacles', () => {
     const view = fs.readFileSync(path.resolve(__dirname, '../src/components/LiveRaceViewer3D.jsx'), 'utf8');
     expect(view).toContain('bumpRef.current.d.add(frame, highlight)');
     expect(view).toContain('hits.gate.allow(f.t)');
+    // Every streamed frame reaches the detector (1 Nov 2026): React may draw two frames as one,
+    // and a frame's events come only once.
+    expect(view).toContain('for (const g of takeRef.current()) bumpRef.current.d.add(g, ownRef.current)');
+    expect(fs.readFileSync(path.resolve(__dirname, '../src/pages/Race.jsx'), 'utf8')).toContain('takeStreamed={stream.takeStreamed}');
+  });
+  it('no obstacle hit is lost when two frames arrive between two draws', () => {
+    // The stream's frames, as takeStreamed() hands them over: the hit's frame and the next one, before a draw.
+    const d = createBumpDetector();
+    const v = (x) => [x, 10];
+    const frames = [
+      { t: 900, v: v(9) }, { t: 950, v: v(9) },
+      { t: 1000, v: v(9), events: [{ t: 1000, i: 0, type: 'bounce', obstacle: 'peg' }] },
+      { t: 1050, v: v(4) }, { t: 1100, v: v(3) }, { t: 1150, v: v(3) }, { t: 1200, v: v(3) },
+    ];
+    for (const f of frames) d.add(f, [0]); // (all of them, as the draw loop does)
+    expect(d.step(1150)).toBeGreaterThan(0);
   });
 });

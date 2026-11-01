@@ -201,6 +201,7 @@ export default function Race() {
           onPrepared={preparing ? startWhenReady : null}
           holdBack={stream.holdBack}
           lagNow={stream.lagNow}
+          takeStreamed={stream.takeStreamed}
           sample={stream.sample}
           frame={stream.frame}
           startsAt={stream.startsAt}
