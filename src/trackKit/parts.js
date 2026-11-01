@@ -358,6 +358,10 @@ module.exports = {
     // …the rivers (1 Nov 2026): the Douro, the Loire, the Vltava.
     'wine-lodges', 'rabelo-boats', 'iron-arch-bridge', 'quinta-house', 'vine-terraces', 'river-chateau', 'hedge-maze', 'stone-arch-bridge', 'moat-towers',
     'castle-hill', 'statue-bridge', 'river-weir', 'bridge-tower', 'twin-spires',
+    // …the mountains and winter (1 Nov 2026).
+    'granite-towers', 'granite-island', 'cube-lodge', 'snow-volcano', 'old-lodge', 'ice-seracs', 'granite-plateau', 'giant-ferns', 'arrowhead-peak', 'turf-houses',
+    'twin-falls', 'rock-island', 'ice-grotto', 'ice-hummocks', 'glacier-front', 'icebergs', 'polar-station', 'geyser-cone', 'hot-spring-terraces', 'steam-vents',
+    'rocky-peaks', 'bubble-ice', 'frozen-falls',
     // Track and Field (generic stadium architecture; no protected names, rings, torch designs or sponsors).
     'athletes-village', 'herm-gateway', 'stone-colonnade', 'stadium-bell-tower', 'warm-up-track', 'timber-stand',
     'woven-lattice', 'wooden-eaves', 'brick-tower', 'relay-batons', 'steeple-pit', 'peristyle-arches', 'flame-cauldron',
@@ -387,7 +391,9 @@ module.exports = {
     // Blocks Series 2: Li River's karst and rice fields, Venice's canal town, Niagara's gorge, the Dolomites' pale rock, Lapland under the aurora;
     // the cities (31 Oct 2026): Kyoto's moss gardens, Marrakesh's souk, Singapore's tropical bay, Lisbon's tiled hills.
     // the rivers (1 Nov 2026): the Douro's vineyards, the Loire's châteaux, the Vltava's castle hill.
-    'karst', 'canal', 'falls', 'dolomite', 'aurora', 'moss', 'souk', 'tropic', 'azulejo', 'vineyard', 'chateau', 'bohemia'],
+    'karst', 'canal', 'falls', 'dolomite', 'aurora', 'moss', 'souk', 'tropic', 'azulejo', 'vineyard', 'chateau', 'bohemia',
+    // the mountains and winter (1 Nov 2026).
+    'patagonia', 'cascade', 'cloudforest', 'iceland', 'clearice', 'polar', 'geyser', 'rockies'],
   // A Track and Field stadium (family 'athletics': `athletics: { stadium }`): its generic architecture, the
   // client's STADIUMS (client/src/three/scenery/athletics.js).
   STADIUMS: ['panathenaic', 'berlin-1936', 'bislett', 'hayward', 'nest', 'tokyo', 'stockholm-1912', 'london', 'coliseum', 'letzigrund', 'accra'],
@@ -403,7 +409,7 @@ module.exports = {
     'museum-of-the-future', 'dubai-frame', 'opera-house', 'tulip-garden', 'roundabout-monument', 'acacia', 'mughal-fountain', 'giant-tree', 'snow-island', 'fallen-statue', 'volcano-rock', 'sagrada-familia', 'frozen-waterfall', 'limestone-island', 'sea-islet', 'giant-redwood', 'lantern-chedi', 'watermill', 'confucius-temple', 'castle-keep', 'magician-trunk', 'top-hat', 'jukebox-tower', 'clocktower', 'lighting-rig', 'claw-tower', 'glitch-tower', 'ringed-planet', 'laser-turret', 'water-tower', 'fork-signpost', 'neon-plaza', 'snow-peak',
     'settling-stack', 'voxel-peak', 'basalt-spire', 'beam-tower', 'level-pillars', 'floodlight-mast', 'flame-cauldron', 'medal-podium',
     'island-castle',
-    'karst-tower', 'cube-campanile', 'three-towers', 'lake-island', 'cube-pagoda', 'garden-towers'],
+    'karst-tower', 'cube-campanile', 'three-towers', 'lake-island', 'cube-pagoda', 'garden-towers', 'granite-island', 'arrowhead-peak', 'geyser-cone'],
   // Scenery near a section (or the start or finish): what grows and stands beside the track there.
   SCENERY: ['bare', 'rocks', 'birches', 'pines', 'race-netting', 'funicular', 'wooden-houses', 'frozen-lake',
     'wood-clad', 'chalets', 'pasture', 'aspens', 'shopfronts',

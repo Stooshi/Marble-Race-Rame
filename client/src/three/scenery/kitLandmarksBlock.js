@@ -1101,6 +1101,198 @@ function twinSpires() {
   return merge(p);
 }
 
+// ── Blocks Series 2, the mountains and winter (1 Nov 2026): generic landscapes built from cubes, nothing copied ──
+
+/** Three granite towers: tall slim stepped spires of grey granite on a scree base, a darker cap on each (a backdrop). */
+function graniteTowers() {
+  const p = [C(70, 12, 30, 0, 6, 0, '#7a7a7e')];
+  [[-20, 70, '#8a8a8e'], [0, 84, '#9a9a9e'], [20, 64, '#8a8a8e']].forEach(([x, h, c]) => {
+    for (let k = 0; k < 5; k += 1) p.push(C(14 - k * 2.2, h / 5, 12 - k * 1.8, x, 12 + (k + 0.5) * (h / 5), 0, k % 2 ? c : '#828286'));
+    p.push(C(4, 4, 4, x, 12 + h + 2, 0, '#4a4a50'));
+  });
+  return merge(p);
+}
+/** A low granite island in the lake: grey rock, golden grass, a few windswept bushes (round a splitter: low and fitted). */
+function graniteIsland() {
+  const p = [C(14, 1.4, 10, 0, 0.7, 0, '#8a8a8e'), C(11, 0.6, 7.6, 0, 1.7, 0, '#b0a060')];
+  for (const [x, z] of [[-3, -1], [2.5, 1.5]]) p.push(C(2, 1.2, 1.6, x, 2.6, z, '#5f7a3a'));
+  return merge(p);
+}
+/** A mountain lodge of cubes: a long low timber house on a stone base, a dark roof, big windows. */
+function cubeLodge() {
+  return merge([
+    C(26, 2, 12, 0, 1, 0, '#7a7a7e'), C(24, 5, 10, 0, 4.5, 0, '#9a6a44'), C(26, 1.2, 12.4, 0, 7.6, 0, '#3f4448'), C(18, 1, 8, 0, 8.7, 0, '#3f4448'),
+    C(16, 2.4, 0.2, 0, 4.4, 5.05, '#a8d0e2'), C(1.6, 4, 1.6, 9, 10, -2, '#7a7a7e'),
+  ]);
+}
+/** A broad snow volcano far away: a wide stepped cone, snow over grey rock, glaciers down its sides (a backdrop; nothing on its summit). */
+function snowVolcano() {
+  const p = [];
+  for (let k = 0; k < 8; k += 1) {
+    const w = 220 - k * 26;
+    p.push(C(w, 12, w * 0.8, 0, 6 + k * 12, 0, k < 3 ? '#6a6e74' : k % 2 ? '#eef3f7' : '#e2eaf0'));
+  }
+  for (const x of [-60, 40]) p.push(C(14, 30, 60, x, 30, 30, '#d8e8f2'));
+  return merge(p);
+}
+/** An old timber lodge: a long stone ground floor, timber above, a steep dark roof with dormers, a stone chimney. */
+function oldLodge() {
+  const p = [C(30, 5, 14, 0, 2.5, 0, '#8a8478'), C(30, 5, 14, 0, 7.5, 0, '#8a5a3a')];
+  for (let k = 0; k < 4; k += 1) p.push(C(31 - k * 3, 2, 15 - k * 3.4, 0, 11 + k * 2, 0, '#3f4a44'));
+  for (const x of [-8, 0, 8]) p.push(C(3, 2.4, 2, x, 13, 5.5, '#8a5a3a'), C(2, 1.4, 0.2, x, 13, 6.55, '#f2d28e'));
+  p.push(C(3, 22, 3, 12, 11, -3, '#7a7468'));
+  return merge(p);
+}
+/** Seracs: a row of leaning blocks of blue glacier ice with snow caps. */
+function iceSeracs() {
+  const p = [C(40, 1, 14, 0, 0.5, 0, '#e2eaf0')];
+  for (let k = -4; k <= 4; k += 1) {
+    const h = 6 + ((k + 4) % 3) * 3;
+    p.push(C(3.6, h, 3.6, k * 4.4, h / 2 + 1, (k % 2) * 2, '#a8d8ee', 0.15 * (k % 3 - 1)), C(3.8, 0.8, 3.8, k * 4.4, h + 1.4, (k % 2) * 2, '#f2f6fa'));
+  }
+  return merge(p);
+}
+/** A granite plateau: broad pale slabs stepping up, dark streaks down them, low shrubs in the cracks (a backdrop; nothing on the summit). */
+function granitePlateau() {
+  const p = [];
+  for (let k = 0; k < 6; k += 1) p.push(C(120 - k * 14, 10, 70 - k * 8, k * 3, 5 + k * 10, 0, k % 2 ? '#8a8a90' : '#9a9aa0'));
+  for (const x of [-30, -10, 14, 30]) p.push(C(2, 40, 0.4, x, 22, 35.2, '#5a5a60'));
+  return merge(p);
+}
+/** Giant ferns and pitcher plants on the forest floor: tall ferns of cubes, red-green pitchers among them. */
+function giantFerns() {
+  const p = [C(26, 0.6, 18, 0, 0.3, 0, '#3f6a3a')];
+  for (const [x, z, h] of [[-9, -4, 7], [-2, 4, 9], [6, -3, 8], [10, 5, 6], [-11, 6, 6]]) {
+    p.push(C(0.6, h, 0.6, x, h / 2, z, '#5a4430'), C(6, 0.5, 1.4, x, h + 0.2, z, '#3f8a3a'), C(1.4, 0.5, 6, x, h + 0.25, z, '#4a9a42'));
+  }
+  for (const [x, z] of [[-5, -6], [2, -7], [8, 1], [-6, 1]]) p.push(C(0.9, 1.6, 0.9, x, 1.4, z, '#8a3a3a'), C(1.1, 0.3, 1.1, x, 2.3, z, '#5f8a3a'));
+  return merge(p);
+}
+/** The arrowhead peak: a steep stepped cone of dark rock, green ledges round it, snow streaks near the top (round a spiral: fitted). */
+function arrowheadPeak() {
+  const p = [];
+  for (let k = 0; k < 9; k += 1) {
+    const w = 18 - k * 1.9;
+    p.push(C(w, 5, w * 0.8, k * 0.25, 2.5 + k * 5, 0, k % 2 ? '#4a4a4e' : '#5f7a4a'));
+  }
+  p.push(C(3, 3, 2.4, 2.2, 46.5, 0, '#eef3f7'), C(4, 0.8, 3.2, 1.2, 38, 0.6, '#eef3f7'));
+  return merge(p);
+}
+/** Turf houses: a row of small houses with grass roofs and white gables, a little black church at one end. */
+function turfHouses() {
+  const p = [];
+  for (let k = -2; k <= 2; k += 1) p.push(C(5, 3.2, 7, k * 6, 1.6, 0, '#7a6a58'), C(5.4, 1.4, 7.4, k * 6, 3.9, 0, '#6f9a4a'), C(5, 3, 0.3, k * 6, 3, 3.6, '#f2f2ee'));
+  p.push(C(5, 6, 8, 18, 3, 0, '#2a2a2e'), C(5.6, 1.6, 8.6, 18, 6.8, 0, '#3f3f44'), C(2, 4, 2, 18, 9.6, 3, '#2a2a2e'));
+  return merge(p);
+}
+/** Twin falls: two short falls of white water over a dark lava ledge, a pool below (beside the track). */
+function twinFalls() {
+  const p = [C(30, 8, 8, 0, 4, -4, '#3a3a3e'), C(30, 0.6, 14, 0, 0.3, 6, '#3f6f8a')];
+  for (const x of [-6, 6]) p.push(C(5, 7.8, 0.6, x, 4, 0.2, '#eef6fa'), C(6, 1, 3, x, 0.8, 2, '#dff0f8'));
+  return merge(p);
+}
+/** A rock island in the frozen lake: a cliff of grey rock with snow on top, a few pines (beside the track). */
+function rockIsland() {
+  const p = [C(22, 12, 14, 0, 6, 0, '#5a6670'), C(20, 1, 12, 0, 12.5, 0, '#eef3f8')];
+  for (const [x, z] of [[-6, -2], [0, 3], [6, -1]]) p.push(C(0.6, 3, 0.6, x, 14.5, z, '#5a4430'), C(2.6, 3, 2.6, x, 16.5, z, '#2f5a42'));
+  return merge(p);
+}
+/** An ice grotto: arches of clear blue ice blocks over a cave mouth, icicles along the lip. */
+function iceGrotto() {
+  const p = [C(4, 10, 8, -8, 5, 0, '#8fd0ea'), C(4, 10, 8, 8, 5, 0, '#8fd0ea'), C(20, 4, 8, 0, 12, 0, '#a8dcf0')];
+  for (let k = -3; k <= 3; k += 1) p.push(C(9 - Math.abs(k) * 1.2, 1, 8.2, 0, 8.5 + (3 - Math.abs(k)) * 0.7, 0, '#bfe6f4'));
+  for (let k = -4; k <= 4; k += 1) p.push(C(0.5, 1.6, 0.5, k * 2, 9, 4.2, '#e2f2fa'));
+  return merge(p);
+}
+/** Ice hummocks: a field of tilted slabs of clear blue ice pushed up on the lake. */
+function iceHummocks() {
+  const p = [];
+  for (let k = 0; k < 12; k += 1) {
+    const x = ((k * 37) % 40) - 20;
+    const z = ((k * 23) % 24) - 12;
+    p.push(C(4, 2.4 + (k % 3), 0.8, x, 1.4, z, k % 2 ? '#8fd0ea' : '#a8dcf0', (k % 5) * 0.4));
+  }
+  return merge(p);
+}
+/** A glacier front: a long high cliff of white and blue ice blocks at the sea, cracked into columns (a backdrop). */
+function glacierFront() {
+  const p = [];
+  for (let k = -10; k <= 10; k += 1) {
+    const h = 20 + ((k + 10) % 4) * 3;
+    p.push(C(6, h, 14, k * 6, h / 2, 0, k % 3 ? '#e6f0f6' : '#a8d4ea'), C(6.2, 1, 14.2, k * 6, h + 0.5, 0, '#f6f9fb'));
+  }
+  return merge(p);
+}
+/** Icebergs: a few blocky white-and-blue bergs in the sea. */
+function icebergs() {
+  const p = [];
+  [[-18, 0, 8], [0, 8, 12], [16, -4, 6], [30, 6, 9]].forEach(([x, z, h]) => {
+    p.push(C(h * 1.2, h, h, x, h / 2, z, '#eef6fa'), C(h * 0.8, h * 0.4, h * 0.7, x + 1, h + h * 0.2, z, '#f6fafc'), C(h * 1.3, 1.2, h * 1.1, x, 0.6, z, '#a8d4ea'));
+  });
+  return merge(p);
+}
+/** A polar station: red and yellow huts on stilts, a mast with dishes, a fuel tank. */
+function polarStation() {
+  const p = [];
+  [[-10, '#c8402e'], [0, '#e8c040'], [10, '#c8402e']].forEach(([x, c]) => {
+    for (const dx of [-3, 3]) for (const dz of [-2, 2]) p.push(C(0.4, 2, 0.4, x + dx, 1, dz, '#4a4e56'));
+    p.push(C(8, 4, 6, x, 4, 0, c), C(8.4, 0.6, 6.4, x, 6.3, 0, '#4a4e56'), C(1.2, 1.2, 0.2, x - 2, 4, 3.05, '#a8d0e2'), C(1.2, 1.2, 0.2, x + 2, 4, 3.05, '#a8d0e2'));
+  });
+  p.push(C(0.6, 18, 0.6, 20, 9, 0, '#8a8f96'), C(3, 3, 0.4, 20, 15, 0.6, '#f2f2ee'), C(6, 4, 4, -22, 2, 0, '#8a8f96'));
+  return merge(p);
+}
+/** A geyser cone: a low mound of pale sinter, orange and white bands, a column of white steam cubes rising from it (round a spiral: fitted). */
+function geyserCone() {
+  const p = [];
+  for (let k = 0; k < 5; k += 1) p.push(C(12 - k * 2.2, 1.6, 12 - k * 2.2, 0, 0.8 + k * 1.6, 0, k % 2 ? '#e8d8b8' : '#d89a5a'));
+  for (let k = 0; k < 6; k += 1) p.push(C(2.4 + k * 0.5, 2.4, 2.4 + k * 0.5, (k % 2) * 0.6, 9 + k * 2.6, 0, k < 2 ? '#f6f9fb' : '#e8eef2'));
+  return merge(p);
+}
+/** Hot-spring terraces: stepped white and orange terraces with blue pools on each step, frost round the edges. */
+function hotSpringTerraces() {
+  const p = [];
+  for (let k = 0; k < 5; k += 1) {
+    const z = -k * 5;
+    p.push(C(30 - k * 3, 2 + k * 2, 5, 0, (2 + k * 2) / 2, z, k % 2 ? '#e8d8b8' : '#d89a5a'), C(24 - k * 3, 0.3, 3, 0, 2 + k * 2 + 0.15, z + 0.6, '#5fa8c0'));
+  }
+  return merge(p);
+}
+/** Steam vents: low pale mounds across the frosty basin, each with a white plume. */
+function steamVents() {
+  const p = [];
+  for (const [x, z, h] of [[-14, -4, 6], [-4, 6, 9], [8, -6, 7], [16, 4, 5]]) {
+    p.push(C(4, 1, 4, x, 0.5, z, '#e8d8b8'));
+    for (let k = 0; k < 3; k += 1) p.push(C(1.8 + k * 0.5, h / 3, 1.8 + k * 0.5, x, 1 + (k + 0.5) * (h / 3), z, '#f2f6f8'));
+  }
+  return merge(p);
+}
+/** A rocky ridge: a long jagged wall of grey peaks under snow (a backdrop). */
+function rockyPeaks() {
+  const p = [];
+  for (let k = -6; k <= 6; k += 1) {
+    const h = 60 + ((k * 7 + 40) % 5) * 12;
+    p.push(C(30, h, 24, k * 26, h / 2, 0, '#5a5e66'), C(18, h * 0.3, 18, k * 26, h * 0.92, 0, '#eef3f7'));
+  }
+  return merge(p);
+}
+/** Bubble ice: a flat sheet of turquoise lake ice with stacks of white frozen bubbles in it. */
+function bubbleIce() {
+  const p = [C(40, 0.3, 24, 0, 0.15, 0, '#5fb8c8')];
+  for (let k = 0; k < 18; k += 1) {
+    const x = ((k * 29) % 36) - 18;
+    const z = ((k * 17) % 20) - 10;
+    for (let d = 0; d < 3; d += 1) p.push(C(1.4 - d * 0.35, 0.12, 1.4 - d * 0.35, x, 0.34 + d * 0.06, z, '#f2fafc'));
+  }
+  return merge(p);
+}
+/** A half-frozen fall: a cliff with a broad fall of ice columns, open water still pouring in the middle (beside the track). */
+function frozenFalls() {
+  const p = [C(34, 26, 8, 0, 13, -4, '#5a5e66'), C(32, 1, 10, 0, 26.5, -4, '#eef3f7')];
+  for (let k = -6; k <= 6; k += 1) p.push(C(2.2, 22 - (k % 3) * 2, 1.4, k * 2.4, 12, 0.6, k % 2 ? '#d8eef8' : '#bfe2f0'));
+  p.push(C(4, 22, 0.6, 0, 12, 1.4, '#f2fafc'));
+  return merge(p);
+}
+
 export const BLOCK_LANDMARKS = {
   'spawn-beacon': { build: spawnBeacon, glow: spawnBeaconGlow, radius: 5 },
   'cube-cottage': { build: cubeCottage, glow: cubeCottageGlow, radius: 7 },
@@ -1198,6 +1390,30 @@ export const BLOCK_LANDMARKS = {
   'river-weir': { build: riverWeir, radius: 43 },
   'bridge-tower': { build: bridgeTower, radius: 8 },
   'twin-spires': { build: twinSpires, radius: 32 },
+  // …the mountains and winter (1 Nov 2026).
+  'granite-towers': { build: graniteTowers, radius: 36 },
+  'granite-island': { build: graniteIsland, radius: 7, fit: 6 },
+  'cube-lodge': { build: cubeLodge, radius: 13 },
+  'snow-volcano': { build: snowVolcano, radius: 110 },
+  'old-lodge': { build: oldLodge, radius: 15 },
+  'ice-seracs': { build: iceSeracs, radius: 20 },
+  'granite-plateau': { build: granitePlateau, radius: 60 },
+  'giant-ferns': { build: giantFerns, radius: 13 },
+  'arrowhead-peak': { build: arrowheadPeak, radius: 9, fit: 8 },
+  'turf-houses': { build: turfHouses, radius: 20 },
+  'twin-falls': { build: twinFalls, radius: 15 },
+  'rock-island': { build: rockIsland, radius: 11 },
+  'ice-grotto': { build: iceGrotto, radius: 10 },
+  'ice-hummocks': { build: iceHummocks, radius: 21 },
+  'glacier-front': { build: glacierFront, radius: 63 },
+  'icebergs': { build: icebergs, radius: 30 },
+  'polar-station': { build: polarStation, radius: 23 },
+  'geyser-cone': { build: geyserCone, radius: 6, fit: 6 },
+  'hot-spring-terraces': { build: hotSpringTerraces, radius: 15 },
+  'steam-vents': { build: steamVents, radius: 17 },
+  'rocky-peaks': { build: rockyPeaks, radius: 160 },
+  'bubble-ice': { build: bubbleIce, radius: 20 },
+  'frozen-falls': { build: frozenFalls, radius: 17 },
 };
 
 // ── The quiet effects, on the race clock ──────────────────────────────────────

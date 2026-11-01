@@ -146,6 +146,48 @@ export const BLOCK_WORLDS = {
     tops: ['#86a05c', '#7a9452'], riser: '#c8a878', deep: '#8a7458', floor: '#4a6f80', bank: '#82a058', fill: '#c8a878', hills: 22, step: 3,
     dressing: [['tree', 0.4], ['lampPost', 0.25], ['bush', 0.2], ['planter', 0.15]],
   },
+  // ── Blocks Series 2, the mountains (1 Nov 2026) ──
+  // Torres del Paine: golden steppe grass over grey granite, a turquoise lake.
+  patagonia: {
+    tops: ['#b8a868', '#a89a5c'], riser: '#8a8a8e', deep: '#5a5a60', floor: '#4fa8b0', bank: '#b0a060', fill: '#8a8a8e', hills: 30, step: 4,
+    dressing: [['bush', 0.35], ['stoneRock', 0.35], ['tree', 0.15], ['flowers', 0.15]],
+  },
+  // Rainier: wildflower meadows and dark conifers under the glacier, grey volcanic rock.
+  cascade: {
+    tops: ['#7aa858', '#6e9c4e'], riser: '#6a6e74', deep: '#4a4e54', floor: '#cfe2ec', bank: '#76a454', fill: '#6a6e74', hills: 26, step: 3,
+    dressing: [['snowPine', 0.4], ['flowers', 0.3], ['stoneRock', 0.15], ['tree', 0.15]],
+  },
+  // Kinabalu: deep cloud-forest green over pale granite slabs.
+  cloudforest: {
+    tops: ['#4f8a42', '#457e3a'], riser: '#7a7a80', deep: '#55555c', floor: '#3f6a50', bank: '#4c8640', fill: '#7a7a80', hills: 26, step: 3,
+    dressing: [['tree', 0.4], ['fern', 0.35], ['stoneRock', 0.25]],
+  },
+  // Kirkjufell: moss over black lava rock, the fjord below.
+  iceland: {
+    tops: ['#7f9a5a', '#71904e'], riser: '#3a3a3e', deep: '#2a2a2e', floor: '#3f6f8a', bank: '#7a965a', fill: '#3a3a3e', hills: 18, step: 3,
+    dressing: [['stoneRock', 0.45], ['bush', 0.35], ['flowers', 0.2]],
+  },
+  // ── …the winter landscapes ──
+  // Baikal: snow over grey rock round a lake of clear blue ice.
+  clearice: {
+    tops: ['#eef3f8', '#e2eaf2'], riser: '#5a6670', deep: '#3f4a54', floor: '#7fc8e8', bank: '#e8eef4', fill: '#5a6670', hills: 16, step: 2,
+    dressing: [['snowRock', 0.4], ['snowPine', 0.35], ['iceShard', 0.25]],
+  },
+  // Svalbard: snowfields over dark rock, a cold blue sea; no trees.
+  polar: {
+    tops: ['#f2f6fa', '#e6edf3'], riser: '#4a4e56', deep: '#33363c', floor: '#2f5a78', bank: '#eef3f7', fill: '#4a4e56', hills: 32, step: 4,
+    dressing: [['snowRock', 0.55], ['iceShard', 0.35], ['crates', 0.1]],
+  },
+  // Yellowstone in winter: frost over orange mineral terraces, hot-spring blue.
+  geyser: {
+    tops: ['#e8eef2', '#dce4ea'], riser: '#c8803a', deep: '#8a5a2a', floor: '#5fa8c0', bank: '#e2e8ee', fill: '#c8a070', hills: 14, step: 3,
+    dressing: [['snowPine', 0.3], ['snowRock', 0.4], ['stoneRock', 0.3]], // (fewer pines and taller terraces: within the drawing budget)
+  },
+  // Abraham Lake: snow on the Rockies, dark pines, a turquoise frozen lake.
+  rockies: {
+    tops: ['#eef3f7', '#e2e9ef'], riser: '#5a5e66', deep: '#3f434a', floor: '#5fb8c8', bank: '#e8eef4', fill: '#5a5e66', hills: 34, step: 4,
+    dressing: [['snowPine', 0.5], ['snowRock', 0.3], ['birch', 0.2]],
+  },
 };
 export const BLOCK_WORLD_NAMES = Object.keys(BLOCK_WORLDS);
 
@@ -301,6 +343,10 @@ const MAKE = {
   ]),
   // The rivers (1 Nov 2026). A row of vines: low green blocks on a line of posts.
   vineRow: () => merge([cube(4.4, 0.9, 0.7, 0, 0.75, 0, '#5f8a3a'), cube(0.2, 1.4, 0.2, -2.2, 0.7, 0, '#6e5136'), cube(0.2, 1.4, 0.2, 2.2, 0.7, 0, '#6e5136'), cube(0.5, 0.4, 0.5, 0.8, 0.55, 0.3, '#5a2f4a')]),
+  // The mountains and winter (1 Nov 2026). A tree fern: a thin trunk, a wide flat crown of fronds.
+  fern: () => merge([cube(0.4, 2.6, 0.4, 0, 1.3, 0, '#5a4430'), cube(3.2, 0.4, 0.8, 0, 2.7, 0, '#3f8a3a'), cube(0.8, 0.4, 3.2, 0, 2.75, 0, '#4a9a42')]),
+  // An ice shard: a leaning block of blue ice with a paler top.
+  iceShard: () => merge([cube(1.4, 2.2, 1.2, 0, 1.1, 0, '#a8d8ee', 0.25), cube(1.0, 0.5, 0.9, 0.2, 2.3, 0, '#e2f2fa', 0.25)]),
   // A clipped hedge: a long dark-green box with a rounder top.
   hedge: () => merge([cube(3.6, 1.4, 1.2, 0, 0.7, 0, '#3f7a3a'), cube(3.2, 0.4, 0.9, 0, 1.6, 0, '#4a8a42')]),
   // A stone lantern: a grey post, a wide cap, a warm light in its box.
