@@ -577,7 +577,13 @@ shots counted within the 20). Plan: project doc `claude/blocks-series-2-plan.md`
   over red earth, cube palms), `tropic` (Singapore: tropical green, grey stone, a blue bay floor),
   `azulejo` (Lisbon: pale stone over blue-tiled risers, terracotta, steep hills); the rivers: `vineyard`
   (the Douro: vine terraces over brown schist, rows of vines), `chateau` (the Loire: lawns and pale
-  tuffeau stone, clipped hedges), `bohemia` (the Vltava: a green castle hill, sandstone, red roofs).
+  tuffeau stone, clipped hedges), `bohemia` (the Vltava: a green castle hill, sandstone, red roofs); the mountains: `patagonia`
+  (Torres del Paine: steppe gold under grey granite, a turquoise lake), `cascade` (Rainier: alpine
+  meadows under snow, dark firs), `cloudforest` (Kinabalu: deep green under granite slabs, giant ferns),
+  `iceland` (Kirkjufell: moss over black lava, a dark fjord); winter: `clearice` (Baikal: snow over grey
+  rock, clear blue ice, ice shards), `polar` (Svalbard: snowfields over dark rock, a cold blue sea, no
+  trees), `geyser` (Yellowstone: frost over orange mineral terraces, hot-spring blue), `rockies`
+  (Abraham Lake: snow on the Rockies, dark pines, a turquoise frozen lake).
 - **Landmarks** (generic architecture and landscape; no logos, no protected landmarks, nothing on a
   summit): `karst-towers`, `karst-tower` (round a splitter), `bamboo-rafts`, `river-village`,
   `palazzo-row`, `cube-campanile` (round a splitter), `arched-cube-bridge`, `cube-gondolas`,
@@ -588,7 +594,12 @@ shots counted within the 20). Plan: project doc `claude/blocks-series-2-plan.md`
   `palm-grove`, `garden-towers` (round a spiral), `glass-dome`, `bay-skyline`, `tiled-houses`,
   `yellow-tram`, `cube-arch`, `river-ferry`; the rivers: `wine-lodges`, `rabelo-boats`,
   `iron-arch-bridge`, `quinta-house`, `vine-terraces`, `river-chateau`, `hedge-maze`, `stone-arch-bridge`,
-  `moat-towers`, `castle-hill`, `statue-bridge`, `river-weir`, `bridge-tower`, `twin-spires`.
+  `moat-towers`, `castle-hill`, `statue-bridge`, `river-weir`, `bridge-tower`, `twin-spires`; the mountains:
+  `granite-towers`, `granite-island` (round a splitter), `cube-lodge`, `snow-volcano`, `old-lodge`,
+  `ice-seracs`, `granite-plateau`, `giant-ferns`, `arrowhead-peak` (round a spiral), `turf-houses`,
+  `twin-falls`; winter: `rock-island`, `ice-grotto`, `ice-hummocks`, `glacier-front`, `icebergs`,
+  `polar-station`, `geyser-cone` (round a spiral), `hot-spring-terraces`, `steam-vents`, `rocky-peaks`,
+  `bubble-ice`, `frozen-falls`.
 - The layouts made for it are the `(blocks 2)` rows (L105 onwards); each has a test track built as
   a Block Series world in its own world.
 - **Lessons from the test five** (31 Oct 2026):
@@ -616,6 +627,21 @@ shots counted within the 20). Plan: project doc `claude/blocks-series-2-plan.md`
     Arcade Spins'. A different first section fixes it (Loire: a slalom straight through the maze, then a
     sweep; Vltava: a straight out of the castle gate before the switchbacks). Run
     `node scripts/start-sequences.js <slug>` after every change to the first sections.
+- **Lessons from the mountains and the winter tracks** (1 Nov 2026):
+  - Each opening and each start type is used at most twice in the family; by the last eight most were
+    full, so check `src/report/variety.js` before choosing one.
+  - The pipe drop, the table top and the half-pipe give little luck: a slalom of five gates (loss
+    0.22–0.3) keeps the strongest five marbles under 50% of wins. Sweeps and spirals open the gap
+    between the first and the last marble: make them steeper or shorter; a last straight at grade 0.2
+    helps the slowest marble in under 85 s.
+  - A straight splitter with the far channel at `drag 1.0, scrub 1.0` shares the marbles about 60/40
+    and the wins fairly (Torres).
+  - **Keep the finish well away from the start** (at least about 200 m across the ground): the land
+    beside the run-out rises at most a slope's worth, so a finish 90 m from a start 265 m above it
+    left a cliff behind the start, and the start's structure stood on 150 m pillars (Yellowstone's
+    valley sweep now turns left). The drawing-load lines show it first, as coaster supports.
+  - The start-look check compares saved start looks, which only change when a track's report reruns:
+    after changing a start's shots or gate, rerun the reports of the tracks it was close to.
 
 ## Track and Field
 
