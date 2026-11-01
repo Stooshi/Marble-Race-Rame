@@ -1,8 +1,8 @@
 'use strict';
 
 // Yellowstone Frost Run: Blocks Series 2 (winter), a geyser basin in winter built from cubes at dawn. Off a fire lookout down the split start,
-// across the geyser basin, the spiral round a geyser cone (big feature one), the frosted forest, the two-step drop
-// down the hot-spring terraces (big feature two), the hairpin and a sweep across the valley.
+// across the geyser basin, the spiral round a geyser cone (big feature one), the hairpin, the frosted forest, the
+// two-step drop down the hot-spring terraces (big feature two) and a sweep left across the valley.
 const { track, opening, layout } = require('../trackKit');
 
 module.exports = track({
