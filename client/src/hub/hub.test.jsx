@@ -89,12 +89,13 @@ describe('published (Moses, 26 Oct 2026)', () => {
     expect(hits).toEqual(['site/SiteFooter.jsx']);
     expect(renderToString(<MemoryRouter><SiteFooter /></MemoryRouter>)).toMatch(/<a href="\/marbles"[^>]*>Marbles<\/a>/);
   });
-  it('the first five articles are published (26 Oct 2026), and no draft is in the site\'s code', () => {
+  it('the published articles: the first five (26 Oct 2026) and the sand track (1 Nov 2026), and no draft is in the site\'s code', () => {
     expect(ARTICLES.map((a) => a.path).sort()).toEqual([
       '/marbles/games/how-to-play-marbles', '/marbles/games/ringer', '/marbles/history/history-of-marbles',
-      '/marbles/making/how-glass-marbles-are-made', '/marbles/types/marble-types-guide',
+      '/marbles/making/how-glass-marbles-are-made', '/marbles/racing/sand-marble-track', '/marbles/types/marble-types-guide',
     ]);
     expect(hubRoutes()).toContain('/marbles/games');
+    expect(hubRoutes()).toContain('/marbles/racing'); // (the Marble racing section's first article: its page and its card on the hub)
   });
 });
 

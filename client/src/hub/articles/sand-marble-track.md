@@ -4,7 +4,8 @@ description: Dig, water and smooth a marble race track in the sand, with a fair 
 section: racing
 slug: sand-marble-track
 type: guide
-status: draft
+status: published
+published: 2026-11-01
 updated: 2026-11-01
 shop: No sand nearby? Race online at marblespins.com.
 sources:
