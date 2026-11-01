@@ -289,6 +289,8 @@ const broadcastApi = {
       return `<div class="mk" style="left:${x.toFixed(0)}px;top:${y.toFixed(0)}px;width:${(2 * r).toFixed(0)}px;height:${(2 * r).toFixed(0)}px"></div><div class="mkl" style="left:${x.toFixed(0)}px;top:${ly.toFixed(0)}px">${nameOf(i)}</div>`;
     }).join('');
   },
+  /** The end card's calm: the frame darkened (0–1 black), under the big lines. */
+  dim(k = 0) { $('dimFx').style.opacity = String(k); },
   rewind(on) {
     $('rewindFx').style.display = on ? 'block' : 'none';
     $('view').style.filter = on ? 'saturate(0.55) contrast(1.15) blur(0.6px)' : '';

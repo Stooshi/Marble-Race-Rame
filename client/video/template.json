@@ -34,8 +34,11 @@
   "intro": { "logo": "A", "on": ["production"] },
 
   "endCard": {
+    "_about": "The end card is on screen for at least minSeconds, fully readable, in every video (Moses, 1 Nov 2026). The logo-page end card (production, cutdown, clip, broadcast) lasts `seconds`. The vertical broadcasts end on their play line instead: held `hold.seconds` on a calm, frozen frame of the finish (the winner), dimmed to `hold.dim` black over `hold.dimIn` s, and fully readable for at least minSeconds before the loop's fade into the first picture starts.",
     "lines": ["Pick your marble. Race your friends.", "Play free at marblespins.com"],
-    "seconds": { "production": 5, "cutdown": 4, "clip": 4, "broadcast": 5 }
+    "seconds": { "production": 5, "cutdown": 4, "clip": 4, "broadcast": 5 },
+    "minSeconds": 2.5,
+    "hold": { "seconds": 3.0, "dim": 0.38, "dimIn": 0.4 }
   },
 
   "sound": {

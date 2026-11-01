@@ -100,7 +100,7 @@ export async function record({ variant = 'A', slug, race: raceName, kind = 'prod
     const info = await page.evaluate(() => window.rec.info());
     const plan = PLANS[kind](info, race, { logo, fly, clip, at, promoStart, variant });
     // (The plan beside the video: swap-logo.mjs uses it to put another logo version in.)
-    fs.writeFileSync(`${out}.plan.json`, JSON.stringify({ slug, race: raceName, kind, format, tune, logo, length: plan.length, shots: plan.shots, sound: plan.sound, texts: plan.texts, captions: plan.captions, hooks: plan.hooks, markers: plan.markers, bc: plan.bc, intro: plan.intro, results: plan.results }));
+    fs.writeFileSync(`${out}.plan.json`, JSON.stringify({ slug, race: raceName, kind, format, tune, logo, length: plan.length, shots: plan.shots, sound: plan.sound, texts: plan.texts, captions: plan.captions, hooks: plan.hooks, dim: plan.dim, markers: plan.markers, bc: plan.bc, intro: plan.intro, results: plan.results }));
     log(`${info.name}: ${kind} ${format}, ${plan.length.toFixed(1)} s, ${plan.shots.length} shots; winner ${info.podium[0].name} by ${info.margin} ms${plan.packShare !== undefined ? `; the race ${Math.round(plan.packShare * 100)}% on the pack` : ''}`);
     for (const sh of plan.shots) log(`  ${sh.at.toFixed(1).padStart(6)} s  ${(sh.type + (sh.follow !== undefined && sh.follow !== 'leader' ? ` #${sh.follow}` : sh.type === 'race' ? ' lead' : '')).padEnd(10)} ${sh.from !== undefined ? `race ${Math.round(sh.from)} ms` : ''} ${sh.speed && sh.speed !== 1 ? `×${sh.speed}` : ''} ${sh.dur.toFixed(1)} s`);
     // The rows on the podium card.
@@ -117,6 +117,7 @@ export async function record({ variant = 'A', slug, race: raceName, kind = 'prod
         bc: { opacity: k, label: span?.[2]?.label ?? null },
         intro: plan.intro ? { k: fade(v, plan.intro.at, plan.intro.dur, 0.5, 0.6), title: plan.intro.title, sub: plan.intro.sub } : null,
         results: plan.results ? { k: fade(v, plan.results.at, plan.results.dur, 0.6, 0.6), ...plan.results } : null,
+        dim: plan.dim && v >= plan.dim.at ? plan.dim.k * Math.min(1, (v - plan.dim.at) / plan.dim.fin) : 0,
         hook: (() => {
           const h = (plan.hooks ?? []).find((x) => v >= x.at && v < x.at + x.dur);
           return h ? { k: fade(v, h.at, h.dur, 0.12, 0.12), text: h.text } : { k: 0, text: '' };
@@ -183,6 +184,7 @@ export async function record({ variant = 'A', slug, race: raceName, kind = 'prod
             r.hook(ov.hook.k, ov.hook.text);
             r.markers(ov.markers.k, ov.markers.members);
             r.rewind(ov.rewind);
+            r.dim?.(ov.dim);
             if (ov.intro) r.intro(ov.intro.k, ov.intro);
             if (ov.results) r.results(ov.results.k, ov.results);
           }

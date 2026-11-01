@@ -70,8 +70,30 @@ function builder(kind) {
   p.add = (s) => { const at = p.v; p.shots.push({ ...s, at }); p.v += s.dur; return at; };
   p.say = (at, key, values = {}, dur = TEMPLATE.text.seconds) => p.texts.push({ at, dur, top: fill(TEXTS[key] ?? key, values) });
   p.lift = (a, b) => p.lifts.push([a, b]);
-  p.end = () => p.add({ type: 'end', dur: TEMPLATE.endCard.seconds[kind] });
+  p.end = () => {
+    const dur = TEMPLATE.endCard.seconds[kind];
+    if (!(dur >= TEMPLATE.endCard.minSeconds)) throw new Error(`The ${kind} end card is ${dur} s: at least ${TEMPLATE.endCard.minSeconds} s (template.json endCard)`);
+    return p.add({ type: 'end', dur });
+  };
   return p;
+}
+
+/** The big lines' fade in and out (record.mjs, hooks). */
+export const HOOK_FADE = 0.12;
+
+/**
+ * The vertical broadcasts' end card (template.json endCard.hold): the play line held on a calm frame,
+ * `shot` frozen (speed 0) and slowly dimmed, readable for at least endCard.minSeconds before the loop
+ * fade. Adds the shot, pushes the line onto `bigs` and returns the dim for the plan.
+ */
+export function endHold(p, shot, bigs, text, { loopFade = 0 } = {}) {
+  const H = TEMPLATE.endCard.hold;
+  const at = p.add({ ...shot, speed: 0, dur: H.seconds });
+  const line = { at: at + 0.05, dur: H.seconds - 0.05, text };
+  const readable = (line.at + line.dur - loopFade) - (line.at + HOOK_FADE);
+  if (readable < TEMPLATE.endCard.minSeconds - 1e-9) throw new Error(`The end card is readable ${readable.toFixed(2)} s: at least ${TEMPLATE.endCard.minSeconds} s (template.json endCard)`);
+  bigs.push(line);
+  return { at, dur: H.seconds, k: H.dim, fin: H.dimIn, readable };
 }
 
 /**
@@ -557,13 +579,15 @@ export function broadcastTall(info, race) {
   const fin = p.add({ type: 'race', follow: 'leader', from: W - 4200, dur: 1.6 });
   const slow = p.add({ ...line, from: W - 950, speed: 0.3, dur: 3.4 });
   bigs.push({ at: slow + 0.2, dur: 3.1, text: T.photoFinish });
-  // 23–25 s: the winner, then the address, on the hook's camera (the loop back to the start).
-  const end = p.add({ ...still, from: W + 70, speed: 0.3, dur: 2 });
-  bigs.push({ at: end + 0.05, dur: 1.1, text: fill(T.winner, name) }, { at: end + 1.15, dur: 0.85, text: T.play });
+  // 23–27 s: the winner, then the address held on the frozen, dimmed finish (the hook's camera: the loop back to the start).
+  const end = p.add({ ...still, from: W + 70, speed: 0.3, dur: 1.3 });
+  bigs.push({ at: end + 0.05, dur: 1.2, text: fill(T.winner, name) });
+  const dim = endHold(p, { ...still, from: W + 70 + 390 }, bigs, T.play);
   bc.push([goAt, end, {}]);
   return {
     shots: p.shots, texts: [], captions: [], hooks: bigs, markers, rewind, podium: null, length: p.v, bc, city: info.name.replace(/\s*Marble Grand Prix$/i, '').trim(),
     tall: { towerRows: T.towerRows },
+    dim,
     marks: { goAt, fin },
     sound: { goAt, beeps: false, music: [[0, p.v]], lifts: [[slow, p.v]], ceremony: null, extra: [{ key: 'whoosh', at: r1 - 0.35, gain: 0.5, dur: 1.6 }], loop: true },
   };
@@ -672,13 +696,18 @@ export function broadcastTallV(info, race, { variant = 'A' } = {}) {
   const finAt = p.add(B ? { type: 'group', members: LEAD_GROUP_AT(race, info, W - 4200), shot: 'fin', from: W - 4200, dur: 1.6, back: 9, up: 5, ahead: 8, fov: 64 } : { type: 'race', follow: 'leader', from: W - 4200, dur: 1.6 });
   const slow = p.add({ ...line, ...(B && { saveAim: 'loopB' }), from: W - 950, speed: 0.3, dur: 3.4 });
   bigs.push({ at: slow + 0.2, dur: 3.1, text: V.photoFinish });
-  // 23–25 s: the winner and the gap, then the address. A ends on the hook's view (it loops); B holds the finish view.
-  const end = p.add({ ...line, useAim: B ? 'loopB' : 'loop', from: W + 70, speed: 0.3, dur: 2 });
-  bigs.push({ at: end + 0.05, dur: 1.05, text: fill(V.winner, name) }, { at: end + 1.12, dur: 0.88, text: V.play });
+  // 23–27 s: the winner and the gap, then the address held 3 s on the frozen, dimmed finish
+  // (template.json endCard.hold). A ends on the hook's view (it loops); B holds the finish view.
+  const loopFade = 0.25;
+  const endShot = { ...line, useAim: B ? 'loopB' : 'loop' };
+  const end = p.add({ ...endShot, from: W + 70, speed: 0.3, dur: 1.3 });
+  bigs.push({ at: end + 0.05, dur: 1.2, text: fill(V.winner, name) });
+  const dim = endHold(p, { ...endShot, from: W + 70 + 390 }, bigs, V.play, { loopFade });
   return {
     shots: p.shots, texts: [], captions: [], hooks: bigs, markers, rewind, intro, podium: null, length: p.v, bc: [[goAt, end, {}]], city: info.name,
     tall: { towerRows: TEMPLATE.broadcast.tall.towerRows },
-    loopFade: 0.25,
+    loopFade,
+    dim,
     marks: { goAt, finAt },
     sound: { goAt, beeps: false, music: [[0, p.v]], lifts: [[slow, p.v]], ceremony: null, extra: [{ key: 'whoosh', at: r1 - 0.35, gain: 0.5, dur: 1.6 }], loop: true },
   };

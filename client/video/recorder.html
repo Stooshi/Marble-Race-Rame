@@ -71,6 +71,7 @@
           text-shadow: 0 0 0.05em var(--navy), 0 0 0.1em var(--navy), 0 0.06em 0.16em rgba(0,0,0,0.75), 0 0 0.5em color-mix(in srgb, var(--navy) 80%, transparent); }
   #hook em { font-style: normal; color: var(--yellow); }
   #markers { position: absolute; inset: 0; pointer-events: none; }
+  #dimFx { position: absolute; inset: 0; pointer-events: none; opacity: 0; background: var(--navy, #0e1320); }
   .mk { position: absolute; border: 0.55vmin solid var(--yellow); border-radius: 50%; box-shadow: 0 0 0 0.35vmin rgba(14,19,32,0.6), 0 0 2.4vmin rgba(255,210,31,0.55); transform: translate(-50%, -50%); }
   .mkl { position: absolute; transform: translate(-50%, -100%); padding: 0.6vmin 1.6vmin; background: var(--yellow); color: var(--navy); border-radius: 0.8vmin; font-family: var(--font), sans-serif; font-size: 3vmin; white-space: nowrap; }
   #rewindFx { position: absolute; inset: 0; pointer-events: none; display: none;
@@ -137,6 +138,7 @@
 <div id="cap" class="panel"></div>
 <div id="markers"></div>
 <div id="rewindFx"><div class="ic">◀◀ REWIND</div></div>
+<div id="dimFx"></div>
 <div id="hook"></div>
 <div id="intro" class="panel"><div class="t" id="introT"></div><div class="s" id="introS"></div></div>
 <div id="results"><div class="wrap"><div id="winner"><div class="lab" id="wLab"></div><div class="big" id="wBall"></div><div class="who" id="wWho"></div><div class="tm" id="wTm"></div></div>
