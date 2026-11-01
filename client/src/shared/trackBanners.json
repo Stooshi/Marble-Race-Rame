@@ -842,9 +842,9 @@
    "name": "Kinabalu Cube Summit",
    "series": "Blocks",
    "lighting": "dawn",
-   "v": "a1b8e723",
-   "bytes": 13126,
-   "bytes2x": 30146,
+   "v": "6c80daa8",
+   "bytes": 12994,
+   "bytes2x": 30400,
    "t": 9207,
    "side": 1,
    "marbles": 4
@@ -1244,6 +1244,17 @@
    "t": 36171,
    "side": 1,
    "marbles": 5
+  },
+  "rainier-ice-block-run": {
+   "name": "Rainier Ice Block Run",
+   "series": "Blocks",
+   "lighting": "day",
+   "v": "0f876191",
+   "bytes": 16188,
+   "bytes2x": 39754,
+   "t": 9959,
+   "side": 1,
+   "marbles": 4
   },
   "redwood-forest-run": {
    "name": "Redwood Forest Run",
@@ -1843,12 +1854,12 @@
    "name": "Yellowstone Frost Run",
    "series": "Blocks",
    "lighting": "dawn",
-   "v": "3eec1ca7",
-   "bytes": 16068,
-   "bytes2x": 40280,
-   "t": 14841,
+   "v": "a952a82f",
+   "bytes": 19926,
+   "bytes2x": 49950,
+   "t": 9672,
    "side": -1,
-   "marbles": 4
+   "marbles": 5
   },
   "zambezi-falls-run": {
    "name": "Zambezi Falls Run",
