@@ -2165,7 +2165,7 @@ const LAYOUTS = {
     { key: 'bigDrop', name: 'Down the mountainside', shape: plunge(70, { grade: 0.3, from: 0.12 }) },
     { key: 'pines', name: 'Through the pines', shape: straight(55, { grade: 0.11 }), obstacles: [slalom({ costume: c.slalom, from: 0.1, to: 0.9, count: 5, loss: 0.3 })] },
     { key: 'lakeBends', name: 'Onto the lake', shape: sBends({ first: R, radius: 80, degrees: 80, grade: 0.12 }), obstacles: [peg({ costume: c.peg, at: 0.5, line: 'center' })], billboards: 2 },
-    { key: 'bubbles', name: 'Across the bubble ice', shape: straight(75, { grade: 0.11 }), obstacles: [slalom({ costume: c.slalom, from: 0.15, to: 0.85, count: 4, loss: 0.2 })] },
+    { key: 'bubbles', name: 'Across the bubble ice', shape: straight(75, { grade: 0.11 }), obstacles: [slalom({ costume: c.slalom, from: 0.1, to: 0.9, count: 5, loss: 0.28 })] },
     { key: 'toTheFall', name: 'To the frozen fall', shape: straight(35, { grade: 0.12 }) },
     { key: 'curtain', name: 'Through the frozen fall', shape: waterfall(35, { grade: 0.5, curtain: true }) },
     { key: 'brakingStraight', name: 'Run to the hairpin', shape: straight(50, { grade: 0.12 }), billboards: 1 },
