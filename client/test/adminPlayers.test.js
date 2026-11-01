@@ -76,4 +76,9 @@ describe('the Players table', () => {
     expect(src).toMatch(/<th>Country<\/th>/);
     expect(src).toMatch(/Country \(first visit\)/);
   });
+  it('the Security tab loads its addresses on its own (audited by the server), not with the details', () => {
+    expect(src).toMatch(/tab === 'Security' && <SecurityTab id=\{p\.id\}/);
+    expect(src).toMatch(/adminApi\.security\(id\)/);
+    expect(readFileSync(join(__dirname, '..', 'src', 'admin', 'adminApi.js'), 'utf8')).toMatch(/\/admin\/players\/\$\{id\}\/security/);
+  });
 });

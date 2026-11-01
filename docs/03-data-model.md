@@ -107,7 +107,7 @@ History of every yes/no to news by email: `consent`, `source` (`signup`, `claim`
 Every choice of the country a player races for: `country` (NULL when removed), `kind` (`first`, `correction`, `change`, `removed`), `created_at`. For "which country did the player have at a moment" (`country.countryAt`: national leagues qualify by the country at the start of the month). In Download my data; deleted with the account.
 
 ### `security_events`
-Sign-up, login and purchase events: `kind`, `ip` (inet), `country` (2 letters, looked up offline), `created_at`. **The full IP is kept for at most 90 days**: a daily job blanks it and keeps only the country (`src/security`). The table is used only for security and fraud checks, such as many accounts from one address.
+Sign-up, login and purchase events: `kind`, `ip` (inet), `country` (2 letters, looked up offline), `created_at`. **The full IP is kept for at most 90 days**: an hourly job blanks it and keeps only the country (`src/security`). The table is used only for security and fraud checks, such as many accounts from one address.
 
 ## Tracks and races
 
@@ -436,7 +436,7 @@ The website's cookie choice, kept as a record of consent (GDPR): one row each ti
 |---|---|
 | `admin_2fa` | One per admin: the authenticator secret, encrypted (`secret_enc`), `enabled_at`, and `last_step` (so each code works only once) |
 | `admin_sessions` | Back-office sessions: `created_at`, `last_seen_at` (30-minute idle limit), `ended_at` |
-| `admin_audit` | Every back-office action: `admin_id`, `action`, `target_user_id`, `reason` (required), `details` (JSON of what changed). Never edited. Also records refunds made in the Stripe dashboard, disputes and account deletions, and support-message status changes (`support-status`, details `message_id`, `from`, `to`) and replies (`support-reply`) |
+| `admin_audit` | Every back-office action: `admin_id`, `action`, `target_user_id`, `reason` (required), `details` (JSON of what changed). Never edited. Also records refunds made in the Stripe dashboard, disputes and account deletions, and support-message status changes (`support-status`, details `message_id`, `from`, `to`) and replies (`support-reply`), and each time an admin opens a player's Security tab with its IP addresses (`security-view`, details: how many events and how many with an address; since 1 Nov 2026) |
 
 ## Bookkeeping tables and views
 

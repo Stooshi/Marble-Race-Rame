@@ -761,6 +761,38 @@ function Players() {
   );
 }
 
+/**
+ * The Security tab: the player's security events with their IP addresses, and other accounts from
+ * the same addresses. Loaded only when the tab is opened (GET /players/:id/security), and the server
+ * writes every opening to the audit log. A server from before 1 Nov 2026 has no such address and sent
+ * the addresses with the details (`fallback`), unaudited.
+ */
+function SecurityTab({ id, fallback }) {
+  const [state, setState] = useState({ data: null, error: null });
+  useEffect(() => {
+    let live = true;
+    adminApi.security(id)
+      .then((data) => live && setState({ data, error: null }))
+      .catch((error) => live && setState(error.status === 404 && fallback?.sameAddress ? { data: fallback, error: null } : { data: null, error }));
+    return () => { live = false; };
+  }, [id]); // eslint-disable-line react-hooks/exhaustive-deps
+  if (state.error) return <Err error={state.error} />;
+  if (!state.data) return <p className="adm-muted">Loading…</p>;
+  const security = state.data;
+  return (
+        <div className="adm-stack">
+          <p className="adm-muted">IP addresses are kept {security.ipDays} days for security and fraud checks; after that only the country. Opening this tab is written to the audit log.</p>
+          <div className="adm-scroll"><table className="adm-table"><thead><tr><th>When</th><th>What</th><th>IP</th><th>Country</th></tr></thead>
+            <tbody>{security.events.map((e, i) => <tr key={i}><td>{when(e.created_at)}</td><td>{e.kind}</td><td>{e.ip ?? <span className="adm-muted">(removed)</span>}</td><td>{e.country ?? '–'}</td></tr>)}</tbody></table></div>
+          <b>Other accounts from the same addresses</b>
+          {security.sameAddress.length === 0 ? <p className="adm-muted">None.</p> : (
+            <div className="adm-scroll"><table className="adm-table"><thead><tr><th>Player</th><th>Kind</th><th>Joined</th><th className="num">Shared events</th></tr></thead>
+              <tbody>{security.sameAddress.map((u) => <tr key={u.id}><td><Link to={`/admin/players/${u.id}`}>@{u.username}</Link></td><td>{u.is_guest ? 'guest' : 'saved'}</td><td>{when(u.created_at)}</td><td className="num">{u.shared}</td></tr>)}</tbody></table></div>
+          )}
+        </div>
+  );
+}
+
 const TABS = ['Coins', 'Races', 'Marbles', 'Payments', 'Messages', 'Security', 'Emails', 'Audit'];
 
 function Player() {
@@ -852,18 +884,7 @@ function Player() {
           <SupportTable rows={messages} showPlayer={false} onChanged={d.reload} />
         </div>
       )}
-      {tab === 'Security' && (
-        <div className="adm-stack">
-          <p className="adm-muted">IP addresses are kept {security.ipDays} days for security and fraud checks; after that only the country.</p>
-          <div className="adm-scroll"><table className="adm-table"><thead><tr><th>When</th><th>What</th><th>IP</th><th>Country</th></tr></thead>
-            <tbody>{security.events.map((e, i) => <tr key={i}><td>{when(e.created_at)}</td><td>{e.kind}</td><td>{e.ip ?? <span className="adm-muted">(removed)</span>}</td><td>{e.country ?? '–'}</td></tr>)}</tbody></table></div>
-          <b>Other accounts from the same addresses</b>
-          {security.sameAddress.length === 0 ? <p className="adm-muted">None.</p> : (
-            <div className="adm-scroll"><table className="adm-table"><thead><tr><th>Player</th><th>Kind</th><th>Joined</th><th className="num">Shared events</th></tr></thead>
-              <tbody>{security.sameAddress.map((u) => <tr key={u.id}><td><Link to={`/admin/players/${u.id}`}>@{u.username}</Link></td><td>{u.is_guest ? 'guest' : 'saved'}</td><td>{when(u.created_at)}</td><td className="num">{u.shared}</td></tr>)}</tbody></table></div>
-          )}
-        </div>
-      )}
+      {tab === 'Security' && <SecurityTab id={p.id} fallback={security} />}
       {tab === 'Emails' && (
         <div className="adm-scroll"><table className="adm-table"><thead><tr><th>When</th><th>Answer</th><th>Where</th></tr></thead>
           <tbody>{consents.map((c, i) => <tr key={i}><td>{when(c.created_at)}</td><td>{c.consent ? 'yes' : 'no'}</td><td>{c.source}</td></tr>)}</tbody></table>

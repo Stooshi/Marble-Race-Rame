@@ -5,7 +5,7 @@
  * sender's too, for spam checks, on the same terms), only for security and fraud
  * (one person farming coins with many accounts, payment fraud). Recorded when an account is made, saved or logs in, and when coins are
  * bought. The full address is kept for at most 90 days (IP_DAYS); after that
- * trimIps() blanks it and only the country stays.
+ * trimIps() (every hour) blanks it and only the country stays.
  *
  * Recording never gets in the way: a failure is logged and the request goes on.
  */
@@ -13,6 +13,7 @@ const geoip = require('geoip-country');
 const db = require('../db');
 
 const IP_DAYS = 90;
+const TRIM_EVERY_MS = 3600_000; // every hour
 const KINDS = ['guest', 'signup', 'claim', 'login', 'purchase', 'admin-login', 'reset-request', 'password-reset'];
 
 /** The client's address (Express works it out behind the proxy: app 'trust proxy'). */
@@ -60,15 +61,15 @@ async function trimIps(client = db) {
   return rowCount + support;
 }
 
-/** Trims now and then once a day (the server's start calls this). */
+/** Trims now and then every hour (the server's start calls this), so no address is older than IP_DAYS by more than an hour (Moses, 1 Nov 2026). */
 function startTrimming() {
   const run = () => trimIps()
     .then((n) => { if (n) console.log(`[security] blanked ${n} IP addresses older than ${IP_DAYS} days (country kept)`); })
     .catch((err) => console.error('[security] trim failed', err.message));
   run();
-  const timer = setInterval(run, 24 * 3600_000);
+  const timer = setInterval(run, TRIM_EVERY_MS);
   timer.unref?.();
   return timer;
 }
 
-module.exports = { IP_DAYS, KINDS, clientIp, countryOf, record, trimIps, startTrimming };
+module.exports = { IP_DAYS, TRIM_EVERY_MS, KINDS, clientIp, countryOf, record, trimIps, startTrimming };

@@ -9,7 +9,8 @@
  * transaction as the change itself, with the admin, the player and what changed.
  *
  *   GET  /players?q=               search by name, email, id or a Marble ID
- *   GET  /players/:id              everything support needs about one player
+ *   GET  /players/:id              everything support needs about one player (no IP addresses)
+ *   GET  /players/:id/security     its security events with IP addresses; each opening audited ('security-view')
  *   POST /players/:id/coins        { amount, reason }       add or take coins
  *   POST /players/:id/items        { item, action: 'grant'|'remove', reason }
  *   POST /players/:id/suspend      { reason }   /unsuspend { reason }
@@ -113,6 +114,39 @@ router.get('/players', async (req, res) => {
   res.json({ players: rows });
 });
 
+/**
+ * GET /players/:id/security — the player's security events with their IP addresses (at most 90
+ * days old) and the other accounts seen from the same addresses, for fraud checks. Admins only,
+ * like everything here; every opening is written to the audit log ('security-view', Moses, 1 Nov 2026).
+ */
+async function securityOf(id) {
+  const [events, related] = await Promise.all([
+    db.query('SELECT kind, host(ip) AS ip, country, created_at FROM security_events WHERE user_id = $1 ORDER BY created_at DESC LIMIT 50', [id]),
+    // Other accounts seen from the same addresses (coin farming with many accounts).
+    db.query(
+      `SELECT u.id, u.username, u.is_guest, u.created_at, COUNT(*)::int AS shared
+         FROM security_events mine
+         JOIN security_events other ON other.ip = mine.ip AND other.user_id <> mine.user_id
+         JOIN users u ON u.id = other.user_id
+        WHERE mine.user_id = $1 AND mine.ip IS NOT NULL
+        GROUP BY u.id ORDER BY shared DESC LIMIT 20`,
+      [id],
+    ),
+  ]);
+  return { events: events.rows, sameAddress: related.rows, ipDays: IP_DAYS };
+}
+
+router.get('/players/:id/security', async (req, res) => {
+  const id = assertUuid(req.params.id);
+  const { rows: [p] } = await db.query('SELECT id FROM users WHERE id = $1', [id]);
+  if (!p) throw notFound('No such player');
+  const security = await securityOf(id);
+  await audit(db, req, 'security-view', id, 'Opened the Security tab (IP addresses)', {
+    events: security.events.length, withIp: security.events.filter((e) => e.ip).length,
+  });
+  res.json(security);
+});
+
 /** GET /players/:id */
 router.get('/players/:id', async (req, res) => {
   const id = assertUuid(req.params.id);
@@ -124,7 +158,7 @@ router.get('/players/:id', async (req, res) => {
     [id],
   );
   if (!player) throw notFound('No such player');
-  const [ledger, sums, races, items, originals, events, related, auditRows, consents, payments, races24h, messages] = await Promise.all([
+  const [ledger, sums, races, items, originals, events, auditRows, consents, payments, races24h, messages] = await Promise.all([
     db.query('SELECT id, amount, kind, note, item_slug, race_id, actor_id, balance_after, created_at FROM coin_ledger WHERE user_id = $1 ORDER BY id DESC LIMIT 200', [id]),
     db.query('SELECT kind, COUNT(*)::int AS lines, SUM(amount)::int AS coins FROM coin_ledger WHERE user_id = $1 GROUP BY kind ORDER BY kind', [id]),
     db.query(
@@ -139,17 +173,8 @@ router.get('/players/:id', async (req, res) => {
         WHERE m.owner_id = $1 OR EXISTS (SELECT 1 FROM user_marbles um WHERE um.user_id = $1 AND um.marble_id = m.id) ORDER BY m.starter_no NULLS LAST, m.name`,
       [id],
     ),
-    db.query('SELECT kind, host(ip) AS ip, country, created_at FROM security_events WHERE user_id = $1 ORDER BY created_at DESC LIMIT 50', [id]),
-    // Other accounts seen from the same addresses (coin farming with many accounts).
-    db.query(
-      `SELECT u.id, u.username, u.is_guest, u.created_at, COUNT(*)::int AS shared
-         FROM security_events mine
-         JOIN security_events other ON other.ip = mine.ip AND other.user_id <> mine.user_id
-         JOIN users u ON u.id = other.user_id
-        WHERE mine.user_id = $1 AND mine.ip IS NOT NULL
-        GROUP BY u.id ORDER BY shared DESC LIMIT 20`,
-      [id],
-    ),
+    // Without the addresses: those only on the Security tab (GET /players/:id/security, audited).
+    db.query('SELECT kind, country, created_at FROM security_events WHERE user_id = $1 ORDER BY created_at DESC LIMIT 50', [id]),
     db.query(
       `SELECT a.id, a.action, a.reason, a.details, a.created_at, adm.username AS admin
          FROM admin_audit a LEFT JOIN users adm ON adm.id = a.admin_id
@@ -172,7 +197,7 @@ router.get('/players/:id', async (req, res) => {
     coins: { ledger: ledger.rows, byKind: sums.rows },
     races: { recent: races.rows, last24h: races24h.rows[0].n },
     marbles: { collection: items.rows, plain: originals.rows },
-    security: { events: events.rows, sameAddress: related.rows, ipDays: IP_DAYS },
+    security: { events: events.rows, ipDays: IP_DAYS },
     consents: consents.rows,
     payments: payments.rows,
     audit: auditRows.rows,

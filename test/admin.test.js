@@ -60,6 +60,16 @@ test('the back office on a real database: admin + 2-step + live session; reasons
     const detail = (await call(`/admin/players/${pid}`, { token })).body;
     assert.deepEqual(detail.audit.map((a) => a.action), ['unsuspend', 'suspend', 'coins']);
     assert.ok(detail.security.events.some((e) => e.kind === 'signup'));
+    // No IP addresses in the details; the Security tab has them, and each opening is audited.
+    assert.ok(detail.security.events.every((e) => !('ip' in e)));
+    assert.ok(!('sameAddress' in detail.security));
+    const sec = (await call(`/admin/players/${pid}/security`, { token })).body;
+    assert.ok(sec.events.some((e) => e.kind === 'signup' && 'ip' in e));
+    assert.ok(Array.isArray(sec.sameAddress));
+    const { rows: views } = await db.query(`SELECT admin_id, reason FROM admin_audit WHERE action = 'security-view' AND target_user_id = $1`, [pid]);
+    assert.equal(views.length, 1);
+    assert.equal(views[0].admin_id, admin.user.id);
+    assert.equal(security.TRIM_EVERY_MS, 3600_000);
     // The first visit's country (never the IP): the oldest event with a country.
     await db.query(`UPDATE security_events SET country = 'NO' WHERE user_id = $1`, [pid]);
     await db.query(`INSERT INTO security_events (user_id, kind, country, created_at) VALUES ($1, 'login', 'DK', now() + interval '1 minute')`, [pid]);
