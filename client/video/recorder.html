@@ -66,6 +66,16 @@
   #cap { position: absolute; left: 4vw; bottom: 8vh; max-width: 60vw; opacity: 0; color: var(--text); font-family: var(--font), sans-serif;
          padding: 1.5vmin 2.8vmin 1.6vmin 2.4vmin; border-left: 0.9vmin solid var(--yellow); font-size: 3.6vmin; letter-spacing: 0.01em; line-height: 1.15; }
   #cap.big { font-size: 5.4vmin; letter-spacing: 0.06em; color: var(--yellow); border-left-color: var(--orange); }
+  /* The hook's big lines (centred, upper third), the contenders' markers and the rewind. */
+  #hook { position: absolute; left: 6vw; right: 6vw; top: 13vh; text-align: center; opacity: 0; font-family: var(--font), sans-serif; color: #fff; font-size: 8.2vmin; line-height: 1.05; letter-spacing: 0.01em;
+          text-shadow: 0 0 0.05em var(--navy), 0 0 0.1em var(--navy), 0 0.06em 0.16em rgba(0,0,0,0.75), 0 0 0.5em color-mix(in srgb, var(--navy) 80%, transparent); }
+  #hook em { font-style: normal; color: var(--yellow); }
+  #markers { position: absolute; inset: 0; pointer-events: none; }
+  .mk { position: absolute; border: 0.55vmin solid var(--yellow); border-radius: 50%; box-shadow: 0 0 0 0.35vmin rgba(14,19,32,0.6), 0 0 2.4vmin rgba(255,210,31,0.55); transform: translate(-50%, -50%); }
+  .mkl { position: absolute; transform: translate(-50%, -100%); padding: 0.6vmin 1.6vmin; background: var(--yellow); color: var(--navy); border-radius: 0.8vmin; font-family: var(--font), sans-serif; font-size: 3vmin; white-space: nowrap; }
+  #rewindFx { position: absolute; inset: 0; pointer-events: none; display: none;
+              background: repeating-linear-gradient(0deg, rgba(255,255,255,0.06) 0 2px, transparent 2px 6px), linear-gradient(90deg, rgba(14,19,32,0.35), rgba(14,19,32,0) 30%, rgba(14,19,32,0) 70%, rgba(14,19,32,0.35)); }
+  #rewindFx .ic { position: absolute; left: 4vw; top: 4vh; padding: 0.8vmin 2vmin; background: var(--orange); color: var(--navy); border-radius: 0.8vmin; font: 400 3.4vmin var(--font), sans-serif; letter-spacing: 0.06em; }
   /* The intro card over the flyover. */
   #intro { color: var(--text); font-family: var(--font), sans-serif; position: absolute; left: 6vw; bottom: 12vh; opacity: 0; padding: 2.4vmin 3.6vmin 2.6vmin; border-left: 1.1vmin solid var(--yellow); }
   #intro .t { font-size: 6.4vmin; letter-spacing: 0.02em; line-height: 1.05; }
@@ -105,6 +115,9 @@
   <div id="tags"></div>
 </div>
 <div id="cap" class="panel"></div>
+<div id="markers"></div>
+<div id="rewindFx"><div class="ic">◀◀ REWIND</div></div>
+<div id="hook"></div>
 <div id="intro" class="panel"><div class="t" id="introT"></div><div class="s" id="introS"></div></div>
 <div id="results"><div class="wrap"><div id="winner"><div class="lab" id="wLab"></div><div class="big" id="wBall"></div><div class="who" id="wWho"></div><div class="tm" id="wTm"></div></div>
   <div id="board" class="panel"><h2 id="rTitle"></h2><div class="sub" id="rSub"></div><div id="rrows"></div></div></div></div>

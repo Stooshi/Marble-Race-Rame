@@ -67,6 +67,7 @@ export function mix(plan, length, { tune }, file) {
     if (s.goAt !== null && s.goAt !== undefined) add(SOUNDS.launch.file, { at: s.goAt, dur: 5, gain: 1.6 });
     if (s.ceremony) add(SOUNDS.ceremony.file, { at: s.ceremony[0], dur: s.ceremony[1] - s.ceremony[0], gain: 0.55, fadeIn: 0.4, fadeOut: 1.5 });
     // The signature sound: intro A's whoosh as the mark lands, on the intro and on every end card.
+    for (const x of s.extra ?? []) add(SOUNDS[x.key].file, { at: x.at, dur: x.dur ?? 2, gain: x.gain ?? 1, fadeOut: 0.3 });
     for (const sh of plan.shots.filter((x) => x.type === 'logo' || x.type === 'end')) {
       const peak = LANDS[sh.type === 'logo' ? sh.version : TEMPLATE.intro.logo] ?? 1;
       add(SOUNDS.whoosh.file, { at: sh.at + Math.max(0, peak - SOUNDS.whoosh.peak), offset: Math.max(0, SOUNDS.whoosh.peak - peak), dur: 2.2, gain: SOUNDS.whoosh.gain, fadeOut: 0.5 });
@@ -80,7 +81,7 @@ export function mix(plan, length, { tune }, file) {
 }
 
 export async function record({ slug, race: raceName, kind = 'production', format = 'wide', tune = 7, logo = TEMPLATE.intro.logo, out, from = null, to = null, fly = null, stills = null, clip = null, at = null, promoStart = null }) {
-  fly ??= kind === 'clip' ? 12 : 15; // (seconds: the flyover's length)
+  fly ??= kind === 'clip' ? 12 : kind === 'broadcast' ? 4.5 : 15; // (seconds: the flyover's length)
   const [W, H] = SIZES[format];
   const race = JSON.parse(fs.readFileSync(path.join(here, '..', 'dev', '.tracks', `${raceName}.json`), 'utf8'));
   const server = await createServer({ root: path.resolve(here, '..'), logLevel: 'error', server: { port: 0, strictPort: false, fs: { allow: [path.resolve(here, '..', '..', '..'), fs.realpathSync(path.resolve(here, '..', 'node_modules'))] } } }); // (allow: a worktree whose node_modules link to another checkout still loads the fonts)
@@ -99,7 +100,7 @@ export async function record({ slug, race: raceName, kind = 'production', format
     const info = await page.evaluate(() => window.rec.info());
     const plan = PLANS[kind](info, race, { logo, fly, clip, at, promoStart });
     // (The plan beside the video: swap-logo.mjs uses it to put another logo version in.)
-    fs.writeFileSync(`${out}.plan.json`, JSON.stringify({ slug, race: raceName, kind, format, tune, logo, length: plan.length, shots: plan.shots, sound: plan.sound, texts: plan.texts, captions: plan.captions, bc: plan.bc, intro: plan.intro, results: plan.results }));
+    fs.writeFileSync(`${out}.plan.json`, JSON.stringify({ slug, race: raceName, kind, format, tune, logo, length: plan.length, shots: plan.shots, sound: plan.sound, texts: plan.texts, captions: plan.captions, hooks: plan.hooks, bc: plan.bc, intro: plan.intro, results: plan.results }));
     log(`${info.name}: ${kind} ${format}, ${plan.length.toFixed(1)} s, ${plan.shots.length} shots; winner ${info.podium[0].name} by ${info.margin} ms${plan.packShare !== undefined ? `; the race ${Math.round(plan.packShare * 100)}% on the pack` : ''}`);
     for (const sh of plan.shots) log(`  ${sh.at.toFixed(1).padStart(6)} s  ${(sh.type + (sh.follow !== undefined && sh.follow !== 'leader' ? ` #${sh.follow}` : sh.type === 'race' ? ' lead' : '')).padEnd(10)} ${sh.from !== undefined ? `race ${Math.round(sh.from)} ms` : ''} ${sh.speed && sh.speed !== 1 ? `×${sh.speed}` : ''} ${sh.dur.toFixed(1)} s`);
     // The rows on the podium card.
@@ -116,6 +117,12 @@ export async function record({ slug, race: raceName, kind = 'production', format
         bc: { opacity: k, label: span?.[2]?.label ?? null },
         intro: plan.intro ? { k: fade(v, plan.intro.at, plan.intro.dur, 0.5, 0.6), title: plan.intro.title, sub: plan.intro.sub } : null,
         results: plan.results ? { k: fade(v, plan.results.at, plan.results.dur, 0.6, 0.6), ...plan.results } : null,
+        hook: (() => {
+          const h = (plan.hooks ?? []).find((x) => v >= x.at && v < x.at + x.dur);
+          return h ? { k: fade(v, h.at, h.dur, 0.12, 0.12), text: h.text } : { k: 0, text: '' };
+        })(),
+        markers: plan.markers && v >= plan.markers.at && v < plan.markers.at + plan.markers.dur ? { k: fade(v, plan.markers.at, plan.markers.dur, 0.2, 0.15), members: plan.markers.members } : { k: 0, members: [] },
+        rewind: plan.rewind && v >= plan.rewind.at && v < plan.rewind.at + plan.rewind.dur ? 1 : 0,
         caption: (() => {
           const c = (plan.captions ?? []).find((x) => v >= x.at && v < x.at + x.dur);
           return c ? { k: fade(v, c.at, c.dur, 0.25, 0.3), text: c.text, big: c.key === 'photoFinish' } : { k: 0, text: '' };
@@ -155,7 +162,7 @@ export async function record({ slug, race: raceName, kind = 'production', format
         shot = await card.screenshot({ type: 'jpeg', quality: 92 });
       } else {
         const t = sh.type === 'fly' ? (u / sh.dur) * fly * 1000 : sh.from + u * 1000 * (sh.speed ?? 1);
-        const step = (1000 / FPS) * (sh.speed ?? 1);
+        const step = (1000 / FPS) * Math.abs(sh.speed ?? 1) || 1000 / FPS; // (a frozen or rewinding shot: the cameras still ease a frame at a time)
         const ov = overlayAt(v);
         const pod = plan.podium && v >= plan.podium.at ? Math.min(1, (v - plan.podium.at) / 0.5) * Math.min(1, Math.max(0, (plan.podium.at + plan.podium.dur - v) / 0.4)) : 0;
         await page.evaluate(([s, t, step, text, pod, rows, ov]) => {
@@ -173,6 +180,9 @@ export async function record({ slug, race: raceName, kind = 'production', format
           if (ov) {
             r.broadcast(s.type === 'fly' ? -1e9 : t, { ...ov.bc, captionOn: ov.caption.k > 0 });
             r.caption(ov.caption.k, ov.caption.text, { big: ov.caption.big });
+            r.hook(ov.hook.k, ov.hook.text);
+            r.markers(ov.markers.k, ov.markers.members);
+            r.rewind(ov.rewind);
             if (ov.intro) r.intro(ov.intro.k, ov.intro);
             if (ov.results) r.results(ov.results.k, ov.results);
           }
