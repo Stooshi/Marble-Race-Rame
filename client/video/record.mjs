@@ -83,7 +83,7 @@ export async function record({ slug, race: raceName, kind = 'production', format
   fly ??= kind === 'clip' ? 12 : 15; // (seconds: the flyover's length)
   const [W, H] = SIZES[format];
   const race = JSON.parse(fs.readFileSync(path.join(here, '..', 'dev', '.tracks', `${raceName}.json`), 'utf8'));
-  const server = await createServer({ root: path.resolve(here, '..'), logLevel: 'error', server: { port: 0, strictPort: false, fs: { allow: [path.resolve(here, '..', '..', '..')] } } }); // (allow: a worktree whose node_modules link to another checkout still loads the fonts)
+  const server = await createServer({ root: path.resolve(here, '..'), logLevel: 'error', server: { port: 0, strictPort: false, fs: { allow: [path.resolve(here, '..', '..', '..'), fs.realpathSync(path.resolve(here, '..', 'node_modules'))] } } }); // (allow: a worktree whose node_modules link to another checkout still loads the fonts)
   await server.listen();
   const { port } = server.httpServer.address();
   const browser = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
@@ -99,12 +99,29 @@ export async function record({ slug, race: raceName, kind = 'production', format
     const info = await page.evaluate(() => window.rec.info());
     const plan = PLANS[kind](info, race, { logo, fly, clip, at, promoStart });
     // (The plan beside the video: swap-logo.mjs uses it to put another logo version in.)
-    fs.writeFileSync(`${out}.plan.json`, JSON.stringify({ slug, race: raceName, kind, format, tune, logo, length: plan.length, shots: plan.shots, sound: plan.sound }));
+    fs.writeFileSync(`${out}.plan.json`, JSON.stringify({ slug, race: raceName, kind, format, tune, logo, length: plan.length, shots: plan.shots, sound: plan.sound, texts: plan.texts, captions: plan.captions, bc: plan.bc, intro: plan.intro, results: plan.results }));
     log(`${info.name}: ${kind} ${format}, ${plan.length.toFixed(1)} s, ${plan.shots.length} shots; winner ${info.podium[0].name} by ${info.margin} ms${plan.packShare !== undefined ? `; the race ${Math.round(plan.packShare * 100)}% on the pack` : ''}`);
     for (const sh of plan.shots) log(`  ${sh.at.toFixed(1).padStart(6)} s  ${(sh.type + (sh.follow !== undefined && sh.follow !== 'leader' ? ` #${sh.follow}` : sh.type === 'race' ? ' lead' : '')).padEnd(10)} ${sh.from !== undefined ? `race ${Math.round(sh.from)} ms` : ''} ${sh.speed && sh.speed !== 1 ? `×${sh.speed}` : ''} ${sh.dur.toFixed(1)} s`);
     // The rows on the podium card.
     await page.evaluate(([title]) => { document.getElementById('podiumTitle').textContent = title; }, [TEXTS.podiumTitle]);
     const rows = info.podium.map((r) => ({ name: r.name, look: r.look, ms: r.ms }));
+    if (plan.bc) await page.evaluate((o) => window.rec.setBroadcast(o), { city: plan.city.toUpperCase(), towerTitle: 'GRAND PRIX' });
+    // (The broadcast's overlay, intro card and results board at video second v: shown with short fades.)
+    const fade = (v, a, d, fin = 0.3, fout = 0.3) => Math.max(0, Math.min(1, (v - a) / fin, (a + d - v) / fout));
+    const overlayAt = (v) => {
+      if (!plan.bc) return null;
+      const span = plan.bc.find(([a, b]) => v >= a && v < b);
+      const k = span ? fade(v, span[0], span[1] - span[0], 0.35, 0.3) : 0;
+      return {
+        bc: { opacity: k, label: span?.[2]?.label ?? null },
+        intro: plan.intro ? { k: fade(v, plan.intro.at, plan.intro.dur, 0.5, 0.6), title: plan.intro.title, sub: plan.intro.sub } : null,
+        results: plan.results ? { k: fade(v, plan.results.at, plan.results.dur, 0.6, 0.6), ...plan.results } : null,
+        caption: (() => {
+          const c = (plan.captions ?? []).find((x) => v >= x.at && v < x.at + x.dur);
+          return c ? { k: fade(v, c.at, c.dur, 0.25, 0.3), text: c.text, big: c.key === 'photoFinish' } : { k: 0, text: '' };
+        })(),
+      };
+    };
     // The logo and end card from their own page, the same size.
     const card = await browser.newPage({ viewport: { width: W, height: H }, deviceScaleFactor: 1 });
     const cardFor = async (q) => { await card.goto(`file://${path.join(here, 'logo.html')}?${new URLSearchParams(q)}`); await card.evaluate(() => window.ready); };
@@ -131,7 +148,7 @@ export async function record({ slug, race: raceName, kind = 'production', format
       if (sh.type === 'logo' || sh.type === 'end') {
         const key = sh.type === 'logo' ? `logo-${sh.version}` : 'end';
         if (cardKey !== key) {
-          await cardFor(sh.type === 'logo' ? { v: sh.version } : { v: TEMPLATE.intro.logo, end: '1', l1: TEXTS.endCard[0], l2: TEXTS.endCard[1] });
+          await cardFor(sh.type === 'logo' ? { v: sh.version } : { v: TEMPLATE.intro.logo, end: '1', l1: (plan.endLines ?? TEXTS.endCard)[0], l2: (plan.endLines ?? TEXTS.endCard)[1] });
           cardKey = key;
         }
         await card.evaluate((t) => window.logoAt(t), Math.min(u, 1.99));
@@ -139,8 +156,9 @@ export async function record({ slug, race: raceName, kind = 'production', format
       } else {
         const t = sh.type === 'fly' ? (u / sh.dur) * fly * 1000 : sh.from + u * 1000 * (sh.speed ?? 1);
         const step = (1000 / FPS) * (sh.speed ?? 1);
+        const ov = overlayAt(v);
         const pod = plan.podium && v >= plan.podium.at ? Math.min(1, (v - plan.podium.at) / 0.5) * Math.min(1, Math.max(0, (plan.podium.at + plan.podium.dur - v) / 0.4)) : 0;
-        await page.evaluate(([s, t, step, text, pod, rows]) => {
+        await page.evaluate(([s, t, step, text, pod, rows, ov]) => {
           const r = window.rec;
           r.text(text ?? { opacity: 0 });
           r.podium(pod, rows);
@@ -152,7 +170,13 @@ export async function record({ slug, race: raceName, kind = 'production', format
             if (s.type === 'look') r.look(t, eye);
             else r.pan(t, { from: eye.from, follow: s.follow, members: s.members, fov: s.fov ?? eye.fov ?? 32, ...(s.lead !== undefined && { lead: s.lead }) });
           }
-        }, [{ type: sh.type, eye: sh.eye, follow: sh.follow, fov: sh.fov, members: sh.members, shot: sh.shot, back: sh.back, up: sh.up, ahead: sh.ahead, lead: sh.lead }, t, step, textAt(plan.texts, v), pod, rows]);
+          if (ov) {
+            r.broadcast(s.type === 'fly' ? -1e9 : t, { ...ov.bc, captionOn: ov.caption.k > 0 });
+            r.caption(ov.caption.k, ov.caption.text, { big: ov.caption.big });
+            if (ov.intro) r.intro(ov.intro.k, ov.intro);
+            if (ov.results) r.results(ov.results.k, ov.results);
+          }
+        }, [{ type: sh.type, eye: sh.eye, follow: sh.follow, fov: sh.fov, members: sh.members, shot: sh.shot, back: sh.back, up: sh.up, ahead: sh.ahead, lead: sh.lead }, t, step, textAt(plan.texts, v), pod, rows, ov]);
         shot = await page.screenshot({ type: 'jpeg', quality: 92 });
       }
       if (list) { fs.writeFileSync(`${out.replace(/\.mp4$/, '')}-${v.toFixed(2)}.jpg`, shot); frames += 1; continue; }

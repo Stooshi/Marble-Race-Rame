@@ -23,7 +23,7 @@ export const SOUNDS = {
   // The signature: soundreality's whoosh (Pixabay 383023, the game's old overtaking sound), loudest about 1.2 s in.
   whoosh: { file: inbox('MARBLES OVERTAKING'), peak: 1.2, gain: TEMPLATE.sound.signatureGain },
   beeps: { file: audio('start-beeps') },   // its fourth beep 3.023 s in (engine.js BEEPS_GO_S)
-  launch: { file: audio('launch') },
+  launch: { file: audio('start-rolling') }, // (the start sound since 30 Oct 2026: the marbles start rolling)
   ceremony: { file: audio('ceremony') },
   crowd: { file: audio('crowd-grand-prix') },
   tune: (n) => ({ file: audio(`tune-${n}`) }),

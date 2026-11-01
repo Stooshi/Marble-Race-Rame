@@ -11,7 +11,7 @@
 // Sound: { goAt (GO in video seconds, or null), beeps, music: [[from, to]], lifts: [[from, to]] (the music lifted
 // a little: the big moments), ceremony: [from, to] } (record.mjs mix(); the end card's signature sound is always added).
 import { TEMPLATE, TEXTS, fill } from './assets.mjs';
-import { FINISH_EYE, START_SHOT, analyse, busiest, directRace, reaches } from './director.mjs';
+import { FINISH_EYE, START_SHOT, analyse, busiest, directRace, packScore, reaches } from './director.mjs';
 
 export { FINISH_EYE };
 
@@ -295,5 +295,159 @@ export function clip(info, race, { clip: kind, at = null, fly = 12, promoStart =
     shots: p.shots, texts: p.texts, podium: null, length: p.v,
     marks: {},
     sound: { goAt, beeps, music: [[0, p.v - TEMPLATE.endCard.seconds.clip + 0.6]], lifts: p.lifts, ceremony: null },
+  };
+}
+
+/**
+ * Cuts every 2–4 s (the broadcast, Moses 1 Nov 2026): a directed shot longer than the template's longest
+ * cut is split into pieces, every other one from another camera on the same action: the leader's follow
+ * camera alternates with a chase camera behind the leading group, the pack's chase with the follow camera
+ * on the bunch's last marble.
+ */
+function cutUp(shots, A, [lo, hi]) {
+  const out = [];
+  const at = (t) => A.find((x) => x.t >= t) ?? A[A.length - 1];
+  for (const s of shots) {
+    if (s.dur <= hi || s.type === 'pan') { out.push(s); continue; }
+    const n = Math.ceil(s.dur / hi);
+    const len = s.dur / n;
+    for (let k = 0; k < n; k += 1) {
+      const from = s.from + k * len * 1000;
+      if (k % 2 === 0) { out.push({ ...s, from, dur: len, shot: `${s.shot ?? 'r'}-${k}` }); continue; }
+      const a = at(from);
+      if (s.type === 'group') out.push({ type: 'race', follow: a.mid ?? 'leader', from, dur: len });
+      else if (s.follow === 'leader') out.push({ type: 'group', members: leadGroup(a), shot: `lead-${from}`, from, dur: len, back: 9, up: 5, ahead: 8, fov: 42 });
+      else out.push({ type: 'group', members: a.members.slice(0, 8), shot: `pk-${from}`, from, dur: len });
+    }
+  }
+  void lo;
+  return out;
+}
+let LEAD_GROUP = null;
+/** The finish from beside the line (the broadcast): a camera a few metres before the line and to the side, turning with the leader. */
+export const LINE_EYE = { p: 1, back: 14, beside: 5, up: 6, ahead: 0, lookUp: 0.3, fov: 32 }; // (close on the leaders, the stand behind)
+/** The live finish: high behind the line, looking down the last bend to it. */
+export const LINE_HIGH = { p: 1, back: 8, beside: 0, up: 7, ahead: 0, lookUp: 0.3, fov: 36 };
+const leadGroup = (x) => (LEAD_GROUP ? LEAD_GROUP(x.t) : [x.lead]);
+
+/**
+ * The broadcast production (horizontal, about 2 minutes; Moses, 1 Nov 2026): the hook (the closest moment,
+ * slowed), the intro card over the flyover, the countdown, the whole race with the overlay and cuts every
+ * 2–4 s, the finish live and in slow motion, the results board with the winner's card, the end card. The
+ * words are the template's broadcast captions (lower third), placed at the race's own moments.
+ */
+export function broadcast(info, race, { fly = 15 } = {}) {
+  const m = moments(info, race);
+  const A = analyse(race, info.arc, m.W + 8000);
+  const G = info.countdownMs;
+  const BC = TEMPLATE.broadcast;
+  const C = BC.captions;
+  const p = builder('broadcast');
+  const city = info.name.replace(/\s*Marble Grand Prix$/i, '').trim();
+  const clock = (ms) => `${Math.floor(ms / 60000)}:${String(Math.floor((ms % 60000) / 1000)).padStart(2, '0')}.${String(Math.round(ms % 1000)).padStart(3, '0')}`;
+  const name = { track: info.name, marble: info.podium[0].name, city: city.toUpperCase(), margin: (info.margin / 1000).toFixed(3), time: clock(info.winnerMs) };
+  // (The leading group at race ms t: the leader and the marbles within 6 m of it.)
+  LEAD_GROUP = (t) => {
+    const f = race.frames[Math.max(0, Math.min(race.frames.length - 1, Math.round(t / race.tickMs)))];
+    const top = Math.max(...f.p.filter((x) => x < 1));
+    return f.p.map((x, i) => [x, i]).filter(([x]) => x < 1 && (top - x) * info.arc < 6).map(([, i]) => i);
+  };
+  const bc = []; // [from, to, { label }]: where the overlay shows
+  const on = (a, b, o = {}) => bc.push([a, b, o]);
+  const want = []; // captions wanted: { v (video s), key, dur?, after? (must start at or after), before? }
+  // 1. The hook: the closest moment, slowed. A photo finish: the last metres from beside the line, cut away
+  // before the line; otherwise the race's best overtaking moment.
+  let hook;
+  if (m.close) hook = p.add({ type: 'pan', from: m.W - 1150, speed: 0.36, dur: 2.9, eye: LINE_EYE, follow: 'leader', fov: 32 });
+  else hook = p.add({ type: 'race', follow: 'leader', from: (m.moves[0]?.t ?? m.W * 0.6) - 1000, speed: 0.6, dur: 2.9 });
+  if (m.close) want.push({ v: hook + 0.15, key: 'hook', dur: 2.6 });
+  p.lift(hook, hook + 2.9);
+  // 2. The intro card over the flyover, then a caption.
+  const flyAt = p.add({ type: 'fly', dur: fly });
+  const intro = { at: flyAt + 1, dur: 6.4, title: fill(BC.introCard, name), sub: fill(BC.introSub, name) };
+  want.push({ v: flyAt + 9.2, key: 'flyover' });
+  // 3. The countdown, the tower showing the gates.
+  const cdAt = p.add({ type: 'race', from: -G, dur: G / 1000 });
+  on(cdAt + 0.4, p.v);
+  want.push({ v: cdAt + 0.8, key: 'grid' });
+  const goAt = p.v;
+  want.push({ v: goAt + 0.3, key: 'go' });
+  // 4. The race, cut every 2–4 s.
+  const { shots } = directRace(A, { from: 0, to: m.W - 8000 });
+  const raceShots = cutUp(shots, A, BC.cutSeconds);
+  for (const s of raceShots) {
+    const at = p.add(s);
+    if (s.follow !== undefined && s.follow !== 'leader' && within3(A, s.from, s.from + s.dur * 1000)) p.lift(at, at + s.dur);
+  }
+  // The last 8 s: the leader, the leading group, the finish from high behind the line.
+  p.add({ type: 'race', follow: 'leader', from: m.W - 8000, dur: 3 });
+  p.add({ type: 'group', members: LEAD_GROUP(m.W - 5000), shot: 'final', from: m.W - 5000, dur: 3.4, back: 9, up: 5, ahead: 8, fov: 42 });
+  p.add({ type: 'pan', from: m.W - 1600, dur: 3.4, eye: LINE_HIGH, follow: 'leader', fov: 36 });
+  p.add({ type: 'race', follow: 'leader', from: m.W + 1800, dur: 2.6 });
+  on(goAt, p.v);
+  p.lift(goAt + (m.W - 3000) / 1000, goAt + (m.W + 3000) / 1000);
+  // The race's moments (race ms → video s: the race runs at its own speed from GO to the finish).
+  const rv = (t) => goAt + t / 1000;
+  const W = m.W;
+  const firstBunch = A.find((x) => x.t >= 5000 && x.t < W - 12000 && x.contacts >= 3);
+  if (firstBunch) want.push({ v: rv(firstBunch.t), key: 'firstBunch' });
+  // (The first big overtake: a marble in the top ten gaining three places or more within 3 s, after the start's shuffle.)
+  const placeAt = (t) => { const f = race.frames[Math.max(0, Math.min(race.frames.length - 1, Math.round(t / race.tickMs)))]; return f.s ?? []; };
+  let move = null;
+  for (let t = 8000; t < W - 10000 && !move; t += 250) {
+    const a = placeAt(t);
+    const b = placeAt(t + 3000);
+    if (b.slice(0, 10).some((i, k) => a.indexOf(i) - k >= 3)) move = t;
+  }
+  if (move !== null) want.push({ v: rv(move + 800), key: 'firstOvertake' });
+  const lead = A.find((x) => x.t >= 6000 && x.t < W - 9000 && x.leadChange);
+  if (lead) want.push({ v: rv(lead.t), key: 'leadChange' });
+  // (A pack shot in the middle of the race: the chase camera on the bunch, between 35% and 70% of the way.)
+  const mid = raceShots.find((s) => s.type === 'group' && s.from > W * 0.35 && s.from < W * 0.7 && s.members?.length >= 4);
+  if (mid) want.push({ v: rv(mid.from + 300), key: 'packShot' });
+  // (A calm stretch: the quietest 3 s between a quarter and three quarters of the way, no lead change in it.)
+  let calm = null;
+  for (const x of A) {
+    if (x.t < W * 0.25 || x.t > W * 0.75) continue;
+    const w = A.filter((y) => y.t >= x.t && y.t < x.t + 3000);
+    if (w.some((y) => y.leadChange)) continue;
+    const sc = packScore(A, x.t, x.t + 3000);
+    if (!calm || sc < calm.s) calm = { t: x.t, s: sc };
+  }
+  if (calm) want.push({ v: rv(calm.t), key: 'calm' });
+  want.push({ v: rv(W - 7800), key: 'finalStretch' });
+  // 5. The finish in slow motion: from beside the line, then the follow camera on the winner.
+  const s1 = p.add({ type: 'pan', from: m.W - 1400, speed: 0.25, dur: 7.2, eye: LINE_EYE, follow: 'leader', fov: 32 });
+  const s2 = p.add({ type: 'race', follow: 'leader', from: m.W - 1300, speed: 0.3, dur: 5.6 });
+  on(s1, p.v, { label: BC.slowMotion });
+  if (m.close) want.push({ v: s1 + 4.2, key: 'photoFinish', dur: 2.8, fixed: true });
+  want.push({ v: s2 + 1.6, key: 'winnerTime', dur: 3, fixed: true });
+  p.lift(s1, p.v);
+  // 6. The results board over the finish.
+  const resAt = p.add({ type: 'race', follow: 'leader', from: m.W + 4000, dur: 12 });
+  const results = { at: resAt + 0.4, dur: 11.6, title: BC.resultsTitle, sub: fill(BC.resultsSub, { ...name, city }), winnerLabel: BC.winner, columns: BC.columns };
+  want.push({ v: resAt + 6.5, key: 'results', fixed: true });
+  // 7. The end card (the broadcast's own lines).
+  const endAt = p.end();
+  // The captions: in time order, never two at once (one that would overlap the last is moved a little later,
+  // or left out when its moment has gone), never inside the intro card or the hook's end.
+  const captions = [];
+  const D = C.seconds;
+  const busyUntil = (v) => (v >= intro.at - 0.3 && v < intro.at + intro.dur + 0.3 ? intro.at + intro.dur + 0.3 : null);
+  for (const w of want.sort((a, b) => a.v - b.v)) {
+    const dur = w.dur ?? D;
+    let v = w.v;
+    const last = captions[captions.length - 1];
+    if (last && v < last.at + last.dur + 0.35) v = last.at + last.dur + 0.35;
+    v = busyUntil(v) ?? v;
+    if (v - w.v > (w.fixed ? 0.6 : 2.2)) continue; // (its moment has gone)
+    if (v + dur > endAt - 0.2 && w.key !== 'results') continue;
+    captions.push({ at: v, dur, key: w.key, text: fill(C[w.key], name) });
+  }
+  return {
+    shots: p.shots, texts: [], captions, podium: null, length: p.v, intro, results, bc, city,
+    endLines: BC.endCard,
+    marks: { flyAt, goAt, resAt, endAt },
+    sound: { goAt, beeps: true, music: [[flyAt, resAt + 0.4]], teaserMusic: [0, flyAt], lifts: p.lifts, ceremony: [resAt, p.v] },
   };
 }
