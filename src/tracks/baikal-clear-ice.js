@@ -22,7 +22,7 @@ module.exports = track({
     { section: 'Across the clear ice', at: 0.6, side: 'right', distance: 10, height: 12 },
     { section: 'Across the hummocks', at: 0.4, side: 'left', distance: 10, height: 12 },
   ],
-  start: { landmark: 'ice-grotto', type: 'straight-lift', gate: 'trapdoor', shots: { countdown: 'above', launch: 'overhead' } },
+  start: { landmark: 'ice-grotto', type: 'straight-lift', gate: 'paddle', shots: { countdown: 'above', launch: 'overhead' } },
   finish: { landmark: 'rock-island' },
   designChanges: [
     'Blocks Series 2 (Moses, 30 Oct 2026): two big features, the table top across the clear ice and the waterfall drop down a frozen icefall. Built from the clear ice layout made for this track (L121).',
