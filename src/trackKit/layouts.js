@@ -2127,7 +2127,7 @@ const LAYOUTS = {
   /** L122 Ice valley (Blocks 2, Svalbard; after the banked turn): a scree straight (a slalom), S-bends down the moraine (a peg), a drop into the ice valley, the ice-valley half-pipe (big feature two; the funnel at the gate is the plan's big feature one, here the banked turn), a sweep along the sea ice past the icebergs (a peg), an iceberg straight (a slalom), the run to the glacier front, the hairpin, a sweep to the station and a parked piece and a peg at the run-in. */
   'ice-valley': (L, R, c) => [
     { key: 'scree', name: 'Down the scree', shape: straight(55, { grade: 0.11 }), obstacles: [slalom({ costume: c.slalom, from: 0.2, to: 0.8, count: 3, loss: 0.15 })] },
-    { key: 'moraineBends', name: 'Moraine S-bends', shape: sBends({ first: R, radius: 70, degrees: 70, grade: 0.14 }), obstacles: [peg({ costume: c.peg, at: 0.5, line: 'center' })], billboards: 1 },
+    { key: 'moraineBends', name: 'Moraine S-bends', shape: sBends({ first: R, radius: 85, degrees: 60, grade: 0.14 }), obstacles: [peg({ costume: c.peg, at: 0.5, line: 'center' })], billboards: 1 },
     { key: 'valleyDrop', name: 'Into the ice valley', shape: plunge(35, { grade: 0.22, from: 0.12 }) },
     { key: 'valley', name: 'The ice-valley half-pipe', shape: halfPipe({ first: L, width: 8, swings: 3, radius: 150, degrees: 18, grade: 0.12 }) },
     { key: 'seaIce', name: 'Along the sea ice', shape: sweep({ side: L, radius: 95, degrees: 120, grade: 0.1 }), obstacles: [peg({ costume: c.peg, at: 0.5, line: 'center' })], billboards: 2 },
