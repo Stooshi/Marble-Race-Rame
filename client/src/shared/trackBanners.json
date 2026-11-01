@@ -1586,6 +1586,17 @@
    "side": -1,
    "marbles": 6
   },
+  "torres-del-paine-block-run": {
+   "name": "Torres del Paine Block Run",
+   "series": "Blocks",
+   "lighting": "sunset",
+   "v": "a9959a26",
+   "bytes": 15286,
+   "bytes2x": 37962,
+   "t": 10136,
+   "side": 1,
+   "marbles": 1
+  },
   "tre-cime-cube-towers": {
    "name": "Tre Cime Cube Towers",
    "series": "Blocks",
