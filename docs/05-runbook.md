@@ -249,7 +249,7 @@ Remove `STRIPE_ALLOW_LIVE`, put the test key and the test `whsec_…` back, and 
 
 ## Email (Brevo)
 
-Email is off until Brevo is set up. When it's on, "Forgot your password?" appears on the log-in page and reset emails are sent, and **every new sign-up gets a "Confirm your email" link** (EN/SV; texts in project doc `claude/signup-confirm-email.md`; Settings sends a new one). Before then, accounts are saved without confirmation.
+**Email is on since 1 Nov 2026** (Moses: `BREVO_API_KEY` and `EMAIL_FROM` = social@marblespins.com set on Railway, redeployed; a password-reset email arrived). So "Forgot your password?" shows on the log-in page and reset emails are sent, and **every new sign-up gets a "Confirm your email" link** (EN/SV; texts in project doc `claude/signup-confirm-email.md`; Settings sends a new one). Accounts saved before 1 Nov stay unconfirmed until the player asks for a link in Settings. The pass reminders stay off (`PASS_REMINDERS_SENDING`) until Moses says go. The steps below are how it was set up (and how to set it up again).
 
 1. **Create the account.** Make a Brevo account (brevo.com) in the company's name.
 2. **Authenticate marblespins.com.** In Brevo, go to Senders, Domains & Dedicated IPs → Domains → Add a domain → `marblespins.com`.

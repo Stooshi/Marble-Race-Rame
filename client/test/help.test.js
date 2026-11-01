@@ -28,11 +28,12 @@ describe('the questions', () => {
     expect(slugify('I paid but my coins didn’t arrive. What do I do?')).toBe('i-paid-but-my-coins-didnt-arrive-what-do-i-do');
   });
 
-  it('keeps the [bracket] placeholders only Moses can answer, and fills the others (19 Oct)', () => {
+  it('keeps the [bracket] placeholders only Moses can answer, and fills the others (19 Oct; email on 1 Nov)', () => {
     const text = all.map((q) => q.text).join('\n');
-    for (const p of ['[coming at launch]', '[Live once email is switched on.]']) {
+    for (const p of ['[coming at launch]']) {
       expect(text, p).toContain(p);
     }
+    expect(text).not.toContain('[Live once email is switched on.]'); // (Moses, 1 Nov: email is on)
     expect(text).not.toContain('[2 working days]'); // (Moses, 22 Oct: filled)
     expect(bySlug['do-coins-expire'].text).toMatch(/^No\. Your coins stay in your account until you use them or delete your account/); // (Moses, 21 Oct)
     for (const p of ['[To decide:', '[Google and Apple sign-in: later.]', '[01:00 / 02:00 Swedish time]', '[To confirm:', '[approval process coming]', "[If there's a quality setting"]) {

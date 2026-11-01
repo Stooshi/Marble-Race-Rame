@@ -11,6 +11,7 @@
 - **Tracks:** **141 live in ten series**: World Tour, Grand Prix, Coasters, Canyons, Blocks, Track and Field, Rivers (16), Peaks (15), Pinball and Arcade. The 31 holiday tracks are switched on but hidden and closed until 1 Dec 00:00 Swedish time (172 then). **Blocks Series 2: all 20 live** (two big features each): the test five since 31 Oct; the other fifteen (four cities, three rivers, four mountains, four winter tracks) switched on by Moses on 1 Nov after the server deploy.
 - **Server:** deployed by Moses on 1 Nov 2026 from Main `6d0472f` (code fingerprint `513360a073a0`): the fifteen Blocks Series 2 tracks (data updates `2027-05-15` to `2027-05-29`), **the free League's 3 tracks** and `GET /api/tracks/popular` ("Other players liked" on the solo starting line). Nothing on Main waits for a server deploy.
 - **Apps:** iPhone and Android (Capacitor) are built; the Android app is tested on Moses's phone. They need a rebuild for the keep-awake fix and the new sounds. Store submission is planned for 16–20 Nov.
+- **Email: on since 1 Nov 2026** (Brevo; `BREVO_API_KEY` and `EMAIL_FROM` = social@marblespins.com on Railway, the server redeployed on the same code `513360a073a0`; a password-reset email arrived in Moses's inbox): password resets, "Confirm your email" for new sign-ups, support replies and contact-form notifications. The pass reminders are not sent yet.
 - **Payments:**
   - Stripe on the website, in **test mode** until Moses says otherwise.
   - Google Play Billing and Apple in-app purchases are built.
@@ -19,7 +20,7 @@
 - **Built, switched off:**
   - push notifications (first app update, December);
   - gift codes;
-  - email: pass reminders and confirmations, waiting for Brevo and its key;
+  - the pass reminder emails (built; `PASS_REMINDERS_SENDING` stays off until Moses says go);
   - the guest deletion job (dry run);
   - deleting replays over 30 days old (dry run until `REPLAY_TRIM=on`; new replays are already a third of the size).
 - **Newest this week (26 Oct – 1 Nov):**
@@ -51,7 +52,7 @@
 - **One server instance only:** race timers live in memory.
 - **After a Railway variables change,** check `/health` shows the new code fingerprint. On 23 Oct a redeploy served an old build.
 - **Rotating `JWT_SECRET` logs everyone out,** and guests lose their accounts.
-- **Store submission is blocked** by the legal DRAFT banner and email (Brevo). See `claude/open-decisions.md` in the project.
+- **Store submission is blocked** by the legal DRAFT banner (email is on since 1 Nov). See `claude/open-decisions.md` in the project.
 
 **Where the rest is:**
 - **In the project:**

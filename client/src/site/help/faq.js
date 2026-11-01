@@ -397,7 +397,7 @@ export function buildFaq({ tracks, platform = 'web' } = {}) {
         ['contact', 'Contact us'],
       ]],
       ['I forgot my password.',
-        "On the log-in page, tap **Forgot your password?** and type your account's email. We email you a link to choose a new password. The link works once, for 60 minutes; if it doesn't arrive, check your spam folder. Choosing a new password logs you out on your other devices. Guest accounts have no password: save your marble to keep it. [Live once email is switched on.]"],
+        "On the log-in page, tap **Forgot your password?** and type your account's email. We email you a link to choose a new password. The link works once, for 60 minutes; if it doesn't arrive, check your spam folder. Choosing a new password logs you out on your other devices. Guest accounts have no password: save your marble to keep it."],
     ]],
     ['Younger players and parents', [
       ['Is there an age limit?',

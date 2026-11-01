@@ -104,7 +104,7 @@
 - Each message is saved in `support_messages`, linked to the player's account (their login, guests too; else the account with the email they typed), and shows in the back office's **Support messages** inbox and on the player's **Messages** tab.
 
 **Email.**
-- Sent through **Brevo** (EU), and switched off until `BREVO_API_KEY` is set on Railway.
+- Sent through **Brevo** (EU): on since 1 Nov 2026 (`BREVO_API_KEY` and `EMAIL_FROM` = social@marblespins.com on Railway). Without the key, email is off.
 - Today it sends **password-reset** links (`/forgot-password` → email → `/reset-password?token=…`), a **notification to the support address** for each new contact-form message (when `SUPPORT_EMAIL` is set; replying to it goes straight to the player), and **replies from the back office** to players. Once it is on it also sends a **confirmation of each website purchase** (with the words agreed to at checkout) and an **acknowledgement of each withdrawal** (`src/payments/emails.js`).
 - News emails will use the same sender; signed unsubscribe links are ready (`src/email/unsubscribe.js`).
 - Stripe sends its own receipts.
