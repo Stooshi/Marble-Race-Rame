@@ -13,6 +13,17 @@
    "side": 1,
    "marbles": 2
   },
+  "abraham-lake-frost": {
+   "name": "Abraham Lake Frost",
+   "series": "Blocks",
+   "lighting": "day",
+   "v": "940746fc",
+   "bytes": 12722,
+   "bytes2x": 30602,
+   "t": 10039,
+   "side": -1,
+   "marbles": 6
+  },
   "accra-december-beats": {
    "name": "Accra December Beats",
    "series": "Track and Field",
