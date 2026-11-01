@@ -2092,7 +2092,7 @@ const LAYOUTS = {
   ],
   /** L120 Arrowhead spiral (Blocks 2, Kirkjufell; after the crest start): a slalom past the lighthouse, S-bends along the fjord (a peg), the run to the falls, the waterfall drop over the twin falls (big feature one), a straight across the lava field (a slalom), the run to the hairpin, the hairpin, the spiral round the arrowhead peak (big feature two), S-bends down to the shore (a peg), a sweep along the shore and a parked piece and a peg at the run-in. */
   'arrowhead-spiral': (L, R, c) => [
-    { key: 'lighthouse', name: 'Past the lighthouse', shape: straight(50, { grade: 0.11 }), obstacles: [slalom({ costume: c.slalom, from: 0.2, to: 0.8, count: 4, loss: 0.15 })] },
+    { key: 'lighthouse', name: 'Past the lighthouse', shape: straight(25, { grade: 0.11 }) },
     { key: 'fjord', name: 'Along the fjord', shape: sBends({ first: R, radius: 85, degrees: 55, grade: 0.11 }), obstacles: [peg({ costume: c.peg, at: 0.5, line: 'center' })], billboards: 2 },
     { key: 'toTheFalls', name: 'To the falls', shape: straight(35, { grade: 0.12 }) },
     { key: 'falls', name: 'Over the twin falls', shape: waterfall(35, { grade: 0.5 }) },

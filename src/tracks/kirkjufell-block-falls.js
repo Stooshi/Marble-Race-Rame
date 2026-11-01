@@ -1,6 +1,6 @@
 'use strict';
 
-// Kirkjufell Block Falls: Blocks Series 2 (mountains), Iceland's arrowhead mountain built from cubes. Off a lighthouse over the crest start, pegs past
+// Kirkjufell Block Falls: Blocks Series 2 (mountains), Iceland's arrowhead mountain built from cubes. Off a lighthouse over the crest start, a short run past
 // the lighthouse, along the fjord, the waterfall drop over the twin falls (big feature one), the lava field, the
 // spiral round the arrowhead peak (big feature two), the hairpin and a sweep along the shore.
 const { track, opening, layout } = require('../trackKit');
