@@ -180,8 +180,8 @@ export const BLOCK_WORLDS = {
   },
   // Yellowstone in winter: frost over orange mineral terraces, hot-spring blue.
   geyser: {
-    tops: ['#e8eef2', '#dce4ea'], riser: '#c8803a', deep: '#8a5a2a', floor: '#5fa8c0', bank: '#e2e8ee', fill: '#c8a070', hills: 14, step: 2,
-    dressing: [['snowPine', 0.5], ['snowRock', 0.3], ['stoneRock', 0.2]],
+    tops: ['#e8eef2', '#dce4ea'], riser: '#c8803a', deep: '#8a5a2a', floor: '#5fa8c0', bank: '#e2e8ee', fill: '#c8a070', hills: 14, step: 3,
+    dressing: [['snowPine', 0.3], ['snowRock', 0.4], ['stoneRock', 0.3]], // (fewer pines and taller terraces: within the drawing budget)
   },
   // Abraham Lake: snow on the Rockies, dark pines, a turquoise frozen lake.
   rockies: {

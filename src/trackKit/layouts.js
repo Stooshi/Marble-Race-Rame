@@ -2153,7 +2153,7 @@ const LAYOUTS = {
     { key: 'drop1', name: 'Down the first terrace', shape: plunge(45, { grade: 0.26, from: 0.12 }) },
     { key: 'ledge', name: 'The middle terrace', shape: straight(30, { grade: 0.1 }), obstacles: [peg({ costume: c.peg, at: 0.5, line: 'center' })] },
     { key: 'drop2', name: 'Down to the river', shape: plunge(45, { grade: 0.26, from: 0.1 }) },
-    { key: 'valleySweep', name: 'Across the valley', shape: sweep({ side: R, radius: 95, degrees: 135, grade: 0.11 }), billboards: 1 },
+    { key: 'valleySweep', name: 'Across the valley', shape: sweep({ side: L, radius: 95, degrees: 135, grade: 0.11 }), billboards: 1 },
     {
       key: 'lastStraight', name: 'Last straight', shape: straight(85, { grade: 0.2 }),
       obstacles: [parked({ costume: c.parked, at: 0.2, side: R, length: 6 }), peg({ costume: c.peg, at: 0.45, line: 'left' })], features: [rumble({ from: 0.7, to: 0.95, count: 3 })],
