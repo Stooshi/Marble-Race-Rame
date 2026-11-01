@@ -176,4 +176,5 @@ module.exports = [
   require('./torres-del-paine-block-run'),
   require('./rainier-ice-block-run'),
   require('./kinabalu-cube-summit'),
+  require('./kirkjufell-block-falls'),
 ];
