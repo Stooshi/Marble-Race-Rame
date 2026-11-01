@@ -77,15 +77,16 @@ if [ -z "${SKIP_EFFECTS:-}" ]; then
   ffmpeg -v error -y -i "$f" -vn -map_metadata -1 -af "$ff" -ar 48000 -c:a libopus -b:a 64k -vbr on -application audio "$OUT/marble-hit.webm"
   ffmpeg -v error -y -i "$f" -vn -map_metadata -1 -af "$ff" -c:a aac -b:a 96k -ar 44100 -movflags +faststart "$OUT/marble-hit.m4a"
   # The player's own marble hitting an obstacle (Moses, 31 Oct 2026): "the same level as the collision sound".
-  # The bump is a dense 0.13 s knock, the collision a sharp click, so matched by energy (their mean level),
-  # not by peak: the bump's mean set to the levelled click's (its peak then well under the click's). The
-  # 30 ms of silence at its start trimmed, so it sounds on the hit.
-  hm=$(ffmpeg -hide_banner -nostats -i "$f" -af volumedetect -f null - 2>&1 | sed -n 's/.*mean_volume: \(.*\) dB/\1/p')
-  target=$(awk -v m="$hm" -v p="$g" 'BEGIN { print m + (-9 - p) }')
+  # First matched by energy (mean level), which left it 5 LU quieter to the ear than the click and hard to
+  # hear (Moses, 1 Nov 2026): now matched by loudness, both measured padded to 0.4 s (the loudness measure's
+  # shortest window), the click as levelled above; the bump's peak stays under the click's. The 28 ms of
+  # silence at its start trimmed, so it sounds on the hit.
+  lufs() { ffmpeg -hide_banner -nostats -i "$1" -af "$2apad=pad_dur=0.4,ebur128" -f null - 2>&1 | sed -n 's/^ *I: *\(-*[0-9.]*\) LUFS/\1/p' | tail -1; }
+  hl=$(lufs "$f" "volume=$(awk -v m="$g" 'BEGIN { print -9 - m }')dB,")
   b=$(ls "$IN"/MARBLE\ BUMP\ ON\ OBSTICALS*.mp3)
   trim="atrim=start=0.028,asetpts=PTS-STARTPTS"
-  bm=$(ffmpeg -hide_banner -nostats -i "$b" -af "$trim,volumedetect" -f null - 2>&1 | sed -n 's/.*mean_volume: \(.*\) dB/\1/p')
-  ff="$trim,volume=$(awk -v t="$target" -v m="$bm" 'BEGIN { print t - m }')dB"
+  bl=$(lufs "$b" "$trim,")
+  ff="$trim,volume=$(awk -v t="$hl" -v m="$bl" 'BEGIN { print t - m }')dB"
   ffmpeg -v error -y -i "$b" -vn -map_metadata -1 -af "$ff" -ar 48000 -c:a libopus -b:a 64k -vbr on -application audio "$OUT/marble-bump.webm"
   ffmpeg -v error -y -i "$b" -vn -map_metadata -1 -af "$ff" -c:a aac -b:a 96k -ar 44100 -movflags +faststart "$OUT/marble-bump.m4a"
   # (No overtaking whoosh for now: Moses, 28 Oct 2026.)
