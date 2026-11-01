@@ -35,7 +35,7 @@
 
   "endCard": {
     "lines": ["Pick your marble. Race your friends.", "Play free at marblespins.com"],
-    "seconds": { "production": 5, "cutdown": 4, "clip": 4 }
+    "seconds": { "production": 5, "cutdown": 4, "clip": 4, "broadcast": 5 }
   },
 
   "sound": {
@@ -55,7 +55,7 @@
 
   "promos": {
     "_about": "Lines about the game, shown 3–4 per video (productions 4, cut-downs 3, short clips as many as fit, at most 2), in the same text style, about 2.6 s each, in calm moments away from the other lines, never over the pack (the top band). Each video gets the next few in the list, so they rotate across videos. A line given as a list is shown in parts, one after the other. Only what is live: no qualifying, no prizes. The fjords line: Sognefjord is a live track (checked 29 Oct 2026, not holiday-locked); if it ever isn't, use the other version in `fjordsFallback`.",
-    "perVideo": { "production": 4, "cutdown": 3, "clip": 2 },
+    "perVideo": { "production": 4, "cutdown": 3, "clip": 2, "broadcast": 3 },
     "seconds": 2.6,
     "lines": [
       "Real physics",
@@ -67,6 +67,43 @@
       ["Amazing tracks: from Norwegian fjords to pinball tables.", "Every track has its own start, layout and surprises."]
     ],
     "fjordsFallback": ["Amazing tracks: from the Grand Canyon to pinball tables.", "Every track has its own start, layout and surprises."]
+  },
+
+  "broadcast": {
+    "_about": "The broadcast production (Moses, 1 Nov 2026): one whole race filmed as a TV motorsport broadcast, in our own style only (navy, yellow and orange, Lilita One, the mark in its usual corner; nothing copied from any real series, team, driver or sponsor). A hook of the closest moment, the intro card over the flyover, the overlay through the race (the standings tower top left, the race clock and the three sectors top right beside the mark, name tags over the marbles near the camera), cuts every 2–4 s, the finish in slow motion, the results board with the winner's card, the end card.",
+    "introCard": "MARBLE SPINS GRAND PRIX · {city}",
+    "introSub": "20 marbles. One winner.",
+    "captions": {
+      "_about": "The broadcast's on-screen script (Moses, 1 Nov 2026): lower-third captions in our font and colours, about 2.6 s each, timed to the race's own moments (not fixed seconds), never two at once, never over the pack. A line whose moment doesn't happen in the race is skipped. {margin}, {marble} and {time} are the chosen race's real numbers.",
+      "seconds": 2.6,
+      "hook": "Decided by {margin} seconds.",
+      "flyover": "Over 100 tracks. This is one.",
+      "grid": "Every gate drawn at random.",
+      "go": "Real physics. Nothing scripted.",
+      "firstBunch": "Every bounce is live.",
+      "firstOvertake": "No two races are ever the same.",
+      "packShot": "Imagine your marble in there.",
+      "calm": "Race your friends with one link.",
+      "leadChange": "Run your own league.",
+      "finalStretch": "Every marble has its own record.",
+      "photoFinish": "PHOTO FINISH",
+      "winnerTime": "{marble} · {time}",
+      "results": "Collect your marbles. Build your Marble Bag."
+    },
+    "endCard": ["Don't just watch marble races. Race them.", "Play free at marblespins.com"],
+    "towerRows": 10,
+    "leader": "Leader",
+    "finished": "Finished",
+    "sectors": ["S1", "S2", "S3"],
+    "replay": "Replay",
+    "slowMotion": "Slow motion",
+    "resultsTitle": "Results",
+    "resultsSub": "Marble Spins Grand Prix · {city}",
+    "winner": "Winner",
+    "columns": ["Pos", "Marble", "Gate", "Time", "Gap"],
+    "tagNearMetres": 24,
+    "tagMax": 6,
+    "cutSeconds": [2, 4]
   },
 
   "words": {
