@@ -179,4 +179,5 @@ module.exports = [
   require('./kirkjufell-block-falls'),
   require('./baikal-clear-ice'),
   require('./svalbard-glacier-run'),
+  require('./yellowstone-frost-run'),
 ];
