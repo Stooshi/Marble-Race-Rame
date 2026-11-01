@@ -123,6 +123,17 @@
    "side": 1,
    "marbles": 4
   },
+  "baikal-clear-ice": {
+   "name": "Baikal Clear Ice",
+   "series": "Blocks",
+   "lighting": "day",
+   "v": "8ba67176",
+   "bytes": 9528,
+   "bytes2x": 22860,
+   "t": 10565,
+   "side": 1,
+   "marbles": 6
+  },
   "baqueira-beret-run": {
    "name": "Baqueira-Beret Run",
    "series": "World Tour",

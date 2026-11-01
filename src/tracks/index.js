@@ -177,4 +177,5 @@ module.exports = [
   require('./rainier-ice-block-run'),
   require('./kinabalu-cube-summit'),
   require('./kirkjufell-block-falls'),
+  require('./baikal-clear-ice'),
 ];
