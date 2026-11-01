@@ -849,6 +849,17 @@
    "side": 1,
    "marbles": 4
   },
+  "kirkjufell-block-falls": {
+   "name": "Kirkjufell Block Falls",
+   "series": "Blocks",
+   "lighting": "day",
+   "v": "81208cad",
+   "bytes": 11974,
+   "bytes2x": 29742,
+   "t": 10168,
+   "side": 1,
+   "marbles": 5
+  },
   "kopaonik-spins": {
    "name": "Kopaonik Spins",
    "series": "Coasters",
