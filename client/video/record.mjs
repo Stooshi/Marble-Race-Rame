@@ -61,7 +61,7 @@ export function mix(plan, length, { tune }, file) {
     // The music, lifted a little (the template's liftDb) at the big moments.
     const lift = 10 ** (T.liftDb / 20);
     const lifted = (s.lifts ?? []).map(([a, b]) => `between(t,${a.toFixed(2)},${b.toFixed(2)})`).join('+');
-    for (const [a, b] of s.music ?? []) add(loop, { at: a, dur: b - a, gain: T.musicGain, fadeIn: 0.8, fadeOut: 1.2, loop: true, lift: lifted ? { expr: lifted, k: lift } : null });
+    for (const [a, b] of s.music ?? []) add(loop, { at: a, dur: b - a, gain: T.musicGain, fadeIn: s.loop ? 0.05 : 0.8, fadeOut: s.loop ? 0.15 : 1.2, offset: s.loop ? 8 : 0, loop: true, lift: lifted ? { expr: lifted, k: lift } : null }); // (a loop: the music in from its first frame, out at its last, so the end runs into the start)
     if (s.teaserMusic) add(loop, { at: s.teaserMusic[0], dur: s.teaserMusic[1] - s.teaserMusic[0], offset: 8, gain: T.musicGain * lift, fadeOut: 0.35, loop: true });
     if (s.beeps && s.goAt !== null) add(SOUNDS.beeps.file, { at: s.goAt - BEEPS_GO_S, dur: BEEPS_GO_S + 0.9, gain: 0.9, fadeOut: 0.15 });
     if (s.goAt !== null && s.goAt !== undefined) add(SOUNDS.launch.file, { at: s.goAt, dur: 5, gain: 1.6 });
@@ -106,7 +106,7 @@ export async function record({ slug, race: raceName, kind = 'production', format
     // The rows on the podium card.
     await page.evaluate(([title]) => { document.getElementById('podiumTitle').textContent = title; }, [TEXTS.podiumTitle]);
     const rows = info.podium.map((r) => ({ name: r.name, look: r.look, ms: r.ms }));
-    if (plan.bc) await page.evaluate((o) => window.rec.setBroadcast(o), { city: plan.city.toUpperCase(), towerTitle: 'GRAND PRIX' });
+    if (plan.bc) await page.evaluate((o) => window.rec.setBroadcast(o), { city: plan.city.toUpperCase(), towerTitle: 'GRAND PRIX', ...(plan.tall && { towerRows: plan.tall.towerRows, compact: true }) });
     // (The broadcast's overlay, intro card and results board at video second v: shown with short fades.)
     const fade = (v, a, d, fin = 0.3, fout = 0.3) => Math.max(0, Math.min(1, (v - a) / fin, (a + d - v) / fout));
     const overlayAt = (v) => {
@@ -175,7 +175,7 @@ export async function record({ slug, race: raceName, kind = 'production', format
           else {
             const eye = s.eye.from ? s.eye : r.eye(s.eye);
             if (s.type === 'look') r.look(t, eye);
-            else r.pan(t, { from: eye.from, follow: s.follow, members: s.members, fov: s.fov ?? eye.fov ?? 32, ...(s.lead !== undefined && { lead: s.lead }) });
+            else r.pan(t, { from: eye.from, follow: s.follow, members: s.members, fov: s.fov ?? eye.fov ?? 32, saveAim: s.saveAim, useAim: s.useAim, ...(s.lead !== undefined && { lead: s.lead }) });
           }
           if (ov) {
             r.broadcast(s.type === 'fly' ? -1e9 : t, { ...ov.bc, captionOn: ov.caption.k > 0 });
@@ -186,7 +186,7 @@ export async function record({ slug, race: raceName, kind = 'production', format
             if (ov.intro) r.intro(ov.intro.k, ov.intro);
             if (ov.results) r.results(ov.results.k, ov.results);
           }
-        }, [{ type: sh.type, eye: sh.eye, follow: sh.follow, fov: sh.fov, members: sh.members, shot: sh.shot, back: sh.back, up: sh.up, ahead: sh.ahead, lead: sh.lead }, t, step, textAt(plan.texts, v), pod, rows, ov]);
+        }, [{ type: sh.type, eye: sh.eye, follow: sh.follow, fov: sh.fov, members: sh.members, saveAim: sh.saveAim, useAim: sh.useAim, shot: sh.shot, back: sh.back, up: sh.up, ahead: sh.ahead, lead: sh.lead }, t, step, textAt(plan.texts, v), pod, rows, ov]);
         shot = await page.screenshot({ type: 'jpeg', quality: 92 });
       }
       if (list) { fs.writeFileSync(`${out.replace(/\.mp4$/, '')}-${v.toFixed(2)}.jpg`, shot); frames += 1; continue; }

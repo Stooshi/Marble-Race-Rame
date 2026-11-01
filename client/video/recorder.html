@@ -97,6 +97,23 @@
   .rrow.hd { font-size: 1.6vmin; color: var(--orange); letter-spacing: 0.08em; height: 2.8vmin; border-bottom: 0.25vmin solid var(--yellow); }
   .rrow + .rrow:not(.hd) { border-top: 0.12vmin solid color-mix(in srgb, var(--text) 9%, transparent); }
   .rrow .c { text-align: center; } .rrow .r { text-align: right; } .rrow.w .pl { color: var(--yellow); }
+  /* The vertical cut (portrait): a compact tower and clock, bigger, clear of the bottom 20% and the right edge (the apps' buttons). */
+  @media (orientation: portrait) {
+    #tower { left: 3.2vmin; top: 3.2vmin; width: 62vmin; }
+    #tower .head .gp, #tower .head .city { font-size: 3.4vmin; }
+    .trow { grid-template-columns: 5.6vmin 3.4vmin 1fr 13vmin 2.8vmin; height: 4.6vmin; font-size: 3vmin; }
+    .trow .gap { font-size: 2.7vmin; }
+    .chip { width: 3.1vmin; height: 3.1vmin; }
+    .arrow { font-size: 2vmin; }
+    #clockP { top: 3.2vmin; right: calc(var(--mark-margin) + var(--mark-size) + 2vmin); min-width: 0; padding: 1.2vmin 2vmin; }
+    #clock { font-size: 5.4vmin; }
+    #clockP .lbl { font-size: 2.2vmin; }
+    #sectors { display: none; }
+    #hook { top: 30vh; left: 5vw; right: 9vw; font-size: 10vmin; }
+    .mkl { font-size: 4vmin; }
+    #rewindFx .ic { top: 24vh; left: 5vw; font-size: 4.4vmin; }
+    #replayTag { top: 26vh; }
+  }
 </style></head>
 <body>
 <canvas id="view"></canvas>

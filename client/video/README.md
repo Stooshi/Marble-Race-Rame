@@ -57,3 +57,7 @@ One whole race as a TV motorsport broadcast, in our own style only (navy, yellow
 node scripts/video-race.js dubai-marble-grand-prix --seeds 120
 cd client && node video/record.mjs dubai-marble-grand-prix dubai-marble-grand-prix.video-1794848 --kind broadcast --tune 7 --out ~/videos/dubai-broadcast.mp4
 ```
+
+### The vertical cut (`--kind broadcastTall --format tall`, Moses, 1 Nov 2026)
+
+25 s for TikTok, Reels and Shorts, 1080×1920: 0–3 s the hook (frozen 0.65 s before the winner's line, the three contenders marked, "Who wins? Pick one."), 3–4 s a quick rewind to GO, 4–18 s six cuts of the best moments (the start scramble, the biggest bunch, the biggest overtake, a lead change), 18–23 s the final stretch and the photo finish in slow motion, 23–25 s the winner and "Play free at marblespins.com". A compact tower (top 5) and the race clock, bigger text, nothing in the bottom 20% or at the right edge. It ends on the hook's first view, so it loops. Its words: `template.json` `broadcast.tall`.

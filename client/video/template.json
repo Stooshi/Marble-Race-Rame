@@ -79,6 +79,15 @@
       "pick": "Who wins? Pick one.",
       "rewind": "20 marbles. {length}. Watch."
     },
+    "tall": {
+      "_about": "The vertical cut of the broadcast (Moses, 1 Nov 2026; TikTok, Reels, Shorts, 25 s, 1080×1920): the hook (frozen before the line, the three marked), a quick rewind to GO, the best moments cut every 2–3 s, the final stretch and the photo finish in slow motion, the winner, the game's address; loop-friendly (it ends on the hook's camera). A compact tower (top 5) and the race clock, bigger text; nothing in the bottom 20% or at the right edge (the apps' buttons and captions).",
+      "towerRows": 5,
+      "hookClose": "{margin} seconds decided it.",
+      "hookPick": "Who wins? Pick one.",
+      "photoFinish": "PHOTO FINISH",
+      "winner": "{marble} · {margin} s",
+      "play": "Play free at marblespins.com"
+    },
     "captions": {
       "_about": "The broadcast's on-screen script (Moses, 1 Nov 2026): lower-third captions in our font and colours, about 2.6 s each, timed to the race's own moments (not fixed seconds), never two at once, never over the pack. A line whose moment doesn't happen in the race is skipped. {margin}, {marble} and {time} are the chosen race's real numbers.",
       "seconds": 2.6,

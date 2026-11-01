@@ -479,3 +479,98 @@ export function broadcast(info, race, { fly = 4.5 } = {}) {
     sound: { goAt, beeps: true, music: [[flyAt, resAt + 0.4]], teaserMusic: [0, h3], lifts: p.lifts, ceremony: [resAt, p.v], extra: [{ key: 'whoosh', at: h3 - 0.35, gain: 0.5, dur: 1.6 }] },
   };
 }
+
+/**
+ * The broadcast's vertical cut (25 s; Moses, 1 Nov 2026): 0–3 s the hook (the final metres slowed, frozen
+ * before the line, the three contenders marked), 3–4 s a quick rewind to GO, 4–18 s the best moments cut
+ * every 2–3 s (the start scramble, the biggest bunch, the biggest overtake, a lead change), 18–23 s the final
+ * stretch and the photo finish in slow motion, 23–25 s the winner and the game's address. It ends on the
+ * hook's camera, so it loops.
+ */
+export function broadcastTall(info, race) {
+  const m = moments(info, race);
+  const W = m.W;
+  const A = analyse(race, info.arc, W + 8000);
+  const T = TEMPLATE.broadcast.tall;
+  const p = builder('broadcast');
+  const name = { marble: info.podium[0].name, margin: (info.margin / 1000).toFixed(3) };
+  const pod = info.podium.map((x) => x.index);
+  // (A phone's picture is narrow: wider lenses, so the three side by side and the whole field fit across it.)
+  // (A phone's picture is narrow: a wide lens, so the three side by side fit across it. The hook and the end
+  // share one camera and one view: the end turns to where the hook's first picture looked, so it loops.)
+  const line = { type: 'pan', eye: { ...LINE_EYE, fov: 72 }, members: pod, fov: 72 };
+  const still = { ...line, useAim: 'loop' };
+  const bigs = [];
+  const bc = [];
+  // 0–3 s: the hook.
+  const freeze = W - 650; // (a phone's narrower picture: frozen a little earlier, the three still side by side in it)
+  const h1 = p.add({ ...line, saveAim: 'loop', from: freeze - 700, speed: 0.5, dur: 1.4 });
+  const h2 = p.add({ ...line, from: freeze, speed: 0, dur: 1.6 });
+  bigs.push({ at: h1 + 0.05, dur: 1.35, text: fill(T.hookClose, name) }, { at: h2 + 0.05, dur: 1.55, text: fill(T.hookPick, name) });
+  const markers = { at: h2 + 0.1, dur: 1.5, members: pod };
+  // 3–4 s: the quick rewind, the line then the gate.
+  const r1 = p.add({ ...line, from: freeze, speed: -5, dur: 0.5 });
+  p.add({ ...START_SHOT(2500, 0.5), fov: 72, speed: -5 });
+  const rewind = { at: r1, dur: 1 };
+  // 4–18 s: the best moments, in race order, cut every 2–3 s.
+  const goAt = p.v;
+  const cut = 14 / 6;
+  const taken = [[0, 3500], [W - 9000, W + 9000]];
+  const free = (a, b) => !taken.some(([x, y]) => a < y && b > x);
+  const picks = [{ shot: { ...START_SHOT(0, cut), fov: 72 }, t: 0 }];
+  // The biggest bunch with collisions: two cuts, the chase camera on it, then the follow camera inside it.
+  const bunch = busiest(A, 4000, W - 9000, cut * 2000, taken);
+  if (bunch) {
+    taken.push([bunch.t - 500, bunch.t + cut * 2000 + 500]);
+    picks.push({ t: bunch.t, shot: { type: 'group', members: bunch.members.slice(0, 8), shot: 'bunch', from: bunch.t, dur: cut, fov: 60, back: 13, up: 9 } });
+    picks.push({ t: bunch.t + cut * 1000, shot: { type: 'race', follow: bunch.mid, from: bunch.t + cut * 1000, dur: cut } });
+  }
+  // The biggest overtake: the most places gained in the top ten within 2.5 s.
+  const order = (t) => race.frames[Math.max(0, Math.min(race.frames.length - 1, Math.round(t / race.tickMs)))].s ?? [];
+  let best = null;
+  for (let t = 4000; t < W - 9000; t += 250) {
+    if (!free(t - 800, t - 800 + cut * 1000)) continue;
+    const a = order(t);
+    const b = order(t + 2500);
+    b.slice(0, 10).forEach((i, k) => { const g = a.indexOf(i) - k; if (g > 0 && (!best || g > best.g)) best = { t, i, g }; });
+  }
+  if (best) {
+    taken.push([best.t - 800, best.t - 800 + cut * 1000]);
+    picks.push({ t: best.t - 800, shot: { type: 'race', follow: best.i, from: best.t - 800, dur: cut } });
+  }
+  // A lead change: the follow camera on the new leader, then the chase camera on the leading group.
+  const lc = A.find((x) => x.t > 6000 && x.leadChange && free(x.t - 1400, x.t - 1400 + cut * 2000));
+  if (lc) {
+    taken.push([lc.t - 1400, lc.t - 1400 + cut * 2000]);
+    picks.push({ t: lc.t - 1400, shot: { type: 'race', follow: 'leader', from: lc.t - 1400, dur: cut } });
+    picks.push({ t: lc.t - 1400 + cut * 1000, shot: { type: 'group', members: LEAD_GROUP_AT(race, info, lc.t), shot: 'lc', from: lc.t - 1400 + cut * 1000, dur: cut, back: 9, up: 5, ahead: 8, fov: 64 } });
+  }
+  // (Fewer than six cuts: the busiest moments left, followed in the pack.)
+  while (picks.length < 6) {
+    const b = busiest(A, 4000, W - 9000, cut * 1000, taken);
+    if (!b) break;
+    taken.push([b.t - 500, b.t + cut * 1000 + 500]);
+    picks.push({ t: b.t, shot: { type: 'race', follow: b.mid, from: b.t, dur: cut } });
+  }
+  for (const k of picks.sort((a, b) => a.t - b.t).slice(0, 6)) p.add(k.shot);
+  // 18–23 s: the final stretch, then the photo finish in slow motion.
+  const fin = p.add({ type: 'race', follow: 'leader', from: W - 4200, dur: 1.6 });
+  const slow = p.add({ ...line, from: W - 950, speed: 0.3, dur: 3.4 });
+  bigs.push({ at: slow + 0.2, dur: 3.1, text: T.photoFinish });
+  // 23–25 s: the winner, then the address, on the hook's camera (the loop back to the start).
+  const end = p.add({ ...still, from: W + 70, speed: 0.3, dur: 2 });
+  bigs.push({ at: end + 0.05, dur: 1.1, text: fill(T.winner, name) }, { at: end + 1.15, dur: 0.85, text: T.play });
+  bc.push([goAt, end, {}]);
+  return {
+    shots: p.shots, texts: [], captions: [], hooks: bigs, markers, rewind, podium: null, length: p.v, bc, city: info.name.replace(/\s*Marble Grand Prix$/i, '').trim(),
+    tall: { towerRows: T.towerRows },
+    marks: { goAt, fin },
+    sound: { goAt, beeps: false, music: [[0, p.v]], lifts: [[slow, p.v]], ceremony: null, extra: [{ key: 'whoosh', at: r1 - 0.35, gain: 0.5, dur: 1.6 }], loop: true },
+  };
+}
+/** The leading group at race ms t (the leader and the marbles within 6 m of it). */
+function LEAD_GROUP_AT(race, info, t) {
+  const f = race.frames[Math.max(0, Math.min(race.frames.length - 1, Math.round(t / race.tickMs)))];
+  const top = Math.max(...f.p.filter((x) => x < 1));
+  return f.p.map((x, i) => [x, i]).filter(([x]) => x < 1 && (top - x) * info.arc < 6).map(([, i]) => i);
+}

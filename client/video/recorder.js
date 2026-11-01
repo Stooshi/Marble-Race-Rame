@@ -92,6 +92,7 @@ function advanceTo(t, step = 1000 / 60, follow = 'leader') {
   clock = t;
 }
 let groupState = null;
+const savedAims = {};
 const BASE_FOV = scene.camera.fov;
 let custom = false; // (a shot of this page's own camera: the game's camera starts afresh after it, at its own lens)
 function place({ from, to, fov }) {
@@ -234,6 +235,7 @@ const broadcastApi = {
         if (x < W * 0.27 && y < H * 0.42) continue; // (under the tower)
         if (x > W * 0.62 && y < H * 0.2) continue; // (under the clock and the mark)
         if (captionOn && x < W * 0.66 && y > H * 0.74) continue; // (under the caption)
+        if (H > W && (y > H * 0.78 || x > W * 0.84 || y < H * 0.3)) continue; // (a phone: clear of the apps' buttons and of the tower)
         near.push({ i, d, x, y });
       }
       near.sort((a, b) => a.d - b.d);
@@ -393,7 +395,7 @@ window.rec = {
    * (follow: 'leader', 'second' or an entry index; the turn eased so the picture never jerks):
    * a broadcast's trackside pan.
    */
-  pan(t, { from, follow = 'leader', members = null, fov = 32, ease = 0.18, lead = 0.6 }) {
+  pan(t, { from, follow = 'leader', members = null, fov = 32, ease = 0.18, lead = 0.6, saveAim = null, useAim = null }) {
     advanceTo(t);
     const f = frameAt(t);
     const index = typeof follow === 'number' ? follow : (f.s ?? [])[follow === 'second' ? 1 : 0] ?? 0;
@@ -407,7 +409,11 @@ window.rec = {
     if (!panState || panState.key !== key || !aim || Math.abs(t - (panState.t ?? t)) > 400) panState = { key, aim: aim ?? new Vector3(...from) };
     else panState.aim.lerp(aim, ease);
     panState.t = t;
-    place({ from, to: panState.aim.toArray(), fov });
+    // (saveAim: the aim of this shot's first picture kept by name; useAim: a later shot aimed there, not turning:
+    // the vertical cut ends on its first picture's view, so it loops.)
+    if (saveAim && !savedAims[saveAim]) savedAims[saveAim] = panState.aim.clone();
+    const to = useAim && savedAims[useAim] ? savedAims[useAim] : panState.aim;
+    place({ from, to: to.toArray(), fov });
     draw(t);
   },
   /** Where a fixed camera beside share p of the track stands: `back` metres up the track, `beside` to the side, `up` above, looking `ahead` on. */
