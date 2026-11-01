@@ -853,12 +853,12 @@
    "name": "Kirkjufell Block Falls",
    "series": "Blocks",
    "lighting": "day",
-   "v": "81208cad",
-   "bytes": 11974,
-   "bytes2x": 29742,
-   "t": 10168,
+   "v": "7eeec731",
+   "bytes": 11616,
+   "bytes2x": 28514,
+   "t": 10069,
    "side": 1,
-   "marbles": 5
+   "marbles": 4
   },
   "kopaonik-spins": {
    "name": "Kopaonik Spins",
@@ -1876,12 +1876,12 @@
    "name": "Yellowstone Frost Run",
    "series": "Blocks",
    "lighting": "dawn",
-   "v": "a952a82f",
-   "bytes": 19926,
-   "bytes2x": 49950,
-   "t": 9672,
-   "side": -1,
-   "marbles": 5
+   "v": "f6904c8a",
+   "bytes": 11610,
+   "bytes2x": 29596,
+   "t": 10101,
+   "side": 1,
+   "marbles": 7
   },
   "zambezi-falls-run": {
    "name": "Zambezi Falls Run",
