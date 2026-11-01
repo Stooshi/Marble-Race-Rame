@@ -7,9 +7,9 @@
 **What it is:** Marble Spins is a free online marble racing game. Players drop a marble into a live 20-marble race, decided on the server by real physics. Purchases only change how a marble looks, never how it races. Races are decided once, from a seed, and never change.
 
 **Where it stands:**
-- **Website:** live at marblespins.com (Vercel builds every push to `Main`; the newest build is Main `6d0472f`, 1 Nov). Soft start (social media, 10–20 invited test pilots) since the week of 26 Oct. **Official launch 1 Dec 2026**, with the Holiday Season, the season pass and the apps. Google Analytics 4 is on since 31 Oct (after cookie consent); the Meta Pixel is off.
-- **Tracks:** **126 live in ten series**: World Tour, Grand Prix, Coasters, Canyons, Blocks, Track and Field, Rivers (16), Peaks (15), Pinball and Arcade. The 31 holiday tracks are switched on but hidden and closed until 1 Dec 00:00 Swedish time (157 then). **Blocks Series 2** (20 tracks, two big features each): the test five live since 31 Oct; the other fifteen (four cities, three rivers, four mountains, four winter tracks) are **built and switched off on Main**, waiting for the server deploy (172 tracks in the database then; 141 live once Moses switches them on).
-- **Waiting for the next server deploy** (on Main since the last known server deploy of 31 Oct morning, `a0cf1f4`): the fifteen Blocks Series 2 tracks (data updates `2027-05-15` to `2027-05-29`), **the free League's 3 tracks** (the website already asks the server how many; until the deploy the server still wants 5), and `GET /api/tracks/popular` ("Other players liked" on the solo starting line; until then the website shows the newest tracks).
+- **Website:** live at marblespins.com (Vercel builds every push to `Main`; redeployed by Moses on 1 Nov after the Blocks Series 2 switch-on). Soft start (social media, 10–20 invited test pilots) since the week of 26 Oct. **Official launch 1 Dec 2026**, with the Holiday Season, the season pass and the apps. Google Analytics 4 is on since 31 Oct (after cookie consent); the Meta Pixel is off.
+- **Tracks:** **141 live in ten series**: World Tour, Grand Prix, Coasters, Canyons, Blocks, Track and Field, Rivers (16), Peaks (15), Pinball and Arcade. The 31 holiday tracks are switched on but hidden and closed until 1 Dec 00:00 Swedish time (172 then). **Blocks Series 2: all 20 live** (two big features each): the test five since 31 Oct; the other fifteen (four cities, three rivers, four mountains, four winter tracks) switched on by Moses on 1 Nov after the server deploy.
+- **Server:** deployed by Moses on 1 Nov 2026 from Main `6d0472f` (code fingerprint `513360a073a0`): the fifteen Blocks Series 2 tracks (data updates `2027-05-15` to `2027-05-29`), **the free League's 3 tracks** and `GET /api/tracks/popular` ("Other players liked" on the solo starting line). Nothing on Main waits for a server deploy.
 - **Apps:** iPhone and Android (Capacitor) are built; the Android app is tested on Moses's phone. They need a rebuild for the keep-awake fix and the new sounds. Store submission is planned for 16–20 Nov.
 - **Payments:**
   - Stripe on the website, in **test mode** until Moses says otherwise.
@@ -23,7 +23,7 @@
   - the guest deletion job (dry run);
   - deleting replays over 30 days old (dry run until `REPLAY_TRIM=on`; new replays are already a third of the size).
 - **Newest this week (26 Oct – 1 Nov):**
-  - Peaks (15) and the Chobe live; Blocks Series 2: five live, fifteen built;
+  - Peaks (15) and the Chobe live; Blocks Series 2: all twenty live (141 live tracks);
   - Leagues and League Night live; the free League down to 3 tracks;
   - a backward-facing TV camera on every track, the TV camera drama and the racing look (kerbs, chevrons, chequered lines);
   - the start show for solo races, rooms and Quick race;
