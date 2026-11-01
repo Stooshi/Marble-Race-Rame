@@ -22,7 +22,7 @@ module.exports = track({
     { section: 'Into the cloud forest', at: 0.9, side: 'left', distance: 10, height: 12 },
     { section: 'Giant fern sweep', at: 0.5, side: 'right', distance: 10, height: 12 },
   ],
-  start: { landmark: 'granite-plateau', type: 'stepped-platform', gate: 'trapdoor', shots: { countdown: 'front', launch: 'overhead' } },
+  start: { landmark: 'granite-plateau', type: 'stepped-platform', gate: 'stalls', shots: { countdown: 'front', launch: 'overhead' } },
   finish: { landmark: 'giant-ferns' },
   designChanges: [
     'Blocks Series 2 (Moses, 30 Oct 2026): two big features, the funnel off the granite plateau and the waterfall drop into the cloud forest. Built from the plateau falls layout made for this track (L119).',
