@@ -2099,9 +2099,9 @@ const LAYOUTS = {
     { key: 'lava', name: 'Across the lava field', shape: straight(60, { grade: 0.11 }), obstacles: [slalom({ costume: c.slalom, from: 0.2, to: 0.8, count: 4, loss: 0.18 })] },
     { key: 'brakingStraight', name: 'Run to the hairpin', shape: straight(50, { grade: 0.12 }), billboards: 1 },
     { key: 'hairpin', name: 'Hairpin', shape: hairpin({ side: R }), obstacles: [swipe({ costume: c.swipe, side: 'high' })] },
-    { key: 'peak', name: 'Round the arrowhead', shape: spiral({ side: L, radius: 50, turns: 0.85, grade: 0.18 }) },
-    { key: 'shoreRun', name: 'Down to the shore', shape: sBends({ first: R, radius: 70, degrees: 60, grade: 0.12 }), obstacles: [peg({ costume: c.peg, at: 0.5, line: 'center' })] },
-    { key: 'shore', name: 'Along the shore', shape: sweep({ side: L, radius: 90, degrees: 75, grade: 0.11 }), billboards: 1 },
+    { key: 'peak', name: 'Round the arrowhead', shape: spiral({ side: L, radius: 50, turns: 0.7, grade: 0.18 }) },
+    { key: 'shoreRun', name: 'Down to the shore', shape: sBends({ first: R, radius: 70, degrees: 60, grade: 0.14 }), obstacles: [peg({ costume: c.peg, at: 0.5, line: 'center' })] },
+    { key: 'shore', name: 'Along the shore', shape: sweep({ side: L, radius: 90, degrees: 75, grade: 0.14 }), billboards: 1 },
     {
       key: 'lastStraight', name: 'Last straight', shape: straight(85, { grade: 0.2 }),
       obstacles: [parked({ costume: c.parked, at: 0.2, side: L, length: 6 }), peg({ costume: c.peg, at: 0.45, line: 'right' })], features: [rumble({ from: 0.7, to: 0.95, count: 3 })],
