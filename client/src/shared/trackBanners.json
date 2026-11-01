@@ -1223,6 +1223,17 @@
    "side": 1,
    "marbles": 5
   },
+  "rainier-ice-block-run": {
+   "name": "Rainier Ice Block Run",
+   "series": "Blocks",
+   "lighting": "day",
+   "v": "0f876191",
+   "bytes": 16188,
+   "bytes2x": 39754,
+   "t": 9959,
+   "side": 1,
+   "marbles": 4
+  },
   "redwood-forest-run": {
    "name": "Redwood Forest Run",
    "series": "Coasters",

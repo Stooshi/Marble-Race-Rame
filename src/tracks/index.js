@@ -174,4 +174,5 @@ module.exports = [
   require('./loire-chateau-run'),
   require('./vltava-bridges-run'),
   require('./torres-del-paine-block-run'),
+  require('./rainier-ice-block-run'),
 ];
