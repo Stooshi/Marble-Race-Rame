@@ -73,10 +73,15 @@
     "_about": "The broadcast production (Moses, 1 Nov 2026): one whole race filmed as a TV motorsport broadcast, in our own style only (navy, yellow and orange, Lilita One, the mark in its usual corner; nothing copied from any real series, team, driver or sponsor). A hook of the closest moment, the intro card over the flyover, the overlay through the race (the standings tower top left, the race clock and the three sectors top right beside the mark, name tags over the marbles near the camera), cuts every 2–4 s, the finish in slow motion, the results board with the winner's card, the end card.",
     "introCard": "MARBLE SPINS GRAND PRIX · {city}",
     "introSub": "20 marbles. One winner.",
+    "hookLines": {
+      "_about": "The hook (Moses, 1 Nov 2026: our first Reel averaged 5 s watch time): 0–2 s the final metres in slow motion, frozen just before the line (the winner not shown); 2–4 s markers on the three contenders; 4–5 s a quick rewind, then straight into the race. Big text, centred. The winner is shown only at the real finish. {length}: the video's own length, rounded to 10 s (\"1 minute 40\").",
+      "close": "{margin} seconds decided it.",
+      "pick": "Who wins? Pick one.",
+      "rewind": "20 marbles. {length}. Watch."
+    },
     "captions": {
       "_about": "The broadcast's on-screen script (Moses, 1 Nov 2026): lower-third captions in our font and colours, about 2.6 s each, timed to the race's own moments (not fixed seconds), never two at once, never over the pack. A line whose moment doesn't happen in the race is skipped. {margin}, {marble} and {time} are the chosen race's real numbers.",
       "seconds": 2.6,
-      "hook": "Decided by {margin} seconds.",
       "flyover": "Over 100 tracks. This is one.",
       "grid": "Every gate drawn at random.",
       "go": "Real physics. Nothing scripted.",
@@ -84,6 +89,7 @@
       "firstOvertake": "No two races are ever the same.",
       "packShot": "Imagine your marble in there.",
       "calm": "Race your friends with one link.",
+      "pickStill": "Your pick still in it?",
       "leadChange": "Run your own league.",
       "finalStretch": "Every marble has its own record.",
       "photoFinish": "PHOTO FINISH",

@@ -254,6 +254,43 @@ const broadcastApi = {
     }
     $('tags').innerHTML = shownTags.map((n) => `<div class="tag" style="left:${n.x.toFixed(0)}px;top:${n.y.toFixed(0)}px"><span class="chip" style="width:1.8vmin;height:1.8vmin;background:${chipCss(n.i)}"></span><b>${place.get(n.i)}</b>${nameOf(n.i)}</div>`).join('');
   },
+  /** The hook's big line (a number in it in yellow). */
+  hook(k, text = '') {
+    const el = $('hook');
+    el.style.opacity = String(k);
+    if (k > 0) el.innerHTML = text.replace(/^([\d.]+ seconds)/, '<em>$1</em>');
+  },
+  /** Rings and names on marbles (the hook's three contenders), in screen order left to right. */
+  markers(k, members = []) {
+    const el = $('markers');
+    el.style.opacity = String(k);
+    if (!k || !members.length) { el.innerHTML = ''; return; }
+    const cam = scene.camera;
+    const W = window.innerWidth;
+    const H = window.innerHeight;
+    const right = new Vector3().setFromMatrixColumn(cam.matrixWorld, 0);
+    const labels = [];
+    el.innerHTML = members.map((i) => {
+      const pos = scene.marbles?.positionOf?.(i);
+      if (!pos) return '';
+      const c = pos.clone().project(cam);
+      const e = pos.clone().addScaledVector(right, 0.55).project(cam);
+      if (c.z > 1) return '';
+      const x = (c.x * 0.5 + 0.5) * W;
+      const y = (0.5 - c.y * 0.5) * H;
+      const r = Math.max(18, Math.abs((e.x - c.x) * 0.5 * W)) * 1.35;
+      // (Labels that would touch another are lifted above it.)
+      let ly = y - r - 10;
+      const w = nameOf(i).length * 0.018 * Math.min(W, H) + 30;
+      while (labels.some((o) => Math.abs(o.x - x) < (o.w + w) / 2 && Math.abs(o.y - ly) < 0.045 * Math.min(W, H))) ly -= 0.05 * Math.min(W, H);
+      labels.push({ x, y: ly, w });
+      return `<div class="mk" style="left:${x.toFixed(0)}px;top:${y.toFixed(0)}px;width:${(2 * r).toFixed(0)}px;height:${(2 * r).toFixed(0)}px"></div><div class="mkl" style="left:${x.toFixed(0)}px;top:${ly.toFixed(0)}px">${nameOf(i)}</div>`;
+    }).join('');
+  },
+  rewind(on) {
+    $('rewindFx').style.display = on ? 'block' : 'none';
+    $('view').style.filter = on ? 'saturate(0.55) contrast(1.15) blur(0.6px)' : '';
+  },
   caption(k, text = '', { big = false } = {}) {
     const el = $('cap');
     el.style.opacity = String(k);
@@ -366,8 +403,10 @@ window.rec = {
     const key = JSON.stringify(from);
     // (Aimed a little ahead of the marble, so it runs into the picture.)
     const aim = at ? at.clone().add(new Vector3(0, lead * 0.4, 0)) : null;
-    if (!panState || panState.key !== key || !aim) panState = { key, aim: aim ?? new Vector3(...from) };
+    // (A jump in time, e.g. a still for checking: aimed afresh rather than eased from the last picture.)
+    if (!panState || panState.key !== key || !aim || Math.abs(t - (panState.t ?? t)) > 400) panState = { key, aim: aim ?? new Vector3(...from) };
     else panState.aim.lerp(aim, ease);
+    panState.t = t;
     place({ from, to: panState.aim.toArray(), fov });
     draw(t);
   },

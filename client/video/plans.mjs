@@ -327,6 +327,8 @@ let LEAD_GROUP = null;
 /** The finish from beside the line (the broadcast): a camera a few metres before the line and to the side, turning with the leader. */
 export const LINE_EYE = { p: 1, back: 14, beside: 5, up: 6, ahead: 0, lookUp: 0.3, fov: 32 }; // (close on the leaders, the stand behind)
 /** The live finish: high behind the line, looking down the last bend to it. */
+/** The hook: the camera beside the last metres (LINE_EYE), the three contenders side by side as it freezes. */
+export const HOOK_EYE = LINE_EYE;
 export const LINE_HIGH = { p: 1, back: 8, beside: 0, up: 7, ahead: 0, lookUp: 0.3, fov: 36 };
 const leadGroup = (x) => (LEAD_GROUP ? LEAD_GROUP(x.t) : [x.lead]);
 
@@ -336,7 +338,7 @@ const leadGroup = (x) => (LEAD_GROUP ? LEAD_GROUP(x.t) : [x.lead]);
  * 2–4 s, the finish live and in slow motion, the results board with the winner's card, the end card. The
  * words are the template's broadcast captions (lower third), placed at the race's own moments.
  */
-export function broadcast(info, race, { fly = 15 } = {}) {
+export function broadcast(info, race, { fly = 4.5 } = {}) {
   const m = moments(info, race);
   const A = analyse(race, info.arc, m.W + 8000);
   const G = info.countdownMs;
@@ -355,21 +357,33 @@ export function broadcast(info, race, { fly = 15 } = {}) {
   const bc = []; // [from, to, { label }]: where the overlay shows
   const on = (a, b, o = {}) => bc.push([a, b, o]);
   const want = []; // captions wanted: { v (video s), key, dur?, after? (must start at or after), before? }
-  // 1. The hook: the closest moment, slowed. A photo finish: the last metres from beside the line, cut away
-  // before the line; otherwise the race's best overtaking moment.
-  let hook;
-  if (m.close) hook = p.add({ type: 'pan', from: m.W - 1150, speed: 0.36, dur: 2.9, eye: LINE_EYE, follow: 'leader', fov: 32 });
-  else hook = p.add({ type: 'race', follow: 'leader', from: (m.moves[0]?.t ?? m.W * 0.6) - 1000, speed: 0.6, dur: 2.9 });
-  if (m.close) want.push({ v: hook + 0.15, key: 'hook', dur: 2.6 });
-  p.lift(hook, hook + 2.9);
-  // 2. The intro card over the flyover, then a caption.
+  // 1. The hook (the first 5 s): the final metres in slow motion, frozen just before the line with the three
+  // contenders side by side (the winner not shown), markers on them, a quick rewind, then the race.
+  const pod = info.podium.map((x) => x.index);
+  const H = BC.hookLines;
+  const freeze = m.W - 400; // (0.4 s before the winner's line: the three side by side, a few metres out, nobody across)
+  const hookShot = { type: 'pan', eye: HOOK_EYE, members: pod, fov: HOOK_EYE.fov };
+  const h1 = p.add({ ...hookShot, from: freeze - 1000, speed: 0.5, dur: 2 });
+  const h2 = p.add({ ...hookShot, from: freeze, speed: 0, dur: 2 });
+  const h3 = p.add({ ...hookShot, from: freeze, speed: -3.35, dur: 1 });
+  // (The video's length, for the rewind's line: worked out once the plan is complete, below.)
+  const hooks = [
+    { at: h1 + 0.1, dur: 1.9, text: fill(H.close, name) },
+    { at: h2 + 0.05, dur: 1.95, text: fill(H.pick, name) },
+    { at: h3, dur: 1, text: fill(H.rewind, name) },
+  ];
+  const markers = { at: h2 + 0.15, dur: 1.85, members: pod };
+  const rewind = { at: h3, dur: 1 };
+  p.lift(h1, h3 + 1);
+  // 2. The flyover, short (4.5 s), the intro card on it for 1.5 s, then a caption.
   const flyAt = p.add({ type: 'fly', dur: fly });
-  const intro = { at: flyAt + 1, dur: 6.4, title: fill(BC.introCard, name), sub: fill(BC.introSub, name) };
-  want.push({ v: flyAt + 9.2, key: 'flyover' });
+  const intro = { at: flyAt + 0.1, dur: 1.5, title: fill(BC.introCard, name), sub: fill(BC.introSub, name) };
+  want.push({ v: flyAt + 1.75, key: 'flyover', dur: 2.6, fixed: true });
   // 3. The countdown, the tower showing the gates.
-  const cdAt = p.add({ type: 'race', from: -G, dur: G / 1000 });
-  on(cdAt + 0.4, p.v);
-  want.push({ v: cdAt + 0.8, key: 'grid' });
+  const cdAt = p.add({ type: 'race', from: -3500, dur: 3.5 });
+  on(cdAt + 0.2, p.v);
+  want.push({ v: cdAt + 0.4, key: 'grid', dur: 2.4 });
+  void G;
   const goAt = p.v;
   want.push({ v: goAt + 0.3, key: 'go' });
   // 4. The race, cut every 2–4 s.
@@ -415,6 +429,16 @@ export function broadcast(info, race, { fly = 15 } = {}) {
     if (!calm || sc < calm.s) calm = { t: x.t, s: sc };
   }
   if (calm) want.push({ v: rv(calm.t), key: 'calm' });
+  // (The three contenders close together mid-race: the moment they are closest, if within 20 m, before the last stretch.)
+  let close = null;
+  for (const f of race.frames) {
+    const t = f.t;
+    if (t < W * 0.3 || t > W - 10000) continue;
+    const ps = pod.map((i) => f.p[i]);
+    const spread = (Math.max(...ps) - Math.min(...ps)) * info.arc;
+    if (spread < 20 && (!close || spread < close.spread)) close = { t, spread };
+  }
+  if (close) want.push({ v: rv(close.t - 600), key: 'pickStill' });
   want.push({ v: rv(W - 7800), key: 'finalStretch' });
   // 5. The finish in slow motion: from beside the line, then the follow camera on the winner.
   const s1 = p.add({ type: 'pan', from: m.W - 1400, speed: 0.25, dur: 7.2, eye: LINE_EYE, follow: 'leader', fov: 32 });
@@ -431,6 +455,9 @@ export function broadcast(info, race, { fly = 15 } = {}) {
   const endAt = p.end();
   // The captions: in time order, never two at once (one that would overlap the last is moved a little later,
   // or left out when its moment has gone), never inside the intro card or the hook's end.
+  const secs = Math.round(p.v / 10) * 10;
+  const length = `${Math.floor(secs / 60)} minute${Math.floor(secs / 60) === 1 ? '' : 's'}${secs % 60 ? ` ${secs % 60}` : ''}`;
+  hooks[2].text = fill(H.rewind, { ...name, length });
   const captions = [];
   const D = C.seconds;
   const busyUntil = (v) => (v >= intro.at - 0.3 && v < intro.at + intro.dur + 0.3 ? intro.at + intro.dur + 0.3 : null);
@@ -441,13 +468,14 @@ export function broadcast(info, race, { fly = 15 } = {}) {
     if (last && v < last.at + last.dur + 0.35) v = last.at + last.dur + 0.35;
     v = busyUntil(v) ?? v;
     if (v - w.v > (w.fixed ? 0.6 : 2.2)) continue; // (its moment has gone)
+    if (v < 5) continue; // (the hook has its own big lines)
     if (v + dur > endAt - 0.2 && w.key !== 'results') continue;
     captions.push({ at: v, dur, key: w.key, text: fill(C[w.key], name) });
   }
   return {
-    shots: p.shots, texts: [], captions, podium: null, length: p.v, intro, results, bc, city,
+    shots: p.shots, texts: [], captions, hooks, markers, rewind, podium: null, length: p.v, intro, results, bc, city,
     endLines: BC.endCard,
     marks: { flyAt, goAt, resAt, endAt },
-    sound: { goAt, beeps: true, music: [[flyAt, resAt + 0.4]], teaserMusic: [0, flyAt], lifts: p.lifts, ceremony: [resAt, p.v] },
+    sound: { goAt, beeps: true, music: [[flyAt, resAt + 0.4]], teaserMusic: [0, h3], lifts: p.lifts, ceremony: [resAt, p.v], extra: [{ key: 'whoosh', at: h3 - 0.35, gain: 0.5, dur: 1.6 }] },
   };
 }
