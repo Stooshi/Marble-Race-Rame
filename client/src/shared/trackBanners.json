@@ -1531,6 +1531,17 @@
    "side": 1,
    "marbles": 5
   },
+  "svalbard-glacier-run": {
+   "name": "Svalbard Glacier Run",
+   "series": "Blocks",
+   "lighting": "day",
+   "v": "22b3416a",
+   "bytes": 12938,
+   "bytes2x": 32326,
+   "t": 9966,
+   "side": -1,
+   "marbles": 5
+  },
   "sydney-harbour-new-year": {
    "name": "Sydney Harbour New Year",
    "series": "Coasters",
