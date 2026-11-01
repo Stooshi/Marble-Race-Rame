@@ -180,4 +180,5 @@ module.exports = [
   require('./baikal-clear-ice'),
   require('./svalbard-glacier-run'),
   require('./yellowstone-frost-run'),
+  require('./abraham-lake-frost'),
 ];
