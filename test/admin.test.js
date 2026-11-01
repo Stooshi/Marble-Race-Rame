@@ -60,6 +60,13 @@ test('the back office on a real database: admin + 2-step + live session; reasons
     const detail = (await call(`/admin/players/${pid}`, { token })).body;
     assert.deepEqual(detail.audit.map((a) => a.action), ['unsuspend', 'suspend', 'coins']);
     assert.ok(detail.security.events.some((e) => e.kind === 'signup'));
+    // The first visit's country (never the IP): the oldest event with a country.
+    await db.query(`UPDATE security_events SET country = 'NO' WHERE user_id = $1`, [pid]);
+    await db.query(`INSERT INTO security_events (user_id, kind, country, created_at) VALUES ($1, 'login', 'DK', now() + interval '1 minute')`, [pid]);
+    assert.equal((await call(`/admin/players/${pid}`, { token })).body.player.first_country, 'NO');
+    const listed = (await call(`/admin/players?q=${pid}`, { token })).body.players[0];
+    assert.equal(listed.first_country, 'NO');
+    assert.ok(!('ip' in listed));
     assert.equal(detail.consents[0].consent, true);
 
     // IPs: older than 90 days → blanked, the country kept.

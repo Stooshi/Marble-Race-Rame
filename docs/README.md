@@ -52,7 +52,7 @@
 - **One server instance only:** race timers live in memory.
 - **After a Railway variables change,** check `/health` shows the new code fingerprint. On 23 Oct a redeploy served an old build.
 - **Rotating `JWT_SECRET` logs everyone out,** and guests lose their accounts.
-- **Store submission is blocked** by the legal DRAFT banner (email is on since 1 Nov). See `claude/open-decisions.md` in the project.
+- **Store submission is no longer blocked by the legal texts:** all four (terms of use, terms of sale, privacy policy, cookie policy) are approved and in effect from 1 Nov 2026, with no DRAFT banner; email is on since 1 Nov. See `claude/open-decisions.md` in the project.
 
 **Where the rest is:**
 - **In the project:**

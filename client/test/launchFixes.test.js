@@ -75,7 +75,12 @@ describe('company details', () => {
       expect(src(f), f).not.toMatch(/\[(COMPANY NAME AB|XXXXXX-XXXX|address|support email|privacy email|date)\]/);
     }
     expect(src('src/site/pages/LegalPage.jsx')).toMatch(/data controller/);
-    expect(src('src/site/pages/LegalPage.jsx')).toMatch(/DRAFT for legal review/); // (until Moses says)
+    // All the legal texts approved by Moses (1 Nov 2026): no DRAFT banner or placeholder, today's date in effect.
+    for (const f of ['src/site/pages/LegalPage.jsx', 'src/site/pages/CookiesPage.jsx']) {
+      expect(src(f), f).not.toMatch(/DRAFT|\[draft\]|ms-msg--bad|\[(?:X|TBD|\d+)[^\]]*\]/i);
+      expect(src(f), f).toMatch(/Effective from \{LEGAL_UPDATED\}/);
+    }
+    expect(company.legalUpdated).toBe('2026-11-01');
   });
 });
 

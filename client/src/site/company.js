@@ -6,7 +6,7 @@ export const ADDRESS = `${company.street}, ${company.postcode} ${company.city}, 
 /** "Marble Spins is operated by Voltron Robotics AB, org.nr 559344-3756" */
 export const OPERATED_BY = `Marble Spins is operated by ${company.name}, org.nr ${company.orgNo}`;
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-/** The legal texts' "last updated" date, e.g. "16 October 2026". */
+/** The legal texts' effective ("last updated") date, e.g. "1 November 2026": the terms of use, terms of sale, privacy policy and cookie policy (all approved by Moses, 1 Nov 2026). */
 export const LEGAL_UPDATED = (() => { const [y, m, d] = company.legalUpdated.split('-').map(Number); return `${d} ${MONTHS[m - 1]} ${y}`; })();
 /** Where every "Contact us" link goes: the contact form at the end of the Help Centre. */
 export const CONTACT_PATH = '/help#contact';

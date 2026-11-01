@@ -80,6 +80,13 @@ router.get('/readiness', async (req, res) => {
   res.json(await require('../readiness').summary(db, { days }));
 });
 
+/**
+ * The country of the player's first recorded security event (their first visit or sign-up), from
+ * the country already stored with it: never the IP address, and nothing new stored (Moses, 1 Nov 2026).
+ * Kept after the address itself is blanked (90 days).
+ */
+const FIRST_COUNTRY = (userId) => `(SELECT s.country FROM security_events s WHERE s.user_id = ${userId} AND s.country IS NOT NULL ORDER BY s.created_at, s.id LIMIT 1)`;
+
 /** GET /players?q=&limit= */
 router.get('/players', async (req, res) => {
   const q = String(req.query.q ?? '').trim();
@@ -96,7 +103,8 @@ router.get('/players', async (req, res) => {
   params.push(limit);
   const { rows } = await db.query(
     `SELECT u.id, u.username, u.display_name, u.email, u.is_guest, u.role, u.coins, u.age_group, u.created_at, u.last_login_at, u.suspended_at, u.deleted_at,
-            (SELECT COUNT(*)::int FROM race_entries e WHERE e.user_id = u.id) AS races
+            (SELECT COUNT(*)::int FROM race_entries e WHERE e.user_id = u.id) AS races,
+            ${FIRST_COUNTRY('u.id')} AS first_country
        FROM users u WHERE ${where}
       ORDER BY u.last_login_at DESC NULLS LAST, u.created_at DESC
       LIMIT $${params.length}`,
@@ -110,7 +118,8 @@ router.get('/players/:id', async (req, res) => {
   const id = assertUuid(req.params.id);
   const { rows: [player] } = await db.query(
     `SELECT id, username, display_name, email, is_guest, role, coins, coins_earned, coins_bought, skill, age_group,
-            marketing_opt_in, created_at, last_login_at, suspended_at, deleted_at, streak_days
+            marketing_opt_in, created_at, last_login_at, suspended_at, deleted_at, streak_days,
+            ${FIRST_COUNTRY('users.id')} AS first_country
        FROM users WHERE id = $1`,
     [id],
   );

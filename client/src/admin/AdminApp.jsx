@@ -3,6 +3,8 @@ import { Link, NavLink, Navigate, Route, Routes, useNavigate, useParams } from '
 import QRCode from 'qrcode';
 import { adminApi, getSession, setSession, whenExpired } from './adminApi';
 import { ITEMS } from '../shared/marbles';
+import { eachLimited, firstCountry, lastFinishedRace, sortPlayers } from './players';
+import { countryName } from '../site/country/countries';
 import './admin.css';
 
 /**
@@ -146,7 +148,10 @@ function useLoad(fn, deps) {
 }
 
 const n = (v) => (v === null || v === undefined ? '–' : Number(v).toLocaleString('en-US'));
-const when = (t) => (t ? new Date(t).toLocaleString('sv-SE', { dateStyle: 'short', timeStyle: 'short' }) : '–');
+// Swedish time wherever the back office is opened (e.g. 2026-11-01 22:13).
+const when = (t) => (t ? new Date(t).toLocaleString('sv-SE', { dateStyle: 'short', timeStyle: 'short', timeZone: 'Europe/Stockholm' }) : '–');
+/** A two-letter country as its name ("Sweden"), or "–". */
+const land = (code) => (code ? countryName(code) ?? code : '–');
 const Err = ({ error }) => (error ? <p className="adm-msg adm-msg--bad">{error.message}</p> : null);
 
 /** An action form: its fields, a required reason, and a confirm. */
@@ -696,6 +701,32 @@ function Players() {
   const [q, setQ] = useState('');
   const [query, setQuery] = useState('');
   const list = useLoad(() => adminApi.players(query), [query]);
+  // Each player's last finished race, read from their details a few at a time (id → ISO, null if never finished, 'error' if it couldn't be read).
+  const [lastRace, setLastRace] = useState({});
+  const [country, setCountry] = useState({}); // id → first country (only when the list has none yet)
+  const [sort, setSort] = useState({ key: null, dir: 'desc' });
+  useEffect(() => {
+    const players = list.data?.players ?? [];
+    let live = true;
+    setLastRace({});
+    setCountry({});
+    eachLimited(players, 4, (p) => adminApi.player(p.id), (p, d) => {
+      if (!live) return;
+      setLastRace((m) => ({ ...m, [p.id]: d ? lastFinishedRace(d) : 'error' }));
+      if (d && !('first_country' in p)) setCountry((m) => ({ ...m, [p.id]: firstCountry(d) }));
+    });
+    return () => { live = false; };
+  }, [list.data]);
+  const rows = useMemo(
+    () => sortPlayers((list.data?.players ?? []).map((p) => ({ ...p, last_race_at: lastRace[p.id] === 'error' ? null : lastRace[p.id] ?? null })), sort.key, sort.dir),
+    [list.data, lastRace, sort],
+  );
+  const by = (key) => setSort((s) => (s.key === key ? { key, dir: s.dir === 'desc' ? 'asc' : 'desc' } : { key, dir: 'desc' }));
+  const Sort = ({ k, label, num }) => (
+    <th className={num ? 'num' : undefined} aria-sort={sort.key === k ? (sort.dir === 'desc' ? 'descending' : 'ascending') : 'none'}>
+      <button type="button" className="adm-sort" onClick={() => by(k)}>{label}{sort.key === k ? (sort.dir === 'desc' ? ' ↓' : ' ↑') : ''}</button>
+    </th>
+  );
   return (
     <section className="adm-stack">
       <h1 className="adm-h1">Players</h1>
@@ -706,16 +737,18 @@ function Players() {
       <Err error={list.error} />
       <div className="adm-scroll">
         <table className="adm-table">
-          <thead><tr><th>Player</th><th>Email</th><th>Kind</th><th>Age</th><th className="num">Coins</th><th className="num">Races</th><th>Last login</th><th>Joined</th></tr></thead>
+          <thead><tr><th>Player</th><th>Email</th><th>Kind</th><th>Age</th><th>Country</th><th className="num">Coins</th><Sort k="races" label="Races" num /><Sort k="lastRace" label="Last race" /><th>Last login</th><Sort k="joined" label="Joined" /></tr></thead>
           <tbody>
-            {list.data?.players.map((p) => (
+            {rows.map((p) => (
               <tr key={p.id}>
                 <td><Link to={`/admin/players/${p.id}`}>{p.display_name || p.username}</Link>{p.display_name ? <span className="adm-muted"> @{p.username}</span> : null}{p.suspended_at && <span className="adm-tag adm-tag--bad">suspended</span>}{p.deleted_at && <span className="adm-tag">deleted</span>}{p.role === 'admin' && <span className="adm-tag">admin</span>}</td>
                 <td>{p.is_guest ? '–' : p.email}</td>
                 <td>{p.is_guest ? 'guest' : 'saved'}</td>
                 <td>{p.age_group ?? '–'}</td>
+                <td title="Where the player first came from (the country of their first visit; never the IP address)">{land('first_country' in p ? p.first_country : country[p.id])}</td>
                 <td className="num">{n(p.coins)}</td>
                 <td className="num">{n(p.races)}</td>
+                <td>{!(p.id in lastRace) ? <span className="adm-muted">…</span> : lastRace[p.id] === 'error' ? <span className="adm-muted" title="Couldn't load this player's races">?</span> : when(lastRace[p.id])}</td>
                 <td>{when(p.last_login_at)}</td>
                 <td>{when(p.created_at)}</td>
               </tr>
@@ -753,6 +786,7 @@ function Player() {
             <div><dt>Player name</dt><dd>@{p.username}</dd></div>
             <div><dt>Email</dt><dd>{p.is_guest ? 'guest (no email)' : p.email}</dd></div>
             <div><dt>Age group</dt><dd>{p.age_group ?? 'not asked (older account)'}</dd></div>
+            <div><dt>Country (first visit)</dt><dd>{land(firstCountry(d.data))}</dd></div>
             <div><dt>News by email</dt><dd>{p.marketing_opt_in ? 'yes' : 'no'}</dd></div>
             <div><dt>Coins</dt><dd>{n(p.coins)} <span className="adm-muted">(earned {n(p.coins_earned)}, bought {n(p.coins_bought)})</span></dd></div>
             <div><dt>Races</dt><dd>{n(races.recent.length)}{races.recent.length === 50 ? '+' : ''} <span className="adm-muted">({races.last24h} in the last 24 h)</span></dd></div>

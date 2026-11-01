@@ -42,7 +42,7 @@ What the stores' rules ask of Marble Spins, checked against the code on 21 Octob
 | **3.1.3(b) multiplatform** | OK | Coins and the pass bought on the website work in the app. Both are also sold as in-app purchases, as the rule requires. |
 | **4.2 minimum functionality** (web wrapper risk) | OK, argue it | A full 3D game, bundled in the app, not a website in a frame. Native: in-app purchases and restore, push (when switched on), offline screen, silent-switch audio, back button, splash, status bar. Put this in the review notes. |
 | **4.8 login services** | OK | Only our own email and password accounts, so 4.8 doesn't apply. No Apple or Google sign-in buttons (checked in `storeRules.test.js`). If Google sign-in is ever added, Sign in with Apple (or an equal option) must come with it. |
-| **5.1.1(i) privacy policy** | OK | `/legal#privacy`, linked in the footer of every page in the app. Needs Moses: the same link in App Store Connect, and the DRAFT banner removed. |
+| **5.1.1(i) privacy policy** | OK | `/legal#privacy`, linked in the footer of every page in the app. Needs Moses: the same link in App Store Connect (the DRAFT banner is gone: all legal texts approved, in effect from 1 Nov 2026). |
 | **5.1.1(v) account deletion** | OK, fixed | See "Account deletion" above. Fixed: Settings in the apps' footer, so guests find it in one tap. |
 | **5.1.2 data use, tracking** | OK | No tracking in the apps, so no App Tracking Transparency prompt. Push is optional and nothing depends on it. |
 | **5.3 contests, sweepstakes** | Needs Moses (when used) | No contest in the app today. Creator giveaways of gift codes run outside the app, by us (5.3.1). If a giveaway is ever shown in the app, its official rules must be in the app and say Apple is not a sponsor (5.3.2). No real-money gaming; coins can't be cashed out (5.3.3, 5.3.4). |
@@ -148,7 +148,7 @@ Tracking: **No**. No data used for tracking. No third-party advertising or analy
 ## Needs Moses
 
 1. ~~**Target audience:**~~ confirmed by Moses 22 Oct: 13–15, 16–17, 18+ on Google Play and no Kids Category on Apple, and keep the store texts and graphics neutral (never "for kids", no "all ages" in the listing). Optionally change the Help answer "Marble Spins is for all ages" to "Anyone can race as a guest; saving an account is for 13 and older."
-2. **Store forms:** enter the age-rating, App Privacy and Data safety answers above; the deletion URL https://marblespins.com/help/how-do-i-delete-my-account; the privacy policy https://marblespins.com/legal#privacy (remove the legal page's DRAFT banner first).
+2. **Store forms:** enter the age-rating, App Privacy and Data safety answers above; the deletion URL https://marblespins.com/help/how-do-i-delete-my-account; the privacy policy https://marblespins.com/legal#privacy.
 3. **Review notes and demo account:** a saved demo account for Apple and Google, "guests can play without an account", the native features (4.2), and how the reviewer can see the pass before 28 Nov (tester account, sandbox).
 4. **Placeholders:** "[2 working days]" filled (22 Oct). "[Live once email is switched on.]" removed 1 Nov 2026: email is on.
 5. **Deletion by message:** confirm "within one month" for deletions asked through the contact form, and that support handles them in the back office (Players → delete).

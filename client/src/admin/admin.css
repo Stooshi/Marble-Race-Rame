@@ -39,6 +39,8 @@
 .adm-table th, .adm-table td { padding: 6px 10px; text-align: left; border-bottom: 1px solid var(--a-line); white-space: nowrap; }
 .adm-table th { color: var(--a-muted); font-weight: 600; font-size: 12px; }
 .adm-table .num { text-align: right; }
+.adm-sort { all: unset; cursor: pointer; color: inherit; font: inherit; }
+.adm-sort:hover, .adm-sort:focus-visible { color: var(--a-text, inherit); text-decoration: underline; }
 .adm-table tbody tr:last-child td { border-bottom: 0; }
 .adm-neg { color: var(--a-bad); }
 .adm-tag { margin-left: 8px; padding: 1px 8px; border-radius: 99px; background: #26304a; font-size: 12px; font-weight: 600; }

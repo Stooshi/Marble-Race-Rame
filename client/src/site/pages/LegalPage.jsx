@@ -4,9 +4,9 @@ import { ADDRESS, CONTACT_PATH, LEGAL_UPDATED, OPERATED_BY, company } from '../c
 import ProtectedEmail from '../ProtectedEmail';
 
 /**
- * Terms of use, terms of sale, privacy, cookies and contact: the design's
- * draft text, for legal review before launch. [Brackets] are still to decide. The company's
- * details come from client/src/shared/company.json.
+ * Terms of use, terms of sale, privacy, cookies and contact: the final texts, approved by
+ * Moses on 1 Nov 2026 and in effect from then (`legalUpdated`). The company's details come
+ * from client/src/shared/company.json.
  */
 export default function LegalPage() {
   const { hash } = useLocation();
@@ -15,8 +15,7 @@ export default function LegalPage() {
   }, [hash]);
   return (
     <div className="ms-page ms-page--narrow ms-legal">
-      <div className="ms-msg ms-msg--bad">DRAFT for legal review before launch.</div>
-      <span className="ms-note">Last updated {LEGAL_UPDATED} · {OPERATED_BY} · <a href="#contact">Contact details</a></span>
+      <span className="ms-note">Effective from {LEGAL_UPDATED} · {OPERATED_BY} · <a href="#contact">Contact details</a></span>
       <h1 id="use" className="ms-h2 ms-legal__h1">Terms of use</h1>
       <h2 className="ms-legal__h2">1. The game</h2>
       <p>Marble Spins is a free online marble racing game. Race results are decided by the game's physics. Every player's marble races at the same level, and nothing you buy changes how fast your marble is. Empty places in a race are filled by computer players, always marked with a robot icon.</p>
