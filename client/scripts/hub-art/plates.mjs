@@ -11,6 +11,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { chromium } from 'playwright-core';
 import sharp from 'sharp';
 import { HISTORY, MAKING, PLAY, RINGER } from './diagrams.mjs';
+import { SAND } from './sand.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const fonts = path.resolve(here, '../../node_modules/@fontsource');
@@ -248,7 +249,25 @@ const MAKING_ARTICLE = {
   share: { kicker: 'Marbles', title: 'How glass marbles are made', items: [['handmade-swirl', 905, 300, 300], ['lutz', 1100, 520, 200], ['onionskin', 780, 520, 190], ['clearie', 1120, 130, 180]], alt: 'How glass marbles are made. Illustrated glass marbles: a handmade swirl, a Lutz, an onionskin and a clearie.' },
 };
 
-const ARTICLES = Object.fromEntries([TYPES, HOW_TO_PLAY, RINGER_ARTICLE, HISTORY_ARTICLE, MAKING_ARTICLE].map((a) => [a.slug, a]));
+const SAND_ARTICLE = {
+  slug: 'sand-marble-track',
+  pictures: [
+    { name: 'header', ...P(SAND.header, 'Illustration seen from above: a marble track dug into sand, from a raised start at the top through banked bends and a splitter round a mound to a finish pit, with marbles racing down it.', 'A marble track in the sand, from the start to the finish pit. Illustration.') },
+    { name: 'what-you-need', ...P(SAND.needs, 'Illustration of what you need: a spade, a bucket, a watering can, a flat piece of wood or a ruler, and a few marbles.', 'A spade, a bucket, a watering can, something flat and a few marbles. Illustration.') },
+    { name: 'pick-the-spot', ...P(SAND.spot, 'Illustration of a long sandy slope seen from the side, with an arrow down it: damp sand holds its shape best, and the longer the slope, the more fun.', 'Any sandy slope will do; damp sand holds its shape best. Illustration.') },
+    { name: 'dig', ...P(SAND.dig, 'Diagram of the channel cut across: a rounded groove about two marbles wide with a raised wall of sand on each side, two marbles side by side in it, and a spade piling sand along the edges.', 'The channel: about two marbles wide, with raised walls on both sides. Diagram.') },
+    { name: 'water', ...P(SAND.water, 'Illustration of a watering can pouring water over the channel and its walls so the sand sticks together.', 'Wet the floor and the walls, then wait a minute. Illustration.') },
+    { name: 'smooth', ...P(SAND.smooth, 'Diagram comparing two channels cut across: on the left a bumpy floor, marked wrong; on the right a smooth floor patted flat with a piece of wood, marked right.', 'Pat the floor and walls smooth, so the marbles roll and don\'t jump out. Diagram.') },
+    { name: 'start', ...P(SAND.start, 'Illustration of the start seen from the side: a raised sand platform at the top of the slope with four marbles side by side behind a stick, and a straight run-in down from it.', 'A raised start with a straight run-in: lift the stick and every marble gets a fair start. Illustration.') },
+    { name: 'banked-bend', ...P(SAND.bend, 'Diagram of a banked bend: seen from above, the channel turns with its outside wall built higher, and a marble follows the bend; cut across, the outside wall stands higher than the inside one.', 'Build the outside wall of each bend higher so the marbles stay in. Diagram.') },
+    { name: 'splitter', ...P(SAND.splitter, 'Diagram seen from above: the channel splits in two round a mound of sand and the two channels join again after it, with marbles taking each way.', 'A splitter: two channels round a mound, the same length and slope, or one side always wins. Diagram.') },
+    { name: 'finish', ...P(SAND.finish, 'Illustration seen from above: the channel ends in a round finish pit dug in the sand, with a dashed finish line and a chequered flag before it.', 'A finish line and a pit that catches the marbles. Illustration.') },
+    { name: 'race', ...P(SAND.race, 'Illustration seen from above: four marbles racing down a winding sand track, numbered by their places, with the rules beside it: everyone picks a marble, all start together, first in the pit wins.', 'Pick a marble, start together, first in the pit wins. Then build it longer. Illustration.') },
+  ],
+  share: { kicker: 'Marble racing', title: 'Build a marble track in the sand', items: [['cats-eye', 905, 300, 300], ['corkscrew', 1100, 520, 200], ['oxblood', 780, 520, 190], ['clearie', 1120, 130, 180]], alt: 'Build a marble track in the sand. Illustrated marbles: a cat\'s eye, a corkscrew, an oxblood and a clearie.' },
+};
+
+const ARTICLES = Object.fromEntries([TYPES, HOW_TO_PLAY, RINGER_ARTICLE, HISTORY_ARTICLE, MAKING_ARTICLE, SAND_ARTICLE].map((a) => [a.slug, a]));
 
 async function shoot(browser, html, w, h, file) {
   const tmp = `${file}.html`;
