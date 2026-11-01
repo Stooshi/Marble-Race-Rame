@@ -160,6 +160,7 @@ Each result's `comparison` compares the race with earlier finished races on the 
 | Method | Path | Auth | Notes |
 | --- | --- | --- | --- |
 | GET | `/tracks` | – | `?difficulty=easy\|medium\|hard\|extreme` |
+| GET | `/tracks/popular` | – | The most raced live tracks of the last 7 days (races with a player in them), up to 12, most raced first; worked out at most every 10 minutes. Shown as "Other players liked" on the solo starting line |
 | GET | `/tracks/:idOrSlug` | – | Full geometry (`waypoints`, `obstacles`) + record time |
 | POST | `/tracks` | admin | `{ slug, name, length_m, lane_count?, difficulty?, description?, waypoints?, obstacles?, thumbnail_url? }` |
 | PATCH | `/tracks/:id` | admin | Partial update. Races already decided keep their snapshot |

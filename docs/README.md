@@ -1,35 +1,35 @@
 # Marble Spins: technical documentation
 
-*One-page status for anyone taking over the code, such as a new CTO. Read this first, then the documents below. Last reviewed 25 Oct 2026, in the Sunday docs review that runs every week. Mirrored in the claude.ai project "Marble Race" under `cto/`.*
+*One-page status for anyone taking over the code, such as a new CTO. Read this first, then the documents below. Last reviewed 1 Nov 2026, in the Sunday docs review that runs every week. Mirrored in the claude.ai project "Marble Race" under `cto/`.*
 
-## Status, 27 Oct 2026
+## Status, 1 Nov 2026
 
 **What it is:** Marble Spins is a free online marble racing game. Players drop a marble into a live 20-marble race, decided on the server by real physics. Purchases only change how a marble looks, never how it races. Races are decided once, from a seed, and never change.
 
 **Where it stands:**
-- **Website:** live at marblespins.com. Soft start (social media, 10–20 invited test pilots) in the week of 26 Oct. **Official launch 1 Dec 2026**, with the Holiday Season, the season pass and the apps.
-- **Tracks:** **126 live in ten series**: World Tour, Grand Prix, Coasters, Canyons, Blocks, Track and Field, Rivers (16), Peaks (15), Pinball and Arcade. The 31 holiday tracks are switched on but hidden and closed until 1 Dec 00:00 Swedish time (157 then). **Peaks:** all fifteen live: the first five since 27 Oct 2026, Peaks 6–15 and the Chobe (the 16th river) switched on by Moses on 30 Oct 2026, after the server deploy that added them. **Blocks Series 2:** the test five (Li River, Venice, Niagara, Tre Cime, Abisko) live since 31 Oct 2026 (switched on by Moses after the deploy); the four cities (Kyoto, Marrakesh, Singapore, Lisbon) and three rivers (Douro, Loire, Vltava), four mountains (Torres del Paine, Rainier, Kinabalu, Kirkjufell) and four winter tracks (Baikal, Svalbard, Yellowstone, Abraham Lake) are built, switched off, waiting for the server deploy (172 tracks then, 141 live once switched on): all twenty built.
-- **Apps:** iPhone and Android (Capacitor) are built; the Android app is tested on Moses's phone. Store submission is planned for 16–20 Nov.
+- **Website:** live at marblespins.com (Vercel builds every push to `Main`; the newest build is Main `6d0472f`, 1 Nov). Soft start (social media, 10–20 invited test pilots) since the week of 26 Oct. **Official launch 1 Dec 2026**, with the Holiday Season, the season pass and the apps. Google Analytics 4 is on since 31 Oct (after cookie consent); the Meta Pixel is off.
+- **Tracks:** **126 live in ten series**: World Tour, Grand Prix, Coasters, Canyons, Blocks, Track and Field, Rivers (16), Peaks (15), Pinball and Arcade. The 31 holiday tracks are switched on but hidden and closed until 1 Dec 00:00 Swedish time (157 then). **Blocks Series 2** (20 tracks, two big features each): the test five live since 31 Oct; the other fifteen (four cities, three rivers, four mountains, four winter tracks) are **built and switched off on Main**, waiting for the server deploy (172 tracks in the database then; 141 live once Moses switches them on).
+- **Waiting for the next server deploy** (on Main since the last known server deploy of 31 Oct morning, `a0cf1f4`): the fifteen Blocks Series 2 tracks (data updates `2027-05-15` to `2027-05-29`), **the free League's 3 tracks** (the website already asks the server how many; until the deploy the server still wants 5), and `GET /api/tracks/popular` ("Other players liked" on the solo starting line; until then the website shows the newest tracks).
+- **Apps:** iPhone and Android (Capacitor) are built; the Android app is tested on Moses's phone. They need a rebuild for the keep-awake fix and the new sounds. Store submission is planned for 16–20 Nov.
 - **Payments:**
   - Stripe on the website, in **test mode** until Moses says otherwise.
   - Google Play Billing and Apple in-app purchases are built.
   - Coin packs and the Holiday Season pass, pre-sale from 28 Nov.
-- **Leagues part 1: on for everyone** since the evening of 27 Oct 2026 (`LEAGUES=on`, deploy `b10e1672d598`): the free 5-track League and the slim League Night, with the rename, Start League Night now, track names on the scoreboards, "Leagues are coming soon" on invite links while off, and the Leagues Help answers. Part 2 (credits, Pro League) after 1 Nov, behind `LEAGUES_PRO`.
+- **Leagues part 1: on for everyone** since 27 Oct 2026 (`LEAGUES=on`): the free League (**3 tracks from 31 Oct**, the taster league; leagues made before keep 5) and the slim League Night. **Part 2** (credits, the Pro League, the league marble) may start from 1 Nov, behind `LEAGUES_PRO`, on branch `leagues-pro`.
 - **Built, switched off:**
   - push notifications (first app update, December);
   - gift codes;
   - email: pass reminders and confirmations, waiting for Brevo and its key;
   - the guest deletion job (dry run);
   - deleting replays over 30 days old (dry run until `REPLAY_TRIM=on`; new replays are already a third of the size).
-- **Newest this week:**
-  - player names everywhere;
-  - public rooms and a one-tap Quick race;
-  - the friend-room start timer;
-  - the phone website with a full-screen race;
-  - Rivers live;
-  - the marbles hub at /marbles, five articles (26 Oct);
-  - the first five Peaks live (27 Oct);
-  - a backward-facing TV camera on every track (27 Oct; in the database since that afternoon's deploy).
+- **Newest this week (26 Oct – 1 Nov):**
+  - Peaks (15) and the Chobe live; Blocks Series 2: five live, fifteen built;
+  - Leagues and League Night live; the free League down to 3 tracks;
+  - a backward-facing TV camera on every track, the TV camera drama and the racing look (kerbs, chevrons, chequered lines);
+  - the start show for solo races, rooms and Quick race;
+  - new sounds (start, hit, bump on obstacles; 12 race tunes);
+  - the solo starting line: Change marble, Change track, "Other players liked"; "your marble" instead of "Shooter";
+  - smaller replays, `.railwayignore`, and server variables changed only from the command line.
 
 **How it runs:**
 
