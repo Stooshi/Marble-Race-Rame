@@ -20,7 +20,7 @@ module.exports = track({
   signature: 'Into the cloud forest',
   tvCameras: [
     { section: 'Into the cloud forest', at: 0.9, side: 'left', distance: 10, height: 12 },
-    { section: 'Giant fern sweep', at: 0.5, side: 'right', distance: 10, height: 12 },
+    { section: 'Giant fern sweep', at: 0.4, side: 'right', distance: 10, height: 12 },
   ],
   start: { landmark: 'granite-plateau', type: 'stepped-platform', gate: 'stalls', shots: { countdown: 'front', launch: 'overhead' } },
   finish: { landmark: 'giant-ferns' },
