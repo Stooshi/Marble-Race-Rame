@@ -13,7 +13,7 @@ Nothing is ever posted from here: Moses reviews and posts.
 | `recorder.html`, `recorder.js` | The recorder's page: the track and race drawn by the game's own `TrackScene`, with the game's cameras (the follow camera, the track's TV moments, the countdown and finish shots, the winner's push-in), the calm helicopter flyover made longer (`?fly=<ms>`, 15 s in the productions), trackside pans and fixed cameras for replays, and the texts and podium card over the picture. No buttons, no game interface. The field wears the standard collection's finished looks (never a seasonal or limited one) and is named after them. |
 | `logo.html` | The logo sting (versions A, B and C; Moses chose A, the marble rolling in, 28 Oct 2026) and the end card, drawn as a function of time. |
 | `director.mjs` | **The director** (Moses, 29 Oct 2026: "the pack is the show"): reads the race before it is filmed (bunches, contacts, overtakes in the pack, marbles in the air, lead changes) and picks the shots: the start wide (from behind the gate, high, looking down the track as all 20 leave it, so the lane and gate markings read the right way up; Moses, 30 Oct 2026), about half the race on the pack (the game's follow camera on the bunch's last marble so the bunch is in front of the lens, or a wide chase camera behind the bunch; the TV cameras show the pack coming towards them), back to the leader for lead changes and the last stretch, the finish head-on so the leader and the chasers are seen arriving; 3–6 s a shot. |
-| `plans.mjs` | What goes into each kind of video, shot by shot: `production` (horizontal, about 2 minutes) and `cutdown` (vertical, 30–60 s) and `clip` (vertical, 10–30 s: `--clip flyover|close|wild|pick`, `--at <race ms>` for a wild moment: it follows the marble highest in the air then if it flies 1.5 m or more, otherwise the leader just after). |
+| `plans.mjs` | What goes into each kind of video, shot by shot: `production` (horizontal, about 2 minutes), `broadcast` (horizontal, about 1:40: the race as a TV broadcast, below), `cutdown` (vertical, 30–60 s) and `clip` (vertical, 10–30 s: `--clip flyover|close|wild|pick`, `--at <race ms>` for a wild moment: it follows the marble highest in the air then if it flies 1.5 m or more, otherwise the leader just after). |
 | `record.mjs` | Draws the frames in a headless browser, 60 fps, 1920×1080 (`--format wide`) or 1080×1920 (`--format tall`), mixes the sound (levelled to -14 LUFS, the level YouTube, TikTok and Instagram play at) and writes the MP4 (H.264, AAC). `--stills 1,5,10` writes those seconds as pictures instead, for checking. |
 | `render-logo.mjs` | The logo sting alone (`node video/render-logo.mjs A out.mp4 [--tall] [--end]`). |
 | `../../scripts/video-race.js` | Picks the race: runs a track's races locally on the real simulator (seeds 900001 + k × 7919) and scores them for a close finish, late lead changes and the top three swapping; writes the race for the recorder. It never reads or changes the database. |
@@ -42,3 +42,18 @@ Drawing is done in software (no graphics card here): about half a second a frame
 8. The end card: the logo, "Pick your marble. Race your friends." and "Play free at marblespins.com".
 
 The vertical cut-down: the last seconds of the countdown, the start, the TV moments and an overtake, the last 8 seconds to the line, the slow-motion finish, the podium and the end card.
+
+## The broadcast (`--kind broadcast`, Moses, 1 Nov 2026)
+
+One whole race as a TV motorsport broadcast, in our own style only (navy, yellow, orange, Lilita One, the mark top right; nothing copied from any real series, team, driver, sponsor or game). Its words are all in `template.json` `broadcast` (the hook lines, the intro card, the captions, the results board, the end card's lines).
+
+1. The hook (5 s): the final metres in slow motion from beside the line, frozen 0.4 s before the winner's line with the three contenders side by side ("0.064 seconds decided it."), rings and names on the three ("Who wins? Pick one."), a quick rewind ("20 marbles. 1 minute 40. Watch.", the video's own length). The winner is shown only at the real finish.
+2. The flyover (4.5 s) with the intro card ("MARBLE SPINS GRAND PRIX · DUBAI") for 1.5 s; the countdown (3.5 s); GO by 13 s on the whole pack leaving the gate.
+3. The race with the overlay: the standings tower top left (the top 10: place, the marble's colour, its name, the gap to the front of the race, green and red arrows for places won and lost in the last 1.5 s), the race clock and the three sectors top right beside the mark, name tags over the marbles near the camera; cuts every 2–4 s.
+4. The captions, lower third, one at a time, at the race's own moments (the grid, GO, the first bunch, the first big overtake, a pack shot, a calm stretch, a lead change, the three contenders close, the final stretch); a line whose moment doesn't happen is left out.
+5. The finish live (from high behind the line), then in slow motion ("PHOTO FINISH", then the winner's time); the results board (the winner's card, then place, marble, start gate, time and gap for all 20); the end card.
+
+```
+node scripts/video-race.js dubai-marble-grand-prix --seeds 120
+cd client && node video/record.mjs dubai-marble-grand-prix dubai-marble-grand-prix.video-1794848 --kind broadcast --tune 7 --out ~/videos/dubai-broadcast.mp4
+```
