@@ -72,6 +72,7 @@
 "kangchenjunga-five-snows": {"family":"peak","reach":0.253,"seq":["opening: crest-start","drop","pileUp","slalom","climb","drop","straight","peg","brake"]},
 "kilimanjaro-five-zones": {"family":"peak","reach":0.236,"seq":["opening: funnel-drop","drop","pileUp","slalom","straight","peg ×2","steps","S-bends right"]},
 "kill-screen": {"family":"arcade","reach":0.229,"seq":["opening: split-start","drop","pileUp","slalom","chutes","drop","slalom","straight","hairpin right","swipe","straight","moguls"]},
+"kinabalu-cube-summit": {"family":"block-2","reach":0.224,"seq":["opening: funnel-drop","drop","pileUp","slalom","straight","slalom","S-bends left","peg"]},
 "kopaonik-spins": {"family":"coaster","reach":0.24,"seq":["opening: classic","drop","pileUp","slalom","spiral left"]},
 "kyoto-block-gardens": {"family":"block-2","reach":0.226,"seq":["opening: crest-start","drop","pileUp","slalom","climb","drop","straight","steps","S-bends left"]},
 "lagos-marble-grand-prix": {"family":"grand-prix","reach":0.207,"seq":["opening: classic","drop","pileUp","slalom","S-bends right"]},
