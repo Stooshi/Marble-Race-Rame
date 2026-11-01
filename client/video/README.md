@@ -61,3 +61,7 @@ cd client && node video/record.mjs dubai-marble-grand-prix dubai-marble-grand-pr
 ### The vertical cut (`--kind broadcastTall --format tall`, Moses, 1 Nov 2026)
 
 25 s for TikTok, Reels and Shorts, 1080×1920: 0–3 s the hook (frozen 0.65 s before the winner's line, the three contenders marked, "Who wins? Pick one."), 3–4 s a quick rewind to GO, 4–18 s six cuts of the best moments (the start scramble, the biggest bunch, the biggest overtake, a lead change), 18–23 s the final stretch and the photo finish in slow motion, 23–25 s the winner and "Play free at marblespins.com". A compact tower (top 5) and the race clock, bigger text, nothing in the bottom 20% or at the right edge. It ends on the hook's first view, so it loops. Its words: `template.json` `broadcast.tall`.
+
+### Two different vertical cuts of one track (`--kind broadcastTallV --variant A|B --format tall`, Moses, 1 Nov 2026)
+
+For the same night on two apps (Sognefjord: A for TikTok, B for Instagram): two different races (the two closest of a batch: `node scripts/video-race.js <slug> --seeds 120 --top 120`, then `--seed <n>` for each), two hooks (A: frozen before the line, the contenders marked; B: the race's biggest overtake frozen as it starts, "Watch number <place> go."), other cameras (B chases where A follows, its finish from high behind the line), the variant's own lines and the intro tag, then "PHOTO FINISH", the winner and the gap, "Race your friends. Play free at marblespins.com". The last 0.25 s fade into the first picture, so it loops. Words: `template.json` `broadcast.tallVariants`.

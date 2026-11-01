@@ -88,6 +88,27 @@
       "winner": "{marble} · {margin} s",
       "play": "Play free at marblespins.com"
     },
+    "tallVariants": {
+      "_about": "Two different vertical cuts of the same track for the same night (Moses, 1 Nov 2026: Sognefjord for TikTok and Instagram): two different races, different camera moments and different words, so they never look like the same video. hook 'finish': frozen before the line, the contenders marked; hook 'overtake': the race's biggest overtake, frozen as it starts, the marble marked ({place}: its place then). lines: shown one at a time through the race. {track}: the track's name in capitals; {marble}, {margin}: the winner and its margin.",
+      "A": {
+        "hook": "finish",
+        "hookText": "Who wins? Pick one.",
+        "introTag": "MARBLE SPINS GRAND PRIX · {track}",
+        "lines": ["20 marbles. Real physics.", "Racing through a Norwegian fjord.", "Every bounce is live."],
+        "photoFinish": "PHOTO FINISH",
+        "winner": "{marble} wins by {margin} s",
+        "play": "Race your friends. Play free at marblespins.com"
+      },
+      "B": {
+        "hook": "overtake",
+        "hookText": "Watch number {place} go.",
+        "introTag": "MARBLE SPINS GRAND PRIX · {track}",
+        "lines": ["No two races are the same.", "Fjord racing, 20 marbles wide.", "Real physics. Nothing scripted."],
+        "photoFinish": "PHOTO FINISH",
+        "winner": "{marble} wins by {margin} s",
+        "play": "Race your friends. Play free at marblespins.com"
+      }
+    },
     "captions": {
       "_about": "The broadcast's on-screen script (Moses, 1 Nov 2026): lower-third captions in our font and colours, about 2.6 s each, timed to the race's own moments (not fixed seconds), never two at once, never over the pack. A line whose moment doesn't happen in the race is skipped. {margin}, {marble} and {time} are the chosen race's real numbers.",
       "seconds": 2.6,

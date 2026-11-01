@@ -80,7 +80,7 @@ export function mix(plan, length, { tune }, file) {
   }
 }
 
-export async function record({ slug, race: raceName, kind = 'production', format = 'wide', tune = 7, logo = TEMPLATE.intro.logo, out, from = null, to = null, fly = null, stills = null, clip = null, at = null, promoStart = null }) {
+export async function record({ variant = 'A', slug, race: raceName, kind = 'production', format = 'wide', tune = 7, logo = TEMPLATE.intro.logo, out, from = null, to = null, fly = null, stills = null, clip = null, at = null, promoStart = null }) {
   fly ??= kind === 'clip' ? 12 : kind === 'broadcast' ? 4.5 : 15; // (seconds: the flyover's length)
   const [W, H] = SIZES[format];
   const race = JSON.parse(fs.readFileSync(path.join(here, '..', 'dev', '.tracks', `${raceName}.json`), 'utf8'));
@@ -98,9 +98,9 @@ export async function record({ slug, race: raceName, kind = 'production', format
     await page.waitForFunction(() => window.rec, null, { timeout: 300_000 });
     await page.evaluate(() => window.rec.ready);
     const info = await page.evaluate(() => window.rec.info());
-    const plan = PLANS[kind](info, race, { logo, fly, clip, at, promoStart });
+    const plan = PLANS[kind](info, race, { logo, fly, clip, at, promoStart, variant });
     // (The plan beside the video: swap-logo.mjs uses it to put another logo version in.)
-    fs.writeFileSync(`${out}.plan.json`, JSON.stringify({ slug, race: raceName, kind, format, tune, logo, length: plan.length, shots: plan.shots, sound: plan.sound, texts: plan.texts, captions: plan.captions, hooks: plan.hooks, bc: plan.bc, intro: plan.intro, results: plan.results }));
+    fs.writeFileSync(`${out}.plan.json`, JSON.stringify({ slug, race: raceName, kind, format, tune, logo, length: plan.length, shots: plan.shots, sound: plan.sound, texts: plan.texts, captions: plan.captions, hooks: plan.hooks, markers: plan.markers, bc: plan.bc, intro: plan.intro, results: plan.results }));
     log(`${info.name}: ${kind} ${format}, ${plan.length.toFixed(1)} s, ${plan.shots.length} shots; winner ${info.podium[0].name} by ${info.margin} ms${plan.packShare !== undefined ? `; the race ${Math.round(plan.packShare * 100)}% on the pack` : ''}`);
     for (const sh of plan.shots) log(`  ${sh.at.toFixed(1).padStart(6)} s  ${(sh.type + (sh.follow !== undefined && sh.follow !== 'leader' ? ` #${sh.follow}` : sh.type === 'race' ? ' lead' : '')).padEnd(10)} ${sh.from !== undefined ? `race ${Math.round(sh.from)} ms` : ''} ${sh.speed && sh.speed !== 1 ? `×${sh.speed}` : ''} ${sh.dur.toFixed(1)} s`);
     // The rows on the podium card.
@@ -201,6 +201,19 @@ export async function record({ slug, race: raceName, kind = 'production', format
     mix(plan, plan.length, { tune }, audio);
     execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-i', silent, '-ss', String(v0), '-t', String(v1 - v0), '-i', audio,
       '-map', '0:v', '-map', '1:a', '-c:v', 'copy', '-c:a', 'aac', '-b:a', '192k', '-movflags', '+faststart', '-shortest', out]);
+    // (A loop: the last moments fade into the first picture, so the video runs on into its start.)
+    if (plan.loopFade && v0 === 0 && v1 >= plan.length - 0.01) {
+      const tmp = `${out}.loop.mp4`;
+      const first = `${out}.first.png`;
+      const L = plan.length;
+      const f = plan.loopFade;
+      execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-i', out, '-frames:v', '1', first]);
+      execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-i', out, '-loop', '1', '-framerate', String(FPS), '-t', String(L), '-i', first, '-filter_complex',
+        `[1:v]format=rgba,fade=t=in:st=${(L - f).toFixed(3)}:d=${f}:alpha=1[ov];[0:v][ov]overlay=shortest=1,format=yuv420p[x]`,
+        '-map', '[x]', '-map', '0:a', '-c:v', 'libx264', '-crf', '18', '-preset', 'medium', '-r', String(FPS), '-c:a', 'copy', '-movflags', '+faststart', tmp]);
+      fs.renameSync(tmp, out);
+      fs.rmSync(first, { force: true });
+    }
     log(`wrote ${out}: ${(v1 - v0).toFixed(1)} s, ${frames} frames in ${((Date.now() - started) / 60000).toFixed(1)} min`);
     return { out, plan, info };
   } finally {
@@ -216,7 +229,7 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   const num = (n) => (opt(n, null) === null ? null : Number(opt(n)));
   await record({
     slug, race, kind: opt('kind', 'production'), format: opt('format', 'wide'), tune: Number(opt('tune', 7)), logo: opt('logo', TEMPLATE.intro.logo),
-    clip: opt('clip', null), at: num('at'), fly: num('fly'), promoStart: num('promos'),
+    variant: opt('variant', 'A'), clip: opt('clip', null), at: num('at'), fly: num('fly'), promoStart: num('promos'),
     out: opt('out', path.join(process.cwd(), `${slug}-${opt('kind', 'production')}-${opt('format', 'wide')}.mp4`)), from: num('from'), to: num('to'), stills: opt('stills', null) === 'shots' ? 'shots' : opt('stills', null)?.split(',').map(Number) ?? null,
   });
   process.exit(0); // (the browser and the dev server can keep the process waiting after closing)
