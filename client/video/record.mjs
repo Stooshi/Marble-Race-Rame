@@ -98,7 +98,7 @@ export async function record({ variant = 'A', slug, race: raceName, kind = 'prod
     await page.waitForFunction(() => window.rec, null, { timeout: 300_000 });
     await page.evaluate(() => window.rec.ready);
     const info = await page.evaluate(() => window.rec.info());
-    const plan = PLANS[kind](info, race, { logo, fly, clip, at, promoStart, variant });
+    const plan = PLANS[kind](info, race, { logo, fly, clip, at, promoStart, variant, slug });
     // (The plan beside the video: swap-logo.mjs uses it to put another logo version in.)
     fs.writeFileSync(`${out}.plan.json`, JSON.stringify({ slug, race: raceName, kind, format, tune, logo, length: plan.length, shots: plan.shots, sound: plan.sound, texts: plan.texts, captions: plan.captions, hooks: plan.hooks, dim: plan.dim, markers: plan.markers, bc: plan.bc, intro: plan.intro, results: plan.results }));
     log(`${info.name}: ${kind} ${format}, ${plan.length.toFixed(1)} s, ${plan.shots.length} shots; winner ${info.podium[0].name} by ${info.margin} ms${plan.packShare !== undefined ? `; the race ${Math.round(plan.packShare * 100)}% on the pack` : ''}`);

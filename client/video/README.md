@@ -51,16 +51,25 @@ One whole race as a TV motorsport broadcast, in our own style only (navy, yellow
 2. The flyover (4.5 s) with the intro card ("MARBLE SPINS GRAND PRIX · DUBAI") for 1.5 s; the countdown (3.5 s); GO by 13 s on the whole pack leaving the gate.
 3. The race with the overlay: the standings tower top left (the top 10: place, the marble's colour, its name, the gap to the front of the race, green and red arrows for places won and lost in the last 1.5 s), the race clock and the three sectors top right beside the mark, name tags over the marbles near the camera; cuts every 2–4 s.
 4. The captions, lower third, one at a time, at the race's own moments (the grid, GO, the first bunch, the first big overtake, a pack shot, a calm stretch, a lead change, the three contenders close, the final stretch); a line whose moment doesn't happen is left out.
-5. The finish live (from high behind the line), then in slow motion ("PHOTO FINISH", then the winner's time); the results board (the winner's card, then place, marble, start gate, time and gap for all 20); the end card.
+5. The finish live (from high behind the line), then in slow motion ("PHOTO FINISH", then the winner's time); the results board for 8.4 s (the winner's card, then place, marble, start gate, time and gap for all 20), then its caption over the finish area (so the board never hides it); the end card.
 
 ```
 node scripts/video-race.js dubai-marble-grand-prix --seeds 120
 cd client && node video/record.mjs dubai-marble-grand-prix dubai-marble-grand-prix.video-1794848 --kind broadcast --tune 7 --out ~/videos/dubai-broadcast.mp4
 ```
 
+### A track's own captions (`template.json` `broadcast.captionSets.<slug>`)
+
+A track can have its own broadcast lines: they replace the shared captions key by key (the rest stay). Sognefjord has one (Moses, 1 Nov 2026, the long YouTube version: racing lines and a few fjord lines, all different from Dubai's). Its race: `sognefjord.video-1066300` (seed 1066300, won by 0.009 s, the third 0.054 s back), the closest of 120 not used in the two verticals:
+
+```
+node scripts/video-race.js sognefjord --seed 1066300
+cd client && node video/record.mjs sognefjord sognefjord.video-1066300 --kind broadcast --tune 7 --out ~/videos/sognefjord-grand-prix-broadcast.mp4
+```
+
 ### The end card rule (every video, Moses, 1 Nov 2026)
 
-The end card is on screen for **at least 2.5 s, fully readable** (`template.json` `endCard.minSeconds`); making a plan stops with an error otherwise. The logo-page end card (production, cutdown, clip, broadcast) lasts `endCard.seconds` (4–5 s). The vertical broadcasts end on their play line instead (`endHold()` in `plans.mjs`): held `endCard.hold.seconds` (3 s) on a calm frame, the finish frozen, dimmed to 38% navy over 0.4 s (`#dimFx`), readable for at least 2.5 s before the loop's 0.25 s fade into the first picture.
+The end card is on screen for **at least 2.5 s, fully readable** (`template.json` `endCard.minSeconds`); making a plan stops with an error otherwise. The logo-page end card (production, cutdown, clip, broadcast) lasts `endCard.seconds` (4.5–5 s): its lines fade in by 1.8 s (`endCard.linesIn`), so they are readable 2.7–3.2 s (the broadcast's 2.8 s). The vertical broadcasts end on their play line instead (`endHold()` in `plans.mjs`): held `endCard.hold.seconds` (3 s) on a calm frame, the finish frozen, dimmed to 38% navy over 0.4 s (`#dimFx`), readable for at least 2.5 s before the loop's 0.25 s fade into the first picture.
 
 ### The vertical cut (`--kind broadcastTall --format tall`, Moses, 1 Nov 2026)
 

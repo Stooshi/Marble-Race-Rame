@@ -34,9 +34,10 @@
   "intro": { "logo": "A", "on": ["production"] },
 
   "endCard": {
-    "_about": "The end card is on screen for at least minSeconds, fully readable, in every video (Moses, 1 Nov 2026). The logo-page end card (production, cutdown, clip, broadcast) lasts `seconds`. The vertical broadcasts end on their play line instead: held `hold.seconds` on a calm, frozen frame of the finish (the winner), dimmed to `hold.dim` black over `hold.dimIn` s, and fully readable for at least minSeconds before the loop's fade into the first picture starts.",
+    "_about": "The end card is on screen for at least minSeconds, fully readable, in every video (Moses, 1 Nov 2026). The logo-page end card (production, cutdown, clip, broadcast) lasts `seconds`: its lines fade in by `linesIn` s (logo.html), so they are readable for `seconds` − `linesIn` (2.7–3.2 s). The vertical broadcasts end on their play line instead: held `hold.seconds` on a calm, frozen frame of the finish (the winner), dimmed to `hold.dim` black over `hold.dimIn` s, and fully readable for at least minSeconds before the loop's fade into the first picture starts.",
     "lines": ["Pick your marble. Race your friends.", "Play free at marblespins.com"],
-    "seconds": { "production": 5, "cutdown": 4, "clip": 4, "broadcast": 5 },
+    "seconds": { "production": 5, "cutdown": 4.5, "clip": 4.5, "broadcast": 4.6 },
+    "linesIn": 1.8,
     "minSeconds": 2.5,
     "hold": { "seconds": 3.0, "dim": 0.38, "dimIn": 0.4 }
   },
@@ -128,6 +129,23 @@
       "photoFinish": "PHOTO FINISH",
       "winnerTime": "{marble} · {time}",
       "results": "Collect your marbles. Build your Marble Bag."
+    },
+    "captionSets": {
+      "_about": "A track's own lines for the broadcast, by its slug (record.mjs passes it): they replace the shared captions above key by key (a key not given keeps the shared line). The same rules: timed to the race's own moments, never two at once, a moment that doesn't happen is skipped.",
+      "sognefjord": {
+        "_about": "The long YouTube Sognefjord broadcast (Moses, 1 Nov 2026): racing lines mixed with a few fjord lines, all different from the shared (Dubai) ones.",
+        "flyover": "Racing through a Norwegian fjord.",
+        "grid": "Twenty marbles on the grid.",
+        "go": "Down towards the water.",
+        "firstBunch": "Contact! Tight in the pack.",
+        "firstOvertake": "Places change on every bend.",
+        "packShot": "Pick a marble. Follow it to the end.",
+        "calm": "Carved by glaciers. Raced by marbles.",
+        "pickStill": "Is your pick still up front?",
+        "leadChange": "New leader!",
+        "finalStretch": "The last metres along the fjord.",
+        "results": "Every result is real physics."
+      }
     },
     "endCard": ["Don't just watch marble races. Race them.", "Play free at marblespins.com"],
     "towerRows": 10,

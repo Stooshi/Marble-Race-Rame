@@ -72,7 +72,8 @@ function builder(kind) {
   p.lift = (a, b) => p.lifts.push([a, b]);
   p.end = () => {
     const dur = TEMPLATE.endCard.seconds[kind];
-    if (!(dur >= TEMPLATE.endCard.minSeconds)) throw new Error(`The ${kind} end card is ${dur} s: at least ${TEMPLATE.endCard.minSeconds} s (template.json endCard)`);
+    const readable = dur - TEMPLATE.endCard.linesIn;
+    if (!(readable >= TEMPLATE.endCard.minSeconds - 1e-9)) throw new Error(`The ${kind} end card's lines are readable ${readable.toFixed(1)} s: at least ${TEMPLATE.endCard.minSeconds} s (template.json endCard)`);
     return p.add({ type: 'end', dur });
   };
   return p;
@@ -360,12 +361,13 @@ const leadGroup = (x) => (LEAD_GROUP ? LEAD_GROUP(x.t) : [x.lead]);
  * 2–4 s, the finish live and in slow motion, the results board with the winner's card, the end card. The
  * words are the template's broadcast captions (lower third), placed at the race's own moments.
  */
-export function broadcast(info, race, { fly = 4.5 } = {}) {
+export function broadcast(info, race, { fly = 4.5, slug = null } = {}) {
   const m = moments(info, race);
   const A = analyse(race, info.arc, m.W + 8000);
   const G = info.countdownMs;
   const BC = TEMPLATE.broadcast;
-  const C = BC.captions;
+  // (A track's own caption set, where it has one, replaces the shared lines; template.json broadcast.captionSets.)
+  const C = { ...BC.captions, ...(slug && BC.captionSets?.[slug]) };
   const p = builder('broadcast');
   const city = info.name.replace(/\s*Marble Grand Prix$/i, '').trim();
   const clock = (ms) => `${Math.floor(ms / 60000)}:${String(Math.floor((ms % 60000) / 1000)).padStart(2, '0')}.${String(Math.round(ms % 1000)).padStart(3, '0')}`;
@@ -471,8 +473,9 @@ export function broadcast(info, race, { fly = 4.5 } = {}) {
   p.lift(s1, p.v);
   // 6. The results board over the finish.
   const resAt = p.add({ type: 'race', follow: 'leader', from: m.W + 4000, dur: 12 });
-  const results = { at: resAt + 0.4, dur: 11.6, title: BC.resultsTitle, sub: fill(BC.resultsSub, { ...name, city }), winnerLabel: BC.winner, columns: BC.columns };
-  want.push({ v: resAt + 6.5, key: 'results', fixed: true });
+  // (The board for 8.4 s, then its caption over the finish area, so the board never hides the caption.)
+  const results = { at: resAt + 0.4, dur: 8.4, title: BC.resultsTitle, sub: fill(BC.resultsSub, { ...name, city }), winnerLabel: BC.winner, columns: BC.columns };
+  want.push({ v: resAt + 9.1, key: 'results', fixed: true });
   // 7. The end card (the broadcast's own lines).
   const endAt = p.end();
   // The captions: in time order, never two at once (one that would overlap the last is moved a little later,
