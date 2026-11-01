@@ -2055,9 +2055,9 @@ const LAYOUTS = {
       obstacles: [parked({ costume: c.parked, at: 0.2, side: R, length: 6 }), peg({ costume: c.peg, at: 0.45, line: 'left' })], features: [rumble({ from: 0.7, to: 0.95, count: 3 })],
     },
   ],
-  /** L118 Glacier snout (Blocks 2, Rainier; after the classic opening): a moraine straight (a peg), a short run onto the glacier, the glacier-valley half-pipe (big feature one: the field rocks wall to wall), crevasse S-bends (a peg), the top of the snout (a peg), the two-step drop off the glacier snout (big feature two), the wildflower-meadow straight (a slalom), the run to the lodge, the hairpin, a sweep to the forest and a parked piece and a peg at the run-in. */
+  /** L118 Glacier snout (Blocks 2, Rainier; after the classic opening): a moraine straight (three pegs), a short run onto the glacier, the glacier-valley half-pipe (big feature one: the field rocks wall to wall), crevasse S-bends (a peg), the top of the snout (a peg), the two-step drop off the glacier snout (big feature two), the wildflower-meadow straight (a slalom), the run to the lodge, the hairpin, a sweep to the forest and a parked piece and a peg at the run-in. */
   'glacier-snout': (L, R, c) => [
-    { key: 'moraine', name: 'Along the moraine', shape: straight(45, { grade: 0.12 }), obstacles: [peg({ costume: c.peg, at: 0.5, line: 'center' })] },
+    { key: 'moraine', name: 'Along the moraine', shape: straight(60, { grade: 0.12 }), obstacles: [peg({ costume: c.peg, at: 0.25, line: 'left' }), peg({ costume: c.peg, at: 0.5, line: 'right' }), peg({ costume: c.peg, at: 0.75, line: 'center' })] },
     { key: 'ontoTheGlacier', name: 'Onto the glacier', shape: plunge(30, { grade: 0.2, from: 0.15 }) },
     { key: 'glacier', name: 'The glacier half-pipe', shape: halfPipe({ first: R, width: 8, swings: 3, radius: 150, degrees: 18, grade: 0.12 }) },
     { key: 'crevasses', name: 'Crevasse S-bends', shape: sBends({ first: L, radius: 70, degrees: 65, grade: 0.12 }), obstacles: [peg({ costume: c.peg, at: 0.5, line: 'center' })], billboards: 1 },
