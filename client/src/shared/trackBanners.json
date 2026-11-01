@@ -827,6 +827,17 @@
    "side": -1,
    "marbles": 4
   },
+  "kinabalu-cube-summit": {
+   "name": "Kinabalu Cube Summit",
+   "series": "Blocks",
+   "lighting": "dawn",
+   "v": "a1b8e723",
+   "bytes": 13126,
+   "bytes2x": 30146,
+   "t": 9207,
+   "side": 1,
+   "marbles": 4
+  },
   "kopaonik-spins": {
    "name": "Kopaonik Spins",
    "series": "Coasters",
