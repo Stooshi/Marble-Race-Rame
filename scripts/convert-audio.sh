@@ -86,9 +86,9 @@ if [ -z "${SKIP_EFFECTS:-}" ]; then
   b=$(ls "$IN"/MARBLE\ BUMP\ ON\ OBSTICALS*.mp3)
   trim="atrim=start=0.028,asetpts=PTS-STARTPTS"
   bl=$(lufs "$b" "$trim,")
-  # Then 4 dB over the click's loudness (Moses, 1 Nov 2026, "I still can't hear it"): a short knock in a
-  # busy race needs more than the click, which plays more often; its peak still under the click's.
-  ff="$trim,volume=$(awk -v t="$hl" -v m="$bl" 'BEGIN { print t - m + 4 }')dB"
+  # Then 8 dB over the click's loudness (Moses, 1 Nov 2026: "I still can't hear it", +4 dB; "still too
+  # low", +4 more): a short knock in a busy race needs more than the click; its peak just under the click's.
+  ff="$trim,volume=$(awk -v t="$hl" -v m="$bl" 'BEGIN { print t - m + 8 }')dB"
   ffmpeg -v error -y -i "$b" -vn -map_metadata -1 -af "$ff" -ar 48000 -c:a libopus -b:a 64k -vbr on -application audio "$OUT/marble-bump.webm"
   ffmpeg -v error -y -i "$b" -vn -map_metadata -1 -af "$ff" -c:a aac -b:a 96k -ar 44100 -movflags +faststart "$OUT/marble-bump.m4a"
   # (No overtaking whoosh for now: Moses, 28 Oct 2026.)
