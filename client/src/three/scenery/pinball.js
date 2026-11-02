@@ -24,7 +24,7 @@ const DISPLAY = { width: 44, height: 7 };
 const FLIP_MS = 1600; // the flippers' fixed rhythm
 
 /** Each art style's colours and the picture's few big shapes (all original art). */
-const ART = {
+export const ART = {
   manor: { sky: ['#140a2a', '#3d1f5c'], ink: '#0b0612', glow: '#c6ff4f', accent: '#ff7a1a' },
   castle: { sky: ['#1a2a5c', '#e08a3a'], ink: '#24182a', glow: '#ffd23f', accent: '#d8342a' },
   saucers: { sky: ['#06142e', '#2a6a8a'], ink: '#10202a', glow: '#7dff6a', accent: '#ff4fd8' },

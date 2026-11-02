@@ -11,6 +11,9 @@ const opts = (style) => ({ radius: 3.6, lip: (80 * Math.PI) / 180, pen: { halfWi
 describe('the finish apron', () => {
   it('is dressed by series: chequered, kerbs, or the scenery', () => {
     expect(apronStyle('dubai-marble-grand-prix').kind).toBe('chequer');
+    // Pinball and Arcade: their own art's neon (glow and accent), as their scenery.
+    expect(apronStyle('multiball-manor', '#000', { pinball: { art: 'manor' } })).toMatchObject({ kind: 'neon', a: '#c6ff4f', b: '#ff7a1a' });
+    expect(apronStyle('kill-screen', '#000', { arcade: { art: 'maze' } })).toMatchObject({ kind: 'neon', a: '#3fd8ff', b: '#ffd23f' });
     for (const slug of ['venice-cube-canals', 'sognefjord', 'bobsleigh-run']) {
       expect(apronStyle(slug)).toMatchObject({ kind: 'kerb', a: KERB_COLORS.kerbA, b: KERB_COLORS.kerbB });
     }
@@ -20,7 +23,7 @@ describe('the finish apron', () => {
   it('stays inside the catch area and the channel\'s lip, its flare the shape the finishers glide down', () => {
     const g = buildFinishApron(opts(apronStyle('venice-cube-canals')));
     const box = new Box3().setFromObject(g);
-    expect(box.max.x).toBeLessThanOrEqual(3.5 + 0.5 + 1e-6);
+    expect(box.max.x).toBeLessThanOrEqual(3.5 + 0.5 + 0.06 + 1e-6); // (round the wall's rim)
     expect(box.max.y).toBeLessThanOrEqual(3.6 * (1 - Math.cos((80 * Math.PI) / 180)) + 0.02);
     expect(box.max.z).toBeLessThanOrEqual(FLARE.cheek + 1e-6);
     expect(FLARE.length).toBe(3); // (marbles.js: a finisher glides off the wall over its first 3 metres)

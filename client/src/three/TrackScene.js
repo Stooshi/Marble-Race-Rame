@@ -624,7 +624,7 @@ export class TrackScene {
         pen,
         wall: { height: wallH, thickness: wallT },
         floor: `#${floorMat.color.getHexString()}`,
-        style: apronStyle(this.track?.slug, this.theme?.ground?.color),
+        style: apronStyle(this.track?.slug, this.theme?.ground?.color, this.track?.physics?.kit),
       }));
     }
     // The padded end cushion.
