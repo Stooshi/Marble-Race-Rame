@@ -79,6 +79,43 @@ test('the back office on a real database: admin + 2-step + live session; reasons
     assert.ok(!('ip' in listed));
     assert.equal(detail.consents[0].consent, true);
 
+    // The Dashboard (2 Nov 2026): read-only counts for a period; staff left out; the first steps.
+    const dash = async (period = '24h') => (await call(`/admin/dashboard?period=${period}`, { token })).body;
+    const before = await dash();
+    const guest = (await call('/auth/guest', { method: 'POST', body: { source: 'quick' } })).body;
+    assert.equal((await call('/users/me/first-step', { method: 'POST', token: guest.token, body: { step: 'go' } })).status, 204);
+    assert.equal((await call('/users/me/first-step', { method: 'POST', token: guest.token, body: { step: 'go' } })).status, 204); // (kept once)
+    assert.equal((await call('/users/me/first-step', { method: 'POST', token: guest.token, body: { step: 'nope' } })).status, 400);
+    let now = await dash();
+    assert.equal(now.players.newGuests, before.players.newGuests + 1);
+    assert.equal(now.funnel.tapped, before.funnel.tapped + 1);
+    assert.equal(now.funnel.sawGo, before.funnel.sawGo + 1);
+    assert.equal(now.funnel.bySource.quick, (before.funnel.bySource.quick ?? 0) + 1);
+    assert.equal(now.timeZone, 'Europe/Stockholm');
+    assert.ok(!JSON.stringify(now).includes(guest.user.username)); // (no player in it)
+    // Staff: the Dashboard leaves them out; admins are staff and can't be unmarked.
+    const gid = guest.user.id;
+    assert.equal((await call(`/admin/players/${gid}/staff`, { method: 'POST', token, body: { staff: true } })).status, 400); // no reason
+    assert.equal((await call(`/admin/players/${gid}/staff`, { method: 'POST', token, body: { staff: true, reason: 'Test account of the team' } })).status, 200);
+    assert.equal((await call(`/admin/players/${gid}/staff`, { method: 'POST', token, body: { staff: true, reason: 'Test account of the team' } })).status, 409);
+    assert.equal((await call(`/admin/players/${admin.user.id}/staff`, { method: 'POST', token, body: { staff: false, reason: 'Trying to unmark an admin' } })).status, 409);
+    now = await dash();
+    assert.equal(now.players.newGuests, before.players.newGuests);
+    assert.equal(now.funnel.tapped, before.funnel.tapped);
+    assert.equal((await call(`/admin/players?q=${gid}`, { token })).body.players[0].is_staff, true);
+    assert.equal((await call(`/admin/players/${gid}`, { token })).body.player.is_staff, true);
+    assert.equal((await call(`/admin/players?q=${admin.user.id}`, { token })).body.players[0].is_staff, true);
+    const { rows: staffAudit } = await db.query(`SELECT action FROM admin_audit WHERE target_user_id = $1 AND action LIKE 'staff-%'`, [gid]);
+    assert.deepEqual(staffAudit.map((r) => r.action), ['staff-on']);
+    for (const period of ['6h', '24h', '7d', '30d', 'mtd', 'lastmonth']) {
+      const d = await dash(period);
+      assert.equal(d.period, period);
+      assert.ok(Array.isArray(d.chart) && d.chart.length >= 1, period);
+      assert.equal(typeof d.races.perActivePlayer, 'number');
+    }
+    assert.equal((await dash('6h')).chart.length >= 6, true);
+    assert.equal((await dash('nonsense')).period, '24h');
+
     // IPs: older than 90 days → blanked, the country kept.
     await db.query(`UPDATE security_events SET created_at = now() - interval '91 days', country = 'SE' WHERE user_id = $1`, [pid]);
     assert.ok(await security.trimIps() >= 1);

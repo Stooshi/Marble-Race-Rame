@@ -17,6 +17,7 @@ import { CEREMONY_PHASES } from '../utils/finishShow';
 import SkipToResults from './SkipToResults';
 import FrameMeter, { useFrameMeter } from './FrameMeter';
 import { useTvMoments } from './tvMomentsSetting';
+import { sawGo } from '../api/firstSteps';
 import { createBumpDetector, createHitDetector, createHitGate } from '../sound/hits';
 import { START_SOUND_MS, crowdCheer, marbleBump, marbleHit, play as playSound, prepare as prepareSound, raceCeremony, raceCountdown, raceGo, soundReport, stopCountdown, whenSoundReady } from '../sound/engine';
 import { watchReadiness } from './raceReadiness';
@@ -336,6 +337,8 @@ export default function LiveRaceViewer3D({
       // GO: the race's music (once per race; also when the page opens mid-race).
       // (GO as shown here: f.t ms ago. A page opened mid-race: the tune joins where the race is.)
       if (f && f.t >= 0 && (lastT === null || lastT < 0) && meta?.raceId) raceGo(meta.raceId, Date.now() - f.t);
+      // The player saw GO with their own marble in the race (the Dashboard's funnel; kept once, the first time).
+      if (f && f.t >= 0 && f.t < 3000 && lastT !== null && lastT < 0 && ownRef.current.length) sawGo();
       if (f && standingsShown(f.t) !== lastGone) { lastGone = standingsShown(f.t); setGone(lastGone); }
       if (f) lastT = f.t;
       if (f && scene) {

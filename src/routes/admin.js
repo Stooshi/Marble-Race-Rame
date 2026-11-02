@@ -8,11 +8,13 @@
  * Every support action takes a reason and is written to the audit log in the same
  * transaction as the change itself, with the admin, the player and what changed.
  *
+ *   GET  /dashboard?period=        read-only numbers for a period (Swedish time), staff left out
  *   GET  /players?q=               search by name, email, id or a Marble ID
  *   GET  /players/:id              everything support needs about one player (no IP addresses)
  *   GET  /players/:id/security     its security events with IP addresses; each opening audited ('security-view')
  *   POST /players/:id/coins        { amount, reason }       add or take coins
  *   POST /players/:id/items        { item, action: 'grant'|'remove', reason }
+ *   POST /players/:id/staff        { staff, reason } staff play normally; the Dashboard leaves them out
  *   POST /players/:id/suspend      { reason }   /unsuspend { reason }
  *   POST /players/:id/name         { display_name, reason } (e.g. an offensive name)
  *   POST /players/:id/consent      { consent: false, reason } (the player asked to stop emails)
@@ -75,6 +77,11 @@ async function lockPlayer(client, id) {
   return rows[0];
 }
 
+/** GET /dashboard?period=6h|24h|7d|30d|mtd|lastmonth — read-only numbers, staff left out (src/admin/dashboard). */
+router.get('/dashboard', async (req, res) => {
+  res.json(await require('../admin/dashboard').summary(db, String(req.query.period ?? '24h')));
+});
+
 /** GET /readiness?days= — which screens weren't ready by GO, and what they missed (src/readiness). */
 router.get('/readiness', async (req, res) => {
   const days = Math.min(30, Math.max(1, Number(req.query.days) || 7));
@@ -103,7 +110,7 @@ router.get('/players', async (req, res) => {
   }
   params.push(limit);
   const { rows } = await db.query(
-    `SELECT u.id, u.username, u.display_name, u.email, u.is_guest, u.role, u.coins, u.age_group, u.created_at, u.last_login_at, u.suspended_at, u.deleted_at,
+    `SELECT u.id, u.username, u.display_name, u.email, u.is_guest, u.role, u.is_staff OR u.role = 'admin' AS is_staff, u.coins, u.age_group, u.created_at, u.last_login_at, u.suspended_at, u.deleted_at,
             (SELECT COUNT(*)::int FROM race_entries e WHERE e.user_id = u.id) AS races,
             ${FIRST_COUNTRY('u.id')} AS first_country
        FROM users u WHERE ${where}
@@ -152,7 +159,7 @@ router.get('/players/:id', async (req, res) => {
   const id = assertUuid(req.params.id);
   const { rows: [player] } = await db.query(
     `SELECT id, username, display_name, email, is_guest, role, coins, coins_earned, coins_bought, skill, age_group,
-            marketing_opt_in, created_at, last_login_at, suspended_at, deleted_at, streak_days,
+            marketing_opt_in, created_at, last_login_at, suspended_at, deleted_at, streak_days, is_staff OR role = 'admin' AS is_staff,
             ${FIRST_COUNTRY('users.id')} AS first_country
        FROM users WHERE id = $1`,
     [id],
@@ -254,6 +261,20 @@ async function setSuspended(req, res, on) {
   });
   res.json({ ok: true });
 }
+/** POST /players/:id/staff { staff: true|false, reason } — staff play normally but the Dashboard leaves them out. */
+router.post('/players/:id/staff', async (req, res) => {
+  const id = assertUuid(req.params.id);
+  const body = validate(req.body, { staff: { type: 'boolean', required: true }, reason: REASON });
+  await db.withTransaction(async (client) => {
+    const p = await lockPlayer(client, id);
+    if (p.role === 'admin') throw conflict('Admins are always staff');
+    if (p.is_staff === body.staff) throw conflict(body.staff ? 'Already staff' : 'Not staff');
+    await client.query('UPDATE users SET is_staff = $2 WHERE id = $1', [id, body.staff]);
+    await audit(client, req, body.staff ? 'staff-on' : 'staff-off', id, body.reason);
+  });
+  res.json({ ok: true });
+});
+
 router.post('/players/:id/suspend', (req, res) => setSuspended(req, res, true));
 router.post('/players/:id/unsuspend', (req, res) => setSuspended(req, res, false));
 

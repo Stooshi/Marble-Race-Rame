@@ -38,6 +38,7 @@ export default function AdminApp() {
       <header className="adm-top">
         <b className="adm-brand">Marble Spins · back office</b>
         <nav className="adm-nav" aria-label="Back office">
+          <NavLink to="/admin/dashboard">Dashboard</NavLink>
           <NavLink to="/admin/players">Players</NavLink>
           <NavLink to="/admin/payments">Payments</NavLink>
           <NavLink to="/admin/support">Support messages</NavLink>
@@ -54,7 +55,8 @@ export default function AdminApp() {
       </header>
       <main className="adm-main">
         <Routes>
-          <Route path="/admin" element={<Navigate to="/admin/players" replace />} />
+          <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
+          <Route path="/admin/dashboard" element={<Dashboard />} />
           <Route path="/admin/players" element={<Players />} />
           <Route path="/admin/players/:id" element={<Player />} />
           <Route path="/admin/payments" element={<Payments />} />
@@ -67,7 +69,7 @@ export default function AdminApp() {
           <Route path="/admin/emails" element={<Emails />} />
           <Route path="/admin/audit" element={<Audit />} />
           <Route path="/admin/readiness" element={<Readiness />} />
-          <Route path="*" element={<Navigate to="/admin/players" replace />} />
+          <Route path="*" element={<Navigate to="/admin/dashboard" replace />} />
         </Routes>
       </main>
     </div>
@@ -695,6 +697,114 @@ function SupportMessage() {
   );
 }
 
+// ── Dashboard ─────────────────────────────────────────────────────────────
+
+const PERIODS = [['6h', 'Last 6 hours'], ['24h', 'Last 24 hours'], ['7d', 'Last 7 days'], ['30d', 'Last 30 days'], ['mtd', 'Month to date'], ['lastmonth', 'Last month']];
+const pct = (a, b) => (b ? `${Math.round((a / b) * 100)}%` : '–');
+
+/**
+ * The Dashboard (Moses, 2 Nov 2026): read-only numbers for a period, Swedish time, staff and computer
+ * players left out, no personal data (server: src/admin/dashboard.js).
+ */
+function Dashboard() {
+  const [period, setPeriod] = useState('24h');
+  const d = useLoad(() => adminApi.dashboard(period), [period]);
+  const x = d.data;
+  return (
+    <section className="adm-stack">
+      <div className="adm-row">
+        <h1 className="adm-h1" style={{ marginRight: 'auto' }}>Dashboard</h1>
+        <div className="adm-row" role="group" aria-label="Period">
+          {PERIODS.map(([k, label]) => (
+            <button key={k} type="button" className={`adm-btn ${period === k ? 'adm-btn--primary' : ''}`} aria-pressed={period === k} onClick={() => setPeriod(k)}>{label}</button>
+          ))}
+        </div>
+      </div>
+      <Err error={d.error} />
+      {!x ? (!d.error && <p className="adm-muted">Loading…</p>) : (
+        <>
+          <p className="adm-muted">{x.label}: {when(x.from)} to {when(x.to)} (Swedish time). Staff and computer players left out.</p>
+          <h2 className="adm-h2">Players</h2>
+          <div className="adm-tiles">
+            <div><span>New guests</span><b>{n(x.players.newGuests)}</b></div>
+            <div><span>New saved accounts</span><b>{n(x.players.newSaved)}</b><small>signed up, or a guest saved</small></div>
+            <div><span>Finished at least 1 race</span><b>{n(x.players.finishedPlayers)}</b></div>
+            <div><span>Returning players</span><b>{n(x.players.returningPlayers)}</b><small>finished a race on a later day than they joined</small></div>
+          </div>
+          <h2 className="adm-h2">Races</h2>
+          <div className="adm-tiles">
+            <div><span>Races finished</span><b>{n(x.races.finished)}</b></div>
+            <div><span>Races per active player</span><b>{x.races.perActivePlayer.toLocaleString('en-US')}</b><small>finished races, average</small></div>
+          </div>
+          <h2 className="adm-h2">New guests: the first visit</h2>
+          <Funnel f={x.funnel} />
+          <div className="adm-row adm-row--top">
+            <div className="adm-stack" style={{ flex: '2 1 420px', minWidth: 0 }}>
+              <h2 className="adm-h2">New guests and players who finished a race, per {x.bucket}</h2>
+              <DashChart rows={x.chart} bucket={x.bucket} />
+            </div>
+            <div className="adm-stack" style={{ flex: '1 1 220px', minWidth: 0 }}>
+              <h2 className="adm-h2">New players by country</h2>
+              {x.countries.length === 0 ? <p className="adm-muted">None in this period.</p> : (
+                <div className="adm-scroll"><table className="adm-table"><thead><tr><th>Country (detected)</th><th className="num">New players</th></tr></thead>
+                  <tbody>{x.countries.map((c) => <tr key={c.country}><td>{c.country === '–' ? 'Unknown' : land(c.country)}</td><td className="num">{n(c.players)}</td></tr>)}</tbody></table></div>
+              )}
+            </div>
+          </div>
+        </>
+      )}
+    </section>
+  );
+}
+
+const SOURCE_NAMES = { quick: 'Quick race / Play', solo: 'Race solo', friends: 'Race with friends', room: 'Joined a room', unknown: 'Unknown' };
+
+/** Tapped Play → joined a race → saw GO → finished a race, with % of the first step and of the step before. */
+function Funnel({ f }) {
+  const steps = [['Tapped Play', f.tapped], ['Joined a race', f.joined], ['Saw GO', f.sawGo], ['Finished a race', f.finished]];
+  if (!f.tapped) return <p className="adm-muted">No new guest tapped Play in this period (taps are counted from 2 Nov 2026).</p>;
+  return (
+    <div className="adm-stack">
+      <div className="adm-funnel">
+        {steps.map(([label, v], i) => (
+          <div key={label}>
+            <span>{label}</span>
+            <b>{n(v)}</b>
+            <i style={{ width: `${f.tapped ? Math.max(2, (v / f.tapped) * 100) : 0}%` }} />
+            <small>{pct(v, f.tapped)} of those who tapped{i > 0 ? ` · ${pct(v, steps[i - 1][1])} of the step before` : ''}</small>
+          </div>
+        ))}
+      </div>
+      <p className="adm-muted">Tapped: {Object.entries(f.bySource).map(([k, v]) => `${SOURCE_NAMES[k] ?? k} ${n(v)}`).join(' · ')}</p>
+    </div>
+  );
+}
+
+/** Two lines over the period: new guests, and players who finished a race. */
+function DashChart({ rows, bucket }) {
+  if (!rows.length) return <p className="adm-muted">No data.</p>;
+  const W = 640; const H = 200; const L = 34; const B = 24; const T = 10;
+  const max = Math.max(1, ...rows.map((r) => Math.max(r.newGuests, r.finishedPlayers)));
+  const step = rows.length > 1 ? (W - L - 10) / (rows.length - 1) : 0;
+  const xAt = (i) => L + i * step;
+  const yAt = (v) => T + (H - T - B) * (1 - v / max);
+  const line = (key) => rows.map((r, i) => `${i ? 'L' : 'M'}${xAt(i).toFixed(1)},${yAt(r[key]).toFixed(1)}`).join(' ');
+  const ticks = [0, Math.round(max / 2), max];
+  const labelEvery = Math.max(1, Math.ceil(rows.length / 8));
+  const label = (at) => (bucket === 'hour' ? at.slice(11, 16) : at.slice(5, 10));
+  return (
+    <div className="adm-scroll">
+      <svg className="adm-chart" viewBox={`0 0 ${W} ${H}`} role="img" aria-label="New guests and players who finished a race">
+        {ticks.map((t) => <g key={t}><line x1={L} x2={W - 10} y1={yAt(t)} y2={yAt(t)} className="adm-chart__grid" /><text x={L - 6} y={yAt(t) + 4} textAnchor="end">{t}</text></g>)}
+        {rows.map((r, i) => (i % labelEvery === 0 ? <text key={r.at} x={xAt(i)} y={H - 6} textAnchor="middle">{label(r.at)}</text> : null))}
+        <path d={line('newGuests')} className="adm-chart__a" />
+        <path d={line('finishedPlayers')} className="adm-chart__b" />
+      </svg>
+      <div className="adm-row adm-muted"><span className="adm-key adm-key--a" />New guests <span className="adm-key adm-key--b" />Players who finished a race</div>
+    </div>
+  );
+}
+
 // ── Players ───────────────────────────────────────────────────────────────
 
 function Players() {
@@ -741,7 +851,7 @@ function Players() {
           <tbody>
             {rows.map((p) => (
               <tr key={p.id}>
-                <td><Link to={`/admin/players/${p.id}`}>{p.display_name || p.username}</Link>{p.display_name ? <span className="adm-muted"> @{p.username}</span> : null}{p.suspended_at && <span className="adm-tag adm-tag--bad">suspended</span>}{p.deleted_at && <span className="adm-tag">deleted</span>}{p.role === 'admin' && <span className="adm-tag">admin</span>}</td>
+                <td><Link to={`/admin/players/${p.id}`}>{p.display_name || p.username}</Link>{p.display_name ? <span className="adm-muted"> @{p.username}</span> : null}{p.suspended_at && <span className="adm-tag adm-tag--bad">suspended</span>}{p.deleted_at && <span className="adm-tag">deleted</span>}{p.role === 'admin' && <span className="adm-tag">admin</span>}{p.is_staff && <span className="adm-tag adm-tag--staff">staff</span>}</td>
                 <td>{p.is_guest ? '–' : p.email}</td>
                 <td>{p.is_guest ? 'guest' : 'saved'}</td>
                 <td>{p.age_group ?? '–'}</td>
@@ -813,7 +923,7 @@ function Player() {
       <Link to="/admin/players" className="adm-muted">← Players</Link>
       <div className="adm-row adm-row--top">
         <div className="adm-stack" style={{ flex: '1 1 420px', minWidth: 0 }}>
-          <h1 className="adm-h1">{p.display_name || p.username} {p.suspended_at && <span className="adm-tag adm-tag--bad">suspended {when(p.suspended_at)}</span>}{p.deleted_at && <span className="adm-tag">account deleted {when(p.deleted_at)}</span>}</h1>
+          <h1 className="adm-h1">{p.display_name || p.username} {p.suspended_at && <span className="adm-tag adm-tag--bad">suspended {when(p.suspended_at)}</span>}{p.deleted_at && <span className="adm-tag">account deleted {when(p.deleted_at)}</span>}{p.is_staff && <span className="adm-tag adm-tag--staff">staff</span>}</h1>
           <dl className="adm-facts">
             <div><dt>Player name</dt><dd>@{p.username}</dd></div>
             <div><dt>Email</dt><dd>{p.is_guest ? 'guest (no email)' : p.email}</dd></div>
@@ -847,6 +957,10 @@ function Player() {
           {p.role !== 'admin' && !p.deleted_at && (
             <Action title="Delete account (the player asked; anonymises it, keeps payments)" submit="Delete account" danger
               onSubmit={(reason) => after((r) => `Deleted: now ${r.username}.`)(() => adminApi.deleteAccount(p.id, reason))} />
+          )}
+          {p.role !== 'admin' && (
+            <Action title={p.is_staff ? 'Staff: count as a player again' : 'Staff: leave out of the Dashboard (team and test accounts)'} submit={p.is_staff ? 'Not staff' : 'Mark as staff'}
+              onSubmit={(reason) => after(p.is_staff ? 'No longer staff: counted on the Dashboard.' : 'Marked as staff: left out of the Dashboard.')(() => adminApi.staff(p.id, !p.is_staff, reason))} />
           )}
           {p.role !== 'admin' && !p.deleted_at && (
             <Action title={p.suspended_at ? 'Lift the suspension' : 'Suspend (no login, no racing)'} submit={p.suspended_at ? 'Lift suspension' : 'Suspend'} danger={!p.suspended_at}

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useRaceSoundPreload } from '../../sound/settings';
-import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, Navigate, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { api } from '../../api/client';
 import { useAuth } from '../../context/AuthContext';
 import { useAsync } from '../../hooks/useAsync';
@@ -43,14 +43,71 @@ function Steps({ at, track, shooter }) {
   );
 }
 
-/** Makes sure there's someone to race as: a guest account if nobody is signed in. */
+/** What a player tapped to get to a page of the race flow (the guest's `source`, for the Dashboard's funnel). */
+export function racerSource(pathname) {
+  if (pathname.startsWith('/r/')) return 'room';
+  if (pathname.startsWith('/play/quick') || pathname.startsWith('/play/start')) return 'quick';
+  if (pathname.startsWith('/play/friends')) return 'friends';
+  return 'solo';
+}
+
+/**
+ * Was this page opened directly (typed, a shared link, a search engine or a link preview) rather than
+ * reached by tapping something in the game? React Router gives the first page of a visit the key
+ * 'default'; every navigation inside the game (a tap on Play, Quick race, Race solo, …) gets its own.
+ */
+export const openedDirectly = (location) => location.key === 'default';
+
+/**
+ * Makes sure there's someone to race as: a guest account if nobody is signed in. Since 2 Nov 2026
+ * (Moses) only after a tap: reached by tapping Play / Quick race / Race solo / a room, it is made
+ * straight away; a race page or room link that was only opened shows TapToPlay first (RacerGate).
+ */
 export function useRacer() {
   const { isAuthenticated, loading, playAsGuest } = useAuth();
+  const location = useLocation();
   const [error, setError] = useState(null);
+  const direct = openedDirectly(location);
+  const source = racerSource(location.pathname);
   useEffect(() => {
-    if (!loading && !isAuthenticated) playAsGuest().catch((e) => setError(e.message));
-  }, [loading, isAuthenticated, playAsGuest]);
+    if (!loading && !isAuthenticated && !direct) playAsGuest(source).catch((e) => setError(e.message));
+  }, [loading, isAuthenticated, playAsGuest, direct, source]);
   return { ready: isAuthenticated, error };
+}
+
+const TAP = {
+  room: { title: 'You\'re invited to a race', text: 'Join the room and race your friends. Free, no account needed.', button: 'JOIN THE ROOM' },
+  quick: { title: 'Quick race', text: 'Race within seconds against players and computer marbles. Free, no account needed.', button: 'PLAY NOW, FREE' },
+  friends: { title: 'Race with friends', text: 'Make a room, share its link and race your friends. Free, no account needed.', button: 'START' },
+  solo: { title: 'Race solo', text: 'Pick a track and race. Free, no account needed.', button: 'START' },
+};
+
+/**
+ * The race flow's pages and rooms (Moses, 2 Nov 2026): opened directly by someone not signed in, they
+ * ask for a tap before a guest is made, so opening a link (or a search engine visiting it) makes no
+ * account. Reached by a tap inside the game, or signed in, they show straight away.
+ */
+export function RacerGate({ children }) {
+  const { isAuthenticated, loading, playAsGuest } = useAuth();
+  const location = useLocation();
+  const [state, setState] = useState({ busy: false, error: null });
+  if (loading) return null;
+  if (isAuthenticated || !openedDirectly(location)) return children;
+  const source = racerSource(location.pathname);
+  const t = TAP[source];
+  const tap = () => {
+    setState({ busy: true, error: null });
+    playAsGuest(source).catch((e) => setState({ busy: false, error: e.message }));
+  };
+  return (
+    <div className="ms-page" style={{ display: 'grid', gap: 16, justifyItems: 'start' }}>
+      <h1 className="ms-h1" style={{ fontFamily: 'var(--ms-cond)', fontWeight: 800 }}>{t.title}</h1>
+      <p className="ms-note">{t.text}</p>
+      <button type="button" className="ms-btn ms-btn--primary ms-btn--lg" onClick={tap} disabled={state.busy}>{state.busy ? '…' : t.button}</button>
+      {state.error && <div className="ms-msg ms-msg--bad" role="alert">{state.error}</div>}
+      <span className="ms-note">Have an account? <Link to="/signup?mode=login">Log in</Link></span>
+    </div>
+  );
 }
 
 export function useTracks() {

@@ -50,6 +50,13 @@ router.post('/me/cookie-consent', requireAuth, async (req, res) => {
 });
 
 /** GET /api/users/me — full private profile with stats */
+/** POST /me/first-step { step: 'go' } — the player saw GO in a race (kept once, the first time; the Dashboard's funnel). */
+router.post('/me/first-step', requireAuth, async (req, res) => {
+  if (req.body?.step !== 'go') return res.status(400).json({ error: 'Unknown step' });
+  await require('../firstSteps').record(req.user.id, 'go');
+  res.status(204).end();
+});
+
 router.get('/me', requireAuth, async (req, res) => {
   const { rows } = await db.query(`SELECT ${PUBLIC_USER_COLUMNS}, last_login_at FROM users WHERE id = $1`, [req.user.id]);
   res.json({ user: rows[0], stats: await getStats(req.user.id), badges: await seasons.badgesOf(db, req.user.id) });

@@ -9,7 +9,7 @@ import { startNativeShell } from './app/native';
 import { resumeStorePurchases } from './site/payments';
 import { useAuth } from './context/AuthContext';
 import LandingPage from './site/landing/LandingPage';
-import { FriendsStep, QuickStep, ShooterStep, StartOrQuick, TrackStep } from './site/pages/RaceFlow';
+import { FriendsStep, QuickStep, RacerGate, ShooterStep, StartOrQuick, TrackStep } from './site/pages/RaceFlow';
 import ShopPage from './site/pages/ShopPage';
 import RoomPage from './site/pages/RoomPage';
 import CertificatePage from './site/pages/CertificatePage';
@@ -102,12 +102,12 @@ export default function App() {
           {/* (The first version's lobby, dashboard and profile pages: their places are taken by /home, /play/… and /scores.) */}
           <Route path="/home" element={isAuthenticated ? <HomeHub /> : authLoading ? null : <Navigate to="/" replace />} />
           <Route path="/lobby" element={<Navigate to="/home" replace />} />
-          <Route path="/play/friends" element={<FriendsStep />} />
-          <Route path="/play/track" element={<TrackStep />} />
-          <Route path="/play/shooter" element={<ShooterStep />} />
-          <Route path="/play/start" element={<StartOrQuick />} />
-          <Route path="/play/quick" element={<QuickStep />} />
-          <Route path="/r/:code" element={<RoomPage />} />
+          <Route path="/play/friends" element={<RacerGate><FriendsStep /></RacerGate>} />
+          <Route path="/play/track" element={<RacerGate><TrackStep /></RacerGate>} />
+          <Route path="/play/shooter" element={<RacerGate><ShooterStep /></RacerGate>} />
+          <Route path="/play/start" element={<RacerGate><StartOrQuick /></RacerGate>} />
+          <Route path="/play/quick" element={<RacerGate><QuickStep /></RacerGate>} />
+          <Route path="/r/:code" element={<RacerGate><RoomPage /></RacerGate>} />
           <Route path="/leagues" element={<LeaguesHome NotFound={NotFound} />} />
           <Route path="/leagues/new" element={<CreateLeague NotFound={NotFound} />} />
           <Route path="/l/:code" element={<LeaguePage NotFound={NotFound} />} />

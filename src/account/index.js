@@ -30,7 +30,7 @@ async function exportData(db, userId) {
        FROM users WHERE id = $1 AND deleted_at IS NULL`,
   );
   if (!account) return null;
-  const [stats, emailAnswers, cookieAnswers, ledger, collection, shooter, look, startingMarbles, races, days, payments, rooms, security, support, supportReplies, passes, badges, passReminders, giftCodes, pushDevices, pushPrefs, countryHistory] = await Promise.all([
+  const [stats, emailAnswers, cookieAnswers, ledger, collection, shooter, look, startingMarbles, races, days, payments, rooms, security, support, supportReplies, passes, badges, passReminders, giftCodes, pushDevices, pushPrefs, countryHistory, firstSteps] = await Promise.all([
     one('SELECT * FROM user_stats WHERE user_id = $1'),
     all('SELECT consent, source, created_at FROM email_consents WHERE user_id = $1 ORDER BY created_at'),
     all('SELECT version, statistics, marketing, decided_at FROM cookie_consents WHERE user_id = $1 ORDER BY created_at'),
@@ -67,6 +67,7 @@ async function exportData(db, userId) {
     all(`SELECT platform, app_version, '…' || right(token, 8) AS token_ends, created_at, last_seen_at, disabled_at FROM push_devices WHERE user_id = $1 ORDER BY created_at`),
     one('SELECT room_invites, season_news, daily_goal, season_news_at, updated_at FROM push_preferences WHERE user_id = $1'),
     all('SELECT country, kind, created_at FROM user_country_history WHERE user_id = $1 ORDER BY created_at, id'),
+    all('SELECT step, source, created_at FROM first_steps WHERE user_id = $1 ORDER BY created_at'),
   ]);
   return {
     about: 'Everything Marble Spins stores about your account. Passwords are stored only as a one-way hash and are not included. IP addresses are kept for security and fraud checks for at most 90 days, then only the country.',
@@ -88,6 +89,7 @@ async function exportData(db, userId) {
     badges,
     friendRoomsHosted: rooms,
     securityLog: security,
+    firstSteps,
     supportMessages: support.map((m) => ({ ...m, replies: supportReplies.filter((r) => r.ref === m.ref).map(({ ref: _r, ...r }) => r) })),
   };
 }

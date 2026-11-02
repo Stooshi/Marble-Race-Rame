@@ -153,6 +153,8 @@ router.post('/guest', guestLimiter, async (req, res) => {
   await ensureAppearance(user.id).catch((err) => console.error('[auth] starting look failed', err.message));
   await starters.ensure(db, user.id).catch((err) => console.error('[auth] starter marbles failed', err.message));
   await security.record(req, user.id, 'guest');
+  // Made only when they tap Play, Quick race, Race solo or join a room (2 Nov 2026): the funnel's first step.
+  await require('../firstSteps').record(user.id, 'tap', req.body?.source);
   res.status(201).json({ token: signToken(user), user });
 });
 

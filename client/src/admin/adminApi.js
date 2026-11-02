@@ -49,7 +49,9 @@ export const adminApi = {
   end: () => request('/admin/session/end', { method: 'POST' }),
   session: () => request('/admin/session'),
 
+  dashboard: (period) => request(`/admin/dashboard?period=${encodeURIComponent(period)}`),
   players: (q) => request(`/admin/players?q=${encodeURIComponent(q ?? '')}`),
+  staff: (id, staff, reason) => request(`/admin/players/${id}/staff`, { method: 'POST', body: { staff, reason } }),
   player: (id) => request(`/admin/players/${id}`),
   // The Security tab: IP addresses; the server writes each opening to the audit log.
   security: (id) => request(`/admin/players/${id}/security`),

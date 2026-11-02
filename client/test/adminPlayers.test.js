@@ -82,3 +82,18 @@ describe('the Players table', () => {
     expect(readFileSync(join(__dirname, '..', 'src', 'admin', 'adminApi.js'), 'utf8')).toMatch(/\/admin\/players\/\$\{id\}\/security/);
   });
 });
+
+describe('the Dashboard and staff (2 Nov 2026)', () => {
+  const app = readFileSync(join(__dirname, '..', 'src', 'admin', 'AdminApp.jsx'), 'utf8');
+  it('is the first tab and the start page, with the six periods', () => {
+    expect(app.indexOf('to="/admin/dashboard">Dashboard')).toBeLessThan(app.indexOf('to="/admin/players">Players'));
+    expect(app).toContain('<Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />');
+    for (const k of ["'6h'", "'24h'", "'7d'", "'30d'", "'mtd'", "'lastmonth'"]) expect(app).toContain(k);
+  });
+  it('staff: a tag in the list and on the page, and the action (not for admins)', () => {
+    expect(app).toContain('{p.is_staff && <span className="adm-tag adm-tag--staff">staff</span>}</td>');
+    expect(app).toContain("adminApi.staff(p.id, !p.is_staff, reason)");
+    expect(app).toContain("{p.role !== 'admin' && (");
+  });
+});
+

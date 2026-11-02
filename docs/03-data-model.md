@@ -59,7 +59,8 @@ marbles ──< user_marbles   (the older plain marbles; looks only)
 | `coins_bought` | Running total of coins bought (coin packs, and credits converted when coins became the only currency). Refunds lower it |
 | `skill` | 1–100, default 50. How fast the player's marbles race (see [Game rules](04-game-rules.md#skill)). For launch every player stays at 50 |
 | `skill_refund_coins` | One-time notice: coins refunded when marbles stopped carrying strength (12 Oct 2026). NULL once seen |
-| `is_guest` | Playing without an account yet ("Play free"). Saving the account clears it and keeps coins and marbles |
+| `is_guest` | Playing without an account yet ("Play free"). Saving the account clears it and keeps coins and marbles. Since 2 Nov 2026 a guest is made only when someone taps Play, Quick race, Race solo or joins a room, not when a page or link is opened |
+| `is_staff` | Staff (2 Nov 2026): the team's own and test accounts, marked in the back office (admins are staff whatever it says). They play normally; the Dashboard leaves them out of every number |
 | `marketing_opt_in` | Current answer to news by email. Its history is in `email_consents`. Always false under 13 |
 | `age_group` | `under-13`, `13-17`, `18+`, or NULL for older accounts. Worked out at sign-up from the birth year and month (older apps send the group) |
 | `birth_month` | The first day of the birth month (year and month asked at sign-up, no day; since 20 Oct 2026). NULL for older accounts and guests |
@@ -108,6 +109,10 @@ Every choice of the country a player races for: `country` (NULL when removed), `
 
 ### `security_events`
 Sign-up, login and purchase events: `kind`, `ip` (inet), `country` (2 letters, looked up offline), `created_at`. **The full IP is kept for at most 90 days**: an hourly job blanks it and keeps only the country (`src/security`). The table is used only for security and fraud checks, such as many accounts from one address.
+
+### `first_steps`
+
+A new player's first steps, for the back office Dashboard's funnel (2 Nov 2026; `src/firstSteps`): one row per player and step, the first time. `step`: `tap` (they tapped Play, Quick race, Race solo or joined a room, and the guest was made then; `source`: quick, solo, friends or room) or `go` (they saw GO in a race with their own marble). Joining a race and finishing one come from `race_entries`. No personal data; deleted with the user row, kept (anonymous) when an account is deleted; in the player's data download.
 
 ## Tracks and races
 
@@ -436,7 +441,7 @@ The website's cookie choice, kept as a record of consent (GDPR): one row each ti
 |---|---|
 | `admin_2fa` | One per admin: the authenticator secret, encrypted (`secret_enc`), `enabled_at`, and `last_step` (so each code works only once) |
 | `admin_sessions` | Back-office sessions: `created_at`, `last_seen_at` (30-minute idle limit), `ended_at` |
-| `admin_audit` | Every back-office action: `admin_id`, `action`, `target_user_id`, `reason` (required), `details` (JSON of what changed). Never edited. Also records refunds made in the Stripe dashboard, disputes and account deletions, and support-message status changes (`support-status`, details `message_id`, `from`, `to`) and replies (`support-reply`), and each time an admin opens a player's Security tab with its IP addresses (`security-view`, details: how many events and how many with an address; since 1 Nov 2026) |
+| `admin_audit` | Every back-office action: `admin_id`, `action`, `target_user_id`, `reason` (required), `details` (JSON of what changed). Never edited. Also records refunds made in the Stripe dashboard, disputes and account deletions, and support-message status changes (`support-status`, details `message_id`, `from`, `to`) and replies (`support-reply`), staff marked or unmarked (`staff-on`, `staff-off`), and each time an admin opens a player's Security tab with its IP addresses (`security-view`, details: how many events and how many with an address; since 1 Nov 2026) |
 
 ## Bookkeeping tables and views
 

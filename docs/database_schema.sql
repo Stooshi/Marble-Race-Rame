@@ -1393,3 +1393,20 @@ CREATE TABLE IF NOT EXISTS race_readiness (
 );
 CREATE INDEX IF NOT EXISTS idx_race_readiness_created ON race_readiness (created_at);
 CREATE INDEX IF NOT EXISTS idx_race_readiness_race ON race_readiness (race_id);
+
+-- Staff (Moses, 2 Nov 2026): accounts of the team and its test accounts (admins are staff
+-- automatically). They play normally; the back office Dashboard leaves them out of every number.
+ALTER TABLE users ADD COLUMN IF NOT EXISTS is_staff boolean NOT NULL DEFAULT false;
+
+-- A new player's first steps (src/firstSteps, Moses, 2 Nov 2026), once each per player, for the
+-- Dashboard's funnel: 'tap' (tapped Play, Quick race, Race solo or joined a room; the guest is made
+-- then; source: quick | solo | friends | room) and 'go' (saw GO in their first race). Joining and
+-- finishing come from race_entries. No personal data; goes with the account.
+CREATE TABLE IF NOT EXISTS first_steps (
+    user_id     uuid        NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    step        varchar(8)  NOT NULL CHECK (step IN ('tap', 'go')),
+    source      varchar(8)  CHECK (source IN ('quick', 'solo', 'friends', 'room')),
+    created_at  timestamptz NOT NULL DEFAULT now(),
+    PRIMARY KEY (user_id, step)
+);
+CREATE INDEX IF NOT EXISTS idx_first_steps_created ON first_steps (step, created_at);
