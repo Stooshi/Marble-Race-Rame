@@ -32,6 +32,7 @@ import { fetchBillboards } from '../api/billboards';
 import { buildEffects } from './lighting';
 import { WinnerGlow } from './winnerGlow';
 import { buildHolidayLayer } from './holidayLayer';
+import { apronStyle, buildFinishApron } from './finishApron';
 import { WINNER_MS } from '../utils/finishShow';
 import { CHEER_NEAR } from './scenery/grandPrix';
 
@@ -612,6 +613,19 @@ export class TrackScene {
       const rim = new Mesh(new BoxGeometry(wallT + 0.1, 0.12, pen.length), rimMat);
       rim.position.set(side * (pen.halfWidth + wallT / 2), wallH, pen.length / 2);
       area.add(rim);
+    }
+    // The finish apron (kit tracks, 2 Nov 2026): the channel's U opening out into the floor, and padded
+    // cheeks bringing its walls down to these (./finishApron.js). Looks only.
+    if (this.track?.physics?.kit && this.channel) {
+      const radius = this.channel.radius;
+      area.add(buildFinishApron({
+        radius,
+        lip: channelLipAt(this.channel, this.channel.arc),
+        pen,
+        wall: { height: wallH, thickness: wallT },
+        floor: `#${floorMat.color.getHexString()}`,
+        style: apronStyle(this.track?.slug, this.theme?.ground?.color),
+      }));
     }
     // The padded end cushion.
     const cushion = new Mesh(new BoxGeometry(pen.halfWidth * 2 + wallT * 2, wallH + 0.6, 0.8), cushionMat);

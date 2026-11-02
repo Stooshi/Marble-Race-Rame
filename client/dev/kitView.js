@@ -12,7 +12,7 @@
 // raceLoad({ every }) draws the follow camera every few seconds of the race and
 // returns each frame's drawing load.
 import { Frustum, Matrix4, Raycaster, Vector3 } from 'three';
-import { TrackScene } from '../src/three/TrackScene';
+import { TrackScene, finishShotPose } from '../src/three/TrackScene';
 import { frameAtTime } from '../src/utils/splits';
 import { COUNTDOWN_MS } from '../src/three/startCamera';
 import { FLYOVER_MS } from '../src/three/flyover';
@@ -140,6 +140,18 @@ window.kitView = {
   /** Dev: the land's height at (x, z). */
   ground(x, z) {
     return scene.scenery?.userData?.groundAt?.(x, z);
+  },
+  /** Dev: the game's finish shot (finishShotPose: over the run-in, down into the catch area), one frame drawn. */
+  finish() {
+    const shot = finishShotPose(scene.centerline, scene.channel, scene.camera.aspect, { fov: scene.camera.fov });
+    scene.camera.position.copy(shot.camera);
+    scene.camera.near = 0.3;
+    scene.camera.far = scene.sky.scale.x * 1.2;
+    scene.camera.lookAt(shot.target);
+    scene.camera.updateProjectionMatrix();
+    scene.renderer.info.reset();
+    scene.renderer.render(scene.scene, scene.camera);
+    return { calls: scene.renderer.info.render.calls, triangles: scene.renderer.info.render.triangles };
   },
   /** Dev: a free camera, from one point looking at another ([x, y, z] each), one frame drawn. */
   look({ from, to }) {
