@@ -21,7 +21,7 @@ const NAMES = {
   'island-hops': 'Island Hops', 'harbour-quays': 'Harbour Quays', 'temple-halls': 'Temple Halls', 'cascade-rows': 'Cascade Rows', 'bonus-stages': 'Bonus Stages',
   'horseshoe-sprint': 'Horseshoe Sprint', 'blue-lanes': 'Blue Lanes', 'bell-lap': 'Bell Lap', 'hurdles-straight': 'Hurdles Straight', 'nest-bend': 'Nest Bend',
   'photo-finish': 'Photo Finish', 'relay-legs': 'Relay Legs', 'steeple-water': 'Steeple Water', 'anchor-arches': 'Anchor Arches', 'golden-lap': 'Golden Lap',
-  'half-pipe-run': 'Half-Pipe Run', 'mid-lottery': 'Mid Lottery', 'jib-run': 'Jib Run', 'jump-run': 'Jump Run', 'clean-drop': 'Clean Drop',
+  'half-pipe-run': 'Half-Pipe Run', 'mid-lottery': 'Mid Lottery', 'jib-run': 'Jib Run', 'jump-run': 'Jump Run', 'loop-run': 'Loop Run', 'clean-drop': 'Clean Drop',
   'bridge-slalom': 'Bridge Slalom', 'market-maze': 'Market Maze', 'steamer-pass': 'Steamer Pass', 'falls-edge': 'Falls Edge', 'lock-staircase': 'Lock Staircase', 'bridge-gate': 'Bridge Gate', 'arch-run': 'Arch Run', 'port-cranes': 'Port Cranes', 'flooded-forest': 'Flooded Forest', 'balloon-plain': 'Balloon Plain', 'peg-drop': 'Peg Drop', 'pipe-drop': 'Pipe Drop',
   'two-waters': 'Two Waters', cataract: 'Cataract', 'rapids-ladder': 'Rapids Ladder', 'island-castle': 'Island Castle', 'river-steps': 'River Steps',
   'icefall-ladders': 'Icefall Ladders', 'needle-ridge': 'Needle Ridge', 'blue-ice-plain': 'Blue-Ice Plain', 'zone-descent': 'Zone Descent', 'ice-cave-run': 'Ice-Cave Run',
@@ -167,6 +167,8 @@ const layouts = LAYOUT_KINDS.map((kind) => track({
   ...(PEAK_LAYOUTS.includes(kind) && { series: 'peak', biome: 'alpine', surface: 'snow', peak: { palette: PEAK_PALETTE[kind] }, start: { ...(kind !== 'tepui-wall' && { landmark: 'mountain-hut' }), type: PEAK_START[kind] } }), // (the tepui wall's lift stands beside its finish: no hut there, as on Roraima)
   ...(PINBALL_LAYOUTS.includes(kind) && { series: 'pinball', biome: 'playfield', lighting: 'parlour' }),
   ...(ARCADE_LAYOUTS.includes(kind) && { series: 'arcade', biome: 'circuit-board', lighting: 'neon-night', billboardFrame: 'marquee' }),
+  // (The loop's proving track: the loop is its big feature, the flyover's highlight, with a TV camera just past it looking back at it.)
+  ...(kind === 'loop-run' && { signature: 'The loop', tvCameras: [{ section: 'The loop', at: 0.85, side: 'right', distance: 10, height: 10 }] }),
   opening: opening(...[].concat(OWN_OPENING[kind] ?? 'classic')),
   sections: layout(kind, COASTER_LAYOUTS.includes(kind) ? { dress: { brakingStraight: { height: 0 }, ...TOUCHDOWNS[kind] } } : CANYON_LAYOUTS.includes(kind) ? { dress: CANYON_HEIGHTS[kind] } : BLOCK_LAYOUTS.includes(kind) ? { dress: BLOCK_HEIGHTS[kind] ?? {} } : ATHLETICS_LAYOUTS.includes(kind) ? { dress: ATHLETICS_DRESS[kind] } : RIVER_LAYOUTS.includes(kind) ? { dress: RIVER_HEIGHTS[kind], mirror: Boolean(RIVER_MIRROR[kind]) } : PEAK_LAYOUTS.includes(kind) ? { dress: PEAK_HEIGHTS[kind] } : {}),
 }));

@@ -6,6 +6,7 @@ const {
 } = require('./trackFeatures');
 const { subSeed } = require('./simulator');
 const { TRACK_STYLE, buildCenterline, trackProfile } = require('./trackGeometry');
+const { loopShape } = require('./loopShape');
 
 /**
  * Physics race simulator (preview only: real races still use simulator.js).
@@ -358,6 +359,19 @@ function advanceChannel(m, time, ctx) {
   }
   const note = (type, obstacle) => events && events.push({ time, index: m.index, type, ...(obstacle && { obstacle }) });
 
+  // A loop (track kit: loop; tracks without one never come here): round it on its own path, or, a
+  // marble that couldn't hold on, falling into the net under it.
+  let inLoop = null;
+  if (ctx.loops && !m.branch) {
+    if (m.loopFall) return fallInLoop(m, time, ctx, note);
+    if (!m.loop) {
+      const L = ctx.loops.find((x) => m.s >= x.s0 && m.s < x.s1);
+      if (L) enterLoop(m, L, ctx);
+    }
+    if (m.loop && m.s >= m.loop.s1) leaveLoop(m, ctx);
+    inLoop = m.loop ?? null;
+  }
+
   // Geometry where the marble is: the main channel, or one side of the splitter.
   const turnMain = look.turn(m.s);
   let stretch = 1; // channel length per metre of main track
@@ -367,8 +381,18 @@ function advanceChannel(m, time, ctx) {
     stretch = Math.hypot(1 - o * turnMain, forkOffsetSlope(fork, m.s));
     radius = forkRadius(fork, channel.radius, m.s);
   }
-  const turn = turnMain / stretch;
-  const slope = clamp(look.slope(m.s) / stretch, -0.97, 0.97);
+  let turn = turnMain / stretch;
+  let slope = clamp(look.slope(m.s) / stretch, -0.97, 0.97);
+  // In a loop: its own path (longer than the ground it stands on), its own slope (all the way
+  // round), and how hard the floor presses on the marble (the curve's pull less gravity's).
+  let press = G;
+  if (inLoop) {
+    const u = (m.s - inLoop.s0) * inLoop.stretch;
+    stretch = inLoop.stretch;
+    turn = 0;
+    slope = inLoop.shape.lerp(inLoop.slope, u);
+    press = Math.max(0, loopPress(inLoop, u, m.v));
+  }
   const kickUp = (speed) => {
     if (!air || speed <= 0 || m.airborne) return;
     m.airborne = true;
@@ -417,7 +441,7 @@ function advanceChannel(m, time, ctx) {
   // --- up and down the channel walls ------------------------------------------
   const cornering = turn * m.v * m.v; // sideways push of the bend (towards the outside)
   let thAcc = (-cornering * Math.cos(m.th)) / radius;
-  if (!m.airborne) thAcc += (m.onBox ? 0 : (-ROLLING * G * Math.sin(m.th)) / radius) - (channel.wides && wideAt(channel, m.s) ? HALF_PIPE_DAMPING : CHANNEL_DAMPING) * m.thv; // (a flat top doesn't pull back to the middle)
+  if (!m.airborne) thAcc += (m.onBox ? 0 : (-ROLLING * press * Math.sin(m.th)) / radius) - (channel.wides && wideAt(channel, m.s) ? HALF_PIPE_DAMPING : CHANNEL_DAMPING) * m.thv; // (a flat top doesn't pull back to the middle)
   m.thv += thAcc * DT;
   if (rng && !m.airborne) {
     // Bumpy ice (luck: fewer knocks). A knock is a sideways shove of the same
@@ -429,7 +453,7 @@ function advanceChannel(m, time, ctx) {
     m.thv += ruts * m.luckKick * rng.gaussian() * Math.sqrt(DT);
   }
   m.th += m.thv * DT;
-  const lip = m.branch ? channel.maxAngle : channelLip(channel, m.s);
+  const lip = m.branch ? channel.maxAngle : inLoop ? inLoop.shape.lipAt((m.s - inLoop.s0) * inLoop.stretch, channel.maxAngle) : channelLip(channel, m.s);
   if (Math.abs(m.th) > lip) {
     const side = Math.sign(m.th);
     const impact = m.thv * side * radius; // speed over the lip
@@ -525,7 +549,7 @@ function advanceChannel(m, time, ctx) {
   } else if (!m.airborne) {
     m.y = look.floor(m.s) + lift;
     m.vy = m.v * surfaceSlope;
-    if ((-look.bend(m.s) / (stretch * stretch)) * m.v * m.v > G * 0.95) {
+    if (!inLoop && (-look.bend(m.s) / (stretch * stretch)) * m.v * m.v > G * 0.95) {
       m.airborne = true;
       m.airSince = time;
     }
@@ -560,6 +584,7 @@ function advanceChannel(m, time, ctx) {
     }
     if (m.jumpFlight && m.y - look.floor(m.s) > m.jumpFlight.top) m.jumpFlight.top = m.y - look.floor(m.s);
   }
+  if (inLoop && m.loop === inLoop) holdOnInLoop(m, inLoop, time, ctx, note);
   return before;
 }
 
@@ -616,10 +641,12 @@ function collideChannel(marbles, time, ctx) {
   if (n < 2) return;
   const cs = live.map((m) => crossSection(m, ctx));
   // Slipstream for the next step: the nearest marble just ahead on the same line.
+  // (Round a loop the path is longer than the ground it stands on: distances along it.)
+  const along = ctx.loops ? (m) => loopPathAt(ctx.loops, m.s) : null;
   for (let i = 0; i < n; i += 1) {
     const a = live[i];
     for (let j = i + 1; j < n; j += 1) {
-      const gap = live[j].s - a.s;
+      const gap = along ? along(live[j]) - along(a) : live[j].s - a.s;
       if (gap > DRAFT_REACH) break;
       if (a.branch !== live[j].branch || Math.abs(cs[j].x - cs[i].x) > DRAFT_WIDTH) continue;
       a.draft = 1 - DRAFT * (1 - gap / DRAFT_REACH);
@@ -630,9 +657,11 @@ function collideChannel(marbles, time, ctx) {
     const a = live[i];
     for (let j = i + 1; j < n; j += 1) {
       const b = live[j];
-      const ds = b.s - a.s;
+      const ds = along ? along(b) - along(a) : b.s - a.s;
       if (ds >= DIAMETER) break; // sorted along the track: nobody further on can touch
       if (a.branch && b.branch && a.branch !== b.branch) continue;
+      // (A marble falling into a loop's net meets nobody on the track.)
+      if (along && (a.loopFall || b.loopFall)) continue;
       // (A marble in a jump's catch channel is under the track: it meets nobody up on it.)
       if (ctx.jumps && (a.jump?.part === 'catch' || b.jump?.part === 'catch')) continue;
       const dx = cs[j].x - cs[i].x;
@@ -663,8 +692,8 @@ function collideChannel(marbles, time, ctx) {
       const wb = 1 - wa;
       // Push apart (half each), along the track and across.
       const overlap = DIAMETER - d;
-      a.s -= wa * overlap * ns;
-      b.s += wb * overlap * ns;
+      a.s -= (wa * overlap * ns) / (along ? loopStretchAt(ctx.loops, a.s) : 1);
+      b.s += (wb * overlap * ns) / (along ? loopStretchAt(ctx.loops, b.s) : 1);
       a.th -= (wa * overlap * tna) / cs[i].R;
       b.th += (wb * overlap * tnb) / cs[j].R;
       if (vrel >= 0) continue; // already moving apart
@@ -728,6 +757,84 @@ const BOX_SIDE_LOSS = 0.02;  // and loses this share of its speed
 // brings each one up to at least the speed that carries it over with room to spare.
 const CATCH_LOSS = 0.3;      // share of speed a marble caught under the gap loses (the catch channel's soft net)
 const CATCH_GRACE = 0.05;    // metres: a marble this little below the deck's lip still lands on it
+
+
+// Loops (track kit: loop, 2 Nov 2026): a roller-coaster loop (./loopShape.js). A marble rides
+// round it on the loop's own path; the floor holds it as long as the curve's pull beats gravity
+// (the press, below). One that ever loses its hold (too slow over the top, or stalling on the way up)
+// drops into the net hung inside the loop, which lets it down onto the way down: back on the track,
+// never off it. The launch pad before the loop brings every marble up to the speed that carries even
+// the slowest round with a wide margin, so in a race the net is never used.
+const LOOP_STALL = 1.5;        // m/s: slower than this on the way up, a marble would roll back: it drops into the net
+const LOOP_NET_SPEED = 4;      // m/s: how fast the net lets a caught marble out onto the way down
+
+/** How hard the loop's floor presses on a marble at u going at v (m/s², along the floor's normal; below 0 it falls). */
+function loopPress(L, u, v) {
+  return v * v * L.shape.lerp(L.shape.kappa, u) + G * Math.cos(L.shape.lerp(L.shape.phi, u));
+}
+/** The ground metres a loop's path stretches over, as the marble's progress counts them. */
+function loopPathAt(loops, s) {
+  let p = s;
+  for (const L of loops) if (s > L.s0) p += (Math.min(s, L.s1) - L.s0) * (L.stretch - 1);
+  return p;
+}
+function loopStretchAt(loops, s) {
+  for (const L of loops) if (s >= L.s0 && s < L.s1) return L.stretch;
+  return 1;
+}
+function enterLoop(m, L, ctx) {
+  m.loop = L;
+  m.airborne = false;
+  m.vy = 0;
+  L.stats.entered += 1;
+  if (ctx.stats?.features) ctx.stats.features.loop += 1;
+}
+function leaveLoop(m, ctx) {
+  const L = m.loop;
+  m.loop = null;
+  if (!m.loopCaught) L.stats.completed += 1;
+  m.loopCaught = false;
+  m.y = ctx.look.floor(m.s);
+  m.vy = m.v * ctx.look.slope(m.s);
+}
+/** After a step in a loop: does the floor still hold the marble? (Its slowest moments go in the report.) */
+function holdOnInLoop(m, L, time, ctx, note) {
+  if (m.s >= L.s1) return;
+  const u = (m.s - L.s0) * L.stretch;
+  const press = loopPress(L, u, m.v);
+  const climbing = L.shape.lerp(L.slope, u) > 0.2;
+  if (u > L.shape.rise * 0.8 && u < L.shape.rise * 1.2) {
+    if (m.v < L.stats.slowestTop) L.stats.slowestTop = m.v;
+    if (press < L.stats.leastPress) L.stats.leastPress = press;
+  }
+  if (press >= 0 && !(climbing && m.v < LOOP_STALL)) return;
+  // Lost its hold: it drops into the net, which lets it down onto the way down, low near the bottom.
+  const shape = L.shape;
+  const zd = shape.lerp(shape.z, u);
+  const land = shape.netLanding(u);
+  const drop = Math.max(0.5, zd - shape.z[land]);
+  m.loopFall = { at: time, h: 0, drop, seconds: Math.sqrt((2 * drop) / G), landS: L.s0 + shape.u[land] / L.stretch };
+  m.loopCaught = true;
+  L.stats.caught += 1;
+  if (ctx.stats?.features) ctx.stats.features.loopCaught += 1;
+  note('bounce', 'loop_net');
+}
+/** A marble falling into the loop's net: down it goes (h, metres fallen), then out onto the way down. */
+function fallInLoop(m, time, ctx, note) {
+  const fall = m.loopFall;
+  const t = time - fall.at;
+  fall.h = Math.min(fall.drop, 0.5 * G * t * t);
+  const before = m.s;
+  if (t >= fall.seconds) {
+    m.loopFall = null;
+    m.s = fall.landS;
+    m.v = LOOP_NET_SPEED;
+    m.th = 0;
+    m.thv = 0;
+    note('bounce', 'loop_net');
+  }
+  return before;
+}
 
 /** A jump's surface under a marble on it, in metres above the ice (the catch channel: below it). */
 function jumpLift(st, s) {
@@ -1112,6 +1219,23 @@ function simulatePhysicsRace({ seed, track, entries, level = 3, tickRateHz = 20 
     }));
     if (!ctx.jumps.length) ctx.jumps = null;
     else if (stats) stats.jumpFlights = [];
+    // Loops: from s0 (where it rises) to s1 (the end of its run-out), its path `stretch` times the ground's length.
+    ctx.loops = features.filter((f) => f.type === 'loop').map((f, id) => {
+      const shape = loopShape(f);
+      const s0 = f.s;
+      const s1 = f.s + shape.ground;
+      // The slope all the way round: the ground's under it plus the loop's own rise and fall.
+      const y = Array.from(shape.u, (_, i) => look.floor(s0 + shape.f[i]) + shape.z[i]);
+      const slope = new Float64Array(shape.n + 1);
+      for (let i = 0; i <= shape.n; i += 1) {
+        const a = Math.max(0, i - 1);
+        const b = Math.min(shape.n, i + 1);
+        slope[i] = (y[b] - y[a]) / (shape.u[b] - shape.u[a]);
+      }
+      return { id, s0, s1, stretch: shape.length / shape.ground, shape, slope, stats: { entered: 0, completed: 0, caught: 0, slowestTop: Infinity, leastPress: Infinity } };
+    });
+    if (!ctx.loops.length) ctx.loops = null;
+    else stats.loops = ctx.loops.map((L) => L.stats);
     ctx.cobbles = features.filter((f) => f.type === 'cobbles').map((f) => ({ ...f, length: f.length ?? 25, drag: f.drag ?? 0.01 }));
     ctx.solids = features.filter((f) => ALL_SOLID_TYPES.includes(f.type)).map((f) => ({
       ...f,
@@ -1131,7 +1255,7 @@ function simulatePhysicsRace({ seed, track, entries, level = 3, tickRateHz = 20 
       ? busParts(o.length ?? 10).map((d, k) => ({ ...o, id: `${o.id}:${k}`, s: o.s + d, ...(o.onePiece && { hitId: o.id }) }))
       : [o]));
     stats.features = {
-      boost: 0, bump: 0, ...(ctx.boxes && { box: 0 }), ...(ctx.jumps && { jump: 0, caught: 0 }), ...Object.fromEntries(SOLID_TYPES.map((t) => [t, 0])),
+      boost: 0, bump: 0, ...(ctx.boxes && { box: 0 }), ...(ctx.jumps && { jump: 0, caught: 0 }), ...(ctx.loops && { loop: 0, loopCaught: 0 }), ...Object.fromEntries(SOLID_TYPES.map((t) => [t, 0])),
       // The kit's solids, listed only on tracks that have them (today's races record exactly as before).
       ...Object.fromEntries(KIT_SOLID_TYPES.filter((t) => features.some((f) => f.type === t)).map((t) => [t, 0])),
     };
@@ -1211,7 +1335,8 @@ function simulatePhysicsRace({ seed, track, entries, level = 3, tickRateHz = 20 
       t.s.push(m.s);
       t.x.push(ctx.channel ? m.th / ctx.channel.maxAngle : m.x / roomFull);
       // (Under a jump's gap, in its catch channel, a marble is below the ice: a negative height.)
-      t.h.push(air ? (m.jump?.part === 'catch' ? m.y - look.floor(m.s) : Math.max(0, m.y - look.floor(m.s))) : 0);
+      // (Falling into a loop's net: how far it has fallen.)
+      t.h.push(m.loopFall ? m.loopFall.h : air ? (m.jump?.part === 'catch' ? m.y - look.floor(m.s) : Math.max(0, m.y - look.floor(m.s))) : 0);
       t.v.push(m.v);
       t.b.push(m.branch || 0);
       t.a.push(0);
@@ -1369,6 +1494,8 @@ function simulatePhysicsRace({ seed, track, entries, level = 3, tickRateHz = 20 
       trackMetres: Math.round(total),
       ...(stats.features && { features: stats.features }),
       ...(stats.jumpFlights && { jumpFlights: stats.jumpFlights }),
+      // (Each loop: marbles in, round, caught by its net; the slowest over its top and the least press there.)
+      ...(stats.loops && { loops: stats.loops.map((L) => ({ ...L, slowestTop: Math.round(L.slowestTop * 10) / 10, leastPress: Math.round(L.leastPress * 10) / 10 })) }),
     ...(stats.fork && { splitter: splitterStats(stats.fork) }),
     ...(stats.forks && { splitters: stats.forks.map(splitterStats) }),
     },

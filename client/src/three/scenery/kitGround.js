@@ -139,6 +139,23 @@ export function biomeOf(kit) {
 }
 
 /** The channel's half-width to the outside of its walls, and its rim's height above the floor, at sample i. */
+/**
+ * A loop on the ground at s metres along: how far aside its lanes at ground level reach
+ * there, on the side it leans to (its way down and run-out run beside the way in). The bank on that
+ * side starts beyond them. 0 elsewhere.
+ */
+function loopAside(channel, s) {
+  for (const L of channel.loops ?? []) {
+    if (s < L.s0 || s > L.s1) continue;
+    const f = s - L.s0;
+    const sh = L.shape;
+    let q = 0;
+    for (let k = 0; k <= sh.n; k += 2) if (sh.z[k] < 3 && Math.abs(sh.f[k] - f) < 1.5) q = Math.max(q, sh.q[k]);
+    return q;
+  }
+  return 0;
+}
+
 function wallsAt(channel, i, step) {
   const s = i * step;
   const R = channelRadiusAt(channel, s);
@@ -295,7 +312,9 @@ export function buildKitGround(centerline, track, { lite = false } = {}) {
     for (const sign of [1, -1]) {
       // Rows at every sample: a bank quad is drawn wherever either end is on the ground, so
       // banks reach right up to a bridge or viaduct (an abutment) and never leave a gap at its ends.
-      const at = (d) => s.pos.clone().addScaledVector(side, sign * (outer + d));
+      // (Beside a loop, on the side it leans to: beyond its lanes on the ground.)
+      const aside = sign > 0 && channel.loops?.length ? loopAside(channel, i * step) : 0;
+      const at = (d) => s.pos.clone().addScaledVector(side, sign * (outer + aside + d));
       // Out to where a 1-in-1 slope from the rim meets the land (cut into it, or filled down to it).
       let w = BANK_MAX;
       for (let d = BANK_MIN; d <= BANK_MAX; d += 1) {

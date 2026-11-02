@@ -13,7 +13,7 @@
  * Looks only: the race never reads the drawn channel (the physics: src/game/physicsSimulator.js).
  */
 import { Vector3 } from 'three';
-import { channelLipAt, channelRadiusAt, forkAt, forkOffset, forkRadius, placeOnChannel } from './iceChannel';
+import { channelLipAt, channelRadiusAt, forkAt, forkOffset, forkRadius, loopAt, loopFrameAt, placeOnChannel } from './iceChannel';
 
 const ACROSS = [-1, -0.75, -0.5, -0.25, 0, 0.25, 0.5, 0.75, 1];
 const TOLERANCE = 0.3; // metres: the flat panels' sag off the true curve is at most about 0.15
@@ -58,6 +58,17 @@ export function channelPoints(centerline, channel, i, { rimWidth = 0.45 } = {}) 
   const s = (i + 0.5) * step;
   const prog = (i + 0.5) / segments;
   const out = [];
+  // A loop: its own path, its low walls, its rims along them.
+  const L = loopAt(channel, s);
+  if (L) {
+    const u = (s - L.s0) * L.stretch;
+    const lip = L.shape.lipAt(u, channel.maxAngle);
+    const R = channel.radius;
+    for (const l of ACROSS) out.push({ p: placeOnChannel(centerline, channel, prog, (l * lip) / channel.maxAngle, 0, 0, -0.02), part: Math.abs(l) === 1 ? 'wall' : 'floor', at: s });
+    const fr = loopFrameAt(L, u, { pos: new Vector3(), tangent: new Vector3(), normal: new Vector3(), across: new Vector3() });
+    for (const k of [-1, 1]) out.push({ p: fr.pos.clone().addScaledVector(fr.across, k * (R * Math.sin(lip) + rimWidth / 2)).addScaledVector(fr.normal, R * (1 - Math.cos(lip))), part: 'rim', at: s });
+    return out;
+  }
   const fork = forkAt(channel, s);
   const branches = fork ? [1, -1] : [0];
   const R = fork ? forkRadius(fork, channel.radius, s) : channelRadiusAt(channel, s);
@@ -98,9 +109,18 @@ export function floorHoles(centerline, channel, geometry, { pieces = null, cut =
   const { segments } = centerline;
   const holes = [];
   const reach = TOLERANCE;
+  const step = channel.arc / segments;
   for (let i = 0; i < segments; i += 1) {
-    const from = starts[Math.max(0, i - 1)];
-    const to = i + 2 < starts.length ? starts[i + 2] : total;
+    let from = starts[Math.max(0, i - 1)];
+    let to = i + 2 < starts.length ? starts[i + 2] : total;
+    // (A loop is drawn whole with the segment it rises in: its points are looked for anywhere in it.)
+    const L = loopAt(channel, (i + 0.5) * step);
+    if (L) {
+      const a = Math.floor(L.s0 / step);
+      const b = Math.ceil(L.s1 / step);
+      from = starts[Math.max(0, a - 1)];
+      to = b + 2 < starts.length ? starts[b + 2] : total;
+    }
     for (const { p, part, at } of channelPoints(centerline, channel, i, { rimWidth })) {
       let best = Infinity;
       for (let v = from; v + 2 < to && best > reach * reach; v += 3) {

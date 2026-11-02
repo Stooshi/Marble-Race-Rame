@@ -276,6 +276,17 @@ function boostJump({ at = 0.3, look = 'ski-jump', pad = 6, kick = 4, min = 22, k
 }
 
 /**
+ * A vertical loop (Moses, 2 Nov 2026; src/game/loopShape.js; on no live track yet: a track with one needs extra overtaking room after it): a launch pad wall to wall (`pad`
+ * metres: adds `kick` and brings every marble up to at least `min` m/s), 2 m, then a roller-coaster loop
+ * (`topRadius`: its tightest curve, at the top; `shift`: how far it leans aside, so the way down runs
+ * beside the way in; `runout`: metres along the ground bringing it back in line). A net hung inside it
+ * lets any marble that can't hold on down onto the way down. `at`: where the pad starts (share of the section).
+ */
+function loop({ at = 0.2, look = 'steel', pad = 6, kick = 4, min = 25, topRadius = 6, shift = 11, runout = 40 } = {}) {
+  return { feature: 'loop', at, look, pad, kick, min, topRadius, shift, runout };
+}
+
+/**
  * Paint on the floor, looks only (the physics never sees it): relay exchange zones ('exchange-zone'), a Go board ('go-board') or a
  * Xiangqi board ('xiangqi') over the stretch from `from` to `to` (China Wall Twister's board-game run).
  */
@@ -290,7 +301,7 @@ function brake({ at = 0.7, length = 15, drag = 0.02 } = {}) {
 
 module.exports = {
   SHARP_RADIUS, EASE, START_RAMP, LIP_STEP, LIP_LENGTH,
-  plunge, straight, climb, sBends, sweep, spiral, hairpin, splitter, waterfall, runIn, halfPipe, box, rail, tableTop, jibLine, boostJump,
+  plunge, straight, climb, sBends, sweep, spiral, hairpin, splitter, waterfall, runIn, halfPipe, box, rail, tableTop, jibLine, boostJump, loop,
   block, pileUp, curtain, swipe, parked, slalom, peg,
   bump, boost, brake, moguls, steps, paint, rumble,
   TUNNELS: ['mine', 'ice-cave', 'dragon', 'rock', 'roots', 'bazaar', 'canyon', 'mosaic', 'pyramid', 'sea-cave', 'lit-tunnel', 'redwood-trunk', 'city-wall', 'subway', 'steamer',

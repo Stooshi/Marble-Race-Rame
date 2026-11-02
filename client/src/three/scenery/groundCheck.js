@@ -13,7 +13,7 @@
  */
 import { coasterFlight, isLifted } from './coaster';
 import { Raycaster, Vector3 } from 'three';
-import { channelLipAt, channelRadiusAt, forkAt, forkOffset, forkRadius } from '../iceChannel';
+import { channelLipAt, channelRadiusAt, forkAt, forkOffset, forkRadius, loopAt } from '../iceChannel';
 
 export const SHOW_LIMIT = 0.4; // metres of outer wall allowed to show on normal terrain
 export const STEEP = 0.45;     // a grade this steep or steeper drops away faster than the land
@@ -39,7 +39,8 @@ export function stretchKinds(centerline, channel, track) {
     const s = samples[i];
     let kind = 'normal';
     const sec = kit.find((x) => p >= x.from && p <= x.to);
-    if (flight && isLifted(flight, i)) kind = 'coaster';
+    if (channel.loops?.length && loopAt(channel, i * step)) kind = 'loop'; // (a loop's own path is drawn there, not the channel: its banks give way to its lanes)
+    else if (flight && isLifted(flight, i)) kind = 'coaster';
     else if (sec?.bridge) kind = 'bridge';
     else if (sec?.waterfall) kind = 'waterfall';
     else {
@@ -133,7 +134,7 @@ export function flaggedStretches(exposure, arc) {
   };
   exposure.forEach((e, i) => {
     const worst = Math.max(e.left, e.right);
-    const bad = e.kind === 'normal' ? worst > SHOW_LIMIT : worst > SHOW_LIMIT && !e.built;
+    const bad = e.kind === 'loop' ? false : e.kind === 'normal' ? worst > SHOW_LIMIT : worst > SHOW_LIMIT && !e.built;
     if (!bad) return close();
     const why = e.kind === 'normal' ? 'wall shows on normal terrain' : `${e.kind}: above ground with nothing built under it`;
     if (run && run.why === why && i === run.lastIndex + 1) {

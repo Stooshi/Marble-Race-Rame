@@ -98,6 +98,16 @@ const JUMP_CLEAR_MARGIN = 0.25;  // metres: at the launch pad's minimum speed a 
 const JUMP_RUN_UP_M = 30;        // metres of the straight before the launch pad, so the field comes in on its line
 const JUMP_RUN_OUT_M = 15;       // metres of the straight left after the catch channel's exit
 const JUMP_CLEAR_M = 15;         // metres clear of other obstacles and features before and after it
+// Loops (2 Nov 2026): one a track, on a straight, clear of everything else, the launch pad fast
+// enough for the hardest-gliding marble (it loses the most climbing) to be pressed on over the top with room to spare.
+// (A loop is ridden in single file, so a track with one needs extra overtaking room after it: that is judged by
+// its full report, about 65 overtakes or more, not here; see src/tracks/README.md.)
+const LOOP_TOP_RADIUS = [4, 8];  // metres: the tightest curve, at the top
+const LOOP_PRESS_MARGIN = 1.5;   // over the top the curve's pull is at least 1.5 × gravity at the pad's minimum speed
+const LOOP_HARDEST_GLIDE = 1.4;  // the most a marble's glide and form multiply gravity's pull on a climb (1.3 × 1.08)
+const LOOP_RUN_UP_M = 30;        // metres of the straight before the launch pad
+const LOOP_RUN_OUT_M = 15;       // metres of the straight left after the run-out
+const LOOP_CLEAR_M = 15;         // metres clear of other obstacles and features before and after it
 const NO_LUCK_OPENINGS = ['clean-drop', 'peg-drop', 'pipe-drop'];
 const LUCK_GATES = 5;
 const LUCK_LOSS = 0.3;
@@ -348,6 +358,29 @@ function checkRecipe({ spec, sections, span, generated, owner, placed, total, wh
     if (endShare > finishShare) problems.push(`${where(sec.name)}: a boost-pad jump within ${OBSTACLE_FREE_FINISH_M} m of the finish line.`);
     const near = placed.find((o) => o !== p && o.kind !== 'brakeBeforeSharp' && o.at > p.at - JUMP_CLEAR_M / total && o.at < endShare + JUMP_CLEAR_M / total);
     if (near) problems.push(`${where(sec.name)}: a ${near.kind} too close to the boost-pad jump; keep ${JUMP_CLEAR_M} m clear before and after it.`);
+  }
+
+  // Loops: on a straight, at most one a track, every marble round at the launch pad's minimum speed.
+  const loops = placed.filter((x) => x.kind === 'loop');
+  if (loops.length > 1) problems.push(`${where(name(loops[1].section))}: at most one loop a track.`);
+  for (const p of loops) {
+    const sec = sections[p.section];
+    const metresIn = (p.at - span[p.section].from) * total;
+    const secLength = (span[p.section].to - span[p.section].from) * total;
+    if (sec.shape.parts.some((x) => x.kind !== 'straight')) problems.push(`${where(sec.name)}: a loop needs a straight.`);
+    const grade = sec.shape.parts[0]?.grade ?? 0;
+    if (!(grade >= 0.05 && grade <= 0.2)) problems.push(`${where(sec.name)}: a loop needs a straight of grade 0.05 to 0.2.`);
+    if (!(p.topRadius >= LOOP_TOP_RADIUS[0] && p.topRadius <= LOOP_TOP_RADIUS[1])) problems.push(`${where(sec.name)}: a loop's top radius is ${LOOP_TOP_RADIUS[0]} to ${LOOP_TOP_RADIUS[1]} m.`);
+    // Over the top at the pad's minimum speed, less what the climb takes from the hardest-gliding marble.
+    const vTop2 = p.min * p.min - 2 * (5 / 7) * 9.81 * LOOP_HARDEST_GLIDE * p.height;
+    const need = 9.81 * p.topRadius * LOOP_PRESS_MARGIN;
+    if (!(vTop2 >= need)) problems.push(`${where(sec.name)}: at ${p.min} m/s the hardest-gliding marble comes over the loop's top at ${Math.sqrt(Math.max(0, vTop2)).toFixed(1)} m/s; it needs ${Math.sqrt(need).toFixed(1)} (a faster pad or a smaller loop).`);
+    if (metresIn < LOOP_RUN_UP_M) problems.push(`${where(sec.name)}: a loop needs ${LOOP_RUN_UP_M} m of the straight before its pad.`);
+    if (metresIn + p.length > secLength - LOOP_RUN_OUT_M) problems.push(`${where(sec.name)}: a loop needs ${LOOP_RUN_OUT_M} m of the straight after it.`);
+    const endShare = p.at + p.length / total;
+    if (endShare > finishShare) problems.push(`${where(sec.name)}: a loop within ${OBSTACLE_FREE_FINISH_M} m of the finish line.`);
+    const near = placed.find((o) => o !== p && o.kind !== 'brakeBeforeSharp' && o.at > p.at - LOOP_CLEAR_M / total && o.at < endShare + LOOP_CLEAR_M / total);
+    if (near) problems.push(`${where(sec.name)}: a ${near.kind} too close to the loop; keep ${LOOP_CLEAR_M} m clear before and after it.`);
   }
 
   // No bumps just after a block: marbles flung off it land on the bumps and bounce high

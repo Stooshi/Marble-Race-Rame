@@ -190,6 +190,17 @@ function summarize(batches, track) {
     lines.push({ part: 'Obstacles, boosts, bumps', what: 'Boost-pad jump: marbles that fell short (into the catch channel)', value: `${caught} of ${flights}`, target: 'none', pass: caught === 0 });
     lines.push({ part: 'Obstacles, boosts, bumps', what: 'Boost-pad jump: highest flight over the ice; slowest off the lip; longest flight', value: `${fmt(top, 2)} m; ${fmt(Math.min(...jumps.map((r) => r.jump.slowest)), 1)} m/s; ${fmt(Math.max(...jumps.map((r) => r.jump.longest)), 1)} m`, target: `at most ${TARGETS.jumpTop} m over the ice`, pass: top <= TARGETS.jumpTop });
   }
+  const loops = all.filter((r) => r.loop);
+  if (loops.length) {
+    // The loop (prototype): every marble round it at racing speed, held on over the top with room to spare.
+    const entered = loops.reduce((n, r) => n + r.loop.entered, 0);
+    const round = loops.reduce((n, r) => n + r.loop.completed, 0);
+    const caught = loops.reduce((n, r) => n + r.loop.caught, 0);
+    const slowest = Math.min(...loops.map((r) => r.loop.slowestTop ?? Infinity));
+    const press = Math.min(...loops.map((r) => r.loop.leastPress ?? Infinity));
+    lines.push({ part: 'Obstacles, boosts, bumps', what: 'Loop: marbles round it (and caught by its net)', value: `${round} of ${entered} (${caught} caught)`, target: 'every one round, none caught', pass: round === entered && caught === 0 });
+    lines.push({ part: 'Obstacles, boosts, bumps', what: 'Loop: slowest over the top; least press there (the floor holding the marble)', value: `${fmt(slowest, 1)} m/s; ${fmt(press / 9.81, 1)} g`, target: 'at least 1 g to spare', pass: press >= 9.81 });
+  }
   const hops = all.map((r) => r.highestHop).sort((a, b) => a - b);
   const p99 = hops[Math.floor(hops.length * 0.99)];
   lines.push({ part: 'Obstacles, boosts, bumps', what: 'Highest hop per race (median, 1 race in 100, highest of all)', value: `${fmt(median(hops), 2)} m, ${fmt(p99, 2)} m, ${fmt(hops[hops.length - 1], 2)} m`, target: `about 1 m: 1 race in 100 at most ${TARGETS.hop} m`, pass: p99 <= TARGETS.hop });

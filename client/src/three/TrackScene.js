@@ -14,7 +14,7 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { buildCenterline, buildTrackGeometry, TRACK_STYLE } from './trackModel';
 import { MARBLE_RADIUS, PEN_DROP, RaceMarbles, RUNOUT_LENGTH } from './marbles';
 import { buildScenery } from './scenery';
-import { buildIceChannelGeometry, channelDetail, channelLipAt, channelPieces, channelPieceSize, channelColors, channelOf, channelRadiusAt, forkAt, forkOffset, forkRadius, ICE_COLORS, STREET_COLORS } from './iceChannel';
+import { buildIceChannelGeometry, channelDetail, channelLipAt, channelPieces, channelPieceSize, channelColors, channelOf, channelRadiusAt, forkAt, forkOffset, forkRadius, ICE_COLORS, loopView, STREET_COLORS } from './iceChannel';
 import { DEFAULT_THEME, themeFor } from './themes';
 import { gatePlaces, StartGate } from './startGate';
 import { countdownPose, handover, launchHandover, launchPose, startLineShot } from './startCamera';
@@ -1572,6 +1572,12 @@ export class TrackScene {
       finish = rig.holdFinish ? 1 : k * k * (3 - 2 * k);
     }
     const { camera: desired, target, roadTop, clearAbove, level, sight } = this.followPose(at, progress, (rig === this.inset ? INSET_CLOSER : 1) * (rig.push ?? 1), reach, finish);
+    // A loop: the camera swings out beside it, level, and watches its marble go round.
+    const loop = this.channel?.loops?.length ? loopView(this.centerline, this.channel, Math.min(1, Math.max(0, progress)) * this.channel.arc) : null;
+    if (loop && loop.w > 0) {
+      desired.lerp(loop.cam, loop.w);
+      target.lerp(at.clone().lerp(loop.centre, loop.pull), loop.w);
+    }
     // The big view on the finish shot: a coaster station's canopy cut away (the corner view keeps it, see render).
     // (On phones and tall screens the canopy is never drawn: roofless.)
     const cutting = rig === this.main && (finish >= FINISH_CUT_FROM || this.roofless()) && Boolean(this.cutaway());

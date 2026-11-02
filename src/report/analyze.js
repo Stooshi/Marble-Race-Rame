@@ -88,6 +88,8 @@ function analyzeRace(sim, entries, track) {
         longest: Math.max(0, ...sim.stats.jumpFlights.map((f) => f.distance ?? 0)),
       },
     }),
+    // A loop (prototype; tracks with one): marbles in, round, caught by its net; the slowest over its top, the least press there.
+    ...(sim.stats.loops && { loop: sim.stats.loops[0] }),
     bumps: sim.stats.features?.bump ?? 0,
   };
 }

@@ -30,7 +30,7 @@ Then add it to `index.js` in this folder.
 No "safe only" tracks. Every new track has **at least one big, exciting feature**:
 - a jump or hop over a gap (the boost-pad jump, a hop);
 - a splitter with two paths;
-- a loop;
+- a loop (the kit's `loop`, available since 2 Nov 2026: a clothoid roller-coaster loop with its launch pad, proven on its test track `variety-layout-loop-run` with the full report; on no live track yet, its first use planned in a new track. **A track with a loop needs extra overtaking room after it** (the loop is ridden in single file: the test track's overtakes came out exactly at the target of 60): a longer run-out or an overtaking section right after it (S-bends, a wide sweep, pegs), aiming clearly above 60 overtakes in its full report, about 65 or more);
 - a funnel;
 - a big drop;
 - a dramatic banked turn.

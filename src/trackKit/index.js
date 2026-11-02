@@ -16,6 +16,7 @@
  */
 
 const { generate } = require('../game/trackShape');
+const { loopShape } = require('../game/loopShape');
 const parts = require('./parts');
 const { checkRecipe, isCoaster, isPinball, isArcade, isCanyon, isBlock, isAthletics, isWinterWonders, isRiver, isPeak } = require('./recipe');
 
@@ -187,12 +188,21 @@ function track(spec) {
         placed.push({ section: i, kind: 'jump', at, length: f.pad + 2 + f.kicker + f.gap + f.landing + 8, height: f.height, gap: f.gap, deck: f.deck, min: f.min, kicker: f.kicker, landing: f.landing });
         continue;
       }
+      if (f.feature === 'loop') {
+        // A loop: the launch pad (a boost wall to wall, with its minimum speed), 2 m, then the loop (physics 'loop').
+        const { ground, height } = loopShape(f);
+        features.push({ type: 'boost', at, l: 0, length: f.pad, halfWidth: 5.2, kick: f.kick, min: f.min });
+        const loopAt = round4(at + (f.pad + 2) / total);
+        features.push({ type: 'loop', at: loopAt, topRadius: f.topRadius, shift: f.shift, runout: f.runout, look: f.look });
+        placed.push({ section: i, kind: 'loop', at, length: f.pad + 2 + ground, height, min: f.min, topRadius: f.topRadius });
+        continue;
+      }
       if (f.feature === 'bump') features.push({ type: 'bump', at });
       else if (f.feature === 'boost') features.push({ type: 'boost', at, l: f.l, length: f.length, halfWidth: f.halfWidth, ...(f.kick !== undefined && { kick: f.kick }) });
       else if (f.feature === 'brake') features.push({ type: 'cobbles', at, length: f.length, drag: f.drag });
       else if (f.feature === 'paint') { features.push({ type: 'paint', at, length: Math.round((f.to - f.from) * metres(i) * 10) / 10, look: f.look }); continue; } // (looks only)
       else {
-        problems.push(`${where(sec.name)}: features must come from the kit (bump, boost, brake, moguls, steps, paint, rumble, box, rail, tableTop, boostJump).`);
+        problems.push(`${where(sec.name)}: features must come from the kit (bump, boost, brake, moguls, steps, paint, rumble, box, rail, tableTop, boostJump, loop).`);
         continue;
       }
       placed.push({ section: i, kind: f.feature, at });
