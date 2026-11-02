@@ -289,6 +289,19 @@ const broadcastApi = {
       return `<div class="mk" style="left:${x.toFixed(0)}px;top:${y.toFixed(0)}px;width:${(2 * r).toFixed(0)}px;height:${(2 * r).toFixed(0)}px"></div><div class="mkl" style="left:${x.toFixed(0)}px;top:${ly.toFixed(0)}px">${nameOf(i)}</div>`;
     }).join('');
   },
+  /** The small line (one at a time, under the big lines): template.json abTall.lines. */
+  line(k = 0, text = '') {
+    const el = $('line');
+    el.style.opacity = String(k);
+    if (k > 0 && el.textContent !== text) el.textContent = text;
+  },
+  /** The big end card over the frame (abTall): "Play free" and the address, large, in our yellow. */
+  endBig(k = 0, l1 = '', l2 = '') {
+    const el = $('endBig');
+    el.style.opacity = String(k);
+    el.style.transform = `scale(${0.94 + 0.06 * k})`;
+    if (k > 0) { $('endBig1').textContent = l1; $('endBig2').textContent = l2; }
+  },
   /** The end card's calm: the frame darkened (0–1 black), under the big lines. */
   dim(k = 0) { $('dimFx').style.opacity = String(k); },
   rewind(on) {
@@ -339,7 +352,7 @@ window.rec = {
       arc: scene.channel?.arc ?? scene.centerline.samples.reduce((a, x, i, all) => a + (i ? x.pos.distanceTo(all[i - 1].pos) : 0), 0),
       podium: [...race.results].sort((a, b) => a.finishTimeMs - b.finishTimeMs).slice(0, 3).map((r) => {
         const e = race.entries[r.index];
-        return { name: e.marble.name, look: e.marble.look, ms: r.finishTimeMs, index: r.index };
+        return { name: e.marble.name, look: e.marble.look, ms: r.finishTimeMs, index: r.index, gate: (e.lane ?? r.index) + 1 };
       }),
       // When the leader first reaches share p of the track (ms after GO): for placing cuts.
       leaderAt: Object.fromEntries([0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.85, 0.9, 0.95, 1].map((p) => {

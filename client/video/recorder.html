@@ -71,6 +71,13 @@
           text-shadow: 0 0 0.05em var(--navy), 0 0 0.1em var(--navy), 0 0.06em 0.16em rgba(0,0,0,0.75), 0 0 0.5em color-mix(in srgb, var(--navy) 80%, transparent); }
   #hook em { font-style: normal; color: var(--yellow); }
   #markers { position: absolute; inset: 0; pointer-events: none; }
+  /* abTall: the small line, and the big end card ("Play free", the address ~110 px tall in our yellow). */
+  #line { position: absolute; left: 6vw; right: 12vw; top: 46vh; text-align: center; opacity: 0; font-family: var(--font), sans-serif; color: #fff; font-size: 5vmin; line-height: 1.1;
+          text-shadow: 0 0 0.08em var(--navy), 0 0.06em 0.16em rgba(0,0,0,0.8); }
+  #endBig { position: absolute; left: 4vw; right: 10vw; top: 30vh; text-align: center; opacity: 0; font-family: var(--font), sans-serif; transform-origin: 50% 40%;
+            text-shadow: 0 0 0.06em var(--navy), 0 0.05em 0.14em rgba(0,0,0,0.75); }
+  #endBig1 { color: #fff; font-size: 8vmin; line-height: 1.1; }
+  #endBig2 { color: var(--yellow); font-size: 11vmin; line-height: 1.1; font-weight: 700; letter-spacing: 0.005em; -webkit-text-stroke: 0.06vmin var(--yellow); }
   #dimFx { position: absolute; inset: 0; pointer-events: none; opacity: 0; background: var(--navy, #0e1320); }
   .mk { position: absolute; border: 0.55vmin solid var(--yellow); border-radius: 50%; box-shadow: 0 0 0 0.35vmin rgba(14,19,32,0.6), 0 0 2.4vmin rgba(255,210,31,0.55); transform: translate(-50%, -50%); }
   .mkl { position: absolute; transform: translate(-50%, -100%); padding: 0.6vmin 1.6vmin; background: var(--yellow); color: var(--navy); border-radius: 0.8vmin; font-family: var(--font), sans-serif; font-size: 3vmin; white-space: nowrap; }
@@ -139,6 +146,8 @@
 <div id="markers"></div>
 <div id="rewindFx"><div class="ic">◀◀ REWIND</div></div>
 <div id="dimFx"></div>
+<div id="line"></div>
+<div id="endBig"><div id="endBig1"></div><div id="endBig2"></div></div>
 <div id="hook"></div>
 <div id="intro" class="panel"><div class="t" id="introT"></div><div class="s" id="introS"></div></div>
 <div id="results"><div class="wrap"><div id="winner"><div class="lab" id="wLab"></div><div class="big" id="wBall"></div><div class="who" id="wWho"></div><div class="tm" id="wTm"></div></div>

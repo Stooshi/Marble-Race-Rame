@@ -80,7 +80,7 @@ export function mix(plan, length, { tune }, file) {
   }
 }
 
-export async function record({ variant = 'A', slug, race: raceName, kind = 'production', format = 'wide', tune = 7, logo = TEMPLATE.intro.logo, out, from = null, to = null, fly = null, stills = null, clip = null, at = null, promoStart = null }) {
+export async function record({ variant = 'A', opening = 'old', slug, race: raceName, kind = 'production', format = 'wide', tune = 7, logo = TEMPLATE.intro.logo, out, from = null, to = null, fly = null, stills = null, clip = null, at = null, promoStart = null }) {
   fly ??= kind === 'clip' ? 12 : kind === 'broadcast' ? 4.5 : 15; // (seconds: the flyover's length)
   const [W, H] = SIZES[format];
   const race = JSON.parse(fs.readFileSync(path.join(here, '..', 'dev', '.tracks', `${raceName}.json`), 'utf8'));
@@ -98,10 +98,10 @@ export async function record({ variant = 'A', slug, race: raceName, kind = 'prod
     await page.waitForFunction(() => window.rec, null, { timeout: 300_000 });
     await page.evaluate(() => window.rec.ready);
     const info = await page.evaluate(() => window.rec.info());
-    const plan = PLANS[kind](info, race, { logo, fly, clip, at, promoStart, variant, slug });
+    const plan = PLANS[kind](info, race, { logo, fly, clip, at, promoStart, variant, slug, opening });
     // (The plan beside the video: swap-logo.mjs uses it to put another logo version in.)
-    fs.writeFileSync(`${out}.plan.json`, JSON.stringify({ slug, race: raceName, kind, format, tune, logo, length: plan.length, shots: plan.shots, sound: plan.sound, texts: plan.texts, captions: plan.captions, hooks: plan.hooks, dim: plan.dim, markers: plan.markers, bc: plan.bc, intro: plan.intro, results: plan.results }));
-    log(`${info.name}: ${kind} ${format}, ${plan.length.toFixed(1)} s, ${plan.shots.length} shots; winner ${info.podium[0].name} by ${info.margin} ms${plan.packShare !== undefined ? `; the race ${Math.round(plan.packShare * 100)}% on the pack` : ''}`);
+    fs.writeFileSync(`${out}.plan.json`, JSON.stringify({ slug, race: raceName, kind, format, tune, logo, length: plan.length, shots: plan.shots, sound: plan.sound, texts: plan.texts, captions: plan.captions, hooks: plan.hooks, lines: plan.lines, endBig: plan.endBig, dim: plan.dim, markers: plan.markers, bc: plan.bc, intro: plan.intro, results: plan.results }));
+    log(`${info.name}: ${kind} ${format}, ${plan.length.toFixed(1)} s, ${plan.shots.length} shots; winner ${info.podium[0].name} (gate ${info.podium[0].gate}) by ${info.margin} ms${plan.packShare !== undefined ? `; the race ${Math.round(plan.packShare * 100)}% on the pack` : ''}`);
     for (const sh of plan.shots) log(`  ${sh.at.toFixed(1).padStart(6)} s  ${(sh.type + (sh.follow !== undefined && sh.follow !== 'leader' ? ` #${sh.follow}` : sh.type === 'race' ? ' lead' : '')).padEnd(10)} ${sh.from !== undefined ? `race ${Math.round(sh.from)} ms` : ''} ${sh.speed && sh.speed !== 1 ? `×${sh.speed}` : ''} ${sh.dur.toFixed(1)} s`);
     // The rows on the podium card.
     await page.evaluate(([title]) => { document.getElementById('podiumTitle').textContent = title; }, [TEXTS.podiumTitle]);
@@ -117,10 +117,15 @@ export async function record({ variant = 'A', slug, race: raceName, kind = 'prod
         bc: { opacity: k, label: span?.[2]?.label ?? null },
         intro: plan.intro ? { k: fade(v, plan.intro.at, plan.intro.dur, 0.5, 0.6), title: plan.intro.title, sub: plan.intro.sub } : null,
         results: plan.results ? { k: fade(v, plan.results.at, plan.results.dur, 0.6, 0.6), ...plan.results } : null,
+        line: (() => {
+          const h = (plan.lines ?? []).find((x) => v >= x.at && v < x.at + x.dur);
+          return h ? { k: fade(v, h.at, h.dur, 0.15, 0.15), text: h.text } : { k: 0, text: '' };
+        })(),
+        endBig: plan.endBig && v >= plan.endBig.at ? { k: Math.min(1, (v - plan.endBig.at) / 0.18), l1: plan.endBig.l1, l2: plan.endBig.l2 } : { k: 0 },
         dim: plan.dim && v >= plan.dim.at ? plan.dim.k * Math.min(1, (v - plan.dim.at) / plan.dim.fin) : 0,
         hook: (() => {
           const h = (plan.hooks ?? []).find((x) => v >= x.at && v < x.at + x.dur);
-          return h ? { k: fade(v, h.at, h.dur, 0.12, 0.12), text: h.text } : { k: 0, text: '' };
+          return h ? { k: h.at === 0 ? Math.min(1, (h.at + h.dur - v) / 0.12) : fade(v, h.at, h.dur, 0.12, 0.12), text: h.text } : { k: 0, text: '' };
         })(),
         markers: plan.markers && v >= plan.markers.at && v < plan.markers.at + plan.markers.dur ? { k: fade(v, plan.markers.at, plan.markers.dur, 0.2, 0.15), members: plan.markers.members } : { k: 0, members: [] },
         rewind: plan.rewind && v >= plan.rewind.at && v < plan.rewind.at + plan.rewind.dur ? 1 : 0,
@@ -185,6 +190,8 @@ export async function record({ variant = 'A', slug, race: raceName, kind = 'prod
             r.markers(ov.markers.k, ov.markers.members);
             r.rewind(ov.rewind);
             r.dim?.(ov.dim);
+            r.line?.(ov.line.k, ov.line.text);
+            r.endBig?.(ov.endBig.k, ov.endBig.l1, ov.endBig.l2);
             if (ov.intro) r.intro(ov.intro.k, ov.intro);
             if (ov.results) r.results(ov.results.k, ov.results);
           }
@@ -231,7 +238,7 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   const num = (n) => (opt(n, null) === null ? null : Number(opt(n)));
   await record({
     slug, race, kind: opt('kind', 'production'), format: opt('format', 'wide'), tune: Number(opt('tune', 7)), logo: opt('logo', TEMPLATE.intro.logo),
-    variant: opt('variant', 'A'), clip: opt('clip', null), at: num('at'), fly: num('fly'), promoStart: num('promos'),
+    variant: opt('variant', 'A'), opening: opt('opening', 'old'), clip: opt('clip', null), at: num('at'), fly: num('fly'), promoStart: num('promos'),
     out: opt('out', path.join(process.cwd(), `${slug}-${opt('kind', 'production')}-${opt('format', 'wide')}.mp4`)), from: num('from'), to: num('to'), stills: opt('stills', null) === 'shots' ? 'shots' : opt('stills', null)?.split(',').map(Number) ?? null,
   });
   process.exit(0); // (the browser and the dev server can keep the process waiting after closing)

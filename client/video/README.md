@@ -67,6 +67,26 @@ node scripts/video-race.js sognefjord --seed 1066300
 cd client && node video/record.mjs sognefjord sognefjord.video-1066300 --kind broadcast --tune 7 --out ~/videos/sognefjord-grand-prix-broadcast.mp4
 ```
 
+### The A/B opening test (`--kind abTall --opening old|new --format tall`, Moses, 2 Nov 2026)
+
+Watch time was stuck at about 5 s, so four 15 s verticals that differ only in the opening (`template.json` `abTall`, every word there):
+
+- **old:** 0–3 s frozen just before the line, the contenders marked, "Who wins? Pick one.", a quick rewind.
+- **new:** no freeze: frame 1 is already the race's busiest bunch (the game's follow camera), with the track's own big line on screen from frame 1 (`newHooks` by slug: Flipper Spins "Bumper chaos.", Venice Cube Canals "Through the canals.").
+- **Then the same for both:** three fast cuts (1.7, 1.6, 1.7 s) of the busiest moments with the small lines "20 marbles. Real physics." and "Race up to 19 friends in one race." (`#line`); the finish as a speed ramp (one low camera close behind the first two, `rampChase`: 1.4 s slowed to about a third, then 1.6 s at full speed through the line into the finish area; never a camera looking back up the track); the winner and the gap; the big end card (`#endBig`: "Play free" and "marblespins.com", the address 11vmin ≈ 119 px, our yellow) on the frozen winner dimmed to 55%, held 3 s (2.57 s readable), then the 0.25 s fade into frame 1, so it loops.
+
+Pick races with comparable gaps for all four, so the opening is the only difference:
+
+```
+node scripts/video-race.js flipper-spins --seed 1668144        # 0.024 s
+node scripts/video-race.js niagara-cube-falls --seed 1581035   # 0.021 s
+node scripts/video-race.js grand-canyon-burst --seed 1565197   # 0.020 s
+node scripts/video-race.js venice-cube-canals --seed 1549359   # 0.018 s
+cd client && node video/record.mjs flipper-spins flipper-spins.video-1668144 --kind abTall --opening new --format tall --tune 9 --out ~/videos/ab-1900-tiktok-flipper-new.mp4
+```
+
+Render from a copy that nobody edits while it runs (the recorder runs on a live development server: an edited file reloads the page and stops the render).
+
 ### The end card rule (every video, Moses, 1 Nov 2026)
 
 The end card is on screen for **at least 2.5 s, fully readable** (`template.json` `endCard.minSeconds`); making a plan stops with an error otherwise. The logo-page end card (production, cutdown, clip, broadcast) lasts `endCard.seconds` (4.5–5 s): its lines fade in by 1.8 s (`endCard.linesIn`), so they are readable 2.7–3.2 s (the broadcast's 2.8 s). The vertical broadcasts end on their play line instead (`endHold()` in `plans.mjs`): held `endCard.hold.seconds` (3 s) on a calm frame, the finish frozen, dimmed to 38% navy over 0.4 s (`#dimFx`), readable for at least 2.5 s before the loop's 0.25 s fade into the first picture.

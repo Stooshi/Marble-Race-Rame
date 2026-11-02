@@ -73,6 +73,20 @@
     "fjordsFallback": ["Amazing tracks: from the Grand Canyon to pinball tables.", "Every track has its own start, layout and surprises."]
   },
 
+  "abTall": {
+    "_about": "The A/B opening test (Moses, 2 Nov 2026: watch time stuck at about 5 s): 15 s vertical race videos, identical except the opening. --kind abTall --opening old|new --format tall. old: frozen before the line, the contenders marked, oldHook, a quick rewind. new: no freeze, frame 1 already the race's busiest chaos with the track's own big line (newHooks, by slug). Then: three fast cuts of collisions and overtakes (cuts, seconds) with the small lines one at a time; the finish as a speed ramp (a low chase camera, `chase`: slowSeconds covering the last slowMs − lineLeadMs before the line, then fastSeconds at full speed through the line into the finish area; never a camera looking back up the track); the winner and the gap; the big end card (endCard: 'Play free' and the address about 110 px tall in our yellow) on the frozen, dimmed winner, held endCard.hold (at least endCard.minSeconds readable), fading into frame 1.",
+    "oldHook": "Who wins? Pick one.",
+    "oldFov": 66,
+    "newHooks": { "flipper-spins": "Bumper chaos.", "venice-cube-canals": "Through the canals.", "default": "Here they come." },
+    "lines": ["20 marbles. Real physics.", "Race up to 19 friends in one race."],
+    "cuts": [1.7, 1.6, 1.7],
+    "rampChase": { "back": 3.2, "up": 0.9, "ahead": 4, "fov": 74 },
+    "endDim": 0.55,
+    "ramp": { "slowMs": 900, "lineLeadMs": 450, "slowSeconds": 1.4, "fastSeconds": 1.6 },
+    "winner": "{marble} wins by {margin} s",
+    "endCard": ["Play free", "marblespins.com"]
+  },
+
   "broadcast": {
     "_about": "The broadcast production (Moses, 1 Nov 2026): one whole race filmed as a TV motorsport broadcast, in our own style only (navy, yellow and orange, Lilita One, the mark in its usual corner; nothing copied from any real series, team, driver or sponsor). A hook of the closest moment, the intro card over the flyover, the overlay through the race (the standings tower top left, the race clock and the three sectors top right beside the mark, name tags over the marbles near the camera), cuts every 2–4 s, the finish in slow motion, the results board with the winner's card, the end card.",
     "introCard": "MARBLE SPINS GRAND PRIX · {city}",

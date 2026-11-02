@@ -715,3 +715,86 @@ export function broadcastTallV(info, race, { variant = 'A' } = {}) {
     sound: { goAt, beeps: false, music: [[0, p.v]], lifts: [[slow, p.v]], ceremony: null, extra: [{ key: 'whoosh', at: r1 - 0.35, gain: 0.5, dur: 1.6 }], loop: true },
   };
 }
+
+/**
+ * The A/B opening test (Moses, 2 Nov 2026; template.json abTall): a 15 s vertical race video whose only
+ * difference is the opening. `opening`:
+ *   'old'  frozen just before the line, the contenders marked, "Who wins? Pick one.", a quick rewind;
+ *   'new'  no freeze: frame 1 is already the race's busiest chaos, the track's own big line from frame 1.
+ * Then the same for both: fast cuts (1.5–2.5 s) of collisions and overtakes with the small lines, the finish
+ * as a speed ramp (a low chase camera: slow approach, then full speed at the line, the marbles flying into the
+ * finish area; never looking back up the track), the winner and the gap, and the big end card ("Play free",
+ * the address) on the frozen, dimmed winner, held endCard.hold (the 2.5 s rule), fading into frame 1 (loops).
+ */
+export function abTall(info, race, { opening = 'old', slug = null } = {}) {
+  const T = TEMPLATE.abTall;
+  const m = moments(info, race);
+  const W = m.W;
+  const A = analyse(race, info.arc, W + 8000);
+  const p = builder('abTall');
+  const name = { marble: info.podium[0].name, margin: (info.margin / 1000).toFixed(3) };
+  const win = info.podium[0].index;
+  const fin = [...race.results].filter((r) => Number.isFinite(r.finishTimeMs)).sort((a, b) => a.finishTimeMs - b.finishTimeMs);
+  const pod = fin.filter((r, k) => k < 2 || r.finishTimeMs - fin[0].finishTimeMs < 500).slice(0, 3).map((r) => r.index);
+  const bigs = [];
+  const taken = [[0, 3000], [W - 6000, W + 9000]];
+  let markers = null;
+  let rewind = null;
+  // 0–3 s: the opening (the same length for both, so everything after it is identical).
+  if (opening === 'new') {
+    // (the game's own follow camera inside the two busiest bunches after the start: movement from frame 1)
+    const c1 = busiest(A, 8000, W - 9000, 1500, taken);
+    taken.push([c1.t - 300, c1.t + 1800]);
+    const c2 = busiest(A, 8000, W - 9000, 1500, taken);
+    taken.push([c2.t - 300, c2.t + 1800]);
+    for (const c of [c1, c2].sort((a, b) => a.t - b.t)) p.add({ type: 'race', follow: c.mid, from: c.t, dur: 1.5 });
+    bigs.push({ at: 0, dur: 2.2, text: T.newHooks[slug] ?? T.newHooks.default });
+  } else {
+    const freeze = W - 650;
+    const line = { type: 'pan', eye: { ...LINE_EYE, fov: T.oldFov }, members: pod, fov: T.oldFov };
+    const h1 = p.add({ ...line, from: freeze - 500, speed: 0.5, dur: 1.0 });
+    const h2 = p.add({ ...line, from: freeze, speed: 0, dur: 1.5 });
+    bigs.push({ at: h2 + 0.05, dur: 1.45, text: T.oldHook });
+    markers = { at: h1 + 0.8, dur: 1.7, members: pod };
+    const r1 = p.add({ ...line, from: freeze, speed: -5, dur: 0.5 });
+    rewind = { at: r1, dur: 0.5 };
+  }
+  // 3–8 s: three fast cuts of collisions and overtakes (1.5–2.5 s), the small lines.
+  const cutsAt = p.v;
+  const cuts = [];
+  for (const dur of T.cuts) {
+    const b = busiest(A, 4000, W - 7000, dur * 1000, taken);
+    if (!b) break;
+    taken.push([b.t - 400, b.t + dur * 1000 + 400]);
+    cuts.push({ t: b.t, dur, b });
+  }
+  // (the game's own follow camera in the bunch: reliable on every kind of track, roofs and walls included)
+  cuts.sort((a, b) => a.t - b.t).forEach((c, k) => p.add({ type: 'race', follow: k % 2 ? c.b.mid : c.b.members[0] ?? c.b.mid, from: c.t, dur: c.dur }));
+  const lines = T.lines.map((text, k) => ({ at: cutsAt + 0.2 + k * 2.5, dur: 2.2, text }));
+  // 8–11 s: the finish as a speed ramp: a low chase camera on the leading group, slow, then full speed at the line.
+  // (the winner, close and low behind it, for the gap and the end card)
+  const r = T.ramp;
+  const low = (from, dur, speed) => ({ type: 'group', members: pod.slice(0, 2), shot: 'won', from, dur, speed, ...T.rampChase });
+  // (the ramp: low and close behind the first two, one camera through both speeds, looking on into the finish area)
+  const ramp = (from, dur, speed) => ({ ...low(from, dur, speed), shot: 'ramp' });
+  const rampAt = p.add(ramp(W - r.slowMs, r.slowSeconds, (r.slowMs - r.lineLeadMs) / 1000 / r.slowSeconds));
+  p.add(ramp(W - r.lineLeadMs, r.fastSeconds, 1));
+  // 11–12 s: the winner and the gap.
+  const won = p.add({ ...low(W + r.fastSeconds * 1000 - r.lineLeadMs, 1.0, 0.35), members: [win], shot: 'won' });
+  bigs.push({ at: won + 0.05, dur: 0.95, text: fill(T.winner, name) });
+  // 12–15 s: the big end card on the frozen, dimmed winner (the template's 2.5 s rule), then the loop fade.
+  const loopFade = 0.25;
+  const H = TEMPLATE.endCard.hold;
+  const holdFrom = W + r.fastSeconds * 1000 - r.lineLeadMs + 350;
+  const endAt = p.add({ ...low(holdFrom, H.seconds, 0), members: [win], shot: 'won' });
+  const endBig = { at: endAt + 0.05, l1: T.endCard[0], l2: T.endCard[1] };
+  const readable = p.v - loopFade - (endBig.at + 0.18);
+  if (readable < TEMPLATE.endCard.minSeconds - 1e-9) throw new Error(`The end card is readable ${readable.toFixed(2)} s: at least ${TEMPLATE.endCard.minSeconds} s (template.json endCard)`);
+  return {
+    shots: p.shots, texts: [], captions: [], hooks: bigs, lines, markers, rewind, podium: null, length: p.v, bc: [], city: info.name,
+    tall: { towerRows: TEMPLATE.broadcast.tall.towerRows },
+    loopFade, endBig, dim: { at: endAt, dur: H.seconds, k: T.endDim ?? H.dim, fin: H.dimIn },
+    marks: { cutsAt, rampAt, won, endAt, readable, gate: info.podium[0].gate },
+    sound: { goAt: 0, beeps: false, music: [[0, p.v]], lifts: [[rampAt, p.v]], ceremony: null, extra: [{ key: 'whoosh', at: Math.max(0, rampAt + r.slowSeconds - 0.4), gain: 0.5, dur: 1.6 }], loop: true },
+  };
+}
