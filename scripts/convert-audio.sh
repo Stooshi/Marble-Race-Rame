@@ -92,6 +92,14 @@ if [ -z "${SKIP_EFFECTS:-}" ]; then
   ff="$trim,volume=$(awk -v t="$hl" -v m="$bl" 'BEGIN { print t - m + 16 }')dB"
   ffmpeg -v error -y -i "$b" -vn -map_metadata -1 -af "$ff" -ar 48000 -c:a libopus -b:a 64k -vbr on -application audio "$OUT/marble-bump.webm"
   ffmpeg -v error -y -i "$b" -vn -map_metadata -1 -af "$ff" -c:a aac -b:a 96k -ar 44100 -movflags +faststart "$OUT/marble-bump.m4a"
+  # The loop's swoosh (2 Nov 2026), as the player's own marble goes round a loop: made by us
+  # (scripts/make-loop-sound.js; no licence needed), 8 dB over the collision click's loudness (measured the
+  # same way): between the click and the obstacle bump (16 dB over), as the hits it plays with.
+  l=$(ls "$IN"/LOOP\ SWOOSH*.wav)
+  ll=$(lufs "$l" "")
+  ff="volume=$(awk -v t="$hl" -v m="$ll" 'BEGIN { print t - m + 8 }')dB"
+  ffmpeg -v error -y -i "$l" -vn -map_metadata -1 -af "$ff" -ar 48000 -c:a libopus -b:a 64k -vbr on -application audio "$OUT/marble-loop.webm"
+  ffmpeg -v error -y -i "$l" -vn -map_metadata -1 -af "$ff" -c:a aac -b:a 96k -ar 44100 -movflags +faststart "$OUT/marble-loop.m4a"
   # (No overtaking whoosh for now: Moses, 28 Oct 2026.)
 fi
 ls -l "$OUT"

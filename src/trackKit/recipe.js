@@ -368,6 +368,9 @@ function checkRecipe({ spec, sections, span, generated, owner, placed, total, wh
     const metresIn = (p.at - span[p.section].from) * total;
     const secLength = (span[p.section].to - span[p.section].from) * total;
     if (sec.shape.parts.some((x) => x.kind !== 'straight')) problems.push(`${where(sec.name)}: a loop needs a straight.`);
+    // On a coaster the loop stands on the land, its legs with it: its stretch touches down.
+    if (isCoaster(spec) && (sec.height ?? spec.coaster?.height ?? (onTheFloor(spec) ? 0 : 1)) !== 0) problems.push(`${where(sec.name)}: on a coaster a loop stands on the land: its section touches down (height: 0).`);
+    if (sec.water) problems.push(`${where(sec.name)}: a loop stands on the land, not over water.`);
     const grade = sec.shape.parts[0]?.grade ?? 0;
     if (!(grade >= 0.05 && grade <= 0.2)) problems.push(`${where(sec.name)}: a loop needs a straight of grade 0.05 to 0.2.`);
     if (!(p.topRadius >= LOOP_TOP_RADIUS[0] && p.topRadius <= LOOP_TOP_RADIUS[1])) problems.push(`${where(sec.name)}: a loop's top radius is ${LOOP_TOP_RADIUS[0]} to ${LOOP_TOP_RADIUS[1]} m.`);

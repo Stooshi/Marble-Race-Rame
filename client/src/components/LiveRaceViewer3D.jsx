@@ -18,8 +18,8 @@ import SkipToResults from './SkipToResults';
 import FrameMeter, { useFrameMeter } from './FrameMeter';
 import { useTvMoments } from './tvMomentsSetting';
 import { sawGo } from '../api/firstSteps';
-import { createBumpDetector, createHitDetector, createHitGate } from '../sound/hits';
-import { START_SOUND_MS, crowdCheer, marbleBump, marbleHit, play as playSound, prepare as prepareSound, raceCeremony, raceCountdown, raceGo, soundReport, stopCountdown, whenSoundReady } from '../sound/engine';
+import { createBumpDetector, createHitDetector, createHitGate, createLoopDetector } from '../sound/hits';
+import { START_SOUND_MS, crowdCheer, marbleBump, marbleLoop, marbleHit, play as playSound, prepare as prepareSound, raceCeremony, raceCountdown, raceGo, soundReport, stopCountdown, whenSoundReady } from '../sound/engine';
 import { watchReadiness } from './raceReadiness';
 import { api } from '../api/client';
 import { FLYOVER_MS } from '../three/flyover';
@@ -316,6 +316,7 @@ export default function LiveRaceViewer3D({
     let lastGone = null;
     let crowdCheckAt = 0;
     let hits = null; // (the own marble's hit sound: one detector per race)
+    let loops = null; // (the own marble's loop swoosh: one detector per race)
     const grandPrix = Boolean(meta?.track?.physics?.kit?.grandPrix);
     const tick = (now) => {
       const dt = (now - lastNow) / 1000;
@@ -356,6 +357,11 @@ export default function LiveRaceViewer3D({
               if (b !== null && (k === null || k === undefined || b > k)) marbleBump(meta.raceId, b);
               else marbleHit(meta.raceId, k);
             }
+          }
+          // Going round a loop (track kit: loop): the player's own marble's swoosh, once per loop (../sound/hits.js; 2 Nov 2026).
+          if (ownRef.current.length && meta?.raceId && scene.channel?.loops?.length) {
+            if (!loops || loops.raceId !== meta.raceId) loops = { raceId: meta.raceId, d: createLoopDetector(), starts: scene.channel.loops.map((L) => L.s0 / scene.channel.arc) };
+            if (loops.d.step(f, ownRef.current, loops.starts)) marbleLoop(meta.raceId);
           }
           // The crowd: the player's own marble passing a stand (Grand Prix) cheers it, once per stand (Moses, 28 Oct 2026).
           if (grandPrix && f.t >= 0 && meta?.raceId && now - crowdCheckAt > 200) {

@@ -22,7 +22,8 @@ try {
     const page = await browser.newPage({ viewport: phone ? { width: 390, height: 844 } : { width: 1280, height: 720 }, deviceScaleFactor: 1 });
     page.on('pageerror', (e) => errors.push(e.message));
     page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
-    const q = new URLSearchParams({ track: 'variety-layout-loop-run', race: 'variety-layout-loop-run.loop-race', ...(phone && { lite: '1' }) });
+    const slug = process.env.LOOP_TRACK ?? 'variety-layout-loop-run';
+    const q = new URLSearchParams({ track: slug, race: `${slug}.loop-race`, ...(phone && { lite: '1' }) });
     await page.goto(`http://localhost:${port}/dev/kit-view.html?${q}`);
     await page.waitForFunction(() => window.kitView, null, { timeout: 120_000 });
     await page.evaluate(() => new Promise((r) => setTimeout(r, 800)));

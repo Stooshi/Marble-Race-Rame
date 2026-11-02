@@ -51,6 +51,8 @@ So:
 | (not in the game since 30 Oct 2026; replaced by `start-rolling`) launch | MARBLES SPEEDING UP - diff_style-start-your-engine-13152.mp3 | diff_style | 13152 | sound effect | (sound effect) |
 | (not in the game since 28 Oct 2026) whoosh | MARBLES OVERTAKING ONLY PLAYED NEXT TO THE PLAYERS OWN MARBLE-soundreality-whoosh-race-2-383023.mp3 | soundreality | 383023 | sound effect | (sound effect) |
 
+**Made by us (no licence needed):** `marble-loop` (the player's own marble going round a loop, from 2 Nov 2026): LOOP SWOOSH - made by Marble Spins.wav, synthesised by `scripts/make-loop-sound.js` (filtered noise, a fixed seed: the same file every time). Not downloaded from anywhere.
+
 **No longer in the game** (the originals stay here, unused): RACE SOUND 1–8 (28 Oct 2026; RACE SOUND 6 is the same file as RACE MUSIC 5), RACE MUSIC 2 (darren_hirst, "Gamer Music 140 BPM", Pixabay id 355954; taken out by Moses, 28 Oct 2026) and RACE MUSIC 1 (freesound_community / Kris Klavenes, "Epic game music", Pixabay id 49771; taken out by Moses, 30 Oct 2026: too like RACE MUSIC 2). 12 race tunes from 30 Oct 2026.
 
 **Find a page:** search the Pixabay id on pixabay.com, or the title from the file name.

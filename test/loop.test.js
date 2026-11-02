@@ -8,7 +8,7 @@ const { loopShape } = require('../src/game/loopShape');
 const { simulatePhysicsRace } = require('../src/game/physicsSimulator');
 const { physicsTrack, PHYSICS_TRACKS } = require('../src/game/physicsTracks');
 const { houseField } = require('../scripts/race-fingerprints');
-const { track, opening, straight, loop, sBends } = require('../src/trackKit');
+const { track, opening, straight, loop, sBends, layout, mirror } = require('../src/trackKit');
 
 const SLUG = 'variety-layout-loop-run';
 
@@ -95,4 +95,20 @@ test('the kit\'s rules for a loop: one a track, on a straight, a launch pad fast
   assert.throws(() => track({ ...base, sections: sections([loop({ at: 0.2, min: 18 })]) }), /comes over the loop's top at/);
   assert.throws(() => track({ ...base, sections: sections([loop({ at: 0.2, topRadius: 12 })]) }), /top radius is 4 to 8 m/);
   assert.throws(() => track({ ...base, sections: sections([loop({ at: 0.05 })]) }), /30 m of the straight before its pad/);
+});
+
+test('on a mirrored track it leans the other way and races the same; on a coaster it stands on the land', () => {
+  const base = physicsTrack(SLUG);
+  const m = mirror(base, { slug: 'loop-mirror', name: 'Loop mirror' });
+  assert.equal(m.physics.features.find((x) => x.type === 'loop').side, 'right');
+  const sim = simulatePhysicsRace({ seed: 3, track: m, entries: houseField(3), level: 3 });
+  assert.equal(sim.stats.loops[0].completed, 20);
+  const coaster = (dress) => track({
+    slug: 'loop-coaster', name: 'Loop coaster', family: 'test', series: 'coaster', difficulty: 'extreme', description: 'x', surface: 'ice', biome: 'meadow', lighting: 'day',
+    coaster: { height: 18 }, start: { landmark: 'mountain-hut' }, finish: { landmark: 'church' }, opening: opening('classic'), sections: layout('loop-run', { dress }),
+  });
+  const c = coaster({ loopStraight: { height: 0 }, brakingStraight: { height: 0 } });
+  const csim = simulatePhysicsRace({ seed: 3, track: c, entries: houseField(3), level: 3 });
+  assert.equal(csim.stats.loops[0].completed, 20);
+  assert.throws(() => coaster({ brakingStraight: { height: 0 } }), /on a coaster a loop stands on the land/);
 });

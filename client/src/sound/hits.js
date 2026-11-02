@@ -148,3 +148,38 @@ export function createHitGate() {
     reset() { lastAt = -Infinity; },
   };
 }
+
+/**
+ * The player's own marble going round a loop (track kit: loop; 2 Nov 2026): its swoosh once, as the race as
+ * shown carries it into the loop. `starts`: where each loop rises (progress, 0 to 1). Once per marble per
+ * loop per race; scrubbing back starts afresh.
+ */
+export function createLoopDetector() {
+  let seen = new Set();
+  let last = null; // progress of each own marble at the last step
+  let lastT = null;
+  return {
+    /** The race as shown (`frame`: t, p), the own marbles' indexes, the loops' starts → whether a swoosh is due. */
+    step(frame, own, starts) {
+      if (!frame || !starts?.length || !own?.length) return false;
+      if (lastT !== null && frame.t < lastT - 50) { seen = new Set(); last = null; }
+      lastT = frame.t;
+      let due = false;
+      const now = {};
+      for (const i of own) {
+        const p = frame.p?.[i];
+        if (!Number.isFinite(p)) continue;
+        now[i] = p;
+        const was = last?.[i];
+        if (was === undefined) continue;
+        starts.forEach((s0, k) => {
+          const key = `${i}:${k}`;
+          if (was < s0 && p >= s0 && p - s0 < 0.02 && !seen.has(key)) { seen.add(key); due = true; }
+        });
+      }
+      last = now;
+      return due;
+    },
+    reset() { seen = new Set(); last = null; lastT = null; },
+  };
+}

@@ -32,7 +32,7 @@ import { fetchBillboards } from '../api/billboards';
 import { buildEffects } from './lighting';
 import { WinnerGlow } from './winnerGlow';
 import { buildHolidayLayer } from './holidayLayer';
-import { apronStyle, buildFinishApron } from './finishApron';
+import { apronStyle, buildFinishApron, loopSteel } from './finishApron';
 import { WINNER_MS } from '../utils/finishShow';
 import { CHEER_NEAR } from './scenery/grandPrix';
 
@@ -411,8 +411,10 @@ export class TrackScene {
     this.applyTheme(theme);
     const style = { ...TRACK_STYLE, colors: { ...TRACK_STYLE.colors, ...theme.track } };
     this.channel = channelOf(track, this.centerline); // ice channel (bobsleigh) instead of a road
+    // (A loop's steel in the series' colours, as the finish apron: finishApron.js loopSteel.)
+    const loopColours = this.channel?.loops?.length ? loopSteel(apronStyle(track?.slug, theme?.ground?.color, track?.physics?.kit), track?.physics?.kit) : null;
     // (On phones a street's U is drawn in fewer strips across.)
-    const geometry = this.channel ? buildIceChannelGeometry(this.centerline, this.channel, channelDetail(track, this.channel, this.lite)) : buildTrackGeometry(track, this.centerline, style);
+    const geometry = this.channel ? buildIceChannelGeometry(this.centerline, this.channel, { ...channelDetail(track, this.channel, this.lite), ...(loopColours && { loopColours }) }) : buildTrackGeometry(track, this.centerline, style);
     this.trackMesh = new Mesh(geometry, this.trackMaterial);
     this.trackGroup.add(this.trackMesh);
     if (this.channel) {

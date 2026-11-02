@@ -5,6 +5,14 @@ import { describe, expect, it } from 'vitest';
 import { buildCenterline } from '../src/three/trackModel';
 import { buildIceChannelGeometry, channelOf, loopView, LOOP_VIEW, placeOnChannel } from '../src/three/iceChannel';
 import { loopShape } from '../src/three/loopShape';
+import fs from 'node:fs';
+import path from 'node:path';
+import { createLoopDetector } from '../src/sound/hits';
+import { LOOP_STRENGTH, SOUNDS, marbleLoop } from '../src/sound/engine';
+import { apronStyle, loopSteel } from '../src/three/finishApron';
+import { underLoop } from '../src/three/scenery/coaster';
+
+const { mirror } = require('../../src/trackKit');
 
 const server = require('../../src/game/loopShape');
 const { physicsTrack } = require('../../src/game/physicsTracks');
@@ -68,5 +76,57 @@ describe('the loop', () => {
     // Held on into the run-out, then easing back, gone before the next stretch.
     expect(loopView(centerline, channel, L.s0 + (2 * L.shape.rise + LOOP_VIEW.hold - 1) / L.stretch).w).toBe(1);
     expect(loopView(centerline, channel, L.s1 + LOOP_VIEW.hold + LOOP_VIEW.after + 1)).toBeNull();
+  });
+
+  it('leans to its side, and the other way on a mirrored track (its banks, its camera and its net with it)', () => {
+    const left = loopShape({ side: 'left' });
+    const right = loopShape({ side: 'right' });
+    expect(left.lean).toBe(1);
+    expect(right.lean).toBe(-1);
+    const top = left.at(left.rise).i;
+    expect(right.q[top]).toBeCloseTo(-left.q[top], 9);
+    const m = mirror(track, { slug: 'loop-mirror', name: 'Loop mirror' });
+    expect(m.physics.features.find((f) => f.type === 'loop').side).toBe('right');
+    const mc = buildCenterline(m);
+    const mch = channelOf(m, mc);
+    const [L] = mch.loops;
+    const v = loopView(mc, mch, L.s0 + L.shape.rise / L.stretch);
+    // (The camera on the side it doesn't lean to: the track's left on the mirrored track.)
+    const side = mc.samples[Math.round(((L.s0 + L.shape.f[L.shape.at(L.shape.rise).i]) / mch.arc) * mc.segments)].side;
+    expect((v.cam.x - v.centre.x) * side.x + (v.cam.z - v.centre.z) * side.z).toBeGreaterThan(20);
+    expect(buildIceChannelGeometry(mc, mch).getAttribute('position').count).toBeGreaterThan(0);
+  });
+
+  it('on a coaster: no rails, spine or ties drawn under it, where its own path is drawn', () => {
+    const [L] = channel.loops;
+    const step = channel.arc / centerline.segments;
+    expect(underLoop(channel, Math.round((L.s0 + 10) / step), step)).toBe(true);
+    expect(underLoop(channel, Math.round((L.s0 - 10) / step), step)).toBe(false);
+    expect(underLoop(channel, Math.round((L.s1 + 10) / step), step)).toBe(false);
+  });
+
+  it('its steel in the series\' colours, as the finish apron', () => {
+    expect(loopSteel({ kind: 'kerb', a: '#d8322b', b: '#f4f4f2' }).leg).toBe('#d8322b');
+    expect(loopSteel({ kind: 'neon', a: '#ff00ff', b: '#00ffff' }).leg).toBe('#ff00ff');
+    expect(loopSteel({ kind: 'chequer', a: '#1d1f24', b: '#f4f4f2' }).leg).toBe('#1d1f24');
+    expect(loopSteel(apronStyle('nowhere'), { coaster: { colours: { support: '#2f5d9a' } } }).leg).toBe('#2f5d9a');
+    expect(loopSteel(apronStyle('nowhere', '#88aa66')).leg).toBe(apronStyle('nowhere', '#88aa66').a);
+  });
+
+  it('the player\'s own marble going round it: its swoosh once, as it goes in, at the hits\' level', () => {
+    const d = createLoopDetector();
+    const at = (t, p) => ({ t, p });
+    expect(d.step(at(0, [0.27, 0.27]), [0], [0.28])).toBe(false);
+    expect(d.step(at(50, [0.279, 0.29]), [0], [0.28])).toBe(false); // (another marble in: not the player's)
+    expect(d.step(at(100, [0.2805, 0.3]), [0], [0.28])).toBe(true);
+    expect(d.step(at(150, [0.29, 0.31]), [0], [0.28])).toBe(false); // (once)
+    expect(d.step(at(50, [0.279, 0.29]), [0], [0.28])).toBe(false); // (scrubbed back: afresh)
+    expect(d.step(at(100, [0.281, 0.3]), [0], [0.28])).toBe(true);
+    expect(SOUNDS.loop).toBe('marble-loop');
+    expect(LOOP_STRENGTH).toBeGreaterThan(0);
+    expect(marbleLoop('x')).toBe(false); // (not unlocked in a test: nothing plays)
+    for (const ext of ['webm', 'm4a']) expect(fs.existsSync(path.resolve(__dirname, `../public/audio/marble-loop.${ext}`))).toBe(true);
+    const view = fs.readFileSync(path.resolve(__dirname, '../src/components/LiveRaceViewer3D.jsx'), 'utf8');
+    expect(view).toContain('if (loops.d.step(f, ownRef.current, loops.starts)) marbleLoop(meta.raceId);');
   });
 });

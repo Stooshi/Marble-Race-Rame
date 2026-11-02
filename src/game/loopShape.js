@@ -10,8 +10,9 @@
  *   - the rise and the fall, U = 2π·topRadius metres each: the slope's angle phi grows as π(u/U)²
  *     (curvature 2πu/U², 1/topRadius at the top);
  *   - the run-out, `runout` metres along the ground after it.
- * The loop leans sideways as it goes round (`shift` metres, as a coaster's does), so the way down
- * runs beside the way in where they cross at the bottom; the run-out brings it back in line.
+ * The loop leans sideways as it goes round (`shift` metres to its `side`, the track's left or right, as a
+ * coaster's does), so the way down runs beside the way in where they cross at the bottom; the run-out
+ * brings it back in line.
  *
  * Plain numbers only: the physics (src/game/physicsSimulator.js) and the 3D view
  * (client/src/three/loopShape.js, the same maths; a test checks they agree) both use it.
@@ -26,7 +27,7 @@ const LIP = (40 * Math.PI) / 180; // radians: round the loop the U's walls are l
                                   // in its middle), so a marble on it shows from beside the loop
 const LIP_EASE = 12;    // metres along the path over which the walls come down at the start and go up again after
 
-function loopShape({ topRadius = 6, shift = 11, runout = 40 } = {}) {
+function loopShape({ topRadius = 6, shift = 11, runout = 40, side = 'left' } = {}) {
   const U = 2 * Math.PI * topRadius;
   const total = 2 * U + runout;
   const n = Math.ceil(total / LOOP_STEP);
@@ -40,7 +41,9 @@ function loopShape({ topRadius = 6, shift = 11, runout = 40 } = {}) {
   const smooth = (k) => { const x = Math.min(1, Math.max(0, k)); return x * x * (3 - 2 * x); };
   // Aside: level on the way in, leaning across over the top (half a loop's length), level again on the
   // way down, then back in line along the run-out.
-  const qAt = (u) => (u <= 2 * U ? shift * smooth((u - 0.5 * U) / U) : shift * (1 - smooth((u - 2 * U) / runout)));
+  // (`side`: which way it leans, as the track's left or right; a mirrored track's leans the other way.)
+  const lean = (side === 'right' ? -1 : 1) * shift;
+  const qAt = (u) => (u <= 2 * U ? lean * smooth((u - 0.5 * U) / U) : lean * (1 - smooth((u - 2 * U) / runout)));
   const u = new Float64Array(n + 1);
   const f = new Float64Array(n + 1);
   const z = new Float64Array(n + 1);
@@ -63,7 +66,7 @@ function loopShape({ topRadius = 6, shift = 11, runout = 40 } = {}) {
   let height = 0;
   for (let i = 0; i <= n; i += 1) if (z[i] > height) height = z[i];
   return {
-    topRadius, shift, runout, rise: U, length: total, ground: f[n], height, step, n,
+    topRadius, shift, runout, side, lean: Math.sign(lean) || 1, rise: U, length: total, ground: f[n], height, step, n,
     u, f, z, q, phi, kappa,
     /** Index and weight of the sample pair either side of u. */
     at(uu) {

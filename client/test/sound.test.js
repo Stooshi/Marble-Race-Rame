@@ -132,7 +132,7 @@ describe('sound', () => {
   });
 
   it('no overtaking whoosh for now; the start sound at GO (the marbles start rolling, 30 Oct 2026)', () => {
-    expect(SOUNDS).toEqual({ crowd: 'crowd-grand-prix', launch: 'start-rolling', beeps: 'start-beeps', hit: 'marble-hit', bump: 'marble-bump' });
+    expect(SOUNDS).toEqual({ crowd: 'crowd-grand-prix', launch: 'start-rolling', beeps: 'start-beeps', hit: 'marble-hit', bump: 'marble-bump', loop: 'marble-loop' });
     // (The old gate sound, MARBLES SPEEDING UP, is gone from the game.)
     expect(fs.existsSync(path.resolve(__dirname, '../public/audio/launch.webm'))).toBe(false);
     for (const n of ['start-rolling', 'marble-hit', 'marble-bump']) for (const ext of ['webm', 'm4a']) expect(fs.existsSync(path.resolve(__dirname, `../public/audio/${n}.${ext}`))).toBe(true);

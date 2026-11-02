@@ -51,6 +51,21 @@ export function apronStyle(slug, groundColor = '#9b9b97', kit = null) {
 }
 
 /**
+ * A loop's steel (its legs, and the net hung inside it) for a track, from the apron's look (the loop is drawn
+ * with the channel, iceChannel.js buildLoop): a coaster's own support colour; Grand Prix black; the kerb
+ * series red; Pinball and Arcade their art's glow and accent; elsewhere the scenery's ground, a shade darker.
+ * → { leg, legDark, net }
+ */
+export function loopSteel(style, kit = null) {
+  const shade = (hex, k) => `#${new Color(hex).multiplyScalar(k).getHexString()}`;
+  const support = kit?.coaster?.colours?.support;
+  if (support) return { leg: support, legDark: shade(support, 0.8), net: '#2d3138' };
+  if (style.kind === 'neon') return { leg: style.a, legDark: style.b, net: shade(style.b, 0.5) };
+  if (style.kind === 'chequer') return { leg: style.a, legDark: shade(style.b, 0.75), net: '#2d3138' };
+  return { leg: style.a, legDark: shade(style.a, 0.78), net: '#2d3138' };
+}
+
+/**
  * The apron's meshes. `radius`, `lip` (radians): the channel's at the line; `pen`: { halfWidth };
  * `wall`: { height, thickness } of the catch area's walls; `floor`: the catch area floor's colour.
  */

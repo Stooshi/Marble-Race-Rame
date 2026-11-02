@@ -141,7 +141,7 @@ export function coasterRails(centerline, channel, { lite = false } = {}) {
       const up = Math.abs(p.y - (a.y + t * (b.y - a.y))) / RAIL_RISE;
       return Math.max(across, up);
     };
-    const line = [pts[0]];
+    let line = [pts[0]];
     let i = 0;
     while (i < segments) {
       let j = Math.min(segments, i + maxStep);
@@ -151,12 +151,24 @@ export function coasterRails(centerline, channel, { lite = false } = {}) {
         if (worst <= 1) break;
         j -= 1;
       }
-      line.push(pts[j]);
+      // (A loop stands on the track there: no rails under it; they go on past its run-out.)
+      const gap = underLoop(channel, i, step) || underLoop(channel, j, step);
+      if (gap && j > i + 1) j = i + 1;
+      if (gap) {
+        if (line.length > 1) lines.push(line);
+        line = [pts[j]];
+      } else line.push(pts[j]);
       i = j;
     }
-    lines.push(line);
+    if (line.length > 1) lines.push(line);
   }
   return lines;
+}
+
+/** Is sample i where a loop stands on the track (its own path drawn there, not the channel)? */
+export function underLoop(channel, i, step) {
+  const s = i * step;
+  return (channel.loops ?? []).some((L) => s > L.s0 && s < L.s1);
 }
 
 /**
@@ -414,6 +426,7 @@ export function buildCoaster(centerline, channel, kit, { lite = false, groundAt,
     for (let k = 1; k < line.length; k += 1) steel.push(strut(line[k - 1], line[k], RAIL_THICKNESS, RAIL));
   }
   for (let i = 0; i + railStep <= segments; i += railStep) {
+    if (underLoop(channel, i, step) || underLoop(channel, i + railStep, step)) continue;
     const a = frameAt(i);
     const b = frameAt(i + railStep);
     steel.push(strut(a.s.pos.clone().addScaledVector(UP, -SKIRT - 0.35), b.s.pos.clone().addScaledVector(UP, -SKIRT - 0.35), 0.55, TIE));
@@ -421,6 +434,7 @@ export function buildCoaster(centerline, channel, kit, { lite = false, groundAt,
   // Cross-ties under the channel, rim to rim.
   const tieEvery = lite ? 8 : 4;
   for (let i = 0; i <= segments; i += Math.max(1, Math.round(tieEvery / step))) {
+    if (underLoop(channel, i, step)) continue;
     const { s, side } = frameAt(i);
     const e = edgeAt(channel, i, step);
     const y = s.pos.y - SKIRT - 0.15;

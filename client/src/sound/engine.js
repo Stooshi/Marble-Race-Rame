@@ -25,7 +25,8 @@
  *   own marble hitting another (marbleHit, from ./hits.js): soft, louder for harder hits, under the music,
  *   at most one a second (30 Oct 2026). The own marble hitting an obstacle (marbleBump, from ./hits.js;
  *   31 Oct 2026): the same, at the same level; the two share one limit (at most one hit sound every
- *   0.5 s). (No overtaking whoosh for now.)
+ *   0.5 s). Going round a loop (marbleLoop, from ./hits.js; 2 Nov 2026): a swoosh up and over, made by us
+ *   (scripts/make-loop-sound.js), at the hits' level. (No overtaking whoosh for now.)
  * - The music sits well under the effects (MUSIC_UNDER) and dips under the gate sound (DUCK).
  * - Readiness: whenSoundReady() / soundMissing() for the race page's readiness check and report.
  */
@@ -44,7 +45,7 @@ export const TRACK_SECONDS = {
   'tune-12': 32.22, 'tune-13': 28.548729, 'tune-14': 28.138437, ceremony: 59.1,
 };
 export const CEREMONY = 'ceremony';
-export const SOUNDS = { crowd: 'crowd-grand-prix', launch: 'start-rolling', beeps: 'start-beeps', hit: 'marble-hit', bump: 'marble-bump' };
+export const SOUNDS = { crowd: 'crowd-grand-prix', launch: 'start-rolling', beeps: 'start-beeps', hit: 'marble-hit', bump: 'marble-bump', loop: 'marble-loop' };
 /**
  * The start sound (the marbles start rolling) plays this long after the GO beep, on the race clock (Moses,
  * 30 Oct 2026), without dipping the music: its file 50% louder than the old gate sound's (+3.5 dB).
@@ -349,6 +350,11 @@ export function marbleHit(raceId, strength) {
 /** The player's own marble hit an obstacle (`strength` 0 to 1, from ./hits.js): as marbleHit, at the same level. */
 export function marbleBump(raceId, strength) {
   return hitSound('bump', raceId, strength);
+}
+/** The player's own marble going round a loop (track kit: loop; 2 Nov 2026): its swoosh, at the hits' level, under the music. */
+export const LOOP_STRENGTH = 0.6;
+export function marbleLoop(raceId) {
+  return hitSound('loop', raceId, LOOP_STRENGTH);
 }
 function hitSound(key, raceId, strength) {
   if (race && race.id !== raceId) return false;

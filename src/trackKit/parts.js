@@ -278,12 +278,12 @@ function boostJump({ at = 0.3, look = 'ski-jump', pad = 6, kick = 4, min = 22, k
 /**
  * A vertical loop (Moses, 2 Nov 2026; src/game/loopShape.js; on no live track yet: a track with one needs extra overtaking room after it): a launch pad wall to wall (`pad`
  * metres: adds `kick` and brings every marble up to at least `min` m/s), 2 m, then a roller-coaster loop
- * (`topRadius`: its tightest curve, at the top; `shift`: how far it leans aside, so the way down runs
- * beside the way in; `runout`: metres along the ground bringing it back in line). A net hung inside it
+ * (`topRadius`: its tightest curve, at the top; `shift`: how far it leans aside, to its `side` (left or
+ * right; a mirrored track's the other way), so the way down runs beside the way in; `runout`: metres along the ground bringing it back in line). A net hung inside it
  * lets any marble that can't hold on down onto the way down. `at`: where the pad starts (share of the section).
  */
-function loop({ at = 0.2, look = 'steel', pad = 6, kick = 4, min = 25, topRadius = 6, shift = 11, runout = 40 } = {}) {
-  return { feature: 'loop', at, look, pad, kick, min, topRadius, shift, runout };
+function loop({ at = 0.2, side = 'left', look = 'steel', pad = 6, kick = 4, min = 25, topRadius = 6, shift = 11, runout = 40 } = {}) {
+  return { feature: 'loop', at, side, look, pad, kick, min, topRadius, shift, runout };
 }
 
 /**

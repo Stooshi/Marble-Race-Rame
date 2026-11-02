@@ -91,7 +91,7 @@ export const STREET_COLORS = {
 const LOOP_DRAW = 1;    // metres along a loop's path between the U's drawn sections
 const LOOP_SKIRT = 0.6; // metres: a loop's outer skin, below its rims (light steel, not the channel's 1.6)
 const LOOP_LEG_CLEAR = 5; // metres: the top's legs stand this far out past the loop's own track on the ground
-/** A loop's steel legs and the net inside it. */
+/** A loop's steel legs and the net inside it (plain steel; a track's own come from its series, finishApron.js loopSteel). */
 export const LOOP_COLORS = { leg: '#9aa3ad', legDark: '#7d8690', net: '#2d3138' };
 const KERB_FROM = 0.5;  // radians up the wall where the kerb starts (about 29°)…
 const KERB_TO = 0.72;   // …and ends (about 41°), where the concrete wall begins
@@ -185,7 +185,8 @@ export function loopView(centerline, channel, s) {
     const along = new Vector3();
     frameAt(centerline, (L.s0 + sh.f[iTop]) / channel.arc, ground, side, along);
     const centre = ground.clone().addScaledVector(UP, sh.height * 0.5).addScaledVector(side, sh.q[iTop]);
-    const cam = ground.clone().addScaledVector(UP, sh.height * LOOP_VIEW.up).addScaledVector(side, sh.q[iTop] - LOOP_VIEW.side);
+    // (On the side it doesn't lean to.)
+    const cam = ground.clone().addScaledVector(UP, sh.height * LOOP_VIEW.up).addScaledVector(side, sh.q[iTop] - sh.lean * LOOP_VIEW.side);
     L.view = { cam, centre, along, fTop: sh.f[iTop] };
   }
   const ease = (k) => { const x = Math.min(1, Math.max(0, k)); return x * x * (3 - 2 * x); };
@@ -362,6 +363,7 @@ export function buildIceChannelGeometry(centerline, channel, {
   segmentsAcross = channel.look === 'street' ? 28 : 14,
   rimWidth = channel.look === 'street' ? 3 : 0.45, // a street's rims are its pavements
   skirt = channel.look === 'street' ? 7 : 1.6,     // and a stone retaining wall below them, down to the ground
+  loopColours = LOOP_COLORS,                        // a loop's legs and net (TrackScene: the series' colours, finishApron.js loopSteel)
 } = {}) {
   const street = channel.look === 'street';
   const toColors = (palette) => Object.fromEntries(Object.entries(palette).map(([k, v]) => [k, new Color(v)]));
@@ -497,8 +499,8 @@ export function buildIceChannelGeometry(centerline, channel, {
       channelStrip(section(prev, 0, channel.radius, L.shape.lipAt(ua, channel.maxAngle), LOOP_SKIRT), section(next, 0, channel.radius, L.shape.lipAt(u, channel.maxAngle), LOOP_SKIRT), Math.floor(u / 6) % 2 === 0, 0, L.s0 + u / L.stretch, L.shape.lipAt(u - LOOP_DRAW / 2, channel.maxAngle));
       prev = next;
     }
-    const steel = new Color(LOOP_COLORS.leg);
-    const dark = new Color(LOOP_COLORS.legDark);
+    const steel = new Color(loopColours.leg);
+    const dark = new Color(loopColours.legDark);
     // A square leg from a point on the ground straight up to a point under the loop (w metres across).
     const leg = (foot, top, w = 0.5) => {
       const d = new Vector3().subVectors(top, foot);
@@ -524,17 +526,17 @@ export function buildIceChannelGeometry(centerline, channel, {
     const top = ring(sh.rise);
     const under = top.pos.clone().addScaledVector(top.up, -(LOOP_SKIRT + 0.2));
     for (const side of [-1, 1]) {
-      const foot = local(fTop, -1.6, qTop + side * (sh.shift / 2 + half + LOOP_LEG_CLEAR));
+      const foot = local(fTop, -1.6, qTop + side * (Math.abs(qTop) + half + LOOP_LEG_CLEAR));
       leg(foot, under.clone().addScaledVector(top.across, side * channel.radius * 0.8));
     }
     // The net: under the top, strung between the two tracks where they pass each other at the bottom
     // (the gap between their walls), sloping down towards the way down: a marble that lost its hold
     // over the top would drop into it and roll out onto the way down.
-    const net = new Color(LOOP_COLORS.net);
+    const net = new Color(loopColours.net);
     const rows = 8;
     const cols = 3;
-    const qIn = channel.radius + 0.5;            // the way in's wall, on the side of the gap
-    const qOut = sh.shift - channel.radius - 0.5; // the way down's wall
+    const qIn = sh.lean * (channel.radius + 0.5);              // the way in's wall, on the side of the gap
+    const qOut = sh.lean * (sh.shift - channel.radius - 0.5);  // the way down's wall
     const netPoint = (r, c) => {
       const f = fTop - 7 + (14 * r) / rows;
       const k = c / cols;

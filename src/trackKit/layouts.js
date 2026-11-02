@@ -1290,7 +1290,7 @@ const LAYOUTS = {
   /** Loop run (the loop's proving layout, 2 Nov 2026; no live track uses it): deep S-bends, a straight with the loop (its launch pad first), a sweep (a peg as it starts), a peg straight, the hairpin, a spiral and the run-in. */
   'loop-run': (L, R, c) => [
     { key: 'sBends', name: 'S-bends', shape: sBends({ first: L, radius: 55, degrees: 110, grade: 0.13 }), billboards: 2 },
-    { key: 'loopStraight', name: 'The loop', shape: straight(130, { grade: 0.12 }), features: [loop({ at: 0.25 })] },
+    { key: 'loopStraight', name: 'The loop', shape: straight(130, { grade: 0.12 }), features: [loop({ at: 0.25, side: L })] },
     { key: 'sweep', name: 'Sweep', shape: sweep({ side: R, radius: 85, degrees: 130, grade: 0.09 }), obstacles: [peg({ costume: c.peg, at: 0.15, line: 'left' })], billboards: 2 },
     {
       key: 'pegStraight', name: 'Peg straight', shape: straight(70, { grade: 0.12 }),
