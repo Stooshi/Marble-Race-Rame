@@ -81,6 +81,7 @@
     "lines": ["20 marbles. Real physics.", "Race up to 19 friends in one race."],
     "cuts": [1.7, 1.6, 1.7],
     "rampChase": { "back": 3.2, "up": 0.9, "ahead": 4, "fov": 74 },
+    "wonChase": { "back": 2.6, "up": 3.2, "ahead": 0.6, "fov": 62 },
     "endDim": 0.55,
     "ramp": { "slowMs": 900, "lineLeadMs": 450, "slowSeconds": 1.4, "fastSeconds": 1.6 },
     "winner": "{marble} wins by {margin} s",

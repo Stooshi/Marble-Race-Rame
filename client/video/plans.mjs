@@ -780,13 +780,15 @@ export function abTall(info, race, { opening = 'old', slug = null } = {}) {
   const rampAt = p.add(ramp(W - r.slowMs, r.slowSeconds, (r.slowMs - r.lineLeadMs) / 1000 / r.slowSeconds));
   p.add(ramp(W - r.lineLeadMs, r.fastSeconds, 1));
   // 11–12 s: the winner and the gap.
-  const won = p.add({ ...low(W + r.fastSeconds * 1000 - r.lineLeadMs, 1.0, 0.35), members: [win], shot: 'won' });
+  // (the winner from a little higher, looking down on it, so marbles arriving behind never hide it)
+  const top = (from, dur, speed) => ({ type: 'group', members: [win], shot: 'won', from, dur, speed, ...T.wonChase });
+  const won = p.add(top(W + r.fastSeconds * 1000 - r.lineLeadMs, 1.0, 0.35));
   bigs.push({ at: won + 0.05, dur: 0.95, text: fill(T.winner, name) });
   // 12–15 s: the big end card on the frozen, dimmed winner (the template's 2.5 s rule), then the loop fade.
   const loopFade = 0.25;
   const H = TEMPLATE.endCard.hold;
   const holdFrom = W + r.fastSeconds * 1000 - r.lineLeadMs + 350;
-  const endAt = p.add({ ...low(holdFrom, H.seconds, 0), members: [win], shot: 'won' });
+  const endAt = p.add(top(holdFrom, H.seconds, 0));
   const endBig = { at: endAt + 0.05, l1: T.endCard[0], l2: T.endCard[1] };
   const readable = p.v - loopFade - (endBig.at + 0.18);
   if (readable < TEMPLATE.endCard.minSeconds - 1e-9) throw new Error(`The end card is readable ${readable.toFixed(2)} s: at least ${TEMPLATE.endCard.minSeconds} s (template.json endCard)`);
