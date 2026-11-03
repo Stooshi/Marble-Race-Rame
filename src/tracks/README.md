@@ -310,7 +310,9 @@ it. Only where the track drops faster than the land (steep plunges,
 waterfalls), crosses over itself, or is a bridge may it run above ground, and
 there it stands on something built: rock fill, a stone viaduct with piers, or
 the bridge. A test checks every kit track, phone and computer, and names any
-stretch where the outer wall shows on normal ground.
+stretch where the outer wall shows on normal ground, and any stretch where the
+land stands inside the channel (across the whole U; on a loop, its lanes near the
+ground beside the way in too: `client/src/three/scenery/channelCheck.js`).
 
 Scenery comes from names in the file (looks only; checked, so a typo is refused):
 
@@ -828,7 +830,8 @@ with a pass or fail beside each line and what to fix at the top:
   Bislett Mile on is held to it (a test).
 - **Safety**: the same seed gives the same race; the database holds what the file
   builds (where there is a database); today's tracks race as recorded.
-- **Ground** and **Camera**: the ground check, and frame by frame through two races
+- **Ground** and **Camera**: the ground check (the outer wall never showing; no land
+  inside the channel, a loop's lanes included), and frame by frame through two races
   on phone and computer screens: the follow camera never blocked, on its marble's
   level, no jumps, its marble never inside the ice.
 - **Drawing load** through a race and the **fixed screenshots**, from a headless
