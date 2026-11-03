@@ -18,6 +18,7 @@ import { PEAK_LANDMARKS } from './kitLandmarksPeak';
 import { BLOCK_LANDMARKS } from './kitLandmarksBlock';
 import { ATHLETICS_LANDMARKS } from './kitLandmarksAthletics';
 import { RIVIERA_LANDMARKS } from './kitLandmarksRiviera';
+import { PUDONG_LANDMARKS } from './kitLandmarksPudong';
 
 // ── Set dressing: one geometry per kind, instanced ──────────────────────────
 
@@ -612,6 +613,7 @@ export const LANDMARKS = {
   ...BLOCK_LANDMARKS,
   ...ATHLETICS_LANDMARKS,
   ...RIVIERA_LANDMARKS,
+  ...PUDONG_LANDMARKS,
 };
 
 // ── Things passing overhead (scenery only, high above the track) ───────────

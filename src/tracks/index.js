@@ -182,4 +182,5 @@ module.exports = [
   require('./yellowstone-frost-run'),
   require('./abraham-lake-frost'),
   require('./saint-tropez'),
+  require('./pudong-marble-grand-prix'),
 ];

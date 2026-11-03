@@ -384,7 +384,7 @@ export function buildGrandPrix(centerline, channel, kit, { lite = false, ground,
 
   // ── Floodlight masts (a night race) ───────────────────────────────────
   const lamps = [];
-  if (kit.lighting === 'night') {
+  if (['night', 'dusk'].includes(kit.lighting)) { // (a night race, and a city at dusk turning to night)
     let k = 0;
     for (let m = 60; m < arc - 30; m += lite ? 160 : 110, k += 1) {
       const i = sampleAt(m / arc);

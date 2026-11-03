@@ -389,7 +389,9 @@ module.exports = {
     'peak-camp', 'serac-field', 'granite-needles', 'nunataks', 'ski-plane', 'crater-ice-cliffs', 'giant-groundsels',
     'meltwater-streams', 'pass-cairn', 'glacier-tongue', 'penitentes', 'icebergs', 'glacial-lake', 'rhododendrons', 'barrel-hut', 'rock-island', 'cinder-cones', 'tepui-falls', 'calving-ice', 'giant-lobelias',
     // The Riviera (Saint-Tropez, 3 Nov 2026; client/src/three/scenery/kitLandmarksRiviera.js; our own models, no names on anything drawn).
-    'riviera-village', 'umbrella-pines', 'lavender-field', 'olive-grove', 'riviera-beach', 'riviera-harbour', 'yachts', 'riviera-lighthouse'],
+    'riviera-village', 'umbrella-pines', 'lavender-field', 'olive-grove', 'riviera-beach', 'riviera-harbour', 'yachts', 'riviera-lighthouse',
+    // Pudong (Pudong Marble Grand Prix, 3 Nov 2026; client/src/three/scenery/kitLandmarksPudong.js; our own towers, inspired by the area, no copies, no names on anything drawn).
+    'pudong-skyline', 'far-bank-skyline', 'pudong-towers', 'pudong-waterfront', 'river-lights', 'river-cruisers', 'pit-garages'],
   OVERHEAD: ['gondola', 'cable-car', 'chairlift', 'vulture',
     // The Canyon Series: birds circling over the gorge, and what spans it from rim to rim, high over the track.
     'condor', 'prayer-flags', 'arch-bridge', 'railway-trestle', 'suspension-bridge',
@@ -423,7 +425,7 @@ module.exports = {
     'museum-of-the-future', 'dubai-frame', 'opera-house', 'tulip-garden', 'roundabout-monument', 'acacia', 'mughal-fountain', 'giant-tree', 'snow-island', 'fallen-statue', 'volcano-rock', 'sagrada-familia', 'frozen-waterfall', 'limestone-island', 'sea-islet', 'giant-redwood', 'lantern-chedi', 'watermill', 'confucius-temple', 'castle-keep', 'magician-trunk', 'top-hat', 'jukebox-tower', 'clocktower', 'lighting-rig', 'claw-tower', 'glitch-tower', 'ringed-planet', 'laser-turret', 'water-tower', 'fork-signpost', 'neon-plaza', 'snow-peak',
     'settling-stack', 'voxel-peak', 'basalt-spire', 'beam-tower', 'level-pillars', 'floodlight-mast', 'flame-cauldron', 'medal-podium',
     'island-castle',
-    'karst-tower', 'cube-campanile', 'three-towers', 'lake-island', 'cube-pagoda', 'garden-towers', 'granite-island', 'arrowhead-peak', 'geyser-cone', 'riviera-lighthouse'],
+    'karst-tower', 'cube-campanile', 'three-towers', 'lake-island', 'cube-pagoda', 'garden-towers', 'granite-island', 'arrowhead-peak', 'geyser-cone', 'riviera-lighthouse', 'pit-garages'],
   // Scenery near a section (or the start or finish): what grows and stands beside the track there.
   SCENERY: ['bare', 'rocks', 'birches', 'pines', 'race-netting', 'funicular', 'wooden-houses', 'frozen-lake',
     'wood-clad', 'chalets', 'pasture', 'aspens', 'shopfronts',

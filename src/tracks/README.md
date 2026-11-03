@@ -30,7 +30,7 @@ Then add it to `index.js` in this folder.
 No "safe only" tracks. Every new track has **at least one big, exciting feature**:
 - a jump or hop over a gap (the boost-pad jump, a hop);
 - a splitter with two paths;
-- a loop (the kit's `loop`, available since 2 Nov 2026: a clothoid roller-coaster loop with its launch pad, proven on its test track `variety-layout-loop-run` with the full report; on no live track yet; its first track is Saint-Tropez, switched off, 3 Nov 2026: rough cobbles into the S-bends after the loop bunch the field again, 65 overtakes. `loop({ viewSide })`, looks only: how far out beside it the follow camera watches it (default 30 m; Saint-Tropez 26, to see down into a cliff road's channel). **A track with a loop needs extra overtaking room after it** (the loop is ridden in single file: the test track's overtakes came out exactly at the target of 60): a longer run-out or an overtaking section right after it (S-bends, a wide sweep, pegs), aiming clearly above 60 overtakes in its full report, about 65 or more);
+- a loop (the kit's `loop`, available since 2 Nov 2026: a clothoid roller-coaster loop with its launch pad, proven on its test track `variety-layout-loop-run` with the full report; on no live track yet; its first track is Saint-Tropez, switched off, 3 Nov 2026: rough cobbles into the S-bends after the loop bunch the field again, 65 overtakes; the second Pudong Marble Grand Prix, switched off, 3 Nov 2026: rough paving into the waterfront S-bends after it, the same way, 70 overtakes. `loop({ viewSide })`, looks only: how far out beside it the follow camera watches it (default 30 m; Saint-Tropez 26, to see down into a cliff road's channel). **A track with a loop needs extra overtaking room after it** (the loop is ridden in single file: the test track's overtakes came out exactly at the target of 60): a longer run-out or an overtaking section right after it (S-bends, a wide sweep, pegs), aiming clearly above 60 overtakes in its full report, about 65 or more);
 - a funnel;
 - a big drop;
 - a dramatic banked turn.
@@ -347,13 +347,25 @@ Scenery comes from names in the file (looks only; checked, so a typo is refused)
   dry-stone terraces), `'riviera-beach'` (striped parasols), `'riviera-harbour'` (a quay with fishing boats and yachts
   moored along it, houses behind), `'yachts'` (at anchor in the bay) and `'riviera-lighthouse'` (on the harbour wall's
   round head; also `around` a spiral).
+- Pudong's landmarks (client/src/three/scenery/kitLandmarksPudong.js, Pudong Marble Grand Prix, 3 Nov 2026; our own
+  modern towers inspired by the area, copying none of its buildings; no names or logos on anything drawn): `'pudong-skyline'`
+  (fourteen towers with slanted, stepped, ringed, bladed and masted crowns, their lit floors, crown bands and red aviation
+  lights drawn unlit), `'far-bank-skyline'` (the same kind of towers on a stone river bank across the water, their lights
+  reflected in the river as long rippling streaks, drawn faint), `'pudong-towers'` (a small cluster), `'pudong-waterfront'`
+  (a promenade with lamps and a glass pavilion, towers behind), `'river-lights'` (the city's reflections on the water
+  alone), `'river-cruisers'` (lit decks, floating) and `'pit-garages'` (the pit lane's garages and pit wall, `around` a
+  splitter's divider). They float on a track's `sea` where it is under them. A landmark may carry `lite: { build, glow,
+  haze }`: lighter parts for phones (null: none there); Pudong's towers light a third of their floors there and draw every
+  other reflection solid with the lit parts, in one draw call less.
 - `sea: { toward: [x, z], from, coast, level }` (or `side: 'left' | 'right'` instead of `toward`), on the track: the
   sea along the track (Saint-Tropez, 3 Nov 2026). From `from` (0–1 along the track) the land keeps its banks within
   `coast` metres (default 26) of every stretch, then falls to the sea floor on the seaward side: towards `toward`
   (a direction on the map, the same for every stretch, as along a coast) or the track's own `side`. One flat sea sheet
   `level` metres below the finish line (default -2.5) covers the world, turquoise near the coast, deep blue out to
   sea; landmarks over the water (boats, a harbour) float at its level, the hills' dressing (stone pines, olives,
-  cypresses, maquis) never stands in it. One extra draw call. Looks only.
+  cypresses, maquis) never stands in it. One extra draw call. Looks only. `near` and `far`: the water's colours near the
+  coast and out at sea (Pudong's dark evening river: `'#24345e'`, `'#101a38'`); a city by the sea or a river keeps its
+  biome's own trees (the Riviera's pines and olives only on a meadow).
 - `figures: ['skier', 'snowboarder', 'spectator', 'reindeer', …]`: people, or any
   block costume, standing on the banks facing the track with small idle movements.
 - `overhead: ['gondola' | 'cable-car' | 'chairlift' | 'vulture']`: a lift crossing high above
@@ -401,7 +413,10 @@ sites to show them (Vercel file storage does). Drawing only: never the race.
 
 `lighting`: the track's own preset, one of `'day' | 'sunset' | 'midnight-sun' |
 'night-northern-lights' | 'fog' | 'snow' | 'rain' | 'night' | 'fireworks-night'` (default `'day'`; `'night'`: a floodlit city night;
-`'fireworks-night'`: the city night with fireworks bursting round the sky all race long, on the race clock, looks only).
+`'fireworks-night'`: the city night with fireworks bursting round the sky all race long, on the race clock, looks only;
+`'dusk'`, Pudong Marble Grand Prix, 3 Nov 2026: a city at dusk turning to night, deep indigo overhead, the last orange and
+rose of the sunset on the horizon, early stars, the towers' windows and the floodlights lit as at night, the marbles glowing;
+on phones no edge lights along the rims, the last of the daylight shows them).
 `variants: ['sunset', 'snow']`: the other presets this track may race in;
 anything not listed is ruled out for it (Paris: no night). Each race picks one
 from its seed when it is decided (the track's own preset twice as often as

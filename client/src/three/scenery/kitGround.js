@@ -629,7 +629,7 @@ export function buildKitGround(centerline, track, { lite = false } = {}) {
     g.computeVertexNormals();
     // (Not the rivers' rippling material: its ripples alias into rings over a sea this wide. A calm, glossy sea
     // catching the low sun instead.)
-    const seaMesh = new Mesh(g, new MeshPhongMaterial({ vertexColors: true, shininess: 70, specular: new Color(kit.lighting === 'sunset' ? '#ffd9a0' : '#ffffff') }));
+    const seaMesh = new Mesh(g, new MeshPhongMaterial({ vertexColors: true, shininess: 70, specular: new Color(kit.lighting === 'sunset' ? '#ffd9a0' : kit.lighting === 'dusk' ? '#ffb48a' : '#ffffff') }));
     seaMesh.name = 'sea';
     seaMesh.userData.ground = true;
     group.add(seaMesh);

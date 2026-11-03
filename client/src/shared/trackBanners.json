@@ -1234,6 +1234,17 @@
    "side": 1,
    "marbles": 6
   },
+  "pudong-marble-grand-prix": {
+   "name": "Pudong Marble Grand Prix",
+   "series": "Grand Prix",
+   "lighting": "dusk",
+   "v": "c5f87ad9",
+   "bytes": 22346,
+   "bytes2x": 55418,
+   "t": 9827,
+   "side": 1,
+   "marbles": 4
+  },
   "pyramid-run": {
    "name": "Pyramid Run",
    "series": "Coasters",

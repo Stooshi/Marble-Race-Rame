@@ -102,6 +102,8 @@ export function buildKitScenery(centerline, track, theme, { lite = false } = {})
   const glowParts = []; // landmarks' parts that give their own light (lamps, gems, magma): drawn unlit
   const hazeParts = []; // landmarks' see-through parts (shafts of light, a rainbow, spray): drawn unlit and faint
   const placed = []; // where each landmark stands: { name, foot, q, scale, p } (a Block Series landmark's effect follows it)
+  // A landmark's part (build, glow, haze): on a phone its `lite` version where it has one (null: none on phones).
+  const part = (lm, k) => (lite && lm.lite && k in lm.lite ? lm.lite[k] : lm[k]);
   const placeLandmark = (name, at, yaw, footY = null, away = null, p = null) => {
     const lm = LANDMARKS[name];
     if (!lm) return;
@@ -110,7 +112,7 @@ export function buildKitScenery(centerline, track, theme, { lite = false } = {})
       // (Out over a coaster's water it floats on the surface: a ship, a jetty.)
       const land = groundAt(spot.x, spot.z) - 0.3;
       const f = new Vector3(spot.x, footY ?? (ground.waterY !== null && ground.waterY !== undefined ? Math.max(land, ground.waterY - 0.6) : land), spot.z);
-      const geo = lm.build();
+      const geo = part(lm, 'build')(); // (`lite`: a lighter version for phones, where a landmark has one)
       geo.applyMatrix4(new Matrix4().compose(f, q, new Vector3(1, 1, 1)));
       return { geo, f };
     };
@@ -125,13 +127,13 @@ export function buildKitScenery(centerline, track, theme, { lite = false } = {})
       }
     }
     landmarkParts.push(g);
-    if (lm.glow) {
-      const glow = lm.glow();
+    if (part(lm, 'glow')) {
+      const glow = part(lm, 'glow')();
       glow.applyMatrix4(new Matrix4().compose(foot, q, new Vector3(1, 1, 1)));
       glowParts.push(glow);
     }
-    if (lm.haze) {
-      const haze = lm.haze();
+    if (part(lm, 'haze')) {
+      const haze = part(lm, 'haze')();
       haze.applyMatrix4(new Matrix4().compose(foot, q, new Vector3(1, 1, 1)));
       hazeParts.push(haze);
     }
@@ -432,7 +434,7 @@ export function buildKitScenery(centerline, track, theme, { lite = false } = {})
   // a bare stretch (a wind-swept summit) keeps only a few rocks.
   // (A mountain: what stands on it by zone: seracs and snow-rimed rocks on the ice, groundsels on the moorland, ./peak.js.)
   const peakDress = ground.peak ? peakDressing(kit.peak.palette) : null;
-  const baseKinds = ground.canyon ? canyonDressing(kit.canyon.palette) : ground.river ? riverDressing(kit.river.palette) : peakDress ? peakDress.kinds : kit.block ? blockDressing(kit.block.world) : kit.sea ? rivieraDressing() : dressingFor(biome);
+  const baseKinds = ground.canyon ? canyonDressing(kit.canyon.palette) : ground.river ? riverDressing(kit.river.palette) : peakDress ? peakDress.kinds : kit.block ? blockDressing(kit.block.world) : kit.sea && biome === 'meadow' ? rivieraDressing() : dressingFor(biome); // (the Riviera's hills by the sea; a city by its river keeps the city's trees)
   const kinds = [...baseKinds, [(l) => snowRock(l), 0], [(l) => winterBirch(l), 0], [(l) => aspen(l), 0], [() => palm(true), 0], [() => jacaranda(), 0], [() => acaciaTree(), 0], [(l) => riverExtras().cypress(l), 0], [(l) => riverExtras().reeds(l), 0]];
   const ROCK = baseKinds.length;
   const BIRCH = baseKinds.length + 1;
@@ -451,7 +453,7 @@ export function buildKitScenery(centerline, track, theme, { lite = false } = {})
   const maxZ = Math.max(...zs);
   const spacing = lite ? 12 : 7;
   const arcadeBoard = biome === 'circuit-board' || biome === 'blacklight-carpet';
-  const maxItems = lite && kit.season ? 180 : kit.canyon || ground.river || ground.peak ? (lite ? 160 : 450) : kit.block ? (lite ? 220 : 650) : kit.athletics ? (lite ? 160 : 450) : lite ? (biome === 'meadow' ? 150 : kit.grandPrix || arcadeBoard ? 220 : 300) : 900; // (fewer of the meadow's broadleaf trees on a phone, and fewer beside a Grand Prix's grandstands or on an arcade board, where the compact layouts show most of the world at once; on the season's tracks on a phone, which also carry the holiday layer)
+  const maxItems = lite && kit.season ? 180 : kit.canyon || ground.river || ground.peak ? (lite ? 160 : 450) : kit.block ? (lite ? 220 : 650) : kit.athletics ? (lite ? 160 : 450) : lite ? (biome === 'meadow' ? 150 : kit.grandPrix && kit.sea ? 30 : kit.grandPrix || arcadeBoard ? 220 : 300) : kit.grandPrix && kit.sea ? 450 : 900; // (fewer of the meadow's broadleaf trees on a phone, and fewer beside a Grand Prix's grandstands or on an arcade board, where the compact layouts show most of the world at once; on the season's tracks on a phone, which also carry the holiday layer; fewer still on a Grand Prix by the water, Pudong, where its towers and the river fill the view, on computers too)
   const spots = [];
   for (let x = minX - 260; x <= maxX + 260; x += spacing) {
     for (let z = minZ - 260; z <= maxZ + 260; z += spacing) spots.push([x + (rand() - 0.5) * spacing * 0.9, z + (rand() - 0.5) * spacing * 0.9, rand(), rand()]);

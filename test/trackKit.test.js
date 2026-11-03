@@ -530,7 +530,7 @@ test('lighting: the track\'s own preset and the variants it allows, picked per r
   // A track that allows no variants always races in its own preset.
   assert.equal(lighting.chooseLighting(track(base()).physics.kit, 99), 'day');
   for (const [change, message] of [
-    [(x) => { x.lighting = 'dusk'; }, /unknown lighting "dusk"/],
+    [(x) => { x.lighting = 'twilight'; }, /unknown lighting "twilight"/],
     [(x) => { x.variants = ['hail']; }, /unknown lighting variant "hail"/],
     [(x) => { x.variants = ['snow', 'snow']; }, /each lighting variant once/],
     [(x) => { x.variants = ['day']; }, /each lighting variant once, and not the track's own preset/],

@@ -15,7 +15,9 @@ const LIGHTINGS = ['day', 'sunset', 'midnight-sun', 'night-northern-lights', 'fo
   // The Block Series: a calm dawn, a dark mine lit by its lamps and gems, a cave lit only by magma.
   'dawn', 'cave', 'magma',
   // Peaks: the thin air's deep blue sky, a small sharp sun and crisp shadows, hardly any haze.
-  'high-altitude'];
+  'high-altitude',
+  // A city at dusk turning to night (Pudong Marble Grand Prix): the last of the sunset low in the sky, the towers' lights on.
+  'dusk'];
 
 // The track's own preset comes up this many times as often as each variant.
 const OWN_WEIGHT = 2;

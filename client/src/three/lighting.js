@@ -21,7 +21,9 @@ export const LIGHTINGS = ['day', 'sunset', 'midnight-sun', 'night-northern-light
   // The Block Series: a calm dawn, a dark mine lit by its lamps and gems, a cave lit only by magma.
   'dawn', 'cave', 'magma',
   // Peaks: the thin air's deep blue sky, a small sharp sun and crisp shadows, hardly any haze.
-  'high-altitude'];
+  'high-altitude',
+  // A city at dusk turning to night (Pudong Marble Grand Prix): the last of the sunset low in the sky, the towers' lights on.
+  'dusk'];
 
 /** Each preset's sky, haze and light (day: the landscape's own). fogRange: metres, near and far. */
 export const PRESETS = {
@@ -150,6 +152,18 @@ export const PRESETS = {
     hemisphere: { sky: '#dbe8ff', ground: '#7d8ba0', intensity: 1.45 },
     ambient: 0.36,
     sun: { color: '#ffffff', intensity: 2.1, direction: [-0.55, 0.62, 0.4] },
+  },
+  // Dusk turning to night (Pudong Marble Grand Prix): deep indigo overhead, the last orange and rose of the sunset
+  // low on the horizon, a few early stars; the towers' and floodlights' lights on, the marbles glowing in their colours.
+  dusk: {
+    sky: { top: '#0b1236', horizon: '#e9785a', glow: '#ffb46a' },
+    fog: '#3b2f52',
+    fogRange: [320, 2000],
+    hemisphere: { sky: '#c2a6d8', ground: '#22243a', intensity: 0.95 },
+    ambient: 0.34,
+    sun: { color: '#ffc59a', intensity: 1.0, direction: [-1, 0.12, 0.3] }, // (the last of the sun, low; the floodlights add the rest)
+    groundTint: 0.3,
+    effects: { stars: true, night: true, liteEdge: false }, // (no edge lights along the rims on phones: the last of the daylight shows them)
   },
   fog: {
     sky: { top: '#b6c0c9', horizon: '#d3d8dc', glow: null },
@@ -545,7 +559,7 @@ export function buildEffects(theme, { centerline = null, channel = null, lite = 
     updates.push((sec, at) => e.update(sec, at));
   }
   if (fx.grid) sky.add(synthGrid(lite));
-  if ((fx.night || fx.edge) && centerline && channel) world.add(edgeLights(centerline, channel, fx.edge));
+  if ((fx.night || fx.edge) && centerline && channel && !(lite && fx.liteEdge === false)) world.add(edgeLights(centerline, channel, fx.edge)); // (`liteEdge: false`: none on phones, dusk)
   const dispose = () => {
     for (const g of [sky, world]) {
       g.traverse((o) => {
