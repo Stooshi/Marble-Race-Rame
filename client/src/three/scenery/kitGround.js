@@ -374,7 +374,9 @@ export function buildKitGround(centerline, track, { lite = false } = {}) {
           if (d < bd) { bd = d; best = c; }
         }
         const d = Math.sqrt(bd);
-        const outer = best.R * Math.sin(channel.maxAngle) + RIM_WIDTH;
+        // (On phones the trench floor reaches 2 m further out: their coarser ground squares, flat between
+        // their corners, would otherwise lift the land over the lanes' far edge.)
+        const outer = best.R * Math.sin(channel.maxAngle) + RIM_WIDTH + (lite ? 2 : 0);
         const cap = d < outer ? best.y - 0.4 : best.y + best.top + Math.max(0, d - outer - SHOULDER) * BANK_SLOPE;
         h = Math.min(h, cap);
       }
