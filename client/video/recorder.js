@@ -47,7 +47,18 @@ const T = await (await fetch('./template.json')).json();
 }
 const race = await (await fetch(`../dev/.tracks/${params.get('race')}.json`)).json();
 // The field in the standard collection's finished looks (never a seasonal or limited one), named after them.
-race.entries = dressEntries(race.entries, params.get('race'), HOUSE_LOOKS).map((e) => ({ ...e, marble: { ...e.marble, name: lookName(e.marble.look) ?? e.marble.name } }));
+// (Designs kept out of the videos, template.json houseLooksExclude: Champion Shooter while its trademark check is open; Moses, 3 Nov 2026.)
+const VIDEO_LOOKS = HOUSE_LOOKS.filter((slug) => !(T.houseLooksExclude ?? []).some((d) => slug.startsWith(`${d}-`)));
+race.entries = dressEntries(race.entries, params.get('race'), VIDEO_LOOKS);
+// (The Marble Spotlight: its marble worn by the entry the race file names; whoever wore that look takes the other's. Looks only.)
+{
+  const sp = race.video?.spotlight;
+  if (sp) {
+    const was = race.entries[sp.index].marble.look;
+    race.entries = race.entries.map((e, i) => (i === sp.index ? { ...e, marble: { ...e.marble, look: sp.look } } : e.marble.look === sp.look ? { ...e, marble: { ...e.marble, look: was } } : e));
+  }
+}
+race.entries = race.entries.map((e) => ({ ...e, marble: { ...e.marble, name: lookName(e.marble.look) ?? e.marble.name } }));
 
 const canvas = document.getElementById('view');
 const scene = new TrackScene(canvas, { interactive: false, lite: false, scenery: true, maxPixelRatio: 1 });
@@ -288,6 +299,16 @@ const broadcastApi = {
       labels.push({ x, y: ly, w });
       return `<div class="mk" style="left:${x.toFixed(0)}px;top:${y.toFixed(0)}px;width:${(2 * r).toFixed(0)}px;height:${(2 * r).toFixed(0)}px"></div><div class="mkl" style="left:${x.toFixed(0)}px;top:${ly.toFixed(0)}px">${nameOf(i)}</div>`;
     }).join('');
+  },
+  /** raceTall: the vertical short's results board, the first `rows` finishers (place, marble and gate, gap). */
+  resultsTall(k = 0, { title = 'Results', rows = 4, gate = 'Gate' } = {}) {
+    const el = $('resT');
+    el.style.opacity = String(k);
+    if (k <= 0 || el.dataset.done) return;
+    el.dataset.done = '1';
+    const fin = [...race.results].filter((r) => Number.isFinite(r.finishTimeMs)).sort((a, b) => a.finishTimeMs - b.finishTimeMs).slice(0, rows);
+    $('resTt').textContent = title.toUpperCase();
+    $('resTr').innerHTML = fin.map((r, k2) => `<div class="tr4${k2 === 0 ? ' w' : ''}"><span class="ps">${k2 + 1}</span><span class="ch" style="background:${chipCss(r.index)}"></span><span class="nm">${nameOf(r.index)}<small>${gate} ${(race.entries[r.index].lane ?? r.index) + 1}</small></span><span class="gp">${k2 === 0 ? clockText(r.finishTimeMs).replace(/^0:/, '') : `+${secText(r.finishTimeMs - fin[0].finishTimeMs)}`}</span></div>`).join('');
   },
   /** The small line (one at a time, under the big lines): template.json abTall.lines. */
   line(k = 0, text = '') {

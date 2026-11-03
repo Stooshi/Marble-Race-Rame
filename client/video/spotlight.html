@@ -1,0 +1,99 @@
+<!doctype html>
+<!-- The Marble Spotlight's close-up (development only; client/video/README.md): one marble in real 3D, the
+     shop's own look (shared materials), spinning slowly, then its name, rarity and Marble ID. Drawn as a function
+     of time by record.mjs (window.spotAt). Looks only: nothing here says or suggests a marble is faster. -->
+<html><head><meta charset="utf-8"><title>Marble Spotlight</title>
+<style>
+  @font-face { font-family: 'Lilita One'; src: url('../node_modules/@fontsource/lilita-one/files/lilita-one-latin-400-normal.woff2') format('woff2'); }
+  :root { --navy: #0E1320; --yellow: #FFD21F; --orange: #FF7A1A; --text: #F2F4F8; --font: 'Lilita One'; }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: radial-gradient(ellipse at 50% 42%, #26335f 0%, #151d36 45%, var(--navy) 80%); }
+  #view { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+  #title { position: absolute; left: 0; right: 0; top: 10.5vh; text-align: center; font: 400 5.6vmin var(--font), sans-serif; color: #fff; letter-spacing: 0.02em; opacity: 0;
+           text-shadow: 0 0 0.04em var(--navy), 0 0.05em 0.12em rgba(0,0,0,0.7); }
+  #card { position: absolute; left: 7vw; right: 13vw; top: 57vh; text-align: center; font-family: var(--font), sans-serif; color: var(--text); opacity: 0; }
+  #name { font-size: 10vmin; line-height: 1.02; color: #fff; text-shadow: 0 0.05em 0.14em rgba(0,0,0,0.6); }
+  #rar { display: inline-block; margin-top: 2.4vmin; padding: 0.8vmin 3.2vmin; border-radius: 1.2vmin; font-size: 5.2vmin; letter-spacing: 0.06em; color: var(--navy); }
+  #id { margin-top: 2.2vmin; font-size: 5vmin; color: var(--yellow); letter-spacing: 0.08em; }
+  #id span { color: var(--text); opacity: 0.75; letter-spacing: 0.03em; margin-right: 1.6vmin; }
+  #coll { margin-top: 1.2vmin; font-size: 3.6vmin; color: var(--orange); letter-spacing: 0.03em; }
+  #note { margin-top: 2.2vmin; font-size: 3.3vmin; color: var(--text); opacity: 0.85; }
+  #mark { position: absolute; top: 3.2vmin; right: 3.2vmin; width: 7vmin; height: 7vmin; opacity: 0.92; }
+</style></head>
+<body>
+<canvas id="view"></canvas>
+<div id="title"></div>
+<div id="card"><div id="name"></div><div id="rar"></div><div id="id"></div><div id="coll"></div><div id="note"></div></div>
+<svg id="mark" viewBox="-120 -120 240 240" aria-hidden="true">
+  <defs><radialGradient id="mk" cx="35%" cy="30%" r="75%"><stop offset="0%" stop-color="#FFFFFF" /><stop offset="28%" stop-color="#FFD21F" /><stop offset="100%" stop-color="#E8580C" /></radialGradient></defs>
+  <path d="M 104 0 A 104 104 0 0 1 52 90" fill="none" stroke="#FF7A1A" stroke-width="14" stroke-linecap="round" />
+  <path d="M -104 0 A 104 104 0 0 1 -52 -90" fill="none" stroke="#FFD21F" stroke-width="14" stroke-linecap="round" />
+  <circle cx="0" cy="0" r="80" fill="url(#mk)" />
+  <path d="M -64 16 C -34 -46 34 -50 62 -16" fill="none" stroke="#FFFFFF" stroke-opacity="0.9" stroke-width="15" stroke-linecap="round" />
+</svg>
+<script type="module">
+import { AmbientLight, CircleGeometry, Color, DirectionalLight, HemisphereLight, Mesh, MeshBasicMaterial, PerspectiveCamera, Quaternion, Scene, SphereGeometry, Vector3, WebGLRenderer } from 'three';
+import { createMarbleLook, glows } from '../src/shared/marbles/materials';
+import { ITEM, lookName, catalog } from '../src/shared/marbles';
+
+const q = new URLSearchParams(location.search);
+const slug = q.get('look');
+const item = ITEM[slug];
+const T = await (await fetch('./template.json')).json();
+const canvas = document.getElementById('view');
+const renderer = new WebGLRenderer({ canvas, antialias: true, alpha: true, preserveDrawingBuffer: true });
+renderer.setPixelRatio(1);
+renderer.setSize(innerWidth, innerHeight, false);
+const scene = new Scene();
+const dark = glows(slug);
+scene.add(new HemisphereLight('#ffffff', dark ? '#1b2235' : '#55607a', dark ? 0.7 : 1.3));
+scene.add(new AmbientLight('#ffffff', 0.25));
+const sun = new DirectionalLight('#fff4e0', dark ? 0.9 : 2.1);
+sun.position.set(-3, 5, 4);
+scene.add(sun);
+const rim = new DirectionalLight('#9fc2ff', 0.8);
+rim.position.set(4, 2, -3);
+scene.add(rim);
+const shadow = new Mesh(new CircleGeometry(1.15, 48), new MeshBasicMaterial({ color: new Color('#000000'), transparent: true, opacity: 0.32 }));
+shadow.rotation.x = -Math.PI / 2;
+shadow.position.y = -0.99;
+scene.add(shadow);
+const look = createMarbleLook(slug, { radius: 1, geometry: new SphereGeometry(1, 96, 64) });
+look.setNight(dark);
+scene.add(look.object);
+const camera = new PerspectiveCamera(30, innerWidth / innerHeight, 0.1, 50);
+const axis = new Vector3(1, 0, 0.35).normalize();
+const qq = new Quaternion();
+const $ = (id) => document.getElementById(id);
+$('title').textContent = T.spotlight.title;
+$('name').textContent = lookName(slug);
+const R = catalog.rarities[item.rarity];
+$('rar').textContent = R.label.toUpperCase();
+$('rar').style.background = R.colour;
+$('id').innerHTML = `<span>Marble ID</span>${item.id}`;
+$('coll').textContent = item.collection;
+$('note').textContent = T.spotlight.note;
+const ease = (x) => { const k = Math.max(0, Math.min(1, x)); return k * k * (3 - 2 * k); };
+/** The picture at t seconds of the spotlight (0–spin: the close-up; then the info card, the marble raised). */
+window.spotAt = (t) => {
+  const S = T.spotlight.seconds;
+  const u = ease((t - S.spin + 0.2) / 0.7); // (0 → 1 as the card comes in)
+  // The close-up: the marble big and centred, the camera easing in; then it rises and shrinks for the card.
+  // (portrait: the marble about three quarters of the width in the close-up, a little smaller over the card)
+  camera.aspect = innerWidth / innerHeight;
+  const fit = camera.aspect < 1 ? 1 / camera.aspect : 1;
+  const dist = (5.2 - 0.9 * ease(t / S.spin) + 1.6 * u) * Math.min(fit, 1.75);
+  camera.position.set(0, 0.55 + 0.6 * u, dist);
+  camera.lookAt(0, -1.6 * u, 0);
+  camera.updateProjectionMatrix();
+  look.object.quaternion.copy(qq.setFromAxisAngle(axis, t * 1.05)).premultiply(new Quaternion().setFromAxisAngle(new Vector3(0, 1, 0), t * 0.55));
+  look.update(t, null);
+  renderer.render(scene, camera);
+  $('title').style.opacity = String(Math.min(ease(t / 0.3), 1 - u));
+  $('card').style.opacity = String(u);
+  $('card').style.transform = `translateY(${(1 - u) * 3}vh)`;
+};
+await document.fonts.ready;
+window.spotAt(0);
+window.ready = true;
+</script>
+</body></html>

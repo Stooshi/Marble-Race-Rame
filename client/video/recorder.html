@@ -125,6 +125,17 @@
     #intro .t { font-size: 5.6vmin; }
     #intro .s:empty { display: none; }
   }
+  /* raceTall: the results board of a vertical short (the first four: place, marble, gate, gap), clear of the bottom 20% and the right edge. */
+  #resT { position: absolute; left: 5vw; right: 13vw; top: 27vh; opacity: 0; font-family: var(--font), sans-serif; color: var(--text); padding: 2.4vmin 3vmin 2.6vmin;
+          background: color-mix(in srgb, var(--navy) 90%, transparent); border-radius: 1.8vmin; border-top: 0.7vmin solid var(--yellow); box-shadow: 0 1vmin 3vmin rgba(0,0,0,0.45); }
+  #resT h2 { margin: 0 0 1.4vmin; font: 400 6vmin var(--font), sans-serif; color: var(--yellow); letter-spacing: 0.05em; }
+  .tr4 { display: grid; grid-template-columns: 6vmin 5vmin 1fr auto; align-items: center; gap: 2vmin; height: 8.6vmin; font-size: 4.6vmin; font-variant-numeric: tabular-nums; }
+  .tr4 + .tr4 { border-top: 0.2vmin solid color-mix(in srgb, var(--text) 14%, transparent); }
+  .tr4 .ps { color: var(--orange); text-align: center; } .tr4.w .ps { color: var(--yellow); }
+  .tr4 .ch { width: 4.6vmin; height: 4.6vmin; border-radius: 50%; box-shadow: inset -0.5vmin -0.6vmin 1vmin rgba(0,0,0,0.45); }
+  .tr4 .nm { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.05; }
+  .tr4 .nm small { display: block; font-size: 2.9vmin; color: var(--orange); letter-spacing: 0.03em; }
+  .tr4 .gp { text-align: right; } .tr4.w .gp { color: var(--yellow); }
 </style></head>
 <body>
 <canvas id="view"></canvas>
@@ -152,6 +163,7 @@
 <div id="intro" class="panel"><div class="t" id="introT"></div><div class="s" id="introS"></div></div>
 <div id="results"><div class="wrap"><div id="winner"><div class="lab" id="wLab"></div><div class="big" id="wBall"></div><div class="who" id="wWho"></div><div class="tm" id="wTm"></div></div>
   <div id="board" class="panel"><h2 id="rTitle"></h2><div class="sub" id="rSub"></div><div id="rrows"></div></div></div></div>
+<div id="resT"><h2 id="resTt"></h2><div id="resTr"></div></div>
 <div id="podium"><h2 id="podiumTitle">Podium</h2><div class="rows"></div></div>
 <script type="module" src="./recorder.js"></script>
 </body></html>

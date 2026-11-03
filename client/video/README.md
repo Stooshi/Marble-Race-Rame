@@ -16,6 +16,8 @@ Nothing is ever posted from here: Moses reviews and posts.
 | `plans.mjs` | What goes into each kind of video, shot by shot: `production` (horizontal, about 2 minutes), `broadcast` (horizontal, about 1:40: the race as a TV broadcast, below), `cutdown` (vertical, 30–60 s) and `clip` (vertical, 10–30 s: `--clip flyover|close|wild|pick`, `--at <race ms>` for a wild moment: it follows the marble highest in the air then if it flies 1.5 m or more, otherwise the leader just after). |
 | `record.mjs` | Draws the frames in a headless browser, 60 fps, 1920×1080 (`--format wide`) or 1080×1920 (`--format tall`), mixes the sound (levelled to -14 LUFS, the level YouTube, TikTok and Instagram play at) and writes the MP4 (H.264, AAC). `--stills 1,5,10` writes those seconds as pictures instead, for checking. |
 | `render-logo.mjs` | The logo sting alone (`node video/render-logo.mjs A out.mp4 [--tall] [--end]`). |
+| `spotlight.html` | The Marble Spotlight's close-up (3 Nov 2026): one marble in the shop's own 3D look (the shared materials), spinning, then its name, rarity, Marble ID and collection, with "Looks only. Every marble races the same." Drawn as a function of time (`window.spotAt`). |
+| `../../scripts/video-pick.js` | Picks the race by searching seeds (Moses, 3 Nov 2026): a pack of 3–4 side by side through at least two curves, 3–4 marbles over the line within about 0.3 s, a close gap; writes the moments (`video`: the curves, the signature feature, the Spotlight's marble) into the race file. |
 | `../../scripts/video-race.js` | Picks the race: runs a track's races locally on the real simulator (seeds 900001 + k × 7919) and scores them for a close finish, late lead changes and the top three swapping; writes the race for the recorder. It never reads or changes the database. |
 
 ## Making one
@@ -98,3 +100,18 @@ The end card is on screen for **at least 2.5 s, fully readable** (`template.json
 ### Two different vertical cuts of one track (`--kind broadcastTallV --variant A|B --format tall`, Moses, 1 Nov 2026)
 
 For the same night on two apps (Sognefjord: A for TikTok, B for Instagram): two different races (the two closest of a batch: `node scripts/video-race.js <slug> --seeds 120 --top 120`, then `--seed <n>` for each), two hooks (A: frozen before the line, the contenders marked; B: the race's biggest overtake frozen as it starts, "Watch number <place> go."), other cameras (B chases where A follows, its finish from high behind the line), the variant's own lines and the intro tag, then "PHOTO FINISH", the winner and the gap, "Race your friends. Play free at marblespins.com", held 3 s on the frozen, dimmed finish (about 27.3 s in all). The last 0.25 s fade into the first picture, so it loops. Words: `template.json` `broadcast.tallVariants`.
+
+### Race shorts, the long broadcasts and the Marble Spotlight (Moses, 3 Nov 2026)
+
+Pick the race by searching, not by luck: `scripts/video-pick.js` runs about 300 seeds per track and keeps the race with all three of a pack of 3–4 side by side through at least two curves, 3–4 marbles over the line within about 0.3 s and a close gap (it prints how many had all three).
+
+- **`--kind raceTall --opening old|new --format tall`** (15 s): the opening (old: frozen before the line, "Who wins? Pick one."; new: the start is frame 1 with the track's line from `raceTall.newHooks`), the start (from behind and above the gate, then cut on to the plunge with the game's camera), two curves with the pack low and close (not in the last 6 s), the signature feature, the speed-ramp finish low behind the 3–4 that cross together, a four-row results board (place, marble, gate, gap), the big end card held 3 s. A track's own feature camera: `raceTall.features.<slug>` (`camera: "game"`: the game's camera on a marble a few places back in the group, for halls, roofs and blocks); `raceTall.curveCameras.<slug>`: `"game"` where blocks stand in a chase camera's way.
+- **`--kind broadcast`** on a race picked this way puts in up to three curves and the feature, and ends in a slow speed ramp (`broadcast.slowRamp`) before the slow-motion replay; outside the Grand Prix the cards name the track and series (`broadcast.otherSeries`).
+- **`--kind spotlight --format tall`** (15 s): `node scripts/video-pick.js <slug> --seeds 150 --spotlight <look>` gives the look to the middle marble of the race's longest pack through a curve (looks only); then the 4 s spin, the name, rarity and Marble ID, that marble marked in the pack, "Collect it. Race it.", the end card.
+- The field never wears a design in `houseLooksExclude` (Champion Shooter while its trademark check is open).
+- Long videos take about 2 hours to draw: a background job stops at 2 hours, so draw them in two parts (`--to 48`, then `--from 48`, at a shot's start) and join them with `ffmpeg -f concat -c copy`.
+
+```
+node scripts/video-pick.js elderglade-marble-grand-prix --seeds 300 --feature "Waterfall plunge"
+cd client && node video/record.mjs elderglade-marble-grand-prix elderglade-marble-grand-prix.video-1113814 --kind raceTall --opening new --format tall --tune 9 --out ~/videos/1900-tiktok-elderglade-new.mp4
+```

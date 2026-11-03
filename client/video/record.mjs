@@ -98,15 +98,17 @@ export async function record({ variant = 'A', opening = 'old', slug, race: raceN
     await page.waitForFunction(() => window.rec, null, { timeout: 300_000 });
     await page.evaluate(() => window.rec.ready);
     const info = await page.evaluate(() => window.rec.info());
-    const plan = PLANS[kind](info, race, { logo, fly, clip, at, promoStart, variant, slug, opening });
+    // (The track's series, from the track picker's list: the broadcast's cards name it on tracks outside the Grand Prix.)
+    const series = JSON.parse(fs.readFileSync(path.join(here, '..', 'src', 'shared', 'trackBanners.json'), 'utf8')).banners?.[slug]?.series ?? null;
+    const plan = PLANS[kind](info, race, { logo, fly, clip, at, promoStart, variant, slug, opening, series });
     // (The plan beside the video: swap-logo.mjs uses it to put another logo version in.)
-    fs.writeFileSync(`${out}.plan.json`, JSON.stringify({ slug, race: raceName, kind, format, tune, logo, length: plan.length, shots: plan.shots, sound: plan.sound, texts: plan.texts, captions: plan.captions, hooks: plan.hooks, lines: plan.lines, endBig: plan.endBig, dim: plan.dim, markers: plan.markers, bc: plan.bc, intro: plan.intro, results: plan.results }));
+    fs.writeFileSync(`${out}.plan.json`, JSON.stringify({ slug, race: raceName, kind, format, tune, logo, length: plan.length, marks: plan.marks, resultsTall: plan.resultsTall, shots: plan.shots, sound: plan.sound, texts: plan.texts, captions: plan.captions, hooks: plan.hooks, lines: plan.lines, endBig: plan.endBig, dim: plan.dim, markers: plan.markers, bc: plan.bc, intro: plan.intro, results: plan.results }));
     log(`${info.name}: ${kind} ${format}, ${plan.length.toFixed(1)} s, ${plan.shots.length} shots; winner ${info.podium[0].name} (gate ${info.podium[0].gate}) by ${info.margin} ms${plan.packShare !== undefined ? `; the race ${Math.round(plan.packShare * 100)}% on the pack` : ''}`);
     for (const sh of plan.shots) log(`  ${sh.at.toFixed(1).padStart(6)} s  ${(sh.type + (sh.follow !== undefined && sh.follow !== 'leader' ? ` #${sh.follow}` : sh.type === 'race' ? ' lead' : '')).padEnd(10)} ${sh.from !== undefined ? `race ${Math.round(sh.from)} ms` : ''} ${sh.speed && sh.speed !== 1 ? `×${sh.speed}` : ''} ${sh.dur.toFixed(1)} s`);
     // The rows on the podium card.
     await page.evaluate(([title]) => { document.getElementById('podiumTitle').textContent = title; }, [TEXTS.podiumTitle]);
     const rows = info.podium.map((r) => ({ name: r.name, look: r.look, ms: r.ms }));
-    if (plan.bc) await page.evaluate((o) => window.rec.setBroadcast(o), { city: plan.city.toUpperCase(), towerTitle: 'GRAND PRIX', ...(plan.tall && { towerRows: plan.tall.towerRows, compact: true }) });
+    if (plan.bc) await page.evaluate((o) => window.rec.setBroadcast(o), { city: plan.city.toUpperCase(), towerTitle: plan.towerTitle ?? 'GRAND PRIX', ...(plan.tall && { towerRows: plan.tall.towerRows, compact: true }) });
     // (The broadcast's overlay, intro card and results board at video second v: shown with short fades.)
     const fade = (v, a, d, fin = 0.3, fout = 0.3) => Math.max(0, Math.min(1, (v - a) / fin, (a + d - v) / fout));
     const overlayAt = (v) => {
@@ -117,6 +119,7 @@ export async function record({ variant = 'A', opening = 'old', slug, race: raceN
         bc: { opacity: k, label: span?.[2]?.label ?? null },
         intro: plan.intro ? { k: fade(v, plan.intro.at, plan.intro.dur, 0.5, 0.6), title: plan.intro.title, sub: plan.intro.sub } : null,
         results: plan.results ? { k: fade(v, plan.results.at, plan.results.dur, 0.6, 0.6), ...plan.results } : null,
+        resultsTall: plan.resultsTall ? { k: fade(v, plan.resultsTall.at, plan.resultsTall.dur, 0.2, 0.2), ...plan.resultsTall } : null,
         line: (() => {
           const h = (plan.lines ?? []).find((x) => v >= x.at && v < x.at + x.dur);
           return h ? { k: fade(v, h.at, h.dur, 0.15, 0.15), text: h.text } : { k: 0, text: '' };
@@ -137,6 +140,14 @@ export async function record({ variant = 'A', opening = 'old', slug, race: raceN
     };
     // The logo and end card from their own page, the same size.
     const card = await browser.newPage({ viewport: { width: W, height: H }, deviceScaleFactor: 1 });
+    // (The Marble Spotlight's close-up: its own page on the same server, the marble in the shop's own 3D look.)
+    let spot = null;
+    if (plan.spot) {
+      spot = await browser.newPage({ viewport: { width: W, height: H }, deviceScaleFactor: 1 });
+      spot.on('pageerror', (e) => log('spotlight page error:', e.message));
+      await spot.goto(`http://localhost:${port}/video/spotlight.html?${new URLSearchParams({ look: plan.spot.look })}`);
+      await spot.waitForFunction(() => window.ready, null, { timeout: 120_000 });
+    }
     const cardFor = async (q) => { await card.goto(`file://${path.join(here, 'logo.html')}?${new URLSearchParams(q)}`); await card.evaluate(() => window.ready); };
 
     const enc = spawn('ffmpeg', ['-y', '-loglevel', 'error', '-f', 'image2pipe', '-framerate', String(FPS), '-c:v', 'mjpeg', '-i', '-',
@@ -158,7 +169,11 @@ export async function record({ variant = 'A', opening = 'old', slug, race: raceN
       const sh = plan.shots.find((x) => v >= x.at && v < x.at + x.dur) ?? plan.shots[plan.shots.length - 1];
       const u = v - sh.at;
       let shot;
-      if (sh.type === 'logo' || sh.type === 'end') {
+      if (sh.type === 'spin') {
+        const first = plan.shots.find((x) => x.type === 'spin');
+        await spot.evaluate((t) => window.spotAt(t), v - first.at);
+        shot = await spot.screenshot({ type: 'jpeg', quality: 92 });
+      } else if (sh.type === 'logo' || sh.type === 'end') {
         const key = sh.type === 'logo' ? `logo-${sh.version}` : 'end';
         if (cardKey !== key) {
           await cardFor(sh.type === 'logo' ? { v: sh.version } : { v: TEMPLATE.intro.logo, end: '1', l1: (plan.endLines ?? TEXTS.endCard)[0], l2: (plan.endLines ?? TEXTS.endCard)[1] });
@@ -194,6 +209,7 @@ export async function record({ variant = 'A', opening = 'old', slug, race: raceN
             r.endBig?.(ov.endBig.k, ov.endBig.l1, ov.endBig.l2);
             if (ov.intro) r.intro(ov.intro.k, ov.intro);
             if (ov.results) r.results(ov.results.k, ov.results);
+            if (ov.resultsTall) r.resultsTall(ov.resultsTall.k, ov.resultsTall);
           }
         }, [{ type: sh.type, eye: sh.eye, follow: sh.follow, fov: sh.fov, members: sh.members, saveAim: sh.saveAim, useAim: sh.useAim, shot: sh.shot, back: sh.back, up: sh.up, ahead: sh.ahead, lead: sh.lead }, t, step, textAt(plan.texts, v), pod, rows, ov]);
         shot = await page.screenshot({ type: 'jpeg', quality: 92 });

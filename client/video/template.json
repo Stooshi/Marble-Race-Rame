@@ -10,6 +10,8 @@
     "_text": "the logo's own near-white (the wordmark's colour), for words on the picture"
   },
   "font": "Lilita One",
+  "houseLooksExclude": ["champion"],
+  "_houseLooksExclude": "Designs the field never wears in a video (their names would show in the tower and the results): Champion Shooter while its trademark check is open (Moses, 3 Nov 2026).",
 
   "text": {
     "_about": "Every tagline: the same font, size, colour and place, every time. One line, centred in the top band (the pack is in the middle and below), fading in and out; never moving, popping or flashing.",
@@ -88,6 +90,41 @@
     "endCard": ["Play free", "marblespins.com"]
   },
 
+  "raceTall": {
+    "_about": "The race short (Moses, 3 Nov 2026): 15 s vertical race videos from a race picked by searching seeds (scripts/video-pick.js: a pack of 3–4 side by side through at least two curves, 3–4 marbles over the line within about 0.3 s, a close gap). --kind raceTall --opening old|new --format tall. The shots in this order: the opening (old: frozen before the line, the contenders marked, oldHook, a quick rewind; new: the start is frame 1, with the track's own big line from newHooks); the start and the acceleration (startChase: low behind the front of the field); two curves with the pack side by side (curveChase: low and close); the track's signature feature with the marbles going down or through it (featureChase, or the track's own setting in `features`: a group chase or a fixed `eye` beside it); the finish as a speed ramp on the 3–4 marbles crossing together (rampChase; never a camera looking back up the track); the results board (the first four: place, marble, gate, gap) over the winner; the big end card on the frozen, dimmed winner (endCard.hold), fading into frame 1. `seconds`: each part's length by opening (about 15 s in all).",
+    "oldHook": "Who wins? Pick one.",
+    "oldFov": 66,
+    "newHooks": { "elderglade-marble-grand-prix": "Down the waterfall.", "verdon-burst": "Into the gorge.", "default": "Here they come." },
+    "lines": ["Side by side through the bends."],
+    "featureLines": {},
+    "closeMs": 300,
+    "seconds": {
+      "new": { "start": 2.2, "startGate": 0.8, "startFrom": 0, "followFrom": 2600, "curve": 1.6, "feature": 2.3, "rampSlow": 1.3, "rampFast": 1.5, "results": 1.6 },
+      "old": { "hookSlow": 0.5, "hookFreeze": 1.3, "rewind": 0.4, "start": 1.5, "startGate": 0.6, "startFrom": 0, "followFrom": 2600, "curve": 1.3, "feature": 1.9, "rampSlow": 1.1, "rampFast": 1.3, "results": 1.4 }
+    },
+    "startShot": "gate",
+    "curveChase": { "back": 5.6, "up": 2.1, "ahead": 6, "fov": 66 },
+    "curveLeadMs": 350,
+    "featureChase": { "back": 9, "up": 5, "ahead": 10, "fov": 62, "leadMs": 500 },
+    "features": { "frostmere-marble-grand-prix": { "camera": "game", "leadMs": 300 }, "kirkjufell-block-falls": { "camera": "game", "leadMs": -300 }, "rhine-castle-run": { "camera": "game", "leadMs": 200 } },
+    "curveCameras": { "kirkjufell-block-falls": "game" },
+    "rampChase": { "back": 5.2, "up": 1.9, "ahead": 4, "fov": 72 },
+    "ramp": { "slowMs": 900, "lineLeadMs": 450 },
+    "resultsTitle": "Results",
+    "gate": "Gate",
+    "endCard": ["Play free", "marblespins.com"]
+  },
+
+  "spotlight": {
+    "_about": "The Marble Spotlight (Moses, 3 Nov 2026): 15 s vertical. --kind spotlight --format tall, on a race whose file has video.spotlight (scripts/video-pick.js --spotlight <look>): a 4 s close-up of the marble spinning (spotlight.html), its name, rarity and Marble ID (with `note`), that marble racing in a pack through a curve (marked), `collect`, then the big end card on the frozen, dimmed frame. Looks only: never say or suggest that rarity or any marble is faster (Moses, 3 Nov 2026).",
+    "title": "Marble Spotlight",
+    "note": "Looks only. Every marble races the same.",
+    "collect": "Collect it. Race it.",
+    "seconds": { "spin": 4, "info": 3, "race": 3.8, "tag": 1.2 },
+    "leadMs": 900,
+    "chase": { "back": 3.8, "up": 1.3, "ahead": 5, "fov": 70 }
+  },
+
   "broadcast": {
     "_about": "The broadcast production (Moses, 1 Nov 2026): one whole race filmed as a TV motorsport broadcast, in our own style only (navy, yellow and orange, Lilita One, the mark in its usual corner; nothing copied from any real series, team, driver or sponsor). A hook of the closest moment, the intro card over the flyover, the overlay through the race (the standings tower top left, the race clock and the three sectors top right beside the mark, name tags over the marbles near the camera), cuts every 2–4 s, the finish in slow motion, the results board with the winner's card, the end card.",
     "introCard": "MARBLE SPINS GRAND PRIX · {city}",
@@ -163,6 +200,18 @@
       }
     },
     "endCard": ["Don't just watch marble races. Race them.", "Play free at marblespins.com"],
+    "otherSeries": {
+      "_about": "A broadcast on a track outside the Grand Prix (Moses, 3 Nov 2026: one long video from another series): the intro card, the tower's title and the results board's line name the track and its series instead of a Grand Prix city. {trackCaps}: the track's name in capitals; {series}: its series.",
+      "introCard": "MARBLE SPINS · {trackCaps}",
+      "towerTitle": "{series}",
+      "resultsSub": "Marble Spins {series} · {track}"
+    },
+    "slowRamp": {
+      "_about": "The broadcast's slow speed ramp into the finish (Moses, 3 Nov 2026), on races picked by scripts/video-pick.js: a low camera close behind the marbles that cross together, the last slowMs − lineLeadMs before the line slowed over slowSeconds, then fastSeconds at full speed through the line into the finish area (never looking back up the track); the slow-motion replay from beside the line follows as before.",
+      "slowMs": 1500, "lineLeadMs": 450, "slowSeconds": 3.2, "fastSeconds": 1.6,
+      "chase": { "back": 4.4, "up": 1.4, "ahead": 4, "fov": 74 }
+    },
+    "featureSeconds": 3.6,
     "towerRows": 10,
     "leader": "Leader",
     "finished": "Finished",
