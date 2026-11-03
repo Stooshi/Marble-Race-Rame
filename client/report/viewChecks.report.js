@@ -18,6 +18,7 @@ import { layoutMarbles, MARBLE_RADIUS } from '../src/three/marbles';
 import { TrackScene } from '../src/three/TrackScene';
 import { frameAtTime } from '../src/utils/splits';
 import { flaggedStretches, wallExposure } from '../src/three/scenery/groundCheck';
+import { channelIntrusions, intrusionStretches } from '../src/three/scenery/channelCheck';
 import { cameraClearance, corridorIntrusions, finishShotView, markStructures, nameOf, pieceFinder, stretchesOf, tunnelAllowance } from '../src/three/scenery/clearCheck';
 import { finishCutaway, finishShotPose } from '../src/three/TrackScene';
 import { coasterRails, stationRoof } from '../src/three/scenery/coaster';
@@ -106,6 +107,8 @@ it.skipIf(!process.env.REPORT_TRACK)('track report: view checks', () => {
     }
     out.ground[lite ? 'phone' : 'computer'] = {
       flagged: flaggedStretches(exposure, channel.arc),
+      // (Land inside the channel, a loop's lanes near the ground included: client/src/three/scenery/channelCheck.js.)
+      inChannel: flyOnly ? [] : intrusionStretches(channelIntrusions(centerline, channel, track, ground)),
       normalMetres: exposure.length ? Math.round((exposure.filter((e) => e.kind === 'normal').length / exposure.length) * channel.arc) : 0,
     };
   }

@@ -332,6 +332,12 @@ Built and **switched off twice**: the apps don't ask until `client/src/shared/pu
 - **Replies** are emailed to the player when Brevo is on, and logged. With email off they are saved but not sent; answer the player another way.
 - **On the player's profile**, the **Messages** tab lists everything they sent (logged in, or from their email).
 
+## Land inside the track (the channel check)
+
+- **What it catches (3 Nov 2026):** the drawn land (terrain, banks, water) standing inside the channel, where the marbles would seem to roll through grass. It looks straight down at every metre of every kit track, across the whole U (a loop's lanes near the ground included), phone and computer.
+- **Where it runs:** `cd client && npx vitest run test/kitScenery.test.js` (fails naming the stretch: metres, % along, how high the land stands, the section) and every full track report (Ground: "No land inside the channel", computer and phone).
+- **If it fails:** the land is shaped in `client/src/three/scenery/kitGround.js`; it is kept under the running surface by `icePoints` and, beside a loop, by `loopLanes`. Looks only: fix the drawing, never the track file.
+
 ## Track pictures (the track picker)
 
 - **Review:** `/preview/banners` shows every track's picture as a picker card (with its moment, side, marbles in view and file sizes).

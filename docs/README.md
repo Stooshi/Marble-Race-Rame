@@ -18,7 +18,7 @@
   - Coin packs and the Holiday Season pass, pre-sale from 28 Nov.
 - **Leagues part 1: on for everyone** since 27 Oct 2026 (`LEAGUES=on`): the free League (**3 tracks from 31 Oct**, the taster league; leagues made before keep 5) and the slim League Night. **Part 2** (credits, the Pro League, the league marble) may start from 1 Nov, behind `LEAGUES_PRO`, on branch `leagues-pro`.
 - **Built, switched off:**
-  - **Saint-Tropez** (World Tour, 3 Nov 2026; the loop out over the cliff, the plunge to the harbour and the spiral round the lighthouse; full report 52 of 52 passed): waits for Moses's review, then the next server deploy and a switch-on;
+  - **Saint-Tropez** (World Tour, 3 Nov 2026; the loop out over the cliff, the plunge to the harbour and the spiral round the lighthouse; full report 52 of 52 passed; 3 Nov, the land that stood inside the loop's run-out cut away, looks only, quick report 53 of 53 with the new channel check): waits for Moses's review, then the next server deploy and a switch-on;
   - push notifications (first app update, December);
   - gift codes;
   - the pass reminder emails (built; `PASS_REMINDERS_SENDING` stays off until Moses says go);
