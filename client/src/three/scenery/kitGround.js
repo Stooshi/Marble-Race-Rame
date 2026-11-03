@@ -135,6 +135,14 @@ export function icePoints(centerline, channel, { margin = ICE_MARGIN } = {}) {
       }
     }
   }
+  // A loop's own path where it runs near the ground (its way down and run-out lean aside, beside the way in):
+  // the land stays under its lanes too (Saint-Tropez, 3 Nov 2026: the land stood in its run-out).
+  for (const lane of loopLanes(channel)) {
+    for (let k = -4; k <= 4; k += 1) {
+      const th = (k / 4) * channel.maxAngle;
+      out.push({ x: lane.x + lane.ax * lane.R * Math.sin(th), z: lane.z + lane.az * lane.R * Math.sin(th), y: lane.y + lane.R * (1 - Math.cos(th)) - margin });
+    }
+  }
   // The catch area past the line (its floor falling PEN_DROP a metre, between its walls), and a little
   // beyond its end cushion: the land stays under it too (a coarse grid square used to rise through it).
   const pen = channel.runout;
@@ -198,6 +206,28 @@ function loopAside(channel, s) {
     return q;
   }
   return 0;
+}
+
+/**
+ * A loop's lanes near the ground that run aside from the track's own line (its way down and run-out, leaning
+ * across beside the way in): about every metre, { x, z, y (its floor), ax, az (across, level), R, top (rim over floor) }.
+ * The land is cut down under them like the channel's own trench (Saint-Tropez, 3 Nov 2026: the land stood in
+ * the run-out, which the channel's points never covered). Looks only.
+ */
+const LANE_NEAR = 3;   // metres up: a loop's path this low runs in the ground
+const LANE_ASIDE = 1;  // metres aside from the track's line: nearer, the channel's own trench already holds it
+export function loopLanes(channel) {
+  const out = [];
+  for (const L of channel?.loops ?? []) {
+    const sh = L.shape;
+    for (let k = 0; k <= sh.n; k += 4) {
+      if (sh.z[k] > LANE_NEAR || sh.q[k] < LANE_ASIDE) continue;
+      const a = new Vector3(L.across[k].x, 0, L.across[k].z).normalize();
+      const R = channel.radius;
+      out.push({ x: L.pos[k].x, z: L.pos[k].z, y: L.pos[k].y, ax: a.x, az: a.z, R, top: R * (1 - Math.cos(channel.maxAngle)) });
+    }
+  }
+  return out;
 }
 
 /** Is s metres along within a loop's stretch watched from beside it (from 50 m before it to 90 m after)? */
@@ -290,6 +320,10 @@ export function buildKitGround(centerline, track, { lite = false } = {}) {
       loopSpots.push({ x: q.pos.x, z: q.pos.z, sx: sv.x, sz: sv.z, y: q.pos.y });
     }
   }
+  const loopLane = loopLanes(channel);
+  const laneBox = loopLane.length
+    ? { minX: Math.min(...loopLane.map((c) => c.x)) - 40, maxX: Math.max(...loopLane.map((c) => c.x)) + 40, minZ: Math.min(...loopLane.map((c) => c.z)) - 40, maxZ: Math.max(...loopLane.map((c) => c.z)) + 40 }
+    : null;
   const xs = samples.map((s) => s.pos.x);
   const zs = samples.map((s) => s.pos.z);
   const margin = landRadius;
@@ -329,6 +363,20 @@ export function buildKitGround(centerline, track, { lite = false } = {}) {
           const out = -((x - best.x) * best.sx + (z - best.z) * best.sz); // (metres out on the camera's side)
           if (out > 0.5) h += (Math.min(h, best.y - 1.2) - h) * smoothstep(0.5, 4, out) * (1 - smoothstep(42, 56, out));
         }
+      }
+      if (loopLane.length && x > laneBox.minX && x < laneBox.maxX && z > laneBox.minZ && z < laneBox.maxZ) {
+        // A loop's lanes aside in the ground: a trench as the channel's own (under the floor across the U,
+        // level with the rims for a shoulder, then up at the banks' slope).
+        let best = null;
+        let bd = Infinity;
+        for (const c of loopLane) {
+          const d = (c.x - x) ** 2 + (c.z - z) ** 2;
+          if (d < bd) { bd = d; best = c; }
+        }
+        const d = Math.sqrt(bd);
+        const outer = best.R * Math.sin(channel.maxAngle) + RIM_WIDTH;
+        const cap = d < outer ? best.y - 0.4 : best.y + best.top + Math.max(0, d - outer - SHOULDER) * BANK_SLOPE;
+        h = Math.min(h, cap);
       }
       if (lift) h = liftHillRaise(lift, x, z, Math.min(h, liftHillCut(lift, x, z))); // (the land carved down along a coaster's lift hill, or raised to its cliff top)
       if (waterSpots.length) {

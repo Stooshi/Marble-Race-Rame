@@ -224,6 +224,15 @@ function viewLines(view, kit) {
       target: 'none',
       pass: kit ? !g.flagged.length : null,
     });
+    // No land inside the channel: the drawn ground never above the running surface, a loop's lanes included (3 Nov 2026).
+    const inside = g.inChannel ?? [];
+    lines.push({
+      part: 'Ground',
+      what: `No land inside the channel, a loop's lanes included (${screen})`,
+      value: inside.length ? inside.map((f) => `${f.metres} m at ${Math.round(f.from * 100)}% (${f.worst.toFixed(2)} m up, ${f.sections.join(', ')})`).join('; ') : 'none',
+      target: 'none',
+      pass: kit ? !inside.length : null,
+    });
   }
   // The rails on the rims (client/src/three/edgeCheck.js railGaps): none floating over the rim or sunk into it.
   if (view.rails) {
