@@ -14,7 +14,7 @@ import { Box3,
 } from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { buildKitGround, biomeOf } from './kitGround';
-import { FIGURE_COLORS, LANDMARKS, PEOPLE, acaciaTree, aspen, cabin, dressingFor, jacaranda, liftTower, palm, snowRock, vulture, winterBirch } from './kitProps';
+import { FIGURE_COLORS, LANDMARKS, PEOPLE, acaciaTree, aspen, cabin, dressingFor, jacaranda, liftTower, palm, rivieraDressing, snowRock, vulture, winterBirch } from './kitProps';
 import { buildGrandPrix } from './grandPrix';
 import { buildCoaster } from './coaster';
 import { buildPinball } from './pinball';
@@ -432,7 +432,7 @@ export function buildKitScenery(centerline, track, theme, { lite = false } = {})
   // a bare stretch (a wind-swept summit) keeps only a few rocks.
   // (A mountain: what stands on it by zone: seracs and snow-rimed rocks on the ice, groundsels on the moorland, ./peak.js.)
   const peakDress = ground.peak ? peakDressing(kit.peak.palette) : null;
-  const baseKinds = ground.canyon ? canyonDressing(kit.canyon.palette) : ground.river ? riverDressing(kit.river.palette) : peakDress ? peakDress.kinds : kit.block ? blockDressing(kit.block.world) : dressingFor(biome);
+  const baseKinds = ground.canyon ? canyonDressing(kit.canyon.palette) : ground.river ? riverDressing(kit.river.palette) : peakDress ? peakDress.kinds : kit.block ? blockDressing(kit.block.world) : kit.sea ? rivieraDressing() : dressingFor(biome);
   const kinds = [...baseKinds, [(l) => snowRock(l), 0], [(l) => winterBirch(l), 0], [(l) => aspen(l), 0], [() => palm(true), 0], [() => jacaranda(), 0], [() => acaciaTree(), 0], [(l) => riverExtras().cypress(l), 0], [(l) => riverExtras().reeds(l), 0]];
   const ROCK = baseKinds.length;
   const BIRCH = baseKinds.length + 1;
@@ -468,6 +468,7 @@ export function buildKitScenery(centerline, track, theme, { lite = false } = {})
     if (ground.canyon && !ground.canyon.dressable(x, z)) continue; // (a canyon: nothing on its walls or in its river)
     if (ground.river && !ground.river.dressable(x, z)) continue; // (a river: nothing in the water)
     if (ground.peak && !ground.peak.dressable(x, z)) continue; // (a mountain: nothing in a crevasse)
+    if (ground.sea && groundAt(x, z) < ground.sea.y + 1) continue; // (a track by the sea: nothing in the water)
     const tags = tagsAt(x, z);
     let acc = 0;
     let k = peakDress ? pickKind(peakDress.byZone, ground.peak.zoneAt(x, z), pick) : baseKinds.findIndex(([, share]) => (acc += share) >= pick);

@@ -17,6 +17,7 @@ import { RIVER_LANDMARKS } from './kitLandmarksRiver';
 import { PEAK_LANDMARKS } from './kitLandmarksPeak';
 import { BLOCK_LANDMARKS } from './kitLandmarksBlock';
 import { ATHLETICS_LANDMARKS } from './kitLandmarksAthletics';
+import { RIVIERA_LANDMARKS } from './kitLandmarksRiviera';
 
 // ── Set dressing: one geometry per kind, instanced ──────────────────────────
 
@@ -258,6 +259,28 @@ function neonStar() {
     piece(new BoxGeometry(3, 0.06, 0.45), colour, new Matrix4().makeTranslation(0, 0.07, 0)),
     piece(new BoxGeometry(0.45, 0.06, 3), colour, new Matrix4().makeTranslation(0, 0.07, 0)),
   ]);
+}
+
+/**
+ * The Riviera's hills (a track by the sea, `sea`; Saint-Tropez, 3 Nov 2026): stone pines with wide flat crowns,
+ * silvery olive trees, dark narrow cypresses and low maquis shrubs. Plain shapes: there are hundreds.
+ */
+export function rivieraDressing() {
+  // (`l`: lite, on phones: fewer sides, the same shapes from the track.)
+  const stonePine = (l) => merge([
+    piece(new CylinderGeometry(0.22, 0.35, 7, l ? 4 : 5, 1, true), '#7a5a42', new Matrix4().makeTranslation(0, 3.5, 0)),
+    piece(new CylinderGeometry(3.2, 2.2, 1.4, l ? 5 : 7, 1), '#3f6b3a', new Matrix4().makeTranslation(0, 7.4, 0)),
+  ]);
+  const olive = (l) => merge([
+    piece(new CylinderGeometry(0.22, 0.38, 1.8, l ? 3 : 5, 1, true), '#6e5a48', new Matrix4().makeTranslation(0, 0.9, 0)),
+    piece(new IcosahedronGeometry(1.8, 0), '#94a67a', new Matrix4().compose(new Vector3(0, 2.6, 0), new Quaternion(), new Vector3(1.2, 0.8, 1.1))),
+  ]);
+  const cypress = (l) => merge([
+    piece(new CylinderGeometry(0.15, 0.2, 1, l ? 3 : 5, 1, true), '#5a4632', new Matrix4().makeTranslation(0, 0.5, 0)),
+    piece(new ConeGeometry(0.9, 7.5, l ? 5 : 6, 1, true), '#2f5a36', new Matrix4().makeTranslation(0, 4.6, 0)),
+  ]);
+  // (Three kinds, as the meadow's: each kind is a draw call in every tile of land.)
+  return [[stonePine, 0.35], [olive, 0.45], [cypress, 0.2]];
 }
 
 export function dressingFor(biome) {
@@ -588,6 +611,7 @@ export const LANDMARKS = {
   ...PEAK_LANDMARKS,
   ...BLOCK_LANDMARKS,
   ...ATHLETICS_LANDMARKS,
+  ...RIVIERA_LANDMARKS,
 };
 
 // ── Things passing overhead (scenery only, high above the track) ───────────

@@ -181,4 +181,5 @@ module.exports = [
   require('./svalbard-glacier-run'),
   require('./yellowstone-frost-run'),
   require('./abraham-lake-frost'),
+  require('./saint-tropez'),
 ];

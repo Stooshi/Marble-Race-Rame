@@ -282,8 +282,9 @@ function boostJump({ at = 0.3, look = 'ski-jump', pad = 6, kick = 4, min = 22, k
  * beside the way in; `runout`: metres along the ground bringing it back in line). A net hung inside it
  * lets any marble that can't hold on down onto the way down. `at`: where the pad starts (share of the section).
  */
-function loop({ at = 0.2, look = 'steel', pad = 6, kick = 4, min = 25, topRadius = 6, shift = 11, runout = 40 } = {}) {
-  return { feature: 'loop', at, look, pad, kick, min, topRadius, shift, runout };
+function loop({ at = 0.2, look = 'steel', pad = 6, kick = 4, min = 25, topRadius = 6, shift = 11, runout = 40, viewSide } = {}) {
+  // (`viewSide`, looks only: how far out beside the loop the follow camera watches it from, metres; default 30.)
+  return { feature: 'loop', at, look, pad, kick, min, topRadius, shift, runout, ...(viewSide && { viewSide }) };
 }
 
 /**
@@ -386,7 +387,9 @@ module.exports = {
     'island-castle', 'hilltop-castle', 'vineyard-terraces', 'ghat-steps', 'floating-lamps', 'rowing-boats',
     // Peaks (client/src/three/scenery/kitLandmarksPeak.js; no religious objects, no flags, nothing on a summit).
     'peak-camp', 'serac-field', 'granite-needles', 'nunataks', 'ski-plane', 'crater-ice-cliffs', 'giant-groundsels',
-    'meltwater-streams', 'pass-cairn', 'glacier-tongue', 'penitentes', 'icebergs', 'glacial-lake', 'rhododendrons', 'barrel-hut', 'rock-island', 'cinder-cones', 'tepui-falls', 'calving-ice', 'giant-lobelias'],
+    'meltwater-streams', 'pass-cairn', 'glacier-tongue', 'penitentes', 'icebergs', 'glacial-lake', 'rhododendrons', 'barrel-hut', 'rock-island', 'cinder-cones', 'tepui-falls', 'calving-ice', 'giant-lobelias',
+    // The Riviera (Saint-Tropez, 3 Nov 2026; client/src/three/scenery/kitLandmarksRiviera.js; our own models, no names on anything drawn).
+    'riviera-village', 'umbrella-pines', 'lavender-field', 'olive-grove', 'riviera-beach', 'riviera-harbour', 'yachts', 'riviera-lighthouse'],
   OVERHEAD: ['gondola', 'cable-car', 'chairlift', 'vulture',
     // The Canyon Series: birds circling over the gorge, and what spans it from rim to rim, high over the track.
     'condor', 'prayer-flags', 'arch-bridge', 'railway-trestle', 'suspension-bridge',
@@ -420,7 +423,7 @@ module.exports = {
     'museum-of-the-future', 'dubai-frame', 'opera-house', 'tulip-garden', 'roundabout-monument', 'acacia', 'mughal-fountain', 'giant-tree', 'snow-island', 'fallen-statue', 'volcano-rock', 'sagrada-familia', 'frozen-waterfall', 'limestone-island', 'sea-islet', 'giant-redwood', 'lantern-chedi', 'watermill', 'confucius-temple', 'castle-keep', 'magician-trunk', 'top-hat', 'jukebox-tower', 'clocktower', 'lighting-rig', 'claw-tower', 'glitch-tower', 'ringed-planet', 'laser-turret', 'water-tower', 'fork-signpost', 'neon-plaza', 'snow-peak',
     'settling-stack', 'voxel-peak', 'basalt-spire', 'beam-tower', 'level-pillars', 'floodlight-mast', 'flame-cauldron', 'medal-podium',
     'island-castle',
-    'karst-tower', 'cube-campanile', 'three-towers', 'lake-island', 'cube-pagoda', 'garden-towers', 'granite-island', 'arrowhead-peak', 'geyser-cone'],
+    'karst-tower', 'cube-campanile', 'three-towers', 'lake-island', 'cube-pagoda', 'garden-towers', 'granite-island', 'arrowhead-peak', 'geyser-cone', 'riviera-lighthouse'],
   // Scenery near a section (or the start or finish): what grows and stands beside the track there.
   SCENERY: ['bare', 'rocks', 'birches', 'pines', 'race-netting', 'funicular', 'wooden-houses', 'frozen-lake',
     'wood-clad', 'chalets', 'pasture', 'aspens', 'shopfronts',

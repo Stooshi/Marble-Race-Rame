@@ -193,7 +193,7 @@ function track(spec) {
         const { ground, height } = loopShape(f);
         features.push({ type: 'boost', at, l: 0, length: f.pad, halfWidth: 5.2, kick: f.kick, min: f.min });
         const loopAt = round4(at + (f.pad + 2) / total);
-        features.push({ type: 'loop', at: loopAt, topRadius: f.topRadius, shift: f.shift, runout: f.runout, look: f.look });
+        features.push({ type: 'loop', at: loopAt, topRadius: f.topRadius, shift: f.shift, runout: f.runout, look: f.look, ...(f.viewSide && { viewSide: f.viewSide }) });
         placed.push({ section: i, kind: 'loop', at, length: f.pad + 2 + ground, height, min: f.min, topRadius: f.topRadius });
         continue;
       }
@@ -330,6 +330,9 @@ function track(spec) {
     ...(isAthletics(spec) && { athletics: { lanes: 'red', ...spec.athletics } }),
     // A Winter Wonders track (family 'winter-wonders'): a World Tour track listed as its own series.
     ...(isWinterWonders(spec) && { winterWonders: true }),
+    // A track by the sea (`sea: { side | toward, from, coast, level }`, Saint-Tropez): open water on one side of the track
+    // (or towards `toward`, [x, z] on the map) from `from` (0–1 along it) to the finish, the land falling to it beyond `coast` metres. Looks only.
+    ...(spec.sea && { sea: { side: 'left', from: 0, coast: 26, level: -2.5, ...spec.sea } }),
     // A pinball table (family 'pinball'): the playfield, the cabinet, the backglass's art and the
     // dot-matrix display's call-outs at the start and for the winner, the apron's flippers and the
     // drain past the finish. Looks only.

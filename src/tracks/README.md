@@ -30,7 +30,7 @@ Then add it to `index.js` in this folder.
 No "safe only" tracks. Every new track has **at least one big, exciting feature**:
 - a jump or hop over a gap (the boost-pad jump, a hop);
 - a splitter with two paths;
-- a loop (the kit's `loop`, available since 2 Nov 2026: a clothoid roller-coaster loop with its launch pad, proven on its test track `variety-layout-loop-run` with the full report; on no live track yet, its first use planned in a new track. **A track with a loop needs extra overtaking room after it** (the loop is ridden in single file: the test track's overtakes came out exactly at the target of 60): a longer run-out or an overtaking section right after it (S-bends, a wide sweep, pegs), aiming clearly above 60 overtakes in its full report, about 65 or more);
+- a loop (the kit's `loop`, available since 2 Nov 2026: a clothoid roller-coaster loop with its launch pad, proven on its test track `variety-layout-loop-run` with the full report; on no live track yet; its first track is Saint-Tropez, switched off, 3 Nov 2026: rough cobbles into the S-bends after the loop bunch the field again, 65 overtakes. `loop({ viewSide })`, looks only: how far out beside it the follow camera watches it (default 30 m; Saint-Tropez 26, to see down into a cliff road's channel). **A track with a loop needs extra overtaking room after it** (the loop is ridden in single file: the test track's overtakes came out exactly at the target of 60): a longer run-out or an overtaking section right after it (S-bends, a wide sweep, pegs), aiming clearly above 60 overtakes in its full report, about 65 or more);
 - a funnel;
 - a big drop;
 - a dramatic banked turn.
@@ -339,6 +339,19 @@ Scenery comes from names in the file (looks only; checked, so a typo is refused)
   (lights, fires and lit ice glow, drawn unlit). The season's costumes: 'steel-pan-bumper', 'firework-bumper' and
   'gumdrop' (blocks), 'maraca-post' and 'candy-cane' (slalom poles and pegs). Its pinball art: 'parang',
   'beach-fireworks'; its arcade art: 'star-lanterns', 'light-stream'.
+- The Riviera's landmarks (client/src/three/scenery/kitLandmarksRiviera.js, Saint-Tropez, 3 Nov 2026; our own models,
+  no names on anything drawn): `'riviera-village'` (a hilltop village of ochre and rose houses under terracotta roofs,
+  a bell tower), `'umbrella-pines'` (stone pines), `'lavender-field'` (with a stone farmhouse), `'olive-grove'` (on
+  dry-stone terraces), `'riviera-beach'` (striped parasols), `'riviera-harbour'` (a quay with fishing boats and yachts
+  moored along it, houses behind), `'yachts'` (at anchor in the bay) and `'riviera-lighthouse'` (on the harbour wall's
+  round head; also `around` a spiral).
+- `sea: { toward: [x, z], from, coast, level }` (or `side: 'left' | 'right'` instead of `toward`), on the track: the
+  sea along the track (Saint-Tropez, 3 Nov 2026). From `from` (0–1 along the track) the land keeps its banks within
+  `coast` metres (default 26) of every stretch, then falls to the sea floor on the seaward side: towards `toward`
+  (a direction on the map, the same for every stretch, as along a coast) or the track's own `side`. One flat sea sheet
+  `level` metres below the finish line (default -2.5) covers the world, turquoise near the coast, deep blue out to
+  sea; landmarks over the water (boats, a harbour) float at its level, the hills' dressing (stone pines, olives,
+  cypresses, maquis) never stands in it. One extra draw call. Looks only.
 - `figures: ['skier', 'snowboarder', 'spectator', 'reindeer', …]`: people, or any
   block costume, standing on the banks facing the track with small idle movements.
 - `overhead: ['gondola' | 'cable-car' | 'chairlift' | 'vulture']`: a lift crossing high above

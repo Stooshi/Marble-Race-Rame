@@ -162,7 +162,7 @@ export function loopFrames(centerline, arc, feature) {
     normal.push(n);
     across.push(new Vector3().crossVectors(t, n).normalize());
   }
-  return { s0, s1: s0 + shape.ground, stretch: shape.length / shape.ground, shape, pos, tangent, normal, across };
+  return { s0, s1: s0 + shape.ground, stretch: shape.length / shape.ground, shape, pos, tangent, normal, across, viewSide: feature.viewSide ?? LOOP_VIEW.side };
 }
 
 /**
@@ -185,7 +185,7 @@ export function loopView(centerline, channel, s) {
     const along = new Vector3();
     frameAt(centerline, (L.s0 + sh.f[iTop]) / channel.arc, ground, side, along);
     const centre = ground.clone().addScaledVector(UP, sh.height * 0.5).addScaledVector(side, sh.q[iTop]);
-    const cam = ground.clone().addScaledVector(UP, sh.height * LOOP_VIEW.up).addScaledVector(side, sh.q[iTop] - LOOP_VIEW.side);
+    const cam = ground.clone().addScaledVector(UP, sh.height * LOOP_VIEW.up).addScaledVector(side, sh.q[iTop] - (L.viewSide ?? LOOP_VIEW.side));
     L.view = { cam, centre, along, fTop: sh.f[iTop] };
   }
   const ease = (k) => { const x = Math.min(1, Math.max(0, k)); return x * x * (3 - 2 * x); };

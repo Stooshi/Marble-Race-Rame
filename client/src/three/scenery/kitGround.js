@@ -15,7 +15,7 @@
  */
 import { PEN_DROP } from '../marbles';
 import { TRACK_STYLE } from '../trackModel';
-import { BoxGeometry, BufferGeometry, Color, DoubleSide, Float32BufferAttribute, Group, Mesh, MeshLambertMaterial, Vector3 } from 'three';
+import { BoxGeometry, BufferGeometry, Color, DoubleSide, Float32BufferAttribute, Group, Mesh, MeshLambertMaterial, MeshPhongMaterial, Vector3 } from 'three';
 import { channelLipAt, channelRadiusAt, forkAt, forkOffset, forkRadius } from '../iceChannel';
 import { channelGround } from './channelGround';
 import { buildTerrain, makeHeightField } from './terrain';
@@ -47,6 +47,50 @@ const LAKE_RADIUS = 95;        // metres: a frozen lake beyond the finish
 const LAKE_SHORE = 45;         // metres over which the land rises from the ice
 const WATER_REACH = 70;        // metres round a coaster's stretch over water that are water…
 const WATER_SHORE = 60;        // …and over which the land then rises from it
+const SEA_SHORE = 34;          // metres over which the land falls from the coast to the sea floor (a track's `sea`)
+
+/**
+ * A track's sea (`sea: { side | toward, from, coast, level }`, Saint-Tropez, 3 Nov 2026): open water on one side of the
+ * track (or towards `toward`, [x, z] on the map: the same open side of every stretch, as along a coast) from `from` (0–1 along it) to the finish, `level` metres below the finish line. The land keeps its
+ * banks within `coast` metres of any stretch of the track, then falls to the sea floor; beyond the land's edge
+ * the whole world is sea. Looks only. → { y, nearest(x, z): the coarse samples' nearest, seaSide(x, z) } or null.
+ */
+export function seaOf(centerline, kit) {
+  const sea = kit?.sea;
+  if (!sea) return null;
+  const { samples, segments } = centerline;
+  const sign = sea.side === 'right' ? -1 : 1;
+  const toward = sea.toward ? (() => { const n = Math.hypot(sea.toward[0], sea.toward[1]) || 1; return [sea.toward[0] / n, sea.toward[1] / n]; })() : null;
+  const coarse = [];
+  for (let i = 0; i <= segments; i += 4) {
+    const s = samples[i];
+    const side = new Vector3(s.side.x, 0, s.side.z).normalize();
+    coarse.push({ x: s.pos.x, z: s.pos.z, sx: side.x, sz: side.z, p: i / segments });
+  }
+  const y = samples[segments].pos.y + (sea.level ?? -2.5);
+  const nearest = (x, z) => {
+    let best = null;
+    let bd = Infinity;
+    for (const c of coarse) {
+      const d = (c.x - x) ** 2 + (c.z - z) ** 2;
+      if (d < bd) { bd = d; best = c; }
+    }
+    return { c: best, d: Math.sqrt(bd) };
+  };
+  return {
+    y,
+    coast: sea.coast ?? 26,
+    /** How far into the sea (0: on the land; 1: the sea floor), at x, z. */
+    depth(x, z) {
+      const { c, d } = nearest(x, z);
+      if (!c || c.p < (sea.from ?? 0)) return 0;
+      // (Seaward: towards `toward` ([x, z] on the map: the coast's open side) if given, else the track's own side.)
+      const seaward = toward ? (x - c.x) * toward[0] + (z - c.z) * toward[1] : ((x - c.x) * c.sx + (z - c.z) * c.sz) * sign;
+      if (seaward <= 0) return 0;
+      return smoothstep(this.coast, this.coast + SEA_SHORE, d);
+    },
+  };
+}
 
 /**
  * Where a frozen lake lies (a kit track with 'frozen-lake' in its finish's or last section's
@@ -156,6 +200,11 @@ function loopAside(channel, s) {
   return 0;
 }
 
+/** Is s metres along within a loop's stretch watched from beside it (from 50 m before it to 90 m after)? */
+function loopViewSide(channel, s) {
+  return (channel.loops ?? []).some((L) => s > L.s0 - 50 && s < L.s1 + 90);
+}
+
 function wallsAt(channel, i, step) {
   const s = i * step;
   const R = channelRadiusAt(channel, s);
@@ -212,6 +261,8 @@ export function buildKitGround(centerline, track, { lite = false } = {}) {
   const ravineFloor = bridgeSpots.length ? Math.min(...bridgeSpots.map((p) => p.y)) - 24 : 0;
   // A frozen lake (scenery 'frozen-lake' at the finish): a flat basin just beyond the run-out.
   const lake = lakeOf(centerline, kit);
+  // A track's sea (`sea`): the land falls to the sea floor beyond its coast.
+  const sea = seaOf(centerline, kit);
   // A coaster's water (sections with `water`): the land sinks under the surface round them.
   const waterSpots = [];
   if (flight) {
@@ -226,6 +277,19 @@ export function buildKitGround(centerline, track, { lite = false } = {}) {
     ? Math.min(...samples.map((x, i) => (nearWater(x.pos) ? x.pos.y - flight[i] : Infinity))) - 2
     : null;
   const lift = flight ? liftHillOf(centerline, flight, kit.start?.type) : null;
+  // Beside a loop, on the side the follow camera swings out to (opposite its lean): the land kept down
+  // to the track's level, so the camera watches the marble go round and down the run-out over open
+  // ground, never over a hillside's bank (Saint-Tropez's cliff road, 3 Nov 2026). Looks only.
+  const loopSpots = [];
+  for (const L of channel.loops ?? []) {
+    for (let sm = L.s0 - 50; sm <= L.s1 + 90; sm += 3) {
+      const i = Math.round(sm / step);
+      if (i < 0 || i > segments) continue;
+      const q = samples[i];
+      const sv = new Vector3(q.side.x, 0, q.side.z).normalize();
+      loopSpots.push({ x: q.pos.x, z: q.pos.z, sx: sv.x, sz: sv.z, y: q.pos.y });
+    }
+  }
   const xs = samples.map((s) => s.pos.x);
   const zs = samples.map((s) => s.pos.z);
   const margin = landRadius;
@@ -249,6 +313,22 @@ export function buildKitGround(centerline, track, { lite = false } = {}) {
       if (lake) {
         const d = Math.hypot(x - lake.x, z - lake.z) - lake.radius * lake.shape(Math.atan2(z - lake.z, x - lake.x));
         if (d < LAKE_SHORE) h += (Math.min(h, lake.y - 1.2) - h) * (1 - smoothstep(0, LAKE_SHORE, d));
+      }
+      if (sea) {
+        const k = sea.depth(x, z);
+        if (k > 0) h += (Math.min(h, sea.y - 5) - h) * k;
+      }
+      if (loopSpots.length) {
+        let best = null;
+        let bd = Infinity;
+        for (const c of loopSpots) {
+          const d = (c.x - x) ** 2 + (c.z - z) ** 2;
+          if (d < bd) { bd = d; best = c; }
+        }
+        if (bd < 60 * 60) {
+          const out = -((x - best.x) * best.sx + (z - best.z) * best.sz); // (metres out on the camera's side)
+          if (out > 0.5) h += (Math.min(h, best.y - 1.2) - h) * smoothstep(0.5, 4, out) * (1 - smoothstep(42, 56, out));
+        }
       }
       if (lift) h = liftHillRaise(lift, x, z, Math.min(h, liftHillCut(lift, x, z))); // (the land carved down along a coaster's lift hill, or raised to its cliff top)
       if (waterSpots.length) {
@@ -336,6 +416,9 @@ export function buildKitGround(centerline, track, { lite = false } = {}) {
       inner.y = rimY;
       const shoulder = at(SHOULDER);
       shoulder.y = rimY; // a level shoulder at the rim first: no wall shows, however the bank then falls
+      // (Beside a loop, on the side the follow camera watches it from: no level shoulder, the bank falls away
+      // from the rim at once, so the camera up there sees down past the rim into the channel. Looks only.)
+      if (sign < 0 && loopViewSide(channel, i * step)) shoulder.y = rimY - Math.min(1.6, Math.max(0, rimY - terrain.groundAt(shoulder.x, shoulder.z)) * 0.6);
       const out = at(SHOULDER + w);
       out.y = terrain.groundAt(out.x, out.z) - 0.05;
       const mid = at(SHOULDER + w * 0.35);
@@ -462,7 +545,46 @@ export function buildKitGround(centerline, track, { lite = false } = {}) {
     const pool = buildWater(waterSpots, waterY, lite ? 70 : 90);
     group.add(pool);
   }
+  // The sea: one flat sheet over the whole world at its level, under the land wherever the land is higher;
+  // turquoise near the coast, deep blue out to sea, with the water's moving ripples and glitter.
+  if (sea) {
+    const pad = 900;
+    const x0 = landBounds.minX - pad; const x1 = landBounds.maxX + pad;
+    const z0 = landBounds.minZ - pad; const z1 = landBounds.maxZ + pad;
+    const n = lite ? 24 : 48;
+    const near = new Color(kit.sea.near ?? '#3fd3cf');
+    const far = new Color(kit.sea.far ?? '#2a8cc0');
+    const pts = [];
+    const cols = [];
+    const at = (a, b) => {
+      const x = x0 + (x1 - x0) * a; const z = z0 + (z1 - z0) * b;
+      let d = Infinity;
+      for (let i = 0; i <= segments; i += 8) d = Math.min(d, Math.hypot(samples[i].pos.x - x, samples[i].pos.z - z));
+      const c = near.clone().lerp(far, smoothstep(40, 420, d));
+      return [x, sea.y, z, c];
+    };
+    const grid = [];
+    for (let j = 0; j <= n; j += 1) { grid.push([]); for (let i = 0; i <= n; i += 1) grid[j].push(at(i / n, j / n)); }
+    for (let j = 0; j < n; j += 1) {
+      for (let i = 0; i < n; i += 1) {
+        for (const v of [grid[j][i], grid[j + 1][i], grid[j][i + 1], grid[j][i + 1], grid[j + 1][i], grid[j + 1][i + 1]]) {
+          pts.push(v[0], v[1], v[2]);
+          cols.push(v[3].r, v[3].g, v[3].b);
+        }
+      }
+    }
+    const g = new BufferGeometry();
+    g.setAttribute('position', new Float32BufferAttribute(pts, 3));
+    g.setAttribute('color', new Float32BufferAttribute(cols, 3));
+    g.computeVertexNormals();
+    // (Not the rivers' rippling material: its ripples alias into rings over a sea this wide. A calm, glossy sea
+    // catching the low sun instead.)
+    const seaMesh = new Mesh(g, new MeshPhongMaterial({ vertexColors: true, shininess: 70, specular: new Color(kit.lighting === 'sunset' ? '#ffd9a0' : '#ffffff') }));
+    seaMesh.name = 'sea';
+    seaMesh.userData.ground = true;
+    group.add(seaMesh);
+  }
 
   const bounds = { minX: Math.min(...xs) - margin, maxX: Math.max(...xs) + margin, minZ: Math.min(...zs) - margin, maxZ: Math.max(...zs) + margin, floorY: biome.sea - 6 };
-  return { group, field, groundAt: (x, z) => terrain.groundAt(x, z), hug, biome, rows, over, onBridge, lake, flight, waterY, floorY: biome.sea - 6, bounds, canyon, blocks, river, peak };
+  return { group, field, groundAt: (x, z) => terrain.groundAt(x, z), hug, biome, rows, over, onBridge, lake, flight, waterY: waterY ?? sea?.y ?? null, sea, floorY: biome.sea - 6, bounds, canyon, blocks, river, peak };
 }

@@ -1377,6 +1377,17 @@
    "side": 1,
    "marbles": 1
   },
+  "saint-tropez": {
+   "name": "Saint-Tropez",
+   "series": "World Tour",
+   "lighting": "sunset",
+   "v": "aa3ee9a8",
+   "bytes": 15112,
+   "bytes2x": 36946,
+   "t": 11071,
+   "side": -1,
+   "marbles": 4
+  },
   "san-fernando-lantern-spins": {
    "name": "San Fernando Lantern Spins",
    "series": "Blocks",
