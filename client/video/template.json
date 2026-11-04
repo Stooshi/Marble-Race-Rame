@@ -87,14 +87,16 @@
     "endDim": 0.55,
     "ramp": { "slowMs": 900, "lineLeadMs": 450, "slowSeconds": 1.4, "fastSeconds": 1.6 },
     "winner": "{marble} wins by {margin} s",
-    "endCard": ["Play free", "marblespins.com"]
+    "endCard": ["Play free", "marblespins.com", "Follow for a new race every day"]
   },
 
   "raceTall": {
     "_about": "The race short (Moses, 3 Nov 2026): 15 s vertical race videos from a race picked by searching seeds (scripts/video-pick.js: a pack of 3–4 side by side through at least two curves, 3–4 marbles over the line within about 0.3 s, a close gap). --kind raceTall --opening old|new --format tall. The shots in this order: the opening (old: frozen before the line, the contenders marked, oldHook, a quick rewind; new: the start is frame 1, with the track's own big line from newHooks); the start and the acceleration (startChase: low behind the front of the field); two curves with the pack side by side (curveChase: low and close); the track's signature feature with the marbles going down or through it (featureChase, or the track's own setting in `features`: a group chase or a fixed `eye` beside it); the finish as a speed ramp on the 3–4 marbles crossing together (rampChase; never a camera looking back up the track); the results board (the first four: place, marble, gate, gap) over the winner; the big end card on the frozen, dimmed winner (endCard.hold), fading into frame 1. `seconds`: each part's length by opening (about 15 s in all).",
     "oldHook": "Who wins? Pick one.",
     "oldFov": 66,
-    "newHooks": { "elderglade-marble-grand-prix": "Down the waterfall.", "verdon-burst": "Into the gorge.", "default": "Here they come." },
+    "newHooks": { "elderglade-marble-grand-prix": "Down the waterfall.", "verdon-burst": "Into the gorge.",
+      "pudong-marble-grand-prix": "Loop the skyline.",
+      "saint-tropez": "Loop over the sea.", "default": "Here they come." },
     "lines": ["Side by side through the bends."],
     "featureLines": {},
     "closeMs": 300,
@@ -106,13 +108,15 @@
     "curveChase": { "back": 5.6, "up": 2.1, "ahead": 6, "fov": 66 },
     "curveLeadMs": 350,
     "featureChase": { "back": 9, "up": 5, "ahead": 10, "fov": 62, "leadMs": 500 },
-    "features": { "frostmere-marble-grand-prix": { "camera": "game", "leadMs": 300 }, "kirkjufell-block-falls": { "camera": "game", "leadMs": -300 }, "rhine-castle-run": { "camera": "game", "leadMs": 200 } },
+    "features": { "frostmere-marble-grand-prix": { "camera": "game", "leadMs": 300 }, "kirkjufell-block-falls": { "camera": "game", "leadMs": -300 }, "pudong-marble-grand-prix": { "tv": 0, "fov": 50, "leadMs": -2400 },
+      "saint-tropez": { "eye": { "p": 0.29, "beside": 42, "up": 16, "fov": 52 }, "leadMs": -2400 },
+      "rhine-castle-run": { "camera": "game", "leadMs": 200 } },
     "curveCameras": { "kirkjufell-block-falls": "game" },
     "rampChase": { "back": 5.2, "up": 1.9, "ahead": 4, "fov": 72 },
     "ramp": { "slowMs": 900, "lineLeadMs": 450 },
     "resultsTitle": "Results",
     "gate": "Gate",
-    "endCard": ["Play free", "marblespins.com"]
+    "endCard": ["Play free", "marblespins.com", "Follow for a new race every day"]
   },
 
   "spotlight": {

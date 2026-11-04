@@ -124,7 +124,7 @@ export async function record({ variant = 'A', opening = 'old', slug, race: raceN
           const h = (plan.lines ?? []).find((x) => v >= x.at && v < x.at + x.dur);
           return h ? { k: fade(v, h.at, h.dur, 0.15, 0.15), text: h.text } : { k: 0, text: '' };
         })(),
-        endBig: plan.endBig && v >= plan.endBig.at ? { k: Math.min(1, (v - plan.endBig.at) / 0.18), l1: plan.endBig.l1, l2: plan.endBig.l2 } : { k: 0 },
+        endBig: plan.endBig && v >= plan.endBig.at ? { k: Math.min(1, (v - plan.endBig.at) / 0.18), l1: plan.endBig.l1, l2: plan.endBig.l2, l3: plan.endBig.l3 ?? '' } : { k: 0 },
         dim: plan.dim && v >= plan.dim.at ? plan.dim.k * Math.min(1, (v - plan.dim.at) / plan.dim.fin) : 0,
         hook: (() => {
           const h = (plan.hooks ?? []).find((x) => v >= x.at && v < x.at + x.dur);
@@ -206,7 +206,7 @@ export async function record({ variant = 'A', opening = 'old', slug, race: raceN
             r.rewind(ov.rewind);
             r.dim?.(ov.dim);
             r.line?.(ov.line.k, ov.line.text);
-            r.endBig?.(ov.endBig.k, ov.endBig.l1, ov.endBig.l2);
+            r.endBig?.(ov.endBig.k, ov.endBig.l1, ov.endBig.l2, ov.endBig.l3);
             if (ov.intro) r.intro(ov.intro.k, ov.intro);
             if (ov.results) r.results(ov.results.k, ov.results);
             if (ov.resultsTall) r.resultsTall(ov.resultsTall.k, ov.resultsTall);

@@ -863,7 +863,7 @@ export function abTall(info, race, { opening = 'old', slug = null } = {}) {
   const H = TEMPLATE.endCard.hold;
   const holdFrom = W + r.fastSeconds * 1000 - r.lineLeadMs + 350;
   const endAt = p.add(top(holdFrom, H.seconds, 0));
-  const endBig = { at: endAt + 0.05, l1: T.endCard[0], l2: T.endCard[1] };
+  const endBig = { at: endAt + 0.05, l1: T.endCard[0], l2: T.endCard[1], l3: T.endCard[2] ?? '' };
   const readable = p.v - loopFade - (endBig.at + 0.18);
   if (readable < TEMPLATE.endCard.minSeconds - 1e-9) throw new Error(`The end card is readable ${readable.toFixed(2)} s: at least ${TEMPLATE.endCard.minSeconds} s (template.json endCard)`);
   return {
@@ -950,8 +950,13 @@ export function raceTall(info, race, { opening = 'new', slug = null } = {}) {
   const fFrom = (fs1.at === 'leader' ? F.leaderIn : reaches(race, fs1.camera === 'game' ? fFollow : fMembers[0], F.p0) ?? F.busiest.t) - (fs1.leadMs ?? 400);
   // (fs1.camera 'game': the game's own follow camera on the group's first marble, which knows the track's roofs,
   // halls and TV cameras; fs1.eye: a fixed camera beside it; otherwise a chase behind and above the group.)
+  // (fs1.tv: the track's own TV camera number tv (its tvCameras entry), turning to keep the group in the picture,
+  // e.g. a loop seen with the skyline or the sea behind it; 4 Nov 2026.)
+  const tvEye = Number.isInteger(fs1.tv) ? info.tv?.[fs1.tv] : null;
   const featureAt = fs1.camera === 'game'
     ? p.add({ type: 'race', follow: fFollow, from: fFrom, dur: D.feature })
+    : tvEye
+    ? p.add({ type: 'pan', eye: { from: tvEye.pos, fov: fs1.fov ?? 44 }, members: fMembers.slice(0, 3), from: fFrom, dur: D.feature, fov: fs1.fov ?? 44 })
     : fs1.eye
     ? p.add({ type: 'pan', eye: fs1.eye, members: fMembers.slice(0, 3), from: fFrom, dur: D.feature, fov: fs1.eye.fov })
     : p.add({ type: 'group', members: fMembers, shot: 'feature', from: fFrom, dur: D.feature, back: fs1.back, up: fs1.up, ahead: fs1.ahead, fov: fs1.fov });
@@ -969,7 +974,7 @@ export function raceTall(info, race, { opening = 'new', slug = null } = {}) {
   const loopFade = 0.25;
   const H = TEMPLATE.endCard.hold;
   const endAt = p.add(top(after + D.results * 300, H.seconds, 0));
-  const endBig = { at: endAt + 0.05, l1: T.endCard[0], l2: T.endCard[1] };
+  const endBig = { at: endAt + 0.05, l1: T.endCard[0], l2: T.endCard[1], l3: T.endCard[2] ?? '' };
   const readable = p.v - loopFade - (endBig.at + 0.18);
   if (readable < TEMPLATE.endCard.minSeconds - 1e-9) throw new Error(`The end card is readable ${readable.toFixed(2)} s: at least ${TEMPLATE.endCard.minSeconds} s (template.json endCard)`);
   return {
@@ -1003,7 +1008,7 @@ export function spotlight(info, race) {
   const loopFade = 0.25;
   const H = TEMPLATE.endCard.hold;
   const endAt = p.add({ type: 'race', follow: V.index, from: c.t - S.leadMs + (S.seconds.race + S.seconds.tag) * 1000, dur: H.seconds, speed: 0 });
-  const endBig = { at: endAt + 0.05, l1: TEMPLATE.abTall.endCard[0], l2: TEMPLATE.abTall.endCard[1] };
+  const endBig = { at: endAt + 0.05, l1: TEMPLATE.abTall.endCard[0], l2: TEMPLATE.abTall.endCard[1], l3: TEMPLATE.abTall.endCard[2] ?? '' };
   const readable = p.v - loopFade - (endBig.at + 0.18);
   if (readable < TEMPLATE.endCard.minSeconds - 1e-9) throw new Error(`The end card is readable ${readable.toFixed(2)} s: at least ${TEMPLATE.endCard.minSeconds} s (template.json endCard)`);
   return {

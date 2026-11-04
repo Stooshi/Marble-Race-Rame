@@ -316,12 +316,12 @@ const broadcastApi = {
     el.style.opacity = String(k);
     if (k > 0 && el.textContent !== text) el.textContent = text;
   },
-  /** The big end card over the frame (abTall): "Play free" and the address, large, in our yellow. */
-  endBig(k = 0, l1 = '', l2 = '') {
+  /** The big end card over the frame (abTall): "Play free" and the address, large, in our yellow; then the follow line under it (4 Nov 2026). */
+  endBig(k = 0, l1 = '', l2 = '', l3 = '') {
     const el = $('endBig');
     el.style.opacity = String(k);
     el.style.transform = `scale(${0.94 + 0.06 * k})`;
-    if (k > 0) { $('endBig1').textContent = l1; $('endBig2').textContent = l2; }
+    if (k > 0) { $('endBig1').textContent = l1; $('endBig2').textContent = l2; $('endBig3').textContent = l3; }
   },
   /** The end card's calm: the frame darkened (0–1 black), under the big lines. */
   dim(k = 0) { $('dimFx').style.opacity = String(k); },
