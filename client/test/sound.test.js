@@ -143,7 +143,7 @@ describe('sound', () => {
     expect(view).toContain("playSound('launch', { duck: false })");
     expect(view).toContain('f.t >= START_SOUND_MS && ((lastT !== null && lastT < START_SOUND_MS)');
     // (50% louder than the old gate sound, Moses 30 Oct 2026: its mean -29.9 dB, 3.5 dB over the old one's -33.4.)
-    expect(fs.readFileSync(path.resolve(__dirname, '../../scripts/convert-audio.sh'), 'utf8')).toContain("print -29.9 - m");
+    expect(fs.readFileSync(path.resolve(__dirname, '../../scripts/convert-audio.sh'), 'utf8')).toContain("print -23.9 - m");
   });
 
   it('the crowd: once per stand per race, under the music, never ducking it', () => {

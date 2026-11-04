@@ -64,10 +64,11 @@ export const CROWD_UNDER = 0.35;
 /**
  * The own marble's hits (the collision click and the obstacle bump, the bump's file 1 dB under the click's): from
  * HIT_LEVEL.soft (the lightest that sounds) to HIT_LEVEL.hard (the hardest), on the effects bus (Moses, 30 Oct
- * 2026: 50% louder at every strength, +3.5 dB; 4 Nov 2026, from his computer test: 6 dB louder again, x2). The
- * click peaks at -9 dBFS in its file (HIT_PEAK_DB): the hardest, as played, about -14 dBFS, well clear of clipping.
+ * 2026: 50% louder at every strength, +3.5 dB; 4 Nov 2026, from his computer test: 6 dB louder again, x2; round 2
+ * the same day: 3 dB louder again, x1.413). The click peaks at -9 dBFS in its file (HIT_PEAK_DB): the hardest, as
+ * played, about -11 dBFS, clear of clipping (in the apps 0.8 x 1.02 = 0.81 of full volume).
  */
-export const HIT_LEVEL = { soft: 0.21, hard: 0.72 };
+export const HIT_LEVEL = { soft: 0.297, hard: 1.017 };
 export const HIT_PEAK_DB = -9;
 /**
  * The speed pad's whoosh (Moses, 4 Nov 2026: "level it with the other effects, under the music's dip"): its
@@ -76,10 +77,10 @@ export const HIT_PEAK_DB = -9;
  */
 export const PAD_LEVEL = 0.25;
 /**
- * The race tunes (Moses, 4 Nov 2026, from his computer test: all 12 about 3 dB lower): each tune voice plays at
- * this gain on the music bus, on the website and in the apps alike. (The ceremony song is unchanged.)
+ * The race tunes (Moses, 4 Nov 2026, from his computer test: all 12 about 3 dB lower; round 2 the same day: 8 dB
+ * lower in all than before that day, 0.398): each tune voice plays at this gain on the music bus, on the website and in the apps alike. (The ceremony song is unchanged.)
  */
-export const TUNE_LEVEL = 0.708;
+export const TUNE_LEVEL = 0.398;
 /** While a sound that dips the music plays (the speed pad), the music dips by this much more (-6 dB). */
 export const DUCK = 0.5;
 /** How many upcoming tunes are kept loaded (this race's and the next race's). */
