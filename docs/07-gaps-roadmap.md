@@ -16,7 +16,7 @@
 | **Help Centre placeholders** | One answer still holds a `[bracket]`: the apps "[coming at launch]" ("[Live once email is switched on.]" removed 1 Nov, email on); whether coins expire is also still open. Fill them in the project doc `claude/help-faq-draft.md` and in `faq.js` together | `client/src/site/help/faq.js` |
 | **Holiday Season pass: the rest** | Built (steps 1, 3 and 5 of the plan): the `seasons` row, the scoreboard season and its end, the top-100 badge (profile and Marble Bag), the pass on Stripe (test mode), Google Play and the App Store, locked season tracks checked by the server, friend rooms, Holiday races and the Track of the Day bonus, and the pre-sale from 28 Nov (activating on 1 Dec, the same on every platform). The seasonal collections (Winter 2026, on sale 1 Dec–7 Jan, then retired) and the season marble (Winter Solstice, given with the pass, numbered) are built too, and the boost-pad jump (on Veliky Ustyug and Sapporo). Still to do: the `holiday-pass-2026` product in Play Console ([runbook](05-runbook.md#the-season-pass-holiday-season-2026)); the App Store setup ([runbook](05-runbook.md#app-store-purchases-the-iphone-app)); the pass page's final design, store texts, terms and Help answers (step 6) (with "Activates 1 December" in the store descriptions) | `src/seasons`, project doc `claude/holiday-season-plan.md` |
 | **App store links** | The website footer shows the App Store / Google Play buttons once their links are in `storeLinks.json` | `client/src/shared/storeLinks.json` |
-| **50 launch tracks** | Done: 141 tracks live in ten series (1 Nov 2026, Moses): the other fifteen Blocks Series 2 tracks switched on 1 Nov after the deploy, the Blocks Series 2 test five switched on 31 Oct after the deploy, Peaks 6–15 and the Chobe switched on 30 Oct after the deploy, the first five Peaks on 27 Oct, the fifteen Rivers on 25 Oct; Track and Field on 19 Oct, Canyon and Block 11–15 on 16 Oct, the Canyon Series on 15 Oct, and the Block Series. The 31 holiday tracks join on 1 Dec (172). Check that every series the landing page shows has live tracks | `docs/data_updates`, `tracks.is_active` |
+| **50 launch tracks** | Done: 143 tracks live in ten series (4 Nov 2026, Moses): Saint-Tropez and Pudong Marble Grand Prix switched on 4 Nov after the deploy, the other fifteen Blocks Series 2 tracks switched on 1 Nov after the deploy, the Blocks Series 2 test five switched on 31 Oct after the deploy, Peaks 6–15 and the Chobe switched on 30 Oct after the deploy, the first five Peaks on 27 Oct, the fifteen Rivers on 25 Oct; Track and Field on 19 Oct, Canyon and Block 11–15 on 16 Oct, the Canyon Series on 15 Oct, and the Block Series. The 31 holiday tracks join on 1 Dec (172). Check that every series the landing page shows has live tracks | `docs/data_updates`, `tracks.is_active` |
 | **Backups** | Not confirmed that Railway backs up the database on the current plan. Until then, take manual `pg_dump` backups | [Runbook](05-runbook.md#backups) |
 
 ## Missing features (planned)
@@ -68,7 +68,7 @@
    - store accounts;
    - legal details;
    - in-app purchases;
-   - ~~the 50 tracks~~ (done: 141 live);
+   - ~~the 50 tracks~~ (done: 143 live);
    - phone testing with the apps;
    - Google Play internal testing (an organisation account needs no 12-tester closed test).
 2. **Second half of November:**
