@@ -43,6 +43,15 @@ Rules that come with it:
 
 This applies from Peaks 6–15 on (after Leagues part 1). Tracks built before 27 Oct 2026, the first five Peaks among them, stay as they are.
 
+## Vary the opening, place the pack separator where it fits (Moses, 4 Nov 2026)
+
+For every new track: vary how it opens (for example a splitter, a funnel, hairpins or the classic
+obstacles), so that no two tracks in a row in a series open the same way. The pack separator (the
+section that spreads the field, such as a slalom) may sit at the start or around 15–20 s in, as long
+as the full report stays within the time limits (last marble home, winner-to-last gap). Tested on the
+opening prototype (branch `prototype/opening-trial`, not merged, not live): a narrow channel before a
+speed pad changed nothing in the race, so it is not a tool for this. Existing tracks stay as they are.
+
 ## Every track has a backward-facing TV camera (Moses, 27 Oct 2026)
 
 Every track, current and future, has **at least one backward-facing TV camera**: a `tvCameras` entry
