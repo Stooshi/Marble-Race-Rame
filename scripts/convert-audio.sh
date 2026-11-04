@@ -73,9 +73,15 @@ if [ -z "${SKIP_EFFECTS:-}" ]; then
   ffmpeg -v error -y -i "$f" -vn -map_metadata -1 -af "$ff" -c:a aac -b:a 96k -ar 44100 -movflags +faststart "$OUT/start-rolling.m4a"
   # The player's own marble hitting another (Moses, 30 Oct 2026): a 0.13 s click, too short for the loudness
   # measure, so levelled by its peak instead (to -9 dBFS); the engine plays it soft, under the music (HIT_LEVEL).
+  # 4 Nov 2026 (Moses, "about 10 dB louder, no clipping or crackle"): HIT_UP_DB more, its sharpest peaks held at
+  # HIT_CEILING by a smooth limiter (1 ms attack, 10 ms release, worked at 192 kHz so it adds no grit); the
+  # click is nearly all peak, so it gives about 8 dB of loudness in the file (the rest is HIT_LEVEL in engine.js).
+  HIT_UP_DB=12
+  HIT_CEILING=0.84 # -1.5 dBFS
   f=$(ls "$IN"/MARBLE\ COLLISSION*.mp3)
   g=$(ffmpeg -hide_banner -nostats -i "$f" -af volumedetect -f null - 2>&1 | sed -n 's/.*max_volume: \(.*\) dB/\1/p')
-  ff="volume=$(awk -v m="$g" 'BEGIN { print -9 - m }')dB"
+  limit="alimiter=limit=$HIT_CEILING:attack=1:release=10:level=disabled"
+  ff="aresample=192000,volume=$(awk -v m="$g" -v u="$HIT_UP_DB" 'BEGIN { print -9 - m + u }')dB,$limit,aresample=48000"
   ffmpeg -v error -y -i "$f" -vn -map_metadata -1 -af "$ff" -ar 48000 -c:a libopus -b:a 64k -vbr on -application audio "$OUT/marble-hit.webm"
   ffmpeg -v error -y -i "$f" -vn -map_metadata -1 -af "$ff" -c:a aac -b:a 96k -ar 44100 -movflags +faststart "$OUT/marble-hit.m4a"
   # The player's own marble hitting an obstacle: from 4 Nov 2026 "BUMP" (Pixabay 206492, a short 0.16 s knock;
@@ -84,11 +90,11 @@ if [ -z "${SKIP_EFFECTS:-}" ]; then
   # loudness measure's shortest window), the click as levelled above, then 1 dB under it (BUMP_UNDER_DB). Its
   # midrange knock carries on phone speakers. The engine plays both on the same scale (HIT_LEVEL).
   lufs() { ffmpeg -hide_banner -nostats -i "$1" -af "$2apad=pad_dur=0.4,ebur128" -f null - 2>&1 | sed -n 's/^ *I: *\(-*[0-9.]*\) LUFS/\1/p' | tail -1; }
-  hl=$(lufs "$f" "volume=$(awk -v m="$g" 'BEGIN { print -9 - m }')dB,")
+  hl=$(lufs "$f" "$ff,")
   b=$(ls "$IN"/BUMP\ -\ PIXABAY*.mp3)
   BUMP_UNDER_DB=1
   bl=$(lufs "$b" "")
-  ff="volume=$(awk -v t="$hl" -v m="$bl" -v u="$BUMP_UNDER_DB" 'BEGIN { print t - m - u }')dB"
+  ff="aresample=192000,volume=$(awk -v t="$hl" -v m="$bl" -v u="$BUMP_UNDER_DB" 'BEGIN { print t - m - u }')dB,$limit,aresample=48000"
   ffmpeg -v error -y -i "$b" -vn -map_metadata -1 -af "$ff" -ar 48000 -c:a libopus -b:a 64k -vbr on -application audio "$OUT/marble-bump.webm"
   ffmpeg -v error -y -i "$b" -vn -map_metadata -1 -af "$ff" -c:a aac -b:a 96k -ar 44100 -movflags +faststart "$OUT/marble-bump.m4a"
   # The speed pad (Moses, 4 Nov 2026): the old overtaking whoosh brought back, when the player's own marble

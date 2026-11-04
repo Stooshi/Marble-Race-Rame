@@ -64,12 +64,13 @@ export const CROWD_UNDER = 0.35;
 /**
  * The own marble's hits (the collision click and the obstacle bump, the bump's file 1 dB under the click's): from
  * HIT_LEVEL.soft (the lightest that sounds) to HIT_LEVEL.hard (the hardest), on the effects bus (Moses, 30 Oct
- * 2026: 50% louder at every strength, +3.5 dB; 4 Nov 2026, from his computer test: 6 dB louder again, x2; round 2
- * the same day: 3 dB louder again, x1.413). The click peaks at -9 dBFS in its file (HIT_PEAK_DB): the hardest, as
- * played, about -11 dBFS, clear of clipping (in the apps 0.8 x 1.02 = 0.81 of full volume).
+ * 2026: 50% louder at every strength, +3.5 dB; 4 Nov 2026, from his computer test: 6 dB louder again, then 3 dB;
+ * that night about 10 dB more: 8.2 dB in the files (scripts/convert-audio.sh, their peaks held by a limiter)
+ * and 1.8 dB here, x1.229). The click peaks at -1.5 dBFS in its file (HIT_PEAK_DB): the hardest, as played at
+ * full effects level, about -1.5 dBFS, never over (in the apps exactly full volume: 0.8 x 1.25 = 1).
  */
-export const HIT_LEVEL = { soft: 0.297, hard: 1.017 };
-export const HIT_PEAK_DB = -9;
+export const HIT_LEVEL = { soft: 0.365, hard: 1.25 };
+export const HIT_PEAK_DB = -1.5;
 /**
  * The speed pad's whoosh (Moses, 4 Nov 2026: "level it with the other effects, under the music's dip"): its
  * file at -20 LUFS like the others, played at this gain on the effects bus, and the music dips (DUCK) while it

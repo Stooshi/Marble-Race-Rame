@@ -56,11 +56,11 @@ describe('the own marble\'s hits', () => {
   });
   it('never ducking the music, never clipping; only the live viewer plays it, for the own marbles', () => {
     // (50% louder from 30 Oct 2026, at every strength; 6 dB louder again, x2, from Moses's computer test, 4 Nov 2026.)
-    expect(HIT_LEVEL.soft).toBeCloseTo(0.07 * 1.5 * 2 * 1.413, 3);
-    expect(HIT_LEVEL.hard).toBeCloseTo(0.24 * 1.5 * 2 * 1.413, 3);
+    expect(HIT_LEVEL.soft).toBeCloseTo(0.365, 3);
+    expect(HIT_LEVEL.hard).toBeCloseTo(1.25, 3);
     const l = levels();
     const db = (g) => 20 * Math.log10(g);
-    expect(HIT_PEAK_DB + db(HIT_LEVEL.hard * l.effects)).toBeLessThan(-10); // (the hardest click's peak as played: about -11 dBFS)
+    expect(HIT_PEAK_DB + db(HIT_LEVEL.hard * l.effects)).toBeLessThanOrEqual(-1.4); // (the hardest click's peak as played: about -1.5 dBFS, never over)
     expect(MUSIC_UNDER).toBeGreaterThan(0);
     expect(HIT_LEVEL.soft).toBeLessThan(HIT_LEVEL.hard);
     expect(marbleHit('x', 1)).toBe(false); // (not unlocked in a test: nothing plays)
