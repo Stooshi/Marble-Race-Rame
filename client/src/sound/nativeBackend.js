@@ -7,7 +7,8 @@
  *     game and the player's own music keeps playing under it, as before;
  *   - each voice starts at its wall-clock moment (the race clock as shown); one that is late (the app
  *     was in the background, a file loaded late) starts part-way in, where the race is: in step;
- *   - fades are volume steps (the plugin has no ramps); paused in the background, picked up in step.
+ *   - fades are volume steps (the plugin has no ramps), the music's dip too (duck(), as on the website, 4 Nov
+ *     2026); paused in the background, picked up in step.
  * Only used when the app has the plugin (an older app build falls back to the website's Web Audio).
  *   - The player's start-up time (Android's MediaPlayer: a seek, then the start) is measured on each
  *     play and kept (`lead`), so a sound is started that much early and heard on time.
@@ -34,7 +35,10 @@ export function createNativeBackend({ plugin, now = () => Date.now(), durations 
     configured ??= Promise.resolve(plugin.configure?.({ focus: false, fade: false })).catch(() => {});
     return configured;
   };
-  const volumeOf = (v) => Math.max(0, Math.min(1, (v.bus === 'music' ? levels.music : levels.effects) * v.gain * v.fade));
+  let dip = 1; // the music's dip under a sound that dips it (the speed pad), as on the website (4 Nov 2026)
+  let dipTimer = null;
+  let dipRamp = null;
+  const volumeOf = (v) => Math.max(0, Math.min(1, (v.bus === 'music' ? levels.music * dip : levels.effects) * v.gain * v.fade));
   const setVolume = (v) => plugin.setVolume({ assetId: v.name, volume: volumeOf(v) }).catch(() => {});
 
   /** Where a voice should be heard from if played now (s into the file), or null if it's over. */
@@ -167,7 +171,20 @@ export function createNativeBackend({ plugin, now = () => Date.now(), durations 
         playing: () => v.on,
       };
     },
-    duck() {}, // (no ducking in the apps: the race sounds are short and sit over the music anyway)
+    /** The music dips to `level` for `seconds`, then comes back over 0.4 s (volume steps: the plugin has no ramps). */
+    duck(level, seconds) {
+      clearTimeout(dipTimer);
+      clearInterval(dipRamp);
+      const music = () => { for (const v of voices) if (v.on && v.bus === 'music') setVolume(v); };
+      dip = level;
+      music();
+      dipTimer = setTimeout(() => {
+        const from = dip;
+        const steps = Math.round(400 / STEP_MS);
+        let k = 0;
+        dipRamp = setInterval(() => { k += 1; dip = from + ((1 - from) * k) / steps; music(); if (k >= steps) clearInterval(dipRamp); }, STEP_MS);
+      }, seconds * 1000);
+    },
     setLevels(next) { levels = next; for (const v of voices) if (v.on) setVolume(v); },
     background(hidden) {
       heldBack = hidden;

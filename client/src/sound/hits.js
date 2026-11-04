@@ -63,45 +63,115 @@ export function createHitDetector({ arc, room }) {
  * and never the ordinary track (its walls, rails or floor), the splitter's divider or a hanging curtain
  * (passed through, not hit).
  *
- * Read from the race's own events (`{ t, i, type: 'bounce', obstacle }`, which the stream carries on
- * its frames ahead of what is shown) and timed on the race clock: the sound plays when the race as shown
- * reaches the hit. How hard: the own marble's speed lost across it (from the frames, BUMP.before ms
- * before to BUMP.after ms after), silent under BUMP.minDrop, the loudest from BUMP.fullDrop. At most
- * one every BUMP.gapMs of race time. Scrubbing back or a jump in time starts afresh.
+ * Worked out on this screen from the race's own frames (Moses, 4 Nov 2026: no longer from the race's
+ * events, which carry at most one obstacle hit per marble every 3 s, about half of them), like the speed
+ * pad: every streamed frame (20 a second, ahead of what is shown) is checked against the obstacles'
+ * footprints as the physics has them (`solidsAt`, ../three/trackFeatures.js, the same the marbles are
+ * drawn round). A hit is where the own marble's path from one frame, carried on at the speed it came in
+ * with, would run into an obstacle before the next frame: the race's own rule for an obstacle hit (a
+ * fresh hit coming into it at more than BUMP.minSpeed; any fresh touch of a parked piece). Played when
+ * the race as shown reaches it, louder the harder it came in (full at BUMP.fullSpeed). At most one every
+ * BUMP.gapMs of race time; never played late. Scrubbing back or a jump in time starts afresh.
  */
 export const BUMP = {
-  minDrop: 1.5,     // m/s lost: below this, no sound (a graze)
-  fullDrop: 8,      // m/s lost: the loudest
-  before: 100,      // ms before the hit: its speed going in
-  after: 150,       // ms after: its speed coming out
+  minSpeed: 4,      // m/s into the obstacle: the race's own threshold for an obstacle hit (src/game/physicsSimulator.js hitSolids)
+  fullSpeed: 14,    // m/s into it: the loudest
+  freshMs: 300,     // the same marble against an obstacle again within this: the same hit (as the race has it)
+  steps: 16,        // points checked along each frame's carried-on path
+  touch: 0.1,       // m: within reach plus this of an obstacle on the carried-on path: into it (the frames' rounding)
+  deflect: 0.08,    // m: the next frame at least this far from where the marble would have been without the hit (it was thrown off)
+  maxStepMs: 120,   // frames further apart than this: no hit measured (a frame dropped, a jump in time)
   gapMs: 1000,      // at most one a second
   late: 400,        // a hit already this far behind the race as shown is let go (never played late)
-  keepMs: 15000,    // frames kept for the speeds (the view may be held back up to 12 s)
 };
-/** The event obstacles that make no bump: the ordinary track, other marbles, the divider, curtains. */
-export const NOT_OBSTACLES = new Set(['wall', 'marble', 'splitter', 'jump_catch', 'icicles']);
+/** What makes no bump: the ordinary track, other marbles, the divider, curtains, and the loop (a track piece, not an obstacle). */
+export const NOT_OBSTACLES = new Set(['wall', 'marble', 'splitter', 'jump_catch', 'icicles', 'loop']);
+const PARKED = new Set(['bus']);
 
-export function createBumpDetector() {
+/** Where an obstacle's footprint is at one moment (its numbers copied: `solidsAt` reuses its objects). */
+const footprints = (solidsAt, t) => (solidsAt?.(t) ?? []).map((o) => ({ id: o.id, type: o.type, s: o.s, xa: o.xa, xb: o.xb, reach: o.reach, parked: PARKED.has(o.type) || Boolean(o.parked) }));
+/** Distance from (s, x) to a footprint at `s0` stretching xa..xb across, with the vector from it. */
+const offset = (s, x, o, xa = o.xa, xb = o.xb) => {
+  const ds = s - o.s;
+  const dx = x - Math.max(xa, Math.min(xb, x));
+  return { d: Math.hypot(ds, dx), ds, dx };
+};
+
+/**
+ * The obstacle hits of the marbles `own` between frames a → b, given the frame before (z): → [{ t, i, k }]
+ * (k: how hard, 0 to 1). `at(t)` gives the footprints at race time t.
+ */
+export function obstacleHits(z, a, b, own, { at, arc, room }) {
+  const out = [];
+  if (!z || !a || !b) return out;
+  const dtA = a.t - z.t;
+  const dtB = b.t - a.t;
+  if (!(dtA > 0) || !(dtB > 0) || dtA > BUMP.maxStepMs || dtB > BUMP.maxStepMs) return out;
+  let then = null;
+  let now = null;
+  for (const i of own ?? []) {
+    const pz = z.p?.[i];
+    const pa = a.p?.[i];
+    if (!Number.isFinite(pz) || !Number.isFinite(pa) || !Number.isFinite(b.p?.[i]) || pa >= 1 || b.p[i] >= 1) continue;
+    const sz = pz * arc;
+    const sa = pa * arc;
+    const xz = (z.l?.[i] ?? 0) * room;
+    const xa = (a.l?.[i] ?? 0) * room;
+    const vs = ((sa - sz) / dtA) * 1000; // m/s along, as it came in
+    const vx = ((xa - xz) / dtA) * 1000; // m/s across
+    if (!then) { then = at(z.t); now = at(a.t); }
+    let best = null;
+    now.forEach((o, k) => {
+      if (NOT_OBSTACLES.has(o.type) || Math.abs(o.xa) > 1e3 || Math.abs(sa - o.s) > 8) return;
+      const was = then[k];
+      const ou = was && Math.abs(was.xa) < 1e3 ? ((o.xa - was.xa) / dtA) * 1000 : 0; // its own speed across
+      if (offset(sa, xa, o).d < o.reach) return; // (already against it: not a fresh hit)
+      for (let n = 1; n <= BUMP.steps; n += 1) {
+        const u = (n / BUMP.steps) * (dtB / 1000);
+        const s = sa + vs * u;
+        const x = xa + vx * u;
+        const q = offset(s, x, o, o.xa + ou * u, o.xb + ou * u);
+        if (q.d >= o.reach + BUMP.touch) continue;
+        const ns = q.d > 1e-6 ? q.ds / q.d : -1;
+        const nx = q.d > 1e-6 ? q.dx / q.d : 0;
+        const into = -(vs * ns + (vx - ou) * nx);
+        if ((o.parked || into > BUMP.minSpeed) && (!best || u < best.u)) best = { u, into: Math.max(0, into), type: o.type };
+        break;
+      }
+    });
+    if (!best) continue;
+    // Confirmed by the next frame: the marble was thrown off its way (a near miss carries straight on).
+    const dev = Math.hypot(b.p[i] * arc - (sa + (vs * dtB) / 1000), (b.l?.[i] ?? 0) * room - (xa + (vx * dtB) / 1000));
+    if (dev < BUMP.deflect) continue;
+    out.push({ t: a.t + best.u * 1000, i, k: Math.max(0.001, Math.min(1, (best.into - BUMP.minSpeed) / (BUMP.fullSpeed - BUMP.minSpeed))), into: best.into, dev, type: best.type });
+  }
+  return out;
+}
+
+export function createBumpDetector({ solidsAt = null, arc = 0, room = 0 } = {}) {
+  let track = solidsAt ? { at: (t) => footprints(solidsAt, t), arc, room } : null;
   let pending = [];      // the own marbles' obstacle hits not yet reached, by time
-  let frames = [];       // { t, v } as streamed (ahead of what is shown)
+  let recent = [];       // the last three streamed frames
+  const lastHit = new Map(); // marble → race time of its last hit (the race's "fresh hit")
   let lastAt = -Infinity;
   let shownAt = null;
-  const speedAt = (i, t) => {
-    let best = null;
-    for (const f of frames) if (Array.isArray(f.v) && Number.isFinite(f.v[i]) && (!best || Math.abs(f.t - t) < Math.abs(best.t - t))) best = f;
-    return best && Math.abs(best.t - t) <= 120 ? best.v[i] : null;
-  };
   return {
-    /** A frame as it arrives (its `events`, and the speeds `v`); `own`: the player's marbles' indexes. */
+    /** The track's obstacles, once the 3D view has them: `solidsAt(t)` and the race's metres. */
+    setTrack({ solidsAt: at, arc: a, room: r }) { track = at ? { at: (t) => footprints(at, t), arc: a, room: r } : null; },
+    hasTrack: () => Boolean(track),
+    /** A frame as it arrives (streamed, ahead of what is shown); `own`: the player's marbles' indexes. */
     add(frame, own) {
       if (!frame || !Number.isFinite(frame.t)) return;
-      if (frames.length && frame.t === frames[frames.length - 1].t) return; // (the same frame again)
-      if (frames.length && frame.t < frames[frames.length - 1].t) { frames = []; pending = []; }
-      frames.push({ t: frame.t, v: frame.v });
-      while (frames.length > 2 && frames[0].t < frame.t - BUMP.keepMs) frames.shift();
-      for (const e of frame.events ?? []) {
-        if (e?.type !== 'bounce' || NOT_OBSTACLES.has(e.obstacle) || !(own ?? []).includes(e.i ?? e.index)) continue;
-        pending.push({ t: e.t ?? e.time, i: e.i ?? e.index });
+      const last = recent[recent.length - 1];
+      if (last && frame.t === last.t) return; // (the same frame again)
+      if (last && frame.t < last.t) { recent = []; pending = []; lastHit.clear(); }
+      recent.push({ t: frame.t, p: frame.p, l: frame.l });
+      if (recent.length > 3) recent.shift();
+      if (!track || recent.length < 3 || frame.t < 0) return;
+      for (const h of obstacleHits(recent[0], recent[1], recent[2], own, track)) {
+        if (h.t - (lastHit.get(h.i) ?? -Infinity) < BUMP.freshMs) { lastHit.set(h.i, h.t); continue; }
+        lastHit.set(h.i, h.t);
+        pending.push(h);
       }
     },
     /** The race as shown is at `t` (ms) → a bump's strength (0 to 1) or null. */
@@ -114,19 +184,14 @@ export function createBumpDetector() {
       for (const h of pending) {
         if (h.t > t) { left.push(h); continue; }
         if (t - h.t > BUMP.late || t - lastAt < BUMP.gapMs) continue;
-        const a = speedAt(h.i, h.t - BUMP.before);
-        const b = speedAt(h.i, h.t + BUMP.after);
-        if (a === null || b === null) continue;
-        const drop = a - b;
-        if (drop < BUMP.minDrop) continue;
-        best = Math.max(best, Math.min(1, (drop - BUMP.minDrop) / (BUMP.fullDrop - BUMP.minDrop)) || 0.001);
+        best = Math.max(best, h.k);
       }
       pending = left;
       if (!best) return null;
       lastAt = t;
       return best;
     },
-    reset() { pending = []; frames = []; lastAt = -Infinity; shownAt = null; },
+    reset() { pending = []; recent = []; lastHit.clear(); lastAt = -Infinity; shownAt = null; },
   };
 }
 

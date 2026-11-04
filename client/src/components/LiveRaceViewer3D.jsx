@@ -100,8 +100,9 @@ export default function LiveRaceViewer3D({
   const [ready, setReady] = useState(false); // the race's marbles in and drawn, the hold decided
   const ownRef = useRef(highlight); // (the player's own marbles, for the crowd's cheer)
   ownRef.current = highlight;
-  // The own marble hitting an obstacle (../sound/hits.js; 31 Oct 2026): its hits come with the streamed
-  // frames, ahead of the race as shown, and sound when the race as shown reaches them.
+  // The own marble hitting an obstacle (../sound/hits.js; 31 Oct 2026): found from the streamed frames
+  // against the obstacles' footprints (4 Nov 2026; no longer the race's events), ahead of the race as
+  // shown, and sounded when the race as shown reaches them.
   const bumpRef = useRef({ raceId: null, d: createBumpDetector() });
   if (bumpRef.current.raceId !== (meta?.raceId ?? null)) bumpRef.current = { raceId: meta?.raceId ?? null, d: createBumpDetector() };
   // Fed every streamed frame (takeStreamed, read in the draw loop), so a frame's events are never lost
@@ -350,6 +351,8 @@ export default function LiveRaceViewer3D({
           if (ownRef.current.length && meta?.raceId) {
             if (!hits || hits.raceId !== meta.raceId) { const span = scene.raceSpan?.(); hits = { raceId: meta.raceId, d: span ? createHitDetector(span) : null, gate: createHitGate() }; }
             const k = hits.d?.step(f, ownRef.current);
+            // (The obstacles' footprints, as the marbles are drawn round them: the bump is found from the frames here, 4 Nov 2026.)
+            if (!bumpRef.current.d.hasTrack()) { const span = scene.raceSpan?.(); const at = scene.features?.solidsAt; if (span && at) bumpRef.current.d.setTrack({ solidsAt: at, ...span }); }
             if (takeRef.current && bumpRef.current.raceId === meta.raceId) for (const g of takeRef.current()) bumpRef.current.d.add(g, ownRef.current);
             const b = bumpRef.current.raceId === meta.raceId ? bumpRef.current.d.step(f.t) : null;
             // (The two share one limit, so they never stack into a rattle: the harder of the two plays.)

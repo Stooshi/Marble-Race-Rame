@@ -288,6 +288,20 @@ describe('the engine: beeps and tunes on the race clock', () => {
     expect(calls.some(([k, a]) => k === 'play' && a.assetId === 'start-beeps')).toBe(true);
     await vi.advanceTimersByTimeAsync(engine.BEEPS_GO_S * 1000);
     expect(calls.some(([k, a]) => k === 'play' && a.assetId.startsWith('tune-'))).toBe(true);
+    // The same balance as the website (Moses, 4 Nov 2026): the tune 3 dB under the music level, and the
+    // music dipping under the speed pad's whoosh, then back.
+    const tune = calls.filter(([k, a]) => k === 'setVolume' && a.assetId.startsWith('tune-')).at(-1)[1];
+    const music = engine.levels().music;
+    expect(tune.volume).toBeCloseTo(music * engine.TUNE_LEVEL, 5);
+    const name = tune.assetId;
+    calls.length = 0;
+    engine.speedPad('n1');
+    const dipped = calls.filter(([k, a]) => k === 'setVolume' && a.assetId === name).at(-1)[1];
+    expect(dipped.volume).toBeCloseTo(music * engine.TUNE_LEVEL * engine.DUCK, 5);
+    await vi.advanceTimersByTimeAsync(41000); // (the fake player says every file is 40 s long: the dip lasts that long)
+    expect(calls.some(([k, a]) => k === 'play' && a.assetId === 'speed-pad')).toBe(true);
+    const back = calls.filter(([k, a]) => k === 'setVolume' && a.assetId === name).at(-1)[1];
+    expect(back.volume).toBeCloseTo(music * engine.TUNE_LEVEL, 5);
   });
 });
 

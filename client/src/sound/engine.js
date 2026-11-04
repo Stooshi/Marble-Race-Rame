@@ -23,7 +23,8 @@
  * - The crowd: when the player's own marble passes a Grand Prix stand (crowdCheer, once per stand per
  *   race), under the music. The start sound 1 s after GO (the marbles start rolling; 30 Oct 2026). The player's
  *   own marble hitting another (marbleHit, from ./hits.js): soft, louder for harder hits, under the music,
- *   at most one a second (30 Oct 2026). The own marble hitting an obstacle (marbleBump, from ./hits.js;
+ *   at most one a second (30 Oct 2026). The own marble hitting an obstacle (marbleBump, from ./hits.js, found
+ *   from the frames since 4 Nov 2026;
  *   31 Oct 2026): the same, at the same level; the two share one limit (at most one hit sound every
  *   0.5 s). The own marble rolling onto a speed pad (speedPad, from ./hits.js; 4 Nov 2026): the old
  *   overtaking whoosh, once per pad pass, at the other effects' level, the music dipping under it.
@@ -61,18 +62,24 @@ export const MUSIC_UNDER = 0.32;
 /** The crowd plays this far under the effects slider (its file 4 LU under the music's): about 6 dB under the music. */
 export const CROWD_UNDER = 0.35;
 /**
- * The own marble's hits: from HIT_LEVEL.soft (the lightest that sounds) to HIT_LEVEL.hard (the hardest), on the
- * effects bus (Moses, 30 Oct 2026: 50% louder at every strength, +3.5 dB); even the hardest peaks under the
- * music's (the 0.13 s click peaks at -9 dBFS in its file: HIT_PEAK_DB).
+ * The own marble's hits (the collision click and the obstacle bump, the bump's file 1 dB under the click's): from
+ * HIT_LEVEL.soft (the lightest that sounds) to HIT_LEVEL.hard (the hardest), on the effects bus (Moses, 30 Oct
+ * 2026: 50% louder at every strength, +3.5 dB; 4 Nov 2026, from his computer test: 6 dB louder again, x2). The
+ * click peaks at -9 dBFS in its file (HIT_PEAK_DB): the hardest, as played, about -14 dBFS, well clear of clipping.
  */
-export const HIT_LEVEL = { soft: 0.105, hard: 0.36 };
+export const HIT_LEVEL = { soft: 0.21, hard: 0.72 };
 export const HIT_PEAK_DB = -9;
 /**
  * The speed pad's whoosh (Moses, 4 Nov 2026: "level it with the other effects, under the music's dip"): its
- * file at -20 LUFS like the others, played at this gain on the effects bus (-8 dB: about the start sound's
- * loudness), and the music dips (DUCK) while it plays (on the website; the apps don't dip).
+ * file at -20 LUFS like the others, played at this gain on the effects bus, and the music dips (DUCK) while it
+ * plays. First 0.4 (-8 dB, the start sound's loudness); the same day, from Moses's computer test, 4 dB lower: 0.25.
  */
-export const PAD_LEVEL = 0.4;
+export const PAD_LEVEL = 0.25;
+/**
+ * The race tunes (Moses, 4 Nov 2026, from his computer test: all 12 about 3 dB lower): each tune voice plays at
+ * this gain on the music bus, on the website and in the apps alike. (The ceremony song is unchanged.)
+ */
+export const TUNE_LEVEL = 0.708;
 /** While a sound that dips the music plays (the speed pad), the music dips by this much more (-6 dB). */
 export const DUCK = 0.5;
 /** How many upcoming tunes are kept loaded (this race's and the next race's). */
@@ -258,7 +265,7 @@ function playTune(name, atWall) {
   race.tune = { name, atWall, voice: null };
   if (!musicOn()) return;
   load(name);
-  race.tune.voice = backend.start(name, { atWall, bus: 'music', loop: true, loopLength: TRACK_SECONDS[name] });
+  race.tune.voice = backend.start(name, { atWall, bus: 'music', gain: TUNE_LEVEL, loop: true, loopLength: TRACK_SECONDS[name] });
 }
 
 /** Starts (or re-times) a race on this screen: `goAt` is GO as shown here (wall ms). */

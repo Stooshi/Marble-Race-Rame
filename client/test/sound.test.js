@@ -104,7 +104,7 @@ describe('sound', () => {
     expect(RACE_TRACKS).toEqual(['tune-3', 'tune-4', 'tune-5', 'tune-6', 'tune-7', 'tune-8', 'tune-9', 'tune-10', 'tune-11', 'tune-12', 'tune-13', 'tune-14']); // (RACE MUSIC 2 out, 7-14 in: 28 Oct 2026; RACE MUSIC 1 out: 30 Oct 2026)
     for (const t of RACE_TRACKS) expect(TRACK_SECONDS[t], t).toBeGreaterThan(20);
     const engine = fs.readFileSync(path.resolve(__dirname, '../src/sound/engine.js'), 'utf8');
-    expect(engine).toContain("race.tune.voice = backend.start(name, { atWall, bus: 'music', loop: true, loopLength: TRACK_SECONDS[name] });");
+    expect(engine).toContain("race.tune.voice = backend.start(name, { atWall, bus: 'music', gain: TUNE_LEVEL, loop: true, loopLength: TRACK_SECONDS[name] });"); // (3 dB lower: Moses, 4 Nov 2026)
     expect(engine).not.toMatch(/crossfade\(|CROSSFADE_S|TUNE_FADE_S|takeTune\(name\)/);
     expect(engine).toContain("c.voice = backend.start(CEREMONY, { atWall: now(), bus: 'music', loop: true });"); // (the ceremony rule as before)
     expect(TRACK_SECONDS[CEREMONY]).toBeGreaterThan(CEREMONY_SECONDS); // (the ceremony song fades out before it would loop)

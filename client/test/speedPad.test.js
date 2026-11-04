@@ -61,8 +61,7 @@ describe('the speed pad sound', () => {
   it('the whoosh file, at the other effects\' level, the music dipping; the live viewer plays it for the own marbles', () => {
     expect(SOUNDS.pad).toBe('speed-pad');
     for (const ext of ['webm', 'm4a']) expect(fs.existsSync(path.resolve(__dirname, `../public/audio/speed-pad.${ext}`))).toBe(true);
-    expect(PAD_LEVEL).toBeGreaterThan(0.25);
-    expect(PAD_LEVEL).toBeLessThan(0.6);
+    expect(PAD_LEVEL).toBeCloseTo(0.4 * 10 ** (-4 / 20), 2); // (first 0.4, then 4 dB lower: Moses, 4 Nov 2026)
     expect(DUCK).toBeLessThan(1);
     expect(speedPad('x')).toBe(false); // (not unlocked in a test: nothing plays)
     const engine = fs.readFileSync(path.resolve(__dirname, '../src/sound/engine.js'), 'utf8');
