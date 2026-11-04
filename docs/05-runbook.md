@@ -1,6 +1,6 @@
 # 5. Operations runbook
 
-*Last updated 30 Oct 2026.* How to deploy, change data, roll back, back up, and fix the usual problems. Items marked **[check]** should be confirmed the first time they are done.
+*Last updated 4 Nov 2026.* How to deploy, change data, roll back, back up, and fix the usual problems. Items marked **[check]** should be confirmed the first time they are done.
 
 ## Deploying
 
@@ -249,17 +249,17 @@ Remove `STRIPE_ALLOW_LIVE`, put the test key and the test `whsec_…` back, and 
 
 ## Email (Brevo)
 
-**Email is on since 1 Nov 2026** (Moses: `BREVO_API_KEY` and `EMAIL_FROM` = social@marblespins.com set on Railway, redeployed; a password-reset email arrived). So "Forgot your password?" shows on the log-in page and reset emails are sent, and **every new sign-up gets a "Confirm your email" link** (EN/SV; texts in project doc `claude/signup-confirm-email.md`; Settings sends a new one). Accounts saved before 1 Nov stay unconfirmed until the player asks for a link in Settings. The pass reminders stay off (`PASS_REMINDERS_SENDING`) until Moses says go. The steps below are how it was set up (and how to set it up again).
+**Email is on since 1 Nov 2026** (Moses: `BREVO_API_KEY` and `EMAIL_FROM` set on Railway, redeployed; a password-reset email arrived). **Sender since 4 Nov 2026: `EMAIL_FROM` = no-reply@marblespins.com** (was social@; set with the Railway CLI, the server redeployed on the same code `d7928db64307`). The same day marblespins.com was re-authenticated in Brevo: the Brevo code (TXT) and the two DKIM CNAMEs `brevo1._domainkey` and `brevo2._domainkey` at Simply.com; DMARC unchanged. Support replies still have support@ as reply-to. So "Forgot your password?" shows on the log-in page and reset emails are sent, and **every new sign-up gets a "Confirm your email" link** (EN/SV; texts in project doc `claude/signup-confirm-email.md`; Settings sends a new one). Accounts saved before 1 Nov stay unconfirmed until the player asks for a link in Settings. The pass reminders stay off (`PASS_REMINDERS_SENDING`) until Moses says go. The steps below are how it was set up (and how to set it up again).
 
 1. **Create the account.** Make a Brevo account (brevo.com) in the company's name.
 2. **Authenticate marblespins.com.** In Brevo, go to Senders, Domains & Dedicated IPs → Domains → Add a domain → `marblespins.com`.
-   - Brevo shows DNS records: a Brevo code, DKIM, DMARC and SPF.
+   - Brevo shows DNS records: a Brevo code (TXT), DKIM (today two CNAMEs, `brevo1._domainkey` and `brevo2._domainkey`), DMARC and SPF. Keep the existing DMARC record if there is one.
    - Add each record at the domain's DNS provider, **Simply.com → marblespins.com → DNS** (as in [Simply.com: the DNS records](#2-simplycom-the-dns-records)), exactly as Brevo shows it, then click **Verify** in Brevo.
-3. **Add the sender.** Go to Senders → Add a sender → `no-reply@marblespins.com`, name "Marble Spins". It is verified through the domain.
+3. **Add the sender.** Go to Senders → Add a sender → `no-reply@marblespins.com`, name "Marble Spins" (the sender in use since 4 Nov 2026). It is verified through the domain.
 4. **Create the key.** Go to SMTP & API → API keys → Generate a new API key, named for example "railway".
 5. **Set the variables on Railway, then restart:**
    - `BREVO_API_KEY` = the key (never paste it in chat or docs);
-   - optional: `EMAIL_FROM` (default `no-reply@marblespins.com`) and `EMAIL_FROM_NAME` (default "Marble Spins").
+   - `EMAIL_FROM` = `no-reply@marblespins.com` (set explicitly since 4 Nov 2026; also the default) and optional `EMAIL_FROM_NAME` (default "Marble Spins"). Set them with the Railway CLI (`railway variables --set …`), never by pasting values in chat.
 6. **Test it:**
    1. On marblespins.com, choose Log in → Forgot your password?
    2. Enter your own account's email.

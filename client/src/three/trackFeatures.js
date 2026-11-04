@@ -1101,7 +1101,9 @@ export function buildTrackFeatures(centerline, channel, features, { lite = false
   }
 
   for (const f of features) {
-    if (f.type === 'boost' || f.type === 'bump' || f.type === 'box' || f.type === 'jump' || f.type === 'cobbles' || f.type === 'paint' || DECOR.includes(f.type)) continue;
+    // Only what the physics treats as an obstacle (src/game ALL_SOLID_TYPES): never the loop, a track piece (4 Nov 2026:
+    // its start point was drawn as an obstacle, marbles nudged round nothing on Saint-Tropez and Pudong).
+    if (f.type === 'boost' || f.type === 'bump' || f.type === 'box' || f.type === 'jump' || f.type === 'cobbles' || f.type === 'paint' || f.type === 'loop' || DECOR.includes(f.type)) continue;
     const l = f.l ?? 0;
     const xa = Math.min(l, f.l2 ?? l) * across;
     const xb = Math.max(l, f.l2 ?? l) * across;
