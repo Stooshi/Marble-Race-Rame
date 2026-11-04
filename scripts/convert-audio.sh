@@ -76,20 +76,17 @@ if [ -z "${SKIP_EFFECTS:-}" ]; then
   ff="volume=$(awk -v m="$g" 'BEGIN { print -9 - m }')dB"
   ffmpeg -v error -y -i "$f" -vn -map_metadata -1 -af "$ff" -ar 48000 -c:a libopus -b:a 64k -vbr on -application audio "$OUT/marble-hit.webm"
   ffmpeg -v error -y -i "$f" -vn -map_metadata -1 -af "$ff" -c:a aac -b:a 96k -ar 44100 -movflags +faststart "$OUT/marble-hit.m4a"
-  # The player's own marble hitting an obstacle (Moses, 31 Oct 2026): "the same level as the collision sound".
-  # First matched by energy (mean level), which left it 5 LU quieter to the ear than the click and hard to
-  # hear (Moses, 1 Nov 2026): now matched by loudness, both measured padded to 0.4 s (the loudness measure's
-  # shortest window), the click as levelled above; the bump's peak stays under the click's. The 28 ms of
-  # silence at its start trimmed, so it sounds on the hit.
+  # The player's own marble hitting an obstacle: from 4 Nov 2026 "BUMP" (Pixabay 206492, a short 0.16 s knock;
+  # Moses: it replaces "Marble bump on obsticals", the phone-handling sound, 31 Oct to 4 Nov). Levelled "just
+  # under the collision click" (Moses, 4 Nov 2026): matched by loudness, both measured padded to 0.4 s (the
+  # loudness measure's shortest window), the click as levelled above, then 1 dB under it (BUMP_UNDER_DB). Its
+  # midrange knock carries on phone speakers. The engine plays both on the same scale (HIT_LEVEL).
   lufs() { ffmpeg -hide_banner -nostats -i "$1" -af "$2apad=pad_dur=0.4,ebur128" -f null - 2>&1 | sed -n 's/^ *I: *\(-*[0-9.]*\) LUFS/\1/p' | tail -1; }
   hl=$(lufs "$f" "volume=$(awk -v m="$g" 'BEGIN { print -9 - m }')dB,")
-  b=$(ls "$IN"/MARBLE\ BUMP\ ON\ OBSTICALS*.mp3)
-  trim="atrim=start=0.028,asetpts=PTS-STARTPTS"
-  bl=$(lufs "$b" "$trim,")
-  # Then 16 dB over the click's loudness (Moses, 1 Nov 2026: "I still can't hear it", +4 dB; "still too
-  # low", +8; "maybe to 16 dB, we can decrease if it's too loud"): a short knock in a busy race needs more
-  # than the click. Its peak about -2 dBFS: above the click's, still clear of clipping.
-  ff="$trim,volume=$(awk -v t="$hl" -v m="$bl" 'BEGIN { print t - m + 16 }')dB"
+  b=$(ls "$IN"/BUMP\ -\ PIXABAY*.mp3)
+  BUMP_UNDER_DB=1
+  bl=$(lufs "$b" "")
+  ff="volume=$(awk -v t="$hl" -v m="$bl" -v u="$BUMP_UNDER_DB" 'BEGIN { print t - m - u }')dB"
   ffmpeg -v error -y -i "$b" -vn -map_metadata -1 -af "$ff" -ar 48000 -c:a libopus -b:a 64k -vbr on -application audio "$OUT/marble-bump.webm"
   ffmpeg -v error -y -i "$b" -vn -map_metadata -1 -af "$ff" -c:a aac -b:a 96k -ar 44100 -movflags +faststart "$OUT/marble-bump.m4a"
   # The speed pad (Moses, 4 Nov 2026): the old overtaking whoosh brought back, when the player's own marble

@@ -23,7 +23,7 @@
   - the pass reminder emails (built; `PASS_REMINDERS_SENDING` stays off until Moses says go);
   - the guest deletion job (dry run);
   - deleting replays over 30 days old (dry run until `REPLAY_TRIM=on`; new replays are already a third of the size).
-- **Newest (2–4 Nov):** the speed pad sound (the old whoosh, the own marble only, 4 Nov); the loop in the track kit; Saint-Tropez and Pudong Marble Grand Prix live, 4 Nov (143 live tracks); a check that no land stands inside the channel, on every kit track (3 Nov, after Saint-Tropez's land inside the loop's run-out, fixed in the website's scenery the same day).
+- **Newest (2–4 Nov):** the speed pad sound (the old whoosh, the own marble only) and a new bump sound (just under the collision click), 4 Nov; the loop in the track kit; Saint-Tropez and Pudong Marble Grand Prix live, 4 Nov (143 live tracks); a check that no land stands inside the channel, on every kit track (3 Nov, after Saint-Tropez's land inside the loop's run-out, fixed in the website's scenery the same day).
 - **Newest the week before (26 Oct – 1 Nov):**
   - Peaks (15) and the Chobe live; Blocks Series 2: all twenty live (141 live tracks);
   - Leagues and League Night live; the free League down to 3 tracks;
