@@ -6,6 +6,7 @@ module.exports = [
   require('./kit-proving-ground'),
   require('./kit-proving-ground-mirrored'),
   ...require('./variety'),
+  require('./opening-trial-splitter-first'),
   require('./are-run'),
   require('./portes-du-soleil-run'),
   require('./park-city-run'),

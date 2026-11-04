@@ -1179,6 +1179,17 @@
    "side": 1,
    "marbles": 4
   },
+  "opening-trial-splitter-first": {
+   "name": "Opening Trial: Splitter First",
+   "series": "World Tour",
+   "lighting": "day",
+   "v": "6cc018d9",
+   "bytes": 14538,
+   "bytes2x": 34630,
+   "t": 14615,
+   "side": 1,
+   "marbles": 7
+  },
   "outback-christmas-burst": {
    "name": "Outback Christmas Burst",
    "series": "Canyons",
