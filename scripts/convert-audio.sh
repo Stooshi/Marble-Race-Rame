@@ -6,7 +6,7 @@
 #   bash scripts/convert-audio.sh            everything
 #   SKIP_EFFECTS=1 bash scripts/convert-audio.sh   the music and the countdown only
 #   ONLY_TUNES=1 bash scripts/convert-audio.sh     the race tunes only
-#   ONLY_EFFECTS=1 bash scripts/convert-audio.sh   the race sounds only (start, crowd, collision, bump)
+#   ONLY_EFFECTS=1 bash scripts/convert-audio.sh   the race sounds only (start, crowd, collision, bump, speed pad)
 # Levels: everything at -20 LUFS, the crowd at -24 (the engine mixes the music under the
 # effects and the crowd under the music). Two passes: the loudness is measured first, then one
 # steady gain is applied to the whole file (loudnorm's linear mode), so a looping track
@@ -92,6 +92,16 @@ if [ -z "${SKIP_EFFECTS:-}" ]; then
   ff="$trim,volume=$(awk -v t="$hl" -v m="$bl" 'BEGIN { print t - m + 16 }')dB"
   ffmpeg -v error -y -i "$b" -vn -map_metadata -1 -af "$ff" -ar 48000 -c:a libopus -b:a 64k -vbr on -application audio "$OUT/marble-bump.webm"
   ffmpeg -v error -y -i "$b" -vn -map_metadata -1 -af "$ff" -c:a aac -b:a 96k -ar 44100 -movflags +faststart "$OUT/marble-bump.m4a"
-  # (No overtaking whoosh for now: Moses, 28 Oct 2026.)
+  # The speed pad (Moses, 4 Nov 2026): the old overtaking whoosh brought back, when the player's own marble
+  # rolls onto a speed pad. From 0.7 s to 2.9 s of the file (its peak at 1.2 s, so it swells as the pad kicks
+  # the marble on), a 30 ms fade in and a 0.6 s fade out. At -20 LUFS like the other effects (measured with
+  # ebur128 and one steady gain: at 2.2 s loudnorm would level it dynamically); the engine plays it at
+  # PAD_LEVEL with the music dipping under it.
+  f=$(ls "$IN"/MARBLES\ OVERTAKING*.mp3)
+  cut="atrim=start=0.7:end=2.9,asetpts=PTS-STARTPTS,afade=t=in:d=0.03,afade=t=out:st=1.6:d=0.6"
+  pl=$(ffmpeg -hide_banner -nostats -i "$f" -af "$cut,ebur128" -f null - 2>&1 | sed -n 's/^ *I: *\(-*[0-9.]*\) LUFS/\1/p' | tail -1)
+  ff="$cut,volume=$(awk -v m="$pl" 'BEGIN { print -20 - m }')dB"
+  ffmpeg -v error -y -i "$f" -vn -map_metadata -1 -af "$ff" -ar 48000 -c:a libopus -b:a 64k -vbr on -application audio "$OUT/speed-pad.webm"
+  ffmpeg -v error -y -i "$f" -vn -map_metadata -1 -af "$ff" -c:a aac -b:a 96k -ar 44100 -movflags +faststart "$OUT/speed-pad.m4a"
 fi
 ls -l "$OUT"

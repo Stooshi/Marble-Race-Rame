@@ -131,6 +131,53 @@ export function createBumpDetector() {
 }
 
 /**
+ * The player's own marble passing over a speed pad (Moses, 4 Nov 2026: the old overtaking whoosh brought
+ * back as the speed pad's sound). Worked out from the race's own frames on the race clock, never for other
+ * marbles: the moment the own marble rolls onto a pad (its start, plus PAD.onto metres), inside the pad's
+ * width, as the pads' flash does (../three/trackFeatures.js). (Not from the race's events: the stream keeps
+ * only some of a marble's pad passes, the newsworthy ones.) Each pass counts once: a marble only crosses a
+ * pad's start once per pass. At most one every PAD.gapMs of race time, so two pads close together don't
+ * stack. Scrubbing back or a jump in time starts afresh.
+ */
+export const PAD = {
+  onto: 1,          // metres onto the pad: rolled onto it
+  gapMs: 800,       // at most one this often
+  maxStepMs: 600,   // frames further apart than this: no crossing measured (a jump in time)
+};
+/** A track's speed pads (`physics.features` of type 'boost'), in the race's own metres. */
+export function padsOf(features, { arc, room }) {
+  return (features ?? []).filter((f) => f?.type === 'boost' && Number.isFinite(f.at)).map((f) => ({ s0: f.at * arc, x0: (f.l ?? 0) * room, half: f.halfWidth ?? 1.3 }));
+}
+export function createPadDetector({ pads, arc, room }) {
+  let prev = null;
+  let lastAt = -Infinity;
+  return {
+    /** The next frame (as shown) and the own marbles' indexes → whether one of them rolled onto a pad. */
+    step(frame, own) {
+      const before = prev;
+      prev = frame;
+      if (!pads?.length || !before || !frame || !(frame.t >= 0)) return false;
+      const dt = frame.t - before.t;
+      if (dt <= 0 || dt > PAD.maxStepMs) { if (dt < 0) lastAt = -Infinity; return false; }
+      let onto = false;
+      for (const o of own ?? []) {
+        const p0 = before.p?.[o];
+        const p1 = frame.p?.[o];
+        if (!Number.isFinite(p0) || !Number.isFinite(p1) || p0 >= 1) continue;
+        const s0 = p0 * arc;
+        const s1 = p1 * arc;
+        const x = (frame.l?.[o] ?? 0) * room;
+        for (const pad of pads) if (s0 < pad.s0 + PAD.onto && s1 >= pad.s0 + PAD.onto && Math.abs(x - pad.x0) <= pad.half) onto = true;
+      }
+      if (!onto || frame.t - lastAt < PAD.gapMs) return false;
+      lastAt = frame.t;
+      return true;
+    },
+    reset() { prev = null; lastAt = -Infinity; },
+  };
+}
+
+/**
  * The two hit sounds share one limit (Moses, 31 Oct 2026), so they never stack into a rattle: at most
  * one of either every HIT_GATE.anyMs of race time (each still at most one a second on its own).
  */

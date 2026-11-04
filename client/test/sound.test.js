@@ -131,11 +131,11 @@ describe('sound', () => {
     expect(web).toContain('src.loopEnd = to;');
   });
 
-  it('no overtaking whoosh for now; the start sound at GO (the marbles start rolling, 30 Oct 2026)', () => {
-    expect(SOUNDS).toEqual({ crowd: 'crowd-grand-prix', launch: 'start-rolling', beeps: 'start-beeps', hit: 'marble-hit', bump: 'marble-bump' });
+  it('no overtaking whoosh on overtakes (it is the speed pad sound since 4 Nov 2026); the start sound at GO (the marbles start rolling, 30 Oct 2026)', () => {
+    expect(SOUNDS).toEqual({ crowd: 'crowd-grand-prix', launch: 'start-rolling', beeps: 'start-beeps', hit: 'marble-hit', bump: 'marble-bump', pad: 'speed-pad' });
     // (The old gate sound, MARBLES SPEEDING UP, is gone from the game.)
     expect(fs.existsSync(path.resolve(__dirname, '../public/audio/launch.webm'))).toBe(false);
-    for (const n of ['start-rolling', 'marble-hit', 'marble-bump']) for (const ext of ['webm', 'm4a']) expect(fs.existsSync(path.resolve(__dirname, `../public/audio/${n}.${ext}`))).toBe(true);
+    for (const n of ['start-rolling', 'marble-hit', 'marble-bump', 'speed-pad']) for (const ext of ['webm', 'm4a']) expect(fs.existsSync(path.resolve(__dirname, `../public/audio/${n}.${ext}`))).toBe(true);
     const view = fs.readFileSync(path.resolve(__dirname, '../src/components/LiveRaceViewer3D.jsx'), 'utf8');
     expect(view).not.toContain("'whoosh'");
     // (1 s after the GO beep, on the race clock, not dipping the music; Moses, 30 Oct 2026.)

@@ -18,8 +18,8 @@ import SkipToResults from './SkipToResults';
 import FrameMeter, { useFrameMeter } from './FrameMeter';
 import { useTvMoments } from './tvMomentsSetting';
 import { sawGo } from '../api/firstSteps';
-import { createBumpDetector, createHitDetector, createHitGate } from '../sound/hits';
-import { START_SOUND_MS, crowdCheer, marbleBump, marbleHit, play as playSound, prepare as prepareSound, raceCeremony, raceCountdown, raceGo, soundReport, stopCountdown, whenSoundReady } from '../sound/engine';
+import { createBumpDetector, createHitDetector, createHitGate, createPadDetector, padsOf } from '../sound/hits';
+import { START_SOUND_MS, crowdCheer, marbleBump, marbleHit, play as playSound, speedPad, prepare as prepareSound, raceCeremony, raceCountdown, raceGo, soundReport, stopCountdown, whenSoundReady } from '../sound/engine';
 import { watchReadiness } from './raceReadiness';
 import { api } from '../api/client';
 import { FLYOVER_MS } from '../three/flyover';
@@ -316,6 +316,7 @@ export default function LiveRaceViewer3D({
     let lastGone = null;
     let crowdCheckAt = 0;
     let hits = null; // (the own marble's hit sound: one detector per race)
+    let pads = null; // (the speed pad sound: one detector per race)
     const grandPrix = Boolean(meta?.track?.physics?.kit?.grandPrix);
     const tick = (now) => {
       const dt = (now - lastNow) / 1000;
@@ -356,6 +357,11 @@ export default function LiveRaceViewer3D({
               if (b !== null && (k === null || k === undefined || b > k)) marbleBump(meta.raceId, b);
               else marbleHit(meta.raceId, k);
             }
+          }
+          // The player's own marble rolling onto a speed pad: the whoosh, once per pad pass (../sound/hits.js; Moses, 4 Nov 2026).
+          if (ownRef.current.length && meta?.raceId) {
+            if (!pads || pads.raceId !== meta.raceId) { const span = scene.raceSpan?.(); pads = { raceId: meta.raceId, d: span ? createPadDetector({ pads: padsOf(theTrack?.physics?.features, span), ...span }) : null }; }
+            if (pads.d?.step(f, ownRef.current)) speedPad(meta.raceId);
           }
           // The crowd: the player's own marble passing a stand (Grand Prix) cheers it, once per stand (Moses, 28 Oct 2026).
           if (grandPrix && f.t >= 0 && meta?.raceId && now - crowdCheckAt > 200) {

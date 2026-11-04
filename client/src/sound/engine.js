@@ -25,8 +25,9 @@
  *   own marble hitting another (marbleHit, from ./hits.js): soft, louder for harder hits, under the music,
  *   at most one a second (30 Oct 2026). The own marble hitting an obstacle (marbleBump, from ./hits.js;
  *   31 Oct 2026): the same, at the same level; the two share one limit (at most one hit sound every
- *   0.5 s). (No overtaking whoosh for now.)
- * - The music sits well under the effects (MUSIC_UNDER) and dips under the gate sound (DUCK).
+ *   0.5 s). The own marble rolling onto a speed pad (speedPad, from ./hits.js; 4 Nov 2026): the old
+ *   overtaking whoosh, once per pad pass, at the other effects' level, the music dipping under it.
+ * - The music sits well under the effects (MUSIC_UNDER) and dips (DUCK) under the speed pad's whoosh.
  * - Readiness: whenSoundReady() / soundMissing() for the race page's readiness check and report.
  */
 import { createWebBackend } from './webBackend';
@@ -44,7 +45,7 @@ export const TRACK_SECONDS = {
   'tune-12': 32.22, 'tune-13': 28.548729, 'tune-14': 28.138437, ceremony: 59.1,
 };
 export const CEREMONY = 'ceremony';
-export const SOUNDS = { crowd: 'crowd-grand-prix', launch: 'start-rolling', beeps: 'start-beeps', hit: 'marble-hit', bump: 'marble-bump' };
+export const SOUNDS = { crowd: 'crowd-grand-prix', launch: 'start-rolling', beeps: 'start-beeps', hit: 'marble-hit', bump: 'marble-bump', pad: 'speed-pad' };
 /**
  * The start sound (the marbles start rolling) plays this long after the GO beep, on the race clock (Moses,
  * 30 Oct 2026), without dipping the music: its file 50% louder than the old gate sound's (+3.5 dB).
@@ -66,7 +67,13 @@ export const CROWD_UNDER = 0.35;
  */
 export const HIT_LEVEL = { soft: 0.105, hard: 0.36 };
 export const HIT_PEAK_DB = -9;
-/** While the gate sound plays the music dips by this much more (-6 dB). */
+/**
+ * The speed pad's whoosh (Moses, 4 Nov 2026: "level it with the other effects, under the music's dip"): its
+ * file at -20 LUFS like the others, played at this gain on the effects bus (-8 dB: about the start sound's
+ * loudness), and the music dips (DUCK) while it plays (on the website; the apps don't dip).
+ */
+export const PAD_LEVEL = 0.4;
+/** While a sound that dips the music plays (the speed pad), the music dips by this much more (-6 dB). */
 export const DUCK = 0.5;
 /** How many upcoming tunes are kept loaded (this race's and the next race's). */
 export const AHEAD = 2;
@@ -349,6 +356,11 @@ export function marbleHit(raceId, strength) {
 /** The player's own marble hit an obstacle (`strength` 0 to 1, from ./hits.js): as marbleHit, at the same level. */
 export function marbleBump(raceId, strength) {
   return hitSound('bump', raceId, strength);
+}
+/** The player's own marble rolled onto a speed pad (from ./hits.js, once per pad pass): the whoosh, the music dipping. */
+export function speedPad(raceId) {
+  if (race && race.id !== raceId) return false;
+  return play('pad', { gain: PAD_LEVEL, duck: true });
 }
 function hitSound(key, raceId, strength) {
   if (race && race.id !== raceId) return false;
