@@ -80,7 +80,7 @@ export function mix(plan, length, { tune }, file) {
   }
 }
 
-export async function record({ variant = 'A', opening = 'old', slug, race: raceName, kind = 'production', format = 'wide', tune = 7, logo = TEMPLATE.intro.logo, out, from = null, to = null, fly = null, stills = null, clip = null, at = null, promoStart = null }) {
+export async function record({ variant = 'A', opening = 'old', text = null, slug, race: raceName, kind = 'production', format = 'wide', tune = 7, logo = TEMPLATE.intro.logo, out, from = null, to = null, fly = null, stills = null, clip = null, at = null, promoStart = null }) {
   fly ??= kind === 'clip' ? 12 : kind === 'broadcast' ? 4.5 : 15; // (seconds: the flyover's length)
   const [W, H] = SIZES[format];
   const race = JSON.parse(fs.readFileSync(path.join(here, '..', 'dev', '.tracks', `${raceName}.json`), 'utf8'));
@@ -100,7 +100,7 @@ export async function record({ variant = 'A', opening = 'old', slug, race: raceN
     const info = await page.evaluate(() => window.rec.info());
     // (The track's series, from the track picker's list: the broadcast's cards name it on tracks outside the Grand Prix.)
     const series = JSON.parse(fs.readFileSync(path.join(here, '..', 'src', 'shared', 'trackBanners.json'), 'utf8')).banners?.[slug]?.series ?? null;
-    const plan = PLANS[kind](info, race, { logo, fly, clip, at, promoStart, variant, slug, opening, series });
+    const plan = PLANS[kind](info, race, { logo, fly, clip, at, promoStart, variant, slug, opening, series, text });
     // (The plan beside the video: swap-logo.mjs uses it to put another logo version in.)
     fs.writeFileSync(`${out}.plan.json`, JSON.stringify({ slug, race: raceName, kind, format, tune, logo, length: plan.length, marks: plan.marks, resultsTall: plan.resultsTall, shots: plan.shots, sound: plan.sound, texts: plan.texts, captions: plan.captions, hooks: plan.hooks, lines: plan.lines, endBig: plan.endBig, dim: plan.dim, markers: plan.markers, bc: plan.bc, intro: plan.intro, results: plan.results }));
     log(`${info.name}: ${kind} ${format}, ${plan.length.toFixed(1)} s, ${plan.shots.length} shots; winner ${info.podium[0].name} (gate ${info.podium[0].gate}) by ${info.margin} ms${plan.packShare !== undefined ? `; the race ${Math.round(plan.packShare * 100)}% on the pack` : ''}`);
@@ -254,7 +254,7 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   const num = (n) => (opt(n, null) === null ? null : Number(opt(n)));
   await record({
     slug, race, kind: opt('kind', 'production'), format: opt('format', 'wide'), tune: Number(opt('tune', 7)), logo: opt('logo', TEMPLATE.intro.logo),
-    variant: opt('variant', 'A'), opening: opt('opening', 'old'), clip: opt('clip', null), at: num('at'), fly: num('fly'), promoStart: num('promos'),
+    variant: opt('variant', 'A'), opening: opt('opening', 'old'), text: { hook: opt('hook', null), curve: opt('curve', null), feature: opt('feature-line', null) }, clip: opt('clip', null), at: num('at'), fly: num('fly'), promoStart: num('promos'),
     out: opt('out', path.join(process.cwd(), `${slug}-${opt('kind', 'production')}-${opt('format', 'wide')}.mp4`)), from: num('from'), to: num('to'), stills: opt('stills', null) === 'shots' ? 'shots' : opt('stills', null)?.split(',').map(Number) ?? null,
   });
   process.exit(0); // (the browser and the dev server can keep the process waiting after closing)

@@ -888,8 +888,27 @@ export function abTall(info, race, { opening = 'old', slug = null } = {}) {
  *   5. the results board (the first four: place, marble, gate, gap), then the big end card on the frozen, dimmed
  *      winner (endCard.hold: readable at least 2.5 s), fading into frame 1 (it loops).
  */
-export function raceTall(info, race, { opening = 'new', slug = null } = {}) {
-  const T = TEMPLATE.raceTall;
+// The on-screen text rule (Moses, 5 Nov 2026, client/video/DAILY-ORDER.md): each video's own lines, at most 6 words,
+// never money or prizes. Looks-only: the text never touches the race.
+export function checkLine(text) {
+  if (text == null) return text;
+  const words = text.trim().split(/\s+/).filter(Boolean);
+  if (words.length > 6) throw new Error(`On-screen line too long (${words.length} words, max 6): "${text}"`);
+  if (/\b(money|cash|prizes?|jackpot|bet\s+money)\b/i.test(text) || /\bwin\s+(money|cash|prizes?)\b/i.test(text)) throw new Error(`On-screen line mentions money or prizes: "${text}"`);
+  return text;
+}
+
+export function raceTall(info, race, { opening = 'new', slug = null, text = null } = {}) {
+  const T0 = TEMPLATE.raceTall;
+  const X = text ?? {};
+  // (Per-video lines from --hook, --curve and --feature-line replace the template's lines for this video only.)
+  const T = {
+    ...T0,
+    oldHook: checkLine(X.hook ?? T0.oldHook),
+    newHooks: X.hook ? { ...T0.newHooks, [slug]: checkLine(X.hook), default: checkLine(X.hook) } : T0.newHooks,
+    lines: X.curve ? [checkLine(X.curve), ...T0.lines.slice(1)] : T0.lines,
+    featureLines: X.feature ? { ...(T0.featureLines ?? {}), [slug]: checkLine(X.feature) } : T0.featureLines,
+  };
   const D = T.seconds[opening];
   const V = race.video;
   if (!V) throw new Error('raceTall needs a race picked by scripts/video-pick.js (its video moments)');
