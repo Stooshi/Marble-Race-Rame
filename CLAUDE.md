@@ -11,4 +11,5 @@
 - **Coins only move through `economy.change()`**, which writes the coin ledger.
 - **Deploys:** the server is deployed by hand by Moses. Vercel builds the website from `Main`.
 - **Every Sunday: a docs review** (Moses, 25 Oct 2026; a scheduled task runs it): every doc in `docs/` and the project (`cto/*`, `claude/*`) checked against the code and fixed; the week's changelog `claude/changelog/<year>-W<week>.md`; `claude/open-decisions.md` and `claude/known-issues.md` kept current; `docs/README.md` (= `cto/README.md`) a one-page status; a PDF of the technical documentation, `Marble-Spins-Tech-Docs-<date>.pdf`, sent to Moses (the Projects tool can't store PDFs; Moses uploads it to `cto/pdf/`).
+- **"videos today"** (Moses, 5 Nov 2026, standing until he says stop): follow `client/video/DAILY-ORDER.md`. It sets the 17:00 and 23:00 sets, the rules, the report, and the list of tracks already used, which is updated after each day.
 - **Commits:** push with `git fetch -q origin Main && git rebase -q origin/Main; git push -q origin HEAD:Main`.
