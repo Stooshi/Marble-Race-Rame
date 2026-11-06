@@ -40,6 +40,8 @@ Rules that come with it:
 - **Place them where the flyover and the TV cameras show them.** Make the feature the track's `signature` (the flyover's highlight) or give it a TV moment.
 - **The checks still apply:** fairness, the phone budget and the scenery checks. If a feature fails one, **tune it rather than remove it**.
 - **A new series' plan lists each track's feature** for Moses's approval before anything is built.
+- **Jumps are capped at 3 tracks, and the cap is used up** (Moses, 6 Nov 2026): no new track or new layout gets a jump or hop over a gap until Moses says otherwise. Pick one of the other features.
+- **A re-laid track** (a live track given a new layout, 6 Nov 2026) follows the same rules, keeps its name and slug, and its records start again (`node scripts/physics-track-sql.js <slug> --relayout "…"`, `docs/04-game-rules.md`).
 
 This applies from Peaks 6–15 on (after Leagues part 1). Tracks built before 27 Oct 2026, the first five Peaks among them, stay as they are.
 
@@ -104,7 +106,7 @@ module.exports = track({
   | `staggered-drop` | The gate lets the field go in five waves of four starting places, 0.15 s apart, in a new order every race; a short rough stretch lets the waves catch up before the pile-up |
   | `tunnel-launch` | Where the gate's funnel ends, the plunge dives into a tunnel (`tunnel`: its look) and bursts out into daylight |
   | `banked-turn` | The steep plunge straight into a steep banked first turn (`side`); the field fans up the wall |
-  | `boost-launch` | A gentler drop, then a strip of boost pads wall to wall: the same kick for everyone. It tends to keep the front starting group ahead; follow it with deep, tight S-bends (as Wadi Mujib Burst) and check the groups early |
+  | `boost-launch` | A gentler drop, then a strip of boost pads wall to wall: the same kick for everyone. It tends to keep the front starting group ahead; follow it with deep, tight S-bends (as Wadi Mujib Burst) and check the groups early. Not for Lagos Marble Grand Prix's new layout (Moses, 6 Nov 2026: it favoured the front starting group on Track and Field) |
   | `funnel-drop` | A longer bowl at the gate; the order mixes as the field squeezes into the channel |
   | `crest-start` | The steep plunge into a short climb and over a rounded crest: the field bunches and spills over in a new order |
   | `clean-drop` | The field let go in waves, a plunge with nothing in it, at full speed into deep, tight S-bends (`side`) that shuffle the field |

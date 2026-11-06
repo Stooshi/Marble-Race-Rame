@@ -6,7 +6,8 @@
  * (never a computer player), saved accounts only, with the country the player had when they joined the
  * race (race_entries.country, filled in at the start by a trigger; so a later change of country never
  * moves an old record, and records start from when a player chose their country). Deleted and
- * suspended players drop out. A tie goes to the earlier race.
+ * suspended players drop out. A tie goes to the earlier race. A track with a new layout counts only the
+ * races since it (tracks.records_since, src/game/recordsSince.js).
  *
  *   byTrack(db, slug)      → { track: { slug, name }, records: [{ country, name, ms, userId, username, at }] } fastest first, or null
  *   byCountry(db, code)    → { country, name, records: [{ slug, track, ms, userId, username, at }] } by track name
@@ -14,6 +15,7 @@
  */
 const { shownName } = require('../names/shown');
 const { nameOf, isCountry } = require('.');
+const { counts } = require('../game/recordsSince');
 
 const CACHE_MS = 60_000;
 const cache = new Map();
@@ -40,8 +42,9 @@ async function byTrack(db, slug) {
          SELECT DISTINCT ON (e.country) e.country, e.finish_time_ms AS ms, u.id AS user_id, u.username, u.display_name, r.finished_at AS at
            FROM race_entries e
            JOIN races r ON r.id = e.race_id AND r.status = 'finished'
+           JOIN tracks t ON t.id = r.track_id
            JOIN users u ON u.id = e.user_id
-          WHERE r.track_id = $1 AND ${COUNTED}
+          WHERE r.track_id = $1 AND ${COUNTED} AND ${counts()}
           ORDER BY e.country, e.finish_time_ms, r.finished_at
        ) best ORDER BY ms, at`,
       [track.id],
@@ -63,7 +66,7 @@ async function byCountry(db, code) {
            JOIN races r ON r.id = e.race_id AND r.status = 'finished'
            JOIN tracks t ON t.id = r.track_id AND ${LIVE}
            JOIN users u ON u.id = e.user_id
-          WHERE e.country = $1 AND ${COUNTED}
+          WHERE e.country = $1 AND ${COUNTED} AND ${counts()}
           ORDER BY t.id, e.finish_time_ms, r.finished_at
        ) best ORDER BY track`,
       [code],

@@ -6,6 +6,7 @@
 // With --rebuild it prints the update that moves an existing classic track
 // onto the new physics instead (its old races keep replaying as they ran):
 //   node scripts/physics-track-sql.js san-francisco --rebuild > docs/data_updates/<date>-san-francisco-rebuild.sql
+// With --relayout it prints a new layout for a live track, whose records start again (see relayoutSql).
 // With --retune it prints a later re-tune of a track already on the new physics
 // (an update that has run is never edited: a new one is added), with what
 // changed in its header:
@@ -21,6 +22,7 @@ if (!track) {
 }
 const mode = process.argv[3];
 process.stdout.write(mode === '--rebuild' ? rebuildSql(track) : mode === '--retune' ? retuneSql(track, process.argv[4])
+  : mode === '--relayout' ? relayoutSql(track, process.argv[4])
   : mode === '--add-hidden' ? hiddenTrackSql(track, process.argv[4]) : trackSql(track));
 
 // A new track added switched off (is_active false): nobody can race on it yet,
@@ -87,6 +89,17 @@ UPDATE tracks
        physics = ${q(JSON.stringify(t.physics))}::jsonb
  WHERE slug = ${q(t.slug)};
 `;
+}
+
+// A new layout for a live track (Moses, 6 Nov 2026): as a re-tune, and its records start again
+// (tracks.records_since, src/game/recordsSince.js). Its name, slug and past races stay.
+//   node scripts/physics-track-sql.js stockholm-marble-grand-prix --relayout "What changed." > docs/data_updates/<date>-<slug>-new-layout.sql
+function relayoutSql(t, note = 'Its new layout as now in code.') {
+  const sql = retuneSql(t, `${note} Its track record, country records and players' personal bests start again from now (tracks.records_since); past results stay.`);
+  return sql
+    .replace(`-- One-time data update: ${t.name} re-tuned.`, `-- One-time data update: ${t.name} gets a new layout.`)
+    .replace('scripts/physics-track-sql.js --retune.', 'scripts/physics-track-sql.js --relayout.')
+    .replace(`       physics = `, `       records_since = now(),\n       physics = `);
 }
 
 function rebuildSql(t) {

@@ -1,5 +1,7 @@
 'use strict';
 
+const { counts } = require('../game/recordsSince');
+
 const { computerPlayers } = require('../marbles/computerPlayers');
 const express = require('express');
 const db = require('../db');
@@ -149,15 +151,17 @@ router.get('/:idOrSlug', optionalAuth, async (req, res) => {
             rec.marble_name AS record_marble, rec.username AS record_holder, rec.entry_id AS record_entry_id, rec.is_bot AS record_is_bot,
             (SELECT MIN(e.split_time_ms) FROM race_entries e
                JOIN races r ON r.id = e.race_id AND r.status = 'finished'
-              WHERE r.track_id = $1) AS best_split_ms
+              JOIN tracks t ON t.id = r.track_id
+              WHERE r.track_id = $1 AND ${counts()}) AS best_split_ms
        FROM (SELECT 1) one
        LEFT JOIN LATERAL (
          SELECT e.finish_time_ms, e.race_id, m.name AS marble_name, u.username, e.id AS entry_id, e.is_bot
            FROM race_entries e
            JOIN races r ON r.id = e.race_id AND r.status = 'finished'
            JOIN marbles m ON m.id = e.marble_id
+           JOIN tracks t ON t.id = r.track_id
            LEFT JOIN users u ON u.id = e.user_id
-          WHERE r.track_id = $1
+          WHERE r.track_id = $1 AND ${counts()}
           ORDER BY e.finish_time_ms ASC, r.finished_at ASC
           LIMIT 1
        ) rec ON true`,

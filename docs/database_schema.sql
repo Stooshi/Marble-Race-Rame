@@ -1410,3 +1410,9 @@ CREATE TABLE IF NOT EXISTS first_steps (
     PRIMARY KEY (user_id, step)
 );
 CREATE INDEX IF NOT EXISTS idx_first_steps_created ON first_steps (step, created_at);
+
+-- Records start again on a new layout (Moses, 6 Nov 2026; src/game/recordsSince.js): when a track's
+-- layout changes, the data update that puts it in sets this to that moment, and the track record, the
+-- country records and the players' personal bests on the track count only races finished since.
+-- NULL (every track until then): all its races count. Past results and replays are never touched.
+ALTER TABLE tracks ADD COLUMN IF NOT EXISTS records_since timestamptz;

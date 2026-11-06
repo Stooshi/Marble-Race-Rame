@@ -37,8 +37,8 @@ The YouTube LONG video needs a proper thumbnail: a sharp shot of the pack with b
 - **End card:** "Follow for a new race every day".
 - **Tracks:**
   - use live tracks only;
-  - use only tracks never used in a video before (list below);
-  - every day includes at least one Grand Prix track.
+  - use only tracks never used in a video before (list below), except Grand Prix tracks (next point);
+  - every day includes at least one Grand Prix track: Sahara on 7 Nov 2026, the last one never used. From 8 Nov a Grand Prix track may be used again, always on a new seed: **never a seed already used on any Grand Prix track** (list below; the shared-layout tracks run the same race on the same seed). Add every Grand Prix video's seed to the list (Moses, 6 Nov 2026).
 - **The Grand Prix kit tracks share one layout.** On the same seed they run the same race; only the looks differ. So two Grand Prix videos must use different seeds.
   - On these tracks the TV cameras film from under the raised track, which shows empty hills.
   - Film the feature with a close camera behind the pack instead.
@@ -121,4 +121,5 @@ Any slot counts: Shorts, long videos, the Spotlight, and planned social clips.
   - Pudong;
   - Sydney;
   - Wyrmwood Hollow.
+- **Grand Prix seeds used** (never again on any Grand Prix track): Elderglade 1113814; Frostmere 2467963; Lagos 2784723; Nairobi 2539234; Pudong 1945309, 2832237; Stockholm 1604792 (the Spotlight); Sydney 2507558; Wyrmwood Hollow 2357097. Not known: the planned clips and the earlier Dubai, Delhi and Istanbul videos; their seeds were not recorded.
 - **Other tracks:** beijing-nest-200, bullet-hell (planned clip), checkpoint-rush, chobe, cotahuasi, danube, Final Level, flipper-spins, grand-canyon-burst, grand-champion (planned clip), Greenland Expedition, irrawaddy, k2, kali-gandaki, Kirkjufell Block Falls, London Steeplechase, marble-stadium-sprint, nanjing, niagara (Cube Falls), Paris Eiffel Tower Run, phantom-peak, pyramid-run, redwood, Rhine Castle Run, saint-tropez, san-francisco, Singapore Block Gardens, sky-islands (planned clip), sognefjord, stockholm, Thames Bridges Run, the-stack, tokyo (planned clip), Venice Cube Canals, Verdon Burst, waimea (planned clip), zambezi, zurich.

@@ -1,5 +1,7 @@
 'use strict';
 
+const { counts } = require('./recordsSince');
+
 const { shownName } = require('../names/shown');
 const { dressRows } = require('../marbles/computerPlayers');
 const { dressComputerPlayers } = require('../marbles/showcase');
@@ -330,19 +332,24 @@ async function getResults(client, raceId) {
 /**
  * For every entry in a finished race, how it compares with what came before on
  * the same track: the player's previous bests (finish time, halfway split,
- * position) and the track record as it stood before this race.
+ * position) and the track record as it stood before this race. On a track with a new layout only the
+ * races since it count (tracks.records_since, src/game/recordsSince.js): its first race on the new
+ * layout is a first finish there.
  * Keyed by entry id.
  */
 async function getComparisons(client, raceId) {
   const { rows } = await client.query(
     `WITH this_race AS (
-       SELECT id, track_id, finished_at FROM races WHERE id = $1 AND status = 'finished'
+       SELECT r.id, r.track_id, r.finished_at, tr.records_since
+         FROM races r JOIN tracks tr ON tr.id = r.track_id
+        WHERE r.id = $1 AND r.status = 'finished'
      ),
      earlier AS (
        SELECT e.user_id, e.finish_time_ms, e.split_time_ms, e.finish_position
          FROM race_entries e
          JOIN races r ON r.id = e.race_id AND r.status = 'finished'
          JOIN this_race t ON r.track_id = t.track_id AND r.finished_at < t.finished_at
+        WHERE ${counts('r', 't')}
      )
      SELECT e.id AS entry_id,
             prev.races AS previous_races_on_track,

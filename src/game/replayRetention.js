@@ -9,6 +9,8 @@
  *   - each track's record: the fastest time on it by anyone, and the fastest by a player;
  *   - the country records: each country's fastest player on each track (as src/country/records.js counts them);
  *   - each collection marble's first win (its certificate's race).
+ * A track with a new layout (tracks.records_since, src/game/recordsSince.js) has these records twice:
+ * the old layout's, kept as they were, and the new layout's since; both replays are kept.
  * A race older than 30 days without its replay still has its results; "Watch replay" then says the
  * replay is no longer kept (GET /api/races/:id/replay: 410 `replay_gone`).
  *
@@ -32,25 +34,25 @@ const keepSql = (recent = KEEP_RECENT) => `
   ) recent
   UNION
   SELECT race_id FROM (
-    SELECT DISTINCT ON (r.track_id) e.race_id
-      FROM race_entries e JOIN races r ON r.id = e.race_id AND r.status = 'finished'
+    SELECT DISTINCT ON (r.track_id, (t.records_since IS NULL OR r.finished_at >= t.records_since)) e.race_id
+      FROM race_entries e JOIN races r ON r.id = e.race_id AND r.status = 'finished' JOIN tracks t ON t.id = r.track_id
      WHERE e.finish_time_ms IS NOT NULL
-     ORDER BY r.track_id, e.finish_time_ms, r.finished_at
+     ORDER BY r.track_id, (t.records_since IS NULL OR r.finished_at >= t.records_since), e.finish_time_ms, r.finished_at
   ) track_record
   UNION
   SELECT race_id FROM (
-    SELECT DISTINCT ON (r.track_id) e.race_id
-      FROM race_entries e JOIN races r ON r.id = e.race_id AND r.status = 'finished'
+    SELECT DISTINCT ON (r.track_id, (t.records_since IS NULL OR r.finished_at >= t.records_since)) e.race_id
+      FROM race_entries e JOIN races r ON r.id = e.race_id AND r.status = 'finished' JOIN tracks t ON t.id = r.track_id
      WHERE e.finish_time_ms IS NOT NULL AND NOT e.is_bot
-     ORDER BY r.track_id, e.finish_time_ms, r.finished_at
+     ORDER BY r.track_id, (t.records_since IS NULL OR r.finished_at >= t.records_since), e.finish_time_ms, r.finished_at
   ) player_record
   UNION
   SELECT race_id FROM (
-    SELECT DISTINCT ON (r.track_id, e.country) e.race_id
-      FROM race_entries e JOIN races r ON r.id = e.race_id AND r.status = 'finished' JOIN users u ON u.id = e.user_id
+    SELECT DISTINCT ON (r.track_id, (t.records_since IS NULL OR r.finished_at >= t.records_since), e.country) e.race_id
+      FROM race_entries e JOIN races r ON r.id = e.race_id AND r.status = 'finished' JOIN tracks t ON t.id = r.track_id JOIN users u ON u.id = e.user_id
      WHERE e.country IS NOT NULL AND NOT e.is_bot AND e.finish_time_ms IS NOT NULL
        AND u.deleted_at IS NULL AND u.suspended_at IS NULL AND NOT u.is_guest
-     ORDER BY r.track_id, e.country, e.finish_time_ms, r.finished_at
+     ORDER BY r.track_id, (t.records_since IS NULL OR r.finished_at >= t.records_since), e.country, e.finish_time_ms, r.finished_at
   ) country_record
   UNION
   SELECT race_id FROM (

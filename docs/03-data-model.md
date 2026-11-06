@@ -126,6 +126,7 @@ A new player's first steps, for the back office Dashboard's funnel (2 Nov 2026; 
 | `thumbnail_url`, `created_by`, `created_at`, `updated_at` | |
 | `is_active` | Shown and raced. New tracks are added switched off and turned on later, by hand in Railway's query box (`UPDATE tracks SET is_active = true WHERE slug = …`, as the Rivers were on 25 Oct 2026 and the first five Peaks on 27 Oct) or by a data update (the holiday tracks: `2027-03-31-switch-on-holiday-tracks`). So the live count is in the database, not the repository (143 on 4 Nov 2026, after Moses switched on Saint-Tropez and Pudong Marble Grand Prix, of 177 in the database; the 31 holiday tracks join on 1 Dec) |
 | `season_key` | A season's track (e.g. `holiday-2026`): raced only by pass holders while the season is on, by nobody before it, by everyone after (see [Seasons](#seasons-and-the-season-pass)). NULL for every ordinary track |
+| `records_since` | When the track's current layout went in (Moses, 6 Nov 2026; set by its `--relayout` data update). Its track record, country records and players' personal bests count only races finished since (`src/game/recordsSince.js`). NULL: the layout never changed, every race counts |
 
 ### `races`
 | Column | Meaning |

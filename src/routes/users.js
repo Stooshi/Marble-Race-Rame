@@ -1,5 +1,7 @@
 'use strict';
 
+const { counts } = require('../game/recordsSince');
+
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const config = require('../config');
@@ -353,7 +355,9 @@ router.get('/:id/races', async (req, res) => {
 
 /**
  * GET /api/users/:id/track-records — the player's bests on every track they
- * have raced, alongside the overall track record.
+ * have raced, alongside the overall track record. On a track with a new layout the bests and the
+ * record count only the races since it (tracks.records_since, src/game/recordsSince.js; null when
+ * the player hasn't finished there since); races, wins, podiums and the average place count them all.
  */
 router.get('/:id/track-records', async (req, res) => {
   const id = assertUuid(req.params.id);
@@ -362,10 +366,10 @@ router.get('/:id/track-records', async (req, res) => {
             COUNT(e.id)::int AS races,
             COUNT(e.id) FILTER (WHERE e.finish_position = 1)::int AS wins,
             COUNT(e.id) FILTER (WHERE e.finish_position <= 3)::int AS podiums,
-            MIN(e.finish_position) AS best_position,
+            MIN(e.finish_position) FILTER (WHERE ${counts()}) AS best_position,
             ROUND(AVG(e.finish_position)::numeric, 2) AS avg_position,
-            MIN(e.finish_time_ms) AS best_time_ms,
-            MIN(e.split_time_ms) AS best_split_ms,
+            MIN(e.finish_time_ms) FILTER (WHERE ${counts()}) AS best_time_ms,
+            MIN(e.split_time_ms) FILTER (WHERE ${counts()}) AS best_split_ms,
             MAX(r.finished_at) AS last_raced_at,
             rec.record_ms AS track_record_ms,
             rec.record_split_ms AS track_record_split_ms
@@ -375,7 +379,7 @@ router.get('/:id/track-records', async (req, res) => {
        CROSS JOIN LATERAL (
          SELECT MIN(x.finish_time_ms) AS record_ms, MIN(x.split_time_ms) AS record_split_ms
            FROM race_entries x JOIN races y ON y.id = x.race_id AND y.status = 'finished'
-          WHERE y.track_id = t.id
+          WHERE y.track_id = t.id AND ${counts('y', 't')}
        ) rec
       WHERE e.user_id = $1
       GROUP BY t.id, t.slug, t.name, t.difficulty, rec.record_ms, rec.record_split_ms
