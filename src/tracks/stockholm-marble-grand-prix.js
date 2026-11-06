@@ -8,13 +8,14 @@
 // records started again with the new layout (tracks.records_since).
 const { track, opening, layout, sBends, straight } = require('../trackKit');
 
-// The layout's Gamla Stan S-bends turned 85° each way rather than 70°: out of the 70° bends the leaders took the
-// right-hand channel of the splitter far more often than their share (64.7% of the wins with 55.8% of the marbles,
-// 3,000 races); out of 85° bends they come to it spread across the channel (6 Nov 2026). And Strandvägen, the last
-// straight, a little steeper (0.18 rather than 0.15): with the deeper bends the median race's winner-to-last gap was
-// 18.1 s (at most 18); the field runs faster to the line, so the gaps in seconds close (50 m long instead made it 18.3 s).
+// Two changes to the layout, tuned over 3,000-race reports (6 Nov 2026):
+// - the Gamla Stan S-bends turn 85° each way rather than 70°: out of the 70° bends the leaders took the splitter's
+//   right-hand channel far more often than their share (64.7% of the wins with 55.8% of the marbles); out of 85° bends
+//   they come to it spread across the channel. They are a little steeper too (0.15, not 0.13), as the deeper bends
+//   slowed the back of the field (the median race's winner-to-last gap went to 18.1 s; at most 18);
+// - Strandvägen, the last straight, a little steeper (0.18, not 0.15), for the same gap.
 const deeperBends = (sections) => {
-  const out = sections.map((s) => (s.layoutKey === 'sBends' ? { ...s, shape: sBends({ first: 'right', radius: 75, degrees: 85, grade: 0.13 }) }
+  const out = sections.map((s) => (s.layoutKey === 'sBends' ? { ...s, shape: sBends({ first: 'right', radius: 75, degrees: 85, grade: 0.15 }) }
     : s.layoutKey === 'lastStraight' ? { ...s, shape: straight(60, { grade: 0.18 }) } : s));
   out.layout = sections.layout;
   return out;
