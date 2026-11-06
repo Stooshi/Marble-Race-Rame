@@ -6,13 +6,15 @@
 // over the Katarina crest and down the Slussen drop (the big feature), through Gamla Stan and round
 // it by the splitter, past City Hall and round Djurgården to the steamboats on Strandvägen. Its
 // records started again with the new layout (tracks.records_since).
-const { track, opening, layout, sBends } = require('../trackKit');
+const { track, opening, layout, sBends, straight } = require('../trackKit');
 
 // The layout's Gamla Stan S-bends turned 85° each way rather than 70°: out of the 70° bends the leaders took the
 // right-hand channel of the splitter far more often than their share (64.7% of the wins with 55.8% of the marbles,
-// 3,000 races); out of 85° bends they come to it spread across the channel (6 Nov 2026).
+// 3,000 races); out of 85° bends they come to it spread across the channel (6 Nov 2026). And Strandvägen, the last
+// straight, 50 m rather than 60: with the deeper bends the median race's winner-to-last gap was 18.1 s (at most 18).
 const deeperBends = (sections) => {
-  const out = sections.map((s) => (s.layoutKey === 'sBends' ? { ...s, shape: sBends({ first: 'right', radius: 75, degrees: 85, grade: 0.13 }) } : s));
+  const out = sections.map((s) => (s.layoutKey === 'sBends' ? { ...s, shape: sBends({ first: 'right', radius: 75, degrees: 85, grade: 0.13 }) }
+    : s.layoutKey === 'lastStraight' ? { ...s, shape: straight(50, { grade: 0.15 }) } : s));
   out.layout = sections.layout;
   return out;
 };

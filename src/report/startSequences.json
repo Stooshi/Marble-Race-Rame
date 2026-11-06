@@ -135,7 +135,7 @@
 "spawn-point": {"family":"block","reach":0.256,"seq":["opening: crest-start","drop","pileUp","slalom","climb","drop","sweep left","boost"]},
 "speedrun-valley": {"family":"block","reach":0.277,"seq":["opening: boost-launch","drop","pileUp","straight","boost","drop","slalom","straight","boost","moguls","sweep right"]},
 "stockholm-1912-relay": {"family":"athletics","reach":0.224,"seq":["opening: split-start","drop","pileUp","slalom","chutes","drop","slalom","straight","peg ×4","paint","brake","sweep right"]},
-"stockholm-marble-grand-prix": {"family":"grand-prix","reach":0.258,"seq":["opening: split-start","drop","pileUp","slalom","chutes","drop","slalom","sweep right","boost","straight","peg","climb"]},
+"stockholm-marble-grand-prix": {"family":"grand-prix","reach":0.267,"seq":["opening: split-start","drop","pileUp","slalom","chutes","drop","slalom","sweep right","boost","straight","peg","climb"]},
 "sunstone-temple": {"family":"block","reach":0.253,"seq":["opening: tunnel-launch","drop","pileUp","slalom","drop","slalom","straight","slalom","straight","hairpin left","swipe","straight","steps"]},
 "svalbard-glacier-run": {"family":"block-2","reach":0.247,"seq":["opening: banked-turn","drop","pileUp","slalom","sweep right","straight","slalom","S-bends right","peg"]},
 "sydney-harbour-new-year": {"family":"coaster","reach":0.34,"seq":["opening: clean-drop","drop","S-bends right","straight","peg ×4","sweep left","curtain"]},
