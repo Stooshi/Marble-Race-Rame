@@ -1,62 +1,71 @@
 'use strict';
 
-const { track, plunge, straight, sBends, sweep, spiral, hairpin, splitter, runIn, pileUp, swipe, parked, slalom, boost, rumble } = require('../trackKit');
+// Stockholm Marble Grand Prix, its own layout (Moses, 6 Nov 2026: approved as planned in
+// claude/grand-prix-relayout-plan.md). Until then it was the same track as Sydney and Lagos
+// (the Grand Prix recipe of 10 Oct 2026, mirrored); now a split start down the Södermalm cliffs,
+// over the Katarina crest and down the Slussen drop (the big feature), through Gamla Stan and round
+// it by the splitter, past City Hall and round Djurgården to the steamboats on Strandvägen. Its
+// records started again with the new layout (tracks.records_since).
+const { track, opening, layout, sBends, straight } = require('../trackKit');
+
+// Two changes to the layout, tuned over 3,000-race reports (6 Nov 2026):
+// - the Gamla Stan S-bends turn 85° each way rather than 70°: out of the 70° bends the leaders took the splitter's
+//   right-hand channel far more often than their share (64.7% of the wins with 55.8% of the marbles); out of 85° bends
+//   they come to it spread across the channel. They are a little steeper too (0.15, not 0.13), as the deeper bends
+//   slowed the back of the field (the median race's winner-to-last gap went to 18.1 s; at most 18);
+// - Strandvägen, the last straight, a little steeper (0.18, not 0.15), for the same gap.
+const deeperBends = (sections) => {
+  const out = sections.map((s) => (s.layoutKey === 'sBends' ? { ...s, shape: sBends({ first: 'right', radius: 75, degrees: 85, grade: 0.15 }) }
+    : s.layoutKey === 'lastStraight' ? { ...s, shape: straight(60, { grade: 0.18 }) } : s));
+  out.layout = sections.layout;
+  return out;
+};
 
 module.exports = track({
   slug: 'stockholm-marble-grand-prix',
   name: 'Stockholm Marble Grand Prix',
   difficulty: 'extreme',
-  description: 'A home race across Stockholm\'s islands and bridges: down the Södermalm cliffs, through Gamla Stan\'s narrow lanes, over the water past City Hall and round Djurgården to the steamboats on Strandvägen.',
+  description: 'A home race across Stockholm\'s islands and bridges: twin chutes down the Södermalm cliffs, over the Katarina crest and down the Slussen drop to the water, round Gamla Stan on both sides, past City Hall and round Djurgården to the steamboats on Strandvägen.',
   surface: 'asphalt',
   biome: 'city',
   lighting: 'day',
   variants: ['sunset', 'midnight-sun'],
   grandPrix: true,
-  signature: 'Bridge sweep',
+  signature: 'Slussen drop',
   tvCameras: [
-    { section: 'Bridge sweep', at: 0.8, side: 'right', distance: 6, height: 8 },
-    { section: 'Island splitter', at: 0.6, side: 'right', distance: 6, height: 5 },
+    // (At the foot of the drop, looking back up it with Södermalm behind.)
+    { section: 'Slussen drop', at: 0.95, side: 'right', distance: 6, height: 6 },
+    { section: 'Gamla Stan splitter', at: 0.6, side: 'right', distance: 6, height: 5 },
   ],
   billboardFrame: 'plain',
-  start: { scenery: ['colourful-houses'], shots: { countdown: 'front', launch: 'high-behind' } },
+  start: { scenery: ['colourful-houses'], gate: 'paddle', shots: { countdown: 'chase', launch: 'low-chase' } },
   finish: { landmark: 'steamboats', scenery: ['grandstand'] },
   designChanges: [
-    'The traffic-cone chicane is at the foot of the Södermalm plunge, straight after the tyre stacks, rather than in the Gamla Stan S-bends: on the bends it left too few overtakes and the field reached the splitter sorted so that one channel never gave its marbles a fair share of wins (measured on Dubai Marble Grand Prix, the same layout).',
-    'The Island splitter comes straight after the Gamla Stan S-bends, before the Bridge sweep, rather than after the City Hall hairpin: out of the hairpin the whole field rides one side of the channel and the splitter cannot share it out fairly (measured on Dubai Marble Grand Prix).',
-    'At the Island splitter the two channels run on the island\'s shores either side of it rather than each on its own bridge: the recipe allows no bridge under a splitter (its two channels have nothing proven to stand on).',
-    'The Bridge sweep\'s billboards stand along the straight to City Hall instead: the recipe has nowhere to stand a billboard on a bridge.',
-    'A 50 m straight, "Run to City Hall", before the City Hall hairpin: the recipe needs a braking zone before the one sharp bend.',
-    'The rumble strips and the parked safety car are on a straight, "Strandvägen", between the spiral and the finish rather than on the spiral and the run-in: the recipe keeps bumps off bends and the last 25 m before the line clear.',
+    'A new layout (6 Nov 2026): until then Stockholm was physically the same track as Sydney and Lagos Marble Grand Prix (the Grand Prix recipe, mirrored), so on one seed the three ran the same race. Its old signature, the Bridge sweep, was the same piece as Lagos\'s Lagoon bridge and goes.',
+    'The split start (twin chutes down the Södermalm cliffs, merging again at Slussen): no other Grand Prix track opens this way, and its start shots (a chase, then a low chase) are its own.',
+    'The rest is the library\'s climb-drop layout, mirrored, as proven on its test track: no live track uses it. Its big feature is the Slussen drop, a short climb over the Katarina crest and a 60 m drop with a slalom down to the water; its second, a splitter round Gamla Stan, with the Gamla Stan S-bends turned deeper (85°) and the splitter\'s tip and inside channel tuned so its two channels share the wins and places fairly.',
   ],
-  sections: [
-    {
-      name: 'Södermalm plunge', shape: plunge(80, { grade: 0.6 }),
-      obstacles: [pileUp({ costume: 'tyre-stack', at: 0.42 }), slalom({ costume: 'traffic-cone', from: 0.55, to: 0.97, count: 6, loss: 0.3 })],
-      scenery: ['colourful-houses'],
+  opening: opening('split-start', {
+    costumes: { block: 'tyre-stack', slalom: 'traffic-cone' },
+    names: { plunge: 'Södermalm plunge', chutes: 'Södermalm twin chutes', after: 'Down to Slussen' },
+    dress: { plunge: { scenery: ['colourful-houses'] }, chutes: { scenery: ['colourful-houses'] } },
+  }),
+  sections: deeperBends(layout('climb-drop', {
+    mirror: true,
+    costumes: { peg: 'traffic-cone', slalom: 'traffic-cone', swipe: 'camera-crane' },
+    dress: {
+      sweep: { name: 'Riddarfjärden sweep', scenery: ['crowd'] },
+      approach: { name: 'Run to the climb' },
+      climb: { name: 'Katarina crest', scenery: ['colourful-houses'] },
+      drop: { name: 'Slussen drop', scenery: ['colourful-houses'] },
+      sBends: { name: 'Gamla Stan S-bends', scenery: ['merchant-houses', 'crowd'], landmarks: [{ name: 'royal-palace', at: 0.7, side: 'right', distance: 34 }] },
+      // (Its tip moved and its inside channel a little smoother than the layout's (2.6, not 2.9; given for the unmirrored
+      // layout, so here the right-hand channel): with the deeper bends both channels share the wins and the places fairly.)
+      splitter: { name: 'Gamla Stan splitter', balance: { tipOffset: -1.6, left: { drag: 2.6, scrub: 2.6 }, right: { drag: 0.42, scrub: 0.72 } }, around: 'river-island', landmarks: [{ name: 'harbour', at: 0.5, side: 'left', distance: 24 }] },
+      brakingStraight: { name: 'Run to City Hall', landmarks: [{ name: 'city-hall', at: 0.9, side: 'right', distance: 36 }] },
+      hairpin: { name: 'City Hall hairpin' },
+      spiral: { name: 'Djurgården spiral', scenery: ['birches'], landmarks: [{ name: 'vasa-museum', at: 0.6, side: 'left', distance: 30 }] },
+      lastStraight: { name: 'Strandvägen', scenery: ['grandstand', 'haussmann'] },
     },
-    {
-      name: 'Gamla Stan S-bends', shape: sBends({ first: 'right', radius: 75, degrees: 80, grade: 0.13 }), billboards: 2, scenery: ['merchant-houses', 'crowd'],
-      landmarks: [{ name: 'royal-palace', at: 0.7, side: 'left', distance: 34 }],
-    },
-    {
-      name: 'Island splitter', shape: splitter({ side: 'right', balance: { tipOffset: 0.8, left: { drag: 0.42, scrub: 0.72 }, right: { drag: 1.32, scrub: 1.32 } } }),
-      around: 'river-island', landmarks: [{ name: 'harbour', at: 0.5, side: 'left', distance: 24 }],
-    },
-    { name: 'Bridge sweep', shape: sweep({ side: 'left', radius: 80, degrees: 160, grade: 0.07 }), features: [boost({ at: 0.08 })], bridge: 'steel' },
-    {
-      name: 'Run to City Hall', shape: straight(50, { grade: 0.12 }), billboards: 2,
-      landmarks: [{ name: 'city-hall', at: 0.9, side: 'left', distance: 36 }],
-    },
-    { name: 'City Hall hairpin', shape: hairpin({ side: 'right' }), obstacles: [swipe({ costume: 'camera-crane', side: 'high' })] },
-    {
-      name: 'Djurgården spiral', shape: spiral({ side: 'left', radius: 45, grade: 0.17 }), scenery: ['birches'],
-      landmarks: [{ name: 'vasa-museum', at: 0.6, side: 'right', distance: 30 }],
-    },
-    {
-      name: 'Strandvägen', shape: straight(90, { grade: 0.15 }),
-      obstacles: [parked({ costume: 'safety-car', at: 0.15, side: 'left', length: 8 })],
-      features: [rumble({ from: 0.55, to: 0.95, count: 4 })], billboards: 2, scenery: ['grandstand', 'haussmann'],
-    },
-    { name: 'Finish', shape: runIn(), scenery: ['grandstand'] },
-  ],
+  })),
 });

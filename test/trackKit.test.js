@@ -767,7 +767,9 @@ for (const [slug, file, note] of HIDDEN_KIT_TRACKS) {
     const body = (x) => x.slice(x.indexOf('UPDATE tracks'));
     const latest = fs.readFileSync(path.join(dir, later.at(-1)), 'utf8');
     assert.match(latest, new RegExp(`^ WHERE slug = '${slug}';$`, 'm'));
-    assert.equal(body(latest), body(execFileSync(process.execPath, [script, slug, '--retune'], { encoding: 'utf8' })), `${later.at(-1)} no longer gives the track in code`);
+    // (A new layout, `--relayout`, is a re-tune that also starts the track's records again: tracks.records_since.)
+    const mode = /gets a new layout\./.test(latest) ? '--relayout' : '--retune';
+    assert.equal(body(latest), body(execFileSync(process.execPath, [script, slug, mode], { encoding: 'utf8' })), `${later.at(-1)} no longer gives the track in code`);
   });
 }
 

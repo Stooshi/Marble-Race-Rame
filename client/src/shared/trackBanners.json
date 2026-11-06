@@ -1546,12 +1546,12 @@
    "name": "Stockholm Marble Grand Prix",
    "series": "Grand Prix",
    "lighting": "day",
-   "v": "93a6a2fc",
-   "bytes": 19284,
-   "bytes2x": 45236,
-   "t": 8781,
+   "v": "c6193504",
+   "bytes": 15040,
+   "bytes2x": 37422,
+   "t": 10000,
    "side": 1,
-   "marbles": 1
+   "marbles": 6
   },
   "sunstone-temple": {
    "name": "Sunstone Temple",
