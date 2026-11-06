@@ -110,6 +110,7 @@
     "featureChase": { "back": 9, "up": 5, "ahead": 10, "fov": 62, "leadMs": 500 },
     "features": { "frostmere-marble-grand-prix": { "camera": "game", "leadMs": 300 }, "kirkjufell-block-falls": { "camera": "game", "leadMs": -300 }, "sydney-marble-grand-prix": { "back": 5, "up": 2.6, "ahead": 7, "fov": 66, "leadMs": -1000 },
         "lagos-marble-grand-prix": { "back": 5, "up": 2.6, "ahead": 7, "fov": 66, "leadMs": 0 },
+        "nairobi-marble-grand-prix": { "back": 5, "up": 2.6, "ahead": 7, "fov": 66, "leadMs": -1000 },
         "pudong-marble-grand-prix": { "tv": 0, "fov": 50, "leadMs": -2400 },
       "saint-tropez": { "eye": { "p": 0.29, "beside": 42, "up": 16, "fov": 52 }, "leadMs": -2400 },
       "rhine-castle-run": { "camera": "game", "leadMs": 200 } },
@@ -203,7 +204,8 @@
         "leadChange": "New leader!",
         "finalStretch": "The last metres along the fjord.",
         "results": "Every result is real physics."
-      }
+      },
+      "paris-eiffel-tower-run": {"_about": "The long YouTube Paris broadcast (6 Nov 2026, DAILY-ORDER.md on-screen text rule): theme THE TRACK, every line its own (max 6 words).", "hookLines": {"close": "One thousandth of a second.", "pick": "Pick your marble for Paris.", "rewind": "Back to Montmartre. Watch."}, "introSub": "Twenty marbles across Paris.", "flyover": "From Montmartre to the Seine.", "grid": "Twenty gates above Montmartre.", "go": "Down the Montmartre plunge.", "firstBunch": "Elbow to elbow in Paris.", "firstOvertake": "Every bend reshuffles Paris.", "packShot": "Tour Eiffel watching every bounce.", "calm": "The whole city on one track.", "pickStill": "Still backing your Paris pick?", "leadChange": "A new leader in Paris.", "finalStretch": "Last plunge to the Seine.", "results": "Paris, raced by real physics."}
     },
     "endCard": ["Don't just watch marble races. Race them.", "Play free at marblespins.com"],
     "otherSeries": {

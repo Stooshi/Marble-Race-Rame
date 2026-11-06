@@ -441,7 +441,8 @@ export function broadcast(info, race, { fly = 4.5, slug = null, series = null } 
   // 1. The hook (the first 5 s): the final metres in slow motion, frozen just before the line with the three
   // contenders side by side (the winner not shown), markers on them, a quick rewind, then the race.
   const pod = info.podium.map((x) => x.index);
-  const H = BC.hookLines;
+  // (A caption set may also bring its own hook lines and intro line, so a long video's opening words are its own; 6 Nov 2026.)
+  const H = { ...BC.hookLines, ...(slug && BC.captionSets?.[slug]?.hookLines) };
   const freeze = m.W - 400; // (0.4 s before the winner's line: the three side by side, a few metres out, nobody across)
   const hookShot = { type: 'pan', eye: HOOK_EYE, members: pod, fov: HOOK_EYE.fov };
   const h1 = p.add({ ...hookShot, from: freeze - 1000, speed: 0.5, dur: 2 });
@@ -458,7 +459,7 @@ export function broadcast(info, race, { fly = 4.5, slug = null, series = null } 
   p.lift(h1, h3 + 1);
   // 2. The flyover, short (4.5 s), the intro card on it for 1.5 s, then a caption.
   const flyAt = p.add({ type: 'fly', dur: fly });
-  const intro = { at: flyAt + 0.1, dur: 1.5, title: fill(other?.introCard ?? BC.introCard, name), sub: fill(BC.introSub, name) };
+  const intro = { at: flyAt + 0.1, dur: 1.5, title: fill(other?.introCard ?? BC.introCard, name), sub: fill((slug && BC.captionSets?.[slug]?.introSub) ?? BC.introSub, name) };
   want.push({ v: flyAt + 1.75, key: 'flyover', dur: 2.6, fixed: true });
   // 3. The countdown, the tower showing the gates.
   const cdAt = p.add({ type: 'race', from: -3500, dur: 3.5 });

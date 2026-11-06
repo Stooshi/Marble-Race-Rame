@@ -87,7 +87,7 @@ Every video gets fresh on-screen text written from the themes below. No line rep
   - `--hook "<line>"` is the opening line: the frozen frame on the OLD opening, frame 1 on the NEW one.
   - `--curve "<line>"` is the line over the curves.
   - `--feature-line "<line>"` is over the signature feature.
-- **Long video:** write its hook lines and captions as that video's own set (`broadcast.captionSets.<slug>` in `template.json`), using the same themes and rules.
+- **Long video:** write its hook lines and captions as that video's own set (`broadcast.captionSets.<slug>` in `template.json`: the captions, plus `hookLines` and `introSub` so its opening words are its own too), using the same themes and rules.
 - After rendering, add every line the video used to the log below.
 
 ## On-screen text log
@@ -100,19 +100,25 @@ One row per video. Keep at least the last 7 days. The YouTube Shorts copies coun
 | 2026-11-05 | 17:00 | Instagram | Final Level | (before the rule) | "Who wins? Pick one." / "Side by side through the bends." |
 | 2026-11-05 | 23:00 | TikTok | Greenland Expedition | (before the rule) | "Who wins? Pick one." / "Side by side through the bends." |
 | 2026-11-05 | 23:00 | Instagram + YouTube Short | Lagos Marble Grand Prix | (before the rule) | "Lagos, flat out." / "Side by side through the bends." |
+| 2026-11-06 | 17:00 | TikTok + YouTube Short | Nairobi Marble Grand Prix | WINNING | "Decided by 0.007 seconds." / "From gate 10 to the win." / "Only one takes the gold." |
+| 2026-11-06 | 17:00 | Instagram | London Steeplechase | CHALLENGE | "Can you call the winner?" / "Pick one. Watch it win." / "Bet you picked wrong." |
+| 2026-11-06 | 17:00 | YouTube long | Paris Eiffel Tower Run | THE TRACK | hook "One thousandth of a second." / "Pick your marble for Paris." / "Back to Montmartre. Watch."; intro "Twenty marbles across Paris."; captions "From Montmartre to the Seine." / "Twenty gates above Montmartre." / "Down the Montmartre plunge." / "Elbow to elbow in Paris." / "Every bend reshuffles Paris." / "Tour Eiffel watching every bounce." / "The whole city on one track." / "Still backing your Paris pick?" / "A new leader in Paris." / "Last plunge to the Seine." / "Paris, raced by real physics." |
+| 2026-11-06 | 23:00 | TikTok | Thames Bridges Run | RACING FRIENDS | "Your crew's pick?" / "Send a code. Race together." / "Race your friends. Free." |
+| 2026-11-06 | 23:00 | Instagram + YouTube Short | Singapore Block Gardens | THE TRACK | "Into Singapore's block gardens." / "Bending through the garden city." / "Through the dome waterfall." |
 
 ## Tracks already used in a video
 
 Any slot counts: Shorts, long videos, the Spotlight, and planned social clips.
 
-- **Grand Prix:**
+- **Grand Prix** (unused live ones left after 6 Nov: Sahara only):
   - Dubai;
   - Delhi;
   - Elderglade;
   - Frostmere;
   - Istanbul (planned clip);
   - Lagos;
+  - Nairobi;
   - Pudong;
   - Sydney;
   - Wyrmwood Hollow.
-- **Other tracks:** beijing-nest-200, bullet-hell (planned clip), checkpoint-rush, chobe, cotahuasi, danube, Final Level, flipper-spins, grand-canyon-burst, grand-champion (planned clip), Greenland Expedition, irrawaddy, k2, kali-gandaki, Kirkjufell Block Falls, marble-stadium-sprint, nanjing, niagara (Cube Falls), phantom-peak, pyramid-run, redwood, Rhine Castle Run, saint-tropez, san-francisco, sky-islands (planned clip), sognefjord, stockholm, the-stack, tokyo (planned clip), Venice Cube Canals, Verdon Burst, waimea (planned clip), zambezi, zurich.
+- **Other tracks:** beijing-nest-200, bullet-hell (planned clip), checkpoint-rush, chobe, cotahuasi, danube, Final Level, flipper-spins, grand-canyon-burst, grand-champion (planned clip), Greenland Expedition, irrawaddy, k2, kali-gandaki, Kirkjufell Block Falls, London Steeplechase, marble-stadium-sprint, nanjing, niagara (Cube Falls), Paris Eiffel Tower Run, phantom-peak, pyramid-run, redwood, Rhine Castle Run, saint-tropez, san-francisco, Singapore Block Gardens, sky-islands (planned clip), sognefjord, stockholm, Thames Bridges Run, the-stack, tokyo (planned clip), Venice Cube Canals, Verdon Burst, waimea (planned clip), zambezi, zurich.
