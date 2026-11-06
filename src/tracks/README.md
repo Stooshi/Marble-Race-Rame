@@ -224,6 +224,7 @@ module.exports = track({
   | `aurora-fell` (blocks 2) | switch1, switch2 (two pairs of banked switchbacks; feature one), birches (a slalom), onTheLake, splitter (curving 40° round the lake island; feature two), shore (a drop), brakingStraight, hairpin, valley (a part spiral), lastStraight |
 
   A track may still write its own sections by hand; the sameness check makes sure they differ.
+  Since 6 Nov 2026 the check also runs on every track at once (`test/samenessAllTracks.test.js`): a new track must pass it, and the tracks built before it (most of the Grand Prix series, ten World Tour tracks, the hand-built three) are listed exceptions that may only shrink. Re-laying out a live track keeps its slug and resets its track and country records (`docs/04-game-rules.md`); take its entry off the list once its report passes.
 - **`family`**: `'world-tour'` (the default), `'grand-prix'` (any `grandPrix` track),
   `'coaster'`, `'pinball'`, `'arcade'`, `'canyon'`, `'block'`, `'athletics'`, `'winter-wonders'`, `'river'`, `'peak'` or `'test'` (test tracks, never compared).
   A Rivers track (`'river'`) gives `river: { palette, side, width, banks }`; each section may say where the river runs

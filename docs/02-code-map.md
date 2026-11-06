@@ -123,7 +123,7 @@
 - `analyze.js`: measures one race.
 - `batch.js`: runs batches of races on worker threads.
 - `summarize.js`: pass/fail lines; `TARGETS` holds every threshold.
-- `overtakes.js`, `variety.js` (sameness check), `startLook.js` + `startLooks.json` (first-3-seconds check), `firstSeconds.js` + `startSequences.json` (first-20-seconds check: what the field races through after the gate against every other track's start; `scripts/start-sequences.js` records every track).
+- `overtakes.js`, `variety.js` (sameness check; `test/samenessAllTracks.test.js` runs it on every track, with the known failures listed), `startLook.js` + `startLooks.json` (first-3-seconds check), `firstSeconds.js` + `startSequences.json` (first-20-seconds check: what the field races through after the gate against every other track's start; `scripts/start-sequences.js` records every track).
 - `html.js`: writes the report page.
 
 **`marbles/`: the collection.**
