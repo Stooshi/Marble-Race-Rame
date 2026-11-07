@@ -897,12 +897,12 @@
    "name": "Lagos Marble Grand Prix",
    "series": "Grand Prix",
    "lighting": "day",
-   "v": "2ebd07b9",
-   "bytes": 18580,
-   "bytes2x": 47112,
-   "t": 8781,
+   "v": "8aec03c1",
+   "bytes": 16568,
+   "bytes2x": 41094,
+   "t": 16064,
    "side": 1,
-   "marbles": 1
+   "marbles": 6
   },
   "lalibela-genna-spins": {
    "name": "Lalibela Genna Spins",

@@ -47,7 +47,6 @@ const KNOWN = {
   'dubai-marble-grand-prix': ['opening', 'opening-kind', 'layout'],
   'sydney-marble-grand-prix': ['opening', 'opening-kind', 'layout'],
   'istanbul-marble-grand-prix': ['opening', 'opening-kind', 'layout'],
-  'lagos-marble-grand-prix': ['opening', 'opening-kind', 'layout'],
   'nairobi-marble-grand-prix': ['opening', 'opening-kind', 'layout'],
   'delhi-red-fort-marble-grand-prix': ['opening', 'opening-kind', 'layout'],
   'sahara-marble-grand-prix': ['opening', 'opening-kind', 'layout'],
