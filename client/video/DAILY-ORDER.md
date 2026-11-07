@@ -113,7 +113,7 @@ One row per video. Keep at least the last 7 days. The YouTube Shorts copies coun
 
 Any slot counts: Shorts, long videos, the Spotlight, and planned social clips.
 
-- **Grand Prix** (unused live ones left after 6 Nov: Sahara only. On 7 Nov Sahara, Nairobi, Delhi and Wyrmwood Hollow got new layouts not yet deployed, and Moses ruled out the re-laid tracks that day, so Pudong was that day's Grand Prix track on a new seed; Sahara waits for the deploy):
+- **Grand Prix** (unused live ones left after 6 Nov: Sahara only. On 7 Nov Sahara, Nairobi, Delhi and Wyrmwood Hollow got new layouts, not yet deployed that day, and Moses ruled out the re-laid tracks, so Pudong was that day's Grand Prix track on a new seed. The four new layouts were deployed on 8 Nov just after midnight, so Sahara, still never in a video, is the next Grand Prix track):
   - Dubai;
   - Delhi;
   - Elderglade;
