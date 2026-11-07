@@ -385,7 +385,9 @@ The apps play the sound through `@capacitor-community/native-audio` (a native pl
 - `[sound] race …: GO in N ms (native, beeps loaded, tune …)`;
 - `[sound] the player took N ms to start` (the start-up time allowed for);
 - trouble shows as `skipped … (late)`, `load … timed out` or `falling back to web audio: …`.
-To check the plugin itself registered: filter `tag:Capacitor message:NativeAudio`. Back office → **Race readiness** shows the Sound column (native/web) per race.
+To check the plugin itself registered: filter `tag:Capacitor message:NativeAudio`. Back office → **Race readiness** shows the Sound column (native/web) per race, and (7 Nov 2026) **Latest app races**: every app race with its build (the footer's "Build …" time), the sound player, the beeps (`scheduled`; `dropped` = they were timed for a later GO than the one shown, so they were cut), how far the sound's GO was from GO as shown, and any file the player couldn't load in time.
+
+**The app's sound, after the 7 Nov 2026 Android test** (build 1.0.0 (2): beeps 30 s into the race, no hit sounds): the files load two at a time, the race's start and hit sounds first; a file slower than 8 s still counts once it arrives; beeps not heard by GO as shown are dropped; the sound's GO follows the hold the picture really keeps (at most 12 s); a play still seeking when it is stopped is stopped once it starts. To check a new build: race a solo and a Quick race on the phone, then look at **Latest app races**: Build = the new time, Sound `native`, Beeps `scheduled`, GO off by about 0 s, nothing under Couldn't load.
 
 ## The season-start website rebuild (1 Dec 2026, automatic)
 

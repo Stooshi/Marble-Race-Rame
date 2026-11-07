@@ -122,11 +122,21 @@ function fallBackToWeb(why) {
   if (backend.kind !== 'native') return;
   nativeFailed = true;
   log(`native audio failed (${why}): falling back to web audio`);
+  // (The native player's voices stop here; the web one starts them again, in step: unlock() below.)
+  if (race) {
+    race.beeps?.stop(0);
+    race.beeps = null;
+    race.tune?.voice?.stop(0);
+    if (race.tune) race.tune = { ...race.tune, voice: null };
+    race.ceremony?.voice?.stop(0);
+    if (race.ceremony) race.ceremony.voice = null;
+  }
   backend = createWebBackend({ urlOf });
   unlocked = false;
   unlock(); // (an app's web view lets sound start without a tap; on the website the next tap does it)
   backend.setLevels(levels());
   for (const n of wantedLoads) backend.load(n);
+  if (race?.ceremony && !race.ceremony.voice) startCeremony();
 }
 export const soundBackend = () => backend.kind;
 
@@ -202,7 +212,18 @@ export function soundMissing(raceId = null) {
 }
 /** For the readiness report: how the sound stands on this device. */
 export function soundReport(raceId = null) {
-  return { backend: backend.kind, started: unlocked, running: isRunning(), missing: soundMissing(raceId) };
+  const here = race && (!raceId || race.id === raceId);
+  return {
+    backend: backend.kind,
+    started: unlocked,
+    running: isRunning(),
+    missing: soundMissing(raceId),
+    // (For the readiness report: the GO the sound is timed on, what became of the beeps, the files the player couldn't load.)
+    goAt: here ? race.goAt : null,
+    goGapMs: here ? goGap : null,
+    beeps: here ? beepsState : 'none',
+    loadFailed: backend.failed?.() ?? [],
+  };
 }
 /**
  * Resolves { ready, missing } once the race's start has its sounds (essentials(): the beeps, the gate
@@ -244,6 +265,10 @@ const effectsOn = () => !settings.muted && settings.effects > 0;
 // ── The race ─────────────────────────────────────────────────────────────
 // race: { id, goAt (wall ms, GO as shown), beeps: voice, tune: { name, atWall, voice }, ceremony: { at, voice, timer } }
 let race = null;
+// What became of this race's beeps (the readiness report): 'scheduled', 'dropped' (GO came first) or 'none'.
+let beepsState = 'none';
+// GO as shown minus the GO the sound was timed on, at GO (ms; null until GO): the readiness report.
+let goGap = null;
 const now = () => Date.now();
 
 function clearTune(fadeS = 0.4) {
@@ -296,6 +321,7 @@ export function raceCountdown(raceId, msToGo) {
     clearBeeps();
     if (effectsOn() && unlocked && msToGo > 150) {
       race.beeps = backend.start(SOUNDS.beeps, { atWall: goAt - BEEPS_GO_S * 1000, bus: 'fx', until: goAt + 900 });
+      beepsState = 'scheduled';
     }
   }
   return Boolean(race.beeps);
@@ -303,6 +329,15 @@ export function raceCountdown(raceId, msToGo) {
 
 /** GO (or a page opened mid-race): the race's tune, from `goAt` (GO as shown here; default now). */
 export function raceGo(raceId, goAt = null) {
+  if (race?.id === raceId && goAt !== null) goGap = Math.round(goAt - race.goAt);
+  // GO as shown more than 0.3 s from the GO the beeps were planned for: the countdown as shown is over, so
+  // beeps not heard yet are dropped (never a countdown after GO: Moses's Android test, 7 Nov 2026, heard
+  // them 30 s into the race). The tune follows the GO as shown.
+  if (race?.id === raceId && goAt !== null && Math.abs(goAt - race.goAt) > 300 && race.beeps) {
+    log(`race ${String(raceId).slice(0, 8)}: GO as shown is ${Math.round(goAt - race.goAt)} ms from the beeps' GO: beeps dropped`);
+    beepsState = 'dropped';
+    clearBeeps();
+  }
   // (Already timed: kept, unless GO as shown is more than 0.3 s from what was planned (the hold changed): then the tune follows.)
   if (race?.id === raceId && race.tune && (goAt === null || Math.abs(goAt - race.goAt) <= 300)) return;
   if (race?.id === raceId && race.tune) clearTune(0.05);
@@ -331,6 +366,8 @@ function startCeremony() {
 }
 
 function endRace() {
+  beepsState = 'none';
+  goGap = null;
   if (!race) return;
   clearBeeps();
   clearTune(0.4);

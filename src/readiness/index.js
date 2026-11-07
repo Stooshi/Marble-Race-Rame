@@ -30,7 +30,8 @@ function clean(body = {}) {
   const d = body.details && typeof body.details === 'object' && !Array.isArray(body.details) ? body.details : {};
   // (Only these, each a short value: nothing else a client sends is kept.)
   const details = {};
-  for (const k of ['backend', 'started', 'running', 'connection', 'memoryGb', 'heldMs', 'waitedMs', 'sound']) {
+  // (build, goGapMs, beeps, loadFailed: 7 Nov 2026, the app's late countdown.)
+  for (const k of ['backend', 'started', 'running', 'connection', 'memoryGb', 'heldMs', 'waitedMs', 'sound', 'build', 'goGapMs', 'beeps', 'loadFailed']) {
     const v = d[k];
     if (typeof v === 'boolean' || (typeof v === 'number' && Number.isFinite(v))) details[k] = v;
     else if (typeof v === 'string') details[k] = v.slice(0, 40);
@@ -55,7 +56,8 @@ async function record(db, { raceId, userId = null, device = null, report }) {
 
 /**
  * The pattern over the last `days` days: per platform how many screens were ready by GO, and how
- * often each piece was missing; plus the latest screens that weren't.
+ * often each piece was missing; plus the latest screens that weren't, and the latest app races, ready
+ * or not (their sound's build, beeps and GO: 7 Nov 2026).
  */
 async function summary(db, { days = 7, limit = 50 } = {}) {
   const { rows: byPlatform } = await db.query(
@@ -78,7 +80,13 @@ async function summary(db, { days = 7, limit = 50 } = {}) {
       ORDER BY created_at DESC LIMIT $2`,
     [days, limit],
   );
-  return { days, byPlatform, missing: missingRows.map((m) => ({ ...m, piece: pieceOf(m.missing) })), latest };
+  const { rows: apps } = await db.query(
+    `SELECT race_id, platform, kind, ready, missing, late_ms, details, created_at
+       FROM race_readiness WHERE platform <> 'web' AND created_at > now() - make_interval(days => $1)
+      ORDER BY created_at DESC LIMIT 20`,
+    [days],
+  );
+  return { days, byPlatform, missing: missingRows.map((m) => ({ ...m, piece: pieceOf(m.missing) })), latest, apps };
 }
 
 /** Deletes reports over KEEP_DAYS old. → how many. */

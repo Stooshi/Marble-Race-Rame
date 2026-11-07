@@ -54,3 +54,12 @@ test('on a real database: recorded from the race page, summed up for the back of
     await db.pool?.end?.().catch?.(() => {});
   }
 });
+
+test('an app race reports its build, its beeps, the sound GO gap and the files it could not load (7 Nov 2026)', () => {
+  const r = readiness.clean({
+    platform: 'android',
+    kind: 'solo',
+    details: { backend: 'native', build: '2026-11-07 09:10 UTC', beeps: 'dropped', goGapMs: -30000, loadFailed: ['marble-hit', 'marble-bump'], secret: 'x' },
+  });
+  assert.deepEqual(r.details, { backend: 'native', build: '2026-11-07 09:10 UTC', beeps: 'dropped', goGapMs: -30000, loadFailed: ['marble-hit', 'marble-bump'] });
+});

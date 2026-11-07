@@ -40,6 +40,13 @@ export function watchReadiness({ kind, goWall, pieces, sound, send, platform = n
         connection: nav.connection?.effectiveType,
         memoryGb: nav.deviceMemory,
         sound: atGo.missing.filter((m) => m !== 'track' && m !== 'marbles'),
+        // (7 Nov 2026: which build this is, how far the sound's GO was from GO as shown, what became of the
+        // beeps and which files the player couldn't load: what the back office's Race readiness needs to tell
+        // a late countdown from a missing one.)
+        build: typeof import.meta !== 'undefined' ? import.meta.env?.VITE_BUILD_STAMP : undefined,
+        goGapMs: s.goGapMs ?? undefined,
+        beeps: s.beeps,
+        loadFailed: s.loadFailed?.length ? s.loadFailed : undefined,
       },
     });
   };

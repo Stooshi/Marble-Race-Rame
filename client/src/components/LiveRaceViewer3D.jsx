@@ -11,7 +11,7 @@ import CornerView, { cornerFollow, followedNow, followLabel } from './CornerView
 import { Spinner } from './Status';
 import { formatTime } from '../utils/format';
 import { COUNTDOWN_MS } from '../three/startCamera';
-import { BUFFER_MS } from '../hooks/useRaceStream';
+import { BUFFER_MS, MAX_HOLD_MS } from '../hooks/useRaceStream';
 import FinishShow, { useFinishShow } from './FinishShow';
 import { CEREMONY_PHASES } from '../utils/finishShow';
 import SkipToResults from './SkipToResults';
@@ -129,6 +129,9 @@ export default function LiveRaceViewer3D({
   // GO as shown on this screen (wall ms): the race clock the beeps and the tunes are timed on.
   // (The view runs BUFFER_MS behind the stream, plus any hold: so does the sound.)
   const goWallRef = useRef(null);
+  // (The hold the stream really keeps: never more than MAX_HOLD_MS. A longer wait (a slow phone building the
+  // track) used to put the sound's GO that much after the GO as shown: the beeps 30 s into the race, 7 Nov 2026.)
+  const heldFor = (lag) => Math.min(MAX_HOLD_MS, Math.max(0, lag || 0));
   const shownGo = (wall) => {
     goWallRef.current = wall;
     if (meta?.raceId) raceCountdown(meta.raceId, wall - Date.now());
@@ -206,7 +209,7 @@ export default function LiveRaceViewer3D({
         holdBack?.(lag, go, { stay: true });
         lagRef.current = lagNow;
         flyRef.current = flight ? { startedAt: performance.now(), go } : null;
-        shownGo(go + BUFFER_MS + lag);
+        shownGo(go + BUFFER_MS + heldFor(lag));
         setPhase(flight ? 'flying' : 'race');
         setReady(true);
         return;
@@ -224,7 +227,7 @@ export default function LiveRaceViewer3D({
         const lag = flying ? 0 : holdFor(go, COUNTDOWN_MS);
         holdBack?.(lag, go);
         lagRef.current = lagNow;
-        shownGo(go + BUFFER_MS + lag);
+        shownGo(go + BUFFER_MS + heldFor(lag));
         setPhase(flying ? 'flying' : 'race');
         setReady(true);
         return;
@@ -233,7 +236,7 @@ export default function LiveRaceViewer3D({
       holdBack?.(lag, go);
       lagRef.current = lagNow;
       // The countdown's beeps, timed to the countdown as shown (none if it is already over).
-      if (go) shownGo(go + BUFFER_MS + lag);
+      if (go) shownGo(go + BUFFER_MS + heldFor(lag));
       if (roomShow) setPhase('race'); // (no GO known: no show)
       setReady(true);
     });
@@ -296,7 +299,7 @@ export default function LiveRaceViewer3D({
     const lag = Math.max(0, Date.now() - (fly.go - countdownMs));
     holdBack?.(lag, fly.go, { stay: true });
     if (meta?.raceId) stopCountdown(meta.raceId);
-    shownGo(fly.go + BUFFER_MS + lag);
+    shownGo(fly.go + BUFFER_MS + heldFor(lag));
     setPhase('race');
   };
   const swapViews = () => {

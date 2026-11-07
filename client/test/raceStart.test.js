@@ -40,7 +40,7 @@ describe('the view holds back when it is ready late', () => {
     const viewer = src('src/components/LiveRaceViewer3D.jsx');
     expect(viewer).toContain('Date.now() - BUFFER_MS - lag - (startRef.current ?? Date.now())');
     // (The beeps and the tunes on GO as shown here: BUFFER_MS behind the stream, plus any hold.)
-    expect(viewer).toContain('shownGo(go + BUFFER_MS + lag);');
+    expect(viewer).toContain('shownGo(go + BUFFER_MS + heldFor(lag));'); // (the hold as the stream keeps it, at most MAX_HOLD_MS: 7 Nov 2026)
     expect(viewer).toContain('if (meta?.raceId) raceCountdown(meta.raceId, wall - Date.now());');
     expect(viewer).toContain('Getting the track ready…');
   });

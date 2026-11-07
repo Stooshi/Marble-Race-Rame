@@ -279,6 +279,19 @@ function Readiness() {
             <thead><tr><th>Platform</th><th>Missing</th><th>Kind</th><th>Times</th></tr></thead>
             <tbody>{r.data.missing.map((m) => <tr key={`${m.platform}-${m.missing}`}><td>{m.platform}</td><td>{m.missing}</td><td>{m.piece}</td><td>{m.times}</td></tr>)}</tbody>
           </table></div>
+          <h2 className="adm-h2">Latest app races</h2>
+          <p className="adm-muted">Every race in the apps, ready or not: the build (its time), the sound player, what became of the countdown beeps, how far the sound&apos;s GO was from GO as shown, and any sound file the player couldn&apos;t load.</p>
+          <div className="adm-scroll"><table className="adm-table">
+            <thead><tr><th>When</th><th>Platform</th><th>Build</th><th>Sound</th><th>Beeps</th><th>Sound&apos;s GO off by</th><th>Couldn&apos;t load</th></tr></thead>
+            <tbody>{(r.data.apps ?? []).map((l) => (
+              <tr key={`app-${l.race_id}-${l.created_at}`}>
+                <td>{new Date(l.created_at).toLocaleString()}</td><td>{l.platform} · {l.kind}</td><td>{l.details?.build ?? '(older build)'}</td>
+                <td>{l.details?.backend ?? '—'}</td><td>{l.details?.beeps ?? '—'}</td>
+                <td>{Number.isFinite(l.details?.goGapMs) ? `${(l.details.goGapMs / 1000).toFixed(1)} s` : '—'}</td>
+                <td>{l.details?.loadFailed?.length ? l.details.loadFailed.join(', ') : '—'}</td>
+              </tr>
+            ))}</tbody>
+          </table></div>
           <h2 className="adm-h2">Latest screens not ready</h2>
           <div className="adm-scroll"><table className="adm-table">
             <thead><tr><th>When</th><th>Platform</th><th>Missing</th><th>Caught up after</th><th>Sound</th><th>Connection</th><th>Device</th></tr></thead>

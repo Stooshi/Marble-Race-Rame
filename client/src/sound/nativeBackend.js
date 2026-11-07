@@ -15,11 +15,21 @@
  *   - A sound whose moment has passed by the time it can play is played in step, part-way in, or not at
  *     all when it's over or its time (`until`, the beeps: GO + 0.9 s) has passed: never late from its start.
  * Every step is logged as "[sound] …" (Logcat: Capacitor/Console).
+ *
+ * Moses's Android test of 7 Nov 2026 (build 1.0.0 (2): the beeps 30 s into the race, no hit sounds):
+ *   - the files load a few at a time (LOADS_AT_ONCE), the race's start and its hit sounds first (urgent):
+ *     Android prepares each file in a MediaPlayer, and twenty at once on a phone still building its 3D world
+ *     could take longer than LOAD_TIMEOUT_MS;
+ *   - a file that takes longer than that is no longer lost for the visit: it still counts once it arrives
+ *     (the hit sounds then work from that moment; a sound whose time has passed is not played);
+ *   - a play the player hasn't started yet when its voice is stopped (or its `until` passes) is stopped once
+ *     it starts: Android's player ignores a stop while it is still seeking to the start position.
  */
 
 const STEP_MS = 50;
 const LOAD_TIMEOUT_MS = 8000; // (a file the player hasn't loaded by then counts as failed)
 const MAX_LEAD_MS = 400;
+const LOADS_AT_ONCE = 2;
 const log = (...a) => { try { console.info('[sound]', ...a); } catch { /* (no console) */ } };
 
 export function createNativeBackend({ plugin, now = () => Date.now(), durations = {} } = {}) {
@@ -30,6 +40,19 @@ export function createNativeBackend({ plugin, now = () => Date.now(), durations 
   let heldBack = false;
   let configured = null;
   let lead = 0; // ms: how long the player takes from play() to sound (measured on each play, see measure())
+  const failed = new Set(); // names the player couldn't load (the readiness report)
+  // The load queue: at most LOADS_AT_ONCE preloads at a time, the urgent ones (the race's start, its hits) first.
+  const queue = [];
+  let loading = 0;
+  const pump = () => {
+    while (loading < LOADS_AT_ONCE && queue.length) {
+      const k = queue.findIndex((q) => q.urgent);
+      const job = queue.splice(k >= 0 ? k : 0, 1)[0];
+      loading += 1;
+      job.run().finally(() => { loading -= 1; pump(); });
+    }
+  };
+  const enqueue = (run, urgent) => new Promise((ok, no) => { queue.push({ urgent, run: () => run().then(ok, no) }); pump(); });
 
   const configure = () => {
     configured ??= Promise.resolve(plugin.configure?.({ focus: false, fade: false })).catch(() => {});
@@ -55,8 +78,9 @@ export function createNativeBackend({ plugin, now = () => Date.now(), durations 
     if (heldBack || !loads.has(v.name)) return;
     const wait = v.atWall - lead - now();
     if (wait > 15) { v.timer = setTimeout(() => begin(v), wait); return; }
-    loads.get(v.name).then((ok) => {
-      if (!ok || !voices.has(v) || heldBack || v.on) return;
+    const p = loads.get(v.name);
+    p.then((ok) => {
+      if (!(ok || p.done) || !voices.has(v) || heldBack || v.on) return; // (p.done: arrived after its timeout)
       // (Worked out again now: the file or the app may have taken a moment.)
       const at = position(v);
       if (at === null) { voices.delete(v); log(`${v.name}: its time has passed, not played (${Math.round(now() - v.atWall)} ms late)`); return; }
@@ -69,6 +93,13 @@ export function createNativeBackend({ plugin, now = () => Date.now(), durations 
       const calledAt = now();
       Promise.resolve(plugin.play({ assetId: v.name, time: at }))
         .then(() => {
+          // (Stopped, or past its `until`, while the player was still getting ready: stopped now that it plays.)
+          if (!voices.has(v) || (v.until && now() >= v.until)) {
+            setTimeout(() => plugin.stop({ assetId: v.name }).catch(() => {}), 60); // (Android: once its seek is done)
+            v.on = false;
+            voices.delete(v);
+            return;
+          }
           if (v.loop && voices.has(v)) plugin.loop({ assetId: v.name }); // (not awaited: Android never answers it)
           measure(v, at, calledAt);
         })
@@ -116,11 +147,11 @@ export function createNativeBackend({ plugin, now = () => Date.now(), durations 
     ready: () => true,
     running: () => !heldBack,
     wake() {},
-    load(name) {
+    load(name, { urgent = false } = {}) {
       if (loads.has(name)) return loads.get(name);
       const t0 = now();
       const work = configure()
-        .then(() => plugin.preload({ assetId: name, assetPath: `public/audio/${name}.m4a`, audioChannelNum: 1, isUrl: false, volume: 1 }))
+        .then(() => enqueue(() => Promise.resolve(plugin.preload({ assetId: name, assetPath: `public/audio/${name}.m4a`, audioChannelNum: 1, isUrl: false, volume: 1 })), urgent || /^(start-|marble-)/.test(name)))
         .then(() => Promise.race([
           Promise.resolve(plugin.getDuration?.({ assetId: name })).then((d) => { if (d?.duration > 0) lengths.set(name, d.duration); }).catch(() => {}),
           new Promise((ok) => setTimeout(ok, 1000)), // (the length is only a check: never waited for long)
@@ -132,17 +163,27 @@ export function createNativeBackend({ plugin, now = () => Date.now(), durations 
           log(`${name}: load failed (${e?.message ?? e})`);
           return false;
         });
-      const p = Promise.race([work, new Promise((ok) => setTimeout(() => ok('timeout'), LOAD_TIMEOUT_MS))]).then((r) => {
-        if (r === 'timeout') { log(`${name}: not loaded after ${LOAD_TIMEOUT_MS / 1000} s`); return false; }
-        if (!r) { loads.delete(name); return false; }
+      const arrived = () => {
         p.done = true;
-        for (const v of voices) if (v.name === name && !v.on) begin(v); // (arrived late: in step)
+        failed.delete(name);
+        for (const v of voices) if (v.name === name && !v.on) begin(v); // (arrived late: in step, or not at all if its time has passed)
+      };
+      const p = Promise.race([work, new Promise((ok) => setTimeout(() => ok('timeout'), LOAD_TIMEOUT_MS))]).then((r) => {
+        if (r === 'timeout') {
+          log(`${name}: not loaded after ${LOAD_TIMEOUT_MS / 1000} s (still loading: it counts once it arrives)`);
+          failed.add(name);
+          work.then((ok) => { if (ok && loads.get(name) === p) { log(`${name}: arrived after ${now() - t0} ms`); arrived(); } });
+          return false;
+        }
+        if (!r) { failed.add(name); loads.delete(name); return false; }
+        arrived();
         return true;
       });
       loads.set(name, p);
       return p;
     },
     loaded: (name) => Boolean(loads.get(name)?.done),
+    failed: () => [...failed],
     fetched: (name) => Boolean(loads.get(name)?.done),
     unload(name) {
       if ([...voices].some((v) => v.name === name)) return;
