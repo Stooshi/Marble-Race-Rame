@@ -776,12 +776,12 @@
    "name": "Istanbul Marble Grand Prix",
    "series": "Grand Prix",
    "lighting": "day",
-   "v": "bd4225be",
-   "bytes": 20448,
-   "bytes2x": 47020,
-   "t": 9381,
+   "v": "c6e9d7f4",
+   "bytes": 10700,
+   "bytes2x": 26798,
+   "t": 10567,
    "side": 1,
-   "marbles": 1
+   "marbles": 5
   },
   "joystick-spins": {
    "name": "Joystick Spins",

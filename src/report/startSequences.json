@@ -67,7 +67,7 @@
 "ice-palace": {"family":"winter-wonders","reach":0.324,"seq":["opening: tunnel-launch","drop","pileUp","slalom","drop","slalom","straight","half-pipe","straight","peg ×3"]},
 "indus-spins": {"family":"canyon","reach":0.241,"seq":["opening: classic","drop","pileUp","slalom","straight","slalom","sweep right","boost"]},
 "irrawaddy-balloon-dawn": {"family":"river","reach":0.228,"seq":["opening: tunnel-launch","drop","pileUp","slalom","drop","slalom","drop","peg ×3","S-bends left","peg ×2"]},
-"istanbul-marble-grand-prix": {"family":"grand-prix","reach":0.216,"seq":["opening: classic","drop","pileUp","slalom","S-bends left"]},
+"istanbul-marble-grand-prix": {"family":"grand-prix","reach":0.207,"seq":["opening: crest-start","drop","pileUp","slalom","climb","drop","S-bends left","peg","slalom","peg"]},
 "joystick-spins": {"family":"arcade","reach":0.238,"seq":["opening: funnel-drop","drop","pileUp","slalom","sweep left"]},
 "k2-concordia": {"family":"peak","reach":0.268,"seq":["opening: split-start","drop","pileUp","slalom","chutes","drop","slalom","straight","peg","brake","splitter"]},
 "kali-gandaki-burst": {"family":"canyon","reach":0.243,"seq":["opening: funnel-drop","drop","pileUp","slalom","straight","peg ×3","sweep left"]},
