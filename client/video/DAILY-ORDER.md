@@ -105,12 +105,15 @@ One row per video. Keep at least the last 7 days. The YouTube Shorts copies coun
 | 2026-11-06 | 17:00 | YouTube long | Paris Eiffel Tower Run | THE TRACK | hook "One thousandth of a second." / "Pick your marble for Paris." / "Back to Montmartre. Watch."; intro "Twenty marbles across Paris."; captions "From Montmartre to the Seine." / "Twenty gates above Montmartre." / "Down the Montmartre plunge." / "Elbow to elbow in Paris." / "Every bend reshuffles Paris." / "Tour Eiffel watching every bounce." / "The whole city on one track." / "Still backing your Paris pick?" / "A new leader in Paris." / "Last plunge to the Seine." / "Paris, raced by real physics." |
 | 2026-11-06 | 23:00 | TikTok | Thames Bridges Run | RACING FRIENDS | "Your crew's pick?" / "Send a code. Race together." / "Race your friends. Free." |
 | 2026-11-06 | 23:00 | Instagram + YouTube Short | Singapore Block Gardens | THE TRACK | "Into Singapore's block gardens." / "Bending through the garden city." / "Through the dome waterfall." |
+| 2026-11-07 | 17:00 | all | (reposts of the 6 Nov 17:00 videos: Buffer did not send them) | | (no new lines) |
+| 2026-11-07 | 23:00 | TikTok | Hong Kong Crossing | THE TRACK | "Who wins the harbour crossing?" / "Swooping over Victoria Harbour." / "Forty-five metres above the sea." |
+| 2026-11-07 | 23:00 | Instagram + YouTube Short | Pudong Marble Grand Prix | WINNING | "Decided by 0.003 seconds." / "Three marbles, one gold." / "Round the loop for gold." |
 
 ## Tracks already used in a video
 
 Any slot counts: Shorts, long videos, the Spotlight, and planned social clips.
 
-- **Grand Prix** (unused live ones left after 6 Nov: Sahara only):
+- **Grand Prix** (unused live ones left after 6 Nov: Sahara only. On 7 Nov Sahara, Nairobi, Delhi and Wyrmwood Hollow got new layouts not yet deployed, and Moses ruled out the re-laid tracks that day, so Pudong was that day's Grand Prix track on a new seed; Sahara waits for the deploy):
   - Dubai;
   - Delhi;
   - Elderglade;
@@ -121,5 +124,5 @@ Any slot counts: Shorts, long videos, the Spotlight, and planned social clips.
   - Pudong;
   - Sydney;
   - Wyrmwood Hollow.
-- **Grand Prix seeds used** (never again on any Grand Prix track): Elderglade 1113814; Frostmere 2467963; Lagos 2784723; Nairobi 2539234; Pudong 1945309, 2832237; Stockholm 1604792 (the Spotlight); Sydney 2507558; Wyrmwood Hollow 2357097. Not known: the planned clips and the earlier Dubai, Delhi and Istanbul videos; their seeds were not recorded.
-- **Other tracks:** beijing-nest-200, bullet-hell (planned clip), checkpoint-rush, chobe, cotahuasi, danube, Final Level, flipper-spins, grand-canyon-burst, grand-champion (planned clip), Greenland Expedition, irrawaddy, k2, kali-gandaki, Kirkjufell Block Falls, London Steeplechase, marble-stadium-sprint, nanjing, niagara (Cube Falls), Paris Eiffel Tower Run, phantom-peak, pyramid-run, redwood, Rhine Castle Run, saint-tropez, san-francisco, Singapore Block Gardens, sky-islands (planned clip), sognefjord, stockholm, Thames Bridges Run, the-stack, tokyo (planned clip), Venice Cube Canals, Verdon Burst, waimea (planned clip), zambezi, zurich.
+- **Grand Prix seeds used** (never again on any Grand Prix track): Elderglade 1113814; Frostmere 2467963; Lagos 2784723; Nairobi 2539234; Pudong 1945309, 2832237, 2665938 (7 Nov 23:00); Stockholm 1604792 (the Spotlight); Sydney 2507558; Wyrmwood Hollow 2357097. Not known: the planned clips and the earlier Dubai, Delhi and Istanbul videos; their seeds were not recorded.
+- **Other tracks:** beijing-nest-200, bullet-hell (planned clip), checkpoint-rush, chobe, cotahuasi, danube, Final Level, flipper-spins, grand-canyon-burst, grand-champion (planned clip), Greenland Expedition, hong-kong-crossing (7 Nov), irrawaddy, k2, kali-gandaki, Kirkjufell Block Falls, London Steeplechase, marble-stadium-sprint, nanjing, niagara (Cube Falls), Paris Eiffel Tower Run, phantom-peak, pyramid-run, redwood, Rhine Castle Run, saint-tropez, san-francisco, Singapore Block Gardens, sky-islands (planned clip), sognefjord, stockholm, Thames Bridges Run, the-stack, tokyo (planned clip), Venice Cube Canals, Verdon Burst, waimea (planned clip), zambezi, zurich.
