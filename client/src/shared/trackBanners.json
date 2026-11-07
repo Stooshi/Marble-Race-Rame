@@ -1381,12 +1381,12 @@
    "name": "Sahara Marble Grand Prix",
    "series": "Grand Prix",
    "lighting": "day",
-   "v": "7bcf8f28",
-   "bytes": 20478,
-   "bytes2x": 48638,
-   "t": 9359,
+   "v": "06e11194",
+   "bytes": 17182,
+   "bytes2x": 42236,
+   "t": 10082,
    "side": 1,
-   "marbles": 1
+   "marbles": 5
   },
   "saint-tropez": {
    "name": "Saint-Tropez",

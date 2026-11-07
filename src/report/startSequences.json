@@ -121,7 +121,7 @@
 "rio-new-year-burst": {"family":"pinball","reach":0.358,"seq":["opening: pipe-drop","drop","half-pipe","sweep right","peg ×2","spiral right"]},
 "roraima-cloud-falls": {"family":"peak","reach":0.29,"seq":["opening: pipe-drop","drop","half-pipe","straight","peg","slalom","peg"]},
 "rwenzori-moss-glaciers": {"family":"peak","reach":0.213,"seq":["opening: funnel-drop","drop","pileUp","slalom","straight","peg ×2","waterfall","straight","slalom"]},
-"sahara-marble-grand-prix": {"family":"grand-prix","reach":0.216,"seq":["opening: classic","drop","pileUp","slalom","S-bends left"]},
+"sahara-marble-grand-prix": {"family":"grand-prix","reach":0.202,"seq":["opening: staggered-drop","drop","pileUp","slalom","brake","S-bends right","slalom","peg"]},
 "saint-tropez": {"family":"world-tour","reach":0.217,"seq":["opening: staggered-drop","drop","pileUp","slalom","brake","sweep right","S-bends right","peg","slalom"]},
 "san-fernando-lantern-spins": {"family":"block","reach":0.33,"seq":["opening: peg-drop","drop","peg ×7","S-bends left","straight","peg ×3","table-top"]},
 "sapporo-snow-sculptures": {"family":"coaster","reach":0.236,"seq":["opening: classic","drop","pileUp","slalom","straight","box","rail","jump","spiral right"]},
