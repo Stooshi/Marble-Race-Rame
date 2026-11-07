@@ -321,7 +321,7 @@ module.exports = {
     'wudian-hall', 'watchtower', 'pagoda', 'rice-terraces', 'lantern-row', 'temple-of-heaven',
     'dubai-fountain', 'marina', 'harbour', 'opera-house', 'galata-tower', 'hagia-sophia', 'blue-mosque', 'bosphorus-bridge', 'tulip-garden',
     'lagos-skyline', 'national-theatre', 'roundabout-monument', 'kicc-tower', 'acacia', 'safari-truck', 'park-fence',
-    'royal-palace', 'city-hall', 'vasa-museum', 'steamboats', 'red-fort', 'red-fort-gate', 'jama-masjid', 'india-gate', 'mughal-fountain',
+    'royal-palace', 'city-hall', 'vasa-museum', 'steamboats', 'red-fort', 'red-fort-gate', 'jama-masjid', 'india-gate', 'mughal-fountain', 'qutub-minar',
     'kasbah', 'mud-mosque', 'caravan',
     'giant-tree', 'tree-platform', 'glow-flowers', 'snow-castle', 'snow-island', 'ice-palace',
     'ruined-castle', 'sleeping-dragon', 'fallen-statue', 'amphitheatre', 'dragon-mountain',
@@ -422,7 +422,7 @@ module.exports = {
   // What stands in the middle of a splitter, between its two channels (the arch: over one of
   // them), or in the middle of a spiral or a hairpin.
   AROUND: ['mountain-hut', 'big-rock', 'mountain-restaurant', 'mine-headframe', 'nunatak', 'bell-tower', 'arc-de-triomphe', 'obelisk', 'notre-dame', 'oasis', 'twisted-tower', 'river-island', 'anaconda', 'watchtower', 'pagoda',
-    'museum-of-the-future', 'dubai-frame', 'opera-house', 'tulip-garden', 'roundabout-monument', 'acacia', 'mughal-fountain', 'giant-tree', 'snow-island', 'fallen-statue', 'volcano-rock', 'sagrada-familia', 'frozen-waterfall', 'limestone-island', 'sea-islet', 'giant-redwood', 'lantern-chedi', 'watermill', 'confucius-temple', 'castle-keep', 'magician-trunk', 'top-hat', 'jukebox-tower', 'clocktower', 'lighting-rig', 'claw-tower', 'glitch-tower', 'ringed-planet', 'laser-turret', 'water-tower', 'fork-signpost', 'neon-plaza', 'snow-peak',
+    'museum-of-the-future', 'dubai-frame', 'opera-house', 'tulip-garden', 'roundabout-monument', 'acacia', 'mughal-fountain', 'qutub-minar', 'giant-tree', 'snow-island', 'fallen-statue', 'volcano-rock', 'sagrada-familia', 'frozen-waterfall', 'limestone-island', 'sea-islet', 'giant-redwood', 'lantern-chedi', 'watermill', 'confucius-temple', 'castle-keep', 'magician-trunk', 'top-hat', 'jukebox-tower', 'clocktower', 'lighting-rig', 'claw-tower', 'glitch-tower', 'ringed-planet', 'laser-turret', 'water-tower', 'fork-signpost', 'neon-plaza', 'snow-peak',
     'settling-stack', 'voxel-peak', 'basalt-spire', 'beam-tower', 'level-pillars', 'floodlight-mast', 'flame-cauldron', 'medal-podium',
     'island-castle',
     'karst-tower', 'cube-campanile', 'three-towers', 'lake-island', 'cube-pagoda', 'garden-towers', 'granite-island', 'arrowhead-peak', 'geyser-cone', 'riviera-lighthouse', 'pit-garages'],

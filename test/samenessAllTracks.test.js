@@ -43,9 +43,8 @@ const KNOWN = {
   'amazon-water-run': ['layout'],
   'rio-jungle-rumble': ['opening', 'opening-kind', 'layout'],
   'china-wall-twister': ['opening', 'opening-kind', 'layout'],
-  // Grand Prix (one design: Dubai's; Stockholm, Lagos, Istanbul, Sydney and Nairobi have their own since 6–7 Nov 2026).
+  // Grand Prix (one design: Dubai's; Stockholm, Lagos, Istanbul, Sydney, Nairobi and Delhi have their own since 6–7 Nov 2026).
   'dubai-marble-grand-prix': ['opening', 'opening-kind', 'layout'],
-  'delhi-red-fort-marble-grand-prix': ['opening', 'opening-kind', 'layout'],
   'sahara-marble-grand-prix': ['opening', 'opening-kind', 'layout'],
   'elderglade-marble-grand-prix': ['opening-kind'], // (its opening and layout are its own since Sydney, Lagos and Stockholm got theirs, 7 Nov 2026)
   'frostmere-marble-grand-prix': ['opening', 'opening-kind', 'layout'],

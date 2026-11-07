@@ -474,7 +474,7 @@ The Grand Prix tracks' own pieces (looks only, like everything here):
   `'opera-house'` (stylised), `'galata-tower'`, `'hagia-sophia'`, `'blue-mosque'`, `'bosphorus-bridge'`,
   `'tulip-garden'`, `'lagos-skyline'`, `'national-theatre'`, `'roundabout-monument'`, `'kicc-tower'`,
   `'acacia'`, `'safari-truck'`, `'park-fence'`, `'royal-palace'`, `'city-hall'`, `'vasa-museum'`,
-  `'steamboats'`, `'red-fort'`, `'red-fort-gate'`, `'jama-masjid'`, `'india-gate'`, `'mughal-fountain'`,
+  `'steamboats'`, `'red-fort'`, `'red-fort-gate'`, `'jama-masjid'`, `'india-gate'`, `'mughal-fountain'`, `'qutub-minar'` (7 Nov 2026: the centre of Delhi Red Fort Marble Grand Prix's spiral),
   `'kasbah'`, `'mud-mosque'`, `'caravan'`, and our own worlds' `'giant-tree'`, `'tree-platform'`,
   `'glow-flowers'`, `'snow-castle'`, `'snow-island'`, `'ice-palace'`, `'ruined-castle'`,
   `'sleeping-dragon'` (one eye opening), `'fallen-statue'`, `'amphitheatre'`, `'dragon-mountain'`.

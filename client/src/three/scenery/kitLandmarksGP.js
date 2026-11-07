@@ -393,6 +393,30 @@ function jamaMasjid() {
   for (const x of [-33, 33]) parts.push(piece(new CylinderGeometry(1.8, 2.2, 42, 10), RED, M(x, 21, 8)), ...chhatri(x, 42, 8, 0.9));
   return merge(parts);
 }
+/**
+ * The Qutub Minar, stylised (the centre of Delhi Marble Grand Prix's spiral): a fluted tower tapering through five
+ * storeys, red sandstone below and banded with pale marble above, a balcony ring at the top of each storey and a small
+ * open cupola on top. 64 m tall, 7 m across at the foot.
+ */
+function qutubMinar() {
+  const parts = [piece(new CylinderGeometry(9, 9.5, 1.2, 20), '#c9b8a0', M(0, 0.6, 0))];
+  const storeys = [[7, 6, 18, RED], [6, 5.1, 14, RED], [5.1, 4.3, 11, RED], [4.3, 3.7, 8, '#e8dcc8'], [3.7, 3.2, 7, RED]];
+  let y = 1.2;
+  for (const [r0, r1, h, colour] of storeys) {
+    parts.push(piece(new CylinderGeometry(r1, r0, h, 16), colour, M(0, y + h / 2, 0)));
+    // (The flutes: thin ribs standing proud of the shaft.)
+    for (let k = 0; k < 8; k += 1) {
+      const a = (k / 8) * Math.PI * 2;
+      const rm = (r0 + r1) / 2;
+      parts.push(piece(new CylinderGeometry(0.45 * (r1 / r0), 0.45, h, 5), RED_DARK, M(Math.cos(a) * rm, y + h / 2, Math.sin(a) * rm)));
+    }
+    if (colour !== RED) parts.push(piece(new CylinderGeometry(r1 + 0.05, r0 + 0.05, 1, 16), RED, M(0, y + h * 0.5, 0)));
+    y += h;
+    parts.push(piece(new CylinderGeometry(r1 + 1.4, r1 + 0.6, 0.9, 16), '#e8dcc8', M(0, y + 0.2, 0)));
+  }
+  parts.push(...chhatri(0, y + 0.6, 0, 0.8));
+  return merge(parts);
+}
 /** India Gate, stylised: a tall sandstone arch with a stepped attic and a shallow dome on top. */
 function indiaGate() {
   return merge([
@@ -623,6 +647,7 @@ export const GP_LANDMARKS = {
   'red-fort-gate': { build: redFortGate, radius: 15 },
   'jama-masjid': { build: jamaMasjid, radius: 36 },
   'india-gate': { build: indiaGate, radius: 18 },
+  'qutub-minar': { build: qutubMinar, radius: 10, fit: 9 },
   'mughal-fountain': { build: () => mughalFountain(30, 12), radius: 16 },
   kasbah: { build: kasbah, radius: 30 },
   'mud-mosque': { build: mudMosque, radius: 32 },

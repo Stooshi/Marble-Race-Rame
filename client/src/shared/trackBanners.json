@@ -446,12 +446,12 @@
    "name": "Delhi Red Fort Marble Grand Prix",
    "series": "Grand Prix",
    "lighting": "day",
-   "v": "89ad7983",
-   "bytes": 21962,
-   "bytes2x": 52854,
-   "t": 9393,
+   "v": "c24bb488",
+   "bytes": 16908,
+   "bytes2x": 41016,
+   "t": 11648,
    "side": 1,
-   "marbles": 1
+   "marbles": 5
   },
   "douro-block-terraces": {
    "name": "Douro Block Terraces",
