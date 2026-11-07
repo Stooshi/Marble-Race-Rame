@@ -43,11 +43,10 @@ const KNOWN = {
   'amazon-water-run': ['layout'],
   'rio-jungle-rumble': ['opening', 'opening-kind', 'layout'],
   'china-wall-twister': ['opening', 'opening-kind', 'layout'],
-  // Grand Prix (one design: Dubai's; Stockholm, Lagos, Istanbul, Sydney, Nairobi, Delhi and Sahara have their own since 6–7 Nov 2026).
+  // Grand Prix (one design: Dubai's; Stockholm, Lagos, Istanbul, Sydney, Nairobi, Delhi, Sahara and Wyrmwood Hollow have their own since 6–7 Nov 2026).
   'dubai-marble-grand-prix': ['opening', 'opening-kind', 'layout'],
   'elderglade-marble-grand-prix': ['opening-kind'], // (its opening and layout are its own since Sydney, Lagos and Stockholm got theirs, 7 Nov 2026)
   'frostmere-marble-grand-prix': ['opening', 'opening-kind', 'layout'],
-  'wyrmwood-hollow-marble-grand-prix': ['opening', 'opening-kind', 'layout'],
 };
 
 const tracks = PHYSICS_TRACKS.filter((t) => profile(t) && profile(t).family !== 'test');

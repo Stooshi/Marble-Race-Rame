@@ -1876,12 +1876,12 @@
    "name": "Wyrmwood Hollow Marble Grand Prix",
    "series": "Grand Prix",
    "lighting": "sunset",
-   "v": "f0e0993f",
-   "bytes": 15904,
-   "bytes2x": 38826,
-   "t": 10333,
+   "v": "f2442715",
+   "bytes": 16294,
+   "bytes2x": 38870,
+   "t": 9786,
    "side": 1,
-   "marbles": 4
+   "marbles": 5
   },
   "yangtze-lock-run": {
    "name": "Yangtze Lock Run",
