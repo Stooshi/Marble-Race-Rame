@@ -24,7 +24,7 @@ module.exports = track({
   tvCameras: [
     // (At the end of the bridge, looking back along the banked turn with the water beside it.)
     { section: 'Lagoon bridge banked turn', at: 0.9, side: 'right', distance: 6, height: 6 },
-    { section: 'Lekki S-bends', at: 0.9, side: 'left', distance: 6, height: 6 },
+    // (A second camera at the end of the Lekki S-bends looked at the bank and scenery beside them: taken out, 7 Nov 2026.)
   ],
   billboardFrame: 'led',
   start: { landmark: 'lagos-skyline', scenery: ['grandstand'], gate: 'trapdoor', shots: { countdown: 'front', launch: 'high-behind' } },
