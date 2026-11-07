@@ -94,7 +94,7 @@
 "mont-blanc-needle-ridge": {"family":"peak","reach":0.251,"seq":["opening: classic","drop","pileUp","slalom","straight","peg","slalom","peg","hairpin left","swipe"]},
 "multiball-manor": {"family":"pinball","reach":0.248,"seq":["opening: tunnel-launch","drop","pileUp","slalom","drop","slalom","sweep left"]},
 "murray-red-gum-run": {"family":"river","reach":0.241,"seq":["opening: classic","drop","pileUp","slalom","straight","slalom","drop","sweep left"]},
-"nairobi-marble-grand-prix": {"family":"grand-prix","reach":0.232,"seq":["opening: classic","drop","pileUp","slalom","S-bends left"]},
+"nairobi-marble-grand-prix": {"family":"grand-prix","reach":0.218,"seq":["opening: banked-turn","drop","pileUp","slalom","sweep right","S-bends left","slalom","peg"]},
 "nanjing": {"family":"coaster","reach":0.208,"seq":["opening: banked-turn","drop","pileUp","slalom","sweep right","S-bends left"]},
 "new-york-winter-run": {"family":"grand-prix","reach":0.31,"seq":["opening: peg-drop","drop","peg ×7","straight","peg ×2","box","rail","spiral left"]},
 "niagara-cube-falls": {"family":"block-2","reach":0.286,"seq":["opening: peg-drop","drop","peg ×7","sweep left","straight","peg ×2","slalom","waterfall"]},

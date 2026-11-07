@@ -42,8 +42,9 @@ test('the loop\'s proving track: the loop is its feature (the flyover\'s highlig
   assert.equal(pad.min, 25);
   assert.equal(t.physics.kit.signature ?? t.signature, 'The loop');
   assert.ok(t.physics.kit.tv.some((c) => c.section === 'The loop' && c.p > lp.at));
-  // The only tracks with a loop: its proving track, Saint-Tropez and Pudong Marble Grand Prix (3 Nov 2026, both switched off until Moses says).
-  assert.deepEqual(PHYSICS_TRACKS.filter((x) => x.physics?.features?.some((y) => y.type === 'loop')).map((x) => x.slug), [SLUG, 'saint-tropez', 'pudong-marble-grand-prix']);
+  // The only tracks with a loop: its proving track, Saint-Tropez and Pudong Marble Grand Prix (3 Nov 2026), and Nairobi
+  // Marble Grand Prix's Expressway loop (its own layout, 7 Nov 2026).
+  assert.deepEqual(PHYSICS_TRACKS.filter((x) => x.physics?.features?.some((y) => y.type === 'loop')).map((x) => x.slug), [SLUG, 'nairobi-marble-grand-prix', 'saint-tropez', 'pudong-marble-grand-prix']);
 });
 
 test('every marble goes round the loop at racing speed, and every one finishes', () => {

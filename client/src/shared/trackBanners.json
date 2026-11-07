@@ -1084,12 +1084,12 @@
    "name": "Nairobi Marble Grand Prix",
    "series": "Grand Prix",
    "lighting": "day",
-   "v": "39fc8128",
-   "bytes": 23132,
-   "bytes2x": 54676,
-   "t": 9621,
+   "v": "e050ded1",
+   "bytes": 19110,
+   "bytes2x": 47324,
+   "t": 10665,
    "side": 1,
-   "marbles": 1
+   "marbles": 4
   },
   "nanjing": {
    "name": "Nanjing",
