@@ -25,6 +25,18 @@ The YouTube LONG video needs a proper thumbnail: a sharp shot of the pack with b
 | Instagram Reel | vertical | NEW |
 | YouTube Short | vertical, a copy of the 23:00 Instagram Reel | |
 
+### Sunday 09:00 set (Moses, 8 Nov 2026: on Sundays, on top of the 17:00 and 23:00 sets; posted 9:00–10:00 Stockholm time, ready the evening before)
+
+| Slot | Format | Opening |
+|---|---|---|
+| TikTok Short | vertical | NEW |
+| Instagram Reel | vertical | OLD |
+| YouTube Short | vertical, a copy of the 09:00 TikTok | |
+
+- One of the two is a Grand Prix track on a seed never used on any Grand Prix track; the other a track not used in the last 7 days (and never Champion Shooter).
+- The same rules as every other video (below): packs at the curves and the finish, the end card, fresh lines.
+- The three sets in a row on one platform count for the theme rotation and the 7-day line rule, so the 09:00 set sits between the night before's 23:00 and the day's 17:00.
+
 ## Rules for every video
 
 - **Picking the race:**
@@ -108,12 +120,14 @@ One row per video. Keep at least the last 7 days. The YouTube Shorts copies coun
 | 2026-11-07 | 17:00 | all | (reposts of the 6 Nov 17:00 videos: Buffer did not send them) | | (no new lines) |
 | 2026-11-07 | 23:00 | TikTok | Hong Kong Crossing | THE TRACK | "Who wins the harbour crossing?" / "Swooping over Victoria Harbour." / "Forty-five metres above the sea." |
 | 2026-11-07 | 23:00 | Instagram + YouTube Short | Pudong Marble Grand Prix | WINNING | "Decided by 0.003 seconds." / "Three marbles, one gold." / "Round the loop for gold." |
+| 2026-11-08 | 09:00 | TikTok + YouTube Short | Sahara Marble Grand Prix | CHALLENGE | "Pick your marble. Now." / "Still happy with your pick?" / "Over the dunes. Still yours?" |
+| 2026-11-08 | 09:00 | Instagram | Ha Long Bay Spins | RACING FRIENDS | "Your group's pick?" / "Your crew vs. 20 marbles." / "Round the islands with friends." |
 
 ## Tracks already used in a video
 
 Any slot counts: Shorts, long videos, the Spotlight, and planned social clips.
 
-- **Grand Prix** (unused live ones left after 6 Nov: Sahara only. On 7 Nov Sahara, Nairobi, Delhi and Wyrmwood Hollow got new layouts, not yet deployed that day, and Moses ruled out the re-laid tracks, so Pudong was that day's Grand Prix track on a new seed. The four new layouts were deployed on 8 Nov just after midnight, so Sahara, still never in a video, is the next Grand Prix track):
+- **Grand Prix** (none left unused since Sahara on 8 Nov 09:00; from then every Grand Prix video reuses a track, on a new seed. On 7 Nov Sahara, Nairobi, Delhi and Wyrmwood Hollow got new layouts, not yet deployed that day, and Moses ruled out the re-laid tracks, so Pudong was that day's Grand Prix track on a new seed. The four new layouts were deployed on 8 Nov just after midnight,)
   - Dubai;
   - Delhi;
   - Elderglade;
@@ -124,5 +138,5 @@ Any slot counts: Shorts, long videos, the Spotlight, and planned social clips.
   - Pudong;
   - Sydney;
   - Wyrmwood Hollow.
-- **Grand Prix seeds used** (never again on any Grand Prix track): Elderglade 1113814; Frostmere 2467963; Lagos 2784723; Nairobi 2539234; Pudong 1945309, 2832237, 2665938 (7 Nov 23:00); Stockholm 1604792 (the Spotlight); Sydney 2507558; Wyrmwood Hollow 2357097. Not known: the planned clips and the earlier Dubai, Delhi and Istanbul videos; their seeds were not recorded.
-- **Other tracks:** beijing-nest-200, bullet-hell (planned clip), checkpoint-rush, chobe, cotahuasi, danube, Final Level, flipper-spins, grand-canyon-burst, grand-champion (planned clip), Greenland Expedition, hong-kong-crossing (7 Nov), irrawaddy, k2, kali-gandaki, Kirkjufell Block Falls, London Steeplechase, marble-stadium-sprint, nanjing, niagara (Cube Falls), Paris Eiffel Tower Run, phantom-peak, pyramid-run, redwood, Rhine Castle Run, saint-tropez, san-francisco, Singapore Block Gardens, sky-islands (planned clip), sognefjord, stockholm, Thames Bridges Run, the-stack, tokyo (planned clip), Venice Cube Canals, Verdon Burst, waimea (planned clip), zambezi, zurich.
+- **Grand Prix seeds used** (never again on any Grand Prix track): Elderglade 1113814; Frostmere 2467963; Lagos 2784723; Nairobi 2539234; Pudong 1945309, 2832237, 2665938 (7 Nov 23:00); Sahara 2760966 (8 Nov 09:00, its new layout); Stockholm 1604792 (the Spotlight); Sydney 2507558; Wyrmwood Hollow 2357097. Not known: the planned clips and the earlier Dubai, Delhi and Istanbul videos; their seeds were not recorded.
+- **Other tracks:** beijing-nest-200, bullet-hell (planned clip), checkpoint-rush, chobe, cotahuasi, danube, Final Level, flipper-spins, grand-canyon-burst, grand-champion (planned clip), Greenland Expedition, ha-long-bay-spins (8 Nov), hong-kong-crossing (7 Nov), irrawaddy, k2, kali-gandaki, Kirkjufell Block Falls, London Steeplechase, marble-stadium-sprint, nanjing, niagara (Cube Falls), Paris Eiffel Tower Run, phantom-peak, pyramid-run, redwood, Rhine Castle Run, saint-tropez, san-francisco, Singapore Block Gardens, sky-islands (planned clip), sognefjord, stockholm, Thames Bridges Run, the-stack, tokyo (planned clip), Venice Cube Canals, Verdon Burst, waimea (planned clip), zambezi, zurich.
