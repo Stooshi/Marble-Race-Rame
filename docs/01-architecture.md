@@ -1,6 +1,6 @@
 # 1. Architecture
 
-*Last updated 4 Nov 2026.*
+*Last updated 8 Nov 2026.*
 
 ## The parts
 
@@ -82,7 +82,7 @@
 5. Refunds and disputes arrive the same way and remove the coins.
 
 **Payments (Android app): Google Play Billing.** Google's rules require its billing for digital items in the app, so Stripe is never used there.
-1. The app asks the server for the player's Play account id (`GET /api/payments/google/account`, a random `users.store_account_id`, never the user id or email) and opens Google's purchase sheet for the pack (`coins-5000`, `coins-10500`, `coins-27500`, `coins-57500`) with that id.
+1. The app asks the server for the player's Play account id (`GET /api/payments/google/account`, a random `users.store_account_id`, never the user id or email) and opens Google's purchase sheet for the pack with that id. In Google Play the products are `coins_5000`, `coins_10500`, `coins_27500`, `coins_57500` and `holiday_pass_2026` (Play refuses hyphens, 27 Oct 2026); the server maps them to and from our ids `coins-5000` … (`src/payments/google.js`).
 2. It sends the purchase token to `POST /api/payments/google/verify`. The server asks Google (Android Publisher API, with a service account) whether the purchase is paid, for this product, and made by this player's account id.
 3. **Only then** are the coins added, once per purchase (unique Google order id and purchase token), through `economy.change()` like a Stripe payment. Then the server *consumes* the purchase at Google so the pack can be bought again.
 4. Google also tells the server about purchases by itself (real-time developer notifications, a Pub/Sub push to `/api/payments/google/rtdn`), so coins arrive even if the app closed mid-purchase; the app also resends unconfirmed purchases at the next login.
@@ -189,7 +189,7 @@ The apps are built with `npm run app:sync`. This sets `VITE_API_URL` to the addr
 
 ### Google Play Console (settings, not variables)
 
-- The four coin packs as one-time products with the same ids as `client/src/shared/payments/packs.json`.
+- The four coin packs and the season pass as one-time products, with the ids of `client/src/shared/payments/packs.json` written with `_` instead of `-` (`coins_5000`, …, `holiday_pass_2026`).
 - API access through a Google Cloud project; a service account with "View financial data" and "Manage orders and subscriptions".
 - Real-time developer notifications: a Pub/Sub topic with a push subscription to `https://<server>/api/payments/google/rtdn?token=<GOOGLE_PLAY_RTDN_TOKEN>`.
 - Step by step: the [runbook](05-runbook.md#google-play-billing-coins-in-the-android-app).
