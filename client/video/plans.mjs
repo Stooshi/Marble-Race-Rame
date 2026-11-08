@@ -1038,3 +1038,51 @@ export function spotlight(info, race) {
     sound: { goAt: null, beeps: false, music: [[0, p.v]], lifts: [[raceAt, tagAt + S.seconds.tag]], ceremony: null, extra: [{ key: 'whoosh', at: Math.max(0, infoAt - 0.6), gain: 0.45, dur: 1.6 }], loop: true },
   };
 }
+
+/**
+ * One shot of a speed montage (Moses, 8 Nov 2026; `DAILY-ORDER.md` "Speed montage"): a low, close chase behind the
+ * busiest group through one section of a race picked by `scripts/video-pick.js --feature <section>` (a waterfall,
+ * a plunge, a speed pad, a loop, a steep drop, a fast straight), `dur` seconds, with an optional big line; the last
+ * shot holds frozen, dimmed, under the big end card (`end`: its lines, held endCard.hold.seconds).
+ * `scripts/speed-montage.mjs` records the shots and cuts them together under one stretch of race music.
+ * The lines say how fast the race looks, never that a marble is faster for being bought.
+ */
+export function speedShot(info, race, { text = null } = {}) {
+  const X = text ?? {};
+  const T = TEMPLATE.speedMontage;
+  const V = race.video;
+  if (!V?.feature) throw new Error('speedShot needs a race picked by scripts/video-pick.js --feature <section>');
+  const dur = X.dur ?? T.shotSeconds;
+  if (!(dur >= T.minShot && dur <= T.maxShot)) throw new Error(`A speed montage shot lasts ${T.minShot}–${T.maxShot} s, not ${dur}`);
+  const line = X.line ? montageLine(X.line) : null;
+  const F = V.feature;
+  const members = F.busiest.members.slice(0, 5);
+  const from = (X.at ?? reaches(race, members[0], F.p0) ?? F.busiest.t) - (X.lead ?? T.leadMs);
+  const p = builder('speedShot');
+  const shot = { type: 'group', members, shot: 'speed', from, dur, speed: 1, ...T.chase };
+  const at = p.add(shot);
+  const hooks = line ? [{ at: at + 0.02, dur: dur - 0.04, text: line }] : [];
+  let endBig = null;
+  let dim = null;
+  if (X.end) {
+    const H = TEMPLATE.endCard.hold;
+    const endAt = p.add({ ...shot, from: from + dur * 1000, speed: 0, dur: H.seconds });
+    const [l1, l2, l3 = ''] = X.end.split('|').map((s) => montageLine(s.trim()));
+    endBig = { at: endAt + 0.05, l1, l2, l3 };
+    const readable = p.v - (endBig.at + 0.18);
+    if (readable < TEMPLATE.endCard.minSeconds - 1e-9) throw new Error(`The end card is readable ${readable.toFixed(2)} s: at least ${TEMPLATE.endCard.minSeconds} s (template.json endCard)`);
+    dim = { at: endAt, dur: H.seconds, k: TEMPLATE.abTall.endDim ?? H.dim, fin: H.dimIn };
+  }
+  return {
+    shots: p.shots, texts: [], captions: [], hooks, lines: [], markers: null, rewind: null, podium: null, length: p.v, bc: [], city: info.name, resultsTall: null,
+    loopFade: 0, endBig, dim, marks: { section: F.name, from, members },
+    sound: { goAt: null, beeps: false, music: [[0, p.v]], lifts: [], ceremony: null, extra: [], loop: true },
+  };
+}
+
+/** A speed montage's on-screen line (Moses's own lines may run past 6 words): no money or prize words, and never that buying makes a marble faster. */
+export function montageLine(text) {
+  if (/\b(money|cash|prizes?|jackpot|bet)\b/i.test(text)) throw new Error(`On-screen line mentions money or prizes: "${text}"`);
+  if (/\b(buy|bought|buying|shop|purchase|upgrade|pay)\b/i.test(text)) throw new Error(`A speed line must not suggest buying makes a marble faster: "${text}"`);
+  return text;
+}

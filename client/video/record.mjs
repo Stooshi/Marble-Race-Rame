@@ -254,7 +254,7 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   const num = (n) => (opt(n, null) === null ? null : Number(opt(n)));
   await record({
     slug, race, kind: opt('kind', 'production'), format: opt('format', 'wide'), tune: Number(opt('tune', 7)), logo: opt('logo', TEMPLATE.intro.logo),
-    variant: opt('variant', 'A'), opening: opt('opening', 'old'), text: { hook: opt('hook', null), curve: opt('curve', null), feature: opt('feature-line', null) }, clip: opt('clip', null), at: num('at'), fly: num('fly'), promoStart: num('promos'),
+    variant: opt('variant', 'A'), opening: opt('opening', 'old'), text: { hook: opt('hook', null), curve: opt('curve', null), feature: opt('feature-line', null), line: opt('line', null), end: opt('end', null), dur: num('dur'), lead: num('lead') }, clip: opt('clip', null), at: num('at'), fly: num('fly'), promoStart: num('promos'),
     out: opt('out', path.join(process.cwd(), `${slug}-${opt('kind', 'production')}-${opt('format', 'wide')}.mp4`)), from: num('from'), to: num('to'), stills: opt('stills', null) === 'shots' ? 'shots' : opt('stills', null)?.split(',').map(Number) ?? null,
   });
   process.exit(0); // (the browser and the dev server can keep the process waiting after closing)

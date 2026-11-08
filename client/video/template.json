@@ -246,5 +246,17 @@
     "slowMotion": "Slow-motion replay",
     "pickYourWinner": "Who wins?",
     "pickYourWinnerAnswer": "Did you pick {marble}?"
+  },
+  "speedMontage": {
+    "_note": "Speed montage (Moses, 8 Nov 2026): fast cuts of one shot each from at least 6 tracks, low close chase cameras, one stretch of race music, the whoosh on speed pads and loops; 15-20 s with the end card (DAILY-ORDER.md).",
+    "shotSeconds": 2,
+    "minShot": 1.5,
+    "maxShot": 3,
+    "leadMs": 350,
+    "chase": { "back": 4.4, "up": 1.4, "ahead": 5, "fov": 76 },
+    "minTracks": 6,
+    "minSeconds": 15,
+    "maxSeconds": 20,
+    "whooshGain": 1.0
   }
 }

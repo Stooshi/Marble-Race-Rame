@@ -26,5 +26,6 @@ export const SOUNDS = {
   launch: { file: audio('start-rolling') }, // (the start sound since 30 Oct 2026: the marbles start rolling)
   ceremony: { file: audio('ceremony') },
   crowd: { file: audio('crowd-grand-prix') },
+  speedPad: { file: audio('speed-pad') }, // (the game's speed-pad whoosh: the speed montage, on its pads and loops)
   tune: (n) => ({ file: audio(`tune-${n}`) }),
 };

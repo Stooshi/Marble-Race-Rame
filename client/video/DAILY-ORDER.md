@@ -37,6 +37,16 @@ The YouTube LONG video needs a proper thumbnail: a sharp shot of the pack with b
 - The same rules as every other video (below): packs at the curves and the finish, the end card, fresh lines.
 - The three sets in a row on one platform count for the theme rotation and the 7-day line rule, so the 09:00 set sits between the night before's 23:00 and the day's 17:00.
 
+### Video type: speed montage (Moses, 8 Nov 2026)
+
+Instead of one race, when Moses asks for it in a slot (the first: 8 Nov 23:00, all three platforms):
+- **15–20 s of fast cuts**, 1.5–3 s each, from **at least 6 tracks, Grand Prix included** (never Champion Shooter): waterfall free falls, plunges, speed pads, loops, steep drops, the fastest straights.
+- **Low, close chase camera** behind the busiest group through each (`plans.mjs speedShot`, `template.json speedMontage.chase`).
+- **The race music** (one tune under the whole montage) and **the game's speed-pad whoosh** on each shot that crosses a pad.
+- **Short on-screen lines**: e.g. "Fast." / "Faster." / "Everyone thinks their marble is the best.", and the end card "Which one is yours?" / "marblespins.com" / "Follow for a new race every day", held 3 s. **Never say or suggest that buying makes a marble faster** (`montageLine()` refuses buy, shop, pay, upgrade and money words).
+- **One vertical file** for TikTok, the Instagram Reel and the YouTube Short.
+- Make it: one race per shot with `node scripts/video-pick.js <slug> --seeds 60 --top 1 --feature "<section>"` (Grand Prix tracks on seeds never used on a Grand Prix track), a shot list in `client/video/montages/<date>-speed.json`, then `cd client && node video/speed-montage.mjs video/montages/<date>-speed.json --tune 11 --out ~/videos/<slot>-speed-montage.mp4`. The montage counts as the slot's theme SPEED for the rotation; its lines go in the log, and its Grand Prix seeds in the seed list. Its tracks are not added to "Tracks already used" (a few seconds each, not a race).
+
 ## Rules for every video
 
 - **Picking the race:**
@@ -122,6 +132,7 @@ One row per video. Keep at least the last 7 days. The YouTube Shorts copies coun
 | 2026-11-07 | 23:00 | Instagram + YouTube Short | Pudong Marble Grand Prix | WINNING | "Decided by 0.003 seconds." / "Three marbles, one gold." / "Round the loop for gold." |
 | 2026-11-08 | 09:00 | TikTok + YouTube Short | Sahara Marble Grand Prix | CHALLENGE | "Pick your marble. Now." / "Still happy with your pick?" / "Over the dunes. Still yours?" |
 | 2026-11-08 | 09:00 | Instagram | Ha Long Bay Spins | RACING FRIENDS | "Your group's pick?" / "Your crew vs. 20 marbles." / "Round the islands with friends." |
+| 2026-11-08 | 23:00 | TikTok + Instagram + YouTube Short | Speed montage: Sydney, Cotahuasi Free Fall, Pudong, Lagos, Elderglade, Nairobi, Sahara (17.4 s) | SPEED | "Fast." / "Faster." / "Everyone thinks their marble is the best." / end "Which one is yours? marblespins.com" |
 
 ## Tracks already used in a video
 
@@ -138,5 +149,5 @@ Any slot counts: Shorts, long videos, the Spotlight, and planned social clips.
   - Pudong;
   - Sydney;
   - Wyrmwood Hollow.
-- **Grand Prix seeds used** (never again on any Grand Prix track): Elderglade 1113814; Frostmere 2467963; Lagos 2784723; Nairobi 2539234; Pudong 1945309, 2832237, 2665938 (7 Nov 23:00); Sahara 2760966 (8 Nov 09:00, its new layout); Stockholm 1604792 (the Spotlight); Sydney 2507558; Wyrmwood Hollow 2357097. Not known: the planned clips and the earlier Dubai, Delhi and Istanbul videos; their seeds were not recorded.
+- **Grand Prix seeds used** (never again on any Grand Prix track): Elderglade 1113814; Frostmere 2467963; Lagos 2784723; Nairobi 2539234; Pudong 1945309, 2832237, 2665938 (7 Nov 23:00); Sahara 2760966 (8 Nov 09:00, its new layout); speed montage 8 Nov 23:00: Sydney 1026705, Pudong 907920, Lagos 1272194, Elderglade 1074219, Nairobi 1280113, Sahara 1335546; Stockholm 1604792 (the Spotlight); Sydney 2507558; Wyrmwood Hollow 2357097. Not known: the planned clips and the earlier Dubai, Delhi and Istanbul videos; their seeds were not recorded.
 - **Other tracks:** beijing-nest-200, bullet-hell (planned clip), checkpoint-rush, chobe, cotahuasi, danube, Final Level, flipper-spins, grand-canyon-burst, grand-champion (planned clip), Greenland Expedition, ha-long-bay-spins (8 Nov), hong-kong-crossing (7 Nov), irrawaddy, k2, kali-gandaki, Kirkjufell Block Falls, London Steeplechase, marble-stadium-sprint, nanjing, niagara (Cube Falls), Paris Eiffel Tower Run, phantom-peak, pyramid-run, redwood, Rhine Castle Run, saint-tropez, san-francisco, Singapore Block Gardens, sky-islands (planned clip), sognefjord, stockholm, Thames Bridges Run, the-stack, tokyo (planned clip), Venice Cube Canals, Verdon Burst, waimea (planned clip), zambezi, zurich.
