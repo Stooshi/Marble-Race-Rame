@@ -51,7 +51,7 @@ The YouTube LONG video needs a proper thumbnail: a sharp shot of the pack with b
   - use live tracks only;
   - use only tracks never used in a video before (list below), except Grand Prix tracks (next point);
   - every day includes at least one Grand Prix track: Sahara on 7 Nov 2026, the last one never used. From 8 Nov a Grand Prix track may be used again, always on a new seed: **never a seed already used on any Grand Prix track** (list below; the shared-layout tracks run the same race on the same seed). Add every Grand Prix video's seed to the list (Moses, 6 Nov 2026).
-- **The Grand Prix kit tracks share one layout.** On the same seed they run the same race; only the looks differ. So two Grand Prix videos must use different seeds.
+- **Dubai and Frostmere Marble Grand Prix still share one layout** (the other Grand Prix kit tracks have their own since 6–8 Nov 2026). On the same seed they run the same race; only the looks differ. The seed rule above stays for every Grand Prix track (Moses, 6 Nov 2026).
   - On these tracks the TV cameras film from under the raised track, which shows empty hills.
   - Film the feature with a close camera behind the pack instead.
 

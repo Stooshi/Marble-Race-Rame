@@ -1,6 +1,6 @@
 # 4. Game and economy rules (plain English)
 
-*Last updated 2 Nov 2026.* The numbers live in `client/src/shared/economy.json` and `client/src/shared/marbles/catalog.json`. If this page and those files ever disagree, the files are right; then update this page.
+*Last updated 8 Nov 2026.* The numbers live in `client/src/shared/economy.json` and `client/src/shared/marbles/catalog.json`. If this page and those files ever disagree, the files are right; then update this page.
 
 ## The golden rules
 
@@ -173,6 +173,10 @@ Reports are saved in `reports/<slug>/`. Track design rules:
 - the racing look (looks only, every kit track in every series, 30 Oct 2026): chequered start and finish lines; short, muted red-and-white kerbs on the inside of the 3 sharpest bends; 3 sets of muted off-white chevrons on the longest straights of 45 m or more (2, or 1, where a track has fewer), never within 15 m of a speed pad, so they never look like boosts; Track and Field keeps its white start line, the chequer at its finish only, no kerbs or chevrons;
 - tracks sit in the ground like a trench, raised only where they drop away or cross;
 - at least 35 of the 50 launch tracks must be truly unique (mirrors count towards the 50).
+
+**Sameness over every track** (Moses, 6 Nov 2026): the sameness check also runs on every live and hand-built track at once (`test/samenessAllTracks.test.js`). A track not on its `KNOWN` list must pass every sameness line; a listed track may fail only its listed lines; the list only shrinks (16 tracks on 8 Nov 2026).
+
+**Records on a re-laid track** (Moses, 6 Nov 2026; `src/game/recordsSince.js`): a live track whose layout changes keeps its slug, and the data update that puts the new layout in sets `tracks.records_since`. From then on only races finished since count for its track record, its country records and each player's personal bests on it (time, halfway split, best place). Past results and replays stay as they ran (old races replay on their stored copy of the track), and the record replays of both layouts are kept.
 
 ## Friend rooms
 
