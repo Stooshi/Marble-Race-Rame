@@ -526,6 +526,13 @@ export function StartStep() {
           </div>
           <span className="ms-note">Computer players fill every other place. Racing with friends? <Link to={`/play/friends${track?.slug ? `?track=${encodeURIComponent(track.slug)}` : ''}`}>Make a friend room</Link> and send them the link.</span>
           {startError && <div className="ms-msg ms-msg--bad" role="alert">{startError}</div>}
+          {/* (The track this race is on, right above the button (Moses, 8 Nov 2026): on a phone the picture at the
+              top is off screen by the time a player taps a track in "Other players liked" below.) */}
+          <div className="ms-start-track" aria-live="polite">
+            <span className="ms-start-track__label">Track</span>
+            <b className="ms-start-track__name">{track?.name ?? (seasonKey ? 'Holiday race' : 'Random track')}</b>
+            {track && <span className="ms-start-track__series">{track.series}</span>}
+          </div>
           <button type="button" className="ms-btn ms-btn--primary ms-btn--lg" onClick={start} disabled={busy || !ready || !tracks.length}>{busy ? 'STARTING…' : 'START THE RACE'}</button>
           {!quick && (
             <div className="ms-start-links">
@@ -544,7 +551,10 @@ export function StartStep() {
 /**
  * "Other players liked" (Moses, 31 Oct 2026): under START THE RACE, where a player lands after closing a
  * solo race, the tracks raced most by players over the last 7 days (not the one just raced), as small
- * pictures; one tap picks that track here. Three show on a computer; on a phone the row swipes for more.
+ * pictures; one tap picks that track here (the same as picking it in "Change track": the race starts on it,
+ * and its name shows above START THE RACE). Three show on a computer; on a phone the row swipes for more.
+ * The yellow border means picked; on touch screens there is no hover border (8 Nov 2026: on an iPhone a
+ * tap showed a yellow border while the name the player could see stayed the old track's).
  * Until the server has the list (a server from before 31 Oct), the newest tracks instead.
  */
 export function OthersLiked({ tracks, current, onPick }) {
