@@ -65,9 +65,10 @@ export const api = {
   confirmEmail: (token) => request('/auth/confirm-email', { method: 'POST', body: { token }, token: null }),
   resendConfirmEmail: (lang) => request('/auth/confirm-email/resend', { method: 'POST', body: { lang } }),
   /** A guest account; `source`: what they tapped (quick | solo | friends | room), for the Dashboard's funnel. */
-  guest: (source) => request('/auth/guest', { method: 'POST', token: null, body: source ? { source } : {} }),
+  // (app: our Android app, for the kind of browser at the tap, 9 Nov 2026.)
+  guest: (source, { app = false } = {}) => request('/auth/guest', { method: 'POST', token: null, body: { ...(source && { source }), ...(app && { app: true }) } }),
   /** The player saw GO (kept once, the first time; the Dashboard's funnel). */
-  firstStep: (step) => request('/users/me/first-step', { method: 'POST', body: { step } }),
+  firstStep: (step, extra = {}) => request('/users/me/first-step', { method: 'POST', body: { step, ...extra } }),
   claim: (body) => request('/auth/claim', { method: 'POST', body }),
 
   // The Help Centre's contact form: a form token first, then the message (logged in or not).

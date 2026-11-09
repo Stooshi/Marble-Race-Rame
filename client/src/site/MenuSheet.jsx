@@ -55,6 +55,7 @@ export function MenuSheet({ user, onClose, drawer = false }) {
             <>
               <Link to="/shop#coins" onClick={onClose}>Get coins</Link>
               {user.is_guest ? <Link to="/signup" onClick={onClose} className="is-strong">Save your marble</Link> : <Link to="/settings" onClick={onClose}>Settings</Link>}
+              {user.is_guest && <Link to="/signup?mode=login" onClick={onClose}>Log in</Link>}
               {!user.is_guest && <Link to="/purchases" onClick={onClose}>Purchases</Link>}
               <LogoutButton className="ms-appmenu__logout" onLoggedOut={onClose} />
             </>

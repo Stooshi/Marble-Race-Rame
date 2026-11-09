@@ -30,6 +30,8 @@ function createApp() {
     }
   });
 
+  // (A log line, path and status only, when a new player's way into a first race is refused: 9 Nov 2026.)
+  app.use(['/api/auth/guest', '/api/rooms/quick'], require('./firstSteps').logRefused);
   app.use('/api/auth', require('./routes/auth'));
   app.use('/api/users', require('./routes/users'));
   app.use('/api/races', require('./routes/races'));

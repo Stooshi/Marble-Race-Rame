@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useRaceSoundPreload } from '../../sound/settings';
 import { Link, Navigate, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { api } from '../../api/client';
+import { firstStepError, useLeftReport } from '../../api/firstSteps';
 import { useAuth } from '../../context/AuthContext';
 import { useAsync } from '../../hooks/useAsync';
 import { ITEM, previewShowcase } from '../../shared/marbles';
@@ -136,6 +137,7 @@ function shooterOf(bag) {
  */
 export function QuickStep() {
   const { ready, error: racerError } = useRacer();
+  const { user } = useAuth();
   useRaceSoundPreload(); // (the race's sound in memory while Quick race finds a room)
   const navigate = useNavigate();
   const [error, setError] = useState(null);
@@ -149,11 +151,12 @@ export function QuickStep() {
         if (stop) return;
         // (A server from before Quick race (until its deploy): the solo race on a random track, as before.)
         if (e?.status === 404) navigate('/play/start', { replace: true });
-        else setError(e);
+        else { setError(e); firstStepError('quick', e, user); }
       });
     return () => { stop = true; };
   }, [ready, tries, navigate]);
   const e = racerError ? { message: racerError } : error;
+  useLeftReport('quick-wait', user); // (9 Nov 2026: a new guest closing the page here, before the room)
   return (
     <div className="ms-page" style={{ display: 'grid', gap: 16, justifyItems: 'start' }}>
       <h1 className="ms-h1" style={{ fontFamily: 'var(--ms-cond)', fontWeight: 800 }}>Quick race</h1>
@@ -495,8 +498,10 @@ export function StartStep() {
     } catch (e) {
       setStartError(e.message);
       setBusy(false);
+      firstStepError('start', e, user);
     }
   };
+  useLeftReport('start-line', user, !busy); // (9 Nov 2026: a new guest closing the page on the starting line)
 
   return (
     <div className="ms-page">

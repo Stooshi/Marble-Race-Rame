@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { api } from '../../api/client';
 import { track } from '../consent/tracking';
@@ -25,7 +25,10 @@ export default function SignupPage() {
     return () => { live = false; };
   }, [mode]);
   const next = search.get('next')?.startsWith('/') ? search.get('next') : '/home';
-  const [f, setF] = useState({ username: '', email: '', login: '', password: '', age: '', terms: false, news: false });
+  // (From the save form's "Log in instead": the email already filled in, carried in the page's state, never the address bar.)
+  const location = useLocation();
+  const [f, setF] = useState({ username: '', email: '', login: typeof location.state?.login === 'string' ? location.state.login : '', password: '', age: '', terms: false, news: false });
+  useEffect(() => { const l = location.state?.login; if (typeof l === 'string' && l) setF((v) => ({ ...v, login: l })); }, [location.state]);
   const [error, setError] = useState(null);
   const [busy, setBusy] = useState(false);
   const set = (k) => (e) => setF((v) => ({ ...v, [k]: e.target.type === 'checkbox' ? e.target.checked : e.target.value }));
@@ -66,7 +69,8 @@ export default function SignupPage() {
       ) : (
         <form className="ms-card ms-form" onSubmit={submit} noValidate>
           <h1 className="ms-h1" style={{ fontFamily: 'var(--ms-cond)', fontWeight: 800 }}>Welcome back</h1>
-          <label>Player name or email<input value={f.login} onChange={set('login')} autoComplete="username" required /></label>
+          {guest && <span className="ms-pill" style={{ justifySelf: 'start' }}>Logging in switches from this guest to your saved account</span>}
+          <label>Player name or email<input value={f.login} onChange={set('login')} autoComplete="username" autoCapitalize="none" autoCorrect="off" spellCheck={false} required /></label>
           <label>Password<input type="password" value={f.password} onChange={set('password')} autoComplete="current-password" required /></label>
           {resetOn && <Link to="/forgot-password" style={{ justifySelf: 'start', color: 'var(--ms-soft)' }}>Forgot your password?</Link>}
           {error && <div className="ms-msg ms-msg--bad" role="alert">{error}</div>}

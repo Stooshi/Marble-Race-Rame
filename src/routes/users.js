@@ -52,10 +52,20 @@ router.post('/me/cookie-consent', requireAuth, async (req, res) => {
 });
 
 /** GET /api/users/me — full private profile with stats */
-/** POST /me/first-step { step: 'go' } — the player saw GO in a race (kept once, the first time; the Dashboard's funnel). */
+/**
+ * POST /me/first-step { step: 'go' } — the player saw GO in a race (kept once, the first time; the Dashboard's funnel).
+ * { step: 'error', detail } / { step: 'left', detail: where, seconds } — before the first race reached GO (src/firstSteps).
+ */
 router.post('/me/first-step', requireAuth, async (req, res) => {
-  if (req.body?.step !== 'go') return res.status(400).json({ error: 'Unknown step' });
-  await require('../firstSteps').record(req.user.id, 'go');
+  const firstSteps = require('../firstSteps');
+  const step = req.body?.step;
+  // 'error' and 'left' (9 Nov 2026): where a new guest stopped before their first race; kept once each.
+  if (firstSteps.EVENTS.includes(step)) {
+    await firstSteps.event(req.user.id, step, req.body?.detail, Number(req.body?.seconds));
+    return res.json({ ok: true });
+  }
+  if (step !== 'go') return res.status(400).json({ error: 'Unknown step' });
+  await firstSteps.record(req.user.id, 'go');
   res.status(204).end();
 });
 

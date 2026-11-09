@@ -216,7 +216,7 @@ a.ms-chip:hover { text-decoration: none; border-color: var(--ms-muted); }
    drawer (MenuSheet.jsx); the apps get exactly this (Moses, 25 Oct 2026). Computers keep the row of pages. */
 .ms-header .ms-header__menu { display: none; }
 @media (max-width: 700px), (orientation: landscape) and (max-height: 500px) {
-  .ms-header .ms-nav, .ms-header .ms-sound, .ms-header .ms-header__logout, .ms-header .ms-chip--streak, .ms-header .ms-header__save, .ms-header .ms-wide-only { display: none; }
+  .ms-header .ms-nav, .ms-header .ms-sound, .ms-header .ms-header__logout, .ms-header .ms-chip--streak, .ms-header .ms-header__save, .ms-header .ms-header__guestlogin, .ms-header .ms-wide-only { display: none; }
   .ms-header .ms-chip--name { max-width: 36vw; }
   .ms-header .ms-chips { gap: 6px; }
   .ms-header .ms-narrow-only { display: inline; }
@@ -1089,3 +1089,7 @@ tr:hover .report-name__btn--compact, .report-name__btn--compact:focus-visible { 
 .ms-league-name__edit:focus-visible { outline: 3px solid var(--ms-yellow); outline-offset: 2px; }
 .ms-league-name__form { display: grid; gap: 8px; max-width: 520px; }
 .ms-league-name__form input { font-family: var(--ms-cond); font-weight: 800; font-size: 1.8rem; min-height: 52px; }
+
+/* A guest's "Log in" in the name menu (9 Nov 2026). */
+.ms-namemenu__login { justify-self: start; color: var(--ms-soft); font-size: 0.9rem; text-decoration: underline; }
+.ms-namemenu__login:hover { color: var(--ms-text); }

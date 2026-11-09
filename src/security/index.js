@@ -14,7 +14,8 @@ const db = require('../db');
 
 const IP_DAYS = 90;
 const TRIM_EVERY_MS = 3600_000; // every hour
-const KINDS = ['guest', 'signup', 'claim', 'login', 'purchase', 'admin-login', 'reset-request', 'password-reset'];
+// 'login-failed' (9 Nov 2026): a wrong password for an account that exists (never the password).
+const KINDS = ['guest', 'signup', 'claim', 'login', 'login-failed', 'purchase', 'admin-login', 'reset-request', 'password-reset'];
 
 /** The client's address (Express works it out behind the proxy: app 'trust proxy'). */
 function clientIp(req) {

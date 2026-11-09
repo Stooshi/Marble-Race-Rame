@@ -17,7 +17,8 @@ import { CEREMONY_PHASES } from '../utils/finishShow';
 import SkipToResults from './SkipToResults';
 import FrameMeter, { useFrameMeter } from './FrameMeter';
 import { useTvMoments } from './tvMomentsSetting';
-import { sawGo } from '../api/firstSteps';
+import { sawGo, useLeftReport } from '../api/firstSteps';
+import { useAuthMaybe } from '../context/AuthContext';
 import { createBumpDetector, createHitDetector, createHitGate, createPadDetector, padsOf } from '../sound/hits';
 import { START_SOUND_MS, crowdCheer, marbleBump, marbleHit, play as playSound, speedPad, prepare as prepareSound, raceCeremony, raceCountdown, raceGo, soundReport, stopCountdown, whenSoundReady } from '../sound/engine';
 import { watchReadiness } from './raceReadiness';
@@ -116,6 +117,9 @@ export default function LiveRaceViewer3D({
   // The start show (`intro`: a solo race started here): 'loading' (the track card) → 'flying' (the
   // flyover) → 'race' (at the gate, 3-2-1, GO). Without it: straight to 'race', as before.
   const [phase, setPhase] = useState(intro || roomShow ? 'loading' : 'race');
+  // (9 Nov 2026: a new guest closing the page while their first race is still loading, before the flyover.)
+  const me = useAuthMaybe()?.user ?? null;
+  useLeftReport('loading', me, phase === 'loading');
   const flyRef = useRef(null); // the flyover: { startedAt (performance ms), go }
   const builtSlug = useRef(null);
   if (adopted.current && !builtSlug.current) builtSlug.current = adopted.current;

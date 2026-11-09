@@ -21,7 +21,7 @@ export function ForgotPasswordPage() {
         {!done && (
           <>
             <p style={{ margin: 0, color: 'var(--ms-soft)' }}>Type the email address of your account and we'll send you a link to choose a new password.</p>
-            <label>Email<input type="email" value={address} onChange={(e) => setAddress(e.target.value)} autoComplete="email" required /></label>
+            <label>Email<input type="email" value={address} onChange={(e) => setAddress(e.target.value)} autoComplete="email" autoCapitalize="none" autoCorrect="off" spellCheck={false} inputMode="email" required /></label>
             {error && <div className="ms-msg ms-msg--bad" role="alert">{error}</div>}
             <button type="submit" className="ms-btn ms-btn--primary ms-btn--lg" disabled={busy || !address.trim()}>{busy ? 'ONE MOMENT…' : 'SEND THE LINK'}</button>
           </>

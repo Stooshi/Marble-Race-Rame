@@ -25,6 +25,8 @@ function UserChips({ user }) {
           name has a "not saved" dot and its menu starts with "Save your marble". NameChip.jsx) */}
       <NameChip user={user} />
       {user.is_guest && <Link to="/signup" className="ms-btn ms-btn--primary ms-btn--sm ms-header__save">SAVE YOUR MARBLE</Link>}
+      {/* (Log in for a guest too: a player with an account on a new browser is a guest from the first tap, 9 Nov 2026.) */}
+      {user.is_guest && <Link to="/signup?mode=login" className="ms-header__login ms-header__guestlogin">Log in</Link>}
     </div>
   );
 }

@@ -46,8 +46,10 @@ async function request(db, { email: address, siteUrl = config.publicSiteUrl }) {
   );
   const link = `${siteUrl.replace(/\/+$/, '')}/reset-password?token=${token}`;
   const message = templates.passwordReset({ username: user.username, link, minutes: LINK_MINUTES });
-  await email.send({ to: user.email, toName: user.username, subject: message.subject, html: message.html, tags: ['password-reset'] });
-  return { sent: true, userId: user.id };
+  // (Sent without waiting, so the answer takes as long whether or not the account exists, 9 Nov 2026.)
+  const sending = email.send({ to: user.email, toName: user.username, subject: message.subject, html: message.html, tags: ['password-reset'] })
+    .catch((err) => console.error(`[password-reset] could not send: ${err.message}`));
+  return { sent: true, userId: user.id, sending };
 }
 
 /** Sets a new password with a link's token. Throws 400 if the link is unknown, used or expired. */

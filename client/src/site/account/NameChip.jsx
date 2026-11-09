@@ -183,7 +183,7 @@ export function SavedNameMenu({ user, onClose }) {
   );
 }
 
-/** The guest's menu: save the marble (first), or choose a name. */
+/** The guest's menu: save the marble (first), log in to an account they already have, or choose a name. */
 export function GuestNameMenu({ user, onClose }) {
   return (
     <Panel label="Your name" onClose={onClose}>
@@ -192,6 +192,8 @@ export function GuestNameMenu({ user, onClose }) {
         <span>{user?.name_hidden ? HIDDEN_NOTICE : 'Not saved yet: save your marble to keep it, your coins and your name on any device.'}</span>
       </div>
       <Link to="/signup" className="ms-btn ms-btn--primary" onClick={onClose}>Save your marble</Link>
+      {/* (A player who already has an account, on a new browser: 9 Nov 2026.) */}
+      <Link to="/signup?mode=login" className="ms-namemenu__login" onClick={onClose}>Already have an account? Log in</Link>
       <ChooseNameForm user={user} label={user?.name_hidden ? 'Choose a new name' : 'Choose your name'} />
     </Panel>
   );

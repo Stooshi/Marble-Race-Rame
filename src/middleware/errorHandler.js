@@ -18,6 +18,7 @@ function notFoundHandler(req, res) {
 // eslint-disable-next-line no-unused-vars
 function errorHandler(err, req, res, _next) {
   if (err instanceof HttpError) {
+    if (err.details?.code) res.locals.errorCode = String(err.details.code).slice(0, 32);
     return res.status(err.status).json({ error: err.message, ...(err.details && { details: err.details }) });
   }
   if (err.type === 'entity.parse.failed') {

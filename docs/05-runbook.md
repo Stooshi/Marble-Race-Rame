@@ -108,6 +108,24 @@ Guests not seen for 90 days are anonymised once a day (`src/account/retention.js
 - **Switching it on:** after reading the log (Moses: after 7 days), set `GUEST_RETENTION_MODE=delete` in Railway → Variables and restart the server. The next run logs `[retention] anonymised N guest accounts …`. Remove the variable to go back to the dry run.
 - Each anonymised guest is in the audit log (`account-deleted`, "Guest account: 90 days without a visit").
 
+## Where new guests stop (from the deploy after 9 Nov 2026)
+
+Guests with 0 races (`race_entries`) never got into a race: Quick race puts them in one at once, Race solo at START THE RACE. Since 9 Nov 2026 the tap keeps the kind of browser and `first_step_events` keeps the first failure and where the page closed (`src/firstSteps`; no addresses or personal data):
+
+```sql
+-- 0-race guests since a day, by what they tapped and their kind of browser
+SELECT f.source, f.browser, count(*) AS guests,
+       count(*) FILTER (WHERE NOT EXISTS (SELECT 1 FROM race_entries e WHERE e.user_id = u.id)) AS zero_races
+FROM users u JOIN first_steps f ON f.user_id = u.id AND f.step = 'tap'
+WHERE u.is_guest AND u.created_at >= now() - interval '1 day' GROUP BY 1, 2 ORDER BY 3 DESC;
+
+-- where they stopped: the first error, and where the page closed (and how long after the tap)
+SELECT kind, detail, count(*), percentile_cont(0.5) WITHIN GROUP (ORDER BY seconds) AS median_seconds
+FROM first_step_events WHERE created_at >= now() - interval '1 day' GROUP BY 1, 2 ORDER BY 3 DESC;
+```
+
+The server log has a line for each refused guest or quick-race request: `[first-steps] refused POST /api/rooms/quick 409 quick_starting` (path, status and code only). A wrong password for an existing account is a `login-failed` security event.
+
 ## Backups
 
 **[check]** Whether Railway takes automatic backups of the Postgres database on the current plan. Look in Railway → the Postgres service → **Backups**. Until that is confirmed, take manual backups:

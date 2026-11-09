@@ -1416,3 +1416,20 @@ CREATE INDEX IF NOT EXISTS idx_first_steps_created ON first_steps (step, created
 -- country records and the players' personal bests on the track count only races finished since.
 -- NULL (every track until then): all its races count. Past results and replays are never touched.
 ALTER TABLE tracks ADD COLUMN IF NOT EXISTS records_since timestamptz;
+
+-- Where new guests stop before their first race (Moses, 9 Nov 2026; src/firstSteps): the kind of
+-- browser at the tap (a short class such as 'tiktok/phone', 'safari/phone', 'app/phone', 'bot';
+-- never the User-Agent, the address or anything else about the player) ...
+ALTER TABLE first_steps ADD COLUMN IF NOT EXISTS browser varchar(24);
+-- ... and, once each, before the first race reached GO: 'error' (the first call that failed, as
+-- "<what>:<status>[:<code>]") and 'left' (the page closed: where, start-line / quick-wait / room /
+-- loading / other, and the seconds since the tap). No IPs or personal data.
+CREATE TABLE IF NOT EXISTS first_step_events (
+    user_id     uuid        NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    kind        varchar(8)  NOT NULL CHECK (kind IN ('error', 'left')),
+    detail      varchar(64) NOT NULL,
+    seconds     integer     CHECK (seconds IS NULL OR seconds >= 0),
+    created_at  timestamptz NOT NULL DEFAULT now(),
+    PRIMARY KEY (user_id, kind)
+);
+CREATE INDEX IF NOT EXISTS idx_first_step_events_created ON first_step_events (kind, created_at);

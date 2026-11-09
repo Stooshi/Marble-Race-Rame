@@ -2,6 +2,8 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
 import { api, getStoredToken, storeToken } from '../api/client';
 import { getSocket } from '../api/socket';
 import { forgetPush } from '../app/push';
+import { isNativeApp } from '../app/native';
+import { noteTap } from '../api/firstSteps';
 
 const AuthContext = createContext(null);
 
@@ -57,7 +59,7 @@ export function AuthProvider({ children }) {
     login: async (login, password) => applySession(await api.login({ login, password })),
     register: async (fields) => { const r = await api.register(fields); applySession(r); return r; },
     /** "Play free": a guest account, so a race can start straight away (`source`: what they tapped). */
-    playAsGuest: async (source) => applySession(await api.guest(source)),
+    playAsGuest: async (source) => { applySession(await api.guest(source, { app: isNativeApp() })); noteTap(); },
     /** A guest saves their marble: name, email and password, keeping coins and marbles. */
     claim: async (fields) => { const r = await api.claim(fields); applySession(r); return r; },
     /** A new password from an emailed link (logs in with it). */
@@ -73,6 +75,11 @@ export function AuthProvider({ children }) {
 /** The signed-in user, or null (also outside an AuthProvider, e.g. a component shown on its own in a test). */
 export function useOptionalUser() {
   return useContext(AuthContext)?.user ?? null;
+}
+
+/** The login if there is one, else null (no AuthProvider: the race viewer in a test or a tool). */
+export function useAuthMaybe() {
+  return useContext(AuthContext);
 }
 
 export function useAuth() {

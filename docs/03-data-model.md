@@ -108,11 +108,15 @@ History of every yes/no to news by email: `consent`, `source` (`signup`, `claim`
 Every choice of the country a player races for: `country` (NULL when removed), `kind` (`first`, `correction`, `change`, `removed`), `created_at`. For "which country did the player have at a moment" (`country.countryAt`: national leagues qualify by the country at the start of the month). In Download my data; deleted with the account.
 
 ### `security_events`
-Sign-up, login and purchase events: `kind`, `ip` (inet), `country` (2 letters, looked up offline), `created_at`. **The full IP is kept for at most 90 days**: an hourly job blanks it and keeps only the country (`src/security`). The table is used only for security and fraud checks, such as many accounts from one address.
+Sign-up, login and purchase events (`kind`: guest, signup, claim, login, `login-failed` since 9 Nov 2026 — a wrong password for an account that exists, never the password —, purchase, admin-login, reset-request, password-reset): `kind`, `ip` (inet), `country` (2 letters, looked up offline), `created_at`. **The full IP is kept for at most 90 days**: an hourly job blanks it and keeps only the country (`src/security`). The table is used only for security and fraud checks, such as many accounts from one address.
 
 ### `first_steps`
 
-A new player's first steps, for the back office Dashboard's funnel (2 Nov 2026; `src/firstSteps`): one row per player and step, the first time. `step`: `tap` (they tapped Play, Quick race, Race solo or joined a room, and the guest was made then; `source`: quick, solo, friends or room) or `go` (they saw GO in a race with their own marble). Joining a race and finishing one come from `race_entries`. No personal data; deleted with the user row, kept (anonymous) when an account is deleted; in the player's data download.
+A new player's first steps, for the back office Dashboard's funnel (2 Nov 2026; `src/firstSteps`): one row per player and step, the first time. `step`: `tap` (they tapped Play, Quick race, Race solo or joined a room, and the guest was made then; `source`: quick, solo, friends or room) or `go` (they saw GO in a race with their own marble). Joining a race and finishing one come from `race_entries`. `browser` (since 9 Nov 2026, on `tap`): the kind of browser, a short class such as `tiktok/phone`, `instagram/phone`, `safari/phone`, `chrome/desktop`, `app/phone` (our Android app) or `bot` (`src/firstSteps/browser.js`; never the User-Agent itself). No personal data; deleted with the user row, kept (anonymous) when an account is deleted; in the player's data download.
+
+### `first_step_events`
+
+Where a new guest stopped before their first race (Moses, 9 Nov 2026; `src/firstSteps`): at most one row per player and `kind`, and only within a day of their `tap` and before their first `go`. `kind`: `error` (`detail`: the first call that failed, `<what>:<status>[:<code>]`, e.g. `quick:409:quick_starting`; `what`: quick, start, room, room-<action>) or `left` (the page closed; `detail`: start-line, quick-wait, room, loading or other; `seconds`: since the tap). No IPs or personal data; deleted with the user row; in the player's data download.
 
 ## Tracks and races
 

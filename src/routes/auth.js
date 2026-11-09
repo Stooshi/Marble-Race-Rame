@@ -128,7 +128,7 @@ router.post('/register', signupLimiter, async (req, res) => {
     res.status(201).json({ token: signToken(user), user, confirm });
   } catch (err) {
     if (err.code === '23505') {
-      throw conflict(err.constraint?.includes('email') ? 'Email is already registered' : 'Username is taken');
+      throw err.constraint?.includes('email') ? new HttpError(409, 'That email already has an account', { code: 'email_taken' }) : conflict('Username is taken');
     }
     throw err;
   }
@@ -154,7 +154,9 @@ router.post('/guest', guestLimiter, async (req, res) => {
   await starters.ensure(db, user.id).catch((err) => console.error('[auth] starter marbles failed', err.message));
   await security.record(req, user.id, 'guest');
   // Made only when they tap Play, Quick race, Race solo or join a room (2 Nov 2026): the funnel's first step.
-  await require('../firstSteps').record(user.id, 'tap', req.body?.source);
+  // (The kind of browser only, e.g. 'tiktok/phone': 9 Nov 2026, where do guests with 0 races stop?)
+  const firstSteps = require('../firstSteps');
+  await firstSteps.record(user.id, 'tap', req.body?.source, undefined, { browser: firstSteps.browserClass(req.get('user-agent'), { app: req.body?.app === true }) });
   res.status(201).json({ token: signToken(user), user });
 });
 
@@ -189,7 +191,7 @@ router.post('/claim', requireAuth, signupLimiter, async (req, res) => {
     res.json({ token: signToken(rows[0]), user: rows[0], confirm });
   } catch (err) {
     if (err.code === '23505') {
-      throw conflict(err.constraint?.includes('email') ? 'Email is already registered' : 'Username is taken');
+      throw err.constraint?.includes('email') ? new HttpError(409, 'That email already has an account', { code: 'email_taken' }) : conflict('Username is taken');
     }
     throw err;
   }
@@ -209,7 +211,11 @@ router.post('/login', authLimiter, async (req, res) => {
   const found = rows[0];
   // Always run bcrypt so response time doesn't reveal whether the account exists.
   const ok = await bcrypt.compare(body.password, found?.password_hash ?? '$2b$12$invalidinvalidinvalidinvalidinvalidinvalidinvalidinv');
-  if (!found || !ok) throw unauthorized('Invalid credentials');
+  if (!found || !ok) {
+    // (A wrong password for an account that exists: an event, never the password; 9 Nov 2026.)
+    if (found) await security.record(req, found.id, 'login-failed');
+    throw unauthorized('Invalid credentials');
+  }
   if (found.suspended_at) throw forbidden('This account is suspended. Contact support if you think this is a mistake.');
 
   await db.query('UPDATE users SET last_login_at = now() WHERE id = $1', [found.id]);

@@ -3,6 +3,7 @@ import { useRaceSoundPreload } from '../../sound/settings';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import QRCode from 'qrcode';
 import { api } from '../../api/client';
+import { firstStepError, useLeftReport } from '../../api/firstSteps';
 import { useAuth } from '../../context/AuthContext';
 import MarbleBadge from '../marbles/MarbleBadge';
 import { SITE_URL } from '../canonical';
@@ -117,10 +118,13 @@ export default function RoomPage() {
       setError(null);
     } catch (e) {
       setError(e);
+      firstStepError('room', e, user);
     }
-  }, [code]);
+  }, [code, user]);
 
   useEffect(() => { if (ready) load(); }, [ready, load]);
+  // (9 Nov 2026: a new guest closing the page while the room waits at the start, before their first race.)
+  useLeftReport('room', user, !view?.race || view.race.status === 'lobby');
 
   // Live: the room's channel, and a slow poll in case the connection drops.
   useEffect(() => {
@@ -147,6 +151,7 @@ export default function RoomPage() {
       setError(null);
     } catch (e) {
       setError(e);
+      firstStepError(`room-${key}`, e, user);
     } finally {
       setBusy(null);
     }
