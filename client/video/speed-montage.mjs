@@ -6,7 +6,8 @@
 //   node video/speed-montage.mjs <shots.json> --tune 11 --out ~/videos/speed-montage.mp4
 //
 // shots.json: [{ "slug", "race" (a race file in dev/.tracks, from scripts/video-pick.js --feature <section>),
-//   "dur" (s), "line"? (a big line on this shot), "padP"? (the speed pad's place on the track, 0–1: the whoosh as the group's first marble rolls onto it), "end"? ("l1|l2|l3":
+//   "dur" (s), "line"? (a big line on this shot), "padP"? (the speed pad's place on the track, 0–1: the whoosh as the group's first marble rolls onto it), "lead"? (ms the shot starts before the group reaches the section; negative: after), "chase"? (this shot's camera:
+//   back, up, ahead, fov, over the template's low chase), "end"? ("l1|l2|l3":
 //   the last shot, held frozen under the end card) }, …]
 import fs from 'node:fs';
 import os from 'node:os';
@@ -43,7 +44,7 @@ export async function speedMontage({ shots, tune = 11, out }) {
     let v = 0;
     for (const [k, s] of shots.entries()) {
       const file = path.join(tmp, `shot-${k}.mp4`);
-      const { plan } = await record({ slug: s.slug, race: s.race, kind: 'speedShot', format: 'tall', tune, out: file, text: { line: s.line ?? null, end: s.end ?? null, dur: s.dur, lead: s.lead ?? null } });
+      const { plan } = await record({ slug: s.slug, race: s.race, kind: 'speedShot', format: 'tall', tune, out: file, text: { line: s.line ?? null, end: s.end ?? null, dur: s.dur, lead: s.lead ?? null, chase: s.chase ?? null } });
       clips.push({ file, length: plan.length, ...s, section: plan.marks.section });
       if (s.padP !== undefined) {
         // (The whoosh as the group's first marble rolls onto the pad, in this shot's time.)

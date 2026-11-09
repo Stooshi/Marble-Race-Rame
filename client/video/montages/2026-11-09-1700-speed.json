@@ -1,0 +1,8 @@
+[
+  {"slug": "waimea-free-fall", "race": "waimea-free-fall.video-1066300", "dur": 2.0, "line": "Blink…"},
+  {"slug": "amazon-water-run", "race": "amazon-water-run.video-1050462", "dur": 2.0, "line": "…and you miss it."},
+  {"slug": "stockholm-marble-grand-prix", "race": "stockholm-marble-grand-prix.video-1137571", "dur": 2.0, "lead": -500, "chase": {"up": 2.6, "back": 5.5}},
+  {"slug": "zambezi-falls-run", "race": "zambezi-falls-run.video-1082138", "dur": 2.4, "line": "Can your marble keep up?"},
+  {"slug": "magma-core", "race": "magma-core.video-1034624", "dur": 2.4, "chase": {"up": 2.4, "back": 5.5}},
+  {"slug": "everest-icefall-run", "race": "everest-icefall-run.video-915839", "dur": 2.0, "end": "Pick yours.|marblespins.com|Follow for a new race every day"}
+]
