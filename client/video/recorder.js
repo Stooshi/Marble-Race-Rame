@@ -417,8 +417,10 @@ window.rec = {
     const ground = scene.scenery?.userData?.groundAt?.(cam.x, cam.z);
     if (Number.isFinite(ground) && cam.y < ground + 3) cam.y = ground + 3;
     const aim = c.clone().addScaledVector(s.ahead, ahead);
-    if (!groupState || groupState.shot !== shot) groupState = { shot, cam: cam.clone(), aim: aim.clone() };
+    // (A jump in time, e.g. a still for checking: placed afresh rather than eased from the last picture.)
+    if (!groupState || groupState.shot !== shot || Math.abs(t - (groupState.t ?? t)) > 400) groupState = { shot, cam: cam.clone(), aim: aim.clone() };
     else { groupState.cam.lerp(cam, 0.08); groupState.aim.lerp(aim, 0.12); }
+    groupState.t = t;
     place({ from: groupState.cam.toArray(), to: groupState.aim.toArray(), fov });
     draw(t);
   },

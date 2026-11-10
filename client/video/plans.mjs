@@ -1064,7 +1064,7 @@ export function speedShot(info, race, { text = null } = {}) {
   const members = C ? C.members.slice(0, 5) : F.busiest.members.slice(0, 5);
   const from = C ? C.at - (X.lead ?? 0) : (X.at ?? reaches(race, members[0], F.p0) ?? F.busiest.t) - (X.lead ?? T.leadMs);
   const p = builder('speedShot');
-  const shot = { type: 'group', members, shot: 'speed', from, dur, speed, ...T.chase, ...(X.chase ?? {}) }; // (a shot's own camera, e.g. higher where the low chase would go into a bank)
+  const shot = { type: 'group', members, shot: 'speed', from, dur, speed, ...T.chase, ...(C ? TEMPLATE.collisionMontage.chase : {}), ...(X.chase ?? {}) }; // (a shot's own camera, e.g. higher where the low chase would go into a bank)
   const at = p.add(shot);
   const hooks = line ? [{ at: at + 0.02, dur: dur - 0.04, text: line }] : [];
   let endBig = null;

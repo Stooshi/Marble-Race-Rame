@@ -1,12 +1,12 @@
 {
   "type": "collision",
   "shots": [
-    {"slug": "multiball-manor", "race": "multiball-manor.video-987110", "dur": 2.4, "speed": 0.5, "line": "Hear that?"},
+    {"slug": "multiball-manor", "race": "multiball-manor.video-1240518", "dur": 2.4, "speed": 0.5, "line": "Hear that?"},
     {"slug": "sunstone-temple", "race": "sunstone-temple.video-931677", "dur": 2.0},
-    {"slug": "wyrmwood-hollow-marble-grand-prix", "race": "wyrmwood-hollow-marble-grand-prix.video-3293004", "dur": 2.4, "speed": 0.5, "line": "Bump. Bounce. Repeat."},
+    {"slug": "wyrmwood-hollow-marble-grand-prix", "race": "wyrmwood-hollow-marble-grand-prix.video-3253409", "dur": 2.4, "speed": 0.5, "line": "Bump. Bounce. Repeat."},
     {"slug": "tiger-leaping-spins", "race": "tiger-leaping-spins.video-955434", "dur": 2.0},
-    {"slug": "aconcagua-penitentes", "race": "aconcagua-penitentes.video-1351384", "dur": 2.4, "speed": 0.5},
-    {"slug": "wizard-mode", "race": "wizard-mode.video-1034624", "dur": 2.0},
-    {"slug": "slingshot-spins", "race": "slingshot-spins.video-1343465", "dur": 2.0, "end": "Spot yours.|marblespins.com|Follow for a new race every day"}
+    {"slug": "aconcagua-penitentes", "race": "aconcagua-penitentes.video-907920", "dur": 2.4, "speed": 0.5},
+    {"slug": "wizard-mode", "race": "wizard-mode.video-1272194", "dur": 2.0},
+    {"slug": "slingshot-spins", "race": "slingshot-spins.video-915839", "dur": 2.0, "end": "Spot yours.|marblespins.com|Follow for a new race every day"}
   ]
 }

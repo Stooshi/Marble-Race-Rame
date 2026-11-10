@@ -19,8 +19,9 @@ const { buildCenterline, trackProfile } = require('../src/game/trackGeometry');
 const { houseField } = require('./race-fingerprints');
 
 const DEV = path.join(__dirname, '..', 'client', 'dev', '.tracks');
-const GROUP = 5;        // marbles in the shot's group (the chase camera rides behind them)
-const SPREAD_M = 9;     // the group within this along the track: all in a close shot
+const GROUP = 5;        // at most this many marbles in the shot's group (the chase camera rides behind them)
+const NEAR_M = 4;       // the group: the marbles within this of the marble in the most hits, along the track (at least 3)
+const BEHIND_M = 8;     // no other marble this close behind the group's last one (it would run through the low camera)
 const STEP_MS = 100;    // windows tried every this often
 const GAP_S = 0.11;     // hits closer than this (video time) count once (as the clicks will)
 
@@ -50,9 +51,15 @@ function best(sim, track, { M, raceMs, p0, p1, speed, lib }) {
     const hub = [...count.entries()].sort((a, b) => b[1] - a[1])[0][0];
     const mid = frameAt(t + raceMs / 2);
     if (!(mid.p[hub] >= p0 && mid.p[hub] <= p1) || mid.p[hub] >= 0.99) continue;
-    const members = all.filter((i) => mid.p[i] < 1).sort((a, b) => Math.abs(mid.p[a] - mid.p[hub]) - Math.abs(mid.p[b] - mid.p[hub])).slice(0, GROUP);
-    const s = members.map((i) => mid.p[i] * M.arc);
-    if (Math.max(...s) - Math.min(...s) > SPREAD_M) continue;
+    const members = all.filter((i) => mid.p[i] < 1 && Math.abs(mid.p[i] - mid.p[hub]) * M.arc <= NEAR_M)
+      .sort((a, b) => Math.abs(mid.p[a] - mid.p[hub]) - Math.abs(mid.p[b] - mid.p[hub])).slice(0, GROUP);
+    if (members.length < 3) continue;
+    // (Nobody close behind the group, at the start or halfway: a marble catching up runs through the camera.)
+    const chased = [frameAt(t), mid].some((f) => {
+      const rear = Math.min(...members.map((i) => f.p[i])) * M.arc;
+      return all.some((i) => !members.includes(i) && f.p[i] < 1 && f.p[i] * M.arc < rear && f.p[i] * M.arc > rear - BEHIND_M);
+    });
+    if (chased) continue;
     const mine = new Set(members);
     const ours = inWin.filter((h) => mine.has(h.i) || (h.j !== undefined && mine.has(h.j)));
     const clicks = lib.soundTimes(ours, { from: t, speed, gap: GAP_S });
