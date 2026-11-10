@@ -26,6 +26,8 @@ export const SOUNDS = {
   launch: { file: audio('start-rolling') }, // (the start sound since 30 Oct 2026: the marbles start rolling)
   ceremony: { file: audio('ceremony') },
   crowd: { file: audio('crowd-grand-prix') },
-  speedPad: { file: audio('speed-pad') }, // (the game's speed-pad whoosh: the speed montage, on its pads and loops)
+  speedPad: { file: audio('speed-pad') },
+  hit: { file: audio('marble-hit') },   // (the game's click: a marble hitting another; the collision montage)
+  bump: { file: audio('marble-bump') }, // (the game's bump: a marble hitting an obstacle; the collision montage) // (the game's speed-pad whoosh: the speed montage, on its pads and loops)
   tune: (n) => ({ file: audio(`tune-${n}`) }),
 };

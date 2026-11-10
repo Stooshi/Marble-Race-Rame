@@ -48,6 +48,19 @@ Instead of one race, when Moses asks for it in a slot (the first: 8 Nov 23:00, a
 - **Check every shot's frames before sending** (9 Nov: the low chase went into the ground or a wall on drops and in chutes). A shot list can give a shot its own `lead` (ms; negative starts after the group reaches the section) and `chase` (`up`, `back`, …: higher where the low camera would hit a bank), or the shot is replaced by another on the same series.
 - Make it: one race per shot with `node scripts/video-pick.js <slug> --seeds 60 --top 1 --feature "<section>"` (Grand Prix tracks on seeds never used on a Grand Prix track), a shot list in `client/video/montages/<date>-speed.json`, then `cd client && node video/speed-montage.mjs video/montages/<date>-speed.json --tune 11 --out ~/videos/<slot>-speed-montage.mp4`. The montage counts as the slot's theme SPEED for the rotation; its lines go in the log, and its Grand Prix seeds in the seed list. Its tracks are not added to "Tracks already used" (a few seconds each, not a race).
 
+### Video type: collision montage (Moses, 10 Nov 2026)
+
+Instead of one race, when Moses asks for it in a slot (the first: 10 Nov 17:00 and 23:00, all three platforms):
+- **15–20 s of cuts**, 1.5–3 s each, from **at least 6 tracks in at least 3 series, Grand Prix included** (Pinball, Blocks, Grand Prix, Canyons, …; never Champion Shooter); different tracks in each montage of the day.
+- **Satisfying collisions**: marbles bouncing off each other, off pegs, pinball bumpers and flippers, splitter tips and obstacles, packs bumping through tight bends.
+- **Some shots in slow motion** (at least 2, at 0.5x, so each hit is clear), mixed with normal speed.
+- **Low, close chase camera** on the pack (the speed montage's `speedShot`).
+- **Sound:** the game's own click (marble on marble) and bump (marble on obstacle) up front, on each real hit as it happens in the shot (later in slow motion), louder the harder; the race music low under them (`template.json` `collisionMontage`).
+- **Very little text**: e.g. "So satisfying." / "Click. Clack.", and the end card "Which one is yours?" / "marblespins.com" / "Follow for a new race every day". The second montage of the day gets its own lines on the same idea. No buy, shop, pay or upgrade words (`montageLine()`).
+- **One vertical file per slot** for TikTok, the Instagram Reel and the YouTube Short.
+- **Check every shot's frames before sending** (as the speed montage), and that each shot really has hits and clicks (the report beside the file lists them).
+- Make it: one race per shot with `node scripts/collision-pick.js <slug> --p <a>-<b> --race-ms <ms> --seeds 60` (the stretch with the pegs, bumpers or splitter; `--race-ms` 1200 for a 2.4 s shot at 0.5x, 2000 for a 2 s shot; Grand Prix tracks with `--first 3000001` or later, on seeds never used on a Grand Prix track), a shot list `client/video/montages/<date>-<slot>-collision.json` (`{ "type": "collision", "shots": [...] }`, `"speed": 0.5` on the slow shots), then `cd client && node video/speed-montage.mjs video/montages/<file> --tune 11 --out ~/videos/<date>-<slot>-collision-montage.mp4`. The montage counts as the slot's theme COLLISIONS for the rotation; its lines go in the log, and its Grand Prix seeds in the seed list. Its tracks are not added to "Tracks already used" (a few seconds each, not a race).
+
 ## Rules for every video
 
 - **Picking the race:**

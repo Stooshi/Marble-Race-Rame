@@ -1051,22 +1051,27 @@ export function speedShot(info, race, { text = null } = {}) {
   const X = text ?? {};
   const T = TEMPLATE.speedMontage;
   const V = race.video;
-  if (!V?.feature) throw new Error('speedShot needs a race picked by scripts/video-pick.js --feature <section>');
+  // (A collision montage's shot: the race and the moment from scripts/collision-pick.js, `video.collision`.)
+  const C = V?.collision ?? null;
+  if (!V?.feature && !C) throw new Error('speedShot needs a race picked by scripts/video-pick.js --feature <section> or scripts/collision-pick.js');
   const dur = X.dur ?? T.shotSeconds;
-  if (!(dur >= T.minShot && dur <= T.maxShot)) throw new Error(`A speed montage shot lasts ${T.minShot}–${T.maxShot} s, not ${dur}`);
+  if (!(dur >= T.minShot && dur <= T.maxShot)) throw new Error(`A montage shot lasts ${T.minShot}–${T.maxShot} s, not ${dur}`);
+  // (Slow motion: speed 0.5 shows half as much race in the same seconds; Moses, 10 Nov 2026.)
+  const speed = X.speed ?? 1;
+  if (!(speed >= 0.25 && speed <= 1)) throw new Error(`A montage shot runs at 0.25–1 speed, not ${speed}`);
   const line = X.line ? montageLine(X.line) : null;
   const F = V.feature;
-  const members = F.busiest.members.slice(0, 5);
-  const from = (X.at ?? reaches(race, members[0], F.p0) ?? F.busiest.t) - (X.lead ?? T.leadMs);
+  const members = C ? C.members.slice(0, 5) : F.busiest.members.slice(0, 5);
+  const from = C ? C.at - (X.lead ?? 0) : (X.at ?? reaches(race, members[0], F.p0) ?? F.busiest.t) - (X.lead ?? T.leadMs);
   const p = builder('speedShot');
-  const shot = { type: 'group', members, shot: 'speed', from, dur, speed: 1, ...T.chase, ...(X.chase ?? {}) }; // (a shot's own camera, e.g. higher where the low chase would go into a bank)
+  const shot = { type: 'group', members, shot: 'speed', from, dur, speed, ...T.chase, ...(X.chase ?? {}) }; // (a shot's own camera, e.g. higher where the low chase would go into a bank)
   const at = p.add(shot);
   const hooks = line ? [{ at: at + 0.02, dur: dur - 0.04, text: line }] : [];
   let endBig = null;
   let dim = null;
   if (X.end) {
     const H = TEMPLATE.endCard.hold;
-    const endAt = p.add({ ...shot, from: from + dur * 1000, speed: 0, dur: H.seconds });
+    const endAt = p.add({ ...shot, from: from + dur * 1000 * speed, speed: 0, dur: H.seconds });
     const [l1, l2, l3 = ''] = X.end.split('|').map((s) => montageLine(s.trim()));
     endBig = { at: endAt + 0.05, l1, l2, l3 };
     const readable = p.v - (endBig.at + 0.18);
@@ -1075,7 +1080,7 @@ export function speedShot(info, race, { text = null } = {}) {
   }
   return {
     shots: p.shots, texts: [], captions: [], hooks, lines: [], markers: null, rewind: null, podium: null, length: p.v, bc: [], city: info.name, resultsTall: null,
-    loopFade: 0, endBig, dim, marks: { section: F.name, from, members },
+    loopFade: 0, endBig, dim, marks: { section: C ? (C.section ?? `p ${C.p}`) : F.name, from, members, speed, raceMs: dur * 1000 * speed },
     sound: { goAt: null, beeps: false, music: [[0, p.v]], lifts: [], ceremony: null, extra: [], loop: true },
   };
 }

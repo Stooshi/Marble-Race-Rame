@@ -24,6 +24,7 @@ import { flyoverHighlight, flyoverPath } from '../src/three/flyover';
 import { HOUSE_LOOKS, dressEntries, lookName } from '../src/shared/marbles';
 import { GLOSS, badgeOf } from '../src/shared/marbles/badge';
 import { pictureBackground } from '../src/site/marbles/picture';
+import { bumpHits, footprintsOf, marbleHits } from './collisions.js';
 
 const params = new URLSearchParams(window.location.search);
 const slug = params.get('track');
@@ -460,6 +461,21 @@ window.rec = {
     if (Number.isFinite(ground) && from.y < ground + 2) from.y = ground + 2; // (never under the land)
     const to = spot(p + ahead / (scene.channel?.arc ?? 1000)).pos.add(new Vector3(0, lookUp, 0));
     return { from: from.toArray(), to: to.toArray(), fov };
+  },
+  /**
+   * The hits from race time `from` to `to` (ms) around a group (`members`): marbles hitting each other and
+   * hitting obstacles, for every marble within `near` metres of the group (the collision montage's clicks,
+   * ./collisions.js) → [{ t, kind: 'hit' | 'bump', i, j?, k, type? }] by time.
+   */
+  hits({ from, to, members, near = 12 }) {
+    const sp = scene.raceSpan?.();
+    const arc = sp?.arc ?? scene.channel?.arc ?? 1000;
+    const room = sp?.room ?? 2;
+    const f = frameAt((from + to) / 2);
+    const mid = members.reduce((a, i) => a + (f.p[i] ?? 0), 0) / members.length;
+    const own = f.p.map((q, i) => i).filter((i) => f.p[i] < 1 && Math.abs(f.p[i] - mid) * arc <= near);
+    const at = scene.features?.solidsAt ? footprintsOf(scene.features.solidsAt) : null;
+    return [...marbleHits(race, { arc, room, own, from, to }), ...bumpHits(race, { at, arc, room, own, from, to })].sort((a, b) => a.t - b.t);
   },
   ...broadcastApi,
   /** The broadcast's settings from record.mjs (the city, the tower's title). */

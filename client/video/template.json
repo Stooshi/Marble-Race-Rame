@@ -258,5 +258,16 @@
     "minSeconds": 15,
     "maxSeconds": 20,
     "whooshGain": 1.0
+  },
+  "collisionMontage": {
+    "_note": "Collision montage (Moses, 10 Nov 2026): the speed montage's cuts and low chase, on marbles hitting each other, pegs, bumpers, flippers, splitter tips and obstacles; some shots in slow motion; the game's own click (marble on marble) and bump (marble on obstacle) on each real hit, up front, the race music low under them; 15-20 s with the end card (DAILY-ORDER.md).",
+    "slowSpeed": 0.5,
+    "minTracks": 6,
+    "minSeries": 3,
+    "minSlow": 2,
+    "musicGain": 0.14,
+    "clickGain": { "soft": 0.9, "hard": 2.0 },
+    "bumpGain": 1.12,
+    "gapSeconds": 0.11
   }
 }

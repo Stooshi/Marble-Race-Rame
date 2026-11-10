@@ -1,0 +1,12 @@
+{
+  "type": "collision",
+  "shots": [
+    {"slug": "flipper-spins", "race": "flipper-spins.video-987110", "dur": 2.4, "speed": 0.5, "line": "So satisfying."},
+    {"slug": "combo-drop", "race": "combo-drop.video-1224680", "dur": 2.0},
+    {"slug": "colca-spin", "race": "colca-spin.video-1121733", "dur": 2.4, "speed": 0.5, "line": "Click. Clack."},
+    {"slug": "delhi-red-fort-marble-grand-prix", "race": "delhi-red-fort-marble-grand-prix.video-3007920", "dur": 2.0},
+    {"slug": "yangtze-lock-run", "race": "yangtze-lock-run.video-979191", "dur": 2.4, "speed": 0.5},
+    {"slug": "kill-screen", "race": "kill-screen.video-1058381", "dur": 2.0},
+    {"slug": "tilt", "race": "tilt.video-1177166", "dur": 2.0, "end": "Which one is yours?|marblespins.com|Follow for a new race every day"}
+  ]
+}

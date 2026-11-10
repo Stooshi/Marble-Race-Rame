@@ -61,13 +61,13 @@ export function mix(plan, length, { tune }, file) {
     // The music, lifted a little (the template's liftDb) at the big moments.
     const lift = 10 ** (T.liftDb / 20);
     const lifted = (s.lifts ?? []).map(([a, b]) => `between(t,${a.toFixed(2)},${b.toFixed(2)})`).join('+');
-    for (const [a, b] of s.music ?? []) add(loop, { at: a, dur: b - a, gain: T.musicGain, fadeIn: s.loop ? 0.05 : 0.8, fadeOut: s.loop ? 0.15 : 1.2, offset: s.loop ? 8 : 0, loop: true, lift: lifted ? { expr: lifted, k: lift } : null }); // (a loop: the music in from its first frame, out at its last, so the end runs into the start)
+    for (const [a, b] of s.music ?? []) add(loop, { at: a, dur: b - a, gain: s.musicGain ?? T.musicGain, fadeIn: s.loop ? 0.05 : 0.8, fadeOut: s.loop ? 0.15 : 1.2, offset: s.loop ? 8 : 0, loop: true, lift: lifted ? { expr: lifted, k: lift } : null }); // (a loop: the music in from its first frame, out at its last, so the end runs into the start)
     if (s.teaserMusic) add(loop, { at: s.teaserMusic[0], dur: s.teaserMusic[1] - s.teaserMusic[0], offset: 8, gain: T.musicGain * lift, fadeOut: 0.35, loop: true });
     if (s.beeps && s.goAt !== null) add(SOUNDS.beeps.file, { at: s.goAt - BEEPS_GO_S, dur: BEEPS_GO_S + 0.9, gain: 0.9, fadeOut: 0.15 });
     if (s.goAt !== null && s.goAt !== undefined) add(SOUNDS.launch.file, { at: s.goAt, dur: 5, gain: 1.6 });
     if (s.ceremony) add(SOUNDS.ceremony.file, { at: s.ceremony[0], dur: s.ceremony[1] - s.ceremony[0], gain: 0.55, fadeIn: 0.4, fadeOut: 1.5 });
     // The signature sound: intro A's whoosh as the mark lands, on the intro and on every end card.
-    for (const x of s.extra ?? []) add(SOUNDS[x.key].file, { at: x.at, dur: x.dur ?? 2, gain: x.gain ?? 1, fadeOut: 0.3 });
+    for (const x of s.extra ?? []) add(SOUNDS[x.key].file, { at: x.at, dur: x.dur ?? 2, gain: x.gain ?? 1, fadeOut: x.fadeOut ?? 0.3 });
     for (const sh of plan.shots.filter((x) => x.type === 'logo' || x.type === 'end')) {
       const peak = LANDS[sh.type === 'logo' ? sh.version : TEMPLATE.intro.logo] ?? 1;
       add(SOUNDS.whoosh.file, { at: sh.at + Math.max(0, peak - SOUNDS.whoosh.peak), offset: Math.max(0, SOUNDS.whoosh.peak - peak), dur: 2.2, gain: SOUNDS.whoosh.gain, fadeOut: 0.5 });
@@ -80,7 +80,7 @@ export function mix(plan, length, { tune }, file) {
   }
 }
 
-export async function record({ variant = 'A', opening = 'old', text = null, slug, race: raceName, kind = 'production', format = 'wide', tune = 7, logo = TEMPLATE.intro.logo, out, from = null, to = null, fly = null, stills = null, clip = null, at = null, promoStart = null }) {
+export async function record({ variant = 'A', opening = 'old', text = null, slug, race: raceName, kind = 'production', format = 'wide', tune = 7, logo = TEMPLATE.intro.logo, out, from = null, to = null, fly = null, stills = null, clip = null, at = null, promoStart = null, hits: wantHits = false }) {
   fly ??= kind === 'clip' ? 12 : kind === 'broadcast' ? 4.5 : 15; // (seconds: the flyover's length)
   const [W, H] = SIZES[format];
   const race = JSON.parse(fs.readFileSync(path.join(here, '..', 'dev', '.tracks', `${raceName}.json`), 'utf8'));
@@ -103,6 +103,8 @@ export async function record({ variant = 'A', opening = 'old', text = null, slug
     const plan = PLANS[kind](info, race, { logo, fly, clip, at, promoStart, variant, slug, opening, series, text });
     // (The plan beside the video: swap-logo.mjs uses it to put another logo version in.)
     fs.writeFileSync(`${out}.plan.json`, JSON.stringify({ slug, race: raceName, kind, format, tune, logo, length: plan.length, marks: plan.marks, resultsTall: plan.resultsTall, shots: plan.shots, sound: plan.sound, texts: plan.texts, captions: plan.captions, hooks: plan.hooks, lines: plan.lines, endBig: plan.endBig, dim: plan.dim, markers: plan.markers, bc: plan.bc, intro: plan.intro, results: plan.results }));
+    // (A collision montage's shot: the hits in it, for its clicks; collisions.js.)
+    const hits = wantHits ? await page.evaluate((o) => window.rec.hits(o), { from: plan.marks.from, to: plan.marks.from + plan.marks.raceMs, members: plan.marks.members }) : null;
     log(`${info.name}: ${kind} ${format}, ${plan.length.toFixed(1)} s, ${plan.shots.length} shots; winner ${info.podium[0].name} (gate ${info.podium[0].gate}) by ${info.margin} ms${plan.packShare !== undefined ? `; the race ${Math.round(plan.packShare * 100)}% on the pack` : ''}`);
     for (const sh of plan.shots) log(`  ${sh.at.toFixed(1).padStart(6)} s  ${(sh.type + (sh.follow !== undefined && sh.follow !== 'leader' ? ` #${sh.follow}` : sh.type === 'race' ? ' lead' : '')).padEnd(10)} ${sh.from !== undefined ? `race ${Math.round(sh.from)} ms` : ''} ${sh.speed && sh.speed !== 1 ? `×${sh.speed}` : ''} ${sh.dur.toFixed(1)} s`);
     // The rows on the podium card.
@@ -240,7 +242,7 @@ export async function record({ variant = 'A', opening = 'old', text = null, slug
       fs.rmSync(first, { force: true });
     }
     log(`wrote ${out}: ${(v1 - v0).toFixed(1)} s, ${frames} frames in ${((Date.now() - started) / 60000).toFixed(1)} min`);
-    return { out, plan, info };
+    return { out, plan, info, hits };
   } finally {
     for (const f of [silent, audio]) fs.rmSync(f, { force: true });
     await Promise.race([Promise.all([browser.close(), server.close()]), new Promise((r) => setTimeout(r, 10_000))]);
