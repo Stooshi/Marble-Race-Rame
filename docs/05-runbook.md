@@ -486,6 +486,18 @@ It also prints the key's SHA-256 fingerprint. The folder is in your home folder 
 
 **If it is lost or leaked:** with Play App Signing, Google holds the real signing key, so the app is not lost. Make a new key (move the old `MarbleSpins-keys` folder away first), then Play Console → Test and release → Setup → **App signing** → *Request upload key reset*, and upload the new `upload_certificate.pem`. Google takes a few days; until then you can't upload.
 
+### A fresh ZIP or clone: put back keystore.properties (no new key)
+
+`client/android/keystore.properties` is gitignored, so a fresh ZIP of Main or a new clone doesn't have it, and `npm run android:release` stops with "No upload key yet". **Don't run `npm run android:key`**: the key registered in Play already exists (it refuses a second key anyway if the `MarbleSpins-keys` folder is there). Write the file back instead. In PowerShell, in the project's `client` folder (Windows PC, key in the usual place):
+
+```powershell
+Set-Content -Path .\android\keystore.properties -Encoding ascii -Value @('storeFile=C:/Users/MosesN/MarbleSpins-keys/marblespins-upload.jks', 'keyAlias=upload')
+```
+
+- **Forward slashes** in `storeFile` (a properties file reads `\` as an escape; `C\:\\Users\\…`, as `npm run android:key` writes it, works too). The alias is `upload`, as the key was made.
+- **No passwords in the file:** `npm run android:release` asks for the key password (or reads `MS_UPLOAD_STOREPASSWORD`) and hands it to Gradle without writing it anywhere. The store and the key share one password (PKCS12).
+- Check: `keytool -list -keystore C:\Users\MosesN\MarbleSpins-keys\marblespins-upload.jks -alias upload` (asks the password) shows a `PrivateKeyEntry`, and its SHA256 matches Play Console → Test and release → App integrity → App signing → "Upload key certificate". The release script makes the same check before building.
+
 ### Building the bundle
 
 1. `npm run app:version` and the release notes (above). Commit them.
