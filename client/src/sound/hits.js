@@ -18,6 +18,82 @@ export const HIT = {
   maxStepMs: 250,   // frames further apart than this: no speed measured
 };
 
+/** The strongest new touch of an own marble with another between two frames (0 to 1), or 0. */
+function strongestTouch(before, frame, own, arc, room) {
+  const touchAt = 2 * HIT.radius * HIT.touch;
+  const dist = (f, a, b) => Math.hypot((f.p[a] - f.p[b]) * arc, ((f.l?.[a] ?? 0) - (f.l?.[b] ?? 0)) * room);
+  const dt = frame.t - before.t;
+  let best = 0;
+  for (const o of own ?? []) {
+    if (!(frame.p[o] < 1) || !Number.isFinite(before.p[o])) continue;
+    for (let j = 0; j < frame.p.length; j += 1) {
+      if (j === o || !(frame.p[j] < 1) || !Number.isFinite(before.p[j])) continue;
+      if (Math.abs(frame.p[j] - frame.p[o]) * arc > 3 * touchAt) continue;
+      const now = dist(frame, o, j);
+      if (now > touchAt) continue;
+      const was = dist(before, o, j);
+      if (was <= touchAt) continue; // (already touching: rubbing, no new hit)
+      const closing = ((was - now) / dt) * 1000;
+      if (closing < HIT.minSpeed) continue;
+      best = Math.max(best, Math.min(1, (closing - HIT.minSpeed) / (HIT.fullSpeed - HIT.minSpeed)));
+      if (best === 0) best = 0.001; // (just over the threshold: the softest)
+    }
+  }
+  return best;
+}
+
+/**
+ * The own marble's hits on other marbles, found from the streamed frames (20 a second, whatever the
+ * screen draws) and played when the race as shown reaches them (Moses's Galaxy A12, 11 Nov 2026: at a
+ * few frames a second, measuring between the frames drawn found almost none). `add` takes each frame as
+ * it arrives; `step(t, late)` gives a hit's strength once the race as shown is at t, or null; a hit
+ * more than `late` ms behind it is let go (the caller passes at least one drawn frame's worth).
+ */
+export function createStreamedHitDetector({ arc, room }) {
+  let prev = null;
+  let pending = [];
+  let lastAt = -Infinity;
+  let shownAt = null;
+  return {
+    add(frame, own) {
+      if (!frame || !Number.isFinite(frame.t)) return;
+      if (prev && frame.t === prev.t) return; // (the same frame again)
+      if (prev && frame.t < prev.t) { prev = null; pending = []; }
+      const before = prev;
+      prev = { t: frame.t, p: frame.p, l: frame.l };
+      if (!before || frame.t < 0) return;
+      const dt = frame.t - before.t;
+      if (dt <= 0 || dt > HIT.maxStepMs) return;
+      const k = strongestTouch(before, frame, own, arc, room);
+      if (k) pending.push({ t: frame.t, k });
+    },
+    step(t, late = BUMP.late) {
+      if (!Number.isFinite(t)) return null;
+      if (shownAt !== null && t < shownAt - 50) { lastAt = -Infinity; pending = pending.filter((h) => h.t > t); }
+      shownAt = t;
+      let best = 0;
+      const left = [];
+      for (const h of pending) {
+        if (h.t > t) { left.push(h); continue; }
+        if (t - h.t > late || t - lastAt < HIT.gapMs) continue;
+        best = Math.max(best, h.k);
+      }
+      pending = left;
+      if (!best) return null;
+      lastAt = t;
+      return best;
+    },
+    reset() { prev = null; pending = []; lastAt = -Infinity; shownAt = null; },
+  };
+}
+
+/**
+ * How late a hit may still be played, given how far apart the frames drawn are (race ms): at least
+ * BUMP.late, more on a slow phone (one drawn frame and a bit), never more than LATE_MAX_MS.
+ */
+export const LATE_MAX_MS = 1200;
+export const lateFor = (drawnGapMs) => Math.min(LATE_MAX_MS, Math.max(BUMP.late, (Number.isFinite(drawnGapMs) ? drawnGapMs : 0) + 100));
+
 /** A detector for one race: `arc` (metres of track), `room` (metres across from the middle to a wall). */
 export function createHitDetector({ arc, room }) {
   let prev = null;
@@ -174,8 +250,8 @@ export function createBumpDetector({ solidsAt = null, arc = 0, room = 0 } = {}) 
         pending.push(h);
       }
     },
-    /** The race as shown is at `t` (ms) → a bump's strength (0 to 1) or null. */
-    step(t) {
+    /** The race as shown is at `t` (ms) → a bump's strength (0 to 1) or null; `late`: see lateFor. */
+    step(t, late = BUMP.late) {
       if (!Number.isFinite(t)) return null;
       if (shownAt !== null && t < shownAt - 50) { lastAt = -Infinity; pending = pending.filter((h) => h.t > t); }
       shownAt = t;
@@ -183,7 +259,7 @@ export function createBumpDetector({ solidsAt = null, arc = 0, room = 0 } = {}) 
       const left = [];
       for (const h of pending) {
         if (h.t > t) { left.push(h); continue; }
-        if (t - h.t > BUMP.late || t - lastAt < BUMP.gapMs) continue;
+        if (t - h.t > late || t - lastAt < BUMP.gapMs) continue;
         best = Math.max(best, h.k);
       }
       pending = left;

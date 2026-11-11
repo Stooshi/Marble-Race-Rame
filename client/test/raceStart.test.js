@@ -36,7 +36,7 @@ describe('the view holds back when it is ready late', () => {
   it('the stream plays from the held-back time and keeps the frames for it; the viewer shows the countdown it held', () => {
     const stream = src('src/hooks/useRaceStream.js');
     expect(stream).toContain('performance.now() + b.offset - BUFFER_MS - lag');
-    expect(stream).toContain('(hold.current.decided ? hold.current.base : MAX_HOLD_MS) + 3000');
+    expect(stream).toContain('(hold.current.decided ? hold.current.base : SOLO_MAX_HOLD_MS) + 3000'); // (undecided: the longest hold there may be, 11 Nov 2026)
     const viewer = src('src/components/LiveRaceViewer3D.jsx');
     expect(viewer).toContain('Date.now() - BUFFER_MS - lag - (startRef.current ?? Date.now())');
     // (The beeps and the tunes on GO as shown here: BUFFER_MS behind the stream, plus any hold.)

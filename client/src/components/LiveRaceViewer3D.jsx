@@ -11,7 +11,7 @@ import CornerView, { cornerFollow, followedNow, followLabel } from './CornerView
 import { Spinner } from './Status';
 import { formatTime } from '../utils/format';
 import { COUNTDOWN_MS } from '../three/startCamera';
-import { BUFFER_MS, MAX_HOLD_MS } from '../hooks/useRaceStream';
+import { BUFFER_MS, holdCap, uiFrameMs } from '../hooks/useRaceStream';
 import FinishShow, { useFinishShow } from './FinishShow';
 import { CEREMONY_PHASES } from '../utils/finishShow';
 import SkipToResults from './SkipToResults';
@@ -19,7 +19,7 @@ import FrameMeter, { useFrameMeter } from './FrameMeter';
 import { useTvMoments } from './tvMomentsSetting';
 import { sawGo, useLeftReport } from '../api/firstSteps';
 import { useAuthMaybe } from '../context/AuthContext';
-import { createBumpDetector, createHitDetector, createHitGate, createPadDetector, padsOf } from '../sound/hits';
+import { createBumpDetector, createHitDetector, createHitGate, createPadDetector, createStreamedHitDetector, lateFor, padsOf } from '../sound/hits';
 import { START_SOUND_MS, crowdCheer, marbleBump, marbleHit, play as playSound, speedPad, prepare as prepareSound, raceCeremony, raceCountdown, raceGo, soundReport, stopCountdown, whenSoundReady } from '../sound/engine';
 import { watchReadiness } from './raceReadiness';
 import { api } from '../api/client';
@@ -43,6 +43,7 @@ const FLYOVER_SHOW_MS = 4000;  // the start show's flyover: a helicopter overvie
 export const FLYOVER_ON = true;
 const COUNT_FROM_MS = 3000;    // the big 3-2-1 over the countdown's last three seconds (before that: "Your gate")
 const GO_SHOWN_MS = 1000;      // "GO!" stays this long
+const UI_MS = typeof window === 'undefined' ? 100 : uiFrameMs(); // the clock and order on screen while held back: as often as the stream's
 const ROOM_FLY_MIN_MS = 1200;  // a room's flyover only with at least this much of it left when the view is ready
 
 /**
@@ -133,9 +134,9 @@ export default function LiveRaceViewer3D({
   // GO as shown on this screen (wall ms): the race clock the beeps and the tunes are timed on.
   // (The view runs BUFFER_MS behind the stream, plus any hold: so does the sound.)
   const goWallRef = useRef(null);
-  // (The hold the stream really keeps: never more than MAX_HOLD_MS. A longer wait (a slow phone building the
-  // track) used to put the sound's GO that much after the GO as shown: the beeps 30 s into the race, 7 Nov 2026.)
-  const heldFor = (lag) => Math.min(MAX_HOLD_MS, Math.max(0, lag || 0));
+  // (The hold the stream really keeps: never more than its cap (holdCap: a solo start show's is longer). A
+  // longer wait used to put the sound's GO that much after the GO as shown: the beeps 30 s into the race, 7 Nov 2026.)
+  const heldFor = (lag, stay = false) => Math.min(holdCap(stay), Math.max(0, lag || 0));
   const shownGo = (wall) => {
     goWallRef.current = wall;
     if (meta?.raceId) raceCountdown(meta.raceId, wall - Date.now());
@@ -213,7 +214,7 @@ export default function LiveRaceViewer3D({
         holdBack?.(lag, go, { stay: true });
         lagRef.current = lagNow;
         flyRef.current = flight ? { startedAt: performance.now(), go } : null;
-        shownGo(go + BUFFER_MS + heldFor(lag));
+        shownGo(go + BUFFER_MS + heldFor(lag, true));
         setPhase(flight ? 'flying' : 'race');
         setReady(true);
         return;
@@ -303,7 +304,7 @@ export default function LiveRaceViewer3D({
     const lag = Math.max(0, Date.now() - (fly.go - countdownMs));
     holdBack?.(lag, fly.go, { stay: true });
     if (meta?.raceId) stopCountdown(meta.raceId);
-    shownGo(fly.go + BUFFER_MS + heldFor(lag));
+    shownGo(fly.go + BUFFER_MS + heldFor(lag, true));
     setPhase('race');
   };
   const swapViews = () => {
@@ -337,7 +338,7 @@ export default function LiveRaceViewer3D({
       const tenth = f && f.t < GO_SHOWN_MS ? Math.floor(f.t / 100) : null;
       if (tenth !== lastShown) { lastShown = tenth; setShownT(tenth === null ? null : tenth * 100); }
       // While held back, the clock and the order on screen are the race as shown, not the live stream.
-      if (lag > 0 && f && Math.floor(f.t / 50) !== lastShownClock) { lastShownClock = Math.floor(f.t / 50); setShown({ t: f.t, s: f.s }); }
+      if (lag > 0 && f && Math.floor(f.t / UI_MS) !== lastShownClock) { lastShownClock = Math.floor(f.t / UI_MS); setShown({ t: f.t, s: f.s }); } // (as often as the stream's own: uiFrameMs)
       else if (lag === 0 && lastShownClock !== null) { lastShownClock = null; setShown(null); }
       const scene = sceneRef.current;
       // The start sound: the marbles start rolling, START_SOUND_MS after the GO beep, on the race clock (Moses, 30 Oct 2026).
@@ -356,12 +357,23 @@ export default function LiveRaceViewer3D({
           scene.updateRace(f, who, dt, insetRef.current); // 'leader', 'second' or an entry index (the scene keeps the leader steady)
           // The player's own marble hitting another: a soft click, louder for harder hits (../sound/hits.js; 30 Oct 2026).
           if (ownRef.current.length && meta?.raceId) {
-            if (!hits || hits.raceId !== meta.raceId) { const span = scene.raceSpan?.(); hits = { raceId: meta.raceId, d: span ? createHitDetector(span) : null, gate: createHitGate() }; }
-            const k = hits.d?.step(f, ownRef.current);
+            // (With the streamed frames (takeStreamed): the clicks are found from those, 20 a second whatever
+            // this screen draws, and played as the race shown reaches them, as late as one drawn frame and a
+            // bit (lateFor): on a slow phone the frames drawn are too far apart to measure a touch; 11 Nov 2026.)
+            const streamed = Boolean(takeRef.current);
+            if (!hits || hits.raceId !== meta.raceId) { const span = scene.raceSpan?.(); hits = { raceId: meta.raceId, d: span ? (streamed ? createStreamedHitDetector(span) : createHitDetector(span)) : null, gate: createHitGate(), shownT: null }; }
+            const late = lateFor(hits.shownT === null ? 0 : f.t - hits.shownT);
+            hits.shownT = f.t;
             // (The obstacles' footprints, as the marbles are drawn round them: the bump is found from the frames here, 4 Nov 2026.)
             if (!bumpRef.current.d.hasTrack()) { const span = scene.raceSpan?.(); const at = scene.features?.solidsAt; if (span && at) bumpRef.current.d.setTrack({ solidsAt: at, ...span }); }
-            if (takeRef.current && bumpRef.current.raceId === meta.raceId) for (const g of takeRef.current()) bumpRef.current.d.add(g, ownRef.current);
-            const b = bumpRef.current.raceId === meta.raceId ? bumpRef.current.d.step(f.t) : null;
+            if (streamed) {
+              for (const g of takeRef.current()) {
+                if (bumpRef.current.raceId === meta.raceId) bumpRef.current.d.add(g, ownRef.current);
+                hits.d?.add(g, ownRef.current);
+              }
+            }
+            const k = streamed ? hits.d?.step(f.t, late) : hits.d?.step(f, ownRef.current);
+            const b = bumpRef.current.raceId === meta.raceId ? bumpRef.current.d.step(f.t, late) : null;
             // (The two share one limit, so they never stack into a rattle: the harder of the two plays.)
             if ((k ?? b) !== null && (k ?? b) !== undefined && hits.gate.allow(f.t)) {
               if (b !== null && (k === null || k === undefined || b > k)) marbleBump(meta.raceId, b);

@@ -14,7 +14,7 @@ import { detectCrossings, lerpFrame } from '../utils/splits';
  * so frames arriving in bursts (a busy phone, a patchy network) never make the
  * marbles leap forward.
  */
-const STREAMED_KEEP = 600; // frames kept for takeStreamed() if nobody reads them (about 30 s)
+const STREAMED_KEEP = 1300; // frames kept for takeStreamed() if nobody reads them (about 65 s: a solo start show held up to SOLO_MAX_HOLD_MS)
 export const BUFFER_MS = 400; // how far behind the newest frame playback runs: rides out a late frame or two (a patchy phone network) without the marbles stopping
 const KEEP = 40; // frames kept for blending (more while the view is held back, see below)
 /**
@@ -26,14 +26,53 @@ const KEEP = 40; // frames kept for blending (more while the view is held back, 
  */
 export const CATCH_UP = 0.35; // lag shed per second (the race plays at 1.35× while catching up)
 export const MAX_HOLD_MS = 12000; // never held back further than this
+// A solo race's start show (`stay`) may be held back further: nobody else watches it live, and a slow phone
+// (Moses's Galaxy A12, 11 Nov 2026) can be ready 20 s or more after the countdown began; capped at 12 s, the
+// countdown and its beeps ran under the flyover and the race was already rolling when the flight ended.
+export const SOLO_MAX_HOLD_MS = 60000;
+export const holdCap = (stay) => (stay ? SOLO_MAX_HOLD_MS : MAX_HOLD_MS);
 /** The hold `{ base, decayFrom }` at performance time `now`: base ms, shed at CATCH_UP from decayFrom on. */
 export const holdLag = (h, now) => Math.max(0, h.base - Math.max(0, now - h.decayFrom) * CATCH_UP);
+/**
+ * How often the page's own state follows the stream (the standings, the clock, the speed): the 3D view
+ * draws from sample() every frame regardless. 20 times a second, every frame redrew the race page's whole
+ * layout, too much for a slow phone (Moses's Galaxy A12, 11 Nov 2026: taps took seconds): phones 4 a
+ * second, computers 10 (the clock's tenths).
+ */
+export function uiFrameMs() {
+  try {
+    const coarse = window.matchMedia?.('(pointer: coarse)').matches;
+    return coarse && Math.min(window.screen.width, window.screen.height) <= 900 ? 250 : 100;
+  } catch {
+    return 100;
+  }
+}
+
+/** Passes on at most one frame per `ms` (the newest), and the last one always (a trailing call). */
+export function throttleFrames(set, ms, { now = () => performance.now(), later = setTimeout, cancel = clearTimeout } = {}) {
+  let lastAt = -Infinity;
+  let timer = null;
+  let pending = null;
+  const flush = () => { timer = null; lastAt = now(); set(pending); };
+  return {
+    push(f) {
+      pending = f;
+      if (now() - lastAt >= ms) { if (timer) { cancel(timer); timer = null; } flush(); return; }
+      if (!timer) timer = later(flush, ms - (now() - lastAt));
+    },
+    reset(f = null) { if (timer) cancel(timer); timer = null; pending = f; lastAt = -Infinity; set(f); },
+  };
+}
+
 export function useRaceStream(raceId, { onLobbyUpdate } = {}) {
   const { socket } = useAuth();
   const [status, setStatus] = useState('connecting');
   const [meta, setMeta] = useState(null);
   const [startsAt, setStartsAt] = useState(null);
-  const [frame, setFrame] = useState(null);
+  const [frame, setFrameNow] = useState(null);
+  const frameUi = useRef(null);
+  if (!frameUi.current) frameUi.current = throttleFrames(setFrameNow, uiFrameMs());
+  const setFrame = useCallback((f) => (f === null ? frameUi.current.reset(null) : frameUi.current.push(f)), []);
   const [splits, setSplits] = useState({});
   const [events, setEvents] = useState([]);
   const [results, setResults] = useState(null);
@@ -81,7 +120,7 @@ export function useRaceStream(raceId, { onLobbyUpdate } = {}) {
     b.list.push(f);
     // (Enough frames to play from while held back: the last few seconds plus the hold; until the view
     // has decided its hold, everything it might need.)
-    const keepMs = (hold.current.decided ? hold.current.base : MAX_HOLD_MS) + 3000;
+    const keepMs = (hold.current.decided ? hold.current.base : SOLO_MAX_HOLD_MS) + 3000; // (undecided: the longest hold there may be)
     while (b.list.length > KEEP && b.list[1].t < f.t - keepMs) b.list.shift();
     // Ease the clock towards what this frame says (never jumping), so network
     // jitter is smoothed out; a big gap (a reconnect, a sleeping tab) resets it.
@@ -177,7 +216,7 @@ export function useRaceStream(raceId, { onLobbyUpdate } = {}) {
    * race's GO (wall clock ms). The catching up starts 1.5 s after the GO as shown.
    */
   const holdBack = useCallback((ms, startsAt, { stay = false } = {}) => {
-    const base = Math.max(0, Math.min(MAX_HOLD_MS, ms || 0));
+    const base = Math.max(0, Math.min(holdCap(stay), ms || 0));
     const goShown = (startsAt ?? Date.now()) + base;
     // `stay` (a solo race's start show, Moses 26 Oct 2026): held back for good, never played faster to
     // catch up (no one else is watching it live). Called again, it replaces the hold (the flyover skipped).

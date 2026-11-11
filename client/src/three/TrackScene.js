@@ -40,6 +40,10 @@ const LEADER_MARGIN = 3; // metres: the follow camera only switches to a new lea
 const SCENERY_LAYER = 1;  // scenery is drawn in the big view only (the small corner view skips it, for speed)
 const HITCH_MS = 100; // frames further apart than this count as a hold-up (the frame-rate counter shows how many)
 const SLOW_FRAME_MS = 40; // frames further apart than this on average (under 25 a second): draw at a lower resolution
+const PAUSE_MS = 1000; // a gap longer than this is a pause (a hidden tab, the first frame), not a slow frame
+const SCENERY_OFF_MS = 50; // a phone still this slow (under 20 a second) at its lowest resolution: scenery off for the race
+const PACE_FRAMES = 60; // judged over this many frames,
+const PACE_WAIT_MS = 3000; // or this long, whichever comes first (a phone at 4 a second takes 15 s to draw 60)
 // Phones draw at most 60 frames a second: a 90/120 Hz screen otherwise doubles the work (heat,
 // battery, and the phone then slows itself down) for motion the races don't need.
 const PHONE_FRAME_MS = 1000 / 60;
@@ -1690,6 +1694,10 @@ export class TrackScene {
    * it draws at a slightly lower resolution, a step at a time, down to one
    * pixel per screen pixel (on phones a little further, PHONE_MIN_PIXEL_RATIO).
    * It never steps back up (no flicker between the two).
+   * A phone still under 20 frames a second at its lowest resolution stops
+   * drawing the scenery for the rest of the race (looks only; Moses's Galaxy
+   * A12, 11 Nov 2026). Frames up to a second apart count as slow ones: before,
+   * anything over 250 ms counted as a pause, so the slowest phones never stepped down.
    */
   keepPace() {
     const now = performance.now();
@@ -1700,15 +1708,30 @@ export class TrackScene {
     drawn.push(now);
     while (drawn.length && drawn[0] < now - 2000) drawn.shift();
     if (Number.isFinite(gap) && gap > HITCH_MS) this.hitches = (this.hitches ?? 0) + 1;
-    if (gap > 250) return; // a pause (or the first frame), not a slow one
+    if (gap > PAUSE_MS) return; // a pause (or the first frame), not a slow one
+    if (this.pace === undefined) this.pacedSince = now;
     this.pace = this.pace === undefined ? gap : this.pace + (gap - this.pace) * 0.05;
     this.paced = (this.paced ?? 0) + 1;
+    if (this.paced < PACE_FRAMES && now - this.pacedSince < PACE_WAIT_MS) return;
     const ratio = this.renderer.getPixelRatio();
     const floor = this.minPixelRatio ?? 1;
-    if (this.paced < 60 || this.pace < SLOW_FRAME_MS || ratio <= floor || now - (this.lastStepDown ?? -Infinity) < 2000) return;
+    if (ratio <= floor) {
+      if (this.lite && this.sceneryOn && this.pace >= SCENERY_OFF_MS && now - (this.lastStepDown ?? -Infinity) >= 2000) this.dropScenery();
+      return;
+    }
+    if (this.pace < SLOW_FRAME_MS || now - (this.lastStepDown ?? -Infinity) < 2000) return;
     this.lastStepDown = now;
     this.renderer.setPixelRatio(Math.max(floor, ratio - 0.25));
     this.renderer.setSize(this.size.width, this.size.height, false);
+    this.pace = undefined;
+    this.paced = 0;
+  }
+
+  /** No more scenery (and billboards) for this race: the phone can't keep up even at its lowest resolution. */
+  dropScenery() {
+    this.sceneryOn = false;
+    this.sceneryDropped = true;
+    this.camera.layers.disable(SCENERY_LAYER);
     this.pace = undefined;
     this.paced = 0;
   }

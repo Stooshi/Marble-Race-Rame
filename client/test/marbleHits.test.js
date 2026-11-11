@@ -181,7 +181,9 @@ describe('the own marble\'s bumps on obstacles', () => {
     expect(view).toContain('hits.gate.allow(f.t)');
     expect(view).toContain('bumpRef.current.d.setTrack({ solidsAt: at, ...span })');
     // Every streamed frame reaches the detector (1 Nov 2026): React may draw two frames as one.
-    expect(view).toContain('for (const g of takeRef.current()) bumpRef.current.d.add(g, ownRef.current)');
+    expect(view).toContain('for (const g of takeRef.current()) {');
+    expect(view).toContain('if (bumpRef.current.raceId === meta.raceId) bumpRef.current.d.add(g, ownRef.current);');
+    expect(view).toContain('hits.d?.add(g, ownRef.current);'); // (the clicks too, from the streamed frames: 11 Nov 2026)
     expect(fs.readFileSync(path.resolve(__dirname, '../src/pages/Race.jsx'), 'utf8')).toContain('takeStreamed={stream.takeStreamed}');
     // (No longer from the race's events: they carry at most one obstacle hit a marble every 3 s.)
     expect(fs.readFileSync(path.resolve(__dirname, '../src/sound/hits.js'), 'utf8')).not.toContain("e?.type !== 'bounce'");
