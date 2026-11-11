@@ -17,6 +17,7 @@ import StartLights from '../components/StartLights';
 import { START_SOUND_MS, play as playSound, prepare as prepareSound, raceCountdown, raceEnd, raceGo } from '../sound/engine';
 import { track, trackingActive } from '../site/consent/tracking';
 import { entryLabel, plainName } from '../shared/playerName';
+import WildnessBadge from '../site/WildnessBadge';
 
 const obstacleName = (o) => o?.replace(/_/g, ' ');
 
@@ -127,7 +128,7 @@ export default function Race() {
   const header = (
     <header className="race-header">
       <div>
-        <p className="eyebrow">{race.track_name} · <span className={`badge badge--${race.difficulty}`}>{race.difficulty}</span></p>
+        <p className="eyebrow">{race.track_name} <WildnessBadge track={race} /></p>
         <h1>{race.name || race.track_name}</h1>
       </div>
       <span className={`badge badge--${status} badge--lg`}>{statusLabel(status)}</span>

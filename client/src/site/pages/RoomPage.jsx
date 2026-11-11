@@ -346,7 +346,7 @@ export default function RoomPage() {
                   style={{ minHeight: 44, borderRadius: 12, padding: '0 12px', background: 'var(--ms-bg)', color: 'var(--ms-text)', border: '1px solid var(--ms-border)' }}
                 >
                   <option value="random">Random track each race</option>
-                  {tracks.map((t) => <option key={t.id} value={t.id} disabled={t.locked}>{t.name}{t.locked ? ' (in the season pass)' : ''}</option>)}
+                  {tracks.map((t) => <option key={t.id} value={t.id} disabled={t.locked}>{t.name}{t.locked ? (t.lockedBy === 'pack' ? ` (in the ${t.pack.name} pack)` : ' (in the season pass)') : ''}</option>)}
                 </select>
               </label>
               <button type="button" className="ms-btn ms-btn--primary ms-btn--lg" disabled={Boolean(busy) || !me.inRace} onClick={run('start', () => api.roomStart(code))}>

@@ -10,6 +10,7 @@ const { validate, UUID_RE } = require('../utils/validate');
 const { badRequest, notFound } = require('../utils/httpError');
 const { OBSTACLE_EFFECTS } = require('../game/simulator');
 const seasons = require('../seasons');
+const packs = require('../packs');
 
 const router = express.Router();
 
@@ -77,7 +78,7 @@ async function withSeasons(rows, userId, now = new Date()) {
   });
 }
 
-/** GET /api/tracks?difficulty= (a season's tracks only from the season's start) */
+/** GET /api/tracks?difficulty= (a season's tracks only from the season's start; difficulty is no longer shown: see wildness) */
 router.get('/', optionalAuth, async (req, res) => {
   const q = validate(req.query, {
     difficulty: { type: 'enum', values: DIFFICULTIES },
@@ -102,15 +103,19 @@ router.get('/', optionalAuth, async (req, res) => {
                  WHEN physics->'kit' ? 'grandPrix' THEN 'Grand Prix'
                  WHEN physics IS NOT NULL THEN 'World Tour'
                  ELSE 'Classic' END AS series,
-            physics->'kit'->>'biome' AS biome, physics->'kit'->>'lighting' AS lighting, season_key
+            physics->'kit'->>'biome' AS biome, physics->'kit'->>'lighting' AS lighting, season_key,
+            wildness, wildness_score, pack_key, is_free
        FROM tracks ${where.length ? `WHERE ${where.join(' AND ')}` : ''}
-      ORDER BY difficulty, name`,
+      ORDER BY name`,
     params,
   );
   // A season's tracks stay out of the list until the season starts (they may be switched on early:
   // nothing to deploy at midnight); they appear by themselves at its first minute. Admins see all.
   const all = q.include_inactive && req.user?.role === 'admin';
-  const tracks = (await withSeasons(rows, req.user?.id ?? null)).filter((t) => all || t.season?.state !== 'before');
+  // Wildness (wildness, wildness_score: how chaotic the races are; luck, not skill) and the track's
+  // pack (pack { key, name }, is_free; locked only with the TRACK_PACKS switch on: src/packs).
+  const withAll = await packs.withPacks(db, await withSeasons(rows, req.user?.id ?? null), { userId: req.user?.id ?? null, role: req.user?.role ?? null });
+  const tracks = withAll.filter((t) => all || t.season?.state !== 'before');
   res.json({ tracks });
 });
 

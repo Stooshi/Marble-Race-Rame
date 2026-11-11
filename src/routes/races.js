@@ -26,7 +26,7 @@ const RACE_LIST_SQL = `
   SELECT r.id, r.name, r.status, r.min_marbles, r.max_marbles, r.entry_fee_coins, r.fill_with_bots,
          r.scheduled_at, r.started_at, r.finished_at, r.created_at, r.created_by, r.next_race_id,
          CASE WHEN r.status = 'finished' THEN r.target_duration_ms END AS duration_ms,
-         t.id AS track_id, t.slug AS track_slug, t.name AS track_name, t.difficulty, t.season_key AS track_season,
+         t.id AS track_id, t.slug AS track_slug, t.name AS track_name, t.difficulty, t.wildness, t.season_key AS track_season,
          (SELECT COUNT(*)::int FROM race_entries e WHERE e.race_id = r.id) AS entry_count,
          (SELECT COUNT(*)::int FROM race_entries e WHERE e.race_id = r.id AND NOT e.is_bot) AS player_count,
          (SELECT ro.code FROM rooms ro WHERE ro.id = r.room_id) AS room_code,

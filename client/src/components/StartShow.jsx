@@ -1,8 +1,9 @@
 import { BANNERS, SERIES_PIC, bannerSrc } from '../site/TrackBanner';
+import WildnessBadge from '../site/WildnessBadge';
 
 /**
  * The start show's screens over the 3D view (Moses, 26 Oct 2026: an unhurried start):
- *   TrackCard: while everything loads, the track's picture, name, series and difficulty;
+ *   TrackCard: while everything loads, the track's picture, name, series and wildness;
  *   FlyoverTitle: during the flyover, the name and series small at the top, and "Tap to skip" (the
  *     whole picture skips).
  * Looks only.
@@ -16,7 +17,7 @@ export function TrackCard({ track, label = 'Loading…' }) {
     <div className="startshow__card" role="status" aria-live="polite" style={{ background: SERIES_PIC[series] ?? SERIES_PIC.Classic }}>
       {pic && <img className="startshow__pic" src={pic.src} srcSet={pic.srcSet} alt="" decoding="async" onError={(e) => { e.currentTarget.hidden = true; }} />}
       <div className="startshow__cardtext">
-        {series && <span className="startshow__series">{series}{track?.difficulty ? ` · ${track.difficulty}` : ''}</span>}
+        {series && <span className="startshow__series">{series} <WildnessBadge track={track} /></span>}
         <strong className="startshow__name">{track?.name ?? 'The next race'}</strong>
         <span className="startshow__loading">{label}<i aria-hidden="true" /></span>
       </div>

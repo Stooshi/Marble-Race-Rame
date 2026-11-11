@@ -30,7 +30,7 @@ async function exportData(db, userId) {
        FROM users WHERE id = $1 AND deleted_at IS NULL`,
   );
   if (!account) return null;
-  const [stats, emailAnswers, cookieAnswers, ledger, collection, shooter, look, startingMarbles, races, days, payments, rooms, security, support, supportReplies, passes, badges, passReminders, giftCodes, pushDevices, pushPrefs, countryHistory, firstSteps, firstStepEvents] = await Promise.all([
+  const [stats, emailAnswers, cookieAnswers, ledger, collection, shooter, look, startingMarbles, races, days, payments, rooms, security, support, supportReplies, passes, badges, passReminders, giftCodes, pushDevices, pushPrefs, countryHistory, firstSteps, firstStepEvents, trackPacks] = await Promise.all([
     one('SELECT * FROM user_stats WHERE user_id = $1'),
     all('SELECT consent, source, created_at FROM email_consents WHERE user_id = $1 ORDER BY created_at'),
     all('SELECT version, statistics, marketing, decided_at FROM cookie_consents WHERE user_id = $1 ORDER BY created_at'),
@@ -70,6 +70,8 @@ async function exportData(db, userId) {
     all('SELECT step, source, browser, created_at FROM first_steps WHERE user_id = $1 ORDER BY created_at'),
     // (Where a new guest stopped before their first race, 9 Nov 2026.)
     all('SELECT kind, detail, seconds, created_at FROM first_step_events WHERE user_id = $1 ORDER BY created_at'),
+    // (Track packs owned, 11 Nov 2026: none yet, nothing grants one.)
+    all('SELECT pack_key, provider, granted_at, revoked_at, revoke_reason FROM pack_owners WHERE user_id = $1 ORDER BY granted_at'),
   ]);
   return {
     about: 'Everything Marble Spins stores about your account. Passwords are stored only as a one-way hash and are not included. IP addresses are kept for security and fraud checks for at most 90 days, then only the country.',
@@ -84,6 +86,7 @@ async function exportData(db, userId) {
     dailyRaces: days,
     payments,
     seasonPasses: passes,
+    trackPacks,
     giftCodesRedeemed: giftCodes,
     pushNotifications: { switches: pushPrefs, devices: pushDevices },
     countryYouRaceFor: { country: account.country, chosenAt: account.country_chosen_at, history: countryHistory },

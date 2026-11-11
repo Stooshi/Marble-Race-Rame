@@ -8,6 +8,8 @@ import { useAsync } from '../../hooks/useAsync';
 import { ITEM, previewShowcase } from '../../shared/marbles';
 import MarbleBadge from '../marbles/MarbleBadge';
 import TrackBanner, { SERIES_PIC } from '../TrackBanner';
+import WildnessBadge from '../WildnessBadge';
+import { WILDNESS, WILDNESS_LEVELS, WILDNESS_NOTE, matchesWildness } from '../../shared/wildness.js';
 import { handle, shownName } from '../../shared/playerName';
 import { useLeaguesOn } from '../leagues/status';
 
@@ -320,6 +322,20 @@ export function RoomPrivacy({ value, onChange, disabled = false }) {
 
 // ── 2 · Track ─────────────────────────────────────────────────────────────
 
+const WILD_FILTER_KEY = 'ms.wildFilter';
+function readWildFilter() {
+  try { const v = localStorage.getItem(WILD_FILTER_KEY); return v === 'all' || WILDNESS[v] ? v : 'all'; } catch { return 'all'; }
+}
+const WILD_RANK = { extreme: 3, wild: 2, easy: 1 };
+/** The picker's orders: newest first, A–Z, wildest first (by the score; a track without one last). */
+export const SORTS = {
+  new: (a, b) => new Date(b.created_at) - new Date(a.created_at),
+  name: (a, b) => a.name.localeCompare(b.name),
+  wild: (a, b) => (b.wildness_score ?? -1) - (a.wildness_score ?? -1) || (WILD_RANK[b.wildness] ?? 0) - (WILD_RANK[a.wildness] ?? 0) || a.name.localeCompare(b.name),
+};
+const SORT_NEXT = { new: 'name', name: 'wild', wild: 'new' };
+const SORT_LABEL = { new: 'New', name: 'A–Z', wild: 'Wildest' };
+
 export function TrackStep() {
   const [search] = useSearchParams();
   const navigate = useNavigate();
@@ -329,7 +345,9 @@ export function TrackStep() {
   const [q, setQ] = useState('');
   const [series, setSeries] = useState(() => new Set());
   const [land, setLand] = useState(() => new Set());
-  const [sort, setSort] = useState('new');
+  const [sort, setSort] = useState('new'); // new | name | wild (wildest first)
+  const [wild, setWildState] = useState(readWildFilter); // (All / Easy / Wild / Extreme, remembered on this device)
+  const setWild = (v) => { setWildState(v); try { localStorage.setItem(WILD_FILTER_KEY, v); } catch { /* (no storage: not remembered) */ } };
   const [filtersOpen, setFiltersOpen] = useState(false); // (phones: folded behind one button, so the tracks come first)
   const best = useMemo(() => new Map((records?.records ?? []).map((r) => [r.slug, r])), [records]);
 
@@ -341,7 +359,8 @@ export function TrackStep() {
     .filter((t) => !q || t.name.toLowerCase().includes(q.toLowerCase()))
     .filter((t) => !series.size || series.has(t.series))
     .filter((t) => !land.size || land.has(LANDSCAPE[t.biome]))
-    .sort((a, b) => (sort === 'new' ? new Date(b.created_at) - new Date(a.created_at) : a.name.localeCompare(b.name)));
+    .filter((t) => matchesWildness(t, wild))
+    .sort(SORTS[sort]);
   const newest = [...tracks].sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).slice(0, 3).map((t) => t.id);
   const go = (slug) => { const n = new URLSearchParams(search); n.set('track', slug); navigate(`/play/shooter?${n}`); };
   // A season that is on, whose tracks this player may race: "Holiday races" (one of its tracks each race).
@@ -354,10 +373,20 @@ export function TrackStep() {
         <h1 className="ms-h1" style={{ fontFamily: 'var(--ms-cond)', fontWeight: 800 }}>Pick a track</h1>
         <div className="ms-row ms-form" style={{ display: 'flex' }}>
           <input type="search" placeholder={`Search ${tracks.length} tracks`} aria-label="Search tracks" value={q} onChange={(e) => setQ(e.target.value)} style={{ width: 'min(100%, 260px)' }} />
-          <button type="button" className="ms-btn ms-btn--sm" onClick={() => setSort((s) => (s === 'new' ? 'name' : 'new'))}>Sort: {sort === 'new' ? 'New' : 'A–Z'}</button>
+          <button type="button" className="ms-btn ms-btn--sm" onClick={() => setSort((s) => SORT_NEXT[s])}>Sort: {SORT_LABEL[sort]}</button>
           {openSeason && <button type="button" className="ms-btn ms-btn--sm" onClick={() => go(`season:${openSeason.key}`)}>{openSeason.name.replace(/ Season \d{4}$/, '')} races</button>}
           <button type="button" className="ms-btn ms-btn--sm ms-btn--primary" onClick={() => go('random')}>Random track</button>
         </div>
+      </div>
+      <div className="ms-row" style={{ gap: 10 }}>
+        <div className="ms-wild-filter" role="group" aria-label="Wildness">
+          {['all', ...WILDNESS_LEVELS].map((l) => (
+            <button key={l} type="button" aria-pressed={wild === l} onClick={() => setWild(l)}>
+              {l === 'all' ? 'All' : WILDNESS[l].word} <span style={{ opacity: 0.75 }}>{l === 'all' ? tracks.length : tracks.filter((t) => t.wildness === l).length}</span>
+            </button>
+          ))}
+        </div>
+        <p className="ms-wild-note">{WILDNESS_NOTE}</p>
       </div>
       <div className="ms-two" style={{ alignItems: 'start' }}>
         <button type="button" className="ms-btn ms-btn--sm ms-filters-toggle" aria-expanded={filtersOpen} aria-controls="ms-track-filters" onClick={() => setFiltersOpen((v) => !v)}>
@@ -374,17 +403,19 @@ export function TrackStep() {
           {shown.map((t) => {
             const r = best.get(t.slug);
             return (
-              <button key={t.id} type="button" className="ms-trackcard" onClick={() => (t.locked ? navigate(`/pass?season=${t.season.key}`) : go(t.slug))}>
+              <button key={t.id} type="button" className="ms-trackcard" aria-disabled={t.lockedBy === 'pack' || undefined} onClick={() => (t.lockedBy === 'pack' ? null : t.locked ? navigate(`/pass?season=${t.season.key}`) : go(t.slug))}>
                 <div className="ms-trackcard__pic" style={{ background: SERIES_PIC[t.series] }}>
                   <TrackBanner slug={t.slug} />
-                  {t.locked
+                  {t.lockedBy === 'pack'
+                    ? <span className="ms-badge-label" aria-label={`Locked: in the ${t.pack.name} pack`}>🔒 {t.pack.name.toUpperCase()} PACK</span>
+                    : t.locked
                     ? <span className="ms-badge-label" aria-label="Locked: in the season pass">🔒 {t.season.state === 'before' ? 'SOON' : 'GET THE PASS'}</span>
                     : t.season?.featured ? <span className="ms-badge-label" style={{ background: 'var(--ms-green)' }}>HOLIDAY TRACK OF THE DAY</span>
                     : newest.includes(t.id) && <span className="ms-badge-label" style={{ background: 'var(--ms-green)' }}>NEW</span>}
                 </div>
                 <div className="ms-trackcard__body">
                   <b>{t.name}</b>
-                  <span>{t.series}{LANDSCAPE[t.biome] ? ` · ${LANDSCAPE[t.biome]}` : ''}</span>
+                  <span className="ms-trackcard__meta">{t.series}{LANDSCAPE[t.biome] ? ` · ${LANDSCAPE[t.biome]}` : ''}<WildnessBadge track={t} /></span>
                   <span style={{ color: r ? 'var(--ms-soft)' : 'var(--ms-muted)' }}>
                     {r ? `Your best: ${r.best_position}${['th', 'st', 'nd', 'rd'][r.best_position % 10 > 3 || Math.floor(r.best_position / 10) === 1 ? 0 : r.best_position % 10]}${r.best_time_ms ? ` · ${(r.best_time_ms / 1000).toFixed(1)} s` : ''}` : 'Not raced yet'}
                   </span>
@@ -511,7 +542,7 @@ export function StartStep() {
         <section className="ms-hero ms-hero--col" style={{ flexBasis: 520, background: track ? `${SERIES_PIC[track.series]}` : SERIES_PIC.Classic }} aria-label="The grid">
           <div style={{ display: 'grid', gap: 4 }}>
             <b style={{ fontFamily: 'var(--ms-cond)', fontSize: '2rem' }}>{track?.name ?? 'Random track'}</b>
-            <span style={{ color: 'var(--ms-text)', opacity: 0.85 }}>{track ? `${track.series}${LANDSCAPE[track.biome] ? ` · ${LANDSCAPE[track.biome]}` : ''}` : 'Picked at random when you start'}</span>
+            <span className="ms-trackcard__meta" style={{ color: 'var(--ms-text)', opacity: 0.85 }}>{track ? `${track.series}${LANDSCAPE[track.biome] ? ` · ${LANDSCAPE[track.biome]}` : ''}` : 'Picked at random when you start'}{track && <WildnessBadge track={track} />}</span>
           </div>
           <div className="ms-gate" aria-hidden="true">
             <span className="ms-gate__you">{shooter && (shooter.slug ? <MarbleBadge slug={shooter.slug} size={40} /> : <MarbleBadge marble={shooter.marble} size={40} />)}<small>YOU</small></span>
@@ -536,7 +567,7 @@ export function StartStep() {
           <div className="ms-start-track" aria-live="polite">
             <span className="ms-start-track__label">Track</span>
             <b className="ms-start-track__name">{track?.name ?? (seasonKey ? 'Holiday race' : 'Random track')}</b>
-            {track && <span className="ms-start-track__series">{track.series}</span>}
+            {track && <span className="ms-start-track__series">{track.series} <WildnessBadge track={track} /></span>}
           </div>
           <button type="button" className="ms-btn ms-btn--primary ms-btn--lg" onClick={start} disabled={busy || !ready || !tracks.length}>{busy ? 'STARTING…' : 'START THE RACE'}</button>
           {!quick && (

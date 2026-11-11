@@ -18,6 +18,10 @@
   --ms-ink: #141413;
   --ms-red: #E5322D;
   --ms-green: #3DDC97;
+  /* Wildness badges (11 Nov 2026): calm teal, orange, magenta; never red or green. */
+  --ms-wild-easy: #3CC7C2;
+  --ms-wild-wild: #FF9A3D;
+  --ms-wild-extreme: #F05BC8;
   --r-common: #A9B1C3;
   --r-uncommon: #3DDC97;
   --r-rare: #6FA8FF;
@@ -1093,3 +1097,16 @@ tr:hover .report-name__btn--compact, .report-name__btn--compact:focus-visible { 
 /* A guest's "Log in" in the name menu (9 Nov 2026). */
 .ms-namemenu__login { justify-self: start; color: var(--ms-soft); font-size: 0.9rem; text-decoration: underline; }
 .ms-namemenu__login:hover { color: var(--ms-text); }
+
+/* Wildness (11 Nov 2026; shared/wildness.js): the badge on track cards, always with the word. */
+.ms-wild { display: inline-flex; align-items: center; gap: 5px; padding: 2px 8px; border-radius: 999px; font-size: 0.78rem; font-weight: 700; letter-spacing: 0.03em; line-height: 1.4; border: 1px solid currentColor; background: rgba(255, 255, 255, 0.06); background: color-mix(in srgb, currentColor 14%, transparent); white-space: nowrap; }
+.ms-wild--easy { color: var(--ms-wild-easy); }
+.ms-wild--wild { color: var(--ms-wild-wild); }
+.ms-wild--extreme { color: var(--ms-wild-extreme); }
+.ms-wild__waves { flex: none; }
+.ms-trackcard__body .ms-wild { justify-self: start; margin-top: 4px; }
+.ms-trackcard__meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; }
+.ms-wild-filter { display: flex; flex-wrap: wrap; gap: 6px; }
+.ms-wild-filter button { background: var(--ms-card); color: var(--ms-soft); border: 1px solid var(--ms-border); border-radius: 999px; padding: 5px 12px; font: inherit; font-weight: 700; font-size: 0.88rem; cursor: pointer; min-height: 32px; }
+.ms-wild-filter button[aria-pressed="true"] { background: var(--ms-yellow); color: var(--ms-ink); border-color: var(--ms-yellow); }
+.ms-wild-note { font-size: 0.85rem; color: var(--ms-muted); margin: 0; max-width: 65ch; }

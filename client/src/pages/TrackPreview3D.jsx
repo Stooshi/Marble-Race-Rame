@@ -6,6 +6,7 @@ import { useTrackScene } from '../hooks/useTrackScene';
 import SceneFailure from '../components/SceneFailure';
 import { ErrorMessage, Spinner } from '../components/Status';
 import { timeAgo } from '../utils/format';
+import WildnessBadge from '../site/WildnessBadge';
 
 /**
  * Phase 2, step 1: each track rendered in 3D from its waypoints, to look at
@@ -77,7 +78,7 @@ export default function TrackPreview3D() {
 
       {track && (
         <div className="preview3d__bar">
-          <span className={`badge badge--${track.difficulty}`}>{track.difficulty}</span>
+          <WildnessBadge track={track} />
           <span>{Number(track.length_m)} m</span>
           <span>{track.lane_count} lanes</span>
           {info && <span>{info.drop} m drop</span>}

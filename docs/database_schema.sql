@@ -1433,3 +1433,41 @@ CREATE TABLE IF NOT EXISTS first_step_events (
     PRIMARY KEY (user_id, kind)
 );
 CREATE INDEX IF NOT EXISTS idx_first_step_events_created ON first_step_events (kind, created_at);
+
+-- Wildness (Moses, 11 Nov 2026; scripts/wildness.js, docs/04-game-rules.md "Wildness"): how chaotic a
+-- track's races are, from the track report's races and its big features. Luck, not skill. The score
+-- 0-100 and its level: easy 0-32, wild 33-46, extreme 47+. Set by data update; NULL until worked out.
+-- (tracks.difficulty stays, no longer shown: it was 'extreme' on nearly every track.)
+ALTER TABLE tracks ADD COLUMN IF NOT EXISTS wildness_score smallint CHECK (wildness_score BETWEEN 0 AND 100);
+ALTER TABLE tracks ADD COLUMN IF NOT EXISTS wildness varchar(8) CHECK (wildness IN ('easy', 'wild', 'extreme'));
+
+-- Track packs (Moses, 11 Nov 2026; src/packs): every series a free set and a pack with the rest. One
+-- pack per series (Pinball and Arcade separate; Blocks as Blocks 1 and Blocks 2). Season tracks are in
+-- no pack. Locking is behind the TRACK_PACKS switch (off: nothing is locked). No prices or store
+-- products yet: product_id stays NULL until a pack is sold.
+CREATE TABLE IF NOT EXISTS track_packs (
+    key             varchar(32) PRIMARY KEY,
+    name            varchar(48) NOT NULL,
+    series          varchar(32) NOT NULL,
+    sort            smallint    NOT NULL DEFAULT 0,
+    product_id      varchar(64),
+    created_at      timestamptz NOT NULL DEFAULT now()
+);
+ALTER TABLE tracks ADD COLUMN IF NOT EXISTS pack_key varchar(32) REFERENCES track_packs(key);
+-- Free tracks race for everyone always; a track with a pack and is_free false is the pack's.
+ALTER TABLE tracks ADD COLUMN IF NOT EXISTS is_free boolean NOT NULL DEFAULT true;
+CREATE INDEX IF NOT EXISTS idx_tracks_pack ON tracks (pack_key);
+
+-- Who owns a pack (a host who owns one opens its tracks to everyone in their friend room or league,
+-- as with the season pass). Nothing grants a pack yet.
+CREATE TABLE IF NOT EXISTS pack_owners (
+    id              uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id         uuid        NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    pack_key        varchar(32) NOT NULL REFERENCES track_packs(key),
+    payment_id      uuid        REFERENCES payments(id) ON DELETE SET NULL,
+    provider        varchar(16) NOT NULL,
+    granted_at      timestamptz NOT NULL DEFAULT now(),
+    revoked_at      timestamptz,
+    revoke_reason   text
+);
+CREATE UNIQUE INDEX IF NOT EXISTS uq_pack_owners_live ON pack_owners (user_id, pack_key) WHERE revoked_at IS NULL;

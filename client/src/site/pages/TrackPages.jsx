@@ -6,6 +6,8 @@ import TrackBanner, { SERIES_PIC } from '../TrackBanner';
 import { applyMeta, metaFor } from '../pageMeta';
 import { FREE_TO_PLAY, holidayPassNeeded } from '../../shared/holidayWording';
 import { TrackCountryRecords } from './CountryRecords';
+import WildnessBadge from '../WildnessBadge';
+import { WILDNESS, WILDNESS_NOTE, wildnessOf } from '../../shared/wildness.js';
 
 export const SERIES_ORDER = ['World Tour', 'Grand Prix', 'Coasters', 'Canyons', 'Blocks', 'Track and Field', 'Rivers', 'Peaks', 'Pinball', 'Arcade', 'Winter Wonders', 'Classic'];
 const lengthOf = (m) => (Number(m) > 0 ? `${(Number(m) / 1000).toFixed(1)} km` : null);
@@ -34,7 +36,7 @@ export function TracksPage() {
             {list.map((t) => (
               <Link key={t.slug} to={`/tracks/${t.slug}`} className="ms-trackcard">
                 <div className="ms-trackcard__pic" style={{ background: SERIES_PIC[t.series] }}><TrackBanner slug={t.slug} /></div>
-                <div className="ms-trackcard__body"><b>{t.name}</b><span>{t.series}</span></div>
+                <div className="ms-trackcard__body"><b>{t.name}</b><span className="ms-trackcard__meta">{t.series}<WildnessBadge track={t} /></span></div>
               </Link>
             ))}
           </div>
@@ -71,10 +73,16 @@ export function TrackPage() {
       <p className="ms-lede" style={{ margin: 0 }}>{track.description}</p>
       <ul className="ms-note" style={{ margin: 0, paddingLeft: 18 }}>
         <li>Series: {track.series}</li>
+        {wildnessOf(track) && <li>Wildness: <WildnessBadge track={track} /> {WILDNESS[track.wildness].about.toLowerCase()}</li>}
         {km && <li>Length: {km}</li>}
         <li>20 marbles a race, about a minute; {holidayPassNeeded() ? FREE_TO_PLAY.replace(/^Free/, 'free') : 'every race is free'}</li>
       </ul>
-      {track.locked ? (
+      {wildnessOf(track) && <p className="ms-wild-note">{WILDNESS_NOTE}</p>}
+      {track.lockedBy === 'pack' ? (
+        <div className="ms-row">
+          <span className="ms-msg" role="status">In the {track.pack.name} pack. Watching its races is free.</span>
+        </div>
+      ) : track.locked ? (
         <div className="ms-row">
           <span className="ms-msg" role="status">{track.season.state === 'before' ? `Opens with the ${track.season.name}.` : `In the ${track.season.name} pass.`} Watching its races is free.</span>
           <Link to={`/pass?season=${track.season.key}`} className="ms-btn ms-btn--primary ms-btn--lg">GET THE PASS</Link>

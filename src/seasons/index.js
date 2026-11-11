@@ -139,10 +139,20 @@ const BEFORE_MESSAGE = (season) => `This track opens with the ${season.name.repl
 
 /**
  * May `userId` race on a track? `track`: { season_key }. `roomHostId`: the host of the friend room the
- * race is in (a host with the pass opens the room's pass track to everyone in it).
- * → { ok: true } or { ok: false, reason: 'before'|'pass', message, season }.
+ * race is in (a host with the pass opens the room's pass track to everyone in it). Also checks the
+ * track's pack (src/packs), which locks nothing while the TRACK_PACKS switch is off.
+ * → { ok: true } or { ok: false, reason: 'before'|'pass', message, season } or { ok: false, reason: 'pack', message, pack }.
  */
-async function trackAccess(db, track, { userId = null, roomHostId = null, now = new Date() } = {}) {
+async function trackAccess(db, track, { userId = null, roomHostId = null, now = new Date(), env = process.env } = {}) {
+  const season = await seasonAccess(db, track, { userId, roomHostId, now });
+  if (!season.ok) return season;
+  // A pack track (src/packs; locked only with the TRACK_PACKS switch on, off by default).
+  const pack = await require('../packs').trackAccess(db, track, { userId, roomHostId, env });
+  if (!pack.ok) return pack;
+  return season.viaHost || pack.viaHost ? { ok: true, viaHost: true } : { ok: true };
+}
+
+async function seasonAccess(db, track, { userId, roomHostId, now }) {
   if (!track?.season_key) return { ok: true };
   const season = await byKey(db, track.season_key);
   if (!season) return { ok: true };
@@ -158,6 +168,7 @@ async function trackAccess(db, track, { userId = null, roomHostId = null, now = 
 async function assertTrackAccess(db, track, opts) {
   const access = await trackAccess(db, track, opts);
   if (!access.ok) {
+    if (access.reason === 'pack') throw new HttpError(403, access.message, { code: 'pack_required', pack: access.pack });
     throw new HttpError(403, access.message, { code: access.reason === 'pass' ? 'season_pass_required' : 'season_not_started', season: access.season });
   }
   return access;
@@ -174,10 +185,13 @@ async function freeSeasonKeys(db, now = new Date()) {
  */
 const OPEN_TRACK_SQL = (param, alias = '') => `(${alias}season_key IS NULL OR ${alias}season_key = ANY(${param}::text[]))`;
 
-/** An active track for the public random pick (never a locked season track) → id, or null. */
-async function pickOpenTrack(client, now = new Date()) {
+/** An active track for the public random pick (never a locked season or pack track) → id, or null. */
+async function pickOpenTrack(client, now = new Date(), env = process.env) {
   const free = await freeSeasonKeys(client, now);
-  const { rows } = await client.query(`SELECT id FROM tracks WHERE is_active AND ${OPEN_TRACK_SQL('$1')} ORDER BY random() LIMIT 1`, [free]);
+  // (With track packs locking for everyone, only free tracks: src/packs. Off, as today: every track.)
+  const packs = require('../packs');
+  const freeOnly = packs.lockingOn(env) ? ` AND ${packs.FREE_TRACK_SQL()}` : '';
+  const { rows } = await client.query(`SELECT id FROM tracks WHERE is_active AND ${OPEN_TRACK_SQL('$1')}${freeOnly} ORDER BY random() LIMIT 1`, [free]);
   return rows[0]?.id ?? null;
 }
 

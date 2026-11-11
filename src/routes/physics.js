@@ -34,7 +34,7 @@ router.get('/preview', async (req, res) => {
   if (!cache.has(key)) {
     // Real tracks from the database, switched on or not yet (a physics track still being added falls back to its definition in code).
     let { rows: [track] } = await db.query(
-      `SELECT id, slug, name, difficulty, length_m, lane_count, waypoints, obstacles, physics
+      `SELECT id, slug, name, difficulty, wildness, length_m, lane_count, waypoints, obstacles, physics
          FROM tracks WHERE slug = $1`, [q.track],
     );
     track ??= physicsTrack(q.track);
@@ -63,7 +63,7 @@ router.get('/preview', async (req, res) => {
       raceId: null,
       name: 'Physics preview',
       track: {
-        id: track.id, slug: track.slug, name: track.name, difficulty: track.difficulty,
+        id: track.id, slug: track.slug, name: track.name, difficulty: track.difficulty, wildness: track.wildness,
         length_m: Number(track.length_m), lane_count: track.lane_count, waypoints: track.waypoints, obstacles: track.obstacles,
         ...(track.physics && { physics: track.physics }),
       },

@@ -302,7 +302,7 @@ function CreateLeagueIn() {
                   <span className="ms-league-track__pic" style={{ background: SERIES_PIC[t.series] }}><TrackBanner slug={t.slug} /></span>
                   <span className="ms-league-track__name">
                     <b>{t.name}</b>
-                    <span>{t.locked ? 'Season pass holders only' : t.series}</span>
+                    <span>{t.locked ? (t.lockedBy === 'pack' ? `In the ${t.pack.name} pack` : 'Season pass holders only') : t.series}</span>
                   </span>
                   <span className="ms-league-track__mark" aria-hidden="true">{on ? `${picked.indexOf(t.id) + 1}` : '+'}</span>
                 </button>

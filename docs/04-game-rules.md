@@ -234,6 +234,25 @@ A season (the first: **Holiday Season 2026**, `holiday-2026`, 1 Dec 2026 00:00 t
 - **What the website says during the season** (Moses, 21 Oct 2026): "Free to play — holiday tracks need the Holiday Pass" replaces "Every race is free" from 1 Dec to 7 Jan (`client/src/shared/holidayWording.js`; the pre-rendered pages get it from the season-start rebuild). The pass's featured track is called the **Holiday Track of the Day** everywhere (the signed-in home's own daily pick stays "Track of the day").
 - **The season marble** comes with the pass ("Kinds of collection" above).
 
+## Wildness
+
+**Wildness** (Moses, 11 Nov 2026) says how chaotic a track's races are: how much the order shuffles, how often marbles hit things and each other, and how many big features the track has. Players can't steer, so it is **luck, not skill**: every marble has the same chance. It replaces the old difficulty word, which is no longer shown (it was "extreme" on nearly every track).
+
+- **The score, 0–100** (`scripts/wildness.js`), from **1,000 races per track** (the track report's first batch of seeds, `batchSeeds(0, 1000)`) on the real simulator and the track's own file:
+  - **Race chaos (60 points)**, each part by the track's rank among all the live tracks (lowest none, highest full points): overtakes per race 18, lead changes per race 14, obstacle hits per race 14, the finishing gap (median, winner to last) 8, and upsets 6 (the less the favourite starting group wins, the more points).
+  - **Features (up to 40):** a loop 10, a jump 8, splitters 6 each (2 at most), big drops 3 each (3 at most; a drop is the track falling more than 6 m within 20 m, after the first 10%, the starting ramp).
+- **The levels:** **Easy** 0–32 (smooth, flowing races), **Wild** 33–46 (plenty of bumping and overtaking), **Extreme** 47 and up (pile-ups, loops, splitters, drops).
+- **Worked out again** when a track is added or re-laid: `node scripts/wildness.js measure` (the new track's races; resumes), then `score` (every track ranked again; `src/tracks/wildness.json`), then a data update for the tracks whose score changed.
+- **Shown** as a badge on track cards (the track picker, the track pages, the starting line, the loading card, the race and results headers): Easy calm teal with one wave, Wild orange with two, Extreme magenta with three; always with the word, never colour alone, never red or green. The track picker has the **All / Easy / Wild / Extreme** filter (remembered on the device) and a **Wildest** order, with the one-line note "It's luck, not skill: every marble has the same chance." Nothing changes during a race, and wildness never changes a result.
+
+## Track packs
+
+Every series has a **free set** (4 or 5 tracks, 45 in all, about half Easy and half Wild, with most Extreme tracks kept in the packs) and a **pack** with the rest (Moses, 11 Nov 2026; `src/packs`, the list in `src/packs/list.js`): one pack per series, **Pinball** and **Arcade** separate, **Blocks** as two packs, **Blocks 1** (the first fifteen) and **Blocks 2** (Blocks Series 2). Season (holiday) tracks are in no pack; they stay in the season pass.
+
+- **Locking is behind the `TRACK_PACKS` switch and stays off** until Moses says go: `off` (the default) locks nothing, every track races as today; `admins` locks pack tracks for admins only (to try it); `on` locks them for everyone.
+- **With it on:** a pack track is raced only by the pack's owners, and by everyone in a friend room (or a league) whose host owns the pack, as with the season pass. Anyone else gets "This track is in the Grand Prix pack" (code `pack_required`), checked on every request that puts a marble on a track. Watching races and replays stays open. The public random pick keeps to free tracks. The picker shows a pack track with a lock and its pack ("🔒 GRAND PRIX PACK") and its wildness badge either way.
+- **No prices or store products yet**, and nothing grants a pack (`pack_owners`).
+
 ## Push notifications (in the apps; switched off until launch)
 
 - **Asked only after the first finished race**, never when the app first opens: our own question first ("Get a ping when a friend wants to race?"), and the phone's own dialog only after a yes. "Not now" isn't asked again; the player can turn them on in Settings → Notifications.

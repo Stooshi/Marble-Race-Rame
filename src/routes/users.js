@@ -372,7 +372,7 @@ router.get('/:id/races', async (req, res) => {
 router.get('/:id/track-records', async (req, res) => {
   const id = assertUuid(req.params.id);
   const { rows } = await db.query(
-    `SELECT t.id AS track_id, t.slug, t.name AS track_name, t.difficulty,
+    `SELECT t.id AS track_id, t.slug, t.name AS track_name, t.difficulty, t.wildness,
             COUNT(e.id)::int AS races,
             COUNT(e.id) FILTER (WHERE e.finish_position = 1)::int AS wins,
             COUNT(e.id) FILTER (WHERE e.finish_position <= 3)::int AS podiums,
@@ -392,7 +392,7 @@ router.get('/:id/track-records', async (req, res) => {
           WHERE y.track_id = t.id AND ${counts('y', 't')}
        ) rec
       WHERE e.user_id = $1
-      GROUP BY t.id, t.slug, t.name, t.difficulty, rec.record_ms, rec.record_split_ms
+      GROUP BY t.id, t.slug, t.name, t.difficulty, t.wildness, rec.record_ms, rec.record_split_ms
       ORDER BY races DESC, t.name`,
     [id],
   );

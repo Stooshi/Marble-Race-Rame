@@ -4,6 +4,7 @@ import { useAsync } from '../hooks/useAsync';
 import { formatTime } from '../utils/format';
 import TrackPreview from './TrackPreview';
 import { ErrorMessage, Spinner } from './Status';
+import WildnessBadge from '../site/WildnessBadge';
 
 /**
  * Choose a track manually, or let the server pick one at random when the race
@@ -73,7 +74,7 @@ export default function TrackSelector({ value, onChange, records = [] }) {
                 <TrackPreview track={t} />
                 <span className="track-card__body">
                   <strong>{t.name}</strong>
-                  <span className={`badge badge--${t.difficulty}`}>{t.difficulty}</span>
+                  <WildnessBadge track={t} />
                   {t.new_physics && <span className="badge badge--physics" title="Collisions, a starting gate and a catch area, watched in 3D">New physics</span>}
                   <small>{Number(t.length_m)} m · {t.new_physics ? 'about 45 s' : `${t.obstacle_count} obstacles`}</small>
                   <small className="track-card__best">

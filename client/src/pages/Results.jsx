@@ -22,6 +22,7 @@ import { ErrorMessage, Spinner } from '../components/Status';
 import { formatDelta, formatTime, ordinal } from '../utils/format';
 import { plainName } from '../shared/playerName';
 import ReportName from '../components/ReportName';
+import WildnessBadge from '../site/WildnessBadge';
 
 export default function Results() {
   const { raceId } = useParams();
@@ -63,7 +64,7 @@ export default function Results() {
       <header className="race-header">
         <div>
           <p className="eyebrow">
-            {race.track_name} · <span className={`badge badge--${race.difficulty}`}>{race.difficulty}</span> · {results.length} marbles
+            {race.track_name} <WildnessBadge track={race} /> · {results.length} marbles
           </p>
           <h1>{race.name || race.track_name} — Results</h1>
         </div>

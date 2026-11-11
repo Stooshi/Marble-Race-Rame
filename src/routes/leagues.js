@@ -53,7 +53,7 @@ router.get('/status', optionalAuth, (req, res) => {
   res.json({ enabled: leagues.openFor(req.user), tracks: leagues.TRACKS, days: leagues.DAYS, attempts: leagues.CAPS });
 });
 
-const TRACK_SQL = `SELECT t.id, t.slug, t.name, t.difficulty, t.season_key FROM tracks t WHERE t.id = ANY($1::uuid[])`;
+const TRACK_SQL = `SELECT t.id, t.slug, t.name, t.difficulty, t.wildness, t.season_key FROM tracks t WHERE t.id = ANY($1::uuid[])`;
 
 /** The league as the page shows it, for this player. */
 async function view(league, userId) {
@@ -87,7 +87,7 @@ async function view(league, userId) {
     tracks: league.track_ids.map((id) => {
       const t = byId.get(id);
       return t && {
-        id: t.id, slug: t.slug, name: t.name, difficulty: t.difficulty,
+        id: t.id, slug: t.slug, name: t.name, difficulty: t.difficulty, wildness: t.wildness,
         ...(member && { best_ms: mine?.bests[id] ?? null, tries: used.get(id) ?? 0, tries_left: league.attempt_cap ? Math.max(0, league.attempt_cap - (used.get(id) ?? 0)) : null }),
       };
     }).filter(Boolean),

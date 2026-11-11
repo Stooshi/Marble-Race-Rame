@@ -1,5 +1,6 @@
 import { formatDelta, formatNumber, formatTime, percent } from '../utils/format';
 import { Empty } from './Status';
+import WildnessBadge from '../site/WildnessBadge';
 
 /**
  * All-time stat tiles plus a per-track records table.
@@ -56,7 +57,7 @@ export default function StatsDisplay({ stats, records = [] }) {
                 return (
                   <tr key={r.track_id}>
                     <td data-label="Track" className="stack-head">
-                      <strong>{r.track_name}</strong> <span className={`badge badge--${r.difficulty}`}>{r.difficulty}</span>
+                      <strong>{r.track_name}</strong> <WildnessBadge track={r} />
                     </td>
                     <td data-label="Races" className="num">{r.races}</td>
                     <td data-label="Wins" className="num">{r.wins}</td>

@@ -124,12 +124,14 @@ Where a new guest stopped before their first race (Moses, 9 Nov 2026; `src/first
 | Column | Meaning |
 |---|---|
 | `slug`, `name`, `description` | Identity (the slug is the stable key used in files and data updates) |
-| `difficulty`, `length_m`, `lane_count` | Display and the classic engine |
+| `difficulty`, `length_m`, `lane_count` | The classic engine. `difficulty` is no longer shown anywhere (it was `extreme` on 142 of 143 live tracks; 11 Nov 2026): see `wildness` |
 | `waypoints`, `obstacles` | JSON: the classic engine's polyline and obstacles |
 | `physics` | JSON settings for the **new physics engine** (channel, sections, features, start, kit looks). NULL means the track uses the classic engine |
 | `thumbnail_url`, `created_by`, `created_at`, `updated_at` | |
 | `is_active` | Shown and raced. New tracks are added switched off and turned on later, by hand in Railway's query box (`UPDATE tracks SET is_active = true WHERE slug = …`, as the Rivers were on 25 Oct 2026 and the first five Peaks on 27 Oct) or by a data update (the holiday tracks: `2027-03-31-switch-on-holiday-tracks`). So the live count is in the database, not the repository (143 on 4 Nov 2026, after Moses switched on Saint-Tropez and Pudong Marble Grand Prix, of 177 in the database; the 31 holiday tracks join on 1 Dec) |
 | `season_key` | A season's track (e.g. `holiday-2026`): raced only by pass holders while the season is on, by nobody before it, by everyone after (see [Seasons](#seasons-and-the-season-pass)). NULL for every ordinary track |
+| `wildness_score`, `wildness` | **Wildness** (Moses, 11 Nov 2026): how chaotic the track's races are, 0–100, and its level `easy` (0–32), `wild` (33–46), `extreme` (47+). Worked out by `scripts/wildness.js` from the track report's races (1,000 per track) and the track's big features; set by data update (`2027-06-10-wildness-and-track-packs`); NULL until worked out (season and Classic tracks). Luck, not skill; never changes a race. See [the game rules](04-game-rules.md#wildness) |
+| `pack_key`, `is_free` | The track's **pack** (`track_packs`) and whether it is in the series' free set. A track with a pack and `is_free` false is the pack's: locked for players without it only while the `TRACK_PACKS` switch is on (off by default). `is_free` defaults to true, so a new track is free until a data update puts it in a pack. Season tracks have no pack |
 | `records_since` | When the track's current layout went in (Moses, 6 Nov 2026; set by its `--relayout` data update). Its track record, country records and players' personal bests count only races finished since (`src/game/recordsSince.js`). NULL: the layout never changed, every race counts |
 
 ### `races`
@@ -367,6 +369,25 @@ A player's pass for a season. Granted once when its payment is paid; a full refu
 |---|---|
 | `user_id`, `season_key` | Whose and which |
 | `payment_id`, `provider` | The payment that bought it; a pass from a gift code has `provider` `gift-code` and no payment (its `gift_code_redemptions` row points here) |
+| `granted_at`, `revoked_at`, `revoke_reason` | |
+
+## Track packs
+
+### `track_packs`
+One row per pack (Moses, 11 Nov 2026; `src/packs`, the packs and the free set in `src/packs/list.js`): one per series, Pinball and Arcade separate, Blocks as **Blocks 1** (the first fifteen) and **Blocks 2** (Blocks Series 2). Added by `2027-06-10-wildness-and-track-packs`.
+
+| Column | Meaning |
+|---|---|
+| `key`, `name`, `series`, `sort` | `grand-prix`, "Grand Prix", the series, the order shown |
+| `product_id` | The store product once a pack is sold. NULL: no prices or products yet |
+
+### `pack_owners`
+Who owns a pack: one live row (not revoked) per player and pack. **Nothing grants one yet** (no store products). An owner who hosts a friend room (or creates a league) opens the pack's tracks to everyone racing with them, as with the season pass. In the account's data export (`trackPacks`).
+
+| Column | Meaning |
+|---|---|
+| `user_id`, `pack_key` | Whose and which |
+| `payment_id`, `provider` | The payment, once packs are sold |
 | `granted_at`, `revoked_at`, `revoke_reason` | |
 
 ### `name_reports`
