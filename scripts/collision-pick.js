@@ -8,7 +8,8 @@
  * (--section "<name>", e.g. a pinball bumper field, a splitter, a block slalom) or a stretch (--p 0.04-0.10).
  * Writes the best race for the recorder with `video.collision` (when, who, how many hits) inside it.
  * Nothing here touches the database or any stored race; races are the same as the game's for that seed.
- *   node scripts/collision-pick.js <slug> [--seeds 60] [--first 900001] [--race-ms 1200] [--section "<name>"] [--p a-b] [--avoid 1,2] [--top 5]
+ *   node scripts/collision-pick.js <slug> [--seeds 60] [--first 900001] [--race-ms 1200] [--section "<name>"] [--p a-b] [--avoid 1,2] [--top 5] [--hard]
+ * --hard: the hardest hits and the biggest pile-ups score most (each hit by its strength, plus every marble in it).
  * --race-ms: the race time the shot covers (a 2.4 s shot at half speed: 1200).
  */
 const fs = require('node:fs');
@@ -33,7 +34,7 @@ function metres(track) {
   return { arc: Number.isFinite(arc) ? arc : track.length_m, room };
 }
 
-function best(sim, track, { M, raceMs, p0, p1, speed, lib }) {
+function best(sim, track, { M, raceMs, p0, p1, speed, lib, hard = false }) {
   const race = { frames: sim.frames, tickMs: sim.tickMs };
   const all = Array.from({ length: sim.frames[0].p.length }, (_, i) => i);
   const hitsAll = lib.marbleHits(race, { ...M, own: all, from: 0, to: sim.durationMs });
@@ -63,9 +64,14 @@ function best(sim, track, { M, raceMs, p0, p1, speed, lib }) {
     const mine = new Set(members);
     const ours = inWin.filter((h) => mine.has(h.i) || (h.j !== undefined && mine.has(h.j)));
     const clicks = lib.soundTimes(ours, { from: t, speed, gap: GAP_S });
-    const score = clicks.reduce((a, h) => a + 0.6 + h.k, 0) + 0.3 * new Set(ours.map((h) => h.kind)).size;
+    // (--hard, Moses 11 Nov 2026: "the hardest hits, big pile-ups": each hit counted by how hard it is, plus
+    // every marble caught up in it.)
+    const piled = new Set(ours.flatMap((h) => [h.i, h.j]).filter((i) => i !== undefined)).size;
+    const score = hard
+      ? clicks.reduce((a, h) => a + 0.25 + 2.5 * h.k, 0) + 0.6 * piled
+      : clicks.reduce((a, h) => a + 0.6 + h.k, 0) + 0.3 * new Set(ours.map((h) => h.kind)).size;
     if (!top || score > top.score) {
-      top = { score, at: t, members: members.sort((a, b) => mid.p[b] - mid.p[a]), clicks: clicks.length, hits: ours.filter((h) => h.kind === 'hit').length, bumps: ours.filter((h) => h.kind === 'bump').length, p: +mid.p[hub].toFixed(3), types: [...new Set(ours.filter((h) => h.type).map((h) => h.type))] };
+      top = { score, piled, maxK: +Math.max(...ours.map((h) => h.k)).toFixed(2), at: t, members: members.sort((a, b) => mid.p[b] - mid.p[a]), clicks: clicks.length, hits: ours.filter((h) => h.kind === 'hit').length, bumps: ours.filter((h) => h.kind === 'bump').length, p: +mid.p[hub].toFixed(3), types: [...new Set(ours.filter((h) => h.type).map((h) => h.type))] };
     }
   }
   return top;
@@ -107,7 +113,7 @@ if (require.main === module) {
       const seed = first + k * 7919;
       if (avoid.has(seed)) continue;
       const sim = simulatePhysicsRace({ seed, track, entries: houseField(seed), level: 3 });
-      const b = best(sim, track, { M, raceMs, p0, p1, speed, lib });
+      const b = best(sim, track, { M, raceMs, p0, p1, speed, lib, hard: args.includes('--hard') });
       if (b) rows.push({ seed, sim, b });
     }
     rows.sort((a, b) => b.b.score - a.b.score);

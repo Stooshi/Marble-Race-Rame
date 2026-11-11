@@ -1,0 +1,12 @@
+{
+  "type": "collision",
+  "shots": [
+    {"slug": "volga-port-burst", "race": "volga-port-burst.video-1224680", "dur": 2.4, "speed": 0.5, "line": "Crash out.", "chase": {"back": 5.0, "up": 1.9, "ahead": 4, "fov": 62}},
+    {"slug": "tre-cime-cube-towers", "race": "tre-cime-cube-towers.video-1200923", "dur": 2.0, "chase": {"back": 5.0, "up": 1.9, "ahead": 4, "fov": 62}},
+    {"slug": "sydney-marble-grand-prix", "race": "sydney-marble-grand-prix.video-3745490", "dur": 2.4, "speed": 0.5, "line": "Smash through.", "chase": {"back": 5.0, "up": 1.9, "ahead": 4, "fov": 62}},
+    {"slug": "everest-icefall-run", "race": "everest-icefall-run.video-1406817", "dur": 2.0, "chase": {"back": 5.0, "up": 1.9, "ahead": 4, "fov": 62}},
+    {"slug": "yarlung-tsangpo-spins", "race": "yarlung-tsangpo-spins.video-1367222", "dur": 2.4, "speed": 0.5, "line": "Last one standing?", "chase": {"back": 5.0, "up": 1.9, "ahead": 4, "fov": 62}},
+    {"slug": "pyramid-run", "race": "pyramid-run.video-1470169", "dur": 2.0, "chase": {"back": 5.0, "up": 1.9, "ahead": 4, "fov": 62}},
+    {"slug": "grand-champion", "race": "grand-champion.video-1050462", "dur": 2.0, "end": "Who makes it out?|marblespins.com|Follow for a new race every day", "chase": {"back": 5.0, "up": 1.9, "ahead": 4, "fov": 62}}
+  ]
+}
