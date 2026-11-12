@@ -1110,3 +1110,32 @@ tr:hover .report-name__btn--compact, .report-name__btn--compact:focus-visible { 
 .ms-wild-filter button { background: var(--ms-card); color: var(--ms-soft); border: 1px solid var(--ms-border); border-radius: 999px; padding: 5px 12px; font: inherit; font-weight: 700; font-size: 0.88rem; cursor: pointer; min-height: 32px; }
 .ms-wild-filter button[aria-pressed="true"] { background: var(--ms-yellow); color: var(--ms-ink); border-color: var(--ms-yellow); }
 .ms-wild-note { font-size: 0.85rem; color: var(--ms-muted); margin: 0; max-width: 65ch; }
+
+/* Track packs in the shop: a design mockup only (/preview/shop-packs, 12 Nov 2026). */
+.ms-mock-banner { border: 1px dashed var(--ms-yellow); color: var(--ms-soft); border-radius: 12px; padding: 8px 12px; font-size: 0.9rem; }
+.ms-mock-banner b { color: var(--ms-yellow); margin-right: 6px; font-family: var(--ms-cond); letter-spacing: 0.04em; text-transform: uppercase; }
+.ms-pack-grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr)); }
+.ms-pack { display: flex; flex-direction: column; border-radius: 18px; overflow: hidden; background: var(--ms-card); border: 1px solid var(--ms-border); min-width: 0; }
+.ms-pack__pic { border: 0; width: 100%; cursor: pointer; font: inherit; }
+.ms-pack__body { display: grid; gap: 8px; padding: 12px 14px 14px; }
+.ms-pack__name { margin: 0; font-family: var(--ms-cond); font-weight: 800; font-size: 1.6rem; line-height: 1; }
+.ms-pack__count { color: var(--ms-muted); font-size: 0.9rem; font-variant-numeric: tabular-nums; }
+.ms-pack__mix { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; }
+.ms-pack__mixitem { display: inline-flex; align-items: center; gap: 4px; font-variant-numeric: tabular-nums; }
+.ms-pack__buy { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-top: 4px; }
+.ms-pack__price { font-family: var(--ms-cond); font-weight: 800; font-size: 1.25rem; color: var(--ms-text); }
+.ms-pack__soon { font-family: var(--ms-cond); font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; color: var(--ms-muted); border: 1px solid var(--ms-border); border-radius: 999px; padding: 5px 12px; }
+.ms-pack__see { justify-self: start; background: none; border: 0; padding: 0; color: var(--ms-yellow); font: inherit; font-weight: 700; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+.ms-pack-hero { display: grid; gap: 18px; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); align-items: center; background: var(--ms-card); border: 1px solid var(--ms-border); border-radius: 22px; padding: 16px; }
+.ms-pack-hero__pic { position: relative; aspect-ratio: 16 / 9; border-radius: 16px; overflow: hidden; }
+.ms-pack-hero__text { display: grid; gap: 12px; min-width: 0; }
+.ms-pack-page__buy { display: grid; gap: 6px; justify-items: start; }
+.ms-pack-tracks { display: grid; gap: 14px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 240px), 1fr)); }
+.ms-pack-track { cursor: default; }
+.ms-pack-track.is-soon { opacity: 0.78; border-style: dashed; }
+.ms-pack-track__flag { position: absolute; inset: 0; display: grid; place-items: center; font-size: 2.4rem; opacity: 0.55; }
+.ms-pack-track__line { color: var(--ms-soft) !important; font-size: 0.86rem; line-height: 1.35; }
+@media (max-width: 720px) {
+  .ms-pack-hero { grid-template-columns: 1fr; padding: 12px; }
+  .ms-pack-page__buy .ms-btn { width: 100%; }
+}
