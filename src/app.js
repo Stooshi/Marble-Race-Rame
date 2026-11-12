@@ -45,6 +45,7 @@ function createApp() {
   app.use('/api/payments', require('./routes/payments'));
   app.use('/api/scoreboard', require('./routes/scoreboard'));
   app.use('/api/seasons', require('./routes/seasons'));
+  app.use('/api/packs', require('./routes/packs')); // (track packs in the shop: src/packs/sale.js)
   app.use('/api/gift-codes', require('./routes/giftCodes'));
   app.use('/api/push', require('./routes/push'));
   app.use('/api/economy', require('./routes/economy'));

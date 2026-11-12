@@ -3,9 +3,10 @@
 /**
  * Google Play Billing for the Android app: coin packs are one-time ("consumable") products. Google
  * Play's product ids allow only lowercase letters, digits, _ and . (no hyphens), so in Google Play our
- * ids are written with _ (playId: coins-5000 → coins_5000, holiday-pass-2026 → holiday_pass_2026);
+ * ids are written with _ (playId: coins-5000 → coins_5000, holiday-pass-2026 → holiday_pass_2026,
+ * trackpack-grand-prix-coins → trackpack_grand_prix_coins);
  * everywhere else (payments.product_id, the website, the App Store) they keep their hyphens (ourId turns
- * a Play id back). A season pass is a one-time product that is kept: acknowledged, never consumed.
+ * a Play id back). A season pass and a track pack are one-time products that are kept: acknowledged, never consumed.
  * Stripe stays for the website only.
  *
  * The flow (docs/05-runbook.md, "Google Play"):
@@ -35,6 +36,7 @@
 const crypto = require('node:crypto');
 const { HttpError, badRequest, forbidden } = require('../utils/httpError');
 const seasons = require('../seasons');
+const sale = require('../packs/sale');
 
 const API = 'https://androidpublisher.googleapis.com/androidpublisher/v3/applications';
 const SCOPE = 'https://www.googleapis.com/auth/androidpublisher';
@@ -204,7 +206,12 @@ async function redeem(db, { userId = null, productId, purchaseToken }, { grant, 
       if (had.user_id !== owner) throw forbidden('This purchase belongs to another account');
       return { status: 'duplicate', orderNo: had.order_no };
     }
-    if (p.keep) {
+    if (p.packKey) {
+      // A track pack: on sale (or a licence tester's test purchase by an admin: Google's purchaseType 0), not
+      // held already, and the coins paid towards it there (set aside before the sheet opened, or now).
+      const refused = await sale.storeRefusal(client, owner, p, { test: g.purchaseType === 0 });
+      if (refused) return { status: refused };
+    } else if (p.keep) {
       // A season pass: bought inside its sale window (Google's purchase time), and not held already.
       const bought = new Date(Number(g.purchaseTimeMillis) || Date.now());
       // (Before the sale starts, only a licence tester's test purchase: Google's purchaseType 0.)
@@ -212,13 +219,15 @@ async function redeem(db, { userId = null, productId, purchaseToken }, { grant, 
       if (await seasons.hasPass(client, owner, p.seasonKey)) return { status: 'already-owned' };
     }
     const { rows: [payment] } = await client.query(
-      `INSERT INTO payments (user_id, provider, provider_ref, store_token, product_id, coins, amount_cents, currency, order_no, status, season_key)
-       VALUES ($1, 'google', $2, $3, $4, $5, $6, $7, 'MS-' || nextval('payment_order_seq'), 'pending', $8)
+      `INSERT INTO payments (user_id, provider, provider_ref, store_token, product_id, coins, amount_cents, currency, order_no, status, season_key, pack_key, coins_spent)
+       VALUES ($1, 'google', $2, $3, $4, $5, $6, $7, 'MS-' || nextval('payment_order_seq'), 'pending', $8, $9, $10)
        ON CONFLICT DO NOTHING RETURNING id, order_no`,
-      [owner, ref, purchaseToken, p.id, p.coins, p.storeAmountCents ?? p.amountCents, p.currency, p.seasonKey ?? null], // (the store's US price: $4.99 for the $5 pack)
+      [owner, ref, purchaseToken, p.id, p.coins, p.storeAmountCents ?? p.amountCents, p.currency, p.seasonKey ?? null, p.packKey ?? null, p.coinsSpent ?? 0], // (the store's US price: $4.99 for the $5 pack)
     );
     if (!payment) return { status: 'duplicate', orderNo: null };
+    if (p.packKey) await sale.storeTakeCoins(client, owner, p, payment);
     const granted = await grant(client, payment.id, ref);
+    if (p.packKey) return { status: 'paid', pack: granted, orderNo: payment.order_no, paymentId: payment.id };
     return p.keep
       ? { status: 'paid', pass: granted, orderNo: payment.order_no, paymentId: payment.id }
       : { status: 'paid', coins: granted, orderNo: payment.order_no, paymentId: payment.id };
@@ -259,7 +268,7 @@ async function redeem(db, { userId = null, productId, purchaseToken }, { grant, 
 async function consumeLeftovers(db) {
   const { rows } = await db.query(
     `SELECT product_id, store_token FROM payments
-      WHERE provider = 'google' AND status = 'paid' AND store_consumed_at IS NULL AND store_token IS NOT NULL AND season_key IS NULL LIMIT 200`,
+      WHERE provider = 'google' AND status = 'paid' AND store_consumed_at IS NULL AND store_token IS NOT NULL AND season_key IS NULL AND pack_key IS NULL LIMIT 200`,
   );
   let done = 0;
   for (const r of rows) {
@@ -280,7 +289,7 @@ async function consumeLeftovers(db) {
 async function acknowledgeLeftovers(db) {
   const { rows } = await db.query(
     `SELECT product_id, store_token FROM payments
-      WHERE provider = 'google' AND status = 'paid' AND store_acknowledged_at IS NULL AND store_token IS NOT NULL AND season_key IS NOT NULL LIMIT 200`,
+      WHERE provider = 'google' AND status = 'paid' AND store_acknowledged_at IS NULL AND store_token IS NOT NULL AND (season_key IS NOT NULL OR pack_key IS NOT NULL) LIMIT 200`,
   );
   let done = 0;
   for (const r of rows) {

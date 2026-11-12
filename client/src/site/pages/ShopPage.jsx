@@ -15,6 +15,7 @@ import { TEASERS } from '../shop/comingSoon';
 import { track } from '../consent/tracking';
 import { shownPrice, useStorePrices } from '../payments';
 import GetCoins, { notEnoughCoins, shortOf } from '../payments/GetCoins';
+import { TrackPacksTab } from '../shop/TrackPacks';
 
 const Turntable = lazy(() => importOrReload(() => import('../marbles/Turntable')));
 
@@ -30,7 +31,9 @@ const DATE = new Intl.DateTimeFormat('en-GB', { weekday: 'short', day: 'numeric'
  * marble in every shade with rarity and shade filters and Find by ID, the
  * seasonal shelf (a seasonal collection while it's on sale, a season pass's marble), a big
  * view with the 3D marble and a shade switcher, the next collections, and
- * coin packs. /collection and /collection/:design?shade= open it
+ * coin packs. While the server sells track packs to the player (TRACK_PACKS on for them: GET /api/packs
+ * onSale; Moses, 12 Nov 2026), tabs: Track packs (first), Marbles, Season pass, Coins; otherwise as before, no tabs.
+ * /collection and /collection/:design?shade= open it
  * too (the second with that marble's big view open), and so does ?id=SC105.
  */
 export default function ShopPage() {
@@ -42,6 +45,10 @@ export default function ShopPage() {
   const [rarity, setRarity] = useState('all');
   const [shade, setShade] = useState('all');
   const [find, setFind] = useState(search.get('id') ?? '');
+  const packs = useAsync(() => api.packs().catch(() => null), []);
+  const tabs = Boolean(packs.data?.onSale);
+  const tab = ['packs', 'marbles', 'pass', 'coins'].includes(search.get('tab')) ? search.get('tab') : (designParam || search.get('id') ? 'marbles' : 'packs');
+  const shows = (t) => !tabs || tab === t;
 
   // The marble in the big view: from /collection/:design?shade=, or ?id=SC105.
   const fromUrl = useMemo(() => {
@@ -70,9 +77,17 @@ export default function ShopPage() {
 
   return (
     <div className="ms-page">
-      <Hero owned={owned} onBought={reload} />
+      {tabs && (
+        <div className="ms-tabs" role="tablist" aria-label="Shop">
+          {[['packs', 'Track packs'], ['marbles', 'Marbles'], ['pass', 'Season pass'], ['coins', 'Coins']].map(([k, l]) => (
+            <button key={k} type="button" role="tab" aria-selected={tab === k} onClick={() => navigate(`/shop?tab=${k}`, { replace: true })}>{l}</button>
+          ))}
+        </div>
+      )}
+      {tabs && tab === 'packs' && <TrackPacksTab data={packs.data} />}
+      {shows('marbles') && <Hero owned={owned} onBought={reload} />}
 
-      <section aria-labelledby="all-h" style={{ display: 'grid', gap: 14 }}>
+      {shows('marbles') && <section aria-labelledby="all-h" style={{ display: 'grid', gap: 14 }}>
         <div className="ms-section-head" style={{ justifyContent: 'space-between' }}>
           <h2 id="all-h">All marbles</h2>
           <span style={{ fontVariantNumeric: 'tabular-nums' }}>{shown.length} of {SC_ITEMS.length} shown</span>
@@ -101,11 +116,12 @@ export default function ShopPage() {
         ) : (
           <p className="ms-note">No marble has an ID like “{find}”. Marble IDs are two letters and three digits, e.g. SC105.</p>
         )}
-      </section>
+      </section>}
 
-      <SeasonalShelf owned={owned} onOpen={setOpen} />
+      {shows('pass') && <SeasonalShelf owned={owned} onOpen={setOpen} />}
+      {tabs && tab === 'pass' && <p className="ms-note">The Holiday Season pass: <Link to="/pass">every holiday track and the season marble</Link>.</p>}
 
-      {ltdSale && (
+      {shows('marbles') && ltdSale && (
         <section aria-labelledby="ltd-h" className="ms-hero" style={{ borderColor: 'var(--r-limited)' }}>
           <div style={{ display: 'flex', justifyContent: 'center', flex: '0 1 160px' }}><MarbleBadge slug={ltdSlug} size={130} label={limited.name} /></div>
           <div style={{ display: 'grid', gap: 8 }}>
@@ -118,9 +134,9 @@ export default function ShopPage() {
         </section>
       )}
 
-      <ComingSoon />
+      {shows('marbles') && <ComingSoon />}
 
-      <CoinPacks />
+      {shows('coins') && <CoinPacks />}
 
       <p className="ms-note">Looks only, never speed: every marble races exactly the same. The first {catalog.editionSize} of every marble on sale are a numbered First Edition.</p>
 

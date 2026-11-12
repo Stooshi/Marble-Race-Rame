@@ -10,7 +10,9 @@
  *
  * Every provider ends in the same place: grant(), which marks the payment paid
  * and adds the pack's coins exactly once (or, for a season pass, gives the player the pass once:
- * a pass payment has no coins and its season in payments.season_key; src/seasons), counted as bought coins (never
+ * a pass payment has no coins and its season in payments.season_key; src/seasons; a track pack's payment gives its
+ * pack once, payments.pack_key, and may carry coins the player paid towards it, payments.coins_spent: src/packs/sale.js),
+ * counted as bought coins (never
  * earned, so they don't count on the scoreboards). Coins are spent in the shop
  * (src/marbles/collection.js) and never cashed out. Looks only, never speed.
  *
@@ -29,6 +31,7 @@ const google = require('./google');
 const apple = require('./apple');
 const consent = require('../../client/src/shared/payments/consent.json');
 const seasons = require('../seasons');
+const sale = require('../packs/sale');
 
 const PACKS = new Map(packsFile.packs.map((p) => [p.id, p]));
 
@@ -92,11 +95,12 @@ async function passProduct(db, productId) {
 async function grant(client, paymentId, providerRef = null) {
   const { rows: [pay] } = await client.query(
     `UPDATE payments SET status = 'paid', paid_at = now(), provider_ref = COALESCE($2, provider_ref)
-      WHERE id = $1 AND status = 'pending' RETURNING id, user_id, coins, product_id, season_key, provider, order_no`,
+      WHERE id = $1 AND status = 'pending' RETURNING id, user_id, coins, product_id, season_key, pack_key, coins_spent, provider, order_no`,
     [paymentId, providerRef],
   );
   if (!pay) return null;
   if (pay.season_key) return `pass-${await seasons.grantForPayment(client, pay)}`;
+  if (pay.pack_key) return `pack-${await sale.grantForPayment(client, pay)}`;
   const done = await economy.change(client, { userId: pay.user_id, amount: pay.coins, kind: 'coin-pack', paymentId: pay.id, note: pay.product_id });
   return done.balance;
 }
@@ -182,8 +186,49 @@ async function passCheckout(client, userId, { seasonKey, provider: providerName 
   return { payment: { order_no: payment.order_no, status: payment.status, product_id: payment.product_id }, next: shown };
 }
 
+/** A track pack's consent as stored with the payment (EU withdrawal-right waiver + terms). */
+const packConsentText = () => `[${consent.version}] ${consent.packWithdrawal} / ${consent.terms}`;
+
+/**
+ * Starts buying a track pack on the website (Stripe; the test provider in development). `useCoins`: pay
+ * part of it in coins (1,990 coins + $5.99; at most 25% of the price, never coins alone): the coins are
+ * taken now and given back if the checkout lapses or fails. The pack comes only from Stripe's signed
+ * webhook, once. Refused while packs aren't sold to the player (403), for a pack not complete yet (409,
+ * except an admin's test purchase with Stripe in test mode) and for a pack the player has (409).
+ */
+async function packCheckout(client, userId, { pack: packKey, useCoins = false, provider: providerName = 'stripe', consent: agreed, locale, siteUrl = null, env = process.env }) {
+  const provider = PROVIDERS[providerName];
+  if (!provider || provider.name === 'google' || provider.name === 'apple') throw badRequest('Track packs are bought on the website here; in the apps, through the store');
+  const item = await sale.packProduct(client, sale.productId(packKey, Boolean(useCoins)));
+  if (!item) throw notFound('No such track pack');
+  await savedAccount(client, userId);
+  const test = provider.name === 'test' || (provider.name === 'stripe' && stripe.mode() === 'test');
+  const why = await sale.refusal(client, userId, item.packKey, { test, env });
+  if (why) throw sale.REFUSED[why](item.pack);
+  if (!provider.configured()) return { payment: null, next: await provider.start(null, {}) };
+  if (agreed !== true) throw badRequest('Please agree to immediate delivery and the terms of sale first');
+  const { rows: [payment] } = await client.query(
+    `INSERT INTO payments (user_id, provider, product_id, coins, amount_cents, currency, order_no, consent_at, consent_text, pack_key, coins_spent)
+     VALUES ($1, $2, $3, 0, $4, $5, 'MS-' || nextval('payment_order_seq'), now(), $6, $7, $8)
+     RETURNING id, user_id, order_no, status, product_id, coins, amount_cents, currency, pack_key, coins_spent`,
+    [userId, provider.name, item.id, item.amountCents, item.currency, packConsentText(), item.packKey, item.coinsSpent],
+  );
+  if (item.coinsSpent && !(await sale.takeCoins(client, { userId, paymentId: payment.id, coins: item.coinsSpent, packName: item.name, orderNo: payment.order_no }))) {
+    throw badRequest('Not enough coins');
+  }
+  const user = await client.query('SELECT email FROM users WHERE id = $1', [userId]).then((r) => r.rows[0]);
+  const next = await provider.start(payment, { userId, pack: item, email: user?.email ?? null, locale, siteUrl });
+  if (next.kind === 'done') {
+    const got = await grant(client, payment.id, `test-${payment.id}`);
+    return { payment: { order_no: payment.order_no, status: 'paid', product_id: payment.product_id }, next, pack: got };
+  }
+  if (next.sessionId) await client.query('UPDATE payments SET stripe_session_id = $2 WHERE id = $1', [payment.id, next.sessionId]);
+  const { sessionId, ...shown } = next;
+  return { payment: { order_no: payment.order_no, status: payment.status, product_id: payment.product_id }, next: shown };
+}
+
 // What a player sees of their own orders (Purchases page).
-const ORDER_COLUMNS = `order_no, provider, product_id, season_key, coins, amount_cents, upper(currency) AS currency, charged_cents, charged_currency,
+const ORDER_COLUMNS = `order_no, provider, product_id, season_key, pack_key, coins_spent, coins, amount_cents, upper(currency) AS currency, charged_cents, charged_currency,
   tax_cents, status, refunded_cents, receipt_url, created_at, paid_at, refunded_at, withdrawn_at`;
 
 /** A player's orders, newest first (lapsed checkouts that were never paid are left out). */
@@ -268,13 +313,16 @@ async function savedAccount(db, userId) {
   if (!u || u.is_guest) throw new HttpError(401, SAVE_FIRST, { code: 'save_first' });
 }
 
+/** A store product by id: a coin pack, a season pass or a track pack (404 for anything else). */
+const storeProduct = async (db, id) => PACKS.get(id) ?? (await passProduct(db, id)) ?? (await sale.packProduct(db, id)) ?? pack(id);
+
 /** The player's account id for Google Play purchases (the app buys with it; saved accounts only). */
 const googleAccountId = async (db, userId) => { await savedAccount(db, userId); return google.accountIdFor(db, userId); };
 
 /** A Google Play purchase from the app (or from Google's notification): verified with Google, coins once. */
 function googlePurchase(db, { userId = null, productId, purchaseToken }) {
   if (!google.configured()) throw new HttpError(503, 'Google Play purchases are not connected yet');
-  return google.redeem(db, { userId, productId, purchaseToken }, { grant, product: async (id) => PACKS.get(id) ?? (await passProduct(db, id)) ?? pack(id) });
+  return google.redeem(db, { userId, productId, purchaseToken }, { grant, product: (id) => storeProduct(db, id) });
 }
 
 /** The player's App Store account token (the iPhone app buys with it as StoreKit's appAccountToken). */
@@ -283,7 +331,7 @@ const appleAccountToken = async (db, userId) => { await savedAccount(db, userId)
 /** An App Store purchase from the iPhone app: Apple's signature checked, then the coins (or the pass) once. */
 function applePurchase(db, { userId, signedTransaction }) {
   if (!apple.configured()) throw new HttpError(503, 'App Store purchases are not connected yet');
-  return apple.redeem(db, { userId, signedTransaction }, { grant, product: async (id) => PACKS.get(id) ?? (await passProduct(db, id)) ?? pack(id) });
+  return apple.redeem(db, { userId, signedTransaction }, { grant, product: (id) => storeProduct(db, id) });
 }
 
 /** An App Store Server Notification (v2): refunds and revocations take the coins (or the pass) back. */
@@ -333,4 +381,4 @@ async function redeemReceipt(client, userId, { provider: providerName, receipt }
   return { coins: await grant(client, payment.id) };
 }
 
-module.exports = { PROVIDERS, PACKS, CONSENT_TEXT, available, checkout, passCheckout, passProduct, grant, redeemReceipt, ordersOf, orderOf, stripeEvent, refund, googleAccountId, googlePurchase, appleAccountToken, applePurchase, appleNotification, googleSync, startGoogleJobs, pack };
+module.exports = { PROVIDERS, PACKS, CONSENT_TEXT, available, checkout, passCheckout, packCheckout, storeProduct, passProduct, grant, redeemReceipt, ordersOf, orderOf, stripeEvent, refund, googleAccountId, googlePurchase, appleAccountToken, applePurchase, appleNotification, googleSync, startGoogleJobs, pack };

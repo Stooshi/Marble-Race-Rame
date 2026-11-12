@@ -7,6 +7,7 @@ import { formatNumber } from '../../utils/format';
 import { wanted } from '../payments/GetCoins';
 import { track } from '../consent/tracking';
 import { activatesDay } from '../payments/preSale';
+import { PACK_NAMES } from '../../shared/payments/trackPacks';
 
 /** An amount in its currency, in the player's own number style ("€10.99", "109,00 kr"). */
 export function money(cents, currency) {
@@ -44,6 +45,8 @@ export default function PurchasesPage() {
   const [seasonList, setSeasonList] = useState([]);
   useEffect(() => { if (isAuthenticated) api.seasons().then((r) => setSeasonList(r.seasons ?? [])).catch(() => {}); }, [isAuthenticated]);
   const passOf = (o) => seasonList.find((x) => x.key === o.season_key && x.pass) ?? null;
+  // (A track pack's order: its pack's name, from the pack key: grand-prix → Grand Prix pack.)
+  const packName = (o) => `${PACK_NAMES[o.pack_key] ?? o.pack_key.replace(/-/g, ' ').replace(/^\w/, (c) => c.toUpperCase())} pack`;
   const refresh = useRef(refreshUser);
   refresh.current = refreshUser;
 
@@ -79,7 +82,7 @@ export default function PurchasesPage() {
           setWaiting(false);
           await Promise.all([load(), refresh.current?.()]);
           // Came through Get coins: back to the marble wanted (coin packs only; this tab remembers it).
-          const w = order.status === 'paid' && !order.season_key ? wanted({ clear: true }) : null;
+          const w = order.status === 'paid' && !order.season_key && !order.pack_key ? wanted({ clear: true }) : null;
           if (w && !stop) navigate(w.back, { replace: true, state: { coinsAdded: order.coins } });
           return;
         }
@@ -112,7 +115,7 @@ export default function PurchasesPage() {
       </div>
 
       {justPaid && waiting && <div className="ms-msg" role="status">Thanks! Waiting for Stripe to confirm order {justPaid}… your coins arrive as soon as it does.</div>}
-      {justPaid && !waiting && fresh?.status === 'paid' && <div className="ms-msg" role="status">Order {justPaid} is paid: {fresh.season_key ? (passOf(fresh)?.state === 'before' ? `your ${passOf(fresh).pass.name} activates on ${activatesDay(passOf(fresh).pass.activatesAt)}` : 'your season pass is ready') : `● ${formatNumber(fresh.coins)} coins added`}. Stripe has emailed you a receipt. <Link to="/shop">To the shop</Link></div>}
+      {justPaid && !waiting && fresh?.status === 'paid' && <div className="ms-msg" role="status">Order {justPaid} is paid: {fresh.pack_key ? `the ${packName(fresh)} is unlocked` : fresh.season_key ? (passOf(fresh)?.state === 'before' ? `your ${passOf(fresh).pass.name} activates on ${activatesDay(passOf(fresh).pass.activatesAt)}` : 'your season pass is ready') : `● ${formatNumber(fresh.coins)} coins added`}. Stripe has emailed you a receipt. <Link to="/shop">To the shop</Link></div>}
       {justPaid && !waiting && fresh?.status === 'pending' && <div className="ms-msg" role="status">Stripe hasn't confirmed order {justPaid} yet. Some payments take a little longer; your coins arrive by themselves when it does. Reload this page to check.</div>}
       {error && <div className="ms-msg ms-msg--bad" role="alert">{error}</div>}
       {!orders && !error && <p className="ms-note">Loading your orders…</p>}
@@ -132,7 +135,7 @@ export default function PurchasesPage() {
                 <tr key={o.order_no} className={o.order_no === justPaid ? 'is-me' : undefined}>
                   <td style={{ fontWeight: 700 }}>{o.order_no}</td>
                   <td>{new Date(o.paid_at ?? o.created_at).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}</td>
-                  <td className="num">{o.season_key ? (passOf(o)?.state === 'before' && o.status === 'paid' ? `Season pass · activates ${activatesDay(passOf(o).pass.activatesAt)}` : 'Season pass') : `● ${formatNumber(o.coins)}`}</td>
+                  <td className="num">{o.pack_key ? `${packName(o)}${o.coins_spent > 0 ? ` (with ● ${formatNumber(o.coins_spent)})` : ''}` : o.season_key ? (passOf(o)?.state === 'before' && o.status === 'paid' ? `Season pass · activates ${activatesDay(passOf(o).pass.activatesAt)}` : 'Season pass') : `● ${formatNumber(o.coins)}`}</td>
                   <td className="num">
                     {o.charged_cents != null ? money(o.charged_cents, o.charged_currency) : ['apple', 'google'].includes(o.provider) ? money(o.amount_cents, o.currency) : `${PACK[o.product_id]?.priceLabel ?? money(o.amount_cents, o.currency)}`}
                     {['apple', 'google'].includes(o.provider) && o.charged_cents == null && <span className="ms-note" style={{ display: 'block' }}>US price; {o.provider === 'apple' ? 'Apple' : 'Google'}'s receipt has what you paid</span>}

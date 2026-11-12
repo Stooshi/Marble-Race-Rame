@@ -297,6 +297,8 @@ The most specific row wins, then the newest. A slot with no row shows a built-in
 | `skill-refund` | The 12 Oct 2026 refund when marbles stopped carrying strength |
 | `admin` | A back-office adjustment, with a reason |
 | `pack-refund` | Coins removed because a coin pack was refunded or disputed |
+| `track-pack` | Spent towards a track pack (at most 25% of its price: 1,990 coins with $5.99; `src/packs/sale.js`). On the website taken when the Stripe checkout starts (`payment_id` set); in the apps set aside before the store's sheet opens (`pack_coin_holds`) |
+| `track-pack-back` | Coins for a track pack given back: its checkout lapsed or failed, the app's sheet was closed, a hold unused for 2 hours, or the pack refunded in full (not a chargeback) |
 | `featured-bonus` | The Track of the Day bonus for a season pass holder: +50% of the race's coins, on the day's full-pay races only. **Neither earned nor bought**: it never counts on the scoreboards or in `coins_earned` |
 
 **The rules that keep the ledger right:**
@@ -307,7 +309,7 @@ The most specific row wins, then the newest. A slot with no row shows a built-in
 - Never update `users.coins` directly in code or in a data update. Write a ledger line through the same logic.
 - Scoreboards and `coins_earned` count **earned** kinds only. Bought coins never count towards the scoreboards.
 
-### `payments`: coin-pack and season-pass orders
+### `payments`: coin-pack, season-pass and track-pack orders
 | Column | Meaning |
 |---|---|
 | `user_id` | The buyer |
@@ -315,10 +317,11 @@ The most specific row wins, then the newest. A slot with no row shows a built-in
 | `provider_ref` | The provider's own id (Stripe session; Google Play order id `GPA.…`, or `token-<sha256>` for a test purchase without one). Unique per provider, so a payment is never credited twice |
 | `store_token` | Google Play: the purchase token. Unique per provider, the second guard against crediting twice |
 | `store_consumed_at` | Google Play: when the server consumed the purchase at Google (so the pack can be bought again). NULL: still to do; the hourly job retries |
-| `store_acknowledged_at` | Google Play, season passes only: when the server acknowledged the purchase (a pass is kept, never consumed). NULL: still to do; the hourly job retries |
-| `product_id`, `coins` | The pack and the coins it gives. A season pass has 0 coins (allowed only with `season_key`) |
+| `store_acknowledged_at` | Google Play, season passes and track packs: when the server acknowledged the purchase (kept, never consumed). NULL: still to do; the hourly job retries |
+| `product_id`, `coins` | The pack and the coins it gives. A season pass and a track pack have 0 coins (allowed only with `season_key` or `pack_key`: data updates `2027-02-16-season-pass`, `2027-06-12-track-pack-payments`) |
 | `season_key` | Set for a season pass (`product_id` is the pass, e.g. `holiday-pass-2026`) |
-| `amount_cents`, `currency` | The pack's list price (USD) |
+| `pack_key`, `coins_spent` | A track pack (`product_id` `trackpack-<pack>` or `trackpack-<pack>-coins`; `src/packs/sale.js`) and the coins paid towards it (0, or 1,990 with the `-coins` product). A full refund takes the pack back and gives the coins back; a chargeback takes the pack |
+| `amount_cents`, `currency` | The list price (USD; the store's US price for an app purchase): a track pack $7.99, or $5.99 with coins |
 | `status` | `pending` → `paid` (or `failed`); `refunded` when fully refunded |
 | `order_no` | Player-facing order number `MS-1001…` (sequence `payment_order_seq`) |
 | `consent_at`, `consent_text` | When the player agreed to immediate delivery and the loss of the withdrawal right, and the exact text they saw |
@@ -379,10 +382,18 @@ One row per pack (Moses, 11 Nov 2026; `src/packs`, the packs and the free set in
 | Column | Meaning |
 |---|---|
 | `key`, `name`, `series`, `sort` | `grand-prix`, "Grand Prix", the series, the order shown |
-| `product_id` | The store product once a pack is sold. NULL: no prices or products yet |
+| `product_id` | Unused: a pack's products follow from its key (`trackpack-<key>`, `trackpack-<key>-coins`; `src/packs/sale.js`) |
+
+### `pack_coin_holds`
+The apps only: coins set aside for a track pack before the store's purchase sheet opens (`POST /api/packs/:key/coin-hold`), so the store charges only the rest. Used by the purchase once the server has checked it (`used_at`, `payment_id`), or given back (`released_at`): the sheet was closed (`DELETE /api/packs/coin-holds/:id`) or the hold sat unused for 2 hours (hourly, `releaseStaleHolds`). The coins move through `economy.change` (`track-pack`, `track-pack-back`).
+
+| Column | Meaning |
+|---|---|
+| `user_id`, `pack_key`, `coins` | Whose, for which pack, how many (1,990) |
+| `created_at`, `used_at`, `payment_id`, `released_at` | |
 
 ### `pack_owners`
-Who owns a pack: one live row (not revoked) per player and pack. **Nothing grants one yet** (no store products). An owner who hosts a friend room (or creates a league) opens the pack's tracks to everyone racing with them, as with the season pass. In the account's data export (`trackPacks`).
+Who owns a pack: one live row (not revoked) per player and pack, granted by a paid pack payment (`payment_id`, `provider`) once; revoked by a full refund or a chargeback. An owner who hosts a friend room (or creates a league) opens the pack's tracks to everyone racing with them, as with the season pass. In the account's data export (`trackPacks`).
 
 | Column | Meaning |
 |---|---|

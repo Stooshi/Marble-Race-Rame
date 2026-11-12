@@ -1139,3 +1139,9 @@ tr:hover .report-name__btn--compact, .report-name__btn--compact:focus-visible { 
   .ms-pack-hero { grid-template-columns: 1fr; padding: 12px; }
   .ms-pack-page__buy .ms-btn { width: 100%; }
 }
+/* The coins and money split at a track pack's checkout (12 Nov 2026). */
+.ms-pack-split { display: grid; gap: 4px; padding: 10px 12px; border: 1px solid var(--ms-border); border-radius: 12px; background: var(--ms-card); font-variant-numeric: tabular-nums; }
+.ms-pack-split b { color: var(--ms-text); }
+a.ms-pack-track { text-decoration: none; cursor: pointer; }
+a.ms-pack__pic { display: flex; }
+a.ms-pack__see { text-decoration: underline; }

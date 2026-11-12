@@ -130,6 +130,12 @@ export const api = {
   seasons: () => request('/seasons'),
   season: (key) => request(`/seasons/${encodeURIComponent(key)}`),
   passCheckout: (body) => request('/payments/pass/checkout', { method: 'POST', body }),
+  // Track packs (src/routes/packs.js; sold only while TRACK_PACKS is on for the player)
+  packs: () => request('/packs'),
+  pack: (key) => request(`/packs/${encodeURIComponent(key)}`),
+  packCheckout: (body) => request('/payments/pack/checkout', { method: 'POST', body }),
+  packCoinHold: (key, body = {}) => request(`/packs/${encodeURIComponent(key)}/coin-hold`, { method: 'POST', body }),
+  packCoinRelease: (id) => request(`/packs/coin-holds/${encodeURIComponent(id)}`, { method: 'DELETE' }),
   // "Remind me when sales open" (before the pass's sale): a player { email_too }, a visitor { email, consent }.
   passRemind: (key, body) => request(`/seasons/${encodeURIComponent(key)}/remind`, { method: 'POST', body }),
   passRemindCancel: (key) => request(`/seasons/${encodeURIComponent(key)}/remind`, { method: 'DELETE' }),

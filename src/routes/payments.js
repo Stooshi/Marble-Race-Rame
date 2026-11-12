@@ -47,6 +47,20 @@ router.post('/pass/checkout', requireAuth, async (req, res) => {
   res.json(out);
 });
 
+/**
+ * POST /api/payments/pack/checkout { pack, useCoins?, provider?, consent: true } — start buying a track pack on
+ * the website (src/packs/sale.js): $7.99, or 1,990 coins + $5.99 (useCoins). The pack comes only from
+ * Stripe's signed webhook, once; the coins are taken now and given back if the checkout lapses.
+ */
+router.post('/pack/checkout', requireAuth, async (req, res) => {
+  const body = validate(req.body, { pack: { type: 'string', required: true, max: 32 }, useCoins: { type: 'boolean' }, provider: { ...PROVIDER, required: false }, consent: { type: 'boolean' }, locale: { type: 'string', max: 12 } });
+  const origin = req.get('origin');
+  const siteUrl = config.isSiteOrigin(origin) ? origin.replace(/\/+$/, '') : null;
+  const out = await db.withTransaction((client) => payments.packCheckout(client, req.user.id, { pack: body.pack, useCoins: body.useCoins === true, provider: body.provider ?? 'stripe', consent: body.consent, locale: body.locale, siteUrl }));
+  await security.record(req, req.user.id, 'purchase');
+  res.json(out);
+});
+
 /** POST /api/payments/receipt { provider: 'apple'|'google', receipt } — an app's store purchase. */
 router.post('/receipt', requireAuth, async (req, res) => {
   const body = validate(req.body, { provider: PROVIDER, receipt: { type: 'string', required: true, max: 20000 } });

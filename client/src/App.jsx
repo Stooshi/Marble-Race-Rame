@@ -11,6 +11,7 @@ import { useAuth } from './context/AuthContext';
 import LandingPage from './site/landing/LandingPage';
 import { FriendsStep, QuickStep, RacerGate, ShooterStep, StartOrQuick, TrackStep } from './site/pages/RaceFlow';
 import ShopPage from './site/pages/ShopPage';
+import { PackPage } from './site/shop/TrackPacks';
 import RoomPage from './site/pages/RoomPage';
 import CertificatePage from './site/pages/CertificatePage';
 import BagPage from './site/pages/BagPage';
@@ -113,6 +114,7 @@ export default function App() {
           <Route path="/leagues/new" element={<CreateLeague NotFound={NotFound} />} />
           <Route path="/l/:code" element={<LeaguePage NotFound={NotFound} />} />
           <Route path="/shop" element={<ShopPage />} />
+          <Route path="/shop/packs/:key" element={<PackPage />} />
           <Route path="/collection" element={<ShopPage />} />
           <Route path="/collection/:design" element={<ShopPage />} />
           <Route path="/certificate/:code" element={<CertificatePage />} />

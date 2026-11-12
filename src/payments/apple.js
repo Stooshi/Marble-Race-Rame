@@ -2,7 +2,7 @@
 
 /**
  * App Store purchases for the iPhone app (StoreKit 2): the coin packs as consumable in-app
- * purchases with the same ids as on the website, and a season pass as a non-consumable.
+ * purchases with the same ids as on the website, and a season pass and the track packs as non-consumables.
  *
  * The flow (docs/05-runbook.md, "App Store"):
  *   1. The app asks for the player's App Store account token (accountTokenFor: a random UUID kept
@@ -32,6 +32,7 @@
 const crypto = require('node:crypto');
 const { HttpError, badRequest, forbidden } = require('../utils/httpError');
 const seasons = require('../seasons');
+const sale = require('../packs/sale');
 
 // SHA-256 fingerprint of "Apple Root CA - G3" (https://www.apple.com/certificateauthority/).
 const APPLE_ROOT_G3 = '63:34:3A:BF:B8:9A:6A:03:EB:B5:7E:9B:3F:5F:A7:BE:7C:4F:5C:75:6F:30:17:B3:A8:C4:88:C3:65:3E:91:79';
@@ -133,7 +134,18 @@ async function redeem(db, { userId, signedTransaction }, { grant, product, now =
       return { status: 'duplicate', orderNo: had.order_no, finish: true };
     }
     if (tx.revocationDate) return { status: 'revoked', finish: true };
-    if (p.keep) {
+    if (p.packKey) {
+      // A track pack: on sale (or a sandbox/TestFlight test purchase by an admin), not held already, and the
+      // coins paid towards it there. Refused: flagged for a refund the player asks Apple for.
+      const refused = await sale.storeRefusal(client, userId, p, { test: env !== 'Production' });
+      if (refused) {
+        await client.query(
+          'INSERT INTO admin_audit (admin_id, action, target_user_id, reason, details) VALUES (NULL, $1, $2, $3, $4)',
+          ['apple-pack-refused', userId, `${refused}: the player can ask Apple for a refund`, JSON.stringify({ transaction_id: ref, product_id: p.id, environment: env })],
+        );
+        return { status: refused, finish: true };
+      }
+    } else if (p.keep) {
       // (Before the sale starts, only a sandbox or TestFlight purchase: App Review and our testers.)
       const bought = new Date(Number(tx.purchaseDate) || now.getTime());
       const flag = async (why) => client.query(
@@ -144,13 +156,15 @@ async function redeem(db, { userId, signedTransaction }, { grant, product, now =
       if (await seasons.hasPass(client, userId, p.seasonKey)) { await flag('A second pass'); return { status: 'already-owned', finish: true }; }
     }
     const { rows: [payment] } = await client.query(
-      `INSERT INTO payments (user_id, provider, provider_ref, store_token, product_id, coins, amount_cents, currency, order_no, status, season_key)
-       VALUES ($1, 'apple', $2, $3, $4, $5, $6, $7, 'MS-' || nextval('payment_order_seq'), 'pending', $8)
+      `INSERT INTO payments (user_id, provider, provider_ref, store_token, product_id, coins, amount_cents, currency, order_no, status, season_key, pack_key, coins_spent)
+       VALUES ($1, 'apple', $2, $3, $4, $5, $6, $7, 'MS-' || nextval('payment_order_seq'), 'pending', $8, $9, $10)
        ON CONFLICT DO NOTHING RETURNING id, order_no`,
-      [userId, ref, String(tx.originalTransactionId ?? ref), p.id, p.coins, p.storeAmountCents ?? p.amountCents, p.currency, p.seasonKey ?? null], // (the store's US price: $4.99 for the $5 pack)
+      [userId, ref, String(tx.originalTransactionId ?? ref), p.id, p.coins, p.storeAmountCents ?? p.amountCents, p.currency, p.seasonKey ?? null, p.packKey ?? null, p.coinsSpent ?? 0], // (the store's US price: $4.99 for the $5 pack)
     );
     if (!payment) return { status: 'duplicate', orderNo: null, finish: true };
+    if (p.packKey) await sale.storeTakeCoins(client, userId, p, payment);
     const granted = await grant(client, payment.id, ref);
+    if (p.packKey) return { status: 'paid', pack: granted, orderNo: payment.order_no, paymentId: payment.id, finish: true };
     return p.keep
       ? { status: 'paid', pass: granted, orderNo: payment.order_no, paymentId: payment.id, finish: true }
       : { status: 'paid', coins: granted, orderNo: payment.order_no, paymentId: payment.id, finish: true };

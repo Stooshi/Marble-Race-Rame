@@ -9,7 +9,7 @@ const schema = fs.readFileSync(SCHEMA_PATH, 'utf8');
 
 test('reads every table and its columns from the schema file', () => {
   const cols = expectedColumns(schema);
-  assert.deepEqual(Object.keys(cols).sort(), ['admin_2fa', 'admin_audit', 'admin_sessions', 'billboards', 'coin_ledger', 'collection_counters', 'cookie_consents', 'data_updates', 'email_confirmations', 'email_consents', 'first_step_events', 'first_steps', 'gift_code_redemptions', 'gift_codes', 'house_looks', 'league_members', 'league_nights', 'league_results', 'league_runs', 'leagues', 'marble_appearances', 'marble_colors', 'marble_effects', 'marble_surfaces', 'marbles', 'name_reports', 'pack_owners', 'pass_reminders', 'password_resets', 'payment_refunds', 'payments', 'push_devices', 'push_preferences', 'push_sends', 'race_entries', 'race_entry_looks', 'race_readiness', 'race_replays', 'races', 'rooms', 'season_passes', 'seasons', 'security_events', 'stripe_events', 'support_messages', 'support_replies', 'track_packs', 'tracks', 'user_badges', 'user_collection', 'user_country_history', 'user_days', 'user_marbles', 'user_shooter', 'users']);
+  assert.deepEqual(Object.keys(cols).sort(), ['admin_2fa', 'admin_audit', 'admin_sessions', 'billboards', 'coin_ledger', 'collection_counters', 'cookie_consents', 'data_updates', 'email_confirmations', 'email_consents', 'first_step_events', 'first_steps', 'gift_code_redemptions', 'gift_codes', 'house_looks', 'league_members', 'league_nights', 'league_results', 'league_runs', 'leagues', 'marble_appearances', 'marble_colors', 'marble_effects', 'marble_surfaces', 'marbles', 'name_reports', 'pack_coin_holds', 'pack_owners', 'pass_reminders', 'password_resets', 'payment_refunds', 'payments', 'push_devices', 'push_preferences', 'push_sends', 'race_entries', 'race_entry_looks', 'race_readiness', 'race_replays', 'races', 'rooms', 'season_passes', 'seasons', 'security_events', 'stripe_events', 'support_messages', 'support_replies', 'track_packs', 'tracks', 'user_badges', 'user_collection', 'user_country_history', 'user_days', 'user_marbles', 'user_shooter', 'users']);
   assert.ok(cols.tracks.includes('physics'));
   assert.deepEqual(cols.billboards, ['id', 'track_slug', 'slot', 'image_url', 'kind', 'note', 'starts_at', 'ends_at', 'created_at']);
   assert.ok(cols.race_replays.includes('data'));
@@ -24,6 +24,8 @@ test('reads every table and its columns from the schema file', () => {
   assert.ok(cols.tracks.includes('season_key'));
   for (const c of ['wildness_score', 'wildness', 'pack_key', 'is_free']) assert.ok(cols.tracks.includes(c), c); // (11 Nov 2026: wildness, track packs)
   assert.deepEqual(cols.track_packs, ['key', 'name', 'series', 'sort', 'product_id', 'created_at']);
+  assert.ok(cols.payments.includes('pack_key') && cols.payments.includes('coins_spent')); // (12 Nov 2026: track pack sales)
+  assert.deepEqual(cols.pack_coin_holds, ['id', 'user_id', 'pack_key', 'coins', 'created_at', 'payment_id', 'used_at', 'released_at']);
   assert.deepEqual(cols.pack_owners, ['id', 'user_id', 'pack_key', 'payment_id', 'provider', 'granted_at', 'revoked_at', 'revoke_reason']);
   assert.ok(cols.first_steps.includes('browser')); // (9 Nov 2026: the kind of browser at the tap)
   assert.deepEqual(cols.first_step_events, ['user_id', 'kind', 'detail', 'seconds', 'created_at']);

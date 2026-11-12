@@ -1471,3 +1471,24 @@ CREATE TABLE IF NOT EXISTS pack_owners (
     revoke_reason   text
 );
 CREATE UNIQUE INDEX IF NOT EXISTS uq_pack_owners_live ON pack_owners (user_id, pack_key) WHERE revoked_at IS NULL;
+
+-- Track packs for sale (Moses, 12 Nov 2026; src/packs/sale.js, the price in
+-- client/src/shared/payments/trackPacks.json). A pack's payment: no coins given (coins 0), its pack, and
+-- the coins the player paid towards it (at most 25% of the price; the rest real money). Refunded in
+-- full: the pack goes and the coins come back; a chargeback takes the pack, the coins stay spent.
+ALTER TABLE payments ADD COLUMN IF NOT EXISTS pack_key varchar(32) REFERENCES track_packs(key);
+ALTER TABLE payments ADD COLUMN IF NOT EXISTS coins_spent integer NOT NULL DEFAULT 0 CHECK (coins_spent >= 0);
+-- The apps: coins set aside for a pack before the store's purchase sheet opens (the store charges the
+-- rest), taken by the purchase when the server has checked it, or given back (the sheet closed, or
+-- unused after 2 hours: src/packs/sale.js releaseStaleHolds, hourly).
+CREATE TABLE IF NOT EXISTS pack_coin_holds (
+    id              uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id         uuid        NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    pack_key        varchar(32) NOT NULL REFERENCES track_packs(key),
+    coins           integer     NOT NULL CHECK (coins > 0),
+    created_at      timestamptz NOT NULL DEFAULT now(),
+    payment_id      uuid        REFERENCES payments(id) ON DELETE SET NULL,
+    used_at         timestamptz,
+    released_at     timestamptz
+);
+CREATE INDEX IF NOT EXISTS idx_pack_coin_holds_open ON pack_coin_holds (user_id, pack_key, created_at) WHERE used_at IS NULL AND released_at IS NULL;

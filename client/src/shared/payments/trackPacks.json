@@ -1,0 +1,13 @@
+{
+  "note": "Track packs for sale (Moses, 12 Nov 2026): the price of every pack, kept here so a campaign can change it without code changes (the server, the website and the apps all read this file). priceCents: the website price (USD, VAT included; Stripe shows it in the player's own currency, as the coin packs). storeAmountCents: the US price set for the products in App Store Connect and Play Console (each store sets other countries itself). withCoins: the same pack paid partly with coins: at most maxCoinShare of the price in coins (coins are worth coinValueCentsPer1000 cents a thousand, as in the coin packs: 1,000 coins = $1), the rest in real money; a pack is never sold for coins alone. Its store products are the pack's id + '-coins'. fullAt: a pack goes on sale once it has this many live tracks; until then it shows as Coming soon. planned: the names of tracks still to come, shown on a pack's page.",
+  "currency": "usd",
+  "priceCents": 799,
+  "storeAmountCents": 799,
+  "maxCoinShare": 0.25,
+  "coinValueCentsPer1000": 100,
+  "withCoins": { "coins": 1990, "priceCents": 599, "storeAmountCents": 599 },
+  "fullAt": 20,
+  "planned": {
+    "grand-prix": ["Heartland Oval Speedway", "Lapland Ice Race", "Lombardy Parkland Circuit", "Mexico City Stadium Section", "Nevada Drag Strip", "Finland Forest Rally", "Tokyo Night Street Race", "São Paulo Rain Circuit", "Atacama Desert Rally", "Rocky Mountain Hill Run", "Outback Red Dirt Rally"]
+  }
+}

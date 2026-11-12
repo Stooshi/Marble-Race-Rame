@@ -13,8 +13,9 @@
  *                      (src/payments/apple.js), then finish the transaction in StoreKit. Transactions
  *                      left unfinished (the app closed first) are sent again at the next start.
  *
- * Screens call buyCoins(pack) (or buyPass(season) for a season pass, which is kept: Google Play
- * acknowledges it, never consumes it; on iPhone it is a non-consumable, with restorePurchases())
+ * Screens call buyCoins(pack) (or buyPass(season) for a season pass, or buyPack(key) for a track pack, which
+ * are kept: Google Play acknowledges them, never consumes them; on iPhone they are non-consumables, with
+ * restorePurchases())
  * and never care which store took the money.
  */
 import { useEffect, useState } from 'react';
@@ -106,7 +107,7 @@ async function verifyApple(t) {
     const { NativePurchases } = await billing();
     await NativePurchases.finishTransaction({ transactionId: String(t.transactionId) }).catch(() => {});
   }
-  if (r.status === 'paid' || r.status === 'duplicate') return { status: 'paid', coins: r.coins, pass: r.pass, orderNo: r.orderNo };
+  if (r.status === 'paid' || r.status === 'duplicate') return { status: 'paid', coins: r.coins, pass: r.pass, pack: r.pack, orderNo: r.orderNo };
   if (r.status === 'already-owned') return { status: 'unavailable', message: 'You already have this pass. You can ask Apple for a refund of the second payment (reportaproblem.apple.com).' };
   if (r.status === 'not-on-sale') return { status: 'unavailable', message: 'This pass isn\'t on sale now. You can ask Apple for a refund (reportaproblem.apple.com).' };
   return { status: 'unavailable', message: 'The App Store refunded or cancelled this purchase.' };
@@ -167,6 +168,64 @@ export async function buyPass(season, { consent = false } = {}) {
   return { status: 'unavailable', message: next.message };
 }
 
+/** What a store said about a track pack purchase, in words (refused purchases are refunded by the store). */
+function packOutcome(r, store) {
+  if (r.status === 'paid' && r.pack === undefined) return { ...r, status: 'unavailable', message: 'Something went wrong. If you were charged, ask for a refund.' };
+  if (r.status === 'paid') return r;
+  const refund = store === 'google' ? 'Google Play refunds the payment by itself within 3 days.' : 'You can ask Apple for a refund (reportaproblem.apple.com).';
+  if (r.status === 'already-owned') return { status: 'unavailable', message: `You already have this pack. ${refund}` };
+  if (r.status === 'not-on-sale') return { status: 'unavailable', message: `This pack isn't on sale yet. ${refund}` };
+  if (r.status === 'coins-missing') return { status: 'unavailable', message: `Your coins for this pack weren't there any more. ${refund}` };
+  return r;
+}
+
+/**
+ * Buys a track pack (src/packs/sale.js): $7.99, or with `useCoins` 1,990 coins + $5.99 (at most 25% in coins,
+ * never coins alone). Web: Stripe Checkout (the pack only from Stripe's signed webhook; the coins taken now,
+ * back if the checkout lapses). Apps: the coins set aside first (given back if the sheet is closed), then the
+ * store's purchase of the pack's product (trackpack-<pack>[-coins]; Google Play with _), kept, never consumed.
+ * `test`: an admin's test purchase of a pack that isn't complete yet. Resolves like buyCoins, with pack.
+ */
+export async function buyPack(packKey, { useCoins = false, consent = false, test = false } = {}) {
+  const provider = storeProvider();
+  const productId = `trackpack-${packKey}${useCoins ? '-coins' : ''}`;
+  if (provider !== 'google' && provider !== 'apple') {
+    const { next, pack } = await api.packCheckout({ pack: packKey, useCoins, provider, consent });
+    if (next.kind === 'redirect') {
+      window.location.assign(next.url);
+      return { status: 'redirecting' };
+    }
+    if (next.kind === 'done') return { status: 'paid', pack };
+    return { status: 'unavailable', message: next.message };
+  }
+  const google = provider === 'google';
+  const { accountId, accountToken, live } = google ? await api.googleAccount() : await api.appleAccount();
+  if (!live) return { status: 'unavailable', message: 'Buying in the app isn\'t switched on yet. Please try again later.' };
+  const hold = useCoins ? await api.packCoinHold(packKey, { test }) : null; // (the coins set aside: 400 "Not enough coins" if they aren't there)
+  const release = () => (hold ? api.packCoinRelease(hold.holdId).catch(() => {}) : Promise.resolve());
+  const { NativePurchases, PURCHASE_TYPE } = await billing();
+  if (!google) await NativePurchases.configure?.({ autoFinishTransactions: false });
+  let t;
+  try {
+    t = await NativePurchases.purchaseProduct({
+      productIdentifier: google ? playId(productId) : productId,
+      productType: PURCHASE_TYPE.INAPP,
+      appAccountToken: google ? accountId : accountToken, // (ties the purchase to this player)
+      isConsumable: false, // (a pack is kept: the server acknowledges it after checking it)
+      autoAcknowledgePurchases: false,
+    });
+  } catch (err) {
+    await release();
+    if (cancelled(err)) return { status: 'cancelled' };
+    throw err;
+  }
+  if (google ? !t?.purchaseToken : !t?.jwsRepresentation) return { status: 'pending', message: 'The store is still processing your payment. Your pack unlocks as soon as it\'s done.' };
+  const r = google ? await api.googleVerify({ productId, purchaseToken: t.purchaseToken }) : await api.appleVerify({ signedTransaction: t.jwsRepresentation });
+  if (!google && r.finish && t.transactionId) await NativePurchases.finishTransaction({ transactionId: String(t.transactionId) }).catch(() => {});
+  if (r.status !== 'paid' && r.status !== 'duplicate') await release();
+  return packOutcome(r.status === 'duplicate' ? { ...r, status: 'paid', pack: 'pack-already' } : r, provider);
+}
+
 /**
  * Android: purchases Google Play still holds unconsumed (the app was closed before the server
  * confirmed, or a pending payment completed): sent to the server, which adds their coins once.
@@ -209,9 +268,9 @@ async function resumeApple() {
 }
 
 /**
- * iPhone: "Restore Purchases" (Apple requires it for a non-consumable such as the season pass): asks
- * the App Store for this Apple ID's purchases and sends the pass ones to the server, which gives back
- * a pass it knows (never a second one). → how many were restored.
+ * iPhone: "Restore Purchases" (Apple requires it for a non-consumable such as the season pass and the track
+ * packs): asks the App Store for this Apple ID's purchases and sends them to the server, which gives back a
+ * pass or a pack it knows (never a second one). → how many were restored.
  */
 export async function restoreStorePurchases() {
   if (storeProvider() !== 'apple') return 0;

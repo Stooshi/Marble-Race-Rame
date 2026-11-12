@@ -23,6 +23,8 @@ async function start() {
   require('./push').startJobs(db); // push notifications: season news and the daily goal reminder (dry runs until PUSH_SENDING=on)
   require('./payments/emails').startJobs(db); // purchase confirmations and withdrawal acknowledgements (once email is on)
   require('./payments').startGoogleJobs(db); // Google Play: consume leftovers hourly, refunds/chargebacks every 6 h
+  // Track packs: coins set aside in the apps but unused for 2 hours go back (src/packs/sale.js), hourly.
+  setInterval(() => require('./packs/sale').releaseStaleHolds(db).catch((err) => console.error(`[packs] holds: ${err.message}`)), 3600_000).unref?.();
   require('./seasons').startJobs(db, { earned: require('./economy').EARNED }); // a season's badges once it has ended
   require('./leagues').startJobs(db); // leagues whose time is up: ended, their scoreboards frozen
   require('./readiness').startJobs(db); // race readiness reports: deleted after 30 days

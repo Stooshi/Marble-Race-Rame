@@ -21,6 +21,7 @@ const config = require('../config');
 const consent = require('../../client/src/shared/payments/consent.json');
 const economy = require('../economy');
 const seasons = require('../seasons');
+const sale = require('../packs/sale');
 const { HttpError, badRequest } = require('../utils/httpError');
 
 let injected = null; // (tests: a fake Stripe client)
@@ -57,7 +58,8 @@ function mode() {
 async function start(payment, { pack, email, locale, siteUrl }) {
   const site = siteUrl || config.stripe.siteUrl;
   const pass = Boolean(pack.seasonKey);
-  const what = pass ? pack.name : `${pack.coins} coins`;
+  const trackPack = Boolean(pack.packKey); // (a track pack: src/packs/sale.js)
+  const what = pass || trackPack ? pack.name : `${pack.coins} coins`;
   // The pass's pre-sale (before the season starts): "Activates 1 December", a full refund until then.
   const preSale = pass && seasons.stateOf(pack.season) === 'before';
   const activates = pass ? seasons.activatesText(pack.season) : null;
@@ -71,8 +73,10 @@ async function start(payment, { pack, email, locale, siteUrl }) {
         unit_amount: pack.amountCents,
         tax_behavior: 'inclusive', // (the price already includes VAT)
         product_data: {
-          name: pass ? `Marble Spins ${pack.name}` : `${pack.coins.toLocaleString('en-US')} Marble Spins coins`,
-          description: `${pass
+          name: pass || trackPack ? `Marble Spins ${pack.name}` : `${pack.coins.toLocaleString('en-US')} Marble Spins coins`,
+          description: `${trackPack
+            ? `Unlocks every track of the ${pack.pack.name} pack for good${pack.coinsSpent ? `, paid partly with ${pack.coinsSpent.toLocaleString('en-US')} coins (already taken from your account)` : ''}. Looks and places only: every marble races the same. Delivered right away; no cash value.`
+            : pass
             ? `${pack.season.name}: every holiday track and the Holiday Track of the Day bonus until ${new Intl.DateTimeFormat('en-GB', { timeZone: pack.season.time_zone, day: 'numeric', month: 'long', year: 'numeric' }).format(new Date(pack.season.free_from))}, and the season marble. One payment, not a subscription. ${preSale ? `Activates ${activates} at 00:00 Swedish time, with a full refund on request until then` : 'Delivered right away'}; no cash value.`
             : 'Coins for the Marble Spins shop: looks only, never speed. Delivered right away; no cash value.'} Sold by ${company.name} (org.nr ${company.orgNo}, VAT ${company.vatNo}). Questions: ${company.supportEmail}`,
           tax_code: config.stripe.taxCode,
@@ -88,8 +92,8 @@ async function start(payment, { pack, email, locale, siteUrl }) {
       metadata: { payment_id: payment.id, order_no: payment.order_no, product_id: pack.id },
     },
     success_url: `${site}/purchases?paid=${encodeURIComponent(payment.order_no)}&session_id={CHECKOUT_SESSION_ID}`,
-    cancel_url: pass ? `${site}/pass?cancelled=1` : `${site}/checkout?pack=${encodeURIComponent(pack.id)}&cancelled=1`,
-    custom_text: { submit: { message: pass ? (preSale ? consent.passPreSaleStripeSubmit.replace('{activates}', activates) : consent.passStripeSubmit) : consent.stripeSubmit } },
+    cancel_url: trackPack ? `${site}/shop/packs/${encodeURIComponent(pack.packKey)}?cancelled=1` : pass ? `${site}/pass?cancelled=1` : `${site}/checkout?pack=${encodeURIComponent(pack.id)}&cancelled=1`,
+    custom_text: { submit: { message: trackPack ? consent.packStripeSubmit : pass ? (preSale ? consent.passPreSaleStripeSubmit.replace('{activates}', activates) : consent.passStripeSubmit) : consent.stripeSubmit } },
     locale: locale || 'auto',
     expires_at: Math.floor(Date.now() / 1000) + 60 * 60, // (an hour, then the order lapses)
   };
@@ -187,15 +191,20 @@ async function revoke(db, { payment, refundId, amountCents, adminId = null, reas
   const passRevoked = payment.season_key && (full || action === 'dispute')
     ? await seasons.revokeForPayment(db, payment, action === 'dispute' ? 'chargeback' : 'refunded')
     : false;
+  // A track pack: taken back on a full refund (its coins given back) or a chargeback (the coins stay spent).
+  const packOut = payment.pack_key && (full || action === 'dispute')
+    ? await sale.revokeForPayment(db, payment, action === 'dispute' ? 'chargeback' : 'refunded', { coinsBack: action !== 'dispute' })
+    : null;
   await db.query(
     'INSERT INTO admin_audit (admin_id, action, target_user_id, reason, details) VALUES ($1, $2, $3, $4, $5)',
     [adminId, action, payment.user_id, reason, JSON.stringify({
       order_no: payment.order_no, payment_id: payment.id, refund_id: refundId, amount_cents: amountCents,
       currency: payment.charged_currency ?? payment.currency, coins_removed: removed, coins_short: short, full,
       ...(payment.season_key && { season: payment.season_key, pass_revoked: passRevoked }),
+      ...(payment.pack_key && { pack: payment.pack_key, pack_revoked: Boolean(packOut?.revoked), coins_back: packOut?.coinsBack ?? 0 }),
     })],
   );
-  return { removed, short, full, ...(payment.season_key && { passRevoked }) };
+  return { removed, short, full, ...(payment.season_key && { passRevoked }), ...(payment.pack_key && { packRevoked: Boolean(packOut?.revoked), coinsBack: packOut?.coinsBack ?? 0 }) };
 }
 
 async function paymentForIntent(db, intentId) {
@@ -230,6 +239,7 @@ async function handleEvent(db, event, { grant, receiptUrl: receipt = null } = {}
       const pay = await paymentForSession(db, o);
       if (!pay) return 'unknown-payment';
       const { rowCount } = await db.query(`UPDATE payments SET status = 'failed' WHERE id = $1 AND status = 'pending'`, [pay.id]);
+      if (rowCount && pay.pack_key) await sale.checkoutFailed(db, pay); // (a track pack's coins back)
       return rowCount ? 'failed' : 'ignored';
     }
     case 'refund.created':

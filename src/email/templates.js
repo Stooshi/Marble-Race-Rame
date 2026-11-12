@@ -72,12 +72,13 @@ const button = (href, text) => `<p style="margin:20px 0"><a href="${esc(href)}" 
 /**
  * The purchase confirmation (EU consumer rules: the contract confirmed on a durable medium, with the
  * buyer's agreement to immediate delivery and its effect on the right of withdrawal).
- * order: { orderNo, item, price (e.g. "$9.99 incl. VAT"), paidAt (text), kind: 'coins' | 'pass' | 'pre-sale-pass',
+ * order: { orderNo, item, price (e.g. "$9.99 incl. VAT"), paidAt (text), kind: 'coins' | 'pass' | 'pre-sale-pass' | 'pack',
  *          activates (text, pre-sale only), agreed: [the consent sentences], purchasesUrl, termsUrl }
  */
 function purchaseConfirmation({ username, orderNo, item, price, paidAt, kind, activates, agreed, purchasesUrl, termsUrl }) {
   const delivered = {
     coins: '<p>Your coins were added to your account right away.</p>',
+    pack: '<p>Your track pack was unlocked right away: its tracks are yours to race, and to race with friends in your rooms.</p>',
     pass: '<p>Your pass is active now: the holiday tracks are open for you until the season ends.</p>',
     'pre-sale-pass': `<p>Your pass activates on <b>${esc(activates)}</b>. Until then you can withdraw from this purchase for a full refund: open your Purchases page and press <b>Withdraw from this purchase</b>. Once the pass activates, your 14-day right of withdrawal ends.</p>${button(purchasesUrl, 'My purchases')}`,
   }[kind];

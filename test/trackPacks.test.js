@@ -96,8 +96,9 @@ test('wildness.json: every live track scored from the full report races; the dat
   assert.deepEqual(inSql.sort(), Object.values(FREE).flat().sort());
   assert.match(second, /WHERE pack_key IS NOT NULL/); // (season tracks untouched)
   for (const sql of [first, second]) assert.doesNotMatch(sql.replace(/--.*$/gm, ''), /is_active|product_id|price/); // (switches nothing on, sells nothing)
-  // (The newest data update sorts last.)
-  assert.equal(fs.readdirSync(UPDATES).filter((f) => f.endsWith('.sql')).sort().at(-1), '2027-06-11-free-set-of-30.sql');
+  // (Each sorts after the one before it.)
+  const all = fs.readdirSync(UPDATES).filter((f) => f.endsWith('.sql')).sort();
+  assert.ok(all.indexOf('2027-06-11-free-set-of-30.sql') > all.indexOf('2027-06-10-wildness-and-track-packs.sql'));
 });
 
 test('with the switch on: a pack track only for its owners and their friend rooms; off again: open to all', { skip: !DB }, async () => {

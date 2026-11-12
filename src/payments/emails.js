@@ -27,6 +27,10 @@ function agreedOf(consentText) {
 }
 
 async function itemOf(db, pay) {
+  if (pay.pack_key) {
+    const { rows: [p] } = await db.query('SELECT name FROM track_packs WHERE key = $1', [pay.pack_key]);
+    return { item: `${p?.name ?? 'Track'} pack${pay.coins_spent > 0 ? ` (with ${Number(pay.coins_spent).toLocaleString('en-US')} coins)` : ''}`, season: null, pack: true };
+  }
   if (!pay.season_key) return { item: `${Number(pay.coins).toLocaleString('en-US')} coins`, season: null };
   const season = await seasons.byKey(db, pay.season_key);
   return { item: season?.pass_name ?? 'Season pass', season };
@@ -34,7 +38,7 @@ async function itemOf(db, pay) {
 
 /** The confirmation email's content for one paid payment row (with username). */
 async function confirmationFor(db, pay) {
-  const { item, season } = await itemOf(db, pay);
+  const { item, season, pack } = await itemOf(db, pay);
   const preSale = season && new Date(pay.paid_at) < new Date(season.starts_at);
   return templates.purchaseConfirmation({
     username: pay.username,
@@ -42,7 +46,7 @@ async function confirmationFor(db, pay) {
     item,
     price: `${money(pay.charged_cents ?? pay.amount_cents, pay.charged_currency ?? pay.currency)} incl. VAT`,
     paidAt: when(pay.paid_at),
-    kind: !season ? 'coins' : preSale ? 'pre-sale-pass' : 'pass',
+    kind: pack ? 'pack' : !season ? 'coins' : preSale ? 'pre-sale-pass' : 'pass',
     activates: season ? when(season.starts_at) : null,
     agreed: agreedOf(pay.consent_text),
     purchasesUrl: `${site()}/purchases`,
