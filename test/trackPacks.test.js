@@ -58,7 +58,8 @@ test('the packs: one per series, Pinball and Arcade separate, Blocks 1 and Block
   assert.equal(packFor('kill-screen', 'Arcade'), 'arcade');
   assert.equal(packFor('spawn-point', 'Blocks'), 'blocks-1');
   assert.equal(packFor('venice-cube-canals', 'Blocks'), 'blocks-2');
-  assert.equal(BLOCKS_2.length, 20);
+  assert.equal(packFor('voxel-peaks', 'Blocks'), 'blocks-2'); // (moved from Blocks 1, 12 Nov 2026)
+  assert.equal(BLOCKS_2.filter((s) => !isFree(s)).length, 20); // (20 in the pack, Lisbon free besides)
   assert.equal(packFor('x', 'Classic'), null);
 });
 
@@ -99,6 +100,11 @@ test('wildness.json: every live track scored from the full report races; the dat
   // (Each sorts after the one before it.)
   const all = fs.readdirSync(UPDATES).filter((f) => f.endsWith('.sql')).sort();
   assert.ok(all.indexOf('2027-06-11-free-set-of-30.sql') > all.indexOf('2027-06-10-wildness-and-track-packs.sql'));
+  // 2027-06-13: Voxel Peaks to Blocks 2 (12 Nov 2026), after the pack payments; one track, from Blocks 1 only.
+  const third = fs.readFileSync(path.join(UPDATES, '2027-06-13-voxel-peaks-to-blocks-2.sql'), 'utf8').replace(/--.*$/gm, '');
+  assert.ok(all.indexOf('2027-06-13-voxel-peaks-to-blocks-2.sql') > all.indexOf('2027-06-12-track-pack-payments.sql'));
+  assert.match(third, /UPDATE tracks SET pack_key = 'blocks-2' WHERE slug = 'voxel-peaks' AND pack_key = 'blocks-1';/);
+  assert.equal((third.match(/UPDATE/g) ?? []).length, 1);
 });
 
 test('with the switch on: a pack track only for its owners and their friend rooms; off again: open to all', { skip: !DB }, async () => {

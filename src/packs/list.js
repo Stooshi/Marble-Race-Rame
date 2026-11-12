@@ -8,7 +8,7 @@
  *
  * Every live track of a series (not the season tracks, not the Classic ones) is in its series' pack;
  * the free ones (FREE) race for everyone always. Blocks is two packs: Blocks 1 (the first fifteen,
- * Oct 2026) and Blocks 2 (Blocks Series 2, BLOCKS_2).
+ * Oct 2026, less Voxel Peaks) and Blocks 2 (Blocks Series 2 and Voxel Peaks, BLOCKS_2).
  */
 
 const PACKS = [
@@ -25,12 +25,17 @@ const PACKS = [
   { key: 'arcade', name: 'Arcade', series: 'Arcade' },
 ];
 
-/** Blocks Series 2 (data updates 2027-05-10 to 2027-05-29): the Blocks 2 pack. */
+/**
+ * The Blocks 2 pack: Blocks Series 2 (data updates 2027-05-10 to 2027-05-29) and Voxel Peaks from Blocks 1, a
+ * real-looking landscape of cubes like the Series 2 tracks, so the pack has 20 tracks besides its free one
+ * (Moses, 12 Nov 2026; data update 2027-06-13-voxel-peaks-to-blocks-2.sql).
+ */
 const BLOCKS_2 = [
   'li-river-karst-run', 'venice-cube-canals', 'niagara-cube-falls', 'tre-cime-cube-towers', 'abisko-aurora-run',
   'kyoto-block-gardens', 'marrakesh-cube-souk', 'singapore-block-gardens', 'lisbon-cube-hills', 'douro-block-terraces',
   'loire-chateau-run', 'vltava-bridges-run', 'torres-del-paine-block-run', 'rainier-ice-block-run', 'kinabalu-cube-summit',
   'kirkjufell-block-falls', 'baikal-clear-ice', 'svalbard-glacier-run', 'yellowstone-frost-run', 'abraham-lake-frost',
+  'voxel-peaks',
 ];
 
 /**

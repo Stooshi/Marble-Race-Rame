@@ -27,7 +27,7 @@ describe('the track-pack shop mockup', () => {
     expect(src).toContain("const PRICE = '[price]'");
     const shop = page('/preview/shop-packs');
     expect(shop).toContain('Design mockup');
-    expect(shop.match(/Coming soon/g)).toHaveLength(11); // (no pack is at 20 tracks yet)
+    expect(shop.match(/Coming soon/g)).toHaveLength(10); // (Blocks 2 has 20 since Voxel Peaks joined it, 12 Nov 2026; the other ten are short)
     expect(page('/preview/shop-packs?as=complete').match(/>Unlock</g)).toHaveLength(11);
   });
 

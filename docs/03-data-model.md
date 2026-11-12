@@ -377,7 +377,7 @@ A player's pass for a season. Granted once when its payment is paid; a full refu
 ## Track packs
 
 ### `track_packs`
-One row per pack (Moses, 11 Nov 2026; `src/packs`, the packs and the free set in `src/packs/list.js`): one per series, Pinball and Arcade separate, Blocks as **Blocks 1** (the first fifteen) and **Blocks 2** (Blocks Series 2). Added by `2027-06-10-wildness-and-track-packs`.
+One row per pack (Moses, 11 Nov 2026; `src/packs`, the packs and the free set in `src/packs/list.js`): one per series, Pinball and Arcade separate, Blocks as **Blocks 1** (the first fifteen, less Voxel Peaks) and **Blocks 2** (Blocks Series 2 and Voxel Peaks, moved by `2027-06-13-voxel-peaks-to-blocks-2`). Added by `2027-06-10-wildness-and-track-packs`.
 
 | Column | Meaning |
 |---|---|
