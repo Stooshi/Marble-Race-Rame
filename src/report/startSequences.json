@@ -86,6 +86,7 @@
 "line-clear": {"family":"block","reach":0.22,"seq":["opening: staggered-drop","drop","pileUp","slalom","brake","straight","slalom","S-bends right"]},
 "lisbon-cube-hills": {"family":"block-2","reach":0.256,"seq":["opening: classic","drop","pileUp","slalom","straight","peg","drop","straight","peg ×3","sweep right"]},
 "loire-chateau-run": {"family":"block-2","reach":0.304,"seq":["opening: peg-drop","drop","peg ×7","straight","slalom","sweep right","peg","drop","half-pipe"]},
+"lombardy-parkland-circuit": {"family":"grand-prix","reach":0.229,"seq":["opening: chicane-start","drop","pileUp","slalom","S-bends right","peg ×2","straight","slalom"]},
 "london-steeplechase": {"family":"athletics","reach":0.273,"seq":["opening: peg-drop","drop","peg ×7","straight","peg","slalom","sweep left","straight","peg"]},
 "magma-core": {"family":"block","reach":0.21,"seq":["opening: funnel-drop","drop","pileUp","slalom","sweep right"]},
 "marble-stadium-sprint": {"family":"athletics","reach":0.194,"seq":["opening: classic","drop","pileUp","slalom","S-bends right"]},

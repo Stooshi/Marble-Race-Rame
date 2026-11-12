@@ -981,6 +981,17 @@
    "side": -1,
    "marbles": 7
   },
+  "lombardy-parkland-circuit": {
+   "name": "Lombardy Parkland Circuit",
+   "series": "Grand Prix",
+   "lighting": "sunset",
+   "v": "456570f7",
+   "bytes": 11868,
+   "bytes2x": 28240,
+   "t": 16115,
+   "side": 1,
+   "marbles": 5
+  },
   "london-steeplechase": {
    "name": "London Steeplechase",
    "series": "Track and Field",

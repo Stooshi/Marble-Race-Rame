@@ -462,6 +462,10 @@ countdown shots for their starts (12 Nov 2026; every pair of shots was used): `l
 height, pushing slowly in) and `crane` (a camera crane swinging over the grid from behind and to one side).
 Easy needs few obstacles: Heartland Oval Speedway first scored 43 (Wild) with 69 obstacle hits a race; with five pegs fewer
 and four-gate slaloms it scores 26.
+A straight splitter (`degrees: 0`) starts from the curved splitter's settings (the wedge 2.2 m over on a right-hand one): set
+`balance: { tipOffset: 0, … }` and mix the lanes in its run-in (pegs), as on Lombardy Parkland Circuit's pit lane; an S-bend
+before it sends the leaders down one channel (Lapland's first splitter: 67% of the wins with half the marbles). The split
+start's twin chutes count as a splitter in the wildness score (6 points): not for an Easy track.
 
 `grandPrix: true` (or `grandPrix: { crowd, barrier, fireworks }`) makes a track a Grand
 Prix: looks only, it races exactly as it would without. It brings:
