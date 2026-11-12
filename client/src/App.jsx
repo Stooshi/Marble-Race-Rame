@@ -56,6 +56,7 @@ const AuroraOptions = lazy(() => importOrReload(() => import('./site/pages/Auror
 const HolidayDesigns = lazy(() => importOrReload(() => import('./site/pages/HolidayDesigns')));
 const LeagueDesigns = lazy(() => importOrReload(() => import('./site/pages/LeagueDesigns')));
 const BannerReview = lazy(() => importOrReload(() => import('./site/pages/BannerReview')));
+const LegalPacksPreview = lazy(() => importOrReload(() => import('./site/pages/LegalPacksPreview'))); // (the legal draft for review: noindex, linked from nowhere; 12 Nov 2026)
 const ShopPacksPreview = lazy(() => importOrReload(() => import('./site/pages/ShopPacksPreview'))); // (a design mockup: noindex, linked from nowhere; 12 Nov 2026)
 const PhysicsPreview = lazy(() => importOrReload(() => import('./pages/PhysicsPreview')));
 // The back office (/admin): its own chunk, never linked from the site; the server checks every request.
@@ -171,6 +172,10 @@ export default function App() {
           <Route
             path="/preview/marbles/league"
             element={<Suspense fallback={<div className="page"><Spinner /></div>}><LeagueDesigns /></Suspense>}
+          />
+          <Route
+            path="/preview/legal-packs"
+            element={<Suspense fallback={<div className="page"><Spinner /></div>}><LegalPacksPreview /></Suspense>}
           />
           <Route
             path="/preview/shop-packs"

@@ -7,8 +7,19 @@ import ProtectedEmail from '../ProtectedEmail';
  * Terms of use, terms of sale, privacy, cookies and contact: the final texts, approved by
  * Moses on 1 Nov 2026 and in effect from then (`legalUpdated`). The company's details come
  * from client/src/shared/company.json.
+ *
+ * `proposed` (only on a review page for Moses, LegalPacksPreview.jsx; 12 Nov 2026): proposed new terms, shown in
+ * place and highlighted: { section } a new section 3 of the terms of sale, and the sentences it changes. Without
+ * it (/legal) the page is exactly the approved text.
  */
-export default function LegalPage() {
+/** A new or changed passage: highlighted with `proposed`, `was` (the approved text) without. */
+const New = ({ on, was = null, children }) => (on ? <mark className="ms-legal__new">{children}</mark> : was);
+
+export default function LegalPage({ proposed = null }) {
+  const shown = Boolean(proposed);
+  // (The terms of sale's section numbers: the proposed section 3 moves the ones after it on.)
+  const n = shown ? { pay: 4, wd: 5, refund: 6, young: 7, complaints: 8 } : { pay: 3, wd: 4, refund: 5, young: 6, complaints: 7 };
+  const num = (k) => (shown ? <New on>{n[k]}</New> : n[k]);
   const { hash } = useLocation();
   useEffect(() => {
     if (hash) document.getElementById(hash.slice(1))?.scrollIntoView({ block: 'start' });
@@ -30,7 +41,7 @@ export default function LegalPage() {
       <h1 id="sale" className="ms-h2 ms-legal__h1">Terms of sale</h1>
       <p>The seller is {company.name} (org.nr {company.orgNo}, VAT no. {company.vatNo}), {ADDRESS}. How to reach us: <a href="#contact">Contact</a>.</p>
       <h2 className="ms-legal__h2">1. What you buy</h2>
-      <p>Coin packs: 5,000 coins for $5, 10,500 for $10, 27,500 for $25 and 57,500 for $50 on the website (shown in your local currency, VAT included). In the apps, the App Store or Google Play shows its own price, in your currency. Coins are used to buy cosmetic marbles (including seasonal collections and limited editions) and bags in the shop. Coins don't expire: they stay in your account until you use them or delete your account. Coin packs and the season pass are sold to saved accounts only, not to guest accounts. The season pass is described in section 2.</p>
+      <p>Coin packs: 5,000 coins for $5, 10,500 for $10, 27,500 for $25 and 57,500 for $50 on the website (shown in your local currency, VAT included). In the apps, the App Store or Google Play shows its own price, in your currency. Coins are used to buy cosmetic marbles (including seasonal collections and limited editions) and bags in the shop. Coins don't expire: they stay in your account until you use them or delete your account. <New on={shown} was="Coin packs and the season pass are sold to saved accounts only, not to guest accounts. The season pass is described in section 2.">Track packs unlock a whole series of tracks (section 3). Coin packs, track packs and the season pass are sold to saved accounts only, not to guest accounts. The season pass is described in section 2.</New></p>
       <h2 id="season-pass" className="ms-legal__h2">2. Season pass</h2>
       <p>The Holiday Season Pass 2026 costs $9.99 on the website (shown in your local currency, VAT included). In the apps, the App Store or Google Play shows its own price, in your currency. It is one payment, not a subscription, and is sold for money only, never for coins. It gives you, from 1 December 2026 until the season ends on 7 January 2027 at 23:59 Swedish time:</p>
       <ul>
@@ -40,17 +51,18 @@ export default function LegalPage() {
         <li>holiday tracks in your friend rooms: when you host a room, everyone in it races the holiday tracks, pass or not.</li>
       </ul>
       <p>After the season ends the holiday tracks are free for everyone, and the pass is no longer sold. The pass needs a saved Marble Spins account (not a guest account), belongs to that account and works on the website and in the apps. It has no cash value and can't be transferred, exchanged or resold. Like everything in the game, it never changes how fast a marble is.</p>
-      <p>The pass is on sale from 28 November 2026 at 00:00 Swedish time, on the website and in the apps. Bought before 1 December 2026 (the pre-sale), it is added to your account as soon as the payment is confirmed and activates on 1 December 2026 at 00:00 Swedish time: the holiday tracks, the Holiday Track of the Day bonus and holiday rooms open then, not at purchase. Until it activates you may withdraw from the purchase for a full refund: press <b>Withdraw from this purchase</b> on your <Link to="/purchases">Purchases</Link> page (for a pass bought on the website or in the Android app), or ask Apple for a pass bought in the iPhone app. When you buy in the pre-sale, you agree that the pass starts on 1 December 2026 and that your right of withdrawal (section 4) ends then.</p>
-      <p>Bought from 1 December 2026, the pass is delivered as soon as the payment is confirmed. You agree to immediate delivery and confirm that this ends your right of withdrawal (section 4) when you buy it. If a pass payment is refunded in full or reversed, the pass is removed: the holiday tracks lock again for you until the season ends, and the season marble is removed from your Marble Bag. A pass bought in the iPhone app is refunded by Apple under its rules.</p>
-      <h2 className="ms-legal__h2">3. Payment</h2>
-      <p>Payments on the website are handled by Stripe; we never see or store your card details. Your coins (or your pass) are added as soon as Stripe confirms the payment, and Stripe emails you a receipt. Each purchase has an order number, listed with its receipt on your Purchases page, and we email you a confirmation of the order with what you agreed to at checkout. In the iPhone and Android apps, purchases go through Apple or Google, with their own receipts.</p>
-      <h2 className="ms-legal__h2">4. Right of withdrawal</h2>
+      <p>The pass is on sale from 28 November 2026 at 00:00 Swedish time, on the website and in the apps. Bought before 1 December 2026 (the pre-sale), it is added to your account as soon as the payment is confirmed and activates on 1 December 2026 at 00:00 Swedish time: the holiday tracks, the Holiday Track of the Day bonus and holiday rooms open then, not at purchase. Until it activates you may withdraw from the purchase for a full refund: press <b>Withdraw from this purchase</b> on your <Link to="/purchases">Purchases</Link> page (for a pass bought on the website or in the Android app), or ask Apple for a pass bought in the iPhone app. When you buy in the pre-sale, you agree that the pass starts on 1 December 2026 and that your right of withdrawal (section {num('wd')}) ends then.</p>
+      <p>Bought from 1 December 2026, the pass is delivered as soon as the payment is confirmed. You agree to immediate delivery and confirm that this ends your right of withdrawal (section {num('wd')}) when you buy it. If a pass payment is refunded in full or reversed, the pass is removed: the holiday tracks lock again for you until the season ends, and the season marble is removed from your Marble Bag. A pass bought in the iPhone app is refunded by Apple under its rules.</p>
+      {proposed?.section}
+      <h2 className="ms-legal__h2">{num('pay')}. Payment</h2>
+      <p>Payments on the website are handled by Stripe; we never see or store your card details. <New on={shown} was="Your coins (or your pass) are added">Your coins, your pass or your track pack are added</New> as soon as Stripe confirms the payment, and Stripe emails you a receipt. Each purchase has an order number, listed with its receipt on your Purchases page, and we email you a confirmation of the order with what you agreed to at checkout. In the iPhone and Android apps, purchases go through Apple or Google, with their own receipts.</p>
+      <h2 className="ms-legal__h2">{num('wd')}. Right of withdrawal</h2>
       <p>Under EU consumer law you normally have 14 days to withdraw from an online purchase. For digital content delivered right away, that right ends once delivery starts, but only if you agreed to immediate delivery and confirmed that you lose the right. We ask for both at checkout. A purchase that can still be withdrawn from (a season pass bought in its pre-sale, until it activates) has a <b>Withdraw from this purchase</b> button on your <Link to="/purchases">Purchases</Link> page: press it and confirm, and we confirm your withdrawal by email and refund the full amount, the same way you paid, within 14 days.</p>
-      <h2 className="ms-legal__h2">5. Refunds</h2>
-      <p>Coins and items aren't refundable once delivered, except where the law requires it: for example a faulty delivery, a purchase made by a minor without a guardian's consent, or a successful chargeback. <Link to={CONTACT_PATH}>Contact us</Link> with your order number and we'll help. When a payment is refunded or reversed, the coins it added are removed from your account (only as many as are left, if some were already spent).</p>
-      <h2 className="ms-legal__h2">6. Young players</h2>
+      <h2 className="ms-legal__h2">{num('refund')}. Refunds</h2>
+      <p><New on={shown} was="Coins and items">Coins, items and track packs</New> aren't refundable once delivered, except where the law requires it: for example a faulty delivery, a purchase made by a minor without a guardian's consent, or a successful chargeback. <Link to={CONTACT_PATH}>Contact us</Link> with your order number and we'll help. When a payment is refunded or reversed, the coins it added are removed from your account (only as many as are left, if some were already spent).<New on={shown}> For a track pack, see section 3: the pack is removed, and on a refund the coins you paid towards it come back.</New></p>
+      <h2 className="ms-legal__h2">{num('young')}. Young players</h2>
       <p>Buying needs a saved account, which is for players 13 and older. Under 18? Ask a parent or guardian before buying. Parents can <Link to={CONTACT_PATH}>contact us</Link> about purchases made without their consent.</p>
-      <h2 className="ms-legal__h2">7. Complaints</h2>
+      <h2 className="ms-legal__h2">{num('complaints')}. Complaints</h2>
       <p><Link to={CONTACT_PATH}>Contact us</Link> first. You can also turn to the Swedish National Board for Consumer Disputes (ARN, arn.se).</p>
       <h1 id="privacy" className="ms-h2 ms-legal__h1">Privacy policy</h1>
       <h2 className="ms-legal__h2">Who is responsible</h2>
@@ -97,3 +109,4 @@ export default function LegalPage() {
     </div>
   );
 }
+

@@ -313,8 +313,14 @@ async function savedAccount(db, userId) {
   if (!u || u.is_guest) throw new HttpError(401, SAVE_FIRST, { code: 'save_first' });
 }
 
-/** A store product by id: a coin pack, a season pass or a track pack (404 for anything else). */
-const storeProduct = async (db, id) => PACKS.get(id) ?? (await passProduct(db, id)) ?? (await sale.packProduct(db, id)) ?? pack(id);
+/**
+ * A store product by id: a coin pack, a season pass or a track pack (404 for anything else). The stores write
+ * our ids with _ (coins_5000: Google Play, and the App Store since 12 Nov 2026): turned back first.
+ */
+async function storeProduct(db, storeIdOrOurs) {
+  const id = google.ourId(storeIdOrOurs);
+  return PACKS.get(id) ?? (await passProduct(db, id)) ?? (await sale.packProduct(db, id)) ?? pack(id);
+}
 
 /** The player's account id for Google Play purchases (the app buys with it; saved accounts only). */
 const googleAccountId = async (db, userId) => { await savedAccount(db, userId); return google.accountIdFor(db, userId); };

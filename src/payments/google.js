@@ -4,8 +4,8 @@
  * Google Play Billing for the Android app: coin packs are one-time ("consumable") products. Google
  * Play's product ids allow only lowercase letters, digits, _ and . (no hyphens), so in Google Play our
  * ids are written with _ (playId: coins-5000 → coins_5000, holiday-pass-2026 → holiday_pass_2026,
- * trackpack-grand-prix-coins → trackpack_grand_prix_coins);
- * everywhere else (payments.product_id, the website, the App Store) they keep their hyphens (ourId turns
+ * trackpack-grand-prix-coins → trackpack_grand_prix_coins; the App Store uses the same _ ids since 12 Nov 2026);
+ * everywhere else (payments.product_id, the website) they keep their hyphens (ourId turns
  * a Play id back). A season pass and a track pack are one-time products that are kept: acknowledged, never consumed.
  * Stripe stays for the website only.
  *

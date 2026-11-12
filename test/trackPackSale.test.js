@@ -283,7 +283,7 @@ test('track packs, end to end: the switch, coming soon, Stripe, the coins, Googl
 
     // The App Store: a non-consumable, checked, the pack once; Restore sends it again (nothing more); a refund takes it back.
     const appleTok = (await call('/payments/apple/account', { token: admin.token })).body.accountToken;
-    const tx = { transactionId: String(3000000000 + Math.floor(Math.random() * 1e8)), bundleId: 'com.marblespins.app', productId: `trackpack-${full}`, purchaseDate: Date.now(), type: 'Non-Consumable', inAppOwnershipType: 'PURCHASED', environment: 'Production', signedDate: Date.now(), appAccountToken: appleTok };
+    const tx = { transactionId: String(3000000000 + Math.floor(Math.random() * 1e8)), bundleId: 'com.marblespins.app', productId: `trackpack_${full.replace(/-/g, '_')}`, purchaseDate: Date.now(), type: 'Non-Consumable', inAppOwnershipType: 'PURCHASED', environment: 'Production', signedDate: Date.now(), appAccountToken: appleTok };
     tx.originalTransactionId = tx.transactionId;
     const ap = (await call('/payments/apple/verify', { method: 'POST', token: admin.token, body: { signedTransaction: signed(tx) } })).body;
     assert.equal(ap.status, 'paid');
@@ -292,8 +292,9 @@ test('track packs, end to end: the switch, coming soon, Stripe, the coins, Googl
     assert.equal((await call('/payments/apple/verify', { method: 'POST', token: admin.token, body: { signedTransaction: signed(tx) } })).body.status, 'duplicate'); // (Restore purchases)
     const apay = (await db.query(`SELECT * FROM payments WHERE provider = 'apple' AND provider_ref = $1`, [tx.transactionId])).rows[0];
     assert.equal(apay.amount_cents, 799);
+    assert.equal(apay.product_id, `trackpack-${full}`); // (the App Store's id with _, ours with -)
     // A test purchase (sandbox) of a coming-soon pack by an admin: allowed; by a player: refused.
-    const tx2 = { ...tx, transactionId: String(Number(tx.transactionId) + 7), originalTransactionId: String(Number(tx.transactionId) + 7), productId: `trackpack-${soon}`, environment: 'Sandbox' };
+    const tx2 = { ...tx, transactionId: String(Number(tx.transactionId) + 7), originalTransactionId: String(Number(tx.transactionId) + 7), productId: `trackpack_${soon.replace(/-/g, '_')}`, environment: 'Sandbox' };
     assert.equal((await call('/payments/apple/verify', { method: 'POST', token: admin.token, body: { signedTransaction: signed(tx2) } })).body.status, 'paid');
     const tx3 = { ...tx2, transactionId: String(Number(tx2.transactionId) + 1), originalTransactionId: String(Number(tx2.transactionId) + 1), appAccountToken: (await call('/payments/apple/account', { token: player.token })).body.accountToken };
     assert.equal((await call('/payments/apple/verify', { method: 'POST', token: player.token, body: { signedTransaction: signed(tx3) } })).body.status, 'not-on-sale');

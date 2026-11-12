@@ -145,7 +145,7 @@ describe('buying a pack', () => {
     plugin.purchaseProduct.mockResolvedValue({ jwsRepresentation: 'jws', transactionId: '77' });
     api.appleVerify.mockResolvedValue({ status: 'paid', pack: 'pack-granted', finish: true });
     expect((await buyPack('grand-prix')).status).toBe('paid');
-    expect(plugin.purchaseProduct).toHaveBeenCalledWith(expect.objectContaining({ productIdentifier: 'trackpack-grand-prix', appAccountToken: 'tok-uuid' }));
+    expect(plugin.purchaseProduct).toHaveBeenCalledWith(expect.objectContaining({ productIdentifier: 'trackpack_grand_prix', appAccountToken: 'tok-uuid' })); // (the App Store's id: with _, as Google Play)
     expect(plugin.finishTransaction).toHaveBeenCalledWith({ transactionId: '77' });
     expect(api.packCoinHold).not.toHaveBeenCalled();
   });

@@ -33,10 +33,13 @@ export const STORE_NAME = { stripe: 'Stripe', apple: 'the App Store', google: 'G
 const billing = () => import('@capgo/native-purchases');
 
 /**
- * A product's id in Google Play: Play allows no hyphens, so coins-5000 is coins_5000 there (the same
- * rule as src/payments/google.js playId; the server turns it back). The App Store and the website keep ours.
+ * A product's id in the app stores: written with _ instead of -, so coins-5000 is coins_5000 there, in
+ * Google Play (which refuses hyphens) and, since 12 Nov 2026, in the App Store too (Moses: the same ids in
+ * both stores). The same rule as src/payments/google.js playId; the server turns it back. The website keeps ours.
  */
 export const playId = (id) => String(id).replace(/-/g, '_');
+/** (The same, for the App Store.) */
+export const storeId = playId;
 
 /** Google's own error for "the player closed the purchase sheet". */
 const cancelled = (err) => /cancel/i.test(`${err?.code ?? ''} ${err?.message ?? ''}`);
@@ -86,7 +89,7 @@ const ADAPTERS = {
     let t;
     try {
       t = await NativePurchases.purchaseProduct({
-        productIdentifier: productId,
+        productIdentifier: storeId(productId), // (coins_5000: the App Store's id, with _)
         productType: PURCHASE_TYPE.INAPP,
         appAccountToken: accountToken, // (StoreKit's appAccountToken: ties the purchase to this player)
         autoAcknowledgePurchases: false,
@@ -208,7 +211,7 @@ export async function buyPack(packKey, { useCoins = false, consent = false, test
   let t;
   try {
     t = await NativePurchases.purchaseProduct({
-      productIdentifier: google ? playId(productId) : productId,
+      productIdentifier: playId(productId), // (both stores: with _)
       productType: PURCHASE_TYPE.INAPP,
       appAccountToken: google ? accountId : accountToken, // (ties the purchase to this player)
       isConsumable: false, // (a pack is kept: the server acknowledges it after checking it)
@@ -304,9 +307,8 @@ export function useStorePrices(packs) {
   useEffect(() => {
     if (storeProvider() !== 'google' && storeProvider() !== 'apple') return undefined;
     let live = true;
-    // (Google Play knows them by their Play ids, coins_5000: the prices come back keyed by ours.)
-    const google = storeProvider() === 'google';
-    const byStore = new Map(ids.split(',').map((id) => [google ? playId(id) : id, id]));
+    // (The stores know them by their store ids, coins_5000: the prices come back keyed by ours.)
+    const byStore = new Map(ids.split(',').map((id) => [playId(id), id])); // (both stores know them with _)
     billing().then(({ NativePurchases, PURCHASE_TYPE }) => NativePurchases.getProducts({ productIdentifiers: [...byStore.keys()], productType: PURCHASE_TYPE.INAPP }))
       .then(({ products = [] }) => { if (live) setPrices(Object.fromEntries(products.map((p) => [byStore.get(p.identifier) ?? p.identifier, p.priceString]))); })
       .catch(() => {});

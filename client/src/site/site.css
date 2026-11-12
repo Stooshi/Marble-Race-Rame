@@ -1145,3 +1145,8 @@ tr:hover .report-name__btn--compact, .report-name__btn--compact:focus-visible { 
 a.ms-pack-track { text-decoration: none; cursor: pointer; }
 a.ms-pack__pic { display: flex; }
 a.ms-pack__see { text-decoration: underline; }
+/* The legal draft preview (/preview/legal-packs, 12 Nov 2026): new and changed passages highlighted. */
+mark.ms-legal__new { background: rgba(255, 210, 31, 0.22); color: var(--ms-text); border-radius: 4px; padding: 0 3px; }
+.ms-legal__newblock { display: grid; gap: 14px; padding: 12px 14px; border-left: 4px solid var(--ms-yellow); background: rgba(255, 210, 31, 0.08); border-radius: 0 10px 10px 0; }
+.ms-legal__newblock p { color: var(--ms-text); }
+.ms-legal__newblock .ms-legal__h2 { scroll-margin-top: 140px; margin-top: 0; }

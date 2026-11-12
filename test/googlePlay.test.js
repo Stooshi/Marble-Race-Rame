@@ -181,7 +181,7 @@ test('Google Play: verified, credited once to the buyer only, consumed; voided p
   }
 });
 
-test('Google Play product ids: no hyphens there (coins_5000), our own ids everywhere else', () => {
+test('store product ids: no hyphens in Google Play or the App Store (coins_5000), our own ids everywhere else', () => {
   const google = require('../src/payments/google');
   const packs = require('../client/src/shared/payments/packs.json').packs.map((p) => p.id);
   const fs = require('fs');
@@ -198,7 +198,9 @@ test('Google Play product ids: no hyphens there (coins_5000), our own ids everyw
   // The app buys and prices with the Play id (client/src/site/payments/index.js).
   const client = fs.readFileSync(path.join(__dirname, '../client/src/site/payments/index.js'), 'utf8');
   assert.match(client, /export const playId = \(id\) => String\(id\)\.replace\(\/-\/g, '_'\);/);
-  assert.equal((client.match(/productIdentifier: playId\(/g) ?? []).length, 2);
+  // (Every purchase in either store uses the store id with _: the App Store too since 12 Nov 2026.)
+  assert.equal((client.match(/productIdentifier: (playId|storeId)\(/g) ?? []).length, 4);
+  assert.doesNotMatch(client, /productIdentifier: (productId|pack\.id|season\.pass\.productId)[,\n ]/);
 });
 
 test('the coin packs: website $5/$10/$25/$50, the stores $4.99/$9.99/$24.99/$49.99 (like credits and the pass)', () => {

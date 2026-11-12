@@ -2,7 +2,9 @@
 
 /**
  * App Store purchases for the iPhone app (StoreKit 2): the coin packs as consumable in-app
- * purchases with the same ids as on the website, and a season pass and the track packs as non-consumables.
+ * purchases, and a season pass and the track packs as non-consumables, with the same ids as in Google Play:
+ * ours with _ instead of - (coins_5000, holiday_pass_2026, trackpack_blocks_2; Moses, 12 Nov 2026), turned
+ * back by src/payments storeProduct.
  *
  * The flow (docs/05-runbook.md, "App Store"):
  *   1. The app asks for the player's App Store account token (accountTokenFor: a random UUID kept
