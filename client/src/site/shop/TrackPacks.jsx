@@ -41,6 +41,17 @@ function usePackPrices(key) {
 }
 
 /** The shop's Track packs tab: a card for every pack. `data`: GET /api/packs. */
+/**
+ * The tab's order (Moses, 12 Nov 2026): the packs that can be bought (complete and on sale, not owned) first,
+ * then the player's own packs, then the Coming soon ones, fewest tracks still to come first; within a group,
+ * the server's order.
+ */
+export function orderPacks(packs) {
+  const group = (p) => (p.owned ? 1 : p.complete ? 0 : 2);
+  const toGo = (p) => (p.complete || p.owned ? 0 : p.fullAt - p.live);
+  return packs.map((p, i) => [p, i]).sort(([a, i], [b, j]) => group(a) - group(b) || toGo(a) - toGo(b) || i - j).map(([p]) => p);
+}
+
 export function TrackPacksTab({ data }) {
   const [restored, setRestored] = useState(null);
   const apple = storeProvider() === 'apple';
@@ -52,7 +63,7 @@ export function TrackPacksTab({ data }) {
       </div>
       <p className="ms-wild-note">Every pack is {TRACK_PACK_PRICE.fullAt} tracks of one series, yours for good: race them any time, and with friends in your rooms. Paid leagues can race any track, locked ones included.</p>
       <div className="ms-pack-grid">
-        {data.packs.map((p) => <PackCard key={p.key} pack={p} testBuy={data.testBuy} />)}
+        {orderPacks(data.packs).map((p) => <PackCard key={p.key} pack={p} testBuy={data.testBuy} />)}
       </div>
       {apple && (
         <div className="ms-row">
@@ -75,7 +86,7 @@ function PackCard({ pack: p, testBuy }) {
       </Link>
       <div className="ms-pack__body">
         <h3 className="ms-pack__name">{p.name}</h3>
-        <span className="ms-pack__count">{p.fullAt} tracks{!p.complete ? ` · ${p.live} ready, ${p.fullAt - p.live} on the way` : ''}</span>
+        <span className="ms-pack__count">{p.complete ? `${p.fullAt} tracks` : `${p.live} of ${p.fullAt} tracks`}</span>
         <Mix mix={p.mix} />
         <div className="ms-pack__buy">
           <span className="ms-pack__price">{prices.money ?? '…'}</span>

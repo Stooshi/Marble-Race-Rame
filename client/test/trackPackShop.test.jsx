@@ -29,7 +29,7 @@ const pageData = vi.hoisted(() => ({ value: null }));
 vi.mock('../src/hooks/useAsync', () => ({ useAsync: () => ({ data: pageData.value, error: null, reload: () => {} }) }));
 
 const { buyPack } = await import('../src/site/payments');
-const { TrackPacksTab, PackPage } = await import('../src/site/shop/TrackPacks');
+const { TrackPacksTab, PackPage, orderPacks } = await import('../src/site/shop/TrackPacks');
 const { TRACK_PACK_PRICE, PACK_NAMES, packProductId } = await import('../src/shared/payments/trackPacks');
 const require = createRequire(import.meta.url);
 const src = (f) => readFileSync(new URL(`../${f}`, import.meta.url), 'utf8');
@@ -62,8 +62,17 @@ describe('the Track packs tab and a pack\'s page', () => {
     expect(out).toContain('$7.99');
     expect(out.match(/>Unlock</g)).toHaveLength(1);
     expect(out).toContain('Coming soon');
-    expect(out).toContain('4 ready, 16 on the way');
+    expect(out).toContain('4 of 20 tracks'); // (a Coming soon card: "X of 20 tracks", 12 Nov 2026)
     expect(out).toContain('Paid leagues can race any track, locked ones included.');
+  });
+
+  it('the order: buyable packs first, then owned, then Coming soon by tracks still to come, fewest first', () => {
+    const pk = (key, live, extra = {}) => ({ ...PACK, key, name: key, live, complete: live >= 20, ...extra });
+    const packs = [pk('arcade', 4), pk('grand-prix', 9), pk('blocks-1', 12), pk('rivers', 13), pk('blocks-2', 20), pk('peaks', 12, { owned: true }), pk('canyons', 12)];
+    expect(orderPacks(packs).map((p) => p.key)).toEqual(['blocks-2', 'peaks', 'rivers', 'blocks-1', 'canyons', 'grand-prix', 'arcade']);
+    const out = html(<TrackPacksTab data={{ onSale: true, testBuy: false, packs: [SOON, PACK] }} />);
+    expect(out.indexOf('>Grand Prix</h3>')).toBeLessThan(out.indexOf('>Arcade</h3>'));
+    expect(out).toContain('>20 tracks<');
   });
 
   it('the pack page: every track with its one line, "Unlock all 20 tracks – $7.99" at the top and the bottom, the coins option and split', () => {
