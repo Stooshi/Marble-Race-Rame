@@ -926,6 +926,17 @@
    "side": 1,
    "marbles": 7
   },
+  "lapland-ice-race": {
+   "name": "Lapland Ice Race",
+   "series": "Grand Prix",
+   "lighting": "night-northern-lights",
+   "v": "4e6f5b98",
+   "bytes": 19536,
+   "bytes2x": 48026,
+   "t": 16378,
+   "side": -1,
+   "marbles": 5
+  },
   "li-river-karst-run": {
    "name": "Li River Karst Run",
    "series": "Blocks",

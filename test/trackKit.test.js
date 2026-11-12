@@ -752,6 +752,7 @@ const HIDDEN_KIT_TRACKS = [
   ['vatnajokull-blue-cave', '2027-04-24-add-vatnajokull-blue-cave.sql', 'Peaks track (switched off until Moses has watched the preview).'],
   // The motorsport Grand Prix tracks (Moses, 12 Nov 2026; switched off until Moses has watched the previews).
   ['heartland-oval-speedway', '2027-06-14-add-heartland-oval-speedway.sql', 'Grand Prix track (motorsport: a big oval speedway on the prairie, a rolling start, the long banked sweep of turns three and four, the infield road course; in the Grand Prix pack; switched off until Moses has watched the preview).'],
+  ['lapland-ice-race', '2027-06-15-add-lapland-ice-race.sql', 'Grand Prix track (motorsport: an ice race on a frozen lake in Lapland under the northern lights, a clean drop off the shore, the Fell drop onto the lake; in the Grand Prix pack; switched off until Moses has watched the preview).'],
 ];
 for (const [slug, file, note] of HIDDEN_KIT_TRACKS) {
   test(`${slug} is added by its data update, switched off, exactly as its track file builds it`, () => {

@@ -184,4 +184,5 @@ module.exports = [
   require('./saint-tropez'),
   require('./pudong-marble-grand-prix'),
   require('./heartland-oval-speedway'),
+  require('./lapland-ice-race'),
 ];
