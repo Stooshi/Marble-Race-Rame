@@ -89,7 +89,7 @@ test('wildness.json: every live track scored from the full report races, the dat
   const sql = fs.readFileSync(path.join(__dirname, '..', 'docs', 'data_updates', '2027-06-10-wildness-and-track-packs.sql'), 'utf8');
   const { execFileSync } = require('node:child_process');
   assert.equal(execFileSync(process.execPath, [path.join(__dirname, '..', 'scripts', 'wildness-sql.js')], { encoding: 'utf8' }), sql);
-  assert.doesNotMatch(sql, /is_active|product_id|price/); // (switches nothing on, sells nothing)
+  assert.doesNotMatch(sql.replace(/--.*$/gm, ''), /is_active|product_id|price/); // (switches nothing on, sells nothing)
 });
 
 test('with the switch on: a pack track only for its owners and their friend rooms; off again: open to all', { skip: !DB }, async () => {

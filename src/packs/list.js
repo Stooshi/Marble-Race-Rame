@@ -38,15 +38,15 @@ const BLOCKS_2 = [
  */
 const FREE = {
   'Grand Prix': ['dubai-marble-grand-prix', 'nairobi-marble-grand-prix', 'delhi-red-fort-marble-grand-prix', 'sydney-marble-grand-prix'],
-  'World Tour': ['are-run', 'paris-eiffel-tower-run', 'amazon-water-run', 'china-wall-twister', 'saint-tropez'],
+  'World Tour': ['are-run', 'paris-eiffel-tower-run', 'amazon-water-run', 'table-mountain-run', 'saint-tropez'],
   Coasters: ['chiang-mai', 'collserola-run', 'hong-kong-crossing', 'ha-long-bay-spins'],
   Canyons: ['antelope-slot-spins', 'indus-spins', 'copper-spins', 'verdon-burst', 'grand-canyon-burst'],
-  Blocks: ['magma-core', 'spawn-point', 'singapore-block-gardens', 'niagara-cube-falls', 'lisbon-cube-hills'],
+  Blocks: ['magma-core', 'spawn-point', 'singapore-block-gardens', 'lisbon-cube-hills', 'douro-block-terraces'],
   'Track and Field': ['bislett-mile', 'marble-stadium-sprint', 'beijing-nest-200', 'london-steeplechase'],
   Rivers: ['danube-night-run', 'volga-port-burst', 'irrawaddy-balloon-dawn', 'rhine-castle-run', 'ganges-dawn-run'],
   Peaks: ['everest-icefall-run', 'aconcagua-penitentes', 'vatnajokull-blue-cave', 'kilimanjaro-five-zones', 'mont-blanc-needle-ridge'],
   Pinball: ['tilt', 'multiball-manor', 'flipper-spins', 'slingshot-spins'],
-  Arcade: ['bullet-hell', 'final-round-spin', 'checkpoint-rush', 'kill-screen'],
+  Arcade: ['bullet-hell', 'final-round-spin', 'checkpoint-rush', 'joystick-spins'],
 };
 
 /** The pack key of a live track of `series`. */
