@@ -24,9 +24,21 @@
  *     (the hit sounds then work from that moment; a sound whose time has passed is not played);
  *   - a play the player hasn't started yet when its voice is stopped (or its `until` passes) is stopped once
  *     it starts: Android's player ignores a stop while it is still seeking to the start position.
+ *
+ * Moses's Android test of 12 Nov 2026 (build 1.0.0 (4), Galaxy A12: no collision clicks or bumps; the ceremony
+ * song playing on through the next race):
+ *   - a one-shot effect started for "now" (the click, the bump, the whoosh: `asap`) plays from its start, never
+ *     part-way in: the click is 0.12 s long and the player takes 0.2-0.4 s to start, so worked out "in step" it
+ *     was always over before it could sound and was never played. It's dropped only when it couldn't start
+ *     within LATE_FX_MS of its moment;
+ *   - a stop is made sure of (hardStop): the volume goes to 0 at once, then stop(), then the player is asked
+ *     (isPlaying) a few times and stopped again while nothing should be playing that file: Android's player
+ *     ignores a stop while it is still seeking, and play() and loop() run on another thread than stop().
  */
 
 const STEP_MS = 50;
+const LATE_FX_MS = 250; // (a one-shot effect started later than this after its moment is dropped)
+const RECHECK_MS = [150, 400, 900, 2000, 4000]; // (after a stop: still playing? stopped again)
 const LOAD_TIMEOUT_MS = 8000; // (a file the player hasn't loaded by then counts as failed)
 const MAX_LEAD_MS = 400;
 const LOADS_AT_ONCE = 2;
@@ -63,9 +75,31 @@ export function createNativeBackend({ plugin, now = () => Date.now(), durations 
   let dipRamp = null;
   const volumeOf = (v) => Math.max(0, Math.min(1, (v.bus === 'music' ? levels.music * dip : levels.effects) * v.gain * v.fade));
   const setVolume = (v) => plugin.setVolume({ assetId: v.name, volume: volumeOf(v) }).catch(() => {});
+  const live = (name) => [...voices].some((v) => v.name === name);
+  /**
+   * Stops a file for sure: volume 0 at once (silent even if the player starts after all), stop(), and while no
+   * voice wants that file any more, asked again a few times (isPlaying) and stopped again if it plays.
+   */
+  function hardStop(name) {
+    Promise.resolve(plugin.setVolume({ assetId: name, volume: 0 })).catch(() => {});
+    Promise.resolve(plugin.stop({ assetId: name })).catch(() => {});
+    if (!plugin.isPlaying) return;
+    for (const ms of RECHECK_MS) {
+      setTimeout(() => {
+        if (live(name)) return; // (started again meanwhile: that voice is in charge)
+        Promise.resolve(plugin.isPlaying({ assetId: name })).then((r) => {
+          if (!r?.isPlaying || live(name)) return;
+          log(`${name}: still playing after its stop: stopped again`);
+          plugin.setVolume({ assetId: name, volume: 0 }).catch(() => {});
+          plugin.stop({ assetId: name }).catch(() => {});
+        }).catch(() => {});
+      }, ms);
+    }
+  }
 
   /** Where a voice should be heard from if played now (s into the file), or null if it's over. */
   function position(v) {
+    if (v.asap) return now() - v.atWall > LATE_FX_MS ? null : 0; // (a one-shot: from its start, or not at all)
     const heardAt = now() + lead; // (the player sounds `lead` ms after play())
     if (v.until && heardAt >= v.until) return null;
     const t = v.offset + Math.max(0, (heardAt - v.atWall) / 1000);
@@ -76,7 +110,7 @@ export function createNativeBackend({ plugin, now = () => Date.now(), durations 
   function begin(v) {
     clearTimeout(v.timer);
     if (heldBack || !loads.has(v.name)) return;
-    const wait = v.atWall - lead - now();
+    const wait = v.asap ? 0 : v.atWall - lead - now();
     if (wait > 15) { v.timer = setTimeout(() => begin(v), wait); return; }
     const p = loads.get(v.name);
     p.then((ok) => {
@@ -85,7 +119,7 @@ export function createNativeBackend({ plugin, now = () => Date.now(), durations 
       const at = position(v);
       if (at === null) { voices.delete(v); log(`${v.name}: its time has passed, not played (${Math.round(now() - v.atWall)} ms late)`); return; }
       const late = now() + lead - v.atWall;
-      if (late > 40) log(`${v.name}: starts ${Math.round(late)} ms late, ${at.toFixed(2)} s in (in step)`);
+      if (late > 40 && !v.asap) log(`${v.name}: starts ${Math.round(late)} ms late, ${at.toFixed(2)} s in (in step)`);
       setVolume(v);
       // A loop: played from where the race is, then looping in the player itself (from memory: no gap).
       // (The plugin's loop() keeps the position on iOS and only switches looping on on Android.)
@@ -95,7 +129,7 @@ export function createNativeBackend({ plugin, now = () => Date.now(), durations 
         .then(() => {
           // (Stopped, or past its `until`, while the player was still getting ready: stopped now that it plays.)
           if (!voices.has(v) || (v.until && now() >= v.until)) {
-            setTimeout(() => plugin.stop({ assetId: v.name }).catch(() => {}), 60); // (Android: once its seek is done)
+            if (!live(v.name)) hardStop(v.name); // (Android: again once its seek is done: hardStop's rechecks)
             v.on = false;
             voices.delete(v);
             return;
@@ -191,22 +225,22 @@ export function createNativeBackend({ plugin, now = () => Date.now(), durations 
       plugin.unload?.({ assetId: name }).catch(() => {});
     },
     duration: (name) => lengths.get(name) ?? durations[name] ?? null,
-    start(name, { atWall = now(), offset = 0, bus = 'fx', gain = 1, loop = false, fadeIn = 0, until = null } = {}) {
+    start(name, { atWall = now(), offset = 0, bus = 'fx', gain = 1, loop = false, fadeIn = 0, until = null, asap = false } = {}) {
       // (One voice per file: a new one replaces it, e.g. the same tune again.)
       for (const old of voices) if (old.name === name) { clearTimeout(old.timer); clearInterval(old.ramp); voices.delete(old); }
-      const v = { name, atWall, offset, bus, gain, loop, until, fadeIn, fade: fadeIn > 0 ? 0 : 1, on: false };
+      const v = { name, atWall, offset, bus, gain, loop, until, fadeIn, fade: fadeIn > 0 ? 0 : 1, on: false, asap: asap && !loop };
       voices.add(v);
       if (!loads.has(name)) this.load(name);
       begin(v);
-      if (until) setTimeout(() => { if (voices.has(v)) { plugin.stop({ assetId: name }).catch(() => {}); voices.delete(v); } }, Math.max(0, until - now()));
+      if (until) setTimeout(() => { if (voices.has(v)) { voices.delete(v); if (!live(name)) hardStop(name); } }, Math.max(0, until - now()));
       return {
         name,
         fadeTo: (to, s) => ramp(v, to, s),
         stop(fadeS = 0.4, fromWall = now()) {
           clearTimeout(v.timer);
-          const go = () => ramp(v, 0, fadeS, () => { if (voices.has(v)) { voices.delete(v); plugin.stop({ assetId: name }).catch(() => {}); } });
+          const go = () => ramp(v, 0, fadeS, () => { if (voices.has(v)) { voices.delete(v); if (!live(name)) hardStop(name); } });
           const wait = fromWall - now();
-          if (!v.on && wait <= 0) { voices.delete(v); plugin.stop({ assetId: name }).catch(() => {}); return; }
+          if (!v.on && wait <= 0) { voices.delete(v); if (!live(name)) hardStop(name); return; }
           if (wait > 0) setTimeout(go, wait); else go();
         },
         playing: () => v.on,

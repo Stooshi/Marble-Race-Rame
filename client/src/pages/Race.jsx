@@ -14,7 +14,7 @@ import NextRace from '../components/NextRace';
 import { Empty, ErrorMessage, Spinner } from '../components/Status';
 import { formatTime } from '../utils/format';
 import StartLights from '../components/StartLights';
-import { START_SOUND_MS, play as playSound, prepare as prepareSound, raceCountdown, raceEnd, raceGo } from '../sound/engine';
+import { START_SOUND_MS, closeCeremony, play as playSound, prepare as prepareSound, raceCountdown, raceEnd, raceGo } from '../sound/engine';
 import { track, trackingActive } from '../site/consent/tracking';
 import { entryLabel, plainName } from '../shared/playerName';
 import WildnessBadge from '../site/WildnessBadge';
@@ -191,7 +191,7 @@ export default function Race() {
           <button type="button" aria-pressed={shown === '2d'} onClick={() => setView('2d')}>2D</button>
         </div>
       )}
-      {(meta || preparing) && shown === '3d' && <RaceFullScreen onLeave={() => (window.history.length > 1 ? navigate(-1) : navigate('/home'))} on2d={meta && newPhysics ? () => setView('2d') : null} />}
+      {(meta || preparing) && shown === '3d' && <RaceFullScreen onLeave={() => { closeCeremony(raceId); raceEnd(raceId); if (window.history.length > 1) navigate(-1); else navigate('/home'); }} on2d={meta && newPhysics ? () => setView('2d') : null} />}
       {(meta || preparing) && shown === '3d' ? (
         <LiveRaceViewer3D
           key={raceId}

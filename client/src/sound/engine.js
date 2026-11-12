@@ -270,6 +270,9 @@ let beepsState = 'none';
 // GO as shown minus the GO the sound was timed on, at GO (ms; null until GO): the readiness report.
 let goGap = null;
 const now = () => Date.now();
+// The ceremony song playing (whichever race started it), and the races that have ended on this screen.
+let ceremonySong = null;
+const ended = new Set();
 
 function clearTune(fadeS = 0.4) {
   const t = race?.tune;
@@ -282,6 +285,7 @@ function clearCeremony(fadeS = 0.4) {
   const c = race?.ceremony;
   if (!c) return;
   clearTimeout(c.timer);
+  if (c.voice && c.voice === ceremonySong) ceremonySong = null;
   c.voice?.stop(fadeS);
   c.voice = null;
 }
@@ -298,6 +302,7 @@ function playTune(name, atWall) {
 /** Starts (or re-times) a race on this screen: `goAt` is GO as shown here (wall ms). */
 function begin(raceId, goAt) {
   if (race && race.id !== raceId) endRace();
+  ended.delete(raceId); // (its countdown or GO here again: the race is on)
   if (!race) race = { id: raceId, goAt, beeps: null, tune: null, ceremony: null };
   const moved = Math.abs(race.goAt - goAt) > 30;
   race.goAt = goAt;
@@ -314,6 +319,7 @@ export function raceCountdown(raceId, msToGo) {
   const fresh = !race || race.id !== raceId;
   if (fresh || Math.abs((race?.goAt ?? 0) - goAt) > 30) log(`race ${String(raceId).slice(0, 8)}: GO in ${Math.round(msToGo)} ms (${backend.kind}; beeps ${backend.loaded(SOUNDS.beeps) ? 'loaded' : 'NOT loaded'}, tune ${trackFor(raceId)} ${backend.loaded(trackFor(raceId)) ? 'loaded' : 'NOT loaded'})`);
   const moved = begin(raceId, goAt);
+  if (!race.ceremony) stopCeremonySong(0.3); // (the next countdown: never the last race's song under it)
   const first = trackFor(raceId);
   prepare(raceId);
   if (fresh || moved || !race.tune) { clearTune(0.05); if (!race.ceremony) playTune(first, goAt); }
@@ -347,6 +353,9 @@ export function raceGo(raceId, goAt = null) {
 
 /** The finish ceremony appears: the tune stops and the ceremony song starts (once per race), as before. */
 export function raceCeremony(raceId) {
+  // (Never for a race that has ended here, nor while another race is on: a page still showing the old race's
+  // finish as the next one loads; Moses's Android test, 12 Nov 2026: the song through the whole next race.)
+  if (ended.has(raceId) || (race && race.id !== raceId)) return;
   if (race?.id !== raceId || race.ceremony) {
     if (race?.id === raceId) return;
     begin(raceId, now());
@@ -360,15 +369,36 @@ function startCeremony() {
   if (!c || !musicOn()) return;
   const left = CEREMONY_SECONDS * 1000 - (now() - c.at);
   if (left <= 0) return;
+  stopCeremonySong(0.05); // (one song at a time)
   c.voice = backend.start(CEREMONY, { atWall: now(), bus: 'music', loop: true });
+  ceremonySong = c.voice;
   clearTimeout(c.timer);
-  c.timer = setTimeout(() => { c.voice?.stop(CEREMONY_FADE_S); c.voice = null; }, left);
+  c.timer = setTimeout(() => { if (ceremonySong === c.voice) stopCeremonySong(CEREMONY_FADE_S); c.voice = null; }, left);
+}
+/** The ceremony song, whichever race started it: stopped (over `fadeS`). */
+function stopCeremonySong(fadeS = 0.4) {
+  const v = ceremonySong;
+  ceremonySong = null;
+  v?.stop(fadeS);
+}
+/**
+ * The player closed the finish celebration (or left it): the ceremony song fades out now (Moses, 12 Nov
+ * 2026). The race is over for the sound: no song again for it.
+ */
+export function closeCeremony(raceId) {
+  if (raceId !== undefined && race && race.id !== raceId) { stopCeremonySong(0.4); return; }
+  if (raceId !== undefined) ended.add(raceId);
+  if (race?.ceremony) clearCeremony(0.4);
+  stopCeremonySong(0.4);
 }
 
 function endRace() {
   beepsState = 'none';
   goGap = null;
+  stopCeremonySong(0.4); // (whatever race it was for)
   if (!race) return;
+  ended.add(race.id);
+  if (ended.size > 50) ended.delete(ended.values().next().value);
   clearBeeps();
   clearTune(0.4);
   clearCeremony(0.4);
@@ -420,7 +450,7 @@ export function play(key, { gain = 1, duck = true } = {}) {
   const name = SOUNDS[key] ?? key;
   if (!backend.loaded(name)) { load(name); return false; }
   if (!backend.running()) { backend.wake(); return false; }
-  backend.start(name, { atWall: now(), bus: 'fx', gain });
+  backend.start(name, { atWall: now(), bus: 'fx', gain, asap: true }); // (asap: from its start, as soon as it can: the apps' player, 12 Nov 2026)
   if (duck) backend.duck(DUCK, backend.duration(name) ?? 2);
   return true;
 }
