@@ -6,6 +6,9 @@
  *
  *   node scripts/wildness.js measure [--races 1000] [--list live.json]   → reports/wildness-raw.json (resumes)
  *   node scripts/wildness.js score                                       → src/tracks/wildness.json
+ *   node scripts/wildness.js one <slug> [--races 1000] [--from-report]   → one new track's score (prints JSON)
+ *     (a track added after the 143 of 11 Nov 2026: its 1,000 races ranked against theirs in src/tracks/wildness.json,
+ *     whose own scores never change; its score goes in its own data update, `<date>-<slug>-to-<pack>.sql`)
  *
  * Score 0–100 = race part (ranks among all the live tracks, 60 points) + features (up to 40):
  *   overtakes 18, lead changes 14, obstacle hits 14, finishing gap 8, upsets 6 (1 − rank of the
@@ -128,8 +131,21 @@ if (require.main === module) {
           loops: t.loops, jumps: t.jumps, splitters: t.splitters, drops: t.drops, races: t.races })),
       }, null, 1)}\n`);
       console.log(counts);
+    } else if (args[0] === 'one') {
+      const slug = args[1];
+      const track = physicsTrack(slug);
+      if (!track) throw new Error(`no track "${slug}"`);
+      const known = JSON.parse(fs.readFileSync(OUT, 'utf8')).tracks.filter((t) => t.slug !== slug);
+      // (--from-report: the full report's first batch, the same 1,000 races, batchSeeds(0, 1000), without racing them again.)
+      const saved = path.join(__dirname, '..', 'reports', slug, 'batches.json');
+      const fromReport = args.includes('--from-report') && fs.existsSync(saved) ? JSON.parse(fs.readFileSync(saved, 'utf8'))[0] : null;
+      if (args.includes('--from-report') && fromReport?.length !== 1000) throw new Error(`${slug}: no full report with a first batch of 1,000 races`);
+      const races = fromReport ?? await runBatch(slug, batchSeeds(0, Number(opt('races', 1000))), { threads: Number(opt('threads', 2)) });
+      const me = { slug, name: track.name, ...measureRaces(races), ...features(track) };
+      const mine = score([...known, me]).find((t) => t.slug === slug);
+      console.log(JSON.stringify(mine));
     } else {
-      console.error('node scripts/wildness.js measure|score');
+      console.error('node scripts/wildness.js measure|score|one <slug>');
       process.exit(1);
     }
     process.exit(0);

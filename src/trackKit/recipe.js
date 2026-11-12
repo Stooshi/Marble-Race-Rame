@@ -108,7 +108,7 @@ const LOOP_HARDEST_GLIDE = 1.4;  // the most a marble's glide and form multiply 
 const LOOP_RUN_UP_M = 30;        // metres of the straight before the launch pad
 const LOOP_RUN_OUT_M = 15;       // metres of the straight left after the run-out
 const LOOP_CLEAR_M = 15;         // metres clear of other obstacles and features before and after it
-const NO_LUCK_OPENINGS = ['clean-drop', 'peg-drop', 'pipe-drop'];
+const NO_LUCK_OPENINGS = ['clean-drop', 'peg-drop', 'pipe-drop', 'rolling-start', 'rumble-start'];
 const LUCK_GATES = 5;
 const LUCK_LOSS = 0.3;
 const MAX_BUMPS_IN_ROW = 8;
@@ -511,7 +511,7 @@ const RIVER_STARTS = ['pier', 'river-boat', 'lock-gate'];
 // (A Rivers track's own look for a start type, looks only: the lift inside a bridge tower or up a port crane, a mansard roof.)
 const START_LOOKS = { elevator: ['bridge-tower', 'port-crane'], rooftop: ['mansard'] };
 const GATES = ['paddle', 'trapdoor', 'stalls', 'barrier'];
-const COUNTDOWN_SHOTS = ['front', 'side', 'above', 'chase'];
+const COUNTDOWN_SHOTS = ['front', 'side', 'above', 'chase', 'low-front', 'crane'];
 const LAUNCH_SHOTS = ['high-behind', 'low-chase', 'side', 'overhead', 'look-back'];
 
 /** start: { type (coasters), gate, shots: { countdown, launch } }: known values; every new track (a library opening) says them. */

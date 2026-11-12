@@ -162,6 +162,18 @@ const COUNTDOWN_KEYS = {
     [at(-8, 0, 60 * wide), at(4, 0, 0)], [at(-6, 2, 52 * wide), at(4, 0, 0)], [at(-5, 0, 44 * wide), at(3, 0, 0)],
     [at(-5, -2, 36 * wide), at(2, 0, 0)], [at(-6, 0, 28 * wide), at(2, 0, 0)], [at(-9, 0, 16), at(2, 0, 0.3)],
   ],
+  // Low in front (Moses, 12 Nov 2026, for Nevada Drag Strip): out in front of the row at marble height, the field
+  // head-on behind its gate as a drag racer's camera sees it, pushing slowly in; then up and over to GO.
+  'low-front': (at, wide) => [
+    [at(26 * wide, 0, 1.4), at(0, 0, 0.6)], [at(23 * wide, 0.8, 1.3), at(0, 0, 0.6)], [at(20 * wide, 0, 1.2), at(0, 0, 0.55)],
+    [at(17 * wide, -0.8, 1.2), at(0, 0, 0.5)], [at(14 * wide, 0, 1.3), at(0, 0, 0.5)], [at(6, -6 * wide, 8), at(2, 0, 0.3)],
+  ],
+  // A camera crane (12 Nov 2026): high behind the gate and off to one side, swinging round over the grid and
+  // coming down behind the row.
+  crane: (at, wide) => [
+    [at(-18, -18 * wide, 22), at(3, 0, 0)], [at(-16, -12 * wide, 20), at(3, 0, 0)], [at(-13, -6 * wide, 18), at(2, 0, 0)],
+    [at(-11, 0, 16), at(2, 0, 0)], [at(-10, 6 * wide, 14), at(2, 0, 0.2)], [at(-8, 4 * wide, 9), at(2, 0, 0.3)],
+  ],
   // Low among the marbles: just behind the row, a little above it, sliding across the channel along it.
   // (Measured along the slope, so on a steep starting ramp it stays above the ice behind the row.)
   // (On a narrow portrait screen, `wide` > 1, it stands further back and a little higher, so the starting blocks and

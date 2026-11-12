@@ -204,7 +204,10 @@ async function databaseLine(track) {
   try {
     const { rows } = await db.query('SELECT physics, waypoints, length_m FROM tracks WHERE slug = $1', [track.slug]);
     if (!rows[0]) return { ...line, value: 'not in the database yet', pass: null };
-    const same = JSON.stringify(rows[0].physics) === JSON.stringify(track.physics) && JSON.stringify(rows[0].waypoints) === JSON.stringify(track.waypoints);
+    // (Compared as values: the database's jsonb keeps its keys in its own order, so the JSON text never matches.)
+    const plain = (v) => JSON.parse(JSON.stringify(v));
+    const { isDeepStrictEqual } = require('node:util');
+    const same = isDeepStrictEqual(rows[0].physics, plain(track.physics)) && isDeepStrictEqual(rows[0].waypoints, plain(track.waypoints));
     return { ...line, value: same ? 'identical' : 'different: add a re-tune update', pass: same };
   } catch (err) {
     return { ...line, value: `not checked: ${err.message}`, pass: null };

@@ -137,7 +137,7 @@ describe('starting camera (countdown)', () => {
   it('the varied starts: each countdown shot moves steadily, keeps the field in the picture and ends on the shot at GO', () => {
     const field = Array.from({ length: 20 }, (_, i) => start.centre.clone().addScaledVector(start.side, (i - 9.5) * 1.15).add(new Vector3(0, 0.55, 0)));
     const middles = {};
-    for (const shot of ['front', 'side', 'above', 'chase']) {
+    for (const shot of ['front', 'side', 'above', 'chase', 'low-front', 'crane']) {
       for (const aspect of [1.8, 0.6]) {
         const cam = new PerspectiveCamera(50, aspect, 0.3, 1000);
         let prev = null;

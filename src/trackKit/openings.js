@@ -19,7 +19,7 @@
  * shape and its obstacles' places are what was proven, so they stay as they are.
  */
 
-const { plunge, straight, sweep, sBends, climb, pileUp, slalom, peg, boost, brake, halfPipe } = require('./parts');
+const { plunge, straight, sweep, sBends, climb, pileUp, slalom, peg, boost, brake, halfPipe, moguls, block } = require('./parts');
 
 // The classic opening (every Grand Prix track's): a steep 80 m plunge, a pile-up, then a slalom.
 const classicObstacles = (c) => [
@@ -136,6 +136,78 @@ const OPENINGS = {
     ],
     waves: { groups: 5, gap: 0.3, jitter: 0.1 },
   }),
+
+  // ── Motorsport starts (Moses, 12 Nov 2026: eleven new Grand Prix tracks, varied openings, no boost launch and
+  // no jump). Each proven on its own test track (src/tracks/variety: variety-opening-<kind>) with its races.
+
+  /**
+   * Rolling start: the field let go in waves down a long, gentle run (the pace lap), a short slalom of cones,
+   * then a wide banked first turn (`side`); the field spreads up the banking.
+   */
+  'rolling-start': (o) => ({
+    sections: [
+      { key: 'run', name: 'Rolling start', shape: plunge(90, { grade: 0.5 }), obstacles: [slalom({ costume: o.costumes.slalom, from: 0.55, to: 0.97, count: 5, loss: 0.3 })] },
+      { key: 'turn', name: 'Turn one', shape: sweep({ side: o.side ?? 'left', radius: 75, degrees: 120, grade: 0.13 }) },
+    ],
+    waves: { groups: 5, gap: 0.3, jitter: 0.1 },
+  }),
+
+  /**
+   * Chicane start: the field let go in waves, down the plunge through the first pile-up, then straight into a tight chicane (`side`: its
+   * first flick) with a peg in the middle of each flick; the order mixes through the flick. (Pegs at the apexes,
+   * one each side, favoured the starting places on one side: average places 10.2 to 10.9 by group.)
+   */
+  'chicane-start': (o) => ({
+    sections: [
+      { key: 'plunge', name: 'Start plunge', shape: plunge(70, { grade: 0.6 }), obstacles: [pileUp({ costume: o.costumes.block, at: 0.45 }), slalom({ costume: o.costumes.slalom, from: 0.62, to: 0.97, count: 4, loss: 0.3 })] },
+      {
+        key: 'chicane', name: 'First chicane', shape: sBends({ first: o.side === 'right' ? 'right' : 'left', radius: 50, degrees: 70, grade: 0.14 }),
+        obstacles: [peg({ costume: o.costumes.peg, at: 0.3, line: 'center' }), peg({ costume: o.costumes.peg, at: 0.7, line: 'center' })],
+      },
+    ],
+    // (Let go in waves, a new order every race: without them the starting places on the chicane's inside won more.)
+    waves: { groups: 5, gap: 0.12, jitter: 0.04 },
+  }),
+
+  /**
+   * Rumble start: the field let go in waves down a plunge striped with rumble strips (low bumps, `costumes.rumble`
+   * their look), then a slalom; the bumps unsettle the line before the cones.
+   */
+  'rumble-start': (o) => ({
+    sections: [{
+      key: 'plunge', name: 'Rumble start', shape: plunge(95, { grade: 0.5 }),
+      features: [moguls({ from: 0.12, to: 0.4, count: 5, ...(o.costumes.rumble && { look: o.costumes.rumble }) })],
+      obstacles: [slalom({ costume: o.costumes.slalom, from: 0.55, to: 0.97, count: 6, loss: 0.3 })],
+    }],
+    waves: { groups: 5, gap: 0.3, jitter: 0.1 },
+  }),
+
+  /**
+   * Grid start: the gate lets the field go in two waves, every other starting place, as from a two-wide grid
+   * (which half goes first is drawn every race); a tyre stack in the middle of the plunge splits the field,
+   * then a short pit straight with staggered pegs.
+   */
+  'grid-start': (o) => ({
+    sections: [
+      { key: 'plunge', name: 'Grid', shape: plunge(65, { grade: 0.6 }), obstacles: [block({ costume: o.costumes.block, at: 0.5, line: 'center' }), slalom({ costume: o.costumes.slalom, from: 0.7, to: 0.97, count: 3, loss: 0.3 })] },
+      {
+        key: 'straight', name: 'Pit straight', shape: plunge(45, { grade: 0.45, from: 0.6 }),
+        obstacles: [peg({ costume: o.costumes.peg, at: 0.25, line: 'left' }), peg({ costume: o.costumes.peg, at: 0.5, line: 'right' }), peg({ costume: o.costumes.peg, at: 0.75, line: 'left' })],
+      },
+    ],
+    waves: { groups: 2, gap: 0.35, jitter: 0.08, interleave: true },
+  }),
+
+  /**
+   * Sand trap: down the plunge into a short slowing stretch (the sand trap), the first pile-up straight after it,
+   * then a slalom of flags; the field arrives bunched and the pile-up sorts it.
+   */
+  'sand-trap': (o) => ({
+    sections: [{
+      key: 'plunge', name: 'Start plunge', shape: plunge(85, { grade: 0.6 }), features: [brake({ at: 0.28, length: 14, drag: 0.03 })],
+      obstacles: [pileUp({ costume: o.costumes.block, at: 0.55 }), slalom({ costume: o.costumes.slalom, from: 0.68, to: 0.97, count: 5, loss: 0.3 })],
+    }],
+  }),
 };
 
 /**
@@ -152,7 +224,7 @@ const DRESS = ['name', 'scenery', 'landmarks', 'billboards', 'billboardFrame', '
 
 /**
  * An opening from the library. `costumes`: what its obstacles look like
- * ({ block, slalom, peg }); `names`: { <key>: 'Section name' }; `dress`:
+ * ({ block, slalom, peg, rumble }); `names`: { <key>: 'Section name' }; `dress`:
  * { <key>: { scenery, landmarks, … } }; `side` (banked-turn): which way the
  * first turn goes; `tunnel` (tunnel-launch): the tunnel's look.
  */

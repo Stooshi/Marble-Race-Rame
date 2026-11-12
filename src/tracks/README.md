@@ -112,6 +112,17 @@ module.exports = track({
   | `clean-drop` | The field let go in waves, a plunge with nothing in it, at full speed into deep, tight S-bends (`side`) that shuffle the field |
   | `peg-drop` | The field let go in waves, a slightly gentler plunge through seven single pegs, left and right, the field threading through |
   | `pipe-drop` | The field let go in waves, a short plunge straight into a half-pipe (`side`: its first swing), the field rocking wall to wall |
+  | `rolling-start` | The field let go in waves down a long, gentle run (the pace lap) through a short slalom, then a wide banked first turn (`side`) |
+  | `chicane-start` | The field let go in waves, a plunge through the first pile-up, then a tight chicane (`side`: its first flick) with a peg in each flick |
+  | `rumble-start` | The field let go in waves down a plunge striped with rumble strips (low bumps), then a slalom |
+  | `grid-start` | Two waves, every other starting place (a two-wide grid; which half goes first drawn every race), a tyre stack mid-plunge, then a pit straight with staggered pegs |
+  | `sand-trap` | A plunge into a short slowing stretch (the sand trap), the pile-up straight after it, then a slalom of flags |
+
+  **The motorsport starts** (Moses, 12 Nov 2026: the eleven new Grand Prix tracks had used up every other opening, two per
+  family). Each has its test track (`variety-opening-<kind>`): every fairness line of its batches passes there; its racing
+  numbers (overtakes) are its layout's, and each is proven with the full report of the track that uses it. The chicane start
+  first had a peg at each apex and no waves: the starting places on the chicane's inside won more (average places 10.2 to
+  10.9 by group), so it lets the field go in waves and its pegs stand in the middle.
 
   **The varied starts** (`clean-drop`, `peg-drop`, `pipe-drop`, October 2026) leave out the pile-up
   and slalom. Those give a race most of its luck: without them the strongest marbles win far too often
@@ -441,6 +452,16 @@ Preview a variant with `&lighting=snow` on the preview link (only presets the
 track allows).
 
 ## Grand Prix tracks
+
+**The motorsport Grand Prix tracks** (Moses, 12 Nov 2026): eleven new tracks, motorsport themed, no trademarks (no real
+series, circuit, team, driver or sponsor), no jumps, all in the Grand Prix pack, each aimed at a wildness level (four Easy,
+four Wild, three Extreme). Each new track's second data update, `<date>-<slug>-to-grand-prix.sql`
+(`scripts/new-track-pack-sql.js`), puts it in the pack and sets its wildness, worked out from its own full report's first
+1,000 races ranked against the 143 tracks of 11 Nov 2026 (`node scripts/wildness.js one <slug> --from-report`). Two more
+countdown shots for their starts (12 Nov 2026; every pair of shots was used): `low-front` (low in front of the row at marble
+height, pushing slowly in) and `crane` (a camera crane swinging over the grid from behind and to one side).
+Easy needs few obstacles: Heartland Oval Speedway first scored 43 (Wild) with 69 obstacle hits a race; with five pegs fewer
+and four-gate slaloms it scores 26.
 
 `grandPrix: true` (or `grandPrix: { crowd, barrier, fireworks }`) makes a track a Grand
 Prix: looks only, it races exactly as it would without. It brings:

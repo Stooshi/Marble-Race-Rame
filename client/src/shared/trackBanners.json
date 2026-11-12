@@ -706,6 +706,17 @@
    "side": 1,
    "marbles": 9
   },
+  "heartland-oval-speedway": {
+   "name": "Heartland Oval Speedway",
+   "series": "Grand Prix",
+   "lighting": "day",
+   "v": "963f7096",
+   "bytes": 19002,
+   "bytes2x": 46482,
+   "t": 10964,
+   "side": 1,
+   "marbles": 4
+  },
   "hells-burst": {
    "name": "Hells Burst",
    "series": "Canyons",

@@ -16,7 +16,7 @@ const spec = (o = {}) => ({ slug: 'variety-check', name: 'Variety Check', openin
 
 test('every opening and every layout in the libraries builds within the recipe, and says which it is', () => {
   // (The varied starts, without the pile-up and slalom, need their luck later on: the mid lottery layout has it.)
-  const NO_LUCK = ['clean-drop', 'peg-drop', 'pipe-drop'];
+  const NO_LUCK = ['clean-drop', 'peg-drop', 'pipe-drop', 'rolling-start', 'rumble-start'];
   for (const kind of OPENING_KINDS) {
     const lay = NO_LUCK.includes(kind) ? 'mid-lottery' : 'classic';
     const t = track(spec({ opening: opening(kind), sections: layout(lay) }));
@@ -233,7 +233,7 @@ test('the varied starts: a new track says how its start looks, checked like any 
   const { START_TYPES, GATES, COUNTDOWN_SHOTS, LAUNCH_SHOTS } = require('../src/trackKit/recipe');
   assert.deepEqual(START_TYPES, ['straight-lift', 'curving-lift', 'spiral-tower', 'elevator', 'cliff', 'rooftop', 'station-launch', 'stepped-platform', 'lighthouse', 'ski-jump', 'castle-tower', 'pier', 'river-boat', 'lock-gate', 'ice-ledge', 'gondola', 'ski-plane']);
   assert.deepEqual(GATES, ['paddle', 'trapdoor', 'stalls', 'barrier']);
-  assert.deepEqual(COUNTDOWN_SHOTS, ['front', 'side', 'above', 'chase']);
+  assert.deepEqual(COUNTDOWN_SHOTS, ['front', 'side', 'above', 'chase', 'low-front', 'crane']);
   assert.deepEqual(LAUNCH_SHOTS, ['high-behind', 'low-chase', 'side', 'overhead', 'look-back']);
   // A new track must say its gate and shots; a coaster its start type too.
   assert.throws(() => track(spec({ start: {} })), /a new track says how its start looks/);

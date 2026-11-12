@@ -183,4 +183,5 @@ module.exports = [
   require('./abraham-lake-frost'),
   require('./saint-tropez'),
   require('./pudong-marble-grand-prix'),
+  require('./heartland-oval-speedway'),
 ];

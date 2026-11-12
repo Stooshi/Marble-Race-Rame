@@ -61,6 +61,7 @@
 "greenland-expedition": {"family":"world-tour","reach":0.202,"seq":["opening: classic","drop","pileUp","slalom","S-bends left"]},
 "ha-long-bay-spins": {"family":"coaster","reach":0.233,"seq":["opening: funnel-drop","drop","pileUp","slalom","straight","peg ×4","sweep right","boost"]},
 "harbin-ice-city": {"family":"coaster","reach":0.307,"seq":["opening: peg-drop","drop","peg ×7","spiral right"]},
+"heartland-oval-speedway": {"family":"grand-prix","reach":0.289,"seq":["opening: rolling-start","drop","slalom","sweep left","straight","peg","slalom","moguls","sweep right"]},
 "hells-burst": {"family":"canyon","reach":0.312,"seq":["opening: split-start","drop","pileUp","slalom","chutes","drop","slalom","sweep left","boost","drop"]},
 "hong-kong-crossing": {"family":"coaster","reach":0.216,"seq":["opening: split-start","drop","pileUp","slalom","chutes","drop","slalom","S-bends left"]},
 "huascaran-turquoise-lakes": {"family":"peak","reach":0.206,"seq":["opening: staggered-drop","drop","pileUp","slalom","brake","sweep left","peg","straight","peg"]},

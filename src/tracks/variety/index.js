@@ -9,6 +9,7 @@ const { track, opening, layout, OPENING_KINDS, LAYOUT_KINDS } = require('../../t
 const NAMES = {
   classic: 'Classic', 'split-start': 'Split-and-Merge Start', 'staggered-drop': 'Staggered Drop', 'tunnel-launch': 'Tunnel Launch',
   'banked-turn': 'Banked First Turn', 'boost-launch': 'Boost-Pad Launch', 'funnel-drop': 'Funnel Drop', 'crest-start': 'Crest Start',
+  'rolling-start': 'Rolling Start', 'chicane-start': 'Chicane Start', 'rumble-start': 'Rumble Start', 'grid-start': 'Grid Start', 'sand-trap': 'Sand Trap',
   'early-hairpin': 'Early Hairpin', 'twin-spirals': 'Twin Spirals', 'climb-drop': 'Climb and Drop', 'late-splitter': 'Late Splitter',
   'mid-drop': 'Mid Drop', 'two-splitters': 'Two Splitters', 'long-sweeps': 'Long Sweeps',
   'island-spins': 'Island Spins', 'sea-crossing': 'Sea Crossing', 'canopy-run': 'Canopy Run', 'terrace-run': 'Terrace Run', 'delta-skim': 'Delta Skim', 'two-spins': 'Two Spins', 'wall-dive': 'Wall Dive', staircases: 'Staircases', 'siege-routes': 'Siege Routes', 'stage-hairpin': 'Stage Hairpin', 'saucer-sweeps': 'Saucer Sweeps', 'lower-playfield': 'Lower Playfield', 'clock-tower': 'Clock Tower', 'encore-split': 'Encore Split', 'cabinet-rows': 'Cabinet Rows', 'maze-corridors': 'Maze Corridors', 'bullet-spirals': 'Bullet Spirals', 'up-up-down-down': 'Up Up Down Down', 'bracket-splits': 'Bracket Splits', 'coast-road': 'Coast Road', 'co-op-street': 'Co-op Street',
@@ -43,7 +44,7 @@ const base = (slug, name, description) => ({
 
 // Openings without the pile-up and slalom are proven on the mid lottery layout (the peg drop on the
 // half-pipe run), a lottery further on as well as their waves at the gate.
-const OPENING_LAYOUT = { 'clean-drop': 'mid-lottery', 'peg-drop': 'half-pipe-run', 'pipe-drop': 'mid-lottery' };
+const OPENING_LAYOUT = { 'clean-drop': 'mid-lottery', 'peg-drop': 'half-pipe-run', 'pipe-drop': 'mid-lottery', 'rolling-start': 'mid-lottery', 'rumble-start': 'mid-lottery' };
 // (The pipe drop's test track: a stronger lottery, 6 gates at loss 0.25, as its batches asked: its
 // half-pipe gives no luck of its own.)
 const OPENING_LAYOUT_OPTIONS = { 'pipe-drop': { lotteryGates: 6, lotteryLoss: 0.25 } };
