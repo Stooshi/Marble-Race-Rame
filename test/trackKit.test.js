@@ -759,7 +759,9 @@ for (const [slug, file, note] of HIDDEN_KIT_TRACKS) {
     // A later data update for the track (already run live, so the add is never edited): the latest
     // sets everything as the track file builds it now (the add then matches it as it was).
     const dir = path.join(__dirname, '..', 'docs', 'data_updates');
-    const later = fs.readdirSync(dir).filter((f) => f > file && f.slice(11).startsWith(`${slug}-`) && f.endsWith('.sql')).sort();
+    // (A pack move, `<date>-<slug>-to-<pack>.sql` such as 2027-06-13-voxel-peaks-to-blocks-2, changes only the
+    // track's pack, not its layout: not a re-tune.)
+    const later = fs.readdirSync(dir).filter((f) => f > file && f.slice(11).startsWith(`${slug}-`) && !f.slice(11).startsWith(`${slug}-to-`) && f.endsWith('.sql')).sort();
     if (!later.length) {
       assert.equal(sql, execFileSync(process.execPath, [script, slug, '--add-hidden', note], { encoding: 'utf8' }));
       return;

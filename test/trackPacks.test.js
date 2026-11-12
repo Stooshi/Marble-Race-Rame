@@ -101,8 +101,8 @@ test('wildness.json: every live track scored from the full report races; the dat
   const all = fs.readdirSync(UPDATES).filter((f) => f.endsWith('.sql')).sort();
   assert.ok(all.indexOf('2027-06-11-free-set-of-30.sql') > all.indexOf('2027-06-10-wildness-and-track-packs.sql'));
   // 2027-06-13: Voxel Peaks to Blocks 2 (12 Nov 2026), after the pack payments; one track, from Blocks 1 only.
-  const third = fs.readFileSync(path.join(UPDATES, '2027-06-13-pack-move-voxel-peaks.sql'), 'utf8').replace(/--.*$/gm, '');
-  assert.ok(all.indexOf('2027-06-13-pack-move-voxel-peaks.sql') > all.indexOf('2027-06-12-track-pack-payments.sql'));
+  const third = fs.readFileSync(path.join(UPDATES, '2027-06-13-voxel-peaks-to-blocks-2.sql'), 'utf8').replace(/--.*$/gm, '');
+  assert.ok(all.indexOf('2027-06-13-voxel-peaks-to-blocks-2.sql') > all.indexOf('2027-06-12-track-pack-payments.sql'));
   assert.match(third, /UPDATE tracks SET pack_key = 'blocks-2' WHERE slug = 'voxel-peaks' AND pack_key = 'blocks-1';/);
   assert.equal((third.match(/UPDATE/g) ?? []).length, 1);
 });

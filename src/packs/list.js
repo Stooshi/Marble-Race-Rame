@@ -28,7 +28,7 @@ const PACKS = [
 /**
  * The Blocks 2 pack: Blocks Series 2 (data updates 2027-05-10 to 2027-05-29) and Voxel Peaks from Blocks 1, a
  * real-looking landscape of cubes like the Series 2 tracks, so the pack has 20 tracks besides its free one
- * (Moses, 12 Nov 2026; data update 2027-06-13-pack-move-voxel-peaks.sql).
+ * (Moses, 12 Nov 2026; data update 2027-06-13-voxel-peaks-to-blocks-2.sql).
  */
 const BLOCKS_2 = [
   'li-river-karst-run', 'venice-cube-canals', 'niagara-cube-falls', 'tre-cime-cube-towers', 'abisko-aurora-run',

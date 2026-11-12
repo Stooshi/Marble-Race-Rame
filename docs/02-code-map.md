@@ -51,7 +51,7 @@
 | Change an email's text | `src/email/templates.js` |
 | Fix the contact form or the support inbox | `client/src/site/help/ContactForm.jsx`, `src/routes/support.js`, `src/support/index.js`, `src/routes/admin.js` (`/support…`); categories and limits in `client/src/shared/support.json` |
 | Change the app icon or splash | `client/assets/*.png`, then `npx capacitor-assets generate --ios --android`. The website's icons follow it: redo `public/apple-touch-icon.png`, `icon-192.png` and `icon-512.png` from `assets/icon-only.png`, `favicon-48x48.png` and `favicon-96x96.png` from `icon-512.png`, and the small `favicon.svg` / `favicon.ico` by hand (check them at 16 px on light and dark tabs). `src/site/seo.test.js` checks the sizes, the links and robots.txt |
-| Change the database | Add columns or tables to `docs/database_schema.sql` (additions only). To change existing rows, add a new file in `docs/data_updates/` |
+| Change the database | Add columns or tables to `docs/database_schema.sql` (additions only). To change existing rows, add a new file in `docs/data_updates/` (never rename or edit one on the applied list, `test/appliedDataUpdates.json`, kept up to date after each deploy) |
 
 ---
 
