@@ -63,33 +63,41 @@ test('the packs: one per series, Pinball and Arcade separate, Blocks 1 and Block
 });
 
 const W = path.join(__dirname, '..', 'src', 'tracks', 'wildness.json');
-test('the free set: 4 or 5 per series, 45 in all, mostly Easy and Wild (most Extreme tracks in the packs)', () => {
+test('the free set: 3 per series, 30 in all, mostly Easy and Wild, at most 2 Extreme (12 Nov 2026)', () => {
   const free = Object.values(FREE).flat();
-  assert.equal(free.length, 45);
-  assert.equal(new Set(free).size, 45);
-  for (const [series, list] of Object.entries(FREE)) assert.ok(list.length >= 4 && list.length <= 5, series);
-  assert.ok(isFree('tilt') && !isFree('grand-champion'));
+  assert.equal(free.length, 30);
+  assert.equal(new Set(free).size, 30);
+  for (const [series, list] of Object.entries(FREE)) assert.equal(list.length, 3, series);
+  assert.ok(isFree('tilt') && !isFree('grand-champion') && !isFree('nairobi-marble-grand-prix'));
   if (!fs.existsSync(W)) return;
   const { tracks } = JSON.parse(fs.readFileSync(W, 'utf8'));
   const by = new Map(tracks.map((t) => [t.slug, t]));
   for (const [series, list] of Object.entries(FREE)) for (const s of list) assert.equal(by.get(s)?.series, series, s);
-  const extreme = tracks.filter((t) => t.wildness === 'extreme');
-  const freeExtreme = extreme.filter((t) => isFree(t.slug));
-  assert.ok(freeExtreme.length * 4 <= extreme.length, `${freeExtreme.length} of ${extreme.length} Extreme tracks free`);
-  const easy = free.filter((s) => by.get(s).wildness === 'easy').length;
-  assert.ok(easy >= 18 && easy <= 27, `${easy} Easy`);
+  assert.ok(free.filter((s) => by.get(s).wildness === 'extreme').length <= 2);
+  // (Each series' landing-page picture is among its free three.)
+  const landing = fs.readFileSync(path.join(__dirname, '..', 'client', 'src', 'site', 'landing', 'LandingPage.jsx'), 'utf8');
+  for (const [, series, slug] of landing.matchAll(/\['([A-Za-z ]+)', '[^']*', '[^']*', '([a-z0-9-]+)'/g)) if (FREE[series]) assert.ok(FREE[series].includes(slug), `${series}: ${slug}`);
 });
 
-test('wildness.json: every live track scored from the full report races, the data update made from it', () => {
+const UPDATES = path.join(__dirname, '..', 'docs', 'data_updates');
+test('wildness.json: every live track scored from the full report races; the data updates', () => {
   if (!fs.existsSync(W)) return;
   const data = JSON.parse(fs.readFileSync(W, 'utf8'));
   assert.ok(data.racesPerTrack >= 1000);
   assert.equal(data.tracks.length, 143);
   for (const t of data.tracks) assert.equal(levelOf(t.score), t.wildness, t.slug);
-  const sql = fs.readFileSync(path.join(__dirname, '..', 'docs', 'data_updates', '2027-06-10-wildness-and-track-packs.sql'), 'utf8');
-  const { execFileSync } = require('node:child_process');
-  assert.equal(execFileSync(process.execPath, [path.join(__dirname, '..', 'scripts', 'wildness-sql.js')], { encoding: 'utf8' }), sql);
-  assert.doesNotMatch(sql.replace(/--.*$/gm, ''), /is_active|product_id|price/); // (switches nothing on, sells nothing)
+  // 2027-06-10 has run on the live server (12 Nov 2026): its scores are wildness.json's, never edited.
+  const first = fs.readFileSync(path.join(UPDATES, '2027-06-10-wildness-and-track-packs.sql'), 'utf8');
+  for (const t of data.tracks) assert.ok(first.includes(`('${t.slug}', ${t.score}, '${t.wildness}', `), t.slug);
+  assert.equal((first.match(/, true\)/g) ?? []).length, 45); // (the first free set)
+  // 2027-06-11: the free set of 30, exactly src/packs/list.js.
+  const second = fs.readFileSync(path.join(UPDATES, '2027-06-11-free-set-of-30.sql'), 'utf8');
+  const inSql = [...second.replace(/--.*$/gm, '').matchAll(/'([a-z0-9-]+)'/g)].map((m) => m[1]);
+  assert.deepEqual(inSql.sort(), Object.values(FREE).flat().sort());
+  assert.match(second, /WHERE pack_key IS NOT NULL/); // (season tracks untouched)
+  for (const sql of [first, second]) assert.doesNotMatch(sql.replace(/--.*$/gm, ''), /is_active|product_id|price/); // (switches nothing on, sells nothing)
+  // (The newest data update sorts last.)
+  assert.equal(fs.readdirSync(UPDATES).filter((f) => f.endsWith('.sql')).sort().at(-1), '2027-06-11-free-set-of-30.sql');
 });
 
 test('with the switch on: a pack track only for its owners and their friend rooms; off again: open to all', { skip: !DB }, async () => {
