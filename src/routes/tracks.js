@@ -116,7 +116,9 @@ router.get('/', optionalAuth, async (req, res) => {
   // pack (pack { key, name }, is_free; locked only with the TRACK_PACKS switch on: src/packs).
   const withAll = await packs.withPacks(db, await withSeasons(rows, req.user?.id ?? null), { userId: req.user?.id ?? null, role: req.user?.role ?? null });
   const tracks = withAll.filter((t) => all || t.season?.state !== 'before');
-  res.json({ tracks });
+  // packLocking: whether pack tracks lock for this player (TRACK_PACKS on, or admins and an admin): the
+  // picker then shows its Can play / Locked / All filter.
+  res.json({ tracks, packLocking: packs.lockingFor(req.user?.role ?? null) });
 });
 
 /**

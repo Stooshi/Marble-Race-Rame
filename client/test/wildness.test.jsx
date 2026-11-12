@@ -1,7 +1,7 @@
 // Wildness (Moses, 11 Nov 2026): a badge on every track card (Easy teal, Wild orange, Extreme magenta,
 // always with the word), the All / Easy / Wild / Extreme filter and "Wildest" order in the track picker,
 // the "luck, not skill" note, and difficulty no longer shown anywhere. Track packs: a pack-locked track
-// (only with the server's TRACK_PACKS switch on) shows its pack and can't be picked.
+// (only with the server's TRACK_PACKS switch on) shows its pack and opens its page in the shop.
 import { readFileSync } from 'node:fs';
 import { renderToString } from 'react-dom/server';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
@@ -63,11 +63,10 @@ describe('the track picker', () => {
   it('"Wildest" orders by the score, wildest first', () => {
     expect([...TRACKS].sort(SORTS.wild).map((t) => t.slug)).toEqual(['san-francisco', 'grand-champion', 'kill-screen', 'tilt']);
   });
-  it('a pack-locked track shows its pack and is not picked', () => {
+  it('a pack-locked track shows its pack and opens the pack\'s page in the shop, not a race (12 Nov 2026)', () => {
     const html = picker();
     expect(html).toContain('Locked: in the Pinball pack');
-    expect(html).toContain('aria-disabled="true"');
-    expect(src('src/site/pages/RaceFlow.jsx')).toContain("onClick={() => (t.lockedBy === 'pack' ? null :");
+    expect(src('src/site/pages/RaceFlow.jsx')).toContain("onClick={() => (t.lockedBy === 'pack' ? navigate(`/shop/packs/${t.pack.key}`) :");
   });
 });
 

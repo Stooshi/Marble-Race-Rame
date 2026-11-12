@@ -11,12 +11,28 @@
  *   admins  pack tracks are locked for admins only (to try it out), as `on` for them;
  *   on      a pack track (pack_key set, is_free false) is raced only by the pack's owners, and by
  *           everyone in a friend room (or a league) whose host owns the pack, as with the season pass.
+ * Only a pack that is on sale locks (Moses, 12 Nov 2026): one that is complete, with `fullAt` (20) live
+ * tracks besides its free ones (client/src/shared/payments/trackPacks.json). The tracks of a Coming soon
+ * pack stay open to everyone until it is complete.
  * The server checks this with the season check (src/seasons trackAccess) on every request that puts a
  * marble on a track. The public random pick never picks a locked pack track while locking is on.
  * Watching races and replays stays open to everyone. Season (holiday) tracks are in no pack.
  */
 
 const MODES = ['off', 'admins', 'on'];
+
+/** A pack is complete (on sale, so its tracks lock) at this many live tracks besides its free ones. */
+const FULL_AT = require('../../client/src/shared/payments/trackPacks.json').fullAt;
+
+/** SQL: the keys of the complete packs (as a subquery). */
+const COMPLETE_PACKS_SQL = `SELECT pack_key FROM tracks WHERE is_active AND NOT is_free AND pack_key IS NOT NULL
+  GROUP BY pack_key HAVING count(*) >= ${Number(FULL_AT)}`;
+
+/** The keys of the complete packs: Set. */
+async function completePacks(db) {
+  const { rows } = await db.query(COMPLETE_PACKS_SQL);
+  return new Set(rows.map((r) => r.pack_key));
+}
 
 /** The TRACK_PACKS switch: 'off' (default), 'admins' or 'on'. */
 function mode(env = process.env) {
@@ -72,6 +88,13 @@ async function packOfTrack(db, track) {
   return rows[0] ?? null;
 }
 
+/** The track's pack if it locks: a pack track (not free) of a complete pack → { key, name } or null. */
+async function lockingPackOf(db, track) {
+  const pack = await packOfTrack(db, track);
+  if (!pack) return null;
+  return (await completePacks(db)).has(pack.key) ? pack : null;
+}
+
 /**
  * May `userId` race on a pack track? (With the switch off: always, with no query at all.)
  * `roomHostId`: the host of the friend room (or the league's creator) the race is in; a host who owns
@@ -82,33 +105,35 @@ async function trackAccess(db, track, { userId = null, roomHostId = null, env = 
   const m = mode(env);
   if (m === 'off' || !track) return { ok: true };
   if (m === 'admins' && await roleOf(db, userId) !== 'admin') return { ok: true };
-  const pack = await packOfTrack(db, track);
+  const pack = await lockingPackOf(db, track); // (a Coming soon pack locks nothing)
   if (!pack) return { ok: true };
   if (await owns(db, userId, pack.key)) return { ok: true };
   if (roomHostId && roomHostId !== userId && await owns(db, roomHostId, pack.key)) return { ok: true, viaHost: true };
   return { ok: false, reason: 'pack', message: LOCKED_MESSAGE(pack), pack: pack.key };
 }
 
-/** SQL for "a track the public random pick may choose" while locking is on: free or in no pack. */
-const FREE_TRACK_SQL = (alias = '') => `(${alias}is_free OR ${alias}pack_key IS NULL)`;
+/** SQL for "a track the public random pick may choose" while locking is on: free, in no pack, or in a pack not complete yet. */
+const FREE_TRACK_SQL = (alias = '') => `(${alias}is_free OR ${alias}pack_key IS NULL OR ${alias}pack_key NOT IN (${COMPLETE_PACKS_SQL}))`;
 
 /**
- * Each track's pack for the player asking (the track lists): pack { key, name } on a pack track, and
- * locked: true when locking is on for them and they can't race it. `rows` carry pack_key, is_free.
+ * Each track's pack for the player asking (the track lists): pack { key, name, complete } on a pack track,
+ * and locked: true when locking is on for them, the pack is complete (on sale) and they don't own it.
+ * `rows` carry pack_key, is_free.
  */
 async function withPacks(db, rows, { userId = null, role = null, env = process.env } = {}) {
   if (!rows.some((t) => t.pack_key)) return rows.map(({ pack_key: _k, ...t }) => t);
   const packs = new Map((await db.query('SELECT key, name FROM track_packs')).rows.map((p) => [p.key, p]));
   const locking = lockingFor(role, env);
   const held = locking ? await packsOf(db, userId) : new Set();
+  const complete = await completePacks(db);
   return rows.map(({ pack_key: key, ...t }) => {
     const p = key ? packs.get(key) : null;
     if (!p) return t;
-    const out = { ...t, pack: { key: p.key, name: p.name } };
-    if (locking && !t.is_free && !held.has(p.key) && !t.locked) out.locked = true;
+    const out = { ...t, pack: { key: p.key, name: p.name, complete: complete.has(p.key) } };
+    if (locking && !t.is_free && complete.has(p.key) && !held.has(p.key) && !t.locked) out.locked = true;
     if (out.locked && !t.season) out.lockedBy = 'pack';
     return out;
   });
 }
 
-module.exports = { MODES, mode, lockingFor, lockingOn, packsOf, owns, packOfTrack, trackAccess, withPacks, FREE_TRACK_SQL, LOCKED_MESSAGE };
+module.exports = { MODES, FULL_AT, COMPLETE_PACKS_SQL, completePacks, lockingPackOf, mode, lockingFor, lockingOn, packsOf, owns, packOfTrack, trackAccess, withPacks, FREE_TRACK_SQL, LOCKED_MESSAGE };

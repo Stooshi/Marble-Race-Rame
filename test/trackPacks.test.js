@@ -101,8 +101,8 @@ test('wildness.json: every live track scored from the full report races; the dat
   const all = fs.readdirSync(UPDATES).filter((f) => f.endsWith('.sql')).sort();
   assert.ok(all.indexOf('2027-06-11-free-set-of-30.sql') > all.indexOf('2027-06-10-wildness-and-track-packs.sql'));
   // 2027-06-13: Voxel Peaks to Blocks 2 (12 Nov 2026), after the pack payments; one track, from Blocks 1 only.
-  const third = fs.readFileSync(path.join(UPDATES, '2027-06-13-voxel-peaks-to-blocks-2.sql'), 'utf8').replace(/--.*$/gm, '');
-  assert.ok(all.indexOf('2027-06-13-voxel-peaks-to-blocks-2.sql') > all.indexOf('2027-06-12-track-pack-payments.sql'));
+  const third = fs.readFileSync(path.join(UPDATES, '2027-06-13-pack-move-voxel-peaks.sql'), 'utf8').replace(/--.*$/gm, '');
+  assert.ok(all.indexOf('2027-06-13-pack-move-voxel-peaks.sql') > all.indexOf('2027-06-12-track-pack-payments.sql'));
   assert.match(third, /UPDATE tracks SET pack_key = 'blocks-2' WHERE slug = 'voxel-peaks' AND pack_key = 'blocks-1';/);
   assert.equal((third.match(/UPDATE/g) ?? []).length, 1);
 });
@@ -143,14 +143,29 @@ test('with the switch on: a pack track only for its owners and their friend room
     let row = (await call('/tracks', { token: friend.token })).body.tracks.find((t) => t.id === packed.id);
     assert.equal(row.wildness, 'extreme');
     assert.equal(row.wildness_score, 61);
-    assert.deepEqual(row.pack, { key, name: 'Test Pack' });
+    assert.deepEqual(row.pack, { key, name: 'Test Pack', complete: false });
     assert.equal(row.is_free, false);
     assert.equal(row.locked, undefined);
     assert.equal((await call('/races', { method: 'POST', token: friend.token, body: { track_id: packed.id, enter: true } })).status, 201);
 
-    // On: locked for the friend, refused on every request; free tracks and the owner as before.
+    // On, but the pack is Coming soon (1 of 20): it locks nothing (Moses, 12 Nov 2026); the list says locking is on.
     process.env.TRACK_PACKS = 'on';
+    let list = (await call('/tracks', { token: friend.token })).body;
+    assert.equal(list.packLocking, true);
+    assert.equal(list.tracks.find((t) => t.id === packed.id).locked, undefined);
+    assert.equal((await call('/races', { method: 'POST', token: friend.token, body: { track_id: packed.id, enter: true } })).status, 201);
+    assert.ok(!(await require('../src/packs').completePacks(db)).has(key));
+    // Complete (19 more live tracks, 20): on sale, so it locks.
+    await db.query(
+      `INSERT INTO tracks (slug, name, difficulty, length_m, lane_count, waypoints, obstacles, is_active, pack_key, is_free, wildness, wildness_score)
+       SELECT $1 || '-' || n, 'Packed Run ' || n, difficulty, length_m, lane_count, waypoints, obstacles, true, $2, false, 'easy', 20
+         FROM tracks, generate_series(1, 19) n WHERE slug = 'meadow-loop'`,
+      [key, key],
+    );
+    assert.ok((await require('../src/packs').completePacks(db)).has(key));
+    // Locked for the friend, refused on every request; free tracks and the owner as before.
     row = (await call('/tracks', { token: friend.token })).body.tracks.find((t) => t.id === packed.id);
+    assert.equal(row.pack.complete, true);
     assert.equal(row.locked, true);
     assert.equal(row.lockedBy, 'pack');
     assert.equal((await call('/tracks', { token: friend.token })).body.tracks.find((t) => t.id === freeOne.id).locked, undefined);
@@ -171,6 +186,14 @@ test('with the switch on: a pack track only for its owners and their friend room
     assert.equal((await call(`/rooms/${room.body.room.code}/join`, { method: 'POST', token: friend.token })).status, 200);
     // The public random pick keeps to free tracks.
     for (let i = 0; i < 25; i += 1) assert.notEqual(await seasons.pickOpenTrack(db), packed.id);
+    // (… and the tracks of Coming soon packs: only a complete pack is kept out.)
+    const { FREE_TRACK_SQL } = require('../src/packs');
+    const open = async (k) => (await db.query(`SELECT count(*)::int AS n FROM tracks WHERE pack_key = $1 AND NOT is_free AND ${FREE_TRACK_SQL()}`, [k])).rows[0].n;
+    assert.equal(await open(key), 0);
+    await db.query(`INSERT INTO track_packs (key, name, series) VALUES ($1, 'Soon Pack', 'Test')`, [`${key}-soon`]);
+    await db.query(`UPDATE tracks SET pack_key = $1 WHERE slug = $2`, [`${key}-soon`, `${key}-1`]);
+    assert.equal(await open(`${key}-soon`), 1);
+    await db.query(`UPDATE tracks SET pack_key = $1 WHERE slug = $2`, [key, `${key}-1`]);
 
     // 'admins': only admins are locked out (to try it); players race as with it off.
     process.env.TRACK_PACKS = 'admins';
@@ -179,6 +202,7 @@ test('with the switch on: a pack track only for its owners and their friend room
     delete process.env.TRACK_PACKS;
     server.close();
     await db.query('DELETE FROM tracks WHERE slug LIKE $1', [`${key}-%`]).catch(() => {});
+    await db.query('DELETE FROM track_packs WHERE key = $1', [`${key}-soon`]).catch(() => {});
     await db.end?.();
   }
 });

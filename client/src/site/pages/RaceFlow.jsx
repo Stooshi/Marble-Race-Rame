@@ -114,9 +114,24 @@ export function RacerGate({ children }) {
 }
 
 export function useTracks() {
-  const { data } = useAsync(() => api.tracks(), []);
-  return useMemo(() => (data?.tracks ?? []).filter((t) => t.is_active !== false), [data]);
+  return useTrackList().tracks;
 }
+
+/** The live tracks, and whether pack tracks lock for this player (TRACK_PACKS on for them: the picker's lock filter). */
+export function useTrackList() {
+  const { data } = useAsync(() => api.tracks(), []);
+  const tracks = useMemo(() => (data?.tracks ?? []).filter((t) => t.is_active !== false), [data]);
+  return { tracks, packLocking: Boolean(data?.packLocking) };
+}
+
+/**
+ * The picker's two lock buttons (Moses, 12 Nov 2026), shown only while pack tracks lock for the player,
+ * working together with the wildness filter: My tracks (the default: free tracks, packs they own, Coming
+ * soon packs, season tracks they may race) and Locked (a pack on sale they don't own, or a season pass
+ * track). With locking off for them: no buttons, every track ('all').
+ */
+export const LOCK_FILTERS = [['mine', 'My tracks'], ['locked', 'Locked']];
+export const matchesLock = (t, f) => f === 'all' || (f === 'locked' ? Boolean(t.locked) : !t.locked);
 
 /** The look a player races in, from their Marble Bag. */
 function shooterOf(bag) {
@@ -340,7 +355,9 @@ export function TrackStep() {
   const [search] = useSearchParams();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const tracks = useTracks();
+  const { tracks, packLocking } = useTrackList();
+  const [lockState, setLock] = useState('mine'); // (My tracks / Locked: only while packs lock for the player)
+  const lock = packLocking ? lockState : 'all';
   const { data: records } = useAsync(() => (user && !user.is_guest ? api.trackRecords(user.id).catch(() => null) : null), [user?.id]);
   const [q, setQ] = useState('');
   const [series, setSeries] = useState(() => new Set());
@@ -360,6 +377,7 @@ export function TrackStep() {
     .filter((t) => !series.size || series.has(t.series))
     .filter((t) => !land.size || land.has(LANDSCAPE[t.biome]))
     .filter((t) => matchesWildness(t, wild))
+    .filter((t) => matchesLock(t, lock))
     .sort(SORTS[sort]);
   const newest = [...tracks].sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).slice(0, 3).map((t) => t.id);
   const go = (slug) => { const n = new URLSearchParams(search); n.set('track', slug); navigate(`/play/shooter?${n}`); };
@@ -386,6 +404,15 @@ export function TrackStep() {
             </button>
           ))}
         </div>
+        {packLocking && (
+          <div className="ms-wild-filter" role="group" aria-label="My tracks or locked">
+            {LOCK_FILTERS.map(([k, label]) => (
+              <button key={k} type="button" aria-pressed={lock === k} onClick={() => setLock(k)}>
+                {k === 'locked' ? '🔒 ' : ''}{label} <span style={{ opacity: 0.75 }}>{tracks.filter((t) => matchesLock(t, k)).length}</span>
+              </button>
+            ))}
+          </div>
+        )}
         <p className="ms-wild-note">{WILDNESS_NOTE}</p>
       </div>
       <div className="ms-two" style={{ alignItems: 'start' }}>
@@ -403,7 +430,7 @@ export function TrackStep() {
           {shown.map((t) => {
             const r = best.get(t.slug);
             return (
-              <button key={t.id} type="button" className="ms-trackcard" aria-disabled={t.lockedBy === 'pack' || undefined} onClick={() => (t.lockedBy === 'pack' ? null : t.locked ? navigate(`/pass?season=${t.season.key}`) : go(t.slug))}>
+              <button key={t.id} type="button" className="ms-trackcard" onClick={() => (t.lockedBy === 'pack' ? navigate(`/shop/packs/${t.pack.key}`) : t.locked ? navigate(`/pass?season=${t.season.key}`) : go(t.slug))}>
                 <div className="ms-trackcard__pic" style={{ background: SERIES_PIC[t.series] }}>
                   <TrackBanner slug={t.slug} />
                   {t.lockedBy === 'pack'
@@ -423,7 +450,7 @@ export function TrackStep() {
               </button>
             );
           })}
-          {tracks.length > 0 && shown.length === 0 && <p className="ms-note">No track matches. Clear a filter.</p>}
+          {tracks.length > 0 && shown.length === 0 && <p className="ms-note">{lock === 'locked' && !tracks.some((t) => t.locked) ? 'Nothing is locked for you: every track is yours to race.' : 'No track matches. Clear a filter.'}</p>}
         </section>
       </div>
     </div>

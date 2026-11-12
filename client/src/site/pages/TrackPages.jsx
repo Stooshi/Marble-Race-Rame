@@ -81,6 +81,7 @@ export function TrackPage() {
       {track.lockedBy === 'pack' ? (
         <div className="ms-row">
           <span className="ms-msg" role="status">In the {track.pack.name} pack. Watching its races is free.</span>
+          <Link to={`/shop/packs/${track.pack.key}`} className="ms-btn ms-btn--primary ms-btn--lg">SEE THE PACK</Link>
         </div>
       ) : track.locked ? (
         <div className="ms-row">
