@@ -762,6 +762,7 @@ const HIDDEN_KIT_TRACKS = [
   ['rocky-mountain-hill-run', '2027-06-21-add-rocky-mountain-hill-run.sql', 'Grand Prix track (motorsport: a hill run down the Rocky Mountains, a falls start, the Canyon drop and the long banked Switchback curve; in the Grand Prix pack; switched off until Moses has watched the preview).'],
   ['nevada-drag-strip', '2027-06-22-add-nevada-drag-strip.sql', 'Grand Prix track (motorsport: a desert drag strip in Nevada, the showpiece: start lights, a short rise, full-width speed pads like a second start, the long Drag strip half-pipe and the Desert loop; in the Grand Prix pack; switched off until Moses has watched the preview).'],
   ['yukon-five-finger-run', '2027-06-24-add-yukon-five-finger-run.sql', 'Rivers track (the Yukon in late summer: a rumble start down a gold-rush trail, the Miles Canyon half-pipe and the big feature, the drop down Five Finger Rapids between rock pillars; in the Rivers pack, not free; switched off until Moses has watched the preview).'],
+  ['arno-old-bridge-run', '2027-06-25-add-arno-old-bridge-run.sql', 'Rivers track (the Arno in Florence on a summer evening: a chicane start in the old town, the stepped weir and the big feature, a splitter through two arches of the old bridge with its shops; in the Rivers pack, not free; switched off until Moses has watched the preview).'],
 ];
 for (const [slug, file, note] of HIDDEN_KIT_TRACKS) {
   test(`${slug} is added by its data update, switched off, exactly as its track file builds it`, () => {

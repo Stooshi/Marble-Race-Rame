@@ -192,5 +192,6 @@ module.exports = [
   require('./sao-paulo-rain-circuit'),
   require('./rocky-mountain-hill-run'),
   require('./nevada-drag-strip'),
+  require('./arno-old-bridge-run'),
   require('./yukon-five-finger-run'),
 ];

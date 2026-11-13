@@ -10,6 +10,7 @@
 "aoraki-ice-lake-run": {"family":"peak","reach":0.324,"seq":["opening: clean-drop","drop","S-bends right","drop","straight","peg","drop","straight","slalom"]},
 "arcade-spins": {"family":"arcade","reach":0.224,"seq":["opening: tunnel-launch","drop","pileUp","slalom","drop","slalom","straight","peg ×2","S-bends left"]},
 "are-run": {"family":"world-tour","reach":0.197,"seq":["opening: classic","drop","pileUp","slalom","S-bends left"]},
+"arno-old-bridge-run": {"family":"river","reach":0.259,"seq":["opening: chicane-start","drop","pileUp","slalom","S-bends left","peg ×2","drop","straight","steps"]},
 "aturi-arcade": {"family":"arcade","reach":0.247,"seq":["opening: crest-start","drop","pileUp","slalom","climb","drop","straight","peg","climb","straight","moguls"]},
 "baikal-clear-ice": {"family":"block-2","reach":0.319,"seq":["opening: pipe-drop","drop","half-pipe","sweep left","peg"]},
 "baqueira-beret-run": {"family":"world-tour","reach":0.201,"seq":["opening: classic","drop","pileUp","slalom","S-bends left"]},

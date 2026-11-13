@@ -123,6 +123,17 @@
    "side": 1,
    "marbles": 4
   },
+  "arno-old-bridge-run": {
+   "name": "Arno Old Bridge Run",
+   "series": "Rivers",
+   "lighting": "sunset",
+   "v": "8afb96ce",
+   "bytes": 18466,
+   "bytes2x": 45464,
+   "t": 17318,
+   "side": 1,
+   "marbles": 5
+  },
   "aturi-arcade": {
    "name": "Aturi Arcade",
    "series": "Arcade",
