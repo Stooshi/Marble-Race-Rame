@@ -24,6 +24,7 @@
 "bullet-hell": {"family":"arcade","reach":0.209,"seq":["opening: staggered-drop","drop","pileUp","slalom","brake","sweep left","spiral right"]},
 "cape-town-summer-christmas": {"family":"coaster","reach":0.223,"seq":["opening: split-start","drop","pileUp","slalom","chutes","drop","slalom","straight","rail","box","table-top","spiral right"]},
 "chain-reaction": {"family":"block","reach":0.199,"seq":["opening: classic","drop","pileUp","slalom","S-bends right"]},
+"chao-phraya-dawn-spiral": {"family":"river","reach":0.198,"seq":["opening: sand-trap","drop","pileUp","slalom","brake","sweep right","straight","slalom"]},
 "checkpoint-rush": {"family":"arcade","reach":0.231,"seq":["opening: boost-launch","drop","pileUp","straight","boost","drop","slalom","sweep left"]},
 "chiang-mai": {"family":"coaster","reach":0.22,"seq":["opening: crest-start","drop","pileUp","slalom","climb","drop","S-bends right","curtain"]},
 "china-wall-twister": {"family":"world-tour","reach":0.207,"seq":["opening: classic","drop","pileUp","slalom","S-bends left"]},

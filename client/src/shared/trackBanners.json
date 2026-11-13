@@ -299,6 +299,17 @@
    "side": 1,
    "marbles": 4
   },
+  "chao-phraya-dawn-spiral": {
+   "name": "Chao Phraya Dawn Spiral",
+   "series": "Rivers",
+   "lighting": "sunset",
+   "v": "df88a38c",
+   "bytes": 12306,
+   "bytes2x": 31222,
+   "t": 10852,
+   "side": 1,
+   "marbles": 4
+  },
   "checkpoint-rush": {
    "name": "Checkpoint Rush",
    "series": "Arcade",
