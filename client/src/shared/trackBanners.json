@@ -1718,6 +1718,17 @@
    "side": 1,
    "marbles": 4
   },
+  "tokyo-night-street-race": {
+   "name": "Tokyo Night Street Race",
+   "series": "Grand Prix",
+   "lighting": "night",
+   "v": "a4285db7",
+   "bytes": 17372,
+   "bytes2x": 41198,
+   "t": 10106,
+   "side": 1,
+   "marbles": 4
+  },
   "tokyo-photo-finish": {
    "name": "Tokyo Photo Finish",
    "series": "Track and Field",
