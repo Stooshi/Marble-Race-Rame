@@ -95,8 +95,9 @@ export const RIVER_PALETTES = {
     dressing: [['spruce', 0.6], ['birch', 0.25], ['rock', 0.15, '#6a6660']] },
   // The Iguazú: silty brown-green water (it must read as water) pouring through deep rainforest, red earth banks.
   iguazu: { water: '#5a7a5c', deep: '#456650', glint: '#e8eee4', rapids: [0.1, 0.22], hillside: ['#2f6a2c', '#245a26'], foam: '#f6f4ee', bank: '#9a4a2e', quay: '#7a5a48', sand: '#b8704a',
-    // (No undergrowth, unlike the Amazon's: with the falls' rock and water the flyover was just over the computer's budget.)
-    dressing: [['broadleaf', 0.45, '#2a6a2c'], ['palm', 0.25], ['banana', 0.2], ['bush', 0.1, '#2f6a2c']] },
+    // (No undergrowth, unlike the Amazon's, and fewer round crowns: with the falls' rock and water the flyover was just over
+    // the computer's budget.)
+    dressing: [['broadleaf', 0.3, '#2a6a2c'], ['palm', 0.25], ['banana', 0.25], ['bush', 0.2, '#2f6a2c']] },
 };
 const BANK_COLOURS = { sand: 'sand', reeds: 'bank', bayou: 'bank', rock: 'quay', quay: 'quay', grass: null };
 

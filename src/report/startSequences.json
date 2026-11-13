@@ -68,6 +68,7 @@
 "hells-burst": {"family":"canyon","reach":0.312,"seq":["opening: split-start","drop","pileUp","slalom","chutes","drop","slalom","sweep left","boost","drop"]},
 "hong-kong-crossing": {"family":"coaster","reach":0.216,"seq":["opening: split-start","drop","pileUp","slalom","chutes","drop","slalom","S-bends left"]},
 "huascaran-turquoise-lakes": {"family":"peak","reach":0.206,"seq":["opening: staggered-drop","drop","pileUp","slalom","brake","sweep left","peg","straight","peg"]},
+"hudson-highlands-run": {"family":"river","reach":0.225,"seq":["opening: crest-start","drop","pileUp","slalom","climb","drop","straight","slalom","moguls"]},
 "ice-palace": {"family":"winter-wonders","reach":0.324,"seq":["opening: tunnel-launch","drop","pileUp","slalom","drop","slalom","straight","half-pipe","straight","peg ×3"]},
 "indus-spins": {"family":"canyon","reach":0.241,"seq":["opening: classic","drop","pileUp","slalom","straight","slalom","sweep right","boost"]},
 "irrawaddy-balloon-dawn": {"family":"river","reach":0.228,"seq":["opening: tunnel-launch","drop","pileUp","slalom","drop","slalom","drop","peg ×3","S-bends left","peg ×2"]},

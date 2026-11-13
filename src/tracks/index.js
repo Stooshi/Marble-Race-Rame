@@ -193,6 +193,7 @@ module.exports = [
   require('./rocky-mountain-hill-run'),
   require('./nevada-drag-strip'),
   require('./arno-old-bridge-run'),
+  require('./hudson-highlands-run'),
   require('./chao-phraya-dawn-spiral'),
   require('./yukon-five-finger-run'),
 ];

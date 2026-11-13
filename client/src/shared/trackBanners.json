@@ -783,6 +783,17 @@
    "side": 1,
    "marbles": 4
   },
+  "hudson-highlands-run": {
+   "name": "Hudson Highlands Run",
+   "series": "Rivers",
+   "lighting": "day",
+   "v": "ecd6931e",
+   "bytes": 17876,
+   "bytes2x": 45762,
+   "t": 10751,
+   "side": 1,
+   "marbles": 4
+  },
   "ice-palace": {
    "name": "Ice Palace",
    "series": "Winter Wonders",
