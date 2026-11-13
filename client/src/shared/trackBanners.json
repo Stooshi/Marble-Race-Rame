@@ -563,6 +563,17 @@
    "side": 1,
    "marbles": 4
   },
+  "finland-forest-rally": {
+   "name": "Finland Forest Rally",
+   "series": "Grand Prix",
+   "lighting": "midnight-sun",
+   "v": "4862e203",
+   "bytes": 17020,
+   "bytes2x": 40176,
+   "t": 14658,
+   "side": -1,
+   "marbles": 5
+  },
   "fish-river-burst": {
    "name": "Fish River Burst",
    "series": "Canyons",

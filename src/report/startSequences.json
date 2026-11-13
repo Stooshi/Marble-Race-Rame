@@ -48,6 +48,7 @@
 "everest-icefall-run": {"family":"peak","reach":0.33,"seq":["opening: clean-drop","drop","S-bends left","drop","slalom","straight","peg","S-bends right","peg"]},
 "final-level": {"family":"block","reach":0.227,"seq":["opening: funnel-drop","drop","pileUp","slalom","S-bends left","sweep right","boost"]},
 "final-round-spin": {"family":"arcade","reach":0.201,"seq":["opening: banked-turn","drop","pileUp","slalom","sweep left","S-bends right"]},
+"finland-forest-rally": {"family":"grand-prix","reach":0.28,"seq":["opening: rumble-start","drop","slalom","moguls","S-bends left","slalom","straight","slalom"]},
 "fish-river-burst": {"family":"canyon","reach":0.218,"seq":["opening: banked-turn","drop","pileUp","slalom","sweep left","S-bends left"]},
 "flipper-spins": {"family":"pinball","reach":0.26,"seq":["opening: classic","drop","pileUp","slalom","straight","hairpin left","swipe","drop","slalom","sweep right","curtain"]},
 "frostmere-marble-grand-prix": {"family":"grand-prix","reach":0.218,"seq":["opening: classic","drop","pileUp","slalom","S-bends left"]},

@@ -187,4 +187,5 @@ module.exports = [
   require('./lapland-ice-race'),
   require('./lombardy-parkland-circuit'),
   require('./mexico-city-stadium-section'),
+  require('./finland-forest-rally'),
 ];
