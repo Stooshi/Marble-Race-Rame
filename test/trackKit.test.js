@@ -757,6 +757,7 @@ const HIDDEN_KIT_TRACKS = [
   ['mexico-city-stadium-section', '2027-06-17-add-mexico-city-stadium-section.sql', 'Grand Prix track (motorsport: a city-park circuit in Mexico City at dusk under the jacarandas, a rolling start, the stadium section banked round a bowl packed with fans; in the Grand Prix pack; switched off until Moses has watched the preview).'],
   ['finland-forest-rally', '2027-06-18-add-finland-forest-rally.sql', 'Grand Prix track (motorsport: a gravel rally stage through the lake forests of Finland under the midnight sun, a rumble start, over a ridge crest and down the big Lake drop; in the Grand Prix pack; switched off until Moses has watched the preview).'],
   ['tokyo-night-street-race', '2027-06-19-add-tokyo-night-street-race.sql', 'Grand Prix track (motorsport: a street race through Tokyo at night among the lit towers, a chicane start, the Expressway loop with the towers behind it; in the Grand Prix pack; switched off until Moses has watched the preview).'],
+  ['sao-paulo-rain-circuit', '2027-06-20-add-sao-paulo-rain-circuit.sql', 'Grand Prix track (motorsport: a hilly old circuit in the south of São Paulo in a tropical downpour, a pipe drop, the long banked Lake curve and the Downhill plunge; in the Grand Prix pack; switched off until Moses has watched the preview).'],
 ];
 for (const [slug, file, note] of HIDDEN_KIT_TRACKS) {
   test(`${slug} is added by its data update, switched off, exactly as its track file builds it`, () => {

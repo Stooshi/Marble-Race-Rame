@@ -129,6 +129,7 @@
 "sahara-marble-grand-prix": {"family":"grand-prix","reach":0.202,"seq":["opening: staggered-drop","drop","pileUp","slalom","brake","S-bends right","slalom","peg"]},
 "saint-tropez": {"family":"world-tour","reach":0.217,"seq":["opening: staggered-drop","drop","pileUp","slalom","brake","sweep right","S-bends right","peg","slalom"]},
 "san-fernando-lantern-spins": {"family":"block","reach":0.33,"seq":["opening: peg-drop","drop","peg ×7","S-bends left","straight","peg ×3","table-top"]},
+"sao-paulo-rain-circuit": {"family":"grand-prix","reach":0.306,"seq":["opening: pipe-drop","drop","half-pipe","S-bends left","peg","slalom"]},
 "sapporo-snow-sculptures": {"family":"coaster","reach":0.236,"seq":["opening: classic","drop","pileUp","slalom","straight","box","rail","jump","spiral right"]},
 "seine-quays-spins": {"family":"river","reach":0.326,"seq":["opening: pipe-drop","drop","half-pipe","straight","slalom","sweep right","peg ×3"]},
 "seoul-winter-lights": {"family":"arcade","reach":0.369,"seq":["opening: clean-drop","drop","S-bends left","sweep right","curtain"]},

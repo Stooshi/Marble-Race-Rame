@@ -189,4 +189,5 @@ module.exports = [
   require('./mexico-city-stadium-section'),
   require('./finland-forest-rally'),
   require('./tokyo-night-street-race'),
+  require('./sao-paulo-rain-circuit'),
 ];

@@ -1476,6 +1476,17 @@
    "side": 1,
    "marbles": 10
   },
+  "sao-paulo-rain-circuit": {
+   "name": "São Paulo Rain Circuit",
+   "series": "Grand Prix",
+   "lighting": "rain",
+   "v": "d95b1d7a",
+   "bytes": 21350,
+   "bytes2x": 50960,
+   "t": 21704,
+   "side": -1,
+   "marbles": 7
+  },
   "sapporo-snow-sculptures": {
    "name": "Sapporo Snow Sculptures",
    "series": "Coasters",
