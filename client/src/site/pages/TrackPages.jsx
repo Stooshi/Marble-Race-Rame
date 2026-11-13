@@ -5,6 +5,7 @@ import { useAsync } from '../../hooks/useAsync';
 import TrackBanner, { SERIES_PIC } from '../TrackBanner';
 import { applyMeta, metaFor } from '../pageMeta';
 import { FREE_TO_PLAY, holidayPassNeeded } from '../../shared/holidayWording';
+import { FREE_AND_PACKS, FREE_TRACKS, PACKS_LIVE } from '../../shared/packWording';
 import { TrackCountryRecords } from './CountryRecords';
 import WildnessBadge from '../WildnessBadge';
 import { WILDNESS, WILDNESS_NOTE, wildnessOf } from '../../shared/wildness.js';
@@ -27,7 +28,7 @@ export function TracksPage() {
   return (
     <div className="ms-page">
       <h1 className="ms-h1" style={{ marginBottom: 8 }}>All tracks</h1>
-      <p className="ms-lede" style={{ marginTop: 0 }}>{data?.tracks?.length ? `${data.tracks.length} tracks` : 'Every track'}, every one with its own start, layout and surprises. {holidayPassNeeded() ? `Pick one and race it. ${FREE_TO_PLAY}.` : 'Pick one and race it, free.'}</p>
+      <p className="ms-lede" style={{ marginTop: 0 }}>{data?.tracks?.length ? `${data.tracks.length} tracks` : 'Every track'}, every one with its own start, layout and surprises. {PACKS_LIVE ? `Pick one and race it. ${FREE_AND_PACKS}.` : holidayPassNeeded() ? `Pick one and race it. ${FREE_TO_PLAY}.` : 'Pick one and race it, free.'}</p>
       {error && <p className="ms-msg ms-msg--bad">The tracks couldn't be loaded. Try again in a moment.</p>}
       {bySeries.map(([series, list]) => (
         <section key={series} aria-labelledby={`series-${series}`} style={{ marginTop: 28 }}>
@@ -75,7 +76,7 @@ export function TrackPage() {
         <li>Series: {track.series}</li>
         {wildnessOf(track) && <li>Wildness: <WildnessBadge track={track} /> {WILDNESS[track.wildness].about.toLowerCase()}</li>}
         {km && <li>Length: {km}</li>}
-        <li>20 marbles a race, about a minute; {holidayPassNeeded() ? FREE_TO_PLAY.replace(/^Free/, 'free') : 'every race is free'}</li>
+        <li>20 marbles a race, about a minute; {PACKS_LIVE ? `${FREE_TRACKS} tracks are free for everyone` : holidayPassNeeded() ? FREE_TO_PLAY.replace(/^Free/, 'free') : 'every race is free'}</li>
       </ul>
       {wildnessOf(track) && <p className="ms-wild-note">{WILDNESS_NOTE}</p>}
       {track.lockedBy === 'pack' ? (

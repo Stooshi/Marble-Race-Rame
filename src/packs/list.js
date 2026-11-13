@@ -3,7 +3,7 @@
 /**
  * The track packs and the free set (Moses, 11 Nov 2026; project doc claude/wildness-and-free-set-proposal.md).
  * The data update 2027-06-10-wildness-and-track-packs.sql was made from this (scripts/wildness-sql.js, with
- * the first free set of 45); the free set of 30 by 2027-06-11-free-set-of-30.sql. Change a pack or the free set
+ * the first free set of 45); the free set of 30 by 2027-06-11-free-set-of-30.sql, of 15 by 2027-06-23-free-set-of-15.sql. Change a pack or the free set
  * with a new data update, and here.
  *
  * Every live track of a series (not the season tracks, not the Classic ones) is in its series' pack;
@@ -39,22 +39,24 @@ const BLOCKS_2 = [
 ];
 
 /**
- * The free set: three per series (30), a good sample of looks and places, mostly Easy and Wild, two Extreme in
- * all, each series' best-looking track among them (the one on its landing-page card). Moses, 12 Nov 2026
- * (claude/free-set-30-proposal.md); data update 2027-06-11-free-set-of-30.sql. (Before: 45, 4 or 5 per series,
- * in 2027-06-10-wildness-and-track-packs.sql.)
+ * The free set: 15 (Moses, 13 Nov 2026, by voice: "15 free now", Claude to pick the best 15 of the 30). One per
+ * series where the pack is nearest 20 (Grand Prix, World Tour, Canyons, Rivers, Peaks: two each back in the
+ * pack, so Grand Prix reaches 20 with its motorsport tracks), two in the others (Coasters, Track and Field,
+ * Pinball, Arcade, Blocks: one each back; Blocks keeps Lisbon so Blocks 2 stays at exactly 20). Each series'
+ * best-looking track (the one on its landing-page card) stays free; 7 Easy, 6 Wild, 2 Extreme. Data update
+ * 2027-06-23-free-set-of-15.sql. (Before: 30, three per series, 2027-06-11-free-set-of-30.sql; first 45.)
  */
 const FREE = {
-  'Grand Prix': ['frostmere-marble-grand-prix', 'sydney-marble-grand-prix', 'sahara-marble-grand-prix'],
-  'World Tour': ['san-francisco', 'are-run', 'amazon-water-run'],
-  Coasters: ['hong-kong-crossing', 'chiang-mai', 'pyramid-run'],
-  Canyons: ['grand-canyon-burst', 'antelope-slot-spins', 'waimea-free-fall'],
-  Blocks: ['spawn-point', 'magma-core', 'lisbon-cube-hills'],
-  'Track and Field': ['marble-stadium-sprint', 'beijing-nest-200', 'london-steeplechase'],
-  Rivers: ['danube-night-run', 'irrawaddy-balloon-dawn', 'congo-rapids-burst'],
-  Peaks: ['everest-icefall-run', 'vatnajokull-blue-cave', 'roraima-cloud-falls'],
-  Pinball: ['flipper-spins', 'tilt', 'multiball-manor'],
-  Arcade: ['checkpoint-rush', 'bullet-hell', 'joystick-spins'],
+  'Grand Prix': ['frostmere-marble-grand-prix'],
+  'World Tour': ['san-francisco'],
+  Coasters: ['hong-kong-crossing', 'chiang-mai'],
+  Canyons: ['grand-canyon-burst'],
+  Blocks: ['spawn-point', 'lisbon-cube-hills'],
+  'Track and Field': ['marble-stadium-sprint', 'london-steeplechase'],
+  Rivers: ['danube-night-run'],
+  Peaks: ['everest-icefall-run'],
+  Pinball: ['flipper-spins', 'tilt'],
+  Arcade: ['checkpoint-rush', 'bullet-hell'],
 };
 
 /** The pack key of a live track of `series`. */

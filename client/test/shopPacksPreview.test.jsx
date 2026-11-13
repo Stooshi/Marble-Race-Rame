@@ -52,10 +52,10 @@ describe('the track-pack shop mockup', () => {
     for (const t of GRAND_PRIX.filter((x) => x.slug)) expect(t.wildness).toBe(gp.find((g) => g.slug === t.slug).wildness);
   });
 
-  it('the Grand Prix pack page: 9 live and 11 coming soon, the buy button at the top and the bottom, the paid-league line', () => {
+  it('the Grand Prix pack page: 11 live and 9 coming soon (13 Nov 2026: Sydney and Sahara back in the pack), the buy button at the top and the bottom, the paid-league line', () => {
     const gp = page('/preview/shop-packs?pack=grand-prix').replace(/<!-- -->/g, '');
     expect(GRAND_PRIX).toHaveLength(20);
-    expect(gp.match(/COMING SOON/g)).toHaveLength(11);
+    expect(gp.match(/COMING SOON/g)).toHaveLength(9);
     expect(gp.match(/Unlock all 20 tracks – \[price\]/g)).toHaveLength(2);
     expect(gp).toContain('Paid leagues can race any track, locked ones included.');
     expect(gp).toContain('City circuits and motorsport');

@@ -27,3 +27,16 @@ export function tracksPhrase(n = BUILD_TRACK_COUNT) {
   const r = roundedTracks(n);
   return r ? `${r} tracks` : 'dozens of tracks';
 }
+
+/**
+ * The landing page draft v2's words for the track count (Moses, 13 Nov 2026: "hundreds of tracks", not a number that
+ * goes stale): "hundreds of tracks" from 200 live tracks, "over 100 tracks" from 100, else the rounded count
+ * ("80+ tracks"); "dozens of tracks" without a count.
+ */
+export function tracksWords(n = BUILD_TRACK_COUNT) {
+  const count = Number(n);
+  if (!Number.isFinite(count) || count <= 0) return 'dozens of tracks';
+  if (count >= 200) return 'hundreds of tracks';
+  if (count >= 100) return 'over 100 tracks';
+  return tracksPhrase(count);
+}

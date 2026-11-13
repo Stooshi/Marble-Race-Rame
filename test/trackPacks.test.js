@@ -64,18 +64,19 @@ test('the packs: one per series, Pinball and Arcade separate, Blocks 1 and Block
 });
 
 const W = path.join(__dirname, '..', 'src', 'tracks', 'wildness.json');
-test('the free set: 3 per series, 30 in all, mostly Easy and Wild, at most 2 Extreme (12 Nov 2026)', () => {
+test('the free set: 15, one or two per series, mostly Easy and Wild, at most 2 Extreme (13 Nov 2026)', () => {
   const free = Object.values(FREE).flat();
-  assert.equal(free.length, 30);
-  assert.equal(new Set(free).size, 30);
-  for (const [series, list] of Object.entries(FREE)) assert.equal(list.length, 3, series);
-  assert.ok(isFree('tilt') && !isFree('grand-champion') && !isFree('nairobi-marble-grand-prix'));
+  assert.equal(free.length, 15);
+  assert.equal(new Set(free).size, 15);
+  assert.equal(Object.keys(FREE).length, 10); // (every series keeps a free track)
+  for (const [series, list] of Object.entries(FREE)) assert.ok(list.length >= 1 && list.length <= 2, series);
+  assert.ok(isFree('tilt') && !isFree('grand-champion') && !isFree('nairobi-marble-grand-prix') && !isFree('sydney-marble-grand-prix'));
   if (!fs.existsSync(W)) return;
   const { tracks } = JSON.parse(fs.readFileSync(W, 'utf8'));
   const by = new Map(tracks.map((t) => [t.slug, t]));
   for (const [series, list] of Object.entries(FREE)) for (const s of list) assert.equal(by.get(s)?.series, series, s);
   assert.ok(free.filter((s) => by.get(s).wildness === 'extreme').length <= 2);
-  // (Each series' landing-page picture is among its free three.)
+  // (Each series' landing-page picture is among its free ones.)
   const landing = fs.readFileSync(path.join(__dirname, '..', 'client', 'src', 'site', 'landing', 'LandingPage.jsx'), 'utf8');
   for (const [, series, slug] of landing.matchAll(/\['([A-Za-z ]+)', '[^']*', '[^']*', '([a-z0-9-]+)'/g)) if (FREE[series]) assert.ok(FREE[series].includes(slug), `${series}: ${slug}`);
 });
@@ -91,12 +92,16 @@ test('wildness.json: every live track scored from the full report races; the dat
   const first = fs.readFileSync(path.join(UPDATES, '2027-06-10-wildness-and-track-packs.sql'), 'utf8');
   for (const t of data.tracks) assert.ok(first.includes(`('${t.slug}', ${t.score}, '${t.wildness}', `), t.slug);
   assert.equal((first.match(/, true\)/g) ?? []).length, 45); // (the first free set)
-  // 2027-06-11: the free set of 30, exactly src/packs/list.js.
+  // 2027-06-11: the free set of 30 (run on the live server: never edited); 2027-06-23: the free set of 15,
+  // exactly src/packs/list.js, the last free-set update.
   const second = fs.readFileSync(path.join(UPDATES, '2027-06-11-free-set-of-30.sql'), 'utf8');
-  const inSql = [...second.replace(/--.*$/gm, '').matchAll(/'([a-z0-9-]+)'/g)].map((m) => m[1]);
-  assert.deepEqual(inSql.sort(), Object.values(FREE).flat().sort());
-  assert.match(second, /WHERE pack_key IS NOT NULL/); // (season tracks untouched)
-  for (const sql of [first, second]) assert.doesNotMatch(sql.replace(/--.*$/gm, ''), /is_active|product_id|price/); // (switches nothing on, sells nothing)
+  const slugsIn = (sql) => [...sql.replace(/--.*$/gm, '').matchAll(/'([a-z0-9-]+)'/g)].map((m) => m[1]);
+  assert.equal(slugsIn(second).length, 30);
+  const fifteen = fs.readFileSync(path.join(UPDATES, '2027-06-23-free-set-of-15.sql'), 'utf8');
+  assert.deepEqual(slugsIn(fifteen).sort(), Object.values(FREE).flat().sort());
+  for (const s of slugsIn(fifteen)) assert.ok(slugsIn(second).includes(s), s); // (the 15 are from the 30)
+  for (const sql of [second, fifteen]) assert.match(sql, /WHERE pack_key IS NOT NULL/); // (season tracks untouched)
+  for (const sql of [first, second, fifteen]) assert.doesNotMatch(sql.replace(/--.*$/gm, ''), /is_active|product_id|price/); // (switches nothing on, sells nothing)
   // (Each sorts after the one before it.)
   const all = fs.readdirSync(UPDATES).filter((f) => f.endsWith('.sql')).sort();
   assert.ok(all.indexOf('2027-06-11-free-set-of-30.sql') > all.indexOf('2027-06-10-wildness-and-track-packs.sql'));

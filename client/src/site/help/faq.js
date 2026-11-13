@@ -24,6 +24,7 @@ import supportSettings from '../../shared/support.json';
 import company from '../../shared/company.json';
 import { BUILD_TRACK_COUNT, BUILD_TRACK_SERIES, roundedTracks } from '../trackCount';
 import { FREE_TO_PLAY, holidayPassNeeded } from '../../shared/holidayWording';
+import { FREE_AND_PACKS, PACKS_LIVE } from '../../shared/packWording';
 
 const n = (v) => Number(v).toLocaleString('en-US');
 const ordinal = (k) => `${k}${['th', 'st', 'nd', 'rd'][(k % 100 > 10 && k % 100 < 14) || k % 10 > 3 ? 0 : k % 10]}`;
@@ -136,9 +137,12 @@ export function buildFaq({ tracks, platform = 'web' } = {}) {
           ? "This app, or any modern browser on a phone, tablet or computer at marblespins.com. It's the same game and the same account everywhere."
           : "Any modern browser on a phone, tablet or computer at marblespins.com. The iPhone and Android apps are [coming at launch]. It's the same game and the same account everywhere."],
       ['Is it really free?',
-        holidayPassNeeded()
-          ? `Yes. ${FREE_TO_PLAY} until ${HOLIDAY.ends}; every other track and every way of earning coins is free. You can buy coins if you want to collect marbles faster, but you never need to, and buying never makes your marble faster.`
-          : 'Yes. Every race, every track and every way of earning coins is free. You can buy coins if you want to collect marbles faster, but you never need to, and buying never makes your marble faster.'],
+        PACKS_LIVE
+          // (With track packs on sale: 15 free tracks, the rest in packs; client/src/shared/packWording.js.)
+          ? `Yes, to play. ${FREE_AND_PACKS}, and every way of earning coins is free.${holidayPassNeeded() ? ` Holiday tracks need the Holiday Pass until ${HOLIDAY.ends}.` : ''} You can buy coins if you want to collect marbles faster, but you never need to, and buying never makes your marble faster.`
+          : holidayPassNeeded()
+            ? `Yes. ${FREE_TO_PLAY} until ${HOLIDAY.ends}; every other track and every way of earning coins is free. You can buy coins if you want to collect marbles faster, but you never need to, and buying never makes your marble faster.`
+            : 'Yes. Every race, every track and every way of earning coins is free. You can buy coins if you want to collect marbles faster, but you never need to, and buying never makes your marble faster.'],
     ]],
     ['Races', [
       ['How is a race decided?',

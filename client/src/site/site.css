@@ -1177,6 +1177,9 @@ mark.ms-legal__new { background: rgba(255, 210, 31, 0.22); color: var(--ms-text)
 .ms-bagdemo__title { font-weight: 800; font-size: 0.8rem; letter-spacing: 0.08em; color: var(--ms-soft); text-align: center; }
 .ms-bagdemo__grid { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; grid-template-columns: repeat(4, minmax(0, 1fr)); }
 .ms-bagdemo__slot { display: grid; justify-items: center; gap: 8px; min-width: 0; }
+.ms-cards.ms-cards--four { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+@media (max-width: 860px) { .ms-cards.ms-cards--four { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; } }
+@media (max-width: 520px) { .ms-cards--four .ms-trackcard__body { padding: 8px 10px 10px; font-size: 0.85rem; } }
 .ms-preview-bar { background: var(--ms-yellow); color: var(--ms-ink); font-weight: 700; font-size: 0.85rem; text-align: center; padding: 6px 16px; }
 @media (max-width: 860px) {
   .ms-case { grid-template-columns: minmax(0, 1fr); padding: 20px 16px; }

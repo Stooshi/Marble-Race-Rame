@@ -9,7 +9,7 @@ import { WILDNESS, WILDNESS_LEVELS, WILDNESS_NOTE } from '../../shared/wildness.
  * example. /preview/shop-packs (noindex like every /preview page; linked from nowhere). Nothing is for sale:
  * every price is "[price]" and no button buys, unlocks or calls the server. The real shop (/shop) is unchanged.
  *
- * The packs' figures are a snapshot of 12 Nov 2026 (src/packs/list.js, the free set of 30, and the wildness
+ * The packs' figures are a snapshot of 13 Nov 2026 (src/packs/list.js, the free set of 15, and the wildness
  * scores in src/tracks/wildness.json): the tracks in each pack today and their levels.
  */
 
@@ -18,20 +18,20 @@ const FULL = 20;
 
 /** The 11 packs: the best-looking track's picture, the tracks in the pack today and their levels. */
 export const PACKS = [
-  { key: 'grand-prix', name: 'Grand Prix', series: 'Grand Prix', pic: 'pudong-marble-grand-prix', live: 9, mix: { easy: 2, wild: 5, extreme: 2 } },
-  { key: 'world-tour', name: 'World Tour', series: 'World Tour', pic: 'saint-tropez', live: 11, mix: { easy: 8, wild: 1, extreme: 2 } },
-  { key: 'coasters', name: 'Coasters', series: 'Coasters', pic: 'phantom-peak', live: 9, mix: { easy: 7, wild: 2, extreme: 0 } },
-  { key: 'canyons', name: 'Canyons', series: 'Canyons', pic: 'tiger-leaping-spins', live: 12, mix: { easy: 6, wild: 5, extreme: 1 } },
-  { key: 'blocks-1', name: 'Blocks 1', series: 'Blocks', pic: 'bonus-round', live: 12, mix: { easy: 7, wild: 5, extreme: 0 } },
+  { key: 'grand-prix', name: 'Grand Prix', series: 'Grand Prix', pic: 'pudong-marble-grand-prix', live: 11, mix: { easy: 2, wild: 7, extreme: 2 } },
+  { key: 'world-tour', name: 'World Tour', series: 'World Tour', pic: 'saint-tropez', live: 13, mix: { easy: 10, wild: 1, extreme: 2 } },
+  { key: 'coasters', name: 'Coasters', series: 'Coasters', pic: 'phantom-peak', live: 10, mix: { easy: 7, wild: 3, extreme: 0 } },
+  { key: 'canyons', name: 'Canyons', series: 'Canyons', pic: 'tiger-leaping-spins', live: 14, mix: { easy: 7, wild: 6, extreme: 1 } },
+  { key: 'blocks-1', name: 'Blocks 1', series: 'Blocks', pic: 'bonus-round', live: 13, mix: { easy: 8, wild: 5, extreme: 0 } },
   { key: 'blocks-2', name: 'Blocks 2', series: 'Blocks', pic: 'venice-cube-canals', live: 20, mix: { easy: 6, wild: 6, extreme: 8 } },
-  { key: 'track-and-field', name: 'Track and Field', series: 'Track and Field', pic: 'stockholm-1912-relay', live: 7, mix: { easy: 5, wild: 1, extreme: 1 } },
-  { key: 'rivers', name: 'Rivers', series: 'Rivers', pic: 'zambezi-falls-run', live: 13, mix: { easy: 3, wild: 10, extreme: 0 } },
-  { key: 'peaks', name: 'Peaks', series: 'Peaks', pic: 'k2-concordia', live: 12, mix: { easy: 4, wild: 5, extreme: 3 } },
-  { key: 'pinball', name: 'Pinball', series: 'Pinball', pic: 'grand-champion', live: 4, mix: { easy: 1, wild: 2, extreme: 1 } },
-  { key: 'arcade', name: 'Arcade', series: 'Arcade', pic: 'kill-screen', live: 4, mix: { easy: 2, wild: 0, extreme: 2 } },
+  { key: 'track-and-field', name: 'Track and Field', series: 'Track and Field', pic: 'stockholm-1912-relay', live: 8, mix: { easy: 5, wild: 2, extreme: 1 } },
+  { key: 'rivers', name: 'Rivers', series: 'Rivers', pic: 'zambezi-falls-run', live: 15, mix: { easy: 3, wild: 12, extreme: 0 } },
+  { key: 'peaks', name: 'Peaks', series: 'Peaks', pic: 'k2-concordia', live: 14, mix: { easy: 5, wild: 6, extreme: 3 } },
+  { key: 'pinball', name: 'Pinball', series: 'Pinball', pic: 'grand-champion', live: 5, mix: { easy: 2, wild: 2, extreme: 1 } },
+  { key: 'arcade', name: 'Arcade', series: 'Arcade', pic: 'kill-screen', live: 5, mix: { easy: 2, wild: 1, extreme: 2 } },
 ];
 
-/** The Grand Prix pack: its 9 live tracks and the 11 planned ones (20). */
+/** The Grand Prix pack: its 11 live tracks (Sydney and Sahara back from the free set, 13 Nov 2026) and the 9 motorsport ones built 12–13 Nov (20). */
 export const GRAND_PRIX = [
   { slug: 'pudong-marble-grand-prix', name: 'Pudong Marble Grand Prix', place: 'Shanghai, China', wildness: 'extreme', line: 'A loop with the glittering skyline behind it, then a banked sweep along the Huangpu at night' },
   { slug: 'stockholm-marble-grand-prix', name: 'Stockholm Marble Grand Prix', place: 'Stockholm, Sweden', wildness: 'extreme', line: 'Twin chutes down the Södermalm cliffs and the Slussen drop to the water' },
@@ -42,6 +42,8 @@ export const GRAND_PRIX = [
   { slug: 'elderglade-marble-grand-prix', name: 'Elderglade Marble Grand Prix', place: 'Our own elven forest', wildness: 'wild', line: 'Down from a giant tree and through a shimmering waterfall' },
   { slug: 'lagos-marble-grand-prix', name: 'Lagos Marble Grand Prix', place: 'Lagos, Nigeria', wildness: 'easy', line: 'A half-pipe into the market and the long banked turn on the lagoon bridge' },
   { slug: 'dubai-marble-grand-prix', name: 'Dubai Marble Grand Prix', place: 'Dubai, UAE', wildness: 'easy', line: 'A floodlit night race from the Burj Khalifa, through the splitter to the Marina' },
+  { slug: 'sydney-marble-grand-prix', name: 'Sydney Marble Grand Prix', place: 'Sydney, Australia', wildness: 'wild', line: 'Across the Harbour Bridge and round both sides of the Opera House' },
+  { slug: 'sahara-marble-grand-prix', name: 'Sahara Marble Grand Prix', place: 'The Sahara', wildness: 'wild', line: 'Out of a kasbah, riding the dune wave and either side of an oasis' },
   { name: 'Heartland Oval Speedway', place: 'The American Midwest', line: 'Steep banked ovals, lap after lap' },
   { name: 'Lapland Ice Race', place: 'Lapland', line: 'A frozen lake under the northern lights' },
   { name: 'Lombardy Parkland Circuit', place: 'Lombardy, Italy', line: 'Fast straights through old royal parkland' },
@@ -50,9 +52,7 @@ export const GRAND_PRIX = [
   { name: 'Finland Forest Rally', place: 'Central Finland', line: 'Jumps over the crests of forest gravel roads' },
   { name: 'Tokyo Night Street Race', place: 'Tokyo, Japan', line: 'Neon streets and tight city corners at night' },
   { name: 'São Paulo Rain Circuit', place: 'São Paulo, Brazil', line: 'A rain-soaked circuit under heavy skies' },
-  { name: 'Atacama Desert Rally', place: 'Atacama, Chile', line: 'Over the dunes of the driest desert on Earth' },
   { name: 'Rocky Mountain Hill Run', place: 'Colorado, USA', line: 'Hairpins all the way up the mountain' },
-  { name: 'Outback Red Dirt Rally', place: 'The Australian Outback', line: 'Red dirt, dust and long jumps' },
 ];
 
 const TABS = [

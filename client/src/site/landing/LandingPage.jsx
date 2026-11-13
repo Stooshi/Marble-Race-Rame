@@ -8,7 +8,8 @@ import { FEATURED_DESIGNS, originalSlug, rarityInfo } from '../../shared/marbles
 import { importOrReload } from '../../utils/staleCode';
 import { isNativeApp } from '../../app/native';
 import TrackBanner from '../TrackBanner';
-import { BUILD_TRACK_COUNT, roundedTracks } from '../trackCount';
+import { BUILD_TRACK_COUNT, roundedTracks, tracksWords } from '../trackCount';
+import { FREE_AND_PACKS, FREE_TRACKS, PACKS_LIVE } from '../../shared/packWording';
 import { FREE_TO_PLAY, holidayPassNeeded } from '../../shared/holidayWording';
 import { CollectCase, HowItWorks, StarterBag } from './LandingV2Sections';
 
@@ -32,15 +33,15 @@ const SERIES = [
 ];
 // (The draft v2's answers, /preview/landing-v2: the same, without buy, pay or upgrade words.)
 const FAQ_V2 = {
-  'Is Marble Spins free?': holidayPassNeeded()
-    ? `Yes. ${FREE_TO_PLAY} until 7 January. Extra marble looks are in the shop if you want them.`
-    : 'Yes. Every race is free and unlimited. Extra marble looks are in the shop if you want them.',
+  'Is Marble Spins free?': `Yes, to play. Race as often as you like: ${FREE_TRACKS} tracks are free for everyone, always, and more come in track packs, one per series.${holidayPassNeeded() ? ' Holiday tracks need the Holiday Pass until 7 January.' : ''} Extra marble looks are in the shop if you want them.`,
   'Can money make my marble faster?': 'Never. Every player\'s marble races at the same level, whatever it looks like: the race itself decides who wins. A marble from the shop only changes how it looks.',
 };
 const FAQ = [
   ['Is Marble Spins free?', holidayPassNeeded()
     ? `Yes. ${FREE_TO_PLAY} until 7 January. You can buy extra marble looks in the shop if you want to.`
-    : 'Yes. Every race is free and unlimited. You can buy extra marble looks in the shop if you want to.'],
+    : PACKS_LIVE
+      ? `Yes, to play. Every race is free and unlimited on ${FREE_TRACKS} free tracks; more tracks come in track packs. You can buy extra marble looks in the shop if you want to.`
+      : 'Yes. Every race is free and unlimited. You can buy extra marble looks in the shop if you want to.'],
   ['Do I need to download anything?', 'No. It plays in your browser on phone or computer. Apps for iPhone and Android are on the way.', true],
   ['Can money make my marble faster?', 'Never. Every player\'s marble races at the same level, whatever it looks like: the race itself decides who wins. Purchases only change how it looks.'],
   ['How long is a race?', 'About a minute. Perfect for a quick break, or ten in a row.'],
@@ -62,6 +63,10 @@ export default function LandingPage({ v2 = false }) {
   // The series with tracks live now (from the live track list, so the heading never goes stale).
   const liveSeries = data?.tracks?.length ? SERIES.filter(([name]) => counts[name]).length : SERIES.filter((s) => !s[4]).length;
   const cards = SERIES.filter(([name, , , , whenLive]) => !whenLive || counts[name]);
+  // (The draft v2: four series, the first four of SERIES with tracks live, then "View more" to every track: the
+  // page holds up however many series come; Moses, 13 Nov 2026.)
+  const topCards = cards.slice(0, 4);
+  const words = tracksWords(data?.tracks?.length || BUILD_TRACK_COUNT);
 
   return (
     <div className="ms-landing">
@@ -73,7 +78,7 @@ export default function LandingPage({ v2 = false }) {
             <h1 className="ms-landing__h1">Don't just watch marble races. Race them.</h1>
           </div>
           <div style={{ display: 'grid', gap: 14, flexBasis: 380 }}>
-            <p className="ms-lede" style={{ margin: 0 }}>Pick your marble, drop it into a 20-marble race on one of {total ? `${total} wild tracks` : 'dozens of wild tracks'}, and beat your friends. {isNativeApp() ? 'Free to play.' : 'Free, in your browser, no download.'}</p>
+            <p className="ms-lede" style={{ margin: 0 }}>Pick your marble, drop it into a 20-marble race on {v2 ? `one of ${words.replace(/ tracks$/, ' wild tracks')}` : `one of ${total ? `${total} wild tracks` : 'dozens of wild tracks'}`}, and beat your friends. {isNativeApp() ? 'Free to play.' : 'Free, in your browser, no download.'}</p>
             <div className="ms-row">
               <Link to="/play/start?quick=1" className="ms-btn ms-btn--primary ms-btn--lg">PLAY NOW, FREE</Link>
               <Link to="/play/friends" className="ms-btn ms-btn--lg ms-btn--ghost">Race with friends</Link>
@@ -106,11 +111,11 @@ export default function LandingPage({ v2 = false }) {
 
       <section id="tracks" aria-labelledby="tracks-h" className="ms-page">
         <div style={{ display: 'grid', gap: 6 }}>
-          <h2 id="tracks-h" className="ms-landing__h2">{total ? `${total} tracks` : 'Tracks'} in {NUMBER_WORDS[liveSeries] ?? liveSeries} series</h2>
-          <p className="ms-lede" style={{ margin: 0 }}>From Norwegian fjords to pinball tables, every track has its own start, layout and surprises.</p>
+          <h2 id="tracks-h" className="ms-landing__h2">{v2 ? words.charAt(0).toUpperCase() + words.slice(1) : `${total ? `${total} tracks` : 'Tracks'} in ${NUMBER_WORDS[liveSeries] ?? liveSeries} series`}</h2>
+          <p className="ms-lede" style={{ margin: 0 }}>From Norwegian fjords to pinball tables, every track has its own start, layout and surprises.{v2 ? ` ${FREE_AND_PACKS}.` : ''}</p>
         </div>
-        <div className="ms-cards" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 180px), 1fr))' }}>
-          {cards.map(([name, line, pic, picture]) => (
+        <div className={v2 ? 'ms-cards ms-cards--four' : 'ms-cards'} style={v2 ? undefined : { gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 180px), 1fr))' }}>
+          {(v2 ? topCards : cards).map(([name, line, pic, picture]) => (
             <div key={name} className="ms-trackcard" style={{ cursor: 'default' }}>
               <div className="ms-trackcard__pic" style={{ background: pic }}>
                 {picture && <TrackBanner slug={picture} />}
@@ -120,6 +125,7 @@ export default function LandingPage({ v2 = false }) {
             </div>
           ))}
         </div>
+        {v2 && <Link to="/tracks" className="ms-btn ms-btn--lg" style={{ alignSelf: 'flex-start' }}>View more tracks</Link>}
       </section>
 
       {v2 && <CollectCase />}
