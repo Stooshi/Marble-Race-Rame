@@ -29,14 +29,24 @@ export function tracksPhrase(n = BUILD_TRACK_COUNT) {
 }
 
 /**
- * The landing page draft v2's words for the track count (Moses, 13 Nov 2026: "hundreds of tracks", not a number that
- * goes stale): "hundreds of tracks" from 200 live tracks, "over 100 tracks" from 100, else the rounded count
- * ("80+ tracks"); "dozens of tracks" without a count.
+ * The landing page draft v2's words for the track count (Moses, 13 Nov 2026): "hundreds of tracks" from 200 live
+ * tracks; below that the live count rounded down to the nearest 50 ("over 150 tracks" for 151 to 200, "over 100"
+ * for 101 to 150; never "over 150" at exactly 150), and under 51 the rounded count ("40+ tracks"); "dozens of
+ * tracks" without a count. The heading adds tracksOnTheWay().
  */
 export function tracksWords(n = BUILD_TRACK_COUNT) {
   const count = Number(n);
   if (!Number.isFinite(count) || count <= 0) return 'dozens of tracks';
   if (count >= 200) return 'hundreds of tracks';
-  if (count >= 100) return 'over 100 tracks';
+  const fifty = Math.floor((count - 1) / 50) * 50;
+  if (fifty >= 50) return `over ${fifty} tracks`;
   return tracksPhrase(count);
+}
+
+/** The landing heading: "Over 150 tracks, with hundreds on the way" under 200, "Hundreds of tracks" from 200. */
+export function tracksHeading(n = BUILD_TRACK_COUNT) {
+  const words = tracksWords(n);
+  const head = words.charAt(0).toUpperCase() + words.slice(1);
+  const count = Number(n);
+  return Number.isFinite(count) && count > 0 && count < 200 ? `${head}, with hundreds on the way` : head;
 }

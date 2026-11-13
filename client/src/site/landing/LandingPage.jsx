@@ -8,7 +8,7 @@ import { FEATURED_DESIGNS, originalSlug, rarityInfo } from '../../shared/marbles
 import { importOrReload } from '../../utils/staleCode';
 import { isNativeApp } from '../../app/native';
 import TrackBanner from '../TrackBanner';
-import { BUILD_TRACK_COUNT, roundedTracks, tracksWords } from '../trackCount';
+import { BUILD_TRACK_COUNT, roundedTracks, tracksHeading, tracksWords } from '../trackCount';
 import { FREE_AND_PACKS, FREE_TRACKS, PACKS_LIVE } from '../../shared/packWording';
 import { FREE_TO_PLAY, holidayPassNeeded } from '../../shared/holidayWording';
 import { CollectCase, HowItWorks, StarterBag } from './LandingV2Sections';
@@ -66,7 +66,8 @@ export default function LandingPage({ v2 = false }) {
   // (The draft v2: four series, the first four of SERIES with tracks live, then "View more" to every track: the
   // page holds up however many series come; Moses, 13 Nov 2026.)
   const topCards = cards.slice(0, 4);
-  const words = tracksWords(data?.tracks?.length || BUILD_TRACK_COUNT);
+  const liveCount = data?.tracks?.length || BUILD_TRACK_COUNT;
+  const words = tracksWords(liveCount);
 
   return (
     <div className="ms-landing">
@@ -111,7 +112,7 @@ export default function LandingPage({ v2 = false }) {
 
       <section id="tracks" aria-labelledby="tracks-h" className="ms-page">
         <div style={{ display: 'grid', gap: 6 }}>
-          <h2 id="tracks-h" className="ms-landing__h2">{v2 ? words.charAt(0).toUpperCase() + words.slice(1) : `${total ? `${total} tracks` : 'Tracks'} in ${NUMBER_WORDS[liveSeries] ?? liveSeries} series`}</h2>
+          <h2 id="tracks-h" className="ms-landing__h2">{v2 ? tracksHeading(liveCount) : `${total ? `${total} tracks` : 'Tracks'} in ${NUMBER_WORDS[liveSeries] ?? liveSeries} series`}</h2>
           <p className="ms-lede" style={{ margin: 0 }}>From Norwegian fjords to pinball tables, every track has its own start, layout and surprises.{v2 ? ` ${FREE_AND_PACKS}.` : ''}</p>
         </div>
         <div className={v2 ? 'ms-cards ms-cards--four' : 'ms-cards'} style={v2 ? undefined : { gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 180px), 1fr))' }}>
