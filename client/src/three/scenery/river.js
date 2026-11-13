@@ -97,7 +97,7 @@ export const RIVER_PALETTES = {
   iguazu: { water: '#5a7a5c', deep: '#456650', glint: '#e8eee4', rapids: [0.1, 0.22], hillside: ['#2f6a2c', '#245a26'], foam: '#f6f4ee', bank: '#9a4a2e', quay: '#7a5a48', sand: '#b8704a',
     // (No undergrowth, unlike the Amazon's, and fewer round crowns: with the falls' rock and water the flyover was just over
     // the computer's budget.)
-    dressing: [['broadleaf', 0.3, '#2a6a2c'], ['palm', 0.25], ['banana', 0.25], ['bush', 0.2, '#2f6a2c']] },
+    dressing: [['broadleaf', 0.2, '#2a6a2c'], ['palm', 0.25], ['banana', 0.3], ['bush', 0.25, '#2f6a2c']] },
 };
 const BANK_COLOURS = { sand: 'sand', reeds: 'bank', bayou: 'bank', rock: 'quay', quay: 'quay', grass: null };
 

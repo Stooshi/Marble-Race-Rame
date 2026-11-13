@@ -70,6 +70,7 @@
 "huascaran-turquoise-lakes": {"family":"peak","reach":0.206,"seq":["opening: staggered-drop","drop","pileUp","slalom","brake","sweep left","peg","straight","peg"]},
 "hudson-highlands-run": {"family":"river","reach":0.225,"seq":["opening: crest-start","drop","pileUp","slalom","climb","drop","straight","slalom","moguls"]},
 "ice-palace": {"family":"winter-wonders","reach":0.324,"seq":["opening: tunnel-launch","drop","pileUp","slalom","drop","slalom","straight","half-pipe","straight","peg ×3"]},
+"iguazu-devils-throat": {"family":"river","reach":0.224,"seq":["opening: banked-turn","drop","pileUp","slalom","sweep right","drop","peg ×2","straight","slalom","moguls"]},
 "indus-spins": {"family":"canyon","reach":0.241,"seq":["opening: classic","drop","pileUp","slalom","straight","slalom","sweep right","boost"]},
 "irrawaddy-balloon-dawn": {"family":"river","reach":0.228,"seq":["opening: tunnel-launch","drop","pileUp","slalom","drop","slalom","drop","peg ×3","S-bends left","peg ×2"]},
 "istanbul-marble-grand-prix": {"family":"grand-prix","reach":0.207,"seq":["opening: crest-start","drop","pileUp","slalom","climb","drop","S-bends left","peg","slalom","peg"]},

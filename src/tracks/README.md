@@ -251,6 +251,20 @@ module.exports = track({
   A Rivers track (`'river'`) gives `river: { palette, side, width, banks }`; each section may say where the river runs
   by it (`river: 'left' | 'right' | 'under' | 'none'`; `under` needs a `height` of at least 6 m). Boats are landmarks
   with `river: true` (`distance`: metres from the river's middle towards the track).
+  **The five more Rivers tracks** (Moses, 13 Nov 2026: the Rivers pack filled to 20; same rules as the motorsport Grand
+  Prix tracks: own layout, varied openings, no jumps, no boost launch, no trademarks; 2 Easy: Hudson, Chao Phraya; 2 Wild:
+  Arno, Yukon; 1 Extreme: Iguazú), each with two signatures of the real place, hand-written sections, each in the Rivers pack and not free (its second data
+  update `<date>-<slug>-to-rivers.sql`, as the Grand Prix tracks'): Arno Old Bridge Run (a straight splitter through the
+  old bridge's two arches, `around: 'shop-bridge'`: the bridge spans both channels, its middle pier on the divider; the
+  stepped weir), Hudson Highlands Run (World's End, a 205° banked sweep; the Palisades cliffs, a castle ruin on its
+  island), Chao Phraya Dawn Spiral (a banked spiral round the temple's tall tower, `around: 'temple-prang'`; long-tail
+  boats), Yukon Five Finger Run (the drop down Five Finger Rapids between rock pillars; the Miles Canyon half-pipe) and
+  Iguazú Devil's Throat (the Devil's Throat, a curtain waterfall; a curved splitter round the island). Palettes `arno`,
+  `chao-phraya`, `hudson`, `yukon`, `iguazu`; trees `spruce` and `cypress-tall`; landmarks in
+  `client/src/three/scenery/kitLandmarksRiver2.js`. Openings: chicane start (Arno), crest start (Hudson), sand trap (Chao Phraya), rumble
+  start (Yukon), banked turn (Iguazú). Hudson, Chao Phraya and Iguazú let the field go in waves (their crest start, sand trap
+  and banked turn favoured one starting group a little), as Nevada Drag Strip. Learned: most racing overtakes happen just after the
+  opening's pile-up; Chao Phraya with the rolling start (no pile-up) had 48 to 56 a race, with the sand trap 75.
   `'winter-wonders'` (Winter Wonders, the Holiday Season's own fairy-tale winter series) is built exactly as a World
   Tour track on the ground; its kit carries `winterWonders: true`, which lists it as its own series.
   Openings are compared within a family.

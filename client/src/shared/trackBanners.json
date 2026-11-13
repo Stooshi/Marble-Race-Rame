@@ -805,6 +805,17 @@
    "side": 1,
    "marbles": 4
   },
+  "iguazu-devils-throat": {
+   "name": "Iguazú Devil's Throat",
+   "series": "Rivers",
+   "lighting": "day",
+   "v": "e25fd8b3",
+   "bytes": 18324,
+   "bytes2x": 49712,
+   "t": 10308,
+   "side": 1,
+   "marbles": 1
+  },
   "indus-spins": {
    "name": "Indus Spins",
    "series": "Canyons",
