@@ -1,10 +1,10 @@
 {
   "note": "Data updates already applied on the live server (Moses deploys by hand). The server records each by its file name, so a renamed one would run again and a changed one never would: never rename, edit or delete a file listed here (test/appliedDataUpdates.test.js). After each of Moses's deploys, add the files that deploy applied, with their sha256 (node test/appliedDataUpdates.test.js --print lists the ones missing).",
   "lastDeploy": {
-    "date": "2026-11-12",
-    "time": "~14:00 Stockholm",
-    "fingerprint": "bc1bd7ff096f",
-    "commit": "a32d6f7"
+    "date": "2026-11-13",
+    "time": "~14:20 Stockholm",
+    "fingerprint": "8d7a15a7631e",
+    "commit": "2d1cd7b"
   },
   "files": {
     "2026-10-04-restore-marbles-tracks.sql": "072b060b4e534ae892b476376aa85d91d692e16747bffb254b9f6199e24e0ace",
@@ -385,6 +385,25 @@
     "2027-06-10-wildness-and-track-packs.sql": "bbfa5f3da7baf2f11cc70aa82c6804713b8809050b04d97792f05cbaa5e6ddc8",
     "2027-06-11-free-set-of-30.sql": "5468447504ae4dc7dc3fe9b28c934a201d9eed1129b92c28c68510dc8d92232c",
     "2027-06-12-track-pack-payments.sql": "74e9b814c8bf47372bba0be22e2d4d8cd3f8547795d169a976a695fcbdaf6be9",
-    "2027-06-13-voxel-peaks-to-blocks-2.sql": "d66bad5ef6e7549bf4b2364de0aa7ee5175047236e07e98043e2a64988f99cea"
+    "2027-06-13-voxel-peaks-to-blocks-2.sql": "d66bad5ef6e7549bf4b2364de0aa7ee5175047236e07e98043e2a64988f99cea",
+    "2027-06-14-add-heartland-oval-speedway.sql": "38c97b1f1b7f5f3fba6f104bf51313a81b7e4118308f6b62052d40b197a607ce",
+    "2027-06-14-heartland-oval-speedway-to-grand-prix.sql": "f0d1c59efce6b05146e6f3c11cd0dd40869ddcf55bf68fc3a66b6e13d2e1f2e3",
+    "2027-06-15-add-lapland-ice-race.sql": "305c5bfb9b52bd8cf613f56f3d993d02b6cb8fdace87ac3fce68e4de7bb8e518",
+    "2027-06-15-lapland-ice-race-to-grand-prix.sql": "5fcaabb0990e3a15250794e5a5b5b80000a6e93a65df3d3ebd4e837a662161f0",
+    "2027-06-16-add-lombardy-parkland-circuit.sql": "61b0f1973435c2b686fb692fc5cf766bf7e03f7f1818899374f6643b92d44982",
+    "2027-06-16-lombardy-parkland-circuit-to-grand-prix.sql": "d336a025cbbe5f65ac946ec5f8c1a543045850cfac327d928a0161af2ccbc531",
+    "2027-06-17-add-mexico-city-stadium-section.sql": "c55a859afe91bf7a4d657322ba9ecae7a4aa5a14bad25a8bd677c18b5efc49b9",
+    "2027-06-17-mexico-city-stadium-section-to-grand-prix.sql": "0e2148f497dd55a2680bb590303f451a12dfed441059e8aeaa270da4cced5f28",
+    "2027-06-18-add-finland-forest-rally.sql": "f6aedc55d5599a4f9d50fb011bfeb1ee4a444c50a85039f8077e6f30e5624ab4",
+    "2027-06-18-finland-forest-rally-to-grand-prix.sql": "7dfac8154e28a94e16207fcf1c534f77039fe384b2fb56c86a1fe2f72355825e",
+    "2027-06-19-add-tokyo-night-street-race.sql": "053c44587fe41f435422deae78421104bf572384a78574c4f6c45e524047257d",
+    "2027-06-19-tokyo-night-street-race-to-grand-prix.sql": "de0bdaf80452efcae6f79945995aab27395c2f53a5e86c72247198e461c7b304",
+    "2027-06-20-add-sao-paulo-rain-circuit.sql": "1f34f1c37a995ae36af000228571c2562bd4c0bdab4f621c23e6842b72c84ff3",
+    "2027-06-20-sao-paulo-rain-circuit-to-grand-prix.sql": "f895e18dbcd0ce8d714e4b641a48f65d6bd7351baa3f21ef8a5d0b7f3530a2d1",
+    "2027-06-21-add-rocky-mountain-hill-run.sql": "617fc710778729311e1d94ea6bc4113490b6eb29bd95708266b5af9db1bb3449",
+    "2027-06-21-rocky-mountain-hill-run-to-grand-prix.sql": "310fef1f0be88c86eab974da324072e8b1e5543ae4706e8667423bf04faf2a5d",
+    "2027-06-22-add-nevada-drag-strip.sql": "83fbc4f155d5cf70118dedcc7f37dac95efefb798f7788809728ca3f76b9fa61",
+    "2027-06-22-nevada-drag-strip-to-grand-prix.sql": "347035f30754cd2cd6c955ff7fd14b05c9ce77b34bea14b6f90147e86e0ab404",
+    "2027-06-23-free-set-of-15.sql": "39de0200ac7cb4da8eb58c5b3b984d2c5907b8ed08e9199c4957186541cbd5a6"
   }
 }
