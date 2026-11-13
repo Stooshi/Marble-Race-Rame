@@ -7,7 +7,10 @@ export const ADDRESS = `${company.street}, ${company.postcode} ${company.city}, 
 export const OPERATED_BY = `Marble Spins is operated by ${company.name}, org.nr ${company.orgNo}`;
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 /** The legal texts' effective ("last updated") date, e.g. "1 November 2026": the terms of use, terms of sale, privacy policy and cookie policy (all approved by Moses, 1 Nov 2026). */
-export const LEGAL_UPDATED = (() => { const [y, m, d] = company.legalUpdated.split('-').map(Number); return `${d} ${MONTHS[m - 1]} ${y}`; })();
+const longDate = (iso) => { const [y, m, d] = iso.split('-').map(Number); return `${d} ${MONTHS[m - 1]} ${y}`; };
+export const LEGAL_UPDATED = longDate(company.legalUpdated);
+/** The last change to the privacy policy (13 Nov 2026: "How you found us", approved by Moses), shown on /legal as "Last updated". */
+export const PRIVACY_UPDATED = longDate(company.privacyUpdated);
 /** Where every "Contact us" link goes: the contact form at the end of the Help Centre. */
 export const CONTACT_PATH = '/help#contact';
 

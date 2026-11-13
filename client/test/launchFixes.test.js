@@ -81,6 +81,10 @@ describe('company details', () => {
       expect(src(f), f).toMatch(/Effective from \{LEGAL_UPDATED\}/);
     }
     expect(company.legalUpdated).toBe('2026-11-01');
+    // (13 Nov 2026: the privacy policy's "How you found us", approved by Moses; the other texts unchanged.)
+    expect(company.privacyUpdated).toBe('2026-11-13');
+    expect(src('src/site/pages/LegalPage.jsx')).toMatch(/Last updated \{PRIVACY_UPDATED\}/);
+    expect(src('src/site/pages/LegalPage.jsx')).toMatch(/How you found us: when you start playing/);
   });
 });
 
