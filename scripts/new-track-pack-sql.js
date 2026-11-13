@@ -2,7 +2,7 @@
 
 /**
  * The second data update of a track added after the packs and wildness (Moses, 12 Nov 2026: the eleven motorsport
- * Grand Prix tracks): its pack (src/packs/list.js), not free, and its wildness, worked out from its full report's
+ * Grand Prix tracks; 13 Nov 2026: the five more Rivers tracks): its pack (src/packs/list.js), not free, and its wildness, worked out from its full report's
  * first 1,000 races and ranked against the 143 tracks of 11 Nov 2026, whose own scores never change
  * (scripts/wildness.js one <slug> --from-report).
  *   node scripts/new-track-pack-sql.js <slug> > docs/data_updates/<date>-<slug>-to-<pack>.sql
@@ -20,7 +20,8 @@ if (!track) {
   console.error(`No track "${slug}"`);
   process.exit(1);
 }
-const series = track.physics.kit?.grandPrix ? 'Grand Prix' : track.series;
+// (Series as src/routes/tracks.js works it out: a Grand Prix's kit carries `grandPrix`, a Rivers track's `river`.)
+const series = track.physics.kit?.grandPrix ? 'Grand Prix' : track.physics.kit?.river ? 'Rivers' : track.series;
 const out = execFileSync(process.execPath, [path.join(__dirname, 'wildness.js'), 'one', slug, '--from-report'], { encoding: 'utf8' });
 const w = JSON.parse(out.trim().split('\n').pop());
 const pack = packFor(slug, series);

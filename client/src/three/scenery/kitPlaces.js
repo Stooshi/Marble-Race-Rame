@@ -15,6 +15,7 @@ import { forkOffset, forkRadius } from '../iceChannel';
 import { merge, piece } from './parts';
 import { LANDMARKS } from './kitProps';
 import { arcDeTriomphe } from './kitLandmarks';
+import { shopBridge } from './kitLandmarksRiver2';
 import { DIVIDER_PIECES } from './kitLandmarksGP';
 import { flakeTexture } from '../lighting';
 
@@ -161,6 +162,19 @@ export function buildCentrepieces(centerline, channel, kit, { lite = false, grou
       const top = s.pos.y + forkRadius(fork, channel.radius, sMid) * (1 - Math.cos(channel.maxAngle));
       const g = arcDeTriomphe(outer + 0.5, 0.5);
       g.applyMatrix4(new Matrix4().compose(new Vector3(at.x, top - 0.05, at.z), new Quaternion().setFromAxisAngle(UP, Math.atan2(sideV.x, sideV.z) + Math.PI / 2), new Vector3(1, 1, 1)));
+      g.name = 'arch';
+      arches.push(g);
+      continue;
+    }
+    if (sec.around === 'shop-bridge') {
+      // (Arno Old Bridge Run, 13 Nov 2026.) Not between the channels but over both: the old bridge spans them, its
+      // middle pier on the divider, the others on the banks beyond the outer rims; the field races under its arches.
+      const off = Math.abs(forkOffset(fork, sMid));
+      const outer = off + forkRadius(fork, channel.radius, sMid) * Math.sin(channel.maxAngle) + 0.45 + 0.1;
+      const sideV = new Vector3(s.side.x, 0, s.side.z).normalize();
+      const top = s.pos.y + forkRadius(fork, channel.radius, sMid) * (1 - Math.cos(channel.maxAngle));
+      const g = shopBridge(2 * outer + 2.4, Math.max(0.3, Math.min(1.2, gap - 0.4)));
+      g.applyMatrix4(new Matrix4().compose(new Vector3(s.pos.x, top - 0.05, s.pos.z), new Quaternion().setFromAxisAngle(UP, Math.atan2(sideV.x, sideV.z) + Math.PI / 2), new Vector3(1, 1, 1)));
       g.name = 'arch';
       arches.push(g);
       continue;

@@ -79,6 +79,24 @@ export const RIVER_PALETTES = {
   // The Ganges at dawn: wide milky grey-green water, pale sand on the far bank, a few trees.
   ganges: { water: '#5a929a', deep: '#447c88', hillside: ['#9ab062', '#86a456'], foam: '#f2f0e8', bank: '#a89878', quay: '#b8a07a', sand: '#e0d0aa', glint: '#f6e8d4', rapids: [0.18, 0.32],
     dressing: [['broadleaf', 0.5, '#4f7a3a'], ['palm', 0.2], ['bush', 0.3, '#6f8a46']] },
+  // ── Five more (Moses, 13 Nov 2026: the Rivers pack filled to 20). ──
+  // The Arno in Florence: calm olive-green water between tall honey-stone quays, Tuscan cypresses and olive trees.
+  arno: { water: '#4f8a78', deep: '#3a7066', glint: '#eef0e4', rapids: [0.18, 0.32], hillside: ['#7a8a4a', '#6a7a42'], foam: '#eef2ea', bank: '#a8946e', quay: '#c8b48a', sand: '#d0bc92',
+    dressing: [['cypress-tall', 0.45], ['broadleaf', 0.3, '#7a8a5a'], ['bush', 0.25, '#6f7f4a']] },
+  // The Chao Phraya in Bangkok at dawn: wide khaki-green water (it must read as water), palms and banana plants on the banks.
+  'chao-phraya': { water: '#5f8a72', deep: '#44706a', glint: '#f6e2c4', rapids: [0.18, 0.32], hillside: ['#5a8a3a', '#4a7a32'], foam: '#eee6d4', bank: '#8f7050', quay: '#a89a84', sand: '#c8a878',
+    dressing: [['palm', 0.4], ['banana', 0.3], ['broadleaf', 0.3, '#3f7a3a']] },
+  // The Hudson in the Highlands in autumn: a wide dark blue-grey river under dark cliffs, the woods red, orange and gold.
+  hudson: { water: '#3f7388', deep: '#2c5a70', glint: '#e4eef4', rapids: [0.18, 0.32], hillside: ['#8a6a34', '#6f7a3a'], foam: '#e8eef0', bank: '#6a6458', quay: '#7f7a70', sand: '#b8a888',
+    // (Fewer round crowns than the other rivers: on a computer the start and the flyover were just over the drawing budget.)
+    dressing: [['broadleaf', 0.3, '#c0602a'], ['poplar', 0.15, '#d8a23a'], ['poplar', 0.1, '#b8762a'], ['spruce', 0.2], ['bush', 0.15, '#9a3a28'], ['rock', 0.1, '#4a4844']] },
+  // The Yukon: a cold milky-turquoise river (glacier silt), gravel bars, spruce and birch forest to the water.
+  yukon: { water: '#4f9aa6', deep: '#367e90', glint: '#eef6f8', rapids: [0.18, 0.32], hillside: ['#4a6a3a', '#3f5f36'], foam: '#f2f8f8', bank: '#8a857a', quay: '#7a766e', sand: '#b8b0a0',
+    dressing: [['spruce', 0.6], ['birch', 0.25], ['rock', 0.15, '#6a6660']] },
+  // The Iguazú: silty brown-green water (it must read as water) pouring through deep rainforest, red earth banks.
+  iguazu: { water: '#5a7a5c', deep: '#456650', glint: '#e8eee4', rapids: [0.1, 0.22], hillside: ['#2f6a2c', '#245a26'], foam: '#f6f4ee', bank: '#9a4a2e', quay: '#7a5a48', sand: '#b8704a',
+    // (No undergrowth, unlike the Amazon's: with the falls' rock and water the flyover was just over the computer's budget.)
+    dressing: [['broadleaf', 0.45, '#2a6a2c'], ['palm', 0.25], ['banana', 0.2], ['bush', 0.1, '#2f6a2c']] },
 };
 const BANK_COLOURS = { sand: 'sand', reeds: 'bank', bayou: 'bank', rock: 'quay', quay: 'quay', grass: null };
 
@@ -146,6 +164,16 @@ export function riverDressing(paletteKey) {
     'sugar-palm': () => () => merge([
       piece(new CylinderGeometry(0.22, 0.3, 9, 5, 1, true), '#6a5a48', T(0, 4.5, 0)),
       piece(new IcosahedronGeometry(1.9, 0), '#4f7a34', T(0, 9.6, 0, 1.2, 0.9, 1.2)),
+    ]),
+    // A spruce: a slim dark spire of needles (the Yukon's forest, the Hudson's hills).
+    spruce: () => (lite) => merge([
+      piece(new CylinderGeometry(0.15, 0.25, 2, 5, 1, true), '#4a3a2a', T(0, 1, 0)),
+      piece(new ConeGeometry(1.5, 7, lite ? 5 : 7, 1, true), '#2f4f34', T(0, 5, 0)),
+    ]),
+    // A Tuscan cypress: a tall narrow dark-green flame.
+    'cypress-tall': () => () => merge([
+      piece(new CylinderGeometry(0.15, 0.2, 1, 5, 1, true), '#5a4a36', T(0, 0.5, 0)),
+      piece(new IcosahedronGeometry(1, 0), '#2f4a2c', T(0, 5, 0, 1, 4.6, 1)),
     ]),
     rock: (colour = '#7a756c') => () => merge([piece(new IcosahedronGeometry(1.5, 0), colour, T(0, 0.5, 0, 1.3, 0.75, 1.1))]),
     bush: (colour = '#4d8a3c') => () => merge([piece(new IcosahedronGeometry(0.9, 0), colour, T(0, 0.5, 0, 1.3, 0.7, 1.2))]),

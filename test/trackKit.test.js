@@ -56,7 +56,7 @@ test('every kit track opens with Bobsleigh Run\'s starting ramp, gate, channel a
     // (The staggered drop and the varied starts let the field go in waves: their funnel has that one setting more.
     // Any other opening only where its track asks for them, listed here: Nevada Drag Strip's crest start.)
     const { waves, ...rest } = funnel;
-    if (waves) assert.ok(['staggered-drop', 'clean-drop', 'peg-drop', 'pipe-drop', 'rolling-start', 'chicane-start', 'rumble-start'].includes(t.physics.kit.opening) || ['nevada-drag-strip'].includes(t.slug), `${t.slug}: waves at the gate`);
+    if (waves) assert.ok(['staggered-drop', 'clean-drop', 'peg-drop', 'pipe-drop', 'rolling-start', 'chicane-start', 'rumble-start'].includes(t.physics.kit.opening) || ['nevada-drag-strip', 'hudson-highlands-run', 'iguazu-devils-throat', 'chao-phraya-dawn-spiral'].includes(t.slug), `${t.slug}: waves at the gate`);
     if (!['funnel-drop', 'staggered-drop'].includes(t.physics.kit.opening)) assert.deepEqual(rest, tmFunnel);
     assert.deepEqual(t.physics.gate, bob.physics.gate);
     assert.equal(t.physics.collisions, true);
@@ -761,6 +761,7 @@ const HIDDEN_KIT_TRACKS = [
   ['sao-paulo-rain-circuit', '2027-06-20-add-sao-paulo-rain-circuit.sql', 'Grand Prix track (motorsport: a hilly old circuit in the south of São Paulo in a tropical downpour, a pipe drop, the long banked Lake curve and the Downhill plunge; in the Grand Prix pack; switched off until Moses has watched the preview).'],
   ['rocky-mountain-hill-run', '2027-06-21-add-rocky-mountain-hill-run.sql', 'Grand Prix track (motorsport: a hill run down the Rocky Mountains, a falls start, the Canyon drop and the long banked Switchback curve; in the Grand Prix pack; switched off until Moses has watched the preview).'],
   ['nevada-drag-strip', '2027-06-22-add-nevada-drag-strip.sql', 'Grand Prix track (motorsport: a desert drag strip in Nevada, the showpiece: start lights, a short rise, full-width speed pads like a second start, the long Drag strip half-pipe and the Desert loop; in the Grand Prix pack; switched off until Moses has watched the preview).'],
+  ['yukon-five-finger-run', '2027-06-24-add-yukon-five-finger-run.sql', 'Rivers track (the Yukon in late summer: a rumble start down a gold-rush trail, the Miles Canyon half-pipe and the big feature, the drop down Five Finger Rapids between rock pillars; in the Rivers pack, not free; switched off until Moses has watched the preview).'],
 ];
 for (const [slug, file, note] of HIDDEN_KIT_TRACKS) {
   test(`${slug} is added by its data update, switched off, exactly as its track file builds it`, () => {

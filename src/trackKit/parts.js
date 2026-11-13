@@ -391,7 +391,9 @@ module.exports = {
     // The Riviera (Saint-Tropez, 3 Nov 2026; client/src/three/scenery/kitLandmarksRiviera.js; our own models, no names on anything drawn).
     'riviera-village', 'umbrella-pines', 'lavender-field', 'olive-grove', 'riviera-beach', 'riviera-harbour', 'yachts', 'riviera-lighthouse',
     // Pudong (Pudong Marble Grand Prix, 3 Nov 2026; client/src/three/scenery/kitLandmarksPudong.js; our own towers, inspired by the area, no copies, no names on anything drawn).
-    'pudong-skyline', 'far-bank-skyline', 'pudong-towers', 'pudong-waterfront', 'river-lights', 'river-cruisers', 'pit-garages'],
+    'pudong-skyline', 'far-bank-skyline', 'pudong-towers', 'pudong-waterfront', 'river-lights', 'river-cruisers', 'pit-garages',
+    // The five Rivers of 13 Nov 2026 (client/src/three/scenery/kitLandmarksRiver2.js): the Hudson, the Arno, the Chao Phraya, the Yukon, the Iguazú.
+    'palisade-cliffs', 'river-sloops', 'island-ruin', 'shop-bridge', 'stone-weir', 'temple-prang', 'rock-fingers', 'horseshoe-cataract', 'rainforest-catwalk'],
   OVERHEAD: ['gondola', 'cable-car', 'chairlift', 'vulture',
     // The Canyon Series: birds circling over the gorge, and what spans it from rim to rim, high over the track.
     'condor', 'prayer-flags', 'arch-bridge', 'railway-trestle', 'suspension-bridge',
@@ -416,7 +418,9 @@ module.exports = {
   // A canyon's rock and river (family 'canyon': `canyon: { palette }`), the client's CANYON_PALETTES.
   CANYONS: ['grand-canyon', 'himalaya', 'andes', 'limestone', 'copper', 'basalt', 'karakoram', 'namib', 'slot', 'verdon', 'jinsha', 'waimea', 'mujib'],
   // A river's water, banks and plants (family 'river': `river: { palette }`), the client's RIVER_PALETTES.
-  RIVERS: ['danube', 'mekong', 'mississippi', 'zambezi', 'yangtze', 'thames', 'seine', 'volga', 'murray', 'irrawaddy', 'amazon', 'nile', 'congo', 'rhine', 'ganges', 'chobe'],
+  RIVERS: ['danube', 'mekong', 'mississippi', 'zambezi', 'yangtze', 'thames', 'seine', 'volga', 'murray', 'irrawaddy', 'amazon', 'nile', 'congo', 'rhine', 'ganges', 'chobe',
+    // (Moses, 13 Nov 2026: five more.)
+    'arno', 'chao-phraya', 'hudson', 'yukon', 'iguazu'],
   // A mountain's snow, ice, rock, zones, sky and backdrop (family 'peak': `peak: { palette }`), the client's PEAK_PALETTES.
   PEAKS: ['everest', 'mont-blanc', 'vinson', 'kilimanjaro', 'vatnajokull', 'fuji', 'aconcagua', 'k2', 'elbrus', 'aoraki', 'rwenzori', 'huascaran', 'roraima', 'kangchenjunga', 'alaska'],
   // What stands in the middle of a splitter, between its two channels (the arch: over one of
@@ -425,7 +429,9 @@ module.exports = {
     'museum-of-the-future', 'dubai-frame', 'opera-house', 'tulip-garden', 'roundabout-monument', 'acacia', 'mughal-fountain', 'qutub-minar', 'giant-tree', 'snow-island', 'fallen-statue', 'volcano-rock', 'sagrada-familia', 'frozen-waterfall', 'limestone-island', 'sea-islet', 'giant-redwood', 'lantern-chedi', 'watermill', 'confucius-temple', 'castle-keep', 'magician-trunk', 'top-hat', 'jukebox-tower', 'clocktower', 'lighting-rig', 'claw-tower', 'glitch-tower', 'ringed-planet', 'laser-turret', 'water-tower', 'fork-signpost', 'neon-plaza', 'snow-peak',
     'settling-stack', 'voxel-peak', 'basalt-spire', 'beam-tower', 'level-pillars', 'floodlight-mast', 'flame-cauldron', 'medal-podium',
     'island-castle',
-    'karst-tower', 'cube-campanile', 'three-towers', 'lake-island', 'cube-pagoda', 'garden-towers', 'granite-island', 'arrowhead-peak', 'geyser-cone', 'riviera-lighthouse', 'pit-garages'],
+    'karst-tower', 'cube-campanile', 'three-towers', 'lake-island', 'cube-pagoda', 'garden-towers', 'granite-island', 'arrowhead-peak', 'geyser-cone', 'riviera-lighthouse', 'pit-garages',
+    // The Rivers of 13 Nov 2026: the old bridge over a splitter (its middle pier on the divider), the temple's tall tower in a spiral.
+    'shop-bridge', 'temple-prang'],
   // Scenery near a section (or the start or finish): what grows and stands beside the track there.
   SCENERY: ['bare', 'rocks', 'birches', 'pines', 'race-netting', 'funicular', 'wooden-houses', 'frozen-lake',
     'wood-clad', 'chalets', 'pasture', 'aspens', 'shopfronts',

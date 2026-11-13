@@ -2015,6 +2015,17 @@
    "side": 1,
    "marbles": 7
   },
+  "yukon-five-finger-run": {
+   "name": "Yukon Five Finger Run",
+   "series": "Rivers",
+   "lighting": "day",
+   "v": "376af3a1",
+   "bytes": 14972,
+   "bytes2x": 39266,
+   "t": 9389,
+   "side": 1,
+   "marbles": 4
+  },
   "zambezi-falls-run": {
    "name": "Zambezi Falls Run",
    "series": "Rivers",

@@ -176,6 +176,7 @@
 "yangtze-lock-run": {"family":"river","reach":0.321,"seq":["opening: clean-drop","drop","S-bends left","straight","steps","climb"]},
 "yarlung-tsangpo-spins": {"family":"canyon","reach":0.225,"seq":["opening: tunnel-launch","drop","pileUp","slalom","drop","slalom","S-bends left"]},
 "yellowstone-frost-run": {"family":"block-2","reach":0.249,"seq":["opening: split-start","drop","pileUp","slalom","chutes","drop","slalom","S-bends left","peg ×2","straight","peg ×2"]},
+"yukon-five-finger-run": {"family":"river","reach":0.263,"seq":["opening: rumble-start","drop","slalom","moguls","sweep left","slalom","peg","straight"]},
 "zambezi-falls-run": {"family":"river","reach":0.221,"seq":["opening: classic","drop","pileUp","slalom","sweep right","straight","peg ×3"]},
 "zermatt-marble-grand-prix": {"family":"grand-prix","reach":0.25,"seq":["opening: staggered-drop","drop","pileUp","slalom","brake","straight","table-top","spiral left"]},
 "zurich-golden-lap": {"family":"athletics","reach":0.24,"seq":["opening: tunnel-launch","drop","pileUp","slalom","drop","slalom","straight","peg ×3","sweep right"]}
