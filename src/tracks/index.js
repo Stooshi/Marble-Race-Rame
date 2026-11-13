@@ -186,4 +186,5 @@ module.exports = [
   require('./heartland-oval-speedway'),
   require('./lapland-ice-race'),
   require('./lombardy-parkland-circuit'),
+  require('./mexico-city-stadium-section'),
 ];

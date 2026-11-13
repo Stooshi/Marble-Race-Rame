@@ -1069,6 +1069,17 @@
    "side": 1,
    "marbles": 5
   },
+  "mexico-city-stadium-section": {
+   "name": "Mexico City Stadium Section",
+   "series": "Grand Prix",
+   "lighting": "dusk",
+   "v": "cbcd2f9e",
+   "bytes": 15172,
+   "bytes2x": 37484,
+   "t": 10190,
+   "side": 1,
+   "marbles": 4
+  },
   "mississippi-steamer-run": {
    "name": "Mississippi Steamer Run",
    "series": "Rivers",

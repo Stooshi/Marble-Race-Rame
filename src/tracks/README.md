@@ -115,14 +115,15 @@ module.exports = track({
   | `rolling-start` | The field let go in waves down a long, gentle run (the pace lap) through a short slalom, then a wide banked first turn (`side`) |
   | `chicane-start` | The field let go in waves, a plunge through the first pile-up, then a tight chicane (`side`: its first flick) with a peg in each flick |
   | `rumble-start` | The field let go in waves down a plunge striped with rumble strips (low bumps), then a slalom |
-  | `grid-start` | Two waves, every other starting place (a two-wide grid; which half goes first drawn every race), a tyre stack mid-plunge, then a pit straight with staggered pegs |
   | `sand-trap` | A plunge into a short slowing stretch (the sand trap), the pile-up straight after it, then a slalom of flags |
 
   **The motorsport starts** (Moses, 12 Nov 2026: the eleven new Grand Prix tracks had used up every other opening, two per
   family). Each has its test track (`variety-opening-<kind>`): every fairness line of its batches passes there; its racing
   numbers (overtakes) are its layout's, and each is proven with the full report of the track that uses it. The chicane start
   first had a peg at each apex and no waves: the starting places on the chicane's inside won more (average places 10.2 to
-  10.9 by group), so it lets the field go in waves and its pegs stand in the middle.
+  10.9 by group), so it lets the field go in waves and its pegs stand in the middle. A grid start (two waves, every
+  other starting place) was tried and left out: with a tyre stack mid-plunge the middle starting places lost (average
+  places 9.1 to 11.8 by group), and with a pile-up and slaloms instead the outside group still won too little (15.8%).
 
   **The varied starts** (`clean-drop`, `peg-drop`, `pipe-drop`, October 2026) leave out the pile-up
   and slalom. Those give a race most of its luck: without them the strongest marbles win far too often

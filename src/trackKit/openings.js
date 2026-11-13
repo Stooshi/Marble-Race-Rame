@@ -183,22 +183,6 @@ const OPENINGS = {
   }),
 
   /**
-   * Grid start: the gate lets the field go in two waves, every other starting place, as from a two-wide grid
-   * (which half goes first is drawn every race); a tyre stack in the middle of the plunge splits the field,
-   * then a short pit straight with staggered pegs.
-   */
-  'grid-start': (o) => ({
-    sections: [
-      { key: 'plunge', name: 'Grid', shape: plunge(65, { grade: 0.6 }), obstacles: [block({ costume: o.costumes.block, at: 0.5, line: 'center' }), slalom({ costume: o.costumes.slalom, from: 0.7, to: 0.97, count: 3, loss: 0.3 })] },
-      {
-        key: 'straight', name: 'Pit straight', shape: plunge(45, { grade: 0.45, from: 0.6 }),
-        obstacles: [peg({ costume: o.costumes.peg, at: 0.25, line: 'left' }), peg({ costume: o.costumes.peg, at: 0.5, line: 'right' }), peg({ costume: o.costumes.peg, at: 0.75, line: 'left' })],
-      },
-    ],
-    waves: { groups: 2, gap: 0.35, jitter: 0.08, interleave: true },
-  }),
-
-  /**
    * Sand trap: down the plunge into a short slowing stretch (the sand trap), the first pile-up straight after it,
    * then a slalom of flags; the field arrives bunched and the pile-up sorts it.
    */

@@ -55,7 +55,7 @@ test('every kit track opens with Bobsleigh Run\'s starting ramp, gate, channel a
     assert.deepEqual(channel, tmChannel);
     // (The staggered drop and the varied starts let the field go in waves: their funnel has that one setting more.)
     const { waves, ...rest } = funnel;
-    if (waves) assert.ok(['staggered-drop', 'clean-drop', 'peg-drop', 'pipe-drop', 'rolling-start', 'chicane-start', 'rumble-start', 'grid-start'].includes(t.physics.kit.opening), `${t.slug}: waves at the gate`);
+    if (waves) assert.ok(['staggered-drop', 'clean-drop', 'peg-drop', 'pipe-drop', 'rolling-start', 'chicane-start', 'rumble-start'].includes(t.physics.kit.opening), `${t.slug}: waves at the gate`);
     if (!['funnel-drop', 'staggered-drop'].includes(t.physics.kit.opening)) assert.deepEqual(rest, tmFunnel);
     assert.deepEqual(t.physics.gate, bob.physics.gate);
     assert.equal(t.physics.collisions, true);
@@ -754,6 +754,7 @@ const HIDDEN_KIT_TRACKS = [
   ['heartland-oval-speedway', '2027-06-14-add-heartland-oval-speedway.sql', 'Grand Prix track (motorsport: a big oval speedway on the prairie, a rolling start, the long banked sweep of turns three and four, the infield road course; in the Grand Prix pack; switched off until Moses has watched the preview).'],
   ['lapland-ice-race', '2027-06-15-add-lapland-ice-race.sql', 'Grand Prix track (motorsport: an ice race on a frozen lake in Lapland under the northern lights, a clean drop off the shore, the Fell drop onto the lake; in the Grand Prix pack; switched off until Moses has watched the preview).'],
   ['lombardy-parkland-circuit', '2027-06-16-add-lombardy-parkland-circuit.sql', 'Grand Prix track (motorsport: an old road circuit through the walled royal park of a Lombardy town at sunset, a chicane start, the pit lane splitter round the garages; in the Grand Prix pack; switched off until Moses has watched the preview).'],
+  ['mexico-city-stadium-section', '2027-06-17-add-mexico-city-stadium-section.sql', 'Grand Prix track (motorsport: a city-park circuit in Mexico City at dusk under the jacarandas, a rolling start, the stadium section banked round a bowl packed with fans; in the Grand Prix pack; switched off until Moses has watched the preview).'],
 ];
 for (const [slug, file, note] of HIDDEN_KIT_TRACKS) {
   test(`${slug} is added by its data update, switched off, exactly as its track file builds it`, () => {

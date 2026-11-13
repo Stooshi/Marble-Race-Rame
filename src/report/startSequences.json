@@ -93,6 +93,7 @@
 "marrakesh-cube-souk": {"family":"block-2","reach":0.297,"seq":["opening: funnel-drop","drop","pileUp","slalom","S-bends right","peg","straight","slalom","sweep left"]},
 "medellin-lights": {"family":"coaster","reach":0.256,"seq":["opening: peg-drop","drop","peg ×7","S-bends left","slalom","straight","peg","half-pipe"]},
 "mekong-market-spins": {"family":"river","reach":0.287,"seq":["opening: peg-drop","drop","peg ×7","straight","slalom","S-bends right"]},
+"mexico-city-stadium-section": {"family":"grand-prix","reach":0.28,"seq":["opening: rolling-start","drop","slalom","sweep right","straight","slalom","S-bends left","slalom"]},
 "mississippi-steamer-run": {"family":"river","reach":0.278,"seq":["opening: staggered-drop","drop","pileUp","slalom","brake","straight","peg ×2","straight","boost","sweep left"]},
 "mont-blanc-needle-ridge": {"family":"peak","reach":0.251,"seq":["opening: classic","drop","pileUp","slalom","straight","peg","slalom","peg","hairpin left","swipe"]},
 "multiball-manor": {"family":"pinball","reach":0.248,"seq":["opening: tunnel-launch","drop","pileUp","slalom","drop","slalom","sweep left"]},
