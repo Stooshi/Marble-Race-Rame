@@ -221,7 +221,9 @@ function opening(kind, { costumes = {}, names = {}, dress = {}, ...o } = {}) {
     for (const k of Object.keys(extra)) if (!DRESS.includes(k)) throw new Error(`opening ${kind}: "${k}" cannot be changed on its ${key} section (only ${DRESS.join(', ')})`);
     return { ...sec, ...extra, ...(names[key] && { name: names[key] }), openingKey: key };
   });
-  return { kind, sections, ...(made.waves && { waves: made.waves }), ...(made.funnel && { funnel: made.funnel }) };
+  // (`waves`: a track may let any opening's field go in waves, a new order every race, to even out its starting groups.)
+  const waves = o.waves ?? made.waves;
+  return { kind, sections, ...(waves && { waves }), ...(made.funnel && { funnel: made.funnel }) };
 }
 
 module.exports = { opening, twinChutes, OPENING_KINDS };

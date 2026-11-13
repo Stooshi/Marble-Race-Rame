@@ -1157,6 +1157,17 @@
    "side": -1,
    "marbles": 4
   },
+  "nevada-drag-strip": {
+   "name": "Nevada Drag Strip",
+   "series": "Grand Prix",
+   "lighting": "sunset",
+   "v": "a1adfd5f",
+   "bytes": 11434,
+   "bytes2x": 29228,
+   "t": 10968,
+   "side": 1,
+   "marbles": 4
+  },
   "new-york-winter-run": {
    "name": "New York Winter Run",
    "series": "Grand Prix",

@@ -125,6 +125,13 @@ module.exports = track({
   other starting place) was tried and left out: with a tyre stack mid-plunge the middle starting places lost (average
   places 9.1 to 11.8 by group), and with a pile-up and slaloms instead the outside group still won too little (15.8%).
 
+  **Waves on any opening** (13 Nov 2026): `opening(kind, { waves: { groups, gap, jitter } })` lets the field go in waves on
+  an opening that has none of its own (as the staggered drop does: a new order every race). Nevada Drag Strip's crest start
+  needed it: its plunge's pile-up and slalom left the first starting group about half a place ahead at the bottom
+  (average place 9.98 against 10.5 to 10.8 over 600 races), and nothing later on the drag strip mixed the field again.
+  A hand-built opening (no `opening()`, Rocky Mountain Hill Run's falls) cannot take waves: there a peg on the first
+  group's line early in the plunge evens it out.
+
   **The varied starts** (`clean-drop`, `peg-drop`, `pipe-drop`, October 2026) leave out the pile-up
   and slalom. Those give a race most of its luck: without them the strongest marbles win far too often
   (57–62% of races, the target is 35–50%). So these openings let the field go in **waves** (five waves of four

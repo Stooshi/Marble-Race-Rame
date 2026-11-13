@@ -53,9 +53,10 @@ test('every kit track opens with Bobsleigh Run\'s starting ramp, gate, channel a
     const { funnel, wides, ...channel } = t.physics.channel;
     const { funnel: tmFunnel, ...tmChannel } = tm.physics.channel;
     assert.deepEqual(channel, tmChannel);
-    // (The staggered drop and the varied starts let the field go in waves: their funnel has that one setting more.)
+    // (The staggered drop and the varied starts let the field go in waves: their funnel has that one setting more.
+    // Any other opening only where its track asks for them, listed here: Nevada Drag Strip's crest start.)
     const { waves, ...rest } = funnel;
-    if (waves) assert.ok(['staggered-drop', 'clean-drop', 'peg-drop', 'pipe-drop', 'rolling-start', 'chicane-start', 'rumble-start'].includes(t.physics.kit.opening), `${t.slug}: waves at the gate`);
+    if (waves) assert.ok(['staggered-drop', 'clean-drop', 'peg-drop', 'pipe-drop', 'rolling-start', 'chicane-start', 'rumble-start'].includes(t.physics.kit.opening) || ['nevada-drag-strip'].includes(t.slug), `${t.slug}: waves at the gate`);
     if (!['funnel-drop', 'staggered-drop'].includes(t.physics.kit.opening)) assert.deepEqual(rest, tmFunnel);
     assert.deepEqual(t.physics.gate, bob.physics.gate);
     assert.equal(t.physics.collisions, true);
@@ -759,6 +760,7 @@ const HIDDEN_KIT_TRACKS = [
   ['tokyo-night-street-race', '2027-06-19-add-tokyo-night-street-race.sql', 'Grand Prix track (motorsport: a street race through Tokyo at night among the lit towers, a chicane start, the Expressway loop with the towers behind it; in the Grand Prix pack; switched off until Moses has watched the preview).'],
   ['sao-paulo-rain-circuit', '2027-06-20-add-sao-paulo-rain-circuit.sql', 'Grand Prix track (motorsport: a hilly old circuit in the south of São Paulo in a tropical downpour, a pipe drop, the long banked Lake curve and the Downhill plunge; in the Grand Prix pack; switched off until Moses has watched the preview).'],
   ['rocky-mountain-hill-run', '2027-06-21-add-rocky-mountain-hill-run.sql', 'Grand Prix track (motorsport: a hill run down the Rocky Mountains, a falls start, the Canyon drop and the long banked Switchback curve; in the Grand Prix pack; switched off until Moses has watched the preview).'],
+  ['nevada-drag-strip', '2027-06-22-add-nevada-drag-strip.sql', 'Grand Prix track (motorsport: a desert drag strip in Nevada, the showpiece: start lights, a short rise, full-width speed pads like a second start, the long Drag strip half-pipe and the Desert loop; in the Grand Prix pack; switched off until Moses has watched the preview).'],
 ];
 for (const [slug, file, note] of HIDDEN_KIT_TRACKS) {
   test(`${slug} is added by its data update, switched off, exactly as its track file builds it`, () => {

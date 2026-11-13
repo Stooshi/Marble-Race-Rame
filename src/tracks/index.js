@@ -191,4 +191,5 @@ module.exports = [
   require('./tokyo-night-street-race'),
   require('./sao-paulo-rain-circuit'),
   require('./rocky-mountain-hill-run'),
+  require('./nevada-drag-strip'),
 ];
