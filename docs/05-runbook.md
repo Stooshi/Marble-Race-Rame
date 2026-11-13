@@ -248,6 +248,11 @@ Once the website, the apps, Stripe, Google and Apple all call api.marblespins.co
   - Events: `checkout.session.completed`, `checkout.session.async_payment_succeeded`, `checkout.session.async_payment_failed`, `checkout.session.expired`, `refund.created`, `refund.updated`, `charge.dispute.created`.
 - **Also set up in the dashboard:** Stripe Tax (registrations and business address), Adaptive Pricing, Apple Pay and Google Pay, and email receipts.
 - **Test purchase:** card `4242 4242 4242 4242`, any future date, any CVC. While test keys are set, the checkout page shows a "TEST MODE" note.
+- **If Stripe shows the webhook failing** (Developers → Webhooks → the endpoint → an event → its delivery attempts; the response body says which):
+  - **503 `{"error":"Stripe webhook secret is not set"}`**: the running server has no `STRIPE_WEBHOOK_SECRET`. Open `https://marble-race-rame-production.up.railway.app/health`: `"stripe": {"mode": "test", "webhook": "secret not set"}` confirms it (since 13 Nov 2026; it never shows a key). In Railway: the variable is on the **server** service, in the **production** environment, its name exactly `STRIPE_WEBHOOK_SECRET`; if the Variables tab shows staged changes (a banner "Apply changes" / "Deploy"), apply them: a variable only reaches the server with a deployment made after it was saved. The log says `[stripe] webhook refused (503)` for each delivery, and at start-up `[stripe] mode test; webhook ready` (or `secret not set`).
+  - **400 "signature"**: the secret is set but is not this endpoint's (copy the **Signing secret** of this endpoint in this mode, test or live). The log says `[stripe] webhook refused (400)`. Spaces, a newline or quotes round the pasted value are taken off by the server.
+  - **503 or 502 as an HTML page, not JSON** (and nothing in the server's log): the request never reached the server: check the endpoint's address (above), and Railway's HTTP logs.
+  - Then **Resend** the event in Stripe: the order completes then (each event counts once).
 
 ### Switching to live (only when Moses says so)
 1. Take a [backup](#backups).

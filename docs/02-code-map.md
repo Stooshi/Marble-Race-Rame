@@ -78,7 +78,7 @@
 
 **Starting up:**
 - `server.js`: builds the app and socket server, checks the database, then runs `migrate()`, `raceManager.recover()`, the race scheduler and the hourly IP trimming, and starts the background jobs: guest retention (`account/retention.js`), push (`push`), purchase emails (`payments/emails.js`), Google Play (`payments` `startGoogleJobs`), seasons (`seasons` `startJobs`), leagues (`leagues` `startJobs`: the end of each league) replays (`game/replayRetention.js`: over 30 days old) and race readiness reports (`readiness`: over 30 days old). Shuts down cleanly on SIGTERM.
-- `app.js`: Express setup (helmet, CORS, `/health`). The Stripe webhook is mounted **before** the JSON parser, because it needs the raw body; so is `/api/support`, which reads its own larger body (a screenshot). The `/api/*` routers come after.
+- `app.js`: Express setup (helmet, CORS, `/health`, which also says whether Stripe's webhook can be checked: `stripe: { mode, webhook: 'ready' | 'secret not set' }`, never a key). The Stripe webhook is mounted **before** the JSON parser, because it needs the raw body; so is `/api/support`, which reads its own larger body (a screenshot). The `/api/*` routers come after.
 - `version.js`: `VERSION` (commit, `codeFingerprint`, engine versions, start time), shown on `/health`.
 - `config/index.js`: every environment setting in one frozen object, including CORS (`isSiteOrigin`) and Stripe. It refuses to start in production without a `JWT_SECRET` of at least 32 characters.
 

@@ -32,6 +32,7 @@ async function start() {
 
   await new Promise((resolve) => server.listen(config.port, resolve));
   console.log(`Marble Race backend listening on :${server.address().port} (${config.env})`);
+  { const st = require('./payments/stripe').status(); console.log(`[stripe] mode ${st.mode}; webhook ${st.webhook}`); }
 
   let shuttingDown = false;
   const shutdown = async (signal) => {

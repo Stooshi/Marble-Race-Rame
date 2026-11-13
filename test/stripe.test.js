@@ -34,6 +34,38 @@ test('test keys work; a live key is refused until STRIPE_ALLOW_LIVE=true', () =>
   }
 });
 
+test('a refused webhook is logged with its reason, never the secret; /health says whether the webhook is ready (13 Nov 2026)', () => {
+  const was = { ...config.stripe };
+  const lines = [];
+  const warn = console.warn;
+  console.warn = (m) => lines.push(String(m));
+  try {
+    assert.deepEqual(stripe.status(), { mode: 'test', webhook: 'ready' });
+    assert.throws(() => stripe.verify(Buffer.from('{}'), 't=1,v1=bad'), /signature/);
+    assert.match(lines.pop(), /^\[stripe\] webhook refused \(400\): the signature does not match/);
+    config.stripe.webhookSecret = null;
+    assert.deepEqual(stripe.status(), { mode: 'test', webhook: 'secret not set' });
+    assert.throws(() => stripe.verify(Buffer.from('{}'), 't=1,v1=bad'), (e) => e.status === 503);
+    assert.match(lines.pop(), /^\[stripe\] webhook refused \(503\): STRIPE_WEBHOOK_SECRET is not set/);
+    assert.ok(lines.every((l) => !l.includes('whsec_fake_for_tests')));
+  } finally {
+    console.warn = warn;
+    Object.assign(config.stripe, was);
+  }
+});
+
+test('a pasted secret is trimmed and unquoted (a stray space or newline broke every signature)', () => {
+  const { execFileSync } = require('node:child_process');
+  const out = execFileSync(process.execPath, ['-e', "console.log(JSON.stringify(require('./src/config').stripe))"], {
+    cwd: require('node:path').join(__dirname, '..'),
+    env: { ...process.env, STRIPE_WEBHOOK_SECRET: ' "whsec_abc"\n', STRIPE_SECRET_KEY: 'sk_test_xyz \n' },
+    encoding: 'utf8',
+  });
+  const st = JSON.parse(out);
+  assert.equal(st.webhookSecret, 'whsec_abc');
+  assert.equal(st.secretKey, 'sk_test_xyz');
+});
+
 test('a webhook without Stripe\'s signature is refused', () => {
   const body = JSON.stringify({ id: 'evt_1', type: 'checkout.session.completed', data: { object: {} } });
   assert.throws(() => stripe.verify(Buffer.from(body), 't=1,v1=bad'), /signature/);

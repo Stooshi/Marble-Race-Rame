@@ -106,14 +106,25 @@ async function start(payment, { pack, email, locale, siteUrl }) {
 
 /** Checks a webhook's signature against the raw body → the Stripe event (throws 400 if it isn't Stripe's). */
 function verify(rawBody, signature) {
-  if (!config.stripe.webhookSecret) throw new HttpError(503, 'Stripe webhook secret is not set');
+  // (Every refusal is logged, 13 Nov 2026: Stripe showed 503 on every delivery while Railway's log stayed empty, as a
+  // refused webhook answered without a line. Never the secret or the body; the reason only.)
+  if (!config.stripe.webhookSecret) {
+    console.warn('[stripe] webhook refused (503): STRIPE_WEBHOOK_SECRET is not set on this server (Railway: the server\'s Variables, then deploy)');
+    throw new HttpError(503, 'Stripe webhook secret is not set');
+  }
   try {
     // (Verification needs no API key; a placeholder key builds the helper when none is set.)
     const verifier = injected?.webhooks ? injected : (real ?? new Stripe(config.stripe.secretKey || 'sk_test_unused'));
     return verifier.webhooks.constructEvent(rawBody, signature, config.stripe.webhookSecret);
   } catch (err) {
+    console.warn(`[stripe] webhook refused (400): ${signature ? 'the signature does not match STRIPE_WEBHOOK_SECRET (the secret of another endpoint, or of the other mode?)' : 'no Stripe-Signature header'} (${err.message.slice(0, 120)})`);
     throw badRequest(`Webhook signature check failed: ${err.message}`);
   }
+}
+
+/** What the server knows of Stripe, for /health and the start-up log: never a key, only whether each is there. */
+function status() {
+  return { mode: mode(), webhook: config.stripe.webhookSecret ? 'ready' : 'secret not set' };
 }
 
 /** The receipt link for a payment (best effort: the coins never wait for it). */
@@ -279,4 +290,4 @@ async function requestRefund(payment, { amountCents, adminId, reason }) {
   return { id: refund.id, status: refund.status, amount: refund.amount };
 }
 
-module.exports = { configured, mode, start, verify, prefetch, handleEvent, revoke, requestRefund, setClient, isLiveKey };
+module.exports = { configured, mode, status, start, verify, prefetch, handleEvent, revoke, requestRefund, setClient, isLiveKey };

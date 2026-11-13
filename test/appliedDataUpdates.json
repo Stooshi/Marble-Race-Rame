@@ -2,9 +2,9 @@
   "note": "Data updates already applied on the live server (Moses deploys by hand). The server records each by its file name, so a renamed one would run again and a changed one never would: never rename, edit or delete a file listed here (test/appliedDataUpdates.test.js). After each of Moses's deploys, add the files that deploy applied, with their sha256 (node test/appliedDataUpdates.test.js --print lists the ones missing).",
   "lastDeploy": {
     "date": "2026-11-13",
-    "time": "~18:30 Stockholm",
-    "fingerprint": "6be622039502",
-    "commit": "e21065c"
+    "time": "~21:45 Stockholm",
+    "fingerprint": "c25a2aa05c5b",
+    "commit": "f46f60c"
   },
   "files": {
     "2026-10-04-restore-marbles-tracks.sql": "072b060b4e534ae892b476376aa85d91d692e16747bffb254b9f6199e24e0ace",
@@ -404,6 +404,16 @@
     "2027-06-21-rocky-mountain-hill-run-to-grand-prix.sql": "310fef1f0be88c86eab974da324072e8b1e5543ae4706e8667423bf04faf2a5d",
     "2027-06-22-add-nevada-drag-strip.sql": "83fbc4f155d5cf70118dedcc7f37dac95efefb798f7788809728ca3f76b9fa61",
     "2027-06-22-nevada-drag-strip-to-grand-prix.sql": "347035f30754cd2cd6c955ff7fd14b05c9ce77b34bea14b6f90147e86e0ab404",
-    "2027-06-23-free-set-of-15.sql": "39de0200ac7cb4da8eb58c5b3b984d2c5907b8ed08e9199c4957186541cbd5a6"
+    "2027-06-23-free-set-of-15.sql": "39de0200ac7cb4da8eb58c5b3b984d2c5907b8ed08e9199c4957186541cbd5a6",
+    "2027-06-24-add-yukon-five-finger-run.sql": "d7e49f10347ead79aba74c9b88120cb90c693e7fd0d73ae40021f53963c91cd4",
+    "2027-06-24-yukon-five-finger-run-to-rivers.sql": "0844c957090ab27a6ee8695dd229bf20b5ca38a4ad13dfba94134b393e9e5e4f",
+    "2027-06-25-add-arno-old-bridge-run.sql": "79e94ecc55550030383bf6375caaae6068e57cc9149725113c367893a4611508",
+    "2027-06-25-arno-old-bridge-run-to-rivers.sql": "977c6cc074f36409712741d86dc808818a91d59c464a7de3e1817e9de039513c",
+    "2027-06-26-add-chao-phraya-dawn-spiral.sql": "845cd5845d7866d1ed8355f770e739b53e5990d06ffa7596fd4b24249d9e119d",
+    "2027-06-26-chao-phraya-dawn-spiral-to-rivers.sql": "4f118f365bea89caef74ca891f23e39e96e73c36ccdf01fc2dddbe9d65d6f6e0",
+    "2027-06-27-add-hudson-highlands-run.sql": "d436b3918ac73b23586f7ebc89612319e2ae0a87133b2ab7178d865a40f26ef8",
+    "2027-06-27-hudson-highlands-run-to-rivers.sql": "cbb12e70c8399331ad73041d3be58a9f55a1e38ec797b18704aed7fa4d05f874",
+    "2027-06-28-add-iguazu-devils-throat.sql": "de6d7f23fc4d34e6e6737dadc5508b5461e7091f3dbe72069be0a9b6cf38e43f",
+    "2027-06-28-iguazu-devils-throat-to-rivers.sql": "b8a7ada698c32f358ee556afa5e08f7fe629df68a8b4100a8eb3a2793b4b175c"
   }
 }

@@ -14,6 +14,12 @@ function int(name, fallback) {
 }
 
 
+/** A pasted secret: surrounding whitespace and quotes taken off; empty → null. */
+function cleanSecret(raw) {
+  const v = String(raw ?? '').trim().replace(/^(['"])(.*)\1$/, '$2').trim();
+  return v || null;
+}
+
 const DEV_JWT_SECRET = 'dev-only-insecure-secret';
 const jwtSecret = process.env.JWT_SECRET || (isProduction ? null : DEV_JWT_SECRET);
 if (!jwtSecret || (isProduction && jwtSecret.length < 32)) {
@@ -93,8 +99,10 @@ module.exports = Object.freeze({
   // Coin packs on the website (Stripe Checkout). Test keys (sk_test_…) work as soon as they are
   // set; live keys (sk_live_…) are refused unless STRIPE_ALLOW_LIVE=true, so nothing goes live by mistake.
   stripe: {
-    secretKey: process.env.STRIPE_SECRET_KEY || null,
-    webhookSecret: process.env.STRIPE_WEBHOOK_SECRET || null,
+    // (Trimmed, and any quotes round a pasted value taken off: a stray space or newline after the value made every
+    // signature check fail.)
+    secretKey: cleanSecret(process.env.STRIPE_SECRET_KEY),
+    webhookSecret: cleanSecret(process.env.STRIPE_WEBHOOK_SECRET),
     allowLive: process.env.STRIPE_ALLOW_LIVE === 'true',
     // Where Checkout sends the player back (the website).
     // (Normally the address the player bought from — www, without www, or the Vercel address — when it
