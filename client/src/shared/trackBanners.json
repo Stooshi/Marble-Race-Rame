@@ -1410,6 +1410,17 @@
    "side": 1,
    "marbles": 6
   },
+  "rocky-mountain-hill-run": {
+   "name": "Rocky Mountain Hill Run",
+   "series": "Grand Prix",
+   "lighting": "day",
+   "v": "0470685b",
+   "bytes": 21046,
+   "bytes2x": 50970,
+   "t": 15785,
+   "side": 1,
+   "marbles": 6
+  },
   "roraima-cloud-falls": {
    "name": "Roraima Cloud Falls",
    "series": "Peaks",
