@@ -42,7 +42,8 @@ describe('guests only on a tap', () => {
     expect(racerSource('/play/track')).toBe('solo');
     expect(openedDirectly({ key: 'default' })).toBe(true);
     expect(openedDirectly({ key: 'x7' })).toBe(false);
-    expect(src('src/api/client.js')).toContain("guest: (source, { app = false } = {}) => request('/auth/guest', { method: 'POST', token: null, body: { ...(source && { source }), ...(app && { app: true }) } })");
+    // (13 Nov 2026: with where the visitor came from, src/utils/origin.js.)
+    expect(src('src/api/client.js')).toContain("guest: (source, { app = false } = {}) => request('/auth/guest', { method: 'POST', token: null, body: { ...(source && { source }), ...(app && { app: true }), ...(currentOrigin() && { origin: currentOrigin() }) } })");
     const app = src('src/App.jsx');
     for (const r of ['/play/friends', '/play/track', '/play/shooter', '/play/start', '/play/quick', '/r/:code']) {
       expect(app).toMatch(new RegExp(`path="${r.replace(/[/:]/g, (c) => `\\${c}`)}" element=\\{<RacerGate>`));

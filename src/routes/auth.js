@@ -119,6 +119,7 @@ router.post('/register', signupLimiter, async (req, res) => {
     if (body.country) user.country = (await country.choose(db, user.id, body.country)).country;
     await logConsent(db, user.id, body.marketing_opt_in ?? false, 'signup');
     await security.record(req, user.id, 'signup');
+    await require('../origins').record(user.id, req.body?.origin);
     await economy.opening(db, user.id, user.coins);
     // Starting marble look. If this fails the look is created on first read instead.
     await ensureAppearance(user.id).catch((err) => console.error('[auth] starting look failed', err.message));
@@ -153,6 +154,8 @@ router.post('/guest', guestLimiter, async (req, res) => {
   await ensureAppearance(user.id).catch((err) => console.error('[auth] starting look failed', err.message));
   await starters.ensure(db, user.id).catch((err) => console.error('[auth] starter marbles failed', err.message));
   await security.record(req, user.id, 'guest');
+  // (Where they came from: the UTM tags or the referring domain the website kept in memory; first touch. src/origins.)
+  await require('../origins').record(user.id, req.body?.origin);
   // Made only when they tap Play, Quick race, Race solo or join a room (2 Nov 2026): the funnel's first step.
   // (The kind of browser only, e.g. 'tiktok/phone': 9 Nov 2026, where do guests with 0 races stop?)
   const firstSteps = require('../firstSteps');

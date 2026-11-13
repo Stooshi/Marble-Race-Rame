@@ -1492,3 +1492,16 @@ CREATE TABLE IF NOT EXISTS pack_coin_holds (
     released_at     timestamptz
 );
 CREATE INDEX IF NOT EXISTS idx_pack_coin_holds_open ON pack_coin_holds (user_id, pack_key, created_at) WHERE used_at IS NULL AND released_at IS NULL;
+
+-- Where a new player came from (Moses, 13 Nov 2026; src/origins): the utm_source / utm_medium / utm_campaign of
+-- the address they arrived on, or, if none, the referring site's domain only. Kept once per account, the first
+-- time (first touch, never overwritten); no cookie is used. Gone with the account.
+CREATE TABLE IF NOT EXISTS player_origins (
+    user_id          uuid        PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+    utm_source       varchar(64),
+    utm_medium       varchar(64),
+    utm_campaign     varchar(64),
+    referrer_domain  varchar(64),
+    created_at       timestamptz NOT NULL DEFAULT now(),
+    CHECK (utm_source IS NOT NULL OR utm_medium IS NOT NULL OR utm_campaign IS NOT NULL OR referrer_domain IS NOT NULL)
+);

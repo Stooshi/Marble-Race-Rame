@@ -30,7 +30,7 @@ async function exportData(db, userId) {
        FROM users WHERE id = $1 AND deleted_at IS NULL`,
   );
   if (!account) return null;
-  const [stats, emailAnswers, cookieAnswers, ledger, collection, shooter, look, startingMarbles, races, days, payments, rooms, security, support, supportReplies, passes, badges, passReminders, giftCodes, pushDevices, pushPrefs, countryHistory, firstSteps, firstStepEvents, trackPacks] = await Promise.all([
+  const [stats, emailAnswers, cookieAnswers, ledger, collection, shooter, look, startingMarbles, races, days, payments, rooms, security, support, supportReplies, passes, badges, passReminders, giftCodes, pushDevices, pushPrefs, countryHistory, firstSteps, firstStepEvents, trackPacks, origin] = await Promise.all([
     one('SELECT * FROM user_stats WHERE user_id = $1'),
     all('SELECT consent, source, created_at FROM email_consents WHERE user_id = $1 ORDER BY created_at'),
     all('SELECT version, statistics, marketing, decided_at FROM cookie_consents WHERE user_id = $1 ORDER BY created_at'),
@@ -72,6 +72,8 @@ async function exportData(db, userId) {
     all('SELECT kind, detail, seconds, created_at FROM first_step_events WHERE user_id = $1 ORDER BY created_at'),
     // (Track packs owned, 11 Nov 2026: none yet, nothing grants one.)
     all('SELECT pack_key, provider, granted_at, revoked_at, revoke_reason FROM pack_owners WHERE user_id = $1 ORDER BY granted_at'),
+    // (Where you came from, 13 Nov 2026: the link's campaign tags or the referring site's domain; src/origins.)
+    one('SELECT utm_source, utm_medium, utm_campaign, referrer_domain, created_at FROM player_origins WHERE user_id = $1'),
   ]);
   return {
     about: 'Everything Marble Spins stores about your account. Passwords are stored only as a one-way hash and are not included. IP addresses are kept for security and fraud checks for at most 90 days, then only the country.',
@@ -96,6 +98,7 @@ async function exportData(db, userId) {
     securityLog: security,
     firstSteps,
     firstStepEvents,
+    howYouFoundUs: origin ?? null,
     supportMessages: support.map((m) => ({ ...m, replies: supportReplies.filter((r) => r.ref === m.ref).map(({ ref: _r, ...r }) => r) })),
   };
 }
@@ -133,6 +136,7 @@ async function deleteAccount(client, userId, { by = 'player', reason = null } = 
   await client.query('DELETE FROM email_consents WHERE user_id = $1', [userId]);
   await client.query('DELETE FROM cookie_consents WHERE user_id = $1', [userId]);
   await client.query('DELETE FROM security_events WHERE user_id = $1', [userId]);
+  await client.query('DELETE FROM player_origins WHERE user_id = $1', [userId]); // (where they came from, src/origins)
   await client.query('DELETE FROM user_country_history WHERE user_id = $1', [userId]);
   await client.query('UPDATE race_entries SET country = NULL WHERE user_id = $1 AND country IS NOT NULL', [userId]); // (off the country records)
   await client.query('DELETE FROM race_readiness WHERE user_id = $1', [userId]);

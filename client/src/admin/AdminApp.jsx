@@ -764,9 +764,46 @@ function Dashboard() {
               )}
             </div>
           </div>
+          <Origins o={x.origins} />
         </>
       )}
     </section>
+  );
+}
+
+/**
+ * Where players come from (13 Nov 2026; src/origins): per source, the new players of the last 7 or 30 days
+ * (whatever the period above) and how far they got. The utm_source of the address they arrived on, else the
+ * referring site's domain; kept the first time only, without cookies.
+ */
+function Origins({ o }) {
+  const [days, setDays] = useState('7d');
+  const rows = o?.[days] ?? [];
+  const total = rows.reduce((t, r) => ({ newPlayers: t.newPlayers + r.newPlayers, finishedRace: t.finishedRace + r.finishedRace, threeRaces: t.threeRaces + r.threeRaces, saved: t.saved + r.saved }), { newPlayers: 0, finishedRace: 0, threeRaces: 0, saved: 0 });
+  const cell = (v, of) => <td className="num">{n(v)}{of ? <small className="adm-muted"> {pct(v, of)}</small> : null}</td>;
+  return (
+    <div className="adm-stack">
+      <div className="adm-row">
+        <h2 className="adm-h2" style={{ marginRight: 'auto' }}>Where players come from</h2>
+        <div className="adm-row" role="group" aria-label="Window">
+          {[['7d', 'Last 7 days'], ['30d', 'Last 30 days']].map(([k, label]) => (
+            <button key={k} type="button" className={`adm-btn ${days === k ? 'adm-btn--primary' : ''}`} aria-pressed={days === k} onClick={() => setDays(k)}>{label}</button>
+          ))}
+        </div>
+      </div>
+      {rows.length === 0 ? <p className="adm-muted">No new players in this window.</p> : (
+        <div className="adm-scroll"><table className="adm-table">
+          <thead><tr><th>Source</th><th className="num">New players</th><th className="num">Finished a race</th><th className="num">3+ races</th><th className="num">Saved accounts</th></tr></thead>
+          <tbody>
+            {rows.map((r) => (
+              <tr key={r.source}><td>{r.source === '(direct or unknown)' ? <span className="adm-muted">Direct or unknown</span> : r.source}</td>{cell(r.newPlayers)}{cell(r.finishedRace, r.newPlayers)}{cell(r.threeRaces, r.newPlayers)}{cell(r.saved, r.newPlayers)}</tr>
+            ))}
+            <tr><td><b>All</b></td>{cell(total.newPlayers)}{cell(total.finishedRace, total.newPlayers)}{cell(total.threeRaces, total.newPlayers)}{cell(total.saved, total.newPlayers)}</tr>
+          </tbody>
+        </table></div>
+      )}
+      <p className="adm-muted">The utm_source of the address a new player arrived on, else the referring site; recorded from 13 Nov 2026 (earlier players are Direct or unknown). No cookies: kept in the page's memory from arrival until the guest account is made.</p>
+    </div>
   );
 }
 

@@ -1,4 +1,5 @@
 import { nameLooks } from '../shared/marbles';
+import { currentOrigin } from '../utils/origin';
 
 export const API_URL = (import.meta.env.VITE_API_URL || 'http://localhost:5000').replace(/\/$/, '');
 
@@ -59,14 +60,15 @@ export async function request(path, { method = 'GET', body, token = getStoredTok
 
 /** Endpoint helpers, grouped by resource. */
 export const api = {
-  register: (body) => request('/auth/register', { method: 'POST', body, token: null }),
+  register: (body) => request('/auth/register', { method: 'POST', body: { ...body, ...(currentOrigin() && { origin: currentOrigin() }) }, token: null }),
   login: (body) => request('/auth/login', { method: 'POST', body, token: null }),
   me: () => request('/auth/me'),
   confirmEmail: (token) => request('/auth/confirm-email', { method: 'POST', body: { token }, token: null }),
   resendConfirmEmail: (lang) => request('/auth/confirm-email/resend', { method: 'POST', body: { lang } }),
   /** A guest account; `source`: what they tapped (quick | solo | friends | room), for the Dashboard's funnel. */
   // (app: our Android app, for the kind of browser at the tap, 9 Nov 2026.)
-  guest: (source, { app = false } = {}) => request('/auth/guest', { method: 'POST', token: null, body: { ...(source && { source }), ...(app && { app: true }) } }),
+  // (`origin`: where the visitor came from, kept in memory since they arrived: src/utils/origin.js.)
+  guest: (source, { app = false } = {}) => request('/auth/guest', { method: 'POST', token: null, body: { ...(source && { source }), ...(app && { app: true }), ...(currentOrigin() && { origin: currentOrigin() }) } }),
   /** The player saw GO (kept once, the first time; the Dashboard's funnel). */
   firstStep: (step, extra = {}) => request('/users/me/first-step', { method: 'POST', body: { step, ...extra } }),
   claim: (body) => request('/auth/claim', { method: 'POST', body }),

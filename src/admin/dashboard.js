@@ -12,7 +12,10 @@
  * - the funnel of the new guests whose first tap falls in the period: tapped Play → joined a race →
  *   saw GO → finished a race (first_steps and race_entries), with the tap's source;
  * - new players (guests and direct sign-ups) by the country detected at their first visit;
- * - a chart: new guests and players who finished a race, per hour (6 and 24 hours) or per day.
+ * - a chart: new guests and players who finished a race, per hour (6 and 24 hours) or per day;
+ * - where players come from (Moses, 13 Nov 2026; src/origins): per source (the utm_source, else the referring
+ *   domain, else "direct or unknown"), the new players of the last 7 and of the last 30 days, and how many of them
+ *   finished a race, finished 3 or more, and have a saved account; always both windows, whatever the period.
  */
 const TZ = 'Europe/Stockholm';
 
@@ -36,6 +39,31 @@ const PERIODS = {
 const COUNTED = "NOT (u.is_staff OR u.role = 'admin')";
 
 const one = async (db, sql, params) => (await db.query(sql, params)).rows[0];
+const { SOURCE_SQL } = require('../origins');
+
+/**
+ * New players of the last `days` days (guests and direct sign-ups, by their first visit) per source: how many,
+ * how many finished a race, finished 3 or more, and are saved accounts now. Biggest sources first.
+ */
+async function origins(db, days) {
+  const { rows } = await db.query(`
+    WITH n AS (
+      SELECT e.user_id, MIN(e.created_at) AS at FROM security_events e
+       WHERE e.kind IN ('guest', 'signup') GROUP BY e.user_id
+    ), p AS (
+      SELECT n.user_id, ${SOURCE_SQL} AS source, u.is_guest,
+             (SELECT COUNT(*) FROM race_entries e JOIN races r ON r.id = e.race_id
+               WHERE e.user_id = n.user_id AND NOT e.is_bot AND r.status = 'finished') AS finished
+        FROM n JOIN users u ON u.id = n.user_id LEFT JOIN player_origins o ON o.user_id = n.user_id
+       WHERE n.at >= now() - make_interval(days => $1) AND ${COUNTED}
+    )
+    SELECT source, COUNT(*)::int AS new_players,
+           COUNT(*) FILTER (WHERE finished >= 1)::int AS finished_race,
+           COUNT(*) FILTER (WHERE finished >= 3)::int AS three_races,
+           COUNT(*) FILTER (WHERE NOT is_guest)::int AS saved
+      FROM p GROUP BY source ORDER BY new_players DESC, source`, [days]);
+  return rows.map((r) => ({ source: r.source, newPlayers: r.new_players, finishedRace: r.finished_race, threeRaces: r.three_races, saved: r.saved }));
+}
 
 async function summary(db, period = '24h') {
   const p = PERIODS[period] ?? PERIODS['24h'];
@@ -111,6 +139,8 @@ async function summary(db, period = '24h') {
     SELECT to_char(b.at, 'YYYY-MM-DD"T"HH24:MI') AS at, COALESCE(g.n, 0) AS new_guests, COALESCE(f.n, 0) AS finished_players
       FROM b LEFT JOIN g ON g.at = b.at LEFT JOIN f ON f.at = b.at ORDER BY b.at`, range);
 
+  const [origins7, origins30] = [await origins(db, 7), await origins(db, 30)];
+
   const active = players.finished_players;
   return {
     period: Object.keys(PERIODS).includes(period) ? period : '24h',
@@ -138,7 +168,8 @@ async function summary(db, period = '24h') {
     },
     countries: countries.map((r) => ({ country: r.country, players: r.players })),
     chart: chart.map((r) => ({ at: r.at, newGuests: r.new_guests, finishedPlayers: r.finished_players })),
+    origins: { '7d': origins7, '30d': origins30 },
   };
 }
 
-module.exports = { PERIODS, TZ, summary };
+module.exports = { PERIODS, TZ, summary, origins };

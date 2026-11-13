@@ -15,6 +15,10 @@ import './styles.css';
 import './site/site.css';
 import { reloadOnceForNewCode } from './utils/staleCode';
 import { preloadHub } from './hub/route';
+import { captureOrigin } from './utils/origin';
+
+// (Where the visitor came from, before anything changes the address: kept in memory only, no cookie; src/utils/origin.js.)
+captureOrigin();
 
 // A code file gone after a new version of the site went live: reload once to pick up the new version.
 window.addEventListener('vite:preloadError', (event) => {

@@ -118,6 +118,10 @@ A new player's first steps, for the back office Dashboard's funnel (2 Nov 2026; 
 
 Where a new guest stopped before their first race (Moses, 9 Nov 2026; `src/firstSteps`): at most one row per player and `kind`, and only within a day of their `tap` and before their first `go`. `kind`: `error` (`detail`: the first call that failed, `<what>:<status>[:<code>]`, e.g. `quick:409:quick_starting`; `what`: quick, start, room, room-<action>) or `left` (the page closed; `detail`: start-line, quick-wait, room, loading or other; `seconds`: since the tap). No IPs or personal data; deleted with the user row; in the player's data download.
 
+### `player_origins`
+
+Where a new player came from (Moses, 13 Nov 2026; `src/origins`): one row per account, kept the first time only (first touch, never overwritten). `utm_source`, `utm_medium`, `utm_campaign` (from the address they arrived on: lower case, letters, digits, `.`, `_`, `-`, `+`, 64 at most) or, only if there are none, `referrer_domain` (the referring site's domain only, never the page; never our own sites). No cookie or browser storage is used: the website keeps the values in memory from arrival until the guest account is made (`POST /api/auth/guest`) or with a direct sign-up (`POST /api/auth/register`). Nothing else is stored. In the player's data download (`howYouFoundUs`); deleted when the account is deleted, and with the user row. The Dashboard's "Where players come from" counts it.
+
 ## Tracks and races
 
 ### `tracks`
