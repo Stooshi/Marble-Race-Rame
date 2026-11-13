@@ -10,6 +10,7 @@ import { isNativeApp } from '../../app/native';
 import TrackBanner from '../TrackBanner';
 import { BUILD_TRACK_COUNT, roundedTracks } from '../trackCount';
 import { FREE_TO_PLAY, holidayPassNeeded } from '../../shared/holidayWording';
+import { CollectCase, HowItWorks, StarterBag } from './LandingV2Sections';
 
 const NUMBER_WORDS = ['no', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten'];
 
@@ -29,6 +30,13 @@ const SERIES = [
   ['Pinball', 'bumpers and flippers', 'linear-gradient(150deg,#3A1E6B,#FF3FA8)', 'flipper-spins'],
   ['Arcade', 'neon and pixels', 'linear-gradient(150deg,#0A0A12,#3FD8FF)', 'checkpoint-rush'],
 ];
+// (The draft v2's answers, /preview/landing-v2: the same, without buy, pay or upgrade words.)
+const FAQ_V2 = {
+  'Is Marble Spins free?': holidayPassNeeded()
+    ? `Yes. ${FREE_TO_PLAY} until 7 January. Extra marble looks are in the shop if you want them.`
+    : 'Yes. Every race is free and unlimited. Extra marble looks are in the shop if you want them.',
+  'Can money make my marble faster?': 'Never. Every player\'s marble races at the same level, whatever it looks like: the race itself decides who wins. A marble from the shop only changes how it looks.',
+};
 const FAQ = [
   ['Is Marble Spins free?', holidayPassNeeded()
     ? `Yes. ${FREE_TO_PLAY} until 7 January. You can buy extra marble looks in the shop if you want to.`
@@ -39,7 +47,7 @@ const FAQ = [
 ];
 
 /** The landing page (marblespins.com for visitors): a real race replay up top, then how it works. */
-export default function LandingPage() {
+export default function LandingPage({ v2 = false }) {
   const [search] = useSearchParams();
   const deleted = search.get('deleted') === '1';
   const { data } = useAsync(() => api.tracks().catch(() => ({ tracks: [] })), [], 'tracks');
@@ -81,7 +89,9 @@ export default function LandingPage() {
 
       <PromoBanner />
 
-      <section id="how" aria-labelledby="how-h" className="ms-page">
+      {v2 && <HowItWorks />}
+
+      {!v2 && <section id="how" aria-labelledby="how-h" className="ms-page">
         <h2 id="how-h" className="ms-landing__h2">How to play</h2>
         <div className="ms-grid">
           {[['Pick your marble', 'Choose the marble you race with from your Marble Bag. Everyone starts with 4 free starter marbles of their own.'],
@@ -92,7 +102,7 @@ export default function LandingPage() {
             </div>
           ))}
         </div>
-      </section>
+      </section>}
 
       <section id="tracks" aria-labelledby="tracks-h" className="ms-page">
         <div style={{ display: 'grid', gap: 6 }}>
@@ -112,7 +122,10 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <section id="marbles" aria-labelledby="marbles-h" className="ms-page">
+      {v2 && <CollectCase />}
+      {v2 && <StarterBag />}
+
+      {!v2 && <section id="marbles" aria-labelledby="marbles-h" className="ms-page">
         <div className="ms-two" style={{ alignItems: 'center' }}>
           <div style={{ display: 'grid', gap: 12 }}>
             <h2 id="marbles-h" className="ms-landing__h2">Build your Marble Bag</h2>
@@ -130,7 +143,7 @@ export default function LandingPage() {
             ))}
           </div>
         </div>
-      </section>
+      </section>}
 
       <section id="friends" aria-labelledby="friends-h" className="ms-page">
         <div className="ms-two" style={{ alignItems: 'center' }}>
@@ -151,7 +164,7 @@ export default function LandingPage() {
         <h2 id="daily-h" className="ms-landing__h2">Come back every day</h2>
         <div className="ms-grid">
           {[['▲', 'Daily goal', 'Race five times a day for bonus coins, and keep your streak going day after day.'],
-            ['★', 'Scoreboards', 'Climb the scoreboard by the coins you earn racing, not the coins you buy.'],
+            ['★', 'Scoreboards', v2 ? 'Climb the scoreboard by the coins you win racing, and only those.' : 'Climb the scoreboard by the coins you earn racing, not the coins you buy.'],
             ['●', 'New tracks', "Fresh tracks and limited marbles arrive regularly, so there's always something new."]].map(([icon, h, p]) => (
             <div key={h} className="ms-card" style={{ display: 'grid', gap: 8 }}>
               <span aria-hidden="true" style={{ color: 'var(--ms-orange)', fontSize: '1.4rem' }}>{icon}</span>
@@ -167,7 +180,7 @@ export default function LandingPage() {
         <div style={{ display: 'grid', gap: 10 }}>
           {/* (The apps leave out "Do I need to download anything?": it speaks about the browser and other platforms.) */}
           {FAQ.filter(([, , webOnly]) => !(webOnly && isNativeApp())).map(([q, a]) => (
-            <details key={q} className="ms-card ms-faq"><summary>{q}</summary><p>{a}</p></details>
+            <details key={q} className="ms-card ms-faq"><summary>{q}</summary><p>{(v2 && FAQ_V2[q]) || a}</p></details>
           ))}
         </div>
         <Link to="/help" style={{ color: 'var(--ms-yellow)', fontWeight: 700 }}>More answers in the Help Centre →</Link>
