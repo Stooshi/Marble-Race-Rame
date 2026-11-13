@@ -2,9 +2,9 @@
   "note": "Data updates already applied on the live server (Moses deploys by hand). The server records each by its file name, so a renamed one would run again and a changed one never would: never rename, edit or delete a file listed here (test/appliedDataUpdates.test.js). After each of Moses's deploys, add the files that deploy applied, with their sha256 (node test/appliedDataUpdates.test.js --print lists the ones missing).",
   "lastDeploy": {
     "date": "2026-11-13",
-    "time": "~21:45 Stockholm",
-    "fingerprint": "c25a2aa05c5b",
-    "commit": "f46f60c"
+    "time": "~23:00 Stockholm",
+    "fingerprint": "7abad7e4c43d",
+    "commit": "7a3342d"
   },
   "files": {
     "2026-10-04-restore-marbles-tracks.sql": "072b060b4e534ae892b476376aa85d91d692e16747bffb254b9f6199e24e0ace",

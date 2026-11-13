@@ -253,6 +253,7 @@ Once the website, the apps, Stripe, Google and Apple all call api.marblespins.co
   - **400 "signature"**: the secret is set but is not this endpoint's (copy the **Signing secret** of this endpoint in this mode, test or live). The log says `[stripe] webhook refused (400)`. Spaces, a newline or quotes round the pasted value are taken off by the server.
   - **503 or 502 as an HTML page, not JSON** (and nothing in the server's log): the request never reached the server: check the endpoint's address (above), and Railway's HTTP logs.
   - Then **Resend** the event in Stripe: the order completes then (each event counts once).
+- **Done once, 13 Nov 2026:** the first webhook 503s were the first case (the secret saved in Railway but not reaching the server); set again, `/health` said `"webhook": "ready"`, Resend gave 200 and the Grand Prix pack ($7.99, test card) unlocked.
 
 ### Switching to live (only when Moses says so)
 1. Take a [backup](#backups).
