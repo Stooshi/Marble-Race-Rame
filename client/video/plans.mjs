@@ -1062,9 +1062,15 @@ export function speedShot(info, race, { text = null } = {}) {
   const line = X.line ? montageLine(X.line) : null;
   const F = V.feature;
   const members = C ? C.members.slice(0, 5) : F.busiest.members.slice(0, 5);
-  const from = C ? C.at - (X.lead ?? 0) : (X.at ?? reaches(race, members[0], F.p0) ?? F.busiest.t) - (X.lead ?? T.leadMs);
+  // (A track montage's shots (Moses, 13 Nov 2026): "start" is the game's own countdown camera, the lights and the start
+  // shots, from `startAt` ms (negative: before GO); "p" starts the chase where the group reaches that place on the track.)
+  const atP = X.p !== undefined && X.p !== null ? reaches(race, members[0], X.p) : null;
+  const from = X.start ? (X.startAt ?? -2000) : C ? C.at - (X.lead ?? 0) : (X.at ?? atP ?? reaches(race, members[0], F.p0) ?? F.busiest.t) - (X.lead ?? T.leadMs);
   const p = builder('speedShot');
-  const shot = { type: 'group', members, shot: 'speed', from, dur, speed, ...T.chase, ...(C ? TEMPLATE.collisionMontage.chase : {}), ...(X.chase ?? {}) }; // (a shot's own camera, e.g. higher where the low chase would go into a bank)
+  const shot = X.start
+    ? { type: 'race', from, dur, speed }
+    : X.follow ? { type: 'race', follow: X.follow, from, dur, speed } // (the game's own camera on the leader: a wide pipe spreads a group too far for the low chase)
+    : { type: 'group', members, shot: 'speed', from, dur, speed, ...T.chase, ...(C ? TEMPLATE.collisionMontage.chase : {}), ...(X.chase ?? {}) }; // (a shot's own camera, e.g. higher where the low chase would go into a bank)
   const at = p.add(shot);
   const hooks = line ? [{ at: at + 0.02, dur: dur - 0.04, text: line }] : [];
   let endBig = null;

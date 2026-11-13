@@ -11,7 +11,10 @@
 // shots.json: [{ "slug", "race" (a race file in dev/.tracks, from scripts/video-pick.js --feature <section>),
 //   "dur" (s), "line"? (a big line on this shot), "padP"? (the speed pad's place on the track, 0–1: the whoosh as the group's first marble rolls onto it), "lead"? (ms the shot starts before the group reaches the section; negative: after), "chase"? (this shot's camera:
 //   back, up, ahead, fov, over the template's low chase), "end"? ("l1|l2|l3":
-//   the last shot, held frozen under the end card) }, …]
+//   the last shot, held frozen under the end card), "start"? (true: the game's countdown camera and start lights from
+//   "startAt" ms, negative before GO), "follow"? ("leader": the game's own camera on the leader), "p"? (the chase starts where the group reaches this place, 0–1) }, …]
+// A track montage (Moses, 13 Nov 2026): { "type": "track", "shots": [...] }, one track's big moments from one race;
+// --format wide makes the 16:9 (1920×1080) version of the same shots.
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -31,14 +34,19 @@ const seriesOf = (slug) => JSON.parse(fs.readFileSync(path.join(here, '..', 'src
 /** Checks the montage's list before anything is recorded: tracks, shot lengths, the total, the end card. */
 export function checkMontage(shots, { type = 'speed', series = seriesOf } = {}) {
   const tracks = new Set(shots.map((s) => s.slug));
-  if (type === 'collision') {
+  if (type === 'track') {
+    // (A track montage (Moses, 13 Nov 2026, Nevada Drag Strip): one track's big moments from one race, cut together.)
+    if (tracks.size !== 1) throw new Error('A track montage shows one track');
+    if (new Set(shots.map((s) => s.race)).size !== 1) throw new Error('A track montage cuts one race');
+    if (shots.length < 4) throw new Error('A track montage has at least 4 shots');
+  } else if (type === 'collision') {
     // (A collision montage: several series, some shots in slow motion; Moses, 10 Nov 2026.)
     const kinds = new Set([...tracks].map(series).filter(Boolean));
     if (kinds.size < C.minSeries) throw new Error(`A collision montage takes tracks from at least ${C.minSeries} series, not ${kinds.size}`);
     if (shots.filter((s) => (s.speed ?? 1) < 1).length < C.minSlow) throw new Error(`A collision montage has at least ${C.minSlow} shots in slow motion`);
   } else if (shots.some((s) => (s.speed ?? 1) !== 1)) throw new Error('A speed montage runs at full speed');
-  if (tracks.size < T.minTracks) throw new Error(`A speed montage needs at least ${T.minTracks} different tracks, not ${tracks.size}`);
-  if (![...tracks].some((s) => s.includes('grand-prix'))) throw new Error('A speed montage includes a Grand Prix track');
+  if (type !== 'track' && tracks.size < T.minTracks) throw new Error(`A speed montage needs at least ${T.minTracks} different tracks, not ${tracks.size}`);
+  if (type !== 'track' && ![...tracks].some((s) => s.includes('grand-prix'))) throw new Error('A speed montage includes a Grand Prix track');
   if (shots.some((s) => /champion-shooter/.test(s.slug))) throw new Error('Never Champion Shooter');
   for (const s of shots) if (!(s.dur >= T.minShot && s.dur <= T.maxShot)) throw new Error(`${s.slug}: a shot lasts ${T.minShot}–${T.maxShot} s, not ${s.dur}`);
   if (!shots[shots.length - 1].end || shots.slice(0, -1).some((s) => s.end)) throw new Error('Only the last shot carries the end card');
@@ -47,7 +55,7 @@ export function checkMontage(shots, { type = 'speed', series = seriesOf } = {}) 
   return length;
 }
 
-export async function speedMontage({ shots, tune = 11, out, type = 'speed' }) {
+export async function speedMontage({ shots, tune = 11, out, type = 'speed', format = 'tall' }) {
   const length = checkMontage(shots, { type });
   const collision = type === 'collision';
   const clicks = [];
@@ -58,7 +66,7 @@ export async function speedMontage({ shots, tune = 11, out, type = 'speed' }) {
     let v = 0;
     for (const [k, s] of shots.entries()) {
       const file = path.join(tmp, `shot-${k}.mp4`);
-      const { plan, hits } = await record({ slug: s.slug, race: s.race, kind: 'speedShot', format: 'tall', tune, out: file, hits: collision, text: { line: s.line ?? null, end: s.end ?? null, dur: s.dur, lead: s.lead ?? null, chase: s.chase ?? null, speed: s.speed ?? 1 } });
+      const { plan, hits } = await record({ slug: s.slug, race: s.race, kind: 'speedShot', format, tune, out: file, hits: collision, text: { line: s.line ?? null, end: s.end ?? null, dur: s.dur, lead: s.lead ?? null, chase: s.chase ?? null, speed: s.speed ?? 1, start: s.start ?? false, startAt: s.startAt ?? null, p: s.p ?? null, follow: s.follow ?? null } });
       let shotClicks = [];
       if (collision) {
         // (The game's click on each marble hitting another, its bump on each obstacle hit, at the moment it
@@ -90,7 +98,7 @@ export async function speedMontage({ shots, tune = 11, out, type = 'speed' }) {
     mix({ shots: [], sound: { goAt: null, beeps: false, music: [[0, total]], lifts: collision ? [] : [[0, endAt]], ceremony: null, loop: false, ...(collision && { musicGain: C.musicGain }),
       extra: [...whooshAt.map((at) => ({ key: 'speedPad', at, gain: T.whooshGain, dur: 1.6 })), ...clickSounds] } }, total, { tune }, audio);
     execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-i', silent, '-i', audio, '-map', '0:v', '-map', '1:a', '-c:v', 'copy', '-c:a', 'aac', '-b:a', '192k', '-shortest', '-movflags', '+faststart', out]);
-    const report = { out, type, length: total, planned: length, tune, shots: clips.map(({ file, ...c }) => c), whooshAt, clicks: clicks.map((h) => ({ at: +h.at.toFixed(3), kind: h.kind, k: +h.k.toFixed(2), type: h.type })) };
+    const report = { out, type, format, length: total, planned: length, tune, shots: clips.map(({ file, ...c }) => c), whooshAt, clicks: clicks.map((h) => ({ at: +h.at.toFixed(3), kind: h.kind, k: +h.k.toFixed(2), type: h.type })) };
     fs.writeFileSync(`${out}.plan.json`, JSON.stringify(report, null, 2));
     return report;
   } finally {
@@ -105,7 +113,8 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   const file = JSON.parse(fs.readFileSync(args[0], 'utf8'));
   const shots = Array.isArray(file) ? file : file.shots;
   const type = Array.isArray(file) ? 'speed' : file.type ?? 'speed';
-  const r = await speedMontage({ shots, type, tune: Number(opt('tune', 11)), out: opt('out', path.join(process.cwd(), `${type}-montage.mp4`)) });
+  // (--format wide: the same shots framed 16:9, 1920×1080, for YouTube; Moses, 13 Nov 2026.)
+  const r = await speedMontage({ shots, type, format: opt('format', 'tall'), tune: Number(opt('tune', 11)), out: opt('out', path.join(process.cwd(), `${type}-montage.mp4`)) });
   console.log(`wrote ${r.out}: ${type} montage, ${r.length.toFixed(1)} s, ${r.shots.length} shots from ${new Set(r.shots.map((s) => s.slug)).size} tracks${type === 'collision' ? `, ${r.clicks.length} clicks` : ''}`);
   process.exit(0);
 }
