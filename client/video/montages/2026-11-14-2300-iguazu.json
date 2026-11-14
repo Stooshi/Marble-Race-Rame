@@ -1,0 +1,75 @@
+{
+ "type": "track",
+ "shots": [
+  {
+   "slug": "iguazu-devils-throat",
+   "race": "iguazu-devils-throat.video-7977166",
+   "start": true,
+   "startAt": -2400,
+   "dur": 2.8,
+   "line": "Into the Devil's Throat…"
+  },
+  {
+   "slug": "iguazu-devils-throat",
+   "race": "iguazu-devils-throat.video-7977166",
+   "p": 0.2,
+   "lead": 0,
+   "dur": 2.4,
+   "chase": {
+    "up": 4.2,
+    "back": 8,
+    "ahead": 6,
+    "fov": 66
+   }
+  },
+  {
+   "slug": "iguazu-devils-throat",
+   "race": "iguazu-devils-throat.video-7977166",
+   "p": 0.395,
+   "lead": 0,
+   "dur": 3.0,
+   "chase": {
+    "up": 1.9,
+    "back": 5,
+    "ahead": 4,
+    "fov": 64
+   }
+  },
+  {
+   "slug": "iguazu-devils-throat",
+   "race": "iguazu-devils-throat.video-7977166",
+   "p": 0.45,
+   "lead": 0,
+   "dur": 2.8,
+   "follow": "leader"
+  },
+  {
+   "slug": "iguazu-devils-throat",
+   "race": "iguazu-devils-throat.video-7977166",
+   "p": 0.6,
+   "lead": 0,
+   "dur": 2.6,
+   "line": "…who comes out first?",
+   "chase": {
+    "up": 5,
+    "back": 9,
+    "ahead": 8,
+    "fov": 68
+   }
+  },
+  {
+   "slug": "iguazu-devils-throat",
+   "race": "iguazu-devils-throat.video-7977166",
+   "p": 0.962,
+   "lead": 0,
+   "dur": 3.0,
+   "end": "Iguazú Devil's Throat.|marblespins.com|Follow for a new race every day",
+   "chase": {
+    "up": 3.6,
+    "back": 8,
+    "ahead": 5,
+    "fov": 64
+   }
+  }
+ ]
+}
