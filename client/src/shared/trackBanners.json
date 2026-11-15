@@ -1458,12 +1458,12 @@
    "name": "Paris Eiffel Tower Run",
    "series": "World Tour",
    "lighting": "day",
-   "v": "6a1b5771",
-   "bytes": 22476,
-   "bytes2x": 55022,
-   "t": 11044,
+   "v": "a67cf07d",
+   "bytes": 13454,
+   "bytes2x": 33020,
+   "t": 9762,
    "side": 1,
-   "marbles": 6
+   "marbles": 1
   },
   "park-city-run": {
    "name": "Park City Run",

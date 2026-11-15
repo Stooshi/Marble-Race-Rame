@@ -36,7 +36,6 @@ const KNOWN = {
 
   'portes-du-soleil-run': ['layout'],
 
-  'paris-eiffel-tower-run': ['layout'],
   'amazon-water-run': ['layout'],
   // Grand Prix (one design: Dubai's; Stockholm, Lagos, Istanbul, Sydney, Nairobi, Delhi, Sahara and Wyrmwood Hollow have their own since 6–7 Nov 2026).
   'dubai-marble-grand-prix': ['opening', 'opening-kind', 'layout'],
