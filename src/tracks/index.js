@@ -199,4 +199,5 @@ module.exports = [
   require('./iguazu-devils-throat'),
   require('./bryce-hoodoo-run'),
   require('./blyde-potholes-spiral'),
+  require('./taroko-marble-gorge'),
 ];

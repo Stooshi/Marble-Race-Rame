@@ -1773,6 +1773,17 @@
    "side": -1,
    "marbles": 4
   },
+  "taroko-marble-gorge": {
+   "name": "Taroko Marble Gorge",
+   "series": "Canyons",
+   "lighting": "day",
+   "v": "336269c3",
+   "bytes": 20356,
+   "bytes2x": 49048,
+   "t": 26775,
+   "side": 1,
+   "marbles": 6
+  },
   "thames-bridges-run": {
    "name": "Thames Bridges Run",
    "series": "Rivers",

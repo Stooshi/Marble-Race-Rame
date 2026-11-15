@@ -274,7 +274,10 @@ module.exports = track({
   switchbacks between tall walls; the hoodoo amphitheatre, a hammer-headed hoodoo; a chicane start; brakes before the
   slaloms bunch the field again, or the switchbacks string it out and overtakes fall under 60). Blyde Potholes Spiral (Wild: a
   banked spiral round the river's potholes; the Three Rondavels; a crest start, the field let go in waves; a rolling
-  start favoured one starting group by nearly a place). Palettes `bryce`,
+  start favoured one starting group by nearly a place). Taroko Marble Gorge (Wild: a splitter round a marble pillar at
+  the narrows, balanced with the left channel slower as the leaders take it; the shrine and its waterfall; a clean
+  drop off a rope footbridge; the rock tunnel sits on the straight after the S-bends, because a tunnel on S-bends
+  brushes the follow camera). Palettes `bryce`,
   `blyde`, `taroko`, `samaria`, `sumidero`, `kings`; landmarks in `client/src/three/scenery/kitLandmarksCanyon2.js`;
   the canyon starts `rock-arch` and `rope-bridge` (canyons only).
 
