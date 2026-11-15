@@ -272,7 +272,9 @@ module.exports = track({
   the motorsport Grand Prix tracks; 2 Easy, 2 Wild, 2 Extreme), hand-written sections, each in the Canyons pack and not
   free (its second data update `<date>-<slug>-to-canyons.sql`): Bryce Hoodoo Run (Easy: Wall Street's steep banked
   switchbacks between tall walls; the hoodoo amphitheatre, a hammer-headed hoodoo; a chicane start; brakes before the
-  slaloms bunch the field again, or the switchbacks string it out and overtakes fall under 60). Palettes `bryce`,
+  slaloms bunch the field again, or the switchbacks string it out and overtakes fall under 60). Blyde Potholes Spiral (Wild: a
+  banked spiral round the river's potholes; the Three Rondavels; a crest start, the field let go in waves; a rolling
+  start favoured one starting group by nearly a place). Palettes `bryce`,
   `blyde`, `taroko`, `samaria`, `sumidero`, `kings`; landmarks in `client/src/three/scenery/kitLandmarksCanyon2.js`;
   the canyon starts `rock-arch` and `rope-bridge` (canyons only).
 

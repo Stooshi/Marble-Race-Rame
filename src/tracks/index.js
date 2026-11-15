@@ -198,4 +198,5 @@ module.exports = [
   require('./yukon-five-finger-run'),
   require('./iguazu-devils-throat'),
   require('./bryce-hoodoo-run'),
+  require('./blyde-potholes-spiral'),
 ];

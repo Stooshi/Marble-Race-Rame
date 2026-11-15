@@ -222,6 +222,17 @@
    "side": 1,
    "marbles": 1
   },
+  "blyde-potholes-spiral": {
+   "name": "Blyde Potholes Spiral",
+   "series": "Canyons",
+   "lighting": "day",
+   "v": "3422b705",
+   "bytes": 21138,
+   "bytes2x": 49722,
+   "t": 16133,
+   "side": 1,
+   "marbles": 5
+  },
   "bobsleigh-run": {
    "name": "Bobsleigh Run",
    "series": "World Tour",

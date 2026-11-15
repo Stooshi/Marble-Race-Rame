@@ -56,7 +56,7 @@ test('every kit track opens with Bobsleigh Run\'s starting ramp, gate, channel a
     // (The staggered drop and the varied starts let the field go in waves: their funnel has that one setting more.
     // Any other opening only where its track asks for them, listed here: Nevada Drag Strip's crest start.)
     const { waves, ...rest } = funnel;
-    if (waves) assert.ok(['staggered-drop', 'clean-drop', 'peg-drop', 'pipe-drop', 'rolling-start', 'chicane-start', 'rumble-start'].includes(t.physics.kit.opening) || ['nevada-drag-strip', 'hudson-highlands-run', 'iguazu-devils-throat', 'chao-phraya-dawn-spiral'].includes(t.slug), `${t.slug}: waves at the gate`);
+    if (waves) assert.ok(['staggered-drop', 'clean-drop', 'peg-drop', 'pipe-drop', 'rolling-start', 'chicane-start', 'rumble-start'].includes(t.physics.kit.opening) || ['nevada-drag-strip', 'hudson-highlands-run', 'iguazu-devils-throat', 'chao-phraya-dawn-spiral', 'blyde-potholes-spiral'].includes(t.slug), `${t.slug}: waves at the gate`);
     if (!['funnel-drop', 'staggered-drop'].includes(t.physics.kit.opening)) assert.deepEqual(rest, tmFunnel);
     assert.deepEqual(t.physics.gate, bob.physics.gate);
     assert.equal(t.physics.collisions, true);
@@ -767,6 +767,7 @@ const HIDDEN_KIT_TRACKS = [
   ['hudson-highlands-run', '2027-06-27-add-hudson-highlands-run.sql', 'Rivers track (the Hudson in autumn: a crest start off the cliffs, the field let go in waves, and the big feature, World\'s End, a long banked bend between the Highlands; the dark cliffs, a castle ruin on its island; in the Rivers pack, not free; switched off until Moses has watched the preview).'],
   ['iguazu-devils-throat', '2027-06-28-add-iguazu-devils-throat.sql', 'Rivers track (the Iguazú on the border of Argentina and Brazil: a banked-turn start into the rainforest, the field let go in waves, the catwalks over the upper river and the big feature, the Devil\'s Throat, a waterfall through falling water; a splitter round the island; in the Rivers pack, not free; switched off until Moses has watched the preview).'],
   ['bryce-hoodoo-run', '2027-06-29-add-bryce-hoodoo-run.sql', 'Canyons track (Bryce Canyon at sunrise: a chicane start among the spires, the hoodoo amphitheatre and the big feature, Wall Street\'s steep banked switchbacks between tall walls; a hammer-headed hoodoo; in the Canyons pack, not free; switched off until Moses has watched the preview).'],
+  ['blyde-potholes-spiral', '2027-06-30-add-blyde-potholes-spiral.sql', 'Canyons track (Blyde River Canyon: a crest start into the canyon, the field let go in waves, past the Three Rondavels and the big feature, a banked spiral round the river\'s potholes; a rock-arch start; in the Canyons pack, not free; switched off until Moses has watched the preview).'],
 ];
 for (const [slug, file, note] of HIDDEN_KIT_TRACKS) {
   test(`${slug} is added by its data update, switched off, exactly as its track file builds it`, () => {
