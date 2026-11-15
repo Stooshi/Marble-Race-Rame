@@ -202,4 +202,5 @@ module.exports = [
   require('./taroko-marble-gorge'),
   require('./samaria-iron-gates'),
   require('./kings-canyon-lost-city'),
+  require('./sumidero-christmas-falls'),
 ];

@@ -1729,6 +1729,17 @@
    "side": 1,
    "marbles": 6
   },
+  "sumidero-christmas-falls": {
+   "name": "Sumidero Christmas Falls",
+   "series": "Canyons",
+   "lighting": "day",
+   "v": "dd333c6e",
+   "bytes": 19002,
+   "bytes2x": 46318,
+   "t": 14361,
+   "side": 1,
+   "marbles": 5
+  },
   "sunstone-temple": {
    "name": "Sunstone Temple",
    "series": "Blocks",
