@@ -840,7 +840,9 @@ one of the world's great mountains. It is built as a coaster (everything above a
   Canyons): written section by section, not from the layout library, each with its own palette (`half-dome`,
   `huayna-picchu`, `huashan`, `eiger`, `etna`, `tianmen`). Half Dome Granite Slabs (Easy: a drop down the granite
   slabs below the dome's face; a rolling start with the shorter waves; the dome stands 75 m out on the right, as on
-  the left the track came back past it). - The layouts made for the series are the `(peaks)` rows above (L89 to L93 for the test five, L94 to L103 for Peaks 6–15); each has a test track built as a
+  the left the track came back past it). Huayna Picchu Terraces (Extreme, planned Easy: the peg drop's pegs and the slaloms
+  that keep the weakest five winning made it lively; a splitter round a terraced hill with equal drag on both channels
+  and a small tip offset). - The layouts made for the series are the `(peaks)` rows above (L89 to L93 for the test five, L94 to L103 for Peaks 6–15); each has a test track built as a
   mountain (`series: 'peak'`).
 
 ## The racing look

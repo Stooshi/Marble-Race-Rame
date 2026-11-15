@@ -204,4 +204,5 @@ module.exports = [
   require('./kings-canyon-lost-city'),
   require('./sumidero-christmas-falls'),
   require('./half-dome-granite-slabs'),
+  require('./huayna-picchu-terraces'),
 ];

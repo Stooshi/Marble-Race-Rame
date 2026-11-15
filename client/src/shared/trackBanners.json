@@ -816,6 +816,17 @@
    "side": 1,
    "marbles": 4
   },
+  "huayna-picchu-terraces": {
+   "name": "Huayna Picchu Terraces",
+   "series": "Peaks",
+   "lighting": "day",
+   "v": "6cbb7977",
+   "bytes": 18114,
+   "bytes2x": 43980,
+   "t": 15498,
+   "side": 1,
+   "marbles": 7
+  },
   "hudson-highlands-run": {
    "name": "Hudson Highlands Run",
    "series": "Rivers",
