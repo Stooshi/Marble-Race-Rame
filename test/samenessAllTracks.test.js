@@ -38,7 +38,6 @@ const KNOWN = {
   'baqueira-beret-run': ['opening', 'opening-kind', 'layout'],
 
   'paris-eiffel-tower-run': ['opening', 'opening-kind', 'layout'],
-  'dubai-twister': ['opening', 'opening-kind', 'layout'],
   'amazon-water-run': ['layout'],
   'rio-jungle-rumble': ['opening', 'opening-kind', 'layout'],
   'china-wall-twister': ['opening', 'opening-kind', 'layout'],

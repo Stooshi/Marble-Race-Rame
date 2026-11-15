@@ -46,7 +46,7 @@
 "delhi-red-fort-marble-grand-prix": {"family":"grand-prix","reach":0.225,"seq":["opening: tunnel-launch","drop","pileUp","slalom","drop","slalom","S-bends right","slalom","peg ×2","spiral right"]},
 "douro-block-terraces": {"family":"block-2","reach":0.266,"seq":["opening: staggered-drop","drop","pileUp","slalom","brake","S-bends right","peg","straight","table-top"]},
 "dubai-marble-grand-prix": {"family":"grand-prix","reach":0.216,"seq":["opening: classic","drop","pileUp","slalom","S-bends left"]},
-"dubai-twister": {"family":"world-tour","reach":0.203,"seq":["opening: classic","drop","pileUp","slalom","S-bends left"]},
+"dubai-twister": {"family":"world-tour","reach":0.245,"seq":["opening: sand-trap","drop","pileUp","slalom","brake","climb","drop","sweep right"]},
 "edinburgh-hogmanay-grand-prix": {"family":"grand-prix","reach":0.249,"seq":["opening: funnel-drop","drop","pileUp","slalom","half-pipe","straight"]},
 "eiger-north-face": {"family":"peak","reach":0.264,"seq":["opening: rumble-start","drop","slalom","moguls","sweep right","straight","slalom","brake","drop"]},
 "elbrus-twin-saddle": {"family":"peak","reach":0.246,"seq":["opening: tunnel-launch","drop","pileUp","slalom","drop","slalom","sweep left","peg","straight","slalom"]},

@@ -545,12 +545,12 @@
    "name": "Dubai Twister",
    "series": "World Tour",
    "lighting": "day",
-   "v": "6d745ba3",
-   "bytes": 16918,
-   "bytes2x": 40622,
-   "t": 9851,
+   "v": "74e1f22e",
+   "bytes": 12688,
+   "bytes2x": 28744,
+   "t": 9590,
    "side": 1,
-   "marbles": 1
+   "marbles": 4
   },
   "edinburgh-hogmanay-grand-prix": {
    "name": "Edinburgh Hogmanay Grand Prix",
