@@ -33,7 +33,7 @@ const KNOWN = {
   'san-francisco': ['opening-kind'],
   'table-mountain-run': ['opening', 'opening-kind', 'layout'],
   // World Tour.
-  'are-run': ['opening', 'opening-kind', 'layout'],
+
   'portes-du-soleil-run': ['opening-kind', 'layout'],
   'park-city-run': ['opening', 'opening-kind', 'layout'],
   'baqueira-beret-run': ['opening', 'opening-kind', 'layout'],

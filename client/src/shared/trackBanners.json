@@ -116,12 +116,12 @@
    "name": "Åre Run",
    "series": "World Tour",
    "lighting": "night-northern-lights",
-   "v": "9c333d21",
-   "bytes": 13878,
-   "bytes2x": 34222,
-   "t": 11374,
+   "v": "70969c31",
+   "bytes": 18296,
+   "bytes2x": 45940,
+   "t": 10055,
    "side": 1,
-   "marbles": 4
+   "marbles": 6
   },
   "arno-old-bridge-run": {
    "name": "Arno Old Bridge Run",

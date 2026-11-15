@@ -22,7 +22,11 @@ if (!track) {
 }
 // (Series as src/routes/tracks.js works it out: a Grand Prix's kit carries `grandPrix`, a Rivers track's `river`, a
 // Canyons track's `canyon`, a Peaks track's `peak`, a Blocks track's `block`: Blocks 1 unless listed in BLOCKS_2.)
-const series = track.physics.kit?.grandPrix ? 'Grand Prix' : track.physics.kit?.river ? 'Rivers' : track.physics.kit?.canyon ? 'Canyons' : track.physics.kit?.peak ? 'Peaks' : track.physics.kit?.block ? 'Blocks' : track.series;
+// A kit track with none of these markers is a World Tour track (a World Tour re-layout, 15 Nov 2026, uses this too).
+const kit = track.physics.kit ?? {};
+const series = kit.pinball ? 'Pinball' : kit.river ? 'Rivers' : kit.peak ? 'Peaks' : kit.arcade ? 'Arcade' : kit.canyon ? 'Canyons'
+  : kit.block ? 'Blocks' : kit.athletics ? 'Track and Field' : kit.winterWonders ? 'Winter Wonders' : kit.coaster ? 'Coasters'
+    : kit.grandPrix ? 'Grand Prix' : track.series ?? 'World Tour';
 const out = execFileSync(process.execPath, [path.join(__dirname, 'wildness.js'), 'one', slug, '--from-report'], { encoding: 'utf8' });
 const w = JSON.parse(out.trim().split('\n').pop());
 const pack = packFor(slug, series);

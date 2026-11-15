@@ -56,7 +56,7 @@ test('every kit track opens with Bobsleigh Run\'s starting ramp, gate, channel a
     // (The staggered drop and the varied starts let the field go in waves: their funnel has that one setting more.
     // Any other opening only where its track asks for them, listed here: Nevada Drag Strip's crest start.)
     const { waves, ...rest } = funnel;
-    if (waves) assert.ok(['staggered-drop', 'clean-drop', 'peg-drop', 'pipe-drop', 'rolling-start', 'chicane-start', 'rumble-start'].includes(t.physics.kit.opening) || ['nevada-drag-strip', 'hudson-highlands-run', 'iguazu-devils-throat', 'chao-phraya-dawn-spiral', 'blyde-potholes-spiral', 'kings-canyon-lost-city', 'huashan-plank-walk', 'etna-valle-del-bove', 'tianmen-heavens-gate', 'sunken-ruins', 'crystal-grotto', 'moon-base'].includes(t.slug), `${t.slug}: waves at the gate`);
+    if (waves) assert.ok(['staggered-drop', 'clean-drop', 'peg-drop', 'pipe-drop', 'rolling-start', 'chicane-start', 'rumble-start'].includes(t.physics.kit.opening) || ['nevada-drag-strip', 'hudson-highlands-run', 'iguazu-devils-throat', 'chao-phraya-dawn-spiral', 'blyde-potholes-spiral', 'kings-canyon-lost-city', 'huashan-plank-walk', 'etna-valle-del-bove', 'tianmen-heavens-gate', 'sunken-ruins', 'are-run', 'crystal-grotto', 'moon-base'].includes(t.slug), `${t.slug}: waves at the gate`);
     if (!['funnel-drop', 'staggered-drop'].includes(t.physics.kit.opening)) assert.deepEqual(rest, tmFunnel);
     assert.deepEqual(t.physics.gate, bob.physics.gate);
     assert.equal(t.physics.collisions, true);
@@ -606,13 +606,17 @@ test('Åre Run is added by its data update, switched off, exactly as its track f
   assert.match(sql, /is_active|false/);
   // Later data updates (already run live, so the add is never edited): the latest gives the track in code.
   const dir = path.join(__dirname, '..', 'docs', 'data_updates');
-  const later = fs.readdirSync(dir).filter((f) => f > '2026-10-15-add-are-run.sql' && f.slice(11).startsWith('are-run-')).sort();
+  // (Not a pack move, `<date>-are-run-to-<pack>.sql`: it changes only the track's pack and wildness.)
+  const later = fs.readdirSync(dir).filter((f) => f > '2026-10-15-add-are-run.sql' && f.slice(11).startsWith('are-run-') && !f.slice(11).startsWith('are-run-to-')).sort();
   if (!later.length) {
     assert.equal(sql, execFileSync(process.execPath, [script, 'are-run', '--add-hidden', note], { encoding: 'utf8' }));
     return;
   }
   const body = (x) => x.slice(x.indexOf('UPDATE tracks'));
-  assert.equal(body(fs.readFileSync(path.join(dir, later.at(-1)), 'utf8')), body(execFileSync(process.execPath, [script, 'are-run', '--retune'], { encoding: 'utf8' })), `${later.at(-1)} no longer gives the track in code`);
+  const latest = fs.readFileSync(path.join(dir, later.at(-1)), 'utf8');
+  // (A new layout, `--relayout`, is a re-tune that also starts the track's records again: tracks.records_since.)
+  const mode = /gets a new layout\./.test(latest) ? '--relayout' : '--retune';
+  assert.equal(body(latest), body(execFileSync(process.execPath, [script, 'are-run', mode], { encoding: 'utf8' })), `${later.at(-1)} no longer gives the track in code`);
 });
 
 // The kit tracks after Åre Run, each added switched off by its own data update.
