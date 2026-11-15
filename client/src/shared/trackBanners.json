@@ -376,6 +376,17 @@
    "side": 1,
    "marbles": 4
   },
+  "clockwork-works": {
+   "name": "Clockwork Works",
+   "series": "Blocks",
+   "lighting": "sunset",
+   "v": "fc7fbf14",
+   "bytes": 13636,
+   "bytes2x": 32414,
+   "t": 10255,
+   "side": 1,
+   "marbles": 4
+  },
   "colca-spin": {
    "name": "Colca Spin",
    "series": "Canyons",

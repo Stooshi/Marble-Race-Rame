@@ -211,4 +211,5 @@ module.exports = [
   require('./tianmen-heavens-gate'),
   require('./mushroom-grove'),
   require('./sunken-ruins'),
+  require('./clockwork-works'),
 ];

@@ -681,6 +681,8 @@ as a coaster (everything above applies), like a canyon (looks only, like everyth
   Sunken Ruins (Easy: a banked turn on supports right round a sunken dome; a sand-trap start, as the clean drop's
   S-bends sorted the field by strength; the stepped pyramid's steps all stand behind the gate, as a step reaching
   forward stood in the channel's first metres).
+  Clockwork Works (Wild: a splitter round a giant gear turned to face the field; a rolling start, as chicane starts
+  had all begun alike; the chute half-pipe taken out, as it sorted the field by strength; jittered waves 0.14 s apart).
 
 ### Blocks Series 2 (from 30 Oct 2026)
 

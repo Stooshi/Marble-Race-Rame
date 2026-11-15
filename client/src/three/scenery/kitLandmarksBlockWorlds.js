@@ -76,9 +76,10 @@ function upright(r, x, y, z, colour, teeth = 12) {
   return p;
 }
 
-/** The giant gear: one great brass gear on an iron stand (the middle of a splitter). */
+/** The giant gear: one great brass gear on an iron stand (the middle of a splitter), its face along the track. */
 function giantGear() {
-  return merge([cube(3, 6, 3, 0, 3, 0, '#3f3a36'), cube(8, 1, 4, 0, 0.5, 0, '#4a4440'), ...upright(6, 0, 12, 0, '#c8963f', 14)]);
+  // (Turned to face along the track: on a splitter's divider its face looks at the oncoming field, not its edge.)
+  return merge([cube(2, 6, 2, 0, 3, 0, '#3f3a36'), cube(5, 1, 3, 0, 0.5, 0, '#4a4440'), ...upright(3.2, 0, 9.5, 0, '#c8963f', 12)]).rotateY(Math.PI / 2);
 }
 
 /** A gear wall: a tall iron wall with interlocking brass and copper gears on its face. */
