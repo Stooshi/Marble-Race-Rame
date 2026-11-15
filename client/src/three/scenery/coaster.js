@@ -17,6 +17,13 @@ import { channelLipAt, channelRadiusAt, forkAt, forkOffset, forkRadius } from '.
 import { box, merge, piece } from './parts';
 import { skiPlaneModel } from './kitLandmarksPeak';
 
+/**
+ * Is sample i on a loop's span (from where it rises to the end of its run-out)? The loop draws its own track and
+ * steel there along its own path (iceChannel loopFrames); the coaster's rails, spine, ties and towers, which follow
+ * the ground's centreline, would run along the floor under it (Kings Canyon Lost City, 15 Nov 2026). Looks only.
+ */
+const onLoop = (channel, i, step) => (channel.loops ?? []).some((L) => i * step >= L.s0 - 3 && i * step <= L.s1 + 3);
+
 const UP = new Vector3(0, 1, 0);
 const SKIRT = 1.6;           // the channel's outer wall reaches this far below its floor (iceChannel.js)
 const RIM_WIDTH = 0.45;      // its rim beyond the lip
@@ -141,10 +148,20 @@ export function coasterRails(centerline, channel, { lite = false } = {}) {
       const up = Math.abs(p.y - (a.y + t * (b.y - a.y))) / RAIL_RISE;
       return Math.max(across, up);
     };
-    const line = [pts[0]];
+    // (A loop's span breaks the rail in two: the loop carries its own; see onLoop.)
+    let line = onLoop(channel, 0, step) ? [] : [pts[0]];
     let i = 0;
     while (i < segments) {
+      if (onLoop(channel, i + 1, step)) {
+        if (line.length > 1) lines.push(line);
+        line = [];
+        i += 1;
+        continue;
+      }
+      if (!line.length) line.push(pts[i]);
       let j = Math.min(segments, i + maxStep);
+      for (let k = i + 1; k <= j; k += 1) if (onLoop(channel, k, step)) { j = k - 1; break; }
+      if (j <= i) { i += 1; continue; }
       while (j > i + 1) {
         let worst = 0;
         for (let k = i + 1; k < j; k += 1) worst = Math.max(worst, stray(pts[k], pts[i], pts[j]));
@@ -154,7 +171,7 @@ export function coasterRails(centerline, channel, { lite = false } = {}) {
       line.push(pts[j]);
       i = j;
     }
-    lines.push(line);
+    if (line.length > 1) lines.push(line);
   }
   return lines;
 }
@@ -426,6 +443,7 @@ export function buildCoaster(centerline, channel, kit, { lite = false, groundAt,
     for (let k = 1; k < line.length; k += 1) steel.push(strut(line[k - 1], line[k], RAIL_THICKNESS, RAIL));
   }
   for (let i = 0; i + railStep <= segments; i += railStep) {
+    if (onLoop(channel, i, step) || onLoop(channel, i + railStep, step)) continue;
     const a = frameAt(i);
     const b = frameAt(i + railStep);
     steel.push(strut(a.s.pos.clone().addScaledVector(UP, -SKIRT - 0.35), b.s.pos.clone().addScaledVector(UP, -SKIRT - 0.35), 0.55, TIE));
@@ -433,6 +451,7 @@ export function buildCoaster(centerline, channel, kit, { lite = false, groundAt,
   // Cross-ties under the channel, rim to rim.
   const tieEvery = lite ? 8 : 4;
   for (let i = 0; i <= segments; i += Math.max(1, Math.round(tieEvery / step))) {
+    if (onLoop(channel, i, step)) continue;
     const { s, side } = frameAt(i);
     const e = edgeAt(channel, i, step);
     const y = s.pos.y - SKIRT - 0.15;
@@ -581,7 +600,7 @@ export function buildCoaster(centerline, channel, kit, { lite = false, groundAt,
   const every = timber ? (lite ? 16 : 9) : blocks || concrete ? (lite ? 20 : 12) : lite ? 22 : 13; // (a trestle's bents stand closer together)
   let last = -Infinity;
   for (let i = 0; i <= segments; i += 1) {
-    if (!isLifted(flight, i) || i * step - last < every) continue;
+    if (!isLifted(flight, i) || i * step - last < every || onLoop(channel, i, step)) continue;
     last = i * step;
     const { s, side } = frameAt(i);
     const top = s.pos.clone().addScaledVector(UP, -SKIRT - 0.4);

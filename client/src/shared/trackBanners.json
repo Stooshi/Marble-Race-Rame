@@ -948,6 +948,17 @@
    "side": 1,
    "marbles": 4
   },
+  "kings-canyon-lost-city": {
+   "name": "Kings Canyon Lost City",
+   "series": "Canyons",
+   "lighting": "sunset",
+   "v": "0d0165e3",
+   "bytes": 11266,
+   "bytes2x": 27690,
+   "t": 11336,
+   "side": 1,
+   "marbles": 4
+  },
   "kirkjufell-block-falls": {
    "name": "Kirkjufell Block Falls",
    "series": "Blocks",

@@ -56,7 +56,7 @@ test('every kit track opens with Bobsleigh Run\'s starting ramp, gate, channel a
     // (The staggered drop and the varied starts let the field go in waves: their funnel has that one setting more.
     // Any other opening only where its track asks for them, listed here: Nevada Drag Strip's crest start.)
     const { waves, ...rest } = funnel;
-    if (waves) assert.ok(['staggered-drop', 'clean-drop', 'peg-drop', 'pipe-drop', 'rolling-start', 'chicane-start', 'rumble-start'].includes(t.physics.kit.opening) || ['nevada-drag-strip', 'hudson-highlands-run', 'iguazu-devils-throat', 'chao-phraya-dawn-spiral', 'blyde-potholes-spiral'].includes(t.slug), `${t.slug}: waves at the gate`);
+    if (waves) assert.ok(['staggered-drop', 'clean-drop', 'peg-drop', 'pipe-drop', 'rolling-start', 'chicane-start', 'rumble-start'].includes(t.physics.kit.opening) || ['nevada-drag-strip', 'hudson-highlands-run', 'iguazu-devils-throat', 'chao-phraya-dawn-spiral', 'blyde-potholes-spiral', 'kings-canyon-lost-city'].includes(t.slug), `${t.slug}: waves at the gate`);
     if (!['funnel-drop', 'staggered-drop'].includes(t.physics.kit.opening)) assert.deepEqual(rest, tmFunnel);
     assert.deepEqual(t.physics.gate, bob.physics.gate);
     assert.equal(t.physics.collisions, true);
@@ -770,6 +770,7 @@ const HIDDEN_KIT_TRACKS = [
   ['blyde-potholes-spiral', '2027-06-30-add-blyde-potholes-spiral.sql', 'Canyons track (Blyde River Canyon: a crest start into the canyon, the field let go in waves, past the Three Rondavels and the big feature, a banked spiral round the river\'s potholes; a rock-arch start; in the Canyons pack, not free; switched off until Moses has watched the preview).'],
   ['taroko-marble-gorge', '2027-07-01-add-taroko-marble-gorge.sql', 'Canyons track (Taroko Gorge: off a rope footbridge, through the old rock tunnel, a splitter round a marble pillar at the narrows, past the shrine and its waterfall; in the Canyons pack, not free; switched off until Moses has watched the preview).'],
   ['samaria-iron-gates', '2027-07-02-add-samaria-iron-gates.sql', 'Canyons track (Samaria Gorge: a rolling start down the gorge path, the field let go in waves, the big feature a drop down the cliff\'s wooden staircase, past the stone village, a half-pipe through the Iron Gates; a rope-bridge start; in the Canyons pack, not free; switched off until Moses has watched the preview).'],
+  ['kings-canyon-lost-city', '2027-07-03-add-kings-canyon-lost-city.sql', 'Canyons track (Kings Canyon: a sand-trap start, the field let go in waves, up to the plateau, the big feature a loop among the Lost City\'s beehive domes, past the Garden of Eden, down a narrow crack; a rock-arch start; in the Canyons pack, not free; switched off until Moses has watched the preview).'],
 ];
 for (const [slug, file, note] of HIDDEN_KIT_TRACKS) {
   test(`${slug} is added by its data update, switched off, exactly as its track file builds it`, () => {

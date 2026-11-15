@@ -138,11 +138,13 @@ export function railGaps(centerline, channel, lines, geometry, { lift = 0.2, mar
   const ray = new Ray(new Vector3(), new Vector3(0, -1, 0));
   const found = [];
   lines.forEach((line, n) => {
-    let j = 0; // the nearest sample, moving on along the line
+    let j = -1; // the nearest sample, moving on along the line (its first point: searched for along the whole track,
+    // as a line may start part way along: after a loop, which carries its own rails; 15 Nov 2026)
     const nearest = (p) => {
-      let best = j; let bestD = Infinity;
-      for (let k = Math.max(0, j - 6); k <= Math.min(segments, j + 60); k += 1) {
-        const d = (samples[k].pos.x - p.x) ** 2 + (samples[k].pos.z - p.z) ** 2;
+      let best = Math.max(0, j); let bestD = Infinity;
+      for (let k = j < 0 ? 0 : Math.max(0, j - 6); k <= (j < 0 ? segments : Math.min(segments, j + 60)); k += 1) {
+        // (the first point: by height too, so a stretch passing under or over it is never taken for its own)
+        const d = (samples[k].pos.x - p.x) ** 2 + (samples[k].pos.z - p.z) ** 2 + (j < 0 ? (samples[k].pos.y - p.y) ** 2 : 0);
         if (d < bestD) { bestD = d; best = k; }
       }
       j = best;

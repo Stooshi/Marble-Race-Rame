@@ -279,7 +279,10 @@ module.exports = track({
   drop off a rope footbridge; the rock tunnel sits on the straight after the S-bends, because a tunnel on S-bends
   brushes the follow camera). Samaria Iron Gates (Easy: a drop down the cliff's wooden staircase, kept to 48 m so it
   counts as one drop; a half-pipe through the Iron Gates; a rolling start with the shorter waves, after a rumble start
-  favoured the fourth starting group and its waves made the race Wild). Palettes `bryce`,
+  favoured the fourth starting group and its waves made the race Wild). Kings Canyon Lost City (Extreme: a loop among
+  the Lost City's beehive domes, the first coaster track with a loop: the coaster's steel stops over the loop's span;
+  a sand-trap start, the field let go in waves, as the front starting places won more; a 68 m drop from the plateau,
+  counted as two). Palettes `bryce`,
   `blyde`, `taroko`, `samaria`, `sumidero`, `kings`; landmarks in `client/src/three/scenery/kitLandmarksCanyon2.js`;
   the canyon starts `rock-arch` and `rope-bridge` (canyons only).
 
