@@ -1601,12 +1601,12 @@
    "name": "Rio Jungle Rumble",
    "series": "World Tour",
    "lighting": "day",
-   "v": "9f0185a7",
-   "bytes": 14876,
-   "bytes2x": 34470,
-   "t": 10631,
-   "side": 1,
-   "marbles": 1
+   "v": "297751b7",
+   "bytes": 14254,
+   "bytes2x": 32708,
+   "t": 32617,
+   "side": -1,
+   "marbles": 5
   },
   "rio-new-year-burst": {
    "name": "Rio New Year Burst",
