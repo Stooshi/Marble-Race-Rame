@@ -215,4 +215,5 @@ module.exports = [
   require('./crystal-grotto'),
   require('./jungle-ruins'),
   require('./moon-base'),
+  require('./neon-grid'),
 ];

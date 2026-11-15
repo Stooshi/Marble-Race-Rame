@@ -692,6 +692,9 @@ as a coaster (everything above applies), like a canyon (looks only, like everyth
   Moon Base (Extreme: a 66 m drop over the great crater's rim; a sand-trap start through the moon dust with the first
   bend left, as a first bend right matched Sunken Ruins' opening; the crater after the hairpin, as a crater-first
   order matched the Loire and the Etna).
+  Neon Grid (Extreme: a loop over the glowing grid, 69 overtakes; a rumble start off a beacon with jittered waves
+  0.16 s apart, as 0.12 s left the last group behind; a long drop down a wall of light and a half-pipe after the loop,
+  as with S-bends there its order matched Mushroom Grove's, Sunken Ruins' and Tianmen's).
 
 ### Blocks Series 2 (from 30 Oct 2026)
 

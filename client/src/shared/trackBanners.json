@@ -1344,6 +1344,17 @@
    "side": -1,
    "marbles": 4
   },
+  "neon-grid": {
+   "name": "Neon Grid",
+   "series": "Blocks",
+   "lighting": "night",
+   "v": "fb7ff1c2",
+   "bytes": 13164,
+   "bytes2x": 32622,
+   "t": 9766,
+   "side": 1,
+   "marbles": 8
+  },
   "nevada-drag-strip": {
    "name": "Nevada Drag Strip",
    "series": "Grand Prix",
