@@ -102,13 +102,13 @@ All endpoints are under `/api`. Request and response bodies are JSON. Authentica
 
 | Method | Path | Auth | Body / notes |
 | --- | --- | --- | --- |
-| POST | `/auth/register` | – | `{ username, email, password, display_name? }` → `{ token, user }` (users start with 500 coins) |
+| POST | `/auth/register` | – | `{ username, email, password, display_name?, birth_year, birth_month, country?, origin? }` → `{ token, user }` (users start with `startingCoins` from `client/src/shared/economy.json`, 650; `origin`: where the player came from, `src/origins`, 13 Nov 2026) |
 | POST | `/auth/login` | – | `{ login, password }`, where `login` is a username or email → `{ token, user }` |
 | GET | `/auth/me` | ✔ | The current user (with `streak`: days in a row with the daily goal met, 0 when broken) |
-| POST | `/auth/guest` | – | "Play free": a guest account to race with at once → `{ token, user }` (`is_guest: true`) |
+| POST | `/auth/guest` | – | "Play free": a guest account to race with at once, `{ origin? }` (the first-touch UTM tags or referring domain, kept once in `player_origins`) → `{ token, user }` (`is_guest: true`) |
 | POST | `/auth/claim` | ✔ guest | A guest saves their marble: `{ username, email, password, marketing_opt_in? }`, keeping coins and marbles |
 
-The auth endpoints are rate-limited to 20 requests per 15 minutes per IP.
+The auth endpoints are rate-limited per IP address: log in, password reset and email confirmation 20 per 15 minutes; sign-up and saving a guest 60 per 15 minutes; starting as a guest 300 per hour (`src/routes/auth.js`).
 
 ### Users
 
