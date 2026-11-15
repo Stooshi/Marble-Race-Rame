@@ -574,6 +574,17 @@
    "side": 1,
    "marbles": 1
   },
+  "etna-valle-del-bove": {
+   "name": "Etna Valle del Bove",
+   "series": "Peaks",
+   "lighting": "sunset",
+   "v": "0fdf3790",
+   "bytes": 15400,
+   "bytes2x": 37218,
+   "t": 15780,
+   "side": -1,
+   "marbles": 6
+  },
   "eugene-hurdles": {
    "name": "Eugene Hurdles",
    "series": "Track and Field",

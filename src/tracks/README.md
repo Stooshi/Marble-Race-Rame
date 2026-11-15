@@ -846,7 +846,9 @@ one of the world's great mountains. It is built as a coaster (everything above a
   a 45 m radius; a crest start with the shorter waves; the ridge has pegs and a brake, as a slalom there began like
   Sognefjord's and a right-hand ridge like Kangchenjunga's). Eiger North Face (Wild: a banked spiral round the window pillar; a ski-jump start, as the
   station start goes only with the boost launch; its first two orders were too like Tokyo Photo Finish and Slingshot
-  Spins, so the hairpin turns left and a rise over the moraine comes before the railway S-bends). - The layouts made for the series are the `(peaks)` rows above (L89 to L93 for the test five, L94 to L103 for Peaks 6–15); each has a test track built as a
+  Spins, so the hairpin turns left and a rise over the moraine comes before the railway S-bends). Etna Valle del Bove (Extreme, planned Wild: 43 on 300 quick
+  races, 50 on the report's 1,000; the drop into the Valle del Bove kept to 50 m; S-bends past the craters, a
+  lava-channel half-pipe and a rise over the old flow, as its sweeps began like Loire Château Run's). - The layouts made for the series are the `(peaks)` rows above (L89 to L93 for the test five, L94 to L103 for Peaks 6–15); each has a test track built as a
   mountain (`series: 'peak'`).
 
 ## The racing look
