@@ -1131,13 +1131,18 @@ function buildStart(lift, { towers, feet, tower, groundAt, lite, RAIL, SUPPORT, 
     const low = groundAt(mid.x, mid.z);
     const total = Math.max(4, topY - low + 1);
     const tierH = total / BLOCK_PYRAMID.tiers;
+    // (Each step's front face stands at the gate, never ahead of it: the track falls away from the gate, and a step
+    // reaching forward would stand in the channel's first metres. The steps fall away behind and to the sides.)
+    let far = mid;
     for (let k = 0; k < BLOCK_PYRAMID.tiers; k += 1) {
       const w = BLOCK_PYRAMID.top + 2 + k * BLOCK_PYRAMID.tier * 2;
       const yTop = topY - k * tierH;
-      towers.push(obox(w, tierH, w, mid.clone().setY(yTop - tierH / 2), yaw, k % 2 ? '#c8c2b0' : '#bab4a2'));
-      towers.push(obox(w + 0.2, 0.4, w + 0.2, mid.clone().setY(yTop - 0.2), yaw, '#5a9a8a'));
+      const c = top.clone().addScaledVector(back, w / 2 + 0.5);
+      towers.push(obox(w, tierH, w, c.clone().setY(yTop - tierH / 2), yaw, k % 2 ? '#c8c2b0' : '#bab4a2'));
+      towers.push(obox(w + 0.2, 0.4, w + 0.2, c.clone().setY(yTop - 0.2), yaw, '#5a9a8a'));
+      far = c;
     }
-    feet.push({ x: mid.x, z: mid.z, r: BLOCK_PYRAMID.top / 2 + BLOCK_PYRAMID.tiers * BLOCK_PYRAMID.tier + 2 });
+    feet.push({ x: far.x, z: far.z, r: BLOCK_PYRAMID.top / 2 + BLOCK_PYRAMID.tiers * BLOCK_PYRAMID.tier + 2 });
   } else if (type === 'gear-tower') {
     // (Blocks 1, 15 Nov 2026) A square iron tower behind the gate, the track on its top, brass gears on its sides.
     const yaw = yawOf(back);

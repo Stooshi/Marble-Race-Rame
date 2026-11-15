@@ -1806,6 +1806,17 @@
    "side": 1,
    "marbles": 5
   },
+  "sunken-ruins": {
+   "name": "Sunken Ruins",
+   "series": "Blocks",
+   "lighting": "day",
+   "v": "331638c3",
+   "bytes": 14108,
+   "bytes2x": 34786,
+   "t": 10188,
+   "side": 1,
+   "marbles": 4
+  },
   "sunstone-temple": {
    "name": "Sunstone Temple",
    "series": "Blocks",

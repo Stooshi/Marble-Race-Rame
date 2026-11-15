@@ -56,7 +56,7 @@ test('every kit track opens with Bobsleigh Run\'s starting ramp, gate, channel a
     // (The staggered drop and the varied starts let the field go in waves: their funnel has that one setting more.
     // Any other opening only where its track asks for them, listed here: Nevada Drag Strip's crest start.)
     const { waves, ...rest } = funnel;
-    if (waves) assert.ok(['staggered-drop', 'clean-drop', 'peg-drop', 'pipe-drop', 'rolling-start', 'chicane-start', 'rumble-start'].includes(t.physics.kit.opening) || ['nevada-drag-strip', 'hudson-highlands-run', 'iguazu-devils-throat', 'chao-phraya-dawn-spiral', 'blyde-potholes-spiral', 'kings-canyon-lost-city', 'huashan-plank-walk', 'etna-valle-del-bove', 'tianmen-heavens-gate'].includes(t.slug), `${t.slug}: waves at the gate`);
+    if (waves) assert.ok(['staggered-drop', 'clean-drop', 'peg-drop', 'pipe-drop', 'rolling-start', 'chicane-start', 'rumble-start'].includes(t.physics.kit.opening) || ['nevada-drag-strip', 'hudson-highlands-run', 'iguazu-devils-throat', 'chao-phraya-dawn-spiral', 'blyde-potholes-spiral', 'kings-canyon-lost-city', 'huashan-plank-walk', 'etna-valle-del-bove', 'tianmen-heavens-gate', 'sunken-ruins'].includes(t.slug), `${t.slug}: waves at the gate`);
     if (!['funnel-drop', 'staggered-drop'].includes(t.physics.kit.opening)) assert.deepEqual(rest, tmFunnel);
     assert.deepEqual(t.physics.gate, bob.physics.gate);
     assert.equal(t.physics.collisions, true);
@@ -779,6 +779,7 @@ const HIDDEN_KIT_TRACKS = [
   ['etna-valle-del-bove', '2027-07-09-add-etna-valle-del-bove.sql', 'Peaks track (Etna on Sicily: a sand-trap start through the black cinders, the field let go in waves, past the smoking craters and a glowing lava flow, the big feature a long drop into the Valle del Bove, a lava-channel half-pipe; a gondola start; in the Peaks pack, not free; switched off until Moses has watched the preview).'],
   ['tianmen-heavens-gate', '2027-07-10-add-tianmen-heavens-gate.sql', 'Peaks track (Tianmen Mountain: a rumble start out of the cliff lift, the field let go in waves, the road of the 99 bends, the cliff walk, the big feature a loop under Heaven\'s Gate, the great arch through the mountain; an elevator start; in the Peaks pack, not free; switched off until Moses has watched the preview).'],
   ['mushroom-grove', '2027-07-11-add-mushroom-grove.sql', 'Blocks 1 track (Mushroom Grove: a game world of giant cube mushrooms, a rolling start, the field let go in waves, the big feature a drop off a giant mushroom\'s cap, a score wall and a checkpoint arch; a ski-jump start; in the Blocks 1 pack, not free; switched off until Moses has watched the preview).'],
+  ['sunken-ruins', '2027-07-12-add-sunken-ruins.sql', 'Blocks 1 track (Sunken Ruins: a teal game world as if under the sea, a sand-trap start through the silt, the field let go in waves, broken arches, the big feature a dramatic banked turn round a sunken dome, clearing rows; a stepped-pyramid start; in the Blocks 1 pack, not free; switched off until Moses has watched the preview).'],
 ];
 for (const [slug, file, note] of HIDDEN_KIT_TRACKS) {
   test(`${slug} is added by its data update, switched off, exactly as its track file builds it`, () => {

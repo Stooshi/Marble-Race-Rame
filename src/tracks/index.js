@@ -210,4 +210,5 @@ module.exports = [
   require('./etna-valle-del-bove'),
   require('./tianmen-heavens-gate'),
   require('./mushroom-grove'),
+  require('./sunken-ruins'),
 ];

@@ -678,6 +678,9 @@ as a coaster (everything above applies), like a canyon (looks only, like everyth
   `portal-gate` (out of a glowing portal), `block-pyramid` (off a stepped pyramid's top), `gear-tower` (off an iron
   tower with gears on its sides). Mushroom Grove (Easy: a drop off a giant mushroom's cap; a rolling start with waves
   0.16 s apart and jittered, as shorter ones favoured the first starting group and longer ones the fourth).
+  Sunken Ruins (Easy: a banked turn on supports right round a sunken dome; a sand-trap start, as the clean drop's
+  S-bends sorted the field by strength; the stepped pyramid's steps all stand behind the gate, as a step reaching
+  forward stood in the channel's first metres).
 
 ### Blocks Series 2 (from 30 Oct 2026)
 
