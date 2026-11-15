@@ -959,6 +959,17 @@
    "side": 1,
    "marbles": 6
   },
+  "jungle-ruins": {
+   "name": "Jungle Ruins",
+   "series": "Blocks",
+   "lighting": "day",
+   "v": "2f4fb865",
+   "bytes": 17754,
+   "bytes2x": 43876,
+   "t": 24757,
+   "side": -1,
+   "marbles": 7
+  },
   "k2-concordia": {
    "name": "K2 Concordia",
    "series": "Peaks",

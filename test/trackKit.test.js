@@ -782,6 +782,7 @@ const HIDDEN_KIT_TRACKS = [
   ['sunken-ruins', '2027-07-12-add-sunken-ruins.sql', 'Blocks 1 track (Sunken Ruins: a teal game world as if under the sea, a sand-trap start through the silt, the field let go in waves, broken arches, the big feature a dramatic banked turn round a sunken dome, clearing rows; a stepped-pyramid start; in the Blocks 1 pack, not free; switched off until Moses has watched the preview).'],
   ['clockwork-works', '2027-07-13-add-clockwork-works.sql', 'Blocks 1 track (Clockwork Works: a game world of brass and iron, a rolling start round the cogs, the field let go in waves, a wall of turning gears, the big feature a splitter round a giant brass gear, a score wall; a gear-tower start; in the Blocks 1 pack, not free; switched off until Moses has watched the preview).'],
   ['crystal-grotto', '2027-07-14-add-crystal-grotto.sql', 'Crystal Grotto: Blocks 1 (15 Nov 2026), hidden until Moses switches it on'],
+  ['jungle-ruins', '2027-07-15-add-jungle-ruins.sql', 'Jungle Ruins: Blocks 1 (15 Nov 2026), hidden until Moses switches it on'],
 ];
 for (const [slug, file, note] of HIDDEN_KIT_TRACKS) {
   test(`${slug} is added by its data update, switched off, exactly as its track file builds it`, () => {

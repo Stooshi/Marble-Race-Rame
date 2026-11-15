@@ -686,6 +686,9 @@ as a coaster (everything above applies), like a canyon (looks only, like everyth
   Crystal Grotto (Wild: a spiral right round a crystal spire; out of a glowing portal, a clean-drop start with
   jittered waves 0.16 s apart; cave lighting; on phones a Block Series cube pillar is at most 8 cubes, each taller,
   as the tall pillars under its high first half went over the phone's triangle budget).
+  Jungle Ruins (Wild: a 40 m waterfall drop through falling water; a rumble start off a castle tower with jittered
+  waves 0.13 s apart; S-bends first and the hairpin late, as a sweep–falls–S-bends order matched Cotahuasi's; fewer
+  pegs and gates, as with them it scored Extreme).
 
 ### Blocks Series 2 (from 30 Oct 2026)
 
