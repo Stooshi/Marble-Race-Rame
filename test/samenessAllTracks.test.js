@@ -37,7 +37,7 @@ const KNOWN = {
   'portes-du-soleil-run': ['opening-kind', 'layout'],
   'park-city-run': ['opening', 'opening-kind', 'layout'],
   'baqueira-beret-run': ['opening', 'opening-kind', 'layout'],
-  'greenland-expedition': ['opening', 'opening-kind', 'layout'],
+
   'paris-eiffel-tower-run': ['opening', 'opening-kind', 'layout'],
   'dubai-twister': ['opening', 'opening-kind', 'layout'],
   'amazon-water-run': ['layout'],
