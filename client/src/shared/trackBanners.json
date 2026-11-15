@@ -750,6 +750,17 @@
    "side": 1,
    "marbles": 1
   },
+  "half-dome-granite-slabs": {
+   "name": "Half Dome Granite Slabs",
+   "series": "Peaks",
+   "lighting": "day",
+   "v": "c32da640",
+   "bytes": 14780,
+   "bytes2x": 36518,
+   "t": 15645,
+   "side": -1,
+   "marbles": 7
+  },
   "harbin-ice-city": {
    "name": "Harbin Ice City",
    "series": "Coasters",

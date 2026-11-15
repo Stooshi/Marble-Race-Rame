@@ -203,4 +203,5 @@ module.exports = [
   require('./samaria-iron-gates'),
   require('./kings-canyon-lost-city'),
   require('./sumidero-christmas-falls'),
+  require('./half-dome-granite-slabs'),
 ];

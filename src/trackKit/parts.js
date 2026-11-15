@@ -390,6 +390,8 @@ module.exports = {
     // Peaks (client/src/three/scenery/kitLandmarksPeak.js; no religious objects, no flags, nothing on a summit).
     'peak-camp', 'serac-field', 'granite-needles', 'nunataks', 'ski-plane', 'crater-ice-cliffs', 'giant-groundsels',
     'meltwater-streams', 'pass-cairn', 'glacier-tongue', 'penitentes', 'icebergs', 'glacial-lake', 'rhododendrons', 'barrel-hut', 'rock-island', 'cinder-cones', 'tepui-falls', 'calving-ice', 'giant-lobelias',
+    // The six of 15 Nov 2026 (client/src/three/scenery/kitLandmarksPeak2.js).
+    'sheer-dome', 'cable-route', 'inca-terraces', 'stone-citadel', 'terraced-hill', 'plank-walk', 'cliff-stairs', 'gallery-windows', 'window-pillar', 'cog-railway', 'lava-flow', 'smoking-crater', 'sky-arch', 'switchback-road',
     // The Riviera (Saint-Tropez, 3 Nov 2026; client/src/three/scenery/kitLandmarksRiviera.js; our own models, no names on anything drawn).
     'riviera-village', 'umbrella-pines', 'lavender-field', 'olive-grove', 'riviera-beach', 'riviera-harbour', 'yachts', 'riviera-lighthouse',
     // Pudong (Pudong Marble Grand Prix, 3 Nov 2026; client/src/three/scenery/kitLandmarksPudong.js; our own towers, inspired by the area, no copies, no names on anything drawn).
@@ -426,7 +428,9 @@ module.exports = {
     // (Moses, 13 Nov 2026: five more.)
     'arno', 'chao-phraya', 'hudson', 'yukon', 'iguazu'],
   // A mountain's snow, ice, rock, zones, sky and backdrop (family 'peak': `peak: { palette }`), the client's PEAK_PALETTES.
-  PEAKS: ['everest', 'mont-blanc', 'vinson', 'kilimanjaro', 'vatnajokull', 'fuji', 'aconcagua', 'k2', 'elbrus', 'aoraki', 'rwenzori', 'huascaran', 'roraima', 'kangchenjunga', 'alaska'],
+  PEAKS: ['everest', 'mont-blanc', 'vinson', 'kilimanjaro', 'vatnajokull', 'fuji', 'aconcagua', 'k2', 'elbrus', 'aoraki', 'rwenzori', 'huascaran', 'roraima', 'kangchenjunga', 'alaska',
+    // (Moses, 15 Nov 2026: six more.)
+    'half-dome', 'huayna-picchu', 'huashan', 'eiger', 'etna', 'tianmen'],
   // What stands in the middle of a splitter, between its two channels (the arch: over one of
   // them), or in the middle of a spiral or a hairpin.
   AROUND: ['mountain-hut', 'big-rock', 'mountain-restaurant', 'mine-headframe', 'nunatak', 'bell-tower', 'arc-de-triomphe', 'obelisk', 'notre-dame', 'oasis', 'twisted-tower', 'river-island', 'anaconda', 'watchtower', 'pagoda',
@@ -437,7 +441,9 @@ module.exports = {
     // The Rivers of 13 Nov 2026: the old bridge over a splitter (its middle pier on the divider), the temple's tall tower in a spiral.
     'shop-bridge', 'temple-prang',
     // The Canyons of 15 Nov 2026: the river's potholes in a spiral's middle, a marble pillar on a splitter's divider.
-    'potholes', 'marble-pillar'],
+    'potholes', 'marble-pillar',
+    // The Peaks of 15 Nov 2026: a terraced hill on a splitter's divider, a rock pillar with windows in a spiral.
+    'terraced-hill', 'window-pillar'],
   // Scenery near a section (or the start or finish): what grows and stands beside the track there.
   SCENERY: ['bare', 'rocks', 'birches', 'pines', 'race-netting', 'funicular', 'wooden-houses', 'frozen-lake',
     'wood-clad', 'chalets', 'pasture', 'aspens', 'shopfronts',

@@ -202,6 +202,80 @@ export const PEAK_PALETTES = {
     ],
     dressing: { ice: [['serac', 0.5], ['snow-rock', 0.5]], snow: [['snow-rock', 0.8], ['serac', 0.2]], rock: [['boulder', 1]], 'black-sand': [['boulder', 1]] },
   },
+  // ── The six of 15 Nov 2026 (Moses: the Peaks pack filled to 20) ──
+  // Half Dome: pale granite slabs and domes above a valley of tall conifers and a green meadow, the great dome's
+  // sheer face in the backdrop (a broad cap cut away).
+  'half-dome': {
+    zone: 'rock', crevasses: false,
+    snow: '#f2f4f6', snowShade: '#d4dae2', ice: '#cfe2ee', iceDeep: '#9cc0dc', rock: '#b8b4ac', rockDark: '#8a867e', moraine: '#a8a49a',
+    zones: { rock: ['#bdb8ae', '#9a958c'], 'cloud-forest': ['#3f6a3a', '#2f5230'], moorland: ['#8aa058', '#6a8044'] },
+    summits: [
+      { bearing: 0.15, dist: 1300, height: 640, radius: 620, snowline: 2, colour: '#a8a49c', cap: true },
+      { bearing: -0.7, dist: 1400, height: 460, radius: 520, snowline: 2, colour: '#9c988f', cap: true },
+      { bearing: 0.8, dist: 1450, height: 520, radius: 480, snowline: 2, colour: '#a29e96' },
+    ],
+    dressing: { rock: [['scree-rock', 0.5], ['pine', 0.5]], 'cloud-forest': [['forest-tree', 0.8], ['boulder', 0.2]], moorland: [['tussock', 0.7], ['pine', 0.3]], snow: [['snow-rock', 1]], ice: [['snow-rock', 1]] },
+  },
+  // Huayna Picchu: green Andean cloud forest on steep slopes, grey granite, the sugarloaf peak above the saddle.
+  'huayna-picchu': {
+    zone: 'cloud-forest', crevasses: false,
+    snow: '#f0f3f5', snowShade: '#d0d8de', ice: '#cfe4ec', iceDeep: '#8cb8cc', rock: '#7a7870', rockDark: '#55534d', moraine: '#8a8478',
+    zones: { 'cloud-forest': ['#4a7a3e', '#33582c'], moorland: ['#7aa04e', '#5a7a3c'], rock: ['#7a7870', '#55534d'] },
+    summits: [
+      { bearing: 0, dist: 1100, height: 620, radius: 300, snowline: 2, colour: '#4f6a3e', needle: true },
+      { bearing: 0.7, dist: 1400, height: 520, radius: 560, snowline: 2, colour: '#4a5f3a' },
+      { bearing: -0.8, dist: 1450, height: 680, radius: 600, snowline: 0.8, colour: '#5a5a50' },
+    ],
+    dressing: { 'cloud-forest': [['forest-tree', 0.7], ['moss-rock', 0.3]], moorland: [['tussock', 0.7], ['boulder', 0.3]], rock: [['boulder', 1]], snow: [['snow-rock', 1]], ice: [['snow-rock', 1]] },
+  },
+  // Huashan: sheer grey-pink granite peaks and knife-edge ridges, pines clinging to the cliffs, a sea of cloud below.
+  huashan: {
+    zone: 'rock', crevasses: false,
+    snow: '#f0f2f4', snowShade: '#d2d8de', ice: '#cfe2ee', iceDeep: '#9cc0dc', rock: '#a8988e', rockDark: '#7a6c64', moraine: '#9a8c82',
+    zones: { rock: ['#aa9a90', '#857870'], 'cloud-forest': ['#3a6036', '#2a4a2a'] },
+    summits: [
+      { bearing: 0, dist: 1200, height: 700, radius: 360, snowline: 2, colour: '#8f8078', needle: true },
+      { bearing: 0.5, dist: 1300, height: 600, radius: 340, snowline: 2, colour: '#887a72', needle: true },
+      { bearing: -0.5, dist: 1300, height: 620, radius: 340, snowline: 2, colour: '#8a7c74', needle: true },
+    ],
+    dressing: { rock: [['pine', 0.6], ['scree-rock', 0.4]], 'cloud-forest': [['pine', 0.8], ['boulder', 0.2]], snow: [['snow-rock', 1]], ice: [['snow-rock', 1]] },
+  },
+  // The Eiger: the great dark north face, snowfields and hanging glaciers, green alpine pasture far below.
+  eiger: {
+    zone: 'snow', crevasses: true,
+    snow: '#f4f6f9', snowShade: '#d2dae4', ice: '#b6d8ea', iceDeep: '#6aa2c8', rock: '#3f3c3a', rockDark: '#2a2827', moraine: '#5f5a55',
+    zones: { moorland: ['#6f9a48', '#557a3a'], heath: ['#5f8a42', '#4a6e36'] },
+    summits: [
+      { bearing: 0, dist: 1100, height: 820, radius: 520, snowline: 0.75, colour: '#34312f' },
+      { bearing: 0.55, dist: 1300, height: 760, radius: 560, snowline: 0.35, colour: '#3c3936' },
+      { bearing: 0.95, dist: 1450, height: 800, radius: 600, snowline: 0.3, colour: '#403d3a' },
+    ],
+    dressing: { snow: [['snow-rock', 0.8], ['serac', 0.2]], ice: [['serac', 0.6], ['snow-rock', 0.4]], rock: [['boulder', 1]], moorland: [['pine', 0.5], ['tussock', 0.5]], heath: [['pine', 0.7], ['boulder', 0.3]] },
+  },
+  // Etna: black lava fields and cinder slopes, snow on the high flanks, the smoking summit in the backdrop.
+  etna: {
+    zone: 'black-sand', crevasses: false,
+    snow: '#eef0f2', snowShade: '#cdd2d8', ice: '#d4e2ea', iceDeep: '#9cb8cc', rock: '#2e2a28', rockDark: '#1e1b1a', moraine: '#4a403c',
+    zones: { 'black-sand': ['#2e2a29', '#3e3532'], 'alpine-desert': ['#5a4a42', '#6a5048'], heath: ['#6a7a3e', '#55623a'] },
+    summits: [
+      { bearing: 0, dist: 1200, height: 700, radius: 1100, snowline: 0.55, colour: '#2f2a28', flat: true },
+      { bearing: 0.8, dist: 1400, height: 320, radius: 420, snowline: 2, colour: '#3a3230' },
+    ],
+    plume: true,
+    dressing: { 'black-sand': [['scree-rock', 0.7], ['boulder', 0.3]], 'alpine-desert': [['scree-rock', 0.6], ['tussock', 0.4]], heath: [['pine', 0.6], ['tussock', 0.4]], snow: [['snow-rock', 1]], rock: [['boulder', 1]] },
+  },
+  // Tianmen: tall sandstone-and-limestone cliffs, forest on every ledge, the great arch through the mountain, mist.
+  tianmen: {
+    zone: 'cloud-forest', crevasses: false,
+    snow: '#eef1f3', snowShade: '#cfd6dc', ice: '#cfe2ec', iceDeep: '#9cbccc', rock: '#8a7e72', rockDark: '#5f564e', moraine: '#8a8076',
+    zones: { 'cloud-forest': ['#3f6a3a', '#2c4e2c'], rock: ['#8a7e72', '#5f564e'] },
+    summits: [
+      { bearing: 0, dist: 1100, height: 560, radius: 700, snowline: 2, colour: '#4f5a40', flat: true },
+      { bearing: 0.7, dist: 1350, height: 480, radius: 300, snowline: 2, colour: '#55603f', needle: true },
+      { bearing: -0.7, dist: 1350, height: 500, radius: 320, snowline: 2, colour: '#535e3e', needle: true },
+    ],
+    dressing: { 'cloud-forest': [['forest-tree', 0.7], ['pine', 0.3]], rock: [['pine', 0.6], ['boulder', 0.4]], snow: [['snow-rock', 1]], ice: [['snow-rock', 1]] },
+  },
 };
 
 /** The zones' own colours: [flat land, steep land]. (`snow`, `ice`, `rock` come from the palette.) */

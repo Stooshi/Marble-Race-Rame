@@ -829,10 +829,18 @@ one of the world's great mountains. It is built as a coaster (everything above a
   without a sacred-summit request), `glacier-tongue`; Peaks 6–15: `cinder-cones`, `penitentes`, `glacial-lake`, `barrel-hut`
   (a round mountain hut), `icebergs`, `giant-lobelias`, `tepui-falls` (ribbon falls off a table mountain), `rhododendrons`,
   `calving-ice` (a tidewater glacier's ice cliff) and `rock-island`.
+  The six more Peaks of 15 Nov 2026 (client `kitLandmarksPeak2.js`): `sheer-dome` and `cable-route` (Half Dome),
+  `inca-terraces`, `stone-citadel` and `terraced-hill` (Huayna Picchu; the hill on a splitter's divider),
+  `plank-walk` and `cliff-stairs` (Huashan), `gallery-windows`, `window-pillar` (in a spiral's middle) and
+  `cog-railway` (the Eiger), `lava-flow` and `smoking-crater` (Etna), `sky-arch` and `switchback-road` (Tianmen).
 - **Costumes**: `serac`, `nunatak`, `groundsel` (slalom poles and pegs).
 - **Never**: religious objects (prayer flags, chortens, shrines, torii, offerings), flags of any kind, expedition,
   guide, gear, lift or airline names, anything on a summit.
-- The layouts made for the series are the `(peaks)` rows above (L89 to L93 for the test five, L94 to L103 for Peaks 6–15); each has a test track built as a
+- **The six more Peaks tracks** (Moses, 15 Nov 2026: the Peaks pack filled to 20; same rules as the six more
+  Canyons): written section by section, not from the layout library, each with its own palette (`half-dome`,
+  `huayna-picchu`, `huashan`, `eiger`, `etna`, `tianmen`). Half Dome Granite Slabs (Easy: a drop down the granite
+  slabs below the dome's face; a rolling start with the shorter waves; the dome stands 75 m out on the right, as on
+  the left the track came back past it). - The layouts made for the series are the `(peaks)` rows above (L89 to L93 for the test five, L94 to L103 for Peaks 6–15); each has a test track built as a
   mountain (`series: 'peak'`).
 
 ## The racing look
