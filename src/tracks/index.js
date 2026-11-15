@@ -212,4 +212,5 @@ module.exports = [
   require('./mushroom-grove'),
   require('./sunken-ruins'),
   require('./clockwork-works'),
+  require('./crystal-grotto'),
 ];

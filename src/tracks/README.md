@@ -683,6 +683,9 @@ as a coaster (everything above applies), like a canyon (looks only, like everyth
   forward stood in the channel's first metres).
   Clockwork Works (Wild: a splitter round a giant gear turned to face the field; a rolling start, as chicane starts
   had all begun alike; the chute half-pipe taken out, as it sorted the field by strength; jittered waves 0.14 s apart).
+  Crystal Grotto (Wild: a spiral right round a crystal spire; out of a glowing portal, a clean-drop start with
+  jittered waves 0.16 s apart; cave lighting; on phones a Block Series cube pillar is at most 8 cubes, each taller,
+  as the tall pillars under its high first half went over the phone's triangle budget).
 
 ### Blocks Series 2 (from 30 Oct 2026)
 

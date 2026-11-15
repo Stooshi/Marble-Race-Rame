@@ -544,7 +544,8 @@ export function buildCoaster(centerline, channel, kit, { lite = false, groundAt,
       const size = light ? CUBE * 1.5 : CUBE;
       const yaw = Math.atan2(side.x, side.z);
       for (const [a, b] of legs) {
-        const n = Math.max(1, Math.ceil((a.y - b.y) / size));
+        // (On phones a tall pillar is at most 8 cubes, each taller: within the drawing budget.)
+        const n = Math.max(1, Math.min(light ? 8 : Infinity, Math.ceil((a.y - b.y) / size)));
         const sz = (a.y - b.y) / n;
         for (let k = 0; k < n; k += 1) {
           const g = new BoxGeometry(size, sz * 0.98, size);

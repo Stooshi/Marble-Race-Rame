@@ -475,6 +475,17 @@
    "side": 1,
    "marbles": 4
   },
+  "crystal-grotto": {
+   "name": "Crystal Grotto",
+   "series": "Blocks",
+   "lighting": "cave",
+   "v": "ad9233f6",
+   "bytes": 13158,
+   "bytes2x": 34486,
+   "t": 16018,
+   "side": 1,
+   "marbles": 8
+  },
   "danube-night-run": {
    "name": "Danube Night Run",
    "series": "Rivers",
