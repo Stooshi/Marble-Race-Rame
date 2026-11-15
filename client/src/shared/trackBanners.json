@@ -244,6 +244,17 @@
    "side": 1,
    "marbles": 6
   },
+  "bryce-hoodoo-run": {
+   "name": "Bryce Hoodoo Run",
+   "series": "Canyons",
+   "lighting": "sunset",
+   "v": "9c050660",
+   "bytes": 17326,
+   "bytes2x": 39708,
+   "t": 11214,
+   "side": 1,
+   "marbles": 4
+  },
   "buenos-aires-summer-christmas": {
    "name": "Buenos Aires Summer Christmas",
    "series": "Grand Prix",

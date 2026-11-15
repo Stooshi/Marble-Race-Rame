@@ -112,6 +112,43 @@ export const CANYON_PALETTES = {
     top: '#d9b47e', top2: '#c49a62', water: '#5a8f8a', foam: '#eef4f2', bands: [1, 1.1, 0.8, 1, 1],
     bank: '#dcb880', dressing: [['rock', 0.6, '#7a6a5a'], ['bush', 0.3, '#a89a5a'], ['quiver', 0.1]],
   },
+  // ── Six more (Moses, 15 Nov 2026: the Canyons pack filled to 20). ──
+  // Bryce Canyon: orange, salmon-pink and white hoodoo rock, ponderosa pines on the rim, no river.
+  bryce: {
+    strata: ['#d9783f', '#e89a62', '#c9653a', '#f2d2b0', '#e07a4a', '#f6e6d2'], ledge: '#d98a5a', floor: '#d8a07a', bar: '#f0d4b0',
+    top: '#e0b890', top2: '#7f8f5a', water: '#5f9a8a', foam: '#eef2ee', bands: [1, 0.7, 1.2, 0.5, 1, 0.6],
+    bank: '#e0a87a', dressing: [['pine', 0.45, '#3f5f34'], ['rock', 0.35, '#e08a52'], ['juniper', 0.2]],
+  },
+  // Blyde River Canyon: red-brown and ochre sandstone, green bush on every ledge, a dark green river.
+  blyde: {
+    strata: ['#8a4a2e', '#a8643a', '#c9884a', '#7a3e28', '#b8774a'], ledge: '#5f8a3e', floor: '#8a7a4a', bar: '#c4a87a',
+    top: '#5f8a3e', top2: '#7a9a4a', water: '#3f7a5a', foam: '#eef4ea', bands: [1, 1.1, 0.9, 1, 1.2],
+    bank: '#9a8a5a', dressing: [['bush', 0.55, '#4f7a34'], ['juniper', 0.25, '#3f6a34'], ['rock', 0.2, '#8a4a2e']],
+  },
+  // Taroko Gorge: grey-white marble streaked with darker bands, jungle on the ledges, a milky turquoise river.
+  taroko: {
+    strata: ['#d8d6d0', '#b8b6b0', '#e8e6e0', '#9a9894', '#cfcdc6'], ledge: '#3f7a3a', floor: '#a8b0a0', bar: '#e2e0d8',
+    top: '#3f7a34', top2: '#4f8a3e', water: '#5ab8b8', foam: '#f2fbfa', bands: [1, 0.6, 1.3, 0.5, 1],
+    bank: '#b8bcb0', dressing: [['bush', 0.45, '#3f7a34'], ['pine', 0.3, '#2f5f30'], ['rock', 0.25, '#d8d6d0']],
+  },
+  // Samaria Gorge: pale grey Cretan limestone, cypress and pine, a dry white riverbed with a thin stream.
+  samaria: {
+    strata: ['#c9c2b4', '#b0a898', '#ddd6c8', '#9a9284', '#d2cab8'], ledge: '#5f7a3e', floor: '#d8d0bc', bar: '#ece4d2',
+    top: '#6f7f4a', top2: '#4f6a3a', water: '#6ab0b8', foam: '#f4f8f6', bands: [1.1, 0.9, 1, 1.2, 0.8],
+    bank: '#e0d8c4', dressing: [['pine', 0.5, '#3f5f34'], ['rock', 0.35, '#c9c2b4'], ['bush', 0.15, '#7a8a4a']],
+  },
+  // Sumidero Canyon: tall dark grey limestone walls, green on every ledge, a deep jade river.
+  sumidero: {
+    strata: ['#6a6862', '#7f7c74', '#5a5852', '#8a877e', '#706d66'], ledge: '#3f7a34', floor: '#7a8a6a', bar: '#a8a898',
+    top: '#3f7a34', top2: '#2f6a2c', water: '#3f8a6a', foam: '#eaf4ee', bands: [1, 1, 1.1, 0.9, 1],
+    bank: '#7a7a62', dressing: [['bush', 0.6, '#2f6a2c'], ['juniper', 0.25, '#3f7a3a'], ['rock', 0.15, '#6a6862']],
+  },
+  // Kings Canyon (Central Australia): deep red sandstone with pale cross-bedded layers, spinifex and ghost gums, a green pool.
+  kings: {
+    strata: ['#a8442a', '#c9653a', '#8a3a22', '#e0b088', '#b8542e'], ledge: '#9a8a4a', floor: '#c9784a', bar: '#e0b088',
+    top: '#b8642e', top2: '#9a8a4a', water: '#3f8a6a', foam: '#eef4ea', bands: [1.2, 0.9, 1, 0.5, 1.1],
+    bank: '#c9784a', dressing: [['bush', 0.5, '#a89a4a'], ['rock', 0.35, '#a8442a'], ['juniper', 0.15, '#6f8a5a']],
+  },
 };
 
 /** What grows and lies about in a canyon (its palette's `dressing`), as kit.js's dressing kinds: [make(lite), share]. */

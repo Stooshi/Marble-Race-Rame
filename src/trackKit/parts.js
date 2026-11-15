@@ -354,6 +354,8 @@ module.exports = {
     'tiger-rock', 'trail-guesthouse', 'gorge-viewpoint',
     'long-waterfall', 'ridge-lookout', 'coast-palms',
     'siq-ladders', 'wadi-gate', 'dead-sea-shore',
+    // The six of 15 Nov 2026 (client/src/three/scenery/kitLandmarksCanyon2.js).
+    'hoodoo-amphitheatre', 'hammer-hoodoo', 'three-rondavels', 'potholes', 'marble-pillar', 'shrine-waterfall', 'wooden-staircase', 'stone-village', 'tree-waterfall', 'crocodiles', 'beehive-domes', 'eden-pool',
     // The Block Series (voxel worlds and falling-block ideas; our own shapes and colours).
     'spawn-beacon', 'cube-cottage', 'cube-windmill', 'split-board', 'cube-farm', 'voxel-peak', 'beam-tower', 'cube-cabin',
     'mine-entrance', 'gem-seam', 'cart-depot', 'shaft-headframe', 'magma-pool', 'basalt-spire', 'lava-falls',
@@ -416,7 +418,9 @@ module.exports = {
   // client's STADIUMS (client/src/three/scenery/athletics.js).
   STADIUMS: ['panathenaic', 'berlin-1936', 'bislett', 'hayward', 'nest', 'tokyo', 'stockholm-1912', 'london', 'coliseum', 'letzigrund', 'accra'],
   // A canyon's rock and river (family 'canyon': `canyon: { palette }`), the client's CANYON_PALETTES.
-  CANYONS: ['grand-canyon', 'himalaya', 'andes', 'limestone', 'copper', 'basalt', 'karakoram', 'namib', 'slot', 'verdon', 'jinsha', 'waimea', 'mujib'],
+  CANYONS: ['grand-canyon', 'himalaya', 'andes', 'limestone', 'copper', 'basalt', 'karakoram', 'namib', 'slot', 'verdon', 'jinsha', 'waimea', 'mujib',
+    // (Moses, 15 Nov 2026: six more.)
+    'bryce', 'blyde', 'taroko', 'samaria', 'sumidero', 'kings'],
   // A river's water, banks and plants (family 'river': `river: { palette }`), the client's RIVER_PALETTES.
   RIVERS: ['danube', 'mekong', 'mississippi', 'zambezi', 'yangtze', 'thames', 'seine', 'volga', 'murray', 'irrawaddy', 'amazon', 'nile', 'congo', 'rhine', 'ganges', 'chobe',
     // (Moses, 13 Nov 2026: five more.)
@@ -431,7 +435,9 @@ module.exports = {
     'island-castle',
     'karst-tower', 'cube-campanile', 'three-towers', 'lake-island', 'cube-pagoda', 'garden-towers', 'granite-island', 'arrowhead-peak', 'geyser-cone', 'riviera-lighthouse', 'pit-garages',
     // The Rivers of 13 Nov 2026: the old bridge over a splitter (its middle pier on the divider), the temple's tall tower in a spiral.
-    'shop-bridge', 'temple-prang'],
+    'shop-bridge', 'temple-prang',
+    // The Canyons of 15 Nov 2026: the river's potholes in a spiral's middle, a marble pillar on a splitter's divider.
+    'potholes', 'marble-pillar'],
   // Scenery near a section (or the start or finish): what grows and stands beside the track there.
   SCENERY: ['bare', 'rocks', 'birches', 'pines', 'race-netting', 'funicular', 'wooden-houses', 'frozen-lake',
     'wood-clad', 'chalets', 'pasture', 'aspens', 'shopfronts',

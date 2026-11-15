@@ -20,8 +20,9 @@ if (!track) {
   console.error(`No track "${slug}"`);
   process.exit(1);
 }
-// (Series as src/routes/tracks.js works it out: a Grand Prix's kit carries `grandPrix`, a Rivers track's `river`.)
-const series = track.physics.kit?.grandPrix ? 'Grand Prix' : track.physics.kit?.river ? 'Rivers' : track.series;
+// (Series as src/routes/tracks.js works it out: a Grand Prix's kit carries `grandPrix`, a Rivers track's `river`, a
+// Canyons track's `canyon`.)
+const series = track.physics.kit?.grandPrix ? 'Grand Prix' : track.physics.kit?.river ? 'Rivers' : track.physics.kit?.canyon ? 'Canyons' : track.series;
 const out = execFileSync(process.execPath, [path.join(__dirname, 'wildness.js'), 'one', slug, '--from-report'], { encoding: 'utf8' });
 const w = JSON.parse(out.trim().split('\n').pop());
 const pack = packFor(slug, series);

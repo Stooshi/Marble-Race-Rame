@@ -268,6 +268,13 @@ module.exports = track({
   `'winter-wonders'` (Winter Wonders, the Holiday Season's own fairy-tale winter series) is built exactly as a World
   Tour track on the ground; its kit carries `winterWonders: true`, which lists it as its own series.
   Openings are compared within a family.
+  **The six more Canyons tracks** (Moses, 15 Nov 2026: the Canyons pack filled to 20; same rules as the Rivers and
+  the motorsport Grand Prix tracks; 2 Easy, 2 Wild, 2 Extreme), hand-written sections, each in the Canyons pack and not
+  free (its second data update `<date>-<slug>-to-canyons.sql`): Bryce Hoodoo Run (Easy: Wall Street's steep banked
+  switchbacks between tall walls; the hoodoo amphitheatre, a hammer-headed hoodoo; a chicane start; brakes before the
+  slaloms bunch the field again, or the switchbacks string it out and overtakes fall under 60). Palettes `bryce`,
+  `blyde`, `taroko`, `samaria`, `sumidero`, `kings`; landmarks in `client/src/three/scenery/kitLandmarksCanyon2.js`;
+  the canyon starts `rock-arch` and `rope-bridge` (canyons only).
 
 ## Shapes
 

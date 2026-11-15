@@ -197,4 +197,5 @@ module.exports = [
   require('./chao-phraya-dawn-spiral'),
   require('./yukon-five-finger-run'),
   require('./iguazu-devils-throat'),
+  require('./bryce-hoodoo-run'),
 ];

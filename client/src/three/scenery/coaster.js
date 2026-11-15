@@ -179,6 +179,8 @@ export function coasterRails(centerline, channel, { lite = false } = {}) {
  *   gondola:       (Peaks) a cable-car station on a granite needle behind the gate, a cabin docked at its platform,
  *                  the cables running away down the mountain;
  *   ski-plane:     (Peaks) a ski plane parked on a glacier runway behind the gate, its cargo ramp down to the gate.
+ *   rock-arch:     (Canyons) a fin of red rock behind the gate, a natural arch worn through it.
+ *   rope-bridge:   (Canyons) a rope footbridge behind the gate, slung from a rock pillar.
  * Returns { type, top, foot, back, side, length, path (top to foot, for a chain lift), cut
  * (the land carved down along the path, so the whole climb shows), plateau (a cliff top) }.
  * `foot` is where the start's landmark is placed beyond, and the countdown's lift shot looks.
@@ -262,6 +264,14 @@ export function liftHillOf(centerline, flight, type = 'straight-lift') {
     cut = false;
     plateau = { y: top.y - SKI_PLANE.floor, edge: 2, half: SKI_PLANE.half, depth: SKI_PLANE.depth };
     foot = go(top, SKI_PLANE.at, 0, 0, plateau.y);
+  } else if (type === 'rock-arch') {
+    path = [top.clone(), go(top, ROCK_ARCH.depth, 0, 0)];
+    cut = false;
+    foot = go(top, ROCK_ARCH.depth + 6, 0, 0);
+  } else if (type === 'rope-bridge') {
+    path = [top.clone(), go(top, ROPE_BRIDGE.length, 0, 0)];
+    cut = false;
+    foot = go(top, ROPE_BRIDGE.length + 4, 0, 0);
   } else if (type === 'ski-jump') {
     // (Up from the gate: the in-run's top, with its start hut, stands SKI_JUMP.rise over the gate.)
     path = [top.clone(), go(top, SKI_JUMP.length, 0, -SKI_JUMP.rise)];
@@ -288,6 +298,8 @@ const SKI_JUMP = { length: 34, rise: 14, half: 3 }; // metres: the in-run behind
 const ICE_LEDGE = { edge: 7, half: 26, depth: 70 }; // metres: the snow ledge behind the gate, the snowfield's half-width and depth
 const GONDOLA = { at: 14, half: 5 };                // metres: the station's middle behind the gate, its half-width
 const SKI_PLANE = { at: 15, floor: 3.4, half: 22, depth: 90 }; // metres: the plane's middle behind the gate, the runway under the gate, its half-width and length
+const ROCK_ARCH = { depth: 26, half: 7, span: 12 }; // metres: (Canyons) the rock fin behind the gate, its half-width, the arch's opening along it
+const ROPE_BRIDGE = { length: 36, half: 1.6, pillar: 6 }; // metres: (Canyons) the footbridge behind the gate, its deck's half-width, the rock pillar's half-size at its far end
 const STEPS = { tiers: 4, depth: (k) => 10 + 6 * k, half: (k) => 8 + 4 * k, drop: 2.6, colours: ['#c9a676', '#b38f60'] };
 
 /** How low the land must lie at (x, z) to show the lift (Infinity away from it): below its path, falling away either side. */
@@ -1013,6 +1025,53 @@ function buildStart(lift, { towers, feet, tower, groundAt, lite, RAIL, SUPPORT, 
       towers.push(strut(m, m.clone().setY(pl.y + 1.6), 0.1, '#e8792a'));
     }
     feet.push({ x: at.x, z: at.z, r: 18 });
+  } else if (type === 'rock-arch') {
+    // (Canyons, 15 Nov 2026) A fin of red rock behind the gate, its top just under the track, a natural arch worn
+    // through it: two thick legs down to the land and the rock bridge between them, a few boulders at its feet.
+    const yaw = yawOf(back);
+    const topY = top.y - 2.0;
+    let low = Infinity;
+    for (let d = 0; d <= ROCK_ARCH.depth; d += 6) for (const j of [-1, 0, 1]) {
+      const c = top.clone().addScaledVector(back, d).addScaledVector(side, j * ROCK_ARCH.half);
+      low = Math.min(low, groundAt(c.x, c.z));
+    }
+    const h = Math.max(4, topY - low + 1);
+    const leg = (ROCK_ARCH.depth - ROCK_ARCH.span) / 2;
+    for (const d of [leg / 2, ROCK_ARCH.depth - leg / 2]) towers.push(obox(ROCK_ARCH.half * 2, h, leg, top.clone().addScaledVector(back, d).setY(topY - h / 2), yaw, d < 10 ? '#b8643a' : '#a8542e'));
+    const lintel = Math.min(5, h * 0.45);
+    towers.push(obox(ROCK_ARCH.half * 2 - 0.6, lintel, ROCK_ARCH.span + 0.2, top.clone().addScaledVector(back, ROCK_ARCH.depth / 2).setY(topY - lintel / 2), yaw, '#c9784a'));
+    for (const t of [0.35, 0.65]) towers.push(obox(ROCK_ARCH.half * 2 - 1.4, 1.2, 2.6, top.clone().addScaledVector(back, leg + ROCK_ARCH.span * t).setY(topY - lintel - 0.4), yaw, '#b8643a')); // the arch's curve
+    towers.push(obox(ROCK_ARCH.half * 2 + 0.4, 0.5, ROCK_ARCH.depth + 0.4, top.clone().addScaledVector(back, ROCK_ARCH.depth / 2).setY(topY + 0.1), yaw, '#e0a070'));
+    for (const [d, j, r] of [[4, 1.6, 2.2], [ROCK_ARCH.depth - 2, -1.5, 2.6], [ROCK_ARCH.depth / 2, 1.3, 1.8]]) towers.push(obox(r * 2, r * 1.4, r * 2, top.clone().addScaledVector(back, d).addScaledVector(side, j * ROCK_ARCH.half).setY(low + r * 0.5), yaw + d, '#9a4a2a'));
+    const mid = top.clone().addScaledVector(back, ROCK_ARCH.depth / 2);
+    feet.push({ x: mid.x, z: mid.z, r: ROCK_ARCH.depth / 2 + ROCK_ARCH.half });
+  } else if (type === 'rope-bridge') {
+    // (Canyons, 15 Nov 2026) A rope footbridge behind the gate, slung from a rock pillar: plank deck, rope handrails
+    // sagging between posts, the pillar's flat top at its far end, its foot on the land below.
+    const yaw = yawOf(back);
+    const deckY = top.y - 1.3;
+    const far = top.clone().addScaledVector(back, ROPE_BRIDGE.length);
+    const low = groundAt(far.x, far.z);
+    for (let d = 0; d < ROPE_BRIDGE.length; d += 1.5) {
+      const sag = 0.9 * Math.sin((Math.PI * d) / ROPE_BRIDGE.length);
+      towers.push(obox(ROPE_BRIDGE.half * 2, 0.18, 1.2, top.clone().addScaledVector(back, d + 0.75).setY(deckY - sag), yaw, (d / 1.5) % 2 ? '#8a6440' : '#7a5636'));
+    }
+    const step = lite ? 9 : 4.5;
+    for (const sign of [1, -1]) {
+      let prev = null;
+      for (let d = 0; d <= ROPE_BRIDGE.length; d += step) {
+        const sag = 0.9 * Math.sin((Math.PI * d) / ROPE_BRIDGE.length);
+        const p = top.clone().addScaledVector(back, d).addScaledVector(side, sign * ROPE_BRIDGE.half).setY(deckY - sag + 1.1);
+        towers.push(strut(p.clone().setY(deckY - sag), p, 0.08, '#5a3e26'));
+        if (prev) towers.push(strut(prev, p, 0.07, '#c9b48a'));
+        prev = p;
+      }
+    }
+    const h = Math.max(3, deckY - low + 0.5);
+    towers.push(obox(ROPE_BRIDGE.pillar * 2, h, ROPE_BRIDGE.pillar * 2, far.clone().addScaledVector(back, ROPE_BRIDGE.pillar - 1).setY(deckY - 0.2 - h / 2), yaw, '#a8643a'));
+    for (const sign of [1, -1]) towers.push(strut(far.clone().addScaledVector(side, sign * (ROPE_BRIDGE.half + 0.3)).setY(deckY), far.clone().addScaledVector(side, sign * (ROPE_BRIDGE.half + 0.3)).setY(deckY + 2.4), 0.2, '#5a3e26'));
+    const mid = top.clone().addScaledVector(back, ROPE_BRIDGE.length / 2);
+    feet.push({ x: mid.x, z: mid.z, r: ROPE_BRIDGE.length / 2 + 4 });
   } else if (type === 'pier' || type === 'river-boat' || type === 'lock-gate') {
     // (Rivers) A pool of the river behind the gate, at the land's lowest there, and what stands in it.
     const yaw = yawOf(back);

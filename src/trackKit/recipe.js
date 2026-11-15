@@ -503,11 +503,13 @@ function arcadeRules({ spec, where }) {
 }
 
 // The varied starts: how a track's first seconds look (drawing only; the race is its opening's).
-const START_TYPES = ['straight-lift', 'curving-lift', 'spiral-tower', 'elevator', 'cliff', 'rooftop', 'station-launch', 'stepped-platform', 'lighthouse', 'ski-jump', 'castle-tower', 'pier', 'river-boat', 'lock-gate', 'ice-ledge', 'gondola', 'ski-plane'];
+const START_TYPES = ['straight-lift', 'curving-lift', 'spiral-tower', 'elevator', 'cliff', 'rooftop', 'station-launch', 'stepped-platform', 'lighthouse', 'ski-jump', 'castle-tower', 'pier', 'river-boat', 'lock-gate', 'ice-ledge', 'gondola', 'ski-plane', 'rock-arch', 'rope-bridge'];
 // (The Peaks' starts: on an overhanging snow ledge, out of a cable-car cabin at a needle-top station, down a ski plane's ramp on a glacier.)
 const PEAK_STARTS = ['ice-ledge', 'gondola', 'ski-plane'];
 // (The Rivers' starts: on a timber pier over the water, on a moored boat's top deck, at a lock's upper gates.)
 const RIVER_STARTS = ['pier', 'river-boat', 'lock-gate'];
+// (Canyons, 15 Nov 2026: every other start type was in two canyons already.)
+const CANYON_STARTS = ['rock-arch', 'rope-bridge'];
 // (A Rivers track's own look for a start type, looks only: the lift inside a bridge tower or up a port crane, a mansard roof.)
 const START_LOOKS = { elevator: ['bridge-tower', 'port-crane'], rooftop: ['mansard'] };
 const GATES = ['paddle', 'trapdoor', 'stalls', 'barrier'];
@@ -524,6 +526,7 @@ function startRules({ spec, where }) {
     else if (!START_TYPES.includes(st.type)) problems.push(`${where('start')}: unknown start type ${JSON.stringify(st.type)} (${START_TYPES.join(', ')}).`);
     if (RIVER_STARTS.includes(st.type) && !isRiver(spec)) problems.push(`${where('start')}: a ${st.type} start stands on a river (family: 'river').`);
     if (PEAK_STARTS.includes(st.type) && !isPeak(spec)) problems.push(`${where('start')}: a ${st.type} start stands on a mountain (family: 'peak').`);
+    if (CANYON_STARTS.includes(st.type) && !isCanyon(spec)) problems.push(`${where('start')}: a ${st.type} start stands in a canyon (family: 'canyon').`);
     if (st.look !== undefined && !(START_LOOKS[st.type] ?? []).includes(st.look)) problems.push(`${where('start')}: unknown look ${JSON.stringify(st.look)} for a ${st.type} start (${Object.entries(START_LOOKS).map(([t, l]) => `${t}: ${l.join(', ')}`).join('; ')}).`);
     if (st.look !== undefined && !isRiver(spec)) problems.push(`${where('start')}: a start's look is for Rivers tracks (family: 'river').`);
     if (st.type === 'station-launch' && spec.opening?.kind !== 'boost-launch') problems.push(`${where('start')}: a launch from the station races the boost-launch opening (opening('boost-launch')).`);
