@@ -56,7 +56,7 @@ test('every kit track opens with Bobsleigh Run\'s starting ramp, gate, channel a
     // (The staggered drop and the varied starts let the field go in waves: their funnel has that one setting more.
     // Any other opening only where its track asks for them, listed here: Nevada Drag Strip's crest start.)
     const { waves, ...rest } = funnel;
-    if (waves) assert.ok(['staggered-drop', 'clean-drop', 'peg-drop', 'pipe-drop', 'rolling-start', 'chicane-start', 'rumble-start'].includes(t.physics.kit.opening) || ['nevada-drag-strip', 'hudson-highlands-run', 'iguazu-devils-throat', 'chao-phraya-dawn-spiral', 'blyde-potholes-spiral', 'kings-canyon-lost-city', 'huashan-plank-walk', 'etna-valle-del-bove'].includes(t.slug), `${t.slug}: waves at the gate`);
+    if (waves) assert.ok(['staggered-drop', 'clean-drop', 'peg-drop', 'pipe-drop', 'rolling-start', 'chicane-start', 'rumble-start'].includes(t.physics.kit.opening) || ['nevada-drag-strip', 'hudson-highlands-run', 'iguazu-devils-throat', 'chao-phraya-dawn-spiral', 'blyde-potholes-spiral', 'kings-canyon-lost-city', 'huashan-plank-walk', 'etna-valle-del-bove', 'tianmen-heavens-gate'].includes(t.slug), `${t.slug}: waves at the gate`);
     if (!['funnel-drop', 'staggered-drop'].includes(t.physics.kit.opening)) assert.deepEqual(rest, tmFunnel);
     assert.deepEqual(t.physics.gate, bob.physics.gate);
     assert.equal(t.physics.collisions, true);
@@ -777,6 +777,7 @@ const HIDDEN_KIT_TRACKS = [
   ['huashan-plank-walk', '2027-07-07-add-huashan-plank-walk.sql', 'Peaks track (Huashan: a crest start off the north peak, the field let go in waves, a knife-edge ridge, the big feature a dramatic banked turn round the cliff of the plank walk, the stone cliff stairs, a half-pipe down a gully; a spiral-tower start; in the Peaks pack, not free; switched off until Moses has watched the preview).'],
   ['eiger-north-face', '2027-07-08-add-eiger-north-face.sql', 'Peaks track (the Eiger: a rumble start off a ski jump, the field let go in waves, a straight under the north face with the railway\'s windows in the rock, the big feature a banked spiral round a rock pillar with the gallery\'s windows, the cog railway; a ski-jump start; in the Peaks pack, not free; switched off until Moses has watched the preview).'],
   ['etna-valle-del-bove', '2027-07-09-add-etna-valle-del-bove.sql', 'Peaks track (Etna on Sicily: a sand-trap start through the black cinders, the field let go in waves, past the smoking craters and a glowing lava flow, the big feature a long drop into the Valle del Bove, a lava-channel half-pipe; a gondola start; in the Peaks pack, not free; switched off until Moses has watched the preview).'],
+  ['tianmen-heavens-gate', '2027-07-10-add-tianmen-heavens-gate.sql', 'Peaks track (Tianmen Mountain: a rumble start out of the cliff lift, the field let go in waves, the road of the 99 bends, the cliff walk, the big feature a loop under Heaven\'s Gate, the great arch through the mountain; an elevator start; in the Peaks pack, not free; switched off until Moses has watched the preview).'],
 ];
 for (const [slug, file, note] of HIDDEN_KIT_TRACKS) {
   test(`${slug} is added by its data update, switched off, exactly as its track file builds it`, () => {

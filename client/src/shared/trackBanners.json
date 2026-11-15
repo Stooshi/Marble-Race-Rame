@@ -1894,6 +1894,17 @@
    "side": -1,
    "marbles": 0
   },
+  "tianmen-heavens-gate": {
+   "name": "Tianmen Heaven's Gate",
+   "series": "Peaks",
+   "lighting": "day",
+   "v": "2820137d",
+   "bytes": 16210,
+   "bytes2x": 39172,
+   "t": 10072,
+   "side": 1,
+   "marbles": 8
+  },
   "tiger-leaping-spins": {
    "name": "Tiger Leaping Spins",
    "series": "Canyons",

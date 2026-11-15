@@ -208,4 +208,5 @@ module.exports = [
   require('./huashan-plank-walk'),
   require('./eiger-north-face'),
   require('./etna-valle-del-bove'),
+  require('./tianmen-heavens-gate'),
 ];
