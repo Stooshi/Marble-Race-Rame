@@ -816,6 +816,17 @@
    "side": 1,
    "marbles": 4
   },
+  "huashan-plank-walk": {
+   "name": "Huashan Plank Walk",
+   "series": "Peaks",
+   "lighting": "day",
+   "v": "58fc821c",
+   "bytes": 18712,
+   "bytes2x": 45714,
+   "t": 10223,
+   "side": 1,
+   "marbles": 6
+  },
   "huayna-picchu-terraces": {
    "name": "Huayna Picchu Terraces",
    "series": "Peaks",

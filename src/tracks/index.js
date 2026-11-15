@@ -205,4 +205,5 @@ module.exports = [
   require('./sumidero-christmas-falls'),
   require('./half-dome-granite-slabs'),
   require('./huayna-picchu-terraces'),
+  require('./huashan-plank-walk'),
 ];

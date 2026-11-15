@@ -56,7 +56,7 @@ test('every kit track opens with Bobsleigh Run\'s starting ramp, gate, channel a
     // (The staggered drop and the varied starts let the field go in waves: their funnel has that one setting more.
     // Any other opening only where its track asks for them, listed here: Nevada Drag Strip's crest start.)
     const { waves, ...rest } = funnel;
-    if (waves) assert.ok(['staggered-drop', 'clean-drop', 'peg-drop', 'pipe-drop', 'rolling-start', 'chicane-start', 'rumble-start'].includes(t.physics.kit.opening) || ['nevada-drag-strip', 'hudson-highlands-run', 'iguazu-devils-throat', 'chao-phraya-dawn-spiral', 'blyde-potholes-spiral', 'kings-canyon-lost-city'].includes(t.slug), `${t.slug}: waves at the gate`);
+    if (waves) assert.ok(['staggered-drop', 'clean-drop', 'peg-drop', 'pipe-drop', 'rolling-start', 'chicane-start', 'rumble-start'].includes(t.physics.kit.opening) || ['nevada-drag-strip', 'hudson-highlands-run', 'iguazu-devils-throat', 'chao-phraya-dawn-spiral', 'blyde-potholes-spiral', 'kings-canyon-lost-city', 'huashan-plank-walk'].includes(t.slug), `${t.slug}: waves at the gate`);
     if (!['funnel-drop', 'staggered-drop'].includes(t.physics.kit.opening)) assert.deepEqual(rest, tmFunnel);
     assert.deepEqual(t.physics.gate, bob.physics.gate);
     assert.equal(t.physics.collisions, true);
@@ -774,6 +774,7 @@ const HIDDEN_KIT_TRACKS = [
   ['sumidero-christmas-falls', '2027-07-04-add-sumidero-christmas-falls.sql', 'Canyons track (Sumidero Canyon: off the rim and down the canyon wall, the field let go in waves, past the crocodiles, the big feature a waterfall beside the moss \'Christmas tree\', a splitter round a rock, a half-pipe between the walls; a ski-jump start; in the Canyons pack, not free; switched off until Moses has watched the preview).'],
   ['half-dome-granite-slabs', '2027-07-05-add-half-dome-granite-slabs.sql', 'Peaks track (Half Dome in Yosemite: a rolling start down the valley trail, the field let go in waves, the big feature a drop down the granite slabs below the dome\'s sheer face, the cables route; a curving-lift start; in the Peaks pack, not free; switched off until Moses has watched the preview).'],
   ['huayna-picchu-terraces', '2027-07-06-add-huayna-picchu-terraces.sql', 'Peaks track (Huayna Picchu above Machu Picchu: a peg drop down the Inca stairs, the green terraces and the stone citadel, the big feature a splitter round a terraced hill; a stone-tower start; in the Peaks pack, not free; switched off until Moses has watched the preview).'],
+  ['huashan-plank-walk', '2027-07-07-add-huashan-plank-walk.sql', 'Peaks track (Huashan: a crest start off the north peak, the field let go in waves, a knife-edge ridge, the big feature a dramatic banked turn round the cliff of the plank walk, the stone cliff stairs, a half-pipe down a gully; a spiral-tower start; in the Peaks pack, not free; switched off until Moses has watched the preview).'],
 ];
 for (const [slug, file, note] of HIDDEN_KIT_TRACKS) {
   test(`${slug} is added by its data update, switched off, exactly as its track file builds it`, () => {
