@@ -277,7 +277,9 @@ module.exports = track({
   start favoured one starting group by nearly a place). Taroko Marble Gorge (Wild: a splitter round a marble pillar at
   the narrows, balanced with the left channel slower as the leaders take it; the shrine and its waterfall; a clean
   drop off a rope footbridge; the rock tunnel sits on the straight after the S-bends, because a tunnel on S-bends
-  brushes the follow camera). Palettes `bryce`,
+  brushes the follow camera). Samaria Iron Gates (Easy: a drop down the cliff's wooden staircase, kept to 48 m so it
+  counts as one drop; a half-pipe through the Iron Gates; a rolling start with the shorter waves, after a rumble start
+  favoured the fourth starting group and its waves made the race Wild). Palettes `bryce`,
   `blyde`, `taroko`, `samaria`, `sumidero`, `kings`; landmarks in `client/src/three/scenery/kitLandmarksCanyon2.js`;
   the canyon starts `rock-arch` and `rope-bridge` (canyons only).
 

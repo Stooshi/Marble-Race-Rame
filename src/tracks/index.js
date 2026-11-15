@@ -200,4 +200,5 @@ module.exports = [
   require('./bryce-hoodoo-run'),
   require('./blyde-potholes-spiral'),
   require('./taroko-marble-gorge'),
+  require('./samaria-iron-gates'),
 ];

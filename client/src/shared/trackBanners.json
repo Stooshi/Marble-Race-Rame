@@ -1542,6 +1542,17 @@
    "side": -1,
    "marbles": 4
   },
+  "samaria-iron-gates": {
+   "name": "Samaria Iron Gates",
+   "series": "Canyons",
+   "lighting": "day",
+   "v": "bf55af6f",
+   "bytes": 18064,
+   "bytes2x": 42778,
+   "t": 10815,
+   "side": 1,
+   "marbles": 5
+  },
   "san-fernando-lantern-spins": {
    "name": "San Fernando Lantern Spins",
    "series": "Blocks",

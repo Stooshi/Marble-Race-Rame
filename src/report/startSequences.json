@@ -136,6 +136,7 @@
 "rwenzori-moss-glaciers": {"family":"peak","reach":0.213,"seq":["opening: funnel-drop","drop","pileUp","slalom","straight","peg ×2","waterfall","straight","slalom"]},
 "sahara-marble-grand-prix": {"family":"grand-prix","reach":0.202,"seq":["opening: staggered-drop","drop","pileUp","slalom","brake","S-bends right","slalom","peg"]},
 "saint-tropez": {"family":"world-tour","reach":0.217,"seq":["opening: staggered-drop","drop","pileUp","slalom","brake","sweep right","S-bends right","peg","slalom"]},
+"samaria-iron-gates": {"family":"canyon","reach":0.305,"seq":["opening: rolling-start","drop","slalom","sweep right","sweep left"]},
 "san-fernando-lantern-spins": {"family":"block","reach":0.33,"seq":["opening: peg-drop","drop","peg ×7","S-bends left","straight","peg ×3","table-top"]},
 "sao-paulo-rain-circuit": {"family":"grand-prix","reach":0.306,"seq":["opening: pipe-drop","drop","half-pipe","S-bends left","peg","slalom"]},
 "sapporo-snow-sculptures": {"family":"coaster","reach":0.236,"seq":["opening: classic","drop","pileUp","slalom","straight","box","rail","jump","spiral right"]},
