@@ -35,7 +35,6 @@ const KNOWN = {
   // World Tour.
 
   'portes-du-soleil-run': ['opening-kind', 'layout'],
-  'park-city-run': ['opening', 'opening-kind', 'layout'],
   'baqueira-beret-run': ['opening', 'opening-kind', 'layout'],
 
   'paris-eiffel-tower-run': ['opening', 'opening-kind', 'layout'],

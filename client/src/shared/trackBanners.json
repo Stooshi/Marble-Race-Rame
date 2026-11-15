@@ -1469,12 +1469,12 @@
    "name": "Park City Run",
    "series": "World Tour",
    "lighting": "day",
-   "v": "f2d90606",
-   "bytes": 15556,
-   "bytes2x": 38180,
-   "t": 10457,
+   "v": "f1b421c2",
+   "bytes": 20888,
+   "bytes2x": 49948,
+   "t": 19630,
    "side": 1,
-   "marbles": 5
+   "marbles": 6
   },
   "phantom-peak": {
    "name": "Phantom Peak",
