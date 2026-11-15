@@ -56,7 +56,7 @@ test('every kit track opens with Bobsleigh Run\'s starting ramp, gate, channel a
     // (The staggered drop and the varied starts let the field go in waves: their funnel has that one setting more.
     // Any other opening only where its track asks for them, listed here: Nevada Drag Strip's crest start.)
     const { waves, ...rest } = funnel;
-    if (waves) assert.ok(['staggered-drop', 'clean-drop', 'peg-drop', 'pipe-drop', 'rolling-start', 'chicane-start', 'rumble-start'].includes(t.physics.kit.opening) || ['nevada-drag-strip', 'hudson-highlands-run', 'iguazu-devils-throat', 'chao-phraya-dawn-spiral', 'blyde-potholes-spiral', 'kings-canyon-lost-city', 'huashan-plank-walk', 'etna-valle-del-bove', 'tianmen-heavens-gate', 'sunken-ruins', 'crystal-grotto'].includes(t.slug), `${t.slug}: waves at the gate`);
+    if (waves) assert.ok(['staggered-drop', 'clean-drop', 'peg-drop', 'pipe-drop', 'rolling-start', 'chicane-start', 'rumble-start'].includes(t.physics.kit.opening) || ['nevada-drag-strip', 'hudson-highlands-run', 'iguazu-devils-throat', 'chao-phraya-dawn-spiral', 'blyde-potholes-spiral', 'kings-canyon-lost-city', 'huashan-plank-walk', 'etna-valle-del-bove', 'tianmen-heavens-gate', 'sunken-ruins', 'crystal-grotto', 'moon-base'].includes(t.slug), `${t.slug}: waves at the gate`);
     if (!['funnel-drop', 'staggered-drop'].includes(t.physics.kit.opening)) assert.deepEqual(rest, tmFunnel);
     assert.deepEqual(t.physics.gate, bob.physics.gate);
     assert.equal(t.physics.collisions, true);
@@ -783,6 +783,7 @@ const HIDDEN_KIT_TRACKS = [
   ['clockwork-works', '2027-07-13-add-clockwork-works.sql', 'Blocks 1 track (Clockwork Works: a game world of brass and iron, a rolling start round the cogs, the field let go in waves, a wall of turning gears, the big feature a splitter round a giant brass gear, a score wall; a gear-tower start; in the Blocks 1 pack, not free; switched off until Moses has watched the preview).'],
   ['crystal-grotto', '2027-07-14-add-crystal-grotto.sql', 'Crystal Grotto: Blocks 1 (15 Nov 2026), hidden until Moses switches it on'],
   ['jungle-ruins', '2027-07-15-add-jungle-ruins.sql', 'Jungle Ruins: Blocks 1 (15 Nov 2026), hidden until Moses switches it on'],
+  ['moon-base', '2027-07-16-add-moon-base.sql', 'Moon Base: Blocks 1 (15 Nov 2026), hidden until Moses switches it on'],
 ];
 for (const [slug, file, note] of HIDDEN_KIT_TRACKS) {
   test(`${slug} is added by its data update, switched off, exactly as its track file builds it`, () => {

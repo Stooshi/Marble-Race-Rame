@@ -214,4 +214,5 @@ module.exports = [
   require('./clockwork-works'),
   require('./crystal-grotto'),
   require('./jungle-ruins'),
+  require('./moon-base'),
 ];

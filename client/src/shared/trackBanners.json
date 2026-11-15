@@ -1278,6 +1278,17 @@
    "side": 1,
    "marbles": 5
   },
+  "moon-base": {
+   "name": "Moon Base",
+   "series": "Blocks",
+   "lighting": "night",
+   "v": "7da2089f",
+   "bytes": 11812,
+   "bytes2x": 28772,
+   "t": 8869,
+   "side": 1,
+   "marbles": 6
+  },
   "multiball-manor": {
    "name": "Multiball Manor",
    "series": "Pinball",

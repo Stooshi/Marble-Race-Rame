@@ -689,6 +689,9 @@ as a coaster (everything above applies), like a canyon (looks only, like everyth
   Jungle Ruins (Wild: a 40 m waterfall drop through falling water; a rumble start off a castle tower with jittered
   waves 0.13 s apart; S-bends first and the hairpin late, as a sweep–falls–S-bends order matched Cotahuasi's; fewer
   pegs and gates, as with them it scored Extreme).
+  Moon Base (Extreme: a 66 m drop over the great crater's rim; a sand-trap start through the moon dust with the first
+  bend left, as a first bend right matched Sunken Ruins' opening; the crater after the hairpin, as a crater-first
+  order matched the Loire and the Etna).
 
 ### Blocks Series 2 (from 30 Oct 2026)
 
