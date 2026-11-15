@@ -163,7 +163,7 @@ test('Block Series: built as coasters on the voxel land unless a section flies, 
   assert.throws(() => track(spec({ block: { world: 'meadow' } })), /block settings are for the Block Series/);
   // The block layouts are on the list, and the series name is neutral.
   const { BLOCK_WORLDS } = require('../src/trackKit/parts');
-  assert.deepEqual(BLOCK_WORLDS, ['meadow', 'valley', 'snow', 'mine', 'magma', 'puzzle', 'fortress', 'portal', 'sky', 'harbour', 'temple', 'bonus', 'karst', 'canal', 'falls', 'dolomite', 'aurora', 'moss', 'souk', 'tropic', 'azulejo', 'vineyard', 'chateau', 'bohemia', 'patagonia', 'cascade', 'cloudforest', 'iceland', 'clearice', 'polar', 'geyser', 'rockies']);
+  assert.deepEqual(BLOCK_WORLDS, ['meadow', 'valley', 'snow', 'mine', 'magma', 'puzzle', 'fortress', 'portal', 'sky', 'harbour', 'temple', 'bonus', 'karst', 'canal', 'falls', 'dolomite', 'aurora', 'moss', 'souk', 'tropic', 'azulejo', 'vineyard', 'chateau', 'bohemia', 'patagonia', 'cascade', 'cloudforest', 'iceland', 'clearice', 'polar', 'geyser', 'rockies', 'mushroom', 'sunken', 'clockwork', 'grotto', 'jungle', 'moon', 'neon']);
   // Blocks Series 2: its own family (the variety rules count its twenty on their own), built the same way.
   assert.equal(track(blocky({ family: 'block-2', block: { world: 'karst' } })).variety.family, 'block-2');
   for (const k of ['karst-splits', 'grand-canal', 'horseshoe-falls', 'three-towers', 'aurora-fell']) assert.ok(kit.LAYOUT_KINDS.includes(k), k);
@@ -231,7 +231,7 @@ test('a track may retune a layout splitter (balance, added pegs), mirrored with 
 
 test('the varied starts: a new track says how its start looks, checked like any opening', () => {
   const { START_TYPES, GATES, COUNTDOWN_SHOTS, LAUNCH_SHOTS } = require('../src/trackKit/recipe');
-  assert.deepEqual(START_TYPES, ['straight-lift', 'curving-lift', 'spiral-tower', 'elevator', 'cliff', 'rooftop', 'station-launch', 'stepped-platform', 'lighthouse', 'ski-jump', 'castle-tower', 'pier', 'river-boat', 'lock-gate', 'ice-ledge', 'gondola', 'ski-plane', 'rock-arch', 'rope-bridge']);
+  assert.deepEqual(START_TYPES, ['straight-lift', 'curving-lift', 'spiral-tower', 'elevator', 'cliff', 'rooftop', 'station-launch', 'stepped-platform', 'lighthouse', 'ski-jump', 'castle-tower', 'pier', 'river-boat', 'lock-gate', 'ice-ledge', 'gondola', 'ski-plane', 'rock-arch', 'rope-bridge', 'portal-gate', 'block-pyramid', 'gear-tower']);
   assert.deepEqual(GATES, ['paddle', 'trapdoor', 'stalls', 'barrier']);
   assert.deepEqual(COUNTDOWN_SHOTS, ['front', 'side', 'above', 'chase', 'low-front', 'crane']);
   assert.deepEqual(LAUNCH_SHOTS, ['high-behind', 'low-chase', 'side', 'overhead', 'look-back']);

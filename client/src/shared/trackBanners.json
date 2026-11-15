@@ -1267,6 +1267,17 @@
    "side": 1,
    "marbles": 4
   },
+  "mushroom-grove": {
+   "name": "Mushroom Grove",
+   "series": "Blocks",
+   "lighting": "day",
+   "v": "9c61d344",
+   "bytes": 16134,
+   "bytes2x": 38594,
+   "t": 20114,
+   "side": 1,
+   "marbles": 5
+  },
   "nairobi-marble-grand-prix": {
    "name": "Nairobi Marble Grand Prix",
    "series": "Grand Prix",

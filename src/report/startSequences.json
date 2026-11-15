@@ -111,6 +111,7 @@
 "mont-blanc-needle-ridge": {"family":"peak","reach":0.251,"seq":["opening: classic","drop","pileUp","slalom","straight","peg","slalom","peg","hairpin left","swipe"]},
 "multiball-manor": {"family":"pinball","reach":0.248,"seq":["opening: tunnel-launch","drop","pileUp","slalom","drop","slalom","sweep left"]},
 "murray-red-gum-run": {"family":"river","reach":0.241,"seq":["opening: classic","drop","pileUp","slalom","straight","slalom","drop","sweep left"]},
+"mushroom-grove": {"family":"block","reach":0.365,"seq":["opening: rolling-start","drop","slalom","sweep right","straight","drop","straight","slalom","brake"]},
 "nairobi-marble-grand-prix": {"family":"grand-prix","reach":0.218,"seq":["opening: banked-turn","drop","pileUp","slalom","sweep right","S-bends left","slalom","peg"]},
 "nanjing": {"family":"coaster","reach":0.208,"seq":["opening: banked-turn","drop","pileUp","slalom","sweep right","S-bends left"]},
 "nevada-drag-strip": {"family":"grand-prix","reach":0.236,"seq":["opening: crest-start","drop","pileUp","slalom","climb","drop","straight","curtain","slalom","peg","boost ×2","half-pipe"]},

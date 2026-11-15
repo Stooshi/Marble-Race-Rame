@@ -667,6 +667,17 @@ as a coaster (everything above applies), like a canyon (looks only, like everyth
 - The ten tracks (switched off until reviewed): Spawn Point (the proof track), Speedrun Valley,
   Voxel Peaks, Deep Mine, Magma Core, Line Clear, Combo Drop, The Stack, Block Fortress,
   Final Level.
+- **Seven more Blocks 1 tracks** (Moses, 15 Nov 2026: the Blocks 1 pack filled to 20; game worlds of our own with
+  retro touches, never another game's names, creatures, textures or falling pieces; same rules as the six Canyons and
+  Peaks): written section by section, each in its own new world (`mushroom`, `sunken`, `clockwork`, `grotto`,
+  `jungle`, `moon`, `neon`; new dressing `mushroomCube`, `kelpCube`, `gearCube`, `neonPost`), with landmarks from
+  `kitLandmarksBlockWorlds.js` (`giant-mushroom`, `mushroom-ring`, `sunken-dome`, `sunken-arches`, `giant-gear` (on a
+  splitter's divider), `gear-wall`, `crystal-spire` (in a spiral's middle), `crystal-pool`, `vine-temple`, `vine-arch`,
+  `moon-domes`, `launch-tower`, `neon-towers`, `neon-gate`) beside the series' own score walls, clearing rows and
+  checkpoint arches. Three Blocks 1 starts, as every other start type was in two Block Series tracks already:
+  `portal-gate` (out of a glowing portal), `block-pyramid` (off a stepped pyramid's top), `gear-tower` (off an iron
+  tower with gears on its sides). Mushroom Grove (Easy: a drop off a giant mushroom's cap; a rolling start with waves
+  0.16 s apart and jittered, as shorter ones favoured the first starting group and longer ones the fourth).
 
 ### Blocks Series 2 (from 30 Oct 2026)
 

@@ -188,6 +188,42 @@ export const BLOCK_WORLDS = {
     tops: ['#eef3f7', '#e2e9ef'], riser: '#5a5e66', deep: '#3f434a', floor: '#5fb8c8', bank: '#e8eef4', fill: '#5a5e66', hills: 34, step: 4,
     dressing: [['snowPine', 0.5], ['snowRock', 0.3], ['birch', 0.2]],
   },
+  // ── Blocks 1, seven more (15 Nov 2026: the Blocks 1 pack filled to 20; game worlds of our own) ──
+  // Mushroom Grove: a soft green world of giant cube mushrooms with spotted caps.
+  mushroom: {
+    tops: ['#8ec46a', '#80b75e'], riser: '#8a6a4a', deep: '#5f5a50', floor: '#80b75e', bank: '#88bf65', fill: '#8a6a4a', hills: 22, step: 3,
+    dressing: [['mushroomCube', 0.45], ['flowers', 0.3], ['bush', 0.25]],
+  },
+  // Sunken Ruins: a teal world as if under water, pale stone ruins, swaying kelp columns.
+  sunken: {
+    tops: ['#5fa8a0', '#56a097'], riser: '#4a7a7a', deep: '#2a4a5a', floor: '#2f5f6a', bank: '#5aa49b', fill: '#4a7a7a', hills: 18, step: 3,
+    dressing: [['kelpCube', 0.45], ['ruin', 0.3], ['paleRock', 0.25]],
+  },
+  // Clockwork Works: brass and copper terraces, iron plates, gears lying about.
+  clockwork: {
+    tops: ['#b8925a', '#ad8752'], riser: '#6a5038', deep: '#3a3028', floor: '#4a3e32', bank: '#b38d57', fill: '#6a5038', hills: 16, step: 2,
+    dressing: [['gearCube', 0.45], ['pillar', 0.3], ['crates', 0.25]],
+  },
+  // Crystal Grotto: a deep violet cave world, glowing crystals and gem seams.
+  grotto: {
+    tops: ['#4a3f6a', '#433962'], riser: '#2c2545', deep: '#1c1730', floor: '#1c1730', bank: '#473c66', fill: '#2c2545', hills: 24, step: 3,
+    dressing: [['crystal', 0.45], ['gems', 0.3], ['darkRock', 0.25]],
+  },
+  // Jungle Ruins: deep green cube jungle over mossy stone, ferns and vine-hung ruins.
+  jungle: {
+    tops: ['#5f9a48', '#568f40'], riser: '#6f6a52', deep: '#3f4a3a', floor: '#568f40', bank: '#5b9645', fill: '#6f6a52', hills: 28, step: 3,
+    dressing: [['palmCube', 0.35], ['fern', 0.35], ['ruin', 0.3]],
+  },
+  // Moon Base: grey dust and craters under a black sky, the base's lights.
+  moon: {
+    tops: ['#9a9a9e', '#909094'], riser: '#5f5f64', deep: '#3a3a3f', floor: '#5a5a5f', bank: '#96969a', fill: '#5f5f64', hills: 18, step: 2,
+    dressing: [['paleRock', 0.5], ['darkRock', 0.3], ['pillar', 0.2]],
+  },
+  // Neon Grid: a dark grid world at night, lit edges, neon posts.
+  neon: {
+    tops: ['#2a2346', '#251f40'], riser: '#e04aa8', deep: '#120e24', floor: '#120e24', bank: '#2a2346', fill: '#3a2a5f', hills: 12, step: 2,
+    dressing: [['neonPost', 0.45], ['pieceStack', 0.3], ['pillar', 0.25]],
+  },
 };
 export const BLOCK_WORLD_NAMES = Object.keys(BLOCK_WORLDS);
 
@@ -351,6 +387,14 @@ const MAKE = {
   hedge: () => merge([cube(3.6, 1.4, 1.2, 0, 0.7, 0, '#3f7a3a'), cube(3.2, 0.4, 0.9, 0, 1.6, 0, '#4a8a42')]),
   // A stone lantern: a grey post, a wide cap, a warm light in its box.
   stoneLantern: () => merge([cube(0.6, 1.4, 0.6, 0, 0.7, 0, '#8a8580'), cube(1.0, 0.7, 1.0, 0, 1.75, 0, '#f2d28e'), cube(1.4, 0.35, 1.4, 0, 2.3, 0, '#7a7570')]),
+  // (15 Nov 2026) A giant cube mushroom: a pale stem, a wide red cap with white spots on top.
+  mushroomCube: () => merge([cube(1.0, 3.2, 1.0, 0, 1.6, 0, '#efe6d2'), cube(3.6, 1.2, 3.6, 0, 3.6, 0, '#c8483a'), cube(0.6, 0.15, 0.6, 0.8, 4.25, 0.6, '#ffffff'), cube(0.6, 0.15, 0.6, -0.9, 4.25, -0.3, '#ffffff')]),
+  // A kelp column: a stack of green cubes leaning a little each way.
+  kelpCube: () => merge([cube(0.7, 1.6, 0.7, 0, 0.8, 0, '#3f7a4a'), cube(0.6, 1.6, 0.6, 0.15, 2.4, 0, '#4a8a52', 0.2), cube(0.5, 1.4, 0.5, -0.1, 3.9, 0.1, '#56965a', -0.2)]),
+  // A gear lying on the ground: a flat brass disc of cubes with square teeth round it.
+  gearCube: () => merge([cube(2.2, 0.5, 2.2, 0, 0.25, 0, '#b8863a'), cube(3.0, 0.4, 0.6, 0, 0.25, 0, '#a8782f'), cube(0.6, 0.4, 3.0, 0, 0.25, 0, '#a8782f'), cube(0.7, 0.6, 0.7, 0, 0.5, 0, '#5a4a38')]),
+  // A neon post: a dark square post with a bright cyan block on top and a pink band.
+  neonPost: () => merge([cube(0.5, 3.0, 0.5, 0, 1.5, 0, '#1a1630'), cube(0.8, 0.8, 0.8, 0, 3.4, 0, '#5ff2ff'), cube(0.6, 0.2, 0.6, 0, 2.2, 0, '#ff4ab8')]),
 };
 
 /** A world's dressing: [[make(lite) → geometry with colours, share], …], shares adding up to 1. */

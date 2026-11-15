@@ -15,6 +15,7 @@ import { ARCADE_LANDMARKS } from './kitLandmarksArcade';
 import { CANYON_LANDMARKS } from './kitLandmarksCanyon';
 import { CANYON2_LANDMARKS } from './kitLandmarksCanyon2';
 import { PEAK2_LANDMARKS } from './kitLandmarksPeak2';
+import { BLOCK_WORLD_LANDMARKS } from './kitLandmarksBlockWorlds';
 import { RIVER_LANDMARKS } from './kitLandmarksRiver';
 import { RIVER2_LANDMARKS } from './kitLandmarksRiver2';
 import { PEAK_LANDMARKS } from './kitLandmarksPeak';
@@ -616,6 +617,7 @@ export const LANDMARKS = {
   ...RIVER2_LANDMARKS,
   ...PEAK_LANDMARKS,
   ...PEAK2_LANDMARKS,
+  ...BLOCK_WORLD_LANDMARKS,
   ...BLOCK_LANDMARKS,
   ...ATHLETICS_LANDMARKS,
   ...RIVIERA_LANDMARKS,

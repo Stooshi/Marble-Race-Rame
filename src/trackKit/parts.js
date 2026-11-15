@@ -392,6 +392,8 @@ module.exports = {
     'meltwater-streams', 'pass-cairn', 'glacier-tongue', 'penitentes', 'icebergs', 'glacial-lake', 'rhododendrons', 'barrel-hut', 'rock-island', 'cinder-cones', 'tepui-falls', 'calving-ice', 'giant-lobelias',
     // The six of 15 Nov 2026 (client/src/three/scenery/kitLandmarksPeak2.js).
     'sheer-dome', 'cable-route', 'inca-terraces', 'stone-citadel', 'terraced-hill', 'plank-walk', 'cliff-stairs', 'gallery-windows', 'window-pillar', 'cog-railway', 'lava-flow', 'smoking-crater', 'sky-arch', 'switchback-road',
+    // The seven Blocks 1 worlds of 15 Nov 2026 (client/src/three/scenery/kitLandmarksBlockWorlds.js).
+    'giant-mushroom', 'mushroom-ring', 'sunken-dome', 'sunken-arches', 'giant-gear', 'gear-wall', 'crystal-spire', 'crystal-pool', 'vine-temple', 'vine-arch', 'moon-domes', 'launch-tower', 'neon-towers', 'neon-gate',
     // The Riviera (Saint-Tropez, 3 Nov 2026; client/src/three/scenery/kitLandmarksRiviera.js; our own models, no names on anything drawn).
     'riviera-village', 'umbrella-pines', 'lavender-field', 'olive-grove', 'riviera-beach', 'riviera-harbour', 'yachts', 'riviera-lighthouse',
     // Pudong (Pudong Marble Grand Prix, 3 Nov 2026; client/src/three/scenery/kitLandmarksPudong.js; our own towers, inspired by the area, no copies, no names on anything drawn).
@@ -415,7 +417,9 @@ module.exports = {
     // the rivers (1 Nov 2026): the Douro's vineyards, the Loire's châteaux, the Vltava's castle hill.
     'karst', 'canal', 'falls', 'dolomite', 'aurora', 'moss', 'souk', 'tropic', 'azulejo', 'vineyard', 'chateau', 'bohemia',
     // the mountains and winter (1 Nov 2026).
-    'patagonia', 'cascade', 'cloudforest', 'iceland', 'clearice', 'polar', 'geyser', 'rockies'],
+    'patagonia', 'cascade', 'cloudforest', 'iceland', 'clearice', 'polar', 'geyser', 'rockies',
+    // (Moses, 15 Nov 2026: Blocks 1 filled to 20.)
+    'mushroom', 'sunken', 'clockwork', 'grotto', 'jungle', 'moon', 'neon'],
   // A Track and Field stadium (family 'athletics': `athletics: { stadium }`): its generic architecture, the
   // client's STADIUMS (client/src/three/scenery/athletics.js).
   STADIUMS: ['panathenaic', 'berlin-1936', 'bislett', 'hayward', 'nest', 'tokyo', 'stockholm-1912', 'london', 'coliseum', 'letzigrund', 'accra'],
@@ -443,7 +447,9 @@ module.exports = {
     // The Canyons of 15 Nov 2026: the river's potholes in a spiral's middle, a marble pillar on a splitter's divider.
     'potholes', 'marble-pillar',
     // The Peaks of 15 Nov 2026: a terraced hill on a splitter's divider, a rock pillar with windows in a spiral.
-    'terraced-hill', 'window-pillar'],
+    'terraced-hill', 'window-pillar',
+    // The Blocks 1 worlds of 15 Nov 2026: a giant gear on a splitter's divider, a crystal spire in a spiral.
+    'giant-gear', 'crystal-spire'],
   // Scenery near a section (or the start or finish): what grows and stands beside the track there.
   SCENERY: ['bare', 'rocks', 'birches', 'pines', 'race-netting', 'funicular', 'wooden-houses', 'frozen-lake',
     'wood-clad', 'chalets', 'pasture', 'aspens', 'shopfronts',

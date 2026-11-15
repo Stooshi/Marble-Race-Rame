@@ -198,6 +198,9 @@ export function coasterRails(centerline, channel, { lite = false } = {}) {
  *   ski-plane:     (Peaks) a ski plane parked on a glacier runway behind the gate, its cargo ramp down to the gate.
  *   rock-arch:     (Canyons) a fin of red rock behind the gate, a natural arch worn through it.
  *   rope-bridge:   (Canyons) a rope footbridge behind the gate, slung from a rock pillar.
+ *   portal-gate:   (Blocks 1) a block platform behind the gate, a square portal frame with a glowing pane over its far end.
+ *   block-pyramid: (Blocks 1) a stepped pyramid of pale stone blocks behind the gate, the track on its flat top.
+ *   gear-tower:    (Blocks 1) a square iron tower behind the gate, the track on its top, brass gears on its sides.
  * Returns { type, top, foot, back, side, length, path (top to foot, for a chain lift), cut
  * (the land carved down along the path, so the whole climb shows), plateau (a cliff top) }.
  * `foot` is where the start's landmark is placed beyond, and the countdown's lift shot looks.
@@ -289,6 +292,12 @@ export function liftHillOf(centerline, flight, type = 'straight-lift') {
     path = [top.clone(), go(top, ROPE_BRIDGE.length, 0, 0)];
     cut = false;
     foot = go(top, ROPE_BRIDGE.length + 4, 0, 0);
+  } else if (type === 'portal-gate' || type === 'block-pyramid' || type === 'gear-tower') {
+    // (Blocks 1, 15 Nov 2026) Flat behind the gate, on a block platform, a stepped pyramid's top or an iron tower.
+    const d = type === 'portal-gate' ? PORTAL_GATE.depth : type === 'block-pyramid' ? BLOCK_PYRAMID.top : GEAR_TOWER.depth;
+    path = [top.clone(), go(top, d, 0, 0)];
+    cut = false;
+    foot = go(top, d + 4, 0, 0);
   } else if (type === 'ski-jump') {
     // (Up from the gate: the in-run's top, with its start hut, stands SKI_JUMP.rise over the gate.)
     path = [top.clone(), go(top, SKI_JUMP.length, 0, -SKI_JUMP.rise)];
@@ -317,6 +326,9 @@ const GONDOLA = { at: 14, half: 5 };                // metres: the station's mid
 const SKI_PLANE = { at: 15, floor: 3.4, half: 22, depth: 90 }; // metres: the plane's middle behind the gate, the runway under the gate, its half-width and length
 const ROCK_ARCH = { depth: 26, half: 7, span: 12 }; // metres: (Canyons) the rock fin behind the gate, its half-width, the arch's opening along it
 const ROPE_BRIDGE = { length: 36, half: 1.6, pillar: 6 }; // metres: (Canyons) the footbridge behind the gate, its deck's half-width, the rock pillar's half-size at its far end
+const PORTAL_GATE = { depth: 22, half: 6, frame: 9 }; // metres: (Blocks 1) the block platform behind the gate, its half-width, the portal's height over the track
+const BLOCK_PYRAMID = { top: 14, tiers: 5, tier: 4 }; // metres: (Blocks 1) the pyramid's top platform behind the gate, its steps, each step's width out
+const GEAR_TOWER = { depth: 14, half: 5 };            // metres: (Blocks 1) the iron tower's top behind the gate, its half-width
 const STEPS = { tiers: 4, depth: (k) => 10 + 6 * k, half: (k) => 8 + 4 * k, drop: 2.6, colours: ['#c9a676', '#b38f60'] };
 
 /** How low the land must lie at (x, z) to show the lift (Infinity away from it): below its path, falling away either side. */
@@ -1091,6 +1103,55 @@ function buildStart(lift, { towers, feet, tower, groundAt, lite, RAIL, SUPPORT, 
     for (const sign of [1, -1]) towers.push(strut(far.clone().addScaledVector(side, sign * (ROPE_BRIDGE.half + 0.3)).setY(deckY), far.clone().addScaledVector(side, sign * (ROPE_BRIDGE.half + 0.3)).setY(deckY + 2.4), 0.2, '#5a3e26'));
     const mid = top.clone().addScaledVector(back, ROPE_BRIDGE.length / 2);
     feet.push({ x: mid.x, z: mid.z, r: ROPE_BRIDGE.length / 2 + 4 });
+  } else if (type === 'portal-gate') {
+    // (Blocks 1, 15 Nov 2026) A platform of dark blocks behind the gate, its top just under the track, and at its far
+    // end a square portal frame standing over the track, a glowing violet pane in it: the field comes out of it.
+    const yaw = yawOf(back);
+    const topY = top.y - 1.4;
+    let low = Infinity;
+    for (let d = 0; d <= PORTAL_GATE.depth; d += 5) for (const j of [-1, 0, 1]) {
+      const c = top.clone().addScaledVector(back, d).addScaledVector(side, j * PORTAL_GATE.half);
+      low = Math.min(low, groundAt(c.x, c.z));
+    }
+    const h = Math.max(3, topY - low + 1);
+    for (let d = 0; d < PORTAL_GATE.depth; d += 5.5) towers.push(obox(PORTAL_GATE.half * 2, h, 5.4, top.clone().addScaledVector(back, d + 2.75).setY(topY - h / 2), yaw, (d / 5.5) % 2 ? '#2e3453' : '#292e4b'));
+    const far = top.clone().addScaledVector(back, PORTAL_GATE.depth - 1.5);
+    for (const sign of [1, -1]) towers.push(obox(1.6, PORTAL_GATE.frame + 1.4, 1.6, far.clone().addScaledVector(side, sign * (PORTAL_GATE.half - 0.8)).setY(topY + (PORTAL_GATE.frame + 1.4) / 2), yaw, '#1d2038'));
+    towers.push(obox(PORTAL_GATE.half * 2, 1.6, 1.6, far.clone().setY(topY + PORTAL_GATE.frame + 0.6), yaw, '#1d2038'));
+    towers.push(obox(PORTAL_GATE.half * 2 - 3.2, PORTAL_GATE.frame - 0.2, 0.3, far.clone().addScaledVector(back, 0.6).setY(topY + PORTAL_GATE.frame / 2 + 0.4), yaw, '#a07af0'));
+    for (const k of [0, 1, 2, 3]) towers.push(obox(1, 1, 1, far.clone().addScaledVector(side, (k - 1.5) * 2.6).setY(topY + PORTAL_GATE.frame + 1.9), yaw, k % 2 ? '#5ff2ff' : '#f4d28e'));
+    const mid = top.clone().addScaledVector(back, PORTAL_GATE.depth / 2);
+    feet.push({ x: mid.x, z: mid.z, r: PORTAL_GATE.depth / 2 + PORTAL_GATE.half });
+  } else if (type === 'block-pyramid') {
+    // (Blocks 1, 15 Nov 2026) A stepped pyramid of pale stone blocks behind the gate, the track on its flat top,
+    // each step wider and lower, down to the land; a band of mossy blocks on every step.
+    const yaw = yawOf(back);
+    const topY = top.y - 1.4;
+    const mid = top.clone().addScaledVector(back, BLOCK_PYRAMID.top / 2);
+    const low = groundAt(mid.x, mid.z);
+    const total = Math.max(4, topY - low + 1);
+    const tierH = total / BLOCK_PYRAMID.tiers;
+    for (let k = 0; k < BLOCK_PYRAMID.tiers; k += 1) {
+      const w = BLOCK_PYRAMID.top + 2 + k * BLOCK_PYRAMID.tier * 2;
+      const yTop = topY - k * tierH;
+      towers.push(obox(w, tierH, w, mid.clone().setY(yTop - tierH / 2), yaw, k % 2 ? '#c8c2b0' : '#bab4a2'));
+      towers.push(obox(w + 0.2, 0.4, w + 0.2, mid.clone().setY(yTop - 0.2), yaw, '#5a9a8a'));
+    }
+    feet.push({ x: mid.x, z: mid.z, r: BLOCK_PYRAMID.top / 2 + BLOCK_PYRAMID.tiers * BLOCK_PYRAMID.tier + 2 });
+  } else if (type === 'gear-tower') {
+    // (Blocks 1, 15 Nov 2026) A square iron tower behind the gate, the track on its top, brass gears on its sides.
+    const yaw = yawOf(back);
+    const topY = top.y - 1.4;
+    const mid = top.clone().addScaledVector(back, GEAR_TOWER.depth / 2);
+    const low = groundAt(mid.x, mid.z);
+    const h = Math.max(4, topY - low + 1);
+    towers.push(obox(GEAR_TOWER.half * 2, h, GEAR_TOWER.depth, mid.clone().setY(topY - h / 2), yaw, '#3f3a36'));
+    towers.push(obox(GEAR_TOWER.half * 2 + 0.6, 0.8, GEAR_TOWER.depth + 0.6, mid.clone().setY(topY - 0.4), yaw, '#5a524a'));
+    for (const sign of [1, -1]) for (const [f, r] of [[0.35, 2.6], [0.7, 1.8]]) {
+      const c = mid.clone().addScaledVector(side, sign * (GEAR_TOWER.half + 0.3)).setY(topY - h * f);
+      towers.push(obox(0.5, r * 2, r * 2, c, yaw, '#c8963f'), obox(0.5, r * 1.4, r * 2.6, c, yaw, '#b8863a'), obox(0.5, r * 2.6, r * 1.4, c, yaw, '#b8863a'));
+    }
+    feet.push({ x: mid.x, z: mid.z, r: GEAR_TOWER.depth / 2 + GEAR_TOWER.half + 2 });
   } else if (type === 'pier' || type === 'river-boat' || type === 'lock-gate') {
     // (Rivers) A pool of the river behind the gate, at the land's lowest there, and what stands in it.
     const yaw = yawOf(back);
