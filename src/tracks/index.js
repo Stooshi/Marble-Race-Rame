@@ -206,4 +206,5 @@ module.exports = [
   require('./half-dome-granite-slabs'),
   require('./huayna-picchu-terraces'),
   require('./huashan-plank-walk'),
+  require('./eiger-north-face'),
 ];

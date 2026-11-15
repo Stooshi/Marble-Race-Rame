@@ -844,7 +844,9 @@ one of the world's great mountains. It is built as a coaster (everything above a
   that keep the weakest five winning made it lively; a splitter round a terraced hill with equal drag on both channels
   and a small tip offset). Huashan Plank Walk (Easy, planned Wild: the plank walk, a 170° banked turn on supports at
   a 45 m radius; a crest start with the shorter waves; the ridge has pegs and a brake, as a slalom there began like
-  Sognefjord's and a right-hand ridge like Kangchenjunga's). - The layouts made for the series are the `(peaks)` rows above (L89 to L93 for the test five, L94 to L103 for Peaks 6–15); each has a test track built as a
+  Sognefjord's and a right-hand ridge like Kangchenjunga's). Eiger North Face (Wild: a banked spiral round the window pillar; a ski-jump start, as the
+  station start goes only with the boost launch; its first two orders were too like Tokyo Photo Finish and Slingshot
+  Spins, so the hairpin turns left and a rise over the moraine comes before the railway S-bends). - The layouts made for the series are the `(peaks)` rows above (L89 to L93 for the test five, L94 to L103 for Peaks 6–15); each has a test track built as a
   mountain (`series: 'peak'`).
 
 ## The racing look

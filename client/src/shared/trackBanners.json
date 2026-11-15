@@ -541,6 +541,17 @@
    "side": -1,
    "marbles": 4
   },
+  "eiger-north-face": {
+   "name": "Eiger North Face",
+   "series": "Peaks",
+   "lighting": "day",
+   "v": "78bde533",
+   "bytes": 19912,
+   "bytes2x": 47656,
+   "t": 16134,
+   "side": 1,
+   "marbles": 6
+  },
   "elbrus-twin-saddle": {
    "name": "Elbrus Twin Saddle",
    "series": "Peaks",
