@@ -219,4 +219,5 @@ module.exports = [
   require('./santorini-caldera-run'),
   require('./hallstatt-salt-mine-run'),
   require('./lake-bled-island-run'),
+  require('./mont-saint-michel-tide-run'),
 ];

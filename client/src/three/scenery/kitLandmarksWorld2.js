@@ -126,10 +126,38 @@ function islandChurch() {
   return merge(p);
 }
 
+// ── Mont-Saint-Michel (Mont-Saint-Michel Tide Run) ─────────────────────────
+
+/**
+ * The abbey mount: a rocky island rising steeply from the sands, ramparts round its foot, grey stone houses up its
+ * flank, the abbey church on top with a tall slim spire. Stands in the middle of the spiral (`around`).
+ */
+function abbeyMount() {
+  const p = [];
+  p.push(piece(new ConeGeometry(22, 26, 9), '#7d766a', M(0, 13, 0)));
+  p.push(piece(new CylinderGeometry(21, 22.5, 5, 18), '#a49c8a', M(0, 2.5, 0)));
+  for (let a = 0; a < 6; a += 1) p.push(piece(new CylinderGeometry(1.8, 2, 7, 8), '#a49c8a', M(Math.cos(a * 1.05) * 21.5, 3.5, Math.sin(a * 1.05) * 21.5)));
+  const r = seededRandom(53);
+  for (let i = 0; i < 16; i += 1) {
+    const ang = r() * Math.PI * 2;
+    const rad = 10 + r() * 8;
+    const y = 4 + (22 - rad) * 0.9;
+    p.push(box(3.5, 3.6, 3.5, Math.cos(ang) * rad, y + 1.8, Math.sin(ang) * rad, '#8e8678'));
+    p.push(piece(new ConeGeometry(2.8, 2, 4), '#4d4e52', turned(Math.cos(ang) * rad, y + 4.6, Math.sin(ang) * rad, Math.PI / 4)));
+  }
+  p.push(box(7, 7, 16, 0, 27.5, 0, '#9b9384'));
+  p.push(piece(new ConeGeometry(8.2, 4, 4), '#4d4e52', turned(0, 33, 0, Math.PI / 4, 0.65, 1, 1.4)));
+  p.push(box(4.2, 8, 4.2, 0, 34, 2, '#9b9384'));
+  p.push(piece(new ConeGeometry(2, 15, 6), '#5a5b60', M(0, 45.5, 2)));
+  p.push(piece(new SphereGeometry(0.6, 6, 4), '#d6b356', M(0, 53.5, 2)));
+  return merge(p);
+}
+
 export const WORLD2_LANDMARKS = {
   'cycladic-village': { build: cycladicVillage, radius: 26 },
   'blue-domes': { build: blueDomes, radius: 10 },
   'cycladic-windmills': { build: cycladicWindmills, radius: 16 },
   'lakeside-village': { build: lakesideVillage, radius: 28 },
   'island-church': { build: islandChurch, radius: 17 },
+  'abbey-mount': { build: abbeyMount, radius: 23, fit: 20 },
 };

@@ -678,6 +678,7 @@ as a coaster (everything above applies), like a canyon (looks only, like everyth
   the caldera cliff to the old port), Hallstatt Salt Mine Run (Wild: up beside the funicular, then down the old miners'
   slide inside the salt mine; a chicane start, a cobbled square after it so its first seconds are its own).
   Lake Bled Island Run (Easy: up to the castle on its cliff, then right round the bay facing the island church).
+  Mont-Saint-Michel Tide Run (Easy: along the causeway over the sands, then a spiral right round the abbey mount).
 - **Seven more Blocks 1 tracks** (Moses, 15 Nov 2026: the Blocks 1 pack filled to 20; game worlds of our own with
   retro touches, never another game's names, creatures, textures or falling pieces; same rules as the six Canyons and
   Peaks): written section by section, each in its own new world (`mushroom`, `sunken`, `clockwork`, `grotto`,

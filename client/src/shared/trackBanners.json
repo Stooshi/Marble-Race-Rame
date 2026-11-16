@@ -1300,6 +1300,17 @@
    "side": 1,
    "marbles": 5
   },
+  "mont-saint-michel-tide-run": {
+   "name": "Mont-Saint-Michel Tide Run",
+   "series": "World Tour",
+   "lighting": "sunset",
+   "v": "8f213c40",
+   "bytes": 13550,
+   "bytes2x": 32556,
+   "t": 10815,
+   "side": 1,
+   "marbles": 9
+  },
   "moon-base": {
    "name": "Moon Base",
    "series": "Blocks",
