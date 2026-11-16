@@ -5,7 +5,7 @@
 // stays together along the lakefront (no obstacle in the first seconds), then the big feature: a long banked spiral
 // out over the water round a little island with its church, the villa gardens in S-bends, a hairpin by the ferry
 // landing past moored boats, a sweep under the umbrella pines and the run to the boathouse. No names on anything.
-const { track, opening, straight, sweep, spiral, sBends, hairpin, halfPipe, runIn, peg, slalom, block, moguls } = require('../trackKit');
+const { track, opening, straight, sweep, spiral, sBends, hairpin, runIn, peg, slalom, block, moguls, curtain } = require('../trackKit');
 
 module.exports = track({
   slug: 'lake-como-villa-run',
@@ -55,7 +55,10 @@ module.exports = track({
       name: 'Garden terrace', shape: straight(40, { grade: 0.14 }), height: 6,
       obstacles: [peg({ costume: 'mooring-pole', at: 0.4, line: 'right' }), peg({ costume: 'mooring-pole', at: 0.75, line: 'left' })],
     },
-    { name: 'Between the villa walls', shape: halfPipe({ first: 'right', width: 8, swings: 2, radius: 140, degrees: 20, grade: 0.12 }), height: 4 },
+    {
+      name: 'Villa terraces', shape: sBends({ first: 'right', radius: 65, degrees: 70, grade: 0.14 }), height: 4,
+      obstacles: [curtain({ costume: 'vines', at: 0.2, side: 'left' }), peg({ costume: 'mooring-pole', at: 0.55, line: 'center' }), peg({ costume: 'mooring-pole', at: 0.8, line: 'right' })],
+    },
     {
       name: 'Under the pines', shape: sweep({ side: 'left', radius: 80, degrees: 75, grade: 0.13 }), height: 10, billboards: 2,
       landmarks: [{ name: 'umbrella-pines', at: 0.5, side: 'right', distance: 26 }],
