@@ -252,10 +252,12 @@ function customerOf(d) {
     security: d.security.events,
     audit: d.audit.map((a) => ({ action: a.action, admin: a.admin, reason: a.reason, at: a.created_at })),
     emails: d.emails ?? [],
+    overview: d.overview ?? { spend: [], sek: { cents: 0 }, packs: [], passes: [] },
   };
 }
 
 const SECTIONS = [
+  { key: 'overview', icon: 'user', title: 'Overview' },
   { key: 'races', icon: 'races', title: 'Races' },
   { key: 'coins', icon: 'coins', title: 'Coins' },
   { key: 'marbles', icon: 'marbles', title: 'Marbles' },
@@ -269,6 +271,7 @@ const SECTIONS = [
 
 function summary(c, key) {
   switch (key) {
+    case 'overview': return `${c.overview.spend.length ? `Spent ${c.overview.spend.map((x) => money(x.cents, x.currency)).join(' + ')}` : 'No purchases'} · ${c.overview.packs.length} pack${c.overview.packs.length === 1 ? '' : 's'}${c.overview.passes.length ? ' · pass' : ''}`;
     case 'races': return `${num(c.races.recent.length)} recent · ${c.races.last24h} in the last 24 h · last ${c.races.recent[0]?.track ?? 'none yet'}`;
     case 'coins': return `${num(c.player.coins)} now · ${num(c.player.coins_earned)} won · ${num(c.player.coins_bought)} bought`;
     case 'marbles': return `${c.marbles.length} marble${c.marbles.length === 1 ? '' : 's'}${c.marbles[0]?.slug ? ` · newest ${ITEM[c.marbles[0].slug]?.design.name ?? ''}` : ''}`;
@@ -298,7 +301,7 @@ function Customers({ id, can }) {
   const [q, setQ] = useState('');
   const [hits, setHits] = useState(null);
   const [cust, setCust] = useState(null);
-  const [section, setSection] = useState('purchases');
+  const [section, setSection] = useState('overview');
   const [detail, setDetail] = useState(false);
   const [error, setError] = useState(null);
   const [recent, setRecent] = useState(null);
@@ -306,7 +309,8 @@ function Customers({ id, can }) {
   useEffect(() => {
     if (q.trim().length < 2) { setHits(null); return undefined; }
     const t = setTimeout(() => {
-      adminApi.players(q.trim()).then((r) => setHits(r.players.slice(0, 8)), (e) => setError(e.message));
+      // (An exact order, receipt, support reference or Marble ID opens its customer at once.)
+      adminApi.players(q.trim()).then((r) => (r.exact ? open(r.players[0].id) : setHits(r.players.slice(0, 8))), (e) => setError(e.message));
     }, 250);
     return () => clearTimeout(t);
   }, [q]);
@@ -406,6 +410,36 @@ function DocLink({ d, can }) {
 function SectionDetail({ c, section, can, reload }) {
   const p = c.player;
   switch (section) {
+    case 'overview': {
+      const o = c.overview;
+      return (
+        <>
+          <div className="crm-stats">
+            <div><b>{o.sek.cents ? money(o.sek.cents, 'SEK') : '—'}</b><span>spent on the website, in SEK (net of refunds)</span></div>
+            <div><b>{o.spend.reduce((n, x) => n + x.purchases, 0)}</b><span>purchases (website and apps)</span></div>
+            <div><b>{o.packs.length}</b><span>track packs</span></div>
+          </div>
+          <Card title="Account">
+            <dl className="crm-kv">
+              <div><dt>Account</dt><dd>{p.is_guest ? 'Guest (no email)' : 'Saved'}{p.deleted_at ? ' · deleted' : ''}{p.suspended_at ? ' · suspended' : ''}{p.is_staff ? ' · staff' : ''}</dd></div>
+              <div><dt>Age group</dt><dd>{p.age_group ?? '—'}{p.age_group === '13-17' ? ' (no marketing)' : ''}</dd></div>
+              <div><dt>Country (first visit)</dt><dd>{p.first_country ? countryName(p.first_country) ?? p.first_country : '—'}</dd></div>
+              <div><dt>Since</dt><dd>{day(p.created_at)}</dd></div>
+              <div><dt>Last played</dt><dd>{when(p.last_login_at)}</dd></div>
+              <div><dt>News by email</dt><dd>{p.marketing_opt_in ? 'Yes' : 'No'}</dd></div>
+            </dl>
+          </Card>
+          <Card title="Spent">
+            <Rows head={['Currency', 'Purchases', 'Net of refunds', 'Last']} rows={o.spend.map((x) => [x.currency, x.purchases, money(x.cents, x.currency), day(x.last_paid_at)])} empty="Nothing bought." />
+            {o.sek.missing > 0 && <p className="crm-muted">{o.sek.missing} website document(s) still waiting for their SEK amount from Stripe.</p>}
+            <p className="crm-muted">App purchases are in US dollars here (the stores' own amounts are in their reports).</p>
+          </Card>
+          <Card title="Owns">
+            <Rows head={['What', 'Through', 'Since']} rows={[...o.packs.map((x) => [`${x.name} pack`, PROVIDER[x.provider] ?? x.provider, day(x.granted_at)]), ...o.passes.map((x) => [`Season pass (${x.season_key})`, PROVIDER[x.provider] ?? x.provider, day(x.granted_at)])]} empty="No packs or passes." />
+          </Card>
+        </>
+      );
+    }
     case 'races':
       return (
         <>

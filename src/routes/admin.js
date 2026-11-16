@@ -123,7 +123,9 @@ router.get('/players', need('customers:read'), async (req, res) => {
       LIMIT $${params.length}`,
     params,
   );
-  res.json({ players: rows });
+  // (An order, receipt, credit note, support reference, Marble ID or account id that finds one player: the CRM opens it.)
+  const exact = rows.length === 1 && /^(MS-\d+|KR?-\d{4}-\d+|S-\d+|[A-Z]{1,3}\d+-\d+|[0-9a-f]{8}-[0-9a-f-]{27})$/i.test(q);
+  res.json({ players: rows, exact });
 });
 
 /**
@@ -160,6 +162,21 @@ router.get('/players/:id/security', need('customers:security'), async (req, res)
 });
 
 /** GET /players/:id */
+async function overviewOf(id) {
+  const [spend, sek, packsHeld, passes] = await Promise.all([
+    db.query(
+      `SELECT upper(COALESCE(charged_currency, currency)) AS currency, COUNT(*)::int AS purchases,
+              SUM(COALESCE(charged_cents, amount_cents) - COALESCE(refunded_cents, 0))::int AS cents, max(paid_at) AS last_paid_at
+         FROM payments WHERE user_id = $1 AND status IN ('paid', 'refunded') GROUP BY 1 ORDER BY 3 DESC`,
+      [id],
+    ),
+    db.query(`SELECT COALESCE(SUM(book_gross_cents), 0)::int AS cents, COUNT(*) FILTER (WHERE book_filled_at IS NULL)::int AS missing FROM billing_documents WHERE user_id = $1`, [id]),
+    db.query(`SELECT o.pack_key, p.name, o.provider, o.granted_at FROM pack_owners o JOIN track_packs p ON p.key = o.pack_key WHERE o.user_id = $1 AND o.revoked_at IS NULL ORDER BY o.granted_at`, [id]),
+    db.query(`SELECT season_key, provider, granted_at FROM season_passes WHERE user_id = $1 AND revoked_at IS NULL ORDER BY granted_at`, [id]),
+  ]);
+  return { spend: spend.rows, sek: sek.rows[0], packs: packsHeld.rows, passes: passes.rows };
+}
+
 router.get('/players/:id', need('customers:read'), async (req, res) => {
   const id = assertUuid(req.params.id);
   const { rows: [player] } = await db.query(
@@ -217,6 +234,9 @@ router.get('/players/:id', need('customers:read'), async (req, res) => {
     payments: payments.rows,
     documents: documents.rows,
     emails: await require('../email/log').ofPlayer(db, id),
+    // The Overview (CRM phase 3): what they have paid (each currency, net of refunds), in SEK where our receipts have it,
+    // and the packs and passes they hold now.
+    overview: await overviewOf(id),
     audit: auditRows.rows,
     messages: messages.rows,
   });
