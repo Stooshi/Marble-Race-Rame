@@ -61,7 +61,7 @@ module.exports = track({
       obstacles: [peg({ costume: 'fence-post', at: 0.25, line: 'center' }), peg({ costume: 'fence-post', at: 0.5, line: 'left' }), peg({ costume: 'fence-post', at: 0.75, line: 'right' })],
     },
     {
-      name: 'Lakeside sweep', shape: sweep({ side: 'right', radius: 75, degrees: 90, grade: 0.15 }), height: 8, water: true, billboards: 2,
+      name: 'Lakeside sweep', shape: sweep({ side: 'right', radius: 75, degrees: 80, grade: 0.16 }), height: 8, water: true, billboards: 2,
       obstacles: [peg({ costume: 'fence-post', at: 0.35, line: 'right' }), peg({ costume: 'fence-post', at: 0.7, line: 'left' })],
     },
     {
