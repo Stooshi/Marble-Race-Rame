@@ -40,7 +40,7 @@ module.exports = track({
       obstacles: [peg({ costume: 'mooring-pole', at: 0.5, line: 'right' })],
     },
     {
-      name: 'Island spiral', shape: spiral({ side: 'right', radius: 46, turns: 1.25, grade: 0.16 }), height: 14, water: true,
+      name: 'Island spiral', shape: spiral({ side: 'right', radius: 46, turns: 1, grade: 0.17 }), height: 14, water: true,
       around: 'lake-island', landmarks: [{ name: 'island-church', at: 0.5, side: 'right', distance: 20 }],
     },
     {
