@@ -14,6 +14,7 @@ const email = require('../email');
 const company = require('../../client/src/shared/company.json');
 const { badRequest } = require('../utils/httpError');
 const library = require('../email/library');
+const { header, HEAD } = require('../email/templates');
 
 const LINK_DAYS = 7;
 const MAX_PER_HOUR = 3;
@@ -49,10 +50,10 @@ function message({ lang = 'en', name, link }) {
   const t = TEXTS[L];
   return {
     subject: t.subject,
-    html: `<!doctype html><html lang="${L}"><body style="margin:0;padding:0;background:#f2f4f8">
+    html: `<!doctype html><html lang="${L}">${HEAD}<body style="margin:0;padding:0;background:#f2f4f8">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f2f4f8;padding:24px 12px"><tr><td align="center">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:#ffffff;border-radius:14px;font-family:Arial,Helvetica,sans-serif;color:#1b1f2a">
-<tr><td style="background:#0e1320;border-radius:14px 14px 0 0;padding:18px 24px;color:#f2f4f8;font-size:22px;font-weight:bold">marblespins</td></tr>
+${header()}
 <tr><td style="padding:24px;font-size:15px;line-height:1.55">
 <h1 style="font-size:20px;margin:0 0 12px">${esc(t.title)}</h1>
 <p style="margin:0 0 12px">${esc(t.hello.replace('{name}', name))}</p>

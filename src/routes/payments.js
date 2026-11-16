@@ -9,7 +9,7 @@ const stripe = require('../payments/stripe');
 const google = require('../payments/google');
 const apple = require('../payments/apple');
 const withdrawal = require('../payments/withdrawal');
-const { badRequest, notFound } = require('../utils/httpError');
+const { badRequest, forbidden, notFound } = require('../utils/httpError');
 
 const security = require('../security');
 const config = require('../config');
@@ -170,7 +170,11 @@ router.post('/orders/:orderNo/withdraw', requireAuth, async (req, res) => {
 /** GET /api/payments/documents/:number — one of the player's own receipts or credit notes (K-…, KR-…; src/billing). */
 router.get('/documents/:number', requireAuth, async (req, res) => {
   const number = String(req.params.number).slice(0, 20);
-  const doc = /^[A-Z]{1,3}-\d{4}-\d{3,}$/.test(number) ? await require('../billing').ofPlayer(db, req.user.id, number) : null;
+  const billing = require('../billing');
+  const valid = /^[A-Z]{1,3}-\d{4}-\d{3,}$/.test(number);
+  const doc = valid ? await billing.ofPlayer(db, req.user.id, number) : null;
+  // (On another account: say so, so the buyer knows to log in with the right one. Nothing of it is shown.)
+  if (!doc && valid && await billing.exists(db, number)) throw forbidden('This receipt belongs to another account');
   if (!doc) throw notFound('No such receipt');
   res.set('Cache-Control', 'private, no-store');
   res.json({ document: doc });

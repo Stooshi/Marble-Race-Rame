@@ -22,14 +22,16 @@ export function money(cents, currency) {
 const STATUS = { pending: 'Waiting for payment', paid: 'Paid', refunded: 'Refunded', failed: 'Not paid' };
 
 function statusOf(o) {
+  if (o.test) return 'Test · not charged';
   if (o.withdrawn_at && o.status === 'paid' && !(o.refunded_cents > 0)) return 'Withdrawn · refund on its way';
   if (o.status === 'paid' && o.refunded_cents > 0) return 'Partly refunded';
   return STATUS[o.status] ?? o.status;
 }
 
 /**
- * The player's coin-pack orders: order number, date, coins, what was charged (their currency,
- * VAT included) and the Stripe receipt. After paying, Stripe sends the player here with
+ * The player's orders: order number, date, the item (coins, a pass, a track pack), what was charged (their currency,
+ * VAT included) and our receipt (K-…, /purchases/receipt/…; Stripe's only for orders from before our receipts, as a
+ * small second link). A Stripe test-mode order shows as "Test", with no receipt (Moses, 16 Nov 2026). After paying, Stripe sends the player here with
  * ?paid=MS-1234; the coins arrive when Stripe confirms the payment, so the page checks for a minute.
  */
 export default function PurchasesPage() {
@@ -107,6 +109,7 @@ export default function PurchasesPage() {
   }
 
   const fresh = justPaid && orders?.find((o) => o.order_no === justPaid);
+  const receiptOf = (o) => (o?.documents ?? []).find((d) => d.kind === 'receipt') ?? null;
   return (
     <div className="ms-page" style={{ display: 'grid', gap: 16 }}>
       <div className="ms-row" style={{ justifyContent: 'space-between', alignItems: 'end' }}>
@@ -115,7 +118,7 @@ export default function PurchasesPage() {
       </div>
 
       {justPaid && waiting && <div className="ms-msg" role="status">Thanks! Waiting for Stripe to confirm order {justPaid}… your coins arrive as soon as it does.</div>}
-      {justPaid && !waiting && fresh?.status === 'paid' && <div className="ms-msg" role="status">Order {justPaid} is paid: {fresh.pack_key ? `the ${packName(fresh)} is unlocked` : fresh.season_key ? (passOf(fresh)?.state === 'before' ? `your ${passOf(fresh).pass.name} activates on ${activatesDay(passOf(fresh).pass.activatesAt)}` : 'your season pass is ready') : `● ${formatNumber(fresh.coins)} coins added`}. Your receipt is in the list below and in your email. <Link to="/shop">To the shop</Link></div>}
+      {justPaid && !waiting && fresh?.status === 'paid' && <div className="ms-msg" role="status">Order {justPaid} is paid: {fresh.pack_key ? `the ${packName(fresh)} is unlocked` : fresh.season_key ? (passOf(fresh)?.state === 'before' ? `your ${passOf(fresh).pass.name} activates on ${activatesDay(passOf(fresh).pass.activatesAt)}` : 'your season pass is ready') : `● ${formatNumber(fresh.coins)} coins added`}. {receiptOf(fresh) ? <> Your receipt: <Link to={`/purchases/receipt/${encodeURIComponent(receiptOf(fresh).number)}`}>{receiptOf(fresh).number}</Link> (we've emailed it to you too).</> : ' Your receipt is in the list below.'} <Link to="/shop">To the shop</Link></div>}
       {justPaid && !waiting && fresh?.status === 'pending' && <div className="ms-msg" role="status">Stripe hasn't confirmed order {justPaid} yet. Some payments take a little longer; your coins arrive by themselves when it does. Reload this page to check.</div>}
       {error && <div className="ms-msg ms-msg--bad" role="alert">{error}</div>}
       {!orders && !error && <p className="ms-note">Loading your orders…</p>}
@@ -128,14 +131,14 @@ export default function PurchasesPage() {
         <div className="ms-card" style={{ padding: 0, overflowX: 'auto' }}>
           <table className="ms-table">
             <thead>
-              <tr><th>Order</th><th>Date</th><th className="num">Coins</th><th className="num">Paid (incl. VAT)</th><th>Status</th><th>Receipt</th></tr>
+              <tr><th>Order</th><th>Date</th><th>Item</th><th className="num">Paid (incl. VAT)</th><th>Status</th><th>Receipt</th></tr>
             </thead>
             <tbody>
               {orders.map((o) => (
                 <tr key={o.order_no} className={o.order_no === justPaid ? 'is-me' : undefined}>
                   <td style={{ fontWeight: 700 }}>{o.order_no}</td>
                   <td>{new Date(o.paid_at ?? o.created_at).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}</td>
-                  <td className="num">{o.pack_key ? `${packName(o)}${o.coins_spent > 0 ? ` (with ● ${formatNumber(o.coins_spent)})` : ''}` : o.season_key ? (passOf(o)?.state === 'before' && o.status === 'paid' ? `Season pass · activates ${activatesDay(passOf(o).pass.activatesAt)}` : 'Season pass') : `● ${formatNumber(o.coins)}`}</td>
+                  <td>{o.pack_key ? `${packName(o)}${o.coins_spent > 0 ? ` (with ● ${formatNumber(o.coins_spent)})` : ''}` : o.season_key ? (passOf(o)?.state === 'before' && o.status === 'paid' ? `Season pass · activates ${activatesDay(passOf(o).pass.activatesAt)}` : 'Season pass') : `${formatNumber(o.coins)} coins`}</td>
                   <td className="num">
                     {o.charged_cents != null ? money(o.charged_cents, o.charged_currency) : ['apple', 'google'].includes(o.provider) ? money(o.amount_cents, o.currency) : `${PACK[o.product_id]?.priceLabel ?? money(o.amount_cents, o.currency)}`}
                     {['apple', 'google'].includes(o.provider) && o.charged_cents == null && <span className="ms-note" style={{ display: 'block' }}>US price; {o.provider === 'apple' ? 'Apple' : 'Google'}'s receipt has what you paid</span>}
@@ -144,8 +147,15 @@ export default function PurchasesPage() {
                   </td>
                   <td>{statusOf(o)}</td>
                   <td>
-                    {(o.documents ?? []).map((d) => <Link key={d.number} to={`/purchases/receipt/${encodeURIComponent(d.number)}`} style={{ display: 'block' }}>{d.kind === 'credit' ? 'Credit note' : 'Receipt'} {d.number}</Link>)}
-                    {!(o.documents ?? []).length && (o.receipt_url ? <a href={o.receipt_url} target="_blank" rel="noreferrer">View receipt</a> : '—')}
+                    {o.test ? '—' : (
+                      <>
+                        {(o.documents ?? []).map((d) => <Link key={d.number} to={`/purchases/receipt/${encodeURIComponent(d.number)}`} style={{ display: 'block' }}>{d.kind === 'credit' ? 'Credit note' : 'View receipt'} {d.number}</Link>)}
+                        {o.receipt_url && ((o.documents ?? []).length
+                          ? <a href={o.receipt_url} target="_blank" rel="noreferrer" className="ms-note" style={{ display: 'block' }}>Stripe's payment receipt</a>
+                          : <a href={o.receipt_url} target="_blank" rel="noreferrer">Stripe's receipt</a>)}
+                        {!(o.documents ?? []).length && !o.receipt_url && '—'}
+                      </>
+                    )}
                   </td>
                 </tr>
               ))}

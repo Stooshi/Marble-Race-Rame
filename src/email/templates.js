@@ -6,11 +6,23 @@ const company = require('../../client/src/shared/company.json');
 
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
+/**
+ * The header's logo (Moses, 16 Nov 2026): the wordmark as a hosted PNG (scripts/email-logo.js draws it, on the header's
+ * own navy, so a mail app's dark mode can't turn it into dark text on a dark header). Shown at 204 × 48.
+ */
+const LOGO_URL = 'https://www.marblespins.com/email/logo-header.png';
+
+/** The email's top bar with the logo; also used by the pass-reminder and confirm-email layouts. */
+const header = () => `<tr><td bgcolor="#0e1320" style="background:#0e1320;border-radius:14px 14px 0 0;padding:14px 12px;line-height:0"><a href="https://www.marblespins.com" style="text-decoration:none"><img src="${LOGO_URL}" width="204" height="48" alt="Marble Spins" style="display:block;border:0;outline:none;width:204px;height:48px;color:#f2f4f8;font-family:Arial,Helvetica,sans-serif;font-size:22px;font-weight:bold;line-height:48px"></a></td></tr>`;
+/** The head every email shares: the colour schemes it supports, so dark-mode mail apps don't invert it on their own. */
+const HEAD = '<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light dark"><meta name="supported-color-schemes" content="light dark"></head>';
+
 function layout(title, body) {
-  return `<!doctype html><html><body style="margin:0;padding:0;background:#f2f4f8">
+  return `<!doctype html><html>${HEAD}
+<body style="margin:0;padding:0;background:#f2f4f8">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f2f4f8;padding:24px 12px"><tr><td align="center">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:#ffffff;border-radius:14px;font-family:Arial,Helvetica,sans-serif;color:#1b1f2a">
-<tr><td style="background:#0e1320;border-radius:14px 14px 0 0;padding:18px 24px;color:#f2f4f8;font-size:22px;font-weight:bold">marblespins</td></tr>
+${header()}
 <tr><td style="padding:24px;font-size:15px;line-height:1.55">
 <h1 style="font-size:20px;margin:0 0 12px">${esc(title)}</h1>
 ${body}
@@ -138,7 +150,7 @@ function creditNote(o) {
 }
 
 module.exports = {
-  passwordReset, supportNotification, supportReply, purchaseConfirmation, withdrawalReceived, creditNote, esc, layout, button,
+  passwordReset, supportNotification, supportReply, purchaseConfirmation, withdrawalReceived, creditNote, esc, layout, button, header, HEAD,
   // The locked parts, for the editable templates (./library.js).
   cores: { passwordCore, supportReplyCore, purchaseCore, withdrawalCore, creditCore },
 };

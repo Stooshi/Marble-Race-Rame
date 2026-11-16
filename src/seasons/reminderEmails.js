@@ -10,6 +10,7 @@
  */
 const { ENGLISH_ONLY } = require('../../client/src/shared/language.json');
 const company = require('../../client/src/shared/company.json');
+const { header, HEAD } = require('../email/templates');
 
 const TEXTS = {
   en: {
@@ -72,10 +73,10 @@ function dayText(iso, lang, timeZone = 'Europe/Stockholm') {
 
 function layout(lang, title, body, cancelLink) {
   const t = TEXTS[lang];
-  return `<!doctype html><html lang="${lang}"><body style="margin:0;padding:0;background:#f2f4f8">
+  return `<!doctype html><html lang="${lang}">${HEAD}<body style="margin:0;padding:0;background:#f2f4f8">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f2f4f8;padding:24px 12px"><tr><td align="center">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:#ffffff;border-radius:14px;font-family:Arial,Helvetica,sans-serif;color:#1b1f2a">
-<tr><td style="background:#0e1320;border-radius:14px 14px 0 0;padding:18px 24px;color:#f2f4f8;font-size:22px;font-weight:bold">marblespins</td></tr>
+${header()}
 <tr><td style="padding:24px;font-size:15px;line-height:1.55">
 <h1 style="font-size:20px;margin:0 0 12px">${esc(title)}</h1>
 ${body}

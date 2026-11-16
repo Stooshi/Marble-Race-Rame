@@ -36,6 +36,18 @@ describe('where documents are reached', () => {
     expect(read('../src/App.jsx')).toMatch(/path="\/purchases\/receipt\/:number"/);
     expect(read('../src/site/pages/PurchasesPage.jsx')).toMatch(/\/purchases\/receipt\/\$\{encodeURIComponent\(d\.number\)\}/);
   });
+  it('/purchases (Moses, 16 Nov 2026): an Item column, our receipt first (Stripe\'s a small second link), test orders marked with no receipt, the paid banner links our receipt', () => {
+    const page = read('../src/site/pages/PurchasesPage.jsx');
+    expect(page).toContain('<th>Item</th>');
+    expect(page).not.toContain('<th className="num">Coins</th>');
+    expect(page).toMatch(/if \(o\.test\) return 'Test · not charged'/);
+    expect(page).toMatch(/\{o\.test \? '—' :/);
+    expect(page).toContain("Stripe's payment receipt");
+    expect(page).toMatch(/Your receipt: <Link to=\{`\/purchases\/receipt\//);
+    expect(page).not.toMatch(/Stripe has emailed/);
+    const receipt = read('../src/site/pages/ReceiptPage.jsx');
+    expect(receipt).toContain('This receipt belongs to another account');
+  });
   it('the CRM: each sidebar item names the permission it needs; the preview address leads to the CRM', () => {
     const crm = read('../src/admin/Crm.jsx');
     const nav = crm.slice(crm.indexOf('const NAV = ['), crm.indexOf('];', crm.indexOf('const NAV = [')));

@@ -144,7 +144,18 @@ test('a paid Stripe purchase gets its receipt, a refund its credit note; the pla
     assert.equal(mine.status, 200);
     assert.equal(mine.body.document.number, r1.number);
     assert.equal(mine.body.document.seller.name, 'Voltron Robotics AB');
-    assert.equal((await call(`/payments/documents/${r1.number}`, { token: other.token })).status, 404);
+    // Another account's receipt: says so (Moses, 16 Nov 2026), and shows nothing of it; an unknown number is a 404.
+    const theirs = await call(`/payments/documents/${r1.number}`, { token: other.token });
+    assert.equal(theirs.status, 403);
+    assert.equal(theirs.body.error, 'This receipt belongs to another account');
+    assert.equal(theirs.body.document, undefined);
+    assert.equal((await call(`/payments/documents/K-1999-99999`, { token: other.token })).status, 404);
+    // A Stripe test-mode order (its session cs_test_…, no K-number): marked test, no Stripe receipt link either.
+    await db.query(`UPDATE payments SET receipt_url = 'https://pay.stripe.com/receipts/test' WHERE id = $1`, [p3.id]);
+    const testOrder = (await call(`/payments/orders/${p3.order_no}`, { token: me.token })).body.order;
+    assert.equal(testOrder.test, true);
+    assert.equal(testOrder.receipt_url, null);
+    assert.deepEqual(testOrder.documents, []);
     assert.equal((await call(`/payments/documents/${r1.number}`)).status, 401);
 
     // The book amounts from Stripe's balance transactions (SEK and the fee).

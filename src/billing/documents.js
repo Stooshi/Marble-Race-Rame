@@ -202,9 +202,15 @@ async function ofPlayer(db, userId, number) {
   return doc ? publicDocument(doc) : null;
 }
 
+/** Whether a document with this number exists at all (on any account): a receipt on another account says so. */
+async function exists(db, number) {
+  const { rows } = await db.query('SELECT 1 FROM billing_documents WHERE number = $1', [number]);
+  return rows.length > 0;
+}
+
 /** What the player (and the back office's "as the customer sees it") is shown: the frozen document. */
 function publicDocument(doc) {
   return { number: doc.number, kind: doc.kind, issuedAt: doc.issued_at, ...doc.snapshot };
 }
 
-module.exports = { DOC_COLUMNS, swedishDate, nextNumber, issueReceipt, issueCreditNote, issueMissing, ofPlayer, publicDocument, rateOf };
+module.exports = { DOC_COLUMNS, swedishDate, nextNumber, issueReceipt, issueCreditNote, issueMissing, ofPlayer, exists, publicDocument, rateOf };

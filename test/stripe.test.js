@@ -81,7 +81,7 @@ function fakeStripe() {
   const run = Date.now().toString(36);
   return {
     made,
-    checkout: { sessions: { create: async (params, opts) => { const id = `cs_test_${run}_${made.sessions.length + 1}`; made.sessions.push({ params, opts, id }); return { id, url: `https://checkout.stripe.com/c/pay/${id}` }; } } },
+    checkout: { sessions: { create: async (params, opts) => { const id = `cs_live_${run}_${made.sessions.length + 1}`; made.sessions.push({ params, opts, id }); return { id, url: `https://checkout.stripe.com/c/pay/${id}` }; } } },
     paymentIntents: { retrieve: async (id) => ({ id, latest_charge: { receipt_url: `https://pay.stripe.com/receipts/${id}` } }) },
     refunds: { create: async (params, opts) => { made.refunds.push({ params, opts }); return { id: `re_test_${run}_${made.refunds.length}`, status: 'pending', amount: params.amount ?? 1000 }; } },
   };

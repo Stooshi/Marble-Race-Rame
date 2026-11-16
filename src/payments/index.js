@@ -228,8 +228,12 @@ async function packCheckout(client, userId, { pack: packKey, useCoins = false, p
 }
 
 // What a player sees of their own orders (Purchases page).
+// A Stripe test-mode order (paid with a test card in Stripe's sandbox; its Checkout session id starts cs_test_): shown
+// as "Test", with no receipt (Moses, 16 Nov 2026). No real money moved, so it gets no K-number either (src/billing).
+const TEST_ORDER = `(provider = 'stripe' AND stripe_session_id LIKE 'cs\\_test\\_%')`;
 const ORDER_COLUMNS = `order_no, provider, product_id, season_key, pack_key, coins_spent, coins, amount_cents, upper(currency) AS currency, charged_cents, charged_currency,
-  tax_cents, status, refunded_cents, receipt_url, created_at, paid_at, refunded_at, withdrawn_at,
+  tax_cents, status, refunded_cents, CASE WHEN ${TEST_ORDER} THEN NULL ELSE receipt_url END AS receipt_url, ${TEST_ORDER} AS test,
+  created_at, paid_at, refunded_at, withdrawn_at,
   (SELECT COALESCE(json_agg(json_build_object('number', d.number, 'kind', d.kind, 'issued_at', d.issued_at, 'gross_cents', d.gross_cents, 'currency', d.currency)
             ORDER BY d.issued_at, d.number), '[]'::json)
      FROM billing_documents d WHERE d.payment_id = payments.id) AS documents`;
@@ -390,4 +394,4 @@ async function redeemReceipt(client, userId, { provider: providerName, receipt }
   return { coins: await grant(client, payment.id) };
 }
 
-module.exports = { PROVIDERS, PACKS, CONSENT_TEXT, available, checkout, passCheckout, packCheckout, storeProduct, passProduct, grant, redeemReceipt, ordersOf, orderOf, stripeEvent, refund, googleAccountId, googlePurchase, appleAccountToken, applePurchase, appleNotification, googleSync, startGoogleJobs, pack };
+module.exports = { TEST_ORDER, PROVIDERS, PACKS, CONSENT_TEXT, available, checkout, passCheckout, packCheckout, storeProduct, passProduct, grant, redeemReceipt, ordersOf, orderOf, stripeEvent, refund, googleAccountId, googlePurchase, appleAccountToken, applePurchase, appleNotification, googleSync, startGoogleJobs, pack };

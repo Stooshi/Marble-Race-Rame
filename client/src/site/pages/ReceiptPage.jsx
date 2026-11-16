@@ -17,7 +17,7 @@ export default function ReceiptPage() {
   useEffect(() => {
     if (!isAuthenticated) return;
     setError(null);
-    api.myDocument(number).then((r) => setDoc(r.document), (e) => setError(e.status === 404 ? 'not-found' : e.message));
+    api.myDocument(number).then((r) => setDoc(r.document), (e) => setError(e.status === 404 ? 'not-found' : e.status === 403 ? 'other-account' : e.message));
   }, [isAuthenticated, number]);
 
   if (!loading && !isAuthenticated) {
@@ -37,7 +37,8 @@ export default function ReceiptPage() {
         <Link to="/purchases" className="ms-btn">← Your purchases</Link>
       </div>
       {error === 'not-found' && <div className="ms-msg ms-msg--bad" role="alert">No receipt {number} on this account. If you bought on another account, log in with that one.</div>}
-      {error && error !== 'not-found' && <div className="ms-msg ms-msg--bad" role="alert">{error}</div>}
+      {error === 'other-account' && <div className="ms-msg ms-msg--bad" role="alert">This receipt belongs to another account. Log in with the account you bought with to see it.</div>}
+      {error && error !== 'not-found' && error !== 'other-account' && <div className="ms-msg ms-msg--bad" role="alert">{error}</div>}
       {!doc && !error && <p className="ms-note">Loading…</p>}
       {doc && <BillingDocument doc={doc} />}
       {doc && <p className="ms-note">Keep this page's address to find it again; it's always on <Link to="/purchases">your purchases</Link>. Questions: <Link to="/help#contact">contact us</Link> with the number {doc.number}.</p>}
