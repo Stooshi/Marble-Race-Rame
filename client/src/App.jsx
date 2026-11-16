@@ -60,6 +60,7 @@ const BannerReview = lazy(() => importOrReload(() => import('./site/pages/Banner
 const LegalPacksPreview = lazy(() => importOrReload(() => import('./site/pages/LegalPacksPreview'))); // (the legal draft for review: noindex, linked from nowhere; 12 Nov 2026)
 const ShopPacksPreview = lazy(() => importOrReload(() => import('./site/pages/ShopPacksPreview'))); // (a design mockup: noindex, linked from nowhere; 12 Nov 2026)
 const LandingV2Preview = lazy(() => importOrReload(() => import('./site/pages/LandingV2Preview'))); // (the landing page draft v2: noindex, linked from nowhere; 13 Nov 2026)
+const PickerV2Preview = lazy(() => importOrReload(() => import('./site/pages/PickerV2Preview'))); // (the track picker's new order: noindex, linked from nowhere; 16 Nov 2026)
 const PhysicsPreview = lazy(() => importOrReload(() => import('./pages/PhysicsPreview')));
 // The back office (/admin): its own chunk, never linked from the site; the server checks every request.
 const AdminApp = lazy(() => importOrReload(() => import('./admin/AdminApp')));
@@ -191,6 +192,10 @@ export default function App() {
           <Route
             path="/preview/banners"
             element={<Suspense fallback={<div className="page"><Spinner /></div>}><BannerReview /></Suspense>}
+          />
+          <Route
+            path="/preview/picker-v2"
+            element={<Suspense fallback={<div className="page"><Spinner /></div>}><PickerV2Preview /></Suspense>}
           />
           <Route
             path="/preview/physics"

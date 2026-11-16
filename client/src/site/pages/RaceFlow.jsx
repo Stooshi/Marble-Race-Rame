@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRaceSoundPreload } from '../../sound/settings';
 import { Link, Navigate, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { api } from '../../api/client';
@@ -9,6 +9,8 @@ import { ITEM, previewShowcase } from '../../shared/marbles';
 import MarbleBadge from '../marbles/MarbleBadge';
 import TrackBanner, { SERIES_PIC } from '../TrackBanner';
 import WildnessBadge from '../WildnessBadge';
+import { PackBanner } from '../shop/TrackPacks';
+import { asLocked, bannerPacks, bannerSlots, orderTracks } from './pickerV2';
 import { WILDNESS, WILDNESS_LEVELS, WILDNESS_NOTE, matchesWildness } from '../../shared/wildness.js';
 import { handle, shownName } from '../../shared/playerName';
 import { useLeaguesOn } from '../leagues/status';
@@ -351,13 +353,40 @@ export const SORTS = {
 const SORT_NEXT = { new: 'name', name: 'wild', wild: 'new' };
 const SORT_LABEL = { new: 'New', name: 'A–Z', wild: 'Wildest' };
 
-export function TrackStep() {
+/** The grid's column count (for the picker's banners every 7 rows). */
+function useColumns(ref) {
+  const [cols, setCols] = useState(3);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || typeof ResizeObserver === 'undefined') return undefined;
+    const read = () => setCols(Math.max(1, getComputedStyle(el).gridTemplateColumns.split(' ').filter(Boolean).length));
+    read();
+    const ro = new ResizeObserver(read);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [ref]);
+  return cols;
+}
+
+/**
+ * Step 1, the track picker. `v2` (Moses, 16 Nov 2026; ./pickerV2.js): while packs lock for the player, the tracks
+ * they can race first, then the locked ones mixed, with pack banners among them; `preview` (/preview/picker-v2
+ * only) shows the player the picker as if TRACK_PACKS were on for them.
+ */
+export function TrackStep({ v2 = false, preview = false } = {}) {
   const [search] = useSearchParams();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { tracks, packLocking } = useTrackList();
-  const [lockState, setLock] = useState('mine'); // (My tracks / Locked: only while packs lock for the player)
+  const list = useTrackList();
+  const { data: packData } = useAsync(() => (v2 ? api.packs().catch(() => null) : Promise.resolve(null)), [v2, user?.id]);
+  const owned = useMemo(() => new Set((packData?.packs ?? []).filter((p) => p.owned).map((p) => p.key)), [packData]);
+  const simulate = preview && !list.packLocking;
+  const tracks = useMemo(() => (simulate ? list.tracks.map((t) => asLocked(t, owned)) : list.tracks), [simulate, list.tracks, owned]);
+  const packLocking = list.packLocking || preview;
+  const [lockState, setLock] = useState(v2 ? 'all' : 'mine'); // (My tracks / Locked: only while packs lock for the player; v2 adds All, the default)
   const lock = packLocking ? lockState : 'all';
+  const gridRef = useRef(null);
+  const cols = useColumns(gridRef);
   const { data: records } = useAsync(() => (user && !user.is_guest ? api.trackRecords(user.id).catch(() => null) : null), [user?.id]);
   const [q, setQ] = useState('');
   const [series, setSeries] = useState(() => new Set());
@@ -384,6 +413,37 @@ export function TrackStep() {
   // A season that is on, whose tracks this player may race: "Holiday races" (one of its tracks each race).
   const openSeason = tracks.find((t) => t.season?.state === 'on' && !t.locked)?.season ?? null;
 
+  const card = (t) => {
+    const r = best.get(t.slug);
+    return (
+      <button key={t.id} type="button" className="ms-trackcard" onClick={() => (t.lockedBy === 'pack' ? navigate(`/shop/packs/${t.pack.key}`) : t.locked ? navigate(`/pass?season=${t.season.key}`) : go(t.slug))}>
+        <div className="ms-trackcard__pic" style={{ background: SERIES_PIC[t.series] }}>
+          <TrackBanner slug={t.slug} />
+          {t.lockedBy === 'pack'
+            ? <span className="ms-badge-label" aria-label={`Locked: in the ${t.pack.name} pack`}>🔒 {t.pack.name.toUpperCase()} PACK</span>
+            : t.locked
+            ? <span className="ms-badge-label" aria-label="Locked: in the season pass">🔒 {t.season.state === 'before' ? 'SOON' : 'GET THE PASS'}</span>
+            : t.season?.featured ? <span className="ms-badge-label" style={{ background: 'var(--ms-green)' }}>HOLIDAY TRACK OF THE DAY</span>
+            : newest.includes(t.id) && <span className="ms-badge-label" style={{ background: 'var(--ms-green)' }}>NEW</span>}
+        </div>
+        <div className="ms-trackcard__body">
+          <b>{t.name}</b>
+          <span className="ms-trackcard__meta">{t.series}{LANDSCAPE[t.biome] ? ` · ${LANDSCAPE[t.biome]}` : ''}<WildnessBadge track={t} /></span>
+          <span style={{ color: r ? 'var(--ms-soft)' : 'var(--ms-muted)' }}>
+            {r ? `Your best: ${r.best_position}${['th', 'st', 'nd', 'rd'][r.best_position % 10 > 3 || Math.floor(r.best_position / 10) === 1 ? 0 : r.best_position % 10]}${r.best_time_ms ? ` · ${(r.best_time_ms / 1000).toFixed(1)} s` : ''}` : 'Not raced yet'}
+          </span>
+        </div>
+      </button>
+    );
+  };
+  // v2: racable first, then the locked ones mixed, a pack banner at the slots (./pickerV2.js).
+  const v2Order = useMemo(() => {
+    if (!v2 || !packLocking) return null;
+    const { free, locked } = orderTracks(shown, SORTS[sort]);
+    const packs = bannerPacks(packData?.packs ?? [], locked);
+    const slots = bannerSlots(locked.length, cols, packs.length);
+    return { free, locked, slots, banner: (k) => packs[slots.indexOf(k)] ?? null };
+  }, [v2, packLocking, shown, sort, packData, cols]);
   return (
     <div className="ms-page">
       <Steps at={1} />
@@ -406,7 +466,7 @@ export function TrackStep() {
         </div>
         {packLocking && (
           <div className="ms-wild-filter" role="group" aria-label="My tracks or locked">
-            {LOCK_FILTERS.map(([k, label]) => (
+            {(v2 ? [['all', 'All tracks'], ...LOCK_FILTERS] : LOCK_FILTERS).map(([k, label]) => (
               <button key={k} type="button" aria-pressed={lock === k} onClick={() => setLock(k)}>
                 {k === 'locked' ? '🔒 ' : ''}{label} <span style={{ opacity: 0.75 }}>{tracks.filter((t) => matchesLock(t, k)).length}</span>
               </button>
@@ -426,30 +486,19 @@ export function TrackStep() {
           {lands.map((l) => <label key={l} className="ms-check"><input type="checkbox" checked={land.has(l)} onChange={() => toggle(land, setLand, l)} /><span>{l}</span><span className="ms-grow" /><span>{count('land', l)}</span></label>)}
           {series.size + land.size > 0 && <button type="button" className="ms-btn ms-btn--sm" onClick={() => { setSeries(new Set()); setLand(new Set()); }}>Clear filters</button>}
         </aside>
-        <section className="ms-cards" style={{ flex: '1 1 480px', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 220px), 1fr))' }} aria-label="Tracks">
-          {shown.map((t) => {
-            const r = best.get(t.slug);
-            return (
-              <button key={t.id} type="button" className="ms-trackcard" onClick={() => (t.lockedBy === 'pack' ? navigate(`/shop/packs/${t.pack.key}`) : t.locked ? navigate(`/pass?season=${t.season.key}`) : go(t.slug))}>
-                <div className="ms-trackcard__pic" style={{ background: SERIES_PIC[t.series] }}>
-                  <TrackBanner slug={t.slug} />
-                  {t.lockedBy === 'pack'
-                    ? <span className="ms-badge-label" aria-label={`Locked: in the ${t.pack.name} pack`}>🔒 {t.pack.name.toUpperCase()} PACK</span>
-                    : t.locked
-                    ? <span className="ms-badge-label" aria-label="Locked: in the season pass">🔒 {t.season.state === 'before' ? 'SOON' : 'GET THE PASS'}</span>
-                    : t.season?.featured ? <span className="ms-badge-label" style={{ background: 'var(--ms-green)' }}>HOLIDAY TRACK OF THE DAY</span>
-                    : newest.includes(t.id) && <span className="ms-badge-label" style={{ background: 'var(--ms-green)' }}>NEW</span>}
-                </div>
-                <div className="ms-trackcard__body">
-                  <b>{t.name}</b>
-                  <span className="ms-trackcard__meta">{t.series}{LANDSCAPE[t.biome] ? ` · ${LANDSCAPE[t.biome]}` : ''}<WildnessBadge track={t} /></span>
-                  <span style={{ color: r ? 'var(--ms-soft)' : 'var(--ms-muted)' }}>
-                    {r ? `Your best: ${r.best_position}${['th', 'st', 'nd', 'rd'][r.best_position % 10 > 3 || Math.floor(r.best_position / 10) === 1 ? 0 : r.best_position % 10]}${r.best_time_ms ? ` · ${(r.best_time_ms / 1000).toFixed(1)} s` : ''}` : 'Not raced yet'}
-                  </span>
-                </div>
-              </button>
-            );
-          })}
+        <section ref={gridRef} className="ms-cards" style={{ flex: '1 1 480px', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 220px), 1fr))' }} aria-label="Tracks">
+          {!v2Order && shown.map(card)}
+          {v2Order && (
+            <>
+              {v2Order.free.map(card)}
+              {v2Order.locked.length > 0 && v2Order.free.length > 0 && <h2 className="ms-picker-divider">Unlock more tracks</h2>}
+              {v2Order.locked.map((t, k) => [
+                v2Order.slots.includes(k) && v2Order.banner(k) && <PackBanner key={`b${k}`} pack={v2Order.banner(k)} />,
+                card(t),
+              ])}
+              {v2Order.slots.includes(v2Order.locked.length) && v2Order.banner(v2Order.locked.length) && <PackBanner key="b-end" pack={v2Order.banner(v2Order.locked.length)} />}
+            </>
+          )}
           {tracks.length > 0 && shown.length === 0 && <p className="ms-note">{lock === 'locked' && !tracks.some((t) => t.locked) ? 'Nothing is locked for you: every track is yours to race.' : 'No track matches. Clear a filter.'}</p>}
         </section>
       </div>

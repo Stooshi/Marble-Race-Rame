@@ -1209,3 +1209,16 @@ mark.ms-legal__new { background: rgba(255, 210, 31, 0.22); color: var(--ms-text)
   .ms-case__ball { min-height: 84px; }
   .ms-case__ball .ms-turntable { max-width: 112px; }
 }
+
+/* The track picker's pack banners (16 Nov 2026, picker v2): a full-width row among the locked tracks. */
+.ms-packbanner { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(0, 260px) minmax(0, 1fr) auto; align-items: center; gap: 18px; padding: 14px; border-radius: 18px; background: linear-gradient(100deg, var(--ms-card) 0%, var(--ms-card) 55%, rgba(255, 210, 31, 0.10) 100%); border: 1px solid var(--ms-yellow, #ffd21f); min-width: 0; }
+.ms-packbanner__pic { position: relative; display: block; aspect-ratio: 16 / 9; border-radius: 12px; overflow: hidden; }
+.ms-packbanner__pic img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.ms-packbanner__text { display: grid; gap: 6px; justify-items: start; min-width: 0; }
+.ms-packbanner__name { margin: 0; font-family: var(--ms-cond); font-weight: 800; font-size: clamp(22px, 3vw, 30px); line-height: 1.05; }
+.ms-packbanner__buy { display: grid; gap: 8px; justify-items: end; }
+.ms-picker-divider { grid-column: 1 / -1; margin: 6px 0 -4px; font-family: var(--ms-cond); font-weight: 800; font-size: 20px; color: var(--ms-soft); }
+@media (max-width: 720px) {
+  .ms-packbanner { grid-template-columns: 1fr; }
+  .ms-packbanner__buy { justify-items: start; grid-auto-flow: column; align-items: center; }
+}

@@ -107,6 +107,32 @@ function PackCard({ pack: p }) {
   );
 }
 
+/**
+ * A track pack's banner in the track picker (Moses, 16 Nov 2026, picker v2): among the locked tracks, a pack the
+ * player doesn't own, its picture, name, 20 tracks and wildness mix, the price and a button to its page.
+ */
+export function PackBanner({ pack: p }) {
+  const prices = usePackPrices(p.key);
+  const to = `/shop/packs/${p.key}`;
+  return (
+    <aside className="ms-packbanner" aria-label={`The ${p.name} track pack`}>
+      <Link to={to} className="ms-packbanner__pic" style={{ background: SERIES_PIC[p.series] }} tabIndex={-1} aria-hidden="true">
+        <TrackBanner slug={p.pic} force />
+      </Link>
+      <div className="ms-packbanner__text">
+        <span className="ms-badge-label">TRACK PACK</span>
+        <h3 className="ms-packbanner__name">{p.name}</h3>
+        <span className="ms-pack__count">{p.fullAt} tracks, yours for good</span>
+        <Mix mix={p.mix} />
+      </div>
+      <div className="ms-packbanner__buy">
+        <span className="ms-pack__price">{prices.money ?? '…'}</span>
+        <Link to={to} className="ms-btn ms-btn--primary">See the {p.name} pack</Link>
+      </div>
+    </aside>
+  );
+}
+
 /** A pack's page: /shop/packs/:key. */
 export function PackPage() {
   const { key } = useParams();
