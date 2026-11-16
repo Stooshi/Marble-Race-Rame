@@ -681,6 +681,8 @@ as a coaster (everything above applies), like a canyon (looks only, like everyth
   Mont-Saint-Michel Tide Run (Easy: along the causeway over the sands, then a spiral right round the abbey mount).
   Angkor Temple Run (Extreme: along the moat facing the five lotus-bud towers, up the terraces and straight down the
   temple's steep stairs, through the temple the tree roots have swallowed).
+  Cappadocia Balloon Run (Wild: the valley under the rising balloons, then right round a cluster of fairy chimneys;
+  a splitter round them was tried first, but its leaders always took one channel).
 - **Seven more Blocks 1 tracks** (Moses, 15 Nov 2026: the Blocks 1 pack filled to 20; game worlds of our own with
   retro touches, never another game's names, creatures, textures or falling pieces; same rules as the six Canyons and
   Peaks): written section by section, each in its own new world (`mushroom`, `sunken`, `clockwork`, `grotto`,

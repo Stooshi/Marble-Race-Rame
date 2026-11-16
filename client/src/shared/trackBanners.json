@@ -321,6 +321,17 @@
    "side": -1,
    "marbles": 4
   },
+  "cappadocia-balloon-run": {
+   "name": "Cappadocia Balloon Run",
+   "series": "World Tour",
+   "lighting": "dawn",
+   "v": "2731a6ab",
+   "bytes": 16166,
+   "bytes2x": 38866,
+   "t": 9971,
+   "side": 1,
+   "marbles": 4
+  },
   "chain-reaction": {
    "name": "Chain Reaction",
    "series": "Blocks",

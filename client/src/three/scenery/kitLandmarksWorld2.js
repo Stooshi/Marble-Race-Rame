@@ -196,6 +196,28 @@ function rootTemple() {
   return merge(p);
 }
 
+// ── Cappadocia (Cappadocia Balloon Run) ────────────────────────────────────
+
+const TUFF = ['#e6cfae', '#dcc19c', '#ecd8bb', '#d8b892'];
+
+/** A cluster of fairy chimneys: tall soft cones of pale tuff, each with a darker rock cap, a few cave windows. */
+function fairyChimneys() {
+  const p = [];
+  const r = seededRandom(61);
+  for (let i = 0; i < 7; i += 1) {
+    const a = i * 0.9 + r() * 0.4;
+    const d = i === 0 ? 0 : 4 + r() * 4;
+    const x = Math.cos(a) * d;
+    const z = Math.sin(a) * d;
+    const h = 8 + r() * 9;
+    const w = 2 + r() * 1.4;
+    p.push(piece(new ConeGeometry(w, h, 8), TUFF[i % TUFF.length], M(x, h / 2, z)));
+    p.push(piece(new ConeGeometry(w * 0.6, 1.8, 8), '#7a5e48', M(x, h * 0.86 + 0.5, z)));
+    if (i % 2 === 0) p.push(box(0.7, 1, 0.3, x, h * 0.35, z + w * 0.62, '#3c3026'));
+  }
+  return merge(p);
+}
+
 export const WORLD2_LANDMARKS = {
   'cycladic-village': { build: cycladicVillage, radius: 26 },
   'blue-domes': { build: blueDomes, radius: 10 },
@@ -205,4 +227,5 @@ export const WORLD2_LANDMARKS = {
   'abbey-mount': { build: abbeyMount, radius: 23, fit: 20 },
   'lotus-temple': { build: lotusTemple, radius: 26 },
   'root-temple': { build: rootTemple, radius: 11 },
+  'fairy-chimneys': { build: fairyChimneys, radius: 10, fit: 6 },
 };

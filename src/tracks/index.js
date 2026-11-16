@@ -217,6 +217,7 @@ module.exports = [
   require('./moon-base'),
   require('./neon-grid'),
   require('./santorini-caldera-run'),
+  require('./cappadocia-balloon-run'),
   require('./hallstatt-salt-mine-run'),
   require('./lake-bled-island-run'),
   require('./mont-saint-michel-tide-run'),
