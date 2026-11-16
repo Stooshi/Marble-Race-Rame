@@ -206,3 +206,9 @@
 .crm-btn--sm { padding: 4px 10px; font-size: 12px; min-height: 0; }
 .crm-preview { display: grid; justify-items: center; padding: 10px; border-radius: 12px; background: #f2f4f8; }
 .crm-preview iframe { height: 640px; border: 0; background: #fff; border-radius: 10px; }
+
+/* Support (CRM phase 4). */
+.crm-reply { padding: 8px 0; border-bottom: 1px solid var(--c-line); }
+.crm-reply:last-child { border-bottom: 0; }
+.crm-textarea, .crm-select { width: 100%; box-sizing: border-box; padding: 8px 10px; border-radius: 10px; border: 1px solid var(--c-line); background: var(--c-bg); color: var(--c-text); font: inherit; resize: vertical; }
+.crm-select { width: auto; max-width: 100%; min-height: 36px; }

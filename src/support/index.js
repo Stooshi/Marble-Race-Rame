@@ -30,6 +30,11 @@ const settings = require('../../client/src/shared/support.json');
 const MIN_FILL_MS = 3_000;
 const MAX_FORM_AGE_MS = 12 * 3600_000;
 const STATUSES = ['new', 'open', 'done'];
+// The four stages (Moses, 16 Nov 2026, CRM phase 4; support_messages.stage): New, Open, Answered (waiting for the
+// player), Closed. `status`, the column before, is kept in step for older code.
+const STAGES = ['new', 'open', 'answered', 'closed'];
+const STATUS_OF = { new: 'new', open: 'open', answered: 'open', closed: 'done' };
+const AUTO_CLOSE_DAYS = 14;
 const { limits } = settings;
 
 const sign = (ts) => crypto.createHmac('sha256', config.auth.jwtSecret).update(`support-form:${ts}`).digest('base64url').slice(0, 32);
@@ -107,8 +112,8 @@ async function create(req, fields, { screenshot = null } = {}) {
   if (same) return { ...same, duplicate: true };
   const ip = security.clientIp(req);
   const { rows: [row] } = await db.query(
-    `INSERT INTO support_messages (ref, user_id, linked_by, name, email, category, order_no, message, screenshot, screenshot_type, device, ip, country)
-     VALUES ('S-' || nextval('support_message_seq'), $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+    `INSERT INTO support_messages (ref, user_id, linked_by, name, email, category, order_no, message, screenshot, screenshot_type, device, ip, country, stage, stage_at)
+     VALUES ('S-' || nextval('support_message_seq'), $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, 'new', now())
      RETURNING id, ref, created_at`,
     [userId, linkedBy, fields.name, fields.email.toLowerCase(), fields.category, fields.order_no ?? null, fields.message,
       screenshot?.bytes ?? null, screenshot?.type ?? null, String(req.get('user-agent') ?? '').slice(0, 300) || null, ip, security.countryOf(ip)],
@@ -133,7 +138,8 @@ async function reply(client, { messageId, adminId, body }) {
     'INSERT INTO support_replies (message_id, admin_id, body) VALUES ($1, $2, $3) RETURNING id, body, created_at',
     [messageId, adminId, body],
   );
-  if (m.status === 'new') await client.query(`UPDATE support_messages SET status = 'open', status_at = now() WHERE id = $1`, [messageId]);
+  // (A reply: Answered, waiting for the player; closes by itself after 14 days without an answer.)
+  await setStage(client, messageId, 'answered');
   let emailed = false;
   let emailError = null;
   if (email.enabled()) {
@@ -151,4 +157,26 @@ async function reply(client, { messageId, adminId, body }) {
   return { reply: { ...r, emailed_at: emailed ? new Date() : null }, emailed, emailError, message: m };
 }
 
-module.exports = { MIN_FILL_MS, MAX_FORM_AGE_MS, STATUSES, settings, formToken, checkFormToken, readScreenshot, create, reply, notify };
+/** Sets a message's stage (and its old status in step). */
+async function setStage(client, id, stage) {
+  await client.query('UPDATE support_messages SET stage = $2, stage_at = now(), status = $3, status_at = now() WHERE id = $1', [id, stage, STATUS_OF[stage]]);
+}
+
+/** Answered with no answer for 14 days: closed. → how many. */
+async function autoClose(db) {
+  const { rowCount } = await db.query(
+    `UPDATE support_messages SET stage = 'closed', stage_at = now(), status = 'done', status_at = now()
+      WHERE stage = 'answered' AND stage_at < now() - make_interval(days => $1)`,
+    [AUTO_CLOSE_DAYS],
+  );
+  return rowCount;
+}
+
+function startJobs(db) {
+  const run = () => autoClose(db).then((n) => { if (n) console.log(`[support] closed ${n} answered message(s) after ${AUTO_CLOSE_DAYS} days`); }).catch((err) => console.error(`[support] auto-close: ${err.message}`));
+  const timer = setInterval(run, 3600_000);
+  timer.unref?.();
+  return timer;
+}
+
+module.exports = { STAGES, STATUS_OF, AUTO_CLOSE_DAYS, setStage, autoClose, startJobs, MIN_FILL_MS, MAX_FORM_AGE_MS, STATUSES, settings, formToken, checkFormToken, readScreenshot, create, reply, notify };

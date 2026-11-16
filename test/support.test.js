@@ -142,7 +142,7 @@ test('the contact form and the support inbox on a real database', { skip: !DB },
     assert.equal(shot.type, 'image/png');
     assert.equal((await call(`/admin/support/${aid}/screenshot`)).status, 401);
 
-    // Status: New → Open → Done, each in the audit log; a bad status is refused.
+    // Status: New → Open → (a reply: Answered) → Done (= Closed, CRM phase 4), each in the audit log; a bad status is refused.
     assert.equal((await call(`/admin/support/${aid}/status`, { method: 'POST', token, body: { status: 'closed' } })).status, 400);
     assert.equal((await call(`/admin/support/${aid}/status`, { method: 'POST', token, body: { status: 'open' } })).body.message.status, 'open');
     // A reply: saved, emailed to the player (reply-to: the support address), in the audit log.
@@ -151,15 +151,17 @@ test('the contact form and the support inbox on a real database', { skip: !DB },
     assert.equal(sent.at(-1).to[0].email, `${name}@test.invalid`);
     assert.equal(sent.at(-1).replyTo.email, 'support@test.invalid');
     assert.match(sent.at(-1).subject, new RegExp(a.body.ref));
+    assert.equal((await call(`/admin/support/${aid}`, { token })).body.message.stage, 'answered'); // (waiting for the player)
     assert.equal((await call(`/admin/support/${aid}/status`, { method: 'POST', token, body: { status: 'done', reason: 'Coins credited' } })).body.message.status, 'done');
     const detail = (await call(`/admin/support/${aid}`, { token })).body;
     assert.equal(detail.message.status, 'done');
+    assert.equal(detail.message.stage, 'closed');
     assert.equal(detail.message.linked_by, 'email');
     assert.equal(detail.replies.length, 1);
     assert.equal(detail.replies[0].admin, adminName);
     assert.deepEqual(detail.audit.map((e) => e.action), ['support-status', 'support-reply', 'support-status']);
-    assert.deepEqual(detail.audit.map((e) => e.details.to ?? null), ['done', null, 'open']);
-    assert.equal(detail.audit[0].details.from, 'open');
+    assert.deepEqual(detail.audit.map((e) => e.details.to ?? null), ['closed', null, 'open']);
+    assert.equal(detail.audit[0].details.from, 'answered');
 
     // The player's profile: a Messages tab with all their messages (linked or sent from their email).
     const prof = (await call(`/admin/players/${player.user.id}`, { token })).body;

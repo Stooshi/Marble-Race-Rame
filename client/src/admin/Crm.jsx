@@ -7,6 +7,7 @@ import { countryName } from '../site/country/countries';
 import BillingDocument, { docMoney } from '../shared/billing/BillingDocument';
 import company from '../shared/company.json';
 import { EmailTemplates } from './CrmEmails';
+import { SupportPage } from './CrmSupport';
 import './crm.css';
 
 /**
@@ -76,7 +77,7 @@ const NAV = [
   { to: 'dashboard', icon: 'dashboard', label: 'Dashboard', need: 'reports:read', old: '/admin/dashboard' },
   { to: 'customers', icon: 'customers', label: 'Customers', need: 'customers:read' },
   { to: 'billing', icon: 'billing', label: 'Billing', need: 'billing:read' },
-  { to: 'support', icon: 'support', label: 'Support', need: 'support:read', old: '/admin/support' },
+  { to: 'support', icon: 'support', label: 'Support', need: 'support:read' },
   { to: 'marketing', icon: 'marketing', label: 'Marketing', need: ['emails:templates', 'gift-codes:read'] },
   { to: 'tracks', icon: 'tracks', label: 'Races & tracks', need: 'reports:read', old: '/admin/readiness' },
   { to: 'settings', icon: 'settings', label: 'Settings', need: 'reports:read' },
@@ -129,6 +130,7 @@ export default function Crm({ session, onLogout }) {
           {can(current.need) && page === 'customers' && <Customers id={sub[0]} can={can} />}
           {can(current.need) && page === 'billing' && <Billing number={sub[0] ? decodeURIComponent(sub[0]) : null} can={can} />}
           {can(current.need) && page === 'settings' && <Settings tab={sub[0]} can={can} me={me} />}
+          {can(current.need) && page === 'support' && <SupportPage id={sub[0]} can={can} me={me} />}
           {can(current.need) && page === 'marketing' && <Marketing tab={sub[0]} kind={sub[1]} can={can} />}
           {can(current.need) && current.old && <Later item={current} />}
         </main>
@@ -244,7 +246,7 @@ function customerOf(d) {
     ],
     purchases,
     credits: docs.filter((x) => x.kind === 'credit').map((x) => ({ ...x, order_no: purchases.find((p) => p.id === x.payment_id)?.order_no ?? '—', of: purchases.find((p) => p.id === x.payment_id)?.receipt?.number ?? null })),
-    support: d.messages.map((m) => ({ id: m.id, ref: m.ref, category: m.category, status: m.status === 'done' ? 'closed' : m.status, message: m.message, at: m.created_at, replies: m.replies })),
+    support: d.messages.map((m) => ({ id: m.id, ref: m.ref, category: m.category, status: m.stage ?? (m.status === 'done' ? 'closed' : m.status), message: m.message, at: m.created_at, replies: m.replies })),
     consents: [
       { what: 'News by email', value: d.player.marketing_opt_in ? 'Yes' : 'No', how: d.consents[0] ? `Last change: ${d.consents[0].source}` : 'Never asked', at: d.consents[0]?.created_at },
       ...d.consents.slice(1, 6).map((c) => ({ what: 'News by email (earlier)', value: c.consent ? 'Yes' : 'No', how: c.source, at: c.created_at })),
@@ -540,7 +542,7 @@ function SectionDetail({ c, section, can, reload }) {
             <Card key={s.ref} title={`${s.ref} · ${s.category}`} actions={<Pill tone={statusTone[s.status]}>{s.status}</Pill>}>
               <p className="crm-quote">{s.message}</p>
               <p className="crm-muted">{when(s.at)} · {s.replies} repl{s.replies === 1 ? 'y' : 'ies'}</p>
-              {can('support:read') && <div className="crm-actions"><Link className="crm-btn" to={`/admin/support/${s.id}`}>Open in the inbox</Link></div>}
+              {can('support:read') && <div className="crm-actions"><Link className="crm-btn" to={`${BASE}/support/${s.id}`}>Open in support</Link></div>}
             </Card>
           ))}
           {!c.support.length && <p className="crm-muted">No support messages.</p>}
@@ -856,7 +858,6 @@ function Marketing({ tab, kind, can }) {
 
 const LATER = {
   dashboard: 'The dashboard stays as it is for now.',
-  support: 'The inbox, each message beside its customer, comes in the next phase (support). Today\'s inbox works as before.',
   tracks: 'Race readiness and the economy, as today.',
 };
 function Later({ item }) {

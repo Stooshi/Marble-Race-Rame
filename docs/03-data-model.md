@@ -516,3 +516,11 @@ The website's cookie choice, kept as a record of consent (GDPR): one row each ti
 | `email_templates` | One row per saved version of an email kind (`kind`, `version`, `subject`, `preheader`, `title`, `blocks` jsonb, `note`, `created_by`, `published_at`, `published_by`). The newest published version is sent; none published: the email in code. Never deleted (the history). |
 | `email_log` | Every email sent through `src/email` (`user_id`, `to_email`, `kind`, `template_version`, `subject`, `provider_id` from Brevo, `status` sent / failed / test, `error`). Kept 24 months. No opens or clicks are recorded (no tracking). |
 
+## Support stages and saved replies (16 Nov 2026, CRM phase 4)
+
+| Column / table | What |
+|---|---|
+| `support_messages.stage` | `new`, `open`, `answered` (we replied; waiting for the player), `closed`. Answered for 14 days with no answer closes by itself. The older `status` column (`new`, `open`, `done`) is kept in step (answered → open, closed → done). Data update `2027-08-18-support-stages-and-saved-replies` set every message's stage from its status (done → closed). |
+| `support_messages.stage_at`, `assigned_to` | When the stage last changed; the admin on it (owner or support). |
+| `support_saved_replies` | Saved reply texts (`title`, `body` with `{{name}}`, `{{ref}}`, `{{order_no}}`), archived rather than deleted. The data update adds four to start from. |
+

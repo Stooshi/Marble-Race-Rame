@@ -1594,3 +1594,23 @@ CREATE TABLE IF NOT EXISTS email_log (
 );
 CREATE INDEX IF NOT EXISTS idx_email_log_user ON email_log (user_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_email_log_time ON email_log (created_at);
+
+-- Support (Moses, 16 Nov 2026, CRM phase 4): four stages, New (just arrived), Open (someone is on it), Answered (we
+-- replied, waiting for the player), Closed (done); Answered for 14 days with no answer closes by itself. A new column
+-- (the schema only adds): `status` stays, kept in step for older code (answered → open, closed → done).
+ALTER TABLE support_messages ADD COLUMN IF NOT EXISTS stage varchar(10) CHECK (stage IN ('new', 'open', 'answered', 'closed'));
+ALTER TABLE support_messages ADD COLUMN IF NOT EXISTS stage_at timestamptz;
+-- Assigned to an admin ("Mine").
+ALTER TABLE support_messages ADD COLUMN IF NOT EXISTS assigned_to uuid REFERENCES users(id) ON DELETE SET NULL;
+CREATE INDEX IF NOT EXISTS idx_support_messages_stage ON support_messages (stage, created_at);
+
+-- Saved replies (CRM phase 4): texts to start a reply from ({{name}}, {{ref}}, {{order_no}} filled in), edited before sending.
+CREATE TABLE IF NOT EXISTS support_saved_replies (
+    id              uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
+    title           varchar(80) NOT NULL,
+    body            text        NOT NULL,
+    created_by      uuid        REFERENCES users(id) ON DELETE SET NULL,
+    created_at      timestamptz NOT NULL DEFAULT now(),
+    updated_at      timestamptz NOT NULL DEFAULT now(),
+    archived_at     timestamptz
+);

@@ -63,7 +63,9 @@ const PAYMENT_COLUMNS = `p.id, p.order_no, p.provider, p.product_id, p.coins, p.
 
 const SUPPORT_LIST_COLUMNS = `s.id, s.ref, s.created_at, s.name, s.email, s.category, s.order_no, s.message, s.status, s.status_at,
   s.linked_by, s.user_id AS player_id, u.username AS player, u.is_guest AS player_guest, s.screenshot IS NOT NULL AS has_screenshot,
-  (SELECT COUNT(*)::int FROM support_replies r WHERE r.message_id = s.id) AS replies`;
+  (SELECT COUNT(*)::int FROM support_replies r WHERE r.message_id = s.id) AS replies,
+  COALESCE(s.stage, CASE s.status WHEN 'done' THEN 'closed' ELSE s.status END) AS stage, COALESCE(s.stage_at, s.status_at) AS stage_at,
+  s.assigned_to, (SELECT x.username FROM users x WHERE x.id = s.assigned_to) AS assigned`;
 
 async function audit(client, req, action, targetUserId, reason, details = {}) {
   await client.query(
@@ -376,11 +378,20 @@ router.post('/payments/:id/refund', need('payments:refund'), async (req, res) =>
 router.get('/support', need('support:read'), async (req, res) => {
   const q = String(req.query.q ?? '').trim().slice(0, 200);
   const status = support.STATUSES.includes(req.query.status) ? req.query.status : null;
+  // (CRM phase 4) The views: mine (assigned to me, not closed), waiting-us (New and Open), waiting-player (Answered), closed.
+  const stage = support.STAGES.includes(req.query.stage) ? req.query.stage : null;
+  const view = ['mine', 'waiting-us', 'waiting-player', 'closed'].includes(req.query.view) ? req.query.view : null;
   const category = support.settings.categories.includes(req.query.category) ? req.query.category : null;
   const limit = Math.min(500, Math.max(1, Number(req.query.limit) || 200));
   const params = [];
   const where = [];
   if (status) { params.push(status); where.push(`s.status = $${params.length}`); }
+  const STAGE = "COALESCE(s.stage, CASE s.status WHEN 'done' THEN 'closed' ELSE s.status END)";
+  if (stage) { params.push(stage); where.push(`${STAGE} = $${params.length}`); }
+  if (view === 'mine') { params.push(req.admin.id); where.push(`s.assigned_to = $${params.length} AND ${STAGE} <> 'closed'`); }
+  if (view === 'waiting-us') where.push(`${STAGE} IN ('new', 'open')`);
+  if (view === 'waiting-player') where.push(`${STAGE} = 'answered'`);
+  if (view === 'closed') where.push(`${STAGE} = 'closed'`);
   if (category) { params.push(category); where.push(`s.category = $${params.length}`); }
   if (/^S-\d+$/i.test(q)) {
     // A message's reference (S-1001): that message only, never others that merely contain the text
@@ -393,7 +404,7 @@ router.get('/support', need('support:read'), async (req, res) => {
     where.push(`(s.name ILIKE ${p} OR s.email ILIKE ${p} OR s.message ILIKE ${p} OR s.order_no ILIKE ${p} OR s.ref ILIKE ${p} OR u.username ILIKE ${p})`);
   }
   params.push(limit);
-  const [list, counts] = await Promise.all([
+  const [list, counts, stages] = await Promise.all([
     db.query(
       `SELECT ${SUPPORT_LIST_COLUMNS} FROM support_messages s LEFT JOIN users u ON u.id = s.user_id
         ${where.length ? `WHERE ${where.join(' AND ')}` : ''}
@@ -401,11 +412,23 @@ router.get('/support', need('support:read'), async (req, res) => {
       params,
     ),
     db.query('SELECT status, COUNT(*)::int AS n FROM support_messages GROUP BY status'),
+    db.query(
+      `SELECT COALESCE(stage, CASE status WHEN 'done' THEN 'closed' ELSE status END) AS stage, COUNT(*)::int AS n,
+              COUNT(*) FILTER (WHERE assigned_to = $1)::int AS mine
+         FROM support_messages GROUP BY 1`,
+      [req.admin.id],
+    ),
   ]);
+  const st = (k) => stages.rows.find((r) => r.stage === k)?.n ?? 0;
   res.json({
     messages: list.rows,
     counts: Object.fromEntries(support.STATUSES.map((st) => [st, counts.rows.find((r) => r.status === st)?.n ?? 0])),
     categories: support.settings.categories,
+    stages: Object.fromEntries(support.STAGES.map((k) => [k, st(k)])),
+    views: {
+      mine: stages.rows.filter((r) => r.stage !== 'closed').reduce((n, r) => n + r.mine, 0),
+      'waiting-us': st('new') + st('open'), 'waiting-player': st('answered'), closed: st('closed'),
+    },
   });
 });
 
@@ -436,7 +459,9 @@ router.get('/support/:id', need('support:read'), async (req, res) => {
       [id],
     ),
   ]);
-  res.json({ message, replies: replies.rows, audit: trail.rows, emailOn: require('../email').enabled() });
+  // (CRM phase 4) The customer beside the message: what they have spent, their packs and pass, their last purchase.
+  const customer = message.player_id ? await overviewOf(message.player_id) : null;
+  res.json({ message, replies: replies.rows, audit: trail.rows, emailOn: require('../email').enabled(), customer });
 });
 
 /** GET /support/:id/screenshot — the image sent with the message. */
@@ -452,17 +477,95 @@ router.get('/support/:id/screenshot', need('support:read'), async (req, res) => 
 router.post('/support/:id/status', need('support:answer'), async (req, res) => {
   const id = assertUuid(req.params.id);
   const body = validate(req.body, { status: { type: 'enum', required: true, values: support.STATUSES }, reason: { type: 'string', max: 500 } });
-  const message = await db.withTransaction(async (client) => {
-    const { rows: [m] } = await client.query('SELECT id, ref, user_id, status FROM support_messages WHERE id = $1 FOR UPDATE', [id]);
+  res.json({ message: await changeStage(req, id, body.status === 'done' ? 'closed' : body.status, body.reason) });
+});
+
+/** A message's stage changed (audited 'support-status', as before). */
+function changeStage(req, id, stage, reason) {
+  return db.withTransaction(async (client) => {
+    const { rows: [m] } = await client.query(
+      `SELECT id, ref, user_id, COALESCE(stage, CASE status WHEN 'done' THEN 'closed' ELSE status END) AS stage FROM support_messages WHERE id = $1 FOR UPDATE`, [id],
+    );
     if (!m) throw notFound('No such message');
-    if (m.status !== body.status) {
-      await client.query('UPDATE support_messages SET status = $2, status_at = now() WHERE id = $1', [id, body.status]);
-      await audit(client, req, 'support-status', m.user_id, body.reason || `${m.ref}: ${m.status} → ${body.status}`,
-        { message_id: id, ref: m.ref, from: m.status, to: body.status });
+    if (m.stage !== stage) {
+      await support.setStage(client, id, stage);
+      await audit(client, req, 'support-status', m.user_id, reason || `${m.ref}: ${m.stage} → ${stage}`, { message_id: id, ref: m.ref, from: m.stage, to: stage });
+    }
+    return supportMessage(client, id);
+  });
+}
+
+/** POST /support/:id/stage { stage: 'new'|'open'|'answered'|'closed', reason? } (CRM phase 4; audited). */
+router.post('/support/:id/stage', need('support:answer'), async (req, res) => {
+  const id = assertUuid(req.params.id);
+  const body = validate(req.body, { stage: { type: 'enum', required: true, values: support.STAGES }, reason: { type: 'string', max: 500 } });
+  res.json({ message: await changeStage(req, id, body.stage, body.reason) });
+});
+
+/** GET /support-assignees — admins a message can be assigned to (owners and support). */
+router.get('/support-assignees', need('support:read'), async (_req, res) => {
+  const { rows } = await db.query(`SELECT id, username FROM users WHERE role = 'admin' AND admin_role IN ('owner', 'support') AND suspended_at IS NULL AND deleted_at IS NULL ORDER BY username`);
+  res.json({ admins: rows });
+});
+
+/** POST /support/:id/assign { adminId | null } — who is on it (audited 'support-assign'). */
+router.post('/support/:id/assign', need('support:answer'), async (req, res) => {
+  const id = assertUuid(req.params.id);
+  const to = req.body?.adminId ? assertUuid(req.body.adminId) : null;
+  const message = await db.withTransaction(async (client) => {
+    const { rows: [m] } = await client.query('SELECT id, ref, user_id, assigned_to FROM support_messages WHERE id = $1 FOR UPDATE', [id]);
+    if (!m) throw notFound('No such message');
+    if (to) {
+      const { rows: [a] } = await client.query(`SELECT id, username FROM users WHERE id = $1 AND role = 'admin' AND admin_role IN ('owner', 'support')`, [to]);
+      if (!a) throw badRequest('Only an owner or a support admin can take a message');
+    }
+    if ((m.assigned_to ?? null) !== to) {
+      await client.query('UPDATE support_messages SET assigned_to = $2 WHERE id = $1', [id, to]);
+      await audit(client, req, 'support-assign', m.user_id, `${m.ref}: ${to ? 'assigned' : 'unassigned'}`, { message_id: id, ref: m.ref, from: m.assigned_to, to });
     }
     return supportMessage(client, id);
   });
   res.json({ message });
+});
+
+// ── Saved replies (CRM phase 4) ───────────────────────────────────────────────────────────────────────────
+
+const SAVED = { title: { type: 'string', required: true, min: 2, max: 80 }, body: { type: 'string', required: true, min: 2, max: 5000 } };
+
+/** GET /support-replies — the saved replies (not archived). */
+router.get('/support-replies', need('support:read'), async (_req, res) => {
+  const { rows } = await db.query(
+    `SELECT r.id, r.title, r.body, r.updated_at, u.username AS created_by FROM support_saved_replies r LEFT JOIN users u ON u.id = r.created_by
+      WHERE r.archived_at IS NULL ORDER BY r.title`,
+  );
+  res.json({ replies: rows, placeholders: ['name', 'ref', 'order_no'] });
+});
+
+/** POST /support-replies { title, body } — a new saved reply. */
+router.post('/support-replies', need('support:answer'), async (req, res) => {
+  const body = validate(req.body, SAVED);
+  const { rows: [r] } = await db.query('INSERT INTO support_saved_replies (title, body, created_by) VALUES ($1, $2, $3) RETURNING id', [body.title.trim(), body.body, req.admin.id]);
+  await audit(db, req, 'saved-reply-add', null, body.title.trim(), { id: r.id });
+  res.json({ id: r.id });
+});
+
+/** POST /support-replies/:id { title, body } — edited. */
+router.post('/support-replies/:id', need('support:answer'), async (req, res) => {
+  const id = assertUuid(req.params.id);
+  const body = validate(req.body, SAVED);
+  const { rowCount } = await db.query('UPDATE support_saved_replies SET title = $2, body = $3, updated_at = now() WHERE id = $1 AND archived_at IS NULL', [id, body.title.trim(), body.body]);
+  if (!rowCount) throw notFound('No such saved reply');
+  await audit(db, req, 'saved-reply-edit', null, body.title.trim(), { id });
+  res.json({ ok: true });
+});
+
+/** POST /support-replies/:id/archive — removed from the list (kept, for the history). */
+router.post('/support-replies/:id/archive', need('support:answer'), async (req, res) => {
+  const id = assertUuid(req.params.id);
+  const { rows: [r] } = await db.query('UPDATE support_saved_replies SET archived_at = now() WHERE id = $1 AND archived_at IS NULL RETURNING title', [id]);
+  if (!r) throw notFound('No such saved reply');
+  await audit(db, req, 'saved-reply-archive', null, r.title, { id });
+  res.json({ ok: true });
 });
 
 /** POST /support/:id/reply { text } — saved, emailed to the player when email is on, written to the audit log. */
