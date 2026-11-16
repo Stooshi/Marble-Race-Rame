@@ -5,7 +5,7 @@
 // battlements (nothing in its way for the first seconds), then the big feature: the long, steep drop off the fort's
 // cliff into the blue city below, its lanes in S-bends under drying cloth, the stepwell sweep, the hairpin by the
 // clock tower market and the run to the city gate. No names on anything.
-const { track, opening, straight, plunge, sweep, spiral, sBends, hairpin, runIn, peg, slalom, curtain, moguls, pileUp, brake, block } = require('../trackKit');
+const { track, opening, straight, plunge, sweep, spiral, sBends, hairpin, runIn, peg, slalom, moguls, pileUp, block } = require('../trackKit');
 
 module.exports = track({
   slug: 'jodhpur-blue-city-run',
@@ -46,13 +46,13 @@ module.exports = track({
     },
     {
       name: 'Blue lanes', shape: sBends({ first: 'right', radius: 60, degrees: 65, grade: 0.16 }), height: 6, scenery: ['colourful-houses'],
-      obstacles: [curtain({ costume: 'drying-nets', at: 0.25, side: 'left' }), slalom({ costume: 'lantern-pole', from: 0.5, to: 0.9, count: 3, loss: 0.25 })],
+      obstacles: [peg({ costume: 'lantern-pole', at: 0.25, line: 'left' }), slalom({ costume: 'lantern-pole', from: 0.5, to: 0.9, count: 3, loss: 0.25 })],
     },
     {
       name: 'Stepwell spiral', shape: spiral({ side: 'left', radius: 40, turns: 1, grade: 0.18 }), height: 10,
       around: 'mughal-fountain',
     },
-    { name: 'To the market', shape: straight(50, { grade: 0.13 }), height: 8, billboards: 1, features: [brake({ at: 0.05, length: 12, drag: 0.02 }), moguls({ from: 0.6, to: 0.9, count: 3 })] },
+    { name: 'To the market', shape: straight(50, { grade: 0.13 }), height: 8, billboards: 1, features: [moguls({ from: 0.6, to: 0.9, count: 3 })] },
     { name: 'Market hairpin', shape: hairpin({ side: 'right' }), height: 10, landmarks: [{ name: 'qutub-minar', at: 0.5, side: 'right', distance: 30 }] },
     {
       name: 'Old city bends', shape: sBends({ first: 'right', radius: 65, degrees: 60, grade: 0.16 }), height: 6,
