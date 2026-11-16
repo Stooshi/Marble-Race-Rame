@@ -115,7 +115,7 @@ export default function PurchasesPage() {
       </div>
 
       {justPaid && waiting && <div className="ms-msg" role="status">Thanks! Waiting for Stripe to confirm order {justPaid}… your coins arrive as soon as it does.</div>}
-      {justPaid && !waiting && fresh?.status === 'paid' && <div className="ms-msg" role="status">Order {justPaid} is paid: {fresh.pack_key ? `the ${packName(fresh)} is unlocked` : fresh.season_key ? (passOf(fresh)?.state === 'before' ? `your ${passOf(fresh).pass.name} activates on ${activatesDay(passOf(fresh).pass.activatesAt)}` : 'your season pass is ready') : `● ${formatNumber(fresh.coins)} coins added`}. Stripe has emailed you a receipt. <Link to="/shop">To the shop</Link></div>}
+      {justPaid && !waiting && fresh?.status === 'paid' && <div className="ms-msg" role="status">Order {justPaid} is paid: {fresh.pack_key ? `the ${packName(fresh)} is unlocked` : fresh.season_key ? (passOf(fresh)?.state === 'before' ? `your ${passOf(fresh).pass.name} activates on ${activatesDay(passOf(fresh).pass.activatesAt)}` : 'your season pass is ready') : `● ${formatNumber(fresh.coins)} coins added`}. Your receipt is in the list below and in your email. <Link to="/shop">To the shop</Link></div>}
       {justPaid && !waiting && fresh?.status === 'pending' && <div className="ms-msg" role="status">Stripe hasn't confirmed order {justPaid} yet. Some payments take a little longer; your coins arrive by themselves when it does. Reload this page to check.</div>}
       {error && <div className="ms-msg ms-msg--bad" role="alert">{error}</div>}
       {!orders && !error && <p className="ms-note">Loading your orders…</p>}
@@ -143,7 +143,10 @@ export default function PurchasesPage() {
                     {o.refunded_cents > 0 && <span className="ms-note" style={{ display: 'block' }}>Refunded {money(o.refunded_cents, o.charged_currency ?? o.currency)}</span>}
                   </td>
                   <td>{statusOf(o)}</td>
-                  <td>{o.receipt_url ? <a href={o.receipt_url} target="_blank" rel="noreferrer">View receipt</a> : '—'}</td>
+                  <td>
+                    {(o.documents ?? []).map((d) => <Link key={d.number} to={`/purchases/receipt/${encodeURIComponent(d.number)}`} style={{ display: 'block' }}>{d.kind === 'credit' ? 'Credit note' : 'Receipt'} {d.number}</Link>)}
+                    {!(o.documents ?? []).length && (o.receipt_url ? <a href={o.receipt_url} target="_blank" rel="noreferrer">View receipt</a> : '—')}
+                  </td>
                 </tr>
               ))}
             </tbody>

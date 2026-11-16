@@ -16,6 +16,7 @@ import RoomPage from './site/pages/RoomPage';
 import CertificatePage from './site/pages/CertificatePage';
 import BagPage from './site/pages/BagPage';
 import PurchasesPage from './site/pages/PurchasesPage';
+import ReceiptPage from './site/pages/ReceiptPage';
 import SettingsPage from './site/pages/SettingsPage';
 import UnsubscribePage from './site/pages/UnsubscribePage';
 import { ForgotPasswordPage, ResetPasswordPage } from './site/pages/PasswordPages';
@@ -126,6 +127,7 @@ export default function App() {
           <Route path="/confirm-email" element={<ConfirmEmailPage />} />
           <Route path="/bag" element={<BagPage />} />
           <Route path="/purchases" element={<PurchasesPage />} />
+          <Route path="/purchases/receipt/:number" element={<ReceiptPage />} />
           <Route path="/settings" element={<SettingsPage />} />
           {/* Gift codes: a 404 until src/shared/giftCodes.json switches them on; never in the apps. */}
           <Route path="/redeem" element={<RedeemPage NotFound={NotFound} />} />

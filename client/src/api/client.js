@@ -115,6 +115,8 @@ export const api = {
   appleAccount: () => request('/payments/apple/account'),
   appleVerify: (body) => request('/payments/apple/verify', { method: 'POST', body }),
   myOrders: () => request('/payments/mine'),
+  // A receipt (K-…) or credit note (KR-…) of the player's own (src/billing on the server).
+  myDocument: (number) => request(`/payments/documents/${encodeURIComponent(number)}`),
   // "Report this name" (src/names on the server): where = 'scoreboard' | 'results' | 'room'.
   reportName: (userId, where, name) => request(`/users/${userId}/report-name`, { method: 'POST', body: { where, ...(name && { name }) } }),
   // Push notifications in the apps (src/push on the server).

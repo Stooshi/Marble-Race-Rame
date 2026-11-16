@@ -41,6 +41,19 @@ async function request(path, { method = 'GET', body, token = getSession()?.token
   return data;
 }
 
+/** Leaves out empty filters. */
+const clean = (f) => Object.fromEntries(Object.entries(f).filter(([, v]) => v != null && String(v).trim() !== '').map(([k, v]) => [k, String(v).trim()]));
+
+/** Saves a CSV answer (an export) as a file. */
+export async function saveCsv(res, filename) {
+  const url = URL.createObjectURL(await res.blob());
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 2000);
+}
+
 export const adminApi = {
   // Step 1: the admin's own password (a player login, kept only in memory). Step 2: the code.
   login: (login, password) => request('/auth/login', { method: 'POST', body: { login, password }, token: null }),
@@ -81,5 +94,16 @@ export const adminApi = {
   giftCode: (id) => request(`/admin/gift-codes/${id}`),
   makeGiftCodes: (body) => request('/admin/gift-codes', { method: 'POST', body }),
   disableGiftCode: (id, reason) => request(`/admin/gift-codes/${id}/disable`, { method: 'POST', body: { reason } }),
+  // CRM phase 1–2 (16 Nov 2026): the audit log with filters, admins and roles (owners), billing (finance, owners).
+  auditLog: (f = {}) => request(`/admin/audit?${new URLSearchParams({ limit: '300', ...clean(f) })}`),
+  auditCsv: (f, reason) => request(`/admin/audit?${new URLSearchParams({ ...clean(f), format: 'csv', reason })}`, { raw: true }),
+  admins: () => request('/admin/admins'),
+  addAdmin: (login, role, reason) => request('/admin/admins', { method: 'POST', body: { login, role, reason } }),
+  setAdminRole: (id, role, reason) => request(`/admin/admins/${id}/role`, { method: 'POST', body: { role, reason } }),
+  removeAdmin: (id, reason) => request(`/admin/admins/${id}/remove`, { method: 'POST', body: { reason } }),
+  billingDocuments: (f = {}) => request(`/admin/billing/documents?${new URLSearchParams(clean(f))}`),
+  billingDocument: (number) => request(`/admin/billing/documents/${encodeURIComponent(number)}`),
+  billingSummary: (month) => request(`/admin/billing/summary?month=${encodeURIComponent(month)}`),
+  billingCsv: (month, file, reason) => request(`/admin/billing/export?${new URLSearchParams({ month, file, reason })}`, { raw: true }),
   consentsCsv: (reason) => request(`/admin/consents?format=csv&reason=${encodeURIComponent(reason)}`, { raw: true }),
 };

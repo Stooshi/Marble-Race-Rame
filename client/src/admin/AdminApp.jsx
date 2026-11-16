@@ -5,7 +5,7 @@ import { adminApi, getSession, setSession, whenExpired } from './adminApi';
 import { ITEMS } from '../shared/marbles';
 import { eachLimited, firstCountry, lastFinishedRace, sortPlayers } from './players';
 import { countryName } from '../site/country/countries';
-import CrmPreview from './CrmPreview';
+import Crm, { BASE as CRM } from './Crm';
 import './admin.css';
 
 /**
@@ -35,13 +35,16 @@ export default function AdminApp() {
   const logout = async () => { await adminApi.end().catch(() => {}); setSession(null); setS(null); navigate('/admin'); };
 
   if (!session) return <Login onDone={signedIn} notice={notice} />;
-  // The CRM design preview (16 Nov 2026): its own frame, admins only; the live back office below is unchanged.
-  if (pathname.startsWith('/admin/preview-crm')) return <CrmPreview session={session} onLogout={logout} />;
+  // The CRM (16 Nov 2026, its own frame: ./Crm.jsx). The approved design preview's address leads there; the
+  // classic pages below stay reachable while the CRM grows.
+  if (pathname.startsWith('/admin/preview-crm')) return <Navigate to={pathname.replace('/admin/preview-crm', CRM)} replace />;
+  if (pathname.startsWith(CRM)) return <Crm session={session} onLogout={logout} />;
   return (
     <div className="adm">
       <header className="adm-top">
         <b className="adm-brand">Marble Spins · back office</b>
         <nav className="adm-nav" aria-label="Back office">
+          <NavLink to="/admin/crm">New CRM</NavLink>
           <NavLink to="/admin/dashboard">Dashboard</NavLink>
           <NavLink to="/admin/players">Players</NavLink>
           <NavLink to="/admin/payments">Payments</NavLink>
