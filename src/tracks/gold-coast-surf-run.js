@@ -4,7 +4,7 @@
 // Australia's Gold Coast: from an observation tower among the beachfront towers, through the beach bends, then the
 // big feature: a long, steeply banked turn out over the surf round a rocky islet, a run past the surfers, the marina
 // hairpin among the yachts, S-bends through the palms and the run along the sand to the surf club. No names on anything.
-const { track, opening, straight, sweep, sBends, hairpin, plunge, runIn, peg, slalom, block, curtain } = require('../trackKit');
+const { track, opening, straight, sweep, sBends, hairpin, plunge, runIn, peg, slalom, block, curtain, brake } = require('../trackKit');
 
 module.exports = track({
   slug: 'gold-coast-surf-run',
@@ -50,8 +50,8 @@ module.exports = track({
       landmarks: [{ name: 'yachts', at: 0.5, side: 'right', distance: 30 }],
       obstacles: [peg({ costume: 'mooring-pole', at: 0.3, line: 'right' }), peg({ costume: 'mooring-pole', at: 0.65, line: 'left' })],
     },
-    { name: 'To the marina', shape: straight(40, { grade: 0.13 }), height: 6, obstacles: [block({ costume: 'buoy', at: 0.5, line: 'center' })] },
-    { name: 'Marina hairpin', shape: hairpin({ side: 'right' }), height: 8, landmarks: [{ name: 'harbour', at: 0.5, side: 'right', distance: 26 }] },
+    { name: 'To the marina', shape: straight(45, { grade: 0.13 }), height: 6, obstacles: [block({ costume: 'buoy', at: 0.65, line: 'center' })], features: [brake({ at: 0.05, length: 12, drag: 0.02 })] },
+    { name: 'Marina hairpin', shape: hairpin({ side: 'right' }), height: 8, landmarks: [{ name: 'harbour', at: 0.5, side: 'right', distance: 44 }] },
     { name: 'Down to the sand', shape: plunge(40, { grade: 0.28, from: 0.14 }), height: 4 },
     {
       name: 'Through the palms', shape: sBends({ first: 'right', radius: 75, degrees: 55, grade: 0.14 }), height: 6, scenery: ['palms'],

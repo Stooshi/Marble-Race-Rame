@@ -5,7 +5,7 @@
 // the big feature: a splitter round a pagoda on the hill, one channel each side, then over the river under the
 // cable-stayed bridge, the lantern-lit market streets, the hairpin and the run down to the palace gate.
 // No names on anything.
-const { track, opening, straight, sweep, sBends, hairpin, splitter, plunge, halfPipe, runIn, peg, slalom, block, moguls } = require('../trackKit');
+const { track, opening, straight, sweep, sBends, hairpin, splitter, plunge, halfPipe, runIn, peg, slalom, block, moguls, brake } = require('../trackKit');
 
 module.exports = track({
   slug: 'seoul-namsan-run',
@@ -33,9 +33,9 @@ module.exports = track({
   }),
   sections: [
     {
-      name: 'Past the palace halls', shape: sweep({ side: 'right', radius: 80, degrees: 70, grade: 0.14 }), height: 16, billboards: 2,
+      name: 'Past the palace halls', shape: straight(70, { grade: 0.13 }), height: 16, billboards: 2,
       landmarks: [{ name: 'wudian-hall', at: 0.5, side: 'left', distance: 34 }],
-      obstacles: [peg({ costume: 'lantern-pole', at: 0.35, line: 'left' }), peg({ costume: 'lantern-pole', at: 0.7, line: 'right' })],
+      features: [moguls({ from: 0.55, to: 0.85, count: 3 })],
     },
     {
       name: 'Round the pagoda',
@@ -54,7 +54,11 @@ module.exports = track({
       landmarks: [{ name: 'lantern-row', at: 0.5, side: 'left', distance: 22 }],
       obstacles: [peg({ costume: 'lantern-pole', at: 0.3, line: 'center' }), peg({ costume: 'lantern-pole', at: 0.7, line: 'right' })],
     },
-    { name: 'To the hairpin', shape: straight(45, { grade: 0.13 }), height: 8, obstacles: [block({ costume: 'stone-lion', at: 0.5, line: 'center' })] },
+        {
+      name: 'Night market', shape: sweep({ side: 'right', radius: 80, degrees: 60, grade: 0.13 }), height: 6,
+      obstacles: [peg({ costume: 'lantern-pole', at: 0.35, line: 'left' }), peg({ costume: 'lantern-pole', at: 0.7, line: 'right' })],
+    },
+    { name: 'To the hairpin', shape: straight(55, { grade: 0.13 }), height: 8, obstacles: [block({ costume: 'stone-lion', at: 0.65, line: 'center' })], features: [brake({ at: 0.05, length: 12, drag: 0.02 })] },
     { name: 'Temple hairpin', shape: hairpin({ side: 'left' }), height: 10 },
     { name: 'Down the steps', shape: straight(30, { grade: 0.15 }), height: 6 },
     { name: 'Between the walls', shape: halfPipe({ first: 'left', width: 8, swings: 2, radius: 140, degrees: 22, grade: 0.12 }), height: 4 },
