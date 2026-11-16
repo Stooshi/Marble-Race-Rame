@@ -12,6 +12,38 @@ const Turntable = lazy(() => importOrReload(() => import('../marbles/Turntable')
 
 const FILTERS = ['all', ...RARITY_ORDER];
 
+/** The bag's tiles from GET /api/bag: starters, owned collection marbles, plain marbles, then the ones still to get. */
+export function bagTiles(data) {
+  if (!data) return [];
+  const copies = new Map(data.copies.map((c) => [c.slug, c]));
+  const complete = new Set(data.sets.filter((s) => s.complete).map((s) => s.design));
+  const collection = ITEMS.map((item) => {
+    const copy = copies.get(item.slug);
+    const notes = [];
+    // (A pass marble: "Holiday 2026 #0001"; any other numbered copy: "#037".)
+    if (copy?.editionNo) notes.push(item.kind === 'pass' ? passNumber(item, copy.editionNo) : `#${String(copy.editionNo).padStart(3, '0')}`);
+    if (copy && complete.has(item.design.key)) notes.push('Set ★');
+    const retired = retiredLine(item);
+    if (copy && retired) notes.push(retired);
+    return {
+      key: item.slug, slug: item.slug, id: item.id, collection: item.collection, owned: Boolean(copy), copy, rarity: item.rarity,
+      name: item.design.shades.length > 1 ? `${item.design.name} · ${item.shade.name}` : item.design.name,
+      note: notes.join(' · '), shooter: data.shooter?.item === item.slug,
+    };
+  });
+  const originals = data.originals.map((m) => ({
+    key: m.id, marble: m, owned: true, rarity: 'original', name: m.name, starterCode: m.marble_code ?? null,
+    note: m.is_starter ? `Starter ${m.starter_no ?? ''} of 4`.replace('  ', ' ') : 'Plain marble',
+    shooter: data.shooter?.original === m.id,
+  }));
+  // Marbles not owned: only those that can still be had (never a retired seasonal one, or a pass marble after its season).
+  const gettable = (t) => !['retired', 'closed'].includes(windowOf(ITEM[t.slug]));
+  // (your own 4 starters first: every player has them, each with its own Marble ID)
+  const starters = originals.filter((t) => t.marble.is_starter);
+  const plain = originals.filter((t) => !t.marble.is_starter);
+  return [...starters, ...collection.filter((t) => t.owned), ...plain, ...collection.filter((t) => !t.owned && gettable(t))];
+}
+
 /**
  * The Marble Bag: every marble the player owns (collection shades and their
  * plain marbles: the player's own 4 starters and any bought), the ones still to collect, Set badges, and picking the Shooter.
@@ -25,36 +57,7 @@ export default function BagPage() {
   const [error, setError] = useState(null);
   const data = bag.data;
 
-  const tiles = useMemo(() => {
-    if (!data) return [];
-    const copies = new Map(data.copies.map((c) => [c.slug, c]));
-    const complete = new Set(data.sets.filter((s) => s.complete).map((s) => s.design));
-    const collection = ITEMS.map((item) => {
-      const copy = copies.get(item.slug);
-      const notes = [];
-      // (A pass marble: "Holiday 2026 #0001"; any other numbered copy: "#037".)
-      if (copy?.editionNo) notes.push(item.kind === 'pass' ? passNumber(item, copy.editionNo) : `#${String(copy.editionNo).padStart(3, '0')}`);
-      if (copy && complete.has(item.design.key)) notes.push('Set ★');
-      const retired = retiredLine(item);
-      if (copy && retired) notes.push(retired);
-      return {
-        key: item.slug, slug: item.slug, id: item.id, collection: item.collection, owned: Boolean(copy), copy, rarity: item.rarity,
-        name: item.design.shades.length > 1 ? `${item.design.name} · ${item.shade.name}` : item.design.name,
-        note: notes.join(' · '), shooter: data.shooter?.item === item.slug,
-      };
-    });
-    const originals = data.originals.map((m) => ({
-      key: m.id, marble: m, owned: true, rarity: 'original', name: m.name, starterCode: m.marble_code ?? null,
-      note: m.is_starter ? `Starter ${m.starter_no ?? ''} of 4`.replace('  ', ' ') : 'Plain marble',
-      shooter: data.shooter?.original === m.id,
-    }));
-    // Marbles not owned: only those that can still be had (never a retired seasonal one, or a pass marble after its season).
-    const gettable = (t) => !['retired', 'closed'].includes(windowOf(ITEM[t.slug]));
-    // (your own 4 starters first: every player has them, each with its own Marble ID)
-    const starters = originals.filter((t) => t.marble.is_starter);
-    const plain = originals.filter((t) => !t.marble.is_starter);
-    return [...starters, ...collection.filter((t) => t.owned), ...plain, ...collection.filter((t) => !t.owned && gettable(t))];
-  }, [data]);
+  const tiles = useMemo(() => bagTiles(data), [data]);
 
   if (!authLoading && !isAuthenticated) {
     return (
@@ -117,43 +120,7 @@ export default function BagPage() {
       {bag.loading && !data && <p className="ms-note">Opening your Marble Bag…</p>}
       {bag.error && <div className="ms-msg ms-msg--bad">{bag.error.message}</div>}
 
-      {pick && (
-        <section className="ms-card" style={{ display: 'flex', flexWrap: 'wrap', gap: 20, alignItems: 'center' }} aria-live="polite">
-          {(() => {
-            // The picked marble in 3D once its look is approved (the picture while it loads).
-            const flat = pick.slug ? <MarbleBadge slug={pick.slug} size={110} /> : <MarbleBadge marble={pick.marble} size={110} />;
-            const in3d = pick.slug ? shows3d(pick.slug) : PLAIN_3D;
-            if (!in3d) return flat;
-            return (
-              <div className="ms-bag__ball">
-                <Suspense fallback={flat}>
-                  <Turntable key={pick.slug ?? pick.marble?.slug} slug={pick.slug} marble={pick.slug ? null : pick.marble} label={`${pick.name} in 3D`} />
-                </Suspense>
-              </div>
-            );
-          })()}
-          <div style={{ display: 'grid', gap: 8, flex: '1 1 260px', minWidth: 0 }}>
-            <h2 className="ms-h3" style={{ fontFamily: 'var(--ms-cond)', fontWeight: 800, fontSize: '1.6rem' }}>{pick.name}</h2>
-            {pick.slug && <span className="ms-row" style={{ gap: 8 }}><span className="ms-id ms-id--big">#{pick.id}</span><span className="ms-sheet__col">{pick.collection.toUpperCase()}</span></span>}
-            {pick.slug && <p style={{ margin: 0, color: 'var(--ms-soft)' }}>{ITEM[pick.slug].shade.description}</p>}
-            {pick.starterCode && <span className="ms-row" style={{ gap: 8 }}><span className="ms-id ms-id--big">{pick.starterCode}</span><span className="ms-sheet__col">YOUR STARTER {pick.marble.starter_no} OF 4</span></span>}
-            {pick.starterCode && <p style={{ margin: 0, color: 'var(--ms-soft)' }}>One of your own 4 starter marbles: plain glass, {pick.marble.pattern === 'half' ? 'two colours, half and half' : 'one colour'}. Its Marble ID is yours alone, and in a race nobody else shows the same look.</p>}
-            {pick.marble?.description && <p style={{ margin: 0, color: 'var(--ms-soft)' }}>{pick.marble.description}</p>}
-            {error && <div className="ms-msg ms-msg--bad">{error}</div>}
-            <div className="ms-row">
-              {pick.owned && (pick.shooter
-                ? <span className="ms-btn" aria-disabled="true">YOUR MARBLE</span>
-                : <button type="button" className="ms-btn ms-btn--primary" disabled={busy} onClick={() => makeShooter(pick)}>{busy ? 'SAVING…' : 'MAKE IT MY MARBLE'}</button>)}
-              {pick.copy && <Link to={`/certificate/${pick.copy.marbleCode}`} className="ms-btn">{pick.copy.editionNo ? 'CERTIFICATE' : 'MARBLE ID'}</Link>}
-              {pick.starterCode && <Link to={`/certificate/${pick.starterCode}`} className="ms-btn">MARBLE ID</Link>}
-              {!pick.owned && (ITEM[pick.slug].kind === 'pass'
-                ? <Link to="/pass" className="ms-btn ms-btn--primary">COMES WITH THE SEASON PASS</Link>
-                : <Link to={`/collection/${ITEM[pick.slug].design.key}?shade=${ITEM[pick.slug].shade.key}`} className="ms-btn ms-btn--primary">GET IT IN THE SHOP</Link>)}
-              <button type="button" className="ms-btn ms-btn--ghost ms-btn--sm" onClick={() => setSelected(null)}>Close</button>
-            </div>
-          </div>
-        </section>
-      )}
+      {pick && <MarbleDetail pick={pick} busy={busy} error={error} onShooter={makeShooter} onClose={() => setSelected(null)} />}
 
       <section aria-label="Marbles" className="ms-cards" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 150px), 1fr))', gap: 12 }}>
         {shown.map((t) => {
@@ -187,5 +154,46 @@ export default function BagPage() {
       )}
       <p className="ms-note">Every marble races at the same level, so pick the one you like looking at. Missing marbles can be earned with coins in the <Link to="/shop">shop</Link>.</p>
     </div>
+  );
+}
+
+/** The chosen marble: in 3D once its look is approved, its ID, words and buttons. */
+export function MarbleDetail({ pick, busy, error, onShooter, onClose }) {
+  return (
+    <section className="ms-card" style={{ display: 'flex', flexWrap: 'wrap', gap: 20, alignItems: 'center' }} aria-live="polite">
+      {(() => {
+        // The picked marble in 3D once its look is approved (the picture while it loads).
+        const flat = pick.slug ? <MarbleBadge slug={pick.slug} size={110} /> : <MarbleBadge marble={pick.marble} size={110} />;
+        const in3d = pick.slug ? shows3d(pick.slug) : PLAIN_3D;
+        if (!in3d) return flat;
+        return (
+          <div className="ms-bag__ball">
+            <Suspense fallback={flat}>
+              <Turntable key={pick.slug ?? pick.marble?.slug} slug={pick.slug} marble={pick.slug ? null : pick.marble} label={`${pick.name} in 3D`} />
+            </Suspense>
+          </div>
+        );
+      })()}
+      <div style={{ display: 'grid', gap: 8, flex: '1 1 260px', minWidth: 0 }}>
+        <h2 className="ms-h3" style={{ fontFamily: 'var(--ms-cond)', fontWeight: 800, fontSize: '1.6rem' }}>{pick.name}</h2>
+        {pick.slug && <span className="ms-row" style={{ gap: 8 }}><span className="ms-id ms-id--big">#{pick.id}</span><span className="ms-sheet__col">{pick.collection.toUpperCase()}</span></span>}
+        {pick.slug && <p style={{ margin: 0, color: 'var(--ms-soft)' }}>{ITEM[pick.slug].shade.description}</p>}
+        {pick.starterCode && <span className="ms-row" style={{ gap: 8 }}><span className="ms-id ms-id--big">{pick.starterCode}</span><span className="ms-sheet__col">YOUR STARTER {pick.marble.starter_no} OF 4</span></span>}
+        {pick.starterCode && <p style={{ margin: 0, color: 'var(--ms-soft)' }}>One of your own 4 starter marbles: plain glass, {pick.marble.pattern === 'half' ? 'two colours, half and half' : 'one colour'}. Its Marble ID is yours alone, and in a race nobody else shows the same look.</p>}
+        {pick.marble?.description && <p style={{ margin: 0, color: 'var(--ms-soft)' }}>{pick.marble.description}</p>}
+        {error && <div className="ms-msg ms-msg--bad">{error}</div>}
+        <div className="ms-row">
+          {pick.owned && (pick.shooter
+            ? <span className="ms-btn" aria-disabled="true">YOUR MARBLE</span>
+            : <button type="button" className="ms-btn ms-btn--primary" disabled={busy} onClick={() => onShooter(pick)}>{busy ? 'SAVING…' : 'MAKE IT MY MARBLE'}</button>)}
+          {pick.copy && <Link to={`/certificate/${pick.copy.marbleCode}`} className="ms-btn">{pick.copy.editionNo ? 'CERTIFICATE' : 'MARBLE ID'}</Link>}
+          {pick.starterCode && <Link to={`/certificate/${pick.starterCode}`} className="ms-btn">MARBLE ID</Link>}
+          {!pick.owned && (ITEM[pick.slug].kind === 'pass'
+            ? <Link to="/pass" className="ms-btn ms-btn--primary">COMES WITH THE SEASON PASS</Link>
+            : <Link to={`/collection/${ITEM[pick.slug].design.key}?shade=${ITEM[pick.slug].shade.key}`} className="ms-btn ms-btn--primary">GET IT IN THE SHOP</Link>)}
+          <button type="button" className="ms-btn ms-btn--ghost ms-btn--sm" onClick={onClose}>Close</button>
+        </div>
+      </div>
+    </section>
   );
 }

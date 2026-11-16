@@ -1222,3 +1222,29 @@ mark.ms-legal__new { background: rgba(255, 210, 31, 0.22); color: var(--ms-text)
   .ms-packbanner { grid-template-columns: 1fr; }
   .ms-packbanner__buy { justify-items: start; grid-auto-flow: column; align-items: center; }
 }
+
+/* The Marble Bag redesign (16 Nov 2026, preview at /preview/bag-v2): bigger cards, the racing marble highlighted,
+   the "Grow your collection" banner and the marbles still to collect in full colour with their price. */
+.ms-bag2__count { color: var(--ms-soft); font-size: 1.05rem; }
+.ms-bag2__count b { color: var(--ms-text, #fff); }
+.ms-bag2__grid { display: grid; gap: 14px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 190px), 1fr)); }
+.ms-bag2__card { position: relative; display: grid; justify-items: center; align-content: start; gap: 6px; padding: 26px 14px 16px; border-radius: 18px; background: var(--ms-card); border: 1px solid var(--ms-border); color: inherit; font: inherit; text-align: center; cursor: pointer; min-width: 0; }
+.ms-bag2__card:hover { border-color: var(--ms-soft); }
+.ms-bag2__card[aria-pressed="true"] { border-color: var(--ms-soft); background: var(--ms-card-2, var(--ms-card)); }
+.ms-bag2__card.is-racing { border: 2px solid var(--ms-yellow); box-shadow: 0 0 0 4px rgba(255, 210, 31, 0.14), 0 10px 30px rgba(255, 210, 31, 0.12); }
+.ms-bag2__racing { position: absolute; top: -11px; left: 50%; transform: translateX(-50%); white-space: nowrap; padding: 3px 10px; border-radius: 99px; background: var(--ms-yellow); color: #14171f; font-family: var(--ms-cond); font-weight: 800; font-size: 12px; letter-spacing: 0.06em; }
+.ms-bag2__name { font-size: 1rem; line-height: 1.2; overflow-wrap: anywhere; }
+.ms-bag2__rarity { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
+.ms-bag2__note { font-size: 0.8rem; color: var(--ms-muted); }
+.ms-bag2__price { font-weight: 700; color: var(--ms-yellow); }
+.ms-bag2__card--shop { cursor: default; padding-top: 18px; }
+.ms-bag2__card--shop .ms-btn { margin-top: 4px; }
+.ms-bag2__pic { display: block; border-radius: 50%; }
+.ms-bag2__grow { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 18px; padding: clamp(18px, 3vw, 28px); border-radius: 20px; border: 1px solid var(--ms-yellow); background: radial-gradient(120% 140% at 100% 0%, rgba(255, 210, 31, 0.16), transparent 60%), var(--ms-card); }
+.ms-bag2__growh { margin: 0; font-family: var(--ms-cond); font-weight: 800; font-size: clamp(26px, 4vw, 38px); line-height: 1; }
+.ms-bag2__points { margin: 0; padding-left: 1.1em; display: grid; gap: 4px; color: var(--ms-soft); }
+@media (max-width: 520px) {
+  .ms-bag2__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .ms-bag2__card { padding: 22px 8px 12px; }
+  .ms-bag2__racing { font-size: 10px; padding: 2px 8px; }
+}
