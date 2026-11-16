@@ -45,7 +45,7 @@ test('the loop\'s proving track: the loop is its feature (the flyover\'s highlig
   // The only tracks with a loop: its proving track, Saint-Tropez and Pudong Marble Grand Prix (3 Nov 2026), Nairobi
   // Marble Grand Prix's Expressway loop (its own layout, 7 Nov 2026), Nevada Drag Strip (13 Nov), Kings Canyon Lost
   // City, Tianmen Heaven's Gate and Neon Grid (15 Nov). A new one goes on this list, and the next test races it.
-  assert.deepEqual(PHYSICS_TRACKS.filter((x) => x.physics?.features?.some((y) => y.type === 'loop')).map((x) => x.slug), [SLUG, 'nairobi-marble-grand-prix', 'saint-tropez', 'pudong-marble-grand-prix', 'nevada-drag-strip', 'kings-canyon-lost-city', 'tianmen-heavens-gate', 'neon-grid']);
+  assert.deepEqual(PHYSICS_TRACKS.filter((x) => x.physics?.features?.some((y) => y.type === 'loop')).map((x) => x.slug), [SLUG, 'nairobi-marble-grand-prix', 'saint-tropez', 'pudong-marble-grand-prix', 'nevada-drag-strip', 'kings-canyon-lost-city', 'tianmen-heavens-gate', 'neon-grid', 'santa-monica-pier-run']);
 });
 
 test('every track with a loop: every marble goes round every loop with grip to spare, none caught, all finish', () => {

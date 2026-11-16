@@ -45,5 +45,17 @@
  "marble-stadium-sprint": {
   "t": 16000,
   "side": 1
+ },
+ "pingxi-lantern-run": {
+  "t": 17000,
+  "side": -1
+ },
+ "jodhpur-blue-city-run": {
+  "t": 17000,
+  "side": 1
+ },
+ "seoul-namsan-run": {
+  "t": 12000,
+  "side": 1
  }
 }
