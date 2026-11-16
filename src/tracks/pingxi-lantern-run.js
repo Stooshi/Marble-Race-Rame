@@ -50,7 +50,7 @@ module.exports = track({
       obstacles: [slalom({ costume: 'lantern-pole', from: 0.2, to: 0.85, count: 5, loss: 0.3 })],
     },
     {
-      name: 'Lantern street', shape: sBends({ first: 'left', radius: 65, degrees: 70, grade: 0.15 }), height: 6,
+      name: 'Lantern street', shape: sBends({ first: 'left', radius: 65, degrees: 60, grade: 0.16 }), height: 6,
       landmarks: [{ name: 'lantern-row', at: 0.5, side: 'right', distance: 22 }],
       obstacles: [slalom({ costume: 'lantern-pole', from: 0.25, to: 0.85, count: 5, loss: 0.3 })],
     },
@@ -67,7 +67,7 @@ module.exports = track({
     { name: 'To the hairpin', shape: straight(40, { grade: 0.13 }), height: 8, features: [brake({ at: 0.05, length: 14, drag: 0.03 })] },
     { name: 'Village hairpin', shape: hairpin({ side: 'right' }), height: 8 },
     {
-      name: 'Bamboo bends', shape: sBends({ first: 'left', radius: 65, degrees: 70, grade: 0.15 }), height: 4,
+      name: 'Bamboo bends', shape: sBends({ first: 'left', radius: 65, degrees: 55, grade: 0.16 }), height: 4,
       obstacles: [peg({ costume: 'lantern-pole', at: 0.25, line: 'center' }), peg({ costume: 'lantern-pole', at: 0.5, line: 'right' }), peg({ costume: 'lantern-pole', at: 0.75, line: 'left' })],
     },
     {

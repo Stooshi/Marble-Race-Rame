@@ -48,7 +48,7 @@ module.exports = track({
       obstacles: [slalom({ costume: 'lantern-pole', from: 0.35, to: 0.85, count: 4, loss: 0.25 })],
     },
     { name: 'To the hairpin', shape: straight(55, { grade: 0.13 }), height: 8, obstacles: [block({ costume: 'stone-lion', at: 0.65, line: 'center' })], features: [brake({ at: 0.05, length: 14, drag: 0.03 })] },
-    { name: 'Temple hairpin', shape: hairpin({ side: 'left' }), height: 10 },
+    { name: 'Temple hairpin', shape: hairpin({ side: 'right' }), height: 10 },
     {
       name: 'Market lanes', shape: sBends({ first: 'right', radius: 65, degrees: 70, grade: 0.15 }), height: 8,
       landmarks: [{ name: 'lantern-row', at: 0.5, side: 'left', distance: 22 }],
