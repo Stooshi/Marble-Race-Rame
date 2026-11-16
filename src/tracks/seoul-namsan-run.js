@@ -49,17 +49,17 @@ module.exports = track({
       obstacles: [slalom({ costume: 'lantern-pole', from: 0.4, to: 0.85, count: 4, loss: 0.25 })],
       features: [moguls({ from: 0.15, to: 0.35, count: 3 })],
     },
+    { name: 'To the hairpin', shape: straight(55, { grade: 0.13 }), height: 8, obstacles: [block({ costume: 'stone-lion', at: 0.65, line: 'center' })], features: [brake({ at: 0.05, length: 14, drag: 0.03 })] },
+    { name: 'Temple hairpin', shape: hairpin({ side: 'left' }), height: 10 },
     {
       name: 'Market lanes', shape: sBends({ first: 'right', radius: 65, degrees: 70, grade: 0.15 }), height: 8,
       landmarks: [{ name: 'lantern-row', at: 0.5, side: 'left', distance: 22 }],
       obstacles: [peg({ costume: 'lantern-pole', at: 0.3, line: 'center' }), peg({ costume: 'lantern-pole', at: 0.7, line: 'right' })],
     },
-        {
+    {
       name: 'Night market', shape: sweep({ side: 'right', radius: 80, degrees: 60, grade: 0.13 }), height: 6,
       obstacles: [peg({ costume: 'lantern-pole', at: 0.35, line: 'left' }), peg({ costume: 'lantern-pole', at: 0.7, line: 'right' })],
     },
-    { name: 'To the hairpin', shape: straight(55, { grade: 0.13 }), height: 8, obstacles: [block({ costume: 'stone-lion', at: 0.65, line: 'center' })], features: [brake({ at: 0.05, length: 12, drag: 0.02 })] },
-    { name: 'Temple hairpin', shape: hairpin({ side: 'left' }), height: 10 },
     {
       name: 'Down the steps', shape: sBends({ first: 'left', radius: 70, degrees: 55, grade: 0.14 }), height: 4,
       obstacles: [peg({ costume: 'lantern-pole', at: 0.4, line: 'center' })],
