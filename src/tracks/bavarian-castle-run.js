@@ -33,15 +33,16 @@ module.exports = track({
   }),
   sections: [
     {
-      name: 'Through the village gate', shape: plunge(50, { grade: 0.3, from: 0.14 }), height: 10, billboards: 2,
+      name: 'Through the village gate', shape: plunge(60, { grade: 0.28, from: 0.14 }), height: 10, billboards: 1,
+      obstacles: [peg({ costume: 'fence-post', at: 0.75, line: 'center' })],
     },
     {
-      name: 'Across the pastures', shape: sweep({ side: 'left', radius: 80, degrees: 70, grade: 0.15 }), height: 12,
+      name: 'Across the pastures', shape: sBends({ first: 'left', radius: 80, degrees: 35, grade: 0.15 }), height: 12,
       obstacles: [peg({ costume: 'fence-post', at: 0.35, line: 'left' }), peg({ costume: 'fence-post', at: 0.7, line: 'right' })],
     },
     {
       name: 'Round the castle',
-      shape: splitter({ side: 'right', degrees: 0, approach: 60, merge: 30, balance: { tipOffset: 0.8, left: { drag: 1.3, scrub: 1.3 }, right: { drag: 2.8, scrub: 2.8 } } }),
+      shape: splitter({ side: 'right', degrees: 0, approach: 60, merge: 30, balance: { tipOffset: 0, left: { drag: 1.5, scrub: 1.5 }, right: { drag: 1.5, scrub: 1.5 } } }),
       around: 'castle-keep', height: 18,
       landmarks: [{ name: 'hilltop-castle', at: 0.5, side: 'left', distance: 60 }],
       obstacles: [peg({ costume: 'fence-post', at: 0.06, line: 'left' }), peg({ costume: 'fence-post', at: 0.14, line: 'right' }), peg({ costume: 'fence-post', at: 0.21, line: 'center' })],
