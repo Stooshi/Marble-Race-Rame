@@ -74,8 +74,42 @@ function cycladicWindmills() {
   return merge(p);
 }
 
+// ── Hallstatt (Hallstatt Salt Mine Run) ─────────────────────────────────────
+
+const PASTEL = ['#f3e6c8', '#e9d1b5', '#f4ead9', '#dcc6a2', '#efd9c2', '#e2e6d8'];
+const ALPINE_ROOFS = ['#5b4a3e', '#6a4f3c', '#4f4a48'];
+
+/** A lakeside village: tall pastel houses with steep dark roofs stacked up the slope, a slim white church spire. */
+function lakesideVillage() {
+  const p = [];
+  const r = seededRandom(47);
+  let k = 0;
+  for (let row = 0; row < 3; row += 1) {
+    for (let i = -3; i <= 3; i += 1) {
+      if (r() < 0.15) continue;
+      const w = 4.5 + r() * 1.5;
+      const d = 5 + r() * 1.5;
+      const h = 6 + r() * 3;
+      const x = i * 6.6 + (row % 2) * 3.2;
+      const y = row * 4;
+      const z = -row * 7;
+      p.push(box(w, h, d, x, y + h / 2, z, PASTEL[k % PASTEL.length]));
+      p.push(piece(new ConeGeometry(Math.hypot(w, d) / 2 + 0.4, 3.4, 4), ALPINE_ROOFS[k % ALPINE_ROOFS.length], turned(x, y + h + 1.7, z, Math.PI / 4, (w + 0.6) / Math.hypot(w, d) * Math.SQRT2, 1, (d + 0.6) / Math.hypot(w, d) * Math.SQRT2)));
+      k += 1;
+    }
+    p.push(box(50, row * 4 + 0.01, 8, 1.5, (row * 4) / 2, -row * 7, '#8f8a7c'));
+  }
+  // The church: a white tower with a tall, slim dark spire, at the village's lake end.
+  p.push(box(4, 14, 4, 24, 7, 4, '#f6f3ea'));
+  p.push(piece(new ConeGeometry(2.3, 9, 4), '#3d4a52', turned(24, 18.5, 4, Math.PI / 4)));
+  p.push(box(8, 7, 12, 24, 3.5, -4, '#f2eee4'));
+  p.push(piece(new ConeGeometry(7.5, 3.6, 4), '#4f4a48', turned(24, 8.8, -4, Math.PI / 4, 0.75, 1, 1.15)));
+  return merge(p);
+}
+
 export const WORLD2_LANDMARKS = {
   'cycladic-village': { build: cycladicVillage, radius: 26 },
   'blue-domes': { build: blueDomes, radius: 10 },
   'cycladic-windmills': { build: cycladicWindmills, radius: 16 },
+  'lakeside-village': { build: lakesideVillage, radius: 28 },
 };

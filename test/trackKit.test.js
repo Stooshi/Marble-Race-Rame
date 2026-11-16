@@ -790,6 +790,7 @@ const HIDDEN_KIT_TRACKS = [
   ['moon-base', '2027-07-16-add-moon-base.sql', 'Moon Base: Blocks 1 (15 Nov 2026), hidden until Moses switches it on'],
   ['neon-grid', '2027-07-17-add-neon-grid.sql', 'Neon Grid: Blocks 1 (15 Nov 2026), hidden until Moses switches it on'],
   ['santorini-caldera-run', '2027-07-28-add-santorini-caldera-run.sql', 'Santorini Caldera Run: World Tour (16 Nov 2026), hidden until Moses switches it on'],
+  ['hallstatt-salt-mine-run', '2027-07-29-add-hallstatt-salt-mine-run.sql', 'Hallstatt Salt Mine Run: World Tour (16 Nov 2026), hidden until Moses switches it on'],
 ];
 for (const [slug, file, note] of HIDDEN_KIT_TRACKS) {
   test(`${slug} is added by its data update, switched off, exactly as its track file builds it`, () => {

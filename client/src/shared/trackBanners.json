@@ -805,6 +805,17 @@
    "side": -1,
    "marbles": 7
   },
+  "hallstatt-salt-mine-run": {
+   "name": "Hallstatt Salt Mine Run",
+   "series": "World Tour",
+   "lighting": "dawn",
+   "v": "bf0a67e0",
+   "bytes": 14330,
+   "bytes2x": 34828,
+   "t": 10807,
+   "side": 1,
+   "marbles": 5
+  },
   "harbin-ice-city": {
    "name": "Harbin Ice City",
    "series": "Coasters",

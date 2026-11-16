@@ -70,6 +70,7 @@
 "greenland-expedition": {"family":"world-tour","reach":0.213,"seq":["opening: sand-trap","drop","pileUp","slalom","brake","straight","moguls","sweep left"]},
 "ha-long-bay-spins": {"family":"coaster","reach":0.233,"seq":["opening: funnel-drop","drop","pileUp","slalom","straight","peg ×4","sweep right","boost"]},
 "half-dome-granite-slabs": {"family":"peak","reach":0.326,"seq":["opening: rolling-start","drop","slalom","sweep left","sweep right","straight"]},
+"hallstatt-salt-mine-run": {"family":"world-tour","reach":0.25,"seq":["opening: chicane-start","drop","pileUp","slalom","S-bends right","peg ×2","straight","brake","sweep right","peg ×2"]},
 "harbin-ice-city": {"family":"coaster","reach":0.307,"seq":["opening: peg-drop","drop","peg ×7","spiral right"]},
 "heartland-oval-speedway": {"family":"grand-prix","reach":0.289,"seq":["opening: rolling-start","drop","slalom","sweep left","straight","peg","slalom","moguls","sweep right"]},
 "hells-burst": {"family":"canyon","reach":0.312,"seq":["opening: split-start","drop","pileUp","slalom","chutes","drop","slalom","sweep left","boost","drop"]},
