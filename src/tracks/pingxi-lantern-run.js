@@ -5,7 +5,7 @@
 // and stays together along the old railway (nothing in its way for the first seconds), then the big feature: the drop
 // down the wide waterfall through its falling water, the lanterns strung along the village street in S-bends, the
 // little train, a sweep through the jungle, the hairpin and the run to the lantern bridge. No names on anything.
-const { track, opening, straight, sweep, sBends, hairpin, waterfall, runIn, peg, slalom, moguls, pileUp, brake } = require('../trackKit');
+const { track, opening, straight, sweep, sBends, hairpin, waterfall, runIn, peg, slalom, moguls, brake, block } = require('../trackKit');
 
 module.exports = track({
   slug: 'pingxi-lantern-run',
@@ -35,7 +35,8 @@ module.exports = track({
   }),
   sections: [
     {
-      name: 'Along the old railway', shape: straight(70, { grade: 0.12 }), height: 12, billboards: 2,
+      name: 'Along the old railway', shape: straight(70, { grade: 0.12 }), height: 12, billboards: 1,
+      obstacles: [slalom({ costume: 'lantern-pole', from: 0.3, to: 0.8, count: 5, loss: 0.3 })],
     },
     {
       name: 'The wide falls', shape: waterfall(55, { grade: 0.6, curtain: true }), height: 0,
@@ -46,7 +47,7 @@ module.exports = track({
     },
     {
       name: 'Below the falls', shape: sBends({ first: 'right', radius: 65, degrees: 70, grade: 0.15 }), height: 4,
-      obstacles: [pileUp({ costume: 'monkey', at: 0.3 }), peg({ costume: 'lantern-pole', at: 0.75, line: 'right' })],
+      obstacles: [slalom({ costume: 'lantern-pole', from: 0.2, to: 0.85, count: 5, loss: 0.3 })],
     },
     {
       name: 'Lantern street', shape: sBends({ first: 'left', radius: 65, degrees: 70, grade: 0.15 }), height: 6,
@@ -56,7 +57,7 @@ module.exports = track({
     {
       name: 'Past the little train', shape: straight(55, { grade: 0.13 }), height: 8,
       landmarks: [{ name: 'steam-train', at: 0.5, side: 'left', distance: 26 }],
-      obstacles: [pileUp({ costume: 'monkey', at: 0.25 }), peg({ costume: 'lantern-pole', at: 0.5, line: 'left' })],
+      obstacles: [block({ costume: 'monkey', at: 0.3, line: 'center' }), peg({ costume: 'lantern-pole', at: 0.65, line: 'left' })],
 
     },
     {
