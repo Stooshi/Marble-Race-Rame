@@ -60,6 +60,7 @@ export const STORAGE_LIST = [
   { category: 'necessary', name: 'marble-race-token', where: 'local storage', by: 'Marble Spins', why: 'Keeps you logged in (your login token).', lasts: 'Until you log out; the login itself ends 180 days after your last visit (90 days for a guest)' },
   { category: 'necessary', name: 'marble-consent', where: 'local storage', by: 'Marble Spins', why: 'Remembers your cookie choices.', lasts: 'Until you change them or clear your browser' },
   { category: 'necessary', name: 'marble-sound', where: 'local storage', by: 'Marble Spins', why: 'Your sound levels and mute setting.', lasts: 'Until you clear your browser' },
+  { category: 'necessary', name: 'marble-tunes', where: 'local storage', by: 'Marble Spins', why: 'Which race tunes are still to come in this round of 12, so every race plays a different one.', lasts: 'Until you clear your browser' },
   { category: 'necessary', name: 'marble-tv-moments', where: 'local storage', by: 'Marble Spins', why: 'Whether the race view cuts to trackside cameras (TV moments), if you switched them off.', lasts: 'Until you clear your browser' },
   { category: 'necessary', name: 'marble-race-fps', where: 'local storage', by: 'Marble Spins', why: 'Whether the frame counter is shown (only if you turn it on).', lasts: 'Until you clear your browser' },
   { category: 'necessary', name: 'marble-consent-logged', where: 'local storage', by: 'Marble Spins', why: 'Which of your accounts already has your cookie choice on record.', lasts: 'Until you clear your browser' },

@@ -141,10 +141,30 @@ function fallBackToWeb(why) {
 export const soundBackend = () => backend.kind;
 
 // ── Which tunes come next ────────────────────────────────────────────────
+// (Moses, 16 Nov 2026: "players should hear all 12 at random". The shuffled round and the last tune are kept on the
+// device (TUNES_KEY), so a round of 12 carries on across page loads and app restarts instead of starting a fresh
+// shuffle each time, and a race's tune is never the one the previous race played, even after a reload.)
+const TUNES_KEY = 'marble-tunes';
 let order = [];
 let lastTrack = null;
 let queue = []; // the upcoming tunes, in the order they'll play (kept loaded)
 const chosen = new Map(); // raceId → its first tune
+let restored = false;
+
+function restoreOrder() {
+  if (restored) return;
+  restored = true;
+  try {
+    const saved = JSON.parse(globalThis.localStorage?.getItem(TUNES_KEY) ?? 'null');
+    const ok = (t) => RACE_TRACKS.includes(t);
+    if (saved && Array.isArray(saved.order) && saved.order.length <= RACE_TRACKS.length + AHEAD && saved.order.every(ok)) order = [...saved.order];
+    if (saved && ok(saved.last)) lastTrack = saved.last;
+  } catch { /* (no storage: a fresh round) */ }
+}
+function saveOrder() {
+  // (What is still to come: the round's rest after the tunes already queued.)
+  try { globalThis.localStorage?.setItem(TUNES_KEY, JSON.stringify({ order: [...queue, ...order], last: lastTrack })); } catch { /* (private mode) */ }
+}
 
 /** The next tune from shuffled rounds of all the tunes (12), never `last`. */
 export function nextTrack(last, random = Math.random) {
@@ -155,9 +175,13 @@ export function nextTrack(last, random = Math.random) {
   }
   return order.shift();
 }
-export function _resetOrder() { order = []; queue = []; lastTrack = null; chosen.clear(); }
+export function _resetOrder({ forget = true } = {}) {
+  order = []; queue = []; lastTrack = null; chosen.clear(); restored = false;
+  if (forget) try { globalThis.localStorage?.removeItem(TUNES_KEY); } catch { /* */ }
+}
 
 function fillQueue(random) {
+  restoreOrder();
   while (queue.length < AHEAD) queue.push(nextTrack(queue.at(-1) ?? lastTrack, random));
 }
 /** Takes the next tune (never `not`). */
@@ -168,6 +192,7 @@ function takeTune(not, random) {
   if (t === not) t = nextTrack(not, random);
   lastTrack = t;
   fillQueue(random);
+  saveOrder();
   for (const n of queue) load(n);
   return t;
 }

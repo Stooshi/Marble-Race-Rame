@@ -53,6 +53,27 @@ describe('sound', () => {
     }
   });
 
+  it('the round of 12 carries on across page loads and app restarts: 1,000 races, each tune 83 or 84 times, never twice in a row', () => {
+    const had = globalThis.localStorage;
+    const m = new Map();
+    globalThis.localStorage = { getItem: (k) => (m.has(k) ? m.get(k) : null), setItem: (k, v) => m.set(k, String(v)), removeItem: (k) => m.delete(k) };
+    _resetOrder();
+    const random = seeded();
+    const count = Object.fromEntries(RACE_TRACKS.map((t) => [t, 0]));
+    let prev = null;
+    for (let race = 0; race < 1000; race += 1) {
+      if (race % 3 === 0) _resetOrder({ forget: false }); // (a new page, or the app opened again: the device remembers)
+      const t = trackFor(`reload-${race}`, random);
+      expect(t).not.toBe(prev);
+      count[t] += 1;
+      prev = t;
+    }
+    for (const t of RACE_TRACKS) expect(count[t]).toBeGreaterThanOrEqual(83);
+    for (const t of RACE_TRACKS) expect(count[t]).toBeLessThanOrEqual(84);
+    _resetOrder();
+    globalThis.localStorage = had;
+  });
+
   it('one track per race: the countdown and GO agree, and the next race gets another', () => {
     _resetOrder();
     const random = seeded();
