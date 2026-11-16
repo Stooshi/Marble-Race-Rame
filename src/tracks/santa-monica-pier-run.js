@@ -1,7 +1,7 @@
 'use strict';
 
 // Santa Monica Pier Run (Moses, 16 Nov 2026: ten more Coasters tracks; one of the three Extreme ones). A coaster on
-// a seaside amusement pier in California: launched out of the pier's station, a sweep over the beach, then the big
+// a seaside amusement pier in California: out of the sand by the pier's water tower, a sweep over the beach, then the big
 // feature: a loop out over the surf beside the pier's funfair, the field going right round it, rough boards
 // after it to bunch the field again, S-bends through the midway's stalls, the hairpin at the end of the pier, a
 // sweep under the palms along the promenade and the run back to the station. No names on anything.
@@ -12,7 +12,7 @@ module.exports = track({
   name: 'Santa Monica Pier Run',
   family: 'coaster',
   difficulty: 'extreme',
-  description: 'A coaster on a seaside amusement pier in California: launched out of the pier\'s station, over the beach, right round a loop out over the surf beside the funfair, through the midway\'s stalls, round the end of the pier and back along the palm-lined promenade.',
+  description: 'A coaster on a seaside amusement pier in California: down from the pier\'s water tower, over the beach, right round a loop out over the surf beside the funfair, through the midway\'s stalls, round the end of the pier and back along the palm-lined promenade.',
   surface: 'ice',
   biome: 'meadow',
   lighting: 'sunset',
@@ -24,9 +24,9 @@ module.exports = track({
     { section: 'Loop over the surf', at: 0.8, side: 'left', distance: 12, height: 13 },
     { section: 'Promenade sweep', at: 0.5, side: 'right', distance: 10, height: 10 },
   ],
-  start: { landmark: 'park-midway', scenery: ['palms'], type: 'station-launch', gate: 'barrier', shots: { countdown: 'low-front', launch: 'high-behind' } },
+  start: { landmark: 'park-midway', scenery: ['palms'], type: 'water-tower', gate: 'barrier', shots: { countdown: 'low-front', launch: 'high-behind' } },
   finish: { landmark: 'distant-coasters', billboards: 2 },
-  opening: opening('boost-launch', {
+  opening: opening('sand-trap', {
     side: 'right',
     costumes: { block: 'barrel', slalom: 'route-flag' },
     dress: {},
@@ -41,6 +41,10 @@ module.exports = track({
       name: 'Loop over the surf', shape: straight(170, { grade: 0.13 }), height: 0,
       landmarks: [{ name: 'park-midway', at: 0.45, side: 'right', distance: 34 }],
       features: [brake({ at: 0.08, length: 12, drag: 0.02 }), loop({ at: 0.45, viewSide: 14 })],
+    },
+    {
+      name: 'Under the pier', shape: sBends({ first: 'left', radius: 65, degrees: 70, grade: 0.15 }), height: 4,
+      obstacles: [peg({ costume: 'mooring-pole', at: 0.25, line: 'right' }), peg({ costume: 'mooring-pole', at: 0.5, line: 'center' }), peg({ costume: 'mooring-pole', at: 0.75, line: 'left' })],
     },
     {
       name: 'Midway bends', shape: sBends({ first: 'right', radius: 65, degrees: 80, grade: 0.16 }), height: 6,
