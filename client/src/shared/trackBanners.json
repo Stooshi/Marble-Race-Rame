@@ -200,6 +200,17 @@
    "side": 1,
    "marbles": 4
   },
+  "bavarian-castle-run": {
+   "name": "Bavarian Castle Run",
+   "series": "Coasters",
+   "lighting": "day",
+   "v": "774d6ebd",
+   "bytes": 17794,
+   "bytes2x": 43722,
+   "t": 10276,
+   "side": 1,
+   "marbles": 5
+  },
   "beijing-nest-200": {
    "name": "Beijing Nest 200",
    "series": "Track and Field",
