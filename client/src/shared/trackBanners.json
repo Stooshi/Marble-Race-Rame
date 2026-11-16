@@ -1707,6 +1707,17 @@
    "side": 1,
    "marbles": 10
   },
+  "santorini-caldera-run": {
+   "name": "Santorini Caldera Run",
+   "series": "World Tour",
+   "lighting": "sunset",
+   "v": "502d51ae",
+   "bytes": 14280,
+   "bytes2x": 35840,
+   "t": 9478,
+   "side": -1,
+   "marbles": 1
+  },
   "sao-paulo-rain-circuit": {
    "name": "São Paulo Rain Circuit",
    "series": "Grand Prix",

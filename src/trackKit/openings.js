@@ -43,7 +43,7 @@ const OPENINGS = {
   'split-start': (o) => ({
     sections: [
       { key: 'plunge', name: 'Start plunge', shape: plunge(70, { grade: 0.6 }), obstacles: [pileUp({ costume: o.costumes.block, at: 0.48 }), slalom({ costume: o.costumes.slalom, from: 0.75, to: 0.97, count: 3, loss: 0.3 })] },
-      { key: 'chutes', name: 'Twin chutes', shape: twinChutes(40, { grade: 0.5 }) },
+      { key: 'chutes', name: 'Twin chutes', shape: twinChutes(40, { grade: 0.5, balance: o.balance }) },
       { key: 'after', name: 'Out of the chutes', shape: plunge(35, { grade: 0.55 }), obstacles: [slalom({ costume: o.costumes.slalom, from: 0.1, to: 0.95, count: 4, loss: 0.3 })] },
     ],
   }),
@@ -198,8 +198,11 @@ const OPENINGS = {
  * Two parallel chutes, side by side, a low wedge between them, merging at the end
  * (the split-and-merge opening's middle). Straight and the same length both ways.
  */
-function twinChutes(length, { grade = 0.45 } = {}) {
-  return { shape: 'twinChutes', parts: [{ kind: 'straight', length, grade }], fork: { chutes: true, radius: 2.5, apart: 5, tipOffset: 0, left: { drag: 1, scrub: 1 }, right: { drag: 1, scrub: 1 } } };
+function twinChutes(length, { grade = 0.45, balance = {} } = {}) {
+  // (`balance`: a track may set each chute's ice on its own, as a splitter's, when one chute wins more than its
+  // share: Santorini Caldera Run's, 16 Nov 2026. Without it both chutes race alike.)
+  const fork = { chutes: true, radius: 2.5, apart: 5, tipOffset: 0, left: { drag: 1, scrub: 1 }, right: { drag: 1, scrub: 1 } };
+  return { shape: 'twinChutes', parts: [{ kind: 'straight', length, grade }], fork: { ...fork, ...balance, left: { ...fork.left, ...balance.left }, right: { ...fork.right, ...balance.right } } };
 }
 
 const OPENING_KINDS = Object.keys(OPENINGS);

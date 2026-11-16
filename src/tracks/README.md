@@ -667,6 +667,15 @@ as a coaster (everything above applies), like a canyon (looks only, like everyth
 - The ten tracks (switched off until reviewed): Spawn Point (the proof track), Speedrun Valley,
   Voxel Peaks, Deep Mine, Magma Core, Line Clear, Combo Drop, The Stack, Block Fortress,
   Final Level.
+- **The World Tour re-layouts and seven new World Tour tracks** (Moses, 15 Nov 2026: every World Tour pack track still on
+  the sameness test's known failures gets its own layout and opening, keeping its name, slug and look, with a signature
+  feature from the real place and a `--relayout` data update that starts its records again; then seven new tracks fill
+  the pack to 20, two signature features each, 2 Easy, 3 Wild, 2 Extreme). A pile-up at the gate spreads the field by
+  about 5 s before the first bend, so the re-laid tracks mostly start without one (rumble, rolling, sand trap, waves);
+  the World Tour keeps two classic starts (Paris, Portes du Soleil). A track whose start is its own first section (a
+  waterfall: Amazon Water Run) may set `waves` on the track itself; a split start may set its two chutes' `balance`
+  (Santorini Caldera Run). New: Santorini Caldera Run (Extreme: the zigzag of the old donkey steps, then straight down
+  the caldera cliff to the old port).
 - **Seven more Blocks 1 tracks** (Moses, 15 Nov 2026: the Blocks 1 pack filled to 20; game worlds of our own with
   retro touches, never another game's names, creatures, textures or falling pieces; same rules as the six Canyons and
   Peaks): written section by section, each in its own new world (`mushroom`, `sunken`, `clockwork`, `grotto`,

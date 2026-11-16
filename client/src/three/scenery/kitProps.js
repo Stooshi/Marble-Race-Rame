@@ -22,6 +22,7 @@ import { PEAK_LANDMARKS } from './kitLandmarksPeak';
 import { BLOCK_LANDMARKS } from './kitLandmarksBlock';
 import { ATHLETICS_LANDMARKS } from './kitLandmarksAthletics';
 import { RIVIERA_LANDMARKS } from './kitLandmarksRiviera';
+import { WORLD2_LANDMARKS } from './kitLandmarksWorld2';
 import { PUDONG_LANDMARKS } from './kitLandmarksPudong';
 
 // ── Set dressing: one geometry per kind, instanced ──────────────────────────
@@ -621,6 +622,7 @@ export const LANDMARKS = {
   ...BLOCK_LANDMARKS,
   ...ATHLETICS_LANDMARKS,
   ...RIVIERA_LANDMARKS,
+  ...WORLD2_LANDMARKS,
   ...PUDONG_LANDMARKS,
 };
 

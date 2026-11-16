@@ -216,4 +216,5 @@ module.exports = [
   require('./jungle-ruins'),
   require('./moon-base'),
   require('./neon-grid'),
+  require('./santorini-caldera-run'),
 ];
