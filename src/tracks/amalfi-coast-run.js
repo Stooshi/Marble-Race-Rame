@@ -29,6 +29,7 @@ module.exports = track({
   opening: opening('rumble-start', {
     side: 'left',
     costumes: { block: 'barrel', slalom: 'mooring-pole' },
+    waves: { groups: 5, gap: 0.12, jitter: 0.04 },
     dress: {},
   }),
   sections: [
@@ -54,6 +55,14 @@ module.exports = track({
       name: 'Round the cove', shape: sweep({ side: 'left', radius: 75, degrees: 100, grade: 0.15 }), height: 8, water: true, billboards: 2,
       landmarks: [{ name: 'umbrella-pines', at: 0.5, side: 'right', distance: 26 }],
       obstacles: [peg({ costume: 'mooring-pole', at: 0.35, line: 'left' }), peg({ costume: 'mooring-pole', at: 0.7, line: 'right' })],
+    },
+    {
+      name: 'Fishing village lanes', shape: sBends({ first: 'left', radius: 65, degrees: 70, grade: 0.14 }), height: 6,
+      obstacles: [peg({ costume: 'mooring-pole', at: 0.25, line: 'center' }), peg({ costume: 'mooring-pole', at: 0.5, line: 'left' }), peg({ costume: 'mooring-pole', at: 0.75, line: 'right' })],
+    },
+    {
+      name: 'Coast road', shape: sweep({ side: 'right', radius: 90, degrees: 60, grade: 0.13 }), height: 10, water: true,
+      obstacles: [slalom({ costume: 'mooring-pole', from: 0.3, to: 0.8, count: 4, loss: 0.25 })],
     },
     {
       name: 'Harbour bends', shape: sBends({ first: 'right', radius: 70, degrees: 60, grade: 0.15 }), height: 6,
