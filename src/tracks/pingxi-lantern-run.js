@@ -5,7 +5,7 @@
 // and stays together along the old railway (nothing in its way for the first seconds), then the big feature: the drop
 // down the wide waterfall through its falling water, the lanterns strung along the village street in S-bends, the
 // little train, a sweep through the jungle, the hairpin and the run to the lantern bridge. No names on anything.
-const { track, opening, straight, sweep, sBends, hairpin, waterfall, runIn, peg, slalom, moguls, brake, block } = require('../trackKit');
+const { track, opening, straight, sweep, sBends, hairpin, waterfall, runIn, peg, slalom, moguls, brake } = require('../trackKit');
 
 module.exports = track({
   slug: 'pingxi-lantern-run',
@@ -30,7 +30,6 @@ module.exports = track({
     side: 'right',
     costumes: { block: 'monkey', slalom: 'lantern-pole' },
     names: { plunge: 'Off the pagoda' },
-    waves: { groups: 5, gap: 0.12, jitter: 0.04 },
     dress: {},
   }),
   sections: [
@@ -57,7 +56,7 @@ module.exports = track({
     {
       name: 'Past the little train', shape: straight(55, { grade: 0.13 }), height: 8,
       landmarks: [{ name: 'steam-train', at: 0.5, side: 'left', distance: 26 }],
-      obstacles: [block({ costume: 'monkey', at: 0.3, line: 'center' }), peg({ costume: 'lantern-pole', at: 0.65, line: 'left' })],
+      obstacles: [peg({ costume: 'lantern-pole', at: 0.3, line: 'right' }), peg({ costume: 'lantern-pole', at: 0.65, line: 'left' })],
 
     },
     {
