@@ -229,7 +229,10 @@ async function packCheckout(client, userId, { pack: packKey, useCoins = false, p
 
 // What a player sees of their own orders (Purchases page).
 const ORDER_COLUMNS = `order_no, provider, product_id, season_key, pack_key, coins_spent, coins, amount_cents, upper(currency) AS currency, charged_cents, charged_currency,
-  tax_cents, status, refunded_cents, receipt_url, created_at, paid_at, refunded_at, withdrawn_at`;
+  tax_cents, status, refunded_cents, receipt_url, created_at, paid_at, refunded_at, withdrawn_at,
+  (SELECT COALESCE(json_agg(json_build_object('number', d.number, 'kind', d.kind, 'issued_at', d.issued_at, 'gross_cents', d.gross_cents, 'currency', d.currency)
+            ORDER BY d.issued_at, d.number), '[]'::json)
+     FROM billing_documents d WHERE d.payment_id = payments.id) AS documents`;
 
 /** A player's orders, newest first (lapsed checkouts that were never paid are left out). */
 async function ordersOf(client, userId) {
@@ -257,7 +260,7 @@ async function stripeEvent(db, event) {
   return db.withTransaction(async (client) => {
     const { rows } = await client.query('INSERT INTO stripe_events (id, type) VALUES ($1, $2) ON CONFLICT (id) DO NOTHING RETURNING id', [event.id, event.type]);
     if (!rows[0]) return 'duplicate';
-    return stripe.handleEvent(client, event, { grant, receiptUrl: extra.receiptUrl });
+    return stripe.handleEvent(client, event, { grant, receiptUrl: extra.receiptUrl, tax: extra.tax });
   });
 }
 

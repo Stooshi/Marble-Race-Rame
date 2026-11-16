@@ -115,6 +115,13 @@
   - `trackFeatures.js`: moving obstacles and their timetables.
 - `appearance.js`: the old colour, surface and effect look. Cosmetic only.
 
+**`billing/`: receipts and credit notes** (16 Nov 2026, CRM phase 1):
+- `layout.js`: what a document shows and what the monthly export holds (the series K/KR, the seller's lines, the F-skatt line (off until D2), the export's columns): the one place to change when the accountant answers D1–D3; documents already issued keep what they showed.
+- `documents.js`: `issueReceipt` (from `payments/stripe.js` when a live checkout is paid), `issueCreditNote` (from `revoke`, for a refund or chargeback), the number series (`billing_counters`), `issueMissing` (at start-up: live purchases from before billing), `ofPlayer`.
+- `book.js`: `fillBook`, the SEK amount and Stripe's fee from the balance transaction (every 5 minutes).
+- `exporting.js`: the month's documents and VAT summary as CSV, the month's totals.
+- `index.js`: `receiptLink` (the purchase confirmation email's link), `sendCreditNotes`, `startJobs`.
+
 **`tracks/` and `trackKit/`: building tracks.**
 - `src/tracks/<slug>.js`: one file per kit track, listed in `src/tracks/index.js`. `src/tracks/variety/` holds test tracks that are never in the database.
 - `src/tracks/README.md`: the guide for building a track.

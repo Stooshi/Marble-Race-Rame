@@ -15,6 +15,7 @@ const email = require('../email');
 const templates = require('../email/templates');
 const seasons = require('../seasons');
 const config = require('../config');
+const billing = require('../billing');
 
 const TZ = 'Europe/Stockholm';
 const when = (t) => new Intl.DateTimeFormat('en-GB', { timeZone: TZ, day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' }).format(new Date(t)).replace(/, /, ' at ') + ' (Swedish time)';
@@ -51,6 +52,8 @@ async function confirmationFor(db, pay) {
     agreed: agreedOf(pay.consent_text),
     purchasesUrl: `${site()}/purchases`,
     termsUrl: `${site()}/legal#sale`,
+    // Our receipt (K-…, src/billing) for a live Stripe purchase; none for the test provider or Stripe's test mode.
+    receipt: await billing.receiptLink(db, pay.id),
   });
 }
 
@@ -66,7 +69,7 @@ async function withdrawalFor(db, pay) {
 }
 
 /** Sends one kind: `column` claims the row, `where` picks them, `build` makes the email. → how many sent. */
-async function sendKind(db, { column, where, build, tag }) {
+async function sendKind(db, { column, where, build, tag, after = null }) {
   const { rows } = await db.query(
     `UPDATE payments p SET ${column} = now()
        FROM users u
@@ -79,6 +82,7 @@ async function sendKind(db, { column, where, build, tag }) {
       const { subject, html } = await build(db, pay);
       await email.send({ to: pay.email, toName: pay.username, subject, html, tags: [tag] });
       sent += 1;
+      if (after) await after(db, pay).catch((err) => console.error(`[payments] ${tag} after sending ${pay.order_no}: ${err.message}`));
     } catch (err) {
       await db.query(`UPDATE payments SET ${column} = NULL WHERE id = $1`, [pay.id]);
       console.error(`[payments] ${tag} email for ${pay.order_no} failed: ${err.message}`);
@@ -95,6 +99,8 @@ async function sendDue(db) {
     where: `p.status = 'paid' AND p.provider IN ('stripe', 'test') AND p.order_no IS NOT NULL AND p.paid_at > now() - interval '2 days'`,
     build: confirmationFor,
     tag: 'purchase-confirmation',
+    // (The receipt went with it: the email holds its link.)
+    after: (d, pay) => d.query(`UPDATE billing_documents SET emailed_at = now() WHERE payment_id = $1 AND kind = 'receipt' AND emailed_at IS NULL`, [pay.id]),
   });
   const withdrawals = await sendKind(db, {
     column: 'withdrawal_ack_sent_at',

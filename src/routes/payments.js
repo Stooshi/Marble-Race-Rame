@@ -9,7 +9,7 @@ const stripe = require('../payments/stripe');
 const google = require('../payments/google');
 const apple = require('../payments/apple');
 const withdrawal = require('../payments/withdrawal');
-const { badRequest } = require('../utils/httpError');
+const { badRequest, notFound } = require('../utils/httpError');
 
 const security = require('../security');
 const config = require('../config');
@@ -165,6 +165,15 @@ router.post('/orders/:orderNo/withdraw', requireAuth, async (req, res) => {
   if (confirm !== true) throw badRequest('Please confirm the withdrawal');
   const out = await withdrawal.withdraw(db, req.user.id, String(req.params.orderNo).slice(0, 16), { refund: payments.refund });
   res.json({ ...out, email: require('../email').enabled() }); // (whether an acknowledgement email follows)
+});
+
+/** GET /api/payments/documents/:number — one of the player's own receipts or credit notes (K-…, KR-…; src/billing). */
+router.get('/documents/:number', requireAuth, async (req, res) => {
+  const number = String(req.params.number).slice(0, 20);
+  const doc = /^[A-Z]{1,3}-\d{4}-\d{3,}$/.test(number) ? await require('../billing').ofPlayer(db, req.user.id, number) : null;
+  if (!doc) throw notFound('No such receipt');
+  res.set('Cache-Control', 'private, no-store');
+  res.json({ document: doc });
 });
 
 /** GET /api/payments/orders/:orderNo — one order (polled after Stripe sends the player back). */

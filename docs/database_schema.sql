@@ -1505,3 +1505,55 @@ CREATE TABLE IF NOT EXISTS player_origins (
     created_at       timestamptz NOT NULL DEFAULT now(),
     CHECK (utm_source IS NOT NULL OR utm_medium IS NOT NULL OR utm_campaign IS NOT NULL OR referrer_domain IS NOT NULL)
 );
+
+-- Billing (Moses, 16 Nov 2026, CRM phase 1; src/billing): a receipt (K-2026-00001…) for every paid Stripe
+-- purchase and a credit note (KR-2026-00001…) for every refund or chargeback of one, each numbered in an
+-- unbroken series per year (billing_counters, taken in the same transaction as the payment or the refund).
+-- A document never changes once issued: what it shows (the seller's details, the buyer, the lines, VAT) is
+-- frozen in `snapshot`. The amounts that reached the Stripe account in SEK, and Stripe's fee, are filled in
+-- from Stripe's balance transaction a few minutes later (book_*). Store purchases (Apple, Google Play) get
+-- none: the stores sell those and issue the receipt. Kept 7 years (Bokföringslagen): never deleted.
+CREATE TABLE IF NOT EXISTS billing_counters (
+    series          varchar(8)  NOT NULL,
+    year            integer     NOT NULL,
+    last_no         integer     NOT NULL DEFAULT 0,
+    PRIMARY KEY (series, year)
+);
+CREATE TABLE IF NOT EXISTS billing_documents (
+    id                  uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
+    number              varchar(20) NOT NULL UNIQUE,
+    kind                varchar(8)  NOT NULL CHECK (kind IN ('receipt', 'credit')),
+    payment_id          uuid        NOT NULL REFERENCES payments(id) ON DELETE RESTRICT,
+    refund_id           varchar(255) REFERENCES payment_refunds(id) ON DELETE RESTRICT,
+    credits_document_id uuid        REFERENCES billing_documents(id) ON DELETE RESTRICT,
+    user_id             uuid        REFERENCES users(id) ON DELETE SET NULL,
+    issued_at           timestamptz NOT NULL,
+    currency            char(3)     NOT NULL,
+    gross_cents         integer     NOT NULL,
+    net_cents           integer     NOT NULL,
+    vat_cents           integer     NOT NULL,
+    vat_rate            numeric(5,2),
+    vat_country         char(2),
+    book_currency       char(3),
+    book_gross_cents    integer,
+    book_fee_cents      integer,
+    book_filled_at      timestamptz,
+    snapshot            jsonb       NOT NULL,
+    emailed_at          timestamptz,
+    created_at          timestamptz NOT NULL DEFAULT now(),
+    CHECK ((kind = 'receipt' AND refund_id IS NULL) OR (kind = 'credit' AND refund_id IS NOT NULL))
+);
+CREATE UNIQUE INDEX IF NOT EXISTS uq_billing_receipt_per_payment ON billing_documents (payment_id) WHERE kind = 'receipt';
+CREATE UNIQUE INDEX IF NOT EXISTS uq_billing_credit_per_refund ON billing_documents (refund_id) WHERE kind = 'credit';
+CREATE INDEX IF NOT EXISTS idx_billing_documents_issued ON billing_documents (issued_at);
+CREATE INDEX IF NOT EXISTS idx_billing_documents_user ON billing_documents (user_id, issued_at DESC);
+CREATE INDEX IF NOT EXISTS idx_billing_documents_book ON billing_documents (created_at) WHERE book_filled_at IS NULL;
+-- The VAT country and rate Stripe Tax used for a website purchase (from the checkout session; for the receipt).
+ALTER TABLE payments ADD COLUMN IF NOT EXISTS vat_country char(2);
+ALTER TABLE payments ADD COLUMN IF NOT EXISTS vat_rate numeric(5,2);
+
+-- Back-office roles (Moses, 16 Nov 2026, CRM phase 2; src/admin/permissions.js): what each admin may do.
+-- owner: everything; finance: customers, purchases, refunds, billing; support: customers, support, names (no
+-- refunds, coins, exports or deletions); marketing: email lists and (later) campaigns; read-only: the
+-- dashboard and reports. An admin without a role can only read the dashboard and reports. Every change is in admin_audit.
+ALTER TABLE users ADD COLUMN IF NOT EXISTS admin_role varchar(16) CHECK (admin_role IN ('owner', 'finance', 'support', 'marketing', 'read-only'));

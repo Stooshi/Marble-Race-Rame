@@ -1,6 +1,6 @@
 # 3. Data model
 
-*Last updated 15 Nov 2026.* The database is PostgreSQL. The schema is defined in `docs/database_schema.sql`. The server applies that file at every start; it only adds what is missing and never deletes or changes rows. Changes to existing rows go in `docs/data_updates/` (see the [runbook](05-runbook.md#data-updates)).
+*Last updated 16 Nov 2026.* The database is PostgreSQL. The schema is defined in `docs/database_schema.sql`. The server applies that file at every start; it only adds what is missing and never deletes or changes rows. Changes to existing rows go in `docs/data_updates/` (see the [runbook](05-runbook.md#data-updates)).
 
 **Conventions:**
 - Ids are UUIDs (`gen_random_uuid()`), except where noted.
@@ -349,6 +349,20 @@ One row per refund or dispute (`id` = the Stripe refund or dispute id, or `googl
 
 The coins taken back are in proportion to the money refunded; the last refund takes exactly what's left.
 
+### `billing_documents`, `billing_counters`: receipts and credit notes (16 Nov 2026, `src/billing`)
+A **receipt** (`kind` `receipt`, number `K-2026-00001`…) for every paid Stripe purchase, issued in the same transaction that marks it paid (none in Stripe's test mode: its events carry `livemode: false`). A **credit note** (`credit`, `KR-2026-00001`…) for every refund, withdrawal or chargeback of a purchase with a receipt, issued in the same transaction that records the refund (`refund_id` → `payment_refunds`, `credits_document_id` → the receipt). Store purchases (Apple, Google Play) get none: the stores sell those and issue their own.
+
+| Column | Meaning |
+|---|---|
+| `number` | Unique, in an unbroken series per kind and year (Swedish time), from `billing_counters` (`series` K or KR, `year`, `last_no`), locked in the same transaction |
+| `payment_id`, `user_id`, `issued_at` | The purchase, the buyer, the document's date (when it was paid, or refunded) |
+| `currency`, `gross_cents`, `net_cents`, `vat_cents`, `vat_rate`, `vat_country` | What the player paid, VAT included, in their currency (negative on a credit note). The rate and country are Stripe Tax's (`payments.vat_rate`, `vat_country`, from the checkout's tax breakdown), else worked out from the amounts |
+| `book_currency`, `book_gross_cents`, `book_fee_cents`, `book_filled_at` | What reached the Stripe account in its own currency (SEK) and Stripe's fee, from the balance transaction (decision D4), filled a few minutes later |
+| `snapshot` | The whole document as issued (seller, buyer, lines, VAT, totals, which fields it shows: `src/billing/layout.js` at that moment). Never changes |
+| `emailed_at` | When it went to the player (a receipt: with the purchase confirmation; a credit note: its own email) |
+
+Kept 7 years (Bokföringslagen): never deleted (`ON DELETE RESTRICT` on the payment).
+
 ### `stripe_events`
 Every Stripe webhook event already handled (`id`, `type`). The event is recorded in the same transaction as its coin change, so a resent event is ignored.
 
@@ -482,6 +496,7 @@ The website's cookie choice, kept as a record of consent (GDPR): one row each ti
 |---|---|
 | `admin_2fa` | One per admin: the authenticator secret, encrypted (`secret_enc`), `enabled_at`, and `last_step` (so each code works only once) |
 | `admin_sessions` | Back-office sessions: `created_at`, `last_seen_at` (30-minute idle limit), `ended_at` |
+| `users.admin_role` | (16 Nov 2026) An admin's back-office role: `owner`, `finance`, `support`, `marketing` or `read-only` (`src/admin/permissions.js`). Admins until then became owners (data update `2027-08-16-admin-roles-owner`) |
 | `admin_audit` | Every back-office action: `admin_id`, `action`, `target_user_id`, `reason` (required), `details` (JSON of what changed). Never edited. Also records refunds made in the Stripe dashboard, disputes and account deletions, and support-message status changes (`support-status`, details `message_id`, `from`, `to`) and replies (`support-reply`), staff marked or unmarked (`staff-on`, `staff-off`), and each time an admin opens a player's Security tab with its IP addresses (`security-view`, details: how many events and how many with an address; since 1 Nov 2026) |
 
 ## Bookkeeping tables and views

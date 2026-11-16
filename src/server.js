@@ -22,6 +22,7 @@ async function start() {
   require('./account/retention').startJobs(db); // guest accounts: deleted after 90 days without a visit
   require('./push').startJobs(db); // push notifications: season news and the daily goal reminder (dry runs until PUSH_SENDING=on)
   require('./payments/emails').startJobs(db); // purchase confirmations and withdrawal acknowledgements (once email is on)
+  require('./billing').startJobs(db); // receipts and credit notes missing at start-up; their SEK amounts from Stripe; credit notes' emails
   require('./payments').startGoogleJobs(db); // Google Play: consume leftovers hourly, refunds/chargebacks every 6 h
   // Track packs: coins set aside in the apps but unused for 2 hours go back (src/packs/sale.js), hourly.
   setInterval(() => require('./packs/sale').releaseStaleHolds(db).catch((err) => console.error(`[packs] holds: ${err.message}`)), 3600_000).unref?.();

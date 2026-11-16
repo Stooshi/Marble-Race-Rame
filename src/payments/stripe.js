@@ -22,6 +22,8 @@ const consent = require('../../client/src/shared/payments/consent.json');
 const economy = require('../economy');
 const seasons = require('../seasons');
 const sale = require('../packs/sale');
+// (The documents only: src/billing/index.js needs this file for its book amounts.)
+const billing = require('../billing/documents');
 const { HttpError, badRequest } = require('../utils/httpError');
 
 let injected = null; // (tests: a fake Stripe client)
@@ -139,11 +141,27 @@ async function receiptUrl(paymentIntentId) {
   }
 }
 
+/**
+ * The VAT Stripe Tax charged on a checkout (for our receipt, src/billing): the rate and the country, from the
+ * session's tax breakdown (best effort: without it the receipt works the rate out from the amounts).
+ */
+async function sessionTax(session) {
+  const country = session.customer_details?.address?.country ?? null;
+  try {
+    const full = await client().checkout.sessions.retrieve(session.id, { expand: ['total_details.breakdown'] });
+    const tax = full.total_details?.breakdown?.taxes?.[0];
+    return { rate: tax?.rate?.percentage ?? null, country: tax?.rate?.country ?? full.customer_details?.address?.country ?? country };
+  } catch (err) {
+    console.warn('[stripe] tax breakdown not found', err.message);
+    return { rate: null, country };
+  }
+}
+
 /** Facts to look up from Stripe before the database transaction (network calls stay outside it). */
 async function prefetch(event) {
   const o = event.data.object;
   if (event.type === 'checkout.session.completed' || event.type === 'checkout.session.async_payment_succeeded') {
-    return { receiptUrl: await receiptUrl(typeof o.payment_intent === 'string' ? o.payment_intent : o.payment_intent?.id) };
+    return { receiptUrl: await receiptUrl(typeof o.payment_intent === 'string' ? o.payment_intent : o.payment_intent?.id), tax: await sessionTax(o) };
   }
   return {};
 }
@@ -199,6 +217,8 @@ async function revoke(db, { payment, refundId, amountCents, adminId = null, reas
     `UPDATE payments SET refunded_cents = $2, refunded_at = now(), status = CASE WHEN $3 THEN 'refunded' ELSE status END WHERE id = $1`,
     [payment.id, refundedAfter, full],
   );
+  // Its credit note (KR-…), in the same transaction, when the purchase has a receipt (src/billing).
+  const credit = payment.provider === 'stripe' ? await billing.issueCreditNote(db, refundId) : null;
   const passRevoked = payment.season_key && (full || action === 'dispute')
     ? await seasons.revokeForPayment(db, payment, action === 'dispute' ? 'chargeback' : 'refunded')
     : false;
@@ -215,7 +235,7 @@ async function revoke(db, { payment, refundId, amountCents, adminId = null, reas
       ...(payment.pack_key && { pack: payment.pack_key, pack_revoked: Boolean(packOut?.revoked), coins_back: packOut?.coinsBack ?? 0 }),
     })],
   );
-  return { removed, short, full, ...(payment.season_key && { passRevoked }), ...(payment.pack_key && { packRevoked: Boolean(packOut?.revoked), coinsBack: packOut?.coinsBack ?? 0 }) };
+  return { removed, short, full, ...(credit && { creditNote: credit.number }), ...(payment.season_key && { passRevoked }), ...(payment.pack_key && { packRevoked: Boolean(packOut?.revoked), coinsBack: packOut?.coinsBack ?? 0 }) };
 }
 
 async function paymentForIntent(db, intentId) {
@@ -228,7 +248,7 @@ async function paymentForIntent(db, intentId) {
  * One verified Stripe event, inside the caller's transaction. `grant` adds a payment's coins once
  * (src/payments → grant). → a short word for the log: what happened.
  */
-async function handleEvent(db, event, { grant, receiptUrl: receipt = null } = {}) {
+async function handleEvent(db, event, { grant, receiptUrl: receipt = null, tax = null } = {}) {
   const o = event.data.object;
   switch (event.type) {
     case 'checkout.session.completed':
@@ -238,11 +258,15 @@ async function handleEvent(db, event, { grant, receiptUrl: receipt = null } = {}
       if (!pay) return 'unknown-payment';
       await db.query(
         `UPDATE payments SET stripe_session_id = $2, payment_intent = COALESCE($3, payment_intent), charged_cents = $4,
-                charged_currency = upper($5), tax_cents = $6, receipt_url = COALESCE($7, receipt_url) WHERE id = $1`,
-        [pay.id, o.id, idOf(o.payment_intent), o.amount_total, o.currency, o.total_details?.amount_tax ?? 0, receipt],
+                charged_currency = upper($5), tax_cents = $6, receipt_url = COALESCE($7, receipt_url),
+                vat_country = COALESCE(upper($8), vat_country), vat_rate = COALESCE($9, vat_rate) WHERE id = $1`,
+        [pay.id, o.id, idOf(o.payment_intent), o.amount_total, o.currency, o.total_details?.amount_tax ?? 0, receipt,
+          tax?.country ?? o.customer_details?.address?.country ?? null, tax?.rate ?? null],
       );
       if (o.payment_status !== 'paid') return 'waiting'; // (a slower payment method: its own event follows)
       const balance = await grant(db, pay.id, o.id);
+      // Its receipt (K-…), in the same transaction (src/billing); none in Stripe's test mode.
+      if (event.livemode !== false) await billing.issueReceipt(db, pay.id);
       return balance === null ? 'already-granted' : 'granted';
     }
     case 'checkout.session.async_payment_failed':
@@ -290,4 +314,7 @@ async function requestRefund(payment, { amountCents, adminId, reason }) {
   return { id: refund.id, status: refund.status, amount: refund.amount };
 }
 
-module.exports = { configured, mode, status, start, verify, prefetch, handleEvent, revoke, requestRefund, setClient, isLiveKey };
+/** Stripe's API client (src/billing's book amounts). */
+const api = () => client();
+
+module.exports = { configured, mode, status, start, verify, prefetch, handleEvent, revoke, requestRefund, setClient, isLiveKey, api };
