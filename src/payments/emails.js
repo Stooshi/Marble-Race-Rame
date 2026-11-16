@@ -13,6 +13,7 @@
  */
 const email = require('../email');
 const templates = require('../email/templates');
+const library = require('../email/library');
 const seasons = require('../seasons');
 const config = require('../config');
 const billing = require('../billing');
@@ -41,7 +42,7 @@ async function itemOf(db, pay) {
 async function confirmationFor(db, pay) {
   const { item, season, pack } = await itemOf(db, pay);
   const preSale = season && new Date(pay.paid_at) < new Date(season.starts_at);
-  return templates.purchaseConfirmation({
+  const o = {
     username: pay.username,
     orderNo: pay.order_no,
     item,
@@ -54,17 +55,24 @@ async function confirmationFor(db, pay) {
     termsUrl: `${site()}/legal#sale`,
     // Our receipt (K-…, src/billing) for a live Stripe purchase; none for the test provider or Stripe's test mode.
     receipt: await billing.receiptLink(db, pay.id),
+  };
+  // (The edited template if one is published, CRM phase 5; the core: the order, the agreements, the receipt.)
+  return library.compose(db, 'purchase-confirmation', {
+    values: { name: pay.username, order_no: pay.order_no, item }, core: templates.cores.purchaseCore(o), fallback: () => templates.purchaseConfirmation(o),
   });
 }
 
 async function withdrawalFor(db, pay) {
   const { item } = await itemOf(db, pay);
-  return templates.withdrawalReceived({
+  const o = {
     username: pay.username,
     orderNo: pay.order_no,
     item,
     price: money(pay.charged_cents ?? pay.amount_cents, pay.charged_currency ?? pay.currency),
     receivedAt: when(pay.withdrawn_at),
+  };
+  return library.compose(db, 'withdrawal-received', {
+    values: { name: pay.username, order_no: pay.order_no, item }, core: templates.cores.withdrawalCore(o), fallback: () => templates.withdrawalReceived(o),
   });
 }
 
@@ -79,8 +87,8 @@ async function sendKind(db, { column, where, build, tag, after = null }) {
   let sent = 0;
   for (const pay of rows) {
     try {
-      const { subject, html } = await build(db, pay);
-      await email.send({ to: pay.email, toName: pay.username, subject, html, tags: [tag] });
+      const { subject, html, templateVersion } = await build(db, pay);
+      await email.send({ to: pay.email, toName: pay.username, subject, html, tags: [tag], userId: pay.user_id, templateVersion });
       sent += 1;
       if (after) await after(db, pay).catch((err) => console.error(`[payments] ${tag} after sending ${pay.order_no}: ${err.message}`));
     } catch (err) {

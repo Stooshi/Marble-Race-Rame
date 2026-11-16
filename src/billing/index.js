@@ -10,6 +10,7 @@
  */
 const email = require('../email');
 const templates = require('../email/templates');
+const library = require('../email/library');
 const config = require('../config');
 const documents = require('./documents');
 const book = require('./book');
@@ -33,17 +34,20 @@ async function sendCreditNotes(db) {
        FROM users u
       WHERE d.kind = 'credit' AND d.emailed_at IS NULL AND d.created_at > now() - interval '2 days'
         AND u.id = d.user_id AND NOT u.is_guest AND u.deleted_at IS NULL AND u.email IS NOT NULL
-      RETURNING d.id, d.number, d.snapshot, d.gross_cents, d.currency, u.username, u.email`,
+      RETURNING d.id, d.number, d.snapshot, d.gross_cents, d.currency, d.user_id, u.username, u.email`,
   );
   let sent = 0;
   for (const d of rows) {
     try {
       const s = d.snapshot;
-      const msg = templates.creditNote({
+      const o = {
         username: d.username, number: d.number, orderNo: s.orderNo, item: s.lines[0]?.description ?? '',
         amount: money(-d.gross_cents, d.currency), receiptNumber: s.credits?.number ?? '', url: `${site()}${s.playerPath}`, chargeback: s.what === 'chargeback',
+      };
+      const msg = await library.compose(db, 'credit-note', {
+        values: { name: d.username, number: d.number, order_no: s.orderNo }, core: templates.cores.creditCore(o), fallback: () => templates.creditNote(o),
       });
-      await email.send({ to: d.email, toName: d.username, subject: msg.subject, html: msg.html, tags: ['credit-note'] });
+      await email.send({ to: d.email, toName: d.username, subject: msg.subject, html: msg.html, tags: ['credit-note'], userId: d.user_id, templateVersion: msg.templateVersion });
       sent += 1;
     } catch (err) {
       await db.query('UPDATE billing_documents SET emailed_at = NULL WHERE id = $1', [d.id]);

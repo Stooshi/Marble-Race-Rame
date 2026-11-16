@@ -508,3 +508,11 @@ The website's cookie choice, kept as a record of consent (GDPR): one row each ti
 | `marble_stats` (view) | Per plain marble: races, wins, average place |
 | `default_marble_color()` | A function giving each new player a starting colour, based on their id |
 | `set_updated_at()` | The trigger function behind every `updated_at` column |
+
+## Email templates and the email log (16 Nov 2026, CRM phase 5)
+
+| Table | What |
+|---|---|
+| `email_templates` | One row per saved version of an email kind (`kind`, `version`, `subject`, `preheader`, `title`, `blocks` jsonb, `note`, `created_by`, `published_at`, `published_by`). The newest published version is sent; none published: the email in code. Never deleted (the history). |
+| `email_log` | Every email sent through `src/email` (`user_id`, `to_email`, `kind`, `template_version`, `subject`, `provider_id` from Brevo, `status` sent / failed / test, `error`). Kept 24 months. No opens or clicks are recorded (no tracking). |
+

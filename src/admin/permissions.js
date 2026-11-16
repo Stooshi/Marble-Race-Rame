@@ -37,6 +37,7 @@ const PERMISSIONS = {
   'gift-codes:read': ['owner', 'marketing'],
   'gift-codes:make': ['owner'],
   'emails:read': ['owner'], // the email list (addresses) and its export
+  'emails:templates': ['owner', 'marketing'], // edit, publish and test-send the email templates (CRM phase 5)
   'audit:read': ['owner'],
   'admins:manage': ['owner'],
 };

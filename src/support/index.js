@@ -23,6 +23,7 @@ const config = require('../config');
 const db = require('../db');
 const email = require('../email');
 const templates = require('../email/templates');
+const library = require('../email/library');
 const security = require('../security');
 const settings = require('../../client/src/shared/support.json');
 
@@ -137,8 +138,9 @@ async function reply(client, { messageId, adminId, body }) {
   let emailError = null;
   if (email.enabled()) {
     try {
-      const t = templates.supportReply({ name: m.name, ref: m.ref, body, original: m.message });
-      await email.send({ to: m.email, toName: m.name, subject: t.subject, html: t.html, tags: ['support-reply'], replyTo: config.support.email || undefined });
+      const o = { name: m.name, ref: m.ref, body, original: m.message };
+      const t = await library.compose(client, 'support-reply', { values: { name: m.name, ref: m.ref }, core: templates.cores.supportReplyCore(o), fallback: () => templates.supportReply(o) });
+      await email.send({ to: m.email, toName: m.name, subject: t.subject, html: t.html, tags: ['support-reply'], replyTo: config.support.email || undefined, templateVersion: t.templateVersion });
       await client.query('UPDATE support_replies SET emailed_at = now() WHERE id = $1', [r.id]);
       emailed = true;
     } catch (err) {
