@@ -37,9 +37,10 @@ module.exports = track({
     {
       name: 'Along the lakefront', shape: straight(80, { grade: 0.12 }), height: 6, water: true, billboards: 2,
       landmarks: [{ name: 'lakeside-village', at: 0.5, side: 'left', distance: 34 }],
+      obstacles: [peg({ costume: 'mooring-pole', at: 0.5, line: 'right' })],
     },
     {
-      name: 'Island spiral', shape: spiral({ side: 'right', radius: 42, turns: 1.25, grade: 0.16 }), height: 14, water: true,
+      name: 'Island spiral', shape: spiral({ side: 'right', radius: 46, turns: 1.25, grade: 0.16 }), height: 14, water: true,
       around: 'lake-island', landmarks: [{ name: 'island-church', at: 0.5, side: 'right', distance: 20 }],
     },
     {
@@ -52,8 +53,8 @@ module.exports = track({
     },
     { name: 'Ferry hairpin', shape: hairpin({ side: 'left' }), height: 6, landmarks: [{ name: 'river-ferry', at: 0.5, side: 'left', distance: 22 }] },
     {
-      name: 'Villa terraces', shape: sBends({ first: 'right', radius: 65, degrees: 60, grade: 0.15 }), height: 4,
-      obstacles: [pileUp({ costume: 'buoy', at: 0.25 }), peg({ costume: 'mooring-pole', at: 0.7, line: 'right' })],
+      name: 'Villa terraces', shape: sBends({ first: 'right', radius: 65, degrees: 60, grade: 0.17 }), height: 4,
+      obstacles: [pileUp({ costume: 'buoy', at: 0.5 }), peg({ costume: 'mooring-pole', at: 0.85, line: 'right' })],
     },
     {
       name: 'Under the pines', shape: sweep({ side: 'left', radius: 80, degrees: 75, grade: 0.13 }), height: 10, billboards: 2,
