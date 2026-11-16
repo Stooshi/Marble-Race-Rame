@@ -31,7 +31,7 @@ module.exports = track({
     side: 'left',
     costumes: { block: 'barrel', slalom: 'street-lamp' },
     names: { plunge: 'Off the ramparts', bends: 'Old town bends' },
-    waves: { groups: 5, gap: 0.12, jitter: 0.04 },
+    waves: { groups: 5, gap: 0.16, jitter: 0.1 },
     dress: {},
   }),
   sections: [
@@ -54,7 +54,7 @@ module.exports = track({
     {
       name: 'Along the river', shape: sweep({ side: 'left', radius: 85, degrees: 80, grade: 0.14 }), height: 10, water: true, billboards: 2,
       landmarks: [{ name: 'cruise-ship', at: 0.5, side: 'right', distance: 40 }],
-      obstacles: [peg({ costume: 'mooring-pole', at: 0.35, line: 'left' }), peg({ costume: 'mooring-pole', at: 0.7, line: 'right' })],
+      obstacles: [peg({ costume: 'mooring-pole', at: 0.25, line: 'left' }), peg({ costume: 'mooring-pole', at: 0.5, line: 'center' }), peg({ costume: 'mooring-pole', at: 0.75, line: 'right' })],
     },
     {
       name: 'Rampart lanes', shape: sBends({ first: 'right', radius: 65, degrees: 55, grade: 0.15 }), height: 6,
