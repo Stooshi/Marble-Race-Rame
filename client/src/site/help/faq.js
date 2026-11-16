@@ -195,7 +195,7 @@ export function buildFaq({ tracks, platform = 'web' } = {}) {
       ["What's the difference between earned and bought coins?",
         "They're the same coins in your wallet and buy the same things. We keep them apart in your history so scoreboards only count earned coins."],
       ['Can I turn coins into money?',
-        "No. Coins can't be cashed out, sold, traded or given to another player. They can only be used in the game. Marbles can't be sold, traded or transferred either."],
+        "No. Coins can't be cashed out, sold, traded or given to another player. They can only be used in the game. Track packs and season passes stay with the account that bought them. Marbles can't be traded yet; if we add trading, it will only work inside Marble Spins, under rules we publish then, and never for money outside the game."],
       ['Do coins expire?',
         "No. Your coins stay in your account until you use them or delete your account. (A guest account, and its coins, is lost after 90 days away: save your marble to keep them for good.)"],
       ['Where can I see my coin history?',

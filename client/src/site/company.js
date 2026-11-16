@@ -10,6 +10,8 @@ const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 
 const longDate = (iso) => { const [y, m, d] = iso.split('-').map(Number); return `${d} ${MONTHS[m - 1]} ${y}`; };
 export const LEGAL_UPDATED = longDate(company.legalUpdated);
 /** The last change to the privacy policy (13 Nov 2026: "How you found us", approved by Moses), shown on /legal as "Last updated". */
+/** The last change to the terms of use and sale (16 Nov 2026: track packs, approved by Moses), shown on /legal. */
+export const TERMS_UPDATED = longDate(company.termsUpdated);
 export const PRIVACY_UPDATED = longDate(company.privacyUpdated);
 /** Where every "Contact us" link goes: the contact form at the end of the Help Centre. */
 export const CONTACT_PATH = '/help#contact';
