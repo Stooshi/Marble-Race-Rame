@@ -24,7 +24,7 @@ module.exports = track({
   signature: 'Down the caldera cliff',
   tvCameras: [
     // (At the foot of the cliff, looking back up it at the field dropping to the old port.)
-    { section: 'Along the old port', at: 0.25, side: 'left', distance: 8, height: 10 },
+    { section: 'Along the old port', at: 0.25, side: 'left', distance: 6, height: 15 },
     { section: 'Past the windmills', at: 0.6, side: 'right', distance: 8, height: 8 },
   ],
   billboardFrame: 'wood',
@@ -43,10 +43,15 @@ module.exports = track({
     waves: { groups: 5, gap: 0.12, jitter: 0.1 },
   }),
   sections: [
-    { name: 'Across the square', shape: straight(40, { grade: 0.13 }), features: [brake({ at: 0.15, length: 12 })] },
+    {
+      name: 'Across the square', shape: straight(40, { grade: 0.13 }), features: [brake({ at: 0.15, length: 12 })],
+      // (Oia's white houses round the square, a second stretch of the village: Moses, 16 Nov 2026, the village should
+      // read clearly in the overview.)
+      landmarks: [{ name: 'cycladic-village', at: 0.5, side: 'right', distance: 60 }],
+    },
     {
       name: 'Along the caldera rim', shape: sweep({ side: 'left', radius: 90, degrees: 150, grade: 0.11 }), billboards: 1,
-      landmarks: [{ name: 'cycladic-village', at: 0.5, side: 'right', distance: 34 }],
+      landmarks: [{ name: 'cycladic-village', at: 0.5, side: 'right', distance: 52 }],
       obstacles: [peg({ costume: 'street-lamp', at: 0.35, line: 'right' }), peg({ costume: 'street-lamp', at: 0.7, line: 'left' })],
     },
     {

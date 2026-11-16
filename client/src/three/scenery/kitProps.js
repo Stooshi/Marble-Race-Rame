@@ -289,8 +289,29 @@ export function rivieraDressing() {
   return [[stonePine, 0.35], [olive, 0.45], [cypress, 0.2]];
 }
 
+/** A small fairy chimney of pale tuff, a darker cap of harder rock on top (Cappadocia's valleys; hundreds, so plain). */
+function tuffChimney(lite) {
+  const h = 12;
+  return merge([
+    piece(new ConeGeometry(2.4, h, lite ? 5 : 7, 1, true), '#ece5d8', new Matrix4().makeTranslation(0, h / 2, 0)),
+    piece(new ConeGeometry(1.3, 1.6, lite ? 5 : 7, 1), '#7d6a5c', new Matrix4().makeTranslation(0, h - 0.3, 0)),
+  ]);
+}
+
+/** A tall, narrow poplar (Cappadocia's valley floors). */
+function poplar(lite) {
+  return merge([
+    piece(new CylinderGeometry(0.15, 0.22, 1.2, lite ? 3 : 5, 1, true), '#6a5a44', new Matrix4().makeTranslation(0, 0.6, 0)),
+    piece(new ConeGeometry(1, 8, lite ? 5 : 6, 1, true), '#6f9446', new Matrix4().makeTranslation(0, 5, 0)),
+  ]);
+}
+
 export function dressingFor(biome) {
   return {
+    // (Cappadocia's tuff valleys: small fairy chimneys, pale rocks and a few poplars; plain, as there are hundreds.)
+    tuff: [[(l) => tuffChimney(l), 0.55], [() => rock(true, '#d8cfc2'), 0.3], [(l) => poplar(l), 0.15]],
+    // (An alpine lake's shores: pine forest, no snow, and grey rocks.)
+    'alpine-lake': [[(l) => pine(l), 0.75], [(l) => rock(l, '#8f8d88'), 0.25]],
     alpine: [[(l) => pine(l, true), 0.8], [(l) => rock(l, '#9a9690'), 0.2]],
     // (Arctic ground is all rocks, hundreds of them: always the plainest rock, so the triangles stay in budget.)
     arctic: [[() => rock(true, '#7d8794'), 0.7], [() => rock(true, '#e8eef5'), 0.3]],

@@ -311,7 +311,7 @@ module.exports = {
   BRIDGES: ['ice', 'stone', 'wood', 'steel'],
   // Scenery names (looks only; the 3D view draws them, client/src/three/scenery/kit*.js).
   SURFACES: ['ice', 'snow', 'sand', 'stone', 'water', 'asphalt', 'tartan', 'tartan-blue'],
-  BIOMES: ['alpine', 'arctic', 'meadow', 'desert', 'jungle', 'city', 'playfield', 'circuit-board', 'blacklight-carpet'],
+  BIOMES: ['alpine', 'arctic', 'meadow', 'desert', 'jungle', 'city', 'playfield', 'circuit-board', 'blacklight-carpet', 'tuff', 'alpine-lake'],
   LANDMARKS: ['church', 'mountain-hut', 'big-rock', 'lighthouse', 'horse-sleigh', 'border-post',
     'lift-station', 'mine-buildings', 'snow-park', 'base-camp',
     'sacre-coeur', 'moulin-rouge', 'fountains', 'louvre-pyramid', 'notre-dame', 'eiffel-tower', 'seine', 'bookstalls',

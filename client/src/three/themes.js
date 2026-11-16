@@ -62,6 +62,8 @@ const KIT_LOOKS = {
   arctic: { sky: { top: '#5d8fc4', horizon: '#e6eef6', glow: '#fff4dc' }, fog: '#e6eef6', ground: { color: '#e2ebf3', y: -66.2 } },
   meadow: { sky: { top: '#5fb4ff', horizon: '#d6f0ff', glow: null }, fog: '#d6f0ff', ground: { color: '#86c66a', y: -66.2 } },
   desert: { sky: { top: '#4a98d8', horizon: '#f3dcb4', glow: '#fff3d6' }, fog: '#f0d9b5', ground: { color: '#e2a764', y: -66.2 } },
+  tuff: { sky: { top: '#6a9ad6', horizon: '#ece6dc', glow: '#fff1dc' }, fog: '#e6e0d6', ground: { color: '#ddd3c4', y: -66.2 } },
+  'alpine-lake': { sky: { top: '#4f93d8', horizon: '#d6e8f2', glow: null }, fog: '#d3e3ea', ground: { color: '#6f9a4f', y: -66.2 } },
   jungle: { sky: { top: '#5aa8e0', horizon: '#d5ead2', glow: null }, fog: '#cfe3cc', ground: { color: '#3f8f3a', y: -66.2 } },
   city: { sky: { top: '#5fa8f0', horizon: '#dbe9f5', glow: null }, fog: '#dbe9f5', ground: { color: '#9cb768', y: -66.2 } },
 };

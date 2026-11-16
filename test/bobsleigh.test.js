@@ -7,7 +7,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { execFileSync } = require('node:child_process');
 const { simulatePhysicsRace } = require('../src/game/physicsSimulator');
-const { physicsTrack } = require('../src/game/physicsTracks');
+const { referenceTrack } = require('../src/game/referenceTracks');
 const { buildCenterline, trackProfile } = require('../src/game/trackGeometry');
 const { realTracks, realMarbles } = require('./helpers/realTracks');
 
@@ -16,7 +16,9 @@ const field = (seed) => Array.from({ length: 20 }, (_, i) => {
   const m = catalog[(i + seed) % catalog.length];
   return { id: `m${i}`, lane: (i * 7 + seed) % 20, topSpeed: m.topSpeed, acceleration: m.acceleration, handling: m.handling, luck: m.luck };
 });
-const bob = physicsTrack('bobsleigh-run');
+// The frozen copy (src/game/referenceTracks.js): the engine's reference track, and the track the data updates
+// up to 2027-04-25 gave; the live track has had its own layout since 16 Nov 2026 (test/worldTourHandBuilt.test.js).
+const bob = referenceTrack('bobsleigh-run');
 const race = (seed) => simulatePhysicsRace({ seed: seed * 104729 + 11, track: bob, entries: field(seed), level: 3 });
 const pathOf = (sim) => {
   const path = new Array(20).fill(null);
@@ -56,7 +58,7 @@ test('Bobsleigh Run races exactly as on physics-preview-4 (later tracks and obst
 test('Bobsleigh Run is added by its data update, then re-tuned, exactly as defined in code, and is always downhill', () => {
   const dir = path.join(__dirname, '..', 'docs', 'data_updates');
   const added = fs.readFileSync(path.join(dir, '2026-10-06-add-bobsleigh-run.sql'), 'utf8');
-  const generated = execFileSync(process.execPath, [path.join(__dirname, '..', 'scripts', 'physics-track-sql.js'), 'bobsleigh-run'], { encoding: 'utf8' });
+  const generated = execFileSync(process.execPath, [path.join(__dirname, '..', 'scripts', 'physics-track-sql.js'), 'bobsleigh-run', '--reference'], { encoding: 'utf8' });
   // The data update that added it (already run, so never edited) plus the
   // later ones (the clean start's stagger, then the boost pads, bumps and
   // obstacles) give the track in code.
@@ -77,7 +79,7 @@ test('Bobsleigh Run is added by its data update, then re-tuned, exactly as defin
   // …and the new start (its own gate and first camera shots, looks only), which sets everything as in code.
   const NEW_START = '2027-04-25-bobsleigh-run-tv-cameras.sql'; // (the latest: after 2026-12-05-bobsleigh-run-new-start.sql, its TV cameras)
   const body = (sql) => sql.slice(sql.indexOf('UPDATE tracks'));
-  const retuned = execFileSync(process.execPath, [path.join(__dirname, '..', 'scripts', 'physics-track-sql.js'), 'bobsleigh-run', '--retune'], { encoding: 'utf8' });
+  const retuned = execFileSync(process.execPath, [path.join(__dirname, '..', 'scripts', 'physics-track-sql.js'), 'bobsleigh-run', '--retune', '--reference'], { encoding: 'utf8' });
   assert.equal(body(fs.readFileSync(path.join(dir, NEW_START), 'utf8')), body(retuned), `${NEW_START} no longer gives the track in code`);
   physics.startLook = bob.physics.startLook;
   physics.tv = bob.physics.tv; // (its TV cameras, 2027-04-25: drawing only)

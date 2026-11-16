@@ -366,8 +366,9 @@ export function buildCapeTown(centerline, track, theme, { lite = false } = {}) {
     }
   }
   spots.sort((a, b) => a[2] - b[2]); // random order, so the limits thin everything evenly
-  const maxTrees = lite ? 260 : 900;
-  const maxBlocks = lite ? 160 : 520;
+  // (Phones: a few fewer since the new layout of 16 Nov 2026, whose flyover sees more of the city at once: within 60k triangles.)
+  const maxTrees = lite ? 230 : 900;
+  const maxBlocks = lite ? 145 : 520;
   for (const [x, z, roll] of spots) {
     if (trees.length >= maxTrees && blocks.length >= maxBlocks) break;
     const c = field.clearance(x, z);

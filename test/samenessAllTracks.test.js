@@ -28,12 +28,9 @@ function lineKey(what) {
 // opening: opens the same way as another track of its family; opening-kind: more than two of its family
 // share its kind of opening; layout: its section order is too alike another track's.
 const KNOWN = {
-  // The three hand-built tracks (before the track kit).
-  'bobsleigh-run': ['opening', 'opening-kind', 'layout'],
-  'san-francisco': ['opening-kind'],
-  'table-mountain-run': ['opening', 'opening-kind', 'layout'],
-  // (The kit-built World Tour tracks all have their own layouts and openings since 15–16 Nov 2026; Bobsleigh Run and
-  // Table Mountain Run above wait for Moses: they are the race fingerprints' reference tracks.)
+  // (Every World Tour track has its own layout and opening since 15–16 Nov 2026: the kit-built ones, then Bobsleigh
+  // Run and Table Mountain Run, re-laid with the kit on 16 Nov, their old tracks frozen for the engine's tests in
+  // src/game/referenceTracks.js; San Francisco, the one hand-built track left with the classic opening, passes.)
   // Grand Prix (one design: Dubai's; Stockholm, Lagos, Istanbul, Sydney, Nairobi, Delhi, Sahara and Wyrmwood Hollow have their own since 6–7 Nov 2026).
   'dubai-marble-grand-prix': ['opening', 'opening-kind', 'layout'],
   'elderglade-marble-grand-prix': ['opening-kind'], // (its opening and layout are its own since Sydney, Lagos and Stockholm got theirs, 7 Nov 2026)

@@ -24,7 +24,7 @@ module.exports = track({
   signature: 'Round the abbey',
   tvCameras: [
     // (Coming off the mount, looking back round the rock at the field winding down under the spire.)
-    { section: 'Down off the ramparts', at: 0.3, side: 'left', distance: 8, height: 12 },
+    { section: 'Down off the ramparts', at: 0.3, side: 'right', distance: 8, height: 12 },
     { section: 'Along the causeway', at: 0.5, side: 'right', distance: 8, height: 8 },
   ],
   billboardFrame: 'wood',

@@ -77,11 +77,30 @@ export function seaOf(centerline, kit) {
     }
     return { c: best, d: Math.sqrt(bd) };
   };
+  // Water beside one stretch only (`to`; Rio's bay turn, 16 Nov 2026): seaward of that stretch (its own side, or
+  // `toward`), measured from it, the land falls to the sea beyond `coast`; every other stretch keeps its banks
+  // (`coast` from it, then the shore's fall).
+  const stretch = coarse.filter((c) => c.p >= (sea.from ?? 0) && c.p <= sea.to);
+  const stretchDepth = (x, z, coast) => {
+    let best = null;
+    let bd = Infinity;
+    for (const c of stretch) {
+      const d2 = (c.x - x) ** 2 + (c.z - z) ** 2;
+      if (d2 < bd) { bd = d2; best = c; }
+    }
+    if (!best) return 0;
+    const seaward = toward ? (x - best.x) * toward[0] + (z - best.z) * toward[1] : ((x - best.x) * best.sx + (z - best.z) * best.sz) * sign;
+    if (seaward <= 0) return 0;
+    const { c, d } = nearest(x, z);
+    const others = c.p >= (sea.from ?? 0) && c.p <= sea.to ? 1 : smoothstep(coast, coast + SEA_SHORE, d);
+    return smoothstep(coast, coast + SEA_SHORE, Math.sqrt(bd)) * others;
+  };
   return {
     y,
     coast: sea.coast ?? 26,
     /** How far into the sea (0: on the land; 1: the sea floor), at x, z. */
     depth(x, z) {
+      if (sea.to !== undefined) return stretchDepth(x, z, this.coast);
       const { c, d } = nearest(x, z);
       if (!c || c.p < (sea.from ?? 0)) return 0;
       // (Seaward: towards `toward` ([x, z] on the map: the coast's open side) if given, else the track's own side.)
@@ -175,6 +194,11 @@ export const BIOMES = {
   arctic: { terrain: { sand: '#dfe9f2', grass: '#eef4fa', dry: '#ffffff', shade: '#a9bfd4' }, bank: '#f0f5fa', fill: '#7d8794', hills: 24, sea: -60 },
   meadow: { terrain: { sand: '#d9c58f', grass: '#8fbf5a', dry: '#b9c46a', shade: '#6f9a45' }, bank: '#86b653', fill: '#8b7d68', hills: 26, sea: -60 },
   desert: { terrain: { sand: '#e8b77a', grass: '#e2a764', dry: '#efc590', shade: '#c98d50' }, bank: '#e5ae6e', fill: '#a8754a', hills: 30, sea: -60 },
+  // Cappadocia's valleys (Moses, 16 Nov 2026: pale tuff rock, not sand dunes): soft cream and rose rock, gently rolling.
+  tuff: { terrain: { sand: '#e9e4da', grass: '#ddd3c4', dry: '#f0ebe2', shade: '#bca39b' }, bank: '#e2dacd', fill: '#a89286', hills: 34, sea: -60 },
+  // An alpine lake's shores (Lake Bled, Hallstatt; Moses, 16 Nov 2026: not a Mediterranean coast): green pasture
+  // and pine forest on steep hills, grey pebbles at the water.
+  'alpine-lake': { terrain: { sand: '#a8a596', grass: '#6f9a4f', dry: '#86a65a', shade: '#4f7a3c' }, bank: '#6a9449', fill: '#7d776c', hills: 48, sea: -60 },
   jungle: { terrain: { sand: '#c9b27a', grass: '#3f8f3a', dry: '#5aa344', shade: '#2f6e2c' }, bank: '#3d8a37', fill: '#6b5a44', hills: 34, sea: -60 },
   city: { terrain: { sand: '#d7c9a6', grass: '#9cb768', dry: '#b7bf7a', shade: '#7f9a54' }, bank: '#a7b8a0', fill: '#a49c8f', hills: 18, sea: -60 },
   // A pinball table's playfield: painted wood in deep colours, gently rolling (the table's art, not a landscape).

@@ -62,7 +62,9 @@ moment: at the track's big feature (its end, so the marbles come through the fea
 just before it; a second one where the track is long enough (at least 300 m from the first). The same
 camera and scenery checks apply (nothing at the lens, a clear view of the track: `client/test/tvMoments.test.js`).
 `test/tvCameras.test.js` fails if any track in the database has none. The three hand-built tracks
-(Bobsleigh Run, San Francisco, Table Mountain Run) carry theirs as `physics.tv` in `src/game/physicsTracks.js`.
+(Bobsleigh Run, San Francisco, Table Mountain Run) carry theirs as `physics.tv` (San Francisco's in
+`src/game/physicsTracks.js`; Bobsleigh Run's and Table Mountain Run's written out from their `tvCameras` by
+`handBuilt()`, below).
 On 27 Oct 2026 the 110 tracks without one got two each (at their signature or biggest features), in
 looks-only data updates (`docs/data_updates/2027-04-25-…-tv-cameras.sql`); races unchanged.
 
@@ -246,6 +248,14 @@ module.exports = track({
 
   A track may still write its own sections by hand; the sameness check makes sure they differ.
   Since 6 Nov 2026 the check also runs on every track at once (`test/samenessAllTracks.test.js`): a new track must pass it, and the tracks built before it (most of the Grand Prix series, ten World Tour tracks, the hand-built three) are listed exceptions that may only shrink. Re-laying out a live track keeps its slug and resets its track and country records (`docs/04-game-rules.md`); take its entry off the list once its report passes.
+
+  **A hand-built track re-laid with the kit** (Bobsleigh Run and Table Mountain Run, 16 Nov 2026, Moses's option (a)):
+  its file in this folder (not in `index.js`) is a kit spec wrapped in `handBuilt()` (`src/trackKit/handBuilt.js`),
+  which keeps its hand-built looks (its theme by slug in `client/src/three/themes.js`, no `physics.kit`; the kit's
+  billboards are not drawn) and writes its start and TV cameras out as `physics.startLook` and `physics.tv`. Its old
+  track is frozen in `src/game/referenceTracks.js` for the engine's tests (the race fingerprints and the kit's
+  comparisons), so its new layout never changes the fingerprints. Table Mountain Run gives its Cape Town scenery's
+  places (`landmarks`: forest, Bo-Kaap, stadium, city) as shares along the new layout (`onSection`).
 - **`family`**: `'world-tour'` (the default), `'grand-prix'` (any `grandPrix` track),
   `'coaster'`, `'pinball'`, `'arcade'`, `'canyon'`, `'block'`, `'athletics'`, `'winter-wonders'`, `'river'`, `'peak'` or `'test'` (test tracks, never compared).
   A Rivers track (`'river'`) gives `river: { palette, side, width, banks }`; each section may say where the river runs
@@ -381,8 +391,11 @@ ground beside the way in too: `client/src/three/scenery/channelCheck.js`).
 
 Scenery comes from names in the file (looks only; checked, so a typo is refused):
 
-- `biome`: `'alpine' | 'arctic' | 'meadow' | 'desert' | 'jungle' | 'city'`:
-  the land's colours and its trees, rocks or cacti (guessed from `surface` if left out).
+- `biome`: `'alpine' | 'arctic' | 'meadow' | 'desert' | 'jungle' | 'city' | 'tuff' | 'alpine-lake'`:
+  the land's colours and its trees, rocks or cacti (guessed from `surface` if left out). `tuff` (16 Nov 2026,
+  Cappadocia): pale cream and rose rock, small fairy chimneys, rocks and poplars. `alpine-lake` (16 Nov 2026, Lake
+  Bled): green pasture and pine forest on steep hills, grey pebbles at the water; give its `sea` cold colours (`near`,
+  `far`) and a mountain behind (`giant-peak`), never the Riviera's dressing.
 - `surface`: `'ice' | 'snow' | 'sand' | 'stone' | 'water'`, for the whole track
   or one section (`surface: 'stone'` on the Steps). Every surface races exactly like ice.
 - `start: { landmark }`, `finish: { landmark }`, and per section
@@ -422,8 +435,9 @@ Scenery comes from names in the file (looks only; checked, so a typo is refused)
   splitter's divider). They float on a track's `sea` where it is under them. A landmark may carry `lite: { build, glow,
   haze }`: lighter parts for phones (null: none there); Pudong's towers light a third of their floors there and draw every
   other reflection solid with the lit parts, in one draw call less.
-- `sea: { toward: [x, z], from, coast, level }` (or `side: 'left' | 'right'` instead of `toward`), on the track: the
-  sea along the track (Saint-Tropez, 3 Nov 2026). From `from` (0–1 along the track) the land keeps its banks within
+- `sea: { toward: [x, z], from, to, coast, level }` (or `side: 'left' | 'right'` instead of `toward`), on the track: the
+  sea along the track (Saint-Tropez, 3 Nov 2026). From `from` (0–1 along the track) to `to` (the finish if left out;
+  Rio's bay turn has water beside that turn only, 16 Nov 2026) the land keeps its banks within
   `coast` metres (default 26) of every stretch, then falls to the sea floor on the seaward side: towards `toward`
   (a direction on the map, the same for every stretch, as along a coast) or the track's own `side`. One flat sea sheet
   `level` metres below the finish line (default -2.5) covers the world, turquoise near the coast, deep blue out to

@@ -13,9 +13,14 @@
 //   node scripts/physics-track-sql.js san-francisco --retune "What changed." > docs/data_updates/<date>-san-francisco-<what>.sql
 // The tests check the committed files still match the code.
 const { physicsTrack } = require('../src/game/physicsTracks');
+const { referenceTrack } = require('../src/game/referenceTracks');
 
+// --reference (tests only): Bobsleigh Run or Table Mountain Run as frozen in src/game/referenceTracks.js, the
+// tracks their data updates up to 2027-04-25 gave (before their new layouts, 16 Nov 2026).
+const reference = process.argv.includes('--reference');
+if (reference) process.argv.splice(process.argv.indexOf('--reference'), 1);
 const slug = process.argv[2];
-const track = physicsTrack(slug);
+const track = reference ? referenceTrack(slug) : physicsTrack(slug);
 if (!track) {
   console.error(`No physics track "${slug}"`);
   process.exit(1);

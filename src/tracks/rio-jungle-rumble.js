@@ -17,6 +17,9 @@ module.exports = track({
   biome: 'jungle',
   lighting: 'day',
   variants: ['sunset'],
+  // The water of Guanabara Bay beside the bay turn, the hillside falling to it as cliffs (looks only; Moses, 16 Nov
+  // 2026: the bay turn should show the bay).
+  sea: { side: 'left', from: 0.5123, to: 0.6383, coast: 8 },
   signature: 'Guanabara Bay turn',
   tvCameras: [
     // (At the end of the turn, looking back round it at the field coming round the bay.)
@@ -51,6 +54,9 @@ module.exports = track({
     { name: 'Hairpin', shape: hairpin({ side: 'left' }), obstacles: [block({ costume: 'football', line: 'left' })], scenery: ['colourful-houses'] },
     {
       name: 'Selarón Steps', shape: straight(90, { grade: 0.13 }), billboards: 1, scenery: ['colourful-houses'],
+      // (The stadium off across the city, seen from the steps and the bay turn: since 16 Nov 2026 the water of the bay
+      // lies where it stood beyond the turn.)
+      landmarks: [{ name: 'maracana', at: 0.5, side: 'left', distance: 150 }],
       features: [steps({ from: 0.5, to: 0.88, count: 6, tiles: 'mosaic' })],
       obstacles: [slalom({ costume: 'corner-flag', from: 0.08, to: 0.3, count: 3, loss: 0.3 })],
     },
@@ -59,7 +65,6 @@ module.exports = track({
     // The track's big feature: a dramatic banked turn right round the bay, under the cable car.
     {
       name: 'Guanabara Bay turn', shape: sweep({ side: 'right', radius: 45, degrees: 180, grade: 0.12 }), overhead: ['cable-car'],
-      landmarks: [{ name: 'maracana', at: 0.5, side: 'left', distance: 140 }],
     },
     { name: 'To the city', shape: straight(40, { grade: 0.13 }), billboards: 1 },
     { name: 'City spiral', shape: spiral({ side: 'left', radius: 45, grade: 0.15 }) },

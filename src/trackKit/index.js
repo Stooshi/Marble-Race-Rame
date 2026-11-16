@@ -330,8 +330,10 @@ function track(spec) {
     ...(isAthletics(spec) && { athletics: { lanes: 'red', ...spec.athletics } }),
     // A Winter Wonders track (family 'winter-wonders'): a World Tour track listed as its own series.
     ...(isWinterWonders(spec) && { winterWonders: true }),
-    // A track by the sea (`sea: { side | toward, from, coast, level }`, Saint-Tropez): open water on one side of the track
-    // (or towards `toward`, [x, z] on the map) from `from` (0–1 along it) to the finish, the land falling to it beyond `coast` metres. Looks only.
+    // A track by the sea (`sea: { side | toward, from, to, coast, level, near, far }`, Saint-Tropez; `to`: the water
+    // beside one stretch only, Rio's bay turn; `near`, `far`: the water's colours, an alpine lake's cold green): open
+    // water on one side of the track (or towards `toward`, [x, z] on the map) from `from` (0–1 along it) to `to` (the
+    // finish if not given), the land falling to it beyond `coast` metres. Looks only.
     ...(spec.sea && { sea: { side: 'left', from: 0, coast: 26, level: -2.5, ...spec.sea } }),
     // A pinball table (family 'pinball'): the playfield, the cabinet, the backglass's art and the
     // dot-matrix display's call-outs at the start and for the winner, the apron's flippers and the
@@ -441,7 +443,7 @@ function track(spec) {
 }
 
 module.exports = {
-  track, mirror: require('./mirror').mirror, ...parts,
+  track, mirror: require('./mirror').mirror, ...parts, ...require('./handBuilt'),
   opening: require('./openings').opening, OPENING_KINDS: require('./openings').OPENING_KINDS,
   layout: require('./layouts').layout, LAYOUT_KINDS: require('./layouts').LAYOUT_KINDS,
 };

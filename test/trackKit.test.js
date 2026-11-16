@@ -9,6 +9,7 @@ const path = require('node:path');
 const { execFileSync } = require('node:child_process');
 const kit = require('../src/trackKit');
 const { physicsTrack, PHYSICS_TRACKS } = require('../src/game/physicsTracks');
+const { referenceTrack } = require('../src/game/referenceTracks');
 const { ALL_SOLID_TYPES } = require('../src/game/trackFeatures');
 const { simulatePhysicsRace } = require('../src/game/physicsSimulator');
 const { houseField } = require('../scripts/race-fingerprints');
@@ -19,8 +20,9 @@ const {
 } = kit;
 
 const proving = physicsTrack('kit-proving-ground');
-const bob = physicsTrack('bobsleigh-run');
-const tm = physicsTrack('table-mountain-run');
+// (The frozen copies of the two hand-built tracks, src/game/referenceTracks.js: the kit is built to their settings.)
+const bob = referenceTrack('bobsleigh-run');
+const tm = referenceTrack('table-mountain-run');
 
 // A small valid track to break one rule at a time.
 const base = () => ({

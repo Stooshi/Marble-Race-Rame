@@ -16,7 +16,8 @@ module.exports = track({
   difficulty: 'hard',
   description: 'The valleys of soft pale rock at dawn, hot-air balloons rising all round: down into the valley under the balloons, right round a cluster of fairy chimneys, down through the underground city and through the rose-coloured valley.',
   surface: 'stone',
-  biome: 'desert',
+  // (Pale tuff rock, not desert sand: Moses, 16 Nov 2026.)
+  biome: 'tuff',
   lighting: 'dawn',
   variants: ['day'],
   signature: 'Round the fairy chimneys',

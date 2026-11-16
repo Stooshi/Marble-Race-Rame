@@ -1376,9 +1376,10 @@ export class TrackScene {
       const k = Math.min(segments - 1, Math.floor(g));
       return new Vector3().lerpVectors(samples[k].pos, samples[k + 1].pos, g - k);
     };
-    // (Tracks from the opening library and coasters; tracks built before them keep their camera exactly.)
+    // (Tracks from the opening library and coasters, and the hand-built tracks re-laid with it, whose start look
+    // names their opening, 16 Nov 2026; tracks built before them keep their camera exactly.)
     const kit = this.track?.physics?.kit;
-    const down = kit?.opening || kit?.coaster
+    const down = kit?.opening || kit?.coaster || this.track?.physics?.startLook?.opening
       ? new Vector3().subVectors(posAt(p + 16 / (this.arcLength || (this.arcLength = this.measureArc()))), posAt(p - 16 / this.arcLength)).normalize()
       : new Vector3().subVectors(samples[i + 1].pos, samples[i].pos).normalize();
     const normal = new Vector3(0, 1, 0).addScaledVector(down, -down.y).normalize();

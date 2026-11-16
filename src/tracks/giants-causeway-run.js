@@ -24,7 +24,7 @@ module.exports = track({
   signature: 'Down the cliff steps',
   tvCameras: [
     // (At the foot of the cliff, looking back up the steps at the field coming down.)
-    { section: 'Along the bay', at: 0.2, side: 'left', distance: 8, height: 10 },
+    { section: 'Along the bay', at: 0.2, side: 'left', distance: 6, height: 15 },
     { section: 'Along the clifftop', at: 0.6, side: 'right', distance: 8, height: 8 },
   ],
   billboardFrame: 'wood',

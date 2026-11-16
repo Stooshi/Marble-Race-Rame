@@ -27,7 +27,7 @@ module.exports = track({
   tvCameras: [
     // (At the foot of the plank walk's turn, looking back round it at the field coming off the cliff.)
     { section: 'Up to the west peak', at: 0.5, side: 'left', distance: 10, height: 12 },
-    { section: 'In the gully', at: 0.6, side: 'right', distance: 10, height: 11 },
+    { section: 'In the gully', at: 0.6, side: 'right', distance: 6, height: 15 },
   ],
   start: { landmark: 'cliff-stairs', type: 'spiral-tower', gate: 'stalls', shots: { countdown: 'crane', launch: 'low-chase' } },
   finish: { landmark: 'peak-camp' },

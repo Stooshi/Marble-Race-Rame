@@ -19,8 +19,9 @@ module.exports = track({
   biome: 'alpine',
   lighting: 'dawn',
   variants: ['day'],
-  // The lake along the east of the run, the mountain falling to it (looks only).
-  sea: { toward: [1, 0.15], from: 0, coast: 30 },
+  // The lake along the east of the run, the mountain falling to it (looks only): cold, dark alpine water (Moses,
+  // 16 Nov 2026: not a Mediterranean coast), the snowy peaks behind the village.
+  sea: { toward: [1, 0.15], from: 0, coast: 30, near: '#3d6f7a', far: '#1f4a5c' },
   signature: 'Down the miners\' slide',
   tvCameras: [
     // (At the foot of the slide, looking back up into the mine at the field coming down it.)
@@ -45,7 +46,7 @@ module.exports = track({
     {
       name: 'Along the lake', shape: sweep({ side: 'right', radius: 90, degrees: 150, grade: 0.1 }), billboards: 1,
       obstacles: [peg({ costume: 'street-lamp', at: 0.3, line: 'right' }), peg({ costume: 'street-lamp', at: 0.6, line: 'left' })],
-      landmarks: [{ name: 'lakeside-village', at: 0.5, side: 'left', distance: 36 }],
+      landmarks: [{ name: 'lakeside-village', at: 0.5, side: 'left', distance: 36 }, { name: 'giant-peak', at: 0.5, side: 'left', distance: 520 }],
     },
     {
       name: 'Up beside the funicular', shape: climb(14, { grade: -0.04, after: 0.3 }),
@@ -55,7 +56,7 @@ module.exports = track({
     { name: 'Down the miners\' slide', shape: plunge(75, { grade: 0.36, from: 0.16 }), tunnel: 'mine' },
     {
       name: 'Run to the hairpin', shape: straight(60, { grade: 0.13 }), billboards: 1,
-      landmarks: [{ name: 'mine-buildings', at: 0.6, side: 'right', distance: 20 }],
+      landmarks: [{ name: 'mine-buildings', at: 0.6, side: 'right', distance: 20 }, { name: 'giant-peak', at: 0.5, side: 'right', distance: 460 }],
       obstacles: [slalom({ costume: 'street-lamp', from: 0.3, to: 0.65, count: 3, loss: 0.3 })],
     },
     { name: 'Hairpin above the lake', shape: hairpin({ side: 'left' }) },

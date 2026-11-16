@@ -8,13 +8,14 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { execFileSync } = require('node:child_process');
 const { simulatePhysicsRace } = require('../src/game/physicsSimulator');
-const { physicsTrack, TABLE_MOUNTAIN_SECTIONS } = require('../src/game/physicsTracks');
+const { referenceTrack, TABLE_MOUNTAIN_SECTIONS } = require('../src/game/referenceTracks');
 const { createRng } = require('../src/game/rng');
 const { subSeed } = require('../src/game/simulator');
 const { HOUSE_SKILLS, skillStats } = require('../src/game/skill');
 
-const tm = physicsTrack('table-mountain-run');
-const bob = physicsTrack('bobsleigh-run');
+// The frozen copies (src/game/referenceTracks.js); the live tracks have had their own layouts since 16 Nov 2026.
+const tm = referenceTrack('table-mountain-run');
+const bob = referenceTrack('bobsleigh-run');
 
 /** A field of house marbles: the house skill ladder, lanes from the seed. */
 function routeRace(seed) {
@@ -41,10 +42,11 @@ test('Table Mountain Run is added switched off, then re-tuned, by its data updat
   const LATEST = '2027-04-25-table-mountain-run-tv-cameras.sql'; // (after 2026-12-07-table-mountain-run-new-start.sql, its own gate and first camera shots: its TV cameras)
   const latest = fs.readFileSync(path.join(dir, LATEST), 'utf8');
   const body = (sql) => sql.slice(sql.indexOf('UPDATE tracks'));
-  const generated = execFileSync(process.execPath, [script, 'table-mountain-run', '--retune'], { encoding: 'utf8' });
+  const generated = execFileSync(process.execPath, [script, 'table-mountain-run', '--retune', '--reference'], { encoding: 'utf8' });
   assert.equal(body(latest), body(generated), 'the latest data update no longer gives the track in code');
   assert.doesNotMatch(latest, /is_active/);
-  const later = fs.readdirSync(dir).filter((f) => f > LATEST && f.includes('table-mountain'));
+  // (After it, only its new layout and its wildness, 16 Nov 2026: test/worldTourHandBuilt.test.js.)
+  const later = fs.readdirSync(dir).filter((f) => f > LATEST && f.includes('table-mountain') && !/-(new-layout|to-world-tour)\.sql$/.test(f));
   assert.deepEqual(later, [], 'a later Table Mountain update: check it against the code here');
 });
 

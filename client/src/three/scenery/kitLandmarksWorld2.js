@@ -24,23 +24,27 @@ function cubeHouse(p, x, y, z, w, d, h, k, dome = false) {
   if (dome) p.push(piece(new SphereGeometry(Math.min(w, d) * 0.38, 10, 5, 0, Math.PI * 2, 0, Math.PI / 2), DOOR_BLUE, M(x, y + h + 0.3, z)));
 }
 
-/** A cliff-top village: white cube houses stepping up the slope behind, blue domes among them. */
+/**
+ * A cliff-top village: white cube houses stepping up the slope behind, blue domes among them, on terraces of the
+ * caldera's dark volcanic rock (16 Nov 2026, Moses: the white village should read clearly in the overview: twice
+ * the houses, six rows across 75 m, the dark terraces under them so the white stands out).
+ */
 function cycladicVillage() {
   const p = [];
   const r = seededRandom(31);
   let k = 0;
-  for (let row = 0; row < 4; row += 1) {
-    for (let i = -3; i <= 3; i += 1) {
+  for (let row = 0; row < 6; row += 1) {
+    for (let i = -5; i <= 5; i += 1) {
       if (r() < 0.18) continue;
       const w = 4 + r() * 2.5;
       const d = 4 + r() * 2;
       const h = 3.2 + r() * 1.6;
-      cubeHouse(p, i * 6.4 + (row % 2) * 3, row * 3.4, -row * 6.5 + r() * 1.5, w, d, h, k, r() < 0.14);
+      cubeHouse(p, i * 6.4 + (row % 2) * 3, row * 3.4, -row * 6.5 + r() * 1.5, w, d, h, k, r() < 0.16);
       k += 1;
     }
   }
-  // (The terraced slope under the houses: one block per row.)
-  for (let row = 0; row < 4; row += 1) p.push(box(48, row * 3.4 + 0.01, 7, 1.5, (row * 3.4) / 2, -row * 6.5, '#d9cbb4'));
+  // (The terraced slope under the houses: one block per row, the caldera's dark red-brown rock.)
+  for (let row = 0; row < 6; row += 1) p.push(box(76, row * 3.4 + 0.01, 7, 1.5, (row * 3.4) / 2, -row * 6.5, '#7a4a3a'));
   return merge(p);
 }
 
@@ -219,7 +223,7 @@ function fairyChimneys() {
 }
 
 export const WORLD2_LANDMARKS = {
-  'cycladic-village': { build: cycladicVillage, radius: 26 },
+  'cycladic-village': { build: cycladicVillage, radius: 42 },
   'blue-domes': { build: blueDomes, radius: 10 },
   'cycladic-windmills': { build: cycladicWindmills, radius: 16 },
   'lakeside-village': { build: lakesideVillage, radius: 28 },

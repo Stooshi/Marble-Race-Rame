@@ -30,22 +30,14 @@ const MAX_PER_OPENING = 2;
 const TOKEN = { plunge: 'drop', waterfall: 'waterfall', climb: 'climb', sBends: 'S-bends', sweep: 'sweep', spiral: 'spiral', hairpin: 'hairpin', splitter: 'splitter', twinChutes: 'chutes', halfPipe: 'half-pipe' };
 const OBSTACLE = { block: 'block', pileUp: 'pile-up', curtain: 'curtain', swipe: 'swipe', parked: 'parked', slalom: 'slalom', peg: 'peg' };
 
-// The three hand-built tracks (src/game/physicsTracks.js), written out as the kit would see them.
+// San Francisco, the hand-built track not laid out with the kit (src/game/physicsTracks.js), written out as the kit
+// would see it. (Bobsleigh Run and Table Mountain Run have been laid out with the kit since 16 Nov 2026: the kit's
+// own profile, family 'classic', src/trackKit/handBuilt.js.)
 const HAND_BUILT = {
-  'bobsleigh-run': {
-    family: 'classic', opening: 'classic', firstObstacle: 'pile-up', firstBend: 'left',
-    tokens: [['S-bends', 'left'], ['splitter', 'left'], ['sweep', 'right'], ['hairpin', 'left'], ['spiral', 'right'], ['drop', null]],
-    splitters: [0.36], sharp: 0.64,
-  },
   'san-francisco': {
     family: 'classic', opening: 'classic', firstObstacle: 'none', firstBend: 'right',
     tokens: [['sweep', 'right'], ['climb', null], ['drop', null], ['S-bends', 'left'], ['hairpin', 'right'], ['climb', null], ['drop', null], ['sweep', 'left']],
     splitters: [], sharp: 0.5,
-  },
-  'table-mountain-run': {
-    family: 'classic', opening: 'classic', firstObstacle: 'pile-up', firstBend: 'left',
-    tokens: [['S-bends', 'left'], ['splitter', 'left'], ['sweep', 'right'], ['hairpin', 'left'], ['splitter', 'right'], ['spiral', 'right'], ['drop', null]],
-    splitters: [0.33, 0.67], sharp: 0.55,
   },
 };
 

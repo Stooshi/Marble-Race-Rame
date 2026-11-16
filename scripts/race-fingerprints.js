@@ -15,6 +15,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { simulatePhysicsRace } = require('../src/game/physicsSimulator');
 const { physicsTrack } = require('../src/game/physicsTracks');
+const { referenceTrack } = require('../src/game/referenceTracks');
 const { simulateRace, subSeed } = require('../src/game/simulator');
 const { createRng } = require('../src/game/rng');
 const { HOUSE_SKILLS, skillStats } = require('../src/game/skill');
@@ -39,7 +40,8 @@ const hash = (value) => crypto.createHash('sha256').update(JSON.stringify(value)
 /** The tracks fingerprinted: each with how to run one of its races. */
 function fingerprintTracks() {
   const physics = PHYSICS_SLUGS.map((slug) => {
-    const track = physicsTrack(slug);
+    // (Bobsleigh Run and Table Mountain Run: the frozen copies, so their new layouts leave the fingerprints alone.)
+    const track = referenceTrack(slug) || physicsTrack(slug);
     return { key: `physics:${slug}`, seeds: PHYSICS_SEEDS, race: (seed) => simulatePhysicsRace({ seed, track, entries: houseField(seed), level: 3 }) };
   });
   // The classic tracks, as their old races ran (still replayed and still raceable).

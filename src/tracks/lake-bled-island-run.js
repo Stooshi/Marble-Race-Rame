@@ -16,11 +16,12 @@ module.exports = track({
   difficulty: 'easy',
   description: 'The green lake under the Julian Alps on a bright morning: up to the castle on its cliff, through the gorge, right round the bay facing the little island with its church and along the lake to the promenade.',
   surface: 'stone',
-  biome: 'meadow',
+  biome: 'alpine-lake',
   lighting: 'day',
   variants: ['sunset'],
-  // The lake along the west of the run (looks only).
-  sea: { toward: [-1, 0.1], from: 0, coast: 30 },
+  // The lake along the west of the run (looks only): its cold, clear green water (Moses, 16 Nov 2026: an alpine
+  // lake, not a Mediterranean coast), pine forest and the Julian Alps behind.
+  sea: { toward: [-1, 0.1], from: 0, coast: 30, near: '#4c9a86', far: '#22626a' },
   signature: 'Round the bay',
   tvCameras: [
     // (At the end of the bay, looking back round it at the field with the island behind.)
@@ -28,7 +29,7 @@ module.exports = track({
     { section: 'Through the gorge', at: 0.5, side: 'right', distance: 8, height: 8 },
   ],
   billboardFrame: 'wood',
-  start: { landmark: 'umbrella-pines', gate: 'paddle', shots: { countdown: 'crane', launch: 'low-chase' } },
+  start: { landmark: 'mountain-hut', gate: 'paddle', shots: { countdown: 'crane', launch: 'low-chase' } },
   finish: { landmark: 'rowing-boats' },
   designChanges: [
     'Two big features from the real place: the climb up to the castle on its cliff above the lake, then the turn right round the bay facing the island with its church (the big feature: a dramatic banked turn).',
@@ -37,14 +38,14 @@ module.exports = track({
   // (The banked-turn start: down from the meadow above the lake, then a wide banked first turn; let go in waves.)
   opening: opening('banked-turn', {
     side: 'left',
-    costumes: { block: 'cafe-table', slalom: 'street-lamp' },
+    costumes: { block: 'rock', slalom: 'street-lamp' },
     names: { plunge: 'Down the meadow', turn: 'Above the lake' },
     waves: { groups: 5, gap: 0.13, jitter: 0.1 },
   }),
   sections: [
     {
       name: 'Up to the castle', shape: climb(12, { grade: -0.04, after: 0.3 }),
-      landmarks: [{ name: 'hilltop-castle', at: 0.5, side: 'left', distance: 34 }],
+      landmarks: [{ name: 'hilltop-castle', at: 0.5, side: 'left', distance: 34 }, { name: 'giant-peak', at: 0.5, side: 'right', distance: 460 }],
     },
     {
       name: 'Through the gorge', shape: sBends({ first: 'right', radius: 65, degrees: 100, grade: 0.12 }), billboards: 1,
@@ -58,7 +59,7 @@ module.exports = track({
     // The track's big feature: a dramatic banked turn right round the bay, the island and its church out on the lake.
     {
       name: 'Round the bay', shape: sweep({ side: 'right', radius: 45, degrees: 180, grade: 0.11 }),
-      landmarks: [{ name: 'island-church', at: 0.5, side: 'left', distance: 130 }],
+      landmarks: [{ name: 'island-church', at: 0.5, side: 'left', distance: 130 }, { name: 'giant-peak', at: 0.5, side: 'left', distance: 560 }],
     },
     {
       name: 'Along the lake', shape: sweep({ side: 'left', radius: 90, degrees: 150, grade: 0.1 }), billboards: 2,
