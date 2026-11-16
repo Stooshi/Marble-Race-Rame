@@ -56,7 +56,7 @@ test('every kit track opens with Bobsleigh Run\'s starting ramp, gate, channel a
     // (The staggered drop and the varied starts let the field go in waves: their funnel has that one setting more.
     // Any other opening only where its track asks for them, listed here: Nevada Drag Strip's crest start.)
     const { waves, ...rest } = funnel;
-    if (waves) assert.ok(['staggered-drop', 'clean-drop', 'peg-drop', 'pipe-drop', 'rolling-start', 'chicane-start', 'rumble-start'].includes(t.physics.kit.opening) || ['nevada-drag-strip', 'hudson-highlands-run', 'iguazu-devils-throat', 'chao-phraya-dawn-spiral', 'blyde-potholes-spiral', 'kings-canyon-lost-city', 'huashan-plank-walk', 'etna-valle-del-bove', 'tianmen-heavens-gate', 'sunken-ruins', 'are-run', 'greenland-expedition', 'dubai-twister', 'rio-jungle-rumble', 'china-wall-twister', 'baqueira-beret-run', 'portes-du-soleil-run', 'amazon-water-run', 'santorini-caldera-run', 'lake-bled-island-run', 'mont-saint-michel-tide-run', 'angkor-temple-run', 'cappadocia-balloon-run',  'crystal-grotto', 'moon-base'].includes(t.slug), `${t.slug}: waves at the gate`);
+    if (waves) assert.ok(['staggered-drop', 'clean-drop', 'peg-drop', 'pipe-drop', 'rolling-start', 'chicane-start', 'rumble-start'].includes(t.physics.kit.opening) || ['nevada-drag-strip', 'hudson-highlands-run', 'iguazu-devils-throat', 'chao-phraya-dawn-spiral', 'blyde-potholes-spiral', 'kings-canyon-lost-city', 'huashan-plank-walk', 'etna-valle-del-bove', 'tianmen-heavens-gate', 'sunken-ruins', 'are-run', 'greenland-expedition', 'dubai-twister', 'rio-jungle-rumble', 'china-wall-twister', 'baqueira-beret-run', 'portes-du-soleil-run', 'amazon-water-run', 'santorini-caldera-run', 'lake-bled-island-run', 'mont-saint-michel-tide-run', 'angkor-temple-run', 'cappadocia-balloon-run', 'giants-causeway-run',  'crystal-grotto', 'moon-base'].includes(t.slug), `${t.slug}: waves at the gate`);
     if (!['funnel-drop', 'staggered-drop'].includes(t.physics.kit.opening)) assert.deepEqual(rest, tmFunnel);
     assert.deepEqual(t.physics.gate, bob.physics.gate);
     assert.equal(t.physics.collisions, true);
@@ -795,6 +795,7 @@ const HIDDEN_KIT_TRACKS = [
   ['mont-saint-michel-tide-run', '2027-07-31-add-mont-saint-michel-tide-run.sql', 'Mont-Saint-Michel Tide Run: World Tour (16 Nov 2026), hidden until Moses switches it on'],
   ['angkor-temple-run', '2027-08-01-add-angkor-temple-run.sql', 'Angkor Temple Run: World Tour (16 Nov 2026), hidden until Moses switches it on'],
   ['cappadocia-balloon-run', '2027-08-02-add-cappadocia-balloon-run.sql', 'Cappadocia Balloon Run: World Tour (16 Nov 2026), hidden until Moses switches it on'],
+  ['giants-causeway-run', '2027-08-03-add-giants-causeway-run.sql', 'Giant\'s Causeway Run: World Tour (16 Nov 2026), hidden until Moses switches it on'],
 ];
 for (const [slug, file, note] of HIDDEN_KIT_TRACKS) {
   test(`${slug} is added by its data update, switched off, exactly as its track file builds it`, () => {

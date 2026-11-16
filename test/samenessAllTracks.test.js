@@ -32,9 +32,8 @@ const KNOWN = {
   'bobsleigh-run': ['opening', 'opening-kind', 'layout'],
   'san-francisco': ['opening-kind'],
   'table-mountain-run': ['opening', 'opening-kind', 'layout'],
-  // World Tour.
-
-
+  // (The kit-built World Tour tracks all have their own layouts and openings since 15–16 Nov 2026; Bobsleigh Run and
+  // Table Mountain Run above wait for Moses: they are the race fingerprints' reference tracks.)
   // Grand Prix (one design: Dubai's; Stockholm, Lagos, Istanbul, Sydney, Nairobi, Delhi, Sahara and Wyrmwood Hollow have their own since 6–7 Nov 2026).
   'dubai-marble-grand-prix': ['opening', 'opening-kind', 'layout'],
   'elderglade-marble-grand-prix': ['opening-kind'], // (its opening and layout are its own since Sydney, Lagos and Stockholm got theirs, 7 Nov 2026)

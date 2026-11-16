@@ -222,4 +222,5 @@ module.exports = [
   require('./lake-bled-island-run'),
   require('./mont-saint-michel-tide-run'),
   require('./angkor-temple-run'),
+  require('./giants-causeway-run'),
 ];
