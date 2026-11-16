@@ -44,7 +44,7 @@ module.exports = track({
     {
       name: 'Border sweep', shape: sweep({ side: 'right', radius: 80, degrees: 140, grade: 0.13 }), figures: ['skier', 'snowboarder', 'skier'],
       billboards: 2, overhead: ['chairlift'], landmarks: [{ name: 'border-post', at: 0.5, side: 'left', distance: 18 }], scenery: ['pines'],
-      obstacles: [peg({ costume: 'cow', at: 0.3, line: 'left' }), peg({ costume: 'cow', at: 0.65, line: 'right' })],
+      obstacles: [peg({ costume: 'cowbell-post', at: 0.3, line: 'left' }), peg({ costume: 'cowbell-post', at: 0.65, line: 'right' })],
     },
     { name: 'To Chavanette', shape: straight(40, { grade: 0.12 }), scenery: ['bare'] },
     {
@@ -60,7 +60,7 @@ module.exports = track({
     { name: 'Hairpin', shape: hairpin({ side: 'left' }), scenery: ['pasture'] },
     {
       name: 'Village S-bends', shape: sBends({ first: 'right', radius: 70, degrees: 80, grade: 0.13 }), scenery: ['chalets'], billboards: 1,
-      obstacles: [peg({ costume: 'cow', at: 0.35, line: 'left' }), peg({ costume: 'cow', at: 0.7, line: 'right' })],
+      obstacles: [peg({ costume: 'cowbell-post', at: 0.35, line: 'left' }), peg({ costume: 'cowbell-post', at: 0.7, line: 'right' })],
     },
     { name: 'Forest spiral', shape: spiral({ side: 'left', radius: 45, grade: 0.15 }), figures: ['marmot'], scenery: ['pines'] },
     {

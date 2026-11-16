@@ -41,7 +41,7 @@ module.exports = track({
   sections: [
     {
       name: 'Down to the river', shape: plunge(40, { grade: 0.3, from: 0.14 }), height: 0, river: 'left',
-      obstacles: [peg({ costume: 'mossy-boulder', at: 0.45, line: 'left' }), peg({ costume: 'mossy-boulder', at: 0.75, line: 'right' })],
+      obstacles: [peg({ costume: 'river-stake', at: 0.45, line: 'left' }), peg({ costume: 'river-stake', at: 0.75, line: 'right' })],
     },
     {
       name: 'Along the catwalks', shape: straight(90, { grade: 0.14 }), height: 6, river: 'under',
@@ -57,14 +57,14 @@ module.exports = track({
     },
     {
       name: 'In the spray', shape: straight(45, { grade: 0.13 }), height: 0, river: 'left',
-      obstacles: [peg({ costume: 'mossy-boulder', at: 0.25, line: 'right' }), peg({ costume: 'mossy-boulder', at: 0.5, line: 'left' }), peg({ costume: 'mossy-boulder', at: 0.75, line: 'center' })],
+      obstacles: [peg({ costume: 'river-stake', at: 0.25, line: 'right' }), peg({ costume: 'river-stake', at: 0.5, line: 'left' }), peg({ costume: 'river-stake', at: 0.75, line: 'center' })],
     },
     {
       // (The island in the middle of the falls: the field divides round it, two straight channels, mixed by three
       // boulders in the run-in, as Arno Old Bridge Run's bridge. Curving 40° round it, the leaders took the outside.)
       name: 'Round the island', shape: splitter({ side: 'right', degrees: 0, approach: 55, merge: 30, balance: { tipOffset: -0.6, left: { drag: 1.4, scrub: 1.4 }, right: { drag: 1.4, scrub: 1.4 } } }),
       around: 'river-island', height: 6, river: 'under',
-      obstacles: [peg({ costume: 'mossy-boulder', at: 0.06, line: 'right' }), peg({ costume: 'mossy-boulder', at: 0.14, line: 'left' }), peg({ costume: 'mossy-boulder', at: 0.21, line: 'center' })],
+      obstacles: [peg({ costume: 'river-stake', at: 0.06, line: 'right' }), peg({ costume: 'river-stake', at: 0.14, line: 'left' }), peg({ costume: 'river-stake', at: 0.21, line: 'center' })],
     },
     { name: 'The lower falls', shape: plunge(40, { grade: 0.25, from: 0.14 }), height: 0, river: 'left' },
     { name: 'Run to the hairpin', shape: straight(50, { grade: 0.13 }), height: 0, river: 'left', billboards: 2 },

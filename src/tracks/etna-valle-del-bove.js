@@ -41,19 +41,19 @@ module.exports = track({
     {
       name: 'Past the craters', shape: sBends({ first: 'left', radius: 70, degrees: 70, grade: 0.16 }), height: 0, billboards: 1, peak: { zone: 'black-sand' },
       landmarks: [{ name: 'smoking-crater', at: 0.5, side: 'right', distance: 44 }],
-      obstacles: [peg({ costume: 'stone-block', at: 0.35, line: 'right' }), peg({ costume: 'stone-block', at: 0.7, line: 'left' })],
+      obstacles: [peg({ costume: 'cairn', at: 0.35, line: 'right' }), peg({ costume: 'cairn', at: 0.7, line: 'left' })],
     },
     {
       name: 'Beside the lava', shape: straight(75, { grade: 0.15 }), height: 0, peak: { zone: 'black-sand' },
       landmarks: [{ name: 'lava-flow', at: 0.5, side: 'left', distance: 36 }],
-      obstacles: [slalom({ costume: 'stone-block', from: 0.5, to: 0.9, count: 4, loss: 0.25 })],
+      obstacles: [slalom({ costume: 'cairn', from: 0.5, to: 0.9, count: 4, loss: 0.25 })],
       features: [brake({ at: 0.05, length: 12, drag: 0.02 })],
     },
     { name: 'To the rim', shape: straight(35, { grade: 0.12 }), height: 0, peak: { zone: 'alpine-desert' } },
     { name: 'Into the Valle del Bove', shape: plunge(50, { grade: 0.34, from: 0.12 }), height: 0, peak: { zone: 'alpine-desert' } },
     {
       name: 'Across the valley floor', shape: straight(55, { grade: 0.14 }), height: 0, peak: { zone: 'black-sand' },
-      obstacles: [peg({ costume: 'stone-block', at: 0.5, line: 'center' })],
+      obstacles: [peg({ costume: 'cairn', at: 0.5, line: 'center' })],
     },
     { name: 'Down the lava channel', shape: halfPipe({ first: 'left', width: 8, swings: 2, radius: 150, degrees: 16, grade: 0.13 }), height: 0, peak: { zone: 'black-sand' } },
     { name: 'Over the old flow', shape: climb(12, { grade: -0.04, after: 0.3 }), height: 0, billboards: 1, peak: { zone: 'alpine-desert' } },

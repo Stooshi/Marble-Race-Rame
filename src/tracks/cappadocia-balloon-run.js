@@ -36,7 +36,7 @@ module.exports = track({
   // (The funnel-drop start: a long bowl of pale rock below the ridge, fallen stones in it, then a row of posts;
   // let go in jittered waves.)
   opening: opening('funnel-drop', {
-    costumes: { block: 'rock', slalom: 'street-lamp' },
+    costumes: { block: 'stone-block', slalom: 'street-lamp' },
     names: { plunge: 'Down the rock bowl' },
     waves: { groups: 5, gap: 0.13, jitter: 0.1 },
   }),

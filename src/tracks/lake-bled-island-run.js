@@ -38,7 +38,7 @@ module.exports = track({
   // (The banked-turn start: down from the meadow above the lake, then a wide banked first turn; let go in waves.)
   opening: opening('banked-turn', {
     side: 'left',
-    costumes: { block: 'rock', slalom: 'street-lamp' },
+    costumes: { block: 'mossy-boulder', slalom: 'street-lamp' },
     names: { plunge: 'Down the meadow', turn: 'Above the lake' },
     waves: { groups: 5, gap: 0.13, jitter: 0.1 },
   }),

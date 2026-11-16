@@ -42,9 +42,24 @@ test('the loop\'s proving track: the loop is its feature (the flyover\'s highlig
   assert.equal(pad.min, 25);
   assert.equal(t.physics.kit.signature ?? t.signature, 'The loop');
   assert.ok(t.physics.kit.tv.some((c) => c.section === 'The loop' && c.p > lp.at));
-  // The only tracks with a loop: its proving track, Saint-Tropez and Pudong Marble Grand Prix (3 Nov 2026), and Nairobi
-  // Marble Grand Prix's Expressway loop (its own layout, 7 Nov 2026).
-  assert.deepEqual(PHYSICS_TRACKS.filter((x) => x.physics?.features?.some((y) => y.type === 'loop')).map((x) => x.slug), [SLUG, 'nairobi-marble-grand-prix', 'saint-tropez', 'pudong-marble-grand-prix', 'nevada-drag-strip']);
+  // The only tracks with a loop: its proving track, Saint-Tropez and Pudong Marble Grand Prix (3 Nov 2026), Nairobi
+  // Marble Grand Prix's Expressway loop (its own layout, 7 Nov 2026), Nevada Drag Strip (13 Nov), Kings Canyon Lost
+  // City, Tianmen Heaven's Gate and Neon Grid (15 Nov). A new one goes on this list, and the next test races it.
+  assert.deepEqual(PHYSICS_TRACKS.filter((x) => x.physics?.features?.some((y) => y.type === 'loop')).map((x) => x.slug), [SLUG, 'nairobi-marble-grand-prix', 'saint-tropez', 'pudong-marble-grand-prix', 'nevada-drag-strip', 'kings-canyon-lost-city', 'tianmen-heavens-gate', 'neon-grid']);
+});
+
+test('every track with a loop: every marble goes round every loop with grip to spare, none caught, all finish', () => {
+  for (const t of PHYSICS_TRACKS.filter((x) => x.physics?.features?.some((y) => y.type === 'loop'))) {
+    for (const seed of [1, 2, 3, 4]) {
+      const sim = simulatePhysicsRace({ seed, track: t, entries: houseField(seed), level: 3 });
+      for (const L of sim.stats.loops) {
+        assert.equal(L.completed, L.entered, `${t.slug} seed ${seed}: ${L.completed} of ${L.entered} round`);
+        assert.equal(L.caught, 0, `${t.slug} seed ${seed}: caught in the net`);
+        assert.ok(L.leastPress > 9.81, `${t.slug} seed ${seed}: least press over the top ${L.leastPress}`);
+      }
+      assert.equal(sim.stats.unfinished, 0, `${t.slug} seed ${seed}: unfinished`);
+    }
+  }
 });
 
 test('every marble goes round the loop at racing speed, and every one finishes', () => {

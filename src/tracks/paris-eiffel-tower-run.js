@@ -43,7 +43,7 @@ module.exports = track({
     {
       name: 'Moulin Rouge sweep', shape: sweep({ side: 'left', radius: 75, degrees: 110, grade: 0.13 }),
       landmarks: [{ name: 'moulin-rouge', at: 0.5, side: 'right', distance: 20 }], scenery: ['haussmann'],
-      obstacles: [peg({ costume: 'cafe-table', at: 0.3, line: 'right' }), peg({ costume: 'cafe-table', at: 0.7, line: 'left' })],
+      obstacles: [peg({ costume: 'bollard', at: 0.3, line: 'right' }), peg({ costume: 'bollard', at: 0.7, line: 'left' })],
     },
     { name: 'To the Étoile', shape: straight(35, { grade: 0.13 }), scenery: ['haussmann'] },
     // The track's big feature: a banked spiral right round the Arc de Triomphe, as the traffic circles the Étoile.

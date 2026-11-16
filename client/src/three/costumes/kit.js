@@ -1659,6 +1659,40 @@ function trashCans(add, mat, group, rimCentre, q, { len, width, drop = 0 }) {
 }
 
 /** A cairn: flat stones stacked into a little tower, as hikers mark a trail (the Canyon Series' slalom poles and pegs). */
+/**
+ * A small snowman on a peg (Åre Run, 16 Nov 2026): two snowballs no wider than the peg where marbles touch it, a
+ * head above them, a carrot nose and coal eyes facing the marbles coming, a hat and a scarf. Looks only: the peg's
+ * physics is a slalom pole's (src/trackKit peg()).
+ */
+function pegSnowman(add, mat, group, point, q, { radius = 0.4 }) {
+  const r = Math.max(radius, 0.3);
+  add('snow', new IcosahedronGeometry(r, 1), local(point, q, 0, r * 0.9, 0));
+  add('snow', new IcosahedronGeometry(r * 0.78, 1), local(point, q, 0, r * 2.3, 0));
+  const headY = r * 3.35;
+  add('snow', new IcosahedronGeometry(r * 0.56, 1), local(point, q, 0, headY, 0));
+  add('carrot', new ConeGeometry(0.06, 0.32, 7).rotateX(Math.PI / 2), local(point, q, 0, headY, r * 0.56 + 0.14));
+  for (const x of [-0.1, 0.1]) add('coal', new SphereGeometry(0.045, 7, 5), local(point, q, x, headY + 0.1, r * 0.5));
+  for (const y of [1.95, 2.3, 2.65]) add('coal', new SphereGeometry(0.05, 7, 5), local(point, q, 0, r * y, r * 0.76));
+  add('scarf', new CylinderGeometry(r * 0.5, r * 0.56, 0.14, 12), local(point, q, 0, headY - r * 0.5, 0));
+  add('hat', new CylinderGeometry(r * 0.56, r * 0.56, 0.05, 14), local(point, q, 0, headY + r * 0.5, 0));
+  add('hat', new CylinderGeometry(r * 0.34, r * 0.34, 0.36, 12), local(point, q, 0, headY + r * 0.5 + 0.18, 0));
+  return [];
+}
+
+/**
+ * A cowbell post on a peg (Portes du Soleil Run, 16 Nov 2026): a wooden post no wider than the peg, a big brass
+ * cowbell on its strap facing the marbles coming, and a little shingle cap on top. Looks only (a peg's physics).
+ */
+function cowbellPost(add, mat, group, point, q, { radius = 0.4 }) {
+  const r = Math.max(radius, 0.2);
+  add('cowStrap', new CylinderGeometry(r * 0.42, r * 0.5, 1.5, 8), local(point, q, 0, 0.75, 0));
+  add('cowStrap', new BoxGeometry(r * 1.6, 0.12, r * 1.6), local(point, q, 0, 1.55, 0));
+  add('cowWhite', new BoxGeometry(r * 1.2, 0.08, r * 1.2), local(point, q, 0, 1.64, 0));
+  add('cowStrap', new BoxGeometry(r * 0.7, 0.06, 0.05), local(point, q, 0, 1.0, r * 0.47));
+  add('cowBell', new CylinderGeometry(0.08, r * 0.4, r * 0.6, 9), local(point, q, 0, 0.82, r * 0.6));
+  return [];
+}
+
 function cairn(add, mat, group, point, q, { height, radius = 0.15 }) {
   // (No wider than its footprint where marbles can touch it; the top stones, above them, a little broader.)
   const h = Math.max(1, height + 0.2);
@@ -2261,6 +2295,8 @@ export const KIT_COSTUMES = {
   },
   'river-ferry': { places: 'parked', build: riverFerry },
   cairn: { places: 'slalom', build: cairn },
+  'cowbell-post': { places: 'slalom', build: cowbellPost },
+  snowman: { places: 'slalom', build: pegSnowman }, // (a peg's snowman; the big block snowman is its own obstacle type, drawn in ../trackFeatures.js)
   // Peaks.
   serac: { places: 'slalom', build: serac },
   nunatak: { places: 'slalom', build: nunatakPost },

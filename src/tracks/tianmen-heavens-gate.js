@@ -62,7 +62,7 @@ module.exports = track({
     { name: 'Up out of the gate', shape: climb(12, { grade: -0.04, after: 0.3 }), height: 0, billboards: 1, peak: { zone: 'rock' } },
     {
       name: 'Down the misty forest', shape: sBends({ first: 'left', radius: 65, degrees: 80, grade: 0.16 }), height: 0, billboards: 1, peak: { zone: 'cloud-forest' },
-      obstacles: [peg({ costume: 'mossy-boulder', at: 0.35, line: 'left' }), peg({ costume: 'mossy-boulder', at: 0.7, line: 'right' })],
+      obstacles: [peg({ costume: 'cairn', at: 0.35, line: 'left' }), peg({ costume: 'cairn', at: 0.7, line: 'right' })],
     },
     {
       name: 'Last straight', shape: straight(65, { grade: 0.16 }), height: 0, billboards: 1, peak: { zone: 'cloud-forest' },

@@ -50,6 +50,7 @@ describe('consent', () => {
       if (k === 'marble-spins-my-data') continue; // (the "Download my data" file name)
       if (k === 'marble-hit' || k === 'marble-bump') continue; // (the own marble's hit sounds, audio file names: not stored keys)
       if (manifest.banners[k]) continue; // (a track's name, Marble Stadium Sprint's: not a stored key)
+      if (k === 'marble-pillar') continue; // (a Canyons landmark's name, Taroko Marble Gorge's: not a stored key)
       const short = k.replace(/:.*$/, '');
       expect(names, `${k} is missing from the cookie list`).toContain(short);
     }

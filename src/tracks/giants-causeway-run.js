@@ -38,14 +38,14 @@ module.exports = track({
   // let go in waves.)
   opening: opening('chicane-start', {
     side: 'left',
-    costumes: { block: 'rock', slalom: 'street-lamp', peg: 'rock' },
+    costumes: { block: 'mossy-boulder', slalom: 'street-lamp', peg: 'cairn' },
     names: { plunge: 'Off the headland', chicane: 'Between the outcrops' },
   }),
   sections: [
     {
       name: 'Along the headland', shape: straight(65, { grade: 0.13 }),
       features: [moguls({ from: 0.55, to: 0.95, count: 4 })],
-      obstacles: [peg({ costume: 'rock', at: 0.15, line: 'right' }), peg({ costume: 'rock', at: 0.3, line: 'left' })],
+      obstacles: [peg({ costume: 'cairn', at: 0.15, line: 'right' }), peg({ costume: 'cairn', at: 0.3, line: 'left' })],
     },
     {
       name: 'Down the cliff path', shape: sBends({ first: 'left', radius: 60, degrees: 95, grade: 0.13 }), billboards: 1,
@@ -54,11 +54,11 @@ module.exports = track({
     {
       name: 'Along the clifftop', shape: sweep({ side: 'right', radius: 90, degrees: 150, grade: 0.1 }), billboards: 2,
       landmarks: [{ name: 'island-ruin', at: 0.5, side: 'left', distance: 60 }],
-      obstacles: [peg({ costume: 'rock', at: 0.2, line: 'left' }), peg({ costume: 'rock', at: 0.4, line: 'right' }), peg({ costume: 'rock', at: 0.6, line: 'center' }), peg({ costume: 'rock', at: 0.8, line: 'left' })],
+      obstacles: [peg({ costume: 'cairn', at: 0.2, line: 'left' }), peg({ costume: 'cairn', at: 0.4, line: 'right' }), peg({ costume: 'cairn', at: 0.6, line: 'center' }), peg({ costume: 'cairn', at: 0.8, line: 'left' })],
     },
     {
       name: 'Over the rope bridge', shape: straight(60, { grade: 0.12 }), bridge: 'wood',
-      obstacles: [peg({ costume: 'rock', at: 0.2, line: 'left' }), peg({ costume: 'rock', at: 0.4, line: 'right' })],
+      obstacles: [peg({ costume: 'cairn', at: 0.2, line: 'left' }), peg({ costume: 'cairn', at: 0.4, line: 'right' })],
     },
     { name: 'Hairpin on the island', shape: hairpin({ side: 'left' }) },
     // The track's big feature: straight down the steep steps of the cliff.

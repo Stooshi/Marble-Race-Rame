@@ -39,7 +39,7 @@ module.exports = track({
     {
       name: 'Past the Three Rondavels', shape: straight(80, { grade: 0.15 }), height: 0,
       landmarks: [{ name: 'three-rondavels', at: 0.5, side: 'right', distance: 55 }],
-      obstacles: [curtain({ costume: 'bighorn-sheep', at: 0.3, side: 'left' }), slalom({ costume: 'cairn', from: 0.5, to: 0.9, count: 4, loss: 0.2 })],
+      obstacles: [curtain({ costume: 'vines', at: 0.3, side: 'left' }), slalom({ costume: 'cairn', from: 0.5, to: 0.9, count: 4, loss: 0.2 })],
       features: [brake({ at: 0.05, length: 12, drag: 0.02 })],
     },
     { name: 'Round the potholes', shape: spiral({ side: 'left', radius: 42, turns: 1, grade: 0.19 }), height: 8, around: 'potholes', billboards: 2 },

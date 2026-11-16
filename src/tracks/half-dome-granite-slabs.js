@@ -57,7 +57,7 @@ module.exports = track({
     { name: 'Over the river rocks', shape: climb(12, { grade: -0.06, after: 0.25 }), height: 0, peak: { zone: 'moorland' } },
     {
       name: 'Through the giant pines', shape: straight(50, { grade: 0.12 }), height: 0, peak: { zone: 'cloud-forest' },
-      obstacles: [slalom({ costume: 'mossy-boulder', from: 0.3, to: 0.8, count: 3, loss: 0.2 })],
+      obstacles: [slalom({ costume: 'cairn', from: 0.3, to: 0.8, count: 3, loss: 0.2 })],
     },
     { name: 'Down the valley', shape: sBends({ first: 'left', radius: 70, degrees: 75, grade: 0.12 }), height: 0, peak: { zone: 'cloud-forest' } },
     { name: 'Along the river', shape: sweep({ side: 'left', radius: 75, degrees: 100, grade: 0.12 }), height: 0, peak: { zone: 'moorland' } },

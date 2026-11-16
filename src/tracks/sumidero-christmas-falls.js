@@ -49,7 +49,7 @@ module.exports = track({
     },
     {
       name: 'Under the walls', shape: sweep({ side: 'right', radius: 70, degrees: 85, grade: 0.17 }), height: 0, billboards: 2,
-      obstacles: [peg({ costume: 'mossy-boulder', at: 0.35, line: 'center' }), peg({ costume: 'mossy-boulder', at: 0.7, line: 'right' })],
+      obstacles: [peg({ costume: 'river-stake', at: 0.35, line: 'center' }), peg({ costume: 'river-stake', at: 0.7, line: 'right' })],
     },
     { name: 'To the falls', shape: straight(40, { grade: 0.1 }), height: 0 },
     {
@@ -58,13 +58,13 @@ module.exports = track({
     },
     {
       name: 'In the spray', shape: straight(50, { grade: 0.13 }), height: 0,
-      obstacles: [peg({ costume: 'mossy-boulder', at: 0.25, line: 'right' }), peg({ costume: 'mossy-boulder', at: 0.5, line: 'left' }), peg({ costume: 'mossy-boulder', at: 0.75, line: 'center' })],
+      obstacles: [peg({ costume: 'river-stake', at: 0.25, line: 'right' }), peg({ costume: 'river-stake', at: 0.5, line: 'left' }), peg({ costume: 'river-stake', at: 0.75, line: 'center' })],
     },
     {
       name: 'Round the rock',
       shape: splitter({ side: 'right', degrees: 0, approach: 55, merge: 30, balance: { tipOffset: -0.6, left: { drag: 1.3, scrub: 1.3 }, right: { drag: 1.9, scrub: 1.9 } } }),
       around: 'river-island', height: 0,
-      obstacles: [peg({ costume: 'mossy-boulder', at: 0.06, line: 'right' }), peg({ costume: 'mossy-boulder', at: 0.14, line: 'left' }), peg({ costume: 'mossy-boulder', at: 0.21, line: 'center' })],
+      obstacles: [peg({ costume: 'river-stake', at: 0.06, line: 'right' }), peg({ costume: 'river-stake', at: 0.14, line: 'left' }), peg({ costume: 'river-stake', at: 0.21, line: 'center' })],
     },
     { name: 'Drop below the rock', shape: plunge(30, { grade: 0.22, from: 0.14 }), height: 0 },
     { name: 'Between the walls', shape: halfPipe({ first: 'right', width: 8, swings: 2, radius: 150, degrees: 18, grade: 0.11 }), height: 0, walls: 1 },
