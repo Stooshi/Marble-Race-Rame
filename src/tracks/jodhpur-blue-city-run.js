@@ -5,7 +5,7 @@
 // battlements (nothing in its way for the first seconds), then the big feature: the long, steep drop off the fort's
 // cliff into the blue city below, its lanes in S-bends under drying cloth, the stepwell sweep, the hairpin by the
 // clock tower market and the run to the city gate. No names on anything.
-const { track, opening, straight, plunge, sweep, spiral, sBends, hairpin, runIn, peg, slalom, curtain, moguls, pileUp, brake } = require('../trackKit');
+const { track, opening, straight, plunge, sweep, spiral, sBends, hairpin, runIn, peg, slalom, curtain, moguls, pileUp, brake, block } = require('../trackKit');
 
 module.exports = track({
   slug: 'jodhpur-blue-city-run',
@@ -35,9 +35,9 @@ module.exports = track({
   }),
   sections: [
     {
-      name: 'Along the battlements', shape: sBends({ first: 'right', radius: 80, degrees: 55, grade: 0.13 }), height: 30, billboards: 2,
+      name: 'Along the battlements', shape: sBends({ first: 'left', radius: 80, degrees: 55, grade: 0.14 }), height: 30, billboards: 2,
       landmarks: [{ name: 'hill-fort', at: 0.5, side: 'right', distance: 40 }],
-      obstacles: [peg({ costume: 'lantern-pole', at: 0.3, line: 'left' }), peg({ costume: 'lantern-pole', at: 0.7, line: 'right' })],
+      obstacles: [block({ costume: 'camel', at: 0.3, line: 'right' }), peg({ costume: 'lantern-pole', at: 0.7, line: 'left' })],
     },
     { name: 'Off the fort', shape: plunge(95, { grade: 0.55, from: 0.1 }), height: 0, scenery: ['colourful-houses'] },
     {
@@ -52,18 +52,14 @@ module.exports = track({
       name: 'Stepwell spiral', shape: spiral({ side: 'left', radius: 40, turns: 1, grade: 0.18 }), height: 10,
       around: 'mughal-fountain',
     },
-    {
-      name: 'Spice market', shape: sBends({ first: 'left', radius: 65, degrees: 65, grade: 0.15 }), height: 6,
-      obstacles: [pileUp({ costume: 'camel', at: 0.3 }), peg({ costume: 'lantern-pole', at: 0.7, line: 'center' })],
-    },
-    { name: 'To the market', shape: straight(50, { grade: 0.13 }), height: 8, billboards: 1, features: [brake({ at: 0.05, length: 14, drag: 0.03 }), moguls({ from: 0.6, to: 0.9, count: 3 })] },
+    { name: 'To the market', shape: straight(50, { grade: 0.13 }), height: 8, billboards: 1, features: [brake({ at: 0.05, length: 12, drag: 0.02 }), moguls({ from: 0.6, to: 0.9, count: 3 })] },
     { name: 'Market hairpin', shape: hairpin({ side: 'right' }), height: 10, landmarks: [{ name: 'qutub-minar', at: 0.5, side: 'right', distance: 30 }] },
     {
-      name: 'Old city bends', shape: sBends({ first: 'right', radius: 65, degrees: 75, grade: 0.16 }), height: 6,
+      name: 'Old city bends', shape: sBends({ first: 'right', radius: 65, degrees: 60, grade: 0.16 }), height: 6,
       obstacles: [peg({ costume: 'lantern-pole', at: 0.3, line: 'center' }), peg({ costume: 'lantern-pole', at: 0.7, line: 'left' })],
     },
     {
-      name: 'Run to the city gate', shape: straight(70, { grade: 0.15 }), height: 0, billboards: 1,
+      name: 'Run to the city gate', shape: straight(55, { grade: 0.15 }), height: 0, billboards: 1,
       obstacles: [slalom({ costume: 'lantern-pole', from: 0.4, to: 0.85, count: 3, loss: 0.3 })],
     },
     { name: 'Finish', shape: runIn(), height: 0 },
