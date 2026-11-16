@@ -41,7 +41,7 @@ module.exports = track({
     },
     {
       name: 'Round the castle',
-      shape: splitter({ side: 'right', degrees: 0, approach: 60, merge: 30, balance: { tipOffset: 0, left: { drag: 1.3, scrub: 1.3 }, right: { drag: 2.5, scrub: 2.5 } } }),
+      shape: splitter({ side: 'right', degrees: 0, approach: 60, merge: 30, balance: { tipOffset: 0.8, left: { drag: 1.3, scrub: 1.3 }, right: { drag: 2.8, scrub: 2.8 } } }),
       around: 'castle-keep', height: 18,
       landmarks: [{ name: 'hilltop-castle', at: 0.5, side: 'left', distance: 60 }],
       obstacles: [peg({ costume: 'fence-post', at: 0.06, line: 'left' }), peg({ costume: 'fence-post', at: 0.14, line: 'right' }), peg({ costume: 'fence-post', at: 0.21, line: 'center' })],
