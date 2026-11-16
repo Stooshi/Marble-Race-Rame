@@ -150,7 +150,7 @@ test('track packs, end to end: the switch, coming soon, Stripe, the coins, Googl
     };
     const admin = await account('a');
     const player = await account('p');
-    await db.query(`UPDATE users SET role = 'admin' WHERE id = $1`, [admin.user.id]);
+    await db.query(`UPDATE users SET role = 'admin', admin_role = 'owner' WHERE id = $1`, [admin.user.id]);
     await db.query('UPDATE users SET coins = 10000 WHERE id = ANY($1)', [[admin.user.id, player.user.id]]);
     const checkout = (u, body) => call('/payments/pack/checkout', { method: 'POST', token: u.token, body: { consent: true, ...body } });
 

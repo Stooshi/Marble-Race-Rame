@@ -171,7 +171,7 @@ test('checkout → Stripe\'s signed "paid" webhook adds the coins once; a refund
     assert.equal((await call('/payments/mine', { token: me.token })).body.orders[0].order_no, pay.order_no);
 
     // The back office asks Stripe for a refund; the coins go only when Stripe's refund event arrives.
-    await db.query(`UPDATE users SET role = 'admin' WHERE id = $1`, [me.user.id]);
+    await db.query(`UPDATE users SET role = 'admin', admin_role = 'owner' WHERE id = $1`, [me.user.id]);
     const setup = (await call('/admin/session/start', { method: 'POST', token: me.token })).body.setup;
     const admin = (await call('/admin/session/verify', { method: 'POST', token: me.token, body: { code: totp.codeAt(setup.secret, totp.stepNow()) } })).body.token;
     assert.equal((await call(`/admin/payments/${pay.id}/refund`, { method: 'POST', token: admin, body: {} })).status, 400); // (a reason is needed)

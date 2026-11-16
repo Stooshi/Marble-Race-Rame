@@ -20,6 +20,7 @@ const { requireAuth } = require('../middleware/auth');
 const { HttpError, forbidden, unauthorized, badRequest } = require('../utils/httpError');
 const totp = require('./totp');
 const security = require('../security');
+const { roleOf, permissionsOf } = require('./permissions');
 
 const IDLE_MINUTES = 30;
 const AUDIENCE = 'marble-admin';
@@ -48,7 +49,7 @@ async function requireAdminSession(req, _res, next) {
       WHERE s.id = $1 AND s.user_id = $2 AND u.id = s.user_id
         AND s.ended_at IS NULL AND s.last_seen_at > now() - make_interval(mins => $3)
         AND u.role = 'admin' AND u.suspended_at IS NULL AND u.deleted_at IS NULL
-      RETURNING u.id, u.username, u.role, s.id AS session_id`,
+      RETURNING u.id, u.username, u.role, u.admin_role, s.id AS session_id`,
     [payload.sid, payload.sub, IDLE_MINUTES],
   );
   if (!rows[0]) throw unauthorized('Your back-office session has ended. Log in again.');
@@ -95,8 +96,12 @@ router.post('/verify', requireAuth, async (req, res) => {
   await db.query('UPDATE admin_2fa SET last_step = $2, enabled_at = COALESCE(enabled_at, now()) WHERE user_id = $1', [req.user.id, step]);
   const { rows: s } = await db.query('INSERT INTO admin_sessions (user_id) VALUES ($1) RETURNING id', [req.user.id]);
   await security.record(req, req.user.id, 'admin-login');
-  res.json({ token: signAdminToken(req.user.id, s[0].id), idleMinutes: IDLE_MINUTES, user: { id: req.user.id, username: req.user.username } });
+  const { rows: [me] } = await db.query('SELECT admin_role FROM users WHERE id = $1', [req.user.id]);
+  res.json({ token: signAdminToken(req.user.id, s[0].id), idleMinutes: IDLE_MINUTES, user: { id: req.user.id, username: req.user.username, ...adminView(me) } });
 });
+
+/** An admin's role and what it allows (src/admin/permissions.js), for the website to hide the rest. */
+const adminView = (a) => ({ role: roleOf(a), permissions: permissionsOf(a) });
 
 /** POST /api/admin/session/end */
 router.post('/end', requireAdminSession, async (req, res) => {
@@ -106,7 +111,7 @@ router.post('/end', requireAdminSession, async (req, res) => {
 
 /** GET /api/admin/session — still logged in? (also keeps the session alive) */
 router.get('/', requireAdminSession, (req, res) => {
-  res.json({ user: { id: req.admin.id, username: req.admin.username }, idleMinutes: IDLE_MINUTES });
+  res.json({ user: { id: req.admin.id, username: req.admin.username, ...adminView(req.admin) }, idleMinutes: IDLE_MINUTES });
 });
 
 module.exports = { router, requireAdminSession, IDLE_MINUTES, AUDIENCE, signAdminToken };

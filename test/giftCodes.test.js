@@ -69,7 +69,7 @@ test('gift codes end to end: back office, redeeming, coins counted as bought, th
     const guest = (await call('/auth/guest', { method: 'POST', body: {} })).body;
 
     // The back office: an admin with the 2-step login.
-    await db.query(`UPDATE users SET role = 'admin' WHERE id = $1`, [admin.user.id]);
+    await db.query(`UPDATE users SET role = 'admin', admin_role = 'owner' WHERE id = $1`, [admin.user.id]);
     const setup = (await call('/admin/session/start', { method: 'POST', token: admin.token })).body.setup;
     const { token: adm } = (await call('/admin/session/verify', { method: 'POST', token: admin.token, body: { code: totp.codeAt(setup.secret, totp.stepNow()) } })).body;
     assert.equal((await call('/admin/gift-codes', { token: alice.token })).status, 401); // (players can't)

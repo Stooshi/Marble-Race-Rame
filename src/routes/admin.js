@@ -39,6 +39,7 @@ const db = require('../db');
 const { assertUuid, validate } = require('../utils/validate');
 const { badRequest, conflict, notFound } = require('../utils/httpError');
 const { requireAdminSession, router: sessionRouter } = require('../admin/session');
+const { need } = require('../admin/permissions');
 const economy = require('../economy');
 const collection = require('../marbles/collection');
 const { bySlug, normaliseId, byId } = require('../marbles/catalog');
@@ -78,12 +79,12 @@ async function lockPlayer(client, id) {
 }
 
 /** GET /dashboard?period=6h|24h|7d|30d|mtd|lastmonth — read-only numbers, staff left out (src/admin/dashboard). */
-router.get('/dashboard', async (req, res) => {
+router.get('/dashboard', need('reports:read'), async (req, res) => {
   res.json(await require('../admin/dashboard').summary(db, String(req.query.period ?? '24h')));
 });
 
 /** GET /readiness?days= — which screens weren't ready by GO, and what they missed (src/readiness). */
-router.get('/readiness', async (req, res) => {
+router.get('/readiness', need('reports:read'), async (req, res) => {
   const days = Math.min(30, Math.max(1, Number(req.query.days) || 7));
   res.json(await require('../readiness').summary(db, { days }));
 });
@@ -96,7 +97,7 @@ router.get('/readiness', async (req, res) => {
 const FIRST_COUNTRY = (userId) => `(SELECT s.country FROM security_events s WHERE s.user_id = ${userId} AND s.country IS NOT NULL ORDER BY s.created_at, s.id LIMIT 1)`;
 
 /** GET /players?q=&limit= */
-router.get('/players', async (req, res) => {
+router.get('/players', need('customers:read'), async (req, res) => {
   const q = String(req.query.q ?? '').trim();
   const limit = Math.min(100, Math.max(1, Number(req.query.limit) || 30));
   const params = [];
@@ -105,8 +106,12 @@ router.get('/players', async (req, res) => {
     // A Marble ID (SC105-000012) finds its owner too.
     const code = q.toUpperCase();
     params.push(`%${q}%`, q, code);
+    // …and an order number (MS-1042), a receipt or credit note (K-2026-00001, KR-…) or a support reference (S-1043).
     where = `(u.username ILIKE $1 OR u.email ILIKE $1 OR u.display_name ILIKE $1 OR u.id::text = $2
-              OR EXISTS (SELECT 1 FROM user_collection c WHERE c.user_id = u.id AND c.marble_code = $3))`;
+              OR EXISTS (SELECT 1 FROM user_collection c WHERE c.user_id = u.id AND c.marble_code = $3)
+              OR EXISTS (SELECT 1 FROM payments p WHERE p.user_id = u.id AND p.order_no = $3)
+              OR EXISTS (SELECT 1 FROM billing_documents d WHERE d.user_id = u.id AND d.number = $3)
+              OR EXISTS (SELECT 1 FROM support_messages s WHERE s.user_id = u.id AND s.ref = $3))`;
   }
   params.push(limit);
   const { rows } = await db.query(
@@ -143,7 +148,7 @@ async function securityOf(id) {
   return { events: events.rows, sameAddress: related.rows, ipDays: IP_DAYS };
 }
 
-router.get('/players/:id/security', async (req, res) => {
+router.get('/players/:id/security', need('customers:security'), async (req, res) => {
   const id = assertUuid(req.params.id);
   const { rows: [p] } = await db.query('SELECT id FROM users WHERE id = $1', [id]);
   if (!p) throw notFound('No such player');
@@ -155,7 +160,7 @@ router.get('/players/:id/security', async (req, res) => {
 });
 
 /** GET /players/:id */
-router.get('/players/:id', async (req, res) => {
+router.get('/players/:id', need('customers:read'), async (req, res) => {
   const id = assertUuid(req.params.id);
   const { rows: [player] } = await db.query(
     `SELECT id, username, display_name, email, is_guest, role, coins, coins_earned, coins_bought, skill, age_group,
@@ -165,7 +170,7 @@ router.get('/players/:id', async (req, res) => {
     [id],
   );
   if (!player) throw notFound('No such player');
-  const [ledger, sums, races, items, originals, events, auditRows, consents, payments, races24h, messages] = await Promise.all([
+  const [ledger, sums, races, items, originals, events, auditRows, consents, payments, races24h, documents, messages] = await Promise.all([
     db.query('SELECT id, amount, kind, note, item_slug, race_id, actor_id, balance_after, created_at FROM coin_ledger WHERE user_id = $1 ORDER BY id DESC LIMIT 200', [id]),
     db.query('SELECT kind, COUNT(*)::int AS lines, SUM(amount)::int AS coins FROM coin_ledger WHERE user_id = $1 GROUP BY kind ORDER BY kind', [id]),
     db.query(
@@ -191,6 +196,9 @@ router.get('/players/:id', async (req, res) => {
     db.query('SELECT consent, source, created_at FROM email_consents WHERE user_id = $1 ORDER BY created_at DESC', [id]),
     db.query(`SELECT ${PAYMENT_COLUMNS} FROM payments p WHERE p.user_id = $1 ORDER BY p.created_at DESC LIMIT 50`, [id]),
     db.query(`SELECT COUNT(*)::int AS n FROM race_entries e JOIN races r ON r.id = e.race_id WHERE e.user_id = $1 AND r.finished_at > now() - interval '24 hours'`, [id]),
+    // Receipts and credit notes (src/billing).
+    db.query(`SELECT d.number, d.kind, d.issued_at, d.gross_cents, d.vat_cents, d.currency, d.payment_id, d.emailed_at, d.snapshot->>'reason' AS reason
+                FROM billing_documents d WHERE d.user_id = $1 ORDER BY d.issued_at DESC, d.number DESC LIMIT 200`, [id]),
     // Support messages: linked to the account, or sent from its email without a link.
     db.query(
       `SELECT ${SUPPORT_LIST_COLUMNS} FROM support_messages s LEFT JOIN users u ON u.id = s.user_id
@@ -207,13 +215,14 @@ router.get('/players/:id', async (req, res) => {
     security: { events: events.rows, ipDays: IP_DAYS },
     consents: consents.rows,
     payments: payments.rows,
+    documents: documents.rows,
     audit: auditRows.rows,
     messages: messages.rows,
   });
 });
 
 /** POST /players/:id/coins { amount, reason } */
-router.post('/players/:id/coins', async (req, res) => {
+router.post('/players/:id/coins', need('coins:adjust'), async (req, res) => {
   const id = assertUuid(req.params.id);
   const body = validate(req.body, { amount: { type: 'int', required: true, min: -1_000_000, max: 1_000_000 }, reason: REASON });
   if (body.amount === 0) throw badRequest('amount must not be 0');
@@ -228,7 +237,7 @@ router.post('/players/:id/coins', async (req, res) => {
 });
 
 /** POST /players/:id/items { item, action, reason } — item: a slug or a Marble ID */
-router.post('/players/:id/items', async (req, res) => {
+router.post('/players/:id/items', need('coins:adjust'), async (req, res) => {
   const id = assertUuid(req.params.id);
   const body = validate(req.body, { item: { type: 'string', required: true, max: 64 }, action: { type: 'enum', values: ['grant', 'remove'], required: true }, reason: REASON });
   const slug = bySlug.has(body.item) ? body.item : byId.get(normaliseId(body.item))?.slug;
@@ -262,7 +271,7 @@ async function setSuspended(req, res, on) {
   res.json({ ok: true });
 }
 /** POST /players/:id/staff { staff: true|false, reason } — staff play normally but the Dashboard leaves them out. */
-router.post('/players/:id/staff', async (req, res) => {
+router.post('/players/:id/staff', need('staff:set'), async (req, res) => {
   const id = assertUuid(req.params.id);
   const body = validate(req.body, { staff: { type: 'boolean', required: true }, reason: REASON });
   await db.withTransaction(async (client) => {
@@ -275,11 +284,11 @@ router.post('/players/:id/staff', async (req, res) => {
   res.json({ ok: true });
 });
 
-router.post('/players/:id/suspend', (req, res) => setSuspended(req, res, true));
-router.post('/players/:id/unsuspend', (req, res) => setSuspended(req, res, false));
+router.post('/players/:id/suspend', need('customers:edit'), (req, res) => setSuspended(req, res, true));
+router.post('/players/:id/unsuspend', need('customers:edit'), (req, res) => setSuspended(req, res, false));
 
 /** POST /players/:id/name { display_name, reason } */
-router.post('/players/:id/name', async (req, res) => {
+router.post('/players/:id/name', need('customers:edit'), async (req, res) => {
   const id = assertUuid(req.params.id);
   const body = validate(req.body, { display_name: { type: 'string', max: 40, nullable: true }, reason: REASON });
   await db.withTransaction(async (client) => {
@@ -291,7 +300,7 @@ router.post('/players/:id/name', async (req, res) => {
 });
 
 /** POST /players/:id/consent { consent: false, reason } */
-router.post('/players/:id/consent', async (req, res) => {
+router.post('/players/:id/consent', need('customers:edit'), async (req, res) => {
   const id = assertUuid(req.params.id);
   const body = validate(req.body, { consent: { type: 'boolean', required: true }, reason: REASON });
   if (body.consent) throw badRequest('Only the player can say yes to emails (in their account); support can only turn them off');
@@ -305,7 +314,7 @@ router.post('/players/:id/consent', async (req, res) => {
 });
 
 /** POST /players/:id/delete { reason } — delete (anonymise) an account the player asked support to delete. */
-router.post('/players/:id/delete', async (req, res) => {
+router.post('/players/:id/delete', need('customers:delete'), async (req, res) => {
   const id = assertUuid(req.params.id);
   const body = validate(req.body, { reason: REASON });
   if (id === req.admin.id) throw badRequest("You can't delete your own admin account here");
@@ -315,7 +324,7 @@ router.post('/players/:id/delete', async (req, res) => {
 });
 
 /** GET /payments?q= — coin-pack orders, newest first; q: an order number, a player's name or e-mail. */
-router.get('/payments', async (req, res) => {
+router.get('/payments', need('payments:read'), async (req, res) => {
   const q = String(req.query.q ?? '').trim().slice(0, 100);
   const { rows } = await db.query(
     `SELECT ${PAYMENT_COLUMNS}, u.id AS player_id, u.username AS player,
@@ -333,7 +342,7 @@ router.get('/payments', async (req, res) => {
  * currency it was charged in). Stripe refunds the money; its refund event then takes the coins
  * back (ledger + audit). Test payments are refunded at once.
  */
-router.post('/payments/:id/refund', async (req, res) => {
+router.post('/payments/:id/refund', need('payments:refund'), async (req, res) => {
   const id = assertUuid(req.params.id);
   const body = validate(req.body, { reason: REASON, amount_cents: { type: 'int', min: 1, max: 10_000_000 } });
   res.json(await paymentsSvc.refund(db, id, { amountCents: body.amount_cents ?? null, adminId: req.admin.id, reason: body.reason }));
@@ -343,7 +352,7 @@ router.post('/payments/:id/refund', async (req, res) => {
  * GET /support?q=&status=&category=&limit= — the support inbox, newest first. q: a name, email,
  * player name, order number, reference (S-1001) or words from the message.
  */
-router.get('/support', async (req, res) => {
+router.get('/support', need('support:read'), async (req, res) => {
   const q = String(req.query.q ?? '').trim().slice(0, 200);
   const status = support.STATUSES.includes(req.query.status) ? req.query.status : null;
   const category = support.settings.categories.includes(req.query.category) ? req.query.category : null;
@@ -390,7 +399,7 @@ async function supportMessage(client, id) {
 }
 
 /** GET /support/:id — one message, its replies and every status change and reply in the audit log. */
-router.get('/support/:id', async (req, res) => {
+router.get('/support/:id', need('support:read'), async (req, res) => {
   const id = assertUuid(req.params.id);
   const message = await supportMessage(db, id);
   const [replies, trail] = await Promise.all([
@@ -410,7 +419,7 @@ router.get('/support/:id', async (req, res) => {
 });
 
 /** GET /support/:id/screenshot — the image sent with the message. */
-router.get('/support/:id/screenshot', async (req, res) => {
+router.get('/support/:id/screenshot', need('support:read'), async (req, res) => {
   const id = assertUuid(req.params.id);
   const { rows: [m] } = await db.query('SELECT screenshot, screenshot_type FROM support_messages WHERE id = $1', [id]);
   if (!m?.screenshot) throw notFound('No screenshot');
@@ -419,7 +428,7 @@ router.get('/support/:id/screenshot', async (req, res) => {
 });
 
 /** POST /support/:id/status { status, reason? } — New, Open or Done; written to the audit log. */
-router.post('/support/:id/status', async (req, res) => {
+router.post('/support/:id/status', need('support:answer'), async (req, res) => {
   const id = assertUuid(req.params.id);
   const body = validate(req.body, { status: { type: 'enum', required: true, values: support.STATUSES }, reason: { type: 'string', max: 500 } });
   const message = await db.withTransaction(async (client) => {
@@ -436,7 +445,7 @@ router.post('/support/:id/status', async (req, res) => {
 });
 
 /** POST /support/:id/reply { text } — saved, emailed to the player when email is on, written to the audit log. */
-router.post('/support/:id/reply', async (req, res) => {
+router.post('/support/:id/reply', need('support:answer'), async (req, res) => {
   const id = assertUuid(req.params.id);
   const body = validate(req.body, { text: { type: 'string', required: true, min: 2, max: 5000 } });
   const out = await db.withTransaction(async (client) => {
@@ -455,19 +464,41 @@ router.post('/support/:id/reply', async (req, res) => {
 });
 
 /** GET /audit?limit=&action= */
-router.get('/audit', async (req, res) => {
-  const limit = Math.min(500, Math.max(1, Number(req.query.limit) || 100));
+router.get('/audit', need('audit:read'), async (req, res) => {
+  // Filters (16 Nov 2026): by admin (username), action, player (username or id), and from / to dates (Swedish time).
+  const csv = req.query.format === 'csv';
+  const limit = csv ? 10_000 : Math.min(500, Math.max(1, Number(req.query.limit) || 100));
+  const params = [];
+  const where = [];
+  const add = (sql, v) => { params.push(v); where.push(sql.replace('$?', `$${params.length}`)); };
+  const date = (v) => (/^\d{4}-\d{2}-\d{2}$/.test(String(v ?? '')) ? String(v) : null);
+  if (req.query.admin) add('adm.username ILIKE $?', String(req.query.admin).slice(0, 40));
+  if (req.query.action) add('a.action = $?', String(req.query.action).slice(0, 40));
+  if (req.query.player) add('(u.username ILIKE $? OR u.id::text = lower($?))'.replace(/\$\?/g, `$${params.length + 1}`), String(req.query.player).slice(0, 60));
+  if (date(req.query.from)) add(`(a.created_at AT TIME ZONE 'Europe/Stockholm') >= $?::date`, date(req.query.from));
+  if (date(req.query.to)) add(`(a.created_at AT TIME ZONE 'Europe/Stockholm') < $?::date + 1`, date(req.query.to));
+  params.push(limit);
   const { rows } = await db.query(
     `SELECT a.id, a.action, a.reason, a.details, a.created_at, adm.username AS admin, u.id AS player_id, u.username AS player
        FROM admin_audit a LEFT JOIN users adm ON adm.id = a.admin_id LEFT JOIN users u ON u.id = a.target_user_id
-      ORDER BY a.created_at DESC LIMIT $1`,
-    [limit],
+      ${where.length ? `WHERE ${where.join(' AND ')}` : ''}
+      ORDER BY a.created_at DESC LIMIT $${params.length}`,
+    params,
   );
-  res.json({ entries: rows });
+  if (!csv) return res.json({ entries: rows });
+  const reason = String(req.query.reason ?? '').trim();
+  if (reason.length < 5) throw badRequest('Give a reason for the export (at least 5 characters)');
+  await audit(db, req, 'audit-export', null, reason, { count: rows.length, filters: { admin: req.query.admin, action: req.query.action, player: req.query.player, from: req.query.from, to: req.query.to } });
+  res.set('Content-Type', 'text/csv; charset=utf-8');
+  res.set('Content-Disposition', `attachment; filename="audit-log-${new Date().toISOString().slice(0, 10)}.csv"`);
+  res.send(require('../billing').csv([
+    ['When', (r) => r.created_at?.toISOString?.() ?? r.created_at], ['Admin', (r) => r.admin ?? ''], ['Action', (r) => r.action],
+    ['Player', (r) => r.player ?? ''], ['Reason', (r) => r.reason], ['Details', (r) => JSON.stringify(r.details ?? {})],
+  ], rows));
 });
 
 /** GET /economy?days=30 */
-router.get('/economy', async (req, res) => {
+router.get('/economy', need('reports:read'), async (req, res) => {
   const days = Math.min(365, Math.max(1, Number(req.query.days) || 30));
   const [daily, totals, players, sales, packs, farming, earners] = await Promise.all([
     db.query(
@@ -540,7 +571,7 @@ router.get('/economy', async (req, res) => {
  * src/names: `hidden`, `hidden_name`, `hidden_at`, and `changed` once the player chose a new one), and
  * names already taken that the filter blocks.
  */
-router.get('/name-reports', async (req, res) => {
+router.get('/name-reports', need('names:moderate'), async (req, res) => {
   const { rows: open } = await db.query(
     `SELECT u.id AS player_id, u.username, u.display_name, u.is_guest, u.suspended_at,
             u.name_hidden_at IS NOT NULL AS hidden, u.name_hidden_name AS hidden_name, u.name_hidden_at AS hidden_at,
@@ -582,7 +613,7 @@ router.get('/name-reports', async (req, res) => {
  *   'rename': the account gets a neutral player name (PlayerNNNN; a guest keeps guest_<number>), the
  *     shown name cleared; closed as renamed.
  */
-router.post('/name-reports/:userId/resolve', async (req, res) => {
+router.post('/name-reports/:userId/resolve', need('names:moderate'), async (req, res) => {
   const id = assertUuid(req.params.userId);
   const body = validate(req.body, { action: { type: 'enum', values: ['restore', 'dismiss', 'keep-hidden', 'rename'], required: true }, reason: REASON });
   const action = body.action === 'dismiss' ? 'restore' : body.action;
@@ -614,7 +645,7 @@ router.post('/name-reports/:userId/resolve', async (req, res) => {
 const codeRow = (c) => ({ ...c, code: giftCodes.display(c.code), state: giftCodes.stateOf(c) });
 
 /** GET /gift-codes?q=&tag= — q: a code or words from its tag or note. */
-router.get('/gift-codes', async (req, res) => {
+router.get('/gift-codes', need('gift-codes:read'), async (req, res) => {
   const q = String(req.query.q ?? '').trim().slice(0, 64);
   const tag = String(req.query.tag ?? '').trim().slice(0, 64);
   const [codes, tags] = await Promise.all([
@@ -638,7 +669,7 @@ router.get('/gift-codes', async (req, res) => {
 });
 
 /** POST /gift-codes — make a code, or a batch of single-use codes. */
-router.post('/gift-codes', async (req, res) => {
+router.post('/gift-codes', need('gift-codes:make'), async (req, res) => {
   const body = validate(req.body, {
     kind: { type: 'enum', values: ['coins', 'pass'], required: true },
     coins: { type: 'int', min: 1, max: 1_000_000 },
@@ -666,7 +697,7 @@ router.post('/gift-codes', async (req, res) => {
 });
 
 /** GET /gift-codes/:id — a code and its redemptions. */
-router.get('/gift-codes/:id', async (req, res) => {
+router.get('/gift-codes/:id', need('gift-codes:read'), async (req, res) => {
   const id = assertUuid(req.params.id);
   const { rows: [c] } = await db.query(
     `SELECT g.*, s.name AS season_name, a.username AS created_by_name FROM gift_codes g
@@ -684,7 +715,7 @@ router.get('/gift-codes/:id', async (req, res) => {
 });
 
 /** POST /gift-codes/:id/disable { reason } — no more redemptions (what was redeemed stays). */
-router.post('/gift-codes/:id/disable', async (req, res) => {
+router.post('/gift-codes/:id/disable', need('gift-codes:make'), async (req, res) => {
   const id = assertUuid(req.params.id);
   const body = validate(req.body, { reason: REASON });
   const out = await db.withTransaction(async (client) => {
@@ -700,7 +731,7 @@ router.post('/gift-codes/:id/disable', async (req, res) => {
 });
 
 /** GET /consents?reason=&format=csv — the email list (who agreed, when); the export itself is audited. */
-router.get('/consents', async (req, res) => {
+router.get('/consents', need('emails:read'), async (req, res) => {
   const { rows } = await db.query(
     `SELECT u.email, u.username, u.display_name, u.age_group,
             (SELECT MAX(c.created_at) FROM email_consents c WHERE c.user_id = u.id AND c.consent) AS since
@@ -717,6 +748,153 @@ router.get('/consents', async (req, res) => {
   res.set('Content-Type', 'text/csv; charset=utf-8');
   res.set('Content-Disposition', `attachment; filename="email-consents-${new Date().toISOString().slice(0, 10)}.csv"`);
   res.send(['email,username,name,age_group,consent_since', ...rows.map((r) => [r.email, r.username, r.display_name, r.age_group, r.since?.toISOString?.() ?? r.since].map(cell).join(','))].join('\n'));
+});
+
+// ── Admins and roles (16 Nov 2026, CRM phase 2; src/admin/permissions.js) ─────────────────────────────
+
+const { ROLES } = require('../admin/permissions');
+const ROLE = { type: 'enum', required: true, values: ROLES };
+
+/** GET /admins — every admin, their role, 2-step login and last use of the back office. */
+router.get('/admins', need('admins:manage'), async (_req, res) => {
+  const { rows } = await db.query(
+    `SELECT u.id, u.username, u.display_name, u.email, COALESCE(u.admin_role, 'read-only') AS role, u.suspended_at,
+            (SELECT f.enabled_at FROM admin_2fa f WHERE f.user_id = u.id) AS two_step_since,
+            (SELECT MAX(s.last_seen_at) FROM admin_sessions s WHERE s.user_id = u.id) AS last_seen_at
+       FROM users u WHERE u.role = 'admin' AND u.deleted_at IS NULL ORDER BY u.username`,
+  );
+  res.json({ admins: rows, roles: ROLES });
+});
+
+/** No change may leave the back office without an owner. */
+async function assertAnotherOwner(client, exceptId) {
+  const { rows: [o] } = await client.query(
+    `SELECT COUNT(*)::int AS n FROM users WHERE role = 'admin' AND admin_role = 'owner' AND id <> $1 AND suspended_at IS NULL AND deleted_at IS NULL`,
+    [exceptId],
+  );
+  if (!o.n) throw conflict('The back office needs at least one owner');
+}
+
+/** POST /admins { login, role, reason } — an existing saved account (username or email) becomes an admin with a role. */
+router.post('/admins', need('admins:manage'), async (req, res) => {
+  const body = validate(req.body, { login: { type: 'string', required: true, min: 2, max: 254 }, role: ROLE, reason: REASON });
+  const out = await db.withTransaction(async (client) => {
+    const { rows: [u] } = await client.query(
+      `SELECT id, username, role, is_guest, suspended_at, deleted_at FROM users WHERE lower(username) = lower($1) OR lower(email) = lower($1) FOR UPDATE`,
+      [body.login.trim()],
+    );
+    if (!u || u.deleted_at) throw notFound('No such account');
+    if (u.is_guest) throw badRequest('A guest account can\'t be an admin: it must be saved first');
+    if (u.suspended_at) throw badRequest('This account is suspended');
+    if (u.role === 'admin') throw conflict('Already an admin: change their role instead');
+    await client.query(`UPDATE users SET role = 'admin', admin_role = $2 WHERE id = $1`, [u.id, body.role]);
+    await audit(client, req, 'admin-add', u.id, body.reason, { role: body.role });
+    return { id: u.id, username: u.username, role: body.role };
+  });
+  res.json({ admin: out });
+});
+
+/** POST /admins/:id/role { role, reason } */
+router.post('/admins/:id/role', need('admins:manage'), async (req, res) => {
+  const id = assertUuid(req.params.id);
+  const body = validate(req.body, { role: ROLE, reason: REASON });
+  await db.withTransaction(async (client) => {
+    const { rows: [u] } = await client.query(`SELECT id, role, admin_role FROM users WHERE id = $1 FOR UPDATE`, [id]);
+    if (!u || u.role !== 'admin') throw notFound('No such admin');
+    const from = u.admin_role ?? 'read-only';
+    if (id === req.admin.id) throw conflict('You can\'t change your own role: another owner can');
+    if (from === body.role) throw conflict(`Already ${body.role}`);
+    if (from === 'owner') await assertAnotherOwner(client, id);
+    await client.query('UPDATE users SET admin_role = $2 WHERE id = $1', [id, body.role]);
+    await audit(client, req, 'admin-role', id, body.reason, { from, to: body.role });
+  });
+  res.json({ ok: true });
+});
+
+/** POST /admins/:id/remove { reason } — back to a player; their back-office sessions end at once. */
+router.post('/admins/:id/remove', need('admins:manage'), async (req, res) => {
+  const id = assertUuid(req.params.id);
+  const body = validate(req.body, { reason: REASON });
+  await db.withTransaction(async (client) => {
+    const { rows: [u] } = await client.query(`SELECT id, role, admin_role FROM users WHERE id = $1 FOR UPDATE`, [id]);
+    if (!u || u.role !== 'admin') throw notFound('No such admin');
+    if (id === req.admin.id) throw conflict('You can\'t remove yourself: another owner can');
+    if (u.admin_role === 'owner') await assertAnotherOwner(client, id);
+    await client.query(`UPDATE users SET role = 'player', admin_role = NULL WHERE id = $1`, [id]);
+    await client.query('UPDATE admin_sessions SET ended_at = now() WHERE user_id = $1 AND ended_at IS NULL', [id]);
+    await audit(client, req, 'admin-remove', id, body.reason, { role: u.admin_role ?? 'read-only' });
+  });
+  res.json({ ok: true });
+});
+
+// ── Billing (16 Nov 2026, CRM phase 1; src/billing) ──────────────────────────────────────────────────────
+
+const billing = require('../billing');
+const thisMonth = () => billing.swedishDate(new Date()).slice(0, 7);
+const monthOf = (v) => (billing.MONTH.test(String(v ?? '')) ? String(v) : thisMonth());
+
+/** GET /billing/documents?q=&kind=receipt|credit&month=YYYY-MM — receipts and credit notes, newest first. */
+router.get('/billing/documents', need('billing:read'), async (req, res) => {
+  const q = String(req.query.q ?? '').trim().slice(0, 100);
+  const kind = ['receipt', 'credit'].includes(req.query.kind) ? req.query.kind : null;
+  const month = req.query.month ? monthOf(req.query.month) : null;
+  const params = [];
+  const where = [];
+  if (kind) { params.push(kind); where.push(`d.kind = $${params.length}`); }
+  if (month) {
+    const r = billing.monthRange(month);
+    params.push(r.from, r.to);
+    where.push(`(d.issued_at AT TIME ZONE 'Europe/Stockholm') >= $${params.length - 1}::date AND (d.issued_at AT TIME ZONE 'Europe/Stockholm') < $${params.length}::date`);
+  }
+  if (q) {
+    params.push(q.toUpperCase(), `%${q}%`);
+    where.push(`(d.number = $${params.length - 1} OR p.order_no = $${params.length - 1} OR u.username ILIKE $${params.length} OR u.email ILIKE $${params.length})`);
+  }
+  const { rows } = await db.query(
+    `SELECT d.number, d.kind, d.issued_at, d.currency, d.gross_cents, d.vat_cents, d.vat_rate, d.vat_country, d.book_currency, d.book_gross_cents,
+            d.book_fee_cents, d.emailed_at, p.order_no, p.provider, u.id AS player_id, u.username AS player
+       FROM billing_documents d JOIN payments p ON p.id = d.payment_id LEFT JOIN users u ON u.id = d.user_id
+      ${where.length ? `WHERE ${where.join(' AND ')}` : ''}
+      ORDER BY d.issued_at DESC, d.number DESC LIMIT 500`,
+    params,
+  );
+  res.json({ documents: rows });
+});
+
+/** GET /billing/documents/:number — one document as issued, its purchase and its customer. */
+router.get('/billing/documents/:number', need('billing:read'), async (req, res) => {
+  const number = String(req.params.number).toUpperCase().slice(0, 20);
+  const { rows: [d] } = await db.query(
+    `SELECT ${billing.DOC_COLUMNS}, p.order_no, p.status AS payment_status, p.refunded_cents, p.charged_cents, p.payment_intent, p.withdrawn_at,
+            u.username AS player, c.number AS credits_number,
+            (SELECT COALESCE(json_agg(x.number ORDER BY x.number), '[]'::json) FROM billing_documents x WHERE x.credits_document_id = d.id) AS credited_by
+       FROM billing_documents d JOIN payments p ON p.id = d.payment_id LEFT JOIN users u ON u.id = d.user_id
+       LEFT JOIN billing_documents c ON c.id = d.credits_document_id
+      WHERE d.number = $1`,
+    [number],
+  );
+  if (!d) throw notFound('No such document');
+  res.json({ document: d });
+});
+
+/** GET /billing/summary?month=YYYY-MM — the month's totals and its VAT per country and rate. */
+router.get('/billing/summary', need('billing:read'), async (req, res) => {
+  const month = monthOf(req.query.month);
+  const [totals, vat] = await Promise.all([billing.monthTotals(db, month), billing.vatSummary(db, month)]);
+  res.json({ month, totals, vat });
+});
+
+/** GET /billing/export?month=YYYY-MM&file=documents|vat&reason= — the month for the accountant, as CSV (audited). */
+router.get('/billing/export', need('billing:export'), async (req, res) => {
+  const month = monthOf(req.query.month);
+  const file = req.query.file === 'vat' ? 'vat' : 'documents';
+  const reason = String(req.query.reason ?? '').trim();
+  if (reason.length < 5) throw badRequest('Give a reason for the export (at least 5 characters)');
+  const body = file === 'vat' ? await billing.exportVat(db, month) : await billing.exportDocuments(db, month);
+  await audit(db, req, 'billing-export', null, reason, { month, file });
+  res.set('Content-Type', 'text/csv; charset=utf-8');
+  res.set('Content-Disposition', `attachment; filename="marble-spins-${file === 'vat' ? 'vat-summary' : 'receipts-and-credit-notes'}-${month}.csv"`);
+  res.send(body);
 });
 
 module.exports = router;

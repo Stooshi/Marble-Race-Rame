@@ -43,7 +43,7 @@ test('the back office on a real database: admin + 2-step + live session; reasons
     // A player can't get in, with or without the pages.
     assert.equal((await call('/admin/players', { token: admin.token })).status, 401);
     assert.equal((await call('/admin/session/start', { method: 'POST', token: admin.token })).status, 403);
-    await db.query(`UPDATE users SET role = 'admin' WHERE id = $1`, [admin.user.id]);
+    await db.query(`UPDATE users SET role = 'admin', admin_role = 'owner' WHERE id = $1`, [admin.user.id]);
     const setup = (await call('/admin/session/start', { method: 'POST', token: admin.token })).body.setup;
     const code = totp.codeAt(setup.secret, totp.stepNow());
     const { token } = (await call('/admin/session/verify', { method: 'POST', token: admin.token, body: { code } })).body;

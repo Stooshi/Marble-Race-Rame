@@ -59,7 +59,7 @@ test('names on a real database: refused at sign-up, saving and renaming; reports
 
     // The back office.
     const admin = (await reg(`Boss_${run}`)).body;
-    await db.query(`UPDATE users SET role = 'admin' WHERE id = $1`, [admin.user.id]);
+    await db.query(`UPDATE users SET role = 'admin', admin_role = 'owner' WHERE id = $1`, [admin.user.id]);
     const setup = (await call('/admin/session/start', { method: 'POST', token: admin.token })).body.setup;
     const { token: adm } = (await call('/admin/session/verify', { method: 'POST', token: admin.token, body: { code: totp.codeAt(setup.secret, totp.stepNow()) } })).body;
     const list = (await call('/admin/name-reports', { token: adm })).body;

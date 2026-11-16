@@ -122,7 +122,7 @@ test('the contact form and the support inbox on a real database', { skip: !DB },
     assert.equal((await call('/admin/support', { token: player.token })).status, 401);
     const adminName = `${name}a`;
     const admin = (await call('/auth/register', { method: 'POST', body: { username: adminName, email: `${adminName}@test.invalid`, password: 'password123', age_group: '18+' } })).body;
-    await db.query(`UPDATE users SET role = 'admin' WHERE id = $1`, [admin.user.id]);
+    await db.query(`UPDATE users SET role = 'admin', admin_role = 'owner' WHERE id = $1`, [admin.user.id]);
     const setup = (await call('/admin/session/start', { method: 'POST', token: admin.token })).body.setup;
     const { token } = (await call('/admin/session/verify', { method: 'POST', token: admin.token, body: { code: totp.codeAt(setup.secret, totp.stepNow()) } })).body;
 
