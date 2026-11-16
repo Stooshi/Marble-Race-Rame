@@ -55,23 +55,40 @@ describe('the price', () => {
 describe('the Track packs tab and a pack\'s page', () => {
   const html = (el, url = '/shop') => renderToString(<MemoryRouter initialEntries={[url]}><Routes><Route path="/shop" element={el} /><Route path="/shop/packs/:key" element={el} /></Routes></MemoryRouter>).replace(/<!-- -->/g, '');
 
-  it('a card per pack: picture, 20 tracks, the wildness mix, the price, Unlock or Coming soon', () => {
+  it('a card per complete pack only: picture, 20 tracks, the wildness mix, the price, Unlock (Moses, 16 Nov 2026)', () => {
     const out = html(<TrackPacksTab data={{ onSale: true, testBuy: false, packs: [PACK, SOON] }} />);
     expect(out).toContain('>Grand Prix</h3>');
     expect(out).toContain('20 tracks');
     expect(out).toContain('$7.99');
     expect(out.match(/>Unlock</g)).toHaveLength(1);
-    expect(out).toContain('Coming soon');
-    expect(out).toContain('4 of 20 tracks'); // (a Coming soon card: "X of 20 tracks", 12 Nov 2026)
+    expect(out).toContain('1 pack ·');
+    // A pack under 20 live tracks has no card at all…
+    expect(out).not.toContain('Arcade');
+    expect(out).not.toContain('Coming soon');
+    expect(out).not.toContain('4 of 20 tracks');
     expect(out).toContain('Paid leagues can race any track, locked ones included.');
+    // …and appears by itself once its 20th track is live (the server's `complete`).
+    expect(html(<TrackPacksTab data={{ onSale: true, testBuy: false, packs: [PACK, { ...SOON, live: 20, complete: true }] }} />)).toContain('>Arcade</h3>');
+  });
+
+  it('admins too: no card for an incomplete pack and no test purchase, the same Unlock as players (Stripe live, 16 Nov 2026)', () => {
+    const out = html(<TrackPacksTab data={{ onSale: true, testBuy: true, packs: [PACK, SOON] }} />);
+    expect(out).not.toContain('Arcade');
+    expect(out).not.toMatch(/test purchase/i);
+    expect(out.match(/>Unlock</g)).toHaveLength(1);
+    pageData.value = { onSale: true, testBuy: true, price: {}, pack: { ...SOON, tracks: [], planned: [] } };
+    const page = html(<PackPage />, '/shop/packs/arcade');
+    expect(page).not.toContain('Unlock all');
+    expect(page).not.toMatch(/test purchase/i);
+    expect(page).toContain('Coming soon');
   });
 
   it('the order: buyable packs first, then owned, then Coming soon by tracks still to come, fewest first', () => {
     const pk = (key, live, extra = {}) => ({ ...PACK, key, name: key, live, complete: live >= 20, ...extra });
     const packs = [pk('arcade', 4), pk('grand-prix', 9), pk('blocks-1', 12), pk('rivers', 13), pk('blocks-2', 20), pk('peaks', 12, { owned: true }), pk('canyons', 12)];
     expect(orderPacks(packs).map((p) => p.key)).toEqual(['blocks-2', 'peaks', 'rivers', 'blocks-1', 'canyons', 'grand-prix', 'arcade']);
-    const out = html(<TrackPacksTab data={{ onSale: true, testBuy: false, packs: [SOON, PACK] }} />);
-    expect(out.indexOf('>Grand Prix</h3>')).toBeLessThan(out.indexOf('>Arcade</h3>'));
+    const out = html(<TrackPacksTab data={{ onSale: true, testBuy: false, packs: [{ ...PACK, key: 'rivers', name: 'Rivers', owned: true }, PACK] }} />);
+    expect(out.indexOf('>Grand Prix</h3>')).toBeLessThan(out.indexOf('>Rivers</h3>'));
     expect(out).toContain('>20 tracks<');
   });
 

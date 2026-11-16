@@ -16,8 +16,10 @@ import { notEnoughCoins } from '../payments/GetCoins';
 /**
  * Track packs in the shop (Moses, 12 Nov 2026; built from the approved design mockup). Shown only
  * while the server sells packs to this player (TRACK_PACKS on for them: GET /api/packs onSale). Every pack:
- * its best track's picture, 20 tracks, its wildness mix, the price, Unlock (or "Coming soon" while it has fewer
- * than 20 live tracks). A pack's page: every track with its picture, one line and wildness, the planned ones, and
+ * its best track's picture, 20 tracks, its wildness mix, the price, Unlock. Only complete packs (20 live tracks)
+ * have a card, for everyone, admins too (Moses, 16 Nov 2026, Stripe live): a pack under 20 has none, and appears
+ * by itself once its 20th track goes live (GET /api/packs `complete`). No test purchases on the website any more:
+ * admins see the same Unlock as players (the server refuses an incomplete pack with Stripe live). A pack's page: every track with its picture, one line and wildness, the planned ones, and
  * "Unlock all 20 tracks – $7.99" at the top and the bottom, or with coins (at most 25%: 1,990 coins + $5.99).
  * In the apps the prices are the store's own (local currency); on the website Stripe shows the player's currency.
  */
@@ -40,11 +42,13 @@ function usePackPrices(key) {
   };
 }
 
-/** The shop's Track packs tab: a card for every pack. `data`: GET /api/packs. */
+/** The packs the tab shows (Moses, 16 Nov 2026): only the complete ones (20 live tracks), for everyone. */
+export const shownPacks = (packs) => packs.filter((p) => p.complete);
+
 /**
  * The tab's order (Moses, 12 Nov 2026): the packs that can be bought (complete and on sale, not owned) first,
  * then the player's own packs, then the Coming soon ones, fewest tracks still to come first; within a group,
- * the server's order.
+ * the server's order. (Since 16 Nov 2026 the tab shows only complete packs: buyable first, then owned.)
  */
 export function orderPacks(packs) {
   const group = (p) => (p.owned ? 1 : p.complete ? 0 : 2);
@@ -52,19 +56,22 @@ export function orderPacks(packs) {
   return packs.map((p, i) => [p, i]).sort(([a, i], [b, j]) => group(a) - group(b) || toGo(a) - toGo(b) || i - j).map(([p]) => p);
 }
 
+/** The shop's Track packs tab: a card for every complete pack. `data`: GET /api/packs. */
 export function TrackPacksTab({ data }) {
   const [restored, setRestored] = useState(null);
   const apple = storeProvider() === 'apple';
+  const packs = orderPacks(shownPacks(data.packs));
   return (
     <section aria-labelledby="packs-h" style={{ display: 'grid', gap: 14 }}>
       <div className="ms-section-head" style={{ justifyContent: 'space-between' }}>
         <h2 id="packs-h">Track packs</h2>
-        <span>{data.packs.length} packs · 3 tracks of every series stay free</span>
+        <span>{packs.length} {packs.length === 1 ? 'pack' : 'packs'} · 3 tracks of every series stay free</span>
       </div>
       <p className="ms-wild-note">Every pack is {TRACK_PACK_PRICE.fullAt} tracks of one series, yours for good: race them any time, and with friends in your rooms. Paid leagues can race any track, locked ones included.</p>
       <div className="ms-pack-grid">
-        {orderPacks(data.packs).map((p) => <PackCard key={p.key} pack={p} testBuy={data.testBuy} />)}
+        {packs.map((p) => <PackCard key={p.key} pack={p} />)}
       </div>
+      {!packs.length && <p className="ms-note">New packs arrive here as soon as all {TRACK_PACK_PRICE.fullAt} of their tracks are ready.</p>}
       {apple && (
         <div className="ms-row">
           <button type="button" className="ms-btn ms-btn--sm" onClick={async () => setRestored(await restoreStorePurchases().catch(() => 0))}>Restore purchases</button>
@@ -75,7 +82,7 @@ export function TrackPacksTab({ data }) {
   );
 }
 
-function PackCard({ pack: p, testBuy }) {
+function PackCard({ pack: p }) {
   const prices = usePackPrices(p.key);
   const to = `/shop/packs/${p.key}`;
   return (
@@ -92,9 +99,7 @@ function PackCard({ pack: p, testBuy }) {
           <span className="ms-pack__price">{prices.money ?? '…'}</span>
           {p.owned
             ? <span className="ms-pack__soon" style={{ color: 'var(--ms-green)', borderColor: 'var(--ms-green)' }}>Unlocked</span>
-            : p.complete || testBuy
-              ? <Link to={to} className="ms-btn ms-btn--primary ms-btn--sm">{p.complete ? 'Unlock' : 'Test purchase'}</Link>
-              : <span className="ms-pack__soon">Coming soon</span>}
+            : <Link to={to} className="ms-btn ms-btn--primary ms-btn--sm">Unlock</Link>}
         </div>
         <Link to={to} className="ms-pack__see">See the tracks</Link>
       </div>
@@ -165,11 +170,11 @@ const ABOUT = {
 
 /**
  * Buying: "Unlock all 20 tracks – $7.99", or with coins (1,990 coins + $5.99) when the player has them; on the
- * website the two agreements first (as for coins and the pass). Coming soon: no button (an admin may make a test
- * purchase). Packs not sold to the player: nothing to buy.
+ * website the two agreements first (as for coins and the pass). Coming soon (a pack reached by its address
+ * before it has 20 tracks): no button, for admins too. Packs not sold to the player: nothing to buy.
  */
 function BuyBox({ data, bottom = false, cancelled = false, onBought }) {
-  const { pack, onSale, testBuy } = data;
+  const { pack, onSale } = data;
   const { isAuthenticated, user, refreshUser } = useAuth();
   const provider = storeProvider();
   const web = provider === 'stripe' || provider === 'test';
@@ -181,13 +186,12 @@ function BuyBox({ data, bottom = false, cancelled = false, onBought }) {
   const [result, setResult] = useState(null);
   const C = TRACK_PACK_PRICE.withCoins;
   const canCoins = (user?.coins ?? 0) >= C.coins;
-  const test = !pack.complete && testBuy;
   const label = useCoins ? `${formatNumber(C.coins)} coins + ${prices.coins ?? '…'}` : prices.money ?? '…';
   const id = bottom ? 'buy-bottom' : 'buy-top';
 
   if (!onSale) return bottom ? null : <div className="ms-msg" role="status">Track packs aren't for sale yet: every track is open to race.</div>;
   if (pack.owned) return <div className="ms-msg" role="status">You have the {pack.name} pack: its tracks are yours. <Link to="/play/track">Race one</Link></div>;
-  if (!pack.complete && !testBuy) return <div className="ms-pack-page__buy"><span className="ms-pack__soon">Coming soon</span><span className="ms-note" style={{ margin: 0 }}>On sale once all {pack.fullAt} tracks are ready. Paid leagues can race any track, locked ones included.</span></div>;
+  if (!pack.complete) return <div className="ms-pack-page__buy"><span className="ms-pack__soon">Coming soon</span><span className="ms-note" style={{ margin: 0 }}>On sale once all {pack.fullAt} tracks are ready. Paid leagues can race any track, locked ones included.</span></div>;
   if (!isAuthenticated || user?.is_guest) {
     const next = encodeURIComponent(`/shop/packs/${pack.key}`);
     return <div className="ms-pack-page__buy"><Link to={`/signup?next=${next}`} className="ms-btn ms-btn--primary">Make a free account to unlock</Link><span className="ms-note" style={{ margin: 0 }}>So the pack is yours on every device.</span></div>;
@@ -197,7 +201,7 @@ function BuyBox({ data, bottom = false, cancelled = false, onBought }) {
     setBusy(true);
     setResult(null);
     try {
-      const r = await buyPack(pack.key, { useCoins, consent: withdrawal && terms, test });
+      const r = await buyPack(pack.key, { useCoins, consent: withdrawal && terms });
       setResult(r);
       if (r.status === 'paid') { await refreshUser?.(); onBought?.(); }
     } catch (err) {
@@ -210,7 +214,6 @@ function BuyBox({ data, bottom = false, cancelled = false, onBought }) {
 
   return (
     <div className="ms-pack-page__buy" aria-label="Unlock the pack">
-      {test && <div className="ms-msg" role="status">Admin test purchase: this pack has {pack.live} of its {pack.fullAt} tracks, so it isn't on sale yet. Stripe test mode, Google Play licence testing or the App Store sandbox only.</div>}
       {canCoins && (
         <div className="ms-chips" role="radiogroup" aria-label="How to pay">
           <button type="button" role="radio" aria-checked={!useCoins} aria-pressed={!useCoins} onClick={() => setUseCoins(false)}>{prices.money ?? '…'}</button>

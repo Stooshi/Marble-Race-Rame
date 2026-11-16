@@ -187,7 +187,8 @@ function packOutcome(r, store) {
  * never coins alone). Web: Stripe Checkout (the pack only from Stripe's signed webhook; the coins taken now,
  * back if the checkout lapses). Apps: the coins set aside first (given back if the sheet is closed), then the
  * store's purchase of the pack's product (trackpack-<pack>[-coins]; Google Play with _), kept, never consumed.
- * `test`: an admin's test purchase of a pack that isn't complete yet. Resolves like buyCoins, with pack.
+ * `test`: an admin's test purchase of a pack that isn't complete yet (the shop no longer offers one, 16 Nov 2026:
+ * Stripe is live). Resolves like buyCoins, with pack.
  */
 export async function buyPack(packKey, { useCoins = false, consent = false, test = false } = {}) {
   const provider = storeProvider();
