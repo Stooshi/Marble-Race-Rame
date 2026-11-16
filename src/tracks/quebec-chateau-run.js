@@ -6,7 +6,7 @@
 // down the cliff beside the funicular to the lower town, its lamp-lit streets in S-bends, a sweep along the river
 // past the cruise ships, the hairpin at the old port, a half-pipe between the ramparts and the run up to the fortress
 // walls. No names on anything.
-const { track, opening, straight, plunge, sweep, sBends, hairpin, runIn, peg, slalom, block, brake } = require('../trackKit');
+const { track, opening, straight, plunge, sweep, sBends, hairpin, runIn, peg, slalom, block, brake, pileUp } = require('../trackKit');
 
 module.exports = track({
   slug: 'quebec-chateau-run',
@@ -25,7 +25,7 @@ module.exports = track({
     { section: 'Down the cliff', at: 0.95, side: 'right', distance: 10, height: 12 },
     { section: 'Plains bends', at: 0.4, side: 'left', distance: 10, height: 11 },
   ],
-  start: { landmark: 'fortress-walls', scenery: ['stone-houses'], type: 'castle-tower', gate: 'trapdoor', shots: { countdown: 'low-front', launch: 'overhead' } },
+  start: { landmark: 'fortress-walls', scenery: ['stone-houses'], type: 'castle-tower', gate: 'trapdoor', shots: { countdown: 'chase', launch: 'side' } },
   finish: { landmark: 'fortress-walls', billboards: 1 },
   opening: opening('clean-drop', {
     side: 'left',
@@ -42,7 +42,7 @@ module.exports = track({
     { name: 'Down the cliff', shape: plunge(70, { grade: 0.5, from: 0.12 }), height: 0, scenery: ['funicular'] },
     {
       name: 'Lower town', shape: sBends({ first: 'right', radius: 65, degrees: 65, grade: 0.14 }), height: 6, scenery: ['stone-houses'],
-      obstacles: [slalom({ costume: 'street-lamp', from: 0.2, to: 0.85, count: 5, loss: 0.3 })],
+      obstacles: [pileUp({ costume: 'barrel', at: 0.3 }), peg({ costume: 'street-lamp', at: 0.75, line: 'right' })],
     },
     {
       name: 'Along the river', shape: sweep({ side: 'left', radius: 85, degrees: 80, grade: 0.12 }), height: 10, water: true, billboards: 2,
@@ -55,13 +55,11 @@ module.exports = track({
       features: [brake({ at: 0.05, length: 14, drag: 0.025 })],
     },
     { name: 'Old port hairpin', shape: hairpin({ side: 'right' }), height: 8, landmarks: [{ name: 'harbour', at: 0.5, side: 'right', distance: 26 }] },
-    { name: 'Up to the ramparts', shape: straight(40, { grade: 0.14 }), height: 8 },
     {
       name: 'Rampart lanes', shape: sBends({ first: 'right', radius: 65, degrees: 70, grade: 0.14 }), height: 6,
       obstacles: [peg({ costume: 'street-lamp', at: 0.25, line: 'center' }), peg({ costume: 'street-lamp', at: 0.5, line: 'left' }), peg({ costume: 'street-lamp', at: 0.75, line: 'right' })],
     },
-    { name: 'Rampart sweep', shape: sweep({ side: 'left', radius: 90, degrees: 50, grade: 0.12 }), height: 10 },
-    { name: 'Under the gate', shape: straight(30, { grade: 0.13 }), height: 8 },
+    { name: 'Under the gate', shape: straight(30, { grade: 0.14 }), height: 8 },
     {
       name: 'Plains bends', shape: sBends({ first: 'left', radius: 75, degrees: 60, grade: 0.14 }), height: 8,
       obstacles: [peg({ costume: 'street-lamp', at: 0.3, line: 'left' }), peg({ costume: 'street-lamp', at: 0.65, line: 'right' })],
