@@ -62,7 +62,7 @@ module.exports = track({
     { name: 'Mosque hairpin', shape: hairpin({ side: 'right' }), height: 8 },
     { name: 'Down to the river bed', shape: plunge(40, { grade: 0.24, from: 0.14 }), height: 4 },
     {
-      name: 'Across the river bed', shape: sweep({ side: 'right', radius: 85, degrees: 70, grade: 0.13 }), height: 6, billboards: 2,
+      name: 'Across the river bed', shape: sweep({ side: 'right', radius: 85, degrees: 60, grade: 0.14 }), height: 6, billboards: 2,
       obstacles: [slalom({ costume: 'rope-post', from: 0.3, to: 0.7, count: 4, loss: 0.3 })],
     },
     {
