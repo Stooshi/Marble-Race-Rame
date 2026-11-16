@@ -5,7 +5,7 @@
 // and stays together along the old railway (nothing in its way for the first seconds), then the big feature: the drop
 // down the wide waterfall through its falling water, the lanterns strung along the village street in S-bends, the
 // little train, a sweep through the jungle, the hairpin and the run to the lantern bridge. No names on anything.
-const { track, opening, straight, sweep, sBends, hairpin, waterfall, runIn, peg, slalom, curtain, moguls, pileUp } = require('../trackKit');
+const { track, opening, straight, sweep, sBends, hairpin, waterfall, runIn, peg, slalom, moguls, pileUp, brake } = require('../trackKit');
 
 module.exports = track({
   slug: 'pingxi-lantern-run',
@@ -30,12 +30,12 @@ module.exports = track({
     side: 'right',
     costumes: { block: 'monkey', slalom: 'lantern-pole' },
     names: { plunge: 'Off the pagoda' },
+    waves: { groups: 5, gap: 0.12, jitter: 0.04 },
     dress: {},
   }),
   sections: [
     {
       name: 'Along the old railway', shape: straight(70, { grade: 0.12 }), height: 12, billboards: 2,
-      landmarks: [{ name: 'steam-train', at: 0.5, side: 'left', distance: 26 }],
     },
     {
       name: 'The wide falls', shape: waterfall(55, { grade: 0.6, curtain: true }), height: 0,
@@ -47,7 +47,7 @@ module.exports = track({
     },
     {
       name: 'Below the falls', shape: sBends({ first: 'right', radius: 65, degrees: 70, grade: 0.15 }), height: 4,
-      obstacles: [curtain({ costume: 'vines', at: 0.2, side: 'left' }), slalom({ costume: 'lantern-pole', from: 0.45, to: 0.9, count: 4, loss: 0.3 })],
+      obstacles: [peg({ costume: 'lantern-pole', at: 0.3, line: 'left' }), peg({ costume: 'lantern-pole', at: 0.7, line: 'right' })],
     },
     {
       name: 'Lantern street', shape: sBends({ first: 'left', radius: 65, degrees: 70, grade: 0.15 }), height: 6,
@@ -56,6 +56,7 @@ module.exports = track({
     },
     {
       name: 'Past the little train', shape: straight(55, { grade: 0.13 }), height: 8,
+      landmarks: [{ name: 'steam-train', at: 0.5, side: 'left', distance: 26 }],
       obstacles: [pileUp({ costume: 'monkey', at: 0.25 }), peg({ costume: 'lantern-pole', at: 0.5, line: 'left' })],
 
     },
@@ -63,7 +64,7 @@ module.exports = track({
       name: 'Jungle sweep', shape: sweep({ side: 'left', radius: 75, degrees: 90, grade: 0.15 }), height: 12, billboards: 2,
       obstacles: [peg({ costume: 'lantern-pole', at: 0.35, line: 'right' }), peg({ costume: 'lantern-pole', at: 0.7, line: 'left' })],
     },
-    { name: 'To the hairpin', shape: straight(40, { grade: 0.13 }), height: 8 },
+    { name: 'To the hairpin', shape: straight(40, { grade: 0.13 }), height: 8, features: [brake({ at: 0.05, length: 14, drag: 0.03 })] },
     { name: 'Village hairpin', shape: hairpin({ side: 'right' }), height: 8 },
     {
       name: 'Bamboo bends', shape: sBends({ first: 'left', radius: 65, degrees: 70, grade: 0.15 }), height: 4,
