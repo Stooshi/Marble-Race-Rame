@@ -89,7 +89,7 @@ const KINDS = {
     name: 'Newsletter', group: 'marketing', listed: false,
     about: 'A newsletter, written in Marketing > Newsletters.',
     placeholders: {},
-    defaults: { subject: 'News from Marble Spins', title: 'News from Marble Spins', blocks: [{ type: 'text', text: 'Hi {{name}},' }, { type: 'text', text: '' }] },
+    defaults: { subject: 'News from Marble Spins', title: 'News from Marble Spins', blocks: [{ type: 'text', text: 'Hi {{name}},' }, { type: 'text', text: 'Write the news here.' }] },
   },
 };
 
