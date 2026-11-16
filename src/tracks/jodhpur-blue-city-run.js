@@ -50,6 +50,7 @@ module.exports = track({
     {
       name: 'Stepwell spiral', shape: spiral({ side: 'left', radius: 40, turns: 1, grade: 0.18 }), height: 10,
       around: 'mughal-fountain',
+      obstacles: [peg({ costume: 'lantern-pole', at: 0.3, line: 'center' }), peg({ costume: 'lantern-pole', at: 0.65, line: 'center' })],
     },
     {
       name: 'Spice market', shape: sBends({ first: 'left', radius: 65, degrees: 60, grade: 0.15 }), height: 6,
@@ -63,7 +64,7 @@ module.exports = track({
     },
     {
       name: 'Run to the city gate', shape: straight(55, { grade: 0.15 }), height: 0, billboards: 1,
-      obstacles: [slalom({ costume: 'lantern-pole', from: 0.4, to: 0.85, count: 3, loss: 0.3 })],
+      obstacles: [slalom({ costume: 'lantern-pole', from: 0.35, to: 0.9, count: 4, loss: 0.3 })],
     },
     { name: 'Finish', shape: runIn(), height: 0 },
   ],
