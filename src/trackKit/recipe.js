@@ -503,7 +503,9 @@ function arcadeRules({ spec, where }) {
 }
 
 // The varied starts: how a track's first seconds look (drawing only; the race is its opening's).
-const START_TYPES = ['straight-lift', 'curving-lift', 'spiral-tower', 'elevator', 'cliff', 'rooftop', 'station-launch', 'stepped-platform', 'lighthouse', 'ski-jump', 'castle-tower', 'pier', 'river-boat', 'lock-gate', 'ice-ledge', 'gondola', 'ski-plane', 'rock-arch', 'rope-bridge', 'portal-gate', 'block-pyramid', 'gear-tower'];
+const START_TYPES = ['straight-lift', 'curving-lift', 'spiral-tower', 'elevator', 'cliff', 'rooftop', 'station-launch', 'stepped-platform', 'lighthouse', 'ski-jump', 'castle-tower', 'pier', 'river-boat', 'lock-gate', 'ice-ledge', 'gondola', 'ski-plane', 'rock-arch', 'rope-bridge', 'portal-gate', 'block-pyramid', 'gear-tower', 'clock-tower', 'pagoda-tower', 'observation-tower', 'water-tower', 'minaret'];
+// (Coasters, 16 Nov 2026: five towers behind the gate, as every other start type was in two coasters already: clock-tower, pagoda-tower,
+// observation-tower, water-tower, minaret.)
 // (The Peaks' starts: on an overhanging snow ledge, out of a cable-car cabin at a needle-top station, down a ski plane's ramp on a glacier.)
 const PEAK_STARTS = ['ice-ledge', 'gondola', 'ski-plane'];
 // (The Rivers' starts: on a timber pier over the water, on a moored boat's top deck, at a lock's upper gates.)

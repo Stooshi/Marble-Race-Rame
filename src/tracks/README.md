@@ -598,7 +598,10 @@ To look at them all: `node scripts/dump-kit-track.js grand-prix-gallery`, then o
   (the gate on broad stone steps, each tier lower, deeper and wider behind it: a temple's or a canyon's),
   `lighthouse` (a lighthouse in red and white bands, its gallery level with the gate), `ski-jump` (a ski
   jump's in-run rising on from the gate to a start hut on a concrete tower) and `castle-tower` (the gate on
-  top of a great round tower with battlements, in the coaster's support colour).
+  top of a great round tower with battlements, in the coaster's support colour). Five towers behind the gate, added for the ten Coasters of 16 Nov 2026 (every other start type was in
+  two coasters already): `clock-tower` (square stone, a clock face each side, a pointed roof), `pagoda-tower` (tiers of
+  flared roofs), `observation-tower` (a slim column, a round deck level with the gate, a mast), `water-tower` (a round
+  tank on four legs) and `minaret` (a slender stone tower, balconies, a small dome); each with a short bridge to the gate.
 - **Station**: a canopy over the finish and the run-out, platforms either side, riders queuing.
 - **Water**: `water: true` on a section: the land sinks under a water surface round it (never
   above any stretch of track). Landmarks out over the water float on it (`cruise-ship`).

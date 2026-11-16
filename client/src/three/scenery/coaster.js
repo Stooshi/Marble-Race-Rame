@@ -12,7 +12,7 @@
  *     phones), the lift hill and its chain, the station and its queue, water
  *     curtains, and a tower under each billboard that stands on one.
  */
-import { Box3, BoxGeometry, BufferGeometry, CircleGeometry, Color, ConeGeometry, CylinderGeometry, DoubleSide, Float32BufferAttribute, Group, IcosahedronGeometry, Matrix4, Mesh, MeshBasicMaterial, MeshLambertMaterial, Quaternion, Vector3 } from 'three';
+import { Box3, BoxGeometry, BufferGeometry, CircleGeometry, Color, ConeGeometry, CylinderGeometry, DoubleSide, Float32BufferAttribute, Group, IcosahedronGeometry, Matrix4, Mesh, MeshBasicMaterial, MeshLambertMaterial, Quaternion, SphereGeometry, Vector3 } from 'three';
 import { channelLipAt, channelRadiusAt, forkAt, forkOffset, forkRadius } from '../iceChannel';
 import { box, merge, piece } from './parts';
 import { skiPlaneModel } from './kitLandmarksPeak';
@@ -198,6 +198,12 @@ export function coasterRails(centerline, channel, { lite = false } = {}) {
  *   ski-plane:     (Peaks) a ski plane parked on a glacier runway behind the gate, its cargo ramp down to the gate.
  *   rock-arch:     (Canyons) a fin of red rock behind the gate, a natural arch worn through it.
  *   rope-bridge:   (Canyons) a rope footbridge behind the gate, slung from a rock pillar.
+ *   clock-tower:   (Coasters, 16 Nov 2026) a square stone clock tower behind the gate, a clock face on each side,
+ *                  a pointed roof; a short bridge from its top to the gate.
+ *   pagoda-tower:  a pagoda behind the gate, its tiers' flared roofs stepping in, the top tier level with the gate.
+ *   observation-tower: a slim concrete column behind the gate, its round deck level with the gate, a mast above.
+ *   water-tower:   a big round water tank on four legs behind the gate, a catwalk round it level with the gate.
+ *   minaret:       a slender round tower in sand-coloured stone behind the gate, balconies and a small dome.
  *   portal-gate:   (Blocks 1) a block platform behind the gate, a square portal frame with a glowing pane over its far end.
  *   block-pyramid: (Blocks 1) a stepped pyramid of pale stone blocks behind the gate, the track on its flat top.
  *   gear-tower:    (Blocks 1) a square iron tower behind the gate, the track on its top, brass gears on its sides.
@@ -259,6 +265,9 @@ export function liftHillOf(centerline, flight, type = 'straight-lift') {
   } else if (type === 'castle-tower') {
     path = [top.clone(), go(top, CASTLE_TOWER.at, 0, 0)];
     foot = go(top, CASTLE_TOWER.at, 0, rise);
+  } else if (TOWER_STARTS[type]) {
+    path = [top.clone(), go(top, TOWER_STARTS[type].at, 0, 0)];
+    foot = go(top, TOWER_STARTS[type].at, 0, rise);
   } else if (type === 'pier') {
     path = [top.clone(), go(top, PIER.length, 0, 0)];
     cut = false;
@@ -317,6 +326,14 @@ const ROOF = { depth: 24, half: 11 };          // metres: the building behind th
 // The stepped platform: its tiers (the top one just under the gate), each this much deeper, wider and lower than the one above.
 const LIGHTHOUSE = { at: 14, radius: 4.2 };    // metres: the lighthouse's middle behind the gate, its radius at the gallery
 const CASTLE_TOWER = { at: 12, radius: 8 };     // metres: the tower's middle behind the gate, its radius
+// (Coasters, 16 Nov 2026) Five towers behind the gate: their middle behind it and their half-width (metres).
+const TOWER_STARTS = {
+  'clock-tower': { at: 13, half: 5 },
+  'pagoda-tower': { at: 14, half: 6 },
+  'observation-tower': { at: 13, half: 5.5 },
+  'water-tower': { at: 14, half: 6.5 },
+  minaret: { at: 12, half: 3.6 },
+};
 const PIER = { length: 34, half: 5.5 };        // metres: the pier behind the gate, its deck's half-width
 const BOAT = { at: 18, half: 6, length: 30 };   // metres: the boat's middle behind the gate, its half-beam and length
 const LOCK = { length: 36, half: 6.5 };         // metres: the lock chamber behind the gate, its half-width inside the walls
@@ -968,6 +985,61 @@ function buildStart(lift, { towers, feet, tower, groundAt, lite, RAIL, SUPPORT, 
     towers.push(piece(new ConeGeometry(3, 2.4, lite ? 10 : 14), '#c8302a', new Matrix4().makeTranslation(at.x, galleryY + 4.7, at.z)));
     deckAlong([top, top.clone().addScaledVector(back, LIGHTHOUSE.at - LIGHTHOUSE.radius - 0.6)], { chain: false });
     feet.push({ x: at.x, z: at.z, r: 9 });
+  } else if (TOWER_STARTS[type]) {
+    // (Coasters, 16 Nov 2026) A tower behind the gate, its top level with the gate's deck, a short bridge on to it.
+    const T = TOWER_STARTS[type];
+    const at = top.clone().addScaledVector(back, T.at);
+    const landY = groundAt(at.x, at.z) - 0.5;
+    const topY = top.y - 0.6;
+    const yaw = yawOf(back);
+    const h = Math.max(2, topY - landY);
+    const mid = (y0, y1) => (y0 + y1) / 2;
+    const seg = lite ? 10 : 16;
+    if (type === 'clock-tower') {
+      towers.push(obox(T.half * 2, h, T.half * 2, at.clone().setY(mid(landY, topY)), yaw, '#cdbf9f'));
+      towers.push(obox(T.half * 2 + 0.6, 0.6, T.half * 2 + 0.6, at.clone().setY(topY + 0.3), yaw, '#8c7c5c'));
+      towers.push(obox(T.half * 2 - 0.4, 4, T.half * 2 - 0.4, at.clone().setY(topY + 2.6), yaw, '#cdbf9f'));
+      for (const [f, sd] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+        const face = at.clone().addScaledVector(back, f * (T.half - 0.15)).addScaledVector(side, sd * (T.half - 0.15)).setY(topY + 2.6);
+        towers.push(piece(new CylinderGeometry(1.5, 1.5, 0.25, seg), '#f6f1e2', new Matrix4().makeRotationY(yaw + (sd ? Math.PI / 2 : 0)).multiply(new Matrix4().makeRotationX(Math.PI / 2)).setPosition(face)));
+      }
+      towers.push(piece(new ConeGeometry(T.half * 1.25, 6, 4), '#3f5a4a', new Matrix4().makeRotationY(yaw + Math.PI / 4).setPosition(at.clone().setY(topY + 7.6))));
+    } else if (type === 'pagoda-tower') {
+      const tiers = Math.max(3, Math.round(h / 6));
+      for (let k = 0; k < tiers; k += 1) {
+        const y0 = landY + (h * k) / tiers;
+        const y1 = landY + (h * (k + 1)) / tiers;
+        const w = T.half * 2 * (1 - 0.12 * k / tiers);
+        towers.push(obox(w * 0.8, y1 - y0 - 0.8, w * 0.8, at.clone().setY(mid(y0, y1 - 0.8)), yaw, '#b8342a'));
+        towers.push(piece(new ConeGeometry(w * 0.82, 1.6, 4, 1, true), '#2f3a36', new Matrix4().makeRotationY(yaw + Math.PI / 4).setPosition(at.clone().setY(y1 - 0.4))));
+      }
+      towers.push(piece(new ConeGeometry(T.half, 4, 4), '#2f3a36', new Matrix4().makeRotationY(yaw + Math.PI / 4).setPosition(at.clone().setY(topY + 2.6))));
+      towers.push(piece(new CylinderGeometry(0.2, 0.2, 4, 6), '#d8b04a', new Matrix4().makeTranslation(at.x, topY + 6, at.z)));
+    } else if (type === 'observation-tower') {
+      towers.push(piece(new CylinderGeometry(1.8, 2.6, h, seg), '#d9d6cf', new Matrix4().makeTranslation(at.x, mid(landY, topY), at.z)));
+      towers.push(piece(new CylinderGeometry(T.half, T.half - 1, 3, seg), '#e9e6df', new Matrix4().makeTranslation(at.x, topY - 1.5, at.z)));
+      towers.push(piece(new CylinderGeometry(T.half - 0.6, T.half - 0.6, 2.4, seg), '#7fb7d8', new Matrix4().makeTranslation(at.x, topY + 1.2, at.z)));
+      towers.push(piece(new CylinderGeometry(T.half - 0.2, T.half - 0.2, 0.5, seg), '#e9e6df', new Matrix4().makeTranslation(at.x, topY + 2.6, at.z)));
+      towers.push(piece(new CylinderGeometry(0.25, 0.5, 9, 6), '#c8302a', new Matrix4().makeTranslation(at.x, topY + 7.3, at.z)));
+    } else if (type === 'water-tower') {
+      const tankY = topY + 3;
+      for (const [i, j] of [[1, 1], [1, -1], [-1, 1], [-1, -1]]) {
+        const foot = at.clone().addScaledVector(back, i * (T.half - 1)).addScaledVector(side, j * (T.half - 1));
+        towers.push(strut(foot.clone().setY(groundAt(foot.x, foot.z) - 0.5), foot.clone().setY(topY), 0.45, '#7a7f87'));
+      }
+      towers.push(piece(new CylinderGeometry(T.half + 0.8, T.half + 0.8, 0.4, seg), '#5a5f67', new Matrix4().makeTranslation(at.x, topY, at.z)));
+      towers.push(piece(new CylinderGeometry(T.half - 0.6, T.half - 0.6, 5.4, seg), '#8fb0c9', new Matrix4().makeTranslation(at.x, tankY, at.z)));
+      towers.push(piece(new ConeGeometry(T.half - 0.4, 2.2, seg), '#5a6a7a', new Matrix4().makeTranslation(at.x, tankY + 3.8, at.z)));
+    } else {
+      // (the minaret)
+      towers.push(piece(new CylinderGeometry(T.half - 0.8, T.half, h, seg), '#d8b98a', new Matrix4().makeTranslation(at.x, mid(landY, topY), at.z)));
+      for (const y of [landY + h * 0.55, topY]) towers.push(piece(new CylinderGeometry(T.half + 0.9, T.half - 0.4, 0.8, seg), '#b89566', new Matrix4().makeTranslation(at.x, y, at.z)));
+      towers.push(piece(new CylinderGeometry(T.half - 1.2, T.half - 1.2, 3.6, seg), '#d8b98a', new Matrix4().makeTranslation(at.x, topY + 2.2, at.z)));
+      towers.push(piece(new SphereGeometry(T.half - 1.2, seg, 6, 0, Math.PI * 2, 0, Math.PI / 2), '#3a8a7a', new Matrix4().makeTranslation(at.x, topY + 4, at.z)));
+      towers.push(piece(new CylinderGeometry(0.12, 0.12, 2.2, 5), '#d8b04a', new Matrix4().makeTranslation(at.x, topY + 6.3, at.z)));
+    }
+    deckAlong([top, top.clone().addScaledVector(back, T.at - T.half - 0.3)], { chain: false });
+    feet.push({ x: at.x, z: at.z, r: T.half + 3 });
   } else if (type === 'castle-tower') {
     // A great round tower behind the gate, its top just under the gate's deck, battlements round it, a door at its foot.
     const at = top.clone().addScaledVector(back, CASTLE_TOWER.at);

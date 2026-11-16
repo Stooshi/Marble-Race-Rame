@@ -223,4 +223,15 @@ module.exports = [
   require('./mont-saint-michel-tide-run'),
   require('./angkor-temple-run'),
   require('./giants-causeway-run'),
+  // Coasters: ten more, the pack filled to 20 (Moses, 16 Nov 2026).
+  require('./lake-como-villa-run'),
+  require('./quebec-chateau-run'),
+  require('./gold-coast-surf-run'),
+  require('./seoul-namsan-run'),
+  require('./pingxi-lantern-run'),
+  require('./atlas-kasbah-run'),
+  require('./amalfi-coast-run'),
+  require('./santa-monica-pier-run'),
+  require('./bavarian-castle-run'),
+  require('./jodhpur-blue-city-run'),
 ];
