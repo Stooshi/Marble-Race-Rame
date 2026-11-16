@@ -42,7 +42,7 @@ module.exports = track({
     { name: 'Off the fort', shape: plunge(85, { grade: 0.5, from: 0.1 }), height: 0, scenery: ['colourful-houses'] },
     {
       name: 'Through the bazaar', shape: straight(50, { grade: 0.14 }), height: 4,
-      obstacles: [slalom({ costume: 'lantern-pole', from: 0.2, to: 0.85, count: 4, loss: 0.25 })],
+      obstacles: [peg({ costume: 'lantern-pole', at: 0.3, line: 'left' }), peg({ costume: 'lantern-pole', at: 0.55, line: 'right' }), peg({ costume: 'lantern-pole', at: 0.8, line: 'center' })],
     },
     {
       name: 'Blue lanes', shape: sBends({ first: 'right', radius: 60, degrees: 65, grade: 0.16 }), height: 6, scenery: ['colourful-houses'],
@@ -51,6 +51,10 @@ module.exports = track({
     {
       name: 'Stepwell spiral', shape: spiral({ side: 'left', radius: 40, turns: 1, grade: 0.18 }), height: 10,
       around: 'mughal-fountain',
+    },
+    {
+      name: 'Spice market', shape: sBends({ first: 'left', radius: 65, degrees: 60, grade: 0.15 }), height: 6,
+      obstacles: [peg({ costume: 'lantern-pole', at: 0.25, line: 'right' }), peg({ costume: 'lantern-pole', at: 0.5, line: 'center' }), peg({ costume: 'lantern-pole', at: 0.75, line: 'left' })],
     },
     { name: 'To the market', shape: straight(50, { grade: 0.13 }), height: 8, billboards: 1, features: [moguls({ from: 0.6, to: 0.9, count: 3 })] },
     { name: 'Market hairpin', shape: hairpin({ side: 'right' }), height: 10, landmarks: [{ name: 'qutub-minar', at: 0.5, side: 'right', distance: 30 }] },
