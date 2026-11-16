@@ -57,6 +57,17 @@
    "side": 1,
    "marbles": 1
   },
+  "amalfi-coast-run": {
+   "name": "Amalfi Coast Run",
+   "series": "Coasters",
+   "lighting": "day",
+   "v": "a2f7c15d",
+   "bytes": 13884,
+   "bytes2x": 34128,
+   "t": 9977,
+   "side": 1,
+   "marbles": 4
+  },
   "amazon-meeting-spins": {
    "name": "Amazon Meeting Spins",
    "series": "Rivers",
@@ -782,6 +793,17 @@
    "t": 10740,
    "side": 1,
    "marbles": 5
+  },
+  "gold-coast-surf-run": {
+   "name": "Gold Coast Surf Run",
+   "series": "Coasters",
+   "lighting": "day",
+   "v": "8a3e4307",
+   "bytes": 15404,
+   "bytes2x": 38346,
+   "t": 10124,
+   "side": 1,
+   "marbles": 6
   },
   "grand-canyon-burst": {
    "name": "Grand Canyon Burst",
@@ -1772,6 +1794,17 @@
    "t": 10951,
    "side": 1,
    "marbles": 10
+  },
+  "santa-monica-pier-run": {
+   "name": "Santa Monica Pier Run",
+   "series": "Coasters",
+   "lighting": "sunset",
+   "v": "b9e000e4",
+   "bytes": 14638,
+   "bytes2x": 35104,
+   "t": 11077,
+   "side": 1,
+   "marbles": 4
   },
   "santorini-caldera-run": {
    "name": "Santorini Caldera Run",
