@@ -32,11 +32,11 @@ module.exports = track({
     costumes: { block: 'barrel', slalom: 'street-lamp' },
     names: { plunge: 'Off the ramparts', bends: 'Old town bends' },
     waves: { groups: 5, gap: 0.12, jitter: 0.04 },
-    dress: { plunge: { height: 18 }, bends: { height: 18 } },
+    dress: { plunge: { height: 8 }, bends: { height: 12 } },
   }),
   sections: [
     {
-      name: 'Along the terrace', shape: straight(95, { grade: 0.11 }), height: 18, billboards: 2,
+      name: 'Along the terrace', shape: straight(95, { grade: 0.11 }), height: 14, billboards: 2,
       landmarks: [{ name: 'chateau-hotel', at: 0.5, side: 'left', distance: 36 }],
     },
     { name: 'Down the cliff', shape: plunge(70, { grade: 0.5, from: 0.12 }), height: 0, scenery: ['funicular'] },
@@ -52,16 +52,16 @@ module.exports = track({
     {
       name: 'To the old port', shape: straight(50, { grade: 0.13 }), height: 6,
       obstacles: [block({ costume: 'barrel', at: 0.6, line: 'center' })],
-      features: [brake({ at: 0.05, length: 12, drag: 0.02 })],
+      features: [brake({ at: 0.05, length: 14, drag: 0.025 })],
     },
     { name: 'Old port hairpin', shape: hairpin({ side: 'right' }), height: 8, landmarks: [{ name: 'harbour', at: 0.5, side: 'right', distance: 26 }] },
     { name: 'Up to the ramparts', shape: straight(40, { grade: 0.14 }), height: 8 },
-    { name: 'Rampart sweep', shape: sweep({ side: 'left', radius: 90, degrees: 50, grade: 0.12 }), height: 10 },
-    { name: 'Under the gate', shape: straight(30, { grade: 0.13 }), height: 8 },
     {
       name: 'Rampart lanes', shape: sBends({ first: 'right', radius: 65, degrees: 70, grade: 0.14 }), height: 6,
       obstacles: [peg({ costume: 'street-lamp', at: 0.25, line: 'center' }), peg({ costume: 'street-lamp', at: 0.5, line: 'left' }), peg({ costume: 'street-lamp', at: 0.75, line: 'right' })],
     },
+    { name: 'Rampart sweep', shape: sweep({ side: 'left', radius: 90, degrees: 50, grade: 0.12 }), height: 10 },
+    { name: 'Under the gate', shape: straight(30, { grade: 0.13 }), height: 8 },
     {
       name: 'Plains bends', shape: sBends({ first: 'left', radius: 75, degrees: 60, grade: 0.14 }), height: 8,
       obstacles: [peg({ costume: 'street-lamp', at: 0.3, line: 'left' }), peg({ costume: 'street-lamp', at: 0.65, line: 'right' })],
