@@ -5,7 +5,7 @@
 // the big feature: a splitter round a pagoda on the hill, one channel each side, then over the river under the
 // cable-stayed bridge, the lantern-lit market streets, the hairpin and the run down to the palace gate.
 // No names on anything.
-const { track, opening, straight, sweep, sBends, hairpin, splitter, plunge, halfPipe, runIn, peg, slalom, block, moguls, brake } = require('../trackKit');
+const { track, opening, straight, sweep, sBends, hairpin, splitter, plunge, runIn, peg, slalom, block, moguls, brake } = require('../trackKit');
 
 module.exports = track({
   slug: 'seoul-namsan-run',
@@ -22,7 +22,7 @@ module.exports = track({
   tvCameras: [
     // (Where the two channels meet again past the pagoda, looking back at both.)
     { section: 'Round the pagoda', at: 0.95, side: 'left', distance: 10, height: 14 },
-    { section: 'Between the walls', at: 0.5, side: 'right', distance: 10, height: 10 },
+    { section: 'Down the steps', at: 0.5, side: 'right', distance: 10, height: 10 },
   ],
   start: { landmark: 'tv-tower', scenery: ['skyscrapers'], type: 'observation-tower', gate: 'barrier', shots: { countdown: 'low-front', launch: 'look-back' } },
   finish: { landmark: 'wudian-hall', billboards: 1 },
@@ -39,7 +39,7 @@ module.exports = track({
     },
     {
       name: 'Round the pagoda',
-      shape: splitter({ side: 'left', degrees: 0, approach: 60, merge: 30, balance: { tipOffset: -0.6, left: { drag: 1.3, scrub: 1.3 }, right: { drag: 1.9, scrub: 1.9 } } }),
+      shape: splitter({ side: 'left', degrees: 0, approach: 60, merge: 30, balance: { tipOffset: -0.6, left: { drag: 1.3, scrub: 1.3 }, right: { drag: 2.3, scrub: 2.3 } } }),
       around: 'pagoda', height: 20,
       obstacles: [peg({ costume: 'lantern-pole', at: 0.06, line: 'right' }), peg({ costume: 'lantern-pole', at: 0.14, line: 'left' })],
     },
@@ -60,8 +60,10 @@ module.exports = track({
     },
     { name: 'To the hairpin', shape: straight(55, { grade: 0.13 }), height: 8, obstacles: [block({ costume: 'stone-lion', at: 0.65, line: 'center' })], features: [brake({ at: 0.05, length: 12, drag: 0.02 })] },
     { name: 'Temple hairpin', shape: hairpin({ side: 'left' }), height: 10 },
-    { name: 'Down the steps', shape: straight(30, { grade: 0.15 }), height: 6 },
-    { name: 'Between the walls', shape: halfPipe({ first: 'left', width: 8, swings: 2, radius: 140, degrees: 22, grade: 0.12 }), height: 4 },
+    {
+      name: 'Down the steps', shape: sBends({ first: 'left', radius: 70, degrees: 55, grade: 0.14 }), height: 4,
+      obstacles: [peg({ costume: 'lantern-pole', at: 0.4, line: 'center' })],
+    },
     {
       name: 'Run to the palace gate', shape: straight(70, { grade: 0.15 }), height: 0, billboards: 1,
       obstacles: [slalom({ costume: 'lantern-pole', from: 0.35, to: 0.8, count: 3, loss: 0.3 })],
