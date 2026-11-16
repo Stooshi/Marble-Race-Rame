@@ -191,7 +191,7 @@ const packConsentText = () => `[${consent.version}] ${consent.packWithdrawal} / 
 
 /**
  * Starts buying a track pack on the website (Stripe; the test provider in development). `useCoins`: pay
- * part of it in coins (1,990 coins + $5.99; at most 25% of the price, never coins alone): the coins are
+ * part of it in coins (1,990 coins + $4.99; at most 30% of the price, never coins alone): the coins are
  * taken now and given back if the checkout lapses or fails. The pack comes only from Stripe's signed
  * webhook, once. Refused while packs aren't sold to the player (403), for a pack not complete yet (409,
  * except an admin's test purchase with Stripe in test mode) and for a pack the player has (409).

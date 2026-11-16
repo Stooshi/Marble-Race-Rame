@@ -301,7 +301,7 @@ The most specific row wins, then the newest. A slot with no row shows a built-in
 | `skill-refund` | The 12 Oct 2026 refund when marbles stopped carrying strength |
 | `admin` | A back-office adjustment, with a reason |
 | `pack-refund` | Coins removed because a coin pack was refunded or disputed |
-| `track-pack` | Spent towards a track pack (at most 25% of its price: 1,990 coins with $5.99; `src/packs/sale.js`). On the website taken when the Stripe checkout starts (`payment_id` set); in the apps set aside before the store's sheet opens (`pack_coin_holds`) |
+| `track-pack` | Spent towards a track pack (at most 30% of its price: 1,990 coins with $4.99; `src/packs/sale.js`). On the website taken when the Stripe checkout starts (`payment_id` set); in the apps set aside before the store's sheet opens (`pack_coin_holds`) |
 | `track-pack-back` | Coins for a track pack given back: its checkout lapsed or failed, the app's sheet was closed, a hold unused for 2 hours, or the pack refunded in full (not a chargeback) |
 | `featured-bonus` | The Track of the Day bonus for a season pass holder: +50% of the race's coins, on the day's full-pay races only. **Neither earned nor bought**: it never counts on the scoreboards or in `coins_earned` |
 
@@ -325,7 +325,7 @@ The most specific row wins, then the newest. A slot with no row shows a built-in
 | `product_id`, `coins` | The pack and the coins it gives. A season pass and a track pack have 0 coins (allowed only with `season_key` or `pack_key`: data updates `2027-02-16-season-pass`, `2027-06-12-track-pack-payments`) |
 | `season_key` | Set for a season pass (`product_id` is the pass, e.g. `holiday-pass-2026`) |
 | `pack_key`, `coins_spent` | A track pack (`product_id` `trackpack-<pack>` or `trackpack-<pack>-coins`; `src/packs/sale.js`) and the coins paid towards it (0, or 1,990 with the `-coins` product). A full refund takes the pack back and gives the coins back; a chargeback takes the pack |
-| `amount_cents`, `currency` | The list price (USD; the store's US price for an app purchase): a track pack $7.99, or $5.99 with coins |
+| `amount_cents`, `currency` | The list price (USD; the store's US price for an app purchase): a track pack $6.99, or $4.99 with coins |
 | `status` | `pending` → `paid` (or `failed`); `refunded` when fully refunded |
 | `order_no` | Player-facing order number `MS-1001…` (sequence `payment_order_seq`) |
 | `consent_at`, `consent_text` | When the player agreed to immediate delivery and the loss of the withdrawal right, and the exact text they saw |

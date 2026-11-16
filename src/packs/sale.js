@@ -2,9 +2,9 @@
 
 /**
  * Selling track packs (Moses, 12 Nov 2026). Every pack has one price, in
- * client/src/shared/payments/trackPacks.json (a campaign changes it there, no code): $7.99 by default, shown in
- * the player's own currency with VAT included; or the same pack with at most 25% of the price paid in coins
- * (1,990 coins + $5.99), never coins alone.
+ * client/src/shared/payments/trackPacks.json (a campaign changes it there, no code): $6.99 by default, shown in
+ * the player's own currency with VAT included; or the same pack with at most 30% of the price paid in coins
+ * (1,990 coins + $4.99), never coins alone.
  *
  * Products (the same ids on the website and the App Store; Google Play writes them with _):
  *   trackpack-<pack>         the pack for real money             (Play: trackpack_<pack with _>)

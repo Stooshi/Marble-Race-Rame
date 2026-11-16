@@ -20,7 +20,7 @@ import { notEnoughCoins } from '../payments/GetCoins';
  * have a card, for everyone, admins too (Moses, 16 Nov 2026, Stripe live): a pack under 20 has none, and appears
  * by itself once its 20th track goes live (GET /api/packs `complete`). No test purchases on the website any more:
  * admins see the same Unlock as players (the server refuses an incomplete pack with Stripe live). A pack's page: every track with its picture, one line and wildness, the planned ones, and
- * "Unlock all 20 tracks – $7.99" at the top and the bottom, or with coins (at most 25%: 1,990 coins + $5.99).
+ * "Unlock all 20 tracks – $6.99" at the top and the bottom, or with coins (at most 30%: 1,990 coins + $4.99).
  * In the apps the prices are the store's own (local currency); on the website Stripe shows the player's currency.
  */
 
@@ -195,7 +195,7 @@ const ABOUT = {
 };
 
 /**
- * Buying: "Unlock all 20 tracks – $7.99", or with coins (1,990 coins + $5.99) when the player has them; on the
+ * Buying: "Unlock all 20 tracks – $6.99", or with coins (1,990 coins + $4.99) when the player has them; on the
  * website the two agreements first (as for coins and the pass). Coming soon (a pack reached by its address
  * before it has 20 tracks): no button, for admins too. Packs not sold to the player: nothing to buy.
  */

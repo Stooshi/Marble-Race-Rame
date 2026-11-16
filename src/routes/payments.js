@@ -49,7 +49,7 @@ router.post('/pass/checkout', requireAuth, async (req, res) => {
 
 /**
  * POST /api/payments/pack/checkout { pack, useCoins?, provider?, consent: true } — start buying a track pack on
- * the website (src/packs/sale.js): $7.99, or 1,990 coins + $5.99 (useCoins). The pack comes only from
+ * the website (src/packs/sale.js): $6.99, or 1,990 coins + $4.99 (useCoins). The pack comes only from
  * Stripe's signed webhook, once; the coins are taken now and given back if the checkout lapses.
  */
 router.post('/pack/checkout', requireAuth, async (req, res) => {

@@ -23,7 +23,7 @@ const { race: RACE, dailyGoal: GOAL, dailyLimit: LIMIT } = economy;
 const EARNED = ['race', 'finish-bonus', 'daily-goal'];
 // ('gift-code': coins from a gift code count as bought, never on the scoreboards: src/giftCodes.)
 const BOUGHT = ['coin-pack', 'credit-conversion', 'gift-code'];
-// ('track-pack': coins paid towards a track pack, at most 25% of its price; 'track-pack-back': given back: src/packs/sale.js.)
+// ('track-pack': coins paid towards a track pack, at most 30% of its price; 'track-pack-back': given back: src/packs/sale.js.)
 const KINDS = ['start', 'opening-balance', ...EARNED, ...BOUGHT, 'purchase', 'bag', 'entry-fee', 'entry-refund', 'refund', 'skill-refund', 'admin', 'pack-refund', 'featured-bonus', 'track-pack', 'track-pack-back'];
 
 /**

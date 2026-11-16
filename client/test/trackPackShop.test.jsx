@@ -1,5 +1,5 @@
-// Track packs in the shop (Moses, 12 Nov 2026): the price from one settings file ($7.99, or at most 25% in coins:
-// 1,990 coins + $5.99, never coins alone), the Track packs tab and a pack's page from the approved mockup, and
+// Track packs in the shop (Moses, 12 Nov 2026): the price from one settings file ($6.99, or at most 30% in coins:
+// 1,990 coins + $4.99, never coins alone), the Track packs tab and a pack's page from the approved mockup, and
 // buying on the website (Stripe), on Android (Google Play, product ids with _) and on iPhone (App Store, a
 // non-consumable), the coins set aside first in the apps and given back if the sheet is closed.
 import { createRequire } from 'node:module';
@@ -38,9 +38,9 @@ const PACK = { key: 'grand-prix', name: 'Grand Prix', series: 'Grand Prix', pic:
 const SOON = { ...PACK, key: 'arcade', name: 'Arcade', series: 'Arcade', pic: 'kill-screen', live: 4, complete: false, mix: { easy: 2, wild: 0, extreme: 2 } };
 
 describe('the price', () => {
-  it('$7.99, or 1,990 coins + $5.99: coins at most 25% of the price, never coins alone (one settings file)', () => {
-    expect(TRACK_PACK_PRICE.label).toBe('$7.99');
-    expect(TRACK_PACK_PRICE.withCoins).toEqual({ coins: 1990, cents: 599, label: '$5.99' });
+  it('$6.99, or 1,990 coins + $4.99: coins at most 30% of the price, never coins alone (one settings file)', () => {
+    expect(TRACK_PACK_PRICE.label).toBe('$6.99');
+    expect(TRACK_PACK_PRICE.withCoins).toEqual({ coins: 1990, cents: 499, label: '$4.99' });
     const s = require('../src/shared/payments/trackPacks.json');
     expect((s.withCoins.coins * s.coinValueCentsPer1000) / 1000).toBeLessThanOrEqual(s.priceCents * s.maxCoinShare);
     expect(s.withCoins.priceCents).toBeGreaterThan(0);
@@ -59,7 +59,7 @@ describe('the Track packs tab and a pack\'s page', () => {
     const out = html(<TrackPacksTab data={{ onSale: true, testBuy: false, packs: [PACK, SOON] }} />);
     expect(out).toContain('>Grand Prix</h3>');
     expect(out).toContain('20 tracks');
-    expect(out).toContain('$7.99');
+    expect(out).toContain('$6.99');
     expect(out.match(/>Unlock</g)).toHaveLength(1);
     expect(out).toContain('1 pack ·');
     // A pack under 20 live tracks has no card at all…
@@ -92,14 +92,14 @@ describe('the Track packs tab and a pack\'s page', () => {
     expect(out).toContain('>20 tracks<');
   });
 
-  it('the pack page: every track with its one line, "Unlock all 20 tracks – $7.99" at the top and the bottom, the coins option and split', () => {
+  it('the pack page: every track with its one line, "Unlock all 20 tracks – $6.99" at the top and the bottom, the coins option and split', () => {
     pageData.value = { onSale: true, testBuy: false, price: {}, pack: { ...PACK, tracks: [{ slug: 'lagos-marble-grand-prix', name: 'Lagos Marble Grand Prix', wildness: 'easy', line: 'Down a half-pipe into a busy market' }], planned: ['Nevada Drag Strip'] } };
     const out = html(<PackPage />, '/shop/packs/grand-prix');
     expect(out).toContain('Lagos Marble Grand Prix');
     expect(out).toContain('Down a half-pipe into a busy market');
     expect(out).toContain('Nevada Drag Strip');
-    expect(out.match(/Unlock all 20 tracks – \$7\.99/g)).toHaveLength(2);
-    expect(out).toContain('● 1,990 + $5.99'); // (the player has the coins: the second way to pay)
+    expect(out.match(/Unlock all 20 tracks – \$6\.99/g)).toHaveLength(2);
+    expect(out).toContain('● 1,990 + $4.99'); // (the player has the coins: the second way to pay)
     expect(out).toContain('City circuits and motorsport');
   });
 

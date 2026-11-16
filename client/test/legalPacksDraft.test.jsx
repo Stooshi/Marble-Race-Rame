@@ -28,7 +28,7 @@ describe('the track-pack terms (draft)', () => {
     const d = html(<LegalPacksPreview />);
     expect(d).toContain('Draft for review');
     expect(d).toContain('id="track-packs"');
-    for (const s of ['$7.99', 'at most 25% of the price', 'can&#x27;t be bought with coins alone', 'Yours for life', 'Unlocked at once', 'ticking the box', '14-day right of withdrawal (section 5) ends when it is unlocked', 'your right of withdrawal (section <mark class="ms-legal__new">5</mark>)', 'the coins you paid towards it are given back', 'the coins aren&#x27;t given back', 'Paid leagues can race any track', 'New tracks added to a pack later are included at no extra cost', 'same series where we can', 'can&#x27;t be transferred, sold, traded, gifted or moved to another account', 'belongs to the account that got it']) {
+    for (const s of ['$6.99', 'at most 30% of the price', 'can&#x27;t be bought with coins alone', 'Yours for life', 'Unlocked at once', 'ticking the box', '14-day right of withdrawal (section 5) ends when it is unlocked', 'your right of withdrawal (section <mark class="ms-legal__new">5</mark>)', 'the coins you paid towards it are given back', 'the coins aren&#x27;t given back', 'Paid leagues can race any track', 'New tracks added to a pack later are included at no extra cost', 'same series where we can', 'can&#x27;t be transferred, sold, traded, gifted or moved to another account', 'belongs to the account that got it']) {
       expect(d, s).toContain(s);
     }
     expect(d).toMatch(/<mark class="ms-legal__new">8<\/mark>\. Complaints/);

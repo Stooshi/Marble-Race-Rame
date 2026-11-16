@@ -183,7 +183,7 @@ function packOutcome(r, store) {
 }
 
 /**
- * Buys a track pack (src/packs/sale.js): $7.99, or with `useCoins` 1,990 coins + $5.99 (at most 25% in coins,
+ * Buys a track pack (src/packs/sale.js): $6.99, or with `useCoins` 1,990 coins + $4.99 (at most 30% in coins,
  * never coins alone). Web: Stripe Checkout (the pack only from Stripe's signed webhook; the coins taken now,
  * back if the checkout lapses). Apps: the coins set aside first (given back if the sheet is closed), then the
  * store's purchase of the pack's product (trackpack-<pack>[-coins]; Google Play with _), kept, never consumed.

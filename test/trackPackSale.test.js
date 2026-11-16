@@ -1,7 +1,7 @@
 'use strict';
 
-// Selling track packs (Moses, 12 Nov 2026; src/packs/sale.js): $7.99, or at most 25% in coins (1,990 coins +
-// $5.99), never coins alone; the price in one settings file. Sold only while pack locking is on for the player
+// Selling track packs (Moses, 12 Nov 2026; src/packs/sale.js): $6.99, or at most 30% in coins (1,990 coins +
+// $4.99), never coins alone; the price in one settings file. Sold only while pack locking is on for the player
 // (TRACK_PACKS); a pack under 20 live tracks is "Coming soon" (an admin's test purchase aside). Website: Stripe
 // Checkout, the pack only from the signed webhook, once; the coins back if the checkout lapses. Google Play and
 // the App Store: checked, kept (acknowledged, never consumed), the coins set aside first. Refunds take the pack
@@ -28,15 +28,15 @@ delete process.env.TRACK_PACKS;
 const settings = require('../client/src/shared/payments/trackPacks.json');
 const sale = require('../src/packs/sale');
 
-test('the price: $7.99, or 1,990 coins + $5.99 (coins at most 25%, never coins alone), from one settings file', () => {
-  assert.equal(settings.priceCents, 799);
+test('the price: $6.99, or 1,990 coins + $4.99 (coins at most 30%, never coins alone), from one settings file', () => {
+  assert.equal(settings.priceCents, 699);
   assert.equal(settings.withCoins.coins, 1990);
-  assert.equal(settings.withCoins.priceCents, 599);
+  assert.equal(settings.withCoins.priceCents, 499);
   assert.equal(sale.checkPrice(), null);
-  assert.match(sale.checkPrice({ ...settings, withCoins: { ...settings.withCoins, coins: 2100 } }), /at most 25%/);
+  assert.match(sale.checkPrice({ ...settings, withCoins: { ...settings.withCoins, coins: 2200 } }), /at most 30%/);
   assert.match(sale.checkPrice({ ...settings, withCoins: { coins: 1990, priceCents: 0, storeAmountCents: 0 } }), /never sold for coins alone/);
   assert.match(sale.checkPrice({ ...settings, withCoins: { coins: 1990, priceCents: 700, storeAmountCents: 700 } }), /no more than the price/);
-  assert.deepEqual(sale.priceInfo(), { currency: 'usd', cents: 799, label: '$7.99', withCoins: { coins: 1990, cents: 599, label: '$5.99' }, maxCoinShare: 0.25 });
+  assert.deepEqual(sale.priceInfo(), { currency: 'usd', cents: 699, label: '$6.99', withCoins: { coins: 1990, cents: 499, label: '$4.99' }, maxCoinShare: 0.3 });
 });
 
 test('product ids: the same on the website and the App Store; Google Play with _', () => {
@@ -64,7 +64,7 @@ function fakeStripe() {
     made,
     checkout: { sessions: { create: async (params, opts) => { const id = `cs_test_tp_${run}_${made.sessions.length + 1}`; made.sessions.push({ params, opts, id }); return { id, url: `https://checkout.stripe.com/c/pay/${id}` }; } } },
     paymentIntents: { retrieve: async (id) => ({ id, latest_charge: { receipt_url: `https://pay.stripe.com/receipts/${id}` } }) },
-    refunds: { create: async (params) => { made.refunds.push({ params }); return { id: `re_test_${run}_${made.refunds.length}`, status: 'pending', amount: params.amount ?? 799 }; } },
+    refunds: { create: async (params) => { made.refunds.push({ params }); return { id: `re_test_${run}_${made.refunds.length}`, status: 'pending', amount: params.amount ?? 699 }; } },
   };
 }
 
@@ -175,20 +175,20 @@ test('track packs, end to end: the switch, coming soon, Stripe, the coins, Googl
     assert.equal(page.pack.tracks.length, 20);
     assert.equal(page.pack.tracks[0].line, 'Over the crest and down the long banked turn');
 
-    // Stripe, $7.99: a Checkout page; the pack only from the signed webhook, once.
+    // Stripe, $6.99: a Checkout page; the pack only from the signed webhook, once.
     const c1 = await checkout(admin, { pack: full });
     assert.equal(c1.status, 200);
     assert.equal(c1.body.next.kind, 'redirect');
     const s1 = fake.made.sessions.at(-1);
-    assert.equal(s1.params.line_items[0].price_data.unit_amount, 799);
+    assert.equal(s1.params.line_items[0].price_data.unit_amount, 699);
     assert.equal(s1.params.line_items[0].price_data.tax_behavior, 'inclusive');
     assert.equal(s1.params.adaptive_pricing.enabled, true); // (shown in the player's own currency)
     assert.match(s1.params.cancel_url, new RegExp(`/shop/packs/${full}\\?cancelled=1$`));
     const pay1 = (await db.query('SELECT * FROM payments WHERE stripe_session_id = $1', [s1.id])).rows[0];
-    assert.deepEqual({ status: pay1.status, pack: pay1.pack_key, coins: pay1.coins, spent: pay1.coins_spent, cents: pay1.amount_cents }, { status: 'pending', pack: full, coins: 0, spent: 0, cents: 799 });
+    assert.deepEqual({ status: pay1.status, pack: pay1.pack_key, coins: pay1.coins, spent: pay1.coins_spent, cents: pay1.amount_cents }, { status: 'pending', pack: full, coins: 0, spent: 0, cents: 699 });
     assert.match(pay1.consent_text, /track pack unlocked right away/);
     assert.equal(await owns(admin, full), false);
-    const done = { id: s1.id, mode: 'payment', payment_status: 'paid', amount_total: 799, currency: 'sek', payment_intent: `pi_tp_${run}_1`, metadata: { payment_id: pay1.id }, total_details: { amount_tax: 160 } };
+    const done = { id: s1.id, mode: 'payment', payment_status: 'paid', amount_total: 699, currency: 'sek', payment_intent: `pi_tp_${run}_1`, metadata: { payment_id: pay1.id }, total_details: { amount_tax: 160 } };
     assert.equal((await send('checkout.session.completed', done)).status, 200);
     await send('checkout.session.completed', done);
     assert.equal(await owns(admin, full), true);
@@ -198,12 +198,12 @@ test('track packs, end to end: the switch, coming soon, Stripe, the coins, Googl
     const orders = (await call('/payments/mine', { token: admin.token })).body.orders;
     assert.ok(orders.some((o) => o.pack_key === full && o.status === 'paid'));
 
-    // With coins: 1,990 coins taken at once, $5.99 at Stripe; the checkout lapses: the coins come back.
+    // With coins: 1,990 coins taken at once, $4.99 at Stripe; the checkout lapses: the coins come back.
     let before = await coinsOf(admin);
     const c2 = await checkout(admin, { pack: full2, useCoins: true });
     assert.equal(c2.status, 200);
     const s2 = fake.made.sessions.at(-1);
-    assert.equal(s2.params.line_items[0].price_data.unit_amount, 599);
+    assert.equal(s2.params.line_items[0].price_data.unit_amount, 499);
     assert.match(s2.params.line_items[0].price_data.product_data.description, /1,990 coins/);
     assert.equal(await coinsOf(admin), before - 1990);
     const pay2 = (await db.query('SELECT * FROM payments WHERE stripe_session_id = $1', [s2.id])).rows[0];
@@ -223,15 +223,15 @@ test('track packs, end to end: the switch, coming soon, Stripe, the coins, Googl
     await checkout(admin, { pack: full2, useCoins: true });
     const s3 = fake.made.sessions.at(-1);
     const pay3 = (await db.query('SELECT * FROM payments WHERE stripe_session_id = $1', [s3.id])).rows[0];
-    await send('checkout.session.completed', { id: s3.id, mode: 'payment', payment_status: 'paid', amount_total: 599, currency: 'usd', payment_intent: `pi_tp_${run}_3`, metadata: { payment_id: pay3.id }, total_details: { amount_tax: 120 } });
+    await send('checkout.session.completed', { id: s3.id, mode: 'payment', payment_status: 'paid', amount_total: 499, currency: 'usd', payment_intent: `pi_tp_${run}_3`, metadata: { payment_id: pay3.id }, total_details: { amount_tax: 120 } });
     assert.equal(await owns(admin, full2), true);
     assert.equal(await coinsOf(admin), before - 1990);
-    await send('refund.created', { id: `re_tp_${run}_3`, status: 'succeeded', amount: 599, payment_intent: `pi_tp_${run}_3`, metadata: {} });
-    await send('refund.created', { id: `re_tp_${run}_3`, status: 'succeeded', amount: 599, payment_intent: `pi_tp_${run}_3`, metadata: {} });
+    await send('refund.created', { id: `re_tp_${run}_3`, status: 'succeeded', amount: 499, payment_intent: `pi_tp_${run}_3`, metadata: {} });
+    await send('refund.created', { id: `re_tp_${run}_3`, status: 'succeeded', amount: 499, payment_intent: `pi_tp_${run}_3`, metadata: {} });
     assert.equal(await owns(admin, full2), false);
     assert.equal(await coinsOf(admin), before);
     // A chargeback takes the first pack back.
-    await send('charge.dispute.created', { id: `dp_tp_${run}`, amount: 799, payment_intent: `pi_tp_${run}_1`, reason: 'fraudulent' });
+    await send('charge.dispute.created', { id: `dp_tp_${run}`, amount: 699, payment_intent: `pi_tp_${run}_1`, reason: 'fraudulent' });
     assert.equal(await owns(admin, full), false);
 
     // Coming soon: fewer than 20 tracks. A player can't buy it (locking on for everyone); an admin's test purchase can.
@@ -257,7 +257,7 @@ test('track packs, end to end: the switch, coming soon, Stripe, the coins, Googl
     assert.equal(await owns(player, full2), true);
     assert.equal(await coinsOf(player), before - 1990); // (the hold, used: no second take)
     const gpay = (await db.query(`SELECT * FROM payments WHERE provider = 'google' AND store_token = $1`, [tok])).rows[0];
-    assert.deepEqual({ product: gpay.product_id, cents: gpay.amount_cents, spent: gpay.coins_spent }, { product: `trackpack-${full2}-coins`, cents: 599, spent: 1990 });
+    assert.deepEqual({ product: gpay.product_id, cents: gpay.amount_cents, spent: gpay.coins_spent }, { product: `trackpack-${full2}-coins`, cents: 499, spent: 1990 });
     assert.equal((await call(`/packs/coin-holds/${hold.holdId}`, { method: 'DELETE', token: player.token })).body.coinsBack, 0); // (used)
     assert.equal(await payments.googleSync(db).then(() => g.state.consumed.length), 0); // (the hourly job never consumes a pack)
     // A hold given back when the sheet closes, and one left over: back after 2 hours.
@@ -291,7 +291,7 @@ test('track packs, end to end: the switch, coming soon, Stripe, the coins, Googl
     assert.equal(await owns(admin, full), true);
     assert.equal((await call('/payments/apple/verify', { method: 'POST', token: admin.token, body: { signedTransaction: signed(tx) } })).body.status, 'duplicate'); // (Restore purchases)
     const apay = (await db.query(`SELECT * FROM payments WHERE provider = 'apple' AND provider_ref = $1`, [tx.transactionId])).rows[0];
-    assert.equal(apay.amount_cents, 799);
+    assert.equal(apay.amount_cents, 699);
     assert.equal(apay.product_id, `trackpack-${full}`); // (the App Store's id with _, ours with -)
     // A test purchase (sandbox) of a coming-soon pack by an admin: allowed; by a player: refused.
     const tx2 = { ...tx, transactionId: String(Number(tx.transactionId) + 7), originalTransactionId: String(Number(tx.transactionId) + 7), productId: `trackpack_${soon.replace(/-/g, '_')}`, environment: 'Sandbox' };
