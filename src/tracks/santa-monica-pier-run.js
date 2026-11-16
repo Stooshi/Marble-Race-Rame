@@ -5,7 +5,7 @@
 // feature: a loop out over the surf beside the pier's funfair, the field going right round it, rough boards
 // after it to bunch the field again, S-bends through the midway's stalls, the hairpin at the end of the pier, a
 // sweep under the palms along the promenade and the run back to the station. No names on anything.
-const { track, opening, straight, sweep, sBends, hairpin, plunge, runIn, peg, slalom, block, brake, loop } = require('../trackKit');
+const { track, opening, straight, sweep, sBends, plunge, runIn, peg, slalom, block, brake, loop } = require('../trackKit');
 
 module.exports = track({
   slug: 'santa-monica-pier-run',
@@ -50,7 +50,7 @@ module.exports = track({
       name: 'Past the stalls', shape: straight(35, { grade: 0.14 }), height: 6,
       features: [brake({ at: 0.1, length: 12, drag: 0.02 })],
     },
-    { name: 'End of the pier hairpin', shape: hairpin({ side: 'left' }), height: 8, water: true },
+    { name: 'Round the end of the pier', shape: sweep({ side: 'left', radius: 55, degrees: 150, grade: 0.13 }), height: 8, water: true },
     { name: 'Off the pier', shape: plunge(45, { grade: 0.3, from: 0.14 }), height: 4 },
     {
       name: 'Under the pier', shape: sBends({ first: 'left', radius: 65, degrees: 70, grade: 0.15 }), height: 4,

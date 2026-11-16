@@ -25,7 +25,7 @@ module.exports = track({
     { section: 'Down the cliff', at: 0.95, side: 'right', distance: 10, height: 12 },
     { section: 'Plains bends', at: 0.4, side: 'left', distance: 10, height: 11 },
   ],
-  start: { landmark: 'fortress-walls', scenery: ['stone-houses'], type: 'water-tower', gate: 'paddle', shots: { countdown: 'front', launch: 'low-chase' } },
+  start: { landmark: 'fortress-walls', scenery: ['stone-houses'], type: 'water-tower', gate: 'paddle', shots: { countdown: 'side', launch: 'high-behind' } },
   finish: { landmark: 'fortress-walls', billboards: 1 },
   opening: opening('clean-drop', {
     side: 'left',
@@ -61,7 +61,7 @@ module.exports = track({
     },
     {
       name: 'Plains bends', shape: sBends({ first: 'left', radius: 75, degrees: 60, grade: 0.15 }), height: 8,
-      obstacles: [slalom({ costume: 'street-lamp', from: 0.25, to: 0.85, count: 4, loss: 0.25 })],
+      obstacles: [slalom({ costume: 'street-lamp', from: 0.2, to: 0.85, count: 5, loss: 0.3 })],
     },
     {
       name: 'Run to the walls', shape: straight(60, { grade: 0.15 }), height: 0, billboards: 1,

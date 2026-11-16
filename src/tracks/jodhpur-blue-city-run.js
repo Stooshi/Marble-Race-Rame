@@ -39,7 +39,7 @@ module.exports = track({
       landmarks: [{ name: 'hill-fort', at: 0.5, side: 'right', distance: 40 }],
       obstacles: [block({ costume: 'camel', at: 0.3, line: 'right' }), peg({ costume: 'lantern-pole', at: 0.7, line: 'left' })],
     },
-    { name: 'Off the fort', shape: plunge(95, { grade: 0.55, from: 0.1 }), height: 0, scenery: ['colourful-houses'] },
+    { name: 'Off the fort', shape: plunge(85, { grade: 0.5, from: 0.1 }), height: 0, scenery: ['colourful-houses'] },
     {
       name: 'Through the bazaar', shape: straight(50, { grade: 0.14 }), height: 4,
       obstacles: [pileUp({ costume: 'camel', at: 0.2 }), peg({ costume: 'lantern-pole', at: 0.6, line: 'left' }), peg({ costume: 'lantern-pole', at: 0.85, line: 'right' })],
@@ -56,7 +56,7 @@ module.exports = track({
     { name: 'Market hairpin', shape: hairpin({ side: 'right' }), height: 10, landmarks: [{ name: 'qutub-minar', at: 0.5, side: 'right', distance: 30 }] },
     {
       name: 'Old city bends', shape: sBends({ first: 'right', radius: 65, degrees: 60, grade: 0.16 }), height: 6,
-      obstacles: [peg({ costume: 'lantern-pole', at: 0.3, line: 'center' }), peg({ costume: 'lantern-pole', at: 0.7, line: 'left' })],
+      obstacles: [peg({ costume: 'lantern-pole', at: 0.25, line: 'center' }), peg({ costume: 'lantern-pole', at: 0.5, line: 'right' }), peg({ costume: 'lantern-pole', at: 0.75, line: 'left' })],
     },
     {
       name: 'Run to the city gate', shape: straight(55, { grade: 0.15 }), height: 0, billboards: 1,
