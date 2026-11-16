@@ -153,6 +153,49 @@ function abbeyMount() {
   return merge(p);
 }
 
+// ── Angkor (Angkor Temple Run) ─────────────────────────────────────────────
+
+const SANDSTONE = ['#a89a7c', '#9c8e70', '#b3a585'];
+
+/** A temple tower: stacked, narrowing tiers with a rounded lotus-bud top. */
+function lotusTower(p, x, z, h, k) {
+  const tiers = 5;
+  for (let i = 0; i < tiers; i += 1) {
+    const w = 7 - i * 1.1;
+    p.push(box(w, h / tiers, w, x, (i + 0.5) * (h / tiers), z, SANDSTONE[(k + i) % SANDSTONE.length]));
+  }
+  p.push(piece(new ConeGeometry(1.8, h * 0.35, 8), SANDSTONE[k % SANDSTONE.length], M(x, h + h * 0.17, z)));
+}
+
+/** The great temple: a stepped terrace, a long gallery round it, five lotus-bud towers (the middle one tallest). */
+function lotusTemple() {
+  const p = [];
+  p.push(box(46, 3, 40, 0, 1.5, 0, '#8f8268'));
+  p.push(box(36, 3, 30, 0, 4.5, 0, '#998b6f'));
+  p.push(box(26, 3, 22, 0, 7.5, 0, '#a29477'));
+  for (const [x, z] of [[-17, 0], [17, 0], [0, -14], [0, 14]]) p.push(box(Math.abs(x) ? 3 : 34, 4, Math.abs(z) ? 3 : 28, x, 5, z, '#8a7d63'));
+  lotusTower(p, 0, 0, 22, 0);
+  for (const [x, z] of [[-9, -7], [9, -7], [-9, 7], [9, 7]]) lotusTower(p, x, z, 15, 1);
+  p.push(box(4, 6, 2, 0, 12, 11, SANDSTONE[0])); // (the doorway's porch on the top terrace, facing out)
+  return merge(p);
+}
+
+/** A jungle temple gate swallowed by trees: a stone gateway, great pale roots poured over it, a tall silk-cotton tree. */
+function rootTemple() {
+  const p = [];
+  p.push(box(14, 8, 5, 0, 4, 0, '#8e8a72'));
+  p.push(box(5, 6, 5.2, 0, 3, 0, '#3a362c'));
+  p.push(piece(new ConeGeometry(2.2, 6, 6), '#9c947a', M(0, 11, 0)));
+  p.push(piece(new CylinderGeometry(1.4, 2.2, 22, 8), '#cfc5ae', M(4.5, 11, -1)));
+  for (let a = 0; a < 6; a += 1) {
+    const root = piece(new CylinderGeometry(0.35, 0.7, 9, 5), '#d7cdb6', new Matrix4().makeRotationZ(0.9 + (a % 3) * 0.25));
+    root.applyMatrix4(turned(4.5 - Math.cos(a) * 2, 5, -1 + Math.sin(a) * 2, a * 1.1));
+    p.push(root);
+  }
+  p.push(piece(new SphereGeometry(7, 8, 5), '#4c6b3a', M(4.5, 24, -1)));
+  return merge(p);
+}
+
 export const WORLD2_LANDMARKS = {
   'cycladic-village': { build: cycladicVillage, radius: 26 },
   'blue-domes': { build: blueDomes, radius: 10 },
@@ -160,4 +203,6 @@ export const WORLD2_LANDMARKS = {
   'lakeside-village': { build: lakesideVillage, radius: 28 },
   'island-church': { build: islandChurch, radius: 17 },
   'abbey-mount': { build: abbeyMount, radius: 23, fit: 20 },
+  'lotus-temple': { build: lotusTemple, radius: 26 },
+  'root-temple': { build: rootTemple, radius: 11 },
 };

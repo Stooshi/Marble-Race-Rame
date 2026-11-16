@@ -401,7 +401,7 @@ module.exports = {
     // The five Rivers of 13 Nov 2026 (client/src/three/scenery/kitLandmarksRiver2.js): the Hudson, the Arno, the Chao Phraya, the Yukon, the Iguazú.
     'palisade-cliffs', 'river-sloops', 'island-ruin', 'shop-bridge', 'stone-weir', 'temple-prang', 'rock-fingers', 'horseshoe-cataract', 'rainforest-catwalk',
     // The seven World Tour tracks of 16 Nov 2026 (client/src/three/scenery/kitLandmarksWorld2.js; our own models after the real places).
-    'cycladic-village', 'blue-domes', 'cycladic-windmills', 'lakeside-village', 'island-church', 'abbey-mount'],
+    'cycladic-village', 'blue-domes', 'cycladic-windmills', 'lakeside-village', 'island-church', 'abbey-mount', 'lotus-temple', 'root-temple'],
   OVERHEAD: ['gondola', 'cable-car', 'chairlift', 'vulture',
     // The Canyon Series: birds circling over the gorge, and what spans it from rim to rim, high over the track.
     'condor', 'prayer-flags', 'arch-bridge', 'railway-trestle', 'suspension-bridge',

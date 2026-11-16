@@ -79,6 +79,17 @@
    "side": 1,
    "marbles": 4
   },
+  "angkor-temple-run": {
+   "name": "Angkor Temple Run",
+   "series": "World Tour",
+   "lighting": "dawn",
+   "v": "977bdd77",
+   "bytes": 12880,
+   "bytes2x": 31162,
+   "t": 9770,
+   "side": 1,
+   "marbles": 4
+  },
   "antelope-slot-spins": {
    "name": "Antelope Slot Spins",
    "series": "Canyons",
