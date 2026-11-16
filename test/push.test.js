@@ -172,7 +172,8 @@ test('push on a real database: switches, devices, dry run, once per key, dead to
     await db.query(`UPDATE users SET age_group = 'under-13' WHERE id = $1`, [teen.user.id]);
     sent.length = 0;
     await push.seasonNews(db);
-    assert.equal(sent.length, 0, 'once per key');
+    // (Only this test's season: other test files running at the same time can put their own seasons on sale.)
+    assert.equal(sent.filter((x) => x.msg.url === `/pass?season=${key}`).length, 0, 'once per key');
     assert.equal((await push.sendTo(db, teen.user.id, 'season-start', { season: { key, name: 'Push Season' } }, `season-start:${key}:again`)).why, 'marketing-not-allowed');
 
     // Room invites: only from a host to someone who raced in a friend room with them (route off while push is off).
