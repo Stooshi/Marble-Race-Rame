@@ -16,6 +16,7 @@ const bcrypt = require('bcryptjs');
 const config = require('../config');
 const email = require('../email');
 const templates = require('../email/templates');
+const library = require('../email/library');
 const { HttpError, badRequest } = require('../utils/httpError');
 
 const LINK_MINUTES = 60;
@@ -45,9 +46,11 @@ async function request(db, { email: address, siteUrl = config.publicSiteUrl }) {
     [user.id, hash(token), LINK_MINUTES],
   );
   const link = `${siteUrl.replace(/\/+$/, '')}/reset-password?token=${token}`;
-  const message = templates.passwordReset({ username: user.username, link, minutes: LINK_MINUTES });
-  // (Sent without waiting, so the answer takes as long whether or not the account exists, 9 Nov 2026.)
-  const sending = email.send({ to: user.email, toName: user.username, subject: message.subject, html: message.html, tags: ['password-reset'] })
+  const o = { username: user.username, link, minutes: LINK_MINUTES };
+  // (Sent without waiting, so the answer takes as long whether or not the account exists, 9 Nov 2026; the edited
+  // template if one is published, CRM phase 5.)
+  const sending = library.compose(db, 'password-reset', { values: { name: user.username }, core: templates.cores.passwordCore(o), fallback: () => templates.passwordReset(o) })
+    .then((message) => email.send({ to: user.email, toName: user.username, subject: message.subject, html: message.html, tags: ['password-reset'], userId: user.id, templateVersion: message.templateVersion }))
     .catch((err) => console.error(`[password-reset] could not send: ${err.message}`));
   return { sent: true, userId: user.id, sending };
 }

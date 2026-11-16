@@ -216,6 +216,7 @@ router.get('/players/:id', need('customers:read'), async (req, res) => {
     consents: consents.rows,
     payments: payments.rows,
     documents: documents.rows,
+    emails: await require('../email/log').ofPlayer(db, id),
     audit: auditRows.rows,
     messages: messages.rows,
   });
@@ -895,6 +896,110 @@ router.get('/billing/export', need('billing:export'), async (req, res) => {
   res.set('Content-Type', 'text/csv; charset=utf-8');
   res.set('Content-Disposition', `attachment; filename="marble-spins-${file === 'vat' ? 'vat-summary' : 'receipts-and-credit-notes'}-${month}.csv"`);
   res.send(body);
+});
+
+// ── Email templates (16 Nov 2026, CRM phase 5; src/email/library.js) ─────────────────────────────────────
+
+const library = require('../email/library');
+const emailSvc = require('../email');
+
+/** GET /emails/templates — every kind: its group, words, placeholders, the published version and the newest saved one. */
+router.get('/emails/templates', need('emails:templates'), async (_req, res) => {
+  const { rows } = await db.query(
+    `SELECT kind, max(version)::int AS latest, max(version) FILTER (WHERE published_at IS NOT NULL)::int AS published_version, max(published_at) AS published_at
+       FROM email_templates GROUP BY kind`,
+  );
+  const by = new Map(rows.map((r) => [r.kind, r]));
+  res.json({
+    kinds: Object.entries(library.KINDS).map(([kind, k]) => ({
+      kind, name: k.name, group: k.group, about: k.about,
+      latest: by.get(kind)?.latest ?? null, published: by.get(kind)?.published_version ?? null, publishedAt: by.get(kind)?.published_at ?? null,
+    })),
+    sending: emailSvc.enabled(),
+  });
+});
+
+const kindOf = (req) => {
+  const kind = String(req.params.kind);
+  if (!library.KINDS[kind]) throw notFound('No such email');
+  return kind;
+};
+
+/** GET /emails/templates/:kind — the kind, its placeholders, its versions, and the one to edit (the newest, else the default). */
+router.get('/emails/templates/:kind', need('emails:templates'), async (req, res) => {
+  const kind = kindOf(req);
+  const { rows: versions } = await db.query(
+    `SELECT t.version, t.subject, t.preheader, t.title, t.blocks, t.note, t.created_at, t.published_at, c.username AS created_by, p.username AS published_by
+       FROM email_templates t LEFT JOIN users c ON c.id = t.created_by LEFT JOIN users p ON p.id = t.published_by
+      WHERE t.kind = $1 ORDER BY t.version DESC`,
+    [kind],
+  );
+  const live = versions.filter((v) => v.published_at).sort((a, b) => new Date(b.published_at) - new Date(a.published_at))[0] ?? null;
+  const k = library.KINDS[kind];
+  res.json({
+    kind, name: k.name, group: k.group, about: k.about,
+    placeholders: Object.entries(library.placeholdersOf(kind)).map(([key, p]) => ({ key, about: p.about, sample: p.sample })),
+    versions, liveVersion: live?.version ?? null,
+    editing: versions[0] ?? { version: null, ...k.defaults, preheader: null, note: null },
+    defaults: k.defaults,
+  });
+});
+
+/** POST /emails/templates/:kind/preview { subject, preheader, title, blocks } — the email with sample values. */
+router.post('/emails/templates/:kind/preview', need('emails:templates'), async (req, res) => {
+  const kind = kindOf(req);
+  const t = library.validate(kind, req.body ?? {});
+  res.json(library.render(kind, t, { values: library.samples(kind), core: library.sampleCore(kind) }));
+});
+
+/** POST /emails/templates/:kind { subject, preheader, title, blocks, note } — saves a new version (not published). */
+router.post('/emails/templates/:kind', need('emails:templates'), async (req, res) => {
+  const kind = kindOf(req);
+  const t = library.validate(kind, req.body ?? {});
+  const note = req.body?.note ? String(req.body.note).trim().slice(0, 300) : null;
+  const { rows: [v] } = await db.query(
+    `INSERT INTO email_templates (kind, version, subject, preheader, title, blocks, note, created_by)
+     VALUES ($1, COALESCE((SELECT max(version) FROM email_templates WHERE kind = $1), 0) + 1, $2, $3, $4, $5, $6, $7) RETURNING version, created_at`,
+    [kind, t.subject, t.preheader, t.title, JSON.stringify(t.blocks), note, req.admin.id],
+  );
+  res.json({ version: v.version, created_at: v.created_at });
+});
+
+/** POST /emails/templates/:kind/:version/publish { reason } — this version is sent from now on (audited). */
+router.post('/emails/templates/:kind/:version/publish', need('emails:templates'), async (req, res) => {
+  const kind = kindOf(req);
+  const version = Number(req.params.version);
+  const body = validate(req.body, { reason: REASON });
+  await db.withTransaction(async (client) => {
+    const { rows: [t] } = await client.query('SELECT id, published_at FROM email_templates WHERE kind = $1 AND version = $2 FOR UPDATE', [kind, version]);
+    if (!t) throw notFound('No such version');
+    await client.query('UPDATE email_templates SET published_at = now(), published_by = $2 WHERE id = $1', [t.id, req.admin.id]);
+    await audit(client, req, 'email-template-publish', null, body.reason, { kind, version });
+  });
+  res.json({ ok: true });
+});
+
+/** POST /emails/templates/:kind/unpublish { reason } — back to the email in code (audited). */
+router.post('/emails/templates/:kind/unpublish', need('emails:templates'), async (req, res) => {
+  const kind = kindOf(req);
+  const body = validate(req.body, { reason: REASON });
+  await db.withTransaction(async (client) => {
+    await client.query('UPDATE email_templates SET published_at = NULL, published_by = NULL WHERE kind = $1 AND published_at IS NOT NULL', [kind]);
+    await audit(client, req, 'email-template-unpublish', null, body.reason, { kind });
+  });
+  res.json({ ok: true });
+});
+
+/** POST /emails/templates/:kind/test { subject, preheader, title, blocks } — sends it, with sample values, to the admin's own address only. */
+router.post('/emails/templates/:kind/test', need('emails:templates'), async (req, res) => {
+  const kind = kindOf(req);
+  const t = library.validate(kind, req.body ?? {});
+  const { rows: [me] } = await db.query('SELECT email, username FROM users WHERE id = $1', [req.admin.id]);
+  if (!me?.email) throw badRequest('Your account has no email address to send the test to');
+  if (!emailSvc.enabled()) throw conflict('Email is not set up on this server (BREVO_API_KEY)');
+  const m = library.render(kind, t, { values: library.samples(kind), core: library.sampleCore(kind) });
+  await emailSvc.send({ to: me.email, toName: me.username, subject: `[Test] ${m.subject}`, html: m.html, kind, userId: req.admin.id, test: true, tags: ['template-test'] });
+  res.json({ sentTo: me.email });
 });
 
 module.exports = router;

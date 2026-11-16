@@ -13,6 +13,7 @@ const config = require('../config');
 const email = require('../email');
 const company = require('../../client/src/shared/company.json');
 const { badRequest } = require('../utils/httpError');
+const library = require('../email/library');
 
 const LINK_DAYS = 7;
 const MAX_PER_HOUR = 3;
@@ -65,6 +66,14 @@ function message({ lang = 'en', name, link }) {
   };
 }
 
+/** The locked part of the confirmation (for the editable template, CRM phase 5): the button, how long it works, the raw link. */
+function core({ link }) {
+  const t = TEXTS.en;
+  return `<p style="margin:24px 0"><a href="${esc(link)}" style="background:#ffd21f;color:#0e1320;text-decoration:none;font-weight:bold;padding:12px 22px;border-radius:10px;display:inline-block">${esc(t.button)}</a></p>
+<p style="margin:0 0 12px;color:#4b5563">${esc(t.later)}</p>
+<p style="margin:16px 0 0;font-size:12px;color:#6b7280">${esc(t.raw)}<br><span style="word-break:break-all">${esc(link)}</span></p>`;
+}
+
 /** Is sending on (email set up)? */
 const on = () => email.enabled();
 
@@ -84,8 +93,8 @@ async function send(db, user, { lang = 'en', siteUrl = config.publicSiteUrl } = 
     [user.id, user.email, hash(token), language, LINK_DAYS],
   );
   const link = `${siteUrl.replace(/\/+$/, '')}/confirm-email?t=${encodeURIComponent(token)}`;
-  const m = message({ lang: language, name: user.username, link });
-  await email.send({ to: user.email, toName: user.username, subject: m.subject, html: m.html, tags: ['confirm-email'] });
+  const m = await library.compose(db, 'confirm-email', { values: { name: user.username }, core: core({ link }), fallback: () => message({ lang: language, name: user.username, link }) });
+  await email.send({ to: user.email, toName: user.username, subject: m.subject, html: m.html, tags: ['confirm-email'], userId: user.id, templateVersion: m.templateVersion });
   return 'sent';
 }
 
@@ -104,4 +113,4 @@ async function confirm(db, token) {
   return { confirmed: true };
 }
 
-module.exports = { send, confirm, message, on, TEXTS, LINK_DAYS, MAX_PER_HOUR, hash };
+module.exports = { core, send, confirm, message, on, TEXTS, LINK_DAYS, MAX_PER_HOUR, hash };

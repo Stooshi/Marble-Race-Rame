@@ -6,6 +6,7 @@ import MarbleBadge from '../site/marbles/MarbleBadge';
 import { countryName } from '../site/country/countries';
 import BillingDocument, { docMoney } from '../shared/billing/BillingDocument';
 import company from '../shared/company.json';
+import { EmailTemplates } from './CrmEmails';
 import './crm.css';
 
 /**
@@ -42,7 +43,7 @@ const PATHS = {
   building: 'M3 21h18M5 21V7l7-4 7 4v14M9 9h1M14 9h1M9 13h1M14 13h1M9 17h1M14 17h1',
   list: 'M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01',
 };
-function Icon({ name, size = 20 }) {
+export function Icon({ name, size = 20 }) {
   return (
     <svg className="crm-ico" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       <path d={PATHS[name]} />
@@ -51,14 +52,14 @@ function Icon({ name, size = 20 }) {
 }
 
 // ── Formatting ───────────────────────────────────────────────────────────────
-const when = (iso) => (iso ? new Date(iso).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Stockholm' }) : '—');
+export const when = (iso) => (iso ? new Date(iso).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Stockholm' }) : '—');
 const day = (iso) => (iso ? new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'Europe/Stockholm' }) : '—');
 const num = (n) => Number(n ?? 0).toLocaleString('en-GB');
 const money = docMoney;
 const place = (n) => (n ? `${n}${n % 10 === 1 && n % 100 !== 11 ? 'st' : n % 10 === 2 && n % 100 !== 12 ? 'nd' : n % 10 === 3 && n % 100 !== 13 ? 'rd' : 'th'}` : '—');
 const thisMonth = () => new Date().toLocaleDateString('sv-SE', { timeZone: 'Europe/Stockholm' }).slice(0, 7);
 const isPhone = () => window.matchMedia?.('(max-width: 820px)').matches;
-const toTop = () => { if (isPhone()) window.scrollTo(0, 0); };
+export const toTop = () => { if (isPhone()) window.scrollTo(0, 0); };
 
 export const BASE = '/admin/crm';
 const ROLE_NAMES = { owner: 'Owner', finance: 'Finance', support: 'Support', marketing: 'Marketing', 'read-only': 'Read-only' };
@@ -76,7 +77,7 @@ const NAV = [
   { to: 'customers', icon: 'customers', label: 'Customers', need: 'customers:read' },
   { to: 'billing', icon: 'billing', label: 'Billing', need: 'billing:read' },
   { to: 'support', icon: 'support', label: 'Support', need: 'support:read', old: '/admin/support' },
-  { to: 'marketing', icon: 'marketing', label: 'Marketing', need: 'gift-codes:read', old: '/admin/gift-codes' },
+  { to: 'marketing', icon: 'marketing', label: 'Marketing', need: ['emails:templates', 'gift-codes:read'] },
   { to: 'tracks', icon: 'tracks', label: 'Races & tracks', need: 'reports:read', old: '/admin/readiness' },
   { to: 'settings', icon: 'settings', label: 'Settings', need: 'reports:read' },
 ];
@@ -86,7 +87,7 @@ function usePermissions(session) {
   const [me, setMe] = useState(session?.user ?? {});
   useEffect(() => { adminApi.session().then((r) => setMe(r.user), () => {}); }, []);
   const list = me.permissions;
-  const can = useCallback((p) => !list || list.includes(p), [list]);
+  const can = useCallback((p) => !list || [].concat(p).some((x) => list.includes(x)), [list]);
   return { me, can };
 }
 
@@ -128,6 +129,7 @@ export default function Crm({ session, onLogout }) {
           {can(current.need) && page === 'customers' && <Customers id={sub[0]} can={can} />}
           {can(current.need) && page === 'billing' && <Billing number={sub[0] ? decodeURIComponent(sub[0]) : null} can={can} />}
           {can(current.need) && page === 'settings' && <Settings tab={sub[0]} can={can} me={me} />}
+          {can(current.need) && page === 'marketing' && <Marketing tab={sub[0]} kind={sub[1]} can={can} />}
           {can(current.need) && current.old && <Later item={current} />}
         </main>
       </div>
@@ -137,7 +139,7 @@ export default function Crm({ session, onLogout }) {
 
 // ── Small parts ──────────────────────────────────────────────────────────────
 
-function Card({ title, children, actions }) {
+export function Card({ title, children, actions }) {
   return (
     <section className="crm-card crm-block">
       {(title || actions) && <div className="crm-block__head"><h3>{title}</h3>{actions}</div>}
@@ -146,7 +148,7 @@ function Card({ title, children, actions }) {
   );
 }
 
-function Rows({ head, rows, empty = 'Nothing yet.', wrap = false }) {
+export function Rows({ head, rows, empty = 'Nothing yet.', wrap = false }) {
   if (!rows.length) return <p className="crm-muted">{empty}</p>;
   return (
     <div className="crm-scroll">
@@ -158,14 +160,14 @@ function Rows({ head, rows, empty = 'Nothing yet.', wrap = false }) {
   );
 }
 
-const Pill = ({ tone, children }) => <span className={`crm-pill${tone ? ` crm-pill--${tone}` : ''}`}>{children}</span>;
+export const Pill = ({ tone, children }) => <span className={`crm-pill${tone ? ` crm-pill--${tone}` : ''}`}>{children}</span>;
 const statusTone = { paid: 'good', refunded: 'warn', pending: 'warn', failed: 'bad', new: 'bad', open: 'warn', answered: 'info', closed: undefined };
 
 /**
  * An action that needs a reason (and maybe more fields), confirmed on the page: the button opens a small form;
  * "Confirm" runs `run(values)`; its answer (or error) shows under it.
  */
-function ReasonAction({ label, danger, fields = [], confirm = 'Confirm', run, done }) {
+export function ReasonAction({ label, danger, fields = [], confirm = 'Confirm', run, done }) {
   const [open, setOpen] = useState(false);
   const [v, setV] = useState({ reason: '' });
   const [busy, setBusy] = useState(false);
@@ -249,6 +251,7 @@ function customerOf(d) {
     ],
     security: d.security.events,
     audit: d.audit.map((a) => ({ action: a.action, admin: a.admin, reason: a.reason, at: a.created_at })),
+    emails: d.emails ?? [],
   };
 }
 
@@ -272,7 +275,7 @@ function summary(c, key) {
     case 'purchases': return c.purchases.length ? `${c.purchases.length} purchase${c.purchases.length === 1 ? '' : 's'} · last ${c.purchases[0].item}` : 'No purchases';
     case 'refunds': return c.credits.length ? `${c.credits.length} credit note${c.credits.length === 1 ? '' : 's'}` : c.purchases.some((p) => p.refunded) ? 'Refunds from before credit notes' : 'None';
     case 'support': return c.support.length ? `${c.support.length} message${c.support.length === 1 ? '' : 's'} · ${c.support[0].ref} ${c.support[0].status}` : 'No messages';
-    case 'emails': return 'Receipts and credit notes so far';
+    case 'emails': return c.emails.length ? `${c.emails.length} sent · last “${c.emails[0].subject}”` : 'None logged yet';
     case 'consents': return `News by email: ${c.consents[0]?.value ?? '—'}`;
     case 'security': return `${c.security.length} sign-in events · ${c.audit.length} admin actions`;
     default: return '';
@@ -509,15 +512,13 @@ function SectionDetail({ c, section, can, reload }) {
           {!c.support.length && <p className="crm-muted">No support messages.</p>}
         </>
       );
-    case 'emails': {
-      const sent = c.purchases.flatMap((o) => [o.receipt, ...o.credits].filter((d) => d?.emailed_at).map((d) => ({ d, o })));
+    case 'emails':
       return (
         <Card title="Emails sent">
-          <Rows head={['When', 'Kind', 'About']} rows={sent.map(({ d, o }) => [when(d.emailed_at), d.kind === 'credit' ? 'Credit note' : 'Purchase and receipt', <>{o.order_no} · <DocLink d={d} can={can} /></>])} empty="None recorded yet." />
-          <p className="crm-muted">The full email log (welcome, reminders, news) comes with the email plan (CRM phase 5).</p>
+          <Rows head={['When', 'Kind', 'Subject', 'Status']} rows={c.emails.map((e) => [when(e.created_at), e.kind, e.subject, <Pill tone={e.status === 'failed' ? 'bad' : e.status === 'test' ? 'info' : 'good'}>{e.status}{e.template_version ? ` · v${e.template_version}` : ''}</Pill>])} empty="No emails logged yet (the log starts with the next deploy)." />
+          <p className="crm-muted">Every email to this player since the log started; kept 24 months. No open or click tracking.</p>
         </Card>
       );
-    }
     case 'consents':
       return (
         <Card title="Consents and choices">
@@ -795,12 +796,33 @@ function AuditLog() {
   );
 }
 
+// ── Marketing ────────────────────────────────────────────────────────────────
+
+const MARKETING_TABS = [
+  { key: 'emails', title: 'Email templates', need: 'emails:templates' },
+];
+
+function Marketing({ tab, kind, can }) {
+  const navigate = useNavigate();
+  const tabs = MARKETING_TABS.filter((t) => can(t.need));
+  const cur = tabs.find((t) => t.key === tab) ?? tabs[0];
+  return (
+    <div className="crm-page">
+      <div className="crm-chips" role="tablist" aria-label="Marketing">
+        {tabs.map((t) => <button key={t.key} type="button" role="tab" aria-selected={cur?.key === t.key} onClick={() => navigate(`${BASE}/marketing/${t.key}`)}>{t.title}</button>)}
+        {can('gift-codes:read') && <Link to="/admin/gift-codes" className="crm-btn crm-btn--sm">Gift codes (classic)</Link>}
+      </div>
+      {cur?.key === 'emails' && <EmailTemplates kind={kind} />}
+      {!cur && <p className="crm-muted">Gift codes are on the classic page for now.</p>}
+    </div>
+  );
+}
+
 // ── Pages not rebuilt yet ────────────────────────────────────────────────────
 
 const LATER = {
   dashboard: 'The dashboard stays as it is for now.',
   support: 'The inbox, each message beside its customer, comes in the next phase (support). Today\'s inbox works as before.',
-  marketing: 'Email templates, onboarding and newsletters come in the marketing phases. Gift codes are on today\'s page.',
   tracks: 'Race readiness and the economy, as today.',
 };
 function Later({ item }) {

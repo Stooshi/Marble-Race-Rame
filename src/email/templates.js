@@ -20,14 +20,15 @@ ${body}
 }
 
 /** The password-reset email: one link, valid for `minutes`. */
+const passwordCore = ({ link, minutes }) => `
+<p style="margin:24px 0"><a href="${esc(link)}" style="background:#ffd21f;color:#0e1320;text-decoration:none;font-weight:bold;padding:12px 22px;border-radius:10px;display:inline-block">Choose a new password</a></p>
+<p>The link works once, for ${minutes} minutes. If the button doesn't work, copy this address into your browser:<br><span style="word-break:break-all;color:#374151">${esc(link)}</span></p>`;
 function passwordReset({ username, link, minutes }) {
   return {
     subject: 'Reset your Marble Spins password',
     html: layout('Reset your password', `
 <p>Hi ${esc(username)},</p>
-<p>Someone asked to reset the password for your Marble Spins account. If it was you, choose a new password here:</p>
-<p style="margin:24px 0"><a href="${esc(link)}" style="background:#ffd21f;color:#0e1320;text-decoration:none;font-weight:bold;padding:12px 22px;border-radius:10px;display:inline-block">Choose a new password</a></p>
-<p>The link works once, for ${minutes} minutes. If the button doesn't work, copy this address into your browser:<br><span style="word-break:break-all;color:#374151">${esc(link)}</span></p>
+<p>Someone asked to reset the password for your Marble Spins account. If it was you, choose a new password here:</p>${passwordCore({ link, minutes })}
 <p>Didn't ask for this? Then you can ignore this email: your password stays the same.</p>`),
   };
 }
@@ -55,14 +56,15 @@ ${row('Screenshot', hasScreenshot ? 'yes, in the back office' : 'none')}
 }
 
 /** To the player: a reply from support, with their own message quoted below. */
+const supportReplyCore = ({ ref, body, original }) => `
+${paragraphs(body)}
+<p style="margin-top:22px;color:#6b7280;font-size:13px">Your message (${esc(ref)}):</p>
+<div style="border-left:3px solid #d1d5db;padding:2px 0 2px 12px;color:#6b7280;font-size:13px">${paragraphs(original)}</div>`;
 function supportReply({ name, ref, body, original }) {
   return {
     subject: `Re: your message to Marble Spins (${ref})`,
     html: layout('A reply from Marble Spins support', `
-<p>Hi ${esc(name)},</p>
-${paragraphs(body)}
-<p style="margin-top:22px;color:#6b7280;font-size:13px">Your message (${esc(ref)}):</p>
-<div style="border-left:3px solid #d1d5db;padding:2px 0 2px 12px;color:#6b7280;font-size:13px">${paragraphs(original)}</div>`),
+<p>Hi ${esc(name)},</p>${supportReplyCore({ ref, body, original })}`),
   };
 }
 
@@ -75,18 +77,15 @@ const button = (href, text) => `<p style="margin:20px 0"><a href="${esc(href)}" 
  * order: { orderNo, item, price (e.g. "$9.99 incl. VAT"), paidAt (text), kind: 'coins' | 'pass' | 'pre-sale-pass' | 'pack',
  *          activates (text, pre-sale only), agreed: [the consent sentences], purchasesUrl, termsUrl }
  */
-function purchaseConfirmation({ username, orderNo, item, price, paidAt, kind, activates, agreed, purchasesUrl, termsUrl, receipt = null }) {
+/** The purchase's locked part: the order, what was delivered, what the buyer agreed to, the receipt and the terms. */
+function purchaseCore({ orderNo, item, price, paidAt, kind, activates, agreed, purchasesUrl, termsUrl, receipt = null }) {
   const delivered = {
     coins: '<p>Your coins were added to your account right away.</p>',
     pack: '<p>Your track pack was unlocked right away: its tracks are yours to race, and to race with friends in your rooms.</p>',
     pass: '<p>Your pass is active now: the holiday tracks are open for you until the season ends.</p>',
     'pre-sale-pass': `<p>Your pass activates on <b>${esc(activates)}</b>. Until then you can withdraw from this purchase for a full refund: open your Purchases page and press <b>Withdraw from this purchase</b>. Once the pass activates, your 14-day right of withdrawal ends.</p>${button(purchasesUrl, 'My purchases')}`,
   }[kind];
-  return {
-    subject: `Your Marble Spins order ${orderNo}`,
-    html: layout('Thanks for your order', `
-<p>Hi ${esc(username)},</p>
-<p>This confirms your purchase from Marble Spins.</p>
+  return `
 <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 14px;font-size:14px">
 ${infoRow('Order', orderNo)}${infoRow('Item', item)}${infoRow('Price', price)}${infoRow('Paid', paidAt)}
 </table>
@@ -94,39 +93,52 @@ ${delivered}
 <p style="margin:16px 0 6px"><b>What you agreed to when you bought it:</b></p>
 <ul style="margin:0 0 14px;padding-left:20px">${agreed.map((a) => `<li style="margin:0 0 6px">${esc(a)}</li>`).join('')}</ul>
 ${receipt ? `<p>Your receipt is <b>${esc(receipt.number)}</b>, with the VAT, on your Purchases page:</p>${button(receipt.url, 'View your receipt')}
-<p>The terms of sale:` : `<p>Your receipt comes in a separate email from Stripe, our payment provider. The terms of sale:`} <a href="${esc(termsUrl)}" style="color:#1d4ed8">${esc(termsUrl.replace(/^https?:\/\//, ''))}</a>. Keep this email for your records.</p>`),
+<p>The terms of sale:` : `<p>Your receipt comes in a separate email from Stripe, our payment provider. The terms of sale:`} <a href="${esc(termsUrl)}" style="color:#1d4ed8">${esc(termsUrl.replace(/^https?:\/\//, ''))}</a>. Keep this email for your records.</p>`;
+}
+function purchaseConfirmation(o) {
+  return {
+    subject: `Your Marble Spins order ${o.orderNo}`,
+    html: layout('Thanks for your order', `
+<p>Hi ${esc(o.username)},</p>
+<p>This confirms your purchase from Marble Spins.</p>${purchaseCore(o)}`),
   };
 }
 
 /** The acknowledgement of a withdrawal (sent without delay once the player has withdrawn). */
-function withdrawalReceived({ username, orderNo, item, price, receivedAt }) {
-  return {
-    subject: `We've received your withdrawal (order ${orderNo})`,
-    html: layout('Withdrawal received', `
-<p>Hi ${esc(username)},</p>
+const withdrawalCore = ({ orderNo, item, price, receivedAt }) => `
 <p>We received your withdrawal from this purchase on <b>${esc(receivedAt)}</b>:</p>
 <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 14px;font-size:14px">
 ${infoRow('Order', orderNo)}${infoRow('Item', item)}${infoRow('Refund', price)}
 </table>
-<p>You get the full amount back, the same way you paid, within 14 days (it usually shows within 5–10 working days). The ${esc(item)} is removed from your account.</p>
+<p>You get the full amount back, the same way you paid, within 14 days (it usually shows within 5–10 working days). The ${esc(item)} is removed from your account.</p>`;
+function withdrawalReceived(o) {
+  return {
+    subject: `We've received your withdrawal (order ${o.orderNo})`,
+    html: layout('Withdrawal received', `
+<p>Hi ${esc(o.username)},</p>${withdrawalCore(o)}
 <p>Changed your mind? You can buy it again while it's on sale.</p>`),
   };
 }
 
 /** A credit note (a refund, part refund, withdrawal or chargeback of a website purchase): the credit note's number and a link to it. */
-function creditNote({ username, number, orderNo, item, amount, receiptNumber, url, chargeback = false }) {
-  return {
-    subject: `Your credit note ${number} (order ${orderNo})`,
-    html: layout('Your credit note', `
-<p>Hi ${esc(username)},</p>
+const creditCore = ({ number, orderNo, item, amount, receiptNumber, url, chargeback = false }) => `
 <p>${chargeback ? 'Your bank reversed this payment, so we have credited it:' : 'We have refunded this purchase:'}</p>
 <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 14px;font-size:14px">
 ${infoRow('Credit note', number)}${infoRow('Order', orderNo)}${infoRow('Item', item)}${infoRow(chargeback ? 'Credited' : 'Refunded', amount)}${infoRow('Credits receipt', receiptNumber)}
 </table>
 ${chargeback ? '' : '<p>The money goes back the same way you paid. It usually shows within 5–10 working days.</p>'}
-${button(url, 'View your credit note')}
+${button(url, 'View your credit note')}`;
+function creditNote(o) {
+  return {
+    subject: `Your credit note ${o.number} (order ${o.orderNo})`,
+    html: layout('Your credit note', `
+<p>Hi ${esc(o.username)},</p>${creditCore(o)}
 <p>Keep this email for your records.</p>`),
   };
 }
 
-module.exports = { passwordReset, supportNotification, supportReply, purchaseConfirmation, withdrawalReceived, creditNote, esc };
+module.exports = {
+  passwordReset, supportNotification, supportReply, purchaseConfirmation, withdrawalReceived, creditNote, esc, layout, button,
+  // The locked parts, for the editable templates (./library.js).
+  cores: { passwordCore, supportReplyCore, purchaseCore, withdrawalCore, creditCore },
+};

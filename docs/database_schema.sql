@@ -1557,3 +1557,40 @@ ALTER TABLE payments ADD COLUMN IF NOT EXISTS vat_rate numeric(5,2);
 -- refunds, coins, exports or deletions); marketing: email lists and (later) campaigns; read-only: the
 -- dashboard and reports. An admin without a role can only read the dashboard and reports. Every change is in admin_audit.
 ALTER TABLE users ADD COLUMN IF NOT EXISTS admin_role varchar(16) CHECK (admin_role IN ('owner', 'finance', 'support', 'marketing', 'read-only'));
+
+-- Editable email templates (Moses, 16 Nov 2026, CRM phase 5; src/email/library.js): every save is a version; the
+-- published one (the newest with published_at) is used, else the email in code. A template holds the wording round
+-- each email's locked part (blocks); figures, legal texts and links always come from the code.
+CREATE TABLE IF NOT EXISTS email_templates (
+    id              bigserial   PRIMARY KEY,
+    kind            varchar(40) NOT NULL,
+    version         integer     NOT NULL,
+    subject         text        NOT NULL,
+    preheader       text,
+    title           text        NOT NULL,
+    blocks          jsonb       NOT NULL,
+    note            text,
+    created_by      uuid        REFERENCES users(id) ON DELETE SET NULL,
+    created_at      timestamptz NOT NULL DEFAULT now(),
+    published_at    timestamptz,
+    published_by    uuid        REFERENCES users(id) ON DELETE SET NULL,
+    UNIQUE (kind, version)
+);
+CREATE INDEX IF NOT EXISTS idx_email_templates_published ON email_templates (kind, published_at DESC) WHERE published_at IS NOT NULL;
+
+-- Every email sent (CRM phase 5; src/email/log.js): to whom, what, which template version, Brevo's message id.
+-- Kept 24 months (trimmed daily). user_id: the player it went to, when it went to a player's address.
+CREATE TABLE IF NOT EXISTS email_log (
+    id               bigserial   PRIMARY KEY,
+    user_id          uuid        REFERENCES users(id) ON DELETE SET NULL,
+    to_email         varchar(254),
+    kind             varchar(40) NOT NULL,
+    template_version integer,
+    subject          text        NOT NULL,
+    provider_id      text,
+    status           varchar(12) NOT NULL DEFAULT 'sent' CHECK (status IN ('sent', 'failed', 'test')),
+    error            text,
+    created_at       timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_email_log_user ON email_log (user_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_email_log_time ON email_log (created_at);
