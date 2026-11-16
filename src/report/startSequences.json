@@ -170,7 +170,7 @@
 "sao-paulo-rain-circuit": {"family":"grand-prix","reach":0.306,"seq":["opening: pipe-drop","drop","half-pipe","S-bends left","peg","slalom"]},
 "sapporo-snow-sculptures": {"family":"coaster","reach":0.236,"seq":["opening: classic","drop","pileUp","slalom","straight","box","rail","jump","spiral right"]},
 "seine-quays-spins": {"family":"river","reach":0.326,"seq":["opening: pipe-drop","drop","half-pipe","straight","slalom","sweep right","peg ×3"]},
-"seoul-namsan-run": {"family":"coaster","reach":0.268,"seq":["opening: chicane-start","drop","pileUp","slalom","S-bends left","peg ×2","straight","moguls","splitter","peg ×2"]},
+"seoul-namsan-run": {"family":"coaster","reach":0.23,"seq":["opening: chicane-start","drop","pileUp","slalom","S-bends left","peg ×2","straight","moguls"]},
 "seoul-winter-lights": {"family":"arcade","reach":0.369,"seq":["opening: clean-drop","drop","S-bends left","sweep right","curtain"]},
 "singapore-block-gardens": {"family":"block-2","reach":0.237,"seq":["opening: tunnel-launch","drop","pileUp","slalom","drop","slalom","climb","drop","sweep right"]},
 "sky-islands": {"family":"block","reach":0.239,"seq":["opening: classic","drop","pileUp","slalom","straight","peg ×2","sweep left","boost"]},

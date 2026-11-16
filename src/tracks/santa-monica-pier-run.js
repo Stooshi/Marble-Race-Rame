@@ -25,7 +25,7 @@ module.exports = track({
     { section: 'Promenade sweep', at: 0.5, side: 'right', distance: 10, height: 10 },
   ],
   start: { landmark: 'park-midway', scenery: ['palms'], type: 'water-tower', gate: 'barrier', shots: { countdown: 'low-front', launch: 'high-behind' } },
-  finish: { landmark: 'distant-coasters', billboards: 2 },
+  finish: { landmark: 'distant-coasters', billboards: 1 },
   opening: opening('sand-trap', {
     side: 'right',
     costumes: { block: 'barrel', slalom: 'route-flag' },
@@ -40,7 +40,6 @@ module.exports = track({
     },
     {
       name: 'Loop over the surf', shape: straight(170, { grade: 0.13 }), height: 0,
-      landmarks: [{ name: 'park-midway', at: 0.45, side: 'right', distance: 34 }],
       features: [brake({ at: 0.08, length: 12, drag: 0.02 }), loop({ at: 0.45, viewSide: 14 })],
     },
     {
@@ -62,12 +61,8 @@ module.exports = track({
       obstacles: [peg({ costume: 'route-flag', at: 0.3, line: 'right' }), peg({ costume: 'route-flag', at: 0.65, line: 'left' })],
     },
     {
-      name: 'Boardwalk bends', shape: sBends({ first: 'left', radius: 65, degrees: 70, grade: 0.16 }), height: 6,
-      obstacles: [block({ costume: 'barrel', at: 0.5, line: 'center' })],
-    },
-    {
       name: 'Run to the station', shape: straight(70, { grade: 0.15 }), height: 0,
-      obstacles: [slalom({ costume: 'route-flag', from: 0.4, to: 0.85, count: 3, loss: 0.3 })],
+      obstacles: [block({ costume: 'barrel', at: 0.2, line: 'center' }), slalom({ costume: 'route-flag', from: 0.4, to: 0.85, count: 3, loss: 0.3 })],
     },
     { name: 'Finish', shape: runIn(), height: 0 },
   ],
