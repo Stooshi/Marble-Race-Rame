@@ -104,6 +104,12 @@
 .crm-btn:disabled { cursor: default; opacity: 0.75; }
 .crm-btn--primary { background: var(--c-accent); border-color: var(--c-accent); color: #111; }
 .crm-btn--danger { border-color: rgba(255, 122, 107, 0.6); color: #ffc9c2; background: rgba(255, 122, 107, 0.08); }
+/* A link styled as a button keeps the button's text colour (".crm a" would make it blue: yellow-on-blue on a primary
+   one, Moses 16 Nov 2026). */
+.crm a.crm-btn { color: var(--c-text); }
+.crm a.crm-btn--primary, .crm a.crm-btn--primary:visited { color: #111; }
+.crm a.crm-btn--danger { color: #ffc9c2; }
+.crm-btn:focus-visible, .crm-chips button:focus-visible, .crm-list button:focus-visible { outline: 2px solid var(--c-info); outline-offset: 2px; }
 .crm-pill { padding: 2px 10px; border-radius: 99px; background: var(--c-raise); border: 1px solid var(--c-line); font-size: 12px; font-weight: 700; color: var(--c-muted); white-space: nowrap; }
 .crm-pill--good { color: var(--c-good); border-color: rgba(79, 209, 139, 0.4); background: rgba(79, 209, 139, 0.1); }
 .crm-pill--warn { color: var(--c-warn); border-color: rgba(255, 179, 71, 0.45); background: rgba(255, 179, 71, 0.1); }
