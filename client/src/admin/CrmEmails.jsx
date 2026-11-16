@@ -53,7 +53,6 @@ function TemplateEditor({ kind, onChanged }) {
   const [dirty, setDirty] = useState(false);
   const [preview, setPreview] = useState(null);
   const [problem, setProblem] = useState(null);
-  const [width, setWidth] = useState(390);
   const [msg, setMsg] = useState(null);
   const timer = useRef(null);
 
@@ -76,10 +75,6 @@ function TemplateEditor({ kind, onChanged }) {
 
   if (!d || !t) return <p className="crm-muted">{problem ?? 'Loading…'}</p>;
   const edit = (patch) => { setT({ ...t, ...patch }); setDirty(true); setMsg(null); };
-  const setBlock = (i, patch) => edit({ blocks: t.blocks.map((b, k) => (k === i ? { ...b, ...patch } : b)) });
-  const move = (i, by) => { const b = [...t.blocks]; const [x] = b.splice(i, 1); b.splice(i + by, 0, x); edit({ blocks: b }); };
-  const remove = (i) => edit({ blocks: t.blocks.filter((_, k) => k !== i) });
-  const add = (type) => edit({ blocks: [...t.blocks, { ...NEW_BLOCK[type] }] });
   const latest = d.versions[0]?.version ?? null;
   const save = async () => {
     try {
@@ -111,37 +106,11 @@ function TemplateEditor({ kind, onChanged }) {
         <p className="crm-muted" style={{ margin: '10px 0 4px' }}>Placeholders: {d.placeholders.map((p) => <code key={p.key} className="crm-code" title={`${p.about} (e.g. ${p.sample})`}>{`{{${p.key}}}`}</code>)}</p>
       </Card>
       <Card title="Blocks">
-        <div className="crm-blocks">
-          {t.blocks.map((b, i) => (
-            <div key={i} className={`crm-blk${b.type === 'core' ? ' crm-blk--core' : ''}`}>
-              <div className="crm-blk__head">
-                <b>{BLOCK_LABEL[b.type]}</b>
-                <span className="crm-grow" />
-                <button type="button" className="crm-btn crm-btn--sm" disabled={i === 0} onClick={() => move(i, -1)} aria-label="Move up">↑</button>
-                <button type="button" className="crm-btn crm-btn--sm" disabled={i === t.blocks.length - 1} onClick={() => move(i, 1)} aria-label="Move down">↓</button>
-                {b.type !== 'core' && <button type="button" className="crm-btn crm-btn--sm crm-btn--danger" onClick={() => remove(i)} aria-label="Remove">✕</button>}
-              </div>
-              {b.type === 'core' && <p className="crm-muted" style={{ margin: 0 }}>Filled by the code: the figures, legal wording and links. It can be moved, not changed.</p>}
-              {(b.type === 'heading' || b.type === 'button') && <input value={b.text} onChange={(e) => setBlock(i, { text: e.target.value })} placeholder={b.type === 'button' ? "The button's words" : 'Heading'} />}
-              {b.type === 'text' && <textarea rows={Math.min(8, Math.max(2, b.text.split('\n').length + 1))} value={b.text} onChange={(e) => setBlock(i, { text: e.target.value })} />}
-              {b.type === 'button' && <input value={b.href} onChange={(e) => setBlock(i, { href: e.target.value })} placeholder="https://… or {{…_url}}" />}
-              {b.type === 'image' && <><input value={b.src} onChange={(e) => setBlock(i, { src: e.target.value })} placeholder="https://… (the picture's address)" /><input value={b.alt} onChange={(e) => setBlock(i, { alt: e.target.value })} placeholder="What it shows" /></>}
-            </div>
-          ))}
-        </div>
-        <div className="crm-actions">
-          {['heading', 'text', 'button', 'divider', 'image'].map((k) => <button key={k} type="button" className="crm-btn crm-btn--sm" onClick={() => add(k)}>+ {BLOCK_LABEL[k]}</button>)}
-          <button type="button" className="crm-btn crm-btn--sm" onClick={() => { setT({ ...d.defaults, preheader: '' }); setDirty(true); }}>Start from today's email</button>
-        </div>
+        <BlocksEditor blocks={t.blocks} onChange={(blocks) => edit({ blocks })} />
+        <div className="crm-actions"><button type="button" className="crm-btn crm-btn--sm" onClick={() => { setT({ ...d.defaults, preheader: '' }); setDirty(true); }}>Start from today's email</button></div>
       </Card>
       {problem && <p className="crm-alert">{problem}</p>}
-      <Card
-        title="Preview (sample values)"
-        actions={<div className="crm-chips" role="tablist">{[[390, 'Phone'], [680, 'Computer']].map(([w, l]) => <button key={w} type="button" role="tab" aria-selected={width === w} onClick={() => setWidth(w)}>{l}</button>)}</div>}
-      >
-        {preview && <p className="crm-muted" style={{ margin: '0 0 8px' }}><b>Subject:</b> {preview.subject}</p>}
-        <div className="crm-preview"><iframe title="Email preview" sandbox="" srcDoc={preview?.html ?? ''} style={{ width: `min(100%, ${width}px)` }} /></div>
-      </Card>
+      <EmailPreview preview={preview} />
       <Card title="Save, test, publish">
         <div className="crm-actions crm-actions--wrap">
           <button type="button" className="crm-btn crm-btn--primary" disabled={!dirty || Boolean(problem)} onClick={save}>Save as a new version</button>
@@ -165,5 +134,52 @@ function TemplateEditor({ kind, onChanged }) {
         <p className="crm-muted">Open an earlier version, save it as a new one and publish it to go back to it.</p>
       </Card>
     </>
+  );
+}
+
+/** An email's blocks: edit, move, remove, add (the locked part only moves). */
+export function BlocksEditor({ blocks, onChange }) {
+  const setBlock = (i, patch) => onChange(blocks.map((b, k) => (k === i ? { ...b, ...patch } : b)));
+  const move = (i, by) => { const b = [...blocks]; const [x] = b.splice(i, 1); b.splice(i + by, 0, x); onChange(b); };
+  const remove = (i) => onChange(blocks.filter((_, k) => k !== i));
+  const add = (type) => onChange([...blocks, { ...NEW_BLOCK[type] }]);
+  return (
+    <>
+      <div className="crm-blocks">
+        {blocks.map((b, i) => (
+          <div key={i} className={`crm-blk${b.type === 'core' ? ' crm-blk--core' : ''}`}>
+            <div className="crm-blk__head">
+              <b>{BLOCK_LABEL[b.type]}</b>
+              <span className="crm-grow" />
+              <button type="button" className="crm-btn crm-btn--sm" disabled={i === 0} onClick={() => move(i, -1)} aria-label="Move up">↑</button>
+              <button type="button" className="crm-btn crm-btn--sm" disabled={i === blocks.length - 1} onClick={() => move(i, 1)} aria-label="Move down">↓</button>
+              {b.type !== 'core' && <button type="button" className="crm-btn crm-btn--sm crm-btn--danger" onClick={() => remove(i)} aria-label="Remove">✕</button>}
+            </div>
+            {b.type === 'core' && <p className="crm-muted" style={{ margin: 0 }}>Filled by the code: the figures, legal wording and links. It can be moved, not changed.</p>}
+            {(b.type === 'heading' || b.type === 'button') && <input value={b.text} onChange={(e) => setBlock(i, { text: e.target.value })} placeholder={b.type === 'button' ? "The button's words" : 'Heading'} />}
+            {b.type === 'text' && <textarea rows={Math.min(8, Math.max(2, b.text.split('\n').length + 1))} value={b.text} onChange={(e) => setBlock(i, { text: e.target.value })} />}
+            {b.type === 'button' && <input value={b.href} onChange={(e) => setBlock(i, { href: e.target.value })} placeholder="https://… or {{…_url}}" />}
+            {b.type === 'image' && <><input value={b.src} onChange={(e) => setBlock(i, { src: e.target.value })} placeholder="https://… (the picture's address)" /><input value={b.alt} onChange={(e) => setBlock(i, { alt: e.target.value })} placeholder="What it shows" /></>}
+          </div>
+        ))}
+      </div>
+      <div className="crm-actions">
+        {['heading', 'text', 'button', 'divider', 'image'].map((k) => <button key={k} type="button" className="crm-btn crm-btn--sm" onClick={() => add(k)}>+ {BLOCK_LABEL[k]}</button>)}
+      </div>
+    </>
+  );
+}
+
+/** An email preview in a frame, at phone or computer width. */
+export function EmailPreview({ preview }) {
+  const [width, setWidth] = useState(390);
+  return (
+    <Card
+      title="Preview (sample values)"
+      actions={<div className="crm-chips" role="tablist">{[[390, 'Phone'], [680, 'Computer']].map(([w, l]) => <button key={w} type="button" role="tab" aria-selected={width === w} onClick={() => setWidth(w)}>{l}</button>)}</div>}
+    >
+      {preview && <p className="crm-muted" style={{ margin: '0 0 8px' }}><b>Subject:</b> {preview.subject}</p>}
+      <div className="crm-preview"><iframe title="Email preview" sandbox="" srcDoc={preview?.html ?? ''} style={{ width: `min(100%, ${width}px)` }} /></div>
+    </Card>
   );
 }

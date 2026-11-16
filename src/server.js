@@ -23,6 +23,7 @@ async function start() {
   require('./push').startJobs(db); // push notifications: season news and the daily goal reminder (dry runs until PUSH_SENDING=on)
   require('./payments/emails').startJobs(db); // purchase confirmations and withdrawal acknowledgements (once email is on)
   require('./email/log').startJobs(db); // the email log: trimmed to 24 months, daily
+  require('./marketing').startJobs(db); // marketing email: onboarding and newsletters (counts only until MARKETING_SENDING=on)
   require('./support').startJobs(db); // support: Answered for 14 days with no answer closes by itself
   require('./billing').startJobs(db); // receipts and credit notes missing at start-up; their SEK amounts from Stripe; credit notes' emails
   require('./payments').startGoogleJobs(db); // Google Play: consume leftovers hourly, refunds/chargebacks every 6 h

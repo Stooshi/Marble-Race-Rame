@@ -31,7 +31,7 @@ test('the role matrix', () => {
   assert.ok(!perms.can(as('finance'), 'customers:edit') && !perms.can(as('finance'), 'coins:adjust'));
   assert.ok(perms.can(as('support'), 'support:answer') && perms.can(as('support'), 'customers:edit'));
   assert.ok(!perms.can(as('support'), 'payments:refund') && !perms.can(as('support'), 'billing:read') && !perms.can(as('support'), 'emails:read'));
-  assert.deepEqual(perms.permissionsOf(as('marketing')), ['reports:read', 'gift-codes:read', 'emails:templates']);
+  assert.deepEqual(perms.permissionsOf(as('marketing')), ['reports:read', 'gift-codes:read', 'emails:templates', 'marketing:read']);
   for (const r of ['finance', 'support', 'marketing', 'read-only']) assert.ok(!perms.can(as(r), 'admins:manage') && !perms.can(as(r), 'audit:read'));
   assert.throws(() => perms.need('no:such'));
   assert.throws(() => perms.can(as('owner'), 'no:such'));

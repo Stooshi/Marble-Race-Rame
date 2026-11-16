@@ -8,6 +8,7 @@ import BillingDocument, { docMoney } from '../shared/billing/BillingDocument';
 import company from '../shared/company.json';
 import { EmailTemplates } from './CrmEmails';
 import { SupportPage } from './CrmSupport';
+import { MarketingRules, Newsletters, Onboarding } from './CrmMarketing';
 import './crm.css';
 
 /**
@@ -78,7 +79,7 @@ const NAV = [
   { to: 'customers', icon: 'customers', label: 'Customers', need: 'customers:read' },
   { to: 'billing', icon: 'billing', label: 'Billing', need: 'billing:read' },
   { to: 'support', icon: 'support', label: 'Support', need: 'support:read' },
-  { to: 'marketing', icon: 'marketing', label: 'Marketing', need: ['emails:templates', 'gift-codes:read'] },
+  { to: 'marketing', icon: 'marketing', label: 'Marketing', need: ['marketing:read', 'emails:templates', 'gift-codes:read'] },
   { to: 'tracks', icon: 'tracks', label: 'Races & tracks', need: 'reports:read', old: '/admin/readiness' },
   { to: 'settings', icon: 'settings', label: 'Settings', need: 'reports:read' },
 ];
@@ -835,6 +836,9 @@ function AuditLog() {
 // ── Marketing ────────────────────────────────────────────────────────────────
 
 const MARKETING_TABS = [
+  { key: 'rules', title: 'Rules and switch', need: 'marketing:read' },
+  { key: 'onboarding', title: 'Onboarding', need: 'marketing:read' },
+  { key: 'newsletters', title: 'Newsletters', need: 'marketing:read' },
   { key: 'emails', title: 'Email templates', need: 'emails:templates' },
 ];
 
@@ -849,6 +853,9 @@ function Marketing({ tab, kind, can }) {
         {can('gift-codes:read') && <Link to="/admin/gift-codes" className="crm-btn crm-btn--sm">Gift codes (classic)</Link>}
       </div>
       {cur?.key === 'emails' && <EmailTemplates kind={kind} />}
+      {cur?.key === 'rules' && <MarketingRules />}
+      {cur?.key === 'onboarding' && <Onboarding />}
+      {cur?.key === 'newsletters' && <Newsletters id={kind} can={can} />}
       {!cur && <p className="crm-muted">Gift codes are on the classic page for now.</p>}
     </div>
   );

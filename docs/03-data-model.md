@@ -524,3 +524,10 @@ The website's cookie choice, kept as a record of consent (GDPR): one row each ti
 | `support_messages.stage_at`, `assigned_to` | When the stage last changed; the admin on it (owner or support). |
 | `support_saved_replies` | Saved reply texts (`title`, `body` with `{{name}}`, `{{ref}}`, `{{order_no}}`), archived rather than deleted. The data update adds four to start from. |
 
+## Marketing email (16 Nov 2026, CRM phase 6; sending off)
+
+| Table | What |
+|---|---|
+| `newsletters` | A newsletter (`name`, `subject`, `preheader`, `title`, `blocks`, `segment` jsonb, `status` draft / sending / sent, `sent_count`). Only a draft can change. |
+| `marketing_sends` | One row per marketing email a player got (`kind`: onboarding-1…4 or newsletter, `newsletter_id`, `status` sent / failed): each onboarding step and each newsletter goes once (unique indexes). |
+

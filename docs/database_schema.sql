@@ -1614,3 +1614,33 @@ CREATE TABLE IF NOT EXISTS support_saved_replies (
     updated_at      timestamptz NOT NULL DEFAULT now(),
     archived_at     timestamptz
 );
+
+-- Marketing email (Moses, 16 Nov 2026, CRM phase 6; src/marketing): newsletters and what each player was sent.
+-- Sending is off (MARKETING_SENDING) until Moses approves; then only to the players the audience rules allow.
+CREATE TABLE IF NOT EXISTS newsletters (
+    id              uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
+    name            varchar(80) NOT NULL,
+    subject         text        NOT NULL,
+    preheader       text,
+    title           text        NOT NULL,
+    blocks          jsonb       NOT NULL,
+    segment         jsonb       NOT NULL DEFAULT '{}'::jsonb,
+    status          varchar(10) NOT NULL DEFAULT 'draft' CHECK (status IN ('draft', 'sending', 'sent')),
+    created_by      uuid        REFERENCES users(id) ON DELETE SET NULL,
+    created_at      timestamptz NOT NULL DEFAULT now(),
+    updated_at      timestamptz NOT NULL DEFAULT now(),
+    send_started_at timestamptz,
+    sent_at         timestamptz,
+    sent_count      integer     NOT NULL DEFAULT 0
+);
+-- One row per marketing email a player got (an onboarding step or a newsletter): each goes once.
+CREATE TABLE IF NOT EXISTS marketing_sends (
+    id              bigserial   PRIMARY KEY,
+    user_id         uuid        NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    kind            varchar(40) NOT NULL,
+    newsletter_id   uuid        REFERENCES newsletters(id) ON DELETE CASCADE,
+    status          varchar(10) NOT NULL DEFAULT 'sent' CHECK (status IN ('sent', 'failed')),
+    created_at      timestamptz NOT NULL DEFAULT now()
+);
+CREATE UNIQUE INDEX IF NOT EXISTS uq_marketing_onboarding ON marketing_sends (user_id, kind) WHERE newsletter_id IS NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS uq_marketing_newsletter ON marketing_sends (user_id, newsletter_id) WHERE newsletter_id IS NOT NULL;

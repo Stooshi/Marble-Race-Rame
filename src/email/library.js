@@ -84,6 +84,13 @@ const KINDS = {
     placeholders: { new_tracks: { about: 'The three newest tracks', sample: 'Lake Como Villa Run, Quebec Château Run, Seoul Namsan Run' }, tracks_url: { about: 'The track list', sample: `${SITE}/tracks` } },
     defaults: { subject: 'New tracks on Marble Spins', title: "What's new", blocks: [{ type: 'text', text: 'Hi {{name}},' }, { type: 'text', text: 'New tracks this week: {{new_tracks}}.' }, { type: 'button', text: 'See the tracks', href: '{{tracks_url}}' }] },
   },
+  // A newsletter's own content (phase 6): composed per newsletter (the newsletters table), not edited here.
+  newsletter: {
+    name: 'Newsletter', group: 'marketing', listed: false,
+    about: 'A newsletter, written in Marketing > Newsletters.',
+    placeholders: {},
+    defaults: { subject: 'News from Marble Spins', title: 'News from Marble Spins', blocks: [{ type: 'text', text: 'Hi {{name}},' }, { type: 'text', text: '' }] },
+  },
 };
 
 const BLOCK_TYPES = ['heading', 'text', 'button', 'divider', 'image', 'core'];

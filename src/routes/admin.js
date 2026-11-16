@@ -1034,7 +1034,7 @@ router.get('/emails/templates', need('emails:templates'), async (_req, res) => {
   );
   const by = new Map(rows.map((r) => [r.kind, r]));
   res.json({
-    kinds: Object.entries(library.KINDS).map(([kind, k]) => ({
+    kinds: Object.entries(library.KINDS).filter(([, k]) => k.listed !== false).map(([kind, k]) => ({
       kind, name: k.name, group: k.group, about: k.about,
       latest: by.get(kind)?.latest ?? null, published: by.get(kind)?.published_version ?? null, publishedAt: by.get(kind)?.published_at ?? null,
     })),
@@ -1123,6 +1123,102 @@ router.post('/emails/templates/:kind/test', need('emails:templates'), async (req
   const m = library.render(kind, t, { values: library.samples(kind), core: library.sampleCore(kind) });
   await emailSvc.send({ to: me.email, toName: me.username, subject: `[Test] ${m.subject}`, html: m.html, kind, userId: req.admin.id, test: true, tags: ['template-test'] });
   res.json({ sentTo: me.email });
+});
+
+// ── Marketing (16 Nov 2026, CRM phase 6; src/marketing): sending is OFF unless MARKETING_SENDING=on ──────────
+
+const marketing = require('../marketing');
+
+/** GET /marketing/status — the switch, the rules, how many players they allow now, and who onboarding would reach today. */
+router.get('/marketing/status', need('marketing:read'), async (_req, res) => {
+  const steps = [];
+  for (const step of marketing.STEPS) steps.push({ ...step, due: (await marketing.due(db, step)).length });
+  res.json({
+    sendingOn: marketing.audience.sendingOn(),
+    softOptInFrom: marketing.audience.softOptInFrom(),
+    allowed: await marketing.audience.count(db, {}),
+    onboarding: steps,
+  });
+});
+
+const NEWSLETTER = { name: { type: 'string', required: true, min: 2, max: 80 } };
+const segmentOf = (seg = {}) => ({
+  ...(marketing.audience.BUYERS[seg.buyers] && { buyers: seg.buyers }),
+  ...([30, 60, 90].includes(Number(seg.lapsedDays)) && { lapsedDays: Number(seg.lapsedDays) }),
+  ...(Number(seg.newDays) === 30 && { newDays: 30 }),
+  ...(/^[A-Z]{2}$/.test(seg.country ?? '') && { country: seg.country }),
+});
+
+/** GET /marketing/newsletters */
+router.get('/marketing/newsletters', need('marketing:read'), async (_req, res) => {
+  const { rows } = await db.query(
+    `SELECT n.id, n.name, n.subject, n.status, n.segment, n.updated_at, n.sent_at, n.sent_count, u.username AS created_by
+       FROM newsletters n LEFT JOIN users u ON u.id = n.created_by ORDER BY n.updated_at DESC LIMIT 200`,
+  );
+  res.json({ newsletters: rows, sendingOn: marketing.audience.sendingOn() });
+});
+
+/** GET /marketing/newsletters/:id */
+router.get('/marketing/newsletters/:id', need('marketing:read'), async (req, res) => {
+  const { rows: [n] } = await db.query('SELECT * FROM newsletters WHERE id = $1', [assertUuid(req.params.id)]);
+  if (!n) throw notFound('No such newsletter');
+  res.json({ newsletter: n, reach: await marketing.audience.count(db, n.segment), sendingOn: marketing.audience.sendingOn() });
+});
+
+/** POST /marketing/newsletters { id?, name, subject, preheader, title, blocks, segment } — a draft saved (new or changed). */
+router.post('/marketing/newsletters', need('marketing:read'), async (req, res) => {
+  const { name } = validate(req.body, NEWSLETTER);
+  const t = library.validate('newsletter', req.body ?? {});
+  const seg = segmentOf(req.body?.segment);
+  if (req.body?.id) {
+    const { rows: [n] } = await db.query(
+      `UPDATE newsletters SET name = $2, subject = $3, preheader = $4, title = $5, blocks = $6, segment = $7, updated_at = now()
+        WHERE id = $1 AND status = 'draft' RETURNING id`,
+      [assertUuid(req.body.id), name.trim(), t.subject, t.preheader, t.title, JSON.stringify(t.blocks), JSON.stringify(seg)],
+    );
+    if (!n) throw conflict('Only a draft can be changed');
+    return res.json({ id: n.id });
+  }
+  const { rows: [n] } = await db.query(
+    `INSERT INTO newsletters (name, subject, preheader, title, blocks, segment, created_by) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`,
+    [name.trim(), t.subject, t.preheader, t.title, JSON.stringify(t.blocks), JSON.stringify(seg), req.admin.id],
+  );
+  res.json({ id: n.id });
+});
+
+/** POST /marketing/preview { subject, preheader, title, blocks } — a newsletter with sample values. */
+router.post('/marketing/preview', need('marketing:read'), async (req, res) => {
+  const t = library.validate('newsletter', req.body ?? {});
+  res.json(library.render('newsletter', t, { values: { name: 'Ada' }, unsubscribeUrl: 'https://marblespins.com/unsubscribe?u=sample' }));
+});
+
+/** POST /marketing/reach { segment } — how many players a segment reaches now, under the rules. */
+router.post('/marketing/reach', need('marketing:read'), async (req, res) => {
+  res.json({ reach: await marketing.audience.count(db, segmentOf(req.body?.segment)) });
+});
+
+/** POST /marketing/test { subject, preheader, title, blocks } — to the admin's own address only. */
+router.post('/marketing/test', need('marketing:read'), async (req, res) => {
+  const t = library.validate('newsletter', req.body ?? {});
+  const { rows: [me] } = await db.query('SELECT email, username FROM users WHERE id = $1', [req.admin.id]);
+  if (!me?.email) throw badRequest('Your account has no email address to send the test to');
+  if (!emailSvc.enabled()) throw conflict('Email is not set up on this server (BREVO_API_KEY)');
+  const m = library.render('newsletter', t, { values: { name: me.username }, unsubscribeUrl: 'https://marblespins.com/unsubscribe?u=test' });
+  await emailSvc.send({ to: me.email, toName: me.username, subject: `[Test] ${m.subject}`, html: m.html, kind: 'newsletter', userId: req.admin.id, test: true, tags: ['newsletter-test'] });
+  res.json({ sentTo: me.email });
+});
+
+/** POST /marketing/newsletters/:id/send { reason } — starts sending a draft (owners; refused while sending is off). */
+router.post('/marketing/newsletters/:id/send', need('marketing:send'), async (req, res) => {
+  const id = assertUuid(req.params.id);
+  const body = validate(req.body, { reason: REASON });
+  if (!marketing.audience.sendingOn()) throw conflict('Marketing email is switched off (MARKETING_SENDING). Nothing was sent.');
+  await db.withTransaction(async (client) => {
+    const { rows: [n] } = await client.query(`UPDATE newsletters SET status = 'sending', send_started_at = now() WHERE id = $1 AND status = 'draft' RETURNING name, segment`, [id]);
+    if (!n) throw conflict('Only a draft can be sent');
+    await audit(client, req, 'newsletter-send', null, body.reason, { id, name: n.name, segment: n.segment, reach: await marketing.audience.count(client, n.segment) });
+  });
+  res.json({ ok: true });
 });
 
 module.exports = router;

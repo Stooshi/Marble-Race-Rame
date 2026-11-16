@@ -212,3 +212,4 @@
 .crm-reply:last-child { border-bottom: 0; }
 .crm-textarea, .crm-select { width: 100%; box-sizing: border-box; padding: 8px 10px; border-radius: 10px; border: 1px solid var(--c-line); background: var(--c-bg); color: var(--c-text); font: inherit; resize: vertical; }
 .crm-select { width: auto; max-width: 100%; min-height: 36px; }
+.crm-points { margin: 0; padding-left: 1.1em; display: grid; gap: 6px; }

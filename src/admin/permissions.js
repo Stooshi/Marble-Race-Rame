@@ -9,7 +9,7 @@
  *   finance    customers (read), purchases, refunds, billing and its export
  *   support    customers (read, rename, suspend, email consent off, security), the support inbox, names;
  *              no refunds, coins, exports or deletions
- *   marketing  reports and gift codes (read); campaigns come later (CRM phase 6). Never email addresses
+ *   marketing  reports, gift codes (read), email templates, onboarding and newsletter drafts (not sending). Never email addresses
  *   read-only  the dashboard and reports
  *
  * An admin with no role (users.admin_role empty) is read-only.
@@ -37,7 +37,10 @@ const PERMISSIONS = {
   'gift-codes:read': ['owner', 'marketing'],
   'gift-codes:make': ['owner'],
   'emails:read': ['owner'], // the email list (addresses) and its export
-  'emails:templates': ['owner', 'marketing'], // edit, publish and test-send the email templates (CRM phase 5)
+  'emails:templates': ['owner', 'marketing'],
+  'marketing:read': ['owner', 'marketing'], // onboarding and newsletters: drafts, previews, counts (CRM phase 6)
+  'marketing:send': ['owner'], // start a newsletter's sending (and only while MARKETING_SENDING=on)
+ // edit, publish and test-send the email templates (CRM phase 5)
   'audit:read': ['owner'],
   'admins:manage': ['owner'],
 };
