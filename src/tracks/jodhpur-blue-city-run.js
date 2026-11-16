@@ -30,6 +30,7 @@ module.exports = track({
     side: 'left',
     costumes: { block: 'camel', slalom: 'lantern-pole' },
     names: { plunge: 'Off the ramparts' },
+    waves: { groups: 5, gap: 0.2, jitter: 0.1 },
     dress: {},
   }),
   sections: [
@@ -38,7 +39,7 @@ module.exports = track({
       landmarks: [{ name: 'hill-fort', at: 0.5, side: 'right', distance: 40 }],
       obstacles: [peg({ costume: 'lantern-pole', at: 0.3, line: 'right' }), peg({ costume: 'lantern-pole', at: 0.7, line: 'left' })],
     },
-    { name: 'Off the fort', shape: plunge(85, { grade: 0.5, from: 0.1 }), height: 0, scenery: ['colourful-houses'] },
+    { name: 'Off the fort', shape: plunge(85, { grade: 0.42, from: 0.1 }), height: 0, scenery: ['colourful-houses'] },
     {
       name: 'Through the bazaar', shape: straight(50, { grade: 0.14 }), height: 4,
       obstacles: [slalom({ costume: 'lantern-pole', from: 0.2, to: 0.85, count: 4, loss: 0.25 })],
