@@ -30,7 +30,7 @@ module.exports = track({
     side: 'left',
     costumes: { block: 'camel', slalom: 'lantern-pole' },
     names: { plunge: 'Off the ramparts' },
-    waves: { groups: 5, gap: 0.24, jitter: 0.1 },
+    waves: { groups: 5, gap: 0.16, jitter: 0.06 },
     dress: {},
   }),
   sections: [
