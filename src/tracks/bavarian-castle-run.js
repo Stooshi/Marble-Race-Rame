@@ -34,7 +34,8 @@ module.exports = track({
   sections: [
     {
       name: 'Through the village gate', shape: straight(60, { grade: 0.16 }), height: 10, billboards: 2,
-      obstacles: [peg({ costume: 'fence-post', at: 0.3, line: 'left' }), peg({ costume: 'fence-post', at: 0.7, line: 'right' })],
+      obstacles: [peg({ costume: 'fence-post', at: 0.25, line: 'left' })],
+      features: [moguls({ from: 0.6, to: 0.9, count: 3 })],
     },
     {
       name: 'Across the pastures', shape: sweep({ side: 'left', radius: 80, degrees: 70, grade: 0.15 }), height: 12,
@@ -42,7 +43,7 @@ module.exports = track({
     },
     {
       name: 'Round the castle',
-      shape: splitter({ side: 'right', degrees: 0, approach: 60, merge: 30, balance: { tipOffset: 0, left: { drag: 1.3, scrub: 1.3 }, right: { drag: 2.25, scrub: 2.25 } } }),
+      shape: splitter({ side: 'right', degrees: 0, approach: 60, merge: 30, balance: { tipOffset: 0, left: { drag: 1.3, scrub: 1.3 }, right: { drag: 2.5, scrub: 2.5 } } }),
       around: 'castle-keep', height: 18,
       landmarks: [{ name: 'hilltop-castle', at: 0.5, side: 'left', distance: 60 }],
       obstacles: [peg({ costume: 'fence-post', at: 0.06, line: 'left' }), peg({ costume: 'fence-post', at: 0.14, line: 'right' }), peg({ costume: 'fence-post', at: 0.21, line: 'center' })],
