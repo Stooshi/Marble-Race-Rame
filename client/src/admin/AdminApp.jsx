@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Link, NavLink, Navigate, Route, Routes, useNavigate, useParams } from 'react-router-dom';
+import { Link, NavLink, Navigate, Route, Routes, useLocation, useNavigate, useParams } from 'react-router-dom';
 import QRCode from 'qrcode';
 import { adminApi, getSession, setSession, whenExpired } from './adminApi';
 import { ITEMS } from '../shared/marbles';
 import { eachLimited, firstCountry, lastFinishedRace, sortPlayers } from './players';
 import { countryName } from '../site/country/countries';
+import CrmPreview from './CrmPreview';
 import './admin.css';
 
 /**
@@ -17,6 +18,7 @@ export default function AdminApp() {
   const [session, setS] = useState(getSession);
   const [notice, setNotice] = useState(null);
   const navigate = useNavigate();
+  const { pathname } = useLocation();
   useEffect(() => {
     const meta = document.createElement('meta');
     meta.name = 'robots';
@@ -33,6 +35,8 @@ export default function AdminApp() {
   const logout = async () => { await adminApi.end().catch(() => {}); setSession(null); setS(null); navigate('/admin'); };
 
   if (!session) return <Login onDone={signedIn} notice={notice} />;
+  // The CRM design preview (16 Nov 2026): its own frame, admins only; the live back office below is unchanged.
+  if (pathname.startsWith('/admin/preview-crm')) return <CrmPreview session={session} onLogout={logout} />;
   return (
     <div className="adm">
       <header className="adm-top">
