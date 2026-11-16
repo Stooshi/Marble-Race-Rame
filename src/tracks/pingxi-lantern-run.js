@@ -39,7 +39,6 @@ module.exports = track({
     },
     {
       name: 'The wide falls', shape: waterfall(55, { grade: 0.6, curtain: true }), height: 0,
-      landmarks: [{ name: 'long-waterfall', at: 0.5, side: 'right', distance: 30 }],
     },
     {
       name: 'In the spray', shape: straight(50, { grade: 0.13 }), height: 0,
@@ -47,12 +46,12 @@ module.exports = track({
     },
     {
       name: 'Below the falls', shape: sBends({ first: 'right', radius: 65, degrees: 70, grade: 0.15 }), height: 4,
-      obstacles: [peg({ costume: 'lantern-pole', at: 0.3, line: 'left' }), peg({ costume: 'lantern-pole', at: 0.7, line: 'right' })],
+      obstacles: [pileUp({ costume: 'monkey', at: 0.3 }), peg({ costume: 'lantern-pole', at: 0.75, line: 'right' })],
     },
     {
       name: 'Lantern street', shape: sBends({ first: 'left', radius: 65, degrees: 70, grade: 0.15 }), height: 6,
       landmarks: [{ name: 'lantern-row', at: 0.5, side: 'right', distance: 22 }],
-      obstacles: [slalom({ costume: 'lantern-pole', from: 0.3, to: 0.8, count: 4, loss: 0.25 })],
+      obstacles: [slalom({ costume: 'lantern-pole', from: 0.25, to: 0.85, count: 5, loss: 0.3 })],
     },
     {
       name: 'Past the little train', shape: straight(55, { grade: 0.13 }), height: 8,
