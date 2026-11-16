@@ -5,7 +5,7 @@
 // stays together along the lakefront (no obstacle in the first seconds), then the big feature: a long banked spiral
 // out over the water round a little island with its church, the villa gardens in S-bends, a hairpin by the ferry
 // landing past moored boats, a sweep under the umbrella pines and the run to the boathouse. No names on anything.
-const { track, opening, straight, sweep, spiral, sBends, hairpin, runIn, peg, slalom, block, moguls, pileUp } = require('../trackKit');
+const { track, opening, straight, sweep, spiral, sBends, hairpin, runIn, peg, slalom, block, moguls } = require('../trackKit');
 
 module.exports = track({
   slug: 'lake-como-villa-run',
@@ -54,7 +54,7 @@ module.exports = track({
     { name: 'Ferry hairpin', shape: hairpin({ side: 'left' }), height: 6, landmarks: [{ name: 'river-ferry', at: 0.5, side: 'left', distance: 22 }] },
     {
       name: 'Villa terraces', shape: sBends({ first: 'right', radius: 65, degrees: 60, grade: 0.17 }), height: 4,
-      obstacles: [pileUp({ costume: 'buoy', at: 0.5 }), peg({ costume: 'mooring-pole', at: 0.85, line: 'right' })],
+      obstacles: [slalom({ costume: 'mooring-pole', from: 0.2, to: 0.85, count: 5, loss: 0.3 })],
     },
     {
       name: 'Under the pines', shape: sweep({ side: 'left', radius: 80, degrees: 75, grade: 0.13 }), height: 10, billboards: 2,
