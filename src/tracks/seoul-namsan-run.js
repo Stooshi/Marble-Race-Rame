@@ -33,9 +33,9 @@ module.exports = track({
   }),
   sections: [
     {
-      name: 'Past the palace halls', shape: straight(70, { grade: 0.13 }), height: 16, billboards: 2,
+      name: 'Past the palace halls', shape: sweep({ side: 'right', radius: 85, degrees: 75, grade: 0.15 }), height: 16, billboards: 2,
       landmarks: [{ name: 'wudian-hall', at: 0.5, side: 'left', distance: 34 }],
-      features: [moguls({ from: 0.55, to: 0.85, count: 3 })],
+      obstacles: [block({ costume: 'stone-lion', at: 0.5, line: 'left' })],
     },
     {
       name: 'Round the pagoda',
@@ -45,9 +45,8 @@ module.exports = track({
     },
     { name: 'Off the hill', shape: plunge(50, { grade: 0.3, from: 0.14 }), height: 10 },
     {
-      name: 'Over the river', shape: straight(80, { grade: 0.12 }), height: 22, water: true, overhead: ['cable-stayed-bridge'], billboards: 2,
-      obstacles: [slalom({ costume: 'lantern-pole', from: 0.4, to: 0.85, count: 4, loss: 0.25 })],
-      features: [moguls({ from: 0.15, to: 0.35, count: 3 })],
+      name: 'Over the river', shape: straight(60, { grade: 0.14 }), height: 22, water: true, overhead: ['cable-stayed-bridge'], billboards: 1,
+      obstacles: [slalom({ costume: 'lantern-pole', from: 0.35, to: 0.85, count: 4, loss: 0.25 })],
     },
     { name: 'To the hairpin', shape: straight(55, { grade: 0.13 }), height: 8, obstacles: [block({ costume: 'stone-lion', at: 0.65, line: 'center' })], features: [brake({ at: 0.05, length: 14, drag: 0.03 })] },
     { name: 'Temple hairpin', shape: hairpin({ side: 'left' }), height: 10 },
@@ -55,10 +54,6 @@ module.exports = track({
       name: 'Market lanes', shape: sBends({ first: 'right', radius: 65, degrees: 70, grade: 0.15 }), height: 8,
       landmarks: [{ name: 'lantern-row', at: 0.5, side: 'left', distance: 22 }],
       obstacles: [peg({ costume: 'lantern-pole', at: 0.3, line: 'center' }), peg({ costume: 'lantern-pole', at: 0.7, line: 'right' })],
-    },
-    {
-      name: 'Night market', shape: sweep({ side: 'right', radius: 80, degrees: 60, grade: 0.13 }), height: 6,
-      obstacles: [peg({ costume: 'lantern-pole', at: 0.35, line: 'left' }), peg({ costume: 'lantern-pole', at: 0.7, line: 'right' })],
     },
     {
       name: 'Down the steps', shape: sBends({ first: 'left', radius: 70, degrees: 55, grade: 0.14 }), height: 4,
