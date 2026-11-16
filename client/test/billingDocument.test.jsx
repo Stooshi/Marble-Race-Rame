@@ -39,7 +39,7 @@ describe('where documents are reached', () => {
   it('the CRM: each sidebar item names the permission it needs; the preview address leads to the CRM', () => {
     const crm = read('../src/admin/Crm.jsx');
     const nav = crm.slice(crm.indexOf('const NAV = ['), crm.indexOf('];', crm.indexOf('const NAV = [')));
-    expect(nav.match(/\{ to: /g).length).toBe(nav.match(/need: '/g).length);
+    expect(nav.match(/\{ to: /g).length).toBe(nav.match(/need: \[?'/g).length); // (one permission, or a list where any one will do)
     expect(crm).toMatch(/NAV\.filter\(\(n\) => can\(n\.need\)\)/);
     expect(read('../src/admin/AdminApp.jsx')).toMatch(/preview-crm.*Navigate/s);
   });
