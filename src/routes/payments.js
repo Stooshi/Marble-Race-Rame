@@ -180,6 +180,20 @@ router.get('/documents/:number', requireAuth, async (req, res) => {
   res.json({ document: doc });
 });
 
+/** GET /api/payments/documents/:number/pdf — the same receipt or credit note as an A4 PDF (src/billing/pdf.js). */
+router.get('/documents/:number/pdf', requireAuth, async (req, res) => {
+  const number = String(req.params.number).slice(0, 20);
+  const billing = require('../billing');
+  const valid = /^[A-Z]{1,3}-\d{4}-\d{3,}$/.test(number);
+  const doc = valid ? await billing.ofPlayer(db, req.user.id, number) : null;
+  if (!doc && valid && await billing.exists(db, number)) throw forbidden('This receipt belongs to another account');
+  if (!doc) throw notFound('No such receipt');
+  const { pdfOf, fileName } = require('../billing/pdf');
+  const pdf = await pdfOf(doc);
+  res.set({ 'Content-Type': 'application/pdf', 'Content-Disposition': `attachment; filename="${fileName(doc)}"`, 'Cache-Control': 'private, no-store' });
+  res.send(pdf);
+});
+
 /** GET /api/payments/orders/:orderNo — one order (polled after Stripe sends the player back). */
 router.get('/orders/:orderNo', requireAuth, async (req, res) => {
   res.json({ order: await payments.orderOf(db, req.user.id, String(req.params.orderNo).slice(0, 16)) });

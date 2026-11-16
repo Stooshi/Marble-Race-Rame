@@ -13,6 +13,26 @@ export default function ReceiptPage() {
   const { isAuthenticated, loading } = useAuth();
   const [doc, setDoc] = useState(null);
   const [error, setError] = useState(null);
+  const [saving, setSaving] = useState(false);
+  const [pdfError, setPdfError] = useState(null);
+  // (The same document as an A4 PDF, from the server: Moses, 16 Nov 2026.)
+  const downloadPdf = async () => {
+    setSaving(true);
+    setPdfError(null);
+    try {
+      const blob = await api.myDocumentPdf(number);
+      const url = URL.createObjectURL(blob);
+      const a = Object.assign(document.createElement('a'), { href: url, download: `Marble-Spins-${number}.pdf` });
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 10000);
+    } catch (e) {
+      setPdfError(e.message);
+    } finally {
+      setSaving(false);
+    }
+  };
 
   useEffect(() => {
     if (!isAuthenticated) return;
@@ -35,7 +55,9 @@ export default function ReceiptPage() {
     <div className="ms-page ms-page--narrow" style={{ display: 'grid', gap: 16 }}>
       <div className="ms-row" style={{ justifyContent: 'space-between', alignItems: 'center' }}>
         <Link to="/purchases" className="ms-btn">← Your purchases</Link>
+        {doc && <button type="button" className="ms-btn ms-btn--primary" onClick={downloadPdf} disabled={saving}>{saving ? 'ONE MOMENT…' : 'Download PDF'}</button>}
       </div>
+      {pdfError && <div className="ms-msg ms-msg--bad" role="alert">The PDF couldn't be made: {pdfError}. Try again in a moment.</div>}
       {error === 'not-found' && <div className="ms-msg ms-msg--bad" role="alert">No receipt {number} on this account. If you bought on another account, log in with that one.</div>}
       {error === 'other-account' && <div className="ms-msg ms-msg--bad" role="alert">This receipt belongs to another account. Log in with the account you bought with to see it.</div>}
       {error && error !== 'not-found' && error !== 'other-account' && <div className="ms-msg ms-msg--bad" role="alert">{error}</div>}

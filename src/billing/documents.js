@@ -50,6 +50,9 @@ async function itemOf(client, pay) {
 
 /** The VAT rate (percent, 2 decimals) of a payment: Stripe Tax's own when known, else worked out from the amounts. */
 function rateOf(pay) {
+  // (A rate only with VAT charged: Stripe Tax can name a rate it didn't collect, e.g. a US state's where we aren't
+  // registered; K-2026-00001 showed "6.63% · US$0.00". Moses, 16 Nov 2026.)
+  if (!(pay.tax_cents > 0)) return 0;
   if (pay.vat_rate != null) return Number(pay.vat_rate);
   const gross = pay.charged_cents ?? pay.amount_cents;
   const vat = pay.tax_cents ?? 0;
@@ -137,7 +140,7 @@ async function issueCreditNote(client, refundId) {
   const vat = receipt.gross_cents ? Math.round((receipt.vat_cents * amount) / receipt.gross_cents) : 0;
   const what = /^du_/.test(r.id) ? 'chargeback' : pay.withdrawn_at ? 'withdrawal' : amount >= receipt.gross_cents ? 'refund' : 'part refund';
   const item = receipt.snapshot.lines[0]?.description ?? (await itemOf(client, pay));
-  const rate = receipt.vat_rate == null ? 0 : Number(receipt.vat_rate);
+  const rate = !vat || receipt.vat_rate == null ? 0 : Number(receipt.vat_rate);
   const snapshot = {
     version: 1,
     kind: 'credit',

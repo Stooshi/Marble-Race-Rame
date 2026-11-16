@@ -128,7 +128,9 @@
 - `documents.js`: `issueReceipt` (from `payments/stripe.js` when a live checkout is paid), `issueCreditNote` (from `revoke`, for a refund or chargeback), the number series (`billing_counters`), `issueMissing` (at start-up: live purchases from before billing), `ofPlayer`.
 - `book.js`: `fillBook`, the SEK amount and Stripe's fee from the balance transaction (every 5 minutes).
 - `exporting.js`: the month's documents and VAT summary as CSV, the month's totals.
-- `index.js`: `receiptLink` (the purchase confirmation email's link), `sendCreditNotes`, `startJobs`.
+- `index.js`: `receiptLink` (the purchase confirmation email's link), `pdfAttachment` (a document's PDF for an email), `sendCreditNotes` (each with its PDF), `startJobs`.
+- `pdf.js` (16 Nov 2026): a receipt or credit note as an A4 PDF (pdfkit; the same content and order as the page, from the frozen snapshot): `GET /api/payments/documents/:number/pdf` (the receipt page's Download PDF), `GET /api/admin/billing/documents/:number/pdf` (the CRM's), and attached to the purchase confirmation and credit-note emails.
+- `vatView.js` (16 Nov 2026): how a document shows its VAT, the same rules as `client/src/shared/billing/vatView.js` (the page; `test/billingPdf.test.js` compares them): a rate only with VAT charged; none charged → "0%" or "Not applicable" with the customer's country, never a rate with a zero amount.
 
 **`tracks/` and `trackKit/`: building tracks.**
 - `src/tracks/<slug>.js`: one file per kit track, listed in `src/tracks/index.js`. `src/tracks/variety/` holds test tracks that are never in the database.

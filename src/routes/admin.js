@@ -1001,6 +1001,17 @@ router.get('/billing/documents/:number', need('billing:read'), async (req, res) 
   res.json({ document: d });
 });
 
+/** GET /billing/documents/:number/pdf — the document as the customer gets it, as an A4 PDF (src/billing/pdf.js). */
+router.get('/billing/documents/:number/pdf', need('billing:read'), async (req, res) => {
+  const number = String(req.params.number).toUpperCase().slice(0, 20);
+  const { rows: [d] } = await db.query(`SELECT ${billing.DOC_COLUMNS} FROM billing_documents d WHERE d.number = $1`, [number]);
+  if (!d) throw notFound('No such document');
+  const { pdfOf, fileName } = require('../billing/pdf');
+  const doc = billing.publicDocument(d);
+  res.set({ 'Content-Type': 'application/pdf', 'Content-Disposition': `attachment; filename="${fileName(doc)}"`, 'Cache-Control': 'private, no-store' });
+  res.send(await pdfOf(doc));
+});
+
 /** GET /billing/summary?month=YYYY-MM — the month's totals and its VAT per country and rate. */
 router.get('/billing/summary', need('billing:read'), async (req, res) => {
   const month = monthOf(req.query.month);

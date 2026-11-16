@@ -19,6 +19,18 @@ describe('a document', () => {
     const html = renderToString(<BillingDocument doc={receipt} />).replace(/<!-- -->/g, '');
     for (const s of ['K-2026-00001', 'MS-1042', '16 November 2026', 'Voltron Robotics AB', '559344-3756', 'SE559344375601', 'Hägersten', 'Ada', 'ada@example.com', '1,000 coins', '€10.90', '€8.72', '€2.18', 'Total paid', 'Card or wallet, through Stripe']) expect(html).toContain(s);
   });
+  it('no VAT charged (K-2026-00001: Stripe named a US rate it didn\'t collect): "not applicable" with the country, never a rate with US$0.00', () => {
+    const us = { ...receipt, currency: 'USD', lines: [{ ...receipt.lines[0], netCents: 999, grossCents: 999, vatCents: 0, vatRate: 6.63 }], totals: { grossCents: 999, netCents: 999, vatCents: 0 }, vat: { country: 'US', rate: 6.63, note: 'VAT: not applicable (sale outside the EU).' } };
+    const html = renderToString(<BillingDocument doc={us} />).replace(/<!-- -->/g, '');
+    expect(html).not.toContain('6.63');
+    expect(html).not.toContain('VAT country');
+    expect(html).toContain('VAT: not applicable (sale outside the EU, customer country US).');
+    expect(html).toContain('VAT (not applicable)');
+  });
+  it('the receipt page has a Download PDF button (the server\'s A4 PDF)', () => {
+    expect(readFileSync(new URL('../src/site/pages/ReceiptPage.jsx', import.meta.url), 'utf8')).toMatch(/Download PDF/);
+    expect(readFileSync(new URL('../src/api/client.js', import.meta.url), 'utf8')).toMatch(/\/payments\/documents\/\$\{encodeURIComponent\(number\)\}\/pdf/);
+  });
   it('a field added later (an F-skatt line) shows without a client change', () => {
     const html = renderToString(<BillingDocument doc={{ ...receipt, seller: { ...seller, fields: [...seller.fields, 'fSkatt'], fSkatt: 'Godkänd för F-skatt' } }} />).replace(/<!-- -->/g, '');
     expect(html).toContain('Godkänd för F-skatt');

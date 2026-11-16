@@ -57,9 +57,11 @@ async function confirmationFor(db, pay) {
     receipt: await billing.receiptLink(db, pay.id),
   };
   // (The edited template if one is published, CRM phase 5; the core: the order, the agreements, the receipt.)
-  return library.compose(db, 'purchase-confirmation', {
+  const msg = await library.compose(db, 'purchase-confirmation', {
     values: { name: pay.username, order_no: pay.order_no, item }, core: templates.cores.purchaseCore(o), fallback: () => templates.purchaseConfirmation(o),
   });
+  // (The receipt as a PDF too, Moses 16 Nov 2026: the same document as the page.)
+  return { ...msg, attachments: o.receipt ? await billing.pdfAttachment(db, o.receipt.number) : [] };
 }
 
 async function withdrawalFor(db, pay) {
@@ -87,8 +89,8 @@ async function sendKind(db, { column, where, build, tag, after = null }) {
   let sent = 0;
   for (const pay of rows) {
     try {
-      const { subject, html, templateVersion } = await build(db, pay);
-      await email.send({ to: pay.email, toName: pay.username, subject, html, tags: [tag], userId: pay.user_id, templateVersion });
+      const { subject, html, templateVersion, attachments } = await build(db, pay);
+      await email.send({ to: pay.email, toName: pay.username, subject, html, tags: [tag], userId: pay.user_id, templateVersion, attachments });
       sent += 1;
       if (after) await after(db, pay).catch((err) => console.error(`[payments] ${tag} after sending ${pay.order_no}: ${err.message}`));
     } catch (err) {

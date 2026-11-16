@@ -48,7 +48,7 @@ function fakeStripe() {
     checkout: {
       sessions: {
         create: async (params, opts) => { const id = `cs_test_${run}_${made.sessions.length + 1}`; made.sessions.push({ params, opts, id }); return { id, url: `https://checkout.stripe.com/c/pay/${id}` }; },
-        retrieve: async (id) => ({ id, total_details: { breakdown: { taxes: [{ rate: { percentage: 19, country: 'DE' } }] } } }),
+        retrieve: async (id) => ({ id, total_details: { breakdown: { taxes: [{ amount: 160, taxability_reason: 'standard_rated', rate: { percentage: 19, country: 'DE' } }] } } }),
       },
     },
     paymentIntents: {
@@ -173,12 +173,28 @@ test('a paid Stripe purchase gets its receipt, a refund its credit note; the pla
     try {
       await billing.sendCreditNotes(db);
       await billing.sendCreditNotes(db);
+      await require('../src/payments/emails').sendDue(db); // (the purchase confirmations: the receipt's PDF attached)
     } finally {
       email.enabled = enabled;
       email.setTransport(null);
     }
     const mail = sent.filter((m) => JSON.stringify(m).includes(c1.number));
     assert.equal(mail.length, 1);
+    const confirmation = sent.find((m) => m.subject?.includes(p1.order_no) && !m.subject.includes('redit'));
+    assert.ok(confirmation, 'the purchase confirmation');
+    assert.equal(confirmation.attachment?.[0]?.name, `Marble-Spins-${r1.number}.pdf`);
+    // …with the credit note as a PDF attachment (Moses, 16 Nov 2026).
+    assert.equal(mail[0].attachment?.[0]?.name, `Marble-Spins-${c1.number}.pdf`);
+    assert.equal(Buffer.from(mail[0].attachment[0].content, 'base64').subarray(0, 5).toString(), '%PDF-');
+
+    // The PDF from the receipt page: the owner gets it, another account is told whose it is.
+    const pdfRes = await fetch(`${base}/payments/documents/${r1.number}/pdf`, { headers: { authorization: `Bearer ${me.token}` } });
+    assert.equal(pdfRes.status, 200);
+    assert.equal(pdfRes.headers.get('content-type'), 'application/pdf');
+    assert.match(pdfRes.headers.get('content-disposition'), new RegExp(`Marble-Spins-${r1.number}\\.pdf`));
+    assert.equal(Buffer.from(await pdfRes.arrayBuffer()).subarray(0, 5).toString(), '%PDF-');
+    assert.equal((await fetch(`${base}/payments/documents/${r1.number}/pdf`, { headers: { authorization: `Bearer ${other.token}` } })).status, 403);
+    assert.equal((await fetch(`${base}/payments/documents/${r1.number}/pdf`)).status, 401);
 
     // The month's export: both documents, and the VAT summary.
     const month = documents.swedishDate(new Date()).slice(0, 7);
@@ -187,6 +203,14 @@ test('a paid Stripe purchase gets its receipt, a refund its credit note; the pla
     assert.ok(csv.includes(`${r1.number},Receipt,`));
     assert.ok(csv.includes(`${c1.number},Credit note,`));
     assert.match(await billing.exportVat(db, month), /DE,19\.00,EUR/);
+
+    // No VAT charged (Stripe named a rate it didn't collect, e.g. a US state's): the receipt keeps rate 0.
+    const p5 = await buy(me.token, 'coins-5000');
+    await db.query(`UPDATE payments SET status = 'paid', paid_at = now(), charged_cents = 999, charged_currency = 'USD', tax_cents = 0, vat_rate = 6.625, vat_country = 'US', stripe_session_id = $2 WHERE id = $1`, [p5.id, `cs_live_us_${p5.id.slice(0, 8)}`]);
+    const r5 = await billing.issueReceipt(db, p5.id);
+    assert.equal(Number(r5.vat_rate), 0);
+    assert.equal(r5.snapshot.vat.rate, 0);
+    assert.equal(r5.snapshot.lines[0].vatRate, 0);
 
     // Live purchases from before billing get their receipts at start-up (a live checkout: cs_live_…), oldest first.
     const p4 = await buy(me.token, 'coins-5000');

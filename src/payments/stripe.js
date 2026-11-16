@@ -149,7 +149,11 @@ async function sessionTax(session) {
   const country = session.customer_details?.address?.country ?? null;
   try {
     const full = await client().checkout.sessions.retrieve(session.id, { expand: ['total_details.breakdown'] });
-    const tax = full.total_details?.breakdown?.taxes?.[0];
+    // (Only VAT actually charged has a rate: Stripe lists a rate with amount 0 and taxability_reason
+    // "not_collecting" where we aren't registered. The country is where Stripe Tax placed the buyer: the billing
+    // address entered at checkout, whose country Checkout fills in from the IP address until the buyer changes it.)
+    const taxes = full.total_details?.breakdown?.taxes ?? [];
+    const tax = taxes.find((t) => t.amount > 0) ?? null;
     return { rate: tax?.rate?.percentage ?? null, country: tax?.rate?.country ?? full.customer_details?.address?.country ?? country };
   } catch (err) {
     console.warn('[stripe] tax breakdown not found', err.message);

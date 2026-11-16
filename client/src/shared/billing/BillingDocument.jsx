@@ -1,4 +1,5 @@
 import './billingDocument.css';
+import { vatView } from './vatView';
 
 /**
  * A receipt (K-…) or credit note (KR-…) as it was issued: everything comes from the document's frozen snapshot
@@ -43,6 +44,8 @@ export default function BillingDocument({ doc }) {
   const credit = doc.kind === 'credit';
   const cur = doc.currency;
   const t = doc.totals ?? {};
+  const vat = vatView(doc);
+  const money = (c) => docMoney(c, cur);
   return (
     <article className={`bdoc${credit ? ' bdoc--credit' : ''}`} aria-label={`${doc.title ?? (credit ? 'Credit note' : 'Receipt')} ${doc.number}`}>
       <header className="bdoc__head">
@@ -67,7 +70,7 @@ export default function BillingDocument({ doc }) {
                 <td>{l.description}</td>
                 <td className="num">{l.qty}</td>
                 <td className="num">{docMoney(l.netCents, cur)}</td>
-                <td className="num">{l.vatRate ? `${l.vatRate}% · ${docMoney(l.vatCents, cur)}` : docMoney(l.vatCents ?? 0, cur)}</td>
+                <td className="num">{vat.lineVat(l, money)}</td>
                 <td className="num">{docMoney(l.grossCents, cur)}</td>
               </tr>
             ))}
@@ -76,11 +79,11 @@ export default function BillingDocument({ doc }) {
       </div>
       <div className="bdoc__totals">
         <span>Excl. VAT <b>{docMoney(t.netCents, cur)}</b></span>
-        <span>VAT{doc.vat?.rate ? ` ${doc.vat.rate}%` : ''} <b>{docMoney(t.vatCents, cur)}</b></span>
+        <span>{vat.totalLabel} <b>{docMoney(t.vatCents ?? 0, cur)}</b></span>
         <span className="bdoc__grand">{credit ? 'Refunded' : 'Total paid'} <b>{docMoney(t.grossCents, cur)}</b></span>
       </div>
-      {doc.vat?.note && <p className="bdoc__note">{doc.vat.note}</p>}
-      {doc.vat?.country && <p className="bdoc__note">VAT country: {doc.vat.country}</p>}
+      {vat.note && <p className="bdoc__note">{vat.note}</p>}
+      {vat.countryLine && <p className="bdoc__note">{vat.countryLine}</p>}
       {credit && doc.reason && <p className="bdoc__note">Reason: {doc.reason}</p>}
       {doc.paidWith && <p className="bdoc__note">{credit ? 'Refunded to' : 'Paid with'}: {doc.paidWith.replace(/^Card or wallet, through Stripe$/, credit ? 'the card or wallet it was paid with, through Stripe' : doc.paidWith)}</p>}
     </article>

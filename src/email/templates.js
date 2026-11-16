@@ -104,7 +104,7 @@ ${infoRow('Order', orderNo)}${infoRow('Item', item)}${infoRow('Price', price)}${
 ${delivered}
 <p style="margin:16px 0 6px"><b>What you agreed to when you bought it:</b></p>
 <ul style="margin:0 0 14px;padding-left:20px">${agreed.map((a) => `<li style="margin:0 0 6px">${esc(a)}</li>`).join('')}</ul>
-${receipt ? `<p>Your receipt is <b>${esc(receipt.number)}</b>, with the VAT, on your Purchases page:</p>${button(receipt.url, 'View your receipt')}
+${receipt ? `<p>Your receipt is <b>${esc(receipt.number)}</b>: it's attached as a PDF, and on your Purchases page:</p>${button(receipt.url, 'View your receipt')}
 <p>The terms of sale:` : `<p>Your receipt comes in a separate email from Stripe, our payment provider. The terms of sale:`} <a href="${esc(termsUrl)}" style="color:#1d4ed8">${esc(termsUrl.replace(/^https?:\/\//, ''))}</a>. Keep this email for your records.</p>`;
 }
 function purchaseConfirmation(o) {
@@ -139,6 +139,7 @@ const creditCore = ({ number, orderNo, item, amount, receiptNumber, url, chargeb
 ${infoRow('Credit note', number)}${infoRow('Order', orderNo)}${infoRow('Item', item)}${infoRow(chargeback ? 'Credited' : 'Refunded', amount)}${infoRow('Credits receipt', receiptNumber)}
 </table>
 ${chargeback ? '' : '<p>The money goes back the same way you paid. It usually shows within 5–10 working days.</p>'}
+<p>The credit note is attached as a PDF.</p>
 ${button(url, 'View your credit note')}`;
 function creditNote(o) {
   return {

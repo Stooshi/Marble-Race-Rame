@@ -44,7 +44,7 @@ async function request(path, { method = 'GET', body, token = getSession()?.token
 /** Leaves out empty filters. */
 const clean = (f) => Object.fromEntries(Object.entries(f).filter(([, v]) => v != null && String(v).trim() !== '').map(([k, v]) => [k, String(v).trim()]));
 
-/** Saves a CSV answer (an export) as a file. */
+/** Saves a file answer (a CSV export, a document's PDF). */
 export async function saveCsv(res, filename) {
   const url = URL.createObjectURL(await res.blob());
   const a = document.createElement('a');
@@ -128,6 +128,7 @@ export const adminApi = {
   sendNewsletter: (id, reason) => request(`/admin/marketing/newsletters/${id}/send`, { method: 'POST', body: { reason } }),
   billingDocuments: (f = {}) => request(`/admin/billing/documents?${new URLSearchParams(clean(f))}`),
   billingDocument: (number) => request(`/admin/billing/documents/${encodeURIComponent(number)}`),
+  billingDocumentPdf: async (number) => saveCsv(await request(`/admin/billing/documents/${encodeURIComponent(number)}/pdf`, { raw: true }), `Marble-Spins-${number}.pdf`),
   billingSummary: (month) => request(`/admin/billing/summary?month=${encodeURIComponent(month)}`),
   billingCsv: (month, file, reason) => request(`/admin/billing/export?${new URLSearchParams({ month, file, reason })}`, { raw: true }),
   consentsCsv: (reason) => request(`/admin/consents?format=csv&reason=${encodeURIComponent(reason)}`, { raw: true }),

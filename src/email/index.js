@@ -4,7 +4,7 @@
  * Sending email, through Brevo (an EU email provider) — off until BREVO_API_KEY is set.
  *
  *   enabled()            whether email can be sent (the key is set)
- *   send({ to, subject, html, tags, headers, replyTo })
+ *   send({ to, subject, html, tags, headers, replyTo, attachments: [{ name, content: Buffer }] })
  *                        sends one email through Brevo's transactional API → { messageId }
  *
  * Used for password resets and support (new-message notifications, replies) now; news emails will use the same sender later (their unsubscribe
@@ -39,7 +39,7 @@ const enabled = () => Boolean(config.email.brevoApiKey) || transport !== brevo;
  * the first tag), `userId` (else the player with that address), `templateVersion` (an edited template's), `test`
  * (an admin's test-send of a template).
  */
-async function send({ to, toName, subject, html, tags = [], headers, replyTo, kind, userId = null, templateVersion = null, test = false }) {
+async function send({ to, toName, subject, html, tags = [], headers, replyTo, attachments = [], kind, userId = null, templateVersion = null, test = false }) {
   if (!enabled()) throw new Error('Email is not set up (BREVO_API_KEY)');
   const what = kind ?? tags[0] ?? 'other';
   try {
@@ -51,6 +51,8 @@ async function send({ to, toName, subject, html, tags = [], headers, replyTo, ki
       tags,
       ...(headers && { headers }),
       ...(replyTo && { replyTo: { email: replyTo } }),
+      // (Files, e.g. the receipt's PDF: Brevo takes them base64-encoded.)
+      ...(attachments.length && { attachment: attachments.map((f) => ({ name: f.name, content: Buffer.from(f.content).toString('base64') })) }),
     });
     await log.record({ to, userId, kind: what, templateVersion, subject, providerId: out?.messageId ?? null, status: test ? 'test' : 'sent' });
     return out;

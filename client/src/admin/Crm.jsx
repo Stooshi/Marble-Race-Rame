@@ -674,6 +674,7 @@ function DocumentPanel({ d, can }) {
   return (
     <>
       <BillingDocument doc={{ number: d.number, kind: d.kind, ...d.snapshot }} />
+      <div className="crm-actions"><button type="button" className="crm-btn" onClick={() => adminApi.billingDocumentPdf(d.number)}>Download PDF</button></div>
       <Card title="For the books">
         <dl className="crm-kv">
           <div><dt>In SEK (Stripe)</dt><dd>{d.book_filled_at ? money(d.book_gross_cents, d.book_currency ?? 'SEK') : 'Not yet from Stripe'}</dd></div>
