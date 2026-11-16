@@ -5,7 +5,7 @@
 // caravan, through the palm grove, then the big feature: a half-pipe swinging between the kasbah's high earthen walls
 // and through its covered market, the hairpin by the mosque, a sweep across the river bed and the run to the camp.
 // No names on anything.
-const { track, opening, straight, sweep, sBends, hairpin, halfPipe, plunge, runIn, peg, slalom, block, brake } = require('../trackKit');
+const { track, opening, straight, sweep, sBends, hairpin, halfPipe, plunge, runIn, peg, slalom, brake } = require('../trackKit');
 
 module.exports = track({
   slug: 'atlas-kasbah-run',
@@ -43,7 +43,7 @@ module.exports = track({
       landmarks: [{ name: 'palm-grove', at: 0.5, side: 'left', distance: 26 }],
       obstacles: [slalom({ costume: 'rope-post', from: 0.3, to: 0.8, count: 4, loss: 0.25 })],
     },
-    { name: 'To the walls', shape: straight(40, { grade: 0.14 }), height: 4, obstacles: [block({ costume: 'camel', at: 0.6, line: 'left' })], features: [brake({ at: 0.05, length: 14, drag: 0.03 })] },
+    { name: 'To the walls', shape: straight(40, { grade: 0.14 }), height: 4, obstacles: [peg({ costume: 'rope-post', at: 0.6, line: 'left' })], features: [brake({ at: 0.05, length: 14, drag: 0.03 })] },
     {
       name: 'Between the kasbah walls', shape: halfPipe({ first: 'left', width: 8, swings: 2, radius: 130, degrees: 22, grade: 0.13 }), height: 0,
       landmarks: [{ name: 'kasbah', at: 0.5, side: 'right', distance: 26 }],
