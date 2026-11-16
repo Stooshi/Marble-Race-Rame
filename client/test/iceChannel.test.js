@@ -7,10 +7,11 @@ import { layoutMarbles, MARBLE_RADIUS, PEN_DROP } from '../src/three/marbles';
 import { lerpFrame } from '../src/utils/splits';
 
 const require = createRequire(import.meta.url);
-const { physicsTrack } = require('../../src/game/physicsTracks');
+// The layout as it was up to 16 Nov 2026 (the frozen copy): the live track has a new layout since then.
+const { referenceTrack } = require('../../src/game/referenceTracks');
 const { simulatePhysicsRace } = require('../../src/game/physicsSimulator');
 
-const track = physicsTrack('bobsleigh-run');
+const track = referenceTrack('bobsleigh-run');
 const centerline = buildCenterline(track);
 const channel = channelOf(track, centerline);
 

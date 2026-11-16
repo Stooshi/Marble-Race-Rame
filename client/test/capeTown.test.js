@@ -8,13 +8,14 @@ import { buildTrackFeatures } from '../src/three/trackFeatures';
 import { themeFor } from '../src/three/themes';
 
 const require = createRequire(import.meta.url);
-const { physicsTrack } = require('../../src/game/physicsTracks');
+// The layout as it was up to 16 Nov 2026 (the frozen copy): the live track has a new layout since then.
+const { referenceTrack } = require('../../src/game/referenceTracks');
 
 // The 3D view draws onto canvases; tests run without a browser.
 const anything = new Proxy(function stub() {}, { get: () => anything, apply: () => anything, set: () => true });
 globalThis.document ??= { createElement: () => ({ getContext: () => anything, width: 0, height: 0 }) };
 
-const track = physicsTrack('table-mountain-run');
+const track = referenceTrack('table-mountain-run');
 const centerline = buildCenterline(track);
 const channel = channelOf(track, centerline);
 const theme = themeFor('table-mountain-run');
