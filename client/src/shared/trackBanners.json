@@ -1491,12 +1491,12 @@
    "name": "Portes du Soleil Run",
    "series": "World Tour",
    "lighting": "day",
-   "v": "defb4761",
-   "bytes": 15604,
-   "bytes2x": 37080,
-   "t": 16902,
+   "v": "c1e5dc9f",
+   "bytes": 14904,
+   "bytes2x": 35468,
+   "t": 10131,
    "side": 1,
-   "marbles": 6
+   "marbles": 4
   },
   "pudong-marble-grand-prix": {
    "name": "Pudong Marble Grand Prix",

@@ -131,7 +131,7 @@
 "paris-eiffel-tower-run": {"family":"world-tour","reach":0.218,"seq":["opening: classic","drop","pileUp","slalom","straight","brake","sweep left","peg ×2"]},
 "park-city-run": {"family":"world-tour","reach":0.365,"seq":["opening: rolling-start","drop","slalom","sweep right","S-bends left","peg ×2"]},
 "phantom-peak": {"family":"coaster","reach":0.202,"seq":["opening: staggered-drop","drop","pileUp","slalom","brake","sweep left","straight"]},
-"portes-du-soleil-run": {"family":"world-tour","reach":0.203,"seq":["opening: classic","drop","pileUp","slalom","S-bends right"]},
+"portes-du-soleil-run": {"family":"world-tour","reach":0.271,"seq":["opening: classic","drop","pileUp","slalom","sweep right","peg ×2","straight"]},
 "pudong-marble-grand-prix": {"family":"grand-prix","reach":0.208,"seq":["opening: tunnel-launch","drop","pileUp","slalom","drop","slalom","S-bends left","peg","slalom","brake"]},
 "pyramid-run": {"family":"coaster","reach":0.226,"seq":["opening: tunnel-launch","drop","pileUp","slalom","drop","slalom","S-bends left","splitter left"]},
 "quebec-old-town-spins": {"family":"world-tour","reach":0.35,"seq":["opening: peg-drop","drop","peg ×7","sweep left","straight","half-pipe"]},

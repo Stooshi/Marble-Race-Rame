@@ -34,7 +34,6 @@ const KNOWN = {
   'table-mountain-run': ['opening', 'opening-kind', 'layout'],
   // World Tour.
 
-  'portes-du-soleil-run': ['layout'],
 
   'amazon-water-run': ['layout'],
   // Grand Prix (one design: Dubai's; Stockholm, Lagos, Istanbul, Sydney, Nairobi, Delhi, Sahara and Wyrmwood Hollow have their own since 6–7 Nov 2026).
