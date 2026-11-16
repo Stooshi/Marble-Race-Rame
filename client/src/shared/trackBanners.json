@@ -72,12 +72,12 @@
    "name": "Amazon Water Run",
    "series": "World Tour",
    "lighting": "day",
-   "v": "15cecbc5",
-   "bytes": 16356,
-   "bytes2x": 39736,
-   "t": 15597,
-   "side": -1,
-   "marbles": 5
+   "v": "3787c002",
+   "bytes": 15552,
+   "bytes2x": 38466,
+   "t": 10731,
+   "side": 1,
+   "marbles": 4
   },
   "antelope-slot-spins": {
    "name": "Antelope Slot Spins",

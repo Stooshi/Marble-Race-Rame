@@ -35,7 +35,6 @@ const KNOWN = {
   // World Tour.
 
 
-  'amazon-water-run': ['layout'],
   // Grand Prix (one design: Dubai's; Stockholm, Lagos, Istanbul, Sydney, Nairobi, Delhi, Sahara and Wyrmwood Hollow have their own since 6–7 Nov 2026).
   'dubai-marble-grand-prix': ['opening', 'opening-kind', 'layout'],
   'elderglade-marble-grand-prix': ['opening-kind'], // (its opening and layout are its own since Sydney, Lagos and Stockholm got theirs, 7 Nov 2026)

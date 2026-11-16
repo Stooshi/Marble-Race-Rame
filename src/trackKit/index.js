@@ -385,11 +385,12 @@ function track(spec) {
     ...(spec.designChanges?.length && { designChanges: [...spec.designChanges] }),
     physics: {
       ...BASE_PHYSICS,
-      // An opening that changes the gate: the field let go in waves, or a wider, longer funnel.
-      ...((spec.opening?.waves || spec.opening?.funnel || wides.length) && {
+      // An opening that changes the gate: the field let go in waves, or a wider, longer funnel. (A track whose start is
+      // its own first section, a waterfall such as Amazon Water Run's, sets `waves` on the track itself: 15 Nov 2026.)
+      ...((spec.opening?.waves || spec.waves || spec.opening?.funnel || wides.length) && {
         channel: {
           ...BASE_PHYSICS.channel,
-          funnel: { ...BASE_PHYSICS.channel.funnel, ...spec.opening?.funnel, ...(spec.opening?.waves && { waves: { ...spec.opening.waves } }) },
+          funnel: { ...BASE_PHYSICS.channel.funnel, ...spec.opening?.funnel, ...((spec.opening?.waves ?? spec.waves) && { waves: { ...(spec.opening?.waves ?? spec.waves) } }) },
           ...(wides.length && { wides }),
         },
       }),
