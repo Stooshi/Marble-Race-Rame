@@ -218,4 +218,5 @@ module.exports = [
   require('./neon-grid'),
   require('./santorini-caldera-run'),
   require('./hallstatt-salt-mine-run'),
+  require('./lake-bled-island-run'),
 ];

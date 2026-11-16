@@ -1102,6 +1102,17 @@
    "side": 1,
    "marbles": 6
   },
+  "lake-bled-island-run": {
+   "name": "Lake Bled Island Run",
+   "series": "World Tour",
+   "lighting": "day",
+   "v": "93c5c6ab",
+   "bytes": 17762,
+   "bytes2x": 41816,
+   "t": 10108,
+   "side": 1,
+   "marbles": 4
+  },
   "lalibela-genna-spins": {
    "name": "Lalibela Genna Spins",
    "series": "Canyons",

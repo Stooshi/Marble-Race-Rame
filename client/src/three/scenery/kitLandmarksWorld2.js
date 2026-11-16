@@ -107,9 +107,29 @@ function lakesideVillage() {
   return merge(p);
 }
 
+// ── Lake Bled (Lake Bled Island Run) ───────────────────────────────────────
+
+/** The island in the lake: a low wooded islet, a white church with a red roof and a tall tower with a dark spire. */
+function islandChurch() {
+  const p = [];
+  p.push(piece(new CylinderGeometry(15, 17, 3, 16), '#6f8a4f', M(0, -1, 0)));
+  p.push(piece(new CylinderGeometry(15.4, 15.4, 0.4, 16), '#8a8270', M(0, -0.1, 0)));
+  for (const [x, z, s] of [[-10, -6, 1.2], [-8, 7, 1], [9, -8, 1.1], [11, 5, 0.9], [-12, 1, 0.9], [3, -11, 1]]) {
+    p.push(piece(new ConeGeometry(2.2 * s, 7 * s, 7), '#3f5f3a', M(x, 0.5 + 3.5 * s, z)));
+  }
+  p.push(box(7, 5.5, 11, 0, 2.75, 0, '#f4f0e6'));
+  p.push(piece(new ConeGeometry(7.2, 3.2, 4), '#b34a35', turned(0, 7.1, 0, Math.PI / 4, 0.72, 1, 1.12)));
+  p.push(box(3.4, 13, 3.4, 0, 6.5, -6.6, '#f4f0e6'));
+  p.push(box(3.6, 1.2, 3.6, 0, 11.4, -6.6, '#d9d3c4'));
+  p.push(piece(new ConeGeometry(2.1, 7, 4), '#4a3f38', turned(0, 16.5, -6.6, Math.PI / 4)));
+  p.push(box(8, 0.6, 3, 0, 0.3, 8, '#cfc6b0'));
+  return merge(p);
+}
+
 export const WORLD2_LANDMARKS = {
   'cycladic-village': { build: cycladicVillage, radius: 26 },
   'blue-domes': { build: blueDomes, radius: 10 },
   'cycladic-windmills': { build: cycladicWindmills, radius: 16 },
   'lakeside-village': { build: lakesideVillage, radius: 28 },
+  'island-church': { build: islandChurch, radius: 17 },
 };
