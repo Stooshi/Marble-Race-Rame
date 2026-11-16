@@ -92,7 +92,7 @@
 "indus-spins": {"family":"canyon","reach":0.241,"seq":["opening: classic","drop","pileUp","slalom","straight","slalom","sweep right","boost"]},
 "irrawaddy-balloon-dawn": {"family":"river","reach":0.228,"seq":["opening: tunnel-launch","drop","pileUp","slalom","drop","slalom","drop","peg ×3","S-bends left","peg ×2"]},
 "istanbul-marble-grand-prix": {"family":"grand-prix","reach":0.207,"seq":["opening: crest-start","drop","pileUp","slalom","climb","drop","S-bends left","peg","slalom","peg"]},
-"jodhpur-blue-city-run": {"family":"coaster","reach":0.319,"seq":["opening: pipe-drop","drop","half-pipe","sweep left","drop"]},
+"jodhpur-blue-city-run": {"family":"coaster","reach":0.293,"seq":["opening: pipe-drop","drop","half-pipe","S-bends right","peg ×2"]},
 "joystick-spins": {"family":"arcade","reach":0.238,"seq":["opening: funnel-drop","drop","pileUp","slalom","sweep left"]},
 "jungle-ruins": {"family":"block","reach":0.29,"seq":["opening: rumble-start","drop","slalom","moguls","S-bends left","straight","slalom","brake"]},
 "k2-concordia": {"family":"peak","reach":0.268,"seq":["opening: split-start","drop","pileUp","slalom","chutes","drop","slalom","straight","peg","brake","splitter"]},
