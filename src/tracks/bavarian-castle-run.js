@@ -34,11 +34,11 @@ module.exports = track({
   sections: [
     {
       name: 'Through the village gate', shape: straight(60, { grade: 0.16 }), height: 10, billboards: 2,
-      obstacles: [peg({ costume: 'fence-post', at: 0.3, line: 'left' }), block({ costume: 'cow', at: 0.7, line: 'right' })],
+      obstacles: [peg({ costume: 'fence-post', at: 0.3, line: 'left' }), peg({ costume: 'fence-post', at: 0.7, line: 'right' })],
     },
     {
       name: 'Across the pastures', shape: sweep({ side: 'left', radius: 80, degrees: 70, grade: 0.15 }), height: 12,
-      obstacles: [slalom({ costume: 'fence-post', from: 0.25, to: 0.8, count: 4, loss: 0.25 })],
+      obstacles: [peg({ costume: 'fence-post', at: 0.35, line: 'left' }), peg({ costume: 'fence-post', at: 0.7, line: 'right' })],
     },
     {
       name: 'Round the castle',

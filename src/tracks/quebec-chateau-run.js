@@ -49,7 +49,7 @@ module.exports = track({
     { name: 'Round the lower town', shape: sweep({ side: 'left', radius: 55, degrees: 150, grade: 0.13 }), height: 6, landmarks: [{ name: 'harbour', at: 0.5, side: 'left', distance: 30 }] },
     {
       name: 'Lower town', shape: sBends({ first: 'right', radius: 65, degrees: 65, grade: 0.15 }), height: 6, scenery: ['stone-houses'],
-      obstacles: [pileUp({ costume: 'barrel', at: 0.3 }), peg({ costume: 'street-lamp', at: 0.75, line: 'right' })],
+      obstacles: [peg({ costume: 'street-lamp', at: 0.25, line: 'center' }), peg({ costume: 'street-lamp', at: 0.5, line: 'left' }), peg({ costume: 'street-lamp', at: 0.75, line: 'right' })],
     },
     {
       name: 'Along the river', shape: sweep({ side: 'left', radius: 85, degrees: 80, grade: 0.14 }), height: 10, water: true, billboards: 2,
