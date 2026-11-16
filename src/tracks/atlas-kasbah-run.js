@@ -5,7 +5,7 @@
 // caravan, through the palm grove, then the big feature: a half-pipe swinging between the kasbah's high earthen walls
 // and through its covered market, the hairpin by the mosque, a sweep across the river bed and the run to the camp.
 // No names on anything.
-const { track, opening, straight, sweep, sBends, hairpin, halfPipe, plunge, runIn, peg, slalom, block, curtain } = require('../trackKit');
+const { track, opening, straight, sweep, sBends, hairpin, halfPipe, plunge, runIn, peg, slalom, block, brake } = require('../trackKit');
 
 module.exports = track({
   slug: 'atlas-kasbah-run',
@@ -24,11 +24,12 @@ module.exports = track({
     { section: 'Between the kasbah walls', at: 0.95, side: 'right', distance: 10, height: 12 },
     { section: 'Across the river bed', at: 0.5, side: 'left', distance: 10, height: 10 },
   ],
-  start: { landmark: 'kasbah', scenery: ['palms'], type: 'minaret', gate: 'trapdoor', shots: { countdown: 'low-front', launch: 'side' } },
+  start: { landmark: 'kasbah', scenery: ['palms'], type: 'minaret', gate: 'trapdoor', shots: { countdown: 'low-front', launch: 'low-chase' } },
   finish: { landmark: 'bedouin-camp', billboards: 1 },
-  opening: opening('sand-trap', {
+  opening: opening('rumble-start', {
     side: 'right',
     costumes: { block: 'camel', slalom: 'rope-post' },
+    waves: { groups: 5, gap: 0.12, jitter: 0.04 },
     dress: {},
   }),
   sections: [
@@ -44,7 +45,7 @@ module.exports = track({
     },
     { name: 'To the walls', shape: straight(40, { grade: 0.14 }), height: 4, obstacles: [block({ costume: 'camel', at: 0.5, line: 'center' })] },
     {
-      name: 'Between the kasbah walls', shape: halfPipe({ first: 'left', width: 8, swings: 3, radius: 120, degrees: 26, grade: 0.13 }), height: 0,
+      name: 'Between the kasbah walls', shape: halfPipe({ first: 'left', width: 8, swings: 2, radius: 130, degrees: 22, grade: 0.13 }), height: 0,
       landmarks: [{ name: 'kasbah', at: 0.5, side: 'right', distance: 26 }],
     },
     { name: 'Through the market', shape: straight(55, { grade: 0.13 }), height: 0, tunnel: 'bazaar' },
@@ -53,7 +54,7 @@ module.exports = track({
       landmarks: [{ name: 'mud-mosque', at: 0.5, side: 'right', distance: 28 }],
       obstacles: [peg({ costume: 'rope-post', at: 0.3, line: 'center' }), peg({ costume: 'rope-post', at: 0.7, line: 'right' })],
     },
-    { name: 'To the hairpin', shape: straight(40, { grade: 0.13 }), height: 8, obstacles: [curtain({ costume: 'drying-nets', at: 0.4, side: 'left' })] },
+    { name: 'To the hairpin', shape: straight(45, { grade: 0.13 }), height: 8, features: [brake({ at: 0.05, length: 12, drag: 0.02 })] },
     { name: 'Mosque hairpin', shape: hairpin({ side: 'right' }), height: 8 },
     { name: 'Down to the river bed', shape: plunge(40, { grade: 0.3, from: 0.14 }), height: 4 },
     {
