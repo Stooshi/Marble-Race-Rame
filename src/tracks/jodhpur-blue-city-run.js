@@ -5,7 +5,7 @@
 // battlements (nothing in its way for the first seconds), then the big feature: the long, steep drop off the fort's
 // cliff into the blue city below, its lanes in S-bends under drying cloth, the stepwell sweep, the hairpin by the
 // clock tower market and the run to the city gate. No names on anything.
-const { track, opening, straight, plunge, sweep, spiral, sBends, hairpin, runIn, peg, slalom, moguls, pileUp, block } = require('../trackKit');
+const { track, opening, straight, plunge, sweep, spiral, sBends, hairpin, runIn, peg, slalom, moguls } = require('../trackKit');
 
 module.exports = track({
   slug: 'jodhpur-blue-city-run',
@@ -37,16 +37,16 @@ module.exports = track({
     {
       name: 'Along the battlements', shape: sBends({ first: 'left', radius: 80, degrees: 55, grade: 0.14 }), height: 30, billboards: 2,
       landmarks: [{ name: 'hill-fort', at: 0.5, side: 'right', distance: 40 }],
-      obstacles: [block({ costume: 'camel', at: 0.3, line: 'right' }), peg({ costume: 'lantern-pole', at: 0.7, line: 'left' })],
+      obstacles: [peg({ costume: 'lantern-pole', at: 0.3, line: 'right' }), peg({ costume: 'lantern-pole', at: 0.7, line: 'left' })],
     },
     { name: 'Off the fort', shape: plunge(85, { grade: 0.5, from: 0.1 }), height: 0, scenery: ['colourful-houses'] },
     {
       name: 'Through the bazaar', shape: straight(50, { grade: 0.14 }), height: 4,
-      obstacles: [pileUp({ costume: 'camel', at: 0.2 }), peg({ costume: 'lantern-pole', at: 0.6, line: 'left' }), peg({ costume: 'lantern-pole', at: 0.85, line: 'right' })],
+      obstacles: [slalom({ costume: 'lantern-pole', from: 0.2, to: 0.85, count: 4, loss: 0.25 })],
     },
     {
       name: 'Blue lanes', shape: sBends({ first: 'right', radius: 60, degrees: 65, grade: 0.16 }), height: 6, scenery: ['colourful-houses'],
-      obstacles: [peg({ costume: 'lantern-pole', at: 0.25, line: 'left' }), slalom({ costume: 'lantern-pole', from: 0.5, to: 0.9, count: 3, loss: 0.25 })],
+      obstacles: [peg({ costume: 'lantern-pole', at: 0.35, line: 'left' }), peg({ costume: 'lantern-pole', at: 0.7, line: 'right' })],
     },
     {
       name: 'Stepwell spiral', shape: spiral({ side: 'left', radius: 40, turns: 1, grade: 0.18 }), height: 10,
