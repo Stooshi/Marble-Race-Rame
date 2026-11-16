@@ -43,10 +43,6 @@ module.exports = track({
       features: [brake({ at: 0.08, length: 12, drag: 0.02 }), loop({ at: 0.45, viewSide: 14 })],
     },
     {
-      name: 'Under the pier', shape: sBends({ first: 'left', radius: 65, degrees: 70, grade: 0.15 }), height: 4,
-      obstacles: [peg({ costume: 'mooring-pole', at: 0.25, line: 'right' }), peg({ costume: 'mooring-pole', at: 0.5, line: 'center' }), peg({ costume: 'mooring-pole', at: 0.75, line: 'left' })],
-    },
-    {
       name: 'Midway bends', shape: sBends({ first: 'right', radius: 65, degrees: 80, grade: 0.16 }), height: 6,
       obstacles: [slalom({ costume: 'route-flag', from: 0.3, to: 0.75, count: 4, loss: 0.25 })],
     },
@@ -56,6 +52,10 @@ module.exports = track({
     },
     { name: 'End of the pier hairpin', shape: hairpin({ side: 'left' }), height: 8, water: true },
     { name: 'Off the pier', shape: plunge(45, { grade: 0.3, from: 0.14 }), height: 4 },
+    {
+      name: 'Under the pier', shape: sBends({ first: 'left', radius: 65, degrees: 70, grade: 0.15 }), height: 4,
+      obstacles: [peg({ costume: 'mooring-pole', at: 0.25, line: 'right' }), peg({ costume: 'mooring-pole', at: 0.5, line: 'center' }), peg({ costume: 'mooring-pole', at: 0.75, line: 'left' })],
+    },
     {
       name: 'Promenade sweep', shape: sweep({ side: 'right', radius: 75, degrees: 100, grade: 0.15 }), height: 8, billboards: 2, scenery: ['palms'],
       obstacles: [peg({ costume: 'route-flag', at: 0.3, line: 'right' }), peg({ costume: 'route-flag', at: 0.65, line: 'left' })],
