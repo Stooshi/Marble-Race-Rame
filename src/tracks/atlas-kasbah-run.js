@@ -22,7 +22,7 @@ module.exports = track({
   tvCameras: [
     // (At the end of the half-pipe, looking back at the field swinging between the walls.)
     { section: 'Between the kasbah walls', at: 0.95, side: 'right', distance: 10, height: 12 },
-    { section: 'Across the river bed', at: 0.5, side: 'left', distance: 10, height: 10 },
+    { section: 'Across the river bed', at: 0.2, side: 'left', distance: 10, height: 10 },
   ],
   start: { landmark: 'kasbah', scenery: ['palms'], type: 'minaret', gate: 'stalls', shots: { countdown: 'side', launch: 'look-back' } },
   finish: { landmark: 'bedouin-camp', billboards: 1 },
@@ -48,9 +48,9 @@ module.exports = track({
       name: 'Between the kasbah walls', shape: halfPipe({ first: 'left', width: 8, swings: 2, radius: 130, degrees: 22, grade: 0.13 }), height: 0,
       landmarks: [{ name: 'kasbah', at: 0.5, side: 'right', distance: 26 }],
     },
-    { name: 'Through the market', shape: straight(55, { grade: 0.13 }), height: 0, tunnel: 'bazaar' },
+    { name: 'Through the market', shape: straight(40, { grade: 0.13 }), height: 0, tunnel: 'bazaar' },
     {
-      name: 'Kasbah lanes', shape: sBends({ first: 'right', radius: 60, degrees: 65, grade: 0.12 }), height: 2,
+      name: 'Kasbah lanes', shape: sBends({ first: 'right', radius: 60, degrees: 50, grade: 0.14 }), height: 2,
       obstacles: [peg({ costume: 'rope-post', at: 0.3, line: 'left' }), peg({ costume: 'rope-post', at: 0.65, line: 'center' })],
     },
     {
@@ -58,7 +58,7 @@ module.exports = track({
       landmarks: [{ name: 'mud-mosque', at: 0.5, side: 'right', distance: 28 }],
       obstacles: [peg({ costume: 'rope-post', at: 0.3, line: 'center' }), peg({ costume: 'rope-post', at: 0.7, line: 'right' })],
     },
-    { name: 'To the hairpin', shape: straight(45, { grade: 0.13 }), height: 8, features: [brake({ at: 0.05, length: 14, drag: 0.03 })] },
+    { name: 'To the hairpin', shape: straight(35, { grade: 0.13 }), height: 8, features: [brake({ at: 0.05, length: 14, drag: 0.03 })] },
     { name: 'Mosque hairpin', shape: hairpin({ side: 'right' }), height: 8 },
     { name: 'Down to the river bed', shape: plunge(40, { grade: 0.24, from: 0.14 }), height: 4 },
     {
@@ -66,7 +66,7 @@ module.exports = track({
       obstacles: [slalom({ costume: 'rope-post', from: 0.3, to: 0.7, count: 4, loss: 0.3 })],
     },
     {
-      name: 'Run to the camp', shape: straight(70, { grade: 0.15 }), height: 0,
+      name: 'Run to the camp', shape: straight(55, { grade: 0.15 }), height: 0,
       obstacles: [peg({ costume: 'rope-post', at: 0.35, line: 'left' }), peg({ costume: 'rope-post', at: 0.7, line: 'right' })],
     },
     { name: 'Finish', shape: runIn(), height: 0 },
