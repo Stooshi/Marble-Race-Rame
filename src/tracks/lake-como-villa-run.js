@@ -5,7 +5,7 @@
 // stays together along the lakefront (no obstacle in the first seconds), then the big feature: a long banked spiral
 // out over the water round a little island with its church, the villa gardens in S-bends, a hairpin by the ferry
 // landing past moored boats, a sweep under the umbrella pines and the run to the boathouse. No names on anything.
-const { track, opening, straight, sweep, spiral, sBends, hairpin, halfPipe, runIn, peg, slalom, block } = require('../trackKit');
+const { track, opening, straight, sweep, spiral, sBends, hairpin, halfPipe, runIn, peg, slalom, block, moguls } = require('../trackKit');
 
 module.exports = track({
   slug: 'lake-como-villa-run',
@@ -30,11 +30,12 @@ module.exports = track({
     side: 'left',
     costumes: { block: 'buoy', slalom: 'mooring-pole' },
     names: { plunge: 'Down from the tower', bends: 'Village bends' },
+    waves: { groups: 5, gap: 0.12, jitter: 0.04 },
     dress: { plunge: { height: 14 }, bends: { height: 10 } },
   }),
   sections: [
     {
-      name: 'Along the lakefront', shape: straight(90, { grade: 0.12 }), height: 6, water: true, billboards: 2,
+      name: 'Along the lakefront', shape: straight(80, { grade: 0.12 }), height: 6, water: true, billboards: 2,
       landmarks: [{ name: 'lakeside-village', at: 0.5, side: 'left', distance: 34 }],
     },
     {
@@ -42,20 +43,23 @@ module.exports = track({
       around: 'lake-island', landmarks: [{ name: 'island-church', at: 0.5, side: 'right', distance: 20 }],
     },
     {
-      name: 'Villa gardens', shape: sBends({ first: 'left', radius: 75, degrees: 55, grade: 0.15 }), height: 8, scenery: ['cypress'],
-      obstacles: [slalom({ costume: 'mooring-pole', from: 0.3, to: 0.8, count: 4, loss: 0.25 })],
+      name: 'Villa gardens', shape: sBends({ first: 'left', radius: 70, degrees: 65, grade: 0.15 }), height: 8, scenery: ['cypress'],
+      obstacles: [slalom({ costume: 'mooring-pole', from: 0.25, to: 0.85, count: 5, loss: 0.25 })],
     },
-    { name: 'Garden terrace', shape: straight(30, { grade: 0.14 }), height: 6 },
-    { name: 'Between the villa walls', shape: halfPipe({ first: 'right', width: 8, swings: 2, radius: 140, degrees: 20, grade: 0.12 }), height: 4 },
     {
       name: 'To the ferry landing', shape: straight(55, { grade: 0.13 }), height: 4, water: true,
       obstacles: [peg({ costume: 'mooring-pole', at: 0.3, line: 'left' }), peg({ costume: 'mooring-pole', at: 0.55, line: 'right' }), peg({ costume: 'mooring-pole', at: 0.8, line: 'center' })],
     },
     { name: 'Ferry hairpin', shape: hairpin({ side: 'left' }), height: 6, landmarks: [{ name: 'river-ferry', at: 0.5, side: 'left', distance: 22 }] },
     {
-      name: 'Under the pines', shape: sweep({ side: 'right', radius: 80, degrees: 75, grade: 0.13 }), height: 10, billboards: 2,
-      landmarks: [{ name: 'umbrella-pines', at: 0.5, side: 'left', distance: 26 }],
-      obstacles: [block({ costume: 'buoy', at: 0.5, line: 'center' })],
+      name: 'Garden terrace', shape: straight(40, { grade: 0.14 }), height: 6,
+      obstacles: [peg({ costume: 'mooring-pole', at: 0.4, line: 'right' }), peg({ costume: 'mooring-pole', at: 0.75, line: 'left' })],
+    },
+    { name: 'Between the villa walls', shape: halfPipe({ first: 'right', width: 8, swings: 2, radius: 140, degrees: 20, grade: 0.12 }), height: 4 },
+    {
+      name: 'Under the pines', shape: sweep({ side: 'left', radius: 80, degrees: 75, grade: 0.13 }), height: 10, billboards: 2,
+      landmarks: [{ name: 'umbrella-pines', at: 0.5, side: 'right', distance: 26 }],
+      obstacles: [peg({ costume: 'mooring-pole', at: 0.3, line: 'left' }), block({ costume: 'buoy', at: 0.65, line: 'center' })],
     },
     {
       name: 'Promenade bends', shape: sBends({ first: 'right', radius: 70, degrees: 60, grade: 0.14 }), height: 6, water: true,
@@ -63,7 +67,8 @@ module.exports = track({
     },
     {
       name: 'Run to the boathouse', shape: straight(70, { grade: 0.14 }), height: 0, billboards: 1,
-      obstacles: [slalom({ costume: 'mooring-pole', from: 0.4, to: 0.85, count: 3, loss: 0.25 })],
+      obstacles: [slalom({ costume: 'mooring-pole', from: 0.15, to: 0.4, count: 3, loss: 0.25 })],
+      features: [moguls({ from: 0.6, to: 0.9, count: 3 })],
     },
     { name: 'Finish', shape: runIn(), height: 0 },
   ],
