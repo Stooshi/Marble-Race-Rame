@@ -24,7 +24,7 @@ module.exports = track({
     { section: 'Between the kasbah walls', at: 0.95, side: 'right', distance: 10, height: 12 },
     { section: 'Across the river bed', at: 0.5, side: 'left', distance: 10, height: 10 },
   ],
-  start: { landmark: 'kasbah', scenery: ['palms'], type: 'minaret', gate: 'trapdoor', shots: { countdown: 'low-front', launch: 'low-chase' } },
+  start: { landmark: 'kasbah', scenery: ['palms'], type: 'minaret', gate: 'stalls', shots: { countdown: 'crane', launch: 'look-back' } },
   finish: { landmark: 'bedouin-camp', billboards: 1 },
   opening: opening('rumble-start', {
     side: 'right',
@@ -50,13 +50,17 @@ module.exports = track({
     },
     { name: 'Through the market', shape: straight(55, { grade: 0.13 }), height: 0, tunnel: 'bazaar' },
     {
+      name: 'Kasbah lanes', shape: sBends({ first: 'right', radius: 60, degrees: 65, grade: 0.12 }), height: 2,
+      obstacles: [peg({ costume: 'rope-post', at: 0.3, line: 'left' }), peg({ costume: 'rope-post', at: 0.65, line: 'center' })],
+    },
+    {
       name: 'Mosque bends', shape: sBends({ first: 'left', radius: 65, degrees: 70, grade: 0.15 }), height: 6,
       landmarks: [{ name: 'mud-mosque', at: 0.5, side: 'right', distance: 28 }],
       obstacles: [peg({ costume: 'rope-post', at: 0.3, line: 'center' }), peg({ costume: 'rope-post', at: 0.7, line: 'right' })],
     },
-    { name: 'To the hairpin', shape: straight(45, { grade: 0.13 }), height: 8, features: [brake({ at: 0.05, length: 12, drag: 0.02 })] },
+    { name: 'To the hairpin', shape: straight(45, { grade: 0.13 }), height: 8, features: [brake({ at: 0.05, length: 14, drag: 0.03 })] },
     { name: 'Mosque hairpin', shape: hairpin({ side: 'right' }), height: 8 },
-    { name: 'Down to the river bed', shape: plunge(40, { grade: 0.3, from: 0.14 }), height: 4 },
+    { name: 'Down to the river bed', shape: plunge(40, { grade: 0.24, from: 0.14 }), height: 4 },
     {
       name: 'Across the river bed', shape: sweep({ side: 'right', radius: 85, degrees: 70, grade: 0.13 }), height: 6, billboards: 2,
       obstacles: [slalom({ costume: 'rope-post', from: 0.3, to: 0.7, count: 4, loss: 0.3 })],
