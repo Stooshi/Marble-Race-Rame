@@ -5,7 +5,7 @@
 // the big feature: a splitter round a pagoda on the hill, one channel each side, then over the river under the
 // cable-stayed bridge, the lantern-lit market streets, the hairpin and the run down to the palace gate.
 // No names on anything.
-const { track, opening, straight, sweep, sBends, hairpin, splitter, plunge, runIn, peg, slalom, block, moguls, brake } = require('../trackKit');
+const { track, opening, straight, sweep, sBends, hairpin, splitter, plunge, runIn, peg, slalom, block, moguls, brake, pileUp } = require('../trackKit');
 
 module.exports = track({
   slug: 'seoul-namsan-run',
@@ -33,13 +33,13 @@ module.exports = track({
   }),
   sections: [
     {
-      name: 'Past the palace halls', shape: sweep({ side: 'right', radius: 85, degrees: 75, grade: 0.15 }), height: 16, billboards: 2,
+      name: 'Past the palace halls', shape: straight(75, { grade: 0.15 }), height: 16, billboards: 2,
       landmarks: [{ name: 'wudian-hall', at: 0.5, side: 'left', distance: 34 }],
-      obstacles: [block({ costume: 'stone-lion', at: 0.5, line: 'left' })],
+      obstacles: [pileUp({ costume: 'stone-lion', at: 0.45 })],
     },
     {
       name: 'Round the pagoda',
-      shape: splitter({ side: 'left', degrees: 0, approach: 60, merge: 30, balance: { tipOffset: -0.6, left: { drag: 1.3, scrub: 1.3 }, right: { drag: 2.3, scrub: 2.3 } } }),
+      shape: splitter({ side: 'left', degrees: 0, approach: 60, merge: 30, balance: { tipOffset: -0.6, left: { drag: 1.3, scrub: 1.3 }, right: { drag: 2.0, scrub: 2.0 } } }),
       around: 'pagoda', height: 20,
       obstacles: [peg({ costume: 'lantern-pole', at: 0.06, line: 'right' }), peg({ costume: 'lantern-pole', at: 0.14, line: 'left' })],
     },
