@@ -39,7 +39,7 @@ module.exports = track({
       obstacles: [peg({ costume: 'rope-post', at: 0.35, line: 'right' }), peg({ costume: 'rope-post', at: 0.7, line: 'left' })],
     },
     {
-      name: 'Palm grove', shape: sBends({ first: 'right', radius: 70, degrees: 60, grade: 0.15 }), height: 8,
+      name: 'Palm grove', shape: sBends({ first: 'right', radius: 70, degrees: 50, grade: 0.16 }), height: 8,
       landmarks: [{ name: 'palm-grove', at: 0.5, side: 'left', distance: 26 }],
       obstacles: [slalom({ costume: 'rope-post', from: 0.3, to: 0.8, count: 4, loss: 0.25 })],
     },
@@ -54,7 +54,7 @@ module.exports = track({
       obstacles: [peg({ costume: 'rope-post', at: 0.3, line: 'left' }), peg({ costume: 'rope-post', at: 0.65, line: 'center' })],
     },
     {
-      name: 'Mosque bends', shape: sBends({ first: 'left', radius: 65, degrees: 70, grade: 0.15 }), height: 6,
+      name: 'Mosque bends', shape: sBends({ first: 'left', radius: 65, degrees: 55, grade: 0.16 }), height: 6,
       landmarks: [{ name: 'mud-mosque', at: 0.5, side: 'right', distance: 28 }],
       obstacles: [peg({ costume: 'rope-post', at: 0.3, line: 'center' }), peg({ costume: 'rope-post', at: 0.7, line: 'right' })],
     },
