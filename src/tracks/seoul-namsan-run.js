@@ -5,7 +5,7 @@
 // the big feature: a splitter round a pagoda on the hill, one channel each side, then over the river under the
 // cable-stayed bridge, the lantern-lit market streets, the hairpin and the run down to the palace gate.
 // No names on anything.
-const { track, opening, straight, sweep, sBends, hairpin, splitter, plunge, runIn, peg, slalom, block, moguls, brake, pileUp } = require('../trackKit');
+const { track, opening, straight, sweep, sBends, hairpin, splitter, plunge, runIn, peg, slalom, block, moguls, brake } = require('../trackKit');
 
 module.exports = track({
   slug: 'seoul-namsan-run',
@@ -25,17 +25,16 @@ module.exports = track({
     { section: 'Down the steps', at: 0.5, side: 'right', distance: 10, height: 10 },
   ],
   start: { landmark: 'tv-tower', scenery: ['skyscrapers'], type: 'observation-tower', gate: 'barrier', shots: { countdown: 'low-front', launch: 'look-back' } },
-  finish: { landmark: 'wudian-hall', billboards: 1 },
-  opening: opening('chicane-start', {
+  finish: { landmark: 'lantern-bridge', billboards: 1 },
+  opening: opening('sand-trap', {
     side: 'left',
     costumes: { block: 'stone-lion', slalom: 'lantern-pole' },
+    waves: { groups: 5, gap: 0.12, jitter: 0.04 },
     dress: {},
   }),
   sections: [
     {
       name: 'Past the palace halls', shape: straight(75, { grade: 0.15 }), height: 16, billboards: 2,
-      landmarks: [{ name: 'wudian-hall', at: 0.5, side: 'left', distance: 34 }],
-      obstacles: [pileUp({ costume: 'stone-lion', at: 0.45 })],
     },
     {
       name: 'Round the pagoda',

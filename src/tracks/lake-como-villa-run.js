@@ -62,11 +62,11 @@ module.exports = track({
       obstacles: [peg({ costume: 'mooring-pole', at: 0.3, line: 'left' }), block({ costume: 'buoy', at: 0.65, line: 'center' })],
     },
     {
-      name: 'Promenade bends', shape: sBends({ first: 'right', radius: 70, degrees: 60, grade: 0.14 }), height: 6, water: true,
+      name: 'Promenade bends', shape: sBends({ first: 'right', radius: 70, degrees: 50, grade: 0.15 }), height: 6, water: true,
       obstacles: [peg({ costume: 'mooring-pole', at: 0.3, line: 'right' }), peg({ costume: 'mooring-pole', at: 0.65, line: 'left' })],
     },
     {
-      name: 'Run to the boathouse', shape: straight(70, { grade: 0.14 }), height: 0, billboards: 1,
+      name: 'Run to the boathouse', shape: straight(70, { grade: 0.15 }), height: 0,
       obstacles: [slalom({ costume: 'mooring-pole', from: 0.15, to: 0.4, count: 3, loss: 0.25 })],
       features: [moguls({ from: 0.6, to: 0.9, count: 3 })],
     },

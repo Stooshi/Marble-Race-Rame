@@ -165,7 +165,7 @@
 "saint-tropez": {"family":"world-tour","reach":0.217,"seq":["opening: staggered-drop","drop","pileUp","slalom","brake","sweep right","S-bends right","peg","slalom"]},
 "samaria-iron-gates": {"family":"canyon","reach":0.305,"seq":["opening: rolling-start","drop","slalom","sweep right","sweep left"]},
 "san-fernando-lantern-spins": {"family":"block","reach":0.33,"seq":["opening: peg-drop","drop","peg ×7","S-bends left","straight","peg ×3","table-top"]},
-"santa-monica-pier-run": {"family":"coaster","reach":0.246,"seq":["opening: sand-trap","drop","pileUp","slalom","brake","sweep left","peg ×2","straight","brake","loop"]},
+"santa-monica-pier-run": {"family":"coaster","reach":0.217,"seq":["opening: sand-trap","drop","pileUp","slalom","brake","sweep left","peg ×2","straight","brake","loop"]},
 "santorini-caldera-run": {"family":"world-tour","reach":0.28,"seq":["opening: split-start","drop","pileUp","slalom","chutes","drop","slalom","straight","brake","sweep left","peg ×2"]},
 "sao-paulo-rain-circuit": {"family":"grand-prix","reach":0.306,"seq":["opening: pipe-drop","drop","half-pipe","S-bends left","peg","slalom"]},
 "sapporo-snow-sculptures": {"family":"coaster","reach":0.236,"seq":["opening: classic","drop","pileUp","slalom","straight","box","rail","jump","spiral right"]},
