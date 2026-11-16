@@ -107,7 +107,7 @@
 "kyoto-block-gardens": {"family":"block-2","reach":0.226,"seq":["opening: crest-start","drop","pileUp","slalom","climb","drop","straight","steps","S-bends left"]},
 "lagos-marble-grand-prix": {"family":"grand-prix","reach":0.266,"seq":["opening: pipe-drop","drop","half-pipe","drop","slalom","S-bends right","peg ×2"]},
 "lake-bled-island-run": {"family":"world-tour","reach":0.289,"seq":["opening: banked-turn","drop","pileUp","slalom","sweep left","climb","S-bends right","peg ×2"]},
-"lake-como-villa-run": {"family":"coaster","reach":0.28,"seq":["opening: rolling-start","drop","slalom","sweep left","straight","peg","spiral right"]},
+"lake-como-villa-run": {"family":"coaster","reach":0.309,"seq":["opening: rolling-start","drop","slalom","sweep left","straight","peg","spiral right"]},
 "lalibela-genna-spins": {"family":"canyon","reach":0.307,"seq":["opening: peg-drop","drop","peg ×7","straight","peg ×3","spiral right"]},
 "lapland-ice-race": {"family":"grand-prix","reach":0.315,"seq":["opening: clean-drop","drop","S-bends left","straight","slalom","peg","hairpin right"]},
 "li-river-karst-run": {"family":"block-2","reach":0.296,"seq":["opening: clean-drop","drop","S-bends right","straight","peg ×2","slalom","splitter"]},
