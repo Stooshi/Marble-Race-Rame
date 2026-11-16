@@ -156,6 +156,17 @@
    "side": 1,
    "marbles": 5
   },
+  "atlas-kasbah-run": {
+   "name": "Atlas Kasbah Run",
+   "series": "Coasters",
+   "lighting": "sunset",
+   "v": "fa3eed8e",
+   "bytes": 14186,
+   "bytes2x": 36534,
+   "t": 10644,
+   "side": 1,
+   "marbles": 5
+  },
   "aturi-arcade": {
    "name": "Aturi Arcade",
    "series": "Arcade",
@@ -1014,6 +1025,17 @@
    "side": 1,
    "marbles": 5
   },
+  "jodhpur-blue-city-run": {
+   "name": "Jodhpur Blue City Run",
+   "series": "Coasters",
+   "lighting": "day",
+   "v": "703fc83f",
+   "bytes": 15408,
+   "bytes2x": 35300,
+   "t": 17000,
+   "side": 1,
+   "marbles": 6
+  },
   "joystick-spins": {
    "name": "Joystick Spins",
    "series": "Arcade",
@@ -1165,6 +1187,17 @@
    "bytes": 17234,
    "bytes2x": 40038,
    "t": 10108,
+   "side": 1,
+   "marbles": 4
+  },
+  "lake-como-villa-run": {
+   "name": "Lake Como Villa Run",
+   "series": "Coasters",
+   "lighting": "day",
+   "v": "fae1f7a7",
+   "bytes": 16320,
+   "bytes2x": 42138,
+   "t": 10409,
    "side": 1,
    "marbles": 4
   },
@@ -1575,6 +1608,17 @@
    "side": 1,
    "marbles": 4
   },
+  "pingxi-lantern-run": {
+   "name": "Pingxi Lantern Run",
+   "series": "Coasters",
+   "lighting": "sunset",
+   "v": "29ee2721",
+   "bytes": 14360,
+   "bytes2x": 34770,
+   "t": 17000,
+   "side": -1,
+   "marbles": 5
+  },
   "portes-du-soleil-run": {
    "name": "Portes du Soleil Run",
    "series": "World Tour",
@@ -1607,6 +1651,17 @@
    "t": 10524,
    "side": 1,
    "marbles": 5
+  },
+  "quebec-chateau-run": {
+   "name": "Quebec Château Run",
+   "series": "Coasters",
+   "lighting": "sunset",
+   "v": "78829526",
+   "bytes": 18296,
+   "bytes2x": 45606,
+   "t": 20202,
+   "side": 1,
+   "marbles": 10
   },
   "quebec-old-town-spins": {
    "name": "Québec Old Town Spins",
@@ -1849,6 +1904,17 @@
    "t": 10334,
    "side": -1,
    "marbles": 6
+  },
+  "seoul-namsan-run": {
+   "name": "Seoul Namsan Run",
+   "series": "Coasters",
+   "lighting": "night",
+   "v": "98a5b08e",
+   "bytes": 21820,
+   "bytes2x": 59140,
+   "t": 12000,
+   "side": 1,
+   "marbles": 1
   },
   "seoul-winter-lights": {
    "name": "Seoul Winter Lights",
