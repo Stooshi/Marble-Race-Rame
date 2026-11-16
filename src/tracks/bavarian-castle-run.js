@@ -33,9 +33,7 @@ module.exports = track({
   }),
   sections: [
     {
-      name: 'Through the village gate', shape: straight(60, { grade: 0.16 }), height: 10, billboards: 2,
-      obstacles: [peg({ costume: 'fence-post', at: 0.25, line: 'left' })],
-      features: [moguls({ from: 0.6, to: 0.9, count: 3 })],
+      name: 'Through the village gate', shape: plunge(50, { grade: 0.3, from: 0.14 }), height: 10, billboards: 2,
     },
     {
       name: 'Across the pastures', shape: sweep({ side: 'left', radius: 80, degrees: 70, grade: 0.15 }), height: 12,

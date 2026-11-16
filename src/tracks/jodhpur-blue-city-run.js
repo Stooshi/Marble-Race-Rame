@@ -42,7 +42,7 @@ module.exports = track({
     { name: 'Off the fort', shape: plunge(75, { grade: 0.36, from: 0.1 }), height: 0, scenery: ['colourful-houses'] },
     {
       name: 'Through the bazaar', shape: straight(50, { grade: 0.14 }), height: 4,
-      obstacles: [slalom({ costume: 'lantern-pole', from: 0.2, to: 0.85, count: 6, loss: 0.4 })],
+      obstacles: [slalom({ costume: 'lantern-pole', from: 0.2, to: 0.85, count: 6, loss: 0.45 })],
     },
     {
       name: 'Blue lanes', shape: sBends({ first: 'right', radius: 60, degrees: 65, grade: 0.16 }), height: 6, scenery: ['colourful-houses'],
