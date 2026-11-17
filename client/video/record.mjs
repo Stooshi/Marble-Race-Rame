@@ -45,6 +45,8 @@ export function mix(plan, length, { tune }, file) {
     const inputs = [];
     const parts = [];
     const add = (src, { at, dur = null, offset = 0, gain = 1, fadeIn = 0, fadeOut = 0, loop: looped = false, lift = null }) => {
+      if (at < 0) { offset += -at; if (dur !== null) dur += at; at = 0; } // (a sound that starts before the video, e.g. the beeps under a short countdown: only its rest is heard)
+      if (dur !== null && dur <= 0) return;
       const k = parts.length;
       inputs.push(...(looped ? ['-stream_loop', '-1'] : []), '-i', src);
       const span = dur ?? 3600;
