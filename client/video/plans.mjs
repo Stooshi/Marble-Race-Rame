@@ -1135,3 +1135,34 @@ export function teaser(info, race, { at, text = null } = {}) {
     sound: { goAt, beeps: true, music: [[0, p.v]], musicFadeOut: 0.25, lifts: [], ceremony: null, raceHits: true },
   };
 }
+
+/**
+ * A teaser with lines (Moses, 17 Nov 2026, 18:42: Quebec Château Run again, for 20:00): the same race, cut between
+ * the follow view (a chase camera behind the pack) and front-facing shots (a camera standing on the track ahead of
+ * the pack, looking back up it, the pack racing towards the lens and arriving as the shot ends), the last one at
+ * the feature's lip as the leaders reach it; Moses's own lines (`text.lines`: [{ at, dur, text }], his words, so
+ * checkLine's six-word limit does not apply); the mark in a corner; the end card added after (record's caller).
+ *   text: { lines, frontAt: [[from ms, to ms]…], followAt: [[from, to]…] } and `at` (race ms, where it stops)
+ */
+export function teaserFront(info, race, { at, text = null } = {}) {
+  const A = analyse(race, info.arc, at + 500);
+  LEAD_GROUP = (t) => LEAD_GROUP_AT(race, info, t);
+  const p = builder('teaser');
+  const goAt = p.v;
+  const CHASE = { back: 10, up: 6.5, ahead: 10, fov: 46 };
+  const lead = (t) => Math.max(...race.frames[Math.max(0, Math.min(race.frames.length - 1, Math.round(t / race.tickMs)))].p.filter((x) => x < 1));
+  for (const [kind, a, b, m = 4, up = 2.2] of text.shots) {
+    const dur = (b - a) / 1000;
+    if (kind === 'start') { p.add(START_SHOT(a, dur)); continue; }
+    const x = A.find((y) => y.t >= a) ?? A[A.length - 1];
+    if (kind === 'follow') { p.add({ type: 'group', members: x.members.slice(0, 8), shot: `f-${a}`, from: a, dur, ...CHASE }); continue; }
+    // (front: standing `m` metres past where the leader is when the shot ends, low, looking back up the track)
+    const pCam = Math.min(0.99, lead(b) + m / info.arc);
+    p.add({ type: 'pan', eye: { p: pCam, back: 0, beside: 0.6, up, ahead: -14, lookUp: 0, fov: 40 }, members: leadGroup(A.find((y) => y.t >= b - 400) ?? A[A.length - 1]), from: a, dur, fov: 40, lead: 0 });
+  }
+  return {
+    shots: p.shots, texts: (text.lines ?? []).map((l) => ({ at: l.at, dur: l.dur, top: l.text })), podium: null, length: p.v, textStyle: text.style ?? null,
+    marks: { goAt, from: 0, raceMs: at, members: Array.from({ length: race.frames[0].p.length }, (_, i) => i), near: 1e9 },
+    sound: { goAt, beeps: false, music: [[0, p.v]], musicFadeOut: 0.25, lifts: [], ceremony: null, raceHits: true },
+  };
+}

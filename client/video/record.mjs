@@ -119,6 +119,13 @@ export async function record({ variant = 'A', opening = 'old', text = null, slug
     for (const sh of plan.shots) log(`  ${sh.at.toFixed(1).padStart(6)} s  ${(sh.type + (sh.follow !== undefined && sh.follow !== 'leader' ? ` #${sh.follow}` : sh.type === 'race' ? ' lead' : '')).padEnd(10)} ${sh.from !== undefined ? `race ${Math.round(sh.from)} ms` : ''} ${sh.speed && sh.speed !== 1 ? `×${sh.speed}` : ''} ${sh.dur.toFixed(1)} s`);
     // (A teaser: no mark in the corner, nothing over the race.)
     if (plan.noMark) await page.evaluate(() => { document.getElementById('mark').style.display = 'none'; });
+    // (A plan's own text place and size, and where the mark sits: e.g. inside TikTok's and Reels' safe area.)
+    if (plan.textStyle) await page.evaluate((st) => {
+      const r = document.documentElement.style;
+      for (const [k, v] of Object.entries(st.vars ?? {})) r.setProperty(k, v);
+      Object.assign(document.getElementById('mark').style, st.mark ?? {});
+      Object.assign(document.getElementById('texts').style, st.box ?? {});
+    }, plan.textStyle);
     // The rows on the podium card.
     await page.evaluate(([title]) => { document.getElementById('podiumTitle').textContent = title; }, [TEXTS.podiumTitle]);
     const rows = info.podium.map((r) => ({ name: r.name, look: r.look, ms: r.ms }));
