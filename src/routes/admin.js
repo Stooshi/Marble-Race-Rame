@@ -33,6 +33,10 @@
  *   POST /gift-codes               { kind: 'coins'|'pass', coins?, season_key?, max_uses, expires_at, tag, note?, code?, count?, reason }
  *                                  make one code, or `count` single-use codes → { codes: [...] }
  *   GET  /gift-codes/:id           one code and who redeemed it   POST /gift-codes/:id/disable { reason }
+ *   GET  /today                    the CRM start page's cards: today's sales, new players, sign-ups, open support,
+ *                                  and (payments:read) the latest purchases
+ *   GET  /tracks                   every track: on or off, pack, free, season, wildness, races in the last 7 days
+ *   POST /tracks/:slug/active      { active, reason } switch a track on or off for every player (tracks:switch, audited)
  */
 const express = require('express');
 const db = require('../db');
@@ -83,6 +87,82 @@ async function lockPlayer(client, id) {
 /** GET /dashboard?period=6h|24h|7d|30d|mtd|lastmonth — read-only numbers, staff left out (src/admin/dashboard). */
 router.get('/dashboard', need('reports:read'), async (req, res) => {
   res.json(await require('../admin/dashboard').summary(db, String(req.query.period ?? '24h')));
+});
+
+/**
+ * GET /today — the CRM start page (Moses, 17 Nov 2026): today in Swedish time. Sales: purchases paid today (test
+ * orders left out) per charged currency, refunds taken off; new players (new guests) and sign-ups (new saved
+ * accounts), staff left out as on the Dashboard; open support messages (new or open). The latest purchases (who
+ * bought what) only for a role that may see payments.
+ */
+router.get('/today', need('reports:read'), async (req, res) => {
+  const { DAY_START, COUNTED } = require('../admin/dashboard');
+  const { can } = require('../admin/permissions');
+  const [sales, players, support, latest] = await Promise.all([
+    db.query(`SELECT upper(COALESCE(charged_currency, currency)) AS currency, COUNT(*)::int AS purchases,
+                     SUM(COALESCE(charged_cents, amount_cents) - COALESCE(refunded_cents, 0))::int AS cents
+                FROM payments WHERE status IN ('paid', 'refunded') AND paid_at >= ${DAY_START} AND NOT ${paymentsSvc.TEST_ORDER}
+               GROUP BY 1 ORDER BY 3 DESC`),
+    db.query(`SELECT
+                (SELECT COUNT(DISTINCT e.user_id)::int FROM security_events e JOIN users u ON u.id = e.user_id
+                  WHERE e.kind = 'guest' AND e.created_at >= ${DAY_START} AND ${COUNTED}) AS new_players,
+                (SELECT COUNT(*)::int FROM (SELECT e.user_id, MIN(e.created_at) AS at FROM security_events e
+                  WHERE e.kind IN ('signup', 'claim') GROUP BY e.user_id) s JOIN users u ON u.id = s.user_id
+                  WHERE s.at >= ${DAY_START} AND ${COUNTED}) AS sign_ups`),
+    db.query(`SELECT COUNT(*)::int AS n FROM support_messages s
+               WHERE COALESCE(s.stage, CASE s.status WHEN 'done' THEN 'closed' ELSE s.status END) IN ('new', 'open')`),
+    can(req.admin, 'payments:read')
+      ? db.query(`SELECT p.id, p.order_no, p.provider, p.product_id, p.status, upper(COALESCE(p.charged_currency, p.currency)) AS currency,
+                         COALESCE(p.charged_cents, p.amount_cents) AS cents, p.refunded_cents, p.paid_at, u.id AS player_id, u.username AS player
+                    FROM payments p JOIN users u ON u.id = p.user_id
+                   WHERE p.status IN ('paid', 'refunded') AND NOT ${paymentsSvc.TEST_ORDER} ORDER BY p.paid_at DESC NULLS LAST LIMIT 8`)
+      : null,
+  ]);
+  res.json({
+    sales: sales.rows,
+    newPlayers: players.rows[0].new_players,
+    signUps: players.rows[0].sign_ups,
+    openSupport: support.rows[0].n,
+    latest: latest?.rows ?? null,
+  });
+});
+
+/**
+ * GET /tracks — every track for the CRM's Races & tracks (Moses, 17 Nov 2026): on or off, its pack and whether
+ * it's free, its season, wildness, and its races in the last 7 days. `built`: the server can run it: an original
+ * track (its route in the database, no `physics`), or a built track whose code this server has (only then can it
+ * be switched on).
+ */
+router.get('/tracks', need('reports:read'), async (_req, res) => {
+  const { physicsTrack } = require('../game/physicsTracks');
+  const { rows } = await db.query(`
+    SELECT t.slug, t.name, t.is_active, t.physics IS NOT NULL AS kit, t.is_free, t.pack_key, p.name AS pack, t.season_key, t.wildness, t.wildness_score, t.created_at,
+           (SELECT COUNT(*)::int FROM races r WHERE r.track_id = t.id AND r.status = 'finished' AND r.finished_at > now() - interval '7 days') AS races_7d
+      FROM tracks t LEFT JOIN track_packs p ON p.key = t.pack_key
+     ORDER BY t.is_active DESC, p.name NULLS FIRST, t.name`);
+  res.json({ tracks: rows.map(({ kit, ...t }) => ({ ...t, built: !kit || Boolean(physicsTrack(t.slug)) })) });
+});
+
+/**
+ * POST /tracks/:slug/active { active, reason } — a track on or off for every player (tracks:switch: the owner),
+ * written to the audit log with the change. On: only a track the server has the code for. The website's track
+ * pages and counts follow with its next build (Vercel), the race picker and packs at once.
+ */
+router.post('/tracks/:slug/active', need('tracks:switch'), async (req, res) => {
+  const slug = String(req.params.slug);
+  if (!/^[a-z0-9-]{1,64}$/.test(slug)) throw badRequest('No such track');
+  const body = validate(req.body, { active: { type: 'boolean', required: true }, reason: REASON });
+  const track = await db.withTransaction(async (client) => {
+    const { rows: [t] } = await client.query('SELECT slug, name, is_active, pack_key, season_key, physics IS NOT NULL AS kit FROM tracks WHERE slug = $1 FOR UPDATE', [slug]);
+    if (!t) throw notFound('No such track');
+    if (body.active && t.kit && !require('../game/physicsTracks').physicsTrack(slug)) throw conflict('This server has no code for that track yet: deploy it first');
+    if (t.is_active === body.active) throw conflict(`It's already ${body.active ? 'on' : 'off'}`);
+    await client.query('UPDATE tracks SET is_active = $2 WHERE slug = $1', [slug, body.active]);
+    await audit(client, req, body.active ? 'track-on' : 'track-off', null, body.reason, { slug, name: t.name, pack: t.pack_key, season: t.season_key });
+    const { kit: _kit, ...out } = t;
+    return { ...out, is_active: body.active };
+  });
+  res.json({ track });
 });
 
 /** GET /readiness?days= — which screens weren't ready by GO, and what they missed (src/readiness). */

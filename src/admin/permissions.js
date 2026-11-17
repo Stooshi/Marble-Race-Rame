@@ -12,6 +12,8 @@
  *   marketing  reports, gift codes (read), email templates, onboarding and newsletter drafts (not sending). Never email addresses
  *   read-only  the dashboard and reports
  *
+ * Tracks are switched on and off by the owner only (`tracks:switch`, 17 Nov 2026: a track goes live for every player).
+ *
  * An admin with no role (users.admin_role empty) is read-only.
  */
 const { forbidden } = require('../utils/httpError');
@@ -41,6 +43,7 @@ const PERMISSIONS = {
   'marketing:read': ['owner', 'marketing'], // onboarding and newsletters: drafts, previews, counts (CRM phase 6)
   'marketing:send': ['owner'], // start a newsletter's sending (and only while MARKETING_SENDING=on)
  // edit, publish and test-send the email templates (CRM phase 5)
+  'tracks:switch': ['owner'], // a track on or off for every player (the CRM's Races & tracks)
   'audit:read': ['owner'],
   'admins:manage': ['owner'],
 };

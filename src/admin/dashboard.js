@@ -21,7 +21,9 @@ const TZ = 'Europe/Stockholm';
 
 const NOW = 'now()';
 const MONTH_START = `(date_trunc('month', now() AT TIME ZONE '${TZ}') AT TIME ZONE '${TZ}')`;
+const DAY_START = `(date_trunc('day', now() AT TIME ZONE '${TZ}') AT TIME ZONE '${TZ}')`;
 const PERIODS = {
+  today: { label: 'Today', from: DAY_START, to: NOW, bucket: 'hour' }, // (the CRM's start page, 17 Nov 2026)
   '6h': { label: 'Last 6 hours', from: "now() - interval '6 hours'", to: NOW, bucket: 'hour' },
   '24h': { label: 'Last 24 hours', from: "now() - interval '24 hours'", to: NOW, bucket: 'hour' },
   '7d': { label: 'Last 7 days', from: "now() - interval '7 days'", to: NOW, bucket: 'day' },
@@ -172,4 +174,4 @@ async function summary(db, period = '24h') {
   };
 }
 
-module.exports = { PERIODS, TZ, summary, origins };
+module.exports = { PERIODS, TZ, DAY_START, COUNTED, summary, origins };

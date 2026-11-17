@@ -9,6 +9,9 @@ import company from '../shared/company.json';
 import { EmailTemplates } from './CrmEmails';
 import { SupportPage } from './CrmSupport';
 import { MarketingRules, Newsletters, Onboarding } from './CrmMarketing';
+import { DashboardPage } from './CrmDashboard';
+import { TracksPage } from './CrmTracks';
+import { TOOLS, ToolsPage } from './CrmTools';
 import './crm.css';
 
 /**
@@ -16,7 +19,8 @@ import './crm.css';
  * /admin/crm/*, the back office's new layout. A sidebar; the customer page and Billing in two columns (a list on
  * the left, the chosen item on the right; phones: one at a time); Settings (admins and roles, company details,
  * the audit log). Each admin sees only what their role may do (`permissions`, from the server, which refuses the
- * rest either way). Pages not rebuilt yet open today's back office (/admin/dashboard …), which stays as it is.
+ * rest either way). Since 17 Nov 2026 every page of the classic back office is here too (the Dashboard, Races &
+ * tracks, Tools); the classic pages (/admin/dashboard …) keep working until Moses approves the move.
  */
 
 // ── Icons (simple strokes, 24 × 24) ─────────────────────────────────────────
@@ -44,6 +48,7 @@ const PATHS = {
   user: 'M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8',
   building: 'M3 21h18M5 21V7l7-4 7 4v14M9 9h1M14 9h1M9 13h1M14 13h1M9 17h1M14 17h1',
   list: 'M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01',
+  tools: 'M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.5 2.5-2.4-.6-.6-2.4z',
 };
 export function Icon({ name, size = 20 }) {
   return (
@@ -73,14 +78,15 @@ const ROLE_TEXT = {
   'read-only': 'The dashboard and reports.',
 };
 
-// The sidebar; `need` hides an item from a role that can't open it. `old`: today's page (not rebuilt yet).
+// The sidebar; `need` hides an item from a role that can't open it (a list: any one of them).
 const NAV = [
-  { to: 'dashboard', icon: 'dashboard', label: 'Dashboard', need: 'reports:read', old: '/admin/dashboard' },
+  { to: 'dashboard', icon: 'dashboard', label: 'Dashboard', need: 'reports:read' },
   { to: 'customers', icon: 'customers', label: 'Customers', need: 'customers:read' },
   { to: 'billing', icon: 'billing', label: 'Billing', need: 'billing:read' },
   { to: 'support', icon: 'support', label: 'Support', need: 'support:read' },
   { to: 'marketing', icon: 'marketing', label: 'Marketing', need: ['marketing:read', 'emails:templates', 'gift-codes:read'] },
-  { to: 'tracks', icon: 'tracks', label: 'Races & tracks', need: 'reports:read', old: '/admin/readiness' },
+  { to: 'tracks', icon: 'tracks', label: 'Races & tracks', need: 'reports:read' },
+  { to: 'tools', icon: 'tools', label: 'Tools', need: TOOLS.map((t) => t.need) },
   { to: 'settings', icon: 'settings', label: 'Settings', need: 'reports:read' },
 ];
 
@@ -100,7 +106,7 @@ export default function Crm({ session, onLogout }) {
   const [page, ...sub] = rest.split('/');
   const nav = NAV.filter((n) => can(n.need));
   const current = NAV.find((n) => n.to === page);
-  if (!current) return <Navigate to={`${BASE}/${nav.find((n) => !n.old)?.to ?? 'settings'}`} replace />;
+  if (!current) return <Navigate to={`${BASE}/${nav[0]?.to ?? 'settings'}`} replace />;
   return (
     <div className="crm">
       <aside className="crm-side">
@@ -133,7 +139,9 @@ export default function Crm({ session, onLogout }) {
           {can(current.need) && page === 'settings' && <Settings tab={sub[0]} can={can} me={me} />}
           {can(current.need) && page === 'support' && <SupportPage id={sub[0]} can={can} me={me} />}
           {can(current.need) && page === 'marketing' && <Marketing tab={sub[0]} kind={sub[1]} can={can} />}
-          {can(current.need) && current.old && <Later item={current} />}
+          {can(current.need) && page === 'dashboard' && <DashboardPage can={can} />}
+          {can(current.need) && page === 'tracks' && <TracksPage tab={sub[0]} can={can} />}
+          {can(current.need) && page === 'tools' && <ToolsPage tab={sub[0]} sub={sub[1]} can={can} />}
         </main>
       </div>
     </div>
@@ -811,7 +819,7 @@ function Company() {
   );
 }
 
-const AUDIT_ACTIONS = ['admin-add', 'admin-remove', 'admin-role', 'audit-export', 'billing-export', 'coins', 'consent-export', 'consent-off', 'delete', 'gift-code-disable', 'gift-codes-create', 'item-grant', 'item-remove', 'name', 'name-reset', 'refund', 'rename', 'security-view', 'staff-off', 'staff-on', 'support-reply', 'support-status', 'suspend', 'unsuspend'];
+const AUDIT_ACTIONS = ['admin-add', 'admin-remove', 'admin-role', 'audit-export', 'billing-export', 'coins', 'consent-export', 'consent-off', 'delete', 'gift-code-disable', 'gift-codes-create', 'item-grant', 'item-remove', 'name', 'name-reset', 'refund', 'rename', 'security-view', 'staff-off', 'staff-on', 'support-reply', 'support-status', 'suspend', 'track-off', 'track-on', 'unsuspend'];
 
 function AuditLog() {
   const [f, setF] = useState({ admin: '', action: '', player: '', from: '', to: '' });
@@ -860,29 +868,13 @@ function Marketing({ tab, kind, can }) {
     <div className="crm-page">
       <div className="crm-chips" role="tablist" aria-label="Marketing">
         {tabs.map((t) => <button key={t.key} type="button" role="tab" aria-selected={cur?.key === t.key} onClick={() => navigate(`${BASE}/marketing/${t.key}`)}>{t.title}</button>)}
-        {can('gift-codes:read') && <Link to="/admin/gift-codes" className="crm-btn crm-btn--sm">Gift codes (classic)</Link>}
+        {can('gift-codes:read') && <Link to={`${BASE}/tools/gift-codes`} className="crm-btn crm-btn--sm">Gift codes</Link>}
       </div>
       {cur?.key === 'emails' && <EmailTemplates kind={kind} />}
       {cur?.key === 'rules' && <MarketingRules />}
       {cur?.key === 'onboarding' && <Onboarding />}
       {cur?.key === 'newsletters' && <Newsletters id={kind} can={can} />}
-      {!cur && <p className="crm-muted">Gift codes are on the classic page for now.</p>}
+      {!cur && <p className="crm-muted">Gift codes are under Tools.</p>}
     </div>
-  );
-}
-
-// ── Pages not rebuilt yet ────────────────────────────────────────────────────
-
-const LATER = {
-  dashboard: 'The dashboard stays as it is for now.',
-  tracks: 'Race readiness and the economy, as today.',
-};
-function Later({ item }) {
-  return (
-    <section className="crm-card crm-block crm-later">
-      <h2>{item.label}</h2>
-      <p>{LATER[item.to]}</p>
-      <Link to={item.old} className="crm-btn crm-btn--primary">Open today's page</Link>
-    </section>
   );
 }
