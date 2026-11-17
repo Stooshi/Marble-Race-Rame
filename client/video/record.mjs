@@ -14,6 +14,7 @@ import { createServer } from 'vite';
 import { chromium } from 'playwright-core';
 import { TEMPLATE, TEXTS, SOUNDS, LANDS } from './assets.mjs';
 import * as PLANS from './plans.mjs';
+import { soundTimes } from './collisions.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const FPS = 60;
@@ -61,7 +62,7 @@ export function mix(plan, length, { tune }, file) {
     // The music, lifted a little (the template's liftDb) at the big moments.
     const lift = 10 ** (T.liftDb / 20);
     const lifted = (s.lifts ?? []).map(([a, b]) => `between(t,${a.toFixed(2)},${b.toFixed(2)})`).join('+');
-    for (const [a, b] of s.music ?? []) add(loop, { at: a, dur: b - a, gain: s.musicGain ?? T.musicGain, fadeIn: s.loop ? 0.05 : 0.8, fadeOut: s.loop ? 0.15 : 1.2, offset: s.loop ? 8 : 0, loop: true, lift: lifted ? { expr: lifted, k: lift } : null }); // (a loop: the music in from its first frame, out at its last, so the end runs into the start)
+    for (const [a, b] of s.music ?? []) add(loop, { at: a, dur: b - a, gain: s.musicGain ?? T.musicGain, fadeIn: s.loop ? 0.05 : 0.8, fadeOut: s.loop ? 0.15 : (s.musicFadeOut ?? 1.2), offset: s.loop ? 8 : 0, loop: true, lift: lifted ? { expr: lifted, k: lift } : null }); // (a loop: the music in from its first frame, out at its last, so the end runs into the start)
     if (s.teaserMusic) add(loop, { at: s.teaserMusic[0], dur: s.teaserMusic[1] - s.teaserMusic[0], offset: 8, gain: T.musicGain * lift, fadeOut: 0.35, loop: true });
     if (s.beeps && s.goAt !== null) add(SOUNDS.beeps.file, { at: s.goAt - BEEPS_GO_S, dur: BEEPS_GO_S + 0.9, gain: 0.9, fadeOut: 0.15 });
     if (s.goAt !== null && s.goAt !== undefined) add(SOUNDS.launch.file, { at: s.goAt, dur: 5, gain: 1.6 });
@@ -104,9 +105,18 @@ export async function record({ variant = 'A', opening = 'old', text = null, slug
     // (The plan beside the video: swap-logo.mjs uses it to put another logo version in.)
     fs.writeFileSync(`${out}.plan.json`, JSON.stringify({ slug, race: raceName, kind, format, tune, logo, length: plan.length, marks: plan.marks, resultsTall: plan.resultsTall, shots: plan.shots, sound: plan.sound, texts: plan.texts, captions: plan.captions, hooks: plan.hooks, lines: plan.lines, endBig: plan.endBig, dim: plan.dim, markers: plan.markers, bc: plan.bc, intro: plan.intro, results: plan.results }));
     // (A collision montage's shot: the hits in it, for its clicks; collisions.js.)
-    const hits = wantHits ? await page.evaluate((o) => window.rec.hits(o), { from: plan.marks.from, to: plan.marks.from + plan.marks.raceMs, members: plan.marks.members }) : null;
+    const hits = wantHits || plan.sound.raceHits ? await page.evaluate((o) => window.rec.hits(o), { from: plan.marks.from, to: plan.marks.from + plan.marks.raceMs, members: plan.marks.members, ...(plan.marks.near && { near: plan.marks.near }) }) : null;
+    // (A teaser: the game's click and bump on the pack's hits as they happen, under the music; race ms → video s from GO.)
+    if (plan.sound.raceHits) {
+      const C = TEMPLATE.collisionMontage;
+      const k = TEMPLATE.teaser?.hitGain ?? 0.55;
+      plan.sound.extra = [...(plan.sound.extra ?? []), ...soundTimes(hits, { from: 0, gap: C.gapSeconds }).map((h) => ({ key: h.kind === 'bump' ? 'bump' : 'hit', at: plan.marks.goAt + h.v, dur: 0.4, fadeOut: 0.05, gain: k * (C.clickGain.soft + (C.clickGain.hard - C.clickGain.soft) * h.k) * (h.kind === 'bump' ? C.bumpGain : 1) }))];
+      log(`  ${plan.sound.extra.length} clicks and bumps in the race`);
+    }
     log(`${info.name}: ${kind} ${format}, ${plan.length.toFixed(1)} s, ${plan.shots.length} shots; winner ${info.podium[0].name} (gate ${info.podium[0].gate}) by ${info.margin} ms${plan.packShare !== undefined ? `; the race ${Math.round(plan.packShare * 100)}% on the pack` : ''}`);
     for (const sh of plan.shots) log(`  ${sh.at.toFixed(1).padStart(6)} s  ${(sh.type + (sh.follow !== undefined && sh.follow !== 'leader' ? ` #${sh.follow}` : sh.type === 'race' ? ' lead' : '')).padEnd(10)} ${sh.from !== undefined ? `race ${Math.round(sh.from)} ms` : ''} ${sh.speed && sh.speed !== 1 ? `×${sh.speed}` : ''} ${sh.dur.toFixed(1)} s`);
+    // (A teaser: no mark in the corner, nothing over the race.)
+    if (plan.noMark) await page.evaluate(() => { document.getElementById('mark').style.display = 'none'; });
     // The rows on the podium card.
     await page.evaluate(([title]) => { document.getElementById('podiumTitle').textContent = title; }, [TEXTS.podiumTitle]);
     const rows = info.podium.map((r) => ({ name: r.name, look: r.look, ms: r.ms }));

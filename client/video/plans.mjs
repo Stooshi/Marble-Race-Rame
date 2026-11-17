@@ -1097,3 +1097,41 @@ export function montageLine(text) {
   if (/\b(buy|bought|buying|shop|purchase|upgrade|pay)\b/i.test(text)) throw new Error(`A speed line must not suggest buying makes a marble faster: "${text}"`);
   return text;
 }
+
+/**
+ * A teaser (Moses, 17 Nov 2026: Quebec Château Run, two 20 s clips that end as the leaders reach the cliff):
+ * the race from the start to a moment (`at`, race ms), nothing else. The last `text.lead` s of the countdown
+ * (the game's countdown camera, the start lights and beeps), the start wide, then the pack through the
+ * director's cuts (2–4 s, mostly on the pack), and the leading group from behind for the last `text.edge` s,
+ * so the feature opens up in front of them as the clip stops: no text, no overlay, no end card. The sound:
+ * the race music, the beeps and launch, and the game's own click and bump on the pack's hits.
+ *   node video/record.mjs <slug> <race> --kind teaser --at <race ms> [--lead 1.5] [--dur 2.8] --format tall|wide
+ */
+export function teaser(info, race, { at, text = null } = {}) {
+  if (!(at > 6000)) throw new Error('A teaser needs --at <race ms>, where it stops');
+  const lead = text?.lead ?? 1.5;
+  const edge = text?.dur ?? 2.8;
+  const A = analyse(race, info.arc, at + 500);
+  LEAD_GROUP = (t) => LEAD_GROUP_AT(race, info, t);
+  const p = builder('teaser');
+  p.add({ type: 'race', from: -lead * 1000, dur: lead });
+  const goAt = p.v;
+  p.add(START_SHOT(0, 3.5));
+  const last = at - edge * 1000;
+  // (TV-style chase cameras on the pack throughout: the game's follow camera and the director's default group camera
+  // sit so close in a tall frame that a few marbles fill it, 17 Nov 2026 check.)
+  const CHASE = { back: 10, up: 6.5, ahead: 10, fov: 46 }; // (high enough that a marble catching the group passes under the lens, not through it)
+  for (const s of cutUp(directRace(A, { from: 3500, to: last, packShare: 0.8, start: false }).shots, A, [2, 4])) {
+    const x = A.find((y) => y.t >= s.from) ?? A[A.length - 1];
+    if (s.type === 'race') p.add({ type: 'group', members: s.follow === 'leader' ? leadGroup(x) : x.members.slice(0, 8), shot: `chase-${s.from}`, from: s.from, dur: s.dur, ...CHASE });
+    else p.add(s.type === 'group' ? { ...s, ...CHASE } : s);
+  }
+  const g = A.find((x) => x.t >= last) ?? A[A.length - 1];
+  p.add({ type: 'group', members: leadGroup(g), shot: 'edge', from: last, dur: edge, back: 9, up: 5, ahead: 10, fov: 44 });
+  const all = Array.from({ length: race.frames[0].p.length }, (_, i) => i);
+  return {
+    shots: p.shots, texts: [], podium: null, length: p.v, noMark: true,
+    marks: { goAt, from: 0, raceMs: at, members: all, near: 1e9 },
+    sound: { goAt, beeps: true, music: [[0, p.v]], musicFadeOut: 0.25, lifts: [], ceremony: null, raceHits: true },
+  };
+}
