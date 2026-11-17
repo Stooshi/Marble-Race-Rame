@@ -163,20 +163,57 @@ router.get('/players/:id/security', need('customers:security'), async (req, res)
   res.json(security);
 });
 
-/** GET /players/:id */
+/**
+ * A document's SEK amount against its own amount: the exchange rate it implies (SEK per unit). Outside SEK_RATE it is
+ * flagged in the Overview (Moses, 17 Nov 2026: MS-1002, a $5.00 purchase, showed as 4.54 SEK; a 10× slip in a book
+ * amount would show here). Stripe's own rates for USD and EUR sit near 9–12 SEK; SEK itself is 1.
+ */
+const SEK_RATE = { USD: [6, 16], EUR: [7, 17], GBP: [8, 20], SEK: [0.97, 1.03] };
+function rateCheck(d) {
+  if (d.book_gross_cents == null || !d.gross_cents) return null;
+  const rate = Math.abs(d.book_gross_cents) / Math.abs(d.gross_cents);
+  const band = SEK_RATE[String(d.currency).toUpperCase()];
+  return { rate: Math.round(rate * 1000) / 1000, odd: band ? rate < band[0] || rate > band[1] : false };
+}
+
+/**
+ * GET /players/:id: the Overview's money (Moses, 17 Nov 2026: net spend after refunds, shown plainly).
+ *   spend    every purchase (website and apps) by charged currency: purchases, paid, refunded, net (test orders left out)
+ *   website  website (Stripe) purchases only, the same by currency: the headline "Spent on the website"
+ *   sek      the SEK amounts Stripe booked for the website's receipts and credit notes (its rate on each day):
+ *            paid, refunded (positive), net, Stripe's fees, documents still waiting, and each document with the
+ *            rate its SEK amount implies (`odd`: outside SEK_RATE)
+ */
 async function overviewOf(id) {
-  const [spend, sek, packsHeld, passes] = await Promise.all([
+  const money = (where) => db.query(
+    `SELECT upper(COALESCE(charged_currency, currency)) AS currency, COUNT(*)::int AS purchases,
+            SUM(COALESCE(charged_cents, amount_cents))::int AS paid_cents, SUM(COALESCE(refunded_cents, 0))::int AS refunded_cents,
+            SUM(COALESCE(charged_cents, amount_cents) - COALESCE(refunded_cents, 0))::int AS cents, max(paid_at) AS last_paid_at
+       FROM payments WHERE user_id = $1 AND status IN ('paid', 'refunded') AND NOT ${paymentsSvc.TEST_ORDER} ${where} GROUP BY 1 ORDER BY 3 DESC`,
+    [id],
+  );
+  const [spend, website, docs, packsHeld, passes] = await Promise.all([
+    money(''),
+    money(`AND provider = 'stripe'`),
     db.query(
-      `SELECT upper(COALESCE(charged_currency, currency)) AS currency, COUNT(*)::int AS purchases,
-              SUM(COALESCE(charged_cents, amount_cents) - COALESCE(refunded_cents, 0))::int AS cents, max(paid_at) AS last_paid_at
-         FROM payments WHERE user_id = $1 AND status IN ('paid', 'refunded') GROUP BY 1 ORDER BY 3 DESC`,
+      `SELECT d.number, d.kind, d.currency, d.gross_cents, d.book_currency, d.book_gross_cents, d.book_fee_cents, d.book_filled_at, p.order_no
+         FROM billing_documents d JOIN payments p ON p.id = d.payment_id WHERE d.user_id = $1 ORDER BY d.issued_at, d.number`,
       [id],
     ),
-    db.query(`SELECT COALESCE(SUM(book_gross_cents), 0)::int AS cents, COUNT(*) FILTER (WHERE book_filled_at IS NULL)::int AS missing FROM billing_documents WHERE user_id = $1`, [id]),
     db.query(`SELECT o.pack_key, p.name, o.provider, o.granted_at FROM pack_owners o JOIN track_packs p ON p.key = o.pack_key WHERE o.user_id = $1 AND o.revoked_at IS NULL ORDER BY o.granted_at`, [id]),
     db.query(`SELECT season_key, provider, granted_at FROM season_passes WHERE user_id = $1 AND revoked_at IS NULL ORDER BY granted_at`, [id]),
   ]);
-  return { spend: spend.rows, sek: sek.rows[0], packs: packsHeld.rows, passes: passes.rows };
+  const filled = docs.rows.filter((d) => d.book_filled_at);
+  const sum = (rows, f) => rows.reduce((n, d) => n + f(d), 0);
+  const sek = {
+    paid: sum(filled.filter((d) => d.kind === 'receipt'), (d) => d.book_gross_cents),
+    refunded: -sum(filled.filter((d) => d.kind !== 'receipt'), (d) => d.book_gross_cents),
+    fees: sum(filled, (d) => d.book_fee_cents ?? 0),
+    missing: docs.rows.length - filled.length,
+    documents: docs.rows.map((d) => ({ number: d.number, kind: d.kind, orderNo: d.order_no, currency: d.currency, cents: d.gross_cents, sekCents: d.book_filled_at ? d.book_gross_cents : null, ...rateCheck(d) })),
+  };
+  sek.cents = sek.paid - sek.refunded;
+  return { spend: spend.rows, website: website.rows, sek, packs: packsHeld.rows, passes: passes.rows };
 }
 
 router.get('/players/:id', need('customers:read'), async (req, res) => {

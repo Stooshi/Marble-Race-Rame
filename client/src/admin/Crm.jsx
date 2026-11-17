@@ -255,7 +255,7 @@ function customerOf(d) {
     security: d.security.events,
     audit: d.audit.map((a) => ({ action: a.action, admin: a.admin, reason: a.reason, at: a.created_at })),
     emails: d.emails ?? [],
-    overview: d.overview ?? { spend: [], sek: { cents: 0 }, packs: [], passes: [] },
+    overview: d.overview ?? { spend: [], website: [], sek: { cents: 0, paid: 0, refunded: 0, fees: 0, missing: 0, documents: [] }, packs: [], passes: [] },
   };
 }
 
@@ -418,7 +418,7 @@ function SectionDetail({ c, section, can, reload }) {
       return (
         <>
           <div className="crm-stats">
-            <div><b>{o.sek.cents ? money(o.sek.cents, 'SEK') : '—'}</b><span>spent on the website, in SEK (net of refunds)</span></div>
+            <div><b>{o.website?.length ? o.website.map((x) => money(x.cents, x.currency)).join(' + ') : '—'}</b><span>spent on the website, after refunds{o.website?.some((x) => x.refunded_cents) ? ` (paid ${o.website.map((x) => money(x.paid_cents, x.currency)).join(' + ')}, refunded ${o.website.map((x) => money(x.refunded_cents, x.currency)).join(' + ')})` : ''}</span></div>
             <div><b>{o.spend.reduce((n, x) => n + x.purchases, 0)}</b><span>purchases (website and apps)</span></div>
             <div><b>{o.packs.length}</b><span>track packs</span></div>
           </div>
@@ -433,7 +433,16 @@ function SectionDetail({ c, section, can, reload }) {
             </dl>
           </Card>
           <Card title="Spent">
-            <Rows head={['Currency', 'Purchases', 'Net of refunds', 'Last']} rows={o.spend.map((x) => [x.currency, x.purchases, money(x.cents, x.currency), day(x.last_paid_at)])} empty="Nothing bought." />
+            <Rows head={['Currency', 'Purchases', 'Paid', 'Refunded', 'Net', 'Last']} rows={o.spend.map((x) => [x.currency, x.purchases, money(x.paid_cents, x.currency), x.refunded_cents ? money(x.refunded_cents, x.currency) : '—', money(x.cents, x.currency), day(x.last_paid_at)])} empty="Nothing bought." />
+            {o.sek.documents?.length > 0 && (
+              <>
+                <p className="crm-muted">In SEK, as Stripe booked it (its rate on each day): paid {money(o.sek.paid, 'SEK')}, refunded {money(o.sek.refunded, 'SEK')}, net {money(o.sek.cents, 'SEK')}; Stripe's fees {money(o.sek.fees, 'SEK')}. A refund is converted on its own day, so a fully refunded order can leave a small SEK difference.</p>
+                <Rows head={['Document', 'Order', 'Amount', 'In SEK', 'SEK per unit']} rows={o.sek.documents.map((d) => [
+                  <DocLink key={d.number} d={d} can={can} />, d.orderNo ?? '—', money(d.kind === 'receipt' ? d.cents : -Math.abs(d.cents), d.currency), d.sekCents == null ? 'waiting for Stripe' : money(d.sekCents, 'SEK'),
+                  d.rate == null ? '—' : <span style={d.odd ? { color: 'var(--c-bad)', fontWeight: 700 } : undefined} title={d.odd ? 'This rate is unlikely: check the SEK amount against the balance transaction in Stripe' : undefined}>{d.rate.toFixed(2)}{d.odd ? ' · check' : ''}</span>,
+                ])} />
+              </>
+            )}
             {o.sek.missing > 0 && <p className="crm-muted">{o.sek.missing} website document(s) still waiting for their SEK amount from Stripe.</p>}
             <p className="crm-muted">App purchases are in US dollars here (the stores' own amounts are in their reports).</p>
           </Card>
