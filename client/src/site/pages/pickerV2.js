@@ -1,16 +1,10 @@
 /**
- * The track picker's new order (Moses, 16 Nov 2026, preview at /preview/picker-v2): while pack tracks lock for the
+ * The track picker's order (Moses, 16 Nov 2026; approved and live 17 Nov 2026): while pack tracks lock for the
  * player (TRACK_PACKS on for them), the tracks they can race come first (free tracks, packs they own, packs not yet
  * complete), then every locked track, mixed across the series rather than grouped, with a track-pack banner where
  * the locked tracks start, another 7 rows later, another 7 rows after that, and one at the very end (each for a
  * different complete pack the player doesn't own). With locking off nothing changes: these functions aren't used.
  */
-
-/** The preview only: a track as the server would send it with TRACK_PACKS on for this player. */
-export function asLocked(t, owned) {
-  if (t.locked || t.is_free || !t.pack?.complete || owned.has(t.pack.key)) return t;
-  return { ...t, locked: true, lockedBy: t.season ? undefined : 'pack' };
-}
 
 /**
  * Locked tracks mixed across their packs: one from each pack in turn (each pack's own tracks in `sort` order), so

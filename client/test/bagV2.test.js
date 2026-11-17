@@ -1,10 +1,9 @@
-// The Marble Bag redesign (Moses, 16 Nov 2026, /preview/bag-v2): the bag shows only owned marbles (starters
-// included), the racing one first; the collection lists the rest; the live /bag is unchanged.
+// The Marble Bag redesign (Moses, 16 Nov 2026; approved and live at /bag 17 Nov 2026): the bag shows only owned
+// marbles (starters included), the racing one first; the collection lists the rest.
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { ITEMS } from '../src/shared/marbles';
-import { bagTiles } from '../src/site/pages/BagPage';
-import { COLLECTION_SIZE, splitBag } from '../src/site/pages/BagV2Preview';
+import { COLLECTION_SIZE, bagTiles, splitBag } from '../src/site/pages/BagPage';
 
 const starter = (n) => ({ id: `s${n}`, name: `Starter ${n}`, is_starter: true, starter_no: n, marble_code: `ST${n}` });
 
@@ -24,10 +23,13 @@ describe('bag v2', () => {
     expect(toGet.every((t) => !t.owned && t.slug)).toBe(true);
     expect(toGet.some((t) => t.slug === owned[0].slug)).toBe(false);
   });
-  it('57 collection marbles; the live /bag unchanged', () => {
+  it('57 collection marbles; /bag is the v2 bag and the old preview link lands on it', () => {
     expect(COLLECTION_SIZE).toBe(57);
     const app = readFileSync(new URL('../src/App.jsx', import.meta.url), 'utf8');
     expect(app).toMatch(/path="\/bag" element=\{<BagPage \/>\}/);
-    expect(app).toMatch(/path="\/preview\/bag-v2"/);
+    expect(app).toMatch(/path="\/preview\/bag-v2" element=\{<Navigate to="\/bag" replace \/>\}/);
+    const page = readFileSync(new URL('../src/site/pages/BagPage.jsx', import.meta.url), 'utf8');
+    expect(page).toMatch(/Grow your collection/);
+    expect(page).not.toMatch(/Preview of the new Marble Bag|next=\/preview/);
   });
 });

@@ -50,3 +50,28 @@ describe('the track-pack terms (live from 16 Nov 2026)', () => {
     expect(linking).toEqual([]);
   });
 });
+
+// Inside the apps the terms name only the store's price (Moses, 17 Nov 2026: nothing in the app mentions web prices;
+// Google Play Payments, App Store 3.1.1; docs/08-store-rules.md). The website keeps its prices.
+describe('the terms inside the apps', () => {
+  const before = globalThis.window;
+  for (const platform of ['android', 'ios']) {
+    it(`${platform}: no website price for coin packs or track packs`, () => {
+      globalThis.window = { ...(before ?? {}), Capacitor: { isNativePlatform: () => true, getPlatform: () => platform } };
+      try {
+        const app = html(<LegalPage />);
+        expect(app).not.toMatch(/\$\d/);
+        expect(app).toContain('Coin packs: 5,000, 10,500, 27,500 and 57,500 coins. In the app, the store shows the price');
+        expect(app).toContain('In the app, the store shows its price, in your currency, VAT included. It is one payment, not a subscription.');
+        expect(app).toContain('at most 30% of the price (1,990 coins; the store shows the rest)');
+        expect(app).toContain('The Holiday Season Pass 2026: in the app, the store shows its price, in your currency, VAT included. It is one payment');
+      } finally {
+        globalThis.window = before;
+      }
+    });
+  }
+  it('the website: the prices as before', () => {
+    const web = html(<LegalPage />);
+    for (const s of ['57,500 for $50 on the website', 'The Holiday Season Pass 2026 costs $9.99 on the website', 'A pack costs $6.99 on the website', '1,990 coins on the website, where the rest is $4.99']) expect(web, s).toContain(s);
+  });
+});

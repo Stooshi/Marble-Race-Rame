@@ -105,6 +105,8 @@ describe('no app-only layout anywhere', () => {
       'site/SocialLinks.jsx': 'no links out to social media in the apps (store rules)',
       'site/help/HelpPage.jsx': 'the Help answers for the platform',
       'site/landing/LandingPage.jsx': 'one sentence: "Free to play" instead of "in your browser"',
+      'site/pages/LegalPage.jsx': 'no website prices in the apps\' terms (store rules)',
+      'site/pages/LegalTrackPacks.jsx': 'no website prices in the apps\' terms (store rules)',
       'site/pages/RedeemPage.jsx': 'no gift codes in the apps (store rules)',
     };
     const root = new URL('../src/', import.meta.url).pathname;

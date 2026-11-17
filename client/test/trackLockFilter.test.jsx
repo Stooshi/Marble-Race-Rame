@@ -29,17 +29,19 @@ describe('the lock filter', () => {
     expect(TRACKS.filter((t) => matchesLock(t, 'all'))).toHaveLength(3);
   });
 
-  it('while packs lock for the player: shown next to the wildness filter, My tracks by default', () => {
+  it('while packs lock for the player: shown next to the wildness filter, All tracks by default (picker v2, 17 Nov 2026)', () => {
     state.packLocking = true;
     const html = picker();
     expect(html).toContain('aria-label="My tracks or locked"');
-    expect(html).toMatch(/aria-pressed="true">My tracks <span[^>]*>2<\/span>/);
     const group = html.split('aria-label="My tracks or locked">')[1].split('</div>')[0];
-    expect(group.match(/<button/g)).toHaveLength(2); // (two buttons, no All)
+    expect(group.match(/<button/g)).toHaveLength(3); // (All tracks, My tracks, Locked)
+    expect(group).toMatch(/aria-pressed="true">All tracks/);
+    expect(html).toMatch(/My tracks <span[^>]*>2<\/span>/);
     expect(html).toMatch(/🔒 Locked <span[^>]*>1<\/span>/);
     expect(html).toContain('Lisbon Cube Hills');
     expect(html).toContain('Kill Screen');
-    expect(html).not.toContain('Venice Cube Canals'); // (locked: under Locked)
+    expect(html).toContain('Venice Cube Canals'); // (locked, after the racable ones)
+    expect(html.indexOf('Venice Cube Canals')).toBeGreaterThan(html.indexOf('Kill Screen'));
   });
 
   it('works with the wildness filter: both apply', () => {

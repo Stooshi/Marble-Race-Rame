@@ -3,19 +3,12 @@
 // for a different complete pack the player doesn't own; with TRACK_PACKS off nothing changes.
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { asLocked, bannerPacks, bannerSlots, mixLocked, orderTracks } from '../src/site/pages/pickerV2';
+import { bannerPacks, bannerSlots, mixLocked, orderTracks } from '../src/site/pages/pickerV2';
 
 const byName = (a, b) => a.name.localeCompare(b.name);
 const track = (name, pack, extra = {}) => ({ name, slug: name, pack: pack && { key: pack, name: pack, complete: true }, ...extra });
 
 describe('picker v2', () => {
-  it('locks as the server would: a complete pack not owned, never a free track', () => {
-    const owned = new Set(['rivers']);
-    expect(asLocked(track('a', 'peaks'), owned)).toMatchObject({ locked: true, lockedBy: 'pack' });
-    expect(asLocked(track('b', 'rivers'), owned).locked).toBeUndefined();
-    expect(asLocked(track('c', 'peaks', { is_free: true }), owned).locked).toBeUndefined();
-    expect(asLocked({ ...track('d', 'arcade'), pack: { key: 'arcade', complete: false } }, owned).locked).toBeUndefined();
-  });
 
   it('racable first, then the locked ones taking turns by pack (never a block of one series)', () => {
     const tracks = [
@@ -46,9 +39,12 @@ describe('picker v2', () => {
     expect(bannerPacks(packs, locked).map((p) => p.key)).toEqual(['peaks', 'rivers', 'pinball']);
   });
 
-  it('only the preview and v2 use it: the live picker (/play/track) is unchanged', () => {
+  it('live since 17 Nov 2026: /play/track is the v2 picker; the old preview link lands on it', () => {
     const app = readFileSync(new URL('../src/App.jsx', import.meta.url), 'utf8');
     expect(app).toMatch(/path="\/play\/track" element=\{<RacerGate><TrackStep \/><\/RacerGate>\}/);
-    expect(app).toMatch(/path="\/preview\/picker-v2"/);
+    expect(app).toMatch(/path="\/preview\/picker-v2" element=\{<Navigate to="\/play\/track" replace \/>\}/);
+    expect(app).not.toMatch(/PickerV2Preview/);
+    const flow = readFileSync(new URL('../src/site/pages/RaceFlow.jsx', import.meta.url), 'utf8');
+    expect(flow).not.toMatch(/TrackStep\(\{|asLocked/);
   });
 });

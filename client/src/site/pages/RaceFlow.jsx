@@ -10,7 +10,7 @@ import MarbleBadge from '../marbles/MarbleBadge';
 import TrackBanner, { SERIES_PIC } from '../TrackBanner';
 import WildnessBadge from '../WildnessBadge';
 import { PackBanner } from '../shop/TrackPacks';
-import { asLocked, bannerPacks, bannerSlots, orderTracks } from './pickerV2';
+import { bannerPacks, bannerSlots, orderTracks } from './pickerV2';
 import { WILDNESS, WILDNESS_LEVELS, WILDNESS_NOTE, matchesWildness } from '../../shared/wildness.js';
 import { handle, shownName } from '../../shared/playerName';
 import { useLeaguesOn } from '../leagues/status';
@@ -369,21 +369,19 @@ function useColumns(ref) {
 }
 
 /**
- * Step 1, the track picker. `v2` (Moses, 16 Nov 2026; ./pickerV2.js): while packs lock for the player, the tracks
- * they can race first, then the locked ones mixed, with pack banners among them; `preview` (/preview/picker-v2
- * only) shows the player the picker as if TRACK_PACKS were on for them.
+ * Step 1, the track picker (picker v2, Moses approved 17 Nov 2026; ./pickerV2.js): while packs lock for the player,
+ * the tracks they can race first, then the locked ones mixed, with pack banners among them, and All tracks / My
+ * tracks / Locked (All the default). With locking off it is the plain list.
  */
-export function TrackStep({ v2 = false, preview = false } = {}) {
+export function TrackStep() {
   const [search] = useSearchParams();
   const navigate = useNavigate();
   const { user } = useAuth();
   const list = useTrackList();
-  const { data: packData } = useAsync(() => (v2 ? api.packs().catch(() => null) : Promise.resolve(null)), [v2, user?.id]);
-  const owned = useMemo(() => new Set((packData?.packs ?? []).filter((p) => p.owned).map((p) => p.key)), [packData]);
-  const simulate = preview && !list.packLocking;
-  const tracks = useMemo(() => (simulate ? list.tracks.map((t) => asLocked(t, owned)) : list.tracks), [simulate, list.tracks, owned]);
-  const packLocking = list.packLocking || preview;
-  const [lockState, setLock] = useState(v2 ? 'all' : 'mine'); // (My tracks / Locked: only while packs lock for the player; v2 adds All, the default)
+  const { data: packData } = useAsync(() => api.packs().catch(() => null), [user?.id]);
+  const tracks = list.tracks;
+  const packLocking = list.packLocking;
+  const [lockState, setLock] = useState('all'); // (All / My tracks / Locked: only while packs lock for the player)
   const lock = packLocking ? lockState : 'all';
   const gridRef = useRef(null);
   const cols = useColumns(gridRef);
@@ -436,14 +434,14 @@ export function TrackStep({ v2 = false, preview = false } = {}) {
       </button>
     );
   };
-  // v2: racable first, then the locked ones mixed, a pack banner at the slots (./pickerV2.js).
+  // Racable first, then the locked ones mixed, a pack banner at the slots (./pickerV2.js).
   const v2Order = useMemo(() => {
-    if (!v2 || !packLocking) return null;
+    if (!packLocking) return null;
     const { free, locked } = orderTracks(shown, SORTS[sort]);
     const packs = bannerPacks(packData?.packs ?? [], locked);
     const slots = bannerSlots(locked.length, cols, packs.length);
     return { free, locked, slots, banner: (k) => packs[slots.indexOf(k)] ?? null };
-  }, [v2, packLocking, shown, sort, packData, cols]);
+  }, [packLocking, shown, sort, packData, cols]);
   return (
     <div className="ms-page">
       <Steps at={1} />
@@ -466,7 +464,7 @@ export function TrackStep({ v2 = false, preview = false } = {}) {
         </div>
         {packLocking && (
           <div className="ms-wild-filter" role="group" aria-label="My tracks or locked">
-            {(v2 ? [['all', 'All tracks'], ...LOCK_FILTERS] : LOCK_FILTERS).map(([k, label]) => (
+            {[['all', 'All tracks'], ...LOCK_FILTERS].map(([k, label]) => (
               <button key={k} type="button" aria-pressed={lock === k} onClick={() => setLock(k)}>
                 {k === 'locked' ? '🔒 ' : ''}{label} <span style={{ opacity: 0.75 }}>{tracks.filter((t) => matchesLock(t, k)).length}</span>
               </button>
