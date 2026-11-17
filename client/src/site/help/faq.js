@@ -421,8 +421,58 @@ export function buildFaq({ tracks, platform = 'web' } = {}) {
       ]],
     ]],
     ['Technical help', [
+      // (17 Nov 2026, Moses approved: the minimums from the code and our tests: WebGL 2 (three.js), the website's
+      // build target (Vite's baseline: Chrome and Edge 111, Firefox 114, Safari 16.4), the apps' minimums
+      // (iOS 16.4, Android 7.0: client/ios, client/android/variables.gradle); data measured on a build: about
+      // 0.9 MB of code, 1 MB of sound for a first race, 0.8–0.9 MB of race stream per race.)
+      ['What do I need to play?', [
+        'A phone, tablet or computer with a browser that can show 3D graphics (WebGL 2):',
+        ['ul',
+          '**Browsers:** Chrome or Edge 111 or later, Firefox 114 or later, or Safari 16.4 or later (iPhone and iPad: iOS 16.4 or later).',
+          ios ? '**The app:** iOS 16.4 or later.'
+            : platform === 'android' ? '**The app:** Android 7.0 or later, with an up-to-date Android System WebView (it updates through Google Play).'
+              : '**The apps:** the iPhone app needs iOS 16.4 or later. The Android app needs Android 7.0 or later, with an up-to-date Android System WebView (it updates through Google Play).',
+          `**Older phones:** the game runs on older and cheaper phones too (we test on a budget ${ios ? '' : 'Android '}phone from 2020). If a phone can't keep up, the game lowers the picture's sharpness by itself, and on a slow phone it leaves out the scenery, so the race stays smooth. Races are exactly the same on every device.`,
+          '**Internet:** you need a connection while you race. Wi-Fi or 4G is recommended.'],
+      ]],
+      ['Why does a race take a moment to load?', [
+        'Before the countdown, the game loads the track, the marbles, the scenery and the race sound.',
+        ['ul',
+          '**On your own,** the race waits a few seconds at most for the sound, so the start beeps and the music are in time.',
+          '**In a shared race** (rooms, races with other players), nobody waits: the race starts on time for everyone. A slower screen joins in step, and its sound comes in at the right place.'],
+        "Your first visit takes longest, because the game itself has to download. After that it's stored on your device, so later visits are quicker. On a slow connection, every step takes longer.",
+      ]],
+      ['Does it use a lot of mobile data?', [
+        'Roughly:',
+        ['ul',
+          '**On the website:** about 3–5 MB for your first visit and first race (the game, the sound and the track pictures), then about 1 MB for each race after that.',
+          '**In the app:** the game, the sound and the pictures come with the app, so a race uses about 1 MB.'],
+        "On Wi-Fi none of this matters. On mobile data, ten races are about 10–15 MB.",
+      ]],
+      ['Why does it use so much battery?', [
+        'The races are drawn live in 3D, so your phone\'s graphics chip works the whole time, as it does in any 3D game. To save battery:',
+        ['ul',
+          'turn off the TV cameras (the **TV** button under the race);',
+          'turn off the music (**Settings → Game music**);',
+          'turn your screen brightness down.'],
+        'Low-power mode saves battery, but it can make the picture less smooth. The game lowers its own detail when it needs to.',
+      ]],
       ['The game is slow or my phone gets hot.',
         "Close other apps and make sure your phone isn't in low-power mode. The game automatically lowers detail on slower phones. You can also turn off the effects you don't need: the TV cameras (the **TV** button under the race) and the music (**Settings → Game music**)."],
+      ['Can I play on slow Wi-Fi or 4G? What if my connection drops mid-race?', [
+        ['ul',
+          '**Slow connections:** yes. A race needs about 1 MB over a minute. On a slow connection the race takes longer to load, and the picture can pause now and then before it catches up.',
+          "**If the connection drops,** you'll see the offline screen. Your race isn't affected: races run on our server, so your marble keeps racing and finishes, and its result and any coins count as normal.",
+          "**When you're back online,** the screen picks up the race where it is now. If the race is over by then, you'll see the result."],
+      ]],
+      ['Is the app better than the browser?', [
+        "It's the same game with the same account: your coins, marbles and track packs are the same everywhere. The differences:",
+        ['ul',
+          '**Loading:** the app starts quicker and uses less data, because the game and its sound are inside the app.',
+          `**Sound:** in the app the sound plays straight away, with no first tap.${ios ? ' It follows the silent switch.' : platform === 'android' ? '' : ' On iPhone it follows the silent switch.'}`,
+          app ? `**Purchases:** in the app you buy through ${STORE}, at its prices.` : '**Purchases:** in the apps you buy through the App Store or Google Play, at their prices. On the website you pay by card.',
+          '**Speed in a race:** the same. Both draw the race the same way.'],
+      ]],
       ['I see the "offline" screen.',
         "You've lost your internet connection, or our server can't be reached. The screen disappears by itself as soon as the connection is back."],
       ["The game won't load.",

@@ -559,7 +559,7 @@ Built on a **Mac with Xcode** (the cloud workspace and Windows can't), in Termin
 
 1. The paid **Apple Developer Program** account (Voltron Robotics AB). Its **Team ID** (developer.apple.com → Account → Membership details; 10 letters and digits, not secret) goes in `client/ios/apple-team-id.txt` (gitignored) or the `MS_APPLE_TEAM_ID` variable. **Not set yet: Moses provides it once the account exists.**
 2. Xcode → Settings → Accounts: sign in with an Apple ID of that team (signing is automatic: Xcode makes the certificates and profiles).
-3. App Store Connect → Apps → + → New App: iOS, Marble Spins, English (U.S.), bundle id `com.marblespins.app` (register it under Certificates, Identifiers & Profiles → Identifiers if it isn't listed, with In-App Purchase), SKU `marblespins-ios`.
+3. The app's minimum is **iOS 16.4** (17 Nov 2026; set in the Xcode project, App target → General → Minimum Deployments: leave it at 16.4; App Store Connect reads it from the build). App Store Connect → Apps → + → New App: iOS, Marble Spins, English (U.S.), bundle id `com.marblespins.app` (register it under Certificates, Identifiers & Profiles → Identifiers if it isn't listed, with In-App Purchase), SKU `marblespins-ios`.
 
 ### Building and uploading
 

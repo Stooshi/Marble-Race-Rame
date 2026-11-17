@@ -10,6 +10,7 @@ What the stores' rules ask of Marble Spins, checked against the code on 21 Octob
 
 ## How the apps are built (what the rules look at)
 
+- **Minimum versions** (Moses, 17 Nov 2026, before the App Store submission): the iPhone app needs **iOS 16.4** (`IPHONEOS_DEPLOYMENT_TARGET` in `client/ios/App/App.xcodeproj`, was 15.0), to match the code: the client is built for Vite's baseline (Safari / iOS 16.4, Chrome and Edge 111, Firefox 114) and needs WebGL 2. The Android app needs Android 7.0 (`minSdkVersion` 24) with an up-to-date Android System WebView. The Help Centre's "What do I need to play?" says the same. App Store Connect takes the minimum from the build.
 - Capacitor 8 wraps the same React client as the website. The pages are **bundled in the app** (`webDir: dist`, no `server.url`): the app does not load the website.
 - Native parts: App Store / Google Play purchases (`@capgo/native-purchases`), Restore Purchases on iPhone, push notifications (built, switched off in `client/src/shared/push.json`), offline screen with the phone's own network status, Android back button, status bar and splash, sound that pauses in the background and follows the iPhone's silent switch. No haptics.
 - No ads, no analytics or crash SDK in the apps. Google Analytics and the Meta Pixel load only on the website, after cookie consent (`client/src/site/consent/tracking.js` stops in the apps). The Android manifest removes `AD_ID`.
