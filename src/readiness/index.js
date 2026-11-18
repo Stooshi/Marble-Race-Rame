@@ -17,6 +17,7 @@ const PLATFORMS = ['web', 'ios', 'android'];
 const KINDS = ['solo', 'room'];
 const PIECES = ['track', 'marbles', 'sound'];
 const MAX_MISSING = 12;
+const MAX_LOG_LINES = 40;
 
 /** A report from the client, checked and trimmed. → the row's fields, or throws a message. */
 function clean(body = {}) {
@@ -38,6 +39,8 @@ function clean(body = {}) {
     else if (typeof v === 'string') details[k] = v.slice(0, 40);
     else if (Array.isArray(v)) details[k] = v.filter((x) => typeof x === 'string').map((x) => x.slice(0, 40)).slice(0, MAX_MISSING);
   }
+  // (18 Nov 2026: an app's last sound log lines, for a race with no sound: longer lines, more of them.)
+  if (Array.isArray(d.log)) details.log = d.log.filter((x) => typeof x === 'string').slice(-MAX_LOG_LINES).map((x) => x.slice(0, 200));
   return { platform, kind, ready: missing.length === 0, missing, lateMs, details };
 }
 

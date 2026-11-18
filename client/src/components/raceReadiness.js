@@ -5,6 +5,7 @@
  * nothing waits for it. A screen opened after GO (watching mid-race) sends nothing.
  */
 import { nativePlatform } from '../app/native';
+import { recentSoundLog } from '../sound/soundLog';
 
 const EVERY_MS = 250;
 const GIVE_UP_MS = 60_000;
@@ -49,6 +50,8 @@ export function watchReadiness({ kind, goWall, pieces, sound, send, platform = n
         loadFailed: s.loadFailed?.length ? s.loadFailed : undefined,
         muted: s.muted, // (18 Nov 2026: the speaker button on mute, and the music switch)
         musicOn: s.musicOn,
+        // (18 Nov 2026: the apps only, the sound's last lines: a store build's console never reaches logcat.)
+        log: platform !== 'web' ? recentSoundLog() : undefined,
       },
     });
   };

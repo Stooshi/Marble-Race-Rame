@@ -241,3 +241,6 @@ rect.crm-chart__c, .crm-key.crm-chart__c { fill: var(--c-warn); background: var(
 .crm-funnel i { display: block; height: 10px; border-radius: 99px; background: var(--c-accent); }
 .crm-funnel small { grid-column: 3; color: var(--c-muted); font-size: 12px; }
 @media (max-width: 600px) { .crm-funnel > div { grid-template-columns: 1fr auto; } .crm-funnel i, .crm-funnel small { grid-column: 1 / -1; } }
+
+/* The app readiness report's sound log (18 Nov 2026). */
+.crm-log { max-width: 640px; max-height: 320px; overflow: auto; margin: 6px 0 0; font-size: 11px; line-height: 1.45; white-space: pre-wrap; word-break: break-word; }

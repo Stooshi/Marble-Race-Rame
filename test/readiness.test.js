@@ -63,3 +63,11 @@ test('an app race reports its build, its beeps, the sound GO gap and the files i
   });
   assert.deepEqual(r.details, { backend: 'native', build: '2026-11-07 09:10 UTC', beeps: 'dropped', goGapMs: -30000, loadFailed: ['marble-hit', 'marble-bump'], muted: true, musicOn: false });
 });
+
+test('an app report may carry the sound log: its last 40 lines, each cut to 200 characters (18 Nov 2026)', () => {
+  const log = Array.from({ length: 50 }, (_, k) => `${k} ${'x'.repeat(300)}`);
+  const r = readiness.clean({ platform: 'android', kind: 'solo', details: { backend: 'native', log: [...log, 7] } });
+  assert.equal(r.details.log.length, 40);
+  assert.ok(r.details.log[0].startsWith('10 '));
+  assert.ok(r.details.log.every((l) => l.length <= 200));
+});

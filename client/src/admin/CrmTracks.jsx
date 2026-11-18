@@ -109,10 +109,11 @@ function Readiness() {
           </Card>
           <Card title="Latest app races">
             <p className="crm-muted">Every race in the apps, ready or not: the build (its time), the sound player, what became of the countdown beeps (&quot;none: …&quot; says why there were none), how far the sound&apos;s GO was from GO as shown, and any sound file the player couldn&apos;t load. &quot;Muted&quot;: the speaker button was on mute (the account&apos;s setting, shared by the website and the apps); &quot;music off&quot;: Settings → Game music.</p>
-            <Rows head={['When', 'Platform', 'Build', 'Sound', 'Beeps', "Sound's GO off by", "Couldn't load"]} rows={(r.apps ?? []).map((l) => [
+            <Rows head={['When', 'Platform', 'Build', 'Sound', 'Beeps', "Sound's GO off by", "Couldn't load", 'Sound log']} rows={(r.apps ?? []).map((l) => [
               at(l.created_at), `${l.platform} · ${l.kind}`, l.details?.build ?? '(older build)',
               `${l.details?.backend ?? '—'}${l.details?.muted ? ' · muted' : l.details?.musicOn === false ? ' · music off' : ''}`, l.details?.beeps ?? '—',
               Number.isFinite(l.details?.goGapMs) ? `${(l.details.goGapMs / 1000).toFixed(1)} s` : '—', l.details?.loadFailed?.length ? l.details.loadFailed.join(', ') : '—',
+              l.details?.log?.length ? <details key="log"><summary>{l.details.log.length} lines</summary><pre className="crm-log">{l.details.log.join('\n')}</pre></details> : '—',
             ])} />
           </Card>
           <Card title="Latest screens not ready">

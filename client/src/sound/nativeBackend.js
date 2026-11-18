@@ -42,7 +42,9 @@ const RECHECK_MS = [150, 400, 900, 2000, 4000]; // (after a stop: still playing?
 const LOAD_TIMEOUT_MS = 8000; // (a file the player hasn't loaded by then counts as failed)
 const MAX_LEAD_MS = 400;
 const LOADS_AT_ONCE = 2;
-const log = (...a) => { try { console.info('[sound]', ...a); } catch { /* (no console) */ } };
+import { soundLog } from './soundLog';
+
+const log = soundLog;
 
 export function createNativeBackend({ plugin, now = () => Date.now(), durations = {} } = {}) {
   const loads = new Map(); // name → Promise<bool>

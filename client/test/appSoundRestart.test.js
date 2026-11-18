@@ -81,3 +81,16 @@ describe('the readiness report says why a race had no beeps', () => {
     expect(s.soundReport('r2').beeps).toBe('none: another race');
   });
 });
+
+describe('the sound log kept for the readiness report', () => {
+  it('keeps the last 40 "[sound]" lines with their time', async () => {
+    vi.resetModules();
+    const { soundLog, recentSoundLog } = await import('../src/sound/soundLog');
+    const info = vi.spyOn(console, 'info').mockImplementation(() => {});
+    for (let k = 0; k < 45; k += 1) soundLog(`line ${k}`, { n: k });
+    expect(recentSoundLog()).toHaveLength(40);
+    expect(recentSoundLog().at(-1)).toMatch(/^\d+\.\d line 44 \{"n":44\}$/);
+    expect(info).toHaveBeenCalledWith('[sound]', 'line 0', { n: 0 });
+    info.mockRestore();
+  });
+});

@@ -19,7 +19,9 @@
 
 const RATE = 32000;
 const DRIFT_S = 0.06; // (a tune more than this out of step is put back)
-const log = (...a) => { try { console.info('[sound]', ...a); } catch { /* (no console) */ } };
+import { soundLog } from './soundLog';
+
+const log = soundLog;
 
 export function createWebBackend({ urlOf, now = () => Date.now() } = {}) {
   let ctx = null;

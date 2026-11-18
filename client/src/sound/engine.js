@@ -33,6 +33,7 @@
  */
 import { createWebBackend } from './webBackend';
 import { createNativeBackend } from './nativeBackend';
+import { soundLog } from './soundLog';
 
 /** The race tunes (Moses: 12 from 30 Oct 2026, RACE MUSIC 3–14; RACE MUSIC 1 and 2 are no longer in the game). */
 export const RACE_TRACKS = ['tune-3', 'tune-4', 'tune-5', 'tune-6', 'tune-7', 'tune-8', 'tune-9', 'tune-10', 'tune-11', 'tune-12', 'tune-13', 'tune-14'];
@@ -98,7 +99,7 @@ function pickFormat() {
 }
 const urlOf = (name) => `${BASE}${name}.${pickFormat()}`;
 
-const log = (...a) => { try { console.info('[sound]', ...a); } catch { /* (no console) */ } };
+const log = soundLog;
 let backend = createWebBackend({ urlOf });
 let unlocked = false;
 let nativeFailed = false;
