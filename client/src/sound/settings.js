@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useSyncExternalStore } from 'react';
 import { api } from '../api/client';
 import { prepare, setSettings, unlock } from './engine';
+import { soundLog } from './soundLog';
 
 /**
  * The player's sound settings (Moses, 28 Oct 2026: no volume controls anywhere; players use the device's
@@ -64,27 +65,41 @@ export function useSoundUnlock(paused = false) {
   }, [paused]);
 }
 
+// The account whose saved settings this page (or app) has taken, once per sign-in (Moses, 18 Nov 2026: Android build
+// 7 raced muted while the speaker button showed sound on). It was kept per component: the phone menu's speaker
+// button mounts afresh every time the menu opens, and each new one took the account's settings again from the
+// user object loaded at start-up, which a change made since (saved with a delay) doesn't update: so a mute undone
+// on the device came back from the account at the next menu or page. Now the account's settings are taken once,
+// when the player signs in (or the app starts signed in); after that the device's own changes stand.
+let adoptedFor = null;
+/** (Tests: forget which account's settings were taken.) */
+export function _resetAdopted() { adoptedFor = null; }
+const save = () => api.saveSettings({ sound: current }).catch((e) => soundLog(`saving the sound settings to the account failed (${e?.message ?? e})`));
+
 /** { settings: { muted, music }, update(patch) } for the speaker button and Settings; `user` from the auth context. */
 export function useSoundSettings(user) {
   const settings = useSyncExternalStore((l) => { listeners.add(l); return () => listeners.delete(l); }, () => current, () => current);
-  // Signing in: the account's settings (if it has any).
-  const adopted = useRef(null);
+  // Signing in: the account's settings (if it has any), once.
   useEffect(() => {
-    if (!user?.id || adopted.current === user.id) return;
-    adopted.current = user.id;
+    if (!user?.id) { adoptedFor = null; return; }
+    if (adoptedFor === user.id) return;
+    adoptedFor = user.id;
     const had = user.settings?.sound;
     if (had) {
       apply({ ...current, ...had });
+      soundLog(`the account's sound settings taken: ${current.muted ? 'muted' : 'sound on'}, music ${current.music ? 'on' : 'off'}`);
       // (Old volume numbers saved with the account: written back without them.)
-      if (typeof had.music === 'number' || 'effects' in had) api.saveSettings({ sound: current }).catch(() => {});
+      if (typeof had.music === 'number' || 'effects' in had) save();
     }
-  }, [user?.id, user?.settings?.sound]);
+  }, [user?.id]); // eslint-disable-line react-hooks/exhaustive-deps
   const timer = useRef(null);
   const update = useCallback((patch) => {
     apply({ ...current, ...patch });
+    soundLog(`sound settings changed here: ${current.muted ? 'muted' : 'sound on'}, music ${current.music ? 'on' : 'off'}`);
     if (!user?.id) return;
+    adoptedFor = user.id; // (a change made here is newer than anything the account held at sign-in)
     clearTimeout(timer.current);
-    timer.current = setTimeout(() => api.saveSettings({ sound: current }).catch(() => {}), 800);
+    timer.current = setTimeout(save, 800);
   }, [user?.id]);
   return { settings, update };
 }
