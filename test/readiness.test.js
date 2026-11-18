@@ -59,7 +59,7 @@ test('an app race reports its build, its beeps, the sound GO gap and the files i
   const r = readiness.clean({
     platform: 'android',
     kind: 'solo',
-    details: { backend: 'native', build: '2026-11-07 09:10 UTC', beeps: 'dropped', goGapMs: -30000, loadFailed: ['marble-hit', 'marble-bump'], secret: 'x' },
+    details: { backend: 'native', build: '2026-11-07 09:10 UTC', beeps: 'dropped', goGapMs: -30000, loadFailed: ['marble-hit', 'marble-bump'], muted: true, musicOn: false, secret: 'x' },
   });
-  assert.deepEqual(r.details, { backend: 'native', build: '2026-11-07 09:10 UTC', beeps: 'dropped', goGapMs: -30000, loadFailed: ['marble-hit', 'marble-bump'] });
+  assert.deepEqual(r.details, { backend: 'native', build: '2026-11-07 09:10 UTC', beeps: 'dropped', goGapMs: -30000, loadFailed: ['marble-hit', 'marble-bump'], muted: true, musicOn: false });
 });

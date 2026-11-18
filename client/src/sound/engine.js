@@ -248,6 +248,10 @@ export function soundReport(raceId = null) {
     goGapMs: here ? goGap : null,
     beeps: here ? beepsState : 'none',
     loadFailed: backend.failed?.() ?? [],
+    // (18 Nov 2026, Moses's Android build 1.0.0 (6) with no sound at all: whether the speaker button had the game
+    // muted, or Settings had the music off, so the readiness report tells a muted game from a broken player.)
+    muted: settings.muted,
+    musicOn: musicOn(),
   };
 }
 /**

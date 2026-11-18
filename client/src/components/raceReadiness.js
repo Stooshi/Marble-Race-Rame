@@ -47,6 +47,8 @@ export function watchReadiness({ kind, goWall, pieces, sound, send, platform = n
         goGapMs: s.goGapMs ?? undefined,
         beeps: s.beeps,
         loadFailed: s.loadFailed?.length ? s.loadFailed : undefined,
+        muted: s.muted, // (18 Nov 2026: the speaker button on mute, and the music switch)
+        musicOn: s.musicOn,
       },
     });
   };

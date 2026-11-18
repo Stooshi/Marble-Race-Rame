@@ -30,8 +30,9 @@ function clean(body = {}) {
   const d = body.details && typeof body.details === 'object' && !Array.isArray(body.details) ? body.details : {};
   // (Only these, each a short value: nothing else a client sends is kept.)
   const details = {};
-  // (build, goGapMs, beeps, loadFailed: 7 Nov 2026, the app's late countdown.)
-  for (const k of ['backend', 'started', 'running', 'connection', 'memoryGb', 'heldMs', 'waitedMs', 'sound', 'build', 'goGapMs', 'beeps', 'loadFailed']) {
+  // (build, goGapMs, beeps, loadFailed: 7 Nov 2026, the app's late countdown. muted, musicOn: 18 Nov 2026, an app
+  // race with no sound at all: muted by the speaker button, or a player that didn't play.)
+  for (const k of ['backend', 'started', 'running', 'connection', 'memoryGb', 'heldMs', 'waitedMs', 'sound', 'build', 'goGapMs', 'beeps', 'loadFailed', 'muted', 'musicOn']) {
     const v = d[k];
     if (typeof v === 'boolean' || (typeof v === 'number' && Number.isFinite(v))) details[k] = v;
     else if (typeof v === 'string') details[k] = v.slice(0, 40);
