@@ -246,7 +246,8 @@ export function soundReport(raceId = null) {
     // (For the readiness report: the GO the sound is timed on, what became of the beeps, the files the player couldn't load.)
     goAt: here ? race.goAt : null,
     goGapMs: here ? goGap : null,
-    beeps: here ? beepsState : 'none',
+    // ('none: no countdown': this screen never had the race's countdown (raceCountdown); 'none: another race': it is on another.)
+    beeps: here ? beepsState : race ? 'none: another race' : 'none: no countdown',
     loadFailed: backend.failed?.() ?? [],
     // (18 Nov 2026, Moses's Android build 1.0.0 (6) with no sound at all: whether the speaker button had the game
     // muted, or Settings had the music off, so the readiness report tells a muted game from a broken player.)
@@ -332,7 +333,7 @@ function playTune(name, atWall) {
 function begin(raceId, goAt) {
   if (race && race.id !== raceId) endRace();
   ended.delete(raceId); // (its countdown or GO here again: the race is on)
-  if (!race) race = { id: raceId, goAt, beeps: null, tune: null, ceremony: null };
+  if (!race) { race = { id: raceId, goAt, beeps: null, tune: null, ceremony: null }; beepsState = 'none: no countdown'; }
   const moved = Math.abs(race.goAt - goAt) > 30;
   race.goAt = goAt;
   return moved;
@@ -357,6 +358,10 @@ export function raceCountdown(raceId, msToGo) {
     if (effectsOn() && unlocked && msToGo > 150) {
       race.beeps = backend.start(SOUNDS.beeps, { atWall: goAt - BEEPS_GO_S * 1000, bus: 'fx', until: goAt + 900 });
       beepsState = 'scheduled';
+    } else {
+      // (18 Nov 2026, Android build 6: solo races reported beeps "none" with nothing missing. Why, in the report.)
+      beepsState = `none: ${!effectsOn() ? (settings.muted ? 'muted' : 'effects off') : !unlocked ? 'sound not started' : `countdown ${Math.round(msToGo)} ms`}`;
+      log(`race ${String(raceId).slice(0, 8)}: beeps not scheduled (${beepsState})`);
     }
   }
   return Boolean(race.beeps);

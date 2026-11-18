@@ -108,7 +108,7 @@ function Readiness() {
             <Rows head={['Platform', 'Missing', 'Kind', 'Times']} rows={r.missing.map((m) => [m.platform, m.missing, m.piece, m.times])} />
           </Card>
           <Card title="Latest app races">
-            <p className="crm-muted">Every race in the apps, ready or not: the build (its time), the sound player, what became of the countdown beeps, how far the sound&apos;s GO was from GO as shown, and any sound file the player couldn&apos;t load. &quot;Muted&quot;: the speaker button was on mute (the account&apos;s setting, shared by the website and the apps); &quot;music off&quot;: Settings → Game music.</p>
+            <p className="crm-muted">Every race in the apps, ready or not: the build (its time), the sound player, what became of the countdown beeps (&quot;none: …&quot; says why there were none), how far the sound&apos;s GO was from GO as shown, and any sound file the player couldn&apos;t load. &quot;Muted&quot;: the speaker button was on mute (the account&apos;s setting, shared by the website and the apps); &quot;music off&quot;: Settings → Game music.</p>
             <Rows head={['When', 'Platform', 'Build', 'Sound', 'Beeps', "Sound's GO off by", "Couldn't load"]} rows={(r.apps ?? []).map((l) => [
               at(l.created_at), `${l.platform} · ${l.kind}`, l.details?.build ?? '(older build)',
               `${l.details?.backend ?? '—'}${l.details?.muted ? ' · muted' : l.details?.musicOn === false ? ' · music off' : ''}`, l.details?.beeps ?? '—',

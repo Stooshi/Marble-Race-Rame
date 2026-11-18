@@ -45,3 +45,39 @@ describe('the apps: races after app restarts with a saved round of tunes', () =>
     }
   });
 });
+
+// Moses, 18 Nov 2026: build 6's solo races reported beeps "none" with nothing missing. The report now says why.
+describe('the readiness report says why a race had no beeps', () => {
+  beforeEach(() => { vi.useFakeTimers(); vi.setSystemTime(T0); });
+  afterEach(() => vi.useRealTimers());
+  const engine = async () => {
+    vi.resetModules();
+    globalThis.localStorage = { getItem: () => null, setItem: () => {}, removeItem: () => {} };
+    const s = await import('../src/sound/engine');
+    s.useNativeAudio(plug().p);
+    return s;
+  };
+  it('a countdown heard: scheduled', async () => {
+    const s = await engine();
+    s.raceCountdown('r1', 4000);
+    expect(s.soundReport('r1').beeps).toBe('scheduled');
+  });
+  it('muted: none: muted', async () => {
+    const s = await engine();
+    s.setSettings({ muted: true });
+    s.raceCountdown('r1', 4000);
+    expect(s.soundReport('r1').beeps).toBe('none: muted');
+  });
+  it('the countdown already over when it reached the sound: none: countdown N ms', async () => {
+    const s = await engine();
+    s.raceCountdown('r1', 100);
+    expect(s.soundReport('r1').beeps).toBe('none: countdown 100 ms');
+  });
+  it('GO with no countdown before it, or none at all: none: no countdown', async () => {
+    const s = await engine();
+    expect(s.soundReport('r1').beeps).toBe('none: no countdown');
+    s.raceGo('r1', T0);
+    expect(s.soundReport('r1').beeps).toBe('none: no countdown');
+    expect(s.soundReport('r2').beeps).toBe('none: another race');
+  });
+});
