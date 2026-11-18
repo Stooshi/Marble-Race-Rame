@@ -209,3 +209,33 @@ test('the coin packs: website $5/$10/$25/$50, the stores $4.99/$9.99/$24.99/$49.
     ['coins-5000', 500, 499], ['coins-10500', 1000, 999], ['coins-27500', 2500, 2499], ['coins-57500', 5000, 4999],
   ]);
 });
+
+// /health's googlePlay (18 Nov 2026: the app said buying wasn't switched on with the variable set): live, or why not.
+test('googlePlay status: live, or the reason the key can\'t be read (never the key)', () => {
+  const g = require('../src/payments/google');
+  g.setTransport(fetch, undefined);
+  const before = process.env.GOOGLE_PLAY_SERVICE_ACCOUNT;
+  const key = JSON.stringify({ type: 'service_account', client_email: 'play@example.iam.gserviceaccount.com', private_key: '-----BEGIN PRIVATE KEY-----\nabc\n-----END PRIVATE KEY-----\n' });
+  const cases = [
+    ['', 'missing'],
+    [`"${key.replace(/"/g, '\\"')}"`, 'quoted'],
+    ['{ "type": "service_account", "private_key": "-----BEGIN\nabc" }', 'not-json'], // (a real line break inside a string)
+    [JSON.stringify({ type: 'authorized_user', client_id: 'x' }), 'not-a-key'],
+  ];
+  try {
+    for (const [v, reason] of cases) {
+      process.env.GOOGLE_PLAY_SERVICE_ACCOUNT = v;
+      assert.deepEqual([g.status().live, g.status().reason], [false, reason], reason);
+      assert.equal(g.configured(), false);
+    }
+    for (const v of [key, Buffer.from(key).toString('base64')]) {
+      process.env.GOOGLE_PLAY_SERVICE_ACCOUNT = v;
+      const st = g.status();
+      assert.equal(st.live, true);
+      assert.equal(g.configured(), true);
+      assert.ok(!JSON.stringify(st).includes('PRIVATE') && !JSON.stringify(st).includes('example.iam'), 'no secrets in the status');
+    }
+  } finally {
+    if (before === undefined) delete process.env.GOOGLE_PLAY_SERVICE_ACCOUNT; else process.env.GOOGLE_PLAY_SERVICE_ACCOUNT = before;
+  }
+});

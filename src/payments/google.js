@@ -55,21 +55,49 @@ function setTransport(fn, account = undefined) { fetchImpl = fn; accountOverride
 
 const packageName = () => process.env.GOOGLE_PLAY_PACKAGE || 'com.marblespins.app';
 
-function serviceAccount() {
-  if (accountOverride !== undefined) return accountOverride;
+/**
+ * The service account from GOOGLE_PLAY_SERVICE_ACCOUNT, and why not when it can't be read (Moses, 18 Nov 2026: the
+ * app said "Buying in the app isn't switched on yet" with the variable set): `reason` is one of
+ *   'missing'        the variable is empty on this server
+ *   'quoted'         it starts with a quote: pasted as a quoted string ("{…}"); paste the JSON itself
+ *   'not-json'       neither JSON nor base64 of JSON (often: real line breaks inside the private key; paste the
+ *                    file's text unchanged, where the key's line breaks are written \n, or base64 the file)
+ *   'not-a-key'      JSON, but no client_email and private_key (another kind of Google file)
+ * Never the key or the account's address.
+ */
+function readAccount() {
+  if (accountOverride !== undefined) return accountOverride ? { acc: accountOverride } : { acc: null, reason: 'missing' };
   const raw = (process.env.GOOGLE_PLAY_SERVICE_ACCOUNT || '').trim();
-  if (!raw) return null;
+  if (!raw) return { acc: null, reason: 'missing' };
+  if (/^["']/.test(raw)) return { acc: null, reason: 'quoted' };
+  let acc;
   try {
-    const json = raw.startsWith('{') ? raw : Buffer.from(raw, 'base64').toString('utf8');
-    const acc = JSON.parse(json);
-    return acc.client_email && acc.private_key ? acc : null;
+    acc = JSON.parse(raw.startsWith('{') ? raw : Buffer.from(raw, 'base64').toString('utf8'));
   } catch {
-    console.error('[google-play] GOOGLE_PLAY_SERVICE_ACCOUNT is not a service account JSON key');
-    return null;
+    return { acc: null, reason: 'not-json' };
   }
+  if (!acc || typeof acc !== 'object' || !acc.client_email || !acc.private_key) return { acc: null, reason: 'not-a-key' };
+  return { acc };
+}
+let warned = null;
+function serviceAccount() {
+  const { acc, reason } = readAccount();
+  if (!acc && reason !== 'missing' && warned !== reason) {
+    warned = reason;
+    console.error(`[google-play] GOOGLE_PLAY_SERVICE_ACCOUNT can't be read (${reason}): Google Play purchases stay off`);
+  }
+  return acc;
 }
 
 const configured = () => Boolean(serviceAccount());
+
+/** For /health: whether Google Play purchases can work on this server, and why not. No secrets. */
+function status() {
+  const { acc, reason } = readAccount();
+  return acc
+    ? { live: true, package: packageName(), rtdn: Boolean(process.env.GOOGLE_PLAY_RTDN_TOKEN) }
+    : { live: false, reason, package: packageName(), rtdn: Boolean(process.env.GOOGLE_PLAY_RTDN_TOKEN) };
+}
 
 const b64url = (buf) => Buffer.from(buf).toString('base64').replace(/=+$/, '').replace(/\+/g, '-').replace(/\//g, '_');
 
@@ -358,6 +386,6 @@ function decodeRtdn(body) {
 }
 
 module.exports = {
-  configured, packageName, accountIdFor, redeem, consume, consumeLeftovers, acknowledge, acknowledgeLeftovers, syncVoided, refundOrder,
+  configured, status, packageName, accountIdFor, redeem, consume, consumeLeftovers, acknowledge, acknowledgeLeftovers, syncVoided, refundOrder,
   getPurchase, voidedPurchases, rtdnTokenOk, decodeRtdn, setTransport, VOID_REASON, playId, ourId, PLAY_ID,
 };
