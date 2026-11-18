@@ -1166,3 +1166,68 @@ export function teaserFront(info, race, { at, text = null } = {}) {
     sound: { goAt, beeps: false, music: [[0, p.v]], musicFadeOut: 0.25, lifts: [], ceremony: null, raceHits: true },
   };
 }
+
+/**
+ * A pack battle (Moses, 18 Nov 2026): the last `text.window` ms before the winner crosses (a race won by under
+ * 0.05 s, 4–6 marbles side by side), from mid-battle: front-facing cameras ahead of the pack looking back (the pack
+ * racing at the lens) cut with low fixed cameras beside the track as the leaders pass; never a follow from behind;
+ * the line from a low camera beside it, then a freeze on the line with the real gap; the end card (`endLines`,
+ * joined part-way so its lines are in). Texts: "N marbles. 1 gap." from frame one (N: the marbles within 4 m of
+ * the leader for most of the window), a small "Lead changes: N" counter that ticks up as the lead changes (a new
+ * leader counted once it has held it 0.3 s), the gap on the freeze. The race sound: music and the pack's hits.
+ *   text: { window, freeze, endSeconds, endLines, style, shots: [[kind, fromMs, toMs, …]…] } (race ms)
+ */
+export function packBattle(info, race, { text = null } = {}) {
+  const L = info.arc;
+  const fin = race.results.map((r) => r.finishTimeMs).filter(Number.isFinite).sort((a, b) => a - b);
+  const tWin = fin[0];
+  const gapMs = fin[1] - fin[0];
+  const W = text.window ?? 9000;
+  const A = tWin - W;
+  const F = race.frames.filter((f) => f.t >= A && f.t <= tWin);
+  // The battle: who is in it, and when the lead changes.
+  let leader = null, cand = null, since = 0;
+  const changes = [];
+  const inGroup = new Map();
+  for (const f of F) {
+    const p = f.p.map((x) => Math.min(x, 1));
+    const order = p.map((x, i) => [x, i]).sort((a, b) => b[0] - a[0]);
+    for (const [x, i] of order) if ((order[0][0] - x) * L <= (text.near ?? 4)) inGroup.set(i, (inGroup.get(i) ?? 0) + 1);
+    const now = order[0][1];
+    if (leader === null) { leader = now; continue; }
+    if (now !== leader) {
+      if (cand !== now) { cand = now; since = f.t; } else if (f.t - since >= 300) { leader = now; cand = null; changes.push(since); }
+    } else cand = null;
+  }
+  const pack = [...inGroup.entries()].filter(([, c]) => c / F.length >= 0.6).map(([i]) => i);
+  const leadAt = (t) => {
+    const f = race.frames[Math.max(0, Math.min(race.frames.length - 1, Math.round(t / race.tickMs)))];
+    return Math.max(...f.p.map((x) => Math.min(x, 1)));
+  };
+  const p = builder('pack battle');
+  // (Cameras that ride with the pack and stay over the track: fixed ones stood inside half-pipe walls and under coaster
+  // decks, 18 Nov 2026 check.) front: ahead of the pack looking back at it; side: beside the leaders.
+  const CAM = { front: { back: -7, up: 2.2, ahead: 0, side: 0, fov: 44 }, side: { back: -3.5, up: 4.2, ahead: 0.5, side: 0.9, fov: 48 }, line: { back: -10, up: 2.6, ahead: 0, side: 0.6, fov: 40 } };
+  for (const [kind, a, b, m] of text.shots) {
+    const cam = { ...CAM[kind], ...(m !== undefined && kind === 'side' ? { side: m } : {}) };
+    p.add({ type: 'group', members: pack, shot: `${kind}-${a}`, from: a, dur: (b - a) / 1000, ...cam });
+  }
+  const raceEnd = p.v;
+  const last = p.shots[p.shots.length - 1];
+  p.add({ ...last, from: tWin, dur: text.freeze ?? 1, speed: 0 }); // (the freeze on the line)
+  const freezeAt = raceEnd;
+  p.add({ type: 'end', dur: text.endSeconds ?? 2, skip: text.endSkip ?? 1.5 });
+  const v = (t) => (t - A) / 1000;
+  const counter = [{ at: 0, text: 'Lead changes: 0' }, ...changes.map((t, k) => ({ at: v(t), text: `Lead changes: ${k + 1}` }))];
+  return {
+    shots: p.shots, length: p.v, podium: null, textStyle: text.style ?? null, endLines: text.endLines,
+    texts: [
+      { at: 0, dur: 2, top: `${pack.length} marbles. 1 gap.` },
+      { at: freezeAt, dur: text.freeze ?? 1, top: `${(gapMs / 1000).toFixed(3)} s` },
+    ],
+    counter: counter.map((c, k) => ({ ...c, dur: (k + 1 < counter.length ? counter[k + 1].at : freezeAt + (text.freeze ?? 1)) - c.at })),
+    battle: { tWin, gapMs, from: A, pack, changes: changes.length, winner: race.results.find((r) => r.finishTimeMs === tWin) },
+    marks: { goAt: 0, from: A, raceMs: W, members: pack, near: 14 },
+    sound: { goAt: 0, beeps: false, music: [[0, p.v]], musicFadeOut: 0.6, lifts: [], ceremony: null, raceHits: true },
+  };
+}

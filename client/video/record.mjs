@@ -112,7 +112,7 @@ export async function record({ variant = 'A', opening = 'old', text = null, slug
     if (plan.sound.raceHits) {
       const C = TEMPLATE.collisionMontage;
       const k = TEMPLATE.teaser?.hitGain ?? 0.55;
-      plan.sound.extra = [...(plan.sound.extra ?? []), ...soundTimes(hits, { from: 0, gap: C.gapSeconds }).map((h) => ({ key: h.kind === 'bump' ? 'bump' : 'hit', at: plan.marks.goAt + h.v, dur: 0.4, fadeOut: 0.05, gain: k * (C.clickGain.soft + (C.clickGain.hard - C.clickGain.soft) * h.k) * (h.kind === 'bump' ? C.bumpGain : 1) }))];
+      plan.sound.extra = [...(plan.sound.extra ?? []), ...soundTimes(hits, { from: plan.marks.from ?? 0, gap: C.gapSeconds }).map((h) => ({ key: h.kind === 'bump' ? 'bump' : 'hit', at: plan.marks.goAt + h.v, dur: 0.4, fadeOut: 0.05, gain: k * (C.clickGain.soft + (C.clickGain.hard - C.clickGain.soft) * h.k) * (h.kind === 'bump' ? C.bumpGain : 1) }))];
       log(`  ${plan.sound.extra.length} clicks and bumps in the race`);
     }
     log(`${info.name}: ${kind} ${format}, ${plan.length.toFixed(1)} s, ${plan.shots.length} shots; winner ${info.podium[0].name} (gate ${info.podium[0].gate}) by ${info.margin} ms${plan.packShare !== undefined ? `; the race ${Math.round(plan.packShare * 100)}% on the pack` : ''}`);
@@ -200,7 +200,7 @@ export async function record({ variant = 'A', opening = 'old', text = null, slug
           await cardFor(sh.type === 'logo' ? { v: sh.version } : { v: TEMPLATE.intro.logo, end: '1', l1: (plan.endLines ?? TEXTS.endCard)[0], l2: (plan.endLines ?? TEXTS.endCard)[1] });
           cardKey = key;
         }
-        await card.evaluate((t) => window.logoAt(t), Math.min(u, 1.99));
+        await card.evaluate((t) => window.logoAt(t), Math.min(u + (sh.skip ?? 0), 1.99)); // (skip: join the card part-way, its lines already in)
         shot = await card.screenshot({ type: 'jpeg', quality: 92 });
       } else {
         const t = sh.type === 'fly' ? (u / sh.dur) * fly * 1000 : sh.from + u * 1000 * (sh.speed ?? 1);
@@ -213,7 +213,7 @@ export async function record({ variant = 'A', opening = 'old', text = null, slug
           r.podium(pod, rows);
           if (s.type === 'fly') r.flyover(t);
           else if (s.type === 'race') r.race(t, { step, follow: s.follow ?? 'leader' });
-          else if (s.type === 'group') r.group(t, { step, members: s.members, shot: s.shot, back: s.back, up: s.up, ahead: s.ahead, fov: s.fov });
+          else if (s.type === 'group') r.group(t, { step, members: s.members, shot: s.shot, back: s.back, up: s.up, ahead: s.ahead, side: s.side, fov: s.fov });
           else {
             const eye = s.eye.from ? s.eye : r.eye(s.eye);
             if (s.type === 'look') r.look(t, eye);
@@ -232,7 +232,11 @@ export async function record({ variant = 'A', opening = 'old', text = null, slug
             if (ov.results) r.results(ov.results.k, ov.results);
             if (ov.resultsTall) r.resultsTall(ov.resultsTall.k, ov.resultsTall);
           }
-        }, [{ type: sh.type, eye: sh.eye, follow: sh.follow, fov: sh.fov, members: sh.members, saveAim: sh.saveAim, useAim: sh.useAim, shot: sh.shot, back: sh.back, up: sh.up, ahead: sh.ahead, lead: sh.lead }, t, step, textAt(plan.texts, v), pod, rows, ov]);
+        }, [{ type: sh.type, eye: sh.eye, follow: sh.follow, fov: sh.fov, members: sh.members, saveAim: sh.saveAim, useAim: sh.useAim, shot: sh.shot, back: sh.back, up: sh.up, ahead: sh.ahead, side: sh.side, lead: sh.lead }, t, step, textAt(plan.texts, v), pod, rows, ov]);
+        if (plan.counter) {
+          const c = plan.counter.find((x) => v >= x.at && v < x.at + x.dur);
+          await page.evaluate((c) => { const el = document.getElementById('counter'); el.textContent = c?.text ?? ''; el.style.opacity = c ? '1' : '0'; }, c ?? null);
+        }
         shot = await page.screenshot({ type: 'jpeg', quality: 92 });
       }
       if (list) { fs.writeFileSync(`${out.replace(/\.mp4$/, '')}-${v.toFixed(2)}.jpg`, shot); frames += 1; continue; }

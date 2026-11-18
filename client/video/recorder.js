@@ -405,7 +405,7 @@ window.rec = {
    * indexes; the pack, or the whole field leaving the gate), looking on down the track at them:
    * the broadcast's wide chase. Eased, so it glides; `shot` (any key) snaps it when a new shot starts.
    */
-  group(t, { members, shot, back = 11, up = 6.5, ahead = 6, fov = 46, step }) {
+  group(t, { members, shot, back = 11, up = 6.5, ahead = 6, side = 0, fov = 46, step }) {
     advanceTo(t, step, 'leader');
     const pts = members.map((i) => scene.marbles.positionOf(i)).filter(Boolean);
     if (!pts.length) { draw(t); return; }
@@ -413,7 +413,8 @@ window.rec = {
     const f = frameAt(t);
     const p = members.reduce((a, i) => a + Math.min(1, f.p[i] ?? 0), 0) / members.length;
     const s = spot(p);
-    const cam = c.clone().addScaledVector(s.ahead, -back).add(new Vector3(0, up, 0));
+    // (back < 0: in front of the group, looking back at it; side: metres to the side, e.g. alongside the leaders)
+    const cam = c.clone().addScaledVector(s.ahead, -back).addScaledVector(s.side, side).add(new Vector3(0, up, 0));
     const ground = scene.scenery?.userData?.groundAt?.(cam.x, cam.z);
     if (Number.isFinite(ground) && cam.y < ground + 3) cam.y = ground + 3;
     const aim = c.clone().addScaledVector(s.ahead, ahead);
