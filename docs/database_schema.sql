@@ -1644,3 +1644,8 @@ CREATE TABLE IF NOT EXISTS marketing_sends (
 );
 CREATE UNIQUE INDEX IF NOT EXISTS uq_marketing_onboarding ON marketing_sends (user_id, kind) WHERE newsletter_id IS NULL;
 CREATE UNIQUE INDEX IF NOT EXISTS uq_marketing_newsletter ON marketing_sends (user_id, newsletter_id) WHERE newsletter_id IS NOT NULL;
+
+-- A test order (Moses, 18 Nov 2026: MS-1001, a sandbox purchase from before Stripe went live): shown as "Test · not
+-- charged" to the player and in the CRM, given no receipt number, and left out of every sales total, VAT report and
+-- bookkeeping export (payments.TEST_ORDER also counts Stripe test-mode orders, cs_test_…, and the 'test' provider).
+ALTER TABLE payments ADD COLUMN IF NOT EXISTS is_test boolean NOT NULL DEFAULT false;

@@ -16,7 +16,10 @@ function monthRange(month) {
   return { from: `${month}-01`, to: `${next}-01` };
 }
 
-const IN_MONTH = `(d.issued_at AT TIME ZONE 'Europe/Stockholm') >= $1::date AND (d.issued_at AT TIME ZONE 'Europe/Stockholm') < $2::date`;
+// (Never a test order's document: Moses, 18 Nov 2026, MS-1001. A test order gets none from then on; this keeps one
+// issued before out of the exports, the VAT summary and the totals.)
+const IN_MONTH = `(d.issued_at AT TIME ZONE 'Europe/Stockholm') >= $1::date AND (d.issued_at AT TIME ZONE 'Europe/Stockholm') < $2::date
+  AND NOT EXISTS (SELECT 1 FROM payments tp WHERE tp.id = d.payment_id AND tp.is_test)`;
 
 async function documentsOf(db, month) {
   const r = monthRange(month);

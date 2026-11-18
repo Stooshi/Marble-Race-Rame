@@ -234,6 +234,7 @@ function customerOf(d) {
     item: product(p),
     provider: p.provider,
     status: p.status,
+    test: Boolean(p.test), // (a test order: not charged, no receipt, in no total. Moses, 18 Nov 2026)
     refunded: p.refunded_cents || 0,
     charged: p.charged_cents ?? p.amount_cents,
     currency: (p.charged_currency ?? p.currency ?? '').toUpperCase(),
@@ -506,16 +507,16 @@ function SectionDetail({ c, section, can, reload }) {
       return (
         <>
           {c.purchases.map((o) => (
-            <Card key={o.id} title={o.item} actions={<Pill tone={statusTone[o.status]}>{o.refunded && o.status === 'paid' ? 'part refunded' : o.status}</Pill>}>
+            <Card key={o.id} title={o.item} actions={o.test ? <Pill tone="info">Test · not charged</Pill> : <Pill tone={statusTone[o.status]}>{o.refunded && o.status === 'paid' ? 'part refunded' : o.status}</Pill>}>
               <dl className="crm-kv">
                 <div><dt>Order</dt><dd>{o.order_no}</dd></div>
                 <div><dt>Paid</dt><dd>{when(o.at)}</dd></div>
                 <div><dt>Amount</dt><dd>{money(o.charged, o.currency)}{o.tax != null ? ` (VAT ${money(o.tax, o.currency)})` : ''}</dd></div>
                 <div><dt>Through</dt><dd>{PROVIDER[o.provider] ?? o.provider}</dd></div>
-                <div><dt>Receipt</dt><dd>{o.receipt ? <DocLink d={o.receipt} can={can} /> : o.provider === 'stripe' ? (o.status === 'pending' ? 'When paid' : '— (issued at the next start-up)') : `${o.provider === 'google' ? 'Google' : 'Apple'}'s own (the store sells it)`}</dd></div>
+                <div><dt>Receipt</dt><dd>{o.test ? 'None: a test order, not charged (left out of sales, VAT and the exports)' : o.receipt ? <DocLink d={o.receipt} can={can} /> : o.provider === 'stripe' ? (o.status === 'pending' ? 'When paid' : '— (issued at the next start-up)') : `${o.provider === 'google' ? 'Google' : 'Apple'}'s own (the store sells it)`}</dd></div>
                 {o.refunded > 0 && <div><dt>Refunded</dt><dd>{money(o.refunded, o.currency)}{o.credits.length ? <> · {o.credits.map((x) => <DocLink key={x.number} d={x} can={can} />)}</> : ''}</dd></div>}
               </dl>
-              {can('payments:refund') && o.status === 'paid' && o.charged > o.refunded && (
+              {can('payments:refund') && !o.test && o.status === 'paid' && o.charged > o.refunded && (
                 <ReasonAction
                   label="Refund…"
                   danger
@@ -666,7 +667,7 @@ function Billing({ number, can }) {
             {list?.map((d) => (
               <button key={d.number} type="button" className={number === d.number ? 'is-on' : undefined} onClick={() => { navigate(`${BASE}/billing/${encodeURIComponent(d.number)}`); toTop(); }}>
                 <span className={`crm-list__ico${d.kind === 'credit' ? ' crm-list__ico--credit' : ''}`}><Icon name={d.kind === 'credit' ? 'refund' : 'receipt'} /></span>
-                <span className="crm-list__txt"><b>{d.number}</b><small>{d.player ?? '—'} · {d.order_no} · {when(d.issued_at)}</small></span>
+                <span className="crm-list__txt"><b>{d.number}</b><small>{d.player ?? '—'} · {d.order_no}{d.test ? ' · Test · not charged' : ''} · {when(d.issued_at)}</small></span>
                 <span className={`crm-amt${d.gross_cents < 0 ? ' crm-neg' : ''}`}>{money(d.gross_cents, d.currency)}</span>
                 <Icon name="chevron" size={18} />
               </button>
@@ -698,7 +699,7 @@ function DocumentPanel({ d, can }) {
           <div><dt>Stripe fee</dt><dd>{d.book_filled_at ? money(d.book_fee_cents, d.book_currency ?? 'SEK') : '—'}</dd></div>
           <div><dt>VAT country, rate</dt><dd>{d.vat_country ?? '—'} · {d.vat_rate == null ? '—' : `${Number(d.vat_rate)}%`}</dd></div>
           <div><dt>Emailed</dt><dd>{d.emailed_at ? when(d.emailed_at) : 'Not yet'}</dd></div>
-          <div><dt>Order</dt><dd>{d.order_no} · {d.payment_status}{d.refunded_cents ? `, ${money(d.refunded_cents, d.currency)} refunded` : ''}</dd></div>
+          <div><dt>Order</dt><dd>{d.order_no} · {d.test ? 'Test · not charged (left out of sales, VAT and the exports)' : d.payment_status}{d.refunded_cents ? `, ${money(d.refunded_cents, d.currency)} refunded` : ''}</dd></div>
           {credit && <div><dt>Credits</dt><dd>{d.credits_number ? <Link to={`${BASE}/billing/${encodeURIComponent(d.credits_number)}`}>{d.credits_number}</Link> : '—'}</dd></div>}
           {!credit && d.credited_by?.length > 0 && <div><dt>Credited by</dt><dd>{d.credited_by.map((n, k) => <span key={n}>{k ? ', ' : ''}<Link to={`${BASE}/billing/${encodeURIComponent(n)}`}>{n}</Link></span>)}</dd></div>}
         </dl>

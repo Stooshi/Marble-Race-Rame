@@ -228,15 +228,19 @@ async function packCheckout(client, userId, { pack: packKey, useCoins = false, p
 }
 
 // What a player sees of their own orders (Purchases page).
-// A Stripe test-mode order (paid with a test card in Stripe's sandbox; its Checkout session id starts cs_test_): shown
-// as "Test", with no receipt (Moses, 16 Nov 2026). No real money moved, so it gets no K-number either (src/billing).
-const TEST_ORDER = `(provider = 'stripe' AND stripe_session_id LIKE 'cs\\_test\\_%')`;
+// A test order: a Stripe test-mode order (paid with a test card in Stripe's sandbox; its Checkout session id starts
+// cs_test_), the 'test' provider, or one marked is_test (Moses, 18 Nov 2026: MS-1001, a sandbox purchase from before
+// Stripe went live). Shown as "Test · not charged", with no receipt (Moses, 16 Nov 2026). No real money moved, so it
+// gets no K-number either (src/billing), and it is left out of every sales total, VAT report and export.
+const TEST_ORDER = `(is_test OR provider = 'test' OR (provider = 'stripe' AND stripe_session_id LIKE 'cs\\_test\\_%'))`;
+/** The same for a payments row in JavaScript. */
+const isTestOrder = (p) => Boolean(p && (p.is_test || p.provider === 'test' || (p.provider === 'stripe' && String(p.stripe_session_id ?? '').startsWith('cs_test_'))));
 const ORDER_COLUMNS = `order_no, provider, product_id, season_key, pack_key, coins_spent, coins, amount_cents, upper(currency) AS currency, charged_cents, charged_currency,
   tax_cents, status, refunded_cents, CASE WHEN ${TEST_ORDER} THEN NULL ELSE receipt_url END AS receipt_url, ${TEST_ORDER} AS test,
   created_at, paid_at, refunded_at, withdrawn_at,
   (SELECT COALESCE(json_agg(json_build_object('number', d.number, 'kind', d.kind, 'issued_at', d.issued_at, 'gross_cents', d.gross_cents, 'currency', d.currency)
             ORDER BY d.issued_at, d.number), '[]'::json)
-     FROM billing_documents d WHERE d.payment_id = payments.id) AS documents`;
+     FROM billing_documents d WHERE d.payment_id = payments.id AND NOT payments.is_test) AS documents`;
 
 /** A player's orders, newest first (lapsed checkouts that were never paid are left out). */
 async function ordersOf(client, userId) {
@@ -394,4 +398,4 @@ async function redeemReceipt(client, userId, { provider: providerName, receipt }
   return { coins: await grant(client, payment.id) };
 }
 
-module.exports = { TEST_ORDER, PROVIDERS, PACKS, CONSENT_TEXT, available, checkout, passCheckout, packCheckout, storeProduct, passProduct, grant, redeemReceipt, ordersOf, orderOf, stripeEvent, refund, googleAccountId, googlePurchase, appleAccountToken, applePurchase, appleNotification, googleSync, startGoogleJobs, pack };
+module.exports = { TEST_ORDER, isTestOrder, PROVIDERS, PACKS, CONSENT_TEXT, available, checkout, passCheckout, packCheckout, storeProduct, passProduct, grant, redeemReceipt, ordersOf, orderOf, stripeEvent, refund, googleAccountId, googlePurchase, appleAccountToken, applePurchase, appleNotification, googleSync, startGoogleJobs, pack };

@@ -334,6 +334,7 @@ The most specific row wins, then the newest. A slot with no row shows a built-in
 | `receipt_url` | Stripe's receipt |
 | `refunded_cents`, `refunded_at` | Total refunded so far |
 | `created_at`, `paid_at` | |
+| `is_test` | A test order (18 Nov 2026; data update `2027-08-29-ms-1001-test-order` marked MS-1001, a sandbox purchase from before Stripe went live). Shown as "Test · not charged" on `/purchases` and in the CRM, never given a receipt number, and left out of every sales total, the VAT summary and the bookkeeping exports. `payments.TEST_ORDER` also counts Stripe test-mode orders (`cs_test_…`) and the `test` provider |
 | `withdrawn_at` | When the player withdrew from the purchase with the online withdrawal function (a season pass in its pre-sale, before it activates; `src/payments/withdrawal.js`). The refund follows; the pass goes when it comes back |
 | `confirmation_sent_at`, `withdrawal_ack_sent_at` | When the purchase confirmation and the withdrawal acknowledgement were emailed (`src/payments/emails.js`; once email is on, website purchases only) |
 

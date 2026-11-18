@@ -204,7 +204,7 @@ function PaymentTable({ rows, showPlayer = false, onChanged }) {
         <thead><tr><th>Order</th><th>When</th>{showPlayer && <th>Player</th>}<th>Provider</th><th className="num">Coins</th><th className="num">Charged (incl. VAT)</th><th className="num">VAT</th><th className="num">Refunded</th><th>Status</th><th>Receipt</th><th /></tr></thead>
         <tbody>{rows.map((x) => (
           <tr key={x.id}>
-            <td><b>{x.order_no ?? '–'}</b></td>
+            <td><b>{x.order_no ?? '–'}</b>{x.test ? <> <small className="adm-muted">Test · not charged</small></> : null}</td>
             <td>{when(x.paid_at ?? x.created_at)}</td>
             {showPlayer && <td><Link to={`/admin/players/${x.player_id}`}>@{x.player}</Link></td>}
             <td>{x.provider}</td>

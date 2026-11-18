@@ -89,6 +89,8 @@ const DOC_COLUMNS = `d.id, d.number, d.kind, d.payment_id, d.refund_id, d.user_i
 async function issueReceipt(client, paymentId) {
   const { rows: [pay] } = await client.query('SELECT * FROM payments WHERE id = $1 FOR UPDATE', [paymentId]);
   if (!pay || pay.provider !== 'stripe' || !['paid', 'refunded'].includes(pay.status) || !pay.paid_at) return null;
+  // (A test order never gets a receipt number: no real money moved. Moses, 18 Nov 2026, MS-1001.)
+  if (pay.is_test) return null;
   const { rows: [had] } = await client.query(`SELECT ${DOC_COLUMNS} FROM billing_documents d WHERE d.payment_id = $1 AND d.kind = 'receipt'`, [pay.id]);
   if (had) return had;
   const number = await nextNumber(client, 'receipt', pay.paid_at);
@@ -181,7 +183,7 @@ async function issueMissing(db) {
     if (!lock.ok) return { receipts: 0, credits: 0 };
     const { rows: pays } = await client.query(
       `SELECT p.id FROM payments p
-        WHERE p.provider = 'stripe' AND p.status IN ('paid', 'refunded') AND p.paid_at IS NOT NULL AND p.stripe_session_id LIKE 'cs_live_%'
+        WHERE p.provider = 'stripe' AND p.status IN ('paid', 'refunded') AND p.paid_at IS NOT NULL AND p.stripe_session_id LIKE 'cs_live_%' AND NOT p.is_test
           AND NOT EXISTS (SELECT 1 FROM billing_documents d WHERE d.payment_id = p.id AND d.kind = 'receipt')
         ORDER BY p.paid_at, p.id`,
     );

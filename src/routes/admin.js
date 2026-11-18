@@ -63,7 +63,8 @@ router.use((_req, res, next) => { res.set('Cache-Control', 'no-store'); next(); 
 
 const REASON = { type: 'string', required: true, min: 5, max: 500 };
 const PAYMENT_COLUMNS = `p.id, p.order_no, p.provider, p.product_id, p.coins, p.amount_cents, upper(p.currency) AS currency, p.charged_cents,
-  p.charged_currency, p.tax_cents, p.status, p.refunded_cents, p.receipt_url, p.payment_intent, p.provider_ref, p.store_consumed_at, p.consent_at, p.created_at, p.paid_at, p.refunded_at`;
+  p.charged_currency, p.tax_cents, p.status, p.refunded_cents, p.receipt_url, p.payment_intent, p.provider_ref, p.store_consumed_at, p.consent_at, p.created_at, p.paid_at, p.refunded_at,
+  (p.is_test OR p.provider = 'test' OR (p.provider = 'stripe' AND p.stripe_session_id LIKE 'cs\\_test\\_%')) AS test`;
 
 const SUPPORT_LIST_COLUMNS = `s.id, s.ref, s.created_at, s.name, s.email, s.category, s.order_no, s.message, s.status, s.status_at,
   s.linked_by, s.user_id AS player_id, u.username AS player, u.is_guest AS player_guest, s.screenshot IS NOT NULL AS has_screenshot,
@@ -277,7 +278,7 @@ async function overviewOf(id) {
     money(`AND provider = 'stripe'`),
     db.query(
       `SELECT d.number, d.kind, d.currency, d.gross_cents, d.book_currency, d.book_gross_cents, d.book_fee_cents, d.book_filled_at, p.order_no
-         FROM billing_documents d JOIN payments p ON p.id = d.payment_id WHERE d.user_id = $1 ORDER BY d.issued_at, d.number`,
+         FROM billing_documents d JOIN payments p ON p.id = d.payment_id WHERE d.user_id = $1 AND NOT p.is_test ORDER BY d.issued_at, d.number`,
       [id],
     ),
     db.query(`SELECT o.pack_key, p.name, o.provider, o.granted_at FROM pack_owners o JOIN track_packs p ON p.key = o.pack_key WHERE o.user_id = $1 AND o.revoked_at IS NULL ORDER BY o.granted_at`, [id]),
@@ -775,7 +776,7 @@ router.get('/economy', need('reports:read'), async (req, res) => {
     ),
     db.query(
       `SELECT product_id, provider, COUNT(*)::int AS paid, SUM(amount_cents)::int AS cents, currency
-         FROM payments WHERE status = 'paid' AND paid_at > now() - make_interval(days => $1)
+         FROM payments WHERE status = 'paid' AND paid_at > now() - make_interval(days => $1) AND NOT ${paymentsSvc.TEST_ORDER}
         GROUP BY product_id, provider, currency ORDER BY cents DESC`,
       [days],
     ),
@@ -1093,7 +1094,7 @@ router.get('/billing/documents', need('billing:read'), async (req, res) => {
   }
   const { rows } = await db.query(
     `SELECT d.number, d.kind, d.issued_at, d.currency, d.gross_cents, d.vat_cents, d.vat_rate, d.vat_country, d.book_currency, d.book_gross_cents,
-            d.book_fee_cents, d.emailed_at, p.order_no, p.provider, u.id AS player_id, u.username AS player
+            d.book_fee_cents, d.emailed_at, p.order_no, p.provider, p.is_test AS test, u.id AS player_id, u.username AS player
        FROM billing_documents d JOIN payments p ON p.id = d.payment_id LEFT JOIN users u ON u.id = d.user_id
       ${where.length ? `WHERE ${where.join(' AND ')}` : ''}
       ORDER BY d.issued_at DESC, d.number DESC LIMIT 500`,
@@ -1106,7 +1107,7 @@ router.get('/billing/documents', need('billing:read'), async (req, res) => {
 router.get('/billing/documents/:number', need('billing:read'), async (req, res) => {
   const number = String(req.params.number).toUpperCase().slice(0, 20);
   const { rows: [d] } = await db.query(
-    `SELECT ${billing.DOC_COLUMNS}, p.order_no, p.status AS payment_status, p.refunded_cents, p.charged_cents, p.payment_intent, p.withdrawn_at,
+    `SELECT ${billing.DOC_COLUMNS}, p.order_no, p.is_test AS test, p.status AS payment_status, p.refunded_cents, p.charged_cents, p.payment_intent, p.withdrawn_at,
             u.username AS player, c.number AS credits_number,
             (SELECT COALESCE(json_agg(x.number ORDER BY x.number), '[]'::json) FROM billing_documents x WHERE x.credits_document_id = d.id) AS credited_by
        FROM billing_documents d JOIN payments p ON p.id = d.payment_id LEFT JOIN users u ON u.id = d.user_id
