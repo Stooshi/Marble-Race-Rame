@@ -1231,3 +1231,37 @@ export function packBattle(info, race, { text = null } = {}) {
     sound: { goAt: 0, beeps: false, music: [[0, p.v]], musicFadeOut: 0.6, lifts: [], ceremony: null, raceHits: true },
   };
 }
+
+/**
+ * A chase (Moses, 19 Nov 2026; DAILY-ORDER.md "Chase"): the last `window` ms before the winner crosses, from a camera
+ * close and low behind the pack (text.members, the race's 5–8 at the front), from its back right, following it, a bit of
+ * track ahead; then a camera at the line (text.lineCam, just ahead of the pack looking back) for the close finish (text.lineMs before it), a short
+ * freeze, the end card.
+ * The on-screen lines are text.lines: [{ at, top }], each until the next (the last until the freeze ends).
+ */
+export function chase(info, race, { text = null } = {}) {
+  const fin = race.results.map((r) => r.finishTimeMs).filter(Number.isFinite).sort((a, b) => a - b);
+  const tWin = fin[0];
+  const W = text.window ?? 9600;
+  const A = tWin - W;
+  const pack = text.members;
+  const p = builder('chase');
+  const lineMs = text.lineMs ?? 1500;
+  p.add({ type: 'group', members: pack, shot: 'chase', from: A, dur: (W - lineMs) / 1000, ...text.chaseCam });
+  // (At the line: a camera riding just ahead of the pack, low, looking back at it as it crosses; a camera standing
+  // by the line stood inside the finish arch's posts on Atlas Kasbah Run.)
+  p.add({ type: 'group', members: pack, shot: 'line', from: tWin - lineMs, dur: lineMs / 1000, ...text.lineCam });
+  const freezeAt = p.v;
+  const last = p.shots[p.shots.length - 1];
+  p.add({ ...last, from: tWin, dur: text.freeze ?? 0.4, speed: 0 });
+  const raceOut = p.v;
+  p.add({ type: 'end', dur: text.endSeconds ?? 2, skip: text.endSkip ?? 1.5 });
+  const lines = text.lines ?? [];
+  return {
+    shots: p.shots, length: p.v, podium: null, textStyle: text.style ?? null, endLines: text.endLines, noMark: text.noMark,
+    texts: lines.map((l, k) => ({ at: l.at, dur: (k + 1 < lines.length ? lines[k + 1].at : raceOut) - l.at, top: l.top, cut: true })),
+    battle: { tWin, gaps: [fin[1] - fin[0], fin[2] - fin[0]], from: A, pack, freezeAt, winner: race.results.find((r) => r.finishTimeMs === tWin) },
+    marks: { goAt: 0, from: A, raceMs: W, members: pack, near: 14 },
+    sound: { goAt: 0, beeps: false, music: [[0, p.v]], musicFadeOut: 0.6, lifts: [], ceremony: null, raceHits: true },
+  };
+}

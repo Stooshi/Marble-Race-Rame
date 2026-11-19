@@ -28,8 +28,10 @@ function textAt(texts, v) {
   const { fadeInSeconds: fin, fadeOutSeconds: fout } = TEMPLATE.text;
   for (const x of texts) {
     const u = v - x.at;
-    if (u < 0 || u > x.dur) continue;
-    const k = Math.min(1, u / fin, (x.dur - u) / fout);
+    // (cut: shown at full strength from its first frame to its last, no fades, the next line straight after it;
+    // the chase's lines, Moses 19 Nov 2026: text from the first frame, readable at every change.)
+    if (u < 0 || u > x.dur || (x.cut && u >= x.dur)) continue;
+    const k = x.cut ? 1 : Math.min(1, u / fin, (x.dur - u) / fout);
     return { top: x.top, opacity: k * k * (3 - 2 * k) };
   }
   return null;
