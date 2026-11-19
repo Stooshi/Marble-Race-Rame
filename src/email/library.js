@@ -59,6 +59,17 @@ const KINDS = {
     placeholders: {},
     defaults: { subject: 'Confirm your email for Marble Spins', title: 'Confirm your email', blocks: [{ type: 'text', text: 'Hi {{name}},' }, { type: 'text', text: 'Thanks for saving your marble. Tap the button to confirm that this is your email address, so your account is yours for good and you can get a new password if you ever forget it.' }, { type: 'core' }] },
   },
+  // The confirmation reminders (Moses, 19 Nov 2026; src/account/confirmReminders.js): service emails, day 1, 3 and 7
+  // after sign-up while the address isn't confirmed, each with a fresh link (the core). DRAFT texts for Moses.
+  ...Object.fromEntries([[1, 'day 1'], [2, 'day 3'], [3, 'day 7, the last']].map(([n, day]) => {
+    const r = require('../account/confirmReminderTexts').REMINDERS[n];
+    return [`confirm-reminder-${n}`, {
+      name: `Confirm-email reminder ${n} (${day})`, group: 'service',
+      about: `Sent ${day} after sign-up if the email isn't confirmed yet (never to deleted, suspended or under-13 accounts; each once). The core is a fresh confirmation link and how long it works.`,
+      placeholders: {},
+      defaults: { subject: r.subject, title: r.title, blocks: [{ type: 'text', text: 'Hi {{name}},' }, { type: 'text', text: r.body }, { type: 'core' }] },
+    }];
+  })),
   // The onboarding emails (phase 6): marketing, only to whom the audience rules allow; sending switched off.
   'onboarding-1': {
     name: 'Onboarding 1 (day 1): welcome', group: 'marketing',
@@ -193,7 +204,10 @@ function sampleCore(kind) {
     case 'credit-note': return cores.creditCore({ number: 'KR-2026-00001', orderNo: 'MS-1042', item: '2,500 coins (refund)', amount: '$9.99', receiptNumber: 'K-2026-00001', url: `${site}/purchases/receipt/KR-2026-00001` });
     case 'support-reply': return cores.supportReplyCore({ ref: 'S-1043', body: 'Thanks for writing. Your coins are back on your account now.', original: 'My coins disappeared after a race.' });
     case 'password-reset': return cores.passwordCore({ link: `${site}/reset-password?token=sample`, minutes: 60 });
-    case 'confirm-email': return require('../account/emailConfirm').core({ link: `${site}/confirm-email?t=sample` });
+    case 'confirm-email':
+    case 'confirm-reminder-1':
+    case 'confirm-reminder-2':
+    case 'confirm-reminder-3': return require('../account/emailConfirm').core({ link: `${site}/confirm-email?t=sample` });
     default: return '';
   }
 }

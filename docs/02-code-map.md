@@ -219,6 +219,7 @@
 - `email/templates.js`: the emails' HTML (password reset, support notification, support reply).
 - `email/unsubscribe.js`: signed unsubscribe links and RFC 8058 one-click headers.
 - `account/emailConfirm.js`: "Confirm your email" after sign-up (double opt-in, sent once email is set up): EN/SV email, `send()` (3 an hour), `confirm()` → `users.email_verified_at`.
+- `account/confirmReminders.js` (19 Nov 2026): the confirm-email reminders, day 1, 3 and 7 after the first confirmation email while the address isn't confirmed (`due()`, `run()`, every 15 minutes from `server.js`): never to confirmed, deleted, suspended, guest or under-13 accounts, or once the address has changed; each once (the email log, kinds `confirm-reminder-1…3`), only the latest one due (an account already past day 7 gets the last alone, within 30 days of sign-up), not within 20 hours of another confirmation email; a fresh link each (`emailConfirm.send(…, { reminder })`). Texts `account/confirmReminderTexts.js`, editable in the CRM (Email templates, service). Off until `CONFIRM_REMINDERS=on`. Test: `test/confirmReminders.test.js`.
 - `account/passwordReset.js`: "Forgot your password?":
   - `request()` emails a one-time link (60 minutes, single use; sent without waiting, so the answer takes as long either way, 9 Nov 2026), says nothing about whether the account exists, and sends at most 3 an hour;
   - `reset()` sets the new password, ends older logins and back-office sessions.

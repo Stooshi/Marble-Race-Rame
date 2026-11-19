@@ -28,7 +28,8 @@ const TEXTS = {
     hello: 'Hi {name},',
     body: 'Thanks for saving your marble. Tap the button to confirm that this is your email address, so your account is yours for good and you can get a new password if you ever forget it.',
     button: 'Confirm my email',
-    later: 'The link works for 7 days. Didn\'t sign up for Marble Spins? Then ignore this email: nothing more will be sent.',
+    // (19 Nov 2026: "nothing more will be sent" no longer true with the reminders; DRAFT for Moses with them.)
+    later: 'The link works for 7 days. Didn\'t sign up for Marble Spins? Then ignore this email.',
     raw: 'If the button doesn\'t work, copy this address into your browser:',
     footer: 'Marble Spins is operated by',
   },
@@ -44,10 +45,12 @@ const TEXTS = {
   },
 };
 
-/** The email: { subject, html }. */
-function message({ lang = 'en', name, link }) {
-  const L = !ENGLISH_ONLY && TEXTS[lang] ? lang : 'en'; // (English only for now: ../../client/src/shared/language.json)
-  const t = TEXTS[L];
+const { REMINDERS } = require('./confirmReminderTexts');
+
+/** The email: { subject, html }. `reminder` 1–3: that reminder's texts around the same button and link. */
+function message({ lang = 'en', name, link, reminder = null }) {
+  const L = reminder || ENGLISH_ONLY || !TEXTS[lang] ? 'en' : lang; // (English only for now: ../../client/src/shared/language.json)
+  const t = reminder ? { ...TEXTS.en, ...REMINDERS[reminder] } : TEXTS[L];
   return {
     subject: t.subject,
     html: `<!doctype html><html lang="${L}">${HEAD}<body style="margin:0;padding:0;background:#f2f4f8">
@@ -78,8 +81,14 @@ function core({ link }) {
 /** Is sending on (email set up)? */
 const on = () => email.enabled();
 
-/** Sends the confirmation link to a saved account's address. → 'sent' | 'off' (email not set up) | 'limit'. */
-async function send(db, user, { lang = 'en', siteUrl = config.publicSiteUrl } = {}) {
+/** The template kind of the first email or a reminder (src/email/library.js; logged under it in email_log). */
+const kindOf = (reminder) => (reminder ? `confirm-reminder-${reminder}` : 'confirm-email');
+
+/**
+ * Sends a confirmation link (a new one each time) to a saved account's address: the first email, or with `reminder`
+ * 1–3 that reminder. → 'sent' | 'off' (email not set up) | 'limit'.
+ */
+async function send(db, user, { lang = 'en', siteUrl = config.publicSiteUrl, reminder = null } = {}) {
   if (!on()) return 'off';
   const { rows: [{ recent }] } = await db.query(
     `SELECT count(*)::int AS recent FROM email_confirmations WHERE user_id = $1 AND created_at > now() - interval '1 hour'`,
@@ -88,14 +97,15 @@ async function send(db, user, { lang = 'en', siteUrl = config.publicSiteUrl } = 
   if (recent >= MAX_PER_HOUR) return 'limit';
   const token = crypto.randomBytes(32).toString('base64url');
   // English only for now (Moses, 21 Oct 2026); the Swedish texts stay below for later.
-  const language = ENGLISH_ONLY ? 'en' : lang === 'sv' ? 'sv' : 'en';
+  const language = ENGLISH_ONLY || reminder ? 'en' : lang === 'sv' ? 'sv' : 'en';
   await db.query(
     `INSERT INTO email_confirmations (user_id, email, token_hash, lang, expires_at) VALUES ($1, $2, $3, $4, now() + make_interval(days => $5))`,
     [user.id, user.email, hash(token), language, LINK_DAYS],
   );
   const link = `${siteUrl.replace(/\/+$/, '')}/confirm-email?t=${encodeURIComponent(token)}`;
-  const m = await library.compose(db, 'confirm-email', { values: { name: user.username }, core: core({ link }), fallback: () => message({ lang: language, name: user.username, link }) });
-  await email.send({ to: user.email, toName: user.username, subject: m.subject, html: m.html, tags: ['confirm-email'], userId: user.id, templateVersion: m.templateVersion });
+  const kind = kindOf(reminder);
+  const m = await library.compose(db, kind, { values: { name: user.username }, core: core({ link }), fallback: () => message({ lang: language, name: user.username, link, reminder }) });
+  await email.send({ to: user.email, toName: user.username, subject: m.subject, html: m.html, tags: [kind], kind, userId: user.id, templateVersion: m.templateVersion });
   return 'sent';
 }
 
@@ -114,4 +124,4 @@ async function confirm(db, token) {
   return { confirmed: true };
 }
 
-module.exports = { core, send, confirm, message, on, TEXTS, LINK_DAYS, MAX_PER_HOUR, hash };
+module.exports = { core, send, confirm, message, on, TEXTS, REMINDERS, kindOf, LINK_DAYS, MAX_PER_HOUR, hash };
