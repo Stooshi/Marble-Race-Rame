@@ -202,6 +202,35 @@ router.get('/me/email', requireAuth, async (req, res) => {
 });
 
 /**
+ * A no to news by email (source: 'unsubscribe', 'purchase'): marketing_opt_in off and a "no" in the consent history,
+ * unless the latest answer is already no. Always written for a buyer under soft opt-in too (Moses approved it on
+ * 19 Nov 2026): they never ticked yes, so marketing_opt_in alone can't stop their emails; the latest no does
+ * (src/marketing/audience.js). False: no such player.
+ */
+async function recordNo(client, userId, source) {
+  const { rows: [was] } = await client.query('SELECT marketing_opt_in FROM users WHERE id = $1 FOR UPDATE', [userId]);
+  if (!was) return false;
+  // (An unticked box at sign-up isn't a no: src/marketing/audience.js NOT_ASKED.)
+  const { rows: [last] } = await client.query('SELECT consent, source FROM email_consents WHERE user_id = $1 ORDER BY created_at DESC, id DESC LIMIT 1', [userId]);
+  if (!was.marketing_opt_in && last && last.consent === false && !['signup', 'claim'].includes(last.source)) return true;
+  await client.query('UPDATE users SET marketing_opt_in = false WHERE id = $1', [userId]);
+  await client.query('INSERT INTO email_consents (user_id, consent, source) VALUES ($1, false, $2)', [userId, source]);
+  return true;
+}
+
+/**
+ * POST /api/users/me/purchase-news { optOut: true } — the box at a purchase, "Don't send me news about new tracks and
+ * marbles", ticked (Moses approved 19 Nov 2026; client/src/shared/payments/newsAtPurchase.json): a no to news by email,
+ * recorded before the purchase starts. Unticked, nothing is recorded: the purchase then counts for soft opt-in from
+ * MARKETING_SOFT_OPT_IN_FROM.
+ */
+router.post('/me/purchase-news', requireAuth, async (req, res) => {
+  if (req.body?.optOut !== true) return res.json({ ok: true, news: null });
+  await db.withTransaction((client) => recordNo(client, req.user.id, 'purchase'));
+  res.json({ ok: true, news: false });
+});
+
+/**
  * POST /api/users/unsubscribe { u, t } (or ?u=&t=) — the link in a news email: stops news emails
  * without logging in. Mail apps' one-click unsubscribe posts here too (List-Unsubscribe=One-Click).
  * Answers the same whether or not it was already off.
@@ -211,11 +240,7 @@ async function unsubscribeHandler(req, res) {
   const t = String(req.body?.t ?? req.query.t ?? '');
   if (!/^[0-9a-f-]{36}$/i.test(u) || !unsubscribe.valid(u, t)) throw badRequest('This unsubscribe link is not valid');
   await db.withTransaction(async (client) => {
-    const { rows: [was] } = await client.query('SELECT marketing_opt_in FROM users WHERE id = $1 FOR UPDATE', [u]);
-    if (!was) throw notFound('No such player');
-    if (!was.marketing_opt_in) return;
-    await client.query('UPDATE users SET marketing_opt_in = false WHERE id = $1', [u]);
-    await client.query(`INSERT INTO email_consents (user_id, consent, source) VALUES ($1, false, 'unsubscribe')`, [u]);
+    if (!(await recordNo(client, u, 'unsubscribe'))) throw notFound('No such player');
   });
   res.json({ ok: true, news: false });
 }

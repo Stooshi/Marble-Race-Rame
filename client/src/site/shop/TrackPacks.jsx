@@ -11,6 +11,7 @@ import TrackBanner, { SERIES_PIC } from '../TrackBanner';
 import WildnessBadge from '../WildnessBadge';
 import { STORE_NAME, buyPack, restoreStorePurchases, shownPrice, storeProvider, useStorePrices } from '../payments';
 import GetCoins from '../payments/GetCoins';
+import NewsAtPurchase, { newsChoiceAtPurchase } from '../payments/NewsAtPurchase';
 import { notEnoughCoins } from '../payments/GetCoins';
 
 /**
@@ -208,6 +209,7 @@ function BuyBox({ data, bottom = false, cancelled = false, onBought }) {
   const [useCoins, setUseCoins] = useState(false);
   const [withdrawal, setWithdrawal] = useState(false);
   const [terms, setTerms] = useState(false);
+  const [noNews, setNoNews] = useState(false); // (the box at a purchase, Moses 19 Nov 2026)
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState(null);
   const C = TRACK_PACK_PRICE.withCoins;
@@ -227,6 +229,7 @@ function BuyBox({ data, bottom = false, cancelled = false, onBought }) {
     setBusy(true);
     setResult(null);
     try {
+      await newsChoiceAtPurchase(user, noNews);
       const r = await buyPack(pack.key, { useCoins, consent: withdrawal && terms });
       setResult(r);
       if (r.status === 'paid') { await refreshUser?.(); onBought?.(); }
@@ -264,6 +267,7 @@ function BuyBox({ data, bottom = false, cancelled = false, onBought }) {
             <input id={`${id}-t`} type="checkbox" checked={terms} onChange={(e) => setTerms(e.target.checked)} style={{ width: 22, height: 22, flex: 'none' }} />
             <span>{CONSENT.terms.replace(/the terms of sale\.$/, '')}<Link to="/legal#sale">the terms of sale</Link>.</span>
           </label>
+          <NewsAtPurchase user={user} checked={noNews} onChange={setNoNews} />
         </>
       )}
       {cancelled && !result && <div className="ms-msg" role="status">Payment cancelled: nothing was charged, and any coins are back.</div>}

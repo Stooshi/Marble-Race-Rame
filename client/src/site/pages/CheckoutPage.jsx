@@ -8,6 +8,7 @@ import { formatNumber } from '../../utils/format';
 import { STORE_NAME, buyCoins, shownPrice, storeProvider, useStorePrices } from '../payments';
 import { track } from '../consent/tracking';
 import QuickSignup from '../account/QuickSignup';
+import NewsAtPurchase, { newsChoiceAtPurchase } from '../payments/NewsAtPurchase';
 import { rememberWanted, safeBack, wanted } from '../payments/GetCoins';
 
 /**
@@ -26,6 +27,7 @@ export default function CheckoutPage() {
   const pack = PACK[search.get('pack')] ?? COIN_PACKS.find((p) => p.popular) ?? COIN_PACKS[0];
   const [withdrawal, setWithdrawal] = useState(false);
   const [terms, setTerms] = useState(false);
+  const [noNews, setNoNews] = useState(false); // (the box at a purchase, Moses 19 Nov 2026)
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState(null);
   const provider = storeProvider();
@@ -78,6 +80,7 @@ export default function CheckoutPage() {
     track('checkout_started', { productId: pack.id, value: pack.amountCents / 100, currency: pack.currency });
     try {
       if (back) rememberWanted(back, backLabel); // (for the way back from Stripe's payment page)
+      await newsChoiceAtPurchase(user, noNews);
       const r = await buyCoins(pack, { consent: withdrawal && terms });
       if (r.status === 'paid') await refreshUser();
       if (r.status === 'paid' && back) { // (the app stores and test payments: straight back to the marble)
@@ -122,6 +125,7 @@ export default function CheckoutPage() {
             <input type="checkbox" checked={terms} onChange={(e) => setTerms(e.target.checked)} style={{ width: 22, height: 22, flex: 'none' }} />
             <span>{CONSENT.terms.replace(/the terms of sale\.$/, '')}<Link to="/legal#sale">the terms of sale</Link>.</span>
           </label>
+          <NewsAtPurchase user={user} checked={noNews} onChange={setNoNews} />
           {cancelled && !result && <div className="ms-msg" role="status">Payment cancelled: nothing was charged. You can try again whenever you like.</div>}
           {back && !result && <div className="ms-msg" role="status">Once paid, you go straight back to {backLabel ?? 'the marble you wanted'}. <Link to={back}>Back without buying</Link></div>}
           {result?.status === 'paid' && <div className="ms-msg" role="status">Paid: ● {formatNumber(pack.coins)} coins added. You now have ● {formatNumber(result.coins ?? 0)}. <Link to="/purchases">Your purchases</Link> · <Link to="/shop">Back to the shop</Link></div>}

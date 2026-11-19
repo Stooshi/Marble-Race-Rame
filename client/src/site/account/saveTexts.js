@@ -39,7 +39,7 @@ export const TEXTS = {
     year: 'Year',
     month: 'Month',
     terms: ['I accept the ', 'terms of use', ' and have read the ', 'privacy policy', '.'],
-    news: 'Email me about new tracks and limited marbles (optional). You can stop any time.',
+    news: 'Send me news about new tracks and marbles (optional). You can stop any time.', // (approved by Moses, 19 Nov 2026)
     save: 'SAVE MY MARBLE',
     saving: 'ONE MOMENT…',
     needTerms: 'Please tick the box to accept the terms of use.',
@@ -87,7 +87,7 @@ export const TEXTS = {
     year: 'År',
     month: 'Månad',
     terms: ['Jag godkänner ', 'användarvillkoren', ' och har läst ', 'integritetspolicyn', '.'],
-    news: 'Mejla mig om nya banor och begränsade kulor (frivilligt). Du kan sluta när du vill.',
+    news: 'Skicka mig nyheter om nya banor och kulor (frivilligt). Du kan sluta när du vill.',
     save: 'SPARA MIN KULA',
     saving: 'ETT ÖGONBLICK…',
     needTerms: 'Kryssa i rutan för att godkänna användarvillkoren.',

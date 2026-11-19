@@ -102,7 +102,7 @@ At most 3 links are sent per account per hour.
 One row per player per day (UTC): `races` finished that day and `goal_met_at` (when the daily goal was reached). Used for the daily full-pay limit and the daily goal.
 
 ### `email_consents`
-History of every yes/no to news by email: `consent`, `source` (`signup`, `claim`, `settings`, `support`, `unsubscribe`), `created_at`. Deleted with the account.
+History of every yes/no to news by email: `consent`, `source` (`signup`, `claim`, `settings`, `support`, `unsubscribe`, `purchase`: the "Don't send me news" box ticked at a purchase, from 19 Nov 2026), `created_at`. Deleted with the account. A no at `signup` or `claim` (the news box left unticked) is consent not given, not an objection: it doesn't stop soft opt-in (`src/marketing/audience.js`).
 
 ### `user_country_history`
 Every choice of the country a player races for: `country` (NULL when removed), `kind` (`first`, `correction`, `change`, `removed`), `created_at`. For "which country did the player have at a moment" (`country.countryAt`: national leagues qualify by the country at the start of the month). In Download my data; deleted with the account.

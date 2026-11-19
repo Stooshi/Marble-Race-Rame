@@ -107,6 +107,7 @@ export const api = {
   // Coin packs for real money: a web checkout, an app store receipt (site/payments picks the provider).
   paymentOptions: () => request('/payments'),
   checkout: (body) => request('/payments/checkout', { method: 'POST', body }),
+  purchaseNews: (body) => request('/users/me/purchase-news', { method: 'POST', body }),
   redeemReceipt: (body) => request('/payments/receipt', { method: 'POST', body }),
   // Google Play (the Android app): the player's account id to buy with, then the purchase to check.
   googleAccount: () => request('/payments/google/account'),

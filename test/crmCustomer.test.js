@@ -29,7 +29,7 @@ test('customer search and overview', { skip: !DB }, async () => {
     const order = `MS-${900000 + (Date.now() % 99999)}`;
     await db.query(
       `INSERT INTO payments (user_id, provider, product_id, coins, amount_cents, currency, charged_cents, charged_currency, status, paid_at, order_no)
-       VALUES ($1, 'test', 'coins-1000', 1000, 499, 'usd', 499, 'eur', 'paid', now(), $2)`,
+       VALUES ($1, 'google', 'coins-1000', 1000, 499, 'usd', 499, 'eur', 'paid', now(), $2)`, // (a real order: the 'test' provider is a test order since 18 Nov 2026, in no total)
       [player.user.id, order],
     );
     const byOrder = (await call(`/admin/players?q=${order}`, { token })).body;

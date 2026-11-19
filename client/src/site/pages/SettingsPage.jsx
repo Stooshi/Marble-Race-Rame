@@ -46,7 +46,7 @@ function NewsByEmail() {
         <>
           <label style={{ display: 'flex', gap: 12, alignItems: 'center', cursor: busy ? 'wait' : 'pointer' }}>
             <input type="checkbox" role="switch" checked={state.news} disabled={busy} onChange={toggle} style={{ width: 22, height: 22, flex: 'none' }} />
-            <span>Send me news, new marbles and events by email ({state.email})</span>
+            <span>Send me news about new tracks and marbles by email ({state.email})</span>
           </label>
           <span className="ms-note">
             {state.news ? 'On' : 'Off'}{state.since ? ` since ${day(state.since)}` : ''}. Every email has a link to stop them; you can change this here any time.

@@ -9,6 +9,7 @@ import { ITEMS, collectionOf } from '../../shared/marbles';
 import MarbleBadge from '../marbles/MarbleBadge';
 import { activatesDay, countdownText, useCountdown } from '../payments/preSale';
 import PassReminder from '../payments/PassReminder';
+import NewsAtPurchase, { newsChoiceAtPurchase } from '../payments/NewsAtPurchase';
 import BANNERS from '../../shared/trackBanners.json';
 
 const day = (iso) => new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Stockholm', day: 'numeric', month: 'long', year: 'numeric' }).format(new Date(iso));
@@ -35,6 +36,7 @@ export default function PassPage() {
   const storePrices = useStorePrices(season?.pass ? [{ id: season.pass.productId }] : []);
   const [withdrawal, setWithdrawal] = useState(false);
   const [terms, setTerms] = useState(false);
+  const [noNews, setNoNews] = useState(false); // (the box at a purchase, Moses 19 Nov 2026)
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState(null);
   const cancelled = search.get('cancelled') === '1';
@@ -78,6 +80,7 @@ export default function PassPage() {
     setBusy(true);
     setResult(null);
     try {
+      await newsChoiceAtPurchase(user, noNews);
       const r = await buyPass(season, { consent: withdrawal && terms });
       setResult(r);
       if (r.status === 'paid') reload();
@@ -186,6 +189,7 @@ export default function PassPage() {
             <input type="checkbox" checked={terms} onChange={(e) => setTerms(e.target.checked)} style={{ width: 22, height: 22, flex: 'none' }} />
             <span>{CONSENT.terms.replace(/the terms of sale\.$/, '')}<Link to="/legal#sale">the terms of sale</Link>.</span>
           </label>
+          <NewsAtPurchase user={user} checked={noNews} onChange={setNoNews} />
           {cancelled && !result && <div className="ms-msg" role="status">Payment cancelled: nothing was charged.</div>}
           {result?.status === 'redirecting' && <div className="ms-msg" role="status">Taking you to Stripe's secure payment page…</div>}
           {result?.status === 'pending' && <div className="ms-msg" role="status">{result.message}</div>}
