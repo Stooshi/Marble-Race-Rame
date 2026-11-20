@@ -30,7 +30,7 @@ async function exportData(db, userId) {
        FROM users WHERE id = $1 AND deleted_at IS NULL`,
   );
   if (!account) return null;
-  const [stats, emailAnswers, cookieAnswers, ledger, collection, shooter, look, startingMarbles, races, days, payments, rooms, security, support, supportReplies, passes, badges, passReminders, giftCodes, pushDevices, pushPrefs, countryHistory, firstSteps, firstStepEvents, trackPacks, origin] = await Promise.all([
+  const [stats, emailAnswers, cookieAnswers, ledger, collection, shooter, look, startingMarbles, races, days, payments, rooms, security, support, supportReplies, passes, badges, passReminders, giftCodes, pushDevices, pushPrefs, countryHistory, firstSteps, firstStepEvents, trackPacks, origin, devices] = await Promise.all([
     one('SELECT * FROM user_stats WHERE user_id = $1'),
     all('SELECT consent, source, created_at FROM email_consents WHERE user_id = $1 ORDER BY created_at'),
     all('SELECT version, statistics, marketing, decided_at FROM cookie_consents WHERE user_id = $1 ORDER BY created_at'),
@@ -74,6 +74,8 @@ async function exportData(db, userId) {
     all('SELECT pack_key, provider, granted_at, revoked_at, revoke_reason FROM pack_owners WHERE user_id = $1 ORDER BY granted_at'),
     // (Where you came from, 13 Nov 2026: the link's campaign tags or the referring site's domain; src/origins.)
     one('SELECT utm_source, utm_medium, utm_campaign, referrer_domain, created_at FROM player_origins WHERE user_id = $1'),
+    // (Your devices and browsers, 20 Nov 2026: coarse fields only; src/devices.)
+    all('SELECT device_type, os_name, os_version, browser_name, browser_version, client, first_seen_at, last_seen_at FROM user_devices WHERE user_id = $1 ORDER BY last_seen_at DESC'),
   ]);
   return {
     about: 'Everything Marble Spins stores about your account. Passwords are stored only as a one-way hash and are not included. IP addresses are kept for security and fraud checks for at most 90 days, then only the country.',
@@ -99,6 +101,7 @@ async function exportData(db, userId) {
     firstSteps,
     firstStepEvents,
     howYouFoundUs: origin ?? null,
+    devicesAndBrowsers: devices,
     supportMessages: support.map((m) => ({ ...m, replies: supportReplies.filter((r) => r.ref === m.ref).map(({ ref: _r, ...r }) => r) })),
   };
 }
@@ -140,6 +143,7 @@ async function deleteAccount(client, userId, { by = 'player', reason = null } = 
   await client.query('DELETE FROM user_country_history WHERE user_id = $1', [userId]);
   await client.query('UPDATE race_entries SET country = NULL WHERE user_id = $1 AND country IS NOT NULL', [userId]); // (off the country records)
   await client.query('DELETE FROM race_readiness WHERE user_id = $1', [userId]);
+  await client.query('DELETE FROM user_devices WHERE user_id = $1', [userId]); // (devices and browsers, src/devices)
   await client.query('DELETE FROM push_devices WHERE user_id = $1', [userId]);
   await client.query('DELETE FROM push_preferences WHERE user_id = $1', [userId]);
   await client.query('DELETE FROM admin_sessions WHERE user_id = $1', [userId]);

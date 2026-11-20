@@ -49,7 +49,57 @@ export function DashboardPage({ can }) {
         </Card>
       )}
       <Dashboard />
+      <Devices />
     </div>
+  );
+}
+
+const DEVICE_NAMES = { phone: 'Phone', tablet: 'Tablet', computer: 'Computer' };
+
+/**
+ * Devices & browsers (Moses, 20 Nov 2026; GET /admin/devices, src/devices): the players seen in the last 30 days, each
+ * counted once by their latest device, as shares by device type, app or website, system and browser. Staff left out.
+ */
+function Devices() {
+  const [d, setD] = useState(null);
+  const [error, setError] = useState(null);
+  // (A server from before 20 Nov 2026 has no such address: the card waits for the deploy.)
+  useEffect(() => { adminApi.devices(30).then(setD, (e) => setError(e.status === 404 ? 'old-server' : e.message)); }, []);
+  if (error === 'old-server') return null;
+  const Share = ({ title, rows, names = {} }) => (
+    <div>
+      <h3 className="crm-h3">{title}</h3>
+      <div className="crm-funnel crm-shares">
+        {rows.map((r) => (
+          <div key={r.key}>
+            <span>{names[r.key] ?? r.key}</span>
+            <b>{pct(r.players, d.players)}</b>
+            <i style={{ width: `${Math.max(2, Math.round((r.players / d.players) * 100))}%` }} aria-hidden="true" />
+            <small>{n(r.players)} player{r.players === 1 ? '' : 's'}</small>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+  return (
+    <Card title="Devices & browsers">
+      {error && <p className="crm-alert">{error}</p>}
+      {!d && !error && <p className="crm-muted">Loading…</p>}
+      {d && d.players === 0 && <p className="crm-muted">No devices recorded yet. They are recorded when a player logs in or opens the game, from the server of 20 Nov 2026 on.</p>}
+      {d && d.players > 0 && (
+        <>
+          <p className="crm-muted">The {n(d.players)} players seen in the last {d.days} days, each counted once by their latest device. Staff left out. Taken from what the browser says about itself (coarse only).</p>
+          <div className="crm-cols crm-cols--even">
+            <Share title="Device" rows={d.device} names={DEVICE_NAMES} />
+            <Share title="App or website" rows={d.client} />
+          </div>
+          <div className="crm-cols crm-cols--even">
+            <Share title="System" rows={d.os} />
+            <Share title="Browser" rows={d.browser} />
+          </div>
+        </>
+      )}
+    </Card>
   );
 }
 

@@ -8,7 +8,8 @@
  * - Nothing waits for it: the server never holds a race for one player (rooms, Quick race, League
  *   Night). A solo race already waits on the player's own screen before its countdown.
  * - Kept 30 days (KEEP_DAYS), then deleted. No IP address; the device is the browser's own short
- *   description (user agent, cut to 200 characters) and the platform the app says (web, ios, android).
+ *   description (user agent, cut to 200 characters) and the platform the app says (web, ios, android), and since
+ *   20 Nov 2026 the same coarse fields as the players' devices (src/devices): device type, system, browser, app or web.
  * - Each report is also one log line on Railway: `[readiness] race … NOT READY …`.
  */
 
@@ -48,12 +49,15 @@ function clean(body = {}) {
 const pieceOf = (m) => (PIECES.includes(m) ? m : m.startsWith('track') ? 'track' : 'sound');
 
 /** Records one screen's report (each screen sends it once per race). */
-async function record(db, { raceId, userId = null, device = null, report }) {
+// (coarse: src/devices' fields for the same request, 20 Nov 2026: device type, system, browser, app or website.)
+async function record(db, { raceId, userId = null, device = null, coarse = null, report }) {
   const r = report;
+  const { label } = require('../devices');
   await db.query(
-    `INSERT INTO race_readiness (race_id, user_id, platform, kind, device, ready, missing, late_ms, details)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
-    [raceId, userId, r.platform, r.kind, device ? String(device).slice(0, 200) : null, r.ready, r.missing, r.lateMs, r.details],
+    `INSERT INTO race_readiness (race_id, user_id, platform, kind, device, ready, missing, late_ms, details, device_type, os, browser, client)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)`,
+    [raceId, userId, r.platform, r.kind, device ? String(device).slice(0, 200) : null, r.ready, r.missing, r.lateMs, r.details,
+      coarse?.device ?? null, coarse ? label(coarse.os, coarse.osVersion) : null, coarse ? label(coarse.browser, coarse.browserVersion) : null, coarse?.client ?? null],
   );
   console.log(`[readiness] race ${raceId} ${r.kind} ${r.platform} ${r.ready ? 'ready' : `NOT READY, missing ${r.missing.join(', ')}; caught up ${r.lateMs} ms after GO`}${r.details.backend ? ` (sound: ${r.details.backend})` : ''}`);
 }
@@ -79,13 +83,13 @@ async function summary(db, { days = 7, limit = 50 } = {}) {
     [days],
   );
   const { rows: latest } = await db.query(
-    `SELECT race_id, platform, kind, device, missing, late_ms, details, created_at
+    `SELECT race_id, platform, kind, device, device_type, os, browser, client, missing, late_ms, details, created_at
        FROM race_readiness WHERE NOT ready AND created_at > now() - make_interval(days => $1)
       ORDER BY created_at DESC LIMIT $2`,
     [days, limit],
   );
   const { rows: apps } = await db.query(
-    `SELECT race_id, platform, kind, ready, missing, late_ms, details, created_at
+    `SELECT race_id, platform, kind, device_type, os, browser, client, ready, missing, late_ms, details, created_at
        FROM race_readiness WHERE platform <> 'web' AND created_at > now() - make_interval(days => $1)
       ORDER BY created_at DESC LIMIT 20`,
     [days],

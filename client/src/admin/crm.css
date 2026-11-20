@@ -244,3 +244,4 @@ rect.crm-chart__c, .crm-key.crm-chart__c { fill: var(--c-warn); background: var(
 
 /* The app readiness report's sound log (18 Nov 2026). */
 .crm-log { max-width: 640px; max-height: 320px; overflow: auto; margin: 6px 0 0; font-size: 11px; line-height: 1.45; white-space: pre-wrap; word-break: break-word; }
+.crm-shares { margin-top: 8px; }

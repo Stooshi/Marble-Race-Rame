@@ -40,6 +40,7 @@
  */
 const express = require('express');
 const db = require('../db');
+const devices = require('../devices');
 const { assertUuid, validate } = require('../utils/validate');
 const { badRequest, conflict, notFound } = require('../utils/httpError');
 const { requireAdminSession, router: sessionRouter } = require('../admin/session');
@@ -166,6 +167,12 @@ router.post('/tracks/:slug/active', need('tracks:switch'), async (req, res) => {
   res.json({ track });
 });
 
+/** GET /devices?days= — the Dashboard's "Devices & browsers": players seen in the last 30 days by their latest device (src/devices). */
+router.get('/devices', need('reports:read'), async (req, res) => {
+  const days = Math.min(90, Math.max(1, Number(req.query.days) || 30));
+  res.json(await devices.breakdown(db, { days }));
+});
+
 /** GET /readiness?days= — which screens weren't ready by GO, and what they missed (src/readiness). */
 router.get('/readiness', need('reports:read'), async (req, res) => {
   const days = Math.min(30, Math.max(1, Number(req.query.days) || 7));
@@ -179,7 +186,7 @@ router.get('/readiness', need('reports:read'), async (req, res) => {
  */
 const FIRST_COUNTRY = (userId) => `(SELECT s.country FROM security_events s WHERE s.user_id = ${userId} AND s.country IS NOT NULL ORDER BY s.created_at, s.id LIMIT 1)`;
 
-/** GET /players?q=&limit= */
+/** GET /players?q=&limit=&device=&client=&os=&browser= (each player's latest device: src/devices) */
 router.get('/players', need('customers:read'), async (req, res) => {
   const q = String(req.query.q ?? '').trim();
   const limit = Math.min(100, Math.max(1, Number(req.query.limit) || 30));
@@ -196,16 +203,25 @@ router.get('/players', need('customers:read'), async (req, res) => {
               OR EXISTS (SELECT 1 FROM billing_documents d WHERE d.user_id = u.id AND d.number = $3)
               OR EXISTS (SELECT 1 FROM support_messages s WHERE s.user_id = u.id AND s.ref = $3))`;
   }
+  // (The device filter, 20 Nov 2026: the player's latest device; ?device=phone|tablet|computer, ?client=web|android-app|ios-app, ?os=Android, ?browser=Chrome.)
+  const [deviceWhere, deviceParams] = devices.filterSql(req.query, params.length + 1);
+  params.push(...deviceParams);
+  if (deviceWhere) where = `(${where}) AND ${deviceWhere}`;
   params.push(limit);
   const { rows } = await db.query(
     `SELECT u.id, u.username, u.display_name, u.email, u.is_guest, u.role, u.is_staff OR u.role = 'admin' AS is_staff, u.coins, u.age_group, u.created_at, u.last_login_at, u.suspended_at, u.deleted_at,
             (SELECT COUNT(*)::int FROM race_entries e WHERE e.user_id = u.id) AS races,
-            ${FIRST_COUNTRY('u.id')} AS first_country
-       FROM users u WHERE ${where}
+            ${FIRST_COUNTRY('u.id')} AS first_country,
+            dev.device_type, dev.os_name, dev.os_version, dev.browser_name, dev.browser_version, dev.client, dev.first_seen_at, dev.last_seen_at
+       FROM users u ${devices.LATEST} WHERE ${where}
       ORDER BY u.last_login_at DESC NULLS LAST, u.created_at DESC
       LIMIT $${params.length}`,
     params,
   );
+  for (const r of rows) {
+    r.device = r.device_type ? devices.shown(r) : null;
+    for (const k of ['device_type', 'os_name', 'os_version', 'browser_name', 'browser_version', 'client', 'first_seen_at', 'last_seen_at']) delete r[k];
+  }
   // (An order, receipt, credit note, support reference, Marble ID or account id that finds one player: the CRM opens it.)
   const exact = rows.length === 1 && /^(MS-\d+|KR?-\d{4}-\d+|S-\d+|[A-Z]{1,3}\d+-\d+|[0-9a-f]{8}-[0-9a-f-]{27})$/i.test(q);
   res.json({ players: rows, exact });
@@ -359,6 +375,8 @@ router.get('/players/:id', need('customers:read'), async (req, res) => {
     overview: await overviewOf(id),
     audit: auditRows.rows,
     messages: messages.rows,
+    // (Devices and browsers, latest first: at most 5, coarse fields only; src/devices, 20 Nov 2026.)
+    devices: await devices.ofPlayer(db, id),
   });
 });
 

@@ -12,6 +12,7 @@ import { MarketingRules, Newsletters, Onboarding } from './CrmMarketing';
 import { DashboardPage } from './CrmDashboard';
 import { TracksPage } from './CrmTracks';
 import { TOOLS, ToolsPage } from './CrmTools';
+import { DEVICE_FILTERS, deviceText } from './devices';
 import './crm.css';
 
 /**
@@ -264,6 +265,7 @@ function customerOf(d) {
     security: d.security.events,
     audit: d.audit.map((a) => ({ action: a.action, admin: a.admin, reason: a.reason, at: a.created_at })),
     emails: d.emails ?? [],
+    devices: d.devices ?? null, // (null: a server from before 20 Nov 2026)
     overview: d.overview ?? { spend: [], website: [], sek: { cents: 0, paid: 0, refunded: 0, fees: 0, missing: 0, documents: [] }, packs: [], passes: [] },
   };
 }
@@ -317,6 +319,7 @@ function Customers({ id, can }) {
   const [detail, setDetail] = useState(false);
   const [error, setError] = useState(null);
   const [recent, setRecent] = useState(null);
+  const [filters, setFilters] = useState({}); // (the players list's device filter, 20 Nov 2026)
 
   useEffect(() => {
     if (q.trim().length < 2) { setHits(null); return undefined; }
@@ -333,7 +336,9 @@ function Customers({ id, can }) {
     try { setCust(customerOf(await adminApi.player(id))); } catch (e) { setError(e.message); }
   }, [id]);
   useEffect(() => { load(); setDetail(false); }, [load]);
-  useEffect(() => { if (!id && !recent) adminApi.players('').then((r) => setRecent(r.players.slice(0, 12)), () => {}); }, [id, recent]);
+  const filtered = Object.values(filters).some(Boolean);
+  useEffect(() => { if (!id && !recent) adminApi.players('', filters).then((r) => setRecent(r.players.slice(0, filtered ? 50 : 12)), (e) => setError(e.message)); }, [id, recent, filters, filtered]);
+  const filterBy = (key, value) => { setFilters((f) => ({ ...f, [key]: value })); setRecent(null); };
 
   const open = (pid) => { setHits(null); setQ(''); navigate(`${BASE}/customers/${pid}`); };
   const pick = (key) => { setSection(key); setDetail(true); toTop(); };
@@ -354,14 +359,24 @@ function Customers({ id, can }) {
       </div>
       {error && <p className="crm-alert">{error}</p>}
       {!id && (
-        <Card title="Players who played last">
+        <Card title={filtered ? 'Players by device' : 'Players who played last'}>
+          <div className="crm-filters" role="group" aria-label="Filter by device">
+            {DEVICE_FILTERS.map(([key, label, options]) => (
+              <select key={key} aria-label={label} value={filters[key] ?? ''} onChange={(e) => filterBy(key, e.target.value)}>
+                <option value="">{label}: all</option>
+                {options.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+              </select>
+            ))}
+            {filtered && <button type="button" className="crm-btn" onClick={() => { setFilters({}); setRecent(null); }}>Clear</button>}
+          </div>
           {!recent && <p className="crm-muted">Loading…</p>}
+          {recent && recent.length === 0 && <p className="crm-muted">Nobody with that device.</p>}
           {recent && (
             <nav className="crm-list crm-list--flat" aria-label="Recent players">
               {recent.map((h) => (
                 <button key={h.id} type="button" onClick={() => open(h.id)}>
                   <span className="crm-list__ico"><Icon name="user" /></span>
-                  <span className="crm-list__txt"><b>{h.display_name || h.username}</b><small>@{h.username}{h.is_guest ? ' · guest' : ''} · {when(h.last_login_at)}</small></span>
+                  <span className="crm-list__txt"><b>{h.display_name || h.username}</b><small>@{h.username}{h.is_guest ? ' · guest' : ''} · {when(h.last_login_at)}{h.device ? ` · ${deviceText(h.device)}` : ''}</small></span>
                   <Icon name="chevron" size={18} />
                 </button>
               ))}
@@ -386,6 +401,7 @@ function Customers({ id, can }) {
                 <div><dt>Coins</dt><dd>● {num(cust.player.coins)}</dd></div>
                 <div><dt>Since</dt><dd>{day(cust.player.created_at)}</dd></div>
                 <div><dt>Last played</dt><dd>{when(cust.player.last_login_at)}</dd></div>
+                {cust.devices && <div><dt>Device</dt><dd>{deviceText(cust.devices[0])}</dd></div>}
               </dl>
             </section>
             {alertsOf(cust).map((a) => (
@@ -455,6 +471,12 @@ function SectionDetail({ c, section, can, reload }) {
             {o.sek.missing > 0 && <p className="crm-muted">{o.sek.missing} website document(s) still waiting for their SEK amount from Stripe.</p>}
             <p className="crm-muted">App purchases are in US dollars here (the stores' own amounts are in their reports).</p>
           </Card>
+          {c.devices && (
+            <Card title="Devices & browsers">
+              <Rows head={['Device', 'System', 'Browser', 'App or web', 'First seen', 'Last seen']} rows={c.devices.map((d) => [{ phone: 'Phone', tablet: 'Tablet', computer: 'Computer' }[d.device] ?? d.device, d.os, d.browser, d.clientLabel, day(d.firstSeenAt), when(d.lastSeenAt)])} empty="None recorded yet (recorded at login and when the app or website opens, since 20 Nov 2026)." />
+              <p className="crm-muted">The last 5, from what the browser says about itself: device type, system and browser with their main version, app or website. Never the full user agent.</p>
+            </Card>
+          )}
           <Card title="Owns">
             <Rows head={['What', 'Through', 'Since']} rows={[...o.packs.map((x) => [`${x.name} pack`, PROVIDER[x.provider] ?? x.provider, day(x.granted_at)]), ...o.passes.map((x) => [`Season pass (${x.season_key})`, PROVIDER[x.provider] ?? x.provider, day(x.granted_at)])]} empty="No packs or passes." />
           </Card>

@@ -17,6 +17,7 @@ const { requireAuth } = require('../middleware/auth');
 const { ensureAppearance } = require('../game/appearance');
 const economy = require('../economy');
 const security = require('../security');
+const devices = require('../devices'); // (the device and browser, coarse fields only: 20 Nov 2026)
 const passwordReset = require('../account/passwordReset');
 const email = require('../email');
 
@@ -119,6 +120,7 @@ router.post('/register', signupLimiter, async (req, res) => {
     if (body.country) user.country = (await country.choose(db, user.id, body.country)).country;
     await logConsent(db, user.id, body.marketing_opt_in ?? false, 'signup');
     await security.record(req, user.id, 'signup');
+    await devices.seen(db, user.id, req);
     await require('../origins').record(user.id, req.body?.origin);
     await economy.opening(db, user.id, user.coins);
     // Starting marble look. If this fails the look is created on first read instead.
@@ -154,6 +156,7 @@ router.post('/guest', guestLimiter, async (req, res) => {
   await ensureAppearance(user.id).catch((err) => console.error('[auth] starting look failed', err.message));
   await starters.ensure(db, user.id).catch((err) => console.error('[auth] starter marbles failed', err.message));
   await security.record(req, user.id, 'guest');
+  await devices.seen(db, user.id, req);
   // (Where they came from: the UTM tags or the referring domain the website kept in memory; first touch. src/origins.)
   await require('../origins').record(user.id, req.body?.origin);
   // Made only when they tap Play, Quick race, Race solo or join a room (2 Nov 2026): the funnel's first step.
@@ -189,6 +192,7 @@ router.post('/claim', requireAuth, signupLimiter, async (req, res) => {
     if (body.country) rows[0].country = (await country.choose(db, rows[0].id, body.country)).country;
     await logConsent(db, rows[0].id, body.marketing_opt_in ?? false, 'claim');
     await security.record(req, rows[0].id, 'claim');
+    await devices.seen(db, rows[0].id, req);
     // Everything the guest won stays: it's the same account (coins, marbles, starters, races).
     const confirm = await emailConfirm.send(db, rows[0], { lang: body.lang }).catch((err) => { console.error('[auth] confirmation email failed', err.message); return 'failed'; });
     res.json({ token: signToken(rows[0]), user: rows[0], confirm });
@@ -223,6 +227,7 @@ router.post('/login', authLimiter, async (req, res) => {
 
   await db.query('UPDATE users SET last_login_at = now() WHERE id = $1', [found.id]);
   await security.record(req, found.id, 'login');
+  await devices.seen(db, found.id, req);
   const { password_hash: _omit, suspended_at: _s, ...user } = found;
   res.json({ token: signToken(user), user });
 });
@@ -261,6 +266,7 @@ router.post('/reset', authLimiter, async (req, res) => {
 router.get('/me', requireAuth, async (req, res) => {
   const { rows } = await db.query(`SELECT ${PUBLIC_USER_COLUMNS} FROM users WHERE id = $1`, [req.user.id]);
   await retention.seen(db, req.user.id); // (guests: deleted after 90 days without a visit)
+  await devices.seen(db, req.user.id, req); // (the app or website opening: at most one write per 10 minutes)
   // A visit renews the login (sliding expiry): a login older than a day gets a fresh token, valid
   // config.auth.jwtExpiresIn from now. The app stores it; the old one stays valid until it expires.
   const age = Math.floor(Date.now() / 1000) - (req.user.tokenPayload?.iat ?? 0);

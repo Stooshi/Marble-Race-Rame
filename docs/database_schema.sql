@@ -1649,3 +1649,28 @@ CREATE UNIQUE INDEX IF NOT EXISTS uq_marketing_newsletter ON marketing_sends (us
 -- charged" to the player and in the CRM, given no receipt number, and left out of every sales total, VAT report and
 -- bookkeeping export (payments.TEST_ORDER also counts Stripe test-mode orders, cs_test_…, and the 'test' provider).
 ALTER TABLE payments ADD COLUMN IF NOT EXISTS is_test boolean NOT NULL DEFAULT false;
+
+-- Each player's device and browser (Moses, 20 Nov 2026; src/devices): worked out from the user agent when a player
+-- starts playing or logs in, and kept as coarse fields only, never the user-agent string. One row per combination
+-- (device type, system and its major version, browser and its major version, app or website); the last 5 per player
+-- are kept, the newest is the player's device now. 0 = version not known. Goes with the account.
+CREATE TABLE IF NOT EXISTS user_devices (
+    user_id         uuid        NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    device_type     varchar(8)  NOT NULL CHECK (device_type IN ('phone', 'tablet', 'computer')),
+    os_name         varchar(20) NOT NULL,
+    os_version      smallint    NOT NULL DEFAULT 0,
+    browser_name    varchar(20) NOT NULL,
+    browser_version smallint    NOT NULL DEFAULT 0,
+    client          varchar(12) NOT NULL CHECK (client IN ('web', 'android-app', 'ios-app')),
+    first_seen_at   timestamptz NOT NULL DEFAULT now(),
+    last_seen_at    timestamptz NOT NULL DEFAULT now(),
+    PRIMARY KEY (user_id, device_type, os_name, os_version, browser_name, browser_version, client)
+);
+CREATE INDEX IF NOT EXISTS idx_user_devices_seen ON user_devices (last_seen_at);
+
+-- The same coarse fields on each race readiness report (20 Nov 2026), beside the short user agent it already keeps
+-- for 30 days.
+ALTER TABLE race_readiness ADD COLUMN IF NOT EXISTS device_type varchar(8);
+ALTER TABLE race_readiness ADD COLUMN IF NOT EXISTS os varchar(30);
+ALTER TABLE race_readiness ADD COLUMN IF NOT EXISTS browser varchar(30);
+ALTER TABLE race_readiness ADD COLUMN IF NOT EXISTS client varchar(12);

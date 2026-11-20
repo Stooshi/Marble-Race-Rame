@@ -1,5 +1,6 @@
 import { nameLooks } from '../shared/marbles';
 import { currentOrigin } from '../utils/origin';
+import { deviceHint, wantsDeviceHint } from './deviceHint';
 
 export const API_URL = (import.meta.env.VITE_API_URL || 'http://localhost:5000').replace(/\/$/, '');
 
@@ -40,6 +41,8 @@ export async function request(path, { method = 'GET', body, token = getStoredTok
       headers: {
         ...(body !== undefined && { 'Content-Type': 'application/json' }),
         ...(token && { Authorization: `Bearer ${token}` }),
+        // (The system's version and a touch Mac, coarse: logins and the app opening only. ./deviceHint.js)
+        ...(wantsDeviceHint(path) && deviceHint() && { 'X-Client-Device': deviceHint() }),
       },
       body: body !== undefined ? JSON.stringify(body) : undefined,
     });

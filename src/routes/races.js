@@ -371,7 +371,7 @@ router.post('/:id/readiness', optionalAuth, readinessLimiter, async (req, res) =
   const id = assertUuid(req.params.id);
   const report = readiness.clean(req.body);
   try {
-    await readiness.record(db, { raceId: id, userId: req.user?.id ?? null, device: req.get('user-agent'), report });
+    await readiness.record(db, { raceId: id, userId: req.user?.id ?? null, device: req.get('user-agent'), coarse: require('../devices').fromRequest(req), report });
   } catch (err) {
     if (err.code === '23503') throw notFound('Race not found');
     throw err;

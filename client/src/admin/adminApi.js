@@ -63,7 +63,9 @@ export const adminApi = {
   session: () => request('/admin/session'),
 
   dashboard: (period) => request(`/admin/dashboard?period=${encodeURIComponent(period)}`),
-  players: (q) => request(`/admin/players?q=${encodeURIComponent(q ?? '')}`),
+  // (filters: { device, client, os, browser } on each player's latest device, 20 Nov 2026.)
+  players: (q, filters = {}) => request(`/admin/players?${new URLSearchParams({ q: q ?? '', ...Object.fromEntries(Object.entries(filters).filter(([, v]) => v)) })}`),
+  devices: (days = 30) => request(`/admin/devices?days=${days}`),
   staff: (id, staff, reason) => request(`/admin/players/${id}/staff`, { method: 'POST', body: { staff, reason } }),
   player: (id) => request(`/admin/players/${id}`),
   // The Security tab: IP addresses; the server writes each opening to the audit log.

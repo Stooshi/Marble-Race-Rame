@@ -4,6 +4,7 @@ import QRCode from 'qrcode';
 import { adminApi, getSession, setSession, whenExpired } from './adminApi';
 import { ITEMS } from '../shared/marbles';
 import { eachLimited, firstCountry, lastFinishedRace, sortPlayers } from './players';
+import { DEVICE_FILTERS, deviceText } from './devices';
 import { countryName } from '../site/country/countries';
 import Crm, { BASE as CRM } from './Crm';
 import './admin.css';
@@ -306,7 +307,7 @@ function Readiness() {
               <tr key={`${l.race_id}-${l.created_at}`}>
                 <td>{new Date(l.created_at).toLocaleString()}</td><td>{l.platform} · {l.kind}</td><td>{l.missing.join(', ')}</td>
                 <td>{(l.late_ms / 1000).toFixed(1)} s</td><td>{l.details?.backend ?? '—'}{l.details?.started === false ? ' (no tap)' : ''}</td>
-                <td>{l.details?.connection ?? '—'}</td><td className="adm-muted">{l.device ?? '—'}</td>
+                <td>{l.details?.connection ?? '—'}</td><td className="adm-muted">{l.os ? `${[{ phone: 'Phone', tablet: 'Tablet', computer: 'Computer' }[l.device_type] ?? l.device_type, l.os, l.browser].filter(Boolean).join(' · ')} — ` : ''}{l.device ?? '—'}</td>
               </tr>
             ))}</tbody>
           </table></div>
@@ -867,7 +868,8 @@ function DashChart({ rows, bucket }) {
 function Players() {
   const [q, setQ] = useState('');
   const [query, setQuery] = useState('');
-  const list = useLoad(() => adminApi.players(query), [query]);
+  const [filters, setFilters] = useState({}); // (each player's latest device, 20 Nov 2026)
+  const list = useLoad(() => adminApi.players(query, filters), [query, filters]);
   // Each player's last finished race, read from their details a few at a time (id → ISO, null if never finished, 'error' if it couldn't be read).
   const [lastRace, setLastRace] = useState({});
   const [country, setCountry] = useState({}); // id → first country (only when the list has none yet)
@@ -901,10 +903,19 @@ function Players() {
         <input className="adm-search" placeholder="Name, email, player id or Marble ID (SC105-000012)" value={q} onChange={(e) => setQ(e.target.value)} />
         <button type="submit" className="adm-btn adm-btn--primary">Search</button>
       </form>
+      <div className="adm-row" role="group" aria-label="Filter by device">
+        {DEVICE_FILTERS.map(([key, label, options]) => (
+          <select key={key} aria-label={label} value={filters[key] ?? ''} onChange={(e) => setFilters((f) => ({ ...f, [key]: e.target.value }))}>
+            <option value="">{label}: all</option>
+            {options.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+          </select>
+        ))}
+        {Object.values(filters).some(Boolean) && <button type="button" className="adm-btn" onClick={() => setFilters({})}>Clear</button>}
+      </div>
       <Err error={list.error} />
       <div className="adm-scroll">
         <table className="adm-table">
-          <thead><tr><th>Player</th><th>Email</th><th>Kind</th><th>Age</th><th>Country</th><th className="num">Coins</th><Sort k="races" label="Races" num /><Sort k="lastRace" label="Last race" /><th>Last login</th><Sort k="joined" label="Joined" /></tr></thead>
+          <thead><tr><th>Player</th><th>Email</th><th>Kind</th><th>Age</th><th>Country</th><th>Device</th><th className="num">Coins</th><Sort k="races" label="Races" num /><Sort k="lastRace" label="Last race" /><th>Last login</th><Sort k="joined" label="Joined" /></tr></thead>
           <tbody>
             {rows.map((p) => (
               <tr key={p.id}>
@@ -913,6 +924,7 @@ function Players() {
                 <td>{p.is_guest ? 'guest' : 'saved'}</td>
                 <td>{p.age_group ?? '–'}</td>
                 <td title="Where the player first came from (the country of their first visit; never the IP address)">{land('first_country' in p ? p.first_country : country[p.id])}</td>
+                <td title="Their latest device: type, system, browser, app or website (from the user agent; coarse only)">{'device' in p ? deviceText(p.device) : <span className="adm-muted">–</span>}</td>
                 <td className="num">{n(p.coins)}</td>
                 <td className="num">{n(p.races)}</td>
                 <td>{!(p.id in lastRace) ? <span className="adm-muted">…</span> : lastRace[p.id] === 'error' ? <span className="adm-muted" title="Couldn't load this player's races">?</span> : when(lastRace[p.id])}</td>
