@@ -1250,7 +1250,8 @@ export function chase(info, race, { text = null } = {}) {
   p.add({ type: 'group', members: pack, shot: 'chase', from: A, dur: (W - lineMs) / 1000, ...text.chaseCam });
   // (At the line: a camera riding just ahead of the pack, low, looking back at it as it crosses; a camera standing
   // by the line stood inside the finish arch's posts on Atlas Kasbah Run.)
-  p.add({ type: 'group', members: pack, shot: 'line', from: tWin - lineMs, dur: lineMs / 1000, ...text.lineCam });
+  // (text.lineMembers: the marbles that cross together, when one of them came from outside the pack: Quebec, 20 Nov 2026.)
+  p.add({ type: 'group', members: text.lineMembers ?? pack, shot: 'line', from: tWin - lineMs, dur: lineMs / 1000, ...text.lineCam });
   const freezeAt = p.v;
   const last = p.shots[p.shots.length - 1];
   p.add({ ...last, from: tWin, dur: text.freeze ?? 0.4, speed: 0 });

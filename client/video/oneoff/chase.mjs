@@ -1,5 +1,7 @@
 // A chase (Moses, 19 Nov 2026): node video/oneoff/chase.mjs <slug> <race> <tall|wide> <out.mp4> <members,…> [stills]
 // The race file from: node scripts/video-pick.js <slug> --seed <n>; members: the pack's entry indexes (the seed search).
+// CHASE_CAMS='{"chaseCam":{…},"lineCam":{…}}' changes the cameras for one track (20 Nov 2026: Quebec's lamps beside the
+// track and its finish on a bend needed the chase camera higher and nearer the middle, the line camera nearer).
 import { record } from '../record.mjs';
 const [slug, race, format, out, members, stills] = process.argv.slice(2);
 const tall = format === 'tall';
@@ -15,5 +17,8 @@ const text = {
     ? { vars: { '--text-top': '16vh', '--text-size': '9.6vmin' }, box: { padding: '0 7vw' }, mark: { top: '10.5vh', right: '4vmin' } }
     : { vars: { '--text-top': '9vh', '--text-size': '8.4vmin' }, box: { padding: '0 14vw' }, mark: {} },
 };
+const over = process.env.CHASE_CAMS ? JSON.parse(process.env.CHASE_CAMS) : {};
+for (const k of ['chaseCam', 'lineCam']) if (over[k]) text[k] = { ...text[k], ...over[k] };
+if (over.lineMembers) text.lineMembers = over.lineMembers; // (the finishers the line camera rides with)
 await record({ slug, race, kind: 'chase', format, tune: 7, text, out, stills: stills ? stills.split(',').map(Number) : null });
 process.exit(0);
