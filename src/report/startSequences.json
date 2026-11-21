@@ -128,6 +128,7 @@
 "mont-saint-michel-tide-run": {"family":"world-tour","reach":0.337,"seq":["opening: clean-drop","drop","S-bends right","straight","slalom","sweep left","peg ×2","brake"]},
 "moon-base": {"family":"block","reach":0.297,"seq":["opening: sand-trap","drop","pileUp","slalom","brake","sweep left","peg ×2","S-bends right","slalom"]},
 "multiball-manor": {"family":"pinball","reach":0.248,"seq":["opening: tunnel-launch","drop","pileUp","slalom","drop","slalom","sweep left"]},
+"munich-tent-roof-run": {"family":"athletics","reach":0.36,"seq":["opening: clear-start","straight","sweep left","sweep right","straight","slalom","brake","sweep right","slalom","brake"]},
 "murray-red-gum-run": {"family":"river","reach":0.241,"seq":["opening: classic","drop","pileUp","slalom","straight","slalom","drop","sweep left"]},
 "mushroom-grove": {"family":"block","reach":0.365,"seq":["opening: rolling-start","drop","slalom","sweep right","straight","drop","straight","slalom","brake"]},
 "nairobi-marble-grand-prix": {"family":"grand-prix","reach":0.218,"seq":["opening: banked-turn","drop","pileUp","slalom","sweep right","S-bends left","slalom","peg"]},

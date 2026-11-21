@@ -67,6 +67,8 @@ export const STADIUMS = {
   helsinki: { seat: '#3c6e9e', riser: '#eceae4', wall: '#f2f0ea', depth: 22, rise: 13, front: 1.8, rows: 11, crowd: 0.64, shape: 'oval', roof: { colour: '#e8e6e0', under: '#bfc3c8', depth: 14, rise: 3, over: 'one-side' }, masts: 4, apron: 8, touch: 'tower' },
   // Munich (Moses, 21 Nov 2026): open bowl stands sunk into a grassy hill, green seats, and a tent roof hung from tall masts over one side.
   munich: { seat: '#4f7d4a', riser: '#c8ccc4', wall: '#9aa79a', depth: 26, rise: 12, front: 1.6, rows: 12, crowd: 0.66, shape: 'oval', roof: null, masts: 0, apron: 10, touch: 'tent' },
+  // Brussels (Moses, 21 Nov 2026): a plain city bowl under a dark roof all round, deep red seats, four tall floodlight masts for the night meeting.
+  brussels: { seat: '#8e2a2e', riser: '#3a3c40', wall: '#4a4c52', depth: 26, rise: 16, front: 2, rows: 13, crowd: 0.74, shape: 'oval', roof: { colour: '#26282c', under: '#3d4046', depth: 15, rise: 2.5, over: 'all', lights: true }, masts: 4, apron: 10, touch: null },
 };
 export const STADIUM_NAMES = Object.keys(STADIUMS);
 
