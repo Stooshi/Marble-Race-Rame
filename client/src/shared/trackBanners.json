@@ -926,6 +926,17 @@
    "side": 1,
    "marbles": 5
   },
+  "helsinki-tower-lap": {
+   "name": "Helsinki Tower Lap",
+   "series": "Track and Field",
+   "lighting": "day",
+   "v": "66328f3d",
+   "bytes": 20748,
+   "bytes2x": 52678,
+   "t": 10813,
+   "side": 1,
+   "marbles": 6
+  },
   "hong-kong-crossing": {
    "name": "Hong Kong Crossing",
    "series": "Coasters",

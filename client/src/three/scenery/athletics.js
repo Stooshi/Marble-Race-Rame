@@ -65,6 +65,8 @@ export const STADIUMS = {
   olimpico: { seat: '#2f5fa8', riser: '#d8d2c4', wall: '#cfc6b4', depth: 28, rise: 15, front: 2, rows: 13, crowd: 0.66, shape: 'oval', roof: { colour: '#f1f1ee', under: '#cfd2d6', depth: 14, rise: 2, over: 'all', lights: true }, masts: 0, apron: 11, touch: null },
   // Helsinki (21 Nov 2026): white functionalist stands, blue seats, a roof over one side and the tall white tower at a corner.
   helsinki: { seat: '#3c6e9e', riser: '#eceae4', wall: '#f2f0ea', depth: 22, rise: 13, front: 1.8, rows: 11, crowd: 0.64, shape: 'oval', roof: { colour: '#e8e6e0', under: '#bfc3c8', depth: 14, rise: 3, over: 'one-side' }, masts: 4, apron: 8, touch: 'tower' },
+  // Munich (Moses, 21 Nov 2026): open bowl stands sunk into a grassy hill, green seats, and a tent roof hung from tall masts over one side.
+  munich: { seat: '#4f7d4a', riser: '#c8ccc4', wall: '#9aa79a', depth: 26, rise: 12, front: 1.6, rows: 12, crowd: 0.66, shape: 'oval', roof: null, masts: 0, apron: 10, touch: 'tent' },
 };
 export const STADIUM_NAMES = Object.keys(STADIUMS);
 
@@ -876,6 +878,28 @@ function buildStands(st, style, { lite, groundAt, grid, clearOf, inside }) {
     for (let k = 1; k < h / 5; k += 1) parts.push(piece(new BoxGeometry(3.7, 0.3, 3.7), '#a0a7b0', new Matrix4().makeTranslation(p.x, y + k * 5, p.z)));
     parts.push(piece(new BoxGeometry(5, 3, 5), '#2f3237', new Matrix4().makeTranslation(p.x, y + h + 1.5, p.z)));
     tryAdd(parts, [piece(new BoxGeometry(5.2, 0.6, 5.2), '#ffe7a8', new Matrix4().makeTranslation(p.x, y + h + 0.4, p.z))], { x: p.x, z: p.z, r: 5 });
+  } else if (style.touch === 'tent') {
+    // A tent roof over one side: tall leaning masts behind the back straight's stand, and pale see-through panels
+    // hung from them down over the seats, each tilted a little differently (a generic cable-net roof; no names).
+    const back = st.B + D + 12;
+    const parts = [];
+    const panes = [];
+    const n4 = 4;
+    for (let k = 0; k < n4; k += 1) {
+      const along = -st.L * 0.75 + (st.L * 1.5 * k) / (n4 - 1);
+      const { p, y } = standAt(along, back);
+      const h = Math.max(38, tallest - y + 22);
+      const lean = new Quaternion().setFromAxisAngle(st.e1.clone().setY(0).normalize(), -0.12);
+      parts.push(piece(new CylinderGeometry(0.45, 0.7, h, 6), '#c9ccd0', new Matrix4().compose(p.clone().setY(y + h / 2), lean, new Vector3(1, 1, 1))));
+      if (k < n4 - 1) {
+        const mid = st.world(along + (st.L * 1.5) / (n4 - 1) / 2, st.B + D * 0.45);
+        // (Local z runs along the straight after the yaw, so the tilt is about local z.)
+        const tilt = new Quaternion().setFromAxisAngle(new Vector3(0, 0, 1), 0.32 + 0.07 * (k % 2));
+        const q = yawOf(st.e1).multiply(tilt);
+        panes.push(piece(new BoxGeometry(D + 10, 0.25, (st.L * 1.5) / (n4 - 1) + 4), '#dfe8ee', new Matrix4().compose(mid.clone().setY(tallest + 6 + 2 * (k % 2)), q, new Vector3(1, 1, 1))));
+      }
+    }
+    tryAdd([...parts, ...panes], [], { x: st.world(0, back).x, z: st.world(0, back).z, r: 12 });
   } else if (style.touch === 'arches') {
     // The peristyle: a row of tall arches across one end, just behind the stands, a flame cauldron over the middle.
     const end = st.L + st.B + D + 3;

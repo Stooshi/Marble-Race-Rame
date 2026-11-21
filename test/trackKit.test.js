@@ -809,6 +809,7 @@ const HIDDEN_KIT_TRACKS = [
   ['bavarian-castle-run', '2027-08-27-add-bavarian-castle-run.sql', 'Coasters track (the Bavarian Alps: a chicane start, through the village gate, across the pastures, the big feature a splitter round the white fairy-tale castle on its crag, one channel each side, down the gorge, the alpine meadows, the chapel hairpin to the village; a clock-tower start; in the Coasters pack, not free; switched off until Moses has watched the preview).'],
   ['jodhpur-blue-city-run', '2027-08-28-add-jodhpur-blue-city-run.sql', 'Coasters track (Jodhpur, the blue city: a pipe drop off the fort\'s ramparts, along the battlements, the big feature the long, steep drop off the fort\'s cliff into the blue city, the bazaar, the lanes under drying cloth, the stepwell spiral, the market hairpin to the city gate; a minaret start; in the Coasters pack, not free; switched off until Moses has watched the preview).'],
   ['rome-monte-mario-drop', '2027-08-30-add-rome-monte-mario-drop.sql', 'Track and Field track (Rome\'s great stadium under Monte Mario: the clear start, the field let go in waves, nothing in the way for the first 300 m, along the hill among the umbrella pines, the big feature a long drop down the hillside into the stadium, a lap under the light roof ring, a spiral round a floodlight mast, back through the pines and the hurdles of the home straight; a straight-lift start; in the Track and Field pack, not free; switched off until Moses has watched the preview).'],
+  ['helsinki-tower-lap', '2027-08-31-add-helsinki-tower-lap.sql', 'Track and Field track (Helsinki\'s white stadium with its tall tower: the clear start, the field let go in waves, nothing in the way for the first 300 m, along the bay over the hurdles, the big feature a splitter round the foot of the stadium tower, the hairpin by the park, a lap of the stadium over the hurdles, S-bends through the birches and the home straight; a clock-tower start; in the Track and Field pack, not free; switched off until Moses has watched the preview).'],
 ];
 for (const [slug, file, note] of HIDDEN_KIT_TRACKS) {
   test(`${slug} is added by its data update, switched off, exactly as its track file builds it`, () => {
@@ -994,7 +995,7 @@ test('every track\'s difficulty is one the database takes', () => {
 
 // Every new track from 21 Nov 2026 starts clear (Moses): the clear-start opening, nothing in the way for the first
 // 300 m (the recipe's rule), the field let go in waves. Add each new track here.
-const CLEAR_START_FROM_21_NOV = ['rome-monte-mario-drop'];
+const CLEAR_START_FROM_21_NOV = ['rome-monte-mario-drop', 'helsinki-tower-lap'];
 test('every new track from 21 Nov 2026 has the clear start', () => {
   const { physicsTrack } = require('../src/game/physicsTracks');
   for (const slug of CLEAR_START_FROM_21_NOV) {
