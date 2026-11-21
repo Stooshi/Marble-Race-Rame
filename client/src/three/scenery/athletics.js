@@ -69,6 +69,8 @@ export const STADIUMS = {
   munich: { seat: '#4f7d4a', riser: '#c8ccc4', wall: '#9aa79a', depth: 26, rise: 12, front: 1.6, rows: 12, crowd: 0.66, shape: 'oval', roof: null, masts: 0, apron: 10, touch: 'tent' },
   // Brussels (Moses, 21 Nov 2026): a plain city bowl under a dark roof all round, deep red seats, four tall floodlight masts for the night meeting.
   brussels: { seat: '#8e2a2e', riser: '#3a3c40', wall: '#4a4c52', depth: 26, rise: 16, front: 2, rows: 13, crowd: 0.74, shape: 'oval', roof: { colour: '#26282c', under: '#3d4046', depth: 15, rise: 2.5, over: 'all', lights: true }, masts: 4, apron: 10, touch: null },
+  // Monaco (Moses, 21 Nov 2026): a compact stadium squeezed between harbour and rock, red and white seats, a light roof over the main stand only.
+  monaco: { seat: '#c23a3a', riser: '#efe9df', wall: '#e8dccb', depth: 22, rise: 15, front: 1.8, rows: 12, crowd: 0.7, shape: 'oval', roof: { colour: '#f3efe8', under: '#d6cfc3', depth: 13, rise: 2.5, over: 'one-side' }, masts: 4, apron: 8, touch: null },
 };
 export const STADIUM_NAMES = Object.keys(STADIUMS);
 

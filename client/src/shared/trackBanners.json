@@ -299,6 +299,17 @@
    "side": 1,
    "marbles": 6
   },
+  "brussels-night-mile": {
+   "name": "Brussels Night Mile",
+   "series": "Track and Field",
+   "lighting": "night",
+   "v": "eea1d532",
+   "bytes": 16988,
+   "bytes2x": 42814,
+   "t": 9815,
+   "side": 1,
+   "marbles": 6
+  },
   "bryce-hoodoo-run": {
    "name": "Bryce Hoodoo Run",
    "series": "Canyons",

@@ -96,6 +96,7 @@ module.exports = [
   require('./rome-monte-mario-drop'),
   require('./helsinki-tower-lap'),
   require('./munich-tent-roof-run'),
+  require('./brussels-night-mile'),
   // Rivers (the first five, the test batch).
   // (In this order so no two tracks in a row start the same way: a test.)
   require('./mississippi-steamer-run'),
