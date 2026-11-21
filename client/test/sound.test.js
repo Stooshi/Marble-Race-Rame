@@ -176,6 +176,9 @@ describe('sound', () => {
     const view = fs.readFileSync(path.resolve(__dirname, '../src/components/LiveRaceViewer3D.jsx'), 'utf8');
     expect(view).toContain('for (const k of scene.crowdsNear(i)) crowdCheer(meta.raceId, k);');
     expect(view).not.toContain("playSound('crowd')");
+    // Track and Field: the leader, at every other stand (Moses, 21 Nov 2026).
+    expect(view).toContain('if (lead >= 0) for (const k of scene.crowdsNear(lead)) if (k % every === 0) crowdCheer(meta.raceId, k);');
+    expect(fs.readFileSync(path.resolve(__dirname, '../src/three/scenery/kit.js'), 'utf8')).toContain('cheerEvery: athletics ? 2 : 1');
   });
 
   it('every file in both formats, small; the old music is gone', () => {

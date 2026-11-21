@@ -327,6 +327,7 @@ export default function LiveRaceViewer3D({
     let hits = null; // (the own marble's hit sound: one detector per race)
     let pads = null; // (the speed pad sound: one detector per race)
     const grandPrix = Boolean(meta?.track?.physics?.kit?.grandPrix);
+    const athletics = Boolean(meta?.track?.physics?.kit?.athletics);
     const tick = (now) => {
       const dt = (now - lastNow) / 1000;
       lastNow = now;
@@ -389,6 +390,15 @@ export default function LiveRaceViewer3D({
           if (grandPrix && f.t >= 0 && meta?.raceId && now - crowdCheckAt > 200) {
             crowdCheckAt = now;
             for (const i of ownRef.current) if (!(f.p?.[i] >= 1)) for (const k of scene.crowdsNear(i)) crowdCheer(meta.raceId, k);
+          }
+          // Track and Field: the leader passing a stand cheers it, at every other stand round the stadium (Moses, 21 Nov 2026).
+          if (athletics && f.t >= 0 && meta?.raceId && now - crowdCheckAt > 200) {
+            crowdCheckAt = now;
+            let lead = -1;
+            const p = f.p ?? [];
+            for (let i = 0; i < p.length; i += 1) if (p[i] < 1 && (lead < 0 || p[i] > p[lead])) lead = i;
+            const every = scene.cheerEvery;
+            if (lead >= 0) for (const k of scene.crowdsNear(lead)) if (k % every === 0) crowdCheer(meta.raceId, k);
           }
           // The flyover: its camera over the race's own until it ends (or is skipped).
           const fly = flyRef.current;

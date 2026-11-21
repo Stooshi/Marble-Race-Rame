@@ -4,7 +4,9 @@
 import { createRequire } from 'node:module';
 import { Vector3 } from 'three';
 import { describe, expect, it } from 'vitest';
-import { STADIUMS, fitStadium } from '../src/three/scenery/athletics';
+import { STADIUMS, buildAthletics, fitStadium } from '../src/three/scenery/athletics';
+import { buildCenterline } from '../src/three/trackModel';
+import { channelOf } from '../src/three/iceChannel';
 import { ATHLETICS_LANDMARKS } from '../src/three/scenery/kitLandmarksAthletics';
 import { LANDMARKS } from '../src/three/scenery/kitProps';
 import { COSTUMES } from '../src/three/costumes';
@@ -12,6 +14,7 @@ import { CHANNEL_LOOKS } from '../src/three/iceChannel';
 
 const require = createRequire(import.meta.url);
 const parts = require('../../src/trackKit/parts');
+const { PHYSICS_TRACKS } = require('../../src/game/physicsTracks');
 
 describe('Track and Field', () => {
   it('every stadium the track kit names has its architecture here', () => {
@@ -62,6 +65,18 @@ describe('Track and Field', () => {
     for (let s = 0; s < st.perimeter; s += st.perimeter / 40) {
       const { p, n } = st.at(s);
       expect(p.clone().sub(st.centre).dot(n)).toBeGreaterThan(0);
+    }
+  });
+
+  it('every stadium has crowd cheer points round its stands (Moses, 21 Nov 2026: the leader cheered at every other one)', () => {
+    const tracks = PHYSICS_TRACKS.filter((t) => t.physics?.kit?.athletics);
+    expect(tracks.length).toBeGreaterThan(10);
+    for (const t of tracks) {
+      const centerline = buildCenterline(t);
+      const built = buildAthletics(centerline, channelOf(t, centerline), t.physics.kit, { lite: true, groundAt: () => 0 });
+      // (Every other point cheers, so at least two: one stand that cheers, one that stays quiet.)
+      expect(built.crowds.length, t.slug).toBeGreaterThanOrEqual(2);
+      for (let k = 1; k < built.crowds.length; k += 1) expect(built.crowds[k].distanceTo(built.crowds[k - 1]), t.slug).toBeGreaterThan(10);
     }
   });
 });

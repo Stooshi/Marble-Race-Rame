@@ -21,7 +21,8 @@
  * - The finish ceremony (unchanged): the tune stops with a short fade and the ceremony song plays,
  *   looping while the player stays, fading out softly (CEREMONY_FADE_S) after CEREMONY_SECONDS.
  * - The crowd: when the player's own marble passes a Grand Prix stand (crowdCheer, once per stand per
- *   race), under the music. The start sound 1 s after GO (the marbles start rolling; 30 Oct 2026). The player's
+ *   race), under the music; on Track and Field when the leader passes a stadium stand, at every other stand
+ *   (Moses, 21 Nov 2026; LiveRaceViewer3D). The start sound 1 s after GO (the marbles start rolling; 30 Oct 2026). The player's
  *   own marble hitting another (marbleHit, from ./hits.js): soft, louder for harder hits, under the music,
  *   at most one a second (30 Oct 2026). The own marble hitting an obstacle (marbleBump, from ./hits.js, found
  *   from the frames since 4 Nov 2026;

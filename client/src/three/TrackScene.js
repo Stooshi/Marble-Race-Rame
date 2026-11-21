@@ -912,9 +912,12 @@ export class TrackScene {
   }
 
   /**
-   * The crowd stands (Grand Prix) within `metres` of marble `index` now → their numbers (the race view
-   * plays the crowd's cheer once per stand when the player's own marble passes one). Drawing only.
+   * The crowd stands (Grand Prix; Track and Field's stadium stands) within `metres` of marble `index` now →
+   * their numbers (the race view plays the crowd's cheer once per stand: on a Grand Prix when the player's
+   * own marble passes one, on Track and Field at every other stand as the leader passes). Drawing only.
    */
+  get cheerEvery() { return this.scenery?.userData?.cheerEvery ?? 1; }
+
   crowdsNear(index, metres = CHEER_NEAR) {
     const crowds = this.scenery?.userData?.crowds;
     const pos = this.marbles?.positions?.[index];

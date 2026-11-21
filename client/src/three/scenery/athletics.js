@@ -85,6 +85,7 @@ const NUMBERS_AT = 4.2; // …and the lane numbers just past it
 const CLEAR = 4.4;      // metres from the channel's middle to beyond its rim
 const REACH = 7.5;      // metres: a stretch of track this near a stand's footprint passes through it
 const UNDER_RAMP = 5;   // metres a stand stays below a ramp flying over it
+const CHEER_STAND = 45; // metres of stand per cheer point (the race view cheers every other one; Moses, 21 Nov 2026)
 
 const hash = (a, b = 0) => {
   const x = Math.sin(a * 127.1 + b * 311.7) * 43758.5453;
@@ -403,12 +404,14 @@ export function buildAthletics(centerline, channel, kit, { lite = false, groundA
   }
   const stadium = inside.length ? fitStadium(inside, style.apron) : null;
   let board = null; // where the scoreboard stands
+  let crowds = []; // the stands' cheer points, in order round the oval
   if (stadium) {
     const built = buildStands(stadium, style, { lite, groundAt, grid: sampleGrid(centerline, channel, RUNOUT), clearOf, inside, samples, segments });
     solid.push(...built.solid);
     glow.push(...built.glow);
     spots.push(...built.spots);
     board = built.board;
+    crowds = built.crowds;
   }
 
   // ── The starter on his stand beside the gate: his gun flashes and smokes at GO ──
@@ -611,7 +614,7 @@ export function buildAthletics(centerline, channel, kit, { lite = false, groundA
     for (const e of effects) e(t, lead, ctx);
   };
   update(-1);
-  return { group, spots, update, stadium };
+  return { group, spots, update, stadium, crowds };
 }
 
 /** The starter's stand: a step up to the rim's height, the starter in a red jacket, his arm up, the gun. */
@@ -710,6 +713,25 @@ function buildStands(st, style, { lite, groundAt, grid, clearOf, inside }) {
     }
   }
   const open = (k) => { const c = chunks[(k + n) % n]; return !c || c.top === null; };
+  // The crowd's cheer points (Moses, 21 Nov 2026): each unbroken run of stand cut into stands of about
+  // CHEER_STAND m, in order round the oval; the race view cheers every other one as the leader passes.
+  // A point sits halfway back and halfway up its stand. Drawing and sound only.
+  const crowds = [];
+  {
+    const startAt = Math.max(0, chunks.findIndex((c, k) => !standing(k)));
+    for (let j = 0; j < n;) {
+      const k0 = (startAt + j) % n;
+      if (!standing(k0)) { j += 1; continue; }
+      let len = 0;
+      while (len < n && standing(k0 + len)) len += 1;
+      const parts = Math.max(1, Math.round((len * ds) / CHEER_STAND));
+      for (let m = 0; m < parts; m += 1) {
+        const c = chunks[(k0 + Math.floor(((m + 0.5) * len) / parts)) % n];
+        crowds.push(c.mid.p.clone().addScaledVector(c.mid.n, D / 2).setY(c.base + (H0 + c.top) / 2));
+      }
+      j += len;
+    }
+  }
   // The stands: rows rising from the front wall to the back; a ramp over them cuts the rows it would touch.
   const roofOver = (c) => {
     const r = style.roof;
@@ -961,5 +983,5 @@ function buildStands(st, style, { lite, groundAt, grid, clearOf, inside }) {
       break;
     }
   }
-  return { solid, glow, spots, board };
+  return { solid, glow, spots, board, crowds };
 }
