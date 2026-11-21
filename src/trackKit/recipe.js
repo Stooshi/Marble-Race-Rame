@@ -108,7 +108,10 @@ const LOOP_HARDEST_GLIDE = 1.4;  // the most a marble's glide and form multiply 
 const LOOP_RUN_UP_M = 30;        // metres of the straight before the launch pad
 const LOOP_RUN_OUT_M = 15;       // metres of the straight left after the run-out
 const LOOP_CLEAR_M = 15;         // metres clear of other obstacles and features before and after it
-const NO_LUCK_OPENINGS = ['clean-drop', 'peg-drop', 'pipe-drop', 'rolling-start', 'rumble-start'];
+const NO_LUCK_OPENINGS = ['clean-drop', 'peg-drop', 'pipe-drop', 'rolling-start', 'rumble-start', 'clear-start'];
+// The clear start (Moses, 21 Nov 2026, every new track): nothing in the way for the first CLEAR_START_M metres (about
+// 10 to 15 seconds): no obstacles, splitters, pegs, drops, jumps or loops; the field stays together as a pack.
+const CLEAR_START_M = 300;
 const LUCK_GATES = 5;
 const LUCK_LOSS = 0.3;
 const MAX_BUMPS_IN_ROW = 8;
@@ -163,6 +166,15 @@ function checkRecipe({ spec, sections, span, generated, owner, placed, total, wh
   if (NO_LUCK_OPENINGS.includes(spec.opening?.kind)) {
     const lucky = Boolean(spec.opening?.waves) || sections.some((sec, i) => span[i].from < 0.5 && (sec.obstacles ?? []).some((o) => o.obstacle === 'pileUp' || (o.obstacle === 'slalom' && o.count >= LUCK_GATES && (o.tune?.loss ?? 0) >= LUCK_LOSS)));
     if (!lucky) problems.push(`${where('track')}: the ${spec.opening.kind} opening has no pile-up or slalom, so the first half of the track needs one (a pile-up, or a slalom of ${LUCK_GATES} gates or more at a loss of ${LUCK_LOSS}): without its luck the strongest marbles win too often.`);
+  }
+
+  if (spec.opening?.kind === 'clear-start') {
+    sections.forEach((sec, i) => {
+      if (span[i].from * total >= CLEAR_START_M) return;
+      const hazards = [...(sec.obstacles ?? []).map((o) => o.obstacle), ...(sec.features ?? []).filter((f) => f.feature !== 'paint').map((f) => f.feature)];
+      const kind = sec.shape?.shape;
+      if (hazards.length || ['plunge', 'splitter', 'waterfall', 'spiral', 'hairpin'].includes(kind)) problems.push(`${where(sec.name)}: the clear start keeps the first ${CLEAR_START_M} m clear (Moses, 21 Nov 2026): gentle bends only, no obstacles, pegs, splitters, drops or other features before then${hazards.length ? ` (here: ${hazards.join(', ')})` : ` (here: a ${kind})`}.`);
+    });
   }
 
   // No dead-flat stretches (except the run-in past the finish), climbs within what's proven.

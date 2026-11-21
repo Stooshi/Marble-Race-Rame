@@ -137,6 +137,24 @@ const OPENINGS = {
     waves: { groups: 5, gap: 0.3, jitter: 0.1 },
   }),
 
+  // ── The clear start (Moses, 21 Nov 2026: every new track from now on). No obstacles, splitters, pegs or drops in
+  // the first part of the race: the field stays together as a pack for its first 10 to 15 seconds, and the hazards
+  // start after that (the track's own first sections are clear too; checked by test/trackKit.test.js).
+
+  /**
+   * Clear start: the field let go in waves (a new order every race: that is what keeps it fair with nothing to mix
+   * it) down a gentle run off the gate, then a long, gentle bend (`side`) and an easy bend back; nothing in the way.
+   */
+  'clear-start': (o) => ({
+    sections: [
+      // (Eased off the gate's steep starting ramp in steps, so the follow camera doesn't swing over a sharp change of slope.)
+      { key: 'run', name: 'Away from the gate', shape: { shape: 'straight', parts: [[10, 0.6], [10, 0.45], [10, 0.32], [45, 0.2]].map(([length, grade]) => ({ kind: 'straight', length, grade })) } },
+      { key: 'bend', name: 'The first bend', shape: sweep({ side: o.side ?? 'left', radius: 95, degrees: 70, grade: 0.12 }) },
+      { key: 'back', name: 'Easy bend back', shape: sweep({ side: (o.side ?? 'left') === 'left' ? 'right' : 'left', radius: 95, degrees: 55, grade: 0.12 }) },
+    ],
+    waves: { groups: 5, gap: 0.12, jitter: 0.08 },
+  }),
+
   // ── Motorsport starts (Moses, 12 Nov 2026: eleven new Grand Prix tracks, varied openings, no boost launch and
   // no jump). Each proven on its own test track (src/tracks/variety: variety-opening-<kind>) with its races.
 

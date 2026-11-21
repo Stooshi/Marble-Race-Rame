@@ -23,7 +23,7 @@ const NAMES = {
   'horseshoe-sprint': 'Horseshoe Sprint', 'blue-lanes': 'Blue Lanes', 'bell-lap': 'Bell Lap', 'hurdles-straight': 'Hurdles Straight', 'nest-bend': 'Nest Bend',
   'photo-finish': 'Photo Finish', 'relay-legs': 'Relay Legs', 'steeple-water': 'Steeple Water', 'anchor-arches': 'Anchor Arches', 'golden-lap': 'Golden Lap',
   'half-pipe-run': 'Half-Pipe Run', 'mid-lottery': 'Mid Lottery', 'jib-run': 'Jib Run', 'jump-run': 'Jump Run', 'loop-run': 'Loop Run', 'clean-drop': 'Clean Drop',
-  'bridge-slalom': 'Bridge Slalom', 'market-maze': 'Market Maze', 'steamer-pass': 'Steamer Pass', 'falls-edge': 'Falls Edge', 'lock-staircase': 'Lock Staircase', 'bridge-gate': 'Bridge Gate', 'arch-run': 'Arch Run', 'port-cranes': 'Port Cranes', 'flooded-forest': 'Flooded Forest', 'balloon-plain': 'Balloon Plain', 'peg-drop': 'Peg Drop', 'pipe-drop': 'Pipe Drop',
+  'bridge-slalom': 'Bridge Slalom', 'market-maze': 'Market Maze', 'steamer-pass': 'Steamer Pass', 'falls-edge': 'Falls Edge', 'lock-staircase': 'Lock Staircase', 'bridge-gate': 'Bridge Gate', 'arch-run': 'Arch Run', 'port-cranes': 'Port Cranes', 'flooded-forest': 'Flooded Forest', 'balloon-plain': 'Balloon Plain', 'peg-drop': 'Peg Drop', 'pipe-drop': 'Pipe Drop', 'clear-start': 'Clear Start',
   'two-waters': 'Two Waters', cataract: 'Cataract', 'rapids-ladder': 'Rapids Ladder', 'island-castle': 'Island Castle', 'river-steps': 'River Steps',
   'icefall-ladders': 'Icefall Ladders', 'needle-ridge': 'Needle Ridge', 'blue-ice-plain': 'Blue-Ice Plain', 'zone-descent': 'Zone Descent', 'ice-cave-run': 'Ice-Cave Run',
   'cinder-switchbacks': 'Cinder Switchbacks', 'penitente-maze': 'Penitente Maze', 'glacier-junction': 'Glacier Junction', 'saddle-traverse': 'Saddle Traverse', 'iceberg-lake': 'Iceberg Lake', 'moss-glacier': 'Moss Glacier', 'lake-terraces': 'Lake Terraces', 'tepui-wall': 'Tepui Wall', 'rhododendron-drop': 'Rhododendron Drop', tidewater: 'Tidewater', 'island-channels': 'Island Channels',
@@ -44,7 +44,7 @@ const base = (slug, name, description) => ({
 
 // Openings without the pile-up and slalom are proven on the mid lottery layout (the peg drop on the
 // half-pipe run), a lottery further on as well as their waves at the gate.
-const OPENING_LAYOUT = { 'clean-drop': 'mid-lottery', 'peg-drop': 'half-pipe-run', 'pipe-drop': 'mid-lottery', 'rolling-start': 'mid-lottery', 'rumble-start': 'mid-lottery' };
+const OPENING_LAYOUT = { 'clean-drop': 'mid-lottery', 'peg-drop': 'half-pipe-run', 'pipe-drop': 'mid-lottery', 'rolling-start': 'mid-lottery', 'rumble-start': 'mid-lottery', 'clear-start': 'mid-lottery' };
 // (The pipe drop's test track: a stronger lottery, 6 gates at loss 0.25, as its batches asked: its
 // half-pipe gives no luck of its own.)
 const OPENING_LAYOUT_OPTIONS = { 'pipe-drop': { lotteryGates: 6, lotteryLoss: 0.25 } };

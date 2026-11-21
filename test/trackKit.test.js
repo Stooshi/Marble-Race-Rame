@@ -58,7 +58,7 @@ test('every kit track opens with Bobsleigh Run\'s starting ramp, gate, channel a
     // (The staggered drop and the varied starts let the field go in waves: their funnel has that one setting more.
     // Any other opening only where its track asks for them, listed here: Nevada Drag Strip's crest start.)
     const { waves, ...rest } = funnel;
-    if (waves) assert.ok(['staggered-drop', 'clean-drop', 'peg-drop', 'pipe-drop', 'rolling-start', 'chicane-start', 'rumble-start'].includes(t.physics.kit.opening) || ['nevada-drag-strip', 'hudson-highlands-run', 'iguazu-devils-throat', 'chao-phraya-dawn-spiral', 'blyde-potholes-spiral', 'kings-canyon-lost-city', 'huashan-plank-walk', 'etna-valle-del-bove', 'tianmen-heavens-gate', 'sunken-ruins', 'are-run', 'greenland-expedition', 'dubai-twister', 'rio-jungle-rumble', 'china-wall-twister', 'baqueira-beret-run', 'portes-du-soleil-run', 'amazon-water-run', 'santorini-caldera-run', 'lake-bled-island-run', 'mont-saint-michel-tide-run', 'angkor-temple-run', 'cappadocia-balloon-run', 'giants-causeway-run', 'santa-monica-pier-run', 'seoul-namsan-run', 'crystal-grotto', 'moon-base'].includes(t.slug), `${t.slug}: waves at the gate`);
+    if (waves) assert.ok(['staggered-drop', 'clean-drop', 'peg-drop', 'pipe-drop', 'rolling-start', 'chicane-start', 'rumble-start', 'clear-start'].includes(t.physics.kit.opening) || ['nevada-drag-strip', 'hudson-highlands-run', 'iguazu-devils-throat', 'chao-phraya-dawn-spiral', 'blyde-potholes-spiral', 'kings-canyon-lost-city', 'huashan-plank-walk', 'etna-valle-del-bove', 'tianmen-heavens-gate', 'sunken-ruins', 'are-run', 'greenland-expedition', 'dubai-twister', 'rio-jungle-rumble', 'china-wall-twister', 'baqueira-beret-run', 'portes-du-soleil-run', 'amazon-water-run', 'santorini-caldera-run', 'lake-bled-island-run', 'mont-saint-michel-tide-run', 'angkor-temple-run', 'cappadocia-balloon-run', 'giants-causeway-run', 'santa-monica-pier-run', 'seoul-namsan-run', 'crystal-grotto', 'moon-base'].includes(t.slug), `${t.slug}: waves at the gate`);
     if (!['funnel-drop', 'staggered-drop'].includes(t.physics.kit.opening)) assert.deepEqual(rest, tmFunnel);
     assert.deepEqual(t.physics.gate, bob.physics.gate);
     assert.equal(t.physics.collisions, true);
@@ -808,6 +808,7 @@ const HIDDEN_KIT_TRACKS = [
   ['santa-monica-pier-run', '2027-08-26-add-santa-monica-pier-run.sql', 'Coasters track (a seaside amusement pier in California: a sand-trap start, the field let go in waves, over the beach, the big feature a loop out over the surf beside the funfair, the midway\'s stalls, round the end of the pier and back along the palm-lined promenade; a water-tower start; in the Coasters pack, not free; switched off until Moses has watched the preview).'],
   ['bavarian-castle-run', '2027-08-27-add-bavarian-castle-run.sql', 'Coasters track (the Bavarian Alps: a chicane start, through the village gate, across the pastures, the big feature a splitter round the white fairy-tale castle on its crag, one channel each side, down the gorge, the alpine meadows, the chapel hairpin to the village; a clock-tower start; in the Coasters pack, not free; switched off until Moses has watched the preview).'],
   ['jodhpur-blue-city-run', '2027-08-28-add-jodhpur-blue-city-run.sql', 'Coasters track (Jodhpur, the blue city: a pipe drop off the fort\'s ramparts, along the battlements, the big feature the long, steep drop off the fort\'s cliff into the blue city, the bazaar, the lanes under drying cloth, the stepwell spiral, the market hairpin to the city gate; a minaret start; in the Coasters pack, not free; switched off until Moses has watched the preview).'],
+  ['rome-monte-mario-drop', '2027-08-30-add-rome-monte-mario-drop.sql', 'Track and Field track (Rome\'s Olympic stadium under Monte Mario: the clear start, the field let go in waves, nothing in the way for the first 300 m, along the hill among the umbrella pines, the big feature a long drop down the hillside into the stadium, a lap under the light roof ring, a spiral round a floodlight mast, back through the pines and the hurdles of the home straight; a straight-lift start; in the Track and Field pack, not free; switched off until Moses has watched the preview).'],
 ];
 for (const [slug, file, note] of HIDDEN_KIT_TRACKS) {
   test(`${slug} is added by its data update, switched off, exactly as its track file builds it`, () => {
@@ -989,4 +990,17 @@ test('every track\'s difficulty is one the database takes', () => {
   const schema = require('node:fs').readFileSync(require('node:path').join(__dirname, '../docs/database_schema.sql'), 'utf8');
   const allowed = schema.match(/CREATE TYPE track_difficulty AS ENUM \(([^)]*)\)/)[1].match(/'([a-z]+)'/g).map((s) => s.slice(1, -1));
   for (const t of require('../src/game/physicsTracks').PHYSICS_TRACKS) assert.ok(allowed.includes(t.difficulty), `${t.slug}: ${t.difficulty}`);
+});
+
+// Every new track from 21 Nov 2026 starts clear (Moses): the clear-start opening, nothing in the way for the first
+// 300 m (the recipe's rule), the field let go in waves. Add each new track here.
+const CLEAR_START_FROM_21_NOV = ['rome-monte-mario-drop'];
+test('every new track from 21 Nov 2026 has the clear start', () => {
+  const { physicsTrack } = require('../src/game/physicsTracks');
+  for (const slug of CLEAR_START_FROM_21_NOV) {
+    const t = physicsTrack(slug);
+    assert.equal(t.physics.kit.opening, 'clear-start', slug);
+    const first = t.sections.find((s) => s.from * t.length_m >= 300 - 1e-6 || (s.obstacles ?? []).length);
+    assert.ok(first.from * t.length_m >= 300 - 1e-6, `${slug}: ${first.name} has obstacles before 300 m`);
+  }
 });

@@ -45,6 +45,21 @@ Rules that come with it:
 
 This applies from Peaks 6–15 on (after Leagues part 1). Tracks built before 27 Oct 2026, the first five Peaks among them, stay as they are.
 
+## Every new track starts clear (Moses, 21 Nov 2026)
+
+From 21 Nov 2026 every new track (including the Track and Field tracks built that day) opens with the `clear-start`
+opening: no obstacles, splitters, pegs or drops in the first part of the race, gentle bends only, so the marbles stay
+together as a pack for roughly the first 10 to 15 seconds; the obstacles start after that. The fairness checks still
+have to pass. The opening is a run off the gate eased down in steps from the starting ramp's steep slope (0.6, 0.45,
+0.32, then 0.2: a sharp change of slope there made the follow camera jump), a long gentle bend (`side`, 70°) and an easy
+bend back (55°), about 330 m with the ramp; the field is let go in waves (a new order every race), which is what keeps
+the starting groups even with nothing to mix them: let go together, the inside of the first bend won too often. The
+recipe refuses any obstacle, feature, drop, spiral, hairpin or splitter in a section that starts within the first 300 m
+of a clear-start track. With no luck at the gate the strongest marbles win too often (57% of wins against at most 50% on
+Rome Monte Mario Drop's first try), so the mixing comes later: at least two slaloms of five gates at a loss of 0.3 or
+more (no pile-ups in a row: two of them left marbles stuck). `test/trackKit.test.js` lists every track from that day
+(`CLEAR_START_FROM_21_NOV`).
+
 ## Vary the opening, place the pack separator where it fits (Moses, 4 Nov 2026)
 
 For every new track: vary how it opens (for example a splitter, a funnel, hairpins or the classic

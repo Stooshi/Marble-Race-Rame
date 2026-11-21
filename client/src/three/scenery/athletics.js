@@ -61,6 +61,10 @@ export const STADIUMS = {
   // Accra (Holiday Season): an open bowl in kente colours, gold seats, green risers, red walls, a lively crowd, floodlights.
   accra: { seat: '#e2a91c', riser: '#2a7a3a', wall: '#b8302a', depth: 24, rise: 14, front: 2, rows: 12, crowd: 0.8, shape: 'oval', roof: null, masts: 4, apron: 9, touch: null },
   letzigrund: { seat: '#2f3a4c', riser: '#7b8088', wall: '#5c6168', depth: 24, rise: 14, front: 2, rows: 12, crowd: 0.75, shape: 'oval', roof: { colour: '#2f3237', under: '#4a4e55', depth: 15, rise: 2.5, over: 'all', lights: true }, masts: 0, apron: 9, touch: 'golden' },
+  // Rome (21 Nov 2026): a long bowl of blue seats under a light roof ring all round, pale travertine walls, pines beyond.
+  olimpico: { seat: '#2f5fa8', riser: '#d8d2c4', wall: '#cfc6b4', depth: 28, rise: 15, front: 2, rows: 13, crowd: 0.66, shape: 'oval', roof: { colour: '#f1f1ee', under: '#cfd2d6', depth: 14, rise: 2, over: 'all', lights: true }, masts: 0, apron: 11, touch: null },
+  // Helsinki (21 Nov 2026): white functionalist stands, blue seats, a roof over one side and the tall white tower at a corner.
+  helsinki: { seat: '#3c6e9e', riser: '#eceae4', wall: '#f2f0ea', depth: 22, rise: 13, front: 1.8, rows: 11, crowd: 0.64, shape: 'oval', roof: { colour: '#e8e6e0', under: '#bfc3c8', depth: 14, rise: 3, over: 'one-side' }, masts: 4, apron: 8, touch: 'tower' },
 };
 export const STADIUM_NAMES = Object.keys(STADIUMS);
 

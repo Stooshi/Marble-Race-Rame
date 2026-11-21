@@ -1784,6 +1784,17 @@
    "side": 1,
    "marbles": 6
   },
+  "rome-monte-mario-drop": {
+   "name": "Rome Monte Mario Drop",
+   "series": "Track and Field",
+   "lighting": "sunset",
+   "v": "9da468e2",
+   "bytes": 25366,
+   "bytes2x": 67732,
+   "t": 20021,
+   "side": 1,
+   "marbles": 10
+  },
   "roraima-cloud-falls": {
    "name": "Roraima Cloud Falls",
    "series": "Peaks",
