@@ -585,6 +585,17 @@
    "side": 1,
    "marbles": 5
   },
+  "doha-desert-sprint": {
+   "name": "Doha Desert Sprint",
+   "series": "Track and Field",
+   "lighting": "day",
+   "v": "749c4ad6",
+   "bytes": 20212,
+   "bytes2x": 50398,
+   "t": 19522,
+   "side": 1,
+   "marbles": 8
+  },
   "douro-block-terraces": {
    "name": "Douro Block Terraces",
    "series": "Blocks",

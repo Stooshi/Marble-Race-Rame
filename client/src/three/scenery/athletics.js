@@ -71,6 +71,10 @@ export const STADIUMS = {
   brussels: { seat: '#8e2a2e', riser: '#3a3c40', wall: '#4a4c52', depth: 26, rise: 16, front: 2, rows: 13, crowd: 0.74, shape: 'oval', roof: { colour: '#26282c', under: '#3d4046', depth: 15, rise: 2.5, over: 'all', lights: true }, masts: 4, apron: 10, touch: null },
   // Monaco (Moses, 21 Nov 2026): a compact stadium squeezed between harbour and rock, red and white seats, a light roof over the main stand only.
   monaco: { seat: '#c23a3a', riser: '#efe9df', wall: '#e8dccb', depth: 22, rise: 15, front: 1.8, rows: 12, crowd: 0.7, shape: 'oval', roof: { colour: '#f3efe8', under: '#d6cfc3', depth: 13, rise: 2.5, over: 'one-side' }, masts: 4, apron: 8, touch: null },
+  // Kingston (Moses, 21 Nov 2026): a big open bowl, seats in yellow and green blocks, a roof over the main stand only, the Blue Mountains behind.
+  kingston: { seat: '#e2b31c', riser: '#2f7a3e', wall: '#3a3d38', depth: 28, rise: 15, front: 2, rows: 13, crowd: 0.82, shape: 'oval', roof: { colour: '#3a3d42', under: '#6d7178', depth: 14, rise: 3, over: 'one-side' }, masts: 4, apron: 10, touch: null },
+  // Doha (Moses, 21 Nov 2026): a sand-coloured bowl under a pale shade roof all round, white seats, built for the heat.
+  doha: { seat: '#f1ede4', riser: '#c9b38a', wall: '#d8c39c', depth: 26, rise: 16, front: 2, rows: 13, crowd: 0.6, shape: 'oval', roof: { colour: '#efe8da', under: '#cbbfa6', depth: 16, rise: 3, over: 'all', lights: true }, masts: 0, apron: 10, touch: null },
 };
 export const STADIUM_NAMES = Object.keys(STADIUMS);
 
