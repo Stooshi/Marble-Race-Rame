@@ -304,6 +304,8 @@ test('no start part straight after the gate on two tracks in a row (every track 
   const held = order.slice(order.indexOf('marble-stadium-sprint'));
   const first = (slug) => physicsTrack(slug).physics.kit.opening;
   for (let k = 1; k < held.length; k += 1) {
+    // (The clear start, every new track's opening from 21 Nov 2026 by Moses's rule, may follow itself.)
+    if (first(held[k]) === 'clear-start' && first(held[k - 1]) === 'clear-start') continue;
     assert.notEqual(first(held[k]), first(held[k - 1]), `${held[k - 1]} and ${held[k]} both start with ${first(held[k])}`);
   }
 });

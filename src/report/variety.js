@@ -126,7 +126,9 @@ function varietyCheck(track, tracks) {
     target: 'none the same',
     pass: !twin,
   });
-  const sameKind = family.filter((o) => o.opening === me.opening);
+  // (The clear start is every new track's opening from 21 Nov 2026, Moses: no cap on it. Its tracks stay apart through
+  // the first 20 seconds, the start on screen and the layout, which still apply.)
+  const sameKind = me.opening === 'clear-start' ? [] : family.filter((o) => o.opening === me.opening);
   lines.push({
     part: 'Variety',
     what: `Opening: at most ${MAX_PER_OPENING} ${familyName(me.family)} tracks with this kind of opening`,
@@ -137,7 +139,10 @@ function varietyCheck(track, tracks) {
 
   // How the start looks: the two camera shots of the first seconds, and a coaster's start type.
   const st = me.start;
-  const sameShots = family.filter((o) => o.start.countdown === st.countdown && o.start.launch === st.launch);
+  // (A clear-start track, 21 Nov 2026: only a few pairs of start shots are left on some series once face-on and
+  // look-back shots are out, so the same pair counts as the same start only with the same gate or start type too.)
+  const sameShots = family.filter((o) => o.start.countdown === st.countdown && o.start.launch === st.launch
+    && (me.opening !== 'clear-start' || o.start.gate === st.gate || (st.type && o.start.type === st.type)));
   lines.push({
     part: 'Variety',
     what: `Start: no other ${familyName(me.family)} track opens on the same camera shots (countdown, first seconds)`,

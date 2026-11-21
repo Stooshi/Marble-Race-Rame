@@ -1,7 +1,7 @@
 'use strict';
 
 // Rome Monte Mario Drop (Moses, 21 Nov 2026: the Track and Field pack filled to 20; track 11 of the series). Rome's
-// Olympic stadium below the wooded hill of Monte Mario: away from the gate on the clear start (the field let go in
+// great stadium below the wooded hill of Monte Mario: away from the gate on the clear start (the field let go in
 // waves, gentle bends and nothing in the way for the first seconds), along the hill among the umbrella pines, then the track's big feature: the long
 // drop down the hillside straight into the stadium, a lap under the light roof ring with its hurdles, a spiral round a
 // floodlight mast, back through the pines and the home straight with its hurdles. Generic stands and pines; no names on anything.
@@ -12,7 +12,7 @@ module.exports = track({
   name: 'Rome Monte Mario Drop',
   family: 'athletics',
   difficulty: 'extreme',
-  description: 'Rome\'s Olympic stadium under Monte Mario: away from the gate in a pack, along the hill among the umbrella pines, then a long drop down the hillside straight into the stadium for a lap under the light roof, round a floodlight mast, back through the pines and over the hurdles of the home straight.',
+  description: 'Rome\'s great stadium under Monte Mario: away from the gate in a pack, along the hill among the umbrella pines, then a long drop down the hillside straight into the stadium for a lap under the light roof, round a floodlight mast, back through the pines and over the hurdles of the home straight.',
   surface: 'tartan',
   biome: 'meadow',
   lighting: 'sunset',
