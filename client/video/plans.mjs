@@ -1266,3 +1266,47 @@ export function chase(info, race, { text = null } = {}) {
     sound: { goAt: 0, beeps: false, music: [[0, p.v]], musicFadeOut: 0.6, lifts: [], ceremony: null, raceHits: true },
   };
 }
+
+/**
+ * A thrill clip (Moses, 22 Nov 2026; DAILY-ORDER.md "Thrill"): fast cuts, 12 s. The pack through the track's big
+ * feature (text.feature: { from, dur, members, cam }), cut to the last stretch before the line (a camera close and low
+ * behind the pack from its back right), then the line (text.lineCam) with its last text.slowMs ms in slow motion
+ * (text.slowSpeed), a short freeze and the end card. The crowd's roar on the feature and at the line (text.crowd).
+ * The on-screen lines are text.lines: [{ at, top }], each until the next (the last until the freeze ends).
+ */
+export function thrill(info, race, { text = null } = {}) {
+  const fin = race.results.map((r) => r.finishTimeMs).filter(Number.isFinite).sort((a, b) => a - b);
+  const tWin = fin[0];
+  const p = builder('thrill');
+  const F = text.feature;
+  p.add({ type: 'group', members: F.members, shot: 'feature', from: F.from, dur: F.dur, ...(F.cam ?? text.chaseCam) });
+  const W = text.window ?? 5300;
+  const A = tWin - W;
+  const lineMs = text.lineMs ?? 1100;
+  const slowMs = text.slowMs ?? 500;
+  const slow = text.slowSpeed ?? 0.3;
+  const chaseAt = p.v;
+  p.add({ type: 'group', members: text.members, shot: 'chase', from: A, dur: (W - lineMs) / 1000, ...text.chaseCam });
+  const lineAt = p.v;
+  const lineM = text.lineMembers ?? text.members;
+  p.add({ type: 'group', members: lineM, shot: 'line', from: tWin - lineMs, dur: (lineMs - slowMs) / 1000, ...text.lineCam });
+  p.add({ type: 'group', members: lineM, shot: 'line', from: tWin - slowMs, dur: slowMs / 1000 / slow, speed: slow, ...text.lineCam });
+  const freezeAt = p.v;
+  const last = p.shots[p.shots.length - 1];
+  p.add({ ...last, from: tWin, dur: text.freeze ?? 0.3, speed: 0 });
+  const raceOut = p.v;
+  p.add({ type: 'end', dur: text.endSeconds ?? 2, skip: text.endSkip ?? 1.5 });
+  const lines = text.lines ?? [];
+  const crowd = text.crowd ?? 0.5;
+  return {
+    shots: p.shots, length: p.v, podium: null, textStyle: text.style ?? null, endLines: text.endLines, noMark: text.noMark,
+    texts: lines.map((l, k) => ({ at: l.at, dur: (k + 1 < lines.length ? lines[k + 1].at : raceOut) - l.at, top: l.top, cut: true })),
+    battle: { tWin, gaps: [fin[1] - fin[0], fin[2] - fin[0]], from: A, pack: text.members, freezeAt, winner: race.results.find((r) => r.finishTimeMs === tWin) },
+    // (The clicks and bumps: the chase and the line at full speed; race ms from A → video s from chaseAt.)
+    marks: { goAt: chaseAt, from: A, raceMs: W - slowMs, members: text.members, near: 14 },
+    sound: {
+      goAt: null, beeps: false, music: [[0, p.v]], musicFadeOut: 0.6, lifts: [[0, F.dur], [lineAt, raceOut]], ceremony: null, raceHits: true,
+      extra: [{ key: 'crowd', at: 0.2, dur: F.dur + 0.4, gain: crowd, fadeOut: 0.5 }, { key: 'crowd', at: lineAt - 0.3, dur: raceOut - lineAt + 0.9, gain: crowd * 1.2, fadeOut: 0.7 }],
+    },
+  };
+}
