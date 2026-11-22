@@ -1641,6 +1641,17 @@
    "side": 1,
    "marbles": 1
   },
+  "paris-saint-denis-relay": {
+   "name": "Paris Saint-Denis Relay",
+   "series": "Track and Field",
+   "lighting": "day",
+   "v": "72fb6ff5",
+   "bytes": 21992,
+   "bytes2x": 55128,
+   "t": 20424,
+   "side": 1,
+   "marbles": 8
+  },
   "park-city-run": {
    "name": "Park City Run",
    "series": "World Tour",

@@ -137,7 +137,7 @@ describe('starting camera (countdown)', () => {
   it('the varied starts: each countdown shot moves steadily, keeps the field in the picture and ends on the shot at GO', () => {
     const field = Array.from({ length: 20 }, (_, i) => start.centre.clone().addScaledVector(start.side, (i - 9.5) * 1.15).add(new Vector3(0, 0.55, 0)));
     const middles = {};
-    for (const shot of ['front', 'side', 'above', 'chase', 'low-front', 'crane']) {
+    for (const shot of ['front', 'side', 'above', 'chase', 'low-front', 'crane', 'swing']) {
       for (const aspect of [1.8, 0.6]) {
         const cam = new PerspectiveCamera(50, aspect, 0.3, 1000);
         let prev = null;
@@ -172,7 +172,7 @@ describe('starting camera (countdown)', () => {
     const frame = { centre: new Vector3(0, 10, 0), down: new Vector3(0, -0.5, 1).normalize(), normal: new Vector3(0, 1, 0.5).normalize(), side: new Vector3(1, 0, 0) };
     expect(launchPose('high-behind', frame)).toBe(null);
     const dirs = {};
-    for (const shot of ['low-chase', 'side', 'overhead', 'look-back']) {
+    for (const shot of ['low-chase', 'side', 'overhead', 'look-back', 'high-side']) {
       const p = launchPose(shot, frame);
       expect(p.target.distanceTo(frame.centre), shot).toBeLessThan(7);
       dirs[shot] = p.camera.clone().sub(frame.centre).normalize();

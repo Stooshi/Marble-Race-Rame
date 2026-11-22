@@ -174,6 +174,12 @@ const COUNTDOWN_KEYS = {
     [at(-18, -18 * wide, 22), at(3, 0, 0)], [at(-16, -12 * wide, 20), at(3, 0, 0)], [at(-13, -6 * wide, 18), at(2, 0, 0)],
     [at(-11, 0, 16), at(2, 0, 0)], [at(-10, 6 * wide, 14), at(2, 0, 0.2)], [at(-8, 4 * wide, 9), at(2, 0, 0.3)],
   ],
+  // A low swing (Moses, 22 Nov 2026, for Track and Field's crowded starts): from low behind the row's right-hand end,
+  // across behind it to high on its left, the row passing under the lens.
+  swing: (at, wide) => [
+    [at(-9, 14 * wide, 2.2), at(2, 0, 0.4)], [at(-10, 9 * wide, 4), at(2, 0, 0.4)], [at(-11, 3 * wide, 6), at(2, 0, 0.3)],
+    [at(-11, -3 * wide, 8), at(2, 0, 0.2)], [at(-10, -8 * wide, 10), at(2, 0, 0.2)], [at(-8, -4 * wide, 9), at(2, 0, 0.3)],
+  ],
   // Low among the marbles: just behind the row, a little above it, sliding across the channel along it.
   // (Measured along the slope, so on a steep starting ramp it stays above the ice behind the row.)
   // (On a narrow portrait screen, `wide` > 1, it stands further back and a little higher, so the starting blocks and
@@ -212,6 +218,7 @@ export function launchPose(shot, { centre, down, normal, side }) {
       const flat = new Vector3(down.x, 0, down.z).normalize();
       return { camera: c.clone().addScaledVector(flat, -6).add(new Vector3(0, 26, 0)), target: c.clone().addScaledVector(flat, 4) };
     }
+    case 'high-side': return { camera: at(-4, 11, 11), target: at(5, 0, 0) }; //     above the field's right-hand side, looking across and down it (22 Nov 2026)
     case 'look-back': return { camera: at(16, 0, 4), target: at(-2, 0, 0.3) }; //      ahead, the field racing at the camera
     default: return null;
   }

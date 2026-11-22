@@ -69,6 +69,12 @@ export const STADIUMS = {
   munich: { seat: '#4f7d4a', riser: '#c8ccc4', wall: '#9aa79a', depth: 26, rise: 12, front: 1.6, rows: 12, crowd: 0.66, shape: 'oval', roof: null, masts: 0, apron: 10, touch: 'tent' },
   // Brussels (Moses, 21 Nov 2026): a plain city bowl under a dark roof all round, deep red seats, four tall floodlight masts for the night meeting.
   brussels: { seat: '#8e2a2e', riser: '#3a3c40', wall: '#4a4c52', depth: 26, rise: 16, front: 2, rows: 13, crowd: 0.74, shape: 'oval', roof: { colour: '#26282c', under: '#3d4046', depth: 15, rise: 2.5, over: 'all', lights: true }, masts: 4, apron: 10, touch: null },
+  // Montreal (Moses, 21 Nov 2026): a concrete bowl, its roof's ring all round, white and grey seats, and the tall tower leaning out over one end.
+  montreal: { seat: '#e8e6e1', riser: '#9aa0a8', wall: '#b9b4ab', depth: 24, rise: 15, front: 1.8, rows: 12, crowd: 0.64, shape: 'oval', roof: null, masts: 0, apron: 10, touch: 'leaning-tower' },
+  // Rio (Moses, 21 Nov 2026): a big round concrete bowl, its seats in green, yellow and blue blocks, a roof ring over the two long stands.
+  rio: { seat: '#2f9a4a', riser: '#f2c230', wall: '#c9c4b8', depth: 26, rise: 15, front: 2, rows: 12, crowd: 0.74, shape: 'oval', roof: { colour: '#e9e6df', under: '#b9b4a8', depth: 14, rise: 3, over: 'straights' }, masts: 0, apron: 10, touch: null },
+  // Paris, Saint-Denis (Moses, 21 Nov 2026): a big oval bowl, blue and white seats, a thin flat roof floating over the two long stands.
+  'saint-denis': { seat: '#2f5fb0', riser: '#e9ecf1', wall: '#aeb6c2', depth: 24, rise: 15, front: 2, rows: 11, crowd: 0.66, shape: 'oval', roof: { colour: '#dfe3ea', under: '#a9b0bb', depth: 17, rise: 5, over: 'straights' }, masts: 0, apron: 10, touch: null },
   // Monaco (Moses, 21 Nov 2026): a compact stadium squeezed between harbour and rock, red and white seats, a light roof over the main stand only.
   monaco: { seat: '#c23a3a', riser: '#efe9df', wall: '#e8dccb', depth: 22, rise: 15, front: 1.8, rows: 12, crowd: 0.7, shape: 'oval', roof: { colour: '#f3efe8', under: '#d6cfc3', depth: 13, rise: 2.5, over: 'one-side' }, masts: 4, apron: 8, touch: null },
   // Kingston (Moses, 21 Nov 2026): a big open bowl, seats in yellow and green blocks, a roof over the main stand only, the Blue Mountains behind.
@@ -908,6 +914,25 @@ function buildStands(st, style, { lite, groundAt, grid, clearOf, inside }) {
     for (let k = 1; k < h / 5; k += 1) parts.push(piece(new BoxGeometry(3.7, 0.3, 3.7), '#a0a7b0', new Matrix4().makeTranslation(p.x, y + k * 5, p.z)));
     parts.push(piece(new BoxGeometry(5, 3, 5), '#2f3237', new Matrix4().makeTranslation(p.x, y + h + 1.5, p.z)));
     tryAdd(parts, [piece(new BoxGeometry(5.2, 0.6, 5.2), '#ffe7a8', new Matrix4().makeTranslation(p.x, y + h + 0.4, p.z))], { x: p.x, z: p.z, r: 5 });
+  } else if (style.touch === 'leaning-tower') {
+    // A tall concrete tower leaning out over one end of the stadium, its top a dark glazed cabin, with cables
+    // down to the roof's edge (a generic inclined mast; no names). One merged set of pieces, its lamp the glow.
+    const { p, y } = standAt(st.L + st.B + D + 6, 0);
+    const h = Math.max(70, tallest - y + 45);
+    const out = st.e1.clone().setY(0).normalize();
+    const lean = new Quaternion().setFromAxisAngle(new Vector3(-out.z, 0, out.x), 0.5); // (about 29°, its top in over the stands)
+    const at = (t) => p.clone().setY(y).add(new Vector3(0, t, 0).applyQuaternion(lean));
+    const parts = [];
+    parts.push(piece(new BoxGeometry(6, h, 4.5), '#cfcac1', new Matrix4().compose(at(h / 2), lean, new Vector3(1, 1, 1))));
+    parts.push(piece(new BoxGeometry(8, 7, 7), '#2d3138', new Matrix4().compose(at(h + 2), lean, new Vector3(1, 1, 1))));
+    for (const side of [-1, 1]) {
+      const from = at(h * 0.92);
+      const to = st.world(st.L * 0.6, side * (st.B + D * 0.5)).setY(y + tallest * 0.5);
+      const len = from.distanceTo(to);
+      const q = new Quaternion().setFromUnitVectors(new Vector3(0, 1, 0), to.clone().sub(from).normalize());
+      parts.push(piece(new CylinderGeometry(0.12, 0.12, len, 4), '#7d8188', new Matrix4().compose(from.clone().lerp(to, 0.5), q, new Vector3(1, 1, 1))));
+    }
+    tryAdd(parts, [piece(new BoxGeometry(8.2, 0.6, 7.2), '#ffe7a8', new Matrix4().compose(at(h - 1.2), lean, new Vector3(1, 1, 1)))], { x: p.x, z: p.z, r: 8 });
   } else if (style.touch === 'tent') {
     // A tent roof over one side: tall leaning masts behind the back straight's stand, and pale see-through panels
     // hung from them down over the seats, each tilted a little differently (a generic cable-net roof; no names).

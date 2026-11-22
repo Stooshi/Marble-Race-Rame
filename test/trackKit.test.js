@@ -813,6 +813,7 @@ const HIDDEN_KIT_TRACKS = [
   ['munich-tent-roof-run', '2027-09-01-add-munich-tent-roof-run.sql', 'Track and Field track (Munich\'s green stadium sunk into its park under a tent roof hung from tall masts: the clear start, the field let go in waves, nothing in the way for the first 300 m, along the lake over the hurdles, a lap under the tent roof, the big feature a full loop by the tall TV tower, S-bends over the hill, the hairpin and the home straight; an observation-tower start; in the Track and Field pack, not free; switched off until Moses has watched the preview).'],
   ['brussels-night-mile', '2027-09-02-add-brussels-night-mile.sql', 'Track and Field track (a night meeting in Brussels\' city stadium under its dark roof and floodlight masts: the clear start, the field let go in waves, nothing in the way for the first 300 m, into the stadium past two hurdles, along the boulevard over the hurdles, the big feature a tight, steep banked turn raised high over the park, S-bends through the park and the home straight; a water-tower start; in the Track and Field pack, not free; switched off until Moses has watched the preview).'],
   ['doha-desert-sprint', '2027-09-03-add-doha-desert-sprint.sql', 'Track and Field track (Doha\'s sand-coloured stadium under a shade roof at the edge of the desert: the clear start, the field let go in waves, nothing in the way for the first 300 m, S-bends along the corniche under a banner gantry and over the hurdles, a lap of the stadium, the big feature a tight, steep banked turn raised high over the dunes, S-bends through the dunes and the home straight; a minaret start; in the Track and Field pack, not free; switched off until Moses has watched the preview).'],
+  ['paris-saint-denis-relay', '2027-09-04-add-paris-saint-denis-relay.sql', 'Track and Field track (the big stadium north of Paris under its thin floating roof, by the canal: the clear start, the field let go in waves, nothing in the way for the first 300 m, along the canal past a hurdle cart, S-bends over the bridges and the hurdles, a lap of the stadium, a steep drop back to the canal, the big feature a splitter either side of an obelisk, the home straight; a water-tower start; in the Track and Field pack, not free; switched off until Moses has watched the preview).'],
 ];
 for (const [slug, file, note] of HIDDEN_KIT_TRACKS) {
   test(`${slug} is added by its data update, switched off, exactly as its track file builds it`, () => {
@@ -998,7 +999,7 @@ test('every track\'s difficulty is one the database takes', () => {
 
 // Every new track from 21 Nov 2026 starts clear (Moses): the clear-start opening, nothing in the way for the first
 // 300 m (the recipe's rule), the field let go in waves. Add each new track here.
-const CLEAR_START_FROM_21_NOV = ['rome-monte-mario-drop', 'helsinki-tower-lap', 'munich-tent-roof-run', 'brussels-night-mile', 'doha-desert-sprint'];
+const CLEAR_START_FROM_21_NOV = ['rome-monte-mario-drop', 'helsinki-tower-lap', 'munich-tent-roof-run', 'brussels-night-mile', 'doha-desert-sprint', 'paris-saint-denis-relay'];
 test('every new track from 21 Nov 2026 has the clear start', () => {
   const { physicsTrack } = require('../src/game/physicsTracks');
   for (const slug of CLEAR_START_FROM_21_NOV) {

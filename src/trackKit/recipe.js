@@ -529,8 +529,8 @@ const BLOCK_STARTS = ['portal-gate', 'block-pyramid', 'gear-tower'];
 // (A Rivers track's own look for a start type, looks only: the lift inside a bridge tower or up a port crane, a mansard roof.)
 const START_LOOKS = { elevator: ['bridge-tower', 'port-crane'], rooftop: ['mansard'] };
 const GATES = ['paddle', 'trapdoor', 'stalls', 'barrier'];
-const COUNTDOWN_SHOTS = ['front', 'side', 'above', 'chase', 'low-front', 'crane'];
-const LAUNCH_SHOTS = ['high-behind', 'low-chase', 'side', 'overhead', 'look-back'];
+const COUNTDOWN_SHOTS = ['front', 'side', 'above', 'chase', 'low-front', 'crane', 'swing'];
+const LAUNCH_SHOTS = ['high-behind', 'low-chase', 'side', 'overhead', 'look-back', 'high-side'];
 
 /** start: { type (coasters), gate, shots: { countdown, launch } }: known values; every new track (a library opening) says them. */
 function startRules({ spec, where }) {
