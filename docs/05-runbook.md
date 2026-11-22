@@ -1,6 +1,6 @@
 # 5. Operations runbook
 
-*Last updated 15 Nov 2026.* How to deploy, change data, roll back, back up, and fix the usual problems. Items marked **[check]** should be confirmed the first time they are done.
+*Last updated 22 Nov 2026.* How to deploy, change data, roll back, back up, and fix the usual problems. Items marked **[check]** should be confirmed the first time they are done.
 
 ## Deploying
 
@@ -325,7 +325,7 @@ The server deploy that brings them applies `docs/database_schema.sql` (the colum
 
 ### Selling track packs (built 12 Nov 2026; test mode, TRACK_PACKS off)
 
-The price is in `client/src/shared/payments/trackPacks.json` ($6.99; 1,990 coins + $4.99 with coins). A campaign changes it there, plus the store products' prices; a test (`test/trackPackSale.test.js`) refuses coins over 25% of the price or a pack for coins alone. The deploy adds `payments.pack_key`, `coins_spent`, the table `pack_coin_holds`, and runs `2027-06-12-track-pack-payments` (a pack payment may have 0 coins), then `2027-06-13-voxel-peaks-to-blocks-2` (Voxel Peaks into the Blocks 2 pack, which then has 20 and can go on sale).
+The price is in `client/src/shared/payments/trackPacks.json` ($6.99; 1,990 coins + $4.99 with coins). A campaign changes it there, plus the store products' prices; a test (`test/trackPackSale.test.js`) refuses coins over 30% of the price or a pack for coins alone. The deploy adds `payments.pack_key`, `coins_spent`, the table `pack_coin_holds`, and runs `2027-06-12-track-pack-payments` (a pack payment may have 0 coins), then `2027-06-13-voxel-peaks-to-blocks-2` (Voxel Peaks into the Blocks 2 pack, which then has 20 and can go on sale).
 1. **Try it on your own account:** `TRACK_PACKS=admins` (above). The shop then shows the tabs (Track packs first) for admin accounts only. Only complete packs (20 live tracks) have a card (since 16 Nov 2026, Stripe live); the website has no test purchase any more (an admin's Unlock is a real payment). In Android a Play licence tester, and on iPhone the sandbox or TestFlight, still buy as a test. The pack unlocks only when Stripe's signed webhook arrives (the Purchases page shows the order).
 2. **Refunds:** the back office's Refund (Stripe and Google) or the store's own refund (Apple, Google Play Console) takes the pack back and gives the coins back; the audit log shows `pack_revoked` and `coins_back`. A purchase refused by the server (`pack-duplicate`, `apple-pack-refused` in the audit log) needs a refund by hand (Apple: the player asks Apple).
 3. **The stores:** every product id is in the project doc `claude/track-packs-products.md`: 11 packs × 2 products in Play Console (one-time products, with _) and App Store Connect (non-consumables, the same ids with _). Nothing new is needed on Stripe or Railway (no new variable; the existing Stripe webhook already sends the events used).
@@ -442,9 +442,11 @@ To check the plugin itself registered: filter `tag:Capacitor message:NativeAudio
 
 **Confirmed 13 Nov 2026** on build 1.0.0 (5), Moses's phone: hit and bump sounds play, and the ceremony song stops at the next race.
 
+**Builds 1.0.0 (6) and (7), 17–18 Nov 2026: no sound in solo races** (Race readiness said "native · muted" while the speaker button showed sound on). Build 7 was a diagnostic build: every app race's readiness report carries the sound's last 40 log lines (CRM → Race readiness → Sound log) and says why a race had no beeps. The cause: each speaker button took the account's saved sound settings when it appeared, so a mute undone on the phone came back. Since build 1.0.0 (8) the account's settings are taken once per sign-in (`client/src/sound/settings.js`). **Confirmed 19 Nov 2026** on build 8, Moses's phone: the beeps and the race sound work. If an app race is silent again, read its Sound log first.
+
 ## The season-start website rebuild (1 Dec 2026, automatic)
 
-The website learns of the holiday tracks only at a build (their pages, the sitemap, the track count: 152 live tracks in ten series today, "150+ tracks"; with the 31 holiday tracks from 1 Dec, 183, "180+ tracks"; 13 Nov 2026); the server shows them from 1 Dec 00:00 by date. The GitHub Actions workflow **"Season start: rebuild the website"** (`.github/workflows/season-start-rebuild.yml`) starts that build at **1 Dec 2026 00:05 Swedish time** (spares at 00:35 and 01:15, which do nothing once the holiday tracks are on the site), waits for it, and checks the sitemap has `/tracks/tromso-aurora-grand-prix`. If anything fails, the run fails and GitHub emails the repository's owner; then press Redeploy in Vercel by hand. Nobody has to be awake for it.
+The website learns of the holiday tracks only at a build (their pages, the sitemap, the track count: 187 live tracks in ten series today, "180+ tracks"; with the 31 holiday tracks from 1 Dec, 218, "210+ tracks"; 22 Nov 2026); the server shows them from 1 Dec 00:00 by date. The GitHub Actions workflow **"Season start: rebuild the website"** (`.github/workflows/season-start-rebuild.yml`) starts that build at **1 Dec 2026 00:05 Swedish time** (spares at 00:35 and 01:15, which do nothing once the holiday tracks are on the site), waits for it, and checks the sitemap has `/tracks/tromso-aurora-grand-prix`. If anything fails, the run fails and GitHub emails the repository's owner; then press Redeploy in Vercel by hand. Nobody has to be awake for it.
 
 It calls a **Vercel Deploy Hook**: a secret URL that rebuilds Main. The URL is kept only in GitHub's secret `VERCEL_DEPLOY_HOOK_SEASON`, never in code, chat, docs or logs. Set-up (once):
 1. **Vercel:** the project `marble-race-rame-client` → **Settings** → **Git** → **Deploy Hooks**. Name: `season-start`, branch: `Main` → **Create Hook**. Copy the URL it shows (Vercel shows it again on that page).
