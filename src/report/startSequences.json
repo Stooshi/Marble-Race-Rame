@@ -128,6 +128,7 @@
 "mississippi-steamer-run": {"family":"river","reach":0.278,"seq":["opening: staggered-drop","drop","pileUp","slalom","brake","straight","peg ×2","straight","boost","sweep left"]},
 "mont-blanc-needle-ridge": {"family":"peak","reach":0.251,"seq":["opening: classic","drop","pileUp","slalom","straight","peg","slalom","peg","hairpin left","swipe"]},
 "mont-saint-michel-tide-run": {"family":"world-tour","reach":0.337,"seq":["opening: clean-drop","drop","S-bends right","straight","slalom","sweep left","peg ×2","brake"]},
+"montreal-tower-run": {"family":"athletics","reach":0.413,"seq":["opening: clear-start","straight","sweep right","sweep left","S-bends left","curtain","slalom"]},
 "moon-base": {"family":"block","reach":0.297,"seq":["opening: sand-trap","drop","pileUp","slalom","brake","sweep left","peg ×2","S-bends right","slalom"]},
 "multiball-manor": {"family":"pinball","reach":0.248,"seq":["opening: tunnel-launch","drop","pileUp","slalom","drop","slalom","sweep left"]},
 "munich-tent-roof-run": {"family":"athletics","reach":0.36,"seq":["opening: clear-start","straight","sweep left","sweep right","straight","slalom","brake","sweep right","slalom","brake"]},
