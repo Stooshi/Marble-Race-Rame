@@ -1,0 +1,146 @@
+# Builds the iPhone app from Main and uploads it to TestFlight (Moses, 23 Nov 2026). Run by hand:
+# Actions → "iPhone: build and upload to TestFlight" → Run workflow.
+#
+# - Version and build from client/app-version.json. If App Store Connect already has that build
+#   number (or a higher one), the build number is raised above the highest one there, and the new
+#   number is committed back to Main ("App x.y.z (n)", like npm run app:version) after the upload.
+# - Signing: only the App Store Connect API key (secrets ASC_KEY_ID, ASC_ISSUER_ID, ASC_KEY_P8).
+#   client/scripts/ios-ci.mjs makes a certificate and profile for this run through the API and
+#   revokes/deletes them at the end, whatever happened. Nothing else needs to be stored.
+# - The app is built against the live server (client/app-api.json), as npm run app:sync does.
+# - The signed .ipa is kept as a run artifact for 14 days.
+# Steps and troubleshooting: docs/05-runbook.md, "iPhone release (App Store)".
+name: "iPhone: build and upload to TestFlight"
+
+on:
+  workflow_dispatch:
+    inputs:
+      upload:
+        description: 'Upload to TestFlight (off: only build the signed .ipa)'
+        type: boolean
+        default: true
+
+permissions:
+  contents: write   # to commit a raised build number back to Main
+
+concurrency:
+  group: ios-testflight
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: macos-26
+    timeout-minutes: 60
+    env:
+      ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+      ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+      ASC_KEY_P8: ${{ secrets.ASC_KEY_P8 }}
+    defaults:
+      run:
+        working-directory: client
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: Main
+          fetch-depth: 50
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: client/package-lock.json
+
+      - name: Check the API key is set
+        run: |
+          for v in ASC_KEY_ID ASC_ISSUER_ID ASC_KEY_P8; do
+            if [ -z "${!v}" ]; then echo "::error::The repository secret $v is missing (Settings → Secrets and variables → Actions)."; exit 1; fi
+          done
+          xcodebuild -version
+
+      - name: Install
+        run: npm ci
+
+      - name: Version and build number
+        id: version
+        run: node scripts/ios-ci.mjs version
+
+      - name: Build the web part into the iPhone project
+        run: node scripts/app-sync.mjs ios
+
+      - name: Signing (certificate and profile for this run)
+        id: signing
+        run: node scripts/ios-ci.mjs signing
+
+      - name: Keychain
+        env:
+          P12: ${{ steps.signing.outputs.p12 }}
+          P12_PASSWORD: ${{ steps.signing.outputs.p12_password }}
+        run: |
+          KC="$RUNNER_TEMP/build.keychain-db"
+          KCPASS="$(openssl rand -hex 16)"
+          security create-keychain -p "$KCPASS" "$KC"
+          security set-keychain-settings -lut 3600 "$KC"
+          security unlock-keychain -p "$KCPASS" "$KC"
+          security import "$P12" -k "$KC" -P "$P12_PASSWORD" -T /usr/bin/codesign -T /usr/bin/security
+          security set-key-partition-list -S apple-tool:,apple: -s -k "$KCPASS" "$KC" > /dev/null
+          security list-keychains -d user -s "$KC" $(security list-keychains -d user | tr -d '"')
+          security find-identity -v -p codesigning "$KC"
+
+      - name: Archive
+        run: |
+          xcodebuild -project ios/App/App.xcodeproj -scheme App -configuration Release \
+            -destination 'generic/platform=iOS' -archivePath "$RUNNER_TEMP/MarbleSpins.xcarchive" \
+            -skipPackagePluginValidation archive 2>&1 | tail -n 300
+
+      - name: Export the signed .ipa
+        run: |
+          xcodebuild -exportArchive -archivePath "$RUNNER_TEMP/MarbleSpins.xcarchive" \
+            -exportPath "$RUNNER_TEMP/export" -exportOptionsPlist "${{ steps.signing.outputs.export_options }}"
+          ls -l "$RUNNER_TEMP/export"
+
+      - name: Upload to TestFlight
+        if: inputs.upload
+        run: |
+          mkdir -p ~/.appstoreconnect/private_keys
+          KEYFILE=~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8
+          printf '%s\n' "$ASC_KEY_P8" > "$KEYFILE"
+          xcrun altool --upload-app -f "$RUNNER_TEMP/export/App.ipa" -t ios --apiKey "$ASC_KEY_ID" --apiIssuer "$ASC_ISSUER_ID" --output-format normal
+          rm -f "$KEYFILE"
+
+      - name: Keep the .ipa
+        uses: actions/upload-artifact@v4
+        with:
+          name: MarbleSpins-${{ steps.version.outputs.version_name }}-${{ steps.version.outputs.build }}-ipa
+          path: ${{ runner.temp }}/export/App.ipa
+          retention-days: 14
+
+      - name: Commit the raised build number to Main
+        if: inputs.upload && steps.version.outputs.bumped == 'true'
+        run: |
+          git checkout -- ios/App/App.xcodeproj/project.pbxproj ios/App/App/App.entitlements
+          node scripts/ios-ci.mjs sync-version
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app-version.json ios/App/App.xcodeproj/project.pbxproj
+          git commit -m "App ${{ steps.version.outputs.version_name }} (${{ steps.version.outputs.build }})" -m "Raised by the iPhone build in GitHub Actions: App Store Connect already had the previous build number."
+          for i in 1 2 3; do git pull -q --rebase origin Main && git push -q origin HEAD:Main && exit 0; sleep 5; done
+          echo "::warning::Could not push the raised build number: set versionCode to ${{ steps.version.outputs.build }} in client/app-version.json by hand."
+
+      - name: Summary
+        if: success()
+        run: |
+          {
+            echo "## Marble Spins ${{ steps.version.outputs.version_name }} (build ${{ steps.version.outputs.build }})"
+            if [ "${{ inputs.upload }}" = "true" ]; then
+              echo "Uploaded to App Store Connect. It shows under the app → TestFlight after 5–30 minutes (Apple processes it first)."
+            else
+              echo "Built and signed, not uploaded. The .ipa is in this run's Artifacts."
+            fi
+            [ "${{ steps.version.outputs.bumped }}" = "true" ] && echo "The build number was raised to ${{ steps.version.outputs.build }} and committed to Main."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Revoke the run's certificate and profile
+        if: always()
+        run: |
+          node scripts/ios-ci.mjs cleanup || true
+          security delete-keychain "$RUNNER_TEMP/build.keychain-db" 2>/dev/null || true

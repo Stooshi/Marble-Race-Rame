@@ -93,6 +93,33 @@ export function setPbxprojVersion(pbx, { versionName, versionCode }, target = 'A
   return out;
 }
 
+/**
+ * project.pbxproj with the given build settings in ONE build configuration (e.g. Release) of the App
+ * target; other targets (the Swift packages) and configurations are left as they are. Used by the
+ * iPhone build in GitHub Actions (scripts/ios-ci.mjs) for manual signing on its own copy only.
+ */
+export function setPbxprojBuildSettings(pbx, settings, { target = 'App', config = 'Release' } = {}) {
+  let out = pbx;
+  let found = 0;
+  for (const id of appConfigIds(pbx, target)) {
+    if (!new RegExp(`\\n\\t*${id} /\\* ${config} \\*/ = \\{`).test(out)) continue;
+    found += 1;
+    const { start, end } = settingsRange(out, id);
+    let body = out.slice(start, end);
+    for (const [key, value] of Object.entries(settings)) {
+      const esc = key.replace(/[[\]*=]/g, (c) => `\\${c}`);
+      const line = new RegExp(`^(\\t+)"?${esc}"? = [^;\\n]*;$`, 'm');
+      const v = /^[A-Za-z0-9._/]+$/.test(value) ? value : `"${String(value).replace(/"/g, '\\"')}"`;
+      const k = /^[A-Za-z0-9_]+$/.test(key) ? key : `"${key}"`;
+      if (line.test(body)) body = body.replace(line, `$1${k} = ${v};`);
+      else body = `\t\t\t\t${k} = ${v};\n${body}`;
+    }
+    out = out.slice(0, start) + body + out.slice(end);
+  }
+  if (!found) throw new Error(`project.pbxproj: the "${target}" target has no ${config} configuration`);
+  return out;
+}
+
 /** [{ id, versionName, versionCode }] for each build configuration of the App target. */
 export function readPbxprojVersions(pbx, target = 'App') {
   return appConfigIds(pbx, target).map((id) => {
