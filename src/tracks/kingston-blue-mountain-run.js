@@ -6,14 +6,17 @@
 // cart of hurdles, S-bends up into the hills over the hurdles, a lap of the stadium, then the track's big feature: a
 // splitter either side of a green hill under the mountains, and the home straight. Generic
 // stands; no names.
-const { track, opening, straight, sweep, splitter, sBends, runIn, peg, slalom, parked, brake } = require('../trackKit');
+const { track, opening, straight, sweep, splitter, sBends, plunge, runIn, peg, slalom, brake, boost } = require('../trackKit');
 
+// Second design (Moses, 24 Nov 2026: one more try with a redesigned splitter). The first had the splitter straight
+// after the stadium sweep, so the leaders all came to it on one line and that channel won 60–70% of races: now the
+// splitter comes off a straight with a hurdle slalom that mixes the field, then the drop down from the mountains.
 module.exports = track({
   slug: 'kingston-blue-mountain-run',
   name: 'Kingston Blue Mountain Run',
   family: 'athletics',
   difficulty: 'extreme',
-  description: 'Kingston\'s big loud stadium under the Blue Mountains: away from the gate in a pack, along the harbour road, up into the hills over the hurdles, a lap of the stadium, then either side of a green hill at the splitter and down the home straight.',
+  description: 'Kingston\'s big loud stadium under the Blue Mountains: away from the gate in a pack, along the harbour road over the hurdles, either side of a green hill, up into the hills, then a steep drop down from the mountains, a lap of the stadium and the home straight.',
   surface: 'tartan',
   biome: 'meadow',
   lighting: 'day',
@@ -24,7 +27,7 @@ module.exports = track({
   tvCameras: [
     // (Where the two channels meet again past the hill, looking back at the field coming round both sides.)
     { section: 'Either side of the hill', at: 0.7, side: 'right', distance: 9, height: 11 },
-    { section: 'Up into the hills', at: 0.3, side: 'left', distance: 9, height: 10 },
+    { section: 'Round the stadium', at: 0.6, side: 'left', distance: 9, height: 10 },
   ],
   start: { landmark: 'warm-up-track', type: 'castle-tower', gate: 'stalls', shots: { countdown: 'side', launch: 'overhead' } },
   finish: { landmark: 'medal-podium' },
@@ -34,27 +37,28 @@ module.exports = track({
   opening: opening('clear-start', { side: 'right', waves: { groups: 5, gap: 0.28, jitter: 0.24 } }),
   sections: [
     {
-      name: 'Along the harbour road', shape: straight(40, { grade: 0.12 }), billboards: 1,
-      features: [brake({ at: 0.06, length: 10, drag: 0.02 })],
-      obstacles: [parked({ costume: 'hurdle-cart', at: 0.5, side: 'left', length: 10 })],
+      name: 'Along the harbour road', shape: straight(60, { grade: 0.12 }), billboards: 1,
+      obstacles: [slalom({ costume: 'hurdle', from: 0.3, to: 0.92, count: 5, loss: 0.3 })],
     },
     {
-      name: 'Up into the hills', shape: sBends({ first: 'left', radius: 70, degrees: 60, grade: 0.13 }), billboards: 1,
-      obstacles: [slalom({ costume: 'hurdle', from: 0.25, to: 0.8, count: 5, loss: 0.3 })],
+      name: 'Either side of the hill',
+      shape: splitter({ side: 'left', degrees: 0, approach: 55, merge: 30, balance: { tipOffset: 0, left: { drag: 1.2, scrub: 1.2 }, right: { drag: 1.2, scrub: 1.2 } } }),
     },
+    {
+      name: 'Up into the hills', shape: sBends({ first: 'left', radius: 70, degrees: 55, grade: 0.13 }), billboards: 1,
+      features: [boost({ at: 0.08 })],
+      obstacles: [slalom({ costume: 'hurdle', from: 0.3, to: 0.85, count: 5, loss: 0.3 })],
+    },
+    { name: 'Down from the mountains', shape: plunge(45, { grade: 0.32, from: 0.1 }) },
     {
       name: 'Round the stadium', shape: sweep({ side: 'right', radius: 90, degrees: 125, grade: 0.09 }), stadium: true, billboards: 1,
-      features: [brake({ at: 0.06, length: 14, drag: 0.025 })],
+      features: [boost({ at: 0.06 })],
       obstacles: [slalom({ costume: 'hurdle', from: 0.35, to: 0.85, count: 5, loss: 0.3 })],
     },
     {
-      name: 'Either side of the hill', shape: splitter({ side: 'left', degrees: 0, approach: 70, merge: 30, balance: { tipOffset: -1.0, left: { drag: 1.2, scrub: 1.2 }, right: { drag: 1.2, scrub: 1.2 } } }),
-      obstacles: [peg({ costume: 'hurdle', at: 0.08, line: 'right' }), peg({ costume: 'hurdle', at: 0.18, line: 'center' })],
-    },
-    {
-      name: 'Home straight', shape: straight(80, { grade: 0.12 }), stadium: true, billboards: 1,
+      name: 'Home straight', shape: straight(70, { grade: 0.12 }), stadium: true, billboards: 1,
       features: [brake({ at: 0.08, length: 10, drag: 0.02 })],
-      obstacles: [slalom({ costume: 'hurdle', from: 0.35, to: 0.9, count: 5, loss: 0.3 })],
+      obstacles: [peg({ costume: 'hurdle', at: 0.35, line: 'left' }), peg({ costume: 'hurdle', at: 0.6, line: 'right' })],
     },
     { name: 'Finish', shape: runIn() },
   ],

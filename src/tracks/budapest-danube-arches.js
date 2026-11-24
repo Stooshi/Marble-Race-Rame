@@ -5,7 +5,7 @@
 // field let go in waves, gentle bends and nothing in the way for the first seconds), a bend along the river past a
 // swinging camera crane and over the hurdles, a straight under the stadium's arches, then the track's big feature: a
 // full loop over the river; S-bends past the domed hall, back along the embankment and the home straight. Generic stands; no names.
-const { track, opening, straight, sweep, sBends, loop, runIn, peg, slalom, swipe, brake } = require('../trackKit');
+const { track, opening, straight, sweep, sBends, loop, runIn, peg, slalom, swipe, brake, boost } = require('../trackKit');
 
 module.exports = track({
   slug: 'budapest-danube-arches',
@@ -22,10 +22,10 @@ module.exports = track({
   signature: 'Loop over the river',
   tvCameras: [
     // (Just past the loop, looking back at the field coming over the top.)
-    { section: 'Loop over the river', at: 0.7, side: 'left', distance: 10, height: 10 },
+    { section: 'Loop over the river', at: 0.75, side: 'right', distance: 9, height: 8 },
     { section: 'Along the river', at: 0.15, side: 'right', distance: 9, height: 10 },
   ],
-  start: { landmark: 'warm-up-track', type: 'castle-tower', gate: 'trapdoor', shots: { countdown: 'side', launch: 'side' } },
+  start: { landmark: 'warm-up-track', type: 'castle-tower', gate: 'stalls', shots: { countdown: 'swing', launch: 'overhead' } },
   finish: { landmark: 'medal-podium' },
   designChanges: [
     'Start shots that look down the track (30 Oct 2026, Moses): the lane numbers read the right way up only from behind the field, so no face-on countdown or look-back first seconds on Track and Field.',
@@ -37,21 +37,22 @@ module.exports = track({
       obstacles: [swipe({ costume: 'camera-crane', at: 0.25, side: 'high' }), slalom({ costume: 'hurdle', from: 0.45, to: 0.9, count: 5, loss: 0.3 })],
     },
     {
-      name: 'Under the arches', shape: straight(60, { grade: 0.12 }), stadium: true, billboards: 1,
-      features: [brake({ at: 0.06, length: 12, drag: 0.02 })],
-      obstacles: [slalom({ costume: 'hurdle', from: 0.35, to: 0.95, count: 5, loss: 0.35 })],
+      name: 'Under the arches', shape: straight(60, { grade: 0.12 }), billboards: 1,
+      features: [brake({ at: 0.06, length: 12, drag: 0.02 }), boost({ at: 0.24 })],
+      obstacles: [peg({ costume: 'hurdle', at: 0.36, line: 'center' }), slalom({ costume: 'hurdle', from: 0.45, to: 0.95, count: 5, loss: 0.35 })],
     },
     {
       name: 'Loop over the river', shape: straight(170, { grade: 0.13 }), height: 0,
       features: [brake({ at: 0.08, length: 12, drag: 0.02 }), loop({ at: 0.45, viewSide: 14 })],
     },
     {
-      name: 'Past the domed hall', shape: sBends({ first: 'right', radius: 70, degrees: 60, grade: 0.14 }), billboards: 1,
+      name: 'Past the domed hall', shape: sBends({ first: 'right', radius: 70, degrees: 60, grade: 0.13 }), billboards: 1,
+      features: [boost({ at: 0.08 })],
       obstacles: [slalom({ costume: 'hurdle', from: 0.25, to: 0.8, count: 6, loss: 0.35 })],
     },
     {
-      name: 'Back along the embankment', shape: sweep({ side: 'left', radius: 55, degrees: 150, grade: 0.13 }), billboards: 1,
-      obstacles: [peg({ costume: 'hurdle', at: 0.35, line: 'left' }), peg({ costume: 'hurdle', at: 0.65, line: 'right' })],
+      name: 'Back along the embankment', shape: sweep({ side: 'left', radius: 55, degrees: 150, grade: 0.12 }), stadium: true, billboards: 1,
+      obstacles: [peg({ costume: 'hurdle', at: 0.3, line: 'left' }), peg({ costume: 'hurdle', at: 0.5, line: 'right' }), peg({ costume: 'hurdle', at: 0.7, line: 'left' })],
     },
     {
       name: 'Home straight', shape: straight(70, { grade: 0.12 }), stadium: true, billboards: 1,
