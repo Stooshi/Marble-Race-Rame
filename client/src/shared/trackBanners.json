@@ -1839,6 +1839,17 @@
    "side": 1,
    "marbles": 6
   },
+  "rio-samba-relay": {
+   "name": "Rio Samba Relay",
+   "series": "Track and Field",
+   "lighting": "day",
+   "v": "722cf4f0",
+   "bytes": 25000,
+   "bytes2x": 66264,
+   "t": 19822,
+   "side": 1,
+   "marbles": 8
+  },
   "rocky-mountain-hill-run": {
    "name": "Rocky Mountain Hill Run",
    "series": "Grand Prix",

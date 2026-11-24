@@ -43,3 +43,8 @@ Every device folder has the same 8 pictures, in this order:
 Google Play upload order (8 per slot): 01, 02, 03, 09, 07, 08, 05, 10 (project doc `claude/store-submission-drafts.md`, 6.1b).
 
 Captions are in English only. The Block Series and Track and Field are live (19 Oct 2026).
+
+## In-app purchase review screenshots (`app-store/iap-review/`)
+
+Made on 23 Nov 2026 for App Store Connect's in-app purchase review (one per complete track pack, used for both of its products): `trackpack_<pack>.png`, 1320 × 2868 (iPhone 6.9"), the pack's page from the real game (a local copy of the site and server, a demo account), as the iPhone app shows it: no price, no website-only payment text, no footer. The workflow "App Store: create in-app purchases" (`client/scripts/asc-iap.mjs`) uploads them to any pack product that has no review screenshot yet. A new complete pack needs its picture here before the workflow runs.
+

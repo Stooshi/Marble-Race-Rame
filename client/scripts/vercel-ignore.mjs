@@ -20,7 +20,7 @@ export const FORCED = [
 /** Changed files that never change the website. */
 export const NOT_WEBSITE = [
   /^client\/test\//, /^client\/report\//, /^client\/android\//, /^client\/ios\//,
-  /\.md$/i, /^client\/scripts\/(app-|android-|ios-)/, /^client\/capacitor\.config\.json$/, /^client\/app-version\.json$/,
+  /\.md$/i, /^client\/scripts\/(app-|android-|ios-|asc-)/, /^client\/capacitor\.config\.json$/, /^client\/app-version\.json$/,
 ];
 export const affectsWebsite = (file) => file.startsWith('client/') && !NOT_WEBSITE.some((re) => re.test(file));
 

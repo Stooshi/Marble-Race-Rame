@@ -424,7 +424,7 @@ module.exports = {
     'mushroom', 'sunken', 'clockwork', 'grotto', 'jungle', 'moon', 'neon'],
   // A Track and Field stadium (family 'athletics': `athletics: { stadium }`): its generic architecture, the
   // client's STADIUMS (client/src/three/scenery/athletics.js).
-  STADIUMS: ['panathenaic', 'berlin-1936', 'bislett', 'hayward', 'nest', 'tokyo', 'stockholm-1912', 'london', 'coliseum', 'letzigrund', 'accra', 'olimpico', 'helsinki', 'munich', 'brussels', 'montreal', 'saint-denis', 'rio', 'monaco', 'kingston', 'doha'],
+  STADIUMS: ['panathenaic', 'berlin-1936', 'bislett', 'hayward', 'nest', 'tokyo', 'stockholm-1912', 'london', 'coliseum', 'letzigrund', 'accra', 'olimpico', 'helsinki', 'munich', 'brussels', 'montreal', 'saint-denis', 'rio', 'monaco', 'kingston', 'doha', 'budapest'],
   // A canyon's rock and river (family 'canyon': `canyon: { palette }`), the client's CANYON_PALETTES.
   CANYONS: ['grand-canyon', 'himalaya', 'andes', 'limestone', 'copper', 'basalt', 'karakoram', 'namib', 'slot', 'verdon', 'jinsha', 'waimea', 'mujib',
     // (Moses, 15 Nov 2026: six more.)

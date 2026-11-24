@@ -1,6 +1,6 @@
 # 1. Architecture
 
-*Last updated 8 Nov 2026.*
+*Last updated 22 Nov 2026.*
 
 ## The parts
 
@@ -147,11 +147,13 @@ There is no separate staging server. Vercel makes a preview build for every bran
 | `PUBLIC_SITE_URL` | no | The website's main address (default https://marblespins.com). Stripe returns players here if their own address isn't recognised |
 | `NODE_ENV` | yes (`production`) | Turns on the production checks |
 | `PORT` | set by Railway | |
-| `STRIPE_SECRET_KEY` | for payments | `sk_test_…` now |
+| `STRIPE_SECRET_KEY` | for payments | A live key (`sk_live_…`) since 16 Nov 2026, with `STRIPE_ALLOW_LIVE`; `sk_test_…` for testing |
 | `STRIPE_WEBHOOK_SECRET` | for payments | `whsec_…` from the webhook endpoint in Stripe |
 | `STRIPE_ALLOW_LIVE` | **only when going live** | `true` lets a `sk_live_…` key work |
 | `PASS_REMINDERS_SENDING` | no | `on` switches on sending the pass reminders (the confirmation emails, the reminder email when the sale opens, the in-game notice); also needs `BREVO_API_KEY`. Unset or anything else: nothing is sent (Moses says go) |
 | `CONFIRM_REMINDERS` | no | `on` switches on the confirm-email reminders (19 Nov 2026, `src/account/confirmReminders.js`): day 1, 3 and 7 after sign-up while the address isn't confirmed, each once with a fresh link; also needs `BREVO_API_KEY`. Unset or anything else: every 15 minutes the job only logs how many are due (`[confirm-reminders] DRY RUN …`). Texts approved by Moses on 19 Nov 2026 (project doc `claude/confirm-reminders-draft.md`); set it after the server deploy |
+| `MARKETING_SENDING` | no | `on` switches on marketing email (CRM phase 6, 16 Nov 2026, `src/marketing`): the newsletter and the onboarding emails, to saved accounts of 18+ that said yes (or a buyer under soft opt-in). Unset: everything is counted, nothing is sent. Off until Moses says go |
+| `MARKETING_SOFT_OPT_IN_FROM` | no | An ISO date and time: purchases from then on count for soft opt-in (a buyer who didn't tick "Don't send me news"). Set it only once every place to buy shows the box. Unset: no soft opt-in |
 | `PUBLIC_API_URL` | no | The server's own public address, for the one-click unsubscribe header in emails; on Railway `RAILWAY_PUBLIC_DOMAIN` is used when it isn't set. `https://api.marblespins.com` once that address works |
 | `PASS_TESTERS` | no | Tester accounts' emails, comma-separated: they may test-buy the season pass before its sale starts (App Review, our testers) |
 | `STRIPE_TAX` | no | `off` turns off Stripe Tax |

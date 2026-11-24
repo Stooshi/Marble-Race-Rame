@@ -8,6 +8,6 @@
   "withCoins": { "coins": 1990, "priceCents": 499, "storeAmountCents": 499 },
   "fullAt": 20,
   "planned": {
-    "grand-prix": ["Heartland Oval Speedway", "Lapland Ice Race", "Lombardy Parkland Circuit", "Mexico City Stadium Section", "Nevada Drag Strip", "Finland Forest Rally", "Tokyo Night Street Race", "São Paulo Rain Circuit", "Atacama Desert Rally", "Rocky Mountain Hill Run", "Outback Red Dirt Rally"]
+    "grand-prix": ["Atacama Desert Rally", "Outback Red Dirt Rally"]
   }
 }

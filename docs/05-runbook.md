@@ -1,6 +1,6 @@
 # 5. Operations runbook
 
-*Last updated 15 Nov 2026.* How to deploy, change data, roll back, back up, and fix the usual problems. Items marked **[check]** should be confirmed the first time they are done.
+*Last updated 22 Nov 2026.* How to deploy, change data, roll back, back up, and fix the usual problems. Items marked **[check]** should be confirmed the first time they are done.
 
 ## Deploying
 
@@ -325,7 +325,7 @@ The server deploy that brings them applies `docs/database_schema.sql` (the colum
 
 ### Selling track packs (built 12 Nov 2026; test mode, TRACK_PACKS off)
 
-The price is in `client/src/shared/payments/trackPacks.json` ($6.99; 1,990 coins + $4.99 with coins). A campaign changes it there, plus the store products' prices; a test (`test/trackPackSale.test.js`) refuses coins over 25% of the price or a pack for coins alone. The deploy adds `payments.pack_key`, `coins_spent`, the table `pack_coin_holds`, and runs `2027-06-12-track-pack-payments` (a pack payment may have 0 coins), then `2027-06-13-voxel-peaks-to-blocks-2` (Voxel Peaks into the Blocks 2 pack, which then has 20 and can go on sale).
+The price is in `client/src/shared/payments/trackPacks.json` ($6.99; 1,990 coins + $4.99 with coins). A campaign changes it there, plus the store products' prices; a test (`test/trackPackSale.test.js`) refuses coins over 30% of the price or a pack for coins alone. The deploy adds `payments.pack_key`, `coins_spent`, the table `pack_coin_holds`, and runs `2027-06-12-track-pack-payments` (a pack payment may have 0 coins), then `2027-06-13-voxel-peaks-to-blocks-2` (Voxel Peaks into the Blocks 2 pack, which then has 20 and can go on sale).
 1. **Try it on your own account:** `TRACK_PACKS=admins` (above). The shop then shows the tabs (Track packs first) for admin accounts only. Only complete packs (20 live tracks) have a card (since 16 Nov 2026, Stripe live); the website has no test purchase any more (an admin's Unlock is a real payment). In Android a Play licence tester, and on iPhone the sandbox or TestFlight, still buy as a test. The pack unlocks only when Stripe's signed webhook arrives (the Purchases page shows the order).
 2. **Refunds:** the back office's Refund (Stripe and Google) or the store's own refund (Apple, Google Play Console) takes the pack back and gives the coins back; the audit log shows `pack_revoked` and `coins_back`. A purchase refused by the server (`pack-duplicate`, `apple-pack-refused` in the audit log) needs a refund by hand (Apple: the player asks Apple).
 3. **The stores:** every product id is in the project doc `claude/track-packs-products.md`: 11 packs × 2 products in Play Console (one-time products, with _) and App Store Connect (non-consumables, the same ids with _). Nothing new is needed on Stripe or Railway (no new variable; the existing Stripe webhook already sends the events used).
@@ -442,9 +442,11 @@ To check the plugin itself registered: filter `tag:Capacitor message:NativeAudio
 
 **Confirmed 13 Nov 2026** on build 1.0.0 (5), Moses's phone: hit and bump sounds play, and the ceremony song stops at the next race.
 
+**Builds 1.0.0 (6) and (7), 17–18 Nov 2026: no sound in solo races** (Race readiness said "native · muted" while the speaker button showed sound on). Build 7 was a diagnostic build: every app race's readiness report carries the sound's last 40 log lines (CRM → Race readiness → Sound log) and says why a race had no beeps. The cause: each speaker button took the account's saved sound settings when it appeared, so a mute undone on the phone came back. Since build 1.0.0 (8) the account's settings are taken once per sign-in (`client/src/sound/settings.js`). **Confirmed 19 Nov 2026** on build 8, Moses's phone: the beeps and the race sound work. If an app race is silent again, read its Sound log first.
+
 ## The season-start website rebuild (1 Dec 2026, automatic)
 
-The website learns of the holiday tracks only at a build (their pages, the sitemap, the track count: 152 live tracks in ten series today, "150+ tracks"; with the 31 holiday tracks from 1 Dec, 183, "180+ tracks"; 13 Nov 2026); the server shows them from 1 Dec 00:00 by date. The GitHub Actions workflow **"Season start: rebuild the website"** (`.github/workflows/season-start-rebuild.yml`) starts that build at **1 Dec 2026 00:05 Swedish time** (spares at 00:35 and 01:15, which do nothing once the holiday tracks are on the site), waits for it, and checks the sitemap has `/tracks/tromso-aurora-grand-prix`. If anything fails, the run fails and GitHub emails the repository's owner; then press Redeploy in Vercel by hand. Nobody has to be awake for it.
+The website learns of the holiday tracks only at a build (their pages, the sitemap, the track count: 187 live tracks in ten series today, "180+ tracks"; with the 31 holiday tracks from 1 Dec, 218, "210+ tracks"; 22 Nov 2026); the server shows them from 1 Dec 00:00 by date. The GitHub Actions workflow **"Season start: rebuild the website"** (`.github/workflows/season-start-rebuild.yml`) starts that build at **1 Dec 2026 00:05 Swedish time** (spares at 00:35 and 01:15, which do nothing once the holiday tracks are on the site), waits for it, and checks the sitemap has `/tracks/tromso-aurora-grand-prix`. If anything fails, the run fails and GitHub emails the repository's owner; then press Redeploy in Vercel by hand. Nobody has to be awake for it.
 
 It calls a **Vercel Deploy Hook**: a secret URL that rebuilds Main. The URL is kept only in GitHub's secret `VERCEL_DEPLOY_HOOK_SEASON`, never in code, chat, docs or logs. Set-up (once):
 1. **Vercel:** the project `marble-race-rame-client` → **Settings** → **Git** → **Deploy Hooks**. Name: `season-start`, branch: `Main` → **Create Hook**. Copy the URL it shows (Vercel shows it again on that page).
@@ -542,6 +544,20 @@ Set-Content -Path .\android\keystore.properties -Encoding ascii -Value @('storeF
 
 Android Studio instead: Build → Generate Signed App Bundle, with the same `.jks`, alias `upload`.
 
+### Building the bundle in GitHub Actions (23 Nov 2026)
+
+Workflow `.github/workflows/android-aab.yml`: GitHub → the repository → **Actions** → **Android: build the signed .aab** → **Run workflow** (branch Main) → **Run workflow**. About 8–12 minutes. When it is green, open the run → **Artifacts** → `marblespins-<versionName>-<versionCode>` (a .zip with the .aab, kept 14 days) → upload it in Play Console as below. It builds from `client/app-version.json` as it is: raise the version first (`npm run app:version`). The bundle's signature is checked against the upload key before it is kept. The local `npm run android:release` is unchanged (it uses `keystore.properties`; the workflow passes the same values as `MS_UPLOAD_*` variables, which `android/app/build.gradle` already reads).
+
+**Once: the two secrets** (GitHub → the repository → Settings → Secrets and variables → Actions → **New repository secret**). The key and its password never go in Git, chat or docs:
+
+1. `ANDROID_UPLOAD_KEYSTORE_BASE64`: the upload key file as text. On the computer with the key (`MarbleSpins-keys/marblespins-upload.jks` in your home folder):
+   - Mac (Terminal): `base64 -i ~/MarbleSpins-keys/marblespins-upload.jks | pbcopy`
+   - Windows (PowerShell): `[Convert]::ToBase64String([IO.File]::ReadAllBytes("$HOME\MarbleSpins-keys\marblespins-upload.jks")) | Set-Clipboard`
+   It is now on the clipboard: paste it as the secret's value and save.
+2. `ANDROID_UPLOAD_KEY_PASSWORD`: the upload key's password (the one `npm run android:release` asks for; the key and the keystore share it).
+
+The alias is `upload` (set by `npm run android:key`). A wrong key or password stops the run at "The upload key".
+
 ### First upload: internal testing
 
 Voltron Robotics AB is an organisation account, so the "12 testers for 14 days" closed-test rule for new personal accounts doesn't apply.
@@ -573,6 +589,17 @@ Built on a **Mac with Xcode** (the cloud workspace and Windows can't), in Termin
 4. App Store Connect → the app → TestFlight: the build appears after 5–30 minutes; paste `<versionName>.appstore.txt` into **What to Test**; add internal testers. `ITSAppUsesNonExemptEncryption` is already false in `Info.plist`, so no export-compliance question.
 5. For the App Store: Distribution → the version → **What's New in This Version** (`.appstore.txt`) → pick the build → Add for Review. Purchases first need the steps in "App Store purchases" below.
 6. Tag the version with the printed `git tag` command (once per version, after the first upload of either app).
+
+### Building in GitHub Actions (no Mac needed; 23 Nov 2026)
+
+Workflow `.github/workflows/ios-testflight.yml`, run by hand: GitHub → the repository → **Actions** → **iPhone: build and upload to TestFlight** → **Run workflow** (branch Main; "Upload to TestFlight" ticked) → **Run workflow**. About 15–25 minutes on a GitHub Mac (`macos-26`, Xcode 26). The repository is public, so GitHub's standard runners cost no minutes.
+
+- **Needs only** the repository secrets `ASC_KEY_ID`, `ASC_ISSUER_ID`, `ASC_KEY_P8` (an App Store Connect team key with Admin access, "GitHub Marble Spins"). No certificate, profile or Team ID secret.
+- **Version:** `client/app-version.json`. If App Store Connect already has that build number (or higher), the run uses the highest + 1 and, after the upload, commits it to Main as `App x.y.z (n)` (Vercel skips that commit). A new version number (1.0.1…) is still `npm run app:version`.
+- **Signing** (`client/scripts/ios-ci.mjs`): a fresh GitHub Mac has no development certificate and no registered iPhone, which Xcode's automatic signing needs, so the run does the same through the API: it makes an Apple Distribution certificate (the private key is made on the runner and never leaves it) and an App Store profile named `Marble Spins GitHub <run id>`, switches on Push Notifications and Associated Domains on `com.marblespins.app` if missing, signs the App target's Release build manually **in its own checkout only**, and at the end (also after a failure) revokes the certificate and deletes the profile. Revoking doesn't touch uploaded builds (Apple re-signs what it distributes). Apple may email the account holder about the certificate.
+- **Upload:** `xcrun altool --upload-app` with the API key. The signed `.ipa` is also kept under the run's **Artifacts** for 14 days. Untick "Upload to TestFlight" to only build.
+- **If it fails:** the run's log says which step. "Apple refused a new distribution certificate": the team is at its limit, revoke an old *Apple Distribution* certificate at developer.apple.com → Certificates and run again. "No app with bundle id": make the app in App Store Connect first. "bundle version must be higher" can't happen (the build number is checked); "train is closed" means that version is approved: `npm run app:version`.
+- Local `npm run ios:release` on a Mac is unchanged.
 
 ## Google Play Billing: coins in the Android app
 
@@ -651,6 +678,8 @@ The iPhone app sells the same four coin packs and the season pass through the Ap
    | `coins_27500` | Consumable | 27,500 coins | USD 24.99 |
    | `coins_57500` | Consumable | 57,500 coins | USD 49.99 |
    | `holiday_pass_2026` | Non-Consumable, Family Sharing off | Holiday Season Pass 2026 | USD 9.99 |
+
+   **Made by the API (23 Nov 2026):** Actions → **App Store: create in-app purchases** → Run workflow (tick "Dry run" first to see the plan, then run without it). It creates the 4 coin packs, the pass and both products of each complete track pack (the "packs" box: the complete packs' keys), with the US price, the English (U.S.) name and description (Apple allows 30 and 45 characters; the full Google Play text goes in the review note), every country except mainland China, Family Sharing off, and the review screenshot where the repository has one (`store-assets/app-store/iphone-6.9/04-shop.png` for the coins, `10-holiday-pass.png` for the pass, `store-assets/app-store/iap-review/trackpack_<pack>.png` for both products of a pack). Running it again adds only what is missing. The run's summary page lists each product's status. Code: `client/scripts/asc-iap.mjs`, the list in `client/scripts/asc-api.mjs`.
 
    The IDs must be exactly these: **with _, the same as in Google Play** (Moses, 12 Nov 2026; the app asks the App Store for `coins_5000`, the server turns it back into our `coins-5000`). Track packs: the project doc `claude/track-packs-products.md`. Prices in the apps are $4.99 / $9.99 / $24.99 / $49.99 (Moses, 27 Oct 2026, like the credits and the pass; the website stays $5 / $10 / $25 / $50): pick these US price points and let Apple set the other countries. Players see Apple's own price in their currency.
 4. **Server Notifications** (App Store Connect → the app → App Information → App Store Server Notifications): **Version 2**, Production URL and Sandbox URL both `https://marble-race-rame-production.up.railway.app/api/payments/apple/notifications`. Then *Request a test notification*: Railway's log shows `[app-store] notification: test`.

@@ -81,6 +81,8 @@ export const STADIUMS = {
   kingston: { seat: '#e2b31c', riser: '#2f7a3e', wall: '#3a3d38', depth: 28, rise: 15, front: 2, rows: 13, crowd: 0.82, shape: 'oval', roof: { colour: '#3a3d42', under: '#6d7178', depth: 14, rise: 3, over: 'one-side' }, masts: 4, apron: 10, touch: null },
   // Doha (Moses, 21 Nov 2026): a sand-coloured bowl under a pale shade roof all round, white seats, built for the heat.
   doha: { seat: '#f1ede4', riser: '#c9b38a', wall: '#d8c39c', depth: 26, rise: 16, front: 2, rows: 13, crowd: 0.6, shape: 'oval', roof: { colour: '#efe8da', under: '#cbbfa6', depth: 16, rise: 3, over: 'all', lights: true }, masts: 0, apron: 10, touch: null },
+  // Budapest (Moses, 21 Nov 2026): a big open bowl by the river, grey seats.
+  budapest: { seat: '#6a7480', riser: '#c8ccd2', wall: '#8d939b', depth: 26, rise: 16, front: 2, rows: 12, crowd: 0.66, shape: 'oval', roof: null, masts: 0, apron: 11, touch: null },
 };
 export const STADIUM_NAMES = Object.keys(STADIUMS);
 
