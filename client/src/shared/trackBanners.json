@@ -2202,6 +2202,17 @@
    "side": 1,
    "marbles": 6
   },
+  "sydney-harbour-relay": {
+   "name": "Sydney Harbour Relay",
+   "series": "Track and Field",
+   "lighting": "day",
+   "v": "6297862d",
+   "bytes": 25420,
+   "bytes2x": 61250,
+   "t": 9936,
+   "side": 1,
+   "marbles": 6
+  },
   "sydney-marble-grand-prix": {
    "name": "Sydney Marble Grand Prix",
    "series": "Grand Prix",

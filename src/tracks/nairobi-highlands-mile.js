@@ -3,10 +3,10 @@
 // Nairobi Highlands Mile (Moses, 24 Nov 2026: the Track and Field pack filled to 20; replaces Monaco Harbour Lap).
 // A big open bowl of a stadium on the city's edge, the plains of the national park beyond it, flat-topped acacias:
 // away from the gate on the clear start (the field let go in waves, gentle bends and nothing in the way for the
-// first seconds), out past the park over the hurdles, S-bends along the forest road off a speed pad, a lap of the
+// first seconds), out past the park over a steeplechase barrier and the hurdles, S-bends along the forest road off a speed pad, a lap of the
 // stadium, then the track's big feature: a steep spiral round a great acacia down onto the plains; across the
 // plains off a second speed pad and the home straight. Generic stands; no names.
-const { track, opening, straight, sweep, sBends, spiral, runIn, peg, slalom, brake, boost } = require('../trackKit');
+const { track, opening, straight, sweep, sBends, spiral, runIn, peg, slalom, block, brake, boost } = require('../trackKit');
 
 module.exports = track({
   slug: 'nairobi-highlands-mile',
@@ -34,9 +34,9 @@ module.exports = track({
   opening: opening('clear-start', { side: 'right', waves: { groups: 5, gap: 0.27, jitter: 0.24 } }),
   sections: [
     {
-      name: 'Out past the park', shape: straight(45, { grade: 0.12 }), billboards: 1,
+      name: 'Out past the park', shape: straight(45, { grade: 0.12 }),
       features: [brake({ at: 0.06, length: 10, drag: 0.02 })],
-      obstacles: [slalom({ costume: 'hurdle', from: 0.35, to: 0.92, count: 5, loss: 0.3 })],
+      obstacles: [block({ costume: 'steeple-barrier', at: 0.2, line: 'center', loss: 0.25 }), slalom({ costume: 'hurdle', from: 0.45, to: 0.95, count: 4, loss: 0.3 })],
     },
     {
       name: 'Along the forest road', shape: sBends({ first: 'left', radius: 70, degrees: 55, grade: 0.13 }), billboards: 1,
