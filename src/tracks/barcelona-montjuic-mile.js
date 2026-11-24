@@ -5,7 +5,7 @@
 // city and the harbour: away from the gate on the clear start (the field let go in waves, gentle bends and nothing
 // in the way for the first seconds), along the palace terraces past a camera crane and over the hurdles, a lap of
 // the stadium, then the track's big feature: the fountain steps, a steep drop down the terraced cascade; S-bends
-// through the gardens off a speed pad, the hairpin under the castle, a second drop down to the harbour, along the
+// through the gardens off a speed pad, the hairpin under the castle, a drop down from the castle and another down to the harbour, along the
 // waterfront off a second speed pad and the home straight. Generic stands; no names.
 const { track, opening, straight, sweep, sBends, plunge, hairpin, runIn, peg, slalom, swipe, brake, boost } = require('../trackKit');
 
@@ -14,7 +14,7 @@ module.exports = track({
   name: 'Barcelona Montjuïc Mile',
   family: 'athletics',
   difficulty: 'extreme',
-  description: 'Barcelona\'s big stadium on the hill above the harbour: away from the gate in a pack, along the palace terraces over the hurdles, a lap of the stadium, then down the fountain steps, through the gardens, round the hairpin under the castle, down again to the harbour and along the waterfront to the line.',
+  description: 'Barcelona\'s big stadium on the hill above the harbour: away from the gate in a pack, along the palace terraces over the hurdles, a lap of the stadium, then down the fountain steps, through the gardens, round the hairpin under the castle, down from the castle and down again to the harbour and along the waterfront to the line.',
   surface: 'tartan',
   biome: 'meadow',
   lighting: 'day',
@@ -44,7 +44,7 @@ module.exports = track({
       obstacles: [slalom({ costume: 'hurdle', from: 0.35, to: 0.85, count: 5, loss: 0.3 })],
     },
     {
-      name: 'Down the fountain steps', shape: plunge(40, { grade: 0.33, from: 0.1 }),
+      name: 'Down the fountain steps', shape: plunge(60, { grade: 0.36, from: 0.09 }),
       landmarks: [{ name: 'fountains', at: 0.5, side: 'right', distance: 20 }],
     },
     {
@@ -52,12 +52,14 @@ module.exports = track({
       features: [boost({ at: 0.08, kick: 4 })],
       obstacles: [peg({ costume: 'hurdle', at: 0.35, line: 'left' }), peg({ costume: 'hurdle', at: 0.6, line: 'right' }), peg({ costume: 'hurdle', at: 0.85, line: 'left' })],
     },
-    { name: 'Run to the castle', shape: straight(40, { grade: 0.12 }), billboards: 1 },
+    { name: 'Run to the castle', shape: straight(40, { grade: 0.12 }) },
     {
       name: 'Hairpin under the castle', shape: hairpin({ side: 'left' }),
       landmarks: [{ name: 'castle-hill', at: 0.5, side: 'right', distance: 40 }],
     },
-    { name: 'Down to the harbour', shape: plunge(45, { grade: 0.32, from: 0.1 }) },
+    { name: 'Down from the castle', shape: plunge(50, { grade: 0.36, from: 0.16 }) },
+    { name: 'Above the harbour', shape: straight(35, { grade: 0.11 }), billboards: 1 },
+    { name: 'Down to the harbour', shape: plunge(55, { grade: 0.36, from: 0.11 }) },
     {
       name: 'Along the waterfront', shape: straight(55, { grade: 0.11 }),
       features: [boost({ at: 0.1, kick: 4 })],

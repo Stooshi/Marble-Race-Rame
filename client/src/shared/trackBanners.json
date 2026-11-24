@@ -2206,9 +2206,9 @@
    "name": "Sydney Harbour Relay",
    "series": "Track and Field",
    "lighting": "day",
-   "v": "5a37a00e",
-   "bytes": 22670,
-   "bytes2x": 56890,
+   "v": "be44b351",
+   "bytes": 22548,
+   "bytes2x": 56606,
    "t": 10050,
    "side": 1,
    "marbles": 6
