@@ -36,7 +36,7 @@ module.exports = track({
     {
       name: 'Along the harbour', shape: straight(50, { grade: 0.12 }), billboards: 1,
       landmarks: [{ name: 'opera-house', at: 0.5, side: 'right', distance: 40 }],
-      features: [brake({ at: 0.06, length: 10, drag: 0.02 }), boost({ at: 0.28 })],
+      features: [brake({ at: 0.06, length: 10, drag: 0.02 }), boost({ at: 0.28, kick: 4 })],
       obstacles: [slalom({ costume: 'hurdle', from: 0.42, to: 0.95, count: 5, loss: 0.3 })],
     },
     {
@@ -48,7 +48,7 @@ module.exports = track({
     { name: 'The surf swell', shape: halfPipe({ first: 'left', width: 8, swings: 3, radius: 120, degrees: 26, grade: 0.13 }), height: 0 },
     {
       name: 'Round the stadium', shape: sweep({ side: 'left', radius: 90, degrees: 135, grade: 0.09 }), stadium: true, billboards: 1,
-      features: [boost({ at: 0.08 })],
+      features: [boost({ at: 0.08, kick: 4 })],
       obstacles: [slalom({ costume: 'hurdle', from: 0.35, to: 0.85, count: 5, loss: 0.3 })],
     },
     {

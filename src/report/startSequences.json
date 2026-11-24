@@ -28,7 +28,7 @@
 "bonus-round": {"family":"block","reach":0.232,"seq":["opening: split-start","drop","pileUp","slalom","chutes","drop","slalom","straight","peg ×4","sweep right","boost"]},
 "brussels-night-mile": {"family":"athletics","reach":0.401,"seq":["opening: clear-start","straight","sweep right","sweep left","sweep left","peg ×2","brake"]},
 "bryce-hoodoo-run": {"family":"canyon","reach":0.246,"seq":["opening: chicane-start","drop","pileUp","slalom","S-bends right","peg ×2","sweep left"]},
-"budapest-danube-arches": {"family":"athletics","reach":0.381,"seq":["opening: clear-start","straight","sweep left","sweep right","sweep right","swipe","slalom"]},
+"budapest-danube-arches": {"family":"athletics","reach":0.367,"seq":["opening: clear-start","straight","sweep left","sweep right","sweep right","swipe","slalom"]},
 "buenos-aires-summer-christmas": {"family":"grand-prix","reach":0.288,"seq":["opening: banked-turn","drop","pileUp","slalom","sweep left","straight","peg ×2","moguls","straight","peg ×3"]},
 "bullet-hell": {"family":"arcade","reach":0.209,"seq":["opening: staggered-drop","drop","pileUp","slalom","brake","sweep left","spiral right"]},
 "cape-town-summer-christmas": {"family":"coaster","reach":0.223,"seq":["opening: split-start","drop","pileUp","slalom","chutes","drop","slalom","straight","rail","box","table-top","spiral right"]},

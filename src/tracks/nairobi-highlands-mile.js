@@ -26,7 +26,7 @@ module.exports = track({
     { section: 'Round the great acacia', at: 0.9, side: 'right', distance: 9, height: 9 },
     { section: 'Along the forest road', at: 0.4, side: 'left', distance: 9, height: 10 },
   ],
-  start: { landmark: 'warm-up-track', type: 'water-tower', gate: 'stalls', shots: { countdown: 'above', launch: 'low-chase' } },
+  start: { landmark: 'warm-up-track', type: 'water-tower', gate: 'stalls', shots: { countdown: 'crane', launch: 'low-chase' } },
   finish: { landmark: 'medal-podium' },
   designChanges: [
     'Start shots that look down the track (30 Oct 2026, Moses): the lane numbers read the right way up only from behind the field, so no face-on countdown or look-back first seconds on Track and Field.',
@@ -40,7 +40,7 @@ module.exports = track({
     },
     {
       name: 'Along the forest road', shape: sBends({ first: 'left', radius: 70, degrees: 55, grade: 0.13 }), billboards: 1,
-      features: [boost({ at: 0.08 })],
+      features: [boost({ at: 0.08, kick: 4 })],
       obstacles: [peg({ costume: 'hurdle', at: 0.35, line: 'left' }), peg({ costume: 'hurdle', at: 0.6, line: 'right' }), peg({ costume: 'hurdle', at: 0.85, line: 'left' })],
     },
     {
@@ -52,7 +52,7 @@ module.exports = track({
     { name: 'Round the great acacia', shape: spiral({ side: 'left', radius: 42, turns: 1, grade: 0.2 }), around: 'acacia' },
     {
       name: 'Across the plains', shape: straight(55, { grade: 0.12 }), billboards: 1,
-      features: [boost({ at: 0.12 })],
+      features: [boost({ at: 0.12, kick: 4 })],
       obstacles: [slalom({ costume: 'hurdle', from: 0.35, to: 0.9, count: 5, loss: 0.3 })],
     },
     {

@@ -29,7 +29,7 @@ module.exports = track({
     { section: 'Either side of the hill', at: 0.7, side: 'right', distance: 9, height: 11 },
     { section: 'Round the stadium', at: 0.6, side: 'left', distance: 9, height: 10 },
   ],
-  start: { landmark: 'warm-up-track', type: 'castle-tower', gate: 'stalls', shots: { countdown: 'side', launch: 'overhead' } },
+  start: { landmark: 'warm-up-track', type: 'castle-tower', gate: 'paddle', shots: { countdown: 'crane', launch: 'high-side' } },
   finish: { landmark: 'medal-podium' },
   designChanges: [
     'Start shots that look down the track (30 Oct 2026, Moses): the lane numbers read the right way up only from behind the field, so no face-on countdown or look-back first seconds on Track and Field.',
@@ -46,13 +46,13 @@ module.exports = track({
     },
     {
       name: 'Up into the hills', shape: sBends({ first: 'left', radius: 70, degrees: 55, grade: 0.13 }), billboards: 1,
-      features: [boost({ at: 0.08 })],
+      features: [boost({ at: 0.08, kick: 4 })],
       obstacles: [slalom({ costume: 'hurdle', from: 0.3, to: 0.85, count: 5, loss: 0.3 })],
     },
     { name: 'Down from the mountains', shape: plunge(45, { grade: 0.32, from: 0.1 }) },
     {
       name: 'Round the stadium', shape: sweep({ side: 'right', radius: 90, degrees: 125, grade: 0.09 }), stadium: true, billboards: 1,
-      features: [boost({ at: 0.06 })],
+      features: [boost({ at: 0.06, kick: 4 })],
       obstacles: [slalom({ costume: 'hurdle', from: 0.35, to: 0.85, count: 5, loss: 0.3 })],
     },
     {
