@@ -36,15 +36,15 @@ module.exports = track({
     {
       name: 'Along the harbour', shape: straight(50, { grade: 0.12 }),
       features: [brake({ at: 0.06, length: 10, drag: 0.02 }), boost({ at: 0.32, kick: 4 })],
-      obstacles: [block({ costume: 'steeple-barrier', at: 0.2, line: 'center', loss: 0.25 }), slalom({ costume: 'hurdle', from: 0.45, to: 0.95, count: 5, loss: 0.3 })],
+      obstacles: [block({ costume: 'steeple-barrier', at: 0.2, line: 'right', loss: 0.15 }), slalom({ costume: 'hurdle', from: 0.45, to: 0.95, count: 5, loss: 0.3 })],
     },
     {
       name: 'Under the arch bridge', shape: sweep({ side: 'right', radius: 85, degrees: 100, grade: 0.11 }), billboards: 1,
-      landmarks: [{ name: 'harbour-arch-bridge', at: 0.5, side: 'left', distance: 30 }],
+      landmarks: [{ name: 'river-ferry', at: 0.5, side: 'left', distance: 34 }],
       obstacles: [peg({ costume: 'hurdle', at: 0.4, line: 'left' }), peg({ costume: 'hurdle', at: 0.7, line: 'right' })],
     },
-    { name: 'Down to the quay', shape: plunge(45, { grade: 0.3, from: 0.1 }) },
-    { name: 'The surf swell', shape: halfPipe({ first: 'left', width: 8, swings: 3, radius: 130, degrees: 22, grade: 0.13 }), height: 0 },
+    { name: 'Down to the quay', shape: plunge(45, { grade: 0.32, from: 0.1 }) },
+    { name: 'The surf swell', shape: halfPipe({ first: 'left', width: 8, swings: 3, radius: 150, degrees: 18, grade: 0.13 }), height: 0 },
     {
       name: 'Round the stadium', shape: sweep({ side: 'left', radius: 90, degrees: 135, grade: 0.09 }), stadium: true, billboards: 1,
       features: [boost({ at: 0.08, kick: 4 })],

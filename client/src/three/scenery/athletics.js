@@ -83,8 +83,8 @@ export const STADIUMS = {
   doha: { seat: '#f1ede4', riser: '#c9b38a', wall: '#d8c39c', depth: 26, rise: 16, front: 2, rows: 13, crowd: 0.6, shape: 'oval', roof: { colour: '#efe8da', under: '#cbbfa6', depth: 16, rise: 3, over: 'all', lights: true }, masts: 0, apron: 10, touch: null },
   // Budapest (Moses, 21 Nov 2026): a big open bowl by the river, grey seats.
   budapest: { seat: '#6a7480', riser: '#c8ccd2', wall: '#8d939b', depth: 26, rise: 16, front: 2, rows: 12, crowd: 0.66, shape: 'oval', roof: null, masts: 0, apron: 11, touch: null },
-  // Sydney (Moses, 24 Nov 2026): a big oval bowl in a park, a pale saddle roof over both long sides, blue seats.
-  sydney: { seat: '#2c6fb3', riser: '#e9edf2', wall: '#b9c2cc', depth: 28, rise: 16, front: 2, rows: 13, crowd: 0.72, shape: 'oval', roof: { colour: '#eef1f4', under: '#aeb7c1', depth: 14, rise: 3, over: 'all' }, masts: 0, apron: 11, touch: null },
+  // Sydney (Moses, 24 Nov 2026): a big oval bowl in a park, a pale roof over the main stand, blue seats.
+  sydney: { seat: '#2c6fb3', riser: '#e9edf2', wall: '#b9c2cc', depth: 24, rise: 15, front: 2, rows: 11, crowd: 0.72, shape: 'oval', roof: { colour: '#eef1f4', under: '#aeb7c1', depth: 12, rise: 3, over: 'one-side' }, masts: 0, apron: 11, touch: null },
   // Nairobi (Moses, 24 Nov 2026): a big open bowl on the city's edge, red and green seats, a shade roof on one side.
   nairobi: { seat: '#b5452c', riser: '#2f7a3e', wall: '#a59d8f', depth: 26, rise: 15, front: 2, rows: 12, crowd: 0.7, shape: 'oval', roof: { colour: '#d9d3c6', under: '#8f887b', depth: 12, rise: 3, over: 'one-side' }, masts: 4, apron: 10, touch: null },
   // Barcelona (Moses, 24 Nov 2026): an old stone-fronted stadium on the hill, a pale roof over the main stand, white seats.

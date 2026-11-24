@@ -36,7 +36,7 @@ module.exports = track({
     {
       name: 'Out past the park', shape: straight(45, { grade: 0.12 }),
       features: [brake({ at: 0.06, length: 10, drag: 0.02 })],
-      obstacles: [block({ costume: 'steeple-barrier', at: 0.2, line: 'center', loss: 0.25 }), slalom({ costume: 'hurdle', from: 0.45, to: 0.95, count: 4, loss: 0.3 })],
+      obstacles: [block({ costume: 'steeple-barrier', at: 0.2, line: 'left', loss: 0.15 }), slalom({ costume: 'hurdle', from: 0.45, to: 0.95, count: 4, loss: 0.3 })],
     },
     {
       name: 'Along the forest road', shape: sBends({ first: 'left', radius: 70, degrees: 55, grade: 0.13 }), billboards: 1,
