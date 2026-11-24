@@ -135,6 +135,7 @@
 "munich-tent-roof-run": {"family":"athletics","reach":0.36,"seq":["opening: clear-start","straight","sweep left","sweep right","straight","slalom","brake","sweep right","slalom","brake"]},
 "murray-red-gum-run": {"family":"river","reach":0.241,"seq":["opening: classic","drop","pileUp","slalom","straight","slalom","drop","sweep left"]},
 "mushroom-grove": {"family":"block","reach":0.365,"seq":["opening: rolling-start","drop","slalom","sweep right","straight","drop","straight","slalom","brake"]},
+"nairobi-highlands-mile": {"family":"athletics","reach":0.32,"seq":["opening: clear-start","straight","sweep right","sweep left","straight","block","slalom","brake","S-bends left","peg ×3","boost"]},
 "nairobi-marble-grand-prix": {"family":"grand-prix","reach":0.218,"seq":["opening: banked-turn","drop","pileUp","slalom","sweep right","S-bends left","slalom","peg"]},
 "nanjing": {"family":"coaster","reach":0.208,"seq":["opening: banked-turn","drop","pileUp","slalom","sweep right","S-bends left"]},
 "neon-grid": {"family":"block","reach":0.332,"seq":["opening: rumble-start","drop","slalom","moguls","drop","sweep right","drop","S-bends left","peg ×2"]},
