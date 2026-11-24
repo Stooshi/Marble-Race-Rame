@@ -17,6 +17,7 @@
 "aturi-arcade": {"family":"arcade","reach":0.247,"seq":["opening: crest-start","drop","pileUp","slalom","climb","drop","straight","peg","climb","straight","moguls"]},
 "baikal-clear-ice": {"family":"block-2","reach":0.319,"seq":["opening: pipe-drop","drop","half-pipe","sweep left","peg"]},
 "baqueira-beret-run": {"family":"world-tour","reach":0.3,"seq":["opening: rolling-start","drop","slalom","sweep left","straight","slalom","moguls","spiral right","peg ×2"]},
+"barcelona-montjuic-mile": {"family":"athletics","reach":0.344,"seq":["opening: clear-start","straight","sweep right","sweep left","straight","swipe","slalom","sweep left","slalom","brake"]},
 "bavarian-castle-run": {"family":"coaster","reach":0.208,"seq":["opening: chicane-start","drop","pileUp","slalom","S-bends right","peg ×2","drop","peg","S-bends left","peg ×2"]},
 "beijing-nest-200": {"family":"athletics","reach":0.325,"seq":["opening: clean-drop","drop","S-bends left","sweep left"]},
 "belgrade-badnjak-run": {"family":"world-tour","reach":0.37,"seq":["opening: pipe-drop","drop","half-pipe","straight","peg ×3","S-bends right","slalom"]},

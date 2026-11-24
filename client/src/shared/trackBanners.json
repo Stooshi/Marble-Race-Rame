@@ -200,6 +200,17 @@
    "side": 1,
    "marbles": 4
   },
+  "barcelona-montjuic-mile": {
+   "name": "Barcelona Montjuïc Mile",
+   "series": "Track and Field",
+   "lighting": "day",
+   "v": "33552a89",
+   "bytes": 21910,
+   "bytes2x": 55990,
+   "t": 9674,
+   "side": 1,
+   "marbles": 6
+  },
   "bavarian-castle-run": {
    "name": "Bavarian Castle Run",
    "series": "Coasters",

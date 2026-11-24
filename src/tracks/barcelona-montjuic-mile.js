@@ -54,14 +54,14 @@ module.exports = track({
     },
     { name: 'Run to the castle', shape: straight(40, { grade: 0.12 }) },
     {
-      name: 'Hairpin under the castle', shape: hairpin({ side: 'left' }),
+      name: 'Hairpin under the castle', shape: hairpin({ side: 'right' }),
       landmarks: [{ name: 'castle-hill', at: 0.5, side: 'right', distance: 40 }],
     },
     { name: 'Down from the castle', shape: plunge(50, { grade: 0.36, from: 0.16 }) },
     { name: 'Above the harbour', shape: straight(35, { grade: 0.11 }), billboards: 1 },
     { name: 'Down to the harbour', shape: plunge(55, { grade: 0.36, from: 0.11 }) },
     {
-      name: 'Along the waterfront', shape: straight(55, { grade: 0.11 }),
+      name: 'Along the waterfront', shape: sBends({ first: 'left', radius: 80, degrees: 40, grade: 0.11 }),
       features: [boost({ at: 0.1, kick: 4 })],
       obstacles: [slalom({ costume: 'hurdle', from: 0.3, to: 0.85, count: 5, loss: 0.3 })],
     },
