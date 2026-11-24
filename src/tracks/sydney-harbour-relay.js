@@ -1,9 +1,9 @@
 'use strict';
 
-// Sydney Harbour Relay (Moses, 24 Nov 2026: the Track and Field pack filled to 20; no "Olympic" or "torch" in
-// its name or scenery). A big oval stadium in a park west of the city, the harbour and its arch bridge on the way:
+// Sydney Harbour Relay (Moses, 24 Nov 2026: the Track and Field pack filled to 20; no protected names in
+// its name or scenery). A big oval stadium in a park west of the city, the harbour and its ferries on the way:
 // away from the gate on the clear start (the field let go in waves, gentle bends and nothing in the way for the
-// first seconds), along the harbour over a steeplechase barrier, a speed pad and the hurdles, under the arch bridge, then the track's big
+// first seconds), along the harbour over a steeplechase barrier, a speed pad and the hurdles, round past the ferry wharf, then the track's big
 // feature: a steep drop to the quay straight into the surf swell, a half-pipe rocking the field wall to wall;
 // a lap of the stadium off a speed pad, along the bay over the hurdles, S-bends through the gum trees and the home straight. Generic stands; no names.
 const { track, opening, straight, sweep, sBends, halfPipe, plunge, runIn, peg, slalom, block, brake, boost } = require('../trackKit');
@@ -13,7 +13,7 @@ module.exports = track({
   name: 'Sydney Harbour Relay',
   family: 'athletics',
   difficulty: 'extreme',
-  description: 'Sydney\'s big stadium by the harbour: away from the gate in a pack, along the water over the hurdles, under the arch bridge, then a steep drop to the quay into the surf swell rocking the field wall to wall, a lap of the stadium, along the bay and through the gum trees to the line.',
+  description: 'Sydney\'s big stadium by the harbour: away from the gate in a pack, along the water over the hurdles, past the ferry wharf, then a steep drop to the quay into the surf swell rocking the field wall to wall, a lap of the stadium, along the bay and through the gum trees to the line.',
   surface: 'tartan',
   biome: 'meadow',
   lighting: 'day',
@@ -39,7 +39,7 @@ module.exports = track({
       obstacles: [block({ costume: 'steeple-barrier', at: 0.2, line: 'right', loss: 0.15 }), slalom({ costume: 'hurdle', from: 0.45, to: 0.95, count: 5, loss: 0.3 })],
     },
     {
-      name: 'Under the arch bridge', shape: sweep({ side: 'right', radius: 85, degrees: 100, grade: 0.11 }), billboards: 1,
+      name: 'Past the ferry wharf', shape: sweep({ side: 'right', radius: 85, degrees: 100, grade: 0.11 }), billboards: 1,
       landmarks: [{ name: 'river-ferry', at: 0.5, side: 'left', distance: 34 }],
       obstacles: [peg({ costume: 'hurdle', at: 0.4, line: 'left' }), peg({ costume: 'hurdle', at: 0.7, line: 'right' })],
     },

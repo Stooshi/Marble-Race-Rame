@@ -1190,17 +1190,6 @@
    "side": 1,
    "marbles": 4
   },
-  "kingston-blue-mountain-run": {
-   "name": "Kingston Blue Mountain Run",
-   "series": "Track and Field",
-   "lighting": "day",
-   "v": "1c6bfaee",
-   "bytes": 20016,
-   "bytes2x": 50848,
-   "t": 9511,
-   "side": 1,
-   "marbles": 6
-  },
   "kirkjufell-block-falls": {
    "name": "Kirkjufell Block Falls",
    "series": "Blocks",

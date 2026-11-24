@@ -4,8 +4,8 @@
 // A big open bowl of a stadium on the city's edge, the plains of the national park beyond it, flat-topped acacias:
 // away from the gate on the clear start (the field let go in waves, gentle bends and nothing in the way for the
 // first seconds), out past the park over a steeplechase barrier and the hurdles, S-bends along the forest road off a speed pad, a lap of the
-// stadium, a full loop over the expressway, then the track's big feature: a steep spiral round a great acacia down onto the plains; across the
-// plains off a second speed pad and the home straight. Generic stands; no names.
+// stadium, a full loop over the expressway, off a second speed pad, then the track's big feature: a steep spiral round a great acacia down onto the plains,
+// and the home straight. Generic stands; no names.
 const { track, opening, straight, sweep, sBends, spiral, loop, runIn, peg, slalom, block, brake, boost } = require('../trackKit');
 
 module.exports = track({
@@ -13,7 +13,7 @@ module.exports = track({
   name: 'Nairobi Highlands Mile',
   family: 'athletics',
   difficulty: 'extreme',
-  description: 'Nairobi\'s big stadium at the edge of the plains: away from the gate in a pack, out past the park over the hurdles, along the forest road, a lap of the stadium, a loop over the expressway, then a steep spiral round a great acacia down onto the plains and across them to the line.',
+  description: 'Nairobi\'s big stadium at the edge of the plains: away from the gate in a pack, out past the park over the hurdles, along the forest road, a lap of the stadium, a loop over the expressway, then a steep spiral round a great acacia down onto the plains and the run to the line.',
   surface: 'tartan',
   biome: 'meadow',
   lighting: 'day',
@@ -22,11 +22,11 @@ module.exports = track({
   coaster: { style: 'concrete', colours: { support: '#a59d8f', rail: '#efe9dd', tie: '#b5452c' } },
   signature: 'Round the great acacia',
   tvCameras: [
-    // (At the foot of the spiral, looking back up at the field coming round the acacia.)
-    { section: 'Round the great acacia', at: 0.9, side: 'right', distance: 9, height: 9 },
-    { section: 'Along the forest road', at: 0.4, side: 'left', distance: 9, height: 10 },
+    // (Halfway down the spiral, looking back up at the field coming round the acacia.)
+    { section: 'Round the great acacia', at: 0.55, side: 'right', distance: 9, height: 9 },
+    { section: 'Loop over the expressway', at: 0.22, side: 'left', distance: 9, height: 9 },
   ],
-  start: { landmark: 'warm-up-track', type: 'water-tower', gate: 'stalls', shots: { countdown: 'crane', launch: 'low-chase' } },
+  start: { landmark: 'warm-up-track', type: 'straight-lift', gate: 'stalls', shots: { countdown: 'crane', launch: 'low-chase' } },
   finish: { landmark: 'medal-podium' },
   designChanges: [
     'Start shots that look down the track (30 Oct 2026, Moses): the lane numbers read the right way up only from behind the field, so no face-on countdown or look-back first seconds on Track and Field.',
@@ -39,7 +39,7 @@ module.exports = track({
       obstacles: [block({ costume: 'steeple-barrier', at: 0.2, line: 'left', loss: 0.15 }), slalom({ costume: 'hurdle', from: 0.45, to: 0.95, count: 4, loss: 0.3 })],
     },
     {
-      name: 'Along the forest road', shape: sBends({ first: 'left', radius: 70, degrees: 55, grade: 0.13 }), billboards: 1,
+      name: 'Along the forest road', shape: sBends({ first: 'left', radius: 70, degrees: 45, grade: 0.13 }), billboards: 1,
       features: [boost({ at: 0.08, kick: 4 })],
       obstacles: [peg({ costume: 'hurdle', at: 0.35, line: 'left' }), peg({ costume: 'hurdle', at: 0.6, line: 'right' }), peg({ costume: 'hurdle', at: 0.85, line: 'left' })],
     },
@@ -52,15 +52,13 @@ module.exports = track({
       name: 'Loop over the expressway', shape: straight(170, { grade: 0.13 }), height: 0,
       features: [brake({ at: 0.08, length: 12, drag: 0.02 }), loop({ at: 0.45, viewSide: 14 })],
     },
-    { name: 'Run to the plains', shape: straight(35, { grade: 0.13 }), billboards: 1 },
+    {
+      name: 'Run to the plains', shape: straight(35, { grade: 0.13 }), billboards: 1,
+      features: [boost({ at: 0.15, kick: 4 })],
+    },
     { name: 'Round the great acacia', shape: spiral({ side: 'left', radius: 42, turns: 1, grade: 0.2 }), around: 'acacia' },
     {
-      name: 'Across the plains', shape: straight(55, { grade: 0.12 }), billboards: 1,
-      features: [boost({ at: 0.12, kick: 4 })],
-      obstacles: [slalom({ costume: 'hurdle', from: 0.35, to: 0.9, count: 5, loss: 0.3 })],
-    },
-    {
-      name: 'Home straight', shape: straight(60, { grade: 0.12 }), stadium: true, billboards: 1,
+      name: 'Home straight', shape: straight(55, { grade: 0.12 }), stadium: true, billboards: 1,
       features: [brake({ at: 0.08, length: 10, drag: 0.02 })],
       obstacles: [peg({ costume: 'hurdle', at: 0.35, line: 'right' }), peg({ costume: 'hurdle', at: 0.6, line: 'left' })],
     },
