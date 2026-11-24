@@ -27,7 +27,7 @@ module.exports = track({
     { section: 'Down the fountain steps', at: 0.9, side: 'right', distance: 9, height: 8 },
     { section: 'Down to the harbour', at: 0.55, side: 'left', distance: 9, height: 9 },
   ],
-  start: { landmark: 'warm-up-track', type: 'clock-tower', gate: 'barrier', shots: { countdown: 'low-front', launch: 'overhead' } },
+  start: { landmark: 'warm-up-track', type: 'clock-tower', gate: 'stalls', shots: { countdown: 'above', launch: 'high-side' } },
   finish: { landmark: 'medal-podium' },
   designChanges: [
     'Start shots that look down the track (30 Oct 2026, Moses): the lane numbers read the right way up only from behind the field, so no face-on countdown or look-back first seconds on Track and Field.',
