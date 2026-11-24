@@ -321,6 +321,17 @@
    "side": 1,
    "marbles": 4
   },
+  "budapest-danube-arches": {
+   "name": "Budapest Danube Arches",
+   "series": "Track and Field",
+   "lighting": "day",
+   "v": "c040d9ed",
+   "bytes": 19998,
+   "bytes2x": 50414,
+   "t": 14609,
+   "side": 1,
+   "marbles": 6
+  },
   "buenos-aires-summer-christmas": {
    "name": "Buenos Aires Summer Christmas",
    "series": "Grand Prix",

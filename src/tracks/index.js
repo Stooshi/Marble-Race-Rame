@@ -101,6 +101,7 @@ module.exports = [
   require('./montreal-tower-run'),
   require('./paris-saint-denis-relay'),
   require('./rio-samba-relay'),
+  require('./budapest-danube-arches'),
   // Rivers (the first five, the test batch).
   // (In this order so no two tracks in a row start the same way: a test.)
   require('./mississippi-steamer-run'),
