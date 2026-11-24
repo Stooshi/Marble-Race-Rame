@@ -1520,6 +1520,17 @@
    "side": 1,
    "marbles": 5
   },
+  "nairobi-highlands-mile": {
+   "name": "Nairobi Highlands Mile",
+   "series": "Track and Field",
+   "lighting": "day",
+   "v": "833c6b0d",
+   "bytes": 21526,
+   "bytes2x": 57156,
+   "t": 10583,
+   "side": 1,
+   "marbles": 6
+  },
   "nairobi-marble-grand-prix": {
    "name": "Nairobi Marble Grand Prix",
    "series": "Grand Prix",

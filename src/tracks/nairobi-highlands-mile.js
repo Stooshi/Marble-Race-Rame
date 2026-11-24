@@ -26,7 +26,7 @@ module.exports = track({
     { section: 'Round the great acacia', at: 0.55, side: 'right', distance: 9, height: 9 },
     { section: 'Loop over the expressway', at: 0.22, side: 'left', distance: 9, height: 9 },
   ],
-  start: { landmark: 'warm-up-track', type: 'straight-lift', gate: 'stalls', shots: { countdown: 'crane', launch: 'low-chase' } },
+  start: { landmark: 'warm-up-track', type: 'observation-tower', gate: 'barrier', shots: { countdown: 'swing', launch: 'low-chase' } },
   finish: { landmark: 'medal-podium' },
   designChanges: [
     'Start shots that look down the track (30 Oct 2026, Moses): the lane numbers read the right way up only from behind the field, so no face-on countdown or look-back first seconds on Track and Field.',
