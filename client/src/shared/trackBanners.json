@@ -325,10 +325,10 @@
    "name": "Budapest Danube Arches",
    "series": "Track and Field",
    "lighting": "day",
-   "v": "222f2c57",
-   "bytes": 19828,
-   "bytes2x": 49892,
-   "t": 14597,
+   "v": "c040d9ed",
+   "bytes": 19998,
+   "bytes2x": 50414,
+   "t": 14609,
    "side": 1,
    "marbles": 6
   },
@@ -1189,6 +1189,17 @@
    "t": 11336,
    "side": 1,
    "marbles": 4
+  },
+  "kingston-blue-mountain-run": {
+   "name": "Kingston Blue Mountain Run",
+   "series": "Track and Field",
+   "lighting": "day",
+   "v": "1c6bfaee",
+   "bytes": 20016,
+   "bytes2x": 50848,
+   "t": 9511,
+   "side": 1,
+   "marbles": 6
   },
   "kirkjufell-block-falls": {
    "name": "Kirkjufell Block Falls",
