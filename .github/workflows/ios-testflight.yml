@@ -19,6 +19,11 @@ on:
         description: 'Upload to TestFlight (off: only build the signed .ipa)'
         type: boolean
         default: true
+      mac:
+        description: 'GitHub Mac to build on (if a run waits and is cancelled with "not acquired by Runner", pick another)'
+        type: choice
+        default: macos-26
+        options: [macos-26, macos-15, macos-15-intel]
 
 permissions:
   contents: write   # to commit a raised build number back to Main
@@ -29,7 +34,7 @@ concurrency:
 
 jobs:
   build:
-    runs-on: macos-26
+    runs-on: ${{ inputs.mac || 'macos-26' }}
     timeout-minutes: 60
     env:
       ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
@@ -55,6 +60,9 @@ jobs:
           for v in ASC_KEY_ID ASC_ISSUER_ID ASC_KEY_P8; do
             if [ -z "${!v}" ]; then echo "::error::The repository secret $v is missing (Settings → Secrets and variables → Actions)."; exit 1; fi
           done
+          # The newest Xcode 26 on this Mac (Apple has wanted uploads built with the iOS 26 SDK since April 2026).
+          X=$(ls -d /Applications/Xcode_26*.app 2>/dev/null | sort -V | tail -1)
+          if [ -n "$X" ]; then sudo xcode-select -s "$X/Contents/Developer"; else echo "::warning::No Xcode 26 on this Mac; using the default (App Store Connect may refuse an older SDK)."; fi
           xcodebuild -version
 
       - name: Install
