@@ -74,7 +74,7 @@ async function signing() {
   // The app id (bundle id) and its capabilities (the entitlements file asks for push and associated domains).
   const bundle = (await a.get(`/v1/bundleIds?filter[identifier]=${BUNDLE_ID}&limit=20`)).data.find((b) => b.attributes.identifier === BUNDLE_ID);
   if (!bundle) fail(`The bundle id ${BUNDLE_ID} isn't registered (developer.apple.com > Identifiers).`);
-  const have = new Set((await a.all(`/v1/bundleIds/${bundle.id}/bundleIdCapabilities?limit=50`)).map((c) => c.attributes.capabilityType));
+  const have = new Set((await a.all(`/v1/bundleIds/${bundle.id}/bundleIdCapabilities`)).map((c) => c.attributes.capabilityType));
   for (const cap of CAPABILITIES.filter((c) => !have.has(c))) {
     await a.post('/v1/bundleIdCapabilities', { data: { type: 'bundleIdCapabilities', attributes: { capabilityType: cap }, relationships: { bundleId: { data: { type: 'bundleIds', id: bundle.id } } } } });
     console.log(`Switched on ${cap} for ${BUNDLE_ID}`);

@@ -112,7 +112,13 @@ jobs:
           mkdir -p ~/.appstoreconnect/private_keys
           KEYFILE=~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8
           printf '%s\n' "$ASC_KEY_P8" > "$KEYFILE"
-          xcrun altool --upload-app -f "$RUNNER_TEMP/export/App.ipa" -t ios --apiKey "$ASC_KEY_ID" --apiIssuer "$ASC_ISSUER_ID" --output-format normal
+          if ! xcrun altool --upload-app -f "$RUNNER_TEMP/export/App.ipa" -t ios --apiKey "$ASC_KEY_ID" --apiIssuer "$ASC_ISSUER_ID" --output-format normal; then
+            echo "::warning::altool could not upload; trying Xcode's own upload."
+            sed 's#<string>export</string>#<string>upload</string>#' "${{ steps.signing.outputs.export_options }}" > "$RUNNER_TEMP/ExportUpload.plist"
+            xcodebuild -exportArchive -archivePath "$RUNNER_TEMP/MarbleSpins.xcarchive" -exportPath "$RUNNER_TEMP/upload" \
+              -exportOptionsPlist "$RUNNER_TEMP/ExportUpload.plist" \
+              -authenticationKeyPath "$KEYFILE" -authenticationKeyID "$ASC_KEY_ID" -authenticationKeyIssuerID "$ASC_ISSUER_ID"
+          fi
           rm -f "$KEYFILE"
 
       - name: Keep the .ipa
