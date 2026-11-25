@@ -150,7 +150,7 @@ jobs:
             else
               echo "Built and signed, not uploaded. The .ipa is in this run's Artifacts."
             fi
-            [ "${{ steps.version.outputs.bumped }}" = "true" ] && echo "The build number was raised to ${{ steps.version.outputs.build }} and committed to Main."
+            if [ "${{ steps.version.outputs.bumped }}" = "true" ]; then echo "The build number was raised to ${{ steps.version.outputs.build }} and committed to Main."; fi
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Revoke the run's certificate and profile
