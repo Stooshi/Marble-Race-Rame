@@ -1,0 +1,175 @@
+<!doctype html>
+<!-- The video recorder's page (development only; client/video/README.md). Its look comes from
+     template.json (recorder.js sets the colours, the font, the text's size and place and the mark's corner). -->
+<html><head><meta charset="utf-8"><title>Video recorder</title>
+<style>
+  @font-face { font-family: 'Lilita One'; src: url('../node_modules/@fontsource/lilita-one/files/lilita-one-latin-400-normal.woff2') format('woff2'); }
+  :root { --navy: #0E1320; --yellow: #FFD21F; --orange: #FF7A1A; --text: #F2F4F8; --font: 'Lilita One';
+          --text-size: 5.6vmin; --text-top: 7vh; --mark-size: 7vmin; --mark-margin: 3.2vmin; --mark-opacity: 0.92; }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: var(--navy); }
+  #view { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+  /* The one text style: one line, centred in the top band. */
+  #texts { position: absolute; left: 0; right: 0; top: var(--text-top); text-align: center; pointer-events: none; padding: 0 12vw; text-wrap: balance; }
+  #top { text-wrap: balance; }
+  /* (A small running line, e.g. a pack battle's "Lead changes: N": record.mjs sets its text, place and size.) */
+  #counter { position: fixed; left: 0; right: 0; top: var(--counter-top, 30vh); text-align: center; z-index: 6; opacity: 0;
+             font-family: var(--font), sans-serif; font-size: var(--counter-size, 4.6vmin); color: #FFD21F; letter-spacing: 0.02em;
+             text-shadow: 0 0 0.05em var(--navy), 0 0 0.1em var(--navy), 0 0.05em 0.14em rgba(0, 0, 0, 0.75), 0 0 0.5em rgba(0, 0, 0, 0.4); }
+  #top { font-family: var(--font), sans-serif; font-size: var(--text-size); color: var(--line, #FFFFFF); line-height: 1.1; letter-spacing: 0.01em;
+         /* (High contrast, Moses 30 Oct 2026: pure white, a tight dark outline and a soft shadow, so the line reads
+            on a pale sky, on dark ground and on a night stadium alike; it fades in quickly, never sitting half grey.) */
+         text-shadow: 0 0 0.04em var(--navy), 0 0 0.08em var(--navy), 0 0.05em 0.12em rgba(0, 0, 0, 0.7), 0 0 0.4em color-mix(in srgb, var(--navy) 80%, transparent), 0 0 1em rgba(0, 0, 0, 0.35); }
+  /* The mark, always in the same corner. */
+  #mark { position: absolute; width: var(--mark-size); height: var(--mark-size); opacity: var(--mark-opacity);
+          filter: drop-shadow(0 0.3vmin 0.6vmin color-mix(in srgb, var(--navy) 70%, transparent)); }
+  #mark.top-right { top: var(--mark-margin); right: var(--mark-margin); } #mark.top-left { top: var(--mark-margin); left: var(--mark-margin); }
+  #mark.bottom-right { bottom: var(--mark-margin); right: var(--mark-margin); } #mark.bottom-left { bottom: var(--mark-margin); left: var(--mark-margin); }
+  /* The podium card. */
+  #podium { position: absolute; right: 4vw; bottom: 7vh; width: 62vmin; opacity: 0; padding: 2.4vmin 2.8vmin; border-radius: 2.4vmin;
+            background: color-mix(in srgb, var(--navy) 88%, transparent); border: 0.25vmin solid var(--yellow); }
+  @media (orientation: portrait) { #podium { left: 6vw; right: 6vw; width: auto; bottom: 9vh; } }
+  #podium h2 { margin: 0 0 1.2vmin; font: 400 4.2vmin var(--font), sans-serif; color: var(--yellow); text-align: center; letter-spacing: 0.02em; }
+  .row { display: grid; grid-template-columns: 7vmin 6.4vmin 1fr auto; align-items: center; gap: 1.6vmin; padding: 1vmin 0; font-family: var(--font), sans-serif; color: var(--text); font-size: 3.4vmin; }
+  .row + .row { border-top: 0.15vmin solid color-mix(in srgb, var(--text) 14%, transparent); }
+  .place { color: var(--orange); } .r1 .place { color: var(--yellow); }
+  .ball { width: 5.6vmin; height: 5.6vmin; border-radius: 50%; box-shadow: inset -0.5vmin -0.6vmin 1.2vmin rgba(0,0,0,0.45), 0 0.3vmin 0.8vmin rgba(0,0,0,0.5); }
+  .who { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .time { color: var(--text); opacity: 0.8; font-variant-numeric: tabular-nums; }
+
+  /* ── The broadcast overlay (plans.mjs broadcast; template.json broadcast): our own look, navy panels, yellow and orange accents. ── */
+  #bc { position: absolute; inset: 0; pointer-events: none; opacity: 0; font-family: var(--font), sans-serif; color: var(--text); }
+  .panel { background: color-mix(in srgb, var(--navy) 90%, transparent); border-radius: 1.2vmin; box-shadow: 0 0.6vmin 1.8vmin rgba(0,0,0,0.35); }
+  #tower { position: absolute; left: 2.6vmin; top: 2.6vmin; width: 44vmin; overflow: hidden; }
+  #tower .head { display: flex; align-items: center; gap: 1.2vmin; padding: 1.1vmin 1.6vmin 1vmin; border-bottom: 0.35vmin solid var(--yellow); }
+  #tower .head .gp { color: var(--yellow); font-size: 2.5vmin; letter-spacing: 0.04em; }
+  #tower .head .city { font-size: 2.5vmin; letter-spacing: 0.04em; }
+  #tower .head .sec { margin-left: auto; font-size: 1.9vmin; color: var(--orange); letter-spacing: 0.06em; }
+  .trow { display: grid; grid-template-columns: 4.2vmin 2.6vmin 1fr 9.6vmin 2.2vmin; align-items: center; gap: 1.1vmin; height: 3.3vmin; padding: 0 1.4vmin 0 0; font-size: 2.15vmin; }
+  .trow + .trow { border-top: 0.12vmin solid color-mix(in srgb, var(--text) 9%, transparent); }
+  .trow .pos { height: 100%; display: grid; place-items: center; background: color-mix(in srgb, var(--text) 7%, transparent); font-variant-numeric: tabular-nums; }
+  .trow.p1 .pos { background: var(--yellow); color: var(--navy); } .trow.p2 .pos, .trow.p3 .pos { color: var(--yellow); }
+  .chip { width: 2.3vmin; height: 2.3vmin; border-radius: 50%; box-shadow: inset -0.25vmin -0.3vmin 0.6vmin rgba(0,0,0,0.45); }
+  .trow .nm { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: 0.01em; }
+  .trow .gap { text-align: right; font-variant-numeric: tabular-nums; opacity: 0.88; font-size: 1.95vmin; }
+  .trow .gap.lead { color: var(--yellow); opacity: 1; }
+  .arrow { font-size: 1.5vmin; text-align: center; }
+  .arrow.up { color: #36D27A; } .arrow.down { color: #FF5A4E; }
+  #clockP { position: absolute; top: 2.6vmin; right: calc(var(--mark-margin) + var(--mark-size) + 1.8vmin); padding: 1vmin 1.6vmin 1.2vmin; min-width: 33vmin; }
+  #clock { font-size: 4.2vmin; text-align: right; font-variant-numeric: tabular-nums; letter-spacing: 0.02em; line-height: 1; }
+  #clockP .lbl { font-size: 1.6vmin; color: var(--orange); letter-spacing: 0.08em; }
+  #sectors { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.8vmin; margin-top: 1vmin; }
+  .sector { border-top: 0.45vmin solid color-mix(in srgb, var(--text) 18%, transparent); padding-top: 0.6vmin; font-size: 1.9vmin; font-variant-numeric: tabular-nums; }
+  .sector .k { font-size: 1.5vmin; opacity: 0.7; letter-spacing: 0.06em; }
+  .sector.done { border-color: var(--yellow); } .sector.now { border-color: var(--orange); }
+  #replayTag { position: absolute; left: 50%; top: 2.6vmin; transform: translateX(-50%); padding: 0.8vmin 2.2vmin; background: var(--orange); color: var(--navy); border-radius: 0.8vmin; font-size: 2.4vmin; letter-spacing: 0.08em; display: none; }
+  .tag { position: absolute; transform: translate(-50%, -100%); padding: 0.35vmin 1vmin 0.35vmin 0.5vmin; display: flex; align-items: center; gap: 0.7vmin; white-space: nowrap;
+         background: color-mix(in srgb, var(--navy) 86%, transparent); border-radius: 0.7vmin; font-size: 1.7vmin; border-bottom: 0.3vmin solid var(--yellow); }
+  .tag b { font-weight: 400; color: var(--yellow); font-variant-numeric: tabular-nums; }
+  .tag::after { content: ''; position: absolute; left: 50%; bottom: -1.2vmin; width: 0.25vmin; height: 0.9vmin; background: var(--yellow); transform: translateX(-50%); }
+  /* The broadcast's captions: one at a time, the lower third, left (the pack runs through the middle). */
+  #cap { position: absolute; left: 4vw; bottom: 8vh; max-width: 60vw; opacity: 0; color: var(--text); font-family: var(--font), sans-serif;
+         padding: 1.5vmin 2.8vmin 1.6vmin 2.4vmin; border-left: 0.9vmin solid var(--yellow); font-size: 3.6vmin; letter-spacing: 0.01em; line-height: 1.15; }
+  #cap.big { font-size: 5.4vmin; letter-spacing: 0.06em; color: var(--yellow); border-left-color: var(--orange); }
+  /* The hook's big lines (centred, upper third), the contenders' markers and the rewind. */
+  #hook { position: absolute; left: 6vw; right: 6vw; top: 13vh; text-align: center; opacity: 0; font-family: var(--font), sans-serif; color: #fff; font-size: 8.2vmin; line-height: 1.05; letter-spacing: 0.01em;
+          text-shadow: 0 0 0.05em var(--navy), 0 0 0.1em var(--navy), 0 0.06em 0.16em rgba(0,0,0,0.75), 0 0 0.5em color-mix(in srgb, var(--navy) 80%, transparent); }
+  #hook em { font-style: normal; color: var(--yellow); }
+  #markers { position: absolute; inset: 0; pointer-events: none; }
+  /* abTall: the small line, and the big end card ("Play free", the address ~110 px tall in our yellow). */
+  #line { position: absolute; left: 6vw; right: 12vw; top: 46vh; text-align: center; opacity: 0; font-family: var(--font), sans-serif; color: #fff; font-size: 5vmin; line-height: 1.1;
+          text-shadow: 0 0 0.08em var(--navy), 0 0.06em 0.16em rgba(0,0,0,0.8); }
+  #endBig { position: absolute; left: 4vw; right: 10vw; top: 30vh; text-align: center; opacity: 0; font-family: var(--font), sans-serif; transform-origin: 50% 40%;
+            text-shadow: 0 0 0.06em var(--navy), 0 0.05em 0.14em rgba(0,0,0,0.75); }
+  #endBig1 { color: #fff; font-size: 8vmin; line-height: 1.1; }
+  #endBig2 { color: var(--yellow); font-size: 11vmin; line-height: 1.1; font-weight: 700; letter-spacing: 0.005em; -webkit-text-stroke: 0.06vmin var(--yellow); }
+  #endBig3 { color: #fff; font-size: 5.6vmin; line-height: 1.15; margin-top: 1.6vh; }
+  #dimFx { position: absolute; inset: 0; pointer-events: none; opacity: 0; background: var(--navy, #0e1320); }
+  .mk { position: absolute; border: 0.55vmin solid var(--yellow); border-radius: 50%; box-shadow: 0 0 0 0.35vmin rgba(14,19,32,0.6), 0 0 2.4vmin rgba(255,210,31,0.55); transform: translate(-50%, -50%); }
+  .mkl { position: absolute; transform: translate(-50%, -100%); padding: 0.6vmin 1.6vmin; background: var(--yellow); color: var(--navy); border-radius: 0.8vmin; font-family: var(--font), sans-serif; font-size: 3vmin; white-space: nowrap; }
+  #rewindFx { position: absolute; inset: 0; pointer-events: none; display: none;
+              background: repeating-linear-gradient(0deg, rgba(255,255,255,0.06) 0 2px, transparent 2px 6px), linear-gradient(90deg, rgba(14,19,32,0.35), rgba(14,19,32,0) 30%, rgba(14,19,32,0) 70%, rgba(14,19,32,0.35)); }
+  #rewindFx .ic { position: absolute; left: 4vw; top: 4vh; padding: 0.8vmin 2vmin; background: var(--orange); color: var(--navy); border-radius: 0.8vmin; font: 400 3.4vmin var(--font), sans-serif; letter-spacing: 0.06em; }
+  /* The intro card over the flyover. */
+  #intro { color: var(--text); font-family: var(--font), sans-serif; position: absolute; left: 6vw; bottom: 12vh; opacity: 0; padding: 2.4vmin 3.6vmin 2.6vmin; border-left: 1.1vmin solid var(--yellow); }
+  #intro .t { font-size: 6.4vmin; letter-spacing: 0.02em; line-height: 1.05; }
+  #intro .t em { font-style: normal; color: var(--yellow); }
+  #intro .s { margin-top: 1vmin; font-size: 2.8vmin; color: var(--orange); letter-spacing: 0.03em; }
+  /* The results board. */
+  #results { color: var(--text); font-family: var(--font), sans-serif; position: absolute; inset: 0; opacity: 0; background: color-mix(in srgb, var(--navy) 62%, transparent); }
+  #results .wrap { position: absolute; left: 5vw; right: 5vw; top: 7vh; bottom: 7vh; display: grid; grid-template-columns: 34% 1fr; gap: 2.4vw; }
+  #winner { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2.6vmin; overflow: hidden;
+            background: radial-gradient(ellipse at 50% 38%, #24305a 0%, var(--navy) 70%); border: 0.35vmin solid var(--yellow); border-radius: 1.6vmin; }
+  #winner .big { width: 30vmin; height: 30vmin; border-radius: 50%; box-shadow: inset -2.6vmin -3vmin 5vmin rgba(0,0,0,0.5), 0 2vmin 4vmin rgba(0,0,0,0.5); }
+  #winner .lab { padding: 0.6vmin 3vmin; background: var(--yellow); color: var(--navy); border-radius: 0.9vmin; font-size: 5.4vmin; letter-spacing: 0.08em; }
+  #winner .who { font-size: 4.4vmin; text-align: center; padding: 0 2vmin; }
+  #winner .tm { font-size: 3vmin; color: var(--orange); font-variant-numeric: tabular-nums; }
+  #board { display: flex; flex-direction: column; padding: 2vmin 2.4vmin; }
+  #board h2 { margin: 0; font: 400 4.6vmin var(--font), sans-serif; color: var(--yellow); letter-spacing: 0.04em; }
+  #board .sub { font-size: 2.3vmin; color: var(--orange); margin: 0.4vmin 0 1.4vmin; letter-spacing: 0.03em; }
+  .rrow { display: grid; grid-template-columns: 5vmin 2.6vmin 1fr 7vmin 11vmin 9vmin; align-items: center; gap: 1.4vmin; height: 3.15vmin; font-size: 2.15vmin; font-variant-numeric: tabular-nums; }
+  .rrow.hd { font-size: 1.6vmin; color: var(--orange); letter-spacing: 0.08em; height: 2.8vmin; border-bottom: 0.25vmin solid var(--yellow); }
+  .rrow + .rrow:not(.hd) { border-top: 0.12vmin solid color-mix(in srgb, var(--text) 9%, transparent); }
+  .rrow .c { text-align: center; } .rrow .r { text-align: right; } .rrow.w .pl { color: var(--yellow); }
+  /* The vertical cut (portrait): a compact tower and clock, bigger, clear of the bottom 20% and the right edge (the apps' buttons). */
+  @media (orientation: portrait) {
+    #tower { left: 3.2vmin; top: 3.2vmin; width: 62vmin; }
+    #tower .head .gp, #tower .head .city { font-size: 3.4vmin; }
+    .trow { grid-template-columns: 5.6vmin 3.4vmin 1fr 13vmin 2.8vmin; height: 4.6vmin; font-size: 3vmin; }
+    .trow .gap { font-size: 2.7vmin; }
+    .chip { width: 3.1vmin; height: 3.1vmin; }
+    .arrow { font-size: 2vmin; }
+    #clockP { top: 3.2vmin; right: calc(var(--mark-margin) + var(--mark-size) + 2vmin); min-width: 0; padding: 1.2vmin 2vmin; }
+    #clock { font-size: 5.4vmin; }
+    #clockP .lbl { font-size: 2.2vmin; }
+    #sectors { display: none; }
+    #hook { top: 30vh; left: 5vw; right: 9vw; font-size: 10vmin; }
+    .mkl { font-size: 4vmin; }
+    #rewindFx .ic { top: 24vh; left: 5vw; font-size: 4.4vmin; }
+    #replayTag { top: 26vh; }
+    #intro { top: 21vh; bottom: auto; left: 5vw; right: 12vw; padding: 1.6vmin 2.4vmin 1.8vmin; }
+    #intro .t { font-size: 5.6vmin; }
+    #intro .s:empty { display: none; }
+  }
+  /* raceTall: the results board of a vertical short (the first four: place, marble, gate, gap), clear of the bottom 20% and the right edge. */
+  #resT { position: absolute; left: 5vw; right: 13vw; top: 27vh; opacity: 0; font-family: var(--font), sans-serif; color: var(--text); padding: 2.4vmin 3vmin 2.6vmin;
+          background: color-mix(in srgb, var(--navy) 90%, transparent); border-radius: 1.8vmin; border-top: 0.7vmin solid var(--yellow); box-shadow: 0 1vmin 3vmin rgba(0,0,0,0.45); }
+  #resT h2 { margin: 0 0 1.4vmin; font: 400 6vmin var(--font), sans-serif; color: var(--yellow); letter-spacing: 0.05em; }
+  .tr4 { display: grid; grid-template-columns: 6vmin 5vmin 1fr auto; align-items: center; gap: 2vmin; height: 8.6vmin; font-size: 4.6vmin; font-variant-numeric: tabular-nums; }
+  .tr4 + .tr4 { border-top: 0.2vmin solid color-mix(in srgb, var(--text) 14%, transparent); }
+  .tr4 .ps { color: var(--orange); text-align: center; } .tr4.w .ps { color: var(--yellow); }
+  .tr4 .ch { width: 4.6vmin; height: 4.6vmin; border-radius: 50%; box-shadow: inset -0.5vmin -0.6vmin 1vmin rgba(0,0,0,0.45); }
+  .tr4 .nm { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.05; }
+  .tr4 .nm small { display: block; font-size: 2.9vmin; color: var(--orange); letter-spacing: 0.03em; }
+  .tr4 .gp { text-align: right; } .tr4.w .gp { color: var(--yellow); }
+</style></head>
+<body>
+<canvas id="view"></canvas>
+<div id="texts"><div id="top"></div></div>
+<div id="counter"></div>
+<svg id="mark" class="top-right" viewBox="-120 -120 240 240" aria-hidden="true">
+  <defs><radialGradient id="mk" cx="35%" cy="30%" r="75%"><stop offset="0%" stop-color="#FFFFFF" /><stop offset="28%" stop-color="#FFD21F" /><stop offset="100%" stop-color="#E8580C" /></radialGradient></defs>
+  <path d="M 104 0 A 104 104 0 0 1 52 90" fill="none" stroke="#FF7A1A" stroke-width="14" stroke-linecap="round" />
+  <path d="M -104 0 A 104 104 0 0 1 -52 -90" fill="none" stroke="#FFD21F" stroke-width="14" stroke-linecap="round" />
+  <circle cx="0" cy="0" r="80" fill="url(#mk)" />
+  <path d="M -64 16 C -34 -46 34 -50 62 -16" fill="none" stroke="#FFFFFF" stroke-opacity="0.9" stroke-width="15" stroke-linecap="round" />
+</svg>
+<div id="bc">
+  <div id="tower" class="panel"><div class="head"><span class="gp" id="tGp"></span><span class="city" id="tCity"></span><span class="sec" id="tSec"></span></div><div id="trows"></div></div>
+  <div id="clockP" class="panel"><div class="lbl" id="clockLbl"></div><div id="clock">0:00.000</div><div id="sectors"></div></div>
+  <div id="replayTag"></div>
+  <div id="tags"></div>
+</div>
+<div id="cap" class="panel"></div>
+<div id="markers"></div>
+<div id="rewindFx"><div class="ic">◀◀ REWIND</div></div>
+<div id="dimFx"></div>
+<div id="line"></div>
+<div id="endBig"><div id="endBig1"></div><div id="endBig2"></div><div id="endBig3"></div></div>
+<div id="hook"></div>
+<div id="intro" class="panel"><div class="t" id="introT"></div><div class="s" id="introS"></div></div>
+<div id="results"><div class="wrap"><div id="winner"><div class="lab" id="wLab"></div><div class="big" id="wBall"></div><div class="who" id="wWho"></div><div class="tm" id="wTm"></div></div>
+  <div id="board" class="panel"><h2 id="rTitle"></h2><div class="sub" id="rSub"></div><div id="rrows"></div></div></div></div>
+<div id="resT"><h2 id="resTt"></h2><div id="resTr"></div></div>
+<div id="podium"><h2 id="podiumTitle">Podium</h2><div class="rows"></div></div>
+<script type="module" src="./recorder.js"></script>
+</body></html>

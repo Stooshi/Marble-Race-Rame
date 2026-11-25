@@ -1,0 +1,288 @@
+// The video recorder (client/video/README.md): draws a race frame by frame in a headless browser
+// through the recorder page (recorder.html: the game's own drawing and cameras), adds the texts,
+// the podium, the logo and the end card, mixes the game's music and race sounds under it and writes
+// an MP4 at 60 fps.
+//   node video/record.mjs <slug> <race> --kind production|cutdown [--format wide|tall] [--tune 7]
+//                         [--logo A] [--out <file.mp4>] [--from <s> --to <s>] (a part only, for checks)
+// <race>: a race file written by scripts/video-race.js (client/dev/.tracks/<race>.json).
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import { spawn, execFileSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
+import { createServer } from 'vite';
+import { chromium } from 'playwright-core';
+import { TEMPLATE, TEXTS, SOUNDS, LANDS } from './assets.mjs';
+import * as PLANS from './plans.mjs';
+import { soundTimes } from './collisions.js';
+
+const here = path.dirname(fileURLToPath(import.meta.url));
+const FPS = 60;
+const SIZES = { wide: [1920, 1080], tall: [1080, 1920] };
+const TUNE_SECONDS = { 1: 71.316542, 3: 43.139458, 4: 37.716083, 5: 30.733125, 6: 50.521917, 7: 48.228708, 8: 27.382583, 9: 27.513625, 10: 54.095521, 11: 53.579333, 12: 32.22, 13: 28.548729, 14: 28.138437 };
+const BEEPS_GO_S = 3.023;
+const log = (...m) => console.log('[record]', ...m);
+
+/** The line of text at video second v and its opacity (the template's fades). */
+function textAt(texts, v) {
+  const { fadeInSeconds: fin, fadeOutSeconds: fout } = TEMPLATE.text;
+  for (const x of texts) {
+    const u = v - x.at;
+    // (cut: shown at full strength from its first frame to its last, no fades, the next line straight after it;
+    // the chase's lines, Moses 19 Nov 2026: text from the first frame, readable at every change.)
+    if (u < 0 || u > x.dur || (x.cut && u >= x.dur)) continue;
+    const k = x.cut ? 1 : Math.min(1, u / fin, (x.dur - u) / fout);
+    return { top: x.top, opacity: k * k * (3 - 2 * k) };
+  }
+  return null;
+}
+
+/** The sound under the video: the game's own files, placed in video time, mixed and levelled. */
+export function mix(plan, length, { tune }, file) {
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'mix-'));
+  try {
+    // The tune, cut to its exact loop length (as the game loops it), so it repeats with no gap.
+    const loop = path.join(tmp, 'tune.wav');
+    execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-i', SOUNDS.tune(tune).file, '-t', String(TUNE_SECONDS[tune]), '-ar', '48000', '-ac', '2', loop]);
+    const inputs = [];
+    const parts = [];
+    const add = (src, { at, dur = null, offset = 0, gain = 1, fadeIn = 0, fadeOut = 0, loop: looped = false, lift = null }) => {
+      if (at < 0) { offset += -at; if (dur !== null) dur += at; at = 0; } // (a sound that starts before the video, e.g. the beeps under a short countdown: only its rest is heard)
+      if (dur !== null && dur <= 0) return;
+      const k = parts.length;
+      inputs.push(...(looped ? ['-stream_loop', '-1'] : []), '-i', src);
+      const span = dur ?? 3600;
+      let f = `[${k}:a]aresample=48000,aformat=channel_layouts=stereo,atrim=${offset}:${offset + span},asetpts=PTS-STARTPTS`;
+      if (fadeIn) f += `,afade=t=in:st=0:d=${fadeIn}`;
+      if (fadeOut && dur) f += `,afade=t=out:st=${Math.max(0, dur - fadeOut)}:d=${fadeOut}`;
+      f += `,volume=${gain},adelay=${Math.round(at * 1000)}:all=1`;
+      // (Lifted at the big moments: t here is video time, after the delay.)
+      if (lift) f += `,volume='if(${lift.expr},${lift.k.toFixed(4)},1)':eval=frame`;
+      f += `[s${k}]`;
+      parts.push(f);
+    };
+    const s = plan.sound;
+    const T = TEMPLATE.sound;
+    // The music, lifted a little (the template's liftDb) at the big moments.
+    const lift = 10 ** (T.liftDb / 20);
+    const lifted = (s.lifts ?? []).map(([a, b]) => `between(t,${a.toFixed(2)},${b.toFixed(2)})`).join('+');
+    for (const [a, b] of s.music ?? []) add(loop, { at: a, dur: b - a, gain: s.musicGain ?? T.musicGain, fadeIn: s.loop ? 0.05 : 0.8, fadeOut: s.loop ? 0.15 : (s.musicFadeOut ?? 1.2), offset: s.loop ? 8 : 0, loop: true, lift: lifted ? { expr: lifted, k: lift } : null }); // (a loop: the music in from its first frame, out at its last, so the end runs into the start)
+    if (s.teaserMusic) add(loop, { at: s.teaserMusic[0], dur: s.teaserMusic[1] - s.teaserMusic[0], offset: 8, gain: T.musicGain * lift, fadeOut: 0.35, loop: true });
+    if (s.beeps && s.goAt !== null) add(SOUNDS.beeps.file, { at: s.goAt - BEEPS_GO_S, dur: BEEPS_GO_S + 0.9, gain: 0.9, fadeOut: 0.15 });
+    if (s.goAt !== null && s.goAt !== undefined) add(SOUNDS.launch.file, { at: s.goAt, dur: 5, gain: 1.6 });
+    if (s.ceremony) add(SOUNDS.ceremony.file, { at: s.ceremony[0], dur: s.ceremony[1] - s.ceremony[0], gain: 0.55, fadeIn: 0.4, fadeOut: 1.5 });
+    // The signature sound: intro A's whoosh as the mark lands, on the intro and on every end card.
+    for (const x of s.extra ?? []) add(SOUNDS[x.key].file, { at: x.at, dur: x.dur ?? 2, gain: x.gain ?? 1, fadeOut: x.fadeOut ?? 0.3 });
+    for (const sh of plan.shots.filter((x) => x.type === 'logo' || x.type === 'end')) {
+      const peak = LANDS[sh.type === 'logo' ? sh.version : TEMPLATE.intro.logo] ?? 1;
+      add(SOUNDS.whoosh.file, { at: sh.at + Math.max(0, peak - SOUNDS.whoosh.peak), offset: Math.max(0, SOUNDS.whoosh.peak - peak), dur: 2.2, gain: SOUNDS.whoosh.gain, fadeOut: 0.5 });
+    }
+    const n = parts.length;
+    const graph = `${parts.join(';')};${Array.from({ length: n }, (_, k) => `[s${k}]`).join('')}amix=inputs=${n}:normalize=0:duration=longest,atrim=0:${length},apad=whole_dur=${length},loudnorm=I=${TEMPLATE.sound.loudnessLufs}:TP=-1.5:LRA=11[out]`;
+    execFileSync('ffmpeg', ['-y', '-loglevel', 'error', ...inputs, '-filter_complex', graph, '-map', '[out]', '-ar', '48000', '-c:a', 'pcm_s16le', file]);
+  } finally {
+    fs.rmSync(tmp, { recursive: true, force: true });
+  }
+}
+
+export async function record({ variant = 'A', opening = 'old', text = null, slug, race: raceName, kind = 'production', format = 'wide', tune = 7, logo = TEMPLATE.intro.logo, out, from = null, to = null, fly = null, stills = null, clip = null, at = null, promoStart = null, hits: wantHits = false }) {
+  fly ??= kind === 'clip' ? 12 : kind === 'broadcast' ? 4.5 : 15; // (seconds: the flyover's length)
+  const [W, H] = SIZES[format];
+  const race = JSON.parse(fs.readFileSync(path.join(here, '..', 'dev', '.tracks', `${raceName}.json`), 'utf8'));
+  const server = await createServer({ root: path.resolve(here, '..'), logLevel: 'error', server: { port: 0, strictPort: false, fs: { allow: [path.resolve(here, '..', '..', '..'), fs.realpathSync(path.resolve(here, '..', 'node_modules'))] } } }); // (allow: a worktree whose node_modules link to another checkout still loads the fonts)
+  await server.listen();
+  const { port } = server.httpServer.address();
+  const browser = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
+  const silent = path.join(os.tmpdir(), `rec-${process.pid}-video.mp4`);
+  const audio = path.join(os.tmpdir(), `rec-${process.pid}-audio.wav`);
+  try {
+    const page = await browser.newPage({ viewport: { width: W, height: H }, deviceScaleFactor: 1 });
+    page.on('pageerror', (e) => log('page error:', e.message));
+    page.on('crash', () => { log('the page crashed'); process.exit(2); });
+    await page.goto(`http://localhost:${port}/video/recorder.html?${new URLSearchParams({ track: slug, race: raceName, fly: String(fly * 1000) })}`);
+    await page.waitForFunction(() => window.rec, null, { timeout: 300_000 });
+    await page.evaluate(() => window.rec.ready);
+    const info = await page.evaluate(() => window.rec.info());
+    // (The track's series, from the track picker's list: the broadcast's cards name it on tracks outside the Grand Prix.)
+    const series = JSON.parse(fs.readFileSync(path.join(here, '..', 'src', 'shared', 'trackBanners.json'), 'utf8')).banners?.[slug]?.series ?? null;
+    const plan = PLANS[kind](info, race, { logo, fly, clip, at, promoStart, variant, slug, opening, series, text });
+    // (The plan beside the video: swap-logo.mjs uses it to put another logo version in.)
+    fs.writeFileSync(`${out}.plan.json`, JSON.stringify({ slug, race: raceName, kind, format, tune, logo, length: plan.length, marks: plan.marks, resultsTall: plan.resultsTall, shots: plan.shots, sound: plan.sound, texts: plan.texts, captions: plan.captions, hooks: plan.hooks, lines: plan.lines, endBig: plan.endBig, dim: plan.dim, markers: plan.markers, bc: plan.bc, intro: plan.intro, results: plan.results }));
+    // (A collision montage's shot: the hits in it, for its clicks; collisions.js.)
+    const hits = wantHits || plan.sound.raceHits ? await page.evaluate((o) => window.rec.hits(o), { from: plan.marks.from, to: plan.marks.from + plan.marks.raceMs, members: plan.marks.members, ...(plan.marks.near && { near: plan.marks.near }) }) : null;
+    // (A teaser: the game's click and bump on the pack's hits as they happen, under the music; race ms → video s from GO.)
+    if (plan.sound.raceHits) {
+      const C = TEMPLATE.collisionMontage;
+      const k = TEMPLATE.teaser?.hitGain ?? 0.55;
+      plan.sound.extra = [...(plan.sound.extra ?? []), ...soundTimes(hits, { from: plan.marks.from ?? 0, gap: C.gapSeconds }).map((h) => ({ key: h.kind === 'bump' ? 'bump' : 'hit', at: plan.marks.goAt + h.v, dur: 0.4, fadeOut: 0.05, gain: k * (C.clickGain.soft + (C.clickGain.hard - C.clickGain.soft) * h.k) * (h.kind === 'bump' ? C.bumpGain : 1) }))];
+      log(`  ${plan.sound.extra.length} clicks and bumps in the race`);
+    }
+    log(`${info.name}: ${kind} ${format}, ${plan.length.toFixed(1)} s, ${plan.shots.length} shots; winner ${info.podium[0].name} (gate ${info.podium[0].gate}) by ${info.margin} ms${plan.packShare !== undefined ? `; the race ${Math.round(plan.packShare * 100)}% on the pack` : ''}`);
+    for (const sh of plan.shots) log(`  ${sh.at.toFixed(1).padStart(6)} s  ${(sh.type + (sh.follow !== undefined && sh.follow !== 'leader' ? ` #${sh.follow}` : sh.type === 'race' ? ' lead' : '')).padEnd(10)} ${sh.from !== undefined ? `race ${Math.round(sh.from)} ms` : ''} ${sh.speed && sh.speed !== 1 ? `×${sh.speed}` : ''} ${sh.dur.toFixed(1)} s`);
+    // (A teaser: no mark in the corner, nothing over the race.)
+    if (plan.noMark) await page.evaluate(() => { document.getElementById('mark').style.display = 'none'; });
+    // (A plan's own text place and size, and where the mark sits: e.g. inside TikTok's and Reels' safe area.)
+    if (plan.textStyle) await page.evaluate((st) => {
+      const r = document.documentElement.style;
+      for (const [k, v] of Object.entries(st.vars ?? {})) r.setProperty(k, v);
+      Object.assign(document.getElementById('mark').style, st.mark ?? {});
+      Object.assign(document.getElementById('texts').style, st.box ?? {});
+    }, plan.textStyle);
+    // The rows on the podium card.
+    await page.evaluate(([title]) => { document.getElementById('podiumTitle').textContent = title; }, [TEXTS.podiumTitle]);
+    const rows = info.podium.map((r) => ({ name: r.name, look: r.look, ms: r.ms }));
+    if (plan.bc) await page.evaluate((o) => window.rec.setBroadcast(o), { city: plan.city.toUpperCase(), towerTitle: process.env.VIDEO_TOWER_TITLE ?? plan.towerTitle ?? 'GRAND PRIX', ...(plan.tall && { towerRows: plan.tall.towerRows, compact: true }) });
+    // (The broadcast's overlay, intro card and results board at video second v: shown with short fades.)
+    const fade = (v, a, d, fin = 0.3, fout = 0.3) => Math.max(0, Math.min(1, (v - a) / fin, (a + d - v) / fout));
+    const overlayAt = (v) => {
+      if (!plan.bc) return null;
+      const span = plan.bc.find(([a, b]) => v >= a && v < b);
+      const k = span ? fade(v, span[0], span[1] - span[0], 0.35, 0.3) : 0;
+      return {
+        bc: { opacity: k, label: span?.[2]?.label ?? null },
+        intro: plan.intro ? { k: fade(v, plan.intro.at, plan.intro.dur, 0.5, 0.6), title: plan.intro.title, sub: plan.intro.sub } : null,
+        results: plan.results ? { k: fade(v, plan.results.at, plan.results.dur, 0.6, 0.6), ...plan.results } : null,
+        resultsTall: plan.resultsTall ? { k: fade(v, plan.resultsTall.at, plan.resultsTall.dur, 0.2, 0.2), ...plan.resultsTall } : null,
+        line: (() => {
+          const h = (plan.lines ?? []).find((x) => v >= x.at && v < x.at + x.dur);
+          return h ? { k: fade(v, h.at, h.dur, 0.15, 0.15), text: h.text } : { k: 0, text: '' };
+        })(),
+        endBig: plan.endBig && v >= plan.endBig.at ? { k: Math.min(1, (v - plan.endBig.at) / 0.18), l1: plan.endBig.l1, l2: plan.endBig.l2, l3: plan.endBig.l3 ?? '' } : { k: 0 },
+        dim: plan.dim && v >= plan.dim.at ? plan.dim.k * Math.min(1, (v - plan.dim.at) / plan.dim.fin) : 0,
+        hook: (() => {
+          const h = (plan.hooks ?? []).find((x) => v >= x.at && v < x.at + x.dur);
+          return h ? { k: h.at === 0 ? Math.min(1, (h.at + h.dur - v) / 0.12) : fade(v, h.at, h.dur, 0.12, 0.12), text: h.text } : { k: 0, text: '' };
+        })(),
+        markers: plan.markers && v >= plan.markers.at && v < plan.markers.at + plan.markers.dur ? { k: fade(v, plan.markers.at, plan.markers.dur, 0.2, 0.15), members: plan.markers.members } : { k: 0, members: [] },
+        rewind: plan.rewind && v >= plan.rewind.at && v < plan.rewind.at + plan.rewind.dur ? 1 : 0,
+        caption: (() => {
+          const c = (plan.captions ?? []).find((x) => v >= x.at && v < x.at + x.dur);
+          return c ? { k: fade(v, c.at, c.dur, 0.25, 0.3), text: c.text, big: c.key === 'photoFinish' } : { k: 0, text: '' };
+        })(),
+      };
+    };
+    // The logo and end card from their own page, the same size.
+    const card = await browser.newPage({ viewport: { width: W, height: H }, deviceScaleFactor: 1 });
+    // (The Marble Spotlight's close-up: its own page on the same server, the marble in the shop's own 3D look.)
+    let spot = null;
+    if (plan.spot) {
+      spot = await browser.newPage({ viewport: { width: W, height: H }, deviceScaleFactor: 1 });
+      spot.on('pageerror', (e) => log('spotlight page error:', e.message));
+      await spot.goto(`http://localhost:${port}/video/spotlight.html?${new URLSearchParams({ look: plan.spot.look })}`);
+      await spot.waitForFunction(() => window.ready, null, { timeout: 120_000 });
+    }
+    const cardFor = async (q) => { await card.goto(`file://${path.join(here, 'logo.html')}?${new URLSearchParams(q)}`); await card.evaluate(() => window.ready); };
+
+    const enc = spawn('ffmpeg', ['-y', '-loglevel', 'error', '-f', 'image2pipe', '-framerate', String(FPS), '-c:v', 'mjpeg', '-i', '-',
+      '-c:v', 'libx264', '-preset', 'medium', '-crf', '18', '-pix_fmt', 'yuv420p', '-r', String(FPS), silent], { stdio: ['pipe', 'inherit', 'inherit'] });
+    const done = new Promise((resolve, reject) => enc.on('close', (c) => (c ? reject(new Error(`ffmpeg ${c}`)) : resolve())));
+    const write = (buf) => new Promise((resolve) => { if (enc.stdin.write(buf)) resolve(); else enc.stdin.once('drain', resolve); });
+    const v0 = from ?? 0;
+    const v1 = Math.min(to ?? plan.length, plan.length);
+    let frames = 0;
+    const started = Date.now();
+    let cardKey = null;
+    // --stills: only these video seconds, each as a JPEG (for checking the picture), no MP4.
+    // (--stills shots: the middle of every shot.)
+    if (stills === 'shots') stills = plan.shots.map((x) => +(x.at + x.dur / 2).toFixed(2));
+    const list = stills ? stills.map((x) => Math.round(x * FPS)) : null;
+    const first = Math.round(v0 * FPS);
+    for (let i = list ? list[0] : first; list ? i !== undefined : i < Math.round(v1 * FPS); i = list ? list[list.indexOf(i) + 1] : i + 1) {
+      const v = i / FPS;
+      const sh = plan.shots.find((x) => v >= x.at && v < x.at + x.dur) ?? plan.shots[plan.shots.length - 1];
+      const u = v - sh.at;
+      let shot;
+      if (sh.type === 'spin') {
+        const first = plan.shots.find((x) => x.type === 'spin');
+        await spot.evaluate((t) => window.spotAt(t), v - first.at);
+        shot = await spot.screenshot({ type: 'jpeg', quality: 92 });
+      } else if (sh.type === 'logo' || sh.type === 'end') {
+        const key = sh.type === 'logo' ? `logo-${sh.version}` : 'end';
+        if (cardKey !== key) {
+          await cardFor(sh.type === 'logo' ? { v: sh.version } : { v: TEMPLATE.intro.logo, end: '1', l1: (plan.endLines ?? TEXTS.endCard)[0], l2: (plan.endLines ?? TEXTS.endCard)[1] });
+          cardKey = key;
+        }
+        await card.evaluate((t) => window.logoAt(t), Math.min(u + (sh.skip ?? 0), 1.99)); // (skip: join the card part-way, its lines already in)
+        shot = await card.screenshot({ type: 'jpeg', quality: 92 });
+      } else {
+        const t = sh.type === 'fly' ? (u / sh.dur) * fly * 1000 : sh.from + u * 1000 * (sh.speed ?? 1);
+        const step = (1000 / FPS) * Math.abs(sh.speed ?? 1) || 1000 / FPS; // (a frozen or rewinding shot: the cameras still ease a frame at a time)
+        const ov = overlayAt(v);
+        const pod = plan.podium && v >= plan.podium.at ? Math.min(1, (v - plan.podium.at) / 0.5) * Math.min(1, Math.max(0, (plan.podium.at + plan.podium.dur - v) / 0.4)) : 0;
+        await page.evaluate(([s, t, step, text, pod, rows, ov]) => {
+          const r = window.rec;
+          r.text(text ?? { opacity: 0 });
+          r.podium(pod, rows);
+          if (s.type === 'fly') r.flyover(t);
+          else if (s.type === 'race') r.race(t, { step, follow: s.follow ?? 'leader' });
+          else if (s.type === 'group') r.group(t, { step, members: s.members, shot: s.shot, back: s.back, up: s.up, ahead: s.ahead, side: s.side, fov: s.fov });
+          else {
+            const eye = s.eye.from ? s.eye : r.eye(s.eye);
+            if (s.type === 'look') r.look(t, eye);
+            else r.pan(t, { from: eye.from, follow: s.follow, members: s.members, fov: s.fov ?? eye.fov ?? 32, saveAim: s.saveAim, useAim: s.useAim, ...(s.lead !== undefined && { lead: s.lead }) });
+          }
+          if (ov) {
+            r.broadcast(s.type === 'fly' ? -1e9 : t, { ...ov.bc, captionOn: ov.caption.k > 0 });
+            r.caption(ov.caption.k, ov.caption.text, { big: ov.caption.big });
+            r.hook(ov.hook.k, ov.hook.text);
+            r.markers(ov.markers.k, ov.markers.members);
+            r.rewind(ov.rewind);
+            r.dim?.(ov.dim);
+            r.line?.(ov.line.k, ov.line.text);
+            r.endBig?.(ov.endBig.k, ov.endBig.l1, ov.endBig.l2, ov.endBig.l3);
+            if (ov.intro) r.intro(ov.intro.k, ov.intro);
+            if (ov.results) r.results(ov.results.k, ov.results);
+            if (ov.resultsTall) r.resultsTall(ov.resultsTall.k, ov.resultsTall);
+          }
+        }, [{ type: sh.type, eye: sh.eye, follow: sh.follow, fov: sh.fov, members: sh.members, saveAim: sh.saveAim, useAim: sh.useAim, shot: sh.shot, back: sh.back, up: sh.up, ahead: sh.ahead, side: sh.side, lead: sh.lead }, t, step, textAt(plan.texts, v), pod, rows, ov]);
+        if (plan.counter) {
+          const c = plan.counter.find((x) => v >= x.at && v < x.at + x.dur);
+          await page.evaluate((c) => { const el = document.getElementById('counter'); el.textContent = c?.text ?? ''; el.style.opacity = c ? '1' : '0'; }, c ?? null);
+        }
+        shot = await page.screenshot({ type: 'jpeg', quality: 92 });
+      }
+      if (list) { fs.writeFileSync(`${out.replace(/\.mp4$/, '')}-${v.toFixed(2)}.jpg`, shot); frames += 1; continue; }
+      await write(shot);
+      frames += 1;
+      if (frames % 600 === 0) log(`  ${(v).toFixed(1)} s of ${v1.toFixed(1)} (${((Date.now() - started) / frames).toFixed(0)} ms a frame)`);
+    }
+    if (list) { enc.kill(); done.catch(() => {}); return { plan, info }; }
+    enc.stdin.end();
+    await done;
+    // The sound, then both together.
+    mix(plan, plan.length, { tune }, audio);
+    execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-i', silent, '-ss', String(v0), '-t', String(v1 - v0), '-i', audio,
+      '-map', '0:v', '-map', '1:a', '-c:v', 'copy', '-c:a', 'aac', '-b:a', '192k', '-movflags', '+faststart', '-shortest', out]);
+    // (A loop: the last moments fade into the first picture, so the video runs on into its start.)
+    if (plan.loopFade && v0 === 0 && v1 >= plan.length - 0.01) {
+      const tmp = `${out}.loop.mp4`;
+      const first = `${out}.first.png`;
+      const L = plan.length;
+      const f = plan.loopFade;
+      execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-i', out, '-frames:v', '1', first]);
+      execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-i', out, '-loop', '1', '-framerate', String(FPS), '-t', String(L), '-i', first, '-filter_complex',
+        `[1:v]format=rgba,fade=t=in:st=${(L - f).toFixed(3)}:d=${f}:alpha=1[ov];[0:v][ov]overlay=shortest=1,format=yuv420p[x]`,
+        '-map', '[x]', '-map', '0:a', '-c:v', 'libx264', '-crf', '18', '-preset', 'medium', '-r', String(FPS), '-c:a', 'copy', '-movflags', '+faststart', tmp]);
+      fs.renameSync(tmp, out);
+      fs.rmSync(first, { force: true });
+    }
+    log(`wrote ${out}: ${(v1 - v0).toFixed(1)} s, ${frames} frames in ${((Date.now() - started) / 60000).toFixed(1)} min`);
+    return { out, plan, info, hits };
+  } finally {
+    for (const f of [silent, audio]) fs.rmSync(f, { force: true });
+    await Promise.race([Promise.all([browser.close(), server.close()]), new Promise((r) => setTimeout(r, 10_000))]);
+  }
+}
+
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  const args = process.argv.slice(2);
+  const [slug, race] = args.filter((a, i) => !a.startsWith('--') && !(i > 0 && args[i - 1].startsWith('--')));
+  const opt = (n, d) => (args.includes(`--${n}`) ? args[args.indexOf(`--${n}`) + 1] : d);
+  const num = (n) => (opt(n, null) === null ? null : Number(opt(n)));
+  await record({
+    slug, race, kind: opt('kind', 'production'), format: opt('format', 'wide'), tune: Number(opt('tune', 7)), logo: opt('logo', TEMPLATE.intro.logo),
+    variant: opt('variant', 'A'), opening: opt('opening', 'old'), text: { hook: opt('hook', null), curve: opt('curve', null), feature: opt('feature-line', null), line: opt('line', null), end: opt('end', null), dur: num('dur'), lead: num('lead') }, clip: opt('clip', null), at: num('at'), fly: num('fly'), promoStart: num('promos'),
+    out: opt('out', path.join(process.cwd(), `${slug}-${opt('kind', 'production')}-${opt('format', 'wide')}.mp4`)), from: num('from'), to: num('to'), stills: opt('stills', null) === 'shots' ? 'shots' : opt('stills', null)?.split(',').map(Number) ?? null,
+  });
+  process.exit(0); // (the browser and the dev server can keep the process waiting after closing)
+}

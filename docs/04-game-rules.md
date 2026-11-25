@@ -1,0 +1,295 @@
+# 4. Game and economy rules (plain English)
+
+*Last updated 22 Nov 2026.* The numbers live in `client/src/shared/economy.json` and `client/src/shared/marbles/catalog.json`. If this page and those files ever disagree, the files are right; then update this page.
+
+## The golden rules
+
+1. **Race results never change.** Once a race is decided, its result, and the replay of how it ran, stay the same forever. No code change, track edit or physics tuning may alter a past race. Tests (race fingerprints) guard this.
+2. **Looks never change speed.** Marbles, shades, collection items, showcase looks, billboards, scenery, lighting, sound and the 3D drawing are all cosmetic. The race engine never receives them.
+3. **Money never buys speed.** Coins and coin packs only buy looks. A season pass buys access to tracks and a coin bonus that never counts on a scoreboard, never speed.
+4. **Every coin is accounted for.** Every coin movement is a line in the coin ledger, and the ledger always adds up to the balance.
+
+## How a race is decided
+
+1. **The lobby.** A race is created with up to 20 places. Players join with their marble (the look they race in; the code's Shooter). Joining is free: coin entry fees were switched off on 14 Oct 2026.
+2. **The decision**, made once, on the server, when the race leaves the lobby:
+   - A random **seed** is drawn.
+   - Empty places are filled with **computer players**, up to the race size. They are always marked as computer players (a small robot icon, "Computer player"), have a fun made-up name from a fixed list (no real people or brands) and, unless they wear a showcase marble, a plain starter-style look (one colour or two half and half) that no one else in the race shows. Names and looks are worked out from the race when it is shown, never stored, and never given to the race engine.
+   - The seed alone decides the computer players' skills, the lanes and the timing of moving obstacles.
+   - The whole race is then simulated, start to finish.
+   - The finishing order, times and halfway splits are written to the database straight away. The API keeps them hidden until the race has finished.
+3. **The countdown** (5 s), then the race is **streamed** to everyone watching at 10–20 frames a second. Viewers only see positions; their device can't affect anything.
+   - **The start show** (26 Oct 2026; looks only, the race itself unchanged): a solo race started from the starting line shows the track card until everything is loaded, a 4 s flyover, a helicopter overview (tap to skip; `FLYOVER_ON`): the whole track from the side, high up and all but still, then one slow move in to the track's highlight (its signature section), then a slow glide down to the gate when it fits, otherwise a cut to the gate; then the countdown from its beginning: "Your gate N" for 2 s, a big 3-2-1 with its beeps, "GO!" with the gates opening and the standings appearing. The solo player's view stays that far behind the race on the server, never playing faster to catch up. Quick race and rooms (server deploy needed): the race counts down 4 s longer (`RACE_START_SHOW_MS`), the flyover over those first 4 s in sync for everyone, the scene built during the wait; a late joiner joins where the show is; skipping is only on your own screen. In Quick race the only real player can tap START NOW to start at once (computer players fill the rest).
+4. **The finish.**
+   - The race is marked finished and coins are paid in the same transaction.
+   - Solo players may race again straight away. A group moves on to a rematch on the same track (about 40 s later).
+   - In a friend room, the next race is set up automatically for everyone in the room. A quick race is one race: its room closes and the results offer "Quick race again" (25 Oct 2026).
+
+**Two engines:**
+- **New physics** (`tracks.physics` set; every current and new track). A real 3D physics simulation of marbles in a channel with obstacles, boosts, splitters and gates. The complete race is saved, so the engine can be tuned later without changing old races.
+- **Classic** (older tracks with no physics settings). A simpler engine whose races are re-created from the seed, which is why that engine must never change.
+
+**A race is between 20 and 90 seconds.** New tracks are designed so the winner finishes in about 48–55 s and the last marble in at most 85 s.
+
+## Skill
+
+- **Every player races at the same level (the rule for launch, decided 14 Oct 2026).** Every player's marble races at skill 50, whatever it looks like and however long they've played. The race itself decides who wins: the track, the start, the bumps and the bounces.
+- **Computer players** are spread a little around the players (skill 45–55), so the field isn't identical and the races stay close.
+- **How skill works in the engine:** skill is a number from 1 to 100 stored per player (`users.skill`). It sets all four marble stats (top speed, acceleration, handling, luck) to the same value. A higher skill would mean a slightly faster marble with fewer losses on walls and knocks.
+- **Skill belongs to the player, not the marble** (12 Oct 2026). Every marble in a bag races the same; coins were refunded for marbles bought for their strength.
+- **After launch:** a growth rule (skill rising with races played, on a curve that flattens, with matched fields) will be considered again using real data. Until then nothing changes a player's skill. Every text says "every player races at the same level"; don't promise growth anywhere.
+- A race keeps each entry's stats as they were (`race_entries.snap_*`), so a future change to skills never changes a past race.
+
+## Coins
+
+There is one currency: **coins**. They can be earned by racing or bought in coin packs. They are spent only in the shop and can never be cashed out, exchanged or transferred.
+
+**Earning:**
+
+| What | Coins |
+|---|---|
+| Starting coins (new account, guests too) | 650 |
+| Taking part in a race | 15 |
+| Finishing bonus | 1st 50 · 2nd 30 · 3rd 20 · 4th–10th 5 each · 11th–20th 0 |
+| Daily goal: 5 races in a day (once a day) | 35 |
+| **Daily limit:** after the first 10 races of the day | each race pays 5 in total (no taking-part or finishing pay) |
+| Streak (days in a row with the daily goal) | shown only (in the header, `▲ 3`, once there is one; on the home screen); pays nothing |
+
+Days run midnight to midnight **UTC**. Friend-room races pay like any race and count towards the same daily limit, so rooms can't be used to farm coins. Computer players are never paid.
+
+**Buying (coin packs):**
+
+| Pack | Website | Apps (US) | Coins |
+|---|---|---|---|
+| `coins-5000` | $5 | $4.99 | 5,000 |
+| `coins-10500` (marked popular) | $10 | $9.99 | 10,500 |
+| `coins-27500` | $25 | $24.99 | 27,500 |
+| `coins-57500` | $50 | $49.99 | 57,500 |
+
+(In the apps each store shows its own price in the player's currency; Google Play's product ids use _ instead of -.)
+
+- **On the web:** Stripe Checkout shows the price in the player's own currency, with VAT included.
+- **Coins arrive only** when Stripe confirms the payment.
+- **Before paying,** the player must agree to immediate delivery and the loss of the 14-day withdrawal right; the exact text is stored with the order.
+- **Refunds and chargebacks** take back the matching share of the coins, or whatever is left if some were spent.
+- **In the apps,** purchases go through the stores: Google Play on Android, the App Store on iPhone. The server checks each purchase (with Google; with Apple's signature) before adding coins, once. Inside the apps, coins are never sold any other way, and the apps never show or link to the website's prices.
+- **App Store refunds** are Apple's: the player asks Apple (we can't refund an App Store purchase). Apple's signed notification then takes the coins back, like any refund.
+
+**Gift codes** (21 Oct 2026; **switched off** until `client/src/shared/giftCodes.json` says enabled):
+- Made in the back office for a creator, a campaign or a giveaway (every code carries that tag), worth a number of coins (up to 100,000) or a season's pass. Single-use, or multi-use up to a limit; each has an expiry date; any code can be switched off.
+- Redeemed on the website only, on **Redeem a code** (`/redeem`, linked from Settings), by a **saved account** (a guest saves first). Each account can use a code once. Never in the apps: Apple doesn't allow an app's own codes to unlock content (App Store guideline 3.1.1), so the apps show no field and no link; what was redeemed works in the apps, because the pass and coins are also sold there through the stores (guideline 3.1.3(b)).
+- **Coins from a code count as bought coins** (ledger kind `gift-code`): in `coins_bought`, **never on the scoreboards**.
+- A pass from a code is like a bought one (the season marble too), but only while its season hasn't ended, and not for a player who already has that pass (the code isn't used up then). It has no payment, so it can't be refunded or withdrawn from.
+- Codes are free: never sold, never exchanged for money. Redeeming is limited to 10 tries per 15 minutes per account (30 per address).
+
+**Scoreboards** rank players by coins **earned** racing. Bought coins never count. The boards are season, all-time, and friends. **The season board** follows the season in the `seasons` table that is on (the Holiday Season 2026: 1 Dec 2026 to 7 Jan 2027, 23:59 Swedish time), counting coins earned between its start and its end; once it has ended it shows the final standings until the next season starts. Before the first season (and when no season is on or has ended) there is no season board or season label, and the scoreboards open on all-time. (A numbered season in `economy.json` → `season` is used only when the table has none.)
+
+**Season badges.** When a season ends, the top 100 by coins earned in it get its badge ("Holiday Season 2026", with their final rank) on their profile and in their Marble Bag. Ties go to the player who reached the total first. Only earned coins count: never bought coins or the Holiday Track of the Day bonus. The server gives the badges by itself within an hour of the end; nothing is deployed on the night.
+
+## The shop and the collection
+
+**Collection 1, Schoolyard Classics (code SC):** 10 designs in 5 shades (Classic, Ocean, Forest, Berry, Sunset), so 50 marbles. More collections are announced as "coming soon": Handmade Heritage (HH), Moonies & Glow (MG), Art Glass (AG). Limited editions use the code LE.
+
+**Marble IDs:** two letters for the collection, then the design number (01–10), then the shade number (1–5). For example, SC105 is design 10 in shade 5 (Sunset). The shop finds a marble by its ID however it's typed.
+
+**Prices by rarity (coins):**
+
+| Rarity | Price |
+|---|---|
+| Common | 1,000 |
+| Uncommon | 2,500 |
+| Rare | 6,000 |
+| Epic | 12,000 |
+| Legendary | 25,000 |
+| Limited (Northern Lights, the launch edition) | 25,000 |
+
+A seasonal collection has its own prices per rarity (below). A season pass's marble is never sold.
+
+**Limited editions:** sold only in their sale window or until their numbered copies are sold, then never again; every copy numbered, with a First Edition certificate. Bags never contain them.
+- **Northern Lights** (LE011), the launch edition: 500 copies (#001–#500) at 25,000 coins, on sale from 1 Dec 2026 00:00 to 31 Dec 2026 23:59 Swedish time (`limited.saleStartsAt` / `saleEndsAt` in the catalogue).
+- Before its window the shop shows it as "Coming 1 December — limited to 500" without a buy button; after the window or once sold out, "Sold out". The server refuses any purchase outside the window, whatever the screen shows.
+- Gifts from support (back office) are not sales: they get a gift number, never one of the 500.
+
+**Kinds of collection** (catalog.json → `collections`, by the two letters of the Marble IDs): the live **standard** collection (Schoolyard Classics, SC), **limited** editions (LE), **seasonal** collections and a **season pass's marble**. Only the standard collection is in bags and on the computer players in beginner races.
+
+**Seasonal collections:** on sale from their release to their retirement at their own prices per rarity, then **retired**: never sold again; owners keep theirs, and they race normally. The shop shows them on the **Seasonal** shelf ("Coming 1 December · on sale until 7 January", then "Leaving in N days"); after retirement they leave the shop, and the Marble Bag and the certificate show "Retired 7 Jan 2027". The server refuses a sale outside the window, whatever the screen shows (409 before, 410 after). The first 500 of each are a numbered First Edition, as for every marble.
+- **Winter 2026** (WI011–WI051), for the Holiday Season: Snowball (Common, 800 coins), Frost Clearie (Common, 800), Candy Cane (Uncommon, 2,000), Evergreen (Rare, 4,500), Midwinter Star (Epic, 9,000), one shade each. On sale 1 Dec 2026 00:00 to 7 Jan 2027 23:59 Swedish time.
+
+**A season pass's marble:** never sold; only the season's pass holders get it, the moment the pass is granted, numbered in the order the passes were granted ("Holiday 2026 #0001", certificate "Holiday Season 2026 pass edition"). An open edition: no fixed size, it closes when the pass stops being sold. A pass refunded in full or charged back takes the marble back (its number is never handed out again); a player who still holds the pass another way keeps it. An hourly job gives it to any pass holder still without it.
+- **Winter Solstice** (HS011), the Holiday Season 2026 pass marble: deep blue glass, a frosted star burst at its heart, snowflakes drifting through it.
+
+**Bags:** the buyer chooses the shade.
+- **Starter Bag:** the 3 Commons at 15% off.
+- **Full Collection Bag:** all 10 designs at 30% off.
+- Prices round to the nearest 100. If the player already owns some marbles in a bag, the discount applies to the ones still missing.
+
+**No loot boxes.** Every purchase is a chosen item; nothing is random.
+
+**First Editions:**
+- The first **500** copies bought of every marble are numbered #001–#500. A limited edition is numbered through its whole run.
+- Each numbered copy gets a **First Edition certificate** showing the serial number, first owner, date and the copy's race record.
+- After 500, the marble stays on sale **unnumbered**, with a Marble ID card instead.
+- Gifts from support have their own numbering and never use up a First Edition number.
+
+**One copy each:** a player can own one copy of each marble.
+
+**Your marble** is the marble a player races in (the game says "your marble" since 31 Oct 2026; the code and the database still call it the Shooter, `shooter`).
+
+**Starter marbles** (since 20 Oct 2026; replaced the 4 shared ones): every player, guest or saved, gets **4 starter marbles of their own** when the account is made (older players the first time they need them). Plain glass from 12 clearly different colours (`client/src/shared/marbles/starters.json`): one in one colour and three in two colours, half and half, all different; two colours of one marble always clearly differ. Each has its own Marble ID (`ST` + 5 characters + 1–4) and certificate. Never sold. Looks only: they never change a race.
+- **In a race no two players show the same starter look.** A player without a collection Shooter races their Shooter starter (or their first); if someone in the race already shows that look, they get their own next starter. Only when all 4 are shown already does an earlier player waiting in the race move to another of theirs. (In 20,000 simulated races of 20 new players, everyone always got one of their own, all different.)
+- So any number of new players fit in one race or friend room (before: 4).
+
+**Showcase marbles:**
+- In beginner races, the computer players wear collection marbles, so new players see what exists.
+- A beginner race is one where every player has finished fewer than 20 races.
+- The mix per race: about 6 Common or Uncommon, 3 Rare or Epic and 1 Legendary.
+- The looks are chosen separately from the race and never affect it. The fairness report checks that every rarity wins its fair share.
+
+## Fairness checks
+
+Every track must pass a **full report** (`npm run report -- <slug>`) before it is switched on. The report runs 3 batches of 1,000 races and checks:
+
+| Check | Target |
+|---|---|
+| Wins per group of 4 starting places | 17–23% each (no lane advantage) |
+| Average finishing place per group | 10.2–10.8 |
+| Strongest five marbles' share of wins | 35–50%; the weakest five win at least 8%, and the strongest win at least twice as often |
+| Median winner's time | 48–55 s (new designs) |
+| Slowest marble home | at most 85 s, never over 90 s |
+| Median gap from winner to last | at most 18 s |
+| Overtakes per race (median) | at least 60 |
+| Splitters | each channel's share of wins within 5 points of its share of marbles, and at most half a place gained or lost |
+| Obstacles | each group's share of hits within 5 points of fair; no hop over 1.2 m |
+| Showcase looks | each rarity wins its share (chi-square test, p above 0.001) |
+| Sameness | layout not too close to another track (fails at 0.80 similarity, 0.70 when key sections match); start looks different; the first 20 seconds (what the field races through after the gate) not too close to another track's (fails at 0.80; held for every track from Bislett Mile on), and no start part straight after the gate on two tracks in a row |
+| Safety | the same seed gives the same race; the database matches the track file; the race fingerprints are unchanged |
+| Drawing | no scenery inside the track (up to 2.5 m above the rim); nothing within 0.5 m of the follow camera; the finish camera's picture clear on two phones and a computer; ground and phone drawing load within budget. Also a test on every track (not in the report, 25 Oct 2026): the drawn channel has no holes, phone and computer, also where the finish cutaway passes (`client/src/three/floorCheck.js`) |
+
+Reports are saved in `reports/<slug>/`. Track design rules:
+- bends long and flowing, with at most one sharp bend per track;
+- **every new track starts clear** (Moses, 21 Nov 2026; the kit's `clear-start` opening, first on Rome Monte Mario Drop): no obstacles, splitters, pegs or drops in the first part of the race (gentle bends only, roughly the first 10–15 s or 300 m), so the field stays a pack; the obstacles come after that, and the fairness checks still pass. Older tracks keep their openings;
+- a race needs its luck: the openings without the pile-up and slalom (clean drop, peg drop, pipe drop) let the field go in **waves** (five waves of four starting places, 0.3 s apart, in a new order every race); a track that opens without the pile-up and slalom and without the waves has a pile-up or a hard slalom (5+ gates, loss 0.3) in its first half;
+- TV moments (looks only): up to two trackside cameras a track cuts to as the followed marble comes up to them (from about 70 m out, cutting back 6 m before the camera: about 2.6 s), never in the first 8 s or the last 150 m; viewers can switch them off (the TV button). Since 30 Oct 2026 (Moses): the cameras stand 2 m higher wherever the scenery leaves room and aim a little up the track; in **about every other race** (picked from the field, the same live, in rooms and in the replay) a camera between 35% and 70% of the way (else the one nearest the middle, 25–78%) instead shows the **pack shot**: the first bunch of **at least 5 marbles** within 20 m of each other coming up to it, framed whole, about 3 s, cutting back 6 m before the camera; no such bunch, no pack shot that race. The player finds their marble by its arrow (no ring since 30 Oct 2026, Moses: the arrow is enough); during the pack shot a label shows where the player stands ("Leader +1.8 s", "7th, in the pack", "12th, 3.4 s behind") for up to 2.6 s;
+- the loop (the track kit's `loop`, available since 2 Nov 2026, approved by Moses; its first tracks are Saint-Tropez and Pudong Marble Grand Prix, built switched off on 3 Nov 2026 and live since 4 Nov; the third, Nairobi Marble Grand Prix's Expressway loop, with its own layout (built 7 Nov, live since 8 Nov 2026); proven on its test track `variety-layout-loop-run`): a roller-coaster loop, not a circle: its curve tightens steadily from nothing at the bottom to its tightest at the top (a clothoid; 6 m radius at the top, 19 m tall), leaning 11 m aside so the way down passes beside the way in, then a 40 m run-out back in line. A launch pad wall to wall before it brings every marble up to at least 25 m/s (the recipe checks that the hardest-gliding marble still comes over the top with 1.5 g of pull to spare). Round it the floor holds the marble as long as the curve's pull beats gravity; one that ever loses its hold (too slow over the top, or stalling on the way up) drops into a net hung inside the loop, which lets it out onto the way down: back on the track, never off it, slower than the rest. Its walls are low round the loop (the floor holds the marble in the middle), so the marbles show from beside it; the follow camera swings out beside the loop, level, and watches its marble go round. The recipe allows one a track, on a straight of grade 0.05–0.2, with 30 m of the straight before its pad, 15 m after it and nothing else within 15 m. **A track with a loop needs extra overtaking room after it** (the loop is ridden in single file; the test track came out exactly at 60 overtakes): a longer run-out or an overtaking section right after it, aiming clearly above 60 overtakes in its full report (about 65 or more).
+- the racing look (looks only, every kit track in every series, 30 Oct 2026): chequered start and finish lines; short, muted red-and-white kerbs on the inside of the 3 sharpest bends; 3 sets of muted off-white chevrons on the longest straights of 45 m or more (2, or 1, where a track has fewer), never within 15 m of a speed pad, so they never look like boosts; Track and Field keeps its white start line, the chequer at its finish only, no kerbs or chevrons;
+- tracks sit in the ground like a trench, raised only where they drop away or cross;
+- at least 35 of the 50 launch tracks must be truly unique (mirrors count towards the 50).
+
+**Sameness over every track** (Moses, 6 Nov 2026): the sameness check also runs on every live and hand-built track at once (`test/samenessAllTracks.test.js`). A track not on its `KNOWN` list must pass every sameness line; a listed track may fail only its listed lines; the list only shrinks (16 tracks on 8 Nov 2026).
+
+**Records on a re-laid track** (Moses, 6 Nov 2026; `src/game/recordsSince.js`): a live track whose layout changes keeps its slug, and the data update that puts the new layout in sets `tracks.records_since`. From then on only races finished since count for its track record, its country records and each player's personal bests on it (time, halfway split, best place). Past results and replays stay as they ran (old races replay on their stored copy of the track), and the record replays of both layouts are kept.
+
+## Friend rooms
+
+- The host creates a room and shares its link (`/r/CODE`). Friends join, as guests if they need to.
+- The host picks the track and starts each race. Empty places fill with computer players, up to 20.
+- **Start timer** (25 Oct 2026): instead, the host can tap "Start in…" 30 s, 1 min or 2 min. Everyone in the room, and anyone opening the link, sees the countdown; at zero the server starts the race, even if the host's app has closed. The host can start early (Start now) or cancel the countdown; a new choice replaces the old one.
+- After a race, the next one is set up with everyone still in the room. There is no chat.
+- A room closes after 2 hours without a race.
+- **Private or public** (25 Oct 2026): a new room is private (only people with the link or code, as before). The host can make it public when creating it or in the waiting room (and back): a public room is listed under "Join a race" on Race with friends (track, players such as 4/20, the countdown if one runs), and anyone can join with a tap, guests too. Full and started rooms drop off the list, and a quick race in its last 3 seconds. The host can take a player out, and they can't join that room again.
+- **Quick race** (25 Oct 2026): always public, one tap. If a quick race starting soon has a free place, the player joins it; otherwise a new one opens on a random track and starts by itself 15 s later (computer players fill it to 20), and others tapping Quick race join it until its last 3 seconds. The player doesn't pick the track; a quick race has no host (nobody changes the track, starts it early or takes players out). It is one race: afterwards "Quick race again". If everyone leaves before it starts, it isn't run.
+- **Race solo** is unchanged: only the player and computer players, on the track they pick.
+- **Same rules everywhere:** no chat; names are filtered and can be reported; the start timer; coins as any race; limits per player on joining rooms (60 in 10 minutes) and Quick race (30 in 10 minutes), and on making rooms (10 an hour).
+- **Season tracks in rooms:** a host with the season pass can pick a season track, and everyone in the room races it, pass or not ("hosted by a pass holder"). A host without the pass sees season tracks locked. If the host's pass is refunded, the room's next race goes back to a random free track.
+
+## Leagues
+
+Built 27 Oct 2026 (Leagues v1 part 1), **on for everyone since 27 Oct 2026** (`LEAGUES` on Railway: `off`, `admins` to test, `on`). Plan: project doc `claude/leagues-v1-build-plan.md`; decisions 25–26 Oct 2026.
+
+- **A League:** a saved player picks a name, **3 different tracks** (the free taster league, Moses 31 Oct 2026; 5 before then, and leagues made before keep their 5), how long it runs (**1 to 7 days**, from now) and the **tries per track** (unlimited, 3, 5 or 10), and shares its link (`/l/CODE`). The name goes through the same filter as player names; the creator can rename the league at any time (the pencil next to its name). Guests are asked to save their marble first. A creator can have **5 leagues open** at once; anyone can be in any number. Up to **50 players**; the creator can add players by name and take them out (they can't come back). Free, for fun: no league marble, nothing toward the Major League.
+- **Racing:** each try is a solo race on one of the league's tracks, with computer players filling the field to 20, decided and paid exactly like any race (coins and the daily full-pay races as usual). A try counts from the moment the race is made; a cancelled race, or one left waiting over 10 minutes, gives the try back. A race made before the league ends counts even if it finishes just after. After a league race, "Race it again" makes the next try from the league (never a plain rematch), and the result says "New best!" when it beat the player's best on that track in the league.
+- **Scoring:** each player's **best time on each track**; their **total** is the sum of the five bests, ranked once all five are done (players still racing are listed below them, by tracks done). The lowest total wins; on the same total, **whoever set it first** ranks higher.
+- **The end:** at its end time the league closes by itself (checked every minute) and its final places are frozen. The creator can **Run again**: a new league with the same tracks, length and tries, and the same players (a league made with 5 tracks runs again with its first 3).
+- **The taster line** (Moses, 31 Oct 2026), on the create page and under a free League that has ended: "Start with a free taster league: 3 races with friends." Once Pro Leagues are on (`pro` in `GET /api/leagues/status`), it goes on: "Ready for more? Go Pro: 10 tracks and a league marble."
+- **League Night** (the slim version): the creator sets a date and time inside the league's days (at least 5 minutes ahead) and 3 to 5 races (moved or called off until its first race starts), or starts it now: its room opens at once and race 1 starts by itself 2 minutes later. A League Night button by the league's name takes everyone to it (Join League Night while it's on). 15 minutes before, a league room opens: only the league's players can join it. The races run one after another on the league's tracks in order: the first at the time set, each next one 90 seconds after the one before finishes, each starting by itself (the creator, its host, can start one early once everyone's in; the track and who can join can't change). Points for each place among the league's players: 10, 8, 6, 5, 4, 3, 2, 1 for the first eight; computer players score nothing. The most points wins the night; on the same points, most race wins, then the better place in the last race. Its own scoreboard on the league's page, live and after. It never uses tries and never changes the league's scoreboard; its races pay coins like any race. A race nobody is in isn't run: the night ends there.
+- **Holiday tracks:** only a pass holder can put them in a league; the league's players then race them there without the pass (as in a pass holder's room). Before 1 Dec nobody can.
+- **Later (part 2, after 1 Nov, behind `LEAGUES_PRO`):** credits, the Pro League (10 tracks), the league marble and the Major League.
+
+## Seasons and the season pass
+
+A season (the first: **Holiday Season 2026**, `holiday-2026`, 1 Dec 2026 00:00 to 7 Jan 2027 23:59 Swedish time) has its own tracks and a pass. Everything follows the season's dates in the `seasons` table, so nothing is deployed on any day of the season (`src/seasons`).
+
+**Who races a season's tracks** (`tracks.season_key`), checked by the server on every request that puts a marble on a track (creating or joining a race, a rematch, a room's track), not only in the pickers:
+- **Before the season starts:** nobody (the tracks may already be switched on).
+- **During the season:** pass holders, and everyone in a friend room whose host has the pass. Anyone else gets "This track is in the Holiday Season pass".
+- **After it ends:** everyone, free. They join the random pick like any track.
+- **Watching** races and replays on season tracks is open to everyone.
+- **The public random pick** never picks a locked season track. Pass holders get **Holiday races** (`POST /api/races { season }`): a random season track each race, the Holiday Track of the Day one race in three.
+
+**The Holiday Track of the Day:** each day of the season (Swedish calendar day) one season track is featured (`seasons.featured`). On it, a pass holder's **full-pay races** (the first 10 of the day) pay **+50% of the race's coins** (taking part and the finishing bonus) as a separate ledger line, `featured-bonus`. After the day's full races there is no bonus. The bonus is **neither earned nor bought**: it never counts on the scoreboards or in a player's earned coins (decided 17 Oct 2026: it comes with a paid pass, and money never buys a place on a scoreboard). Free players see the Holiday Track of the Day locked with "Get the pass".
+
+**The pass** (`holiday-pass-2026`, $9.99): real money only, never coins. Its terms are section 2 of the terms of sale (`/legal#season-pass`); the Help Centre's "Season pass" category answers the common questions (its dates and price are written there, kept in step with the season's row).
+- **On the web:** Stripe Checkout (test mode until Moses says otherwise), with an immediate-delivery consent of its own ("I want my pass delivered right away…"; in the pre-sale "I want my pass to activate on 1 December. Until then I can cancel it for a full refund…"), stored with the payment like a coin pack's. The pass arrives only when Stripe's signed webhook confirms the payment, once.
+- **On Android:** Google Play; the server checks the purchase with Google and **acknowledges** it (a pass is kept, never consumed). A purchase made outside the sale window, or a second pass while holding one, is not taken and left unacknowledged, so Google refunds it by itself within 3 days.
+- **On iPhone:** the App Store, a non-consumable in-app purchase. The server checks Apple's signature, this player and the sale window; a pass bought outside the window, or a second one, is not given (Apple can't be asked by us to refund: the player asks Apple, and the back office sees it flagged). "Restore purchases" on the pass page gives back a pass the player already has, never a second.
+- **Sold** from `pass_sale_starts_at` (**28 Nov 2026 00:00 Swedish time**, 72 hours before the season: the pre-sale, decided 19 Oct, replacing "no pre-sale") to the season's end, with an "ends in N days" countdown from 1 Jan. The server refuses a sale outside the window, or a second pass. The sale start is a date, the same on the website, the App Store and Google Play (each store purchase is checked by its own purchase time).
+- **A season's tracks before the season:** switched on ahead of time, they are still closed to everyone (pass holders too) and left out of the track list (the picker, the website's track pages and track count) until the season's start; they appear and open by themselves then, with nothing deployed. Only the pass page counts them before ("All 31 holiday tracks").
+- **The pre-sale (28 Nov to 1 Dec):** a pass bought then is the player's at once (and its season marble, numbered in order), but it **activates on 1 Dec 00:00**: the holiday tracks, the Holiday Track of the Day bonus and holiday rooms follow the season's `starts_at`, for every holder at once, never the purchase. The pass page, Stripe's checkout and the app's purchase screen say "Activates 1 December" with a countdown; the account (Settings, Purchases) says "Holiday Season Pass 2026 — activates 1 December". A buyer who asks for a refund before 1 Dec gets it in full (back office for Stripe and Google Play; Apple refunds its own), and the refund revokes the pass as any full refund does.
+- **Test purchases before the sale starts** (for App Review and our testers, decided 18 Oct): an Apple sandbox or TestFlight purchase, a Google Play licence tester's test purchase (`purchaseType` 0), or a Stripe purchase in test mode by a tester account (`PASS_TESTERS`, emails) is accepted before the sale starts, never after it ends. Tester accounts see the pass on sale early, marked as a test purchase. Real (production) purchases stay refused until the sale starts, 28 Nov 2026 00:00 Swedish time.
+- **Before the sale opens** the pass page shows the price ($9.99 on the website; the store's own price in the apps) and **"Remind me when sales open"**: a player gets a reminder in the game, and by email to their account's address only if they tick it; a visitor (or a guest) gives an email address and ticks a consent box (unticked by default: one email, no newsletter, cancel any time). The exact consent text is stored. **Double opt-in** (decided 19 Oct): an email reminder goes only to an address confirmed from a confirmation email; a player's verified account email would count as confirmed, but accounts have no email check yet, so players confirm too. Unconfirmed 7 days after the confirmation email: a visitor's reminder is deleted, a player's keeps only the in-game one. **Sending is built but off** until `BREVO_API_KEY` and `PASS_REMINDERS_SENDING=on` are set on Railway (Moses says go): then the confirmation emails go out before the sale (every 5 minutes), one reminder email to each confirmed address once the sale opens (28 Nov 00:00), and players who asked see an "on sale now" notice above the page until they close it. Emails are in English (English only for now, 21 Oct 2026; the Swedish texts are kept for later); every one has a cancel link and works with mail apps' unsubscribe button. The reminders are deleted 30 days after the sale opens, when cancelled, or with the account. The page shows the reminder form only when the server supports it (otherwise just the price and date).
+- **One pass works everywhere:** bought on one platform, owned on all.
+- **No coins move:** a pass payment is a row in `payments` with 0 coins and its `season_key`.
+- **Withdrawal online (21 Oct 2026, EU rules):** a pass bought in its pre-sale can be withdrawn from until it activates: **Withdraw from this purchase** on the Purchases page, then **Confirm withdrawal**. The website (Stripe) and Android (Google Play) ones are refunded in full from there; the pass goes when the refund comes back. Bought in the iPhone app: the page says to ask Apple. Coin packs, and a pass bought once the season has started, have no button: they are delivered at once with the buyer's agreement that this ends the right of withdrawal. `payments.withdrawn_at` records it; an acknowledgement email follows once email is on.
+- **Emails (once email is on):** a confirmation of each website purchase with the order, the price and the exact words agreed to at checkout (`payments.consent_text`), and an acknowledgement of each withdrawal (`src/payments/emails.js`). In-app purchases get the store's receipt.
+- **Receipts and credit notes** (16 Nov 2026, CRM phase 1; `src/billing`): every paid website (Stripe, live mode) purchase gets a receipt numbered K-<year>-00001 onwards, and every refund or chargeback of one a credit note KR-<year>-00001 onwards; each series unbroken per year (Swedish time), issued in the same database step as the coins or their taking back, and never changed afterwards (the document is frozen as issued). They show the seller (company name, org. no, VAT no, address, support email), the buyer (name, email), the item, VAT by rate and country (from Stripe Tax) and the totals; what they show and the monthly export's columns are settings (`src/billing/layout.js`) until the accountant answers D1–D3. The purchase email links the receipt (`/purchases/receipt/<number>`); credit notes are emailed by themselves. Google Play and App Store purchases get none (the store is the seller). The books' SEK amounts and Stripe's fee come from Stripe's balance transactions (filled every 5 minutes).
+- **A full refund or a chargeback** revokes the pass: the season's tracks lock again for that player until the season ends, and the season marble (Winter Solstice) is taken back. Partial refunds leave the pass.
+- **What the website says during the season** (Moses, 21 Oct 2026): "Free to play — holiday tracks need the Holiday Pass" replaces "Every race is free" from 1 Dec to 7 Jan (`client/src/shared/holidayWording.js`; the pre-rendered pages get it from the season-start rebuild). The pass's featured track is called the **Holiday Track of the Day** everywhere (the signed-in home's own daily pick stays "Track of the day").
+- **The season marble** comes with the pass ("Kinds of collection" above).
+
+## Wildness
+
+**Wildness** (Moses, 11 Nov 2026) says how chaotic a track's races are: how much the order shuffles, how often marbles hit things and each other, and how many big features the track has. Players can't steer, so it is **luck, not skill**: every marble has the same chance. It replaces the old difficulty word, which is no longer shown (it was "extreme" on nearly every track).
+
+- **The score, 0–100** (`scripts/wildness.js`), from **1,000 races per track** (the track report's first batch of seeds, `batchSeeds(0, 1000)`) on the real simulator and the track's own file:
+  - **Race chaos (60 points)**, each part by the track's rank among all the live tracks (lowest none, highest full points): overtakes per race 18, lead changes per race 14, obstacle hits per race 14, the finishing gap (median, winner to last) 8, and upsets 6 (the less the favourite starting group wins, the more points).
+  - **Features (up to 40):** a loop 10, a jump 8, splitters 6 each (2 at most), big drops 3 each (3 at most; a drop is the track falling more than 6 m within 20 m, after the first 10%, the starting ramp).
+- **The levels:** **Easy** 0–32 (smooth, flowing races), **Wild** 33–46 (plenty of bumping and overtaking), **Extreme** 47 and up (pile-ups, loops, splitters, drops).
+- **Worked out again** when a track is added or re-laid: `node scripts/wildness.js measure` (the new track's races; resumes), then `score` (every track ranked again; `src/tracks/wildness.json`), then a data update for the tracks whose score changed.
+- **Shown** as a badge on track cards (the track picker, the track pages, the starting line, the loading card, the race and results headers): Easy calm teal with one wave, Wild orange with two, Extreme magenta with three; always with the word, never colour alone, never red or green. The track picker has the **All / Easy / Wild / Extreme** filter (remembered on the device) and a **Wildest** order, with the one-line note "It's luck, not skill: every marble has the same chance." Nothing changes during a race, and wildness never changes a result.
+
+## Track packs
+
+Every series has a **free set** of **1 or 2 tracks (15 in all**: one where the pack is nearest 20, Grand Prix, World Tour, Canyons, Rivers and Peaks; two in Coasters, Track and Field, Pinball, Arcade and Blocks, Blocks 1 one and Blocks 2 one; each series' best-looking track, the one on its landing-page card, among them; 7 Easy, 6 Wild, 2 Extreme; Moses, 13 Nov 2026, Claude's pick of the 30, data update `2027-06-23-free-set-of-15`; before it 30, `2027-06-11-free-set-of-30`, and first 45) and a **pack** with the rest (Moses, 11 Nov 2026; `src/packs`, the list in `src/packs/list.js`): one pack per series, **Pinball** and **Arcade** separate, **Blocks** as two packs, **Blocks 1** (the first fifteen less Voxel Peaks: 13 in the pack, 1 free) and **Blocks 2** (Blocks Series 2 and Voxel Peaks, the one Blocks 1 track with the Series 2 look, a real-looking landscape of cubes: 20 in the pack, 1 free; Moses, 12 Nov 2026, data update `2027-06-13-voxel-peaks-to-blocks-2`). Season (holiday) tracks are in no pack; they stay in the season pass.
+
+- **Locking is behind the `TRACK_PACKS` switch and stays off** until Moses says go: `off` (the default) locks nothing, every track races as today; `admins` locks pack tracks for admins only (to try it); `on` locks them for everyone.
+- **Only a pack on sale locks** (Moses, 12 Nov 2026): a complete pack, with **20** live tracks besides its free ones. The tracks of a **Coming soon** pack stay open to everyone, switch on or not. Today (13 Nov 2026) that is **Blocks 2** and **Grand Prix**.
+- **With it on:** a track of a complete pack is raced only by the pack's owners, and by everyone in a friend room (or a league) whose host owns the pack, as with the season pass. Anyone else gets "This track is in the Grand Prix pack" (code `pack_required`), checked on every request that puts a marble on a track. Watching races and replays stays open. The public random pick keeps to tracks that don't lock (free ones, and those of Coming soon packs). The picker shows a locked pack track with a lock and its pack ("🔒 BLOCKS 2 PACK") and its wildness badge; a tap opens the pack's page in the shop (`/shop/packs/<pack>`), and so does SEE THE PACK on the track's page.
+- **The picker's two buttons** (Moses, 12 Nov 2026), next to the wildness filter and working with it, only while locking is on for the player: **My tracks** (the default: free tracks, packs they own, Coming soon packs, and season tracks they may race) and **🔒 Locked** (pack tracks they don't have, and season pass tracks), each with its count. With `TRACK_PACKS` off for the player, no buttons and every track shows. (The picker is the solo race's; in a room the host picks from the room's list, where the host's own packs open tracks for everyone.)
+- **The price** (Moses, 12 Nov 2026; lowered 16 Nov 2026): every pack **$6.99** (was $7.99), shown in the player's own currency with VAT included (Stripe on the website; each store's own price in the apps). It is kept in one settings file, `client/src/shared/payments/trackPacks.json`, so a campaign changes it without code. **Coins pay at most 30%** (25% until 16 Nov 2026): the same pack for **1,990 coins + $4.99**; never coins alone. The checkout shows the split (coins from the balance, the rest by card or through the store).
+- **Sold only while locking is on for the player** (`TRACK_PACKS`: `admins` for admin accounts, `on` for everyone); otherwise the shop shows no packs. **The Track packs tab's order** (Moses, 12 Nov 2026; `orderPacks` in `client/src/site/shop/TrackPacks.jsx`): the packs that can be bought (complete, not owned) first, then the player's own packs. **Only complete packs show** (Moses, 16 Nov 2026, Stripe live; `shownPacks`): a pack with fewer than **20** live tracks has no card at all, for everyone, admins too, and appears by itself once its 20th track is live (the server's `complete`, counted on every request). Its page, reached by its address, says **Coming soon**, without a buy button. **No test purchase on the website** any more: admins see the same Unlock as players, and the server refuses an incomplete pack while Stripe is live (`packCheckout`). The apps' store tests (a Google Play licence tester, the App Store sandbox) are unchanged.
+- **Buying:** website: Stripe Checkout, the pack only from Stripe's signed webhook, once per payment; the coins are taken when the checkout starts and given back if it lapses or fails. Android: Google Play (`trackpack_<pack>`, `trackpack_<pack>_coins`), kept (acknowledged, never consumed). iPhone: App Store non-consumables with the same _ ids as Google Play, with Restore purchases. In the apps the coins are set aside before the store's sheet opens and given back if it closes (or after 2 hours unused). A purchase the server refuses (coming soon, already owned, the coins gone) is left for the store to refund (Google refunds an unacknowledged purchase after 3 days; Apple: the player asks, the back office audit log flags it).
+- **Refunds:** a full refund takes the pack back and gives the coins back; a chargeback takes the pack, the coins stay spent. The Purchases page, the confirmation email and Restore purchases include packs. Products per store: the project doc `claude/track-packs-products.md`.
+- **Paid leagues can race any track, locked ones included** (the shop says so).
+
+## Push notifications (in the apps; switched off until launch)
+
+- **Asked only after the first finished race**, never when the app first opens: our own question first ("Get a ping when a friend wants to race?"), and the phone's own dialog only after a yes. "Not now" isn't asked again; the player can turn them on in Settings → Notifications.
+- **The messages:** a friend invites you to their room (on by default), the daily goal reminder at 17:00 UTC if today's goal isn't done (off by default), and **season news**: the season pass on sale (28 Nov) and the season starting (1 Dec). Season news is marketing: **off until the player turns it on** (a box, unticked, under the first question, or the switch in Settings), and **never for guests or under-13s**, whatever is stored.
+- **Room invites** go only from a room's host to players who raced in a friend room with them in the last 30 days, at most one per friend and room every 10 minutes. The host never learns whether it reached a phone.
+- Each message goes once (per season, per day, per invite). Logging out on a phone stops its notifications; deleting the account deletes the tokens and switches.
+
+## Age and accounts
+
+- **Birth year and month at sign-up** (no day; since 20 Oct 2026): the age group (under 13, 13–17, 18+) is worked out from them, counting the birth month as not yet reached.
+- **Under 13:** no saved account (13 and older only, decided 21 Oct 2026; there is no parental approval): the sign-up form says so kindly and the player keeps racing as a guest; the server refuses too and stores nothing. Never news emails. Guests can play without giving an age.
+- **Buying needs a saved account** (21 Oct 2026): coin packs and the season pass. A guest at checkout gets "Save your marble to buy" with the quick sign-up; the server refuses a guest's checkout and store account ids (401, `save_first`).
+- **Guests are deleted after 90 days without a visit** (Moses, 21 Oct 2026; the last visit is the latest of `users.last_seen_at`, created, last login and last race; a daily job, the same anonymising as a deleted account; a dry run that only logs until `GUEST_RETENTION_MODE=delete`). A guest's login also lasts 90 days after the last visit; a saved account's 180. Saved accounts stay until the player deletes them; purchase records 7 years (Swedish Bookkeeping Act).
+- **The name shown** (Moses, 25 Oct 2026): every list (live standings, replays, results, scoreboards, country records, rooms) shows the player's name, with the marble's name as a small second line: the name they chose, else their player name, else for a guest `guest_<5 digits>` (the same every time; no made-up names). A guest can choose a name (tap their name in the top bar, "Choose your name") and keeps it when saving the account. A chosen name is 3–24 letters, digits, spaces, `_` or `-`, passes the name filter, is never `guest_…` or `Player_…` and a number, and never another player's player name or chosen name (also when sent at sign-up). Computer players keep their friendly names and the computer-player mark.
+- **Reported names hide themselves** (Moses, 25 Oct 2026): any player, guests too, can report a name (⚑). When the name a player shows has open reports from **3 different players on 3 different connections**, it is hidden at once, everywhere: others see `guest_<number>` (a guest) or `Player_<number>` (a saved account) until the back office has looked. The player sees "Your name was reported and is hidden. Choose a new name." and chooses one (the same rules; not the hidden name again). The back office (Name reports, hidden names first) **restores** the name (the reports are dismissed: it takes 3 new reports to hide it again), **keeps it hidden** (until the player chooses a new one) or **renames** the account. Against abuse: at most 10 reports a day per player (and 30 an hour); one report per reporter and name while it's open; several accounts on one connection count once; a stand-in name (`guest_…`, `Player_…`) can't be reported; computer players have no account, so they can't be reported.
+- **Player names** (Moses, 22 Oct 2026): offensive names are refused when chosen or changed (the account name at sign-up and when a guest saves, the shown name): a maintained word list in English and Swedish, German, French, Spanish, Italian, Portuguese, Dutch, Polish, Turkish, Norwegian/Danish and Finnish, read through leetspeak (0→o, 1→i/l, 3→e, 4→a, 5→s, @, $…), separators and repeated letters; unambiguous words anywhere in a name, short or ambiguous ones only as a whole part of it (so "Scunthorpe" or "therapist" pass). Any logged-in player (guests too) can **report a name** (⚑ on scoreboards and race results, and on the tapped-marble card), once per player while open; the reported player isn't told who. The back office renames (a neutral PlayerNNNN, the shown name cleared) or dismisses.
+- **Trading** (terms updated 16 Nov 2026): coins, season passes and track packs can never be sold, traded, transferred or gifted to another account, and coins can't be cashed out. **Marbles can't be traded yet**; if trading comes, it will work only inside Marble Spins, under rules published then, and never for money outside the game. **Coins don't expire.**
+- **Save your marble pop-up** (guests only): after every 3rd finished race (3, 6, 9 …, counted by the server across visits), before the next race starts. Headline "Save your marble — it's free", six reasons, a big "Sign up now" and a plain "Later". **"Later" always works and racing is never blocked** (App Store rules). Never shown to saved players (the app review accounts are saved accounts). In English (English only for now, 21 Oct 2026).
+- **Quick sign-up** (the pop-up and the sign-up page alike): player name (a suggested free name, or the name the guest chose, which the player can change), email, password, birth year and month, the terms (required), news by email (optional, unticked). Everything the guest won stays: it is the same account.
+- **Confirm your email** (double opt-in): once email is set up (`BREVO_API_KEY`), a link to confirm the address, valid 7 days; Settings sends a new one. Until then accounts are saved without it.
+- **Accounts:** players can download their data and delete their account in Settings. Deletion anonymises the account and keeps race results and payment records.
+
+## The country you race for
+
+*Moses, 22 Oct 2026. `src/country`, `client/src/site/country/`.*
+- **Optional, saved accounts only.** Asked (optional) on the quick sign-up and changeable in **Settings → Your country**. Any country on the ISO 3166-1 list (249, by CLDR's English names); it needn't be where the player lives. The picker is pre-filled with a guess (the connection's country, looked up at that moment and not stored for this; else the browser's region), which the player can change or clear.
+- **Never from the IP address:** the IP's country is kept for security and fraud only (`security_events`).
+- **The change rule:** the first choice is free; for **24 hours** after a choice, changes are corrections; after that **one change every 90 days**, counted from the last choice. Removing the country is allowed any time but doesn't restart the clock. Settings shows the date of the next change. Help: "You can change your country once every 90 days."
+- **History:** every choice is kept (`user_country_history`), so national leagues can use **the country a player had at the start of the month** (`country.countryAt`).
+- **Country records:** on each live track, the fastest finishing time by a player of each country. Counted: finished races, the player's own marble (never a computer player), saved accounts, with the country they had when they joined the race (so records start from when a player chose a country, and a later change never moves one). Deleted and suspended players drop out; a tie goes to the earlier race. Shown on each track's page (the top 10) and on **Scoreboards → Countries** (by track, or one country's record on every track), with the player's name and the date. Read only: no coins or prizes. **A track whose layout changes** (Moses, 6 Nov 2026) keeps its name and slug; its track record, its country records and every player's personal bests on it (finish time, halfway split, best place) start again from the new layout, while past results and replays stay as they ran. The results page then treats a player's first race on the new layout as their first finish there; their page still counts all their races, wins and podiums on the track. The data update that puts the new layout in sets `tracks.records_since` (`node scripts/physics-track-sql.js <slug> --relayout "…"`; `src/game/recordsSince.js`). The record replays of both layouts are kept.
+- **Shown by name, never a flag:** names read the same on every device (flag emoji show as two letters on Windows) and avoid flag politics; the stores' and the law's rules allow either.
+- **Later (not built):** an overall country table from finishing places (points for the top 3, averaged per player), and national leagues (see `claude/leagues-plan.md` in the project).

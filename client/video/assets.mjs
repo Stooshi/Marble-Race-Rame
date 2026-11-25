@@ -1,0 +1,33 @@
+// What the videos use: the template (template.json: the brand, the words, the sound settings; the one
+// file every video follows) and the sounds (the game's own files in public/audio, and the originals in
+// music-inbox; licences: music-inbox/LICENCES.md).
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const here = path.dirname(fileURLToPath(import.meta.url));
+const audio = (n) => path.join(here, '..', 'public', 'audio', `${n}.m4a`);
+const inbox = (start) => {
+  const dir = path.join(here, '..', '..', 'music-inbox');
+  return path.join(dir, fs.readdirSync(dir).find((f) => f.startsWith(start)));
+};
+
+export const TEMPLATE = JSON.parse(fs.readFileSync(path.join(here, 'template.json'), 'utf8'));
+export const TEXTS = { ...TEMPLATE.words, endCard: TEMPLATE.endCard.lines, podiumTitle: TEMPLATE.podium.title };
+export const fill = (s, v) => String(s).replace(/\{(\w+)\}/g, (_, k) => v[k] ?? '');
+
+/** When intro A's mark lands (s into the sting): the signature sound peaks there. */
+export const LANDS = { A: 0.85, B: 1.3, C: 0.45 };
+
+export const SOUNDS = {
+  // The signature: soundreality's whoosh (Pixabay 383023, the game's old overtaking sound), loudest about 1.2 s in.
+  whoosh: { file: inbox('MARBLES OVERTAKING'), peak: 1.2, gain: TEMPLATE.sound.signatureGain },
+  beeps: { file: audio('start-beeps') },   // its fourth beep 3.023 s in (engine.js BEEPS_GO_S)
+  launch: { file: audio('start-rolling') }, // (the start sound since 30 Oct 2026: the marbles start rolling)
+  ceremony: { file: audio('ceremony') },
+  crowd: { file: audio('crowd-grand-prix') },
+  speedPad: { file: audio('speed-pad') },
+  hit: { file: audio('marble-hit') },   // (the game's click: a marble hitting another; the collision montage)
+  bump: { file: audio('marble-bump') }, // (the game's bump: a marble hitting an obstacle; the collision montage) // (the game's speed-pad whoosh: the speed montage, on its pads and loops)
+  tune: (n) => ({ file: audio(`tune-${n}`) }),
+};

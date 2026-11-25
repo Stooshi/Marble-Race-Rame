@@ -1,0 +1,52 @@
+{
+ "type": "track",
+ "shots": [
+  {
+   "slug": "nevada-drag-strip",
+   "race": "nevada-drag-strip.video-7388592",
+   "start": true,
+   "startAt": -2400,
+   "dur": 3.0,
+   "line": "Lights out…"
+  },
+  {
+   "slug": "nevada-drag-strip",
+   "race": "nevada-drag-strip.video-7388592",
+   "p": 0.19,
+   "lead": 0,
+   "dur": 2.6,
+   "padP": 0.1993,
+   "chase": {
+    "up": 1.6,
+    "back": 4,
+    "ahead": 4,
+    "fov": 62
+   },
+   "line": "…full send"
+  },
+  {
+   "slug": "nevada-drag-strip",
+   "race": "nevada-drag-strip.video-7388592",
+   "p": 0.29,
+   "lead": 0,
+   "dur": 3.0,
+   "follow": "leader"
+  },
+  {
+   "slug": "nevada-drag-strip",
+   "race": "nevada-drag-strip.video-7388592",
+   "p": 0.4,
+   "lead": 0,
+   "dur": 2.0,
+   "follow": "leader"
+  },
+  {
+   "slug": "nevada-drag-strip",
+   "race": "nevada-drag-strip.video-7388592",
+   "p": 0.497,
+   "lead": 0,
+   "dur": 3.0,
+   "end": "Nevada Drag Strip.|marblespins.com|Follow for a new race every day"
+  }
+ ]
+}

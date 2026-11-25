@@ -1,0 +1,12 @@
+{
+  "note": "Every player's own 4 starter marbles (Moses, 20 Oct 2026; approved on the preview page): plain glass, one colour or two colours half and half, no patterns or effects, from these 12 clearly different colours. src/marbles/starters.js makes them; the pictures come from badge.js plainLookOf (pattern 'solid' or 'half'). Two colours of one marble differ by at least splitMin (OKLab); the 12 differ pairwise by at least 0.139. Looks only: a starter never changes how a race goes.",
+  "palette": [
+    ["Red", "#E0262B"], ["Orange", "#FF7A12"], ["Yellow", "#FFD21F"], ["Lime", "#8FE03A"],
+    ["Green", "#1E8A3A"], ["Teal", "#11B5B5"], ["Sky", "#7CCBFF"], ["Blue", "#1E44E6"],
+    ["Purple", "#9A2FD8"], ["Pink", "#FF6FC0"], ["White", "#F4F4EF"], ["Black", "#22252E"]
+  ],
+  "splitMin": 0.16,
+  "perPlayer": { "solid": 1, "half": 3 },
+  "idPrefix": "ST",
+  "sharedBefore": ["ruby", "sapphire", "emerald", "topaz"]
+}
