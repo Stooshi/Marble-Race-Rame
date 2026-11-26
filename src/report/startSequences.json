@@ -133,6 +133,7 @@
 "mont-saint-michel-tide-run": {"family":"world-tour","reach":0.337,"seq":["opening: clean-drop","drop","S-bends right","straight","slalom","sweep left","peg ×2","brake"]},
 "montreal-tower-run": {"family":"athletics","reach":0.413,"seq":["opening: clear-start","straight","sweep right","sweep left","S-bends left","curtain","slalom"]},
 "moon-base": {"family":"block","reach":0.297,"seq":["opening: sand-trap","drop","pileUp","slalom","brake","sweep left","peg ×2","S-bends right","slalom"]},
+"moonshot": {"family":"pinball","reach":0.311,"seq":["opening: clear-start","straight","sweep right","sweep left","straight","slalom","boost","drop","slalom","S-bends right","peg ×2"]},
 "multiball-manor": {"family":"pinball","reach":0.248,"seq":["opening: tunnel-launch","drop","pileUp","slalom","drop","slalom","sweep left"]},
 "munich-tent-roof-run": {"family":"athletics","reach":0.36,"seq":["opening: clear-start","straight","sweep left","sweep right","straight","slalom","brake","sweep right","slalom","brake"]},
 "murray-red-gum-run": {"family":"river","reach":0.241,"seq":["opening: classic","drop","pileUp","slalom","straight","slalom","drop","sweep left"]},
