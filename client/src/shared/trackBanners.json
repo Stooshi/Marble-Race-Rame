@@ -1223,6 +1223,17 @@
    "side": 1,
    "marbles": 4
   },
+  "kraken-deep": {
+   "name": "Kraken Deep",
+   "series": "Pinball",
+   "lighting": "parlour",
+   "v": "ea89aeda",
+   "bytes": 10032,
+   "bytes2x": 24406,
+   "t": 10817,
+   "side": -1,
+   "marbles": 7
+  },
   "kyoto-block-gardens": {
    "name": "Kyoto Block Gardens",
    "series": "Blocks",

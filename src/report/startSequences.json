@@ -109,6 +109,7 @@
 "kings-canyon-lost-city": {"family":"canyon","reach":0.199,"seq":["opening: sand-trap","drop","pileUp","slalom","brake","climb","sweep left","peg ×2"]},
 "kirkjufell-block-falls": {"family":"block-2","reach":0.216,"seq":["opening: crest-start","drop","pileUp","slalom","climb","drop","straight","S-bends right","peg"]},
 "kopaonik-spins": {"family":"coaster","reach":0.24,"seq":["opening: classic","drop","pileUp","slalom","spiral left"]},
+"kraken-deep": {"family":"pinball","reach":0.272,"seq":["opening: clear-start","straight","sweep left","sweep right","straight","slalom","boost","drop","spiral right"]},
 "kyoto-block-gardens": {"family":"block-2","reach":0.226,"seq":["opening: crest-start","drop","pileUp","slalom","climb","drop","straight","steps","S-bends left"]},
 "lagos-marble-grand-prix": {"family":"grand-prix","reach":0.266,"seq":["opening: pipe-drop","drop","half-pipe","drop","slalom","S-bends right","peg ×2"]},
 "lake-bled-island-run": {"family":"world-tour","reach":0.289,"seq":["opening: banked-turn","drop","pileUp","slalom","sweep left","climb","S-bends right","peg ×2"]},
