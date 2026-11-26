@@ -882,6 +882,17 @@
    "side": 1,
    "marbles": 6
   },
+  "gold-rush": {
+   "name": "Gold Rush",
+   "series": "Pinball",
+   "lighting": "parlour",
+   "v": "c093f75d",
+   "bytes": 12968,
+   "bytes2x": 31380,
+   "t": 10234,
+   "side": -1,
+   "marbles": 8
+  },
   "grand-canyon-burst": {
    "name": "Grand Canyon Burst",
    "series": "Canyons",
