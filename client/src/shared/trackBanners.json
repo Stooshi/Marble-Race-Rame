@@ -1058,6 +1058,17 @@
    "side": 1,
    "marbles": 4
   },
+  "ice-station": {
+   "name": "Ice Station",
+   "series": "Pinball",
+   "lighting": "parlour",
+   "v": "55cc14dc",
+   "bytes": 14374,
+   "bytes2x": 35018,
+   "t": 15129,
+   "side": -1,
+   "marbles": 8
+  },
   "idol-of-the-jungle": {
    "name": "Idol of the Jungle",
    "series": "Pinball",
