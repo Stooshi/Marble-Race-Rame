@@ -1762,6 +1762,17 @@
    "side": -1,
    "marbles": 5
   },
+  "pirate-plunder": {
+   "name": "Pirate Plunder",
+   "series": "Pinball",
+   "lighting": "parlour",
+   "v": "9e151d5b",
+   "bytes": 11468,
+   "bytes2x": 28872,
+   "t": 14541,
+   "side": -1,
+   "marbles": 6
+  },
   "portes-du-soleil-run": {
    "name": "Portes du Soleil Run",
    "series": "World Tour",
