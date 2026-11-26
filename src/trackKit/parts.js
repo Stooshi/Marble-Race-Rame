@@ -335,6 +335,8 @@ module.exports = {
     'pancic-mausoleum', 'stone-monastery', 'watermill', 'sheep-flock', 'kolo-village',
     'sun-yat-sen-mausoleum', 'yangtze-bridge', 'zhonghua-gate', 'lake-pagodas', 'ginkgo-grove', 'haunted-manor', 'siege-castle', 'castle-keep', 'grand-theatre', 'magician-trunk', 'top-hat', 'flying-saucer', 'saucer-town',
     'retro-diner', 'soda-fountain', 'jukebox-tower', 'gumball-machine', 'clocktower', 'floating-doors', 'concert-stage', 'speaker-wall', 'lighting-rig',
+    // The Pinball tables of 26 Nov 2026 (client/src/three/scenery/kitLandmarksPinball2.js).
+    'kraken', 'launch-tower', 'stone-idol', 'storm-galleon', 'big-top-tent',
     'arcade-hall', 'cabinet-row', 'prize-counter', 'claw-tower', 'neon-maze', 'glitch-tower', 'level-sign',
     'alien-formation', 'mothership', 'ringed-planet', 'laser-turret',
     'pixel-hills', 'floating-platforms', 'pixel-waterfall', 'arrow-up', 'arrow-down', 'arrow-left', 'arrow-right', 'ba-buttons',

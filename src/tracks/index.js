@@ -105,6 +105,11 @@ module.exports = [
   require('./sydney-harbour-relay'),
   require('./nairobi-highlands-mile'),
   require('./barcelona-montjuic-mile'),
+  require('./kraken-deep'),
+  require('./moonshot'),
+  require('./idol-of-the-jungle'),
+  require('./pirate-plunder'),
+  require('./big-top'),
   // Rivers (the first five, the test batch).
   // (In this order so no two tracks in a row start the same way: a test.)
   require('./mississippi-steamer-run'),

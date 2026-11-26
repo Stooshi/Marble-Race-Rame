@@ -34,6 +34,12 @@ export const ART = {
   concert: { sky: ['#0a0a12', '#5a0a6a'], ink: '#06060a', glow: '#ff3fa8', accent: '#3fd8ff' },
   parang: { sky: ['#0a1a2e', '#1f6a5a'], ink: '#08141a', glow: '#ffd23f', accent: '#ff5a3a' },
   'beach-fireworks': { sky: ['#04061a', '#1a2a6a'], ink: '#05070f', glow: '#fff2b0', accent: '#ff4f9a' },
+  // The tables of 26 Nov 2026.
+  'deep-sea': { sky: ['#021a2a', '#0a4a5a'], ink: '#020c14', glow: '#5affd2', accent: '#ff5aa8' },
+  rocket: { sky: ['#02030f', '#2a1a5a'], ink: '#05060f', glow: '#ffd23f', accent: '#ff5a2a' },
+  temple: { sky: ['#0a2a14', '#c86a1a'], ink: '#0a160a', glow: '#7dff6a', accent: '#ffd23f' },
+  pirate: { sky: ['#0a0f1a', '#3a4a5a'], ink: '#05070a', glow: '#ffd27a', accent: '#d8242a' },
+  circus: { sky: ['#2a0a3a', '#d8242a'], ink: '#14060a', glow: '#ffd23f', accent: '#f2efe6' },
 };
 
 function shapes(g, art, w, h, c) {
@@ -93,6 +99,36 @@ function shapes(g, art, w, h, c) {
       for (let k = 0; k < 14; k += 1) { const a = (k / 14) * Math.PI * 2; g.beginPath(); g.moveTo(w * x + Math.cos(a) * h * r * 0.3, h * y + Math.sin(a) * h * r * 0.3); g.lineTo(w * x + Math.cos(a) * h * r, h * y + Math.sin(a) * h * r); g.stroke(); }
     }
     g.fillStyle = c.ink; for (let k = 0; k < 9; k += 1) g.fillRect(w * (0.06 + k * 0.1), h * 0.68, w * 0.07, h * 0.04); // the line of people on the shore
+  } else if (art === 'deep-sea') {
+    g.fillStyle = c.ink; g.beginPath(); g.ellipse(w * 0.5, h * 0.55, w * 0.12, h * 0.22, 0, 0, Math.PI * 2); g.fill(); // the octopus's head
+    g.lineWidth = h * 0.04; g.strokeStyle = c.ink; g.lineCap = 'round';
+    for (let k = 0; k < 6; k += 1) { const x = 0.3 + k * 0.08; g.beginPath(); g.moveTo(w * 0.5, h * 0.7); g.quadraticCurveTo(w * x, h * 0.95, w * (x + (k < 3 ? -0.12 : 0.12)), h * (0.6 - (k % 3) * 0.1)); g.stroke(); }
+    g.fillStyle = c.glow; for (const x of [0.46, 0.54]) { g.beginPath(); g.arc(w * x, h * 0.5, h * 0.035, 0, Math.PI * 2); g.fill(); }
+    g.fillStyle = c.accent; for (let k = 0; k < 12; k += 1) { g.beginPath(); g.arc(w * (0.08 + (k * 0.37) % 0.86), h * (0.08 + (k * 0.23) % 0.4), h * 0.012, 0, Math.PI * 2); g.fill(); } // bubbles
+    g.fillStyle = '#e8e2c8'; g.fillRect(w * 0.12, h * 0.18, w * 0.14, h * 0.05); g.fillRect(w * 0.17, h * 0.13, w * 0.04, h * 0.05); // the submarine
+  } else if (art === 'rocket') {
+    g.fillStyle = '#f2f4f8'; for (let k = 0; k < 40; k += 1) g.fillRect(w * ((k * 0.137) % 1), h * ((k * 0.311) % 0.6), 2, 2); // stars
+    g.fillStyle = '#d8dde6'; g.beginPath(); g.arc(w * 0.8, h * 0.22, h * 0.12, 0, Math.PI * 2); g.fill(); // the moon
+    g.fillStyle = '#f2f4f8'; g.fillRect(w * 0.46, h * 0.28, w * 0.08, h * 0.42);
+    g.beginPath(); g.moveTo(w * 0.46, h * 0.28); g.lineTo(w * 0.5, h * 0.14); g.lineTo(w * 0.54, h * 0.28); g.fill();
+    g.fillStyle = c.accent; g.beginPath(); g.moveTo(w * 0.47, h * 0.7); g.lineTo(w * 0.5, h * 0.86); g.lineTo(w * 0.53, h * 0.7); g.fill(); // the flame
+    g.fillStyle = c.ink; g.fillRect(0, h * 0.78, w, h * 0.22);
+  } else if (art === 'temple') {
+    g.fillStyle = c.ink; for (let k = 0; k < 5; k += 1) g.fillRect(w * (0.2 + k * 0.05), h * (0.78 - k * 0.1), w * (0.6 - k * 0.1), h * 0.1); // the stepped temple
+    g.fillRect(w * 0.42, h * 0.18, w * 0.16, h * 0.2); // the idol's head
+    g.fillStyle = c.glow; g.fillRect(w * 0.44, h * 0.24, w * 0.04, h * 0.03); g.fillRect(w * 0.52, h * 0.24, w * 0.04, h * 0.03); // its eyes
+    g.fillStyle = '#1f5a2a'; for (const x of [0.06, 0.88]) { g.beginPath(); g.moveTo(w * x, h); g.lineTo(w * (x + 0.03), h * 0.2); g.lineTo(w * (x + 0.06), h); g.fill(); }
+  } else if (art === 'pirate') {
+    g.fillStyle = '#1f3a4a'; g.beginPath(); g.moveTo(0, h * 0.75); for (let k = 0; k <= 10; k += 1) g.quadraticCurveTo(w * (k * 0.1 - 0.05), h * 0.62, w * k * 0.1, h * 0.75); g.lineTo(w, h); g.lineTo(0, h); g.fill(); // the waves
+    g.fillStyle = c.ink; g.beginPath(); g.moveTo(w * 0.28, h * 0.62); g.lineTo(w * 0.72, h * 0.58); g.lineTo(w * 0.66, h * 0.72); g.lineTo(w * 0.34, h * 0.74); g.fill(); // the hull
+    for (const x of [0.38, 0.5, 0.62]) g.fillRect(w * x, h * 0.2, w * 0.008, h * 0.4); // the masts
+    g.fillStyle = '#e8dcc0'; for (const x of [0.36, 0.48, 0.6]) g.fillRect(w * x, h * 0.28, w * 0.06, h * 0.18); // the sails
+    g.fillStyle = c.glow; g.fillRect(w * 0.12, h * 0.1, w * 0.01, h * 0.25); // the lightning
+  } else if (art === 'circus') {
+    for (let k = 0; k < 10; k += 1) { g.fillStyle = k % 2 ? c.accent : '#d8242a'; g.beginPath(); g.moveTo(w * 0.5, h * 0.12); g.lineTo(w * (0.25 + k * 0.05), h * 0.5); g.lineTo(w * (0.3 + k * 0.05), h * 0.5); g.fill(); } // the tent roof
+    for (let k = 0; k < 10; k += 1) { g.fillStyle = k % 2 ? c.accent : '#d8242a'; g.fillRect(w * (0.25 + k * 0.05), h * 0.5, w * 0.05, h * 0.22); }
+    g.fillStyle = c.glow; g.beginPath(); g.arc(w * 0.82, h * 0.2, h * 0.04, 0, Math.PI * 2); g.fill(); // the human cannonball
+    g.fillStyle = c.ink; g.fillRect(0, h * 0.72, w, h * 0.28);
   } else {
     g.fillStyle = c.ink; g.fillRect(0, h * 0.62, w, h * 0.38);
     for (let k = 0; k < 8; k += 1) { g.fillStyle = k % 2 ? c.glow : c.accent; g.globalAlpha = 0.5; g.beginPath(); g.moveTo(w * (0.1 + k * 0.11), 0); g.lineTo(w * (0.05 + k * 0.11), h * 0.62); g.lineTo(w * (0.15 + k * 0.11), h * 0.62); g.fill(); }

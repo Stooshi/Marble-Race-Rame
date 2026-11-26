@@ -255,6 +255,17 @@
    "side": 1,
    "marbles": 4
   },
+  "big-top": {
+   "name": "Big Top",
+   "series": "Pinball",
+   "lighting": "parlour",
+   "v": "11a4e156",
+   "bytes": 13126,
+   "bytes2x": 32330,
+   "t": 10595,
+   "side": 1,
+   "marbles": 7
+  },
   "bislett-mile": {
    "name": "Bislett Mile",
    "series": "Track and Field",
@@ -1047,6 +1058,17 @@
    "side": 1,
    "marbles": 4
   },
+  "idol-of-the-jungle": {
+   "name": "Idol of the Jungle",
+   "series": "Pinball",
+   "lighting": "parlour",
+   "v": "ebd312a5",
+   "bytes": 14452,
+   "bytes2x": 35142,
+   "t": 10617,
+   "side": 1,
+   "marbles": 7
+  },
   "iguazu-devils-throat": {
    "name": "Iguazú Devil's Throat",
    "series": "Rivers",
@@ -1222,6 +1244,17 @@
    "t": 10387,
    "side": 1,
    "marbles": 4
+  },
+  "kraken-deep": {
+   "name": "Kraken Deep",
+   "series": "Pinball",
+   "lighting": "parlour",
+   "v": "ea89aeda",
+   "bytes": 10032,
+   "bytes2x": 24406,
+   "t": 10817,
+   "side": -1,
+   "marbles": 7
   },
   "kyoto-block-gardens": {
    "name": "Kyoto Block Gardens",
@@ -1487,6 +1520,17 @@
    "side": 1,
    "marbles": 6
   },
+  "moonshot": {
+   "name": "Moonshot",
+   "series": "Pinball",
+   "lighting": "parlour",
+   "v": "a1fc7274",
+   "bytes": 11162,
+   "bytes2x": 27470,
+   "t": 10842,
+   "side": 1,
+   "marbles": 7
+  },
   "multiball-manor": {
    "name": "Multiball Manor",
    "series": "Pinball",
@@ -1728,6 +1772,17 @@
    "t": 17000,
    "side": -1,
    "marbles": 5
+  },
+  "pirate-plunder": {
+   "name": "Pirate Plunder",
+   "series": "Pinball",
+   "lighting": "parlour",
+   "v": "9e151d5b",
+   "bytes": 11468,
+   "bytes2x": 28872,
+   "t": 14541,
+   "side": -1,
+   "marbles": 6
   },
   "portes-du-soleil-run": {
    "name": "Portes du Soleil Run",
