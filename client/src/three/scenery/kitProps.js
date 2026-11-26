@@ -12,6 +12,7 @@ import { GP_LANDMARKS } from './kitLandmarksGP';
 import { HOLIDAY_LANDMARKS } from './kitLandmarksHoliday';
 import { COASTER_LANDMARKS } from './kitLandmarksCoaster';
 import { PINBALL2_LANDMARKS } from './kitLandmarksPinball2';
+import { PINBALL3_LANDMARKS } from './kitLandmarksPinball3';
 import { ARCADE_LANDMARKS } from './kitLandmarksArcade';
 import { CANYON_LANDMARKS } from './kitLandmarksCanyon';
 import { CANYON2_LANDMARKS } from './kitLandmarksCanyon2';
@@ -634,6 +635,7 @@ export const LANDMARKS = {
   ...HOLIDAY_LANDMARKS,
   ...COASTER_LANDMARKS,
   ...PINBALL2_LANDMARKS,
+  ...PINBALL3_LANDMARKS,
   ...ARCADE_LANDMARKS,
   ...CANYON_LANDMARKS,
   ...CANYON2_LANDMARKS,

@@ -40,6 +40,11 @@ export const ART = {
   temple: { sky: ['#0a2a14', '#c86a1a'], ink: '#0a160a', glow: '#7dff6a', accent: '#ffd23f' },
   pirate: { sky: ['#0a0f1a', '#3a4a5a'], ink: '#05070a', glow: '#ffd27a', accent: '#d8242a' },
   circus: { sky: ['#2a0a3a', '#d8242a'], ink: '#14060a', glow: '#ffd23f', accent: '#f2efe6' },
+  volcano: { sky: ['#1a0a14', '#ff5a1a'], ink: '#140806', glow: '#ffb020', accent: '#2fd88a' },
+  polar: { sky: ['#020a1f', '#1a5a7a'], ink: '#04101a', glow: '#7dffd2', accent: '#d8242a' },
+  factory: { sky: ['#0a0f14', '#3a4a5a'], ink: '#05080a', glow: '#ff7a1a', accent: '#5affd2' },
+  dino: { sky: ['#1a2a0a', '#c8a43a'], ink: '#0f1406', glow: '#ece2c6', accent: '#ff5a2a' },
+  goldrush: { sky: ['#2a140a', '#e8902a'], ink: '#140a04', glow: '#ffd23f', accent: '#d8242a' },
 };
 
 function shapes(g, art, w, h, c) {
@@ -129,6 +134,29 @@ function shapes(g, art, w, h, c) {
     for (let k = 0; k < 10; k += 1) { g.fillStyle = k % 2 ? c.accent : '#d8242a'; g.fillRect(w * (0.25 + k * 0.05), h * 0.5, w * 0.05, h * 0.22); }
     g.fillStyle = c.glow; g.beginPath(); g.arc(w * 0.82, h * 0.2, h * 0.04, 0, Math.PI * 2); g.fill(); // the human cannonball
     g.fillStyle = c.ink; g.fillRect(0, h * 0.72, w, h * 0.28);
+  } else if (art === 'volcano') {
+    g.fillStyle = c.ink; g.beginPath(); g.moveTo(w * 0.2, h); g.lineTo(w * 0.44, h * 0.3); g.lineTo(w * 0.56, h * 0.3); g.lineTo(w * 0.8, h); g.fill(); // the cone
+    g.fillStyle = c.glow; g.fillRect(w * 0.44, h * 0.28, w * 0.12, h * 0.03); // the crater
+    for (let k = 0; k < 8; k += 1) { g.beginPath(); g.arc(w * (0.4 + (k * 0.037) % 0.2), h * (0.08 + (k * 0.071) % 0.18), h * 0.02, 0, Math.PI * 2); g.fill(); } // sparks
+    g.fillStyle = c.accent; for (const x of [0.08, 0.86]) { g.beginPath(); g.moveTo(w * x, h); g.lineTo(w * (x + 0.03), h * 0.4); g.lineTo(w * (x + 0.06), h); g.fill(); }
+  } else if (art === 'polar') {
+    g.fillStyle = c.glow; for (let k = 0; k < 4; k += 1) g.fillRect(0, h * (0.1 + k * 0.06), w, h * 0.02); // the aurora's bands
+    g.fillStyle = '#e6ecf2'; g.fillRect(0, h * 0.7, w, h * 0.3); // the ice
+    g.fillStyle = c.accent; g.fillRect(w * 0.38, h * 0.55, w * 0.24, h * 0.15); // the base
+    g.fillStyle = '#e6ecf2'; g.beginPath(); g.arc(w * 0.72, h * 0.7, h * 0.08, Math.PI, 0); g.fill(); // its radar dome
+  } else if (art === 'factory') {
+    g.fillStyle = c.ink; for (let k = 0; k < 5; k += 1) g.fillRect(w * (0.1 + k * 0.17), h * 0.45, w * 0.12, h * 0.55); // the halls
+    g.fillStyle = c.glow; g.fillRect(w * 0.47, h * 0.2, w * 0.04, h * 0.3); g.fillRect(w * 0.47, h * 0.2, w * 0.18, h * 0.04); // the robot arm
+    g.fillStyle = c.accent; for (let k = 0; k < 6; k += 1) g.fillRect(w * (0.12 + k * 0.14), h * 0.6, w * 0.04, h * 0.03); // lights
+  } else if (art === 'dino') {
+    g.fillStyle = c.ink; g.fillRect(0, h * 0.78, w, h * 0.22);
+    g.strokeStyle = c.glow; g.lineWidth = h * 0.025; g.beginPath(); g.moveTo(w * 0.2, h * 0.6); g.quadraticCurveTo(w * 0.5, h * 0.3, w * 0.72, h * 0.32); g.stroke(); // the spine
+    for (let k = 0; k < 6; k += 1) { g.beginPath(); g.moveTo(w * (0.34 + k * 0.05), h * 0.45); g.lineTo(w * (0.34 + k * 0.05), h * 0.6); g.stroke(); } // ribs
+    g.fillStyle = c.glow; g.fillRect(w * 0.7, h * 0.26, w * 0.1, h * 0.08); // the skull
+  } else if (art === 'goldrush') {
+    g.fillStyle = '#8a3a1a'; g.beginPath(); g.moveTo(0, h * 0.5); g.lineTo(w * 0.2, h * 0.4); g.lineTo(w * 0.35, h * 0.55); g.lineTo(w * 0.6, h * 0.35); g.lineTo(w, h * 0.5); g.lineTo(w, h); g.lineTo(0, h); g.fill(); // the mesas
+    g.fillStyle = c.ink; g.fillRect(w * 0.44, h * 0.2, w * 0.02, h * 0.5); g.fillRect(w * 0.54, h * 0.2, w * 0.02, h * 0.5); g.fillRect(w * 0.44, h * 0.2, w * 0.12, h * 0.02); // the headframe
+    g.fillStyle = c.glow; g.beginPath(); g.arc(w * 0.5, h * 0.16, h * 0.05, 0, Math.PI * 2); g.fill(); // its wheel
   } else {
     g.fillStyle = c.ink; g.fillRect(0, h * 0.62, w, h * 0.38);
     for (let k = 0; k < 8; k += 1) { g.fillStyle = k % 2 ? c.glow : c.accent; g.globalAlpha = 0.5; g.beginPath(); g.moveTo(w * (0.1 + k * 0.11), 0); g.lineTo(w * (0.05 + k * 0.11), h * 0.62); g.lineTo(w * (0.15 + k * 0.11), h * 0.62); g.fill(); }

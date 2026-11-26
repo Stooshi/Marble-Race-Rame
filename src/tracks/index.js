@@ -110,6 +110,7 @@ module.exports = [
   require('./idol-of-the-jungle'),
   require('./pirate-plunder'),
   require('./big-top'),
+  require('./ice-station'),
   // Rivers (the first five, the test batch).
   // (In this order so no two tracks in a row start the same way: a test.)
   require('./mississippi-steamer-run'),
