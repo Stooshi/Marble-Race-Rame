@@ -1,0 +1,136 @@
+import { useMemo, useState } from 'react';
+import { Link, useLocation } from 'react-router-dom';
+import { api } from '../api/client';
+import { useAuth } from '../context/AuthContext';
+import { useAsync } from '../hooks/useAsync';
+import { formatNumber } from '../utils/format';
+import MarbleBall from './MarbleBall';
+import { ErrorMessage, Spinner } from './Status';
+import { getCoinsHref, notEnoughCoins, rememberWanted } from '../site/payments/GetCoins';
+
+/** A marble's own history with you: races, wins and podiums with it as your marble. */
+function history(m) {
+  if (!m.my_races) return 'Not raced yet';
+  const n = (k, word) => `${formatNumber(k)} ${word}${k === 1 ? '' : 's'}`;
+  return `${n(m.my_races, 'race')} · ${n(m.my_wins, 'win')} · ${n(m.my_podiums, 'podium')}`;
+}
+
+/**
+ * Pick your Shooter from your Marble Bag (owned + free starters). The shop tab
+ * lists the rest of the catalog with a buy button. Marbles are looks only:
+ * every marble in the bag races at the player's own skill.
+ *
+ * Props: value (marble id), onChange(marble), disabledIds (already in race)
+ */
+export default function MarbleSelector({ value, onChange, disabledIds = [] }) {
+  const { user, setCoins, refreshUser } = useAuth();
+  const { pathname, search } = useLocation();
+  const here = pathname + search;
+  // Mine: the player's own marbles (their 4 starters and any bought), the shop: the catalogue.
+  const { data, error, loading, reload } = useAsync(async () => {
+    const [own, all] = await Promise.all([api.myMarbles(), api.marbles()]);
+    return { own: own.marbles ?? [], marbles: all.marbles ?? [] };
+  }, [user?.id]);
+  const [tab, setTab] = useState('mine');
+  const [buying, setBuying] = useState(null);
+  const [buyError, setBuyError] = useState(null);
+
+  const { mine, shop } = useMemo(() => {
+    const own = data?.own ?? [];
+    const ownIds = new Set(own.map((m) => m.id));
+    return { mine: own, shop: (data?.marbles ?? []).filter((m) => !ownIds.has(m.id) && m.on_sale !== false) };
+  }, [data]);
+
+  async function buy(marble) {
+    setBuying(marble.id);
+    setBuyError(null);
+    try {
+      const res = await api.purchaseMarble(marble.id);
+      setCoins(res.coins);
+      await reload();
+      setTab('mine');
+      onChange?.(marble);
+    } catch (err) {
+      if (notEnoughCoins(err)) refreshUser?.(); // (the real coin count: Get coins shows instead)
+      else setBuyError(err.message);
+    } finally {
+      setBuying(null);
+    }
+  }
+
+  if (loading && !data) return <Spinner label="Loading marbles…" />;
+  if (error) return <ErrorMessage error={error} onRetry={reload} />;
+
+  const list = tab === 'mine' ? mine : shop;
+
+  return (
+    <div className="marble-selector">
+      <div className="segmented segmented--sm" role="tablist" aria-label="Marble Bag and shop">
+        <button type="button" role="tab" aria-selected={tab === 'mine'} onClick={() => setTab('mine')}>
+          Marble Bag ({mine.length})
+        </button>
+        <button type="button" role="tab" aria-selected={tab === 'shop'} onClick={() => setTab('shop')}>
+          Shop ({shop.length})
+        </button>
+      </div>
+      <p className="muted marble-selector__note">
+        {tab === 'mine'
+          ? 'Every player\'s marble races at the same level: pick the look you like as your marble.'
+          : 'Marbles are sold for their looks only: they never change how fast you race.'}
+      </p>
+      {buyError && <p className="error">{buyError}</p>}
+
+      <div className="marble-grid" role={tab === 'mine' ? 'radiogroup' : undefined} aria-label="Choose your marble">
+        {list.map((m) => {
+          const taken = disabledIds.includes(m.id);
+          const selected = value === m.id;
+          const affordable = (user?.coins ?? 0) >= m.price_coins;
+          return (
+            <div
+              key={m.id}
+              className={`marble-card rarity--${m.rarity}${selected ? ' is-selected' : ''}${taken ? ' is-disabled' : ''}`}
+              role={tab === 'mine' ? 'radio' : undefined}
+              aria-checked={tab === 'mine' ? selected : undefined}
+              aria-disabled={taken || undefined}
+              tabIndex={tab === 'mine' && !taken ? 0 : undefined}
+              onClick={() => tab === 'mine' && !taken && onChange?.(m)}
+              onKeyDown={(e) => {
+                if (tab === 'mine' && !taken && (e.key === 'Enter' || e.key === ' ')) {
+                  e.preventDefault();
+                  onChange?.(m);
+                }
+              }}
+            >
+              <div className="marble-card__head">
+                <MarbleBall marble={m} size={36} />
+                <div>
+                  <strong>{m.name}</strong>
+                  <small className={`rarity-label rarity-label--${m.rarity}`}>{m.rarity}</small>
+                </div>
+              </div>
+              {m.description && <p className="marble-card__desc">{m.description}</p>}
+              {tab === 'mine' && <small className="marble-card__history">{selected ? 'Your marble · ' : ''}{history(m)}</small>}
+              {taken && <small className="muted">Already in this race</small>}
+              {tab === 'shop' && !affordable && (
+                <Link className="btn btn--sm btn--block btn--primary" to={getCoinsHref(m.price_coins - (user?.coins ?? 0), here)} onClick={() => rememberWanted(here, m.name)}
+                  aria-label={`Get coins: ${formatNumber(m.price_coins - (user?.coins ?? 0))} more needed for ${m.name}`}>
+                  Get coins · {formatNumber(m.price_coins - (user?.coins ?? 0))} more
+                </Link>
+              )}
+              {tab === 'shop' && affordable && (
+                <button
+                  type="button"
+                  className="btn btn--sm btn--block"
+                  disabled={buying === m.id}
+                  onClick={() => buy(m)}
+                >
+                  {buying === m.id ? 'Buying…' : `Buy · ${formatNumber(m.price_coins)} coins`}
+                </button>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}

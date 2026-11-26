@@ -1,0 +1,5 @@
+{
+  "note": "The app store pages, shown as buttons in the website's footer once set (an empty link hides its button). Never shown inside the apps. Example: https://apps.apple.com/app/id0000000000",
+  "appStore": "",
+  "googlePlay": ""
+}

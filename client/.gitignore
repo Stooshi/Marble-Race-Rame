@@ -1,0 +1,13 @@
+node_modules/
+dist/
+.env
+.env.local
+dev/.tracks/
+dev/.shots/
+.vercel/
+
+# The Apple Developer Team ID for npm run ios:release (per person, made by hand)
+ios/apple-team-id.txt
+
+# Temporary signing files of scripts/ios-ci.mjs when run outside GitHub Actions
+.ios-ci/

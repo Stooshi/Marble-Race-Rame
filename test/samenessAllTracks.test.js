@@ -1,0 +1,61 @@
+'use strict';
+
+// The sameness check (src/report/variety.js) over every track at once (Moses, 6 Nov 2026).
+//
+// Until now the check ran only in a new track's own report, so tracks built before it (the Grand Prix
+// series of 10 Oct 2026 and several World Tour tracks) were never held to it. This test runs it on
+// every kit and hand-built track:
+//   - a track not listed below must pass every sameness line;
+//   - a listed track may fail only the lines listed for it, never a new one;
+//   - a listed line that passes again must be taken off the list (so the list only ever shrinks).
+// Re-laying out a listed track: take its entry off once its report passes.
+const test = require('node:test');
+const assert = require('node:assert/strict');
+const { PHYSICS_TRACKS } = require('../src/game/physicsTracks');
+const { varietyCheck, profile } = require('../src/report/variety');
+
+/** The sameness lines, by a short name. */
+function lineKey(what) {
+  if (what.startsWith('Opening: no other')) return 'opening';
+  if (what.startsWith('Opening: at most')) return 'opening-kind';
+  if (what.startsWith('Start: no other')) return 'start-shots';
+  if (what.startsWith('Start: at most')) return 'start-type';
+  if (what.startsWith('Layout: the section')) return 'layout';
+  return what;
+}
+
+// The known failures on 6 Nov 2026, parked until each track gets its own layout (Moses, 6 Nov 2026).
+// opening: opens the same way as another track of its family; opening-kind: more than two of its family
+// share its kind of opening; layout: its section order is too alike another track's.
+const KNOWN = {
+  // (Every World Tour track has its own layout and opening since 15–16 Nov 2026: the kit-built ones, then Bobsleigh
+  // Run and Table Mountain Run, re-laid with the kit on 16 Nov, their old tracks frozen for the engine's tests in
+  // src/game/referenceTracks.js; San Francisco, the one hand-built track left with the classic opening, passes.)
+  // Grand Prix (one design: Dubai's; Stockholm, Lagos, Istanbul, Sydney, Nairobi, Delhi, Sahara and Wyrmwood Hollow have their own since 6–7 Nov 2026).
+  'dubai-marble-grand-prix': ['opening', 'opening-kind', 'layout'],
+  'elderglade-marble-grand-prix': ['opening-kind'], // (its opening and layout are its own since Sydney, Lagos and Stockholm got theirs, 7 Nov 2026)
+  'frostmere-marble-grand-prix': ['opening', 'opening-kind', 'layout'],
+};
+
+const tracks = PHYSICS_TRACKS.filter((t) => profile(t) && profile(t).family !== 'test');
+
+test('every track passes the sameness check, apart from the known failures listed here', () => {
+  const problems = [];
+  for (const t of tracks) {
+    const failing = varietyCheck(t, PHYSICS_TRACKS).lines.filter((l) => l.pass === false);
+    const allowed = KNOWN[t.slug] ?? [];
+    for (const l of failing) {
+      if (!allowed.includes(lineKey(l.what))) problems.push(`${t.slug}: ${l.what.split(':')[0]}: ${l.value}`);
+    }
+    const now = failing.map((l) => lineKey(l.what));
+    for (const k of allowed) {
+      if (!now.includes(k)) problems.push(`${t.slug}: "${k}" passes now, take it off the known failures`);
+    }
+  }
+  assert.deepEqual(problems, []);
+});
+
+test('the known failures name only real tracks', () => {
+  const slugs = new Set(tracks.map((t) => t.slug));
+  for (const slug of Object.keys(KNOWN)) assert.ok(slugs.has(slug), `${slug} is not a track (renamed or removed?)`);
+});

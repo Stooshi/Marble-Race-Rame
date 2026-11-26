@@ -1,0 +1,9 @@
+[
+  {"slug": "redwood-forest-run", "race": "redwood-forest-run.video-1280113", "dur": 2.6, "line": "Easy…", "chase": {"up": 3.2, "back": 7.5, "ahead": 5, "fov": 66}},
+  {"slug": "kyoto-block-gardens", "race": "kyoto-block-gardens.video-1113814", "dur": 2.6, "chase": {"up": 4.2, "back": 10, "ahead": 7, "fov": 70}},
+  {"slug": "fuji-cinder-sunrise", "race": "fuji-cinder-sunrise.video-1200923", "dur": 2.4, "chase": {"up": 4.2, "back": 10, "ahead": 7, "fov": 70}},
+  {"slug": "pudong-marble-grand-prix", "race": "pudong-marble-grand-prix.video-4527627", "dur": 1.8, "line": "…or EXTREME?", "chase": {"up": 2.4, "back": 6}},
+  {"slug": "huascaran-turquoise-lakes", "race": "huascaran-turquoise-lakes.video-1208842", "dur": 1.8, "lead": 400, "chase": {"up": 2.8, "back": 6.5}},
+  {"slug": "san-francisco", "race": "san-francisco.video-1224680", "dur": 1.8, "line": "Which one do you race?"},
+  {"slug": "stockholm-1912-relay", "race": "stockholm-1912-relay.video-1319708", "dur": 1.8, "chase": {"back": 5, "up": 1.9, "ahead": 4, "fov": 62}, "end": "Easy. Wild. Extreme.|marblespins.com|Follow for a new race every day"}
+]

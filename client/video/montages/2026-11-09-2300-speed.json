@@ -1,0 +1,8 @@
+[
+  {"slug": "dubai-marble-grand-prix", "race": "dubai-marble-grand-prix.video-915839", "dur": 2.0, "line": "Look away…", "chase": {"up": 2.4, "back": 6}},
+  {"slug": "verdon-burst", "race": "verdon-burst.video-1097976", "dur": 2.0, "line": "…it's already over."},
+  {"slug": "saint-tropez", "race": "saint-tropez.video-979191", "dur": 2.4, "padP": 0.288, "lead": -450, "chase": {"up": 2.4, "back": 5.5}},
+  {"slug": "danube-night-run", "race": "danube-night-run.video-1208842", "dur": 2.4, "line": "Can yours hold the pace?"},
+  {"slug": "chiang-mai", "race": "chiang-mai.video-1002948", "dur": 2.0},
+  {"slug": "alaska-tidewater-run", "race": "alaska-tidewater-run.video-1121733", "dur": 2.0, "chase": {"up": 2.6, "back": 6}, "end": "Find yours.|marblespins.com|Follow for a new race every day"}
+]

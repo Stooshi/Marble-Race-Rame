@@ -1,0 +1,1250 @@
+/* ==========================================================================
+   Marble Spins — site shell (header, footer, logo, buttons, page frame).
+   Tokens from the "Web · …" artboards. Loaded after styles.css, so the
+   older game pages pick up the new palette too.
+   ========================================================================== */
+
+:root {
+  --ms-bg: #0E1320;
+  --ms-card: #1A2133;
+  --ms-card-2: #222A3F;
+  --ms-border: #2A3349;
+  --ms-text: #F2F4F8;
+  --ms-soft: #C7CEDC;
+  --ms-muted: #A9B1C3;
+  --ms-yellow: #FFD21F;
+  --ms-yellow-hover: #FFE476;
+  --ms-orange: #FF7A1A;
+  --ms-ink: #141413;
+  --ms-red: #E5322D;
+  --ms-green: #3DDC97;
+  /* Wildness badges (11 Nov 2026): calm teal, orange, magenta; never red or green. */
+  --ms-wild-easy: #3CC7C2;
+  --ms-wild-wild: #FF9A3D;
+  --ms-wild-extreme: #F05BC8;
+  --r-common: #A9B1C3;
+  --r-uncommon: #3DDC97;
+  --r-rare: #6FA8FF;
+  --r-epic: #B79BFF;
+  --r-legendary: #FFD21F;
+  --r-limited: #E040C8;
+  --r-season: #8FC4FF;
+  --ms-display: 'Lilita One', 'Arial Rounded MT Bold', system-ui, sans-serif;
+  --ms-cond: 'Barlow Condensed', 'Arial Narrow', system-ui, sans-serif;
+  --ms-body: 'Source Sans 3', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --ms-wide: 1240px;
+
+  /* the older pages' tokens, re-pointed at the new palette */
+  --bg: var(--ms-bg);
+  --bg-elev: var(--ms-card);
+  --bg-inset: #121829;
+  --border: var(--ms-border);
+  --text: var(--ms-text);
+  --muted: var(--ms-muted);
+  --accent: var(--ms-yellow);
+  --accent-ink: var(--ms-ink);
+  color-scheme: dark;
+}
+
+body {
+  background: var(--ms-bg);
+  font-family: var(--ms-body);
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+#root { display: flex; flex-direction: column; min-height: 100vh; }
+#root > main { flex: 1 0 auto; }
+
+/* ── Logo ─────────────────────────────────────────────────────────────── */
+.ms-logo {
+  font-family: var(--ms-display);
+  color: var(--ms-text);
+  line-height: 1;
+  letter-spacing: 0.005em;
+  white-space: nowrap;
+  display: inline-block;
+}
+.ms-logo__i { position: relative; display: inline-block; }
+.ms-logo__i svg {
+  position: absolute;
+  left: 50%;
+  top: -0.07em;
+  width: 0.5em;
+  height: 0.5em;
+  transform: translateX(-50%);
+  overflow: visible;
+}
+a:hover .ms-logo, .ms-header__logo:hover { text-decoration: none; }
+
+/* ── Buttons ──────────────────────────────────────────────────────────── */
+.ms-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-family: var(--ms-cond);
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-size: 1.05rem;
+  line-height: 1;
+  padding: 14px 22px;
+  border-radius: 14px;
+  border: 2px solid transparent;
+  cursor: pointer;
+  color: var(--ms-text);
+  background: var(--ms-card);
+  border-color: var(--ms-border);
+  text-decoration: none;
+  transition: background 0.15s, transform 0.1s;
+}
+.ms-btn:hover { text-decoration: none; background: var(--ms-card-2); }
+.ms-btn:active { transform: translateY(1px); }
+.ms-btn--primary { background: var(--ms-yellow); color: var(--ms-ink); border-color: var(--ms-yellow); }
+.ms-btn--primary:hover { background: var(--ms-yellow-hover); border-color: var(--ms-yellow-hover); }
+.ms-btn--ghost { background: transparent; }
+.ms-btn--sm { font-size: 0.95rem; padding: 9px 14px; border-radius: 10px; min-height: 40px; }
+.ms-btn, .ms-nav a, .ms-chip { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+.ms-btn--lg { font-size: 1.3rem; padding: 18px 30px; border-radius: 18px; }
+.ms-btn[disabled] { opacity: 0.5; cursor: not-allowed; }
+.ms-btn--danger { background: #C8322D; color: #fff; border-color: #C8322D; }
+.ms-btn--danger:hover { background: #A92925; border-color: #A92925; }
+
+/* Hover is a bonus only: every hover state also shows on keyboard focus, and nothing is hidden behind it. */
+.ms-btn:focus-visible, .ms-nav a:focus-visible, .ms-chip:focus-visible { outline: 3px solid var(--ms-yellow); outline-offset: 2px; }
+@media (hover: none) {
+  .ms-btn:hover { background: var(--ms-card); }
+  .ms-btn--ghost:hover { background: transparent; }
+  .ms-btn--primary:hover { background: var(--ms-yellow); border-color: var(--ms-yellow); }
+}
+
+/* ── Header ───────────────────────────────────────────────────────────── */
+.ms-header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: rgba(14, 19, 32, 0.92);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--ms-border);
+  padding-top: env(safe-area-inset-top, 0px);
+}
+.ms-header__inner {
+  max-width: var(--ms-wide);
+  margin: 0 auto;
+  padding: 12px max(16px, env(safe-area-inset-right, 0px)) 12px max(16px, env(safe-area-inset-left, 0px));
+  display: flex;
+  align-items: center;
+  gap: 12px 20px;
+  flex-wrap: wrap;
+}
+.ms-header__inner--narrow { max-width: 980px; }
+.ms-header__logo { display: inline-flex; }
+.ms-header__logo .ms-logo { font-size: 28px !important; }
+.ms-header__back, .ms-header__login, .ms-header__logout {
+  color: var(--ms-soft);
+  font-weight: 600;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+}
+.ms-header__back:hover, .ms-header__login:hover, .ms-header__logout:hover { color: var(--ms-text); }
+.ms-grow { flex: 1; }
+
+.ms-nav {
+  display: flex;
+  gap: 4px;
+  order: 3;
+  width: 100%;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.ms-nav::-webkit-scrollbar { display: none; }
+.ms-nav a {
+  min-height: 40px;
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--ms-cond);
+  font-weight: 700;
+  font-size: 1.05rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ms-muted);
+  padding: 6px 10px;
+  border-radius: 10px;
+  white-space: nowrap;
+}
+.ms-nav a:hover { color: var(--ms-text); text-decoration: none; }
+.ms-nav a.active { color: var(--ms-ink); background: var(--ms-yellow); }
+.ms-nav--landing { display: none; }
+
+.ms-chips { display: flex; gap: 8px; align-items: center; margin-left: auto; flex-wrap: wrap; }
+.ms-chip {
+  font-family: var(--ms-cond);
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--ms-text);
+  background: var(--ms-card);
+  border: 1px solid var(--ms-border);
+  border-radius: 999px;
+  padding: 5px 12px;
+  white-space: nowrap;
+}
+.ms-chip--streak { color: var(--ms-orange); }
+a.ms-chip:hover { text-decoration: none; border-color: var(--ms-muted); }
+
+.ms-header__inner--landing .ms-header__login { margin-left: auto; }
+
+@media (max-width: 520px) {
+  .ms-chip--streak { display: none; }
+  .ms-header__logout { display: none; }
+  .ms-header__logo .ms-logo { font-size: 24px !important; }
+  .ms-header__inner { gap: 10px 12px; }
+  .ms-chips { gap: 6px; }
+  .ms-wide-only { display: none; }
+  .ms-nav { justify-content: space-between; }
+  .ms-nav a { font-size: 0.92rem; padding: 6px 6px; letter-spacing: 0.02em; }
+}
+@media (min-width: 521px) { .ms-narrow-only { display: none; } }
+
+@media (min-width: 900px) {
+  .ms-nav { order: 0; width: auto; flex: 1; justify-content: center; }
+  .ms-nav--landing { display: flex; }
+  .ms-chips { margin-left: 0; }
+  .ms-header__inner--landing .ms-header__login { margin-left: 0; }
+}
+
+/* Phones (portrait up to 700 px wide, or landscape up to 500 px tall; Moses, 25 Oct 2026): the header as
+   in the apps, a small logo, the coins, SAVE and one menu button; the pages, sound and log out in a
+   drawer (MenuSheet.jsx); the apps get exactly this (Moses, 25 Oct 2026). Computers keep the row of pages. */
+.ms-header .ms-header__menu { display: none; }
+@media (max-width: 700px), (orientation: landscape) and (max-height: 500px) {
+  .ms-header .ms-nav, .ms-header .ms-sound, .ms-header .ms-header__logout, .ms-header .ms-chip--streak, .ms-header .ms-header__save, .ms-header .ms-header__guestlogin, .ms-header .ms-wide-only { display: none; }
+  .ms-header .ms-chip--name { max-width: 36vw; }
+  .ms-header .ms-chips { gap: 6px; }
+  .ms-header .ms-narrow-only { display: inline; }
+  .ms-header .ms-header__menu { display: inline-grid; margin-right: -8px; }
+  .ms-header__inner { flex-wrap: nowrap; gap: 8px; padding-top: 6px; padding-bottom: 6px; }
+  .ms-header__logo .ms-logo { font-size: 21px !important; }
+  .ms-header .ms-chips { flex-wrap: nowrap; }
+}
+
+/* The player's name in the top bar (NameChip.jsx): a guest's with a small "not saved" dot; long names end in "…". */
+.ms-chip--name { gap: 6px; max-width: 220px; cursor: pointer; font: inherit; font-family: var(--ms-cond); font-weight: 700; font-size: 0.95rem; }
+.ms-chip--name .ms-chip__text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.ms-chip__unsaved { flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--ms-orange); box-shadow: 0 0 0 2px rgba(255, 140, 66, 0.25); }
+.ms-namemenu { position: fixed; inset: 0; z-index: 90; background: rgba(5, 8, 16, 0.5); display: flex; justify-content: flex-end; align-items: flex-start; }
+.ms-namemenu__panel {
+  margin: calc(env(safe-area-inset-top, 0px) + 60px) max(12px, env(safe-area-inset-right, 0px)) 0 12px; width: calc(100% - 24px); max-width: 340px; box-sizing: border-box;
+  display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; padding: 16px; border-radius: 18px; background: var(--ms-card); border: 1px solid var(--ms-border);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45); animation: ms-sheet-up 0.16s ease-out;
+}
+.ms-namemenu__who { display: grid; gap: 4px; }
+.ms-namemenu__who b { font-family: var(--ms-cond); font-size: 1.2rem; overflow-wrap: anywhere; }
+.ms-namemenu__who span { color: var(--ms-soft); font-size: 0.9rem; }
+.ms-namemenu__form, .ms-form.ms-namemenu__form { display: grid; grid-template-columns: minmax(0, 1fr); gap: 6px; min-width: 0; padding-top: 10px; border-top: 1px solid var(--ms-border); }
+.ms-namemenu__form label { font-weight: 700; }
+.ms-namemenu__row { display: flex; gap: 8px; }
+.ms-namemenu__row input { flex: 1; min-width: 0; min-height: 44px; box-sizing: border-box; }
+.ms-namemenu__row .ms-btn { min-height: 44px; }
+.ms-namemenu__error { color: var(--ms-red, #ff6b6b); font-size: 0.9rem; }
+.ms-namemenu__reset { justify-self: start; padding: 0; min-height: 36px; text-align: left; }
+.ms-namemenu__ok { color: var(--ms-green, #3ddc97); font-size: 0.9rem; }
+
+/* Public rooms under "Join a race" (RaceFlow.jsx PublicRooms), and the Private | Public toggle. */
+.ms-public { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.ms-public__row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 12px; border-radius: 14px; background: var(--ms-bg); border: 1px solid var(--ms-border); color: var(--ms-text); min-height: 56px; }
+.ms-public__row:hover { text-decoration: none; border-color: var(--ms-muted); }
+.ms-public__what { display: grid; min-width: 0; }
+.ms-public__what b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ms-public__when { color: var(--ms-yellow); font-variant-numeric: tabular-nums; }
+.ms-privacy { justify-self: start; }
+.ms-privacy button { min-height: 44px; min-width: 96px; }
+
+/* ── Footer ───────────────────────────────────────────────────────────── */
+.ms-footer {
+  border-top: 1px solid var(--ms-border);
+  margin-top: 48px;
+  color: var(--ms-muted);
+  font-size: 0.9rem;
+}
+.ms-footer__inner {
+  max-width: var(--ms-wide);
+  margin: 0 auto;
+  padding: 28px max(16px, env(safe-area-inset-right, 0px)) calc(36px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px 28px;
+  align-items: center;
+}
+.ms-footer__nav { display: flex; flex-wrap: wrap; gap: 0 18px; }
+.ms-footer__nav a { color: var(--ms-soft); }
+.ms-footer__link { background: none; border: 0; padding: 0; color: var(--ms-soft); font: inherit; cursor: pointer; text-decoration: none; }
+.ms-footer__link:hover, .ms-footer__link:focus-visible { color: var(--ms-text); text-decoration: underline; }
+.ms-footer__stores { display: flex; gap: 10px; margin-left: auto; }
+.ms-footer__stores a { border: 1px solid var(--ms-border); border-radius: 10px; padding: 6px 12px; }
+/* Tap targets at least 44 px tall (pre-launch item 14; Apple's guideline, WCAG's minimum is 24 px). */
+.ms-footer__nav a, .ms-footer__link, .ms-footer__stores a { display: inline-flex; align-items: center; min-height: 44px; }
+.ms-header__logo, .ms-header__back, .ms-header__login { display: inline-flex; align-items: center; min-height: 44px; }
+@media (min-width: 521px) { .ms-header__logout { display: inline-flex; align-items: center; min-height: 44px; } } /* (hidden on phones) */
+.ms-header__login, .ms-header__back { padding: 0 4px; }
+.ms-chip { display: inline-flex; align-items: center; min-height: 36px; position: relative; }
+a.ms-chip::after, button.ms-chip::after { content: ''; position: absolute; inset: -4px 0; } /* (a 44 px tap target, a compact chip) */
+.ms-filters .ms-check { align-items: center; min-height: 44px; }
+.ms-footer__company a { display: inline-block; padding-block: 13px; margin-block: -13px; } /* (links in a sentence: a taller target, same line) */
+@media (pointer: coarse) { .ms-btn--sm, .ms-nav a { min-height: 44px; } }
+.ms-social { display: flex; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.ms-social a { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 10px; color: var(--ms-soft); }
+.ms-social a:hover, .ms-social a:focus-visible { color: var(--ms-text); background: rgba(255, 255, 255, 0.06); }
+.ms-footer__company { flex-basis: 100%; margin: 0; font-size: 0.82rem; line-height: 1.5; }
+.ms-footer__build { flex-basis: 100%; margin: 0; font-size: 0.72rem; color: var(--ms-soft); opacity: 0.7; }
+.ms-footer__company a { color: var(--ms-soft); }
+.ms-legal__address { font-style: normal; color: var(--ms-soft); line-height: 1.6; }
+
+/* ── Page frame and common blocks ───────────────────────────────────────── */
+.ms-page {
+  width: 100%;
+  max-width: var(--ms-wide);
+  margin: 0 auto;
+  padding: 28px max(16px, env(safe-area-inset-right, 0px)) 0 max(16px, env(safe-area-inset-left, 0px));
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+.ms-page--narrow { max-width: 980px; }
+.ms-h1, .ms-h2, .ms-h3 { font-family: var(--ms-display); font-weight: 400; color: var(--ms-text); text-wrap: balance; }
+.ms-h1 { font-size: clamp(2rem, 5vw, 3.4rem); line-height: 1.02; }
+.ms-h2 { font-size: clamp(1.5rem, 3.4vw, 2.2rem); line-height: 1.08; }
+.ms-h3 { font-size: 1.3rem; line-height: 1.15; }
+.ms-eyebrow {
+  font-family: var(--ms-cond);
+  font-weight: 800;
+  font-size: 0.95rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--ms-orange);
+}
+.ms-lede { color: var(--ms-soft); font-size: 1.1rem; max-width: 62ch; }
+.ms-card {
+  background: var(--ms-card);
+  border: 1px solid var(--ms-border);
+  border-radius: 20px;
+  padding: 20px;
+  min-width: 0;
+}
+.ms-grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 240px), 1fr)); }
+.ms-row { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+.ms-placeholder { color: var(--ms-muted); font-style: normal; }
+.ms-tag {
+  display: inline-block;
+  font-family: var(--ms-cond);
+  font-weight: 800;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: var(--ms-card-2);
+  color: var(--ms-soft);
+}
+.ms-coins { font-variant-numeric: tabular-nums; font-family: var(--ms-cond); font-weight: 800; }
+
+/* ── Marble badges ─────────────────────────────────────────────────────── */
+.ms-m { position: relative; display: inline-block; border-radius: 50%; overflow: hidden; flex-shrink: 0; }
+.ms-m > i { position: absolute; inset: 0; display: block; border-radius: 50%; }
+@keyframes msSpin { to { transform: rotate(360deg); } }
+.ms-spin-fast { animation: msSpin 4s linear infinite; }
+.ms-spin-slow { animation: msSpin 14s linear infinite; }
+/* A soft sheen drifting across a shimmering marble's picture (Northern Lights). */
+.ms-shimmer { background: linear-gradient(115deg, transparent 30%, rgba(214, 255, 236, 0.16) 45%, rgba(255, 255, 255, 0.26) 50%, rgba(214, 236, 255, 0.16) 55%, transparent 70%) 0 0 / 300% 100% no-repeat; mix-blend-mode: screen; animation: msShimmer 5.5s ease-in-out infinite; }
+@keyframes msShimmer { 0% { background-position: 100% 0; } 60%, 100% { background-position: 0% 0; } }
+@media (prefers-reduced-motion: reduce) { .ms-spin-fast, .ms-spin-slow, .ms-shimmer { animation: none; } .ms-shimmer { display: none; } }
+
+/* ── Collection, shop and bag ─────────────────────────────────────────────── */
+.ms-hero {
+  border-radius: 28px;
+  border: 1px solid var(--ms-border);
+  background: radial-gradient(circle at 80% 20%, #3A1E6B 0%, #142338 55%, var(--ms-bg) 100%);
+  padding: clamp(20px, 4vw, 36px);
+  display: flex; flex-wrap: wrap; gap: 24px; align-items: center;
+}
+.ms-hero > * { flex: 1 1 300px; min-width: 0; }
+.ms-hero--col { flex-direction: column; align-items: stretch; justify-content: space-between; }
+.ms-hero--col > * { flex: none; }
+.ms-hero__balls { display: flex; justify-content: center; align-items: center; gap: 18px; flex-wrap: wrap; }
+.ms-badge-label { align-self: flex-start; justify-self: start; background: var(--ms-yellow); color: var(--ms-ink); font-size: 0.8rem; font-weight: 700; padding: 4px 10px; border-radius: 6px; letter-spacing: 0.04em; }
+.ms-pills { display: flex; flex-wrap: wrap; gap: 8px; }
+.ms-pill { background: var(--ms-card); border: 1px solid var(--ms-border); border-radius: 999px; padding: 5px 12px; font-weight: 700; font-size: 0.9rem; }
+.ms-cards { display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 250px), 1fr)); }
+.ms-mcard {
+  background: var(--ms-card); border: 1px solid var(--ms-border); border-radius: 20px; padding: 22px;
+  display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center; color: var(--ms-text); min-width: 0;
+}
+a.ms-mcard:hover { text-decoration: none; border-color: var(--ms-muted); }
+.ms-mcard__rarity { margin-top: 6px; font-size: 0.78rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
+.ms-mcard__name { font-weight: 700; font-size: 1.25rem; }
+.ms-mcard__story { font-size: 0.95rem; line-height: 1.45; color: #E3E7EF; font-style: italic; }
+.ms-mcard__mat { font-size: 0.82rem; line-height: 1.45; color: var(--ms-muted); }
+.ms-mcard__fe { margin-top: auto; font-size: 0.82rem; font-weight: 700; color: var(--ms-orange); }
+/* A limited edition's sale line on the shop's banner: coming, on sale (how many left), sold out. */
+.ms-ltd-state { font-weight: 800; color: var(--r-limited); letter-spacing: .01em; }
+.ms-ltd-state[data-state='sold-out'], .ms-ltd-state[data-state='retired'] { color: var(--ms-soft); }
+/* The seasonal shelf's line: "Coming 1 December", "Leaving in N days". */
+.ms-ltd-state.ms-seasonal-line[data-state='coming'], .ms-ltd-state.ms-seasonal-line[data-state='on-sale'] { color: var(--r-season); }
+.ms-price-btn {
+  display: flex; justify-content: center; align-items: center; width: 100%; min-height: 44px;
+  border: 1px solid var(--ms-yellow); border-radius: 10px; color: var(--ms-yellow); font-weight: 700; background: transparent; cursor: pointer;
+}
+.ms-price-btn:disabled { border-color: var(--ms-border); color: var(--ms-muted); cursor: default; }
+.ms-section-head { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; }
+.ms-section-head h2 { font-family: var(--ms-cond); font-weight: 800; font-size: 2rem; margin: 0; }
+.ms-section-head span { color: var(--ms-muted); }
+.ms-quote { display: flex; flex-direction: column; gap: 4px; padding: 12px 14px; background: rgba(14,19,32,0.55); border-radius: 12px; }
+.ms-quote > span:first-child { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; }
+.ms-quote > span + span { font-size: 0.95rem; line-height: 1.45; color: #E3E7EF; }
+.ms-swatches { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; font-size: 0.8rem; color: var(--ms-muted); }
+.ms-swatches i { width: 14px; height: 14px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.15); display: inline-block; }
+.ms-shades { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 150px), 1fr)); }
+.ms-shade {
+  display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; padding: 12px 8px;
+  border-radius: 14px; border: 1px solid transparent; background: none; color: var(--ms-text); cursor: pointer; font: inherit;
+}
+.ms-shade[aria-pressed="true"] { border-color: var(--ms-yellow); background: rgba(255,210,31,0.06); }
+.ms-shade small { color: var(--ms-soft); font-size: 0.8rem; line-height: 1.35; }
+.ms-progress { display: flex; align-items: center; gap: 12px; }
+.ms-progress > div { flex: 1; height: 10px; background: var(--ms-border); border-radius: 999px; overflow: hidden; }
+.ms-progress > div > div { height: 100%; background: var(--ms-yellow); border-radius: 999px; }
+.ms-progress > span { font-weight: 700; color: var(--ms-soft); font-size: 0.9rem; white-space: nowrap; }
+.ms-tabs { display: flex; gap: 6px; flex-wrap: wrap; }
+.ms-tabs button {
+  min-height: 40px; padding: 8px 16px; border-radius: 999px; border: 1px solid var(--ms-border); background: var(--ms-card);
+  color: var(--ms-soft); font-weight: 700; cursor: pointer; font: inherit;
+}
+.ms-tabs button[aria-selected="true"], .ms-tabs button[aria-pressed="true"] { background: var(--ms-yellow); border-color: var(--ms-yellow); color: var(--ms-ink); }
+.ms-cert {
+  background: linear-gradient(160deg, #2B2410 0%, var(--ms-card) 60%); border: 1px solid var(--ms-yellow); border-radius: 22px;
+  padding: 24px; display: flex; flex-direction: column; gap: 14px; min-width: 0;
+}
+.ms-cert__tag { align-self: flex-start; background: var(--ms-orange); color: var(--ms-ink); font-size: 0.75rem; font-weight: 800; padding: 4px 10px; border-radius: 6px; letter-spacing: 0.04em; }
+.ms-cert__title { font-family: var(--ms-cond); font-weight: 800; font-size: 1.9rem; line-height: 1; }
+.ms-kv { display: grid; grid-template-columns: auto 1fr; gap: 8px 16px; font-size: 0.95rem; }
+.ms-kv > :nth-child(odd) { color: var(--ms-muted); }
+.ms-kv > :nth-child(even) { font-weight: 700; overflow-wrap: anywhere; }
+.ms-note { color: var(--ms-muted); font-size: 0.9rem; margin: 0; }
+.ms-msg { padding: 12px 14px; border-radius: 12px; background: rgba(61,220,151,0.1); border: 1px solid rgba(61,220,151,0.4); }
+.ms-msg--bad { background: rgba(229,50,45,0.1); border-color: rgba(229,50,45,0.45); }
+.ms-turntable { width: 100%; aspect-ratio: 4 / 3; max-width: 100%; border-radius: 20px; display: block; background: #0B1020; touch-action: pan-y; }
+.ms-two { display: flex; flex-wrap: wrap; gap: 20px; }
+.ms-two > * { flex: 1 1 340px; min-width: 0; }
+
+/* ── Legal ──────────────────────────────────────────────────────────────── */
+.ms-legal { gap: 14px; max-width: 820px; }
+.ms-legal p, .ms-legal li { color: var(--ms-soft); max-width: 70ch; margin: 0; }
+.ms-legal ul { margin: 0; padding-left: 1.2em; display: grid; gap: 6px; }
+.ms-legal__h1 { font-family: var(--ms-cond); font-weight: 800; margin-top: 22px; scroll-margin-top: 140px; }
+.ms-legal__h2 { font-size: 1.1rem; margin-top: 8px; color: var(--ms-text); }
+
+/* ── Forms ──────────────────────────────────────────────────────────────── */
+.ms-form { display: grid; gap: 14px; }
+.ms-form label:not(.ms-check) { display: grid; gap: 6px; font-weight: 600; }
+.ms-form input:not([type="checkbox"]) {
+  min-height: 48px; padding: 10px 14px; border-radius: 12px; border: 1px solid var(--ms-border);
+  background: var(--ms-bg); color: var(--ms-text); font: inherit; font-size: 16px; /* 16px: no zoom-on-focus on iPhone */
+}
+.ms-form input:focus-visible { outline: 3px solid var(--ms-yellow); outline-offset: 1px; }
+.ms-check { display: flex; gap: 10px; align-items: flex-start; cursor: pointer; color: var(--ms-soft); }
+.ms-check input { width: 22px; height: 22px; flex: none; margin-top: 1px; accent-color: var(--ms-yellow); }
+.ms-or { display: flex; align-items: center; gap: 12px; color: var(--ms-muted); font-size: 0.9rem; }
+.ms-or span { flex: 1; height: 1px; background: var(--ms-border); }
+.ms-linkbtn { background: none; border: 0; color: var(--ms-yellow); font: inherit; font-weight: 600; cursor: pointer; min-height: 40px; }
+
+/* ── Tables, tiles, home ───────────────────────────────────────────────── */
+.ms-table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; min-width: 520px; }
+.ms-table th, .ms-table td { text-align: left; padding: 12px 16px; border-bottom: 1px solid var(--ms-border); white-space: nowrap; }
+.ms-table th { color: var(--ms-muted); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.06em; }
+.ms-table .num { text-align: right; }
+.ms-table tr.is-me td { background: rgba(255,210,31,0.12); }
+/* The scoreboards on a phone (pre-launch item 11): every column fits a 390 px screen; the shooter shows as its marble only. */
+@media (max-width: 520px) {
+  .ms-table--scores { min-width: 0; }
+  .ms-table--scores th, .ms-table--scores td { padding: 10px 8px; }
+  .ms-table--scores th:first-child, .ms-table--scores td:first-child { padding-left: 12px; }
+  .ms-table--scores th:last-child, .ms-table--scores td:last-child { padding-right: 12px; }
+  .ms-table--scores .ms-scores__shooter, .ms-table--scores .ms-wide-only { display: none; }
+  .ms-table--scores .ms-scores__player { max-width: 34vw; overflow: hidden; text-overflow: ellipsis; }
+}
+.ms-tile { display: grid; gap: 2px; flex: 1 1 0; color: var(--ms-text); padding: 16px; }
+/* The home hub's race buttons (HomeHub.jsx): three identical yellow buttons stacked full width, on phones
+   and computers alike (Moses, 25 Oct 2026). */
+.ms-race-choices, .ms-race-more { display: grid; gap: 12px; grid-template-columns: 1fr; }
+.ms-race-quick, .ms-race-choice {
+  min-height: 84px; width: 100%; padding: 12px 18px; border-radius: 18px; border: 2px solid var(--ms-yellow);
+  background: var(--ms-yellow); color: var(--ms-ink); display: grid; place-content: center; justify-items: center; gap: 4px;
+  font-family: var(--ms-cond); font-weight: 800; font-size: 1.6rem; line-height: 1; text-transform: uppercase; letter-spacing: 0.04em; text-align: center;
+}
+.ms-race-choice b { font-weight: 800; }
+a.ms-race-choice span { color: var(--ms-ink); opacity: 0.78; font-family: var(--ms-body); font-weight: 600; font-size: 0.95rem; text-transform: none; letter-spacing: 0; }
+a.ms-race-quick:hover, a.ms-race-choice:hover { border-color: var(--ms-yellow-hover); background: var(--ms-yellow-hover); text-decoration: none; }
+.ms-tile span { color: var(--ms-muted); font-size: 0.9rem; }
+a.ms-tile:hover, a.ms-card:hover { text-decoration: none; border-color: var(--ms-muted); }
+.ms-home-hero { min-height: 340px; background: radial-gradient(circle at 70% 10%, #2A4A7A 0%, #13284A 45%, var(--ms-bg) 100%); align-items: flex-end; position: relative; overflow: hidden; isolation: isolate; }
+.ms-home-hero__pic { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: -1; opacity: 0; transition: opacity 0.4s ease; }
+.ms-home-hero__pic[data-loaded] { opacity: 1; }
+.ms-home-hero::after { content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none; background: linear-gradient(180deg, rgba(14,19,32,0.05) 0%, rgba(14,19,32,0.55) 50%, rgba(14,19,32,0.92) 100%); }
+@media (prefers-reduced-motion: reduce) { .ms-home-hero__pic { transition: none; } }
+
+/* ── Race flow ─────────────────────────────────────────────────────────── */
+.ms-steps { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+.ms-steps li { padding: 6px 12px; border-radius: 999px; background: var(--ms-card); border: 1px solid var(--ms-border); color: var(--ms-muted); font-weight: 700; font-size: 0.9rem; }
+.ms-steps li[aria-current="step"] { background: var(--ms-yellow); color: var(--ms-ink); border-color: var(--ms-yellow); }
+.ms-steps li a { color: var(--ms-soft); }
+.ms-flowbar { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; border-top: 1px solid var(--ms-border); padding-top: 18px; }
+.ms-field-like { flex: 1; min-width: 0; min-height: 44px; display: flex; align-items: center; padding: 0 14px; border-radius: 12px; background: var(--ms-bg); border: 1px solid var(--ms-border); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
+.ms-filters { display: grid; gap: 8px; }
+/* Phones and narrow windows: the filters fold behind one button, so the first tracks show at once (pre-launch item 10). */
+.ms-filters-toggle { display: none; }
+@media (max-width: 759px) {
+  .ms-filters-toggle { display: inline-flex; flex: 0 0 auto !important; }
+  .ms-filters { display: none; }
+  .ms-filters.ms-filters--open { display: grid; flex-basis: 100% !important; }
+}
+.ms-filters .ms-check span:last-child { color: var(--ms-muted); }
+.ms-trackcard { display: flex; flex-direction: column; text-align: left; padding: 0; border-radius: 18px; overflow: hidden; background: var(--ms-card); border: 1px solid var(--ms-border); color: var(--ms-text); cursor: pointer; font: inherit; }
+.ms-trackcard:hover, .ms-trackcard:focus-visible { border-color: var(--ms-yellow); }
+.ms-trackcard__pic { position: relative; overflow: hidden; aspect-ratio: 16 / 9; padding: 10px; display: flex; align-items: flex-start; }
+.ms-trackcard__pic > .ms-badge-label { position: relative; z-index: 1; }
+.ms-trackcard__img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 0.25s ease; }
+.ms-trackcard__img[data-loaded] { opacity: 1; }
+@media (prefers-reduced-motion: reduce) { .ms-trackcard__img { transition: none; } }
+.ms-trackcard__body { display: grid; gap: 2px; padding: 12px 14px 14px; }
+.ms-trackcard__body span { font-size: 0.88rem; color: var(--ms-muted); }
+/* The solo starting line's links and "Other players liked" (31 Oct 2026). */
+.ms-start-links { display: flex; justify-content: center; gap: 22px; flex-wrap: wrap; }
+.ms-start-links a { color: var(--ms-soft); }
+.ms-liked { display: grid; gap: 8px; border-top: 1px solid var(--ms-border); padding-top: 12px; min-width: 0; }
+.ms-liked__h { margin: 0; font-size: 0.95rem; font-weight: 700; color: var(--ms-soft); }
+.ms-liked__row { display: grid; grid-auto-flow: column; grid-auto-columns: calc((100% - 16px) / 3); gap: 8px; overflow-x: auto; scroll-snap-type: x mandatory; overscroll-behavior-x: contain; scrollbar-width: none; padding-bottom: 2px; }
+.ms-liked__row::-webkit-scrollbar { display: none; }
+.ms-liked__card { display: grid; gap: 4px; padding: 0; text-align: left; background: none; border: 0; color: var(--ms-text); font: inherit; cursor: pointer; scroll-snap-align: start; min-width: 0; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+.ms-liked__pic { position: relative; overflow: hidden; aspect-ratio: 16 / 9; border-radius: 10px; border: 2px solid transparent; }
+/* (The hover border only with a mouse: on a touch screen it stuck after a tap and looked like a pick, 8 Nov 2026.) */
+@media (hover: hover) { .ms-liked__card:hover .ms-liked__pic { border-color: var(--ms-yellow); } }
+.ms-liked__card:focus-visible .ms-liked__pic { border-color: var(--ms-yellow); }
+/* The track the race is on, right above START THE RACE (8 Nov 2026). */
+.ms-start-track { display: grid; grid-template-columns: auto 1fr; column-gap: 8px; align-items: baseline; padding: 10px 12px; border-radius: 10px; background: rgba(0,0,0,0.22); border: 1px solid var(--ms-border); min-width: 0; }
+.ms-start-track__label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ms-soft); }
+.ms-start-track__name { font-family: var(--ms-cond); font-weight: 800; font-size: 1.25rem; line-height: 1.15; overflow-wrap: anywhere; min-width: 0; }
+.ms-start-track__series { grid-column: 2; font-size: 0.8rem; color: var(--ms-soft); }
+.ms-liked__card[aria-pressed="true"] .ms-liked__pic { border-color: var(--ms-yellow); box-shadow: 0 0 0 2px rgba(0,0,0,0.35); }
+.ms-liked__name { font-size: 0.8rem; line-height: 1.2; font-weight: 600; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+@media (max-width: 720px) { .ms-liked__row { grid-auto-columns: calc((100% - 16px) / 2.6); } }
+.ms-gate { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: center; padding: 18px 8px; background: rgba(0,0,0,0.25); border-radius: 18px; }
+.ms-gate__you { display: inline-flex; flex-direction: column; align-items: center; gap: 2px; color: var(--ms-yellow); font-weight: 800; }
+
+/* ── Landing ───────────────────────────────────────────────────────────── */
+.ms-landing { display: flex; flex-direction: column; gap: 40px; }
+.ms-landing__h1 { font-family: var(--ms-display); font-weight: 400; font-size: clamp(2.4rem, 7vw, 4.6rem); line-height: 0.98; margin: 0; text-wrap: balance; }
+.ms-landing__h2 { font-family: var(--ms-cond); font-weight: 800; font-size: clamp(1.9rem, 4.5vw, 2.8rem); line-height: 1; margin: 0; text-wrap: balance; }
+.ms-landing__num { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; background: var(--ms-yellow); color: var(--ms-ink); font-weight: 800; }
+.ms-landing section[id] { scroll-margin-top: 90px; }
+.ms-faq summary { cursor: pointer; font-weight: 700; min-height: 32px; display: flex; align-items: center; }
+.ms-faq p { margin: 8px 0 0; color: var(--ms-soft); }
+.ms-heroplay { position: relative; border-radius: 26px; overflow: hidden; border: 1px solid var(--ms-border); background: #0B1020; }
+.ms-heroplay__view { position: relative; width: 100%; aspect-ratio: 16 / 8; min-height: 360px; max-height: 70vh; }
+.ms-heroplay__view canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.ms-heroplay__fallback { position: absolute; inset: 0; background: radial-gradient(circle at 70% 20%, #2A4A7A 0%, #13284A 45%, #0B1020 100%); }
+.ms-heroplay__top { position: absolute; top: 12px; left: 12px; right: 12px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; pointer-events: none; }
+.ms-heroplay__top > span { background: rgba(14,19,32,0.78); border-radius: 999px; padding: 5px 12px; font-weight: 700; font-size: 0.85rem; }
+.ms-heroplay__time { margin-left: auto; }
+.ms-heroplay__live { display: inline-flex; align-items: center; gap: 8px; font-weight: 800; font-size: 0.85rem; letter-spacing: 0.06em; color: var(--ms-text); background: rgba(14,19,32,0.78); border-radius: 999px; padding: 5px 12px; }
+.ms-heroplay__live i { width: 8px; height: 8px; border-radius: 50%; background: var(--ms-red); box-shadow: 0 0 8px var(--ms-red); }
+.ms-heroplay__bottom { position: absolute; left: 12px; right: 12px; bottom: 12px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; }
+.ms-heroplay__order { list-style: none; margin: 0; padding: 6px 8px; display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; background: rgba(14,19,32,0.78); border-radius: 14px; min-width: 0; flex: 1 1 260px; }
+.ms-heroplay__order li { display: grid; justify-items: center; gap: 1px; font-size: 0.7rem; font-weight: 700; color: var(--ms-soft); flex: none; width: 26px; }
+@media (max-width: 600px) {
+  .ms-heroplay__view { aspect-ratio: 3 / 4; min-height: 0; }
+  .ms-heroplay__bottom .ms-btn { width: 100%; }
+}
+
+/* ── Computer-player icon and tapped-marble card ─────────────────────────────────────── */
+.cpu-tag { flex: none;
+  display: inline-grid; place-items: center; margin-left: 6px; width: 20px; height: 18px; border-radius: 5px; vertical-align: -3px;
+  color: var(--ms-muted); border: 1px solid var(--ms-border); background: rgba(14,19,32,0.6); line-height: 0;
+}
+.cpu-tag svg { display: block; }
+.marble-tap { background: none; border: 0; padding: 0; margin: 0; font: inherit; color: inherit; cursor: pointer; text-align: left; display: inline-flex; align-items: center; gap: 6px; min-height: 28px; }
+.marble-tap:hover .board__name, .marble-tap:focus-visible .board__name { text-decoration: underline; }
+.marble-info__backdrop { position: fixed; inset: 0; z-index: 80; background: rgba(5,8,16,0.55); display: grid; place-items: end center; padding: 16px 16px calc(16px + env(safe-area-inset-bottom, 0px)); }
+@media (min-width: 640px) { .marble-info__backdrop { place-items: center; } }
+.marble-info {
+  width: min(100%, 380px); background: var(--ms-card); border: 1px solid var(--ms-border); border-radius: 20px; padding: 18px;
+  display: grid; grid-template-columns: auto 1fr; gap: 12px 16px; align-items: center; color: var(--ms-text); outline: none;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+}
+.marble-info__text { display: grid; gap: 2px; min-width: 0; }
+.marble-info__name { font: 800 1.4rem/1.1 var(--ms-cond); }
+.marble-info__rarity { font-weight: 700; font-size: 0.85rem; letter-spacing: 0.04em; text-transform: uppercase; }
+.marble-info__note { color: var(--ms-muted); font-size: 0.88rem; }
+.marble-info__owner { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; font-size: 0.88rem; color: var(--ms-soft); margin-top: 4px; }
+.marble-info__actions { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 8px; }
+.marble-info__actions .ms-btn--primary { flex: 1; }
+
+/* ── The shop: live collection hero, filters, the 50-marble grid, big view, coming soon ── */
+.ms-hero--shop { background: radial-gradient(circle at 85% 15%, rgba(229,50,45,0.35) 0%, #142338 55%, var(--ms-bg) 100%); }
+.ms-shop-title { font-family: var(--ms-cond); font-weight: 800; font-size: clamp(2.8rem, 8vw, 4.5rem); line-height: 0.92; text-wrap: balance; margin: 0; }
+.ms-chips { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.ms-chips__label { color: var(--ms-muted); font-size: 0.85rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; margin-right: 4px; }
+.ms-chips button {
+  min-height: 40px; padding: 8px 14px; border-radius: 999px; border: 1px solid var(--ms-border); background: var(--ms-card);
+  color: var(--ms-soft); font: inherit; font-weight: 700; font-size: 0.95rem; cursor: pointer;
+}
+.ms-chips button[aria-pressed="true"] { background: var(--ms-text); border-color: var(--ms-text); color: var(--ms-ink); }
+.ms-room-timer { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.ms-room-timer__clock { font-family: var(--ms-cond); font-size: 2.4rem; line-height: 1; font-variant-numeric: tabular-nums; color: var(--ms-yellow); }
+.ms-chips button:focus-visible, .ms-bag:focus-visible, .ms-mcard--grid:focus-visible, .ms-sheet__shades button:focus-visible { outline: 3px solid var(--ms-yellow); outline-offset: 2px; }
+.ms-find {
+  font: inherit; font-size: 0.95rem; min-height: 40px; width: min(220px, 100%); padding: 8px 14px; border-radius: 999px;
+  border: 1px solid var(--ms-border); background: var(--ms-card); color: var(--ms-text); text-transform: uppercase;
+}
+.ms-find::placeholder { text-transform: none; color: var(--ms-muted); }
+.ms-grid50 { display: grid; gap: 14px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 150px), 1fr)); }
+.ms-mcard--grid { padding: 16px 10px 14px; gap: 5px; cursor: pointer; font: inherit; transition: transform 0.15s ease, border-color 0.15s ease; }
+.ms-mcard--grid:hover { transform: translateY(-3px); border-color: #465270; }
+.ms-mcard--legend { border-color: var(--ms-yellow); }
+.ms-mcard--grid .ms-mcard__rarity { margin-top: 4px; font-size: 0.7rem; }
+.ms-mcard__shade { font-size: 0.85rem; color: var(--ms-muted); }
+.ms-mcard__col { font-size: 0.72rem; color: var(--ms-muted); letter-spacing: 0.03em; }
+.ms-mcard__price { margin-top: 4px; font-weight: 700; font-size: 0.9rem; color: var(--ms-yellow); }
+.ms-mcard__tag { font-size: 0.72rem; font-weight: 700; color: var(--r-season); letter-spacing: 0.03em; }
+.ms-id {
+  font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace; font-size: 0.75rem; font-weight: 700; color: var(--ms-soft);
+  background: #26304A; border-radius: 6px; padding: 2px 7px; letter-spacing: 0.04em;
+}
+.ms-id--big { font-size: 0.95rem; padding: 4px 10px; }
+.ms-bags { display: flex; flex-wrap: wrap; gap: 12px; }
+.ms-bag {
+  display: flex; flex-direction: column; gap: 2px; padding: 12px 16px; border-radius: 14px; border: 2px solid var(--ms-yellow);
+  background: transparent; color: var(--ms-text); font: inherit; text-align: left; cursor: pointer; min-height: 44px;
+}
+.ms-bag b { font-family: var(--ms-cond); font-size: 1.35rem; letter-spacing: 0.02em; }
+.ms-bag small { font-size: 0.88rem; font-weight: 600; opacity: 0.85; }
+.ms-bag s { opacity: 0.6; }
+.ms-bag--main { background: var(--ms-yellow); color: var(--ms-ink); }
+.ms-bag:disabled { opacity: 0.6; cursor: default; }
+.ms-sheet { position: fixed; inset: 0; z-index: 60; background: rgba(5,8,15,0.72); display: flex; align-items: flex-end; justify-content: center; padding: 16px; }
+@media (min-width: 700px) { .ms-sheet { align-items: center; } }
+.ms-sheet__panel {
+  position: relative; width: 100%; max-width: 520px; max-height: 92vh; overflow: auto; background: var(--ms-card); border: 1px solid var(--ms-border);
+  border-radius: 26px; padding: 24px; padding-bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+  display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center;
+}
+.ms-sheet__close { position: absolute; right: 14px; top: 10px; background: none; border: 0; color: var(--ms-muted); font-size: 2rem; cursor: pointer; min-width: 44px; min-height: 44px; }
+.ms-sheet__ball { width: 100%; display: grid; place-items: center; }
+.ms-sheet__ball .ms-turntable { max-width: 320px; aspect-ratio: 1 / 1; background: transparent; }
+.ms-bag__ball { width: 170px; max-width: 100%; flex: none; }
+.ms-bag__ball .ms-turntable { aspect-ratio: 1 / 1; background: transparent; }
+.ms-sheet__col { font-size: 0.8rem; font-weight: 700; color: var(--ms-muted); letter-spacing: 0.04em; }
+.ms-sheet__name { margin: 0; font-family: var(--ms-cond); font-weight: 800; font-size: 2.2rem; line-height: 1; }
+.ms-sheet__story { margin: 0; color: var(--ms-soft); font-size: 1rem; line-height: 1.5; font-style: italic; max-width: 42ch; }
+.ms-sheet__shades { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+.ms-sheet__shades button { background: none; border: 2px solid transparent; border-radius: 50%; padding: 3px; cursor: pointer; min-width: 44px; min-height: 44px; }
+.ms-sheet__shades button[aria-pressed="true"] { border-color: var(--ms-yellow); }
+.ms-sheet__buy { width: 100%; min-height: 54px; font-family: var(--ms-cond); font-size: 1.4rem; }
+.ms-getcoins { display: grid; gap: 8px; justify-items: start; width: 100%; }
+.ms-getcoins .ms-sheet__buy { justify-self: stretch; text-align: center; display: inline-flex; align-items: center; justify-content: center; }
+.ms-sheet .ms-getcoins { justify-items: center; }
+.ms-soon { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); }
+.ms-soon__card { border-radius: 22px; border: 1px dashed #46527A; background: var(--ms-card); padding: 20px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.ms-soon__date { align-self: flex-start; font-weight: 800; font-size: 0.8rem; letter-spacing: 0.06em; border-radius: 7px; padding: 4px 9px; background: #26304A; }
+.ms-soon__card h3 { margin: 0; font-family: var(--ms-cond); font-size: 1.8rem; line-height: 1; }
+.ms-soon__card p { margin: 0; color: var(--ms-soft); font-size: 0.95rem; line-height: 1.45; }
+@media (prefers-reduced-motion: reduce) { .ms-mcard--grid { transition: none; } .ms-mcard--grid:hover { transform: none; } }
+.ms-sheet__panel:focus { outline: none; }
+
+/* The sound control in the header */
+.ms-sound { position: relative; flex: none; }
+.ms-sound__btn { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 12px; border: 1px solid var(--ms-border); background: transparent; color: var(--ms-text); cursor: pointer; }
+.ms-sound__btn:focus-visible { outline: 3px solid var(--ms-yellow); outline-offset: 1px; }
+
+/* ── Offline screen (no connection, or the app can't reach the server) ── */
+.ms-offline {
+  position: fixed; inset: 0; z-index: 200; display: grid; place-items: center;
+  padding: max(24px, env(safe-area-inset-top, 0px)) 16px max(24px, env(safe-area-inset-bottom, 0px));
+  background: radial-gradient(circle at 50% 40%, #1B2546 0%, var(--ms-bg) 70%);
+}
+.ms-offline__box { display: grid; justify-items: center; gap: 16px; text-align: center; max-width: 360px; }
+.ms-offline__icon { width: 64px; height: 64px; color: var(--ms-soft); }
+.ms-offline__help { color: var(--ms-soft); font-weight: 600; min-height: 40px; display: inline-flex; align-items: center; }
+.ms-offline-bar {
+  position: sticky; top: 0; z-index: 60; display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: center; justify-content: center;
+  padding: max(8px, env(safe-area-inset-top, 0px)) 16px 8px; background: #3A2410; color: var(--ms-text); font-weight: 600; text-align: center;
+}
+.ms-offline-bar .ms-linkbtn { min-height: 32px; }
+
+/* ── Inside the apps ── */
+.is-app body { overscroll-behavior: none; -webkit-user-select: none; user-select: none; }
+.is-app input, .is-app textarea { -webkit-user-select: text; user-select: text; }
+.is-app { -webkit-tap-highlight-color: transparent; }
+
+/* (The apps use the website's header and its phone layout: SiteHeader.jsx, Moses, 25 Oct 2026. The
+   round icon buttons, the menu button among them, keep this class.) */
+.ms-apphead__icon {
+  display: inline-grid; place-items: center; width: 44px; height: 44px; flex: none;
+  background: none; border: 0; border-radius: 12px; color: var(--ms-text); cursor: pointer;
+}
+.ms-apphead__icon:active { background: rgba(255, 255, 255, 0.08); }
+
+/* The menu: a bottom sheet. */
+.ms-appmenu { position: fixed; inset: 0; z-index: 90; background: rgba(5, 8, 16, 0.6); display: flex; align-items: flex-end; justify-content: center; }
+.ms-appmenu__panel {
+  width: min(100%, 520px); max-height: calc(100dvh - env(safe-area-inset-top, 0px) - 12px); overflow-y: auto;
+  background: var(--ms-card); border: 1px solid var(--ms-border); border-bottom: 0; border-radius: 22px 22px 0 0;
+  padding: 8px max(16px, env(safe-area-inset-right, 0px)) calc(16px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
+  display: grid; gap: 12px; animation: ms-sheet-up 0.18s ease-out;
+}
+@keyframes ms-sheet-up { from { transform: translateY(24px); opacity: 0; } to { transform: none; opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .ms-appmenu__panel { animation: none; } }
+.ms-appmenu__grip { justify-self: center; width: 40px; height: 4px; border-radius: 2px; background: var(--ms-border); }
+.ms-appmenu__who { display: grid; gap: 2px; padding: 4px 4px 0; }
+.ms-appmenu__who span { color: var(--ms-soft); font-size: 0.9rem; }
+.ms-appmenu__pages { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.ms-appmenu__pages a {
+  display: flex; align-items: center; min-height: 52px; padding: 0 14px; border-radius: 14px;
+  background: var(--ms-bg); border: 1px solid var(--ms-border); color: var(--ms-text);
+  font-family: var(--ms-cond); font-weight: 700; font-size: 1.1rem; text-transform: uppercase; letter-spacing: 0.03em;
+}
+.ms-appmenu__pages a:hover { text-decoration: none; }
+.ms-appmenu__pages a.active { background: var(--ms-yellow); border-color: var(--ms-yellow); color: var(--ms-ink); }
+.ms-appmenu__more { display: grid; }
+.ms-appmenu__more a, .ms-appmenu__logout {
+  display: flex; align-items: center; min-height: 46px; padding: 0 6px; border: 0; border-top: 1px solid var(--ms-border);
+  background: none; color: var(--ms-soft); font: inherit; font-weight: 600; text-align: left; cursor: pointer;
+}
+.ms-appmenu__more a.is-strong { color: var(--ms-yellow); }
+.ms-appmenu__close { min-height: 46px; }
+
+/* The menu as a drawer from the right (a phone's website). */
+.ms-appmenu--drawer { justify-content: flex-end; align-items: stretch; }
+.ms-appmenu--drawer .ms-appmenu__panel {
+  width: min(86vw, 340px); max-height: none; height: 100%; align-content: start; border: 0; border-left: 1px solid var(--ms-border); border-radius: 0;
+  padding: calc(8px + env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) calc(16px + env(safe-area-inset-bottom, 0px)) 16px;
+  animation: ms-drawer-in 0.18s ease-out;
+}
+@keyframes ms-drawer-in { from { transform: translateX(24px); opacity: 0; } to { transform: none; opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .ms-appmenu--drawer .ms-appmenu__panel { animation: none; } }
+.ms-appmenu__top { display: flex; justify-content: space-between; align-items: center; }
+.ms-appmenu--drawer .ms-appmenu__pages { grid-template-columns: 1fr; }
+
+/* A race on the whole screen (html.is-race-full, while the 3D view shows; Race.jsx): on phones, computers
+   and in the apps alike (Moses, 25 Oct 2026). The race fills the screen or the browser window, the
+   standings over its left side and the camera buttons over its foot, everything clear of the notch and
+   the home bar. The header and footer go, and a ✕ (leave) and a ⋯ (the 2D view) float over the race. */
+.is-race-full, .is-race-full body { overflow: hidden; overscroll-behavior: none; } /* (html too: Safari scrolls the page under a fixed layer otherwise) */
+.is-race-full .ms-header { display: none; }
+.race-float { display: none; }
+.is-race-full .race-float {
+  display: inline-grid; place-items: center; position: fixed; z-index: 71; top: calc(env(safe-area-inset-top, 0px) + 8px);
+  width: 40px; height: 40px; border: 0; border-radius: 50%; background: rgba(17, 19, 26, 0.62); color: #fff; cursor: pointer;
+}
+.race-float::after { content: ''; position: absolute; inset: -2px; } /* (a 44 px tap target) */
+.is-race-full .race-float--exit { left: calc(env(safe-area-inset-left, 0px) + 8px); }
+.is-race-full .race-float--more { right: calc(env(safe-area-inset-right, 0px) + 8px); }
+.race-more-menu {
+  position: fixed; z-index: 72; top: calc(env(safe-area-inset-top, 0px) + 54px); right: calc(env(safe-area-inset-right, 0px) + 8px);
+  display: grid; min-width: 170px; padding: 6px; border-radius: 14px; background: rgba(17, 19, 26, 0.92); border: 1px solid var(--ms-border);
+}
+.race-more-menu button { min-height: 44px; padding: 0 12px; border: 0; border-radius: 10px; background: none; color: #fff; font: inherit; font-weight: 600; text-align: left; cursor: pointer; }
+.race-more-menu button:hover, .race-more-menu button:focus-visible { background: rgba(255, 255, 255, 0.08); }
+.is-race-full .ms-footer, .is-race-full .ms-onsale { display: none; }
+.is-race-full .race-page {
+  position: fixed; inset: 0; z-index: 40; max-width: none; margin: 0; padding: 0; background: #0E1320;
+}
+.is-race-full .race-page > .race-header,
+.is-race-full .race-page .event-feed { display: none; }
+.is-race-full .race-page .live3d { position: absolute; inset: 0; }
+.is-race-full .race-page .preview3d__stage { position: absolute; inset: 0; height: auto; min-height: 0; border: 0; border-radius: 0; }
+/* 3D / 2D: behind the ⋯. */
+.is-race-full .race-page > .segmented { display: none; }
+.is-race-full .race-page > .segmented {
+  position: fixed; z-index: 71; top: calc(env(safe-area-inset-top, 0px) + 10px); left: 50%; transform: translateX(-50%); margin: 0;
+  background: rgba(17, 19, 26, 0.62);
+}
+/* The race's own overlays move clear of the floating buttons and the camera bar. */
+.is-race-full .replay3d__standings { top: calc(env(safe-area-inset-top, 0px) + 58px); left: calc(env(safe-area-inset-left, 0px) + 8px); }
+.is-race-full .replay3d__clock { top: calc(env(safe-area-inset-top, 0px) + 58px); right: calc(env(safe-area-inset-right, 0px) + 8px); }
+.is-race-full .replay3d__speed { bottom: calc(env(safe-area-inset-bottom, 0px) + 62px); right: calc(env(safe-area-inset-right, 0px) + 8px); }
+.is-race-full .cornerview { bottom: calc(env(safe-area-inset-bottom, 0px) + 62px); left: calc(env(safe-area-inset-left, 0px) + 8px); }
+.is-race-full .segmented--camera {
+  position: fixed; z-index: 45; left: calc(env(safe-area-inset-left, 0px) + 8px); right: calc(env(safe-area-inset-right, 0px) + 8px);
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 8px); width: auto; margin: 0; max-width: 560px; margin-inline: auto;
+  background: rgba(17, 19, 26, 0.62); border-color: transparent;
+}
+.is-race-full .segmented--camera button { color: #fff; min-height: 44px; }
+.is-race-full .skip-results {
+  position: fixed; z-index: 45; right: calc(env(safe-area-inset-right, 0px) + 10px); bottom: calc(env(safe-area-inset-bottom, 0px) + 58px); margin: 0;
+}
+.is-race-full .skip-results__link { color: #fff; background: rgba(17, 19, 26, 0.62); border-radius: 999px; padding: 6px 10px; }
+/* Big windows (a computer's browser): the standings and the clock a little larger, beside the track. */
+@media (min-width: 1200px) and (min-height: 700px) {
+  .is-race-full .replay3d__standings button { font-size: 0.95rem; padding: 4px 8px; }
+  .is-race-full .replay3d__standings { max-width: 300px; }
+}
+/* Landscape phones: the standings smaller, so more of the track shows. */
+@media (orientation: landscape) and (max-height: 500px) {
+  .is-race-full .replay3d__standings { top: calc(env(safe-area-inset-top, 0px) + 54px); font-size: 0.8rem; max-width: 34%; }
+  .is-race-full .replay3d__clock { top: calc(env(safe-area-inset-top, 0px) + 54px); }
+  .is-race-full .segmented--camera { max-width: 460px; }
+  .is-race-full .cornerview { width: clamp(110px, 18%, 160px); }
+}
+@media (orientation: landscape) and (max-height: 500px) {
+  .ms-appmenu__pages { grid-template-columns: repeat(3, 1fr); }
+  .ms-appmenu__pages a { min-height: 46px; }
+}
+/* The finish show's banner and results board keep clear of the buttons too. */
+.is-race-full .finish__banner { top: calc(env(safe-area-inset-top, 0px) + 56px); }
+.is-race-full .finish__board {
+  top: calc(env(safe-area-inset-top, 0px) + 56px); bottom: calc(env(safe-area-inset-bottom, 0px) + 60px);
+  left: calc(env(safe-area-inset-left, 0px) + 8px); right: calc(env(safe-area-inset-right, 0px) + 8px);
+}
+/* Short camera labels over the race ("Leader", "My marble", "Track"), whatever the width. */
+.is-race-full .segmented--camera .ms-wide-only { display: none; }
+.is-race-full .segmented--camera .ms-narrow-only { display: inline; }
+
+/* ── Help Centre (/help) ───────────────────────────────────────────────── */
+.ms-visually-hidden { position: absolute !important; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+.ms-help { gap: 18px; padding-bottom: 8px; }
+.ms-help__top { display: grid; gap: 14px; }
+.ms-help-search { position: relative; z-index: 5; }
+.ms-help-search__box { position: relative; display: flex; align-items: center; }
+.ms-help-search__box > svg { position: absolute; left: 16px; width: 22px; height: 22px; color: var(--ms-muted); pointer-events: none; }
+.ms-help-search input {
+  width: 100%; min-height: 56px; padding: 12px 52px 12px 50px; border-radius: 16px; border: 2px solid var(--ms-border);
+  background: var(--ms-card); color: var(--ms-text); font: inherit; font-size: 17px; -webkit-appearance: none; appearance: none;
+}
+.ms-help-search input::-webkit-search-cancel-button { display: none; }
+.ms-help-search input:focus-visible { outline: none; border-color: var(--ms-yellow); }
+.ms-help-search__clear { position: absolute; right: 6px; width: 44px; height: 44px; border: 0; border-radius: 12px; background: none; color: var(--ms-muted); font-size: 1.6rem; cursor: pointer; }
+.ms-help-search__clear:hover { color: var(--ms-text); }
+.ms-help-suggest {
+  position: absolute; left: 0; right: 0; top: calc(100% + 6px); margin: 0; padding: 6px; list-style: none;
+  background: var(--ms-card-2); border: 1px solid var(--ms-border); border-radius: 16px; box-shadow: 0 18px 40px rgba(0,0,0,0.45);
+  max-height: min(60vh, 460px); overflow-y: auto; overscroll-behavior: contain;
+}
+.ms-help-suggest li { display: grid; gap: 2px; padding: 10px 12px; border-radius: 10px; cursor: pointer; min-height: 44px; }
+.ms-help-suggest li[aria-selected="true"] { background: rgba(255,210,31,0.12); box-shadow: inset 3px 0 0 var(--ms-yellow); }
+.ms-help-suggest li b { font-weight: 700; }
+.ms-help-suggest__in { font-family: var(--ms-cond); font-weight: 800; font-size: 0.78rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ms-orange); }
+.ms-help-suggest__snip { font-size: 0.9rem; color: var(--ms-muted); line-height: 1.4; }
+.ms-help-suggest mark { background: none; color: var(--ms-yellow); font-weight: 800; }
+.ms-help-suggest a, .ms-help a:not(.ms-btn) { color: var(--ms-yellow); }
+.ms-help-suggest--none { display: grid; gap: 4px; padding: 14px 16px; color: var(--ms-soft); }
+.ms-help__topics { display: flex; flex-wrap: wrap; gap: 8px; }
+.ms-help__topics a { padding: 6px 12px; border-radius: 999px; border: 1px solid var(--ms-border); color: var(--ms-soft); font-weight: 600; font-size: 0.9rem; min-height: 36px; display: inline-flex; align-items: center; }
+.ms-help__topics a:hover { color: var(--ms-text); border-color: var(--ms-muted); text-decoration: none; }
+.ms-help__sec { display: grid; gap: 4px; padding: 18px 18px 8px; scroll-margin-top: 130px; }
+.ms-help__sec > h2 { display: flex; align-items: baseline; gap: 12px; margin: 0 0 6px; font-family: var(--ms-cond); font-weight: 800; font-size: clamp(1.5rem, 3.4vw, 1.9rem); line-height: 1.05; text-wrap: balance; }
+.ms-help__sec > h2 span { font-size: 0.9rem; color: var(--ms-orange); letter-spacing: 0.06em; font-variant-numeric: tabular-nums; }
+.ms-help-q { border-top: 1px solid var(--ms-border); scroll-margin-top: 140px; }
+@media (min-width: 900px) { .ms-help-q, .ms-help__sec, .ms-help__contact { scroll-margin-top: 90px; } }
+.ms-help-q h3 { margin: 0; font-size: 1.02rem; }
+.ms-help-q h3 button {
+  width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 2px; min-height: 52px;
+  background: none; border: 0; color: var(--ms-text); font: inherit; font-weight: 700; text-align: left; cursor: pointer;
+  -webkit-tap-highlight-color: transparent; touch-action: manipulation;
+}
+.ms-help-q h3 button:hover { color: var(--ms-yellow); }
+.ms-help-q h3 button:focus-visible { outline: 3px solid var(--ms-yellow); outline-offset: 2px; border-radius: 8px; }
+.ms-help-q h3 svg { width: 20px; height: 20px; flex: none; color: var(--ms-muted); transition: transform 0.18s ease; }
+.ms-help-q[data-open] h3 svg { transform: rotate(180deg); color: var(--ms-yellow); }
+.ms-help-q:target h3 button, .ms-help-q[data-open] h3 button { color: var(--ms-yellow); }
+.ms-help-a[hidden] { display: none; }
+.ms-help-a { display: grid; gap: 10px; padding: 0 2px 16px; color: var(--ms-soft); line-height: 1.55; max-width: 68ch; }
+.ms-help-a p, .ms-help-a ul, .ms-help-a ol { margin: 0; }
+.ms-help-a ul, .ms-help-a ol { padding-left: 1.3em; display: grid; gap: 4px; }
+.ms-help-a strong { color: var(--ms-text); }
+.ms-help-a__foot { display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: center; }
+.ms-help-a__foot .ms-linkbtn { padding: 0; font-size: 0.9rem; }
+.ms-help-ph { color: var(--ms-orange); background: rgba(255,122,26,0.1); border: 1px dashed rgba(255,122,26,0.55); border-radius: 6px; padding: 0 4px; font-weight: 600; -webkit-box-decoration-break: clone; box-decoration-break: clone; }
+.ms-help-table { overflow-x: auto; }
+.ms-help-table table { border-collapse: collapse; font-variant-numeric: tabular-nums; min-width: 240px; }
+.ms-help-table th, .ms-help-table td { text-align: left; padding: 7px 18px 7px 0; border-bottom: 1px solid var(--ms-border); }
+.ms-help-table thead th { color: var(--ms-muted); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.06em; }
+.ms-help-table tbody th { color: var(--ms-text); font-weight: 700; }
+.ms-form select, .ms-form textarea {
+  min-height: 48px; padding: 10px 14px; border-radius: 12px; border: 1px solid var(--ms-border);
+  background: var(--ms-bg); color: var(--ms-text); font: inherit; font-size: 16px; font-weight: 400; width: 100%;
+}
+.ms-form textarea { resize: vertical; min-height: 140px; line-height: 1.45; }
+.ms-form select:focus-visible, .ms-form textarea:focus-visible { outline: 3px solid var(--ms-yellow); outline-offset: 1px; }
+.ms-help-form__two { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); }
+.ms-help-form__opt { color: var(--ms-muted); font-weight: 400; }
+.ms-help-form__file { display: grid; gap: 8px; justify-items: start; }
+.ms-help-form__pick { cursor: pointer; }
+.ms-help-form__pick:focus-within { outline: 3px solid var(--ms-yellow); outline-offset: 2px; }
+.ms-help-form__thumb { max-width: min(220px, 100%); max-height: 160px; border-radius: 10px; border: 1px solid var(--ms-border); object-fit: contain; background: var(--ms-bg); }
+.ms-help-form__hp { position: absolute; left: -10000px; width: 1px; height: 1px; overflow: hidden; }
+.ms-help__contact { position: relative; display: grid; gap: 14px; scroll-margin-top: 130px; border-color: var(--ms-yellow); }
+@media (prefers-reduced-motion: reduce) { .ms-help-q h3 svg { transition: none; } }
+
+/* ── Cookie banner and settings (src/site/consent) ─────────────────────── */
+.ms-consent { position: fixed; left: 0; right: 0; bottom: 0; z-index: 60; background: var(--ms-card); border-top: 1px solid var(--ms-border); padding: 14px 16px calc(14px + env(safe-area-inset-bottom, 0px)); box-shadow: 0 -8px 24px rgba(0,0,0,.35); }
+.ms-consent__inner { max-width: var(--ms-wide); margin: 0 auto; display: flex; flex-wrap: wrap; gap: 12px 24px; align-items: center; justify-content: space-between; }
+.ms-consent__text { margin: 0; color: var(--ms-soft); flex: 1 1 420px; min-width: 0; line-height: 1.45; }
+.ms-consent__text a, .ms-consent-dialog a { color: var(--ms-yellow); }
+.ms-consent__buttons { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+/* Accept all and Reject all: the same size, colour and weight (neither is pushed). */
+.ms-consent__btn { min-width: 132px; justify-content: center; }
+.ms-consent-dialog { position: fixed; inset: 0; z-index: 70; background: rgba(5,8,15,.72); display: grid; place-items: center; padding: 16px; }
+.ms-consent-dialog__box { background: var(--ms-card); border: 1px solid var(--ms-border); border-radius: 16px; padding: 22px; max-width: 560px; width: 100%; display: grid; gap: 14px; max-height: calc(100vh - 32px); overflow: auto; outline: none; }
+.ms-consent-dialog__row { display: grid; grid-template-columns: 22px 1fr; gap: 10px; align-items: start; color: var(--ms-soft); line-height: 1.45; }
+.ms-consent-dialog__row input { width: 20px; height: 20px; margin-top: 2px; accent-color: var(--ms-yellow); }
+.ms-cookie-table { width: 100%; border-collapse: collapse; font-size: .95rem; }
+.ms-cookie-table th, .ms-cookie-table td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--ms-border); vertical-align: top; }
+.ms-cookie-table-wrap { overflow-x: auto; }
+
+/* The season pass page (/pass): a winter-night hero with the season marble, then what the pass gives. */
+.ms-pass-hero {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 20px;
+  border-radius: 28px; border: 1px solid var(--ms-border);
+  background: radial-gradient(circle at 85% 30%, #1D4F99 0%, #0E2A5C 38%, #0A1426 78%, var(--ms-bg) 100%);
+  padding: clamp(20px, 4vw, 36px);
+}
+.ms-pass-hero > div:first-child { flex: 1 1 280px; }
+.ms-pass-eyebrow { font-family: var(--ms-cond); font-weight: 800; font-size: 0.95rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--r-season); }
+.ms-pass-hero__marble { display: grid; justify-items: center; gap: 10px; flex: 0 0 auto; text-align: center; }
+.ms-pass-grid { display: grid; gap: 12px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+@media (max-width: 640px) { .ms-pass-grid { grid-template-columns: 1fr; } }
+.ms-onsale { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; padding: 10px 16px; background: var(--ms-card); border-bottom: 1px solid var(--r-season); color: var(--ms-text); }
+.ms-onsale > span { flex: 1 1 260px; min-width: 0; }
+.ms-onsale__x { background: none; border: 0; color: var(--ms-soft); font-size: 1.5rem; line-height: 1; cursor: pointer; padding: 4px 8px; min-width: 44px; min-height: 44px; }
+.ms-pass-remind { display: grid; gap: 10px; padding-top: 14px; border-top: 1px solid var(--ms-border); position: relative; }
+.ms-pass-remind__h { font-family: var(--ms-cond); font-weight: 800; font-size: 1.15rem; letter-spacing: 0.02em; text-transform: uppercase; }
+.ms-pass-remind .ms-btn--primary { justify-self: start; }
+.ms-pass-remind--set { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; }
+.ms-pass-activates { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; padding: 14px 18px; border-radius: 18px; border: 1px solid var(--r-season); background: var(--ms-card); }
+.ms-pass-activates strong { font-family: var(--ms-cond); font-weight: 800; font-size: 1.5rem; letter-spacing: 0.02em; text-transform: uppercase; color: var(--r-season); }
+.ms-pass-activates__count { font-family: var(--ms-cond); font-weight: 800; font-size: 1.25rem; }
+.ms-pass-feature { display: grid; align-content: start; gap: 6px; background: var(--ms-card); border: 1px solid var(--ms-border); border-radius: 18px; padding: 18px; min-width: 0; }
+.ms-pass-feature h2 { margin: 0; font-family: var(--ms-cond); font-weight: 800; font-size: 1.35rem; line-height: 1.15; text-wrap: balance; }
+.ms-pass-feature p { margin: 0; color: var(--ms-soft); line-height: 1.5; }
+.ms-pass-feature__k { font-size: 0.75rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: var(--r-season); }
+.ms-pass-feature__link { font-weight: 700; color: var(--ms-yellow); text-transform: capitalize; }
+
+/* The 404 page ("Lost the marble"): a marble rolled off to the edge. */
+.ms-notfound { min-height: 300px; position: relative; overflow: hidden; }
+.ms-notfound__ball { flex: none !important; width: 120px; height: 120px; border-radius: 50%; margin-left: auto; background: radial-gradient(circle at 32% 28%, #FFF6C8 0%, var(--ms-yellow) 28%, #E08A12 70%, #7A3E05 100%); box-shadow: 0 18px 30px rgba(0,0,0,0.45); transform: translateX(30%); }
+@media (max-width: 520px) { .ms-notfound__ball { width: 80px; height: 80px; } }
+
+/* The save pop-up and quick sign-up (for guests after every 3rd race; "Later" always works). */
+.ms-sheet--save { z-index: 80; }
+.ms-save-panel { text-align: left; align-items: stretch; }
+.ms-save { display: grid; gap: 10px; width: 100%; text-align: left; }
+.ms-save--center { justify-items: center; text-align: center; }
+.ms-save__eyebrow { font-family: var(--ms-cond); font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; font-size: 0.85rem; color: var(--ms-muted); }
+.ms-save__h { margin: 0; font-family: var(--ms-cond); font-weight: 800; font-size: 1.9rem; line-height: 1.05; text-wrap: balance; }
+.ms-save__p { margin: 0; color: var(--ms-soft); }
+.ms-save__ticks { list-style: none; margin: 0 0 6px; padding: 0; display: grid; gap: 7px; color: var(--ms-soft); }
+.ms-save__ticks li { display: grid; grid-template-columns: 22px 1fr; gap: 6px; }
+.ms-save__ticks li::before { content: '✓'; color: var(--ms-green); font-weight: 800; }
+.ms-save__later { justify-self: center; background: none; border: 0; color: var(--ms-soft); font: inherit; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; min-height: 44px; padding: 0 16px; cursor: pointer; }
+.ms-save__later:hover, .ms-save__later:focus-visible { color: var(--ms-text); }
+.ms-save__born { border: 0; padding: 0; margin: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.ms-save__born legend { font-weight: 600; margin-bottom: 6px; padding: 0; }
+.ms-save__env { font-size: 3rem; line-height: 1; }
+
+/* ── Home page promo banner (under the hero race): headline, points, the button at the bottom ── */
+.ms-promo-wrap { padding-top: 0; }
+.ms-promo {
+  position: relative; overflow: hidden; display: grid; gap: 20px; grid-template-columns: 1fr;
+  padding: 28px 32px; border-radius: 22px;
+  background: linear-gradient(115deg, #2F5BEA 0%, #6A3FD8 55%, #FF7A1A 130%);
+  box-shadow: 0 18px 40px rgba(8, 12, 30, 0.45);
+}
+.ms-promo::after { content: ''; position: absolute; right: -60px; top: -60px; width: 220px; height: 220px; border-radius: 50%; background: radial-gradient(circle, rgba(255,210,31,0.35), rgba(255,210,31,0) 70%); pointer-events: none; }
+.ms-promo__h { margin: 0; font: 400 clamp(1.9rem, 3.2vw, 2.6rem)/1 var(--ms-display); color: #fff; letter-spacing: 0.01em; text-shadow: 0 2px 0 rgba(0,0,0,0.18); }
+.ms-promo__points { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px 18px; }
+.ms-promo__points li { display: flex; align-items: center; gap: 10px; min-width: 0; font: 700 1.1rem/1.15 var(--ms-cond); letter-spacing: 0.02em; text-transform: uppercase; color: #fff; }
+.ms-promo__points svg { flex: none; width: 30px; height: 30px; color: var(--ms-yellow); filter: drop-shadow(0 1px 0 rgba(0,0,0,0.2)); }
+.ms-promo__cta { position: relative; z-index: 1; width: 100%; }
+@media (max-width: 860px) {
+  .ms-promo__points { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 640px) {
+  .ms-promo { padding: 22px 20px; gap: 16px; }
+  .ms-promo__points li { font-size: 1rem; }
+}
+
+/* "Report this name" (components/ReportName.jsx) */
+.report-name__btn { background: none; border: 0; padding: 4px 6px; min-height: 32px; color: var(--ms-muted); font: inherit; font-size: 0.85rem; cursor: pointer; border-radius: 6px; }
+.report-name__btn:hover, .report-name__btn:focus-visible { color: var(--ms-text); background: rgba(255, 255, 255, 0.06); }
+.report-name__btn--compact { opacity: 0.55; font-size: 0.8rem; padding: 2px 6px; min-height: 28px; }
+tr:hover .report-name__btn--compact, .report-name__btn--compact:focus-visible { opacity: 1; }
+.report-name { display: inline-flex; flex-wrap: wrap; gap: 6px 8px; align-items: center; font-size: 0.9rem; color: var(--ms-soft); }
+.report-name--done { color: var(--ms-green); }
+
+/* A name hidden after reports (25 Oct 2026): the notice under the top bar, with "Choose a new name". */
+.ms-hidden-name { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px 14px; padding: 10px 16px; background: #3a2a0c; color: #ffe2a3; border-bottom: 1px solid #6b4d14; font-size: 0.95rem; text-align: center; }
+.is-race-full .ms-hidden-name { display: none; }
+
+/* ── Leagues (site/leagues/LeaguesPages.jsx; Leagues v1, 27 Oct 2026) ───────── */
+.ms-league-lede { max-width: 62ch; margin: 0; }
+.ms-league-col { display: grid; gap: 12px; align-content: start; min-width: 0; }
+.ms-league-kind { display: grid; gap: 2px; padding: 12px 14px; border-radius: 14px; border: 2px solid var(--ms-yellow); background: rgba(255,210,31,0.08); }
+.ms-league-kind b { font-family: var(--ms-cond); font-weight: 800; font-size: 1.3rem; letter-spacing: 0.02em; }
+.ms-league-kind span { color: var(--ms-soft); font-weight: 600; }
+.ms-go-pro { margin: 0; font-size: 0.85rem; }
+.ms-league-taster { margin: 0; color: var(--ms-yellow); font-weight: 600; }
+.ms-league-save { display: grid; gap: 12px; }
+.ms-league-link { color: var(--ms-soft); font-weight: 600; }
+.ms-league-new, .ms-league-join { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; }
+.ms-league-select { min-height: 44px; border-radius: 12px; padding: 0 12px; background: var(--ms-bg); color: var(--ms-text); border: 1px solid var(--ms-border); }
+/* My leagues */
+.ms-league-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.ms-league-list__row { display: flex; gap: 12px; align-items: center; justify-content: space-between; padding: 10px 12px; border-radius: 12px; background: var(--ms-bg); border: 1px solid var(--ms-border); color: var(--ms-text); }
+.ms-league-list__row:hover { text-decoration: none; border-color: var(--ms-muted); }
+.ms-league-list__what { display: grid; gap: 2px; min-width: 0; }
+.ms-league-list__what b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ms-league-list__me { display: grid; justify-items: end; text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.ms-league-list--compact .ms-league-list__row { padding: 8px 10px; }
+/* Create: the five picked, and the track list */
+.ms-league-col .ms-chips { margin-left: 0; }
+.ms-league-create { display: grid; gap: 16px; grid-template-columns: minmax(0, 360px) minmax(0, 1fr); grid-template-areas: "set pick" "sum pick"; align-items: start; }
+.ms-league-create__set { grid-area: set; }
+.ms-league-create__sum { grid-area: sum; }
+.ms-league-create__pick { grid-area: pick; }
+@media (max-width: 760px) {
+  .ms-league-create { grid-template-columns: minmax(0, 1fr); grid-template-areas: "set" "pick" "sum"; }
+  .ms-league-create__sum { position: sticky; bottom: 0; z-index: 2; box-shadow: 0 -8px 24px rgba(0,0,0,0.35); }
+  .ms-league-create__sum .ms-league-picked { display: none; }
+  .ms-league-create__sum .ms-league-create__note { display: none; }
+}
+.ms-league-picked { margin: 0; padding-left: 1.4em; display: grid; gap: 4px; font-variant-numeric: tabular-nums; }
+.ms-league-picked li { min-height: 36px; }
+.ms-league-picked li { line-height: 36px; }
+.ms-league-picked li .ms-btn { float: right; min-height: 32px; padding: 0 10px; }
+.ms-league-share { flex: 0 1 320px; }
+.ms-league-share__link { display: flex; gap: 8px; min-width: 0; }
+.ms-league-share__link .ms-btn { flex: none; }
+.ms-league-tracks { display: grid; gap: 8px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 240px), 1fr)); max-height: 70vh; overflow-y: auto; padding-right: 2px; }
+.ms-league-track { display: grid; grid-template-columns: 72px 1fr auto; gap: 10px; align-items: center; text-align: left; padding: 6px; border-radius: 12px; background: var(--ms-bg); border: 1px solid var(--ms-border); color: var(--ms-text); cursor: pointer; min-height: 56px; }
+.ms-league-track[aria-pressed="true"] { border-color: var(--ms-yellow); background: rgba(255,210,31,0.10); }
+.ms-league-track:disabled { opacity: 0.45; cursor: not-allowed; }
+.ms-league-track:focus-visible { outline: 3px solid var(--ms-yellow); outline-offset: 2px; }
+.ms-league-track__pic { position: relative; width: 72px; aspect-ratio: 16 / 9; border-radius: 8px; overflow: hidden; }
+.ms-league-track__pic img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.ms-league-track__name { display: grid; gap: 2px; min-width: 0; }
+.ms-league-track__name b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ms-league-track__name span { color: var(--ms-muted); font-size: 0.85rem; }
+.ms-league-track__mark { width: 28px; height: 28px; border-radius: 999px; display: grid; place-items: center; font-weight: 800; border: 1px solid var(--ms-border); color: var(--ms-soft); }
+.ms-league-track[aria-pressed="true"] .ms-league-track__mark { background: var(--ms-yellow); border-color: var(--ms-yellow); color: var(--ms-ink); }
+/* The league's tracks to race */
+.ms-league-run { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.ms-league-run li { display: flex; gap: 12px; align-items: center; padding: 10px 12px; border-radius: 12px; background: var(--ms-bg); border: 1px solid var(--ms-border); }
+.ms-league-run__n { width: 28px; height: 28px; flex: none; border-radius: 999px; display: grid; place-items: center; font-weight: 800; background: var(--ms-card); color: var(--ms-soft); }
+.ms-league-run__what { display: grid; gap: 2px; flex: 1; min-width: 0; }
+.ms-league-run__what b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ms-league-run .ms-btn { flex: none; }
+/* The scoreboard: each track's best on wide screens, "3/5" on phones */
+.ms-table--league { min-width: 0; }
+.ms-table--league .ms-league-narrow { display: none; }
+.ms-league-player { max-width: 260px; overflow: hidden; text-overflow: ellipsis; }
+@media (max-width: 760px) {
+  .ms-table--league .ms-league-wide { display: none; }
+  .ms-table--league .ms-league-narrow { display: table-cell; }
+  .ms-table--league th, .ms-table--league td { padding: 10px 10px; }
+  .ms-league-player { max-width: 40vw; }
+}
+/* An invite link's welcome (LeaguesPages.jsx LeagueWelcome) */
+.ms-league-welcome { display: grid; gap: 16px; max-width: 920px; margin-inline: auto; }
+.ms-league-welcome__card { display: grid; gap: 18px; border-color: rgba(255,210,31,0.45); background: linear-gradient(180deg, rgba(255,210,31,0.07), transparent 55%), var(--ms-card); }
+.ms-league-welcome__name { color: var(--ms-yellow); }
+.ms-league-welcome__tracks { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.ms-league-welcome__tracks li { display: grid; gap: 6px; min-width: 0; }
+.ms-league-welcome__pic { position: relative; display: block; aspect-ratio: 16 / 9; max-width: 100%; border-radius: 10px; overflow: hidden; }
+.ms-league-welcome__n { position: absolute; left: 6px; top: 6px; min-width: 24px; height: 24px; padding: 0 6px; border-radius: 999px; display: grid; place-items: center; background: rgba(11,16,32,0.82); color: var(--ms-text); font-weight: 800; font-size: 0.8rem; }
+.ms-league-welcome__tname { font-weight: 700; font-size: 0.9rem; line-height: 1.25; overflow-wrap: anywhere; }
+.ms-league-welcome__facts { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.ms-league-welcome__facts li { display: grid; gap: 2px; padding: 10px 12px; border-radius: 12px; background: var(--ms-bg); border: 1px solid var(--ms-border); min-width: 0; }
+.ms-league-welcome__facts span { color: var(--ms-soft); font-size: 0.9rem; }
+.ms-league-welcome__go { display: grid; gap: 8px; justify-items: start; }
+.ms-league-welcome__btn { min-height: 60px; font-size: 1.2rem; padding-inline: 28px; }
+.ms-league-welcome .ms-league-save { scroll-margin-top: 84px; }
+.ms-league-welcome__peek { background: none; border: 0; padding: 0; cursor: pointer; justify-self: start; text-decoration: underline; min-height: 44px; }
+@media (max-width: 760px) {
+  .ms-league-welcome__tracks { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .ms-league-welcome__tracks li:first-child { grid-column: 1 / -1; }
+  .ms-league-welcome__facts { grid-template-columns: minmax(0, 1fr); }
+  .ms-league-welcome__go, .ms-league-welcome__btn { width: 100%; justify-items: stretch; }
+}
+/* The scoreboards' track columns: each track's name (two lines at most), not a number. */
+.ms-table--league th.ms-league-th { white-space: normal; vertical-align: bottom; text-transform: none; letter-spacing: 0; font-size: 0.78rem; line-height: 1.2; min-width: 6.5em; max-width: 9em; }
+.ms-table--league th.ms-league-th span { display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; }
+.ms-league-nightbtn { min-height: 34px; }
+/* League Night (LeaguesPages.jsx LeagueNight; RoomPage.jsx in a league room) */
+.ms-league-night__form { display: grid; gap: 12px; max-width: 420px; }
+.ms-league-night__form input[type="datetime-local"] { min-height: 44px; border-radius: 12px; padding: 0 12px; background: var(--ms-bg); color: var(--ms-text); border: 1px solid var(--ms-border); }
+.ms-league-list__night { color: var(--ms-yellow); font-weight: 700; font-size: 0.9rem; }
+.ms-room-night { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; background: rgba(255,210,31,0.08); border-color: rgba(255,210,31,0.45); }
+/* The league's name and its creator's pencil (LeaguesPages.jsx LeagueName) */
+.ms-league-name { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.ms-league-name__edit { flex: none; width: 40px; height: 40px; border-radius: 999px; display: grid; place-items: center; background: var(--ms-card); border: 1px solid var(--ms-border); color: var(--ms-soft); cursor: pointer; }
+.ms-league-name__edit:hover { color: var(--ms-text); border-color: var(--ms-muted); }
+.ms-league-name__edit:focus-visible { outline: 3px solid var(--ms-yellow); outline-offset: 2px; }
+.ms-league-name__form { display: grid; gap: 8px; max-width: 520px; }
+.ms-league-name__form input { font-family: var(--ms-cond); font-weight: 800; font-size: 1.8rem; min-height: 52px; }
+
+/* A guest's "Log in" in the name menu (9 Nov 2026). */
+.ms-namemenu__login { justify-self: start; color: var(--ms-soft); font-size: 0.9rem; text-decoration: underline; }
+.ms-namemenu__login:hover { color: var(--ms-text); }
+
+/* Wildness (11 Nov 2026; shared/wildness.js): the badge on track cards, always with the word. */
+.ms-wild { display: inline-flex; align-items: center; gap: 5px; padding: 2px 8px; border-radius: 999px; font-size: 0.78rem; font-weight: 700; letter-spacing: 0.03em; line-height: 1.4; border: 1px solid currentColor; background: rgba(255, 255, 255, 0.06); background: color-mix(in srgb, currentColor 14%, transparent); white-space: nowrap; }
+.ms-wild--easy { color: var(--ms-wild-easy); }
+.ms-wild--wild { color: var(--ms-wild-wild); }
+.ms-wild--extreme { color: var(--ms-wild-extreme); }
+.ms-wild__waves { flex: none; }
+.ms-trackcard__body .ms-wild { justify-self: start; margin-top: 4px; }
+.ms-trackcard__meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; }
+.ms-wild-filter { display: flex; flex-wrap: wrap; gap: 6px; }
+.ms-wild-filter button { background: var(--ms-card); color: var(--ms-soft); border: 1px solid var(--ms-border); border-radius: 999px; padding: 5px 12px; font: inherit; font-weight: 700; font-size: 0.88rem; cursor: pointer; min-height: 32px; }
+.ms-wild-filter button[aria-pressed="true"] { background: var(--ms-yellow); color: var(--ms-ink); border-color: var(--ms-yellow); }
+.ms-wild-note { font-size: 0.85rem; color: var(--ms-muted); margin: 0; max-width: 65ch; }
+
+/* Track packs in the shop: a design mockup only (/preview/shop-packs, 12 Nov 2026). */
+.ms-mock-banner { border: 1px dashed var(--ms-yellow); color: var(--ms-soft); border-radius: 12px; padding: 8px 12px; font-size: 0.9rem; }
+.ms-mock-banner b { color: var(--ms-yellow); margin-right: 6px; font-family: var(--ms-cond); letter-spacing: 0.04em; text-transform: uppercase; }
+.ms-pack-grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr)); }
+.ms-pack { display: flex; flex-direction: column; border-radius: 18px; overflow: hidden; background: var(--ms-card); border: 1px solid var(--ms-border); min-width: 0; }
+.ms-pack__pic { border: 0; width: 100%; cursor: pointer; font: inherit; }
+.ms-pack__body { display: grid; gap: 8px; padding: 12px 14px 14px; }
+.ms-pack__name { margin: 0; font-family: var(--ms-cond); font-weight: 800; font-size: 1.6rem; line-height: 1; }
+.ms-pack__count { color: var(--ms-muted); font-size: 0.9rem; font-variant-numeric: tabular-nums; }
+.ms-pack__mix { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; }
+.ms-pack__mixitem { display: inline-flex; align-items: center; gap: 4px; font-variant-numeric: tabular-nums; }
+.ms-pack__buy { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-top: 4px; }
+.ms-pack__price { font-family: var(--ms-cond); font-weight: 800; font-size: 1.25rem; color: var(--ms-text); }
+.ms-pack__soon { font-family: var(--ms-cond); font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; color: var(--ms-muted); border: 1px solid var(--ms-border); border-radius: 999px; padding: 5px 12px; }
+.ms-pack__see { justify-self: start; background: none; border: 0; padding: 0; color: var(--ms-yellow); font: inherit; font-weight: 700; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+.ms-pack-hero { display: grid; gap: 18px; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); align-items: center; background: var(--ms-card); border: 1px solid var(--ms-border); border-radius: 22px; padding: 16px; }
+.ms-pack-hero__pic { position: relative; aspect-ratio: 16 / 9; border-radius: 16px; overflow: hidden; }
+.ms-pack-hero__text { display: grid; gap: 12px; min-width: 0; }
+.ms-pack-page__buy { display: grid; gap: 6px; justify-items: start; }
+.ms-pack-tracks { display: grid; gap: 14px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 240px), 1fr)); }
+.ms-pack-track { cursor: default; }
+.ms-pack-track.is-soon { opacity: 0.78; border-style: dashed; }
+.ms-pack-track__flag { position: absolute; inset: 0; display: grid; place-items: center; font-size: 2.4rem; opacity: 0.55; }
+.ms-pack-track__line { color: var(--ms-soft) !important; font-size: 0.86rem; line-height: 1.35; }
+@media (max-width: 720px) {
+  .ms-pack-hero { grid-template-columns: 1fr; padding: 12px; }
+  .ms-pack-page__buy .ms-btn { width: 100%; }
+}
+/* The coins and money split at a track pack's checkout (12 Nov 2026). */
+.ms-pack-split { display: grid; gap: 4px; padding: 10px 12px; border: 1px solid var(--ms-border); border-radius: 12px; background: var(--ms-card); font-variant-numeric: tabular-nums; }
+.ms-pack-split b { color: var(--ms-text); }
+a.ms-pack-track { text-decoration: none; cursor: pointer; }
+a.ms-pack__pic { display: flex; }
+a.ms-pack__see { text-decoration: underline; }
+/* The legal draft preview (/preview/legal-packs, 12 Nov 2026): new and changed passages highlighted. */
+mark.ms-legal__new { background: rgba(255, 210, 31, 0.22); color: var(--ms-text); border-radius: 4px; padding: 0 3px; }
+.ms-legal__newblock { display: grid; gap: 14px; padding: 12px 14px; border-left: 4px solid var(--ms-yellow); background: rgba(255, 210, 31, 0.08); border-radius: 0 10px 10px 0; }
+.ms-legal__newblock p { color: var(--ms-text); }
+.ms-legal__newblock .ms-legal__h2 { scroll-margin-top: 140px; margin-top: 0; }
+/* The landing page draft v2 (/preview/landing-v2, 13 Nov 2026): How it works, the Collect display case, Your Marble Bag. */
+.ms-how { list-style: none; margin: 0; padding: 0; display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr)); }
+.ms-how__step { display: grid; gap: 8px; align-content: start; }
+.ms-how__step p { margin: 0; color: var(--ms-soft); }
+.ms-how__pic { position: relative; height: 150px; border-radius: 14px; overflow: hidden; display: grid; place-items: center; background: radial-gradient(circle at 50% 35%, #2A3A62 0%, #141B2E 75%); margin-bottom: 4px; }
+.ms-how__pic--marble { gap: 8px; align-content: center; }
+.ms-how__tag { display: inline-flex; gap: 8px; align-items: center; font-size: 0.9rem; }
+.ms-how__pic--race .ms-trackcard__img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.ms-how__live { position: absolute; left: 10px; bottom: 10px; display: inline-flex; align-items: center; gap: 6px; background: rgba(14,19,32,0.82); border-radius: 999px; padding: 4px 10px; font-weight: 800; font-size: 0.75rem; letter-spacing: 0.06em; }
+.ms-how__live i { width: 8px; height: 8px; border-radius: 50%; background: var(--ms-red); }
+.ms-how__pic--win { gap: 10px; align-content: center; }
+.ms-how__coins { font-size: 1.9rem; font-weight: 800; }
+.ms-how__trio { display: inline-flex; gap: 10px; }
+.ms-case { display: grid; gap: 24px; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); align-items: center; padding: 28px; border-radius: 26px; border: 1px solid var(--ms-border); background: linear-gradient(180deg, #1C2438 0%, #121828 100%); box-shadow: inset 0 1px 0 rgba(255,255,255,0.06); }
+.ms-case__text { display: grid; gap: 14px; min-width: 0; }
+.ms-case__kicker { font-weight: 800; font-size: 0.78rem; letter-spacing: 0.08em; color: var(--ms-yellow); }
+.ms-case__facts { margin: 0; padding: 0 0 0 18px; display: grid; gap: 6px; color: var(--ms-soft); }
+.ms-case__facts b { color: var(--ms-text); }
+.ms-case__shelf { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.ms-case__slot { display: grid; justify-items: center; gap: 4px; padding: 10px 8px 12px; border-radius: 18px; background: linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0) 60%), #0E1424; border: 1px solid #263049; text-align: center; min-width: 0; }
+.ms-case__ball { width: 100%; display: grid; place-items: center; min-height: 110px; }
+.ms-case__ball .ms-turntable { aspect-ratio: 1 / 1; max-width: 150px; background: transparent; }
+.ms-case__meta { display: inline-flex; flex-wrap: wrap; justify-content: center; gap: 6px; align-items: center; font-size: 0.78rem; font-weight: 700; }
+.ms-bagdemo { display: grid; gap: 14px; padding: 20px; border-radius: 22px; border: 2px dashed #3A4566; background: #141B2E; }
+.ms-bagdemo__title { font-weight: 800; font-size: 0.8rem; letter-spacing: 0.08em; color: var(--ms-soft); text-align: center; }
+.ms-bagdemo__grid { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.ms-bagdemo__slot { display: grid; justify-items: center; gap: 8px; min-width: 0; }
+.ms-cards.ms-cards--four { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+@media (max-width: 860px) { .ms-cards.ms-cards--four { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; } }
+@media (max-width: 520px) { .ms-cards--four .ms-trackcard__body { padding: 8px 10px 10px; font-size: 0.85rem; } }
+.ms-preview-bar { background: var(--ms-yellow); color: var(--ms-ink); font-weight: 700; font-size: 0.85rem; text-align: center; padding: 6px 16px; }
+@media (max-width: 860px) {
+  .ms-case { grid-template-columns: minmax(0, 1fr); padding: 20px 16px; }
+}
+@media (max-width: 520px) {
+  .ms-case__shelf { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .ms-bagdemo { padding: 16px 10px; }
+  .ms-bagdemo__grid { gap: 6px; }
+  .ms-bagdemo__slot .ms-m { width: 58px !important; height: 58px !important; }
+  .ms-bagdemo__slot .ms-id { font-size: 0.6rem; padding: 2px 4px; letter-spacing: 0; }
+  /* (On a phone each step is one compact row, the picture beside its words, so all three fit on about one screen.) */
+  .ms-how { gap: 10px; }
+  .ms-how__step { grid-template-columns: 116px minmax(0, 1fr); column-gap: 14px; row-gap: 4px; align-items: start; padding: 12px; }
+  .ms-how__step > :not(.ms-how__pic) { grid-column: 2; }
+  .ms-how__pic { grid-column: 1; grid-row: 1 / span 3; height: 116px; margin: 0; }
+  .ms-how__step .ms-landing__num { width: 26px; height: 26px; font-size: 0.85rem; }
+  .ms-how__step h3 { font-size: 1.2rem !important; line-height: 1.1; }
+  .ms-how__step p { font-size: 0.92rem; }
+  .ms-how__pic .ms-m { width: 54px !important; height: 54px !important; }
+  .ms-how__pic--marble { gap: 6px; }
+  .ms-how__tag { flex-direction: column; gap: 3px; font-size: 0.75rem; }
+  .ms-how__live { left: 6px; bottom: 6px; font-size: 0.6rem; padding: 3px 7px; }
+  .ms-how__coins { font-size: 1.25rem; }
+  .ms-how__trio { gap: 4px; }
+  .ms-how__trio .ms-m { width: 30px !important; height: 30px !important; }
+  .ms-case__slot { padding: 6px 6px 10px; }
+  .ms-case__ball { min-height: 84px; }
+  .ms-case__ball .ms-turntable { max-width: 112px; }
+}
+
+/* The track picker's pack banners (16 Nov 2026, picker v2): a full-width row among the locked tracks. */
+.ms-packbanner { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(0, 260px) minmax(0, 1fr) auto; align-items: center; gap: 18px; padding: 14px; border-radius: 18px; background: linear-gradient(100deg, var(--ms-card) 0%, var(--ms-card) 55%, rgba(255, 210, 31, 0.10) 100%); border: 1px solid var(--ms-yellow, #ffd21f); min-width: 0; }
+.ms-packbanner__pic { position: relative; display: block; aspect-ratio: 16 / 9; border-radius: 12px; overflow: hidden; }
+.ms-packbanner__pic img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.ms-packbanner__text { display: grid; gap: 6px; justify-items: start; min-width: 0; }
+.ms-packbanner__name { margin: 0; font-family: var(--ms-cond); font-weight: 800; font-size: clamp(22px, 3vw, 30px); line-height: 1.05; }
+.ms-packbanner__buy { display: grid; gap: 8px; justify-items: end; }
+.ms-picker-divider { grid-column: 1 / -1; margin: 6px 0 -4px; font-family: var(--ms-cond); font-weight: 800; font-size: 20px; color: var(--ms-soft); }
+@media (max-width: 720px) {
+  .ms-packbanner { grid-template-columns: 1fr; }
+  .ms-packbanner__buy { justify-items: start; grid-auto-flow: column; align-items: center; }
+}
+
+/* The Marble Bag redesign (16 Nov 2026, preview at /preview/bag-v2): bigger cards, the racing marble highlighted,
+   the "Grow your collection" banner and the marbles still to collect in full colour with their price. */
+.ms-bag2__count { color: var(--ms-soft); font-size: 1.05rem; }
+.ms-bag2__count b { color: var(--ms-text, #fff); }
+.ms-bag2__grid { display: grid; gap: 14px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 190px), 1fr)); }
+.ms-bag2__card { position: relative; display: grid; justify-items: center; align-content: start; gap: 6px; padding: 26px 14px 16px; border-radius: 18px; background: var(--ms-card); border: 1px solid var(--ms-border); color: inherit; font: inherit; text-align: center; cursor: pointer; min-width: 0; }
+.ms-bag2__card:hover { border-color: var(--ms-soft); }
+.ms-bag2__card[aria-pressed="true"] { border-color: var(--ms-soft); background: var(--ms-card-2, var(--ms-card)); }
+.ms-bag2__card.is-racing { border: 2px solid var(--ms-yellow); box-shadow: 0 0 0 4px rgba(255, 210, 31, 0.14), 0 10px 30px rgba(255, 210, 31, 0.12); }
+.ms-bag2__racing { position: absolute; top: -11px; left: 50%; transform: translateX(-50%); white-space: nowrap; padding: 3px 10px; border-radius: 99px; background: var(--ms-yellow); color: #14171f; font-family: var(--ms-cond); font-weight: 800; font-size: 12px; letter-spacing: 0.06em; }
+.ms-bag2__name { font-size: 1rem; line-height: 1.2; overflow-wrap: anywhere; }
+.ms-bag2__rarity { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
+.ms-bag2__note { font-size: 0.8rem; color: var(--ms-muted); }
+.ms-bag2__price { font-weight: 700; color: var(--ms-yellow); }
+.ms-bag2__card--shop { cursor: default; padding-top: 18px; }
+.ms-bag2__card--shop .ms-btn { margin-top: 4px; }
+.ms-bag2__pic { display: block; border-radius: 50%; }
+.ms-bag2__grow { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 18px; padding: clamp(18px, 3vw, 28px); border-radius: 20px; border: 1px solid var(--ms-yellow); background: radial-gradient(120% 140% at 100% 0%, rgba(255, 210, 31, 0.16), transparent 60%), var(--ms-card); }
+.ms-bag2__growh { margin: 0; font-family: var(--ms-cond); font-weight: 800; font-size: clamp(26px, 4vw, 38px); line-height: 1; }
+.ms-bag2__points { margin: 0; padding-left: 1.1em; display: grid; gap: 4px; color: var(--ms-soft); }
+@media (max-width: 520px) {
+  .ms-bag2__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .ms-bag2__card { padding: 22px 8px 12px; }
+  .ms-bag2__racing { font-size: 10px; padding: 2px 8px; }
+}

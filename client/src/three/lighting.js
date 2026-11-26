@@ -1,0 +1,574 @@
+/**
+ * Lighting and weather presets for kit tracks (track kit, step 6): day,
+ * sunset, midnight sun, night with northern lights, fog, snow, rain, and a
+ * floodlit city night (Grand Prix). A
+ * preset sets the sky, sun, haze and effects over the track's landscape (its
+ * ground and scenery colours stay its own). Drawing only: the race never sees
+ * them. The server picks each race's preset from the track's allowed list
+ * (src/trackKit/lighting.js) and stores it with the race.
+ *
+ * Night stays watchable: the marbles glow softly in their own colours and the
+ * channel's rims carry a faint edge light, so the marbles are always in the
+ * picture. Phones get far fewer snowflakes and raindrops; fog is free.
+ */
+import {
+  AdditiveBlending, BufferGeometry, CanvasTexture, Color, DoubleSide, Float32BufferAttribute, Group, LineBasicMaterial, LineSegments,
+  Mesh, MeshBasicMaterial, Points, PointsMaterial, Vector3,
+} from 'three';
+import { channelLipAt, channelRadiusAt, forkAt, forkOffset, forkRadius } from './iceChannel';
+
+export const LIGHTINGS = ['day', 'sunset', 'midnight-sun', 'night-northern-lights', 'fog', 'snow', 'rain', 'night', 'fireworks-night', 'parlour', 'neon-night', 'synthwave',
+  // The Block Series: a calm dawn, a dark mine lit by its lamps and gems, a cave lit only by magma.
+  'dawn', 'cave', 'magma',
+  // Peaks: the thin air's deep blue sky, a small sharp sun and crisp shadows, hardly any haze.
+  'high-altitude',
+  // A city at dusk turning to night (Pudong Marble Grand Prix): the last of the sunset low in the sky, the towers' lights on.
+  'dusk'];
+
+/** Each preset's sky, haze and light (day: the landscape's own). fogRange: metres, near and far. */
+export const PRESETS = {
+  day: {},
+  sunset: {
+    sky: { top: '#34477f', horizon: '#ff9a5c', glow: '#ffd27a' },
+    fog: '#e3a383',
+    hemisphere: { sky: '#ffd2a8', ground: '#5d5068', intensity: 1.35 },
+    ambient: 0.32,
+    sun: { color: '#ffa860', intensity: 2.0, direction: [-1, 0.16, 0.35] },
+  },
+  'midnight-sun': {
+    sky: { top: '#7392c4', horizon: '#ffd8b4', glow: '#fff0c8' },
+    fog: '#f0dccb',
+    hemisphere: { sky: '#ffe8d0', ground: '#8790a3', intensity: 1.5 },
+    ambient: 0.4,
+    sun: { color: '#ffd59a', intensity: 1.7, direction: [0.85, 0.1, -0.55] },
+  },
+  'night-northern-lights': {
+    sky: { top: '#040a1c', horizon: '#13284a', glow: null },
+    fog: '#0d1b33',
+    fogRange: [260, 1600],
+    hemisphere: { sky: '#5f7fbf', ground: '#141c30', intensity: 0.6 },
+    ambient: 0.22,
+    sun: { color: '#bcd0ff', intensity: 0.55, direction: [0.3, 0.8, -0.4] }, // the moon
+    groundTint: 0.35,
+    effects: { stars: true, aurora: true, night: true },
+  },
+  // A night race under floodlights (Dubai Marble Grand Prix): a city's dark sky with a few
+  // stars, brighter light on the track than a northern-lights night, no aurora.
+  night: {
+    sky: { top: '#050a18', horizon: '#1d2a4a', glow: null },
+    fog: '#121c33',
+    fogRange: [300, 1800],
+    hemisphere: { sky: '#8aa0d0', ground: '#1a2236', intensity: 0.8 },
+    ambient: 0.32,
+    sun: { color: '#fff1d6', intensity: 0.75, direction: [0.2, 1, 0.3] }, // the floodlights, from high above
+    groundTint: 0.4,
+    effects: { stars: true, night: true },
+  },
+  // A New Year's Eve night (the Holiday Season's fireworks tracks): the city night, with fireworks
+  // bursting over the track all through the race (looks only).
+  'fireworks-night': {
+    sky: { top: '#070818', horizon: '#22284a', glow: null },
+    fog: '#121c33',
+    fogRange: [300, 1800],
+    hemisphere: { sky: '#8a96d0', ground: '#1a2236', intensity: 0.8 },
+    ambient: 0.32,
+    sun: { color: '#fff1d6', intensity: 0.75, direction: [0.2, 1, 0.3] },
+    groundTint: 0.4,
+    effects: { stars: true, night: true, fireworks: true },
+  },
+  // A pinball parlour (the pinball tables): a dim room round the giant table, warm lamps over it,
+  // the playfield's inserts and the backglass glowing, the marbles glowing in their own colours.
+  parlour: {
+    sky: { top: '#07040c', horizon: '#2a1236', glow: null },
+    fog: '#160c20',
+    fogRange: [320, 1900],
+    hemisphere: { sky: '#d8b8ff', ground: '#2a1838', intensity: 1.05 },
+    ambient: 0.36,
+    sun: { color: '#ffe0b0', intensity: 0.95, direction: [0.15, 1, 0.3] }, // the lamps over the table
+    effects: { night: true },
+  },
+  // Neon night (the arcade worlds): dark, bright magenta, cyan and yellow glow, neon edges on the
+  // track's walls, stars, the marbles glowing in their own colours.
+  'neon-night': {
+    sky: { top: '#04020c', horizon: '#2a0a4a', glow: null },
+    fog: '#12061f',
+    fogRange: [300, 1800],
+    hemisphere: { sky: '#ff9ae8', ground: '#1a0a3a', intensity: 1.0 },
+    ambient: 0.34,
+    sun: { color: '#9ad8ff', intensity: 0.9, direction: [0.2, 1, 0.35] },
+    effects: { stars: true, night: true, edge: '#ff3fd8' },
+  },
+  // Synthwave sunset (the arcade racers): the sunset under a purple sky, a neon grid on the horizon
+  // and a big striped sun low over it.
+  synthwave: {
+    sky: { top: '#1a0a3a', horizon: '#ff4fa8', glow: '#ffd23f' },
+    fog: '#b04a8a',
+    fogRange: [260, 1700],
+    hemisphere: { sky: '#ffb8e0', ground: '#3a1a5a', intensity: 1.25 },
+    ambient: 0.32,
+    sun: { color: '#ff9a6a', intensity: 1.8, direction: [-1, 0.14, 0.3] },
+    effects: { grid: true, edge: '#3fd8ff' },
+  },
+  // Dawn (the Block Series' meadows): a soft pale-blue sky warming to peach at the horizon, a low
+  // warm sun, long gentle shadows; calm colours.
+  dawn: {
+    sky: { top: '#5b7fb8', horizon: '#f3c9a6', glow: '#ffe4b4' },
+    fog: '#e6d4c6',
+    fogRange: [320, 2400],
+    hemisphere: { sky: '#ffe8d2', ground: '#66766a', intensity: 1.45 },
+    ambient: 0.38,
+    sun: { color: '#ffc994', intensity: 1.75, direction: [0.9, 0.22, -0.35] },
+  },
+  // A cave or mine (Deep Mine): near-black rock overhead, warm lamplight on the track, the gem
+  // seams and lamps glowing, the marbles glowing in their own colours.
+  cave: {
+    sky: { top: '#050608', horizon: '#15171d', glow: null },
+    fog: '#0e1015',
+    fogRange: [140, 1000],
+    hemisphere: { sky: '#b4bccb', ground: '#1c1d22', intensity: 0.8 },
+    ambient: 0.32,
+    sun: { color: '#ffd9a0', intensity: 0.85, direction: [0.2, 1, 0.3] }, // (the lamps, from above)
+    groundTint: 0.55,
+    effects: { night: true, edge: '#ffc977' },
+  },
+  // Magma light (Magma Core): a dark cave lit from below by glowing magma, deep orange on the rock,
+  // a few embers drifting up.
+  magma: {
+    sky: { top: '#0a0406', horizon: '#3a1208', glow: null },
+    fog: '#1e0a07',
+    fogRange: [160, 1100],
+    hemisphere: { sky: '#ffa066', ground: '#40140a', intensity: 0.95 },
+    ambient: 0.3,
+    sun: { color: '#ff8a4a', intensity: 0.95, direction: [0.3, 0.7, 0.2] },
+    groundTint: 0.5,
+    effects: { night: true, edge: '#ff8a45', embers: true },
+  },
+  // High altitude (Everest, Aconcagua): the thin air's sky, a deep blue overhead fading pale at the horizon,
+  // a small sharp sun, crisp shadows, hardly any haze: the far mountains stay clear.
+  'high-altitude': {
+    sky: { top: '#123a8c', horizon: '#c9dcef', glow: '#fffaf0' },
+    fog: '#d4e2f0',
+    fogRange: [600, 4200],
+    hemisphere: { sky: '#dbe8ff', ground: '#7d8ba0', intensity: 1.45 },
+    ambient: 0.36,
+    sun: { color: '#ffffff', intensity: 2.1, direction: [-0.55, 0.62, 0.4] },
+  },
+  // Dusk turning to night (Pudong Marble Grand Prix): deep indigo overhead, the last orange and rose of the sunset
+  // low on the horizon, a few early stars; the towers' and floodlights' lights on, the marbles glowing in their colours.
+  dusk: {
+    sky: { top: '#0b1236', horizon: '#e9785a', glow: '#ffb46a' },
+    fog: '#3b2f52',
+    fogRange: [320, 2000],
+    hemisphere: { sky: '#c2a6d8', ground: '#22243a', intensity: 0.95 },
+    ambient: 0.34,
+    sun: { color: '#ffc59a', intensity: 1.0, direction: [-1, 0.12, 0.3] }, // (the last of the sun, low; the floodlights add the rest)
+    groundTint: 0.3,
+    effects: { stars: true, night: true, liteEdge: false }, // (no edge lights along the rims on phones: the last of the daylight shows them)
+  },
+  fog: {
+    sky: { top: '#b6c0c9', horizon: '#d3d8dc', glow: null },
+    fog: '#cfd4d8',
+    fogRange: [30, 300],
+    hemisphere: { sky: '#eef1f4', ground: '#8f969c', intensity: 1.6 },
+    ambient: 0.5,
+    sun: { color: '#f4f4f0', intensity: 0.8, direction: [-0.4, 1, 0.3] },
+  },
+  snow: {
+    sky: { top: '#95a3b3', horizon: '#c9d1da', glow: null },
+    fog: '#c9d1da',
+    fogRange: [70, 700],
+    hemisphere: { sky: '#e6ebf0', ground: '#98a1ad', intensity: 1.45 },
+    ambient: 0.4,
+    sun: { color: '#eef2f8', intensity: 0.75, direction: [-0.4, 1, 0.3] },
+    effects: { precipitation: 'snow' },
+  },
+  rain: {
+    sky: { top: '#6f7a88', horizon: '#9aa4af', glow: null },
+    fog: '#97a1ab',
+    fogRange: [55, 600],
+    hemisphere: { sky: '#c9d0d8', ground: '#5f6670', intensity: 1.45 },
+    ambient: 0.42,
+    sun: { color: '#dfe4ea', intensity: 0.7, direction: [-0.4, 1, 0.3] },
+    effects: { precipitation: 'rain' },
+  },
+};
+
+/** The presets a kit track allows: its own first, then its variants. */
+export function allowedLightings(kit) {
+  if (!kit) return [];
+  const own = kit.lighting || 'day';
+  return [own, ...(kit.variants ?? []).filter((v) => v !== own)];
+}
+
+/** A ?lighting= override from the address (preview links, screenshots), honoured only if the track allows it. */
+export function lightingOverride(kit) {
+  try {
+    const asked = new URLSearchParams(window.location.search).get('lighting');
+    return asked && allowedLightings(kit).includes(asked) ? asked : null;
+  } catch {
+    return null;
+  }
+}
+
+/** A theme (the landscape's look) under a preset. */
+export function withPreset(theme, name) {
+  const preset = PRESETS[name];
+  if (!preset || name === 'day') return { ...theme, lighting: 'day', effects: {} };
+  const ground = preset.groundTint
+    ? { ...theme.ground, color: `#${new Color(theme.ground.color).multiplyScalar(preset.groundTint).getHexString()}` }
+    : theme.ground;
+  const { groundTint, effects = {}, ...look } = preset;
+  return { ...theme, ...look, ground, lighting: name, effects };
+}
+
+// ── Effects ────────────────────────────────────────────────────────────────
+
+const noise = (k) => {
+  const x = Math.sin(k * 127.1 + 311.7) * 43758.5453;
+  return x - Math.floor(x);
+};
+
+/** Stars on the upper sky (a child of the unit sky dome). */
+function stars(lite) {
+  const n = lite ? 400 : 1200;
+  const pos = [];
+  for (let k = 0; k < n; k += 1) {
+    const a = noise(k) * Math.PI * 2;
+    const up = 0.08 + 0.92 * noise(k + 0.5) ** 0.7;
+    const r = Math.sqrt(1 - up * up);
+    pos.push(Math.cos(a) * r * 0.97, up * 0.97, Math.sin(a) * r * 0.97);
+  }
+  const g = new BufferGeometry();
+  g.setAttribute('position', new Float32BufferAttribute(pos, 3));
+  const p = new Points(g, new PointsMaterial({ color: '#ffffff', size: lite ? 1.6 : 1.3, sizeAttenuation: false, fog: false, transparent: true, opacity: 0.85, depthWrite: false }));
+  p.name = 'stars';
+  p.renderOrder = -1;
+  return p;
+}
+
+/**
+ * Fireworks: bursts of coloured sparks round the sky, each opening, drifting down and fading, then
+ * another somewhere else, on the race clock (so a replay shows the same). One draw call.
+ */
+function fireworks(lite) {
+  const BURSTS = lite ? 5 : 9;
+  const SPARKS = lite ? 48 : 90;
+  const LIFE = 1.9; // seconds a burst shows
+  const COLOURS = [[1, 0.35, 0.4], [1, 0.85, 0.3], [0.4, 1, 0.55], [0.4, 0.75, 1], [1, 0.5, 0.95], [1, 1, 1]];
+  const hash = (a, b) => { const x = Math.sin(a * 127.1 + b * 311.7) * 43758.5453; return x - Math.floor(x); };
+  const dirs = [];
+  for (let k = 0; k < SPARKS; k += 1) {
+    const y = 1 - (2 * (k + 0.5)) / SPARKS;
+    const r = Math.sqrt(1 - y * y);
+    const a = k * 2.39996;
+    dirs.push([Math.cos(a) * r, y, Math.sin(a) * r]);
+  }
+  const pos = new Float32Array(BURSTS * SPARKS * 3);
+  const col = new Float32Array(BURSTS * SPARKS * 3);
+  const g = new BufferGeometry();
+  g.setAttribute('position', new Float32BufferAttribute(pos, 3));
+  g.setAttribute('color', new Float32BufferAttribute(col, 3));
+  const p = new Points(g, new PointsMaterial({ size: lite ? 4.4 : 3.6, sizeAttenuation: false, vertexColors: true, fog: false, transparent: true, blending: AdditiveBlending, depthWrite: false }));
+  p.name = 'fireworks';
+  p.renderOrder = -1;
+  p.frustumCulled = false;
+  const update = (sec) => {
+    const P = g.getAttribute('position');
+    const C = g.getAttribute('color');
+    for (let b = 0; b < BURSTS; b += 1) {
+      const period = 2.6 + (b % 3) * 0.45;
+      const t0 = sec + b * 0.83;
+      const n = Math.floor(t0 / period);
+      const tau = t0 - n * period;
+      const live = sec > 0 && tau < LIFE;
+      const t = tau / LIFE;
+      const az = hash(b, n) * Math.PI * 2;
+      const up = 0.3 + 0.38 * hash(n, b + 7);
+      const rr = Math.sqrt(1 - up * up) * 0.9;
+      const cx = Math.cos(az) * rr;
+      const cy = up * 0.9;
+      const cz = Math.sin(az) * rr;
+      const size = (0.09 + 0.06 * hash(b + 3, n)) * (1 - (1 - t) * (1 - t));
+      const fade = live ? (1 - t) ** 1.6 : 0;
+      const [r, gg, bb] = COLOURS[Math.floor(hash(n + 11, b) * COLOURS.length)];
+      for (let k = 0; k < SPARKS; k += 1) {
+        const i = b * SPARKS + k;
+        const [dx, dy, dz] = dirs[k];
+        P.setXYZ(i, cx + dx * size, cy + dy * size - 0.04 * t * t, cz + dz * size);
+        C.setXYZ(i, r * fade, gg * fade, bb * fade);
+      }
+    }
+    P.needsUpdate = true;
+    C.needsUpdate = true;
+  };
+  update(0);
+  return { group: p, update };
+}
+
+/**
+ * Northern lights: soft curtains low over the horizon, green at the foot fading to
+ * violet and nothing at the top, in vertical rays, slowly rippling. One draw call.
+ */
+function aurora(lite) {
+  const segs = lite ? 48 : 110;
+  const bands = [[0, -0.6, 1.7, 0.24], [1, 0.9, 1.3, 0.19], [2, 2.6, 1.2, 0.22]];
+  const ROWS = 3; // foot, glow, top
+  const perBand = (segs + 1) * ROWS;
+  const pos = new Float32Array(bands.length * perBand * 3);
+  const col = [];
+  const index = [];
+  bands.forEach((_, n) => {
+    for (let i = 0; i <= segs; i += 1) {
+      // Rays: the curtain brighter and dimmer across, as the real thing.
+      const ray = 0.45 + 0.55 * Math.abs(Math.sin(i * 0.9 + n * 2.1) * Math.sin(i * 0.23 + n));
+      col.push(0.2, 1, 0.5, 0); // foot: fades in
+      col.push(0.25, 1, 0.55, 0.8 * ray); // the bright band
+      col.push(0.6, 0.3, 0.95, 0); // top: violet, fading out
+      if (i < segs) {
+        const a = n * perBand + i * ROWS;
+        for (let r = 0; r < ROWS - 1; r += 1) index.push(a + r, a + r + 1, a + ROWS + r, a + r + 1, a + ROWS + r + 1, a + ROWS + r);
+      }
+    }
+  });
+  const g = new BufferGeometry();
+  g.setAttribute('position', new Float32BufferAttribute(pos, 3));
+  g.setAttribute('color', new Float32BufferAttribute(col, 4));
+  g.setIndex(index);
+  const mesh = new Mesh(g, new MeshBasicMaterial({
+    vertexColors: true, transparent: true, blending: AdditiveBlending, depthWrite: false, side: DoubleSide, fog: false,
+  }));
+  mesh.name = 'aurora';
+  mesh.renderOrder = -1;
+  mesh.frustumCulled = false;
+  const update = (sec) => {
+    const p = g.getAttribute('position');
+    bands.forEach(([k, from, span, height], n) => {
+      for (let i = 0; i <= segs; i += 1) {
+        const u = i / segs;
+        const a = from + u * span;
+        const r = 0.93 + 0.035 * Math.sin(u * 9 + sec * 0.35 + k) + 0.02 * Math.sin(u * 23 - sec * 0.6);
+        const foot = 0.08 + 0.03 * Math.sin(u * 5 + k);
+        const top = foot + height * (0.75 + 0.25 * Math.sin(u * 7 + sec * 0.25 + k * 2));
+        const v = n * perBand + i * ROWS;
+        for (const [row, y, rr] of [[0, foot, r], [1, foot + (top - foot) * 0.3, r * 0.99], [2, top, r * 0.97]]) {
+          p.setXYZ(v + row, Math.cos(a) * rr, y, Math.sin(a) * rr);
+        }
+      }
+    });
+    p.needsUpdate = true;
+  };
+  update(0);
+  return { group: mesh, update };
+}
+
+/** A soft round snowflake (points are drawn square without one). */
+export function flakeTexture() {
+  const canvas = document.createElement('canvas');
+  canvas.width = 32;
+  canvas.height = 32;
+  const g = canvas.getContext('2d');
+  const grad = g.createRadialGradient(16, 16, 0, 16, 16, 16);
+  grad.addColorStop(0, 'rgba(255,255,255,1)');
+  grad.addColorStop(0.5, 'rgba(255,255,255,0.8)');
+  grad.addColorStop(1, 'rgba(255,255,255,0)');
+  g.fillStyle = grad;
+  g.fillRect(0, 0, 32, 32);
+  return new CanvasTexture(canvas);
+}
+
+/** Snow or rain in a box that travels with the camera (drawn the same whichever way it looks). */
+function precipitation(kind, lite) {
+  const snow = kind === 'snow';
+  const n = snow ? (lite ? 500 : 3000) : (lite ? 500 : 2600);
+  const box = snow ? { w: 70, h: 40 } : { w: 60, h: 36 };
+  const base = new Float32Array(n * 3);
+  for (let k = 0; k < n; k += 1) {
+    base[k * 3] = (noise(k) - 0.5) * box.w;
+    base[k * 3 + 1] = noise(k + 0.37) * box.h;
+    base[k * 3 + 2] = (noise(k + 0.71) - 0.5) * box.w;
+  }
+  let object;
+  if (snow) {
+    const g = new BufferGeometry();
+    g.setAttribute('position', new Float32BufferAttribute(new Float32Array(n * 3), 3));
+    object = new Points(g, new PointsMaterial({ color: '#ffffff', map: flakeTexture(), size: lite ? 0.42 : 0.32, transparent: true, opacity: 0.95, depthWrite: false }));
+  } else {
+    const g = new BufferGeometry();
+    g.setAttribute('position', new Float32BufferAttribute(new Float32Array(n * 6), 3));
+    object = new LineSegments(g, new LineBasicMaterial({ color: '#dfe8f2', transparent: true, opacity: 0.45, depthWrite: false }));
+  }
+  object.name = snow ? 'snow' : 'rain';
+  object.frustumCulled = false;
+  const fall = snow ? 1.6 : 22; // metres per second
+  const streak = 0.9;
+  // Wrapped into a box centred on the camera, each flake fixed in the world (they don't swim with it).
+  const wrap = (v, size) => ((((v + size / 2) % size) + size) % size) - size / 2;
+  const update = (sec, at) => {
+    const pos = object.geometry.getAttribute('position');
+    for (let k = 0; k < n; k += 1) {
+      const x = at.x + wrap(base[k * 3] + (snow ? Math.sin(sec * 0.7 + k) * 0.8 : sec * 2.5) - at.x, box.w);
+      const z = at.z + wrap(base[k * 3 + 2] + (snow ? Math.cos(sec * 0.5 + k * 1.3) * 0.8 : sec * 1.2) - at.z, box.w);
+      const y = at.y + wrap(base[k * 3 + 1] - sec * fall - at.y, box.h);
+      if (snow) pos.setXYZ(k, x, y, z);
+      else {
+        pos.setXYZ(k * 2, x, y, z);
+        pos.setXYZ(k * 2 + 1, x - 0.1, y + streak, z - 0.05);
+      }
+    }
+    pos.needsUpdate = true;
+  };
+  return { object, update };
+}
+
+/** Embers drifting up round the camera (magma light): a few soft orange points, additive. */
+function embers(lite) {
+  const n = lite ? 120 : 400;
+  const box = { w: 80, h: 30 };
+  const base = new Float32Array(n * 3);
+  for (let k = 0; k < n; k += 1) {
+    base[k * 3] = (noise(k + 3.1) - 0.5) * box.w;
+    base[k * 3 + 1] = noise(k + 4.37) * box.h;
+    base[k * 3 + 2] = (noise(k + 5.71) - 0.5) * box.w;
+  }
+  const g = new BufferGeometry();
+  g.setAttribute('position', new Float32BufferAttribute(new Float32Array(n * 3), 3));
+  const object = new Points(g, new PointsMaterial({ color: '#ff9a4a', map: flakeTexture(), size: lite ? 0.5 : 0.38, transparent: true, opacity: 0.8, depthWrite: false, blending: AdditiveBlending }));
+  object.name = 'embers';
+  object.frustumCulled = false;
+  const wrap = (v, size) => ((((v + size / 2) % size) + size) % size) - size / 2;
+  const update = (sec, at) => {
+    const pos = object.geometry.getAttribute('position');
+    for (let k = 0; k < n; k += 1) {
+      const x = at.x + wrap(base[k * 3] + Math.sin(sec * 0.4 + k) * 1.2 - at.x, box.w);
+      const z = at.z + wrap(base[k * 3 + 2] + Math.cos(sec * 0.3 + k * 1.3) * 1.2 - at.z, box.w);
+      const y = at.y - 8 + wrap(base[k * 3 + 1] + sec * 1.1 - at.y, box.h);
+      pos.setXYZ(k, x, y, z);
+    }
+    pos.needsUpdate = true;
+  };
+  return { object, update };
+}
+
+/** A faint edge light along the top of both rims (night): one draw call. */
+/**
+ * Synthwave sunset's sky: a magenta grid over the lower sky (lines running out to the horizon
+ * and lines along it) and a big sun low in the west, striped across its lower half. One draw.
+ */
+function synthGrid(lite) {
+  const pos = [];
+  const col = [];
+  const line = (a, b, c) => { pos.push(...a, ...b); col.push(...c, ...c); };
+  const magenta = [1, 0.25, 0.85];
+  const at = (a, y) => { const r = Math.sqrt(1 - y * y) * 0.985; return [Math.cos(a) * r, y, Math.sin(a) * r]; };
+  const n = lite ? 48 : 96;
+  for (let k = 0; k < n; k += 1) {
+    const a = (k / n) * Math.PI * 2;
+    line(at(a, 0.0), at(a, 0.09), magenta);
+  }
+  for (const y of [0.012, 0.03, 0.055, 0.09]) {
+    for (let k = 0; k < n; k += 1) line(at((k / n) * Math.PI * 2, y), at(((k + 1) / n) * Math.PI * 2, y), magenta);
+  }
+  // The sun: horizontal strokes filling a disc, gaps in its lower half.
+  const sunA = Math.PI; // the west (the preset's sun comes from -x)
+  const R = 0.16;
+  for (let k = 0; k <= 40; k += 1) {
+    const dy = -R + (2 * R * k) / 40;
+    if (dy < 0 && Math.floor((-dy / R) * 8) % 2 === 1) continue;
+    const half = Math.sqrt(Math.max(0, R * R - dy * dy));
+    const y = 0.1 + dy;
+    const t = (dy + R) / (2 * R);
+    const c = [1, 0.35 + 0.5 * t, 0.3 * (1 - t)];
+    line(at(sunA - half, y), at(sunA + half, y), c);
+  }
+  const g = new BufferGeometry();
+  g.setAttribute('position', new Float32BufferAttribute(pos, 3));
+  g.setAttribute('color', new Float32BufferAttribute(col, 3));
+  const lines = new LineSegments(g, new LineBasicMaterial({ vertexColors: true, fog: false, transparent: true, opacity: 0.9, depthWrite: false }));
+  lines.name = 'synthwave grid';
+  lines.renderOrder = -1;
+  lines.frustumCulled = false;
+  return lines;
+}
+
+export function edgeLights(centerline, channel, colour = '#7fd8ff') {
+  const { samples, segments } = centerline;
+  const step = channel.arc / segments;
+  const pos = [];
+  const rows = [];
+  for (let i = 0; i <= segments; i += 1) {
+    const s = samples[i];
+    const sArc = i * step;
+    const side = new Vector3(s.side.x, 0, s.side.z).normalize();
+    const R = channelRadiusAt(channel, sArc);
+    const lip = channelLipAt(channel, sArc);
+    const fork = forkAt(channel, sArc);
+    const edge = fork ? Math.abs(forkOffset(fork, sArc)) + forkRadius(fork, channel.radius, sArc) * Math.sin(channel.maxAngle) : R * Math.sin(lip);
+    const top = s.pos.y + R * (1 - Math.cos(lip)) + 0.03;
+    rows.push([1, -1].map((sign) => [0.04, 0.22].map((d) => {
+      const p = s.pos.clone().addScaledVector(side, sign * (edge + d));
+      p.y = top;
+      return p;
+    })));
+  }
+  for (let i = 0; i < segments; i += 1) {
+    for (let k = 0; k < 2; k += 1) {
+      const [a0, a1] = rows[i][k];
+      const [b0, b1] = rows[i + 1][k];
+      for (const p of [a0, b0, b1, a0, b1, a1]) pos.push(p.x, p.y, p.z);
+    }
+  }
+  const g = new BufferGeometry();
+  g.setAttribute('position', new Float32BufferAttribute(pos, 3));
+  g.computeBoundingSphere();
+  const mesh = new Mesh(g, new MeshBasicMaterial({ color: colour, side: DoubleSide, fog: false }));
+  mesh.name = 'edge lights';
+  return mesh;
+}
+
+/**
+ * The effects of a theme's preset: { sky (children for the sky dome), world
+ * (things in the world), update(sec, cameraPosition), dispose } or null.
+ */
+export function buildEffects(theme, { centerline = null, channel = null, lite = false } = {}) {
+  const fx = theme?.effects ?? {};
+  if (!fx.stars && !fx.aurora && !fx.fireworks && !fx.precipitation && !fx.night && !fx.grid && !fx.edge && !fx.embers) return null;
+  const sky = new Group();
+  sky.name = 'sky effects';
+  const world = new Group();
+  world.name = 'weather';
+  const updates = [];
+  if (fx.stars) sky.add(stars(lite));
+  if (fx.aurora) {
+    const a = aurora(lite);
+    sky.add(a.group);
+    updates.push((sec) => a.update(sec));
+  }
+  if (fx.fireworks) {
+    const f = fireworks(lite);
+    sky.add(f.group);
+    updates.push((sec) => f.update(sec));
+  }
+  if (fx.precipitation) {
+    const p = precipitation(fx.precipitation, lite);
+    world.add(p.object);
+    updates.push((sec, at) => p.update(sec, at));
+  }
+  if (fx.embers && !lite) { // (computers only: on a phone the draw call goes to the race)
+    const e = embers(lite);
+    world.add(e.object);
+    updates.push((sec, at) => e.update(sec, at));
+  }
+  if (fx.grid) sky.add(synthGrid(lite));
+  if ((fx.night || fx.edge) && centerline && channel && !(lite && fx.liteEdge === false)) world.add(edgeLights(centerline, channel, fx.edge)); // (`liteEdge: false`: none on phones, dusk)
+  const dispose = () => {
+    for (const g of [sky, world]) {
+      g.traverse((o) => {
+        o.geometry?.dispose();
+        o.material?.map?.dispose();
+        o.material?.dispose();
+      });
+      g.removeFromParent();
+    }
+  };
+  return { sky, world, night: Boolean(fx.night), update: (sec, at) => updates.forEach((u) => u(sec, at)), dispose };
+}

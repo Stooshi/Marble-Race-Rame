@@ -1,0 +1,4 @@
+{
+  "note": "The site's language (Moses, 21 Oct 2026): English only for now, everywhere: the save pop-up, the quick sign-up, the confirm-email and pass-reminder emails. The Swedish texts stay in the code (saveTexts.js, emailConfirm.js, reminderEmails.js) and in the project docs for later: set ENGLISH_ONLY to false to give Swedish browsers Swedish again.",
+  "ENGLISH_ONLY": true
+}
