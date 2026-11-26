@@ -93,6 +93,7 @@
 "huayna-picchu-terraces": {"family":"peak","reach":0.345,"seq":["opening: peg-drop","drop","peg ×7","sweep right","straight","slalom","brake","hairpin left"]},
 "hudson-highlands-run": {"family":"river","reach":0.225,"seq":["opening: crest-start","drop","pileUp","slalom","climb","drop","straight","slalom","moguls"]},
 "ice-palace": {"family":"winter-wonders","reach":0.324,"seq":["opening: tunnel-launch","drop","pileUp","slalom","drop","slalom","straight","half-pipe","straight","peg ×3"]},
+"idol-of-the-jungle": {"family":"pinball","reach":0.283,"seq":["opening: clear-start","straight","sweep left","sweep right","straight","swipe","slalom","boost","S-bends left","peg ×2"]},
 "iguazu-devils-throat": {"family":"river","reach":0.224,"seq":["opening: banked-turn","drop","pileUp","slalom","sweep right","drop","peg ×2","straight","slalom","moguls"]},
 "indus-spins": {"family":"canyon","reach":0.241,"seq":["opening: classic","drop","pileUp","slalom","straight","slalom","sweep right","boost"]},
 "irrawaddy-balloon-dawn": {"family":"river","reach":0.228,"seq":["opening: tunnel-launch","drop","pileUp","slalom","drop","slalom","drop","peg ×3","S-bends left","peg ×2"]},

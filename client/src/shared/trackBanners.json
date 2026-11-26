@@ -1047,6 +1047,17 @@
    "side": 1,
    "marbles": 4
   },
+  "idol-of-the-jungle": {
+   "name": "Idol of the Jungle",
+   "series": "Pinball",
+   "lighting": "parlour",
+   "v": "ebd312a5",
+   "bytes": 14452,
+   "bytes2x": 35142,
+   "t": 10617,
+   "side": 1,
+   "marbles": 7
+  },
   "iguazu-devils-throat": {
    "name": "Iguazú Devil's Throat",
    "series": "Rivers",
