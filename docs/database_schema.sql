@@ -1,0 +1,1676 @@
+-- =============================================================================
+-- Marble Race — PostgreSQL schema
+-- =============================================================================
+-- The backend applies this file automatically on every start
+-- (src/db/migrate.js), inside one transaction. It can also be applied with
+--   npm run db:migrate      or      psql "$DATABASE_URL" -1 -f docs/database_schema.sql
+-- (by hand, -1 runs it as one transaction; only the backend also applies the
+-- one-time data updates in docs/data_updates/).
+--
+-- The script is idempotent and safe for a database that already holds data:
+--  * tables, columns, types and indexes are only created when missing;
+--  * no statement drops, deletes or updates stored rows (the views are
+--    rebuilt, but views hold no data);
+--  * seed marbles and tracks are inserted only when no row with the same slug
+--    or name exists, so existing rows are never overwritten or duplicated.
+--
+-- Design notes
+--  * A race is decided exactly once, on the server, when it leaves the lobby.
+--    The PRNG seed and a snapshot of every entrant's marble stats are stored,
+--    so the full race (every frame) can be regenerated deterministically for
+--    replays without storing the frames themselves.
+--  * Finish positions are written at decision time but are only exposed by the
+--    API once the race status is 'finished'.
+-- =============================================================================
+
+CREATE EXTENSION IF NOT EXISTS pgcrypto;   -- gen_random_uuid()
+CREATE EXTENSION IF NOT EXISTS citext;     -- case-insensitive username/email
+
+-- -----------------------------------------------------------------------------
+-- Enumerated types
+-- -----------------------------------------------------------------------------
+DO $$ BEGIN
+    CREATE TYPE user_role AS ENUM ('player', 'admin');
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+    CREATE TYPE race_status AS ENUM ('lobby', 'countdown', 'running', 'finished', 'cancelled');
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+    CREATE TYPE marble_rarity AS ENUM ('common', 'uncommon', 'rare', 'epic', 'legendary');
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+    CREATE TYPE track_difficulty AS ENUM ('easy', 'medium', 'hard', 'extreme');
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+-- -----------------------------------------------------------------------------
+-- updated_at trigger helper
+-- -----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION set_updated_at() RETURNS trigger AS $$
+BEGIN
+    NEW.updated_at = now();
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- -----------------------------------------------------------------------------
+-- users
+-- -----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS users (
+    id              uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    username        citext      NOT NULL UNIQUE
+                    CHECK (username ~ '^[A-Za-z0-9_]{3,24}$'),
+    email           citext      NOT NULL UNIQUE
+                    CHECK (position('@' IN email) > 1),
+    password_hash   text        NOT NULL,
+    display_name    varchar(40),
+    avatar_url      text,
+    role            user_role   NOT NULL DEFAULT 'player',
+    coins           integer     NOT NULL DEFAULT 650 CHECK (coins >= 0),
+    last_login_at   timestamptz,
+    created_at      timestamptz NOT NULL DEFAULT now(),
+    updated_at      timestamptz NOT NULL DEFAULT now()
+);
+
+-- skill: how strong the player's marbles race (1-100). Skill belongs to the
+--        player, not the marble: every marble in their Marble Bag races at it,
+--        whichever one is their Shooter. Everyone starts at 50, the middle of
+--        the house field.
+-- skill_refund_coins: coins refunded when marbles stopped carrying strength
+--        (2026-10-12), shown once on the dashboard; NULL once seen.
+ALTER TABLE users ADD COLUMN IF NOT EXISTS skill smallint NOT NULL DEFAULT 50 CHECK (skill BETWEEN 1 AND 100);
+ALTER TABLE users ADD COLUMN IF NOT EXISTS skill_refund_coins integer CHECK (skill_refund_coins > 0);
+
+DROP TRIGGER IF EXISTS trg_users_updated_at ON users;
+CREATE TRIGGER trg_users_updated_at BEFORE UPDATE ON users
+    FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+
+-- -----------------------------------------------------------------------------
+-- tracks
+-- -----------------------------------------------------------------------------
+-- waypoints: ordered polyline the marbles follow, e.g. [{"x":0,"y":0}, ...]
+--            in abstract track units; clients scale it to the viewport.
+-- obstacles: features along the track, each positioned by fractional progress
+--            (0..1) e.g. {"type":"bumper","at":0.35,"span":0.04,"intensity":0.6}
+--            Supported types: bumper, ramp, sand, spinner, funnel.
+CREATE TABLE IF NOT EXISTS tracks (
+    id              uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    slug            varchar(64)      NOT NULL UNIQUE CHECK (slug ~ '^[a-z0-9-]+$'),
+    name            varchar(80)      NOT NULL,
+    description     text,
+    difficulty      track_difficulty NOT NULL DEFAULT 'medium',
+    length_m        numeric(8,2)     NOT NULL CHECK (length_m > 0),
+    lane_count      smallint         NOT NULL DEFAULT 4 CHECK (lane_count BETWEEN 1 AND 20),
+    waypoints       jsonb            NOT NULL DEFAULT '[]'::jsonb
+                    CHECK (jsonb_typeof(waypoints) = 'array'),
+    obstacles       jsonb            NOT NULL DEFAULT '[]'::jsonb
+                    CHECK (jsonb_typeof(obstacles) = 'array'),
+    physics         jsonb,
+    thumbnail_url   text,
+    is_active       boolean          NOT NULL DEFAULT true,
+    created_by      uuid REFERENCES users(id) ON DELETE SET NULL,
+    created_at      timestamptz      NOT NULL DEFAULT now(),
+    updated_at      timestamptz      NOT NULL DEFAULT now()
+);
+
+-- physics: settings for the new physics engine (src/game/physicsSimulator.js:
+-- ice channel, splitter, starting gate, catch area). NULL = the track races on
+-- the classic engine (src/game/simulator.js), as every track did before.
+ALTER TABLE tracks ADD COLUMN IF NOT EXISTS physics jsonb;
+
+CREATE INDEX IF NOT EXISTS idx_tracks_active ON tracks (is_active);
+
+DROP TRIGGER IF EXISTS trg_tracks_updated_at ON tracks;
+CREATE TRIGGER trg_tracks_updated_at BEFORE UPDATE ON tracks
+    FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+
+-- -----------------------------------------------------------------------------
+-- marbles (catalog)
+-- -----------------------------------------------------------------------------
+-- Marbles are looks only: skill belongs to the player (users.skill). The stat
+-- columns (top_speed, acceleration, handling, luck) are no longer read by any
+-- race; they stay only as a record of the old catalog. Past races keep their
+-- own copy of the stats they ran with (race_entries.snap_*).
+CREATE TABLE IF NOT EXISTS marbles (
+    id              uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    slug            varchar(64)   NOT NULL UNIQUE CHECK (slug ~ '^[a-z0-9-]+$'),
+    name            varchar(60)   NOT NULL,
+    description     text,
+    color_primary   char(7)       NOT NULL CHECK (color_primary   ~ '^#[0-9A-Fa-f]{6}$'),
+    color_secondary char(7)                CHECK (color_secondary ~ '^#[0-9A-Fa-f]{6}$'),
+    pattern         varchar(24)   NOT NULL DEFAULT 'solid',
+    rarity          marble_rarity NOT NULL DEFAULT 'common',
+    top_speed       smallint      NOT NULL DEFAULT 50 CHECK (top_speed    BETWEEN 1 AND 100),
+    acceleration    smallint      NOT NULL DEFAULT 50 CHECK (acceleration BETWEEN 1 AND 100),
+    handling        smallint      NOT NULL DEFAULT 50 CHECK (handling     BETWEEN 1 AND 100),
+    luck            smallint      NOT NULL DEFAULT 50 CHECK (luck         BETWEEN 1 AND 100),
+    price_coins     integer       NOT NULL DEFAULT 0  CHECK (price_coins >= 0),
+    is_starter      boolean       NOT NULL DEFAULT false,  -- usable by every player for free
+    is_active       boolean       NOT NULL DEFAULT true,
+    created_at      timestamptz   NOT NULL DEFAULT now(),
+    updated_at      timestamptz   NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_marbles_active ON marbles (is_active);
+
+DROP TRIGGER IF EXISTS trg_marbles_updated_at ON marbles;
+CREATE TRIGGER trg_marbles_updated_at BEFORE UPDATE ON marbles
+    FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+
+-- -----------------------------------------------------------------------------
+-- user_marbles (ownership / collection)
+-- -----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS user_marbles (
+    user_id         uuid        NOT NULL REFERENCES users(id)   ON DELETE CASCADE,
+    marble_id       uuid        NOT NULL REFERENCES marbles(id) ON DELETE CASCADE,
+    is_favorite     boolean     NOT NULL DEFAULT false,
+    acquired_at     timestamptz NOT NULL DEFAULT now(),
+    PRIMARY KEY (user_id, marble_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_user_marbles_marble ON user_marbles (marble_id);
+
+-- -----------------------------------------------------------------------------
+-- races
+-- -----------------------------------------------------------------------------
+-- seed               PRNG seed used by the simulator (set when decided)
+-- target_duration_ms total race length: on the classic engine the simulation is
+--                    scaled to it (50–90 s; the server defaults to fixed 90 s
+--                    races); on the new physics it is however long the race
+--                    takes (a ceiling of 90 s), so 20–90 s overall
+-- countdown_ms       pre-start countdown streamed to clients
+-- decided_at         moment the outcome was computed (lobby -> countdown)
+-- track_snapshot     copy of the track geometry/obstacles used for the decision,
+--                    so later track edits never change a past race or its replay;
+--                    on the new physics it also holds the physics settings and
+--                    the engine version ("engine"); without them it is a classic race
+CREATE TABLE IF NOT EXISTS races (
+    id                  uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    track_id            uuid        NOT NULL REFERENCES tracks(id) ON DELETE RESTRICT,
+    name                varchar(80),
+    status              race_status NOT NULL DEFAULT 'lobby',
+    min_marbles         smallint    NOT NULL DEFAULT 20,
+    max_marbles         smallint    NOT NULL DEFAULT 20,
+    entry_fee_coins     integer     NOT NULL DEFAULT 0 CHECK (entry_fee_coins >= 0), -- always 0: coin entry fees switched off 14 Oct 2026 (kept for old races)
+    fill_with_bots      boolean     NOT NULL DEFAULT true,
+    seed                bigint,
+    target_duration_ms  integer,
+    tick_rate_hz        smallint    NOT NULL DEFAULT 10 CHECK (tick_rate_hz BETWEEN 1 AND 60),
+    countdown_ms        integer     NOT NULL DEFAULT 5000 CHECK (countdown_ms BETWEEN 0 AND 60000),
+    track_snapshot      jsonb,
+    created_by          uuid REFERENCES users(id) ON DELETE SET NULL,
+    scheduled_at        timestamptz,
+    decided_at          timestamptz,
+    started_at          timestamptz,
+    finished_at         timestamptz,
+    created_at          timestamptz NOT NULL DEFAULT now(),
+    updated_at          timestamptz NOT NULL DEFAULT now(),
+
+    CONSTRAINT races_marble_bounds CHECK (
+        min_marbles BETWEEN 10 AND 20
+        AND max_marbles BETWEEN 10 AND 20
+        AND min_marbles <= max_marbles
+    ),
+    CONSTRAINT races_duration_bounds CHECK (
+        target_duration_ms IS NULL OR target_duration_ms BETWEEN 20000 AND 90000
+    ),
+    CONSTRAINT races_decided_has_seed CHECK (
+        status IN ('lobby', 'cancelled')
+        OR (seed IS NOT NULL AND target_duration_ms IS NOT NULL AND track_snapshot IS NOT NULL)
+    )
+);
+
+CREATE INDEX IF NOT EXISTS idx_races_status       ON races (status);
+CREATE INDEX IF NOT EXISTS idx_races_track        ON races (track_id);
+CREATE INDEX IF NOT EXISTS idx_races_created_at   ON races (created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_races_scheduled_at ON races (scheduled_at)
+    WHERE status = 'lobby' AND scheduled_at IS NOT NULL;
+
+DROP TRIGGER IF EXISTS trg_races_updated_at ON races;
+CREATE TRIGGER trg_races_updated_at BEFORE UPDATE ON races
+    FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+
+-- -----------------------------------------------------------------------------
+-- race_entries (one marble per row; user_id NULL = house bot)
+-- -----------------------------------------------------------------------------
+-- The stat columns snapshot the marble at decision time so later catalog edits
+-- never change a historical race or its replay.
+CREATE TABLE IF NOT EXISTS race_entries (
+    id                uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    race_id           uuid        NOT NULL REFERENCES races(id)   ON DELETE CASCADE,
+    marble_id         uuid        NOT NULL REFERENCES marbles(id) ON DELETE RESTRICT,
+    user_id           uuid                 REFERENCES users(id)   ON DELETE SET NULL,
+    is_bot            boolean     NOT NULL DEFAULT false,
+    lane              smallint    CHECK (lane BETWEEN 0 AND 19),
+    snap_top_speed    smallint,
+    snap_acceleration smallint,
+    snap_handling     smallint,
+    snap_luck         smallint,
+    finish_position   smallint    CHECK (finish_position BETWEEN 1 AND 20),
+    finish_time_ms    integer     CHECK (finish_time_ms > 0),
+    split_time_ms     integer     CHECK (split_time_ms > 0),   -- time at the halfway point
+    coins_awarded     integer     NOT NULL DEFAULT 0 CHECK (coins_awarded >= 0),
+    joined_at         timestamptz NOT NULL DEFAULT now(),
+
+    CONSTRAINT race_entries_unique_marble UNIQUE (race_id, marble_id),
+    CONSTRAINT race_entries_unique_lane   UNIQUE (race_id, lane),
+    CONSTRAINT race_entries_unique_pos    UNIQUE (race_id, finish_position),
+    CONSTRAINT race_entries_bot_xor_user  CHECK (is_bot = (user_id IS NULL))
+);
+
+-- -----------------------------------------------------------------------------
+-- race_replays: the stored replay of each race on the new physics
+-- -----------------------------------------------------------------------------
+-- Classic races are replayed by re-running the simulator from their seed. Races
+-- on the new physics are saved as they were decided (gzipped JSON of the frames,
+-- events and starting gate), so later tuning of the physics never changes a past
+-- race's replay. Results and coins live in race_entries as for every race.
+CREATE TABLE IF NOT EXISTS race_replays (
+    race_id     uuid        PRIMARY KEY REFERENCES races(id) ON DELETE CASCADE,
+    engine      text        NOT NULL,
+    data        bytea       NOT NULL,
+    created_at  timestamptz NOT NULL DEFAULT now()
+);
+
+-- Upgrade path for databases created before these columns existed (including
+-- tables created by hand from an earlier version of this file).
+ALTER TABLE race_entries ADD COLUMN IF NOT EXISTS split_time_ms integer CHECK (split_time_ms > 0);
+ALTER TABLE races        ADD COLUMN IF NOT EXISTS track_snapshot jsonb;
+-- The rematch: the follow-up race on the same track that the group moves on to
+-- after this one (POST /api/races/:id/next creates it once and everyone joins it).
+ALTER TABLE races        ADD COLUMN IF NOT EXISTS next_race_id uuid REFERENCES races(id) ON DELETE SET NULL;
+
+-- -----------------------------------------------------------------------------
+-- Friend rooms: a private race with friends, joined by a short code (/r/K7QF2M)
+-- -----------------------------------------------------------------------------
+-- A room is a run of private races (races.room_id) on the host's track. Its
+-- races never show in the public lists and never start by themselves: the host
+-- starts each one; empty places fill with CPU players as in any race. When one
+-- finishes the next is set up straight away with everyone still in the room.
+-- A room closes after two hours without a race.
+CREATE TABLE IF NOT EXISTS rooms (
+    id               uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    code             varchar(8)  NOT NULL UNIQUE,
+    host_id          uuid        NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    track_id         uuid        REFERENCES tracks(id) ON DELETE SET NULL,
+    current_race_id  uuid        REFERENCES races(id) ON DELETE SET NULL,
+    status           varchar(10) NOT NULL DEFAULT 'open' CHECK (status IN ('open', 'closed')),
+    created_at       timestamptz NOT NULL DEFAULT now(),
+    last_active_at   timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_rooms_host ON rooms (host_id, created_at);
+ALTER TABLE races        ADD COLUMN IF NOT EXISTS room_id uuid REFERENCES rooms(id) ON DELETE SET NULL;
+CREATE INDEX IF NOT EXISTS idx_races_room ON races (room_id) WHERE room_id IS NOT NULL;
+
+-- A player may enter at most one marble per race.
+CREATE UNIQUE INDEX IF NOT EXISTS uq_race_entries_race_user
+    ON race_entries (race_id, user_id) WHERE user_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_race_entries_user   ON race_entries (user_id);
+CREATE INDEX IF NOT EXISTS idx_race_entries_marble ON race_entries (marble_id);
+CREATE INDEX IF NOT EXISTS idx_races_track_finished ON races (track_id, finished_at) WHERE status = 'finished';
+
+-- -----------------------------------------------------------------------------
+-- Marble appearance: each player's cosmetic look (no effect on racing)
+-- -----------------------------------------------------------------------------
+-- A look is PURELY COSMETIC and completely separate from physics. Races are
+-- decided only from the catalog marble's stats (marbles.top_speed etc.,
+-- snapshotted into race_entries); the race engine never reads these tables, so
+-- no look can ever give a gameplay advantage. A spiky or flaming marble moves
+-- exactly like a plain one. (test/appearance.test.js enforces this.)
+--
+-- Players choose from curated lists only. Each list is a table of keys seeded
+-- below (insert-if-missing), so options can be added later with one line and
+-- no code change, and retired by setting is_active = false (players who chose
+-- them keep them).
+--
+-- STORED NOW, RENDERED LATER: every surface and effect below is stored now,
+-- but only some will be drawn in Phase 2 (expected: solid, swirl, striped,
+-- dotted, glowing, sparkle, galaxy). Spiky, bumpy, star and flaming need
+-- dedicated 3D work in a later phase. We store the ambition, not the rendering.
+--
+-- Planned, not built: uploaded images or logos will live in their own table
+-- (e.g. marble_images, with a moderation status: pending / approved /
+-- rejected) and marble_appearances will gain a nullable link to an approved
+-- image. That is purely additive; nothing here changes.
+
+CREATE TABLE IF NOT EXISTS marble_colors (
+    key         varchar(24) PRIMARY KEY CHECK (key ~ '^[a-z0-9-]+$'),
+    name        varchar(24) NOT NULL,
+    hex         char(7)     NOT NULL CHECK (hex ~ '^#[0-9A-Fa-f]{6}$'),
+    sort_order  smallint    NOT NULL DEFAULT 0,
+    is_active   boolean     NOT NULL DEFAULT true
+);
+
+CREATE TABLE IF NOT EXISTS marble_surfaces (
+    key         varchar(24) PRIMARY KEY CHECK (key ~ '^[a-z0-9-]+$'),
+    name        varchar(24) NOT NULL,
+    description text,
+    sort_order  smallint    NOT NULL DEFAULT 0,
+    is_active   boolean     NOT NULL DEFAULT true
+);
+
+CREATE TABLE IF NOT EXISTS marble_effects (
+    key         varchar(24) PRIMARY KEY CHECK (key ~ '^[a-z0-9-]+$'),
+    name        varchar(24) NOT NULL,
+    description text,
+    sort_order  smallint    NOT NULL DEFAULT 0,
+    is_active   boolean     NOT NULL DEFAULT true
+);
+
+INSERT INTO marble_colors (key, name, hex, sort_order) VALUES
+    ('cherry-red',   'Cherry Red',   '#E0115F',  1),
+    ('tangerine',    'Tangerine',    '#FF7A1A',  2),
+    ('sunflower',    'Sunflower',    '#FFD21F',  3),
+    ('lime',         'Lime',         '#8BD448',  4),
+    ('forest-green', 'Forest Green', '#1FA35B',  5),
+    ('teal',         'Teal',         '#13A8A8',  6),
+    ('sky-blue',     'Sky Blue',     '#3DB5FF',  7),
+    ('royal-blue',   'Royal Blue',   '#2F5BEA',  8),
+    ('violet',       'Violet',       '#8E5CF5',  9),
+    ('magenta',      'Magenta',      '#E040C8', 10),
+    ('bubblegum',    'Bubblegum',    '#FF8FC8', 11),
+    ('chocolate',    'Chocolate',    '#7A4A2A', 12),
+    ('sand',         'Sand',         '#D9B77E', 13),
+    ('snow',         'Snow',         '#F4F4F2', 14),
+    ('silver',       'Silver',       '#A8AFB8', 15),
+    ('midnight',     'Midnight',     '#23252B', 16)
+ON CONFLICT (key) DO NOTHING;
+
+INSERT INTO marble_surfaces (key, name, description, sort_order) VALUES
+    ('solid',   'Solid',   'Smooth and glossy, one colour',  1),
+    ('swirl',   'Swirl',   'Colour swirled with white',      2),
+    ('striped', 'Striped', 'Bands of colour and white',      3),
+    ('dotted',  'Dotted',  'Covered in light polka dots',    4),
+    ('spiky',   'Spiky',   'Studded with soft spikes',       5),
+    ('bumpy',   'Bumpy',   'Knobbly, pebble-like surface',   6),
+    ('star',    'Star',    'Covered in small star shapes',   7)
+ON CONFLICT (key) DO NOTHING;
+
+INSERT INTO marble_effects (key, name, description, sort_order) VALUES
+    ('none',     'None',     'No effect',                               1),
+    ('flaming',  'Flaming',  'A trail of flames',                       2),
+    ('glowing',  'Glowing',  'A soft halo of light',                    3),
+    ('sparkle',  'Sparkle',  'Twinkling glints',                        4),
+    ('galaxy',   'Galaxy',   'A starfield swirling inside the marble',  5)
+ON CONFLICT (key) DO NOTHING;
+
+-- One look per player, used for whichever catalog marble they race.
+-- label: the name shown above the marble. Kept for later but always NULL for
+-- now (the username is shown instead): custom text needs a word filter first,
+-- since public rooms are planned. The API refuses to set it.
+CREATE TABLE IF NOT EXISTS marble_appearances (
+    user_id     uuid        PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+    color_key   varchar(24) NOT NULL REFERENCES marble_colors(key) ON UPDATE CASCADE,
+    surface_key varchar(24) NOT NULL DEFAULT 'solid' REFERENCES marble_surfaces(key) ON UPDATE CASCADE,
+    effect_key  varchar(24) NOT NULL DEFAULT 'none'  REFERENCES marble_effects(key)  ON UPDATE CASCADE,
+    label       varchar(16)
+                CHECK (label IS NULL OR (label ~ '^[A-Za-z0-9_ -]{1,16}$' AND label = btrim(label))),
+    created_at  timestamptz NOT NULL DEFAULT now(),
+    updated_at  timestamptz NOT NULL DEFAULT now()
+);
+
+DROP TRIGGER IF EXISTS trg_marble_appearances_updated_at ON marble_appearances;
+CREATE TRIGGER trg_marble_appearances_updated_at BEFORE UPDATE ON marble_appearances
+    FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+
+-- Starting colour for a player: picked from the active colours by a hash of
+-- their id, so a group of friends doesn't start out identical. Used by the
+-- backfill below and by registration (src/game/appearance.js).
+CREATE OR REPLACE FUNCTION default_marble_color(p_user_id uuid) RETURNS varchar AS $$
+    SELECT key FROM marble_colors
+     WHERE is_active
+     ORDER BY sort_order, key
+    OFFSET ((hashtext(p_user_id::text)::bigint % GREATEST(1, (SELECT count(*) FROM marble_colors WHERE is_active)))
+            + (SELECT count(*) FROM marble_colors WHERE is_active))
+           % GREATEST(1, (SELECT count(*) FROM marble_colors WHERE is_active))
+     LIMIT 1;
+$$ LANGUAGE sql STABLE;
+
+-- Every player gets a starting look (solid, no effect). Runs on each boot and
+-- only adds rows for players who don't have one yet; existing looks are kept.
+INSERT INTO marble_appearances (user_id, color_key)
+SELECT u.id, default_marble_color(u.id)
+FROM users u
+WHERE NOT EXISTS (SELECT 1 FROM marble_appearances a WHERE a.user_id = u.id)
+ON CONFLICT (user_id) DO NOTHING;
+
+-- -----------------------------------------------------------------------------
+-- billboards: the images on the tracks' billboards (looks only, never the race)
+-- -----------------------------------------------------------------------------
+-- Each kit track has 4 to 6 billboard slots, numbered 1, 2, 3… down the track.
+-- One row puts an image (2:1, 1024 x 512, on Vercel file storage) on one slot
+-- of one track, on every slot of a track (slot NULL), on one slot of every
+-- track (track_slug NULL), or everywhere (both NULL), from starts_at until
+-- ends_at (NULL: until replaced). The most specific row wins, then the newest.
+-- With no row, or if an image fails to load, a slot shows a built-in promotion.
+--   INSERT INTO billboards (track_slug, slot, image_url)
+--   VALUES ('are-run', 2, 'https://….public.blob.vercel-storage.com/winter-editions.png');
+CREATE TABLE IF NOT EXISTS billboards (
+    id          uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
+    track_slug  varchar(64),
+    slot        smallint    CHECK (slot IS NULL OR slot BETWEEN 1 AND 6),
+    image_url   text        NOT NULL CHECK (image_url ~ '^https://[^\s]+$'),
+    kind        varchar(16) NOT NULL DEFAULT 'own' CHECK (kind IN ('own', 'partner')),
+    note        text,
+    starts_at   timestamptz NOT NULL DEFAULT now(),
+    ends_at     timestamptz,
+    created_at  timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_billboards_track ON billboards (track_slug);
+
+-- -----------------------------------------------------------------------------
+-- Marble collection (Collection 1 · Grand Opening): designs in shades
+-- -----------------------------------------------------------------------------
+-- The catalogue itself (names, stories, shades, colours, rarities, prices)
+-- lives in client/src/shared/marbles/catalog.json, shared by the server, the
+-- website and the phone apps. Items are named by slug, "<design>-<shade>"
+-- (e.g. 'candy-pink'). Looks only: the race engine never reads these tables.
+--
+-- marbles.on_sale: whether a plain marble can still be bought (all can, for now).
+ALTER TABLE marbles ADD COLUMN IF NOT EXISTS on_sale boolean NOT NULL DEFAULT true;
+-- users.is_guest: playing without an account yet (made by "Play free"); saving the
+--        marble turns it into a normal account, keeping coins and marbles.
+ALTER TABLE users ADD COLUMN IF NOT EXISTS is_guest boolean NOT NULL DEFAULT false;
+-- users.marketing_opt_in: agreed at sign-up to emails about new tracks and limited marbles.
+ALTER TABLE users ADD COLUMN IF NOT EXISTS marketing_opt_in boolean NOT NULL DEFAULT false;
+-- A player's own settings that follow them to any device, e.g. { "sound": { "music": 0.6, "effects": 0.8, "muted": false } }.
+ALTER TABLE users ADD COLUMN IF NOT EXISTS settings jsonb NOT NULL DEFAULT '{}'::jsonb;
+
+-- How many copies of each item have been bought and given away so far. The
+-- row is locked while a copy is handed out, so numbers are never shared.
+CREATE TABLE IF NOT EXISTS collection_counters (
+    item_slug   varchar(64) PRIMARY KEY CHECK (item_slug ~ '^[a-z0-9-]+$'),
+    bought      integer     NOT NULL DEFAULT 0 CHECK (bought >= 0),
+    gifted      integer     NOT NULL DEFAULT 0 CHECK (gifted >= 0)
+);
+
+-- One owned copy of an item. copy_no counts bought copies of that item
+-- (1, 2, 3…); the first 500 (or the whole run of a limited edition) are the
+-- numbered First Edition, edition_no = copy_no. Gifts (gift_no) never take a
+-- First Edition number. marble_code is the ID on the certificate, e.g.
+-- MS-SUN-SOL-000037. first_owner_id stays when trading arrives later.
+CREATE TABLE IF NOT EXISTS user_collection (
+    id              uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id         uuid        NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    item_slug       varchar(64) NOT NULL CHECK (item_slug ~ '^[a-z0-9-]+$'),
+    source          varchar(16) NOT NULL CHECK (source IN ('purchase', 'legacy-gift', 'grant')),
+    copy_no         integer     CHECK (copy_no > 0),
+    gift_no         integer     CHECK (gift_no > 0),
+    edition_no      integer     CHECK (edition_no > 0),
+    marble_code     varchar(32) NOT NULL UNIQUE,
+    currency        varchar(8)  CHECK (currency IN ('coins', 'credits')), -- always 'coins' now ('credits' only on copies from before coins-only)
+    price_paid      integer     CHECK (price_paid >= 0),
+    first_owner_id  uuid        REFERENCES users(id) ON DELETE SET NULL,
+    acquired_at     timestamptz NOT NULL DEFAULT now(),
+
+    CONSTRAINT user_collection_one_each UNIQUE (user_id, item_slug),
+    CONSTRAINT user_collection_copy     UNIQUE (item_slug, copy_no),
+    CONSTRAINT user_collection_gift     UNIQUE (item_slug, gift_no),
+    CONSTRAINT user_collection_edition  UNIQUE (item_slug, edition_no)
+);
+CREATE INDEX IF NOT EXISTS idx_user_collection_item ON user_collection (item_slug);
+
+-- The look a player races in (their Shooter): one collection item, or one of
+-- their Originals (the old plain marbles). Neither set: their plain starter.
+CREATE TABLE IF NOT EXISTS user_shooter (
+    user_id         uuid        PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+    item_slug       varchar(64),
+    marble_id       uuid        REFERENCES marbles(id) ON DELETE SET NULL,
+    updated_at      timestamptz NOT NULL DEFAULT now(),
+    CONSTRAINT user_shooter_one CHECK (item_slug IS NULL OR marble_id IS NULL)
+);
+
+-- Which collection marble a player raced in, per race entry (for the
+-- certificate's race record). Written when they join; races never read it.
+CREATE TABLE IF NOT EXISTS race_entry_looks (
+    entry_id        uuid        PRIMARY KEY REFERENCES race_entries(id) ON DELETE CASCADE,
+    collection_id   uuid        NOT NULL REFERENCES user_collection(id) ON DELETE CASCADE
+);
+CREATE INDEX IF NOT EXISTS idx_race_entry_looks_copy ON race_entry_looks (collection_id);
+
+-- Payments for coin packs, whoever took the money: Stripe on the web, Apple or
+-- Google in-app purchases in the phone apps ('test' only outside production).
+-- product_id is the coin pack (client/src/shared/payments/packs.json), coins
+-- what it added.
+-- provider_ref is the provider's own id (Stripe session, App Store
+-- transaction, Play order), unique so a payment is never credited twice.
+CREATE TABLE IF NOT EXISTS payments (
+    id              uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id         uuid        NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
+    provider        varchar(16) NOT NULL CHECK (provider IN ('stripe', 'apple', 'google', 'test')),
+    provider_ref    varchar(255),
+    product_id      varchar(32) NOT NULL,
+    coins           integer     NOT NULL CHECK (coins > 0),
+    amount_cents    integer     NOT NULL CHECK (amount_cents >= 0),
+    currency        char(3)     NOT NULL,
+    status          varchar(16) NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'paid', 'failed', 'refunded')),
+    created_at      timestamptz NOT NULL DEFAULT now(),
+    paid_at         timestamptz,
+    CONSTRAINT payments_provider_ref UNIQUE (provider, provider_ref)
+);
+CREATE INDEX IF NOT EXISTS idx_payments_user ON payments (user_id, created_at DESC);
+-- Stripe (the website): the order number players see, what they agreed to at checkout, and what
+-- Stripe charged (in the player's own currency, VAT included) and refunded.
+CREATE SEQUENCE IF NOT EXISTS payment_order_seq START 1001;
+ALTER TABLE payments ADD COLUMN IF NOT EXISTS order_no varchar(16) UNIQUE;
+ALTER TABLE payments ADD COLUMN IF NOT EXISTS consent_at timestamptz;
+ALTER TABLE payments ADD COLUMN IF NOT EXISTS consent_text text;
+ALTER TABLE payments ADD COLUMN IF NOT EXISTS stripe_session_id varchar(255);
+ALTER TABLE payments ADD COLUMN IF NOT EXISTS payment_intent varchar(255);
+ALTER TABLE payments ADD COLUMN IF NOT EXISTS charged_cents integer;
+ALTER TABLE payments ADD COLUMN IF NOT EXISTS charged_currency char(3);
+ALTER TABLE payments ADD COLUMN IF NOT EXISTS tax_cents integer;
+ALTER TABLE payments ADD COLUMN IF NOT EXISTS receipt_url text;
+ALTER TABLE payments ADD COLUMN IF NOT EXISTS refunded_cents integer NOT NULL DEFAULT 0;
+ALTER TABLE payments ADD COLUMN IF NOT EXISTS refunded_at timestamptz;
+CREATE INDEX IF NOT EXISTS idx_payments_intent ON payments (payment_intent) WHERE payment_intent IS NOT NULL;
+-- Google Play (the Android app): the purchase token Google gave the app (each credited once), and
+-- when the purchase was consumed at Google (Google refunds purchases not acknowledged within 3 days;
+-- consuming also acknowledges). provider_ref holds Google's order id (GPA.…).
+ALTER TABLE payments ADD COLUMN IF NOT EXISTS store_token text;
+ALTER TABLE payments ADD COLUMN IF NOT EXISTS store_consumed_at timestamptz;
+CREATE UNIQUE INDEX IF NOT EXISTS idx_payments_store_token ON payments (provider, store_token) WHERE store_token IS NOT NULL;
+-- The player's random account id for store purchases (Google Play's obfuscatedAccountId): ties a
+-- purchase to one player without giving Google anything personal.
+ALTER TABLE users ADD COLUMN IF NOT EXISTS store_account_id varchar(64);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_users_store_account ON users (store_account_id) WHERE store_account_id IS NOT NULL;
+-- The player's random account token for App Store purchases (StoreKit's appAccountToken, a UUID):
+-- ties a purchase from the iPhone app to one player without giving Apple anything personal.
+ALTER TABLE users ADD COLUMN IF NOT EXISTS apple_account_token uuid;
+CREATE UNIQUE INDEX IF NOT EXISTS idx_users_apple_account ON users (apple_account_token) WHERE apple_account_token IS NOT NULL;
+
+-- Each refund once (a Stripe refund id): the coins it took back, and any it couldn't (already spent).
+CREATE TABLE IF NOT EXISTS payment_refunds (
+    id              varchar(255) PRIMARY KEY,
+    payment_id      uuid        NOT NULL REFERENCES payments(id) ON DELETE CASCADE,
+    amount_cents    integer     NOT NULL CHECK (amount_cents > 0),
+    coins_removed   integer     NOT NULL DEFAULT 0,
+    coins_short     integer     NOT NULL DEFAULT 0,
+    admin_id        uuid        REFERENCES users(id) ON DELETE SET NULL,
+    reason          text,
+    created_at      timestamptz NOT NULL DEFAULT now()
+);
+
+-- Stripe webhook events already handled (Stripe may send one more than once).
+CREATE TABLE IF NOT EXISTS stripe_events (
+    id              varchar(255) PRIMARY KEY,
+    type            varchar(64) NOT NULL,
+    received_at     timestamptz NOT NULL DEFAULT now()
+);
+
+-- (Older databases made this table with credits instead of coins: data update
+-- 2027-01-03-coins-only fills coins and drops credits.)
+ALTER TABLE payments ADD COLUMN IF NOT EXISTS coins integer CHECK (coins > 0);
+
+-- Showcase marbles: the collection look a computer player wears in a beginner
+-- race (src/marbles/showcase.js). Drawn when the race is decided, apart from
+-- the race itself; the race engine never reads it.
+CREATE TABLE IF NOT EXISTS house_looks (
+    entry_id    uuid        PRIMARY KEY REFERENCES race_entries(id) ON DELETE CASCADE,
+    item_slug   varchar(64) NOT NULL CHECK (item_slug ~ '^[a-z0-9-]+$')
+);
+
+-- -----------------------------------------------------------------------------
+-- data_updates: one-time changes to existing rows (docs/data_updates/*.sql)
+-- -----------------------------------------------------------------------------
+-- The backend runs each file once, in name order, and records it here so it is
+-- never applied twice.
+CREATE TABLE IF NOT EXISTS data_updates (
+    id          text        PRIMARY KEY,
+    applied_at  timestamptz NOT NULL DEFAULT now(),
+    summary     text
+);
+
+-- -----------------------------------------------------------------------------
+-- The coin economy (client/src/shared/economy.json, src/economy/index.js)
+-- -----------------------------------------------------------------------------
+-- One currency: coins, earned by racing or bought in coin packs.
+-- coin_ledger: every change to a player's coins, one line each (taking part,
+--   finishing bonuses, the daily goal, coin packs, purchases, bags, entry
+--   fees, refunds, admin adjustments), with the balance after it. Scoreboards
+--   count the earned kinds only; the back office shows it as the wallet.
+-- users.coins_earned / coins_bought: running totals of coins earned racing and
+--   coins bought (coin packs, and credits converted when coins became the only
+--   currency); spending doesn't lower them.
+-- user_days: races finished per player per day (UTC), and when the daily goal
+--   was met. users.streak_days / streak_last_day: the daily-goal streak (shown;
+--   it pays no coins).
+CREATE TABLE IF NOT EXISTS coin_ledger (
+    id              bigserial   PRIMARY KEY,
+    user_id         uuid        NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    amount          integer     NOT NULL CHECK (amount <> 0),
+    kind            varchar(24) NOT NULL,
+    race_id         uuid,
+    item_slug       varchar(64),
+    payment_id      uuid,
+    note            text,
+    actor_id        uuid,
+    balance_after   integer,
+    created_at      timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_coin_ledger_user ON coin_ledger (user_id, created_at);
+CREATE INDEX IF NOT EXISTS idx_coin_ledger_kind ON coin_ledger (kind, created_at);
+CREATE INDEX IF NOT EXISTS idx_coin_ledger_race ON coin_ledger (race_id) WHERE race_id IS NOT NULL;
+
+CREATE TABLE IF NOT EXISTS user_days (
+    user_id         uuid        NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    day             date        NOT NULL,
+    races           integer     NOT NULL DEFAULT 0 CHECK (races >= 0),
+    goal_met_at     timestamptz,
+    PRIMARY KEY (user_id, day)
+);
+ALTER TABLE users ADD COLUMN IF NOT EXISTS streak_days smallint NOT NULL DEFAULT 0 CHECK (streak_days >= 0);
+ALTER TABLE users ADD COLUMN IF NOT EXISTS streak_last_day date;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS coins_earned integer NOT NULL DEFAULT 0 CHECK (coins_earned >= 0);
+ALTER TABLE users ADD COLUMN IF NOT EXISTS coins_bought integer NOT NULL DEFAULT 0 CHECK (coins_bought >= 0);
+ALTER TABLE users ALTER COLUMN coins SET DEFAULT 650; -- the starting bag (economy.json startingCoins)
+
+-- -----------------------------------------------------------------------------
+-- Views
+-- -----------------------------------------------------------------------------
+-- Dropped and recreated rather than CREATE OR REPLACE, which refuses to change
+-- an existing view's columns. Views store no data, so this loses nothing.
+DROP VIEW IF EXISTS user_stats;
+DROP VIEW IF EXISTS marble_stats;
+
+-- Per-player aggregate stats over finished races.
+CREATE VIEW user_stats AS
+SELECT
+    u.id                                                         AS user_id,
+    u.username,
+    COUNT(e.id)                                                  AS races_played,
+    COUNT(e.id) FILTER (WHERE e.finish_position = 1)             AS wins,
+    COUNT(e.id) FILTER (WHERE e.finish_position <= 3)            AS podiums,
+    MIN(e.finish_time_ms) FILTER (WHERE e.finish_position = 1)   AS best_win_time_ms,
+    ROUND(AVG(e.finish_position)::numeric, 2)                    AS avg_position,
+    COALESCE(SUM(e.coins_awarded), 0)                            AS coins_won,
+    MIN(e.split_time_ms)                                         AS best_split_ms,
+    MIN(e.finish_time_ms)                                        AS best_finish_time_ms
+FROM users u
+LEFT JOIN (race_entries e
+           JOIN races r ON r.id = e.race_id AND r.status = 'finished')
+       ON e.user_id = u.id
+GROUP BY u.id, u.username;
+
+-- Per-marble aggregate stats over finished races (bots included).
+CREATE VIEW marble_stats AS
+SELECT
+    m.id                                                AS marble_id,
+    m.name,
+    COUNT(e.id)                                         AS races_run,
+    COUNT(e.id) FILTER (WHERE e.finish_position = 1)    AS wins,
+    ROUND(AVG(e.finish_position)::numeric, 2)           AS avg_position
+FROM marbles m
+LEFT JOIN (race_entries e
+           JOIN races r ON r.id = e.race_id AND r.status = 'finished')
+       ON e.marble_id = m.id
+GROUP BY m.id, m.name;
+
+-- -----------------------------------------------------------------------------
+-- Back office: player details for support, admin 2-step login, the audit log,
+-- security events (IP addresses) and email consent
+-- -----------------------------------------------------------------------------
+-- age_group: asked at sign-up ('under-13', '13-17', '18+'); NULL for older accounts.
+-- marketing_opt_in (above) is the current email consent; email_consents keeps its history.
+-- suspended_at: set by the back office (with a reason in the audit log); a suspended
+--        player can't log in or race.
+ALTER TABLE users ADD COLUMN IF NOT EXISTS age_group varchar(8) CHECK (age_group IN ('under-13', '13-17', '18+'));
+ALTER TABLE users ADD COLUMN IF NOT EXISTS suspended_at timestamptz;
+-- deleted_at: the player deleted their account (src/account). The row stays, anonymised, so race
+-- results, marble IDs and payment records (bookkeeping) stay whole; nothing in it points to the person.
+ALTER TABLE users ADD COLUMN IF NOT EXISTS deleted_at timestamptz;
+
+-- Admin 2-step login: an authenticator-app secret per admin (encrypted with the server's key).
+CREATE TABLE IF NOT EXISTS admin_2fa (
+    user_id         uuid        PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+    secret_enc      text        NOT NULL,
+    enabled_at      timestamptz,
+    last_step       bigint,
+    created_at      timestamptz NOT NULL DEFAULT now()
+);
+
+-- Back-office sessions: started with the 2-step code, ended after 30 minutes without use.
+CREATE TABLE IF NOT EXISTS admin_sessions (
+    id              uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id         uuid        NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    created_at      timestamptz NOT NULL DEFAULT now(),
+    last_seen_at    timestamptz NOT NULL DEFAULT now(),
+    ended_at        timestamptz
+);
+
+-- Every back-office action, with who did it, to whom, why, and what changed. Never edited.
+CREATE TABLE IF NOT EXISTS admin_audit (
+    id              bigserial   PRIMARY KEY,
+    admin_id        uuid        REFERENCES users(id) ON DELETE SET NULL,
+    action          varchar(40) NOT NULL,
+    target_user_id  uuid        REFERENCES users(id) ON DELETE SET NULL,
+    reason          text        NOT NULL,
+    details         jsonb       NOT NULL DEFAULT '{}'::jsonb,
+    created_at      timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_admin_audit_target ON admin_audit (target_user_id, created_at);
+CREATE INDEX IF NOT EXISTS idx_admin_audit_time   ON admin_audit (created_at);
+
+-- IP addresses, only for security and fraud (account creation, login, coin purchases):
+-- the full address for at most 90 days, then only its country (src/security).
+CREATE TABLE IF NOT EXISTS security_events (
+    id              bigserial   PRIMARY KEY,
+    user_id         uuid        REFERENCES users(id) ON DELETE CASCADE,
+    kind            varchar(24) NOT NULL,
+    ip              inet,
+    country         char(2),
+    created_at      timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_security_events_user ON security_events (user_id, created_at);
+CREATE INDEX IF NOT EXISTS idx_security_events_ip   ON security_events (ip) WHERE ip IS NOT NULL;
+
+-- Password resets (src/account/passwordReset.js): a one-time link emailed to the player. Only the
+-- token's SHA-256 is stored; it works once, for 60 minutes. users.password_changed_at: when the
+-- password was last reset — logins from before then stop working.
+ALTER TABLE users ADD COLUMN IF NOT EXISTS password_changed_at timestamptz;
+CREATE TABLE IF NOT EXISTS password_resets (
+    id              uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id         uuid        NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    token_hash      char(64)    NOT NULL UNIQUE,
+    created_at      timestamptz NOT NULL DEFAULT now(),
+    expires_at      timestamptz NOT NULL,
+    used_at         timestamptz
+);
+CREATE INDEX IF NOT EXISTS idx_password_resets_user ON password_resets (user_id, created_at);
+
+-- Email consent history: every time a player says yes or no to news by email.
+CREATE TABLE IF NOT EXISTS email_consents (
+    id              bigserial   PRIMARY KEY,
+    user_id         uuid        NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    consent         boolean     NOT NULL,
+    source          varchar(16) NOT NULL,
+    created_at      timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_email_consents_user ON email_consents (user_id, created_at);
+
+-- Support messages: the Help Centre's contact form (/help#contact; src/support). One row per message,
+-- with a reference like S-1001 the player is shown. user_id: the player's account — set when they
+-- were logged in (guests too: linked_by 'login'), or matched on the email they typed (linked_by
+-- 'email'; not proof of identity). The screenshot (optional, at most 4 MB: PNG, JPEG, WebP or GIF)
+-- is kept in the row. ip: for spam and fraud only, blanked after 90 days like security_events (the
+-- country stays). Deleting an account deletes its messages. status: new → open → done, every change
+-- in admin_audit ('support-status').
+CREATE SEQUENCE IF NOT EXISTS support_message_seq START 1001;
+CREATE TABLE IF NOT EXISTS support_messages (
+    id              uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
+    ref             varchar(16) NOT NULL UNIQUE,
+    user_id         uuid        REFERENCES users(id) ON DELETE SET NULL,
+    linked_by       varchar(8)  CHECK (linked_by IN ('login', 'email')),
+    name            varchar(80) NOT NULL,
+    email           varchar(254) NOT NULL,
+    category        varchar(40) NOT NULL,
+    order_no        varchar(40),
+    message         text        NOT NULL,
+    screenshot      bytea,
+    screenshot_type varchar(16),
+    device          varchar(300),
+    status          varchar(8)  NOT NULL DEFAULT 'new' CHECK (status IN ('new', 'open', 'done')),
+    status_at       timestamptz,
+    notified_at     timestamptz,
+    ip              inet,
+    country         char(2),
+    created_at      timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_support_messages_status ON support_messages (status, created_at);
+CREATE INDEX IF NOT EXISTS idx_support_messages_user   ON support_messages (user_id, created_at);
+CREATE INDEX IF NOT EXISTS idx_support_messages_email  ON support_messages (lower(email));
+
+-- Replies to support messages from the back office: emailed to the player when email is on
+-- (emailed_at), and written to admin_audit ('support-reply').
+CREATE TABLE IF NOT EXISTS support_replies (
+    id              bigserial   PRIMARY KEY,
+    message_id      uuid        NOT NULL REFERENCES support_messages(id) ON DELETE CASCADE,
+    admin_id        uuid        REFERENCES users(id) ON DELETE SET NULL,
+    body            text        NOT NULL,
+    emailed_at      timestamptz,
+    created_at      timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_support_replies_message ON support_replies (message_id, created_at);
+
+-- Cookie consent on the website (/cookies): every choice a logged-in player makes in the cookie
+-- banner or its settings, as a record of the consent (time, banner version, each category).
+-- Necessary storage needs no consent and isn't asked. In "Download my data"; deleted with the account.
+CREATE TABLE IF NOT EXISTS cookie_consents (
+    id              bigserial   PRIMARY KEY,
+    user_id         uuid        NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    version         smallint    NOT NULL,
+    statistics      boolean     NOT NULL,
+    marketing       boolean     NOT NULL,
+    decided_at      timestamptz NOT NULL,
+    created_at      timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_cookie_consents_user ON cookie_consents (user_id, created_at);
+
+-- -----------------------------------------------------------------------------
+-- Seasons and the season pass (src/seasons; docs/04-game-rules.md "Seasons")
+-- -----------------------------------------------------------------------------
+-- A season (the Holiday Season 2026: 'holiday-2026') has its dates and its pass. Its tracks
+-- (tracks.season_key) can be raced only by pass holders (and in friend rooms a holder hosts)
+-- from starts_at until free_from; from free_from they are free for everyone. Before starts_at
+-- nobody races them. featured: the Track of the Day, { "YYYY-MM-DD": "track-slug" } by the
+-- season's own calendar day (time_zone); on it pass holders get featured_bonus × the race's
+-- coins on their full-pay races (coin ledger kind 'featured-bonus', never counted on the
+-- scoreboards). Everything follows the dates, so nothing is deployed on any day of a season.
+-- The pass is bought with real money only (never coins), between pass_sale_starts_at and
+-- pass_sale_ends_at, and is one row in payments (payments.season_key) like a coin pack.
+CREATE TABLE IF NOT EXISTS seasons (
+    key                  varchar(32)  PRIMARY KEY CHECK (key ~ '^[a-z0-9-]+$'),
+    name                 varchar(80)  NOT NULL,
+    starts_at            timestamptz  NOT NULL,
+    ends_at              timestamptz  NOT NULL,
+    free_from            timestamptz  NOT NULL,
+    time_zone            varchar(40)  NOT NULL DEFAULT 'Europe/Stockholm',
+    pass_product_id      varchar(32)  UNIQUE,
+    pass_name            varchar(80),
+    price_cents          integer      CHECK (price_cents > 0),
+    currency             char(3)      NOT NULL DEFAULT 'usd',
+    pass_sale_starts_at  timestamptz,
+    pass_sale_ends_at    timestamptz,
+    featured             jsonb        NOT NULL DEFAULT '{}'::jsonb CHECK (jsonb_typeof(featured) = 'object'),
+    featured_bonus       numeric(4,2) NOT NULL DEFAULT 0.5 CHECK (featured_bonus >= 0 AND featured_bonus <= 1),
+    created_at           timestamptz  NOT NULL DEFAULT now(),
+    CHECK (ends_at > starts_at AND free_from >= starts_at)
+);
+
+-- The season's scoreboard and badge: the top badge_top players by coins earned in the season (from
+-- starts_at to ends_at, ties to who got there first) get a badge (user_badges, badge_key = the
+-- season's key); badges_awarded_at once the season-end job has done it (src/seasons awardBadges).
+ALTER TABLE seasons ADD COLUMN IF NOT EXISTS badge_top integer NOT NULL DEFAULT 100 CHECK (badge_top >= 0);
+ALTER TABLE seasons ADD COLUMN IF NOT EXISTS badges_awarded_at timestamptz;
+
+-- A player's pass for a season: granted when its payment is paid (once), revoked by a full
+-- refund or a chargeback (revoked_at, with the reason; the audit log has the details). One live
+-- pass per player and season.
+CREATE TABLE IF NOT EXISTS season_passes (
+    id              uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id         uuid        NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    season_key      varchar(32) NOT NULL REFERENCES seasons(key),
+    payment_id      uuid        REFERENCES payments(id) ON DELETE SET NULL,
+    provider        varchar(16) NOT NULL,
+    granted_at      timestamptz NOT NULL DEFAULT now(),
+    revoked_at      timestamptz,
+    revoke_reason   text
+);
+CREATE UNIQUE INDEX IF NOT EXISTS uq_season_passes_live ON season_passes (user_id, season_key) WHERE revoked_at IS NULL;
+CREATE INDEX IF NOT EXISTS idx_season_passes_payment ON season_passes (payment_id);
+
+-- Badges on a player's profile (e.g. 'holiday-2026-top-100' with the final rank).
+CREATE TABLE IF NOT EXISTS user_badges (
+    user_id         uuid        NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    badge_key       varchar(48) NOT NULL,
+    rank            integer     CHECK (rank > 0),
+    awarded_at      timestamptz NOT NULL DEFAULT now(),
+    PRIMARY KEY (user_id, badge_key)
+);
+
+-- "Remind me when sales open" on the pass page (src/seasons/reminders.js): collected now, sent
+-- later (in the game, and by email through Brevo, once). A player's reminder (user_id) is always
+-- in the game, and by email to their account's address only if they ticked it (email_wanted); a
+-- visitor's (no account) is by email only, to the address they gave, with their consent (the exact
+-- text in consent_text). Double opt-in: an email reminder goes only to a confirmed address
+-- (confirmed_at, from the link in a confirmation email, sent at confirm_sent_at; a verified account
+-- email counts as confirmed). Unconfirmed 7 days after the confirmation email: a visitor's is
+-- deleted, a player's keeps only the in-game reminder. One live reminder per player or address and
+-- season. Deleted with the account, on cancelling (cancelled_at, then deleted by the hourly job)
+-- and 30 days after the sale opens.
+CREATE TABLE IF NOT EXISTS pass_reminders (
+    id              uuid         PRIMARY KEY DEFAULT gen_random_uuid(),
+    season_key      varchar(32)  NOT NULL REFERENCES seasons(key),
+    user_id         uuid         REFERENCES users(id) ON DELETE CASCADE,
+    email           varchar(254),
+    email_wanted    boolean      NOT NULL DEFAULT false,
+    consent_text    text         NOT NULL,
+    token           varchar(64)  NOT NULL UNIQUE,
+    created_at      timestamptz  NOT NULL DEFAULT now(),
+    confirm_sent_at timestamptz,
+    confirmed_at    timestamptz,
+    sent_at         timestamptz,
+    cancelled_at    timestamptz,
+    CHECK (user_id IS NOT NULL OR email IS NOT NULL)
+);
+CREATE UNIQUE INDEX IF NOT EXISTS uq_pass_reminders_player ON pass_reminders (season_key, user_id) WHERE user_id IS NOT NULL AND cancelled_at IS NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS uq_pass_reminders_email ON pass_reminders (season_key, lower(email)) WHERE user_id IS NULL AND cancelled_at IS NULL;
+-- The language of its emails ('en' or 'sv', from the browser when it was asked for), and when a
+-- player dismissed the in-game "on sale now" notice (src/seasons/reminderMail.js).
+ALTER TABLE pass_reminders ADD COLUMN IF NOT EXISTS lang varchar(5) NOT NULL DEFAULT 'en';
+ALTER TABLE pass_reminders ADD COLUMN IF NOT EXISTS notice_seen_at timestamptz;
+
+-- A season's tracks; NULL = an ordinary track, free for everyone.
+ALTER TABLE tracks ADD COLUMN IF NOT EXISTS season_key varchar(32) REFERENCES seasons(key);
+CREATE INDEX IF NOT EXISTS idx_tracks_season ON tracks (season_key) WHERE season_key IS NOT NULL;
+-- A season pass's payment (no coins: data update 2027-02-16-season-pass lets coins be 0 for one).
+ALTER TABLE payments ADD COLUMN IF NOT EXISTS season_key varchar(32) REFERENCES seasons(key);
+-- When a store purchase that is kept (a season pass) was acknowledged at Google (never consumed).
+ALTER TABLE payments ADD COLUMN IF NOT EXISTS store_acknowledged_at timestamptz;
+-- The Track of the Day bonus a pass holder got on a race (its own ledger line; kept out of
+-- coins_awarded, which the scoreboards and stats read).
+ALTER TABLE race_entries ADD COLUMN IF NOT EXISTS bonus_coins integer NOT NULL DEFAULT 0 CHECK (bonus_coins >= 0);
+
+-- -----------------------------------------------------------------------------
+-- Seed data (idempotent)
+-- -----------------------------------------------------------------------------
+-- The catalog is staged in temporary tables (dropped when the transaction ends)
+-- so that both the inserts below and the one-time data updates in
+-- docs/data_updates/ read the same values. Apply this file inside a single
+-- transaction: the backend does, and by hand use `psql -1 -f`.
+--
+-- Marbles are looks only now (skill belongs to the player); the stats below are
+-- kept only as a record. They were balanced by simulating thousands of 20-marble
+-- races per track: top speed matters most, then handling (more on rough tracks), then
+-- luck, then acceleration.
+CREATE TEMP TABLE seed_marbles ON COMMIT DROP AS
+SELECT * FROM (VALUES
+    -- Free starters, in every Marble Bag.
+    ('ruby',        'Ruby',        'Deep red and classic: the marble everyone remembers from their first race.', '#E0115F', NULL, 'solid', 'common', 50, 50, 50, 50, 0, true),
+    ('sapphire',    'Sapphire',    'Ocean blue with a cool, glassy shine.', '#0F52BA', NULL, 'solid', 'common', 52, 48, 46, 50, 0, true),
+    ('emerald',     'Emerald',     'Rich forest green that glows when the light catches it.', '#50C878', NULL, 'solid', 'common', 49, 48, 55, 48, 0, true),
+    ('topaz',       'Topaz',       'Warm honey gold, like late afternoon sun.', '#FFC87C', NULL, 'solid', 'common', 49, 60, 50, 49, 0, true),
+    -- Uncommon to legendary: rarer looks.
+    ('onyx',        'Onyx',        'Midnight black with silver swirls: the dark horse of any field.', '#353839', '#AAAAAA', 'swirl', 'uncommon', 50, 50, 49, 62, 250, false),
+    ('pearl',       'Pearl',       'Soft, creamy lustre that shimmers as it rolls.', '#F0EAD6', '#D4C4A8', 'pearl', 'uncommon', 51, 53, 52, 50, 250, false),
+    ('amethyst',    'Amethyst',    'Violet swirls over pale lavender: graceful in every bend.', '#9966CC', '#E6E6FA', 'swirl', 'uncommon', 49, 52, 56, 50, 300, false),
+    ('citrine',     'Citrine',     'Lemon yellow striped with blazing orange.', '#E4D00A', '#FF8C00', 'striped', 'rare', 50, 64, 51, 51, 600, false),
+    ('cobalt-comet','Cobalt Comet','Electric blue with a white streak, like a comet''s tail.', '#0047AB', '#FFFFFF', 'striped', 'rare', 52, 56, 49, 53, 600, false),
+    ('jade-dragon', 'Jade Dragon', 'Jade green with a gold cat''s eye: an ancient charm.', '#00A86B', '#FFD700', 'cat-eye', 'epic', 51, 55, 51, 55, 1200, false),
+    ('solar-flare', 'Solar Flare', 'A swirling galaxy of fire orange and gold.', '#FF4500', '#FFD700', 'galaxy', 'legendary', 51, 62, 51, 54, 2500, false),
+    ('nebula',      'Nebula',      'Deep space purple dusted with pink starlight.', '#2E0854', '#FF69B4', 'galaxy', 'legendary', 50, 57, 53, 57, 2500, false),
+    -- Commons sold in the shop.
+    ('garnet',      'Garnet',      'Dark wine red, quietly elegant.', '#733635', NULL, 'solid', 'common', 50, 54, 51, 48, 100, false),
+    ('aquamarine',  'Aquamarine',  'Pale sea green, cool and clear as a lagoon.', '#7FFFD4', NULL, 'solid', 'common', 49, 50, 54, 50, 100, false),
+    ('opal',        'Opal',        'Misty green swirled with blush pink; no two glances look the same.', '#A8C3BC', '#F8C8DC', 'swirl', 'common', 49, 48, 48, 62, 100, false),
+    ('quartz',      'Quartz',      'Crystal clear: you can see the track right through it.', '#F7F7F7', NULL, 'clear', 'common', 52, 52, 45, 49, 100, false),
+    ('obsidian',    'Obsidian',    'Volcanic black glass, born on Volcano Run.', '#0B1304', NULL, 'solid', 'common', 48, 44, 58, 50, 100, false),
+    ('amber',       'Amber',       'Warm, glowing amber, like sunlight through honey.', '#FFBF00', NULL, 'solid', 'common', 50, 50, 51, 51, 100, false),
+    ('coral',       'Coral',       'Bright reef coral, cheerful from start to finish.', '#FF7F50', NULL, 'solid', 'common', 49, 62, 49, 48, 100, false),
+    ('turquoise',   'Turquoise',   'A traveller''s lucky charm in vivid turquoise.', '#40E0D0', NULL, 'solid', 'common', 49, 48, 50, 60, 100, false),
+    ('peridot',     'Peridot',     'Zesty lime green with a fresh, bright sparkle.', '#B4C424', NULL, 'solid', 'common', 52, 47, 47, 49, 100, false),
+    ('moonstone',   'Moonstone',   'Pale moonlight with a soft blue sheen.', '#E3E4FA', '#B0C4DE', 'pearl', 'common', 50, 51, 50, 52, 100, false)
+) AS v(slug, name, description, color_primary, color_secondary, pattern, rarity,
+       top_speed, acceleration, handling, luck, price_coins, is_starter);
+
+-- Waypoints are {x, y, z}: x/y the ground plan and z the height above the finish
+-- line, in track units. Obstacles sit at a fraction (0..1) of the way along.
+-- Tracks added after launch come in their own data updates instead, e.g.
+-- San Francisco in docs/data_updates/2026-10-05-add-san-francisco.sql.
+CREATE TEMP TABLE seed_tracks ON COMMIT DROP AS
+SELECT * FROM (VALUES
+    ('meadow-loop', 'Meadow Loop', 'easy', 600, 6,
+     'A gentle, wide course through rolling grass. Small ramps, a soft sand patch and room to overtake: the place to learn.',
+     '[{"x":0,"y":0,"z":40},{"x":36,"y":10,"z":41},{"x":88,"y":24,"z":42},{"x":140,"y":30,"z":41},{"x":187,"y":19,"z":39},{"x":233,"y":-1,"z":35},{"x":280,"y":-10,"z":31},{"x":328,"y":-2,"z":28},{"x":376,"y":16,"z":25},{"x":420,"y":40,"z":25},{"x":462,"y":71,"z":26},{"x":499,"y":110,"z":27},{"x":520,"y":150,"z":28},{"x":518,"y":195,"z":29},{"x":499,"y":243,"z":27},{"x":470,"y":280,"z":25},{"x":430,"y":303,"z":21},{"x":380,"y":315,"z":17},{"x":330,"y":320,"z":13},{"x":283,"y":311,"z":12},{"x":235,"y":295,"z":11},{"x":190,"y":290,"z":12},{"x":145,"y":304,"z":14},{"x":103,"y":329,"z":15},{"x":70,"y":360,"z":15},{"x":48,"y":398,"z":14},{"x":36,"y":441,"z":12},{"x":40,"y":480,"z":9},{"x":65,"y":513,"z":5},{"x":105,"y":541,"z":2},{"x":150,"y":560,"z":0},{"x":203,"y":566,"z":0},{"x":260,"y":563,"z":0},{"x":300,"y":560,"z":0}]',
+     '[{"type":"ramp","at":0.12,"span":0.03,"intensity":0.35},{"type":"bumper","at":0.27,"span":0.04,"intensity":0.3},{"type":"sand","at":0.4,"span":0.05,"intensity":0.3},{"type":"ramp","at":0.55,"span":0.03,"intensity":0.4},{"type":"funnel","at":0.68,"span":0.04,"intensity":0.3},{"type":"bumper","at":0.8,"span":0.04,"intensity":0.35},{"type":"sand","at":0.9,"span":0.04,"intensity":0.25}]'),
+    ('canyon-drop', 'Canyon Drop', 'medium', 750, 5,
+     'Switchbacks down a red-rock canyon. Steep drops launch marbles off ramps into tight funnels and gravel.',
+     '[{"x":0,"y":0,"z":160},{"x":58,"y":8,"z":160},{"x":138,"y":20,"z":160},{"x":200,"y":40,"z":147},{"x":234,"y":74,"z":132},{"x":250,"y":115,"z":127},{"x":240,"y":150,"z":126},{"x":185,"y":169,"z":123},{"x":104,"y":180,"z":120},{"x":40,"y":200,"z":118},{"x":6,"y":237,"z":116},{"x":-10,"y":283,"z":115},{"x":0,"y":320,"z":113},{"x":55,"y":340,"z":111},{"x":136,"y":351,"z":108},{"x":200,"y":370,"z":106},{"x":234,"y":404,"z":104},{"x":250,"y":446,"z":89},{"x":240,"y":480,"z":77},{"x":185,"y":499,"z":68},{"x":104,"y":510,"z":64},{"x":40,"y":530,"z":60},{"x":6,"y":567,"z":58},{"x":-10,"y":613,"z":55},{"x":0,"y":650,"z":53},{"x":55,"y":669,"z":50},{"x":136,"y":681,"z":46},{"x":200,"y":700,"z":43},{"x":233,"y":737,"z":40},{"x":249,"y":782,"z":38},{"x":240,"y":820,"z":36},{"x":187,"y":842,"z":33},{"x":110,"y":858,"z":29},{"x":60,"y":880,"z":25},{"x":64,"y":920,"z":15},{"x":96,"y":967,"z":0},{"x":120,"y":1000,"z":0}]',
+     '[{"type":"ramp","at":0.08,"span":0.05,"intensity":0.6},{"type":"funnel","at":0.18,"span":0.04,"intensity":0.6},{"type":"sand","at":0.28,"span":0.05,"intensity":0.5},{"type":"bumper","at":0.38,"span":0.05,"intensity":0.5},{"type":"ramp","at":0.46,"span":0.05,"intensity":0.7},{"type":"spinner","at":0.58,"span":0.04,"intensity":0.6},{"type":"funnel","at":0.7,"span":0.04,"intensity":0.6},{"type":"sand","at":0.79,"span":0.05,"intensity":0.5},{"type":"bumper","at":0.87,"span":0.04,"intensity":0.5},{"type":"ramp","at":0.93,"span":0.05,"intensity":0.5}]'),
+    ('volcano-run', 'Volcano Run', 'extreme', 900, 4,
+     'From the crater rim, spiral down the burning slopes. Spinners, ash and lava-rock bumpers everywhere: only the lucky survive.',
+     '[{"x":510,"y":400,"z":260},{"x":505,"y":441,"z":254},{"x":489,"y":489,"z":247},{"x":450,"y":524,"z":240},{"x":400,"y":543,"z":233},{"x":342,"y":538,"z":225},{"x":287,"y":513,"z":217},{"x":246,"y":463,"z":209},{"x":224,"y":400,"z":200},{"x":232,"y":330,"z":191},{"x":264,"y":264,"z":182},{"x":325,"y":216,"z":172},{"x":400,"y":191,"z":162},{"x":483,"y":202,"z":152},{"x":559,"y":241,"z":142},{"x":614,"y":312,"z":131},{"x":641,"y":400,"z":120},{"x":628,"y":495,"z":109},{"x":582,"y":582,"z":98},{"x":500,"y":644,"z":87},{"x":400,"y":674,"z":76},{"x":292,"y":659,"z":65},{"x":194,"y":606,"z":54},{"x":126,"y":513,"z":43},{"x":93,"y":400,"z":33},{"x":111,"y":280,"z":23},{"x":171,"y":171,"z":14},{"x":290,"y":101,"z":5},{"x":400,"y":60,"z":0}]',
+     '[{"type":"spinner","at":0.06,"span":0.04,"intensity":0.8},{"type":"sand","at":0.15,"span":0.06,"intensity":0.6},{"type":"bumper","at":0.24,"span":0.05,"intensity":0.8},{"type":"ramp","at":0.33,"span":0.04,"intensity":0.8},{"type":"funnel","at":0.42,"span":0.04,"intensity":0.9},{"type":"sand","at":0.51,"span":0.06,"intensity":0.7},{"type":"spinner","at":0.6,"span":0.04,"intensity":0.9},{"type":"ramp","at":0.69,"span":0.04,"intensity":0.8},{"type":"bumper","at":0.77,"span":0.05,"intensity":0.8},{"type":"funnel","at":0.85,"span":0.04,"intensity":0.9},{"type":"spinner","at":0.93,"span":0.04,"intensity":0.7}]')
+) AS v(slug, name, difficulty, length_m, lane_count, description, waypoints, obstacles);
+
+-- Each row is inserted only if no existing row has the same slug OR the same
+-- name (case-insensitive). Existing rows are left exactly as they are.
+INSERT INTO marbles (slug, name, description, color_primary, color_secondary, pattern, rarity,
+                     top_speed, acceleration, handling, luck, price_coins, is_starter)
+SELECT s.slug, s.name, s.description, s.color_primary, s.color_secondary, s.pattern,
+       s.rarity::marble_rarity, s.top_speed, s.acceleration, s.handling, s.luck,
+       s.price_coins, s.is_starter
+FROM seed_marbles s
+WHERE NOT EXISTS (
+    SELECT 1 FROM marbles m WHERE m.slug = s.slug OR lower(m.name) = lower(s.name)
+)
+ON CONFLICT DO NOTHING;
+
+INSERT INTO tracks (slug, name, description, difficulty, length_m, lane_count, waypoints, obstacles)
+SELECT s.slug, s.name, s.description, s.difficulty::track_difficulty, s.length_m, s.lane_count,
+       s.waypoints::jsonb, s.obstacles::jsonb
+FROM seed_tracks s
+WHERE NOT EXISTS (
+    SELECT 1 FROM tracks t WHERE t.slug = s.slug OR lower(t.name) = lower(s.name)
+)
+ON CONFLICT DO NOTHING;
+
+-- ---------------------------------------------------------------------------
+-- Every player's own 4 starter marbles (Moses, 20 Oct 2026): their own rows in `marbles` (plain
+-- glass, one colour or two half and half: pattern 'solid' | 'half'), made by src/marbles/starters.js.
+-- owner_id: the player (catalogue marbles: NULL). starter_no 1-4. marble_code: the Marble ID
+-- ("ST" + the player's 5-character code + 1-4), also the certificate's code. Looks only.
+-- ---------------------------------------------------------------------------
+ALTER TABLE marbles ADD COLUMN IF NOT EXISTS owner_id uuid REFERENCES users(id) ON DELETE CASCADE;
+ALTER TABLE marbles ADD COLUMN IF NOT EXISTS starter_no smallint CHECK (starter_no BETWEEN 1 AND 4);
+ALTER TABLE marbles ADD COLUMN IF NOT EXISTS marble_code varchar(16);
+CREATE UNIQUE INDEX IF NOT EXISTS uq_marbles_marble_code ON marbles (marble_code) WHERE marble_code IS NOT NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS uq_marbles_owner_starter ON marbles (owner_id, starter_no) WHERE owner_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_marbles_owner ON marbles (owner_id) WHERE owner_id IS NOT NULL;
+
+-- ---------------------------------------------------------------------------
+-- Every player's own 4 starter marbles (20 Oct 2026; src/marbles/starters.js). A starter is the
+-- player's own `marbles` row: owner_id, starter_no 1–4 and its Marble ID (marble_code, e.g.
+-- STLVAS82; its certificate). Catalogue marbles have owner_id NULL. Looks only: a race never reads a
+-- marble's stats. pattern 'half': two colours, half and half.
+-- ---------------------------------------------------------------------------
+ALTER TABLE marbles ADD COLUMN IF NOT EXISTS owner_id    uuid REFERENCES users(id) ON DELETE CASCADE;
+ALTER TABLE marbles ADD COLUMN IF NOT EXISTS starter_no  smallint CHECK (starter_no BETWEEN 1 AND 4);
+ALTER TABLE marbles ADD COLUMN IF NOT EXISTS marble_code varchar(16);
+CREATE UNIQUE INDEX IF NOT EXISTS uq_marbles_marble_code ON marbles (marble_code) WHERE marble_code IS NOT NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS uq_marbles_owner_starter ON marbles (owner_id, starter_no) WHERE owner_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_marbles_catalogue ON marbles (is_active) WHERE owner_id IS NULL;
+
+-- ---------------------------------------------------------------------------
+-- Sign-up with birth year and month (20 Oct 2026): the age group is worked out from them (under 13:
+-- no account). Stored as the first day of the month, so the age group stays right as players grow up.
+-- Email confirmation (double opt-in, sent once email is set up: src/account/emailConfirm.js): the
+-- address is confirmed when its link is opened (email_verified_at). Only the link's SHA-256 is stored.
+-- ---------------------------------------------------------------------------
+ALTER TABLE users ADD COLUMN IF NOT EXISTS birth_month       date;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verified_at timestamptz;
+
+CREATE TABLE IF NOT EXISTS email_confirmations (
+    id          bigserial   PRIMARY KEY,
+    user_id     uuid        NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    email       varchar(254) NOT NULL,
+    token_hash  char(64)    NOT NULL UNIQUE,
+    lang        varchar(5)  NOT NULL DEFAULT 'en',
+    created_at  timestamptz NOT NULL DEFAULT now(),
+    expires_at  timestamptz NOT NULL,
+    used_at     timestamptz
+);
+CREATE INDEX IF NOT EXISTS idx_email_confirmations_user ON email_confirmations (user_id, created_at);
+
+-- ---------------------------------------------------------------------------
+-- Guest accounts are deleted after 90 days without a visit (21 Oct 2026, src/account/retention.js):
+-- last_seen_at is set when an account is made and on a visit at most once a day (GET /auth/me).
+-- Accounts from before start counting from when this column was added.
+-- ---------------------------------------------------------------------------
+ALTER TABLE users ADD COLUMN IF NOT EXISTS last_seen_at timestamptz DEFAULT now();
+CREATE INDEX IF NOT EXISTS idx_users_guest_seen ON users (last_seen_at) WHERE is_guest AND deleted_at IS NULL;
+
+-- ---------------------------------------------------------------------------
+-- The online withdrawal function and purchase emails (21 Oct 2026, src/payments/withdrawal.js and
+-- src/payments/emails.js): withdrawn_at is when the player withdrew from the purchase (a season pass
+-- bought in its pre-sale, before it activates); confirmation_sent_at and withdrawal_ack_sent_at are
+-- when the purchase confirmation and the withdrawal acknowledgement were emailed (once email is on).
+-- ---------------------------------------------------------------------------
+ALTER TABLE payments ADD COLUMN IF NOT EXISTS withdrawn_at           timestamptz;
+ALTER TABLE payments ADD COLUMN IF NOT EXISTS confirmation_sent_at   timestamptz;
+ALTER TABLE payments ADD COLUMN IF NOT EXISTS withdrawal_ack_sent_at timestamptz;
+
+-- ---------------------------------------------------------------------------
+-- Gift codes (21 Oct 2026, src/giftCodes): made in the back office for creators, campaigns and
+-- giveaways; each is worth coins (kind 'coins', ledger kind 'gift-code': bought coins, never on the
+-- scoreboards) or a season's pass (kind 'pass': a season_passes row with provider 'gift-code').
+-- code: normalised (upper case, no spaces or dashes). max_uses 1 = single-use. tag: the creator or
+-- campaign. batch_id: codes made together. A player redeems a code once (gift_code_redemptions).
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS gift_codes (
+    id          uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
+    code        varchar(24) NOT NULL UNIQUE CHECK (code ~ '^[A-Z0-9]{4,24}$'),
+    kind        varchar(8)  NOT NULL CHECK (kind IN ('coins', 'pass')),
+    coins       integer     CHECK (coins > 0),
+    season_key  varchar(32) REFERENCES seasons(key),
+    max_uses    integer     NOT NULL DEFAULT 1 CHECK (max_uses > 0),
+    uses        integer     NOT NULL DEFAULT 0 CHECK (uses >= 0),
+    expires_at  timestamptz NOT NULL,
+    tag         varchar(64) NOT NULL,
+    note        text,
+    batch_id    uuid,
+    created_by  uuid        REFERENCES users(id) ON DELETE SET NULL,
+    created_at  timestamptz NOT NULL DEFAULT now(),
+    disabled_at timestamptz,
+    disabled_by uuid        REFERENCES users(id) ON DELETE SET NULL,
+    CHECK (uses <= max_uses),
+    CHECK ((kind = 'coins' AND coins IS NOT NULL AND season_key IS NULL) OR (kind = 'pass' AND season_key IS NOT NULL AND coins IS NULL))
+);
+CREATE INDEX IF NOT EXISTS idx_gift_codes_tag ON gift_codes (tag, created_at);
+CREATE INDEX IF NOT EXISTS idx_gift_codes_batch ON gift_codes (batch_id) WHERE batch_id IS NOT NULL;
+
+CREATE TABLE IF NOT EXISTS gift_code_redemptions (
+    id              bigserial   PRIMARY KEY,
+    code_id         uuid        NOT NULL REFERENCES gift_codes(id),
+    user_id         uuid        NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    coins           integer,
+    season_pass_id  uuid        REFERENCES season_passes(id) ON DELETE SET NULL,
+    redeemed_at     timestamptz NOT NULL DEFAULT now(),
+    UNIQUE (code_id, user_id)
+);
+CREATE INDEX IF NOT EXISTS idx_gift_code_redemptions_user ON gift_code_redemptions (user_id, redeemed_at);
+
+-- ---------------------------------------------------------------------------
+-- Push notifications in the apps (21 Oct 2026, src/push): built switched off (the apps don't ask
+-- until client/src/shared/push.json is on; the server sends nothing until PUSH_SENDING=on and the
+-- Firebase / Apple keys are set).
+--   push_devices: a phone's push token (Firebase Cloud Messaging on Android, APNs on iPhone) for an
+--     account; app_id tells the iPhone test app (com.marblespins.app.dev, APNs sandbox) from the store one.
+--   push_preferences: the player's switches (Settings → Notifications). Season news (the pass on
+--     sale, the season starting) is marketing: off until the player turns it on, and never for guests
+--     or under-13s. Friend room invites: on. The daily goal reminder: off.
+--   push_sends: what was sent to whom, once per message key (e.g. 'pass-sale:holiday-2026').
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS push_devices (
+    id            uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id       uuid        NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    platform      varchar(8)  NOT NULL CHECK (platform IN ('ios', 'android')),
+    token         text        NOT NULL UNIQUE,
+    app_id        varchar(64),
+    app_version   varchar(16),
+    created_at    timestamptz NOT NULL DEFAULT now(),
+    last_seen_at  timestamptz NOT NULL DEFAULT now(),
+    disabled_at   timestamptz,
+    disabled_why  varchar(64)
+);
+CREATE INDEX IF NOT EXISTS idx_push_devices_user ON push_devices (user_id) WHERE disabled_at IS NULL;
+
+CREATE TABLE IF NOT EXISTS push_preferences (
+    user_id       uuid        PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+    room_invites  boolean     NOT NULL DEFAULT true,
+    season_news   boolean     NOT NULL DEFAULT false,
+    daily_goal    boolean     NOT NULL DEFAULT false,
+    season_news_at timestamptz,
+    updated_at    timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS push_sends (
+    id            bigserial   PRIMARY KEY,
+    user_id       uuid        NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    kind          varchar(24) NOT NULL,
+    key           varchar(96) NOT NULL,
+    devices       smallint    NOT NULL DEFAULT 0,
+    delivered     smallint    NOT NULL DEFAULT 0,
+    sent_at       timestamptz NOT NULL DEFAULT now(),
+    UNIQUE (user_id, key)
+);
+CREATE INDEX IF NOT EXISTS idx_push_sends_kind ON push_sends (kind, sent_at);
+
+-- ---------------------------------------------------------------------------
+-- Name reports (22 Oct 2026, src/names): a player reports another player's name as offensive, from
+-- a scoreboard, race results or a room; the back office renames the player (resolution 'renamed')
+-- or dismisses the reports ('dismissed'). One open report per reporter and player.
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS name_reports (
+    id                bigserial   PRIMARY KEY,
+    reported_user_id  uuid        NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    reporter_id       uuid        REFERENCES users(id) ON DELETE SET NULL,
+    place             varchar(16) NOT NULL DEFAULT 'scoreboard',
+    name_shown        varchar(64),
+    created_at        timestamptz NOT NULL DEFAULT now(),
+    resolved_at       timestamptz,
+    resolved_by       uuid        REFERENCES users(id) ON DELETE SET NULL,
+    resolution        varchar(16) CHECK (resolution IN ('renamed', 'dismissed'))
+);
+CREATE INDEX IF NOT EXISTS idx_name_reports_open ON name_reports (reported_user_id) WHERE resolved_at IS NULL;
+
+-- ---------------------------------------------------------------------------
+-- The country a player races for (22 Oct 2026, src/country): chosen by the player (optional; it
+-- needn't be where they live), never taken from the IP address, which is kept for security only.
+-- users.country: ISO 3166-1 two letters, or NULL. users.country_chosen_at: when the player last
+-- chose (the first choice or a change), which starts a 24-hour window for corrections and the 90
+-- days until the next change. user_country_history: every choice, for "which country did they have
+-- on a date" (national leagues qualify by the country at the start of the month).
+-- race_entries.country: the player's country when they joined the race (BEFORE INSERT trigger),
+-- for the country records per track; NULL for computer players, guests and players without one.
+-- ---------------------------------------------------------------------------
+ALTER TABLE users ADD COLUMN IF NOT EXISTS country           char(2) CHECK (country ~ '^[A-Z]{2}$');
+ALTER TABLE users ADD COLUMN IF NOT EXISTS country_chosen_at timestamptz;
+CREATE TABLE IF NOT EXISTS user_country_history (
+    id          bigserial   PRIMARY KEY,
+    user_id     uuid        NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    country     char(2)     CHECK (country ~ '^[A-Z]{2}$'),
+    kind        varchar(12) NOT NULL CHECK (kind IN ('first', 'correction', 'change', 'removed')),
+    created_at  timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_user_country_history_user ON user_country_history (user_id, created_at);
+ALTER TABLE race_entries ADD COLUMN IF NOT EXISTS country char(2) CHECK (country ~ '^[A-Z]{2}$');
+CREATE INDEX IF NOT EXISTS idx_race_entries_country ON race_entries (country, race_id) WHERE country IS NOT NULL;
+CREATE OR REPLACE FUNCTION race_entry_country() RETURNS trigger AS $$
+BEGIN
+    IF NEW.user_id IS NOT NULL AND NEW.country IS NULL THEN
+        SELECT CASE WHEN is_guest OR deleted_at IS NOT NULL THEN NULL ELSE country END INTO NEW.country
+          FROM users WHERE id = NEW.user_id;
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+DROP TRIGGER IF EXISTS trg_race_entries_country ON race_entries;
+CREATE TRIGGER trg_race_entries_country BEFORE INSERT ON race_entries
+    FOR EACH ROW EXECUTE FUNCTION race_entry_country();
+
+-- Chosen names (users.display_name; 25 Oct 2026): a guest can choose one and keeps it when saving the
+-- account; no one may choose another player's player name or chosen name (case ignored: src/names).
+CREATE INDEX IF NOT EXISTS users_display_name_lower ON users (lower(display_name)) WHERE display_name IS NOT NULL;
+
+-- Public rooms and Quick race (25 Oct 2026): a room is private (link or code only, as before) or public
+-- (listed under "Join a race"); a quick race is a public room with no host, on a random track, that
+-- starts by itself 15 s after it opens and closes after its race. `removed`: players the host took out
+-- (they can't join that room again).
+ALTER TABLE rooms ADD COLUMN IF NOT EXISTS is_public boolean NOT NULL DEFAULT false;
+ALTER TABLE rooms ADD COLUMN IF NOT EXISTS kind varchar(10) NOT NULL DEFAULT 'friends' CHECK (kind IN ('friends', 'quick'));
+ALTER TABLE rooms ADD COLUMN IF NOT EXISTS removed uuid[] NOT NULL DEFAULT '{}';
+CREATE INDEX IF NOT EXISTS idx_rooms_public ON rooms (kind, created_at) WHERE is_public AND status = 'open';
+
+-- ---------------------------------------------------------------------------
+-- Reported names hidden by themselves (25 Oct 2026, src/names): when the name a player shows gets
+-- open reports from 3 different players on 3 different addresses, it is hidden at once until the
+-- back office has looked: users.display_name becomes NULL for a guest (guest_<number> shows) or
+-- Player_<number> for a saved account, users.name_hidden_at is set and users.name_hidden_name keeps
+-- the hidden name (for the back office, and so it can't be chosen again). The player is told and
+-- chooses a new name (that clears name_hidden_at); the back office restores the name (the reports
+-- dismissed: it takes 3 new reports to hide it again), keeps it hidden or renames the account.
+-- name_reports.reporter_ip_hash: a keyed hash of the reporter's address (never the address), so one
+-- person with several accounts on one connection counts once.
+-- ---------------------------------------------------------------------------
+ALTER TABLE users ADD COLUMN IF NOT EXISTS name_hidden_at   timestamptz;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS name_hidden_name varchar(64);
+ALTER TABLE name_reports ADD COLUMN IF NOT EXISTS reporter_ip_hash varchar(64);
+CREATE INDEX IF NOT EXISTS idx_name_reports_reporter ON name_reports (reporter_id, created_at);
+CREATE INDEX IF NOT EXISTS idx_users_name_hidden ON users (name_hidden_at) WHERE name_hidden_at IS NOT NULL;
+
+-- ---------------------------------------------------------------------------
+-- Leagues (Leagues v1, part 1, 27 Oct 2026; src/leagues, behind LEAGUES=off|admins|on). A league is a
+-- player's own competition: its tracks (5 for a League; 10 for a Pro League, part 2), 1-7 days, an
+-- attempt cap (NULL: unlimited), the best time per track, the total ranked once every track is done.
+-- leagues.kind: 'league' (free, for fun) or 'pro' (part 2: paid by the creator, the league marble,
+-- feeds the Major League: feeds_major). league_members.final_*: the scoreboard frozen when it ends.
+-- league_runs: one per league race a member starts (a try), its time once the race is finished.
+-- league_results: written once per member when a Pro League (or its League Night) ends: never for a
+-- League, solo, Quick race or room races (part 2; empty until then). races.league_id: a league race.
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS leagues (
+    id           uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
+    code         varchar(8)  NOT NULL UNIQUE,
+    kind         varchar(10) NOT NULL DEFAULT 'league' CHECK (kind IN ('league', 'pro')),
+    name         varchar(60) NOT NULL,
+    created_by   uuid        NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    track_ids    uuid[]      NOT NULL,
+    attempt_cap  integer     CHECK (attempt_cap IN (3, 5, 10)),
+    starts_at    timestamptz NOT NULL DEFAULT now(),
+    ends_at      timestamptz NOT NULL,
+    status       varchar(10) NOT NULL DEFAULT 'open' CHECK (status IN ('open', 'ended')),
+    feeds_major  boolean     NOT NULL DEFAULT false,
+    again_of     uuid        REFERENCES leagues(id) ON DELETE SET NULL,
+    created_at   timestamptz NOT NULL DEFAULT now(),
+    ended_at     timestamptz
+);
+CREATE INDEX IF NOT EXISTS idx_leagues_creator_open ON leagues (created_by) WHERE status = 'open';
+CREATE INDEX IF NOT EXISTS idx_leagues_open_ends ON leagues (ends_at) WHERE status = 'open';
+
+CREATE TABLE IF NOT EXISTS league_members (
+    league_id       uuid        NOT NULL REFERENCES leagues(id) ON DELETE CASCADE,
+    user_id         uuid        NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    joined_at       timestamptz NOT NULL DEFAULT now(),
+    removed_at      timestamptz,
+    final_place     integer,
+    final_total_ms  integer,
+    PRIMARY KEY (league_id, user_id)
+);
+CREATE INDEX IF NOT EXISTS idx_league_members_user ON league_members (user_id) WHERE removed_at IS NULL;
+
+CREATE TABLE IF NOT EXISTS league_runs (
+    id           uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
+    league_id    uuid        NOT NULL REFERENCES leagues(id) ON DELETE CASCADE,
+    user_id      uuid        NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    track_id     uuid        NOT NULL REFERENCES tracks(id) ON DELETE CASCADE,
+    race_id      uuid        UNIQUE REFERENCES races(id) ON DELETE SET NULL,
+    time_ms      integer     CHECK (time_ms > 0),
+    created_at   timestamptz NOT NULL DEFAULT now(),
+    finished_at  timestamptz
+);
+CREATE INDEX IF NOT EXISTS idx_league_runs_member ON league_runs (league_id, user_id, track_id);
+
+CREATE TABLE IF NOT EXISTS league_results (
+    id               uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
+    league_id        uuid        NOT NULL REFERENCES leagues(id) ON DELETE CASCADE,
+    user_id          uuid        NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    kind             varchar(10) NOT NULL CHECK (kind IN ('challenge', 'night')),
+    night_id         uuid,
+    month            date        NOT NULL,
+    place            integer     NOT NULL,
+    ranked_humans    integer     NOT NULL,
+    points           integer,
+    tracks_finished  integer     NOT NULL DEFAULT 0,
+    counted_runs     integer     NOT NULL DEFAULT 0,
+    racing_days      integer     NOT NULL DEFAULT 0,
+    country          char(2),
+    created_at       timestamptz NOT NULL DEFAULT now()
+);
+CREATE UNIQUE INDEX IF NOT EXISTS uq_league_results ON league_results (league_id, user_id, kind, COALESCE(night_id, '00000000-0000-0000-0000-000000000000'::uuid));
+
+ALTER TABLE races ADD COLUMN IF NOT EXISTS league_id uuid REFERENCES leagues(id) ON DELETE SET NULL;
+CREATE INDEX IF NOT EXISTS idx_races_league ON races (league_id) WHERE league_id IS NOT NULL;
+
+-- ---------------------------------------------------------------------------
+-- League Night (Leagues v1 part 1, slim; 27 Oct 2026): the league racing live together. The creator sets
+-- a date, a time and 3 to 5 races; 15 minutes before, a league room opens (a friend room only the
+-- league's players can join, rooms.league_night_id), and the races run one after another on the league's
+-- tracks in order, each starting by itself. Points for each place among the league's players
+-- (10-8-6-5-4-3-2-1; computer players score nothing) go on the night's own scoreboard, worked out from
+-- the races' results (races.league_night_id, league_night_race). Never a league race: no tries used.
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS league_nights (
+    id          uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
+    league_id   uuid        NOT NULL REFERENCES leagues(id) ON DELETE CASCADE,
+    starts_at   timestamptz NOT NULL,
+    races       smallint    NOT NULL CHECK (races BETWEEN 3 AND 5),
+    status      varchar(10) NOT NULL DEFAULT 'scheduled' CHECK (status IN ('scheduled', 'open', 'done', 'cancelled')),
+    room_id     uuid        REFERENCES rooms(id) ON DELETE SET NULL,
+    created_at  timestamptz NOT NULL DEFAULT now(),
+    opened_at   timestamptz,
+    ended_at    timestamptz
+);
+-- (One League Night planned or on at a time per league.)
+CREATE UNIQUE INDEX IF NOT EXISTS uq_league_nights_live ON league_nights (league_id) WHERE status IN ('scheduled', 'open');
+CREATE INDEX IF NOT EXISTS idx_league_nights_due ON league_nights (starts_at) WHERE status = 'scheduled';
+
+ALTER TABLE rooms ADD COLUMN IF NOT EXISTS league_night_id uuid REFERENCES league_nights(id) ON DELETE SET NULL;
+ALTER TABLE races ADD COLUMN IF NOT EXISTS league_night_id uuid REFERENCES league_nights(id) ON DELETE SET NULL;
+ALTER TABLE races ADD COLUMN IF NOT EXISTS league_night_race smallint;
+CREATE INDEX IF NOT EXISTS idx_races_league_night ON races (league_night_id) WHERE league_night_id IS NOT NULL;
+
+-- ---------------------------------------------------------------------------
+-- Race readiness (28 Oct 2026): each screen's report at GO, once per race: whether the track (with
+-- its scenery), the marbles and the sound were all loaded, what was missing and how long after GO it
+-- caught up (late_ms). For seeing the pattern (src/readiness, GET /api/admin/readiness). No IP address;
+-- device is the user agent (cut to 200). Deleted after 30 days.
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS race_readiness (
+    id          bigserial   PRIMARY KEY,
+    race_id     uuid        NOT NULL REFERENCES races(id) ON DELETE CASCADE,
+    user_id     uuid        REFERENCES users(id) ON DELETE SET NULL,
+    platform    varchar(10) NOT NULL CHECK (platform IN ('web', 'ios', 'android')),
+    kind        varchar(10) NOT NULL CHECK (kind IN ('solo', 'room')),
+    device      varchar(200),
+    ready       boolean     NOT NULL,
+    missing     text[]      NOT NULL DEFAULT '{}',
+    late_ms     integer     NOT NULL DEFAULT 0,
+    details     jsonb       NOT NULL DEFAULT '{}',
+    created_at  timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_race_readiness_created ON race_readiness (created_at);
+CREATE INDEX IF NOT EXISTS idx_race_readiness_race ON race_readiness (race_id);
+
+-- Staff (Moses, 2 Nov 2026): accounts of the team and its test accounts (admins are staff
+-- automatically). They play normally; the back office Dashboard leaves them out of every number.
+ALTER TABLE users ADD COLUMN IF NOT EXISTS is_staff boolean NOT NULL DEFAULT false;
+
+-- A new player's first steps (src/firstSteps, Moses, 2 Nov 2026), once each per player, for the
+-- Dashboard's funnel: 'tap' (tapped Play, Quick race, Race solo or joined a room; the guest is made
+-- then; source: quick | solo | friends | room) and 'go' (saw GO in their first race). Joining and
+-- finishing come from race_entries. No personal data; goes with the account.
+CREATE TABLE IF NOT EXISTS first_steps (
+    user_id     uuid        NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    step        varchar(8)  NOT NULL CHECK (step IN ('tap', 'go')),
+    source      varchar(8)  CHECK (source IN ('quick', 'solo', 'friends', 'room')),
+    created_at  timestamptz NOT NULL DEFAULT now(),
+    PRIMARY KEY (user_id, step)
+);
+CREATE INDEX IF NOT EXISTS idx_first_steps_created ON first_steps (step, created_at);
+
+-- Records start again on a new layout (Moses, 6 Nov 2026; src/game/recordsSince.js): when a track's
+-- layout changes, the data update that puts it in sets this to that moment, and the track record, the
+-- country records and the players' personal bests on the track count only races finished since.
+-- NULL (every track until then): all its races count. Past results and replays are never touched.
+ALTER TABLE tracks ADD COLUMN IF NOT EXISTS records_since timestamptz;
+
+-- Where new guests stop before their first race (Moses, 9 Nov 2026; src/firstSteps): the kind of
+-- browser at the tap (a short class such as 'tiktok/phone', 'safari/phone', 'app/phone', 'bot';
+-- never the User-Agent, the address or anything else about the player) ...
+ALTER TABLE first_steps ADD COLUMN IF NOT EXISTS browser varchar(24);
+-- ... and, once each, before the first race reached GO: 'error' (the first call that failed, as
+-- "<what>:<status>[:<code>]") and 'left' (the page closed: where, start-line / quick-wait / room /
+-- loading / other, and the seconds since the tap). No IPs or personal data.
+CREATE TABLE IF NOT EXISTS first_step_events (
+    user_id     uuid        NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    kind        varchar(8)  NOT NULL CHECK (kind IN ('error', 'left')),
+    detail      varchar(64) NOT NULL,
+    seconds     integer     CHECK (seconds IS NULL OR seconds >= 0),
+    created_at  timestamptz NOT NULL DEFAULT now(),
+    PRIMARY KEY (user_id, kind)
+);
+CREATE INDEX IF NOT EXISTS idx_first_step_events_created ON first_step_events (kind, created_at);
+
+-- Wildness (Moses, 11 Nov 2026; scripts/wildness.js, docs/04-game-rules.md "Wildness"): how chaotic a
+-- track's races are, from the track report's races and its big features. Luck, not skill. The score
+-- 0-100 and its level: easy 0-32, wild 33-46, extreme 47+. Set by data update; NULL until worked out.
+-- (tracks.difficulty stays, no longer shown: it was 'extreme' on nearly every track.)
+ALTER TABLE tracks ADD COLUMN IF NOT EXISTS wildness_score smallint CHECK (wildness_score BETWEEN 0 AND 100);
+ALTER TABLE tracks ADD COLUMN IF NOT EXISTS wildness varchar(8) CHECK (wildness IN ('easy', 'wild', 'extreme'));
+
+-- Track packs (Moses, 11 Nov 2026; src/packs): every series a free set and a pack with the rest. One
+-- pack per series (Pinball and Arcade separate; Blocks as Blocks 1 and Blocks 2). Season tracks are in
+-- no pack. Locking is behind the TRACK_PACKS switch (off: nothing is locked). No prices or store
+-- products yet: product_id stays NULL until a pack is sold.
+CREATE TABLE IF NOT EXISTS track_packs (
+    key             varchar(32) PRIMARY KEY,
+    name            varchar(48) NOT NULL,
+    series          varchar(32) NOT NULL,
+    sort            smallint    NOT NULL DEFAULT 0,
+    product_id      varchar(64),
+    created_at      timestamptz NOT NULL DEFAULT now()
+);
+ALTER TABLE tracks ADD COLUMN IF NOT EXISTS pack_key varchar(32) REFERENCES track_packs(key);
+-- Free tracks race for everyone always; a track with a pack and is_free false is the pack's.
+ALTER TABLE tracks ADD COLUMN IF NOT EXISTS is_free boolean NOT NULL DEFAULT true;
+CREATE INDEX IF NOT EXISTS idx_tracks_pack ON tracks (pack_key);
+
+-- Who owns a pack (a host who owns one opens its tracks to everyone in their friend room or league,
+-- as with the season pass). Nothing grants a pack yet.
+CREATE TABLE IF NOT EXISTS pack_owners (
+    id              uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id         uuid        NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    pack_key        varchar(32) NOT NULL REFERENCES track_packs(key),
+    payment_id      uuid        REFERENCES payments(id) ON DELETE SET NULL,
+    provider        varchar(16) NOT NULL,
+    granted_at      timestamptz NOT NULL DEFAULT now(),
+    revoked_at      timestamptz,
+    revoke_reason   text
+);
+CREATE UNIQUE INDEX IF NOT EXISTS uq_pack_owners_live ON pack_owners (user_id, pack_key) WHERE revoked_at IS NULL;
+
+-- Track packs for sale (Moses, 12 Nov 2026; src/packs/sale.js, the price in
+-- client/src/shared/payments/trackPacks.json). A pack's payment: no coins given (coins 0), its pack, and
+-- the coins the player paid towards it (at most 25% of the price; the rest real money). Refunded in
+-- full: the pack goes and the coins come back; a chargeback takes the pack, the coins stay spent.
+ALTER TABLE payments ADD COLUMN IF NOT EXISTS pack_key varchar(32) REFERENCES track_packs(key);
+ALTER TABLE payments ADD COLUMN IF NOT EXISTS coins_spent integer NOT NULL DEFAULT 0 CHECK (coins_spent >= 0);
+-- The apps: coins set aside for a pack before the store's purchase sheet opens (the store charges the
+-- rest), taken by the purchase when the server has checked it, or given back (the sheet closed, or
+-- unused after 2 hours: src/packs/sale.js releaseStaleHolds, hourly).
+CREATE TABLE IF NOT EXISTS pack_coin_holds (
+    id              uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id         uuid        NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    pack_key        varchar(32) NOT NULL REFERENCES track_packs(key),
+    coins           integer     NOT NULL CHECK (coins > 0),
+    created_at      timestamptz NOT NULL DEFAULT now(),
+    payment_id      uuid        REFERENCES payments(id) ON DELETE SET NULL,
+    used_at         timestamptz,
+    released_at     timestamptz
+);
+CREATE INDEX IF NOT EXISTS idx_pack_coin_holds_open ON pack_coin_holds (user_id, pack_key, created_at) WHERE used_at IS NULL AND released_at IS NULL;
+
+-- Where a new player came from (Moses, 13 Nov 2026; src/origins): the utm_source / utm_medium / utm_campaign of
+-- the address they arrived on, or, if none, the referring site's domain only. Kept once per account, the first
+-- time (first touch, never overwritten); no cookie is used. Gone with the account.
+CREATE TABLE IF NOT EXISTS player_origins (
+    user_id          uuid        PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+    utm_source       varchar(64),
+    utm_medium       varchar(64),
+    utm_campaign     varchar(64),
+    referrer_domain  varchar(64),
+    created_at       timestamptz NOT NULL DEFAULT now(),
+    CHECK (utm_source IS NOT NULL OR utm_medium IS NOT NULL OR utm_campaign IS NOT NULL OR referrer_domain IS NOT NULL)
+);
+
+-- Billing (Moses, 16 Nov 2026, CRM phase 1; src/billing): a receipt (K-2026-00001…) for every paid Stripe
+-- purchase and a credit note (KR-2026-00001…) for every refund or chargeback of one, each numbered in an
+-- unbroken series per year (billing_counters, taken in the same transaction as the payment or the refund).
+-- A document never changes once issued: what it shows (the seller's details, the buyer, the lines, VAT) is
+-- frozen in `snapshot`. The amounts that reached the Stripe account in SEK, and Stripe's fee, are filled in
+-- from Stripe's balance transaction a few minutes later (book_*). Store purchases (Apple, Google Play) get
+-- none: the stores sell those and issue the receipt. Kept 7 years (Bokföringslagen): never deleted.
+CREATE TABLE IF NOT EXISTS billing_counters (
+    series          varchar(8)  NOT NULL,
+    year            integer     NOT NULL,
+    last_no         integer     NOT NULL DEFAULT 0,
+    PRIMARY KEY (series, year)
+);
+CREATE TABLE IF NOT EXISTS billing_documents (
+    id                  uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
+    number              varchar(20) NOT NULL UNIQUE,
+    kind                varchar(8)  NOT NULL CHECK (kind IN ('receipt', 'credit')),
+    payment_id          uuid        NOT NULL REFERENCES payments(id) ON DELETE RESTRICT,
+    refund_id           varchar(255) REFERENCES payment_refunds(id) ON DELETE RESTRICT,
+    credits_document_id uuid        REFERENCES billing_documents(id) ON DELETE RESTRICT,
+    user_id             uuid        REFERENCES users(id) ON DELETE SET NULL,
+    issued_at           timestamptz NOT NULL,
+    currency            char(3)     NOT NULL,
+    gross_cents         integer     NOT NULL,
+    net_cents           integer     NOT NULL,
+    vat_cents           integer     NOT NULL,
+    vat_rate            numeric(5,2),
+    vat_country         char(2),
+    book_currency       char(3),
+    book_gross_cents    integer,
+    book_fee_cents      integer,
+    book_filled_at      timestamptz,
+    snapshot            jsonb       NOT NULL,
+    emailed_at          timestamptz,
+    created_at          timestamptz NOT NULL DEFAULT now(),
+    CHECK ((kind = 'receipt' AND refund_id IS NULL) OR (kind = 'credit' AND refund_id IS NOT NULL))
+);
+CREATE UNIQUE INDEX IF NOT EXISTS uq_billing_receipt_per_payment ON billing_documents (payment_id) WHERE kind = 'receipt';
+CREATE UNIQUE INDEX IF NOT EXISTS uq_billing_credit_per_refund ON billing_documents (refund_id) WHERE kind = 'credit';
+CREATE INDEX IF NOT EXISTS idx_billing_documents_issued ON billing_documents (issued_at);
+CREATE INDEX IF NOT EXISTS idx_billing_documents_user ON billing_documents (user_id, issued_at DESC);
+CREATE INDEX IF NOT EXISTS idx_billing_documents_book ON billing_documents (created_at) WHERE book_filled_at IS NULL;
+-- The VAT country and rate Stripe Tax used for a website purchase (from the checkout session; for the receipt).
+ALTER TABLE payments ADD COLUMN IF NOT EXISTS vat_country char(2);
+ALTER TABLE payments ADD COLUMN IF NOT EXISTS vat_rate numeric(5,2);
+
+-- Back-office roles (Moses, 16 Nov 2026, CRM phase 2; src/admin/permissions.js): what each admin may do.
+-- owner: everything; finance: customers, purchases, refunds, billing; support: customers, support, names (no
+-- refunds, coins, exports or deletions); marketing: email lists and (later) campaigns; read-only: the
+-- dashboard and reports. An admin without a role can only read the dashboard and reports. Every change is in admin_audit.
+ALTER TABLE users ADD COLUMN IF NOT EXISTS admin_role varchar(16) CHECK (admin_role IN ('owner', 'finance', 'support', 'marketing', 'read-only'));
+
+-- Editable email templates (Moses, 16 Nov 2026, CRM phase 5; src/email/library.js): every save is a version; the
+-- published one (the newest with published_at) is used, else the email in code. A template holds the wording round
+-- each email's locked part (blocks); figures, legal texts and links always come from the code.
+CREATE TABLE IF NOT EXISTS email_templates (
+    id              bigserial   PRIMARY KEY,
+    kind            varchar(40) NOT NULL,
+    version         integer     NOT NULL,
+    subject         text        NOT NULL,
+    preheader       text,
+    title           text        NOT NULL,
+    blocks          jsonb       NOT NULL,
+    note            text,
+    created_by      uuid        REFERENCES users(id) ON DELETE SET NULL,
+    created_at      timestamptz NOT NULL DEFAULT now(),
+    published_at    timestamptz,
+    published_by    uuid        REFERENCES users(id) ON DELETE SET NULL,
+    UNIQUE (kind, version)
+);
+CREATE INDEX IF NOT EXISTS idx_email_templates_published ON email_templates (kind, published_at DESC) WHERE published_at IS NOT NULL;
+
+-- Every email sent (CRM phase 5; src/email/log.js): to whom, what, which template version, Brevo's message id.
+-- Kept 24 months (trimmed daily). user_id: the player it went to, when it went to a player's address.
+CREATE TABLE IF NOT EXISTS email_log (
+    id               bigserial   PRIMARY KEY,
+    user_id          uuid        REFERENCES users(id) ON DELETE SET NULL,
+    to_email         varchar(254),
+    kind             varchar(40) NOT NULL,
+    template_version integer,
+    subject          text        NOT NULL,
+    provider_id      text,
+    status           varchar(12) NOT NULL DEFAULT 'sent' CHECK (status IN ('sent', 'failed', 'test')),
+    error            text,
+    created_at       timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_email_log_user ON email_log (user_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_email_log_time ON email_log (created_at);
+
+-- Support (Moses, 16 Nov 2026, CRM phase 4): four stages, New (just arrived), Open (someone is on it), Answered (we
+-- replied, waiting for the player), Closed (done); Answered for 14 days with no answer closes by itself. A new column
+-- (the schema only adds): `status` stays, kept in step for older code (answered → open, closed → done).
+ALTER TABLE support_messages ADD COLUMN IF NOT EXISTS stage varchar(10) CHECK (stage IN ('new', 'open', 'answered', 'closed'));
+ALTER TABLE support_messages ADD COLUMN IF NOT EXISTS stage_at timestamptz;
+-- Assigned to an admin ("Mine").
+ALTER TABLE support_messages ADD COLUMN IF NOT EXISTS assigned_to uuid REFERENCES users(id) ON DELETE SET NULL;
+CREATE INDEX IF NOT EXISTS idx_support_messages_stage ON support_messages (stage, created_at);
+
+-- Saved replies (CRM phase 4): texts to start a reply from ({{name}}, {{ref}}, {{order_no}} filled in), edited before sending.
+CREATE TABLE IF NOT EXISTS support_saved_replies (
+    id              uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
+    title           varchar(80) NOT NULL,
+    body            text        NOT NULL,
+    created_by      uuid        REFERENCES users(id) ON DELETE SET NULL,
+    created_at      timestamptz NOT NULL DEFAULT now(),
+    updated_at      timestamptz NOT NULL DEFAULT now(),
+    archived_at     timestamptz
+);
+
+-- Marketing email (Moses, 16 Nov 2026, CRM phase 6; src/marketing): newsletters and what each player was sent.
+-- Sending is off (MARKETING_SENDING) until Moses approves; then only to the players the audience rules allow.
+CREATE TABLE IF NOT EXISTS newsletters (
+    id              uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
+    name            varchar(80) NOT NULL,
+    subject         text        NOT NULL,
+    preheader       text,
+    title           text        NOT NULL,
+    blocks          jsonb       NOT NULL,
+    segment         jsonb       NOT NULL DEFAULT '{}'::jsonb,
+    status          varchar(10) NOT NULL DEFAULT 'draft' CHECK (status IN ('draft', 'sending', 'sent')),
+    created_by      uuid        REFERENCES users(id) ON DELETE SET NULL,
+    created_at      timestamptz NOT NULL DEFAULT now(),
+    updated_at      timestamptz NOT NULL DEFAULT now(),
+    send_started_at timestamptz,
+    sent_at         timestamptz,
+    sent_count      integer     NOT NULL DEFAULT 0
+);
+-- One row per marketing email a player got (an onboarding step or a newsletter): each goes once.
+CREATE TABLE IF NOT EXISTS marketing_sends (
+    id              bigserial   PRIMARY KEY,
+    user_id         uuid        NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    kind            varchar(40) NOT NULL,
+    newsletter_id   uuid        REFERENCES newsletters(id) ON DELETE CASCADE,
+    status          varchar(10) NOT NULL DEFAULT 'sent' CHECK (status IN ('sent', 'failed')),
+    created_at      timestamptz NOT NULL DEFAULT now()
+);
+CREATE UNIQUE INDEX IF NOT EXISTS uq_marketing_onboarding ON marketing_sends (user_id, kind) WHERE newsletter_id IS NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS uq_marketing_newsletter ON marketing_sends (user_id, newsletter_id) WHERE newsletter_id IS NOT NULL;
+
+-- A test order (Moses, 18 Nov 2026: MS-1001, a sandbox purchase from before Stripe went live): shown as "Test · not
+-- charged" to the player and in the CRM, given no receipt number, and left out of every sales total, VAT report and
+-- bookkeeping export (payments.TEST_ORDER also counts Stripe test-mode orders, cs_test_…, and the 'test' provider).
+ALTER TABLE payments ADD COLUMN IF NOT EXISTS is_test boolean NOT NULL DEFAULT false;
+
+-- Each player's device and browser (Moses, 20 Nov 2026; src/devices): worked out from the user agent when a player
+-- starts playing or logs in, and kept as coarse fields only, never the user-agent string. One row per combination
+-- (device type, system and its major version, browser and its major version, app or website); the last 5 per player
+-- are kept, the newest is the player's device now. 0 = version not known. Goes with the account.
+CREATE TABLE IF NOT EXISTS user_devices (
+    user_id         uuid        NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    device_type     varchar(8)  NOT NULL CHECK (device_type IN ('phone', 'tablet', 'computer')),
+    os_name         varchar(20) NOT NULL,
+    os_version      smallint    NOT NULL DEFAULT 0,
+    browser_name    varchar(20) NOT NULL,
+    browser_version smallint    NOT NULL DEFAULT 0,
+    client          varchar(12) NOT NULL CHECK (client IN ('web', 'android-app', 'ios-app')),
+    first_seen_at   timestamptz NOT NULL DEFAULT now(),
+    last_seen_at    timestamptz NOT NULL DEFAULT now(),
+    PRIMARY KEY (user_id, device_type, os_name, os_version, browser_name, browser_version, client)
+);
+CREATE INDEX IF NOT EXISTS idx_user_devices_seen ON user_devices (last_seen_at);
+
+-- The same coarse fields on each race readiness report (20 Nov 2026), beside the short user agent it already keeps
+-- for 30 days.
+ALTER TABLE race_readiness ADD COLUMN IF NOT EXISTS device_type varchar(8);
+ALTER TABLE race_readiness ADD COLUMN IF NOT EXISTS os varchar(30);
+ALTER TABLE race_readiness ADD COLUMN IF NOT EXISTS browser varchar(30);
+ALTER TABLE race_readiness ADD COLUMN IF NOT EXISTS client varchar(12);

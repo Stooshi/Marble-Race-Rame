@@ -1,0 +1,12 @@
+{
+  "type": "collision",
+  "shots": [
+    {"slug": "thames-bridges-run", "race": "thames-bridges-run.video-971272", "dur": 2.4, "speed": 0.5, "line": "SMASH.", "chase": {"back": 5.0, "up": 1.9, "ahead": 4, "fov": 62}},
+    {"slug": "baikal-clear-ice", "race": "baikal-clear-ice.video-1446412", "dur": 2.0, "chase": {"back": 5.0, "up": 1.9, "ahead": 4, "fov": 62}},
+    {"slug": "lagos-marble-grand-prix", "race": "lagos-marble-grand-prix.video-3840518", "dur": 2.4, "speed": 0.5, "line": "CRASH.", "chase": {"back": 5.0, "up": 1.9, "ahead": 4, "fov": 62}},
+    {"slug": "roraima-cloud-falls", "race": "roraima-cloud-falls.video-1248437", "dur": 2.0, "chase": {"back": 5.0, "up": 1.9, "ahead": 4, "fov": 62}},
+    {"slug": "wadi-mujib-burst", "race": "wadi-mujib-burst.video-1034624", "dur": 2.4, "speed": 0.5, "line": "Nobody's safe.", "chase": {"back": 5.0, "up": 1.9, "ahead": 4, "fov": 62}},
+    {"slug": "final-round-spin", "race": "final-round-spin.video-1137571", "dur": 2.0, "chase": {"back": 5.0, "up": 1.9, "ahead": 4, "fov": 62}},
+    {"slug": "replay", "race": "replay.video-923758", "dur": 2.0, "end": "Which one survives?|marblespins.com|Follow for a new race every day", "chase": {"back": 5.0, "up": 1.9, "ahead": 4, "fov": 62}}
+  ]
+}

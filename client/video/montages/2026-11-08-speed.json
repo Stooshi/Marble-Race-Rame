@@ -1,0 +1,9 @@
+[
+  {"slug": "sydney-marble-grand-prix", "race": "sydney-marble-grand-prix.video-1026705", "dur": 1.8, "line": "Fast."},
+  {"slug": "cotahuasi-free-fall", "race": "cotahuasi-free-fall.video-955434", "dur": 1.8, "line": "Faster."},
+  {"slug": "pudong-marble-grand-prix", "race": "pudong-marble-grand-prix.video-907920", "dur": 2.2, "padP": 0.256},
+  {"slug": "lagos-marble-grand-prix", "race": "lagos-marble-grand-prix.video-1272194", "dur": 1.8, "padP": 0.429},
+  {"slug": "elderglade-marble-grand-prix", "race": "elderglade-marble-grand-prix.video-1074219", "dur": 3.0, "line": "Everyone thinks their marble is the best."},
+  {"slug": "nairobi-marble-grand-prix", "race": "nairobi-marble-grand-prix.video-1280113", "dur": 2.2, "padP": 0.317},
+  {"slug": "sahara-marble-grand-prix", "race": "sahara-marble-grand-prix.video-1335546", "dur": 1.6, "end": "Which one is yours?|marblespins.com|Follow for a new race every day", "lead": -500}
+]

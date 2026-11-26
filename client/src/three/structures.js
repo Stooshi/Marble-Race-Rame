@@ -1,0 +1,703 @@
+/**
+ * Track structures for kit tracks (physics.kit.sections): tunnels and caves,
+ * bridges and waterfalls. Drawing only: the race engine never sees them.
+ *
+ * The camera rule: the follow camera is never blocked. A tunnel's roof is an
+ * arch whose every face points inward, drawn one-sided: from inside you see
+ * the cave all round you; from outside (the camera above or behind it) its
+ * faces point away and are not drawn at all, so nothing ever hides a marble.
+ * Anything else beside the channel stays outside its rims, and anything
+ * crossing it is see-through (water, spray). Bridges stand below the channel.
+ *
+ * Returns { group, update(t), dispose } (t: ms after the start), or null.
+ */
+import {
+  AdditiveBlending, BufferGeometry, CanvasTexture, Color, ConeGeometry, DoubleSide, Float32BufferAttribute, FrontSide,
+  Group, IcosahedronGeometry, Matrix4, Mesh, MeshBasicMaterial, MeshLambertMaterial, Points, PointsMaterial, Quaternion,
+  RepeatWrapping, SRGBColorSpace, BoxGeometry, Vector3,
+} from 'three';
+import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
+import { channelLipAt, channelRadiusAt, placeOnChannel } from './iceChannel';
+import { mergeByArea, piece } from './scenery/parts';
+
+const UP = new Vector3(0, 1, 0);
+
+export const STRUCTURE_COLORS = {
+  // tunnels
+  rock: '#6d6a66', rockDark: '#4f4c49', timber: '#7a5534', lantern: '#ffd36b',
+  ice: '#9fd8f2', iceDeep: '#4fa3d6', iceRib: '#e3f6ff',
+  scale: '#c42d24', scaleDark: '#8e1c18', gold: '#e8b33c', tooth: '#f6f1e2', eye: '#ffd21f', pupil: '#1b1b1e', horn: '#e9dcc0',
+  root: '#6b4a2e', rootDark: '#4a321f',
+  redRock: '#b8603a', redRockDark: '#94482a', canyonFan: '#2556b8', canyonFan2: '#f2b81c',
+  plaster: '#e8d6b0', plasterDark: '#d9c39a', ablaqRed: '#b8452f', ablaqCream: '#f2e6c8', carpetRed: '#a8201c', carpetBlue: '#2a4f8a', bazaarLamp: '#ffb84a',
+  // trencadís mosaic (Park Güell) and the passage through a pyramid
+  tileWhite: '#f2efe6', tileBlue: '#2f7fc4', tileYellow: '#f2c230', tileGreen: '#4aa35a', tileRed: '#d8442f', tileTeal: '#2fb0a8',
+  sandstone: '#d8b878', sandstoneDark: '#b8955a', glyph: '#5a3a22', torch: '#ffb03a',
+  wallBrick: '#8f8a80', wallBrickDark: '#6f6a62', mortar: '#b8b2a6', redLantern: '#ff4a3a',
+  // a sea cave: wet grey limestone, pale stalactite ribs, pools glowing turquoise
+  caveStone: '#7a807a', caveStoneDark: '#5a605c', stalactite: '#d8d4c4', poolGlow: '#5ae8d8',
+  // an undersea-style road tunnel (light strips), and a tunnel through a fallen redwood (bark outside, heartwood rings)
+  concrete: '#b8bcc0', concreteDark: '#9a9ea4', lightStrip: '#f4f8ff', subwayTile: '#e8ecf0', subwayTileDark: '#d4d8de', subwayLine: '#ff7a1a', subwayLamp: '#3fd8ff', steamerWhite: '#f4f2ea', steamerCream: '#e4ddc8', steamerRed: '#a8322a', steamerRib: '#cfc6ae', heartwood: '#c8784a', heartwoodDark: '#a85a32', bark: '#7a3f28', barkDark: '#5a2c1c',
+  // bridges
+  plank: '#8a6340', plankDark: '#6a4a2f', stone: '#a49c8f', stoneDark: '#837b70', iceSlab: '#cdeefc',
+  steel: '#8d939b', steelDark: '#6c727a', bridgeWater: '#3f7fa8',
+  // Peaks: the blue-ice cave (light through the ice, holes of daylight in its roof), the crevasse bridges
+  blueIce: '#7fd0f2', blueIceDeep: '#2f86c4', blueIceLight: '#d8f4ff', blueIceVein: '#1f5f9a', skyHole: '#f6fcff',
+  ladderRail: '#b8bec6', ladderRung: '#8f969e', rope: '#e8792a', arch: '#cfeaf6', archDeep: '#8fc6e4',
+  // waterfalls
+  water: '#3f9ad6', foam: '#ffffff', cliff: '#7c7a74', cliffDark: '#5d5b56',
+};
+
+const TUNNEL_STYLES = {
+  // Shape of the arch: how far out past the rims its walls stand, and how high its crown is above them.
+  mine: { out: 0.7, rise: 3.6, ribEvery: 3 },
+  rock: { out: 0.9, rise: 4.2, ribEvery: 0 },
+  'ice-cave': { out: 1.2, rise: 4.6, ribEvery: 5, see: 0.5 },
+  dragon: { out: 1.0, rise: 4.2, ribEvery: 1.5 },
+  roots: { out: 1.0, rise: 4.0, ribEvery: 2.5 },
+  bazaar: { out: 0.9, rise: 4.4, ribEvery: 3 },
+  mosaic: { out: 0.9, rise: 4.2, ribEvery: 0 },
+  pyramid: { out: 0.9, rise: 4.0, ribEvery: 4 },
+  'sea-cave': { out: 1.1, rise: 4.6, ribEvery: 3 },
+  'lit-tunnel': { out: 0.9, rise: 4.2, ribEvery: 3 },
+  'redwood-trunk': { out: 0.9, rise: 4.4, ribEvery: 2 },
+  'city-wall': { out: 0.9, rise: 4.2, ribEvery: 4 },
+  subway: { out: 0.9, rise: 4.2, ribEvery: 3 },
+  // Through a paddle steamer's lower deck: white-painted timber ribs, a red band low, warm lamps.
+  steamer: { out: 1.0, rise: 4.4, ribEvery: 3 },
+  // Peaks: a long cave under an ice cap, its blue ice bright with the light coming through (opaque: no see-through).
+  'blue-ice': { out: 0.8, rise: 3.2, ribEvery: 6 }, // (low and snug: going in and coming out of the cave's S-bends the follow camera rides just over its crown; a 5.2 m roof came within 0.5 m of it)
+  // A canyon: no roof, towering red rock walls either side, spectators along the cliff tops.
+  canyon: { out: 1.2, rise: 0, ribEvery: 0, open: true },
+};
+
+/** The track's frame at progress p: floor point, level sideways direction (left), along it. */
+function frameAt(centerline, p) {
+  const { samples, segments } = centerline;
+  const f = Math.min(1, Math.max(0, p)) * segments;
+  const i = Math.min(segments - 1, Math.floor(f));
+  const a = samples[i];
+  const b = samples[i + 1];
+  return {
+    pos: new Vector3().lerpVectors(a.pos, b.pos, f - i),
+    side: new Vector3(a.side.x, 0, a.side.z).normalize(),
+    along: new Vector3().subVectors(b.pos, a.pos).normalize(),
+  };
+}
+
+/** Small fixed pseudo-random numbers (the same every visit). */
+const noise = (k) => {
+  const x = Math.sin(k * 127.1 + 311.7) * 43758.5453;
+  return x - Math.floor(x);
+};
+
+/** A soft stripy water texture (our own), scrolled down the chute each frame. */
+function waterTexture() {
+  const canvas = document.createElement('canvas');
+  canvas.width = 64;
+  canvas.height = 256;
+  const g = canvas.getContext('2d');
+  g.fillStyle = STRUCTURE_COLORS.water;
+  g.fillRect(0, 0, 64, 256);
+  g.fillStyle = 'rgba(255,255,255,0.55)';
+  for (let k = 0; k < 26; k += 1) {
+    const x = (k * 37) % 64;
+    const y = (k * 71) % 256;
+    g.fillRect(x, y, 2 + (k % 3), 18 + ((k * 13) % 30));
+  }
+  const tex = new CanvasTexture(canvas);
+  tex.colorSpace = SRGBColorSpace;
+  tex.wrapS = RepeatWrapping;
+  tex.wrapT = RepeatWrapping;
+  return tex;
+}
+
+export function buildStructures(centerline, channel, kit, { lite = false } = {}) {
+  const sections = kit?.sections?.filter((s) => s.tunnel || s.bridge || s.waterfall || s.peak?.crevasse);
+  if (!channel || !sections?.length) return null;
+  const group = new Group();
+  group.name = 'structures';
+  const surface = (p, l, lift = 0) => placeOnChannel(centerline, channel, p, l, 0, lift, 0);
+  const metres = (s) => (s.to - s.from) * channel.arc;
+  const parts = {}; // colour key → geometries, merged per material
+  const add = (key, geometry, matrix) => {
+    if (matrix) geometry.applyMatrix4(matrix);
+    (parts[key] ??= []).push(geometry.index ? geometry.toNonIndexed() : geometry);
+  };
+  const water = []; // scrolling water textures
+  const owned = []; // materials and textures to dispose
+
+  /**
+   * An inward-facing arch along the track from p0 to p1: rings every `step`
+   * metres from the left rim over to the right one, each triangle wound so it
+   * faces the middle of the arch. colour(k, j, ring) gives a vertex colour.
+   */
+  const arch = (p0, p1, style, colour, { scale = 1, step = lite ? 3 : 1.5 } = {}) => {
+    const count = Math.max(2, Math.round(((p1 - p0) * channel.arc) / step) + 1);
+    const ACROSS = lite ? 8 : 14;
+    const rings = [];
+    for (let k = 0; k < count; k += 1) {
+      const p = p0 + ((p1 - p0) * k) / (count - 1);
+      const { pos, side } = frameAt(centerline, p);
+      const left = surface(p, 1);
+      const right = surface(p, -1);
+      const centre = left.clone().lerp(right, 0.5);
+      const a = (left.distanceTo(right) / 2 + style.out) * scale;
+      const b = style.rise * scale + (centre.y - pos.y);
+      const base = new Vector3(centre.x, pos.y - 0.6, centre.z); // the walls run down past the rims
+      const ring = [];
+      for (let j = 0; j <= ACROSS; j += 1) {
+        const phi = (Math.PI * j) / ACROSS; // 0: the left wall, π/2: the crown, π: the right wall
+        ring.push(base.clone().addScaledVector(side, a * Math.cos(phi)).addScaledVector(UP, b * Math.sin(phi)));
+      }
+      rings.push({ ring, centre: base.clone().addScaledVector(UP, b * 0.4), p });
+    }
+    const pos = [];
+    const col = [];
+    const c = new Color();
+    const tri = (A, B, C, inside, colours) => {
+      // Facing the middle of the arch (inward): flip the winding if it doesn't.
+      const n = new Vector3().subVectors(B, A).cross(new Vector3().subVectors(C, A));
+      const mid = new Vector3().add(A).add(B).add(C).multiplyScalar(1 / 3);
+      const facesIn = n.dot(new Vector3().subVectors(inside, mid)) >= 0;
+      const pts = facesIn ? [A, B, C] : [A, C, B];
+      const cols = facesIn ? colours : [colours[0], colours[2], colours[1]];
+      pts.forEach((v, q) => { pos.push(v.x, v.y, v.z); col.push(cols[q].r, cols[q].g, cols[q].b); });
+    };
+    for (let k = 0; k < rings.length - 1; k += 1) {
+      const r0 = rings[k];
+      const r1 = rings[k + 1];
+      const inside = r0.centre.clone().lerp(r1.centre, 0.5);
+      for (let j = 0; j < ACROSS; j += 1) {
+        const tone = c.set(colour(k, j, rings.length, ACROSS)).clone();
+        tri(r0.ring[j], r1.ring[j], r1.ring[j + 1], inside, [tone, tone, tone]);
+        tri(r0.ring[j], r1.ring[j + 1], r0.ring[j + 1], inside, [tone, tone, tone]);
+      }
+    }
+    const g = new BufferGeometry();
+    g.setAttribute('position', new Float32BufferAttribute(pos, 3));
+    g.setAttribute('color', new Float32BufferAttribute(col, 3));
+    g.computeVertexNormals();
+    return { geometry: g, rings };
+  };
+
+  const archMaterial = (see) => {
+    const m = see
+      ? new MeshLambertMaterial({ vertexColors: true, side: FrontSide, transparent: true, opacity: see, depthWrite: false, flatShading: true })
+      : new MeshLambertMaterial({ vertexColors: true, side: FrontSide, flatShading: true });
+    owned.push(m);
+    return m;
+  };
+
+  // The waterfalls' see-through water, all of a track's falls in one mesh of each kind (one texture,
+  // one call each however many falls: Huascarán's three were twelve calls, over the phone's budget).
+  const falls = { tex: null, floors: [], cascades: [], sprays: [], rainbows: [] };
+  for (const s of sections) {
+    const len = metres(s);
+    // ── Tunnels and caves ──────────────────────────────────────────────
+    if (s.tunnel) {
+      const style = TUNNEL_STYLES[s.tunnel] ?? TUNNEL_STYLES.rock;
+      const C = STRUCTURE_COLORS;
+      const ribRings = style.ribEvery ? Math.max(1, Math.round(style.ribEvery / (lite ? 3 : 1.5))) : 0;
+      const colour = {
+        mine: (k, j) => (ribRings && k % ribRings === 0 ? C.timber : noise(k * 31 + j) > 0.5 ? C.rock : C.rockDark),
+        // (j counts across the arch from the left wall, 0 to `across`: the crown is at across / 2.)
+        rock: (k, j) => (noise(k * 17 + j * 7) > 0.45 ? C.rock : C.rockDark),
+        'ice-cave': (k, j, n, across) => (ribRings && k % ribRings === 0 ? C.iceRib : j / across > 0.3 && j / across < 0.7 ? C.ice : C.iceDeep),
+        // The blue cave: bright blue ice, paler where the light comes through near the crown, darker veins in
+        // waves, now and then a hole of daylight in the roof (a pale tile).
+        'blue-ice': (k, j, n, across) => {
+          const crown = Math.abs(j + 0.5 - across / 2) < across * 0.18;
+          if (crown && k % 11 === 5) return C.skyHole;
+          if ((k + Math.round(Math.sin(j * 0.9) * 2)) % 7 === 0) return C.blueIceVein;
+          if (crown) return C.blueIceLight;
+          return noise(k * 7 + j * 3) > 0.45 ? C.blueIce : C.blueIceDeep;
+        },
+        dragon: (k, j, n, across) => {
+          if (Math.abs(j + 0.5 - across / 2) < 1) return C.gold; // the golden spine along the crown
+          if (k >= n - 3) return C.scaleDark; // inside the mouth
+          return k % 2 ? C.scale : C.scaleDark;
+        },
+        roots: (k, j) => ((k + j) % 4 === 0 ? C.rootDark : noise(k * 13 + j) > 0.6 ? C.root : C.rock),
+        // The Grand Bazaar's vaulted halls: arches striped red and cream, plaster vaults, carpets hung low on the walls.
+        bazaar: (k, j, n, across) => {
+          if (ribRings && k % ribRings === 0) return j % 2 ? C.ablaqRed : C.ablaqCream;
+          const low = j / across < 0.22 || j / across > 0.78;
+          if (low && Math.floor(k / 2) % 3 === 1) return Math.floor(k / 6) % 2 ? C.carpetRed : C.carpetBlue;
+          return noise(k * 7 + j) > 0.5 ? C.plaster : C.plasterDark;
+        },
+        // Park Güell: broken tiles of every colour, white grout showing between.
+        mosaic: (k, j) => {
+          const t = noise(k * 23 + j * 11);
+          return t < 0.18 ? C.tileWhite : [C.tileBlue, C.tileYellow, C.tileGreen, C.tileRed, C.tileTeal][Math.floor(noise(k * 5 + j * 29) * 5) % 5];
+        },
+        // A passage through a pyramid: sandstone blocks, bands of hieroglyphs low on the walls.
+        pyramid: (k, j, n, across) => {
+          const low = j / across < 0.25 || j / across > 0.75;
+          if (low && (k + j) % 3 === 0) return C.glyph;
+          return noise(k * 9 + j * 5) > 0.5 ? C.sandstone : C.sandstoneDark;
+        },
+        // Through an old city wall's gate: grey brick in courses, the mortar showing between them.
+        'city-wall': (k, j) => (j % 3 === 0 ? C.mortar : noise(k * 11 + j * 7) > 0.5 ? C.wallBrick : C.wallBrickDark),
+        // A subway tunnel: white tiles, a coloured line band low on each wall, a light strip down the crown.
+        subway: (k, j, n, across) => (Math.abs(j + 0.5 - across / 2) < 1 ? C.lightStrip : (j / across < 0.28 || j / across > 0.72) && j % 4 === 1 ? C.subwayLine : (k + j) % 2 ? C.subwayTile : C.subwayTileDark),
+        // Through a paddle steamer's lower deck: white planking, cream ribs, a red band low on each side.
+        steamer: (k, j, n, across) => (ribRings && k % ribRings === 0 ? C.steamerRib : (j / across < 0.2 || j / across > 0.8) ? C.steamerRed : (k + j) % 3 ? C.steamerWhite : C.steamerCream),
+        'lit-tunnel': (k, j, n, across) => (Math.abs(j + 0.5 - across / 2) < 1 ? C.lightStrip : noise(k * 5 + j) > 0.5 ? C.concrete : C.concreteDark),
+        // Inside a fallen redwood: heartwood, its growth rings showing as bands.
+        'redwood-trunk': (k, j) => ((k % 4 === 0) ? C.heartwoodDark : noise(k * 7 + j * 3) > 0.5 ? C.heartwood : C.heartwoodDark),
+        'sea-cave': (k, j, n, across) => {
+          if (ribRings && k % ribRings === 0 && j / across > 0.3 && j / across < 0.7) return C.stalactite;
+          return noise(k * 13 + j * 3) > 0.5 ? C.caveStone : C.caveStoneDark;
+        },
+      }[s.tunnel] ?? ((k, j) => (noise(k + j) > 0.5 ? C.rock : C.rockDark));
+      let rings = [];
+      if (!style.open) {
+        const built = arch(s.from, s.to, style, colour);
+        rings = built.rings;
+        const mesh = new Mesh(built.geometry, archMaterial(style.see));
+        mesh.name = `tunnel:${s.tunnel}`;
+        group.add(mesh);
+      }
+
+      // From outside: banks beside the channel (rock, ice or the dragon's coils), never across
+      // it, so the follow camera above sees the run dive in under them.
+      const bank = { mine: ['rock', 'rockDark'], rock: ['rock', 'rockDark'], roots: ['root', 'rock'], 'ice-cave': ['iceRib', 'ice'], dragon: ['scale', 'scaleDark'], bazaar: ['plaster', 'plasterDark'], canyon: ['redRock', 'redRockDark'], mosaic: ['tileGreen', 'tileWhite'], pyramid: ['sandstone', 'sandstoneDark'], 'sea-cave': ['caveStone', 'caveStoneDark'], 'lit-tunnel': ['concrete', 'concreteDark'], 'redwood-trunk': ['bark', 'barkDark'], 'city-wall': ['wallBrick', 'wallBrickDark'], subway: ['concrete', 'concreteDark'], steamer: ['steamerWhite', 'steamerRed'], 'blue-ice': ['blueIceLight', 'blueIce'] }[s.tunnel] ?? ['rock', 'rockDark'];
+      const bankStep = lite ? 6 : 3.5;
+      const nb = Math.max(2, Math.round(len / bankStep));
+      for (let k = 0; k <= nb; k += 1) {
+        const p = s.from + ((s.to - s.from) * k) / nb;
+        const { side } = frameAt(centerline, p);
+        for (const sign of [-1, 1]) {
+          const rim = surface(p, sign);
+          const out = side.clone().multiplyScalar(sign);
+          const r = 2.2 + noise(k * 5 + sign) * 1.4;
+          const at = rim.clone().addScaledVector(out, style.out + r + 0.8).addScaledVector(UP, r * 0.45);
+          const geo = s.tunnel === 'dragon' ? new IcosahedronGeometry(r * 0.9, lite ? 0 : 1) : new IcosahedronGeometry(r, 0);
+          add(bank[(k + (sign > 0 ? 0 : 1)) % 2], geo, new Matrix4().compose(at, new Quaternion().setFromAxisAngle(UP, k * 1.3), new Vector3(1, s.tunnel === 'dragon' ? 0.8 : 1.3, 1.2)));
+          if (s.tunnel === 'canyon') {
+            // The canyon wall: more rock stacked high above the first, and now and then a few spectators on top.
+            const r2 = 3 + noise(k * 9 + sign) * 2;
+            const top = at.clone().addScaledVector(out, r2 * 0.6).addScaledVector(UP, r * 0.9 + r2 * 0.8);
+            add(bank[(k + 1) % 2], new IcosahedronGeometry(r2, 0), new Matrix4().compose(top, new Quaternion().setFromAxisAngle(UP, k * 0.7), new Vector3(1.1, 1.5, 1.2)));
+            if (k % 3 === 0) {
+              for (let n = 0; n < 3; n += 1) add(n % 2 ? 'canyonFan' : 'canyonFan2', new BoxGeometry(0.45, 0.8, 0.3), new Matrix4().makeTranslation(...top.clone().addScaledVector(out, 1).add(new Vector3((n - 1) * 0.7, r2 * 1.45 + 0.4, 0)).toArray()));
+            }
+          }
+          if (s.tunnel === 'dragon' && k % 2 === 0) {
+            // A golden spine plate on each coil.
+            const plate = new ConeGeometry(0.5, 1.4, 4);
+            plate.translate(0, 0.7, 0);
+            add('gold', plate, new Matrix4().makeTranslation(at.x, at.y + r * 0.7, at.z));
+          }
+        }
+        // Timber posts standing at the rims on the mine's frames.
+        if (s.tunnel === 'mine' && k % 2 === 0) {
+          for (const sign of [-1, 1]) {
+            const rim = surface(p, sign);
+            const out = side.clone().multiplyScalar(sign);
+            add('timber', new BoxGeometry(0.35, 3.2, 0.35), new Matrix4().makeTranslation(...rim.clone().addScaledVector(out, 0.5).addScaledVector(UP, 1.2).toArray()));
+          }
+        }
+      }
+
+      if (s.tunnel === 'mine' || s.tunnel === 'bazaar' || s.tunnel === 'pyramid' || s.tunnel === 'sea-cave' || s.tunnel === 'city-wall' || s.tunnel === 'subway' || s.tunnel === 'steamer') {
+        // Lanterns on the timber frames (the bazaar: brass lanterns by the arches), low on the walls (inward-facing glowing tiles).
+        const lamps = [];
+        for (let k = ribRings * 2; k < rings.length - 1; k += ribRings * 3) {
+          const last = rings[k].ring.length - 1;
+          for (const j of [Math.round(last * 0.15), Math.round(last * 0.85)]) {
+            const a = rings[k].ring[j];
+            const b = rings[k + 1].ring[j];
+            const centre = rings[k].centre;
+            const inward = new Vector3().subVectors(centre, a).normalize();
+            const q = new Quaternion().setFromUnitVectors(new Vector3(0, 0, 1), inward);
+            const tile = new BoxGeometry(0.35, 0.45, 0.02);
+            lamps.push(tile.applyMatrix4(new Matrix4().compose(a.clone().lerp(b, 0.5).addScaledVector(inward, 0.08), q, new Vector3(1, 1, 1))));
+          }
+        }
+        if (lamps.length) {
+          const m = new MeshBasicMaterial({ color: s.tunnel === 'bazaar' ? STRUCTURE_COLORS.bazaarLamp : s.tunnel === 'pyramid' ? STRUCTURE_COLORS.torch : s.tunnel === 'city-wall' ? STRUCTURE_COLORS.redLantern : s.tunnel === 'subway' ? STRUCTURE_COLORS.subwayLamp : s.tunnel === 'sea-cave' ? STRUCTURE_COLORS.poolGlow : STRUCTURE_COLORS.lantern });
+          owned.push(m);
+          group.add(new Mesh(mergeGeometries(lamps.map((g) => g.toNonIndexed())), m));
+        }
+      }
+
+      if (s.tunnel === 'dragon') {
+        // In at the tail, out of the mouth. The tail curls away beside the way in; the
+        // head's eyes and horns stand at the mouth's sides, outside the rims (never in the
+        // camera's way), and teeth line the mouth's upper walls.
+        const last = rings[rings.length - 1];
+        const first = rings[0];
+        const exit = frameAt(centerline, s.to);
+        const enter = frameAt(centerline, s.from);
+        for (const sign of [-1, 1]) {
+          const cheek = last.ring[sign > 0 ? 3 : last.ring.length - 4];
+          const outward = exit.side.clone().multiplyScalar(sign);
+          add('eye', new IcosahedronGeometry(0.55, 1), new Matrix4().compose(cheek.clone().addScaledVector(outward, 0.5).addScaledVector(exit.along, 0.4), new Quaternion(), new Vector3(1, 1.2, 1)));
+          add('pupil', new IcosahedronGeometry(0.22, 0), new Matrix4().makeTranslation(...cheek.clone().addScaledVector(outward, 0.95).addScaledVector(exit.along, 0.55).toArray()));
+          const horn = new ConeGeometry(0.3, 2.2, 7);
+          horn.translate(0, 1.1, 0);
+          add('horn', horn, new Matrix4().compose(cheek.clone().addScaledVector(outward, 0.6).addScaledVector(UP, 0.8), new Quaternion().setFromUnitVectors(UP, outward.clone().multiplyScalar(0.6).add(UP).addScaledVector(exit.along, -0.5).normalize()), new Vector3(1, 1, 1)));
+          // Whiskers: long thin barbels sweeping out from the snout, beside the channel.
+          const whisker = new ConeGeometry(0.06, 3.5, 5);
+          whisker.translate(0, 1.75, 0);
+          add('gold', whisker, new Matrix4().compose(cheek.clone().addScaledVector(exit.along, 1.2).addScaledVector(UP, -0.4), new Quaternion().setFromUnitVectors(UP, outward.clone().addScaledVector(exit.along, 0.5).addScaledVector(UP, -0.2).normalize()), new Vector3(1, 1, 1)));
+        }
+        // The head over the mouth, drawn with its forward-facing surfaces only: seen from the
+        // front it is a whole head; the follow camera, always behind, never sees it, so it can
+        // never come between the camera and a marble.
+        const crown = last.ring[Math.floor(last.ring.length / 2)];
+        const forward = exit.along.clone().setY(0).normalize();
+        const frontOnly = (geometry, matrix, key) => {
+          const g = geometry.toNonIndexed();
+          g.applyMatrix4(matrix);
+          const pos = g.getAttribute('position');
+          const keep = [];
+          const a = new Vector3();
+          const b = new Vector3();
+          const c = new Vector3();
+          for (let t3 = 0; t3 < pos.count; t3 += 3) {
+            a.fromBufferAttribute(pos, t3);
+            b.fromBufferAttribute(pos, t3 + 1);
+            c.fromBufferAttribute(pos, t3 + 2);
+            const n = new Vector3().subVectors(b, a).cross(new Vector3().subVectors(c, a)).normalize();
+            if (n.dot(forward) > 0.2) keep.push(a.x, a.y, a.z, b.x, b.y, b.z, c.x, c.y, c.z);
+          }
+          const out = new BufferGeometry();
+          out.setAttribute('position', new Float32BufferAttribute(keep, 3));
+          add(key, out);
+        };
+        const head = crown.clone().addScaledVector(UP, 1.2).addScaledVector(forward, 0.8);
+        const turn = new Quaternion().setFromUnitVectors(new Vector3(0, 0, 1), forward);
+        frontOnly(new IcosahedronGeometry(1, 1), new Matrix4().compose(head, turn, new Vector3(4.2, 2.2, 2.6)), 'scale');           // the head
+        frontOnly(new IcosahedronGeometry(1, 1), new Matrix4().compose(head.clone().addScaledVector(forward, 1.8).addScaledVector(UP, -0.6), turn, new Vector3(2.6, 1.3, 2)), 'scaleDark'); // the snout
+        for (const sign of [-1, 1]) {
+          const brow = head.clone().addScaledVector(exit.side, sign * 1.6).addScaledVector(UP, 1.1).addScaledVector(forward, 1.2);
+          frontOnly(new IcosahedronGeometry(0.7, 0), new Matrix4().compose(brow, turn, new Vector3(1.4, 0.6, 1)), 'gold');            // golden brows
+          frontOnly(new IcosahedronGeometry(0.35, 0), new Matrix4().compose(head.clone().addScaledVector(exit.side, sign * 0.7).addScaledVector(forward, 3.6).addScaledVector(UP, -0.4), turn, new Vector3(1, 1, 1)), 'pupil'); // nostrils
+        }
+        // Teeth along the upper side walls of the mouth, pointing in.
+        for (let k = Math.max(0, rings.length - 3); k < rings.length; k += 1) {
+          const across = rings[k].ring.length - 1;
+          for (const j of [...new Set([0.22, 0.29, 0.71, 0.78].map((u) => Math.round(u * across)))]) {
+            const at = rings[k].ring[j];
+            const inward = new Vector3().subVectors(rings[k].centre, at).normalize();
+            const tooth = new ConeGeometry(0.16, 0.7, 5);
+            tooth.translate(0, 0.35, 0);
+            add('tooth', tooth, new Matrix4().compose(at, new Quaternion().setFromUnitVectors(UP, inward), new Vector3(1, 1, 1)));
+          }
+        }
+        // The tail: tapering coils curling away beside the way in, on the outside.
+        const sign = 1;
+        const outward = enter.side.clone().multiplyScalar(sign);
+        let at = first.ring[2].clone().addScaledVector(outward, 0.6);
+        for (let k = 0; k < (lite ? 5 : 9); k += 1) {
+          const r = 1.0 * (1 - k / 11);
+          at = at.clone().addScaledVector(enter.along, -1.6).addScaledVector(outward, 0.9).addScaledVector(UP, Math.sin(k * 0.9) * 0.6);
+          add(k % 2 ? 'scale' : 'scaleDark', new IcosahedronGeometry(r, 1), new Matrix4().makeTranslation(at.x, at.y, at.z));
+          if (k % 2 === 0) {
+            const spike = new ConeGeometry(r * 0.35, r * 1.1, 5);
+            spike.translate(0, r * 0.9, 0);
+            add('gold', spike, new Matrix4().makeTranslation(at.x, at.y, at.z));
+          }
+        }
+      }
+    }
+
+    // ── Peaks: a crevasse crossed on a ladder bridge (aluminium ladders lashed end to end, ropes either side) or
+    // an ice-arch bridge (a thick bow of blue-white ice), under the channel along the section ─────────────
+    if (s.peak?.crevasse) {
+      const step = lite ? 3 : 1.5;
+      const n = Math.max(2, Math.round(len / step));
+      for (let k = 0; k <= n; k += 1) {
+        const p = s.from + ((s.to - s.from) * k) / n;
+        const { pos, side, along } = frameAt(centerline, p);
+        const down = along.clone().normalize();
+        const deckUp = new Vector3().crossVectors(down, side).normalize();
+        if (deckUp.y < 0) deckUp.negate();
+        const qs = new Quaternion().setFromRotationMatrix(new Matrix4().makeBasis(new Vector3().crossVectors(deckUp, down).normalize(), deckUp, down));
+        const half = channelRadiusAt(channel, p * channel.arc) * Math.sin(channelLipAt(channel, p * channel.arc)) + 0.6;
+        const under = pos.clone().addScaledVector(deckUp, -2);
+        if (s.peak.crevasse === 'ladder') {
+          for (const x of [-half, half]) add('ladderRail', new BoxGeometry(0.22, 0.28, step * 1.02), new Matrix4().compose(under.clone().addScaledVector(side, x), qs, new Vector3(1, 1, 1)));
+          if (k % (lite ? 1 : 2) === 0) add('ladderRung', new BoxGeometry(2 * half, 0.12, 0.14), new Matrix4().compose(under, qs, new Vector3(1, 1, 1)));
+          for (const x of [-half - 0.6, half + 0.6]) add('rope', new BoxGeometry(0.06, 0.06, step * 1.02), new Matrix4().compose(under.clone().addScaledVector(side, x).addScaledVector(deckUp, 1.4), qs, new Vector3(1, 1, 1)));
+        } else {
+          // (The arch's underside dips in the middle of the span, bowed like a snow bridge.)
+          const t = k / n;
+          const sag = 2.2 + Math.sin(Math.PI * t) * 3.2;
+          add(k % 2 ? 'arch' : 'archDeep', new BoxGeometry(2 * half + 1.2, sag, step * 1.02), new Matrix4().compose(under.clone().addScaledVector(deckUp, -sag / 2 + 0.6), qs, new Vector3(1, 1, 1)));
+        }
+      }
+    }
+
+    // ── Bridges: below the channel, so they never come between camera and marble ─
+    if (s.bridge) {
+      const step = lite ? 4 : 2;
+      // (The water under a steel bridge: just above the ravine floor, 24 m below the lowest bridge, as kitGround cuts it.)
+      const waterLevel = Math.min(...kit.sections.filter((x) => x.bridge).flatMap((x) => [0, 0.25, 0.5, 0.75, 1].map((k) => frameAt(centerline, x.from + (x.to - x.from) * k).pos.y))) - 22.8;
+      const n = Math.max(2, Math.round(len / step));
+      for (let k = 0; k <= n; k += 1) {
+        const p = s.from + ((s.to - s.from) * k) / n;
+        const { pos, side, along } = frameAt(centerline, p);
+        const flat = along.clone().setY(0).normalize();
+        const q = new Quaternion().setFromRotationMatrix(new Matrix4().makeBasis(side, UP, flat));
+        const under = pos.clone().addScaledVector(UP, -1.75); // just under the channel's outer wall
+        if (s.bridge === 'wood') {
+          add(k % 2 ? 'plank' : 'plankDark', new BoxGeometry(9.5, 0.25, step * 0.9), new Matrix4().compose(under, q, new Vector3(1, 1, 1)));
+          if (k % 3 === 0) {
+            for (const x of [-4.2, 4.2]) add('plankDark', new BoxGeometry(0.35, 30, 0.35), new Matrix4().compose(under.clone().addScaledVector(side, x).addScaledVector(UP, -15.1), q, new Vector3(1, 1, 1))); // down into the ravine
+          }
+        } else if (s.bridge === 'stone') {
+          add(k % 2 ? 'stone' : 'stoneDark', new BoxGeometry(9.5, 1.2, step * 0.95), new Matrix4().compose(under.clone().addScaledVector(UP, -0.4), q, new Vector3(1, 1, 1)));
+          if (k % 4 === 0) add('stoneDark', new BoxGeometry(2.2, 30, 2.2), new Matrix4().compose(under.clone().addScaledVector(UP, -15.6), q, new Vector3(1, 1, 1)));
+        } else if (s.bridge === 'steel') {
+          // (Laid along the slope itself, so on a steep plunge the deck stays under the channel.)
+          const down = along.clone().normalize();
+          const deckUp = new Vector3().crossVectors(down, side).normalize();
+          if (deckUp.y < 0) deckUp.negate();
+          const qs = new Quaternion().setFromRotationMatrix(new Matrix4().makeBasis(new Vector3().crossVectors(deckUp, down).normalize(), deckUp, down));
+          const below = pos.clone().addScaledVector(deckUp, -2.1);
+          // A city bridge in grey steel: a deck girder, a lattice of struts below it, piers every 16 m,
+          // and water (a harbour, a lagoon, a lake) along the ravine floor beneath.
+          // (As wide as the channel there: the start's wide funnel too.)
+          const half = channelRadiusAt(channel, p * channel.arc) * Math.sin(channelLipAt(channel, p * channel.arc)) + 1.4;
+          add(k % 2 ? 'steel' : 'steelDark', new BoxGeometry(2 * half, 1.1, step * 0.98), new Matrix4().compose(below, qs, new Vector3(1, 1, 1)));
+          for (const x of lite && k % 2 ? [] : [-half + 0.4, half - 0.4]) { // (on phones, half as many struts)
+            const strut = new BoxGeometry(0.3, 3.2, 0.3);
+            strut.rotateX(k % 2 ? 0.6 : -0.6);
+            add('steelDark', strut, new Matrix4().compose(below.clone().addScaledVector(side, x).addScaledVector(deckUp, -2.1), qs, new Vector3(1, 1, 1)));
+          }
+          if (k % 8 === 0) for (const x of [-half + 1, half - 1]) add('steelDark', new BoxGeometry(1.2, 30, 1.2), new Matrix4().compose(under.clone().addScaledVector(side, x).addScaledVector(UP, -15.6), q, new Vector3(1, 1, 1)));
+          add('bridgeWater', new BoxGeometry(2 * half + 24, 0.3, step * 1.02), new Matrix4().compose(new Vector3(pos.x, waterLevel, pos.z), q, new Vector3(1, 1, 1)));
+        } else {
+          // A narrow-looking bridge of blue ice over the crevasse (the channel keeps its width).
+          add('iceSlab', new BoxGeometry(8.2, 1.6, step * 0.98), new Matrix4().compose(under.clone().addScaledVector(UP, -0.5), q, new Vector3(1, 1, 1)));
+          add('iceDeep', new BoxGeometry(6.5, 2.5, step * 0.98), new Matrix4().compose(under.clone().addScaledVector(UP, -2.4), q, new Vector3(1, 1, 1)));
+        }
+      }
+    }
+
+    // ── Waterfalls: water down the chute, cascades beside it, spray, a curtain ─
+    if (s.waterfall) {
+      if (!falls.tex) {
+        falls.tex = waterTexture();
+        owned.push(falls.tex);
+        water.push({ tex: falls.tex, speed: 1.6 });
+      }
+      const tex = falls.tex;
+      // Water running down the floor of the chute (see-through: the marbles race on it).
+      const rows = Math.max(4, Math.round(len / (lite ? 4 : 2)));
+      const cols = lite ? 6 : 10;
+      const pos = [];
+      const uv = [];
+      for (let r = 0; r <= rows; r += 1) {
+        const p = s.from + ((s.to - s.from) * r) / rows;
+        for (let c = 0; c <= cols; c += 1) {
+          const pt = surface(p, -0.92 + (1.84 * c) / cols, 0.02);
+          pos.push(pt.x, pt.y, pt.z);
+          uv.push(c / cols, (r * len) / rows / 6);
+        }
+      }
+      const index = [];
+      for (let r = 0; r < rows; r += 1) {
+        for (let c = 0; c < cols; c += 1) {
+          const a = r * (cols + 1) + c;
+          index.push(a, a + cols + 1, a + 1, a + 1, a + cols + 1, a + cols + 2);
+        }
+      }
+      const floor = new BufferGeometry();
+      floor.setAttribute('position', new Float32BufferAttribute(pos, 3));
+      floor.setAttribute('uv', new Float32BufferAttribute(uv, 2));
+      floor.setIndex(index);
+      falls.floors.push(floor);
+
+      // Rock cliffs either side of the chute, outside the rims, with water pouring down their faces.
+      const cascades = [];
+      const steps = Math.max(3, Math.round(len / 6));
+      for (let k = 0; k <= steps; k += 1) {
+        const p = s.from + ((s.to - s.from) * k) / steps;
+        const { side } = frameAt(centerline, p);
+        for (const sign of [-1, 1]) {
+          const rim = surface(p, sign);
+          const out = side.clone().multiplyScalar(sign);
+          // (Never reaching over the rim: a big rock stands further out.)
+          const r = 2.4 + noise(k * 7 + sign) * 1.2;
+          const rock = rim.clone().addScaledVector(out, Math.max(3.4 + noise(k * 3 + sign) * 1.2, r * 1.2 + 0.5)).addScaledVector(UP, 0.6);
+          add(noise(k + sign * 5) > 0.5 ? 'cliff' : 'cliffDark', new IcosahedronGeometry(r, 0), new Matrix4().compose(rock, new Quaternion().setFromAxisAngle(UP, k), new Vector3(1, 1.5, 1.2)));
+          if (k < steps) cascades.push({ rim, out, p });
+        }
+      }
+      // The cascades: sheets of water falling from the cliff tops to the rims, beside the channel.
+      const cpos = [];
+      const cuv = [];
+      const cidx = [];
+      cascades.forEach(({ rim, out }, k) => {
+        const top = rim.clone().addScaledVector(out, 1.9).addScaledVector(UP, 3.2);
+        const bottom = rim.clone().addScaledVector(out, 0.9);
+        const { along } = frameAt(centerline, cascades[k].p);
+        const w = 2.2;
+        const v0 = cpos.length / 3;
+        for (const [pt, v] of [[top, 1], [bottom, 0]]) {
+          for (const d of [-w, w]) {
+            const q = pt.clone().addScaledVector(along, d);
+            cpos.push(q.x, q.y, q.z);
+            cuv.push(d < 0 ? 0 : 1, v * 1.5);
+          }
+        }
+        cidx.push(v0, v0 + 2, v0 + 1, v0 + 1, v0 + 2, v0 + 3);
+      });
+      if (cpos.length) {
+        const cg = new BufferGeometry();
+        cg.setAttribute('position', new Float32BufferAttribute(cpos, 3));
+        cg.setAttribute('uv', new Float32BufferAttribute(cuv, 2));
+        cg.setIndex(cidx);
+        falls.cascades.push(cg);
+      }
+
+      // Spray at the foot of the falls: white drops, drifting (see-through).
+      const foot = frameAt(centerline, s.to);
+      const sprayCount = lite ? 40 : 120;
+      const spray = new Float32Array(sprayCount * 3);
+      for (let k = 0; k < sprayCount; k += 1) {
+        const q = foot.pos.clone().addScaledVector(foot.side, (noise(k) - 0.5) * 9).addScaledVector(UP, noise(k * 3) * 3).addScaledVector(foot.along, (noise(k * 7) - 0.5) * 6);
+        spray.set([q.x, q.y, q.z], k * 3);
+      }
+      const sg = new BufferGeometry();
+      sg.setAttribute('position', new Float32BufferAttribute(spray, 3));
+      falls.sprays.push(sg);
+
+      // A rainbow in the spray, off to one side (see-through).
+      if (!lite) {
+        const rpos = [];
+        const rcol = [];
+        const bands = ['#ff4d4d', '#ffa64d', '#fff04d', '#5ed65e', '#4da6ff', '#a24dff'].map((h) => new Color(h));
+        const centre = foot.pos.clone().addScaledVector(foot.side, 6).addScaledVector(foot.along, 4);
+        bands.forEach((bc, bi) => {
+          const r0 = 6 + bi * 0.35;
+          for (let k = 0; k < 16; k += 1) {
+            const a0 = (Math.PI * k) / 16;
+            const a1 = (Math.PI * (k + 1)) / 16;
+            const ring = (r, a) => centre.clone().addScaledVector(foot.along, Math.cos(a) * r).addScaledVector(UP, Math.sin(a) * r);
+            const quad = [ring(r0, a0), ring(r0 + 0.35, a0), ring(r0 + 0.35, a1), ring(r0, a1)];
+            for (const v of [quad[0], quad[1], quad[2], quad[0], quad[2], quad[3]]) {
+              rpos.push(v.x, v.y, v.z);
+              rcol.push(bc.r, bc.g, bc.b);
+            }
+          }
+        });
+        const rg = new BufferGeometry();
+        rg.setAttribute('position', new Float32BufferAttribute(rpos, 3));
+        rg.setAttribute('color', new Float32BufferAttribute(rcol, 3));
+        falls.rainbows.push(rg);
+      }
+
+      // The curtain: a see-through sheet of water across the channel, the marbles racing through it.
+      if (s.waterfall.curtain) {
+        const p = s.from + 0.55 * (s.to - s.from);
+        const left = surface(p, 1.15, 0);
+        const right = surface(p, -1.15, 0);
+        const topY = Math.max(left.y, right.y) + 4.5;
+        const lowY = Math.min(left.y, right.y) - 3.2;
+        const cg = new BufferGeometry();
+        const cp = [left.x, topY, left.z, right.x, topY, right.z, left.x, lowY, left.z, right.x, lowY, right.z];
+        cg.setAttribute('position', new Float32BufferAttribute(cp, 3));
+        cg.setAttribute('uv', new Float32BufferAttribute([0, 1.4, 1, 1.4, 0, 0, 1, 0], 2));
+        cg.setIndex([0, 2, 1, 1, 2, 3]);
+        const curtainMat = new MeshBasicMaterial({ map: tex, transparent: true, opacity: 0.35, depthWrite: false, side: DoubleSide });
+        owned.push(curtainMat);
+        const curtain = new Mesh(cg, curtainMat);
+        curtain.name = 'waterfall-curtain';
+        group.add(curtain);
+      }
+    }
+  }
+
+  if (falls.floors.length) {
+    const one = (list) => (list.length === 1 ? list[0] : mergeGeometries(list));
+    const sheetMat = new MeshBasicMaterial({ map: falls.tex, transparent: true, opacity: 0.55, depthWrite: false, side: DoubleSide, polygonOffset: true, polygonOffsetFactor: -2 });
+    owned.push(sheetMat);
+    const floorMesh = new Mesh(one(falls.floors), sheetMat);
+    floorMesh.name = 'waterfall-water';
+    floorMesh.renderOrder = 1;
+    group.add(floorMesh);
+    // (Phones: the water down the chute only, no cascades or spray: two calls fewer, within their budget.)
+    if (falls.cascades.length && !lite) {
+      const cascadeMat = new MeshBasicMaterial({ map: falls.tex, transparent: true, opacity: 0.7, depthWrite: false, side: DoubleSide });
+      owned.push(cascadeMat);
+      const cm = new Mesh(one(falls.cascades), cascadeMat);
+      cm.name = 'waterfall-cascades';
+      group.add(cm);
+    }
+    if (!lite) {
+      const sprayMat = new PointsMaterial({ color: STRUCTURE_COLORS.foam, size: 0.45, transparent: true, opacity: 0.7, depthWrite: false });
+      owned.push(sprayMat);
+      const sprayPoints = new Points(one(falls.sprays), sprayMat);
+      sprayPoints.name = 'waterfall-spray';
+      group.add(sprayPoints);
+      water.push({ spray: sprayPoints, base: sprayPoints.geometry.getAttribute('position').array.slice() });
+    }
+    if (falls.rainbows.length) {
+      const rm = new MeshBasicMaterial({ vertexColors: true, transparent: true, opacity: 0.35, depthWrite: false, side: DoubleSide, blending: AdditiveBlending });
+      owned.push(rm);
+      const rainbow = new Mesh(one(falls.rainbows), rm);
+      rainbow.name = 'rainbow';
+      group.add(rainbow);
+    }
+  }
+
+  // The solid pieces, coloured per piece and merged by neighbourhood: one draw call per
+  // structure or so, whatever its colours (bridges apart: the ground check counts them as built).
+  const BUILT = ['plank', 'plankDark', 'stone', 'stoneDark', 'iceSlab', 'iceDeep', 'steel', 'steelDark', 'bridgeWater'];
+  const solidMats = {};
+  const coloured = { built: [], other: [] };
+  for (const [key, list] of Object.entries(parts)) {
+    const ready = list.map((g) => {
+      for (const name of Object.keys(g.attributes)) if (name !== 'position' && name !== 'normal') g.deleteAttribute(name);
+      return g;
+    });
+    if (key === 'eye') {
+      // The dragon's glowing eyes: unlit, their own call.
+      solidMats.eye = new MeshBasicMaterial({ color: STRUCTURE_COLORS.eye });
+      const mesh = new Mesh(mergeGeometries(ready), solidMats.eye);
+      mesh.name = key;
+      group.add(mesh);
+      continue;
+    }
+    for (const g of ready) coloured[BUILT.includes(key) ? 'built' : 'other'].push(piece(g, STRUCTURE_COLORS[key] ?? '#ff00ff'));
+  }
+  solidMats.solid = new MeshLambertMaterial({ vertexColors: true, flatShading: true });
+  for (const [kind, list] of Object.entries(coloured)) {
+    if (!list.length) continue;
+    // (Phones: in cells of 1 km, not 250 m: a short structure on a cell corner was four calls.)
+    for (const geometry of mergeByArea(list, lite ? 1000 : 250)) {
+      const mesh = new Mesh(geometry, solidMats.solid);
+      mesh.name = kind === 'built' ? 'bridge' : 'structure';
+      if (kind === 'built') mesh.userData.built = true;
+      group.add(mesh);
+    }
+  }
+
+  const update = (t) => {
+    const sec = t / 1000;
+    for (const w of water) {
+      if (w.tex) w.tex.offset.y = sec * w.speed;
+      if (w.spray) {
+        // The drops rise and drift a little, on the race clock (every viewer sees the same).
+        const attr = w.spray.geometry.getAttribute('position');
+        for (let k = 0; k < attr.count; k += 1) {
+          const lift = ((sec * 0.8 + noise(k)) % 1) * 2.5;
+          attr.setY(k, w.base[k * 3 + 1] + lift);
+        }
+        attr.needsUpdate = true;
+      }
+    }
+  };
+  update(0);
+  const dispose = () => {
+    group.traverse((o) => { if (o.isMesh || o.isPoints) o.geometry.dispose(); });
+    for (const m of [...owned, ...Object.values(solidMats)]) m.dispose();
+  };
+  return { group, update, dispose };
+}

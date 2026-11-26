@@ -1,0 +1,177 @@
+'use strict';
+
+// The variety libraries' test tracks: one per opening (each on the classic layout) and
+// one per layout (each with the classic opening). Like the Kit Proving Ground they are
+// never raced for real (not in the database); each passed its full track report before
+// any real track used its opening or layout. Preview: /preview/physics?track=<slug>.
+const { track, opening, layout, OPENING_KINDS, LAYOUT_KINDS } = require('../../trackKit');
+
+const NAMES = {
+  classic: 'Classic', 'split-start': 'Split-and-Merge Start', 'staggered-drop': 'Staggered Drop', 'tunnel-launch': 'Tunnel Launch',
+  'banked-turn': 'Banked First Turn', 'boost-launch': 'Boost-Pad Launch', 'funnel-drop': 'Funnel Drop', 'crest-start': 'Crest Start',
+  'rolling-start': 'Rolling Start', 'chicane-start': 'Chicane Start', 'rumble-start': 'Rumble Start', 'sand-trap': 'Sand Trap',
+  'early-hairpin': 'Early Hairpin', 'twin-spirals': 'Twin Spirals', 'climb-drop': 'Climb and Drop', 'late-splitter': 'Late Splitter',
+  'mid-drop': 'Mid Drop', 'two-splitters': 'Two Splitters', 'long-sweeps': 'Long Sweeps',
+  'island-spins': 'Island Spins', 'sea-crossing': 'Sea Crossing', 'canopy-run': 'Canopy Run', 'terrace-run': 'Terrace Run', 'delta-skim': 'Delta Skim', 'two-spins': 'Two Spins', 'wall-dive': 'Wall Dive', staircases: 'Staircases', 'siege-routes': 'Siege Routes', 'stage-hairpin': 'Stage Hairpin', 'saucer-sweeps': 'Saucer Sweeps', 'lower-playfield': 'Lower Playfield', 'clock-tower': 'Clock Tower', 'encore-split': 'Encore Split', 'cabinet-rows': 'Cabinet Rows', 'maze-corridors': 'Maze Corridors', 'bullet-spirals': 'Bullet Spirals', 'up-up-down-down': 'Up Up Down Down', 'bracket-splits': 'Bracket Splits', 'coast-road': 'Coast Road', 'co-op-street': 'Co-op Street',
+  'horseshoe-bend': 'Horseshoe Bend', 'great-bend': 'Great Bend', 'terrace-steps': 'Terrace Steps', 'rafting-run': 'Rafting Run', 'six-canyons': 'Six Canyons',
+  'basalt-gorge': 'Basalt Gorge', 'twin-peaks': 'Twin Peaks', 'cliff-ledge': 'Cliff Ledge', 'free-fall': 'Free Fall', meanders: 'Meanders',
+  'spawn-meadow': 'Spawn Meadow', 'speedrun-straights': 'Speedrun Straights', 'peak-beams': 'Peak Beams', 'mine-shaft': 'Mine Shaft', 'magma-loops': 'Magma Loops',
+  'clear-rows': 'Clear Rows', 'combo-steps': 'Combo Steps', 'stack-spiral': 'Stack Spiral', 'fortress-gate': 'Fortress Gate', 'final-level': 'Final Level',
+  'slot-canyon': 'Slot Canyon', 'cliff-road': 'Cliff Road', 'rapids-gorge': 'Rapids Gorge', 'long-falls': 'Long Falls', 'siq-passage': 'Siq Passage',
+  'karst-splits': 'Karst Splits', 'grand-canal': 'Grand Canal', 'horseshoe-falls': 'Horseshoe Falls', 'three-towers': 'Three Towers', 'aurora-fell': 'Aurora Fell', 'temple-terraces': 'Temple Terraces', 'souk-walls': 'Souk Walls', 'garden-domes': 'Garden Domes', 'tram-hills': 'Tram Hills', 'quay-terraces': 'Quay Terraces', 'chateau-moat': 'Château Moat', 'castle-weir': 'Castle Weir', 'lake-towers': 'Lake Towers', 'glacier-snout': 'Glacier Snout', 'plateau-falls': 'Plateau Falls', 'arrowhead-spiral': 'Arrowhead Spiral', 'clear-ice': 'Clear Ice', 'ice-valley': 'Ice Valley', 'geyser-terraces': 'Geyser Terraces', 'bubble-lake': 'Bubble Lake',
+  'island-hops': 'Island Hops', 'harbour-quays': 'Harbour Quays', 'temple-halls': 'Temple Halls', 'cascade-rows': 'Cascade Rows', 'bonus-stages': 'Bonus Stages',
+  'horseshoe-sprint': 'Horseshoe Sprint', 'blue-lanes': 'Blue Lanes', 'bell-lap': 'Bell Lap', 'hurdles-straight': 'Hurdles Straight', 'nest-bend': 'Nest Bend',
+  'photo-finish': 'Photo Finish', 'relay-legs': 'Relay Legs', 'steeple-water': 'Steeple Water', 'anchor-arches': 'Anchor Arches', 'golden-lap': 'Golden Lap',
+  'half-pipe-run': 'Half-Pipe Run', 'mid-lottery': 'Mid Lottery', 'jib-run': 'Jib Run', 'jump-run': 'Jump Run', 'loop-run': 'Loop Run', 'clean-drop': 'Clean Drop',
+  'bridge-slalom': 'Bridge Slalom', 'market-maze': 'Market Maze', 'steamer-pass': 'Steamer Pass', 'falls-edge': 'Falls Edge', 'lock-staircase': 'Lock Staircase', 'bridge-gate': 'Bridge Gate', 'arch-run': 'Arch Run', 'port-cranes': 'Port Cranes', 'flooded-forest': 'Flooded Forest', 'balloon-plain': 'Balloon Plain', 'peg-drop': 'Peg Drop', 'pipe-drop': 'Pipe Drop', 'clear-start': 'Clear Start',
+  'two-waters': 'Two Waters', cataract: 'Cataract', 'rapids-ladder': 'Rapids Ladder', 'island-castle': 'Island Castle', 'river-steps': 'River Steps',
+  'icefall-ladders': 'Icefall Ladders', 'needle-ridge': 'Needle Ridge', 'blue-ice-plain': 'Blue-Ice Plain', 'zone-descent': 'Zone Descent', 'ice-cave-run': 'Ice-Cave Run',
+  'cinder-switchbacks': 'Cinder Switchbacks', 'penitente-maze': 'Penitente Maze', 'glacier-junction': 'Glacier Junction', 'saddle-traverse': 'Saddle Traverse', 'iceberg-lake': 'Iceberg Lake', 'moss-glacier': 'Moss Glacier', 'lake-terraces': 'Lake Terraces', 'tepui-wall': 'Tepui Wall', 'rhododendron-drop': 'Rhododendron Drop', tidewater: 'Tidewater', 'island-channels': 'Island Channels',
+};
+
+const base = (slug, name, description) => ({
+  slug,
+  name,
+  family: 'test',
+  difficulty: 'extreme',
+  description,
+  surface: 'ice',
+  biome: 'alpine',
+  lighting: 'day',
+  start: { landmark: 'mountain-hut' },
+  finish: { landmark: 'church' },
+});
+
+// Openings without the pile-up and slalom are proven on the mid lottery layout (the peg drop on the
+// half-pipe run), a lottery further on as well as their waves at the gate.
+const OPENING_LAYOUT = { 'clean-drop': 'mid-lottery', 'peg-drop': 'half-pipe-run', 'pipe-drop': 'mid-lottery', 'rolling-start': 'mid-lottery', 'rumble-start': 'mid-lottery', 'clear-start': 'mid-lottery' };
+// (The pipe drop's test track: a stronger lottery, 6 gates at loss 0.25, as its batches asked: its
+// half-pipe gives no luck of its own.)
+const OPENING_LAYOUT_OPTIONS = { 'pipe-drop': { lotteryGates: 6, lotteryLoss: 0.25 } };
+const openings = OPENING_KINDS.filter((k) => k !== 'classic').map((kind) => track({
+  ...base(`variety-opening-${kind}`, `Variety Test: ${NAMES[kind]}`, `The opening library's test track for the ${NAMES[kind].toLowerCase()}, on the ${NAMES[OPENING_LAYOUT[kind] ?? 'classic'].toLowerCase()} layout.`),
+  opening: opening(kind),
+  sections: layout(OPENING_LAYOUT[kind] ?? 'classic', OPENING_LAYOUT_OPTIONS[kind] ?? {}),
+}));
+
+// Layouts made for one coaster are proven on a test track built as a coaster (up on its
+// supports, touching down at the run to the hairpin and where else its coaster does), as that coaster will race them.
+const COASTER_LAYOUTS = ['island-spins', 'sea-crossing', 'canopy-run', 'terrace-run', 'delta-skim', 'two-spins', 'wall-dive'];
+// (Where else each touches down, as its coaster does: enough of it on the land.)
+// Layouts made for one pinball table are proven on a test track built as a pinball table.
+const PINBALL_LAYOUTS = ['staircases', 'siege-routes', 'stage-hairpin', 'saucer-sweeps', 'lower-playfield', 'clock-tower', 'encore-split'];
+// A layout whose results depend on how the field arrives (a splitter's balance, the spread) is proven with its table's own opening.
+// Layouts made for one arcade world are proven on a test track built as an arcade world.
+const ARCADE_LAYOUTS = ['cabinet-rows', 'maze-corridors', 'bullet-spirals', 'up-up-down-down', 'bracket-splits', 'coast-road', 'co-op-street'];
+const OWN_OPENING = { 'karst-splits': ['clean-drop', { side: 'right' }], 'grand-canal': 'staggered-drop', 'horseshoe-falls': 'peg-drop', 'three-towers': ['clean-drop', { side: 'left' }], 'aurora-fell': 'split-start', 'temple-terraces': 'crest-start', 'souk-walls': 'funnel-drop', 'garden-domes': 'tunnel-launch', 'tram-hills': 'classic', 'quay-terraces': 'staggered-drop', 'chateau-moat': 'peg-drop', 'castle-weir': 'tunnel-launch', 'lake-towers': ['banked-turn', { side: 'left' }], 'glacier-snout': 'classic', 'plateau-falls': 'funnel-drop', 'arrowhead-spiral': 'crest-start', 'clear-ice': ['pipe-drop', { side: 'left' }], 'ice-valley': ['banked-turn', { side: 'right' }], 'geyser-terraces': 'split-start', 'bubble-lake': ['pipe-drop', { side: 'right' }], 'cinder-switchbacks': 'staggered-drop', 'penitente-maze': ['banked-turn', { side: 'left' }], 'glacier-junction': 'split-start', 'saddle-traverse': 'tunnel-launch', 'iceberg-lake': ['clean-drop', { side: 'right' }], 'moss-glacier': 'funnel-drop', 'lake-terraces': 'staggered-drop', 'tepui-wall': 'pipe-drop', 'rhododendron-drop': 'crest-start', tidewater: 'classic', 'island-channels': 'funnel-drop', 'icefall-ladders': ['clean-drop', { side: 'left' }], 'needle-ridge': 'classic', 'blue-ice-plain': 'peg-drop', 'zone-descent': 'funnel-drop', 'ice-cave-run': ['banked-turn', { side: 'right' }], 'bridge-gate': 'pipe-drop', 'arch-run': 'pipe-drop', 'port-cranes': ['clean-drop', { side: 'right' }], 'balloon-plain': 'tunnel-launch', 'two-waters': 'funnel-drop', cataract: ['banked-turn', { side: 'left' }], 'rapids-ladder': 'staggered-drop', 'island-castle': ['split-start', { dress: { after: { height: 12 } } }], 'river-steps': 'peg-drop', 'bridge-slalom': 'tunnel-launch', 'market-maze': 'peg-drop', 'steamer-pass': 'staggered-drop', 'lock-staircase': 'clean-drop', 'siege-routes': 'crest-start', 'saucer-sweeps': 'staggered-drop', 'clock-tower': 'funnel-drop', 'encore-split': 'split-start', 'cabinet-rows': 'funnel-drop', 'maze-corridors': 'split-start', 'bullet-spirals': 'staggered-drop', 'up-up-down-down': 'crest-start', 'bracket-splits': 'banked-turn', 'coast-road': 'boost-launch', 'co-op-street': 'tunnel-launch', 'lower-playfield': ['banked-turn', { side: 'right' }] };
+// (Lower playfield: the banked turn the other way, so the test track is Tilt's exact mirror image.)
+// Layouts made for one canyon are proven on a test track built as a canyon (on the canyon floor, climbing out where its canyon does).
+const CANYON_LAYOUTS = ['horseshoe-bend', 'great-bend', 'terrace-steps', 'rafting-run', 'six-canyons', 'basalt-gorge', 'twin-peaks', 'cliff-ledge', 'free-fall', 'meanders',
+  'slot-canyon', 'cliff-road', 'rapids-gorge', 'long-falls', 'siq-passage'];
+const CANYON_HEIGHTS = {
+  'horseshoe-bend': { climbOut: { height: 40 }, sweep2: { height: 12 } },
+  'great-bend': { ledge: { height: 36 }, greatBend: { height: 16 } },
+  'terrace-steps': { highSweep: { height: 34 }, sweep2: { height: 18 } },
+  'rafting-run': { whirlpool: { height: 10 }, sweep: { height: 32 } },
+  'six-canyons': { hop1: { height: 30 }, hop2: { height: 28 }, hop3: { height: 32 }, spin: { height: 16 } },
+  'basalt-gorge': { trestle1: { height: 32 }, trestle2: { height: 24 } },
+  'twin-peaks': { sweep1: { height: 30 }, spin: { height: 14 } },
+  'cliff-ledge': { ledge: { height: 26 }, ledgeBend: { height: 26 }, spin: { height: 14 } },
+  'free-fall': { highSweep: { height: 30 }, sweep2: { height: 16 } },
+  meanders: { highSweep: { height: 28 } },
+  'slot-canyon': { rimRun: { height: 14 }, corkscrew: { height: 14 } },
+  'cliff-road': { rimRoad: { height: 30 }, lookout: { height: 30 } },
+  'rapids-gorge': { highTrail: { height: 28 } },
+  'long-falls': { ridgeSweep: { height: 28 }, toTheLip: { height: 14 }, plungePool: { height: 12 }, spin: { height: 12 } },
+  'siq-passage': { openSweep: { height: 24 } },
+};
+// Layouts made for one Block Series track are proven on a test track built as a Block Series world (on its
+// voxel land, flying on block pillars where its track does).
+const BLOCK_LAYOUTS = ['spawn-meadow', 'speedrun-straights', 'peak-beams', 'mine-shaft', 'magma-loops', 'clear-rows', 'combo-steps', 'stack-spiral', 'fortress-gate', 'final-level',
+  'island-hops', 'harbour-quays', 'temple-halls', 'cascade-rows', 'bonus-stages',
+  // Blocks Series 2 (each proven in its own world).
+  'karst-splits', 'grand-canal', 'horseshoe-falls', 'three-towers', 'aurora-fell', 'temple-terraces', 'souk-walls', 'garden-domes', 'tram-hills', 'quay-terraces', 'chateau-moat', 'castle-weir', 'lake-towers', 'glacier-snout', 'plateau-falls', 'arrowhead-spiral', 'clear-ice', 'ice-valley', 'geyser-terraces', 'bubble-lake'];
+const BLOCK_WORLD = { 'karst-splits': 'karst', 'grand-canal': 'canal', 'horseshoe-falls': 'falls', 'three-towers': 'dolomite', 'aurora-fell': 'aurora', 'temple-terraces': 'moss', 'souk-walls': 'souk', 'garden-domes': 'tropic', 'tram-hills': 'azulejo', 'quay-terraces': 'vineyard', 'chateau-moat': 'chateau', 'castle-weir': 'bohemia', 'lake-towers': 'patagonia', 'glacier-snout': 'cascade', 'plateau-falls': 'cloudforest', 'arrowhead-spiral': 'iceland', 'clear-ice': 'clearice', 'ice-valley': 'polar', 'geyser-terraces': 'geyser', 'bubble-lake': 'rockies' };
+const BLOCK_HEIGHTS = {
+  'peak-beams': { beamSweep: { height: 30 }, ridgeSweep: { height: 18 } },
+  'stack-spiral': { stackSpiral: { height: 12 } },
+  'final-level': { loop: { height: 14 } },
+  'island-hops': { bridge1: { height: 12 }, bridge2: { height: 10 } },
+  'harbour-quays': { pier: { height: 6 }, basinSweep: { height: 6 } },
+  'temple-halls': { stairs1: { height: 10 }, courtyard: { height: 10 } },
+  'cascade-rows': { brakingStraight: { height: 10 }, hairpin: { height: 10 }, spin: { height: 10 } },
+  'bonus-stages': { stage2: { height: 10 }, spin: { height: 10 } },
+};
+// Layouts made for one Track and Field track are proven on a test track built as a stadium (on its ground,
+// the stadium round the sections its track runs inside it).
+const ATHLETICS_LAYOUTS = ['horseshoe-sprint', 'blue-lanes', 'bell-lap', 'hurdles-straight', 'nest-bend', 'photo-finish', 'relay-legs', 'steeple-water', 'anchor-arches', 'golden-lap'];
+const ATHLETICS_DRESS = {
+  'horseshoe-sprint': { homeStraight: { stadium: true }, hairpin: { stadium: true }, backStraight: { stadium: true } },
+  'blue-lanes': { stadiumBend: { stadium: true }, colonnade: { stadium: true } },
+  'bell-lap': { backStraight: { stadium: true }, sweep: { stadium: true } },
+  'hurdles-straight': { sweep: { stadium: true }, hurdles: { stadium: true } },
+  'nest-bend': { longBend: { stadium: true }, homeStraight: { stadium: true } },
+  'photo-finish': { longSweep: { stadium: true }, lastStraight: { stadium: true } },
+  'relay-legs': { leg1: { stadium: true }, sweep1: { stadium: true }, leg2: { stadium: true } },
+  'steeple-water': { barrier2: { stadium: true }, waterJump: { stadium: true }, sBends: { stadium: true } },
+  'anchor-arches': { sweep2: { stadium: true }, lastStraight: { stadium: true } },
+  'golden-lap': { goldenSweep: { stadium: true }, sBends: { stadium: true } },
+};
+// Layouts made for one Rivers track are proven on a test track built as a river (on its banks, flying out
+// over the water where its track does), with the opening its track races.
+const RIVER_LAYOUTS = ['bridge-slalom', 'market-maze', 'steamer-pass', 'falls-edge', 'lock-staircase', 'bridge-gate', 'arch-run', 'port-cranes', 'flooded-forest', 'balloon-plain', 'two-waters', 'cataract', 'rapids-ladder', 'island-castle', 'river-steps', 'island-channels'];
+const RIVER_HEIGHTS = {
+  'bridge-slalom': { flyOut: { height: 14 } },
+  'market-maze': {},
+  'steamer-pass': { bayou: { height: 10 } },
+  'falls-edge': { lip: { height: 14 }, lipBend: { height: 14 } },
+  'lock-staircase': {},
+  'bridge-gate': { reach: { height: 12 } },
+  'arch-run': {},
+  'port-cranes': { bridgeRun: { height: 10 } },
+  'flooded-forest': { trunks: { height: 7 } },
+  'balloon-plain': { plainBends: { height: 14 } },
+  'two-waters': { seam: { height: 8 }, seamSweep: { height: 8 } },
+  cataract: { sails: { height: 12 } },
+  'rapids-ladder': { whiteWater: { height: 8 } },
+  'island-castle': { bargeReach: { height: 8 }, bargeSweep: { height: 10 } },
+  'river-steps': { lamps: { height: 6 } },
+};
+// (Each test track starts the way its track does: looks only, but the land behind the gate differs.)
+// (Island castle: out of the chutes on supports, as Rhine Castle Run, so the barge reach below has no bank of it to pass through.)
+const RIVER_START = { 'market-maze': 'river-boat', cataract: 'cliff', 'rapids-ladder': 'stepped-platform', 'island-castle': 'castle-tower', 'river-steps': 'stepped-platform' };
+// (Falls edge is proven the way Zambezi Falls Run races it: mirrored, its first bend to the right.)
+const RIVER_MIRROR = { 'falls-edge': true };
+// Layouts made for one Peaks track are proven on a test track built as a mountain (on its snow, flying along a
+// ridge or over a crevasse where its track does), with the opening and start its track races.
+const PEAK_LAYOUTS = ['icefall-ladders', 'needle-ridge', 'blue-ice-plain', 'zone-descent', 'ice-cave-run', 'cinder-switchbacks', 'penitente-maze', 'glacier-junction', 'saddle-traverse', 'iceberg-lake', 'moss-glacier', 'lake-terraces', 'tepui-wall', 'rhododendron-drop', 'tidewater'];
+const PEAK_HEIGHTS = {
+  'icefall-ladders': { ladder1: { height: 8, peak: { crevasse: 'ladder' } }, ladder2: { height: 8, peak: { crevasse: 'ladder' } }, ladder3: { height: 8, peak: { crevasse: 'ice-arch' } } },
+  'needle-ridge': { ridge: { height: 14, peak: { ridge: true } } },
+  'blue-ice-plain': {},
+  'zone-descent': {},
+  'ice-cave-run': { cave: { tunnel: 'blue-ice' } },
+  'cinder-switchbacks': { cloudSea: { height: 12 } },
+  'tepui-wall': { wall: { height: 10 } },
+};
+const PEAK_START = { 'cinder-switchbacks': 'curving-lift', 'penitente-maze': 'cliff', 'glacier-junction': 'cliff', 'saddle-traverse': 'rooftop', 'iceberg-lake': 'ice-ledge', 'moss-glacier': 'stepped-platform', 'lake-terraces': 'straight-lift', 'tepui-wall': 'elevator', 'rhododendron-drop': 'straight-lift', tidewater: 'ski-plane', 'icefall-ladders': 'ice-ledge', 'needle-ridge': 'gondola', 'blue-ice-plain': 'ski-plane', 'zone-descent': 'stepped-platform', 'ice-cave-run': 'spiral-tower' };
+const PEAK_PALETTE = { 'cinder-switchbacks': 'fuji', 'penitente-maze': 'aconcagua', 'glacier-junction': 'k2', 'saddle-traverse': 'elbrus', 'iceberg-lake': 'aoraki', 'moss-glacier': 'rwenzori', 'lake-terraces': 'huascaran', 'tepui-wall': 'roraima', 'rhododendron-drop': 'kangchenjunga', tidewater: 'alaska', 'icefall-ladders': 'everest', 'needle-ridge': 'mont-blanc', 'blue-ice-plain': 'vinson', 'zone-descent': 'kilimanjaro', 'ice-cave-run': 'vatnajokull' };
+const TOUCHDOWNS = { 'sea-crossing': { tunnelRun: { height: 0 } }, 'terrace-run': { swoops: { height: 0 } }, 'wall-dive': { tunnelRun: { height: 0 } } };
+
+const layouts = LAYOUT_KINDS.map((kind) => track({
+  ...base(`variety-layout-${kind}`, `Variety Test: ${NAMES[kind]} Layout`, `The layout library's test track for the ${NAMES[kind].toLowerCase()} layout, with the ${OWN_OPENING[kind] ? `${NAMES[[].concat(OWN_OPENING[kind])[0]].toLowerCase()} opening its table races` : 'classic opening'}${COASTER_LAYOUTS.includes(kind) ? ', built as a coaster' : CANYON_LAYOUTS.includes(kind) ? ', built as a canyon' : BLOCK_LAYOUTS.includes(kind) ? ', built as a Block Series world' : ATHLETICS_LAYOUTS.includes(kind) ? ', built as a stadium' : RIVER_LAYOUTS.includes(kind) ? ', built as a river' : PEAK_LAYOUTS.includes(kind) ? ', built as a mountain' : PINBALL_LAYOUTS.includes(kind) ? ', built as a pinball table' : ARCADE_LAYOUTS.includes(kind) ? ', built as an arcade world' : ''}.`),
+  ...(COASTER_LAYOUTS.includes(kind) && { series: 'coaster', coaster: { height: 18 } }),
+  ...(CANYON_LAYOUTS.includes(kind) && { series: 'canyon', biome: 'desert', canyon: { palette: 'grand-canyon' } }),
+  ...(BLOCK_LAYOUTS.includes(kind) && { series: 'block', biome: 'meadow', block: { world: BLOCK_WORLD[kind] ?? 'meadow' } }),
+  ...(ATHLETICS_LAYOUTS.includes(kind) && { series: 'athletics', biome: 'city', surface: 'tartan', athletics: { stadium: 'bislett' } }),
+  ...(RIVER_LAYOUTS.includes(kind) && { series: 'river', biome: 'meadow', river: { palette: 'danube' }, start: { landmark: 'mountain-hut', type: RIVER_START[kind] ?? 'pier' } }),
+  ...(PEAK_LAYOUTS.includes(kind) && { series: 'peak', biome: 'alpine', surface: 'snow', peak: { palette: PEAK_PALETTE[kind] }, start: { ...(kind !== 'tepui-wall' && { landmark: 'mountain-hut' }), type: PEAK_START[kind] } }), // (the tepui wall's lift stands beside its finish: no hut there, as on Roraima)
+  ...(PINBALL_LAYOUTS.includes(kind) && { series: 'pinball', biome: 'playfield', lighting: 'parlour' }),
+  ...(ARCADE_LAYOUTS.includes(kind) && { series: 'arcade', biome: 'circuit-board', lighting: 'neon-night', billboardFrame: 'marquee' }),
+  // (The loop's proving track: the loop is its big feature, the flyover's highlight, with a TV camera just past it looking back at it.)
+  ...(kind === 'loop-run' && { signature: 'The loop', tvCameras: [{ section: 'The loop', at: 0.85, side: 'right', distance: 10, height: 10 }] }),
+  opening: opening(...[].concat(OWN_OPENING[kind] ?? 'classic')),
+  sections: layout(kind, COASTER_LAYOUTS.includes(kind) ? { dress: { brakingStraight: { height: 0 }, ...TOUCHDOWNS[kind] } } : CANYON_LAYOUTS.includes(kind) ? { dress: CANYON_HEIGHTS[kind] } : BLOCK_LAYOUTS.includes(kind) ? { dress: BLOCK_HEIGHTS[kind] ?? {} } : ATHLETICS_LAYOUTS.includes(kind) ? { dress: ATHLETICS_DRESS[kind] } : RIVER_LAYOUTS.includes(kind) ? { dress: RIVER_HEIGHTS[kind], mirror: Boolean(RIVER_MIRROR[kind]) } : PEAK_LAYOUTS.includes(kind) ? { dress: PEAK_HEIGHTS[kind] } : {}),
+}));
+
+module.exports = [...openings, ...layouts];

@@ -1,0 +1,19 @@
+import { isNativeApp } from '../../app/native';
+
+/**
+ * The terms of sale's section 3, track packs (Moses: drafted 12 Nov 2026, approved and live 16 Nov 2026, with packs
+ * never transferable). `highlight`: the review page's look (/preview/legal-packs).
+ */
+export default function TrackPacksSection({ highlight = false }) {
+  const app = isNativeApp(); // (the apps: the store's price only, no website price; docs/08-store-rules.md)
+  return (
+    <section className={highlight ? 'ms-legal__newblock' : undefined} aria-label={highlight ? 'New: track packs' : undefined}>
+      <h2 id="track-packs" className="ms-legal__h2">3. Track packs</h2>
+      <p>A track pack unlocks every track of one series for your account, for example the Grand Prix pack. Each pack has its own page in the shop listing the tracks it unlocks. {app ? 'In the app, the store shows its price, in your currency, VAT included.' : 'A pack costs $6.99 on the website (shown in your local currency, VAT included). In the apps, the App Store or Google Play shows its own price, in your currency.'} It is one payment, not a subscription.</p>
+      <p><b>Paying partly with coins.</b> You may pay part of a pack's price with coins: at most 30% of the price ({app ? '1,990 coins; the store shows the rest' : '1,990 coins on the website, where the rest is $4.99'}). The rest is always paid with money; a pack can't be bought with coins alone. The checkout shows how many coins and how much money you pay. On the website the coins are taken from your account when you continue to payment, and given back automatically if the payment isn't completed. In the apps they are set aside when you open the App Store's or Google Play's purchase, and given back if you close it without buying, or within 2 hours if no purchase is made.</p>
+      <p><b>Yours for life.</b> A pack belongs to the saved Marble Spins account that bought it, for as long as the account exists and we run Marble Spins, on the website and in the apps. With it you can race the pack's tracks at any time, and when you host a friend room or a league, everyone in it races them, pack or not. Tracks that are free stay free for everyone. New tracks added to a pack later are included at no extra cost. We may improve a track's layout or looks; if we ever remove a track from a pack, we'll replace it with another track from the same series where we can. A pack has no cash value and belongs to the account that bought it: it can never be transferred, sold, traded, gifted or moved to another account (terms of use, section 4). Like everything in the game, it never changes how fast a marble is. Paid leagues can race any track, including tracks in packs you don't have.</p>
+      <p><b>Unlocked at once.</b> A pack is unlocked as soon as the payment is confirmed: on the website when Stripe confirms it, in the apps when the App Store or Google Play confirms it and we have checked it. At checkout you ask for the pack to be unlocked right away and confirm, by ticking the box, that your 14-day right of withdrawal (section 5) ends when it is unlocked. In the apps, the App Store's or Google Play's own purchase terms also apply.</p>
+      <p><b>Refunds.</b> A pack isn't refundable once unlocked, except where the law requires it (section 6). If a pack payment is refunded in full, the pack is removed from your account and the coins you paid towards it are given back. If a payment is reversed by a chargeback, the pack is removed and the coins aren't given back. Packs bought in the apps are refunded by Apple or Google under their rules; when they tell us of the refund, the pack is removed the same way.</p>
+    </section>
+  );
+}

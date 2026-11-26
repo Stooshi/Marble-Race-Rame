@@ -1,0 +1,694 @@
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { useRaceSoundPreload } from '../../sound/settings';
+import { Link, Navigate, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+import { api } from '../../api/client';
+import { firstStepError, useLeftReport } from '../../api/firstSteps';
+import { useAuth } from '../../context/AuthContext';
+import { useAsync } from '../../hooks/useAsync';
+import { ITEM, previewShowcase } from '../../shared/marbles';
+import MarbleBadge from '../marbles/MarbleBadge';
+import TrackBanner, { SERIES_PIC } from '../TrackBanner';
+import WildnessBadge from '../WildnessBadge';
+import { PackBanner } from '../shop/TrackPacks';
+import { bannerPacks, bannerSlots, orderTracks } from './pickerV2';
+import { WILDNESS, WILDNESS_LEVELS, WILDNESS_NOTE, matchesWildness } from '../../shared/wildness.js';
+import { handle, shownName } from '../../shared/playerName';
+import { useLeaguesOn } from '../leagues/status';
+
+/**
+ * The race flow: 1 Friends → 2 Track → 3 Marble → 4 Starting line.
+ * The choices travel in the address (?track=…&with=friends), so any step can
+ * be opened, shared or reloaded. Racing with friends goes through a friend room
+ * (RoomPage, /r/CODE); the Friends step makes one or opens one by its code.
+ */
+
+const LANDSCAPE = {
+  alpine: 'Snow and ice', arctic: 'Snow and ice', city: 'City', jungle: 'Jungle', desert: 'Desert', meadow: 'Countryside',
+  playfield: 'Pinball table', 'circuit-board': 'Arcade', 'blacklight-carpet': 'Arcade',
+};
+const SERIES_ORDER = ['World Tour', 'Grand Prix', 'Coasters', 'Canyons', 'Blocks', 'Track and Field', 'Rivers', 'Peaks', 'Pinball', 'Arcade', 'Winter Wonders', 'Classic'];
+
+function Steps({ at, track, shooter }) {
+  const [search] = useSearchParams();
+  const q = search.toString();
+  const steps = [
+    ['/play/friends', '1 · Friends'],
+    ['/play/track', `2 · Track${track ? `: ${track}` : ''}`],
+    ['/play/shooter', `3 · Marble${shooter ? `: ${shooter}` : ''}`],
+    ['/play/start', '4 · Starting line'],
+  ];
+  return (
+    <ol aria-label="Steps" className="ms-steps">
+      {steps.map(([to, label], k) => (
+        <li key={to} aria-current={k === at ? 'step' : undefined}>
+          {k < at ? <Link to={`${to}${q ? `?${q}` : ''}`}>{label}</Link> : label}
+        </li>
+      ))}
+    </ol>
+  );
+}
+
+/** What a player tapped to get to a page of the race flow (the guest's `source`, for the Dashboard's funnel). */
+export function racerSource(pathname) {
+  if (pathname.startsWith('/r/')) return 'room';
+  if (pathname.startsWith('/play/quick') || pathname.startsWith('/play/start')) return 'quick';
+  if (pathname.startsWith('/play/friends')) return 'friends';
+  return 'solo';
+}
+
+/**
+ * Was this page opened directly (typed, a shared link, a search engine or a link preview) rather than
+ * reached by tapping something in the game? React Router gives the first page of a visit the key
+ * 'default'; every navigation inside the game (a tap on Play, Quick race, Race solo, …) gets its own.
+ */
+export const openedDirectly = (location) => location.key === 'default';
+
+/**
+ * Makes sure there's someone to race as: a guest account if nobody is signed in. Since 2 Nov 2026
+ * (Moses) only after a tap: reached by tapping Play / Quick race / Race solo / a room, it is made
+ * straight away; a race page or room link that was only opened shows TapToPlay first (RacerGate).
+ */
+export function useRacer() {
+  const { isAuthenticated, loading, playAsGuest } = useAuth();
+  const location = useLocation();
+  const [error, setError] = useState(null);
+  const direct = openedDirectly(location);
+  const source = racerSource(location.pathname);
+  useEffect(() => {
+    if (!loading && !isAuthenticated && !direct) playAsGuest(source).catch((e) => setError(e.message));
+  }, [loading, isAuthenticated, playAsGuest, direct, source]);
+  return { ready: isAuthenticated, error };
+}
+
+const TAP = {
+  room: { title: 'You\'re invited to a race', text: 'Join the room and race your friends. Free, no account needed.', button: 'JOIN THE ROOM' },
+  quick: { title: 'Quick race', text: 'Race within seconds against players and computer marbles. Free, no account needed.', button: 'PLAY NOW, FREE' },
+  friends: { title: 'Race with friends', text: 'Make a room, share its link and race your friends. Free, no account needed.', button: 'START' },
+  solo: { title: 'Race solo', text: 'Pick a track and race. Free, no account needed.', button: 'START' },
+};
+
+/**
+ * The race flow's pages and rooms (Moses, 2 Nov 2026): opened directly by someone not signed in, they
+ * ask for a tap before a guest is made, so opening a link (or a search engine visiting it) makes no
+ * account. Reached by a tap inside the game, or signed in, they show straight away.
+ */
+export function RacerGate({ children }) {
+  const { isAuthenticated, loading, playAsGuest } = useAuth();
+  const location = useLocation();
+  const [state, setState] = useState({ busy: false, error: null });
+  if (loading) return null;
+  if (isAuthenticated || !openedDirectly(location)) return children;
+  const source = racerSource(location.pathname);
+  const t = TAP[source];
+  const tap = () => {
+    setState({ busy: true, error: null });
+    playAsGuest(source).catch((e) => setState({ busy: false, error: e.message }));
+  };
+  return (
+    <div className="ms-page" style={{ display: 'grid', gap: 16, justifyItems: 'start' }}>
+      <h1 className="ms-h1" style={{ fontFamily: 'var(--ms-cond)', fontWeight: 800 }}>{t.title}</h1>
+      <p className="ms-note">{t.text}</p>
+      <button type="button" className="ms-btn ms-btn--primary ms-btn--lg" onClick={tap} disabled={state.busy}>{state.busy ? '…' : t.button}</button>
+      {state.error && <div className="ms-msg ms-msg--bad" role="alert">{state.error}</div>}
+      <span className="ms-note">Have an account? <Link to="/signup?mode=login">Log in</Link></span>
+    </div>
+  );
+}
+
+export function useTracks() {
+  return useTrackList().tracks;
+}
+
+/** The live tracks, and whether pack tracks lock for this player (TRACK_PACKS on for them: the picker's lock filter). */
+export function useTrackList() {
+  const { data } = useAsync(() => api.tracks(), []);
+  const tracks = useMemo(() => (data?.tracks ?? []).filter((t) => t.is_active !== false), [data]);
+  return { tracks, packLocking: Boolean(data?.packLocking) };
+}
+
+/**
+ * The picker's two lock buttons (Moses, 12 Nov 2026), shown only while pack tracks lock for the player,
+ * working together with the wildness filter: My tracks (the default: free tracks, packs they own, Coming
+ * soon packs, season tracks they may race) and Locked (a pack on sale they don't own, or a season pass
+ * track). With locking off for them: no buttons, every track ('all').
+ */
+export const LOCK_FILTERS = [['mine', 'My tracks'], ['locked', 'Locked']];
+export const matchesLock = (t, f) => f === 'all' || (f === 'locked' ? Boolean(t.locked) : !t.locked);
+
+/** The look a player races in, from their Marble Bag. */
+function shooterOf(bag) {
+  if (!bag) return null;
+  if (bag.shooter?.item) {
+    const item = ITEM[bag.shooter.item];
+    return { slug: item.slug, name: item.design.shades.length > 1 ? `${item.design.name} · ${item.shade.name}` : item.design.name, rarity: item.rarity };
+  }
+  const original = bag.originals.find((m) => m.id === bag.shooter?.original) ?? bag.originals[0];
+  return original ? { marble: original, name: original.name, rarity: original.rarity } : null;
+}
+
+// ── Quick race ────────────────────────────────────────────────────────────
+
+/**
+ * Quick race (Moses, 25 Oct 2026): one tap, racing within seconds. The server puts the player into a
+ * public quick race starting soon with a free place, else opens a new one on a random track that starts
+ * by itself in 15 s; others tapping Quick race join it until then. The player doesn't pick the track.
+ * The room page (/r/CODE) shows who's in and the countdown, then goes to the race.
+ */
+export function QuickStep() {
+  const { ready, error: racerError } = useRacer();
+  const { user } = useAuth();
+  useRaceSoundPreload(); // (the race's sound in memory while Quick race finds a room)
+  const navigate = useNavigate();
+  const [error, setError] = useState(null);
+  const [tries, setTries] = useState(0);
+  useEffect(() => {
+    if (!ready) return undefined;
+    let stop = false;
+    api.quickRace()
+      .then((v) => { if (!stop) navigate(`/r/${v.room.code}`, { replace: true }); })
+      .catch((e) => {
+        if (stop) return;
+        // (A server from before Quick race (until its deploy): the solo race on a random track, as before.)
+        if (e?.status === 404) navigate('/play/start', { replace: true });
+        else { setError(e); firstStepError('quick', e, user); }
+      });
+    return () => { stop = true; };
+  }, [ready, tries, navigate]);
+  const e = racerError ? { message: racerError } : error;
+  useLeftReport('quick-wait', user); // (9 Nov 2026: a new guest closing the page here, before the room)
+  return (
+    <div className="ms-page" style={{ display: 'grid', gap: 16, justifyItems: 'start' }}>
+      <h1 className="ms-h1" style={{ fontFamily: 'var(--ms-cond)', fontWeight: 800 }}>Quick race</h1>
+      {!e && <p className="ms-note" aria-live="polite">Finding the next race…</p>}
+      {e && (
+        <>
+          <div className="ms-msg ms-msg--bad" role="alert">
+            {e.message}
+            {e.details?.code === 'no_free_marble' && <> <Link to="/shop">Shop</Link></>}
+          </div>
+          <div className="ms-row">
+            <button type="button" className="ms-btn ms-btn--primary" onClick={() => { setError(null); setTries((n) => n + 1); }}>TRY AGAIN</button>
+            <Link to="/play/track" className="ms-btn">RACE SOLO</Link>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+/** /play/start?quick=1 (the "Play free" buttons, older links): Quick race; anything else, the starting line. */
+export function StartOrQuick() {
+  const [search] = useSearchParams();
+  return search.get('quick') === '1' ? <Navigate to="/play/quick" replace /> : <StartStep />;
+}
+
+/** "Starts in 0:12" / "Waiting for the host", for a public room in the list. */
+function RoomWhen({ startsAt, serverNow }) {
+  const skew = useMemo(() => (serverNow ? new Date(serverNow).getTime() - Date.now() : 0), [serverNow]);
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    if (!startsAt) return undefined;
+    const t = setInterval(() => setNow(Date.now()), 500);
+    return () => clearInterval(t);
+  }, [startsAt]);
+  if (!startsAt) return <span>waiting for the host</span>;
+  const s = Math.max(0, Math.ceil((new Date(startsAt).getTime() - (now + skew)) / 1000));
+  return <span className="ms-public__when">starts in {Math.floor(s / 60)}:{String(s % 60).padStart(2, '0')}</span>;
+}
+
+/**
+ * The public rooms (Moses, 25 Oct 2026), quick races too: track, players (4/20), the countdown if one
+ * runs; a tap opens the room, which puts the player in (guests too). Full and started rooms drop off.
+ */
+export function PublicRooms({ ready }) {
+  const [rooms, setRooms] = useState(null);
+  useEffect(() => {
+    if (!ready) return undefined;
+    let stop = false;
+    const load = () => api.publicRooms().then((r) => { if (!stop) setRooms(r.rooms ?? []); }).catch(() => { if (!stop) setRooms((x) => x ?? []); });
+    load();
+    const t = setInterval(load, 5000);
+    return () => { stop = true; clearInterval(t); };
+  }, [ready]);
+  if (!rooms) return <p className="ms-note">Looking for races…</p>;
+  if (!rooms.length) return <p className="ms-note">No public races waiting right now. Tap Quick race to start one, or make a public room.</p>;
+  return (
+    <ul className="ms-public">
+      {rooms.map((r) => (
+        <li key={r.code}>
+          <Link to={`/r/${r.code}`} className="ms-public__row">
+            <span className="ms-public__what">
+              <b>{r.track.name}</b>
+              <span className="ms-note">{r.kind === 'quick' ? 'Quick race · ' : ''}{r.players}/{r.size} players · <RoomWhen startsAt={r.startsAt} serverNow={r.serverNow} /></span>
+            </span>
+            <span className="ms-btn ms-btn--sm ms-btn--primary">JOIN</span>
+          </Link>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+// ── 1 · Friends ───────────────────────────────────────────────────────────
+
+export function FriendsStep() {
+  const [search] = useSearchParams();
+  const { ready, error } = useRacer();
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const { data } = useAsync(async () => {
+    if (!ready) return null;
+    const board = await api.scoreboard('friends').catch(() => null);
+    return { friends: (board?.rows ?? []).filter((r) => !r.me) };
+  }, [ready]);
+  const [isPublic, setIsPublic] = useState(false); // (a new room: private by default, Moses 25 Oct 2026)
+  const [making, setMaking] = useState(false);
+  const [roomError, setRoomError] = useState(null);
+  const [roomCode, setRoomCode] = useState('');
+  const trackSlug = search.get('track');
+  const tracks = useTracks();
+  const leaguesOn = useLeaguesOn();
+
+  const makeRoom = async () => {
+    setMaking(true);
+    setRoomError(null);
+    try {
+      const t = tracks.find((x) => x.slug === trackSlug);
+      const v = await api.createRoom(t?.id, isPublic);
+      navigate(`/r/${v.room.code}`);
+    } catch (e) {
+      setRoomError(e.message);
+      setMaking(false);
+    }
+  };
+
+
+  return (
+    <div className="ms-page">
+      <Steps at={0} />
+      <h1 className="ms-h1" style={{ fontFamily: 'var(--ms-cond)', fontWeight: 800 }}>Invite your friends</h1>
+      {error && <div className="ms-msg ms-msg--bad">{error}</div>}
+      <div className="ms-two">
+        <section className="ms-card" style={{ display: 'grid', gap: 12 }} aria-labelledby="room-h">
+          <h2 id="room-h" className="ms-h3" style={{ fontFamily: 'var(--ms-cond)', fontWeight: 800, fontSize: '1.6rem' }}>Race with friends</h2>
+          <RoomPrivacy value={isPublic} onChange={setIsPublic} />
+          <p className="ms-note">{isPublic
+            ? 'A public room is listed under "Join a race": anyone can join until it starts, and you can still send the link. Up to 20 players; computer players fill the empty places. You pick the track and start.'
+            : 'Make a room and send its link: friends join from their phone or computer, no account needed. Up to 20 players; computer players fill the empty places. You pick the track and start.'}</p>
+          {roomError && <div className="ms-msg ms-msg--bad">{roomError}</div>}
+          <button type="button" className="ms-btn ms-btn--primary" disabled={!ready || making} onClick={makeRoom}>{making ? 'MAKING YOUR ROOM…' : 'MAKE A ROOM'}</button>
+          <form className="ms-form ms-row" style={{ display: 'flex', gap: 8 }} onSubmit={(e) => { e.preventDefault(); if (roomCode.trim()) navigate(`/r/${roomCode.trim().toUpperCase().replace(/[^A-Z0-9]/g, '')}`); }}>
+            <input aria-label="Room code" placeholder="Got a code? e.g. K7QF2M" value={roomCode} onChange={(e) => setRoomCode(e.target.value)} maxLength={10} style={{ flex: '1 1 160px', textTransform: 'uppercase' }} />
+            <button type="submit" className="ms-btn ms-btn--sm" disabled={!roomCode.trim()}>Join</button>
+          </form>
+          {leaguesOn && <Link to="/leagues/new" className="ms-league-link">Or start a league: race your friends all week, best times count</Link>}
+        </section>
+        <section className="ms-card" style={{ display: 'grid', gap: 12 }} aria-labelledby="friends-h">
+          <h2 id="friends-h" className="ms-h3" style={{ fontFamily: 'var(--ms-cond)', fontWeight: 800, fontSize: '1.6rem' }}>Join a race</h2>
+          <PublicRooms ready={ready} />
+          <h3 style={{ margin: '8px 0 0' }}>Raced with today</h3>
+          {data && data.friends.length === 0 && <p className="ms-note">Players you race with show up here for a day.</p>}
+          {data?.friends.slice(0, 6).map((f) => (
+            <div key={f.userId} className="ms-row" style={{ justifyContent: 'space-between' }}>
+              <span className="ms-row" style={{ flexWrap: 'nowrap', gap: 10 }}>
+                {f.shooter?.item ? <MarbleBadge slug={f.shooter.item} size={34} still /> : <MarbleBadge marble={f.shooter?.original} size={34} still />}
+                <span>{f.name ?? handle(f.username)}</span>
+              </span>
+
+            </div>
+          ))}
+        </section>
+      </div>
+      <div className="ms-flowbar">
+        <span className="ms-note">Or race on your own: computer players fill every other place</span>
+        <Link to={`/play/track?${search}`} className="ms-btn">RACE SOLO: PICK A TRACK</Link>
+      </div>
+    </div>
+  );
+}
+
+/** Private (link or code only, the default) | Public (listed under "Join a race"). */
+export function RoomPrivacy({ value, onChange, disabled = false }) {
+  return (
+    <div className="segmented ms-privacy" role="group" aria-label="Who can join">
+      <button type="button" aria-pressed={!value} disabled={disabled} onClick={() => onChange(false)}>Private</button>
+      <button type="button" aria-pressed={value} disabled={disabled} onClick={() => onChange(true)}>Public</button>
+    </div>
+  );
+}
+
+// ── 2 · Track ─────────────────────────────────────────────────────────────
+
+const WILD_FILTER_KEY = 'ms.wildFilter';
+function readWildFilter() {
+  try { const v = localStorage.getItem(WILD_FILTER_KEY); return v === 'all' || WILDNESS[v] ? v : 'all'; } catch { return 'all'; }
+}
+const WILD_RANK = { extreme: 3, wild: 2, easy: 1 };
+/** The picker's orders: newest first, A–Z, wildest first (by the score; a track without one last). */
+export const SORTS = {
+  new: (a, b) => new Date(b.created_at) - new Date(a.created_at),
+  name: (a, b) => a.name.localeCompare(b.name),
+  wild: (a, b) => (b.wildness_score ?? -1) - (a.wildness_score ?? -1) || (WILD_RANK[b.wildness] ?? 0) - (WILD_RANK[a.wildness] ?? 0) || a.name.localeCompare(b.name),
+};
+const SORT_NEXT = { new: 'name', name: 'wild', wild: 'new' };
+const SORT_LABEL = { new: 'New', name: 'A–Z', wild: 'Wildest' };
+
+/** The grid's column count (for the picker's banners every 7 rows). */
+function useColumns(ref) {
+  const [cols, setCols] = useState(3);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || typeof ResizeObserver === 'undefined') return undefined;
+    const read = () => setCols(Math.max(1, getComputedStyle(el).gridTemplateColumns.split(' ').filter(Boolean).length));
+    read();
+    const ro = new ResizeObserver(read);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [ref]);
+  return cols;
+}
+
+/**
+ * Step 1, the track picker (picker v2, Moses approved 17 Nov 2026; ./pickerV2.js): while packs lock for the player,
+ * the tracks they can race first, then the locked ones mixed, with pack banners among them, and All tracks / My
+ * tracks / Locked (All the default). With locking off it is the plain list.
+ */
+export function TrackStep() {
+  const [search] = useSearchParams();
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const list = useTrackList();
+  const { data: packData } = useAsync(() => api.packs().catch(() => null), [user?.id]);
+  const tracks = list.tracks;
+  const packLocking = list.packLocking;
+  const [lockState, setLock] = useState('all'); // (All / My tracks / Locked: only while packs lock for the player)
+  const lock = packLocking ? lockState : 'all';
+  const gridRef = useRef(null);
+  const cols = useColumns(gridRef);
+  const { data: records } = useAsync(() => (user && !user.is_guest ? api.trackRecords(user.id).catch(() => null) : null), [user?.id]);
+  const [q, setQ] = useState('');
+  const [series, setSeries] = useState(() => new Set());
+  const [land, setLand] = useState(() => new Set());
+  const [sort, setSort] = useState('new'); // new | name | wild (wildest first)
+  const [wild, setWildState] = useState(readWildFilter); // (All / Easy / Wild / Extreme, remembered on this device)
+  const setWild = (v) => { setWildState(v); try { localStorage.setItem(WILD_FILTER_KEY, v); } catch { /* (no storage: not remembered) */ } };
+  const [filtersOpen, setFiltersOpen] = useState(false); // (phones: folded behind one button, so the tracks come first)
+  const best = useMemo(() => new Map((records?.records ?? []).map((r) => [r.slug, r])), [records]);
+
+  const count = (key, val) => tracks.filter((t) => (key === 'series' ? t.series : LANDSCAPE[t.biome]) === val).length;
+  const seriesList = SERIES_ORDER.filter((s) => count('series', s));
+  const lands = [...new Set(tracks.map((t) => LANDSCAPE[t.biome]).filter(Boolean))];
+  const toggle = (set, setter, v) => { const n = new Set(set); if (n.has(v)) n.delete(v); else n.add(v); setter(n); };
+  const shown = tracks
+    .filter((t) => !q || t.name.toLowerCase().includes(q.toLowerCase()))
+    .filter((t) => !series.size || series.has(t.series))
+    .filter((t) => !land.size || land.has(LANDSCAPE[t.biome]))
+    .filter((t) => matchesWildness(t, wild))
+    .filter((t) => matchesLock(t, lock))
+    .sort(SORTS[sort]);
+  const newest = [...tracks].sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).slice(0, 3).map((t) => t.id);
+  const go = (slug) => { const n = new URLSearchParams(search); n.set('track', slug); navigate(`/play/shooter?${n}`); };
+  // A season that is on, whose tracks this player may race: "Holiday races" (one of its tracks each race).
+  const openSeason = tracks.find((t) => t.season?.state === 'on' && !t.locked)?.season ?? null;
+
+  const card = (t) => {
+    const r = best.get(t.slug);
+    return (
+      <button key={t.id} type="button" className="ms-trackcard" onClick={() => (t.lockedBy === 'pack' ? navigate(`/shop/packs/${t.pack.key}`) : t.locked ? navigate(`/pass?season=${t.season.key}`) : go(t.slug))}>
+        <div className="ms-trackcard__pic" style={{ background: SERIES_PIC[t.series] }}>
+          <TrackBanner slug={t.slug} />
+          {t.lockedBy === 'pack'
+            ? <span className="ms-badge-label" aria-label={`Locked: in the ${t.pack.name} pack`}>🔒 {t.pack.name.toUpperCase()} PACK</span>
+            : t.locked
+            ? <span className="ms-badge-label" aria-label="Locked: in the season pass">🔒 {t.season.state === 'before' ? 'SOON' : 'GET THE PASS'}</span>
+            : t.season?.featured ? <span className="ms-badge-label" style={{ background: 'var(--ms-green)' }}>HOLIDAY TRACK OF THE DAY</span>
+            : newest.includes(t.id) && <span className="ms-badge-label" style={{ background: 'var(--ms-green)' }}>NEW</span>}
+        </div>
+        <div className="ms-trackcard__body">
+          <b>{t.name}</b>
+          <span className="ms-trackcard__meta">{t.series}{LANDSCAPE[t.biome] ? ` · ${LANDSCAPE[t.biome]}` : ''}<WildnessBadge track={t} /></span>
+          <span style={{ color: r ? 'var(--ms-soft)' : 'var(--ms-muted)' }}>
+            {r ? `Your best: ${r.best_position}${['th', 'st', 'nd', 'rd'][r.best_position % 10 > 3 || Math.floor(r.best_position / 10) === 1 ? 0 : r.best_position % 10]}${r.best_time_ms ? ` · ${(r.best_time_ms / 1000).toFixed(1)} s` : ''}` : 'Not raced yet'}
+          </span>
+        </div>
+      </button>
+    );
+  };
+  // Racable first, then the locked ones mixed, a pack banner at the slots (./pickerV2.js).
+  const v2Order = useMemo(() => {
+    if (!packLocking) return null;
+    const { free, locked } = orderTracks(shown, SORTS[sort]);
+    const packs = bannerPacks(packData?.packs ?? [], locked);
+    const slots = bannerSlots(locked.length, cols, packs.length);
+    return { free, locked, slots, banner: (k) => packs[slots.indexOf(k)] ?? null };
+  }, [packLocking, shown, sort, packData, cols]);
+  return (
+    <div className="ms-page">
+      <Steps at={1} />
+      <div className="ms-row" style={{ justifyContent: 'space-between' }}>
+        <h1 className="ms-h1" style={{ fontFamily: 'var(--ms-cond)', fontWeight: 800 }}>Pick a track</h1>
+        <div className="ms-row ms-form" style={{ display: 'flex' }}>
+          <input type="search" placeholder={`Search ${tracks.length} tracks`} aria-label="Search tracks" value={q} onChange={(e) => setQ(e.target.value)} style={{ width: 'min(100%, 260px)' }} />
+          <button type="button" className="ms-btn ms-btn--sm" onClick={() => setSort((s) => SORT_NEXT[s])}>Sort: {SORT_LABEL[sort]}</button>
+          {openSeason && <button type="button" className="ms-btn ms-btn--sm" onClick={() => go(`season:${openSeason.key}`)}>{openSeason.name.replace(/ Season \d{4}$/, '')} races</button>}
+          <button type="button" className="ms-btn ms-btn--sm ms-btn--primary" onClick={() => go('random')}>Random track</button>
+        </div>
+      </div>
+      <div className="ms-row" style={{ gap: 10 }}>
+        <div className="ms-wild-filter" role="group" aria-label="Wildness">
+          {['all', ...WILDNESS_LEVELS].map((l) => (
+            <button key={l} type="button" aria-pressed={wild === l} onClick={() => setWild(l)}>
+              {l === 'all' ? 'All' : WILDNESS[l].word} <span style={{ opacity: 0.75 }}>{l === 'all' ? tracks.length : tracks.filter((t) => t.wildness === l).length}</span>
+            </button>
+          ))}
+        </div>
+        {packLocking && (
+          <div className="ms-wild-filter" role="group" aria-label="My tracks or locked">
+            {[['all', 'All tracks'], ...LOCK_FILTERS].map(([k, label]) => (
+              <button key={k} type="button" aria-pressed={lock === k} onClick={() => setLock(k)}>
+                {k === 'locked' ? '🔒 ' : ''}{label} <span style={{ opacity: 0.75 }}>{tracks.filter((t) => matchesLock(t, k)).length}</span>
+              </button>
+            ))}
+          </div>
+        )}
+        <p className="ms-wild-note">{WILDNESS_NOTE}</p>
+      </div>
+      <div className="ms-two" style={{ alignItems: 'start' }}>
+        <button type="button" className="ms-btn ms-btn--sm ms-filters-toggle" aria-expanded={filtersOpen} aria-controls="ms-track-filters" onClick={() => setFiltersOpen((v) => !v)}>
+          Filters{series.size + land.size ? ` (${series.size + land.size})` : ''} {filtersOpen ? '▴' : '▾'}
+        </button>
+        <aside id="ms-track-filters" aria-label="Filters" className={`ms-card ms-filters${filtersOpen ? ' ms-filters--open' : ''}`} style={{ flex: '0 1 230px' }}>
+          <span className="ms-eyebrow" style={{ color: 'var(--ms-muted)' }}>Series</span>
+          {seriesList.map((s) => <label key={s} className="ms-check"><input type="checkbox" checked={series.has(s)} onChange={() => toggle(series, setSeries, s)} /><span>{s}</span><span className="ms-grow" /><span>{count('series', s)}</span></label>)}
+          <span className="ms-eyebrow" style={{ color: 'var(--ms-muted)', marginTop: 8 }}>Landscape</span>
+          {lands.map((l) => <label key={l} className="ms-check"><input type="checkbox" checked={land.has(l)} onChange={() => toggle(land, setLand, l)} /><span>{l}</span><span className="ms-grow" /><span>{count('land', l)}</span></label>)}
+          {series.size + land.size > 0 && <button type="button" className="ms-btn ms-btn--sm" onClick={() => { setSeries(new Set()); setLand(new Set()); }}>Clear filters</button>}
+        </aside>
+        <section ref={gridRef} className="ms-cards" style={{ flex: '1 1 480px', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 220px), 1fr))' }} aria-label="Tracks">
+          {!v2Order && shown.map(card)}
+          {v2Order && (
+            <>
+              {v2Order.free.map(card)}
+              {v2Order.locked.length > 0 && v2Order.free.length > 0 && <h2 className="ms-picker-divider">Unlock more tracks</h2>}
+              {v2Order.locked.map((t, k) => [
+                v2Order.slots.includes(k) && v2Order.banner(k) && <PackBanner key={`b${k}`} pack={v2Order.banner(k)} />,
+                card(t),
+              ])}
+              {v2Order.slots.includes(v2Order.locked.length) && v2Order.banner(v2Order.locked.length) && <PackBanner key="b-end" pack={v2Order.banner(v2Order.locked.length)} />}
+            </>
+          )}
+          {tracks.length > 0 && shown.length === 0 && <p className="ms-note">{lock === 'locked' && !tracks.some((t) => t.locked) ? 'Nothing is locked for you: every track is yours to race.' : 'No track matches. Clear a filter.'}</p>}
+        </section>
+      </div>
+    </div>
+  );
+}
+
+// ── 3 · Marble ────────────────────────────────────────────────────────────
+
+export function ShooterStep() {
+  const [search] = useSearchParams();
+  const { ready, error } = useRacer();
+  const { user } = useAuth();
+  const bag = useAsync(() => (ready ? api.bag() : null), [ready]);
+  const tracks = useTracks();
+  const trackSlug = search.get('track');
+  const track = tracks.find((t) => t.slug === trackSlug);
+  const [busy, setBusy] = useState(false);
+  const shooter = shooterOf(bag.data);
+  const options = useMemo(() => {
+    if (!bag.data) return [];
+    return [
+      ...bag.data.copies.map((c) => ({ key: c.slug, item: c.slug, name: ITEM[c.slug]?.design.name ?? c.slug })),
+      ...bag.data.originals.map((m) => ({ key: m.id, original: m.id, marble: m, name: m.name })),
+    ];
+  }, [bag.data]);
+  const isShooter = (o) => (o.item ? bag.data?.shooter?.item === o.item : bag.data?.shooter?.original === o.original || (!bag.data?.shooter && o.marble === bag.data?.originals[0]));
+  const choose = async (o) => {
+    setBusy(true);
+    try { await api.setShooter(o.item ? { item: o.item } : { original: o.original }); await bag.reload(); } finally { setBusy(false); }
+  };
+
+  return (
+    <div className="ms-page">
+      <Steps at={2} track={trackSlug === 'random' ? 'Random' : track?.name} />
+      <h1 className="ms-h1" style={{ fontFamily: 'var(--ms-cond)', fontWeight: 800 }}>Pick your marble</h1>
+      {error && <div className="ms-msg ms-msg--bad">{error}</div>}
+      <div className="ms-two" style={{ alignItems: 'start' }}>
+        <section className="ms-card" style={{ display: 'grid', gap: 10, justifyItems: 'center', textAlign: 'center', flex: '0 1 320px' }}>
+          {shooter && (shooter.slug ? <MarbleBadge slug={shooter.slug} size={150} label={shooter.name} /> : <MarbleBadge marble={shooter.marble} size={150} label={shooter.name} />)}
+          <h2 className="ms-h2" style={{ fontFamily: 'var(--ms-cond)', fontWeight: 800 }}>{shooter?.name ?? '…'}</h2>
+          {shooter?.slug && <span className="ms-note">{ITEM[shooter.slug].design.inRaces}</span>}
+          <span className="ms-pill">Looks only: <b style={{ color: 'var(--ms-yellow)' }}>every player races at the same level</b></span>
+        </section>
+        <section className="ms-card" style={{ display: 'grid', gap: 14, flex: '1 1 420px' }}>
+          <div className="ms-row" style={{ justifyContent: 'space-between' }}>
+            <h2 className="ms-h3" style={{ fontFamily: 'var(--ms-cond)', fontWeight: 800, fontSize: '1.6rem' }}>Your Marble Bag</h2>
+            <Link to="/shop" style={{ color: 'var(--ms-yellow)', fontWeight: 700 }}>Get more in the Shop →</Link>
+          </div>
+          <div className="ms-cards" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(96px, 1fr))', gap: 10 }}>
+            {options.map((o) => (
+              <button key={o.key} type="button" className="ms-shade" aria-pressed={isShooter(o)} disabled={busy} onClick={() => choose(o)}>
+                {o.item ? <MarbleBadge slug={o.item} size={60} /> : <MarbleBadge marble={o.marble} size={60} />}
+                <small style={{ color: 'var(--ms-text)', fontWeight: 600 }}>{o.name}</small>
+              </button>
+            ))}
+          </div>
+          <div className="ms-flowbar" style={{ border: 0, padding: 0 }}>
+            <span />
+            {search.get('room')
+              ? <Link to={`/r/${search.get('room')}?rejoin=1`} className="ms-btn ms-btn--primary">BACK TO THE ROOM</Link>
+              : <Link to={`/play/start?${search}`} className="ms-btn ms-btn--primary">TO THE STARTING LINE</Link>}
+          </div>
+        </section>
+      </div>
+    </div>
+  );
+}
+
+// ── 4 · Starting line ─────────────────────────────────────────────────────
+
+export function StartStep() {
+  const [search, setSearch] = useSearchParams();
+  const navigate = useNavigate();
+  const { ready, error } = useRacer();
+  const { user } = useAuth();
+  const quick = search.get('quick') === '1';
+  const tracks = useTracks();
+  const bag = useAsync(() => (ready ? api.bag() : null), [ready]);
+  const trackSlug = quick ? 'random' : search.get('track') ?? 'random';
+  const track = tracks.find((t) => t.slug === trackSlug);
+  const seasonKey = trackSlug.startsWith('season:') ? trackSlug.slice(7) : null; // ("Holiday races")
+  const shooter = shooterOf(bag.data);
+  const [busy, setBusy] = useState(false);
+  const [startError, setStartError] = useState(null);
+  const grid = useMemo(() => previewShowcase(19, `${trackSlug}-${user?.id}`), [trackSlug, user?.id]);
+  // The race's 3D code fetched while the player is still here, so the race page starts building at once.
+  useEffect(() => { import('../../three/TrackScene').catch(() => {}); }, []); // (a failure here is retried by the race page)
+  useRaceSoundPreload(); // (and its sound loaded into memory)
+
+  const start = async () => {
+    setBusy(true);
+    setStartError(null);
+    try {
+      const { race } = await api.createRace({
+        ...(track ? { track_id: track.id } : seasonKey ? { season: seasonKey } : { random_track: true }),
+        enter: true,
+        min_marbles: 20,
+        max_marbles: 20,
+      });
+      // Solo: house marbles fill the field. The race page builds the track's 3D view first and then
+      // starts it (?go=1), so the countdown is never over before the player sees it (22 Oct 2026).
+      navigate(`/race/${race.id}?go=1`);
+    } catch (e) {
+      setStartError(e.message);
+      setBusy(false);
+      firstStepError('start', e, user);
+    }
+  };
+  useLeftReport('start-line', user, !busy); // (9 Nov 2026: a new guest closing the page on the starting line)
+
+  return (
+    <div className="ms-page">
+      <Steps at={3} track={track?.name ?? 'Random'} shooter={shooter?.name} />
+      {error && <div className="ms-msg ms-msg--bad">{error}</div>}
+      <div className="ms-two" style={{ alignItems: 'stretch' }}>
+        <section className="ms-hero ms-hero--col" style={{ flexBasis: 520, background: track ? `${SERIES_PIC[track.series]}` : SERIES_PIC.Classic }} aria-label="The grid">
+          <div style={{ display: 'grid', gap: 4 }}>
+            <b style={{ fontFamily: 'var(--ms-cond)', fontSize: '2rem' }}>{track?.name ?? 'Random track'}</b>
+            <span className="ms-trackcard__meta" style={{ color: 'var(--ms-text)', opacity: 0.85 }}>{track ? `${track.series}${LANDSCAPE[track.biome] ? ` · ${LANDSCAPE[track.biome]}` : ''}` : 'Picked at random when you start'}{track && <WildnessBadge track={track} />}</span>
+          </div>
+          <div className="ms-gate" aria-hidden="true">
+            <span className="ms-gate__you">{shooter && (shooter.slug ? <MarbleBadge slug={shooter.slug} size={40} /> : <MarbleBadge marble={shooter.marble} size={40} />)}<small>YOU</small></span>
+            {grid.map((slug, k) => (slug ? <MarbleBadge key={k} slug={slug} size={30} still /> : <MarbleBadge key={k} marble={{ color_primary: '#8A93A6' }} size={30} still />))}
+          </div>
+          <div className="ms-row" style={{ justifyContent: 'space-between' }}>
+            <span>20 marbles · you and 19 computer players</span>
+            <span style={{ opacity: 0.8 }}>In your first races the computer players show off marbles from the shop. Places at the gate are drawn at random.</span>
+          </div>
+        </section>
+        <aside className="ms-card" style={{ display: 'grid', gap: 14, alignContent: 'start', flexBasis: 300 }}>
+          <h1 className="ms-h2" style={{ fontFamily: 'var(--ms-cond)', fontWeight: 800 }}>The starting line</h1>
+          <div className="ms-row" style={{ flexWrap: 'nowrap' }}>
+            {shooter && (shooter.slug ? <MarbleBadge slug={shooter.slug} size={44} /> : <MarbleBadge marble={shooter.marble} size={44} />)}
+            <div style={{ display: 'grid', flex: 1, minWidth: 0 }}><b>{user?.username ? shownName(user) : '…'} (host)</b><span className="ms-note">{shooter?.name ?? 'Picking a marble…'}</span></div>
+            <span style={{ color: 'var(--ms-green)', fontWeight: 700 }}>✓ Ready</span>
+          </div>
+          <span className="ms-note">Computer players fill every other place. Racing with friends? <Link to={`/play/friends${track?.slug ? `?track=${encodeURIComponent(track.slug)}` : ''}`}>Make a friend room</Link> and send them the link.</span>
+          {startError && <div className="ms-msg ms-msg--bad" role="alert">{startError}</div>}
+          {/* (The track this race is on, right above the button (Moses, 8 Nov 2026): on a phone the picture at the
+              top is off screen by the time a player taps a track in "Other players liked" below.) */}
+          <div className="ms-start-track" aria-live="polite">
+            <span className="ms-start-track__label">Track</span>
+            <b className="ms-start-track__name">{track?.name ?? (seasonKey ? 'Holiday race' : 'Random track')}</b>
+            {track && <span className="ms-start-track__series">{track.series} <WildnessBadge track={track} /></span>}
+          </div>
+          <button type="button" className="ms-btn ms-btn--primary ms-btn--lg" onClick={start} disabled={busy || !ready || !tracks.length}>{busy ? 'STARTING…' : 'START THE RACE'}</button>
+          {!quick && (
+            <div className="ms-start-links">
+              <Link to={`/play/shooter?${search}`}>Change marble</Link>
+              <Link to={`/play/track?${search}`}>Change track</Link>
+            </div>
+          )}
+          {quick && <Link to="/play/track" style={{ color: 'var(--ms-soft)', textAlign: 'center' }}>Pick the track yourself</Link>}
+          {!quick && <OthersLiked tracks={tracks} current={trackSlug} onPick={(slug) => { const n = new URLSearchParams(search); n.set('track', slug); setSearch(n, { replace: true }); }} />}
+        </aside>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * "Other players liked" (Moses, 31 Oct 2026): under START THE RACE, where a player lands after closing a
+ * solo race, the tracks raced most by players over the last 7 days (not the one just raced), as small
+ * pictures; one tap picks that track here (the same as picking it in "Change track": the race starts on it,
+ * and its name shows above START THE RACE). Three show on a computer; on a phone the row swipes for more.
+ * The yellow border means picked; on touch screens there is no hover border (8 Nov 2026: on an iPhone a
+ * tap showed a yellow border while the name the player could see stayed the old track's).
+ * Until the server has the list (a server from before 31 Oct), the newest tracks instead.
+ */
+export function OthersLiked({ tracks, current, onPick }) {
+  const { data, error } = useAsync(() => api.popularTracks(), []);
+  const [skip] = useState(current); // (the track just raced: left out, even after another is picked here)
+  const bySlug = useMemo(() => new Map(tracks.map((t) => [t.slug, t])), [tracks]);
+  const list = useMemo(() => {
+    const ok = (t) => t && !t.locked && t.slug !== skip;
+    const popular = (data?.tracks ?? []).map((p) => bySlug.get(p.slug)).filter(ok);
+    if (popular.length >= 3 || (data && !error)) return popular.slice(0, 8);
+    return [...tracks].filter(ok).sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).slice(0, 8);
+  }, [data, error, bySlug, tracks, skip]);
+  if (list.length < 3) return null;
+  return (
+    <section className="ms-liked" aria-labelledby="ms-liked-h">
+      <h2 id="ms-liked-h" className="ms-liked__h">Other players liked</h2>
+      <div className="ms-liked__row">
+        {list.map((t) => (
+          <button key={t.slug} type="button" className="ms-liked__card" aria-pressed={t.slug === current} onClick={() => onPick(t.slug)}>
+            <span className="ms-liked__pic" style={{ background: SERIES_PIC[t.series] }}><TrackBanner slug={t.slug} /></span>
+            <span className="ms-liked__name">{t.name}</span>
+          </button>
+        ))}
+      </div>
+    </section>
+  );
+}

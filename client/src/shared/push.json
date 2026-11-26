@@ -1,0 +1,6 @@
+{
+  "enabled": false,
+  "note": "Push notifications in the apps (src/push on the server, client/src/app/push.js). While false the apps never ask for permission and Settings shows no Notifications section. The server sends only with PUSH_SENDING=on and the Firebase/Apple keys set (docs/05-runbook.md, Push notifications).",
+  "askAfterRaces": 1,
+  "dailyGoalHourUtc": 17
+}

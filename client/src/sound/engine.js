@@ -1,0 +1,552 @@
+/**
+ * The game's sound (Moses, 28 Oct 2026): the countdown beeps, the race tunes, the ceremony song, the
+ * gate sound and the crowd, all loaded into memory ahead of the race and timed on the race clock.
+ *
+ * - Two ways to play (./webBackend.js, ./nativeBackend.js):
+ *     the website: Web Audio only, started on the player's first tap (Safari's rule), resumed whenever
+ *       it is suspended;
+ *     the iPhone/iPad and Android apps: the native audio plugin (no tap needed; the iPhone's silent
+ *       switch mutes the game; useNativeAudio(), from app/native.js). An older app build without the
+ *       plugin uses Web Audio.
+ * - Preloaded early (prepare(), from the race page, a room, Quick race and League Night as soon as the
+ *   player is there): the start beeps, the gate sound, the crowd, the ceremony song and the next two
+ *   race tunes (this race's and the next race's). The tunes come from shuffled rounds of all 12, decided
+ *   ahead so they can be loaded: a race's tune is never the previous race's.
+ * - Timing on the race clock: raceCountdown(raceId, msToGo) and raceGo(raceId, goAt) give GO as shown
+ *   on this screen (a wall-clock moment). The beeps (their fourth beep exactly on GO) and the race's
+ *   tune (from GO) are scheduled for it. The tune picked at GO loops seamlessly until the finish
+ *   ceremony (Moses, 28 Oct 2026): from memory (a Web Audio buffer, the native player's loop), no
+ *   crossfade, no fade and no gap at the loop point. A sound that isn't loaded in time starts when it
+ *   arrives, part-way in, in step with the race: never late from its start.
+ * - The finish ceremony (unchanged): the tune stops with a short fade and the ceremony song plays,
+ *   looping while the player stays, fading out softly (CEREMONY_FADE_S) after CEREMONY_SECONDS.
+ * - The crowd: when the player's own marble passes a Grand Prix stand (crowdCheer, once per stand per
+ *   race), under the music; on Track and Field when the leader passes a stadium stand, at every other stand
+ *   (Moses, 21 Nov 2026; LiveRaceViewer3D). The start sound 1 s after GO (the marbles start rolling; 30 Oct 2026). The player's
+ *   own marble hitting another (marbleHit, from ./hits.js): soft, louder for harder hits, under the music,
+ *   at most one a second (30 Oct 2026). The own marble hitting an obstacle (marbleBump, from ./hits.js, found
+ *   from the frames since 4 Nov 2026;
+ *   31 Oct 2026): the same, at the same level; the two share one limit (at most one hit sound every
+ *   0.5 s). The own marble rolling onto a speed pad (speedPad, from ./hits.js; 4 Nov 2026): the old
+ *   overtaking whoosh, once per pad pass, at the other effects' level, the music dipping under it.
+ * - The music sits well under the effects (MUSIC_UNDER) and dips (DUCK) under the speed pad's whoosh.
+ * - Readiness: whenSoundReady() / soundMissing() for the race page's readiness check and report.
+ */
+import { createWebBackend } from './webBackend';
+import { createNativeBackend } from './nativeBackend';
+import { soundLog } from './soundLog';
+
+/** The race tunes (Moses: 12 from 30 Oct 2026, RACE MUSIC 3–14; RACE MUSIC 1 and 2 are no longer in the game). */
+export const RACE_TRACKS = ['tune-3', 'tune-4', 'tune-5', 'tune-6', 'tune-7', 'tune-8', 'tune-9', 'tune-10', 'tune-11', 'tune-12', 'tune-13', 'tune-14'];
+/**
+ * Lengths in seconds. The tunes: their exact loop lengths (scripts/convert-audio.sh prints them; no
+ * fades, the silence at both ends trimmed, cut at zero crossings), so the loop is seamless.
+ */
+export const TRACK_SECONDS = {
+  'tune-3': 43.139458, 'tune-4': 37.716083, 'tune-5': 30.733125, 'tune-6': 50.521917,
+  'tune-7': 48.228708, 'tune-8': 27.382583, 'tune-9': 27.513625, 'tune-10': 54.095521, 'tune-11': 53.579333,
+  'tune-12': 32.22, 'tune-13': 28.548729, 'tune-14': 28.138437, ceremony: 59.1,
+};
+export const CEREMONY = 'ceremony';
+export const SOUNDS = { crowd: 'crowd-grand-prix', launch: 'start-rolling', beeps: 'start-beeps', hit: 'marble-hit', bump: 'marble-bump', pad: 'speed-pad' };
+/**
+ * The start sound (the marbles start rolling) plays this long after the GO beep, on the race clock (Moses,
+ * 30 Oct 2026), without dipping the music: its file 50% louder than the old gate sound's (+3.5 dB).
+ */
+export const START_SOUND_MS = 1000;
+/** In "start beeps" the four beeps start at 0.024, 1.026, 2.035 and 3.023 s: the fourth, the GO, this far in. */
+export const BEEPS_GO_S = 3.023;
+/** The ceremony song fades out (over CEREMONY_FADE_S) this long after it started. */
+export const CEREMONY_SECONDS = 45;
+export const CEREMONY_FADE_S = 4;
+/** At the same slider position the music sits this far under the effects (-10 dB). */
+export const MUSIC_UNDER = 0.32;
+/** The crowd plays this far under the effects slider (its file 4 LU under the music's): about 6 dB under the music. */
+export const CROWD_UNDER = 0.35;
+/**
+ * The own marble's hits (the collision click and the obstacle bump, the bump's file 1 dB under the click's): from
+ * HIT_LEVEL.soft (the lightest that sounds) to HIT_LEVEL.hard (the hardest), on the effects bus (Moses, 30 Oct
+ * 2026: 50% louder at every strength, +3.5 dB; 4 Nov 2026, from his computer test: 6 dB louder again, then 3 dB;
+ * that night about 10 dB more: 8.2 dB in the files (scripts/convert-audio.sh, their peaks held by a limiter)
+ * and 1.8 dB here, x1.229). The click peaks at -1.5 dBFS in its file (HIT_PEAK_DB): the hardest, as played at
+ * full effects level, about -1.5 dBFS, never over (in the apps exactly full volume: 0.8 x 1.25 = 1).
+ */
+export const HIT_LEVEL = { soft: 0.365, hard: 1.25 };
+export const HIT_PEAK_DB = -1.5;
+/**
+ * The speed pad's whoosh (Moses, 4 Nov 2026: "level it with the other effects, under the music's dip"): its
+ * file at -20 LUFS like the others, played at this gain on the effects bus, and the music dips (DUCK) while it
+ * plays. First 0.4 (-8 dB, the start sound's loudness); the same day, from Moses's computer test, 4 dB lower: 0.25.
+ */
+export const PAD_LEVEL = 0.25;
+/**
+ * The race tunes (Moses, 4 Nov 2026, from his computer test: all 12 about 3 dB lower; round 2 the same day: 8 dB
+ * lower in all than before that day, 0.398): each tune voice plays at this gain on the music bus, on the website and in the apps alike. (The ceremony song is unchanged.)
+ */
+export const TUNE_LEVEL = 0.398;
+/** While a sound that dips the music plays (the speed pad), the music dips by this much more (-6 dB). */
+export const DUCK = 0.5;
+/** How many upcoming tunes are kept loaded (this race's and the next race's). */
+export const AHEAD = 2;
+const BASE = '/audio/';
+
+let settings = { music: 0.7, effects: 0.8, muted: false };
+let format = null;
+function pickFormat() {
+  if (format) return format;
+  const a = typeof Audio !== 'undefined' ? new Audio() : null;
+  format = a && a.canPlayType?.('audio/webm; codecs="opus"') ? 'webm' : 'm4a';
+  return format;
+}
+const urlOf = (name) => `${BASE}${name}.${pickFormat()}`;
+
+const log = soundLog;
+let backend = createWebBackend({ urlOf });
+let unlocked = false;
+let nativeFailed = false;
+
+/** The apps: play through the native audio plugin from now on (app/native.js, at start-up). */
+export function useNativeAudio(plugin) {
+  if (!plugin || backend.kind === 'native' || nativeFailed) return;
+  backend = createNativeBackend({ plugin, durations: TRACK_SECONDS });
+  backend.init();
+  unlocked = true;
+  backend.setLevels(levels());
+  log(`backend: native (the app's audio player), ${wantedLoads.size} sounds to load`);
+  if (wantedLoads.size) for (const n of wantedLoads) backend.load(n);
+}
+
+/**
+ * The native player couldn't load what a race needs (Moses's Android test, 28 Oct 2026): the game plays
+ * through Web Audio instead, for the rest of this visit, and says so in the log.
+ */
+function fallBackToWeb(why) {
+  if (backend.kind !== 'native') return;
+  nativeFailed = true;
+  log(`native audio failed (${why}): falling back to web audio`);
+  // (The native player's voices stop here; the web one starts them again, in step: unlock() below.)
+  if (race) {
+    race.beeps?.stop(0);
+    race.beeps = null;
+    race.tune?.voice?.stop(0);
+    if (race.tune) race.tune = { ...race.tune, voice: null };
+    race.ceremony?.voice?.stop(0);
+    if (race.ceremony) race.ceremony.voice = null;
+  }
+  backend = createWebBackend({ urlOf });
+  unlocked = false;
+  unlock(); // (an app's web view lets sound start without a tap; on the website the next tap does it)
+  backend.setLevels(levels());
+  for (const n of wantedLoads) backend.load(n);
+  if (race?.ceremony && !race.ceremony.voice) startCeremony();
+}
+export const soundBackend = () => backend.kind;
+
+// ── Which tunes come next ────────────────────────────────────────────────
+// (Moses, 16 Nov 2026: "players should hear all 12 at random". The shuffled round and the last tune are kept on the
+// device (TUNES_KEY), so a round of 12 carries on across page loads and app restarts instead of starting a fresh
+// shuffle each time, and a race's tune is never the one the previous race played, even after a reload.)
+const TUNES_KEY = 'marble-tunes';
+let order = [];
+let lastTrack = null;
+let queue = []; // the upcoming tunes, in the order they'll play (kept loaded)
+const chosen = new Map(); // raceId → its first tune
+let restored = false;
+
+function restoreOrder() {
+  if (restored) return;
+  restored = true;
+  try {
+    const saved = JSON.parse(globalThis.localStorage?.getItem(TUNES_KEY) ?? 'null');
+    const ok = (t) => RACE_TRACKS.includes(t);
+    if (saved && Array.isArray(saved.order) && saved.order.length <= RACE_TRACKS.length + AHEAD && saved.order.every(ok)) order = [...saved.order];
+    if (saved && ok(saved.last)) lastTrack = saved.last;
+  } catch { /* (no storage: a fresh round) */ }
+}
+function saveOrder() {
+  // (What is still to come: the round's rest after the tunes already queued.)
+  try { globalThis.localStorage?.setItem(TUNES_KEY, JSON.stringify({ order: [...queue, ...order], last: lastTrack })); } catch { /* (private mode) */ }
+}
+
+/** The next tune from shuffled rounds of all the tunes (12), never `last`. */
+export function nextTrack(last, random = Math.random) {
+  if (!order.length) {
+    order = [...RACE_TRACKS];
+    for (let i = order.length - 1; i > 0; i -= 1) { const j = Math.floor(random() * (i + 1)); [order[i], order[j]] = [order[j], order[i]]; }
+    if (order[0] === last && order.length > 1) order.push(order.shift());
+  }
+  return order.shift();
+}
+export function _resetOrder({ forget = true } = {}) {
+  order = []; queue = []; lastTrack = null; chosen.clear(); restored = false;
+  if (forget) try { globalThis.localStorage?.removeItem(TUNES_KEY); } catch { /* */ }
+}
+
+function fillQueue(random) {
+  restoreOrder();
+  while (queue.length < AHEAD) queue.push(nextTrack(queue.at(-1) ?? lastTrack, random));
+}
+/** Takes the next tune (never `not`). */
+function takeTune(not, random) {
+  fillQueue(random);
+  let t = queue.shift();
+  for (let k = 0; t === not && k < RACE_TRACKS.length; k += 1) { queue.push(t); t = queue.shift(); }
+  if (t === not) t = nextTrack(not, random);
+  lastTrack = t;
+  fillQueue(random);
+  saveOrder();
+  for (const n of queue) load(n);
+  return t;
+}
+/** The tune a race starts with (picked once per race, from the loaded queue). */
+export function trackFor(raceId, random = Math.random) {
+  if (!chosen.has(raceId)) {
+    chosen.set(raceId, takeTune(lastTrack, random));
+    if (chosen.size > 20) chosen.delete(chosen.keys().next().value);
+  }
+  return chosen.get(raceId);
+}
+/** The tunes queued after the current one (for checks). */
+export const upcoming = () => [...queue];
+
+// ── Loading ──────────────────────────────────────────────────────────────
+const wantedLoads = new Set();
+function load(name, opts) { wantedLoads.add(name); return backend.load(name, opts); }
+/**
+ * What a race's start needs (a solo race waits for these): the beeps, the gate sound and its own tune
+ * (picked now, from the queue). The rest loads after them.
+ */
+const essentials = (raceId) => [SOUNDS.beeps, SOUNDS.launch, ...(raceId ? [trackFor(raceId)] : [])];
+/** What a race needs loaded: the beeps, the gate sound, the crowd, the ceremony song and the next tunes. */
+const needed = (raceId) => [...Object.values(SOUNDS), CEREMONY, ...(raceId && chosen.has(raceId) ? [chosen.get(raceId)] : []), ...queue];
+
+/**
+ * Preloads everything a race needs (the race page, a room, Quick race, League Night: as soon as the
+ * player is there), the start's essentials first. Safe to call often. → a promise of { ready, missing }.
+ */
+export function prepare(raceId = null) {
+  fillQueue();
+  const first = essentials(raceId);
+  const firstDone = Promise.all(first.map((n) => load(n, { urgent: true })));
+  const rest = needed(raceId).filter((n) => !first.includes(n));
+  return Promise.all([firstDone, ...rest.map((n) => load(n))]).then(() => ({ ready: soundMissing(raceId).length === 0, missing: soundMissing(raceId) }));
+}
+/** The sounds a race needs that aren't loaded yet. */
+export function soundMissing(raceId = null) {
+  // (Before the website's first tap: fetched into memory counts, it decodes in a moment on the tap.)
+  const has = backend.ready() ? backend.loaded : backend.fetched;
+  return needed(raceId).filter((n) => !has(n));
+}
+/** For the readiness report: how the sound stands on this device. */
+export function soundReport(raceId = null) {
+  const here = race && (!raceId || race.id === raceId);
+  return {
+    backend: backend.kind,
+    started: unlocked,
+    running: isRunning(),
+    missing: soundMissing(raceId),
+    // (For the readiness report: the GO the sound is timed on, what became of the beeps, the files the player couldn't load.)
+    goAt: here ? race.goAt : null,
+    goGapMs: here ? goGap : null,
+    // ('none: no countdown': this screen never had the race's countdown (raceCountdown); 'none: another race': it is on another.)
+    beeps: here ? beepsState : race ? 'none: another race' : 'none: no countdown',
+    loadFailed: backend.failed?.() ?? [],
+    // (18 Nov 2026, Moses's Android build 1.0.0 (6) with no sound at all: whether the speaker button had the game
+    // muted, or Settings had the music off, so the readiness report tells a muted game from a broken player.)
+    muted: settings.muted,
+    musicOn: musicOn(),
+  };
+}
+/**
+ * Resolves { ready, missing } once the race's start has its sounds (essentials(): the beeps, the gate
+ * sound, its tune; the rest keeps loading), or after `maxMs` with what is missing. In the apps, essentials
+ * the native player failed to load switch the game to Web Audio (fallBackToWeb) within the same wait.
+ */
+export function whenSoundReady(raceId = null, maxMs = 6000) {
+  const t0 = Date.now();
+  prepare(raceId);
+  const first = essentials(raceId);
+  const has = () => (backend.ready() ? backend.loaded : backend.fetched);
+  const check = () => Promise.all(first.map((n) => load(n, { urgent: true })));
+  const done = check().then(async (oks) => {
+    if (backend.kind === 'native' && oks.some((ok) => !ok)) {
+      fallBackToWeb(`${first.filter((n, k) => !oks[k]).join(', ')} not loaded`);
+      await check();
+    }
+    return null;
+  });
+  const out = (timedOut) => {
+    const missing = first.filter((n) => !has()(n));
+    const r = { ready: missing.length === 0, missing };
+    log(`${raceId ? `race ${String(raceId).slice(0, 8)}: ` : ''}${r.ready ? 'sound ready' : `sound NOT ready${timedOut ? ` after ${maxMs / 1000} s` : ''}, missing ${missing.join(', ')}`} (${Date.now() - t0} ms, ${backend.kind})`);
+    return r;
+  };
+  return Promise.race([done.then(() => out(false)), new Promise((ok) => setTimeout(() => ok(out(true)), maxMs))]);
+}
+/** (Kept for the start show: resolves when the race's sound is in, at most `maxMs`.) */
+export const preloadRace = (raceId, maxMs = 2500) => whenSoundReady(raceId, maxMs).then((r) => r.ready);
+
+// ── Levels ───────────────────────────────────────────────────────────────
+export function levels(s = settings) {
+  if (s.muted) return { music: 0, effects: 0 };
+  return { music: s.music * MUSIC_UNDER, effects: s.effects };
+}
+const musicOn = () => !settings.muted && settings.music > 0;
+const effectsOn = () => !settings.muted && settings.effects > 0;
+
+// ── The race ─────────────────────────────────────────────────────────────
+// race: { id, goAt (wall ms, GO as shown), beeps: voice, tune: { name, atWall, voice }, ceremony: { at, voice, timer } }
+let race = null;
+// What became of this race's beeps (the readiness report): 'scheduled', 'dropped' (GO came first) or 'none'.
+let beepsState = 'none';
+// GO as shown minus the GO the sound was timed on, at GO (ms; null until GO): the readiness report.
+let goGap = null;
+const now = () => Date.now();
+// The ceremony song playing (whichever race started it), and the races that have ended on this screen.
+let ceremonySong = null;
+const ended = new Set();
+
+function clearTune(fadeS = 0.4) {
+  const t = race?.tune;
+  if (!t) return;
+  t.voice?.stop(fadeS);
+  race.tune = null;
+}
+function clearBeeps() { race?.beeps?.stop(0.05); if (race) race.beeps = null; }
+function clearCeremony(fadeS = 0.4) {
+  const c = race?.ceremony;
+  if (!c) return;
+  clearTimeout(c.timer);
+  if (c.voice && c.voice === ceremonySong) ceremonySong = null;
+  c.voice?.stop(fadeS);
+  c.voice = null;
+}
+
+/** The race's tune from `atWall` (GO as shown), looping seamlessly from memory; in step if late. */
+function playTune(name, atWall) {
+  if (!race || race.ceremony) return;
+  race.tune = { name, atWall, voice: null };
+  if (!musicOn()) return;
+  load(name);
+  race.tune.voice = backend.start(name, { atWall, bus: 'music', gain: TUNE_LEVEL, loop: true, loopLength: TRACK_SECONDS[name] });
+}
+
+/** Starts (or re-times) a race on this screen: `goAt` is GO as shown here (wall ms). */
+function begin(raceId, goAt) {
+  if (race && race.id !== raceId) endRace();
+  ended.delete(raceId); // (its countdown or GO here again: the race is on)
+  if (!race) { race = { id: raceId, goAt, beeps: null, tune: null, ceremony: null }; beepsState = 'none: no countdown'; }
+  const moved = Math.abs(race.goAt - goAt) > 30;
+  race.goAt = goAt;
+  return moved;
+}
+
+/**
+ * The countdown: GO is `msToGo` from now as shown here. Schedules the beeps (the fourth on GO) and the
+ * race's first tune from GO. Called again with a new time (a start show re-timed), it re-schedules.
+ * → whether beeps are scheduled.
+ */
+export function raceCountdown(raceId, msToGo) {
+  const goAt = now() + msToGo;
+  const fresh = !race || race.id !== raceId;
+  if (fresh || Math.abs((race?.goAt ?? 0) - goAt) > 30) log(`race ${String(raceId).slice(0, 8)}: GO in ${Math.round(msToGo)} ms (${backend.kind}; beeps ${backend.loaded(SOUNDS.beeps) ? 'loaded' : 'NOT loaded'}, tune ${trackFor(raceId)} ${backend.loaded(trackFor(raceId)) ? 'loaded' : 'NOT loaded'})`);
+  const moved = begin(raceId, goAt);
+  if (!race.ceremony) stopCeremonySong(0.3); // (the next countdown: never the last race's song under it)
+  const first = trackFor(raceId);
+  prepare(raceId);
+  if (fresh || moved || !race.tune) { clearTune(0.05); if (!race.ceremony) playTune(first, goAt); }
+  if (fresh || moved || !race.beeps) {
+    clearBeeps();
+    if (effectsOn() && unlocked && msToGo > 150) {
+      race.beeps = backend.start(SOUNDS.beeps, { atWall: goAt - BEEPS_GO_S * 1000, bus: 'fx', until: goAt + 900 });
+      beepsState = 'scheduled';
+    } else {
+      // (18 Nov 2026, Android build 6: solo races reported beeps "none" with nothing missing. Why, in the report.)
+      beepsState = `none: ${!effectsOn() ? (settings.muted ? 'muted' : 'effects off') : !unlocked ? 'sound not started' : `countdown ${Math.round(msToGo)} ms`}`;
+      log(`race ${String(raceId).slice(0, 8)}: beeps not scheduled (${beepsState})`);
+    }
+  }
+  return Boolean(race.beeps);
+}
+
+/** GO (or a page opened mid-race): the race's tune, from `goAt` (GO as shown here; default now). */
+export function raceGo(raceId, goAt = null) {
+  if (race?.id === raceId && goAt !== null) goGap = Math.round(goAt - race.goAt);
+  // GO as shown more than 0.3 s from the GO the beeps were planned for: the countdown as shown is over, so
+  // beeps not heard yet are dropped (never a countdown after GO: Moses's Android test, 7 Nov 2026, heard
+  // them 30 s into the race). The tune follows the GO as shown.
+  if (race?.id === raceId && goAt !== null && Math.abs(goAt - race.goAt) > 300 && race.beeps) {
+    log(`race ${String(raceId).slice(0, 8)}: GO as shown is ${Math.round(goAt - race.goAt)} ms from the beeps' GO: beeps dropped`);
+    beepsState = 'dropped';
+    clearBeeps();
+  }
+  // (Already timed: kept, unless GO as shown is more than 0.3 s from what was planned (the hold changed): then the tune follows.)
+  if (race?.id === raceId && race.tune && (goAt === null || Math.abs(goAt - race.goAt) <= 300)) return;
+  if (race?.id === raceId && race.tune) clearTune(0.05);
+  begin(raceId, goAt ?? race?.goAt ?? now());
+  if (!race.ceremony) playTune(trackFor(raceId), race.goAt);
+}
+
+/** The finish ceremony appears: the tune stops and the ceremony song starts (once per race), as before. */
+export function raceCeremony(raceId) {
+  // (Never for a race that has ended here, nor while another race is on: a page still showing the old race's
+  // finish as the next one loads; Moses's Android test, 12 Nov 2026: the song through the whole next race.)
+  if (ended.has(raceId) || (race && race.id !== raceId)) return;
+  if (race?.id !== raceId || race.ceremony) {
+    if (race?.id === raceId) return;
+    begin(raceId, now());
+  }
+  clearTune(0.4);
+  race.ceremony = { at: now(), voice: null, timer: null };
+  startCeremony();
+}
+function startCeremony() {
+  const c = race?.ceremony;
+  if (!c || !musicOn()) return;
+  const left = CEREMONY_SECONDS * 1000 - (now() - c.at);
+  if (left <= 0) return;
+  stopCeremonySong(0.05); // (one song at a time)
+  c.voice = backend.start(CEREMONY, { atWall: now(), bus: 'music', loop: true });
+  ceremonySong = c.voice;
+  clearTimeout(c.timer);
+  c.timer = setTimeout(() => { if (ceremonySong === c.voice) stopCeremonySong(CEREMONY_FADE_S); c.voice = null; }, left);
+}
+/** The ceremony song, whichever race started it: stopped (over `fadeS`). */
+function stopCeremonySong(fadeS = 0.4) {
+  const v = ceremonySong;
+  ceremonySong = null;
+  v?.stop(fadeS);
+}
+/**
+ * The player closed the finish celebration (or left it): the ceremony song fades out now (Moses, 12 Nov
+ * 2026). The race is over for the sound: no song again for it.
+ */
+export function closeCeremony(raceId) {
+  if (raceId !== undefined && race && race.id !== raceId) { stopCeremonySong(0.4); return; }
+  if (raceId !== undefined) ended.add(raceId);
+  if (race?.ceremony) clearCeremony(0.4);
+  stopCeremonySong(0.4);
+}
+
+function endRace() {
+  beepsState = 'none';
+  goGap = null;
+  stopCeremonySong(0.4); // (whatever race it was for)
+  if (!race) return;
+  ended.add(race.id);
+  if (ended.size > 50) ended.delete(ended.values().next().value);
+  clearBeeps();
+  clearTune(0.4);
+  clearCeremony(0.4);
+  race = null;
+}
+/** The player left the race (or the next one begins): its music and countdown stop. */
+export function raceEnd(raceId) {
+  if (raceId !== undefined && race && race.id !== raceId) return;
+  endRace();
+}
+/** The countdown's beeps for this race stopped (a start show re-times them). */
+export function stopCountdown(raceId) { if (race?.id === raceId) clearBeeps(); }
+
+/** The player's own marble passes a crowd stand (`key`, once per race): the crowd's cheer, under the music. */
+const cheered = new Map();
+export function crowdCheer(raceId, key) {
+  if (!cheered.has(raceId)) {
+    cheered.set(raceId, new Set());
+    if (cheered.size > 20) cheered.delete(cheered.keys().next().value);
+  }
+  const done = cheered.get(raceId);
+  if (done.has(key)) return false;
+  done.add(key);
+  return play('crowd', { gain: CROWD_UNDER, duck: false });
+}
+
+/** The player's own marble hit another (`strength` 0 to 1, from ./hits.js): soft, never ducking the music. */
+export function marbleHit(raceId, strength) {
+  return hitSound('hit', raceId, strength);
+}
+/** The player's own marble hit an obstacle (`strength` 0 to 1, from ./hits.js): as marbleHit, at the same level. */
+export function marbleBump(raceId, strength) {
+  return hitSound('bump', raceId, strength);
+}
+/** The player's own marble rolled onto a speed pad (from ./hits.js, once per pad pass): the whoosh, the music dipping. */
+export function speedPad(raceId) {
+  if (race && race.id !== raceId) return false;
+  return play('pad', { gain: PAD_LEVEL, duck: true });
+}
+function hitSound(key, raceId, strength) {
+  if (race && race.id !== raceId) return false;
+  const k = Math.max(0, Math.min(1, strength));
+  return play(key, { gain: HIT_LEVEL.soft + (HIT_LEVEL.hard - HIT_LEVEL.soft) * k, duck: false });
+}
+
+/** A race sound now (only if loaded and the sound is running: never played late). → whether it played. */
+export function play(key, { gain = 1, duck = true } = {}) {
+  if (!unlocked || !effectsOn()) return false;
+  const name = SOUNDS[key] ?? key;
+  if (!backend.loaded(name)) { load(name); return false; }
+  if (!backend.running()) { backend.wake(); return false; }
+  backend.start(name, { atWall: now(), bus: 'fx', gain, asap: true }); // (asap: from its start, as soon as it can: the apps' player, 12 Nov 2026)
+  if (duck) backend.duck(DUCK, backend.duration(name) ?? 2);
+  return true;
+}
+
+/** What is meant to play now (for tests and checks). */
+export function musicState() {
+  if (!race) return null;
+  if (race.ceremony) return { raceId: race.id, kind: 'ceremony', track: CEREMONY };
+  // (Scheduled for GO: playing from GO on, not during the countdown.)
+  return race.tune && now() >= race.tune.atWall - 5 ? { raceId: race.id, kind: 'race', track: race.tune.name } : null;
+}
+export function nowPlaying() {
+  if (!race || !musicOn()) return null;
+  if (race.ceremony) return race.ceremony.voice ? { raceId: race.id, kind: 'ceremony', name: CEREMONY } : null;
+  return race.tune?.voice ? { raceId: race.id, kind: 'race', name: race.tune.name } : null;
+}
+
+// ── Starting, settings, background ──────────────────────────────────────
+/** The website: starts the sound on the first tap (call from a tap/click/key handler); resumes it after. */
+export function unlock() {
+  if (unlocked && backend.kind === 'native') return;
+  if (unlocked) { backend.wake(); return; }
+  if (!backend.init()) return;
+  unlocked = true;
+  backend.setLevels(levels());
+  for (const n of [...Object.values(SOUNDS), ...wantedLoads]) load(n);
+  // (Tapped during a race: its tune joins in step, and the beeps if the countdown is still on.)
+  if (race?.tune && !race.tune.voice && musicOn()) playTune(race.tune.name, race.tune.atWall);
+  if (race && !race.beeps && !race.ceremony && effectsOn() && race.goAt - now() > 150) {
+    race.beeps = backend.start(SOUNDS.beeps, { atWall: race.goAt - BEEPS_GO_S * 1000, bus: 'fx', until: race.goAt + 900 });
+  }
+}
+
+export function setSettings(next) {
+  const wasMusic = musicOn();
+  const wasFx = effectsOn();
+  settings = { ...settings, ...next };
+  backend.setLevels(levels());
+  if (!race) return;
+  // Music off: the tune stops; on again mid-race: it joins in step (or the ceremony song, while it's on).
+  if (wasMusic && !musicOn()) { const t = race.tune; clearTune(0.3); if (t) race.tune = { ...t, voice: null }; clearCeremony(0.3); }
+  if (!wasMusic && musicOn()) {
+    if (race.ceremony) startCeremony();
+    else if (race.tune) playTune(race.tune.name, race.tune.atWall);
+  }
+  if (wasFx && !effectsOn()) clearBeeps();
+  if (!wasFx && effectsOn() && unlocked && race.goAt - now() > 150 && !race.beeps) {
+    race.beeps = backend.start(SOUNDS.beeps, { atWall: race.goAt - BEEPS_GO_S * 1000, bus: 'fx', until: race.goAt + 900 });
+  }
+}
+export const getSettings = () => ({ ...settings });
+export const isUnlocked = () => unlocked;
+/** Whether sound is actually running (an iPhone browser may want a second tap). */
+export const isRunning = () => unlocked && backend.running();
+
+/** The app or tab went to the background (true) or came back (false): quiet meanwhile, back in step. */
+export function setBackground(hidden) { backend.background(hidden); }
+
+if (typeof document !== 'undefined') {
+  document.addEventListener('visibilitychange', () => setBackground(document.visibilityState === 'hidden'));
+  // (Back on the page: the sound resumed if Safari suspended it meanwhile.)
+  for (const e of ['focus', 'pageshow']) window.addEventListener(e, () => { if (unlocked && document.visibilityState !== 'hidden') backend.wake(); });
+}
