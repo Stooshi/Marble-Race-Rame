@@ -56,10 +56,10 @@ function launchTower() {
   for (let k = 0; k < 11; k += 1) p.push(box(4.6, 0.35, 4.6, -7, 1.5 + k * 3.2, -1, '#c8342a'));
   for (const y of [14, 22, 29]) p.push(box(5, 0.6, 1.2, -2.4, y, -1, '#8a8f99'));
   // The rocket: white stages, a black band, the capsule and its escape tower, fins.
-  p.push(piece(new CylinderGeometry(2.4, 2.4, 16, 16), '#f2f4f8', M(2, 10, -1)));
-  p.push(piece(new CylinderGeometry(2.4, 2.4, 2, 16), '#14141a', M(2, 17, -1)));
-  p.push(piece(new CylinderGeometry(1.9, 2.4, 9, 16), '#f2f4f8', M(2, 22.5, -1)));
-  p.push(piece(new ConeGeometry(1.9, 4, 16), '#d8dde6', M(2, 29, -1)));
+  p.push(piece(new CylinderGeometry(2.4, 2.4, 16, 10), '#f2f4f8', M(2, 10, -1)));
+  p.push(piece(new CylinderGeometry(2.4, 2.4, 2, 10), '#14141a', M(2, 17, -1)));
+  p.push(piece(new CylinderGeometry(1.9, 2.4, 9, 10), '#f2f4f8', M(2, 22.5, -1)));
+  p.push(piece(new ConeGeometry(1.9, 4, 10), '#d8dde6', M(2, 29, -1)));
   p.push(piece(new CylinderGeometry(0.15, 0.15, 3.5, 6), '#c8342a', M(2, 32.6, -1)));
   for (let k = 0; k < 4; k += 1) {
     const a = (k / 4) * Math.PI * 2;
@@ -67,7 +67,7 @@ function launchTower() {
   }
   // The pad, and the steam rolling off it.
   p.push(box(26, 1.4, 18, -2, 0.7, -1, '#8a8f99'));
-  for (const [x, z, r] of [[8, 4, 3.2], [10, -3, 2.6], [-1, 6, 2.8], [12, 1, 2.2], [5, 7, 2.4]]) p.push(piece(new IcosahedronGeometry(r, 1), '#e6ecf2', M(x, 1.8 + r * 0.5, z)));
+  for (const [x, z, r] of [[8, 4, 3.2], [10, -3, 2.6], [-1, 6, 2.8], [12, 1, 2.2], [5, 7, 2.4]]) p.push(piece(new IcosahedronGeometry(r, 0), '#e6ecf2', M(x, 1.8 + r * 0.5, z)));
   return merge(p);
 }
 

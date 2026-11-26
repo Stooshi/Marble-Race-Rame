@@ -13,7 +13,7 @@ module.exports = track({
   name: 'Pirate Plunder',
   family: 'pinball',
   difficulty: 'hard',
-  description: 'A pirate pinball table in a storm: away from the gate in a pack, along the quay past the barrels, through the harbour bends and down the gangplank, then round the whirlpool, a steep banked turn high over the playfield, round the cannon and through the treasure cove to the flippers.',
+  description: 'A pirate pinball table in a storm: away from the gate in a pack, along the quay past the barrels, through the harbour bends and down the gangplank, then round the whirlpool, a tight, steep banked turn, round the cannon and through the treasure cove to the flippers.',
   surface: 'ice',
   biome: 'playfield',
   lighting: 'parlour',
@@ -29,7 +29,7 @@ module.exports = track({
   opening: opening('clear-start', { side: 'right' }),
   sections: [
     {
-      name: 'Along the quay', shape: straight(55, { grade: 0.12 }), billboards: 1,
+      name: 'Along the quay', shape: straight(55, { grade: 0.12 }),
       features: [boost({ at: 0.08, kick: 4 })],
       obstacles: [block({ costume: 'barrel', at: 0.25, line: 'left', loss: 0.15 }), slalom({ costume: 'mooring-pole', from: 0.5, to: 0.95, count: 4, loss: 0.3 })],
     },
@@ -37,9 +37,12 @@ module.exports = track({
       name: 'Harbour bends', shape: sBends({ first: 'left', radius: 70, degrees: 60, grade: 0.13 }), billboards: 1,
       obstacles: [peg({ costume: 'mooring-pole', at: 0.35, line: 'center' }), peg({ costume: 'mooring-pole', at: 0.7, line: 'center' })],
     },
-    { name: 'Down the gangplank', shape: plunge(45, { grade: 0.3, from: 0.13 }) },
+    {
+      name: 'Down the gangplank', shape: plunge(50, { grade: 0.3, from: 0.13 }), billboards: 1,
+      obstacles: [slalom({ costume: 'mooring-pole', from: 0.5, to: 0.85, count: 2, loss: 0.15 })],
+    },
     { name: 'Up to the whirlpool', shape: straight(45, { grade: 0.12 }), billboards: 1 },
-    { name: 'The whirlpool', shape: sweep({ side: 'right', radius: 45, degrees: 170, grade: 0.14 }), height: 8 },
+    { name: 'The whirlpool', shape: sweep({ side: 'right', radius: 45, degrees: 170, grade: 0.14 }) },
     {
       name: 'Out of the whirlpool', shape: sBends({ first: 'left', radius: 65, degrees: 60, grade: 0.13 }),
       features: [boost({ at: 0.08, kick: 4 })],

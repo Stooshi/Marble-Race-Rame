@@ -1498,6 +1498,17 @@
    "side": 1,
    "marbles": 6
   },
+  "moonshot": {
+   "name": "Moonshot",
+   "series": "Pinball",
+   "lighting": "parlour",
+   "v": "a1fc7274",
+   "bytes": 11162,
+   "bytes2x": 27470,
+   "t": 10842,
+   "side": 1,
+   "marbles": 7
+  },
   "multiball-manor": {
    "name": "Multiball Manor",
    "series": "Pinball",
