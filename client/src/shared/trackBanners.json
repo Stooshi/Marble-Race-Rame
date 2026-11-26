@@ -255,6 +255,17 @@
    "side": 1,
    "marbles": 4
   },
+  "big-top": {
+   "name": "Big Top",
+   "series": "Pinball",
+   "lighting": "parlour",
+   "v": "11a4e156",
+   "bytes": 13126,
+   "bytes2x": 32330,
+   "t": 10595,
+   "side": 1,
+   "marbles": 7
+  },
   "bislett-mile": {
    "name": "Bislett Mile",
    "series": "Track and Field",

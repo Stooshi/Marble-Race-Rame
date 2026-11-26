@@ -60,6 +60,11 @@ Rome Monte Mario Drop's first try), so the mixing comes later: at least two slal
 more (no pile-ups in a row: two of them left marbles stuck). `test/trackKit.test.js` lists every track from that day
 (`CLEAR_START_FROM_21_NOV`).
 
+On an ice table (the Pinball tables of 26 Nov 2026) the strongest marbles won 58–64% of races with only pegs after
+the opening (pegs favour them: they power through the hits). What brought it to a fair share: a slalom (3–4 gates, loss
+0.3) on the first section after the opening, and short slaloms of 2 gates (loss 0.15) on the drops; a swinging arm's
+timing adds luck too. The hits also raise the wildness (Moonshot: 70 a race, Extreme).
+
 ## Vary the opening, place the pack separator where it fits (Moses, 4 Nov 2026)
 
 For every new track: vary how it opens (for example a splitter, a funnel, hairpins or the classic
