@@ -1,0 +1,61 @@
+{
+ "flipper-spins": {
+  "at": 1,
+  "back": -40,
+  "beside": 0,
+  "up": 10,
+  "ahead": 4,
+  "rise": 2,
+  "t": 44200
+ },
+ "indus-spins": {
+  "at": 0.25,
+  "back": 20,
+  "beside": 14,
+  "side": -1,
+  "up": 10,
+  "ahead": 45,
+  "rise": -12
+ },
+ "the-stack": {
+  "at": 0.72,
+  "back": 10,
+  "beside": 8,
+  "side": -1,
+  "up": 16,
+  "ahead": 130,
+  "rise": 18
+ },
+ "waimea-free-fall": {
+  "t": 26000,
+  "side": -1
+ },
+ "sky-islands": {
+  "t": 9000,
+  "side": -1
+ },
+ "voxel-harbor": {
+  "t": 36000,
+  "side": -1
+ },
+ "chain-reaction": {
+  "t": 17000,
+  "side": 1
+ },
+ "marble-stadium-sprint": {
+  "t": 16000,
+  "side": 1
+ },
+ "pingxi-lantern-run": {
+  "t": 17000,
+  "side": -1
+ },
+ "jodhpur-blue-city-run": {
+  "t": 17000,
+  "side": 1
+ },
+ "seoul-namsan-run": {
+  "t": 12000,
+  "side": 1
+ }
+}

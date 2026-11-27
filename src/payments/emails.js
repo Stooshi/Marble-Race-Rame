@@ -1,0 +1,132 @@
+'use strict';
+
+/**
+ * Purchase emails (Moses, 21 Oct 2026), sent by Brevo once email is on (BREVO_API_KEY):
+ *   - the purchase confirmation for each website purchase (coin pack or season pass), with the order,
+ *     the price and the exact words the player agreed to at checkout (payments.consent_text: immediate
+ *     delivery and the end of the right of withdrawal; for a pass in its pre-sale, how to withdraw);
+ *   - the acknowledgement of a withdrawal (./withdrawal.js).
+ * In-app (Apple, Google Play) purchases get the store's own receipt; the stores sell those.
+ *
+ * Checked every few minutes: each email goes once (claimed in payments before sending, released if
+ * Brevo refuses it). Only recent ones: switching email on later doesn't send old confirmations.
+ */
+const email = require('../email');
+const templates = require('../email/templates');
+const library = require('../email/library');
+const seasons = require('../seasons');
+const config = require('../config');
+const billing = require('../billing');
+
+const TZ = 'Europe/Stockholm';
+const when = (t) => new Intl.DateTimeFormat('en-GB', { timeZone: TZ, day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' }).format(new Date(t)).replace(/, /, ' at ') + ' (Swedish time)';
+const money = (cents, currency) => new Intl.NumberFormat('en-US', { style: 'currency', currency: String(currency || 'USD').toUpperCase() }).format(cents / 100);
+const site = () => (config.stripe.siteUrl || 'https://marblespins.com').replace(/\/$/, '');
+
+/** The sentences the player agreed to, from the stored consent text ("[version] a / b"). */
+function agreedOf(consentText) {
+  return String(consentText || '').replace(/^\[[^\]]*\]\s*/, '').split(' / ').map((s) => s.trim()).filter(Boolean);
+}
+
+async function itemOf(db, pay) {
+  if (pay.pack_key) {
+    const { rows: [p] } = await db.query('SELECT name FROM track_packs WHERE key = $1', [pay.pack_key]);
+    return { item: `${p?.name ?? 'Track'} pack${pay.coins_spent > 0 ? ` (with ${Number(pay.coins_spent).toLocaleString('en-US')} coins)` : ''}`, season: null, pack: true };
+  }
+  if (!pay.season_key) return { item: `${Number(pay.coins).toLocaleString('en-US')} coins`, season: null };
+  const season = await seasons.byKey(db, pay.season_key);
+  return { item: season?.pass_name ?? 'Season pass', season };
+}
+
+/** The confirmation email's content for one paid payment row (with username). */
+async function confirmationFor(db, pay) {
+  const { item, season, pack } = await itemOf(db, pay);
+  const preSale = season && new Date(pay.paid_at) < new Date(season.starts_at);
+  const o = {
+    username: pay.username,
+    orderNo: pay.order_no,
+    item,
+    price: `${money(pay.charged_cents ?? pay.amount_cents, pay.charged_currency ?? pay.currency)} incl. VAT`,
+    paidAt: when(pay.paid_at),
+    kind: pack ? 'pack' : !season ? 'coins' : preSale ? 'pre-sale-pass' : 'pass',
+    activates: season ? when(season.starts_at) : null,
+    agreed: agreedOf(pay.consent_text),
+    purchasesUrl: `${site()}/purchases`,
+    termsUrl: `${site()}/legal#sale`,
+    // Our receipt (K-…, src/billing) for a live Stripe purchase; none for the test provider or Stripe's test mode.
+    receipt: await billing.receiptLink(db, pay.id),
+  };
+  // (The edited template if one is published, CRM phase 5; the core: the order, the agreements, the receipt.)
+  const msg = await library.compose(db, 'purchase-confirmation', {
+    values: { name: pay.username, order_no: pay.order_no, item }, core: templates.cores.purchaseCore(o), fallback: () => templates.purchaseConfirmation(o),
+  });
+  // (The receipt as a PDF too, Moses 16 Nov 2026: the same document as the page.)
+  return { ...msg, attachments: o.receipt ? await billing.pdfAttachment(db, o.receipt.number) : [] };
+}
+
+async function withdrawalFor(db, pay) {
+  const { item } = await itemOf(db, pay);
+  const o = {
+    username: pay.username,
+    orderNo: pay.order_no,
+    item,
+    price: money(pay.charged_cents ?? pay.amount_cents, pay.charged_currency ?? pay.currency),
+    receivedAt: when(pay.withdrawn_at),
+  };
+  return library.compose(db, 'withdrawal-received', {
+    values: { name: pay.username, order_no: pay.order_no, item }, core: templates.cores.withdrawalCore(o), fallback: () => templates.withdrawalReceived(o),
+  });
+}
+
+/** Sends one kind: `column` claims the row, `where` picks them, `build` makes the email. → how many sent. */
+async function sendKind(db, { column, where, build, tag, after = null }) {
+  const { rows } = await db.query(
+    `UPDATE payments p SET ${column} = now()
+       FROM users u
+      WHERE u.id = p.user_id AND NOT u.is_guest AND u.deleted_at IS NULL AND p.${column} IS NULL AND ${where}
+      RETURNING p.*, u.username, u.email`,
+  );
+  let sent = 0;
+  for (const pay of rows) {
+    try {
+      const { subject, html, templateVersion, attachments } = await build(db, pay);
+      await email.send({ to: pay.email, toName: pay.username, subject, html, tags: [tag], userId: pay.user_id, templateVersion, attachments });
+      sent += 1;
+      if (after) await after(db, pay).catch((err) => console.error(`[payments] ${tag} after sending ${pay.order_no}: ${err.message}`));
+    } catch (err) {
+      await db.query(`UPDATE payments SET ${column} = NULL WHERE id = $1`, [pay.id]);
+      console.error(`[payments] ${tag} email for ${pay.order_no} failed: ${err.message}`);
+    }
+  }
+  return sent;
+}
+
+/** Sends what is due. → { confirmations, withdrawals } (nothing while email is off). */
+async function sendDue(db) {
+  if (!email.enabled()) return { confirmations: 0, withdrawals: 0 };
+  const confirmations = await sendKind(db, {
+    column: 'confirmation_sent_at',
+    where: `p.status = 'paid' AND p.provider IN ('stripe', 'test') AND p.order_no IS NOT NULL AND p.paid_at > now() - interval '2 days'`,
+    build: confirmationFor,
+    tag: 'purchase-confirmation',
+    // (The receipt went with it: the email holds its link.)
+    after: (d, pay) => d.query(`UPDATE billing_documents SET emailed_at = now() WHERE payment_id = $1 AND kind = 'receipt' AND emailed_at IS NULL`, [pay.id]),
+  });
+  const withdrawals = await sendKind(db, {
+    column: 'withdrawal_ack_sent_at',
+    where: `p.withdrawn_at IS NOT NULL AND p.withdrawn_at > now() - interval '7 days'`,
+    build: withdrawalFor,
+    tag: 'withdrawal-received',
+  });
+  return { confirmations, withdrawals };
+}
+
+/** Every 2 minutes. */
+function startJobs(db) {
+  const run = () => sendDue(db).catch((err) => console.error('[payments] purchase emails failed', err.message));
+  const timer = setInterval(run, 120_000);
+  timer.unref?.();
+  return timer;
+}
+
+module.exports = { agreedOf, confirmationFor, withdrawalFor, sendDue, startJobs };

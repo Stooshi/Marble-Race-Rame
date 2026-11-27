@@ -1,0 +1,250 @@
+'use strict';
+
+/**
+ * The opening library: proven ways for a kit track to leave the gate, so not
+ * every track starts with the same steep drop and the same pile-up.
+ *
+ *   opening: opening('banked-turn', { side: 'right', costumes: { block: 'tyre-stack' } }),
+ *   sections: [ …the rest of the track… ],
+ *
+ * An opening is the first section or two of a track, plus anything it changes
+ * at the gate (how the field is let go, the starting funnel, twin chutes). Each
+ * was proven on its own test track (src/tracks/variety-*.js) before any real
+ * track used it: three batches of 1,000 races and the full track report, every
+ * fairness and racing target passing. The recipe's first rule is that a track
+ * opens with one of these (or, as every track before the library did, the
+ * classic steep plunge written out by hand).
+ *
+ * `name`, `names`, `costumes` and the scenery fields dress an opening; its
+ * shape and its obstacles' places are what was proven, so they stay as they are.
+ */
+
+const { plunge, straight, sweep, sBends, climb, pileUp, slalom, peg, boost, brake, halfPipe, moguls, block } = require('./parts');
+
+// The classic opening (every Grand Prix track's): a steep 80 m plunge, a pile-up, then a slalom.
+const classicObstacles = (c) => [
+  pileUp({ costume: c.block, at: 0.42 }),
+  slalom({ costume: c.slalom, from: 0.55, to: 0.97, count: 6, loss: 0.3 }),
+];
+
+const OPENINGS = {
+  /** The classic: a steep plunge, a pile-up and a slalom (as on every track before the library). */
+  classic: (o) => ({
+    sections: [{ key: 'plunge', name: 'Start plunge', shape: plunge(80, { grade: 0.6 }), obstacles: classicObstacles(o.costumes) }],
+  }),
+
+  /**
+   * Split-and-merge: down the steep plunge through the first pile-up, then into two
+   * parallel chutes, an island between them, merging again about two seconds later
+   * (the wedge stands just below the gate's funnel, where the field is first in one
+   * channel). Both chutes are the same length and the same ice, so neither is
+   * quicker; which a marble takes depends on where it is across the plunge.
+   */
+  'split-start': (o) => ({
+    sections: [
+      { key: 'plunge', name: 'Start plunge', shape: plunge(70, { grade: 0.6 }), obstacles: [pileUp({ costume: o.costumes.block, at: 0.48 }), slalom({ costume: o.costumes.slalom, from: 0.75, to: 0.97, count: 3, loss: 0.3 })] },
+      { key: 'chutes', name: 'Twin chutes', shape: twinChutes(40, { grade: 0.5, balance: o.balance }) },
+      { key: 'after', name: 'Out of the chutes', shape: plunge(35, { grade: 0.55 }), obstacles: [slalom({ costume: o.costumes.slalom, from: 0.1, to: 0.95, count: 4, loss: 0.3 })] },
+    ],
+  }),
+
+  /**
+   * Staggered gate drop: the gate lets the field go in five waves of four starting
+   * places, 0.15 s apart, in an order drawn afresh every race, so each wave leads
+   * as often as any other.
+   */
+  'staggered-drop': (o) => ({
+    // (A short rough stretch where the waves catch each other up, then the pile-up and slalom.)
+    sections: [{
+      key: 'plunge', name: 'Start plunge', shape: plunge(90, { grade: 0.6 }), features: [brake({ at: 0.3, length: 12, drag: 0.02 })],
+      obstacles: [pileUp({ costume: o.costumes.block, at: 0.52 }), slalom({ costume: o.costumes.slalom, from: 0.63, to: 0.97, count: 6, loss: 0.3 })],
+    }],
+    waves: { groups: 5, gap: 0.15, jitter: 0.05 },
+  }),
+
+  /** Tunnel launch: down the steep plunge from the gate, through the first pile-up and into a tunnel where the gate's funnel ends, out into daylight. */
+  'tunnel-launch': (o) => ({
+    sections: [
+      { key: 'portal', name: 'To the portal', shape: plunge(55, { grade: 0.6 }), obstacles: [pileUp({ costume: o.costumes.block, at: 0.61 }), slalom({ costume: o.costumes.slalom, from: 0.8, to: 0.97, count: 2, loss: 0.3 })] },
+      { key: 'tunnel', name: 'Launch tunnel', shape: plunge(45, { grade: 0.6 }), tunnel: o.tunnel ?? 'rock', obstacles: [slalom({ costume: o.costumes.slalom, from: 0.1, to: 0.6, count: 4, loss: 0.3 })] },
+    ],
+  }),
+
+  /** Banked first turn: a shorter plunge straight into a steep banked sweep; the field fans up the wall. */
+  'banked-turn': (o) => ({
+    sections: [
+      { key: 'plunge', name: 'Start plunge', shape: plunge(80, { grade: 0.6 }), obstacles: classicObstacles(o.costumes) },
+      { key: 'turn', name: 'First turn', shape: sweep({ side: o.side ?? 'left', radius: 60, degrees: 110, grade: 0.14 }) },
+    ],
+  }),
+
+  /**
+   * Boost-pad launch: a gentler drop, then a strip of boost pads across the whole
+   * channel, wall to wall, so every marble gets the same kick and the field
+   * arrives at the first bend packed together.
+   */
+  'boost-launch': (o) => ({
+    sections: [
+      { key: 'drop', name: 'Launch drop', shape: plunge(70, { grade: 0.35 }), obstacles: [pileUp({ costume: o.costumes.block, at: 0.5 })] },
+      { key: 'launch', name: 'Launch strip', shape: straight(30, { grade: 0.3 }), features: [boost({ at: 0.2, halfWidth: 5.2, length: 10 })] },
+      { key: 'plunge', name: 'After the launch', shape: plunge(50, { grade: 0.45, from: 0.3 }), obstacles: [slalom({ costume: o.costumes.slalom, from: 0.3, to: 0.95, count: 6, loss: 0.3 })] },
+    ],
+  }),
+
+  /** Funnel drop: a longer bowl at the gate (82 m against the usual 70 m), a longer slalom out of it; the order mixes as the field squeezes into the channel. */
+  'funnel-drop': (o) => ({
+    sections: [{ key: 'plunge', name: 'Bowl', shape: plunge(95, { grade: 0.6 }), obstacles: [pileUp({ costume: o.costumes.block, at: 0.4 }), slalom({ costume: o.costumes.slalom, from: 0.5, to: 0.97, count: 7, loss: 0.3 })] }],
+    funnel: { length: 82 },
+  }),
+
+  /** Crest start: the steep plunge and its pile-up and slalom, then a short climb and over a rounded crest; the field bunches on the climb and spills over in a new order. */
+  'crest-start': (o) => ({
+    sections: [
+      { key: 'plunge', name: 'Start plunge', shape: plunge(80, { grade: 0.6 }), obstacles: classicObstacles(o.costumes) },
+      { key: 'climb', name: 'The crest', shape: climb(12, { grade: -0.06, after: 0.3 }) },
+      { key: 'drop', name: 'Over the top', shape: plunge(40, { grade: 0.5, from: 0.3 }) },
+    ],
+  }),
+
+  // ── Varied starts (October 2026): no pile-up and slalom after the gate. Without the pile-up's luck the
+  // strongest marbles win too often (57% against the usual 42%), so a track starting with one of these
+  // has its pile-up later on (the recipe's rule): the luck stays, the first seconds differ.
+
+  /** Clean drop: a plunge with nothing in it, at full speed into deep, tight S-bends that shuffle the field. */
+  'clean-drop': (o) => ({
+    sections: [
+      { key: 'plunge', name: 'Start plunge', shape: plunge(70, { grade: 0.5 }) },
+      { key: 'bends', name: 'First S-bends', shape: sBends({ first: o.side === 'right' ? 'right' : 'left', radius: 55, degrees: 110, grade: 0.13 }) },
+    ],
+    waves: { groups: 5, gap: 0.3, jitter: 0.1 },
+  }),
+
+  /** Peg drop: a slightly gentler plunge through a scatter of single pegs, left and right, the field threading through. */
+  'peg-drop': (o) => ({
+    sections: [{
+      key: 'plunge', name: 'Peg drop', shape: plunge(90, { grade: 0.5 }),
+      obstacles: [['left', 0.3], ['right', 0.4], ['left', 0.5], ['right', 0.6], ['left', 0.7], ['right', 0.8], ['center', 0.9]].map(([line, at]) => peg({ costume: o.costumes.peg, at, line })),
+    }],
+    waves: { groups: 5, gap: 0.3, jitter: 0.1 },
+  }),
+
+  /** Pipe drop: a short plunge straight into a half-pipe, the field rocking from wall to wall down its U. */
+  'pipe-drop': (o) => ({
+    sections: [
+      { key: 'plunge', name: 'Start plunge', shape: plunge(60, { grade: 0.55 }) },
+      { key: 'pipe', name: 'Half-pipe', shape: halfPipe({ first: o.side === 'right' ? 'right' : 'left', width: 8, swings: 4, radius: 150, degrees: 18, grade: 0.12 }) },
+    ],
+    waves: { groups: 5, gap: 0.3, jitter: 0.1 },
+  }),
+
+  // ── The clear start (Moses, 21 Nov 2026: every new track from now on). No obstacles, splitters, pegs or drops in
+  // the first part of the race: the field stays together as a pack for its first 10 to 15 seconds, and the hazards
+  // start after that (the track's own first sections are clear too; checked by test/trackKit.test.js).
+
+  /**
+   * Clear start: the field let go in waves (a new order every race: that is what keeps it fair with nothing to mix
+   * it) down a gentle run off the gate, then a long, gentle bend (`side`) and an easy bend back; nothing in the way.
+   */
+  'clear-start': (o) => ({
+    sections: [
+      // (Eased off the gate's steep starting ramp in steps, so the follow camera doesn't swing over a sharp change of slope.)
+      { key: 'run', name: 'Away from the gate', shape: { shape: 'straight', parts: [[10, 0.6], [10, 0.45], [10, 0.32], [45, 0.2]].map(([length, grade]) => ({ kind: 'straight', length, grade })) } },
+      { key: 'bend', name: 'The first bend', shape: sweep({ side: o.side ?? 'left', radius: 95, degrees: 70, grade: 0.12 }) },
+      { key: 'back', name: 'Easy bend back', shape: sweep({ side: (o.side ?? 'left') === 'left' ? 'right' : 'left', radius: 95, degrees: 55, grade: 0.12 }) },
+    ],
+    waves: { groups: 5, gap: 0.12, jitter: 0.08 },
+  }),
+
+  // ── Motorsport starts (Moses, 12 Nov 2026: eleven new Grand Prix tracks, varied openings, no boost launch and
+  // no jump). Each proven on its own test track (src/tracks/variety: variety-opening-<kind>) with its races.
+
+  /**
+   * Rolling start: the field let go in waves down a long, gentle run (the pace lap), a short slalom of cones,
+   * then a wide banked first turn (`side`); the field spreads up the banking.
+   */
+  'rolling-start': (o) => ({
+    sections: [
+      { key: 'run', name: 'Rolling start', shape: plunge(90, { grade: 0.5 }), obstacles: [slalom({ costume: o.costumes.slalom, from: 0.55, to: 0.97, count: 5, loss: 0.3 })] },
+      { key: 'turn', name: 'Turn one', shape: sweep({ side: o.side ?? 'left', radius: 75, degrees: 120, grade: 0.13 }) },
+    ],
+    waves: { groups: 5, gap: 0.3, jitter: 0.1 },
+  }),
+
+  /**
+   * Chicane start: the field let go in waves, down the plunge through the first pile-up, then straight into a tight chicane (`side`: its
+   * first flick) with a peg in the middle of each flick; the order mixes through the flick. (Pegs at the apexes,
+   * one each side, favoured the starting places on one side: average places 10.2 to 10.9 by group.)
+   */
+  'chicane-start': (o) => ({
+    sections: [
+      { key: 'plunge', name: 'Start plunge', shape: plunge(70, { grade: 0.6 }), obstacles: [pileUp({ costume: o.costumes.block, at: 0.45 }), slalom({ costume: o.costumes.slalom, from: 0.62, to: 0.97, count: 4, loss: 0.3 })] },
+      {
+        key: 'chicane', name: 'First chicane', shape: sBends({ first: o.side === 'right' ? 'right' : 'left', radius: 50, degrees: 70, grade: 0.14 }),
+        obstacles: [peg({ costume: o.costumes.peg, at: 0.3, line: 'center' }), peg({ costume: o.costumes.peg, at: 0.7, line: 'center' })],
+      },
+    ],
+    // (Let go in waves, a new order every race: without them the starting places on the chicane's inside won more.)
+    waves: { groups: 5, gap: 0.12, jitter: 0.04 },
+  }),
+
+  /**
+   * Rumble start: the field let go in waves down a plunge striped with rumble strips (low bumps, `costumes.rumble`
+   * their look), then a slalom; the bumps unsettle the line before the cones.
+   */
+  'rumble-start': (o) => ({
+    sections: [{
+      key: 'plunge', name: 'Rumble start', shape: plunge(95, { grade: 0.5 }),
+      features: [moguls({ from: 0.12, to: 0.4, count: 5, ...(o.costumes.rumble && { look: o.costumes.rumble }) })],
+      obstacles: [slalom({ costume: o.costumes.slalom, from: 0.55, to: 0.97, count: 6, loss: 0.3 })],
+    }],
+    waves: { groups: 5, gap: 0.3, jitter: 0.1 },
+  }),
+
+  /**
+   * Sand trap: down the plunge into a short slowing stretch (the sand trap), the first pile-up straight after it,
+   * then a slalom of flags; the field arrives bunched and the pile-up sorts it.
+   */
+  'sand-trap': (o) => ({
+    sections: [{
+      key: 'plunge', name: 'Start plunge', shape: plunge(85, { grade: 0.6 }), features: [brake({ at: 0.28, length: 14, drag: 0.03 })],
+      obstacles: [pileUp({ costume: o.costumes.block, at: 0.55 }), slalom({ costume: o.costumes.slalom, from: 0.68, to: 0.97, count: 5, loss: 0.3 })],
+    }],
+  }),
+};
+
+/**
+ * Two parallel chutes, side by side, a low wedge between them, merging at the end
+ * (the split-and-merge opening's middle). Straight and the same length both ways.
+ */
+function twinChutes(length, { grade = 0.45, balance = {} } = {}) {
+  // (`balance`: a track may set each chute's ice on its own, as a splitter's, when one chute wins more than its
+  // share: Santorini Caldera Run's, 16 Nov 2026. Without it both chutes race alike.)
+  const fork = { chutes: true, radius: 2.5, apart: 5, tipOffset: 0, left: { drag: 1, scrub: 1 }, right: { drag: 1, scrub: 1 } };
+  return { shape: 'twinChutes', parts: [{ kind: 'straight', length, grade }], fork: { ...fork, ...balance, left: { ...fork.left, ...balance.left }, right: { ...fork.right, ...balance.right } } };
+}
+
+const OPENING_KINDS = Object.keys(OPENINGS);
+// Dressing an opening: what may change (looks only) on each of its sections.
+const DRESS = ['name', 'scenery', 'landmarks', 'billboards', 'billboardFrame', 'surface', 'figures', 'overhead', 'tunnel', 'height', 'water', 'waterCurtain', 'stadium', 'river', 'peak'];
+
+/**
+ * An opening from the library. `costumes`: what its obstacles look like
+ * ({ block, slalom, peg, rumble }); `names`: { <key>: 'Section name' }; `dress`:
+ * { <key>: { scenery, landmarks, … } }; `side` (banked-turn): which way the
+ * first turn goes; `tunnel` (tunnel-launch): the tunnel's look.
+ */
+function opening(kind, { costumes = {}, names = {}, dress = {}, ...o } = {}) {
+  const make = OPENINGS[kind];
+  if (!make) throw new Error(`unknown opening ${JSON.stringify(kind)} (${OPENING_KINDS.join(', ')})`);
+  const made = make({ ...o, costumes });
+  const sections = made.sections.map(({ key, ...sec }) => {
+    const extra = dress[key] ?? {};
+    for (const k of Object.keys(extra)) if (!DRESS.includes(k)) throw new Error(`opening ${kind}: "${k}" cannot be changed on its ${key} section (only ${DRESS.join(', ')})`);
+    return { ...sec, ...extra, ...(names[key] && { name: names[key] }), openingKey: key };
+  });
+  // (`waves`: a track may let any opening's field go in waves, a new order every race, to even out its starting groups.)
+  const waves = o.waves ?? made.waves;
+  return { kind, sections, ...(waves && { waves }), ...(made.funnel && { funnel: made.funnel }) };
+}
+
+module.exports = { opening, twinChutes, OPENING_KINDS };

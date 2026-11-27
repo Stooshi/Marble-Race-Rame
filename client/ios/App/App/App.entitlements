@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- Push notifications (APNs). "development" here; an App Store build is signed as "production"
+	     by Xcode automatically. Needs the Push Notifications capability on the app id in the Apple
+	     Developer account (docs/05-runbook.md, Push notifications). -->
+	<key>aps-environment</key>
+	<string>development</string>
+	<!-- Universal Links (27 Oct 2026): marblespins.com pages open the app; iOS checks
+	     https://marblespins.com/.well-known/apple-app-site-association (client/app-links.json, once the
+	     Team ID is filled in). Needs the Associated Domains capability on the app id (Xcode adds it with
+	     automatic signing under the paid team). -->
+	<key>com.apple.developer.associated-domains</key>
+	<array>
+		<string>applinks:marblespins.com</string>
+		<string>applinks:www.marblespins.com</string>
+	</array>
+</dict>
+</plist>

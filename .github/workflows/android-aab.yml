@@ -1,0 +1,99 @@
+# Builds the signed Android App Bundle (.aab) for Google Play from Main, on demand (Moses, 23 Nov 2026).
+# Run by hand: Actions → "Android: build the signed .aab" → Run workflow. The .aab is in the run's
+# Artifacts (14 days); upload it yourself in Play Console (Test and release → Internal testing →
+# Create new release). Nothing is uploaded to Google from here.
+#
+# - Version from client/app-version.json (raise it first with npm run app:version: Google never
+#   accepts the same versionCode twice).
+# - Signed with the UPLOAD key from two repository secrets (set-up: docs/05-runbook.md, "Android
+#   build in GitHub Actions"):
+#     ANDROID_UPLOAD_KEYSTORE_BASE64  the .jks file, base64
+#     ANDROID_UPLOAD_KEY_PASSWORD     its password (the key and the keystore share it)
+#   The key is written to the runner's temporary folder only and deleted at the end. android/app/build.gradle
+#   reads it from the MS_UPLOAD_* variables, so the local build (keystore.properties) is unchanged.
+# - The bundle's signature is checked against the key before it is kept.
+name: "Android: build the signed .aab"
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    defaults:
+      run:
+        working-directory: client
+    env:
+      KEYSTORE_B64: ${{ secrets.ANDROID_UPLOAD_KEYSTORE_BASE64 }}
+      MS_UPLOAD_STOREPASSWORD: ${{ secrets.ANDROID_UPLOAD_KEY_PASSWORD }}
+      MS_UPLOAD_KEYPASSWORD: ${{ secrets.ANDROID_UPLOAD_KEY_PASSWORD }}
+      MS_UPLOAD_KEYALIAS: upload
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: Main
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: client/package-lock.json
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: gradle
+
+      - name: The upload key
+        run: |
+          if [ -z "$KEYSTORE_B64" ] || [ -z "$MS_UPLOAD_STOREPASSWORD" ]; then
+            echo "::error::Add the secrets ANDROID_UPLOAD_KEYSTORE_BASE64 and ANDROID_UPLOAD_KEY_PASSWORD first (docs/05-runbook.md, Android build in GitHub Actions)."; exit 1
+          fi
+          KEY="$RUNNER_TEMP/upload.jks"
+          printf '%s' "$KEYSTORE_B64" | tr -d ' \r\n' | base64 -d > "$KEY"
+          keytool -list -keystore "$KEY" -alias "$MS_UPLOAD_KEYALIAS" -storepass "$MS_UPLOAD_STOREPASSWORD" > /dev/null \
+            || { echo "::error::The key or its password is wrong (or the alias isn't \"upload\")."; exit 1; }
+          echo "MS_UPLOAD_STOREFILE=$KEY" >> "$GITHUB_ENV"
+
+      - name: Install
+        run: npm ci
+
+      - name: Build the web part into the Android project
+        run: node scripts/app-sync.mjs android
+
+      - name: Build the bundle
+        working-directory: client/android
+        run: ./gradlew --no-daemon bundleRelease
+
+      - name: Check the signature and name the file
+        id: aab
+        run: |
+          V=$(node -p "require('./app-version.json').versionName")
+          C=$(node -p "require('./app-version.json').versionCode")
+          AAB=android/app/build/outputs/bundle/release/app-release.aab
+          want=$(keytool -list -v -keystore "$MS_UPLOAD_STOREFILE" -alias upload -storepass "$MS_UPLOAD_STOREPASSWORD" | grep -m1 'SHA256:' | awk '{print $2}')
+          got=$(keytool -printcert -jarfile "$AAB" | grep -m1 'SHA256:' | awk '{print $2}')
+          if [ -z "$got" ] || [ "$got" != "$want" ]; then echo "::error::The bundle isn't signed with the upload key."; exit 1; fi
+          mkdir -p "$RUNNER_TEMP/out"
+          cp "$AAB" "$RUNNER_TEMP/out/marblespins-$V-$C.aab"
+          echo "name=marblespins-$V-$C" >> "$GITHUB_OUTPUT"
+          {
+            echo "## Marble Spins $V (versionCode $C)"
+            echo "Signed with the upload key (SHA-256 $got). Download it under Artifacts below, then Play Console → Test and release → Internal testing → Create new release → upload."
+            echo "Next time: raise the version first (npm run app:version), as Google never accepts a versionCode twice."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.aab.outputs.name }}
+          path: ${{ runner.temp }}/out/*.aab
+          retention-days: 14
+
+      - name: Delete the key
+        if: always()
+        run: rm -f "$RUNNER_TEMP/upload.jks"

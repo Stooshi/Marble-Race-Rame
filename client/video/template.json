@@ -1,0 +1,275 @@
+{
+  "_about": "The Marble Spins video template (Moses, 28 Oct 2026): every video (the productions, the cut-downs and the short clips) is drawn from this one file, so a new video follows it automatically. Calm and stylish: the races bring the energy. Clean frames, few words, no flashy effects, no shouting text; the music lifts a little at the big moments. Change a word or a setting here and render again; nothing else needs editing. {track} and {marble} are filled in.",
+
+  "colours": {
+    "navy": "#0E1320",
+    "yellow": "#FFD21F",
+    "orange": "#FF7A1A",
+    "text": "#F2F4F8",
+  "white": "#FFFFFF",
+    "_text": "the logo's own near-white (the wordmark's colour), for words on the picture"
+  },
+  "font": "Lilita One",
+  "houseLooksExclude": ["champion"],
+  "_houseLooksExclude": "Designs the field never wears in a video (their names would show in the tower and the results): Champion Shooter while its trademark check is open (Moses, 3 Nov 2026).",
+
+  "text": {
+    "_about": "Every tagline: the same font, size, colour and place, every time. One line, centred in the top band (the pack is in the middle and below), fading in and out; never moving, popping or flashing.",
+    "sizeVmin": 5.6,
+    "topWide": "7vh",
+    "topTall": "10.5vh",
+    "colour": "white",
+    "shadow": "navy",
+    "seconds": 2.6,
+    "fadeInSeconds": 0.15,
+    "fadeOutSeconds": 0.25
+  },
+
+  "mark": {
+    "_about": "The small Marble Spins mark (the marble and its two arcs), in the same corner on every frame except the logo intro and the end card.",
+    "corner": "top-right",
+    "sizeVmin": 7,
+    "marginVmin": 3.2,
+    "opacity": 0.92
+  },
+
+  "intro": { "logo": "A", "on": ["production"] },
+
+  "endCard": {
+    "_about": "The end card is on screen for at least minSeconds, fully readable, in every video (Moses, 1 Nov 2026). The logo-page end card (production, cutdown, clip, broadcast) lasts `seconds`: its lines fade in by `linesIn` s (logo.html), so they are readable for `seconds` − `linesIn` (2.7–3.2 s). The vertical broadcasts end on their play line instead: held `hold.seconds` on a calm, frozen frame of the finish (the winner), dimmed to `hold.dim` black over `hold.dimIn` s, and fully readable for at least minSeconds before the loop's fade into the first picture starts.",
+    "lines": ["Pick your marble. Race your friends.", "Play free at marblespins.com"],
+    "seconds": { "production": 5, "cutdown": 4.5, "clip": 4.5, "broadcast": 4.6 },
+    "linesIn": 1.8,
+    "minSeconds": 2.5,
+    "hold": { "seconds": 3.0, "dim": 0.38, "dimIn": 0.4 }
+  },
+
+  "sound": {
+    "_about": "The signature: the whoosh of intro A (soundreality, Pixabay 383023), on the intro and as the end card's mark lands, on every video. Music: the game's race tunes (Pixabay), lifted a little at the big moments (photo finishes, jumps).",
+    "signature": "whoosh",
+    "signatureGain": 0.55,
+    "musicGain": 0.5,
+    "liftDb": 2.5,
+    "loudnessLufs": -14
+  },
+
+  "podium": {
+    "_about": "The podium card: navy, a thin yellow edge, the first three with their marbles and times.",
+    "title": "Podium",
+    "places": ["1st", "2nd", "3rd"]
+  },
+
+  "promos": {
+    "_about": "Lines about the game, shown 3–4 per video (productions 4, cut-downs 3, short clips as many as fit, at most 2), in the same text style, about 2.6 s each, in calm moments away from the other lines, never over the pack (the top band). Each video gets the next few in the list, so they rotate across videos. A line given as a list is shown in parts, one after the other. Only what is live: no qualifying, no prizes. The fjords line: Sognefjord is a live track (checked 29 Oct 2026, not holiday-locked); if it ever isn't, use the other version in `fjordsFallback`.",
+    "perVideo": { "production": 4, "cutdown": 3, "clip": 2, "broadcast": 3 },
+    "seconds": 2.6,
+    "lines": [
+      "Real physics",
+      "Invite and race your friends",
+      "Create your own league",
+      "Build your Marble Bag. Collect your favourite marbles.",
+      "Don't just watch marble races. Race them.",
+      "Race. Earn coins. Collect marbles.",
+      ["Amazing tracks: from Norwegian fjords to pinball tables.", "Every track has its own start, layout and surprises."]
+    ],
+    "fjordsFallback": ["Amazing tracks: from the Grand Canyon to pinball tables.", "Every track has its own start, layout and surprises."]
+  },
+
+  "abTall": {
+    "_about": "The A/B opening test (Moses, 2 Nov 2026: watch time stuck at about 5 s): 15 s vertical race videos, identical except the opening. --kind abTall --opening old|new --format tall. old: frozen before the line, the contenders marked, oldHook, a quick rewind. new: no freeze, frame 1 already the race's busiest chaos with the track's own big line (newHooks, by slug). Then: three fast cuts of collisions and overtakes (cuts, seconds) with the small lines one at a time; the finish as a speed ramp (a low chase camera, `chase`: slowSeconds covering the last slowMs − lineLeadMs before the line, then fastSeconds at full speed through the line into the finish area; never a camera looking back up the track); the winner and the gap; the big end card (endCard: 'Play free' and the address about 110 px tall in our yellow) on the frozen, dimmed winner, held endCard.hold (at least endCard.minSeconds readable), fading into frame 1.",
+    "oldHook": "Who wins? Pick one.",
+    "oldFov": 66,
+    "newHooks": { "flipper-spins": "Bumper chaos.", "venice-cube-canals": "Through the canals.", "default": "Here they come." },
+    "lines": ["20 marbles. Real physics.", "Race up to 19 friends in one race."],
+    "cuts": [1.7, 1.6, 1.7],
+    "rampChase": { "back": 3.2, "up": 0.9, "ahead": 4, "fov": 74 },
+    "wonChase": { "back": 2.6, "up": 3.2, "ahead": 0.6, "fov": 62 },
+    "endDim": 0.55,
+    "ramp": { "slowMs": 900, "lineLeadMs": 450, "slowSeconds": 1.4, "fastSeconds": 1.6 },
+    "winner": "{marble} wins by {margin} s",
+    "endCard": ["Play free", "marblespins.com", "Follow for a new race every day"]
+  },
+
+  "raceTall": {
+    "_about": "The race short (Moses, 3 Nov 2026): 15 s vertical race videos from a race picked by searching seeds (scripts/video-pick.js: a pack of 3–4 side by side through at least two curves, 3–4 marbles over the line within about 0.3 s, a close gap). --kind raceTall --opening old|new --format tall. The shots in this order: the opening (old: frozen before the line, the contenders marked, oldHook, a quick rewind; new: the start is frame 1, with the track's own big line from newHooks); the start and the acceleration (startChase: low behind the front of the field); two curves with the pack side by side (curveChase: low and close); the track's signature feature with the marbles going down or through it (featureChase, or the track's own setting in `features`: a group chase or a fixed `eye` beside it); the finish as a speed ramp on the 3–4 marbles crossing together (rampChase; never a camera looking back up the track); the results board (the first four: place, marble, gate, gap) over the winner; the big end card on the frozen, dimmed winner (endCard.hold), fading into frame 1. `seconds`: each part's length by opening (about 15 s in all).",
+    "oldHook": "Who wins? Pick one.",
+    "oldFov": 66,
+    "newHooks": { "elderglade-marble-grand-prix": "Down the waterfall.", "verdon-burst": "Into the gorge.",
+      "pudong-marble-grand-prix": "Loop the skyline.",
+      "saint-tropez": "Loop over the sea.", "sydney-marble-grand-prix": "Off the Harbour Bridge.", "lagos-marble-grand-prix": "Lagos, flat out.", "default": "Here they come." },
+    "lines": ["Side by side through the bends."],
+    "featureLines": {},
+    "closeMs": 300,
+    "seconds": {
+      "new": { "start": 2.2, "startGate": 0.8, "startFrom": 0, "followFrom": 2600, "curve": 1.6, "feature": 2.3, "rampSlow": 1.3, "rampFast": 1.5, "results": 1.6 },
+      "old": { "hookSlow": 0.5, "hookFreeze": 1.3, "rewind": 0.4, "start": 1.5, "startGate": 0.6, "startFrom": 0, "followFrom": 2600, "curve": 1.3, "feature": 1.9, "rampSlow": 1.1, "rampFast": 1.3, "results": 1.4 }
+    },
+    "startShot": "gate",
+    "curveChase": { "back": 5.6, "up": 2.1, "ahead": 6, "fov": 66 },
+    "curveLeadMs": 350,
+    "featureChase": { "back": 9, "up": 5, "ahead": 10, "fov": 62, "leadMs": 500 },
+    "features": { "frostmere-marble-grand-prix": { "camera": "game", "leadMs": 300 }, "kirkjufell-block-falls": { "camera": "game", "leadMs": -300 }, "sydney-marble-grand-prix": { "back": 5, "up": 2.6, "ahead": 7, "fov": 66, "leadMs": -1000 },
+        "lagos-marble-grand-prix": { "back": 5, "up": 2.6, "ahead": 7, "fov": 66, "leadMs": 0 },
+        "nairobi-marble-grand-prix": { "back": 5, "up": 2.6, "ahead": 7, "fov": 66, "leadMs": -1000 },
+        "pudong-marble-grand-prix": { "tv": 0, "fov": 50, "leadMs": -2400 },
+      "saint-tropez": { "eye": { "p": 0.29, "beside": 42, "up": 16, "fov": 52 }, "leadMs": -2400 },
+      "rhine-castle-run": { "camera": "game", "leadMs": 200 } },
+    "curveCameras": { "kirkjufell-block-falls": "game" },
+    "rampChase": { "back": 5.2, "up": 1.9, "ahead": 4, "fov": 72 },
+    "ramp": { "slowMs": 900, "lineLeadMs": 450 },
+    "resultsTitle": "Results",
+    "gate": "Gate",
+    "endCard": ["Play free", "marblespins.com", "Follow for a new race every day"]
+  },
+
+  "spotlight": {
+    "_about": "The Marble Spotlight (Moses, 3 Nov 2026): 15 s vertical. --kind spotlight --format tall, on a race whose file has video.spotlight (scripts/video-pick.js --spotlight <look>): a 4 s close-up of the marble spinning (spotlight.html), its name, rarity and Marble ID (with `note`), that marble racing in a pack through a curve (marked), `collect`, then the big end card on the frozen, dimmed frame. Looks only: never say or suggest that rarity or any marble is faster (Moses, 3 Nov 2026).",
+    "title": "Marble Spotlight",
+    "note": "Looks only. Every marble races the same.",
+    "collect": "Collect it. Race it.",
+    "seconds": { "spin": 4, "info": 3, "race": 3.8, "tag": 1.2 },
+    "leadMs": 900,
+    "chase": { "back": 3.8, "up": 1.3, "ahead": 5, "fov": 70 }
+  },
+
+  "broadcast": {
+    "_about": "The broadcast production (Moses, 1 Nov 2026): one whole race filmed as a TV motorsport broadcast, in our own style only (navy, yellow and orange, Lilita One, the mark in its usual corner; nothing copied from any real series, team, driver or sponsor). A hook of the closest moment, the intro card over the flyover, the overlay through the race (the standings tower top left, the race clock and the three sectors top right beside the mark, name tags over the marbles near the camera), cuts every 2–4 s, the finish in slow motion, the results board with the winner's card, the end card.",
+    "introCard": "MARBLE SPINS GRAND PRIX · {city}",
+    "introSub": "20 marbles. One winner.",
+    "hookLines": {
+      "_about": "The hook (Moses, 1 Nov 2026: our first Reel averaged 5 s watch time): 0–2 s the final metres in slow motion, frozen just before the line (the winner not shown); 2–4 s markers on the three contenders; 4–5 s a quick rewind, then straight into the race. Big text, centred. The winner is shown only at the real finish. {length}: the video's own length, rounded to 10 s (\"1 minute 40\").",
+      "close": "{margin} seconds decided it.",
+      "pick": "Who wins? Pick one.",
+      "rewind": "20 marbles. {length}. Watch."
+    },
+    "tall": {
+      "_about": "The vertical cut of the broadcast (Moses, 1 Nov 2026; TikTok, Reels, Shorts, 25 s, 1080×1920): the hook (frozen before the line, the three marked), a quick rewind to GO, the best moments cut every 2–3 s, the final stretch and the photo finish in slow motion, the winner, the game's address; loop-friendly (it ends on the hook's camera). A compact tower (top 5) and the race clock, bigger text; nothing in the bottom 20% or at the right edge (the apps' buttons and captions).",
+      "towerRows": 5,
+      "hookClose": "{margin} seconds decided it.",
+      "hookPick": "Who wins? Pick one.",
+      "photoFinish": "PHOTO FINISH",
+      "winner": "{marble} · {margin} s",
+      "play": "Play free at marblespins.com"
+    },
+    "tallVariants": {
+      "_about": "Two different vertical cuts of the same track for the same night (Moses, 1 Nov 2026: Sognefjord for TikTok and Instagram): two different races, different camera moments and different words, so they never look like the same video. hook 'finish': frozen before the line, the contenders marked; hook 'overtake': the race's biggest overtake, frozen as it starts, the marble marked ({place}: its place then). lines: shown one at a time through the race. {track}: the track's name in capitals; {marble}, {margin}: the winner and its margin.",
+      "A": {
+        "hook": "finish",
+        "hookText": "Who wins? Pick one.",
+        "introTag": "MARBLE SPINS GRAND PRIX · {track}",
+        "lines": ["20 marbles. Real physics.", "Racing through a Norwegian fjord.", "Every bounce is live."],
+        "photoFinish": "PHOTO FINISH",
+        "winner": "{marble} wins by {margin} s",
+        "play": "Race your friends. Play free at marblespins.com"
+      },
+      "B": {
+        "hook": "overtake",
+        "hookText": "Watch number {place} go.",
+        "introTag": "MARBLE SPINS GRAND PRIX · {track}",
+        "lines": ["No two races are the same.", "Fjord racing, 20 marbles wide.", "Real physics. Nothing scripted."],
+        "photoFinish": "PHOTO FINISH",
+        "winner": "{marble} wins by {margin} s",
+        "play": "Race your friends. Play free at marblespins.com"
+      }
+    },
+    "captions": {
+      "_about": "The broadcast's on-screen script (Moses, 1 Nov 2026): lower-third captions in our font and colours, about 2.6 s each, timed to the race's own moments (not fixed seconds), never two at once, never over the pack. A line whose moment doesn't happen in the race is skipped. {margin}, {marble} and {time} are the chosen race's real numbers.",
+      "seconds": 2.6,
+      "flyover": "Over 100 tracks. This is one.",
+      "grid": "Every gate drawn at random.",
+      "go": "Real physics. Nothing scripted.",
+      "firstBunch": "Every bounce is live.",
+      "firstOvertake": "No two races are ever the same.",
+      "packShot": "Imagine your marble in there.",
+      "calm": "Race your friends with one link.",
+      "pickStill": "Your pick still in it?",
+      "leadChange": "Run your own league.",
+      "finalStretch": "Every marble has its own record.",
+      "photoFinish": "PHOTO FINISH",
+      "winnerTime": "{marble} · {time}",
+      "results": "Collect your marbles. Build your Marble Bag."
+    },
+    "captionSets": {
+      "_about": "A track's own lines for the broadcast, by its slug (record.mjs passes it): they replace the shared captions above key by key (a key not given keeps the shared line). The same rules: timed to the race's own moments, never two at once, a moment that doesn't happen is skipped.",
+      "sognefjord": {
+        "_about": "The long YouTube Sognefjord broadcast (Moses, 1 Nov 2026): racing lines mixed with a few fjord lines, all different from the shared (Dubai) ones.",
+        "flyover": "Racing through a Norwegian fjord.",
+        "grid": "Twenty marbles on the grid.",
+        "go": "Down towards the water.",
+        "firstBunch": "Contact! Tight in the pack.",
+        "firstOvertake": "Places change on every bend.",
+        "packShot": "Pick a marble. Follow it to the end.",
+        "calm": "Carved by glaciers. Raced by marbles.",
+        "pickStill": "Is your pick still up front?",
+        "leadChange": "New leader!",
+        "finalStretch": "The last metres along the fjord.",
+        "results": "Every result is real physics."
+      },
+      "paris-eiffel-tower-run": {"_about": "The long YouTube Paris broadcast (6 Nov 2026, DAILY-ORDER.md on-screen text rule): theme THE TRACK, every line its own (max 6 words).", "hookLines": {"close": "One thousandth of a second.", "pick": "Pick your marble for Paris.", "rewind": "Back to Montmartre. Watch."}, "introSub": "Twenty marbles across Paris.", "flyover": "From Montmartre to the Seine.", "grid": "Twenty gates above Montmartre.", "go": "Down the Montmartre plunge.", "firstBunch": "Elbow to elbow in Paris.", "firstOvertake": "Every bend reshuffles Paris.", "packShot": "Tour Eiffel watching every bounce.", "calm": "The whole city on one track.", "pickStill": "Still backing your Paris pick?", "leadChange": "A new leader in Paris.", "finalStretch": "Last plunge to the Seine.", "results": "Paris, raced by real physics."}
+    },
+    "endCard": ["Don't just watch marble races. Race them.", "Play free at marblespins.com"],
+    "otherSeries": {
+      "_about": "A broadcast on a track outside the Grand Prix (Moses, 3 Nov 2026: one long video from another series): the intro card, the tower's title and the results board's line name the track and its series instead of a Grand Prix city. {trackCaps}: the track's name in capitals; {series}: its series.",
+      "introCard": "MARBLE SPINS · {trackCaps}",
+      "towerTitle": "{series}",
+      "resultsSub": "Marble Spins {series} · {track}"
+    },
+    "slowRamp": {
+      "_about": "The broadcast's slow speed ramp into the finish (Moses, 3 Nov 2026), on races picked by scripts/video-pick.js: a low camera close behind the marbles that cross together, the last slowMs − lineLeadMs before the line slowed over slowSeconds, then fastSeconds at full speed through the line into the finish area (never looking back up the track); the slow-motion replay from beside the line follows as before.",
+      "slowMs": 1500, "lineLeadMs": 450, "slowSeconds": 3.2, "fastSeconds": 1.6,
+      "chase": { "back": 4.4, "up": 1.4, "ahead": 4, "fov": 74 }
+    },
+    "featureSeconds": 3.6,
+    "towerRows": 10,
+    "leader": "Leader",
+    "finished": "Finished",
+    "sectors": ["S1", "S2", "S3"],
+    "replay": "Replay",
+    "slowMotion": "Slow motion",
+    "resultsTitle": "Results",
+    "resultsSub": "Marble Spins Grand Prix · {city}",
+    "winner": "Winner",
+    "columns": ["Pos", "Marble", "Gate", "Time", "Gap"],
+    "tagNearMetres": 24,
+    "tagMax": 6,
+    "cutSeconds": [2, 4]
+  },
+
+  "words": {
+    "opening": "20 marbles. One winner.",
+    "trackCard": "{track}",
+    "countdown": "Who takes the lead?",
+    "lastStretch": "Final stretch",
+    "photoFinish": "Photo finish!",
+    "winner": "{marble} wins",
+    "replay": "Replay",
+    "slowMotion": "Slow-motion replay",
+    "pickYourWinner": "Who wins?",
+    "pickYourWinnerAnswer": "Did you pick {marble}?"
+  },
+  "speedMontage": {
+    "_note": "Speed montage (Moses, 8 Nov 2026): fast cuts of one shot each from at least 6 tracks, low close chase cameras, one stretch of race music, the whoosh on speed pads and loops; 15-20 s with the end card (DAILY-ORDER.md).",
+    "shotSeconds": 2,
+    "minShot": 1.5,
+    "maxShot": 3,
+    "leadMs": 350,
+    "chase": { "back": 4.4, "up": 1.4, "ahead": 5, "fov": 76 },
+    "minTracks": 6,
+    "minSeconds": 15,
+    "maxSeconds": 20,
+    "whooshGain": 1.0
+  },
+  "collisionMontage": {
+    "_note": "Collision montage (Moses, 10 Nov 2026): the speed montage's cuts and low chase, on marbles hitting each other, pegs, bumpers, flippers, splitter tips and obstacles; some shots in slow motion; the game's own click (marble on marble) and bump (marble on obstacle) on each real hit, up front, the race music low under them; 15-20 s with the end card (DAILY-ORDER.md).",
+    "chase": { "back": 6.2, "up": 2.4, "ahead": 4, "fov": 66 },
+    "_chase": "A little higher and further back than the speed montage's low chase: marbles catching the group pass the camera in a pile-up and would fill the picture (10 Nov 2026 check).",
+    "slowSpeed": 0.5,
+    "minTracks": 6,
+    "minSeries": 3,
+    "minSlow": 2,
+    "musicGain": 0.14,
+    "clickGain": { "soft": 0.9, "hard": 2.0 },
+    "bumpGain": 1.12,
+    "gapSeconds": 0.11
+  }
+}

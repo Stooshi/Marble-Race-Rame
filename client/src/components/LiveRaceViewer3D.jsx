@@ -1,0 +1,522 @@
+import { useEffect, useRef, useState } from 'react';
+import { standingsRows, standingsShown } from '../utils/standingsRows';
+import YourGate from './YourGate';
+import TvStanding from './TvStanding';
+import { entryLabel } from '../shared/playerName';
+import { useTrackScene } from '../hooks/useTrackScene';
+import MarbleBall from './MarbleBall';
+import CpuTag from './CpuTag';
+import SceneFailure from './SceneFailure';
+import CornerView, { cornerFollow, followedNow, followLabel } from './CornerView';
+import { Spinner } from './Status';
+import { formatTime } from '../utils/format';
+import { COUNTDOWN_MS } from '../three/startCamera';
+import { BUFFER_MS, holdCap, uiFrameMs } from '../hooks/useRaceStream';
+import FinishShow, { useFinishShow } from './FinishShow';
+import { CEREMONY_PHASES } from '../utils/finishShow';
+import SkipToResults from './SkipToResults';
+import FrameMeter, { useFrameMeter } from './FrameMeter';
+import { useTvMoments } from './tvMomentsSetting';
+import { sawGo, useLeftReport } from '../api/firstSteps';
+import { useAuthMaybe } from '../context/AuthContext';
+import { createBumpDetector, createHitDetector, createHitGate, createPadDetector, createStreamedHitDetector, lateFor, padsOf } from '../sound/hits';
+import { START_SOUND_MS, crowdCheer, marbleBump, marbleHit, play as playSound, speedPad, prepare as prepareSound, raceCeremony, raceCountdown, raceGo, soundReport, stopCountdown, whenSoundReady } from '../sound/engine';
+import { watchReadiness } from './raceReadiness';
+import { api } from '../api/client';
+import { FLYOVER_MS } from '../three/flyover';
+import { ownGate } from '../utils/standingsRows';
+import { FlyoverTitle, GateMoment, TrackCard } from './StartShow';
+import StartLights from './StartLights';
+import NowPlaying from './NowPlaying';
+import { useKeepAwake } from '../app/keepAwake';
+
+// A solo race's countdown starts only once the track, the marbles, the scenery and the sound are all
+// in (Moses, 28 Oct 2026); the sound (its beeps, gate sound and tune) gets at most this long (a very slow phone: the race goes on,
+// each sound joining in step when it arrives).
+const SOLO_SOUND_WAIT_MS = 6000;
+const SOUND_RECHECK_MS = 2500;
+const HOLD_FROM_MS = 250;     // the view held back when it gets ready later than this after the countdown began…
+const JOIN_LIVE_AFTER_MS = 8000; // …unless the race is already this far past GO: then it joins live
+const FLYOVER_SHOW_MS = 4000;  // the start show's flyover: a helicopter overview (three/flyover.js)
+// The flyover's switch (Moses, 26 Oct 2026: off while it was rebuilt; on again with the helicopter
+// overview). Off, the show is the track card, the gate, the 3-2-1 and GO.
+export const FLYOVER_ON = true;
+const COUNT_FROM_MS = 3000;    // the big 3-2-1 over the countdown's last three seconds (before that: "Your gate")
+const GO_SHOWN_MS = 1000;      // "GO!" stays this long
+const UI_MS = typeof window === 'undefined' ? 100 : uiFrameMs(); // the clock and order on screen while held back: as often as the stream's
+const ROOM_FLY_MIN_MS = 1200;  // a room's flyover only with at least this much of it left when the view is ready
+
+/**
+ * A live race in 3D (tracks on the new physics, e.g. Bobsleigh Run): the
+ * marbles wait behind the starting gate during the countdown, then the scene
+ * follows the live stream. Same stream contract as RaceViewer (2D): `meta`
+ * from the stream header, `sample()` for a smoothly interpolated frame, and
+ * the latest `frame` for the standings.
+ */
+const NOBODY = [];
+const NONE = {};
+
+/**
+ * The finish: `finishes` (entry index → official finish ms, as marbles cross),
+ * `complete` (the race is over), `clock()` (the stream's race clock, running
+ * on after the last frame) and `next` (the next-race panel for the board).
+ */
+/**
+ * How far to hold the view back when it is ready at `now`: as late as it is after the countdown began
+ * (from HOLD_FROM_MS), unless the race is already JOIN_LIVE_AFTER_MS past GO (then 0: it joins live).
+ * `go`: GO by the wall clock, known only when this page saw the countdown (then the frames from the
+ * start are kept, see useRaceStream).
+ */
+export function holdFor(go, countdownMs, now = Date.now()) {
+  if (!go) return 0;
+  const late = now - (go - countdownMs);
+  return late > HOLD_FROM_MS && now < go + JOIN_LIVE_AFTER_MS ? late : 0;
+}
+
+/**
+ * Getting ready (Moses, 22 Oct 2026: on phones the view was ready only after the countdown): `track`
+ * (the race's track, known before the countdown) is built as soon as the 3D view exists, and
+ * `onPrepared()` is called once its whole world is built and compiled (the solo race then starts its
+ * countdown). When the race's marbles are in and drawn, the view holds itself back
+ * (`holdBack(ms, startsAt)` from useRaceStream) if it got ready after the countdown began, so the
+ * countdown, its beeps and the gates opening always show from the start, and then catches up
+ * (`lagNow()`).
+ */
+export default function LiveRaceViewer3D({
+  meta, sample, frame, startsAt, countdownMs = COUNTDOWN_MS, highlight = NOBODY, footer = null,
+  finishes = NONE, complete = false, clock = null, next = null, canSkip = false,
+  track = null, onPrepared = null, holdBack = null, lagNow = null, intro = false, raceId = null, takeStreamed = null,
+}) {
+  // (A scene the room page built during the wait, for this race: taken over, not built again.)
+  const { wrapRef, canvasRef, sceneRef, status, failure, fail, adopted } = useTrackScene({ adoptFor: raceId });
+  // The rooms' and Quick race's start show (Moses, 26 Oct 2026): the server counts down longer
+  // (RACE_START_SHOW_MS more), so everyone sees the flyover in sync over the extra time, then the gate
+  // and the 3-2-1 over the usual COUNTDOWN_MS. Late joiners join where it is (no hold), and a skip is
+  // only this screen's.
+  const roomShow = !intro && countdownMs > COUNTDOWN_MS;
+  const showMs = roomShow ? countdownMs - COUNTDOWN_MS : 0;
+  const [camera, setCamera] = useState('follow'); // follow | overview
+  const [follow, setFollow] = useState('leader'); // 'leader' or an entry index
+  const [built, setBuilt] = useState(false);
+  const [trackReady, setTrackReady] = useState(false);
+  const [ready, setReady] = useState(false); // the race's marbles in and drawn, the hold decided
+  const ownRef = useRef(highlight); // (the player's own marbles, for the crowd's cheer)
+  ownRef.current = highlight;
+  // The own marble hitting an obstacle (../sound/hits.js; 31 Oct 2026): found from the streamed frames
+  // against the obstacles' footprints (4 Nov 2026; no longer the race's events), ahead of the race as
+  // shown, and sounded when the race as shown reaches them.
+  const bumpRef = useRef({ raceId: null, d: createBumpDetector() });
+  if (bumpRef.current.raceId !== (meta?.raceId ?? null)) bumpRef.current = { raceId: meta?.raceId ?? null, d: createBumpDetector() };
+  // Fed every streamed frame (takeStreamed, read in the draw loop), so a frame's events are never lost
+  // when React draws two frames as one; without it (older callers), the frames as drawn.
+  const takeRef = useRef(takeStreamed);
+  takeRef.current = takeStreamed;
+  useEffect(() => { if (!takeRef.current && frame && highlight.length) bumpRef.current.d.add(frame, highlight); }, [frame, highlight]);
+  const [shownT, setShownT] = useState(null); // the countdown as shown (whole tenths), for its overlay
+  const [shown, setShown] = useState(null); // the race as shown (its clock and order), when held back
+  const [gone, setGone] = useState(false); // the gates have opened (as shown): the standings appear
+  // The start show (`intro`: a solo race started here): 'loading' (the track card) → 'flying' (the
+  // flyover) → 'race' (at the gate, 3-2-1, GO). Without it: straight to 'race', as before.
+  const [phase, setPhase] = useState(intro || roomShow ? 'loading' : 'race');
+  // (9 Nov 2026: a new guest closing the page while their first race is still loading, before the flyover.)
+  const me = useAuthMaybe()?.user ?? null;
+  useLeftReport('loading', me, phase === 'loading');
+  const flyRef = useRef(null); // the flyover: { startedAt (performance ms), go }
+  const builtSlug = useRef(null);
+  if (adopted.current && !builtSlug.current) builtSlug.current = adopted.current;
+  const onPreparedRef = useRef(onPrepared);
+  onPreparedRef.current = onPrepared;
+  const theTrack = meta?.track ?? track;
+  // Everything the race's sound needs, loaded into memory from the moment the page opens (not during
+  // the countdown). A solo race waits for it (showing "Loading…") before it starts.
+  useEffect(() => { prepareSound(raceId ?? meta?.raceId ?? null); }, [raceId]); // eslint-disable-line react-hooks/exhaustive-deps
+  const [soundWait, setSoundWait] = useState(false);
+  // GO as shown on this screen (wall ms): the race clock the beeps and the tunes are timed on.
+  // (The view runs BUFFER_MS behind the stream, plus any hold: so does the sound.)
+  const goWallRef = useRef(null);
+  // (The hold the stream really keeps: never more than its cap (holdCap: a solo start show's is longer). A
+  // longer wait used to put the sound's GO that much after the GO as shown: the beeps 30 s into the race, 7 Nov 2026.)
+  const heldFor = (lag, stay = false) => Math.min(holdCap(stay), Math.max(0, lag || 0));
+  const shownGo = (wall) => {
+    goWallRef.current = wall;
+    if (meta?.raceId) raceCountdown(meta.raceId, wall - Date.now());
+  };
+  const soloSound = () => {
+    if (!onPreparedRef.current) return null;
+    setSoundWait(true);
+    return whenSoundReady(raceId ?? meta?.raceId ?? null, SOLO_SOUND_WAIT_MS).then((r) => { setSoundWait(false); return r; });
+  };
+
+  // The track first (before the countdown when it is known), its whole world built and compiled.
+  useEffect(() => {
+    const scene = sceneRef.current;
+    if (status !== 'ready' || !scene || !theTrack) return;
+    if (builtSlug.current === theTrack.slug) {
+      // (Built during the wait: ready as soon as it says so.)
+      if (adopted.current !== theTrack.slug || trackReady) return;
+      let live = true;
+      scene.whenReady().then(() => { if (!live) return null; setTrackReady(true); return soloSound(); }).then(() => { if (live) onPreparedRef.current?.(); });
+      return () => { live = false; };
+    }
+    try {
+      scene.setTrack(theTrack);
+      builtSlug.current = theTrack.slug;
+    } catch (err) {
+      fail(`building "${theTrack?.name}"`, err);
+      return;
+    }
+    let live = true;
+    scene.whenReady().then(() => {
+      if (!live) return null;
+      setTrackReady(true);
+      return soloSound();
+    }).then(() => { if (live) onPreparedRef.current?.(); });
+    return () => { live = false; };
+  }, [status, theTrack?.slug]); // eslint-disable-line react-hooks/exhaustive-deps
+  const meter = useFrameMeter();
+  const tv = useTvMoments();
+  useEffect(() => { sceneRef.current?.setTvMoments(tv.on); }, [tv.on, sceneRef, status]);
+  const dirty = useRef(true);
+
+  useEffect(() => {
+    const scene = sceneRef.current;
+    if (status !== 'ready' || !scene || !meta || builtSlug.current !== meta.track?.slug) return;
+    try {
+      // Live, the starting camera runs over the race's whole countdown (the gate's own is shorter).
+      // (In a room's show, over the gate and 3-2-1 part only: the flyover has the time before it.)
+      scene.setRace(meta.entries, highlight, [], meta.start && meta.firstFrame ? { ...meta.start, countdownMs: roomShow ? COUNTDOWN_MS : countdownMs, frame: meta.firstFrame } : null);
+      setBuilt(true);
+    } catch (err) {
+      fail(`building the race on "${meta.track?.name}"`, err);
+    }
+  }, [status, meta?.raceId, highlight.join(','), trackReady]); // the header repeats (countdown, start): build once per race
+
+  // Ready: the marbles compiled and drawn too. Hold the view back if that came after the countdown began.
+  useEffect(() => {
+    const scene = sceneRef.current;
+    if (!built || !trackReady || !scene || ready) return undefined;
+    let live = true;
+    // (The start show checks the race's sounds once more, briefly: they were waited for before the race
+    // started, and the race's clock is running now (a longer wait here would cut the countdown short).
+    // A shared race never waits: its sounds join in step as they arrive.)
+    const sounds = intro && meta?.raceId ? whenSoundReady(meta.raceId, SOUND_RECHECK_MS) : Promise.resolve();
+    Promise.all([scene.whenReady(), sounds]).then(() => {
+      if (!live) return;
+      const go = startRef.current;
+      if (intro && go) {
+        // The start show: the flyover from now, then the countdown from its beginning, held back for
+        // good (a solo race: no one to catch up with), so nothing jumps or plays fast afterwards.
+        // (No flight for a player who asked for less motion: straight to the gate.)
+        const still = typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+        const flight = still || !FLYOVER_ON ? 0 : FLYOVER_SHOW_MS;
+        if (flight) scene.flyoverFor();
+        const lag = Math.max(0, Date.now() + flight - (go - countdownMs));
+        holdBack?.(lag, go, { stay: true });
+        lagRef.current = lagNow;
+        flyRef.current = flight ? { startedAt: performance.now(), go } : null;
+        shownGo(go + BUFFER_MS + heldFor(lag, true));
+        setPhase(flight ? 'flying' : 'race');
+        setReady(true);
+        return;
+      }
+      if (roomShow && go) {
+        // The room's show: the flyover while there is more than the countdown to GO; ready later than
+        // that, the countdown is held back to show from its beginning (the short fallback for slow phones).
+        const still = typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+        // (Not for a last moment of flight: under ROOM_FLY_MIN_MS left, straight to the gate.)
+        const flying = !still && FLYOVER_ON && Date.now() < go - COUNTDOWN_MS - ROOM_FLY_MIN_MS;
+        if (flying) {
+          scene.flyoverFor();
+          flyRef.current = { room: true, go };
+        }
+        const lag = flying ? 0 : holdFor(go, COUNTDOWN_MS);
+        holdBack?.(lag, go);
+        lagRef.current = lagNow;
+        shownGo(go + BUFFER_MS + heldFor(lag));
+        setPhase(flying ? 'flying' : 'race');
+        setReady(true);
+        return;
+      }
+      const lag = holdFor(go, countdownMs);
+      holdBack?.(lag, go);
+      lagRef.current = lagNow;
+      // The countdown's beeps, timed to the countdown as shown (none if it is already over).
+      if (go) shownGo(go + BUFFER_MS + heldFor(lag));
+      if (roomShow) setPhase('race'); // (no GO known: no show)
+      setReady(true);
+    });
+    return () => { live = false; };
+  }, [built, trackReady, ready, startsAt]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    sceneRef.current?.setCameraMode(camera);
+    dirty.current = true;
+  }, [camera, built]);
+
+  // Every animation frame: the live (interpolated) frame, or during the
+  // countdown the field waiting at the gate, timed up to GO.
+  const sampleRef = useRef(sample);
+  sampleRef.current = sample;
+  const startRef = useRef(startsAt);
+  startRef.current = startsAt;
+  const firstRef = useRef(meta?.firstFrame);
+  firstRef.current = meta?.firstFrame;
+  const lagRef = useRef(null);
+  // The readiness report (./raceReadiness): at GO as shown, was everything in? (Sent once per race.)
+  const piecesRef = useRef({ track: false, marbles: false });
+  piecesRef.current = { track: trackReady, marbles: built && ready };
+  useEffect(() => {
+    const id = meta?.raceId;
+    if (!id || !startsAt) return undefined;
+    return watchReadiness({
+      kind: intro ? 'solo' : 'room',
+      goWall: () => goWallRef.current ?? (startRef.current ? startRef.current + BUFFER_MS : null),
+      pieces: () => piecesRef.current,
+      sound: () => soundReport(id),
+      send: (body) => api.raceReadiness(id, body).catch(() => {}),
+    });
+  }, [meta?.raceId, Boolean(startsAt)]); // eslint-disable-line react-hooks/exhaustive-deps
+  const entryCount = meta?.entries?.length ?? 0;
+  const show = useFinishShow({ finishes, count: entryCount, complete, clock });
+  // The screen stays on from the start show and countdown until the results board (app/keepAwake.js).
+  useKeepAwake(show.phase !== 'board');
+  // Once the winner's moment has passed, the camera following the leader
+  // watches the rest come home instead; the corner view bows out.
+  const finishing = show.phase !== 'racing' && show.phase !== 'winner';
+  // The winner's moment in the scene: the golden spotlight and the camera pushing in.
+  const winnerIndex = show.plan ? Number(Object.keys(finishes).find((i) => finishes[i] === show.plan.winnerMs)) : null;
+  useEffect(() => {
+    sceneRef.current?.setCelebration(show.plan && Number.isInteger(winnerIndex) ? { index: winnerIndex, ms: show.plan.winnerMs } : null);
+  }, [built, winnerIndex, show.plan?.winnerMs]);
+  const followRef = useRef(follow);
+  followRef.current = follow === 'leader' && finishing ? 'arriving' : follow;
+  // The small corner view follows the other one of leader / my marble (none in the whole-track view).
+  const inset = camera === 'follow' && !finishing ? cornerFollow(follow, highlight) : null;
+  const insetRef = useRef(inset);
+  insetRef.current = inset;
+  // Skipping the flyover: the countdown starts now (the hold shortened, the beeps re-timed).
+  const skipFlyover = () => {
+    const fly = flyRef.current;
+    if (!fly) return;
+    flyRef.current = null;
+    // (A room's: everyone else's goes on; here straight to the gate, the countdown as it is.)
+    if (fly.room) { setPhase('race'); return; }
+    const lag = Math.max(0, Date.now() - (fly.go - countdownMs));
+    holdBack?.(lag, fly.go, { stay: true });
+    if (meta?.raceId) stopCountdown(meta.raceId);
+    shownGo(fly.go + BUFFER_MS + heldFor(lag, true));
+    setPhase('race');
+  };
+  const swapViews = () => {
+    if (inset === null) return;
+    // Tell the frame loop at once, so not even one frame drives the swapped cameras the old way.
+    followRef.current = inset;
+    insetRef.current = follow;
+    sceneRef.current?.swapViews();
+    setFollow(inset);
+  };
+  useEffect(() => {
+    if (!built || !ready) return undefined;
+    let raf;
+    let lastShown = null;
+    let lastShownClock = null;
+    let lastNow = performance.now();
+    let lastT = null;
+    let lastGone = null;
+    let crowdCheckAt = 0;
+    let hits = null; // (the own marble's hit sound: one detector per race)
+    let pads = null; // (the speed pad sound: one detector per race)
+    const grandPrix = Boolean(meta?.track?.physics?.kit?.grandPrix);
+    const athletics = Boolean(meta?.track?.physics?.kit?.athletics);
+    const tick = (now) => {
+      const dt = (now - lastNow) / 1000;
+      lastNow = now;
+      let f = sampleRef.current();
+      // (Running BUFFER_MS behind, as the live race itself does, so GO flows straight on into the race.)
+      const lag = lagRef.current ? lagRef.current() : 0;
+      if (!f && firstRef.current) f = { ...firstRef.current, t: Math.max(-countdownMs, Math.min(0, Date.now() - BUFFER_MS - lag - (startRef.current ?? Date.now()))) };
+      // The countdown's overlay follows the countdown as shown (tenths: the start lights need them).
+      const tenth = f && f.t < GO_SHOWN_MS ? Math.floor(f.t / 100) : null;
+      if (tenth !== lastShown) { lastShown = tenth; setShownT(tenth === null ? null : tenth * 100); }
+      // While held back, the clock and the order on screen are the race as shown, not the live stream.
+      if (lag > 0 && f && Math.floor(f.t / UI_MS) !== lastShownClock) { lastShownClock = Math.floor(f.t / UI_MS); setShown({ t: f.t, s: f.s }); } // (as often as the stream's own: uiFrameMs)
+      else if (lag === 0 && lastShownClock !== null) { lastShownClock = null; setShown(null); }
+      const scene = sceneRef.current;
+      // The start sound: the marbles start rolling, START_SOUND_MS after the GO beep, on the race clock (Moses, 30 Oct 2026).
+      // (Or within 1.5 s of that if the 3D world was still being built then.)
+      if (f && f.t >= START_SOUND_MS && ((lastT !== null && lastT < START_SOUND_MS) || (lastT === null && f.t < START_SOUND_MS + 1500))) playSound('launch', { duck: false });
+      // GO: the race's music (once per race; also when the page opens mid-race).
+      // (GO as shown here: f.t ms ago. A page opened mid-race: the tune joins where the race is.)
+      if (f && f.t >= 0 && (lastT === null || lastT < 0) && meta?.raceId) raceGo(meta.raceId, Date.now() - f.t);
+      // The player saw GO with their own marble in the race (the Dashboard's funnel; kept once, the first time).
+      if (f && f.t >= 0 && f.t < 3000 && lastT !== null && lastT < 0 && ownRef.current.length) sawGo();
+      if (f && standingsShown(f.t) !== lastGone) { lastGone = standingsShown(f.t); setGone(lastGone); }
+      if (f) lastT = f.t;
+      if (f && scene) {
+        const who = followRef.current;
+        try {
+          scene.updateRace(f, who, dt, insetRef.current); // 'leader', 'second' or an entry index (the scene keeps the leader steady)
+          // The player's own marble hitting another: a soft click, louder for harder hits (../sound/hits.js; 30 Oct 2026).
+          if (ownRef.current.length && meta?.raceId) {
+            // (With the streamed frames (takeStreamed): the clicks are found from those, 20 a second whatever
+            // this screen draws, and played as the race shown reaches them, as late as one drawn frame and a
+            // bit (lateFor): on a slow phone the frames drawn are too far apart to measure a touch; 11 Nov 2026.)
+            const streamed = Boolean(takeRef.current);
+            if (!hits || hits.raceId !== meta.raceId) { const span = scene.raceSpan?.(); hits = { raceId: meta.raceId, d: span ? (streamed ? createStreamedHitDetector(span) : createHitDetector(span)) : null, gate: createHitGate(), shownT: null }; }
+            const late = lateFor(hits.shownT === null ? 0 : f.t - hits.shownT);
+            hits.shownT = f.t;
+            // (The obstacles' footprints, as the marbles are drawn round them: the bump is found from the frames here, 4 Nov 2026.)
+            if (!bumpRef.current.d.hasTrack()) { const span = scene.raceSpan?.(); const at = scene.features?.solidsAt; if (span && at) bumpRef.current.d.setTrack({ solidsAt: at, ...span }); }
+            if (streamed) {
+              for (const g of takeRef.current()) {
+                if (bumpRef.current.raceId === meta.raceId) bumpRef.current.d.add(g, ownRef.current);
+                hits.d?.add(g, ownRef.current);
+              }
+            }
+            const k = streamed ? hits.d?.step(f.t, late) : hits.d?.step(f, ownRef.current);
+            const b = bumpRef.current.raceId === meta.raceId ? bumpRef.current.d.step(f.t, late) : null;
+            // (The two share one limit, so they never stack into a rattle: the harder of the two plays.)
+            if ((k ?? b) !== null && (k ?? b) !== undefined && hits.gate.allow(f.t)) {
+              if (b !== null && (k === null || k === undefined || b > k)) marbleBump(meta.raceId, b);
+              else marbleHit(meta.raceId, k);
+            }
+          }
+          // The player's own marble rolling onto a speed pad: the whoosh, once per pad pass (../sound/hits.js; Moses, 4 Nov 2026).
+          if (ownRef.current.length && meta?.raceId) {
+            if (!pads || pads.raceId !== meta.raceId) { const span = scene.raceSpan?.(); pads = { raceId: meta.raceId, d: span ? createPadDetector({ pads: padsOf(theTrack?.physics?.features, span), ...span }) : null }; }
+            if (pads.d?.step(f, ownRef.current)) speedPad(meta.raceId);
+          }
+          // The crowd: the player's own marble passing a stand (Grand Prix) cheers it, once per stand (Moses, 28 Oct 2026).
+          if (grandPrix && f.t >= 0 && meta?.raceId && now - crowdCheckAt > 200) {
+            crowdCheckAt = now;
+            for (const i of ownRef.current) if (!(f.p?.[i] >= 1)) for (const k of scene.crowdsNear(i)) crowdCheer(meta.raceId, k);
+          }
+          // Track and Field: the leader passing a stand cheers it, at every other stand round the stadium (Moses, 21 Nov 2026).
+          if (athletics && f.t >= 0 && meta?.raceId && now - crowdCheckAt > 200) {
+            crowdCheckAt = now;
+            let lead = -1;
+            const p = f.p ?? [];
+            for (let i = 0; i < p.length; i += 1) if (p[i] < 1 && (lead < 0 || p[i] > p[lead])) lead = i;
+            const every = scene.cheerEvery;
+            if (lead >= 0) for (const k of scene.crowdsNear(lead)) if (k % every === 0) crowdCheer(meta.raceId, k);
+          }
+          // The flyover: its camera over the race's own until it ends (or is skipped).
+          const fly = flyRef.current;
+          if (fly?.room) {
+            // In step with everyone: the flight runs over the time before the countdown, by the race's clock.
+            const ms = f.t + countdownMs;
+            if (f.t < -COUNTDOWN_MS) scene.showFlyover(Math.max(0, (ms / showMs) * FLYOVER_MS));
+            else { flyRef.current = null; setPhase('race'); }
+          } else if (fly) {
+            const ms = now - fly.startedAt;
+            if (ms < FLYOVER_SHOW_MS) scene.showFlyover((ms / FLYOVER_SHOW_MS) * FLYOVER_MS);
+            else { flyRef.current = null; setPhase('race'); }
+          }
+        } catch (err) {
+          fail('moving the marbles', err);
+          return;
+        }
+      }
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [built, ready]);
+
+  // The finish ceremony appears: the race music gives way to the ceremony song.
+  useEffect(() => {
+    if (meta?.raceId && CEREMONY_PHASES.includes(show.phase)) raceCeremony(meta.raceId);
+  }, [show.phase, meta?.raceId]);
+
+  const entries = meta?.entries ?? [];
+  const standings = shown?.s ?? frame?.s ?? meta?.firstFrame?.s ?? [];
+
+  // (No overtaking whoosh for now: Moses, 28 Oct 2026.)
+  const followIndex = followedNow(follow, standings);
+  const insetIndex = inset === null ? undefined : followedNow(inset, standings);
+  const speed = show.phase === 'racing' && gone && frame?.v && followIndex !== undefined && frame.p[followIndex] < 1 ? frame.v[followIndex] : null;
+
+  return (
+    <div className="live3d">
+      <div className={`preview3d__stage${show.phase !== 'racing' ? ' is-finishing' : ''}`} ref={wrapRef}>
+        <canvas ref={canvasRef} className="preview3d__canvas" aria-label="Live race in 3D" />
+        {(intro || roomShow) && phase === 'loading' && <TrackCard track={theTrack} label={soundWait && trackReady ? 'Loading the sound…' : 'Loading…'} />}
+        {!intro && !roomShow && status === 'loading' && <div className="preview3d__overlay"><Spinner label="Loading 3D…" /></div>}
+        {!intro && !roomShow && status === 'ready' && !ready && <div className="preview3d__overlay"><Spinner label="Getting the track ready…" /></div>}
+        {phase === 'flying' && <FlyoverTitle track={theTrack} onSkip={skipFlyover} />}
+        {ready && phase === 'race' && shownT !== null && (
+          <div className="replay3d__countdownwrap" aria-live="polite">
+            {theTrack?.physics?.kit?.grandPrix
+              ? <StartLights t={shownT} className="replay3d__lights" />
+              : shownT >= 0
+                ? <span key="go" className="replay3d__countdown is-go">GO!</span>
+                : shownT >= -COUNT_FROM_MS
+                  ? <span key={Math.ceil(-shownT / 1000)} className="replay3d__countdown">{Math.ceil(-shownT / 1000)}</span>
+                  : <GateMoment gate={ownGate(entries, highlight)} />}
+          </div>
+        )}
+        {status === 'failed' && failure && <SceneFailure failure={failure} />}
+        {built && ready && (
+          <>
+            {show.phase !== 'winner' && phase === 'race' && <div className="replay3d__clock">{formatTime(Math.max(0, shown?.t ?? frame?.t ?? 0))}</div>}
+            <NowPlaying />
+            {speed !== null && (
+              <div className="replay3d__speed" aria-label="Speed of the marble the camera follows">
+                <strong>{Math.round(speed * 3.6)}</strong> km/h
+              </div>
+            )}
+            <CornerView
+              sceneRef={sceneRef}
+              ready={built}
+              visible={inset !== null && phase === 'race'}
+              label={inset === null ? '' : followLabel(inset, highlight, entries)}
+              marble={entries[insetIndex]?.marble}
+              onSwap={swapViews}
+            />
+            {meter.on && <FrameMeter sceneRef={sceneRef} />}
+            {tv.on && <TvStanding sceneRef={sceneRef} />}
+            <FinishShow show={show} finishes={finishes} entries={entries} mine={highlight} raceId={meta?.raceId} trackName={meta?.track?.name} next={next} />
+            {show.phase === 'racing' && !gone && phase === 'race' && <YourGate entries={entries} mine={highlight} />}
+            {show.phase === 'racing' && gone && (
+              <ol className="replay3d__standings" aria-label="Current standings">
+                {standingsRows(standings, highlight).map(({ index: i, pos, own }) => {
+                  const e = entries[i];
+                  return (
+                    <li key={i} className={`${i === followIndex ? 'is-followed' : ''}${highlight.includes(i) ? ' is-mine' : ''}${own ? ' is-own-below' : ''}`}>
+                      <button type="button" onClick={() => { setFollow(i); setCamera('follow'); }} title={`Follow ${entryLabel(e)}${e?.user ? ` (${e.marble.name})` : ''}`}>
+                        <span className="replay3d__pos">{pos + 1}</span>
+                        <MarbleBall marble={e?.marble} size={16} />
+                        <span className="replay3d__name">{entryLabel(e)}</span>{e?.isBot && <CpuTag />}
+                      </button>
+                    </li>
+                  );
+                })}
+              </ol>
+            )}
+          </>
+        )}
+      </div>
+      <SkipToResults show={show} allowed={canSkip} onSkip={show.skip} />
+      <div className="segmented segmented--camera" role="group" aria-label="Camera" hidden={phase !== 'race'}>
+        <button type="button" aria-pressed={camera === 'follow' && follow === 'leader'} onClick={() => { setFollow('leader'); setCamera('follow'); }}>
+          <span className="ms-wide-only">Follow the leader</span><span className="ms-narrow-only">Leader</span>
+        </button>
+        {highlight.length > 0 && (
+          <button type="button" aria-pressed={camera === 'follow' && follow === highlight[0]} onClick={() => { setFollow(highlight[0]); setCamera('follow'); }}>
+            <span className="ms-wide-only">Follow my marble</span><span className="ms-narrow-only">My marble</span>
+          </button>
+        )}
+        <button type="button" aria-pressed={camera === 'overview'} onClick={() => setCamera('overview')}>
+          <span className="ms-wide-only">Whole track</span><span className="ms-narrow-only">Track</span>
+        </button>
+        <button type="button" aria-pressed={tv.on} onClick={tv.toggle} title="TV moments: cut to trackside cameras as the marble you follow comes by">
+          TV
+        </button>
+        <button type="button" aria-pressed={meter.on} onClick={meter.toggle} title="Show the frame rate">
+          FPS
+        </button>
+      </div>
+      {footer}
+    </div>
+  );
+}

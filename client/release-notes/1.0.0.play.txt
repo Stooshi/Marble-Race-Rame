@@ -1,0 +1,7 @@
+<en-US>
+A new track picker: the tracks you can race come first.
+A new Marble Bag: your marbles up front, your racing marble first, and the marbles still to collect below.
+More Coasters tracks.
+The race music now plays all 12 tunes in a shuffled order, even after you close the app.
+Bug fixes and smoother races.
+</en-US>
