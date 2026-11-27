@@ -338,6 +338,7 @@ module.exports = {
     // The Pinball tables of 26 Nov 2026 (client/src/three/scenery/kitLandmarksPinball2.js).
     'kraken', 'launch-tower', 'stone-idol', 'storm-galleon', 'big-top-tent',
     'erupting-volcano', 'ice-station', 'assembly-robot', 'fossil-skeleton', 'mine-headframe', // (kitLandmarksPinball3.js)
+    'hoard-dragon', 'viking-longship', 'safari-lookout', 'giant-cupcake', // (kitLandmarksPinball4.js)
     'arcade-hall', 'cabinet-row', 'prize-counter', 'claw-tower', 'neon-maze', 'glitch-tower', 'level-sign',
     'alien-formation', 'mothership', 'ringed-planet', 'laser-turret',
     'pixel-hills', 'floating-platforms', 'pixel-waterfall', 'arrow-up', 'arrow-down', 'arrow-left', 'arrow-right', 'ba-buttons',

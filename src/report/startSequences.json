@@ -56,6 +56,7 @@
 "delhi-red-fort-marble-grand-prix": {"family":"grand-prix","reach":0.225,"seq":["opening: tunnel-launch","drop","pileUp","slalom","drop","slalom","S-bends right","slalom","peg ×2","spiral right"]},
 "doha-desert-sprint": {"family":"athletics","reach":0.377,"seq":["opening: clear-start","straight","sweep left","sweep right","S-bends right","curtain","slalom","brake"]},
 "douro-block-terraces": {"family":"block-2","reach":0.266,"seq":["opening: staggered-drop","drop","pileUp","slalom","brake","S-bends right","peg","straight","table-top"]},
+"dragons-lair": {"family":"pinball","reach":0.32,"seq":["opening: clear-start","straight","sweep right","sweep left","straight","parked","boost","sweep left","slalom","peg ×2"]},
 "dubai-marble-grand-prix": {"family":"grand-prix","reach":0.216,"seq":["opening: classic","drop","pileUp","slalom","S-bends left"]},
 "dubai-twister": {"family":"world-tour","reach":0.245,"seq":["opening: sand-trap","drop","pileUp","slalom","brake","climb","drop","sweep right"]},
 "edinburgh-hogmanay-grand-prix": {"family":"grand-prix","reach":0.249,"seq":["opening: funnel-drop","drop","pileUp","slalom","half-pipe","straight"]},

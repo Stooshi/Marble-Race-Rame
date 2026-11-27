@@ -640,6 +640,17 @@
    "side": 1,
    "marbles": 4
   },
+  "dragons-lair": {
+   "name": "Dragon's Lair",
+   "series": "Pinball",
+   "lighting": "parlour",
+   "v": "c830dad4",
+   "bytes": 10982,
+   "bytes2x": 26632,
+   "t": 10106,
+   "side": 1,
+   "marbles": 8
+  },
   "dubai-marble-grand-prix": {
    "name": "Dubai Marble Grand Prix",
    "series": "Grand Prix",
