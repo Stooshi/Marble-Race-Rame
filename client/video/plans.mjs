@@ -1310,3 +1310,34 @@ export function thrill(info, race, { text = null } = {}) {
     },
   };
 }
+
+/**
+ * A pack breakout (Moses, 27 Nov 2026): only the clear opening, the pack racing shoulder to shoulder, from a camera
+ * close and a little above behind it from its back right (text.cam), following text.members (the 6–10 at the front),
+ * from race ms text.from to text.breakAt, where one marble breaks out of the pack; that breakout in slow motion
+ * (text.slowMs race ms at text.slowSpeed), a short freeze and the end card. Lines as the chase's: text.lines [{ at, top }].
+ */
+export function packBreak(info, race, { text = null } = {}) {
+  const p = builder('packBreak');
+  const A = text.from;
+  const B = text.breakAt;
+  const slowMs = text.slowMs ?? 1200;
+  const slow = text.slowSpeed ?? 0.5;
+  p.add({ type: 'group', members: text.members, shot: 'chase', from: A, dur: (B - A) / 1000, ...text.cam });
+  p.add({ type: 'group', members: text.members, shot: 'chase', from: B, dur: slowMs / 1000 / slow, speed: slow, ...text.cam });
+  const last = p.shots[p.shots.length - 1];
+  p.add({ ...last, from: B + slowMs, dur: text.freeze ?? 0.4, speed: 0 });
+  const raceOut = p.v;
+  p.add({ type: 'end', dur: text.endSeconds ?? 2.6, skip: text.endSkip ?? 1.5 });
+  const lines = text.lines ?? [];
+  return {
+    shots: p.shots, length: p.v, podium: null, textStyle: text.style ?? null, endLines: text.endLines, noMark: text.noMark,
+    texts: lines.map((l, k) => ({ at: l.at, dur: (k + 1 < lines.length ? lines[k + 1].at : raceOut) - l.at, top: l.top, cut: true })),
+    battle: { from: A, breakAt: B, pack: text.members },
+    marks: { goAt: 0, from: A, raceMs: B - A, members: text.members, near: 14 },
+    sound: {
+      goAt: null, beeps: false, music: [[0, p.v]], musicFadeOut: 0.6, lifts: [[(B - A) / 1000, raceOut]], ceremony: null, raceHits: true,
+      extra: [{ key: 'crowd', at: 0, dur: raceOut + 0.5, gain: 0.45, fadeOut: 0.8 }],
+    },
+  };
+}
