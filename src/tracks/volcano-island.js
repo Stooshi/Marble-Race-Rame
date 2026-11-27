@@ -4,9 +4,9 @@
 // pinball table. The gate stands under an erupting volcano of our own, lava running down its slopes, a tiki totem at
 // its foot. Away on the clear start (the field let go in waves, gentle bends and nothing in the way for the first
 // seconds), along the lava field off a speed pad, a lava rock far down it on the left (the table's first obstacle),
-// down the crater wall, round the ash slope through the lava pillars, the tiki bends off a second speed pad, down into the
-// jungle, then the table's big feature: the lava jump, a boost-pad jump over a lava gap; the fire hairpin, round the
-// cone and the lava pillars on the run to the flippers.
+// down the crater wall, round the ash slope through the lava pillars, the tiki bends off a second speed pad, down into
+// the jungle, then the table's big feature: the lava jump, a boost-pad jump over a lava gap; the fire hairpin, round
+// the cone and the lava pillars on the run to the flippers.
 const { track, opening, straight, sweep, sBends, plunge, hairpin, spiral, runIn, block, slalom, boost, boostJump } = require('../trackKit');
 
 const drops = () => [slalom({ costume: 'magma-pillar', from: 0.5, to: 0.85, count: 2, loss: 0.15 })];
@@ -43,7 +43,7 @@ module.exports = track({
       features: [boost({ at: 0.1, kick: 4 })], obstacles: [slalom({ costume: 'magma-pillar', from: 0.35, to: 0.75, count: 3, loss: 0.25 })],
     },
     { name: 'Into the jungle', shape: plunge(45, { grade: 0.3, from: 0.12 }), obstacles: drops() },
-    { name: 'The lava jump', shape: straight(235, { grade: 0.1 }), billboards: 1, features: [boostJump({ at: 0.17, look: 'river-jump' })], obstacles: [slalom({ costume: 'magma-pillar', from: 0.82, to: 0.95, count: 2, loss: 0.25 })] },
+    { name: 'The lava jump', shape: straight(200, { grade: 0.1 }), billboards: 1, features: [boostJump({ at: 0.19, look: 'river-jump' })], obstacles: [slalom({ costume: 'magma-pillar', from: 0.8, to: 0.95, count: 2, loss: 0.25 })] },
     { name: 'Fire hairpin', shape: hairpin({ side: 'left' }) },
     { name: 'Round the cone', shape: spiral({ side: 'right', radius: 48, turns: 1, grade: 0.14 }) },
     { name: 'Down to the flippers', shape: straight(60, { grade: 0.13 }), obstacles: [slalom({ costume: 'magma-pillar', from: 0.3, to: 0.88, count: 4, loss: 0.3 })] },
