@@ -17,7 +17,7 @@ module.exports = track({
   name: 'Dragon\'s Lair',
   family: 'pinball',
   difficulty: 'extreme',
-  description: 'A dragon\'s-castle pinball table: away from the dragon in a pack along the castle road past a siege catapult, round the drawbridge, through the great hall's gem pillars, down the dungeon stairs, then the ring of fire, a full loop, round the tower bend, over the battlements and through the hoard bends to the flippers.',
+  description: 'A dragon\'s-castle pinball table: away from the dragon in a pack along the castle road past a siege catapult, round the drawbridge, through the great hall\'s gem pillars, down the dungeon stairs, then the ring of fire, a full loop, round the tower bend, over the battlements and through the hoard bends to the flippers.',
   surface: 'ice',
   biome: 'playfield',
   lighting: 'parlour',

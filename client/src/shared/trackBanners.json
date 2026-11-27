@@ -640,6 +640,17 @@
    "side": 1,
    "marbles": 4
   },
+  "dragons-lair": {
+   "name": "Dragon's Lair",
+   "series": "Pinball",
+   "lighting": "parlour",
+   "v": "c830dad4",
+   "bytes": 10982,
+   "bytes2x": 26632,
+   "t": 10106,
+   "side": 1,
+   "marbles": 8
+  },
   "dubai-marble-grand-prix": {
    "name": "Dubai Marble Grand Prix",
    "series": "Grand Prix",
@@ -1959,17 +1970,6 @@
    "t": 19822,
    "side": 1,
    "marbles": 8
-  },
-  "robot-factory": {
-   "name": "Robot Factory",
-   "series": "Pinball",
-   "lighting": "parlour",
-   "v": "148193ac",
-   "bytes": 16662,
-   "bytes2x": 42248,
-   "t": 15704,
-   "side": 1,
-   "marbles": 11
   },
   "rocky-mountain-hill-run": {
    "name": "Rocky Mountain Hill Run",

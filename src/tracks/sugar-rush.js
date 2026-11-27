@@ -10,7 +10,7 @@
 const { track, opening, straight, sweep, sBends, plunge, loop, runIn, swipe, peg, slalom, brake, boost } = require('../trackKit');
 
 const pegs = (a, b) => [peg({ costume: 'candy-cane', at: 0.35, line: a }), peg({ costume: 'candy-cane', at: 0.7, line: b })];
-const drops = () => [slalom({ costume: 'candy-cane', from: 0.5, to: 0.85, count: 2, loss: 0.15 })];
+const drops = () => [slalom({ costume: 'candy-cane', from: 0.45, to: 0.88, count: 3, loss: 0.2 })];
 
 module.exports = track({
   slug: 'sugar-rush',
@@ -38,7 +38,8 @@ module.exports = track({
     },
     {
       name: 'Gumdrop bends', shape: sBends({ first: 'left', radius: 65, degrees: 65, grade: 0.12 }), billboards: 1,
-      features: [boost({ at: 0.1, kick: 4 })], obstacles: [slalom({ costume: 'candy-cane', from: 0.25, to: 0.92, count: 5, loss: 0.3 })],
+      features: [boost({ at: 0.08, kick: 4 })],
+      obstacles: [peg({ costume: 'candy-cane', at: 0.18, line: 'center' }), slalom({ costume: 'candy-cane', from: 0.32, to: 0.92, count: 5, loss: 0.3 })],
     },
     { name: 'Frosting sweep', shape: sweep({ side: 'right', radius: 90, degrees: 100, grade: 0.12 }), billboards: 1, obstacles: pegs('left', 'right') },
     { name: 'Down the chocolate falls', shape: plunge(50, { grade: 0.36, from: 0.12 }), obstacles: drops() },

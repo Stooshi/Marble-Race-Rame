@@ -10,7 +10,7 @@
 const { track, opening, straight, sweep, sBends, plunge, hairpin, runIn, pileUp, peg, slalom, boost, boostJump } = require('../trackKit');
 
 const pegs = (a, b) => [peg({ costume: 'river-stake', at: 0.35, line: a }), peg({ costume: 'river-stake', at: 0.7, line: b })];
-const drops = () => [slalom({ costume: 'river-stake', from: 0.5, to: 0.85, count: 2, loss: 0.15 })];
+const drops = () => [slalom({ costume: 'river-stake', from: 0.45, to: 0.88, count: 3, loss: 0.2 })];
 
 module.exports = track({
   slug: 'safari-stampede',
@@ -37,7 +37,8 @@ module.exports = track({
     },
     {
       name: 'Acacia sweep', shape: sweep({ side: 'right', radius: 90, degrees: 100, grade: 0.12 }), billboards: 1,
-      features: [boost({ at: 0.1, kick: 4 })], obstacles: [slalom({ costume: 'river-stake', from: 0.25, to: 0.92, count: 5, loss: 0.3 })],
+      features: [boost({ at: 0.08, kick: 4 })],
+      obstacles: [peg({ costume: 'river-stake', at: 0.18, line: 'center' }), slalom({ costume: 'river-stake', from: 0.32, to: 0.92, count: 5, loss: 0.3 })],
     },
     { name: 'Down to the river', shape: plunge(50, { grade: 0.32, from: 0.12 }), obstacles: drops() },
     { name: 'Herd bend', shape: sweep({ side: 'left', radius: 90, degrees: 110, grade: 0.12 }), billboards: 1, obstacles: pegs('left', 'right') },
