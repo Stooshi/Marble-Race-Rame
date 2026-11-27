@@ -1960,6 +1960,17 @@
    "side": 1,
    "marbles": 8
   },
+  "robot-factory": {
+   "name": "Robot Factory",
+   "series": "Pinball",
+   "lighting": "parlour",
+   "v": "148193ac",
+   "bytes": 16662,
+   "bytes2x": 42248,
+   "t": 15704,
+   "side": 1,
+   "marbles": 11
+  },
   "rocky-mountain-hill-run": {
    "name": "Rocky Mountain Hill Run",
    "series": "Grand Prix",
