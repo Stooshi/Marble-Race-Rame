@@ -6,6 +6,7 @@
  *   viking-longship    Viking Raid: a longship with a striped sail, a row of shields and a carved prow, on a wave
  *   safari-lookout     Safari Stampede: a flat-topped acacia, a stilted lookout tower and a safari tent
  *   giant-cupcake      Sugar Rush: a giant cupcake with a cherry on top, lollipops and a candy-striped pole
+ *   desert-pyramid     Pharaoh's Tomb: a pyramid with its golden cap, a lion-bodied guardian, an obelisk and palms
  */
 import { BoxGeometry, ConeGeometry, CylinderGeometry, IcosahedronGeometry, Matrix4, Quaternion, SphereGeometry, TorusGeometry, Vector3 } from 'three';
 import { box, merge, piece } from './parts';
@@ -102,7 +103,29 @@ function giantCupcake() {
   return merge(p);
 }
 
+function desertPyramid() {
+  const SAND = '#d8b36a';
+  const p = [];
+  p.push(piece(new ConeGeometry(17, 18, 4), SAND, R(0, 9, -4, 0, Math.PI / 4, 0)));
+  p.push(piece(new ConeGeometry(2.4, 2.6, 4), '#ffd23f', R(0, 17.2, -4, 0, Math.PI / 4, 0))); // its golden cap
+  p.push(box(4, 5, 1, 0, 2.5, 8.1, '#3a2a1a')); // the tomb's door
+  // The guardian: a lion's body lying down, its head with a striped headdress.
+  p.push(box(4, 3, 10, 13, 1.5, 6, '#c8a45a'));
+  for (const z of [0.8, 11.2]) p.push(box(1.2, 1.2, 3, 13 + (z > 5 ? 0 : 0), 0.6, z, '#c8a45a')); // paws
+  p.push(box(3, 3.4, 2.8, 13, 4.6, 11, '#c8a45a'));
+  for (let k = 0; k < 4; k += 1) p.push(box(3.4, 0.4, 3, 13, 3.4 + k * 0.8, 10.6, k % 2 ? '#2a5aa8' : '#ffd23f'));
+  // An obelisk and palms.
+  p.push(piece(new BoxGeometry(1.6, 14, 1.6), '#c89a5a', M(-13, 7, 8)));
+  p.push(piece(new ConeGeometry(1.2, 2, 4), '#ffd23f', R(-13, 15, 8, 0, Math.PI / 4, 0)));
+  for (const [x, z] of [[-16, -2], [16, -6]]) {
+    p.push(piece(new CylinderGeometry(0.4, 0.6, 9, 5), '#7a5a32', M(x, 4.5, z)));
+    for (let k = 0; k < 5; k += 1) p.push(piece(new ConeGeometry(0.9, 5, 4), '#3a8a3a', R(x, 9, z, Math.PI / 2.3, (k / 5) * Math.PI * 2, 0)));
+  }
+  return merge(p);
+}
+
 export const PINBALL4_LANDMARKS = {
+  'desert-pyramid': { build: desertPyramid, radius: 18 },
   'hoard-dragon': { build: hoardDragon, radius: 16 },
   'viking-longship': { build: vikingLongship, radius: 18 },
   'safari-lookout': { build: safariLookout, radius: 18 },

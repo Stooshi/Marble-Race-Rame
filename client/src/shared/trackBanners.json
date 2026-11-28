@@ -1806,6 +1806,17 @@
    "side": 1,
    "marbles": 4
   },
+  "pharaohs-tomb": {
+   "name": "Pharaoh's Tomb",
+   "series": "Pinball",
+   "lighting": "parlour",
+   "v": "3d89c283",
+   "bytes": 11032,
+   "bytes2x": 26832,
+   "t": 9604,
+   "side": -1,
+   "marbles": 7
+  },
   "pingxi-lantern-run": {
    "name": "Pingxi Lantern Run",
    "series": "Coasters",

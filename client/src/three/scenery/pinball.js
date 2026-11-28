@@ -49,6 +49,7 @@ export const ART = {
   viking: { sky: ['#0a1424', '#4a7a9a'], ink: '#05080f', glow: '#f2ead8', accent: '#d8242a' },
   safari: { sky: ['#3a1a0a', '#ff9a3a'], ink: '#1a0a04', glow: '#ffe07a', accent: '#5a8a2a' },
   sweets: { sky: ['#ff9ad0', '#7ad8ff'], ink: '#7a2a5a', glow: '#fff0f6', accent: '#ffd23f' },
+  tomb: { sky: ['#1a0e3a', '#e8a04a'], ink: '#1a0e08', glow: '#ffd23f', accent: '#2a7ad8' },
 };
 
 function shapes(g, art, w, h, c) {
@@ -175,6 +176,12 @@ function shapes(g, art, w, h, c) {
     g.fillStyle = c.ink; g.fillRect(0, h * 0.75, w, h * 0.25);
     g.fillRect(w * 0.2, h * 0.4, w * 0.015, h * 0.36); g.fillRect(w * 0.08, h * 0.36, w * 0.26, h * 0.05); // an acacia
     for (const x of [0.58, 0.66, 0.74]) { g.fillRect(w * x, h * 0.62, w * 0.05, h * 0.08); g.fillRect(w * (x + 0.035), h * 0.5, w * 0.012, h * 0.14); } // giraffes
+  } else if (art === 'tomb') {
+    g.fillStyle = c.glow; g.beginPath(); g.arc(w * 0.72, h * 0.3, h * 0.12, 0, Math.PI * 2); g.fill(); // the sun disc
+    g.fillStyle = '#c8a45a'; g.beginPath(); g.moveTo(w * 0.1, h * 0.8); g.lineTo(w * 0.42, h * 0.3); g.lineTo(w * 0.74, h * 0.8); g.fill(); // the pyramid
+    g.fillStyle = c.ink; g.fillRect(0, h * 0.8, w, h * 0.2);
+    g.fillRect(w * 0.82, h * 0.35, w * 0.03, h * 0.45); // an obelisk
+    g.fillStyle = c.accent; for (let k = 0; k < 4; k += 1) g.fillRect(w * (0.3 + k * 0.08), h * 0.86, w * 0.05, h * 0.03); // hieroglyph-like marks of our own
   } else if (art === 'sweets') {
     for (let k = 0; k < 6; k += 1) { g.fillStyle = k % 2 ? '#ffffff' : '#d8242a'; g.fillRect(w * (0.08 + k * 0.02), h * 0.3, w * 0.02, h * 0.7); } // a candy pole
     g.fillStyle = '#a86a3a'; g.fillRect(w * 0.38, h * 0.62, w * 0.24, h * 0.38); // the cupcake

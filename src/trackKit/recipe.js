@@ -63,7 +63,7 @@ const COASTER_STYLES = ['steel', 'timber', 'blocks', 'concrete', 'alpine'];
 // A pinball table: the pinball family, or a library test track built as one (series 'pinball').
 const isPinball = (spec) => spec.family === 'pinball' || (spec.family === 'test' && spec.series === 'pinball');
 // A pinball table's backglass art (original art, one style per table) and its dot-matrix call-out.
-const PINBALL_ART = ['manor', 'castle', 'saucers', 'theatre', 'diner', 'clocks', 'concert', 'parang', 'beach-fireworks', 'deep-sea', 'rocket', 'temple', 'pirate', 'circus', 'volcano', 'polar', 'factory', 'dino', 'goldrush', 'lair', 'viking', 'safari', 'sweets'];
+const PINBALL_ART = ['manor', 'castle', 'saucers', 'theatre', 'diner', 'clocks', 'concert', 'parang', 'beach-fireworks', 'deep-sea', 'rocket', 'temple', 'pirate', 'circus', 'volcano', 'polar', 'factory', 'dino', 'goldrush', 'lair', 'viking', 'safari', 'sweets', 'tomb'];
 // An arcade world: the arcade family, or a library test track built as one (series 'arcade').
 const isArcade = (spec) => spec.family === 'arcade' || (spec.family === 'test' && spec.series === 'arcade');
 // An arcade world's cabinet and side art (original art, one style per genre).
