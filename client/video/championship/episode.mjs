@@ -4,7 +4,7 @@
 //     the marbles to watch; the marbles lining up at the gates open the race video;
 //   the race (race.mp4, from record.mjs --kind championship);
 //   the ceremony (the podium, points awarded), the standings, "Next race: <track>".
-// The cards come from cards.mjs. Each still becomes a scene with a slow push-in and its own sound (the race music
+// The cards come from cards.mjs. Each still becomes a held scene with its own sound (the race music
 // under the opening and the standings, the ceremony song under the podium); the scenes are joined with short
 // crossfades in one pass.
 //   node video/championship/episode.mjs <episode dir> <n> --out <file.mp4> [--tune 11]
@@ -30,7 +30,7 @@ const dur = (f) => Number(execFileSync('ffprobe', ['-v', 'error', '-show_entries
 const V = ['-c:v', 'libx264', '-preset', 'medium', '-crf', '18', '-pix_fmt', 'yuv420p', '-r', String(FPS)];
 const A = ['-c:a', 'aac', '-b:a', '192k', '-ar', '48000', '-ac', '2'];
 
-/** A still as a scene: a slow push-in, its sound (a stretch of music, faded) levelled under the race's loudness. */
+/** A still as a scene, held (a push-in would crop the logo and the card edges), with its sound (a stretch of music, faded) levelled under the race's loudness. */
 let musicAt = 0;
 function still(png, secs, { song = null } = {}) {
   const f = path.join(tmp, `${path.basename(png, '.png')}.mp4`);
@@ -39,7 +39,7 @@ function still(png, secs, { song = null } = {}) {
   const off = song ? 0 : musicAt;
   if (!song) musicAt += secs;
   run(['-loop', '1', '-framerate', String(FPS), '-i', png, '-stream_loop', '-1', '-ss', String(off), '-i', src,
-    '-filter_complex', `[0:v]scale=2112:-1,zoompan=z='1+0.0004*on':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':d=${frames}:s=1920x1080:fps=${FPS},format=yuv420p,setsar=1[v];` +
+    '-filter_complex', `[0:v]scale=1920:1080,format=yuv420p,setsar=1,trim=end_frame=${frames}[v];` +
       `[1:a]atrim=0:${secs},asetpts=PTS-STARTPTS,afade=t=in:d=0.6,afade=t=out:st=${Math.max(0, secs - 0.8)}:d=0.8,loudnorm=I=-17:TP=-1.5:LRA=11,aresample=48000[a]`,
     '-map', '[v]', '-map', '[a]', '-t', String(secs), ...V, ...A, f]);
   return f;
@@ -53,10 +53,13 @@ function clip(file) {
 
 const C = path.join(dir, 'cards');
 const scenes = [];
+// Episode 1's opening (the title, the 20 racers, points): 20–25 s at most (Moses, 28 Nov 2026).
+const OPENING = [['title', 5], ['competitors', 11], ['points', 8]];
+const OPENING_MAX = 25;
 if (n === 1) {
-  scenes.push(still(path.join(C, 'title.png'), 5));
-  scenes.push(still(path.join(C, 'competitors.png'), 11));
-  scenes.push(still(path.join(C, 'points.png'), 8));
+  const secs = OPENING.reduce((s, [, d]) => s + d, 0) - XF * (OPENING.length - 1);
+  if (secs > OPENING_MAX) throw new Error(`opening ${secs} s is over ${OPENING_MAX} s`);
+  for (const [card, d] of OPENING) scenes.push(still(path.join(C, `${card}.png`), d));
 }
 scenes.push(clip(path.join(dir, 'fly.mp4')));
 if (fs.existsSync(path.join(C, 'watch.png'))) scenes.push(still(path.join(C, 'watch.png'), 6.5));
