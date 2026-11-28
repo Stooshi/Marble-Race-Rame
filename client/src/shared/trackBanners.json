@@ -618,6 +618,17 @@
    "side": 1,
    "marbles": 5
   },
+  "dino-dig": {
+   "name": "Dino Dig",
+   "series": "Pinball",
+   "lighting": "parlour",
+   "v": "2a4700a2",
+   "bytes": 14526,
+   "bytes2x": 34738,
+   "t": 10157,
+   "side": 1,
+   "marbles": 8
+  },
   "doha-desert-sprint": {
    "name": "Doha Desert Sprint",
    "series": "Track and Field",
