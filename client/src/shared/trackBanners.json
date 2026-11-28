@@ -1927,6 +1927,17 @@
    "side": 1,
    "marbles": 9
   },
+  "pinata-party": {
+   "name": "Pinata Party",
+   "series": "Arcade",
+   "lighting": "synthwave",
+   "v": "d51f0608",
+   "bytes": 14272,
+   "bytes2x": 37288,
+   "t": 15664,
+   "side": 1,
+   "marbles": 9
+  },
   "pingxi-lantern-run": {
    "name": "Pingxi Lantern Run",
    "series": "Coasters",

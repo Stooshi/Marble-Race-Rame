@@ -172,6 +172,7 @@
 "phantom-peak": {"family":"coaster","reach":0.202,"seq":["opening: staggered-drop","drop","pileUp","slalom","brake","sweep left","straight"]},
 "pharaohs-tomb": {"family":"pinball","reach":0.304,"seq":["opening: clear-start","straight","sweep left","sweep right","straight","curtain","boost","S-bends left","slalom"]},
 "pin-drop": {"family":"arcade","reach":0.303,"seq":["opening: clear-start","straight","sweep left","sweep right","straight","slalom","box"]},
+"pinata-party": {"family":"arcade","reach":0.288,"seq":["opening: clear-start","straight","sweep left","sweep right","S-bends right"]},
 "pingxi-lantern-run": {"family":"coaster","reach":0.303,"seq":["opening: pipe-drop","drop","half-pipe","straight","slalom","waterfall"]},
 "pirate-plunder": {"family":"pinball","reach":0.293,"seq":["opening: clear-start","straight","sweep right","sweep left","straight","peg","slalom","boost","straight","sweep right"]},
 "pixel-dungeon": {"family":"arcade","reach":0.303,"seq":["opening: clear-start","straight","sweep right","sweep left","sweep left","swipe"]},
