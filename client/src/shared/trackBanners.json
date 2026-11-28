@@ -1916,6 +1916,17 @@
    "side": 1,
    "marbles": 4
   },
+  "prize-wheel": {
+   "name": "Prize Wheel",
+   "series": "Arcade",
+   "lighting": "synthwave",
+   "v": "0be8fad1",
+   "bytes": 16580,
+   "bytes2x": 41672,
+   "t": 20962,
+   "side": 1,
+   "marbles": 9
+  },
   "pudong-marble-grand-prix": {
    "name": "Pudong Marble Grand Prix",
    "series": "Grand Prix",

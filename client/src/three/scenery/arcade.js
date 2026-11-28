@@ -52,6 +52,9 @@ export const ART = {
   dungeon: { sky: ['#06060e', '#1a1a3a'], ink: '#04040a', glow: '#ff7a1a', accent: '#a86aff' },
   rink: { sky: ['#0a1a2a', '#3a6a9a'], ink: '#061018', glow: '#3fd8ff', accent: '#ff3fa8' },
   coins: { sky: ['#1a0a2a', '#4a2a6a'], ink: '#0a0614', glow: '#ffd23f', accent: '#7dff6a' },
+  golf: { sky: ['#0a2a3a', '#3a9aca'], ink: '#06140a', glow: '#7dff6a', accent: '#ff3f3f' },
+  wheel: { sky: ['#2a0a1a', '#8a1a4a'], ink: '#12040a', glow: '#ffd23f', accent: '#3fd8ff' },
+  fishing: { sky: ['#041a2a', '#0a5a8a'], ink: '#020a12', glow: '#9ae8ff', accent: '#ff7a1a' },
 };
 
 // The picture: one small canvas, drawn in pixels. Regions (x, y, w, h) in its pixels.
@@ -227,6 +230,25 @@ function paintSide(g, art, c) {
     }
     g.fillStyle = '#8a8a9a'; g.fillRect(8, 8, 112, 8);
     g.fillStyle = c.accent; for (let k = 0; k < 6; k += 1) g.fillRect(14 + k * 18, 96, 6, 6);
+  } else if (art === 'golf') {
+    // A crazy-golf green: a windmill, a ball rolling to the flag.
+    g.fillStyle = '#2a8a3a'; g.fillRect(0, 70, w, h - 70);
+    g.fillStyle = '#c84a3a'; g.fillRect(18, 40, 22, 34); g.fillStyle = '#f2f6fa'; g.fillRect(28, 14, 3, 40); g.fillRect(12, 32, 34, 3);
+    g.fillStyle = c.ink; g.fillRect(96, 84, 8, 4); g.fillStyle = '#f2f6fa'; g.fillRect(99, 50, 2, 34);
+    g.fillStyle = c.accent; g.fillRect(101, 50, 12, 8); g.fillStyle = '#f2f6fa'; g.fillRect(64, 82, 5, 5);
+  } else if (art === 'wheel') {
+    // A prize wheel, its segments in turn, lights round the rim and the pointer at the top.
+    for (let k = 0; k < 12; k += 1) {
+      g.fillStyle = [c.glow, c.accent, '#ff3fa8', '#7dff6a'][k % 4];
+      g.beginPath(); g.moveTo(64, 58); g.arc(64, 58, 40, (k / 12) * Math.PI * 2, ((k + 1) / 12) * Math.PI * 2); g.fill();
+    }
+    g.fillStyle = '#f2f6fa'; g.fillRect(60, 54, 8, 8); g.fillStyle = '#ff3f3f'; g.fillRect(61, 10, 6, 10);
+  } else if (art === 'fishing') {
+    // Waves, fish leaping and a line dropping in from above.
+    g.fillStyle = '#0a5a8a'; g.fillRect(0, 64, w, h - 64);
+    g.fillStyle = c.glow; for (let k = 0; k < 8; k += 1) g.fillRect(k * 16, 62 + (k % 2) * 3, 10, 3);
+    for (const [x, y, col] of [[24, 46, c.accent], [70, 36, '#ffd23f'], [100, 52, '#ff3fa8']]) { g.fillStyle = col; g.fillRect(x, y, 16, 7); g.fillRect(x - 5, y - 2, 5, 11); }
+    g.fillStyle = '#f2f6fa'; g.fillRect(84, 0, 1, 34);
   } else {
     g.fillStyle = c.glow;
     for (let k = 0; k < 7; k += 1) g.fillRect(6 + k * 17, 40 + ((k * 13) % 30), 12, h);
