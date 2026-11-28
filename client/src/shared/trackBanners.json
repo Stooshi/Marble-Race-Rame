@@ -1905,6 +1905,17 @@
    "side": -1,
    "marbles": 7
   },
+  "pin-drop": {
+   "name": "Pin Drop",
+   "series": "Arcade",
+   "lighting": "neon-night",
+   "v": "7e15e01d",
+   "bytes": 10188,
+   "bytes2x": 24758,
+   "t": 14478,
+   "side": 1,
+   "marbles": 9
+  },
   "pingxi-lantern-run": {
    "name": "Pingxi Lantern Run",
    "series": "Coasters",
