@@ -1663,6 +1663,17 @@
    "side": 1,
    "marbles": 8
   },
+  "neon-snake": {
+   "name": "Neon Snake",
+   "series": "Arcade",
+   "lighting": "neon-night",
+   "v": "d3a613b6",
+   "bytes": 15138,
+   "bytes2x": 36558,
+   "t": 15596,
+   "side": 1,
+   "marbles": 9
+  },
   "nevada-drag-strip": {
    "name": "Nevada Drag Strip",
    "series": "Grand Prix",

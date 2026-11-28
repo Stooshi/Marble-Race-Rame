@@ -148,6 +148,7 @@
 "nairobi-marble-grand-prix": {"family":"grand-prix","reach":0.218,"seq":["opening: banked-turn","drop","pileUp","slalom","sweep right","S-bends left","slalom","peg"]},
 "nanjing": {"family":"coaster","reach":0.208,"seq":["opening: banked-turn","drop","pileUp","slalom","sweep right","S-bends left"]},
 "neon-grid": {"family":"block","reach":0.332,"seq":["opening: rumble-start","drop","slalom","moguls","drop","sweep right","drop","S-bends left","peg ×2"]},
+"neon-snake": {"family":"arcade","reach":0.293,"seq":["opening: clear-start","straight","sweep right","sweep left","S-bends right","peg"]},
 "nevada-drag-strip": {"family":"grand-prix","reach":0.236,"seq":["opening: crest-start","drop","pileUp","slalom","climb","drop","straight","curtain","slalom","peg","boost ×2","half-pipe"]},
 "new-york-winter-run": {"family":"grand-prix","reach":0.31,"seq":["opening: peg-drop","drop","peg ×7","straight","peg ×2","box","rail","spiral left"]},
 "niagara-cube-falls": {"family":"block-2","reach":0.286,"seq":["opening: peg-drop","drop","peg ×7","sweep left","straight","peg ×2","slalom","waterfall"]},
