@@ -14,6 +14,7 @@
  *   golf-windmill   Crazy Golf: a crazy-golf windmill with its sails, a flag in the hole and a ball on the green
  *   prize-wheel     Prize Wheel: a giant prize wheel on its stand, its coloured segments, lights round the rim
  *   fish-tank       Fishing Frenzy: a fishing-game tank, pixel fish leaping out of its water, a rod over it
+ *   laser-fort      Laser Tag: a laser-tag fort of stacked blocks, its lookout towers and beams criss-crossing it
  */
 import { box, merge } from './parts';
 
@@ -197,7 +198,24 @@ function fishTank() {
   return merge(p);
 }
 
+function laserFort() {
+  const p = [];
+  for (let r = 0; r < 3; r += 1) for (let c = 0; c < 6; c += 1) {
+    if (r === 0 && (c === 2 || c === 3)) continue; // the way in
+    p.push(box(3.4, 3, 3, -8.5 + c * 3.4, 1.5 + r * 3, 0, (r + c) % 2 ? '#2a2a4a' : '#3a3a5a'));
+  }
+  for (const x of [-11, 11]) {
+    p.push(box(4, 16, 4, x, 8, 0, '#2a2a4a'), box(5, 1.2, 5, x, 16.6, 0, '#3a3a5a'));
+    p.push(box(1.2, 1.2, 0.4, x, 12, 2.1, '#7dff6a'));
+  }
+  // The beams: thin glowing bars criss-crossing the fort.
+  for (const [y, c] of [[11, '#ff3f3f'], [13.5, '#3fd8ff']]) p.push(box(22, 0.2, 0.2, 0, y, 1.6, c));
+  for (let k = 0; k < 5; k += 1) p.push(box(0.2, 6, 0.2, -8 + k * 4, 12, 1.6, k % 2 ? '#ff3fa8' : '#7dff6a'));
+  return merge(p);
+}
+
 export const ARCADE2_LANDMARKS = {
+  'laser-fort': { build: laserFort, radius: 14 },
   'golf-windmill': { build: golfWindmill, radius: 12 },
   'prize-wheel': { build: prizeWheel, radius: 11 },
   'fish-tank': { build: fishTank, radius: 12 },

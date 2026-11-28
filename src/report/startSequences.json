@@ -127,6 +127,7 @@
 "lake-como-villa-run": {"family":"coaster","reach":0.309,"seq":["opening: rolling-start","drop","slalom","sweep left","straight","peg","spiral right"]},
 "lalibela-genna-spins": {"family":"canyon","reach":0.307,"seq":["opening: peg-drop","drop","peg ×7","straight","peg ×3","spiral right"]},
 "lapland-ice-race": {"family":"grand-prix","reach":0.315,"seq":["opening: clean-drop","drop","S-bends left","straight","slalom","peg","hairpin right"]},
+"laser-tag": {"family":"arcade","reach":0.293,"seq":["opening: clear-start","straight","sweep left","sweep right","climb","sweep left","peg"]},
 "li-river-karst-run": {"family":"block-2","reach":0.296,"seq":["opening: clean-drop","drop","S-bends right","straight","peg ×2","slalom","splitter"]},
 "line-clear": {"family":"block","reach":0.22,"seq":["opening: staggered-drop","drop","pileUp","slalom","brake","straight","slalom","S-bends right"]},
 "lisbon-cube-hills": {"family":"block-2","reach":0.256,"seq":["opening: classic","drop","pileUp","slalom","straight","peg","drop","straight","peg ×3","sweep right"]},

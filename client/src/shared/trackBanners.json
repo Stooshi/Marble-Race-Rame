@@ -1421,6 +1421,17 @@
    "side": -1,
    "marbles": 5
   },
+  "laser-tag": {
+   "name": "Laser Tag",
+   "series": "Arcade",
+   "lighting": "neon-night",
+   "v": "4e1113df",
+   "bytes": 12896,
+   "bytes2x": 31940,
+   "t": 26170,
+   "side": 1,
+   "marbles": 8
+  },
   "li-river-karst-run": {
    "name": "Li River Karst Run",
    "series": "Blocks",

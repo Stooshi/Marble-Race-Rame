@@ -55,6 +55,7 @@ export const ART = {
   golf: { sky: ['#0a2a3a', '#3a9aca'], ink: '#06140a', glow: '#7dff6a', accent: '#ff3f3f' },
   wheel: { sky: ['#2a0a1a', '#8a1a4a'], ink: '#12040a', glow: '#ffd23f', accent: '#3fd8ff' },
   fishing: { sky: ['#041a2a', '#0a5a8a'], ink: '#020a12', glow: '#9ae8ff', accent: '#ff7a1a' },
+  laser: { sky: ['#06020e', '#1a0a3a'], ink: '#020106', glow: '#ff3f3f', accent: '#7dff6a' },
 };
 
 // The picture: one small canvas, drawn in pixels. Regions (x, y, w, h) in its pixels.
@@ -249,6 +250,12 @@ function paintSide(g, art, c) {
     g.fillStyle = c.glow; for (let k = 0; k < 8; k += 1) g.fillRect(k * 16, 62 + (k % 2) * 3, 10, 3);
     for (const [x, y, col] of [[24, 46, c.accent], [70, 36, '#ffd23f'], [100, 52, '#ff3fa8']]) { g.fillStyle = col; g.fillRect(x, y, 16, 7); g.fillRect(x - 5, y - 2, 5, 11); }
     g.fillStyle = '#f2f6fa'; g.fillRect(84, 0, 1, 34);
+  } else if (art === 'laser') {
+    // A block fort in the dark, laser beams criss-crossing it.
+    g.fillStyle = '#2a2a4a'; g.fillRect(16, 56, 96, 50); g.fillRect(8, 30, 16, 76); g.fillRect(104, 30, 16, 76);
+    g.strokeStyle = c.glow; g.lineWidth = 2;
+    for (const [a, b, x2, y2] of [[0, 20, 128, 70], [0, 80, 128, 24], [20, 0, 90, 110]]) { g.beginPath(); g.moveTo(a, b); g.lineTo(x2, y2); g.stroke(); }
+    g.strokeStyle = c.accent; g.beginPath(); g.moveTo(128, 40); g.lineTo(0, 100); g.stroke();
   } else {
     g.fillStyle = c.glow;
     for (let k = 0; k < 7; k += 1) g.fillRect(6 + k * 17, 40 + ((k * 13) % 30), 12, h);
