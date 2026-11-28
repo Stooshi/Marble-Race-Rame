@@ -1850,6 +1850,17 @@
    "side": -1,
    "marbles": 6
   },
+  "pixel-dungeon": {
+   "name": "Pixel Dungeon",
+   "series": "Arcade",
+   "lighting": "neon-night",
+   "v": "21dcb8bf",
+   "bytes": 14502,
+   "bytes2x": 34566,
+   "t": 10278,
+   "side": -1,
+   "marbles": 8
+  },
   "portes-du-soleil-run": {
    "name": "Portes du Soleil Run",
    "series": "World Tour",

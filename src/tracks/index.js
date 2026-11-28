@@ -122,6 +122,7 @@ module.exports = [
   require('./pharaohs-tomb'),
   require('./rhythm-rush'),
   require('./neon-snake'),
+  require('./pixel-dungeon'),
   // Rivers (the first five, the test batch).
   // (In this order so no two tracks in a row start the same way: a test.)
   require('./mississippi-steamer-run'),

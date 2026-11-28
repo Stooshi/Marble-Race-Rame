@@ -165,6 +165,7 @@
 "pharaohs-tomb": {"family":"pinball","reach":0.304,"seq":["opening: clear-start","straight","sweep left","sweep right","straight","curtain","boost","S-bends left","slalom"]},
 "pingxi-lantern-run": {"family":"coaster","reach":0.303,"seq":["opening: pipe-drop","drop","half-pipe","straight","slalom","waterfall"]},
 "pirate-plunder": {"family":"pinball","reach":0.293,"seq":["opening: clear-start","straight","sweep right","sweep left","straight","peg","slalom","boost","straight","sweep right"]},
+"pixel-dungeon": {"family":"arcade","reach":0.303,"seq":["opening: clear-start","straight","sweep right","sweep left","sweep left","swipe"]},
 "portes-du-soleil-run": {"family":"world-tour","reach":0.271,"seq":["opening: classic","drop","pileUp","slalom","sweep right","peg ×2","straight"]},
 "pudong-marble-grand-prix": {"family":"grand-prix","reach":0.208,"seq":["opening: tunnel-launch","drop","pileUp","slalom","drop","slalom","S-bends left","peg","slalom","brake"]},
 "pyramid-run": {"family":"coaster","reach":0.226,"seq":["opening: tunnel-launch","drop","pileUp","slalom","drop","slalom","S-bends left","splitter left"]},
