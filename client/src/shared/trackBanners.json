@@ -673,6 +673,17 @@
    "side": 1,
    "marbles": 8
   },
+  "dodgem-derby": {
+   "name": "Dodgem Derby",
+   "series": "Arcade",
+   "lighting": "neon-night",
+   "v": "2a184f73",
+   "bytes": 14238,
+   "bytes2x": 33854,
+   "t": 14373,
+   "side": 1,
+   "marbles": 8
+  },
   "doha-desert-sprint": {
    "name": "Doha Desert Sprint",
    "series": "Track and Field",
