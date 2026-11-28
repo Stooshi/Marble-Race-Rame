@@ -15,6 +15,7 @@ import { PINBALL2_LANDMARKS } from './kitLandmarksPinball2';
 import { PINBALL3_LANDMARKS } from './kitLandmarksPinball3';
 import { PINBALL4_LANDMARKS } from './kitLandmarksPinball4';
 import { ARCADE_LANDMARKS } from './kitLandmarksArcade';
+import { ARCADE2_LANDMARKS } from './kitLandmarksArcade2';
 import { CANYON_LANDMARKS } from './kitLandmarksCanyon';
 import { CANYON2_LANDMARKS } from './kitLandmarksCanyon2';
 import { PEAK2_LANDMARKS } from './kitLandmarksPeak2';
@@ -639,6 +640,7 @@ export const LANDMARKS = {
   ...PINBALL3_LANDMARKS,
   ...PINBALL4_LANDMARKS,
   ...ARCADE_LANDMARKS,
+  ...ARCADE2_LANDMARKS,
   ...CANYON_LANDMARKS,
   ...CANYON2_LANDMARKS,
   ...RIVER_LANDMARKS,

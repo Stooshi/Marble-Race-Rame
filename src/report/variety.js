@@ -100,8 +100,8 @@ const samePlaces = (a, b) => {
   return a.splitters.every((s, k) => near(s, b.splitters[k]));
 };
 
-/** Families whose clear-start tracks may repeat an opening (Moses, 28 Nov 2026). */
-const REPEAT_OPENING_FAMILIES = new Set(['pinball']);
+/** Families whose clear-start tracks may repeat an opening (Moses, 28 Nov 2026: Pinball at 06:26, Arcade at 08:34). */
+const REPEAT_OPENING_FAMILIES = new Set(['pinball', 'arcade']);
 
 /** Every other track this one is compared with. */
 function others(me, all) {

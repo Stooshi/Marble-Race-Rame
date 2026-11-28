@@ -42,6 +42,14 @@ export const ART = {
   downtown: { sky: ['#06061a', '#2a1a5a'], ink: '#04040c', glow: '#3fd8ff', accent: '#ff7a1a' },
   'star-lanterns': { sky: ['#0a0a2a', '#3a1a5a'], ink: '#06061a', glow: '#ffd23f', accent: '#ff4f6a' },
   'light-stream': { sky: ['#040a1a', '#1a3a6a'], ink: '#02060e', glow: '#9ae8ff', accent: '#ff8ad8' },
+  // The Arcade tables of 28 Nov 2026.
+  bricks: { sky: ['#0a0a2a', '#2a0a5a'], ink: '#06061a', glow: '#ff7a1a', accent: '#3fd8ff' },
+  snake: { sky: ['#02140a', '#0a3a1a'], ink: '#02080a', glow: '#7dff6a', accent: '#ff3f3f' },
+  rhythm: { sky: ['#1a0a2a', '#5a0a4a'], ink: '#0a0612', glow: '#ff3fa8', accent: '#7dff6a' },
+  moles: { sky: ['#1a3a0a', '#6aa83a'], ink: '#1a1008', glow: '#ffd23f', accent: '#ff3f3f' },
+  bubbles: { sky: ['#0a1a3a', '#2a6aaa'], ink: '#04081a', glow: '#9ae8ff', accent: '#ff4fd8' },
+  skee: { sky: ['#2a0a0a', '#7a2a1a'], ink: '#120604', glow: '#ffd23f', accent: '#3fd8ff' },
+  dungeon: { sky: ['#06060e', '#1a1a3a'], ink: '#04040a', glow: '#ff7a1a', accent: '#a86aff' },
 };
 
 // The picture: one small canvas, drawn in pixels. Regions (x, y, w, h) in its pixels.
@@ -147,6 +155,60 @@ function paintSide(g, art, c) {
       g.fillRect(x, 20, 3, 40); g.fillRect(x + 24, 20, 3, 40); g.fillRect(x, 18, 27, 3);
     }
     g.fillStyle = '#f2f6fa'; for (let k = 0; k < 20; k += 1) g.fillRect((k * 29) % w, (k * 17) % 56, 1, 1);
+  } else if (art === 'bricks') {
+    // Rows of bricks with a gap knocked in them, a paddle and a ball.
+    for (let r = 0; r < 5; r += 1) for (let k = 0; k < 8; k += 1) {
+      if (r > 2 && (k === 3 || k === 4)) continue;
+      g.fillStyle = [c.glow, c.accent, '#ffd23f', '#ff3fa8', '#7dff6a'][r];
+      g.fillRect(4 + k * 15, 8 + r * 8, 13, 6);
+    }
+    g.fillStyle = '#f2f6fa'; g.fillRect(50, 90, 28, 4); g.fillRect(70, 66, 4, 4);
+  } else if (art === 'snake') {
+    // A pixel snake winding over a dark grid, an apple ahead of it.
+    g.fillStyle = 'rgba(125,255,106,0.15)';
+    for (let k = 0; k < w; k += 8) { g.fillRect(k, 0, 1, h); g.fillRect(0, k, w, 1); }
+    g.fillStyle = c.glow;
+    for (const [x, y] of [[16, 80], [24, 80], [32, 80], [40, 80], [40, 72], [40, 64], [48, 64], [56, 64], [64, 64], [64, 56], [64, 48], [72, 48], [80, 48], [88, 48]]) g.fillRect(x, y, 7, 7);
+    g.fillStyle = c.accent; g.fillRect(104, 48, 7, 7);
+  } else if (art === 'rhythm') {
+    // Four lanes of falling arrows over a lit dance floor.
+    g.fillStyle = c.ink; g.fillRect(0, 70, w, h - 70);
+    for (let k = 0; k < 4; k += 1) {
+      g.fillStyle = [c.glow, c.accent, '#ffd23f', '#3fd8ff'][k];
+      for (let r = 0; r < 3; r += 1) { g.fillRect(14 + k * 28, 10 + r * 20 + k * 4, 14, 6); g.fillRect(18 + k * 28, 6 + r * 20 + k * 4, 6, 14); }
+      g.fillRect(10 + k * 28, 78, 22, 16);
+    }
+  } else if (art === 'moles') {
+    // Green grass, a row of holes, moles popping up and a mallet.
+    g.fillStyle = '#3a8a2a'; g.fillRect(0, 60, w, h - 60);
+    for (let k = 0; k < 4; k += 1) {
+      g.fillStyle = '#1a0a04'; g.fillRect(8 + k * 30, 72, 22, 8);
+      if (k % 2 === 0) { g.fillStyle = '#8a5a3a'; g.fillRect(12 + k * 30, 58, 14, 16); g.fillStyle = '#0a0a12'; g.fillRect(15 + k * 30, 62, 2, 2); g.fillRect(21 + k * 30, 62, 2, 2); }
+    }
+    g.fillStyle = c.accent; g.fillRect(90, 20, 26, 14); g.fillStyle = '#c89a5a'; g.fillRect(100, 34, 5, 24);
+  } else if (art === 'bubbles') {
+    // A ceiling of coloured bubbles and a cannon aiming up at it.
+    for (let r = 0; r < 3; r += 1) for (let k = 0; k < 9 - r; k += 1) {
+      g.fillStyle = [c.glow, c.accent, '#ffd23f', '#7dff6a'][(k + r) % 4];
+      g.beginPath(); g.arc(8 + k * 13 + r * 6, 10 + r * 11, 6, 0, Math.PI * 2); g.fill();
+    }
+    g.fillStyle = '#8a8a9a'; g.fillRect(58, 80, 12, 20); g.fillRect(60, 66, 8, 16);
+  } else if (art === 'skee') {
+    // Three ramped lanes rising to their target rings.
+    for (let k = 0; k < 3; k += 1) {
+      const x = 8 + k * 40;
+      g.fillStyle = '#8a5a3a'; g.beginPath(); g.moveTo(x, h); g.lineTo(x + 32, h); g.lineTo(x + 24, 50); g.lineTo(x + 8, 50); g.fill();
+      g.fillStyle = c.glow; g.fillRect(x + 4, 16, 24, 24);
+      g.fillStyle = c.ink; g.fillRect(x + 8, 20, 16, 16);
+      g.fillStyle = c.accent; g.fillRect(x + 12, 24, 8, 8);
+    }
+  } else if (art === 'dungeon') {
+    // A pixel keep under a dark sky, torches either side of its gate.
+    g.fillStyle = '#4a4a6a'; g.fillRect(30, 40, 68, h); g.fillRect(20, 24, 18, h); g.fillRect(90, 24, 18, h);
+    g.fillStyle = c.ink; g.fillRect(54, 74, 20, 30);
+    g.fillStyle = '#ffd23f'; for (const [x, y] of [[26, 40], [96, 40], [44, 54], [80, 54]]) g.fillRect(x, y, 5, 7);
+    g.fillStyle = c.glow; g.fillRect(46, 70, 4, 8); g.fillRect(78, 70, 4, 8);
+    g.fillStyle = c.accent; for (let k = 0; k < 14; k += 1) g.fillRect((k * 37) % w, (k * 13) % 20, 1, 1);
   } else {
     g.fillStyle = c.glow;
     for (let k = 0; k < 7; k += 1) g.fillRect(6 + k * 17, 40 + ((k * 13) % 30), 12, h);
