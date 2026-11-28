@@ -2554,6 +2554,17 @@
    "side": -1,
    "marbles": 5
   },
+  "volcano-island": {
+   "name": "Volcano Island",
+   "series": "Pinball",
+   "lighting": "parlour",
+   "v": "f777235d",
+   "bytes": 14200,
+   "bytes2x": 35802,
+   "t": 9885,
+   "side": 1,
+   "marbles": 8
+  },
   "volcano-run": {
    "name": "Volcano Run",
    "series": "Classic",
