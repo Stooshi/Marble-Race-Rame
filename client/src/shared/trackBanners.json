@@ -2257,6 +2257,17 @@
    "side": 1,
    "marbles": 6
   },
+  "sugar-rush": {
+   "name": "Sugar Rush",
+   "series": "Pinball",
+   "lighting": "parlour",
+   "v": "3382f8d5",
+   "bytes": 12846,
+   "bytes2x": 30522,
+   "t": 10020,
+   "side": -1,
+   "marbles": 8
+  },
   "sumidero-christmas-falls": {
    "name": "Sumidero Christmas Falls",
    "series": "Canyons",
