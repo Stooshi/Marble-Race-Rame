@@ -75,6 +75,7 @@
 "final-round-spin": {"family":"arcade","reach":0.201,"seq":["opening: banked-turn","drop","pileUp","slalom","sweep left","S-bends right"]},
 "finland-forest-rally": {"family":"grand-prix","reach":0.28,"seq":["opening: rumble-start","drop","slalom","moguls","S-bends left","slalom","straight","slalom"]},
 "fish-river-burst": {"family":"canyon","reach":0.218,"seq":["opening: banked-turn","drop","pileUp","slalom","sweep left","S-bends left"]},
+"fishing-frenzy": {"family":"arcade","reach":0.288,"seq":["opening: clear-start","straight","sweep right","sweep left","climb","S-bends left","curtain"]},
 "flipper-spins": {"family":"pinball","reach":0.26,"seq":["opening: classic","drop","pileUp","slalom","straight","hairpin left","swipe","drop","slalom","sweep right","curtain"]},
 "frostmere-marble-grand-prix": {"family":"grand-prix","reach":0.218,"seq":["opening: classic","drop","pileUp","slalom","S-bends left"]},
 "fuji-cinder-sunrise": {"family":"peak","reach":0.226,"seq":["opening: staggered-drop","drop","pileUp","slalom","brake","straight","peg","S-bends right","peg"]},

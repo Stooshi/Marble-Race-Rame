@@ -849,6 +849,17 @@
    "side": 1,
    "marbles": 5
   },
+  "fishing-frenzy": {
+   "name": "Fishing Frenzy",
+   "series": "Arcade",
+   "lighting": "neon-night",
+   "v": "53129ad0",
+   "bytes": 14986,
+   "bytes2x": 35210,
+   "t": 10774,
+   "side": -1,
+   "marbles": 8
+  },
   "flipper-spins": {
    "name": "Flipper Spins",
    "series": "Pinball",
