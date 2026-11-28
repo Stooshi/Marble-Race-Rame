@@ -2554,6 +2554,17 @@
    "side": 1,
    "marbles": 5
   },
+  "viking-raid": {
+   "name": "Viking Raid",
+   "series": "Pinball",
+   "lighting": "parlour",
+   "v": "3c18557e",
+   "bytes": 11246,
+   "bytes2x": 27916,
+   "t": 14598,
+   "side": 1,
+   "marbles": 8
+  },
   "vinson-blue-ice": {
    "name": "Vinson Blue Ice",
    "series": "Peaks",
