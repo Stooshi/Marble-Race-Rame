@@ -343,17 +343,6 @@
    "side": 1,
    "marbles": 4
   },
-  "bubble-pop": {
-   "name": "Bubble Pop",
-   "series": "Arcade",
-   "lighting": "synthwave",
-   "v": "f0135937",
-   "bytes": 12822,
-   "bytes2x": 32220,
-   "t": 15745,
-   "side": 1,
-   "marbles": 8
-  },
   "budapest-danube-arches": {
    "name": "Budapest Danube Arches",
    "series": "Track and Field",
@@ -1531,6 +1520,17 @@
    "side": 1,
    "marbles": 4
   },
+  "mole-mayhem": {
+   "name": "Mole Mayhem",
+   "series": "Arcade",
+   "lighting": "neon-night",
+   "v": "fbe9d509",
+   "bytes": 11656,
+   "bytes2x": 29324,
+   "t": 15277,
+   "side": 1,
+   "marbles": 9
+  },
   "mont-blanc-needle-ridge": {
    "name": "Mont Blanc Needle Ridge",
    "series": "Peaks",
@@ -2245,6 +2245,17 @@
    "t": 22790,
    "side": -1,
    "marbles": 5
+  },
+  "skee-hall": {
+   "name": "Skee Hall",
+   "series": "Arcade",
+   "lighting": "synthwave",
+   "v": "3e2bf3ba",
+   "bytes": 15338,
+   "bytes2x": 38762,
+   "t": 15647,
+   "side": -1,
+   "marbles": 9
   },
   "sky-islands": {
    "name": "Sky Islands",
