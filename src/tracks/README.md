@@ -1015,7 +1015,8 @@ with a pass or fail beside each line and what to fix at the top:
 - **Obstacles, boosts, bumps**: hits by starting group and strength group; the
   highest hops.
 - **Variety** (the sameness check, no races needed): no other track of the family opens
-  the same way (opening, first obstacle, first bend), at most two of a family share an
+  the same way (opening, first obstacle, first bend; a clear-start Pinball table may repeat one,
+  Moses, 28 Nov 2026, since only seven were left: its first 20 seconds and layout still differ), at most two of a family share an
   opening, and the section order is not too alike any other track's (similarity 0.80, or
   0.70 with the splitters and sharp bend in the same places; shown from 0.65).
   `node scripts/variety-table.js` scores every track at once (`--matrix`: every pair).

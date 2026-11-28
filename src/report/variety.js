@@ -100,6 +100,9 @@ const samePlaces = (a, b) => {
   return a.splitters.every((s, k) => near(s, b.splitters[k]));
 };
 
+/** Families whose clear-start tracks may repeat an opening (Moses, 28 Nov 2026). */
+const REPEAT_OPENING_FAMILIES = new Set(['pinball']);
+
 /** Every other track this one is compared with. */
 function others(me, all) {
   return all.filter((o) => o && o.slug !== me.slug && o.family !== 'test' && o.slug !== me.mirrorOf && o.mirrorOf !== me.slug);
@@ -119,12 +122,15 @@ function varietyCheck(track, tracks) {
   // The opening.
   const family = rest.filter((o) => o.family === me.family);
   const twin = family.find((o) => o.opening === me.opening && o.firstObstacle === me.firstObstacle && o.firstBend === me.firstBend);
+  // (Moses, 28 Nov 2026: a clear-start Pinball table may open like another one, since only seven openings were left
+  // for it; it must still differ in its first 20 seconds and its layout, checked below.)
+  const repeatAllowed = REPEAT_OPENING_FAMILIES.has(me.family) && me.opening === 'clear-start';
   lines.push({
     part: 'Variety',
     what: `Opening: no other ${familyName(me.family)} track opens the same way (kind, first obstacle, first bend)`,
-    value: `${me.opening}, ${me.firstObstacle}, first bend ${me.firstBend}${twin ? `: the same as ${twin.name}` : ''}`,
-    target: 'none the same',
-    pass: !twin,
+    value: `${me.opening}, ${me.firstObstacle}, first bend ${me.firstBend}${twin ? `: the same as ${twin.name}${repeatAllowed ? ' (allowed for a clear-start Pinball table)' : ''}` : ''}`,
+    target: repeatAllowed ? 'none the same (a clear-start Pinball table may repeat one)' : 'none the same',
+    pass: !twin || repeatAllowed,
   });
   // (The clear start is every new track's opening from 21 Nov 2026, Moses: no cap on it. Its tracks stay apart through
   // the first 20 seconds, the start on screen and the layout, which still apply.)

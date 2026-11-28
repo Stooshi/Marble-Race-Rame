@@ -177,6 +177,7 @@
 "rio-jungle-rumble": {"family":"world-tour","reach":0.278,"seq":["opening: rumble-start","drop","slalom","moguls","S-bends right","peg ×2"]},
 "rio-new-year-burst": {"family":"pinball","reach":0.358,"seq":["opening: pipe-drop","drop","half-pipe","sweep right","peg ×2","spiral right"]},
 "rio-samba-relay": {"family":"athletics","reach":0.358,"seq":["opening: clear-start","straight","sweep right","sweep left","straight","parked","sweep left","peg ×3","brake"]},
+"robot-factory": {"family":"pinball","reach":0.299,"seq":["opening: clear-start","straight","sweep right","sweep left","straight","block","slalom","boost"]},
 "rocky-mountain-hill-run": {"family":"grand-prix","reach":0.23,"seq":["opening: waterfall","waterfall","peg","pileUp","slalom","S-bends right","slalom"]},
 "rome-monte-mario-drop": {"family":"athletics","reach":0.364,"seq":["opening: clear-start","straight","sweep left","sweep right","straight","peg ×2","brake","drop"]},
 "roraima-cloud-falls": {"family":"peak","reach":0.29,"seq":["opening: pipe-drop","drop","half-pipe","straight","peg","slalom","peg"]},
