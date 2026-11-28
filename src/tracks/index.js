@@ -128,6 +128,9 @@ module.exports = [
   require('./air-hockey-rink'),
   require('./coin-pusher'),
   require('./bubble-pop'),
+  require('./prize-wheel'),
+  require('./fishing-frenzy'),
+  require('./laser-tag'),
   require('./crazy-golf'),
   // Rivers (the first five, the test batch).
   // (In this order so no two tracks in a row start the same way: a test.)

@@ -340,7 +340,7 @@ module.exports = {
     'erupting-volcano', 'ice-station', 'assembly-robot', 'fossil-skeleton', 'mine-headframe', // (kitLandmarksPinball3.js)
     'hoard-dragon', 'viking-longship', 'safari-lookout', 'giant-cupcake', 'desert-pyramid', // (kitLandmarksPinball4.js)
     'brick-paddle', 'pixel-snake', 'dance-pad', 'mole-machine', 'bubble-cannon', 'skee-lanes', 'pixel-keep', 'hockey-rink', 'coin-pusher',
-    'golf-windmill', 'prize-wheel', 'fish-tank', // (kitLandmarksArcade2.js)
+    'golf-windmill', 'prize-wheel', 'fish-tank', 'laser-fort', // (kitLandmarksArcade2.js)
     'arcade-hall', 'cabinet-row', 'prize-counter', 'claw-tower', 'neon-maze', 'glitch-tower', 'level-sign',
     'alien-formation', 'mothership', 'ringed-planet', 'laser-turret',
     'pixel-hills', 'floating-platforms', 'pixel-waterfall', 'arrow-up', 'arrow-down', 'arrow-left', 'arrow-right', 'ba-buttons',

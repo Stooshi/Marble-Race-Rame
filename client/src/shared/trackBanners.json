@@ -622,10 +622,10 @@
    "name": "Crazy Golf",
    "series": "Arcade",
    "lighting": "synthwave",
-   "v": "f2470575",
-   "bytes": 19334,
-   "bytes2x": 47092,
-   "t": 20368,
+   "v": "aab20322",
+   "bytes": 16492,
+   "bytes2x": 41362,
+   "t": 19177,
    "side": -1,
    "marbles": 8
   },
@@ -859,6 +859,17 @@
    "t": 15469,
    "side": 1,
    "marbles": 5
+  },
+  "fishing-frenzy": {
+   "name": "Fishing Frenzy",
+   "series": "Arcade",
+   "lighting": "neon-night",
+   "v": "53129ad0",
+   "bytes": 14986,
+   "bytes2x": 35210,
+   "t": 10774,
+   "side": -1,
+   "marbles": 8
   },
   "flipper-spins": {
    "name": "Flipper Spins",
@@ -1421,6 +1432,17 @@
    "side": -1,
    "marbles": 5
   },
+  "laser-tag": {
+   "name": "Laser Tag",
+   "series": "Arcade",
+   "lighting": "neon-night",
+   "v": "4e1113df",
+   "bytes": 12896,
+   "bytes2x": 31940,
+   "t": 26170,
+   "side": 1,
+   "marbles": 8
+  },
   "li-river-karst-run": {
    "name": "Li River Karst Run",
    "series": "Blocks",
@@ -1926,6 +1948,17 @@
    "t": 10131,
    "side": 1,
    "marbles": 4
+  },
+  "prize-wheel": {
+   "name": "Prize Wheel",
+   "series": "Arcade",
+   "lighting": "synthwave",
+   "v": "0be8fad1",
+   "bytes": 16580,
+   "bytes2x": 41672,
+   "t": 20962,
+   "side": 1,
+   "marbles": 9
   },
   "pudong-marble-grand-prix": {
    "name": "Pudong Marble Grand Prix",
