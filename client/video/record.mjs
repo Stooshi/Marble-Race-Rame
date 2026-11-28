@@ -17,7 +17,7 @@ import * as PLANS from './plans.mjs';
 import { soundTimes } from './collisions.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
-const FPS = 60;
+const FPS = Number(process.env.VIDEO_FPS ?? 60); // (VIDEO_FPS=30: the championship episodes, Moses 28 Nov 2026)
 const SIZES = { wide: [1920, 1080], tall: [1080, 1920] };
 const TUNE_SECONDS = { 1: 71.316542, 3: 43.139458, 4: 37.716083, 5: 30.733125, 6: 50.521917, 7: 48.228708, 8: 27.382583, 9: 27.513625, 10: 54.095521, 11: 53.579333, 12: 32.22, 13: 28.548729, 14: 28.138437 };
 const BEEPS_GO_S = 3.023;
@@ -70,6 +70,8 @@ export function mix(plan, length, { tune }, file) {
     if (s.teaserMusic) add(loop, { at: s.teaserMusic[0], dur: s.teaserMusic[1] - s.teaserMusic[0], offset: 8, gain: T.musicGain * lift, fadeOut: 0.35, loop: true });
     if (s.beeps && s.goAt !== null) add(SOUNDS.beeps.file, { at: s.goAt - BEEPS_GO_S, dur: BEEPS_GO_S + 0.9, gain: 0.9, fadeOut: 0.15 });
     if (s.goAt !== null && s.goAt !== undefined) add(SOUNDS.launch.file, { at: s.goAt, dur: 5, gain: 1.6 });
+    // (The crowd under the race: the Grand Prix crowd looped, low; the championship.)
+    for (const [a, b] of s.crowd ?? []) add(SOUNDS.crowd.file, { at: a, dur: b - a, gain: s.crowdGain ?? 0.3, fadeIn: 1, fadeOut: 1.5, loop: true });
     if (s.ceremony) add(SOUNDS.ceremony.file, { at: s.ceremony[0], dur: s.ceremony[1] - s.ceremony[0], gain: 0.55, fadeIn: 0.4, fadeOut: 1.5 });
     // The signature sound: intro A's whoosh as the mark lands, on the intro and on every end card.
     for (const x of s.extra ?? []) add(SOUNDS[x.key].file, { at: x.at, dur: x.dur ?? 2, gain: x.gain ?? 1, fadeOut: x.fadeOut ?? 0.3 });
@@ -85,8 +87,8 @@ export function mix(plan, length, { tune }, file) {
   }
 }
 
-export async function record({ variant = 'A', opening = 'old', text = null, slug, race: raceName, kind = 'production', format = 'wide', tune = 7, logo = TEMPLATE.intro.logo, out, from = null, to = null, fly = null, stills = null, clip = null, at = null, promoStart = null, hits: wantHits = false }) {
-  fly ??= kind === 'clip' ? 12 : kind === 'broadcast' ? 4.5 : 15; // (seconds: the flyover's length)
+export async function record({ champ: champArg = null, variant = 'A', opening = 'old', text = null, slug, race: raceName, kind = 'production', format = 'wide', tune = 7, logo = TEMPLATE.intro.logo, out, from = null, to = null, fly = null, stills = null, clip = null, at = null, promoStart = null, hits: wantHits = false }) {
+  fly ??= kind === 'clip' || kind === 'champFly' ? 12 : kind === 'broadcast' ? 4.5 : 15; // (seconds: the flyover's length)
   const [W, H] = SIZES[format];
   const race = JSON.parse(fs.readFileSync(path.join(here, '..', 'dev', '.tracks', `${raceName}.json`), 'utf8'));
   const server = await createServer({ root: path.resolve(here, '..'), logLevel: 'error', server: { port: 0, strictPort: false, fs: { allow: [path.resolve(here, '..', '..', '..'), fs.realpathSync(path.resolve(here, '..', 'node_modules'))] } } }); // (allow: a worktree whose node_modules link to another checkout still loads the fonts)
@@ -105,7 +107,9 @@ export async function record({ variant = 'A', opening = 'old', text = null, slug
     const info = await page.evaluate(() => window.rec.info());
     // (The track's series, from the track picker's list: the broadcast's cards name it on tracks outside the Grand Prix.)
     const series = JSON.parse(fs.readFileSync(path.join(here, '..', 'src', 'shared', 'trackBanners.json'), 'utf8')).banners?.[slug]?.series ?? null;
-    const plan = PLANS[kind](info, race, { logo, fly, clip, at, promoStart, variant, slug, opening, series, text });
+    // (The championship's race and track intro: champ.json's entry for --champ <n>.)
+    const champ = champArg ? (() => { const C = JSON.parse(fs.readFileSync(path.join(here, 'championship', 'champ.json'), 'utf8')); return { ...C.races.find((r) => r.n === champArg), total: 10 }; })() : null;
+    const plan = PLANS[kind](info, race, { logo, fly, clip, at, promoStart, variant, slug, opening, series, text, champ });
     // (The plan beside the video: swap-logo.mjs uses it to put another logo version in.)
     fs.writeFileSync(`${out}.plan.json`, JSON.stringify({ slug, race: raceName, kind, format, tune, logo, length: plan.length, marks: plan.marks, resultsTall: plan.resultsTall, shots: plan.shots, sound: plan.sound, texts: plan.texts, captions: plan.captions, hooks: plan.hooks, lines: plan.lines, endBig: plan.endBig, dim: plan.dim, markers: plan.markers, bc: plan.bc, intro: plan.intro, results: plan.results }));
     // (A collision montage's shot: the hits in it, for its clicks; collisions.js.)
@@ -280,7 +284,7 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   const opt = (n, d) => (args.includes(`--${n}`) ? args[args.indexOf(`--${n}`) + 1] : d);
   const num = (n) => (opt(n, null) === null ? null : Number(opt(n)));
   await record({
-    slug, race, kind: opt('kind', 'production'), format: opt('format', 'wide'), tune: Number(opt('tune', 7)), logo: opt('logo', TEMPLATE.intro.logo),
+    champ: num('champ'), slug, race, kind: opt('kind', 'production'), format: opt('format', 'wide'), tune: Number(opt('tune', 7)), logo: opt('logo', TEMPLATE.intro.logo),
     variant: opt('variant', 'A'), opening: opt('opening', 'old'), text: { hook: opt('hook', null), curve: opt('curve', null), feature: opt('feature-line', null), line: opt('line', null), end: opt('end', null), dur: num('dur'), lead: num('lead') }, clip: opt('clip', null), at: num('at'), fly: num('fly'), promoStart: num('promos'),
     out: opt('out', path.join(process.cwd(), `${slug}-${opt('kind', 'production')}-${opt('format', 'wide')}.mp4`)), from: num('from'), to: num('to'), stills: opt('stills', null) === 'shots' ? 'shots' : opt('stills', null)?.split(',').map(Number) ?? null,
   });

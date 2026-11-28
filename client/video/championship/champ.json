@@ -1,0 +1,27 @@
+{
+  "_about": "The Marble Spins Championship video series (Moses, 28 Nov 2026): 10 races, one per series, 10 episodes stitched later into one YouTube video. The 20 racers are made-up usernames (racers.json), shown above their marbles; never claimed to be real people, no prize. Points per place 10-8-6-5-4-3-2-1 for places 1 to 8. Live tracks only. Looks only: the races are the game's own for each seed.",
+  "title": "MARBLE SPINS CHAMPIONSHIP",
+  "points": [10, 8, 6, 5, 4, 3, 2, 1],
+  "races": [
+    {
+      "n": 1, "slug": "pudong-marble-grand-prix", "name": "Pudong Marble Grand Prix", "series": "Grand Prix", "place": "Pudong, Shanghai",
+      "facts": ["A full loop with the lit skyline behind it", "A 200° banked sweep along the river", "Wildness: Extreme"]
+    },
+    {
+      "n": 2, "slug": "taroko-marble-gorge", "name": "Taroko Marble Gorge", "series": "Canyons", "place": "Taroko Gorge, Taiwan",
+      "facts": ["Through rock tunnels in marble walls", "The narrows: a split round a marble pillar", "Wildness: Wild"]
+    },
+    {
+      "n": 3, "slug": "flipper-spins", "name": "Flipper Spins", "series": "Pinball", "place": "A grand old theatre",
+      "facts": ["Round the magician's trunk at the hairpin", "Through the red stage curtain", "Wildness: Wild"]
+    },
+    {
+      "n": 4, "slug": "iguazu-devils-throat", "name": "Iguazú Devil's Throat", "series": "Rivers", "place": "Iguazú Falls, Argentina and Brazil",
+      "facts": ["Along the catwalks over the upper river", "Straight down the Devil's Throat falls", "Wildness: Extreme"]
+    },
+    {
+      "n": 5, "slug": "saint-tropez", "name": "Saint-Tropez", "series": "World Tour", "place": "The French Riviera",
+      "facts": ["A loop out over the cliff, the sea behind it", "Down the cliff and round the lighthouse", "Wildness: Extreme"]
+    }
+  ]
+}

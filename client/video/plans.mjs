@@ -1310,3 +1310,191 @@ export function thrill(info, race, { text = null } = {}) {
     },
   };
 }
+
+/**
+ * A pack breakout (Moses, 27 Nov 2026): only the clear opening, the pack racing shoulder to shoulder, from a camera
+ * close and a little above behind it from its back right (text.cam), following text.members (the 6–10 at the front),
+ * from race ms text.from to text.breakAt, where one marble breaks out of the pack; that breakout in slow motion
+ * (text.slowMs race ms at text.slowSpeed), a short freeze and the end card. Lines as the chase's: text.lines [{ at, top }].
+ */
+export function packBreak(info, race, { text = null } = {}) {
+  const p = builder('packBreak');
+  const A = text.from;
+  const B = text.breakAt;
+  const slowMs = text.slowMs ?? 1200;
+  const slow = text.slowSpeed ?? 0.5;
+  p.add({ type: 'group', members: text.members, shot: 'chase', from: A, dur: (B - A) / 1000, ...text.cam });
+  p.add({ type: 'group', members: text.members, shot: 'chase', from: B, dur: slowMs / 1000 / slow, speed: slow, ...text.cam });
+  const last = p.shots[p.shots.length - 1];
+  p.add({ ...last, from: B + slowMs, dur: text.freeze ?? 0.4, speed: 0 });
+  const raceOut = p.v;
+  p.add({ type: 'end', dur: text.endSeconds ?? 2.6, skip: text.endSkip ?? 1.5 });
+  const lines = text.lines ?? [];
+  return {
+    shots: p.shots, length: p.v, podium: null, textStyle: text.style ?? null, endLines: text.endLines, noMark: text.noMark,
+    texts: lines.map((l, k) => ({ at: l.at, dur: (k + 1 < lines.length ? lines[k + 1].at : raceOut) - l.at, top: l.top, cut: true })),
+    battle: { from: A, breakAt: B, pack: text.members },
+    marks: { goAt: 0, from: A, raceMs: B - A, members: text.members, near: 14 },
+    sound: {
+      goAt: null, beeps: false, music: [[0, p.v]], musicFadeOut: 0.6, lifts: [[(B - A) / 1000, raceOut]], ceremony: null, raceHits: true,
+      extra: [{ key: 'crowd', at: 0, dur: raceOut + 0.5, gain: 0.45, fadeOut: 0.8 }],
+    },
+  };
+}
+
+/**
+ * The Marble Spins Championship (Moses, 28 Nov 2026; championship/champ.json): one race of the series, from the
+ * marbles lining up at the gates to the finish in slow motion. The camera close behind the pack most of the way
+ * (5–8 marbles in view), up to two big moments slowed down where they happen (the race goes on from there, so
+ * the whole race is shown), text callouts only ("Overtake!", the leader at halfway, "Photo finish!"), the
+ * broadcast's tower and name tags, the racers' usernames. No hook, results board or end card: the episode's
+ * ceremony and standings follow it (championship/episode.mjs). `champ`: { n, total, names } from record.mjs.
+ */
+export function championship(info, race, { slug = null, champ = {} } = {}) {
+  const m = moments(info, race);
+  const A = analyse(race, info.arc, m.W + 8000);
+  const G = info.countdownMs;
+  const W = m.W;
+  const p = builder('broadcast');
+  const V = race.video ?? null;
+  const names = race.league?.names ?? [];
+  const who = (i) => names[race.entries[i]?.lane] ?? race.entries[i]?.marble?.name ?? '';
+  const frameAt = (t) => race.frames[Math.max(0, Math.min(race.frames.length - 1, Math.round(t / race.tickMs)))];
+  LEAD_GROUP = (t) => {
+    const f = frameAt(t);
+    const top = Math.max(...f.p.filter((x) => x < 1));
+    return f.p.map((x, i) => [x, i]).filter(([x]) => x < 1 && (top - x) * info.arc < 6).map(([, i]) => i);
+  };
+  RAMP_AT = null;
+  const bc = [];
+  const want = [];
+  // 1. The marbles lining up at the gates: the game's countdown camera from the start of the countdown.
+  const cdAt = p.add({ type: 'race', from: -G, dur: G / 1000 });
+  bc.push([cdAt + 0.2, null]);
+  want.push({ race: -G + 700, text: `Race ${champ.n ?? 1} of ${champ.total ?? 10} · ${info.name}`, dur: 2.6, fixed: true });
+  want.push({ race: -1700, text: 'Lining up at the gates', dur: 1.6, fixed: true });
+  const goAt = p.v;
+  // 2. The race: the pack most of the way, cut every 2–4 s; the forced curves and feature of a picked race.
+  const { shots } = directRace(A, { from: 0, to: W - 8000, packShare: 0.75 });
+  let raceShots = cutUp(shots, A, TEMPLATE.broadcast.cutSeconds);
+  if (V) raceShots = forceShots(raceShots, broadcastMoments(V, race, slug, W - 8000));
+  // The big moments slowed: the first big overtake in the top ten and the busiest contact bunch (1.6 s of race each, at 0.4).
+  const placeAt = (t) => frameAt(t).s ?? [];
+  const overs = [];
+  for (let t = 10000; t < W - 10000; t += 250) {
+    const a = placeAt(t);
+    const b = placeAt(t + 2000);
+    const mover = b.slice(0, 8).find((i, k) => a.indexOf(i) - k >= 2);
+    if (mover !== undefined && !overs.some((o) => Math.abs(o.t - t) < 6000)) overs.push({ t, i: mover, from: a.indexOf(mover) + 1, to: b.indexOf(mover) + 1 });
+  }
+  const bunch = busiest(A, 8000, W - 10000, 2000, overs.slice(0, 1).map((o) => [o.t - 2000, o.t + 4500]));
+  const SLOW = 0.4;
+  const slows = [];
+  if (overs[0]) slows.push({ a: overs[0].t + 300, b: overs[0].t + 1900, members: LEAD_GROUP(overs[0].t).length >= 3 ? null : null, i: overs[0].i });
+  if (bunch && bunch.s > 3) slows.push({ a: bunch.t + 200, b: bunch.t + 1800, members: bunch.members.slice(0, 8) });
+  slows.sort((x, y) => x.a - y.a);
+  const split = (list, at) => list.flatMap((s) => {
+    const e = s.from + s.dur * 1000;
+    if (at <= s.from + 1 || at >= e - 1) return [s];
+    return [{ ...s, dur: (at - s.from) / 1000 }, { ...s, from: at, dur: (e - at) / 1000, ...(s.shot && { shot: `${s.shot}-x${Math.round(at)}` }) }];
+  });
+  for (const w of slows) {
+    raceShots = split(split(raceShots, w.a), w.b);
+    // (The slowed piece: low behind the group, so the contact fills the picture.)
+    const mem = w.members ?? (A.find((x) => x.t >= w.a)?.members ?? []).slice(0, 8);
+    raceShots = raceShots.filter((s) => !(s.from >= w.a && s.from < w.b));
+    raceShots.push({ type: 'group', members: mem.length >= 2 ? mem : [w.i], shot: `slow-${w.a}`, from: w.a, dur: (w.b - w.a) / 1000 / SLOW, speed: SLOW, back: 6, up: 2.4, ahead: 5, fov: 58, slow: true });
+  }
+  raceShots.sort((x, y) => x.from - y.from);
+  // Close behind the pack (Moses: 5–8 marbles in view): the game's follow camera on one marble becomes a low chase
+  // behind its bunch, the leader's shots a chase behind the leading group when it has 3 or more; pieces under 1 s
+  // join the shot before.
+  const CL = { back: 7, up: 3, ahead: 6, fov: 56 };
+  const bunchOf = (i, t) => {
+    const f = frameAt(t);
+    const me = f.p[i] * info.arc;
+    return f.p.map((x, j) => [x * info.arc, j]).filter(([x]) => x < info.arc - 0.5 && x - me > -3 && x - me < 9).sort((a, b) => b[0] - a[0]).slice(0, 8).map(([, j]) => j);
+  };
+  raceShots = raceShots.map((s) => {
+    if (s.forced || s.slow || s.type === 'pan') return s;
+    if (s.type === 'race' && typeof s.follow === 'number') { const mem = bunchOf(s.follow, s.from); return mem.length >= 3 ? { type: 'group', members: mem, shot: `cl-${s.from}`, from: s.from, dur: s.dur, ...CL } : s; }
+    if (s.type === 'race') { const mem = LEAD_GROUP(s.from).slice(0, 8); return mem.length >= 3 ? { type: 'group', members: mem, shot: `ld-${s.from}`, from: s.from, dur: s.dur, ...CL } : s; }
+    if (s.type === 'group' && s.back === undefined) return { ...s, members: s.members.slice(0, 8), ...CL };
+    return s;
+  });
+  for (let k = 1; k < raceShots.length; k += 1) if (raceShots[k].dur < 1 && !raceShots[k].slow && !raceShots[k].forced && !raceShots[k - 1].slow && raceShots[k - 1].from + raceShots[k - 1].dur * 1000 >= raceShots[k].from - 1) { raceShots[k - 1].dur += raceShots[k].dur; raceShots.splice(k, 1); k -= 1; }
+  // (race ms → video s: the slowed pieces stretch what comes after them)
+  const extra = (t) => slows.reduce((s, w) => s + (t > w.a ? (Math.min(t, w.b) - w.a) * (1 / SLOW - 1) / 1000 : 0), 0);
+  const rv = (t) => goAt + t / 1000 + extra(t);
+  for (const s of raceShots) {
+    const at = p.add(s);
+    if (s.slow) { bc.push([at, at + s.dur, { label: TEMPLATE.broadcast.slowMotion }]); p.lift(at, at + s.dur); }
+  }
+  // 3. The last 8 s and the finish: the slow speed ramp (a picked race) or the leading group, then high behind the line.
+  p.add({ type: 'race', follow: 'leader', from: W - 8000, dur: 3 });
+  const RV = TEMPLATE.broadcast.slowRamp;
+  if (V && RV) {
+    const fin = [...race.results].filter((r) => Number.isFinite(r.finishTimeMs)).sort((a, b) => a.finishTimeMs - b.finishTimeMs);
+    const close4 = fin.filter((r, k) => k < 2 || r.finishTimeMs - fin[0].finishTimeMs <= 350).slice(0, 4).map((r) => r.index);
+    p.add({ type: 'race', follow: close4[close4.length - 1], from: W - 5000, dur: (5000 - RV.slowMs) / 1000 });
+    RAMP_AT = p.add({ type: 'group', members: close4, shot: 'ramp', from: W - RV.slowMs, dur: RV.slowSeconds, speed: (RV.slowMs - RV.lineLeadMs) / 1000 / RV.slowSeconds, ...RV.chase });
+    p.add({ type: 'group', members: close4, shot: 'ramp', from: W - RV.lineLeadMs, dur: RV.fastSeconds, speed: 1, ...RV.chase });
+    p.add({ type: 'race', follow: 'leader', from: W - RV.lineLeadMs + RV.fastSeconds * 1000, dur: 2.2 });
+  } else {
+    p.add({ type: 'group', members: LEAD_GROUP(W - 5000), shot: 'final', from: W - 5000, dur: 3.4, back: 9, up: 5, ahead: 8, fov: 42 });
+    p.add({ type: 'pan', from: W - 1600, dur: 3.4, eye: LINE_HIGH, follow: 'leader', fov: 36 });
+    p.add({ type: 'race', follow: 'leader', from: W + 1800, dur: 2.6 });
+  }
+  bc[0][1] = p.v;
+  p.lift(rv(W - 3000), p.v);
+  // The callouts: GO, the overtakes, the leader at halfway, lead changes, the final stretch.
+  want.push({ v: goAt + 0.3, text: 'And they\'re off!', dur: 1.8 });
+  for (const o of overs.slice(0, 3)) want.push({ v: rv(o.t + 900), text: `Overtake! ${who(o.i)} up to P${o.to}` });
+  const half = A.find((x) => x.t >= W / 2);
+  if (half) want.push({ v: rv(half.t), text: `Halfway · ${who(half.lead)} leads` });
+  for (const x of A.filter((y) => y.leadChange && y.t > 6000 && y.t < W - 9000).slice(0, 2)) want.push({ v: rv(x.t + 300), text: `${who(x.lead)} takes the lead!` });
+  want.push({ v: rv(W - 7800), text: 'Final stretch!' });
+  // 4. The finish in slow motion from beside the line, then the winner.
+  const s1 = p.add({ type: 'pan', from: W - 1400, speed: 0.25, dur: 7.2, eye: LINE_EYE, follow: 'leader', fov: 32 });
+  const s2 = p.add({ type: 'race', follow: 'leader', from: W - 1300, speed: 0.3, dur: 4.4 });
+  bc.push([s1, p.v, { label: TEMPLATE.broadcast.slowMotion }]);
+  if (m.close) want.push({ v: s1 + 3.9, text: 'Photo finish!', dur: 3, fixed: true, big: true });
+  want.push({ v: s2 + 0.6, text: `${who(info.podium[0].index)} wins by ${(info.margin / 1000).toFixed(3)} s!`, dur: 3.4, fixed: true });
+  p.lift(s1, p.v);
+  // Callouts one at a time, in order, never two at once; one whose moment has gone is left out.
+  const D = TEMPLATE.broadcast.captions.seconds;
+  const captions = [];
+  for (const w of want.map((x) => ({ ...x, v: x.v ?? cdAt + (x.race + G) / 1000 })).sort((a, b) => a.v - b.v)) {
+    const dur = w.dur ?? D;
+    let v = w.v;
+    const last = captions[captions.length - 1];
+    if (last && v < last.at + last.dur + 0.3) v = last.at + last.dur + 0.3;
+    if (v - w.v > (w.fixed ? 0.8 : 2.2)) continue;
+    if (v + dur > p.v) continue;
+    captions.push({ at: v, dur, key: w.big ? 'photoFinish' : 'c', text: w.text });
+  }
+  return {
+    shots: p.shots, texts: [], captions, podium: null, length: p.v, bc, city: '',
+    towerTitle: `RACE ${champ.n ?? 1} · ${(champ.series ?? '').toUpperCase()}`,
+    marks: { goAt, slows: slows.map((w) => `${Math.round(w.a)}–${Math.round(w.b)} ms`), overtakes: overs.map((o) => `${who(o.i)} P${o.from}→P${o.to} at ${o.t} ms`), rampAt: RAMP_AT },
+    sound: { goAt, beeps: true, music: [[cdAt, p.v]], lifts: p.lifts, crowd: [[goAt - 0.5, p.v]], extra: [] },
+  };
+}
+
+/**
+ * The championship's track intro (Moses, 28 Nov 2026: the interlude before each race, 15–30 s with the racers'
+ * card): the flyover with the track's name, place and series on the intro card, then its 2–3 facts one at a time.
+ */
+export function champFly(info, race, { fly = 12, champ = {} } = {}) {
+  const p = builder('broadcast');
+  const flyAt = p.add({ type: 'fly', dur: fly });
+  const intro = { at: flyAt + 0.3, dur: 3.2, title: (champ.name ?? info.name).toUpperCase(), sub: `${champ.place ?? ''} · ${champ.series ?? ''}`.replace(/^ · | · $/g, '') };
+  const facts = champ.facts ?? [];
+  const room = fly - 4.2;
+  const each = Math.min(3, room / Math.max(1, facts.length));
+  const captions = facts.map((t, k) => ({ at: 4 + k * each, dur: each - 0.35, key: 'c', text: t }));
+  return {
+    shots: p.shots, texts: [], captions, podium: null, length: p.v, bc: [], intro, city: '', marks: {},
+    sound: { goAt: null, music: [[0, p.v]], lifts: [], extra: [] },
+  };
+}
