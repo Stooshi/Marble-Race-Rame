@@ -116,6 +116,7 @@ module.exports = [
   require('./dino-dig'),
   require('./volcano-island'),
   require('./robot-factory'),
+  require('./sugar-rush'),
   // Rivers (the first five, the test batch).
   // (In this order so no two tracks in a row start the same way: a test.)
   require('./mississippi-steamer-run'),
