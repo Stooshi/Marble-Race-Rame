@@ -365,6 +365,17 @@
    "side": 1,
    "marbles": 4
   },
+  "bubble-pop": {
+   "name": "Bubble Pop",
+   "series": "Arcade",
+   "lighting": "synthwave",
+   "v": "3b12951c",
+   "bytes": 13646,
+   "bytes2x": 34056,
+   "t": 15159,
+   "side": 1,
+   "marbles": 8
+  },
   "budapest-danube-arches": {
    "name": "Budapest Danube Arches",
    "series": "Track and Field",
