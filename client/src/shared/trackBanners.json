@@ -46,6 +46,17 @@
    "side": 1,
    "marbles": 7
   },
+  "air-hockey-rink": {
+   "name": "Air Hockey Rink",
+   "series": "Arcade",
+   "lighting": "neon-night",
+   "v": "9c86e3be",
+   "bytes": 14866,
+   "bytes2x": 34950,
+   "t": 10239,
+   "side": -1,
+   "marbles": 8
+  },
   "alaska-tidewater-run": {
    "name": "Alaska Tidewater Run",
    "series": "Peaks",
@@ -321,6 +332,17 @@
    "side": 1,
    "marbles": 6
   },
+  "brick-breaker": {
+   "name": "Brick Breaker",
+   "series": "Arcade",
+   "lighting": "synthwave",
+   "v": "9c9e5e1b",
+   "bytes": 16618,
+   "bytes2x": 41700,
+   "t": 14492,
+   "side": 1,
+   "marbles": 8
+  },
   "brussels-night-mile": {
    "name": "Brussels Night Mile",
    "series": "Track and Field",
@@ -342,6 +364,17 @@
    "t": 11214,
    "side": 1,
    "marbles": 4
+  },
+  "bubble-pop": {
+   "name": "Bubble Pop",
+   "series": "Arcade",
+   "lighting": "synthwave",
+   "v": "3b12951c",
+   "bytes": 13646,
+   "bytes2x": 34056,
+   "t": 15159,
+   "side": 1,
+   "marbles": 8
   },
   "budapest-danube-arches": {
    "name": "Budapest Danube Arches",
@@ -486,6 +519,17 @@
    "side": 1,
    "marbles": 4
   },
+  "coin-pusher": {
+   "name": "Coin Pusher",
+   "series": "Arcade",
+   "lighting": "neon-night",
+   "v": "c57fa6fc",
+   "bytes": 11258,
+   "bytes2x": 26958,
+   "t": 14795,
+   "side": 1,
+   "marbles": 8
+  },
   "colca-spin": {
    "name": "Colca Spin",
    "series": "Canyons",
@@ -573,6 +617,17 @@
    "t": 10655,
    "side": 1,
    "marbles": 4
+  },
+  "crazy-golf": {
+   "name": "Crazy Golf",
+   "series": "Arcade",
+   "lighting": "synthwave",
+   "v": "f2470575",
+   "bytes": 19334,
+   "bytes2x": 47092,
+   "t": 20368,
+   "side": -1,
+   "marbles": 8
   },
   "crystal-grotto": {
    "name": "Crystal Grotto",
@@ -1519,17 +1574,6 @@
    "t": 9772,
    "side": 1,
    "marbles": 4
-  },
-  "mole-mayhem": {
-   "name": "Mole Mayhem",
-   "series": "Arcade",
-   "lighting": "neon-night",
-   "v": "fbe9d509",
-   "bytes": 11656,
-   "bytes2x": 29324,
-   "t": 15277,
-   "side": 1,
-   "marbles": 9
   },
   "mont-blanc-needle-ridge": {
    "name": "Mont Blanc Needle Ridge",

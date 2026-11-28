@@ -9,6 +9,11 @@
  *   bubble-cannon   Bubble Pop: a bubble cannon on its base, a ceiling of stacked coloured bubbles over it
  *   skee-lanes      Skee Hall: three ramped prize lanes with their target rings and a prize ticket stack
  *   pixel-keep      Pixel Dungeon: a pixel keep with its towers and lit windows, a pixel torch and a treasure chest
+ *   hockey-rink     Air Hockey Rink: a giant air-hockey table, its goals, two mallets and a puck, a scoreboard over it
+ *   coin-pusher     Coin Pusher: a coin-pusher machine, its shelves stacked with coins, the pusher and a prize on top
+ *   golf-windmill   Crazy Golf: a crazy-golf windmill with its sails, a flag in the hole and a ball on the green
+ *   prize-wheel     Prize Wheel: a giant prize wheel on its stand, its coloured segments, lights round the rim
+ *   fish-tank       Fishing Frenzy: a fishing-game tank, pixel fish leaping out of its water, a rod over it
  */
 import { box, merge } from './parts';
 
@@ -131,7 +136,73 @@ function pixelKeep() {
   return merge(p);
 }
 
+function hockeyRink() {
+  const p = [box(24, 4, 14, 0, 2, 0, '#14141e'), box(23, 0.3, 13, 0, 4.15, 0, '#e8f2fa')];
+  for (const [w, d, x, z] of [[24.4, 0.8, 0, 6.8], [24.4, 0.8, 0, -6.8], [0.8, 14.4, 12, 0], [0.8, 14.4, -12, 0]]) p.push(box(w, 1.2, d, x, 4.6, z, '#3fd8ff'));
+  for (const x of [-11.6, 11.6]) p.push(box(0.6, 0.9, 4, x, 4.5, 0, '#0a0a12')); // the goals
+  p.push(box(0.2, 0.32, 13, 0, 4.3, 0, '#ff3f3f'));
+  for (const [x, c] of [[-6, '#ff3fa8'], [6, '#7dff6a']]) { p.push(box(2.2, 0.8, 2.2, x, 4.7, 0, c)); p.push(box(1, 1.4, 1, x, 5.6, 0, c)); } // the mallets
+  p.push(box(1.4, 0.3, 1.4, 2, 4.45, 2, '#ffd23f')); // the puck
+  p.push(box(12, 5, 1, 0, 14, -7, '#0a0a12'), box(1, 8, 1, -5, 8, -7, '#2a2a34'), box(1, 8, 1, 5, 8, -7, '#2a2a34'));
+  for (let k = 0; k < 4; k += 1) p.push(box(1.6, 2.6, 0.4, -3.6 + k * 2.4 + (k > 1 ? 0.6 : 0), 14, -6.4, k < 2 ? '#ff3fa8' : '#7dff6a'));
+  return merge(p);
+}
+
+function coinPusher() {
+  const p = [box(16, 8, 12, 0, 4, 0, '#2a1a4a'), box(16.4, 16, 1, 0, 16, -5.5, '#14141e')];
+  for (let k = 0; k < 2; k += 1) {
+    p.push(box(14, 0.6, 7, 0, 8.3 + k * 4, 1 - k * 2, '#5a5a6a')); // the shelves
+    for (let c = 0; c < 9; c += 1) for (let r = 0; r < 3; r += 1) p.push(box(1.2, 0.3, 1.2, -5.6 + c * 1.4, 8.8 + k * 4 + (c + r) % 2 * 0.3, 3 - r * 1.6 - k * 2, '#ffd23f'));
+  }
+  p.push(box(14, 2.2, 1.6, 0, 9.7, -2.6, '#8a8a9a')); // the pusher
+  for (let k = 0; k < 12; k += 1) p.push(box(0.8, 0.8, 0.4, -6.2 + (k % 6) * 2.5, 22.5 + Math.floor(k / 6) * 1.6, -5, NEON[k % NEON.length])); // the lit sign
+  p.push(box(3, 3, 3, 0, 26.5, -4, '#ff3fa8'), box(3.4, 0.6, 3.4, 0, 28.3, -4, '#ffd23f')); // a prize box on top
+  return merge(p);
+}
+
+function golfWindmill() {
+  const p = [box(22, 0.6, 22, 0, 0.3, 0, '#2a8a3a')];
+  p.push(box(7, 12, 7, -4, 6.6, -3, '#c84a3a'), box(7.8, 1, 7.8, -4, 13, -3, '#8a2a1a'));
+  for (let k = 0; k < 3; k += 1) p.push(box(5 - k * 1.6, 1.2, 5 - k * 1.6, -4, 14 + k * 1.2, -3, '#8a2a1a')); // the roof
+  p.push(box(2, 3, 0.4, -4, 2.1, 0.6, '#1a0a04')); // the tunnel the ball goes through
+  for (const [w, h, y] of [[1.2, 14, 9], [14, 1.2, 9]]) p.push(box(w, h, 0.4, -4, y + 2, 0.8, '#f2f6fa')); // the sails
+  p.push(box(1.4, 1.4, 0.5, -4, 11, 1, '#2a2a34'));
+  p.push(box(1.6, 0.2, 1.6, 6, 0.7, 5, '#0a0a12'), box(0.2, 7, 0.2, 6, 4, 5, '#f2f6fa'), box(2.4, 1.6, 0.2, 7.3, 6.6, 5, '#ff3f3f')); // the hole and flag
+  p.push(box(0.8, 0.8, 0.8, 2, 1, 6, '#f2f6fa')); // the ball
+  for (const [x, z, c] of [[8, -6, '#ffd23f'], [-9, 7, '#3fd8ff']]) p.push(box(2, 1.2, 2, x, 1.2, z, c)); // bumpers
+  return merge(p);
+}
+
+function prizeWheel() {
+  const p = [box(10, 2, 6, 0, 1, 0, '#2a2a34'), box(1.6, 12, 1.6, -3, 7, 0, '#5a5a6a'), box(1.6, 12, 1.6, 3, 7, 0, '#5a5a6a')];
+  const N = 12; const R = 9; const cy = 15;
+  for (let k = 0; k < N; k += 1) {
+    const a = (k / N) * Math.PI * 2;
+    for (let r = 2; r < R; r += 1.6) p.push(box(1.6, 1.6, 1, Math.cos(a) * r, cy + Math.sin(a) * r, 1, NEON[k % NEON.length]));
+    p.push(box(1, 1, 1.2, Math.cos(a + 0.26) * (R + 0.6), cy + Math.sin(a + 0.26) * (R + 0.6), 1, '#ffd23f')); // the rim's lights
+  }
+  p.push(box(2.6, 2.6, 1.6, 0, cy, 1.4, '#f2f6fa'));
+  p.push(box(1.2, 2.4, 1.2, 0, cy + R + 2, 1.4, '#ff3f3f')); // the pointer
+  return merge(p);
+}
+
+function fishTank() {
+  const p = [box(20, 6, 12, 0, 3, 0, '#14141e'), box(19, 0.4, 11, 0, 5.8, 0, '#2a6aaa')];
+  for (let k = 0; k < 7; k += 1) p.push(box(1.6, 0.3, 1.6, -7.5 + k * 2.5, 6.1, (k % 2) * 3 - 1.5, '#9ae8ff')); // ripples
+  for (const [x, y, z, c] of [[-5, 9, 0, '#ff7a1a'], [2, 11, 2, '#ffd23f'], [6, 8, -2, '#ff3fa8']]) { // fish leaping
+    p.push(box(3, 1.4, 1, x, y, z, c), box(1, 1.8, 0.6, x - 1.8, y, z, c), box(0.4, 0.4, 0.3, x + 1, y + 0.3, z + 0.5, '#0a0a12'));
+  }
+  p.push(box(0.6, 16, 0.6, 11, 8, -5, '#c89a5a'), box(12, 0.5, 0.5, 5.5, 16, -5, '#c89a5a'), box(0.1, 6, 0.1, 0, 13, -5, '#f2f6fa'));
+  p.push(box(20.4, 1, 1, 0, 6.5, 6, '#ffd23f'), box(20.4, 1, 1, 0, 6.5, -6, '#ffd23f'));
+  return merge(p);
+}
+
 export const ARCADE2_LANDMARKS = {
+  'golf-windmill': { build: golfWindmill, radius: 12 },
+  'prize-wheel': { build: prizeWheel, radius: 11 },
+  'fish-tank': { build: fishTank, radius: 12 },
+  'hockey-rink': { build: hockeyRink, radius: 15 },
+  'coin-pusher': { build: coinPusher, radius: 11 },
   'brick-paddle': { build: brickPaddle, radius: 16 },
   'pixel-snake': { build: pixelSnake, radius: 14 },
   'dance-pad': { build: dancePad, radius: 15 },

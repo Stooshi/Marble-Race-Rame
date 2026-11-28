@@ -67,7 +67,7 @@ const PINBALL_ART = ['manor', 'castle', 'saucers', 'theatre', 'diner', 'clocks',
 // An arcade world: the arcade family, or a library test track built as one (series 'arcade').
 const isArcade = (spec) => spec.family === 'arcade' || (spec.family === 'test' && spec.series === 'arcade');
 // An arcade world's cabinet and side art (original art, one style per genre).
-const ARCADE_ART = ['maze', 'coin-op', 'space', 'side-scroller', 'fighter', 'highway', 'downtown', 'star-lanterns', 'light-stream', 'bricks', 'snake', 'rhythm', 'moles', 'bubbles', 'skee', 'dungeon'];
+const ARCADE_ART = ['maze', 'coin-op', 'space', 'side-scroller', 'fighter', 'highway', 'downtown', 'star-lanterns', 'light-stream', 'bricks', 'snake', 'rhythm', 'moles', 'bubbles', 'skee', 'dungeon', 'rink', 'coins', 'golf', 'wheel', 'fishing'];
 const ARCADE_BIOMES = ['circuit-board', 'blacklight-carpet'];
 const ARCADE_LIGHTINGS = ['neon-night', 'synthwave'];
 const MAX_COASTER_HEIGHT = 45; // metres: the tallest supports drawn
