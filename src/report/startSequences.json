@@ -182,6 +182,7 @@
 "rome-monte-mario-drop": {"family":"athletics","reach":0.364,"seq":["opening: clear-start","straight","sweep left","sweep right","straight","peg ×2","brake","drop"]},
 "roraima-cloud-falls": {"family":"peak","reach":0.29,"seq":["opening: pipe-drop","drop","half-pipe","straight","peg","slalom","peg"]},
 "rwenzori-moss-glaciers": {"family":"peak","reach":0.213,"seq":["opening: funnel-drop","drop","pileUp","slalom","straight","peg ×2","waterfall","straight","slalom"]},
+"safari-stampede": {"family":"pinball","reach":0.293,"seq":["opening: clear-start","straight","sweep right","sweep left","straight","swipe","slalom"]},
 "sahara-marble-grand-prix": {"family":"grand-prix","reach":0.202,"seq":["opening: staggered-drop","drop","pileUp","slalom","brake","S-bends right","slalom","peg"]},
 "saint-tropez": {"family":"world-tour","reach":0.217,"seq":["opening: staggered-drop","drop","pileUp","slalom","brake","sweep right","S-bends right","peg","slalom"]},
 "samaria-iron-gates": {"family":"canyon","reach":0.305,"seq":["opening: rolling-start","drop","slalom","sweep right","sweep left"]},

@@ -2037,6 +2037,17 @@
    "side": 1,
    "marbles": 5
   },
+  "safari-stampede": {
+   "name": "Safari Stampede",
+   "series": "Pinball",
+   "lighting": "parlour",
+   "v": "b04c750e",
+   "bytes": 10882,
+   "bytes2x": 26552,
+   "t": 15957,
+   "side": -1,
+   "marbles": 7
+  },
   "sahara-marble-grand-prix": {
    "name": "Sahara Marble Grand Prix",
    "series": "Grand Prix",
