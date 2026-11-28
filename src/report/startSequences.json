@@ -28,6 +28,7 @@
 "blyde-potholes-spiral": {"family":"canyon","reach":0.252,"seq":["opening: crest-start","drop","pileUp","slalom","climb","drop","straight","curtain","slalom","brake","spiral left"]},
 "bobsleigh-run": {"family":"classic","reach":0.291,"seq":["opening: rolling-start","drop","slalom","sweep left","straight","peg ×2","brake","drop","straight"]},
 "bonus-round": {"family":"block","reach":0.232,"seq":["opening: split-start","drop","pileUp","slalom","chutes","drop","slalom","straight","peg ×4","sweep right","boost"]},
+"brick-breaker": {"family":"arcade","reach":0.304,"seq":["opening: clear-start","straight","sweep left","sweep right","straight","peg","slalom"]},
 "brussels-night-mile": {"family":"athletics","reach":0.401,"seq":["opening: clear-start","straight","sweep right","sweep left","sweep left","peg ×2","brake"]},
 "bryce-hoodoo-run": {"family":"canyon","reach":0.246,"seq":["opening: chicane-start","drop","pileUp","slalom","S-bends right","peg ×2","sweep left"]},
 "budapest-danube-arches": {"family":"athletics","reach":0.367,"seq":["opening: clear-start","straight","sweep left","sweep right","sweep right","swipe","slalom"]},

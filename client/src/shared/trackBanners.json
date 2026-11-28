@@ -321,6 +321,17 @@
    "side": 1,
    "marbles": 6
   },
+  "brick-breaker": {
+   "name": "Brick Breaker",
+   "series": "Arcade",
+   "lighting": "synthwave",
+   "v": "9c9e5e1b",
+   "bytes": 16618,
+   "bytes2x": 41700,
+   "t": 14492,
+   "side": 1,
+   "marbles": 8
+  },
   "brussels-night-mile": {
    "name": "Brussels Night Mile",
    "series": "Track and Field",
