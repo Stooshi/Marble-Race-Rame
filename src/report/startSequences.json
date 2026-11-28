@@ -3,6 +3,7 @@
 "abraham-lake-frost": {"family":"block-2","reach":0.317,"seq":["opening: pipe-drop","drop","half-pipe","straight","peg","drop","straight","slalom"]},
 "accra-december-beats": {"family":"athletics","reach":0.24,"seq":["opening: banked-turn","drop","pileUp","slalom","sweep left","straight","peg","slalom"]},
 "aconcagua-penitentes": {"family":"peak","reach":0.235,"seq":["opening: banked-turn","drop","pileUp","slalom","sweep left","straight","steps","moguls"]},
+"air-hockey-rink": {"family":"arcade","reach":0.297,"seq":["opening: clear-start","straight","sweep right","sweep left","climb","straight","swipe"]},
 "alaska-tidewater-run": {"family":"peak","reach":0.228,"seq":["opening: classic","drop","pileUp","slalom","sweep right","peg","straight","peg","jump"]},
 "amalfi-coast-run": {"family":"coaster","reach":0.281,"seq":["opening: rumble-start","drop","slalom","moguls","sweep right","straight","drop","straight","peg ×3"]},
 "amazon-meeting-spins": {"family":"river","reach":0.237,"seq":["opening: funnel-drop","drop","pileUp","slalom","straight","peg ×2","slalom","moguls","sweep left"]},

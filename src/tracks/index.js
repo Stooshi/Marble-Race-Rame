@@ -125,6 +125,7 @@ module.exports = [
   require('./pixel-dungeon'),
   require('./skee-hall'),
   require('./brick-breaker'),
+  require('./air-hockey-rink'),
   // Rivers (the first five, the test batch).
   // (In this order so no two tracks in a row start the same way: a test.)
   require('./mississippi-steamer-run'),

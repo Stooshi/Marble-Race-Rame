@@ -46,6 +46,17 @@
    "side": 1,
    "marbles": 7
   },
+  "air-hockey-rink": {
+   "name": "Air Hockey Rink",
+   "series": "Arcade",
+   "lighting": "neon-night",
+   "v": "9c86e3be",
+   "bytes": 14866,
+   "bytes2x": 34950,
+   "t": 10239,
+   "side": -1,
+   "marbles": 8
+  },
   "alaska-tidewater-run": {
    "name": "Alaska Tidewater Run",
    "series": "Peaks",

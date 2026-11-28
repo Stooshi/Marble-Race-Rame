@@ -50,6 +50,8 @@ export const ART = {
   bubbles: { sky: ['#0a1a3a', '#2a6aaa'], ink: '#04081a', glow: '#9ae8ff', accent: '#ff4fd8' },
   skee: { sky: ['#2a0a0a', '#7a2a1a'], ink: '#120604', glow: '#ffd23f', accent: '#3fd8ff' },
   dungeon: { sky: ['#06060e', '#1a1a3a'], ink: '#04040a', glow: '#ff7a1a', accent: '#a86aff' },
+  rink: { sky: ['#0a1a2a', '#3a6a9a'], ink: '#061018', glow: '#3fd8ff', accent: '#ff3fa8' },
+  coins: { sky: ['#1a0a2a', '#4a2a6a'], ink: '#0a0614', glow: '#ffd23f', accent: '#7dff6a' },
 };
 
 // The picture: one small canvas, drawn in pixels. Regions (x, y, w, h) in its pixels.
@@ -209,6 +211,22 @@ function paintSide(g, art, c) {
     g.fillStyle = '#ffd23f'; for (const [x, y] of [[26, 40], [96, 40], [44, 54], [80, 54]]) g.fillRect(x, y, 5, 7);
     g.fillStyle = c.glow; g.fillRect(46, 70, 4, 8); g.fillRect(78, 70, 4, 8);
     g.fillStyle = c.accent; for (let k = 0; k < 14; k += 1) g.fillRect((k * 37) % w, (k * 13) % 20, 1, 1);
+  } else if (art === 'rink') {
+    // An air-hockey table from above: its centre line, goals, two mallets and a puck mid-flight.
+    g.fillStyle = '#e8f2fa'; g.fillRect(10, 20, 108, 70);
+    g.fillStyle = c.glow; g.fillRect(10, 20, 108, 3); g.fillRect(10, 87, 108, 3); g.fillRect(10, 20, 3, 70); g.fillRect(115, 20, 3, 70);
+    g.fillStyle = '#ff3f3f'; g.fillRect(63, 23, 2, 64);
+    g.fillStyle = c.ink; g.fillRect(10, 45, 3, 20); g.fillRect(115, 45, 3, 20);
+    g.fillStyle = c.accent; g.fillRect(28, 50, 10, 10); g.fillStyle = '#7dff6a'; g.fillRect(90, 50, 10, 10);
+    g.fillStyle = '#ffd23f'; g.fillRect(70, 36, 6, 6);
+  } else if (art === 'coins') {
+    // Shelves of gold coins and the pusher sliding across them.
+    for (let r = 0; r < 3; r += 1) {
+      g.fillStyle = '#5a5a6a'; g.fillRect(8, 30 + r * 26, 112, 4);
+      g.fillStyle = c.glow; for (let k = 0; k < 12; k += 1) g.fillRect(10 + k * 9 + (r % 2) * 4, 24 + r * 26, 7, 5);
+    }
+    g.fillStyle = '#8a8a9a'; g.fillRect(8, 8, 112, 8);
+    g.fillStyle = c.accent; for (let k = 0; k < 6; k += 1) g.fillRect(14 + k * 18, 96, 6, 6);
   } else {
     g.fillStyle = c.glow;
     for (let k = 0; k < 7; k += 1) g.fillRect(6 + k * 17, 40 + ((k * 13) % 30), 12, h);
