@@ -1,0 +1,226 @@
+{
+ "article": "sand-marble-track",
+ "pictures": [
+  {
+   "name": "header",
+   "alt": "Illustration seen from above: a marble track dug into sand, from a raised start at the top through banked bends and a splitter round a mound to a finish pit, with marbles racing down it.",
+   "caption": "A marble track in the sand, from the start to the finish pit. Illustration.",
+   "files": [
+    {
+     "file": "header-1600.webp",
+     "width": 1600,
+     "height": 900,
+     "bytes": 30858
+    },
+    {
+     "file": "header-800.webp",
+     "width": 800,
+     "height": 450,
+     "bytes": 5818
+    }
+   ]
+  },
+  {
+   "name": "what-you-need",
+   "alt": "Illustration of what you need: a spade, a bucket, a watering can, a flat piece of wood or a ruler, and a few marbles.",
+   "caption": "A spade, a bucket, a watering can, something flat and a few marbles. Illustration.",
+   "files": [
+    {
+     "file": "what-you-need-1600.webp",
+     "width": 1600,
+     "height": 820,
+     "bytes": 26430
+    },
+    {
+     "file": "what-you-need-800.webp",
+     "width": 800,
+     "height": 410,
+     "bytes": 13098
+    }
+   ]
+  },
+  {
+   "name": "pick-the-spot",
+   "alt": "Illustration of a long sandy slope seen from the side, with an arrow down it: damp sand holds its shape best, and the longer the slope, the more fun.",
+   "caption": "Any sandy slope will do; damp sand holds its shape best. Illustration.",
+   "files": [
+    {
+     "file": "pick-the-spot-1600.webp",
+     "width": 1600,
+     "height": 820,
+     "bytes": 29678
+    },
+    {
+     "file": "pick-the-spot-800.webp",
+     "width": 800,
+     "height": 410,
+     "bytes": 14666
+    }
+   ]
+  },
+  {
+   "name": "dig",
+   "alt": "Diagram of the channel cut across: a rounded groove about two marbles wide with a raised wall of sand on each side, two marbles side by side in it, and a spade piling sand along the edges.",
+   "caption": "The channel: about two marbles wide, with raised walls on both sides. Diagram.",
+   "files": [
+    {
+     "file": "dig-1600.webp",
+     "width": 1600,
+     "height": 860,
+     "bytes": 26792
+    },
+    {
+     "file": "dig-800.webp",
+     "width": 800,
+     "height": 430,
+     "bytes": 12922
+    }
+   ]
+  },
+  {
+   "name": "water",
+   "alt": "Illustration of a watering can pouring water over the channel and its walls so the sand sticks together.",
+   "caption": "Wet the floor and the walls, then wait a minute. Illustration.",
+   "files": [
+    {
+     "file": "water-1600.webp",
+     "width": 1600,
+     "height": 860,
+     "bytes": 22848
+    },
+    {
+     "file": "water-800.webp",
+     "width": 800,
+     "height": 430,
+     "bytes": 11026
+    }
+   ]
+  },
+  {
+   "name": "smooth",
+   "alt": "Diagram comparing two channels cut across: on the left a bumpy floor, marked wrong; on the right a smooth floor patted flat with a piece of wood, marked right.",
+   "caption": "Pat the floor and walls smooth, so the marbles roll and don't jump out. Diagram.",
+   "files": [
+    {
+     "file": "smooth-1600.webp",
+     "width": 1600,
+     "height": 860,
+     "bytes": 17438
+    },
+    {
+     "file": "smooth-800.webp",
+     "width": 800,
+     "height": 430,
+     "bytes": 8726
+    }
+   ]
+  },
+  {
+   "name": "start",
+   "alt": "Illustration of the start seen from the side: a raised sand platform at the top of the slope with four marbles side by side behind a stick, and a straight run-in down from it.",
+   "caption": "A raised start with a straight run-in: lift the stick and every marble gets a fair start. Illustration.",
+   "files": [
+    {
+     "file": "start-1600.webp",
+     "width": 1600,
+     "height": 860,
+     "bytes": 25536
+    },
+    {
+     "file": "start-800.webp",
+     "width": 800,
+     "height": 430,
+     "bytes": 12374
+    }
+   ]
+  },
+  {
+   "name": "banked-bend",
+   "alt": "Diagram of a banked bend: seen from above, the channel turns with its outside wall built higher, and a marble follows the bend; cut across, the outside wall stands higher than the inside one.",
+   "caption": "Build the outside wall of each bend higher so the marbles stay in. Diagram.",
+   "files": [
+    {
+     "file": "banked-bend-1600.webp",
+     "width": 1600,
+     "height": 900,
+     "bytes": 21818
+    },
+    {
+     "file": "banked-bend-800.webp",
+     "width": 800,
+     "height": 450,
+     "bytes": 10444
+    }
+   ]
+  },
+  {
+   "name": "splitter",
+   "alt": "Diagram seen from above: the channel splits in two round a mound of sand and the two channels join again after it, with marbles taking each way.",
+   "caption": "A splitter: two channels round a mound, the same length and slope, or one side always wins. Diagram.",
+   "files": [
+    {
+     "file": "splitter-1600.webp",
+     "width": 1600,
+     "height": 900,
+     "bytes": 20354
+    },
+    {
+     "file": "splitter-800.webp",
+     "width": 800,
+     "height": 450,
+     "bytes": 9680
+    }
+   ]
+  },
+  {
+   "name": "finish",
+   "alt": "Illustration seen from above: the channel ends in a round finish pit dug in the sand, with a dashed finish line and a chequered flag before it.",
+   "caption": "A finish line and a pit that catches the marbles. Illustration.",
+   "files": [
+    {
+     "file": "finish-1600.webp",
+     "width": 1600,
+     "height": 860,
+     "bytes": 14500
+    },
+    {
+     "file": "finish-800.webp",
+     "width": 800,
+     "height": 430,
+     "bytes": 6978
+    }
+   ]
+  },
+  {
+   "name": "race",
+   "alt": "Illustration seen from above: four marbles racing down a winding sand track, numbered by their places, with the rules beside it: everyone picks a marble, all start together, first in the pit wins.",
+   "caption": "Pick a marble, start together, first in the pit wins. Then build it longer. Illustration.",
+   "files": [
+    {
+     "file": "race-1600.webp",
+     "width": 1600,
+     "height": 900,
+     "bytes": 24062
+    },
+    {
+     "file": "race-800.webp",
+     "width": 800,
+     "height": 450,
+     "bytes": 11632
+    }
+   ]
+  },
+  {
+   "name": "share",
+   "alt": "Build a marble track in the sand. Illustrated marbles: a cat's eye, a corkscrew, an oxblood and a clearie.",
+   "files": [
+    {
+     "file": "share-1200x630.jpg",
+     "width": 1200,
+     "height": 630,
+     "bytes": 49203
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,235 @@
+import { nameLooks } from '../shared/marbles';
+import { currentOrigin } from '../utils/origin';
+import { deviceHint, wantsDeviceHint } from './deviceHint';
+
+export const API_URL = (import.meta.env.VITE_API_URL || 'http://localhost:5000').replace(/\/$/, '');
+
+const TOKEN_KEY = 'marble-race-token';
+
+export function getStoredToken() {
+  try {
+    return localStorage.getItem(TOKEN_KEY);
+  } catch {
+    return null;
+  }
+}
+
+export function storeToken(token) {
+  try {
+    if (token) localStorage.setItem(TOKEN_KEY, token);
+    else localStorage.removeItem(TOKEN_KEY);
+  } catch {
+    /* storage unavailable (private mode) — session-only login */
+  }
+}
+
+export class ApiError extends Error {
+  constructor(status, message, details) {
+    super(message);
+    this.status = status;
+    this.details = details;
+  }
+}
+
+/** Thin fetch wrapper: JSON in/out, bearer token, readable errors. */
+export async function request(path, { method = 'GET', body, token = getStoredToken(), signal } = {}) {
+  let res;
+  try {
+    res = await fetch(`${API_URL}/api${path}`, {
+      method,
+      signal,
+      headers: {
+        ...(body !== undefined && { 'Content-Type': 'application/json' }),
+        ...(token && { Authorization: `Bearer ${token}` }),
+        // (The system's version and a touch Mac, coarse: logins and the app opening only. ./deviceHint.js)
+        ...(wantsDeviceHint(path) && deviceHint() && { 'X-Client-Device': deviceHint() }),
+      },
+      body: body !== undefined ? JSON.stringify(body) : undefined,
+    });
+  } catch (err) {
+    if (err.name === 'AbortError') throw err;
+    throw new ApiError(0, `Can't reach the game server at ${API_URL}. Is the backend running?`);
+  }
+
+  if (res.status === 204) return null;
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    // (a machine-readable `code` is for the page, never shown in the message)
+    const details = data.details ? Object.entries(data.details).filter(([k]) => k !== 'code' && k !== 'field').map(([k, v]) => `${k} ${v}`).join(', ') : '';
+    throw new ApiError(res.status, details ? `${data.error}: ${details}` : data.error || res.statusText, data.details);
+  }
+  return data;
+}
+
+/** Endpoint helpers, grouped by resource. */
+export const api = {
+  register: (body) => request('/auth/register', { method: 'POST', body: { ...body, ...(currentOrigin() && { origin: currentOrigin() }) }, token: null }),
+  login: (body) => request('/auth/login', { method: 'POST', body, token: null }),
+  me: () => request('/auth/me'),
+  confirmEmail: (token) => request('/auth/confirm-email', { method: 'POST', body: { token }, token: null }),
+  resendConfirmEmail: (lang) => request('/auth/confirm-email/resend', { method: 'POST', body: { lang } }),
+  /** A guest account; `source`: what they tapped (quick | solo | friends | room), for the Dashboard's funnel. */
+  // (app: our Android app, for the kind of browser at the tap, 9 Nov 2026.)
+  // (`origin`: where the visitor came from, kept in memory since they arrived: src/utils/origin.js.)
+  guest: (source, { app = false } = {}) => request('/auth/guest', { method: 'POST', token: null, body: { ...(source && { source }), ...(app && { app: true }), ...(currentOrigin() && { origin: currentOrigin() }) } }),
+  /** The player saw GO (kept once, the first time; the Dashboard's funnel). */
+  firstStep: (step, extra = {}) => request('/users/me/first-step', { method: 'POST', body: { step, ...extra } }),
+  claim: (body) => request('/auth/claim', { method: 'POST', body }),
+
+  // The Help Centre's contact form: a form token first, then the message (logged in or not).
+  supportForm: () => request('/support/form', { token: null }),
+  sendSupport: (body) => request('/support', { method: 'POST', body }),
+
+  user: (id) => request(`/users/${id}`),
+  myProfile: () => request('/users/me'),
+  cookieConsent: (body) => request('/users/me/cookie-consent', { method: 'POST', body }),
+  userRaces: (id, limit = 10) => request(`/users/${id}/races?limit=${limit}`),
+  trackRecords: (id) => request(`/users/${id}/track-records`),
+  leaderboard: (sort = 'wins', limit = 10) => request(`/users/leaderboard?sort=${sort}&limit=${limit}`),
+
+  marbles: () => request('/marbles'),
+  myMarbles: () => request('/users/me/marbles'),
+  refundNoteSeen: () => request('/users/me/refund-note/seen', { method: 'POST' }),
+  purchaseMarble: (id) => request(`/marbles/${id}/purchase`, { method: 'POST' }),
+
+  // The marble collection (Schoolyard Classics): items, bags, the Marble Bag, buying, the Shooter, certificates.
+  collection: () => request('/collection'),
+  bag: () => request('/collection/bag'),
+  buyItem: (slug) => request(`/collection/${slug}/buy`, { method: 'POST' }),
+  bags: (shade = 'classic') => request(`/collection/bags?shade=${shade}`),
+  buyBag: (bag, shade = 'classic') => request(`/collection/bags/${bag}/buy`, { method: 'POST', body: { shade } }),
+  setShooter: (choice) => request('/collection/shooter', { method: 'PUT', body: choice }),
+  certificate: (code) => request(`/collection/certificate/${code}`),
+
+  scoreboard: (board = 'season') => request(`/scoreboard?board=${board}`),
+  // The coin economy: its numbers, your day (races, daily goal, streak), one race's coins, your coin history.
+  economy: () => request('/economy'),
+  economyMe: () => request('/economy/me'),
+  raceCoins: (raceId) => request(`/economy/races/${raceId}`),
+  coinLedger: () => request('/economy/ledger'),
+  // Coin packs for real money: a web checkout, an app store receipt (site/payments picks the provider).
+  paymentOptions: () => request('/payments'),
+  checkout: (body) => request('/payments/checkout', { method: 'POST', body }),
+  purchaseNews: (body) => request('/users/me/purchase-news', { method: 'POST', body }),
+  redeemReceipt: (body) => request('/payments/receipt', { method: 'POST', body }),
+  // Google Play (the Android app): the player's account id to buy with, then the purchase to check.
+  googleAccount: () => request('/payments/google/account'),
+  googleVerify: (body) => request('/payments/google/verify', { method: 'POST', body }),
+  // The App Store (the iPhone app): the player's account token to buy with, then the signed transaction to check.
+  appleAccount: () => request('/payments/apple/account'),
+  appleVerify: (body) => request('/payments/apple/verify', { method: 'POST', body }),
+  myOrders: () => request('/payments/mine'),
+  // A receipt (K-…) or credit note (KR-…) of the player's own (src/billing on the server).
+  myDocument: (number) => request(`/payments/documents/${encodeURIComponent(number)}`),
+  /** The same receipt or credit note as an A4 PDF (a Blob). */
+  myDocumentPdf: async (number) => {
+    const token = getStoredToken();
+    const res = await fetch(`${API_URL}/api/payments/documents/${encodeURIComponent(number)}/pdf`, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
+    if (!res.ok) throw new ApiError(res.status, (await res.json().catch(() => ({}))).error || res.statusText);
+    return res.blob();
+  },
+  // "Report this name" (src/names on the server): where = 'scoreboard' | 'results' | 'room'.
+  reportName: (userId, where, name) => request(`/users/${userId}/report-name`, { method: 'POST', body: { where, ...(name && { name }) } }),
+  // Push notifications in the apps (src/push on the server).
+  pushSettings: () => request('/push/settings'),
+  setPushSettings: (body) => request('/push/settings', { method: 'PUT', body }),
+  pushRegister: (body) => request('/push/devices', { method: 'POST', body }),
+  pushForget: (token) => request('/push/devices/forget', { method: 'POST', body: { token } }),
+  roomInvitable: (code) => request(`/rooms/${encodeURIComponent(code)}/invitable`),
+  roomInvite: (code, userId) => request(`/rooms/${encodeURIComponent(code)}/invite`, { method: 'POST', body: { user_id: userId } }),
+  // Gift codes (src/giftCodes on the server; off until shared/giftCodes.json is switched on).
+  redeemCode: (code) => request('/gift-codes/redeem', { method: 'POST', body: { code } }),
+  myGiftCodes: () => request('/gift-codes/mine'),
+  withdrawOrder: (orderNo) => request(`/payments/orders/${encodeURIComponent(orderNo)}/withdraw`, { method: 'POST', body: { confirm: true } }),
+  // Seasons and the season pass (real money only: Stripe on the web, Google Play in the Android app).
+  seasons: () => request('/seasons'),
+  season: (key) => request(`/seasons/${encodeURIComponent(key)}`),
+  passCheckout: (body) => request('/payments/pass/checkout', { method: 'POST', body }),
+  // Track packs (src/routes/packs.js; sold only while TRACK_PACKS is on for the player)
+  packs: () => request('/packs'),
+  pack: (key) => request(`/packs/${encodeURIComponent(key)}`),
+  packCheckout: (body) => request('/payments/pack/checkout', { method: 'POST', body }),
+  packCoinHold: (key, body = {}) => request(`/packs/${encodeURIComponent(key)}/coin-hold`, { method: 'POST', body }),
+  packCoinRelease: (id) => request(`/packs/coin-holds/${encodeURIComponent(id)}`, { method: 'DELETE' }),
+  // "Remind me when sales open" (before the pass's sale): a player { email_too }, a visitor { email, consent }.
+  passRemind: (key, body) => request(`/seasons/${encodeURIComponent(key)}/remind`, { method: 'POST', body }),
+  passRemindCancel: (key) => request(`/seasons/${encodeURIComponent(key)}/remind`, { method: 'DELETE' }),
+  // The links in the reminder emails, and closing the in-game "on sale now" notice.
+  passReminderConfirm: (token) => request('/seasons/reminders/confirm', { method: 'POST', body: { token }, token: null }),
+  passReminderCancel: (token) => request('/seasons/reminders/cancel', { method: 'POST', body: { token }, token: null }),
+  passReminderSeen: (key) => request(`/seasons/${encodeURIComponent(key)}/remind/seen`, { method: 'POST', body: {} }),
+  // Forgot your password: on only when the server can send email.
+  passwordResetEnabled: () => request('/auth/password-reset', { token: null }),
+  forgotPassword: (email) => request('/auth/forgot', { method: 'POST', body: { email }, token: null }),
+  resetPassword: (token, password) => request('/auth/reset', { method: 'POST', body: { token, password }, token: null }),
+  // Account settings: news by email, the data download, deleting the account.
+  emailStatus: () => request('/users/me/email'),
+  // The country a player races for (src/country on the server).
+  myCountry: () => request('/users/me/country'),
+  setCountry: (country) => request('/users/me/country', { method: 'PUT', body: { country } }),
+  countrySuggestion: () => request('/users/country-suggestion', { token: null }),
+  countryRecords: (track) => request(`/scoreboard/countries?track=${encodeURIComponent(track)}`, { token: null }),
+  countryRecordsOf: (code) => request(`/scoreboard/countries/${encodeURIComponent(code)}`, { token: null }),
+  setNews: (on) => request('/users/me', { method: 'PATCH', body: { marketing_opt_in: on } }),
+  unsubscribe: (u, t) => request('/users/unsubscribe', { method: 'POST', body: { u, t }, token: null }),
+  deleteAccount: (body) => request('/users/me', { method: 'DELETE', body }),
+  async exportData() {
+    const res = await fetch(`${API_URL}/api/users/me/export`, { headers: { Authorization: `Bearer ${getStoredToken()}` } });
+    if (!res.ok) throw new ApiError(res.status, (await res.json().catch(() => ({}))).error || 'Download failed');
+    return res.blob();
+  },
+  order: (orderNo) => request(`/payments/orders/${encodeURIComponent(orderNo)}`),
+
+  tracks: () => request('/tracks'),
+  popularTracks: () => request('/tracks/popular'), // (the most raced of the last 7 days: "Other players liked")
+  track: (idOrSlug) => request(`/tracks/${idOrSlug}`),
+
+  showcase: () => request('/races/showcase'),
+  races: (status, limit = 20) => request(`/races?${status ? `status=${status}&` : ''}limit=${limit}`),
+  race: (id) => request(`/races/${id}`),
+  createRace: (body) => request('/races', { method: 'POST', body }),
+  joinRace: (id, marbleId) => request(`/races/${id}/join`, { method: 'POST', body: { marble_id: marbleId } }),
+  leaveRace: (id) => request(`/races/${id}/join`, { method: 'DELETE' }),
+  startRace: (id) => request(`/races/${id}/start`, { method: 'POST' }),
+  cancelRace: (id) => request(`/races/${id}/cancel`, { method: 'POST' }),
+  raceReadiness: (id, body) => request(`/races/${id}/readiness`, { method: 'POST', body }),
+  nextRace: (id, marbleId) => request(`/races/${id}/next`, { method: 'POST', body: marbleId ? { marble_id: marbleId } : {} }),
+  results: (id) => request(`/races/${id}/results`),
+  replay: (id) => request(`/races/${id}/replay`).then(nameLooks), // marbles named after the looks they wear
+  // Friend rooms: a private race with friends, joined by a short code (marblespins.com/r/CODE).
+  createRoom: (trackId, isPublic = false) => request('/rooms', { method: 'POST', body: { ...(trackId && { track_id: trackId }), public: Boolean(isPublic) } }),
+  roomVisibility: (code, isPublic) => request(`/rooms/${encodeURIComponent(code)}/visibility`, { method: 'POST', body: { public: Boolean(isPublic) } }),
+  publicRooms: () => request('/rooms/public'),
+  quickRace: () => request('/rooms/quick', { method: 'POST' }),
+  room: (code) => request(`/rooms/${encodeURIComponent(code)}`),
+  joinRoom: (code) => request(`/rooms/${encodeURIComponent(code)}/join`, { method: 'POST' }),
+  leaveRoom: (code) => request(`/rooms/${encodeURIComponent(code)}/leave`, { method: 'POST' }),
+  roomTrack: (code, trackId) => request(`/rooms/${encodeURIComponent(code)}/track`, { method: 'POST', body: trackId ? { track_id: trackId } : { random: true } }),
+  roomRemove: (code, userId) => request(`/rooms/${encodeURIComponent(code)}/remove`, { method: 'POST', body: { user_id: userId } }),
+  roomStart: (code) => request(`/rooms/${encodeURIComponent(code)}/start`, { method: 'POST' }),
+  // Quick race, the only real player in it: start at once (the computer players fill the rest).
+  roomStartNow: (code) => request(`/rooms/${encodeURIComponent(code)}/start-now`, { method: 'POST' }),
+  // The host's start timer: 30, 60 or 120 seconds; the server starts the race then (POST again: a new time).
+  roomStartIn: (code, seconds) => request(`/rooms/${encodeURIComponent(code)}/start-in`, { method: 'POST', body: { seconds } }),
+  roomStartInCancel: (code) => request(`/rooms/${encodeURIComponent(code)}/start-in/cancel`, { method: 'POST' }),
+  roomClose: (code) => request(`/rooms/${encodeURIComponent(code)}/close`, { method: 'POST' }),
+  // Leagues (behind the server's LEAGUES switch: leaguesStatus says whether they're open to this player).
+  leaguesStatus: () => request('/leagues/status'),
+  myLeagues: () => request('/leagues/mine'),
+  createLeague: (body) => request('/leagues', { method: 'POST', body }),
+  league: (code) => request(`/leagues/${encodeURIComponent(code)}`),
+  renameLeague: (code, name) => request(`/leagues/${encodeURIComponent(code)}`, { method: 'PATCH', body: { name } }),
+  joinLeague: (code) => request(`/leagues/${encodeURIComponent(code)}/join`, { method: 'POST' }),
+  leaveLeague: (code) => request(`/leagues/${encodeURIComponent(code)}/join`, { method: 'DELETE' }),
+  leagueAdd: (code, username) => request(`/leagues/${encodeURIComponent(code)}/members`, { method: 'POST', body: { username } }),
+  leagueRemove: (code, userId) => request(`/leagues/${encodeURIComponent(code)}/members/${encodeURIComponent(userId)}`, { method: 'DELETE' }),
+  leagueRace: (code, trackId) => request(`/leagues/${encodeURIComponent(code)}/race`, { method: 'POST', body: { track_id: trackId } }),
+  leagueAgain: (code) => request(`/leagues/${encodeURIComponent(code)}/again`, { method: 'POST' }),
+  // League Night: the creator sets it ({ starts_at ISO, races 3-5 }) or calls it off.
+  leagueNight: (code, startsAt, races) => request(`/leagues/${encodeURIComponent(code)}/night`, { method: 'POST', body: { starts_at: startsAt, races } }),
+  leagueNightNow: (code, races) => request(`/leagues/${encodeURIComponent(code)}/night`, { method: 'POST', body: { now: true, races } }),
+  leagueNightOff: (code) => request(`/leagues/${encodeURIComponent(code)}/night`, { method: 'DELETE' }),
+  setName: (name) => request('/users/me', { method: 'PATCH', body: { display_name: name } }),
+  saveSettings: (settings) => request('/users/me/settings', { method: 'PUT', body: settings }),
+  physicsPreview: (track, seed, level) => request(`/physics/preview?track=${encodeURIComponent(track)}&seed=${seed}&level=${level}`),
+};

@@ -1,0 +1,328 @@
+/**
+ * Hills shaped around a track: the land follows the track's height, stays
+ * just under the road where the track runs, rises in gentle banks beside it,
+ * rolls into hills further out and falls into the water at the edges.
+ * Pure maths for the heights (unit tested); one mesh to draw them.
+ */
+import { BufferGeometry, Color, Float32BufferAttribute } from 'three';
+import { TRACK_STYLE } from '../trackModel';
+import { smoothstep } from './parts';
+
+/** Smooth bumpy noise from a few sine waves (cheap, seed-free, no visible grid). */
+function rolling(x, z) {
+  return (
+    Math.sin(x * 0.0085 + 1.3) * Math.cos(z * 0.0105 - 0.7) * 0.65
+    + Math.sin((x + z) * 0.019 + 2.1) * 0.22
+    + Math.cos((x - z) * 0.029 - 1.2) * 0.13
+  );
+}
+
+/**
+ * Returns heightAt(x, z) for ground around the track, plus helpers.
+ * Options: hillHeight (m of extra rolling hills away from the track),
+ * landRadius (m from the track where land gives way to water),
+ * water(x, z) → 0..1 extra pull down into the water (e.g. a bay),
+ * street: a channel built into the ground as a city street (San Francisco
+ * rebuilt): { halfAt(i), liftAt(i) } per centre-line sample i, the channel's
+ * half-width with its pavements, and the height of its pavements above the
+ * floor (and optionally dip: metres beyond them the ground stays down, for
+ * coarse ground; under: metres the ground stays under the floor; cap: how
+ * steeply the ground may rise beside any stretch, for tracks passing over
+ * themselves). The ground then sits at pavement level right beside it, dips
+ * under the channel itself, and blends into the hills further out.
+ */
+export function makeHeightField(centerline, laneCount, { hillHeight = 18, landRadius = 300, seaLevel = -1.2, water = () => 0, street = null, sinkFrom = 0.7 } = {}, style = TRACK_STYLE) {
+  const keep = centerline.samples.map((_, i) => i).filter((i) => i % 3 === 0 || i === centerline.samples.length - 1);
+  const samples = keep.map((i) => centerline.samples[i]);
+  const xs = samples.map((s) => s.pos.x);
+  const zs = samples.map((s) => s.pos.z);
+  const ys = samples.map((s) => s.pos.y);
+  const halves = street ? keep.map((i) => street.halfAt(i)) : null;
+  const lifts = street ? keep.map((i) => street.liftAt(i)) : null;
+  // Metres along the track to each kept sample (to tell another stretch from the same one further along).
+  const along = [0];
+  for (let k = 1; k < samples.length; k += 1) along.push(along[k - 1] + samples[k].pos.distanceTo(samples[k - 1].pos));
+  // Another stretch of track: much further along the track than across the ground (it went away and came back).
+  const otherStretch = (i, j, planar) => i !== j && Math.abs(along[i] - along[j]) > 2.5 * planar + 40;
+  const roadHalf = street ? Math.max(...halves.slice(Math.floor(halves.length * 0.1))) : (laneCount * style.laneWidth) / 2 + style.wallThickness;
+  const flatTo = roadHalf + 14; // ground stays under the road this far out
+  const capReach2 = (flatTo + 110) ** 2;
+
+  function nearest(x, z) {
+    let best = Infinity;
+    for (let i = 0; i < xs.length; i += 1) {
+      const d = (xs[i] - x) ** 2 + (zs[i] - z) ** 2;
+      if (d < best) best = d;
+    }
+    return Math.sqrt(best);
+  }
+
+  // Squared distance from the spot being worked out to each sample (filled by heightAt, reused by streetHeight).
+  const D2 = new Float64Array(xs.length);
+
+  // A street channel: pavement level beside it (from the nearby stretches, softly
+  // blended where two pass close), under the floor beneath it, hills further out.
+  // bi: the nearest sample; pavement: the blended pavement level here.
+  function streetHeight(x, z, hills, bi, pavement) {
+    const d = Math.sqrt(D2[bi]);
+    const inner = halves[bi];
+    const dip = street.dip ?? 0; // (coarse ground: stays down a little further out, under the street's stone walls)
+    const under = street.under ?? 2; // metres under the street's floor (coarse ground: deeper, where the hill bends sharply)
+    // Under the channel: below the lowest stretch over this spot (where the track
+    // passes over itself, the ground stays under the lower one; the upper one
+    // stands on supports). The floor right here is between the nearest sample
+    // and its neighbour (on a steep plunge it is well below the nearest sample's).
+    let lowest = Infinity;
+    if (d < inner + dip) {
+      let best2 = Infinity;
+      for (const j of [bi - 1, bi]) {
+        if (j < 0 || j + 1 >= xs.length) continue;
+        const ax = xs[j + 1] - xs[j];
+        const az = zs[j + 1] - zs[j];
+        const u = Math.max(0, Math.min(1, ((x - xs[j]) * ax + (z - zs[j]) * az) / (ax * ax + az * az || 1)));
+        const e2 = (xs[j] + ax * u - x) ** 2 + (zs[j] + az * u - z) ** 2;
+        if (e2 < best2) { best2 = e2; lowest = ys[j] + (ys[j + 1] - ys[j]) * u; }
+      }
+      if (lowest === Infinity) lowest = ys[bi];
+    }
+    // Other stretches (see otherStretch; the nearest one's own neighbours are the same
+    // stretch, steep start ramps included): under one, the ground stays under it too;
+    // and with cap, beside any of them the ground rises at most that steeply from its
+    // rim, so where the track passes over itself the bank never buries the lower stretch.
+    let cap = Infinity;
+    for (let i = 0; i < xs.length; i += 1) {
+      const r2 = D2[i];
+      const foot = halves[i] + dip;
+      const near = r2 < foot * foot;
+      if (!near && !(street.cap && r2 < 6400)) continue;
+      const r = Math.sqrt(r2);
+      const other = otherStretch(i, bi, r + d);
+      if (near && other) lowest = Math.min(lowest, ys[i]);
+      if (street.cap && (i === bi || other)) cap = Math.min(cap, ys[i] + (near ? -under : lifts[i] - 0.25 + (r - foot) * street.cap));
+    }
+    if (lowest < Infinity) return Math.min(lowest - under, cap);
+    const kerb = ys[bi] - under + (pavement - ys[bi] + under) * smoothstep(inner + dip, inner + dip + 5, d);
+    return Math.min(kerb + (hills - kerb) * smoothstep(inner + 40, inner + 160, d), cap);
+  }
+
+  function heightAt(x, z) {
+    let wSum = 0;
+    let hSum = 0;
+    let pSum = 0; // (street: the pavement level blended from nearby stretches)
+    let pW = 0;
+    let best = Infinity;
+    let bi = 0;
+    let floorBelow = Infinity; // lowest road within flatTo
+    for (let i = 0; i < xs.length; i += 1) {
+      const dx = xs[i] - x;
+      const dz = zs[i] - z;
+      const d2 = dx * dx + dz * dz;
+      D2[i] = d2;
+      const t = d2 + 400;
+      const w = 1 / (t * Math.sqrt(t));
+      wSum += w;
+      hSum += w * ys[i];
+      if (d2 < best) { best = d2; bi = i; }
+      if (street) {
+        if (d2 <= 90 * 90) {
+          const wp = 1 / (d2 + 25) ** 2;
+          pW += wp;
+          pSum += wp * (ys[i] + lifts[i] - 0.25);
+        }
+      } else if (d2 < capReach2) {
+        // Beside the road the ground may rise above it by at most half the distance to it (gentle banks).
+        const d = Math.sqrt(d2);
+        const cap = ys[i] - 1 + Math.max(0, d - flatTo) * 0.5;
+        if (cap < floorBelow) floorBelow = cap;
+      }
+    }
+    const r = Math.sqrt(best);
+    let h = hSum / wSum - 2 + hillHeight * rolling(x, z) * smoothstep(flatTo, flatTo + 120, r);
+    if (street) h = streetHeight(x, z, h, bi, pW ? pSum / pW : ys[bi] + lifts[bi] - 0.25);
+    else h = Math.min(h, floorBelow);
+    // Out at the edges, and wherever the theme puts water, the land sinks into the sea.
+    const sink = Math.max(smoothstep(landRadius * sinkFrom, landRadius, r), water(x, z));
+    return h + (seaLevel - 6 - h) * sink;
+  }
+
+  /** Metres clear of the road's (or street channel's) edge at a spot (negative: on it). */
+  function clearance(x, z) {
+    if (!street) return nearest(x, z) - roadHalf;
+    let best = Infinity;
+    for (let i = 0; i < xs.length; i += 1) best = Math.min(best, Math.hypot(xs[i] - x, zs[i] - z) - halves[i]);
+    return best;
+  }
+
+  return { heightAt, nearest, clearance, roadHalf };
+}
+
+/**
+ * One terrain mesh over the track's surroundings, coloured by height and
+ * steepness: sand at the waterline, gold-green grass, dry golden hilltops.
+ */
+export function buildTerrainGeometry(field, bounds, { cells = 96, colors } = {}) {
+  return buildTerrain(field, bounds, { cells, colors }).geometry;
+}
+
+/**
+ * The terrain mesh plus groundAt(x, z): the height of the drawn surface itself
+ * (cheap, and things placed with it sit exactly on what you see).
+ * tiles > 1 also cuts it into tiles × tiles pieces (`geometries`), so a camera
+ * down among the streets only draws the ground in front of it.
+ *
+ * below: [{ x, z, y }] points the drawn ground must stay at or under (the ice of
+ * a channel). A grid square is flat between its corners, so a narrow channel
+ * crossing a square can find the square's surface above its ice (on a bend no
+ * corner falls inside the channel). Those squares (and, with `neighbours`, the
+ * squares next to them the channel also crosses) are drawn on a finer grid (about `fine` metres) that
+ * follows the height field; their outer edges stay straight where they meet an
+ * ordinary square, so nothing cracks open. The rest of the land is unchanged.
+ */
+export function buildTerrain(field, bounds, { cells = 96, colors, tiles = 1, below = null, fine = 2.5, neighbours = true, detail = null, detailFine = fine, colorAt = null } = {}) {
+  const { minX, maxX, minZ, maxZ } = bounds;
+  const n = cells + 1;
+  const heights = new Float32Array(n * n);
+  for (let j = 0; j < n; j += 1) {
+    for (let i = 0; i < n; i += 1) {
+      heights[j * n + i] = field.heightAt(minX + ((maxX - minX) * i) / cells, minZ + ((maxZ - minZ) * j) / cells);
+    }
+  }
+  const C = {
+    sand: new Color(colors?.sand ?? '#e6cf98'),
+    grass: new Color(colors?.grass ?? '#9fb35c'),
+    dry: new Color(colors?.dry ?? '#c4b46a'),
+    shade: new Color(colors?.shade ?? '#7f9a4c'),
+  };
+  const top = Math.max(...heights);
+  const cw = (maxX - minX) / cells;
+  const cd = (maxZ - minZ) / cells;
+  const sx = 1 / cw;
+  const sz = 1 / cd;
+  const h = (a, b) => heights[b * n + a];
+  // A square's surface: two flat triangles, split (a, d, b) and (b, d, e) as drawn.
+  const flat = (y00, y10, y01, y11, u, v) => (u + v <= 1 ? y00 + (y10 - y00) * u + (y01 - y00) * v : y11 + (y01 - y11) * (1 - u) + (y10 - y11) * (1 - v));
+  const cellOf = (x, z) => {
+    const fx = Math.min(cells - 1e-6, Math.max(0, (x - minX) * sx));
+    const fz = Math.min(cells - 1e-6, Math.max(0, (z - minZ) * sz));
+    return [Math.floor(fx), Math.floor(fz), fx, fz];
+  };
+
+  // The finer squares: key → { k, y: heights (k + 1)²}.
+  const refined = new Map();
+  if (below?.length || detail) {
+    const key = (i, j) => j * cells + i;
+    const crossed = new Set();
+    const above = new Set();
+    // (A canyon's walls: `detail` points whose squares are always drawn finer, at `detailFine`, given the squares' size.)
+    const walls = new Set();
+    if (detail) {
+      for (const p of detail(Math.max(cw, cd))) {
+        const [i, j] = cellOf(p.x, p.z);
+        walls.add(key(i, j));
+      }
+    }
+    for (const p of below ?? []) {
+      const [i, j, fx, fz] = cellOf(p.x, p.z);
+      crossed.add(key(i, j));
+      if (flat(h(i, j), h(i + 1, j), h(i, j + 1), h(i + 1, j + 1), fx - i, fz - j) > p.y) above.add(key(i, j));
+    }
+    // (Squares the ice needs drawn finer at `fine`; a canyon's other wall squares at `detailFine`.)
+    const kIce = Math.max(2, Math.ceil(Math.max(cw, cd) / fine));
+    const kWall = Math.max(2, Math.ceil(Math.max(cw, cd) / detailFine));
+    const pick = new Map(); // square → its subdivisions
+    for (const kk of above) {
+      const i = kk % cells; const j = Math.floor(kk / cells);
+      for (let dj = -1; dj <= 1; dj += 1) for (let di = -1; di <= 1; di += 1) {
+        const q = key(i + di, j + dj);
+        if (i + di >= 0 && i + di < cells && j + dj >= 0 && j + dj < cells && (q === kk || (neighbours && crossed.has(q)))) pick.set(q, kIce);
+      }
+    }
+    for (const kk of walls) if (!pick.has(kk)) pick.set(kk, kWall);
+    const kOf = (q) => pick.get(q);
+    for (const [kk, k] of pick) {
+      const i = kk % cells; const j = Math.floor(kk / cells);
+      const y = new Float32Array((k + 1) * (k + 1));
+      for (let b = 0; b <= k; b += 1) {
+        for (let a = 0; a <= k; a += 1) {
+          const u = a / k; const v = b / k;
+          const edge = a === 0 ? [i - 1, j] : a === k ? [i + 1, j] : b === 0 ? [i, j - 1] : b === k ? [i, j + 1] : null;
+          const corner = (a === 0 || a === k) && (b === 0 || b === k);
+          // Corners and edges shared with an ordinary square keep the square's own straight edge.
+          const kN = edge ? kOf(key(edge[0], edge[1])) : undefined;
+          const straight = corner || (edge && kN === undefined);
+          let yy;
+          if (straight) yy = flat(h(i, j), h(i + 1, j), h(i, j + 1), h(i + 1, j + 1), u, v);
+          else if (edge && kN < k) {
+            // An edge shared with a coarser finer square (a canyon's walls beside the ice's): it follows
+            // the land at that square's points, straight between them, so the two meet without a crack.
+            const vertical = a === 0 || a === k;
+            const t = vertical ? v : u;
+            const t0 = Math.min(kN - 1, Math.floor(t * kN)) / kN;
+            const t1 = t0 + 1 / kN;
+            const at = (tt) => (vertical
+              ? field.heightAt(minX + cw * (i + (a === 0 ? 0 : 1)), minZ + cd * (j + tt))
+              : field.heightAt(minX + cw * (i + tt), minZ + cd * (j + (b === 0 ? 0 : 1))));
+            yy = at(t0) + (at(t1) - at(t0)) * ((t - t0) * kN);
+          } else yy = field.heightAt(minX + cw * (i + u), minZ + cd * (j + v));
+          y[b * (k + 1) + a] = yy;
+        }
+      }
+      refined.set(kk, { k, y });
+    }
+  }
+
+  const c = new Color();
+  const piece = (i0, i1, j0, j1) => {
+    const positions = [];
+    const colorList = [];
+    const tri3 = (a, b, d) => {
+      const tri = [a, b, d];
+      const y = (a[1] + b[1] + d[1]) / 3;
+      const steep = Math.max(...tri.map((p) => p[1])) - Math.min(...tri.map((p) => p[1]));
+      // (`span`: the triangle's widest horizontal reach, so a colouring can tell a slope from a big flat-ish square.)
+      const span = colorAt ? Math.max(Math.hypot(a[0] - b[0], a[2] - b[2]), Math.hypot(a[0] - d[0], a[2] - d[2]), Math.hypot(b[0] - d[0], b[2] - d[2])) : 0;
+      const own = colorAt && colorAt((a[0] + b[0] + d[0]) / 3, y, (a[2] + b[2] + d[2]) / 3, steep, span);
+      if (own) c.copy(own);
+      else if (y < 0.3) c.copy(C.sand);
+      else c.copy(C.grass).lerp(C.dry, Math.min(1, y / (top || 1)) * 0.9);
+      if (steep > 6 && !own) c.lerp(C.shade, 0.35);
+      for (const p of tri) { positions.push(...p); colorList.push(c.r, c.g, c.b); }
+    };
+    const quad = (a, b, d, e) => { tri3(a, d, b); tri3(b, d, e); };
+    for (let j = j0; j < j1; j += 1) {
+      for (let i = i0; i < i1; i += 1) {
+        const r = refined.get(j * cells + i);
+        if (!r) {
+          const at = (ii, jj) => [minX + cw * ii, h(ii, jj), minZ + cd * jj];
+          quad(at(i, j), at(i + 1, j), at(i, j + 1), at(i + 1, j + 1));
+          continue;
+        }
+        const at = (a, b) => [minX + cw * (i + a / r.k), r.y[b * (r.k + 1) + a], minZ + cd * (j + b / r.k)];
+        for (let b = 0; b < r.k; b += 1) for (let a = 0; a < r.k; a += 1) quad(at(a, b), at(a + 1, b), at(a, b + 1), at(a + 1, b + 1));
+      }
+    }
+    const g = new BufferGeometry();
+    g.setAttribute('position', new Float32BufferAttribute(positions, 3));
+    g.setAttribute('color', new Float32BufferAttribute(colorList, 3));
+    g.computeVertexNormals();
+    return g;
+  };
+  const cut = (k) => Math.round((cells * k) / tiles);
+  const geometries = [];
+  for (let tj = 0; tj < tiles; tj += 1) {
+    for (let ti = 0; ti < tiles; ti += 1) geometries.push(piece(cut(ti), cut(ti + 1), cut(tj), cut(tj + 1)));
+  }
+  const g = geometries[0];
+
+  function groundAt(x, z) {
+    const [i, j, fx, fz] = cellOf(x, z);
+    const r = refined.get(j * cells + i);
+    if (!r) return flat(h(i, j), h(i + 1, j), h(i, j + 1), h(i + 1, j + 1), fx - i, fz - j);
+    const ga = Math.min(r.k - 1e-6, (fx - i) * r.k);
+    const gb = Math.min(r.k - 1e-6, (fz - j) * r.k);
+    const a = Math.floor(ga); const b = Math.floor(gb);
+    const Y = (aa, bb) => r.y[bb * (r.k + 1) + aa];
+    return flat(Y(a, b), Y(a + 1, b), Y(a, b + 1), Y(a + 1, b + 1), ga - a, gb - b);
+  }
+  return { geometry: g, geometries, groundAt, refined: refined.size };
+}

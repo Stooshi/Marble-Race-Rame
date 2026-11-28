@@ -1,0 +1,26 @@
+/* A receipt or credit note. Its own colours (paper-like, the same on the website and in the back office),
+   so it reads as a document and prints or screenshots the same in both themes. */
+.bdoc {
+  --bdoc-ink: #1d1b16; --bdoc-mute: #6b6658; --bdoc-line: #e4dfd2; --bdoc-paper: #fffdf7; --bdoc-accent: #8a6a00; --bdoc-credit: #a8321f;
+  background: var(--bdoc-paper); color: var(--bdoc-ink); border-radius: 10px; padding: clamp(16px, 4vw, 32px);
+  display: grid; gap: 18px; font-size: 14px; line-height: 1.45; box-shadow: 0 1px 0 rgba(0,0,0,.08);
+}
+.bdoc__head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 16px; }
+.bdoc__kind { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--bdoc-accent); font-weight: 700; }
+.bdoc--credit .bdoc__kind { color: var(--bdoc-credit); }
+.bdoc__no { margin: 2px 0 6px; font-size: 26px; font-variant-numeric: tabular-nums; }
+.bdoc__meta { margin: 0; display: grid; gap: 2px; }
+.bdoc__meta div { display: flex; gap: 8px; }
+.bdoc__meta dt { color: var(--bdoc-mute); min-width: 52px; }
+.bdoc__meta dd { margin: 0; }
+.bdoc__party { display: grid; gap: 1px; min-width: 0; overflow-wrap: anywhere; }
+.bdoc__label { font-size: 12px; color: var(--bdoc-mute); text-transform: uppercase; letter-spacing: .06em; }
+.bdoc__scroll { overflow-x: auto; }
+.bdoc__table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+.bdoc__table th { text-align: left; font-weight: 600; color: var(--bdoc-mute); font-size: 12px; border-bottom: 1px solid var(--bdoc-line); padding: 6px 8px; }
+.bdoc__table td { border-bottom: 1px solid var(--bdoc-line); padding: 8px; vertical-align: top; }
+.bdoc__table .num { text-align: right; white-space: nowrap; }
+.bdoc__totals { display: grid; justify-items: end; gap: 4px; font-variant-numeric: tabular-nums; }
+.bdoc__totals b { display: inline-block; min-width: 110px; text-align: right; }
+.bdoc__grand { font-size: 17px; font-weight: 700; padding-top: 6px; border-top: 2px solid var(--bdoc-ink); }
+.bdoc__note { margin: 0; color: var(--bdoc-mute); font-size: 13px; }

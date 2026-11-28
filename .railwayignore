@@ -1,0 +1,73 @@
+# What `railway up` leaves out (Moses, 27 Oct 2026: the whole repository, 88 MB, kept failing to upload).
+# Only the game server goes up. It reads, and so nothing here may leave out:
+#   package.json, package-lock.json   (Railway installs and starts the server from them)
+#   src/                              (all of it: /health's code fingerprint is a hash of every src/**/*.js)
+#   scripts/                          (small; src/report uses scripts/race-fingerprints.js)
+#   docs/database_schema.sql, docs/data_updates/   (applied at every start, src/db/migrate.js)
+#   client/src/shared/                (the settings the server shares with the website: economy.json,
+#                                      company.json, push.json, nameFilter.js, marbles/catalog.json, …)
+# Everything below is the website, the apps, pictures, music, review sheets, measurements and docs.
+# Plain paths from the top folder only (a leading "/"; no "!" re-includes), so every ignore-file reader treats it the same.
+# Adding a folder the server reads? Check it isn't listed here (docs/05-runbook.md, "Deploying").
+
+# Repository and tools
+/.git/
+/.github/
+node_modules/
+**/node_modules/
+/.env
+/.env.example
+/CLAUDE.md
+/README.md
+/vercel.json
+/test/
+/reports/
+
+# Pictures, music, store material, the hub's articles
+/store-assets/
+/music-inbox/
+/content/
+
+# Docs (the server only reads database_schema.sql and data_updates/)
+docs/*.md
+docs/pdf/
+
+# The website and the apps (client/): all but client/src/shared/
+client/.env.example
+client/.gitignore
+client/.vercelignore
+client/APP-TESTING.md
+client/README.md
+client/android/
+client/ios/
+client/app-api.json
+client/app-version.json
+client/assets/
+client/capacitor.config.json
+client/dev/
+client/dist/
+client/index.html
+client/package.json
+client/package-lock.json
+client/public/
+client/report/
+client/scripts/
+client/test/
+client/vercel.json
+client/vite.config.js
+client/src/App.jsx
+client/src/main.jsx
+client/src/styles.css
+client/src/admin/
+client/src/api/
+client/src/app/
+client/src/components/
+client/src/context/
+client/src/hooks/
+client/src/hub/
+client/src/pages/
+client/src/prerender/
+client/src/site/
+client/src/sound/
+client/src/three/
+client/src/utils/

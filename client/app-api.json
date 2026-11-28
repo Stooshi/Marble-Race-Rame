@@ -1,0 +1,5 @@
+{
+  "api": "https://marble-race-rame-production.up.railway.app",
+  "planned": "https://api.marblespins.com",
+  "fallback": "https://marble-race-rame-production.up.railway.app"
+}

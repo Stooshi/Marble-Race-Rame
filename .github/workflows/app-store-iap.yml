@@ -1,0 +1,48 @@
+# Creates the App Store in-app purchases through the App Store Connect API (Moses, 23 Nov 2026).
+# Run by hand, once (safe to run again: only what is missing is added): Actions → "App Store: create
+# in-app purchases" → Run workflow. Try "Dry run" first to see what it would do.
+# The products (21): the 4 coin packs, holiday_pass_2026 and both products of each complete track
+# pack, with the same ids as Google Play (client/scripts/asc-api.mjs iapProducts). Each product's status
+# is in the run's summary page. Uses the secrets ASC_KEY_ID, ASC_ISSUER_ID, ASC_KEY_P8.
+name: "App Store: create in-app purchases"
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Dry run: only report what would be done'
+        type: boolean
+        default: false
+      packs:
+        description: 'Complete track packs (comma-separated keys)'
+        type: string
+        default: 'grand-prix,blocks-2,rivers,canyons,peaks,blocks-1,world-tour,coasters'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: app-store-iap
+  cancel-in-progress: false
+
+jobs:
+  create:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+      ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+      ASC_KEY_P8: ${{ secrets.ASC_KEY_P8 }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: Main
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Create the products
+        working-directory: client
+        env:
+          PACKS: ${{ inputs.packs }}
+          DRY: ${{ inputs.dry_run && '--dry-run' || '' }}
+        run: node scripts/asc-iap.mjs $DRY --packs "$PACKS"

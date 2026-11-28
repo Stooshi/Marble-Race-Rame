@@ -1,0 +1,65 @@
+{
+  "note": "The coin economy: every number in one place (server and client read this file). One currency: coins. Coins are earned by racing or bought in coin packs with real money (client/src/shared/payments/packs.json); they are never cashed out. Earned and bought coins are counted apart, and scoreboards count earned coins only. Marble prices by rarity are in client/src/shared/marbles/catalog.json.",
+  "startingCoins": 650,
+  "race": {
+    "takingPart": 15,
+    "places": [
+      {
+        "upTo": 1,
+        "coins": 50
+      },
+      {
+        "upTo": 2,
+        "coins": 30
+      },
+      {
+        "upTo": 3,
+        "coins": 20
+      },
+      {
+        "upTo": 10,
+        "coins": 5
+      }
+    ]
+  },
+  "dailyGoal": {
+    "races": 5,
+    "coins": 35
+  },
+  "streak": {
+    "note": "Days in a row with the daily goal met. Shown to the player; pays no coins."
+  },
+  "dailyLimit": {
+    "fullRaces": 10,
+    "coinsAfter": 5
+  },
+  "dayBoundary": "UTC",
+  "bagPricesRoundTo": 100,
+  "bags": {
+    "starter": {
+      "label": "Starter Bag",
+      "rarities": [
+        "common"
+      ],
+      "discount": 0.15
+    },
+    "full": {
+      "label": "Full Collection Bag",
+      "rarities": [
+        "common",
+        "uncommon",
+        "rare",
+        "epic",
+        "legendary"
+      ],
+      "discount": 0.3
+    }
+  },
+  "season": {
+    "note": "A numbered scoreboard season, used only when no season in the seasons table is on or has ended (the Holiday Season 2026 is in that table). Until number, startsAt and endsAt are all set (ISO dates, e.g. 2026-11-01T00:00:00Z), no season is shown anywhere: no season name or days left, no 'This season' board (the scoreboards open on All time). badgeTop: how many players win the season badge.",
+    "number": null,
+    "startsAt": null,
+    "endsAt": null,
+    "badgeTop": 100
+  }
+}

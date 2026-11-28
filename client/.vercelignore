@@ -1,0 +1,4 @@
+ios/
+android/
+capacitor.config.json
+scripts/app-sync.mjs
