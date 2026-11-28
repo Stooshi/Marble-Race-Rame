@@ -1278,6 +1278,17 @@
    "side": -1,
    "marbles": 4
   },
+  "kart-kingdom": {
+   "name": "Kart Kingdom",
+   "series": "Arcade",
+   "lighting": "synthwave",
+   "v": "63032bd5",
+   "bytes": 16572,
+   "bytes2x": 41422,
+   "t": 21086,
+   "side": -1,
+   "marbles": 9
+  },
   "kilimanjaro-five-zones": {
    "name": "Kilimanjaro Five Zones",
    "series": "Peaks",

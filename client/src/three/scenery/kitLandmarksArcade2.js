@@ -15,6 +15,10 @@
  *   prize-wheel     Prize Wheel: a giant prize wheel on its stand, its coloured segments, lights round the rim
  *   fish-tank       Fishing Frenzy: a fishing-game tank, pixel fish leaping out of its water, a rod over it
  *   laser-fort      Laser Tag: a laser-tag fort of stacked blocks, its lookout towers and beams criss-crossing it
+ *   pin-cabinet     Pin Drop: a tall pin-drop cabinet, rows of pins, a ball falling through them and its prize cups
+ *   kart-podium     Kart Kingdom: a pixel go-kart on a winners' podium, a chequered arch and stacked tyres
+ *   bumper-arena    Dodgem Derby: a bumper-car arena, its netted poles and two bumper cars nose to nose
+ *   giant-pinata    Pinata Party: a giant star-shaped pinata on its rope, sweets spilling out under it
  */
 import { box, merge } from './parts';
 
@@ -214,7 +218,50 @@ function laserFort() {
   return merge(p);
 }
 
+function pinCabinet() {
+  const p = [box(14, 26, 3, 0, 13, 0, '#14141e'), box(12, 22, 0.4, 0, 14, 1.6, '#1a2a4a')];
+  for (let r = 0; r < 8; r += 1) for (let c = 0; c < 6 - (r % 2); c += 1) p.push(box(0.4, 0.4, 0.6, -4.5 + c * 1.8 + (r % 2) * 0.9, 22 - r * 2.4, 1.9, '#d8dce4'));
+  p.push(box(1.2, 1.2, 1.2, 0.9, 15, 2.2, '#f2f6fa')); // the ball on its way down
+  for (let k = 0; k < 5; k += 1) p.push(box(2, 1.6, 0.6, -4.8 + k * 2.4, 4, 2, NEON[k])); // the prize cups
+  p.push(box(14.4, 2.4, 3.2, 0, 27.2, 0, '#ff3fa8'));
+  return merge(p);
+}
+
+function kartPodium() {
+  const p = [box(6, 4, 6, 0, 2, 0, '#ffd23f'), box(6, 2.6, 6, -6.2, 1.3, 0, '#c8c8d0'), box(6, 1.6, 6, 6.2, 0.8, 0, '#c87a3a')];
+  p.push(box(4.4, 1.2, 2.6, 0, 4.8, 0, '#ff3f3f'), box(1.6, 1, 1.6, 0, 5.8, 0, '#2a2a34'), box(1, 1, 1, 0, 6.8, 0, '#f2f6fa')); // the kart and its driver
+  for (const [x, z] of [[-1.7, -1.4], [1.7, -1.4], [-1.7, 1.4], [1.7, 1.4]]) p.push(box(1, 1, 0.6, x, 4.4, z, '#0a0a12'));
+  for (const x of [-11, 11]) p.push(box(1.2, 16, 1.2, x, 8, -3, '#2a2a34'));
+  for (let k = 0; k < 12; k += 1) p.push(box(1.9, 1.4, 1, -10.4 + k * 1.9, 15.6, -3, k % 2 ? '#f2f6fa' : '#0a0a12')); // the chequered arch
+  for (let k = 0; k < 4; k += 1) p.push(box(2.6, 1, 2.6, 13, 0.5 + k * 1.05, 4, '#1a1a1a')); // a tyre stack
+  return merge(p);
+}
+
+function bumperArena() {
+  const p = [box(24, 0.6, 16, 0, 0.3, 0, '#3a3a4a'), box(24.4, 1.2, 0.6, 0, 1, 8, '#ffd23f'), box(24.4, 1.2, 0.6, 0, 1, -8, '#ffd23f')];
+  for (const [x, c, d] of [[-3, '#3fd8ff', 1], [3, '#ff3fa8', -1]]) {
+    p.push(box(4.6, 1.4, 3.4, x, 1.6, 0, c), box(5, 0.6, 3.8, x, 1, 0, '#1a1a1a'), box(1.6, 1.6, 1.4, x - d * 0.8, 3, 0, '#2a2a34'));
+    p.push(box(0.2, 9, 0.2, x - d * 1.4, 7, 0, '#c8c8d0')); // its pole up to the net
+  }
+  p.push(box(24, 0.2, 16, 0, 11.6, 0, '#5a5a6a'));
+  for (const [x, z] of [[-11.6, -7.6], [11.6, -7.6], [-11.6, 7.6], [11.6, 7.6]]) p.push(box(0.8, 12, 0.8, x, 6, z, '#2a2a34'));
+  return merge(p);
+}
+
+function giantPinata() {
+  const p = [box(0.4, 10, 0.4, 0, 26, 0, '#c89a5a'), box(16, 0.6, 0.6, 0, 31, 0, '#5a3418')];
+  p.push(box(7, 7, 4, 0, 17, 0, '#ff3fa8'));
+  for (const [x, y, c] of [[0, 23, '#ffd23f'], [0, 11, '#3fd8ff'], [6, 17, '#7dff6a'], [-6, 17, '#ff7a1a'], [4.5, 21.5, '#a86aff'], [-4.5, 12.5, '#ff3f3f']]) p.push(box(3, 3, 3, x, y, 0, c)); // its star points
+  for (const x of [-1.5, 1.5]) p.push(box(0.4, 6, 0.4, x, 10, 0.4, NEON[(x > 0) + 2])); // the streamers
+  for (let k = 0; k < 14; k += 1) p.push(box(0.9, 0.5, 0.9, -5 + (k * 37) % 10, 0.25 + (k % 3) * 0.5, -3 + (k * 13) % 6, NEON[k % NEON.length])); // sweets on the ground
+  return merge(p);
+}
+
 export const ARCADE2_LANDMARKS = {
+  'pin-cabinet': { build: pinCabinet, radius: 8 },
+  'kart-podium': { build: kartPodium, radius: 14 },
+  'bumper-arena': { build: bumperArena, radius: 15 },
+  'giant-pinata': { build: giantPinata, radius: 9 },
   'laser-fort': { build: laserFort, radius: 14 },
   'golf-windmill': { build: golfWindmill, radius: 12 },
   'prize-wheel': { build: prizeWheel, radius: 11 },

@@ -56,6 +56,10 @@ export const ART = {
   wheel: { sky: ['#2a0a1a', '#8a1a4a'], ink: '#12040a', glow: '#ffd23f', accent: '#3fd8ff' },
   fishing: { sky: ['#041a2a', '#0a5a8a'], ink: '#020a12', glow: '#9ae8ff', accent: '#ff7a1a' },
   laser: { sky: ['#06020e', '#1a0a3a'], ink: '#020106', glow: '#ff3f3f', accent: '#7dff6a' },
+  pins: { sky: ['#0a0a2a', '#3a1a6a'], ink: '#04040e', glow: '#d8dce4', accent: '#ff3fa8' },
+  karts: { sky: ['#0a2a0a', '#3a8a3a'], ink: '#040a04', glow: '#ffd23f', accent: '#ff3f3f' },
+  dodgems: { sky: ['#1a0a2a', '#5a1a5a'], ink: '#0a040e', glow: '#3fd8ff', accent: '#ff3fa8' },
+  fiesta: { sky: ['#2a0a2a', '#aa3a6a'], ink: '#12040a', glow: '#ffd23f', accent: '#7dff6a' },
 };
 
 // The picture: one small canvas, drawn in pixels. Regions (x, y, w, h) in its pixels.
@@ -256,6 +260,27 @@ function paintSide(g, art, c) {
     g.strokeStyle = c.glow; g.lineWidth = 2;
     for (const [a, b, x2, y2] of [[0, 20, 128, 70], [0, 80, 128, 24], [20, 0, 90, 110]]) { g.beginPath(); g.moveTo(a, b); g.lineTo(x2, y2); g.stroke(); }
     g.strokeStyle = c.accent; g.beginPath(); g.moveTo(128, 40); g.lineTo(0, 100); g.stroke();
+  } else if (art === 'pins') {
+    // Rows of pins and a ball bouncing down through them into the cups.
+    g.fillStyle = c.glow; for (let r = 0; r < 7; r += 1) for (let k = 0; k < 8; k += 1) g.fillRect(8 + k * 15 + (r % 2) * 7, 8 + r * 11, 3, 3);
+    g.fillStyle = '#f2f6fa'; g.beginPath(); g.arc(58, 44, 4, 0, Math.PI * 2); g.fill();
+    for (let k = 0; k < 5; k += 1) { g.fillStyle = [c.accent, '#ffd23f', '#3fd8ff', '#7dff6a', '#ff7a1a'][k]; g.fillRect(6 + k * 24, 92, 20, 12); }
+  } else if (art === 'karts') {
+    // A curving race track, two karts and the chequered line.
+    g.fillStyle = '#3a3a4a'; g.beginPath(); g.arc(64, 110, 70, Math.PI, 0); g.lineTo(104, 110); g.arc(64, 110, 40, 0, Math.PI, true); g.fill();
+    for (let k = 0; k < 6; k += 1) { g.fillStyle = k % 2 ? '#f2f6fa' : c.ink; g.fillRect(4 + k * 5, 84, 5, 5); }
+    g.fillStyle = c.accent; g.fillRect(40, 52, 14, 8); g.fillStyle = c.glow; g.fillRect(76, 48, 14, 8);
+  } else if (art === 'dodgems') {
+    // Bumper cars nose to nose under the sparking net.
+    g.fillStyle = '#3a3a4a'; g.fillRect(0, 74, w, h - 74);
+    g.fillStyle = c.glow; g.fillRect(24, 64, 30, 14); g.fillStyle = c.accent; g.fillRect(74, 64, 30, 14);
+    g.fillStyle = '#c8c8d0'; g.fillRect(30, 10, 2, 54); g.fillRect(96, 10, 2, 54);
+    g.fillStyle = '#ffd23f'; for (const [x, y] of [[31, 10], [97, 10], [64, 70]]) { g.fillRect(x - 3, y - 1, 7, 2); g.fillRect(x - 1, y - 3, 2, 7); }
+  } else if (art === 'fiesta') {
+    // Bunting across the top, a star pinata and sweets falling out of it.
+    for (let k = 0; k < 10; k += 1) { g.fillStyle = [c.glow, c.accent, '#3fd8ff', '#ff3fa8'][k % 4]; g.beginPath(); g.moveTo(k * 13, 6); g.lineTo(k * 13 + 12, 6); g.lineTo(k * 13 + 6, 18); g.fill(); }
+    g.fillStyle = '#ff3fa8'; g.fillRect(52, 34, 24, 24); g.fillStyle = c.glow; g.fillRect(58, 26, 12, 8); g.fillRect(76, 40, 8, 12); g.fillRect(44, 40, 8, 12);
+    g.fillStyle = c.accent; for (let k = 0; k < 8; k += 1) g.fillRect(50 + (k * 7) % 30, 66 + k * 5, 4, 3);
   } else {
     g.fillStyle = c.glow;
     for (let k = 0; k < 7; k += 1) g.fillRect(6 + k * 17, 40 + ((k * 13) % 30), 12, h);
