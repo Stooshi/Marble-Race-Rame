@@ -2235,6 +2235,17 @@
    "side": -1,
    "marbles": 5
   },
+  "skee-hall": {
+   "name": "Skee Hall",
+   "series": "Arcade",
+   "lighting": "synthwave",
+   "v": "3e2bf3ba",
+   "bytes": 15338,
+   "bytes2x": 38762,
+   "t": 15647,
+   "side": -1,
+   "marbles": 9
+  },
   "sky-islands": {
    "name": "Sky Islands",
    "series": "Blocks",
