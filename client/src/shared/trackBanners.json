@@ -508,6 +508,17 @@
    "side": 1,
    "marbles": 4
   },
+  "coin-pusher": {
+   "name": "Coin Pusher",
+   "series": "Arcade",
+   "lighting": "neon-night",
+   "v": "c57fa6fc",
+   "bytes": 11258,
+   "bytes2x": 26958,
+   "t": 14795,
+   "side": 1,
+   "marbles": 8
+  },
   "colca-spin": {
    "name": "Colca Spin",
    "series": "Canyons",
